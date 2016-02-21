@@ -13,28 +13,21 @@
 	background-color: #ffffff;
 	box-shadow: 10px 10px 5px #888888;
 }
-.centered {
-	text-align: center;
-}
-.right {
-	text-align: right;
+.period {
 	vertical-align: text-top;
 	white-space: nowrap;
 }
-td {
-	padding: 10px;
-}
 table {
 	border-collapse: collapse;
+}
+td {
+	padding: 5px;
 }
 .vertical {
 	text-align: right;
 	border-right: solid 2px #000000;
 	vertical-align: text-top;
 	white-space: nowrap;
-}
-a {
-	text-decoration: none !important;
 }
 body {
 	background-color: #cccccc;
@@ -60,7 +53,7 @@ body {
 
   <h3>Ideal Role</h3>
   <ul>
-    <li>Active software development and research</li>
+    <li>Active software research & development</li>
     <li>C/C++ or Java</li>
     <li>Work in environment with Quality Assurance and fully automated production process</li>
     <li>Related to Applied Mathematics</li>
@@ -68,41 +61,52 @@ body {
 
   <h3>Education</h3>
   <table>
-    <tr><td class="vertical">1996 – 2001</td><td>University of Technology in Poznan Poland<br/>Master of Science Engineer in Automatics and Robotics</td></tr>
-    <tr><td class="vertical">1990 – 1995</td><td>Technikum Elektroniczne in Bydgoszcz Poland<br/>Secondary school specializes in Electronics and Telecommunication</td></tr>
+    <tr><td class="vertical">1996 – 2001</td><td>University of Technology in Poznan Poland<br/><b>Master of Science Engineer in Automatics and Robotics</b></td></tr>
+    <tr><td class="vertical">1990 – 1995</td><td>Technikum Elektroniczne in Bydgoszcz Poland<br/>Secondary school specializes in <b>Electronics and Telecommunication</b></td></tr>
   </table>
 
   <h3>Key Technical Skills</h3>
   <ul>
+    <li><b>C/C++ - 10+ years of commercial experience</b></li>
+    <li><b>Java - 7+ years of commercial experience</b></li>
     <li>Strong debugging skills</li>
-    <li>Concurrent processing expert: multi-threading or event-driven systems, also barriers and atomic operations</li>
+    <li><b>Concurrent processing expert</b>: multi-threading or event-driven systems, also barriers and atomic operations</li>
     <li>Linux, Solaris enthusiast</li>
-    <li>C/C++ - 10+ years of commercial experience</li>
-    <li>Java - 5+ years of commercial experience</li>
     <li>3D math expert (education Robotics, as a part of my master thesis I created 3D CAD system for FEM computations in OpenGL/Qt/Lua)</li>
     <li>Very good GIS experience (3 years geographical map development)</li>
     <li>C#, Python, Perl, JavaScript and many more</li>
     <li>SQL Databases - MS SQL Server, Oracle, MySQL and many more</li>
     <li>Object Databases - Hibernate, db4o (also Berkley DB)</li>
-    <li>Maven, Ant, Subversion, Eclipse, Makefile</li>
+    <li>Maven, Ant, git, Subversion, Eclipse, IntelliJ, Makefile, Jenkins, Bamboo, JIRA</li>
   </ul>
 
   <h3>Employment Experience</h3>
   <table>
-    <tr><td class="right">11/2007 - present</td><td>Micro Focus (formerly IONA Technologies, Dublin)<br/>
-        Micro Focus delivers middleware solutions. Main products are Orbix and Artix. Orbix is the leading implementation of CORBA. Artix is successor of Orbix and is based on Web Services and implements ESB.<br/>
-        Main responsibilities:
+    <tr><td class="period">07/2015 - present</td><td><b>NuoDB Ireland (Dublin)</b><br/>
+        The SQL database for the cloud. First truely distributed database supporting SQL.<br/>
+        <p>Tasks:</p>
+        <ul>
+          <li>Design and implementation of LDAP authentication in C++. Supported by OpenLDAP for Linux, Mac, Windows (Active Directory).</li>
+          <li>Design and implementation of system security based on TLS. Supported by JDK7/8.</li>
+        </ul>
+    </td></tr>
+
+    <tr><td class="period">11/2007 - 06/2015</td><td><b>Micro Focus (formerly IONA Technologies, Dublin)</b><br/>
+        Micro Focus delivers middleware solutions. Main products are Orbix and Artix. Orbix is the leading implementation of CORBA. Artix is successor of Orbix and is based on Web Services and implements ESB.
+        All products support Java and C++ technologies<br/>
+        <p>Main responsibilities:</p>
         <ul>
           <li>Last year development task was delivery of full integration of Orbix C++ with Actional. Actional is monitoring tool. It gives users of Orbix full ability to snoop CORBA invocations and track errors.</li>
-          <li>Mantainace of existing code. Bugfixes and debugging</li>
+          <li>Mantainace of existing code. Bugfixes and debugging.</li>
         </ul>
         Platforms: SunOS, Linux, Windows, HP-UX, AIX
     </td></tr>
 
-    <tr><td class="right">08/2004 - 10/2007</td><td>Aircraft Management Technologies (Malahide, Ireland)<br/>
+    <tr><td class="period">08/2004 - 10/2007</td><td><b>Aircraft Management Technologies (Malahide, Ireland)</b><br/>
         AMT delivers specific aircraft software solutions for airlines. The main focus of the system is management and replication of distributed databases where connections between airborne planes and the airport
         server is not always guaranteed. The system optimizes a connection price (SAT, GPRS, GSM, Wireless) and an amount of data to achieve minimum costs and maximum usability.<br/>
-        Involved in:
+        Technology: Java with JNI back-end for specific protocols and embeded environment.<br/>
+        <p>Involved in:</p>
         <ul>
           <li>Design and implementation of a subscription and publishing data system (XPath filters define data flow between aircrafts and ground server)</li>
           <li>Design and implementation of a large content management system (transport of files by means of available media and protocols)</li>
@@ -112,11 +116,11 @@ body {
         </ul>
     </td></tr>
   
-    <tr><td class="right">09/2001 – 06/2004</td><td>Systherm-Info (Poznan, Poland)<br/>
+    <tr><td class="period">09/2001 – 06/2004</td><td><b>Systherm-Info (Poznan, Poland)</b><br/>
         Main revenue stream - distributed spatial data systems for government departments (numeric maps, GIS and database applications). The primary project was a spatial data manager. The system created a graphics
         view of remote databases. User was obtaining current or past state of the reality. The system had ability of simultaneous work with a few databases (SQL Server, Oracle and Pervasive) all at once. The system
         had a general mechanism to extend the interface for a new kind of a database.<br/>
-        Involved in:
+        <p>Involved in:</p>
         <ul>
           <li>Design and implementation of multidimensional index for specific applications (indexing vector objects in a storage)</li>
           <li>Design and implementation of a drawing system (fast geometric algorithms)</li>
@@ -126,10 +130,10 @@ body {
         </ul>
     </td></tr>
 
-    <tr><td class="right">06/1999 – 09/2001</td><td>Xnet Communications (Poland, German subsidiary)<br/>
+    <tr><td class="period">06/1999 – 09/2001</td><td><b>Xnet Communications (Poland, German subsidiary)</b><br/>
         The company specialized in network communication. Tasks related to implementation of systems controlling data flow in the network (e.g. acquisition of data from distributed cash-registers). The central unit
         of the system was an FTP server and a scheduler. The engine was configured with Lua scripts (see lua.org).<br/>
-        Involved in:
+        <p>Involved in:</p>
         <ul>
           <li>Implementation of distributed file management system (core and GUI)</li>
           <li>Implementation of transport layer based on modems</li>
@@ -143,18 +147,21 @@ body {
   <ul>
     <li>English - fluent</li>
     <li>Polski - native</li>
-    <li>Espa˜nol - learning</li>
+    <li>Espa&#241;ol - learning</li>
   </ul>
 
   <h3>Interests</h3>
   <ul>
     <li>Rock Climbing</li>
-    <li>Applied Mathematics</li>
-    My recent work can be found at http://knapiontek.comze.com/fem.pdf
+    <li>Applied Mathematics<br/>
+      My recent work can be found at <a href="http://knapiontek.github.io/fem.pdf">http://knapiontek.github.io/fem.pdf</a>
+    </li>
   </ul>
 
   <h3>References</h3>
-  Available on request
+  <ul>
+    <li>Available on request</li>
+  </ul>
 </div>
 </body>
 </html>
