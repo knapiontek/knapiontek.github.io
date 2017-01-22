@@ -149,7 +149,7 @@ function render_katex() {
         var texTxt = $(this).text()
         elem = $(this).get(0)
         try {
-            katex.render_planets(texTxt, elem, { displayMode: true })
+            katex.render(texTxt, elem, { displayMode: true })
         }
         catch(err) {
             $(this).html("<span class='err'>" + err)
