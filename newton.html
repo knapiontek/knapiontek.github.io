@@ -32,54 +32,57 @@ body {
 <body>
 <div id="main_page">
     <h3>Newton Dynamics</h3>
-    <div class="math">\vec{F}=m\frac{\partial^2\vec{x}}{\partial t^2}</div>
+    <div class="math">\vec{F}=m\frac{\partial^2\vec{u}}{\partial t^2}</div>
     <h3>Law Of Gravitation</h3>
     <div class="math">F=G\frac{Mm}{r^2}</div>
     <h3>Stellar System Simulation</h3>
-    <div><canvas id='system'></div>
+    <div><canvas id='system'/></div>
     <h3>Solution</h3>
     <p>from geometry</p>
-    <div class="math">\vec{x}=\begin{bmatrix}x_1\\x_2\end{bmatrix}</div>
-    <div class="math">\vec{F}=-\begin{bmatrix}F_1\\F_2\end{bmatrix}</div>
-    <div class="math">r^2=x_1^2+x_2^2</div>
-    <div class="math">\begin{matrix}\frac{F_1}{F}=\frac{x_1}{r}&\frac{F_2}{F}=\frac{x_2}{r}\end{matrix}</div>
+    <div class="math">\vec{u}=\begin{bmatrix}x\\y\end{bmatrix}</div>
+    <div class="math">\vec{F}=-\begin{bmatrix}F_x\\F_y\end{bmatrix}</div>
+    <div class="math">r^2=x^2+y^2</div>
+    <div class="math">\begin{matrix}\frac{F_x}{F}=\frac{x}{r}&\frac{F_y}{F}=\frac{y}{r}\end{matrix}</div>
     <p>we get</p>
-    <div class="math">\frac{\partial^2\vec{x_{n+1}}}{\partial t^2}=\vec{a_{n+1}}=\frac{\vec{F_{n+1}}}{m}=GM\frac{\vec{x_n}}{r^3}</div>
-    <div class="math">\frac{\partial\vec{x_{n+1}}}{\partial t}=\vec{v_{n+1}}=\vec{v_0}+\sum_{i=1}^{i=n}\vec{a_i}\Delta t</div>
-    <div class="math">\vec{x_{n+1}}=\vec{x_0}+\sum_{i=1}^{i=n}\vec{v_i}\Delta t</div>
+    <div class="math">\frac{\partial^2\vec{u_{n+1}}}{\partial t^2}=\vec{a_{n+1}}=\frac{\vec{F_{n+1}}}{m}=GM\frac{\vec{u_n}}{r^3}</div>
+    <div class="math">\frac{\partial\vec{u_{n+1}}}{\partial t}=\vec{v_{n+1}}=\vec{v_0}+\sum_{i=1}^{i=n}\vec{a_i}\Delta t</div>
+    <div class="math">\vec{u_{n+1}}=\vec{u_0}+\sum_{i=1}^{i=n}\vec{v_i}\Delta t</div>
 </div>
 <script>
 var G = 30
 var delta = 0.02
 var size = 1000
-var planet_seq = [{ r: 40.0, x1: 500, x2: 500, v1: 0, v2: 0, c: 'yellow' },
-                  { r: 9.0, x1: 350, x2: 550, v1: 0, v2: 225, c: 'blue' },
-                  null, null, null, null, null, null, null, null, null, null]
+var planet_seq = [{ r: 40.0, x: 500, y: 500, vx: 0, vy: 0, c: 'yellow' },
+                  { r: 2.0, x: 400, y: 500, vx: 0, vy: 225, c: 'red' },
+                  { r: 3.0, x: 500, y: 650, vx: 200, vy: 0, c: 'green' },
+                  { r: 6.0, x: 700, y: 500, vx: 0, vy: -125, c: 'blue' },
+                  { r: 3.0, x: 500, y: 300, vx: -150, vy: 5, c: 'black' },
+                  { r: 2.0, x: 200, y: 250, vx: -80, vy: 125, c: 'brown' }]
 function mass(r) {
     return r * r * r * Math.PI * 4 / 3
 }
 function radius(m) {
-    return Math.pow(m * 3 / 4 / Math.PI, 1 / 3) // square cube
+    return Math.pow(m * 3 / 4 / Math.PI, 1 / 3) // cube root
 }
 function generate_planet() {
     for(var i = 0; i < planet_seq.length; i++) {
-        planet = planet_seq[i]
+        var planet = planet_seq[i]
         if(planet == null
-            || (planet.x1 > (2 * size))
-            || (planet.x2 > (2 * size))
-            || (planet.x1 < -size)
-            || (planet.x2 < -size)) {
+            || (planet.x > (2 * size))
+            || (planet.y > (2 * size))
+            || (planet.x < -size)
+            || (planet.y < -size)) {
             var r = 10 * Math.random()
-            var x1 = size * Math.random()
-            var x2 = 0
-            var v1 = 100 * (Math.random() - 0.5)
-            var v2 = 300 * (Math.random() - 0.5)
+            var x = size * Math.random()
+            var y = 0
+            var vx = 100 * (Math.random() - 0.5)
+            var vy = 300 * (Math.random() - 0.5)
             var c = 'rgb(' + (255 * Math.random()).toFixed()
                      + ',' + (255 * Math.random()).toFixed()
                      + ',' + (255 * Math.random()).toFixed() + ')'
-            if(v2 < 0)
-                x2 = size
-            planet = { r: r, x1: x1, x2: x2, v1: v1, v2: v2, c: c }
+            if(vy < 0)
+                y = size
+            planet = { r: r, x: x, y: y, vx: vx, vy: vy, c: c }
             planet_seq[i] = planet
             return
         }
@@ -92,41 +95,41 @@ function render_planets() {
     system.height = size
     context.clearRect(0, 0, size, size)
     for(var i = 0; i < planet_seq.length; i++) {
-        planet = planet_seq[i]
+        var planet = planet_seq[i]
         if(planet != null) {
             context.beginPath()
             context.fillStyle = planet.c
-            context.arc(planet.x1, planet.x2, planet.r, 0, 2 * Math.PI)
+            context.arc(planet.x, planet.y, planet.r, 0, 2 * Math.PI)
             context.fill()
         }
     }
 }
 function calculate_planet_positions() {
     for(var i1 = 0; i1 < planet_seq.length; i1++) {
-        planet1 = planet_seq[i1]
+        var planet1 = planet_seq[i1]
         if(planet1 != null) {
             var ax = 0
             var ay = 0
             for(var i2 = 0; i2 < planet_seq.length; i2++) {
                 if(i1 != i2) {
-                    planet2 = planet_seq[i2]
+                    var planet2 = planet_seq[i2]
                     if(planet2 != null) {
-                        var x1 = planet2.x1 - planet1.x1 // direction F ~ x
-                        var x2 = planet2.x2 - planet1.x2
-                        var r2 = (x1 * x1) + (x2 * x2)
+                        var x = planet2.x - planet1.x // direction F ~ x
+                        var y = planet2.y - planet1.y
+                        var r2 = (x * x) + (y * y)
                         var r = Math.sqrt(r2)
                         var m1 = mass(planet1.r)
                         var m2 = mass(planet2.r)
                         if(r > (planet1.r + planet2.r)) {
                             var r3 = r2 * r
                             // a ~ -x
-                            ax += G * m2 * x1 / r3
-                            ay += G * m2 * x2 / r3
+                            ax += G * m2 * x / r3
+                            ay += G * m2 * y / r3
                         } else if(planet1.r <= planet2.r) {
                             var m = m1 + m2
                             planet2.r = radius(m)
-                            planet2.v1 = ((m1 * planet1.v1) + (m2 * planet2.v1)) / m // conservation of momentum, putty collision
-                            planet2.v2 = ((m1 * planet1.v2) + (m2 * planet2.v2)) / m
+                            planet2.vx = ((m1 * planet1.vx) + (m2 * planet2.vx)) / m // conservation of momentum, putty collision
+                            planet2.vy = ((m1 * planet1.vy) + (m2 * planet2.vy)) / m
                             // remove smaller planet
                             planet_seq[i1] = planet1 = null
                             break;
@@ -136,10 +139,10 @@ function calculate_planet_positions() {
             }
         }
         if(planet1 != null) {
-            planet1.v1 = planet1.v1 + (ax * delta)
-            planet1.v2 = planet1.v2 + (ay * delta)
-            planet1.x1 = planet1.x1 + (planet1.v1 * delta)
-            planet1.x2 = planet1.x2 + (planet1.v2 * delta)
+            planet1.vx = planet1.vx + (ax * delta)
+            planet1.vy = planet1.vy + (ay * delta)
+            planet1.x = planet1.x + (planet1.vx * delta)
+            planet1.y = planet1.y + (planet1.vy * delta)
         }
     }
     render_planets()
@@ -156,7 +159,6 @@ function render_katex() {
         }
     })
 }
-setInterval(generate_planet, 4000)
 setInterval(calculate_planet_positions, 50)
 render_katex()
 </script>
