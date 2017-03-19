@@ -22,7 +22,12 @@ body {
     margin-top: 1.5em;
     margin-bottom: 1.5em;
 }
-#system {
+#system2 {
+    width: 100%;
+    margin: 0 auto;
+    border: thin solid;
+}
+#system3 {
     width: 100%;
     margin: 0 auto;
     border: thin solid;
@@ -94,6 +99,104 @@ x_2 = c_2
 \end{cases}
 </div>
 
+<p>In the matrix notation</p>
+<div class='math'>
+\begin{bmatrix}
+2 & 1 & 0 & 0 & -1 & 0 & 0 & 0 & 0 \\
+1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 2 & 1 & 0 & 0 & -1 & 0 \\
+0 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+0 & -1 & 0 & 0 & 0 & 0 & 2 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+a_0 \\ b_0 \\ c_0 \\ a_1 \\ b_1 \\ c_1 \\ a_2 \\ b_2 \\ c_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+0 \\ x_1 \\ x_0 \\ 0 \\ x_2 \\ x_1 \\ 0 \\ x_0 \\ x_2
+\end{bmatrix}
+</div>
+
+<p>Finally the result</p>
+<div><canvas id='system2'></div>
+
+<p>Consider 3 cubic polynomial equations</p>
+<div class='math'>
+\begin{cases}
+x_0(t) = a_0t^3 + b_0t^2 + c_0t + d_0 \\
+x'_0(t) = 3a_0t^2 + 2b_0t + c_0 \\
+x''_0(t) = 6a_0t + 2b_0
+\end{cases}
+\begin{cases}
+x_1(t) = a_1t^3 + b_1t^2 + c_1t + d_1 \\
+x'_1(t) = 3a_1t^2 + 2b_1t + c_1 \\
+x''_1(t) = 6a_1t + 2b_1
+\end{cases}
+\begin{cases}
+x_2(t) = a_2t^3 + b_2t^2 + c_2t + d_2 \\
+x'_2(t) = 3a_2t^2 + 2b_2t + c_2 \\
+x''_2(t) = 6a_2t + 2b_2
+\end{cases}
+</div>
+
+<p>Let's evaluated them in points <b class='inmath'>t=0, t=1</b></p>
+<div class='math'>
+\begin{cases}
+x_0(0) = d_0 \\
+x'_0(0) = c_0 \\
+x''_0(0) = 2b_0 \\
+x_0(1) = a_0 + b_0 + c_0 + d_0 \\
+x'_0(1) = 3a_0 + 2b_0 + c_0 \\
+x''_0(1) = 6a_0 + 2b_0
+\end{cases}
+\begin{cases}
+x_1(0) = d_1 \\
+x'_1(0) = c_1 \\
+x''_1(0) = 2b_1 \\
+x_1(1) = a_1 + b_1 + c_1 + d_1 \\
+x'_1(1) = 3a_1 + 2b_1 + c_1 \\
+x''_1(1) = 6a_1 + 2b_1
+\end{cases}
+\begin{cases}
+x_2(0) = d_2 \\
+x'_2(0) = c_2 \\
+x''_2(0) = 2b_2 \\
+x_2(1) = a_2 + b_2 + c_2 + d_2 \\
+x'_2(1) = 3a_2 + 2b_2 + c_2 \\
+x''_2(1) = 6a_2 + 2b_2
+\end{cases}
+</div>
+
+<p>We add extra constraints to ensure continuity in the point of joining</p>
+<div class='math'>
+\begin{cases}
+x'_0(1) = x'_1(0) \\
+x''_0(1) = x''_1(0) \\
+x'_1(1) = x'_2(0) \\
+x''_1(1) = x''_2(0) \\
+x'_2(1) = x'_0(0) \\
+x''_2(1) = x''_0(0)
+\end{cases}
+</div>
+
+<p>We can expand it for 3 fixed points <b class='inmath'>x_0, x_1, x_2</b></p>
+<div class='math'>
+\begin{cases}
+2a_0 + b_0 = b_1 \\
+x_1 = a_0 + b_0 + c_0 \\
+x_0 = c_0 \\
+2a_1 + b_1 = b_2 \\
+x_2 = a_1 + b_1 + c_1 \\
+x_1 = c_1 \\
+2a_2 + b_2 = b_0 \\
+x_0 = a_2 + b_2 + c_2 \\
+x_2 = c_2
+\end{cases}
+</div>
 
 <p>In the matrix notation</p>
 <div class='math'>
@@ -118,7 +221,7 @@ a_0 \\ b_0 \\ c_0 \\ a_1 \\ b_1 \\ c_1 \\ a_2 \\ b_2 \\ c_2
 </div>
 
 <p>Finally the result</p>
-<div><canvas id='system'></div>
+<div><canvas id='system3'></div>
 
 <script>
 function arrow(context, begin, end) {
@@ -158,6 +261,17 @@ function vector_zero(size)
     }
     return vector
 }
+function vector_norm2(vec1, vec2)
+{
+    console.assert(vec1.length == vec2.length)
+
+    var acc = 0.0
+    for(var i = 0; i < vec1.length; i++)
+    {
+        acc += vec1[i] * vec2[i]
+    }
+    return acc
+}
 function square_matrix_zero(size)
 {
     matrix = []
@@ -186,8 +300,10 @@ function square_matrix_identity(size)
 }
 function square_matrix_mul(matrix, in_vec)
 {
+    console.assert(matrix[0].length == in_vec.length)
+
     out_vec = []
-    for(var i1 = 0; i1 < in_vec.length; i1++)
+    for(var i1 = 0; i1 < matrix.length; i1++)
     {
         var acc = 0.0
         for(var i2 = 0; i2 < in_vec.length; i2++)
@@ -198,6 +314,8 @@ function square_matrix_mul(matrix, in_vec)
 }
 function calculate_equation_system(A, B) // solving A * X = B by LU method
 {
+    console.assert(A.length == B.length)
+
     var size = B.length
     var X = vector_zero(size)
     var L = square_matrix_identity(size) // lower matrix
@@ -254,15 +372,10 @@ function test_calculate_equation_system() {
     var X = calculate_equation_system(A, B)
 
     var E = square_matrix_mul(A, X)
-    for(var i = 0; i < size; i++)
-    {
-        if(E[i] - B[i] > 0.001) {
-            console.log('B, E are not the same')
-        }
-    }
+    console.assert(vector_norm2(E, B))
 }
-function generate_matrix(data) {
-    var size = data.length * data.length
+function generate_matrix2(data) {
+    var size = 3 * data.length
     var A = square_matrix_zero(size)
     var Bx = vector_zero(size)
     var By = vector_zero(size)
@@ -287,13 +400,15 @@ function generate_matrix(data) {
 
     return [A, Bx, By]
 }
-function render_spline() {
+function render_spline2() {
     var data = [point(300, 300),
-            point(500, 800),
-            point(800, 700)]
+            point(200, 200),
+            point(400, 450),
+            point(600, 800),
+            point(600, 600)]
 
     var size = 1000
-    var system = $('#system').get(0)
+    var system = $('#system2').get(0)
     var context = system.getContext('2d')
     system.width = size
     system.height = size
@@ -306,17 +421,14 @@ function render_spline() {
         context.fill()
     }
 
-    var [A, Bx, By] = generate_matrix(data)
+    var [A, Bx, By] = generate_matrix2(data)
     var Ux = calculate_equation_system(A, Bx)
     var Uy = calculate_equation_system(A, By)
 
     var Ex = square_matrix_mul(A, Ux)
-    for(var i = 0; i < Ux.length; i++)
-    {
-        if(Ex[i] - Bx[i] > 0.001) {
-            console.log('Bx, E are not the same')
-        }
-    }
+    var Ey = square_matrix_mul(A, Uy)
+    console.assert(vector_norm2(Ex, Bx))
+    console.assert(vector_norm2(Ey, By))
     
     context.beginPath()
     context.moveTo(cx, cy)
@@ -328,36 +440,89 @@ function render_spline() {
         var ay = Uy[j+0]
         var by = Uy[j+1]
         var cy = Uy[j+2]
-        for(var t = 0; t <= 1; t += 0.05) {
+        for(var t = 0; t < 1; t += 0.05) {
             var x = (ax*t*t) + (bx*t) + cx
             var y = (ay*t*t) + (by*t) + cy
             context.lineTo(x, y)
         }
+        context.lineTo(data[(i+1)%data.length].x, data[(i+1)%data.length].y)
     }
     context.stroke()
 }
-function render_field() {
+function generate_matrix3(data) {
+    var size = 3 * data.length
+    var A = square_matrix_zero(size)
+    var Bx = vector_zero(size)
+    var By = vector_zero(size)
+
+    for(var i = 0; i < data.length; i++) {
+        var j = 3 * i
+
+        A[j+0][j+0] = 2.0
+        A[j+0][j+1] = 1.0
+        A[j+0][(j+4)%size] = -1.0
+        A[j+1][j+0] = 1.0
+        A[j+1][j+1] = 1.0
+        A[j+1][j+2] = 1.0
+        A[j+2][j+2] = 1.0
+
+        Bx[j+2] = data[i].x
+        Bx[(j-2+size)%size] = data[i].x
+
+        By[j+2] = data[i].y
+        By[(j-2+size)%size] = data[i].y
+    }
+
+    return [A, Bx, By]
+}
+function render_spline3() {
+    var data = [point(300, 300),
+            point(200, 200),
+            point(400, 450),
+            point(600, 800),
+            point(600, 600)]
+
     var size = 1000
-    var system = $('#system').get(0)
+    var system = $('#system3').get(0)
     var context = system.getContext('2d')
     system.width = size
     system.height = size
     context.clearRect(0, 0, size, size)
-    context.beginPath()
     context.fillStyle = 'blue'
-    context.moveTo(500, 500)
-    context.lineTo(1000, 1000)
-    context.stroke()
-    arrow(context, {x: 100, y: 100}, {x: 200, y: 250})
-    arrow(context, {x: 100, y: 100}, {x: 150, y: 50})
-    
-    pi = Math.atan(1)
-    pi_step = pi / 8
-    for(var i = 0; i < 2 * pi; i+=pi_step) {
-        var center = {x: 500, y: 500}
-        var ray = {x: 400*Math.cos(i), y: 400*Math.sin(i)}
-        arrow(context, center, ray)
+
+    for(var i = 0; i < data.length; i++) {
+        context.beginPath()
+        context.arc(data[i].x, data[i].y, 4, 0, 2 * Math.PI, true);
+        context.fill()
     }
+
+    var [A, Bx, By] = generate_matrix3(data)
+    var Ux = calculate_equation_system(A, Bx)
+    var Uy = calculate_equation_system(A, By)
+
+    var Ex = square_matrix_mul(A, Ux)
+    var Ey = square_matrix_mul(A, Uy)
+    console.assert(vector_norm2(Ex, Bx))
+    console.assert(vector_norm2(Ey, By))
+    
+    context.beginPath()
+    context.moveTo(cx, cy)
+    for(var i = 0; i < data.length; i++) {
+        var j = 3 * i
+        var ax = Ux[j+0]
+        var bx = Ux[j+1]
+        var cx = Ux[j+2]
+        var ay = Uy[j+0]
+        var by = Uy[j+1]
+        var cy = Uy[j+2]
+        for(var t = 0; t < 1; t += 0.05) {
+            var x = (ax*t*t) + (bx*t) + cx
+            var y = (ay*t*t) + (by*t) + cy
+            context.lineTo(x, y)
+        }
+        context.lineTo(data[(i+1)%data.length].x, data[(i+1)%data.length].y)
+    }
+    context.stroke()
 }
 function render_katex() {
     $('.math').each(function() {
@@ -382,7 +547,8 @@ function render_katex() {
     })
 }
 test_calculate_equation_system()
-render_spline()
+render_spline2()
+render_spline3()
 render_katex()
 </script>
 </body>
