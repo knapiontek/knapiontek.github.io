@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -37,7 +39,7 @@ body {
 <body>
 <div id='main_page'>
 
-<p>Consider 3 square polynomial equations</p>
+<h4>Consider 3 square polynomial equations</h4>
 <div class='math'>
 \begin{cases}
 x_0(t) = a_0t^2 + b_0t + c_0 \\
@@ -124,7 +126,7 @@ a_0 \\ b_0 \\ c_0 \\ a_1 \\ b_1 \\ c_1 \\ a_2 \\ b_2 \\ c_2
 <p>Finally the result</p>
 <div><canvas id='system2'></div>
 
-<p>Consider 3 cubic polynomial equations</p>
+<h4>Consider 3 cubic polynomial equations</h4>
 <div class='math'>
 \begin{cases}
 x_0(t) = a_0t^3 + b_0t^2 + c_0t + d_0 \\
@@ -186,42 +188,54 @@ x''_2(1) = x''_0(0)
 <p>We can expand it for 3 fixed points <b class='inmath'>x_0, x_1, x_2</b></p>
 <div class='math'>
 \begin{cases}
-2a_0 + b_0 = b_1 \\
-x_1 = a_0 + b_0 + c_0 \\
-x_0 = c_0 \\
-2a_1 + b_1 = b_2 \\
-x_2 = a_1 + b_1 + c_1 \\
-x_1 = c_1 \\
-2a_2 + b_2 = b_0 \\
-x_0 = a_2 + b_2 + c_2 \\
-x_2 = c_2
+6a_0 + 2b_0 = 2b_1 \\
+3a_0 + 2b_0 + c_0 = c_1 \\
+x_1 = a_0 + b_0 + c_0 + d_0 \\
+x_0 = d_0 \\
+6a_1 + 2b_1 = 2b_2 \\
+3a_1 + 2b_1 + c_1 = c_2 \\
+x_2 = a_1 + b_1 + c_1 + d_1 \\
+x_1 = d_1 \\
+6a_2 + 2b_2 = 2b_0 \\
+3a_2 + 2b_2 + c_2 = c_0 \\
+x_0 = a_2 + b_2 + c_2 + d_2 \\
+x_2 = d_2
 \end{cases}
 </div>
 
 <p>In the matrix notation</p>
 <div class='math'>
 \begin{bmatrix}
-2 & 1 & 0 & 0 & -1 & 0 & 0 & 0 & 0 \\
-1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 2 & 1 & 0 & 0 & -1 & 0 \\
-0 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
-0 & -1 & 0 & 0 & 0 & 0 & 2 & 1 & 0 \\
-0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 \\
-0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1
+6 & 2 & 0 & 0 & 0 & -2 & 0 & 0 & 0 & 0 & 0 & 0 \\
+3 & 2 & 1 & 0 & 0 & 0 & -1 & 0 & 0 & 0 & 0 & 0 \\
+1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 6 & 2 & 0 & 0 & 0 & -2 & 0 & 0 \\
+0 & 0 & 0 & 0 & 3 & 2 & 1 & 0 & 0 & 0 & -1 & 0 \\
+0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & -2 & 0 & 0 & 0 & 0 & 0 & 0 & 6 & 2 & 0 & 0 \\
+0 & 0 & -1 & 0 & 0 & 0 & 0 & 0 & 3 & 2 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1
 \end{bmatrix}
 \begin{bmatrix}
-a_0 \\ b_0 \\ c_0 \\ a_1 \\ b_1 \\ c_1 \\ a_2 \\ b_2 \\ c_2
+a_0 \\ b_0 \\ c_0 \\ d_0 \\ a_1 \\ b_1 \\ c_1 \\ d_1 \\ a_2 \\ b_2 \\ c_2 \\ d_2
 \end{bmatrix}
 =
 \begin{bmatrix}
-0 \\ x_1 \\ x_0 \\ 0 \\ x_2 \\ x_1 \\ 0 \\ x_0 \\ x_2
+0 \\ 0 \\ x_1 \\ x_0 \\ 0 \\ 0 \\ x_2 \\ x_1 \\ 0 \\ 0 \\ x_0 \\ x_2
 \end{bmatrix}
 </div>
 
 <p>Finally the result</p>
 <div><canvas id='system3'></div>
+
+<h4>Conclusion</h4>
+<li>The square polynomials require less coefficients and are generally faster to compute.</li>
+<li>The cubic polynomials are more flexible and require less fixed points to sketch required curve.</li>
+<li>System of equations can be avoided if one can fix derivatives of first polynomial. We cannot do it here because we draw closed loops.</li>
+<li>No real winner here.</li>
 
 <script>
 function arrow(context, begin, end) {
@@ -450,36 +464,41 @@ function render_spline2() {
     context.stroke()
 }
 function generate_matrix3(data) {
-    var size = 3 * data.length
+    var size = 4 * data.length
     var A = square_matrix_zero(size)
     var Bx = vector_zero(size)
     var By = vector_zero(size)
 
     for(var i = 0; i < data.length; i++) {
-        var j = 3 * i
+        var j = 4 * i
 
-        A[j+0][j+0] = 2.0
-        A[j+0][j+1] = 1.0
-        A[j+0][(j+4)%size] = -1.0
-        A[j+1][j+0] = 1.0
-        A[j+1][j+1] = 1.0
+        A[j+0][j+0] = 6.0
+        A[j+0][j+1] = 2.0
+        A[j+0][(j+5)%size] = -2.0
+        A[j+1][j+0] = 3.0
+        A[j+1][j+1] = 2.0
         A[j+1][j+2] = 1.0
+        A[j+1][(j+6)%size] = -1.0
+        A[j+2][j+0] = 1.0
+        A[j+2][j+1] = 1.0
         A[j+2][j+2] = 1.0
+        A[j+2][j+3] = 1.0
+        A[j+3][j+3] = 1.0
 
-        Bx[j+2] = data[i].x
+        Bx[j+3] = data[i].x
         Bx[(j-2+size)%size] = data[i].x
 
-        By[j+2] = data[i].y
+        By[j+3] = data[i].y
         By[(j-2+size)%size] = data[i].y
     }
 
     return [A, Bx, By]
 }
 function render_spline3() {
-    var data = [point(300, 300),
+    var data = [point(300, 600),
             point(200, 200),
-            point(400, 450),
-            point(600, 800),
+            point(400, 250),
+            point(800, 200),
             point(600, 600)]
 
     var size = 1000
@@ -508,16 +527,18 @@ function render_spline3() {
     context.beginPath()
     context.moveTo(cx, cy)
     for(var i = 0; i < data.length; i++) {
-        var j = 3 * i
+        var j = 4 * i
         var ax = Ux[j+0]
         var bx = Ux[j+1]
         var cx = Ux[j+2]
+        var dx = Ux[j+3]
         var ay = Uy[j+0]
         var by = Uy[j+1]
         var cy = Uy[j+2]
+        var dy = Uy[j+3]
         for(var t = 0; t < 1; t += 0.05) {
-            var x = (ax*t*t) + (bx*t) + cx
-            var y = (ay*t*t) + (by*t) + cy
+            var x = (ax*t*t*t) + (bx*t*t) + (cx*t) + dx
+            var y = (ay*t*t*t) + (by*t*t) + (cy*t) + dy
             context.lineTo(x, y)
         }
         context.lineTo(data[(i+1)%data.length].x, data[(i+1)%data.length].y)
