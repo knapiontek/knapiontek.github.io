@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -31,35 +32,19 @@ body {
 </head>
 <body>
 <div id='main_page'>
-<!--http://home.agh.edu.pl/~leszekad/dydaktyka/imir_fizyka/przyklady_9.pdf-->
-<p>Let take two inercial system frames</p>
-<div class='math'>\begin{matrix}S_1 & S_2\end{matrix}</div>
-<p>where relative velocities are described as follows</p>
-<div class='math'>\begin{matrix}v_1 = -v_2 & v_2 = -v_1\end{matrix}</div>
-<p>Classic theory</p>
-<div class='math'>\begin{matrix}x_1 = x_2 - vt & x_2 = x_1 + vt\end{matrix}</div>
-<p>does not follow observation that speed of light is constant in all directions and in all systems</p>
-<div class='math'>\begin{matrix}x_1 = ct_1 & x_2 = ct_2\end{matrix}</div>
-<p>Let's find new relation beetwen coordinates of these systems</p>
-<div class='math'>\begin{matrix}x_1 = ax_2 + bt_2 & x_2 = ax_1 + bt_1\end{matrix}</div>
-<p>where <i>a</i> and <i>b</i> are new coefficients we need to find</p>
-<p>When <i class='inmath'>S_1</i> and <i class='inmath'>S_2</i> are at the same location at the begging</p>
-<div class='math'>\begin{matrix}0 = ax_2 + bt_2 & 0 = ax_1 + bt_1\end{matrix}</div>
-<p>then</p>
-<div class='math'>\begin{matrix}b = a\frac{x_2}{t_2} = -av & b = a\frac{x_1}{t_1} = av\end{matrix}</div>
-<div class='math'>\begin{matrix}x_1 = ax_2 - avt_2 & x_2 = ax_1 + avt_1\end{matrix}</div>
-<div class='math'>\begin{matrix}x_1 = a(x_2 - vt_2) & x_2 = a(x_1 + vt_1)\end{matrix}</div>
-<p>We postulate that the speed of the light is constant and the same in any system</p>
-<div class='math'>\begin{matrix}ct_1 = a(ct_2 - vt_2) & ct_2 = a(ct_1 + vt_1)\end{matrix}</div>
-<div class='math'>\begin{matrix}ct_1 = at_2(c - v) & ct_2 = at_1(c + v)\end{matrix}</div>
-<p>Let's multiply it by sides</p>
-<div class='math'>c^2t_1t_2 = a^2t_1t_2(c^2 - v^2)</div>
-<div class='math'>c^2 = a^2(c^2 - v^2)</div>
-<div class='math'>a^2 = \frac{c^2}{c^2 - v^2} = \frac{1}{1 - \frac{v^2}{c^2}}</div>
-<div class='math'>a = \frac{1}{\sqrt{1 - \frac{v^2}{c^2}}}</div>
-<p>Finally Lorentz Transformation</p>
-<div class='math'>\begin{matrix}x_1 = \frac{x_2 - vt_2}{\sqrt{1 - \frac{v^2}{c^2}}} & x_2 = \frac{x_1 + vt_1}{\sqrt{1 - \frac{v^2}{c^2}}}\end{matrix}</div>
+
+<h4>Euler equation</h4>
+<div class='math'>
+e^{ix} = \cos x + i\sin x
 </div>
+
+<h4>Euler identity</h4>
+<div class='math'>
+e^{i\pi} - 1 = 0
+</div>
+
+</div>
+
 <script>
 function render_katex() {
     $('.math').each(function() {
@@ -85,5 +70,6 @@ function render_katex() {
 }
 render_katex()
 </script>
+
 </body>
 </html>
