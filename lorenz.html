@@ -5,6 +5,7 @@
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js' integrity='sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s' crossorigin='anonymous'></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+<script src='common.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 <style>
 #main_page {
@@ -42,9 +43,96 @@ body {
 \end{cases}
 </div>
 
+<h4>Newton approximation with Jacobian matrix</h4>
+<div class='math'>
+\begin{bmatrix}
+-\sigma & \sigma & 0 \\
+\rho - z_n & -1 & -x_n \\
+y_n & x_n & -\beta
+\end{bmatrix}
+\begin{bmatrix}
+\Delta x_n \\
+\Delta y_n \\
+\Delta z_n
+\end{bmatrix}
+= -
+\begin{bmatrix}
+\sigma(y_n-x_n) \\
+x_n(\rho-z_n) - y_n \\
+x_ny_n - \beta z_n
+\end{bmatrix}
+</div>
+
+<h4>Simulation</h4>
+<div><canvas id='system'></div>
+
 </div>
 
 <script>
+function newton_root() {
+	var rho = 28.0
+	var sigma = 10.0
+	var beta = 8.0 / 3.0
+	var U = [10.0, 10.0, -5.0]
+
+	for(var i = 0; i < 100; i++)
+	{
+		var [x, y, z] = U
+		var J = [[-sigma, sigma, 0],
+		         [rho-z, -1, -x],
+				 [y, x, -beta]]
+		var B = [rho*(y-x), x*(rho-z)-y, x*y-beta*z]
+		if(vector_norm2(B, vector_zero(3)) < 0.001) {
+			console.log('number of iterations: ', i)
+			console.log('result: ', JSON.stringify(U))
+			return
+		}
+		
+		B = vector_mul_no(B, -1)
+
+		var U1 = calculate_equation_system(J, B)
+		var E = square_matrix_mul(J, U1)
+		console.assert(vector_norm2(E, B) < 0.001)
+
+		U = vector_add(U, U1)
+	}
+}
+function run_calculation() {
+    var size = 1000
+    var system = $('#system').get(0)
+    var context = system.getContext('2d')
+    system.width = size
+    system.height = size
+    context.clearRect(0, 0, size, size)
+	
+    var size = 2
+    var A = [[1, 2], [3, 4]]
+    var B = [5, 11]
+    var X = calculate_equation_system(A, B)
+    var E = square_matrix_mul(A, X)
+    console.assert(vector_norm2(E, B) < 0.001)
+	
+	var dt = 0.005
+	var rho = 28.0
+	var sigma = 10.0
+	var beta = 8.0 / 3.0
+	var U = [0.0001, 0.0001, 0.0001]
+
+	context.beginPath()
+	var [x, y, z] = vector_add_no(U, 500)
+	context.moveTo(y+500, z)
+	for(var i = 0; i < 10000; i++)
+	{
+		var [x, y, z] = U
+		var B = [rho*(y-x), x*(rho-z)-y, x*y-beta*z]
+		du = vector_mul_no(B, dt)
+
+		U = vector_add(U, du)
+		var [x, y, z] = vector_mul_no(U, 20)
+		context.lineTo(y+500, z)
+	}
+	context.stroke()
+}
 function render_katex() {
     $('.math').each(function() {
         var texTxt = $(this).text()
@@ -67,6 +155,8 @@ function render_katex() {
         }
     })
 }
+newton_root()
+run_calculation()
 render_katex()
 </script>
 
