@@ -5,6 +5,7 @@
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js' integrity='sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s' crossorigin='anonymous'></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+<script src='common.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 <style>
 #main_page {
@@ -43,9 +44,128 @@ e^{ix} = \cos x + i\sin x
 e^{i\pi} - 1 = 0
 </div>
 
+<h4>Homogeneous Ordinary Differential Equations</h4>
+<p>General form</p>
+<div class='math'>
+ay'' + by' + cy = 0
+</div>
+<p>General solution is expected to be in a form of exponential function</p>
+<div class='math'>
+y = e^{rt}
+</div>
+<p>Let's plug it in</p>
+<div class='math'>
+a(e^{rt})'' + b(e^{rt})' + c(e^{rt}) = 0
+</div>
+<div class='math'>
+ar^2e^{rt} + bre^{rt} + ce^{rt} = 0
+</div>
+<div class='math'>
+(ar^2 + br + c)e^{rt} = 0
+</div>
+<div class='math'>
+ar^2 + br + c = 0
+</div>
+<p>When roots are real we obtain a solution in the form</p>
+<div class='math'>
+y = c_1e^{r_1t} + c_2e^{r_2t}
+</div>
+<p>We need to fix boundaries to find coefficients <b class='inmath'>c_1, c_2</b></p>
+<div class='math'>
+\begin{cases}
+y(t) = c_1e^{r_1t} + c_2e^{r_2t} \\
+y'(t) = c_1r_1e^{r_1t} + c_2r_2e^{r_2t}
+\end{cases}
+</div>
+<p>When roots are complex we obtain a solution in the form</p>
+<div class='math'>
+y = c_1e^{(\alpha+i\beta)t} + c_2e^{(\alpha-i\beta)t}
+</div>
+<p>Using Euler equation</p>
+<div class='math'>
+\begin{cases}
+e^{i\beta t} = \cos\beta t + i\sin\beta t \\
+e^{-i\beta t} = \cos\beta t - i\sin\beta t
+\end{cases}
+</div>
+<p>We get</p>
+<div class='math'>
+\begin{cases}
+y_1 = c_1e^{(\alpha+i\beta)t} = c_1e^{\alpha t}e^{i\beta t} = c_1e^{\alpha t}(\cos\beta t + i\sin\beta t) \\
+y_2 = c_2e^{(\alpha-i\beta)t} = c_2e^{\alpha t}e^{-i\beta t} = c_2e^{\alpha t}(\cos\beta t -i\sin\beta t)
+\end{cases}
+</div>
+<p>Let's manipulate it as follows</p>
+<div class='math'>
+\begin{cases}
+y_1^* = y_1 + y_2 = 2(c_1+c_2)e^{\alpha t}\cos\beta t \\
+y_2^* = y_1 - y_2 = 2(c_1-c_2)ie^{\alpha t}\sin\beta t
+\end{cases}
+</div>
+<p>After constant consolidation finally we obtain</p>
+<div class='math'>
+y = y_1^* + y_2^* = c_1^*e^{\alpha t}\cos\beta t + c_2^*e^{\alpha t}\sin\beta t
+</div>
+<p>Notice that the above solution is real only if <b class='inmath'>c_2^*=2(c_1-c_2)i</b> is real</p>
+
+<p>Numeric example</p>
+<div class='math'>
+y'' + 2y' + 2y = 0
+</div>
+<div class='math'>
+r^2 + 2r + 2 = 0
+</div>
+<div class='math'>
+\begin{cases}
+r_1 = -1-i \\
+r_2 = -1+i
+\end{cases}
+</div>
+<div class='math'>
+\begin{cases}
+y(0) = c_1e^{-t}\cos t - c_2e^{-t}\sin t = 1 \\
+y'(0) = c_1(-e^{-t}\cos t - e^{-t}\sin t) - c_2(-e^{-t}\sin t + e^{-t}\cos t) = 0
+\end{cases}
+</div>
+<div class='math'>
+\begin{cases}
+y(0) = c_1 = 1 \\
+y'(0) = c_1 - c_2 = 0
+\end{cases}
+</div>
+
+<h4>Simulation</h4>
+<div><canvas id='system'></div>
+
 </div>
 
 <script>
+function run_calculation() {
+    var size = 1000
+    var system = $('#system').get(0)
+    var context = system.getContext('2d')
+    system.width = size
+    system.height = size / 2
+    context.clearRect(0, 0, size, size)
+
+	context.beginPath()
+	var margin = 10
+	arrow(context, point(margin, size/2-margin), point(margin, margin))
+	arrow(context, point(margin, size/4-margin), point(size-margin, size/4-margin))
+
+	var y_scale = 200
+	var alpha_scale = 400
+	var beta_scale = 100
+	var t_scale = 200
+
+	context.moveTo(margin, size/4-y_scale-margin)
+	for(i=0; i<t_scale; i++) {
+		t = i * (size-2*margin) / t_scale
+		y = Math.pow(Math.E, -t/alpha_scale) * Math.cos(t/beta_scale)
+		context.lineTo(t+margin, size/4-y_scale*y-margin)
+	}
+	context.stroke()
+}
 function render_katex() {
     $('.math').each(function() {
         var texTxt = $(this).text()
@@ -68,6 +188,7 @@ function render_katex() {
         }
     })
 }
+run_calculation()
 render_katex()
 </script>
 
