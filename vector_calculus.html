@@ -4,6 +4,7 @@
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js' integrity='sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s' crossorigin='anonymous'></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+<script src='common.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 <style>
 #main_page {
@@ -74,43 +75,6 @@ y^2 \\ x \\ 0
 <div><canvas id='_rot2_canvas'></div>
 
 <script>
-function arrow(context, begin, end) {
-    line = {x: end.x - begin.x, y: end.y - begin.y}
-    len = Math.sqrt((line.x * line.x) + (line.y * line.y))
-    unit = {x: line.x / len, y: line.y / len}
-
-    v = 20
-    h = 6
-    left = {
-        x: end.x - (v * unit.x) + (h * unit.y),
-        y: end.y - (v * unit.y) - (h * unit.x)
-    }
-    right = {
-        x: end.x - (v * unit.x) - (h * unit.y),
-        y: end.y - (v * unit.y) + (h * unit.x)
-    }
-
-    context.moveTo(begin.x, begin.y)
-    context.lineTo(end.x, end.y)
-    context.stroke()
-
-    context.moveTo(end.x, end.y)
-    context.lineTo(left.x, left.y)
-    context.lineTo(right.x, right.y)
-    context.fill()
-}
-function point(x, y) {
-    return {x: x, y: y}
-}
-function point_add(p1, p2) {
-    return point(p1.x + p2.x, p1.y + p2.y)
-}
-function point_mul_no(p, n) {
-    return point(p.x * n, p.y * n)
-}
-function point_div_no(p, n) {
-    return point(p.x / n, p.y / n)
-}
 function field1(x, y) {
     return point(2*y, -2*x)
 }
@@ -189,28 +153,6 @@ function render_field2() {
 
     var rot_canvas = $('#_rot2_canvas').get(0)
     render_rot(rot_canvas, field2)
-}
-function render_katex() {
-    $('.math').each(function() {
-        var texTxt = $(this).text()
-        elem = $(this).get(0)
-        try {
-            katex.render(texTxt, elem, { displayMode: true })
-        }
-        catch(err) {
-            $(this).html('<span class="error">' + err)
-        }
-    })
-    $('.inmath').each(function() {
-        var texTxt = $(this).text()
-        elem = $(this).get(0)
-        try {
-            katex.render(texTxt, elem, { displayMode: false })
-        }
-        catch(err) {
-            $(this).html('<span class="error">' + err)
-        }
-    })
 }
 render_field1()
 render_field2()

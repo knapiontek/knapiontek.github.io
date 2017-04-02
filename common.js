@@ -26,6 +26,15 @@ function arrow(context, begin, end) {
 function point(x, y) {
         return {x: x, y: y}
 }
+function point_add(p1, p2) {
+    return point(p1.x + p2.x, p1.y + p2.y)
+}
+function point_mul_no(p, n) {
+    return point(p.x * n, p.y * n)
+}
+function point_div_no(p, n) {
+    return point(p.x / n, p.y / n)
+}
 function vector_zero(size)
 {
     vector = []
@@ -176,4 +185,26 @@ function test_calculate_equation_system() {
 
     var E = square_matrix_mul(A, X)
     console.assert(vector_norm2(E, B))
+}
+function render_katex() {
+    $('.math').each(function() {
+        var texTxt = $(this).text()
+        elem = $(this).get(0)
+        try {
+            katex.render(texTxt, elem, { displayMode: true })
+        }
+        catch(err) {
+            $(this).html('<span class="error">' + err)
+        }
+    })
+    $('.inmath').each(function() {
+        var texTxt = $(this).text()
+        elem = $(this).get(0)
+        try {
+            katex.render(texTxt, elem, { displayMode: false })
+        }
+        catch(err) {
+            $(this).html('<span class="error">' + err)
+        }
+    })
 }

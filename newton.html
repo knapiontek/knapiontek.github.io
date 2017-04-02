@@ -4,6 +4,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css" integrity="sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js" integrity="sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s" crossorigin="anonymous"></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+<script src='common.js'></script>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <style>
 #main_page {
@@ -146,18 +147,6 @@ function calculate_planet_positions() {
         }
     }
     render_planets()
-}
-function render_katex() {
-    $(".math").each(function() {
-        var texTxt = $(this).text()
-        elem = $(this).get(0)
-        try {
-            katex.render(texTxt, elem, { displayMode: true })
-        }
-        catch(err) {
-            $(this).html("<span class='err'>" + err)
-        }
-    })
 }
 setInterval(calculate_planet_positions, 50)
 render_katex()

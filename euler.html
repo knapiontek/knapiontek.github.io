@@ -166,28 +166,6 @@ function run_calculation() {
 	}
 	context.stroke()
 }
-function render_katex() {
-    $('.math').each(function() {
-        var texTxt = $(this).text()
-        elem = $(this).get(0)
-        try {
-            katex.render(texTxt, elem, { displayMode: true })
-        }
-        catch(err) {
-            $(this).html('<span class="error">' + err)
-        }
-    })
-    $('.inmath').each(function() {
-        var texTxt = $(this).text()
-        elem = $(this).get(0)
-        try {
-            katex.render(texTxt, elem, { displayMode: false })
-        }
-        catch(err) {
-            $(this).html('<span class="error">' + err)
-        }
-    })
-}
 run_calculation()
 render_katex()
 </script>
