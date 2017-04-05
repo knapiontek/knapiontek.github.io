@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -108,34 +109,65 @@ y = y_1^* + y_2^* = c_1^*e^{\alpha t}\cos\beta t + c_2^*e^{\alpha t}\sin\beta t
 </div>
 <p>Notice that the above solution is real only if <b class='inmath'>c_2^*=2(c_1-c_2)i</b> is real</p>
 
-<p>Numeric example</p>
+<h4>Numeric example</h4>
 <div class='math'>
-y'' + 2y' + 2y = 0
+y'' + 2y' + 65y = 0
 </div>
 <div class='math'>
-r^2 + 2r + 2 = 0
+r^2 + 2r + 65 = 0
 </div>
 <div class='math'>
 \begin{cases}
-r_1 = -1-i \\
-r_2 = -1+i
+r_1 = -1-i8 \\
+r_2 = -1+i8
 \end{cases}
 </div>
 <div class='math'>
 \begin{cases}
-y(0) = c_1e^{-t}\cos t - c_2e^{-t}\sin t = 1 \\
-y'(0) = c_1(-e^{-t}\cos t - e^{-t}\sin t) - c_2(-e^{-t}\sin t + e^{-t}\cos t) = 0
+y = c_1e^{-t}\cos 8t + c_2e^{-t}\sin 8t \\
+y' = -c_1e^{-t}\cos 8t - 8c_1e^{-t}\sin 8t - c_2e^{-t}\sin 8t + 8c_2e^{-t}\cos 8t
 \end{cases}
 </div>
+<p>By fixing <b class='inmath'>c_2=0,\;y(0)=0.7,\;y'(0)=-0.7</b> we get the solution</p>
+<div class='math'>
+y = 0.7e^{-t}\cos 8t
+</div>
+
+<p>Lets compare analytical solution with numerical method</p>
+
+<p>Order reduction</p>
 <div class='math'>
 \begin{cases}
-y(0) = c_1 = 1 \\
-y'(0) = c_1 - c_2 = 0
+y' = x \\
+x' + 2x + 65y = 0
 \end{cases}
 </div>
 
-<h4>Simulation</h4>
+<p>Approximation by Euler method <b class='inmath'>\mathcal{O}(\Delta t)</b></p>
+<div class='math'>
+\begin{cases}
+\frac{\Delta y}{\Delta t} = x \\
+\\
+\frac{\Delta x}{\Delta t} = -2x - 65y
+\end{cases}
+</div>
+
+<p>Recursive algorithm</p>
+<div class='math'>
+\begin{cases}
+y_{n+1} = y_n + x \Delta t \\
+x_{n+1} = x_n - 2x_n \Delta t - 65y_{n+1} \Delta t
+\end{cases}
+</div>
+
+<p>Simulation</p>
 <div><canvas id='system'></div>
+
+<p>Remark</p>
+<ul>
+<li>The solution is very <i>smooth</i> therefore the first order approximation produces satisfying results. I had to set <b class='inmath'>\Delta t=0.03</b> to make the difference visible.</li>
+</ul>
+
 
 </div>
 
@@ -153,16 +185,29 @@ function run_calculation() {
 	arrow(context, point(margin, size/2-margin), point(margin, margin))
 	arrow(context, point(margin, size/4-margin), point(size-margin, size/4-margin))
 
-	var y_scale = 200
-	var alpha_scale = 400
-	var beta_scale = 100
-	var t_scale = 200
+	var c = 0.7
+	var alpha = -1.0
+	var beta = 8.0
+	var scale = 300
+	var dt = (size-2*margin) / scale
 
-	context.moveTo(margin, size/4-y_scale-margin)
-	for(i=0; i<t_scale; i++) {
-		t = i * (size-2*margin) / t_scale
-		y = Math.pow(Math.E, -t/alpha_scale) * Math.cos(t/beta_scale)
-		context.lineTo(t+margin, size/4-y_scale*y-margin)
+	context.moveTo(margin, size/4-scale*c-margin)
+	for(t = 0; t < size-2*margin; t+=dt) {
+		var y = c * Math.pow(Math.E, alpha*t/scale) * Math.cos(beta*t/scale)
+		context.lineTo(t+margin, size/4-scale*y-margin)
+	}
+	context.stroke()
+
+	var x = -0.7 // 1-st derivative at 0
+	var y = 0.7 // function value at 0
+	var dt = 0.03 // integration step
+
+	context.setLineDash([5, 3])
+	context.moveTo(margin, size/4-scale*c-margin)
+	for(t = 0; t < size-2*margin; t+=scale*dt) {
+		y = y + x*dt
+		x = x - 2*x*dt - 65*y*dt
+		context.lineTo(t+margin, size/4-scale*y-margin)
 	}
 	context.stroke()
 }
