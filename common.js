@@ -3,8 +3,8 @@ function arrow(context, begin, end) {
     len = Math.sqrt((line.x * line.x) + (line.y * line.y))
     unit = {x: line.x / len, y: line.y / len}
 
-    v = 25
-    h = 8
+    v = 15
+    h = 4
     left = {
         x: end.x - (v * unit.x) + (h * unit.y),
         y: end.y - (v * unit.y) - (h * unit.x)

@@ -37,7 +37,7 @@ body {
 
 <h4>Euler equation</h4>
 <div class='math'>
-e^{ix} = \cos x + i\sin x
+e^{i\omega} = \cos\omega + i\sin\omega
 </div>
 
 <h4>Euler identity</h4>
@@ -80,34 +80,41 @@ y'(t) = c_1r_1e^{r_1t} + c_2r_2e^{r_2t}
 </div>
 <p>When roots are complex we obtain a solution in the form</p>
 <div class='math'>
-y = c_1e^{(\alpha+i\beta)t} + c_2e^{(\alpha-i\beta)t}
+y = c_1e^{(\gamma+i\omega)t} + c_2e^{(\gamma-i\omega)t}
 </div>
 <p>Using Euler equation</p>
 <div class='math'>
 \begin{cases}
-e^{i\beta t} = \cos\beta t + i\sin\beta t \\
-e^{-i\beta t} = \cos\beta t - i\sin\beta t
+e^{i\omega t} = \cos\omega t + i\sin\omega t \\
+e^{-i\omega t} = \cos\omega t - i\sin\omega t
 \end{cases}
 </div>
 <p>We get</p>
 <div class='math'>
 \begin{cases}
-y_1 = c_1e^{(\alpha+i\beta)t} = c_1e^{\alpha t}e^{i\beta t} = c_1e^{\alpha t}(\cos\beta t + i\sin\beta t) \\
-y_2 = c_2e^{(\alpha-i\beta)t} = c_2e^{\alpha t}e^{-i\beta t} = c_2e^{\alpha t}(\cos\beta t -i\sin\beta t)
+y_1 = c_1e^{(\gamma+i\omega)t} = c_1e^{\gamma t}e^{i\omega t} = c_1e^{\gamma t}(\cos\omega t + i\sin\omega t) \\
+y_2 = c_2e^{(\gamma-i\omega)t} = c_2e^{\gamma t}e^{-i\omega t} = c_2e^{\gamma t}(\cos\omega t -i\sin\omega t)
 \end{cases}
 </div>
 <p>Let's manipulate it as follows</p>
 <div class='math'>
 \begin{cases}
-y_1^* = y_1 + y_2 = 2(c_1+c_2)e^{\alpha t}\cos\beta t \\
-y_2^* = y_1 - y_2 = 2(c_1-c_2)ie^{\alpha t}\sin\beta t
+y_1^* = y_1 + y_2 = 2(c_1+c_2)e^{\gamma t}\cos\omega t \\
+y_2^* = y_1 - y_2 = 2(c_1-c_2)ie^{\gamma t}\sin\omega t
 \end{cases}
 </div>
 <p>After constant consolidation finally we obtain</p>
 <div class='math'>
-y = y_1^* + y_2^* = c_1^*e^{\alpha t}\cos\beta t + c_2^*e^{\alpha t}\sin\beta t
+y = y_1^* + y_2^* = c_1^*e^{\gamma t}\cos\omega t + c_2^*e^{\gamma t}\sin\omega t
 </div>
-<p>Notice that the above solution is real only if <b class='inmath'>c_2^*=2(c_1-c_2)i</b> is real</p>
+<p>Yet another form of coefficients</p>
+<div class='math'>
+y = e^{\gamma t}R\cos\phi\cos\omega t + e^{\gamma t}R\sin\phi\sin\omega t
+</div>
+<p>Yields to</p>
+<div class='math'>
+y = e^{\gamma t}R\cos(\omega t - \phi)
+</div>
 
 <h4>Numeric example</h4>
 <div class='math'>
@@ -155,7 +162,7 @@ x' + 2x + 65y = 0
 <p>Recursive algorithm</p>
 <div class='math'>
 \begin{cases}
-y_{n+1} = y_n + x \Delta t \\
+y_{n+1} = y_n + x_n \Delta t \\
 x_{n+1} = x_n - 2x_n \Delta t - 65y_{n+1} \Delta t
 \end{cases}
 </div>

@@ -29,7 +29,7 @@ canvas {
     margin-left: auto;
     margin-right: auto;
     display: block;
-    width: 50%;
+    width: 70%;
     margin: 0 auto;
     border: thin solid;
 }
@@ -43,7 +43,9 @@ canvas {
 \nabla \times A =
 \begin{bmatrix}
 \frac{\partial F_z}{\partial y} - \frac{\partial F_y}{\partial z} \\
+\\
 \frac{\partial F_x}{\partial z} - \frac{\partial F_z}{\partial x} \\
+\\
 \frac{\partial F_y}{\partial x} - \frac{\partial F_x}{\partial y}
 \end{bmatrix}
 </div>
@@ -88,7 +90,7 @@ function rot(x, y, field_func) {
     return (v1.y - v2.y)/(2*d) - (v1.x - v2.x)/(2*d)
 }
 function render_field(field_canvas, field_func) {
-    var size = 1000
+    var size = 700
 
     var field_context = field_canvas.getContext('2d')
     field_canvas.width = size
@@ -100,18 +102,18 @@ function render_field(field_canvas, field_func) {
             var center = point(size, size)
             center = point_div_no(center, 2)
             var start = point(x, y)
-            start = point_mul_no(start, 100)
+            start = point_mul_no(start, 70)
             start = point_add(center, start)
 
             var field = field_func(x, y)
-            field = point_mul_no(field, 10)
+            field = point_mul_no(field, 7)
             var end = point_add(start, field)
             arrow(field_context, start, end)
         }
     }
 }
 function render_rot(rot_canvas, field_func) {
-    var size = 1000
+    var size = 700
 
     var rot_context = rot_canvas.getContext('2d')
     rot_canvas.width = size
@@ -124,7 +126,7 @@ function render_rot(rot_canvas, field_func) {
             var center = point(size, size)
             center = point_div_no(center, 2)
             var start = point(x, y)
-            start = point_mul_no(start, 100)
+            start = point_mul_no(start, 70)
             start = point_add(center, start)
 
             var _rot = rot(x, y, field_func)

@@ -34,13 +34,26 @@ body {
 <body>
 <div id='main_page'>
 
-<h4>Maxwell Equations</h4>
+
+<h4>Integral Maxwell Equations</h4>
 <div class='math'>
 \begin{aligned}
-\nabla\cdot B                 \quad & = \quad 0                & \quad \text{(Gauss)} \\
+\oint_{\partial V} B                 \quad & = \quad 0                & \quad \text{(Gauss)} \\
 \nabla\cdot E                 \quad & = \quad 0                & \quad \text{(Colomb)} \\
 \frac{\partial E}{\partial t} \quad & = \quad \nabla\times B   & \quad \text{(Faraday)} \\
 \frac{\partial B}{\partial t} \quad & = \quad -\nabla\times E  & \quad \text{(Ampere)}
+\end{aligned}
+</div>
+
+<h4>Differencial Maxwell Equations</h4>
+<div class='math'>
+\begin{aligned}
+\nabla\cdot B \quad & = \quad 0 & \quad \text{(Gauss)} \\
+\nabla\cdot E \quad & = \quad \frac{\rho}{\epsilon} & \quad \text{(Colomb)} \\
+\\
+\nabla\times B \quad & = \quad \frac{\partial E}{\partial t} & \quad \text{(Faraday)} \\
+\\
+\nabla\times E \quad & = \quad -\frac{\partial B}{\partial t} & \quad \text{(Ampere)}
 \end{aligned}
 </div>
 
