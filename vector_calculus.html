@@ -81,7 +81,8 @@ function field1(x, y) {
 function field2(x, y) {
     return point(y*y/2, x)
 }
-function rot(x, y, field_func, d) {
+function rot(x, y, field_func) {
+    var d = 0.1
     var v1 = field_func(x-d, y-d)
     var v2 = field_func(x+d, y+d)
     return (v1.y - v2.y)/(2*d) - (v1.x - v2.x)/(2*d)
@@ -117,7 +118,7 @@ function render_rot(rot_canvas, field_func) {
     rot_canvas.height = size
     rot_context.clearRect(0, 0, size, size)
 
-    var d = 0.7
+    var d = 1.0
     for(var x = -5; x <= 5; x+=d) {
         for(var y = -5; y <= 5; y+=d) {
             var center = point(size, size)
@@ -126,7 +127,7 @@ function render_rot(rot_canvas, field_func) {
             start = point_mul_no(start, 100)
             start = point_add(center, start)
 
-            var _rot = rot(x, y, field_func, d)
+            var _rot = rot(x, y, field_func)
             if(_rot < 0) {
                 _rot = -_rot
                 rot_context.fillStyle = 'green'
