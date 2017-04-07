@@ -33,109 +33,45 @@ body {
 <body>
 <div id='main_page'>
 
-<h4>Euler equation</h4>
+<h4>Runge-Kutta Second Order</h4>
 <div class='math'>
 e^{i\omega} = \cos\omega + i\sin\omega
 </div>
 
-<h4>Euler identity</h4>
-<div class='math'>
-e^{i\pi} - 1 = 0
-</div>
-
-<h4>Homogeneous Ordinary Differential Equations</h4>
-<p>General form</p>
-<div class='math'>
-ay'' + by' + cy = 0
-</div>
-<p>General solution is expected to be in a form of exponential function</p>
-<div class='math'>
-y = e^{rt}
-</div>
-<p>Let's plug it in</p>
-<div class='math'>
-a(e^{rt})'' + b(e^{rt})' + c(e^{rt}) = 0
-</div>
-<div class='math'>
-ar^2e^{rt} + bre^{rt} + ce^{rt} = 0
-</div>
-<div class='math'>
-(ar^2 + br + c)e^{rt} = 0
-</div>
-<div class='math'>
-ar^2 + br + c = 0
-</div>
-<p>When roots are real we obtain a solution in the form</p>
-<div class='math'>
-y = c_1e^{r_1t} + c_2e^{r_2t}
-</div>
-<p>We need to fix boundaries to find coefficients <b class='inmath'>c_1, c_2</b></p>
-<div class='math'>
-\begin{cases}
-y(t) = c_1e^{r_1t} + c_2e^{r_2t} \\
-y'(t) = c_1r_1e^{r_1t} + c_2r_2e^{r_2t}
-\end{cases}
-</div>
-<p>When roots are complex we obtain a solution in the form</p>
-<div class='math'>
-y = c_1e^{(\gamma+i\omega)t} + c_2e^{(\gamma-i\omega)t}
-</div>
-<p>Using Euler equation</p>
-<div class='math'>
-\begin{cases}
-e^{i\omega t} = \cos\omega t + i\sin\omega t \\
-e^{-i\omega t} = \cos\omega t - i\sin\omega t
-\end{cases}
-</div>
-<p>We get</p>
-<div class='math'>
-\begin{cases}
-y_1 = c_1e^{(\gamma+i\omega)t} = c_1e^{\gamma t}e^{i\omega t} = c_1e^{\gamma t}(\cos\omega t + i\sin\omega t) \\
-y_2 = c_2e^{(\gamma-i\omega)t} = c_2e^{\gamma t}e^{-i\omega t} = c_2e^{\gamma t}(\cos\omega t -i\sin\omega t)
-\end{cases}
-</div>
-<p>Let's manipulate it as follows</p>
-<div class='math'>
-\begin{cases}
-y_1^* = y_1 + y_2 = 2(c_1+c_2)e^{\gamma t}\cos\omega t \\
-y_2^* = y_1 - y_2 = 2(c_1-c_2)ie^{\gamma t}\sin\omega t
-\end{cases}
-</div>
-<p>After constant consolidation finally we obtain</p>
-<div class='math'>
-y = y_1^* + y_2^* = c_1^*e^{\gamma t}\cos\omega t + c_2^*e^{\gamma t}\sin\omega t
-</div>
-<p>Yet another form of coefficients</p>
-<div class='math'>
-y = e^{\gamma t}R\cos\phi\cos\omega t + e^{\gamma t}R\sin\phi\sin\omega t
-</div>
-<p>Yields to</p>
-<div class='math'>
-y = e^{\gamma t}R\cos(\omega t - \phi)
-</div>
-
 <h4>Numeric example</h4>
 <div class='math'>
-y'' + 2y' + 65y = 0
+y'' + 2y' + 65y = \cos 2t
 </div>
+<h4>Expected Solution</h4>
 <div class='math'>
-r^2 + 2r + 65 = 0
+a \cos 2t + b\sin 2t
+</div>
+<h4>Let's search for coefficients by substituting expected solution to the example</h4>
+<div class='math'>
+\begin{matrix}
+(a\cos 2t + b\sin 2t)'' + 2(a\cos 2t + b\sin 2t)' + 65(a\cos 2t + b\sin 2t) = \cos 2t \\
+(a\cos 2t + b\sin 2t)'' + (2a\cos 2t + 2b\sin 2t)' + 65a\cos 2t + 65b\sin 2t = \cos 2t \\
+(-2a\sin 2t + 2b\cos 2t)' - 4a\sin 2t + 4b\cos 2t + 65a\cos 2t + 65b\sin 2t = \cos 2t \\
+-4a\cos 2t - 4b\sin 2t - 4a\sin 2t + 4b\cos 2t + 65a\cos 2t + 65b\sin 2t = \cos 2t
+\end{matrix}
 </div>
 <div class='math'>
 \begin{cases}
-r_1 = -1-i8 \\
-r_2 = -1+i8
+ - 4b - 4a + 65b = 0 \\
+-4a + 4b + 65a - 1 = 0
 \end{cases}
 </div>
 <div class='math'>
 \begin{cases}
-y = c_1e^{-t}\cos 8t + c_2e^{-t}\sin 8t \\
-y' = -c_1e^{-t}\cos 8t - 8c_1e^{-t}\sin 8t - c_2e^{-t}\sin 8t + 8c_2e^{-t}\cos 8t
+4a = -61b \\
+4b = 1 - 61a
 \end{cases}
 </div>
-<p>By fixing <b class='inmath'>c_2=0,\;y(0)=0.7,\;y'(0)=-0.7</b> we get the solution</p>
 <div class='math'>
-y = 0.7e^{-t}\cos 8t
+\begin{cases}
+a = -\frac{61b}{4} \\
+b = \frac{1 - 61a}{4}
+\end{cases}
 </div>
 
 <p>Lets compare analytical solution with numerical method</p>
@@ -144,7 +80,7 @@ y = 0.7e^{-t}\cos 8t
 <div class='math'>
 \begin{cases}
 y' = x \\
-x' + 2x + 65y = 0
+x' + 2x + 65y = \cos 2t
 \end{cases}
 </div>
 
