@@ -1,0 +1,16 @@
+#main_page {
+    padding: 2cm;
+    width: 19cm;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #ffffff;
+    box-shadow: 10px 10px 5px #888888;
+}
+body {
+    background-color: #cccccc;
+    font: 14px Myriad,Helvetica,Tahoma,Arial,clean,sans-serif;
+    font-size: 0.8em;
+    line-height: 1.5em;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+}
