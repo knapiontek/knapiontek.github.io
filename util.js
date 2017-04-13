@@ -1,20 +1,28 @@
 
-function Canvas(element, size) {
+function Canvas(element, size_x, size_y) {
     var that = {}
 
     that.element = $(element)
-    that.size = size
+    that.size_x = size_x
+    that.size_y = size_y
     that.canvas = $('<canvas>')
 
     var canvas = that.canvas.get(0);
     canvas.id = 'system';
-    canvas.width = size
-    canvas.height = size
+    canvas.width = size_x
+    canvas.height = size_y
     that.element.append(canvas)
 
     that.context = canvas.getContext('2d')
-    that.context.clearRect(0, 0, size, size)
+    that.context.clearRect(0, 0, size_x, size_y)
     that.context.beginPath()
+
+    that.erase = function() {
+        that.context.lineWidth = 1
+        that.context.setLineDash([])
+        that.context.clearRect(0, 0, size_x, size_y)
+        that.context.beginPath()
+    }
 
     that.move_to = function(pt) {
         that.context.moveTo(pt.x, pt.y)
@@ -77,8 +85,8 @@ function Canvas(element, size) {
     }
 
     that.text = function(text, pt) {
-        var x = pt.x * that.canvas.width() / that.size
-        var y = pt.y * that.canvas.height() / that.size
+        var x = pt.x * that.canvas.width() / that.size_x
+        var y = pt.y * that.canvas.height() / that.size_y
 
         var div = $('<div>').get(0);
         div.style.position = 'absolute';
@@ -245,9 +253,9 @@ function Matrix(arg, value) {
 
     that.lu = function(vb) {
         // A * X = B
-        console.assert(that.data.length == b.data.length)
+        console.assert(that.data.length == vb.data.length)
 
-        var size = b.data.length
+        var size = vb.data.length
         var vx = Vector(size)
         var ml = Matrix(size, 1) // lower matrix
         var mu = Matrix(size) // upper matrix
@@ -279,7 +287,7 @@ function Matrix(arg, value) {
             var acc = 0.0
             for(var i2 = 0; i2 < i1; i2++)
                 acc += ml.data[i1][i2] * vz.data[i2]
-            vz.data[i1] = b.data[i1] - acc
+            vz.data[i1] = vb.data[i1] - acc
         }
         for(var i1 = size - 1; i1 >= 0; i1--) {
             // find X where U * X = Z
@@ -289,7 +297,7 @@ function Matrix(arg, value) {
             vx.data[i1] = (vz.data[i1] - acc) / mu.data[i1][i1]
         }
         
-        return x
+        return vx
     }
     
     return that

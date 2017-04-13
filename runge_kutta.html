@@ -5,7 +5,7 @@
 <link rel='stylesheet' href='common.css'>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js' integrity='sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s' crossorigin='anonymous'></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
-<script src='common.js'></script>
+<script src='util.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 <style>
 #system {
@@ -114,7 +114,7 @@ x_0 = y'(0) = \frac{1}{2}
 
 <p>Simulation</p>
 <p>Press [+] or [-] to change <i class='inmath'>\Delta t=</i><i id='step'>step</i></p>
-<div><canvas id='system'></div>
+<div id='simulation'></div>
 
 <p>Remark</p>
 <ul>
@@ -125,66 +125,73 @@ x_0 = y'(0) = \frac{1}{2}
 </div>
 
 <script>
+var size = 1000
+var canvas = Canvas('#simulation', size, size/2)
 function run_calculation(step) {
-    var size = 1000
-    var system = $('#system').get(0)
-    var context = system.getContext('2d')
-    system.width = size
-    system.height = size / 2
-    context.clearRect(0, 0, size, size)
 
-	context.beginPath()
-	var margin = 10
-	arrow(context, point(margin, size/2-margin), point(margin, margin))
-	arrow(context, point(margin, size/4-margin), point(size-margin, size/4-margin))
+    canvas.erase()
+    
+    var margin = 10
+    canvas.pike_line(Point2D(margin, size/2-margin), Point2D(margin, margin))
+    canvas.pike_line(Point2D(margin, size/4-margin), Point2D(size-margin, size/4-margin))
 
-	var a = -1.0/2.0
-	var b = 1.0/2.0/Math.sqrt(3)
-	var omega = Math.sqrt(3)
-	var scale_y = 200
-	var scale_t = 100
-	var dt = 5
+    var omega = Math.sqrt(3)
+    var scale_y = 200
+    var scale_t = 100
+    var dt = 5
 
-	context.moveTo(margin, size/4-scale_y*a-margin)
-	for(t = 0; t < size-2*margin; t+=dt) {
-		var y = a*Math.cos(omega*t/scale_t) + b*Math.sin(omega*t/scale_t)
-		context.lineTo(t+margin, size/4-scale_y*y-margin)
-	}
-	context.stroke()
+    function solution(t) {
+        var a = -1.0/2.0
+        var b = 1.0/2.0/Math.sqrt(3)
+        var y = a*Math.cos(omega*t/scale_t) + b*Math.sin(omega*t/scale_t)
+        return Point2D(t+margin, size/4-scale_y*y-margin)
+    }
 
-	var x = 1.0/2.0 // 1-st derivative at 0
-	var y = -1.0/2.0 // function value at 0
-	var dt = step
+    canvas.move_to(solution(0))
+    for(t = 0; t < size-2*margin; t+=dt) {
+        canvas.line_to(solution(t))
+    }
+    canvas.stroke()
 
-	context.setLineDash([5, 3])
-	context.moveTo(margin, size/4-scale_y*y-margin)
-	for(t = 0; t < size-2*margin; t+=scale_t*dt) {
-		y = y + x*dt
-		x = x - 2*x*dt - 3*y*dt + 2*Math.cos((omega*t/scale_t-(Math.PI/3.0)))*dt
-		context.lineTo(t+margin, size/4-scale_y*y-margin)
-	}
-	context.stroke()
+    var x = 1.0/2.0 // 1-st derivative at 0
+    var y = -1.0/2.0 // function value at 0
+    var dt = step
+    function simulation(t) {
+        y = y + x*dt
+        x = x - 2*x*dt - 3*y*dt + 2*Math.cos(omega*t/scale_t-Math.PI/3.0)*dt
+        return Point2D(t+margin, size/4-scale_y*y-margin)
+    }
+
+    var dash_style = {width:1, dash:[12, 7]}
+    canvas.style(dash_style)
+
+    canvas.move_to(simulation(0))
+    for(t = scale_t*dt; t < size-2*margin; t+=scale_t*dt) {
+        canvas.line_to(simulation(t))
+    }
+    canvas.stroke()
 }
+
 var step = 0.2
 run_calculation(step)
 render_katex()
 $('#step').text(step)
 $(window).keydown(function(event) {
-	switch(event.which) {
-		case 109:
-			step-=0.01
-			break
-		case 107:
-			step+=0.01
-			break
-		default:
-			return
-	}
-	if(step < 0.01) {
-		step = 0.01
-	}
-	$('#step').text(step.toFixed(2))
-	run_calculation(step)
+    switch(event.which) {
+        case 109:
+            step-=0.01
+            break
+        case 107:
+            step+=0.01
+            break
+        default:
+            return
+    }
+    if(step < 0.01) {
+        step = 0.01
+    }
+    $('#step').text(step.toFixed(2))
+    run_calculation(step)
 })
 </script>
 

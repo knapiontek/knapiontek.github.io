@@ -2,27 +2,12 @@
 <html>
 <head>
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
+<link rel='stylesheet' href='common.css'>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js' integrity='sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s' crossorigin='anonymous'></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
 <script src='util.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 <style>
-#main_page {
-    padding: 2cm;
-    width: 19cm;
-    margin-left: auto;
-    margin-right: auto;
-    background-color: #ffffff;
-    box-shadow: 10px 10px 5px #888888;
-}
-body {
-    background-color: #cccccc;
-    font: 14px Myriad,Helvetica,Tahoma,Arial,clean,sans-serif;
-    font-size: 0.8em;
-    line-height: 1.5em;
-    margin-top: 1.5em;
-    margin-bottom: 1.5em;
-}
 #system {
     width: 80%;
     margin: 0 auto;
@@ -67,7 +52,7 @@ e^{-\gamma+i\omega} = e^{-\gamma t}(\cos\omega t+i\sin\omega t)
 <script>
 function run_segment() {
     var size = 700
-    var canvas = Canvas('#segment', size)
+    var canvas = Canvas('#segment', size, size)
 
     var a1 = Point2D(50, 150)
     var a2 = Point2D(650, 400)
@@ -119,22 +104,26 @@ function run_segment() {
     canvas.text('\\vec{v_1}\\cdot\\hat b', b1.add(pd1).div(2).add(Point2D(-20, -40)))
 }
 
-function euler(t) {
-    var damp = Math.pow(Math.E, -t/45)
-    return Point2D(Math.cos(t), Math.sin(t)).mul(damp)
-}
-
 function run_euler() {
     var size = 700
-    var canvas = Canvas('#euler', size)
+    var canvas = Canvas('#euler', size, size)
     
     canvas.line(Point2D(0, 0), Point2D(size, size))
     
     var max = 200
     var middle = Point2D(size, size).div(2)
-    canvas.move_to(euler(0).mul(max).add(middle))
-    for(var i = 0.01; i < 20; i+=0.01) {
-        canvas.line_to(euler(i).mul(max).add(middle))
+
+    function euler(t) {
+        var damp = Math.pow(Math.E, -t/45)
+        return Point2D(Math.cos(t), Math.sin(t))
+            .mul(damp)
+            .mul(max)
+            .add(middle)
+    }
+
+    canvas.move_to(euler(0))
+    for(var i = 0.01; i < 120; i+=0.01) {
+        canvas.line_to(euler(i))
     }
     canvas.stroke()
 }
