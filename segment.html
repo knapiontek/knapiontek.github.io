@@ -1,0 +1,48 @@
+<!DOCTYPE html><html><head><link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'><script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js' integrity='sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s' crossorigin='anonymous'></script><script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script><script src='3.txt'></script><meta http-equiv='Content-Type' content='text/html; charset=UTF-8' /><style>#main_page {    padding: 2cm;    width: 19cm;    margin-left: auto;    margin-right: auto;    background-color: #ffffff;    box-shadow: 10px 10px 5px #888888;}body {    background-color: #cccccc;    font: 14px Myriad,Helvetica,Tahoma,Arial,clean,sans-serif;    font-size: 0.8em;    line-height: 1.5em;    margin-top: 1.5em;    margin-bottom: 1.5em;}#system {    width: 80%;    margin: 0 auto;    border: thin solid;}#segment {    position: relative}#euler {    position: relative}</style></head><body><div id='main_page'><h4>Segment Intersection</h4><div class='math'>\begin{matrix}\hat b = \frac{\vec{b}}{|\vec{b}|} \\\\d_1+d_2 = \vec{v_2}\cdot\hat b - \vec{v_1}\cdot\hat b \\\\c_1 = \vec{v_1}\times\hat b \\c_2 = \vec{v_2}\times\hat b \\\\\frac{d_1}{c_1} = \frac{d_1+d_2}{c_1+c_2}\end{matrix}</div><p>Simulation</p><div id='segment'></div><h4>Euler Equation</h4><div class='math'>e^{-\gamma+i\omega} = e^{-\gamma t}(\cos\omega t+i\sin\omega t)</div><p>Simulation</p><div id='euler'></div></div>
+<script>function Canvas(element, size) {    var that = {}
+    that.element = $(element)    that.size = size    that.canvas = $('<canvas>')
+    var canvas = that.canvas.get(0);    canvas.id = 'system';    canvas.width = size    canvas.height = size    that.element.append(canvas)
+    that.context = canvas.getContext('2d')    that.context.clearRect(0, 0, size, size)    that.context.beginPath()
+    that.move_to = function(pt) {        that.context.moveTo(pt.x, pt.y)    }
+    that.line_to = function(pt) {        that.context.lineTo(pt.x, pt.y)    }
+    that.stroke = function(pt) {        that.context.stroke()    }
+    that.pike = function(begin, end, style) {        that.style(style)
+        var line = {x: end.x - begin.x, y: end.y - begin.y}        var len = Math.sqrt((line.x * line.x) + (line.y * line.y))        var unit = {x: line.x / len, y: line.y / len}
+        var v = 15        var h = 4        var left = {            x: end.x - (v * unit.x) + (h * unit.y),            y: end.y - (v * unit.y) - (h * unit.x)        }        var right = {            x: end.x - (v * unit.x) - (h * unit.y),            y: end.y - (v * unit.y) + (h * unit.x)        }
+        that.context.moveTo(end.x, end.y)        that.context.lineTo(left.x, left.y)        that.context.lineTo(right.x, right.y)        that.context.fill()    }
+    that.line = function(begin, end, style) {        that.style(style)
+        that.context.moveTo(begin.x, begin.y)        that.context.lineTo(end.x, end.y)        that.context.stroke()    }
+    that.pike_line = function(begin, end, style) {        that.pike(begin, end, style)
+        that.context.moveTo(begin.x, begin.y)        that.context.lineTo(end.x, end.y)        that.context.stroke()    }
+    that.dot = function(p, style) {        that.style(style)
+        that.context.beginPath()        that.context.arc(p.x, p.y, 5, 0, 2*Math.PI)        that.context.fill()    }
+    that.text = function(text, pt) {        var x = pt.x * that.canvas.width() / that.size        var y = pt.y * that.canvas.height() / that.size
+        var div = $('<div>').get(0);        div.style.position = 'absolute';        div.style.left = x + 'px';        div.style.top = y + 'px';        div.style.z_index = '1'        katex.render(text, div, {displayMode: false})        that.element.append(div)    }
+    that.style = function(style) {        if(style) {            if(style.width) {                that.context.lineWidth = style.width            }            if(style.dash) {                that.context.setLineDash(style.dash)            }        } else {            return {                width: that.context.lineWidth,                dash: that.context.getLineDash()            }        }    }
+    return that}function Point2D(x, y) {    var that = {x: x, y: y}
+    that.add = function(p) {        return Point2D(that.x + p.x, that.y + p.y)    }
+    that.sub = function(p) {        return Point2D(that.x - p.x, that.y - p.y)    }
+    that.mul = function(n) {        return Point2D(that.x * n, that.y * n)    }
+    that.div = function(n) {        return Point2D(that.x / n, that.y / n)    }
+    that.norm2 = function() {        return that.x * that.x + that.y * that.y    }
+    that.norm = function() {        return Math.sqrt(that.norm2())    }
+    that.unit = function() {        return that.div(that.norm())    }
+    that.dot = function(p) {        return that.x * p.x + that.y * p.y    }
+    that.cross = function(p) {        return that.x * p.y - that.y * p.x    }
+    return that}function run_segment() {    var size = 700    var canvas = Canvas('#segment', size)
+    var a1 = Point2D(50, 150)    var a2 = Point2D(650, 400)    var b1 = Point2D(100, 650)    var b2 = Point2D(650, 50)
+    var ub = b2.sub(b1).unit()
+    var v1 = a1.sub(b1)    var v2 = a2.sub(b1)
+    var d1 = v1.dot(ub)    var d2 = v2.dot(ub)
+    var c1 = ub.cross(v1)    var c2 = v2.cross(ub)
+    var pd1 = b1.add(ub.mul(d1))    var pd2 = b1.add(ub.mul(d2))
+    var po = pd1.add(ub.mul(c1*(d2-d1)/(c1+c2)))
+    var default_style = canvas.style()    var dash_style = {width:1, dash:[12, 7]}
+    canvas.line(a1, a2)    canvas.pike_line(b1, b2)
+    canvas.pike(b1, pd1)    canvas.pike(b1, pd2)
+    canvas.line(a1, pd1, dash_style)    canvas.line(a2, pd2)
+    canvas.pike_line(b1, a1)    canvas.pike_line(b1, a2)
+    canvas.dot(po)
+    canvas.text('O', po.add(Point2D(0, 15)))    canvas.text('c_1', a1.add(pd1).div(2).add(Point2D(20, -10)))    canvas.text('c_2', a2.add(pd2).div(2).add(Point2D(10, -20)))    canvas.text('d_1', pd1.add(po).div(2).add(Point2D(5, 5)))    canvas.text('d_2', pd2.add(po).div(2).add(Point2D(5, 5)))
+    canvas.text('\\vec{b}', b2.add(Point2D(-30, 0)))    canvas.text('\\vec{v_1}', v1.div(-2).add(a1).add(Point2D(10, 0)))    canvas.text('\\vec{v_2}', v2.div(2).add(b1).add(Point2D(0, 10)))    canvas.text('\\vec{v_1}\\cdot\\hat b', b1.add(pd1).div(2).add(Point2D(-20, -40)))}function euler(t) {    var damp = Math.pow(Math.E, -t/45)    return Point2D(Math.cos(t), Math.sin(t)).mul(damp)}function run_euler() {    var size = 700    var canvas = Canvas('#euler', size)        canvas.line(Point2D(0, 0), Point2D(size, size))        var max = 200    var middle = Point2D(size, size).div(2)    canvas.move_to(euler(0).mul(max).add(middle))    for(var i = 0.01; i < 20; i+=0.01) {        canvas.line_to(euler(i).mul(max).add(middle))    }    canvas.stroke()}run_segment()run_euler()render_katex()</script>
+</body></html>
