@@ -25,6 +25,7 @@ function Canvas(element, size_x, size_y) {
     }
 
     that.move_to = function(pt) {
+        that.context.beginPath()
         that.context.moveTo(pt.x, pt.y)
     }
 

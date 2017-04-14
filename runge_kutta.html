@@ -128,46 +128,42 @@ x_0 = y'(0) = \frac{1}{2}
 var size = 1000
 var canvas = Canvas('#simulation', size, size/2)
 function run_calculation(step) {
-
     canvas.erase()
     
-    var margin = 10
-    canvas.pike_line(Point2D(margin, size/2-margin), Point2D(margin, margin))
-    canvas.pike_line(Point2D(margin, size/4-margin), Point2D(size-margin, size/4-margin))
-
-    var omega = Math.sqrt(3)
     var scale_y = 200
     var scale_t = 100
-    var dt = 5
+    var margin = 10
+    var x1 = margin
+    var x2 = size - margin
+    var y1 = margin
+    var y2 = size/2 - margin
+    var ym = size/4 - margin
 
-    function solution(t) {
+    canvas.pike_line(Point2D(x1, y2), Point2D(x1, y1))
+    canvas.pike_line(Point2D(x1, ym), Point2D(x2, ym))
+
+    var omega = Math.sqrt(3)
+    var dt = 0.05
+    canvas.move_to(Point2D(x1, ym-scale_y*y))
+    for(var t = dt; x1+scale_t*t < x2; t += dt) {
         var a = -1.0/2.0
         var b = 1.0/2.0/Math.sqrt(3)
-        var y = a*Math.cos(omega*t/scale_t) + b*Math.sin(omega*t/scale_t)
-        return Point2D(t+margin, size/4-scale_y*y-margin)
-    }
-
-    canvas.move_to(solution(0))
-    for(t = 0; t < size-2*margin; t+=dt) {
-        canvas.line_to(solution(t))
+        var y = a*Math.cos(omega*t) + b*Math.sin(omega*t)
+        canvas.line_to(Point2D(x1+scale_t*t, ym-scale_y*y))
     }
     canvas.stroke()
-
-    var x = 1.0/2.0 // 1-st derivative at 0
-    var y = -1.0/2.0 // function value at 0
-    var dt = step
-    function simulation(t) {
-        y = y + x*dt
-        x = x - 2*x*dt - 3*y*dt + 2*Math.cos(omega*t/scale_t-Math.PI/3.0)*dt
-        return Point2D(t+margin, size/4-scale_y*y-margin)
-    }
 
     var dash_style = {width:1, dash:[12, 7]}
     canvas.style(dash_style)
 
-    canvas.move_to(simulation(0))
-    for(t = scale_t*dt; t < size-2*margin; t+=scale_t*dt) {
-        canvas.line_to(simulation(t))
+    var x = 1.0/2.0 // 1-st derivative at 0
+    var y = -1.0/2.0 // function value at 0
+    var dt = step
+    canvas.move_to(Point2D(x1, ym-scale_y*y))
+    for(var t = dt; x1+scale_t*t < x2; t += dt) {
+        y = y + x*dt
+        x = x - 2*x*dt - 3*y*dt + 2*Math.cos(omega*t-Math.PI/3.0)*dt
+        canvas.line_to(Point2D(x1+scale_t*t, ym-scale_y*y))
     }
     canvas.stroke()
 }
@@ -177,18 +173,19 @@ run_calculation(step)
 render_katex()
 $('#step').text(step)
 $(window).keydown(function(event) {
+    var min_value = 0.01
     switch(event.which) {
         case 109:
-            step-=0.01
+            step -= min_value
             break
         case 107:
-            step+=0.01
+            step += min_value
             break
         default:
             return
     }
-    if(step < 0.01) {
-        step = 0.01
+    if(step < min_value) {
+        step = min_value
     }
     $('#step').text(step.toFixed(2))
     run_calculation(step)
