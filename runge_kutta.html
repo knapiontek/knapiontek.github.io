@@ -129,7 +129,7 @@ var size = 1000
 var canvas = Canvas('#simulation', size, size/2)
 function run_calculation(step) {
     canvas.erase()
-    
+
     var scale_y = 200
     var scale_t = 100
     var margin = 10
@@ -139,33 +139,35 @@ function run_calculation(step) {
     var y2 = size/2 - margin
     var ym = size/4 - margin
 
-    canvas.pike_line(Point2D(x1, y2), Point2D(x1, y1))
-    canvas.pike_line(Point2D(x1, ym), Point2D(x2, ym))
+    var axis_path = canvas.Path()
+    axis_path.pike_line(Point2D(x1, y2), Point2D(x1, y1))
+    axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
     var omega = Math.sqrt(3)
     var dt = 0.05
-    canvas.move_to(Point2D(x1, ym-scale_y*y))
+
+    var solid_path = canvas.Path()
+    solid_path.move_to(Point2D(x1, ym-scale_y*y))
     for(var t = dt; x1+scale_t*t < x2; t += dt) {
         var a = -1.0/2.0
         var b = 1.0/2.0/Math.sqrt(3)
         var y = a*Math.cos(omega*t) + b*Math.sin(omega*t)
-        canvas.line_to(Point2D(x1+scale_t*t, ym-scale_y*y))
+        solid_path.line_to(Point2D(x1+scale_t*t, ym-scale_y*y))
     }
-    canvas.stroke()
-
-    var dash_style = {width:1, dash:[12, 7]}
-    canvas.style(dash_style)
+    solid_path.stroke()
 
     var x = 1.0/2.0 // 1-st derivative at 0
     var y = -1.0/2.0 // function value at 0
     var dt = step
-    canvas.move_to(Point2D(x1, ym-scale_y*y))
+
+    var dash_path = canvas.Path({width:1, dash:[12, 7]})
+    dash_path.move_to(Point2D(x1, ym-scale_y*y))
     for(var t = dt; x1+scale_t*t < x2; t += dt) {
         y = y + x*dt
         x = x - 2*x*dt - 3*y*dt + 2*Math.cos(omega*t-Math.PI/3.0)*dt
-        canvas.line_to(Point2D(x1+scale_t*t, ym-scale_y*y))
+        dash_path.line_to(Point2D(x1+scale_t*t, ym-scale_y*y))
     }
-    canvas.stroke()
+    dash_path.stroke()
 }
 
 var step = 0.2

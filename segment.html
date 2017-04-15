@@ -75,22 +75,23 @@ function run_segment() {
 
     var po = pd1.add(ub.mul(c1*(d2-d1)/(c1+c2)))
 
-    var default_style = canvas.style()
-    var dash_style = {width:1, dash:[12, 7]}
+    var solid_path = canvas.Path()
 
-    canvas.line(a1, a2)
-    canvas.pike_line(b1, b2)
+    solid_path.line(a1, a2)
+    solid_path.pike_line(b1, b2)
 
-    canvas.pike(b1, pd1)
-    canvas.pike(b1, pd2)
+    solid_path.pike(b1, pd1)
+    solid_path.pike(b1, pd2)
 
-    canvas.line(a1, pd1, dash_style)
-    canvas.line(a2, pd2)
+    var dash_path = canvas.Path({width:1, dash:[12, 7]})
 
-    canvas.pike_line(b1, a1)
-    canvas.pike_line(b1, a2)
+    dash_path.line(a1, pd1)
+    dash_path.line(a2, pd2)
 
-    canvas.dot(po)
+    dash_path.pike_line(b1, a1)
+    dash_path.pike_line(b1, a2)
+
+    dash_path.dot(po)
 
     canvas.text('O', po.add(Point2D(0, 15)))
     canvas.text('c_1', a1.add(pd1).div(2).add(Point2D(20, -10)))
@@ -107,8 +108,9 @@ function run_segment() {
 function run_euler() {
     var size = 700
     var canvas = Canvas('#euler', size, size)
+    var path = canvas.Path()
     
-    canvas.line(Point2D(0, 0), Point2D(size, size))
+    path.line(Point2D(0, 0), Point2D(size, size))
     
     var max = 200
     var middle = Point2D(size, size).div(2)
@@ -121,11 +123,11 @@ function run_euler() {
             .add(middle)
     }
 
-    canvas.move_to(euler(0))
+    path.move_to(euler(0))
     for(var i = 0.01; i < 120; i+=0.01) {
-        canvas.line_to(euler(i))
+        path.line_to(euler(i))
     }
-    canvas.stroke()
+    path.stroke()
 }
 
 run_segment()
