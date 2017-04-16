@@ -8,7 +8,7 @@ function Canvas(element, size_x, size_y) {
     _that.canvas = $('<canvas>')
 
     var canvas = _that.canvas.get(0);
-    canvas.id = 'system';
+    canvas.style.width = '100%'
     canvas.width = size_x
     canvas.height = size_y
     _that.element.append(canvas)
