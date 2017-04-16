@@ -22,17 +22,36 @@ function Canvas(element, size_x, size_y) {
         _that.context.clearRect(0, 0, size_x, size_y)
     }
 
-    _that.text = function(text, pt) {
-        var x = pt.x * _that.canvas.width() / _that.size_x
-        var y = pt.y * _that.canvas.height() / _that.size_y
+    _that.text = function(text, pt1, pt2) {
+        var x1 = pt1.x * _that.canvas.width() / _that.size_x
+        var y1 = pt1.y * _that.canvas.height() / _that.size_y
 
-        var div = $('<div>').get(0);
+        var elem = $('<div>')
+        var div = elem.get(0);
         div.style.position = 'absolute';
-        div.style.left = x + 'px';
-        div.style.top = y + 'px';
+        div.style.left = x1 + 'px';
+        div.style.top = y1 + 'px';
         div.style.z_index = '1'
         katex.render(text, div, {displayMode: false})
         _that.element.append(div)
+
+        if(pt2) {
+            var x2 = pt2.x * _that.canvas.width() / _that.size_x
+            var y2 = pt2.y * _that.canvas.height() / _that.size_y
+
+            var w = elem.width()
+            var h = elem.height()
+
+            x1 = (x1+x2) / 2
+            y1 = (y1+y2) / 2
+
+            var rot = Math.atan2(y2-y1, x2-x1)
+            var orth = Point2D(y2-y1, x1-x2).unit().mul(h/2)
+
+            div.style.left = (x1+orth.x-w/2) + 'px';
+            div.style.top = (y1+orth.y-h/2) + 'px';
+            div.style.transform = 'rotate('+rot+'rad)'
+        }
     }
 
     _that.Path = function(style) {
@@ -75,15 +94,17 @@ function Canvas(element, size_x, size_y) {
             that.context.stroke()
         }
 
-        that.pike = function(begin, end, style) {
-            that.style(style)
-
+        that.pike = function(begin, end, size) {
             var line = {x: end.x - begin.x, y: end.y - begin.y}
             var len = Math.sqrt((line.x * line.x) + (line.y * line.y))
             var unit = {x: line.x / len, y: line.y / len}
 
-            var v = 15
-            var h = 4
+            var v = 15.0
+            var h = 4.0
+            if(size) {
+                v *= size
+                h *= size
+            }
             var left = {
                 x: end.x - (v * unit.x) + (h * unit.y),
                 y: end.y - (v * unit.y) - (h * unit.x)
@@ -99,25 +120,20 @@ function Canvas(element, size_x, size_y) {
             that.context.fill()
         }
 
-        that.line = function(begin, end, style) {
-            that.style(style)
-
+        that.line = function(begin, end) {
             that.context.moveTo(begin.x, begin.y)
             that.context.lineTo(end.x, end.y)
             that.context.stroke()
         }
 
-        that.pike_line = function(begin, end, style) {
-            that.pike(begin, end, style)
-
+        that.pike_line = function(begin, end, size) {
+            that.pike(begin, end, size)
             that.context.moveTo(begin.x, begin.y)
             that.context.lineTo(end.x, end.y)
             that.context.stroke()
         }
 
-        that.dot = function(pt, style) {
-            that.style(style)
-
+        that.dot = function(pt) {
             that.context.beginPath()
             that.context.arc(pt.x, pt.y, 5, 0, 2*Math.PI)
             that.context.fill()
