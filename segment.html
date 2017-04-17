@@ -34,19 +34,29 @@
 <h4>Segment Intersection</h4>
 <div class='math'>
 \begin{matrix}
+\hat{a} = \frac{\vec{a}}{|\vec{a}|} &
 \hat{b} = \frac{\vec{b}}{|\vec{b}|} \\
 \\
-d_1 = \vec{v_1}\cdot\hat{b} \\
-d_2 = \vec{v_2}\cdot\hat{b} \\
+d_1 = \vec{v_1}\cdot\hat{b} & d_2 = \vec{v_2}\cdot\hat{b} \\
 \\
-c_1 = \vec{v_1}\times\hat{b} \\
-c_2 = \vec{v_2}\times\hat{b} \\
-\\
+c_1 = \vec{v_1}\times\hat{b} & c_2 = \vec{v_2}\times\hat{b} \\
+\end{matrix}
+</div>
+<div class='math'>
+\begin{matrix}
 e_1+e_2 = d_2-d_1 \\
 \\
 \frac{e_1}{c_1} = \frac{e_1+e_2}{c_1+c_2} \\
 \\
-O = (d_1+e_1)\hat{b}
+O = b_1 + (d_1+e_1)\hat{b}
+\end{matrix}
+</div>
+<p>Yet another way</p>
+<div class='math'>
+\begin{matrix}
+k\hat{a}\cdot\hat{c_1} = c_1 \\
+\\
+O = a_1+k\hat{a}
 \end{matrix}
 </div>
 <p>Simulation</p>
@@ -71,6 +81,7 @@ function run_segment() {
     var b1 = Point2D(100.0, 650.0)
     var b2 = Point2D(650.0, 50.0)
 
+    var ua = a2.sub(a1).unit()
     var ub = b2.sub(b1).unit()
 
     var v1 = a1.sub(b1)
@@ -79,21 +90,22 @@ function run_segment() {
     var d1 = v1.dot(ub)
     var d2 = v2.dot(ub)
 
-    var c1 = ub.rot(v1)
-    var c2 = v2.rot(ub)
+    var c1 = v1.rot(ub)
+    var c2 = ub.rot(v2)
 
     var pd1 = b1.add(ub.mul(d1))
     var pd2 = b1.add(ub.mul(d2))
 
-    var po = pd1.add(ub.mul(c1*(d2-d1)/(c1+c2)))
+    var po1 = pd1.add(ub.mul(c1*(d2-d1)/(c1+c2)))
 
-    var solid_path = canvas.Path()
+    var uc1 = pd1.sub(a1).unit()
+    var k = c1 / ua.dot(uc1)
+    var po2 = ua.mul(k).add(a1)
 
-    solid_path.pike_line(a2, a1)
-    solid_path.pike_line(b1, b2)
+    var solid_path = canvas.Path({width:2})
 
-    solid_path.pike(b1, pd1)
-    solid_path.pike(b1, pd2)
+    solid_path.line(a1, a2)
+    solid_path.line(b1, b2)
 
     var dash_path = canvas.Path({width:1, dash:[12, 7]})
 
@@ -103,17 +115,22 @@ function run_segment() {
     dash_path.pike_line(b1, a1)
     dash_path.pike_line(b1, a2)
 
-    dash_path.dot(po)
+    dash_path.dot(po1)
 
-    canvas.text('O', po.add(Point2D(0, 15)))
+    var red_path = canvas.Path({color:'red', dash:[]})
+    red_path.circle(po2, 8)
+
+    canvas.text('O', po1.add(Point2D(0, 15)))
     canvas.text('c_1', a1, pd1)
     canvas.text('c_2', pd2, a2)
     canvas.text('d_1', b1, pd1)
-    canvas.text('e_1', pd1, po)
-    canvas.text('e_2', po, pd2)
+    canvas.text('e_1', pd1, po1)
+    canvas.text('e_2', po1, pd2)
 
-    canvas.text('\\vec{a}', a1.add(Point2D(20, -20)))
-    canvas.text('\\vec{b}', b2.add(Point2D(-30, 0)))
+    canvas.text('a_1', a1.add(Point2D(20, -20)))
+    canvas.text('a_2', a2)
+    canvas.text('b_1', b1)
+    canvas.text('b_2', b2)
     canvas.text('\\vec{v_1}', a1, b1)
     canvas.text('\\vec{v_2}', b1, a2)
 }

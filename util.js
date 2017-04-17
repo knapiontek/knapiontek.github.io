@@ -69,6 +69,9 @@ function Canvas(element, size_x, size_y) {
             if(style.dash) {
                 that.context.setLineDash(style.dash)
             }
+            if(style.color) {
+                that.context.strokeStyle = style.color
+            }
         }
 
         that.style = function() {
@@ -77,7 +80,8 @@ function Canvas(element, size_x, size_y) {
             } else {
                 return {
                     width: that.context.lineWidth,
-                    dash: that.context.getLineDash()
+                    dash: that.context.getLineDash(),
+                    color: that.context.strokeStyle
                 }
             }
         }
@@ -137,6 +141,12 @@ function Canvas(element, size_x, size_y) {
             that.context.beginPath()
             that.context.arc(pt.x, pt.y, 5, 0, 2*Math.PI)
             that.context.fill()
+        }
+
+        that.circle = function(pt, radius) {
+            that.context.beginPath()
+            that.context.arc(pt.x, pt.y, radius, 0, 2*Math.PI)
+            that.context.stroke()
         }
 
         return that
