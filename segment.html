@@ -34,14 +34,19 @@
 <h4>Segment Intersection</h4>
 <div class='math'>
 \begin{matrix}
-\hat b = \frac{\vec{b}}{|\vec{b}|} \\
+\hat{b} = \frac{\vec{b}}{|\vec{b}|} \\
 \\
-e_1+e_2 = \vec{v_2}\cdot\hat b - \vec{v_1}\cdot\hat b = -\vec{a}\cdot\hat b \\
+d_1 = \vec{v_1}\cdot\hat{b} \\
+d_2 = \vec{v_2}\cdot\hat{b} \\
 \\
-c_1 = \vec{v_1}\times\hat b \\
-c_2 = \vec{v_2}\times\hat b \\
+c_1 = \vec{v_1}\times\hat{b} \\
+c_2 = \vec{v_2}\times\hat{b} \\
 \\
-\frac{e_1}{c_1} = \frac{e_1+e_2}{c_1+c_2}
+\frac{e_1}{c_1} = \frac{e_1+e_2}{c_1+c_2} \\
+\\
+e_1+e_2 = d_2-d_1 \\
+\\
+O = (d_1+e_1)\hat{b}
 \end{matrix}
 </div>
 <p>Simulation</p>
@@ -110,7 +115,7 @@ function run_segment() {
     canvas.text('\\vec{b}', b2.add(Point2D(-30, 0)))
     canvas.text('\\vec{v_1}', a1, b1)
     canvas.text('\\vec{v_2}', b1, a2)
-    canvas.text('\\vec{v_1}\\cdot\\hat b', b1, pd1)
+    canvas.text('\\vec{v_1}\\cdot\\hat{b}', b1, pd1)
 }
 
 function run_euler() {
