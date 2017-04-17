@@ -5,12 +5,25 @@
 <link rel='stylesheet' href='common.css'>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js' integrity='sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s' crossorigin='anonymous'></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
-<script src='common.js'></script>
+<script src='util.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 <style>
-#system {
+#euler {
+    position: relative;
+
+    width: 70%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    border: thin solid;
+}
+#simulation {
+    position: relative;
+
     width: 100%;
-    margin: 0 auto;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
     border: thin solid;
 }
 </style>
@@ -18,15 +31,22 @@
 <body>
 <div id='main_page'>
 
-<h4>Euler equation</h4>
+<h4>Euler Equation</h4>
 <div class='math'>
 e^{i\omega} = \cos\omega + i\sin\omega
 </div>
 
-<h4>Euler identity</h4>
+<h4>Euler Identity</h4>
 <div class='math'>
 e^{i\pi} - 1 = 0
 </div>
+
+<h4>Euler Function</h4>
+<div class='math'>
+e^{-\gamma+i\omega} = e^{-\gamma t}(\cos\omega t+i\sin\omega t)
+</div>
+<p>Simulation</p>
+<div id='euler'></div>
 
 <h4>Solving <b class='inmath'>i^i</b></h4>
 <div class='math'>
@@ -161,76 +181,108 @@ x_{n+1} = x_n - 2x_n \Delta t - 65y_{n+1} \Delta t
 
 <p>Simulation</p>
 <p>Press [+] or [-] to change <i class='inmath'>\Delta t=</i><i id='step'>step</i></p>
-<div><canvas id='system'></div>
+<div id='simulation'></div>
 
 <p>Remark</p>
 <ul>
 <li>The solution is very <i>smooth</i> therefore the first order approximation produces satisfying results. I had to set <b class='inmath'>\Delta t=0.03</b> to make the difference visible.</li>
 </ul>
 
-
 </div>
 
 <script>
-function run_calculation(step) {
-    var size = 1000
-    var system = $('#system').get(0)
-    var context = system.getContext('2d')
-    system.width = size
-    system.height = size / 2
-    context.clearRect(0, 0, size, size)
+function run_euler() {
+    var size = 700
+    var canvas = Canvas('#euler', size, size)
+    var path = canvas.Path()
 
-	context.beginPath()
-	var margin = 10
-	arrow(context, point(margin, size/2-margin), point(margin, margin))
-	arrow(context, point(margin, size/4-margin), point(size-margin, size/4-margin))
+    path.line(Point2D(0, 0), Point2D(size, size))
+
+    var max = 200
+    var middle = Point2D(size, size).div(2)
+
+    function euler(t) {
+        var damp = Math.pow(Math.E, -t/45)
+        return Point2D(Math.cos(t), Math.sin(t))
+            .mul(damp)
+            .mul(max)
+            .add(middle)
+    }
+
+    path.move_to(euler(0))
+    for(var i = 0.01; i < 120; i+=0.01) {
+        path.line_to(euler(i))
+    }
+    path.stroke()
+}
+
+var size = 1000
+var canvas = Canvas('#simulation', size, size/2)
+function run_calculation(step) {
+    canvas.erase()
+
+    var scale_y = 300
+    var scale_t = 400
+    var margin = 10
+    var x1 = margin
+    var x2 = size - margin
+    var y1 = margin
+    var y2 = size/2 - margin
+    var ym = size/4 - margin
+
+    var axis_path = canvas.Path()
+    axis_path.pike_line(Point2D(x1, y2), Point2D(x1, y1))
+    axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
 	var c = 0.7
 	var alpha = -1.0
 	var beta = 8.0
-	var scale = 300
-	var dt = (size-2*margin) / scale
+    var dt = 0.01
 
-	context.moveTo(margin, size/4-scale*c-margin)
-	for(t = 0; t < size-2*margin; t+=dt) {
-		var y = c * Math.pow(Math.E, alpha*t/scale) * Math.cos(beta*t/scale)
-		context.lineTo(t+margin, size/4-scale*y-margin)
-	}
-	context.stroke()
+    var solid_path = canvas.Path()
+    solid_path.move_to(Point2D(x1, ym-scale_y*c))
+    for(var t = dt; x1+scale_t*t < x2; t += dt) {
+		var y = c*Math.pow(Math.E, alpha*t) * Math.cos(beta*t)
+        solid_path.line_to(Point2D(x1+scale_t*t, ym-scale_y*y))
+    }
+    solid_path.stroke()
 
 	var x = -0.7 // 1-st derivative at 0
 	var y = 0.7 // function value at 0
-	var dt = step
+    var dt = step
 
-	context.setLineDash([5, 3])
-	context.moveTo(margin, size/4-scale*c-margin)
-	for(t = 0; t < size-2*margin; t+=scale*dt) {
+    var dash_path = canvas.Path({width:1, dash:[12, 7]})
+    dash_path.move_to(Point2D(x1, ym-scale_y*y))
+    for(var t = dt; x1+scale_t*t < x2; t += dt) {
 		y = y + x*dt
 		x = x - 2*x*dt - 65*y*dt
-		context.lineTo(t+margin, size/4-scale*y-margin)
-	}
-	context.stroke()
+        dash_path.line_to(Point2D(x1+scale_t*t, ym-scale_y*y))
+    }
+    dash_path.stroke()
 }
+
+run_euler()
 var step = 0.03
 run_calculation(step)
 render_katex()
 $('#step').text(step)
 $(window).keydown(function(event) {
-	switch(event.which) {
-		case 109:
-			step-=0.001
-			break
-		case 107:
-			step+=0.001
-			break
-		default:
-			return
-	}
-	if(step < 0.001) {
-		step = 0.001
-	}
-	$('#step').text(step.toFixed(3))
-	run_calculation(step)
+    var min_value = 0.001
+    switch(event.which) {
+        case 109:
+            step -= min_value
+            break
+        case 107:
+            step += min_value
+            break
+        default:
+            return
+    }
+    if(step < min_value) {
+        step = min_value
+    }
+    $('#step').text(step.toFixed(3))
+    run_calculation(step)
 })
 </script>
 
