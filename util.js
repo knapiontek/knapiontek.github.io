@@ -1,17 +1,16 @@
-
-function Canvas(element, size_x, size_y) {
+﻿function Canvas(anchor, size_x, size_y) {
     var _that = {}
 
-    _that.element = $(element)
+    _that.anchor = $(anchor)
     _that.size_x = size_x
     _that.size_y = size_y
-    _that.canvas = $('<canvas>')
+    _that.jcanvas = $('<canvas>')
 
-    var canvas = _that.canvas.get(0);
+    var canvas = _that.jcanvas.get(0);
     canvas.style.width = '100%'
     canvas.width = size_x
     canvas.height = size_y
-    _that.element.append(canvas)
+    _that.anchor.append(canvas)
 
     _that.context = canvas.getContext('2d')
     _that.context.clearRect(0, 0, size_x, size_y)
@@ -23,24 +22,24 @@ function Canvas(element, size_x, size_y) {
     }
 
     _that.text = function(text, pt1, pt2) {
-        var x1 = pt1.x * _that.canvas.width() / _that.size_x
-        var y1 = pt1.y * _that.canvas.height() / _that.size_y
+        var x1 = pt1.x * _that.jcanvas.width() / _that.size_x
+        var y1 = pt1.y * _that.jcanvas.height() / _that.size_y
 
-        var elem = $('<div>')
-        var div = elem.get(0);
+        var jdiv = $('<div>')
+        var div = jdiv.get(0);
         div.style.position = 'absolute';
         div.style.left = x1 + 'px';
         div.style.top = y1 + 'px';
         div.style.z_index = '1'
         katex.render(text, div, {displayMode: false})
-        _that.element.append(div)
+        _that.anchor.append(div)
 
         if(pt2) {
-            var x2 = pt2.x * _that.canvas.width() / _that.size_x
-            var y2 = pt2.y * _that.canvas.height() / _that.size_y
+            var x2 = pt2.x * _that.jcanvas.width() / _that.size_x
+            var y2 = pt2.y * _that.jcanvas.height() / _that.size_y
 
-            var w = elem.width()
-            var h = elem.height()
+            var w = jdiv.width()
+            var h = jdiv.height()
 
             x1 = (x1+x2) / 2
             y1 = (y1+y2) / 2
@@ -57,33 +56,28 @@ function Canvas(element, size_x, size_y) {
     _that.Path = function(style) {
         var that = {}
 
-        that.style = style
-        that.context = _that.context
-
+		that.context = _that.context
         that.context.beginPath()
 
-        if(style) {
-            if(style.width) {
-                that.context.lineWidth = style.width
-            }
-            if(style.dash) {
-                that.context.setLineDash(style.dash)
-            }
-            if(style.color) {
-                that.context.strokeStyle = style.color
-            }
-        }
+		if(style) {
+			if(style.width) {
+				that.context.lineWidth = style.width
+			}
+			if(style.dash) {
+				that.context.setLineDash(style.dash)
+			}
+			if(style.color) {
+				that.context.strokeStyle = style.color
+				that.context.fillStyle = style.color
+			}
+		}
 
         that.style = function() {
-            if(that.style) {
-                return that.style
-            } else {
-                return {
-                    width: that.context.lineWidth,
-                    dash: that.context.getLineDash(),
-                    color: that.context.strokeStyle
-                }
-            }
+			return {
+				width: that.context.lineWidth,
+				dash: that.context.getLineDash(),
+				color: that.context.strokeStyle
+			}
         }
 
         that.move_to = function(pt) {

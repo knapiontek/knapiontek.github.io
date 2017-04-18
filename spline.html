@@ -1,21 +1,29 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
 <link rel='stylesheet' href='common.css'>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js' integrity='sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s' crossorigin='anonymous'></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
-<script src='common.js'></script>
+<script src='util.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 <style>
 #system2 {
-    width: 100%;
-    margin: 0 auto;
+    position: relative;
+
+    width: 70%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
     border: thin solid;
 }
 #system3 {
-    width: 100%;
-    margin: 0 auto;
+    position: relative;
+
+    width: 70%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
     border: thin solid;
 }
 </style>
@@ -108,7 +116,7 @@ a_0 \\ b_0 \\ c_0 \\ a_1 \\ b_1 \\ c_1 \\ a_2 \\ b_2 \\ c_2
 </div>
 
 <p>Finally the result</p>
-<div><canvas id='system2'></div>
+<div id='system2'></div>
 
 <h4>Consider 3 cubic polynomial equations</h4>
 <div class='math'>
@@ -213,7 +221,7 @@ a_0 \\ b_0 \\ c_0 \\ d_0 \\ a_1 \\ b_1 \\ c_1 \\ d_1 \\ a_2 \\ b_2 \\ c_2 \\ d_2
 </div>
 
 <p>Finally the result</p>
-<div><canvas id='system3'></div>
+<div id='system3'></div>
 
 <h4>Conclusion</h4>
 <li>The square polynomials require less coefficients and are generally faster to compute.</li>
@@ -224,162 +232,153 @@ a_0 \\ b_0 \\ c_0 \\ d_0 \\ a_1 \\ b_1 \\ c_1 \\ d_1 \\ a_2 \\ b_2 \\ c_2 \\ d_2
 <script>
 function generate_matrix2(data) {
     var size = 3 * data.length
-    var A = square_matrix_zero(size)
-    var Bx = vector_zero(size)
-    var By = vector_zero(size)
+    var ma = Matrix(size)
+    var vbx = Vector(size)
+    var vby = Vector(size)
 
     for(var i = 0; i < data.length; i++) {
         var j = 3 * i
 
-        A[j+0][j+0] = 2.0
-        A[j+0][j+1] = 1.0
-        A[j+0][(j+4)%size] = -1.0
-        A[j+1][j+0] = 1.0
-        A[j+1][j+1] = 1.0
-        A[j+1][j+2] = 1.0
-        A[j+2][j+2] = 1.0
+        ma.data[j+0][j+0] = 2.0
+        ma.data[j+0][j+1] = 1.0
+        ma.data[j+0][(j+4)%size] = -1.0
+        ma.data[j+1][j+0] = 1.0
+        ma.data[j+1][j+1] = 1.0
+        ma.data[j+1][j+2] = 1.0
+        ma.data[j+2][j+2] = 1.0
 
-        Bx[j+2] = data[i].x
-        Bx[(j-2+size)%size] = data[i].x
+        vbx.data[j+2] = data[i].x
+        vbx.data[(j-2+size)%size] = data[i].x
 
-        By[j+2] = data[i].y
-        By[(j-2+size)%size] = data[i].y
+        vby.data[j+2] = data[i].y
+        vby.data[(j-2+size)%size] = data[i].y
     }
 
-    return [A, Bx, By]
+    return [ma, vbx, vby]
 }
 function render_spline2() {
-    var data = [point(300, 300),
-            point(200, 200),
-            point(400, 450),
-            point(600, 800),
-            point(600, 600)]
+    var data = [
+		Point2D(300.0, 300.0),
+		Point2D(200.0, 200.0),
+		Point2D(400.0, 450.0),
+		Point2D(600.0, 800.0),
+		Point2D(600.0, 600.0)
+	]
 
     var size = 1000
-    var system = $('#system2').get(0)
-    var context = system.getContext('2d')
-    system.width = size
-    system.height = size
-    context.clearRect(0, 0, size, size)
-    context.fillStyle = 'blue'
+    var canvas = Canvas('#system2', size, size)
 
+	var dot_path = canvas.Path({color: 'blue'})
     for(var i = 0; i < data.length; i++) {
-        context.beginPath()
-        context.arc(data[i].x, data[i].y, 4, 0, 2 * Math.PI, true);
-        context.fill()
+        dot_path.dot(data[i])
     }
 
-    var [A, Bx, By] = generate_matrix2(data)
-    var Ux = calculate_equation_system(A, Bx)
-    var Uy = calculate_equation_system(A, By)
+    var [ma, vbx, vby] = generate_matrix2(data)
+    var vux = ma.lu(vbx)
+    var vuy = ma.lu(vby)
 
-    var Ex = square_matrix_mul(A, Ux)
-    var Ey = square_matrix_mul(A, Uy)
-    console.assert(vector_norm2(Ex, Bx))
-    console.assert(vector_norm2(Ey, By))
+    var vex = ma.mul(vux)
+    var vey = ma.mul(vuy)
+    console.assert(vex.norm2(vbx) < 0.001)
+    console.assert(vey.norm2(vby) < 0.001)
     
-    context.beginPath()
-    context.moveTo(cx, cy)
+	var path = canvas.Path({color: 'black'})
+    path.move_to(data[0])
     for(var i = 0; i < data.length; i++) {
         var j = 3 * i
-        var ax = Ux[j+0]
-        var bx = Ux[j+1]
-        var cx = Ux[j+2]
-        var ay = Uy[j+0]
-        var by = Uy[j+1]
-        var cy = Uy[j+2]
+        var ax = vux.data[j+0]
+        var bx = vux.data[j+1]
+        var cx = vux.data[j+2]
+        var ay = vuy.data[j+0]
+        var by = vuy.data[j+1]
+        var cy = vuy.data[j+2]
         for(var t = 0; t < 1; t += 0.05) {
             var x = (ax*t*t) + (bx*t) + cx
             var y = (ay*t*t) + (by*t) + cy
-            context.lineTo(x, y)
+			path.line_to(Point2D(x, y))
         }
-        context.lineTo(data[(i+1)%data.length].x, data[(i+1)%data.length].y)
+        path.line_to(data[(i+1)%data.length])
     }
-    context.stroke()
+    path.stroke()
 }
 function generate_matrix3(data) {
     var size = 4 * data.length
-    var A = square_matrix_zero(size)
-    var Bx = vector_zero(size)
-    var By = vector_zero(size)
+    var ma = Matrix(size)
+    var vbx = Vector(size)
+    var vby = Vector(size)
 
     for(var i = 0; i < data.length; i++) {
         var j = 4 * i
 
-        A[j+0][j+0] = 6.0
-        A[j+0][j+1] = 2.0
-        A[j+0][(j+5)%size] = -2.0
-        A[j+1][j+0] = 3.0
-        A[j+1][j+1] = 2.0
-        A[j+1][j+2] = 1.0
-        A[j+1][(j+6)%size] = -1.0
-        A[j+2][j+0] = 1.0
-        A[j+2][j+1] = 1.0
-        A[j+2][j+2] = 1.0
-        A[j+2][j+3] = 1.0
-        A[j+3][j+3] = 1.0
+        ma.data[j+0][j+0] = 6.0
+        ma.data[j+0][j+1] = 2.0
+        ma.data[j+0][(j+5)%size] = -2.0
+        ma.data[j+1][j+0] = 3.0
+        ma.data[j+1][j+1] = 2.0
+        ma.data[j+1][j+2] = 1.0
+        ma.data[j+1][(j+6)%size] = -1.0
+        ma.data[j+2][j+0] = 1.0
+        ma.data[j+2][j+1] = 1.0
+        ma.data[j+2][j+2] = 1.0
+        ma.data[j+2][j+3] = 1.0
+        ma.data[j+3][j+3] = 1.0
 
-        Bx[j+3] = data[i].x
-        Bx[(j-2+size)%size] = data[i].x
+        vbx.data[j+3] = data[i].x
+        vbx.data[(j-2+size)%size] = data[i].x
 
-        By[j+3] = data[i].y
-        By[(j-2+size)%size] = data[i].y
+        vby.data[j+3] = data[i].y
+        vby.data[(j-2+size)%size] = data[i].y
     }
 
-    return [A, Bx, By]
+    return [ma, vbx, vby]
 }
 function render_spline3() {
-    var data = [point(300, 600),
-            point(200, 200),
-            point(400, 250),
-            point(800, 200),
-            point(600, 600)]
+    var data = [
+		Point2D(300.0, 600.0),
+        Point2D(200.0, 200.0),
+		Point2D(400.0, 250.0),
+		Point2D(800.0, 200.0),
+		Point2D(600.0, 600.0)
+	]
 
     var size = 1000
-    var system = $('#system3').get(0)
-    var context = system.getContext('2d')
-    system.width = size
-    system.height = size
-    context.clearRect(0, 0, size, size)
-    context.fillStyle = 'blue'
+    var canvas = Canvas('#system3', size, size)
 
+	var dot_path = canvas.Path({color: 'blue'})
     for(var i = 0; i < data.length; i++) {
-        context.beginPath()
-        context.arc(data[i].x, data[i].y, 4, 0, 2 * Math.PI, true);
-        context.fill()
+        dot_path.dot(data[i])
     }
 
-    var [A, Bx, By] = generate_matrix3(data)
-    var Ux = calculate_equation_system(A, Bx)
-    var Uy = calculate_equation_system(A, By)
+    var [ma, vbx, vby] = generate_matrix3(data)
+    var vux = ma.lu(vbx)
+    var vuy = ma.lu(vby)
 
-    var Ex = square_matrix_mul(A, Ux)
-    var Ey = square_matrix_mul(A, Uy)
-    console.assert(vector_norm2(Ex, Bx))
-    console.assert(vector_norm2(Ey, By))
+    var vex = ma.mul(vux)
+    var vey = ma.mul(vuy)
+    console.assert(vex.norm2(vbx) < 0.001)
+    console.assert(vey.norm2(vby) < 0.001)
     
-    context.beginPath()
-    context.moveTo(cx, cy)
+	var path = canvas.Path({color: 'black'})
+    path.move_to(data[0])
     for(var i = 0; i < data.length; i++) {
         var j = 4 * i
-        var ax = Ux[j+0]
-        var bx = Ux[j+1]
-        var cx = Ux[j+2]
-        var dx = Ux[j+3]
-        var ay = Uy[j+0]
-        var by = Uy[j+1]
-        var cy = Uy[j+2]
-        var dy = Uy[j+3]
+        var ax = vux.data[j+0]
+        var bx = vux.data[j+1]
+        var cx = vux.data[j+2]
+        var dx = vux.data[j+3]
+        var ay = vuy.data[j+0]
+        var by = vuy.data[j+1]
+        var cy = vuy.data[j+2]
+        var dy = vuy.data[j+3]
         for(var t = 0; t < 1; t += 0.05) {
             var x = (ax*t*t*t) + (bx*t*t) + (cx*t) + dx
             var y = (ay*t*t*t) + (by*t*t) + (cy*t) + dy
-            context.lineTo(x, y)
+            path.line_to(Point2D(x, y))
         }
-        context.lineTo(data[(i+1)%data.length].x, data[(i+1)%data.length].y)
+        path.line_to(data[(i+1)%data.length])
     }
-    context.stroke()
+    path.stroke()
 }
-test_calculate_equation_system()
 render_spline2()
 render_spline3()
 render_katex()
