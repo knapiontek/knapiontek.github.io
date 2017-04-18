@@ -56,28 +56,28 @@
     _that.Path = function(style) {
         var that = {}
 
-		that.context = _that.context
+        that.context = _that.context
         that.context.beginPath()
 
-		if(style) {
-			if(style.width) {
-				that.context.lineWidth = style.width
-			}
-			if(style.dash) {
-				that.context.setLineDash(style.dash)
-			}
-			if(style.color) {
-				that.context.strokeStyle = style.color
-				that.context.fillStyle = style.color
-			}
-		}
+        if(style) {
+            if(style.width) {
+                that.context.lineWidth = style.width
+            }
+            if(style.dash) {
+                that.context.setLineDash(style.dash)
+            }
+            if(style.color) {
+                that.context.strokeStyle = style.color
+                that.context.fillStyle = style.color
+            }
+        }
 
         that.style = function() {
-			return {
-				width: that.context.lineWidth,
-				dash: that.context.getLineDash(),
-				color: that.context.strokeStyle
-			}
+            return {
+                width: that.context.lineWidth,
+                dash: that.context.getLineDash(),
+                color: that.context.strokeStyle
+            }
         }
 
         that.move_to = function(pt) {
@@ -131,9 +131,16 @@
             that.context.stroke()
         }
 
-        that.dot = function(pt) {
+        that.dot = function(pt, _radius, color) {
+            var radius = 5
+            if(_radius) {
+                radius = _radius
+            }
+            if(color) {
+                that.context.fillStyle = color
+            }
             that.context.beginPath()
-            that.context.arc(pt.x, pt.y, 5, 0, 2*Math.PI)
+            that.context.arc(pt.x, pt.y, radius, 0, 2*Math.PI)
             that.context.fill()
         }
 
@@ -153,12 +160,20 @@
 function Point2D(x, y) {
     var that = {x: x, y: y}
 
-    that.add = function(pt) {
-        return Point2D(that.x + pt.x, that.y + pt.y)
+    that.add = function(arg) {
+        if($.isNumeric(arg)) {
+            return Point2D(that.x + arg, that.y + arg)
+        } else {
+            return Point2D(that.x + arg.x, that.y + arg.y)
+        }
     }
 
-    that.sub = function(pt) {
-        return Point2D(that.x - pt.x, that.y - pt.y)
+    that.sub = function(arg) {
+        if($.isNumeric(arg)) {
+            return Point2D(that.x - arg, that.y - arg)
+        } else {
+            return Point2D(that.x - arg.x, that.y - arg.y)
+        }
     }
 
     that.mul = function(no) {
@@ -207,18 +222,30 @@ function Vector(arg) {
         console.assert(false)
     }
 
-    that.add = function(vec) {
-        console.assert(that.data.length == vec.data.length)
-        for(var i = 0; i < that.data.length; i++) {
-            that.data[i] += vec[i]
+    that.add = function(arg) {
+        if($.isNumeric(arg)) {
+            for(var i = 0; i < that.data.length; i++) {
+                that.data[i] += arg
+            }
+        } else {
+            console.assert(that.data.length == arg.data.length)
+            for(var i = 0; i < that.data.length; i++) {
+                that.data[i] += arg[i]
+            }
         }
         return that
     }
 
-    that.sub = function(vec) {
-        console.assert(that.data.length == vec.data.length)
-        for(var i = 0; i < that.data.length; i++) {
-            that.data[i] -= vec[i]
+    that.sub = function(arg) {
+        if($.isNumeric(arg)) {
+            for(var i = 0; i < that.data.length; i++) {
+                that.data[i] -= arg
+            }
+        } else {
+            console.assert(that.data.length == arg.data.length)
+            for(var i = 0; i < that.data.length; i++) {
+                that.data[i] -= arg[i]
+            }
         }
         return that
     }

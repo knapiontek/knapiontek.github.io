@@ -1,21 +1,20 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
 <link rel='stylesheet' href='common.css'>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js' integrity='sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s' crossorigin='anonymous'></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
-<script src='common.js'></script>
+<script src='util.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 <style>
-canvas {
-    padding-left: 0;
-    padding-right: 0;
+#field1_canvas, #field2_canvas, #_rot1_canvas, #_rot2_canvas {
+    position: relative;
+
+    width: 70%;
     margin-left: auto;
     margin-right: auto;
     display: block;
-    width: 70%;
-    margin: 0 auto;
     border: thin solid;
 }
 </style>
@@ -42,11 +41,11 @@ A =
 y \\ -x \\ 0
 \end{bmatrix}
 </div>
-<div><canvas id='field1_canvas'></div>
+<div id='field1_canvas'></div>
 
 <h3>Rotation</h3>
-<div class='math'>\nabla \times A</div>
-<div><canvas id='_rot1_canvas'></div>
+<div class='math'>\nabla\times A</div>
+<div id='_rot1_canvas'></div>
 
 <h3>Vector Field</h3>
 <div class='math'>
@@ -55,96 +54,77 @@ A =
 y^2 \\ x \\ 0
 \end{bmatrix}
 </div>
-<div><canvas id='field2_canvas'></div>
+<div id='field2_canvas'></div>
 
 <h3>Rotation</h3>
 <div class='math'>\nabla \times A</div>
-<div><canvas id='_rot2_canvas'></div>
+<div id='_rot2_canvas'></div>
+
+</div>
 
 <script>
-function field1(x, y) {
-    return point(2*y, -2*x)
+function field1(pt) {
+    return Point2D(2*pt.y, -2*pt.x)
 }
-function field2(x, y) {
-    return point(y*y/2, x)
+function field2(pt) {
+    return Point2D(pt.y*pt.y/2, pt.x)
 }
-function rot(x, y, field_func) {
+function rot(pt, field_func) {
     var d = 0.1
-    var v1 = field_func(x-d, y-d)
-    var v2 = field_func(x+d, y+d)
+    var v1 = field_func(pt.sub(d))
+    var v2 = field_func(pt.add(d))
     return (v1.y - v2.y)/(2*d) - (v1.x - v2.x)/(2*d)
 }
-function render_field(field_canvas, field_func) {
+function render_field(anchor, field_func) {
     var size = 700
+    var canvas = Canvas(anchor, size, size)
 
-    var field_context = field_canvas.getContext('2d')
-    field_canvas.width = size
-    field_canvas.height = size
-    field_context.clearRect(0, 0, size, size)
-
+    var path = canvas.Path()
+    var center = Point2D(size, size).div(2)
     for(var x = -5; x <= 5; x++) {
         for(var y = -5; y <= 5; y++) {
-            var center = point(size, size)
-            center = point_div_no(center, 2)
-            var start = point(x, y)
-            start = point_mul_no(start, 70)
-            start = point_add(center, start)
-
-            var field = field_func(x, y)
-            field = point_mul_no(field, 7)
-            var end = point_add(start, field)
-            arrow(field_context, start, end)
+            var pt = Point2D(x, y)
+            var start = pt.mul(70).add(center)
+            var end = field_func(pt).mul(7).add(start)
+            path.pike_line(start, end)
         }
     }
 }
-function render_rot(rot_canvas, field_func) {
+function render_rot(anchor, field_func) {
     var size = 700
-
-    var rot_context = rot_canvas.getContext('2d')
-    rot_canvas.width = size
-    rot_canvas.height = size
-    rot_context.clearRect(0, 0, size, size)
+    var canvas = Canvas(anchor, size, size)
 
     var d = 1.0
+    var path = canvas.Path()
+    var center = Point2D(size, size).div(2)
     for(var x = -5; x <= 5; x+=d) {
         for(var y = -5; y <= 5; y+=d) {
-            var center = point(size, size)
-            center = point_div_no(center, 2)
-            var start = point(x, y)
-            start = point_mul_no(start, 70)
-            start = point_add(center, start)
+            var pt = Point2D(x, y)
+            var start = pt.mul(70).add(center)
 
-            var _rot = rot(x, y, field_func)
+            var _rot = rot(pt, field_func)
+            var color = 'blue'
             if(_rot < 0) {
-                _rot = -_rot
-                rot_context.fillStyle = 'green'
+                path.dot(start, -2*_rot, 'green')
             } else {
-                rot_context.fillStyle = 'blue'
+                path.dot(start, 2*_rot, 'blue')
             }
 
-            rot_context.beginPath()
-            rot_context.arc(start.x, start.y, 2*_rot, 0, 2*Math.PI, true)
-            rot_context.fill()
         }
     }
 }
 function render_field1() {
-    var field_canvas = $('#field1_canvas').get(0)
-    render_field(field_canvas, field1)
-
-    var rot_canvas = $('#_rot1_canvas').get(0)
-    render_rot(rot_canvas, field1)
+    render_field('#field1_canvas', field1)
+    render_rot('#_rot1_canvas', field1)
 }
 function render_field2() {
-    var field_canvas = $('#field2_canvas').get(0)
-    render_field(field_canvas, field2)
-
-    var rot_canvas = $('#_rot2_canvas').get(0)
-    render_rot(rot_canvas, field2)
+    render_field('#field2_canvas', field2)
+    render_rot('#_rot2_canvas', field2)
 }
 render_field1()
 render_field2()
 render_katex()
 </script>
+
 </body>
 </html>

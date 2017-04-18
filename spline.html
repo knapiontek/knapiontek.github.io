@@ -258,17 +258,17 @@ function generate_matrix2(data) {
 }
 function render_spline2() {
     var data = [
-		Point2D(300.0, 300.0),
-		Point2D(200.0, 200.0),
-		Point2D(400.0, 450.0),
-		Point2D(600.0, 800.0),
-		Point2D(600.0, 600.0)
-	]
+        Point2D(300.0, 300.0),
+        Point2D(200.0, 200.0),
+        Point2D(400.0, 450.0),
+        Point2D(600.0, 800.0),
+        Point2D(600.0, 600.0)
+    ]
 
     var size = 1000
     var canvas = Canvas('#system2', size, size)
 
-	var dot_path = canvas.Path({color: 'blue'})
+    var dot_path = canvas.Path({color: 'blue'})
     for(var i = 0; i < data.length; i++) {
         dot_path.dot(data[i])
     }
@@ -282,7 +282,7 @@ function render_spline2() {
     console.assert(vex.norm2(vbx) < 0.001)
     console.assert(vey.norm2(vby) < 0.001)
     
-	var path = canvas.Path({color: 'black'})
+    var path = canvas.Path({color: 'black'})
     path.move_to(data[0])
     for(var i = 0; i < data.length; i++) {
         var j = 3 * i
@@ -295,7 +295,7 @@ function render_spline2() {
         for(var t = 0; t < 1; t += 0.05) {
             var x = (ax*t*t) + (bx*t) + cx
             var y = (ay*t*t) + (by*t) + cy
-			path.line_to(Point2D(x, y))
+            path.line_to(Point2D(x, y))
         }
         path.line_to(data[(i+1)%data.length])
     }
@@ -334,17 +334,17 @@ function generate_matrix3(data) {
 }
 function render_spline3() {
     var data = [
-		Point2D(300.0, 600.0),
+        Point2D(300.0, 600.0),
         Point2D(200.0, 200.0),
-		Point2D(400.0, 250.0),
-		Point2D(800.0, 200.0),
-		Point2D(600.0, 600.0)
-	]
+        Point2D(400.0, 250.0),
+        Point2D(800.0, 200.0),
+        Point2D(600.0, 600.0)
+    ]
 
     var size = 1000
     var canvas = Canvas('#system3', size, size)
 
-	var dot_path = canvas.Path({color: 'blue'})
+    var dot_path = canvas.Path({color: 'blue'})
     for(var i = 0; i < data.length; i++) {
         dot_path.dot(data[i])
     }
@@ -358,7 +358,7 @@ function render_spline3() {
     console.assert(vex.norm2(vbx) < 0.001)
     console.assert(vey.norm2(vby) < 0.001)
     
-	var path = canvas.Path({color: 'black'})
+    var path = canvas.Path({color: 'black'})
     path.move_to(data[0])
     for(var i = 0; i < data.length; i++) {
         var j = 4 * i
