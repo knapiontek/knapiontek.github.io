@@ -67,19 +67,19 @@ function newton_root() {
             [y, x, -beta]
         ])
         var vb = Vector([rho*(y-x), x*(rho-z)-y, x*y-beta*z])
-        if(vb.norm2(Vector(3)) < 0.001) {
+        if(vb.norm2() < 0.001) {
             console.log('number of iterations: ', i)
             console.log('result: ', JSON.stringify(vu))
             return
         }
         
-        vb = vb.mul(-1)
+        vb.mul(-1)
 
         var vu1 = mj.lu(vb)
         var ve = mj.mul(vu1)
         console.assert(ve.norm2(vb) < 0.001)
 
-        vu = vu.add(vu1)
+        vu.add(vu1)
     }
 }
 function run_calculation() {
@@ -90,18 +90,18 @@ function run_calculation() {
     var rho = 28.0
     var sigma = 10.0
     var beta = 8.0 / 3.0
-    var vu = Vector([0.0001, 0.0001, 0.0001])
+    var vu = Vector([0.0001, 0.0001, 55.0001])
 
     var path = canvas.Path()
-    var [x, y, z] = vu.add(500).data
+    var [x, y, z] = vu.data
     path.move_to(Point2D(y+500, z))
-    for(var i = 0; i < 10000; i++) {
+    for(var i = 0; i < 5000; i++) {
         var [x, y, z] = vu.data
         var vb = Vector([rho*(y-x), x*(rho-z)-y, x*y-beta*z])
-        du = vb.mul(dt)
+        du = vb.dup().mul(dt)
 
-        vu = vu.add(du)
-        var [x, y, z] = vu.mul(20).data
+        vu.add(du)
+        var [x, y, z] = vu.dup().mul(20).data
         path.line_to(Point2D(y+500, z))
     }
     path.stroke()

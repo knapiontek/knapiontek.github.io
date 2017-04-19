@@ -222,6 +222,14 @@ function Vector(arg) {
         console.assert(false)
     }
 
+    that.dup = function() {
+        var data = []
+        for(var i = 0; i < that.data.length; i++) {
+            data[i] = that.data[i]
+        }
+        return Vector(data)
+    }
+
     that.add = function(arg) {
         if($.isNumeric(arg)) {
             for(var i = 0; i < that.data.length; i++) {
@@ -230,7 +238,7 @@ function Vector(arg) {
         } else {
             console.assert(that.data.length == arg.data.length)
             for(var i = 0; i < that.data.length; i++) {
-                that.data[i] += arg[i]
+                that.data[i] += arg.data[i]
             }
         }
         return that
@@ -244,7 +252,7 @@ function Vector(arg) {
         } else {
             console.assert(that.data.length == arg.data.length)
             for(var i = 0; i < that.data.length; i++) {
-                that.data[i] -= arg[i]
+                that.data[i] -= arg.data[i]
             }
         }
         return that
@@ -265,10 +273,17 @@ function Vector(arg) {
     }
 
     that.norm2 = function(vec) {
-        console.assert(that.data.length == vec.data.length)
         var acc = 0.0
-        for(var i = 0; i < that.data.length; i++) {
-            acc += that.data[i]*vec.data[i] - that.data[i]*vec.data[i]
+        if(vec) {
+            console.assert(that.data.length == vec.data.length)
+            for(var i = 0; i < that.data.length; i++) {
+                var diff = that.data[i]-vec.data[i]
+                acc += diff*diff
+            }
+        } else {
+            for(var i = 0; i < that.data.length; i++) {
+                acc += that.data[i]*that.data[i]
+            }
         }
         return acc
     }
@@ -298,6 +313,17 @@ function Matrix(arg, value) {
         that.data = arg
     } else {
         console.assert(false)
+    }
+
+    that.dup = function() {
+        var data = []
+        for(var i1 = 0; i1 < that.data.length; i1++) {
+            data[i1] = []
+            for(var i2 = 0; i2 < that.data.length; i2++) {
+                data[i1][i2] = that.data[i1][i2]
+            }
+        }
+        return Matrix(data)
     }
 
     that.mul = function(vec) {
