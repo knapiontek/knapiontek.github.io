@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
+<link rel='stylesheet' href='common.css'>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js' integrity='sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s' crossorigin='anonymous'></script>
+<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+<script src='util.js'></script>
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+<style>
+#simulation {
+    position: relative;
+
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    border: thin solid;
+}
+</style>
+</head>
+<body>
+<div id='main_page'>
+
+<h4>Poisson Equation</h4>
+<div class='math'>
+\nabla^2u = f(u)
+</div>
+
+<p>Simulation</p>
+<div id='simulation'></div>
+
+</div>
+
+<script>
+function run_calculation(step) {
+    var size = 1000
+    var canvas = Canvas('#simulation', size, size/2)
+
+    var scale_y = 5
+    var scale_x = 100
+    var margin = 10
+    var x1 = margin
+    var x2 = size - margin
+    var y1 = margin
+    var y2 = size/2 - margin
+
+    var axis_path = canvas.Path()
+    axis_path.pike_line(Point2D(x1, y2), Point2D(x1, y1))
+    axis_path.pike_line(Point2D(x1, y2), Point2D(x2, y2))
+
+    var dx = 0.05
+    var solid_path = canvas.Path()
+    solid_path.move_to(Point2D(x1, y2-scale_y*10))
+    for(var x = dx; x1+scale_x*x < x2; x += dx) {
+        var y = x*x + 10
+        solid_path.line_to(Point2D(x1+scale_x*x, y2-scale_y*y))
+    }
+    solid_path.stroke()
+}
+run_calculation()
+render_katex()
+</script>
+
+</body>
+</html>
