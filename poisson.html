@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
@@ -29,7 +29,7 @@
 
 <h4>Numeric Example 1-Dimention</h4>
 <div class='math'>
-\frac{d^2y}{dx^2} = -e^{-x^2}(4x^2 - 2)
+\frac{d^2y}{dx^2} = e^{-x^2}(4x^2 - 2)
 </div>
 
 <p>Integration by parts</p>
@@ -44,7 +44,7 @@ a'b = (ab)' - ab' \\
 <p>Double Integral</p>
 <div class='math'>
 \begin{matrix}
-\frac{dy}{dx} = -\int e^{-x^2}(4x^2-2)dx \\
+\frac{dy}{dx} = \int e^{-x^2}(4x^2-2)dx \\
 \\
 a' = 2e^{-x^2}x & b = 1 \\
 \\
@@ -62,9 +62,9 @@ y = -\int 2e^{-x^2}xdx & c_1 = 0 \\
 \\
 u=-x^2 \Rightarrow du=-2xdx \\
 \\
-y = -e^{-x^2} + c_2 \\
+y = e^{-x^2} + c_2 \\
 \\
-y = -e^{-x^2} & c_2 = 0
+y = e^{-x^2} & c_2 = 0
 \end{matrix}
 </div>
 
@@ -84,19 +84,19 @@ function run_calculation() {
     var margin = 10
     var x1 = margin
     var x2 = size - margin
-	var xm = (x1 + x2) / 2
+    var xm = (x1 + x2) / 2
     var y1 = margin
     var y2 = size/2 - margin
-	var ym = (y1 + 1.4*y2) / 2
+    var ym = (y1 + 1.4*y2) / 2
 
     var axis_path = canvas.Path()
     axis_path.pike_line(Point2D(xm, y2), Point2D(xm, y1))
     axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
-	function evaluate1(x) {
+    function evaluate1(x) {
         var y = Math.pow(Math.E, -x*x)
-		return Point2D(xm+scale_x*x, ym-scale_y*y)
-	}
+        return Point2D(xm+scale_x*x, ym-scale_y*y)
+    }
     var solid_path = canvas.Path()
     solid_path.move_to(evaluate1(-5))
     for(var x=-4; x<5; x+=0.1) {
@@ -104,10 +104,10 @@ function run_calculation() {
     }
     solid_path.stroke()
 
-	function evaluate2(x) {
+    function evaluate2(x) {
         var y = -Math.pow(Math.E, -x*x)*(4*x*x-2)
-		return Point2D(xm+scale_x*x, ym-scale_y*y)
-	}
+        return Point2D(xm+scale_x*x, ym-scale_y*y)
+    }
     var solid_path = canvas.Path({dash:[9,12]})
     solid_path.move_to(evaluate2(-5))
     for(var x=-4; x<5; x+=0.1) {
