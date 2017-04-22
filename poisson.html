@@ -34,31 +34,34 @@
 
 <p>Integration by parts</p>
 <div class='math'>
-\begin{matrix}
-(ab)' = a'b + ab' \\
-a'b = (ab)' - ab' \\
-\int a'b = ab - \int ab'
-\end{matrix}
+\int \frac{du}{dx}v = uv-\int u\frac{dv}{dx}
 </div>
 
 <p>Double Integral</p>
 <div class='math'>
+\frac{dy}{dx} = \int e^{-x^2}(4x^2-2)dx
+</div>
+
+<p>Let's substitute</p>
+<div class='math'>
+\begin{cases}
+u=e^{-x^2} \Rightarrow \frac{du}{dx} = -2xe^{-x^2} \Rightarrow du=-2xe^{-x^2}dx \\
+v=-2x
+\end{cases}
+</div>
+
+<div class='math'>
+\begin{aligned}
+\frac{dy}{dx} &= 4\int x^2e^{-x^2} - 2\int e^{-x^2}dx \\
+&= -2xe^{-x^2} + 2\int e^{-x^2}dx - 2\int e^{-x^2}dx \\
+&= -2xe^{-x^2}
+\end{aligned}
+</div>
+
+<p>Second integral</p>
+<div class='math'>
 \begin{matrix}
-\frac{dy}{dx} = \int e^{-x^2}(4x^2-2)dx \\
-\\
-a' = 2e^{-x^2}x & b = 1 \\
-\\
-\int e^{-x^2}(4x^2-2)dx = -4e^{-x^2}x - \int e^{-x^2}(4x^2-2)dx \\
-\\
-\int -2e^{-x^2}x = \int -4xe^{-x^2}x - 2e^{-x^2}
-\\
-\\
-(-2e^{-x^2}x)' = -4xe^{-x^2}x - 2e^{-x^2} = e^{-x^2}(4x^2-2)
-\\
-\\
-\frac{dy}{dx} = -2e^{-x^2}x + c_1 \\
-\\
-y = -\int 2e^{-x^2}xdx & c_1 = 0 \\
+y = \int -2xe^{-x^2}dx & c_1 = 0 \\
 \\
 u=-x^2 \Rightarrow du=-2xdx \\
 \\
@@ -97,9 +100,9 @@ function run_calculation() {
         var y = Math.pow(Math.E, -x*x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
     }
-    var solid_path = canvas.Path()
-    solid_path.move_to(evaluate1(-5))
-    for(var x=-4; x<5; x+=0.1) {
+    var solid_path = canvas.Path({color:'red'})
+    solid_path.move_to(evaluate1(-3))
+    for(var x=-3; x<3; x+=0.1) {
         solid_path.line_to(evaluate1(x))
     }
     solid_path.stroke()
@@ -108,9 +111,9 @@ function run_calculation() {
         var y = -Math.pow(Math.E, -x*x)*(4*x*x-2)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
     }
-    var solid_path = canvas.Path({dash:[9,12]})
-    solid_path.move_to(evaluate2(-5))
-    for(var x=-4; x<5; x+=0.1) {
+    var solid_path = canvas.Path({dash:[9,12], color:'grey'})
+    solid_path.move_to(evaluate2(-3))
+    for(var x=-3; x<3; x+=0.1) {
         solid_path.line_to(evaluate2(x))
     }
     solid_path.stroke()
