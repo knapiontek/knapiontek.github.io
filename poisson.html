@@ -27,22 +27,20 @@
 \nabla^2u = -f
 </div>
 
-<h4>Numeric Example 1-Dimention</h4>
-<div class='math'>
-\frac{d^2y}{dx^2} = e^{-x^2}(4x^2 - 2)
-</div>
-
 <p>Integration by parts</p>
 <div class='math'>
 \int \frac{du}{dx}v = uv-\int u\frac{dv}{dx}
 </div>
 
-<p>Double Integral</p>
+<h4>Numeric Example 1-Dimention</h4>
 <div class='math'>
-\frac{dy}{dx} = \int e^{-x^2}(4x^2-2)dx
+\frac{d^2y}{dx^2} = e^{-x^2}(4x^2 - 2)
 </div>
 
-<p>Let's substitute</p>
+<p>First integral</p>
+<div class='math'>
+c_1 = 0
+</div>
 <div class='math'>
 \begin{cases}
 u=e^{-x^2} \Rightarrow \frac{du}{dx} = -2xe^{-x^2} \Rightarrow du=-2xe^{-x^2}dx \\
@@ -52,23 +50,26 @@ v=-2x
 
 <div class='math'>
 \begin{aligned}
-\frac{dy}{dx} &= 4\int x^2e^{-x^2} - 2\int e^{-x^2}dx \\
-&= -2xe^{-x^2} + 2\int e^{-x^2}dx - 2\int e^{-x^2}dx \\
+\frac{dy}{dx} &= \int e^{-x^2}(4x^2-2)dx \\
+&= \int 4x^2e^{-x^2} - \int 2e^{-x^2}dx \\
+&= -2xe^{-x^2} + \int 2e^{-x^2}dx - \int 2e^{-x^2}dx \\
 &= -2xe^{-x^2}
 \end{aligned}
 </div>
 
 <p>Second integral</p>
 <div class='math'>
-\begin{matrix}
-y = \int -2xe^{-x^2}dx & c_1 = 0 \\
-\\
-u=-x^2 \Rightarrow du=-2xdx \\
-\\
-y = e^{-x^2} + c_2 \\
-\\
-y = e^{-x^2} & c_2 = 0
-\end{matrix}
+c_2 = 0
+</div>
+<div class='math'>
+u=-x^2 \Rightarrow du=-2xdx
+</div>
+
+<div class='math'>
+\begin{aligned}
+y &= \int -2xe^{-x^2}dx \\
+&= e^{-x^2} \\
+\end{aligned}
 </div>
 
 <p>Simulation</p>
