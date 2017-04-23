@@ -107,7 +107,7 @@ y &= \int -2xe^{-x^2}dx \\
 </div>
 
 <p>Simulation</p>
-<p>Press [+] or [-] to change <i class='inmath'>\Delta t=</i><i id='step'>step</i></p>
+<p>Press [+] or [-] to change number of steps: <i id='steps'>steps</i></p>
 <div id='simulation'></div>
 
 </div>
@@ -116,24 +116,23 @@ y &= \int -2xe^{-x^2}dx \\
 function input(x) {
     return Math.pow(Math.E, -x*x)*(4*x*x-2)
 }
-function generate_matrix(scope, dx) {
-    var size = 2*scope/dx+1
-    var ma = Matrix(size)
-    var vb = Vector(size)
+function generate_matrix(steps, dx, shift) {
+    var ma = Matrix(steps)
+    var vb = Vector(steps)
 
-    for(var i = 0; i < size; i++) {
+    for(var i = 0; i < steps; i++) {
         ma.data[i][i] = -2.0
         if(i > 0) ma.data[i][i-1] = 1.0
-        if(i < size-1) ma.data[i][i+1] = 1.0
+        if(i < steps-1) ma.data[i][i+1] = 1.0
 
-        vb.data[i] = dx*dx*input(i*dx-scope)
+        vb.data[i] = dx*dx*input(i*dx - shift)
     }
 
     return [ma, vb]
 }
 var size = 1000
 var canvas = Canvas('#simulation', size, size)
-function run_calculation(step) {
+function run_calculation(steps) {
     canvas.erase()
 
     var scale_y = 280
@@ -151,6 +150,7 @@ function run_calculation(step) {
     axis_path.pike_line(Point2D(xm, y2), Point2D(xm, y1))
     axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
+    // actual solution
     function evaluate1(x) {
         var y = Math.pow(Math.E, -x*x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
@@ -162,6 +162,7 @@ function run_calculation(step) {
     }
     solid_path.stroke()
 
+    // input f function
     function evaluate2(x) {
         var y = input(x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
@@ -173,38 +174,44 @@ function run_calculation(step) {
     }
     dash_path.stroke()
 
-    var scope = 3
-    var dx = step
-    var [ma, vb] = generate_matrix(scope, dx)
+    // finite difference method
+    var shift = 3
+    var dx = 2*shift / (steps-1)
+    var [ma, vb] = generate_matrix(steps, dx, shift)
     var u = ma.lu(vb)
 
-    function evaluate3(x) {
-        return Point2D(xm+scale_x*x, ym-scale_y*u.data[(x+scope)/dx])
+    function evaluate3(i) {
+        console.assert(i < u.data.length)
+        var x = i*dx - shift
+        return Point2D(xm+scale_x*x, ym-scale_y*u.data[i])
     }
     var blue_path = canvas.Path({dash:[], color:'blue'})
-    blue_path.move_to(evaluate3(-scope))
-    for(var x=-scope+dx; x<=scope; x+=dx) {
-        blue_path.line_to(evaluate3(x))
+    blue_path.move_to(evaluate3(0))
+    for(var i = 1; i < steps; i++) {
+        blue_path.line_to(evaluate3(i))
     }
     blue_path.stroke()
 }
-var step = 1.0
-run_calculation(step)
+var steps = 8
+run_calculation(steps)
 render_katex()
-$('#step').text(step)
+$('#steps').text(steps)
 $(window).keydown(function(event) {
     switch(event.which) {
         case 109:
-            step /= 2
+            steps -= 1
             break
         case 107:
-            step *= 2
+            steps += 1
             break
         default:
             return
     }
-    $('#step').text(step.toFixed(4))
-    run_calculation(step)
+    if(steps < 5) {
+        steps = 5
+    }
+    $('#steps').text(steps)
+    run_calculation(steps)
 })
 </script>
 
