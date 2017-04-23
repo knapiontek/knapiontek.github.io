@@ -27,6 +27,40 @@
 \nabla^2u = -f
 </div>
 
+<p>Matrix equation example for 5-steps with boundraries <b class='inmath'>u_0 \rightarrow c_0, u_6  \rightarrow c_6</b> and uniform <i>h</i></p>
+<div class='math'>
+\begin{bmatrix}
+2 & -1 & 0 & 0 & 0 \\
+-1 & 2 & -1 & 0 & 0 \\
+0 & -1 & 2 & -1 & 0 \\
+0 & 0 & -1 & 2 & -1 \\
+0 & 0 & 0 & -1 & 2
+\end{bmatrix}
+\begin{bmatrix}
+u_1 \\
+u_2 \\
+u_3 \\
+u_4 \\
+u_5
+\end{bmatrix}
+=h^2
+\begin{bmatrix}
+f_1 \\
+f_2 \\
+f_3 \\
+f_4 \\
+f_5
+\end{bmatrix}
++
+\begin{bmatrix}
+c_0 \\
+0 \\
+0 \\
+0 \\
+c_6
+\end{bmatrix}
+</div>
+
 <p>Integration by parts</p>
 <div class='math'>
 \int \frac{du}{dx}v = uv-\int u\frac{dv}{dx}
@@ -73,16 +107,36 @@ y &= \int -2xe^{-x^2}dx \\
 </div>
 
 <p>Simulation</p>
+<p>Press [+] or [-] to change <i class='inmath'>\Delta t=</i><i id='step'>step</i></p>
 <div id='simulation'></div>
 
 </div>
 
 <script>
-function run_calculation() {
-    var size = 1000
-    var canvas = Canvas('#simulation', size, size/2)
+function input(x) {
+    return Math.pow(Math.E, -x*x)*(4*x*x-2)
+}
+function generate_matrix(scope, dx) {
+    var size = 2*scope/dx+1
+    var ma = Matrix(size)
+    var vb = Vector(size)
 
-    var scale_y = 150
+    for(var i = 0; i < size; i++) {
+        ma.data[i][i] = -2.0
+        if(i > 0) ma.data[i][i-1] = 1.0
+        if(i < size-1) ma.data[i][i+1] = 1.0
+
+        vb.data[i] = dx*dx*input(i*dx-scope)
+    }
+
+    return [ma, vb]
+}
+var size = 1000
+var canvas = Canvas('#simulation', size, size)
+function run_calculation(step) {
+    canvas.erase()
+
+    var scale_y = 280
     var scale_x = 150
 
     var margin = 10
@@ -90,10 +144,10 @@ function run_calculation() {
     var x2 = size - margin
     var xm = (x1 + x2) / 2
     var y1 = margin
-    var y2 = size/2 - margin
-    var ym = (y1 + 1.4*y2) / 2
+    var y2 = size - margin
+    var ym = (y1 + 0.8*y2) / 2
 
-    var axis_path = canvas.Path()
+    var axis_path = canvas.Path({color:'black'})
     axis_path.pike_line(Point2D(xm, y2), Point2D(xm, y1))
     axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
@@ -109,18 +163,49 @@ function run_calculation() {
     solid_path.stroke()
 
     function evaluate2(x) {
-        var y = -Math.pow(Math.E, -x*x)*(4*x*x-2)
+        var y = input(x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
     }
-    var solid_path = canvas.Path({dash:[9,12], color:'grey'})
-    solid_path.move_to(evaluate2(-3))
+    var dash_path = canvas.Path({dash:[9,12], color:'grey'})
+    dash_path.move_to(evaluate2(-3))
     for(var x=-3; x<3; x+=0.1) {
-        solid_path.line_to(evaluate2(x))
+        dash_path.line_to(evaluate2(x))
     }
-    solid_path.stroke()
+    dash_path.stroke()
+
+    var scope = 3
+    var dx = step
+    var [ma, vb] = generate_matrix(scope, dx)
+    var u = ma.lu(vb)
+
+    function evaluate3(x) {
+        return Point2D(xm+scale_x*x, ym-scale_y*u.data[(x+scope)/dx])
+    }
+    var blue_path = canvas.Path({dash:[], color:'blue'})
+    blue_path.move_to(evaluate3(-scope))
+    for(var x=-scope+dx; x<=scope; x+=dx) {
+        blue_path.line_to(evaluate3(x))
+    }
+    blue_path.stroke()
 }
-run_calculation()
+var step = 1.0
+run_calculation(step)
 render_katex()
+$('#step').text(step)
+$(window).keydown(function(event) {
+    switch(event.which) {
+        case 109:
+            step /= 2
+            break
+        case 107:
+            step *= 2
+            break
+        default:
+            return
+    }
+    $('#step').text(step.toFixed(4))
+    run_calculation(step)
+})
 </script>
 
 </body>
