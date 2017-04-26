@@ -1,4 +1,4 @@
-﻿function Canvas(anchor, size_x, size_y) {
+function Canvas(anchor, size_x, size_y) {
     var _that = {}
 
     _that.anchor = $(anchor)
@@ -303,7 +303,7 @@ function Matrix(arg, value) {
                 that.data[i1][i2] = 0.0
             }
         }
-        
+
         if(value) {
             for(var i = 0; i < size; i++) {
                 that.data[i][i] = value
@@ -383,10 +383,10 @@ function Matrix(arg, value) {
                 acc += mu.data[i1][i2] * vx.data[i2]
             vx.data[i1] = (vz.data[i1] - acc) / mu.data[i1][i1]
         }
-        
+
         return vx
     }
-    
+
     return that
 }
 
@@ -400,6 +400,27 @@ function test_lu() {
 }
 
 function render_katex() {
+    $('math').each(function() {
+        var tex = $(this).text()
+        elem = $(this).get(0)
+        try {
+            katex.render(tex, elem, {displayMode: true})
+        }
+        catch(err) {
+            $(this).html('<span class="error">' + err)
+        }
+    })
+    $('m').each(function() {
+        var tex = $(this).text()
+        elem = $(this).get(0)
+        try {
+            katex.render(tex, elem, {displayMode: false})
+        }
+        catch(err) {
+            $(this).html('<span class="error">' + err)
+        }
+    })
+
     $('.math').each(function() {
         var tex = $(this).text()
         elem = $(this).get(0)

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
@@ -30,9 +30,10 @@
 <div id='main_page'>
 
 <h2>Poisson Equation</h2>
-<math>\nabla^2u = -f</math>
+<math>\nabla^2\vec{u} = f</math>
 
 <h3>1-Dimention</h3>
+<math>\frac{d^2u}{dx} = f(x)</math>
 
 <p>Taylor series approximation</p>
 <math>
@@ -60,7 +61,7 @@ u''(x)&=\lim_{h \to 0}\frac{u_2'(x)-u_1'(x)}{h} \\
 \end{aligned}
 </math>
 
-<p>Euler method algorithm where <i>u_n''=f_n</i></p>
+<p>Euler method algorithm where <m>u_n''=f_n</m></p>
 <math>u_{n-1}-2u_n+u_{n+1}=h^2f_n</math>
 
 <p>Matrix equation example for 5-steps with boundraries <i>u_0 \to c_0, u_6  \to c_6</i> and uniform <i>h</i></p>
@@ -141,18 +142,18 @@ y &= \int -2xe^{-x^2}dx \\
 <div id='simulation'></div>
 
 <h3>2-Dimentions</h3>
+<math>\frac{d^2u}{dx}+\frac{d^2u}{dy} = f(x,y)</math>
 
 <p>Taylor series approximation</p>
 <math>
 \begin{aligned}
-FIXME \\
-u(x-h,y-h)&=u(x,y)-hu'(x,y)+\frac{1}{2}h^2u''(x,y)-\mathcal{O}(h^3) \\
+u''(x)&=\frac{u(x-h)-2u(x)+u(x+h)}{h^2} \\
 \\
-u(x+h,y+h)&=u(x,y)+hu'(x,y)+\frac{1}{2}h^2u''(x,y)+\mathcal{O}(h^3) \\
+u''(y)&=\frac{u(y-h)-2u(y)+u(y+h)}{h^2} \\
 \\
-u(x-h,y-h)+u(x+h,y+h)&=2u(x,y)+h^2u''(x,y) \\
+u''(x,y)&=u''(x)+u''(y) \\
 \\
-u''(x)&=\frac{u(x-h,y)+u(x,y-h)-4u(x,y)+u(x+h,y)+u(x,y+h)}{h^2}
+&=\frac{u(x-h,y)+u(x,y-h)-4u(x,y)+u(x+h,y)+u(x,y+h)}{h^2}
 \end{aligned}
 </math>
 
@@ -169,7 +170,7 @@ u''(x,y)&=\lim_{h\to 0}\frac{u_2'(x,y)-u_1'(x,y)}{h} \\
 \end{aligned}
 </math>
 
-<p>Euler method algorithm where <i>u_{x,y}''=f_{x,y}</i></p>
+<p>Euler method algorithm where <m>u_{x,y}''=f_{x,y}</m></p>
 <math>u_{x-1,y}+u_{x,y-1}-4u_{x,y}+u_{x+1,y}+u_{x,y+1}=h^2f_{x,y}</math>
 
 <p>Simulation</p>
