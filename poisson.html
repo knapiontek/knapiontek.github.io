@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
@@ -10,8 +10,15 @@
 <style>
 #simulation {
     position: relative;
-
-    width: 100%;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    border: thin solid;
+}
+#equipotential {
+    position: relative;
+    width: 80%;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -22,19 +29,48 @@
 <body>
 <div id='main_page'>
 
-<h4>Poisson Equation</h4>
-<div class='math'>
-\nabla^2u = -f
-</div>
+<h2>Poisson Equation</h2>
+<math>\nabla^2u = -f</math>
 
-<p>Matrix equation example for 5-steps with boundraries <b class='inmath'>u_0 \rightarrow c_0, u_6  \rightarrow c_6</b> and uniform <i>h</i></p>
-<div class='math'>
+<h3>1-Dimention</h3>
+
+<p>Taylor series approximation</p>
+<math>
+\begin{aligned}
+u(x-h)&=u(x)-hu'(x)+\frac{1}{2}h^2u''(x)-\mathcal{O}(h^3) \\
+\\
+u(x+h)&=u(x)+hu'(x)+\frac{1}{2}h^2u''(x)+\mathcal{O}(h^3) \\
+\\
+u(x-h)+u(x+h)&=2u(x)+h^2u''(x) \\
+\\
+u''(x)&=\frac{u(x-h)-2u(x)+u(x+h)}{h^2}
+\end{aligned}
+</math>
+
+<p>Approximation by definition</p>
+<math>
+\begin{aligned}
+u_1'(x)&=\lim_{h \to 0}\frac{u(x)-u(x-h)}{h} \\
+\\
+u_2'(x)&=\lim_{h \to 0}\frac{u(x+h)-u(x)}{h} \\
+\\
+u''(x)&=\lim_{h \to 0}\frac{u_2'(x)-u_1'(x)}{h} \\
+\\
+&=\lim_{h \to 0}\frac{u(x-h)-2u(x)+u(x+h)}{h^2}
+\end{aligned}
+</math>
+
+<p>Euler method algorithm where <i>u_n''=f_n</i></p>
+<math>u_{n-1}-2u_n+u_{n+1}=h^2f_n</math>
+
+<p>Matrix equation example for 5-steps with boundraries <i>u_0 \to c_0, u_6  \to c_6</i> and uniform <i>h</i></p>
+<math>
 \begin{bmatrix}
-2 & -1 & 0 & 0 & 0 \\
--1 & 2 & -1 & 0 & 0 \\
-0 & -1 & 2 & -1 & 0 \\
-0 & 0 & -1 & 2 & -1 \\
-0 & 0 & 0 & -1 & 2
+-2 & 1 & 0 & 0 & 0 \\
+1 & -2 & 1 & 0 & 0 \\
+0 & 1 & -2 & 1 & 0 \\
+0 & 0 & 1 & -2 & 1 \\
+0 & 0 & 0 & 1 & -2
 \end{bmatrix}
 \begin{bmatrix}
 u_1 \\
@@ -59,61 +95,89 @@ c_0 \\
 0 \\
 c_6
 \end{bmatrix}
-</div>
+</math>
 
 <p>Integration by parts</p>
-<div class='math'>
-\int \frac{du}{dx}v = uv-\int u\frac{dv}{dx}
-</div>
+<math>\int \frac{du}{dx}v = uv-\int u\frac{dv}{dx}</math>
 
-<h4>Numeric Example 1-Dimention</h4>
-<div class='math'>
-\frac{d^2y}{dx^2} = e^{-x^2}(4x^2 - 2)
-</div>
+<h4>Numeric Example</h4>
+<math>\frac{d^2y}{dx^2} = e^{-x^2}(4x^2 - 2)</math>
 
 <p>First integral</p>
-<div class='math'>
+<math>
 c_1 = 0
-</div>
-<div class='math'>
+</math>
+<math>
 \begin{cases}
-u=e^{-x^2} \Rightarrow \frac{du}{dx} = -2xe^{-x^2} \Rightarrow du=-2xe^{-x^2}dx \\
+u=e^{-x^2} \to \frac{du}{dx} = -2xe^{-x^2} \to du=-2xe^{-x^2}dx \\
 v=-2x
 \end{cases}
-</div>
-
-<div class='math'>
+</math>
+<math>
 \begin{aligned}
 \frac{dy}{dx} &= \int e^{-x^2}(4x^2-2)dx \\
 &= \int 4x^2e^{-x^2} - \int 2e^{-x^2}dx \\
 &= -2xe^{-x^2} + \int 2e^{-x^2}dx - \int 2e^{-x^2}dx \\
 &= -2xe^{-x^2}
 \end{aligned}
-</div>
+</math>
 
 <p>Second integral</p>
-<div class='math'>
+<math>
 c_2 = 0
-</div>
-<div class='math'>
-u=-x^2 \Rightarrow du=-2xdx
-</div>
-
-<div class='math'>
+</math>
+<math>
+u=-x^2 \to du=-2xdx
+</math>
+<math>
 \begin{aligned}
 y &= \int -2xe^{-x^2}dx \\
 &= e^{-x^2} \\
 \end{aligned}
-</div>
+</math>
 
 <p>Simulation</p>
 <p>Press [+] or [-] to change number of steps: <i id='steps'>steps</i></p>
 <div id='simulation'></div>
 
+<h3>2-Dimentions</h3>
+
+<p>Taylor series approximation</p>
+<math>
+\begin{aligned}
+FIXME \\
+u(x-h,y-h)&=u(x,y)-hu'(x,y)+\frac{1}{2}h^2u''(x,y)-\mathcal{O}(h^3) \\
+\\
+u(x+h,y+h)&=u(x,y)+hu'(x,y)+\frac{1}{2}h^2u''(x,y)+\mathcal{O}(h^3) \\
+\\
+u(x-h,y-h)+u(x+h,y+h)&=2u(x,y)+h^2u''(x,y) \\
+\\
+u''(x)&=\frac{u(x-h,y)+u(x,y-h)-4u(x,y)+u(x+h,y)+u(x,y+h)}{h^2}
+\end{aligned}
+</math>
+
+<p>Approximation by definition</p>
+<math>
+\begin{aligned}
+u_1'(x,y)&=\lim_{h\to 0}\frac{u(x,y)-u(x-h,y)}{h}+\lim_{h\to 0}\frac{u(x,y)-u(x,y-h)}{h} \\
+\\
+u_2'(x,y)&=\lim_{h\to 0}\frac{u(x+h,y)-u(x,y)}{h}+\lim_{h\to 0}\frac{u(x,y+h)-u(x,y)}{h} \\
+\\
+u''(x,y)&=\lim_{h\to 0}\frac{u_2'(x,y)-u_1'(x,y)}{h} \\
+\\
+&=\lim_{h\to 0}\frac{u(x-h,y)+u(x,y-h)-4u(x,y)+u(x+h,y)+u(x,y+h)}{h^2}
+\end{aligned}
+</math>
+
+<p>Euler method algorithm where <i>u_{x,y}''=f_{x,y}</i></p>
+<math>u_{x-1,y}+u_{x,y-1}-4u_{x,y}+u_{x+1,y}+u_{x,y+1}=h^2f_{x,y}</math>
+
+<p>Simulation</p>
+<div id='equipotential'></div>
 </div>
 
 <script>
-function input(x) {
+function input1D(x) {
     return Math.pow(Math.E, -x*x)*(4*x*x-2)
 }
 function generate_matrix(steps, dx, shift) {
@@ -125,7 +189,7 @@ function generate_matrix(steps, dx, shift) {
         if(i > 0) ma.data[i][i-1] = 1.0
         if(i < steps-1) ma.data[i][i+1] = 1.0
 
-        vb.data[i] = dx*dx*input(i*dx - shift)
+        vb.data[i] = dx*dx*input1D(i*dx - shift)
     }
 
     return [ma, vb]
@@ -162,9 +226,9 @@ function run_calculation(steps) {
     }
     solid_path.stroke()
 
-    // input f function
+    // input1D f function
     function evaluate2(x) {
-        var y = input(x)
+        var y = input1D(x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
     }
     var dash_path = canvas.Path({dash:[9,12], color:'grey'})
@@ -192,8 +256,42 @@ function run_calculation(steps) {
     }
     blue_path.stroke()
 }
+function input2D(pt) {
+    var r2 = pt.x*pt.x+pt.y*pt.y
+    return Math.pow(Math.E, -r2)*(4*r2-2)
+}
+function run_equipotential() {
+    var size = 1000
+    var canvas = Canvas('#equipotential', size, size)
+
+    var scale = 200
+
+    var margin = 10
+    var x1 = margin
+    var x2 = size - margin
+    var xm = (x1 + x2) / 2
+    var y1 = margin
+    var y2 = size - margin
+    var ym = (y1 + y2) / 2
+
+    var axis_path = canvas.Path({color:'black'})
+    axis_path.pike_line(Point2D(xm, y2), Point2D(xm, y1))
+    axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
+
+    var path = canvas.Path()
+    for(var x = -4; x <= 4; x+=0.2) {
+        for(var y = -4; y <= 4; y+=0.2) {
+            var pt = Point2D(x, y)
+            var loc = pt.mul(scale).add(size/2)
+            var val = 10*input2D(pt)
+            if(val > 0) path.dot(loc, val, 'blue')
+            if(val < 0) path.dot(loc, -val, 'red')
+        }
+    }
+}
 var steps = 8
 run_calculation(steps)
+run_equipotential()
 render_katex()
 $('#steps').text(steps)
 $(window).keydown(function(event) {
@@ -214,6 +312,5 @@ $(window).keydown(function(event) {
     run_calculation(steps)
 })
 </script>
-
 </body>
 </html>
