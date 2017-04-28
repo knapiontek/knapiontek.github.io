@@ -64,7 +64,7 @@ u''(x)&=\lim_{h \to 0}\frac{u_2'(x)-u_1'(x)}{h} \\
 <p>Euler method algorithm where <m>u_n''=f_n</m></p>
 <math>u_{n-1}-2u_n+u_{n+1}=h^2f_n</math>
 
-<p>Matrix equation example for 5-steps with boundraries <i>u_0 \to c_0, u_6  \to c_6</i> and uniform <i>h</i></p>
+<p>Matrix equation example for 5-steps with boundraries <m>u_0 \to c_0, u_6  \to c_6</m> and uniform <i>h</i></p>
 <math>
 \begin{bmatrix}
 -2 & 1 & 0 & 0 & 0 \\
@@ -88,7 +88,7 @@ f_3 \\
 f_4 \\
 f_5
 \end{bmatrix}
-+
+-
 \begin{bmatrix}
 c_0 \\
 0 \\
@@ -142,9 +142,9 @@ y &= \int -2xe^{-x^2}dx \\
 <div id='simulation'></div>
 
 <h3>2-Dimentions</h3>
-<math>\frac{d^2u}{dx}+\frac{d^2u}{dy} = f(x,y)</math>
+<math>\frac{\partial^2u}{\partial x}+\frac{\partial^2u}{\partial y} = f(x,y)</math>
 
-<p>Taylor series approximation</p>
+<p>Taylor series approximation as in 1-Dimention</p>
 <math>
 \begin{aligned}
 u''(x)&=\frac{u(x-h)-2u(x)+u(x+h)}{h^2} \\
@@ -173,12 +173,50 @@ u''(x,y)&=\lim_{h\to 0}\frac{u_2'(x,y)-u_1'(x,y)}{h} \\
 <p>Euler method algorithm where <m>u_{x,y}''=f_{x,y}</m></p>
 <math>u_{x-1,y}+u_{x,y-1}-4u_{x,y}+u_{x+1,y}+u_{x,y+1}=h^2f_{x,y}</math>
 
+<p>Matrix equation example for 3-steps with boundraries equal zero and uniform <i>h</i></p>
+<math>
+\begin{bmatrix}
+-4 & 1 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+1 & -4 & 1 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & 1 & -4 & 1 & 0 & 1 & 0 & 0 & 0 \\
+1 & 0 & 1 & -4 & 1 & 0 & 1 & 0 & 0 \\
+0 & 1 & 0 & 1 & -4 & 1 & 0 & 1 & 0 \\
+0 & 0 & 1 & 0 & 1 & -4 & 1 & 0 & 1 \\
+0 & 0 & 0 & 1 & 0 & 1 & -4 & 1 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 & 1 & -4 & 1 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 1 & -4
+\end{bmatrix}
+\begin{bmatrix}
+u_{11} \\
+u_{12} \\
+u_{13} \\
+u_{21} \\
+u_{22} \\
+u_{23} \\
+u_{31} \\
+u_{32} \\
+u_{33}
+\end{bmatrix}
+=h^2
+\begin{bmatrix}
+f_{11} \\
+f_{12} \\
+f_{13} \\
+f_{21} \\
+f_{22} \\
+f_{23} \\
+f_{31} \\
+f_{32} \\
+f_{33}
+\end{bmatrix}
+</math>
+
 <p>Simulation</p>
 <div id='equipotential'></div>
 </div>
 
 <script>
-function input1D(x) {
+function input_1D(x) {
     return Math.pow(Math.E, -x*x)*(4*x*x-2)
 }
 function generate_matrix(steps, dx, shift) {
@@ -190,7 +228,7 @@ function generate_matrix(steps, dx, shift) {
         if(i > 0) ma.data[i][i-1] = 1.0
         if(i < steps-1) ma.data[i][i+1] = 1.0
 
-        vb.data[i] = dx*dx*input1D(i*dx - shift)
+        vb.data[i] = dx*dx*input_1D(i*dx - shift)
     }
 
     return [ma, vb]
@@ -227,9 +265,9 @@ function run_calculation(steps) {
     }
     solid_path.stroke()
 
-    // input1D f function
+    // input_1D f function
     function evaluate2(x) {
-        var y = input1D(x)
+        var y = input_1D(x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
     }
     var dash_path = canvas.Path({dash:[9,12], color:'grey'})
@@ -257,16 +295,15 @@ function run_calculation(steps) {
     }
     blue_path.stroke()
 }
-function input2D(pt) {
+function solution_2D(pt) {
     var r2 = pt.x*pt.x+pt.y*pt.y
-    return Math.pow(Math.E, -r2)*(4*r2-2)
+    return Math.pow(Math.E, -r2)
 }
 function run_equipotential() {
     var size = 1000
     var canvas = Canvas('#equipotential', size, size)
 
     var scale = 200
-
     var margin = 10
     var x1 = margin
     var x2 = size - margin
@@ -279,14 +316,68 @@ function run_equipotential() {
     axis_path.pike_line(Point2D(xm, y2), Point2D(xm, y1))
     axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
-    var path = canvas.Path()
-    for(var x = -4; x <= 4; x+=0.2) {
-        for(var y = -4; y <= 4; y+=0.2) {
-            var pt = Point2D(x, y)
-            var loc = pt.mul(scale).add(size/2)
-            var val = 10*input2D(pt)
-            if(val > 0) path.dot(loc, val, 'blue')
-            if(val < 0) path.dot(loc, -val, 'red')
+    var d = 0.2
+    var min = -4
+    var max = 4
+    var val_list = [0.1, 0.3, 0.5, 0.7, 0.9]
+
+    var path = canvas.Path({color:'black'})
+    for(var x = min; x <= max; x+=d) {
+        for(var y = min; y <= max; y+=d) {
+            var p1 = Point2D(x-d, y)
+            var p2 = Point2D(x, y)
+            var p3 = Point2D(x, y-d)
+            var p4 = Point2D(x-d, y-d)
+
+            var l1 = p1.mul(scale).add(size/2)
+            var l2 = p2.mul(scale).add(size/2)
+            var l3 = p3.mul(scale).add(size/2)
+            var l4 = p4.mul(scale).add(size/2)
+
+            var v1 = solution_2D(p1)
+            var v2 = solution_2D(p2)
+            var v3 = solution_2D(p3)
+            var v4 = solution_2D(p4)
+
+            for(var i in val_list) {
+                var v0 = val_list[i]
+                var v10 = v1 - v0
+                var v20 = v2 - v0
+                var v30 = v3 - v0
+                var v40 = v4 - v0
+
+                var dot1 = null
+                var dot2 = null
+                if(v10*v20 < 0) {
+                    var pivot = d*(v10)/(v2-v1)
+                    var px = Point2D(x-d-pivot, y)
+                    dot1 = px.mul(scale).add(size/2)
+                }
+                if(v20*v30 < 0) {
+                    var pivot = d*(v20)/(v2-v3)
+                    var py = Point2D(x, y-pivot)
+                    var ly = py.mul(scale).add(size/2)
+                    if(dot1) dot2 = ly
+                    else dot1 = ly
+                }
+                if(v30*v40 < 0) {
+                    var pivot = d*(v30)/(v3-v4)
+                    var px = Point2D(x-pivot, y-d)
+                    var lx = px.mul(scale).add(size/2)
+                    if(dot1) dot2 = lx
+                    else dot1 = lx
+                }
+                if(v40*v10 < 0) {
+                    var pivot = d*(v40)/(v1-v4)
+                    var py = Point2D(x-d, y-d-pivot)
+                    var ly = py.mul(scale).add(size/2)
+                    if(dot1) dot2 = ly
+                    else dot1 = ly
+                }
+                if(dot1 && dot2) {
+                    path.line(dot1, dot2)
+                }
+            }
         }
     }
 }
