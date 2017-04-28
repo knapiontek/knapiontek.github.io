@@ -319,7 +319,7 @@ function run_equipotential() {
     var d = 0.2
     var min = -4
     var max = 4
-    var val_list = [0.1, 0.3, 0.5, 0.7, 0.9]
+    var val_list = [0.001, 0.1, 0.3, 0.5, 0.7, 0.9, 0.999]
 
     var path = canvas.Path({color:'black'})
     for(var x = min; x <= max; x+=d) {
@@ -328,11 +328,6 @@ function run_equipotential() {
             var p2 = Point2D(x, y)
             var p3 = Point2D(x, y-d)
             var p4 = Point2D(x-d, y-d)
-
-            var l1 = p1.mul(scale).add(size/2)
-            var l2 = p2.mul(scale).add(size/2)
-            var l3 = p3.mul(scale).add(size/2)
-            var l4 = p4.mul(scale).add(size/2)
 
             var v1 = solution_2D(p1)
             var v2 = solution_2D(p2)
@@ -346,35 +341,31 @@ function run_equipotential() {
                 var v30 = v3 - v0
                 var v40 = v4 - v0
 
-                var dot1 = null
+                var dots = []
                 var dot2 = null
                 if(v10*v20 < 0) {
                     var pivot = d*(v10)/(v2-v1)
                     var px = Point2D(x-d-pivot, y)
-                    dot1 = px.mul(scale).add(size/2)
+                    dots = dots.concat(px)
                 }
                 if(v20*v30 < 0) {
                     var pivot = d*(v20)/(v2-v3)
                     var py = Point2D(x, y-pivot)
-                    var ly = py.mul(scale).add(size/2)
-                    if(dot1) dot2 = ly
-                    else dot1 = ly
+                    dots = dots.concat(py)
                 }
                 if(v30*v40 < 0) {
                     var pivot = d*(v30)/(v3-v4)
                     var px = Point2D(x-pivot, y-d)
-                    var lx = px.mul(scale).add(size/2)
-                    if(dot1) dot2 = lx
-                    else dot1 = lx
+                    dots = dots.concat(px)
                 }
                 if(v40*v10 < 0) {
                     var pivot = d*(v40)/(v1-v4)
                     var py = Point2D(x-d, y-d-pivot)
-                    var ly = py.mul(scale).add(size/2)
-                    if(dot1) dot2 = ly
-                    else dot1 = ly
+                    dots = dots.concat(py)
                 }
-                if(dot1 && dot2) {
+                if(dots.length == 2) {
+                    var dot1 = dots[0].mul(scale).add(size/2)
+                    var dot2 = dots[1].mul(scale).add(size/2)
                     path.line(dot1, dot2)
                 }
             }
