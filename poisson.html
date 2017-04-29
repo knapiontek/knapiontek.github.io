@@ -8,7 +8,7 @@
 <script src='util.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 <style>
-#simulation {
+#simulation1D {
     position: relative;
     width: 80%;
     margin-left: auto;
@@ -16,7 +16,7 @@
     display: block;
     border: thin solid;
 }
-#equipotential {
+#simulation2D {
     position: relative;
     width: 80%;
     margin-left: auto;
@@ -138,8 +138,8 @@ y &= \int -2xe^{-x^2}dx \\
 </math>
 
 <p>Simulation</p>
-<p>Press [+] or [-] to change number of steps: <i id='steps1'>steps</i></p>
-<div id='simulation'></div>
+<p>Press [1] and follow [+] or [-] to change number of steps: <i id='steps1'>steps</i></p>
+<div id='simulation1D'></div>
 
 <h3>2-Dimentions</h3>
 <math>\frac{\partial^2u}{\partial x}+\frac{\partial^2u}{\partial y} = f(x,y)</math>
@@ -212,14 +212,15 @@ f_{33}
 </math>
 
 <p>Simulation</p>
-<div id='equipotential'></div>
+<p>Press [2] and follow [+] or [-] to change number of steps: <i id='steps2'>steps</i></p>
+<div id='simulation2D'></div>
 </div>
 
 <script>
 function source_1D(x) {
     return Math.pow(Math.E, -x*x)*(4*x*x-2)
 }
-function generate_matrix1(steps, dx, shift) {
+function generate_matrix1D(steps, dx, shift) {
     var ma = Matrix(steps)
     var vb = Vector(steps)
 
@@ -233,23 +234,23 @@ function generate_matrix1(steps, dx, shift) {
 
     return [ma, vb]
 }
-var size = 1000
-var canvas = Canvas('#simulation', size, size)
-function run_calculation1(steps) {
-    canvas.erase()
+var size1D = 1000
+var canvas1D = Canvas('#simulation1D', size1D, size1D)
+function run_calculation1D(steps) {
+    canvas1D.erase()
 
     var scale_y = 280
     var scale_x = 150
 
     var margin = 10
     var x1 = margin
-    var x2 = size - margin
+    var x2 = size1D - margin
     var xm = (x1 + x2) / 2
     var y1 = margin
-    var y2 = size - margin
+    var y2 = size1D - margin
     var ym = (y1 + 0.8*y2) / 2
 
-    var axis_path = canvas.Path({color:'black'})
+    var axis_path = canvas1D.Path({color:'black'})
     axis_path.pike_line(Point2D(xm, y2), Point2D(xm, y1))
     axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
@@ -258,7 +259,7 @@ function run_calculation1(steps) {
         var y = Math.pow(Math.E, -x*x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
     }
-    var solid_path = canvas.Path({color:'red'})
+    var solid_path = canvas1D.Path({color:'red'})
     solid_path.move_to(exact_solution_1D(-3))
     for(var x=-3; x<3; x+=0.1) {
         solid_path.line_to(exact_solution_1D(x))
@@ -270,7 +271,7 @@ function run_calculation1(steps) {
         var y = source_1D(x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
     }
-    var dash_path = canvas.Path({dash:[9,12], color:'grey'})
+    var dash_path = canvas1D.Path({dash:[9,12], color:'grey'})
     dash_path.move_to(scaled_source_1D(-3))
     for(var x=-3; x<3; x+=0.1) {
         dash_path.line_to(scaled_source_1D(x))
@@ -280,7 +281,7 @@ function run_calculation1(steps) {
     // finite difference method
     var shift = 3
     var dx = 2*shift / (steps-1)
-    var [ma, vb] = generate_matrix1(steps, dx, shift)
+    var [ma, vb] = generate_matrix1D(steps, dx, shift)
     var u = ma.lu(vb)
 
     function numerical_solution_1D(i) {
@@ -288,31 +289,42 @@ function run_calculation1(steps) {
         var x = i*dx - shift
         return Point2D(xm+scale_x*x, ym-scale_y*u.data[i])
     }
-    var blue_path = canvas.Path({dash:[], color:'blue'})
+    var blue_path = canvas1D.Path({dash:[], color:'blue'})
     blue_path.move_to(numerical_solution_1D(0))
     for(var i = 1; i < steps; i++) {
         blue_path.line_to(numerical_solution_1D(i))
     }
     blue_path.stroke()
 }
-function exact_solution_2D(pt) {
-    var r2 = pt.x*pt.x+pt.y*pt.y
-    return Math.pow(Math.E, -r2)
+function generate_matrix2D(steps, dx, shift) {
+    var ma = Matrix(steps)
+    var vb = Vector(steps)
+
+    for(var i = 0; i < steps; i++) {
+        ma.data[i][i] = -2.0
+        if(i > 0) ma.data[i][i-1] = 1.0
+        if(i < steps-1) ma.data[i][i+1] = 1.0
+
+        vb.data[i] = 1
+    }
+
+    return [ma, vb]
 }
-function run_equipotential() {
-    var size = 1000
-    var canvas = Canvas('#equipotential', size, size)
+var size2D = 1000
+var canvas2D = Canvas('#simulation2D', size2D, size2D)
+function run_calculation2D(steps) {
+    canvas2D.erase()
 
     var scale = 200
     var margin = 10
     var x1 = margin
-    var x2 = size - margin
+    var x2 = size2D - margin
     var xm = (x1 + x2) / 2
     var y1 = margin
-    var y2 = size - margin
+    var y2 = size2D - margin
     var ym = (y1 + y2) / 2
 
-    var axis_path = canvas.Path({color:'black'})
+    var axis_path = canvas2D.Path({color:'black'})
     axis_path.pike_line(Point2D(xm, y2), Point2D(xm, y1))
     axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
@@ -321,7 +333,12 @@ function run_equipotential() {
     var max = 4
     var val_list = [0.001, 0.1, 0.3, 0.5, 0.7, 0.9, 0.999]
 
-    var path = canvas.Path({color:'black'})
+    function exact_solution_2D(pt) {
+        var r2 = pt.x*pt.x+pt.y*pt.y
+        return Math.pow(Math.E, -r2)
+    }
+
+    var path = canvas2D.Path({color:'black'})
     for(var x = min; x <= max; x+=d) {
         for(var y = min; y <= max; y+=d) {
             var p1 = Point2D(x-d, y)
@@ -364,8 +381,8 @@ function run_equipotential() {
                     dots = dots.concat(py)
                 }
                 if(dots.length == 2) {
-                    var dot1 = dots[0].mul(scale).add(size/2)
-                    var dot2 = dots[1].mul(scale).add(size/2)
+                    var dot1 = dots[0].mul(scale).add(size2D/2)
+                    var dot2 = dots[1].mul(scale).add(size2D/2)
                     path.line(dot1, dot2)
                 }
             }
@@ -374,26 +391,45 @@ function run_equipotential() {
 }
 var mode = 1
 var steps1 = 8
-run_calculation1(steps1)
-run_equipotential()
+var steps2 = 8
+run_calculation1D(steps1)
+run_calculation2D(steps2)
 render_katex()
 $('#steps1').text(steps1)
+$('#steps2').text(steps2)
 $(window).keydown(function(event) {
     switch(event.which) {
+        case 49:
+            mode = 1
+            break
+        case 50:
+            mode = 2
+            break
         case 109:
-            steps1 -= 1
+            if(mode == 1) steps1 -= 1
+            if(mode == 2) steps2 -= 1
             break
         case 107:
-            steps1 += 1
+            if(mode == 1) steps1 += 1
+            if(mode == 2) steps2 += 1
             break
         default:
             return
     }
-    if(steps1 < 5) {
-        steps1 = 5
+    if(mode == 1) {
+        if(steps1 < 5) {
+            steps1 = 5
+        }
+        $('#steps1').text(steps1)
+        run_calculation1D(steps1)
     }
-    $('#steps1').text(steps1)
-    run_calculation1(steps1)
+    if(mode == 2) {
+        if(steps2 < 5) {
+            steps2 = 5
+        }
+        $('#steps2').text(steps2)
+        run_calculation2D(steps2)
+    }
 })
 </script>
 </body>
