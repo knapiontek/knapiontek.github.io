@@ -51,11 +51,11 @@ u''(x)&=\frac{u(x-h)-2u(x)+u(x+h)}{h^2}
 <p>Approximation by definition</p>
 <math>
 \begin{aligned}
-u_1'(x)&=\lim_{h \to 0}\frac{u(x)-u(x-h)}{h} \\
+u_-'(x)&=\lim_{h \to 0}\frac{u(x)-u(x-h)}{h} \\
 \\
-u_2'(x)&=\lim_{h \to 0}\frac{u(x+h)-u(x)}{h} \\
+u_+'(x)&=\lim_{h \to 0}\frac{u(x+h)-u(x)}{h} \\
 \\
-u''(x)&=\lim_{h \to 0}\frac{u_2'(x)-u_1'(x)}{h} \\
+u''(x)&=\lim_{h \to 0}\frac{u_+'(x)-u_-'(x)}{h} \\
 \\
 &=\lim_{h \to 0}\frac{u(x-h)-2u(x)+u(x+h)}{h^2}
 \end{aligned}
@@ -101,7 +101,7 @@ c_6
 <p>Integration by parts</p>
 <math>\int \frac{du}{dx}v = uv-\int u\frac{dv}{dx}</math>
 
-<h4>Numeric Example</h4>
+<h4>Numerical Example</h4>
 <math>\frac{d^2y}{dx^2} = e^{-x^2}(4x^2 - 2)</math>
 
 <p>First integral</p>
@@ -138,7 +138,7 @@ y &= \int -2xe^{-x^2}dx \\
 </math>
 
 <p>Simulation</p>
-<p>Press [+] or [-] to change number of steps: <i id='steps'>steps</i></p>
+<p>Press [+] or [-] to change number of steps: <i id='steps1'>steps</i></p>
 <div id='simulation'></div>
 
 <h3>2-Dimentions</h3>
@@ -160,11 +160,11 @@ u''(x,y)&=u''(x)+u''(y) \\
 <p>Approximation by definition</p>
 <math>
 \begin{aligned}
-u_1'(x,y)&=\lim_{h\to 0}\frac{u(x,y)-u(x-h,y)}{h}+\lim_{h\to 0}\frac{u(x,y)-u(x,y-h)}{h} \\
+u_-'(x,y)&=\lim_{h\to 0}\frac{u(x,y)-u(x-h,y)}{h}+\lim_{h\to 0}\frac{u(x,y)-u(x,y-h)}{h} \\
 \\
-u_2'(x,y)&=\lim_{h\to 0}\frac{u(x+h,y)-u(x,y)}{h}+\lim_{h\to 0}\frac{u(x,y+h)-u(x,y)}{h} \\
+u_+'(x,y)&=\lim_{h\to 0}\frac{u(x+h,y)-u(x,y)}{h}+\lim_{h\to 0}\frac{u(x,y+h)-u(x,y)}{h} \\
 \\
-u''(x,y)&=\lim_{h\to 0}\frac{u_2'(x,y)-u_1'(x,y)}{h} \\
+u''(x,y)&=\lim_{h\to 0}\frac{u_+'(x,y)-u_-'(x,y)}{h} \\
 \\
 &=\lim_{h\to 0}\frac{u(x-h,y)+u(x,y-h)-4u(x,y)+u(x+h,y)+u(x,y+h)}{h^2}
 \end{aligned}
@@ -216,10 +216,10 @@ f_{33}
 </div>
 
 <script>
-function input_1D(x) {
+function source_1D(x) {
     return Math.pow(Math.E, -x*x)*(4*x*x-2)
 }
-function generate_matrix(steps, dx, shift) {
+function generate_matrix1(steps, dx, shift) {
     var ma = Matrix(steps)
     var vb = Vector(steps)
 
@@ -228,14 +228,14 @@ function generate_matrix(steps, dx, shift) {
         if(i > 0) ma.data[i][i-1] = 1.0
         if(i < steps-1) ma.data[i][i+1] = 1.0
 
-        vb.data[i] = dx*dx*input_1D(i*dx - shift)
+        vb.data[i] = dx*dx*source_1D(i*dx - shift)
     }
 
     return [ma, vb]
 }
 var size = 1000
 var canvas = Canvas('#simulation', size, size)
-function run_calculation(steps) {
+function run_calculation1(steps) {
     canvas.erase()
 
     var scale_y = 280
@@ -254,48 +254,48 @@ function run_calculation(steps) {
     axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
     // actual solution
-    function evaluate1(x) {
+    function exact_solution_1D(x) {
         var y = Math.pow(Math.E, -x*x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
     }
     var solid_path = canvas.Path({color:'red'})
-    solid_path.move_to(evaluate1(-3))
+    solid_path.move_to(exact_solution_1D(-3))
     for(var x=-3; x<3; x+=0.1) {
-        solid_path.line_to(evaluate1(x))
+        solid_path.line_to(exact_solution_1D(x))
     }
     solid_path.stroke()
 
-    // input_1D f function
-    function evaluate2(x) {
-        var y = input_1D(x)
+    // source_1D f function
+    function scaled_source_1D(x) {
+        var y = source_1D(x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
     }
     var dash_path = canvas.Path({dash:[9,12], color:'grey'})
-    dash_path.move_to(evaluate2(-3))
+    dash_path.move_to(scaled_source_1D(-3))
     for(var x=-3; x<3; x+=0.1) {
-        dash_path.line_to(evaluate2(x))
+        dash_path.line_to(scaled_source_1D(x))
     }
     dash_path.stroke()
 
     // finite difference method
     var shift = 3
     var dx = 2*shift / (steps-1)
-    var [ma, vb] = generate_matrix(steps, dx, shift)
+    var [ma, vb] = generate_matrix1(steps, dx, shift)
     var u = ma.lu(vb)
 
-    function evaluate3(i) {
+    function numerical_solution_1D(i) {
         console.assert(i < u.data.length)
         var x = i*dx - shift
         return Point2D(xm+scale_x*x, ym-scale_y*u.data[i])
     }
     var blue_path = canvas.Path({dash:[], color:'blue'})
-    blue_path.move_to(evaluate3(0))
+    blue_path.move_to(numerical_solution_1D(0))
     for(var i = 1; i < steps; i++) {
-        blue_path.line_to(evaluate3(i))
+        blue_path.line_to(numerical_solution_1D(i))
     }
     blue_path.stroke()
 }
-function solution_2D(pt) {
+function exact_solution_2D(pt) {
     var r2 = pt.x*pt.x+pt.y*pt.y
     return Math.pow(Math.E, -r2)
 }
@@ -329,10 +329,10 @@ function run_equipotential() {
             var p3 = Point2D(x, y-d)
             var p4 = Point2D(x-d, y-d)
 
-            var v1 = solution_2D(p1)
-            var v2 = solution_2D(p2)
-            var v3 = solution_2D(p3)
-            var v4 = solution_2D(p4)
+            var v1 = exact_solution_2D(p1)
+            var v2 = exact_solution_2D(p2)
+            var v3 = exact_solution_2D(p3)
+            var v4 = exact_solution_2D(p4)
 
             for(var i in val_list) {
                 var v0 = val_list[i]
@@ -372,27 +372,28 @@ function run_equipotential() {
         }
     }
 }
-var steps = 8
-run_calculation(steps)
+var mode = 1
+var steps1 = 8
+run_calculation1(steps1)
 run_equipotential()
 render_katex()
-$('#steps').text(steps)
+$('#steps1').text(steps1)
 $(window).keydown(function(event) {
     switch(event.which) {
         case 109:
-            steps -= 1
+            steps1 -= 1
             break
         case 107:
-            steps += 1
+            steps1 += 1
             break
         default:
             return
     }
-    if(steps < 5) {
-        steps = 5
+    if(steps1 < 5) {
+        steps1 = 5
     }
-    $('#steps').text(steps)
-    run_calculation(steps)
+    $('#steps1').text(steps1)
+    run_calculation1(steps1)
 })
 </script>
 </body>
