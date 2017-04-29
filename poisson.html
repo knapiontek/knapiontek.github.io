@@ -336,13 +336,13 @@ function run_equipotential() {
 
             for(var i in val_list) {
                 var v0 = val_list[i]
+
                 var v10 = v1 - v0
                 var v20 = v2 - v0
                 var v30 = v3 - v0
                 var v40 = v4 - v0
 
                 var dots = []
-                var dot2 = null
                 if(v10*v20 < 0) {
                     var pivot = d*(v10)/(v2-v1)
                     var px = Point2D(x-d-pivot, y)
