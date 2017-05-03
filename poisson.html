@@ -178,11 +178,11 @@ u''(x,y)&=\lim_{h\to 0}\frac{u_+'(x,y)-u_-'(x,y)}{h} \\
 \begin{bmatrix}
 -4 & 1 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
 1 & -4 & 1 & 0 & 1 & 0 & 0 & 0 & 0 \\
-0 & 1 & -4 & 1 & 0 & 1 & 0 & 0 & 0 \\
-1 & 0 & 1 & -4 & 1 & 0 & 1 & 0 & 0 \\
+0 & 1 & -4 & 0 & 0 & 1 & 0 & 0 & 0 \\
+1 & 0 & 0 & -4 & 1 & 0 & 1 & 0 & 0 \\
 0 & 1 & 0 & 1 & -4 & 1 & 0 & 1 & 0 \\
-0 & 0 & 1 & 0 & 1 & -4 & 1 & 0 & 1 \\
-0 & 0 & 0 & 1 & 0 & 1 & -4 & 1 & 0 \\
+0 & 0 & 1 & 0 & 1 & -4 & 0 & 0 & 1 \\
+0 & 0 & 0 & 1 & 0 & 0 & -4 & 1 & 0 \\
 0 & 0 & 0 & 0 & 1 & 0 & 1 & -4 & 1 \\
 0 & 0 & 0 & 0 & 0 & 1 & 0 & 1 & -4
 \end{bmatrix}
@@ -226,8 +226,11 @@ function generate_matrix1D(steps, dx, shift) {
 
     for(var i = 0; i < steps; i++) {
         ma.data[i][i] = -2.0
-        if(i-1 > 0) ma.data[i][i-1] = 1.0
-        if(i+1 < steps) ma.data[i][i+1] = 1.0
+
+        if(i-1 >= 0)
+            ma.data[i][i-1] = 1.0
+        if(i+1 < steps)
+            ma.data[i][i+1] = 1.0
 
         vb.data[i] = dx*dx*source_1D(i*dx - shift)
     }
@@ -296,20 +299,29 @@ function run_calculation1D(steps) {
     }
     blue_path.stroke()
 }
-function generate_matrix2D(steps) {
+function generate_matrix2D(steps, dd) {
     var steps2 = steps * steps
     var ma = Matrix(steps2)
     var vb = Vector(steps2)
 
     for(var i = 0; i < steps2; i++) {
         ma.data[i][i] = -4.0
-        if(i-1 > 0) ma.data[i][i-1] = 1.0
-        if(i+1 < steps) ma.data[i][i+1] = 1.0
 
-        if(i-steps-1 > 0) ma.data[i][i-steps-1] = 1.0
-        if(i+steps+1 < steps) ma.data[i][i+steps+1] = 1.0
+        var bound = i % steps
+        if(bound != 0)
+            ma.data[i][i-1] = 1.0
+        if(bound != steps-1)
+            ma.data[i][i+1] = 1.0
 
-        vb.data[i] = 1
+        if(i-steps >= 0)
+            ma.data[i][i-steps] = 1.0
+        if(i+steps < steps2)
+            ma.data[i][i+steps] = 1.0
+
+        if(i < steps2/2)
+			vb.data[i] = dd * dd
+		else
+			vb.data[i] = -dd * dd
     }
 
     return [ma, vb]
@@ -319,7 +331,7 @@ var canvas2D = Canvas('#simulation2D', size2D, size2D)
 function run_calculation2D(steps) {
     canvas2D.erase()
 
-    var scale = 200
+    var scale = 100
     var margin = 10
     var x1 = margin
     var x2 = size2D - margin
@@ -328,40 +340,37 @@ function run_calculation2D(steps) {
     var y2 = size2D - margin
     var ym = (y1 + y2) / 2
 
-    var axis_path = canvas2D.Path({color:'black'})
-    axis_path.pike_line(Point2D(xm, y2), Point2D(xm, y1))
-    axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
-
-    var d = 0.2
-    var min = -4
-    var max = 4
-    var val_list = [0.001, 0.1, 0.3, 0.5, 0.7, 0.9, 0.999]
-
-
     // finite difference method
-    var shift = 3
-    var dx = 2*shift / (steps-1)
-    var [ma, vb] = generate_matrix2D(steps)
+    var shift = 4
+    var dd = 2 * shift / (steps-1)
+    var [ma, vb] = generate_matrix2D(steps, dd)
     var u = ma.lu(vb)
 
-    function exact_solution_2D(pt) {
-        var r2 = pt.x*pt.x+pt.y*pt.y
-        return Math.pow(Math.E, -r2)
+    function solution_2D(pt) {
+		if(pt.x == -1 || pt.y == -1 || pt.x == steps || pt.y == steps) {
+			return 0
+		}
+        console.assert(pt.x + pt.y*steps < u.data.length)
+        return u.data[pt.x + pt.y*steps]
     }
 
     // draw equipotentials
+    var val_list = [-2.0, -1.5, -1.0, -0.5, -0.1, 0.1, 0.5, 1.0, 1.5, 2.0]
     var path = canvas2D.Path({color:'black'})
-    for(var x = min; x <= max; x+=d) {
-        for(var y = min; y <= max; y+=d) {
-            var p1 = Point2D(x-d, y)
-            var p2 = Point2D(x, y)
-            var p3 = Point2D(x, y-d)
-            var p4 = Point2D(x-d, y-d)
+    for(var ix = 0; ix <= steps; ix++) {
+        for(var iy = 0; iy <= steps; iy++) {
+            var x = dd*ix - shift
+            var y = dd*iy - shift
 
-            var v1 = exact_solution_2D(p1)
-            var v2 = exact_solution_2D(p2)
-            var v3 = exact_solution_2D(p3)
-            var v4 = exact_solution_2D(p4)
+            var p1 = Point2D(ix-1, iy)
+            var p2 = Point2D(ix, iy)
+            var p3 = Point2D(ix, iy-1)
+            var p4 = Point2D(ix-1, iy-1)
+
+            var v1 = solution_2D(p1)
+            var v2 = solution_2D(p2)
+            var v3 = solution_2D(p3)
+            var v4 = solution_2D(p4)
 
             for(var i in val_list) {
                 var v0 = val_list[i]
@@ -373,23 +382,23 @@ function run_calculation2D(steps) {
 
                 var dots = []
                 if(v10*v20 < 0) {
-                    var pivot = d*(v10)/(v2-v1)
-                    var px = Point2D(x-d-pivot, y)
+                    var pivot = dd*(v10)/(v2-v1)
+                    var px = Point2D(x-dd-pivot, y)
                     dots = dots.concat(px)
                 }
                 if(v20*v30 < 0) {
-                    var pivot = d*(v20)/(v2-v3)
+                    var pivot = dd*(v20)/(v2-v3)
                     var py = Point2D(x, y-pivot)
                     dots = dots.concat(py)
                 }
                 if(v30*v40 < 0) {
-                    var pivot = d*(v30)/(v3-v4)
-                    var px = Point2D(x-pivot, y-d)
+                    var pivot = dd*(v30)/(v3-v4)
+                    var px = Point2D(x-pivot, y-dd)
                     dots = dots.concat(px)
                 }
                 if(v40*v10 < 0) {
-                    var pivot = d*(v40)/(v1-v4)
-                    var py = Point2D(x-d, y-d-pivot)
+                    var pivot = dd*(v40)/(v1-v4)
+                    var py = Point2D(x-dd, y-dd-pivot)
                     dots = dots.concat(py)
                 }
                 if(dots.length == 2) {
@@ -403,7 +412,7 @@ function run_calculation2D(steps) {
 }
 var mode = 1
 var steps1 = 8
-var steps2 = 8
+var steps2 = 15
 run_calculation1D(steps1)
 run_calculation2D(steps2)
 render_katex()
