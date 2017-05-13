@@ -30,7 +30,7 @@
 <div id='main_page'>
 
 <h2>Poisson Equation</h2>
-<math>\nabla^2\vec{u} = f</math>
+<math>\nabla^2u = f</math>
 
 <h3>1-Dimention</h3>
 <math>\frac{d^2u}{dx} = f(x)</math>
@@ -38,33 +38,33 @@
 <p>Taylor series approximation</p>
 <math>
 \begin{aligned}
-u(x-h)&=u(x)-hu'(x)+\frac{1}{2}h^2u''(x)-\mathcal{O}(h^3) \\
+u(x-h)&=u(x)-h\dot{u}(x)+\frac{1}{2}h^2\ddot{u}(x)-\mathcal{O}(h^3) \\
 \\
-u(x+h)&=u(x)+hu'(x)+\frac{1}{2}h^2u''(x)+\mathcal{O}(h^3) \\
+u(x+h)&=u(x)+h\dot{u}(x)+\frac{1}{2}h^2\ddot{u}(x)+\mathcal{O}(h^3) \\
 \\
-u(x-h)+u(x+h)&=2u(x)+h^2u''(x) \\
+u(x-h)+u(x+h)&=2u(x)+h^2\ddot{u}(x) \\
 \\
-u''(x)&=\frac{u(x-h)-2u(x)+u(x+h)}{h^2}
+\ddot{u}(x)&=\frac{u(x-h)-2u(x)+u(x+h)}{h^2}
 \end{aligned}
 </math>
 
 <p>Approximation by definition</p>
 <math>
 \begin{aligned}
-u_-'(x)&=\lim_{h \to 0}\frac{u(x)-u(x-h)}{h} \\
+\dot{u}_-(x)&=\lim_{h \to 0}\frac{u(x)-u(x-h)}{h} \\
 \\
-u_+'(x)&=\lim_{h \to 0}\frac{u(x+h)-u(x)}{h} \\
+\dot{u}_+(x)&=\lim_{h \to 0}\frac{u(x+h)-u(x)}{h} \\
 \\
-u''(x)&=\lim_{h \to 0}\frac{u_+'(x)-u_-'(x)}{h} \\
+\ddot{u}(x)&=\lim_{h \to 0}\frac{\dot{u}_+(x)-\dot{u}_-(x)}{h} \\
 \\
 &=\lim_{h \to 0}\frac{u(x-h)-2u(x)+u(x+h)}{h^2}
 \end{aligned}
 </math>
 
-<p>Euler method algorithm where <m>u_n''=f_n</m></p>
+<p>Euler method algorithm where <m>\ddot{u_n}=f_n</m></p>
 <math>u_{n-1}-2u_n+u_{n+1}=h^2f_n</math>
 
-<p>Matrix equation example for 5-steps with boundraries <m>u_0 \to c_0, u_6  \to c_6</m> and uniform <i>h</i></p>
+<p>Matrix equation example for 5-nodes with boundraries <m>u_0 \to c_0, u_6  \to c_6</m> and uniform <i>h</i></p>
 <math>
 \begin{bmatrix}
 -2 & 1 & 0 & 0 & 0 \\
@@ -138,7 +138,7 @@ y &= \int -2xe^{-x^2}dx \\
 </math>
 
 <p>Simulation</p>
-<p>Press [1] and follow [+] or [-] to change number of steps: <i id='steps1'>steps</i></p>
+<p>Press [1] and follow [+] or [-] to change number of nodes: <i id='nodes1'>nodes</i></p>
 <div id='simulation1D'></div>
 
 <h3>2-Dimentions</h3>
@@ -147,11 +147,11 @@ y &= \int -2xe^{-x^2}dx \\
 <p>Taylor series approximation as in 1-Dimention</p>
 <math>
 \begin{aligned}
-u''(x)&=\frac{u(x-h)-2u(x)+u(x+h)}{h^2} \\
+\ddot{u}(x)&=\frac{u(x-h)-2u(x)+u(x+h)}{h^2} \\
 \\
-u''(y)&=\frac{u(y-h)-2u(y)+u(y+h)}{h^2} \\
+\ddot{u}(y)&=\frac{u(y-h)-2u(y)+u(y+h)}{h^2} \\
 \\
-u''(x,y)&=u''(x)+u''(y) \\
+\ddot{u}(x,y)&=\ddot{u}(x)+\ddot{u}(y) \\
 \\
 &=\frac{u(x-h,y)+u(x,y-h)-4u(x,y)+u(x+h,y)+u(x,y+h)}{h^2}
 \end{aligned}
@@ -160,20 +160,20 @@ u''(x,y)&=u''(x)+u''(y) \\
 <p>Approximation by definition</p>
 <math>
 \begin{aligned}
-u_-'(x,y)&=\lim_{h\to 0}\frac{u(x,y)-u(x-h,y)}{h}+\lim_{h\to 0}\frac{u(x,y)-u(x,y-h)}{h} \\
+\dot{u}_-(x,y)&=\lim_{h\to 0}\frac{u(x,y)-u(x-h,y)}{h}+\lim_{h\to 0}\frac{u(x,y)-u(x,y-h)}{h} \\
 \\
-u_+'(x,y)&=\lim_{h\to 0}\frac{u(x+h,y)-u(x,y)}{h}+\lim_{h\to 0}\frac{u(x,y+h)-u(x,y)}{h} \\
+\dot{u}_+(x,y)&=\lim_{h\to 0}\frac{u(x+h,y)-u(x,y)}{h}+\lim_{h\to 0}\frac{u(x,y+h)-u(x,y)}{h} \\
 \\
-u''(x,y)&=\lim_{h\to 0}\frac{u_+'(x,y)-u_-'(x,y)}{h} \\
+\ddot{u}(x,y)&=\lim_{h\to 0}\frac{\dot{u}_+(x,y)-\dot{u}_-(x,y)}{h} \\
 \\
 &=\lim_{h\to 0}\frac{u(x-h,y)+u(x,y-h)-4u(x,y)+u(x+h,y)+u(x,y+h)}{h^2}
 \end{aligned}
 </math>
 
-<p>Euler method algorithm where <m>u_{x,y}''=f_{x,y}</m></p>
+<p>Euler method algorithm where <m>\ddot{u}_{x,y}=f_{x,y}</m></p>
 <math>u_{x-1,y}+u_{x,y-1}-4u_{x,y}+u_{x+1,y}+u_{x,y+1}=h^2f_{x,y}</math>
 
-<p>Matrix equation example for 3-steps with boundraries equal zero and uniform <i>h</i></p>
+<p>Matrix equation example for 3-nodes with boundraries equal zero and uniform <i>h</i></p>
 <math>
 \begin{bmatrix}
 -4 & 1 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
@@ -212,7 +212,7 @@ f_{33}
 </math>
 
 <p>Simulation</p>
-<p>Press [2] and follow [+] or [-] to change number of steps: <i id='steps2'>steps</i></p>
+<p>Press [2] and follow [+] or [-] to change number of nodes: <i id='nodes2'>nodes</i></p>
 <div id='simulation2D'></div>
 </div>
 
@@ -220,16 +220,16 @@ f_{33}
 function source_1D(x) {
     return Math.pow(Math.E, -x*x)*(4*x*x-2)
 }
-function generate_matrix1D(steps, dx, shift) {
-    var ma = Matrix(steps)
-    var vb = Vector(steps)
+function generate_matrix1D(nodes, dx, shift) {
+    var ma = Matrix(nodes)
+    var vb = Vector(nodes)
 
-    for(var i = 0; i < steps; i++) {
+    for(var i = 0; i < nodes; i++) {
         ma.data[i][i] = -2.0
 
         if(i-1 >= 0)
             ma.data[i][i-1] = 1.0
-        if(i+1 < steps)
+        if(i+1 < nodes)
             ma.data[i][i+1] = 1.0
 
         vb.data[i] = dx*dx*source_1D(i*dx - shift)
@@ -239,7 +239,7 @@ function generate_matrix1D(steps, dx, shift) {
 }
 var size1D = 1000
 var canvas1D = Canvas('#simulation1D', size1D, size1D)
-function run_calculation1D(steps) {
+function run_calculation1D(nodes) {
     canvas1D.erase()
 
     var scale_y = 280
@@ -283,8 +283,8 @@ function run_calculation1D(steps) {
 
     // finite difference method
     var shift = 3
-    var dx = 2*shift / (steps-1)
-    var [ma, vb] = generate_matrix1D(steps, dx, shift)
+    var dx = 2*shift / (nodes-1)
+    var [ma, vb] = generate_matrix1D(nodes, dx, shift)
     var u = ma.lu(vb)
 
     function numerical_solution_1D(i) {
@@ -294,31 +294,32 @@ function run_calculation1D(steps) {
     }
     var blue_path = canvas1D.Path({dash:[], color:'blue'})
     blue_path.move_to(numerical_solution_1D(0))
-    for(var i = 1; i < steps; i++) {
+    for(var i = 1; i < nodes; i++) {
         blue_path.line_to(numerical_solution_1D(i))
     }
     blue_path.stroke()
 }
-function generate_matrix2D(steps, dd) {
-    var steps2 = steps * steps
-    var ma = Matrix(steps2)
-    var vb = Vector(steps2)
+function generate_matrix2D(nodes, dd) {
+    var nodes2 = nodes * nodes
+    var ma = Matrix(nodes2)
+    var vb = Vector(nodes2)
 
-    for(var i = 0; i < steps2; i++) {
+    for(var i = 0; i < nodes2; i++) {
         ma.data[i][i] = -4.0
 
-        var bound = i % steps
-        if(bound != 0)
+        var x = i % nodes
+        var y = (i / nodes) | 0
+        if(x != 0)
             ma.data[i][i-1] = 1.0
-        if(bound != steps-1)
+        if(x != nodes-1)
             ma.data[i][i+1] = 1.0
 
-        if(i-steps >= 0)
-            ma.data[i][i-steps] = 1.0
-        if(i+steps < steps2)
-            ma.data[i][i+steps] = 1.0
+        if(i-nodes >= 0)
+            ma.data[i][i-nodes] = 1.0
+        if(i+nodes < nodes2)
+            ma.data[i][i+nodes] = 1.0
 
-        if(i < steps2/2)
+        if(x < nodes/1.8 && y < nodes/1.8)
 			vb.data[i] = dd * dd
 		else
 			vb.data[i] = -dd * dd
@@ -328,7 +329,7 @@ function generate_matrix2D(steps, dd) {
 }
 var size2D = 1000
 var canvas2D = Canvas('#simulation2D', size2D, size2D)
-function run_calculation2D(steps) {
+function run_calculation2D(nodes) {
     canvas2D.erase()
 
     var scale = 100
@@ -342,23 +343,23 @@ function run_calculation2D(steps) {
 
     // finite difference method
     var shift = 4
-    var dd = 2 * shift / (steps-1)
-    var [ma, vb] = generate_matrix2D(steps, dd)
+    var dd = 2 * shift / (nodes-1)
+    var [ma, vb] = generate_matrix2D(nodes, dd)
     var u = ma.lu(vb)
 
     function solution_2D(pt) {
-		if(pt.x == -1 || pt.y == -1 || pt.x == steps || pt.y == steps) {
+		if(pt.x == -1 || pt.y == -1 || pt.x == nodes || pt.y == nodes) {
 			return 0
 		}
-        console.assert(pt.x + pt.y*steps < u.data.length)
-        return u.data[pt.x + pt.y*steps]
+        console.assert(pt.x + pt.y*nodes < u.data.length)
+        return u.data[pt.x + pt.y*nodes]
     }
 
     // draw equipotentials
     var val_list = [-2.0, -1.5, -1.0, -0.5, -0.1, 0.1, 0.5, 1.0, 1.5, 2.0]
     var path = canvas2D.Path({color:'black'})
-    for(var ix = 0; ix <= steps; ix++) {
-        for(var iy = 0; iy <= steps; iy++) {
+    for(var ix = 0; ix <= nodes; ix++) {
+        for(var iy = 0; iy <= nodes; iy++) {
             var x = dd*ix - shift
             var y = dd*iy - shift
 
@@ -411,13 +412,13 @@ function run_calculation2D(steps) {
     }
 }
 var mode = 1
-var steps1 = 8
-var steps2 = 15
-run_calculation1D(steps1)
-run_calculation2D(steps2)
+var nodes1 = 8
+var nodes2 = 23
+run_calculation1D(nodes1)
+run_calculation2D(nodes2)
 render_katex()
-$('#steps1').text(steps1)
-$('#steps2').text(steps2)
+$('#nodes1').text(nodes1)
+$('#nodes2').text(nodes2)
 $(window).keydown(function(event) {
     switch(event.which) {
         case 49:
@@ -427,29 +428,29 @@ $(window).keydown(function(event) {
             mode = 2
             break
         case 109:
-            if(mode == 1) steps1 -= 1
-            if(mode == 2) steps2 -= 1
+            if(mode == 1) nodes1 -= 1
+            if(mode == 2) nodes2 -= 1
             break
         case 107:
-            if(mode == 1) steps1 += 1
-            if(mode == 2) steps2 += 1
+            if(mode == 1) nodes1 += 1
+            if(mode == 2) nodes2 += 1
             break
         default:
             return
     }
     if(mode == 1) {
-        if(steps1 < 5) {
-            steps1 = 5
+        if(nodes1 < 5) {
+            nodes1 = 5
         }
-        $('#steps1').text(steps1)
-        run_calculation1D(steps1)
+        $('#nodes1').text(nodes1)
+        run_calculation1D(nodes1)
     }
     if(mode == 2) {
-        if(steps2 < 5) {
-            steps2 = 5
+        if(nodes2 < 5) {
+            nodes2 = 5
         }
-        $('#steps2').text(steps2)
-        run_calculation2D(steps2)
+        $('#nodes2').text(nodes2)
+        run_calculation2D(nodes2)
     }
 })
 </script>
