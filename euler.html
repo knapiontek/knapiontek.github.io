@@ -194,9 +194,8 @@ x_{n+1} = x_n - 2x_n \Delta t - 65y_{n+1} \Delta t
 function run_euler() {
     var size = 700
     var canvas = Canvas('#euler', size, size)
-    var path = canvas.Path()
 
-    path.line(Point2D(0, 0), Point2D(size, size))
+    canvas.line(Point2D(0, 0), Point2D(size, size))
 
     var max = 200
     var middle = Point2D(size, size).div(2)
@@ -209,6 +208,7 @@ function run_euler() {
             .add(middle)
     }
 
+    var path = canvas.Path()
     path.move_to(euler(0))
     for(var i = 0.01; i < 120; i+=0.01) {
         path.line_to(euler(i))
@@ -230,32 +230,31 @@ function run_calculation(step) {
     var y2 = size/2 - margin
     var ym = size/4 - margin
 
-    var axis_path = canvas.Path()
-    axis_path.pike_line(Point2D(x1, y2), Point2D(x1, y1))
-    axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
+    canvas.pike_line(Point2D(x1, y2), Point2D(x1, y1))
+    canvas.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
-	var c = 0.7
-	var alpha = -1.0
-	var beta = 8.0
+    var c = 0.7
+    var alpha = -1.0
+    var beta = 8.0
     var dt = 0.01
 
     var solid_path = canvas.Path()
     solid_path.move_to(Point2D(x1, ym-scale_y*c))
     for(var t = dt; x1+scale_t*t < x2; t += dt) {
-		var y = c*Math.pow(Math.E, alpha*t) * Math.cos(beta*t)
+        var y = c*Math.pow(Math.E, alpha*t) * Math.cos(beta*t)
         solid_path.line_to(Point2D(x1+scale_t*t, ym-scale_y*y))
     }
     solid_path.stroke()
 
-	var x = -0.7 // 1-st derivative at 0
-	var y = 0.7 // function value at 0
+    var x = -0.7 // 1-st derivative at 0
+    var y = 0.7 // function value at 0
     var dt = step
 
     var dash_path = canvas.Path({width:1, dash:[12, 7]})
     dash_path.move_to(Point2D(x1, ym-scale_y*y))
     for(var t = dt; x1+scale_t*t < x2; t += dt) {
-		y = y + x*dt
-		x = x - 2*x*dt - 65*y*dt
+        y = y + x*dt
+        x = x - 2*x*dt - 65*y*dt
         dash_path.line_to(Point2D(x1+scale_t*t, ym-scale_y*y))
     }
     dash_path.stroke()

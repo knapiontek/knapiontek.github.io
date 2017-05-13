@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
@@ -86,37 +86,37 @@ function run_segment() {
     var k = c1 / ua.dot(uc1)
     var po2 = ua.mul(k).add(a1)
 
-    var solid_path = canvas.Path({width:2})
+    var style = {width:2}
 
-    solid_path.line(a1, a2)
-    solid_path.line(b1, b2)
+    canvas.line(a1, a2, style)
+    canvas.line(b1, b2, style)
 
-    var dash_path = canvas.Path({width:1, dash:[12, 7]})
+    var dash_style = {width:1, dash:[12, 7]}
 
-    dash_path.line(a1, pd1)
-    dash_path.line(a2, pd2)
+    canvas.line(a1, pd1, dash_style)
+    canvas.line(a2, pd2, dash_style)
 
-    dash_path.pike_line(b1, a1)
-    dash_path.pike_line(b1, a2)
+    canvas.pike_line(b1, a1, 1, dash_style)
+    canvas.pike_line(b1, a2, 1, dash_style)
 
-    dash_path.dot(po1)
+    canvas.dot(po1)
 
-    var red_path = canvas.Path({color:'red', dash:[]})
-    red_path.circle(po2, 8)
+    var red_style = {stroke_color:'red', dash:[]}
+    canvas.circle(po2, 8, red_style)
 
-    canvas.text('O', po1.add(Point2D(0, 15)))
-    canvas.text('c_1', a1, pd1)
-    canvas.text('c_2', pd2, a2)
-    canvas.text('d_1', b1, pd1)
-    canvas.text('e_1', pd1, po1)
-    canvas.text('e_2', po1, pd2)
+    canvas.tex('O', po1.add(Point2D(0, 15)))
+    canvas.tex('c_1', a1, pd1)
+    canvas.tex('c_2', pd2, a2)
+    canvas.tex('d_1', b1, pd1)
+    canvas.tex('e_1', pd1, po1)
+    canvas.tex('e_2', po1, pd2)
 
-    canvas.text('a_1', a1.add(Point2D(20, -20)))
-    canvas.text('a_2', a2)
-    canvas.text('b_1', b1)
-    canvas.text('b_2', b2)
-    canvas.text('\\vec{v_1}', a1, b1)
-    canvas.text('\\vec{v_2}', b1, a2)
+    canvas.tex('a_1', a1.add(Point2D(20, -20)))
+    canvas.tex('a_2', a2)
+    canvas.tex('b_1', b1)
+    canvas.tex('b_2', b2)
+    canvas.tex('\\vec{v_1}', a1, b1)
+    canvas.tex('\\vec{v_2}', b1, a2)
 }
 
 run_segment()

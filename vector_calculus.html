@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css' integrity='sha384-wE+lCONuEo/QSfLb4AfrSk7HjWJtc4Xc1OiB2/aDBzHzjnlBP4SX7vjErTcwlA8C' crossorigin='anonymous'>
@@ -79,14 +79,13 @@ function render_field(anchor, field_func) {
     var size = 700
     var canvas = Canvas(anchor, size, size)
 
-    var path = canvas.Path()
     var center = Point2D(size, size).div(2)
     for(var x = -5; x <= 5; x++) {
         for(var y = -5; y <= 5; y++) {
             var pt = Point2D(x, y)
             var start = pt.mul(70).add(center)
             var end = field_func(pt).mul(7).add(start)
-            path.pike_line(start, end)
+            canvas.pike_line(start, end)
         }
     }
 }
@@ -95,7 +94,8 @@ function render_rot(anchor, field_func) {
     var canvas = Canvas(anchor, size, size)
 
     var d = 1.0
-    var path = canvas.Path()
+    var blue_style = {fill_color: 'blue'}
+    var green_style = {fill_color: 'green'}
     var center = Point2D(size, size).div(2)
     for(var x = -5; x <= 5; x+=d) {
         for(var y = -5; y <= 5; y+=d) {
@@ -103,11 +103,10 @@ function render_rot(anchor, field_func) {
             var start = pt.mul(70).add(center)
 
             var _rot = rot(pt, field_func)
-            var color = 'blue'
             if(_rot < 0) {
-                path.dot(start, -2*_rot, 'green')
+                canvas.dot(start, -2*_rot, green_style)
             } else {
-                path.dot(start, 2*_rot, 'blue')
+                canvas.dot(start, 2*_rot, blue_style)
             }
 
         }

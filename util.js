@@ -1,29 +1,66 @@
 function Canvas(anchor, size_x, size_y) {
-    var _that = {}
+    var that = {}
 
-    _that.anchor = $(anchor)
-    _that.size_x = size_x
-    _that.size_y = size_y
-    _that.jcanvas = $('<canvas>')
+    that.anchor = $(anchor)
+    that.size_x = size_x
+    that.size_y = size_y
+    that._style = null
+    that.jcanvas = $('<canvas>')
 
-    var canvas = _that.jcanvas.get(0);
+    var canvas = that.jcanvas.get(0);
     canvas.style.width = '100%'
     canvas.width = size_x
     canvas.height = size_y
-    _that.anchor.append(canvas)
+    that.anchor.append(canvas)
 
-    _that.context = canvas.getContext('2d')
-    _that.context.clearRect(0, 0, size_x, size_y)
+    that.context = canvas.getContext('2d')
+    that.context.clearRect(0, 0, size_x, size_y)
 
-    _that.erase = function() {
-        _that.context.lineWidth = 1
-        _that.context.setLineDash([])
-        _that.context.clearRect(0, 0, size_x, size_y)
+    that.erase = function() {
+        that.context.lineWidth = 1
+        that.context.setLineDash([])
+        that.context.clearRect(0, 0, size_x, size_y)
     }
 
-    _that.text = function(text, pt1, pt2) {
-        var x1 = pt1.x * _that.jcanvas.width() / _that.size_x
-        var y1 = pt1.y * _that.jcanvas.height() / _that.size_y
+    that.style = function(style) {
+        if(style) {
+            if(that._style != style) {
+                if(style.width) {
+                    that.context.lineWidth = style.width
+                } else {
+                    style.width = that.context.lineWidth
+                }
+                if(style.dash) {
+                    that.context.setLineDash(style.dash)
+                } else {
+                    style.dash = that.context.getLineDash()
+                }
+                if(style.stroke_color) {
+                    that.context.strokeStyle = style.stroke_color
+                } else {
+                    style.stroke_color = that.context.strokeStyle
+                }
+                if(style.fill_color) {
+                    that.context.fillStyle = style.fill_color
+                } else {
+                    style.fill_color = that.context.fillStyle
+                }
+                that._style = style
+            }
+        } else {
+            that._style = {
+                width: that.context.lineWidth,
+                dash: that.context.getLineDash(),
+                stoke_color: that.context.strokeStyle,
+                fill_color: that.context.fillStyle
+            }
+        }
+        return that._style
+    }
+
+    that.tex = function(text, pt1, pt2) {
+        var x1 = pt1.x * that.jcanvas.width() / that.size_x
+        var y1 = pt1.y * that.jcanvas.height() / that.size_y
 
         var jdiv = $('<div>')
         var div = jdiv.get(0);
@@ -32,11 +69,11 @@ function Canvas(anchor, size_x, size_y) {
         div.style.top = y1 + 'px';
         div.style.z_index = '1'
         katex.render(text, div, {displayMode: false})
-        _that.anchor.append(div)
+        that.anchor.append(div)
 
         if(pt2) {
-            var x2 = pt2.x * _that.jcanvas.width() / _that.size_x
-            var y2 = pt2.y * _that.jcanvas.height() / _that.size_y
+            var x2 = pt2.x * that.jcanvas.width() / that.size_x
+            var y2 = pt2.y * that.jcanvas.height() / that.size_y
 
             var w = jdiv.width()
             var h = jdiv.height()
@@ -53,108 +90,92 @@ function Canvas(anchor, size_x, size_y) {
         }
     }
 
-    _that.Path = function(style) {
-        var that = {}
+    that.pike = function(begin, end, size, style) {
+        var line = {x: end.x - begin.x, y: end.y - begin.y}
+        var len = Math.sqrt((line.x * line.x) + (line.y * line.y))
+        var unit = {x: line.x / len, y: line.y / len}
 
-        that.context = _that.context
+        var v = 15.0
+        var h = 4.0
+        if(size) {
+            v *= size
+            h *= size
+        }
+        var left = {
+            x: end.x - (v * unit.x) + (h * unit.y),
+            y: end.y - (v * unit.y) - (h * unit.x)
+        }
+        var right = {
+            x: end.x - (v * unit.x) - (h * unit.y),
+            y: end.y - (v * unit.y) + (h * unit.x)
+        }
+
+        that.style(style)
+        that.context.moveTo(end.x, end.y)
+        that.context.lineTo(left.x, left.y)
+        that.context.lineTo(right.x, right.y)
+        that.context.fill()
+    }
+
+    that.line = function(begin, end, style) {
+        that.style(style)
+        that.context.moveTo(begin.x, begin.y)
+        that.context.lineTo(end.x, end.y)
+        that.context.stroke()
+    }
+
+    that.pike_line = function(begin, end, size, style) {
+        that.style(style)
+        that.pike(begin, end, size, style)
+        that.context.moveTo(begin.x, begin.y)
+        that.context.lineTo(end.x, end.y)
+        that.context.stroke()
+    }
+
+    that.dot = function(pt, radius, style) {
+        var _radius = 5
+        if(radius) {
+            _radius = radius
+        }
+        that.style(style)
+        that.context.beginPath()
+        that.context.arc(pt.x, pt.y, _radius, 0, 2*Math.PI)
+        that.context.fill()
+    }
+
+    that.circle = function(pt, _radius, style) {
+        that.style(style)
+        that.context.beginPath()
+        that.context.arc(pt.x, pt.y, _radius, 0, 2*Math.PI)
+        that.context.stroke()
+    }
+
+    that.Path = function(style) {
+        var path = {}
+
+        path.style = that.style(style)
+
         that.context.beginPath()
 
-        if(style) {
-            if(style.width) {
-                that.context.lineWidth = style.width
-            }
-            if(style.dash) {
-                that.context.setLineDash(style.dash)
-            }
-            if(style.color) {
-                that.context.strokeStyle = style.color
-                that.context.fillStyle = style.color
-            }
-        }
-
-        that.style = function() {
-            return {
-                width: that.context.lineWidth,
-                dash: that.context.getLineDash(),
-                color: that.context.strokeStyle
-            }
-        }
-
-        that.move_to = function(pt) {
+        path.move_to = function(pt) {
+            that.style(path.style)
             that.context.moveTo(pt.x, pt.y)
         }
 
-        that.line_to = function(pt) {
+        path.line_to = function(pt) {
+            that.style(path.style)
             that.context.lineTo(pt.x, pt.y)
         }
 
-        that.stroke = function(pt) {
+        path.stroke = function() {
             that.context.stroke()
         }
 
-        that.pike = function(begin, end, size) {
-            var line = {x: end.x - begin.x, y: end.y - begin.y}
-            var len = Math.sqrt((line.x * line.x) + (line.y * line.y))
-            var unit = {x: line.x / len, y: line.y / len}
-
-            var v = 15.0
-            var h = 4.0
-            if(size) {
-                v *= size
-                h *= size
-            }
-            var left = {
-                x: end.x - (v * unit.x) + (h * unit.y),
-                y: end.y - (v * unit.y) - (h * unit.x)
-            }
-            var right = {
-                x: end.x - (v * unit.x) - (h * unit.y),
-                y: end.y - (v * unit.y) + (h * unit.x)
-            }
-
-            that.context.moveTo(end.x, end.y)
-            that.context.lineTo(left.x, left.y)
-            that.context.lineTo(right.x, right.y)
-            that.context.fill()
-        }
-
-        that.line = function(begin, end) {
-            that.context.moveTo(begin.x, begin.y)
-            that.context.lineTo(end.x, end.y)
-            that.context.stroke()
-        }
-
-        that.pike_line = function(begin, end, size) {
-            that.pike(begin, end, size)
-            that.context.moveTo(begin.x, begin.y)
-            that.context.lineTo(end.x, end.y)
-            that.context.stroke()
-        }
-
-        that.dot = function(pt, _radius, color) {
-            var radius = 5
-            if(_radius) {
-                radius = _radius
-            }
-            if(color) {
-                that.context.fillStyle = color
-            }
-            that.context.beginPath()
-            that.context.arc(pt.x, pt.y, radius, 0, 2*Math.PI)
-            that.context.fill()
-        }
-
-        that.circle = function(pt, radius) {
-            that.context.beginPath()
-            that.context.arc(pt.x, pt.y, radius, 0, 2*Math.PI)
-            that.context.stroke()
-        }
-
-        return that
+        return path
 
     }
 
-    return _that
+    return that
 }
 
 function Point2D(x, y) {

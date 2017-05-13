@@ -142,9 +142,8 @@ function run_calculation(step) {
     var y2 = size/2 - margin
     var ym = size/4 - margin
 
-    var axis_path = canvas.Path()
-    axis_path.pike_line(Point2D(x1, y2), Point2D(x1, y1))
-    axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
+    canvas.pike_line(Point2D(x1, y2), Point2D(x1, y1))
+    canvas.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
     var omega = Math.sqrt(3)
     var dt = 0.05

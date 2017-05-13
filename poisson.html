@@ -253,16 +253,15 @@ function run_calculation1D(nodes) {
     var y2 = size1D - margin
     var ym = (y1 + 0.8*y2) / 2
 
-    var axis_path = canvas1D.Path({color:'black'})
-    axis_path.pike_line(Point2D(xm, y2), Point2D(xm, y1))
-    axis_path.pike_line(Point2D(x1, ym), Point2D(x2, ym))
+    canvas1D.pike_line(Point2D(xm, y2), Point2D(xm, y1))
+    canvas1D.pike_line(Point2D(x1, ym), Point2D(x2, ym))
 
     // actual solution
     function exact_solution_1D(x) {
         var y = Math.pow(Math.E, -x*x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
     }
-    var solid_path = canvas1D.Path({color:'red'})
+    var solid_path = canvas1D.Path({stroke_color:'red'})
     solid_path.move_to(exact_solution_1D(-3))
     for(var x=-3; x<3; x+=0.1) {
         solid_path.line_to(exact_solution_1D(x))
@@ -274,7 +273,7 @@ function run_calculation1D(nodes) {
         var y = source_1D(x)
         return Point2D(xm+scale_x*x, ym-scale_y*y)
     }
-    var dash_path = canvas1D.Path({dash:[9,12], color:'grey'})
+    var dash_path = canvas1D.Path({dash:[9,12], stroke_color:'grey'})
     dash_path.move_to(scaled_source_1D(-3))
     for(var x=-3; x<3; x+=0.1) {
         dash_path.line_to(scaled_source_1D(x))
@@ -292,7 +291,7 @@ function run_calculation1D(nodes) {
         var x = i*dx - shift
         return Point2D(xm+scale_x*x, ym-scale_y*u.data[i])
     }
-    var blue_path = canvas1D.Path({dash:[], color:'blue'})
+    var blue_path = canvas1D.Path({dash:[], stroke_color:'blue'})
     blue_path.move_to(numerical_solution_1D(0))
     for(var i = 1; i < nodes; i++) {
         blue_path.line_to(numerical_solution_1D(i))
@@ -320,9 +319,9 @@ function generate_matrix2D(nodes, dd) {
             ma.data[i][i+nodes] = 1.0
 
         if(x < nodes/1.8 && y < nodes/1.8)
-			vb.data[i] = dd * dd
-		else
-			vb.data[i] = -dd * dd
+            vb.data[i] = dd * dd
+        else
+            vb.data[i] = -dd * dd
     }
 
     return [ma, vb]
@@ -348,16 +347,16 @@ function run_calculation2D(nodes) {
     var u = ma.lu(vb)
 
     function solution_2D(pt) {
-		if(pt.x == -1 || pt.y == -1 || pt.x == nodes || pt.y == nodes) {
-			return 0
-		}
+        if(pt.x == -1 || pt.y == -1 || pt.x == nodes || pt.y == nodes) {
+            return 0
+        }
         console.assert(pt.x + pt.y*nodes < u.data.length)
         return u.data[pt.x + pt.y*nodes]
     }
 
     // draw equipotentials
     var val_list = [-2.0, -1.5, -1.0, -0.5, -0.1, 0.1, 0.5, 1.0, 1.5, 2.0]
-    var path = canvas2D.Path({color:'black'})
+    var style = {stroke_color:'black'}
     for(var ix = 0; ix <= nodes; ix++) {
         for(var iy = 0; iy <= nodes; iy++) {
             var x = dd*ix - shift
@@ -405,7 +404,7 @@ function run_calculation2D(nodes) {
                 if(dots.length == 2) {
                     var dot1 = dots[0].mul(scale).add(size2D/2)
                     var dot2 = dots[1].mul(scale).add(size2D/2)
-                    path.line(dot1, dot2)
+                    canvas2D.line(dot1, dot2, style)
                 }
             }
         }
@@ -420,6 +419,22 @@ render_katex()
 $('#nodes1').text(nodes1)
 $('#nodes2').text(nodes2)
 $(window).keydown(function(event) {
+    function refresh() {
+        if(mode == 1) {
+            if(nodes1 < 5) {
+                nodes1 = 5
+            }
+            $('#nodes1').text(nodes1)
+            run_calculation1D(nodes1)
+        }
+        if(mode == 2) {
+            if(nodes2 < 5) {
+                nodes2 = 5
+            }
+            $('#nodes2').text(nodes2)
+            run_calculation2D(nodes2)
+        }
+    }
     switch(event.which) {
         case 49:
             mode = 1
@@ -430,27 +445,15 @@ $(window).keydown(function(event) {
         case 109:
             if(mode == 1) nodes1 -= 1
             if(mode == 2) nodes2 -= 1
+            refresh()
             break
         case 107:
             if(mode == 1) nodes1 += 1
             if(mode == 2) nodes2 += 1
+            refresh()
             break
         default:
             return
-    }
-    if(mode == 1) {
-        if(nodes1 < 5) {
-            nodes1 = 5
-        }
-        $('#nodes1').text(nodes1)
-        run_calculation1D(nodes1)
-    }
-    if(mode == 2) {
-        if(nodes2 < 5) {
-            nodes2 = 5
-        }
-        $('#nodes2').text(nodes2)
-        run_calculation2D(nodes2)
     }
 })
 </script>
