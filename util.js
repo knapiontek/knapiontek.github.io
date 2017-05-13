@@ -17,8 +17,11 @@ function Canvas(anchor, size_x, size_y) {
     that.context.clearRect(0, 0, size_x, size_y)
 
     that.erase = function() {
+        that._style = null
         that.context.lineWidth = 1
         that.context.setLineDash([])
+        that.context.strokeStyle = '#000000'
+        that.context.fillStyle = '#000000'
         that.context.clearRect(0, 0, size_x, size_y)
     }
 
