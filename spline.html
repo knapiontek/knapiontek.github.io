@@ -268,7 +268,7 @@ function render_spline2() {
     var size = 1000
     var canvas = Canvas('#system2', size, size)
 
-    var style = {fill_color: 'blue'}
+    var style = {fill: 'blue'}
     for(var i = 0; i < data.length; i++) {
         canvas.dot(data[i], 5, style)
     }
@@ -282,7 +282,7 @@ function render_spline2() {
     console.assert(vex.norm2(vbx) < 0.001)
     console.assert(vey.norm2(vby) < 0.001)
     
-    var path = canvas.Path({stroke_color: 'black'})
+    var path = canvas.Path({stroke: 'black'})
     path.move_to(data[0])
     for(var i = 0; i < data.length; i++) {
         var j = 3 * i
@@ -344,7 +344,7 @@ function render_spline3() {
     var size = 1000
     var canvas = Canvas('#system3', size, size)
 
-    var style = {fill_color: 'blue'}
+    var style = {fill: 'blue'}
     for(var i = 0; i < data.length; i++) {
         canvas.dot(data[i], 5, style)
     }
@@ -358,7 +358,7 @@ function render_spline3() {
     console.assert(vex.norm2(vbx) < 0.001)
     console.assert(vey.norm2(vby) < 0.001)
     
-    var path = canvas.Path({stroke_color: 'black'})
+    var path = canvas.Path({stroke: 'black'})
     path.move_to(data[0])
     for(var i = 0; i < data.length; i++) {
         var j = 4 * i

@@ -38,15 +38,15 @@ function Canvas(anchor, size_x, size_y) {
                 } else {
                     style.dash = that.context.getLineDash()
                 }
-                if(style.stroke_color) {
-                    that.context.strokeStyle = style.stroke_color
+                if(style.stroke) {
+                    that.context.strokeStyle = style.stroke
                 } else {
-                    style.stroke_color = that.context.strokeStyle
+                    style.stroke = that.context.strokeStyle
                 }
-                if(style.fill_color) {
-                    that.context.fillStyle = style.fill_color
+                if(style.fill) {
+                    that.context.fillStyle = style.fill
                 } else {
-                    style.fill_color = that.context.fillStyle
+                    style.fill = that.context.fillStyle
                 }
                 that._style = style
             }
@@ -55,7 +55,7 @@ function Canvas(anchor, size_x, size_y) {
                 width: that.context.lineWidth,
                 dash: that.context.getLineDash(),
                 stoke_color: that.context.strokeStyle,
-                fill_color: that.context.fillStyle
+                fill: that.context.fillStyle
             }
         }
         return that._style
@@ -114,6 +114,7 @@ function Canvas(anchor, size_x, size_y) {
         }
 
         that.style(style)
+        that.context.beginPath()
         that.context.moveTo(end.x, end.y)
         that.context.lineTo(left.x, left.y)
         that.context.lineTo(right.x, right.y)
@@ -122,6 +123,7 @@ function Canvas(anchor, size_x, size_y) {
 
     that.line = function(begin, end, style) {
         that.style(style)
+        that.context.beginPath()
         that.context.moveTo(begin.x, begin.y)
         that.context.lineTo(end.x, end.y)
         that.context.stroke()
@@ -130,6 +132,7 @@ function Canvas(anchor, size_x, size_y) {
     that.pike_line = function(begin, end, size, style) {
         that.style(style)
         that.pike(begin, end, size, style)
+        that.context.beginPath()
         that.context.moveTo(begin.x, begin.y)
         that.context.lineTo(end.x, end.y)
         that.context.stroke()

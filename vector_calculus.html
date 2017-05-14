@@ -94,8 +94,8 @@ function render_rot(anchor, field_func) {
     var canvas = Canvas(anchor, size, size)
 
     var d = 1.0
-    var blue_style = {fill_color: 'blue'}
-    var green_style = {fill_color: 'green'}
+    var blue_style = {fill: 'blue'}
+    var green_style = {fill: 'green'}
     var center = Point2D(size, size).div(2)
     for(var x = -5; x <= 5; x+=d) {
         for(var y = -5; y <= 5; y+=d) {
