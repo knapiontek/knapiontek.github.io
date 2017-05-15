@@ -7,44 +7,46 @@
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
 <script src='util.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
-<style>
-#system {
-    width: 100%;
-    margin: 0 auto;
-    border: thin solid;
-}
-</style>
 </head>
 <body>
 <div id='main_page'>
 
 <h4>Integral Maxwell Equations</h4>
-<div class='math'>
+<math>
 \begin{aligned}
-\oint_{\partial V} B                 \quad & = \quad 0                & \quad \text{(Gauss)} \\
-\nabla\cdot E                 \quad & = \quad 0                & \quad \text{(Colomb)} \\
-\frac{\partial E}{\partial t} \quad & = \quad \nabla\times B   & \quad \text{(Faraday)} \\
-\frac{\partial B}{\partial t} \quad & = \quad -\nabla\times E  & \quad \text{(Ampere)}
+1.\quad & \oint_{\partial\Omega}\vec{E}\cdot d\vec{a} = 4\pi\int_{\Omega}\rho dV \\
+\\
+2.\quad & \oint_{\partial\Omega}\vec{B}\cdot d\vec{a} = 0 \\
+\\
+3.\quad & \oint_{\partial\Sigma}\vec{E}\cdot d\vec{l} = -\frac{1}{c}\frac{d}{dt}\int_\Sigma\vec{B}\cdot d\vec{a} \\
+\\
+4.\quad & \oint_{\partial\Sigma}\vec{B}\cdot d\vec{l} = \frac{1}{c}\Bigl(4\pi\int_\Sigma\vec{J}\cdot\vec{a}+\frac{d}{dt}\int_\Sigma\vec{E}\cdot d\vec{a}\Bigr) \\
 \end{aligned}
-</div>
+</math>
 
 <h4>Differencial Maxwell Equations</h4>
-<div class='math'>
+<math>
 \begin{aligned}
-\nabla\cdot B \quad & = \quad 0 & \quad \text{(Gauss)} \\
-\nabla\cdot E \quad & = \quad \frac{\rho}{\epsilon} & \quad \text{(Colomb)} \\
+1.\quad & \nabla\cdot\vec{E} = 4\pi\rho \\
 \\
-\nabla\times B \quad & = \quad \frac{\partial E}{\partial t} & \quad \text{(Faraday)} \\
+2.\quad & \nabla\cdot\vec{B} = 0 \\
 \\
-\nabla\times E \quad & = \quad -\frac{\partial B}{\partial t} & \quad \text{(Ampere)}
+3.\quad & \nabla\times\vec{E} = -\frac{1}{c}\frac{\partial\vec{B}}{\partial t} \\
+\\
+4.\quad & \nabla\times\vec{B} = \frac{1}{c}\Bigl(4\pi\vec{J}+\frac{\partial\vec{E}}{\partial t}\Bigr) \\
 \end{aligned}
-</div>
+</math>
+
+<ol>
+<li>The electric flux leaving a volume is proportional to the charge inside.</li>
+<li>There are no magnetic monopoles; the total magnetic flux through a closed surface is zero.</li>
+<li>The voltage induced in a closed circuit is proportional to the rate of change of the magnetic flux it encloses.</li>
+<li>The magnetic field integrated around a closed loop is proportional to the electric current plus displacement current (rate of change of electric field) it encloses.</li>
+</ol>
 
 </div>
-
 <script>
 render_katex()
 </script>
-
 </body>
 </html>
