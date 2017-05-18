@@ -12,45 +12,60 @@
 <div id='main_page'>
 
 <h4>Fourier Series</h4>
+<p>We assume that a periodic function can be represented by a sum of harmonics as follows</p>
+<math>x(t) = \frac{a_0}{2}+\sum_{n=1}^\infty a_n\cos(n\omega_0t) + \frac{b_0}{2}+\sum_{n=1}^\infty b_n\sin(n\omega_0t)</math>
 
-<p>We assume that an even periodic function can be represented by a sum of harmonics as follows</p>
-<math>x(t) = \sum_{n=0}^\infty a_n\cos(n\omega_0t)</math>
+<p>For simplicity let's consider first an even function which looks like</m></p>
+<math>x_e(t) = \sum_{n=1}^\infty a_n\cos(n\omega_0t)</math>
 
 <p>We manipulate it in order to extract <m>a_n</m></p>
 <math>
 \begin{aligned}
-x(t)\cos(m\omega_0t) &= \sum_{n=0}^\infty a_n\cos(n\omega_0t)\cos(m\omega_0t) \\
+x_e(t)\cos(m\omega_0t) &= \sum_{n=1}^\infty a_n\cos(n\omega_0t)\cos(m\omega_0t) \\
 \\
-\int_T x(t)\cos(m\omega_0t)dt &= \int_T \sum_{n=0}^\infty a_n\cos(n\omega_0t)\cos(m\omega_0t)dt \\
+\int_T x_e(t)\cos(m\omega_0t)dt &= \int_T \sum_{n=1}^\infty a_n\cos(n\omega_0t)\cos(m\omega_0t)dt \\
 \\
-&= \sum_{n=0}^\infty a_n\int_T\cos(n\omega_0t)\cos(m\omega_0t)dt \\
+&= \sum_{n=1}^\infty a_n\int_T\cos(n\omega_0t)\cos(m\omega_0t)dt \\
 \\
-&= \sum_{n=0}^\infty a_n \int_T {1 \over 2}\Bigl[\cos((m+n)\omega_0t)+\cos((m-n)\omega_0t)\Bigr]dt \\
+&= \sum_{n=1}^\infty a_n \int_T {1 \over 2}\Bigl[\cos((m+n)\omega_0t)+\cos((m-n)\omega_0t)\Bigr]dt \\
 \\
-&= {1\over 2}\sum_{n=0}^\infty a_n \int_T\Bigl[\cos((m+n)\omega_0t)+\cos((m-n)\omega_0t)\Bigr]dt \\
+&= {1\over 2}\sum_{n=1}^\infty a_n\int_T\Bigl[\cos((m+n)\omega_0t)+\cos((m-n)\omega_0t)\Bigr]dt \\
 \\
-&= {1\over 2} a_mT
+&= {1\over 2}\sum_{n=1}^\infty a_n\int_T\cos((m+n)\omega_0t)dt + {1\over 2}\sum_{n=1}^\infty a_n\int_T\cos((m-n)\omega_0t)dt \\
+\\
+&= 0 + {1\over 2} a_mT
 \end{aligned}
 </math>
 
-<p>Where</p>
-<math>\cos((m+n)\omega_0t)=0</math>
+<p>Where cosine integral over full number of periods equals zero</p>
+<math>\int_T\cos((m+n)\omega_0t)dt=0</math>
 <math>
-\cos((m-n)\omega_0t) =
+\int_T\cos((m-n)\omega_0t)dt =
 \begin{cases}
 0\quad m\ne n \\
-1\quad m=n
+\int_T\cos(0)dt = T\quad m=n
 \end{cases}
 </math>
-<math>\int_Tdt = T</math>
 
 <p>Therefore</p>
-<math>a_m = {2\over T}\int_Tx(t)\cos(m\omega_0t)dt</math>
-<p>Or</p>
-<math>a_n = {2\over T}\int_Tx(t)\cos(n\omega_0t)dt</math>
+<math>a_m = {2\over T}\int_Tx_e(t)\cos(m\omega_0t)dt</math>
+
+<p>Finally we can generalize the formula for coefficients <m>n \in 0,1,2,...</m></p>
+<math>
+\begin{aligned}
+a_n = {2\over T}\int_Tx(t)\cos(n\omega_0t)dt \\
+\\
+b_n = {2\over T}\int_Tx(t)\sin(n\omega_0t)dt
+\end{aligned}
+</math>
 
 <h4>Forward Discrete Fourier Transform (DFT)</h4>
 <math>X_k = \sum_{n=0}^{N-1}x_ne^{-i2\pi kn/N}</math>
+<ul>
+<li><m>N</m> - total number of function samples</li>
+<li><m>n</m> - index of a function sample</li>
+<li><m>k</m> - index of a harmonic</li>
+</ul>
 
 <h4>Inverse Discrete Fourier Transform (IDFT)</h4>
 <math>x_n = \frac{1}{N}\sum_{k=0}^{N-1}X_ke^{i2\pi kn/N}</math>
@@ -68,10 +83,10 @@ X_{N + k} &= \sum_{n=0}^{N-1}x_ne^{-i2\pi(N+k)n/N} \\
 \end{aligned}
 </math>
 <p>Where Euler Identity</p>
-<math>e^{i2\pi n} = 1 \quad n=0,1,2,...</math>
+<math>e^{i2\pi n} = 1 \quad n \in 0,1,2,...</math>
 <p>Yields to</p>
 <math>
-X_{k+nN} = X_k \quad n=0,1,2,...
+X_{k+nN} = X_k \quad n \in 0,1,2,...
 </math>
 
 <p>It allows us manipulation as follows</p>
