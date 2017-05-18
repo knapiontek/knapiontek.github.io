@@ -12,82 +12,80 @@
 <div id='main_page'>
 
 <h4>Fourier Series</h4>
+
+<p>We assume that an even periodic function can be represented by a sum of harmonics as follows</p>
+<math>x(t) = \sum_{n=0}^\infty a_n\cos(n\omega_0t)</math>
+
+<p>We manipulate it in order to extract <m>a_n</m></p>
 <math>
 \begin{aligned}
-x_e (t) = \sum\limits_{n = 0}^\infty  {a_n \cos \left( {n\omega _0 t} \right)} \\
-x_e (t) = a_0 + \sum\limits_{n = 1}^\infty  {a_n \cos \left( {n\omega _0 t} \right)} \\
-x_e (t) = \sum\limits_{n = 0}^\infty  {a_n \cos ( n\omega _0 t)} \\
-x_e (t)\cos \left( {m\omega _0 t} \right) = \sum\limits_{n = 0}^\infty  {a_n \cos \left( {n\omega _0 t} \right)} \cos \left( {m\omega _0 t} \right) \\
-\int\limits_T {x_e (t)\cos \left( {m\omega _0 t} \right)dt}  = \int\limits_T {\sum\limits_{n = 0}^\infty  {a_n \cos \left( {n\omega _0 t} \right)} \cos \left( {m\omega _0 t} \right)dt}
+x(t)\cos(m\omega_0t) &= \sum_{n=0}^\infty a_n\cos(n\omega_0t)\cos(m\omega_0t) \\
+\\
+\int_T x(t)\cos(m\omega_0t)dt &= \int_T \sum_{n=0}^\infty a_n\cos(n\omega_0t)\cos(m\omega_0t)dt \\
+\\
+&= \sum_{n=0}^\infty a_n\int_T\cos(n\omega_0t)\cos(m\omega_0t)dt \\
+\\
+&= \sum_{n=0}^\infty a_n \int_T {1 \over 2}\Bigl[\cos((m+n)\omega_0t)+\cos((m-n)\omega_0t)\Bigr]dt \\
+\\
+&= {1\over 2}\sum_{n=0}^\infty a_n \int_T\Bigl[\cos((m+n)\omega_0t)+\cos((m-n)\omega_0t)\Bigr]dt \\
+\\
+&= {1\over 2} a_mT
 \end{aligned}
 </math>
 
+<p>Where</p>
+<math>\cos((m+n)\omega_0t)=0</math>
 <math>
-\begin{aligned}
-\int\limits_T {x_e (t)\cos \left( {m\omega _0 t} \right)dt}
-& = \sum\limits_{n = 0}^\infty  {a_n \int\limits_T {\cos \left( {n\omega _0 t} \right)\cos \left( {m\omega _0 t} \right)dt} }   \\
-& = \sum\limits_{n = 0}^\infty  {a_n \int\limits_T {{1 \over 2}\left( {\cos \left( {\left( {m + n} \right)\omega _0 t} \right) + \cos \left( {\left( {m - n} \right)\omega _0 t} \right)} \right)dt} }   \\
-& = {1 \over 2}\sum\limits_{n = 0}^\infty  {a_n \int\limits_T {\left( {\cos \left( {\left( {n + m} \right)\omega _0 t} \right) + \cos \left( {\left( {m - n} \right)\omega _0 t} \right)} \right)dt} }
-\end{aligned}
+\cos((m-n)\omega_0t) =
+\begin{cases}
+0\quad m\ne n \\
+1\quad m=n
+\end{cases}
 </math>
+<math>\int_Tdt = T</math>
 
-<math>
-\begin{aligned}
-\int\limits_T {x_e (t)\cos \left( {m\omega _0 t} \right)dt}  &= \frac{1}
-{2}\sum\limits_{n = 0}^\infty  {a_n \int\limits_T {\left( {\cos \left( {\left( {n + m} \right)\omega _0 t} \right) + \cos \left( {\left( {m - n} \right)\omega _0 t} \right)} \right)dt} } \\
-& = \frac{1}
-{2}\sum\limits_{n = 0}^\infty  {a_n \left( {\int\limits_T {\cos \left( {\left( {n + m} \right)\omega _0 t} \right)dt}  + \int\limits_T {\cos \left( {\left( {m - n} \right)\omega _0 t} \right)dt} } \right)} \\
-& = \frac{1}
-{2}\sum\limits_{n = 0}^\infty  {a_n \int\limits_T {\cos \left( {\left( {m - n} \right)\omega _0 t} \right)dt} }
-\end{aligned}
-</math>
-
-<math>
-\begin{aligned}
-\int\limits_T {x_e (t)\cos \left( {m\omega _0 t} \right)dt}  = {1 \over 2}a_m T \\
-a_m  = {2 \over T}\int\limits_T {x_e (t)\cos \left( {m\omega _0 t} \right)dt} \\
-a_n  = {2 \over T}\int\limits_T {x_e (t)\cos \left( {n\omega _0 t} \right)dt}
-\end{aligned}
-</math>
-
-<math>
-a_m T = \sum\limits_{n = 0}^\infty  {a_n \int\limits_T {\cos \left( {\left( {m - n} \right)\omega _0 t} \right)dt} }
-</math>
+<p>Therefore</p>
+<math>a_m = {2\over T}\int_Tx(t)\cos(m\omega_0t)dt</math>
+<p>Or</p>
+<math>a_n = {2\over T}\int_Tx(t)\cos(n\omega_0t)dt</math>
 
 <h4>Forward Discrete Fourier Transform (DFT)</h4>
-<math>X_k = \sum_{n=0}^{N-1} x_n \cdot e^{-i 2\pi kn/N}</math>
+<math>X_k = \sum_{n=0}^{N-1}x_ne^{-i2\pi kn/N}</math>
 
 <h4>Inverse Discrete Fourier Transform (IDFT)</h4>
-<math>x_n = \frac{1}{N}\sum_{k=0}^{N-1} X_k e^{i 2\pi k n / N}</math>
+<math>x_n = \frac{1}{N}\sum_{k=0}^{N-1}X_ke^{i2\pi kn/N}</math>
 
 <h4>Fast Fourier Transform (FFT)</h4>
 
+<p>Let's notice</p>
 <math>
 \begin{aligned}
-X_{N + k} &= \sum_{n=0}^{N-1}x_n\cdot e^{-i 2\pi(N+k)n/N} \\
-          &= \sum_{n=0}^{N-1}x_n\cdot e^{-i 2\pi n}\cdot e^{-i 2\pi kn/N} \\
-          &= \sum_{n=0}^{N-1}x_n\cdot e^{-i 2\pi kn/N}
+X_{N + k} &= \sum_{n=0}^{N-1}x_ne^{-i2\pi(N+k)n/N} \\
+\\
+&= \sum_{n=0}^{N-1}x_ne^{-i2\pi n}e^{-i 2\pi kn/N} \\
+\\
+&= \sum_{n=0}^{N-1}x_ne^{-i2\pi kn/N}
 \end{aligned}
 </math>
-
-<p>Where Euler identity</p>
+<p>Where Euler Identity</p>
 <math>e^{i2\pi n} = 1 \quad n=0,1,2,...</math>
-
 <p>Yields to</p>
 <math>
 X_{k+nN} = X_k \quad n=0,1,2,...
 </math>
 
-<p>It allows us to rearrange into</p>
+<p>It allows us manipulation as follows</p>
 <math>
 \begin{aligned}
-X_k &= \sum_{n=0}^{N-1}x_n\cdot e^{-i 2\pi kn/N} \\
-    &= \sum_{m=0}^{N/2-1}x_{2m}\cdot e^{-i 2\pi k(2m)/N} + \sum_{m=0}^{N/2-1}x_{2m + 1}\cdot e^{-i 2\pi k(2m+1)/N} \\
-    &= \sum_{m=0}^{N/2-1}x_{2m}\cdot e^{-i 2\pi km/(N/2)} + e^{-i 2\pi k/N}\sum_{m=0}^{N/2-1}x_{2m + 1}\cdot e^{-i2\pi km/(N/2)}
+X_k &= \sum_{n=0}^{N-1}x_ne^{-i 2\pi kn/N} \\
+\\
+&= \sum_{m=0}^{N/2-1}x_{2m}e^{-i2\pi k(2m)/N}+\sum_{m=0}^{N/2-1}x_{2m+1}e^{-i2\pi k(2m+1)/N} \\
+\\
+&= \sum_{m=0}^{N/2-1}x_{2m}e^{-i2\pi km/(N/2)}+e^{-i 2\pi k/N}\sum_{m=0}^{N/2-1}x_{2m+1}e^{-i2\pi km/(N/2)}
 \end{aligned}
 </math>
 
-<p>The above step can be executed extensivly gaining <m>\mathcal{O}(N^2) \rightarrow \mathcal{O}(NlogN)</m></p>
+<p>The above step can be executed recursively gaining <m>\mathcal{O}(N^2) \rightarrow \mathcal{O}(NlogN)</m></p>
 
 </div>
 <script>
