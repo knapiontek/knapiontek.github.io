@@ -7,7 +7,16 @@
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
 <script src='util.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
-</head>
+<style>
+#simulation {
+    position: relative;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    border: thin solid;
+}
+</style></head>
 <body>
 <div id='main_page'>
 
@@ -102,8 +111,50 @@ X_k &= \sum_{n=0}^{N-1}x_ne^{-i 2\pi kn/N} \\
 
 <p>The above step can be executed recursively gaining <m>\mathcal{O}(N^2) \rightarrow \mathcal{O}(NlogN)</m></p>
 
+<h4>Simulation</h4>
+<div id='simulation'></div>
+
 </div>
 <script>
+var size = 1000
+var canvas = Canvas('#simulation', size, size/2)
+function run_calculation(nodes) {
+    canvas.erase()
+
+    var margin = 10
+    var x1 = margin
+    var x2 = size - margin
+    var y1 = margin
+    var y2 = size/2 - margin
+	
+    canvas.pike_line(Point2D(x1, y2), Point2D(x1, y1))
+    canvas.pike_line(Point2D(x1, y2), Point2D(x2, y2))
+
+	var sample_no = 100
+	var max_val = 10
+
+	function scale(pt) {
+		var scale_x = (x2 - x1) / sample_no
+		var scale_y = (y2 - y1) / (3/2) / max_val
+		return Point2D(margin + scale_x * pt.x, y2 - margin - scale_y * pt.y)
+	}
+
+	var input = []
+	for(var i = 0; i < sample_no; i += 1) {
+		var val = 0
+		if(25 < i && i < 75)
+			val = max_val
+		input[i] = Point2D(i, val)
+	}
+	
+	var path = canvas.Path({width:2, stroke:'blue'})
+	path.move_to(scale(input[0]))
+	for(var i = 1; i < sample_no; i += 1) {
+		path.line_to(scale(input[i]))
+	}
+	path.stroke()
+}
+run_calculation(30)
 render_katex()
 </script>
 </body>
