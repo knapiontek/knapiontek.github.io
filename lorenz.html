@@ -9,7 +9,8 @@
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 <style>
 #system {
-    width: 100%;
+    width: 650px;
+	height: 650px;
     margin: 0 auto;
     border: thin solid;
 }
@@ -83,26 +84,26 @@ function newton_root() {
     }
 }
 function run_calculation() {
-    var size = 1000
-    var canvas = Canvas('#system', size, size)
+    var canvas = Canvas('#system')
     
     var dt = 0.005
     var rho = 28.0
     var sigma = 10.0
     var beta = 8.0 / 3.0
     var vu = Vector([0.0001, 0.0001, 55.0001])
+	var center = canvas.height() / 2
 
     var path = canvas.Path()
     var [x, y, z] = vu.data
-    path.move_to(Point2D(y+500, z))
+    path.move_to(Point2D(y+center, z))
     for(var i = 0; i < 5000; i++) {
         var [x, y, z] = vu.data
         var vb = Vector([rho*(y-x), x*(rho-z)-y, x*y-beta*z])
         du = vb.dup().mul(dt)
 
         vu.add(du)
-        var [x, y, z] = vu.dup().mul(20).data
-        path.line_to(Point2D(y+500, z))
+        var [x, y, z] = vu.dup().mul(12).data
+        path.line_to(Point2D(y+center, z))
     }
     path.stroke()
 }

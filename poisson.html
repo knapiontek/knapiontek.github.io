@@ -10,7 +10,8 @@
 <style>
 #simulation1D {
     position: relative;
-    width: 80%;
+    width: 650px;
+	height: 650px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -18,7 +19,8 @@
 }
 #simulation2D {
     position: relative;
-    width: 80%;
+    width: 650px;
+	height: 650px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -237,20 +239,19 @@ function generate_matrix1D(nodes, dx, shift) {
 
     return [ma, vb]
 }
-var size1D = 1000
-var canvas1D = Canvas('#simulation1D', size1D, size1D)
+var canvas1D = Canvas('#simulation1D')
 function run_calculation1D(nodes) {
     canvas1D.erase()
 
-    var scale_y = 280
-    var scale_x = 150
+    var scale_y = 180
+    var scale_x = 100
 
     var margin = 10
     var x1 = margin
-    var x2 = size1D - margin
+    var x2 = canvas1D.width() - margin
     var xm = (x1 + x2) / 2
     var y1 = margin
-    var y2 = size1D - margin
+    var y2 = canvas1D.height() - margin
     var ym = (y1 + 0.8*y2) / 2
 
     canvas1D.pike_line(Point2D(xm, y2), Point2D(xm, y1))
@@ -326,19 +327,12 @@ function generate_matrix2D(nodes, dd) {
 
     return [ma, vb]
 }
-var size2D = 1000
-var canvas2D = Canvas('#simulation2D', size2D, size2D)
+var canvas2D = Canvas('#simulation2D')
 function run_calculation2D(nodes) {
     canvas2D.erase()
 
-    var scale = 100
-    var margin = 10
-    var x1 = margin
-    var x2 = size2D - margin
-    var xm = (x1 + x2) / 2
-    var y1 = margin
-    var y2 = size2D - margin
-    var ym = (y1 + y2) / 2
+    var scale = 65
+	var mid = Point2D(canvas1D.width()/2, canvas1D.height()/2)
 
     // finite difference method
     var shift = 4
@@ -366,6 +360,8 @@ function run_calculation2D(nodes) {
             var p2 = Point2D(ix, iy)
             var p3 = Point2D(ix, iy-1)
             var p4 = Point2D(ix-1, iy-1)
+
+			//canvas2D.dot(p2.mul(scale), 2) TODO: find input finction
 
             var v1 = solution_2D(p1)
             var v2 = solution_2D(p2)
@@ -402,8 +398,8 @@ function run_calculation2D(nodes) {
                     dots = dots.concat(py)
                 }
                 if(dots.length == 2) {
-                    var dot1 = dots[0].mul(scale).add(size2D/2)
-                    var dot2 = dots[1].mul(scale).add(size2D/2)
+                    var dot1 = dots[0].mul(scale).add(mid)
+                    var dot2 = dots[1].mul(scale).add(mid)
                     canvas2D.line(dot1, dot2, style)
                 }
             }

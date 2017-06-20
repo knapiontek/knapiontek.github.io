@@ -10,8 +10,8 @@
 <style>
 #system2 {
     position: relative;
-
-    width: 70%;
+    width: 650px;
+	height: 650px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -19,8 +19,8 @@
 }
 #system3 {
     position: relative;
-
-    width: 70%;
+    width: 650px;
+	height: 650px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -258,15 +258,14 @@ function generate_matrix2(data) {
 }
 function render_spline2() {
     var data = [
-        Point2D(300.0, 300.0),
         Point2D(200.0, 200.0),
-        Point2D(400.0, 450.0),
-        Point2D(600.0, 800.0),
-        Point2D(600.0, 600.0)
+        Point2D(100.0, 100.0),
+        Point2D(300.0, 350.0),
+        Point2D(500.0, 700.0),
+        Point2D(500.0, 500.0)
     ]
 
-    var size = 1000
-    var canvas = Canvas('#system2', size, size)
+    var canvas = Canvas('#system2')
 
     var style = {fill: 'blue'}
     for(var i = 0; i < data.length; i++) {
@@ -334,15 +333,14 @@ function generate_matrix3(data) {
 }
 function render_spline3() {
     var data = [
-        Point2D(300.0, 600.0),
-        Point2D(200.0, 200.0),
-        Point2D(400.0, 250.0),
-        Point2D(800.0, 200.0),
-        Point2D(600.0, 600.0)
+        Point2D(200.0, 500.0),
+        Point2D(100.0, 100.0),
+        Point2D(300.0, 150.0),
+        Point2D(500.0, 100.0),
+        Point2D(500.0, 500.0)
     ]
 
-    var size = 1000
-    var canvas = Canvas('#system3', size, size)
+    var canvas = Canvas('#system3')
 
     var style = {fill: 'blue'}
     for(var i = 0; i < data.length; i++) {

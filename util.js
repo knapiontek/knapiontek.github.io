@@ -1,20 +1,17 @@
-function Canvas(anchor, size_x, size_y) {
+function Canvas(anchor) {
     var that = {}
 
     that.anchor = $(anchor)
-    that.size_x = size_x
-    that.size_y = size_y
     that._style = null
-    that.jcanvas = $('<canvas>')
 
-    var canvas = that.jcanvas.get(0);
+    var canvas = $('<canvas>').get(0);
     canvas.style.width = '100%'
-    canvas.width = size_x
-    canvas.height = size_y
+    canvas.width = that.anchor.width()
+    canvas.height = that.anchor.height()
     that.anchor.append(canvas)
 
     that.context = canvas.getContext('2d')
-    that.context.clearRect(0, 0, size_x, size_y)
+    that.context.clearRect(0, 0, that.anchor.width(), that.anchor.height())
 
     that.erase = function() {
         that._style = null
@@ -22,8 +19,16 @@ function Canvas(anchor, size_x, size_y) {
         that.context.setLineDash([])
         that.context.strokeStyle = '#000000'
         that.context.fillStyle = '#000000'
-        that.context.clearRect(0, 0, size_x, size_y)
+		that.context.clearRect(0, 0, that.anchor.width(), that.anchor.height())
     }
+
+	that.width = function() {
+		return that.anchor.width()
+	}
+
+	that.height = function() {
+		return that.anchor.height()
+	}
 
     that.style = function(style) {
         if(style) {
@@ -62,8 +67,8 @@ function Canvas(anchor, size_x, size_y) {
     }
 
     that.tex = function(text, pt1, pt2) {
-        var x1 = pt1.x * that.jcanvas.width() / that.size_x
-        var y1 = pt1.y * that.jcanvas.height() / that.size_y
+        var x1 = pt1.x
+        var y1 = pt1.y
 
         var jdiv = $('<div>')
         var div = jdiv.get(0);
@@ -75,8 +80,8 @@ function Canvas(anchor, size_x, size_y) {
         that.anchor.append(div)
 
         if(pt2) {
-            var x2 = pt2.x * that.jcanvas.width() / that.size_x
-            var y2 = pt2.y * that.jcanvas.height() / that.size_y
+            var x2 = pt2.x
+            var y2 = pt2.y
 
             var w = jdiv.width()
             var h = jdiv.height()
@@ -98,8 +103,8 @@ function Canvas(anchor, size_x, size_y) {
         var len = Math.sqrt((line.x * line.x) + (line.y * line.y))
         var unit = {x: line.x / len, y: line.y / len}
 
-        var v = 15.0
-        var h = 4.0
+        var v = 10.0
+        var h = 3.0
         if(size) {
             v *= size
             h *= size
@@ -178,7 +183,6 @@ function Canvas(anchor, size_x, size_y) {
         }
 
         return path
-
     }
 
     return that

@@ -10,11 +10,11 @@
 <style>
 #simulation {
     position: relative;
-    width: 80%;
+    width: 650px;
+	height: 350px;
     margin-left: auto;
     margin-right: auto;
     display: block;
-    border: thin solid;
 }
 </style></head>
 <body>
@@ -116,17 +116,16 @@ X_k &= \sum_{n=0}^{N-1}x_ne^{-i 2\pi kn/N} \\
 
 </div>
 <script>
-var size = 1000
-var canvas = Canvas('#simulation', size, size/2)
+var canvas = Canvas('#simulation')
 function run_calculation(nodes) {
     canvas.erase()
 
     var margin = 10
     var x1 = margin
-    var x2 = size - margin
+    var x2 = canvas.width() - margin
     var y1 = margin
-    var y2 = size/2 - margin
-	
+    var y2 = canvas.height() - margin
+
     canvas.pike_line(Point2D(x1, y2), Point2D(x1, y1))
     canvas.pike_line(Point2D(x1, y2), Point2D(x2, y2))
 
@@ -146,8 +145,8 @@ function run_calculation(nodes) {
 			val = max_val
 		input[i] = Point2D(i, val)
 	}
-	
-	var path = canvas.Path({width:2, stroke:'blue'})
+
+	var path = canvas.Path({stroke:'blue'})
 	path.move_to(scale(input[0]))
 	for(var i = 1; i < sample_no; i += 1) {
 		path.line_to(scale(input[i]))

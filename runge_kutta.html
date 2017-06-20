@@ -10,8 +10,8 @@
 <style>
 #simulation {
     position: relative;
-
-    width: 100%;
+    width: 650px;
+	height: 350px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -128,8 +128,7 @@ x_0 = y'(0) = \frac{1}{2}
 </div>
 
 <script>
-var size = 1000
-var canvas = Canvas('#simulation', size, size/2)
+var canvas = Canvas('#simulation')
 function run_calculation(step) {
     canvas.erase()
 
@@ -137,10 +136,10 @@ function run_calculation(step) {
     var scale_t = 100
     var margin = 10
     var x1 = margin
-    var x2 = size - margin
+    var x2 = canvas.width() - margin
     var y1 = margin
-    var y2 = size/2 - margin
-    var ym = size/4 - margin
+    var y2 = canvas.height() - margin
+    var ym = canvas.height()/2 - margin
 
     canvas.pike_line(Point2D(x1, y2), Point2D(x1, y1))
     canvas.pike_line(Point2D(x1, ym), Point2D(x2, ym))

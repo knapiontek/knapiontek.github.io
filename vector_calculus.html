@@ -10,8 +10,8 @@
 <style>
 #field1_canvas, #field2_canvas, #_rot1_canvas, #_rot2_canvas {
     position: relative;
-
-    width: 70%;
+    width: 550px;
+	height: 550px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -76,10 +76,8 @@ function rot(pt, field_func) {
     return (v1.y - v2.y)/(2*d) - (v1.x - v2.x)/(2*d)
 }
 function render_field(anchor, field_func) {
-    var size = 700
-    var canvas = Canvas(anchor, size, size)
-
-    var center = Point2D(size, size).div(2)
+    var canvas = Canvas(anchor)
+    var center = Point2D(canvas.width(), canvas.height()).div(2)
     for(var x = -5; x <= 5; x++) {
         for(var y = -5; y <= 5; y++) {
             var pt = Point2D(x, y)
@@ -90,13 +88,11 @@ function render_field(anchor, field_func) {
     }
 }
 function render_rot(anchor, field_func) {
-    var size = 700
-    var canvas = Canvas(anchor, size, size)
-
+    var canvas = Canvas(anchor)
     var d = 1.0
     var blue_style = {fill: 'blue'}
     var green_style = {fill: 'green'}
-    var center = Point2D(size, size).div(2)
+    var center = Point2D(canvas.width(), canvas.height()).div(2)
     for(var x = -5; x <= 5; x+=d) {
         for(var y = -5; y <= 5; y+=d) {
             var pt = Point2D(x, y)
@@ -104,11 +100,10 @@ function render_rot(anchor, field_func) {
 
             var _rot = rot(pt, field_func)
             if(_rot < 0) {
-                canvas.dot(start, -2*_rot, green_style)
+                canvas.dot(start, -_rot, green_style)
             } else {
-                canvas.dot(start, 2*_rot, blue_style)
+                canvas.dot(start, _rot, blue_style)
             }
-
         }
     }
 }
