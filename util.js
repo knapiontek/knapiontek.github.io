@@ -19,16 +19,16 @@ function Canvas(anchor) {
         that.context.setLineDash([])
         that.context.strokeStyle = '#000000'
         that.context.fillStyle = '#000000'
-		that.context.clearRect(0, 0, that.anchor.width(), that.anchor.height())
+        that.context.clearRect(0, 0, that.anchor.width(), that.anchor.height())
     }
 
-	that.width = function() {
-		return that.anchor.width()
-	}
+    that.width = function() {
+        return that.anchor.width()
+    }
 
-	that.height = function() {
-		return that.anchor.height()
-	}
+    that.height = function() {
+        return that.anchor.height()
+    }
 
     that.style = function(style) {
         if(style) {
@@ -207,8 +207,12 @@ function Point2D(x, y) {
         }
     }
 
-    that.mul = function(no) {
-        return Point2D(that.x * no, that.y * no)
+    that.mul = function(arg) {
+        if($.isNumeric(arg)) {
+            return Point2D(that.x * arg, that.y * arg)
+        } else {
+            return Point2D(that.x * arg, that.y * arg)
+        }
     }
 
     that.div = function(no) {

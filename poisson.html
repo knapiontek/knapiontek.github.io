@@ -11,7 +11,7 @@
 #simulation1D {
     position: relative;
     width: 650px;
-	height: 650px;
+    height: 650px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -20,7 +20,7 @@
 #simulation2D {
     position: relative;
     width: 650px;
-	height: 650px;
+    height: 650px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -332,7 +332,7 @@ function run_calculation2D(nodes) {
     canvas2D.erase()
 
     var scale = 65
-	var mid = Point2D(canvas1D.width()/2, canvas1D.height()/2)
+    var mid = Point2D(canvas1D.width()/2, canvas1D.height()/2)
 
     // finite difference method
     var shift = 4
@@ -361,7 +361,7 @@ function run_calculation2D(nodes) {
             var p3 = Point2D(ix, iy-1)
             var p4 = Point2D(ix-1, iy-1)
 
-			//canvas2D.dot(p2.mul(scale), 2) TODO: find input finction
+            //canvas2D.dot(p2.mul(scale), 2) TODO: find input finction
 
             var v1 = solution_2D(p1)
             var v2 = solution_2D(p2)

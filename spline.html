@@ -11,7 +11,7 @@
 #system2 {
     position: relative;
     width: 650px;
-	height: 650px;
+    height: 650px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -20,7 +20,7 @@
 #system3 {
     position: relative;
     width: 650px;
-	height: 650px;
+    height: 650px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -280,7 +280,7 @@ function render_spline2() {
     var vey = ma.mul(vuy)
     console.assert(vex.norm2(vbx) < 0.001)
     console.assert(vey.norm2(vby) < 0.001)
-    
+
     var path = canvas.Path({stroke: 'black'})
     path.move_to(data[0])
     for(var i = 0; i < data.length; i++) {
@@ -355,7 +355,7 @@ function render_spline3() {
     var vey = ma.mul(vuy)
     console.assert(vex.norm2(vbx) < 0.001)
     console.assert(vey.norm2(vby) < 0.001)
-    
+
     var path = canvas.Path({stroke: 'black'})
     path.move_to(data[0])
     for(var i = 0; i < data.length; i++) {

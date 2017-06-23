@@ -11,7 +11,7 @@
 #euler {
     position: relative;
     width: 650px;
-	height: 650px;
+    height: 650px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -20,7 +20,7 @@
 #simulation {
     position: relative;
     width: 650px;
-	height: 350px;
+    height: 350px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -193,7 +193,7 @@ x_{n+1} = x_n - 2x_n \Delta t - 65y_{n+1} \Delta t
 <script>
 function run_euler() {
     var canvas = Canvas('#euler')
-	var begin = Point2D(0, 0)
+    var begin = Point2D(0, 0)
     var end = Point2D(canvas.width(), canvas.height())
 
     canvas.line(begin, end)
