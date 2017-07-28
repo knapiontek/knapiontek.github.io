@@ -8,10 +8,19 @@
 <script src='util.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 <style>
-#simulation, #spectrum {
+#simulation {
     position: relative;
     width: 650px;
     height: 350px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    border: thin solid;
+}
+#spectrum {
+    position: relative;
+    width: 650px;
+    height: 550px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -113,7 +122,7 @@ X_k &= \sum_{n=0}^{N-1}x_ne^{-i 2\pi kn/N} \\
 <p>The above step can be executed recursively gaining <m>\mathcal{O}(N^2) \rightarrow \mathcal{O}(NlogN)</m></p>
 
 <h4>Simulation</h4>
-<p>Press [+] or [-] to change number of valid harmonics: <i id='valid_harmonics'>valid_harmonics</i></p>
+<p>Press [+] or [-] to change number of prime harmonics: <i id='prime_harmonics'>prime_harmonics</i></p>
 <div id='simulation'></div>
 
 <h4>Spectrum</h4>
@@ -121,48 +130,43 @@ X_k &= \sum_{n=0}^{N-1}x_ne^{-i 2\pi kn/N} \\
 
 </div>
 <script>
+var sample_no = 200
 var canvas_real = Canvas('#simulation')
 var canvas_spectrum = Canvas('#spectrum')
-function run_calculation(valid_harmonics) {
+function run_calculation(prime_harmonics) {
     canvas_real.erase()
     canvas_spectrum.erase()
 
-    var margin = 10
-    var x1 = margin
-    var x2 = canvas_real.width() - margin
-    var y1 = margin
-    var y2 = canvas_real.height() - margin
+    var x1 = 0
+    var x2 = canvas_real.width()
+    var y1 = 0
+    var y2 = canvas_real.height()
 
-    canvas_real.pike_line(Point2D(x1, y2), Point2D(x1, y1))
-    canvas_real.pike_line(Point2D(x1, y2), Point2D(x2, y2))
-    canvas_spectrum.pike_line(Point2D(x1, y2), Point2D(x1, y1))
-    canvas_spectrum.pike_line(Point2D(x1, y2), Point2D(x2, y2))
-
-    var sample_no = 100
-    var max_val = 10
+    var max_val = 5
 
     function scale_real(x, y) {
         var scale_x = (x2 - x1) / sample_no
-        var scale_y = (y2 - y1) / (3/2) / max_val
-        return Point2D(margin + scale_x * x, y2 - margin - scale_y * y)
+        var scale_y = (y2 - y1) / 3 / max_val
+        return Point2D(scale_x * x, y2 - scale_y * (y + 1.3 * max_val))
     }
 
     function scale_spectrum(x, y) {
         var scale_x = (x2 - x1) / sample_no
-        var scale_y = (y2 - y1) / max_val / max_val / max_val * 3
-        return Point2D(margin + scale_x * x, y2 - margin - scale_y * y)
+        var scale_y = (y2 - y1) / max_val / max_val / max_val / 2
+        return Point2D(scale_x * x, y2 - scale_y * y - 10)
     }
 
     // simetric signal avoid sine
+    var limit = sample_no / 4
     var input = []
     for(var i = 0; i < sample_no; i += 1) {
-        var val = 0
-        if(25 < i && i < 75)
+        var val = -max_val
+        if(limit < i && i < sample_no-limit)
             val = max_val
         input[i] = val
     }
 
-    // signal is simetric => sine == 0
+    // signal is simetric => sine == 0 [exp(ia) = cos(a) - i*sin(a)]
     var spectrum = []
     for(var i1 = 0; i1 < sample_no; i1 += 1) {
         var freq = 0.0
@@ -173,11 +177,11 @@ function run_calculation(valid_harmonics) {
         spectrum[i1] = freq
     }
 
-    // inversed for only valid_harmonics
+    // inversed for only prime_harmonics
     var inversed = []
     for(var i1 = 0; i1 < sample_no; i1 += 1) {
         var sample = 0
-        for(var i2 = 0; i2 < valid_harmonics; i2 += 1) {
+        for(var i2 = 0; i2 < prime_harmonics; i2 += 1) {
             var angle1 = 2*Math.PI*i1*i2/sample_no
             sample += spectrum[i2] * Math.cos(angle1)
             var angle2 = 2*Math.PI*i1*(sample_no-1-i2)/sample_no
@@ -202,30 +206,27 @@ function run_calculation(valid_harmonics) {
 
     var styles = [{fill:'red'}, {fill:'blue'}]
     for(var i = 0; i < sample_no; i += 1) {
-        var amplitude = Math.abs(spectrum[i])
-        if(Math.abs(amplitude-10) > 1e-11) {
-            var style = styles[(i > valid_harmonics && i < sample_no-valid_harmonics)|0]
-            canvas_spectrum.dot(scale_spectrum(i, amplitude), 2, style)
-        }
+        var style = styles[(i > prime_harmonics && i < sample_no-prime_harmonics) | 0]
+        canvas_spectrum.dot(scale_spectrum(i, spectrum[i]), 1.5, style)
     }
 }
-var valid_harmonics = 5
-run_calculation(valid_harmonics)
+var prime_harmonics = 5
+run_calculation(prime_harmonics)
 render_katex()
-$('#valid_harmonics').text(valid_harmonics)
+$('#prime_harmonics').text(prime_harmonics)
 $(window).keydown(function(event) {
     switch(event.which) {
         case 107:
-            valid_harmonics += 1
-            if(valid_harmonics > 50) valid_harmonics = 50
-            $('#valid_harmonics').text(valid_harmonics)
-            run_calculation(valid_harmonics)
+            prime_harmonics += 1
+            if(prime_harmonics > sample_no/2) prime_harmonics = sample_no/2
+            $('#prime_harmonics').text(prime_harmonics)
+            run_calculation(prime_harmonics)
             break
         case 109:
-            valid_harmonics -= 1
-            if(valid_harmonics < 1) valid_harmonics = 1
-            $('#valid_harmonics').text(valid_harmonics)
-            run_calculation(valid_harmonics)
+            prime_harmonics -= 1
+            if(prime_harmonics < 1) prime_harmonics = 1
+            $('#prime_harmonics').text(prime_harmonics)
+            run_calculation(prime_harmonics)
             break
         default:
             return
