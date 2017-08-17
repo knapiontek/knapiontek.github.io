@@ -8,9 +8,22 @@
 <script src='util.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 </head>
+<style>
+#spacetime {
+    position: relative;
+    width: 550px;
+    height: 550px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    border: thin solid;
+}
+</style>
 <body>
 <div id='main_page'>
 <!--http://home.agh.edu.pl/~leszekad/dydaktyka/imir_fizyka/przyklady_9.pdf-->
+
+<h4>Derivation</h4>
 <p>Let take two inercial system frames</p>
 <math>\begin{matrix}S_1 & S_2\end{matrix}</math>
 <p>where relative velocities are described as follows</p>
@@ -38,7 +51,8 @@
 <math>a = \frac{1}{\sqrt{1 - \frac{v^2}{c^2}}}</math>
 <p>Finally Lorentz Transformation</p>
 <math>\begin{matrix}x_1 = \frac{x_2 - vt_2}{\sqrt{1 - \frac{v^2}{c^2}}} & x_2 = \frac{x_1 + vt_1}{\sqrt{1 - \frac{v^2}{c^2}}}\end{matrix}</math>
-<p>Lorentz Factor in Minkowski Space</p>
+
+<h4>Lorentz Factor in Minkowski Space</h4>
 <math>c^2t^2-x^2 = c^2\bar{t}^2-\bar{x}^2</math>
 <math>c^2t^2-v_1^2t^2 = c^2\bar{t}^2-v_2^2\bar{t}^2</math>
 <math>\begin{matrix}v_1=0 & v_2=v\end{matrix}</math>
@@ -46,7 +60,8 @@
 <math>c^2t^2 = \bar{t}^2(c^2-v^2)</math>
 <math>t^2 = \bar{t}^2\Big(1-\frac{v^2}{c^2}\Big)</math>
 <math>t = \bar{t}\sqrt{1-\frac{v^2}{c^2}}</math>
-<p>Approximation with Taylor Series</p>
+
+<h4>Approximation with Taylor Series</h4>
 <math>f(x)=f(a)+\frac{f'(a)}{1!}(x-a)^1+\frac{f''(a)}{2!}(x-a)^2+...</math>
 <math>\begin{matrix}\gamma=\frac{1}{\sqrt{1-\beta}} & \beta=\frac{v^2}{c^2}\end{matrix}</math>
 <math>\gamma'=\frac{1}{2\sqrt{1-\beta}}</math>
@@ -54,8 +69,29 @@
 <math>\gamma = 1+\frac{\beta}{2} = 1+\frac{v^2}{2c^2}</math>
 <math>E = mc^2\gamma = mc^2+mc^2\frac{v^2}{2c^2} = mc^2+\frac{1}{2}mv^2</math>
 
+<h4>Minkowski Space</h4>
+<math>s^2 = c^2t^2-x^2</math>
+<div id='spacetime'></div>
 </div>
 <script>
+var canvas = Canvas('#spacetime')
+var scope = 100.0
+var center = Point2D(scope, scope)
+var margin = 20.0
+var scale_x = canvas.width() / scope / 2
+var scale_y = canvas.height() / scope / 2
+for(var i1 = -scope; i1 <= scope; i1 += 1.0) {
+    for(var i2 = -scope; i2 <= scope; i2 += 1.0) {
+        var point = Point2D(scale_x * (i1 + scope), scale_y * (i2 + scope))
+        if(i1*i1 - i2*i2 > margin*margin) {
+            canvas.dot(point, 1.0, {fill: 'red'})
+        } else if(i2*i2 - i1*i1 > margin*margin) {
+            canvas.dot(point, 1.0, {fill: 'green'})
+        } else {
+            canvas.dot(point, 1.0, {fill: 'blue'})
+        }
+    }
+}
 render_katex()
 </script>
 </body>
