@@ -10,8 +10,8 @@
 <style>
 #field1_canvas, #field2_canvas, #_rot1_canvas, #_rot2_canvas {
     position: relative;
-    width: 550px;
-    height: 550px;
+    width: 450px;
+    height: 450px;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -22,42 +22,90 @@
 <body>
 <div id='main_page'>
 
-<h3>Field Rotation Formula (3D - Cartesian)</h3>
-<div class='math'>
-\nabla \times A =
-\begin{bmatrix}
-\frac{\partial F_z}{\partial y} - \frac{\partial F_y}{\partial z} \\
-\\
-\frac{\partial F_x}{\partial z} - \frac{\partial F_z}{\partial x} \\
-\\
-\frac{\partial F_y}{\partial x} - \frac{\partial F_x}{\partial y}
-\end{bmatrix}
-</div>
+<h2>Vector Calculus in Cartesian Coordinates</h2>
 
-<h3>Vector Field</h3>
-<div class='math'>
+<p>Let <m>U</m> be a scalar field and <m>E</m> a vector field</p>
+
+<h3>Scalar Field Difference</h3>
+<p>For arbitrary points <m>A</m> and <m>B</m></p>
+<math>\Delta U = U(B)-U(A)</math>
+
+<h3>Gradient of Scalar Field</h3>
+<math>
+\begin{aligned}
+\nabla U
+&= \lim_{\Delta l\to 0}\frac{\Delta U}{\Delta l} \\
+\\
+&= \lim_{dx\to 0}\frac{U(x+dx)-U(x)}{dx}+\lim_{dy\to 0}\frac{U(y+dy)-U(y)}{dy}+\lim_{dz\to 0}\frac{U(z+dz)-U(z)}{dz} \\
+\\
+&= \frac{\partial U}{\partial x}+\frac{\partial U}{\partial y}+\frac{\partial U}{\partial z}
+\end{aligned}
+</math>
+
+<h4>Line Integral</h4>
+<math>\int_{l}\bold{E}\cdot\bold{dl} = \lim_{\Delta l\to 0}\sum \bold{E}\cdot\bold{\Delta l}</math>
+
+<h4>Line Integral of Gradient</h4>
+<math>\int_{l}\nabla U\cdot\bold{dl} = \lim_{\Delta l\to 0}\sum\frac{\Delta U}{\Delta l}\cdot\bold{\Delta l} = \sum\Delta U = \Delta U</math>
+
+<h4>Closed Line Integral of Gradient</h4>
+<math>\oint_{l}\nabla U\cdot\bold{dl} = \Delta U = 0</math>
+
+<h3>Rotation of Vector Field</h3>
+<math>\nabla\times\bold{E} = \lim_{\Delta s\to 0}\frac{\oint_{l}\bold{E}\cdot\bold{dl}}{\Delta s}</math>
+
+<math>
+\begin{aligned}
+\nabla_z\times\bold{E}
+&= \lim_{dxdy\to 0}\frac{E_x(x,y)dx+E_y(x+dx,y)dy-E_x(x+dx,y+dy)dx-E_y(x,y+dy)dy}{dxdy}
+\\
+\\
+&= \lim_{dxdy\to 0}\frac{E_y(x+dx,y)dy-E_y(x,y+dy)dy}{dxdy}-\frac{E_x(x+dx,y+dy)dx-E_x(x,y)dx}{dxdy}
+\\
+\\
+&= \lim_{dxdy\to 0}\frac{E_y(x+dx,y)-E_y(x,y+dy)}{dx}-\frac{E_x(x+dx,y+dy)-E_x(x,y)}{dy}
+\\
+\\
+&= \frac{\partial E_y}{\partial x}-\frac{\partial E_x}{\partial y}
+\end{aligned}
+</math>
+
+<p>Finally</p>
+<math>
+\nabla \times E =
+\begin{bmatrix}
+\frac{\partial E_z}{\partial y} - \frac{\partial E_y}{\partial z} \\
+\\
+\frac{\partial E_x}{\partial z} - \frac{\partial E_z}{\partial x} \\
+\\
+\frac{\partial E_y}{\partial x} - \frac{\partial E_x}{\partial y}
+\end{bmatrix}
+</math>
+
+<h3>Vector Field Example 1</h3>
+<math>
 A =
 \begin{bmatrix}
 y \\ -x \\ 0
 \end{bmatrix}
-</div>
+</math>
 <div id='field1_canvas'></div>
 
-<h3>Rotation</h3>
-<div class='math'>\nabla\times A</div>
+<p>Rotation</p>
+<math>\nabla\times A</math>
 <div id='_rot1_canvas'></div>
 
-<h3>Vector Field</h3>
-<div class='math'>
+<h3>Vector Field Example 2</h3>
+<math>
 A =
 \begin{bmatrix}
 y^2 \\ x \\ 0
 \end{bmatrix}
-</div>
+</math>
 <div id='field2_canvas'></div>
 
-<h3>Rotation</h3>
-<div class='math'>\nabla \times A</div>
+<p>Rotation</p>
+<math>\nabla \times A</math>
 <div id='_rot2_canvas'></div>
 
 </div>
