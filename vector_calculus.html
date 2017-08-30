@@ -33,7 +33,7 @@
 <h3>Gradient of Scalar Field</h3>
 <math>
 \begin{aligned}
-\nabla U
+\bold{\nabla} U
 &= \lim_{\Delta l\to 0}\frac{\Delta U}{\Delta l} \\
 \\
 &= \lim_{dx\to 0}\frac{U(x+dx)-U(x)}{dx}+\lim_{dy\to 0}\frac{U(y+dy)-U(y)}{dy}+\lim_{dz\to 0}\frac{U(z+dz)-U(z)}{dz} \\
@@ -46,33 +46,34 @@
 <math>\int_{l}\bold{E}\cdot\bold{dl} = \lim_{\Delta l\to 0}\sum \bold{E}\cdot\bold{\Delta l}</math>
 
 <h4>Line Integral of Gradient</h4>
-<math>\int_{l}\nabla U\cdot\bold{dl} = \lim_{\Delta l\to 0}\sum\frac{\Delta U}{\Delta l}\cdot\bold{\Delta l} = \sum\Delta U = \Delta U</math>
+<math>\int_{l}\bold{\nabla} U\cdot\bold{dl} = \lim_{\Delta l\to 0}\sum\frac{\Delta U}{\Delta l}\cdot\bold{\Delta l} = \sum\Delta U = \Delta U</math>
 
 <h4>Closed Line Integral of Gradient</h4>
-<math>\oint_{l}\nabla U\cdot\bold{dl} = \Delta U = 0</math>
+<math>\oint_{l}\bold{\nabla} U\cdot\bold{dl} = \Delta U = 0</math>
 
 <h3>Rotation of Vector Field</h3>
-<math>\nabla\times\bold{E} = \lim_{\Delta s\to 0}\frac{\oint_{l}\bold{E}\cdot\bold{dl}}{\Delta s}</math>
+<math>\bold{\nabla}\times\bold{E} = \lim_{\Delta S\to 0}\frac{\oint_{l}\bold{E}\cdot\bold{dl}}{\Delta S}</math>
 
+<p>Let's calculate <m>z</m> component along a path enclosing area <m>dxdy</m></p>
 <math>
 \begin{aligned}
-\nabla_z\times\bold{E}
-&= \lim_{dxdy\to 0}\frac{E_x(x,y)dx+E_y(x+dx,y)dy-E_x(x+dx,y+dy)dx-E_y(x,y+dy)dy}{dxdy}
+\bold{\nabla}_z\times\bold{E}
+&= \lim_{dxdy\to 0}\frac{E_x(x,y)dx+E_y(x+dx,y)dy-E_x(x+dx,y+dy)dx-E_y(x,y+dy)dy}{dxdy} \\
 \\
+&= \lim_{dxdy\to 0}\frac{E_y(x+dx,y)dy-E_y(x,y+dy)dy}{dxdy}-\frac{E_x(x+dx,y+dy)dx-E_x(x,y)dx}{dxdy} \\
 \\
-&= \lim_{dxdy\to 0}\frac{E_y(x+dx,y)dy-E_y(x,y+dy)dy}{dxdy}-\frac{E_x(x+dx,y+dy)dx-E_x(x,y)dx}{dxdy}
-\\
-\\
-&= \lim_{dxdy\to 0}\frac{E_y(x+dx,y)-E_y(x,y+dy)}{dx}-\frac{E_x(x+dx,y+dy)-E_x(x,y)}{dy}
-\\
+&= \lim_{dxdy\to 0}\frac{E_y(x+dx,y)-E_y(x,y+dy)}{dx}-\frac{E_x(x+dx,y+dy)-E_x(x,y)}{dy} \\
 \\
 &= \frac{\partial E_y}{\partial x}-\frac{\partial E_x}{\partial y}
 \end{aligned}
 </math>
 
+<p>Where <m>E_y(x,y+dy)=-E_y(x,y)</m> and <m>E_x(x+dx,y)=-E_x(x,y)</m></p>
+
+
 <p>Finally</p>
 <math>
-\nabla \times E =
+\bold{\nabla} \times E =
 \begin{bmatrix}
 \frac{\partial E_z}{\partial y} - \frac{\partial E_y}{\partial z} \\
 \\
@@ -81,6 +82,48 @@
 \frac{\partial E_y}{\partial x} - \frac{\partial E_x}{\partial y}
 \end{bmatrix}
 </math>
+
+<h4>Rotation of Gradient</h4>
+<math>\bold{\nabla}\times\bold{\nabla} U = \lim_{\Delta S\to 0}\frac{\oint_{l}\bold{\nabla} U\cdot\bold{dl}}{\Delta S}</math>
+
+<h4>Scalar Field of Rotation-Free Vector Field</h4>
+<math>
+\begin{aligned}
+\bold{\nabla}\times\bold{E} & = 0 \\
+& \Rightarrow \int\bold{E}\cdot\bold{dl} = 0 \\
+\\
+& \Rightarrow \int\bold{\nabla} U\cdot\bold{dl} = 0 \\
+\\
+& \Rightarrow \bold{E} = \bold{\nabla} U
+\\
+\end{aligned}
+</math>
+
+<h4>Closed Surface Integral of Rotation</h4>
+<math>\oint_{S}(\bold{\nabla}\times\bold{E})\cdot\bold{dS} = \oint_{l}\bold{E}\cdot\bold{dl} = 0</math>
+
+<h3>Divergance of Vector Field</h3>
+<math>\bold{\nabla}\cdot\bold{E} = \lim_{\Delta V\to 0}\frac{\oint_{S}\bold{E}\cdot\bold{dS}}{\Delta V}</math>
+
+<math>
+\begin{aligned}
+\bold{\nabla}\cdot\bold{E}
+&= \lim_{dxdydz\to 0}\frac{-E_x(x)dydz+E_x(x+dx)dydz+\ldots}{dxdydz} \\
+\\
+&= \lim_{dx\to 0}\frac{E_x(x+dx)-E_x(x)}{dx}+\ldots \\
+\\
+&= \frac{\partial E_x}{\partial x} + \frac{\partial E_y}{\partial y} + \frac{\partial E_z}{\partial z}
+\end{aligned}
+</math>
+
+<h4>Divergance of Free Field</h4>
+<math>\bold{\nabla}\cdot\bold{E} = 0 \Rightarrow\bold{E} = \bold{\nabla}\times\bold{F}</math>
+
+<h4>Volume Integral</h4>
+<math>\int_{V}UdV = \lim_{dV\to 0}\sum UdV</math>
+
+<h4>Volume Integral of Divergance</h4>
+<math>\int_{V}(\bold{\nabla}\cdot\bold{E})dV = \lim_{dV\to 0}\sum\frac{\oint_{S}\bold{E}\cdot\bold{dS}}{\Delta V}\Delta V = \sum\oint_{S}\bold{E}\cdot\bold{dS} = \oint_{S}\bold{E}\cdot\bold{dS}</math>
 
 <h3>Vector Field Example 1</h3>
 <math>
@@ -92,7 +135,7 @@ y \\ -x \\ 0
 <div id='field1_canvas'></div>
 
 <p>Rotation</p>
-<math>\nabla\times A</math>
+<math>\bold{\nabla}\times A</math>
 <div id='_rot1_canvas'></div>
 
 <h3>Vector Field Example 2</h3>
@@ -105,7 +148,7 @@ y^2 \\ x \\ 0
 <div id='field2_canvas'></div>
 
 <p>Rotation</p>
-<math>\nabla \times A</math>
+<math>\bold{\nabla} \times A</math>
 <div id='_rot2_canvas'></div>
 
 </div>
