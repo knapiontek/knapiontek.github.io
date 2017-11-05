@@ -5,41 +5,93 @@
 <link rel='stylesheet' href='common.css'>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js' integrity='sha384-tdtuPw3yx/rnUGmnLNWXtfjb9fpmwexsd+lr6HUYnUY4B7JhB5Ty7a1mYd+kto/s' crossorigin='anonymous'></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
-<script src='common.js'></script>
+<script src='util.js'></script>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 </head>
+<style>
+#spacetime {
+    position: relative;
+    width: 550px;
+    height: 550px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    border: thin solid;
+}
+</style>
 <body>
 <div id='main_page'>
 <!--http://home.agh.edu.pl/~leszekad/dydaktyka/imir_fizyka/przyklady_9.pdf-->
+
+<h4>Derivation</h4>
 <p>Let take two inercial system frames</p>
-<div class='math'>\begin{matrix}S_1 & S_2\end{matrix}</div>
+<math>\begin{matrix}S_1 & S_2\end{matrix}</math>
 <p>where relative velocities are described as follows</p>
-<div class='math'>\begin{matrix}v_1 = -v_2 & v_2 = -v_1\end{matrix}</div>
+<math>\begin{matrix}v_1 = -v_2 & v_2 = -v_1\end{matrix}</math>
 <p>Classic theory</p>
-<div class='math'>\begin{matrix}x_1 = x_2 - vt & x_2 = x_1 + vt\end{matrix}</div>
+<math>\begin{matrix}x_1 = x_2 - vt & x_2 = x_1 + vt\end{matrix}</math>
 <p>does not follow observation that speed of light is constant in all directions and in all systems</p>
-<div class='math'>\begin{matrix}x_1 = ct_1 & x_2 = ct_2\end{matrix}</div>
+<math>\begin{matrix}x_1 = ct_1 & x_2 = ct_2\end{matrix}</math>
 <p>Let's find new relation beetwen coordinates of these systems</p>
-<div class='math'>\begin{matrix}x_1 = ax_2 + bt_2 & x_2 = ax_1 + bt_1\end{matrix}</div>
+<math>\begin{matrix}x_1 = ax_2 + bt_2 & x_2 = ax_1 + bt_1\end{matrix}</math>
 <p>where <i>a</i> and <i>b</i> are new coefficients we need to find</p>
-<p>When <i class='inmath'>S_1</i> and <i class='inmath'>S_2</i> are at the same location at the begging</p>
-<div class='math'>\begin{matrix}0 = ax_2 + bt_2 & 0 = ax_1 + bt_1\end{matrix}</div>
+<p>When <m>S_1</m> and <m>S_2</m> are at the same location at the begging</p>
+<math>\begin{matrix}0 = ax_2 + bt_2 & 0 = ax_1 + bt_1\end{matrix}</math>
 <p>then</p>
-<div class='math'>\begin{matrix}b = a\frac{x_2}{t_2} = -av & b = a\frac{x_1}{t_1} = av\end{matrix}</div>
-<div class='math'>\begin{matrix}x_1 = ax_2 - avt_2 & x_2 = ax_1 + avt_1\end{matrix}</div>
-<div class='math'>\begin{matrix}x_1 = a(x_2 - vt_2) & x_2 = a(x_1 + vt_1)\end{matrix}</div>
+<math>\begin{matrix}b = a\frac{x_2}{t_2} = -av & b = a\frac{x_1}{t_1} = av\end{matrix}</math>
+<math>\begin{matrix}x_1 = ax_2 - avt_2 & x_2 = ax_1 + avt_1\end{matrix}</math>
+<math>\begin{matrix}x_1 = a(x_2 - vt_2) & x_2 = a(x_1 + vt_1)\end{matrix}</math>
 <p>We postulate that the speed of the light is constant and the same in any system</p>
-<div class='math'>\begin{matrix}ct_1 = a(ct_2 - vt_2) & ct_2 = a(ct_1 + vt_1)\end{matrix}</div>
-<div class='math'>\begin{matrix}ct_1 = at_2(c - v) & ct_2 = at_1(c + v)\end{matrix}</div>
+<math>\begin{matrix}ct_1 = a(ct_2 - vt_2) & ct_2 = a(ct_1 + vt_1)\end{matrix}</math>
+<math>\begin{matrix}ct_1 = at_2(c - v) & ct_2 = at_1(c + v)\end{matrix}</math>
 <p>Let's multiply it by sides</p>
-<div class='math'>c^2t_1t_2 = a^2t_1t_2(c^2 - v^2)</div>
-<div class='math'>c^2 = a^2(c^2 - v^2)</div>
-<div class='math'>a^2 = \frac{c^2}{c^2 - v^2} = \frac{1}{1 - \frac{v^2}{c^2}}</div>
-<div class='math'>a = \frac{1}{\sqrt{1 - \frac{v^2}{c^2}}}</div>
+<math>c^2t_1t_2 = a^2t_1t_2(c^2 - v^2)</math>
+<math>c^2 = a^2(c^2 - v^2)</math>
+<math>a^2 = \frac{c^2}{c^2 - v^2} = \frac{1}{1 - \frac{v^2}{c^2}}</math>
+<math>a = \frac{1}{\sqrt{1 - \frac{v^2}{c^2}}}</math>
 <p>Finally Lorentz Transformation</p>
-<div class='math'>\begin{matrix}x_1 = \frac{x_2 - vt_2}{\sqrt{1 - \frac{v^2}{c^2}}} & x_2 = \frac{x_1 + vt_1}{\sqrt{1 - \frac{v^2}{c^2}}}\end{matrix}</div>
+<math>\begin{matrix}x_1 = \frac{x_2 - vt_2}{\sqrt{1 - \frac{v^2}{c^2}}} & x_2 = \frac{x_1 + vt_1}{\sqrt{1 - \frac{v^2}{c^2}}}\end{matrix}</math>
+
+<h4>Lorentz Factor in Minkowski Space</h4>
+<math>c^2t^2-x^2 = c^2\bar{t}^2-\bar{x}^2</math>
+<math>c^2t^2-v_1^2t^2 = c^2\bar{t}^2-v_2^2\bar{t}^2</math>
+<math>\begin{matrix}v_1=0 & v_2=v\end{matrix}</math>
+<math>c^2t^2 = c^2\bar{t}^2-v^2\bar{t}^2</math>
+<math>c^2t^2 = \bar{t}^2(c^2-v^2)</math>
+<math>t^2 = \bar{t}^2\Big(1-\frac{v^2}{c^2}\Big)</math>
+<math>t = \bar{t}\sqrt{1-\frac{v^2}{c^2}}</math>
+
+<h4>Approximation with Taylor Series</h4>
+<math>f(x)=f(a)+\frac{f'(a)}{1!}(x-a)^1+\frac{f''(a)}{2!}(x-a)^2+...</math>
+<math>\begin{matrix}\gamma=\frac{1}{\sqrt{1-\beta}} & \beta=\frac{v^2}{c^2}\end{matrix}</math>
+<math>\gamma'=\frac{1}{2\sqrt{1-\beta}}</math>
+<math>\begin{matrix}\gamma'(a)=\frac{1}{2} & a=0\end{matrix}</math>
+<math>\gamma = 1+\frac{\beta}{2} = 1+\frac{v^2}{2c^2}</math>
+<math>E = mc^2\gamma = mc^2+mc^2\frac{v^2}{2c^2} = mc^2+\frac{1}{2}mv^2</math>
+
+<h4>Minkowski Space</h4>
+<math>s^2 = c^2t^2-x^2</math>
+<div id='spacetime'></div>
 </div>
 <script>
+var canvas = Canvas('#spacetime')
+var scope = 100.0
+var center = Point2D(scope, scope)
+var margin = 20.0
+var scale_x = canvas.width() / scope / 2
+var scale_y = canvas.height() / scope / 2
+for(var i1 = -scope; i1 <= scope; i1 += 1.0) {
+    for(var i2 = -scope; i2 <= scope; i2 += 1.0) {
+        var point = Point2D(scale_x * (i1 + scope), scale_y * (i2 + scope))
+        if(i1*i1 - i2*i2 > margin*margin) {
+            canvas.dot(point, 1.0, {fill: 'red'})
+        } else if(i2*i2 - i1*i1 > margin*margin) {
+            canvas.dot(point, 1.0, {fill: 'green'})
+        } else {
+            canvas.dot(point, 1.0, {fill: 'blue'})
+        }
+    }
+}
 render_katex()
 </script>
 </body>

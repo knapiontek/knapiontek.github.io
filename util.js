@@ -185,6 +185,72 @@ function Canvas(anchor) {
         return path
     }
 
+    that.Chart = function() {
+        var chart = {}
+
+        chart.line = function(data, style) {
+            var x_min = Number.MAX_VALUE
+            var x_max = Number.MIN_VALUE
+            var y_min = Number.MAX_VALUE
+            var y_max = Number.MIN_VALUE
+
+            for(var i = 0; i < data.length; i += 1) {
+                var d = data[i]
+                if (d.x < x_min) x_min = d.x
+                if (d.x > x_max) x_max = d.x
+                if (d.y < y_min) y_min = d.y
+                if (d.y > y_max) y_max = d.y
+            }
+
+            y_min *= 1.1
+            y_max *= 1.1
+
+            var scale_x = that.width() / (x_max - x_min)
+            var scale_y = that.height() / (y_max - y_min)
+
+            function scale(pt) {
+                return Point2D(scale_x * (pt.x - x_min), that.height() - scale_y * (pt.y - y_min))
+            }
+
+            var path = that.Path(style)
+            path.move_to(scale(data[0]))
+            for(var i = 1; i < data.length; i += 1) {
+                path.line_to(scale(data[i]))
+            }
+            path.stroke()
+        }
+
+        chart.dot = function(data, style_function) {
+            var x_min = Number.MAX_VALUE
+            var x_max = Number.MIN_VALUE
+            var y_min = Number.MAX_VALUE
+            var y_max = Number.MIN_VALUE
+
+            for(var i = 0; i < data.length; i += 1) {
+                var d = data[i]
+                if (d.x < x_min) x_min = d.x
+                if (d.x > x_max) x_max = d.x
+                if (d.y < y_min) y_min = d.y
+                if (d.y > y_max) y_max = d.y
+            }
+
+            y_min *= 1.1
+            y_max *= 1.1
+
+            var scale_x = that.width() / (x_max - x_min)
+            var scale_y = that.height() / (y_max - y_min)
+
+            for(var i = 1; i < data.length; i += 1) {
+                var d = data[i]
+                var style = style_function(d)
+                var pt = Point2D(scale_x * (d.x - x_min), that.height() - scale_y * (d.y - y_min))
+                that.dot(pt, 1.5, style)
+            }
+        }
+
+        return chart
+    }
+
     return that
 }
 
