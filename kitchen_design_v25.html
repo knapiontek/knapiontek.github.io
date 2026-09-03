@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitchen Elevation Layout</title>
+  <style>
+    /* =============================================================
+       STYLES
+       ============================================================= */
+        :root {
+          --bg: #0f172a;
+          --panel: #1e293b;
+          --accent: #38bdf8;
+          --accent-hover: #7dd3fc;
+          --danger: #f87171;
+          --danger-hover: #fca5a5;
+          --text: #f8fafc;
+          --text-muted: #cbd5e1;
+          --text-dim: #e2e8f0;
+          --border: #334155;
+          --border-soft: #475569;
+          --row-hover: #334155;
+    
+          --sheet-bg: #ffffff;
+          --sheet-header-bg: #f1f5f9;
+          --sheet-border: #d8dee8;
+          --sheet-text: #1e293b;
+          --sheet-text-muted: #64748b;
+          --sheet-row-alt: #f8fafc;
+          --sheet-row-hover: #eaf4fe;
+          --sheet-focus: #38bdf8;
+          --sheet-ghost: #94a3b8;
+        }
+    
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+    
+        h1 { max-width: 1400px; margin: 0 auto 18px auto; font-size: 22px; }
+    
+        #action-bar {
+          max-width: 1400px;
+          margin: 0 auto 15px auto;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          justify-content: flex-end;
+          align-items: center;
+        }
+        .action-group { display: flex; gap: 8px; padding-left: 10px; border-left: 1px solid var(--border-soft); }
+        .action-group:first-child { border-left: none; padding-left: 0; }
+    
+        .btn {
+          background: var(--accent);
+          color: var(--bg);
+          border: none;
+          padding: 9px 16px;
+          font-size: 13px;
+          font-weight: 600;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: background 0.15s ease, transform 0.1s ease;
+          white-space: nowrap;
+        }
+        .btn:hover { background: var(--accent-hover); }
+        .btn:active { transform: scale(0.98); }
+        .btn.secondary { background: var(--border-soft); color: var(--text); }
+        .btn.secondary:hover { background: #5b6b83; }
+        .btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+        .btn.danger:hover { background: rgba(248,113,113,0.12); color: var(--danger-hover); border-color: var(--danger-hover); }
+    
+        #status-banner {
+          max-width: 1400px;
+          margin: 0 auto 15px auto;
+          display: none;
+          padding: 10px 14px;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 500;
+        }
+        #status-banner.show { display: block; }
+        #status-banner.error { background: rgba(248,113,113,0.12); color: var(--danger-hover); border: 1px solid var(--danger); }
+        #status-banner.ok { background: rgba(56,189,248,0.12); color: var(--accent-hover); border: 1px solid var(--accent); }
+    
+        #svg-container { width: 100%; max-width: 1400px; margin: 20px auto 0 auto; background: var(--panel); padding: 20px; box-sizing: border-box; border-radius: 8px; position: relative; }
+        #svg-canvas { width: 100%; text-align: center; }
+        svg {
+          display: inline-block;
+          width: auto;
+          height: auto;
+          max-width: 100%;
+          max-height: min(70vh, 700px);
+          overflow: visible;
+        }
+        .component-group { cursor: pointer; }
+        .component-group:hover rect { filter: brightness(1.2); stroke: var(--accent) !important; stroke-width: 3px; }
+        
+        #tooltip {
+          position: absolute;
+          display: none;
+          background: var(--bg);
+          color: var(--accent);
+          border: 2px solid var(--accent);
+          padding: 6px 12px;
+          font-size: 14px;
+          font-weight: bold;
+          border-radius: 4px;
+          pointer-events: none;
+          white-space: nowrap;
+          z-index: 10;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        #svg-footnote {
+          margin-top: 16px;
+          padding-top: 12px;
+          border-top: 1px solid var(--border);
+          font-size: 13px;
+          color: var(--text-muted);
+          min-height: 18px;
+          text-align: center;
+        }
+    
+        .panel {
+          max-width: 1400px;
+          margin: 20px auto 0 auto;
+          background: var(--panel);
+          padding: 20px;
+          border-radius: 8px;
+          box-sizing: border-box;
+        }
+        .panel h3 { margin-top: 0; color: var(--accent); font-size: 16px; }
+    
+        .carcass-settings {
+          display: flex;
+          gap: 20px;
+          margin-bottom: 16px;
+          align-items: center;
+          font-size: 13px;
+          color: var(--text-dim);
+          background: var(--bg);
+          padding: 10px 14px;
+          border-radius: 6px;
+          border: 1px solid var(--border);
+        }
+        .carcass-settings label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .carcass-settings input {
+          width: 90px;
+          background: var(--sheet-bg);
+          border: 1px solid var(--sheet-border);
+          border-radius: 4px;
+          padding: 5px 8px;
+          color: var(--sheet-text);
+          font: inherit;
+          text-align: right;
+        }
+    
+        .input-grid {
+          display: grid;
+          grid-template-columns: minmax(220px, 300px) 1fr;
+          gap: 20px;
+          align-items: start;
+        }
+        .summary-grid {
+          display: grid;
+          grid-template-columns: 0.8fr 0.8fr 1.4fr;
+          gap: 20px;
+        }
+        .sub-section h4 {
+          margin: 0 0 8px 0;
+          color: var(--text-dim);
+          border-bottom: 1px solid var(--border-soft);
+          padding-bottom: 6px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 14px;
+        }
+        .sub-section h4 span.total { font-size: 12px; color: var(--accent); font-weight: normal; }
+    
+        .sheet-wrap {
+          background: var(--sheet-bg);
+          border: 1px solid var(--sheet-border);
+          border-radius: 6px;
+          overflow: auto;
+          max-height: 360px;
+        }
+        .carcass-sheet-wrap table.sheet {
+          min-width: 500px;
+        }
+    
+        table.sheet {
+          width: 100%;
+          border-collapse: collapse;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          font-size: 12.5px;
+          background: var(--sheet-bg);
+        }
+        table.sheet thead th {
+          position: sticky;
+          top: 0;
+          background: var(--sheet-header-bg);
+          color: var(--sheet-text);
+          font-weight: 700;
+          text-align: left;
+          padding: 7px 10px;
+          border-bottom: 2px solid var(--sheet-border);
+          border-right: 1px solid var(--sheet-border);
+          white-space: nowrap;
+          z-index: 1;
+        }
+        table.sheet thead th:last-child { border-right: none; }
+        table.sheet tbody td {
+          padding: 0;
+          border-bottom: 1px solid var(--sheet-border);
+          border-right: 1px solid var(--sheet-border);
+          color: var(--sheet-text);
+        }
+        table.sheet tbody td:last-child { border-right: none; }
+        table.sheet tbody tr:nth-child(even) td { background: var(--sheet-row-alt); }
+        table.sheet tbody tr:hover td { background: var(--sheet-row-hover); }
+        table.sheet tbody tr.is-empty-row td { color: var(--sheet-ghost); }
+        table.sheet tbody tr.is-invalid td { background: rgba(248,113,113,0.14) !important; }
+    
+        table.sheet input, table.sheet select {
+          width: 100%;
+          border: none;
+          background: transparent;
+          padding: 7px 10px;
+          font: inherit;
+          color: var(--sheet-text);
+          outline: none;
+        }
+        table.sheet input:focus, table.sheet select:focus {
+          background: #fff8e1;
+          box-shadow: inset 0 0 0 2px var(--sheet-focus);
+        }
+        table.sheet input[type="number"] { text-align: right; }
+        table.sheet select { cursor: pointer; }
+    
+        td.col-actions { width: 56px; text-align: center; padding: 0 !important; white-space: nowrap; }
+        td.col-actions button {
+          width: 26px; height: 100%; border: none; background: transparent;
+          color: var(--sheet-ghost); cursor: pointer; font-size: 15px; line-height: 1; padding: 7px 0;
+        }
+        td.col-actions button.row-insert:hover { color: var(--accent-hover); background: rgba(56,189,248,0.12); }
+        td.col-actions button.row-del:hover { color: var(--danger); background: rgba(248,113,113,0.1); }
+    
+        table.sheet.output td { padding: 7px 10px; }
+        table.sheet.output.spacy td { padding: 10px 14px; }
+        table.sheet.output td strong { color: #0f172a; }
+    
+        .hidden-file-input { display: none; }
+    
+        @media (max-width: 1100px) {
+          .summary-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 900px) {
+          .input-grid { grid-template-columns: 1fr; }
+        }
+  </style>
+</head>
+<body>
+
+<div x-data="kitchenApp()">
+
+  <h1>Kitchen Elevation Layout</h1>
+
+  <div id="action-bar">
+    <div class="action-group">
+      <button class="btn secondary" @click="triggerImport()">Import State CSV</button>
+      <button class="btn secondary" @click="exportStateCSV()">Export State CSV</button>
+      <input type="file" class="hidden-file-input" accept=".csv,text/csv" x-ref="importFile" @change="handleImportFile($event)">
+    </div>
+    <div class="action-group">
+      <button class="btn" @click="exportBarsCSV()">Export Bars CSV</button>
+      <button class="btn" @click="exportFrontsCSV()">Export Fronts CSV</button>
+      <button class="btn" @click="exportCarcassesCSV()">Export Carcasses CSV</button>
+      <button class="btn" @click="exportSVG()">Export SVG</button>
+    </div>
+    <div class="action-group">
+      <button class="btn danger" @click="resetDefaults()">Reset to Sample Data</button>
+    </div>
+  </div>
+
+  <div id="status-banner" :class="{show: bannerType !== '', error: bannerType === 'error', ok: bannerType === 'ok'}" x-text="bannerText"></div>
+
+  <!-- 1. INPUT -->
+  <div class="panel">
+    <h3>Input Data</h3>
+    <div class="carcass-settings">
+      <label>
+        Carcass Depth (mm):
+        <input type="number" x-model.number="carcassDepthMm" min="100" step="1">
+      </label>
+      <label>
+        Board Thickness (mm):
+        <input type="number" x-model.number="boardThicknessMm" min="1" step="0.5">
+      </label>
+    </div>
+    <div class="input-grid">
+      <div class="sub-section">
+        <h4>Groups &amp; Columns</h4>
+        <div class="sheet-wrap">
+          <table class="sheet">
+            <thead>
+              <tr><th style="width:70px">Group</th><th>Width (mm)</th><th class="col-actions"></th></tr>
+            </thead>
+            <tbody x-ref="columnsTbody">
+              <template x-for="(row, idx) in columns" :key="row.id">
+                <tr :class="{'is-invalid': build.colFlags[idx] === 'invalid', 'is-empty-row': build.colFlags[idx] === 'empty'}">
+                  <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
+                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.width"></td>
+                  <td class="col-actions">
+                    <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertColumnRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeColumnRow(idx)">×</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sub-section">
+        <h4>Components</h4>
+        <div class="sheet-wrap">
+          <table class="sheet">
+            <thead>
+              <tr>
+                <th style="width:56px">Group</th>
+                <th style="width:52px">Col</th>
+                <th style="width:52px">Span</th>
+                <th style="width:96px">Type</th>
+                <th style="width:96px">Height (mm)</th>
+                <th style="width:80px">Handle</th>
+                <th style="width:70px">Gap W (mm)</th>
+                <th style="width:70px">Gap H (mm)</th>
+                <th class="col-actions"></th>
+              </tr>
+            </thead>
+            <tbody x-ref="componentsTbody">
+              <template x-for="(row, idx) in components" :key="row.id">
+                <tr :class="{'is-invalid': build.compFlags[idx] === 'invalid', 'is-empty-row': build.compFlags[idx] === 'empty'}">
+                  <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
+                  <td><input type="number" class="cell" min="1" step="1" x-model.number="row.col"></td>
+                  <td><input type="number" class="cell" min="1" step="1" x-model.number="row.span"></td>
+                  <td>
+                    <select class="cell" x-model="row.type">
+                      <template x-for="t in COMPONENT_TYPES" :key="t">
+                        <option :value="t" x-text="t"></option>
+                      </template>
+                    </select>
+                  </td>
+                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.height"></td>
+                  <td>
+                    <select class="cell" x-model="row.handle">
+                      <template x-for="h in HANDLE_POSITIONS" :key="h || 'none'">
+                        <option :value="h" x-text="h || '—'"></option>
+                      </template>
+                    </select>
+                  </td>
+                  <td><input type="number" class="cell" min="0" step="1" :placeholder="CONFIG.gapMm" x-model.number="row.gapW"></td>
+                  <td><input type="number" class="cell" min="0" step="1" :placeholder="CONFIG.gapMm" x-model.number="row.gapH"></td>
+                  <td class="col-actions">
+                    <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertComponentRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeComponentRow(idx)">×</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. SVG DIAGRAM -->
+  <div id="svg-container" x-ref="svgContainer" @mouseover="onSvgHover($event)" @mousemove="onSvgMove($event)" @mouseleave="onSvgLeave()">
+    <div id="svg-canvas" x-ref="svgCanvas" x-show="!build.isEmpty" x-html="build.svg"></div>
+    <div x-show="build.isEmpty" style="padding:60px 20px;text-align:center;color:#94a3b8;">No layout yet — add some groups &amp; columns and components in the tables above.</div>
+    <div id="tooltip" x-show="tooltip.show" :style="`left:${tooltip.x}px; top:${tooltip.y}px`" x-text="tooltip.text"></div>
+    <div id="svg-footnote" x-show="!build.isEmpty" x-text="hoverInfo"></div>
+  </div>
+
+  <!-- 3. OUTPUT -->
+  <div class="panel">
+    <h3>Component Dimensions &amp; Totals</h3>
+    <div class="summary-grid">
+      <div class="sub-section">
+        <h4>Bars <span class="total" x-text="`Total Length: ${(build.summary.totalBarLengthMm / 1000).toFixed(2)} m`"></span></h4>
+        <div class="sheet-wrap">
+          <table class="sheet output">
+            <thead>
+              <tr><th>Width (mm)</th><th>Height (mm)</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+              <template x-if="build.summary.bars.length === 0"><tr><td colspan="3">None</td></tr></template>
+              <template x-for="item in build.summary.bars" :key="item.width + 'x' + item.height">
+                <tr><td x-text="item.width"></td><td x-text="item.height"></td><td x-text="item.count"></td></tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sub-section">
+        <h4>Fronts (Shakers) <span class="total" x-text="`Total Area: ${(build.summary.totalFrontAreaMm2 / 1_000_000).toFixed(3)} m²`"></span></h4>
+        <div class="sheet-wrap">
+          <table class="sheet output">
+            <thead>
+              <tr><th>Front Net Width (mm)</th><th>Front Net Height (mm)</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+              <template x-if="build.summary.fronts.length === 0"><tr><td colspan="3">None</td></tr></template>
+              <template x-for="item in build.summary.fronts" :key="item.frontW + 'x' + item.frontH">
+                <tr><td><strong x-text="item.frontW"></strong></td><td><strong x-text="item.frontH"></strong></td><td x-text="item.count"></td></tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sub-section">
+        <h4>Carcasses <span class="total" x-text="`Total Board Area: ${(build.summary.totalCarcassBoardAreaMm2 / 1_000_000).toFixed(3)} m²`"></span></h4>
+        <div class="sheet-wrap carcass-sheet-wrap">
+          <table class="sheet output spacy">
+            <thead>
+              <tr><th>Part</th><th>Width (mm)</th><th>Height (mm)</th><th>Thickness (mm)</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+              <template x-if="build.summary.carcasses.length === 0"><tr><td colspan="5">None</td></tr></template>
+              <template x-for="(item, i) in build.summary.carcasses" :key="item.part + i">
+                <tr><td x-text="item.part"></td><td x-text="item.width"></td><td x-text="item.height"></td><td x-text="item.thickness"></td><td x-text="item.count"></td></tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script>
+'use strict';
+
+/* ===================================================================
+   SECTION 1 — CONFIG & SAMPLE DATA
+   Colors, sizing constants, component-type lists, and the data that
+   pre-fills the tables on first load. Nothing in this section runs
+   any logic - it is just values other sections read from.
+   =================================================================== */
+
+// All tunable numbers and colors live here. Nothing in this file does any
+// work - it's just data that the layout engine and renderer read from.
+
+const CONFIG = {
+  scale: 1,
+  frameThickness: 50,   // shaker frame border width, in SVG units
+  groupGap: 100,        // horizontal gap between groups, in SVG units
+  gapMm: 4,              // default reveal gap between shaker fronts, in mm
+  viewBoxMargin: 40,
+
+  colors: {
+    canvasBg: '#f8fafc',
+    box: '#cbd5e1', boxStroke: '#1e293b',
+    wood: '#f3c48b', woodStroke: '#a86c32',
+    trim: '#e2e8f0', trimStroke: '#94a3b8',
+    bar: '#bfdbfe', barStroke: '#1e293b',
+    shakerOuter: '#bfdbfe', shakerOuterStroke: '#1e293b',
+    shakerInner: '#dbeafe', shakerInnerStroke: '#64748b',
+    handle: '#d97706', handleStroke: '#78350f',
+    applianceBody: '#e2e8f0', applianceBodyStroke: '#1e293b',
+    applianceGlass: '#94a3b8', applianceGlassStroke: '#475569',
+    applianceTrim: '#cbd5e1', applianceTrimStroke: '#475569',
+    controlPanel: '#334155', controlPanelStroke: '#1e293b',
+    knob: '#64748b'
+  },
+
+  handle: { thickness: 16, edgeOffset: 20, minSpan: 30, maxSpan: 80 }
+};
+
+// Component types that are just a plain colored rectangle. Mapping each one
+// to its fill/stroke pair here means the renderer needs only ONE function
+// for all four of them instead of four near-identical ones.
+const SIMPLE_RECT_TYPES = {
+  box: { fill: 'box', stroke: 'boxStroke' },
+  wood: { fill: 'wood', stroke: 'woodStroke' },
+  trim: { fill: 'trim', stroke: 'trimStroke' },
+  bar: { fill: 'bar', stroke: 'barStroke' }
+};
+
+const COMPONENT_TYPES = ['box', 'wood', 'trim', 'bar', 'shaker', 'oven', 'micro'];
+const HANDLE_POSITIONS = ['', 'T', 'B', 'L', 'R'];
+
+// Default data that pre-fills the input tables on first load.
+const SAMPLE_DATA = {
+  columns: [
+    ...[40, 20, 800, 20, 600, 20, 800, 20, 400, 80, 550].map(w => [1, w]),
+    ...[20, 580, 20, 20, 600, 20, 600, 20, 600, 20, 250, 20, 120].map(w => [2, w]),
+    ...[40, 20, 800, 20, 800, 20, 40].map(w => [3, w])
+  ],
+  components: [
+    [1, 1, 1, 'wood', 820, '', '', ''],
+    [1, 1, 11, 'wood', 40, '', '', ''],
+    [1, 1, 10, 'wood', 220, '', '', ''],
+    [1, 2, 1, 'bar', 820, '', '', ''],
+    [1, 3, 8, 'box', 100, '', '', ''],
+    [1, 3, 1, 'shaker', 420, 'T', 4, 4],
+    [1, 3, 1, 'shaker', 300, 'T', 4, 4],
+    [1, 4, 1, 'bar', 720, '', '', ''],
+    [1, 5, 1, 'shaker', 720, 'T', 4, 4],
+    [1, 6, 1, 'bar', 720, '', '', ''],
+    [1, 7, 1, 'shaker', 420, 'T', 4, 4],
+    [1, 7, 1, 'shaker', 300, 'T', 4, 4],
+    [1, 8, 1, 'bar', 720, '', '', ''],
+    [1, 9, 1, 'shaker', 720, 'T', 4, 4],
+    [1, 10, 1, 'bar', 720, '', '', ''],
+    [1, 11, 1, 'box', 820, '', '', ''],
+
+    [2, 1, 1, 'box', 860, '', '', ''],
+    [2, 1, 1, 'bar', 1640, '', '', ''],
+    [2, 1, 12, 'bar', 20, '', '', ''],
+    [2, 1, 12, 'box', 220, '', '', ''],
+    [2, 2, 1, 'box', 820, '', '', ''],
+    [2, 2, 2, 'box', 40, '', '', ''],
+    [2, 2, 2, 'shaker', 1160, 'R', 4, 4],
+    [2, 2, 2, 'shaker', 480, 'B', 4, 4],
+    [2, 3, 9, 'box', 100, '', '', ''],
+    [2, 3, 1, 'bar', 720, '', '', ''],
+    [2, 4, 1, 'bar', 2400, '', '', ''],
+    [2, 5, 1, 'shaker', 720, 'T', 4, 4],
+    [2, 5, 1, 'shaker', 1200, 'R', 4, 4],
+    [2, 5, 1, 'shaker', 480, 'B', 4, 4],
+    [2, 6, 1, 'bar', 2400, '', '', ''],
+    [2, 7, 1, 'shaker', 520, 'T', 4, 4],
+    [2, 7, 1, 'oven', 600, '', '', ''],
+    [2, 7, 1, 'micro', 400, '', '', ''],
+    [2, 7, 1, 'shaker', 400, 'B', 4, 4],
+    [2, 7, 1, 'shaker', 480, 'B', 4, 4],
+    [2, 8, 1, 'bar', 2400, '', '', ''],
+    [2, 9, 1, 'shaker', 720, 'T', 4, 4],
+    [2, 9, 1, 'shaker', 1200, 'L', 4, 4],
+    [2, 9, 1, 'shaker', 480, 'B', 4, 4],
+    [2, 10, 1, 'bar', 2400, '', '', ''],
+    [2, 11, 1, 'shaker', 720, 'T', 4, 4],
+    [2, 11, 1, 'shaker', 1200, 'L', 4, 4],
+    [2, 11, 1, 'shaker', 480, 'B', 4, 4],
+    [2, 12, 1, 'bar', 2500, '', '', ''],
+    [2, 13, 1, 'box', 2740, '', '', ''],
+
+    [3, 1, 1, 'wood', 820, '', '', ''],
+    [3, 1, 10, 'wood', 40, '', '', ''],
+    [3, 2, 1, 'bar', 820, '', '', ''],
+    [3, 3, 3, 'box', 100, '', '', ''],
+    [3, 3, 1, 'shaker', 420, 'T', 4, 4],
+    [3, 3, 1, 'shaker', 300, 'T', 4, 4],
+    [3, 4, 1, 'bar', 720, '', '', ''],
+    [3, 5, 1, 'shaker', 420, 'T', 4, 4],
+    [3, 5, 1, 'shaker', 300, 'T', 4, 4],
+    [3, 6, 1, 'bar', 820, '', '', ''],
+    [3, 7, 1, 'wood', 820, '', '', '']
+  ]
+};
+
+/* ===================================================================
+   SECTION 2 — GENERIC UTILITIES
+   CSV read/write, number parsing, file download. No kitchen-specific
+   knowledge here - safe to reuse in any other project.
+   =================================================================== */
+
+// Generic helpers with no knowledge of kitchens, layouts, or Alpine.
+// Kept separate so they're easy to test or reuse on their own.
+
+function isRowEmpty(...vals) {
+  return vals.every(v => String(v ?? '').trim() === '');
+}
+
+function toNum(v, isInt) {
+  const s = String(v ?? '').trim();
+  if (s === '') return NaN;
+  return isInt ? parseInt(s, 10) : parseFloat(s);
+}
+
+function downloadBlob(content, mimeType, filename) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function toCSV(rows) {
+  return rows.map(r => r.map(val => `"${String(val ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  for (let i = 0; i < normalized.length; i++) {
+    const ch = normalized[i];
+    if (inQuotes) {
+      if (ch === '"') { if (normalized[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; } }
+      else field += ch;
+    } else if (ch === '"') inQuotes = true;
+    else if (ch === ',') { row.push(field); field = ''; }
+    else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
+    else field += ch;
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(cell => String(cell).trim() !== ''));
+}
+
+/* ===================================================================
+   SECTION 3 — LAYOUT ENGINE (pure geometry)
+   Figures out where each component sits: x, y, width, height. Knows
+   nothing about colors or SVG markup - that is Section 4.
+   =================================================================== */
+
+// LayoutEngine turns "groups + columns + components" into positioned boxes
+// (x, y, width, height for each component). It knows nothing about how
+// those boxes get drawn - that's svg-renderer.js's job. Splitting the two
+// apart is what used to make the old KitchenSVGBuilder class hard to follow.
+
+// Where a new component can start, given the ranges already stacked in its
+// column(s): the top of the highest contiguous stack starting from 0.
+function getContiguousTop(ranges) {
+  const sorted = [...ranges].sort((a, b) => a[0] - b[0]);
+  let currY = 0;
+  for (const [start, end] of sorted) {
+    if (start <= currY) { if (end > currY) currY = end; } else break;
+  }
+  return currY;
+}
+
+function rangesOverlap(yStart, yEnd, ranges) {
+  return ranges.some(([start, end]) => Math.max(yStart, start) < Math.min(yEnd, end));
+}
+
+class LayoutEngine {
+  constructor(options = {}) {
+    this.scale = options.scale ?? CONFIG.scale;
+    this.groupGap = options.groupGap ?? CONFIG.groupGap;
+    this.defaultGapMm = options.gapMm ?? CONFIG.gapMm;
+    this.carcassDepthMm = options.carcassDepthMm ?? 550;
+    this.boardThicknessMm = options.boardThicknessMm ?? 18;
+
+    this.groups = new Map();         // groupId -> { colWidths, colX }
+    this.rawComponents = [];
+  }
+
+  setGroupColumns(groupId, widthsInMm) {
+    const colWidths = widthsInMm.map(w => w * this.scale);
+    const colX = [];
+    let x = 0;
+    for (const w of colWidths) { colX.push(x); x += w; }
+    this.groups.set(groupId, { colWidths, colX });
+  }
+
+  addComponent(groupNum, colNum, colSpan, type, heightMm, handlePos = null, gapWMm = null, gapHMm = null) {
+    this.rawComponents.push({ groupNum, colNum, colSpan, type, heightMm, handlePos, gapWMm, gapHMm });
+  }
+
+  // Places every component, left to right by group, bottom to top within a
+  // column. Returns everything svg-renderer.js and summary.js need.
+  calculate() {
+    const warnings = [];
+    const components = [];
+
+    // occupied[groupId][colIndex] = list of [yStart, yEnd] ranges already filled
+    const occupied = new Map();
+    for (const [groupId, group] of this.groups) occupied.set(groupId, group.colWidths.map(() => []));
+
+    const groupXOffsets = new Map();
+    let cursor = 0;
+    for (const [groupId, group] of this.groups) {
+      const width = group.colWidths.reduce((a, b) => a + b, 0);
+      groupXOffsets.set(groupId, width > 0 ? cursor : 0);
+      if (width > 0) cursor += width + this.groupGap;
+    }
+
+    for (const comp of this.rawComponents) {
+      const group = this.groups.get(comp.groupNum);
+      if (!group) {
+        warnings.push(`Component "${comp.type}" references unknown group ${comp.groupNum}. Skipped.`);
+        continue;
+      }
+      const ranges = occupied.get(comp.groupNum);
+      const colIndex = comp.colNum - 1;
+      const colSpan = comp.colSpan;
+      const height = comp.heightMm * this.scale;
+
+      if (colIndex < 0 || colSpan < 1) {
+        warnings.push(`Component "${comp.type}" at Group ${comp.groupNum} has an invalid column/span. Skipped.`);
+        continue;
+      }
+
+      let yFromBottom = 0;
+      for (let i = 0; i < colSpan; i++) {
+        const cIdx = colIndex + i;
+        if (cIdx < ranges.length) yFromBottom = Math.max(yFromBottom, getContiguousTop(ranges[cIdx]));
+      }
+      const yTop = yFromBottom + height;
+
+      let fits = true;
+      for (let i = 0; i < colSpan; i++) {
+        const cIdx = colIndex + i;
+        if (cIdx < ranges.length && rangesOverlap(yFromBottom, yTop, ranges[cIdx])) { fits = false; break; }
+      }
+      if (!fits) {
+        warnings.push(`Component "${comp.type}" (${comp.heightMm}mm) at Group ${comp.groupNum}, Col ${comp.colNum} overlaps an existing component. Skipped.`);
+        continue;
+      }
+
+      for (let i = 0; i < colSpan; i++) {
+        const cIdx = colIndex + i;
+        if (cIdx < ranges.length) ranges[cIdx].push([yFromBottom, yTop]);
+      }
+
+      const localX = group.colX[colIndex];
+      const x = localX + groupXOffsets.get(comp.groupNum);
+
+      let width = 0;
+      for (let i = 0; i < colSpan; i++) {
+        const cIdx = colIndex + i;
+        if (cIdx < group.colWidths.length) width += group.colWidths[cIdx];
+      }
+
+      const widthMm = width / this.scale;
+      const gapWMm = Number.isFinite(comp.gapWMm) ? comp.gapWMm : this.defaultGapMm;
+      const gapHMm = Number.isFinite(comp.gapHMm) ? comp.gapHMm : this.defaultGapMm;
+      const isFront = comp.type === 'shaker';
+      const frontWidthMm = isFront ? Math.max(0, widthMm - gapWMm) : widthMm;
+      const frontHeightMm = isFront ? Math.max(0, comp.heightMm - gapHMm) : comp.heightMm;
+
+      components.push({
+        groupNum: comp.groupNum, colNum: comp.colNum, colIndex, colSpan, type: comp.type,
+        x, yFromBottom, width, height, heightMm: comp.heightMm, widthMm, gapWMm, gapHMm, isFront,
+        frontWidthMm, frontHeightMm, carcassDepthMm: this.carcassDepthMm, handlePos: comp.handlePos
+      });
+    }
+
+    // Overall canvas size: widest total across groups, tallest column anywhere.
+    const groupWidths = new Map();
+    let totalWidth = 0;
+    let activeGroupsCount = 0;
+    for (const [groupId, group] of this.groups) {
+      const w = group.colWidths.reduce((a, b) => a + b, 0);
+      groupWidths.set(groupId, w);
+      totalWidth += w;
+      if (w > 0) activeGroupsCount++;
+    }
+    if (activeGroupsCount > 1) totalWidth += this.groupGap * (activeGroupsCount - 1);
+
+    let totalHeight = 0;
+    for (const [, ranges] of occupied) {
+      for (const col of ranges) {
+        for (const [, end] of col) totalHeight = Math.max(totalHeight, end);
+      }
+    }
+
+    return {
+      components,
+      groupWidths,
+      groupXOffsets,
+      totalWidth,
+      totalHeight,
+      isEmpty: totalWidth <= 0 || totalHeight <= 0,
+      warnings,
+      carcassDepthMm: this.carcassDepthMm,
+      boardThicknessMm: this.boardThicknessMm
+    };
+  }
+}
+
+/* ===================================================================
+   SECTION 4 — SVG RENDERER
+   Turns positioned components (from Section 3) into SVG markup.
+   Only this section touches CONFIG.colors or writes <rect>/<g> tags.
+   =================================================================== */
+
+// Everything here is a pure function: (positioned component) -> SVG string.
+// No state, no layout math - that all happened in layout-engine.js already.
+
+function renderSimpleRect(c, svgY, colorKey) {
+  const { fill, stroke } = SIMPLE_RECT_TYPES[colorKey];
+  const { [fill]: fillColor, [stroke]: strokeColor } = CONFIG.colors;
+  return `<rect fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" x="${c.x}" y="${svgY}" width="${c.width}" height="${c.height}"/>`;
+}
+
+function renderShaker(c, svgY) {
+  const ft = CONFIG.frameThickness;
+  const { shakerOuter, shakerOuterStroke, shakerInner, shakerInnerStroke } = CONFIG.colors;
+  const outer = `<rect fill="${shakerOuter}" stroke="${shakerOuterStroke}" stroke-width="2" x="${c.x}" y="${svgY}" width="${c.width}" height="${c.height}"/>`;
+  if (c.width <= ft * 2 || c.height <= ft * 2) return outer;
+  const inner = `<rect fill="${shakerInner}" stroke="${shakerInnerStroke}" stroke-width="2" x="${c.x + ft}" y="${svgY + ft}" width="${c.width - ft * 2}" height="${c.height - ft * 2}"/>`;
+  return outer + inner;
+}
+
+function renderOven(c, svgY) {
+  const p = 30;
+  const { applianceBody, applianceBodyStroke, applianceTrim, knob, controlPanel, controlPanelStroke, applianceGlass, applianceGlassStroke } = CONFIG.colors;
+  return `
+    <rect fill="${applianceBody}" stroke="${applianceBodyStroke}" stroke-width="2" x="${c.x}" y="${svgY}" width="${c.width}" height="${c.height}"/>
+    <rect fill="${applianceTrim}" stroke="${applianceGlassStroke}" stroke-width="1.5" x="${c.x + p}" y="${svgY + 15}" width="${c.width - p * 2}" height="45"/>
+    <circle cx="${c.x + p + 20}" cy="${svgY + 37.5}" r="10" fill="${knob}"/>
+    <circle cx="${c.x + c.width - p - 20}" cy="${svgY + 37.5}" r="10" fill="${knob}"/>
+    <rect fill="${controlPanel}" stroke="${controlPanelStroke}" stroke-width="1" x="${c.x + c.width / 2 - 40}" y="${svgY + 25}" width="80" height="25"/>
+    <rect fill="${applianceGlass}" stroke="${applianceGlassStroke}" stroke-width="2" x="${c.x + p}" y="${svgY + 70}" width="${c.width - p * 2}" height="${c.height - 85}"/>
+    <rect fill="${applianceTrim}" stroke="${applianceBodyStroke}" stroke-width="1" x="${c.x + p + 20}" y="${svgY + 90}" width="${c.width - p * 2 - 40}" height="15"/>
+  `;
+}
+
+function renderMicro(c, svgY) {
+  const p = 20;
+  const panelWidth = 80;
+  const { applianceBody, applianceBodyStroke, applianceGlass, applianceGlassStroke, applianceTrim, controlPanel, controlPanelStroke } = CONFIG.colors;
+  return `
+    <rect fill="${applianceBody}" stroke="${applianceBodyStroke}" stroke-width="2" x="${c.x}" y="${svgY}" width="${c.width}" height="${c.height}"/>
+    <rect fill="${applianceGlass}" stroke="${applianceGlassStroke}" stroke-width="2" x="${c.x + p}" y="${svgY + p}" width="${c.width - p * 3 - panelWidth}" height="${c.height - p * 2}"/>
+    <rect fill="${applianceTrim}" stroke="${applianceGlassStroke}" stroke-width="1.5" x="${c.x + c.width - p - panelWidth}" y="${svgY + p}" width="${panelWidth}" height="${c.height - p * 2}"/>
+    <rect fill="${controlPanel}" stroke="${controlPanelStroke}" stroke-width="1" x="${c.x + c.width - p - panelWidth + 10}" y="${svgY + p + 10}" width="${panelWidth - 20}" height="30"/>
+  `;
+}
+
+function renderHandle(c, svgY) {
+  if (!c.handlePos) return '';
+  const { thickness, edgeOffset, minSpan, maxSpan } = CONFIG.handle;
+  const pos = c.handlePos.toUpperCase();
+  const vSpan = Math.min(120, Math.max(minSpan, c.height - 80));
+  const hSpan = Math.min(maxSpan, Math.max(minSpan, c.width - 80));
+  let hx, hy, hw, hh;
+
+  switch (pos) {
+    case 'T': hw = hSpan; hh = thickness; hx = c.x + (c.width - hw) / 2; hy = svgY + edgeOffset; break;
+    case 'B': hw = hSpan; hh = thickness; hx = c.x + (c.width - hw) / 2; hy = svgY + c.height - edgeOffset - thickness; break;
+    case 'L': hw = thickness; hh = vSpan; hx = c.x + edgeOffset; hy = svgY + (c.height - hh) / 2; break;
+    case 'R':
+    default: hw = thickness; hh = vSpan; hx = c.x + c.width - edgeOffset - thickness; hy = svgY + (c.height - hh) / 2; break;
+  }
+
+  return `<rect fill="${CONFIG.colors.handle}" stroke="${CONFIG.colors.handleStroke}" stroke-width="1.5" x="${hx}" y="${hy}" width="${hw}" height="${hh}"/>`;
+}
+
+// Single dispatch table instead of a big switch statement. Adding a new
+// component type later just means adding one entry here.
+const COMPONENT_RENDERERS = {
+  box: (c, svgY) => renderSimpleRect(c, svgY, 'box'),
+  wood: (c, svgY) => renderSimpleRect(c, svgY, 'wood'),
+  trim: (c, svgY) => renderSimpleRect(c, svgY, 'trim'),
+  bar: (c, svgY) => renderSimpleRect(c, svgY, 'bar'),
+  shaker: (c, svgY) => renderShaker(c, svgY) + renderHandle(c, svgY),
+  oven: renderOven,
+  micro: renderMicro
+};
+
+function renderComponent(c, totalHeight, warnings) {
+  const svgY = totalHeight - c.yFromBottom - c.height;
+  const draw = COMPONENT_RENDERERS[c.type];
+  if (!draw) {
+    warnings.push(`Unknown component type "${c.type}" - not rendered.`);
+    return '';
+  }
+  const content = draw(c, svgY);
+  return `<g class="component-group" data-w="${c.widthMm}" data-h="${c.heightMm}" data-fw="${c.frontWidthMm}" data-fh="${c.frontHeightMm}" data-gap-w="${c.gapWMm}" data-gap-h="${c.gapHMm}" data-type="${c.type}">${content}</g>`;
+}
+
+// layout: the object returned by LayoutEngine.calculate()
+function renderSVG(layout) {
+  if (layout.isEmpty) return '';
+
+  const vbMargin = CONFIG.viewBoxMargin;
+  const viewBox = `-${vbMargin} -${vbMargin} ${layout.totalWidth + vbMargin * 2} ${layout.totalHeight + vbMargin * 2}`;
+
+  const backgroundRects = [...layout.groupWidths.entries()]
+    .map(([groupId, width]) => `<rect fill="${CONFIG.colors.canvasBg}" x="${layout.groupXOffsets.get(groupId)}" y="0" width="${width}" height="${layout.totalHeight}"/>`)
+    .join('');
+
+  const componentShapes = layout.components
+    .map(c => renderComponent(c, layout.totalHeight, layout.warnings))
+    .join('');
+
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Kitchen elevation layout diagram">
+      ${backgroundRects}
+      ${componentShapes}
+    </svg>`;
+}
+
+/* ===================================================================
+   SECTION 5 — CUT-LIST SUMMARY
+   Turns positioned components into the Bars / Fronts / Carcasses
+   totals shown in the output tables.
+   =================================================================== */
+
+// layout: the object returned by LayoutEngine.calculate()
+function computeSummary(layout) {
+  const barMap = new Map();
+  const frontMap = new Map();
+  const carcassBoxes = {};
+  let totalBarLengthMm = 0;
+  let totalFrontAreaMm2 = 0;
+
+  for (const c of layout.components) {
+    if (c.type === 'bar') {
+      const key = `${c.widthMm}x${c.heightMm}`;
+      const entry = barMap.get(key) || { width: c.widthMm, height: c.heightMm, count: 0 };
+      entry.count += 1;
+      barMap.set(key, entry);
+      totalBarLengthMm += c.heightMm;
+    } else if (c.type === 'shaker') {
+      const frontKey = `${c.frontWidthMm}x${c.frontHeightMm}`;
+      const fEntry = frontMap.get(frontKey) || { frontW: c.frontWidthMm, frontH: c.frontHeightMm, count: 0 };
+      fEntry.count += 1;
+      frontMap.set(frontKey, fEntry);
+      totalFrontAreaMm2 += c.frontWidthMm * c.frontHeightMm;
+
+      const boxKey = `${c.widthMm}x${c.heightMm}`;
+      if (!carcassBoxes[boxKey]) carcassBoxes[boxKey] = { carcassW: c.widthMm, carcassH: c.heightMm, count: 0 };
+      carcassBoxes[boxKey].count += 1;
+    }
+  }
+
+  // Every shaker-fronted opening needs a carcass box behind it: two side
+  // panels (full depth x box height) and two top/bottom panels (box width
+  // minus the two board thicknesses x full depth).
+  const t = layout.boardThicknessMm;
+  const depth = layout.carcassDepthMm;
+  const sideMap = new Map();
+  const topBottomMap = new Map();
+  for (const box of Object.values(carcassBoxes)) {
+    sideMap.set(box.carcassH, (sideMap.get(box.carcassH) || 0) + 2 * box.count);
+    const innerW = Math.max(0, box.carcassW - 2 * t);
+    topBottomMap.set(innerW, (topBottomMap.get(innerW) || 0) + 2 * box.count);
+  }
+
+  const carcasses = [];
+  for (const [h, qty] of sideMap) carcasses.push({ part: 'Side Panel', width: depth, height: h, thickness: t, count: qty });
+  for (const [w, qty] of topBottomMap) carcasses.push({ part: 'Top/Bottom Panel', width: w, height: depth, thickness: t, count: qty });
+
+  let totalCarcassBoardAreaMm2 = 0;
+  carcasses.forEach(b => { totalCarcassBoardAreaMm2 += b.width * b.height * b.count; });
+
+  return {
+    bars: [...barMap.values()],
+    fronts: [...frontMap.values()],
+    carcasses,
+    totalBarLengthMm,
+    totalFrontAreaMm2,
+    totalCarcassBoardAreaMm2
+  };
+}
+
+/* ===================================================================
+   SECTION 6 — COMPUTE LAYOUT (glue)
+   Validates the raw table rows, then runs Sections 3 -> 4 -> 5 and
+   packages the result for the UI. This is the one function Section 7
+   calls whenever the input tables change.
+   =================================================================== */
+
+// The one function app.js calls whenever the input tables change.
+// columnRows / componentRows are the raw {group, width, ...} objects bound
+// to the Alpine tables - this function is what turns them into a diagram.
+function computeLayout(columnRows, componentRows, carcassDepthMm, boardThicknessMm) {
+  const warnings = [];
+  const colFlags = columnRows.map(() => null);
+  const compFlags = componentRows.map(() => null);
+  const groupWidths = new Map();
+
+  columnRows.forEach((row, idx) => {
+    if (isRowEmpty(row.group, row.width)) { colFlags[idx] = 'empty'; return; }
+    const group = toNum(row.group, true);
+    const width = toNum(row.width, false);
+    if (!Number.isFinite(group) || group < 1 || !Number.isFinite(width) || width < 0) {
+      colFlags[idx] = 'invalid';
+      warnings.push(`Groups & Columns row ${idx + 1}: Group must be ≥1 and Width ≥0.`);
+      return;
+    }
+    if (!groupWidths.has(group)) groupWidths.set(group, []);
+    groupWidths.get(group).push(width);
+  });
+
+  const comps = [];
+  componentRows.forEach((row, idx) => {
+    if (isRowEmpty(row.group, row.col, row.span, row.height)) { compFlags[idx] = 'empty'; return; }
+    const group = toNum(row.group, true);
+    const col = toNum(row.col, true);
+    const span = toNum(row.span, true);
+    const height = toNum(row.height, false);
+    const type = row.type;
+    const handle = row.handle || null;
+    const gapWRaw = String(row.gapW ?? '').trim();
+    const gapHRaw = String(row.gapH ?? '').trim();
+    const gapW = gapWRaw === '' ? null : toNum(row.gapW, false);
+    const gapH = gapHRaw === '' ? null : toNum(row.gapH, false);
+    if (!Number.isFinite(group) || group < 1 || !Number.isFinite(col) || col < 1 ||
+        !Number.isFinite(span) || span < 1 || !Number.isFinite(height) || height < 0 ||
+        (gapWRaw !== '' && (!Number.isFinite(gapW) || gapW < 0)) ||
+        (gapHRaw !== '' && (!Number.isFinite(gapH) || gapH < 0))) {
+      compFlags[idx] = 'invalid';
+      warnings.push(`Components row ${idx + 1}: Group/Col/Span ≥1, Height/Gap W/Gap H ≥0 required.`);
+      return;
+    }
+    comps.push({ groupNum: group, colNum: col, colSpan: span, type, heightMm: height, handlePos: handle, gapWMm: gapW, gapHMm: gapH });
+  });
+
+  const engine = new LayoutEngine({ scale: CONFIG.scale, carcassDepthMm, boardThicknessMm });
+  for (const [g, widths] of groupWidths) engine.setGroupColumns(g, widths);
+  for (const c of comps) engine.addComponent(c.groupNum, c.colNum, c.colSpan, c.type, c.heightMm, c.handlePos, c.gapWMm, c.gapHMm);
+
+  const layout = engine.calculate();
+  const svg = renderSVG(layout);
+  const summary = computeSummary(layout);
+  warnings.push(...layout.warnings);
+
+  return { svg, isEmpty: layout.isEmpty, summary, warnings, colFlags, compFlags };
+}
+
+/* ===================================================================
+   SECTION 7 — UI / EVENTS (Alpine component)
+   All page state (table rows, status banner, tooltip) and user
+   actions (import/export, add/remove rows, hover tooltip). This is
+   the only section that touches the DOM or Alpine directly.
+   =================================================================== */
+
+// Alpine component: all page state (table rows, status banner, tooltip) and
+// user actions (import/export, add/remove rows). Delegates the actual
+// diagram math to computeLayout() (compute-layout.js).
+
+document.addEventListener('alpine:init', () => {
+  Alpine.data('kitchenApp', () => ({
+    columns: [],
+    components: [],
+    carcassDepthMm: 550,
+    boardThicknessMm: 18,
+    status: { message: '', type: '' },
+    tooltip: { show: false, x: 0, y: 0, text: '' },
+    hoverInfo: 'Hover a component in the diagram to see its dimensions.',
+    nextId: 1,
+    CONFIG,
+    COMPONENT_TYPES,
+    HANDLE_POSITIONS,
+    _statusTimer: null,
+
+    init() {
+      this.seed(SAMPLE_DATA);
+      this.ensureEmptyRows();
+
+      this.$watch('columns', () => {
+        const last = this.columns[this.columns.length - 1];
+        if (last && !isRowEmpty(last.group, last.width)) {
+          this.columns.push(this.newColumnRow());
+        }
+        while (this.columns.length > 1 &&
+               isRowEmpty(this.columns[this.columns.length - 1].group, this.columns[this.columns.length - 1].width) &&
+               isRowEmpty(this.columns[this.columns.length - 2].group, this.columns[this.columns.length - 2].width)) {
+          this.columns.pop();
+        }
+      });
+
+      this.$watch('components', () => {
+        const last = this.components[this.components.length - 1];
+        if (last && !isRowEmpty(last.group, last.col, last.span, last.height)) {
+          this.components.push(this.newComponentRow());
+        }
+        while (this.components.length > 1 &&
+               isRowEmpty(this.components[this.components.length - 1].group, this.components[this.components.length - 1].col, this.components[this.components.length - 1].span, this.components[this.components.length - 1].height) &&
+               isRowEmpty(this.components[this.components.length - 2].group, this.components[this.components.length - 2].col, this.components[this.components.length - 2].span, this.components[this.components.length - 2].height)) {
+          this.components.pop();
+        }
+      });
+    },
+
+    get build() {
+      return computeLayout(this.columns, this.components, this.carcassDepthMm, this.boardThicknessMm);
+    },
+
+    get bannerType() {
+      if (this.status.type === 'error') return 'error';
+      if (this.build.warnings.length > 0) return 'error';
+      if (this.status.type === 'ok') return 'ok';
+      return '';
+    },
+    get bannerText() {
+      if (this.status.type === 'error') return this.status.message;
+      const w = this.build.warnings;
+      if (w.length > 0) return `${w.length} issue(s) — ${w[0]}${w.length > 1 ? ' …' : ''}`;
+      return this.status.message;
+    },
+
+    newColumnRow(group = '', width = '') { return { id: this.nextId++, group, width }; },
+    newComponentRow(group = '', col = '', span = '', type = 'box', height = '', handle = '', gapW = '', gapH = '') {
+      return { id: this.nextId++, group, col, span, type, height, handle, gapW, gapH };
+    },
+
+    seed(data) {
+      this.columns = data.columns.map(([g, w]) => this.newColumnRow(g, w));
+      this.components = data.components.map(([g, c, s, t, h, hp, gw, gh]) => this.newComponentRow(g, c, s, t, h, hp, gw, gh));
+    },
+
+    ensureEmptyRows() {
+      if (this.columns.length === 0 || !isRowEmpty(this.columns[this.columns.length - 1].group, this.columns[this.columns.length - 1].width)) {
+        this.columns.push(this.newColumnRow());
+      }
+      if (this.components.length === 0 || !isRowEmpty(this.components[this.components.length - 1].group, this.components[this.components.length - 1].col, this.components[this.components.length - 1].span, this.components[this.components.length - 1].height)) {
+        this.components.push(this.newComponentRow());
+      }
+    },
+
+    insertColumnRow(idx) {
+      const current = this.columns[idx];
+      const cloned = this.newColumnRow(current.group, current.width);
+      this.columns.splice(idx + 1, 0, cloned);
+      this.$nextTick(() => this.$refs.columnsTbody.querySelectorAll('tr')[idx + 1]?.querySelector('input')?.focus());
+    },
+    removeColumnRow(idx) { this.columns.splice(idx, 1); },
+
+    insertComponentRow(idx) {
+      const current = this.components[idx];
+      const cloned = this.newComponentRow(current.group, current.col, current.span, current.type, current.height, current.handle, current.gapW, current.gapH);
+      this.components.splice(idx + 1, 0, cloned);
+      this.$nextTick(() => this.$refs.componentsTbody.querySelectorAll('tr')[idx + 1]?.querySelector('input')?.focus());
+    },
+    removeComponentRow(idx) { this.components.splice(idx, 1); },
+
+    resetDefaults() {
+      if (!confirm('Replace the current input tables with the sample data? This cannot be undone.')) return;
+      this.seed(SAMPLE_DATA);
+      this.ensureEmptyRows();
+      this.showStatus('Reset to sample data.', false);
+    },
+
+    showStatus(message, isError) {
+      clearTimeout(this._statusTimer);
+      this.status = { message, type: isError ? 'error' : 'ok' };
+      if (!isError) this._statusTimer = setTimeout(() => { this.status = { message: '', type: '' }; }, 3000);
+    },
+
+    onSvgHover(e) {
+      const group = e.target.closest('.component-group');
+      if (!group) { this.tooltip.show = false; return; }
+      const text = this.describeComponent(group);
+      this.tooltip.text = text;
+      this.tooltip.show = true;
+      // Footnote keeps showing the last-hovered component's dimensions even
+      // after the mouse leaves - handy on touch devices where there's no
+      // hover, and easier to read than a tooltip chasing the cursor.
+      this.hoverInfo = text;
+    },
+    onSvgMove(e) {
+      const group = e.target.closest('.component-group');
+      if (!group) { this.tooltip.show = false; return; }
+      const rect = this.$refs.svgContainer.getBoundingClientRect();
+      this.tooltip.x = e.clientX - rect.left + 15;
+      this.tooltip.y = e.clientY - rect.top - 35;
+    },
+    onSvgLeave() { this.tooltip.show = false; },
+    describeComponent(group) {
+      const type = group.getAttribute('data-type');
+      const w = group.getAttribute('data-w');
+      const h = group.getAttribute('data-h');
+      if (type === 'shaker') {
+        const fw = group.getAttribute('data-fw');
+        const fh = group.getAttribute('data-fh');
+        const gapW = group.getAttribute('data-gap-w');
+        const gapH = group.getAttribute('data-gap-h');
+        return `${type.toUpperCase()} — Carcass: ${w}×${h}mm | Front: ${fw}×${fh}mm (Gap W: ${gapW}mm, Gap H: ${gapH}mm)`;
+      }
+      return `${type.toUpperCase()} — W: ${w} × H: ${h}mm`;
+    },
+
+    exportSVG() {
+      const svgEl = this.$refs.svgCanvas.querySelector('svg');
+      if (!svgEl) return;
+      const serializer = new XMLSerializer();
+      const svgString = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' + serializer.serializeToString(svgEl);
+      downloadBlob(svgString, 'image/svg+xml;charset=utf-8', 'kitchen-layout.svg');
+    },
+    exportBarsCSV() {
+      const rows = [['Bar Width (mm)', 'Bar Height (mm)', 'Count']];
+      this.build.summary.bars.forEach(item => rows.push([item.width, item.height, item.count]));
+      if (rows.length === 1) rows.push(['None', '', '']);
+      downloadBlob(toCSV(rows), 'text/csv;charset=utf-8;', 'bars.csv');
+      this.showStatus('Bars CSV exported.', false);
+    },
+    exportFrontsCSV() {
+      const rows = [['Front Net Width (mm)', 'Front Net Height (mm)', 'Count']];
+      this.build.summary.fronts.forEach(item => rows.push([item.frontW, item.frontH, item.count]));
+      if (rows.length === 1) rows.push(['None', '', '']);
+      downloadBlob(toCSV(rows), 'text/csv;charset=utf-8;', 'fronts-shakers.csv');
+      this.showStatus('Fronts (shakers) CSV exported.', false);
+    },
+    exportCarcassesCSV() {
+      const rows = [['Part', 'Width (mm)', 'Height (mm)', 'Thickness (mm)', 'Count']];
+      this.build.summary.carcasses.forEach(item => rows.push([item.part, item.width, item.height, item.thickness, item.count]));
+      if (rows.length === 1) rows.push(['None', '', '', '', '']);
+      downloadBlob(toCSV(rows), 'text/csv;charset=utf-8;', 'carcass-boards.csv');
+      this.showStatus(`Carcasses CSV exported (depth set at ${this.carcassDepthMm}mm).`, false);
+    },
+    exportStateCSV() {
+      const rows = [['RowType', 'Group', 'Col', 'Span', 'Type', 'Value', 'Handle', 'GapW', 'GapH']];
+      this.columns.forEach(r => {
+        if (isRowEmpty(r.group, r.width)) return;
+        rows.push(['COLUMN', r.group, '', '', '', r.width, '', '', '']);
+      });
+      this.components.forEach(r => {
+        if (isRowEmpty(r.group, r.col, r.span, r.height)) return;
+        rows.push(['COMPONENT', r.group, r.col, r.span, r.type, r.height, r.handle, r.gapW, r.gapH]);
+      });
+      downloadBlob(toCSV(rows), 'text/csv;charset=utf-8;', 'kitchen-state.csv');
+      this.showStatus('State exported to CSV.', false);
+    },
+
+    triggerImport() {
+      this.$refs.importFile.value = '';
+      this.$refs.importFile.click();
+    },
+    handleImportFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          this.importStateCSV(String(reader.result));
+          this.ensureEmptyRows();
+          this.showStatus(`Imported "${file.name}".`, false);
+        } catch (err) {
+          this.showStatus(`Import failed: ${err.message}`, true);
+        } finally {
+          e.target.value = '';
+        }
+      };
+      reader.onerror = () => { this.showStatus('Could not read the file.', true); e.target.value = ''; };
+      reader.readAsText(file);
+    },
+    importStateCSV(text) {
+      const parsed = parseCSV(text);
+      if (parsed.length === 0) throw new Error('CSV file is empty.');
+
+      let dataRows = parsed;
+      const header = parsed[0].map(h => String(h).trim().toUpperCase());
+      if (header[0] === 'ROWTYPE') dataRows = parsed.slice(1);
+
+      const newColumns = [];
+      const newComponents = [];
+
+      dataRows.forEach((r, idx) => {
+        const [rowType, group, col, span, type, value, handle, gapW, gapH] = r;
+        const rt = String(rowType || '').trim().toUpperCase();
+        if (rt === 'COLUMN') {
+          const g = parseInt(group, 10);
+          const w = parseFloat(value);
+          if (!Number.isFinite(g) || !Number.isFinite(w)) throw new Error(`Row ${idx + 1}: invalid COLUMN data.`);
+          newColumns.push(this.newColumnRow(g, w));
+        } else if (rt === 'COMPONENT') {
+          const g = parseInt(group, 10);
+          const c = parseInt(col, 10);
+          const s = parseInt(span, 10);
+          const h = parseFloat(value);
+          const t = String(type || '').trim();
+          const gapWStr = String(gapW ?? '').trim();
+          const gapHStr = String(gapH ?? '').trim();
+          if (!Number.isFinite(g) || !Number.isFinite(c) || !Number.isFinite(s) || !Number.isFinite(h) || !t) {
+            throw new Error(`Row ${idx + 1}: invalid COMPONENT data.`);
+          }
+          newComponents.push(this.newComponentRow(g, c, s, t, h, String(handle || '').trim(), gapWStr, gapHStr));
+        } else if (rt) {
+          throw new Error(`Row ${idx + 1}: unknown RowType "${rowType}" (expected COLUMN or COMPONENT).`);
+        }
+      });
+
+      this.columns = newColumns;
+      this.components = newComponents;
+    }
+  }));
+});
+</script>
+
+</body>
+</html>

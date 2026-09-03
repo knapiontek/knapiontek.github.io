@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multiplication Practice (1×1 to 12×12)</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --panel2:#273449; --text:#e2e8f0; --muted:#94a3b8;
+    --accent:#38bdf8; --good:#22c55e; --bad:#ef4444; --border:#334155;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:linear-gradient(160deg,#0f172a,#111827); color:var(--text); min-height:100vh;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:24px 16px 60px;}
+  header{text-align:center;margin-bottom:18px;}
+  h1{font-size:1.4rem;margin:0 0 4px;}
+  .subtitle{color:var(--muted);font-size:0.88rem;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+  .hidden{display:none !important;}
+
+  /* setup */
+  label{display:block;font-size:0.85rem;color:var(--muted);margin:14px 0 6px;}
+  .range-row{display:flex;gap:10px;align-items:center;}
+  select, input[type=number]{
+    background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;
+    padding:8px 10px;font-size:0.95rem;width:100%;
+  }
+  .table-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:6px;}
+  .table-chip{
+    text-align:center;padding:8px 0;border-radius:8px;background:var(--panel2);
+    border:1px solid var(--border);cursor:pointer;font-size:0.85rem;user-select:none;
+  }
+  .table-chip.active{background:var(--accent);color:#04202f;border-color:var(--accent);font-weight:700;}
+  .btn{
+    display:inline-block;background:var(--accent);color:#04202f;font-weight:700;border:none;
+    padding:12px 22px;border-radius:10px;cursor:pointer;font-size:1rem;margin-top:16px;width:100%;
+    transition:transform .1s ease;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border);width:auto;}
+  .row-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+
+  /* quiz */
+  .progress-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:0.85rem;color:var(--muted);}
+  .progress-bar{height:6px;background:var(--panel2);border-radius:4px;overflow:hidden;margin-bottom:20px;}
+  .progress-bar-fill{height:100%;background:var(--accent);width:0%;transition:width .2s ease;}
+  .timer{font-variant-numeric:tabular-nums;}
+
+  .problem{
+    text-align:center;font-size:2.6rem;font-weight:800;margin:20px 0 22px;letter-spacing:.02em;
+  }
+  .answer-row{display:flex;gap:10px;justify-content:center;align-items:center;}
+  #answer-input{
+    width:130px;font-size:1.6rem;text-align:center;padding:12px;border-radius:10px;
+    border:2px solid var(--border);background:var(--panel2);color:var(--text);
+  }
+  #answer-input:focus{outline:none;border-color:var(--accent);}
+  #answer-input.correct{border-color:var(--good);background:rgba(34,197,94,0.15);}
+  #answer-input.incorrect{border-color:var(--bad);background:rgba(239,68,68,0.15);}
+  .submit-btn{
+    background:var(--accent);color:#04202f;border:none;border-radius:10px;
+    padding:0 20px;font-size:1.4rem;font-weight:800;cursor:pointer;height:52px;
+  }
+  .feedback-line{text-align:center;margin-top:16px;font-size:0.95rem;min-height:22px;}
+  .feedback-line.correct-text{color:var(--good);}
+  .feedback-line.incorrect-text{color:var(--bad);}
+  .stats-row{display:flex;justify-content:space-around;margin-top:20px;font-size:0.85rem;color:var(--muted);}
+  .stats-row b{color:var(--text);font-size:1rem;}
+
+  /* results */
+  #result-screen h2{margin-top:0;text-align:center;}
+  .score-big{font-size:2.6rem;font-weight:800;color:var(--accent);text-align:center;margin:6px 0 4px;}
+  .score-sub{text-align:center;color:var(--muted);margin-bottom:20px;}
+  .missed-list{margin-top:10px;}
+  .missed-item{
+    display:flex;justify-content:space-between;border:1px solid var(--border);border-radius:10px;
+    padding:10px 14px;margin-bottom:8px;background:var(--panel2);font-size:0.92rem;
+  }
+  .missed-item .yours{color:var(--bad);}
+  .missed-item .right{color:var(--good);}
+
+  footer{text-align:center;color:var(--muted);font-size:0.75rem;margin-top:26px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>✖️ Multiplication Practice</h1>
+    <div class="subtitle">Times tables from 1×1 to 12×12</div>
+  </header>
+
+  <!-- SETUP SCREEN -->
+  <div class="card" id="setup-screen">
+    <label>Which tables do you want to practice?</label>
+    <div class="table-grid" id="table-grid"></div>
+    <div class="row-btns" style="margin-top:10px;">
+      <button class="btn secondary" onclick="selectAllTables(true)">Select all</button>
+      <button class="btn secondary" onclick="selectAllTables(false)">Clear</button>
+    </div>
+
+    <label>Number of questions</label>
+    <select id="question-count">
+      <option value="10">10</option>
+      <option value="20" selected>20</option>
+      <option value="30">30</option>
+      <option value="50">50</option>
+    </select>
+
+    <label>Time limit per question (optional)</label>
+    <select id="time-limit">
+      <option value="0" selected>No time limit</option>
+      <option value="5">5 seconds</option>
+      <option value="10">10 seconds</option>
+      <option value="15">15 seconds</option>
+    </select>
+
+    <button class="btn" onclick="startQuiz()">Start practice</button>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div class="card hidden" id="quiz-screen">
+    <div class="progress-row">
+      <span id="progress-text">Question 1 / 20</span>
+      <span id="timer-text" class="timer"></span>
+    </div>
+    <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill"></div></div>
+
+    <div class="problem" id="problem-text"></div>
+    <div class="answer-row">
+      <input type="number" id="answer-input" inputmode="numeric" autocomplete="off" placeholder="?">
+      <button class="submit-btn" onclick="submitAnswer()">✓</button>
+    </div>
+    <div class="feedback-line" id="feedback-line"></div>
+
+    <div class="stats-row">
+      <div>Correct<br><b id="stat-correct">0</b></div>
+      <div>Wrong<br><b id="stat-wrong">0</b></div>
+      <div>Streak<br><b id="stat-streak">0</b></div>
+    </div>
+
+    <button class="btn secondary" style="width:100%;margin-top:20px;" onclick="quitQuiz()">Quit to menu</button>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="card hidden" id="result-screen">
+    <h2>Results</h2>
+    <div class="score-big" id="final-score"></div>
+    <div class="score-sub" id="final-score-sub"></div>
+    <div class="row-btns">
+      <button class="btn" onclick="restartSame()">Practice again</button>
+      <button class="btn secondary" onclick="backToSetup()">Change settings</button>
+    </div>
+    <div id="missed-section">
+      <h3 id="missed-title" class="hidden">Problems to review:</h3>
+      <div class="missed-list" id="missed-list"></div>
+    </div>
+  </div>
+
+  <footer>Works fully offline — no internet connection needed.</footer>
+</div>
+
+<script>
+let selectedTables = new Set([1,2,3,4,5,6,7,8,9,10,11,12]);
+let questionCount = 20;
+let timeLimit = 0;
+let timerInterval = null;
+let timeRemaining = 0;
+
+let quizProblems = [];
+let currentIndex = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let streak = 0;
+let missed = [];
+let answered = false;
+
+function buildTableGrid(){
+  const grid = document.getElementById("table-grid");
+  grid.innerHTML = "";
+  for(let i=1;i<=12;i++){
+    const chip = document.createElement("div");
+    chip.className = "table-chip active";
+    chip.textContent = i + "×";
+    chip.onclick = () => toggleTable(i, chip);
+    grid.appendChild(chip);
+  }
+}
+
+function toggleTable(n, chip){
+  if(selectedTables.has(n)){
+    selectedTables.delete(n);
+    chip.classList.remove("active");
+  } else {
+    selectedTables.add(n);
+    chip.classList.add("active");
+  }
+}
+
+function selectAllTables(all){
+  selectedTables = new Set();
+  document.querySelectorAll(".table-chip").forEach((chip,idx)=>{
+    if(all){
+      selectedTables.add(idx+1);
+      chip.classList.add("active");
+    } else {
+      chip.classList.remove("active");
+    }
+  });
+}
+
+function show(id){
+  ["setup-screen","quiz-screen","result-screen"].forEach(s=>{
+    document.getElementById(s).classList.toggle("hidden", s!==id);
+  });
+}
+
+function generateProblems(){
+  const tables = Array.from(selectedTables);
+  const problems = [];
+  for(let i=0;i<questionCount;i++){
+    const a = tables[Math.floor(Math.random()*tables.length)];
+    const b = Math.floor(Math.random()*12)+1;
+    problems.push({a,b,answer:a*b});
+  }
+  return problems;
+}
+
+function startQuiz(){
+  if(selectedTables.size === 0){
+    alert("Please select at least one times table.");
+    return;
+  }
+  questionCount = parseInt(document.getElementById("question-count").value,10);
+  timeLimit = parseInt(document.getElementById("time-limit").value,10);
+  quizProblems = generateProblems();
+  currentIndex = 0;
+  correctCount = 0;
+  wrongCount = 0;
+  streak = 0;
+  missed = [];
+  show("quiz-screen");
+  renderProblem();
+}
+
+function restartSame(){
+  quizProblems = generateProblems();
+  currentIndex = 0;
+  correctCount = 0;
+  wrongCount = 0;
+  streak = 0;
+  missed = [];
+  show("quiz-screen");
+  renderProblem();
+}
+
+function backToSetup(){
+  clearTimer();
+  show("setup-screen");
+}
+
+function quitQuiz(){
+  clearTimer();
+  show("setup-screen");
+}
+
+function clearTimer(){
+  if(timerInterval){
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function renderProblem(){
+  answered = false;
+  const p = quizProblems[currentIndex];
+  document.getElementById("progress-text").textContent = `Question ${currentIndex+1} / ${quizProblems.length}`;
+  document.getElementById("progress-fill").style.width = (currentIndex/quizProblems.length*100)+"%";
+  document.getElementById("problem-text").textContent = `${p.a} × ${p.b} = ?`;
+  document.getElementById("stat-correct").textContent = correctCount;
+  document.getElementById("stat-wrong").textContent = wrongCount;
+  document.getElementById("stat-streak").textContent = streak;
+  document.getElementById("feedback-line").textContent = "";
+  document.getElementById("feedback-line").className = "feedback-line";
+  const input = document.getElementById("answer-input");
+  input.value = "";
+  input.className = "";
+  input.disabled = false;
+  input.focus();
+
+  clearTimer();
+  if(timeLimit > 0){
+    timeRemaining = timeLimit;
+    document.getElementById("timer-text").textContent = timeRemaining + "s";
+    timerInterval = setInterval(()=>{
+      timeRemaining--;
+      document.getElementById("timer-text").textContent = timeRemaining + "s";
+      if(timeRemaining <= 0){
+        clearTimer();
+        if(!answered) forceTimeout();
+      }
+    },1000);
+  } else {
+    document.getElementById("timer-text").textContent = "";
+  }
+}
+
+function forceTimeout(){
+  answered = true;
+  const p = quizProblems[currentIndex];
+  wrongCount++;
+  streak = 0;
+  missed.push({problem:`${p.a} × ${p.b}`, yours:"(no answer)", right:p.answer});
+  const input = document.getElementById("answer-input");
+  input.disabled = true;
+  input.classList.add("incorrect");
+  input.value = "";
+  const fb = document.getElementById("feedback-line");
+  fb.textContent = `⏱ Time's up! The answer was ${p.answer}.`;
+  fb.className = "feedback-line incorrect-text";
+  setTimeout(nextProblem, 1300);
+}
+
+function submitAnswer(){
+  if(answered) return;
+  const input = document.getElementById("answer-input");
+  const val = input.value.trim();
+  if(val === "") return;
+  answered = true;
+  clearTimer();
+  const p = quizProblems[currentIndex];
+  const userAnswer = parseInt(val,10);
+  const isCorrect = userAnswer === p.answer;
+  input.disabled = true;
+  const fb = document.getElementById("feedback-line");
+  if(isCorrect){
+    correctCount++;
+    streak++;
+    input.classList.add("correct");
+    fb.textContent = "✔ Correct!";
+    fb.className = "feedback-line correct-text";
+  } else {
+    wrongCount++;
+    streak = 0;
+    input.classList.add("incorrect");
+    fb.textContent = `✘ Not quite — the answer was ${p.answer}.`;
+    fb.className = "feedback-line incorrect-text";
+    missed.push({problem:`${p.a} × ${p.b}`, yours:userAnswer, right:p.answer});
+  }
+  document.getElementById("stat-correct").textContent = correctCount;
+  document.getElementById("stat-wrong").textContent = wrongCount;
+  document.getElementById("stat-streak").textContent = streak;
+  setTimeout(nextProblem, isCorrect ? 700 : 1300);
+}
+
+function nextProblem(){
+  if(currentIndex === quizProblems.length-1){
+    showResults();
+  } else {
+    currentIndex++;
+    renderProblem();
+  }
+}
+
+function showResults(){
+  clearTimer();
+  show("result-screen");
+  const pct = Math.round(correctCount/quizProblems.length*100);
+  document.getElementById("final-score").textContent = `${correctCount} / ${quizProblems.length} (${pct}%)`;
+  let msg = "Excellent work — you know these tables well!";
+  if(pct < 50) msg = "Keep practicing — repetition is the key to mastering times tables.";
+  else if(pct < 80) msg = "Good effort! Review the missed problems below and try again.";
+  document.getElementById("final-score-sub").textContent = msg;
+
+  const missedTitle = document.getElementById("missed-title");
+  const missedList = document.getElementById("missed-list");
+  missedList.innerHTML = "";
+  if(missed.length === 0){
+    missedTitle.classList.add("hidden");
+  } else {
+    missedTitle.classList.remove("hidden");
+    missed.forEach(m=>{
+      const div = document.createElement("div");
+      div.className = "missed-item";
+      div.innerHTML = `<span>${m.problem}</span><span><span class="yours">${m.yours}</span> → <span class="right">${m.right}</span></span>`;
+      missedList.appendChild(div);
+    });
+  }
+}
+
+document.getElementById("answer-input").addEventListener("keydown", (e)=>{
+  if(e.key === "Enter") submitAnswer();
+});
+
+buildTableGrid();
+</script>
+</body>
+</html>
