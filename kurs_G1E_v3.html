@@ -1,0 +1,2224 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Egzaminacyjny SEP G1 E - 100 Pytan</title>
+    <style>
+        :root {
+            --bg-color: #121824;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --correct: #22c55e;
+            --wrong: #ef4444;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            color: var(--accent);
+        }
+
+        .score-board {
+            display: flex;
+            gap: 15px;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .score-board span {
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .correct-score { color: var(--correct); }
+        .wrong-score { color: var(--wrong); }
+
+        .nav-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        select, button {
+            background-color: #0f172a;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            border-color: var(--accent);
+            background-color: #1e293b;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .question-box {
+            font-size: 1.1rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-top: 10px;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .option-btn {
+            text-align: left;
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.3;
+        }
+
+        .option-btn.correct-ans {
+            background-color: rgba(34, 197, 94, 0.2) !important;
+            border-color: var(--correct) !important;
+            color: #86efac;
+        }
+
+        .option-btn.wrong-ans {
+            background-color: rgba(239, 68, 68, 0.2) !important;
+            border-color: var(--wrong) !important;
+            color: #fca5a5;
+        }
+
+        .hint-btn {
+            background-color: transparent;
+            color: var(--accent);
+            border: 1px dashed var(--accent);
+            align-self: flex-start;
+        }
+
+        .info-card {
+            background-color: #0f172a;
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .info-card.visible {
+            display: block;
+        }
+
+        .info-card h4 {
+            margin-bottom: 5px;
+            color: var(--accent);
+        }
+
+        .footer-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .small-btn {
+            font-size: 0.8rem;
+            padding: 6px 10px;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .review-banner {
+            display: none;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .review-banner.visible {
+            display: flex;
+        }
+
+        .completion-banner {
+            display: none;
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid var(--correct);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .completion-banner.visible {
+            display: flex;
+        }
+
+        .completion-banner h3 {
+            color: var(--correct);
+        }
+
+        .completion-banner .banner-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .glossary-box {
+            border-left-color: #a78bfa !important;
+        }
+
+        .glossary-box h4 {
+            color: #a78bfa !important;
+        }
+
+        .glossary-entry + .glossary-entry {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .glossary-entry h5 {
+            color: #a78bfa;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        .info-card table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 0.85rem;
+        }
+
+        .info-card th, .info-card td {
+            border: 1px solid var(--border);
+            padding: 6px 8px;
+            text-align: left;
+        }
+
+        .info-card th {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-main);
+        }
+
+        .info-card ul {
+            margin: 6px 0 6px 20px;
+        }
+
+        .info-card p {
+            margin-bottom: 6px;
+        }
+
+        .info-card strong {
+            color: var(--text-main);
+        }
+
+        .summary-box {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .summary-box.visible {
+            display: flex;
+        }
+
+        .summary-stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .summary-stats > div {
+            flex: 1;
+            min-width: 100px;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .summary-stats .stat-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        .wrong-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .wrong-list button {
+            padding: 6px 10px;
+            font-size: 0.85rem;
+            border-color: var(--wrong);
+            color: #fca5a5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>SEP G1 E - Trener Egzaminacyjny (100 Pytan)</h1>
+        <div class="score-board">
+            <span class="correct-score">Poprawne: <strong id="score-correct">0</strong></span>
+            <span class="wrong-score">Bledne: <strong id="score-wrong">0</strong></span>
+            <span>Wynik: <strong id="score-percent">0%</strong></span>
+        </div>
+    </header>
+
+    <div class="nav-controls">
+        <label for="jump-select">Pytanie:</label>
+        <select id="jump-select" onchange="jumpToQuestion(this.value)"></select>
+        <button onclick="toggleHint()" class="hint-btn">Pokaż Wskazówkę</button>
+        <button onclick="showSummary()" class="small-btn">📊 Podsumowanie</button>
+        <button onclick="saveProgress()" class="small-btn">💾 Zapisz postęp</button>
+        <button onclick="document.getElementById('file-input').click()" class="small-btn">📂 Wczytaj postęp</button>
+        <button onclick="exportCSV()" class="small-btn">📄 Eksport CSV</button>
+        <input type="file" id="file-input" accept=".json,application/json" onchange="loadProgress(event)">
+        <button onclick="resetQuiz()" style="margin-left: auto;">Resetuj Wyniki</button>
+    </div>
+
+    <div class="review-banner" id="review-banner">
+        <span id="review-banner-text">🔁 Tryb powtórki błędnych odpowiedzi</span>
+        <button onclick="exitReview()" class="small-btn">Zakończ powtórkę &rarr; wróć do pełnego kursu</button>
+    </div>
+
+    <div id="quiz-view">
+        <div class="question-box" id="question-text">Ładowanie pytania...</div>
+
+        <div class="options-grid" id="options-container"></div>
+
+        <div class="info-card" id="hint-box">
+            <h4>Wskazówka:</h4>
+            <p id="hint-text"></p>
+        </div>
+
+        <div class="info-card" id="explanation-box" style="border-left-color: var(--correct);">
+            <h4 id="explanation-title">Szczegółowe Wyjaśnienie:</h4>
+            <p id="explanation-text"></p>
+        </div>
+
+        <div class="info-card glossary-box" id="glossary-box">
+            <h4>📚 Baza wiedzy – rozszerzone wyjaśnienie tematu:</h4>
+            <div id="glossary-content"></div>
+        </div>
+
+        <div class="completion-banner" id="completion-banner">
+            <h3>🎉 Ukończono kurs!</h3>
+            <p id="completion-text"></p>
+            <div class="banner-actions">
+                <button onclick="startReview()" id="review-start-btn">🔁 Powtórz błędne odpowiedzi</button>
+                <button onclick="showSummary()">📊 Zobacz podsumowanie</button>
+            </div>
+        </div>
+
+        <div class="footer-nav">
+            <button id="prev-btn" onclick="prevQuestion()">&larr; Poprzednie</button>
+            <button id="next-btn" onclick="nextQuestion()">Następne &rarr;</button>
+        </div>
+    </div>
+
+    <div class="summary-box" id="summary-box">
+        <h3>Podsumowanie postępów</h3>
+        <div class="summary-stats">
+            <div><div class="stat-value" id="sum-answered">0</div><div>Odpowiedziano</div></div>
+            <div><div class="stat-value correct-score" id="sum-correct">0</div><div>Poprawne</div></div>
+            <div><div class="stat-value wrong-score" id="sum-wrong">0</div><div>Błędne</div></div>
+            <div><div class="stat-value" id="sum-percent">0%</div><div>Wynik</div></div>
+        </div>
+        <div id="sum-wrong-section">
+            <p style="margin-bottom:8px; color: var(--text-muted);">Pytania z błędną odpowiedzią (kliknij, aby przejść do pytania):</p>
+            <div class="wrong-list" id="wrong-list"></div>
+        </div>
+        <div class="banner-actions" style="display:flex; gap:10px; flex-wrap: wrap;">
+            <button onclick="startReview()" id="review-start-btn-2">🔁 Powtórz błędne odpowiedzi</button>
+            <button onclick="hideSummary()">&larr; Wróć do kursu</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const quizData = [
+    {
+        q: "1. Jakie są 5 Zasad Bezpiecznej Pracy przy urządzeniach elektrycznych wyłączonych spod napięcia (kolejność!)?",
+        options: [
+            "1. Wyłączyć całkowicie, 2. Zabezpieczyć przed ponownym załączeniem, 3. Sprawdzić brak napięcia, 4. Uziemić i zewrzeć, 5. Wyznaczyć i ogrodzić strefę pracy",
+            "1. Sprawdzić brak napięcia, 2. Wyłączyć prąd, 3. Założyć rękawice, 4. Uziemić, 5. Podpisać dokumenty",
+            "1. Wyłączyć wyłącznik główny, 2. Uziemić przewody, 3. Oznaczyć tabliczką, 4. Wykonać pomiary, 5. Zgłosić do D",
+            "1. Wyznaczyć strefę, 2. Wyłączyć napięcie, 3. Sprawdzić wskaźnikiem, 4. Założyć uziemiacz, 5. Założyć blokadę"
+        ],
+        answer: 0,
+        hint: "Kolejność jest absolutnie kluczowa i sprawdzana przez każdą komisję SEP.",
+        exp: "Prawidłowa kolejność zgodna z normą PN-EN 50110-1: 1. Całkowite odłączenie od napięcia, 2. Zabezpieczenie przed przypadkowym załączeniem (blokady, tabliczki 'NIE ZAŁĄCZAĆ'), 3. Sprawdzenie braku napięcia dwubiegunowym wskaźnikiem, 4. Uziemienie i zwarcie (w tej kolejności!), 5. Wyznaczenie i zabezpieczenie miejsca pracy."
+    },
+    {
+        q: "2. Jak należy postąpić w pierwszej kolejności przy uwolnieniu poszkodowanego spod napięcia do 1 kV?",
+        options: [
+            "Złapać poszkodowanego za ubranie i natychmiast odciągnąć",
+            "Odłączyć napięcie odpowiednim wyłącznikiem lub odciągnąć poszkodowanego używając sprzętu izolacyjnego",
+            "Rozpocząć natychmiast uciskanie klatki piersiowej",
+            "Zadzwończyć na pogotowie przed podjęciem jakichkolwiek działań"
+        ],
+        answer: 1,
+        hint: "Bezpieczeństwo ratownika jest zawsze na 1. miejscu.",
+        exp: "Pierwsza zasada ratownictwa: nie stawać się drugą ofiarą. Należy wyłączyć napięcie włącznikiem/bezpiecznikiem, a jeśli to niemożliwe – odepchnąć/odciągnąć poszkodowanego za pomocą przedmiotu sucho-izolacyjnego (np. kij od szczotki, przedłużacz dielektryczny)."
+    },
+    {
+        q: "3. Jaki jest prawidłowy stosunek uciśnięć klatki piersiowej do wdechów ratowniczych u dorosłego podczas RKO?",
+        options: [
+            "15 uciśnięć : 2 wdechy",
+            "30 uciśnięć : 2 wdechy",
+            "50 uciśnięć : 5 wdechów",
+            "Tylko uciśnięcia bez wdechów z częstotliwością 60/min"
+        ],
+        answer: 1,
+        hint: "Zgodne z aktualnymi wytycznymi Europejskiej Rady Resuscytacji (ERC).",
+        exp: "Wymagany stosunek to 30 uciśnięć (na głębokość 5-6 cm z częstotliwością 100-120/min) do 2 wdechów ratowniczych."
+    },
+    {
+        q: "4. Co jest główną przyczyną migotania komór serca (migotania komorowego) przy porażeniu prądem przemiennym 50 Hz?",
+        options: [
+            "Przepływ prądu o wartości powyżej 30-50 mA przez klatkę piersiową",
+            "Oparzenie skóry na wejściu prądu",
+            "Spadek napięcia w sieci poniżej 180V",
+            "Przepływ prądu stałego o wartości 5 mA"
+        ],
+        answer: 0,
+        hint: "Szczególnie niebezpieczny próg prądu przemiennego dla częstotliwości sieciowej.",
+        exp: "Prąd przemienny 50 Hz o wartości powyżej 30-50 mA przepływający przez klatkę piersiową w tzw. wrażliwej fazie cyklu pracy serca (faza T) zakłóca impulsy elektryczne serca i wywołuje migotanie komór, co prowadzi do zatrzymania krążenia."
+    },
+    {
+        q: "5. Jaka wartość prądu różnicowego IΔn jest wymagana dla wyłączników RCD stanowiących ochronę uzupełniającą?",
+        options: [
+            "Nie większa niż 10 mA",
+            "Nie większa niż 30 mA",
+            "Dokładnie 100 mA",
+            "300 mA lub 500 mA"
+        ],
+        answer: 1,
+        hint: "Standardowy RCD w domach i biurach.",
+        exp: "Zgodnie z normą PN-HD 60364-4-41, jako ochrona uzupełniająca (przed dotykiem bezpośrednim) wymagane są wyłączniki różnicowoprądowe o znamionowym prądzie różnicowym IΔn ≤ 30 mA."
+    },
+    {
+        q: "6. Co to jest ochrona podstawowa (dawniej: przed dotykiem bezpośrednim)?",
+        options: [
+            "Ochrona ludzi przed dotknięciem części przewodzących dostępnych pod napięciem podczas awarii",
+            "Ochrona zapobiegająca dotknięciu części czynnych (pod napięciem podczas normalnej pracy)",
+            "System automatycznego wyłączania zasilania bezpiecznikiem topikowym",
+            "Uziemienie obudowy urządzenia"
+        ],
+        answer: 1,
+        hint: "Dotyczy normalnych warunków pracy urządzenia.",
+        exp: "Ochrona podstawowa zabezpiecza przed dotknięciem elementów, które w normalnych warunkach znajdują się pod napięciem (np. izolacja robocza, obudowy zamykane na klucz, osłony i przegrody)."
+    },
+    {
+        q: "7. Co to jest ochrona przy uszkodzeniu (dawniej: przed dotykiem pośrednim)?",
+        options: [
+            "Izolacja robocza przewodów faza-neutralny",
+            "Ochrona przed porażeniem przy dotknięciu części przewodzących dostępnych, które znalazły się pod napięciem w wyniku uszkodzenia izolacji",
+            "Używanie rękawic gumowych podczas wymiany żarówki",
+            "Stosowanie tablic ostrzegawczych na słupach WN"
+        ],
+        answer: 1,
+        hint: "Dotyczy sytuacji awaryjnej (przebicie na obudowę).",
+        exp: "Ochrona przy uszkodzeniu chroni przed porażeniem, gdy na metalowej obudowie urządzenia (część przewodząca dostępna) pojawi się napięcie wskutek awarii (np. uszkodzenia izolacji podstawowej). Realizowana m.in. przez Samoczynne Wyłączenie Zasilania (SWZ)."
+    },
+    {
+        q: "8. Jak działa wyłącznik różnicowoprądowy (RCD)?",
+        options: [
+            "Mierzy temperaturę przewodów i wyłącza przy przegrzaniu",
+            "Porównuje prąd wypływający przewodem fazowym z prądem powracającym przewodem neutralnym za pomocą przekładnika Ferrantego",
+            "Wyłącza obwód w momencie gdy napięcie spadnie poniżej 190V",
+            "Mierzy rezystancję uziemienia i rozłącza obwód przy jej wzroście"
+        ],
+        answer: 1,
+        hint: "I wejściowe - I wyjściowe = I różnicowe.",
+        exp: "RCD wykorzystuje przekładnik sumujący (Ferrantego). W stanie prawidłowym suma geometryczna prądów w przewodach roboczych wynosi zero. Jeśli wystąpi upływ prądu do ziemi (np. przez ciało człowieka), równowaga zostaje zaburzona i układ wyzwala zamek wyłącznika."
+    },
+    {
+        q: "9. Dlaczego ZABRONIONE jest stosowanie wyłącznika RCD w układzie sieci TN-C?",
+        options: [
+            "Ponieważ prąd w sieci TN-C jest zbyt wysoki",
+            "Przerwanie przewodu PEN przez RCD pozbawia instalację ochrony i stwarza śmiertelne zagrożenie pojawienia się napięcia na obudowach",
+            "Ponieważ RCD działa tylko z prądem stałym",
+            "Nie ma takiego zakazu, można bez problemu instalować"
+        ],
+        answer: 1,
+        hint: "Pamiętaj o absolutnym zakazie przerywania przewodu ochronno-neutralnego PEN!",
+        exp: "W układzie TN-C przewód PEN pełni funkcję neutralną i ochronną. Przepisy kategorycznie zabraniają instalowania urządzeń łączących (w tym styków RCD) w przewodzie PEN/PE, ponieważ jego przerwanie spowoduje pojawienie się pełnego napięcia sieciowego na wszystkich obudowach urządzeń I klasy!"
+    },
+    {
+        q: "10. Czym różni się przewód PE od przewodu PEN?",
+        options: [
+            "PE to przewód fazowy, PEN to ochronny",
+            "PE pełni wyłącznie funkcję ochronną; PEN łączy funkcję przewodu ochronnego (PE) i neutralnego (N)",
+            "PE ma kolor jasnoniebieski, a PEN zielono-żółty",
+            "Przewód PE stosuje się w układzie TT, a PEN w układzie IT"
+        ],
+        answer: 1,
+        hint: "Zwróć uwagę na litery: Protective Earth vs Protective Earth Neutral.",
+        exp: "PE (Protective Earth) służy wyłącznie do ochrony przed porażeniem. PEN (Protective Earth Neutral) pełni jednocześnie funkcję roboczą (przewodzi prąd roboczy N) oraz funkcję ochronną (PE). PEN występuje tylko w układzie TN-C (min. przekrój 10 mm² Cu lub 16 mm² Al)."
+    },
+    {
+        q: "11. Co oznacza symbol Samoczynne Wyłączenie Zasilania (SWZ)?",
+        options: [
+            "Ręczne wyłączenie bezpiecznika przed pracą",
+            "Środek ochrony przy uszkodzeniu, polegający na automatycznym otwarciu obwodu przez zabezpieczenie nadprądowe lub RCD w określonym czasie",
+            "Wyłączenie prądu przez elektrownię przy braku płatności",
+            "Przejście instalacji na zasilanie awaryjne z akumulatorów"
+        ],
+        answer: 1,
+        hint: "Środek ochrony przeciwporażeniowej oparty na pętli zwarcia.",
+        exp: "SWZ polega na tym, że w przypadku zwarcia fazy z obudową powstaje prąd zwarciowy o wartości wystarczającej do tego, aby zabezpieczenie (np. wyłącznik nadprądowy, topikowy lub RCD) samoczynnie odłączyło zasilanie w czasie określonym normą."
+    },
+    {
+        q: "12. Jaki jest maksymalny dopuszczalny czas wyłączenia zasilania w układzie TN dla obwodów końcowych do 32 A przy U0 = 230 V?",
+        options: [
+            "0,2 sekundy",
+            "0,4 sekundy",
+            "1,0 sekunda",
+            "5,0 sekund"
+        ],
+        answer: 1,
+        hint: "Norma PN-HD 60364-4-41 Tabela 41.1.",
+        exp: "Dla napięcia U0 = 230 V względem ziemi w układzie TN maksymalny dopuszczalny czas samoczynnego wyłączenia dla obwodów gniazdowych/odbiorczych do 32 A wynosi 0,4 s (w układzie TT wynosi 0,2 s)."
+    },
+    {
+        q: "13. Czym charakteryzuje się urządzenie wykonane w II klasie ochronności?",
+        options: [
+            "Wymaga podłączenia przewodu ochronnego PE do obudowy",
+            "Posiada izolację podwójną lub wzmocnioną i nie posiada (oraz nie wymaga) przewodu ochronnego PE",
+            "Zasilane jest wyłącznie napięciem bezpiecznym SELV 12V",
+            "Może pracować wyłącznie pod wodą"
+        ],
+        answer: 1,
+        hint: "Symbol dwóch kwadratów wpisanych w siebie.",
+        exp: "Urządzenia II klasy ochronności mają izolację podwójną lub wzmocnioną. Metalowe części nie mogą znaleźć się pod napięciem w wyniku pojedynczej usterki. Urządzenia te posiadają wtyczkę bez styku ochronnego (lub z otworem niepołączonym elektrycznie)."
+    },
+    {
+        q: "14. Czym różni się system zasilania SELV od PELV?",
+        options: [
+            "SELV jest na prąd stały, PELV na przemienny",
+            "Obwód SELV jest całkowicie odizolowany od ziemi; obwód PELV może być uziemiony",
+            "SELV to napięcie 230V, PELV to napięcie 12V",
+            "PELV stosuje się w kopalniach, SELV w budownictwie"
+        ],
+        answer: 1,
+        hint: "S = Separated (odizolowany), P = Protected (uziemiony ochronnie).",
+        exp: "Oba układy to obwody bardzo niskiego napięcia (bardzo niskie napięcie bezpieczne, U ≤ 50V AC). SELV (Safety Extra-Low Voltage) jest bezwzględnie odizolowany od ziemi. PELV (Protective Extra-Low Voltage) ma punkt obwodu po stronie wtórnej połączony z ziemią."
+    },
+    {
+        q: "15. Jaka jest maksymalna wartość napięcia dotykowego dopuszczalnego długotrwale (UL) w środowisku normalnym (I) dla prądu przemiennego?",
+        options: [
+            "12 V",
+            "25 V",
+            "50 V",
+            "120 V"
+        ],
+        answer: 2,
+        hint: "Standardowa granica bezpiecznego napięcia w suchych pomieszczeniach.",
+        exp: "W warunkach normalnych (środowisko I - suche pomieszczenia, podłogi drewniane/dywanowe) dopuszczalne długotrwale napięcie dotykowe wynosi UL = 50 V AC (oraz 120 V DC)."
+    },
+    {
+        q: "16. Jaka jest wartość napięcia UL w warunkach szczególnego zagrożenia (środowisko II, np. łazienki, obory, tereny otwarte)?",
+        options: [
+            "12 V AC",
+            "25 V AC",
+            "50 V AC",
+            "100 V AC"
+        ],
+        answer: 1,
+        hint: "Połowa wartości dla środowiska normalnego.",
+        exp: "W środowisku o zwiększonym zagrożeniu (środowisko II - wilgoć, duża powierzchnia przewodząca, łazienki, plac budowy) dopuszczalne napięcie dotykowe długotrwałe obniża się do UL = 25 V AC (oraz 60 V DC)."
+    },
+    {
+        q: "17. Do czego służą połączenia wyrównawcze (wyrównywanie potencjałów)?",
+        options: [
+            "Do zmniejszenia spadków napięcia na długich liniach",
+            "Do wyrównania potencjałów części przewodzących dostępnych i obcych w celu wyeliminowania niebezpiecznych napięć dotykowych",
+            "Do poprawy współczynnika mocy cos fi",
+            "Do uniknięcia przeciążeń sieci elektrycznej"
+        ],
+        answer: 1,
+        hint: "Łączenie rur metalowych, konstrukcji budynku z szyną uziemiającą.",
+        exp: "Połączenia wyrównawcze (Główne CCW i Miejscowe) łączą ze sobą części przewodzące obce (rury, konstrukcje, ciągi wentylacyjne) z przewodem PE/GSU, aby w przypadku awarii nie powstała niebezpieczna różnica potencjałów (napięcie dotykowe) między dwoma elementami w zasięgu ręki."
+    },
+    {
+        q: "18. Co oznaczają litery w nazwie układu sieciowego TN-C-S?",
+        options: [
+            "T - punkt neutralny uziemiony; N - obudowy połączone z punktem neutralnym; C-S - rozdział przewodu PEN na PE i N",
+            "T - transformator; N - napięcie; C - prąd; S - bezpiecznik",
+            "T - uziemienie miejscowe; N - brak uziemienia; C - prąd stały; S - prąd przemienny",
+            "T - trójfazowy; N - neutralny; C - ciągły; S - samoczynny"
+        ],
+        answer: 0,
+        hint: "1. litera = punkt neutralny źródła; 2. litera = obudowy odbiorników; dalsze = funkcja przewodu N/PE.",
+        exp: "T (Terre) = punkt neutralny źródła uziemiony. N (Neutre) = części przewodzące połączone z uziemionym punktem neutralnym. C (Combined) = funkcje PE i N połączone w jednym przewodzie PEN. S (Separated) = funkcje PE i N rozdzielone na osobne przewody."
+    },
+    {
+        q: "19. Co oznacza druga litera 'T' w nazwie układu sieciowego TT?",
+        options: [
+            "Trójfazowy układ zasilania",
+            "Części przewodzące dostępne odbiornika są bezpośrednio połączone z własnym, niezależnym uziomem ochronnym",
+            "Transformator jest uziemiony przez dużą impedancję",
+            "Tylko przewód neutralny jest połączony z ziemią"
+        ],
+        answer: 1,
+        hint: "Pierwsze T = ziemia w stacji transformatorowej, drugie T = ziemia u klienta.",
+        exp: "W układzie TT punkt neutralny transformatora jest uziemiony (1. litera T), a obudowy urządzeń u odbiorcy są połączone z oddzielnym, niezależnym uziomem ochronnym (2. litera T). W układzie TT nie ma przewodu PE wyciągniętego ze stacji."
+    },
+    {
+        q: "20. Jaka jest kluczowa cecha układu sieciowego IT?",
+        options: [
+            "Punkt neutralny jest bezpośrednio zwarty z fazą L1",
+            "Punkt neutralny źródła jest odizolowany od ziemi lub połączony z nią przez dużą impedancję (np. iskiernik/dławik)",
+            "Stosuje się go powszechnie w domkach jednorodzinnych",
+            "Instalacja nie posiada żadnych zabezpieczeń"
+        ],
+        answer: 1,
+        hint: "I = Isolated/Impedance. Używany w szpitalach (sale operacyjne) i kopalniach.",
+        exp: "W układzie IT części pod napięciem są odizolowane od ziemi lub połączone przez dużą impedancję. Pierwsze zwarcie z masą/ziemią nie powoduje samoczynnego wyłączenia zasilania – instalacja pracuje nadal, sygnalizując awarię przez układ kontroli stanu izolacji (UKSI)."
+    },
+    {
+        q: "21. Gdzie zgodnie z przepisami należy dokonać podziału przewodu PEN na PE i N w nowo projektowanych instalacjach?",
+        options: [
+            "W dowolnym gniazdku elektrycznym",
+            "Najlepiej w złączu kablowym lub rozdzielnicy głównej budynku, a punkt podziału należy uziemić",
+            "Na słupie linii napowietrznej 15 kV",
+            "Nie wolno dzielić przewodu PEN"
+        ],
+        answer: 1,
+        hint: "Miejsce przejścia z TN-C na TN-S.",
+        exp: "Podziału PEN na PE i N dokonuje się na wejściu do instalacji budynku (w złączu ZK lub rozdzielnicy głównej RG). Punkt podziału powinien być uziemiony (uziomem fundamentowym lub otokowym), aby zapewnić stabilny potencjał 0V na przewodzie PE."
+    },
+    {
+        q: "22. Czy raz rozdzielony przewód PEN na PE i N można ponownie połączyć w dalszej części instalacji?",
+        options: [
+            "Tak, w dowolnym miejscu",
+            "ABSOLUTNIE NIE – raz rozdzielonych przewodów PE i N nigdy nie wolno ponownie łączyć!",
+            "Tak, ale tylko przy użyciu bezpiecznika",
+            "Tak, jeśli długość przewodów przekracza 50 metrów"
+        ],
+        answer: 1,
+        hint: "Zasada 'Raz rozdzielone – nigdy nie połączone'.",
+        exp: "Po rozdzieleniu PEN na PE i N prąd roboczy powrotny płynie wyłącznie przewodem N. Ponowne połączenie doprowadziłoby do płynięcia prądu roboczego przewodem PE oraz spowodowałoby natychmiastowe zadziałanie wyłączników RCD!"
+    },
+    {
+        q: "23. Jakie są prawidłowe barwy izolacji przewodów w instalacji niskiego napięcia wg normy PN-EN 60446?",
+        options: [
+            "Faza (L): czarny/brązowy/szary; Neutralny (N): jasnoniebieski; Ochronny (PE): zielono-żółty",
+            "Faza (L): zielono-żółty; Neutralny (N): czarny; Ochronny (PE): niebieski",
+            "Faza (L): czerwony; Neutralny (N): biały; Ochronny (PE): czarny",
+            "Kolory są dowolne, ważne są tylko oznaczenia literowe na końcach"
+        ],
+        answer: 0,
+        hint: "Podstawowy standard kolorystyczny instalatora.",
+        exp: "Standard europejski: PE wyłącznie ZIELONO-ŻÓŁTY. N wyłącznie JASNONIEBIESKI. Przewody fazowe L: Brązowy, Czarny, Szary (oraz inne z wyjątkiem zielonego i żółtego)."
+    },
+    {
+        q: "24. Jaki jest prawidłowy proces sprawdzania braku napięcia dwubiegunowym wskaźnikiem napięcia?",
+        options: [
+            "Sprawdzić napięcie na urządzeniu wyłączonym i zakończyć pracę",
+            "1. Sprawdzić działanie wskaźnika na znanym źródle napięcia, 2. Sprawdzić brak napięcia na wyłączonym obwodzie, 3. Ponownie sprawdzić wskaźnik na znanym źródle",
+            "Dotknąć przewodu ręką w rękawicy",
+            "Użyć śrubokręta z neonówką (probówki) bez wcześniejszego testu"
+        ],
+        answer: 1,
+        hint: "Zasada Test-Pomiar-Test (Znane źródło - Obiekt - Znane źródło).",
+        exp: "Aby mieć 100% pewności, że brak odczytu wynika z braku napięcia, a nie z uszkodzenia miernika, przed i natychmiast po pomiarze na wyłączonym obwodzie należy zweryfikować sprawność wskaźnika na obwodzie pod napięciem."
+    },
+    {
+        q: "25. Jakie zadanie pełni wyłącznik nadprądowy o charakterystyce 'B'?",
+        options: [
+            "Służy wyłącznie do ochrony przed zwarciami w silnikach o ciężkim rozruchu",
+            "Chroni obwody oświetleniowe i gniazdowe przed skutkami przeciążeń i zwarć (wyzwalacz zwarciowy działa przy 3-5 I_n)",
+            "Wyłącza instalację przy pojawieniu się prądu upływu 30 mA",
+            "Chroni przed przepięciami piorunowymi"
+        ],
+        answer: 1,
+        hint: "Najczęstsze zabezpieczenie w mieszkalnictwie.",
+        exp: "Charakterystyka B jest podstawową charakterystyką dla obwodów mieszkaniowych. Wyzwalacz elektromagnetyczny (zwarciowy) zadziała przy prądzie z przedziału (3 ÷ 5) × I_n (znamionowego)."
+    },
+    {
+        q: "26. Czym różni się wyłącznik nadprądowy o charakterystyce 'C' od 'B'?",
+        options: [
+            "Charakterystyka C wyłącza prąd wolniej przy przeciążeniu",
+            "Charakterystyka C ma wyższy próg zadziałania wyzwalacza zwarciowego (5-10 I_n) i stosuje się ją do odbiorników o podwyższonym prądzie rozruchowym (np. silniki)",
+            "Charakterystyka C nadaje się tylko do prądu stałego",
+            "Charakterystyka C jest jednopolowa, a B trójpolowa"
+        ],
+        answer: 1,
+        hint: "Stosowany do odbiorników indukcyjnych (silniki, transformatory, małe spawarki).",
+        exp: "Wyzwalacz elektromagnetyczny typu C działa przy prądzie (5 ÷ 10) × I_n. Zapobiega to niepotrzebnemu wyzwalaniu zabezpieczenia w momencie rozruchu urządzeń pobierających chwilowo duży prąd."
+    },
+    {
+        q: "27. Gdzie i po co stosuje się wyłączniki nadprądowe o charakterystyce 'D'?",
+        options: [
+            "W instalacjach oświetlenia LED",
+            "Do zabezpieczania urządzeń o bardzo dużych prądach rozruchowych (wyzwalacz zwarciowy 10-20 I_n), np. duże silniki, transformatory",
+            "W obwodach bardzo niskiego napięcia SELV",
+            "Do ochrony przed porażeniem w łazienkach"
+        ],
+        answer: 1,
+        hint: "Bardzo wysoki próg zwarciowy.",
+        exp: "Charakterystyka D wyzwala przy (10 ÷ 20) × I_n. Stosowana w przemyśle do zasilania urządzeń o ciężkim rozruchu, gdzie udar prądowy trwa ułamek sekundy, ale wielokrotnie przekracza prąd znamionowy."
+    },
+    {
+        q: "28. Co oznacza symbol 'gG' na bezpieczniku topikowym?",
+        options: [
+            "Szybki bezpiecznik do ochrony półprzewodników",
+            "Wkładka topikowa o pełnym zakresie zdolności wyłączania, do ogólnego przeznaczenia (ochrona kabli i przewodów)",
+            "Wkładka zwłoczna wyłącznie do silników",
+            "Gwarancja Główna producenta"
+        ],
+        answer: 1,
+        hint: "g = peł zakres (full range), G = general application.",
+        exp: "Oznaczenie gG to wkładka ogólnego przeznaczenia (general application). Chroni zarówno przed skutkami przeciążeń, jak i zwarć w obwodach rozdzielczych i odbiorczych."
+    },
+    {
+        q: "29. Jaka jest zasadnicza różnica między PRZECIĄŻENIEM a ZWARCIEM?",
+        options: [
+            "Przeciążenie to przepływ prądu przez ziemię, a zwarcie to brak napięcia",
+            "Przeciążenie to długotrwały pobór prądu większego niż znamionowy w obwodzie nieuszkodzonym; zwarcie to połączenie przewodów fazowych/N o znikomej impedancji spowodowane uszkodzeniem",
+            "Zwarcie trwa długo, a przeciążenie kilka milisekund",
+            "Nie ma żadnej różnicy, to pojęcia tożsame"
+        ],
+        answer: 1,
+        hint: "Stan zakłóceniowy vs uszkodzenie instalacji.",
+        exp: "Przeciążenie następuje, gdy podłączymy zbyt wiele odbiorników do sprawnej instalacji (prąd np. 1.5x I_n przez dłuższą chwilę). Zwarcie to awaria (połączenie L-N lub L-PE bez obciążenia), gdzie prąd gwałtownie rośnie do setek lub tysięcy amperów w ułamku sekundy."
+    },
+    {
+        q: "30. Co to jest selektywność (stopniowanie) zabezpieczeń?",
+        options: [
+            "Ręczny wybór bezpiecznika przed włączeniem prądu",
+            "Właściwość instalacji zapewniająca, że przy awarii wyłącza się tylko zabezpieczenie znajdujące się najbliżej miejsca uszkodzenia",
+            "Stosowanie zabezpieczeń tej samej firmy w całej rozdzielnicy",
+            "Ustawienie wyłączników od największego do najmniejszego"
+        ],
+        answer: 1,
+        hint: "Chodzi o to, żeby zwarcie w gniazdku w pokoju nie wyłączało prądu w całym bloku.",
+        exp: "Selektywność polega na takim doborze prądów i czasów zadziałania zabezpieczeń połączonych szeregowo, aby w przypadku zwarcia/przeciążenia zadziałało wyłącznie zabezpieczenie bezpośrednio poprzedzające uszkodzenie (najbliższe awarii)."
+    },
+    {
+        q: "31. Przed czym chronią ograniczniki przepięć Typu 1 (dawniej klasa B)?",
+        options: [
+            "Przed przeciążeniem od czajnika elektrycznego",
+            "Przed bezpośrednim lub bliskim uderzeniem pioruna w linię lub instalację odgromową (odprowadzają prądy udarowe Iimp)",
+            "Przed spadkiem napięcia poniżej 200V",
+            "Przed prądem upływu w gniazdkach"
+        ],
+        answer: 1,
+        hint: "Pierwsza linia ochrony przeciwprzepięciowej przy wejściu do budynku.",
+        exp: "Typ 1 (SPD Typ 1) jest badany prądem udarowym Iimp (fala 10/350 µs) i służy do ochrony przed bezpośrednim wyładowaniem atmosferycznym lub prądami piorunowymi wpływającymi z sieci zasilającej."
+    },
+    {
+        q: "32. Przed czym chronią ograniczniki przepięć Typu 2 (dawniej klasa C)?",
+        options: [
+            "Ochrona przed przepięciami łączeniowymi oraz pośrednimi wyładowaniami atmosferycznymi",
+            "Ochrona silnika przed brakiem fazy",
+            "Przed bezpośrednim trafieniem pioruna w dach",
+            "Przed kradzieżą prądu"
+        ],
+        answer: 0,
+        hint: "Montowane najczęściej w rozdzielnicy głównej budynku.",
+        exp: "Typ 2 (SPD Typ 2) redukuje przepięcia do poziomu bezpiecznego dla większości odbiorników (In, fala 8/20 µs). Chroni przed przepięciami powstałymi podczas przełączeń w sieci oraz od odległych wyładowań."
+    },
+    {
+        q: "33. Jakim napięciem pomiarowym prądu stałego (DC) należy wykonywać pomiar rezystancji izolacji w obwodach o napięciu znamionowym 230/400 V?",
+        options: [
+            "100 V DC",
+            "250 V DC",
+            "500 V DC",
+            "2500 V DC"
+        ],
+        answer: 2,
+        hint: "Standardowe napięcie próby dla sieci nN wg PN-HD 60364-6.",
+        exp: "Zgodnie z normą PN-HD 60364-6 Tabela 6.1, dla instalacji o napięciu nominalnym od 250V do 500V (w tym standardowe 230/400V) napięcie probiercze prądu stałego wynosi 500 V DC."
+    },
+    {
+        q: "34. Jaka jest minimalna dopuszczalna wartość rezystancji izolacji dla obwodu o napięciu do 500 V wg normy PN-HD 60364-6?",
+        options: [
+            "0,1 MΩ (megaohma)",
+            "0,5 MΩ",
+            "1,0 MΩ",
+            "10 MΩ"
+        ],
+        answer: 2,
+        hint: "W starych przepisach było 0.5 MΩ, aktualna norma określa wyższą wartość!",
+        exp: "Zgodnie z najnowszą wersją normy PN-HD 60364-6, minimalna wymagana wartość rezystancji izolacji dla obwodów o napięciu nominalnym do 500V (przy napięciu pomiarowym 500V DC) wynosi 1,0 MΩ."
+    },
+    {
+        q: "35. Co to jest Impedancja Pętli Zwarcia (Zs) i dlaczego się ją mierzy?",
+        options: [
+            "Mierzy zużycie energii elektrycznej",
+            "To całkowita impedancja drogi, jaką przebywa prąd od źródła przez przewód fazowy, miejsce zwarcia i przewód ochronny z powrotem do źródła; mierzy się ją, by sprawdzić czy obwód wyłączy zasilanie w wymaganym czasie (SWZ)",
+            "To rezystancja uziemienia szpiku otokowego",
+            "To spadek napięcia pod pełnym obciążeniem roboczym"
+        ],
+        answer: 1,
+        hint: "Kluczowy pomiar w odbiorach instalacji pod kątem SWZ.",
+        exp: "Pomiar Zs pozwala obliczyć spodziewany prąd zwarciowy (Ik = U0 / Zs). Następnie sprawdza się warunek Zs × Ia ≤ U0, gdzie Ia to prąd powodujący zadziałanie zabezpieczenia nadprądowego w wymaganym czasie."
+    },
+    {
+        q: "36. Jaki prąd pomiarowy jest wymagany przy badaniu ciągłości przewodów ochronnych i wyrównawczych?",
+        options: [
+            "Co najmniej 1 mA",
+            "Co najmniej 200 mA (przy napięciu 4 - 24 V)",
+            "Dokładnie 10 A",
+            "100 A prądu przemiennego"
+        ],
+        answer: 1,
+        hint: "Wymóg normy pomiarowej dla mierników wielofunkcyjnych.",
+        exp: "Norma PN-EN 61557-4 wymaga, aby pomiar ciągłości przewodów ochronnych odbywał się prądem o wartości co najmniej 200 mA ze źródła o napięciu 4 V do 24 V (DC lub AC)."
+    },
+    {
+        q: "37. Jaki jest dopuszczalny maksymalny czas zadziałania wyłącznika RCD 30 mA przy prądzie różnicowym równym IΔn?",
+        options: [
+            "0,3 sekundy (300 ms)",
+            "1 sekunda",
+            "5 sekund",
+            "0,01 sekundy"
+        ],
+        answer: 0,
+        hint: "Bardzo szybkie wyłączenie chroniące przed zatrzymaniem akcji serca.",
+        exp: "Dla RCD bez opóźnienia (krótkołukowe/bezzwłoczne) maksymalny czas wyłączenia przy znamionowym prądzie różnicowym (1x IΔn) wynosi 300 ms (0,3 s), choć w praktyce sprawny wyłącznik reaguje w czasie poniżej 30-40 ms."
+    },
+    {
+        q: "38. Co ile lat (zgodnie z Prawem Budowlanym art. 62) należy wykonywać okresowy przegląd i pomiary instalacji elektrycznej w budynku?",
+        options: [
+            "Co rok",
+            "Co 3 lata",
+            "Co najmniej raz na 5 lat",
+            "Co 10 lat"
+        ],
+        answer: 2,
+        hint: "Często pytane zagadnienie z zakresu prawa budowlanego.",
+        exp: "Zgodnie z art. 62 ust. 1 pkt 2 Prawa Budowlanego, obiekty budowlane powinny być w czasie ich użytkowania poddawane przez właściciela lub zarządcę kontroli okresowej, co najmniej raz na 5 lat."
+    },
+    {
+        q: "39. Co ile miesięcy należy poddawać badaniom okresowym sprzęt ochronny (np. rękawice dielektryczne)?",
+        options: [
+            "Co 3 miesiące",
+            "Co 6 miesięcy (rękawice dielektryczne)",
+            "Co 24 miesiące",
+            "Nie bada się, wymienia po zniszczeniu"
+        ],
+        answer: 1,
+        hint: "Podstawowy sprzęt BHP elektroinstalatora.",
+        exp: "Sprzęt dielektryczny ze skóry/gumy (np. rękawice dielektryczne) podlega badaniom okresowym w laboratorium wysokich napięć co 6 miesięcy (pół roku)."
+    },
+    {
+        q: "40. Do jakiego napięcia maksymalnego chronią narządzia izolowane z certyfikatem VDE (oznaczone symbolem 1000 V)?",
+        options: [
+            "Do 500 V AC",
+            "Do 1000 V AC (oraz 1500 V DC)",
+            "Do 15 kV AC",
+            "Do dowolnego napięcia, jeśli są suche"
+        ],
+        answer: 1,
+        hint: "Certyfikat dla prac pod napięciem w niskim napięciu.",
+        exp: "Narzędzia izolowane dedykowane do prac pod napięciem (PPN) posiadają certyfikat odporności izolacji do 1000 V AC i 1500 V DC (testowane pod napięciem próbnym 10 000 V)."
+    },
+    {
+        q: "41. Kto wydaje polecenie pisemne na wykonanie prac przy urządzeniach energetycznych?",
+        options: [
+            "Każdy pracownik posiadający uprawnienia E",
+            "Prowadzony przez poleceniodawcę (osoba upoważniona ze strony eksploatatora)",
+            "Straż Pożarna lub Inspektor PIP",
+            "Dostawca prądu (Tauron/PGE/Enea)"
+        ],
+        answer: 1,
+        hint: "Organizacja prac ze szczególnym zagrożeniem.",
+        exp: "Polecenie pisemne wydaje 'Poleceniodawca' – osoba wyznaczona przez prowadzącego eksploatację urządzeń, posiadająca odpowiednie upoważnienie i kwalifikacje (zazwyczaj D)."
+    },
+    {
+        q: "42. Jaka jest zasadnicza różnica między świadectwem kwalifikacyjnym 'E' (Eksploatacja) a 'D' (Dozór)?",
+        options: [
+            "E jest dla inżynierów, D dla techników",
+            "E uprawnia do wykonywania prac (obsługa, konserwacja, montaż, pomiary); D uprawnia do kierowania pracami, wydawania poleceń, nadzoru oraz podpisywania protokołów",
+            "E dotyczy prądu stałego, D przemiennego",
+            "E wydawane jest na 10 lat, D bezterminowo"
+        ],
+        answer: 1,
+        hint: "Wykonawca vs Osoba Nadzorująca/Kierująca.",
+        exp: "Świadectwo 'E' uprawnia do stanowiska eksploatacji (wykonywanie czynności fizycznych/technicznych przy instalacjach). Świadectwo 'D' uprawnia do kierowania pracownikami, nadzoru technicznego oraz akceptacji protokołów odbiorczych."
+    },
+    {
+        q: "43. Na jaki okres wydawane są świadectwa kwalifikacyjne SEP (Grupa 1, 2, 3)?",
+        options: [
+            "Bezterminowo",
+            "Na 2 lata",
+            "Na 5 lat",
+            "Na 10 lat"
+        ],
+        answer: 2,
+        hint: "Standardowy okres ważności uprawnień w Polsce.",
+        exp: "Świadectwa kwalifikacyjne wydaje się na okres 5 lat (zgodnie z ustawą Prawo Energetyczne)."
+    },
+    {
+        q: "44. Sformułuj wzór na Prawo Ohma.",
+        options: [
+            "P = U * I",
+            "I = U / R",
+            "R = U * I",
+            "U = I / R"
+        ],
+        answer: 1,
+        hint: "Natężenie prądu jest wprost proporcjonalne do napięcia i odwrotnie proporcjonalne do oporu.",
+        exp: "Prawo Ohma: I = U / R, gdzie I to natężenie prądu [A], U to napięcie [V], a R to rezystancja (opór) [Ω]."
+    },
+    {
+        q: "45. Jak nazywamy moc P wyrażoną w Watach [W] lub KiloWatach [kW] w obwodzie prądu przemiennego?",
+        options: [
+            "Moc bierna",
+            "Moc czynna",
+            "Moc pozorna",
+            "Moc zwarciowa"
+        ],
+        answer: 1,
+        hint: "Moc zamieniana na pracę pożyteczną lub ciepło.",
+        exp: "Moc czynna P (jednostka: Wat [W]) reprezentuje rzeczywistą energię przekształcaną na pracę mechaniczną, światło lub ciepło. Wzór 1-fazowy: P = U * I * cos(fi)."
+    },
+    {
+        q: "46. W jakich jednostkach wyrażamy moc bierną Q oraz moc pozorną S?",
+        options: [
+            "Moc bierna Q w [W], Moc pozorna S w [var]",
+            "Moc bierna Q w [var] (war), Moc pozorna S w [VA] (woltamper)",
+            "Obie w Watach [W]",
+            "Q w [kWh], S w [kVAh]"
+        ],
+        answer: 1,
+        hint: "Rozróżnienie jednostek w trójkącie mocy.",
+        exp: "Moc bierna Q [var] (lub kvar) – moc krążąca między źródłem a odbiornikiem indukcyjnym/pojemnościowym. Moc pozorna S [VA] (lub kVA) – całkowita moc wyznaczana jako iloczyn U * I."
+    },
+    {
+        q: "47. Co to jest zjawisko naskórkowości (skin effect)?",
+        options: [
+            "Porażenie skóry człowieka podczas dotknięcia przewodu",
+            "Zjawisko wypychania prądu przemiennego (szczególnie o wyższych częstotliwościach) ku powierzchni przewodu, co zmniejsza jego efektywny przekrój",
+            "Gromadzenie się kurzu na powierzchni kabli pod napięciem",
+            "Uszkodzenie zewnętrznej powłoki kabla pod wpływem UV"
+        ],
+        answer: 1,
+        hint: "Powoduje gęstszy przepływ prądu przy powierzchni przewodu.",
+        exp: "Zjawisko naskórkowości powoduje gęstszy przepływ prądu przemiennego blisko zewnętrznej powierzchni przewodnika niż w jego wnętrzu. Im wyższa częstotliwość, tym cieńsza jest warstwa przewodząca."
+    },
+    {
+        q: "48. Co to jest uziom fundamentowy naturalny?",
+        options: [
+            "Pręt wbity w ziemię pod fundamentem",
+            "Zbrojenie stalowe ławy fundamentowej zalanego betonem, połączone ze sobą i wyprowadzone do GSU",
+            "Bednarka ułożona na dnie wykopu poza budynkiem",
+            "Rura wodociągowa wchodząca do budynku"
+        ],
+        answer: 1,
+        hint: "Najlepszy i najtrwalszy uziom nowoczesnego budynku.",
+        exp: "Uziom fundamentowy naturalny stanowi zbrojenie betonowych fundamentów budynku. Beton ma dobrą przewodność i chroni stal przed korozją. Jest to obecnie standard instalacyjny."
+    },
+    {
+        q: "49. Jaki jest minimalny przekrój przewodu PEN wykonanego z miedzi (Cu) w instalacji ułożonej na stałe?",
+        options: [
+            "2,5 mm²",
+            "6 mm²",
+            "10 mm² Cu (lub 16 mm² Al)",
+            "25 mm²"
+        ],
+        answer: 2,
+        hint: "Wymóg wytrzymałości mechanicznej i elektrycznej dla przewodu PEN wg PN-HD 60364-5-52.",
+        exp: "Zgodnie z normami, przewód PEN musi mieć przekrój nie mniejszy niż 10 mm² dla miedzi (Cu) lub 16 mm² dla aluminium (Al) ze względów bezpieczeństwa mechanicznego i elektrycznego."
+    },
+    {
+        q: "50. Jakie jest standardowe napięcie międzyfazowe (przewód-przewód, np. L1-L2) w sieci niskiego napięcia w Polsce?",
+        options: [
+            "230 V",
+            "400 V",
+            "500 V",
+            "690 V"
+        ],
+        answer: 1,
+        hint: "Napięcie w gnieździe siłowym 3-fazowym.",
+        exp: "Napięcie międzyfazowe wynosi U = √3 * U0 = 1,732 * 230 V ≈ 400 V AC."
+    },
+    {
+        q: "51. Jakie napięcie występuje między przewodem fazowym L a neutralnym N (napięcie fazowe U0) w standardowej sieci nN?",
+        options: [
+            "110 V",
+            "230 V",
+            "400 V",
+            "500 V"
+        ],
+        answer: 1,
+        hint: "Zwykłe gniazdko domowe.",
+        exp: "Napięcie fazowe wynosi U0 = 230 V AC (z tolerancją +10% / -15%)."
+    },
+    {
+        q: "52. Co oznacza stopień ochrony IP44 na obudowie osprzętu elektrycznego?",
+        options: [
+            "Ochrona przed ciałami obcymi > 1 mm oraz przed bryzgami wody z dowolnego kierunku",
+            "Pełna pyłoszczelność i odporność na zanurzenie w wodzie",
+            "Brak jakiejkolwiek ochrony",
+            "Ochrona tylko przed dotknięciem palcem"
+        ],
+        answer: 0,
+        hint: "Często wymagany w łazienkach poza strefą 0 i 1 oraz na zewnątrz.",
+        exp: "1. cyfra (4) = ochrona przed ciałami stałymi o średnicy > 1 mm. 2. cyfra (4) = ochrona przed bryzgami wody z dowolnego kierunku."
+    },
+    {
+        q: "53. Co oznacza stopień ochrony IP67?",
+        options: [
+            "Ochrona przed pyłem i krótkotrwałym zanurzeniem w wodzie",
+            "Ochrona przed dotknięciem dłonią",
+            "Obudowa do stosowania w temperaturze do 67 stopni C",
+            "Ochrona przed wybuchem gazu"
+        ],
+        answer: 0,
+        hint: "Wysoka szczelność przemysłowa/zewnętrzna.",
+        exp: "IP6x oznacza pełną pyłoszczelność (odporność na wnikanie pyłu). IPx7 oznacza odporność na skutki krótkotrwałego zanurzenia w wodzie (30 min na głębokości 1 m)."
+    },
+    {
+        q: "54. Jakie urządzenia zaliczamy do sprzętu podstawowego do prac pod napięciem (PPN) do 1 kV?",
+        options: [
+            "Narzędzia izolowane, drążki izolacyjne, kleszcze izolacyjne, wskaźniki napięcia",
+            "Okulary ochronne, hełm, dywanik dielektryczny",
+            "Rękawice dielektryczne, chodnik dielektryczny, półbuty dielektryczne",
+            "Tablice ostrzegawcze, linki wygradzające"
+        ],
+        answer: 0,
+        hint: "Sprzęt, którego izolacja bezpośrednio chroni montera przed częściami pod napięciem.",
+        exp: "Sprzęt podstawowy stanowi barierę izolacyjną przyjmującą pełne napięcie robocze (np. narzędzia izolowane 1000V, drążki, kleszcze). Rękawice, dywaniki czy chodniki dielektryczne to sprzęt dodatkowy."
+    },
+    {
+        q: "55. Dlaczego NIE WOLNO otwierać obwodu wtórnego przekładnika prądowego, gdy w obwodzie pierwotnym płynie prąd?",
+        options: [
+            "Przekładnik ulegnie rozmagnesowaniu",
+            "Na otwartych zaciskach wtórnych indukuje się niebezpiecznie wysokie napięcie (kilka kV), grożące śmiercią i zniszczeniem przekładnika",
+            "Prąd w obwodzie głównym spadnie do zera",
+            "Licznik zacznie kręcić się w drugą stronę"
+        ],
+        answer: 1,
+        hint: "Bardzo ważne i niebezpieczne zjawisko w podstacjach i rozdzielnicach!",
+        exp: "Przekładnik prądowy pracuje w stanie zbliżonym do zwarcia. Otwarcia obwodu wtórnego powoduje gwałtowny wzrost strumienia magnetycznego w rdzeniu i indukowanie szczytowych napięć rzędu kilku tysięcy woltów – grozi to przebiciem izolacji, pożarem i śmiertelnym porażeniem!"
+    },
+    {
+        q: "56. Dlaczego NIE WOLNO zwierać obwodu wtórnego przekładnika napięciowego?",
+        options: [
+            "Spowoduje to gwałtowny wzrost prądu zwarciowego w uzwojeniu wtórnym i spalenie przekładnika",
+            "Wywoła to przepięcie w sieci wysokiego napięcia",
+            "Niczego to nie spowoduje, to normalny stan pracy",
+            "Przekładnik ulegnie natychmiastowemu uziemieniu"
+        ],
+        answer: 0,
+        hint: "Przekładnik napięciowy pracuje jak zwykły transformator w stanie jałowym.",
+        exp: "Przekładnik napięciowy pracuje w stanie jałowym (duża impedancja obciążenia). Zwarcie jego zacisków wtórnych prowadzi do przepływu bardzo dużego prądu zwarciowego, uszkodzenia uzwojeń i zadziałania zabezpieczeń."
+    },
+    {
+        q: "57. Do czego służy wyłącznik RCD typu A?",
+        options: [
+            "Do ochrony wyłącznie przy prądzie stałym gładkim",
+            "Reaguje na prądy różnicowe przemienne (AC) oraz prądy tętniące jednopołówkowe ze składową stałą (DC)",
+            "Stosuje się go tylko na wsi",
+            "Wyłącza tylko przy prądzie o wartości 10 A"
+        ],
+        answer: 1,
+        hint: "Klasyczny RCD do nowej elektroniki (pralki, zasilacze, komputery).",
+        exp: "Typ AC reaguje tylko na czysty sinusoidalny prąd przemienny. Typ A reaguje na prąd przemienny oraz wyprostowany tętniący (obecny w nowoczesnym sprzęcie RTV/AGD z układami prostownikowymi). Wycofuje się stosowanie typów AC na rzecz A."
+    },
+    {
+        q: "58. Co oznacza polecenie pisemne na wykonanie prac?",
+        options: [
+            "SMS od kierownika",
+            "Dokument stanowiący pisemny nakaz wykonania prac przy urządzeniach energetycznych, określający zakres, miejsce, czas, środki ostrożności oraz imienny skład brygady",
+            "Faktura za wykonaną usługę elektryczną",
+            "Instrukcja obsługi wiertarki"
+        ],
+        answer: 1,
+        hint: "Kluczowy dokument BHP w energetyce.",
+        exp: "Polecenie pisemne wydawane jest dla prac w warunkach szczególnego zagrożenia. Precyzuje kto, co, gdzie, kiedy i przy jakich zabezpieczeniach ma wykonać dane zadanie."
+    },
+    {
+        q: "59. Kiedy dopuszcza się wykonywanie prac przy urządzeniach elektrycznych bez polecenia?",
+        options: [
+            "Zawsze, jeśli praca trwa krócej niż 15 minut",
+            "Przy czynnościach związanych z ratowaniem życia ludzkiego lub zabezpieczeniem mienia przed zniszczeniem oraz przy prostych pracach eksploatacyjnych określonych w instrukcji",
+            "Gdy pracownik zapomniał dokumentu",
+            "Nigdy i pod żadnym pozorem"
+        ],
+        answer: 1,
+        hint: "Stan wyższej konieczności oraz rutynowa obsługa.",
+        exp: "Bez polecenia można wykonywać prace ratujące życie/mienie (stan wyższej konieczności) oraz proste, z góry określone w Instrukcji Eksploatacji czynności obsługowe (np. przełączenia, wymiana bezpieczników przez przeszkolony personel)."
+    },
+    {
+        q: "60. Jakie uziemienie nazywamy uziemieniem ochronnym?",
+        options: [
+            "Uziemienie punktu neutralnego transformatora",
+            "Uziemienie części przewodzących dostępnych (np. obudów urządzeń) w celu ochrony ludzi przed porażeniem w przypadku uszkodzenia izolacji",
+            "Uziemienie zwodu instalacji odgromowej",
+            "Uziemienie anteny telewizyjnej"
+        ],
+        answer: 1,
+        hint: "Ochrona ludzi przed pojawieniem się napięcia na metalowej obudowie.",
+        exp: "Uziemienie ochronne łączy części przewodzące dostępne (obudowy) z ziemią, zapewniając sprowadzenie potencjału obudowy do poziomu bezpiecznego i umożliwiając zadziałanie samoczynnego wyłączenia zasilania (SWZ)."
+    },
+    {
+        q: "61. Co to jest uziemienie robocze?",
+        options: [
+            "Uziemienie szpadla podczas kopania rowu",
+            "Uziemienie punktu obwodu elektrycznego (np. punktu gwiazdowego transformatora N/PEN) niezbędne do prawidłowej i bezpiecznej pracy sieci elektrycznej",
+            "Uziemienie płotu metalowego",
+            "Uziemienie tymczasowe zakładane na czas prac"
+        ],
+        answer: 1,
+        hint: "Uziemienie punktu N transformatora.",
+        exp: "Uziemienie robocze zapewnia prawidłowe funkcjonowanie układu sieci elektroenergetycznej w warunkach normalnych i awaryjnych (np. uziemienie punktu neutralnego transformatora w stacji)."
+    },
+    {
+        q: "62. Co to jest uziemienie przenośne (miejscowe) i kiedy się je stosuje?",
+        options: [
+            "Przenośny agregat prądotwórczy z prętem uziemiającym",
+            "Zaciski połączone linką miedzianą zakładane na wyłączone części pod napięciem w celu zabezpieczenia pracowników przed przypadkowym załączeniem napięcia",
+            "Pasek masowy w samochodzie",
+            "Uziemienie ładowarki do telefonu"
+        ],
+        answer: 1,
+        hint: "Punkt 4 z 5 Zasad Bezpiecznej Pracy.",
+        exp: "Uziemiacz przenośny nakłada się na wyłączone i sprawdzone przewody. W przypadku omyłkowego załączenia napięcia wywołuje natychmiastowe zwarcie i zadziałanie zabezpieczeń, chroniąc pracujących ludzi."
+    },
+    {
+        q: "63. Jaka jest prawidłowa kolejność zakładania uziemiacza przenośnego?",
+        options: [
+            "Najpierw podłączyć zacisk do uziomu/ziemi, a następnie zaciski do przewodów fazowych",
+            "Najpierw założyć zaciski na przewody fazowe, a potem do ziemi",
+            "Kolejność nie ma znaczenia",
+            "Zakładać wyłącznie pod napięciem"
+        ],
+        answer: 0,
+        hint: "Pamiętaj: Ziemia pierwsza, Ziemia ostatnia!",
+        exp: "Ściśle wymagana kolejność: Najpierw łączymy uziemiacz z PE/ziemią (aby zapewnić stały potencjał ziemi dla monterów), a dopiero potem zakłada się klamry na przewody fazowe. Zdejmowanie odbywa się w kolejności dokładnie odwrotnej!"
+    },
+    {
+        q: "64. Co to jest współczynnik mocy cos(phi)?",
+        options: [
+            "Stosunek mocy biernej do mocy pozornej",
+            "Stosunek mocy czynnej P do mocy pozornej S",
+            "Kąt przesunięcia fazowego między prądem a napięciem opisywany w stopniach Celsjusza",
+            "Spadek napięcia na kablu"
+        ],
+        answer: 1,
+        hint: "Mówi o tym, jak efektywnie wykorzystujemy energię elektryczną.",
+        exp: "Współczynnik mocy cos(φ) = P / S. Określa udział mocy czynnej w mocy pozornej. Dąży się do wartości jak najbliższej 1 (brak opłat za moc bierną)."
+    },
+    {
+        q: "65. Czym kompensuje się moc bierną INDUKCYJNĄ (generowaną np. przez silniki, transformatory)?",
+        options: [
+            "Dławikami indukcyjnymi",
+            "Bateriami kondensatorów",
+            "Rezystorami dużej mocy",
+            "Transformatorami separatorami"
+        ],
+        answer: 1,
+        hint: "Prąd w kondensatorze wyprzedza napięcie, a w cewce opóźnia.",
+        exp: "Moc bierna indukcyjna (związaną z polami magnetycznymi) kompensuje się poprzez podłączenie równolegle baterii kondensatorów, które generują moc bierną pojemnościową."
+    },
+    {
+        q: "66. Czym kompensuje się moc bierną POJEMNOŚCIOWĄ (generowaną np. przez długie linie kablowe, oświetlenie LED)?",
+        options: [
+            "Bateriami kondensatorów",
+            "Bateriami dławików indukcyjnych",
+            "Wyłącznikami nadprądowymi",
+            "Transformatorami bezpieczeństwa"
+        ],
+        answer: 1,
+        hint: "Odwrotność kompensacji silników.",
+        exp: "Moc bierna pojemnościowa kompensowana jest przez dławiki kompensacyjne (cewki indukcyjne), które pobierają moc bierną indukcyjną."
+    },
+    {
+        q: "67. W jakiej strefie w łazience (Strefa 0, 1, 2) dopuszcza się montaż urządzeń zasilanych napięciem 230 V?",
+        options: [
+            "W Strefie 0 (wnętrze wanny)",
+            "W Strefie 1 (nad wanną do 2,25 m)",
+            "W Strefie 2 (do 0,6 m od krawędzi wanny) – osprzęt o IPX4, oraz poza strefami",
+            "W żadnej strefie łazienki nie wolno stosować 230V"
+        ],
+        answer: 2,
+        hint: "Strefy 0 i 1 wymagają zasilania SELV o bardzo niskim napięciu.",
+        exp: "W strefie 0 (wewnątrz wanny) stosuje się SELV max 12V AC (IPX7). W strefie 1 podgrzewacze wody/SELV 25V. W strefie 2 dopuszcza się pojedyncze odbiory pod warunkiem ochrony RCD 30 mA i stopnia IPX4."
+    },
+    {
+        q: "68. Jaki jest minimalny przekrój przewodu ochronnego PE w instalacji, jeżeli przewód fazowy ma przekrój S = 16 mm² Cu (z tego samego materiału)?",
+        options: [
+            "2,5 mm²",
+            "6 mm²",
+            "16 mm²",
+            "35 mm²"
+        ],
+        answer: 2,
+        hint: "Zasada doboru przekroju PE dla S ≤ 16 mm².",
+        exp: "Zgodnie z normą PN-HD 60364-5-54: Jeśli S ≤ 16 mm² -> przekrój PE = S (czyli 16 mm²). Jeśli 16 < S ≤ 35 -> PE = 16 mm². Jeśli S > 35 -> PE = S / 2."
+    },
+    {
+        q: "69. Co to jest transformator separacyjny i przed czym chroni?",
+        options: [
+            "Transformator obniżający napięcie do 12V",
+            "Transformator o przekładni 1:1 zapewniający separację elektryczną obwodu wtórnego od ziemi i sieci, chroniąc przed porażeniem przy dotknięciu pojedynczej fazy",
+            "Transformator do zasilania spawarek",
+            "Transformator służący do pomiaru prądu"
+        ],
+        answer: 1,
+        hint: "Brak pętli zwarcia do ziemi po stronie wtórnej.",
+        exp: "Separacja elektryczna odizolowuje obwód odbiorczy od ziemi i źródła zasilania. Dotknięcie jednego przewodu po stronie wtórnej nie powoduje przepływu prądu przez ciało do ziemi, ponieważ obwód się nie zamyka."
+    },
+    {
+        q: "70. Czy do jednego transformatora separacyjnego można podłączyć kilka odbiorników?",
+        options: [
+            "Tak, bez żadnych dodatkowych wymagań",
+            "Zasadniczo chroni się 1 odbiornik. Podłączenie więcej niż jednego wymaga zastosowania nieuziemionych połączeń wyrównawczych między obudowami",
+            "Nigdy nie wolno podłączać więcej niż 1 odbiornika",
+            "Zależy od temperatury otoczenia"
+        ],
+        answer: 1,
+        hint: "Ryzyko zwarcia podwójnego po stronie wtórnej.",
+        exp: "Standardowo separacja stosowana jest dla jednego odbiornika. W przypadku zasilania kilku odbiorników z jednego separatora konieczne są nieuziemione miejscowe połączenia wyrównawcze, aby uniknąć zagrożenia przy wywoływanym podwójnym uszkodzeniu izolacji różnych faz."
+    },
+    {
+        q: "71. Jaka jest zalecana wysokość montażu gniazd wtyczkowych w pomieszczeniach mieszkalnych (poza łazienką i kuchnią)?",
+        options: [
+            "Brak sztywnego przepisu normatywnego, w praktyce przyjmuje się około 0,2 - 0,3 m od podłogi",
+            "Dokładnie 1,5 metra",
+            "Zawsze przy samej suficie",
+            "Dokładnie 0,8 metra"
+        ],
+        answer: 0,
+        hint: "Praktyka instalatorska i ergonomia.",
+        exp: "Normy nie narzucają sztywnej wysokości dla pokoi – standard wykończenia to zwykle 0,2-0,3 m od wykończonej podłogi (nad blatem kuchennym 1,0-1,2 m, w łazience min. 1,2 m)."
+    },
+    {
+        q: "72. Jaki jest cel wykonywania próby biegu jałowego transformatora?",
+        options: [
+            "Wyznaczenie strat w miedzi (uzwojeniach)",
+            "Wyznaczenie strat w stali (rdzeniu) Fe oraz prądu magnesowania biegu jałowego",
+            "Mierzenie sprawności chłodzenia olejowego",
+            "Sprawdzenie szczelności obudowy"
+        ],
+        answer: 1,
+        hint: "Bieg jałowy = uzwojenie wtórne otwarte.",
+        exp: "Podczas próby biegu jałowego (uzwojenie wtórne otwarte) prąd płynący przez transformator jest znikomy, więc straty w miedzi są pomijalne. Mierzona moc odpowiada stratom w rdzeniu (w stali) na przesterowanie i prądy wirowe."
+    },
+    {
+        q: "73. Jaki jest cel wykonywania próby zwarcia pomiarowego transformatora?",
+        options: [
+            "Wyznaczenie strat w stali (rdzeniu)",
+            "Wyznaczenie strat w miedzi (Pcu) przy znamionowych prądach oraz napięcia zwarcia Uz",
+            "Sprawdzenie wytrzymałości mechanicznej obudowy na wybuch",
+            "Próba wyłączenia bezpiecznika"
+        ],
+        answer: 1,
+        hint: "Uzwojenie wtórne zwarte, napięcie obniżone tak, by płynął prąd znamionowy.",
+        exp: "W próbie zwarcia zwarte jest uzwojenie wtórne, a na pierwotne podaje się obniżone napięcie zwarcia Uz. Mierzona moc pobierana odpowiada stratom mocy na rezystancji uzwojeń (tzw. straty w miedzi Pcu)."
+    },
+    {
+        q: "74. Co określa Instrukcja Eksploatacji urządzenia/instalacji?",
+        options: [
+            "Cenę zakupu urządzenia",
+            "Wytyczne dotyczące bezpiecznej obsługi, konserwacji, napraw, przeglądów oraz czynności ratowniczych i wymagań BHP dla danego obiektu/urządzenia",
+            "Imię i nazwisko prezesa firmy",
+            "Warunki gwarancji w sklepie"
+        ],
+        answer: 1,
+        hint: "Obowiązkowy dokument zakładowy eksploatacyjny.",
+        exp: "Prowadzący eksploatację ma obowiązek posiadać aktualne instrukcje eksploatacji, które definiują harmonogramy przeglądów, procedury przełączeń, środki ochrony oraz zasady postępowania w awariach."
+    },
+    {
+        q: "75. Jakie wymagania musi spełniać osoba wykonująca pomiary eksploatacyjne instalacji elektrycznych zakończone protokołem?",
+        options: [
+            "Wystarczy ukończenie szkoły zawodowej",
+            "Musi posiadać świadectwo kwalifikacyjne 'E' w zakresie pomiarów, a osoba sprawdzająca/podpisująca protokół świadectwo 'D'",
+            "Musi posiadać wpis do rejestru sądowego",
+            "Musi być pracownikiem elektrowni"
+        ],
+        answer: 1,
+        hint: "Podział uprawnień E i D przy odbiorach.",
+        exp: "Wykonywać pomiary fizycznie może osoba ze świadectwem 'E' z wpisem punktu 10 (Aparatura kontrolno-pomiarowa). Protokół musi zostać zweryfikowany i podpisany przez osobę ze świadectwem 'D'."
+    },
+    {
+        q: "76. Czym charakteryzuje się prąd stały (DC) w porównaniu do prądu przemiennego (AC) przy porażeniu?",
+        options: [
+            "Prąd stały jest znacznie bardziej niebezpieczny przy małych wartościach niż AC",
+            "Prąd stały powoduje skurcz mięśni ciągły (trudniej 'odpuścić' przewód), a jego próg odczuwania jest wyższy (ok. 2 mA dla DC vs 0,5 mA dla AC)",
+            "Prąd stały nie powoduje oparzeń",
+            "Prąd stały płynie tylko po powierzchni skóry"
+        ],
+        answer: 1,
+        hint: "Inna charakterystyka reakcji neurologicznej ciała.",
+        exp: "Dla prądu stałego DC próg odczuwania (ok. 2 mA) i próg samouwolnienia są wyższe niż dla AC 50Hz, jednak DC powoduje bardzo silne elektrolityczne oparzenia tkanek i ciągły skurcz."
+    },
+    {
+        q: "77. Co oznacza litera 'L' w schematach elektrycznych zasilania AC?",
+        options: [
+            "Przewód Linii (Fazowy) - Line",
+            "Przewód Lekki",
+            "Przewód Lokalny",
+            "Licznik energii"
+        ],
+        answer: 0,
+        hint: "L1, L2, L3.",
+        exp: "Oznaczenie L (z angielskiego Line) oznacza przewód fazowy."
+    },
+    {
+        q: "78. Co oznacza litera 'N' w schematach elektrycznych zasilania AC?",
+        options: [
+            "Przewód Napięciowy",
+            "Przewód Neutralny (Neutral)",
+            "Przewód Nadprądowy",
+            "Przewód Ochronny"
+        ],
+        answer: 1,
+        hint: "Przewód powrotny roboczy połączony z punktem gwiazdowym.",
+        exp: "Oznaczenie N (Neutral) to przewód neutralny."
+    },
+    {
+        q: "79. Co oznacza litera 'PE' w instalacjach elektrycznych?",
+        options: [
+            "Protective Earth (Przewód Ochronny)",
+            "Power Electric (Prąd Elektryczny)",
+            "Phase Energy (Energia Fazowa)",
+            "Primary Element (Element Główny)"
+        ],
+        answer: 0,
+        hint: "Zielono-żółty przewód.",
+        exp: "PE = Protective Earth (Przewód ochronny uziemiający)."
+    },
+    {
+        q: "80. Do czego służy przycisk 'TEST' na obudowie wyłącznika różnicowoprądowego RCD?",
+        options: [
+            "Do sprawdzania czy w sieci jest prąd 230V",
+            "Do wymuszenia sztucznego prądu różnicowego w celu mechanicznego i elektrycznego sprawdzenia sprawności wyłącznika (należy wciskać min. raz na miesiąc/pół roku)",
+            "Do resetowania bezpiecznika po zwarciu",
+            "Do włączania światła"
+        ],
+        answer: 1,
+        hint: "Ręczny test mechanizmu wyzwalającego RCD.",
+        exp: "Naciśnięcie przycisku TEST załącza wewnętrzny rezystor wytwarzający prąd upływu wyzwalający RCD. Służy do weryfikacji czy zamek mechaniczny nie uległ zapieczeniu."
+    },
+    {
+        q: "81. Czy wyłącznik różnicowoprądowy RCD wyłączy zasilanie, gdy człowiek dotknie jednocześnie przewodu fazowego L i neutralnego N, stojąc na idealnie izolowanej drabinie z tworzywa?",
+        options: [
+            "Tak, RCD wyłączy natychmiast",
+            "NIE – RCD nie wyłączy, ponieważ prąd płynący przez ciało z L do N zostanie potraktowany przez przekładnik jako zwykły prąd obciążenia odbiornika!",
+            "Tak, z opóźnieniem 1 sekundy",
+            "Wyłączy tylko wtedy, gdy drabina jest mokra"
+        ],
+        answer: 1,
+        hint: "Pomyśl: Czy z punktu widzenia RCD prąd wypływa poza obwód roboczy?",
+        exp: "Jest to śmiertelnie niebezpieczna sytuacja. Prąd wypływa przewodem L i w całości wraca przewodem N przez ciało. Bilans prądów w RCD wynosi zero – wyłącznik NIE WIDZI uszkodzenia i nie zadziała!"
+    },
+    {
+        q: "82. Co to jest polecenie pisemne na prace w pobliżu napięcia?",
+        options: [
+            "Dokument wymagany przy pracach, gdzie strefa pracy zbliża się do nieosłoniętych urządzeń pod napięciem na odległość mniejszą niż bezpieczna",
+            "Rysunek instalacji domowej",
+            "Upoważnienie do zakupu kabli",
+            "List polecony ze stacji energetycznej"
+        ],
+        answer: 0,
+        hint: "Środki ostrożności przy pracach w sąsiedztwie linii/urządzeń pod napięciem.",
+        exp: "Prace w pobliżu napięcia wymagają zachowania szczególnych odstępów, stosowania osłon/przegród izolacyjnych oraz nadzoru z wyznaczeniem granic strefy bezpiecznej."
+    },
+    {
+        q: "83. Jakie są trzy strefy przy pracach w pobliżu urządzeń elektroenergetycznych pod napięciem?",
+        options: [
+            "Strefa zielona, żółta, czerwona",
+            "Strefa prac pod napięciem (PPN), strefa dozwolona i strefa zagrożenia",
+            "Strefa 0, 1 i 2",
+            "Strefa niski, średni i wysoki prąd"
+        ],
+        answer: 1,
+        hint: "Podział odległościowy od części pod napięciem.",
+        exp: "Wyznacza się: Strefę prac pod napięciem (granica dotyku bezpośredniego), Strefę zagrożenia (wymaga specjalnych procedur) oraz Strefę dozwoloną (bezpieczną)."
+    },
+    {
+        q: "84. Co to jest tablica ostrzegawcza 'NIE ZAŁĄCZAĆ - PRACUJĄ LUDZIE' i gdzie się ją umieszcza?",
+        options: [
+            "Na drzwiach wejściowych do budynku",
+            "Na napędzie wyłącznika/odłącznika lub bezpiecznikach, którymi odłączono zasilanie na czas prac (Punkt 2 Zasad BHP)",
+            "Na słupie oświetleniowym",
+            "Na masce samochodu służbowego"
+        ],
+        answer: 1,
+        hint: "Ochrona przed przypadkowym podaniem napięcia przez osoby trzecie.",
+        exp: "Tabliczkę blokującą zawiesza się bezpośrednio na aparatach łączeniowych po wyłączeniu zasilania, aby wyeliminować ryzyko przypadkowego załączenia obwodu."
+    },
+    {
+        q: "85. Co to jest odłącznik i czym różni się od wyłącznika?",
+        options: [
+            "Odłącznik tworzy bezpieczną, widoczną przerwę izolacyjną w obwodzie, ale NIE MOŻE być otwierany pod obciążeniem (nie gasi łuku)",
+            "Odłącznik służy do wyłączania prądów zwarciowych",
+            "Wyłącznik nie posiada styków",
+            "To dokładnie to samo urządzenie pod inną nazwą"
+        ],
+        answer: 0,
+        hint: "Czysto manewrowy aparat z widoczną przerwą.",
+        exp: "Wyłącznik potrafi gasić łuk elektryczny i wyłączać prądy robocze i zwarciowe. Odłącznik służy wyłącznie do stworzenia widocznej przerwy w stanie BEZPRĄDOWYM (otwierać go wolno dopiero po uprzednim otwarciu wyłącznika!)."
+    },
+    {
+        q: "86. Jaka jest rola uziomu otokowego wokół budynku?",
+        options: [
+            "Ochrona elewacji przed wilgocią",
+            "Wyrównanie potencjału wokół budynku oraz zapewnienie niskiej rezystancji uziemienia dla instalacji odgromowej i elektrycznej",
+            "Chłodzenie kabli zasilających",
+            "Zabezpieczenie przed kradzieżą prądu"
+        ],
+        answer: 1,
+        hint: "Taśma (bednarka) zakopana wokół budowli na głębokości min. 0,7 m.",
+        exp: "Uziom otokowy to zamknięta pętla z bednarki ukryta w ziemi wokół obiektu. Zapewnia równomierny rozkład potencjału na powierzchni gruntu i niską wartość rezystancji uziomu."
+    },
+    {
+        q: "87. Jaka powinna być maksymalna wartość rezystancji uziemienia dla instalacji odgromowej (LPS) w standardowym budynku (zalecana w normie PN-EN 62305)?",
+        options: [
+            "Nie większa niż 10 Ω (omów)",
+            "Dokładnie 100 Ω",
+            "Poniżej 0,1 Ω",
+            "Wartość nie ma znaczenia"
+        ],
+        answer: 0,
+        hint: "Standardowa granica dla odprowadzenia prądu wyładowania piorunowego.",
+        exp: "Zgodnie z normą odgromową PN-EN 62305, całkowita rezystancja uziomu odgromowego nie powinna przekraczać 10 Ω."
+    },
+    {
+        q: "88. Czym mierzy się rezystancję uziemienia?",
+        options: [
+            "Zwykłym omomierzem ze sklepu elektronicznego za 20 zł",
+            "Miernikiem dedykowanym do uziemień metodą techniczną (3- lub 4-przewodową z sondami pomocniczymi) lub metodą udarową",
+            "Woltomierzem prądu stałego",
+            "Amperomierzem cęgowym bez otwierania pętli"
+        ],
+        answer: 1,
+        hint: "Wymaga wprowadzania w grunt dodatkowych szpilek pomiarowych (S i H).",
+        exp: "Pomiar rezystancji uziemienia wymaga wprowadzenia prądu pomiarowego w grunt przez sondy pomocnicze (prądową i napięciową) w celu wyeliminowania rezystancji przewodów i styków."
+    },
+    {
+        q: "89. Jak należy podłączyć gniazdo wtyczkowe 230 V w sieci typu TN-C (mostkowanie)?",
+        options: [
+            "Przewód fazowy L na kołek, PEN na prawy styk",
+            "Przewód fazowy L na styk roboczy, przewód PEN NAJPIERW na kołek ochronny (PE), a z kołka mostek do drugiego styku roboczego (N)",
+            "Przewód PEN na styk roboczy N, a z niego mostek do fazy L",
+            "W sieci TN-C nie wolno podłączać gniazd"
+        ],
+        answer: 1,
+        hint: "Zasada bezpieczeństwa przy mostkowaniu kołka: Najpierw ochrona!",
+        exp: "W sieci TN-C z przewodem PEN, przewód PEN doprowadza się NAJPIERW do bolca ochronnego, a dopiero stamtąd wykonuje się zmostkowanie do zacisku N. Zapobiega to pojawieniu się fazy na bolcu przy przypadkowym poluzowaniu mostka."
+    },
+    {
+        q: "90. Czy do wymiany pojedynczego uszkodzonego gniazdka 230 V w domu wymagana jest obecność dwóch osób?",
+        options: [
+            "Tak, zawsze prace musi wykonywać brygada 2-osobowa",
+            "Nie, prace wykonywane po wyłączeniu napięcia i sprawdzeniu braku napięcia przy pojedynczych odbiornikach mogą być wykonywane jednoosobowo",
+            "Tak, druga osoba musi trzymać gaśnicę",
+            "Wymagane są 3 osoby"
+        ],
+        answer: 1,
+        hint: "Dwie osoby wymagane są tylko przy pracach w warunkach szczególnego zagrożenia pod napięciem.",
+        exp: "Prace przy wyłączonym napięciu o niskim stopniu zagrożenia (jak wymiana gniazdka, włącznika) mogą być prowadzone przez jedną osobę posiadającą uprawnienia E."
+    },
+    {
+        q: "91. Co oznacza termin 'Praca pod napięciem' (PPN)?",
+        options: [
+            "Praca na dachu budynków",
+            "Praca, podczas której pracownik dotyka części pod napięciem lub wchodzi w strefę prac pod napięciem ciałem, narzędziami lub sprzętem",
+            "Praca z włączonym radiem",
+            "Praca po godzinach 22:00"
+        ],
+        answer: 1,
+        hint: "Specjalistologia elektroenergetyczna wymagająca dodatkowego przeszkolenia PPN.",
+        exp: "PPN to praca wykonywana bez wyłączania zasilania na otwartych elementach przewodzących pod napięciem. Wymaga dedykowanych technologii, sprawny sprzęt PPN oraz specjalnego przeszkolenia."
+    },
+    {
+        q: "92. Jaki jest cel stosowania szyn wyrównawczych GSU (Główna Szyna Uziemiająca)?",
+        options: [
+            "Służy jako stojak na kable",
+            "To centralny punkt połączenia przewodów ochronnych PE, uziemiających, połączeń wyrównawczych oraz ograniczników przepięć w obiekcie",
+            "Służy do rozdzielania prądu na mieszkania",
+            "Element dekoracyjny rozdzielnicy"
+        ],
+        answer: 1,
+        hint: "Miedziane lub mosiężne płaskowniki na dole rozdzielnicy/maszynowni.",
+        exp: "GSU (Główna Szyna Uziemiająca) integruje wszystkie uziomowe i ochronne przewody budynku w jednym miejscu, gwarantując równy potencjał w całym obiekcie."
+    },
+    {
+        q: "93. Jakie skutki powoduje spadek napięcia na zbyt długich i zbyt cienkich przewodach zasilających?",
+        options: [
+            "Lepszą pracę silników elektrycznych",
+            "Niewłaściwą pracę urządzeń, przegrzewanie się przewodów (ryzyko pożaru) oraz niezadziałanie samoczynnego wyłączenia zasilania (SWZ)",
+            "Wzrost napięcia na końcu linii",
+            "Brak jakichkolwiek skutków"
+        ],
+        answer: 1,
+        hint: "Ciepło Joule'a-Lenza (I^2 * R) oraz zbyt duża impedancja Zs.",
+        exp: "Zbyt mały przekrój i duża długość zwiększają opór R. Prowadzi to do dużych spadków napięcia (urządzenia nie działają), wydzielania ciepła na kablu oraz drastycznego spadku prądu zwarciowego (zabezpieczenie może nie wyłączyć zwarcia!)."
+    },
+    {
+        q: "94. Jaki jest wzór na spadek mocy wydzielanej na rezystancji przewodnika (Prawo Joule'a-Lenza)?",
+        options: [
+            "P = U / I",
+            "P = I² * R",
+            "P = R / I",
+            "P = U² * I"
+        ],
+        answer: 1,
+        hint: "Straty cieplne w przewodach rosną z kwadratem natężenia prądu!",
+        exp: "Straty mocy w postaci ciepła wyraża wzór P = I² * R. Zwiekszenie prądu 2-krotnie powoduje 4-krotny wzrost ilości wydzielanego ciepła!"
+    },
+    {
+        q: "95. Co to jest przewód samonośny AsXSn?",
+        options: [
+            "Kabel miedziany do układania w ziemi",
+            "Napowietrzny przewód elektroenergetyczny o żyłach aluminiowych z izolacją z polietylenu usieciowanego, stosowany w liniach napowietrznych nN",
+            "Przewód wewnątrzścienny pod tynk",
+            "Światłowód zasilający"
+        ],
+        answer: 1,
+        hint: "Czarny gruby wiór izolowany widoczny na słupach NN przy drogach.",
+        exp: "AsXSn to izolowany przewód samonośny napowietrzny (Aluminium, izolacja X, Wstrzymujący palenie, Samonośny). Zastąpił dawne nieizolowane druty miedziane na słupach."
+    },
+    {
+        q: "96. Co należy zrobić w pierwszej kolejności przed przystąpieniem do pomiaru rezystancji izolacji kabla?",
+        options: [
+            "Odłączyć kabel od zasilania, rozładować ładunek pojemnościowy i odłączyć wrażliwe urządzenia elektroniczne",
+            "Podłączyć napięcie 400V",
+            "Zmoczyć kabel wodą",
+            "Zewrzeć fazy z ziemią na stałe"
+        ],
+        answer: 0,
+        hint: "Napięcie 500V/1000V z miernika zniszczy elektronikę i może porazić z naładowanego kabla!",
+        exp: "Przed pomiarem izolacji NALEŻY odłączyć obiekt od napięcia, odpiąć odbiorniki (elektronikę) oraz po pomiarze rozładować kabel (ponieważ kabel działa jak kondensator i gromadzi wysokie napięcie!)."
+    },
+    {
+        q: "97. Do czego służy sprawdzian kierunku wirowania pól (miernik kolejności faz)?",
+        options: [
+            "Do pomiaru prędkości obrotowej wentylatora",
+            "Do weryfikacji prawidłowości podłączenia faz (L1, L2, L3) w silnikach 3-fazowych i gniazdach siłowych (wirowanie w prawo)",
+            "Do sprawdzania uziemienia",
+            "Do pomiaru poboru energii"
+        ],
+        answer: 1,
+        hint: "Zapobiega kręceniu się silnika w lewo zamiast w prawo.",
+        exp: "Miernik kolejności faz sprawdza, czy fazy są podłączone w sekwencji L1-L2-L3 (wirowanie w prawo). Błędna kolejność powoduje obroty silnika 3-fazowego w przeciwnym kierunku, co może zniszczyć maszynę."
+    },
+    {
+        q: "98. Czym skutkuje brak przewodu neutralnego N w trójfazowej sieci zasilającej z odbiornikami jednofazowymi (tzw. 'przerwa w N')?",
+        options: [
+            "Niczym, urządzenia będą działać normalnie",
+            "Pojawieniem się asymetrii napięć – na obwodach mniej obciążonych napięcie wzrośnie nawet do 400V, co spowoduje zniszczenie sprzętu RTV/AGD",
+            "Wyłączeniem tylko światła",
+            "Spadkiem napięcia do zera na wszystkich fazach"
+        ],
+        answer: 1,
+        hint: "Pływający punkt neutralny.",
+        exp: "Upalenie/przerwanie przewodu N w sieci 3-fazowej powoduje powstanie 'pływającego punktu neutralnego'. Napięcia fazowe odbiorników zmieniają się w zależności od ich oporu – na urządzeniach o małej mocy napięcie skacze blisko 400V, paląc elektronikę!"
+    },
+    {
+        q: "99. Kto ponosi prawną odpowiedzialność za stan techniczny i bezpieczną eksploatację instalacji elektrycznej w budynku?",
+        options: [
+            "Właściciel lub zarządca obiektu budowlanego",
+            "Elektryk, który montował gniazdko 10 lat temu",
+            "Pan woźny",
+            "Lokalna jednostka Policji"
+        ],
+        answer: 0,
+        hint: "Prawo Budowlane art. 61.",
+        exp: "Zgodnie z Prawem Budowlanym to właściciel lub zarządca obiektu jest zobowiązany do utrzymania obiektu w należytym stanie technicznym i zlecania okresowych kontroli eksploatacyjnych."
+    },
+    {
+        q: "100. Jak należy postąpić w przypadku zapalenia się urządzeń elektrycznych będących POD NAPIĘCIEM?",
+        options: [
+            "Gasić wodą z kranu pod dużym ciśnieniem",
+            "Użyć gaśnicy proszkowej lub śniegowej (CO2) dedykowanej do urządzeń pod napięciem (z zachowaniem bezpiecznej odległości) i dążyć do odłączenia zasilania",
+            "Przykryć pożar mokrym kocem z wełny",
+            "Czekać aż sam zgaśnie"
+        ],
+        answer: 1,
+        hint: "NIGDY nie gasić urządzeń pod napięciem wodą (przewodzi prąd)!",
+        exp: "Urządzenia pod napięciem należy gasić gaśnicami proszkowymi lub CO2 (śniegowymi) posiadającymi dopuszczenie do gaszenia urządzeń pod napięciem (zazwyczaj do 1000V przy zachowaniu min. 1m odległości). Woda grozi śmiertelnym porażeniem!"
+    }
+];
+
+// ============================================================
+// BAZA WIEDZY - rozszerzone wyjaśnienia tematów (dopasowywane
+// automatycznie do treści pytania na podstawie słów kluczowych)
+// ============================================================
+const KNOWLEDGE_BASE = [
+    {
+        id: "ip_code",
+        keywords: /\bIP\s?\d{2}\b|\bIPX\d\b|stopie[nń] ochrony/i,
+        title: "Kod IP (Ingress Protection) – pełna tabela",
+        html: `
+            <p>Stopień ochrony IP zapisuje się jako <strong>IP</strong> + dwie cyfry, np. <strong>IP44</strong>. Pierwsza cyfra opisuje ochronę przed ciałami stałymi/pyłem, druga – ochronę przed wodą. Litera <strong>X</strong> w miejscu cyfry oznacza, że dany parametr nie był badany/nie jest określany (np. IPX4).</p>
+            <table>
+                <tr><th>1. cyfra</th><th>Ochrona przed ciałami stałymi</th></tr>
+                <tr><td>0</td><td>Brak ochrony</td></tr>
+                <tr><td>1</td><td>Ciała &gt; 50 mm (np. dłoń)</td></tr>
+                <tr><td>2</td><td>Ciała &gt; 12,5 mm (np. palec)</td></tr>
+                <tr><td>3</td><td>Ciała &gt; 2,5 mm (narzędzia, druty)</td></tr>
+                <tr><td>4</td><td>Ciała &gt; 1 mm (druty, śruby)</td></tr>
+                <tr><td>5</td><td>Ochrona przed pyłem (dopuszczalne niewielkie osadzanie, bez wpływu na pracę)</td></tr>
+                <tr><td>6</td><td>Pełna pyłoszczelność (brak wnikania pyłu)</td></tr>
+            </table>
+            <table>
+                <tr><th>2. cyfra</th><th>Ochrona przed wodą</th></tr>
+                <tr><td>0</td><td>Brak ochrony</td></tr>
+                <tr><td>1</td><td>Krople pionowe (kondensacja)</td></tr>
+                <tr><td>2</td><td>Krople padające pod kątem do 15°</td></tr>
+                <tr><td>3</td><td>Deszcz/spryskiwanie pod kątem do 60°</td></tr>
+                <tr><td>4</td><td>Bryzgi wody z dowolnego kierunku</td></tr>
+                <tr><td>5</td><td>Strugi wody z dowolnego kierunku (dysza)</td></tr>
+                <tr><td>6</td><td>Silne strugi wody (fale, silna dysza)</td></tr>
+                <tr><td>7</td><td>Krótkotrwałe zanurzenie (do 1 m, do 30 min)</td></tr>
+                <tr><td>8</td><td>Ciągłe zanurzenie na głębokości &gt; 1 m (wg deklaracji producenta)</td></tr>
+                <tr><td>9/9K</td><td>Mycie pod wysokim ciśnieniem i wysoką temperaturą (myjki ciśnieniowe)</td></tr>
+            </table>
+            <p><strong>Najczęściej spotykane oznaczenia w instalacjach:</strong></p>
+            <ul>
+                <li><strong>IP20</strong> – standardowy osprzęt wewnątrz pomieszczeń suchych (gniazdka, wyłączniki w mieszkaniu)</li>
+                <li><strong>IP44</strong> – ochrona przed ciałami &gt; 1 mm i bryzgami wody – typowo łazienka (strefa 2), garaż, zewnątrz pod osłoną</li>
+                <li><strong>IP54</strong> – ochrona przed pyłem (ograniczona) i bryzgami – pomieszczenia gospodarcze, warsztaty</li>
+                <li><strong>IP65</strong> – pełna pyłoszczelność + strugi wody – oprawy zewnętrzne, myjnie</li>
+                <li><strong>IP67</strong> – pełna pyłoszczelność + krótkotrwałe zanurzenie do 1 m – studzienki, złącza zewnętrzne, urządzenia narażone na zalanie</li>
+                <li><strong>IP68</strong> – pełna pyłoszczelność + długotrwałe zanurzenie – kable i osprzęt układany pod wodą/w ziemi na stałe</li>
+            </ul>`
+    },
+    {
+        id: "rcd",
+        keywords: /\bRCD\b|różnicowopr[ąa]d/i,
+        title: "Wyłączniki różnicowoprądowe (RCD)",
+        html: `
+            <p>RCD (ang. Residual Current Device) porównuje prąd wpływający (L) z wypływającym (N). Różnica (prąd upływu) powyżej progu <strong>IΔn</strong> powoduje wyłączenie obwodu.</p>
+            <p><strong>Klasy czułości:</strong></p>
+            <ul>
+                <li><strong>10–30 mA</strong> – ochrona uzupełniająca (dodatkowa) ludzi przed porażeniem, wymagana m.in. w gniazdach ogólnego przeznaczenia, łazienkach, na zewnątrz</li>
+                <li><strong>100–300 mA</strong> – ochrona przeciwpożarowa (ograniczenie skutków prądów upływu w dużych instalacjach)</li>
+                <li><strong>500 mA i więcej</strong> – ochrona selektywna w instalacjach przemysłowych</li>
+            </ul>
+            <p><strong>Typy RCD wg kształtu prądu upływu:</strong></p>
+            <ul>
+                <li><strong>Typ AC</strong> – reaguje tylko na prądy sinusoidalne AC (rzadko dziś stosowany, wycofywany)</li>
+                <li><strong>Typ A</strong> – reaguje na prądy AC oraz pulsujące prądy stałe (np. z prostowników, ładowarek, falowników) – standard w nowych instalacjach mieszkaniowych</li>
+                <li><strong>Typ F</strong> – jak A, dodatkowo odporny na wyższe częstotliwości (np. pralki z falownikiem)</li>
+                <li><strong>Typ B</strong> – reaguje również na czyste prądy stałe (DC) – wymagany np. przy ładowarkach EV, fotowoltaice</li>
+            </ul>
+            <p>RCD <strong>nie wolno</strong> stosować w układzie TN-C, ponieważ przewód PEN pełni jednocześnie funkcję N i PE – RCD nie byłby w stanie wykryć różnicy prądów (prąd zwarciowy popłynąłby częściowo przez PEN, który przechodzi przez cewkę RCD w obu kierunkach). RCD wymaga rozdzielonych PE i N (układ TN-S lub TN-C-S za punktem podziału).</p>`
+    },
+    {
+        id: "network_systems",
+        keywords: /TN-C-S|TN-S|TN-C\b|układ(?:zie|u)? sieciow|(?:\bTT\b|\bIT\b)(?= |,|\.|\)|$)/,
+        title: "Układy sieciowe TN / TT / IT",
+        html: `
+            <p>Litery oznaczają: 1. – sposób uziemienia źródła, 2. – sposób uziemienia części przewodzących dostępnych, dodatkowo C/S opisują przewód ochronny i neutralny.</p>
+            <ul>
+                <li><strong>TN-C</strong> – punkt neutralny źródła uziemiony, funkcje N i PE połączone w jednym przewodzie (PEN) na całej długości instalacji</li>
+                <li><strong>TN-S</strong> – punkt neutralny uziemiony, przewody N i PE oddzielone na całej długości instalacji</li>
+                <li><strong>TN-C-S</strong> – na początku instalacji przewód PEN, który w pewnym miejscu (najczęściej w złączu/rozdzielnicy głównej) rozdziela się na osobne N i PE – najczęściej spotykany układ w Polsce</li>
+                <li><strong>TT</strong> – punkt neutralny źródła uziemiony, natomiast części przewodzące dostępne instalacji odbiorczej uziemione są niezależnym uziomem lokalnym (drugie „T” = Terra, czyli lokalne uziemienie odbiorcy) – wymaga RCD jako podstawowej ochrony</li>
+                <li><strong>IT</strong> – punkt neutralny źródła izolowany od ziemi (lub uziemiony przez dużą impedancję); części przewodzące dostępne uziemione lokalnie – stosowany tam, gdzie ciągłość zasilania jest krytyczna (np. sale operacyjne, przemysł) – pierwsze uszkodzenie doziemne nie powoduje wyłączenia, sygnalizowane jest przez kontrolery izolacji</li>
+            </ul>`
+    },
+    {
+        id: "protection_classes",
+        keywords: /klas[ay] ochronno[śs]ci/i,
+        title: "Klasy ochronności urządzeń elektrycznych",
+        html: `
+            <ul>
+                <li><strong>Klasa 0</strong> – tylko izolacja podstawowa, brak zacisku PE – zakazana we współczesnych instalacjach</li>
+                <li><strong>Klasa I</strong> – izolacja podstawowa + obowiązkowe podłączenie do przewodu ochronnego PE (metalowa obudowa uziemiona) – np. pralki, piekarniki</li>
+                <li><strong>Klasa II</strong> – podwójna lub wzmocniona izolacja, brak zacisku PE, oznaczenie symbolem „podwójny kwadrat” □□ – np. wiertarki, ładowarki, sprzęt RTV</li>
+                <li><strong>Klasa III</strong> – zasilanie wyłącznie z obwodu SELV/PELV (bardzo niskie napięcie bezpieczne, np. 12 V, 24 V) – np. lampki na niskie napięcie, zabawki elektryczne</li>
+            </ul>`
+    },
+    {
+        id: "touch_voltage",
+        keywords: /napi[ęe]cia? dotykow|\bUL\b/i,
+        title: "Dopuszczalne napięcia dotykowe UL",
+        html: `
+            <p>UL to graniczna wartość napięcia dotykowego, która może utrzymywać się na dostępnej części przewodzącej bez ograniczenia czasowego, bez zagrożenia dla człowieka.</p>
+            <ul>
+                <li><strong>Warunki normalne (środowisko I, AC)</strong> – UL = 50 V</li>
+                <li><strong>Warunki szczególnego zagrożenia (środowisko II, AC)</strong> – UL = 25 V (np. łazienki, obory, baseny, tereny budów, pomieszczenia wilgotne)</li>
+                <li>Dla prądu stałego (DC) wartości są wyższe (odpowiednio ok. 120 V i 60 V), ponieważ DC jest statystycznie mniej niebezpieczny przy tych samych warunkach niż AC 50 Hz</li>
+            </ul>
+            <p>Im niższe dopuszczalne UL, tym krótszy musi być maksymalny czas samoczynnego wyłączenia zasilania (SWZ) w razie uszkodzenia.</p>`
+    },
+    {
+        id: "mcb_curves",
+        keywords: /charakterystyc[ea] ['"]?[BCD]['"]?|wy[łl]ącznik(a|iem|owi)? nadpr[ąa]dow/i,
+        title: "Charakterystyki wyzwalania wyłączników nadprądowych (B/C/D)",
+        html: `
+            <p>Litera określa krotność prądu znamionowego In, przy której zadziała wyzwalacz elektromagnetyczny (zwarciowy, natychmiastowy) – nie mylić z wyzwalaczem termicznym (przeciążeniowym), który działa tak samo dla wszystkich charakterystyk.</p>
+            <ul>
+                <li><strong>B</strong> – wyzwolenie przy 3–5 × In – obwody z odbiornikami bez dużych prądów rozruchowych (oświetlenie, gniazda w budynkach mieszkalnych, długie linie kablowe o dużej impedancji)</li>
+                <li><strong>C</strong> – wyzwolenie przy 5–10 × In – odbiorniki z umiarkowanym prądem rozruchowym (silniki, transformatory, żarówki, sprzęt AGD) – najczęściej stosowana w instalacjach mieszkaniowych/biurowych</li>
+                <li><strong>D</strong> – wyzwolenie przy 10–20 × In – odbiorniki z bardzo dużym prądem rozruchowym (duże silniki, transformatory spawalnicze, prądnice, baterie kondensatorów)</li>
+            </ul>`
+    },
+    {
+        id: "surge_protection",
+        keywords: /ogranicznik.*przepi[ęe]|Typu 1\b|Typu 2\b|Typu 3\b/i,
+        title: "Ograniczniki przepięć (SPD) – Typ 1 / 2 / 3",
+        html: `
+            <ul>
+                <li><strong>Typ 1 (dawna klasa B)</strong> – chroni przed bezpośrednim uderzeniem pioruna / falą udarową prądu piorunowego (10/350 µs), montowany na wejściu instalacji budynków z instalacją odgromową lub zasilanych linią napowietrzną</li>
+                <li><strong>Typ 2 (dawna klasa C)</strong> – chroni przed przepięciami łączeniowymi i pośrednimi skutkami wyładowań atmosferycznych (fala 8/20 µs), montowany w rozdzielnicy głównej/piętrowej</li>
+                <li><strong>Typ 3 (dawna klasa D)</strong> – ochrona precyzyjna, montowana blisko wrażliwych odbiorników (np. przy komputerze, RTV), wymaga odpowiedniej odległości/koordynacji z Typem 2</li>
+            </ul>
+            <p>Ograniczniki łączy się często kaskadowo (Typ 1+2, potem 3), aby stopniowo obniżać poziom przepięcia do bezpiecznej wartości dla chronionego urządzenia.</p>`
+    },
+    {
+        id: "wire_colors",
+        keywords: /barwy izolacji|kolory przewod[óo]w|PN-EN 60446/i,
+        title: "Barwy izolacji przewodów",
+        html: `
+            <ul>
+                <li><strong>Żółto-zielony (pasiasty)</strong> – wyłącznie przewód ochronny PE (zakaz stosowania do innych celów)</li>
+                <li><strong>Niebieski</strong> – przewód neutralny N</li>
+                <li><strong>Czarny, brązowy, szary (i inne poza zastrzeżonymi)</strong> – przewody fazowe L1, L2, L3</li>
+                <li><strong>Żółto-zielony z niebieskim paskiem na końcu</strong> – przewód PEN</li>
+            </ul>`
+    },
+    {
+        id: "ac_power",
+        keywords: /moc bierna|moc czynna|moc pozorna|cos\s?\(?\s?ph?i|cos\s?φ/i,
+        title: "Moc czynna, bierna i pozorna w obwodach AC",
+        html: `
+            <ul>
+                <li><strong>Moc czynna P [W, kW]</strong> – rzeczywiście zamieniana na pracę użyteczną (ciepło, ruch, światło); P = U·I·cos φ</li>
+                <li><strong>Moc bierna Q [var, kvar]</strong> – „krąży” między źródłem a odbiornikiem indukcyjnym/pojemnościowym, nie wykonuje pracy użytecznej, ale obciąża linię; Q = U·I·sin φ</li>
+                <li><strong>Moc pozorna S [VA, kVA]</strong> – wypadkowa (wektorowa suma P i Q), decyduje o obciążalności przewodów/transformatorów; S = U·I = √(P² + Q²)</li>
+                <li><strong>cos φ (współczynnik mocy)</strong> – stosunek P/S; im bliższy 1, tym efektywniej wykorzystywana jest moc pozorna. Niski cos φ oznacza duże straty przesyłowe przy tej samej mocy użytecznej</li>
+                <li>Moc bierną indukcyjną (silniki, transformatory, dławiki) kompensuje się <strong>bateriami kondensatorów</strong>; moc bierną pojemnościową (długie kable, oświetlenie LED, sieci lekko obciążone) kompensuje się <strong>dławikami (cewkami)</strong></li>
+            </ul>`
+    },
+    {
+        id: "separation_transformer",
+        keywords: /transformator separacyjny/i,
+        title: "Transformator separacyjny",
+        html: `
+            <p>Transformator o przekładni najczęściej 1:1, którego uzwojenie wtórne jest galwanicznie odizolowane od sieci zasilającej (i od ziemi). Stosowany jako <strong>ochrona przez separację elektryczną</strong> – w razie doziemienia w obwodzie wtórnym nie powstaje zamknięty obwód prądowy przez ziemię, więc dotyk pojedynczego przewodu jest bezpieczny.</p>
+            <p>Do jednego transformatora separacyjnego <strong>zaleca się podłączać tylko jeden odbiornik</strong> – podłączenie kilku odbiorników i jednoczesne doziemienie dwóch różnych obwodów mogłoby doprowadzić do porażenia (utrata korzyści z separacji).</p>
+            <p>Typowe zastosowania: zasilanie narzędzi na budowach, oprawy oświetleniowe w strefie 1 łazienki (niekiedy), urządzenia medyczne, warsztaty.</p>`
+    },
+    {
+        id: "bathroom_zones",
+        keywords: /strefa 0\b|strefa 1\b|strefa 2\b|w [łl]azience|łazience/i,
+        title: "Strefy ochronne w łazience (0, 1, 2)",
+        html: `
+            <ul>
+                <li><strong>Strefa 0</strong> – wnętrze wanny/brodzika – dopuszczalne wyłącznie urządzenia SELV ≤ 12 V AC, IPX7</li>
+                <li><strong>Strefa 1</strong> – nad wanną/brodzikiem do wysokości 2,25 m – dopuszczalne np. podgrzewacze wody, obwody SELV do 25 V, wymagane min. IPX4 (IPX5 przy strumieniach wody)</li>
+                <li><strong>Strefa 2</strong> – pas do 0,6 m od krawędzi wanny/brodzika (poziomo) – dopuszcza się osprzęt 230 V pod warunkiem stopnia ochrony min. IPX4 i ochrony wyłącznikiem RCD ≤ 30 mA</li>
+                <li><strong>Poza strefami</strong> – standardowy osprzęt (IP20), również obowiązkowo pod ochroną RCD ≤ 30 mA dla wszystkich obwodów w łazience</li>
+            </ul>`
+    },
+    {
+        id: "pe_pen_n",
+        keywords: /\bPEN\b|przewód(u|em)? ochronn(y|ego) PE|przewod(u|em)? neutraln(y|ego)? N/i,
+        title: "Przewody PE, N i PEN",
+        html: `
+            <ul>
+                <li><strong>N (neutralny)</strong> – przewód roboczy, zamyka obwód prądowy, w normalnej pracy płynie nim prąd</li>
+                <li><strong>PE (ochronny)</strong> – łączy dostępne części przewodzące urządzeń z układem uziemiającym; w normalnej pracy nie płynie nim prąd, pełni funkcję wyłącznie bezpieczeństwa</li>
+                <li><strong>PEN</strong> – przewód łączący funkcje N i PE w jednym przewodniku (stosowany w TN-C); ze względów bezpieczeństwa nie wolno go przerywać ani zabezpieczać (np. bezpiecznikiem), a po rozdzieleniu na PE i N (w TN-C-S) nie wolno ich już nigdy ponownie łączyć w dalszej części instalacji</li>
+                <li>Minimalny przekrój PEN z miedzi w instalacji stałej to zazwyczaj <strong>10 mm² Cu</strong> (lub 16 mm² Al)</li>
+            </ul>`
+    },
+    {
+        id: "earthing",
+        keywords: /uziemienie ochronne|uziemienie robocze|uziom|uziemiacz/i,
+        title: "Rodzaje uziemień",
+        html: `
+            <ul>
+                <li><strong>Uziemienie ochronne</strong> – połączenie z ziemią części przewodzących dostępnych (obudów, korpusów), które w normalnych warunkach nie są pod napięciem, ale mogłyby się nim stać w razie uszkodzenia izolacji – celem jest bezpieczeństwo ludzi</li>
+                <li><strong>Uziemienie robocze</strong> – uziemienie punktu obwodu elektrycznego niezbędne do prawidłowej pracy sieci/urządzenia (np. punkt neutralny transformatora) – celem jest poprawna praca instalacji, nie tylko bezpieczeństwo</li>
+                <li><strong>Uziemienie przenośne (miejscowe)</strong> – tymczasowy uziemiacz zakładany na czas prac przy urządzeniach wyłączonych spod napięcia, aby zabezpieczyć przed przypadkowym/indukowanym napięciem; kolejność zakładania: najpierw koniec uziemiający (do ziemi/szyny), na końcu zaciski na przewody robocze; zdejmowanie w kolejności odwrotnej</li>
+                <li><strong>Uziom fundamentowy</strong> – przewodzący element (np. stalowe zbrojenie) zatopiony w fundamencie budynku, pełniący funkcję uziomu naturalnego</li>
+                <li><strong>Uziom otokowy</strong> – uziom ułożony w ziemi wokół budynku, wyrównujący potencjał gruntu i wspomagający instalację odgromową oraz uziemienie ochronne</li>
+            </ul>`
+    },
+    {
+        id: "selectivity",
+        keywords: /selektywno[śs][ćc]/i,
+        title: "Selektywność (stopniowanie) zabezpieczeń",
+        html: `
+            <p>Selektywność oznacza, że w razie zwarcia lub przeciążenia zadziała <strong>tylko zabezpieczenie najbliższe miejscu uszkodzenia</strong>, a zabezpieczenia wyżej w hierarchii (bliżej źródła) pozostają załączone. Uzyskuje się ją przez odpowiedni dobór prądów znamionowych, charakterystyk wyzwalania i czasów zadziałania kolejnych stopni zabezpieczeń (np. bezpiecznik 63 A na złączu, 32 A w tablicy piętrowej, 16 A w obwodzie odbiorczym).</p>`
+    },
+    {
+        id: "selv_pelv",
+        keywords: /\bSELV\b|\bPELV\b/i,
+        title: "Systemy SELV i PELV",
+        html: `
+            <ul>
+                <li><strong>SELV (Safety Extra Low Voltage)</strong> – bardzo niskie napięcie bezpieczne, obwód całkowicie odizolowany od ziemi i od innych obwodów (brak uziemienia) – najwyższy poziom ochrony, napięcie ≤ 50 V AC / 120 V DC (typowo 12–24 V)</li>
+                <li><strong>PELV (Protective Extra Low Voltage)</strong> – jak SELV, ale obwód może być uziemiony w jednym punkcie – stosowany, gdy wymagane jest uziemienie funkcjonalne urządzenia</li>
+                <li>Oba systemy zasilane są z transformatora bezpieczeństwa (podwójnie izolowanego) lub źródła o równoważnym poziomie bezpieczeństwa (np. baterii)</li>
+            </ul>`
+    },
+    {
+        id: "ohm_power",
+        keywords: /Prawo Ohma|Joule.?a-Lenza|wzór na spadek mocy/i,
+        title: "Prawo Ohma i wzór Joule'a-Lenza",
+        html: `
+            <ul>
+                <li><strong>Prawo Ohma:</strong> U = I · R (napięcie = prąd × rezystancja); z tego I = U/R oraz R = U/I</li>
+                <li><strong>Prawo Joule'a-Lenza:</strong> P = I² · R – moc strat cieplnych rośnie z <strong>kwadratem</strong> prądu, dlatego nawet niewielki wzrost prądu (np. przez zbyt mały przekrój przewodu) silnie zwiększa nagrzewanie się kabla</li>
+                <li>Zbyt mały przekrój przewodu przy danej długości ⇒ większa rezystancja R ⇒ większy spadek napięcia U=IR na przewodzie i większe straty cieplne P=I²R</li>
+            </ul>`
+    }
+];
+
+function getMatchingTopics(question) {
+    const haystack = (question.q || "") + " " + (question.exp || "") + " " + (question.options || []).join(" ");
+    return KNOWLEDGE_BASE.filter(topic => topic.keywords.test(haystack));
+}
+
+function renderGlossary(question) {
+    const box = document.getElementById('glossary-box');
+    const content = document.getElementById('glossary-content');
+    const topics = getMatchingTopics(question);
+
+    if (topics.length === 0) {
+        box.classList.remove('visible');
+        content.innerHTML = '';
+        return;
+    }
+
+    content.innerHTML = topics.map(t => `
+        <div class="glossary-entry">
+            <h5>${t.title}</h5>
+            ${t.html}
+        </div>
+    `).join('');
+}
+
+// ============================================================
+// STAN APLIKACJI
+// ============================================================
+let userAnswers = new Array(quizData.length).fill(null);
+let activeIndices = quizData.map((_, i) => i); // pełna lista lub lista powtórki
+let currentPos = 0; // pozycja w activeIndices
+let isReviewMode = false;
+
+function currentRealIndex() {
+    return activeIndices[currentPos];
+}
+
+function initQuiz() {
+    rebuildJumpSelect();
+    showQuestion(0);
+}
+
+function rebuildJumpSelect() {
+    const select = document.getElementById('jump-select');
+    select.innerHTML = '';
+    activeIndices.forEach((realIdx, pos) => {
+        const opt = document.createElement('option');
+        opt.value = pos;
+        opt.textContent = isReviewMode
+            ? `Powtórka: Pytanie ${realIdx + 1}`
+            : `Pytanie ${realIdx + 1}`;
+        select.appendChild(opt);
+    });
+}
+
+function showQuestion(pos) {
+    currentPos = pos;
+    const realIdx = currentRealIndex();
+    document.getElementById('jump-select').value = pos;
+    const data = quizData[realIdx];
+
+    document.getElementById('question-text').textContent = data.q;
+
+    // Hide info boxes
+    document.getElementById('hint-box').classList.remove('visible');
+    document.getElementById('explanation-box').classList.remove('visible');
+    document.getElementById('glossary-box').classList.remove('visible');
+    document.getElementById('hint-text').textContent = data.hint;
+
+    const optionsContainer = document.getElementById('options-container');
+    optionsContainer.innerHTML = '';
+
+    data.options.forEach((optText, optIdx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = optText;
+        btn.onclick = () => selectOption(optIdx);
+
+        // If answered
+        if (userAnswers[realIdx] !== null) {
+            btn.disabled = true;
+            if (optIdx === data.answer) {
+                btn.classList.add('correct-ans');
+            }
+            if (userAnswers[realIdx] === optIdx && optIdx !== data.answer) {
+                btn.classList.add('wrong-ans');
+            }
+        }
+
+        optionsContainer.appendChild(btn);
+    });
+
+    if (userAnswers[realIdx] !== null) {
+        showExplanation(realIdx);
+        renderGlossary(data);
+    }
+
+    // Nav state
+    const isLast = (pos === activeIndices.length - 1);
+    const isAnswered = (userAnswers[realIdx] !== null);
+    document.getElementById('prev-btn').disabled = (pos === 0);
+    const nextBtn = document.getElementById('next-btn');
+    nextBtn.disabled = isLast || !isAnswered;
+    nextBtn.textContent = isAnswered ? 'Następne →' : 'Odpowiedz, aby przejść dalej →';
+
+    checkCompletion();
+}
+
+function selectOption(optionIndex) {
+    const realIdx = currentRealIndex();
+    if (userAnswers[realIdx] !== null) return;
+
+    userAnswers[realIdx] = optionIndex;
+    updateScore();
+    showQuestion(currentPos);
+}
+
+function showExplanation(realIdx) {
+    const data = quizData[realIdx];
+    const expBox = document.getElementById('explanation-box');
+    const expTitle = document.getElementById('explanation-title');
+    const expText = document.getElementById('explanation-text');
+
+    const isCorrect = userAnswers[realIdx] === data.answer;
+    expTitle.textContent = isCorrect ? "Dobrze! Wyjaśnienie:" : "Błąd! Wyjaśnienie:";
+    expTitle.style.color = isCorrect ? "var(--correct)" : "var(--wrong)";
+    expBox.style.borderLeftColor = isCorrect ? "var(--correct)" : "var(--wrong)";
+
+    expText.textContent = data.exp;
+    expBox.classList.add('visible');
+}
+
+function toggleHint() {
+    const hintBox = document.getElementById('hint-box');
+    hintBox.classList.toggle('visible');
+}
+
+function updateScore() {
+    let correct = 0;
+    let wrong = 0;
+
+    userAnswers.forEach((ans, idx) => {
+        if (ans !== null) {
+            if (ans === quizData[idx].answer) correct++;
+            else wrong++;
+        }
+    });
+
+    document.getElementById('score-correct').textContent = correct;
+    document.getElementById('score-wrong').textContent = wrong;
+
+    const answeredCount = correct + wrong;
+    const percent = answeredCount > 0 ? Math.round((correct / answeredCount) * 100) : 0;
+    document.getElementById('score-percent').textContent = `${percent}%`;
+}
+
+function nextQuestion() {
+    if (currentPos < activeIndices.length - 1) {
+        showQuestion(currentPos + 1);
+    }
+}
+
+function prevQuestion() {
+    if (currentPos > 0) {
+        showQuestion(currentPos - 1);
+    }
+}
+
+function jumpToQuestion(pos) {
+    showQuestion(parseInt(pos, 10));
+}
+
+function resetQuiz() {
+    if (confirm("Czy na pewno chcesz zresetować wszystkie wyniki?")) {
+        userAnswers = new Array(quizData.length).fill(null);
+        isReviewMode = false;
+        activeIndices = quizData.map((_, i) => i);
+        document.getElementById('review-banner').classList.remove('visible');
+        hideSummary();
+        rebuildJumpSelect();
+        updateScore();
+        showQuestion(0);
+    }
+}
+
+// ============================================================
+// UKOŃCZENIE KURSU + POWTÓRKA BŁĘDNYCH ODPOWIEDZI
+// ============================================================
+function getWrongIndices() {
+    return userAnswers
+        .map((ans, idx) => ({ ans, idx }))
+        .filter(o => o.ans !== null && o.ans !== quizData[o.idx].answer)
+        .map(o => o.idx);
+}
+
+function checkCompletion() {
+    const banner = document.getElementById('completion-banner');
+    if (isReviewMode) {
+        banner.classList.remove('visible');
+        return;
+    }
+    const allAnswered = userAnswers.every(a => a !== null);
+    if (!allAnswered) {
+        banner.classList.remove('visible');
+        return;
+    }
+    const wrongCount = getWrongIndices().length;
+    const text = wrongCount === 0
+        ? "Brawo! Wszystkie 100 pytań poprawnie! 🏆"
+        : `Odpowiedziałeś na wszystkie 100 pytań. Błędnych odpowiedzi: ${wrongCount}. Możesz je teraz przećwiczyć.`;
+    document.getElementById('completion-text').textContent = text;
+    document.getElementById('review-start-btn').style.display = wrongCount === 0 ? 'none' : 'inline-block';
+    banner.classList.add('visible');
+}
+
+function startReview() {
+    const wrong = getWrongIndices();
+    if (wrong.length === 0) {
+        alert("Brak błędnych odpowiedzi do powtórki! 🎉");
+        return;
+    }
+    // Zezwól na ponowną odpowiedź na błędne pytania
+    wrong.forEach(idx => { userAnswers[idx] = null; });
+
+    isReviewMode = true;
+    activeIndices = wrong;
+    currentPos = 0;
+
+    document.getElementById('review-banner').classList.add('visible');
+    document.getElementById('review-banner-text').textContent =
+        `🔁 Tryb powtórki błędnych odpowiedzi (${wrong.length} ${wrong.length === 1 ? 'pytanie' : 'pytań'})`;
+
+    hideSummary();
+    updateScore();
+    rebuildJumpSelect();
+    showQuestion(0);
+}
+
+function exitReview() {
+    isReviewMode = false;
+    activeIndices = quizData.map((_, i) => i);
+    currentPos = 0;
+    document.getElementById('review-banner').classList.remove('visible');
+    rebuildJumpSelect();
+    updateScore();
+    showQuestion(0);
+}
+
+// ============================================================
+// PODSUMOWANIE
+// ============================================================
+function showSummary() {
+    let correct = 0, wrong = 0, answered = 0;
+    userAnswers.forEach((ans, idx) => {
+        if (ans !== null) {
+            answered++;
+            if (ans === quizData[idx].answer) correct++;
+            else wrong++;
+        }
+    });
+    const percent = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+
+    document.getElementById('sum-answered').textContent = `${answered}/${quizData.length}`;
+    document.getElementById('sum-correct').textContent = correct;
+    document.getElementById('sum-wrong').textContent = wrong;
+    document.getElementById('sum-percent').textContent = `${percent}%`;
+
+    const wrongIndices = getWrongIndices();
+    const wrongListEl = document.getElementById('wrong-list');
+    wrongListEl.innerHTML = '';
+    if (wrongIndices.length === 0) {
+        wrongListEl.innerHTML = '<span style="color: var(--text-muted);">Brak błędnych odpowiedzi. 🎉</span>';
+    } else {
+        wrongIndices.forEach(idx => {
+            const btn = document.createElement('button');
+            btn.textContent = `Pytanie ${idx + 1}`;
+            btn.onclick = () => {
+                isReviewMode = false;
+                activeIndices = quizData.map((_, i) => i);
+                document.getElementById('review-banner').classList.remove('visible');
+                rebuildJumpSelect();
+                hideSummary();
+                showQuestion(idx);
+            };
+            wrongListEl.appendChild(btn);
+        });
+    }
+
+    document.getElementById('review-start-btn-2').style.display = wrongIndices.length === 0 ? 'none' : 'inline-block';
+
+    document.getElementById('quiz-view').style.display = 'none';
+    document.getElementById('summary-box').classList.add('visible');
+}
+
+function hideSummary() {
+    document.getElementById('summary-box').classList.remove('visible');
+    document.getElementById('quiz-view').style.display = 'block';
+}
+
+// ============================================================
+// ZAPIS / WCZYTYWANIE POSTĘPU (JSON) I EKSPORT RAPORTU (CSV)
+// ============================================================
+function saveProgress() {
+    const payload = {
+        quizTitle: "SEP G1 E - Trener Egzaminacyjny",
+        savedAt: new Date().toISOString(),
+        totalQuestions: quizData.length,
+        userAnswers: userAnswers
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `postep-SEP-G1E-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function loadProgress(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const payload = JSON.parse(e.target.result);
+            const loaded = payload.userAnswers;
+            if (!Array.isArray(loaded) || loaded.length !== quizData.length) {
+                alert("Nieprawidłowy plik postępu (niezgodna liczba pytań).");
+                return;
+            }
+            userAnswers = loaded.map(v => (v === null || Number.isInteger(v)) ? v : null);
+            isReviewMode = false;
+            activeIndices = quizData.map((_, i) => i);
+            document.getElementById('review-banner').classList.remove('visible');
+            hideSummary();
+            rebuildJumpSelect();
+            updateScore();
+            showQuestion(0);
+            alert("Postęp wczytany pomyślnie!");
+        } catch (err) {
+            alert("Błąd wczytywania pliku: " + err.message);
+        } finally {
+            event.target.value = '';
+        }
+    };
+    reader.readAsText(file);
+}
+
+function exportCSV() {
+    const rows = [["Nr", "Pytanie", "Twoja odpowiedź", "Poprawna odpowiedź", "Wynik"]];
+    quizData.forEach((data, idx) => {
+        const ans = userAnswers[idx];
+        const userAnsText = ans !== null ? data.options[ans] : "(brak odpowiedzi)";
+        const correctAnsText = data.options[data.answer];
+        const result = ans === null ? "Nieodpowiedziane" : (ans === data.answer ? "Poprawna" : "Błędna");
+        rows.push([idx + 1, data.q, userAnsText, correctAnsText, result]);
+    });
+
+    const csvContent = rows.map(row =>
+        row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';')
+    ).join('\r\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `raport-SEP-G1E-${dateStr}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+window.onload = initQuiz;
+</script>
+</body>
+</html>
