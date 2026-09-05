@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chemia jako inżynieria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #142943;
+    --bg-panel: #1B375A;
+    --bg-panel-2: #0F2038;
+    --grid: rgba(234,246,255,0.07);
+    --ink: #EAF6FF;
+    --ink-dim: #9FBBD4;
+    --plus: #E8935B;
+    --minus: #6FD6E8;
+    --neutral: #7C93AC;
+    --accent-line: #EAF6FF;
+    --danger: #E8695B;
+    --ok: #7CD68A;
+    --serif: 'Space Grotesk', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--serif);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  body{
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  .sheet{
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 28px 24px 90px;
+  }
+
+  /* ---- Title block, like an engineering drawing ---- */
+  .titleblock{
+    border: 1.5px solid var(--ink-dim);
+    display:grid;
+    grid-template-columns: 1fr auto;
+    gap: 0;
+    margin-bottom: 40px;
+  }
+  .titleblock-main{
+    padding: 22px 24px;
+    border-right: 1.5px solid var(--ink-dim);
+  }
+  .titleblock-main h1{
+    font-size: clamp(28px, 5vw, 44px);
+    line-height:1.05;
+    margin: 0 0 8px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .titleblock-main p{
+    margin:0;
+    color: var(--ink-dim);
+    font-size: 15px;
+    max-width: 46ch;
+  }
+  .titleblock-meta{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    padding: 22px 20px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    gap: 10px;
+    min-width: 150px;
+  }
+  .titleblock-meta div span{ color: var(--ink); }
+
+  /* ---- Section framing ---- */
+  .tag{
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-dim);
+    letter-spacing: 0.02em;
+    margin-bottom: 6px;
+  }
+  section{ margin-bottom: 64px; }
+  section > h2{
+    font-size: 26px;
+    margin: 0 0 14px;
+    font-weight: 600;
+  }
+  .lede{
+    color: var(--ink-dim);
+    font-size: 16px;
+    line-height: 1.65;
+    max-width: 68ch;
+    margin: 0 0 22px;
+  }
+  .lede strong{ color: var(--ink); font-weight: 600; }
+
+  .panel{
+    background: var(--bg-panel);
+    border: 1px solid rgba(234,246,255,0.14);
+    border-radius: 4px;
+    padding: 22px;
+  }
+
+  /* ---- buttons / controls ---- */
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  button.chip{
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--bg-panel-2);
+    color: var(--ink-dim);
+    border: 1px solid rgba(234,246,255,0.18);
+    border-radius: 3px;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  button.chip:hover{ color: var(--ink); border-color: var(--ink-dim); }
+  button.chip.active{
+    background: var(--ink);
+    color: var(--bg-panel-2);
+    border-color: var(--ink);
+    font-weight: 600;
+  }
+
+  .readout{
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-top: 14px;
+    line-height:1.6;
+  }
+  .readout b{ color: var(--ink); }
+  .readout .plus{ color: var(--plus); }
+  .readout .minus{ color: var(--minus); }
+
+  svg text{ font-family: var(--mono); }
+
+  /* ---- gauges for case study ---- */
+  .gauges{ margin-top: 20px; display:flex; flex-direction:column; gap:14px; }
+  .gauge-row{ display:grid; grid-template-columns: 130px 1fr 42px; align-items:center; gap: 12px; }
+  .gauge-label{ font-family: var(--mono); font-size:12px; color: var(--ink-dim); }
+  .gauge-track{ height: 8px; background: rgba(234,246,255,0.1); border-radius: 4px; overflow:hidden; }
+  .gauge-fill{ height:100%; border-radius:4px; transition: width .4s ease; background: var(--minus); }
+  .gauge-val{ font-family:var(--mono); font-size:12px; text-align:right; color: var(--ink-dim); }
+
+  .product-tag{
+    display:inline-block;
+    margin-top: 18px;
+    font-family: var(--mono);
+    font-size: 13px;
+    border: 1px solid var(--ink-dim);
+    border-radius: 3px;
+    padding: 8px 14px;
+  }
+  .product-tag b{ color: var(--plus); }
+
+  /* ---- takeaway cards ---- */
+  .cards{ display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 620px){ .cards{ grid-template-columns: 1fr; } .gauge-row{grid-template-columns: 100px 1fr 38px;} }
+  .card{
+    background: var(--bg-panel);
+    border: 1px solid rgba(234,246,255,0.14);
+    border-radius: 4px;
+    padding: 20px;
+  }
+  .card .q{
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+  .card p{ color: var(--ink-dim); font-size: 14px; line-height:1.55; margin:0; }
+
+  .footnote{
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-dim);
+    border-top: 1px solid rgba(234,246,255,0.14);
+    padding-top: 18px;
+    margin-top: 10px;
+  }
+
+  .shield-x{ opacity:0; transition: opacity .2s; }
+  .shield-check{ opacity:0; transition: opacity .2s; }
+
+  @keyframes spin{ from{ transform: rotate(0deg);} to{ transform: rotate(360deg);} }
+  @keyframes shake{
+    0%,100%{ transform: translateX(0); }
+    25%{ transform: translateX(-3px); }
+    75%{ transform: translateX(3px); }
+  }
+  @keyframes pulseRing{
+    0%,100%{ opacity: .35; }
+    50%{ opacity: .9; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="titleblock">
+    <div class="titleblock-main">
+      <h1>Chemia jako inżynieria</h1>
+      <p>Trzy fizyczne zasady, które zastępują wkuwanie właściwości setek grup funkcyjnych.</p>
+    </div>
+    <div class="titleblock-meta">
+      <div>ARKUSZ: <span>01 / 04</span></div>
+      <div>TEMAT: <span>WIĄZANIA I ŁADUNEK</span></div>
+      <div>SKALA: <span>MOLEKULARNA</span></div>
+    </div>
+  </div>
+
+  <section>
+    <p class="lede">
+      Podręcznik zwykle podaje chemię organiczną jako listę grup do zapamiętania razem z ich
+      cechami — jakby to była książka telefoniczna. To zły model. Cząsteczka zachowuje się jak
+      wyprodukowany element: jej właściwości <strong>wynikają</strong> ze struktury, a nie są
+      przypisane z góry. Tak jak inżynier nie zapamiętuje wytrzymałości każdego możliwego kształtu
+      belki, tylko liczy z geometrii i materiału — tak i tu wystarczą trzy pytania, żeby przewidzieć
+      zachowanie niemal każdej cząsteczki, zamiast pamiętać setki nazw.
+    </p>
+  </section>
+
+  <!-- ============ PRINCIPLE 1: CHARGE ============ -->
+  <section>
+    <div class="tag">ZASADA 01</div>
+    <h2>Rozkład ładunku — kto kradnie elektrony?</h2>
+    <p class="lede">
+      To odpowiednik napięcia w obwodzie. Węgiel i wodór dzielą się elektronami niemal po równo —
+      cząsteczka złożona wyłącznie z nich jest elektrycznie „cicha”: tłusta, obojętna, nie reaguje
+      chętnie z niczym. Tlen, azot, chlor czy fluor mają dużą elektroujemność — silniej przyciągają
+      wspólną parę elektronów. Powstaje nierównowaga: jeden koniec wiązania robi się lekko ujemny
+      (δ−), drugi lekko dodatni (δ+). Wybierz parę atomów i zobacz, gdzie ucieka ładunek.
+    </p>
+    <div class="panel">
+      <div class="controls" id="bond-controls"></div>
+      <svg id="bond-svg" viewBox="0 0 640 200" width="100%" height="200"></svg>
+      <div class="readout" id="bond-readout"></div>
+    </div>
+  </section>
+
+  <!-- ============ PRINCIPLE 2: STERIC ============ -->
+  <section>
+    <div class="tag">ZASADA 02</div>
+    <h2>Geometria i zawada przestrzenna — kto blokuje dostęp?</h2>
+    <p class="lede">
+      To już czysta mechanika, nie elektryka. Każdy atom i każda grupa zajmuje realną objętość.
+      Jeśli obok miejsca reakcji siedzi duża grupa, działa jak fizyczna tarcza — inna cząsteczka
+      po prostu nie może się fizycznie zbliżyć, niezależnie od tego, jak „chętna” byłaby reakcja
+      pod względem ładunku. Podmień grupę przy centrum reakcji i sprawdź, czy reagent ma szansę dotrzeć.
+    </p>
+    <div class="panel">
+      <div class="controls" id="steric-controls"></div>
+      <svg id="steric-svg" viewBox="0 0 640 200" width="100%" height="200"></svg>
+      <div class="readout" id="steric-readout"></div>
+    </div>
+  </section>
+
+  <!-- ============ PRINCIPLE 3: RIGIDITY ============ -->
+  <section>
+    <div class="tag">ZASADA 03</div>
+    <h2>Sztywność konstrukcji — co można obrócić, a co jest spawane?</h2>
+    <p class="lede">
+      Wiązanie pojedyncze działa jak łożysko: cząsteczka swobodnie się wokół niego obraca, jest
+      elastyczna. Wiązanie podwójne jest jak spaw — sztywne, płaskie, nie do obrócenia bez
+      zerwania — i ma przy tym „odsłonięte” elektrony łatwe do zaatakowania. Pierścień aromatyczny
+      to konstrukcja kratownicowa: elektrony są rozproszone po całym pierścieniu, dzięki czemu
+      całość jest wyjątkowo trudna do zniszczenia.
+    </p>
+    <div class="panel">
+      <div class="controls" id="rigid-controls"></div>
+      <svg id="rigid-svg" viewBox="0 0 640 200" width="100%" height="200"></svg>
+      <div class="readout" id="rigid-readout"></div>
+    </div>
+  </section>
+
+  <!-- ============ CASE STUDY ============ -->
+  <section>
+    <div class="tag">STUDIUM PRZYPADKU</div>
+    <h2>Jedna zamieniona grupa, zupełnie inny materiał</h2>
+    <p class="lede">
+      Ten sam szkielet węglowy. Zamieniamy tylko to, co wisi na jednym z atomów węgla, i patrzymy
+      jak — bez żadnego wkuwania — zmienia się materiał, korzystając wyłącznie z dwóch pytań
+      powyżej: gdzie jest ładunek i co blokuje ruch.
+    </p>
+    <div class="panel">
+      <div class="controls" id="chain-controls"></div>
+      <svg id="chain-svg" viewBox="0 0 640 110" width="100%" height="110"></svg>
+      <div class="gauges" id="chain-gauges"></div>
+      <div class="product-tag" id="chain-product"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="tag">PODSUMOWANIE</div>
+    <h2>Dwa pytania zamiast stu definicji</h2>
+    <div class="cards">
+      <div class="card">
+        <p class="q">Gdzie uciekają elektrony?</p>
+        <p>Znajdź atom o wysokiej elektroujemności (O, N, Cl, F...). To on decyduje, czy cząsteczka
+        jest polarna, czy będzie się rozpuszczać w wodzie i gdzie najłatwiej ją zaatakować.</p>
+      </div>
+      <div class="card">
+        <p class="q">Co fizycznie blokuje dostęp?</p>
+        <p>Sprawdź rozmiar grup obok interesującego cię miejsca i sztywność wiązań dookoła. To
+        decyduje, czy reakcja — nawet elektrycznie „chętna” — w ogóle ma szansę zajść.</p>
+      </div>
+    </div>
+    <p class="footnote">
+      Te trzy zasady nie zastępują pełnej chemii organicznej — ale zastępują wkuwanie. Gdy
+      napotkasz nową grupę funkcyjną, zamiast szukać jej w tabeli, zapytaj: jaki ma rozkład
+      ładunku, ile zajmuje miejsca i jak sztywno jest wpięta w resztę cząsteczki.
+    </p>
+  </section>
+
+</div>
+
+<script>
+/* ============================================================
+   ZASADA 1 — ROZKŁAD ŁADUNKU
+   ============================================================ */
+const EN = { H:2.20, C:2.55, N:3.04, O:3.44, F:3.98, Cl:3.16 };
+const bondPairs = [
+  { id:'CH', a:'C', b:'H', label:'C–H' },
+  { id:'CN', a:'C', b:'N', label:'C–N' },
+  { id:'CO', a:'C', b:'O', label:'C–O' },
+  { id:'CCl', a:'C', b:'Cl', label:'C–Cl' },
+  { id:'CF', a:'C', b:'F', label:'C–F' },
+];
+let bondState = 'CH';
+const bondControls = document.getElementById('bond-controls');
+bondPairs.forEach(p=>{
+  const b = document.createElement('button');
+  b.className = 'chip'; b.textContent = p.label; b.dataset.id = p.id;
+  b.onclick = ()=>{ bondState = p.id; renderBond(); };
+  bondControls.appendChild(b);
+});
+
+function renderBond(){
+  [...bondControls.children].forEach(c=> c.classList.toggle('active', c.dataset.id===bondState));
+  const p = bondPairs.find(x=>x.id===bondState);
+  const diff = Math.abs(EN[p.a]-EN[p.b]);
+  const maxDiff = 1.78; // C..F
+  const t = diff / maxDiff; // 0..1
+  const leftX = 190, rightX = 450, cy = 100;
+  // electron cloud center shifts toward the more electronegative atom
+  const moreEnIsB = EN[p.b] >= EN[p.a];
+  const cloudX = moreEnIsB ? leftX + (rightX-leftX)*(0.5 + t*0.42)
+                            : leftX + (rightX-leftX)*(0.5 - t*0.42);
+  const cloudR = 34 + t*10;
+  const svg = document.getElementById('bond-svg');
+  const plusAtom = moreEnIsB ? p.a : p.b;
+  const minusAtom = moreEnIsB ? p.b : p.a;
+  const plusX = moreEnIsB ? leftX : rightX;
+  const minusX = moreEnIsB ? rightX : leftX;
+
+  svg.innerHTML = `
+    <line x1="${leftX}" y1="${cy}" x2="${rightX}" y2="${cy}" stroke="var(--ink-dim)" stroke-width="2"/>
+    <circle cx="${cloudX}" cy="${cy}" r="${cloudR}" fill="var(--minus)" opacity="${0.18+t*0.28}"/>
+    <circle cx="${leftX}" cy="${cy}" r="30" fill="var(--bg-panel-2)" stroke="var(--ink)" stroke-width="2"/>
+    <text x="${leftX}" y="${cy+7}" text-anchor="middle" font-size="20" fill="var(--ink)">${p.a}</text>
+    <circle cx="${rightX}" cy="${cy}" r="30" fill="var(--bg-panel-2)" stroke="var(--ink)" stroke-width="2"/>
+    <text x="${rightX}" y="${cy+7}" text-anchor="middle" font-size="20" fill="var(--ink)">${p.b}</text>
+    <text x="${plusX}" y="${cy-46}" text-anchor="middle" font-size="15" fill="var(--plus)">${diff>0.4?'δ+':''}</text>
+    <text x="${minusX}" y="${cy-46}" text-anchor="middle" font-size="15" fill="var(--minus)">${diff>0.4?'δ−':''}</text>
+    <text x="320" y="30" text-anchor="middle" font-size="12" fill="var(--ink-dim)">różnica elektroujemności: ${diff.toFixed(2)}</text>
+  `;
+
+  const label = diff < 0.4 ? 'praktycznie brak polaryzacji — wiązanie „obojętne", jak w tłuszczach i węglowodorach.'
+              : diff < 1.0 ? 'wiązanie wyraźnie polarne — cząsteczka zaczyna „lubić" wodę i staje się bardziej reaktywna.'
+              : 'silna polaryzacja — ' + (moreEnIsB?p.b:p.a) + ' mocno ściąga elektrony, to miejsce łatwo zaatakować i łatwo rozpuszcza się w wodzie.';
+  document.getElementById('bond-readout').innerHTML =
+    `<b>${p.label}</b>: <span class="plus">δ+ na ${plusAtom}</span> / <span class="minus">δ− na ${minusAtom}</span> — ${label}`;
+}
+renderBond();
+
+/* ============================================================
+   ZASADA 2 — ZAWADA PRZESTRZENNA
+   ============================================================ */
+const stericGroups = [
+  { id:'H', label:'–H', r:10, blocks:false },
+  { id:'CH3', label:'–CH₃', r:20, blocks:false },
+  { id:'Cl', label:'–Cl', r:28, blocks:true },
+  { id:'Ph', label:'pierścień fenylowy', r:40, blocks:true },
+];
+let stericState = 'H';
+const stericControls = document.getElementById('steric-controls');
+stericGroups.forEach(g=>{
+  const b = document.createElement('button');
+  b.className='chip'; b.textContent = g.label; b.dataset.id = g.id;
+  b.onclick = ()=>{ stericState = g.id; renderSteric(); };
+  stericControls.appendChild(b);
+});
+
+function renderSteric(){
+  [...stericControls.children].forEach(c=> c.classList.toggle('active', c.dataset.id===stericState));
+  const g = stericGroups.find(x=>x.id===stericState);
+  const centerX = 420, centerY = 100;
+  const svg = document.getElementById('steric-svg');
+  const arrowStartX = 40;
+  const blocked = g.blocks;
+  const arrowEndX = blocked ? centerX - g.r - 26 : centerX - 32;
+
+  svg.innerHTML = `
+    <text x="40" y="140" font-size="12" fill="var(--ink-dim)">nukleofil →</text>
+    <line x1="${arrowStartX}" y1="100" x2="${arrowEndX}" y2="100" stroke="${blocked?'var(--danger)':'var(--ok)'}" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <defs>
+      <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" fill="${blocked?'var(--danger)':'var(--ok)'}"/>
+      </marker>
+    </defs>
+    <circle cx="${centerX}" cy="${centerY}" r="14" fill="var(--bg-panel-2)" stroke="var(--ink)" stroke-width="2"/>
+    <text x="${centerX}" y="${centerY+5}" text-anchor="middle" font-size="12" fill="var(--ink)">C•</text>
+    <circle cx="${centerX+g.r+18}" cy="${centerY}" r="${g.r}" fill="${blocked?'rgba(232,105,91,0.25)':'rgba(124,214,138,0.2)'}" stroke="${blocked?'var(--danger)':'var(--ok)'}" stroke-width="1.5" stroke-dasharray="${blocked?'0':'3,3'}"/>
+    <text x="${centerX+g.r+18}" y="${centerY+5}" text-anchor="middle" font-size="11" fill="var(--ink)">${g.label}</text>
+    <text x="${centerX}" y="30" text-anchor="middle" font-size="13" fill="${blocked?'var(--danger)':'var(--ok)'}">${blocked? 'ZABLOKOWANE — brak fizycznego dostępu':'DOSTĘPNE — reakcja możliwa'}</text>
+  `;
+  const text = blocked
+    ? `Grupa ${g.label} jest fizycznie za duża — nie ma znaczenia, czy reakcja jest elektrycznie „chętna": reagent zwyczajnie nie zmieści się blisko centrum.`
+    : `Grupa ${g.label} jest mała — nie zasłania centrum reakcji, więc o tym, czy coś zajdzie, decyduje już tylko rozkład ładunku.`;
+  document.getElementById('steric-readout').innerHTML = `<b>${g.label}</b> — ${text}`;
+}
+renderSteric();
+
+/* ============================================================
+   ZASADA 3 — SZTYWNOŚĆ WIĄZAŃ
+   ============================================================ */
+const rigidTypes = [
+  { id:'single', label:'wiązanie pojedyncze' },
+  { id:'double', label:'wiązanie podwójne' },
+  { id:'ring', label:'pierścień aromatyczny' },
+];
+let rigidState = 'single';
+const rigidControls = document.getElementById('rigid-controls');
+rigidTypes.forEach(r=>{
+  const b = document.createElement('button');
+  b.className='chip'; b.textContent = r.label; b.dataset.id = r.id;
+  b.onclick = ()=>{ rigidState = r.id; renderRigid(); };
+  rigidControls.appendChild(b);
+});
+
+function renderRigid(){
+  [...rigidControls.children].forEach(c=> c.classList.toggle('active', c.dataset.id===rigidState));
+  const svg = document.getElementById('rigid-svg');
+  const cx1=250, cx2=390, cy=100;
+
+  if(rigidState==='single'){
+    svg.innerHTML = `
+      <line x1="${cx1}" y1="${cy}" x2="${cx2}" y2="${cy}" stroke="var(--ink)" stroke-width="3"/>
+      <circle cx="${cx1}" cy="${cy}" r="26" fill="var(--bg-panel-2)" stroke="var(--ink)" stroke-width="2"/>
+      <text x="${cx1}" y="${cy+6}" text-anchor="middle" font-size="16" fill="var(--ink)">C</text>
+      <g style="transform-origin:${cx2}px ${cy}px; animation: spin 2.6s linear infinite;">
+        <circle cx="${cx2}" cy="${cy}" r="26" fill="var(--bg-panel-2)" stroke="var(--ink)" stroke-width="2"/>
+        <text x="${cx2}" y="${cy+6}" text-anchor="middle" font-size="16" fill="var(--ink)">C</text>
+        <line x1="${cx2}" y1="${cy}" x2="${cx2+34}" y2="${cy-18}" stroke="var(--minus)" stroke-width="2"/>
+      </g>
+      <text x="320" y="35" text-anchor="middle" font-size="13" fill="var(--ok)">ŁOŻYSKO — swobodny obrót</text>
+    `;
+    document.getElementById('rigid-readout').innerHTML =
+      `<b>C–C</b> — grupy po obu stronach mogą się swobodnie obracać. Cząsteczka jest elastyczna, jak łańcuch w polietylenie.`;
+  } else if(rigidState==='double'){
+    svg.innerHTML = `
+      <line x1="${cx1}" y1="${cy-4}" x2="${cx2}" y2="${cy-4}" stroke="var(--ink)" stroke-width="3"/>
+      <line x1="${cx1}" y1="${cy+4}" x2="${cx2}" y2="${cy+4}" stroke="var(--ink)" stroke-width="3"/>
+      <circle cx="${cx1}" cy="${cy}" r="26" fill="var(--bg-panel-2)" stroke="var(--ink)" stroke-width="2"/>
+      <text x="${cx1}" y="${cy+6}" text-anchor="middle" font-size="16" fill="var(--ink)">C</text>
+      <g id="rigid-double-g">
+        <circle cx="${cx2}" cy="${cy}" r="26" fill="var(--bg-panel-2)" stroke="var(--ink)" stroke-width="2"/>
+        <text x="${cx2}" y="${cy+6}" text-anchor="middle" font-size="16" fill="var(--ink)">C</text>
+        <line x1="${cx2}" y1="${cy}" x2="${cx2+34}" y2="${cy-18}" stroke="var(--plus)" stroke-width="2"/>
+      </g>
+      <text x="320" y="35" text-anchor="middle" font-size="13" fill="var(--danger)">SPAW — płasko, bez obrotu</text>
+    `;
+    document.getElementById('rigid-readout').innerHTML =
+      `<b>C=C</b> — kliknij poniżej, żeby spróbować obrócić. Płaska, sztywna konstrukcja z odsłoniętymi elektronami π — łatwa do zaatakowania, ale nie do przekręcenia.`;
+    const readout = document.getElementById('rigid-readout');
+    const tryBtn = document.createElement('button');
+    tryBtn.className='chip'; tryBtn.style.marginTop='10px'; tryBtn.textContent='spróbuj obrócić →';
+    tryBtn.onclick = ()=>{
+      const g = document.getElementById('rigid-double-g');
+      g.style.animation = 'shake .3s';
+      setTimeout(()=> g.style.animation = '', 300);
+    };
+    readout.appendChild(document.createElement('br'));
+    readout.appendChild(tryBtn);
+  } else {
+    const rcx=320, rcy=100, R=42;
+    let hexPts = [];
+    for(let i=0;i<6;i++){
+      const ang = Math.PI/180*(60*i-90);
+      hexPts.push([rcx+R*Math.cos(ang), rcy+R*Math.sin(ang)]);
+    }
+    const poly = hexPts.map(p=>p.join(',')).join(' ');
+    svg.innerHTML = `
+      <circle cx="${rcx}" cy="${rcy}" r="${R-10}" fill="none" stroke="var(--minus)" stroke-width="6" opacity="0.5" style="animation: pulseRing 2s ease-in-out infinite;"/>
+      <polygon points="${poly}" fill="none" stroke="var(--ink)" stroke-width="3"/>
+      ${hexPts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="10" fill="var(--bg-panel-2)" stroke="var(--ink)" stroke-width="1.5"/>`).join('')}
+      <text x="${rcx}" y="35" text-anchor="middle" font-size="13" fill="var(--minus)">KRATOWNICA — ładunek rozproszony po całości</text>
+    `;
+    document.getElementById('rigid-readout').innerHTML =
+      `<b>Pierścień aromatyczny</b> — elektrony nie należą do jednego wiązania, tylko są rozłożone na cały pierścień, tak jak siła w kratownicy mostu rozkłada się na wiele prętów. Efekt: wyjątkowa odporność na rozerwanie.`;
+  }
+}
+renderRigid();
+
+/* ============================================================
+   STUDIUM PRZYPADKU — ŁAŃCUCH WĘGLOWY
+   ============================================================ */
+const chainOptions = [
+  { id:'H', label:'–H  (polietylen)', polarity:8, hardness:12, solubility:5,
+    product:'Folia polietylenowa (torebka na zakupy)',
+    note:'Sam węgiel i wodór — brak ładunku, brak blokady. Łańcuchy ślizgają się po sobie: miękko, elastycznie, nie rozpuszcza się w wodzie.' },
+  { id:'OH', label:'–OH  (alkohol)', polarity:78, hardness:30, solubility:85,
+    product:'Alkohol / rozpuszczalnik',
+    note:'Tlen jest mały, więc nie blokuje ruchu — ale mocno ściąga elektrony. Cząsteczka staje się polarna i zaczyna wiązać się z wodą.' },
+  { id:'Cl', label:'–Cl  (PVC)', polarity:64, hardness:88, solubility:15,
+    product:'Rura kanalizacyjna z PVC',
+    note:'Chlor jest jednocześnie duży (fizycznie usztywnia łańcuch) i elektroujemny (przyciąga sąsiednie łańcuchy elektrycznie). Efekt: z miękkiej folii robi się twardy, sztywny materiał konstrukcyjny.' },
+];
+let chainState = 'H';
+const chainControls = document.getElementById('chain-controls');
+chainOptions.forEach(o=>{
+  const b = document.createElement('button');
+  b.className='chip'; b.textContent = o.label; b.dataset.id = o.id;
+  b.onclick = ()=>{ chainState = o.id; renderChain(); };
+  chainControls.appendChild(b);
+});
+
+function renderChain(){
+  [...chainControls.children].forEach(c=> c.classList.toggle('active', c.dataset.id===chainState));
+  const o = chainOptions.find(x=>x.id===chainState);
+  const svg = document.getElementById('chain-svg');
+  const n = 6;
+  const startX = 60, gap = 100, cy = 55;
+  let atoms = '';
+  let bonds = '';
+  for(let i=0;i<n;i++){
+    const x = startX + i*gap;
+    if(i>0) bonds += `<line x1="${x-gap+16}" y1="${cy}" x2="${x-16}" y2="${cy}" stroke="var(--ink-dim)" stroke-width="2"/>`;
+    const highlight = (i===3);
+    atoms += `<circle cx="${x}" cy="${cy}" r="16" fill="var(--bg-panel-2)" stroke="${highlight?'var(--plus)':'var(--ink-dim)'}" stroke-width="${highlight?2.5:1.5}"/>`;
+    atoms += `<text x="${x}" y="${cy+5}" text-anchor="middle" font-size="12" fill="var(--ink)">C</text>`;
+    if(highlight){
+      atoms += `<line x1="${x}" y1="${cy-16}" x2="${x}" y2="${cy-42}" stroke="${o.id==='H'?'var(--ink-dim)':'var(--minus)'}" stroke-width="2"/>`;
+      atoms += `<text x="${x}" y="${cy-50}" text-anchor="middle" font-size="13" fill="${o.id==='H'?'var(--ink-dim)':'var(--minus)'}">${o.label.split(' ')[0]}</text>`;
+    }
+  }
+  svg.innerHTML = bonds + atoms;
+
+  const gaugesEl = document.getElementById('chain-gauges');
+  const rows = [
+    { label:'Polarność', val:o.polarity, color:'var(--minus)' },
+    { label:'Twardość', val:o.hardness, color:'var(--plus)' },
+    { label:'Rozp. w wodzie', val:o.solubility, color:'var(--ok)' },
+  ];
+  gaugesEl.innerHTML = rows.map(r=>`
+    <div class="gauge-row">
+      <div class="gauge-label">${r.label}</div>
+      <div class="gauge-track"><div class="gauge-fill" style="width:${r.val}%; background:${r.color};"></div></div>
+      <div class="gauge-val">${r.val}%</div>
+    </div>
+  `).join('');
+
+  document.getElementById('chain-product').innerHTML = `<b>${o.product}</b> — ${o.note}`;
+}
+renderChain();
+</script>
+</body>
+</html>
