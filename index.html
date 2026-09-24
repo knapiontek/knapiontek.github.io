@@ -1,72 +1,208 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Krzysztof Napiontek web site</title>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Index</title>
 <style>
-#main_page {
-    padding: 80px;
-    width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-    background-color: #ffffff;
-    box-shadow: 10px 10px 5px #888888;
-}
-.centered {
-    text-align: center;
-}
-a {
-    text-decoration: none !important;
-}
-body {
-    background-color: #cccccc;
-    font: 14px Tahoma,Myriad,Helvetica,Arial,clean,sans-serif;
-    font-size: 0.8em;
-    line-height: 1.5em;
-    margin-top: 1.5em;
-    margin-bottom: 1.5em;
-}
+  :root {
+    --ink: #1c1b22;
+    --ink-soft: #63616e;
+    --paper: #fbfaf9;
+    --panel: #ffffff;
+    --border: #e6e4e9;
+    --accent: #3457d5;
+    --accent-soft: #eef1fd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #f1f0f4;
+      --ink-soft: #a9a6b4;
+      --paper: #131217;
+      --panel: #1b1a20;
+      --border: #2c2a33;
+      --accent: #8aa4ff;
+      --accent-soft: #1f2540;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 48px 20px 60px; }
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    word-break: break-all;
+  }
+  .path { color: var(--ink-soft); font-size: 14px; margin: 0 0 28px; }
+  .path code {
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  ul.file-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--panel); }
+  ul.file-list li { border-bottom: 1px solid var(--border); }
+  ul.file-list li:last-child { border-bottom: none; }
+  ul.file-list a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 15px;
+    transition: background 0.12s ease;
+  }
+  ul.file-list a:hover { background: var(--accent-soft); }
+  ul.file-list a .icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+  ul.file-list a .name { flex: 1; word-break: break-all; }
+  ul.file-list a .size { color: var(--ink-soft); font-size: 12.5px; flex-shrink: 0; }
+  .parent a .name { color: var(--ink-soft); font-style: italic; }
+  .status {
+    color: var(--ink-soft);
+    font-size: 14px;
+    padding: 16px 0;
+  }
+  .status.error { color: #c0392b; }
+  footer {
+    margin-top: 28px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  footer a { color: inherit; }
 </style>
 </head>
 <body>
-<div id="main_page">
+<div class="wrap">
+  <h1 id="title">Index</h1>
+  <p class="path">Directory: <code id="pathLabel">/</code></p>
 
+  <div id="status" class="status">Loading directory listing&hellip;</div>
+  <ul class="file-list" id="fileList" style="display:none;"></ul>
 
-<h1 class="centered">List of My Articles</h1>
-<h2 class="centered">Krzysztof Napiontek</h2>
-<h3 class="centered">knapiontek@gmail.com</h3>
-
-<h2>Contents</h2>
-<ol>
-  <li><a href="cv.knapiontek.html">Curriculum Vitae</a></li>
-  <li><a href="fem.pdf">The Finite Element Method by Example in Qt/C++</a></li>
-  <li><a href="cgm.pdf">Conjugate Gradients Method by Example in Qt/C++</a></li>
-</ol>
-
-<h2>Notes</h2>
-<ol>
-  <li><a href="newton.html">Newton Dynamics</a></li>
-  <li><a href="poisson.html">Poisson Equation</a></li>
-  <li><a href="fourier.html">Fourier Series</a></li>
-  <li><a href="vector_calculus.html">Vector Calculus</a></li>
-  <li><a href="spline.html">Spline</a></li>
-  <li><a href="segment.html">Segment Intersection</a></li>
-  <li><a href="maxwell.html">Maxwell Equations</a></li>
-  <li><a href="lorentz.html">Lorentz Transformation</a></li>
-  <li><a href="riemann.html">Riemann Manifold</a></li>
-  <li><a href="euler.html">Euler Equation</a></li>
-  <li><a href="runge_kutta.html">Runge Kutta Algorithm</a></li>
-  <li><a href="lorenz.html">Lorenz Attractor</a></li>
-  <li><a href="schrodinger.html">Schr&#246;dinger Equation</a></li>
-  <li><a href="dirac.html">Dirac Equation</a></li>
-</ol>
-
-<h2>Bibliography</h2>
-<ol>
-    <li><a href="bibliography.html">List of useful links</a></li>
-</ol>
-
+  <footer>Auto-generated from the GitHub repository contents.</footer>
 </div>
+
+<script>
+(function () {
+  "use strict";
+
+  var OWNER = "knapiontek";
+  var REPO = "knapiontek.github.io";
+
+  // Directory of this index.html, relative to the repo root.
+  // A user page (username.github.io) is served with paths matching the repo
+  // root 1:1, so the URL path (minus the filename) is the repo-relative path.
+  var pathname = decodeURIComponent(window.location.pathname);
+  var dir = pathname.replace(/\/[^\/]*$/, "");       // strip filename
+  dir = dir.replace(/^\/+/, "").replace(/\/+$/, ""); // trim leading/trailing slashes
+
+  document.getElementById("pathLabel").textContent = "/" + dir;
+  document.title = "Index — /" + dir;
+  document.getElementById("title").textContent = dir === "" ? "Index of /" : "Index of /" + dir + "/";
+
+  var apiPath = dir.split("/").filter(Boolean).map(encodeURIComponent).join("/");
+  var apiUrl = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents" + (apiPath ? "/" + apiPath : "");
+
+  var ICONS = {
+    dir: "\uD83D\uDCC1",
+    html: "\uD83C\uDF10", htm: "\uD83C\uDF10",
+    css: "\uD83C\uDFA8",
+    js: "\uD83D\uDCDC", mjs: "\uD83D\uDCDC",
+    json: "\uD83E\uDDFE",
+    md: "\uD83D\uDCDD",
+    pdf: "\uD83D\uDCD5",
+    png: "\uD83D\uDDBC\uFE0F", jpg: "\uD83D\uDDBC\uFE0F", jpeg: "\uD83D\uDDBC\uFE0F", gif: "\uD83D\uDDBC\uFE0F", svg: "\uD83D\uDDBC\uFE0F", webp: "\uD83D\uDDBC\uFE0F", ico: "\uD83D\uDDBC\uFE0F",
+    txt: "\uD83D\uDCC4",
+    default: "\uD83D\uDCC4"
+  };
+
+  function iconFor(item) {
+    if (item.type === "dir") return ICONS.dir;
+    var ext = item.name.indexOf(".") >= 0 ? item.name.split(".").pop().toLowerCase() : "";
+    return ICONS[ext] || ICONS.default;
+  }
+
+  function formatSize(bytes) {
+    if (bytes === undefined || bytes === null) return "";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  function render(items) {
+    var statusEl = document.getElementById("status");
+    var listEl = document.getElementById("fileList");
+
+    // Hide dotfiles (.git, .nojekyll, .gitignore, etc.) and this page itself.
+    var visible = items.filter(function (it) {
+      return it.name.charAt(0) !== "." && it.name.toLowerCase() !== "index.html";
+    });
+
+    visible.sort(function (a, b) {
+      if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
+      return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+    });
+
+    listEl.innerHTML = "";
+
+    if (dir !== "") {
+      var upLi = document.createElement("li");
+      upLi.className = "parent";
+      var upA = document.createElement("a");
+      upA.href = "../";
+      upA.innerHTML = '<span class="icon">\u2B06\uFE0F</span><span class="name">.. (parent directory)</span>';
+      upLi.appendChild(upA);
+      listEl.appendChild(upLi);
+    }
+
+    if (visible.length === 0 && dir === "") {
+      statusEl.textContent = "This directory is empty.";
+      statusEl.style.display = "";
+      listEl.style.display = "none";
+      return;
+    }
+
+    visible.forEach(function (item) {
+      var li = document.createElement("li");
+      var a = document.createElement("a");
+      a.href = item.type === "dir" ? item.name + "/" : item.name;
+      var sizeHtml = item.type === "file" ? '<span class="size">' + formatSize(item.size) + "</span>" : "";
+      a.innerHTML =
+        '<span class="icon">' + iconFor(item) + '</span>' +
+        '<span class="name">' + item.name + (item.type === "dir" ? "/" : "") + "</span>" +
+        sizeHtml;
+      li.appendChild(a);
+      listEl.appendChild(li);
+    });
+
+    statusEl.style.display = "none";
+    listEl.style.display = "";
+  }
+
+  fetch(apiUrl, { headers: { "Accept": "application/vnd.github+json" } })
+    .then(function (res) {
+      if (!res.ok) throw new Error("GitHub API returned " + res.status);
+      return res.json();
+    })
+    .then(function (data) {
+      if (!Array.isArray(data)) throw new Error("Unexpected response (is this path a file, not a directory?)");
+      render(data);
+    })
+    .catch(function (err) {
+      var statusEl = document.getElementById("status");
+      statusEl.textContent = "Could not load directory listing (" + err.message + "). GitHub's API is rate-limited for anonymous requests \u2014 try again in a bit.";
+      statusEl.className = "status error";
+    });
+})();
+</script>
 </body>
 </html>

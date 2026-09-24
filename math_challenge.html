@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jump &amp; Square Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    --gold: #d97a1f;
+    --violet: #7c4fd6;
+    --ink: #241a33;
+    --ink-soft: #5c5270;
+    --paper: #f6f3fb;
+    --panel: #ffffff;
+    --panel-border: #e2dced;
+    --line: #241a33;
+    --shadow: rgba(36, 26, 51, 0.12);
+    --good: #12875a;
+    --bad: #c73554;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --gold: #f0a94e;
+      --violet: #b28cf5;
+      --ink: #f3eefc;
+      --ink-soft: #bcb2d6;
+      --paper: #17131f;
+      --panel: #211c2c;
+      --panel-border: #382f47;
+      --line: #f3eefc;
+      --shadow: rgba(0, 0, 0, 0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --gold: #f0a94e;
+    --violet: #b28cf5;
+    --ink: #f3eefc;
+    --ink-soft: #bcb2d6;
+    --paper: #17131f;
+    --panel: #211c2c;
+    --panel-border: #382f47;
+    --line: #f3eefc;
+    --shadow: rgba(0, 0, 0, 0.5);
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 18px 50px;
+  }
+
+  header.top { margin-bottom: 6px; }
+  header.top .eyebrow-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  header.top .badge { font-size: 26px; line-height: 1; }
+  h1 {
+    font-family: 'Baloo 2', ui-rounded, system-ui, sans-serif;
+    font-weight: 800;
+    font-size: clamp(24px, 5.5vw, 32px);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  header.top p { margin: 6px 0 0; color: var(--ink-soft); font-size: 15px; max-width: 56ch; }
+
+  .mode-row { display: flex; gap: 8px; margin: 16px 0 4px; flex-wrap: wrap; }
+  .mode-btn {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 2px solid var(--panel-border);
+    background: var(--panel);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .mode-btn:hover { transform: translateY(-1px); }
+  .mode-btn:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
+  .mode-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  .score-row { display: flex; gap: 10px; margin: 16px 0 14px; flex-wrap: wrap; }
+  .score-chip {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 8px 14px;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+  .score-chip b { color: var(--ink); font-size: 15.5px; }
+
+  .stage {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 22px;
+    padding: 14px 10px 6px;
+    box-shadow: 0 8px 24px var(--shadow);
+  }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .marker-dot { transition: cx 0.85s cubic-bezier(.4,1.4,.4,1); }
+  .marker-label { transition: x 0.85s cubic-bezier(.4,1.4,.4,1); font-family: 'Baloo 2', sans-serif; font-weight: 700; }
+  .hint-layer { opacity: 0; transition: opacity 0.25s ease; }
+  .hint-layer.on { opacity: 1; }
+
+  .hint-toggle {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 14px 2px 4px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+  }
+  .hint-toggle input { width: 18px; height: 18px; accent-color: var(--violet); cursor: pointer; }
+  .hint-toggle .note { font-weight: 500; font-size: 12.5px; color: var(--ink-soft); }
+
+  .problem-text { text-align: center; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: clamp(26px, 6.5vw, 38px); margin: 18px 0 4px; }
+  .problem-text .ptext-gap { display: inline-block; width: 34px; }
+  .problem-sub { text-align: center; color: var(--ink-soft); font-size: 13.5px; margin-bottom: 6px; }
+
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .choice-btn {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    padding: 16px 10px;
+    border-radius: 16px;
+    border: 2px solid var(--panel-border);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  }
+  .choice-btn:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--violet); }
+  .choice-btn:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
+  .choice-btn.correct { background: var(--good); color: #fff; border-color: var(--good); }
+  .choice-btn.wrong { background: var(--bad); color: #fff; border-color: var(--bad); }
+  .choice-btn:disabled { cursor: default; }
+
+  .feedback {
+    text-align: center;
+    min-height: 24px;
+    margin-top: 14px;
+    font-weight: 800;
+    font-family: 'Baloo 2', sans-serif;
+    font-size: 16px;
+  }
+  .feedback.good { color: var(--good); }
+  .feedback.bad { color: var(--bad); }
+
+  .action-row { display: flex; justify-content: center; margin-top: 16px; }
+  .btn {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 11px 22px;
+    border-radius: 14px;
+    border: 2px solid var(--panel-border);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); border-color: var(--violet); }
+  .btn:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
+
+  footer.note { text-align: center; color: var(--ink-soft); font-size: 12.5px; margin-top: 26px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow-row">
+      <span class="badge">🧮</span>
+      <h1>Jump &amp; Square Challenge</h1>
+    </div>
+    <p>Two ways to practice: jump along the number line with negatives, or find the side and perimeter of a square from its area.</p>
+  </header>
+
+  <div class="mode-row" role="group" aria-label="Choose task type">
+    <button class="mode-btn active" data-mode="line">🔢 Number Line</button>
+    <button class="mode-btn" data-mode="square">◻ Squares</button>
+    <button class="mode-btn" data-mode="order">🧠 Order of Ops</button>
+    <button class="mode-btn" data-mode="mix">🔀 Mix</button>
+  </div>
+
+  <div class="score-row">
+    <div class="score-chip">Score: <b id="scoreVal">0</b></div>
+    <div class="score-chip">Streak: <b id="streakVal">0</b></div>
+    <div class="score-chip">Best streak: <b id="bestVal">0</b></div>
+  </div>
+
+  <div class="stage">
+    <svg id="lineSvg" viewBox="0 0 800 130" role="img" aria-label="Number line"></svg>
+    <svg id="squareSvg" viewBox="0 0 300 210" role="img" aria-label="Square diagram" style="display:none"></svg>
+  </div>
+
+  <div class="hint-toggle" id="hintToggleWrap">
+    <input type="checkbox" id="hintToggle">
+    <label for="hintToggle" style="display:contents;">Show the jump <span class="note">(gives away the answer &mdash; use if you're stuck)</span></label>
+  </div>
+
+  <div class="problem-text" id="problemText">&minus;5 + (&minus;7) = ?</div>
+  <div class="problem-sub" id="problemSub">Where does the marker land?</div>
+
+  <div class="choices" id="choicesRow"></div>
+
+  <div class="feedback" id="feedback" aria-live="polite"></div>
+
+  <div class="action-row">
+    <button class="btn" id="skipBtn">New problem</button>
+  </div>
+
+  <footer class="note">
+    Number Line: the dot shows your start; turn on the jump to see the arrow that gets you to the answer.<br>
+    Squares: s&sup2; means side &times; side (the area). &radic; is the opposite &mdash; it finds the side from the area.<br>
+    Order of Ops: brackets and powers/roots first, then &times; and &divide;, then + and &minus;.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- shared helpers ----------
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) {
+    var e = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+  function randInt(lo, hi) { return Math.floor(Math.random() * (hi - lo + 1)) + lo; }
+  function fmt(n) { return n < 0 ? "\u2212" + Math.abs(n) : "" + n; }
+  function fmtOperand(n) { return n < 0 ? "(\u2212" + Math.abs(n) + ")" : "" + n; }
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  var problemText = document.getElementById("problemText");
+  var problemSub = document.getElementById("problemSub");
+  var choicesRow = document.getElementById("choicesRow");
+  var feedback = document.getElementById("feedback");
+  var scoreVal = document.getElementById("scoreVal");
+  var streakVal = document.getElementById("streakVal");
+  var bestVal = document.getElementById("bestVal");
+  var hintToggle = document.getElementById("hintToggle");
+  var hintToggleWrap = document.getElementById("hintToggleWrap");
+  var lineSvg = document.getElementById("lineSvg");
+  var squareSvg = document.getElementById("squareSvg");
+
+  var score = 0, streak = 0, best = 0;
+  try {
+    var saved = localStorage.getItem("numline-best-streak");
+    if (saved) best = parseInt(saved, 10) || 0;
+  } catch (e) { /* storage unavailable, ignore */ }
+  bestVal.textContent = best;
+
+  function renderChoices(values, onClick) {
+    choicesRow.innerHTML = "";
+    values.forEach(function (v) {
+      var btn = document.createElement("button");
+      btn.className = "choice-btn";
+      btn.textContent = fmt(v);
+      btn.addEventListener("click", function () { onClick(v, btn); });
+      choicesRow.appendChild(btn);
+    });
+  }
+
+  function revealCorrect(correctVal, chosenVal, btnEl) {
+    var buttons = choicesRow.querySelectorAll(".choice-btn");
+    buttons.forEach(function (b) { b.disabled = true; });
+    if (chosenVal === correctVal) {
+      btnEl.classList.add("correct");
+    } else {
+      btnEl.classList.add("wrong");
+      buttons.forEach(function (b) {
+        if (parseInt(b.textContent.replace("\u2212", "-"), 10) === correctVal) b.classList.add("correct");
+      });
+    }
+  }
+
+  function awardPoints(isCorrect) {
+    if (isCorrect) {
+      score += 10; streak += 1;
+      if (streak > best) {
+        best = streak; bestVal.textContent = best;
+        try { localStorage.setItem("numline-best-streak", String(best)); } catch (e) {}
+      }
+    } else {
+      streak = 0;
+    }
+    scoreVal.textContent = score;
+    streakVal.textContent = streak;
+  }
+
+  // ================= NUMBER LINE TASK =================
+  var MIN = -50, MAX = 50;
+  var X0 = 34, X1 = 766;
+  var GROUND_Y = 66;
+
+  function valueToX(v, view) { return X0 + ((v - view.min) / (view.max - view.min)) * (X1 - X0); }
+
+  function computeView(a, result) {
+    var lo = Math.min(a, result, 0);
+    var hi = Math.max(a, result, 0);
+    var span = hi - lo;
+    var pad = Math.max(3, Math.round(span * 0.3));
+    var vMin = lo - pad;
+    var vMax = hi + pad;
+    var MIN_SPAN = 10;
+    if (vMax - vMin < MIN_SPAN) {
+      var extra = (MIN_SPAN - (vMax - vMin)) / 2;
+      vMin -= extra; vMax += extra;
+    }
+    vMin = clamp(Math.floor(vMin), MIN, MAX);
+    vMax = clamp(Math.ceil(vMax), MIN, MAX);
+    if (vMax - vMin < MIN_SPAN) {
+      if (vMin === MIN) vMax = clamp(vMin + MIN_SPAN, MIN, MAX);
+      else vMin = clamp(vMax - MIN_SPAN, MIN, MAX);
+    }
+    return { min: vMin, max: vMax };
+  }
+
+  function pickTickSteps(span) {
+    if (span <= 14) return { minor: 1, major: 2 };
+    if (span <= 24) return { minor: 1, major: 5 };
+    return { minor: 5, major: 10 };
+  }
+
+  function buildLineScene(view) {
+    lineSvg.innerHTML = "";
+
+    var defs = el("defs", {});
+    var arrowGold = el("marker", { id: "arrowGold", viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" });
+    arrowGold.appendChild(el("path", { d: "M0,0 L10,5 L0,10 z", fill: "var(--gold)" }));
+    var arrowViolet = el("marker", { id: "arrowViolet", viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" });
+    arrowViolet.appendChild(el("path", { d: "M0,0 L10,5 L0,10 z", fill: "var(--violet)" }));
+    defs.appendChild(arrowGold); defs.appendChild(arrowViolet);
+    lineSvg.appendChild(defs);
+
+    lineSvg.appendChild(el("line", { x1: X0 - 6, x2: X1 + 6, y1: GROUND_Y, y2: GROUND_Y, stroke: "var(--line)", "stroke-width": 2.5 }));
+
+    var steps = pickTickSteps(view.max - view.min);
+    var startTick = Math.ceil(view.min / steps.minor) * steps.minor;
+    for (var v = startTick; v <= view.max; v += steps.minor) {
+      var x = valueToX(v, view);
+      var major = (v % steps.major === 0);
+      var isZero = v === 0;
+      var h = isZero ? 12 : (major ? 9 : 5);
+      lineSvg.appendChild(el("line", {
+        x1: x, x2: x, y1: GROUND_Y - h, y2: GROUND_Y + h,
+        stroke: "var(--line)",
+        "stroke-width": isZero ? 3 : (major ? 2 : 1.2),
+        opacity: isZero ? 1 : (major ? 0.85 : 0.45)
+      }));
+      if (major) {
+        var t = el("text", {
+          x: x, y: GROUND_Y + h + 18, "text-anchor": "middle",
+          "font-family": "Baloo 2, sans-serif", "font-weight": "700",
+          "font-size": isZero ? "15" : "13",
+          fill: "var(--ink)"
+        });
+        t.textContent = v;
+        lineSvg.appendChild(t);
+      }
+    }
+
+    lineSvg.appendChild(el("g", { id: "hintLayer", class: "hint-layer" }));
+    var startG = el("g", { id: "startMarker" });
+    startG.appendChild(el("circle", { class: "marker-dot", cy: GROUND_Y, r: 10, fill: "var(--ink)", stroke: "var(--panel)", "stroke-width": 3 }));
+    var startLabel = el("text", { class: "marker-label", y: GROUND_Y - 18, "text-anchor": "middle", "font-size": "13", fill: "var(--ink)" });
+    startG.appendChild(startLabel);
+    lineSvg.appendChild(startG);
+  }
+
+  function setStart(a, view) {
+    var x = valueToX(a, view);
+    var g = document.getElementById("startMarker");
+    g.querySelector(".marker-dot").setAttribute("cx", x);
+    var label = g.querySelector(".marker-label");
+    label.setAttribute("x", x);
+    label.textContent = fmt(a);
+  }
+
+  function drawHint(a, result, view) {
+    var layer = document.getElementById("hintLayer");
+    layer.innerHTML = "";
+    var xa = valueToX(a, view);
+    var xr = valueToX(result, view);
+    var goingRight = result >= a;
+    var color = goingRight ? "var(--gold)" : "var(--violet)";
+    var arcY = GROUND_Y - 34;
+
+    var path = "M " + xa + " " + (GROUND_Y - 12) + " Q " + ((xa + xr) / 2) + " " + arcY + " " + xr + " " + (GROUND_Y - 12);
+    layer.appendChild(el("path", {
+      d: path, fill: "none", stroke: color, "stroke-width": 3,
+      "marker-end": goingRight ? "url(#arrowGold)" : "url(#arrowViolet)"
+    }));
+
+    var land = el("circle", { cx: xr, cy: GROUND_Y, r: 10, fill: color, stroke: "var(--panel)", "stroke-width": 3 });
+    layer.appendChild(land);
+    var landLabel = el("text", { x: xr, y: GROUND_Y - 18, "text-anchor": "middle", "font-family": "Baloo 2, sans-serif", "font-weight": "700", "font-size": "13", fill: color });
+    landLabel.textContent = fmt(result);
+    layer.appendChild(landLabel);
+  }
+
+  function setHintVisible(on) {
+    document.getElementById("hintLayer").classList.toggle("on", !!on);
+  }
+
+  function generateLineProblem() {
+    var op, a, b, result, tries = 0;
+    do {
+      op = Math.random() < 0.5 ? "+" : "-";
+      a = randInt(MIN, MAX);
+      b = randInt(1, 40);
+      if (Math.random() < 0.5) b = -b;
+      result = op === "+" ? a + b : a - b;
+      tries++;
+    } while ((result < MIN || result > MAX) && tries < 80);
+    return { type: "line", op: op, a: a, b: b, result: clamp(result, MIN, MAX) };
+  }
+
+  function makeLineChoices(p) {
+    var correct = p.result;
+    var flipped = p.op === "+" ? p.a - p.b : p.a + p.b;
+    var pool = [correct];
+    function addUnique(n) {
+      n = clamp(n, MIN - 20, MAX + 20);
+      if (pool.indexOf(n) === -1) pool.push(n);
+    }
+    addUnique(flipped);
+    addUnique(correct === 0 ? 7 : -correct);
+    var guard = 0;
+    while (pool.length < 4 && guard < 30) {
+      addUnique(correct + (randInt(1, 9) * (Math.random() < 0.5 ? 1 : -1)));
+      guard++;
+    }
+    return shuffle(pool.slice(0, 4));
+  }
+
+  function renderLineRound() {
+    var p = current;
+    problemText.innerHTML = fmt(p.a) + " " + p.op + " " + fmtOperand(p.b) + " = ?";
+    problemSub.textContent = "Where does the marker land?";
+    var view = computeView(p.a, p.result);
+    buildLineScene(view);
+    setStart(p.a, view);
+    drawHint(p.a, p.result, view);
+    setHintVisible(hintToggle.checked);
+    feedback.textContent = "";
+    feedback.className = "feedback";
+    renderChoices(makeLineChoices(p), handleLineAnswer);
+  }
+
+  function handleLineAnswer(chosen, btnEl) {
+    var p = current;
+    var isCorrect = chosen === p.result;
+    revealCorrect(p.result, chosen, btnEl);
+    if (isCorrect) {
+      feedback.textContent = "That's it! " + fmt(p.a) + " " + p.op + " " + fmtOperand(p.b) + " lands on " + fmt(p.result) + ".";
+      feedback.className = "feedback good";
+    } else {
+      feedback.textContent = "The marker actually lands on " + fmt(p.result) + ". Here's the jump:";
+      feedback.className = "feedback bad";
+    }
+    awardPoints(isCorrect);
+    setHintVisible(true);
+    setTimeout(startRound, 2200);
+  }
+
+  // ================= SQUARE TASK =================
+  function generateSquare() {
+    var side = randInt(2, 7);
+    return { type: "square", stage: "side", side: side, area: side * side, perimeter: side * 4 };
+  }
+
+  function drawSquareSVG(sq, stage) {
+    squareSvg.innerHTML = "";
+    var vb = { w: 300, h: 210 };
+    var sidePx = clamp(70 + (sq.side - 2) * 13, 70, 150);
+    var sx = (vb.w - sidePx) / 2;
+    var sy = 25;
+    var highlighted = stage === "perimeter";
+
+    squareSvg.appendChild(el("rect", {
+      x: sx, y: sy, width: sidePx, height: sidePx, rx: 6,
+      fill: "var(--panel)",
+      stroke: highlighted ? "var(--violet)" : "var(--ink)",
+      "stroke-width": highlighted ? 5 : 2.5
+    }));
+
+    var areaText = el("text", {
+      x: vb.w / 2, y: sy + sidePx / 2 + 6, "text-anchor": "middle",
+      "font-family": "Baloo 2, sans-serif", "font-weight": "800", "font-size": "28", fill: "var(--ink)"
+    });
+    areaText.textContent = sq.area;
+    squareSvg.appendChild(areaText);
+
+    var capText = el("text", {
+      x: vb.w / 2, y: sy + sidePx / 2 + 26, "text-anchor": "middle",
+      "font-family": "Nunito, sans-serif", "font-weight": "700", "font-size": "11", fill: "var(--ink-soft)"
+    });
+    capText.textContent = "area (units\u00B2)";
+    squareSvg.appendChild(capText);
+
+    if (highlighted) {
+      var midX = sx + sidePx / 2;
+      var midY = sy + sidePx / 2;
+      var positions = [
+        { x: midX, y: sy - 10 },
+        { x: midX, y: sy + sidePx + 22 },
+        { x: sx - 14, y: midY + 5 },
+        { x: sx + sidePx + 14, y: midY + 5 }
+      ];
+      positions.forEach(function (pos) {
+        var t = el("text", {
+          x: pos.x, y: pos.y, "text-anchor": "middle",
+          "font-family": "Baloo 2, sans-serif", "font-weight": "700", "font-size": "14", fill: "var(--violet)"
+        });
+        t.textContent = sq.side;
+        squareSvg.appendChild(t);
+      });
+    }
+  }
+
+  function makeSideChoices(sq) {
+    var correct = sq.side;
+    var pool = [correct];
+    function addUnique(n) {
+      n = Math.max(1, Math.round(n));
+      if (pool.indexOf(n) === -1) pool.push(n);
+    }
+    addUnique(sq.area);          // forgot to take the square root
+    addUnique(correct + 1);
+    addUnique(correct > 1 ? correct - 1 : correct + 2);
+    var guard = 0;
+    while (pool.length < 4 && guard < 20) {
+      addUnique(correct + randInt(1, 4) * (Math.random() < 0.5 ? 1 : -1));
+      guard++;
+    }
+    return shuffle(pool.slice(0, 4));
+  }
+
+  function makePerimeterChoices(sq) {
+    var correct = sq.perimeter;
+    var pool = [correct];
+    function addUnique(n) {
+      n = Math.max(1, Math.round(n));
+      if (pool.indexOf(n) === -1) pool.push(n);
+    }
+    addUnique(sq.area);       // confused perimeter with area
+    addUnique(sq.side);       // forgot to multiply by 4
+    addUnique(sq.side * 2);   // only doubled instead of x4
+    var guard = 0;
+    while (pool.length < 4 && guard < 20) {
+      addUnique(correct + randInt(1, 6) * (Math.random() < 0.5 ? 1 : -1));
+      guard++;
+    }
+    return shuffle(pool.slice(0, 4));
+  }
+
+  function renderSquareRound() {
+    var sq = current;
+    if (sq.stage === "side") {
+      problemText.innerHTML = "\u221A" + sq.area + " = ?" + '<span class="ptext-gap"></span>' + "?\u00B2 = " + sq.area;
+      problemSub.textContent = "Find the side length \u2014 since side\u00B2 = " + sq.area;
+      drawSquareSVG(sq, "side");
+      renderChoices(makeSideChoices(sq), handleSquareAnswer);
+    } else {
+      problemText.innerHTML = "4 \u00D7 " + sq.side + " = ?";
+      problemSub.textContent = "Find the perimeter \u2014 P = 4 \u00D7 side (side = " + sq.side + ")";
+      drawSquareSVG(sq, "perimeter");
+      renderChoices(makePerimeterChoices(sq), handleSquareAnswer);
+    }
+    feedback.textContent = "";
+    feedback.className = "feedback";
+  }
+
+  function handleSquareAnswer(chosen, btnEl) {
+    var sq = current;
+    var stage = sq.stage;
+    var correctVal = stage === "side" ? sq.side : sq.perimeter;
+    var isCorrect = chosen === correctVal;
+    revealCorrect(correctVal, chosen, btnEl);
+
+    if (stage === "side") {
+      feedback.textContent = isCorrect
+        ? "Yes! \u221A" + sq.area + " = " + sq.side + "."
+        : "Actually \u221A" + sq.area + " = " + sq.side + " (because " + sq.side + "\u00B2 = " + sq.area + ").";
+    } else {
+      feedback.textContent = isCorrect
+        ? "Yes! 4 \u00D7 " + sq.side + " = " + sq.perimeter + "."
+        : "The perimeter is 4 \u00D7 " + sq.side + " = " + sq.perimeter + ".";
+    }
+    feedback.className = "feedback " + (isCorrect ? "good" : "bad");
+    awardPoints(isCorrect);
+
+    setTimeout(function () {
+      if (stage === "side") {
+        sq.stage = "perimeter";
+        renderSquareRound();
+      } else {
+        startRound();
+      }
+    }, 1900);
+  }
+
+  // ================= ORDER OF OPERATIONS TASK =================
+  function buildChoices(correct, candidates) {
+    var pool = [correct];
+    (candidates || []).forEach(function (n) {
+      if (Number.isInteger(n) && n >= 0 && pool.indexOf(n) === -1) pool.push(n);
+    });
+    var guard = 0;
+    while (pool.length < 4 && guard < 25) {
+      var val = correct + randInt(1, 6) * (Math.random() < 0.5 ? 1 : -1);
+      if (Number.isInteger(val) && val >= 0 && pool.indexOf(val) === -1) pool.push(val);
+      guard++;
+    }
+    return shuffle(pool.slice(0, 4));
+  }
+
+  var PERFECT_SQUARES = [[4, 2], [9, 3], [16, 4], [25, 5], [36, 6]];
+
+  var orderPatterns = [
+    function () { // a + b x c  (no brackets) — the classic case, e.g. 2 + 3 x 4
+      var a = randInt(2, 9), b = randInt(2, 6), c = randInt(2, 6);
+      var correct = a + b * c;
+      return { display: a + " + " + b + " \u00D7 " + c + " = ?", sub: "Multiply before you add.", correct: correct, candidates: [(a + b) * c, a * b + c] };
+    },
+    function () { // a x b + c (no brackets)
+      var a = randInt(2, 6), b = randInt(2, 6), c = randInt(2, 9);
+      var correct = a * b + c;
+      return { display: a + " \u00D7 " + b + " + " + c + " = ?", sub: "Multiply before you add.", correct: correct, candidates: [a * (b + c)] };
+    },
+    function () { // a - b x c  (no brackets)
+      var b = randInt(2, 6), c = randInt(2, 4);
+      var a = randInt(b * c + 1, b * c + 15);
+      var correct = a - b * c;
+      return { display: a + " \u2212 " + b + " \u00D7 " + c + " = ?", sub: "Multiply before you subtract.", correct: correct, candidates: [(a - b) * c] };
+    },
+    function () { // a x b - c x d  (no brackets, two multiplications)
+      var a = randInt(2, 6), b = randInt(2, 6), c = randInt(2, 5), d = randInt(2, 5);
+      var correct = a * b - c * d;
+      if (correct < 0) { var t = a; a = c; c = t; var t2 = b; b = d; d = t2; correct = a * b - c * d; }
+      return { display: a + " \u00D7 " + b + " \u2212 " + c + " \u00D7 " + d + " = ?", sub: "Do both multiplications first, then subtract.", correct: correct, candidates: [((a * b) - c) * d] };
+    },
+    function () { // (a + b) x c  (brackets)
+      var a = randInt(2, 7), b = randInt(2, 7), c = randInt(2, 6);
+      var correct = (a + b) * c;
+      return { display: "(" + a + " + " + b + ") \u00D7 " + c + " = ?", sub: "Brackets go first \u2014 add, then multiply.", correct: correct, candidates: [a + b * c] };
+    },
+    function () { // a x (b - c)  (brackets)
+      var a = randInt(2, 7), b = randInt(4, 9), c = randInt(1, b - 1);
+      var correct = a * (b - c);
+      return { display: a + " \u00D7 (" + b + " \u2212 " + c + ") = ?", sub: "Brackets go first \u2014 subtract, then multiply.", correct: correct, candidates: [a * b - c] };
+    },
+    function () { // a + b^2  (no brackets)
+      var a = randInt(2, 9), b = randInt(2, 6);
+      var correct = a + b * b;
+      return { display: a + " + " + b + "\u00B2 = ?", sub: "Square before you add.", correct: correct, candidates: [(a + b) * (a + b)] };
+    },
+    function () { // (a + b)^2  (brackets)
+      var a = randInt(1, 6), b = randInt(1, 6);
+      var correct = (a + b) * (a + b);
+      return { display: "(" + a + " + " + b + ")\u00B2 = ?", sub: "Brackets go first \u2014 add, then square.", correct: correct, candidates: [a * a + b * b] };
+    },
+    function () { // sqrt(n) + a  (no brackets)
+      var pick = PERFECT_SQUARES[randInt(0, PERFECT_SQUARES.length - 1)];
+      var n = pick[0], r = pick[1];
+      var a = randInt(2, 9);
+      var correct = r + a;
+      return { display: "\u221A" + n + " + " + a + " = ?", sub: "Find the square root first, then add.", correct: correct, candidates: [n + a] };
+    }
+  ];
+
+  function generateOrderProblem() {
+    var p = orderPatterns[randInt(0, orderPatterns.length - 1)]();
+    p.type = "order";
+    return p;
+  }
+
+  function renderOrderRound() {
+    var p = current;
+    problemText.innerHTML = p.display;
+    problemSub.textContent = p.sub;
+    feedback.textContent = "";
+    feedback.className = "feedback";
+    renderChoices(buildChoices(p.correct, p.candidates), handleOrderAnswer);
+  }
+
+  function handleOrderAnswer(chosen, btnEl) {
+    var p = current;
+    var isCorrect = chosen === p.correct;
+    revealCorrect(p.correct, chosen, btnEl);
+    feedback.textContent = isCorrect
+      ? "Yes! " + p.sub
+      : p.sub + " Answer: " + p.correct + ".";
+    feedback.className = "feedback " + (isCorrect ? "good" : "bad");
+    awardPoints(isCorrect);
+    setTimeout(startRound, 2000);
+  }
+
+  // ================= MODE SWITCHING + MAIN LOOP =================
+  var currentMode = "line";
+  var current = null;
+  var stageEl = document.querySelector(".stage");
+
+  function showLineUI() {
+    stageEl.style.display = "";
+    lineSvg.style.display = "";
+    squareSvg.style.display = "none";
+    hintToggleWrap.style.display = "flex";
+  }
+  function showSquareUI() {
+    stageEl.style.display = "";
+    lineSvg.style.display = "none";
+    squareSvg.style.display = "";
+    hintToggleWrap.style.display = "none";
+  }
+  function showOrderUI() {
+    stageEl.style.display = "none";
+    hintToggleWrap.style.display = "none";
+  }
+
+  function startRound() {
+    var type = currentMode;
+    if (currentMode === "mix") {
+      var options = ["line", "square", "order"];
+      type = options[randInt(0, options.length - 1)];
+    }
+    if (type === "line") {
+      current = generateLineProblem();
+      showLineUI();
+      renderLineRound();
+    } else if (type === "square") {
+      current = generateSquare();
+      showSquareUI();
+      renderSquareRound();
+    } else {
+      current = generateOrderProblem();
+      showOrderUI();
+      renderOrderRound();
+    }
+  }
+
+  var modeButtons = document.querySelectorAll(".mode-btn");
+  modeButtons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      modeButtons.forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      currentMode = btn.dataset.mode;
+      startRound();
+    });
+  });
+
+  hintToggle.addEventListener("change", function () { setHintVisible(this.checked); });
+  document.getElementById("skipBtn").addEventListener("click", startRound);
+
+  startRound();
+})();
+</script>
+</body>
+</html>
