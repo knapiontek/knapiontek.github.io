@@ -1,0 +1,2280 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jump &amp; Square Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    --gold: #d97a1f;
+    --violet: #7c4fd6;
+    --carry-blue: #2170d8;
+    --ink: #241a33;
+    --ink-soft: #5c5270;
+    --paper: #f6f3fb;
+    --panel: #ffffff;
+    --panel-border: #e2dced;
+    --line: #241a33;
+    --shadow: rgba(36, 26, 51, 0.12);
+    --good: #12875a;
+    --bad: #c73554;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --gold: #f0a94e;
+      --violet: #b28cf5;
+      --carry-blue: #5b9dff;
+      --ink: #f3eefc;
+      --ink-soft: #bcb2d6;
+      --paper: #17131f;
+      --panel: #211c2c;
+      --panel-border: #382f47;
+      --line: #f3eefc;
+      --shadow: rgba(0, 0, 0, 0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --gold: #f0a94e;
+    --violet: #b28cf5;
+    --carry-blue: #5b9dff;
+    --ink: #f3eefc;
+    --ink-soft: #bcb2d6;
+    --paper: #17131f;
+    --panel: #211c2c;
+    --panel-border: #382f47;
+    --line: #f3eefc;
+    --shadow: rgba(0, 0, 0, 0.5);
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 18px 50px;
+  }
+
+  header.top { margin-bottom: 6px; }
+  header.top .eyebrow-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  header.top .badge { font-size: 26px; line-height: 1; }
+  h1 {
+    font-family: 'Baloo 2', ui-rounded, system-ui, sans-serif;
+    font-weight: 800;
+    font-size: clamp(24px, 5.5vw, 32px);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  header.top p { margin: 6px 0 0; color: var(--ink-soft); font-size: 15px; max-width: 56ch; }
+
+  .mode-row { display: flex; gap: 8px; margin: 16px 0 4px; flex-wrap: wrap; }
+  .mode-btn {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 2px solid var(--panel-border);
+    background: var(--panel);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .mode-btn:hover { transform: translateY(-1px); }
+  .mode-btn:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
+  .mode-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  .score-row { display: flex; gap: 10px; margin: 16px 0 14px; flex-wrap: wrap; }
+  .score-chip {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 8px 14px;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+  .score-chip b { color: var(--ink); font-size: 15.5px; }
+
+  .stage {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 22px;
+    padding: 14px 10px 6px;
+    box-shadow: 0 8px 24px var(--shadow);
+  }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .marker-dot { transition: cx 0.85s cubic-bezier(.4,1.4,.4,1); }
+  .marker-label { transition: x 0.85s cubic-bezier(.4,1.4,.4,1); font-family: 'Baloo 2', sans-serif; font-weight: 700; }
+  .hint-layer { opacity: 0; transition: opacity 0.25s ease; }
+  .hint-layer.on { opacity: 1; }
+
+  .hint-toggle {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 14px 2px 4px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+  }
+  .hint-toggle input { width: 18px; height: 18px; accent-color: var(--violet); cursor: pointer; }
+  .hint-toggle .note { font-weight: 500; font-size: 12.5px; color: var(--ink-soft); }
+
+  .problem-text { text-align: center; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: clamp(26px, 6.5vw, 38px); margin: 18px 0 4px; }
+  .problem-text .ptext-gap { display: inline-block; width: 34px; }
+  .problem-sub { text-align: center; color: var(--ink-soft); font-size: 13.5px; margin-bottom: 6px; }
+
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .choice-btn {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    padding: 16px 10px;
+    border-radius: 16px;
+    border: 2px solid var(--panel-border);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  }
+  .choice-btn:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--violet); }
+  .choice-btn:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
+  .choice-btn.correct { background: var(--good); color: #fff; border-color: var(--good); }
+  .choice-btn.wrong { background: var(--bad); color: #fff; border-color: var(--bad); }
+  .choice-btn:disabled { cursor: default; }
+
+  .feedback {
+    text-align: center;
+    min-height: 24px;
+    margin-top: 14px;
+    font-weight: 800;
+    font-family: 'Baloo 2', sans-serif;
+    font-size: 16px;
+  }
+  .feedback.good { color: var(--good); }
+  .feedback.bad { color: var(--bad); }
+
+  .action-row { display: flex; justify-content: center; margin-top: 16px; }
+
+  .digit-task { margin-top: 12px; font-family: 'Baloo 2', sans-serif; }
+
+  /* ---- shared cell types for both worksheets ---- */
+  .mg-row { display: flex; gap: 6px; align-items: center; }
+  .mg-gutter-cell { width: 32px; flex: 0 0 32px; text-align: center; font-weight: 800; font-size: 18px; color: var(--ink-soft); }
+  .mg-plain { width: 34px; flex: 0 0 34px; text-align: center; font-weight: 700; font-size: 19px; color: var(--ink); }
+  .mg-box {
+    width: 34px; height: 36px; flex: 0 0 34px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    background: var(--panel);
+    color: var(--ink-soft);
+    font-weight: 800; font-size: 19px;
+  }
+  .mg-box.active { border-color: var(--violet); color: var(--violet); }
+  .mg-box.typed { color: var(--ink); }
+  .mg-box.filled.right { background: var(--good); border-color: var(--good); color: #fff; }
+  .mg-box.filled.wrong { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .mg-box.mg-input-cell { padding: 0; border-color: var(--violet); }
+  .mg-box.wide { width: 48px; flex: 0 0 48px; }
+  .mg-box input.mg-inline-input {
+    width: 100%; height: 100%;
+    border: none; background: transparent; outline: none;
+    text-align: center; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 19px; color: var(--violet);
+  }
+  .mg-carry-row { min-height: 16px; }
+  .mg-carry-row .mg-box { width: 30px; height: 30px; flex: 0 0 30px; font-size: 15px; }
+  .mg-carry-row .mg-box.wide { width: 48px; flex: 0 0 48px; }
+  .mg-carry-row .mg-box .mg-inline-input { font-size: 15px; }
+  /* carry / remainder cells get a distinct blue, separate from the violet
+     used for the "main" digit being solved */
+  .mg-carry-row .mg-box.active { border-color: var(--carry-blue); color: var(--carry-blue); }
+  .mg-carry-row .mg-box.typed { color: var(--carry-blue); }
+  .mg-carry-row .mg-box.mg-input-cell { border-color: var(--carry-blue); }
+  .mg-carry-row .mg-box.filled.right { background: var(--carry-blue); border-color: var(--carry-blue); color: #fff; }
+  .mg-carry-row .mg-box input.mg-inline-input { color: var(--carry-blue); }
+  .mg-rule-row { border-top: 2.5px solid var(--ink); margin: 3px 0 3px 38px; }
+
+  /* ---- long multiplication worksheet ---- */
+  .mul-block { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 10px auto 6px; }
+
+  /* ---- long division: bracket with quotient on top ---- */
+  .div-block { display: flex; flex-direction: column; align-items: center; margin: 10px auto 6px; }
+  .div-quotient-row { display: flex; gap: 6px; margin-left: 46px; margin-bottom: 2px; }
+  .div-bracket-row { display: flex; align-items: flex-end; gap: 6px; }
+  .div-divisor { width: 32px; text-align: center; font-weight: 800; font-size: 19px; padding-bottom: 6px; color: var(--ink); }
+  .div-dividend {
+    display: flex; gap: 6px;
+    border-top: 3px solid var(--ink);
+    border-left: 3px solid var(--ink);
+    border-radius: 8px 0 0 0;
+    padding: 4px 10px 2px 8px;
+  }
+  .div-remainder-row { display: flex; gap: 6px; margin-top: 6px; margin-left: 46px; }
+  .div-multiples {
+    display: flex; justify-content: center; margin-top: 10px;
+    overflow-x: auto;
+  }
+  .div-multiples .dt-table {
+    display: flex;
+    border: 1.5px solid var(--panel-border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .div-multiples .dt-col { display: flex; flex-direction: column; border-left: 1px solid var(--panel-border); }
+  .div-multiples .dt-col:first-child { border-left: none; }
+  .div-multiples .dt-n {
+    font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 11px; color: var(--ink-soft);
+    text-align: center; padding: 4px 9px; border-bottom: 1.5px solid var(--panel-border); background: var(--paper);
+  }
+  .div-multiples .dt-val {
+    font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 14px; color: var(--ink);
+    text-align: center; padding: 5px 9px;
+  }
+
+  /* ---- prime factor ladder ---- */
+  .factor-task { margin-top: 8px; }
+  .ladder { display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 6px auto 4px; font-family: 'Baloo 2', sans-serif; }
+  .ladder-row { display: flex; align-items: center; gap: 10px; }
+  .ladder-cell {
+    width: 42px; height: 42px; flex: 0 0 42px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px;
+    border: 2px solid var(--panel-border);
+    background: var(--panel);
+    color: var(--ink-soft);
+    font-weight: 800; font-size: 18px;
+  }
+  .ladder-cell.active { border-color: var(--violet); color: var(--violet); }
+  .ladder-cell.right { background: var(--good); border-color: var(--good); color: #fff; }
+  .ladder-cell.wrong-flash { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .ladder-divider { color: var(--ink-soft); font-weight: 700; font-size: 20px; }
+  .ladder-value { min-width: 66px; text-align: left; font-weight: 800; font-size: 21px; color: var(--ink); }
+  .ladder-value.done { color: var(--good); }
+
+  .prime-palette { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
+  .prime-chip {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 19px;
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    border: 2px solid var(--panel-border);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+  }
+  .prime-chip:hover { transform: translateY(-2px); border-color: var(--violet); }
+  .prime-chip:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
+  .prime-chip.flash-right { background: var(--good); border-color: var(--good); color: #fff; }
+  .prime-chip.flash-wrong { background: var(--bad); border-color: var(--bad); color: #fff; }
+
+  .factor-result {
+    text-align: center;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: clamp(20px, 5.5vw, 26px);
+    color: var(--good);
+    margin-top: 18px;
+  }
+
+  /* ---- fraction arithmetic ---- */
+  .fraction-task { margin-top: 10px; }
+  .frac-lines { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .frac-row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .frac-lines .frac-row:not(:last-child) { opacity: 0.82; }
+  .frac { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; }
+  .frac-bar { width: 100%; height: 2.5px; background: var(--ink); margin: 3px 0; border-radius: 1px; }
+  .frac-plain {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 21px;
+    color: var(--ink);
+    line-height: 1;
+    padding: 1px 6px;
+    text-align: center;
+  }
+  .frac-op {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    color: var(--ink-soft);
+    padding: 0 2px;
+  }
+  .frac-box {
+    width: 40px; height: 40px; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    background: var(--panel);
+    color: var(--ink-soft);
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800; font-size: 20px;
+  }
+  .frac-box.wide { width: 54px; }
+  .frac-box.active { border-color: var(--violet); color: var(--violet); }
+  .frac-box.typed { color: var(--ink); }
+  .frac-box.filled.right { background: var(--good); border-color: var(--good); color: #fff; }
+  .frac-box.filled.wrong { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .frac-box.input-cell { padding: 0; border-color: var(--violet); }
+  .frac-box input.frac-inline-input {
+    width: 100%; height: 100%;
+    border: none; background: transparent; outline: none;
+    text-align: center; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 20px; color: var(--violet);
+  }
+
+  .btn {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 11px 22px;
+    border-radius: 14px;
+    border: 2px solid var(--panel-border);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); border-color: var(--violet); }
+  .btn:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
+  .btn-primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .btn-primary:hover { filter: brightness(1.1); }
+
+  footer.note { text-align: center; color: var(--ink-soft); font-size: 12.5px; margin-top: 26px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow-row">
+      <span class="badge">🧮</span>
+      <h1>Jump &amp; Square Challenge</h1>
+    </div>
+    <p>Practice negatives on the number line, squares, order of operations, long multiplication and division, hunt for prime factors, or work through fraction arithmetic.</p>
+  </header>
+
+  <div class="mode-row" role="group" aria-label="Choose task type">
+    <button class="mode-btn active" data-mode="line">🔢 Number Line</button>
+    <button class="mode-btn active" data-mode="square">◻ Squares</button>
+    <button class="mode-btn active" data-mode="order">🧠 Order of Ops</button>
+    <button class="mode-btn active" data-mode="multiply">✖️ Multiply</button>
+    <button class="mode-btn active" data-mode="divide">➗ Divide</button>
+    <button class="mode-btn active" data-mode="factor">🧩 Factors</button>
+    <button class="mode-btn active" data-mode="fraction">🥧 Fractions</button>
+  </div>
+
+  <div class="score-row">
+    <div class="score-chip">Score: <b id="scoreVal">0</b></div>
+    <div class="score-chip">Streak: <b id="streakVal">0</b></div>
+    <div class="score-chip">Best streak: <b id="bestVal">0</b></div>
+  </div>
+
+  <div class="stage">
+    <svg id="lineSvg" viewBox="0 0 800 130" role="img" aria-label="Number line"></svg>
+    <svg id="squareSvg" viewBox="0 0 300 210" role="img" aria-label="Square diagram" style="display:none"></svg>
+  </div>
+
+  <div class="hint-toggle" id="hintToggleWrap">
+    <input type="checkbox" id="hintToggle">
+    <label for="hintToggle" style="display:contents;">Show the jump <span class="note">(gives away the answer &mdash; use if you're stuck)</span></label>
+  </div>
+
+  <div class="problem-text" id="problemText">&minus;5 + (&minus;7) = ?</div>
+  <div class="problem-sub" id="problemSub">Where does the marker land?</div>
+
+  <div class="choices" id="choicesRow"></div>
+
+  <div class="digit-task" id="digitPanel" style="display:none;">
+    <div class="mul-block" id="mulGrid" style="display:none;"></div>
+
+    <div class="div-block" id="divBlock" style="display:none;">
+      <div class="div-quotient-row" id="divQuotientRow"></div>
+      <div class="div-bracket-row">
+        <div class="div-divisor" id="divDivisorLabel"></div>
+        <div class="div-dividend" id="divDividendRow"></div>
+      </div>
+      <div class="div-remainder-row mg-carry-row" id="divRemainderRow"></div>
+
+      <div class="hint-toggle" id="divHintToggleWrap">
+        <input type="checkbox" id="divHintToggle">
+        <label for="divHintToggle" style="display:contents;">Show &times;divisor table <span class="note">(helps pick each digit)</span></label>
+      </div>
+      <div class="div-multiples" id="divMultiples" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="factor-task" id="factorPanel" style="display:none;">
+    <div class="problem-text" id="factorTargetLabel">Factor 84</div>
+    <div class="problem-sub" id="factorSub">Pick a prime that divides evenly into it.</div>
+
+    <div class="ladder" id="ladderRows"></div>
+
+    <div class="prime-palette" id="primePalette"></div>
+
+    <div class="factor-result" id="factorResult" style="display:none;"></div>
+  </div>
+
+  <div class="fraction-task" id="fractionPanel" style="display:none;">
+    <div class="frac-row" id="fracMainRow"></div>
+    <div class="problem-sub" id="fracStepLabel">Multiply the first fraction so the denominators match.</div>
+    <div class="frac-lines" id="fracStepRow"></div>
+  </div>
+
+  <div class="feedback" id="feedback" aria-live="polite"></div>
+
+  <div class="action-row">
+    <button class="btn" id="skipBtn">New problem</button>
+  </div>
+
+  <footer class="note">
+    Number Line: the dot shows your start; turn on the jump to see the arrow that gets you to the answer.<br>
+    Squares: s&sup2; means side &times; side (the area). &radic; is the opposite &mdash; it finds the side from the area.<br>
+    Order of Ops: brackets and powers/roots first, then &times; and &divide;, then + and &minus;.<br>
+    Multiply/Divide: type each digit as you work it out, including the carry (multiply) or remainder (divide) &mdash; there's a &times;divisor table to help with division.<br>
+    Factors: tap a prime to test it &mdash; if it divides evenly the ladder steps down; if not, just try another. No penalty for testing, only for stopping too soon!<br>
+    Fractions: +/&minus; make you match denominators first (multiply each fraction by the other's bottom number over itself); &divide; makes you flip and multiply. The final answer just needs to be an equivalent fraction &mdash; simplified or not.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- shared helpers ----------
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) {
+    var e = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+  function randInt(lo, hi) { return Math.floor(Math.random() * (hi - lo + 1)) + lo; }
+  function fmt(n) { return n < 0 ? "\u2212" + Math.abs(n) : "" + n; }
+  function fmtOperand(n) { return n < 0 ? "(\u2212" + Math.abs(n) + ")" : "" + n; }
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  // Regenerates a problem a few times if it's an exact repeat of the last one
+  // of the same type, so numbers feel less repetitive round to round.
+  var lastSig = {};
+  function sigOf(type, obj) {
+    if (type === "line") return obj.op + "," + obj.a + "," + obj.b;
+    if (type === "square") return String(obj.side);
+    if (type === "order") return obj.display;
+    if (type === "multiply") return obj.a + "x" + obj.b;
+    if (type === "divide") return obj.dividend + "/" + obj.divisor;
+    if (type === "factor") return String(obj.target);
+    if (type === "fraction") return obj.op + "," + obj.a + "/" + obj.b + "," + obj.c + "/" + obj.d;
+    return null;
+  }
+  function generateNoRepeat(type, genFn) {
+    var obj, sig, tries = 0;
+    do {
+      obj = genFn();
+      sig = sigOf(type, obj);
+      tries++;
+    } while (sig === lastSig[type] && tries < 10);
+    lastSig[type] = sig;
+    return obj;
+  }
+
+  var problemText = document.getElementById("problemText");
+  var problemSub = document.getElementById("problemSub");
+  var choicesRow = document.getElementById("choicesRow");
+  var feedback = document.getElementById("feedback");
+  var scoreVal = document.getElementById("scoreVal");
+  var streakVal = document.getElementById("streakVal");
+  var bestVal = document.getElementById("bestVal");
+  var hintToggle = document.getElementById("hintToggle");
+  var hintToggleWrap = document.getElementById("hintToggleWrap");
+  var lineSvg = document.getElementById("lineSvg");
+  var squareSvg = document.getElementById("squareSvg");
+
+  var score = 0, streak = 0, best = 0;
+  try {
+    var saved = localStorage.getItem("numline-best-streak");
+    if (saved) best = parseInt(saved, 10) || 0;
+  } catch (e) { /* storage unavailable, ignore */ }
+  bestVal.textContent = best;
+
+  function renderChoices(values, onClick) {
+    choicesRow.innerHTML = "";
+    values.forEach(function (v) {
+      var btn = document.createElement("button");
+      btn.className = "choice-btn";
+      btn.textContent = fmt(v);
+      btn.addEventListener("click", function () { onClick(v, btn); });
+      choicesRow.appendChild(btn);
+    });
+  }
+
+  function revealCorrect(correctVal, chosenVal, btnEl) {
+    var buttons = choicesRow.querySelectorAll(".choice-btn");
+    buttons.forEach(function (b) { b.disabled = true; });
+    if (chosenVal === correctVal) {
+      btnEl.classList.add("correct");
+    } else {
+      btnEl.classList.add("wrong");
+      buttons.forEach(function (b) {
+        if (parseInt(b.textContent.replace("\u2212", "-"), 10) === correctVal) b.classList.add("correct");
+      });
+    }
+  }
+
+  function awardPoints(isCorrect) {
+    if (isCorrect) {
+      score += 10; streak += 1;
+      if (streak > best) {
+        best = streak; bestVal.textContent = best;
+        try { localStorage.setItem("numline-best-streak", String(best)); } catch (e) {}
+      }
+    } else {
+      streak = 0;
+    }
+    scoreVal.textContent = score;
+    streakVal.textContent = streak;
+  }
+
+  // ================= NUMBER LINE TASK =================
+  var MIN = -50, MAX = 50;
+  var X0 = 34, X1 = 766;
+  var GROUND_Y = 66;
+
+  function valueToX(v, view) { return X0 + ((v - view.min) / (view.max - view.min)) * (X1 - X0); }
+
+  function computeView(a, result) {
+    var lo = Math.min(a, result, 0);
+    var hi = Math.max(a, result, 0);
+    var span = hi - lo;
+    var pad = Math.max(3, Math.round(span * 0.3));
+    var vMin = lo - pad;
+    var vMax = hi + pad;
+    var MIN_SPAN = 10;
+    if (vMax - vMin < MIN_SPAN) {
+      var extra = (MIN_SPAN - (vMax - vMin)) / 2;
+      vMin -= extra; vMax += extra;
+    }
+    vMin = clamp(Math.floor(vMin), MIN, MAX);
+    vMax = clamp(Math.ceil(vMax), MIN, MAX);
+    if (vMax - vMin < MIN_SPAN) {
+      if (vMin === MIN) vMax = clamp(vMin + MIN_SPAN, MIN, MAX);
+      else vMin = clamp(vMax - MIN_SPAN, MIN, MAX);
+    }
+    return { min: vMin, max: vMax };
+  }
+
+  function pickTickSteps(span) {
+    if (span <= 14) return { minor: 1, major: 2 };
+    if (span <= 24) return { minor: 1, major: 5 };
+    return { minor: 5, major: 10 };
+  }
+
+  function buildLineScene(view) {
+    lineSvg.innerHTML = "";
+
+    var defs = el("defs", {});
+    var arrowGold = el("marker", { id: "arrowGold", viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" });
+    arrowGold.appendChild(el("path", { d: "M0,0 L10,5 L0,10 z", fill: "var(--gold)" }));
+    var arrowViolet = el("marker", { id: "arrowViolet", viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" });
+    arrowViolet.appendChild(el("path", { d: "M0,0 L10,5 L0,10 z", fill: "var(--violet)" }));
+    defs.appendChild(arrowGold); defs.appendChild(arrowViolet);
+    lineSvg.appendChild(defs);
+
+    lineSvg.appendChild(el("line", { x1: X0 - 6, x2: X1 + 6, y1: GROUND_Y, y2: GROUND_Y, stroke: "var(--line)", "stroke-width": 2.5 }));
+
+    var steps = pickTickSteps(view.max - view.min);
+    var startTick = Math.ceil(view.min / steps.minor) * steps.minor;
+    for (var v = startTick; v <= view.max; v += steps.minor) {
+      var x = valueToX(v, view);
+      var major = (v % steps.major === 0);
+      var isZero = v === 0;
+      var h = isZero ? 12 : (major ? 9 : 5);
+      lineSvg.appendChild(el("line", {
+        x1: x, x2: x, y1: GROUND_Y - h, y2: GROUND_Y + h,
+        stroke: "var(--line)",
+        "stroke-width": isZero ? 3 : (major ? 2 : 1.2),
+        opacity: isZero ? 1 : (major ? 0.85 : 0.45)
+      }));
+      if (major) {
+        var t = el("text", {
+          x: x, y: GROUND_Y + h + 18, "text-anchor": "middle",
+          "font-family": "Baloo 2, sans-serif", "font-weight": "700",
+          "font-size": isZero ? "15" : "13",
+          fill: "var(--ink)"
+        });
+        t.textContent = v;
+        lineSvg.appendChild(t);
+      }
+    }
+
+    lineSvg.appendChild(el("g", { id: "hintLayer", class: "hint-layer" }));
+    var startG = el("g", { id: "startMarker" });
+    startG.appendChild(el("circle", { class: "marker-dot", cy: GROUND_Y, r: 10, fill: "var(--ink)", stroke: "var(--panel)", "stroke-width": 3 }));
+    var startLabel = el("text", { class: "marker-label", y: GROUND_Y - 18, "text-anchor": "middle", "font-size": "13", fill: "var(--ink)" });
+    startG.appendChild(startLabel);
+    lineSvg.appendChild(startG);
+  }
+
+  function setStart(a, view) {
+    var x = valueToX(a, view);
+    var g = document.getElementById("startMarker");
+    g.querySelector(".marker-dot").setAttribute("cx", x);
+    var label = g.querySelector(".marker-label");
+    label.setAttribute("x", x);
+    label.textContent = fmt(a);
+  }
+
+  function drawHint(a, result, view) {
+    var layer = document.getElementById("hintLayer");
+    layer.innerHTML = "";
+    var xa = valueToX(a, view);
+    var xr = valueToX(result, view);
+    var goingRight = result >= a;
+    var color = goingRight ? "var(--gold)" : "var(--violet)";
+    var arcY = GROUND_Y - 34;
+
+    var path = "M " + xa + " " + (GROUND_Y - 12) + " Q " + ((xa + xr) / 2) + " " + arcY + " " + xr + " " + (GROUND_Y - 12);
+    layer.appendChild(el("path", {
+      d: path, fill: "none", stroke: color, "stroke-width": 3,
+      "marker-end": goingRight ? "url(#arrowGold)" : "url(#arrowViolet)"
+    }));
+
+    var land = el("circle", { cx: xr, cy: GROUND_Y, r: 10, fill: color, stroke: "var(--panel)", "stroke-width": 3 });
+    layer.appendChild(land);
+    var landLabel = el("text", { x: xr, y: GROUND_Y - 18, "text-anchor": "middle", "font-family": "Baloo 2, sans-serif", "font-weight": "700", "font-size": "13", fill: color });
+    landLabel.textContent = fmt(result);
+    layer.appendChild(landLabel);
+  }
+
+  function setHintVisible(on) {
+    document.getElementById("hintLayer").classList.toggle("on", !!on);
+  }
+
+  function generateLineProblem() {
+    var op, a, b, result, tries = 0;
+    do {
+      op = Math.random() < 0.5 ? "+" : "-";
+      a = randInt(MIN, MAX);
+      b = randInt(1, 40);
+      if (Math.random() < 0.5) b = -b;
+      result = op === "+" ? a + b : a - b;
+      tries++;
+    } while ((result < MIN || result > MAX) && tries < 80);
+    return { type: "line", op: op, a: a, b: b, result: clamp(result, MIN, MAX) };
+  }
+
+  function makeLineChoices(p) {
+    var correct = p.result;
+    var flipped = p.op === "+" ? p.a - p.b : p.a + p.b;
+    var pool = [correct];
+    function addUnique(n) {
+      n = clamp(n, MIN - 20, MAX + 20);
+      if (pool.indexOf(n) === -1) pool.push(n);
+    }
+    addUnique(flipped);
+    addUnique(correct === 0 ? 7 : -correct);
+    var guard = 0;
+    while (pool.length < 4 && guard < 30) {
+      addUnique(correct + (randInt(1, 9) * (Math.random() < 0.5 ? 1 : -1)));
+      guard++;
+    }
+    return shuffle(pool.slice(0, 4));
+  }
+
+  function renderLineRound() {
+    var p = current;
+    problemText.innerHTML = fmt(p.a) + " " + p.op + " " + fmtOperand(p.b) + " = ?";
+    problemSub.textContent = "Where does the marker land?";
+    var view = computeView(p.a, p.result);
+    buildLineScene(view);
+    setStart(p.a, view);
+    drawHint(p.a, p.result, view);
+    setHintVisible(hintToggle.checked);
+    feedback.textContent = "";
+    feedback.className = "feedback";
+    renderChoices(makeLineChoices(p), handleLineAnswer);
+  }
+
+  function handleLineAnswer(chosen, btnEl) {
+    var p = current;
+    var isCorrect = chosen === p.result;
+    revealCorrect(p.result, chosen, btnEl);
+    if (isCorrect) {
+      feedback.textContent = "That's it! " + fmt(p.a) + " " + p.op + " " + fmtOperand(p.b) + " lands on " + fmt(p.result) + ".";
+      feedback.className = "feedback good";
+    } else {
+      feedback.textContent = "The marker actually lands on " + fmt(p.result) + ". Here's the jump:";
+      feedback.className = "feedback bad";
+    }
+    awardPoints(isCorrect);
+    setHintVisible(true);
+    setTimeout(startRound, 2200);
+  }
+
+  // ================= SQUARE TASK =================
+  function generateSquare() {
+    var side = randInt(2, 20);
+    return { type: "square", stage: "side", side: side, area: side * side, perimeter: side * 4 };
+  }
+
+  function drawSquareSVG(sq, stage) {
+    squareSvg.innerHTML = "";
+    var vb = { w: 300, h: 210 };
+    var sidePx = clamp(70 + (sq.side - 2) * 13, 70, 150);
+    var sx = (vb.w - sidePx) / 2;
+    var sy = 25;
+    var highlighted = stage === "perimeter";
+
+    squareSvg.appendChild(el("rect", {
+      x: sx, y: sy, width: sidePx, height: sidePx, rx: 6,
+      fill: "var(--panel)",
+      stroke: highlighted ? "var(--violet)" : "var(--ink)",
+      "stroke-width": highlighted ? 5 : 2.5
+    }));
+
+    var areaText = el("text", {
+      x: vb.w / 2, y: sy + sidePx / 2 + 6, "text-anchor": "middle",
+      "font-family": "Baloo 2, sans-serif", "font-weight": "800", "font-size": "28", fill: "var(--ink)"
+    });
+    areaText.textContent = sq.area;
+    squareSvg.appendChild(areaText);
+
+    var capText = el("text", {
+      x: vb.w / 2, y: sy + sidePx / 2 + 26, "text-anchor": "middle",
+      "font-family": "Nunito, sans-serif", "font-weight": "700", "font-size": "11", fill: "var(--ink-soft)"
+    });
+    capText.textContent = "area (units\u00B2)";
+    squareSvg.appendChild(capText);
+
+    if (highlighted) {
+      var midX = sx + sidePx / 2;
+      var midY = sy + sidePx / 2;
+      var positions = [
+        { x: midX, y: sy - 10 },
+        { x: midX, y: sy + sidePx + 22 },
+        { x: sx - 14, y: midY + 5 },
+        { x: sx + sidePx + 14, y: midY + 5 }
+      ];
+      positions.forEach(function (pos) {
+        var t = el("text", {
+          x: pos.x, y: pos.y, "text-anchor": "middle",
+          "font-family": "Baloo 2, sans-serif", "font-weight": "700", "font-size": "14", fill: "var(--violet)"
+        });
+        t.textContent = sq.side;
+        squareSvg.appendChild(t);
+      });
+    }
+  }
+
+  function makeSideChoices(sq) {
+    var correct = sq.side;
+    var pool = [correct];
+    function addUnique(n) {
+      n = Math.max(1, Math.round(n));
+      if (pool.indexOf(n) === -1) pool.push(n);
+    }
+    addUnique(sq.area);          // forgot to take the square root
+    addUnique(correct + 1);
+    addUnique(correct > 1 ? correct - 1 : correct + 2);
+    var guard = 0;
+    while (pool.length < 4 && guard < 20) {
+      addUnique(correct + randInt(1, 4) * (Math.random() < 0.5 ? 1 : -1));
+      guard++;
+    }
+    return shuffle(pool.slice(0, 4));
+  }
+
+  function makePerimeterChoices(sq) {
+    var correct = sq.perimeter;
+    var pool = [correct];
+    function addUnique(n) {
+      n = Math.max(1, Math.round(n));
+      if (pool.indexOf(n) === -1) pool.push(n);
+    }
+    addUnique(sq.area);       // confused perimeter with area
+    addUnique(sq.side);       // forgot to multiply by 4
+    addUnique(sq.side * 2);   // only doubled instead of x4
+    var guard = 0;
+    while (pool.length < 4 && guard < 20) {
+      addUnique(correct + randInt(1, 6) * (Math.random() < 0.5 ? 1 : -1));
+      guard++;
+    }
+    return shuffle(pool.slice(0, 4));
+  }
+
+  function renderSquareRound() {
+    var sq = current;
+    if (sq.stage === "side") {
+      problemText.innerHTML = "\u221A" + sq.area + " = ?" + '<span class="ptext-gap"></span>' + "?\u00B2 = " + sq.area;
+      problemSub.textContent = "Find the side length \u2014 since side\u00B2 = " + sq.area;
+      drawSquareSVG(sq, "side");
+      renderChoices(makeSideChoices(sq), handleSquareAnswer);
+    } else {
+      problemText.innerHTML = "4 \u00D7 " + sq.side + " = ?";
+      problemSub.textContent = "Find the perimeter \u2014 P = 4 \u00D7 side (side = " + sq.side + ")";
+      drawSquareSVG(sq, "perimeter");
+      renderChoices(makePerimeterChoices(sq), handleSquareAnswer);
+    }
+    feedback.textContent = "";
+    feedback.className = "feedback";
+  }
+
+  function handleSquareAnswer(chosen, btnEl) {
+    var sq = current;
+    var stage = sq.stage;
+    var correctVal = stage === "side" ? sq.side : sq.perimeter;
+    var isCorrect = chosen === correctVal;
+    revealCorrect(correctVal, chosen, btnEl);
+
+    if (stage === "side") {
+      feedback.textContent = isCorrect
+        ? "Yes! \u221A" + sq.area + " = " + sq.side + "."
+        : "Actually \u221A" + sq.area + " = " + sq.side + " (because " + sq.side + "\u00B2 = " + sq.area + ").";
+    } else {
+      feedback.textContent = isCorrect
+        ? "Yes! 4 \u00D7 " + sq.side + " = " + sq.perimeter + "."
+        : "The perimeter is 4 \u00D7 " + sq.side + " = " + sq.perimeter + ".";
+    }
+    feedback.className = "feedback " + (isCorrect ? "good" : "bad");
+    awardPoints(isCorrect);
+
+    setTimeout(function () {
+      if (stage === "side") {
+        sq.stage = "perimeter";
+        renderSquareRound();
+      } else {
+        startRound();
+      }
+    }, 1900);
+  }
+
+  // ================= ORDER OF OPERATIONS TASK =================
+  function buildChoices(correct, candidates) {
+    var pool = [correct];
+    (candidates || []).forEach(function (n) {
+      if (Number.isInteger(n) && n >= 0 && pool.indexOf(n) === -1) pool.push(n);
+    });
+    var guard = 0;
+    while (pool.length < 4 && guard < 25) {
+      var val = correct + randInt(1, 6) * (Math.random() < 0.5 ? 1 : -1);
+      if (Number.isInteger(val) && val >= 0 && pool.indexOf(val) === -1) pool.push(val);
+      guard++;
+    }
+    return shuffle(pool.slice(0, 4));
+  }
+
+  var PERFECT_SQUARES = [[4, 2], [9, 3], [16, 4], [25, 5], [36, 6]];
+
+  var orderPatterns = [
+    function () { // a + b x c  (no brackets) — the classic case, e.g. 2 + 3 x 4
+      var a = randInt(2, 9), b = randInt(2, 6), c = randInt(2, 6);
+      var correct = a + b * c;
+      return { display: a + " + " + b + " \u00D7 " + c + " = ?", sub: "Multiply before you add.", correct: correct, candidates: [(a + b) * c, a * b + c] };
+    },
+    function () { // a x b + c (no brackets)
+      var a = randInt(2, 6), b = randInt(2, 6), c = randInt(2, 9);
+      var correct = a * b + c;
+      return { display: a + " \u00D7 " + b + " + " + c + " = ?", sub: "Multiply before you add.", correct: correct, candidates: [a * (b + c)] };
+    },
+    function () { // a - b x c  (no brackets)
+      var b = randInt(2, 6), c = randInt(2, 4);
+      var a = randInt(b * c + 1, b * c + 15);
+      var correct = a - b * c;
+      return { display: a + " \u2212 " + b + " \u00D7 " + c + " = ?", sub: "Multiply before you subtract.", correct: correct, candidates: [(a - b) * c] };
+    },
+    function () { // a x b - c x d  (no brackets, two multiplications)
+      var a = randInt(2, 6), b = randInt(2, 6), c = randInt(2, 5), d = randInt(2, 5);
+      var correct = a * b - c * d;
+      if (correct < 0) { var t = a; a = c; c = t; var t2 = b; b = d; d = t2; correct = a * b - c * d; }
+      return { display: a + " \u00D7 " + b + " \u2212 " + c + " \u00D7 " + d + " = ?", sub: "Do both multiplications first, then subtract.", correct: correct, candidates: [((a * b) - c) * d] };
+    },
+    function () { // (a + b) x c  (brackets)
+      var a = randInt(2, 7), b = randInt(2, 7), c = randInt(2, 6);
+      var correct = (a + b) * c;
+      return { display: "(" + a + " + " + b + ") \u00D7 " + c + " = ?", sub: "Brackets go first \u2014 add, then multiply.", correct: correct, candidates: [a + b * c] };
+    },
+    function () { // a x (b - c)  (brackets)
+      var a = randInt(2, 7), b = randInt(4, 9), c = randInt(1, b - 1);
+      var correct = a * (b - c);
+      return { display: a + " \u00D7 (" + b + " \u2212 " + c + ") = ?", sub: "Brackets go first \u2014 subtract, then multiply.", correct: correct, candidates: [a * b - c] };
+    },
+    function () { // a + b^2  (no brackets)
+      var a = randInt(2, 9), b = randInt(2, 6);
+      var correct = a + b * b;
+      return { display: a + " + " + b + "\u00B2 = ?", sub: "Square before you add.", correct: correct, candidates: [(a + b) * (a + b)] };
+    },
+    function () { // (a + b)^2  (brackets)
+      var a = randInt(1, 6), b = randInt(1, 6);
+      var correct = (a + b) * (a + b);
+      return { display: "(" + a + " + " + b + ")\u00B2 = ?", sub: "Brackets go first \u2014 add, then square.", correct: correct, candidates: [a * a + b * b] };
+    },
+    function () { // sqrt(n) + a  (no brackets)
+      var pick = PERFECT_SQUARES[randInt(0, PERFECT_SQUARES.length - 1)];
+      var n = pick[0], r = pick[1];
+      var a = randInt(2, 9);
+      var correct = r + a;
+      return { display: "\u221A" + n + " + " + a + " = ?", sub: "Find the square root first, then add.", correct: correct, candidates: [n + a] };
+    },
+    function () { // a + b ÷ c  (division, no brackets)
+      var c = randInt(2, 5), k = randInt(2, 6), b = c * k, a = randInt(2, 9);
+      var correct = a + k;
+      return { display: a + " + " + b + " \u00F7 " + c + " = ?", sub: "Divide before you add.", correct: correct, candidates: [a + b] };
+    },
+    function () { // a - b ÷ c  (division + subtraction, no brackets)
+      var c = randInt(2, 5), k = randInt(2, 6), b = c * k, a = randInt(k + 2, k + 9);
+      var correct = a - k;
+      return { display: a + " \u2212 " + b + " \u00F7 " + c + " = ?", sub: "Divide before you subtract.", correct: correct, candidates: [a - b] };
+    },
+    function () { // a x b ÷ c  (chain, no brackets)
+      var c = randInt(2, 5), k = randInt(2, 6), b = c * k, a = randInt(2, 8);
+      var correct = a * k;
+      return { display: a + " \u00D7 " + b + " \u00F7 " + c + " = ?", sub: "Multiply and divide, left to right.", correct: correct, candidates: [a * b] };
+    },
+    function () { // sqrt(n) - a  (no brackets)
+      var pick = PERFECT_SQUARES[randInt(0, PERFECT_SQUARES.length - 1)];
+      var n = pick[0], r = pick[1];
+      var a = randInt(1, r - 1);
+      var correct = r - a;
+      return { display: "\u221A" + n + " \u2212 " + a + " = ?", sub: "Find the square root first, then subtract.", correct: correct, candidates: [n - a] };
+    },
+    function () { // a^2 - b  (no brackets)
+      var a = randInt(2, 8), b = randInt(1, a * a - 1);
+      var correct = a * a - b;
+      return { display: a + "\u00B2 \u2212 " + b + " = ?", sub: "Square before you subtract.", correct: correct, candidates: [(a - b) * (a - b)] };
+    },
+    function () { // a + b x c - d  (a bit longer, still small numbers, no brackets)
+      var a = randInt(2, 9), b = randInt(2, 5), c = randInt(2, 5), d = randInt(1, 9);
+      var correct = a + b * c - d;
+      if (correct < 0) { d = 1; correct = a + b * c - d; }
+      return { display: a + " + " + b + " \u00D7 " + c + " \u2212 " + d + " = ?", sub: "Multiply first, then add and subtract left to right.", correct: correct, candidates: [(a + b) * c - d] };
+    }
+  ];
+
+  var lastOrderPatternIndex = -1;
+  function generateOrderProblem() {
+    var idx;
+    do {
+      idx = randInt(0, orderPatterns.length - 1);
+    } while (idx === lastOrderPatternIndex && orderPatterns.length > 1);
+    lastOrderPatternIndex = idx;
+    var p = orderPatterns[idx]();
+    p.type = "order";
+    return p;
+  }
+
+  function renderOrderRound() {
+    var p = current;
+    problemText.innerHTML = p.display;
+    problemSub.textContent = p.sub;
+    feedback.textContent = "";
+    feedback.className = "feedback";
+    renderChoices(buildChoices(p.correct, p.candidates), handleOrderAnswer);
+  }
+
+  function handleOrderAnswer(chosen, btnEl) {
+    var p = current;
+    var isCorrect = chosen === p.correct;
+    revealCorrect(p.correct, chosen, btnEl);
+    feedback.textContent = isCorrect
+      ? "Yes! " + p.sub
+      : p.sub + " Answer: " + p.correct + ".";
+    feedback.className = "feedback " + (isCorrect ? "good" : "bad");
+    awardPoints(isCorrect);
+    setTimeout(startRound, 2000);
+  }
+
+  // ================= LONG MULTIPLICATION TASK =================
+  var mulGrid = document.getElementById("mulGrid");
+  var divBlock = document.getElementById("divBlock");
+  var divQuotientRow = document.getElementById("divQuotientRow");
+  var divDivisorLabel = document.getElementById("divDivisorLabel");
+  var divDividendRow = document.getElementById("divDividendRow");
+  var divRemainderRow = document.getElementById("divRemainderRow");
+  var divHintToggle = document.getElementById("divHintToggle");
+  var divMultiples = document.getElementById("divMultiples");
+
+  // ---- small DOM builders shared by both worksheets ----
+  function mgRow(extraCls) {
+    var row = document.createElement("div");
+    row.className = "mg-row" + (extraCls ? " " + extraCls : "");
+    return row;
+  }
+  function mgGutter(row, text) {
+    var g = document.createElement("div");
+    g.className = "mg-gutter-cell";
+    g.textContent = text || "";
+    row.appendChild(g);
+  }
+  function mgPlain(row, text) {
+    var p = document.createElement("div");
+    p.className = "mg-plain";
+    p.textContent = (text === null || text === undefined) ? "" : text;
+    row.appendChild(p);
+  }
+  function mgStaticBox(row, state, text, wide) {
+    var b = document.createElement("div");
+    b.className = "mg-box" + (wide ? " wide" : "");
+    if (state === "active") { b.classList.add("active"); b.textContent = "?"; }
+    else if (state === "typed") { b.classList.add("typed"); b.textContent = text; }
+    else if (state === "right" || state === "wrong") { b.classList.add("filled", state); b.textContent = text; }
+    row.appendChild(b);
+    return b;
+  }
+  function mgLiveBox(row, liveInputRef, maxLen) {
+    maxLen = maxLen || 1;
+    var b = document.createElement("div");
+    b.className = "mg-box mg-input-cell" + (maxLen > 1 ? " wide" : "");
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.setAttribute("inputmode", "numeric");
+    inp.setAttribute("pattern", "[0-9]*");
+    inp.maxLength = maxLen;
+    inp.autocomplete = "off";
+    inp.className = "mg-inline-input";
+    inp.addEventListener("input", function (e) { onCellInput(e, maxLen); });
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") onCellSubmitForce(e); });
+    b.appendChild(inp);
+    row.appendChild(b);
+    liveInputRef.el = inp;
+    return b;
+  }
+
+  // ---- building one partial-product chain (a × single digit) ----
+  function buildMultChain(a, mult, phase) {
+    var digitsA = String(a).split("").reverse().map(Number); // ones first
+    var steps = [];
+    var carry = 0;
+    digitsA.forEach(function (d, place) {
+      var product = d * mult + carry;
+      var carryBefore = carry;
+      var digit = product % 10;
+      carry = Math.floor(product / 10);
+      steps.push({ phase: phase, place: place, digit: d, mult: mult, carryBefore: carryBefore, product: product, expected: digit, carryAfter: carry, isFinal: false });
+    });
+    if (carry > 0) {
+      steps.push({ phase: phase, place: digitsA.length, digit: null, mult: mult, carryBefore: carry, product: carry, expected: carry, carryAfter: 0, isFinal: true });
+    }
+    return steps;
+  }
+
+  // ---- adding the two (shifted) partial products together ----
+  function buildSumChain(pp1, pp2) {
+    function valAt(steps, place) {
+      for (var i = 0; i < steps.length; i++) if (steps[i].place === place) return steps[i].expected;
+      return 0;
+    }
+    var maxPp1 = pp1.length ? pp1[pp1.length - 1].place : -1;
+    var maxPp2Shifted = pp2.length ? pp2[pp2.length - 1].place + 1 : -1;
+    var maxPlace = Math.max(maxPp1, maxPp2Shifted);
+    var steps = [];
+    var carry = 0;
+    for (var place = 0; place <= maxPlace; place++) {
+      var v1 = valAt(pp1, place);
+      var v2 = valAt(pp2, place - 1); // pp2 is shifted one place left (×10)
+      var total = v1 + v2 + carry;
+      var carryBefore = carry;
+      var digit = total % 10;
+      carry = Math.floor(total / 10);
+      steps.push({ phase: "sum", place: place, v1: v1, v2: v2, carryBefore: carryBefore, total: total, expected: digit, carryAfter: carry, isFinal: false });
+    }
+    if (carry > 0) {
+      steps.push({ phase: "sum", place: maxPlace + 1, v1: 0, v2: 0, carryBefore: carry, total: carry, expected: carry, carryAfter: 0, isFinal: true });
+    }
+    return steps;
+  }
+
+  function stageOrder(task) {
+    var needsCarry = stepNeedsCarry(task, task.stepIndex);
+    if (!needsCarry) return ["digit"];
+    return task.type === "multiply" ? ["carry", "digit"] : ["digit", "carry"];
+  }
+
+  function generateMultiplyProblem() {
+    var aDigits = randInt(2, 4);   // up to 4 digits, but not always
+    var aMin = Math.pow(10, aDigits - 1), aMax = Math.pow(10, aDigits) - 1;
+    var a = randInt(aMin, aMax);
+
+    var bDigits = randInt(1, 2);   // up to 2 digits, but not always
+    var b = bDigits === 1 ? randInt(2, 9) : randInt(10, 99);
+    var b0 = b % 10, b1 = Math.floor(b / 10);
+
+    var pp1 = buildMultChain(a, b0, "pp1");
+    var hasSecondPP = b1 > 0; // only a 2-digit multiplier needs a second partial product + addition
+    var pp2 = hasSecondPP ? buildMultChain(a, b1, "pp2") : [];
+    var sum = hasSecondPP ? buildSumChain(pp1, pp2) : pp1;
+    var steps = hasSecondPP ? pp1.concat(pp2).concat(sum) : pp1;
+
+    var task = {
+      type: "multiply", a: a, b: b, b0: b0, b1: b1, pp1: pp1, pp2: pp2, sum: sum, hasSecondPP: hasSecondPP,
+      steps: steps, stepIndex: 0, answerDigits: new Array(steps.length).fill(null), carryEntries: {},
+      tempCarryVal: null, tempDigitVal: null
+    };
+    task.inputStage = stageOrder(task)[0];
+    return task;
+  }
+
+  function dispPlace(step) {
+    return step.phase === "pp2" ? step.place + 1 : step.place;
+  }
+
+  // ================= LONG DIVISION TASK =================
+  function generateDivideProblem() {
+    var divisor, quotient, dividend, digits, tries = 0;
+    do {
+      var divisorDigits = randInt(1, 2);      // up to 2 digits, but not always
+      divisor = divisorDigits === 1 ? randInt(2, 9) : randInt(11, 19); // capped at 19
+      var quotientDigits = randInt(1, 4);
+      var qMin = quotientDigits === 1 ? 2 : Math.pow(10, quotientDigits - 1);
+      var qMax = Math.pow(10, quotientDigits) - 1;
+      quotient = randInt(qMin, qMax);
+      dividend = divisor * quotient;
+      digits = String(dividend).split("").map(Number);
+      tries++;
+    } while ((digits.length > 5 || digits.length < 2) && tries < 30); // up to 5 digits, but not always
+
+    var remainder = 0;
+    var trace = [];
+    digits.forEach(function (d) {
+      var current = remainder * 10 + d;
+      var remBefore = remainder;
+      var qDigit = Math.floor(current / divisor);
+      remainder = current % divisor;
+      trace.push({ bringDigit: d, remBefore: remBefore, current: current, expected: qDigit, remAfter: remainder });
+    });
+
+    // Real long division doesn't write leading zero quotient digits — with a
+    // 2-digit divisor the first digit (sometimes two) of the dividend is
+    // usually smaller than the divisor, so skip straight to the first
+    // column that actually produces a quotient digit.
+    var startIdx = 0;
+    for (var i = 0; i < trace.length; i++) {
+      if (trace[i].expected > 0) { startIdx = i; break; }
+      startIdx = i;
+    }
+    var steps = trace.slice(startIdx);
+
+    var task = {
+      type: "divide", divisor: divisor, dividend: dividend, digits: digits, colOffset: startIdx,
+      steps: steps, stepIndex: 0, answerDigits: new Array(steps.length).fill(null), carryEntries: {},
+      tempCarryVal: null, tempDigitVal: null
+    };
+    task.inputStage = stageOrder(task)[0];
+    return task;
+  }
+
+  // A step asks for a second value (carry / remainder) only when it's
+  // actually needed for something later — for multiplication that's
+  // within the *same* partial-product or addition pass only (carry never
+  // crosses from one phase into another); for division it's every step
+  // except the last, since the remainder combines with the next digit
+  // brought down.
+  function stepNeedsCarry(task, i) {
+    var cur = task.steps[i];
+    var next = task.steps[i + 1];
+    if (!cur || !next) return false;
+    if (task.type === "multiply") return next.phase === cur.phase;
+    return true;
+  }
+
+  // ---- multiplication worksheet: multiplicand, ×multiplier, two partial
+  // products (each with its own reused carry row), then the addition ----
+  function renderMulGrid(task) {
+    mulGrid.innerHTML = "";
+    var W = task.sum.length;
+    var digitsA = String(task.a).split("").reverse().map(Number);
+    var lenA = digitsA.length;
+    var curStep = task.steps[task.stepIndex] || null;
+    var curPhase = curStep ? curStep.phase : null;
+    var needsCarry = stepNeedsCarry(task, task.stepIndex);
+    // The carry a step produces feeds the NEXT digit of the multiplicand
+    // (pp1/pp2) or the next addition column (sum) — in every case that's
+    // simply the next step's own (raw) place, which already lines up with
+    // the row it needs to sit above.
+    var carryTargetPlace = needsCarry ? task.steps[task.stepIndex + 1].place : null;
+    var liveInputRef = { el: null };
+
+    function buildCarryRow(triggerPhases) {
+      var inGroup = triggerPhases.indexOf(curPhase) !== -1;
+      var showOutgoing = needsCarry && inGroup;
+
+      // The carry the previous same-phase step produced is exactly what
+      // THIS step needs in order to be solved — keep it visible, resolved,
+      // right above the digit it's being added into, for as long as it's
+      // actually needed.
+      var prevStep = task.stepIndex > 0 ? task.steps[task.stepIndex - 1] : null;
+      var hasIncoming = inGroup && prevStep && prevStep.phase === curPhase && task.carryEntries[task.stepIndex - 1];
+      var incomingEntry = hasIncoming ? task.carryEntries[task.stepIndex - 1] : null;
+      var incomingPlace = hasIncoming ? curStep.place : null;
+
+      if (!showOutgoing && !incomingEntry) return;
+
+      var expectedCarry = showOutgoing ? task.steps[task.stepIndex].carryAfter : null;
+      var maxLen = expectedCarry !== null ? String(expectedCarry).length : 1;
+      var wide = maxLen > 1;
+
+      var row = mgRow("mg-carry-row");
+      mgGutter(row, "");
+      for (var c = 0; c < W; c++) {
+        var p = W - 1 - c;
+        if (incomingEntry && p === incomingPlace) {
+          mgStaticBox(row, incomingEntry.wrong ? "wrong" : "right", incomingEntry.val, String(incomingEntry.val).length > 1);
+        } else if (showOutgoing && p === carryTargetPlace) {
+          var entry = task.carryEntries[task.stepIndex];
+          if (entry) mgStaticBox(row, entry.wrong ? "wrong" : "right", entry.val, String(entry.val).length > 1);
+          else if (task.inputStage === "carry") mgLiveBox(row, liveInputRef, maxLen);
+          else if (task.tempCarryVal !== null && task.tempCarryVal !== undefined) mgStaticBox(row, "typed", task.tempCarryVal, wide);
+          else mgStaticBox(row, "active", null, wide);
+        } else {
+          mgPlain(row, "");
+        }
+      }
+      mulGrid.appendChild(row);
+    }
+
+    function buildValueRow(stepsArr, phaseName, shifted) {
+      var row = mgRow();
+      mgGutter(row, "");
+      for (var c = 0; c < W; c++) {
+        var place = W - 1 - c;
+        var internalPlace = shifted ? place - 1 : place;
+        var step = null;
+        for (var k = 0; k < stepsArr.length; k++) { if (stepsArr[k].place === internalPlace) { step = stepsArr[k]; break; } }
+        if (!step) { mgPlain(row, ""); continue; }
+        var stepIdx = task.steps.indexOf(step);
+        var entry = task.answerDigits[stepIdx];
+        if (entry) {
+          mgStaticBox(row, entry.wrong ? "wrong" : "right", entry.val);
+        } else if (stepIdx === task.stepIndex) {
+          if (task.inputStage === "digit") mgLiveBox(row, liveInputRef);
+          else if (task.tempDigitVal !== null && task.tempDigitVal !== undefined) mgStaticBox(row, "typed", task.tempDigitVal);
+          else mgStaticBox(row, "active");
+        } else {
+          mgStaticBox(row, null);
+        }
+      }
+      mulGrid.appendChild(row);
+    }
+
+    // carry sits above the multiplicand while multiplying — the classic spot
+    buildCarryRow(["pp1", "pp2"]);
+
+    var aRow = mgRow();
+    mgGutter(aRow, "");
+    for (var c1 = 0; c1 < W; c1++) {
+      var p1 = W - 1 - c1;
+      mgPlain(aRow, p1 < lenA ? digitsA[p1] : "");
+    }
+    mulGrid.appendChild(aRow);
+
+    var opRow = mgRow();
+    mgGutter(opRow, "\u00D7");
+    for (var c2 = 0; c2 < W; c2++) {
+      var p2 = W - 1 - c2;
+      mgPlain(opRow, p2 === 0 ? task.b0 : (p2 === 1 ? task.b1 : ""));
+    }
+    mulGrid.appendChild(opRow);
+
+    var rule1 = document.createElement("div");
+    rule1.className = "mg-rule-row";
+    mulGrid.appendChild(rule1);
+
+    // carry sits above the top addend while adding the partial products
+    buildCarryRow(["sum"]);
+
+    buildValueRow(task.pp1, "pp1", false);
+
+    if (task.hasSecondPP) {
+      buildValueRow(task.pp2, "pp2", true);
+
+      var rule2 = document.createElement("div");
+      rule2.className = "mg-rule-row";
+      mulGrid.appendChild(rule2);
+
+      buildValueRow(task.sum, "sum", false);
+    }
+
+    if (liveInputRef.el) liveInputRef.el.focus();
+  }
+
+  function renderMultiplyRound() {
+    feedback.textContent = "";
+    feedback.className = "feedback";
+    var task = current;
+    var st = task.steps[task.stepIndex];
+    if (st && st.isFinal) {
+      // The leftover carry just becomes the leading digit — nothing new to
+      // compute, so it flows straight into the front of the row instead of
+      // asking the person to re-type a value they already entered as carry.
+      task.answerDigits[task.stepIndex] = { val: st.expected, wrong: false };
+      renderMulGrid(task);
+      advanceStep(task, 700);
+      return;
+    }
+    renderMulGrid(task);
+  }
+
+  // ---- division: bracket with quotient digits above, remainder row below ----
+  function renderDivGrid(task) {
+    divQuotientRow.innerHTML = "";
+    divDividendRow.innerHTML = "";
+    divDivisorLabel.textContent = task.divisor;
+    var liveInputRef = { el: null };
+
+    task.digits.forEach(function (d, i) {
+      var row = divQuotientRow; // not a row per se, but keeps naming consistent below
+      if (i < task.colOffset) {
+        mgPlain(row, "");
+      } else {
+        var stepIdx = i - task.colOffset;
+        var entry = task.answerDigits[stepIdx];
+        if (entry) {
+          mgStaticBox(row, entry.wrong ? "wrong" : "right", entry.val);
+        } else if (stepIdx === task.stepIndex) {
+          if (task.inputStage === "digit") mgLiveBox(row, liveInputRef);
+          else if (task.tempDigitVal !== null && task.tempDigitVal !== undefined) mgStaticBox(row, "typed", task.tempDigitVal);
+          else mgStaticBox(row, "active");
+        } else {
+          mgStaticBox(row, null);
+        }
+      }
+      mgPlain(divDividendRow, d);
+    });
+
+    if (liveInputRef.el) liveInputRef.el.focus();
+  }
+
+  function renderDivRemainderRow(task) {
+    divRemainderRow.innerHTML = "";
+    var liveInputRef = { el: null };
+    task.digits.forEach(function (d, i) {
+      if (i < task.colOffset) { mgPlain(divRemainderRow, ""); return; }
+      var stepIdx = i - task.colOffset;
+      var needsRem = stepNeedsCarry(task, stepIdx);
+      if (!needsRem) { mgPlain(divRemainderRow, ""); return; }
+      var st = task.steps[stepIdx];
+      var maxLen = String(st.remAfter).length; // remainder can be up to 2 digits (divisor is 2-digit)
+      var wide = maxLen > 1;
+      var entry = task.carryEntries[stepIdx];
+      if (entry) {
+        mgStaticBox(divRemainderRow, entry.wrong ? "wrong" : "right", entry.val, String(entry.val).length > 1);
+      } else if (stepIdx === task.stepIndex) {
+        if (task.inputStage === "carry") mgLiveBox(divRemainderRow, liveInputRef, maxLen);
+        else if (task.tempCarryVal !== null && task.tempCarryVal !== undefined) mgStaticBox(divRemainderRow, "typed", task.tempCarryVal, wide);
+        else mgStaticBox(divRemainderRow, "active", null, wide);
+      } else {
+        mgStaticBox(divRemainderRow, null, null, wide);
+      }
+    });
+    if (liveInputRef.el) liveInputRef.el.focus();
+  }
+
+  function renderDivMultiples(task) {
+    divMultiples.innerHTML = "";
+    var table = document.createElement("div");
+    table.className = "dt-table";
+    for (var n = 1; n <= 9; n++) {
+      var col = document.createElement("div");
+      col.className = "dt-col";
+      var nCell = document.createElement("div");
+      nCell.className = "dt-n";
+      nCell.textContent = "\u00D7" + n;
+      var valCell = document.createElement("div");
+      valCell.className = "dt-val";
+      valCell.textContent = n * task.divisor;
+      col.appendChild(nCell);
+      col.appendChild(valCell);
+      table.appendChild(col);
+    }
+    divMultiples.appendChild(table);
+    divMultiples.style.display = divHintToggle.checked ? "flex" : "none";
+  }
+
+  function renderDivideRound() {
+    feedback.textContent = "";
+    feedback.className = "feedback";
+    renderDivGrid(current);
+    renderDivRemainderRow(current);
+    renderDivMultiples(current);
+  }
+
+  function renderDigitRound() {
+    if (current.type === "multiply") {
+      mulGrid.style.display = "flex";
+      divBlock.style.display = "none";
+      renderMultiplyRound();
+    } else {
+      mulGrid.style.display = "none";
+      divBlock.style.display = "flex";
+      renderDivideRound();
+    }
+  }
+
+  function finishDigitTask(task) {
+    if (task.type === "multiply") {
+      var sumCount = task.sum.length;
+      var sumEntries = task.answerDigits.slice(task.answerDigits.length - sumCount);
+      var resultStr = sumEntries.slice().reverse().map(function (e) { return e.val; }).join("");
+      feedback.textContent = task.a + " \u00D7 " + task.b + " = " + resultStr + " \u2713";
+    } else {
+      var resultStr2 = task.answerDigits.map(function (e) { return e.val; }).join("");
+      feedback.textContent = task.dividend + " \u00F7 " + task.divisor + " = " + resultStr2 + " \u2713";
+    }
+    feedback.className = "feedback good";
+  }
+
+  function advanceStep(task, delay) {
+    setTimeout(function () {
+      task.stepIndex++;
+      if (task.stepIndex >= task.steps.length) {
+        finishDigitTask(task);
+        setTimeout(startRound, 1700);
+      } else {
+        task.inputStage = stageOrder(task)[0];
+        renderDigitRound();
+      }
+    }, delay);
+  }
+
+  function submitStep(digitVal) {
+    var task = current;
+    var st = task.steps[task.stepIndex];
+    var needsCarry = stepNeedsCarry(task, task.stepIndex);
+    var expectedCarry = task.type === "multiply" ? st.carryAfter : st.remAfter;
+    var carryVal = needsCarry ? task.tempCarryVal : null;
+
+    var digitCorrect = digitVal === st.expected;
+    var carryCorrect = !needsCarry || carryVal === expectedCarry;
+    var allCorrect = digitCorrect && carryCorrect;
+
+    task.answerDigits[task.stepIndex] = { val: st.expected, wrong: !digitCorrect };
+    if (needsCarry) task.carryEntries[task.stepIndex] = { val: expectedCarry, wrong: !carryCorrect };
+    task.tempCarryVal = null;
+    task.tempDigitVal = null;
+
+    if (allCorrect) {
+      feedback.textContent = "";
+      feedback.className = "feedback";
+    } else {
+      var carryWord = task.type === "multiply" ? "carry" : "remainder";
+      var wrongParts = [];
+      if (!digitCorrect) wrongParts.push("digit is " + st.expected);
+      if (needsCarry && !carryCorrect) wrongParts.push(carryWord + " is " + expectedCarry);
+      var why;
+      if (task.type === "multiply") {
+        if (st.phase === "sum") {
+          why = st.v1 + " + " + st.v2 + (st.carryBefore ? " + " + st.carryBefore : "") + " = " + st.total;
+        } else {
+          why = (st.isFinal ? "carry " + st.carryBefore : st.digit + " \u00D7 " + st.mult + (st.carryBefore ? " + " + st.carryBefore : "")) + " = " + st.product;
+        }
+      } else {
+        why = st.current + " \u00F7 " + task.divisor + " = " + st.expected + " r" + st.remAfter;
+      }
+      feedback.textContent = why + " \u2014 " + wrongParts.join(", ") + ".";
+      feedback.className = "feedback bad";
+    }
+
+    awardPoints(allCorrect);
+
+    // show the resolved (colored) cells for a moment before advancing
+    if (task.type === "multiply") renderMulGrid(task);
+    else { renderDivGrid(task); renderDivRemainderRow(task); }
+
+    advanceStep(task, 1900);
+  }
+
+  function completeFieldEntry(val) {
+    var task = current;
+    var stages = stageOrder(task);
+    var idx = stages.indexOf(task.inputStage);
+
+    if (task.inputStage === "carry") task.tempCarryVal = val;
+    else task.tempDigitVal = val;
+
+    if (idx < stages.length - 1) {
+      task.inputStage = stages[idx + 1];
+      if (task.type === "multiply") renderMulGrid(task);
+      else { renderDivGrid(task); renderDivRemainderRow(task); }
+    } else {
+      submitStep(task.tempDigitVal);
+    }
+  }
+
+  function onCellInput(e, maxLen) {
+    maxLen = maxLen || 1;
+    var v = e.target.value.replace(/[^0-9]/g, "").slice(0, maxLen);
+    e.target.value = v;
+    if (v.length < maxLen) return; // wait for the remaining digit(s), or Enter to submit early
+    completeFieldEntry(parseInt(v, 10));
+  }
+
+  function onCellSubmitForce(e) {
+    var v = e.target.value.replace(/[^0-9]/g, "");
+    if (v.length < 1) return;
+    completeFieldEntry(parseInt(v, 10));
+  }
+
+  // ================= PRIME FACTOR LADDER TASK =================
+  var factorTargetLabel = document.getElementById("factorTargetLabel");
+  var factorSub = document.getElementById("factorSub");
+  var ladderRows = document.getElementById("ladderRows");
+  var primePalette = document.getElementById("primePalette");
+  var factorResult = document.getElementById("factorResult");
+  var SUPERSCRIPT_DIGITS = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+  function toSuperscript(n) {
+    return String(n).split("").map(function (d) { return SUPERSCRIPT_DIGITS[d]; }).join("");
+  }
+
+  function generateFactorProblem() {
+    var smallPrimes = [2, 3, 5, 7, 11, 13];
+    var target, rowsPlan, tries = 0;
+    do {
+      var count = randInt(2, 4);
+      rowsPlan = [];
+      var product = 1;
+      for (var i = 0; i < count; i++) {
+        // weight toward the friendlier small primes, with 11/13 as an occasional twist
+        var p = Math.random() < 0.78 ? smallPrimes[randInt(0, 3)] : smallPrimes[randInt(4, 5)];
+        rowsPlan.push(p);
+        product *= p;
+      }
+      target = product;
+      tries++;
+    } while ((target < 8 || target > 360) && tries < 40);
+    rowsPlan.sort(function (a, b) { return a - b; });
+
+    // Build a palette: every distinct prime actually needed, plus a couple of
+    // small "distractor" primes that don't divide the target, so testing
+    // actually means something instead of every button being a sure hit.
+    var distinctFactors = rowsPlan.filter(function (v, i, arr) { return arr.indexOf(v) === i; });
+    var distractorPool = shuffle(smallPrimes.filter(function (p) { return distinctFactors.indexOf(p) === -1; }));
+    var numDistractors = clamp(6 - distinctFactors.length, 1, 3);
+    var palette = shuffle(distinctFactors.concat(distractorPool.slice(0, numDistractors)));
+
+    return { type: "factor", target: target, remaining: target, rows: [], palette: palette };
+  }
+
+  function renderLadder(task) {
+    ladderRows.innerHTML = "";
+    task.rows.forEach(function (row) {
+      var tr = document.createElement("div");
+      tr.className = "ladder-row";
+      var primeCell = document.createElement("div");
+      primeCell.className = "ladder-cell right";
+      primeCell.textContent = row.prime;
+      var divider = document.createElement("div");
+      divider.className = "ladder-divider";
+      divider.textContent = "|";
+      var valueCell = document.createElement("div");
+      valueCell.className = "ladder-value";
+      valueCell.textContent = row.before;
+      tr.appendChild(primeCell);
+      tr.appendChild(divider);
+      tr.appendChild(valueCell);
+      ladderRows.appendChild(tr);
+    });
+
+    if (task.remaining === 1) {
+      var doneRow = document.createElement("div");
+      doneRow.className = "ladder-row";
+      var doneCell = document.createElement("div");
+      doneCell.className = "ladder-cell right";
+      doneCell.textContent = "✓";
+      var doneDivider = document.createElement("div");
+      doneDivider.className = "ladder-divider";
+      doneDivider.textContent = "|";
+      var doneValue = document.createElement("div");
+      doneValue.className = "ladder-value done";
+      doneValue.textContent = "1";
+      doneRow.appendChild(doneCell);
+      doneRow.appendChild(doneDivider);
+      doneRow.appendChild(doneValue);
+      ladderRows.appendChild(doneRow);
+    } else {
+      var activeRow = document.createElement("div");
+      activeRow.className = "ladder-row";
+      var activeCell = document.createElement("div");
+      activeCell.className = "ladder-cell active";
+      activeCell.id = "ladderActiveCell";
+      activeCell.textContent = "?";
+      var activeDivider = document.createElement("div");
+      activeDivider.className = "ladder-divider";
+      activeDivider.textContent = "|";
+      var activeValue = document.createElement("div");
+      activeValue.className = "ladder-value";
+      activeValue.textContent = task.remaining;
+      activeRow.appendChild(activeCell);
+      activeRow.appendChild(activeDivider);
+      activeRow.appendChild(activeValue);
+      ladderRows.appendChild(activeRow);
+    }
+  }
+
+  function renderPrimePalette(task) {
+    primePalette.innerHTML = "";
+    task.palette.forEach(function (p) {
+      var btn = document.createElement("button");
+      btn.className = "prime-chip";
+      btn.textContent = p;
+      btn.addEventListener("click", function () { testPrime(task, p, btn); });
+      primePalette.appendChild(btn);
+    });
+  }
+
+  function renderFactorRound() {
+    var task = current;
+    factorTargetLabel.textContent = "Factor " + task.target;
+    factorSub.textContent = "Pick a prime that divides evenly into it.";
+    factorResult.style.display = "none";
+    feedback.textContent = "";
+    feedback.className = "feedback";
+    renderLadder(task);
+    renderPrimePalette(task);
+  }
+
+  function testPrime(task, p, btnEl) {
+    if (task.remaining === 1) return; // already solved, ignore stray clicks during the pause
+    var divides = task.remaining % p === 0;
+
+    if (divides) {
+      btnEl.classList.add("flash-right");
+      var activeCell = document.getElementById("ladderActiveCell");
+      if (activeCell) activeCell.classList.add("right");
+      var before = task.remaining;
+      task.rows.push({ prime: p, before: before });
+      task.remaining = before / p;
+      feedback.textContent = before + " ÷ " + p + " = " + task.remaining + (task.remaining === 1 ? " — fully factored!" : ".");
+      feedback.className = "feedback good";
+      awardPoints(true);
+
+      setTimeout(function () {
+        btnEl.classList.remove("flash-right");
+        if (task.remaining === 1) {
+          finishFactorTask(task);
+        } else {
+          renderLadder(task);
+        }
+      }, 550);
+    } else {
+      btnEl.classList.add("flash-wrong");
+      feedback.textContent = task.remaining + " isn't divisible by " + p + " — try another prime.";
+      feedback.className = "feedback bad";
+      setTimeout(function () { btnEl.classList.remove("flash-wrong"); }, 550);
+    }
+  }
+
+  function finishFactorTask(task) {
+    renderLadder(task);
+    var counts = {};
+    task.rows.forEach(function (r) { counts[r.prime] = (counts[r.prime] || 0) + 1; });
+    var primesAsc = Object.keys(counts).map(Number).sort(function (a, b) { return a - b; });
+    var expr = primesAsc.map(function (p) {
+      return counts[p] > 1 ? p + toSuperscript(counts[p]) : String(p);
+    }).join(" × ");
+    factorResult.textContent = task.target + " = " + expr;
+    factorResult.style.display = "block";
+    feedback.textContent = "";
+    setTimeout(startRound, 2200);
+  }
+
+  function showFactorUI() {
+    resetTaskUI();
+    factorPanel.style.display = "block";
+    problemText.style.display = "none";
+    problemSub.style.display = "none";
+  }
+
+  // ================= FRACTION ARITHMETIC TASK =================
+  var fractionPanel = document.getElementById("fractionPanel");
+  // Boxes are sized to fit the raw (unsimplified) expected value, but a
+  // shorter equivalent answer (e.g. "2" for a box sized for "12") is just as
+  // valid and should never be stuck waiting for digits that aren't coming —
+  // so a short pause after typing auto-submits whatever's there, on top of
+  // the existing "fill the box" and Enter-key paths.
+  var fracInputTimer = null;
+  var fracMainRow = document.getElementById("fracMainRow");
+  var fracStepLabel = document.getElementById("fracStepLabel");
+  var fracStepRow = document.getElementById("fracStepRow");
+  var OP_SYMBOL = { "+": "+", "-": "−", "*": "×", "/": "÷" };
+
+  function gcdOf(x, y) { while (y) { var t = y; y = x % y; x = t; } return x; }
+  function lcmOf(x, y) { return (x * y) / gcdOf(x, y); }
+
+  // Once the raw (unsimplified) result is worked out, tack on whichever
+  // clean-up steps it actually needs: pull out a whole-number part if it's
+  // improper, then reduce to lowest terms if it's still reducible. Both are
+  // forced — a kid can't skip straight to a tidy answer without showing the
+  // work — and the task remembers the true final value (whole + fraction)
+  // for the closing "✓" line.
+  function appendResultRefinementSteps(steps, rawNum, rawDen) {
+    if (rawNum === 0) return { finalUnits: 0, finalNum: 0, finalDen: 1 };
+
+    var finalUnits = 0, finalNum = rawNum, finalDen = rawDen;
+
+    if (rawNum >= rawDen) {
+      if (rawNum % rawDen === 0) {
+        var units = rawNum / rawDen;
+        steps.push({ kind: "wholeNumber", label: "That's a whole number — how many whole ones?",
+          rawNum: rawNum, rawDen: rawDen,
+          blanks: [ { fields: ["num"], expNum: units, exact: true } ] });
+        return { finalUnits: units, finalNum: 0, finalDen: 1 };
+      }
+      var whole = Math.floor(rawNum / rawDen);
+      var remNum = rawNum % rawDen;
+      steps.push({ kind: "mixed", label: "That's an improper fraction — pull out the whole number part.",
+        rawNum: rawNum, rawDen: rawDen,
+        blanks: [
+          { fields: ["num"], expNum: whole, exact: true },
+          { fields: ["num", "den"], expNum: remNum, expDen: rawDen, exact: true }
+        ] });
+      finalUnits = whole; finalNum = remNum; finalDen = rawDen;
+    }
+
+    var g = gcdOf(finalNum, finalDen);
+    if (g > 1) {
+      var simpNum = finalNum / g, simpDen = finalDen / g;
+      steps.push({ kind: "simplify", label: "Can you simplify that fraction to lowest terms?",
+        baseNum: finalNum, baseDen: finalDen,
+        blanks: [ { fields: ["num", "den"], expNum: simpNum, expDen: simpDen, exact: true } ] });
+      finalNum = simpNum; finalDen = simpDen;
+    }
+
+    return { finalUnits: finalUnits, finalNum: finalNum, finalDen: finalDen };
+  }
+
+  // Every op breaks down into a short chain of forced sub-steps. +/- always
+  // uses the least common denominator (the smallest one that works), and
+  // both "multiply by a form of 1" conversions happen together in one combined
+  // equation, exactly the way it's written out on paper. Whatever raw result
+  // comes out the far end then gets tidied up (mixed number, simplified) by
+  // appendResultRefinementSteps.
+  function buildFractionSteps(op, a, b, c, d) {
+    var steps, rawNum, rawDen;
+    if (op === "+" || op === "-") {
+      var commonD = lcmOf(b, d);
+      var m1 = commonD / b, m2 = commonD / d;
+      var num1 = a * m1, num2 = c * m2;
+      rawNum = op === "+" ? num1 + num2 : num1 - num2;
+      rawDen = commonD;
+      steps = [];
+      // Only ask to multiply a fraction by a form of 1 when it actually needs
+      // to change — if a denominator already equals the common denominator,
+      // multiplying it by 1/1 teaches nothing, so that side is just shown
+      // as-is instead of turned into a needless blank.
+      var convertBlanks = [], convertSides = [];
+      if (m1 !== 1) { convertBlanks.push({ fields: ["num", "den"], expNum: m1, expDen: m1, exact: true }); convertSides.push(0); }
+      if (m2 !== 1) { convertBlanks.push({ fields: ["num", "den"], expNum: m2, expDen: m2, exact: true }); convertSides.push(1); }
+      if (convertBlanks.length > 0) {
+        steps.push({ kind: "convert", label: "Multiply each fraction by a form of 1 so the denominators match.",
+          blanks: convertBlanks, sides: convertSides });
+      }
+      steps.push({ kind: "combine", label: "Denominators match — now " + (op === "+" ? "add" : "subtract") + " the numerators.",
+        num1: num1, num2: num2, den: commonD,
+        blanks: [ { fields: ["num", "den"], expNum: rawNum, expDen: rawDen, exact: false } ] });
+    } else if (op === "*") {
+      rawNum = a * c; rawDen = b * d;
+      steps = [
+        { kind: "multiply", label: "Multiply straight across: numerator × numerator, denominator × denominator.",
+          blanks: [ { fields: ["num", "den"], expNum: rawNum, expDen: rawDen, exact: false } ] }
+      ];
+    } else {
+      rawNum = a * d; rawDen = b * c;
+      steps = [
+        { kind: "flip", label: "Flip the second fraction upside down (its reciprocal).",
+          blanks: [ { fields: ["num", "den"], expNum: d, expDen: c, exact: true } ] },
+        { kind: "divmul", label: "Now multiply by that flipped fraction.",
+          flippedNum: d, flippedDen: c,
+          blanks: [ { fields: ["num", "den"], expNum: rawNum, expDen: rawDen, exact: false } ] }
+      ];
+    }
+    // No refinement steps are pre-built here — a sharp kid can shortcut
+    // straight to the simplified (or mixed-number) answer on this very blank
+    // (it's equivalence-checked), and forcing them through "simplify this"
+    // and "pull out the whole part" afterward when they already did that
+    // work would just be busywork. Whatever refinement is still needed gets
+    // figured out — and added on the fly — from what they actually typed,
+    // once this step resolves (see submitFractionBlank).
+    return steps;
+  }
+
+  function generateFractionProblem() {
+    var ops = ["+", "-", "*", "/"];
+    var op = ops[randInt(0, 3)];
+    var b = randInt(2, 9), d = randInt(2, 9);
+    var a = randInt(1, b - 1), c = randInt(1, d - 1);
+    // Keep subtraction non-negative (first fraction >= second) so results
+    // stay simple — no minus-sign input needed anywhere in this task.
+    if (op === "-" && a * d < c * b) {
+      var ta = a, tb = b; a = c; b = d; c = ta; d = tb;
+    }
+    var steps = buildFractionSteps(op, a, b, c, d);
+    return {
+      type: "fraction", op: op, a: a, b: b, c: c, d: d,
+      steps: steps, stepIndex: 0, blankIndex: 0, fieldIdx: 0, tempVals: {},
+      entries: steps.map(function (s) { return new Array(s.blanks.length).fill(null); }),
+      finalUnits: 0, finalNum: 0, finalDen: 1 // set for real once the raw result resolves
+    };
+  }
+
+  function frPlain(val) {
+    var e = document.createElement("div");
+    e.className = "frac-plain";
+    e.textContent = (val === null || val === undefined) ? "" : val;
+    return e;
+  }
+  function frOp(row, text) {
+    var o = document.createElement("div");
+    o.className = "frac-op";
+    o.textContent = text;
+    row.appendChild(o);
+  }
+  function frBuild(row, numNode, denNode) {
+    var wrap = document.createElement("div");
+    wrap.className = "frac";
+    wrap.appendChild(numNode);
+    var bar = document.createElement("div");
+    bar.className = "frac-bar";
+    wrap.appendChild(bar);
+    wrap.appendChild(denNode);
+    row.appendChild(wrap);
+    return wrap;
+  }
+  function frBoxState(kind, val, maxLen) {
+    var b = document.createElement("div");
+    b.className = "frac-box" + (maxLen > 1 ? " wide" : "");
+    if (kind === "active") { b.classList.add("active"); b.textContent = "?"; }
+    else if (kind === "typed") { b.classList.add("typed"); b.textContent = val; }
+    else if (kind === "right" || kind === "wrong") { b.classList.add("filled", kind); b.textContent = val; }
+    // "pending": blank empty box, nothing more to add
+    return b;
+  }
+  function frLiveBox(liveInputRef, maxLen, allowShort) {
+    maxLen = maxLen || 1;
+    var b = document.createElement("div");
+    b.className = "frac-box input-cell" + (maxLen > 1 ? " wide" : "");
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.setAttribute("inputmode", "numeric");
+    inp.setAttribute("pattern", "[0-9]*");
+    inp.maxLength = maxLen;
+    inp.autocomplete = "off";
+    inp.className = "frac-inline-input";
+    inp.addEventListener("input", function (e) { onFracCellInput(e, maxLen, allowShort); });
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") onFracCellSubmitForce(e); });
+    b.appendChild(inp);
+    liveInputRef.el = inp;
+    return b;
+  }
+
+  function renderFractionMain(task) {
+    fracMainRow.innerHTML = "";
+    frBuild(fracMainRow, frPlain(task.a), frPlain(task.b));
+    frOp(fracMainRow, OP_SYMBOL[task.op]);
+    frBuild(fracMainRow, frPlain(task.c), frPlain(task.d));
+    frOp(fracMainRow, "=");
+    frOp(fracMainRow, "?");
+  }
+
+  // Builds ONE step's worked line into rowEl. isCurrent is true only for the
+  // step being actively solved right now — earlier steps just render their
+  // already-resolved (right/wrong) boxes, same visual language, no live input.
+  function renderStepLine(task, stepIdx, rowEl, liveInputRef) {
+    var st = task.steps[stepIdx];
+    var isCurrent = stepIdx === task.stepIndex;
+
+    function blank(idx) {
+      var b = st.blanks[idx];
+      var entry = task.entries[stepIdx][idx];
+      var isActive = isCurrent && idx === task.blankIndex;
+      var isWhole = b.fields.length === 1;
+      var numLen = String(b.expNum).length;
+
+      if (isWhole) {
+        var node;
+        if (entry) node = frBoxState(entry.wrong ? "wrong" : "right", entry.num, numLen);
+        else if (isActive) node = frLiveBox(liveInputRef, numLen, false);
+        else node = frBoxState("pending", null, numLen);
+        rowEl.appendChild(node);
+        return;
+      }
+
+      var denLen = String(b.expDen).length;
+      var allowShort = !b.exact; // equivalence blanks can have a shorter-but-correct answer
+      var numNode, denNode;
+      if (entry) {
+        numNode = frBoxState(entry.wrong ? "wrong" : "right", entry.num, numLen);
+        denNode = frBoxState(entry.wrong ? "wrong" : "right", entry.den, denLen);
+      } else if (isActive) {
+        if (task.fieldIdx === 0) {
+          numNode = frLiveBox(liveInputRef, numLen, allowShort);
+          denNode = frBoxState("pending", null, denLen);
+        } else {
+          numNode = frBoxState("typed", task.tempVals.num, numLen);
+          denNode = frLiveBox(liveInputRef, denLen, allowShort);
+        }
+      } else {
+        numNode = frBoxState("pending", null, numLen);
+        denNode = frBoxState("pending", null, denLen);
+      }
+      frBuild(rowEl, numNode, denNode);
+    }
+
+    if (st.kind === "convert") {
+      // both "multiply by a form of 1" conversions in one combined equation —
+      // but only the sides that actually need converting get a blank; a side
+      // whose denominator already matches is shown plain.
+      var bi = 0;
+      frBuild(rowEl, frPlain(task.a), frPlain(task.b));
+      if (st.sides.indexOf(0) !== -1) { frOp(rowEl, "×"); blank(bi); bi++; }
+      frOp(rowEl, OP_SYMBOL[task.op]);
+      frBuild(rowEl, frPlain(task.c), frPlain(task.d));
+      if (st.sides.indexOf(1) !== -1) { frOp(rowEl, "×"); blank(bi); bi++; }
+      frOp(rowEl, "=");
+      frOp(rowEl, "?");
+    } else if (st.kind === "combine") {
+      frBuild(rowEl, frPlain(st.num1), frPlain(st.den));
+      frOp(rowEl, OP_SYMBOL[task.op]);
+      frBuild(rowEl, frPlain(st.num2), frPlain(st.den));
+      frOp(rowEl, "=");
+      blank(0);
+    } else if (st.kind === "multiply") {
+      frBuild(rowEl, frPlain(task.a), frPlain(task.b));
+      frOp(rowEl, "×");
+      frBuild(rowEl, frPlain(task.c), frPlain(task.d));
+      frOp(rowEl, "=");
+      blank(0);
+    } else if (st.kind === "flip") {
+      frBuild(rowEl, frPlain(task.c), frPlain(task.d));
+      frOp(rowEl, "→");
+      blank(0);
+    } else if (st.kind === "divmul") {
+      frBuild(rowEl, frPlain(task.a), frPlain(task.b));
+      frOp(rowEl, "×");
+      frBuild(rowEl, frPlain(st.flippedNum), frPlain(st.flippedDen));
+      frOp(rowEl, "=");
+      blank(0);
+    } else if (st.kind === "wholeNumber") {
+      frBuild(rowEl, frPlain(st.rawNum), frPlain(st.rawDen));
+      frOp(rowEl, "=");
+      blank(0);
+    } else if (st.kind === "mixed") {
+      frBuild(rowEl, frPlain(st.rawNum), frPlain(st.rawDen));
+      frOp(rowEl, "=");
+      blank(0);
+      blank(1);
+    } else { // simplify
+      frBuild(rowEl, frPlain(st.baseNum), frPlain(st.baseDen));
+      frOp(rowEl, "=");
+      blank(0);
+    }
+  }
+
+  // Renders the whole worked solution so far, one line per step — like
+  // writing it out continuously on paper rather than erasing the page
+  // between steps. Earlier lines stay put, fully resolved; only the newest
+  // line is live.
+  function renderFractionStep(task) {
+    fracStepRow.innerHTML = "";
+    var liveInputRef = { el: null };
+    for (var i = 0; i <= task.stepIndex && i < task.steps.length; i++) {
+      var lineEl = document.createElement("div");
+      lineEl.className = "frac-row";
+      renderStepLine(task, i, lineEl, liveInputRef);
+      fracStepRow.appendChild(lineEl);
+    }
+    var curSt = task.steps[task.stepIndex];
+    fracStepLabel.textContent = curSt ? curSt.label : "";
+    if (liveInputRef.el) liveInputRef.el.focus();
+  }
+
+  function renderFractionRound() {
+    feedback.textContent = "";
+    feedback.className = "feedback";
+    renderFractionMain(current);
+    renderFractionStep(current);
+  }
+
+  function fractionBlankWhy(st, blankIndex) {
+    var b = st.blanks[blankIndex];
+    if (st.kind === "convert") {
+      var side = st.sides[blankIndex];
+      return (side === 0 ? current.a + "/" + current.b : current.c + "/" + current.d) +
+        " needs × " + b.expNum + "/" + b.expDen;
+    }
+    if (st.kind === "flip") return current.c + "/" + current.d + " flipped is " + b.expNum + "/" + b.expDen;
+    if (st.kind === "wholeNumber") return st.rawNum + "/" + st.rawDen + " = " + b.expNum;
+    if (st.kind === "mixed") {
+      return blankIndex === 0
+        ? "The whole number part is " + b.expNum
+        : "The leftover fraction is " + b.expNum + "/" + b.expDen;
+    }
+    if (st.kind === "simplify") return st.baseNum + "/" + st.baseDen + " simplifies to " + b.expNum + "/" + b.expDen;
+    return "Try " + b.expNum + "/" + b.expDen + ", or any equivalent fraction";
+  }
+
+  function advanceFractionBlank(task, delay) {
+    setTimeout(function () {
+      var st = task.steps[task.stepIndex];
+      task.blankIndex++;
+      if (task.blankIndex >= st.blanks.length) {
+        task.stepIndex++;
+        task.blankIndex = 0;
+        if (task.stepIndex >= task.steps.length) {
+          finishFractionTask(task);
+          setTimeout(startRound, 2000);
+          return;
+        }
+      }
+      renderFractionStep(task);
+    }, delay);
+  }
+
+  function submitFractionBlank() {
+    var task = current;
+    var st = task.steps[task.stepIndex];
+    var b = st.blanks[task.blankIndex];
+    var num = task.tempVals.num, den = task.tempVals.den;
+    var correct = b.fields.length > 1
+      ? (b.exact ? (num === b.expNum && den === b.expDen) : (den > 0 && num * b.expDen === b.expNum * den))
+      : (num === b.expNum);
+
+    task.entries[task.stepIndex][task.blankIndex] = { num: num, den: den, wrong: !correct };
+
+    if (correct) {
+      feedback.textContent = "";
+      feedback.className = "feedback";
+    } else {
+      feedback.textContent = fractionBlankWhy(st, task.blankIndex) + ".";
+      feedback.className = "feedback bad";
+    }
+
+    // This is the "raw result" blank (any equivalent fraction is accepted)
+    // — figure out what, if anything, still needs doing based on what was
+    // actually typed. A kid who shortcuts straight to the simplified or
+    // mixed-number answer skips the follow-up steps entirely; one who leaves
+    // it unreduced or improper gets exactly the steps still needed, no more.
+    if (st.kind === "combine" || st.kind === "multiply" || st.kind === "divmul") {
+      var baseNum = correct ? num : b.expNum;
+      var baseDen = correct ? den : b.expDen;
+      var extraSteps = [];
+      var refinement = appendResultRefinementSteps(extraSteps, baseNum, baseDen);
+      if (extraSteps.length > 0) {
+        var extraEntries = extraSteps.map(function (s) { return new Array(s.blanks.length).fill(null); });
+        Array.prototype.splice.apply(task.steps, [task.stepIndex + 1, 0].concat(extraSteps));
+        Array.prototype.splice.apply(task.entries, [task.stepIndex + 1, 0].concat(extraEntries));
+      }
+      task.finalUnits = refinement.finalUnits;
+      task.finalNum = refinement.finalNum;
+      task.finalDen = refinement.finalDen;
+    }
+
+    awardPoints(correct);
+    task.tempVals = {};
+    task.fieldIdx = 0;
+    renderFractionStep(task);
+    advanceFractionBlank(task, 1900);
+  }
+
+  function completeFractionEntry(val) {
+    var task = current;
+    var st = task.steps[task.stepIndex];
+    var b = st.blanks[task.blankIndex];
+    var fieldName = b.fields[task.fieldIdx];
+    task.tempVals[fieldName] = val;
+    if (task.fieldIdx < b.fields.length - 1) {
+      task.fieldIdx++;
+      renderFractionStep(task);
+    } else {
+      submitFractionBlank();
+    }
+  }
+
+  function onFracCellInput(e, maxLen, allowShort) {
+    var v = e.target.value.replace(/[^0-9]/g, "").slice(0, maxLen);
+    e.target.value = v;
+    if (fracInputTimer) { clearTimeout(fracInputTimer); fracInputTimer = null; }
+    if (v.length === 0) return;
+    if (v.length >= maxLen) { completeFractionEntry(parseInt(v, 10)); return; }
+    if (!allowShort) return; // exact-answer box: wait for the full digit count (or Enter)
+    // Fewer digits than the box's max, but still a real answer (e.g. "2" in
+    // a box sized for "12") — give it a beat in case more digits are coming,
+    // then accept what's there.
+    var inputEl = e.target;
+    fracInputTimer = setTimeout(function () {
+      fracInputTimer = null;
+      if (inputEl.value === v && v.length > 0) completeFractionEntry(parseInt(v, 10));
+    }, 900);
+  }
+
+  function onFracCellSubmitForce(e) {
+    if (fracInputTimer) { clearTimeout(fracInputTimer); fracInputTimer = null; }
+    var v = e.target.value.replace(/[^0-9]/g, "");
+    if (v.length < 1) return;
+    completeFractionEntry(parseInt(v, 10));
+  }
+
+  function finishFractionTask(task) {
+    var resultStr;
+    if (task.finalUnits > 0 && task.finalNum > 0) resultStr = task.finalUnits + " " + task.finalNum + "/" + task.finalDen;
+    else if (task.finalUnits > 0) resultStr = String(task.finalUnits);
+    else resultStr = task.finalNum + "/" + task.finalDen;
+    feedback.textContent = task.a + "/" + task.b + " " + OP_SYMBOL[task.op] + " " + task.c + "/" + task.d + " = " + resultStr + " ✓";
+    feedback.className = "feedback good";
+  }
+
+  function showFractionUI() {
+    resetTaskUI();
+    fractionPanel.style.display = "block";
+    problemText.style.display = "none";
+    problemSub.style.display = "none";
+  }
+
+  // ================= MODE SWITCHING + MAIN LOOP =================
+  var current = null;
+  var lastType = null;
+  var stageEl = document.querySelector(".stage");
+  var digitPanel = document.getElementById("digitPanel");
+  var factorPanel = document.getElementById("factorPanel");
+  var modeButtons = document.querySelectorAll(".mode-btn");
+  // fractionPanel already declared above in the fraction-task section
+
+  function enabledTypes() {
+    var types = [];
+    modeButtons.forEach(function (b) { if (b.classList.contains("active")) types.push(b.dataset.mode); });
+    return types;
+  }
+
+  function resetTaskUI() {
+    stageEl.style.display = "none";
+    hintToggleWrap.style.display = "none";
+    choicesRow.style.display = "none";
+    digitPanel.style.display = "none";
+    factorPanel.style.display = "none";
+    fractionPanel.style.display = "none";
+  }
+  function showLineUI() {
+    resetTaskUI();
+    stageEl.style.display = "";
+    lineSvg.style.display = "";
+    squareSvg.style.display = "none";
+    hintToggleWrap.style.display = "flex";
+    choicesRow.style.display = "";
+    problemText.style.display = "";
+    problemSub.style.display = "";
+  }
+  function showSquareUI() {
+    resetTaskUI();
+    stageEl.style.display = "";
+    lineSvg.style.display = "none";
+    squareSvg.style.display = "";
+    choicesRow.style.display = "";
+    problemText.style.display = "";
+    problemSub.style.display = "";
+  }
+  function showOrderUI() {
+    resetTaskUI();
+    choicesRow.style.display = "";
+    problemText.style.display = "";
+    problemSub.style.display = "";
+  }
+  function showDigitUI() {
+    resetTaskUI();
+    digitPanel.style.display = "block";
+    problemText.style.display = "none";
+    problemSub.style.display = "none";
+  }
+
+  function pickType() {
+    var types = enabledTypes();
+    if (types.length === 0) types = ["line"]; // safety net, shouldn't happen
+    if (types.length === 1) return types[0];
+    // avoid repeating the same task type twice in a row when there's a choice
+    var pool = types.filter(function (t) { return t !== lastType; });
+    if (pool.length === 0) pool = types;
+    return pool[randInt(0, pool.length - 1)];
+  }
+
+  function startRound() {
+    var type = pickType();
+    lastType = type;
+    if (type === "line") {
+      current = generateNoRepeat("line", generateLineProblem);
+      showLineUI();
+      renderLineRound();
+    } else if (type === "square") {
+      current = generateNoRepeat("square", generateSquare);
+      showSquareUI();
+      renderSquareRound();
+    } else if (type === "order") {
+      current = generateNoRepeat("order", generateOrderProblem);
+      showOrderUI();
+      renderOrderRound();
+    } else if (type === "multiply") {
+      current = generateNoRepeat("multiply", generateMultiplyProblem);
+      showDigitUI();
+      renderDigitRound();
+    } else if (type === "divide") {
+      current = generateNoRepeat("divide", generateDivideProblem);
+      showDigitUI();
+      renderDigitRound();
+    } else if (type === "factor") {
+      current = generateNoRepeat("factor", generateFactorProblem);
+      showFactorUI();
+      renderFactorRound();
+    } else {
+      current = generateNoRepeat("fraction", generateFractionProblem);
+      showFractionUI();
+      renderFractionRound();
+    }
+  }
+
+  modeButtons.forEach(function (btn) {
+    btn.setAttribute("aria-pressed", "true");
+    btn.addEventListener("click", function () {
+      var willBeActive = !btn.classList.contains("active");
+      if (!willBeActive && enabledTypes().length === 1) return; // keep at least one type enabled
+      btn.classList.toggle("active", willBeActive);
+      btn.setAttribute("aria-pressed", willBeActive ? "true" : "false");
+      // if the task on screen just got disabled, jump to a still-enabled type right away
+      if (!willBeActive && current && current.type === btn.dataset.mode) startRound();
+    });
+  });
+
+  hintToggle.addEventListener("change", function () { setHintVisible(this.checked); });
+  divHintToggle.addEventListener("change", function () { divMultiples.style.display = this.checked ? "flex" : "none"; });
+  document.getElementById("skipBtn").addEventListener("click", startRound);
+
+  startRound();
+})();
+</script>
+</body>
+</html>
+
+</body></html>
