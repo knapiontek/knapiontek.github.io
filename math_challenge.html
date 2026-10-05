@@ -178,6 +178,8 @@ main{flex:1 1 auto;min-height:540px;display:flex;gap:14px}
 .eq .frac>span:first-child{border-bottom-width:3px}
 .par{color:var(--ink-soft)}
 .op{padding:0 1px}
+.nd.sm>.op,.nd.sm>.mk-add>.op,.nd.sm>.mk-strike>.op{margin:0 .28em}
+.nd.sm>.op:first-child{margin-left:0}
 .frac>span .op{margin-right:.22em}
 sup{font-size:.6em;line-height:0;vertical-align:super}
 .pw{display:inline-block;white-space:nowrap;border-radius:8px}
@@ -201,6 +203,20 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
 .eq.flip{animation:flip .4s ease-out}
 .tools{display:flex;flex-wrap:wrap;gap:8px}
 .hint-pulse{animation:hp 1s ease-in-out infinite}
+/* choosing a part of the equation */
+.live .nd{cursor:pointer;border-radius:7px}
+.live .nd.v:hover,.live .nd.nm:hover{background:rgba(47,111,214,.10)}
+.nd.sel{background:rgba(47,111,214,.16);box-shadow:0 0 0 2.5px var(--accent);border-radius:8px}
+.nd.sel .nd.sel{box-shadow:none}
+.nd.sel.run{display:inline-flex;align-items:baseline}
+.nd.sm>.run>.op{margin:0 .28em}
+.nd.sm>.run:first-child>.op:first-child{margin-left:0}
+[data-at]{cursor:pointer}
+.sq2{font-size:.78em;position:relative;top:-.45em;font-weight:700}
+.chosen{font-size:13.5px;font-weight:700;color:var(--ink-soft);min-height:1.6em;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.chosen .cpick{font-family:var(--hand);font-weight:400;font-size:24px;color:var(--ink);display:inline-flex;align-items:center}
+.obtn.small{font-family:var(--body);font-weight:800;font-size:14px}
+
 @keyframes hp{50%{box-shadow:0 3px 0 var(--ink),0 0 0 6px rgba(47,111,214,.35)}}
 .eq .hint-pulse{animation:hp2 1s ease-in-out infinite;border-radius:8px}
 @keyframes hp2{50%{box-shadow:0 0 0 5px rgba(47,111,214,.45);background:rgba(47,111,214,.12)}}
@@ -273,19 +289,15 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
 .bracket{display:flex;gap:6px;position:relative;border-top:3px solid var(--ink);padding-top:2px}
 .bracket::before{content:"";position:absolute;left:-5px;top:-3px;bottom:-2px;border-left:3px solid var(--ink);border-top-left-radius:9px}
 .tablebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-/* segmented switch: every choice the same width */
-.seg{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;border:2px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--panel)}
-.seg button{font-family:var(--body);font-weight:700;font-size:12.5px;border:0;border-left:2px solid var(--ink);background:transparent;color:var(--ink);padding:4px 12px;cursor:pointer;white-space:nowrap;text-align:center}
-.seg button:first-child{border-left:0}
-.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
-.mtable{display:flex;flex-wrap:wrap;align-self:flex-start;gap:0;border-top:2px solid var(--ink)}
-.tcol{display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 6px 0;border-left:1.5px solid rgba(36,48,74,.35);min-width:52px}
-.tcol:first-child{border-left:0}
-.tlab{font-family:var(--hand);font-size:17px;color:var(--ink-soft);white-space:nowrap}
-.tval{font-family:var(--hand);font-weight:400;font-size:28px;line-height:42px;color:var(--ink)}
+/* the times table: 1 … 9 on top, the results in one row below; same size filled in or not */
+.mtable{display:grid;grid-template-columns:max-content repeat(9,max-content);grid-template-rows:auto auto;column-gap:0;row-gap:4px;align-self:flex-start;align-items:center;justify-items:center}
+.thead{font-family:var(--hand);font-size:20px;color:var(--ink-soft);white-space:nowrap;justify-self:end;padding-right:6px}
+.tnum{font-family:var(--hand);font-size:24px;color:var(--ink-soft);border-bottom:2px solid var(--ink);width:100%;text-align:center}
+.mtable>.thead:first-child{border-bottom:2px solid var(--ink);align-self:stretch;display:flex;align-items:center}
+.toggle.off{opacity:.45;cursor:default}
 .tin input{width:100%;height:100%;border:0;background:transparent;outline:0;text-align:center;font:inherit;color:var(--accent);padding:0}
 .tin:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-.mtable .cell{width:44px}
+.mtable .cell{width:calc(var(--tw,2) * 19px + 12px);margin:0 4px}
 
 /* prime-factor ladder */
 .ladder{display:flex;flex-direction:column;gap:4px;align-self:flex-start;padding:4px 16px 4px 0}
@@ -306,6 +318,8 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
 .cell input{min-width:0}
 .cell.gutter .mdot{width:.2em;height:.2em}
 .fop{color:var(--ink-soft);padding:0 2px}
+.cut{display:inline-flex;align-items:center;gap:4px}
+.cut .old{font-size:.72em;color:var(--ink-soft);text-decoration-color:var(--va);text-decoration-thickness:2px}
 
 /* topic groups: Geometry on its own; the problem topics together with "Next problem" */
 .tgroup{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
@@ -581,11 +595,9 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
 
           <div class="ws" id="pr-mul" hidden></div>
           <div class="ws" id="pr-div" hidden></div>
-          <div class="tablebar" id="pr-tablewrap" hidden>
-            <span class="eyebrow">Times table</span>
-            <div class="seg" role="group" aria-label="Times table of the divisor">
-              <button data-tmode="off" aria-pressed="true">Hide</button><button data-tmode="full" aria-pressed="false">Show</button><button data-tmode="build" aria-pressed="false">Build it myself</button>
-            </div>
+          <div class="toggles tablebar" id="pr-tablewrap" hidden>
+            <label class="toggle"><input type="checkbox" id="pr-t-show">Show the times table</label>
+            <label class="toggle" id="pr-t-fillwrap"><input type="checkbox" id="pr-t-fill">Fill it in for me</label>
           </div>
           <div class="mtable" id="pr-table" hidden></div>
 
@@ -1411,8 +1423,10 @@ const NB = (() => {
 </script>
 <script>
 (() => {
-  // ===== Equations: one engine, two boards (Geometry → Formulas, and Algebra) =====
-  // Every move is done to BOTH sides; the board shows the working line by line.
+  // ===== Equations: one engine, two boards (Algebra, and Geometry's formula problems) =====
+  // A move is always "do the same to both sides"; afterwards each side is tidied with the same
+  // general rules (like terms, cancelling, numbers and fractions, powers). Nothing depends on the route.
+
   // ---------- expression nodes ----------
   const Sy = n => ({ t: 'sym', n }), Nu = v => ({ t: 'num', v });
   const Pr = (num, den = []) => ({ t: 'prod', num, den });
@@ -1432,182 +1446,7 @@ const NB = (() => {
       case 'sqrt': return 'R(' + key(n.e) + ')';
     }
   }
-  const eq = (a, b) => key(a) === key(b);
   const contains = (n, s) => key(n).split(/[^A-Za-zα-γπ]/).includes(s);
-  const isPi = e => e.t === 'sym' && e.n === 'π';
-  // a term like 2·x or a·x: tapped as one piece when adding or taking away
-  const isTerm = e => e.t === 'prod' && !e.den.length && e.num.length === 2 && (e.num[0].t === 'num' || e.num[0].t === 'sym') && e.num[1].t === 'sym';
-
-  function simp(n) {
-    switch (n.t) {
-      case 'sym': return Sy(n.n);
-      case 'num': return Nu(n.v);
-      case 'pow': {
-        let b = simp(n.b), k = n.k;
-        if (b.t === 'sqrt' && k === 2) return b.e;
-        if (b.t === 'pow') { k *= b.k; b = b.b; }
-        if (b.t === 'num') return Nu(fix(b.v ** k));
-        return k === 1 ? b : Pw(b, k);
-      }
-      case 'sqrt': {
-        const e = simp(n.e);
-        if (e.t === 'pow' && e.k % 2 === 0) return simp(Pw(e.b, e.k / 2));
-        if (e.t === 'num' && e.v >= 0 && Number.isInteger(Math.sqrt(e.v))) return Nu(Math.sqrt(e.v));
-        return Sq(e);
-      }
-      case 'sum': {
-        let terms = [];
-        for (const t of n.terms) {
-          const e = simp(t.e);
-          if (e.t === 'sum') e.terms.forEach(u => terms.push(T(u.e, u.s * t.s)));
-          else if (!(e.t === 'num' && e.v === 0)) terms.push(T(e, t.s));
-        }
-        // collect like terms: 5·x − 2·x = 3·x and b − b = 0
-        const split = e => (e.t === 'prod' && !e.den.length && e.num.length > 1 && e.num[0].t === 'num')
-          ? [e.num[0].v, e.num.length === 2 ? e.num[1] : Pr(e.num.slice(1))] : [1, e];
-        const groups = new Map(), order = [];
-        for (const t of terms) {
-          if (t.e.t === 'num') { order.push(t); continue; }
-          const [k, rest] = split(t.e), id = key(rest);
-          if (groups.has(id)) groups.get(id).k += t.s * k;
-          else { const g = { k: t.s * k, rest }; groups.set(id, g); order.push(g); }
-        }
-        terms = order.flatMap(g => {
-          if (!g.rest) return [g];
-          const k = fix(g.k);
-          if (k === 0) return [];
-          return [T(Math.abs(k) === 1 ? g.rest : simp(Pr([Nu(Math.abs(k)), g.rest])), k < 0 ? -1 : 1)];
-        });
-        const ni = terms.findIndex(t => t.e.t === 'num');
-        if (ni >= 0) {
-          let tot = 0; terms.forEach(t => { if (t.e.t === 'num') tot += t.s * t.e.v; });
-          tot = fix(tot);
-          terms = terms.flatMap((t, i) => t.e.t !== 'num' ? [t] : (i === ni && tot !== 0 ? [T(Nu(Math.abs(tot)), tot < 0 ? -1 : 1)] : []));
-        }
-        if (!terms.length) return Nu(0);
-        if (terms.length === 1 && terms[0].s === 1) return terms[0].e;
-        return Su(terms);
-      }
-      case 'prod': {
-        let num = [], den = [];
-        for (const f of n.num) { const e = simp(f); if (e.t === 'prod') { num.push(...e.num); den.push(...e.den); } else num.push(e); }
-        for (const f of n.den) { const e = simp(f); if (e.t === 'prod') { den.push(...e.num); num.push(...e.den); } else den.push(e); }
-        for (let i = 0; i < num.length; i++) { const j = den.findIndex(d => d && eq(d, num[i])); if (j >= 0) { num[i] = null; den[j] = null; } }
-        num = num.filter(Boolean); den = den.filter(Boolean);
-        if (num.some(e => e.t === 'num' && e.v === 0)) return Nu(0);
-        let N = 1, D = 1;
-        num = num.filter(e => e.t === 'num' ? (N *= e.v, false) : true);
-        den = den.filter(e => e.t === 'num' ? (D *= e.v, false) : true);
-        if (Number.isInteger(N) && Number.isInteger(D)) { const g = gcd(N, D); N /= g; D /= g; } else { N = fix(N / D); D = 1; }
-        const ord = a => a.sort((x, y) => (isPi(x) ? 0 : 1) - (isPi(y) ? 0 : 1));
-        ord(num); ord(den);
-        if (N !== 1) num.unshift(Nu(N)); if (D !== 1) den.unshift(Nu(D));
-        if (!den.length) { if (!num.length) return Nu(1); if (num.length === 1) return num[0]; }
-        return Pr(num, den);
-      }
-    }
-  }
-
-  // ---------- one move, done to one side ----------
-  function opSide(side, op, X) {
-    if (op === 'mul' || op === 'div' || op === 'inv') {
-      const base = side.t === 'prod' ? side : Pr([side]);
-      if (op === 'mul') {
-        const j = base.den.findIndex(e => eq(e, X));
-        return {
-          mid: Pr(base.num.concat([mk(X, j >= 0 ? 'strike' : 'add')]), base.den.map((e, i) => i === j ? mk(e, 'strike') : e)),
-          out: simp(Pr(base.num.concat([X]), base.den))
-        };
-      }
-      const j = base.num.findIndex(e => eq(e, X));
-      const num = base.num.map((e, i) => i === j ? mk(e, 'strike') : e);
-      const m = j >= 0 ? 'strike' : 'add';
-      return {
-        mid: op === 'div' ? Pr(num, base.den.concat([mk(X, m)])) : Pr(num.concat([mk(Pr([Nu(1)], [X]), m)]), base.den),
-        out: simp(Pr(base.num, base.den.concat([X])))
-      };
-    }
-    if (op === 'add' || op === 'sub') {
-      const terms = side.t === 'sum' ? side.terms : [T(side)], s = op === 'add' ? 1 : -1;
-      const j = terms.findIndex(t => t.s === -s && eq(t.e, X));
-      return {
-        mid: Su(terms.map((t, i) => i === j ? T(mk(t.e, 'strike'), t.s) : t).concat([T(mk(X, j >= 0 ? 'strike' : 'add'), s)])),
-        out: simp(Su(terms.concat([T(X, s)])))
-      };
-    }
-    if (op === 'sqrt') return { mid: mk(Sq(side), 'add'), out: simp(Sq(side)) };
-    if (op === 'sq') return { mid: mk(Pw(side, 2), 'add'), out: simp(Pw(side, 2)) };
-  }
-  // when one side is 0, dividing would mean dividing by something that is zero
-  const isZero = n => n.t === 'num' && n.v === 0;
-  const allowed = (st, op) => !(op === 'div' && (isZero(st.L) || isZero(st.R)));
-  function applyEq(st, op, X) {
-    if (op === 'swap') return { mid: { L: st.R, R: st.L }, out: { L: st.R, R: st.L } };
-    const a = opSide(st.L, op, X), b = opSide(st.R, op, X);
-    return { mid: { L: a.mid, R: b.mid }, out: { L: a.out, R: b.out } };
-  }
-  const isSym = (n, s) => n.t === 'sym' && n.n === s;
-  // solved only when the letter stands alone on the LEFT side
-  const won = (st, t) => isSym(st.L, t) && !contains(st.R, t);
-  const aloneRight = (st, t) => isSym(st.R, t) && !contains(st.L, t);
-  const stKey = st => key(st.L) + '=' + key(st.R);
-
-  // things a kid can multiply / divide / add / take away: letters, numbers and squares like b²
-  function atomsOf(st) {
-    const seen = new Map();
-    const walk = n => {
-      if (n.t === 'sym' || n.t === 'num') { if (!(n.t === 'num' && n.v === 0)) seen.set(key(n), n.t === 'sym' ? Sy(n.n) : Nu(n.v)); return; }
-      if (n.t === 'prod') { [...n.num, ...n.den].forEach(e => { if (e.t === 'sum') seen.set(key(e), e); walk(e); }); }
-      // a term like 2·x can be taken away as a whole
-      if (n.t === 'sum') n.terms.forEach(t => { const e = t.e; if (isTerm(e)) seen.set(key(e), e); walk(e); });
-      if (n.t === 'pow') { if (n.b.t === 'sym') seen.set(key(n), Pw(Sy(n.b.n), n.k)); walk(n.b); }
-      if (n.t === 'sqrt') walk(n.e);
-    };
-    walk(st.L); walk(st.R);
-    return [...seen.values()];
-  }
-
-  // the whole terms of both sides: 5·x and 1 in 5·x + 1
-  function termsOf(st) {
-    const seen = new Map();
-    [st.L, st.R].forEach(side => (side.t === 'sum' ? side.terms.map(t => t.e) : [side])
-      .forEach(e => { if (!(e.t === 'num' && e.v === 0)) seen.set(key(e), e); }));
-    return [...seen.values()];
-  }
-
-  // shortest list of moves to finish (breadth-first, capped so it stays quick)
-  function solve(st, target, maxD = 4) {
-    if (won(st, target)) return [];
-    let frontier = [{ s: st, path: [] }];
-    const seen = new Set([stKey(st)]);
-    let budget = 60000;
-    for (let d = 0; d < maxD; d++) {
-      const next = [];
-      for (const { s, path } of frontier) {
-        const moves = [];
-        // take away / add first (that is how it is taught), then times / divide; flipping the sides last
-        // times / divide by any piece; add / take away whole terms only — exactly what a tap picks
-        const atoms = atomsOf(s), terms = termsOf(s);
-        for (const op of ['sub', 'add']) for (const X of terms) moves.push([op, X]);
-        for (const op of ['div', 'mul']) for (const X of atoms) if (!(X.t === 'num' && X.v === 1)) moves.push([op, X]);
-        moves.push(['sqrt', null], ['sq', null], ['swap', null]);
-        for (const [op, X] of moves) {
-          if (--budget < 0) return null;
-          if (!allowed(s, op)) continue;
-          const r = applyEq(s, op, X).out, k = stKey(r);
-          if (seen.has(k) || k.length > 120) continue;
-          seen.add(k);
-          const p = path.concat([[op, X]]);
-          if (won(r, target)) return p;
-          next.push({ s: r, path: p });
-        }
-      }
-      frontier = next;
-      if (!frontier.length) break;
-    }
-    return null;
-  }
-
   function ev(n, vals) {
     switch (n.t) {
       case 'sym': return n.n === 'π' ? Math.PI : vals[n.n];
@@ -1619,9 +1458,249 @@ const NB = (() => {
     }
   }
 
-  // ---------- rendering ----------
-  // the root sign is drawn, so its tick, slope and bar are one line that stretches over what is under it
-  const RAD = '<svg class="rad" viewBox="0 0 10 20" preserveAspectRatio="none" aria-hidden="true"><path d="M0.5 12.5 L3 11 L6.2 19.2 L10 0.6"/></svg>';
+  // =====================================================================
+  // TIDYING: a side becomes a list of terms; a term is a fraction c = [top, bottom]
+  // times factors (letter, bracket or root) each with a whole-number power (negative = in the bottom)
+  // =====================================================================
+  const rat = (p, q = 1) => { if (q < 0) { p = -p; q = -q; } const g = gcd(p, q); return [p / g, q / g]; };
+  const unit = () => ({ c: [1, 1], f: new Map() });
+  const factorTerm = (b, e) => ({ c: [1, 1], f: new Map([[key(b), { b, e }]]) });
+  // multiply (sign 1) or divide (sign −1) two terms: numbers multiply, equal factors add their powers
+  function mulTerm(A, B, sign) {
+    const c = sign > 0 ? rat(A.c[0] * B.c[0], A.c[1] * B.c[1]) : rat(A.c[0] * B.c[1], A.c[1] * B.c[0]);
+    const f = new Map(A.f);
+    for (const [k, { b, e }] of B.f) {
+      const e2 = (f.has(k) ? f.get(k).e : 0) + sign * e;
+      if (e2) f.set(k, { b: f.has(k) ? f.get(k).b : b, e: e2 }); else f.delete(k);
+    }
+    return { c, f };
+  }
+  // (√y)² = y: a root raised to an even power gives back what is inside
+  function unroot(t) {
+    for (const [k, { b, e }] of t.f) {
+      if (b.t !== 'sqrt' || Math.abs(e) < 2) continue;
+      const half = Math.trunc(e / 2), rest = e - 2 * half, f = new Map(t.f);
+      if (rest) f.set(k, { b, e: rest }); else f.delete(k);
+      let u = { c: t.c, f };
+      const inner = asTerm(b.e);
+      for (let i = 0; i < Math.abs(half); i++) u = mulTerm(u, inner, half > 0 ? 1 : -1);
+      return unroot(u);
+    }
+    return t;
+  }
+  const tkey = t => [...t.f.keys()].sort().map(k => k + '^' + t.f.get(k).e).join('*');
+  // like terms: same factors with the same powers → add the numbers in front
+  function collect(terms) {
+    const m = new Map();
+    for (const t of terms) {
+      if (t.c[0] === 0) continue;
+      const k = tkey(t);
+      if (m.has(k)) { const u = m.get(k); u.c = rat(u.c[0] * t.c[1] + t.c[0] * u.c[1], u.c[1] * t.c[1]); }
+      else m.set(k, { c: t.c, f: t.f });
+    }
+    return [...m.values()].filter(t => t.c[0] !== 0);
+  }
+  // a lone bracket with nothing in front of it is just its terms: 1·(x + 2) → x + 2
+  // and a minus in front of a lone bracket flips the signs inside: −(b − a) → a − b
+  // a number (or fraction) times a lone bracket is multiplied out too: 3·(x + 2) → 3·x + 6, (5x + 4) : 5 → x + 4/5
+  const loneBracket = t => t.f.size === 1 && [...t.f.values()][0].e === 1 && [...t.f.values()][0].b.t === 'sum';
+  const openBracket = t => poly([...t.f.values()][0].b).map(u => ({ c: rat(t.c[0] * u.c[0], t.c[1] * u.c[1]), f: u.f }));
+  function poly(n) {
+    switch (n.t) {
+      case 'num': return n.v === 0 ? [] : [{ c: rat(n.v), f: new Map() }];
+      case 'sym': return [factorTerm(Sy(n.n), 1)];
+      case 'sum': {
+        const out = [];
+        for (const t of n.terms) for (const u of poly(t.e)) out.push({ c: [t.s * u.c[0], u.c[1]], f: u.f });
+        return collect(out.flatMap(t => loneBracket(t) ? openBracket(t) : [t]));
+      }
+      case 'prod': {
+        let acc = unit();
+        for (const x of n.num) { const t = asTerm(x); if (t.c[0] === 0) return []; acc = mulTerm(acc, t, 1); }
+        for (const x of n.den) acc = mulTerm(acc, asTerm(x), -1);
+        acc = unroot(acc);
+        return loneBracket(acc) ? openBracket(acc) : [acc];
+      }
+      case 'pow': {
+        const p = poly(n.b);
+        if (!p.length) return [];
+        if (p.length === 1) { const t = p[0], u = unroot({ c: rat(t.c[0] ** n.k, t.c[1] ** n.k), f: new Map([...t.f].map(([k, v]) => [k, { b: v.b, e: v.e * n.k }])) }); return loneBracket(u) ? openBracket(u) : [u]; }
+        return [factorTerm(fromPoly(p), n.k)];
+      }
+      case 'sqrt': {
+        const p = poly(n.e);
+        if (!p.length) return [];
+        if (p.length === 1 && rootTerm(p[0])) return [rootTerm(p[0])];
+        return [factorTerm(Sq(fromPoly(p)), 1)];
+      }
+    }
+  }
+  // one term stands for this node; a sum of several terms becomes a bracket factor
+  function asTerm(n) {
+    const p = poly(n);
+    if (!p.length) return { c: [0, 1], f: new Map() };
+    return p.length === 1 ? p[0] : factorTerm(fromPoly(p), 1);
+  }
+  // √ of a perfect square term: √(4·x²) = 2·x
+  function rootTerm(t) {
+    const [p, q] = t.c, rp = Math.round(Math.sqrt(p)), rq = Math.round(Math.sqrt(q));
+    if (p < 0 || rp * rp !== p || rq * rq !== q || [...t.f.values()].some(v => v.e % 2)) return null;
+    return { c: [rp, rq], f: new Map([...t.f].map(([k, v]) => [k, { b: v.b, e: v.e / 2 }])) };
+  }
+  // back to a tree for writing it down
+  function termNode(t, alone) {
+    let [p, q] = t.c;
+    const fs = [...t.f.values()].sort((a, b) => (a.b.t === 'sym' && a.b.n === 'π' ? -1 : 0) - (b.b.t === 'sym' && b.b.n === 'π' ? -1 : 0));
+    const num = [], den = [];
+    fs.forEach(({ b, e }) => { const node = Math.abs(e) === 1 ? b : Pw(b, Math.abs(e)); (e > 0 ? num : den).push(node); });
+    if (!alone) p = Math.abs(p);
+    const top = (p !== 1 || !num.length) ? [Nu(p), ...num] : num;
+    const bottom = q !== 1 ? [Nu(q), ...den] : den;
+    if (!bottom.length) return top.length === 1 ? top[0] : Pr(top);
+    return Pr(top.length === 1 && top[0].t === 'num' && top[0].v === 1 && num.length === 0 ? [] : top, bottom);
+  }
+  function fromPoly(terms) {
+    if (!terms.length) return Nu(0);
+    if (terms.length === 1) return termNode(terms[0], true);
+    const first = terms.findIndex(t => t.c[0] > 0);              // start with a plus term: a − b, not −b + a
+    if (first > 0) terms = [terms[first], ...terms.filter((t, i) => i !== first)];
+    return Su(terms.map(t => T(termNode(t, false), t.c[0] < 0 ? -1 : 1)));
+  }
+  const tidy = n => fromPoly(poly(n));
+
+  // =====================================================================
+  // MOVES: the same thing to both sides, then tidy
+  // =====================================================================
+  function opSide(side, op, X) {
+    if (op === 'add') return Su([T(side), T(X)]);
+    if (op === 'sub') return Su([T(side), T(X, -1)]);
+    if (op === 'mul') return Pr([side, X]);
+    if (op === 'div') return Pr([side], [X]);
+    if (op === 'sqrt') return Sq(side);
+    if (op === 'sq') return Pw(side, 2);
+  }
+  // the working line in between: what is added is yellow, what cancels is crossed out
+  function markSide(side, op, X) {
+    const same = (a, b) => key(tidy(a)) === key(tidy(b));
+    if (op === 'add' || op === 'sub') {
+      const s = op === 'add' ? 1 : -1, terms = side.t === 'sum' ? side.terms : [T(side)];
+      const j = terms.findIndex(t => t.s === -s && same(t.e, X));
+      return Su(terms.map((t, i) => i === j ? T(mk(t.e, 'strike'), t.s) : t).concat([T(mk(X, j >= 0 ? 'strike' : 'add'), s)]));
+    }
+    if (op === 'mul' || op === 'div') {
+      const base = side.t === 'prod' ? side : Pr([side]);
+      const pool = op === 'mul' ? base.den : base.num, j = pool.findIndex(e => same(e, X));
+      const hit = list => list.map((e, i) => i === j ? mk(e, 'strike') : e), m = mk(X, j >= 0 ? 'strike' : 'add');
+      return op === 'mul' ? Pr(base.num.concat([m]), j >= 0 ? hit(base.den) : base.den) : Pr(j >= 0 ? hit(base.num) : base.num, base.den.concat([m]));
+    }
+    if (op === 'sqrt') return mk(Sq(side), 'add');
+    if (op === 'sq') return mk(Pw(side, 2), 'add');
+  }
+  function applyEq(st, op, X) {
+    if (op === 'swap') return { mid: { L: st.R, R: st.L }, out: { L: st.R, R: st.L } };
+    return {
+      mid: { L: markSide(st.L, op, X), R: markSide(st.R, op, X) },
+      out: { L: tidy(opSide(st.L, op, X)), R: tidy(opSide(st.R, op, X)) }
+    };
+  }
+  // multiplying out a bracket (one side only — it does not change the value): 3·(x + 2) → 3·x + 6
+  function expandNode(n) {
+    if (n.t !== 'prod') return null;
+    const i = n.num.findIndex(e => e.t === 'sum');
+    if (i < 0) return null;
+    const rest = n.num.filter((e, k) => k !== i);
+    return Su(n.num[i].terms.map(t => T(Pr([...rest, t.e], n.den), t.s)));
+  }
+  // multiply out at a place on one side, then tidy that side
+  const expandAt = (st, path) => { const s2 = replaceAt(st, path, expandNode(at(st, path))); const side = path.split('.')[0]; return { ...st, [side]: tidy(s2[side]) }; };
+  const canExpand = n => !!n && n.t === 'prod' && n.num.some(e => e.t === 'sum') && (n.num.length > 1 || n.den.length > 0);
+
+  // ---------- which moves are allowed (only real maths rules) ----------
+  const isZero = n => { const p = poly(n); return !p.length; };
+  const isNegNum = n => { const p = poly(n); return p.length === 1 && p[0].f.size === 0 && p[0].c[0] < 0; };
+  const squareSide = n => { const p = poly(n); return p.length === 1 && !!rootTerm(p[0]) && [...p[0].f.values()].length > 0; };
+  const tooBig = n => n.t === 'num' ? Math.abs(n.v) > 1e6 : n.t === 'sum' ? n.terms.some(t => tooBig(t.e)) : n.t === 'prod' ? [...n.num, ...n.den].some(tooBig) : n.t === 'pow' ? tooBig(n.b) : n.t === 'sqrt' ? tooBig(n.e) : false;
+  // why a move is not allowed (or '' when it is)
+  function refuse(st, op, X, target) {
+    if (op === 'div' || op === 'mul') {
+      if (isZero(X)) return op === 'div' ? 'You can never divide by 0.' : 'Multiplying by 0 makes both sides 0 — that loses the equation.';
+      if (op === 'div' && contains(X, target)) return `Don't divide by something with <b>${target}</b> in it — it might be 0.`;
+    }
+    if (op === 'sqrt' && (isNegNum(st.L) || isNegNum(st.R))) return 'There is no square root of a negative number.';
+    if (op !== 'swap' && op !== 'sqrt' && op !== 'sq') { const r = applyEq(st, op, X).out; if (tooBig(r.L) || tooBig(r.R)) return 'The numbers would get far too big.'; }
+    return '';
+  }
+  const won = (st, t) => st.L.t === 'sym' && st.L.n === t && !contains(st.R, t);
+
+  // =====================================================================
+  // THE HINT: like a person — undo the outermost step on the side with the letter
+  // =====================================================================
+  function peel(st, t) {
+    const inL = contains(st.L, t), inR = contains(st.R, t);
+    if (won(st, t)) return null;
+    if (!inL && inR) return { op: 'swap' };
+    if (inL && inR) {                                         // bring the letter's terms over to the left
+      if (st.R.t === 'sum') { const i = st.R.terms.findIndex(u => contains(u.e, t)); return { op: st.R.terms[i].s > 0 ? 'sub' : 'add', path: 'R.t' + i }; }
+      return { op: 'sub', path: 'R' };
+    }
+    const L = st.L;
+    if (L.t === 'sum') {                                      // take away what is added
+      const i = L.terms.findIndex(u => !contains(u.e, t));
+      return i < 0 ? null : { op: L.terms[i].s > 0 ? 'sub' : 'add', path: 'L.t' + i };
+    }
+    if (L.t === 'prod') {
+      if (L.den.length) return { op: 'mul', path: 'L.d0' };    // first clear the bottom
+      const i = L.num.findIndex(e => !contains(e, t));         // then divide by what multiplies
+      if (i >= 0) return { op: 'div', path: 'L.n' + i };
+      return null;
+    }
+    if (L.t === 'pow' && L.k % 2 === 0) return { op: 'sqrt' };
+    return null;
+  }
+  // follow the hint to the end: how many moves (or null if it gets stuck)
+  function hintPath(st, t, max = 12) {
+    const out = [];
+    for (let i = 0; i < max; i++) {
+      if (won(st, t)) return out;
+      const h = peel(st, t);
+      if (!h) return null;
+      const X = h.path ? at(st, h.path) : null;
+      if (refuse(st, h.op, X, t)) return null;
+      out.push(h);
+      st = applyEq(st, h.op, X).out;
+    }
+    return won(st, t) ? out : null;
+  }
+
+  // ---------- places in the equation: 'L', 'L.t1' (2nd term), 'L.n0' (1st factor), 'L.d0' (bottom), 'L.n1.b' (base) ----------
+  function at(st, path) {
+    const seg = path.split('.');
+    let n = st[seg[0]];
+    for (const s of seg.slice(1)) {
+      if (!n) return null;
+      const i = +s.slice(1);
+      n = s[0] === 't' ? (n.terms && n.terms[i] && n.terms[i].e) : s[0] === 'n' ? (n.num && n.num[i]) : s[0] === 'd' ? (n.den && n.den[i]) : s === 'b' ? n.b : s === 'e' ? n.e : null;
+    }
+    return n || null;
+  }
+  function replaceAt(st, path, node) {
+    const seg = path.split('.');
+    const rec = (n, k) => {
+      if (k === seg.length) return node;
+      const s = seg[k], i = +s.slice(1);
+      if (s[0] === 't') return { ...n, terms: n.terms.map((u, j) => j === i ? T(rec(u.e, k + 1), u.s) : u) };
+      if (s[0] === 'n') return { ...n, num: n.num.map((u, j) => j === i ? rec(u, k + 1) : u) };
+      if (s[0] === 'd') return { ...n, den: n.den.map((u, j) => j === i ? rec(u, k + 1) : u) };
+      if (s === 'b') return { ...n, b: rec(n.b, k + 1) };
+      if (s === 'e') return { ...n, e: rec(n.e, k + 1) };
+    };
+    return { ...st, [seg[0]]: rec(st[seg[0]], 1) };
+  }
+  const parentPath = p => p.includes('.') ? p.slice(0, p.lastIndexOf('.')) : null;
+
+  // =====================================================================
+  // WRITING IT DOWN — every part carries its place (data-id), so it can be tapped
+  // =====================================================================
   const COL = { x: '#2f6fd6', a: '#e2455b', b: '#14946a', c: '#d98200', d: '#d98200', h: '#7a4cd8', r: '#7a4cd8', e: '#e2455b', f: '#14946a', s: '#e2455b', n: '#2f6fd6',
     'α': '#e2455b', 'β': '#14946a', 'γ': '#7a4cd8', P: '#a37a00', L: '#2f6fd6', V: '#2f6fd6', S: '#2f6fd6', 'π': '#24304a' };
   const col = n => COL[n] || '#24304a';
@@ -1629,57 +1708,90 @@ const NB = (() => {
   const fmtN = v => { const r = Math.round(v * 100) / 100; return String(r).replace('-', '−'); };
   const paren = h => `<span class="par">(</span>${h}<span class="par">)</span>`;
   const fracH = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+  const RAD = '<svg class="rad" viewBox="0 0 10 20" preserveAspectRatio="none" aria-hidden="true"><path d="M0.5 12.5 L3 11 L6.2 19.2 L10 0.6"/></svg>';
 
-  function R(n, o = {}) {
+  // o.ids: write places; o.sel(path) → 'sel' / ''; o.range {path, from, to}: a run of terms or factors is chosen;
+  // o.sub: numbers in place of letters. Each + − sign and · dot carries data-at="path|i" (the sign before part i).
+  const atAttr = (o, path, i) => o.ids && path ? ` data-at="${path}|${i}"` : '';
+  // put a chosen run of pieces into one box
+  const group = (o, path, pieces, join = '') => {
+    if (!(o.range && o.range.path === path)) return pieces.join(join);
+    const { from, to } = o.range;
+    pieces = pieces.slice();
+    // a + in front of the run stays outside the box (b + c is chosen, not +b + c); a − belongs to it
+    const plus = (pieces[from].match(/^<span class="op"[^>]*>\+<\/span>/) || [''])[0];
+    pieces[from] = pieces[from].slice(plus.length);
+    return pieces.slice(0, from).join(join) + (from ? join : '') + plus + `<span class="nd sel run">${pieces.slice(from, to + 1).join(join)}</span>` + (to < pieces.length - 1 ? join : '') + pieces.slice(to + 1).join(join);
+  };
+  function R(n, o = {}, path = null, inParen = false) {
+    const id = o.ids && path ? ` data-id="${path}"` : '';
+    const cls = o.ids && path && o.sel ? o.sel(path) : '';
+    const wrap = (inner, extra = '', style = '') => `<span class="nd${extra}${cls ? ' ' + cls : ''}"${style ? ` style="${style}"` : ''}${id}>${inner}</span>`;
+    const kid = (c, p, pr = false) => R(c, o, path ? path + '.' + p : null, pr);
     let h;
     switch (n.t) {
-      case 'sym': {
-        if (o.sub && n.n in o.sub) { h = `<span class="v" style="--c:${col(n.n)}">${fmtN(o.sub[n.n])}</span>`; break; }
-        const tgt = o.target === n.n ? ' target' : '';
-        const k = o.nokey ? '' : ` data-key="${n.n}"`;
-        h = `<span class="v${tgt}"${k} style="--c:${col(n.n)}">${n.n}</span>`;
+      case 'sym':
+        h = wrap(o.sub && n.n in o.sub ? fmtN(o.sub[n.n]) : n.n, ' v', '--c:' + col(n.n));
         break;
-      }
-      case 'num': h = `<span class="nm"${o.nokey ? '' : ` data-key="#${n.v}"`}>${fmtN(n.v)}</span>`; break;
+      case 'num': h = wrap(fmtN(n.v), ' nm'); break;
       case 'sum':
-        h = n.terms.map((t, i) => {
+        h = wrap(group(o, path, n.terms.map((t, i) => {
           const m = t.e.mark, e = m ? { ...t.e, mark: undefined } : t.e;
-          let inner = e.t === 'sum' ? paren(R(e, o)) : R(e, o);
-          if (isTerm(e) && !o.nokey && !o.sub) inner = `<span class="term" data-key="${key(e)}">${inner}</span>`;
+          const inner = e.t === 'sum' ? kid(e, 't' + i, true) : kid(e, 't' + i);
           const sign = i === 0 ? (t.s < 0 ? '−' : '') : (t.s < 0 ? '−' : '+');
-          const piece = `${sign ? `<span class="op">${sign}</span>` : ''}${inner}`;
+          const piece = `${sign ? `<span class="op"${i ? atAttr(o, path, i) : ''}>${sign}</span>` : ''}${inner}`;
           return m ? `<span class="mk-${m}">${piece}</span>` : piece;
-        }).join(' ');
+        })), ' sm');
+        if (inParen) h = h.replace(/^(<span[^>]*>)/, '$1<span class="par">(</span>').replace(/<\/span>$/, '<span class="par">)</span></span>');
         break;
       case 'prod': {
-        const part = list => list.length ? list.map(e => {
-          const needs = e.t === 'sum' && (list.length > 1 || e.mark);
-          return needs ? (e.mark ? `<span class="mk-${e.mark}">${paren(R({ ...e, mark: undefined }, o))}</span>` : `<span class="ex"${o.nokey || o.sub ? '' : ` data-key="${key(e)}"`}>${paren(R(e, o))}</span>`) : R(e, o);
-        }).join(DOT) : '1';
-        h = n.den.length ? fracH(part(n.num), part(n.den)) : part(n.num);
+        const part = (list, letter, alone) => {
+          if (!list.length) return '1';
+          const minus = list.length > 1 && list[0].t === 'num' && list[0].v === -1;
+          const items = list.map((e, i) => {
+            if (minus && i === 0) return `<span class="nd nm${o.ids && path && o.sel ? ' ' + o.sel(path + '.' + letter + '0') : ''}"${o.ids && path ? ` data-id="${path}.${letter}0"` : ''}>−</span>`;
+            const needs = e.t === 'sum' && (!alone || e.mark);
+            const em = e.mark ? { ...e, mark: undefined } : e;
+            const inner = needs ? kid(em, letter + i, true) : kid(em, letter + i);
+            return e.mark ? `<span class="mk-${e.mark}">${inner}</span>` : inner;
+          });
+          // the dot before factor i can be tapped (top line only)
+          const dot = i => letter === 'n' ? `<span class="mdot"${atAttr(o, path, i)}></span>` : DOT;
+          const first = minus ? 1 : 0;
+          if (letter === 'n' && o.range && o.range.path === path) {
+            const { from, to } = o.range;
+            let out = minus ? items[0] : '';
+            for (let i = first; i < items.length; i++) {
+              if (i === from) out += (i > first ? dot(i) : '') + '<span class="nd sel run">';
+              else if (i > first) out += dot(i);
+              out += items[i];
+              if (i === to) out += '</span>';
+            }
+            return out;
+          }
+          return (minus ? items[0] : '') + items.slice(first).map((it, j) => (j ? dot(first + j) : '') + it).join('');
+        };
+        const top = part(n.num, 'n', n.num.length === 1 && n.den.length > 0), bottom = part(n.den, 'd', n.den.length === 1);
+        h = wrap(n.den.length ? fracH(top, bottom) : top, ' pr');
         break;
       }
       case 'pow': {
         const simple = n.b.t === 'sym' || n.b.t === 'num';
-        const inner = { ...o, nokey: o.nokey || simple };
-        const b = simple ? R(n.b, inner) : paren(R(n.b, o));
-        const k = simple && !o.nokey && !o.sub ? ` data-key="${key(n)}"` : '';
-        h = `<span class="pw"${k}>${b}<sup>${n.k}</sup></span>`; break;
+        h = wrap(`${simple ? kid(n.b, 'b') : kid(n.b, 'b', true)}<sup>${n.k}</sup>`, ' pw');
+        break;
       }
-      case 'sqrt': h = `<span class="sqrt">${RAD}<span class="under">${R(n.e, o)}</span></span>`; break;
+      case 'sqrt': h = wrap(`<span class="sqrt">${RAD}<span class="under">${kid(n.e, 'e')}</span></span>`); break;
     }
     return n.mark ? `<span class="mk-${n.mark}">${h}</span>` : h;
   }
-  const RE = (st, o = {}) => `<span class="ex">${R(st.L, o)}</span><span class="eqs">=</span><span class="ex">${R(st.R, o)}</span>`;
+  const RE = (st, o = {}) => `<span class="ex">${R(st.L, o, 'L')}</span><span class="eqs">=</span><span class="ex">${R(st.R, o, 'R')}</span>`;
   const penText = (op, X) => {
     if (op === 'sqrt') return '| √';
-    if (op === 'sq') return '| ( )²';
-    if (op === 'swap') return '| ⇄ flip';
-    const x = X ? R(X, { nokey: true }) : '?';
-    if (op === 'inv') return `| ${DOT} ${fracH('1', x)}`;
-    return `| ${{ mul: DOT, div: ':', add: '+', sub: '−' }[op]} ${x}`;
+    if (op === 'swap') return '| ⇄';
+    if (op === 'sq') return '| <span class="sq2">2</span>';
+    const x = X ? R(X) : '?', wrapX = X && (X.t === 'sum' || (X.t === 'num' && X.v < 0)) ? paren(x) : x;
+    return `| ${{ mul: DOT, div: ':', add: '+', sub: '−' }[op]} ${wrapX}`;
   };
-
   // ---------- pictures of each formula ----------
   const ink = '#24304a', yel = 'rgba(255,214,10,.45)';
   const tx = (x, y, t, c = ink, s = 22) => `<text x="${x}" y="${y}" fill="${c}" font-size="${s}" text-anchor="middle" dominant-baseline="middle" font-family="Patrick Hand, Comic Sans MS, cursive">${t}</text>`;
@@ -1808,6 +1920,7 @@ const NB = (() => {
     return `We know ${known} of ${art} ${shape}. ${ask}`;
   }
 
+
   // =====================================================================
   // shared bits for both boards
   // =====================================================================
@@ -1823,7 +1936,7 @@ const NB = (() => {
   // =====================================================================
   const FORMULAS = {
     progKey: 'solve',
-    allLabel: null,        // the formulas overview is Geometry's own front page
+    allLabel: 'All formulas',
     inMix: true,           // "Next problem" (shuffle) brings formula puzzles
     pids: () => F.flatMap(f => f.solve.map(v => f.id + ':' + v)),
     make(pid) {
@@ -1871,7 +1984,7 @@ const NB = (() => {
       gen() { const v = rnd(2, 30), a = rnd(2, 30); return { v, L: plus(x, n(a)), R: n(v + a) }; } },
     { id: 'sub', name: 'Something taken from x', form: [plus(x, [A, -1]), B], plan: 'Add the number to both sides.',
       gen() { const v = rnd(8, 40), a = rnd(2, v - 1); return { v, L: plus(x, [n(a), -1]), R: n(v - a) }; } },
-    { id: 'rsub', name: 'x taken away', form: [plus(A, [x, -1]), B], plan: 'Add x to both sides, take the number away, then flip the sides.',
+    { id: 'rsub', name: 'x taken away', form: [plus(A, [x, -1]), B], plan: 'Add x to both sides, take the number away, then swap the sides ⇄.',
       gen() { const v = rnd(2, 20), b = rnd(1, 20); return { v, L: plus(n(v + b), [x, -1]), R: n(b) }; } },
     { id: 'mul', name: 'x times a number', form: [Pr([A, x]), B], plan: 'Divide both sides by the number in front of x.',
       gen() { const a = rnd(2, 9), v = rnd(2, 12); return { v, L: kx(a, x), R: n(a * v) }; } },
@@ -1967,9 +2080,11 @@ const NB = (() => {
     }))
   };
 
+
   // =====================================================================
-  // THE BOARD — the same page for both sources
+  // THE BOARD — choose a part of the equation, then what to do with it
   // =====================================================================
+  const SAY = { add: 'add', sub: 'take away', mul: 'multiply both sides by', div: 'divide both sides by' };
   function Board(root, src) {
     root.innerHTML = `
       <div class="sheet board">
@@ -1979,21 +2094,22 @@ const NB = (() => {
             <div class="findbig">Find <span data-r="target"></span></div>
             <div class="moves" data-r="moves"></div>
             <span class="spacer"></span>
-            <button class="chip" data-r="allbtn">${src.allLabel}</button>
+            ${src.allLabel ? `<button class="chip" data-r="allbtn">${src.allLabel}</button>` : ''}
           </div>
           <div class="hist" data-r="hist"></div>
           <div class="eqrow"><div class="eq live" data-r="eq"></div><span class="pen ghost" data-r="pen"></span></div>
           <div class="status" data-r="status"></div>
           <div class="win" data-r="win" hidden></div>
           <div class="tools" data-r="tools">
-            <button class="obtn" data-op="mul" aria-label="Multiply both sides"><span class="mdot"></span> ?</button>
-            <button class="obtn" data-op="div" aria-label="Divide both sides">: ?</button>
-            <button class="obtn" data-op="add" aria-label="Add to both sides">+ ?</button>
-            <button class="obtn" data-op="sub" aria-label="Take away from both sides">− ?</button>
+            <button class="obtn" data-op="add" aria-label="Add the chosen part to both sides">+</button>
+            <button class="obtn" data-op="sub" aria-label="Take the chosen part away from both sides">−</button>
+            <button class="obtn" data-op="mul" aria-label="Multiply both sides by the chosen part"><span class="mdot"></span></button>
+            <button class="obtn" data-op="div" aria-label="Divide both sides by the chosen part">:</button>
             <button class="obtn" data-op="sqrt" aria-label="Square root of both sides">√</button>
-            <button class="obtn" data-op="sq" aria-label="Square both sides">( )²</button>
-            <button class="obtn" data-op="swap" aria-label="Flip the sides">⇄ flip</button>
+            <button class="obtn sqbtn" data-op="sq" aria-label="Square both sides"><span class="sq2">2</span></button>
+            <button class="obtn" data-op="swap" aria-label="Swap the sides">⇄</button>
           </div>
+          <div class="chosen" data-r="chosen"></div>
           <div class="acts">
             <button class="chip" data-r="undo">Undo</button>
             <button class="chip" data-r="hint">Hint</button>
@@ -2005,10 +2121,11 @@ const NB = (() => {
         <canvas class="fx" data-r="fx" aria-hidden="true"></canvas>
       </div>`;
     const $r = name => root.querySelector(`[data-r="${name}"]`);
-    const board = root.querySelector('.board');
+    const board = root.querySelector('.board'), eqEl = $r('eq');
     const prog = NB.progress.get(src.progKey) || {};
     const saveProg = () => NB.progress.set(src.progKey, prog);
-    const S = { p: null, st: null, hist: [], pending: null, busy: false, best: null, hint: null, done: false };
+    // sel: { path } — the chosen part
+    const S = { p: null, st: null, hist: [], sel: null, busy: false, best: null, hint: null, msg: '', done: false };
 
     function random() {
       if (src.nextPid) { start(src.make(src.nextPid(S.p && S.p.pid, prog))); return; }
@@ -2018,47 +2135,67 @@ const NB = (() => {
       start(src.make(pickOne(pool)));
     }
     function start(p) {
-      Object.assign(S, { p, st: { L: p.L, R: p.R }, hist: [], pending: null, busy: false, hint: null, done: false });
-      const path = solve(S.st, p.target, 4) || solve(S.st, p.target, 5);
+      Object.assign(S, { p, st: { L: p.L, R: p.R }, hist: [], sel: null, busy: false, hint: null, msg: '', done: false });
+      const path = hintPath(S.st, p.target);
       S.best = path ? path.length : null;
       $r('info').innerHTML = p.info;
       draw();
-      if (src.onStart) src.onStart(p.pid);
     }
     const restart = () => start(S.p);
+
+    // ---------- the chosen part ----------
+    // tap a number or a letter: that is chosen; tap a + − sign, a · dot, a fraction line or a bracket:
+    // the whole expression it belongs to is chosen; tap the same thing again: nothing is chosen
+    // tap a sign between two parts (a + b + c, tap the 2nd +): just those two parts, b + c, are chosen
+    const chosenNode = () => {
+      if (!S.sel) return null;
+      const n = at(S.st, S.sel.path);
+      if (S.sel.from == null || !n) return n;
+      const { from, to } = S.sel;
+      return n.t === 'sum' ? Su(n.terms.slice(from, to + 1)) : Pr(n.num.slice(from, to + 1));
+    };
+    const selClass = path => S.sel && S.sel.from == null && path === S.sel.path ? 'sel' : '';
+    const sameSel = (a, b) => a && b && a.path === b.path && a.from === b.from && a.to === b.to;
+    function tap(sel) {
+      S.hint = null; S.msg = '';
+      S.sel = sameSel(S.sel, sel) ? null : sel;
+    }
+    // the sign before part i of the expression at path: its two neighbours, or the whole thing if it has only two parts
+    function signSel(path, i) {
+      const n = at(S.st, path); if (!n) return null;
+      const list = n.t === 'sum' ? n.terms : n.num;
+      const lo = n.t === 'prod' && list[0].t === 'num' && list[0].v === -1 ? 1 : 0;
+      const whole = i - 1 <= lo && i >= list.length - 1 && (n.t === 'sum' || !n.den.length);
+      return whole ? { path } : { path, from: i - 1, to: i };
+    }
 
     function draw(midSt) {
       const st = midSt || S.st, t = S.p.target;
       $r('q').innerHTML = S.p.question;
-      $r('target').innerHTML = R(Sy(t), { nokey: true, target: t });
+      $r('target').innerHTML = R(Sy(t));
       $r('moves').textContent = `Moves: ${S.hist.length}${S.best != null ? ' · best: ' + S.best : ''}`;
-      $r('hist').innerHTML = S.hist.map(hs => `<div class="hline"><span class="ex">${RE(hs.st, { nokey: true })}</span><span class="pen">${penText(hs.op, hs.X)}</span></div>` +
-        (hs.op === 'swap' ? '' : `<div class="hline mid"><span class="ex">${RE(hs.mid, { nokey: true })}</span><span></span></div>`)).join('');
-      const eqEl = $r('eq');
-      eqEl.innerHTML = RE(st, { target: t, nokey: !!midSt || S.done });
-      eqEl.classList.toggle('picking', !!S.pending && !midSt);
+      $r('hist').innerHTML = S.hist.map(hs => `<div class="hline"><span class="ex">${RE(hs.st)}</span><span class="pen">${penText(hs.op, hs.X)}</span></div>` +
+        (hs.mid ? `<div class="hline mid"><span class="ex">${RE(hs.mid)}</span><span></span></div>` : '')).join('');
+      const live = !midSt && !S.done && !S.busy;
+      eqEl.innerHTML = RE(st, live ? { ids: true, sel: selClass, range: S.sel && S.sel.from != null ? S.sel : null } : {});
+      eqEl.classList.toggle('picking', live);
       const pen = $r('pen');
-      pen.innerHTML = midSt ? penText(S.lastOp, S.lastX) : S.pending ? penText(S.pending, null) : '';
+      pen.innerHTML = midSt ? penText(S.lastOp, S.lastX) : '';
       pen.classList.toggle('ghost', !midSt);
 
+      const X = live ? chosenNode() : null;
       $r('tools').hidden = S.done;
       $r('tools').querySelectorAll('.obtn').forEach(btn => {
-        btn.disabled = S.busy || S.done;
-        btn.setAttribute('aria-pressed', String(S.pending === btn.dataset.op));
-        const hop = S.hint && S.hint.op;
-        btn.classList.toggle('hint-pulse', !!hop && !S.pending && hop === btn.dataset.op);
+        const op = btn.dataset.op;
+        btn.disabled = !live || (['add', 'sub', 'mul', 'div'].includes(op) && !X);
+        btn.classList.toggle('hint-pulse', !!S.hint && S.hint.op === op);
       });
-
-      // the hint points at the very thing to tap
-      if (S.hint && S.hint.X && !midSt) eqEl.querySelectorAll(`[data-key="${key(S.hint.X)}"]`).forEach(el => el.classList.add('hint-pulse'));
-
+      $r('chosen').innerHTML = S.done ? '' : X
+        ? `Chosen: <span class="cpick">${R(X)}</span>`
+        : 'Tap a number or a letter — or a sign + − <span class="mdot"></span>, a fraction line or a bracket for the whole part.';
       const status = $r('status');
-      status.hidden = S.done;
-      const tb = `<b style="color:${col(t)}">${t}</b>`;
-      if (midSt) status.innerHTML = 'Doing the same thing to <b>both sides</b>…';
-      else if (S.pending) status.innerHTML = `${{ mul: 'Multiply both sides by', div: 'Divide both sides by', add: 'Add to both sides', sub: 'Take away from both sides' }[S.pending]} … tap it in the line. (Tap the button again to cancel.)`;
-      else if (S.hint) status.innerHTML = S.hint.msg;
-      else status.innerHTML = '';                  // the question above already says what to do
+      status.hidden = S.done || !(midSt || S.msg);
+      status.innerHTML = midSt ? 'Doing the same thing to <b>both sides</b>…' : S.msg;
       $r('undo').disabled = !S.hist.length || S.busy;
       $r('hint').disabled = S.busy || S.done;
       win();
@@ -2070,73 +2207,78 @@ const NB = (() => {
       if (!S.done) { w.hidden = true; return; }
       const t = S.p.target;
       w.innerHTML = `
-        <div class="big">${starsH(starsFor(S.hist.length))} You found ${R(Sy(t), { nokey: true })}!</div>
+        <div class="big">${starsH(starsFor(S.hist.length))} You found ${R(Sy(t))}!</div>
         ${S.p.check(S.st.R)}
         <div class="acts"><button class="chip" data-r="again">Try for fewer moves</button></div>`;
       w.hidden = false;
       $r('again').onclick = () => { NB.cancelAuto(); restart(); };
     }
+    function finished() {
+      if (!won(S.st, S.p.target)) return;
+      S.done = true; S.sel = null;
+      prog[S.p.pid] = Math.max(prog[S.p.pid] || 0, starsFor(S.hist.length)); saveProg(); confetti();
+      NB.score.award(true);
+      NB.autoNext(4500);          // time to read the check, then a random ticked topic
+    }
 
-    function apply(op, X) {
+    function apply(op) {
       if (S.busy || S.done) return;
-      if (!allowed(S.st, op)) {
-        S.pending = null;
-        S.hint = { msg: 'One side is <b>0</b> — dividing now would mean dividing by zero. <b>Undo</b> and try another move.' };
-        draw(); return;
-      }
+      const t = S.p.target, needs = ['add', 'sub', 'mul', 'div'].includes(op);
+      const X = needs ? chosenNode() : null;
+      if (needs && !X) { S.msg = `First tap the part you want to ${SAY[op]}.`; draw(); return; }
+      const why = refuse(S.st, op, X, t);
+      if (why) { S.msg = why + ' Try another move.'; S.hint = null; draw(); return; }
       const r = applyEq(S.st, op, X);
-      S.busy = true; S.pending = null; S.lastOp = op; S.lastX = X;
+      S.busy = true; S.lastOp = op; S.lastX = X; S.msg = ''; S.hint = null;
       draw(r.mid);
       setTimeout(() => {
         S.busy = false;
-        S.hist.push({ st: S.st, op, X, mid: r.mid }); S.st = r.out; S.hint = null;
-        if (won(S.st, S.p.target)) {
-          S.done = true;
-          prog[S.p.pid] = Math.max(prog[S.p.pid] || 0, starsFor(S.hist.length)); saveProg(); confetti();
-          NB.score.award(true);
-          NB.autoNext(4500);          // time to read the check, then a random ticked topic
-        }
+        S.hist.push({ st: S.st, op, X, mid: op === 'swap' ? null : r.mid }); S.st = r.out; S.sel = null;
+        finished();
         draw();
-        const el = $r('eq'), cls = op === 'swap' ? 'flip' : 'pop';
-        el.classList.remove('pop', 'flip'); void el.offsetWidth; el.classList.add(cls);
+        const cls = op === 'swap' ? 'flip' : 'pop';
+        eqEl.classList.remove('pop', 'flip'); void eqEl.offsetWidth; eqEl.classList.add(cls);
       }, op === 'swap' ? 200 : SLOW);
     }
 
+    // the hint chooses the part for you and shows which button to press
     function giveHint() {
-      const p = solve(S.st, S.p.target, 4) || solve(S.st, S.p.target, 5);
-      if (!p) { S.hint = { msg: 'This got tangled. Tap <b>Undo</b> to go back a step.' }; draw(); return; }
-      if (!p.length) return;
-      const [op, X] = p[0], what = X ? R(X, { nokey: true }) : '';
-      const say = { mul: `multiply both sides by <b>${what}</b>`, div: `divide both sides by <b>${what}</b>`, add: `add <b>${what}</b> to both sides`, sub: `take <b>${what}</b> away from both sides`, sqrt: 'take the square root <b>√</b> of both sides', sq: 'square both sides', swap: 'press <b>⇄ flip</b> to swap the sides' }[op];
-      S.hint = { op, X, msg: `Hint: ${say}. ${p.length > 1 ? `Then ${p.length - 1} more move${p.length > 2 ? 's' : ''}.` : 'That finishes it!'}` };
+      const t = S.p.target, h = peel(S.st, t);
+      if (!h || !hintPath(S.st, t)) {
+        let back = 1;
+        while (back < S.hist.length && !hintPath(S.hist[S.hist.length - back].st, t)) back++;
+        S.sel = null; S.hint = null;
+        S.msg = S.hist.length ? `This way gets stuck. Tap <b>Undo</b> ${back === 1 ? 'once' : back + ' times'} and try another move.` : 'Try a different move.';
+        draw(); return;
+      }
+      const X = h.path ? at(S.st, h.path) : null, what = X ? R(X) : '';
+      S.sel = h.path ? { path: h.path } : null; S.hint = h;
+      const say = { add: `add <b>${what}</b> to both sides — press <b>+</b>`, sub: `take <b>${what}</b> away from both sides — press <b>−</b>`,
+        mul: `multiply both sides by <b>${what}</b> — press <b>·</b>`, div: `divide both sides by <b>${what}</b> — press <b>:</b>`,
+        sqrt: 'take the square root of both sides — press <b>√</b>', swap: 'swap the sides — press <b>⇄</b>' }[h.op];
+      const left = hintPath(S.st, t).length;
+      S.msg = `Hint: ${say}. ${left > 1 ? `Then ${left - 1} more move${left > 2 ? 's' : ''}.` : 'That finishes it!'}`;
       draw();
     }
 
     // ---------- events ----------
-    const pickX = k => { const X = atomsOf(S.st).find(a => key(a) === k); if (X) apply(S.pending, X); };
-    // tap the thing itself in the line: adding or taking away uses the whole term (2·x), times and divide the single piece
-    $r('eq').addEventListener('click', e => {
-      if (S.busy || !S.pending) return;
-      const atoms = atomsOf(S.st).map(key);
-      const term = e.target.closest('.term'), piece = e.target.closest('[data-key]');
-      const k = (S.pending === 'add' || S.pending === 'sub') && term ? term.dataset.key : piece && piece.dataset.key;
-      if (k && atoms.includes(k)) pickX(k);
+    eqEl.addEventListener('click', e => {
+      if (S.busy || S.done) return;
+      const sign = e.target.closest('[data-at]');
+      if (sign) { const [path, i] = sign.dataset.at.split('|'); const s = signSel(path, +i); if (s) { tap(s); draw(); } return; }
+      const el = e.target.closest('[data-id]');
+      if (!el) return;
+      tap({ path: el.dataset.id }); draw();
     });
-    $r('tools').addEventListener('click', e => {
-      const btn = e.target.closest('[data-op]'); if (!btn || btn.disabled) return;
-      const op = btn.dataset.op;
-      if (op === 'sqrt' || op === 'sq' || op === 'swap') { apply(op, null); return; }
-      S.pending = S.pending === op ? null : op; draw();
-    });
+    $r('tools').addEventListener('click', e => { const b = e.target.closest('[data-op]'); if (b && !b.disabled) apply(b.dataset.op); });
     $r('undo').addEventListener('click', () => {
       if (!S.hist.length || S.busy) return;
-      const last = S.hist.pop(); S.st = last.st; S.done = false; S.pending = null; S.hint = null; draw();
+      const last = S.hist.pop(); S.st = last.st; S.done = false; S.sel = null; S.hint = null; S.msg = ''; NB.cancelAuto(); draw();
     });
     $r('hint').addEventListener('click', () => { if (!S.busy) giveHint(); });
     $r('restart').addEventListener('click', () => { if (!S.busy) restart(); });
-    // the button on the page always gives another puzzle of the same kind
 
-    // ---------- the overview of every puzzle type ----------
+    // ---------- the overview of every puzzle type (Algebra) ----------
     const ov = $r('all');
     function showAll() {
       ov.innerHTML = `<div class="all-head"><h3>${src.allLabel}</h3><button class="chip" data-close>Close</button></div>
@@ -2145,7 +2287,7 @@ const NB = (() => {
           <div class="aname">${c.name}</div>
           <div class="amini">${c.mini}</div>
           <div class="avars">${c.chips.length
-            ? 'Find: ' + c.chips.map(ch => `<button class="vchip" data-pid="${ch.pid}" style="--c:${ch.c}">${ch.label} ${starsH(prog[ch.pid] || 0)}</button>`).join('')
+            ? c.chips.map(ch => `<button class="vchip" data-pid="${ch.pid}" style="--c:${ch.c}">${ch.label} ${starsH(prog[ch.pid] || 0)}</button>`).join('')
             : starsH(prog[c.pids[0]] || 0)}</div>
         </div>`).join('')}</div>`;
       ov.hidden = false; ov.scrollTop = 0; board.scrollTop = 0;
@@ -2154,16 +2296,18 @@ const NB = (() => {
       const pids = card.dataset.pids.split(','), open = pids.filter(p => !prog[p]);
       ov.hidden = true; start(src.make(pickOne(open.length ? open : pids)));
     }
-    $r('allbtn').addEventListener('click', () => { if (!S.busy) showAll(); });
-    ov.addEventListener('click', e => {
-      if (e.target.closest('[data-close]')) { ov.hidden = true; return; }
-      const chip = e.target.closest('[data-pid]'); if (chip) { ov.hidden = true; start(src.make(chip.dataset.pid)); return; }
-      const card = e.target.closest('[data-pids]'); if (card) startCard(card);
-    });
-    ov.addEventListener('keydown', e => {
-      const card = e.target.closest('[data-pids]');
-      if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); startCard(card); }
-    });
+    if (src.allLabel) {
+      $r('allbtn').addEventListener('click', () => { if (!S.busy) showAll(); });
+      ov.addEventListener('click', e => {
+        if (e.target.closest('[data-close]')) { ov.hidden = true; return; }
+        const chip = e.target.closest('[data-pid]'); if (chip) { ov.hidden = true; start(src.make(chip.dataset.pid)); return; }
+        const card = e.target.closest('[data-pids]'); if (card) startCard(card);
+      });
+      ov.addEventListener('keydown', e => {
+        const card = e.target.closest('[data-pids]');
+        if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); startCard(card); }
+      });
+    }
 
     // ---------- a small burst of paper confetti ----------
     function confetti() {
@@ -2174,14 +2318,13 @@ const NB = (() => {
       const cols = ['#ffd60a', '#e2455b', '#14946a', '#7a4cd8', '#2f6fd6'];
       const ps = Array.from({ length: 90 }, () => ({ x: rc.width * (.25 + Math.random() * .35), y: rc.height * .3, vx: (Math.random() - .5) * 9, vy: -Math.random() * 9 - 3, s: 5 + Math.random() * 5, a: Math.random() * 6, c: pickOne(cols) }));
       const t0 = performance.now();
-      (function step(t) {
+      (function step(tm) {
         g.clearRect(0, 0, rc.width, rc.height);
         ps.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .3; p.a += .2; g.save(); g.translate(p.x, p.y); g.rotate(p.a); g.fillStyle = p.c; g.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); g.restore(); });
-        if (t - t0 < 1600) requestAnimationFrame(step); else g.clearRect(0, 0, rc.width, rc.height);
+        if (tm - t0 < 1600) requestAnimationFrame(step); else g.clearRect(0, 0, rc.width, rc.height);
       })(t0);
     }
 
-    if (!src.allLabel) $r('allbtn').remove();
     return { random, ensure: () => { if (!S.p) random(); }, open: pid => start(src.make(pid)), current: () => S.p && S.p.pid, prog };
   }
 
@@ -2722,20 +2865,31 @@ const NB = (() => {
     focusLive();
   }
 
-  // ---------- the times table of the divisor: hidden, shown in full, or built by the kid ----------
-  const tableMode = () => { const m = prefs.get('table'); return m === true ? 'full' : ['full', 'build'].includes(m) ? m : 'off'; };
+  // ---------- the times table of the divisor: shown or not; filled in for you, or by you ----------
+  // prefs.table: { show, fill } (older saves: 'full' / 'build' / true)
+  const tableOpts = () => {
+    const m = prefs.get('table');
+    if (m && typeof m === 'object') return { show: !!m.show, fill: !!m.fill };
+    return { show: m === 'full' || m === 'build' || m === true, fill: m === 'full' || m === true };
+  };
   function renderTable(t) {
-    const tab = $('pr-table'), mode = tableMode(), d = t.divisor;
-    document.querySelectorAll('[data-tmode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tmode === mode)));
-    tab.hidden = mode === 'off';
+    const tab = $('pr-table'), o = tableOpts(), d = t.divisor;
+    $('pr-t-show').checked = o.show; $('pr-t-fill').checked = o.fill;
+    $('pr-t-fill').disabled = !o.show; $('pr-t-fillwrap').classList.toggle('off', !o.show);
+    tab.hidden = !o.show;
     tab.innerHTML = '';
-    if (mode === 'off') return;
+    if (!o.show) return;
     t.tbl = t.tbl || {};
+    const w = String(9 * d).length;
+    tab.style.setProperty('--tw', Math.max(2, w));
+    // two rows: 1 2 3 … 9 on top, n · d below each
+    tab.appendChild(elt('span', 'thead', 'n'));
+    for (let n = 1; n <= 9; n++) tab.appendChild(elt('span', 'tnum', String(n)));
+    tab.appendChild(elt('span', 'thead', `n · ${d}`));
     for (let n = 1; n <= 9; n++) {
-      const col = elt('div', 'tcol'), want = n * d;
-      col.appendChild(elt('span', 'tlab', `${n} · ${d}`));
-      if (mode === 'full') col.appendChild(elt('b', 'tval', String(want)));
-      else if (t.tbl[n]) col.appendChild(resolved(t.tbl[n]));
+      const want = n * d;
+      if (o.fill) tab.appendChild(elt('div', 'cell tval', String(want)));
+      else if (t.tbl[n]) tab.appendChild(resolved(t.tbl[n]));
       else {
         const b = elt('div', 'cell box tin'), inp = document.createElement('input');
         inp.type = 'text'; inp.inputMode = 'numeric'; inp.maxLength = String(want).length; inp.autocomplete = 'off';
@@ -2744,9 +2898,8 @@ const NB = (() => {
         inp.addEventListener('input', () => { inp.value = inp.value.replace(/\D/g, ''); if (inp.value.length >= inp.maxLength) send(+inp.value); });
         inp.addEventListener('keydown', e => { if (e.key === 'Enter' && inp.value) send(+inp.value); });
         b.appendChild(inp);
-        col.appendChild(b);
+        tab.appendChild(b);
       }
-      tab.appendChild(col);
     }
   }
   // after a table entry: the next empty table box, or back to the division when the table is done
@@ -2754,10 +2907,11 @@ const NB = (() => {
     const next = $('pr-table').querySelector('.tin input');
     if (next) next.focus({ preventScroll: true }); else focusLive();
   }
-  document.querySelectorAll('[data-tmode]').forEach(b => b.addEventListener('click', () => {
-    prefs.set('table', b.dataset.tmode);
+  ['pr-t-show', 'pr-t-fill'].forEach(id => $(id).addEventListener('change', () => {
+    const o = { show: $('pr-t-show').checked, fill: $('pr-t-fill').checked };
+    prefs.set('table', o);
     if (S.cur && S.cur.type === 'divide') renderTable(S.cur);
-    if (b.dataset.tmode === 'build') focusTable(); else focusLive();
+    if (o.show && !o.fill) focusTable(); else focusLive();
   }));
   const renderDigits = t => t.type === 'multiply' ? renderMul(t) : renderDiv(t);
 
@@ -2900,6 +3054,7 @@ const NB = (() => {
   // what is still needed after the raw result: pull out wholes, then simplify
   function tidySteps(steps, n, d) {
     if (n === 0) return { units: 0, n: 0, d: 1 };
+    if (d === 1) return { units: n, n: 0, d: 1 };          // n/1 is just n
     let units = 0, fn = n, fd = d;
     if (n >= d) {
       if (n % d === 0) {
@@ -2922,21 +3077,32 @@ const NB = (() => {
   function fractionSteps(op, a, b, c, d) {
     if (op === '+' || op === '-') {
       // smallest common denominator; each fraction is multiplied by a fraction worth 1 (3/3, 2/2 …)
+      // a fraction that already has that denominator is left alone (· 1/1 changes nothing, so it is not written)
       const D = lcm(b, d), m1 = D / b, m2 = D / d, n1 = a * m1, n2 = c * m2, raw = op === '+' ? n1 + n2 : n1 - n2;
+      const grow = [m1, m2].map((m, i) => m > 1 ? i : -1).filter(i => i >= 0);   // which fractions change
       return [
-        { kind: 'expand', label: 'Multiply each fraction by a fraction worth 1, so both get the smallest common denominator.', blanks: [FR(m1, m1), FR(m2, m2)], m1, m2, D },
-        { kind: 'over', label: 'Now multiply it out — top · top, bottom · bottom.', m1, m2, blanks: [FR(n1, D), FR(n2, D)] },
+        ...(grow.length ? [
+          { kind: 'expand', label: grow.length > 1 ? 'Multiply each fraction by a fraction worth 1, so both get the smallest common denominator.'
+              : `Multiply by a fraction worth 1, so both have the bottom ${D}.`, grow, blanks: grow.map(i => FR([m1, m2][i], [m1, m2][i])), m1, m2, D },
+          { kind: 'over', label: 'Now multiply it out — top · top, bottom · bottom.', grow, m1, m2, blanks: grow.map(i => FR([n1, n2][i], D)) }] : []),
         { kind: 'combine', label: `The bottoms match — now ${op === '+' ? 'add' : 'take away'} the tops.`, n1, n2, den: D, blanks: [{ fields: ['n', 'd'], n: raw, d: D, exact: false }] }
       ];
     }
     // times (and divide, after flipping): shorten across first, then multiply
     const [p1, q1, p2, q2] = op === '*' ? [a, b, c, d] : [a, b, d, c];
     const g1 = gcd(p1, q2), g2 = gcd(p2, q1);
-    const s = [p1 / g1, q1 / g2, p2 / g2, q2 / g1];           // shortened: s[0]/s[1] · s[2]/s[3]
+    const f = [p1, q1, p2, q2], gOf = [g1, g2, g2, g1];        // top 1 pairs with bottom 2, top 2 with bottom 1
+    const s = f.map((v, i) => v / gOf[i]);                     // shortened: s[0]/s[1] · s[2]/s[3]
+    // shortening is done on the line itself, like on paper: cross a number out, write the smaller one next to it
+    const cuts = [0, 1, 2, 3].filter(i => gOf[i] > 1);
+    const N = s[0] * s[2], D = s[1] * s[3];
+    const result = D === 1 ? { fields: ['n'], n: N, exact: true } : { fields: ['n', 'd'], n: N, d: D, exact: false };
     return [
       ...(op === '/' ? [{ kind: 'flip', label: 'To divide, flip the second fraction upside down and multiply.', blanks: [FR(d, c)] }] : []),
-      ...(g1 > 1 || g2 > 1 ? [{ kind: 'cancel', label: 'Shorten first: divide a top and a bottom by the same number — across is allowed.', f: [p1, q1, p2, q2], g: [g1, g2], blanks: [FR(s[0], s[1]), FR(s[2], s[3])] }] : []),
-      { kind: 'times', label: 'Multiply straight across: top · top, bottom · bottom.', f: s, blanks: [{ fields: ['n', 'd'], n: s[0] * s[2], d: s[1] * s[3], exact: false }] }
+      { kind: 'times', f, g: gOf, s, cuts, result: cuts.length,
+        labels: [...cuts.map(() => 'Shorten first: cross out a top and a bottom that share a number and divide them — across is allowed.'),
+          'Multiply straight across: top · top, bottom · bottom.'],
+        blanks: [...cuts.map(i => ({ fields: ['n'], n: s[i], exact: true })), result] }
     ];
   }
   function genFraction() {
@@ -2971,13 +3137,43 @@ const NB = (() => {
     const O = OPS[t.op];
     switch (st.kind) {
       // 1/2 + 1/3 = 1/2 · [3/3] + 1/3 · [2/2]
-      case 'expand': rowEl.append(fr(t.a, t.b), fop(O), fr(t.c, t.d), fop('='), fr(t.a, t.b), fop('·')); blank(0); rowEl.append(fop(O), fr(t.c, t.d), fop('·')); blank(1); break;
+      // (only the fractions that change get a "· m/m")
+      case 'expand': {
+        rowEl.append(fr(t.a, t.b), fop(O), fr(t.c, t.d), fop('='));
+        [[t.a, t.b], [t.c, t.d]].forEach(([x, y], i) => {
+          if (i) rowEl.appendChild(fop(O));
+          rowEl.appendChild(fr(x, y));
+          const j = st.grow.indexOf(i); if (j >= 0) { rowEl.appendChild(fop('·')); blank(j); }
+        });
+        break;
+      }
       // 1/2 · 3/3 + 1/3 · 2/2 = [3/6] + [2/6]
-      case 'over': rowEl.append(fr(t.a, t.b), fop('·'), fr(st.m1, st.m1), fop(O), fr(t.c, t.d), fop('·'), fr(st.m2, st.m2), fop('=')); blank(0); rowEl.appendChild(fop(O)); blank(1); break;
+      case 'over': {
+        const ms = [st.m1, st.m2], fs = [[t.a, t.b], [t.c, t.d]];
+        fs.forEach(([x, y], i) => { if (i) rowEl.appendChild(fop(O)); rowEl.appendChild(fr(x, y)); if (ms[i] > 1) rowEl.append(fop('·'), fr(ms[i], ms[i])); });
+        rowEl.appendChild(fop('='));
+        fs.forEach(([x, y], i) => {
+          if (i) rowEl.appendChild(fop(O));
+          const j = st.grow.indexOf(i); if (j >= 0) blank(j); else rowEl.appendChild(fr(x, y));
+        });
+        break;
+      }
       case 'combine': rowEl.append(fr(st.n1, st.den), fop(O), fr(st.n2, st.den), fop('=')); blank(0); break;
       case 'flip': rowEl.append(fr(t.a, t.b), fop(':'), fr(t.c, t.d), fop('='), fr(t.a, t.b), fop('·')); blank(0); break;
-      case 'cancel': rowEl.append(fr(st.f[0], st.f[1]), fop('·'), fr(st.f[2], st.f[3]), fop('=')); blank(0); rowEl.appendChild(fop('·')); blank(1); break;
-      case 'times': rowEl.append(fr(st.f[0], st.f[1]), fop('·'), fr(st.f[2], st.f[3]), fop('=')); blank(0); break;
+      case 'times': {
+        // a crossed-out number with its shortened one (a box to fill) beside it
+        const part = i => {
+          const j = st.cuts.indexOf(i);
+          if (j < 0) return num(st.f[i]);
+          const w = elt('span', 'cut');
+          w.appendChild(elt('s', 'old', String(st.f[i])));
+          blank(j); w.appendChild(rowEl.lastChild);           // blank() writes onto the line; move it beside the old number
+          return w;
+        };
+        rowEl.append(fracNode(part(0), part(1)), fop('·'), fracNode(part(2), part(3)), fop('='));
+        blank(st.result);
+        break;
+      }
       case 'whole': rowEl.append(fr(st.rawN, st.rawD), fop('=')); blank(0); break;
       case 'mixed': rowEl.append(fr(st.rawN, st.rawD), fop('=')); blank(0); blank(1); break;
       default: rowEl.append(fr(st.baseN, st.baseD), fop('=')); blank(0);
@@ -2992,7 +3188,7 @@ const NB = (() => {
       host.appendChild(r);
     }
     const st = t.steps[t.i];
-    if (st) sub(math(st.label));
+    if (st) sub(math(st.labels ? st.labels[Math.min(t.k, st.labels.length - 1)] : st.label));
     focusLive();
   }
   function fractionHead(t, result) {
@@ -3019,10 +3215,14 @@ const NB = (() => {
   function blankWhy(t, st, idx) {
     const b = st.blanks[idx];
     switch (st.kind) {
-      case 'expand': return `The smallest common denominator is ${st.D}: ${idx === 0 ? t.b : t.d} · ${b.n} = ${st.D}, so multiply by ${b.n}/${b.d}`;
-      case 'over': { const [x, y, m] = idx === 0 ? [t.a, t.b, st.m1] : [t.c, t.d, st.m2]; return `${x} · ${m} = ${b.n} and ${y} · ${m} = ${b.d}`; }
+      case 'expand': return `The smallest common denominator is ${st.D}: ${st.grow[idx] === 0 ? t.b : t.d} · ${b.n} = ${st.D}, so multiply by ${b.n}/${b.d}`;
+      case 'over': { const [x, y, m] = st.grow[idx] === 0 ? [t.a, t.b, st.m1] : [t.c, t.d, st.m2]; return `${x} · ${m} = ${b.n} and ${y} · ${m} = ${b.d}`; }
       case 'flip': return `${t.c}/${t.d} flipped is ${b.n}/${b.d}`;
-      case 'cancel': return `Divide ${st.f[0]} and ${st.f[3]} by ${st.g[0]}, and ${st.f[2]} and ${st.f[1]} by ${st.g[1]}: ${b.n}/${b.d}`;
+      case 'times': {
+        if (idx < st.result) { const i = st.cuts[idx], other = st.f[3 - i]; return `${st.f[i]} and ${other} can both be divided by ${st.g[i]}: ${st.f[i]} : ${st.g[i]} = ${b.n}`; }
+        return b.fields.length === 1 ? `${st.s[0]} · ${st.s[2]} = ${b.n} on top and ${st.s[1]} · ${st.s[3]} = 1 below — that is just ${b.n}`
+          : `${st.s[0]} · ${st.s[2]} = ${b.n} and ${st.s[1]} · ${st.s[3]} = ${b.d}`;
+      }
       case 'whole': return `${st.rawN}/${st.rawD} = ${b.n}`;
       case 'mixed': return idx === 0 ? `There are ${b.n} wholes` : `What is left over is ${b.n}/${b.d}`;
       case 'simplify': return `${st.baseN}/${st.baseD} is the same as ${b.n}/${b.d}`;
@@ -3038,9 +3238,9 @@ const NB = (() => {
     t.entries[t.i][t.k] = ok ? { n, d, wrong: false } : { n: b.n, d: b.d, tn: n, td: d, wrong: true };
     say(ok ? '' : blankWhy(t, st, t.k) + '.', ok ? '' : 'bad');
     // after the raw result, add exactly the tidy-up steps still needed for what was typed
-    if (['combine', 'times'].includes(st.kind)) {
-      const extra = [];
-      t.final = tidySteps(extra, ok ? n : b.n, ok ? d : b.d);
+    if (st.kind === 'combine' || (st.kind === 'times' && t.k === st.result)) {
+      const extra = [], whole = b.fields.length === 1;
+      t.final = tidySteps(extra, ok ? n : b.n, whole ? 1 : ok ? d : b.d);
       if (extra.length) {
         t.steps.splice(t.i + 1, 0, ...extra);
         t.entries.splice(t.i + 1, 0, ...extra.map(s => new Array(s.blanks.length).fill(null)));
@@ -3085,6 +3285,7 @@ const NB = (() => {
   $('pr-o-jump').checked = !!prefs.get('jump');
   $('pr-o-jump').addEventListener('change', e => { prefs.set('jump', e.target.checked); showJump(e.target.checked); });
   NB.onLeave(cancelAll);   // leaving the topic stops its pauses
+  NB.practiceNow = () => S.cur;   // the problem on the page (used by the tests)
 
   // =====================================================================
   // THE MIX: "Next problem" picks a random topic from the ticked ones
