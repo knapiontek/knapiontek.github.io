@@ -121,6 +121,7 @@ main{flex:1 1 auto;min-height:540px;display:flex;gap:14px}
 .finfo svg{width:100%;height:auto;display:block}
 .finfo .fbig{font-family:var(--hand);font-size:30px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
 .finfo p{margin:0;font-size:13.5px;color:var(--ink)}
+.finfo .steps{margin:0;padding:0 0 0 18px;font-size:14px;line-height:1.45;color:var(--ink)}
 .obtn{font-family:var(--hand);font-size:27px;line-height:1;min-width:64px;padding:8px 12px 6px;border-radius:14px;border:2px solid var(--ink);background:var(--panel);color:var(--ink);cursor:pointer;box-shadow:0 3px 0 var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:4px}
 .obtn:hover{background:var(--hl-soft)}
 .obtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
@@ -308,6 +309,45 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
 .lrow .num.done{color:var(--vb)}
 .primes{display:flex;flex-wrap:wrap;gap:10px}
 .primes .tile{min-width:56px;font-size:30px;padding:8px 10px 6px}
+/* two numbers: two ladders side by side, the one you are working on is lit */
+.ladders{display:flex;flex-wrap:wrap;gap:22px;align-self:flex-start}
+.ladders .ladder{border-radius:12px;padding:6px 16px 6px 8px;border:2px solid transparent}
+.ladders .ladder.on{background:var(--accent-soft);border-color:var(--accent)}
+.ladders .ladder.pickable{cursor:pointer;opacity:.6;border-style:dashed;border-color:var(--line)}
+.ladders .ladder.pickable:hover,.ladders .ladder.pickable:focus-visible{opacity:1;border-color:var(--accent);outline:none}
+.ladders .lcap{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 2px 2px}
+/* HCF / LCM: pair the common factors, then build from the zones */
+.hcf{display:flex;flex-direction:column;gap:12px;align-self:stretch;max-width:760px}
+.fsrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--hand);font-size:32px;line-height:1.1}
+.fsrow .lab{min-width:76px}
+.fsrow .cell.live{width:calc(22px + 17px * var(--n,1))}
+.fsrow .cell.right,.fsrow .cell.wrong{width:auto;min-width:44px;padding:0 8px}
+.hcf .tile{font-size:28px;min-width:48px}
+.tile.pick{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px var(--accent-soft)}
+.tile.pair{background:var(--vb);border-color:var(--vb);color:#fff;cursor:default}
+.tile.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+.tile:disabled{cursor:default}
+.venn{display:grid;grid-template-columns:1fr 1.15fr 1fr}
+.zone{border:2.5px solid;padding:6px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:96px}
+.zone .zh{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);text-align:center}
+.zone .zc{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.zone .none{font-family:var(--hand);font-size:26px;color:var(--ink-soft)}
+.zone.za{border-color:var(--accent);border-right:0;border-radius:70px 0 0 70px;background:rgba(47,111,214,.06)}
+.zone.zm{border-color:var(--vb);background:rgba(20,148,106,.11)}
+.zone.zb{border-color:var(--vc);border-left:0;border-radius:0 70px 70px 0;background:rgba(122,76,216,.06)}
+.fsrow .obtn{font-size:22px}
+.stepcap{flex-basis:100%;font-family:var(--display);font-weight:800;font-size:15px;color:var(--accent);margin:2px 0 0}
+.hsec{display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:2px dashed rgba(36,48,74,.18)}
+.hsec .fsrow .cell.right{width:auto;min-width:44px;padding:0 8px}
+.fsrow.small{font-size:24px;color:var(--vb)}
+.fsrow.tried{font-size:26px;color:var(--va)}
+.fsrow.tried s{text-decoration-thickness:2.5px}
+.proof{display:flex;flex-wrap:wrap;align-items:center;gap:6px 28px}
+.pcap{font-size:13px;font-weight:700;color:var(--ink-soft)}
+.pdiv{animation:pin .4s ease both}
+.pdiv .ok{font-size:28px}
+@keyframes pin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pdiv{animation:none}}
 
 /* fraction working: line after line */
 .flines{display:flex;flex-direction:column;gap:8px;align-self:flex-start;padding:4px 16px 4px 0}
@@ -319,6 +359,22 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
 .cell.gutter .mdot{width:.2em;height:.2em}
 .fop{color:var(--ink-soft);padding:0 2px}
 .cut{display:inline-flex;align-items:center;gap:4px}
+/* brackets: the pair being multiplied is lit; like terms share a colour underline */
+.xt{border-radius:8px;padding:0 3px}
+.xt.onA{background:rgba(47,111,214,.18);color:var(--accent)}
+.xt.onB{background:rgba(122,76,216,.18);color:var(--vc)}
+.xinwrap{display:inline-flex;align-items:center;gap:8px}
+.frow .cell.live.xin{width:calc(22px + 17px * 4)}
+.xprev{font-family:var(--hand);font-size:30px;color:var(--accent);min-width:1.5em}
+.xok{font-size:22px;min-width:44px;padding:6px 10px 4px}
+.frow .cell.grouped{box-shadow:0 6px 0 -1px var(--g,transparent)}
+.cell.xtap[role="button"]{cursor:pointer}
+.cell.xtap[role="button"]:hover{outline:2px solid var(--accent);outline-offset:2px}
+.cell.picked{outline:3px solid var(--accent);outline-offset:3px}
+.shake,.wrong-flash{animation:shake .35s}
+.wrong-flash{outline:3px solid var(--va);outline-offset:3px}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@media (prefers-reduced-motion:reduce){.shake,.wrong-flash{animation:none}}
 .cut .old{font-size:.72em;color:var(--ink-soft);text-decoration-color:var(--va);text-decoration-thickness:2px}
 
 /* topic groups: Geometry on its own; the problem topics together with "Next problem" */
@@ -331,7 +387,14 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
 .tab.out .mixbox{background:transparent;border-color:#b9c0cc}
 .tab.out .mixbox::after{display:none}
 .tab.out[aria-selected="true"]{background:#9aa3b5;border-color:#9aa3b5;color:#fff;border-style:solid}
-.mixnext{margin-left:4px}
+.nextrow{flex-basis:100%;display:flex}
+.mixnext{display:inline-flex;align-items:center;gap:9px;white-space:nowrap;font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:.01em;
+  border:2.5px solid var(--ink);background:var(--hl);color:var(--ink);border-radius:8px;padding:7px 18px 5px;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+.mixnext:hover{background:#ffe14d}
+.mixnext:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.mixnext.ready{animation:nglow 1.6s ease-in-out infinite}
+@keyframes nglow{0%,100%{box-shadow:3px 3px 0 var(--ink),0 0 0 0 rgba(255,214,10,0)}50%{box-shadow:3px 3px 0 var(--ink),0 0 0 8px rgba(255,214,10,.55)}}
+@media (prefers-reduced-motion:reduce){.mixnext.ready{animation:none;box-shadow:3px 3px 0 var(--ink),0 0 0 5px rgba(255,214,10,.6)}}
 .scorebar{margin-left:auto;font-weight:700;font-size:14px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
 .scorebar b{font-family:var(--display);font-weight:800;font-size:17px;color:var(--ink)}
 
@@ -390,9 +453,13 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
         <button class="tab" role="tab" data-tab="divide" aria-selected="false"><span class="mixbox" role="checkbox" aria-checked="true" aria-label="Include Divide in Next problem"></span>Divide</button>
         <button class="tab" role="tab" data-tab="factor" aria-selected="false"><span class="mixbox" role="checkbox" aria-checked="true" aria-label="Include Factors in Next problem"></span>Factors</button>
         <button class="tab" role="tab" data-tab="fraction" aria-selected="false"><span class="mixbox" role="checkbox" aria-checked="true" aria-label="Include Fractions in Next problem"></span>Fractions</button>
+        <button class="tab" role="tab" data-tab="expand" aria-selected="false"><span class="mixbox" role="checkbox" aria-checked="true" aria-label="Include Brackets in Next problem"></span>Brackets</button>
         <button class="tab" role="tab" data-tab="alg" aria-selected="false"><span class="mixbox" role="checkbox" aria-checked="true" aria-label="Include Algebra in Next problem"></span>Algebra</button>
         <button class="tab" role="tab" data-tab="geo" aria-selected="false"><span class="mixbox" role="checkbox" aria-checked="true" aria-label="Include Geometry in Next problem"></span>Geometry</button>
-        <button class="newbtn mixnext" id="mix-next" title="A random topic from the ticked ones">Next problem <svg class="ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h4c5 0 6 10 11 10h3M3 17h4c2 0 3.2-1.6 4.3-3.6M14.7 9.6C15.8 8 17 7 18 7h3M18 4l3 3-3 3M18 14l3 3-3 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <!-- its own line, its own look: not a topic, the way on -->
+      <div class="nextrow">
+        <button class="mixnext" id="mix-next" title="A random topic from the ticked ones">Next problem <svg class="ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h4c5 0 6 10 11 10h3M3 17h4c2 0 3.2-1.6 4.3-3.6M14.7 9.6C15.8 8 17 7 18 7h3M18 4l3 3-3 3M18 14l3 3-3 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </nav>
   </header>
@@ -577,7 +644,7 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
     <section class="view" id="alg" data-view="alg" hidden aria-label="Algebra"></section>
 
     <!-- ============ PRACTICE ============ -->
-    <section class="view" id="prac" data-view="line square order multiply divide factor fraction" hidden aria-label="Practice">
+    <section class="view" id="prac" data-view="line square order multiply divide factor fraction expand" hidden aria-label="Practice">
       <div class="sheet" id="pr-board">
         <div class="work">
           <div class="question" id="pr-sub"></div>
@@ -601,10 +668,12 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
           </div>
           <div class="mtable" id="pr-table" hidden></div>
 
-          <div class="ladder" id="pr-ladder" hidden></div>
+          <div class="ladders" id="pr-ladder" hidden></div>
           <div class="primes" id="pr-primes" hidden></div>
+          <div class="hcf" id="pr-hcf" hidden></div>
 
           <div class="flines" id="pr-frac" hidden></div>
+          <div class="flines" id="pr-exp" hidden></div>
 
           <div class="status" id="pr-fb" aria-live="polite"></div>
         </div>
@@ -642,9 +711,9 @@ const NB = (() => {
     };
   }
 
-  const TABS = ['geo', 'line', 'square', 'order', 'multiply', 'divide', 'factor', 'fraction', 'alg'];
+  const TABS = ['geo', 'line', 'square', 'order', 'multiply', 'divide', 'factor', 'fraction', 'expand', 'alg'];
   const SHAPES = { triangles: 'tri', rectangles: 'rect', circles: 'circ', polygons: 'poly', formulas: 'form', solve: 'form' };
-  const ALIAS = { geometry: 'geo', numberline: 'line', squares: 'square', order: 'order', multiplication: 'multiply', division: 'divide', factors: 'factor', fractions: 'fraction', whichfirst: 'order', algebra: 'alg', equations: 'alg' };
+  const ALIAS = { geometry: 'geo', numberline: 'line', squares: 'square', order: 'order', multiplication: 'multiply', division: 'divide', factors: 'factor', fractions: 'fraction', brackets: 'expand', expand: 'expand', distribution: 'expand', whichfirst: 'order', algebra: 'alg', equations: 'alg' };
 
   const prefs = store('mathnb_prefs', { tab: 'line', opts: {}, jump: false, table: false, mix: null });
   const progress = store('mathnb_progress', { solve: null, best: 0 });
@@ -676,6 +745,8 @@ const NB = (() => {
   const onLeave = fn => leaving.push(fn);
   const autoNext = ms => { clearTimeout(auto); auto = setTimeout(() => mix.next(), ms); };
   const cancelAuto = () => clearTimeout(auto);
+  // a finished problem waits: the Next problem button glows, nothing moves on by itself
+  const ready = () => $('mix-next').classList.add('ready');
 
   // show the page that belongs to a topic, without changing anything else
   function view(name) {
@@ -689,7 +760,7 @@ const NB = (() => {
   // open a topic; fresh = start a new problem instead of carrying on
   function go(name, fresh = false) {
     if (!TABS.includes(name)) name = 'line';
-    cancelAuto(); leaving.forEach(fn => fn());
+    cancelAuto(); $('mix-next').classList.remove('ready'); leaving.forEach(fn => fn());
     current = name;
     document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
     reveal(name);
@@ -699,7 +770,7 @@ const NB = (() => {
   }
 
   // ---------- "Next problem": always a random ticked topic (also when a problem is finished) ----------
-  const MIXABLE = ['line', 'square', 'order', 'multiply', 'divide', 'factor', 'fraction', 'alg', 'geo'];
+  const MIXABLE = ['line', 'square', 'order', 'multiply', 'divide', 'factor', 'fraction', 'expand', 'alg', 'geo'];
   const mix = {
     ids: (prefs.get('mix') || MIXABLE).filter(id => MIXABLE.includes(id)),
     next() {
@@ -715,6 +786,12 @@ const NB = (() => {
     }
   };
   if (!mix.ids.length) mix.ids = MIXABLE.slice();
+  // a topic added to the app later starts ticked, even for a saved mix
+  {
+    const known = prefs.get('mixKnown');
+    if (known) { const fresh = MIXABLE.filter(id => !known.includes(id)); if (fresh.length) { mix.ids = MIXABLE.filter(id => mix.ids.includes(id) || fresh.includes(id)); prefs.set('mix', mix.ids); } }
+    prefs.set('mixKnown', MIXABLE);
+  }
   function mark() {
     document.querySelectorAll('.tab[data-tab]').forEach(t => {
       const box = t.querySelector('.mixbox'); if (!box) return;
@@ -745,7 +822,7 @@ const NB = (() => {
     go(fromHash() || prefs.get('tab'));
   }
 
-  return { $, store, prefs, progress, onShow, mix, score, onLeave, autoNext, cancelAuto, view, reveal, go, boot };
+  return { $, store, prefs, progress, onShow, mix, score, onLeave, autoNext, cancelAuto, ready, view, reveal, go, boot };
 })();
 
 </script>
@@ -2211,14 +2288,14 @@ const NB = (() => {
         ${S.p.check(S.st.R)}
         <div class="acts"><button class="chip" data-r="again">Try for fewer moves</button></div>`;
       w.hidden = false;
-      $r('again').onclick = () => { NB.cancelAuto(); restart(); };
+      $r('again').onclick = () => { NB.cancelAuto(); NB.$('mix-next').classList.remove('ready'); restart(); };
     }
     function finished() {
       if (!won(S.st, S.p.target)) return;
       S.done = true; S.sel = null;
       prog[S.p.pid] = Math.max(prog[S.p.pid] || 0, starsFor(S.hist.length)); saveProg(); confetti();
       NB.score.award(true);
-      NB.autoNext(4500);          // time to read the check, then a random ticked topic
+      NB.ready();                 // stays on the page until Next problem is pressed
     }
 
     function apply(op) {
@@ -2273,7 +2350,7 @@ const NB = (() => {
     $r('tools').addEventListener('click', e => { const b = e.target.closest('[data-op]'); if (b && !b.disabled) apply(b.dataset.op); });
     $r('undo').addEventListener('click', () => {
       if (!S.hist.length || S.busy) return;
-      const last = S.hist.pop(); S.st = last.st; S.done = false; S.sel = null; S.hint = null; S.msg = ''; NB.cancelAuto(); draw();
+      const last = S.hist.pop(); S.st = last.st; S.done = false; S.sel = null; S.hint = null; S.msg = ''; NB.cancelAuto(); NB.$('mix-next').classList.remove('ready'); draw();
     });
     $r('hint').addEventListener('click', () => { if (!S.busy) giveHint(); });
     $r('restart').addEventListener('click', () => { if (!S.busy) restart(); });
@@ -2427,10 +2504,13 @@ const NB = (() => {
       T(130, 74, '8', INK, 30) + T(164, 74, '4', INK, 30) +
       Bx(118, 100, 24, 24, PUR) + T(130, 113, '0', '#fff', 19) +
       T(130, 146, '8 : 4 = 2 r 0', '#5d6984', 17)),
-    factor: () => SV([[60, 2], [30, 2], [15, 3], [5, 5], [1, null]].map(([v, pr], i) => {
-      const y = 18 + i * 30;
-      return (pr ? Bx(80, y - 13, 28, 26, GRN) + T(94, y, pr, '#fff', 20) : T(94, y, '✓', GRN, 22)) + T(140, y, v, v === 1 ? GRN : INK, 26, 'start');
-    }).join('') + Ln(122, 4, 122, 148, INK, 3)),
+    // 12 = 2·2·3 and 18 = 2·3·3: the overlap holds the common factors
+    factor: () => SV(
+      `<circle cx="92" cy="74" r="56" fill="rgba(47,111,214,.10)" stroke="${BLU}" stroke-width="2.5"/>` +
+      `<circle cx="148" cy="74" r="56" fill="rgba(122,76,216,.10)" stroke="${PUR}" stroke-width="2.5"/>` +
+      T(62, 12, '12', BLU, 20) + T(178, 12, '18', PUR, 20) +
+      T(64, 76, '2', INK, 28) + T(120, 58, '2', GRN, 28) + T(120, 92, '3', GRN, 28) + T(176, 76, '3', INK, 28) +
+      T(120, 148, 'HCF = 2 · 3   LCM = 2 · 2 · 3 · 3', '#5d6984', 14)),
     fraction: () => SV(
       `<g font-family="Patrick Hand, Comic Sans MS, cursive">` +
       [[26, '1', '2'], [84, '1', '3'], [150, '3', '6'], [208, '2', '6']].map(([x, n, d]) => T(x, 50, n, INK, 28) + Ln(x - 13, 66, x + 13, 66, INK, 2.5) + T(x, 84, d, INK, 28)).join('') +
@@ -2438,29 +2518,39 @@ const NB = (() => {
       [0, 1, 2, 3, 4, 5].map(i => Bx(30 + i * 31, 116, 28, 26, i < 3 ? 'rgba(47,111,214,.35)' : i < 5 ? 'rgba(122,76,216,.35)' : 'rgba(36,48,74,.08)', 'rgba(36,48,74,.3)')).join('') +
       T(120, 152, '3 sixths + 2 sixths = 5 sixths', '#5d6984', 15))
   };
+  PIC.expand = () => SV(
+    [['(', 30], ['a', 48], ['+', 69], ['b', 90], [')', 106], ['(', 128], ['c', 146], ['+', 167], ['d', 188], [')', 204]]
+      .map(([c, x]) => T(x, 84, c, 'ab'.includes(c) ? BLU : 'cd'.includes(c) ? PUR : INK, 30)).join('') +
+    `<path d="M48 66 Q97 18 146 66" fill="none" stroke="${ORA}" stroke-width="2.5"/><path d="M48 66 Q118 2 188 66" fill="none" stroke="${ORA}" stroke-width="2.5"/>` +
+    `<path d="M90 102 Q118 132 146 102" fill="none" stroke="${GRN}" stroke-width="2.5"/><path d="M90 102 Q139 146 188 102" fill="none" stroke="${GRN}" stroke-width="2.5"/>` +
+    T(120, 152, 'ac + ad + bc + bd', '#5d6984', 15));
   const F = (n, d) => `<span class="frac"><span>${n}</span><span>${d}</span></span>`;
+  // the rule card is a reminder for after the teacher has explained: a few short lines
   const TOPICS = [
     { id: 'line', name: 'Number line', rule: `5 − (−2) = 5 + 2`,
-      about: 'Start at the dot. Adding moves right, taking away moves left — and taking away a negative number moves right.',
-      legend: [['+', ORA, 'move right'], ['−', PUR, 'move left'], ['− (−)', INK, 'two minuses make a plus']] },
+      about: ['Start at the dot.'],
+      legend: [['+', ORA, 'move right'], ['−', PUR, 'move left'], ['− (−)', INK, 'is +']] },
     { id: 'square', name: 'Squares', rule: `a<sup>2</sup> = a ${DOT} a`,
-      about: 'a² is the area of a square with side a. The square root √ goes back: it finds the side from the area. Walking all the way round is 4 · a.',
-      legend: [['a', RED, 'side'], ['a²', INK, 'area'], ['√', INK, 'side from the area'], ['4 · a', BLU, 'perimeter']] },
+      about: ['area = a²', 'perimeter = 4 · a', '√area = a'],
+      legend: [['a', RED, 'side'], ['a²', INK, 'area'], ['4 · a', BLU, 'perimeter']] },
     { id: 'order', name: 'Which first?', rule: `2 + 3 ${DOT} 4 = 14`,
-      about: 'Brackets first, then powers and roots, then · and :, and only then + and −. Two of the same kind? Go left to right.',
-      legend: [['1', BLU, 'brackets ( )'], ['2', BLU, 'powers x² and roots √'], ['3', BLU, 'times · and divide :'], ['4', BLU, 'plus + and minus −']] },
+      about: ['Same step? Left to right.'],
+      legend: [] },   // the picture already lists the order
     { id: 'multiply', name: 'Long multiplication', rule: `47 ${DOT} 3 = 141`,
-      about: 'Start on the right. Write one digit, carry the tens into the small purple box above. With a two-digit number the second row moves one place left — then add the rows.',
-      legend: [['7', GRN, 'digit you write'], ['2', PUR, 'carry, added to the next column']] },
+      about: ['Start on the right.', 'Carry the tens.', 'Second row: one place left, then add.'],
+      legend: [['7', GRN, 'write'], ['2', PUR, 'carry']] },
     { id: 'divide', name: 'Long division', rule: `84 : 4 = 21`,
-      about: 'Go left to right: how many times does the divisor fit? Write that on top and the remainder underneath — it joins the next digit.',
-      legend: [['2', GRN, 'how many times it fits'], ['0', PUR, 'what is left over']] },
-    { id: 'factor', name: 'Prime factors', rule: `60 = 2<sup>2</sup> ${DOT} 3 ${DOT} 5`,
-      about: 'Tap a prime to test it. If it divides evenly the ladder steps down; if not, try another — testing costs nothing. You are done at 1.',
-      legend: [['2', GRN, 'a prime that divides evenly'], ['1', GRN, 'the end of the ladder']] },
+      about: ['Left to right.', 'How many fit? Write it on top.', 'The rest joins the next digit.'],
+      legend: [['2', GRN, 'how many fit'], ['0', PUR, 'left over']] },
+    { id: 'factor', name: 'Prime factors, HCF & LCM', rule: `<span>HCF(12, 18) = 6</span><span>LCM(12, 18) = 36</span>`,
+      about: ['Ladder down to 1.', 'Pair the primes in both.', 'HCF = common', 'LCM = common · uncommon', 'Check: divide, get whole numbers.'],
+      legend: [['HCF', GRN, 'Highest Common Factor'], ['LCM', BLU, 'Lowest Common Multiple']] },
     { id: 'fraction', name: 'Fractions', rule: `${F(1, 2)} + ${F(1, 3)} = ${F(5, 6)}`,
-      about: 'For + and − multiply each fraction by a fraction worth 1 (like 3/3) to reach the smallest common denominator. To divide, flip the second fraction. Before multiplying, shorten first — across too. Then tidy the answer up.',
-      legend: [['top', INK, 'how many pieces'], ['bottom', INK, 'how many pieces make a whole']] }
+      about: ['+ − → same bottom first', '· → shorten first, also across', ': → flip the second, then ·', 'Tidy the answer.'],
+      legend: [['top', INK, 'pieces'], ['bottom', INK, 'pieces in a whole']] },
+    { id: 'expand', name: 'Brackets', rule: `(a + b)(c + d) = ac + ad + bc + bd`,
+      about: ['Each term times each term.', 'Add the like terms.'],
+      legend: [['x3', INK, 'type for x³'], ['like', BLU, 'same power of x']] }
   ];
   const TOPIC = Object.fromEntries(TOPICS.map(t => [t.id, t]));
 
@@ -2471,7 +2561,7 @@ const NB = (() => {
       <h3>${t.name}</h3>
       ${PIC[id]()}
       <div class="fbig">${t.rule}</div>
-      <p>${math(t.about)}</p>
+      <ul class="steps">${[].concat(t.about).map(l => `<li>${math(l)}</li>`).join('')}</ul>
       <ul class="legend">${t.legend.map(([k, c, v]) => `<li><b style="color:${c}">${math(k)}</b><span>${math(v)}</span></li>`).join('')}</ul>`;
   }
 
@@ -2485,7 +2575,7 @@ const NB = (() => {
   const cancelAll = () => { timers.forEach(clearTimeout); timers = []; clearTimeout(inputTimer); };
 
   // ---------- page parts ----------
-  const PARTS = ['pr-figure', 'pr-jumpwrap', 'pr-choices', 'pr-mul', 'pr-div', 'pr-tablewrap', 'pr-table', 'pr-ladder', 'pr-primes', 'pr-frac'];
+  const PARTS = ['pr-figure', 'pr-jumpwrap', 'pr-choices', 'pr-mul', 'pr-div', 'pr-tablewrap', 'pr-table', 'pr-ladder', 'pr-primes', 'pr-hcf', 'pr-frac', 'pr-exp'];
   function showParts(...ids) { PARTS.forEach(id => { $(id).hidden = !ids.includes(id); }); }  // the table's own mode then decides if it shows
   // wrapped in a span so ² and · sit inline with the digits, not as separate flex items
   const head = html => { $('pr-q').innerHTML = `<span class="pt">${html}</span>`; };
@@ -2636,7 +2726,7 @@ const NB = (() => {
     ask(options(p.result, [flipped, p.result === 0 ? 7 : -p.result], 9), p.result, ok => {
       say(ok ? `That's it! ${text} lands on ${fmt(p.result)}.` : `It lands on ${fmt(p.result)} — here is the jump.`, ok ? 'good' : 'bad');
       showJump(true);
-      later(next, 2200);
+      NB.ready();
     });
   }
 
@@ -2670,7 +2760,7 @@ const NB = (() => {
       head(math(`4 · ${q.side} = ?`));
       ask(options(q.perimeter, [q.area, q.side, 2 * q.side], 6, n => n > 0), q.perimeter, ok => {
         say(ok ? `Yes! 4 · ${q.side} = ${q.perimeter}.` : `The perimeter is 4 · ${q.side} = ${q.perimeter}.`, ok ? 'good' : 'bad');
-        later(next, 1900);
+        NB.ready();
       });
     }
   }
@@ -2717,7 +2807,7 @@ const NB = (() => {
     head(supMath(p.t + ' = ?'));
     ask(options(p.ans, p.trap, 6, n => n >= 0), p.ans, ok => {
       say(ok ? `Yes! ${p.why}` : `${p.why} ${p.t} = ${p.ans}.`, ok ? 'good' : 'bad');
-      later(next, 2000);
+      NB.ready();
     });
   }
 
@@ -2976,41 +3066,81 @@ const NB = (() => {
       const text = t.type === 'multiply' ? `${t.a} · ${t.b} = ${result}` : `${t.dividend} : ${t.divisor} = ${result}`;
       head(math(text) + ' <span class="ok">✓</span>');
       say(t.type === 'multiply' ? 'Done — every column worked out.' : 'Done — nothing left over.', 'good');
-      later(next, 1900);
+      NB.ready();
     }, ms);
   }
 
   // =====================================================================
-  // PRIME FACTORS (the ladder)
+  // PRIME FACTORS of two numbers (two ladders), then HCF and LCM
+  // built from the common and the uncommon factors
   // =====================================================================
   const SMALL = [2, 3, 5, 7, 11, 13];
+  const prod = arr => arr.reduce((x, y) => x * y, 1);
+  const asc = arr => [...arr].sort((x, y) => x - y);
+  const powers = list => {
+    const c = {};
+    list.forEach(q => { c[q] = (c[q] || 0) + 1; });
+    return Object.keys(c).map(Number).sort((x, y) => x - y).map(q => c[q] > 1 ? q + SUP(c[q]) : String(q)).join(' · ');
+  };
   function genFactor() {
-    let rows, target, tries = 0;
+    // a common part and an uncommon part for each number; the uncommon parts share no prime,
+    // so the common part really is the HCF
+    const draw = n => Array.from({ length: n }, () => Math.random() < .85 ? SMALL[rnd(0, 3)] : SMALL[rnd(4, 5)]);
+    let common, ea, eb, a, b, ok, tries = 0;
     do {
-      rows = Array.from({ length: rnd(2, 4) }, () => Math.random() < .78 ? SMALL[rnd(0, 3)] : SMALL[rnd(4, 5)]);
-      target = rows.reduce((x, y) => x * y, 1);
-    } while ((target < 8 || target > 360) && ++tries < 40);
-    // every prime needed, plus a few that don't divide it — so testing means something
-    const need = [...new Set(rows)];
+      common = draw(rnd(1, 2)); ea = draw(rnd(1, 2)); eb = draw(rnd(1, 2));
+      a = prod(common) * prod(ea); b = prod(common) * prod(eb);
+      ok = !ea.some(q => eb.includes(q)) && a !== b && Math.min(a, b) >= 8 && Math.max(a, b) <= 240;
+    } while (!ok && ++tries < 400);
+    if (!ok) { common = [2, 2, 3]; ea = [5]; eb = [7]; a = 60; b = 84; }
+    if (a > b) { [a, b] = [b, a]; [ea, eb] = [eb, ea]; }
+    const fa = asc([...common, ...ea]), fb = asc([...common, ...eb]);
+    // every prime needed, plus a few that divide neither — so testing means something
+    const need = [...new Set([...fa, ...fb])];
     const decoys = shuffle(SMALL.filter(p => !need.includes(p))).slice(0, clamp(6 - need.length, 1, 3));
-    return { type: 'factor', target, left: target, rows: [], palette: shuffle([...need, ...decoys]) };
+    return {
+      type: 'factor', a, b, fa, fb, common: asc(common), uncA: asc(ea), uncB: asc(eb),
+      hcf: prod(common), lcm: prod(common) * prod(ea) * prod(eb),
+      lad: [a, b].map(n => ({ target: n, left: n, rows: [] })), on: 0, stage: 'ladder',
+      palette: shuffle([...need, ...decoys])
+    };
+  }
+
+  // ---------- step 1: the two ladders ----------
+  function factorHead(t) {
+    head(t.lad.map(L => L.left === 1 ? math(`${L.target} = ${powers(L.rows.map(r => r.prime))}`) : `${L.target} = ?`).join('&nbsp;&nbsp;&nbsp;'));
   }
   function renderLadder(t) {
     const host = $('pr-ladder');
     host.innerHTML = '';
-    const line = (cellEl, value, done) => {
-      const r = elt('div', 'lrow');
-      r.append(cellEl, elt('span', 'bar'), elt('span', 'num' + (done ? ' done' : ''), String(value)));
-      host.appendChild(r);
-    };
-    t.rows.forEach(r => line(box('right', r.prime), r.before));
-    if (t.left === 1) line(box('right', '✓'), 1, true);
-    else line(box('active'), t.left);
+    host.appendChild(elt('div', 'stepcap', `1 · Break ${t.a} and ${t.b} into primes`));
+    t.lad.forEach((L, k) => {
+      const col = elt('div', 'ladder' + (L.left > 1 && k === t.on ? ' on' : ''));
+      col.appendChild(elt('div', 'lcap', L.left === 1 ? 'done' : k === t.on ? 'working on' : 'tap to switch'));
+      const line = (cellEl, value, done) => {
+        const r = elt('div', 'lrow');
+        r.append(cellEl, elt('span', 'bar'), elt('span', 'num' + (done ? ' done' : ''), String(value)));
+        col.appendChild(r);
+      };
+      L.rows.forEach(r => line(box('right', r.prime), r.before));
+      if (L.left === 1) line(box('right', '✓'), 1, true);
+      else line(box(k === t.on ? 'active' : ''), L.left);
+      if (L.left > 1 && k !== t.on) {
+        col.classList.add('pickable');
+        col.tabIndex = 0;
+        col.setAttribute('role', 'button');
+        col.setAttribute('aria-label', `Work on ${L.target}`);
+        const go = () => { t.on = k; say(''); renderLadder(t); };
+        col.addEventListener('click', go);
+        col.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+      }
+      host.appendChild(col);
+    });
   }
   function playFactor(t) {
     showParts('pr-ladder', 'pr-primes');
-    sub('Break the number into primes. Tap a prime that divides it evenly.');
-    head(`${t.target} = ?`);
+    sub('Step 1: break both numbers into primes.');
+    factorHead(t);
     renderLadder(t);
     const host = $('pr-primes');
     host.innerHTML = '';
@@ -3021,30 +3151,246 @@ const NB = (() => {
     });
   }
   function test(t, p, btn) {
-    if (t.left === 1) return;
-    if (t.left % p === 0) {
+    if (t.stage !== 'ladder') return;
+    const L = t.lad[t.on];
+    if (L.left === 1) return;
+    if (L.left % p === 0) {
       btn.classList.add('right');
-      const before = t.left;
-      t.rows.push({ prime: p, before });
-      t.left = before / p;
-      say(`${before} : ${p} = ${t.left}${t.left === 1 ? ' — all the way down!' : '.'}`, 'good');
+      const before = L.left;
+      L.rows.push({ prime: p, before });
+      L.left = before / p;
+      say(`${before} : ${p} = ${L.left}${L.left === 1 ? ` — ${L.target} is all the way down!` : '.'}`, 'good');
       award(true);
+      if (L.left === 1) {
+        const other = t.lad.findIndex(M => M.left > 1);
+        if (other >= 0) t.on = other; else t.stage = 'wait';
+      }
       later(() => {
         btn.classList.remove('right');
         renderLadder(t);
-        if (t.left === 1) {
-          const counts = {};
-          t.rows.forEach(r => { counts[r.prime] = (counts[r.prime] || 0) + 1; });
-          const expr = Object.keys(counts).map(Number).sort((x, y) => x - y).map(q => counts[q] > 1 ? q + SUP(counts[q]) : String(q)).join(' · ');
-          head(math(`${t.target} = ${expr}`) + ' <span class="ok">✓</span>');
-          later(next, 2200);
-        }
+        factorHead(t);
+        if (t.stage === 'wait') later(() => startSort(t), 1200);
       }, 550);
     } else {
       btn.classList.add('wrong');
-      say(`${t.left} can't be divided evenly by ${p} — try another prime.`, 'bad');
+      say(`${L.left} can't be divided evenly by ${p} — try another prime.`, 'bad');
       later(() => btn.classList.remove('wrong'), 550);
     }
+  }
+
+  // ---------- step 2: pair up the common factors ----------
+  function startSort(t) {
+    t.stage = 'sort';
+    t.chips = { a: t.fa.map(v => ({ v, pair: -1 })), b: t.fb.map(v => ({ v, pair: -1 })) };
+    t.pairs = []; t.pick = null;
+    t.tries = { hcf: [], lcm: [] }; t.res = {};
+    showParts('pr-ladder', 'pr-hcf');
+    renderLadder(t);
+    sub('Step 2: pair the primes that are in both.');
+    say('');
+    renderHcf(t);
+    scrollToNew();
+  }
+  const openPairs = t => {   // how many more pairs could still be made
+    const left = t.chips.b.filter(c => c.pair < 0).map(c => c.v);
+    let n = 0;
+    t.chips.a.filter(c => c.pair < 0).forEach(c => { const i = left.indexOf(c.v); if (i >= 0) { left.splice(i, 1); n++; } });
+    return n;
+  };
+  function tapChip(t, side, c, btn) {
+    if (t.stage !== 'sort' || c.pair >= 0) return;
+    if (!t.pick || t.pick.side === side) { t.pick = t.pick && t.pick.c === c ? null : { side, c }; say(''); renderHcf(t); return; }
+    const o = t.pick.c;
+    t.pick = null;
+    if (o.v !== c.v) {
+      btn.classList.add('wrong');
+      say(`${o.v} ≠ ${c.v}`, 'bad');
+      later(() => renderHcf(t), 650);
+      return;
+    }
+    o.pair = c.pair = t.pairs.length;
+    t.pairs.push(c.v);
+    award(true);
+    if (openPairs(t) > 0) {
+      say(`${c.v} is in both.`, 'good');
+      renderHcf(t);
+      return;
+    }
+    say('All pairs found.', 'good');
+    t.stage = 'sorted';
+    renderHcf(t);
+    later(() => startBuild(t, 'hcf'), 1500);
+  }
+
+  // ---------- step 3: build the HCF, then the LCM, from the zones ----------
+  // every factor once: 'a…' only in a, 'c…' common, 'b…' only in b
+  const zoneKeys = t => ({
+    a: t.chips.a.map((c, i) => c.pair < 0 ? 'a' + i : null).filter(Boolean),
+    c: t.pairs.map((v, i) => 'c' + i),
+    b: t.chips.b.map((c, i) => c.pair < 0 ? 'b' + i : null).filter(Boolean)
+  });
+  const keyVal = (t, k) => k[0] === 'c' ? t.pairs[+k.slice(1)] : t.chips[k[0]][+k.slice(1)].v;
+  const ordered = (t, set) => { const z = zoneKeys(t); return [...z.a, ...z.c, ...z.b].filter(k => set.has(k)); };
+  const NAME = { hcf: 'HCF', lcm: 'LCM' };
+  const FULL = { hcf: 'Highest Common Factor', lcm: 'Lowest Common Multiple' };
+
+  function startBuild(t, what) {
+    t.stage = what; t.sel = new Set();
+    sub(what === 'hcf'
+      ? 'Step 3: build the HCF — Highest Common Factor.'
+      : 'Step 4: build the LCM — Lowest Common Multiple.');
+    say('');
+    renderHcf(t);
+    scrollToNew();
+  }
+  function checkBuild(t) {
+    const z = zoneKeys(t), sel = t.sel;
+    const has = arr => arr.filter(k => sel.has(k)).length;
+    const nc = has(z.c), nu = has(z.a) + has(z.b), allU = z.a.length + z.b.length;
+    let ok, msg;
+    if (t.stage === 'hcf') {
+      ok = nc === z.c.length && nu === 0;
+      msg = nu ? 'HCF: only the common factors.' : 'HCF: all the common factors.';
+    } else {
+      ok = nc === z.c.length && nu === allU;
+      msg = nc < z.c.length ? 'LCM: all the common factors.' : 'LCM: add the uncommon factors.';
+    }
+    award(ok);
+    const what = t.stage, keys = ordered(t, sel), expr = keys.map(k => keyVal(t, k)).join(' · ');
+    if (!ok) {
+      // a try stays on the paper, crossed out, with its value
+      t.tries[what].push({ expr, val: keys.reduce((x, k) => x * keyVal(t, k), 1) });
+      say(msg, 'bad');
+      renderHcf(t);
+      return;
+    }
+    // the factors are right: work out the product and prove it by dividing
+    const val = what === 'hcf' ? t.hcf : t.lcm;
+    const divs = what === 'hcf' ? [[t.a, val], [t.b, val]] : [[val, t.a], [val, t.b]];
+    const q = divs.map(([x, y]) => x / y);
+    t.res[what] = { expr, keys, val, divs, q };
+    say(`${NAME[what]} = ${val}`, 'good');
+    if (what === 'hcf') {
+      t.stage = 'pause';
+      renderHcf(t);
+      scrollToNew();
+      later(() => startBuild(t, 'lcm'), 2400);
+      return;
+    }
+    t.stage = 'end';
+    renderHcf(t);
+    scrollToNew();
+    head(`HCF(${t.a}, ${t.b}) = ${t.hcf}&nbsp;&nbsp;&nbsp;LCM(${t.a}, ${t.b}) = ${t.lcm} <span class="ok">✓</span>`);
+    sub('Done.');
+    NB.ready();
+  }
+  // the newest step slides into view as the page grows
+  function scrollToNew() {
+    const last = $('pr-hcf').lastElementChild;
+    if (last && last.scrollIntoView) later(() => last.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 60);
+  }
+
+  // back on the page after leaving mid-pause: do what the pause was waiting to do
+  function resumeFactor(t) {
+    if (t.stage === 'ladder') return playFactor(t);
+    if (t.stage === 'wait') return startSort(t);
+    if (t.stage === 'sorted') return startBuild(t, 'hcf');
+    if (t.stage === 'pause') return startBuild(t, 'lcm');
+    showParts('pr-ladder', 'pr-hcf');
+    renderLadder(t);
+    renderHcf(t);
+  }
+
+  // the whole working stays on one page, step under step, like a sheet of paper
+  function renderHcf(t) {
+    const host = $('pr-hcf');
+    host.innerHTML = '';
+    const section = cap => { const sec = elt('div', 'hsec'); sec.appendChild(elt('div', 'stepcap', cap)); host.appendChild(sec); return sec; };
+    const exprEl = expr => { const e = elt('span'); e.innerHTML = math(expr); return e; };
+
+    // 2 · the two factorisations, the common primes paired up
+    // 2 · common and uncommon: first pair them up, then the same factors sit in the zones
+    const s2 = section('2 · Common and uncommon factors');
+    if (t.stage === 'sort' || t.stage === 'sorted') ['a', 'b'].forEach(side => {
+      const row = elt('div', 'fsrow');
+      row.appendChild(elt('span', 'lab', `${t[side]} =`));
+      t.chips[side].forEach((c, i) => {
+        if (i) row.appendChild(elt('span', 'fop', '·'));
+        const cls = c.pair >= 0 ? ' pair' : t.pick && t.pick.c === c ? ' pick' : '';
+        const b = elt('button', 'tile' + cls, String(c.v));
+        b.disabled = t.stage !== 'sort' || c.pair >= 0;
+        b.setAttribute('aria-label', `${c.v} in ${t[side]}${c.pair >= 0 ? ', common' : ''}`);
+        b.addEventListener('click', () => tapChip(t, side, c, b));
+        row.appendChild(b);
+      });
+      s2.appendChild(row);
+    });
+    if (t.stage === 'sort' || t.stage === 'sorted') {
+      if (t.pairs.length) s2.appendChild(elt('div', 'fsrow small', `in both: ${t.pairs.join(' · ')}`));
+      return;
+    }
+    const z = zoneKeys(t), building = t.stage === 'hcf' || t.stage === 'lcm';
+    const venn = elt('div', 'venn');
+    [['za', `only in ${t.a}`, z.a], ['zm', 'in both — common', z.c], ['zb', `only in ${t.b}`, z.b]].forEach(([cls, label, keys]) => {
+      const zone = elt('div', 'zone ' + cls), chips = elt('div', 'zc');
+      zone.appendChild(elt('span', 'zh', label));
+      if (!keys.length) chips.appendChild(elt('span', 'none', '—'));
+      keys.forEach(k => {
+        const on = building && t.sel.has(k);
+        const b = elt('button', 'tile' + (on ? ' sel' : ''), String(keyVal(t, k)));
+        b.disabled = !building;
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.addEventListener('click', () => {
+          if (!(t.stage === 'hcf' || t.stage === 'lcm')) return;
+          t.sel.has(k) ? t.sel.delete(k) : t.sel.add(k);
+          say('');
+          renderHcf(t);
+        });
+        chips.appendChild(b);
+      });
+      zone.appendChild(chips);
+      venn.appendChild(zone);
+    });
+    s2.appendChild(venn);
+
+    // 4 · HCF and 5 · LCM: wrong tries crossed out, then the result and its proof
+    ['hcf', 'lcm'].forEach((what, n) => {
+      const res = t.res[what], active = t.stage === what;
+      if (!res && !active) return;
+      const sec = section(`${3 + n} · ${FULL[what]} (${NAME[what]})`);
+      sec.classList.add(what === 'hcf' ? 'shcf' : 'slcm');
+      t.tries[what].forEach(tr => {
+        const row = elt('div', 'fsrow tried');
+        const x = elt('s'); x.innerHTML = math(`${tr.expr} = ${tr.val}`);
+        row.append(elt('span', 'lab', `${NAME[what]} ≠`), x);
+        sec.appendChild(row);
+      });
+      if (active) {
+        const row = elt('div', 'fsrow'), expr = ordered(t, t.sel).map(k => keyVal(t, k)).join(' · ');
+        row.appendChild(elt('span', 'lab', `${NAME[what]} =`));
+        const e = elt('span');
+        e.innerHTML = expr ? math(expr) : '<span class="fop">tap the factors</span>';
+        row.appendChild(e);
+        const chk = elt('button', 'obtn', 'Check');
+        chk.disabled = !t.sel.size;
+        chk.addEventListener('click', () => checkBuild(t));
+        row.appendChild(chk);
+        sec.appendChild(row);
+        return;
+      }
+      const row = elt('div', 'fsrow');
+      row.append(elt('span', 'lab', `${NAME[what]} =`), exprEl(res.expr), elt('span', 'fop', '='), box('right', res.val));
+      sec.appendChild(row);
+      const proof = elt('div', 'proof');
+      proof.appendChild(elt('span', 'pcap', 'check:'));
+      res.divs.forEach(([x, y], i) => {
+        const r = elt('div', 'fsrow pdiv');
+        r.style.animationDelay = `${.35 + i * .45}s`;
+        r.append(elt('span', null, `${x} : ${y} =`), box('right', res.q[i]), elt('span', 'ok', '✓'));
+        proof.appendChild(r);
+      });
+      sec.appendChild(proof);
+    });
   }
 
   // =====================================================================
@@ -3257,16 +3603,195 @@ const NB = (() => {
       fractionHead(t, t.final);
       sub('All worked out on paper.');
       say('Done — that is the tidiest answer.', 'good');
-      later(next, 2000);
+      NB.ready();
     }, ok ? 450 : 1900);   // right: carry on quickly; wrong: time to read the correction
+  }
+
+  // =====================================================================
+  // BRACKETS: multiply out, then add the like terms
+  // =====================================================================
+  // a term is { c: number in front, e: power of x }
+  const termBody = (c, e) => {
+    const a = Math.abs(c);
+    if (e === 0) return String(a);
+    return (a === 1 ? '' : String(a)) + 'x' + (e > 1 ? SUP(e) : '');
+  };
+  const termLead = t => (t.c < 0 ? '−' : '') + termBody(t.c, t.e);           // first in a line
+  const polyText = ts => ts.map((t, i) => i ? `${t.c < 0 ? '−' : '+'} ${termBody(t.c, t.e)}` : termLead(t)).join(' ');
+  // what was typed: "x3" is x³, also "2x2", "-3x", "x^2", "5"
+  function parseTerm(raw) {
+    const v = String(raw).replace(/\s+/g, '').replace(/−/g, '-').replace(/\^/g, '').replace(/²/g, '2').replace(/³/g, '3').replace(/⁴/g, '4');
+    const m = /^([+-]?)(\d*)(x(\d?))?$/i.exec(v);
+    if (!m || (!m[2] && !m[3])) return null;
+    const c = (m[2] ? +m[2] : 1) * (m[1] === '-' ? -1 : 1);
+    return { c, e: m[3] ? (m[4] ? +m[4] : 1) : 0 };
+  }
+
+  function genExpand() {
+    const k = () => rnd(1, 5) * (Math.random() < .3 ? -1 : 1);
+    const forms = [
+      () => [[{ c: 1, e: 1 }, { c: k(), e: 0 }], [{ c: 1, e: 1 }, { c: k(), e: 0 }]],                                        // (x + a)(x + b)
+      () => [[{ c: 1, e: 1 }, { c: k(), e: 0 }], [{ c: 1, e: 2 }, { c: k(), e: 1 }, { c: k(), e: 0 }]],                      // (x + a)(x² + bx + c)
+      () => [[{ c: rnd(1, 3), e: 1 }, { c: k(), e: 0 }], [{ c: rnd(1, 3), e: 1 }, { c: k(), e: 0 }]]                         // (px + a)(qx + b)
+    ];
+    let A, B, prods, sums, tries = 0;
+    do {
+      [A, B] = forms[Math.random() < .3 ? 0 : Math.random() < .55 ? 1 : 2]();
+      prods = [];
+      A.forEach((a, i) => B.forEach((b, j) => prods.push({ i, j, c: a.c * b.c, e: a.e + b.e })));
+      sums = {};
+      prods.forEach(q => { sums[q.e] = (sums[q.e] || 0) + q.c; });
+    } while (Object.values(sums).some(v => v === 0) && ++tries < 50);   // no term that cancels to nothing
+    const powers = Object.keys(sums).map(Number).sort((x, y) => y - x);
+    return {
+      type: 'expand', A, B, prods, powers, sums,
+      key: polyText(A) + '|' + polyText(B),
+      k: 0, typed: [], stage: 'mul', sel: new Set(), done: new Set()
+    };
+  }
+
+  // (x + 1)(x² + x + 1), with the pair being multiplied lit up
+  function expandHead(t, tail = '') {
+    const part = (ts, which) => '(' + ts.map((q, i) => {
+      const txt = i ? `${q.c < 0 ? '−' : '+'} ${termBody(q.c, q.e)}` : termLead(q);
+      const on = t.stage === 'mul' && (which === 'A' ? t.prods[t.k].i : t.prods[t.k].j) === i;
+      return `<span class="xt${on ? ' on' + which : ''}">${txt}</span>`;
+    }).join(' ') + ')';
+    head(part(t.A, 'A') + part(t.B, 'B') + tail);
+  }
+
+  // a box you type a term into; Enter sends it
+  function termInput(onDone) {
+    const b = elt('div', 'cell box live xin');
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.maxLength = 6;
+    inp.setAttribute('autocapitalize', 'off'); inp.setAttribute('aria-label', 'Term');
+    const show = elt('span', 'xprev');
+    inp.addEventListener('input', () => {
+      inp.value = inp.value.replace(/[^0-9xX+\-−^]/g, '').toLowerCase();
+      const q = parseTerm(inp.value);
+      show.textContent = q ? termLead(q) : '';
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const q = parseTerm(inp.value);
+      if (!q) { b.classList.add('shake'); later(() => b.classList.remove('shake'), 400); return; }
+      onDone(q, inp.value);
+    });
+    const ok = elt('button', 'obtn xok', '↵');
+    ok.setAttribute('aria-label', 'Enter');
+    ok.addEventListener('click', () => inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })));
+    b.appendChild(inp);
+    const wrap = elt('span', 'xinwrap');
+    wrap.append(b, show, ok);
+    return wrap;
+  }
+
+  const GROUPC = [BLU, ORA, PUR, GRN, RED];
+  const colourOf = (t, e) => GROUPC[t.powers.indexOf(e) % GROUPC.length];
+
+  function renderExpand(t) {
+    const host = $('pr-exp');
+    host.innerHTML = '';
+    // line 1: every term times every term
+    const r1 = elt('div', 'frow');
+    r1.appendChild(elt('span', 'fop', '='));
+    t.prods.forEach((q, n) => {
+      const got = t.typed[n];
+      if (n) r1.appendChild(elt('span', 'fop', got ? (q.c < 0 ? '−' : '+') : ''));
+      if (got) {
+        const cell = resolved({ val: n ? termBody(q.c, q.e) : termLead(q), typed: got.raw, wrong: got.wrong });
+        if (t.stage !== 'mul') {
+          const grouped = t.done.has(q.e), picked = t.sel.has(n);
+          cell.classList.add('xtap');
+          if (grouped) { cell.classList.add('grouped'); cell.style.setProperty('--g', colourOf(t, q.e)); }
+          if (picked) cell.classList.add('picked');
+          if (t.stage === 'collect' && !grouped) {
+            cell.tabIndex = 0; cell.setAttribute('role', 'button');
+            cell.addEventListener('click', () => pickTerm(t, n, cell));
+            cell.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickTerm(t, n, cell); } });
+          }
+        }
+        r1.appendChild(cell);
+      } else if (n === t.k && t.stage === 'mul') {
+        r1.appendChild(termInput((q2, raw) => typedTerm(t, q2, raw)));
+      } else r1.appendChild(box('', ''));
+    });
+    host.appendChild(r1);
+    if (t.stage === 'mul') return;
+    // line 2: the like terms added up, highest power first
+    const r2 = elt('div', 'frow');
+    r2.appendChild(elt('span', 'fop', '='));
+    t.powers.forEach((e, n) => {
+      const c = t.sums[e], filled = t.done.has(e);
+      if (n) r2.appendChild(elt('span', 'fop', filled ? (c < 0 ? '−' : '+') : ''));
+      const cell = filled ? box('right', n ? termBody(c, e) : termLead({ c, e })) : box('', '');
+      cell.classList.add('grouped');
+      if (filled) cell.style.setProperty('--g', colourOf(t, e));
+      r2.appendChild(cell);
+    });
+    host.appendChild(r2);
+  }
+
+  function playExpand(t) {
+    showParts('pr-exp');
+    sub('Multiply each term by each term.');
+    expandHead(t, ' =');
+    renderExpand(t);
+    focusLive();
+  }
+  function typedTerm(t, q, raw) {
+    if (t.stage !== 'mul') return;
+    const want = t.prods[t.k], ok = q.c === want.c && q.e === want.e;
+    award(ok);
+    t.typed[t.k] = { raw: raw.replace(/-/g, '−'), wrong: !ok };
+    const a = t.A[want.i], b = t.B[want.j];
+    say(ok ? '' : `${termLead(a)} · ${termLead(b)} = ${termLead(want)}`, ok ? '' : 'bad');
+    t.k++;
+    if (t.k < t.prods.length) { expandHead(t, ' ='); renderExpand(t); focusLive(); return; }
+    // all multiplied: now the like terms; a power that shows up once is already done
+    t.stage = 'collect';
+    t.powers.forEach(e => { if (t.prods.filter(p => p.e === e).length === 1) t.done.add(e); });
+    sub('Tap the like terms to add them.');
+    expandHead(t, ' =');
+    renderExpand(t);
+  }
+  function pickTerm(t, n, cell) {
+    if (t.stage !== 'collect') return;
+    const e = t.prods[n].e;
+    if (t.sel.has(n)) { t.sel.delete(n); say(''); renderExpand(t); return; }
+    const first = [...t.sel][0];
+    if (first != null && t.prods[first].e !== e) {
+      award(false);
+      say(`${termLead(t.prods[first])} and ${termLead(t.prods[n])} are not like terms.`, 'bad');
+      cell.classList.add('wrong-flash');
+      later(() => cell.classList.remove('wrong-flash'), 600);
+      return;
+    }
+    t.sel.add(n);
+    const group = t.prods.map((p, i) => p.e === e ? i : -1).filter(i => i >= 0);
+    if (group.every(i => t.sel.has(i))) {
+      award(true);
+      t.done.add(e); t.sel.clear();
+      say(`${polyText(group.map(i => t.prods[i]))} = ${termLead({ c: t.sums[e], e })}`, 'good');
+      if (t.powers.every(x => t.done.has(x))) {
+        t.stage = 'end';
+        renderExpand(t);
+        expandHead(t, ' = ' + polyText(t.powers.map(x => ({ c: t.sums[x], e: x }))) + ' <span class="ok">✓</span>');
+        sub('Done.');
+        NB.ready();
+        return;
+      }
+    } else say('');
+    renderExpand(t);
   }
 
   // =====================================================================
   // ROUNDS
   // =====================================================================
-  const GEN = { line: genLine, square: genSquare, order: genOrder, multiply: genMultiply, divide: genDivide, factor: genFactor, fraction: genFraction };
-  const PLAY = { line: playLine, square: playSquare, order: playOrder, multiply: playDigits, divide: playDigits, factor: playFactor, fraction: playFraction };
-  const sigOf = p => ({ line: `${p.op}${p.a},${p.b}`, square: p.side, order: p.t, multiply: `${p.a}x${p.b}`, divide: `${p.dividend}/${p.divisor}`, factor: p.target, fraction: `${p.op}${p.a}/${p.b},${p.c}/${p.d}` })[p.type];
+  const GEN = { line: genLine, square: genSquare, order: genOrder, multiply: genMultiply, divide: genDivide, factor: genFactor, fraction: genFraction, expand: genExpand };
+  const PLAY = { line: playLine, square: playSquare, order: playOrder, multiply: playDigits, divide: playDigits, factor: playFactor, fraction: playFraction, expand: playExpand };
+  const sigOf = p => ({ line: `${p.op}${p.a},${p.b}`, square: p.side, order: p.t, multiply: `${p.a}x${p.b}`, divide: `${p.dividend}/${p.divisor}`, factor: `${p.a},${p.b}`, fraction: `${p.op}${p.a}/${p.b},${p.c}/${p.d}`, expand: p.key })[p.type];
 
   // a finished problem moves on to a random ticked topic
   const next = () => NB.mix.next();
@@ -3293,7 +3818,10 @@ const NB = (() => {
   // each topic is its own section; they share one sheet of paper
   TOPICS.forEach(({ id }) => {
     NB.onShow[id] = fresh => {
-      if (!fresh && S.topic === id && S.cur) { focusLive(); return; }   // coming back: carry on where you were
+      if (!fresh && S.topic === id && S.cur) {   // coming back: carry on where you were
+        if (S.cur.type === 'factor') resumeFactor(S.cur);   // leaving cancelled its pause — pick up after it
+        focusLive(); return;
+      }
       S.topic = id;
       info(id);
       newProblem();
