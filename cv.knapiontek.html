@@ -1,238 +1,332 @@
-
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-<title>Krzysztof Napiontek</title>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Krzysztof Napiontek – CV</title>
+<meta name="description" content="Krzysztof Napiontek – Senior Software Engineer / Technical Lead. Java, Python, C/C++, distributed systems, AI-assisted development.">
 <style>
-#main_page {
-	padding: 2cm;
-	width: 19cm;
-	margin-left: auto;
-	margin-right: auto;
-	background-color: #ffffff;
-	box-shadow: 10px 10px 5px #888888;
-}
-.period {
-	vertical-align: text-top;
-	white-space: nowrap;
-}
-table {
-	border-collapse: collapse;
-}
-td {
-	padding: 5px;
-}
-.vertical {
-	text-align: right;
-	border-right: solid 2px #000000;
-	vertical-align: text-top;
-	white-space: nowrap;
-}
-body {
-	background-color: #cccccc;
-	font: 14px Myriad,Helvetica,Tahoma,Arial,clean,sans-serif;
-	font-size: 0.8em;
-	line-height: 1.5em;
-	margin-top: 1.5em;
-	margin-bottom: 1.5em;
-}
+  :root {
+    --ink: #1d2330;
+    --muted: #5b6475;
+    --accent: #1f5fa8;
+    --line: #dde2ea;
+    --bg: #ffffff;
+    --chip: #eef3fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #f4f6f9;
+    color: var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  main {
+    max-width: 860px;
+    margin: 32px auto;
+    padding: 40px 48px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+  }
+  header { border-bottom: 2px solid var(--accent); padding-bottom: 16px; margin-bottom: 8px; }
+  h1 { margin: 0; font-size: 30px; letter-spacing: -0.5px; }
+  .headline { margin: 4px 0 12px; font-size: 17px; color: var(--accent); font-weight: 600; }
+  .contact { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--muted); font-size: 14px; }
+  .contact a { color: inherit; }
+  h2 {
+    margin: 28px 0 10px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--accent);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 4px;
+  }
+  p { margin: 0 0 10px; }
+  ul { margin: 4px 0 0; padding-left: 20px; }
+  li { margin: 2px 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .highlight {
+    background: var(--chip);
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    border-radius: 0 4px 4px 0;
+  }
+  .highlight h3 { margin: 0 0 6px; font-size: 15px; }
+
+  .skills { display: grid; grid-template-columns: 170px 1fr; gap: 6px 16px; }
+  .skills dt { font-weight: 600; }
+  .skills dd { margin: 0; }
+
+  .job { margin: 0 0 18px; break-inside: avoid; }
+  .job-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .job-title { font-weight: 700; }
+  .job-org { color: var(--muted); }
+  .job-date { color: var(--muted); font-size: 14px; white-space: nowrap; }
+  .job-about { color: var(--muted); font-size: 14px; margin: 2px 0 4px; }
+  .tech { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .tech b { color: var(--ink); font-weight: 600; }
+
+  .edu { display: grid; grid-template-columns: 110px 1fr; gap: 4px 16px; }
+  .edu span:nth-child(odd) { color: var(--muted); font-size: 14px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
+
+  @media (max-width: 640px) {
+    main { margin: 0; padding: 24px 16px; border: 0; border-radius: 0; }
+    .skills, .edu, .two-col { grid-template-columns: 1fr; }
+    .skills dt { margin-top: 6px; }
+  }
+  @media print {
+    body { background: #fff; font-size: 12.5px; }
+    main { margin: 0; padding: 0; border: 0; max-width: none; }
+    a { color: var(--ink); }
+    h2 { margin-top: 18px; }
+  }
 </style>
 </head>
 <body>
+<main>
 
-<div id="main_page">
+<header>
+  <h1>Krzysztof Napiontek</h1>
+  <div class="headline">Senior Software Engineer · Java / Python / C++ · Distributed &amp; Financial Systems</div>
+  <div class="contact">
+    <span>Monkstown, Co. Dublin, Ireland</span>
+    <a href="mailto:knapiontek@gmail.com">knapiontek@gmail.com</a>
+    <a href="tel:+353868424950">+353 86 842 4950</a>
+    <a href="https://knapiontek.github.io">knapiontek.github.io</a>
+    <a href="https://github.com/knapiontek">github.com/knapiontek</a>
+    <span>EU citizen (Polish)</span>
+  </div>
+</header>
 
-  <h2>Krzysztof Napiontek</h2>
-  <table>
-    <tr><td class="vertical">Nationality</td><td>Polish / EU</td></tr>
-    <tr><td class="vertical">Date of Birth</td><td>1975</td></tr>
-    <tr><td class="vertical">Address</td><td>Monkstown, Ireland</td></tr>
-    <tr><td class="vertical">Email</td><td>knapiontek@gmail.com</td></tr>
-    <tr><td class="vertical">Phone</td><td>+353 86 842 4950</td></tr>
-  </table>
-  <h3>Education</h3>
-  <table>
-    <tr><td class="vertical">2018 – 2019</td><td>Udemy: Advanced Scala and Functional Programming</td></tr>
-    <tr><td class="vertical">2018 – 2018</td><td>Udemy: TensorFlow for Deep Learning with Python (CNN, RNN)</td></tr>
-    <tr><td class="vertical">2001 – 2002</td><td>University of Technology in Poznan Poland<br/>1 Year of Phd in <b>Numeric Methods</b></td></tr>
-    <tr><td class="vertical">1996 – 2001</td><td>University of Technology in Poznan Poland<br/><b>Master of Science Engineer in Automatics and Robotics</b></td></tr>
-    <tr><td class="vertical">1990 – 1995</td><td>Technikum Elektroniczne in Bydgoszcz Poland<br/>Secondary school specializes in <b>Electronics and Telecommunication</b></td></tr>
-  </table>
+<h2>Profile</h2>
+<p>
+  Software engineer with 25+ years of commercial experience building distributed, concurrent and data-intensive systems
+  in Java, Python and C/C++ – from aircraft data replication and CORBA middleware to a cloud-native distributed SQL
+  database and trading platforms in investment banking. Comfortable across the stack, from low-level performance and
+  concurrency work to architecture, observability and leading delivery. Background in robotics, numerical methods and 3D maths.
+</p>
+<p>
+  Currently working on Java services in a trading environment, using AI coding assistants
+  (GitHub Copilot and Claude in IntelliJ IDEA) as an everyday part of the development workflow.
+</p>
 
-  <h3>Key Technical Skills</h3>
+<div class="highlight">
+  <h3>AI-assisted Java development</h3>
   <ul>
-    <li><b>Java - 7+ years of commercial experience</b></li>
-    <li><b>Python - 6+ years of commercial experience</b></li>
-    <li><b>Matlab - 2+ years of commercial experience</b></li>
-    <li><b>C/C++ - 10+ years of commercial experience</b></li>
-    <li>Strong front-end and back-end experience</li>
-    <li>Strong debugging skills</li>
-    <li><b>Concurrent processing expert</b>: multi-threading or event-driven systems, also barriers and atomic operations</li>
-    <li>3D math expert (education Robotics, as a part of my master thesis I created 3D CAD system for FEM computations in OpenGL/Qt/Lua)</li>
-    <li>Experience in computer simulations of Maxwell equations</li>
-    <li>Very good GIS experience (3 years geographical map development)</li>
-  </ul>
-
-  <h3>Tools</h3>
-  <ul>
-    <li>Linux, Solaris enthusiast</li>
-    <li>JavaScript, jQuery, Bootstrap, Flask, NodeJS, Struts, JSP, Jinja</li>
-    <li>SQL Databases - Postgres, MS SQL Server, Oracle, MySQL</li>
-    <li>Object Databases - Hibernate, db4o, MongoDB, Redis, Berkley DB</li>
-    <li>AWS EC2, PySpark</li>
-    <li>Maven, Ant, git, Subversion, Makefile</li>
-    <li>Eclipse, IntelliJ, PyCharm, Emacs, Vi</li>
-    <li>Gitlab, Jenkins, Bamboo, JIRA</li>
-  </ul>
-
-  <h3>Resources</h3>
-  <ul>
-    <li>Web site: <a style="font-family: monospace;" href="http://knapiontek.github.io">http://knapiontek.github.io</a></li>
-    <li>C++ standard library: <a style="font-family: monospace;" href="https://github.com/knapiontek/therion/tree/master/lite/src/core">https://github.com/knapiontek/therion/tree/master/lite/src/core</a></li>
-    <li>LALR(1) parser: <a style="font-family: monospace;" href="https://github.com/knapiontek/therion/tree/master/therion1/src/langen">https://github.com/knapiontek/therion/tree/master/therion1/src/langen</a></li>
-    <li>Eternity II: <a style="font-family: monospace;" href="https://github.com/knapiontek/therion/tree/master/eternity">https://github.com/knapiontek/therion/tree/master/eternity</a></li>
-    <li>Finite Element Method: <a style="font-family: monospace;" href="https://github.com/knapiontek/therion/tree/master/fem">https://github.com/knapiontek/therion/tree/master/fem</a></li>
-    <li>Lite - compiler based on LLVM: <a style="font-family: monospace;" href="https://github.com/knapiontek/therion/tree/master/lite">https://github.com/knapiontek/therion/tree/master/lite</a></li>
-  </ul>
-
-  <h3>Employment Experience</h3>
-  <table>
-    <tr><td class="period">01/2021 - present</td><td><b>Torronto Dominion Securities (Dublin)</b><br/>
-        Role: IT Program Manager<br/>
-        <p>Tasks:</p>
-        <ul>
-          <li>Coordination and management of the trade service</li>
-          <li>Introducing Telementry to the system for increased observability</li>
-          <li>Research for new analytics platform based on Apache Spark and Druid</li>
-          <li>Design of the BiTemporal index for trading data</li>
-          <li>Solving problems for the clients of the system</li>
-        </ul>
-    </td></tr>
-
-    <tr><td class="period">08/2019 - 01/2021</td><td><b>Huawei Ireland (Dublin)</b><br/>
-        Huawei Research Center - Machine Learning.<br/>
-        Role: Software Developer, Data Scientist<br/>
-        <p>Tasks:</p>
-        <ul>
-          <li>Design and build of micro-service for procesing and agregating data. It runs on Python, Dash, Flask, aiohttp, PostgreSQL</li>
-          <li>Agregating/processing/storing and presenting data from Elastic-Search/Kabana system</li>
-        </ul>
-    </td></tr>
-
-    <tr><td class="period">02/2019 - 08/2020</td><td><b>Danalto Ireland (Dublin)</b><br/>
-        Danalto provides management platform for devices and gateways for Internet of Things.<br/>
-        Role: Software Architect<br/>
-        <p>Tasks:</p>
-        <ul>
-          <li>Configuration of an automated QA process with Gitlab and AWS EC2</li>
-          <li>Design and implementation of a geo-location system for IoT. It requires to work with Django, Gitlab, Docker Swarm, Kubernates, Alpine, AWS, aiohttp, Postgres</li>
-        </ul>
-    </td></tr>
-
-    <tr><td class="period">03/2018 - 02/2019</td><td><b>Renaissance Reinsurance Ireland (Dublin)</b><br/>
-        Role: Python Developer<br/>
-        <p>Tasks:</p>
-        <ul>
-          <li>Making the client system fully secure and move it to the cloud when ready. It requires to work with Vault, Etcd, Docker, Kubernates, Celery, Redis, Grafana, Tornado</li>
-        </ul>
-    </td></tr>
-
-    <tr><td class="period">09/2016 - 02/2018</td><td><b>Merrill Lynch Ireland (Dublin)</b><br/>
-        Role: Python Developer<br/>
-        <p>Tasks:</p>
-        <ul>
-          <li>Migration of the legacy system. Task required creating scripts transfering data to the new model. I proposed successful automation process which has saved hundrends of customer hours.</li>
-          <li>Creating solutions for users (UI, back-end) which require working with: Flask, Tornado, Neteeza SQL, PyCharm, Sandra Object DB, Toad, Jinja using Python, javascript, html etc.</li>
-        </ul>
-    </td></tr>
-
-    <tr><td class="period">07/2015 - 08/2016</td><td><b>NuoDB Ireland (Dublin)</b><br/>
-        The SQL database for the cloud. First truely distributed database supporting SQL.<br/>
-        <p>Tasks:</p>
-        <ul>
-          <li>Design and implementation of system security based on TLS. Supported by JDK7/8.</li>
-          <li>Sophisticated JAVA test for failover of the distributed database engine. Running in Docker and AWS EC2 using AWS API</li>
-          <li>Improvement and design of <b>Python</b> test framework. Adding Python integration tests for new C++/Java features.</li>
-          <li>Implementing new features to the SQL Python client.</li>
-          <li>Design and implementation of LDAP authentication in C++. Supported by OpenLDAP for Linux, Mac, Windows (Active Directory).</li>
-        </ul>
-    </td></tr>
-
-    <tr><td class="period">11/2007 - 06/2015</td><td><b>Micro Focus (formerly IONA Technologies, Dublin)</b><br/>
-        Micro Focus delivers middleware solutions. Main products are Orbix and Artix. Orbix is the leading implementation of CORBA. Artix is successor of Orbix and is based on Web Services and implements ESB.
-        All products support Java and C++ technologies<br/>
-        <p>Main responsibilities:</p>
-        <ul>
-          <li>Enhancing Load Balancer functionality. It required to collect some network statistics to find the most apropriate sever node.</li>
-          <li>Design and implementation of http chunked transfer encoding. Required to improve network latency.</li>
-          <li>Implementation of plugins for Actional (web based monitoring tool) and Orbix CORBA server. (C++, Java)</li>
-          <li>Rebuilding test framework. Replacing Makefile, Ant, Perl with Maven and bits of Python</li>
-          <li>Mantainace of existing code. Bugfixes and debugging.</li>
-          <li>Introducing Jenkins support for the test framework.</li>
-        </ul>
-        Platforms: SunOS, Linux, Windows, HP-UX, AIX
-    </td></tr>
-
-    <tr><td class="period">08/2004 - 10/2007</td><td><b>Aircraft Management Technologies (Malahide, Ireland)</b><br/>
-        AMT delivers specific aircraft software solutions for airlines. The main focus of the system is management and replication of distributed databases where connections between airborne planes and the airport
-        server is not always guaranteed. The system optimizes a connection price (SAT, GPRS, GSM, Wireless) and an amount of data to achieve minimum costs and maximum usability.<br/>
-        Technology: Java with JNI back-end for specific protocols and for embeded environment.<br/>
-        <p>Involved in:</p>
-        <ul>
-          <li>Development of a server front-end based on web application (Tomcat, JSP, javascript, jQuery, HTLM, ajax, Hibernate)</li>
-          <li>Design and implementation of a subscription and publishing data system (XPath filters define data flow between aircrafts and ground server)</li>
-          <li>Design and implementation of a large content management system (transport of files by means of available media and protocols)</li>
-          <li>Significant improvement of speed of the system core (migration from JDBC-based client to PL/SQL procedures - avoiding unnecessary network traffic, further optimisation)</li>
-          <li>Adaptation of the company software to the Boeing hardware (JNI)</li>
-          <li>Embedding Java applications in an OS environment (Windows and Linux API)</li>
-        </ul>
-    </td></tr>
-  
-    <tr><td class="period">09/2001 – 06/2004</td><td><b>Systherm-Info (Poznan, Poland)</b><br/>
-        Main revenue stream - distributed spatial data systems for government departments (numeric maps, GIS and database applications). The primary project was a spatial data manager. The system created a graphics
-        view of remote databases. User was obtaining current or past state of the reality. The system had ability of simultaneous work with a few databases (SQL Server, Oracle and Pervasive) all at once. The system
-        had a general mechanism to extend the interface for a new kind of a database.<br/>
-        <p>Involved in:</p>
-        <ul>
-          <li>Design and implementation of multidimensional index for specific GIS applications (indexing vector objects in a storage)</li>
-          <li>Design and implementation of a drawing system (fast geometric algorithms)</li>
-          <li>Design and implementation of transport layer (in-house protocol for GIS data</li>
-          <li>Replication and data merging system (i.e. merging two map snapshots of different time-stamp)</li>
-          <li>High level UI functions for manual data input</li>
-        </ul>
-    </td></tr>
-
-    <tr><td class="period">06/1999 – 09/2001</td><td><b>Xnet Communications (Poland, German subsidiary)</b><br/>
-        The company specialized in network communication. Tasks related to implementation of systems controlling data flow in the network (e.g. acquisition of data from distributed cash-registers). The central unit
-        of the system was an FTP server and a scheduler. The engine was configured with Lua scripts (see lua.org).<br/>
-        <p>Involved in:</p>
-        <ul>
-          <li>Implementation of distributed file management system (core and GUI)</li>
-          <li>Implementation of transport layer based on modems</li>
-          <li>Implementation of the FTP client and extensions of FTP server</li>
-          <li>SMTP implementation</li>
-        </ul>
-    </td></tr>
-  </table>
-
-  <h3>Languages</h3>
-  <ul>
-    <li>English - fluent</li>
-    <li>Polski - native</li>
-    <li>Espa&#241;ol - learning</li>
-  </ul>
-
-  <h3>Interests</h3>
-  <ul>
-    <li>Rock Climbing, Kitesurfing</li>
-    <li>Applied Mathematics</li>
-  </ul>
-
-  <h3>References</h3>
-  <ul>
-    <li>Available on request</li>
+    <li>Daily use of <b>GitHub Copilot</b> and <b>Claude</b> (Anthropic) inside <b>IntelliJ IDEA</b> for Java development.</li>
+    <li>Using AI assistants for code generation, refactoring, writing and extending unit/integration tests, and navigating and explaining legacy code.</li>
+    <li>Applying them to code review, debugging and documentation, while keeping engineering judgement on design, correctness and security.</li>
+    <li>Experience writing effective prompts and context for agentic coding tasks across multi-module Maven projects.</li>
   </ul>
 </div>
+
+<h2>Key Skills</h2>
+<dl class="skills">
+  <dt>Languages</dt>
+  <dd><b>Java</b> (current), <b>Python</b> (6+ yrs), <b>C/C++</b> (10+ yrs), Scala, JavaScript, SQL, Matlab, Lua</dd>
+  <dt>AI tooling</dt>
+  <dd>GitHub Copilot, Claude (Anthropic), AI-assisted coding in IntelliJ IDEA; TensorFlow (CNN, RNN)</dd>
+  <dt>Concurrency</dt>
+  <dd>Multi-threaded and event-driven systems, barriers, atomic operations, lock-free techniques</dd>
+  <dt>Data &amp; analytics</dt>
+  <dd>Apache Spark / PySpark, Druid, Elasticsearch / Kibana, bi-temporal data modelling</dd>
+  <dt>Databases</dt>
+  <dd>PostgreSQL, Oracle (PL/SQL), MS SQL Server, MySQL, Netezza; MongoDB, Redis, Berkeley DB, db4o, Hibernate</dd>
+  <dt>Cloud &amp; DevOps</dt>
+  <dd>AWS (EC2), Docker, Docker Swarm, Kubernetes, Vault, etcd, GitLab CI, Jenkins, Bamboo, Grafana, OpenTelemetry</dd>
+  <dt>Web</dt>
+  <dd>Flask, Django, Tornado, aiohttp, Dash, Node.js, JSP/Struts, Tomcat, jQuery, Bootstrap, Jinja</dd>
+  <dt>Build &amp; tools</dt>
+  <dd>Maven, Ant, Make, Git, Subversion, JIRA; IntelliJ IDEA, PyCharm, Eclipse, Emacs, Vi</dd>
+  <dt>Platforms</dt>
+  <dd>Linux, Solaris/SunOS, Windows, macOS, HP-UX, AIX</dd>
+  <dt>Maths &amp; domain</dt>
+  <dd>3D geometry, FEM, numerical simulation of Maxwell's equations, GIS and spatial indexing (3 yrs)</dd>
+</dl>
+
+<h2>Employment</h2>
+
+<div class="job">
+  <div class="job-head">
+    <div><span class="job-title">IT Program Manager</span> · <span class="job-org">TD Securities (Toronto-Dominion), Dublin</span></div>
+    <div class="job-date">01/2021 – present</div>
+  </div>
+  <ul>
+    <li>Coordinating and managing development of the trade service.</li>
+    <li>Java development on the trade platform using AI-assisted workflows (GitHub Copilot and Claude in IntelliJ IDEA) to speed up implementation, testing and refactoring.</li>
+    <li>Introduced telemetry to the system, significantly improving observability.</li>
+    <li>Researched a new analytics platform based on Apache Spark and Apache Druid.</li>
+    <li>Designed a bi-temporal index for trading data.</li>
+    <li>Resolved production issues directly with the system's client teams.</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="job-head">
+    <div><span class="job-title">Software Developer / Data Scientist</span> · <span class="job-org">Huawei Ireland Research Centre, Dublin</span></div>
+    <div class="job-date">08/2019 – 01/2021</div>
+  </div>
+  <div class="job-about">Machine-learning research group.</div>
+  <ul>
+    <li>Designed and built a microservice for processing and aggregating data.</li>
+    <li>Aggregated, processed, stored and visualised data from an Elasticsearch / Kibana system.</li>
+  </ul>
+  <div class="tech"><b>Tech:</b> Python, Dash, Flask, aiohttp, PostgreSQL, Elasticsearch</div>
+</div>
+
+<div class="job">
+  <div class="job-head">
+    <div><span class="job-title">Software Architect</span> · <span class="job-org">Danalto, Dublin</span></div>
+    <div class="job-date">02/2019 – 08/2020</div>
+  </div>
+  <div class="job-about">Management platform for IoT devices and gateways.</div>
+  <ul>
+    <li>Designed and implemented a geo-location system for IoT devices.</li>
+    <li>Set up an automated QA process with GitLab CI and AWS EC2.</li>
+  </ul>
+  <div class="tech"><b>Tech:</b> Python, Django, aiohttp, PostgreSQL, Docker Swarm, Kubernetes, Alpine, AWS, GitLab</div>
+</div>
+
+<div class="job">
+  <div class="job-head">
+    <div><span class="job-title">Python Developer</span> · <span class="job-org">RenaissanceRe, Dublin</span></div>
+    <div class="job-date">03/2018 – 02/2019</div>
+  </div>
+  <ul>
+    <li>Hardened the client system's security and prepared it for migration to the cloud.</li>
+  </ul>
+  <div class="tech"><b>Tech:</b> Python, Tornado, Celery, Redis, Vault, etcd, Docker, Kubernetes, Grafana</div>
+</div>
+
+<div class="job">
+  <div class="job-head">
+    <div><span class="job-title">Python Developer</span> · <span class="job-org">Bank of America Merrill Lynch, Dublin</span></div>
+    <div class="job-date">09/2016 – 02/2018</div>
+  </div>
+  <ul>
+    <li>Migrated a legacy system, writing scripts to transfer data into the new model.</li>
+    <li>Proposed and delivered an automation process that saved hundreds of customer hours.</li>
+    <li>Built user-facing solutions end to end (UI and back-end).</li>
+  </ul>
+  <div class="tech"><b>Tech:</b> Python, Flask, Tornado, Jinja, JavaScript, Netezza SQL, Sandra object DB, Toad</div>
+</div>
+
+<div class="job">
+  <div class="job-head">
+    <div><span class="job-title">Software Engineer</span> · <span class="job-org">NuoDB, Dublin</span></div>
+    <div class="job-date">07/2015 – 08/2016</div>
+  </div>
+  <div class="job-about">Distributed, cloud-native SQL database.</div>
+  <ul>
+    <li>Designed and implemented TLS-based system security (JDK 7/8).</li>
+    <li>Built sophisticated Java failover tests for the distributed database engine, running in Docker and on AWS EC2 via the AWS API.</li>
+    <li>Designed and improved the Python test framework; added integration tests for new C++/Java features.</li>
+    <li>Implemented new features in the Python SQL client.</li>
+    <li>Designed and implemented LDAP authentication in C++ (OpenLDAP on Linux/macOS, Active Directory on Windows).</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="job-head">
+    <div><span class="job-title">Software Engineer</span> · <span class="job-org">Micro Focus (formerly IONA Technologies), Dublin</span></div>
+    <div class="job-date">11/2007 – 06/2015</div>
+  </div>
+  <div class="job-about">Middleware: Orbix (leading CORBA implementation) and Artix (Web Services / ESB), in Java and C++.</div>
+  <ul>
+    <li>Enhanced load-balancer functionality using network statistics to select the most appropriate server node.</li>
+    <li>Designed and implemented HTTP chunked transfer encoding to reduce network latency.</li>
+    <li>Implemented plugins for Actional (web-based monitoring) and the Orbix CORBA server (C++, Java).</li>
+    <li>Rebuilt the test framework, replacing Make, Ant and Perl with Maven and Python; introduced Jenkins CI.</li>
+    <li>Maintenance, debugging and bug fixing across SunOS, Linux, Windows, HP-UX and AIX.</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="job-head">
+    <div><span class="job-title">Software Engineer</span> · <span class="job-org">Aircraft Management Technologies, Malahide</span></div>
+    <div class="job-date">08/2004 – 10/2007</div>
+  </div>
+  <div class="job-about">Distributed database replication between airborne aircraft and ground servers over intermittent links (SAT, GPRS, GSM, wireless), optimising cost and data volume. Java with a JNI back-end for embedded environments.</div>
+  <ul>
+    <li>Developed the server web front-end (Tomcat, JSP, JavaScript, jQuery, AJAX, Hibernate).</li>
+    <li>Designed and implemented a publish/subscribe data system using XPath filters to define data flow between aircraft and the ground server.</li>
+    <li>Designed and implemented a large content-management system transporting files over the available media and protocols.</li>
+    <li>Significantly sped up the system core by moving from a JDBC client to PL/SQL procedures, cutting network traffic.</li>
+    <li>Adapted the software to Boeing hardware via JNI; embedded Java applications in Windows and Linux environments.</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="job-head">
+    <div><span class="job-title">Software Engineer</span> · <span class="job-org">Systherm-Info, Poznań, Poland</span></div>
+    <div class="job-date">09/2001 – 06/2004</div>
+  </div>
+  <div class="job-about">Distributed spatial-data systems (GIS, digital maps) for government departments, working with SQL Server, Oracle and Pervasive simultaneously.</div>
+  <ul>
+    <li>Designed and implemented a multidimensional index for vector GIS objects.</li>
+    <li>Built a drawing system based on fast geometric algorithms.</li>
+    <li>Implemented an in-house transport protocol for GIS data.</li>
+    <li>Built replication and merging of map snapshots with different timestamps.</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="job-head">
+    <div><span class="job-title">Software Engineer</span> · <span class="job-org">Xnet Communications (German subsidiary), Poland</span></div>
+    <div class="job-date">06/1999 – 09/2001</div>
+  </div>
+  <div class="job-about">Network data-flow systems, e.g. acquisition of data from distributed cash registers, built around an FTP server and Lua-configured scheduler.</div>
+  <ul>
+    <li>Implemented a distributed file-management system (core and GUI) and a modem-based transport layer.</li>
+    <li>Implemented an FTP client, FTP server extensions and SMTP.</li>
+  </ul>
+</div>
+
+<h2>Education &amp; Training</h2>
+<div class="edu">
+  <span>2001 – 2002</span><span>Poznań University of Technology – one year of PhD studies in <b>Numerical Methods</b></span>
+  <span>1996 – 2001</span><span>Poznań University of Technology – <b>MSc Eng. in Automatics and Robotics</b>; thesis: 3D CAD system for FEM computations (OpenGL, Qt, Lua)</span>
+  <span>1990 – 1995</span><span>Technikum Elektroniczne, Bydgoszcz – Electronics and Telecommunications</span>
+  <span>2018 – 2019</span><span>Udemy: Advanced Scala and Functional Programming</span>
+  <span>2018</span><span>Udemy: TensorFlow for Deep Learning with Python (CNN, RNN)</span>
+</div>
+
+<h2>Open-Source Projects</h2>
+<ul>
+  <li><a href="https://github.com/knapiontek/therion/tree/master/lite">Lite</a> – compiler built on LLVM</li>
+  <li><a href="https://github.com/knapiontek/therion/tree/master/lite/src/core">C++ standard library</a> – custom core library</li>
+  <li><a href="https://github.com/knapiontek/therion/tree/master/therion1/src/langen">LALR(1) parser generator</a></li>
+  <li><a href="https://github.com/knapiontek/therion/tree/master/fem">Finite Element Method</a> solver</li>
+  <li><a href="https://github.com/knapiontek/therion/tree/master/eternity">Eternity II</a> puzzle solver</li>
+</ul>
+
+<div class="two-col">
+  <div>
+    <h2>Languages</h2>
+    <ul>
+      <li>English – fluent</li>
+      <li>Polish – native</li>
+      <li>Spanish – learning</li>
+    </ul>
+  </div>
+  <div>
+    <h2>Interests</h2>
+    <ul>
+      <li>Rock climbing, kitesurfing</li>
+      <li>Applied mathematics</li>
+    </ul>
+  </div>
+</div>
+
+<h2>References</h2>
+<p>Available on request.</p>
+
+</main>
 </body>
 </html>
