@@ -49,12 +49,21 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12px;text
   border:1px solid var(--line);border-radius:999px;padding:6px;display:flex;gap:4px;overflow-x:auto}
 .dock button{border-color:transparent;background:transparent;white-space:nowrap}
 .dock button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.toggle,.spec-head{display:none}
 @media (max-width:760px){
-  .title h1{font-size:28px}
+  .title{top:12px;left:14px;max-width:calc(100% - 140px)}
+  .title h1{font-size:19px;line-height:1.15}
   .title p{display:none}
-  .spec{top:auto;bottom:76px;left:16px;right:16px;width:auto;max-height:42%}
-  .spec .mats,.spec .hide-m{display:none}
-  .dock{bottom:14px;justify-content:flex-start}
+  .toggle{display:flex;align-items:center;gap:6px;position:absolute;top:10px;right:12px;z-index:3;font-weight:600;
+    background:var(--card);border-color:var(--line);padding:8px 12px}
+  .toggle svg{width:16px;height:16px}
+  .spec{display:none;top:auto;left:12px;right:12px;bottom:calc(64px + env(safe-area-inset-bottom,0px));width:auto;max-height:68%;z-index:4}
+  body.open .spec{display:flex}
+  body.open .toggle{display:none}
+  .spec-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .spec-head h2{margin:0}
+  .dock{bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:4px;max-width:calc(100% - 24px)}
+  .dock button{padding:6px 10px;font-size:13px}
 }
 </style>
 
@@ -64,7 +73,12 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12px;text
     <p>Aneks kuchenny: blat pod oknem z płytą i okapem, wysoka zabudowa z piekarnikiem na prawej ścianie i wyspa naprzeciw okna. Fronty shaker w ramie.</p>
   </div>
 
-  <div class="spec">
+  <button class="toggle" id="toggleSpec" aria-expanded="false" aria-controls="spec">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+    Ustawienia</button>
+
+  <div class="spec" id="spec">
+    <div class="spec-head"><h2>Ustawienia</h2><button id="closeSpec">Zamknij</button></div>
     <section>
       <h2>Uchwyty</h2>
       <div class="row" id="metal">
@@ -82,7 +96,7 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12px;text
         <li><i style="background:linear-gradient(120deg,#c4c6c7,#b5b8ba 45%,#cfd1d2)"></i><small>Podłoga</small><b>Szary marmur 120 × 60</b></li>
       </ul>
     </section>
-    <details class="hide-m">
+    <details>
       <summary>Wymiary w modelu</summary>
       <dl>
         <dt>Blat pod oknem</dt><dd>3350 × 600 × 40</dd>
@@ -407,6 +421,14 @@ document.getElementById('views').addEventListener('click',e=>{const b=e.target.c
   for(const x of document.querySelectorAll('#views button'))x.setAttribute('aria-pressed',x===b);go(b.dataset.v,reduce);});
 document.getElementById('metal').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;setMetal(b.dataset.m);
   for(const x of document.querySelectorAll('#metal button'))x.setAttribute('aria-pressed',x===b);});
+
+/* ---------- panel ustawień na telefonie ---------- */
+const tg=document.getElementById('toggleSpec'),cl=document.getElementById('closeSpec');
+function spec(on){document.body.classList.toggle('open',on);tg.setAttribute('aria-expanded',on);}
+tg.addEventListener('click',()=>{spec(true);cl.focus();});
+cl.addEventListener('click',()=>{spec(false);tg.focus({preventScroll:true});});
+renderer.domElement.addEventListener('pointerdown',()=>spec(false));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')spec(false);});
 
 /* ---------- pętla ---------- */
 function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
