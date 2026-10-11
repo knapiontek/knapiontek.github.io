@@ -1,0 +1,546 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Sixty Matrices</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500;62..125,700;62..125,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow test column, like a booklet page; the figure is the hero, options sit below as an answer row. */
+:root{
+  --bg:#ECEEF3; --surface:#F8F9FB; --ink:#141829; --muted:#5B6176; --line:#D3D7E1; --line-strong:#A9AFBF;
+  --accent:#2A41D0; --accent-soft:#E2E6FA; --good:#1D7A4C; --good-soft:#DDF0E5; --bad:#B23A30; --bad-soft:#F6E1DE;
+  --fig-bg:#FFFFFF; --fig-ink:#121522;
+  --display:'Archivo','Arial Narrow',system-ui,sans-serif; --body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D101A; --surface:#151927; --ink:#E5E8F1; --muted:#99A0B5; --line:#283044; --line-strong:#424B63;
+  --accent:#8D9CFF; --accent-soft:#1C2347; --good:#5DC690; --good-soft:#12301F; --bad:#F2847A; --bad-soft:#3A1A17;
+  --fig-bg:#181C2B; --fig-ink:#E8EAF2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D101A; --surface:#151927; --ink:#E5E8F1; --muted:#99A0B5; --line:#283044; --line-strong:#424B63;
+  --accent:#8D9CFF; --accent-soft:#1C2347; --good:#5DC690; --good-soft:#12301F; --bad:#F2847A; --bad-soft:#3A1A17;
+  --fig-bg:#181C2B; --fig-ink:#E8EAF2; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:20px 56px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:4px 18px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.brand{font-family:var(--display);font-weight:800;font-stretch:72%;font-size:20px;letter-spacing:.01em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.brand svg{width:22px;height:22px}
+.meta{font-family:var(--mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+
+/* buttons */
+.btn{appearance:none;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:9px 16px;font-weight:500;cursor:pointer;transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);border-color:var(--line)}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* intro */
+.intro h1{font-family:var(--display);font-weight:800;font-stretch:68%;font-size:clamp(44px,11vw,84px);line-height:.92;letter-spacing:-.01em;text-transform:uppercase;margin:6px 0 14px;text-wrap:balance}
+.lede{font-size:18px;max-width:58ch;margin:0 0 22px;color:var(--ink)}
+.facts{display:flex;flex-wrap:wrap;gap:8px 22px;font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:28px}
+.facts b{color:var(--ink);font-weight:500}
+.sets{list-style:none;margin:0 0 26px;padding:0;border-top:1px solid var(--line)}
+.sets li{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--line)}
+.sets .letter{font-family:var(--display);font-weight:800;font-stretch:72%;font-size:26px;line-height:1;color:var(--accent)}
+.sets .nm{font-weight:600}.sets .ds{color:var(--muted);font-size:14px;display:block}
+.sets .ct{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.note{color:var(--muted);font-size:14px;max-width:62ch;margin:0 0 24px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+/* progress ticks */
+.ticks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:22px}
+.tgroup{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2px}
+.tgroup span{height:6px;border-radius:1px;background:var(--line)}
+.tgroup span.done{background:var(--line-strong)}
+.tgroup span.cur{background:var(--accent)}
+.tlabel{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:.06em}
+
+.itemhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.code{font-family:var(--display);font-weight:800;font-stretch:72%;font-size:34px;line-height:1}
+.itemhead .sub{color:var(--muted);font-size:14px;margin-left:10px}
+.itemhead .left{display:flex;align-items:baseline;min-width:0}
+
+/* figures */
+.fig{display:block;width:100%;height:auto}
+.fig .f0{fill:var(--fig-bg);stroke:var(--fig-ink);stroke-width:2.2;stroke-linejoin:round}
+.fig .f1{fill:url(#hatch);stroke:var(--fig-ink);stroke-width:2.2;stroke-linejoin:round}
+.fig .f2{fill:var(--fig-ink);stroke:var(--fig-ink);stroke-width:2.2;stroke-linejoin:round}
+.fig .f3{fill:url(#dots);stroke:var(--fig-ink);stroke-width:2.2;stroke-linejoin:round}
+.fig .fo{fill:none;stroke:var(--fig-ink);stroke-width:2.2;stroke-linejoin:round}
+.fig .ln{stroke:var(--fig-ink);stroke-width:2.6;stroke-linecap:round}
+.fig .lh{stroke:var(--fig-bg);stroke-width:7;stroke-linecap:round}
+.fig .tk{fill:var(--fig-ink)}
+.fig .tl{stroke:var(--fig-ink);fill:none}
+.fig .bgf{fill:var(--fig-bg)}
+.fig .hole{fill:var(--fig-bg);stroke:var(--fig-ink);stroke-width:2}
+.fig .frame{fill:none;stroke:var(--fig-ink);stroke-width:1.5}
+.pl{stroke:var(--fig-ink);stroke-width:1.4}.pbg{fill:var(--fig-bg)}.pd{fill:var(--fig-ink)}
+
+.problem{background:var(--fig-bg);border:1px solid var(--line);border-radius:10px;padding:clamp(14px,4vw,28px);display:flex;justify-content:center;margin:0 0 18px}
+.matrix{display:grid;width:100%;border-top:1.5px solid var(--line-strong);border-left:1.5px solid var(--line-strong)}
+.matrix.n2{max-width:300px}.matrix.n3{max-width:420px}
+.matrix .cell{aspect-ratio:1;max-width:100%;border-right:1.5px solid var(--line-strong);border-bottom:1.5px solid var(--line-strong);display:flex;align-items:center;justify-content:center}
+.matrix .missing{background:repeating-linear-gradient(135deg,transparent 0 7px,var(--accent-soft) 7px 9px)}
+.matrix .missing span{font-family:var(--display);font-weight:800;font-size:clamp(28px,7vw,44px);color:var(--accent)}
+.texfield{width:100%;max-width:520px}
+
+.optlabel{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.opts{display:grid;gap:10px;margin-bottom:20px}
+.opts.c6{grid-template-columns:repeat(3,minmax(0,1fr))}
+.opts.c8{grid-template-columns:repeat(4,minmax(0,1fr))}
+.opt{position:relative;appearance:none;background:var(--fig-bg);border:1.5px solid var(--line);border-radius:10px;padding:22px 10px 10px;cursor:pointer;min-width:0;transition:border-color .12s,transform .12s,box-shadow .12s}
+.opt:hover{border-color:var(--line-strong)}
+.opt .num{position:absolute;top:6px;left:9px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.opt .figbox{max-width:120px;margin:0 auto}
+.opts.tex .opt .figbox{max-width:150px}
+.opt.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.opt.sel .num{color:var(--accent);font-weight:500}
+.opt.right{border-color:var(--good);box-shadow:0 0 0 3px var(--good-soft)}
+.opt.wrong{border-color:var(--bad);box-shadow:0 0 0 3px var(--bad-soft)}
+.opt .tag{position:absolute;top:5px;right:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em}
+.opt.right .tag{color:var(--good)}.opt.wrong .tag{color:var(--bad)}
+.opt:disabled{cursor:default}
+@media (prefers-reduced-motion:no-preference){.opt:active:not(:disabled){transform:scale(.98)}}
+
+.nav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.hint{font-size:13px;color:var(--muted);margin-top:16px}
+.hint kbd{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--surface)}
+
+/* answer sheet */
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:22px}
+.sheet h2{font-family:var(--display);font-weight:700;font-stretch:80%;font-size:17px;text-transform:uppercase;letter-spacing:.03em;margin:0 0 12px}
+.srow{display:grid;grid-template-columns:22px repeat(12,minmax(0,1fr));gap:4px;align-items:center;margin-bottom:5px}
+.srow .sl{font-family:var(--display);font-weight:800;font-stretch:72%;font-size:16px;color:var(--accent)}
+.sq{appearance:none;aspect-ratio:1;max-width:100%;border:1px solid var(--line-strong);border-radius:4px;background:var(--fig-bg);font-family:var(--mono);font-size:11px;padding:0;cursor:pointer;color:var(--muted);font-variant-numeric:tabular-nums}
+.sq.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.sq.cur{outline:2px solid var(--accent);outline-offset:1px}
+.sq.ok{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.sq.no{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.sheet .row{margin-top:12px}
+.confirm{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--accent-soft);border-radius:8px;padding:10px 12px;margin-top:12px;font-size:14px}
+
+/* results */
+.score{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:4px 0 6px}
+.score .big{font-family:var(--display);font-weight:800;font-stretch:68%;font-size:clamp(72px,20vw,128px);line-height:.85;font-variant-numeric:tabular-nums}
+.score .of{font-family:var(--display);font-weight:500;font-stretch:72%;font-size:28px;color:var(--muted);padding-bottom:6px}
+.res-sub{color:var(--muted);margin:10px 0 24px;font-size:15px;max-width:60ch}
+.bars{margin:0 0 26px;border-top:1px solid var(--line)}
+.bar{display:grid;grid-template-columns:34px minmax(0,1fr) 56px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.bar .sl{font-family:var(--display);font-weight:800;font-stretch:72%;font-size:22px;color:var(--accent)}
+.bar .nm{font-size:13.5px;color:var(--muted);margin-bottom:5px}
+.track{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--ink);border-radius:4px}
+.bar .n{font-family:var(--mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+.res-note{font-size:14px;color:var(--muted);max-width:62ch;margin:0 0 22px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:8px 0 0}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;border:1px solid}
+.legend .lo::before{background:var(--good-soft);border-color:var(--good)}
+.legend .ln2::before{background:var(--bad-soft);border-color:var(--bad)}
+.verdict{font-size:14px;margin:0 0 16px;color:var(--muted)}
+.verdict b{color:var(--ink)}
+
+@media (max-width:480px){
+  .opts.c8{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  .opts.c6{gap:8px}
+  .opt{padding:18px 4px 6px}
+  .opt .num{top:3px;left:6px;font-size:11px}
+  .hint{display:none}
+  .ticks{gap:5px}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="hatch" patternUnits="userSpaceOnUse" width="4.6" height="4.6" patternTransform="rotate(45)"><rect width="4.6" height="4.6" class="pbg"/><line x1="2.3" y1="0" x2="2.3" y2="4.6" class="pl"/></pattern>
+    <pattern id="dots" patternUnits="userSpaceOnUse" width="4.6" height="4.6"><rect width="4.6" height="4.6" class="pbg"/><circle cx="2.3" cy="2.3" r="1.3" class="pd"/></pattern>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="6" height="6"/><rect x="9" y="2" width="6" height="6"/><rect x="16" y="2" width="6" height="6"/><rect x="2" y="9" width="6" height="6"/><rect x="9" y="9" width="6" height="6"/><rect x="16" y="9" width="6" height="6"/><rect x="2" y="16" width="6" height="6"/><rect x="9" y="16" width="6" height="6"/></g><text x="19" y="21.5" font-size="7" text-anchor="middle" fill="currentColor" font-family="sans-serif" font-weight="700">?</text></svg>Sixty Matrices</div>
+    <div class="meta" id="meta"></div>
+  </header>
+  <main id="app"></main>
+</div>
+
+<script>// ===== Sixty Matrices: item generator (original items, deterministic) =====
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const pick=(R,a)=>a[Math.floor(R()*a.length)];
+function shuffle(R,a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
+const take=(R,a,k)=>shuffle(R,a).slice(0,k);
+const GEN=[0,1,2,3,4,5], ROTS=[6,8,2], FILL3=[0,1,2], FILLS=[0,1,2,3];
+// shapes: 0 circle 1 square 2 triangle 3 diamond 4 hexagon 5 cross 6 arrow 7 bar 8 semicircle
+const SYM=[0,90,120,180,60,90,360,180,360];
+const BITS8=[0,1,2,3,4,5,6,7];
+function bits(m){let n=0;while(m){n+=m&1;m>>=1}return n}
+function randMask(R,k){return take(R,BITS8,k).reduce((m,b)=>m|1<<b,0)}
+function distinctMasks(R,k,nb){for(;;){const m=[];for(let i=0;i<k;i++)m.push(randMask(R,nb));if(new Set(m).size===k)return m;}}
+const OPS={xor:(a,b)=>a^b,or:(a,b)=>a|b,and:(a,b)=>a&b,sub:(a,b)=>a&~b,sum:(a,b)=>a+b,diff:(a,b)=>a-b};
+const C=v=>({t:'c',v}),ROW=v=>({t:'row',v}),COL=v=>({t:'col',v}),PROG=(b,dc,dr)=>({t:'prog',b,dc,dr}),LAT=(v,d)=>({t:'lat',v,d}),OP=(op,dir,m)=>({t:'op',op,dir,m});
+function RC(R){const b=take(R,BITS8,6);return{t:'rc',row:b.slice(0,3),col:b.slice(3)}}
+
+function pairFor(R,op){for(;;){let a,b;
+  if(op==='xor'){a=randMask(R,3);b=randMask(R,pick(R,[2,3]));if((a&b)&&a!==b&&bits(a^b)>=2)return[a,b];}
+  else if(op==='or'){a=randMask(R,2);b=randMask(R,2);if(bits(a&b)<=1&&(a|b)!==a&&(a|b)!==b)return[a,b];}
+  else if(op==='and'){a=randMask(R,4);b=randMask(R,4);const x=a&b;if(bits(x)>=2&&bits(x)<=3)return[a,b];}
+  else if(op==='sub'){a=randMask(R,4);const inA=BITS8.filter(i=>a>>i&1),out=BITS8.filter(i=>!(a>>i&1));
+    b=take(R,inA,pick(R,[1,2])).reduce((m,i)=>m|1<<i,0)|(1<<pick(R,out));return[a,b];}
+}}
+function triple(R,op){for(;;){const m=[pairFor(R,op),pairFor(R,op),pairFor(R,op)];const res=m.map(([a,b])=>OPS[op](a,b));
+  if(new Set(res).size===3&&new Set(m.flat()).size>=5&&res.every(x=>x))return m;}}
+function ctriple(R,op){for(;;){const m=[0,1,2].map(()=>op==='sum'?[1+Math.floor(R()*4),1+Math.floor(R()*4)]:[4+Math.floor(R()*5),1+Math.floor(R()*3)]);
+  const res=m.map(([a,b])=>OPS[op](a,b));if(res.every(v=>v>=1&&v<=9)&&new Set(res).size===3)return m;}}
+
+const g3=R=>take(R,GEN,3),g2=R=>take(R,GEN,2),f3=R=>shuffle(R,FILL3),f2=R=>take(R,FILLS,2),r8=R=>Math.floor(R()*8);
+
+// Sets B–E. Set B: 2×2 analogies. C: progressions. D: distribution of three. E: combination rules.
+const MSPEC=[
+// ---- B ----
+R=>({n:2,r:{shape:COL(g2(R)),fill:C(0)}}),
+R=>({n:2,r:{shape:C(pick(R,GEN)),fill:COL(take(R,[0,1,2],2))}}),
+R=>({n:2,r:{shape:ROW(g2(R)),fill:COL(f2(R))}}),
+R=>({n:2,r:{shape:ROW(g2(R)),size:COL(shuffle(R,[1,4]))}}),
+R=>({n:2,r:{shape:ROW(g2(R)),count:COL(take(R,[1,2,3,4],2)),size:C(2)}}),
+R=>({n:2,r:{shape:C(pick(R,ROTS)),rot:COL([0,pick(R,[2,4,6])]),fill:ROW(f2(R))}}),
+R=>({n:2,r:{shape:ROW(g2(R)),outer:COL(shuffle(R,[-1,pick(R,[0,1,4])])),fill:C(pick(R,[0,2]))}}),
+R=>({n:2,r:{shape:ROW(g2(R)),lines:COL(distinctMasks(R,2,2)),size:C(1),fill:C(2)}}),
+R=>({n:2,r:{shape:COL(g2(R)),fill:ROW(f2(R)),size:ROW(shuffle(R,[1,4]))}}),
+R=>({n:2,r:{shape:C(pick(R,ROTS)),count:ROW(take(R,[1,2,3],2)),rot:COL([0,pick(R,[2,6])]),fill:COL(f2(R)),size:C(2)}}),
+R=>({n:2,r:{shape:ROW(g2(R)),fill:COL(f2(R)),count:COL(take(R,[1,2,3,4],2)),size:ROW(shuffle(R,[1,3]))}}),
+R=>({n:2,r:{shape:COL(take(R,ROTS,2)),outer:ROW([-1,pick(R,[0,1,4])]),fill:COL(f2(R)),rot:ROW([0,pick(R,[2,4,6])])}}),
+// ---- C ----
+R=>({n:3,r:{shape:C(pick(R,GEN)),count:PROG(1,1,1),fill:C(pick(R,[0,2])),size:C(3)}}),
+R=>({n:3,r:{shape:ROW(g3(R)),size:PROG(0,2,0),fill:C(pick(R,[0,1,2]))}}),
+R=>({n:3,r:{shape:C(pick(R,[6,8])),rot:PROG(r8(R),1,0),fill:ROW(f3(R))}}),
+R=>({n:3,r:{shape:C(pick(R,GEN)),fill:PROG(0,1,0),count:ROW(take(R,[1,2,3,4],3)),size:C(3)}}),
+R=>({n:3,r:{shape:ROW(g3(R)),count:PROG(1,1,3),fill:C(pick(R,[0,2])),size:C(3)}}),
+R=>({n:3,r:{shape:C(pick(R,GEN)),size:PROG(0,1,1),fill:ROW(f3(R))}}),
+R=>({n:3,r:{shape:C(6),rot:PROG(r8(R),1,2),fill:COL(f3(R))}}),
+R=>({n:3,r:{count:C(0),lines:RC(R),outer:ROW(take(R,[0,1,4],3))}}),
+R=>({n:3,r:{shape:ROW(g3(R)),count:PROG(1,1,1),size:PROG(4,0,-1),fill:C(pick(R,[0,2]))}}),
+R=>({n:3,r:{shape:C(2),rot:PROG(r8(R),1,0),count:PROG(1,0,1),fill:C(pick(R,[1,2])),size:C(3)}}),
+R=>({n:3,r:{shape:C(pick(R,[1,3,5])),outer:ROW(take(R,[0,1,4],3)),count:PROG(1,1,1),fill:PROG(0,1,0)}}),
+R=>({n:3,r:{shape:C(6),count:PROG(1,1,3),size:PROG(4,0,-1),rot:PROG(Math.floor(R()*4)*2,2,0),fill:ROW(f3(R))}}),
+// ---- D ----
+R=>({n:3,r:{shape:LAT(g3(R),1),fill:C(pick(R,[0,2]))}}),
+R=>({n:3,r:{shape:C(pick(R,GEN)),fill:LAT(f3(R),1)}}),
+R=>({n:3,r:{shape:ROW(g3(R)),count:LAT(take(R,[1,2,3,4,5],3),1),size:C(2)}}),
+R=>({n:3,r:{shape:LAT(g3(R),1),fill:LAT(f3(R),-1)}}),
+R=>({n:3,r:{shape:LAT(g3(R),1),count:LAT(take(R,[1,2,3,4],3),-1),fill:C(pick(R,[0,1,2])),size:C(2)}}),
+R=>({n:3,r:{outer:LAT(take(R,[0,1,3,4],3),1),shape:LAT(g3(R),-1),fill:C(2)}}),
+R=>({n:3,r:{shape:LAT(g3(R),1),fill:LAT(f3(R),-1),size:LAT(shuffle(R,[0,2,4]),1)}}),
+R=>({n:3,r:{lines:LAT(distinctMasks(R,3,2),1),shape:LAT(g3(R),-1),size:C(1),fill:C(2)}}),
+R=>({n:3,r:{shape:C(6),rot:LAT(take(R,[0,2,4,6],3),1),count:LAT(shuffle(R,[1,2,3]),-1),fill:C(pick(R,[0,2])),size:C(2)}}),
+R=>({n:3,r:{shape:LAT(g3(R),1),fill:LAT(f3(R),-1),count:LAT(shuffle(R,[1,2,3]),-1),outer:LAT(take(R,[-1,0,1,4],3),1)}}),
+R=>({n:3,r:{shape:LAT(g3(R),1),fill:LAT(f3(R),-1),outer:LAT(take(R,[0,1,4],3),-1),size:LAT(shuffle(R,[0,2,4]),1)}}),
+R=>({n:3,r:{shape:LAT(shuffle(R,ROTS),1),rot:LAT(take(R,[0,2,4,6],3),-1),fill:LAT(f3(R),-1),count:LAT(shuffle(R,[1,2,3]),1),size:C(2)}}),
+// ---- E ----
+R=>({n:3,r:{count:C(0),lines:OP('or','row',triple(R,'or'))}}),
+R=>({n:3,r:{count:C(0),lines:OP('xor','row',triple(R,'xor'))}}),
+R=>({n:3,r:{count:C(0),lines:OP('sub','row',triple(R,'sub'))}}),
+R=>({n:3,r:{shape:C(pick(R,GEN)),count:OP('sum','row',ctriple(R,'sum')),fill:C(pick(R,[0,2])),size:C(3)}}),
+R=>({n:3,r:{count:C(0),lines:OP('and','row',triple(R,'and')),outer:LAT(take(R,[0,1,4],3),1)}}),
+R=>({n:3,r:{lines:OP('xor','row',triple(R,'xor')),shape:LAT(g3(R),1),size:C(1),fill:C(2)}}),
+R=>({n:3,r:{shape:LAT(g3(R),1),fill:LAT(f3(R),-1),count:OP('sum','row',ctriple(R,'sum')),size:C(3)}}),
+R=>({n:3,r:{count:OP('diff','row',ctriple(R,'diff')),fill:LAT(f3(R),1),shape:LAT(g3(R),-1),size:C(3)}}),
+R=>({n:3,r:{lines:OP('xor','row',triple(R,'xor')),count:PROG(1,1,1),fill:LAT(f3(R),-1),shape:C(pick(R,GEN)),size:C(0)}}),
+R=>({n:3,r:{lines:OP('xor','col',triple(R,'xor')),shape:LAT(g3(R),1),size:LAT(shuffle(R,[0,1,2]),-1),fill:C(2)}}),
+R=>({n:3,r:{lines:OP('sub','row',triple(R,'sub')),shape:C(6),rot:PROG(r8(R),1,1),count:LAT(shuffle(R,[1,2,3]),-1),fill:LAT(f3(R),1),size:C(1)}}),
+R=>({n:3,r:{lines:OP('xor','col',triple(R,'xor')),count:OP('sum','row',ctriple(R,'sum')),shape:LAT(g3(R),1),fill:LAT(f3(R),-1),size:C(0)}}),
+];
+
+const DEF={shape:1,count:1,size:3,fill:0,rot:0,outer:-1,lines:0};
+const RANGE={count:[1,9],size:[0,4],fill:[0,3],rot:[0,7],shape:[0,8],outer:[-1,4]};
+function ev(rule,r,c){switch(rule.t){
+  case'c':return rule.v;case'row':return rule.v[r];case'col':return rule.v[c];
+  case'prog':return rule.b+rule.dc*c+rule.dr*r;case'lat':return rule.v[((c+rule.d*r)%3+3)%3];
+  case'rc':return(1<<rule.row[r])|(1<<rule.col[c]);
+  case'op':{const k=rule.dir==='row'?r:c,i=rule.dir==='row'?c:r;const[a,b]=rule.m[k];return i===0?a:i===1?b:OPS[rule.op](a,b);}
+}}
+function keyOf(p){const has=p.count>0;let r=0;if(has&&p.shape!==0){const s=SYM[p.shape];r=((p.rot*45)%s+s)%s;}
+  return[has?p.shape:-1,p.count,has?p.size:-1,has?p.fill:-1,r,p.outer,p.lines].join('|');}
+
+function wrongCands(a,rule,ans,grid,R){
+  const n=grid.length,seen=[];grid.forEach((row,r)=>row.forEach((p,c)=>{if(!(r===n-1&&c===n-1))seen.push(p[a])}));
+  const v=ans[a];let c2=[];
+  if(a==='count'){c2=[v+1,v-1,v+2,v-2];if(rule.t==='op'){const[x,y]=rule.m[n-1];c2=[rule.op==='sum'?Math.abs(x-y):x+y,v+1,v-1].concat(c2);}}
+  if(a==='size'){const fine=rule.t==='prog'&&(Math.abs(rule.dc)===1||Math.abs(rule.dr)===1);c2=fine?[v+1,v-1,v+2,v-2]:[v+2,v-2,v+3,v-3];}
+  if(a==='rot')c2=[v+1,v-1,v+2,v+4].map(x=>(x+8)%8);
+  if(a==='fill')c2=shuffle(R,FILLS);
+  if(a==='shape')c2=shuffle(R,ROTS.includes(ans.shape)?ROTS.concat(GEN):GEN);
+  if(a==='outer')c2=shuffle(R,[-1,0,1,4]);
+  const lead=rule.t==='op'?c2.slice(0,1):[];
+  const sizeOk=x=>a!=='size'||Math.abs(x-v)>=2||(rule.t==='prog'&&(Math.abs(rule.dc)===1||Math.abs(rule.dr)===1));
+  return[...new Set(lead.concat(shuffle(R,[...new Set(seen)]),c2))].filter(x=>x!==v&&x>=RANGE[a][0]&&x<=RANGE[a][1]&&sizeOk(x));
+}
+function lineToggles(rule,ans,grid,R){
+  const n=grid.length,L=ans.lines,t=[];
+  if(rule.t==='op'){const[a,b]=rule.m[n-1];
+    if(rule.op==='xor')t.push(a&b,b&~a);if(rule.op==='or')t.push(a&b);if(rule.op==='and')t.push(a^b);if(rule.op==='sub')t.push(a&b,b&~a);}
+  if(rule.t==='rc')t.push(1<<rule.col[n-1],1<<rule.row[n-1]);
+  const seen=new Set();grid.forEach((row,r)=>row.forEach((p,c)=>{if(!(r===n-1&&c===n-1))seen.add(p.lines)}));
+  const pri=t.slice();shuffle(R,[...seen]).forEach(m=>t.push(L^m));shuffle(R,BITS8).forEach(b=>t.push(1<<b));
+  return{pri:pri.filter(x=>x&&(L^x)),all:[...new Set(t)].filter(x=>x&&(L^x))};
+}
+function biasPick(R,a){return a[Math.floor(R()*R()*a.length)]}
+
+function buildMatrix(spec,R,nopts){
+  const n=spec.n,grid=[];
+  for(let r=0;r<n;r++){grid.push([]);for(let c=0;c<n;c++){const p={...DEF};
+    for(const[a,rule]of Object.entries(spec.r)){let v=ev(rule,r,c);if(a==='rot')v=((v%8)+8)%8;p[a]=v;}
+    if(p.count===0)p.lines=p.lines;else if(p.count<1||p.count>9||p.size<0||p.size>4||p.fill<0||p.fill>3)return null;
+    grid[r].push(p);}}
+  const ans=grid[n-1][n-1];
+  const attrDims=[],constDims=[];let lineInfo=null;
+  for(const[a,rule]of Object.entries(spec.r)){
+    if(a==='lines'){lineInfo=lineToggles(rule,ans,grid,R);continue;}
+    if(rule.t==='c'){if(!(a==='count'&&ans.count===0))constDims.push({a,c:wrongCands(a,rule,ans,grid,R)});continue;}
+    attrDims.push({a,c:wrongCands(a,rule,ans,grid,R)});}
+  if(ans.count>0)['fill','shape','size'].forEach(a=>{if(!spec.r[a])constDims.push({a,c:wrongCands(a,C(DEF[a]),ans,grid,R)})});
+  for(let tries=0;tries<300;tries++){
+    const dims=[];const A=shuffle(R,attrDims);
+    if(lineInfo){const src=lineInfo.pri.length&&R()<0.85?lineInfo.pri:lineInfo.all;dims.push({l:pick(R,src)});}
+    while(dims.length<3&&A.length){const d=A.shift();if(d.c.length)dims.push({a:d.a,v:biasPick(R,d.c)});}
+    let guard=0;while(dims.length<3&&lineInfo&&guard++<20){const t=pick(R,lineInfo.all);if(!dims.some(d=>d.l===t))dims.push({l:t});}
+    const K=shuffle(R,constDims);while(dims.length<3&&K.length){const d=K.shift();if(d.c.length)dims.push({a:d.a,v:pick(R,d.c)});}
+    if(dims.length<3)continue;
+    const opts=[];for(let m=0;m<8;m++){const p={...ans};dims.forEach((d,j)=>{if(m>>j&1){if(d.l!==undefined)p.lines^=d.l;else p[d.a]=d.v;}});opts.push(p);}
+    const keys=opts.map(keyOf);if(new Set(keys).size!==8)continue;
+    let pool=opts.slice(1);if(nopts<8)pool=shuffle(R,pool).slice(0,nopts-1);
+    const all=shuffle(R,[ans].concat(pool));
+    return{kind:'mat',n,grid,opts:all,answer:all.indexOf(ans)};
+  }
+  return null;
+}
+
+// ---- Set A: texture completion ----
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function texSVG(name,p){let s='';const f=x=>+x.toFixed(2);
+  switch(name){
+  case'h':for(let y=-200;y<420;y+=p.s)s+=`<rect class="tk" x="-200" y="${y}" width="720" height="${p.t}"/>`;break;
+  case'v':for(let x=-200;x<520;x+=p.s)s+=`<rect class="tk" x="${x}" y="-200" width="${p.t}" height="620"/>`;break;
+  case'dots':for(let y=-200+p.s/2;y<420;y+=p.s)for(let x=-200+p.s/2;x<520;x+=p.s)s+=`<circle class="tk" cx="${x}" cy="${y}" r="${p.r}"/>`;break;
+  case'check':for(let i=-10;i<26;i++)for(let j=-10;j<20;j++)if((i+j)&1)s+=`<rect class="tk" x="${i*p.s}" y="${j*p.s}" width="${p.s}" height="${p.s}"/>`;break;
+  case'diag':for(let k=-45;k<45;k++){const x=k*p.s;s+=`<line class="tl" x1="${x}" y1="-200" x2="${x+620}" y2="420" stroke-width="${p.t}"/>`}break;
+  case'wave':for(let y=-200;y<420;y+=p.s){let d='';for(let x=-200;x<=520;x+=4)d+=(x===-200?'M':'L')+x+' '+f(y+p.a*Math.sin(2*Math.PI*x/p.l));s+=`<path class="tl" d="${d}" stroke-width="${p.t}"/>`}break;
+  case'gstripe':for(let x=-200;x<520;x+=p.s){const w=clamp(1+(x/300)*p.g,0.6,p.s-2);s+=`<rect class="tk" x="${x}" y="-200" width="${f(w)}" height="620"/>`}break;
+  case'gdots':for(let y=-200+p.s/2;y<420;y+=p.s)for(let x=-200+p.s/2;x<520;x+=p.s){const r=clamp(0.8+x/300*p.gx+y/200*p.gy,0.5,p.s/2-1);s+=`<circle class="tk" cx="${x}" cy="${y}" r="${f(r)}"/>`}break;
+  case'grid':for(let x=-200;x<520;x+=p.s)s+=`<rect class="tk" x="${x}" y="-200" width="${p.t}" height="620"/>`;for(let y=-200;y<420;y+=p.s)s+=`<rect class="tk" x="-200" y="${y}" width="720" height="${p.t}"/>`;break;
+  case'dgrid':for(let x=-200;x<520;x+=p.s)s+=`<rect class="tk" x="${x}" y="-200" width="${p.t}" height="620"/>`;for(let k=0;k<20;k++){const y=p.q*k*k;if(y>420)break;s+=`<rect class="tk" x="-200" y="${y}" width="720" height="${p.t}"/>`}break;
+  case'rings':for(let r=p.s;r<720;r+=p.s)s+=`<circle class="tl" cx="${p.cx}" cy="${p.cy}" r="${r}" stroke-width="${p.t}"/>`;break;
+  case'dash':for(let y=-200+p.s/2;y<420;y+=p.s)for(let x=-200+p.s/2;x<520;x+=p.s){const a=(x/300)*p.span*Math.PI/180,dx=Math.cos(a)*p.L/2,dy=Math.sin(a)*p.L/2;s+=`<line class="tl" x1="${f(x-dx)}" y1="${f(y-dy)}" x2="${f(x+dx)}" y2="${f(y+dy)}" stroke-width="${p.t}"/>`}break;
+  case'gcheck':{const B=[];for(let i=0;i<40;i++){const v=p.a*i+p.b*i*i;B.push(v);if(v>520)break;}
+    for(let i=0;i<B.length-1;i++)for(let j=0;j<B.length-1;j++){if(B[j]>420)break;if((i+j)&1)s+=`<rect class="tk" x="${f(B[i])}" y="${f(B[j]*0.75)}" width="${f(B[i+1]-B[i])}" height="${f((B[j+1]-B[j])*0.75)}"/>`}}break;
+  }return s;}
+const HW=84,HH=64;
+const TSPEC=[
+ {tex:'h',p:{s:16,t:6},hole:[150,80],mods:[{k:'tex',tex:'v',p:{s:16,t:6}},{k:'blank'},{k:'tex',tex:'dots',p:{s:16,r:4}},{k:'shift',dx:0,dy:8},{k:'tex',tex:'check',p:{s:20}}]},
+ {tex:'dots',p:{s:18,r:3.5},hole:[60,70],mods:[{k:'tex',tex:'h',p:{s:14,t:4}},{k:'scale',f:2},{k:'blank'},{k:'tex',tex:'diag',p:{s:14,t:3}},{k:'shift',dx:9,dy:9}]},
+ {tex:'v',p:{s:14,t:4},hole:[120,40],mods:[{k:'rot',a:90},{k:'scale',f:2},{k:'tex',tex:'dots',p:{s:14,r:3}},{k:'blank'},{k:'shift',dx:7,dy:0}]},
+ {tex:'check',p:{s:20},hole:[100,60],mods:[{k:'shift',dx:20,dy:0},{k:'scale',f:0.5},{k:'tex',tex:'diag',p:{s:12,t:4}},{k:'rot',a:45},{k:'tex',tex:'h',p:{s:20,t:10}}]},
+ {tex:'diag',p:{s:16,t:4},hole:[170,30],mods:[{k:'flip'},{k:'scale',f:2},{k:'tex',tex:'h',p:{s:16,t:4}},{k:'tex',tex:'v',p:{s:16,t:4}},{k:'shift',dx:8,dy:0}]},
+ {tex:'wave',p:{s:20,a:5,l:60,t:2.5},hole:[40,90],mods:[{k:'shift',dx:30,dy:0},{k:'scale',f:1.7},{k:'tex',tex:'h',p:{s:20,t:2.5}},{k:'rot',a:90},{k:'tex',tex:'wave',p:{s:20,a:9,l:30,t:2.5}}]},
+ {tex:'gstripe',p:{s:14,g:9},hole:[190,70],mods:[{k:'shift',dx:-150,dy:0},{k:'shift',dx:-80,dy:0},{k:'tex',tex:'v',p:{s:14,t:5}},{k:'flip'},{k:'scale',f:0.6}]},
+ {tex:'gdots',p:{s:18,gx:4,gy:2.5},hole:[180,110],mods:[{k:'shift',dx:-150,dy:-90},{k:'shift',dx:-70,dy:0},{k:'flip'},{k:'rot',a:180},{k:'tex',tex:'dots',p:{s:18,r:3}}]},
+ {tex:'dgrid',p:{s:22,q:2,t:2},hole:[110,110],mods:[{k:'shift',dx:0,dy:-80},{k:'rot',a:90},{k:'rot',a:180},{k:'shift',dx:11,dy:0},{k:'tex',tex:'grid',p:{s:22,t:2}}]},
+ {tex:'rings',p:{cx:80,cy:70,s:12,t:2.5},hole:[170,90],mods:[{k:'flip'},{k:'rot',a:90},{k:'rot',a:180},{k:'shift',dx:-60,dy:30},{k:'scale',f:1.7}]},
+ {tex:'dash',p:{s:20,L:13,span:180,t:2.5},hole:[130,70],mods:[{k:'flip'},{k:'shift',dx:-110,dy:0},{k:'shift',dx:70,dy:0},{k:'rot',a:90},{k:'tex',tex:'dash',p:{s:20,L:13,span:0,t:2.5}}]},
+ {tex:'gcheck',p:{a:8,b:0.9},hole:[180,90],mods:[{k:'shift',dx:-150,dy:0},{k:'shift',dx:0,dy:-80},{k:'flip'},{k:'rot',a:180},{k:'scale',f:0.6}]},
+];
+function buildTex(spec,R){const all=shuffle(R,[null].concat(spec.mods));return{kind:'tex',spec,opts:all,answer:all.indexOf(null)};}
+
+function buildAll(){const out=[];
+  for(let i=0;i<60;i++){let it=null;
+    if(i<12)it=buildTex(TSPEC[i],mulberry32(1000+i*7919));
+    else for(let at=0;!it&&at<50;at++){const R=mulberry32(5000+i*7919+at*104729);it=buildMatrix(MSPEC[i-12](R),R,i<24?6:8);}
+    if(!it)throw new Error('item '+(i+1)+' failed');
+    it.code='ABCDE'[Math.floor(i/12)]+(i%12+1);it.set=Math.floor(i/12);out.push(it);}
+  return out;}
+
+// ---- rendering ----
+const SZ=[0.45,0.58,0.71,0.85,1.0];
+const SLOT={1:30,2:15,3:15.5,4:14,5:12.5,6:10,7:9.5,8:9.5,9:9.5};
+const LAY={1:[[0,0]],2:[[-.5,0],[.5,0]],3:[[0,-.5],[-.55,.45],[.55,.45]],4:[[-.5,-.5],[.5,-.5],[-.5,.5],[.5,.5]],
+ 5:[[-.55,-.55],[.55,-.55],[0,0],[-.55,.55],[.55,.55]],6:[[-.65,-.4],[0,-.4],[.65,-.4],[-.65,.4],[0,.4],[.65,.4]],
+ 7:[[-.65,-.65],[0,-.65],[.65,-.65],[0,0],[-.65,.65],[0,.65],[.65,.65]],8:[[-.65,-.65],[0,-.65],[.65,-.65],[-.36,0],[.36,0],[-.65,.65],[0,.65],[.65,.65]],
+ 9:[[-.65,-.65],[0,-.65],[.65,-.65],[-.65,0],[0,0],[.65,0],[-.65,.65],[0,.65],[.65,.65]]};
+const FCL=['f0','f1','f2','f3'];
+function shapeSVG(sh,cx,cy,r,rot,cls){const a=rot*Math.PI/180,co=Math.cos(a),si=Math.sin(a);
+  const P=arr=>`<polygon class="${cls}" points="${arr.map(([x,y])=>(cx+x*co-y*si).toFixed(1)+','+(cy+x*si+y*co).toFixed(1)).join(' ')}"/>`;
+  const ring=(k,rr,off)=>Array.from({length:k},(_,i)=>{const t=off+i*2*Math.PI/k;return[rr*Math.cos(t),rr*Math.sin(t)]});
+  switch(sh){
+  case 0:return`<circle class="${cls}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${(r*0.9).toFixed(1)}"/>`;
+  case 1:{const h=r*0.78;return P([[-h,-h],[h,-h],[h,h],[-h,h]]);}
+  case 2:return P(ring(3,r,-Math.PI/2));
+  case 3:return P([[0,-r],[r*0.66,0],[0,r],[-r*0.66,0]]);
+  case 4:return P(ring(6,r*0.92,0));
+  case 5:{const w=r*0.32,q=r*0.92;return P([[-w,-q],[w,-q],[w,-w],[q,-w],[q,w],[w,w],[w,q],[-w,q],[-w,w],[-q,w],[-q,-w],[-w,-w]]);}
+  case 6:return P([[0,-r],[r*0.72,-r*0.08],[r*0.28,-r*0.08],[r*0.28,r],[-r*0.28,r],[-r*0.28,-r*0.08],[-r*0.72,-r*0.08]]);
+  case 7:return P([[-r,-r*0.24],[r,-r*0.24],[r,r*0.24],[-r,r*0.24]]);
+  case 8:{const pts=[];for(let i=0;i<=16;i++){const t=Math.PI+i*Math.PI/16;pts.push([r*Math.cos(t),r*Math.sin(t)+r*0.38]);}return P(pts);}
+  }}
+const SEG=[[12,12,88,12],[12,88,88,88],[12,12,12,88],[88,12,88,88],[12,12,88,88],[88,12,12,88],[50,12,50,88],[12,50,88,50]];
+function cellSVG(p){let s='<svg viewBox="0 0 100 100" class="fig" aria-hidden="true">';
+  const hasO=p.outer>=0;if(hasO)s+=shapeSVG(p.outer,50,50,41,0,'fo');
+  if(p.count>0){const H=hasO?20:32,sc=hasO?0.65:1,r=SLOT[p.count]*sc*SZ[p.size];
+    for(const[x,y]of LAY[p.count])s+=shapeSVG(p.shape,50+x*H,50+y*H,r,p.rot*45,FCL[p.fill]);}
+  let h='',l='';for(let b=0;b<8;b++)if(p.lines>>b&1){const[x1,y1,x2,y2]=SEG[b],at=`x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"`;if(p.count>0)h+=`<line class="lh" ${at}/>`;l+=`<line class="ln" ${at}/>`;}
+  s+=h+l;
+  return s+'</svg>';}
+function modWrap(mod,hx,hy,content,base){const cx=hx+HW/2,cy=hy+HH/2;
+  if(!mod)return content;
+  switch(mod.k){case'blank':return'';case'tex':return texSVG(mod.tex,mod.p);
+  case'shift':return`<g transform="translate(${-mod.dx} ${-mod.dy})">${content}</g>`;
+  case'rot':return`<g transform="rotate(${mod.a} ${cx} ${cy})">${content}</g>`;
+  case'scale':return`<g transform="translate(${cx} ${cy}) scale(${mod.f}) translate(${-cx} ${-cy})">${content}</g>`;
+  case'flip':return`<g transform="translate(${2*cx} 0) scale(-1 1)">${content}</g>`;}}
+function texField(it){const sp=it.spec,[hx,hy]=sp.hole;
+  return`<svg viewBox="-2 -2 304 204" class="fig field" aria-hidden="true"><svg x="0" y="0" width="300" height="200" viewBox="0 0 300 200" overflow="hidden"><rect class="bgf" width="300" height="200"/>${texSVG(sp.tex,sp.p)}</svg><rect class="hole" x="${hx}" y="${hy}" width="${HW}" height="${HH}"/><rect class="frame" width="300" height="200"/></svg>`;}
+function texOption(it,k){const sp=it.spec,[hx,hy]=sp.hole,base=texSVG(sp.tex,sp.p);
+  return`<svg viewBox="-1 -1 ${HW+2} ${HH+2}" class="fig" aria-hidden="true"><svg width="${HW}" height="${HH}" viewBox="${hx} ${hy} ${HW} ${HH}" overflow="hidden"><rect class="bgf" x="${hx-300}" y="${hy-300}" width="700" height="700"/>${modWrap(it.opts[k],hx,hy,base)}</svg><rect class="frame" width="${HW}" height="${HH}"/></svg>`;}
+
+if(typeof module!=='undefined')module.exports={buildAll,cellSVG,keyOf,texField,texOption};
+</script>
+<script>(function(){
+const ITEMS=buildAll();
+const SETS=[
+  {l:'A',nm:'Pattern completion',ds:'Find the patch that continues a texture, including ones that change across the page.'},
+  {l:'B',nm:'Analogies',ds:'2 × 2 grids. What changes across a row also changes down the column.'},
+  {l:'C',nm:'Progressions',ds:'3 × 3 grids where count, size, angle or shading steps along rows and columns.'},
+  {l:'D',nm:'Distribution of three',ds:'Each row holds three values of each feature, rearranged from row to row.'},
+  {l:'E',nm:'Combination rules',ds:'Lines and figures are added, subtracted or cancelled, often with two or three rules at once.'}];
+const KEY='sixty-matrices-v1';
+const app=document.getElementById('app'),meta=document.getElementById('meta');
+let S=load()||fresh();let sheetOpen=false,confirmFinish=false,confirmReset=false;
+
+function fresh(){return{answers:Array(60).fill(null),cur:0,active:0,view:'intro',reviewFrom:0};}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.answers)&&s.answers.length===60)return s;}catch(e){}return null;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+// time on task: counts only while a test item is on screen
+setInterval(()=>{if(S.view==='test'&&document.visibilityState==='visible'){S.active++;if(S.active%5===0)save();}},1000);
+const fmt=s=>{const m=Math.floor(s/60);return m<60?`${m} min`:`${Math.floor(m/60)} h ${m%60} min`;};
+const answered=()=>S.answers.filter(a=>a!==null).length;
+const score=()=>S.answers.reduce((n,a,i)=>n+(a===ITEMS[i].answer?1:0),0);
+
+function figHTML(it){
+  if(it.kind==='tex')return`<div class="texfield">${texField(it)}</div>`;
+  let h=`<div class="matrix n${it.n}" style="grid-template-columns:repeat(${it.n},minmax(0,1fr))">`;
+  for(let r=0;r<it.n;r++)for(let c=0;c<it.n;c++){
+    h+=(r===it.n-1&&c===it.n-1)?'<div class="cell missing" aria-label="missing piece"><span>?</span></div>':`<div class="cell">${cellSVG(it.grid[r][c])}</div>`;}
+  return h+'</div>';}
+function optFig(it,k){return it.kind==='tex'?texOption(it,k):cellSVG(it.opts[k]);}
+function ticks(){return'<div class="ticks">'+SETS.map((st,s)=>'<div><div class="tgroup">'+
+  Array.from({length:12},(_,j)=>{const i=s*12+j;return`<span class="${i===S.cur?'cur':S.answers[i]!==null?'done':''}"></span>`}).join('')+
+  `</div><div class="tlabel">SET ${st.l}</div></div>`).join('')+'</div>';}
+function sheetHTML(review){
+  let h=`<section class="sheet"><h2>${review?'Your answers':'Answer sheet'}</h2>`;
+  SETS.forEach((st,s)=>{h+=`<div class="srow"><span class="sl">${st.l}</span>`;
+    for(let j=0;j<12;j++){const i=s*12+j,a=S.answers[i];let cls='sq',lab=a===null?'':a+1;
+      if(review)cls+=a===ITEMS[i].answer?' ok':' no';else{if(a!==null)cls+=' on';if(i===S.cur)cls+=' cur';}
+      h+=`<button class="${cls}" data-go="${i}" aria-label="Item ${ITEMS[i].code}${a===null?', unanswered':', answer '+(a+1)}">${lab===''?'·':lab}</button>`;}
+    h+='</div>';});
+  if(review)h+='<div class="legend"><span class="lo">Correct</span><span class="ln2">Wrong or blank</span></div>';
+  else{h+=`<div class="row"><button class="btn primary" id="finish">Finish and score</button><span class="note" style="margin:0">${answered()} of 60 answered</span></div>`;
+    if(confirmFinish)h+=`<div class="confirm"><span>${60-answered()} items are still blank and will count as wrong.</span><button class="btn primary" id="finishYes">Score anyway</button><button class="btn ghost" id="finishNo">Keep going</button></div>`;}
+  return h+'</section>';}
+
+function render(){
+  meta.textContent=S.view==='test'?`${answered()}/60 answered`:S.view==='results'||S.view==='review'?`Score ${score()}/60`:'No time limit';
+  if(S.view==='intro')return renderIntro();
+  if(S.view==='results')return renderResults();
+  renderItem(S.view==='review');}
+
+function renderIntro(){
+  const started=answered()>0;
+  app.innerHTML=`<section class="intro">
+    <h1>Sixty<br>Matrices</h1>
+    <p class="lede">A nonverbal reasoning test. Each item is a pattern with a piece missing. Choose the piece that completes it.</p>
+    <div class="facts"><span><b>60</b> items</span><span><b>5</b> sets of 12</span><span><b>6–8</b> choices each</span><span>No time limit</span></div>
+    <ul class="sets">${SETS.map(st=>`<li><span class="letter">${st.l}</span><span><span class="nm">${st.nm}</span><span class="ds">${st.ds}</span></span><span class="ct">${st.l}1–${st.l}12</span></li>`).join('')}</ul>
+    <p class="note">Items get harder within each set and from set to set. Work at your own pace and answer every item; a guess is better than a blank. Your answers save in this browser, so you can stop and come back.</p>
+    <div class="row"><button class="btn primary" id="start">${started?`Resume at ${ITEMS[S.cur].code}`:'Start with A1'}</button>
+    ${started?'<button class="btn ghost" id="reset">Start over</button>':''}</div>
+    ${confirmReset?'<div class="confirm"><span>This clears all your answers.</span><button class="btn primary" id="resetYes">Clear and restart</button><button class="btn ghost" id="resetNo">Cancel</button></div>':''}
+  </section>`;}
+
+function renderItem(review){
+  const i=S.cur,it=ITEMS[i],a=S.answers[i],st=SETS[it.set];
+  const nOpt=it.opts.length;
+  let opts='';for(let k=0;k<nOpt;k++){let cls='opt',tag='';
+    if(review){if(k===it.answer){cls+=' right';tag='<span class="tag">correct</span>';}else if(k===a){cls+=' wrong';tag='<span class="tag">yours</span>';}}
+    else if(k===a)cls+=' sel';
+    opts+=`<button class="${cls}" data-opt="${k}" ${review?'disabled':''} aria-label="Option ${k+1}" aria-pressed="${k===a}"><span class="num">${k+1}</span>${tag}<div class="figbox">${optFig(it,k)}</div></button>`;}
+  const verdict=review?`<p class="verdict">${a===null?'You left this blank.':a===it.answer?'<b>You got this one.</b>':`<b>You chose ${a+1}.</b> The answer is ${it.answer+1}.`}</p>`:'';
+  app.innerHTML=`${review?'':ticks()}
+    <div class="itemhead"><div class="left"><span class="code">${it.code}</span><span class="sub">${st.nm} · item ${i+1} of 60</span></div>
+      ${review?'<button class="btn ghost" id="back">Back to results</button>':`<button class="btn ghost" id="sheetBtn" aria-expanded="${sheetOpen}">${sheetOpen?'Hide answer sheet':'Answer sheet'}</button>`}</div>
+    ${!review&&sheetOpen?sheetHTML(false):''}
+    <figure class="problem">${figHTML(it)}</figure>
+    ${verdict}
+    <p class="optlabel">${review?'Choices':'Which piece fits?'}</p>
+    <div class="opts c${nOpt} ${it.kind==='tex'?'tex':''}">${opts}</div>
+    <div class="nav"><button class="btn" id="prev" ${i===0?'disabled':''}>Previous</button>
+      ${review?`<button class="btn" id="next" ${i===59?'disabled':''}>Next</button>`:i===59?'<button class="btn primary" id="toSheet">Finish and score</button>':`<button class="btn" id="next">${a===null?'Skip':'Next'}</button>`}</div>
+    ${review?'':'<p class="hint">Keys: <kbd>1</kbd>–<kbd>'+nOpt+'</kbd> to choose, <kbd>←</kbd> <kbd>→</kbd> to move.</p>'}`;}
+
+function renderResults(){
+  const sc=score(),per=SETS.map((_,s)=>S.answers.slice(s*12,s*12+12).reduce((n,a,j)=>n+(a===ITEMS[s*12+j].answer?1:0),0));
+  const e=per[4];
+  const read=sc>=55?'You solved almost everything, including the combination items in set E that separate the strongest scorers.':
+    sc>=46?`Strong result. Set E (${e}/12) is where the remaining points are.`:
+    sc>=34?'Solid on the early sets. Most lost points are in the multi-rule items of sets D and E.':
+    'The later sets get much harder. Review a few missed items to see the rules they use.';
+  app.innerHTML=`<section>
+    <p class="optlabel">Raw score</p>
+    <div class="score"><span class="big">${sc}</span><span class="of">/ 60</span></div>
+    <p class="res-sub">${read} Time on task: ${fmt(S.active)}.</p>
+    <div class="bars">${SETS.map((st,s)=>`<div class="bar"><span class="sl">${st.l}</span><div><div class="nm">${st.nm}</div><div class="track"><i style="width:${per[s]/12*100}%"></i></div></div><span class="n">${per[s]}/12</span></div>`).join('')}</div>
+    <p class="res-note">These items are original and have not been normed against a population, so this is a raw score and can't be converted to an IQ. Treat it as a comparison point for yourself.</p>
+    ${sheetHTML(true)}
+    <p class="note">Select any item to see your choice next to the answer.</p>
+    <div class="row"><button class="btn" id="reviewFirst">Review from A1</button><button class="btn ghost" id="reset">Start over</button></div>
+    ${confirmReset?'<div class="confirm"><span>This clears all your answers.</span><button class="btn primary" id="resetYes">Clear and restart</button><button class="btn ghost" id="resetNo">Cancel</button></div>':''}
+  </section>`;}
+
+function go(i){S.cur=Math.max(0,Math.min(59,i));save();render();window.scrollTo({top:0});}
+function choose(k){S.answers[S.cur]=k;save();render();
+  if(S.cur<59)setTimeout(()=>{if(S.view==='test'&&S.answers[S.cur]===k)go(S.cur+1);},260);
+  else{sheetOpen=true;render();}}
+function finish(){S.view='results';confirmFinish=false;sheetOpen=false;save();render();window.scrollTo({top:0});}
+
+app.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.opt!==undefined&&S.view==='test')return choose(+b.dataset.opt);
+  if(b.dataset.go!==undefined){if(S.view==='results'){S.view='review';}return go(+b.dataset.go);}
+  switch(b.id){
+    case'start':S.view='test';save();render();break;
+    case'reset':confirmReset=true;render();break;
+    case'resetNo':confirmReset=false;render();break;
+    case'resetYes':confirmReset=false;S=fresh();S.view='test';save();render();break;
+    case'prev':go(S.cur-1);break;case'next':go(S.cur+1);break;
+    case'sheetBtn':sheetOpen=!sheetOpen;confirmFinish=false;render();break;
+    case'toSheet':sheetOpen=true;render();window.scrollTo({top:0,behavior:'smooth'});break;
+    case'finish':if(answered()<60){confirmFinish=true;render();}else finish();break;
+    case'finishYes':finish();break;case'finishNo':confirmFinish=false;render();break;
+    case'back':S.view='results';save();render();break;
+    case'reviewFirst':S.view='review';go(0);break;}
+});
+document.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;
+  if(S.view!=='test'&&S.view!=='review')return;
+  const n=ITEMS[S.cur].opts.length;
+  if(S.view==='test'&&/^[1-8]$/.test(e.key)&&+e.key<=n){e.preventDefault();choose(+e.key-1);}
+  else if(e.key==='ArrowRight'){e.preventDefault();go(S.cur+1);}
+  else if(e.key==='ArrowLeft'){e.preventDefault();go(S.cur-1);}
+});
+render();
+})();
+</script>
+
+</body></html>
