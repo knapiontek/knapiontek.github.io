@@ -48,9 +48,16 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12px;text
 .note{font-size:12px;color:var(--muted);line-height:1.5;margin:10px 0 0}
 .dock{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);max-width:calc(100% - 32px);background:var(--card);
   border:1px solid var(--line);border-radius:999px;padding:6px;display:flex;gap:4px;overflow-x:auto}
+.dock .full{display:flex;gap:4px}
 .dock button{border-color:transparent;background:transparent;white-space:nowrap}
 .dock button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
 .toggle,.spec-head{display:none}
+.dock .mini{display:none;align-items:center}
+.dock .mini button{width:36px;height:36px;padding:0;border-radius:50%;display:grid;place-items:center;font-size:20px;line-height:1}
+.dock .mini select{font:inherit;font-size:14px;font-weight:600;color:var(--ink);background:transparent;border:0;border-radius:999px;
+  padding:8px 6px;min-width:0;text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;cursor:pointer}
+.dock .mini select:focus-visible{outline:2px solid var(--brass);outline-offset:-2px}
+.dock .mini option{color:#000}
 @media (max-width:760px){
   .title{top:calc(12px + env(safe-area-inset-top,0px));left:14px;max-width:calc(100% - 140px)}
   .title h1{font-size:19px;line-height:1.15}
@@ -63,16 +70,17 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12px;text
   body.open .toggle{display:none}
   .spec-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .spec-head h2{margin:0}
-  .dock{left:0;right:0;bottom:0;transform:none;max-width:none;border-radius:0;border-width:1px 0 0;
-    padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));justify-content:flex-start}
-  .dock button{padding:7px 11px;font-size:13px;flex:none}
+  .spec{bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+  .dock{bottom:calc(12px + env(safe-area-inset-bottom,0px));padding:3px;gap:0;align-items:center;overflow:visible}
+  .dock .full{display:none}
+  .dock .mini{display:flex}
 }
 </style>
 
 <div id="stage">
   <div class="title">
     <h1>Kuchnia <span>English Navy</span></h1>
-    <p>Aneks kuchenny: blat pod oknem z płytą i okapem, wysoka zabudowa z piekarnikiem na prawej ścianie i wyspa naprzeciw okna. Fronty shaker w ramie.</p>
+    <p>Aneks kuchenny: blat pod oknem z płytą, okapem i zlewem, wysoka zabudowa z piekarnikiem na prawej ścianie i wyspa naprzeciw okna. Fronty shaker w ramie.</p>
   </div>
 
   <button class="toggle" id="toggleSpec" aria-expanded="false" aria-controls="spec">
@@ -109,32 +117,44 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12px;text
     <details>
       <summary>Wymiary w modelu</summary>
       <dl>
-        <dt>Blat pod oknem</dt><dd>600 × 40, od ściany 20</dd>
+        <dt>Blat pod oknem</dt><dd>3350 × 600 × 40, od ściany</dd>
         <dt>Szafki dolne</dt><dd>820, cokół 100</dd>
         <dt>Blenda pod oknem</dt><dd>2780 × 220 × 20, dąb</dd>
-        <dt>Wysoka zabudowa</dt><dd>2890 × 2740</dd>
+        <dt>Wysoka zabudowa</dt><dd>2870 × 2740</dd>
         <dt>Słupek AGD</dt><dd>piekarnik 600 + mikro 400</dd>
         <dt>Wyspa</dt><dd>1740 × 900 × 860</dd>
         <dt>Szuflady w wyspie</dt><dd>gł. 600</dd>
         <dt>Wnęka na hokery</dt><dd>gł. 300, navy</dd>
         <dt>Głębokość korpusu</dt><dd>550</dd>
-        <dt>Narożnik</dt><dd>listwa 20 + blat 600 + słupek 20</dd>
+        <dt>Narożnik</dt><dd>box 580 + listwa 20, słupek 20</dd>
+        <dt>Cokół</dt><dd>L, styk w narożniku</dd>
+        <dt>Zlew</dt><dd>podwieszany 680 × 400 × 200</dd>
+        <dt>Bateria</dt><dd>niska, ok. 180 nad blatem</dd>
         <dt>Ramy</dt><dd>20 / 80 mm</dd>
-        <dt>Okno</dt><dd>1600 × 1220, antracyt</dd>
+        <dt>Rama frontu</dt><dd>50, na wszystkich</dd>
+        <dt>Okno</dt><dd>1900 × 1300, antracyt</dd>
         <dt>Szpaleta</dt><dd>150, 20 od zabudowy</dd>
         <dt>Okap kominowy</dt><dd>600, stal</dd>
       </dl>
-      <p class="note">Wymiary zabudowy z kitchen_design_v25. Okno, położenie wyspy i lampy nad nią są przyjęte orientacyjnie.</p>
+      <p class="note">Wymiary zabudowy z kitchen_design_v25. Położenie okna w poziomie, wyspy i lamp nad nią przyjęte orientacyjnie. Cokół w narożniku dociągnięty poza rysunek.</p>
     </details>
   </div>
 
   <nav class="dock" id="views" aria-label="Widoki">
+    <div class="full">
     <button data-v="all" aria-pressed="true">Ogólny</button>
     <button data-v="a" aria-pressed="false">Pod oknem</button>
     <button data-v="b" aria-pressed="false">Wysoka zabudowa</button>
     <button data-v="c" aria-pressed="false">Wyspa</button>
+    <button data-v="sink" aria-pressed="false">Zlew</button>
     <button data-v="corner" aria-pressed="false">Narożnik</button>
     <button data-v="top" aria-pressed="false">Rzut</button>
+    </div>
+    <div class="mini">
+      <button type="button" data-step="-1" aria-label="Poprzedni widok">‹</button>
+      <select id="viewSel" aria-label="Widok"><option value="all">Ogólny</option><option value="a">Pod oknem</option><option value="b">Wysoka zabudowa</option><option value="c">Wyspa</option><option value="sink">Zlew</option><option value="corner">Narożnik</option><option value="top">Rzut</option></select>
+      <button type="button" data-step="1" aria-label="Następny widok">›</button>
+    </div>
   </nav>
 </div>
 
@@ -151,8 +171,8 @@ const G={
   A:{w:[40,20,800,20,600,20,800,20,400,80,550],c:[
     [1,1,'wood',820],[1,11,'wood',40],[1,10,'wood',220],[2,1,'bar',820],[3,8,'box',100],[3,1,'shaker',420,'T'],[3,1,'shaker',300,'T'],
     [4,1,'bar',720],[5,1,'shaker',720,'T'],[6,1,'bar',720],[7,1,'shaker',420,'T'],[7,1,'shaker',300,'T'],[8,1,'bar',720],[9,1,'shaker',720,'T'],[10,1,'bar',720],[11,1,'box',820]]},
-  B:{w:[20,580,20,20,600,20,600,20,600,20,250,20,120],c:[
-    [1,1,'box',860],[1,1,'bar',1640],[1,12,'bar',20],[1,12,'box',220],[2,1,'box',820],[2,2,'box',40],[2,2,'shaker',1160,'R'],[2,2,'shaker',480,'B'],
+  B:{w:[20,560,20,20,600,20,600,20,600,20,250,20,120],c:[
+    [1,2,'box',820],[1,3,'box',40],[1,1,'bar',1640],[1,12,'bar',20],[1,12,'box',220],[2,2,'shaker',1160,'R'],[2,2,'shaker',480,'B'],
     [3,9,'box',100],[3,1,'bar',720],[4,1,'bar',2400],[5,1,'shaker',720,'T'],[5,1,'shaker',1200,'R'],[5,1,'shaker',480,'B'],[6,1,'bar',2400],
     [7,1,'shaker',520,'T'],[7,1,'oven',600],[7,1,'micro',400],[7,1,'shaker',400,'B'],[7,1,'shaker',480,'B'],[8,1,'bar',2400],
     [9,1,'shaker',720,'T'],[9,1,'shaker',1200,'L'],[9,1,'shaker',480,'B'],[10,1,'bar',2400],[11,1,'shaker',720,'T'],[11,1,'shaker',1200,'L'],[11,1,'shaker',480,'B'],
@@ -161,15 +181,24 @@ const G={
     [1,1,'wood',820],[1,10,'wood',40],[2,1,'bar',820],[3,3,'box',100],[3,1,'shaker',420,'T'],[3,1,'shaker',300,'T'],[4,1,'bar',720],
     [5,1,'shaker',420,'T'],[5,1,'shaker',300,'T'],[6,1,'bar',820],[7,1,'wood',820]]}
 };
-function layout(g){const x=[0];g.w.forEach(w=>x.push(x[x.length-1]+w));const cur=g.w.map(()=>0),out=[];
-  for(const [c,s,t,h,hd] of g.c){const i=c-1,j=Math.min(i+s,g.w.length),v=cur[i];
-    for(let k=i+1;k<j;k++)if(cur[k]===v)cur[k]=v+h;cur[i]=v+h;out.push({u0:x[i],u1:x[j],v0:v,v1:v+h,t,s,c,hd});}
+// wierny port LayoutEngine z v25: start = najwyższy ciągły stos od 0 w kolumnach zakresu, kolizja = pominięcie
+function layout(g){const n=g.w.length,x=[0];g.w.forEach(w=>x.push(x[x.length-1]+w));const occ=g.w.map(()=>[]),out=[];
+  const top=r=>{let y=0;for(const [a,b] of [...r].sort((p,q)=>p[0]-q[0])){if(a<=y){if(b>y)y=b;}else break;}return y;};
+  for(const [c,s,t,h,hd] of g.c){const i=c-1,j=Math.min(i+s,n);if(i<0||i>=n||s<1)continue;
+    let v=0;for(let k=i;k<j;k++)v=Math.max(v,top(occ[k]));
+    if(occ.slice(i,j).some(r=>r.some(([a,b])=>Math.max(v,a)<Math.min(v+h,b))))continue;
+    for(let k=i;k<j;k++)occ[k].push([v,v+h]);out.push({u0:x[i],u1:x[j],v0:v,v1:v+h,t,s,c,hd});}
   return out;}
+const LA=layout(G.A),LB=layout(G.B),LC=layout(G.C);
+const cum=w=>w.reduce((a,v)=>(a.push(a[a.length-1]+v),a),[0]);
 
 /* ---------- układ (mm): A na ścianie z oknem z=0, B na prawej ścianie x=3350, C wyspa; aneks otwarty w lewo i do przodu ---------- */
-const RX=3350, I0=0, IZ=1870, HC=2740;   // wyspa: lewa krawędź z A (x=0), tył z końcem szafek B (z=2770)
+const RX=3350, I0=0, HC=2740;
+const OA=0;   // v25: w narożniku B blat (box 40, kol. 1-3) zaczyna się od ściany z oknem -> ciąg A bez odsunięcia, blenda stoi na blacie
+const BEND=cum(G.B.w)[12];   // koniec szafek B (za listwą kol. 12) = 2750
+const IZ=BEND-900;           // wyspa: lewa krawędź z A (x=0), tył równo z końcem szafek B
 const RUNS={
-  A:(u0,u1,n0,n1)=>[u0,u1,n0+20,n1+20],   // 20 mm od ściany: blenda dębowa i listwa w narożniku
+  A:(u0,u1,n0,n1)=>[u0,u1,n0+OA,n1+OA],
   B:(u0,u1,n0,n1)=>[RX-n1,RX-n0,u0,u1],
   C:(u0,u1,n0,n1)=>[I0+1740-u1,I0+1740-u0,IZ+600-n1,IZ+600-n0]
 };
@@ -234,7 +263,7 @@ new MutationObserver(stageColor).observe(document.documentElement,{attributes:tr
   scene.environment=pm.fromScene(env,.04).texture;})();
 const camera=new THREE.PerspectiveCamera(45,1,0.05,60);
 const controls=new THREE.OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true;controls.minDistance=.3;controls.maxDistance=14;controls.maxPolarAngle=Math.PI*.495;
+controls.enableDamping=true;controls.minDistance=.08;controls.maxDistance=14;controls.maxPolarAngle=Math.PI*.495;
 const aniso=renderer.capabilities.getMaxAnisotropy();
 
 const C=h=>new THREE.Color(h).convertSRGBToLinear();
@@ -270,14 +299,14 @@ function cyl(r,len,mat,x,y,z,axis,seg){const m=new THREE.Mesh(new THREE.Cylinder
   if(axis==='x')m.rotation.z=Math.PI/2;if(axis==='z')m.rotation.x=Math.PI/2;m.castShadow=true;scene.add(m);return m;}
 
 /* ---------- fronty shaker ---------- */
-const FN=570;
+const FN=570, FR=50, HO=28;   // FR: rama frontu shaker = 50 mm jak w v25, jednakowa dla wszystkich frontów; HO: oś uchwytu na ramie
 function handle(run,u0,u1,v0,v1,hd){if(!hd)return;const L=160,s=FN+4;
-  if(hd==='T'||hd==='B'){const v=hd==='T'?v1-45:v0+45,uc=(u0+u1)/2;
+  if(hd==='T'||hd==='B'){const v=hd==='T'?v1-HO:v0+HO,uc=(u0+u1)/2;
     rb(run,uc-L/2,uc+L/2,v-6,v+6,s+20,s+30,M.handle);rb(run,uc-L/2+8,uc-L/2+18,v-5,v+5,s,s+20,M.handle);rb(run,uc+L/2-18,uc+L/2-8,v-5,v+5,s,s+20,M.handle);}
-  else{const u=hd==='L'?u0+45:u1-45,vc=Math.min(v0+260,(v0+v1)/2);
+  else{const u=hd==='L'?u0+HO:u1-HO,vc=Math.min(v0+260,(v0+v1)/2);
     rb(run,u-6,u+6,vc-L/2,vc+L/2,s+20,s+30,M.handle);rb(run,u-5,u+5,vc-L/2+8,vc-L/2+18,s,s+20,M.handle);rb(run,u-5,u+5,vc+L/2-18,vc+L/2-8,s,s+20,M.handle);}}
 function shaker(run,u0,u1,v0,v1,hd){const g=2;u0+=g;u1-=g;v0+=g;v1-=g;
-  const w=Math.min(70,(u1-u0)*.2,(v1-v0)*.22);
+  const w=FR;
   rb(run,u0,u1,v1-w,v1,FN-18,FN,M.navy);rb(run,u0,u1,v0,v0+w,FN-18,FN,M.navy);
   rb(run,u0,u0+w,v0+w,v1-w,FN-18,FN,M.navy);rb(run,u1-w,u1,v0+w,v1-w,FN-18,FN,M.navy);
   rb(run,u0+w,u1-w,v0+w,v1-w,FN-18,FN-9,M.navy);
@@ -315,30 +344,45 @@ function appliance(u0,u1,v0,v1,kind){const g=2;u0+=g;u1-=g;v0+=g;v1-=g;const uc=
   }}
 
 function build(run){
-  for(const it of layout(G[run])){const {u0,u1,v0,v1,t,s,c,hd}=it;
+  for(const it of {A:LA,B:LB,C:LC}[run]){const {u0,u1,v0,v1,t,s,c,hd}=it;
     if(t==='wood'){const h=v1-v0;
-      if(run==='A'&&h===40){   // blat 600 od listwy 20 mm do długiego słupka B
-        rb(run,u0,RX-FN,v0,v1,0,600,M.oak).userData.grain='x';
-        bx(RX-FN,RX,v0,v1,20,620,M.oak).userData.grain='x';continue;}
+      if(run==='A'&&h===40){worktopA(v0,v1);continue;}   // blat 3350 × 600 od ściany, z otworem na zlew
       if(run==='A'&&h===220){  // blenda pod oknem 20 mm, kończy się na licu wysokiej zabudowy
         bx(u0,RX-FN,v0,v1,0,20,M.oak).userData.grain='x';continue;}
       const m=rb(run,u0,u1,v0,v1,run==='C'?-300:0,h===220?30:600,M.oak);if(m&&h===820)m.userData.grain='y';}
     else if(t==='bar')rb(run,u0,u1,v0,v1,20,FN,M.navy);
     else if(t==='box'){
       if(v1-v0===100)rb(run,u0,u1,v0,v1,20,FN-70,M.navyDeep);
-      else if(run==='B'&&(s>=12||c===13))rb(run,u0,u1,v0,v1,0,600,M.wall);
-      else if(run==='B'&&c===1&&v1-v0===860)rb(run,u0,u1,v0,v1,20,FN,M.navy);}
+      else if(run==='B'&&(s>=12||c===13))rb(run,u0,u1,v0,v1,0,600,M.wall);}   // box 820 i 40 w narożniku B są zakryte ciągiem A
     else if(t==='shaker')shaker(run,u0,u1,v0,v1,hd);
     else appliance(u0,u1,v0,v1,t);
   }}
-rb('A',40,3350,100,820,20,FN-20,M.navyDeep);
-rb('B',20,2770,100,2500,20,FN-20,M.navyDeep);
+/* ---------- zlew podwieszany pod oknem: oś szafki kol. 7 (800) ---------- */
+const AX=cum(G.A.w),SC=(AX[6]+AX[7])/2,SX0=SC-340,SX1=SC+340,SZ0=110,SZ1=510,SB=620,ST=2;   // komora 680 × 400 × 200
+function worktopA(v0,v1){[[0,SX0,0,600],[SX1,RX,0,600],[SX0,SX1,0,SZ0],[SX0,SX1,SZ1,600]].forEach(([a,b,c,d])=>rb('A',a,b,v0,v1,c,d,M.oak).userData.grain='x');}
+// wnętrze korpusów A z wycięciem na komorę zlewu
+[[40,SX0-ST,20,FN-20,100,820],[SX1+ST,3350,20,FN-20,100,820],[SX0-ST,SX1+ST,20,SZ0-ST,SB-ST,820],[SX0-ST,SX1+ST,SZ1+ST,FN-20,SB-ST,820],[SX0-ST,SX1+ST,20,FN-20,100,SB-ST]]
+  .forEach(([a,b,c,d,y0,y1])=>rb('A',a,b,y0,y1,c,d,M.navyDeep));
+rb('A',SX0-ST,SX0,SB,820,SZ0-ST,SZ1+ST,M.steel);rb('A',SX1,SX1+ST,SB,820,SZ0-ST,SZ1+ST,M.steel);
+rb('A',SX0,SX1,SB,820,SZ0-ST,SZ0,M.steel);rb('A',SX0,SX1,SB,820,SZ1,SZ1+ST,M.steel);rb('A',SX0,SX1,SB-ST,SB,SZ0,SZ1,M.steel);
+cyl(45,3,M.steel,SC,SB+1.5,OA+(SZ0+SZ1)/2,null,32);cyl(30,4,M.ovenIn,SC,SB+2,OA+(SZ0+SZ1)/2,null,32);
+// bateria niska (góra ~1040): okno otwiera się do środka, skrzydło prawe omiata blat od wys. ~1125
+(function(){const z=OA+65;
+  cyl(28,8,M.handle,SC,864,z,null,32);cyl(20,172,M.handle,SC,954,z,null,32);cyl(21,6,M.handle,SC,1043,z,null,32);
+  cyl(11,220,M.handle,SC,1026,z+110,'z',20);cyl(13,26,M.handle,SC,1012,z+214,null,20);
+  cyl(7,70,M.handle,SC+55,1000,z,'x',16);})();
+
+rb('B',20,BEND,100,2500,20,FN-20,M.navyDeep);
 rb('C',40,1700,100,820,20,FN-20,M.navyDeep);
 build('A');build('B');build('C');
-// narożnik L zgodnie z rysunkiem: pusty box, blat do słupka, cokoły połączone
-bx(RX-FN,RX-FN+20,100,820,FN+20,600,M.navy);   // lico pustego boxu B widoczne między frontem A a ramą B
-bx(2780,RX-FN+70,0,100,40,FN-50,M.navyDeep);
-bx(RX-FN+70,RX-20,0,100,FN-50,620,M.navyDeep);
+// narożnik L: cokół (wyjątek od rysunku) dochodzi z obu stron do narożnika i styka się w linii lic cokołów
+const PF=FN-70;   // lico cokołu 70 za licem frontów
+const plA=LA.filter(i=>i.t==='box'&&i.v1-i.v0===100),plB=LB.filter(i=>i.t==='box'&&i.v1-i.v0===100);
+rb('A',Math.max(...plA.map(i=>i.u1)),RX-PF,0,100,20,PF,M.navyDeep);   // A: 2800 -> 2850
+rb('B',OA+PF,Math.min(...plB.map(i=>i.u0)),0,100,20,PF,M.navyDeep);   // B: 580 -> 500
+// lico pustego boxu narożnego widoczne między frontem A (z=570) a listwą B kol. 3 (z=580)
+{const st=LB.find(i=>i.t==='bar'&&i.c===3),fa=LA.find(i=>i.t==='bar'&&i.c===10);
+  if(st.u0>OA+FN)bx(XF,fa.u1,st.v0,st.v1,OA+FN,st.u0,M.navy);}
 // tył wyspy: wnęka 30 cm na hokery, jednolita w kolorze navy
 rb('C',40,1700,0,820,0,20,M.navy);
 
@@ -346,8 +390,8 @@ rb('C',40,1700,0,820,0,20,M.navy);
 (function(){const u0=160,u1=760,v=860;
   rb('A',u0,u1,v,v+5,40,560,M.glassBlack);
   [[310,180,.1],[610,180,.085],[310,410,.085],[610,410,.11]].forEach(([u,n,r])=>{
-    const m=new THREE.Mesh(new THREE.RingGeometry(r-.003,r,64),M.ring);m.rotation.x=-Math.PI/2;m.position.set(u/1000,(v+5.5)/1000,n/1000);scene.add(m);});
-  const s=new THREE.Mesh(new THREE.PlaneGeometry(.22,.03),M.ring);s.rotation.x=-Math.PI/2;s.position.set(.46,(v+5.5)/1000,.53);scene.add(s);
+    const m=new THREE.Mesh(new THREE.RingGeometry(r-.003,r,64),M.ring);m.rotation.x=-Math.PI/2;m.position.set(u/1000,(v+5.5)/1000,(OA+n)/1000);scene.add(m);});
+  const s=new THREE.Mesh(new THREE.PlaneGeometry(.22,.03),M.ring);s.rotation.x=-Math.PI/2;s.position.set(.46,(v+5.5)/1000,(OA+530)/1000);scene.add(s);
 })();
 
 /* ---------- okap kominowy ze stali, 60 cm ---------- */
@@ -367,7 +411,7 @@ rb('C',40,1700,0,820,0,20,M.navy);
 /* ---------- ściany: tylko tylna (z oknem) i prawa, aneks otwarty ---------- */
 const walls=[];
 function wallGroup(n,mid){const g=new THREE.Group();scene.add(g);walls.push({g,n:new THREE.Vector3(...n),mid:new THREE.Vector3(...mid)});return g;}
-const WX0=1160,WX1=2760,WY0=1080,WY1=2300,TW=300,RV=150;    // okno 1600 × 1220, szpaleta 15 cm
+const WX1=XF-20,WX0=WX1-1900,WY0=1080,WY1=WY0+1300,TW=300,RV=150;    // okno 1900 × 1300: szpaleta 20 od zabudowy B, parapet na górze blendy
 const back=wallGroup([0,0,-1],[1.3,1.37,0]);
 const BX0=-900;
 [[BX0,WX0,0,HC],[WX1,RX+TW,0,HC],[WX0,WX1,0,WY0],[WX0,WX1,WY1,HC]].forEach(([x0,x1,y0,y1])=>bx(x0,x1,y0,y1,-TW,0,M.wall,back));
@@ -427,17 +471,31 @@ const VIEWS={
   a:{p:[1.6,1.6,3.2],t:[1.6,1.15,.1]},
   b:{p:[.4,1.55,1.7],t:[3.2,1.35,1.5]},
   c:{p:[1.7,1.45,.85],t:[.85,.6,2.25]},
-  corner:{p:[1.9,1.45,1.75],t:[3.05,.85,.45]},
+  sink:{p:[1.9,1.95,1.75],t:[1.9,.85,.3]},
+  corner:{p:[2.1,1.05,2.3],t:[2.95,.35,.5]},
   top:{p:[1.33,8.2,1.91],t:[1.32,0,1.9]}
 };
 let anim=null;
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),fwd=new THREE.Vector3(),hp=new THREE.Vector3();
+function shown(o){for(;o;o=o.parent)if(!o.visible)return false;return true;}
+function repivot(e){const r=renderer.domElement.getBoundingClientRect();
+  ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
+  const hit=ray.intersectObjects(scene.children,true).find(h=>h.object.isMesh&&h.object.material!==M.glass&&h.object.material!==M.sky&&shown(h.object));
+  if(!hit)return;camera.getWorldDirection(fwd);
+  const d=Math.max(.15,hp.copy(hit.point).sub(camera.position).dot(fwd));   // głębokość trafienia wzdłuż osi widoku -> bez skoku obrazu
+  controls.target.copy(camera.position).addScaledVector(fwd,d);}
+renderer.domElement.addEventListener('pointerdown',e=>{if(anim||e.isPrimary===false)return;controls.update();repivot(e);},true);
+renderer.domElement.addEventListener('wheel',e=>{if(!anim)repivot(e);},{capture:true,passive:true});
 function go(v,instant){const V=VIEWS[v],p=new THREE.Vector3(...V.p),t=new THREE.Vector3(...V.t);
   if(instant){camera.position.copy(p);controls.target.copy(t);controls.update();return;}
   anim={p0:camera.position.clone(),t0:controls.target.clone(),p,t,s:performance.now()};}
 go('all',true);
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const vsel=document.getElementById('viewSel'),VK=[...vsel.options].map(o=>o.value);
+function setView(v){for(const x of document.querySelectorAll('#views .full button'))x.setAttribute('aria-pressed',x.dataset.v===v);vsel.value=v;go(v,reduce);}
 document.getElementById('views').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-  for(const x of document.querySelectorAll('#views button'))x.setAttribute('aria-pressed',x===b);go(b.dataset.v,reduce);});
+  if(b.dataset.step)setView(VK[(VK.indexOf(vsel.value)+ +b.dataset.step+VK.length)%VK.length]);else setView(b.dataset.v);});
+vsel.addEventListener('change',()=>setView(vsel.value));
 document.getElementById('metal').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;setMetal(b.dataset.m);
   for(const x of document.querySelectorAll('#metal button'))x.setAttribute('aria-pressed',x===b);});
 
