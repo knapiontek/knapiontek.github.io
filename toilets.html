@@ -293,6 +293,20 @@ new MutationObserver(stageColor).observe(document.documentElement,{attributes:tr
 const camera=new THREE.PerspectiveCamera(50,1,0.05,60);
 const controls=new THREE.OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true;controls.minDistance=0.3;controls.maxDistance=10;
+// Przy przybliżeniu punkt obrotu bywał przed ścianami, które oglądamy — wtedy obraz kręcił się odwrotnie.
+// Na początku przeciągania przesuwamy punkt obrotu wzdłuż osi widoku na powierzchnię na środku ekranu,
+// więc widok nie skacze, a wszystko, co widać, leży przed punktem obrotu i podąża za ruchem ręki.
+const pivotRay=new THREE.Raycaster(),pivotCenter=new THREE.Vector2(0,0),pivotDir=new THREE.Vector3();
+function shown(o){for(;o;o=o.parent)if(!o.visible)return false;return true;}
+renderer.domElement.addEventListener('pointerdown',e=>{
+  if(anim||(e.pointerType==='mouse'&&e.button!==0))return;
+  pivotRay.setFromCamera(pivotCenter,camera);
+  const hit=pivotRay.intersectObjects(scene.children,true).find(h=>h.object.isMesh&&shown(h.object)&&
+    !(h.object.material&&(h.object.material.visible===false||h.object.material.opacity<.5)));
+  if(!hit)return;
+  const d=Math.min(controls.maxDistance,Math.max(controls.minDistance,hit.distance));
+  camera.getWorldDirection(pivotDir);controls.target.copy(camera.position).addScaledVector(pivotDir,d);
+});
 const maxAniso=renderer.capabilities.getMaxAnisotropy();
 
 const H=2.6,T=0.1;
