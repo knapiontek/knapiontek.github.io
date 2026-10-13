@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kosztorys Kuchni</title>
+<style>
+  :root {
+    --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; --text: #f8fafc; --muted: #cbd5e1;
+    --sheet: #ffffff; --head: #f1f5f9; --grid: #d8dee8; --ink: #1e293b; --ink-muted: #64748b;
+    --input: #0000ff; --input-bg: #eef4ff; --sub: #e2e8f0; --total: #fff2cc; --sel: #1d4ed8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: Arial, Helvetica, sans-serif; }
+  .app { max-width: 1500px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 10px; color: var(--accent); }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .btn { background: var(--accent); color: #0f172a; border: 0; border-radius: 6px; padding: 7px 12px; font-weight: bold; cursor: pointer; font-size: 13px; text-decoration: none; }
+  .btn.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .btn:hover { filter: brightness(1.1); }
+  .total-pill { margin-left: auto; background: var(--panel); border: 1px solid #334155; border-radius: 6px; padding: 6px 12px; font-size: 14px; }
+  .total-pill b { color: var(--accent); }
+  .fx { display: flex; align-items: stretch; background: var(--sheet); color: var(--ink); border: 1px solid var(--grid); border-bottom: 0; font-size: 13px; }
+  .fx .ref { width: 70px; padding: 6px 8px; border-right: 1px solid var(--grid); background: var(--head); font-weight: bold; text-align: center; }
+  .fx .lbl { padding: 6px 8px; color: var(--ink-muted); font-style: italic; border-right: 1px solid var(--grid); }
+  .fx .val { padding: 6px 8px; flex: 1; font-family: Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .grid-wrap { background: var(--sheet); border: 1px solid var(--grid); overflow: auto; max-height: calc(100vh - 210px); min-height: 300px; }
+  table.grid { border-collapse: collapse; font-size: 13px; color: var(--ink); min-width: 100%; }
+  .grid th, .grid td { border: 1px solid var(--grid); padding: 3px 6px; height: 24px; }
+  .grid thead th { position: sticky; top: 0; background: var(--head); color: var(--ink-muted); font-weight: normal; z-index: 2; }
+  .grid td.rn, .grid th.rn { position: sticky; left: 0; background: var(--head); color: var(--ink-muted); text-align: center; width: 40px; min-width: 40px; z-index: 1; }
+  .grid thead th.rn { z-index: 3; }
+  .grid td { background: var(--sheet); vertical-align: top; }
+  .grid td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .grid td.wrap { white-space: normal; }
+  .grid td.sel { outline: 2px solid var(--sel); outline-offset: -2px; }
+  .grid tr.hdr td:not(.rn) { background: var(--ink); color: #fff; font-weight: bold; }
+  .grid tr.sub td:not(.rn) { background: var(--sub); font-weight: bold; }
+  .grid tr.tot td:not(.rn) { font-weight: bold; }
+  .grid tr.grand td:not(.rn) { background: var(--total); font-weight: bold; font-size: 14px; }
+  .grid tr.title td:not(.rn) { font-size: 16px; font-weight: bold; }
+  .grid input { width: 100%; min-width: 64px; border: 0; background: var(--input-bg); color: var(--input); font: inherit; text-align: right; padding: 2px 4px; }
+  .grid input:focus { outline: 2px solid var(--sel); }
+  .grid input.changed { background: #fde68a; }
+  .calc { color: var(--ink); cursor: help; }
+  .tabs { display: flex; gap: 2px; background: var(--head); border: 1px solid var(--grid); border-top: 0; padding: 0 8px; }
+  .tab { padding: 7px 16px; color: var(--ink-muted); cursor: pointer; font-size: 13px; border: 0; background: transparent; border-top: 3px solid transparent; }
+  .tab.active { background: var(--sheet); color: var(--ink); font-weight: bold; border-top-color: #16a34a; }
+  .foot { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  @media (max-width: 700px) {
+    .total-pill { margin-left: 0; width: 100%; }
+    .fx .lbl { display: none; }
+    .grid-wrap { max-height: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1 id="title"></h1>
+  <div class="toolbar">
+    <button class="btn secondary" id="reset">Przywróć ceny</button>
+    <button class="btn" id="csv">Eksport CSV</button>
+    <div class="total-pill">Razem: <b id="grand"></b></div>
+  </div>
+  <div class="fx"><div class="ref" id="ref">A1</div><div class="lbl">fx</div><div class="val" id="fxval"></div></div>
+  <div class="grid-wrap"><table class="grid" id="grid"></table></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="foot">Wartość = Ilość × Cena jedn. Ilości z formułą (najedź kursorem) pochodzą z zakładki Rozkrój.</div>
+</div>
+
+<!-- ===================================================================
+     DANE KOSZTORYSU (JSON) - jedyne miejsce z wartościami projektu.
+     Skrypt poniżej nie zawiera danych; czyta ten blok przy starcie.
+       blocks: formatki (mm), wyliczone wg założeń kosztorysu
+       items:  pozycje; qty = liczba albo formuła na sumach bloków
+               (np. "ceil(board18.m2*1.15/5.796)", qty(n) = ilość pozycji n)
+     =================================================================== -->
+<script type="application/json" id="cost-data">
+{
+  "title": "Kosztorys materiałów - Kuchnia Jaworze (Group 1+Group 2 w L, wyspa Group 3)",
+  "info": ["PLN brutto (VAT 23%), średnie ceny rynkowe X 2026. Tylko materiały, montaż własny.", "Niebieskie komórki (ceny, ilości) można edytować; zmiany zapamiętuje przeglądarka. Ilości z formułą liczą się z zakładki Rozkrój.", "Ceny z dopiskiem \"szac.\" to szacunki - sprawdź u dostawcy."],
+  "groups": {"Meble (materiały)": ["Fronty i elementy MDF", "Korpusy", "Okucia", "Blaty i panele", "Zlew i bateria"], "AGD": ["AGD"]},
+  "notes": [
+    "Nie zawiera: okapu (poza meblami), ścian/g-k (\"box\"), robocizny, elektryki, hydrauliki, transportu.",
+    "Zawiasy: Blum w cenie; tańsza alternatywa obniża sumę o ok. 400-550 zł.",
+    "Piekarnik: typowa nisza dla 595 mm to ok. 560 W x 590 H x 550 D - potwierdź w instrukcji montażu.",
+    "Lodówka: korpus 1920 (wewnątrz 1884) bez zmian, nad lodówką pusto; front 1200 dłuższy od drzwi lodówki."
+  ],
+  "blocks": [
+    {"id": "fronts", "title": "FRONTY - MDF 18 shaker, lakier English Navy satyna (frontowiec)", "kind": "front", "cols": ["Funkcja", "Szer.", "Wys.", "Ilość"],
+     "rows": [
+       ["szuflada", 796, 416, 3],
+       ["szuflada", 796, 296, 3],
+       ["front na drzwi AGD", 596, 716, 2],
+       ["drzwi", 796, 416, 1],
+       ["front martwy", 796, 296, 1],
+       ["drzwi", 396, 716, 1],
+       ["drzwi", 576, 1158, 1],
+       ["drzwi", 576, 476, 1],
+       ["drzwi", 596, 716, 1],
+       ["drzwi", 596, 1196, 1],
+       ["drzwi", 596, 476, 3],
+       ["drzwi", 596, 516, 1],
+       ["drzwi", 596, 414, 1],
+       ["front na drzwi AGD", 596, 1196, 1],
+       ["drzwi", 246, 716, 1],
+       ["drzwi", 246, 1196, 1],
+       ["drzwi", 246, 476, 1]
+     ]},
+    {"id": "bars", "title": "BARY I BLENDY - MDF 18 lakier jak fronty (frontowiec)", "kind": "front", "cols": ["Element", "Szer.", "Dł.", "Ilość"],
+     "rows": [
+       ["Bar na sztorc (100 gł.)", 100, 820, 3],
+       ["Bar na sztorc (100 gł.)", 100, 720, 5],
+       ["Blenda płaska", 80, 720, 1],
+       ["Bar na sztorc (100 gł.)", 100, 1642, 1],
+       ["Bar na sztorc (100 gł.)", 100, 2750, 1],
+       ["Bar na sztorc (100 gł.)", 100, 2400, 4],
+       ["Bar na sztorc (100 gł.)", 100, 2500, 1]
+     ]},
+    {"id": "plinth", "title": "COKÓŁ - MDF 18 lakier, długości z rysunku (docinasz na miejscu)", "kind": "front", "cols": ["Element", "Wys.", "Dł.", "Ilość"],
+     "rows": [
+       ["Cokół", 100, 2740, 1],
+       ["Cokół", 100, 2150, 1],
+       ["Cokół", 100, 1620, 1]
+     ]},
+    {"id": "island", "title": "PANEL TYŁU WYSPY - MDF 18 lakier gładki", "kind": "front", "cols": ["Element", "Szer.", "Wys.", "Ilość"],
+     "rows": [
+       ["Panel tył wyspy", 1660, 820, 1]
+     ]},
+    {"id": "board18", "title": "KORPUSY - płyta wiórowa 18 biała, cięcie + ABS 0,8 (hurtownia)", "kind": "board", "cols": ["Element", "Szer.", "Wys.", "Ilość"],
+     "rows": [
+       ["Bok", 550, 720, 10],
+       ["Wieniec dolny", 764, 550, 4],
+       ["Trawers (listwa górna)", 764, 100, 8],
+       ["Wieniec dolny", 364, 550, 1],
+       ["Trawers (listwa górna)", 364, 100, 2],
+       ["Półka ruchoma", 362, 530, 1],
+       ["Bok", 550, 1162, 2],
+       ["Wieniec dolny", 544, 550, 2],
+       ["Wieniec górny", 544, 550, 2],
+       ["Półka ruchoma", 542, 530, 4],
+       ["Bok", 550, 480, 10],
+       ["Bok", 550, 1920, 8],
+       ["Wieniec dolny", 564, 550, 6],
+       ["Wieniec górny", 564, 550, 6],
+       ["Półka stała", 564, 530, 4],
+       ["Półka ruchoma", 562, 530, 9],
+       ["Wieniec dolny", 214, 550, 2],
+       ["Wieniec górny", 214, 550, 2],
+       ["Półka stała", 214, 530, 1],
+       ["Półka ruchoma", 212, 530, 5]
+     ]},
+    {"id": "board16", "title": "SZUFLADY - płyta 16 biała (dna i tyły TANDEMBOX)", "kind": "board", "cols": ["Element", "Szer.", "Gł./Wys.", "Ilość"],
+     "rows": [
+       ["Dno szuflady", 689, 490, 6],
+       ["Tył szuflady D", 677, 199, 3],
+       ["Tył szuflady M", 677, 68, 3]
+     ]},
+    {"id": "hdf", "title": "PLECY - HDF 3 biały", "kind": "front", "cols": ["Element", "Szer.", "Wys.", "Ilość"],
+     "rows": [
+       ["Plecy", 798, 718, 4],
+       ["Plecy", 398, 718, 1],
+       ["Plecy", 578, 1160, 1],
+       ["Plecy", 578, 478, 1],
+       ["Plecy", 598, 1918, 3],
+       ["Plecy", 598, 478, 3],
+       ["Plecy", 248, 1918, 1],
+       ["Plecy", 248, 478, 1]
+     ]}
+  ],
+  "items": [
+    {"cat": "Fronty i elementy MDF", "name": "Fronty MDF 18 shaker, lakierowane", "spec": "wg Rozkrój, English Navy satyna", "qty": "fronts.m2", "unit": "m²", "price": 480, "src": "szac.; kb.pl: fronty lakierowane 270-450 zł/m² (2026), frezowane shaker drożej"},
+    {"cat": "Fronty i elementy MDF", "name": "Bary 20 mm na sztorc + blenda 80", "spec": "MDF 18 lakier, 100 gł.", "qty": "bars.m2", "unit": "m²", "price": 480, "src": "szac., jak fronty (lakier z 3 stron)"},
+    {"cat": "Fronty i elementy MDF", "name": "Cokół MDF 18 lakier", "spec": "długości z rysunku +20% na docięcie", "qty": "plinth.m2*1.2", "unit": "m²", "price": 400, "src": "szac., gładki lakier"},
+    {"cat": "Fronty i elementy MDF", "name": "Panel tył wyspy", "spec": "MDF 18 lakier gładki 1660 x 820", "qty": "island.m2", "unit": "m²", "price": 400, "src": "szac., gładki lakier"},
+    {"cat": "Korpusy", "name": "Płyta wiórowa 18 biała", "spec": "arkusz 2800x2070 (5,80 m²), +15% odpad", "qty": "ceil(board18.m2*1.15/5.796)", "unit": "ark.", "price": 260, "src": "szac., Kronospan/Egger biały w hurtowni"},
+    {"cat": "Korpusy", "name": "Płyta wiórowa 16 biała", "spec": "dna i tyły szuflad", "qty": "ceil(board16.m2*1.15/5.796)", "unit": "ark.", "price": 240, "src": "szac."},
+    {"cat": "Korpusy", "name": "Cięcie formatek", "spec": "płyta 18 + 16", "qty": "board18.cut+board16.cut", "unit": "mb", "price": 3, "src": "szac., usługa hurtowni"},
+    {"cat": "Korpusy", "name": "Oklejanie ABS 0,8 biały", "spec": "krawędzie przednie, +10%", "qty": "board18.edge*1.1", "unit": "mb", "price": 4.5, "src": "szac., z usługą"},
+    {"cat": "Korpusy", "name": "HDF 3 biały (plecy)", "spec": "arkusz 2800x2070, +15%", "qty": "ceil(hdf.m2*1.15/5.796)", "unit": "ark.", "price": 85, "src": "szac."},
+    {"cat": "Okucia", "name": "Zawias Blum CLIP top BLUMOTION 110° + prowadnik", "spec": "nakładany; 2/3/4 szt. na drzwi wg wysokości", "qty": 31, "unit": "szt.", "price": 28, "src": "szac.; tańsza alternatywa GTV/Hettich z hamulcem ok. 10-15 zł"},
+    {"cat": "Okucia", "name": "TANDEMBOX antaro D (224) NL 500 BLUMOTION", "spec": "komplet z mocowaniem frontu, dolne szuflady", "qty": 3, "unit": "kpl.", "price": 420, "src": "szac."},
+    {"cat": "Okucia", "name": "TANDEMBOX antaro M (83) NL 500 BLUMOTION", "spec": "komplet, górne szuflady (pod płytą)", "qty": 3, "unit": "kpl.", "price": 260, "src": "szac."},
+    {"cat": "Okucia", "name": "Uchwyt IKEA ENERYDA muszelka, mosiądz", "spec": "1 na front", "qty": 24, "unit": "szt.", "price": 25, "src": "szac., IKEA"},
+    {"cat": "Okucia", "name": "Nóżki meblowe regulowane 100 mm", "spec": "4 na korpus (6 gdy > 900 mm)", "qty": 36, "unit": "szt.", "price": 3, "src": "szac."},
+    {"cat": "Okucia", "name": "Klipsy cokołu", "spec": "1 na 2 nóżki", "qty": "ceil(qty(13)/2)", "unit": "szt.", "price": 1, "src": "szac."},
+    {"cat": "Okucia", "name": "Podpórki półek 5 mm", "spec": "4 na półkę", "qty": 76, "unit": "szt.", "price": 0.25, "src": "szac."},
+    {"cat": "Okucia", "name": "Konfirmaty 7x50 + zaślepki", "spec": "ok. 18 na korpus", "qty": "15*18", "unit": "szt.", "price": 0.3, "src": "szac."},
+    {"cat": "Okucia", "name": "Łączniki korpusów, kątowniki do ściany, wkręty", "spec": "komplet", "qty": 1, "unit": "kpl.", "price": 120, "src": "szac."},
+    {"cat": "Okucia", "name": "Mocowanie frontu martwego zlewu", "spec": "kątowniki", "qty": 1, "unit": "kpl.", "price": 10, "src": "szac."},
+    {"cat": "Okucia", "name": "Kratka wentylacyjna w cokole (lodówka)", "spec": "aluminium/biała", "qty": 1, "unit": "szt.", "price": 40, "src": "szac."},
+    {"cat": "Blaty i panele", "name": "Blat laminowany dąb 38 x 600 x 4100", "spec": "Group 1 3348 + wodospad 820 (2 płyty, mitra wymaga zapasu)", "qty": 2, "unit": "szt.", "price": 700, "src": "szac., ok. 170 zł/mb"},
+    {"cat": "Blaty i panele", "name": "Blat laminowany dąb 38 x 920 x 4100", "spec": "wyspa 1736 + 2 wodospady 820", "qty": 1, "unit": "szt.", "price": 1200, "src": "szac."},
+    {"cat": "Blaty i panele", "name": "Panel ścienny laminowany jak blat", "spec": "osłona ściany Group 1 2798 x 222", "qty": 1, "unit": "szt.", "price": 350, "src": "szac., panel 4100 x 640"},
+    {"cat": "Blaty i panele", "name": "Obrzeża blatu, łączniki wodospadów, klej, silikon", "spec": "komplet", "qty": 1, "unit": "kpl.", "price": 150, "src": "szac."},
+    {"cat": "Zlew i bateria", "name": "Zlewozmywak granitowy 1-komorowy", "spec": "wpuszczany, do szafki 800, z syfonem", "qty": 1, "unit": "szt.", "price": 600, "src": "szac., np. Deante"},
+    {"cat": "Zlew i bateria", "name": "Bateria kuchenna", "spec": "stojąca, wylewka obrotowa", "qty": 1, "unit": "szt.", "price": 450, "src": "szac."},
+    {"cat": "AGD", "name": "Lodówka Bosch KIS86AFE0", "spec": "do zabudowy 1772, zawias płaski (nie ślizgowy), nisza 1775-1780", "qty": 1, "unit": "szt.", "price": 3549, "src": "neonet.pl: 3549 zł (promocja 3210 do 31.10.2026)"},
+    {"cat": "AGD", "name": "Zmywarka Bosch SMV4HVX00E", "spec": "w pełni zabudowa 60", "qty": 1, "unit": "szt.", "price": 1850, "src": "okazje.info.pl: mediana 1799, ostatnio 1899 zł"},
+    {"cat": "AGD", "name": "Płyta indukcyjna Electrolux CIT61443", "spec": "60 cm, wycięcie 560 x 490", "qty": 1, "unit": "szt.", "price": 1600, "src": "okazje.info.pl: mediana 1596 zł"},
+    {"cat": "AGD", "name": "Piekarnik Samsung NV7B5785KAK", "spec": "Dual Cook Flex, 595 x 596 x 570", "qty": 1, "unit": "szt.", "price": 4600, "src": "okazje.info.pl: mediana 4599 zł"},
+    {"cat": "AGD", "name": "Mikrofala Bosch BFL623MB3", "spec": "do zabudowy, nisza 362-365 x 560-568 x 320", "qty": 1, "unit": "szt.", "price": 999, "src": "okazje.info.pl: typowo 999 zł"}
+  ]
+}
+</script>
+
+<script>
+'use strict';
+
+const DATA = JSON.parse(document.getElementById('cost-data').textContent);
+const STORE_KEY = 'kitchen-cost-overrides';
+const COLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+// ---------- number formats ----------
+const fmtPLN = v => v ? v.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł' : '-';
+const fmtNum = (v, d = 2) => (Math.round(v * 10 ** d) / 10 ** d).toLocaleString('pl-PL', { maximumFractionDigits: d });
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- user overrides (per browser) ----------
+function loadOverrides() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || { price: {}, qty: {} }; }
+  catch { return { price: {}, qty: {} }; }
+}
+function saveOverrides(o) { try { localStorage.setItem(STORE_KEY, JSON.stringify(o)); } catch { /* storage unavailable */ } }
+let overrides = loadOverrides();
+
+// ---------- model ----------
+function blockTotals(b) {
+  let qty = 0, m2 = 0, edge = 0, cut = 0;
+  for (const [name, w, h, q] of b.rows) {
+    qty += q; m2 += w * h * q / 1e6;
+    edge += (name === 'Bok' ? h : w) * q / 1000;
+    cut += (w + h) * q / 1000;
+  }
+  return { qty, m2, edge, cut };
+}
+const TOT = Object.fromEntries(DATA.blocks.map(b => [b.id, blockTotals(b)]));
+
+function evalQty(expr, qtyOf) {
+  const names = Object.keys(TOT);
+  const fn = new Function(...names, 'ceil', 'qty', `return (${expr});`);
+  return fn(...names.map(n => TOT[n]), Math.ceil, qtyOf);
+}
+
+function compute() {
+  const qtys = [];
+  const qtyOf = i => qtys[i] ?? 0;
+  const rows = DATA.items.map((it, i) => {
+    const isFormula = typeof it.qty === 'string';
+    let qty = isFormula ? evalQty(it.qty, qtyOf) : it.qty;
+    if (!isFormula && overrides.qty[i] !== undefined) qty = overrides.qty[i];
+    qtys[i] = qty;
+    const price = overrides.price[i] !== undefined ? overrides.price[i] : it.price;
+    return { ...it, i, isFormula, qty, price, value: qty * price };
+  });
+  const byCat = {};
+  rows.forEach(r => { byCat[r.cat] = (byCat[r.cat] || 0) + r.value; });
+  const groups = Object.entries(DATA.groups).map(([g, cats]) => [g, cats.reduce((a, c) => a + (byCat[c] || 0), 0)]);
+  const grand = groups.reduce((a, [, v]) => a + v, 0);
+  return { rows, byCat, groups, grand };
+}
+
+// ---------- rendering ----------
+let sheet = 'cost';
+let cellFormulas = {};   // "A1" -> text shown in the formula bar
+
+function gridHead(n) {
+  return `<thead><tr><th class="rn"></th>${COLS.slice(0, n).map(c => `<th>${c}</th>`).join('')}</tr></thead>`;
+}
+function rowHtml(rn, cells, cls = '') {
+  return `<tr class="${cls}"><td class="rn">${rn}</td>${cells.map((c, k) => {
+    const ref = COLS[k] + rn;
+    cellFormulas[ref] = c.f ?? c.raw ?? '';
+    return `<td data-ref="${ref}" class="${c.cls || ''}"${c.span ? ` colspan="${c.span}"` : ''}>${c.html ?? esc(c.raw ?? '')}</td>`;
+  }).join('')}</tr>`;
+}
+
+function renderCost() {
+  const m = compute();
+  cellFormulas = {};
+  let rn = 1, h = gridHead(8);
+  h += '<tbody>';
+  h += rowHtml(rn++, [{ raw: DATA.title, span: 8 }], 'title');
+  DATA.info.forEach(t => { h += rowHtml(rn++, [{ raw: t, span: 8 }]); });
+  h += rowHtml(rn++, [{ raw: '', span: 8 }]);
+  h += rowHtml(rn++, ['Kategoria', 'Pozycja', 'Specyfikacja', 'Ilość', 'Jedn.', 'Cena jedn.', 'Wartość', 'Źródło / założenie'].map(raw => ({ raw })), 'hdr');
+  const first = rn;
+  for (const r of m.rows) {
+    const qtyCell = r.isFormula
+      ? { html: `<span class="calc" title="=${esc(r.qty)}">${fmtNum(r.qty)}</span>`, cls: 'num', f: '=' + DATA.items[r.i].qty }
+      : { html: `<input type="number" step="any" min="0" data-kind="qty" data-i="${r.i}" value="${r.qty}" class="${overrides.qty[r.i] !== undefined ? 'changed' : ''}">`, f: String(r.qty) };
+    h += rowHtml(rn, [
+      { raw: r.cat }, { raw: r.name, cls: 'wrap' }, { raw: r.spec, cls: 'wrap' }, qtyCell, { raw: r.unit },
+      { html: `<input type="number" step="any" min="0" data-kind="price" data-i="${r.i}" value="${r.price}" class="${overrides.price[r.i] !== undefined ? 'changed' : ''}">`, f: String(r.price) },
+      { raw: fmtPLN(r.value), cls: 'num', f: `=D${rn}*F${rn}` }, { raw: r.src, cls: 'wrap' }
+    ]);
+    rn++;
+  }
+  const last = rn - 1;
+  h += rowHtml(rn++, [{ raw: '', span: 8 }]);
+  for (const [g, v] of m.groups) {
+    const cats = DATA.groups[g];
+    h += rowHtml(rn++, [{ raw: '', span: 5 }, { raw: g }, { raw: fmtPLN(v), cls: 'num', f: `= suma kategorii: ${cats.join(' + ')}` }, { raw: '' }], 'tot');
+  }
+  h += rowHtml(rn++, [{ raw: '', span: 5 }, { raw: 'RAZEM' }, { raw: fmtPLN(m.grand), cls: 'num', f: `=SUM(G${first}:G${last})` }, { raw: '' }], 'grand');
+  h += rowHtml(rn++, [{ raw: '', span: 8 }]);
+  DATA.notes.forEach(t => { h += rowHtml(rn++, [{ raw: t, span: 8 }]); });
+  h += rowHtml(rn++, [{ raw: '', span: 8 }]);
+  h += rowHtml(rn++, [{ raw: 'Suma wg kategorii', span: 8 }], 'sub');
+  Object.entries(m.byCat).forEach(([c, v]) => {
+    h += rowHtml(rn++, [{ raw: c }, { raw: '', span: 5 }, { raw: fmtPLN(v), cls: 'num', f: `=SUMIFS(G${first}:G${last}; A${first}:A${last}; "${c}")` }, { raw: '' }]);
+  });
+  h += '</tbody>';
+  document.getElementById('grid').innerHTML = h;
+  document.getElementById('grand').textContent = fmtPLN(m.grand);
+}
+
+function renderCut() {
+  cellFormulas = {};
+  let rn = 1, h = gridHead(7) + '<tbody>';
+  h += rowHtml(rn++, [{ raw: 'Rozkrój i formatki (moje założenia: korpusy, półki, szuflady)', span: 7 }], 'title');
+  h += rowHtml(rn++, [{ raw: 'Wymiary w mm. Płyta korpusów 18 mm, głębokość 550. Obrzeże: jedna długa krawędź przednia.', span: 7 }]);
+  h += rowHtml(rn++, [{ raw: '', span: 7 }]);
+  for (const b of DATA.blocks) {
+    const board = b.kind === 'board';
+    h += rowHtml(rn++, [{ raw: b.title, span: 7 }], 'sub');
+    h += rowHtml(rn++, [...b.cols, 'm²', ...(board ? ['Obrzeże mb', 'Cięcie mb'] : ['', ''])].map(raw => ({ raw })), 'hdr');
+    const first = rn;
+    for (const [name, w, hh, q] of b.rows) {
+      h += rowHtml(rn, [
+        { raw: name }, { raw: w, cls: 'num' }, { raw: hh, cls: 'num' }, { raw: q, cls: 'num' },
+        { raw: fmtNum(w * hh * q / 1e6, 3), cls: 'num', f: `=B${rn}*C${rn}*D${rn}/1000000` },
+        board ? { raw: fmtNum((name === 'Bok' ? hh : w) * q / 1000), cls: 'num', f: `=${name === 'Bok' ? 'C' : 'B'}${rn}*D${rn}/1000` } : { raw: '' },
+        board ? { raw: fmtNum((w + hh) * q / 1000), cls: 'num', f: `=(B${rn}+C${rn})*D${rn}/1000` } : { raw: '' }
+      ]);
+      rn++;
+    }
+    const t = TOT[b.id], last = rn - 1;
+    h += rowHtml(rn++, [
+      { raw: 'Razem' }, { raw: '' }, { raw: '' }, { raw: t.qty, cls: 'num', f: `=SUM(D${first}:D${last})` },
+      { raw: fmtNum(t.m2, 3), cls: 'num', f: `=SUM(E${first}:E${last})` },
+      board ? { raw: fmtNum(t.edge), cls: 'num', f: `=SUM(F${first}:F${last})` } : { raw: '' },
+      board ? { raw: fmtNum(t.cut), cls: 'num', f: `=SUM(G${first}:G${last})` } : { raw: '' }
+    ], 'tot');
+    h += rowHtml(rn++, [{ raw: '', span: 7 }]);
+  }
+  h += '</tbody>';
+  document.getElementById('grid').innerHTML = h;
+  document.getElementById('grand').textContent = fmtPLN(compute().grand);
+}
+
+function render() {
+  (sheet === 'cost' ? renderCost : renderCut)();
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.sheet === sheet));
+  selectCell('A1');
+}
+
+function selectCell(ref) {
+  document.querySelectorAll('.grid td.sel').forEach(td => td.classList.remove('sel'));
+  const td = document.querySelector(`.grid td[data-ref="${ref}"]`);
+  if (td) td.classList.add('sel');
+  document.getElementById('ref').textContent = ref;
+  document.getElementById('fxval').textContent = cellFormulas[ref] ?? '';
+}
+
+// ---------- events ----------
+document.getElementById('tabs').innerHTML =
+  [['cost', 'Kosztorys'], ['cut', 'Rozkrój']].map(([id, l]) => `<button class="tab" data-sheet="${id}">${l}</button>`).join('');
+document.getElementById('tabs').addEventListener('click', e => {
+  const t = e.target.closest('.tab'); if (!t) return;
+  sheet = t.dataset.sheet; render();
+});
+document.getElementById('grid').addEventListener('click', e => {
+  const td = e.target.closest('td[data-ref]'); if (td) selectCell(td.dataset.ref);
+});
+document.getElementById('grid').addEventListener('change', e => {
+  const inp = e.target.closest('input[data-kind]'); if (!inp) return;
+  const i = Number(inp.dataset.i), kind = inp.dataset.kind, v = parseFloat(inp.value);
+  const orig = DATA.items[i][kind];
+  if (!Number.isFinite(v) || v === orig) delete overrides[kind][i]; else overrides[kind][i] = v;
+  saveOverrides(overrides);
+  const ref = inp.closest('td').dataset.ref;
+  render(); selectCell(ref);
+});
+document.getElementById('reset').addEventListener('click', () => {
+  if (!confirm('Przywrócić wszystkie ceny i ilości z kosztorysu?')) return;
+  overrides = { price: {}, qty: {} }; saveOverrides(overrides); render();
+});
+document.getElementById('csv').addEventListener('click', () => {
+  const m = compute();
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [['Kategoria', 'Pozycja', 'Specyfikacja', 'Ilość', 'Jedn.', 'Cena jedn.', 'Wartość', 'Źródło'].map(q).join(';')];
+  m.rows.forEach(r => lines.push([r.cat, r.name, r.spec, fmtNum(r.qty), r.unit, fmtNum(r.price), fmtNum(r.value), r.src].map(q).join(';')));
+  m.groups.forEach(([g, v]) => lines.push(['', '', '', '', '', g, fmtNum(v), ''].map(q).join(';')));
+  lines.push(['', '', '', '', '', 'RAZEM', fmtNum(m.grand), ''].map(q).join(';'));
+  const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'kosztorys-kuchnia.csv';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('title').textContent = DATA.title;
+render();
+</script>
+</body>
+</html>

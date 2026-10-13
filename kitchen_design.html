@@ -331,7 +331,7 @@
       <button class="btn" @click="exportSVG()">Export SVG</button>
     </div>
     <div class="action-group">
-      <button class="btn danger" @click="resetDefaults()">Reset to Sample Data</button>
+      <button class="btn danger" @click="resetDefaults()">Reload Project Data</button>
     </div>
   </div>
 
@@ -367,6 +367,14 @@
       <label>
         Board Thickness (mm):
         <input type="number" x-model.number="boardThicknessMm" min="1" step="0.5">
+      </label>
+      <label>
+        Default Front Gap (mm):
+        <input type="number" x-model.number="gapMm" min="0" step="0.5">
+      </label>
+      <label>
+        Max Carcass Height (mm):
+        <input type="number" x-model.number="maxCarcassMm" min="100" step="10">
       </label>
     </div>
     <div class="input-grid">
@@ -430,8 +438,8 @@
                       </template>
                     </select>
                   </td>
-                  <td><input type="number" class="cell" min="0" step="1" :placeholder="CONFIG.gapMm" x-model.number="row.gapW"></td>
-                  <td><input type="number" class="cell" min="0" step="1" :placeholder="CONFIG.gapMm" x-model.number="row.gapH"></td>
+                  <td><input type="number" class="cell" min="0" step="1" :placeholder="gapMm" x-model.number="row.gapW"></td>
+                  <td><input type="number" class="cell" min="0" step="1" :placeholder="gapMm" x-model.number="row.gapH"></td>
                   <td class="col-note"><input type="text" class="cell" x-model="row.note"></td>
                   <td class="col-actions">
                     <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertComponentRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeComponentRow(idx)">×</button>
@@ -474,7 +482,7 @@
         </div>
       </div>
       <div class="sub-section">
-        <h4>Fronts (Shakers) <span class="total" x-text="`Total Area: ${(build.summary.totalFrontAreaMm2 / 1_000_000).toFixed(3)} m²`"></span></h4>
+        <h4>Fronts <span class="total" x-text="`Total Area: ${(build.summary.totalFrontAreaMm2 / 1_000_000).toFixed(3)} m²`"></span></h4>
         <div class="sheet-wrap">
           <table class="sheet output">
             <thead>
@@ -505,12 +513,165 @@
           </table>
         </div>
       </div>
+      <div class="sub-section">
+        <h4>Back Panels <span class="total" x-text="`Total Area: ${(build.summary.totalBackAreaMm2 / 1_000_000).toFixed(3)} m²`"></span></h4>
+        <div class="sheet-wrap">
+          <table class="sheet output">
+            <thead>
+              <tr><th>Width (mm)</th><th>Height (mm)</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+              <template x-if="build.summary.backs.length === 0"><tr><td colspan="3">None</td></tr></template>
+              <template x-for="(item, i) in build.summary.backs" :key="'b' + i">
+                <tr><td x-text="item.width"></td><td x-text="item.height"></td><td x-text="item.count"></td></tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sub-section">
+        <h4>Drawer Sets</h4>
+        <div class="sheet-wrap">
+          <table class="sheet output">
+            <thead>
+              <tr><th>Inner Width (mm)</th><th>Front Height (mm)</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+              <template x-if="build.summary.drawers.length === 0"><tr><td colspan="3">None</td></tr></template>
+              <template x-for="(item, i) in build.summary.drawers" :key="'d' + i">
+                <tr><td x-text="item.innerW"></td><td x-text="item.frontH"></td><td x-text="item.count"></td></tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sub-section">
+        <h4>Hardware &amp; Counts</h4>
+        <div class="sheet-wrap">
+          <table class="sheet output">
+            <thead>
+              <tr><th>Item</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+              <template x-for="item in build.summary.hardware" :key="item.item">
+                <tr><td x-text="item.item"></td><td x-text="item.count"></td></tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
 </div>
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<!-- ===================================================================
+     PROJECT DATA (JSON) - the only place with values for this kitchen.
+     The application script below never contains project values; it reads
+     this block at start-up. To update the kitchen, edit only this block.
+       columns:    group -> column widths in mm, left to right
+       components: placed bottom-up within their column(s), in list order
+         g group, c first column, s column span,
+         t type (box|wood|trim|bar|cabinet = hinged door|drawer|oven|micro), h height mm,
+         hd handle (T|B|L|R|""), gw/gh front gaps mm ("" = default)
+     =================================================================== -->
+<script type="application/json" id="kitchen-project">
+{
+  "settings": {"carcassDepthMm": 550, "boardThicknessMm": 18, "gapMm": 4, "maxCarcassMm": 2000},
+  "notes": [
+    ["Project name", "Kitchen - Jaworze"],
+    ["Location", "Jaworze, Bielsko-Biała county"],
+    ["Type / style", "Shaker, painted. Overlay fronts; 20 mm bars between them make them look inset"],
+    ["Hinge system", "Blum CLIP top BLUMOTION 110° + plate (alt. cheaper: GTV soft-close). Per door: <900: 2, <1600: 3, else 4"],
+    ["Drawer system", "Blum TANDEMBOX antaro NL 500: front >=350 -> D (224), lower -> M (83); bottom & back 16 mm"],
+    ["Handles", "IKEA ENERYDA cup, brass - every front, 1 per front"],
+    ["Carcass material", "Chipboard 18 mm white (Kronospan standard), ABS 0.8; back HDF 3 mm white"],
+    ["Front material / finish", "MDF 18 mm shaker, English Navy satin, ordered lacquered (per m2)"],
+    ["Worktop", "Laminate oak 38, depth 600 (Group 1, one piece through the L corner); island 900; waterfalls 38 on Group 1 left and both island ends"],
+    ["Appliances", "Value for money; hood not part of furniture (skipped)"],
+    ["Sink", "Group 1 col 7, inset granite 1-bowl for 800 unit + tap; 420 door, 300 dummy front"],
+    ["Dishwasher", "Group 1 col 5, Bosch SMV4HVX00E, niche 815-875 x 600 x 550"],
+    ["Hob", "Group 1 col 3, Electrolux CIT61443, cut-out 560 x 490"],
+    ["Hood / extractor", "Above hob, Electrolux LFV416K, 600 wide"],
+    ["Fridge / freezer", "Group 2 col 9, Bosch KIS86AFE0, flat hinge (no sliding rails), 1772 high, niche 1775-1780 x 560 x 550; carcass unchanged, empty space above"],
+    ["Oven", "Group 2 col 7, Samsung NV7B5785KAK, 595 x 596 x 570; standard niche ~560 W x 590 H x 550 D, slot 600 OK"],
+    ["Microwave", "Group 2 col 7, Bosch BFL623MB3, niche 362-365 x 560-568 x 320"],
+    ["Plumbing & electrics", "Hob 400 V 2-phase; dedicated circuits for oven, dishwasher, fridge"],
+    ["Plinth / cornice", "Plinth 100 mm MDF lacquered, cut to length on site; adjustable legs 100 mm with plinth clips"],
+    ["Bars", "MDF 18 like fronts, set on edge, 100 mm deep, between carcasses (side|bar|side); flush with fronts. Wider bars = flat MDF fillers"],
+    ["Carcasses", "Modular, width = column. One carcass per stack of fronts up to 2000 mm; above that or under ceiling a separate carcass. \"box\" = wall / plasterboard / filler, not ordered"],
+    ["Island", "Group 3 1736 long, worktop 900 deep with stool overhang; back closed with smooth MDF 18 lacquered panel"],
+    ["Wall panel", "Group 1 222 mm above worktop: laminate wall panel matching worktop"]
+  ],
+  "generalNotes": "Materials only, I build it myself. Prices: average market, PLN gross.\nCarcasses: modular, width = column. Stacked fronts in a column = one carcass up to Max Carcass Height (2000 mm), above that a separate carcass. Group 2 cols 2-3 corner (1160 + 480 = 1640) counts as one carcass; under-ceiling 480 there should be separate (+2 sides, +2 top/bottom). Group 1 col 5 dishwasher is counted as a carcass but needs none. Hinges: output counts every cabinet front; dishwasher, freezer and fridge fronts and the sink dummy front need none (-9, so 31 to buy).\nGroup 1 col 5 dishwasher: no carcass, front fixed on appliance door. Group 2 col 9 fridge: in carcass, front fixed on appliance door (flat hinge, no sliding rails).\nFronts: drawers only in 800 units (type drawer). Group 1 col 7 sink: 420 door, 300 dummy front (fixed, no hinges). All other cabinet fronts = doors.\nHints on input data: wood is always 38. Group 2 cols 1-3 box 40 = Group 1 worktop seen end-on (real 38); left as 40 so the corner cabinet above meets the tall units at 2500. Group 3 worktop span 10 > 7 columns.\n\"box\" = wall / plasterboard / filler, not ordered. Plinth (box 100) is ordered: MDF lacquered, cut to length on site.\nShelves: 1 adjustable shelf behind each door up to 720 and behind each 418-520 door; 3 behind each 1160-1200 door; 0 in the sink unit and behind fridge/freezer fronts. Fixed shelves: between stacked doors in one carcass, under the oven, under and above the microwave. Shelf = inner width x (depth - 20).\nBase carcasses (720 on the plinth) use 2 top rails 100 deep instead of a full top. Drawer boxes: 16 mm bottom and back for the drawer system.\nPer carcass on the plinth: 4 adjustable legs (6 if wider than 900). 4 shelf pins per adjustable shelf. About 18 confirmat screws per carcass.\nAlso to buy (not in the drawing): Group 3 island back panel 1660 x 820 MDF lacquered; laminate wall panel for Group 1 222 strip; worktops 38 (600 deep for Group 1, 900 for Group 3) incl. waterfalls; sink + tap; ventilation grille in the fridge plinth.",
+  "columns": {
+    "1": [38, 20, 800, 20, 600, 20, 800, 20, 400, 80, 550],
+    "2": [20, 560, 20, 20, 600, 20, 600, 20, 600, 20, 250, 20, 120],
+    "3": [38, 20, 800, 20, 800, 20, 38]
+  },
+  "components": [
+    {"g": 1, "c": 1, "s": 1, "t": "wood", "h": 820, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 1, "s": 11, "t": "wood", "h": 38, "hd": "", "gw": "", "gh": "", "note": "Worktop"},
+    {"g": 1, "c": 1, "s": 10, "t": "wood", "h": 222, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 2, "s": 1, "t": "bar", "h": 820, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 3, "s": 8, "t": "box", "h": 100, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer (deep)"},
+    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer, hob above"},
+    {"g": 1, "c": 4, "s": 1, "t": "bar", "h": 720, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 4, "note": "Dishwasher, niche 815-875 x 600 x 550"},
+    {"g": 1, "c": 6, "s": 1, "t": "bar", "h": 720, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 7, "s": 1, "t": "cabinet", "h": 420, "hd": "T", "gw": 4, "gh": 4, "note": "Sink unit"},
+    {"g": 1, "c": 7, "s": 1, "t": "cabinet", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Sink unit, dummy front"},
+    {"g": 1, "c": 8, "s": 1, "t": "bar", "h": 720, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 1, "c": 10, "s": 1, "t": "bar", "h": 720, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 11, "s": 1, "t": "box", "h": 820, "hd": "", "gw": "", "gh": ""},
+
+    {"g": 2, "c": 1, "s": 2, "t": "box", "h": 820, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 1, "s": 3, "t": "box", "h": 40, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 1, "s": 1, "t": "bar", "h": 1640, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 1, "s": 12, "t": "bar", "h": 20, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 1, "s": 12, "t": "box", "h": 220, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 1160, "hd": "R", "gw": 4, "gh": 4},
+    {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 3, "s": 9, "t": "box", "h": 100, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 3, "s": 1, "t": "bar", "h": 720, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 4, "s": 1, "t": "bar", "h": 2400, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 1200, "hd": "R", "gw": 4, "gh": 4},
+    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 6, "s": 1, "t": "bar", "h": 2400, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 520, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 2, "c": 7, "s": 1, "t": "oven", "h": 600, "hd": "", "gw": "", "gh": "", "note": "Niche 560 x 580 x 550 (verify)"},
+    {"g": 2, "c": 7, "s": 1, "t": "micro", "h": 382, "hd": "", "gw": "", "gh": "", "note": "Niche 362-365 x 560-568 x 320"},
+    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 418, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 8, "s": 1, "t": "bar", "h": 2400, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 4, "note": "Freezer door"},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4, "note": "Fridge door, niche 1940 x 560 x 550"},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 10, "s": 1, "t": "bar", "h": 2400, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4},
+    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 12, "s": 1, "t": "bar", "h": 2500, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 13, "s": 1, "t": "box", "h": 2740, "hd": "", "gw": "", "gh": ""},
+
+    {"g": 3, "c": 1, "s": 1, "t": "wood", "h": 820, "hd": "", "gw": "", "gh": ""},
+    {"g": 3, "c": 1, "s": 10, "t": "wood", "h": 38, "hd": "", "gw": "", "gh": "", "note": "Worktop"},
+    {"g": 3, "c": 2, "s": 1, "t": "bar", "h": 820, "hd": "", "gw": "", "gh": ""},
+    {"g": 3, "c": 3, "s": 3, "t": "box", "h": 100, "hd": "", "gw": "", "gh": ""},
+    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 3, "c": 4, "s": 1, "t": "bar", "h": 720, "hd": "", "gw": "", "gh": ""},
+    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 3, "c": 6, "s": 1, "t": "bar", "h": 820, "hd": "", "gw": "", "gh": ""},
+    {"g": 3, "c": 7, "s": 1, "t": "wood", "h": 820, "hd": "", "gw": "", "gh": ""}
+  ]
+}
+</script>
 <script>
 'use strict';
 
@@ -563,101 +724,59 @@ const SIMPLE_RECT_TYPES = {
   bar: { fill: 'bar', stroke: 'barStroke' }
 };
 
-// Default fields of the General Notes panel - things the drawing itself
-// does not show. Keys are editable in the UI; [key, placeholder hint].
-const DEFAULT_NOTE_FIELDS = [
-  ['Project name', 'e.g. Kitchen - Dublin', 'Kitchen - Jaworze'],
-  ['Location', 'town, county', 'Jaworze, Bielsko-Biała county'],
-  ['Type / style', 'e.g. shaker, painted', 'Shaker, painted'],
-  ['Hinge system', 'brand, model', 'Blum CLIP top BLUMOTION 110°'],
-  ['Drawer system', 'brand, model', 'Blum TANDEMBOX antaro'],
-  ['Handles', 'model, finish', 'IKEA ENERYDA cup, brass'],
-  ['Carcass material', 'board, colour', 'Chipboard 18 mm white, ABS edge'],
-  ['Front material / finish', 'MDF, paint colour', 'MDF 18 mm, English Navy, satin'],
-  ['Worktop', 'material, thickness', 'Laminate oak, 38 mm'],
-  ['Appliances', 'policy', 'Value for money'],
-  ['Sink', 'cabinet, type', 'G1 col 7, inset, granite composite'],
-  ['Dishwasher', 'cabinet, model, niche', 'G1 col 5, Bosch SMV4HVX00E, niche 815-875 x 600 x 550'],
-  ['Hob', 'position, model, cut-out', 'G1 col 3, Electrolux CIT61443, cut-out 560 x 490'],
-  ['Hood / extractor', 'position, model', 'Above hob, Electrolux LFV416K, 600 wide'],
-  ['Fridge / freezer', 'cabinet, model, niche', 'G2 col 9, Siemens KI96NVFD0, door-on-door, niche 1940 x 560 x 550'],
-  ['Oven', 'cabinet, model, niche', 'G2 col 7, Samsung NV7B5785KAK, niche 560 x 580 x 550 (verify)'],
-  ['Microwave', 'cabinet, model, niche', 'G2 col 7, Bosch BFL623MB3, niche 362-365 x 560-568 x 320'],
-  ['Plumbing & electrics', 'water, drain, sockets', 'Hob 400 V 2-phase; dedicated circuits for oven, dishwasher, fridge'],
-  ['Plinth / cornice', 'height, material', 'Plinth 100 mm, painted']
+// Schema of the General Notes panel: [key, placeholder hint]. Values come
+// from the project data block (#kitchen-project), never from here.
+const NOTE_FIELD_HINTS = [
+  ['Project name', 'e.g. Kitchen - Dublin'],
+  ['Location', 'town, county'],
+  ['Type / style', 'e.g. shaker, painted'],
+  ['Hinge system', 'brand, model'],
+  ['Drawer system', 'brand, model'],
+  ['Handles', 'model, finish'],
+  ['Carcass material', 'board, colour'],
+  ['Front material / finish', 'MDF, paint colour'],
+  ['Worktop', 'material, thickness'],
+  ['Appliances', 'policy'],
+  ['Sink', 'cabinet, type'],
+  ['Dishwasher', 'cabinet, model, niche'],
+  ['Hob', 'position, model, cut-out'],
+  ['Hood / extractor', 'position, model'],
+  ['Fridge / freezer', 'cabinet, model, niche'],
+  ['Oven', 'cabinet, model, niche'],
+  ['Microwave', 'cabinet, model, niche'],
+  ['Plumbing & electrics', 'water, drain, sockets'],
+  ['Plinth / cornice', 'height, material']
 ];
+const hintFor = key => (NOTE_FIELD_HINTS.find(([k]) => k === key) || [])[1] || '';
 
-const COMPONENT_TYPES = ['box', 'wood', 'trim', 'bar', 'shaker', 'oven', 'micro'];
+const COMPONENT_TYPES = ['box', 'wood', 'trim', 'bar', 'cabinet', 'drawer', 'oven', 'micro'];
+// Front types: drawn alike; 'cabinet' = hinged door front, 'drawer' = drawer front.
+const FRONT_TYPES = ['cabinet', 'drawer'];
 const HANDLE_POSITIONS = ['', 'T', 'B', 'L', 'R'];
 
-// Default data that pre-fills the input tables on first load.
-const SAMPLE_DATA = {
-  columns: [
-    ...[40, 20, 800, 20, 600, 20, 800, 20, 400, 80, 550].map(w => [1, w]),
-    ...[20, 560, 20, 20, 600, 20, 600, 20, 600, 20, 250, 20, 120].map(w => [2, w]),
-    ...[40, 20, 800, 20, 800, 20, 40].map(w => [3, w])
-  ],
-  components: [
-    [1, 1, 1, 'wood', 820, '', '', ''],
-    [1, 1, 11, 'wood', 38, '', '', '', 'Worktop'],
-    [1, 1, 10, 'wood', 222, '', '', ''],
-    [1, 2, 1, 'bar', 820, '', '', ''],
-    [1, 3, 8, 'box', 100, '', '', ''],
-    [1, 3, 1, 'shaker', 420, 'T', 4, 4, 'Drawer (deep)'],
-    [1, 3, 1, 'shaker', 300, 'T', 4, 4, 'Drawer, hob above'],
-    [1, 4, 1, 'bar', 720, '', '', ''],
-    [1, 5, 1, 'shaker', 720, 'T', 4, 4, 'Dishwasher, niche 815-875 x 600 x 550'],
-    [1, 6, 1, 'bar', 720, '', '', ''],
-    [1, 7, 1, 'shaker', 420, 'T', 4, 4, 'Sink unit'],
-    [1, 7, 1, 'shaker', 300, 'T', 4, 4, 'Sink unit, dummy front'],
-    [1, 8, 1, 'bar', 720, '', '', ''],
-    [1, 9, 1, 'shaker', 720, 'T', 4, 4],
-    [1, 10, 1, 'bar', 720, '', '', ''],
-    [1, 11, 1, 'box', 820, '', '', ''],
+// Fallbacks used only when the project file leaves a setting out.
+const DEFAULT_SETTINGS = { carcassDepthMm: 550, boardThicknessMm: 18, gapMm: CONFIG.gapMm, maxCarcassMm: 2000 };
 
-    [2, 1, 2, 'box', 820, '', '', ''],
-    [2, 1, 3, 'box', 40, '', '', ''],
-    [2, 1, 1, 'bar', 1640, '', '', ''],
-    [2, 1, 12, 'bar', 20, '', '', ''],
-    [2, 1, 12, 'box', 220, '', '', ''],
-    [2, 2, 2, 'shaker', 1160, 'R', 4, 4],
-    [2, 2, 2, 'shaker', 480, 'B', 4, 4],
-    [2, 3, 9, 'box', 100, '', '', ''],
-    [2, 3, 1, 'bar', 720, '', '', ''],
-    [2, 4, 1, 'bar', 2400, '', '', ''],
-    [2, 5, 1, 'shaker', 720, 'T', 4, 4],
-    [2, 5, 1, 'shaker', 1200, 'R', 4, 4],
-    [2, 5, 1, 'shaker', 480, 'B', 4, 4],
-    [2, 6, 1, 'bar', 2400, '', '', ''],
-    [2, 7, 1, 'shaker', 520, 'T', 4, 4],
-    [2, 7, 1, 'oven', 600, '', '', '', 'Niche 560 x 580 x 550 (verify)'],
-    [2, 7, 1, 'micro', 382, '', '', '', 'Niche 362-365 x 560-568 x 320'],
-    [2, 7, 1, 'shaker', 418, 'B', 4, 4],
-    [2, 7, 1, 'shaker', 480, 'B', 4, 4],
-    [2, 8, 1, 'bar', 2400, '', '', ''],
-    [2, 9, 1, 'shaker', 720, 'T', 4, 4, 'Freezer door'],
-    [2, 9, 1, 'shaker', 1200, 'L', 4, 4, 'Fridge door, niche 1940 x 560 x 550'],
-    [2, 9, 1, 'shaker', 480, 'B', 4, 4],
-    [2, 10, 1, 'bar', 2400, '', '', ''],
-    [2, 11, 1, 'shaker', 720, 'T', 4, 4],
-    [2, 11, 1, 'shaker', 1200, 'L', 4, 4],
-    [2, 11, 1, 'shaker', 480, 'B', 4, 4],
-    [2, 12, 1, 'bar', 2500, '', '', ''],
-    [2, 13, 1, 'box', 2740, '', '', ''],
-
-    [3, 1, 1, 'wood', 820, '', '', ''],
-    [3, 1, 10, 'wood', 38, '', '', '', 'Worktop'],
-    [3, 2, 1, 'bar', 820, '', '', ''],
-    [3, 3, 3, 'box', 100, '', '', ''],
-    [3, 3, 1, 'shaker', 420, 'T', 4, 4],
-    [3, 3, 1, 'shaker', 300, 'T', 4, 4],
-    [3, 4, 1, 'bar', 720, '', '', ''],
-    [3, 5, 1, 'shaker', 420, 'T', 4, 4],
-    [3, 5, 1, 'shaker', 300, 'T', 4, 4],
-    [3, 6, 1, 'bar', 820, '', '', ''],
-    [3, 7, 1, 'wood', 820, '', '', '']
-  ]
-};
+// The project itself lives in the JSON block #kitchen-project above.
+// This turns it into the plain shape the UI binds to, so the app never
+// depends on how the data file is written.
+function loadProject(p) {
+  p = p || { columns: {}, components: [] };
+  const columns = [];
+  for (const [g, widths] of Object.entries(p.columns || {})) for (const w of widths) columns.push([Number(g), w]);
+  return {
+    settings: { ...DEFAULT_SETTINGS, ...(p.settings || {}) },
+    notes: (p.notes || NOTE_FIELD_HINTS.map(([k]) => [k, ''])),
+    generalNotes: p.generalNotes || '',
+    columns,
+    components: (p.components || []).map(c => [c.g, c.c, c.s, c.t, c.h, c.hd ?? '', c.gw ?? '', c.gh ?? '', c.note ?? ''])
+  };
+}
+const PROJECT = loadProject((() => {
+  const el = document.getElementById('kitchen-project');
+  try { return el ? JSON.parse(el.textContent) : null; }
+  catch (e) { console.error('Project data JSON is invalid:', e); return null; }
+})());
 
 /* ===================================================================
    SECTION 2 — GENERIC UTILITIES
@@ -750,8 +869,8 @@ class LayoutEngine {
     this.scale = options.scale ?? CONFIG.scale;
     this.groupGap = options.groupGap ?? CONFIG.groupGap;
     this.defaultGapMm = options.gapMm ?? CONFIG.gapMm;
-    this.carcassDepthMm = options.carcassDepthMm ?? 550;
-    this.boardThicknessMm = options.boardThicknessMm ?? 18;
+    this.carcassDepthMm = options.carcassDepthMm ?? DEFAULT_SETTINGS.carcassDepthMm;
+    this.boardThicknessMm = options.boardThicknessMm ?? DEFAULT_SETTINGS.boardThicknessMm;
 
     this.groups = new Map();         // groupId -> { colWidths, colX }
     this.rawComponents = [];
@@ -837,7 +956,7 @@ class LayoutEngine {
       const widthMm = width / this.scale;
       const gapWMm = Number.isFinite(comp.gapWMm) ? comp.gapWMm : this.defaultGapMm;
       const gapHMm = Number.isFinite(comp.gapHMm) ? comp.gapHMm : this.defaultGapMm;
-      const isFront = comp.type === 'shaker';
+      const isFront = FRONT_TYPES.includes(comp.type);
       const frontWidthMm = isFront ? Math.max(0, widthMm - gapWMm) : widthMm;
       const frontHeightMm = isFront ? Math.max(0, comp.heightMm - gapHMm) : comp.heightMm;
 
@@ -876,6 +995,7 @@ class LayoutEngine {
       totalHeight,
       isEmpty: totalWidth <= 0 || totalHeight <= 0,
       warnings,
+      scale: this.scale,
       carcassDepthMm: this.carcassDepthMm,
       boardThicknessMm: this.boardThicknessMm
     };
@@ -977,7 +1097,8 @@ const COMPONENT_RENDERERS = {
   wood: (c, svgY) => renderSimpleRect(c, svgY, 'wood'),
   trim: (c, svgY) => renderSimpleRect(c, svgY, 'trim'),
   bar: (c, svgY) => renderSimpleRect(c, svgY, 'bar'),
-  shaker: (c, svgY) => renderShaker(c, svgY) + renderHandle(c, svgY),
+  cabinet: (c, svgY) => renderShaker(c, svgY) + renderHandle(c, svgY),
+  drawer: (c, svgY) => renderShaker(c, svgY) + renderHandle(c, svgY),
   oven: renderOven,
   micro: renderMicro
 };
@@ -1022,12 +1143,16 @@ function renderSVG(layout) {
    =================================================================== */
 
 // layout: the object returned by LayoutEngine.calculate()
-function computeSummary(layout) {
+function computeSummary(layout, maxCarcassMm) {
   const barMap = new Map();
   const frontMap = new Map();
   const carcassBoxes = {};
   let totalBarLengthMm = 0;
   let totalFrontAreaMm2 = 0;
+  const drawerMap = new Map();
+  let hingeCount = 0;
+  // Hinges per door by front height (common rule of thumb).
+  const hingesFor = h => (h < 900 ? 2 : h < 1600 ? 3 : 4);
 
   for (const c of layout.components) {
     if (c.type === 'bar') {
@@ -1036,20 +1161,53 @@ function computeSummary(layout) {
       entry.count += 1;
       barMap.set(key, entry);
       totalBarLengthMm += c.heightMm;
-    } else if (c.type === 'shaker') {
+    } else if (FRONT_TYPES.includes(c.type)) {
       const frontKey = `${c.frontWidthMm}x${c.frontHeightMm}`;
       const fEntry = frontMap.get(frontKey) || { frontW: c.frontWidthMm, frontH: c.frontHeightMm, count: 0 };
       fEntry.count += 1;
       frontMap.set(frontKey, fEntry);
       totalFrontAreaMm2 += c.frontWidthMm * c.frontHeightMm;
-
-      const boxKey = `${c.widthMm}x${c.heightMm}`;
-      if (!carcassBoxes[boxKey]) carcassBoxes[boxKey] = { carcassW: c.widthMm, carcassH: c.heightMm, count: 0 };
-      carcassBoxes[boxKey].count += 1;
+      if (c.type === 'cabinet') hingeCount += hingesFor(c.frontHeightMm);
+      if (c.type === 'drawer') {
+        const innerW = c.widthMm - 2 * layout.boardThicknessMm;
+        const dKey = `${innerW}x${c.frontHeightMm}`;
+        const d = drawerMap.get(dKey) || { innerW, frontH: c.frontHeightMm, count: 0 };
+        d.count += 1;
+        drawerMap.set(dKey, d);
+      }
     }
   }
 
-  // Every shaker-fronted opening needs a carcass box behind it: two side
+  // Fronts and appliances stacked directly on each other in the same
+  // column(s) share one carcass, until the stack would exceed maxCarcassMm.
+  const stacks = new Map();
+  for (const c of layout.components) {
+    if (![...FRONT_TYPES, 'oven', 'micro'].includes(c.type)) continue;
+    const key = `${c.groupNum}|${c.colNum}|${c.colSpan}`;
+    if (!stacks.has(key)) stacks.set(key, []);
+    stacks.get(key).push(c);
+  }
+  const addBox = (w, h) => {
+    const boxKey = `${w}x${h}`;
+    if (!carcassBoxes[boxKey]) carcassBoxes[boxKey] = { carcassW: w, carcassH: h, count: 0 };
+    carcassBoxes[boxKey].count += 1;
+  };
+  for (const items of stacks.values()) {
+    items.sort((a, b) => a.yFromBottom - b.yFromBottom);
+    let start = null, top = null;
+    for (const c of items) {
+      const cTop = c.yFromBottom + c.height;
+      const joins = start !== null && Math.abs(c.yFromBottom - top) < 0.5 && (cTop - start) / layout.scale <= maxCarcassMm;
+      if (!joins) {
+        if (start !== null) addBox(items[0].widthMm, (top - start) / layout.scale);
+        start = c.yFromBottom;
+      }
+      top = cTop;
+    }
+    if (start !== null) addBox(items[0].widthMm, (top - start) / layout.scale);
+  }
+
+  // Every carcass box: two side
   // panels (full depth x box height) and two top/bottom panels (box width
   // minus the two board thicknesses x full depth).
   const t = layout.boardThicknessMm;
@@ -1069,7 +1227,31 @@ function computeSummary(layout) {
   let totalCarcassBoardAreaMm2 = 0;
   carcasses.forEach(b => { totalCarcassBoardAreaMm2 += b.width * b.height * b.count; });
 
+  // Front edge banding: one long edge per side and per top/bottom panel.
+  let totalEdgeMm = 0;
+  for (const [h, qty] of sideMap) totalEdgeMm += h * qty;
+  for (const [w, qty] of topBottomMap) totalEdgeMm += w * qty;
+
+  // One back panel per carcass, 2 mm smaller than the carcass each way.
+  const backs = Object.values(carcassBoxes).map(b => ({ width: b.carcassW - 2, height: b.carcassH - 2, count: b.count }));
+  const totalBackAreaMm2 = backs.reduce((a, b) => a + b.width * b.height * b.count, 0);
+
+  // Items to buy that follow directly from the drawing.
+  const handleCount = layout.components.filter(c => FRONT_TYPES.includes(c.type) && c.handlePos).length;
+  const carcassCount = Object.values(carcassBoxes).reduce((a, b) => a + b.count, 0);
+  const hardware = [
+    { item: 'Hinges', count: hingeCount },
+    { item: 'Drawer sets', count: [...drawerMap.values()].reduce((a, d) => a + d.count, 0) },
+    { item: 'Handles', count: handleCount },
+    { item: 'Carcasses', count: carcassCount },
+    { item: 'Edge banding (m)', count: +(totalEdgeMm / 1000).toFixed(2) }
+  ];
+
   return {
+    backs,
+    totalBackAreaMm2,
+    drawers: [...drawerMap.values()],
+    hardware,
     bars: [...barMap.values()],
     fronts: [...frontMap.values()],
     carcasses,
@@ -1089,7 +1271,7 @@ function computeSummary(layout) {
 // The one function app.js calls whenever the input tables change.
 // columnRows / componentRows are the raw {group, width, ...} objects bound
 // to the Alpine tables - this function is what turns them into a diagram.
-function computeLayout(columnRows, componentRows, carcassDepthMm, boardThicknessMm) {
+function computeLayout(columnRows, componentRows, carcassDepthMm, boardThicknessMm, gapMm, maxCarcassMm) {
   const warnings = [];
   const colFlags = columnRows.map(() => null);
   const compFlags = componentRows.map(() => null);
@@ -1132,13 +1314,13 @@ function computeLayout(columnRows, componentRows, carcassDepthMm, boardThickness
     comps.push({ groupNum: group, colNum: col, colSpan: span, type, heightMm: height, handlePos: handle, gapWMm: gapW, gapHMm: gapH, note: String(row.note ?? '').trim() });
   });
 
-  const engine = new LayoutEngine({ scale: CONFIG.scale, carcassDepthMm, boardThicknessMm });
+  const engine = new LayoutEngine({ scale: CONFIG.scale, carcassDepthMm, boardThicknessMm, gapMm });
   for (const [g, widths] of groupWidths) engine.setGroupColumns(g, widths);
   for (const c of comps) engine.addComponent(c.groupNum, c.colNum, c.colSpan, c.type, c.heightMm, c.handlePos, c.gapWMm, c.gapHMm, c.note);
 
   const layout = engine.calculate();
   const svg = renderSVG(layout);
-  const summary = computeSummary(layout);
+  const summary = computeSummary(layout, maxCarcassMm ?? DEFAULT_SETTINGS.maxCarcassMm);
   warnings.push(...layout.warnings);
 
   return { svg, isEmpty: layout.isEmpty, summary, warnings, colFlags, compFlags };
@@ -1161,8 +1343,10 @@ document.addEventListener('alpine:init', () => {
     components: [],
     notes: [],
     generalNotes: '',
-    carcassDepthMm: 550,
-    boardThicknessMm: 18,
+    carcassDepthMm: DEFAULT_SETTINGS.carcassDepthMm,
+    boardThicknessMm: DEFAULT_SETTINGS.boardThicknessMm,
+    gapMm: DEFAULT_SETTINGS.gapMm,
+    maxCarcassMm: DEFAULT_SETTINGS.maxCarcassMm,
     status: { message: '', type: '' },
     tooltip: { show: false, x: 0, y: 0, text: '' },
     hoverInfo: 'Hover a component in the diagram to see its dimensions.',
@@ -1173,9 +1357,8 @@ document.addEventListener('alpine:init', () => {
     _statusTimer: null,
 
     init() {
-      this.seed(SAMPLE_DATA);
+      this.seed(PROJECT);
       this.ensureEmptyRows();
-      this.resetNotes();
 
       this.$watch('columns', () => {
         const last = this.columns[this.columns.length - 1];
@@ -1203,7 +1386,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     get build() {
-      return computeLayout(this.columns, this.components, this.carcassDepthMm, this.boardThicknessMm);
+      return computeLayout(this.columns, this.components, this.carcassDepthMm, this.boardThicknessMm, this.gapMm, this.maxCarcassMm);
     },
 
     get bannerType() {
@@ -1224,10 +1407,7 @@ document.addEventListener('alpine:init', () => {
       return { id: this.nextId++, group, col, span, type, height, handle, gapW, gapH, note };
     },
     newNote(key = '', value = '', hint = '') { return { id: this.nextId++, key, value, hint }; },
-    resetNotes() {
-      this.notes = DEFAULT_NOTE_FIELDS.map(([k, hint, value]) => this.newNote(k, value || '', hint));
-      this.generalNotes = '';
-    },
+    emptyNotes() { return NOTE_FIELD_HINTS.map(([k, hint]) => this.newNote(k, '', hint)); },
     autoGrow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; },
     addNote() { this.notes.push(this.newNote('New field', '')); },
     removeNote(idx) {
@@ -1237,6 +1417,9 @@ document.addEventListener('alpine:init', () => {
     },
 
     seed(data) {
+      Object.assign(this, data.settings);
+      this.notes = data.notes.map(([k, v]) => this.newNote(k, v ?? '', hintFor(k)));
+      this.generalNotes = data.generalNotes;
       this.columns = data.columns.map(([g, w]) => this.newColumnRow(g, w));
       this.components = data.components.map(([g, c, s, t, h, hp, gw, gh, note]) => this.newComponentRow(g, c, s, t, h, hp, gw, gh, note || ''));
     },
@@ -1267,11 +1450,10 @@ document.addEventListener('alpine:init', () => {
     removeComponentRow(idx) { this.components.splice(idx, 1); },
 
     resetDefaults() {
-      if (!confirm('Replace the current input tables and notes with the sample data? This cannot be undone.')) return;
-      this.seed(SAMPLE_DATA);
+      if (!confirm('Replace the current input tables and notes with the project data? This cannot be undone.')) return;
+      this.seed(PROJECT);
       this.ensureEmptyRows();
-      this.resetNotes();
-      this.showStatus('Reset to sample data.', false);
+      this.showStatus('Reloaded project data.', false);
     },
 
     showStatus(message, isError) {
@@ -1308,7 +1490,7 @@ document.addEventListener('alpine:init', () => {
       const type = group.getAttribute('data-type');
       const w = group.getAttribute('data-w');
       const h = group.getAttribute('data-h');
-      if (type === 'shaker') {
+      if (FRONT_TYPES.includes(type)) {
         const fw = group.getAttribute('data-fw');
         const fh = group.getAttribute('data-fh');
         const gapW = group.getAttribute('data-gap-w');
@@ -1336,8 +1518,8 @@ document.addEventListener('alpine:init', () => {
       const rows = [['Front Net Width (mm)', 'Front Net Height (mm)', 'Count']];
       this.build.summary.fronts.forEach(item => rows.push([item.frontW, item.frontH, item.count]));
       if (rows.length === 1) rows.push(['None', '', '']);
-      downloadBlob(toCSV(rows), 'text/csv;charset=utf-8;', 'fronts-shakers.csv');
-      this.showStatus('Fronts (shakers) CSV exported.', false);
+      downloadBlob(toCSV(rows), 'text/csv;charset=utf-8;', 'fronts.csv');
+      this.showStatus('Fronts CSV exported.', false);
     },
     exportCarcassesCSV() {
       const rows = [['Part', 'Width (mm)', 'Height (mm)', 'Thickness (mm)', 'Count']];
@@ -1348,6 +1530,7 @@ document.addEventListener('alpine:init', () => {
     },
     exportStateCSV() {
       const rows = [['RowType', 'Group', 'Col', 'Span', 'Type', 'Value', 'Handle', 'GapW', 'GapH', 'Note']];
+      for (const k of Object.keys(DEFAULT_SETTINGS)) rows.push(['SETTING', '', '', '', k, this[k], '', '', '', '']);
       this.notes.forEach(n => {
         if (isRowEmpty(n.key, n.value)) return;
         rows.push(['NOTE', '', '', '', n.key, n.value, '', '', '', '']);
@@ -1399,14 +1582,19 @@ document.addEventListener('alpine:init', () => {
       const newComponents = [];
       const newNotes = [];
       let newGeneralNotes = '';
+      const newSettings = { ...DEFAULT_SETTINGS };
 
       dataRows.forEach((r, idx) => {
         const [rowType, group, col, span, type, value, handle, gapW, gapH, note] = r;
         const rt = String(rowType || '').trim().toUpperCase();
-        if (rt === 'NOTE') {
+        if (rt === 'SETTING') {
           const key = String(type ?? '').trim();
-          const def = DEFAULT_NOTE_FIELDS.find(([k]) => k === key);
-          newNotes.push(this.newNote(key, String(value ?? ''), def ? def[1] : ''));
+          const v = parseFloat(value);
+          if (!(key in DEFAULT_SETTINGS) || !Number.isFinite(v)) throw new Error(`Row ${idx + 1}: invalid SETTING "${key}".`);
+          newSettings[key] = v;
+        } else if (rt === 'NOTE') {
+          const key = String(type ?? '').trim();
+          newNotes.push(this.newNote(key, String(value ?? ''), hintFor(key)));
         } else if (rt === 'GENERAL_NOTES') {
           newGeneralNotes = String(value ?? '');
         } else if (rt === 'COLUMN') {
@@ -1427,19 +1615,16 @@ document.addEventListener('alpine:init', () => {
           }
           newComponents.push(this.newComponentRow(g, c, s, t, h, String(handle || '').trim(), gapWStr, gapHStr, String(note ?? '')));
         } else if (rt) {
-          throw new Error(`Row ${idx + 1}: unknown RowType "${rowType}" (expected NOTE, GENERAL_NOTES, COLUMN or COMPONENT).`);
+          throw new Error(`Row ${idx + 1}: unknown RowType "${rowType}" (expected SETTING, NOTE, GENERAL_NOTES, COLUMN or COMPONENT).`);
         }
       });
 
+      Object.assign(this, newSettings);
       this.columns = newColumns;
       this.components = newComponents;
-      // Older CSVs have no notes: keep the default fields in that case.
-      this.resetNotes();
-      if (newNotes.length > 0) {
-        // Keep any default field missing from the file (empty), after the imported ones.
-        const have = new Set(newNotes.map(n => n.key));
-        this.notes = [...newNotes, ...this.notes.filter(n => !have.has(n.key))];
-      }
+      // Keep any standard field missing from the file (empty), after the imported ones.
+      const have = new Set(newNotes.map(n => n.key));
+      this.notes = [...newNotes, ...this.emptyNotes().filter(n => !have.has(n.key))];
       this.generalNotes = newGeneralNotes;
     }
   }));
