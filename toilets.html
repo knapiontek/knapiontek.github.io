@@ -158,7 +158,7 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;te
         <dt>Szpaleta okna</dt><dd>15 cm, w płytce</dd>
         <dt>Zabudowa WC + pion Ø160</dt><dd>85 × 28 × 260</dd>
         <dt>Oś WC od ściany z oknem</dt><dd>58 cm</dd>
-        <dt>Szafka nad stelażem</dt><dd>HEJSTA 40 × 60, gł. 15, wys. 120–180</dd>
+        <dt>Szafka nad stelażem</dt><dd>HEJSTA 40 × 80, gł. 15, wys. 120–200</dd>
         <dt>Miska WC podwieszana</dt><dd>36 × 53 cm</dd>
         <dt>Szafka z umywalką</dt><dd>80 × 46 cm</dd>
         <dt>Drzwi prysznica</dt><dd>60 cm, zawias na szybie stałej</dd>
@@ -420,10 +420,10 @@ box(1.6+T*2,.12,2.4+T*2,M.frame,.8,-.061,1.2);box(1+T,.12,.9+T*2,M.frame,-.5-T/2
 const ZX0=1.32, ZD=.28, ZZ0=1.55, ZZ1=2.4, PZ0=2.08;       // głębokość zabudowy 28 cm
 const NDEP=.15, ZXB=ZX0+NDEP;                               // szafka wpuszczona 15 cm
 const WCZ=(ZZ0+PZ0)/2;
-/* szafka nad stelażem z frontem IKEA HEJSTA 40×60 (antracyt, szkło ryflowane, 39,7×59,7×1,9 cm)
-   40 szer. × 60 wys., w osi miski i przycisku; góra i dół na fugach rzędu płytek 60 cm (120–180), więc płytki
-   wokół szafki to same prostokąty, bez docinek w kształcie U/L. Zawiasy od strony pionu. */
-const CW=.40, CH=.60, CY0=1.20, CZC=WCZ;
+/* szafka nad stelażem z frontem IKEA HEJSTA 40×80 (antracyt, szkło ryflowane, 39,7×79,7×1,9 cm)
+   40 szer. × 80 wys., w osi miski i przycisku; dół 120 cm na fudze rzędu płytek 60 cm, nad stelażem Geberit
+   Duofix (112 cm) i przyciskiem (góra ~108 cm); góra 200 cm. Zawiasy od strony pionu. */
+const CW=.40, CH=.80, CY0=1.20, CZC=WCZ;
 const zab=new THREE.Group();scene.add(zab);
 function zfront(z0,z1,y0,y1,g){const w=z1-z0,h=y1-y0;if(w<.001||h<.001)return;
   tiled('wall',new THREE.BoxGeometry(NDEP,h,w),w,h,z0,y0,g).position.set(ZX0+NDEP/2,y0+h/2,z0+w/2);}

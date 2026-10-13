@@ -191,6 +191,9 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
 .sqrt .under{border-top:var(--rw) solid currentColor;padding:.1em .15em 0 .12em;display:inline-flex;align-items:center;gap:6px}
 .eq .sqrt,.ptext .sqrt{--rw:3.5px}
 .hline .sqrt{--rw:2px}
+/* cube root: the same sign with a small 3 tucked into the tick */
+.sqrt.cb{position:relative;margin-left:.3em}
+.sqrt.cb .idx{position:absolute;left:-.12em;top:.02em;font-size:.45em;line-height:1}
 .v{color:var(--c,var(--ink));border-radius:8px;padding:0 2px}
 /* the letter to find keeps its own colour; no box around it */
 .v.target{}
@@ -290,6 +293,8 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
 .bracket{display:flex;gap:6px;position:relative;border-top:3px solid var(--ink);padding-top:2px}
 .bracket::before{content:"";position:absolute;left:-5px;top:-3px;bottom:-2px;border-left:3px solid var(--ink);border-top-left-radius:9px}
 .tablebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* keep the times table well clear of the division worksheet */
+#pr-tablewrap{margin-top:28px;padding-top:14px;border-top:2px dashed var(--grid-strong)}
 /* the times table: 1 … 9 on top, the results in one row below; same size filled in or not */
 .mtable{display:grid;grid-template-columns:max-content repeat(9,max-content);grid-template-rows:auto auto;column-gap:0;row-gap:4px;align-self:flex-start;align-items:center;justify-items:center}
 .thead{font-family:var(--hand);font-size:20px;color:var(--ink-soft);white-space:nowrap;justify-self:end;padding-right:6px}
@@ -674,6 +679,7 @@ sup{font-size:.6em;line-height:0;vertical-align:super}
 
           <div class="flines" id="pr-frac" hidden></div>
           <div class="flines" id="pr-exp" hidden></div>
+          <label class="toggle" id="pr-expwrap" hidden><input type="checkbox" id="pr-x-adv">Harder: two brackets <em>— like (a + b)(c + d)</em></label>
 
           <div class="status" id="pr-fb" aria-live="polite"></div>
         </div>
@@ -2470,7 +2476,8 @@ const NB = (() => {
   const math = s => esc(s).replace(/·/g, DOT);   // the notebook writes "·" for times and ":" for divide
   // the same drawn root sign as in Algebra: √16 → a root over 16
   const RAD = '<svg class="rad" viewBox="0 0 10 20" preserveAspectRatio="none" aria-hidden="true"><path d="M0.5 12.5 L3 11 L6.2 19.2 L10 0.6"/></svg>';
-  const root = s => s.replace(/√(\d+)/g, (m, d) => `<span class="sqrt">${RAD}<span class="under">${d}</span></span>`);
+  const root = s => s.replace(/√(\d+)/g, (m, d) => `<span class="sqrt">${RAD}<span class="under">${d}</span></span>`)
+    .replace(/∛(\d+)/g, (m, d) => `<span class="sqrt cb"><span class="idx">3</span>${RAD}<span class="under">${d}</span></span>`);
   const SUP = n => String(n).split('').map(d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]).join('');
 
   // ---------- the rule card for each topic: picture, formula, legend ----------
@@ -2485,10 +2492,14 @@ const NB = (() => {
       `<path d="M120 96 Q157 52 195 96" fill="none" stroke="${ORA}" stroke-width="3" marker-end="url(#ra)"/>` + T(157, 52, '+ 3', ORA, 22) +
       `<path d="M120 96 Q83 52 45 96" fill="none" stroke="${PUR}" stroke-width="3" marker-end="url(#la)"/>` + T(83, 52, '− 3', PUR, 22) +
       `<circle cx="120" cy="108" r="8" fill="${INK}" stroke="#fff" stroke-width="3"/>`),
-    square: () => SV(`<rect x="70" y="22" width="100" height="100" fill="${YEL}" stroke="${INK}" stroke-width="2.5"/>` +
-      Ln(70, 72, 170, 72, 'rgba(36,48,74,.25)', 1.5, '4 4') + Ln(120, 22, 120, 122, 'rgba(36,48,74,.25)', 1.5, '4 4') +
-      T(120, 140, 'a', RED, 24) + T(186, 72, 'a', RED, 24) + T(120, 74, 'a²', INK, 34) +
-      `<rect x="70" y="22" width="100" height="100" fill="none" stroke="${BLU}" stroke-width="4" stroke-dasharray="9 6" opacity=".55"/>`),
+    // a square (area a²) next to a cube (volume a³)
+    square: () => SV(`<rect x="16" y="40" width="86" height="86" fill="${YEL}" stroke="${INK}" stroke-width="2.5"/>` +
+      `<rect x="16" y="40" width="86" height="86" fill="none" stroke="${BLU}" stroke-width="4" stroke-dasharray="9 6" opacity=".55"/>` +
+      T(59, 144, 'a', RED, 22) + T(59, 85, 'a²', INK, 32) +
+      `<polygon points="132,62 200,62 200,130 132,130" fill="${YEL}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+      `<polygon points="132,62 160,36 228,36 200,62" fill="rgba(255,214,10,.25)" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+      `<polygon points="200,62 228,36 228,104 200,130" fill="rgba(255,214,10,.15)" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+      T(166, 147, 'a', RED, 22) + T(166, 98, 'a³', INK, 32) + T(59, 20, 'square', '#5d6984', 15) + T(180, 18, 'cube', '#5d6984', 15)),
     order: () => SV([['1', '( )', 'brackets'], ['2', 'x²  √', 'powers, roots'], ['3', '·  :', 'times, divide'], ['4', '+  −', 'plus, minus']].map(([n, s, w], i) => {
       const y = 10 + i * 36;
       return Bx(20, y, 200, 30, i === 0 ? 'rgba(255,214,10,.55)' : 'rgba(255,214,10,.18)', 'rgba(36,48,74,.25)') + T(38, y + 16, n, BLU, 22) + T(92, y + 16, s, INK, 25) + T(136, y + 16, w, '#5d6984', 14, 'start');
@@ -2524,19 +2535,25 @@ const NB = (() => {
     `<path d="M48 66 Q97 18 146 66" fill="none" stroke="${ORA}" stroke-width="2.5"/><path d="M48 66 Q118 2 188 66" fill="none" stroke="${ORA}" stroke-width="2.5"/>` +
     `<path d="M90 102 Q118 132 146 102" fill="none" stroke="${GRN}" stroke-width="2.5"/><path d="M90 102 Q139 146 188 102" fill="none" stroke="${GRN}" stroke-width="2.5"/>` +
     T(120, 152, 'ac + ad + bc + bd', '#5d6984', 15));
+  // one number in front of one bracket: 2 · (x + 4) = 2x + 8
+  PIC.expandSimple = () => SV(
+    [['2', 40, BLU], ['·', 66, INK], ['(', 90, INK], ['x', 112, PUR], ['+', 140, INK], ['4', 168, PUR], [')', 190, INK]]
+      .map(([c, x, col]) => T(x, 90, c, col, 32)).join('') +
+    `<path d="M40 70 Q76 28 112 70" fill="none" stroke="${ORA}" stroke-width="2.5"/><path d="M40 70 Q104 4 168 70" fill="none" stroke="${ORA}" stroke-width="2.5"/>` +
+    T(120, 140, '2 · x + 2 · 4 = 2x + 8', '#5d6984', 16));
   const F = (n, d) => `<span class="frac"><span>${n}</span><span>${d}</span></span>`;
   // the rule card is a reminder for after the teacher has explained: a few short lines
   const TOPICS = [
     { id: 'line', name: 'Number line', rule: `5 − (−2) = 5 + 2`,
       about: ['Start at the dot.'],
       legend: [['+', ORA, 'move right'], ['−', PUR, 'move left'], ['− (−)', INK, 'is +']] },
-    { id: 'square', name: 'Squares', rule: `a<sup>2</sup> = a ${DOT} a`,
-      about: ['area = a²', 'perimeter = 4 · a', '√area = a'],
-      legend: [['a', RED, 'side'], ['a²', INK, 'area'], ['4 · a', BLU, 'perimeter']] },
-    { id: 'order', name: 'Which first?', rule: `2 + 3 ${DOT} 4 = 14`,
-      about: ['Same step? Left to right.'],
+    { id: 'square', name: 'Squares & cubes', rule: `<span>a<sup>2</sup> = a ${DOT} a</span><span>a<sup>3</sup> = a ${DOT} a ${DOT} a</span>`,
+      about: ['√area = a', 'perimeter = 4 · a', '∛volume = a', 'cube surface = 6 · a²'],
+      legend: [['a', RED, 'side / edge'], ['a²', INK, 'area'], ['a³', INK, 'volume'], ['4 · a', BLU, 'perimeter']] },
+    { id: 'order', name: 'Which first?', rule: `2 + 3 ${DOT} 4 − 5 = 9`,
+      about: ['Do the steps in this order.', 'Same step? Left to right.', 'Write each part down as you go.'],
       legend: [] },   // the picture already lists the order
-    { id: 'multiply', name: 'Long multiplication', rule: `47 ${DOT} 3 = 141`,
+    { id: 'multiply', name: 'Long multiplication', rule: `47 ${DOT} 23 = 1081`,
       about: ['Start on the right.', 'Carry the tens.', 'Second row: one place left, then add.'],
       legend: [['7', GRN, 'write'], ['2', PUR, 'carry']] },
     { id: 'divide', name: 'Long division', rule: `84 : 4 = 21`,
@@ -2552,14 +2569,19 @@ const NB = (() => {
       about: ['Each term times each term.', 'Add the like terms.'],
       legend: [['x3', INK, 'type for x³'], ['like', BLU, 'same power of x']] }
   ];
+  // the easy brackets (one number in front) get their own card; the tick box switches to the one above
+  const EXPAND_SIMPLE = { id: 'expand', name: 'Brackets', rule: `a ${DOT} (b + c) = ab + ac`, pic: 'expandSimple',
+    about: ['The number in front times each term inside.', 'Add the like terms.'],
+    legend: [['2x', INK, 'means 2 · x'], ['like', BLU, 'same kind: numbers, or x']] };
+  const expandAdv = () => !!prefs.get('expAdv');
   const TOPIC = Object.fromEntries(TOPICS.map(t => [t.id, t]));
 
   function info(id) {
-    const t = TOPIC[id];
+    const t = id === 'expand' && !expandAdv() ? EXPAND_SIMPLE : TOPIC[id];
     $('pr-info').innerHTML = `
       <span class="eyebrow">The rule</span>
       <h3>${t.name}</h3>
-      ${PIC[id]()}
+      ${PIC[t.pic || id]()}
       <div class="fbig">${t.rule}</div>
       <ul class="steps">${[].concat(t.about).map(l => `<li>${math(l)}</li>`).join('')}</ul>
       <ul class="legend">${t.legend.map(([k, c, v]) => `<li><b style="color:${c}">${math(k)}</b><span>${math(v)}</span></li>`).join('')}</ul>`;
@@ -2575,7 +2597,7 @@ const NB = (() => {
   const cancelAll = () => { timers.forEach(clearTimeout); timers = []; clearTimeout(inputTimer); };
 
   // ---------- page parts ----------
-  const PARTS = ['pr-figure', 'pr-jumpwrap', 'pr-choices', 'pr-mul', 'pr-div', 'pr-tablewrap', 'pr-table', 'pr-ladder', 'pr-primes', 'pr-hcf', 'pr-frac', 'pr-exp'];
+  const PARTS = ['pr-figure', 'pr-jumpwrap', 'pr-choices', 'pr-mul', 'pr-div', 'pr-tablewrap', 'pr-table', 'pr-ladder', 'pr-primes', 'pr-hcf', 'pr-frac', 'pr-exp', 'pr-expwrap'];
   function showParts(...ids) { PARTS.forEach(id => { $(id).hidden = !ids.includes(id); }); }  // the table's own mode then decides if it shows
   // wrapped in a span so ² and · sit inline with the digits, not as separate flex items
   const head = html => { $('pr-q').innerHTML = `<span class="pt">${html}</span>`; };
@@ -2733,7 +2755,24 @@ const NB = (() => {
   // =====================================================================
   // SQUARES
   // =====================================================================
+  // a cube drawn in a slanted view: the front face, the top and the right side
+  function drawCube(q, stage) {
+    const s = $('pr-square'), L = clamp(64 + (q.side - 2) * 7, 64, 120), D = Math.round(L * .42);
+    const x = (300 - L - D) / 2, y = 14 + D, round = stage === 'surface';
+    const stroke = round ? 'var(--accent)' : 'var(--ink)', sw = round ? 4 : 3, dash = round ? '10 6' : 'none';
+    s.innerHTML = '';
+    const face = (pts, fill) => s.appendChild(svgEl('polygon', { points: pts, fill, stroke, 'stroke-width': sw, 'stroke-dasharray': dash, 'stroke-linejoin': 'round' }));
+    face(`${x},${y} ${x + L},${y} ${x + L},${y + L} ${x},${y + L}`, 'rgba(255,214,10,.42)');
+    face(`${x},${y} ${x + D},${y - D} ${x + L + D},${y - D} ${x + L},${y}`, 'rgba(255,214,10,.26)');
+    face(`${x + L},${y} ${x + L + D},${y - D} ${x + L + D},${y + L - D} ${x + L},${y + L}`, 'rgba(255,214,10,.16)');
+    const mx = x + L / 2, my = y + L / 2;
+    s.appendChild(svgEl('text', { x: mx, y: my + 2, 'text-anchor': 'middle', 'font-family': HAND, 'font-size': 32, fill: 'var(--ink)' }, String(round ? q.side * q.side : q.volume)));
+    s.appendChild(svgEl('text', { x: mx, y: my + 24, 'text-anchor': 'middle', 'font-family': 'Nunito, sans-serif', 'font-weight': 700, 'font-size': 11, fill: 'var(--ink-soft)' }, round ? 'one face (cm²)' : 'volume (cm³)'));
+    const marks = round ? [[mx, y + L + 22], [x - 16, my + 6], [x + L + D / 2 + 22, y + L - D / 2 + 14]] : [[mx, y + L + 22]];
+    marks.forEach(([tx, ty]) => s.appendChild(svgEl('text', { x: tx, y: ty, 'text-anchor': 'middle', 'font-family': HAND, 'font-size': 21, fill: round ? 'var(--accent)' : 'var(--vc)' }, round ? String(q.side) : 'a = ?')));
+  }
   function drawSquare(q, stage) {
+    if (q.shape === 'cube') return drawCube(q, stage);
     const s = $('pr-square'), side = clamp(70 + (q.side - 2) * 13, 70, 150), x = (300 - side) / 2, y = 25, round = stage === 'perimeter';
     s.innerHTML = '';
     s.appendChild(svgEl('rect', { x, y, width: side, height: side, rx: 4, fill: 'rgba(255,214,10,.42)', stroke: round ? 'var(--accent)' : 'var(--ink)', 'stroke-width': round ? 5 : 3, 'stroke-dasharray': round ? '10 6' : 'none' }));
@@ -2743,11 +2782,35 @@ const NB = (() => {
     const marks = round ? [[mx, y - 9], [mx, y + side + 22], [x - 16, my + 6], [x + side + 16, my + 6]] : [[mx, y + side + 22]];
     marks.forEach(([tx, ty]) => s.appendChild(svgEl('text', { x: tx, y: ty, 'text-anchor': 'middle', 'font-family': HAND, 'font-size': 21, fill: round ? 'var(--accent)' : 'var(--vc)' }, round ? String(q.side) : 'a = ?')));
   }
-  function genSquare() { const side = rnd(2, 20); return { type: 'square', stage: 'side', side, area: side * side, perimeter: 4 * side }; }
+  // squares up to 20² = 400, cubes up to 10³ = 1000
+  function genSquare() {
+    if (Math.random() < .45) { const side = rnd(2, 10); return { type: 'square', shape: 'cube', stage: 'side', side, volume: side ** 3, surface: 6 * side * side }; }
+    const side = rnd(2, 20); return { type: 'square', shape: 'square', stage: 'side', side, area: side * side, perimeter: 4 * side };
+  }
+  function playCube(q) {
+    if (q.stage === 'side') {
+      sub(`The cube's volume is ${q.volume} cm³. How long is one edge a?`);
+      head(root(`∛${q.volume} = ?`));
+      ask(options(q.side, [q.side * q.side, q.side + 1, q.side > 2 ? q.side - 1 : q.side + 2], 3, n => n > 0), q.side, ok => {
+        say(ok ? `Yes! ∛${q.volume} = ${q.side}.` : `∛${q.volume} = ${q.side}, because ${q.side} · ${q.side} · ${q.side} = ${q.volume}.`, ok ? 'good' : 'bad');
+        later(() => { q.stage = 'surface'; say(''); playSquare(q); }, 1900);
+      });
+    } else {
+      const f = q.side * q.side;
+      sub(math(`A cube has 6 equal square faces. Each face is ${q.side} · ${q.side} = ${f} cm². What is the whole surface?`));
+      head(math(`6 · ${f} = ?`));
+      ask(options(q.surface, [4 * f, q.volume, 6 * q.side], 5 * q.side, n => n > 0), q.surface, ok => {
+        say(ok ? `Yes! 6 · ${q.side}² = 6 · ${f} = ${q.surface} cm².` : `The surface is 6 · ${f} = ${q.surface} cm².`, ok ? 'good' : 'bad');
+        NB.ready();
+      });
+    }
+  }
   function playSquare(q) {
     showParts('pr-figure', 'pr-choices');
     $('pr-line').style.display = 'none'; $('pr-square').style.display = '';
+    $('pr-square').setAttribute('aria-label', q.shape === 'cube' ? 'Cube' : 'Square');
     drawSquare(q, q.stage);
+    if (q.shape === 'cube') return playCube(q);
     if (q.stage === 'side') {
       sub(`The square's area is ${q.area} cm². How long is one side a?`);
       head(root(`√${q.area} = ?`));
@@ -2768,37 +2831,39 @@ const NB = (() => {
   // =====================================================================
   // ORDER OF OPERATIONS
   // =====================================================================
-  const ROOTS = [[4, 2], [9, 3], [16, 4], [25, 5], [36, 6]];
+  const ROOTS = [[4, 2], [9, 3], [16, 4], [25, 5], [36, 6], [49, 7], [64, 8], [81, 9]];
+  // longer chains with small, friendly numbers: each step is easy, the order is the challenge
   const ORDER = [
-    () => { const a = rnd(2, 9), b = rnd(2, 6), c = rnd(2, 6); return { t: `${a} + ${b} · ${c}`, why: 'Multiply before you add.', ans: a + b * c, trap: [(a + b) * c, a * b + c] }; },
-    () => { const a = rnd(2, 6), b = rnd(2, 6), c = rnd(2, 9); return { t: `${a} · ${b} + ${c}`, why: 'Multiply before you add.', ans: a * b + c, trap: [a * (b + c)] }; },
-    () => { const b = rnd(2, 6), c = rnd(2, 4), a = rnd(b * c + 1, b * c + 15); return { t: `${a} − ${b} · ${c}`, why: 'Multiply before you take away.', ans: a - b * c, trap: [(a - b) * c] }; },
+    () => { const a = rnd(2, 9), b = rnd(2, 5), c = rnd(2, 5), d = rnd(2, 4), e = rnd(2, 4); return { t: `${a} + ${b} · ${c} − ${d} · ${e}`, why: 'Both multiplications first, then add and take away from left to right.', ans: a + b * c - d * e, trap: [((a + b) * c - d) * e, a + b * c - d] }; },
+    () => { const a = rnd(2, 6), b = rnd(2, 6), c = rnd(2, 5), d = rnd(1, 7); return { t: `(${a} + ${b}) · ${c} − ${d}`, why: 'Brackets first, then multiply, then take away.', ans: (a + b) * c - d, trap: [a + b * c - d, (a + b) * (c - d)] }; },
+    () => { const a = rnd(2, 5), b = rnd(1, 5), c = rnd(1, 5), d = rnd(2, 5), e = rnd(2, 5); return { t: `${a} · (${b} + ${c}) + ${d} · ${e}`, why: 'Brackets first, then both multiplications, then add.', ans: a * (b + c) + d * e, trap: [a * b + c + d * e, (a * (b + c) + d) * e] }; },
+    () => { const a = rnd(2, 9), b = rnd(2, 6), c = rnd(2, 4), d = rnd(2, 4); return { t: `${a} + ${b}² − ${c} · ${d}`, why: 'Square first, then multiply, then add and take away.', ans: a + b * b - c * d, trap: [(a + b) ** 2 - c * d, (a + b * b - c) * d] }; },
+    () => { const c = rnd(2, 5), k = rnd(2, 6), m = rnd(2, 5), d = rnd(1, 9); return { t: `${c * k} : ${c} · ${m} + ${d}`, why: 'Divide and multiply from left to right, then add.', ans: k * m + d, trap: [k * (m + d), c * k + d] }; },
+    () => { const [n, r] = pick(ROOTS), a = rnd(2, 5), b = rnd(2, 5), c = rnd(1, 9); return { t: `√${n} + ${a} · ${b} − ${c}`, why: 'Square root and multiplication first, then add and take away.', ans: r + a * b - c, trap: [(r + a) * b - c, n + a * b - c] }; },
+    () => { const a = rnd(2, 9), b = rnd(4, 9), c = rnd(1, b - 2), d = rnd(2, 5); return { t: `${a} + (${b} − ${c}) · ${d}`, why: 'Brackets first, then multiply, then add.', ans: a + (b - c) * d, trap: [(a + b - c) * d, a + b - c * d] }; },
     () => {
-      let a = rnd(2, 6), b = rnd(2, 6), c = rnd(2, 5), d = rnd(2, 5);
+      let a = rnd(2, 6), b = rnd(2, 6), c = rnd(2, 5), d = rnd(2, 5); const e = rnd(1, 9);
       if (a * b < c * d) [a, b, c, d] = [c, d, a, b];
-      return { t: `${a} · ${b} − ${c} · ${d}`, why: 'Do both multiplications first, then take away.', ans: a * b - c * d, trap: [(a * b - c) * d] };
+      return { t: `${a} · ${b} − ${c} · ${d} + ${e}`, why: 'Both multiplications first, then take away and add from left to right.', ans: a * b - c * d + e, trap: [(a * b - c) * d + e, a * b - (c * d + e)] };
     },
-    () => { const a = rnd(2, 7), b = rnd(2, 7), c = rnd(2, 6); return { t: `(${a} + ${b}) · ${c}`, why: 'Brackets first — add, then multiply.', ans: (a + b) * c, trap: [a + b * c] }; },
-    () => { const a = rnd(2, 7), b = rnd(4, 9), c = rnd(1, b - 1); return { t: `${a} · (${b} − ${c})`, why: 'Brackets first — take away, then multiply.', ans: a * (b - c), trap: [a * b - c] }; },
-    () => { const a = rnd(2, 9), b = rnd(2, 6); return { t: `${a} + ${b}²`, why: 'Square before you add.', ans: a + b * b, trap: [(a + b) ** 2] }; },
-    () => { const a = rnd(1, 6), b = rnd(1, 6); return { t: `(${a} + ${b})²`, why: 'Brackets first — add, then square.', ans: (a + b) ** 2, trap: [a * a + b * b] }; },
-    () => { const [n, r] = pick(ROOTS), a = rnd(2, 9); return { t: `√${n} + ${a}`, why: 'Square root first, then add.', ans: r + a, trap: [n + a] }; },
-    () => { const c = rnd(2, 5), k = rnd(2, 6), a = rnd(2, 9); return { t: `${a} + ${c * k} : ${c}`, why: 'Divide before you add.', ans: a + k, trap: [a + c * k] }; },
-    () => { const c = rnd(2, 5), k = rnd(2, 6), a = rnd(k + 2, k + 9); return { t: `${a} − ${c * k} : ${c}`, why: 'Divide before you take away.', ans: a - k, trap: [a - c * k] }; },
-    () => { const c = rnd(2, 5), k = rnd(2, 6), a = rnd(2, 8); return { t: `${a} · ${c * k} : ${c}`, why: 'Multiply and divide from left to right.', ans: a * k, trap: [a * c * k] }; },
-    () => { const [n, r] = pick(ROOTS), a = rnd(1, r - 1); return { t: `√${n} − ${a}`, why: 'Square root first, then take away.', ans: r - a, trap: [n - a] }; },
-    () => { const a = rnd(2, 8), b = rnd(1, a * a - 1); return { t: `${a}² − ${b}`, why: 'Square before you take away.', ans: a * a - b, trap: [(a - b) ** 2] }; },
-    () => {
-      const a = rnd(2, 9), b = rnd(2, 5), c = rnd(2, 5); let d = rnd(1, 9);
-      if (a + b * c - d < 0) d = 1;
-      return { t: `${a} + ${b} · ${c} − ${d}`, why: 'Multiply first, then add and take away from left to right.', ans: a + b * c - d, trap: [(a + b) * c - d] };
-    }
+    () => { const a = rnd(1, 6), b = rnd(1, 6), c = rnd(4, 9), d = rnd(1, c - 2); return { t: `(${a} + ${b}) · (${c} − ${d})`, why: 'Both brackets first, then multiply.', ans: (a + b) * (c - d), trap: [a + b * c - d] }; },
+    () => { const a = rnd(2, 9), b = rnd(2, 4), c = rnd(1, 4), d = rnd(1, 4), e = rnd(1, 9); return { t: `${a} + ${b} · (${c} + ${d}) − ${e}`, why: 'Brackets first, then multiply, then add and take away.', ans: a + b * (c + d) - e, trap: [(a + b) * (c + d) - e, a + b * c + d - e] }; },
+    () => { const c = rnd(2, 5), k = rnd(2, 6), d = rnd(2, 5), m = rnd(2, 6), e = rnd(1, 5); return { t: `${c * k} : ${c} + ${d * m} : ${d} − ${e}`, why: 'Both divisions first, then add and take away.', ans: k + m - e, trap: [k + d * m - e] }; },
+    () => { const a = rnd(2, 4), b = rnd(2, 5), c = rnd(1, 9); return { t: `${a} · ${b}² + ${c}`, why: 'Square first, then multiply, then add.', ans: a * b * b + c, trap: [(a * b) ** 2 + c, a * (b * b + c)] }; },
+    () => { const a = rnd(2, 6), b = rnd(2, 6), c = rnd(1, 9); return { t: `${a}² + ${b}² − ${c}`, why: 'Both squares first, then add and take away.', ans: a * a + b * b - c, trap: [(a + b) ** 2 - c, a * a + (b - c) ** 2] }; },
+    () => { const a = rnd(2, 5), b = rnd(2, 5), c = rnd(2, 5), d = rnd(2, 4), e = rnd(1, 9); return { t: `${a} · ${b} + ${c} · ${d} − ${e}`, why: 'Both multiplications first, then add and take away.', ans: a * b + c * d - e, trap: [(a * b + c) * d - e] }; },
+    () => { const a = rnd(3, 9), b = rnd(2, 9), d = rnd(2, 5), k = rnd(1, Math.floor((a * b - 1) / d)), c = a * b - d * k; return { t: `(${a} · ${b} − ${c}) : ${d}`, why: 'Inside the bracket: multiply, then take away. Then divide.', ans: k, trap: [a * b - c, d * k + 1] }; },
+    () => { const a = rnd(2, 9), b = rnd(2, 5), d = rnd(2, 4), m = rnd(1, 4); return { t: `${a} + ${b} · ${d * m} : ${d}`, why: 'Multiply and divide from left to right, then add.', ans: a + b * m, trap: [(a + b) * m] }; },
+    () => { const a = rnd(1, 4), b = rnd(1, 3), c = rnd(2, 4), d = rnd(1, 9); return { t: `(${a} + ${b})² · ${c} − ${d}`, why: 'Brackets, then the square, then multiply, then take away.', ans: (a + b) ** 2 * c - d, trap: [(a * a + b * b) * c - d, a + b * b * c - d] }; }
   ];
   let lastOrder = -1;
   function genOrder() {
     let i; do i = rnd(0, ORDER.length - 1); while (i === lastOrder);
     lastOrder = i;
-    return { type: 'order', ...ORDER[i]() };
+    let q, tries = 0;
+    do q = ORDER[i](); while (q.ans < 0 && ++tries < 40);
+    if (q.ans < 0) q = ORDER[1]();
+    return { type: 'order', ...q };
   }
   const supMath = s => root(math(s).replace(/²/g, '<sup>2</sup>'));
   function playOrder(p) {
@@ -2848,8 +2913,10 @@ const NB = (() => {
   const fresh = t => { Object.assign(t, { i: 0, digits: new Array(t.steps.length).fill(null), carries: {}, tmpCarry: null, tmpDigit: null }); t.stage = stagesOf(t)[0]; return t; };
 
   function genMultiply() {
-    const n = rnd(2, 4), a = rnd(10 ** (n - 1), 10 ** n - 1);
-    const b = Math.random() < .5 ? rnd(2, 9) : rnd(10, 99), b0 = b % 10, b1 = Math.floor(b / 10);
+    // never smaller than 2 digits · 2 digits; no 0 at the end of the second number (that row would be all zeros)
+    const n = rnd(2, 3), a = rnd(10 ** (n - 1) + 1, 10 ** n - 1);
+    let b; do b = rnd(11, 99); while (b % 10 === 0);
+    const b0 = b % 10, b1 = Math.floor(b / 10);
     const pp1 = multChain(a, b0, 'pp1'), two = b1 > 0, pp2 = two ? multChain(a, b1, 'pp2') : [];
     const sum = two ? sumChain(pp1, pp2) : pp1;
     return fresh({ type: 'multiply', a, b, b0, b1, pp1, pp2, sum, two, steps: two ? [...pp1, ...pp2, ...sum] : pp1 });
@@ -3629,14 +3696,24 @@ const NB = (() => {
 
   function genExpand() {
     const k = () => rnd(1, 5) * (Math.random() < .3 ? -1 : 1);
-    const forms = [
+    const sgn = () => Math.random() < .35 ? -1 : 1;
+    // easy: one number in front of one bracket — 2 · (3 + 4), 3 · (x − 2), 2 · (3x + 5)
+    const easy = [
+      () => { const b = rnd(2, 9), c = Math.random() < .3 ? -rnd(1, b - 1) : rnd(1, 9); return [[{ c: rnd(2, 9), e: 0 }], [{ c: b, e: 0 }, { c, e: 0 }]]; },
+      () => [[{ c: rnd(2, 9), e: 0 }], [{ c: 1, e: 1 }, { c: rnd(1, 9) * sgn(), e: 0 }]],
+      () => [[{ c: rnd(2, 6), e: 0 }], [{ c: rnd(2, 5), e: 1 }, { c: rnd(1, 9) * sgn(), e: 0 }]],
+      () => [[{ c: rnd(2, 5), e: 0 }], [{ c: 1, e: 1 }, { c: rnd(1, 9) * sgn(), e: 0 }, { c: rnd(1, 9), e: 0 }]]    // 2 · (x + 3 + 4): like terms to add
+    ];
+    const hard = [
       () => [[{ c: 1, e: 1 }, { c: k(), e: 0 }], [{ c: 1, e: 1 }, { c: k(), e: 0 }]],                                        // (x + a)(x + b)
       () => [[{ c: 1, e: 1 }, { c: k(), e: 0 }], [{ c: 1, e: 2 }, { c: k(), e: 1 }, { c: k(), e: 0 }]],                      // (x + a)(x² + bx + c)
       () => [[{ c: rnd(1, 3), e: 1 }, { c: k(), e: 0 }], [{ c: rnd(1, 3), e: 1 }, { c: k(), e: 0 }]]                         // (px + a)(qx + b)
     ];
+    const adv = expandAdv();
+    const choose = () => adv ? hard[Math.random() < .3 ? 0 : Math.random() < .55 ? 1 : 2]() : pick(easy)();
     let A, B, prods, sums, tries = 0;
     do {
-      [A, B] = forms[Math.random() < .3 ? 0 : Math.random() < .55 ? 1 : 2]();
+      [A, B] = choose();
       prods = [];
       A.forEach((a, i) => B.forEach((b, j) => prods.push({ i, j, c: a.c * b.c, e: a.e + b.e })));
       sums = {};
@@ -3644,7 +3721,7 @@ const NB = (() => {
     } while (Object.values(sums).some(v => v === 0) && ++tries < 50);   // no term that cancels to nothing
     const powers = Object.keys(sums).map(Number).sort((x, y) => y - x);
     return {
-      type: 'expand', A, B, prods, powers, sums,
+      type: 'expand', A, B, prods, powers, sums, adv,
       key: polyText(A) + '|' + polyText(B),
       k: 0, typed: [], stage: 'mul', sel: new Set(), done: new Set()
     };
@@ -3657,7 +3734,10 @@ const NB = (() => {
       const on = t.stage === 'mul' && (which === 'A' ? t.prods[t.k].i : t.prods[t.k].j) === i;
       return `<span class="xt${on ? ' on' + which : ''}">${txt}</span>`;
     }).join(' ') + ')';
-    head(part(t.A, 'A') + part(t.B, 'B') + tail);
+    const front = t.A.length === 1 && t.A[0].e === 0
+      ? `<span class="xt${t.stage === 'mul' ? ' onA' : ''}">${termLead(t.A[0])}</span> ${DOT} `
+      : part(t.A, 'A');
+    head(front + part(t.B, 'B') + tail);
   }
 
   // a box you type a term into; Enter sends it
@@ -3734,8 +3814,9 @@ const NB = (() => {
   }
 
   function playExpand(t) {
-    showParts('pr-exp');
-    sub('Multiply each term by each term.');
+    showParts('pr-exp', 'pr-expwrap');
+    $('pr-x-adv').checked = t.adv;
+    sub(t.A.length === 1 ? 'Multiply the number in front by each term in the bracket.' : 'Multiply each term by each term.');
     expandHead(t, ' =');
     renderExpand(t);
     focusLive();
@@ -3752,11 +3833,19 @@ const NB = (() => {
     // all multiplied: now the like terms; a power that shows up once is already done
     t.stage = 'collect';
     t.powers.forEach(e => { if (t.prods.filter(p => p.e === e).length === 1) t.done.add(e); });
+    if (t.powers.every(x => t.done.has(x))) { finishExpand(t, 'No like terms to add — done.'); return; }
     sub('Tap the like terms to add them.');
     expandHead(t, ' =');
     renderExpand(t);
   }
-  function pickTerm(t, n, cell) {
+  function finishExpand(t, msg) {
+    t.stage = 'end';
+    renderExpand(t);
+    expandHead(t, ' = ' + polyText(t.powers.map(x => ({ c: t.sums[x], e: x }))) + ' <span class="ok">✓</span>');
+    sub(msg);
+    NB.ready();
+  }
+    function pickTerm(t, n, cell) {
     if (t.stage !== 'collect') return;
     const e = t.prods[n].e;
     if (t.sel.has(n)) { t.sel.delete(n); say(''); renderExpand(t); return; }
@@ -3774,14 +3863,7 @@ const NB = (() => {
       award(true);
       t.done.add(e); t.sel.clear();
       say(`${polyText(group.map(i => t.prods[i]))} = ${termLead({ c: t.sums[e], e })}`, 'good');
-      if (t.powers.every(x => t.done.has(x))) {
-        t.stage = 'end';
-        renderExpand(t);
-        expandHead(t, ' = ' + polyText(t.powers.map(x => ({ c: t.sums[x], e: x }))) + ' <span class="ok">✓</span>');
-        sub('Done.');
-        NB.ready();
-        return;
-      }
+      if (t.powers.every(x => t.done.has(x))) { finishExpand(t, 'Done.'); return; }
     } else say('');
     renderExpand(t);
   }
@@ -3791,7 +3873,7 @@ const NB = (() => {
   // =====================================================================
   const GEN = { line: genLine, square: genSquare, order: genOrder, multiply: genMultiply, divide: genDivide, factor: genFactor, fraction: genFraction, expand: genExpand };
   const PLAY = { line: playLine, square: playSquare, order: playOrder, multiply: playDigits, divide: playDigits, factor: playFactor, fraction: playFraction, expand: playExpand };
-  const sigOf = p => ({ line: `${p.op}${p.a},${p.b}`, square: p.side, order: p.t, multiply: `${p.a}x${p.b}`, divide: `${p.dividend}/${p.divisor}`, factor: `${p.a},${p.b}`, fraction: `${p.op}${p.a}/${p.b},${p.c}/${p.d}`, expand: p.key })[p.type];
+  const sigOf = p => ({ line: `${p.op}${p.a},${p.b}`, square: p.shape + p.side, order: p.t, multiply: `${p.a}x${p.b}`, divide: `${p.dividend}/${p.divisor}`, factor: `${p.a},${p.b}`, fraction: `${p.op}${p.a}/${p.b},${p.c}/${p.d}`, expand: p.key })[p.type];
 
   // a finished problem moves on to a random ticked topic
   const next = () => NB.mix.next();
@@ -3809,6 +3891,12 @@ const NB = (() => {
   // ---------- wiring ----------
   $('pr-o-jump').checked = !!prefs.get('jump');
   $('pr-o-jump').addEventListener('change', e => { prefs.set('jump', e.target.checked); showJump(e.target.checked); });
+  // harder brackets: two brackets (a + b)(c + d); a change starts a fresh problem of the new kind
+  $('pr-x-adv').checked = expandAdv();
+  $('pr-x-adv').addEventListener('change', e => {
+    prefs.set('expAdv', e.target.checked);
+    if (S.topic === 'expand') { info('expand'); newProblem(); }
+  });
   NB.onLeave(cancelAll);   // leaving the topic stops its pauses
   NB.practiceNow = () => S.cur;   // the problem on the page (used by the tests)
 
