@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kosztorys Kuchni Jaworze</title>
+<title>Kitchen Cost Estimate Jaworze</title>
 <style>
   :root {
     --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; --text: #f8fafc; --muted: #cbd5e1;
@@ -64,45 +64,45 @@
   <h1 id="title"></h1>
   <p class="info" id="info"></p>
   <div class="toolbar">
-    <button class="btn" id="btnXlsx">Eksport XLSX</button>
-    <button class="btn secondary" id="btnReset">Przywróć dane</button>
-    <div class="total-pill">Razem brutto: <b id="pillTotal"></b></div>
+    <button class="btn" id="btnXlsx">Export XLSX</button>
+    <button class="btn secondary" id="btnReset">Restore data</button>
+    <div class="total-pill">Total gross: <b id="pillTotal"></b></div>
   </div>
   <div class="tabs">
-    <button class="tab active" data-tab="kosztorys">Kosztorys</button>
-    <button class="tab" data-tab="rozkroj">Rozkrój</button>
-    <button class="tab" data-tab="uwagi">Uwagi</button>
+    <button class="tab active" data-tab="estimate">Estimate</button>
+    <button class="tab" data-tab="cutting">Cutting list</button>
+    <button class="tab" data-tab="notes">Notes</button>
   </div>
 
-  <section id="tab-kosztorys">
+  <section id="tab-estimate">
     <div class="params">
-      <label>Zapas na odpad płyt <input type="number" step="0.01" data-param="waste"> </label>
-      <label>Arkusz płyty 2800×2070 [m²] <input type="number" step="0.001" data-param="sheet"></label>
-      <label>Rezerwa (% od mebli) <input type="number" step="0.01" data-param="reserve"></label>
+      <label>Board waste allowance <input type="number" step="0.01" data-param="waste"> </label>
+      <label>Board sheet 2800×2070 [m²] <input type="number" step="0.001" data-param="sheet"></label>
+      <label>Contingency (% of furniture) <input type="number" step="0.01" data-param="reserve"></label>
     </div>
     <div class="grid-wrap">
       <table class="grid">
-        <thead><tr><th>Lp.</th><th>Pozycja</th><th>Specyfikacja</th><th>Ilość</th><th>J.m.</th><th>Cena jedn. [zł]</th><th>Wartość [zł]</th><th>Źródło ceny / uwagi</th></tr></thead>
+        <thead><tr><th>No.</th><th>Item</th><th>Specification</th><th>Qty</th><th>Unit</th><th>Unit price [PLN]</th><th>Value [PLN]</th><th>Price source / notes</th></tr></thead>
         <tbody id="kBody"></tbody>
       </table>
     </div>
     <div class="excl" id="excl"></div>
   </section>
 
-  <section id="tab-rozkroj" class="hidden">
+  <section id="tab-cutting" class="hidden">
     <div class="grid-wrap">
       <table class="grid">
-        <thead><tr><th>Element</th><th>A [mm]</th><th>B [mm]</th><th>Ilość</th><th>m²</th><th>Obrzeże ABS [mb]</th><th>Cięcie [mb]</th></tr></thead>
+        <thead><tr><th>Element</th><th>A [mm]</th><th>B [mm]</th><th>Qty</th><th>m²</th><th>ABS edging [lm]</th><th>Cutting [lm]</th></tr></thead>
         <tbody id="rBody"></tbody>
       </table>
     </div>
-    <div class="excl">Korpus = szerokość kolumny, gł. 550; wnętrze = szer. − 36; półka ruchoma = wnętrze − 2 × 530; plecy HDF = korpus − 2; fronty = moduł − 4 mm szczeliny; listwa tylna = 100 × dł. ramy; szuflada U: dno z wycięciem, tył z 2 części. Obrzeże ABS tylko krawędzie przednie.</div>
+    <div class="excl">Carcass = column width, depth 550; interior = width − 36; adjustable shelf = interior − 2 × 530; HDF back = carcass − 2; fronts = module − 4 mm gap; back strip = 100 × frame length (frames 18); drawer bottom = LW − 75 × 490, back = LW − 87; inner drawer back 84 high. ABS edging on front edges only.</div>
   </section>
 
-  <section id="tab-uwagi" class="hidden">
+  <section id="tab-notes" class="hidden">
     <div class="grid-wrap">
       <table class="grid">
-        <thead><tr><th>Pkt</th><th>Temat</th><th>Opis</th><th>Przyjęte w kosztorysie</th><th>Do decyzji</th></tr></thead>
+        <thead><tr><th>No.</th><th>Topic</th><th>Description</th><th>Assumed in the estimate</th><th>To decide</th></tr></thead>
         <tbody id="uBody"></tbody>
       </table>
     </div>
@@ -110,16 +110,16 @@
 </div>
 
 <!-- ===================================================================
-     DANE KOSZTORYSU (JSON) - jedyne miejsce z wartościami projektu.
-     blocks: formatki (mm) wyliczone z kitchen_design.html
-     cats/rows: pozycje; qty = liczba albo formuła:
-       {blok.m2|edge|cut} = suma bloku z Rozkroju, {q:id} = ilość pozycji,
-       {waste}, {sheet} = parametry, ROUNDUP(x,0) = zaokrąglenie w górę
-     notes: zakładka Uwagi; refs w pozycji = numery uwag
+     COST DATA (JSON) - the only place with values for this project.
+     blocks: panels (mm) derived from kitchen_design.html
+     cats/rows: items; qty = number or formula:
+       {block.m2|edge|cut} = block total from the Cutting list, {q:id} = item qty,
+       {waste}, {sheet} = parameters, ROUNDUP(x,0) = round up
+     notes: Notes tab; refs in an item = note numbers
      =================================================================== -->
 <script type="application/json" id="cost-data">{
- "title": "Kosztorys materiałów – Kuchnia Jaworze (Group 1+2 w L, wyspa Group 3)",
- "info": "PLN brutto, ceny średnie rynkowe X 2026, tylko materiały (montaż własny). Niebieskie komórki można edytować; zmiany zapamiętuje przeglądarka. Ilości z formułą liczą się z zakładki Rozkrój.",
+ "title": "Material cost estimate – Kitchen Jaworze (Group 1+2 in an L, island Group 3)",
+ "info": "PLN gross, average market prices October 2026, materials only (self-assembly). Blue cells are editable; the browser remembers changes. Quantities with a formula are calculated from the Cutting list tab.",
  "params": {
   "waste": 0.15,
   "sheet": 5.796,
@@ -128,112 +128,112 @@
  "blocks": [
   {
    "id": "front",
-   "title": "FRONTY – MDF 18 shaker, lakier English Navy satyna (frontowiec)",
+   "title": "FRONTS – MDF 18 shaker, English Navy satin lacquer (front maker)",
    "cols": [
-    "Funkcja",
-    "Szer.",
-    "Wys.",
-    "Ilość"
+    "Function",
+    "Width",
+    "Height",
+    "Qty"
    ],
    "rows": [
     [
-     "szuflada",
+     "drawer",
      796,
-     416,
+     418,
      3
     ],
     [
-     "szuflada",
+     "drawer",
      796,
      296,
      3
     ],
     [
-     "front na drzwi AGD",
+     "appliance-door front",
      596,
-     716,
+     718,
      2
     ],
     [
-     "szuflada U",
+     "sink drawer (waste bins)",
      796,
-     416,
+     418,
      1
     ],
     [
-     "front martwy",
+     "dummy front",
      796,
      296,
      1
     ],
     [
-     "drzwi",
+     "door",
      396,
-     716,
+     718,
      1
     ],
     [
-     "drzwi",
-     576,
+     "door",
+     578,
      1158,
      1
     ],
     [
-     "drzwi",
-     576,
+     "door",
+     578,
      476,
      1
     ],
     [
-     "drzwi",
+     "door",
      596,
-     716,
+     718,
      1
     ],
     [
-     "drzwi",
+     "door",
      596,
      1196,
      1
     ],
     [
-     "drzwi",
+     "door",
      596,
      476,
      3
     ],
     [
-     "drzwi",
+     "door",
      596,
-     516,
+     518,
      1
     ],
     [
-     "drzwi",
+     "door",
      596,
      414,
      1
     ],
     [
-     "front na drzwi AGD",
+     "appliance-door front",
      596,
      1196,
      1
     ],
     [
-     "drzwi",
+     "door",
      246,
-     716,
+     718,
      1
     ],
     [
-     "drzwi",
+     "door",
      246,
      1196,
      1
     ],
     [
-     "drzwi",
+     "door",
      246,
      476,
      1
@@ -242,52 +242,52 @@
   },
   {
    "id": "bar",
-   "title": "BARY / BLENDY – MDF 18 lakier jak fronty, na sztorc 100 gł.",
+   "title": "FRAMES / FILLERS – MDF 18 lacquered like the fronts; 18 frames on edge 100 deep, wider fillers flat",
    "cols": [
     "Element",
-    "Szer./gł.",
-    "Dł.",
-    "Ilość"
+    "Width / depth",
+    "Length",
+    "Qty"
    ],
    "rows": [
     [
-     "Bar na sztorc (100 gł.)",
+     "Frame 18 on edge (100 deep)",
      100,
      820,
      3
     ],
     [
-     "Bar na sztorc (100 gł.)",
+     "Frame 18 on edge (100 deep)",
      100,
      720,
      5
     ],
     [
-     "Blenda płaska",
+     "Filler 80, installed flat",
      80,
      720,
      1
     ],
     [
-     "Bar na sztorc (100 gł.)",
+     "Frame 18 on edge (100 deep)",
      100,
      1642,
      1
     ],
     [
-     "Bar poziomy na sztorc (100 gł.)",
+     "Horizontal frame 18 on edge (100 deep)",
      100,
-     2750,
+     2740,
      1
     ],
     [
-     "Bar na sztorc (100 gł.)",
+     "Frame 18 on edge (100 deep)",
      100,
      2400,
      4
     ],
     [
-     "Bar na sztorc (100 gł.)",
+     "Frame 18 on edge (100 deep)",
      100,
      2500,
      1
@@ -296,47 +296,47 @@
   },
   {
    "id": "plinth",
-   "title": "COKÓŁ – MDF 18 lakier (docinany na miejscu)",
+   "title": "PLINTH – MDF 18 lacquered (cut to length on site)",
    "cols": [
     "Element",
-    "Wys.",
-    "Dł.",
-    "Ilość"
+    "Height",
+    "Length",
+    "Qty"
    ],
    "rows": [
     [
-     "Cokół",
+     "Plinth",
      100,
-     2740,
+     2734,
      1
     ],
     [
-     "Cokół",
+     "Plinth",
      100,
-     2150,
+     2140,
      1
     ],
     [
-     "Cokół",
+     "Plinth",
      100,
-     1620,
+     1618,
      1
     ]
    ]
   },
   {
    "id": "island",
-   "title": "PANEL TYŁU WYSPY – MDF 18 lakier gładki",
+   "title": "ISLAND BACK PANEL – MDF 18, smooth lacquer",
    "cols": [
     "Element",
-    "Szer.",
-    "Wys.",
-    "Ilość"
+    "Width",
+    "Height",
+    "Qty"
    ],
    "rows": [
     [
-     "Panel tył wyspy",
-     1660,
+     "Island back panel",
+     1654,
      820,
      1
     ]
@@ -344,154 +344,154 @@
   },
   {
    "id": "p18",
-   "title": "KORPUSY – płyta wiórowa 18 biała, cięcie + ABS 0,8 front (z listwami tylnymi za ramami)",
+   "title": "CARCASSES – white chipboard 18, cut + ABS 0.8 front edge (incl. back strips behind the frames)",
    "cols": [
     "Element",
-    "Szer.",
-    "Wys./gł.",
-    "Ilość"
+    "Width",
+    "Height / depth",
+    "Qty"
    ],
    "rows": [
     [
-     "Bok",
+     "Side",
      550,
      720,
      10
     ],
     [
-     "Wieniec dolny",
+     "Bottom panel",
      764,
      550,
      5
     ],
     [
-     "Trawers (listwa górna 100)",
+     "Top rail 100",
      764,
      100,
      10
     ],
     [
-     "Półka ruchoma",
+     "Adjustable shelf",
      762,
      530,
      1
     ],
     [
-     "Bok",
+     "Side",
      550,
      1162,
      2
     ],
     [
-     "Wieniec dolny",
-     544,
+     "Bottom panel",
+     546,
      550,
      2
     ],
     [
-     "Wieniec górny",
-     544,
+     "Top panel",
+     546,
      550,
      2
     ],
     [
-     "Półka ruchoma",
-     542,
+     "Adjustable shelf",
+     544,
      530,
      4
     ],
     [
-     "Bok",
+     "Side",
      550,
      480,
      10
     ],
     [
-     "Bok",
+     "Side",
      550,
      1920,
      8
     ],
     [
-     "Wieniec dolny",
+     "Bottom panel",
      564,
      550,
      6
     ],
     [
-     "Wieniec górny",
+     "Top panel",
      564,
      550,
      6
     ],
     [
-     "Półka stała",
+     "Fixed shelf",
      564,
      530,
      4
     ],
     [
-     "Półka ruchoma",
+     "Adjustable shelf",
      562,
      530,
      9
     ],
     [
-     "Wieniec dolny",
+     "Bottom panel",
      214,
      550,
      2
     ],
     [
-     "Wieniec górny",
+     "Top panel",
      214,
      550,
      2
     ],
     [
-     "Półka stała",
+     "Fixed shelf",
      214,
      530,
      1
     ],
     [
-     "Półka ruchoma",
+     "Adjustable shelf",
      212,
      530,
      5
     ],
     [
-     "Listwa tylna 100",
+     "Back strip 100",
      100,
      820,
      3
     ],
     [
-     "Listwa tylna 100",
+     "Back strip 100",
      100,
      720,
      5
     ],
     [
-     "Listwa tylna 100",
+     "Back strip 100",
      100,
      1642,
      1
     ],
     [
-     "Listwa tylna 100",
+     "Back strip 100",
      100,
-     2750,
+     2740,
      1
     ],
     [
-     "Listwa tylna 100",
+     "Back strip 100",
      100,
      2400,
      4
     ],
     [
-     "Listwa tylna 100",
+     "Back strip 100",
      100,
      2500,
      1
@@ -500,94 +500,88 @@
   },
   {
    "id": "p16",
-   "title": "SZUFLADY – płyta 16 biała (dna i tyły TANDEMBOX)",
+   "title": "DRAWERS – white chipboard 16 (TANDEMBOX bottoms and backs, incl. inner drawers)",
    "cols": [
     "Element",
-    "Szer.",
-    "Gł./wys.",
-    "Ilość"
+    "Width",
+    "Depth / height",
+    "Qty"
    ],
    "rows": [
     [
-     "Dno szuflady",
+     "Drawer bottom",
      689,
      490,
-     6
+     10
     ],
     [
-     "Tył szuflady D",
+     "Drawer back D",
      677,
      199,
-     3
+     4
     ],
     [
-     "Tył szuflady M",
+     "Drawer back M",
      677,
      68,
      3
     ],
     [
-     "Dno szuflady U",
-     689,
-     490,
-     1
-    ],
-    [
-     "Tył szuflady U",
-     189,
-     199,
-     2
+     "Inner drawer back",
+     677,
+     84,
+     3
     ]
    ]
   },
   {
    "id": "hdf",
-   "title": "PLECY – HDF 3 biały",
+   "title": "BACKS – HDF 3 white",
    "cols": [
     "Element",
-    "Szer.",
-    "Wys.",
-    "Ilość"
+    "Width",
+    "Height",
+    "Qty"
    ],
    "rows": [
     [
-     "Plecy",
+     "Back",
      798,
      718,
      5
     ],
     [
-     "Plecy",
-     578,
+     "Back",
+     580,
      1160,
      1
     ],
     [
-     "Plecy",
-     578,
+     "Back",
+     580,
      478,
      1
     ],
     [
-     "Plecy",
+     "Back",
      598,
      1918,
      3
     ],
     [
-     "Plecy",
+     "Back",
      598,
      478,
      3
     ],
     [
-     "Plecy",
+     "Back",
      248,
      1918,
      1
     ],
     [
-     "Plecy",
+     "Back",
      248,
      478,
      1
@@ -597,28 +591,28 @@
  ],
  "cats": [
   {
-   "cat": "Fronty i elementy MDF (lakier)",
+   "cat": "Fronts and MDF parts (lacquered)",
    "rows": [
     {
      "id": "i1",
-     "name": "Fronty MDF 18 shaker, lakierowane",
-     "spec": "English Navy satyna, wg Rozkrój",
+     "name": "Fronts MDF 18 shaker, lacquered",
+     "spec": "English Navy satin, per cutting list",
      "qty": "={front.m2}",
      "unit": "m²",
      "price": 900,
-     "src": "ogony.pl: 900 zł/m² (wycena X 2026)",
+     "src": "ogony.pl: 900 PLN/m² (quote October 2026)",
      "refs": [
       "9"
      ]
     },
     {
      "id": "i2",
-     "name": "Bary 20 na sztorc + blenda 80",
-     "spec": "MDF 18 lakier z 3 stron, 100 gł.",
+     "name": "Frames 18 on edge + flat filler 80",
+     "spec": "MDF 18 lacquered on 3 sides, 100 deep; filler lacquered face + edges",
      "qty": "={bar.m2}",
      "unit": "m²",
      "price": 480,
-     "src": "szac., jak fronty; frontowiec może liczyć min. powierzchnię na element",
+     "src": "est., like the fronts; the front maker may charge a minimum area per piece",
      "refs": [
       "6",
       "9"
@@ -626,24 +620,24 @@
     },
     {
      "id": "i3",
-     "name": "Cokół MDF 18 lakier",
-     "spec": "długości z rysunku +20% na docięcie",
+     "name": "Plinth MDF 18 lacquered",
+     "spec": "lengths from the drawing +20% for cutting",
      "qty": "={plinth.m2}*1.2",
      "unit": "m²",
      "price": 400,
-     "src": "szac., lakier gładki",
+     "src": "est., smooth lacquer",
      "refs": [
       "9"
      ]
     },
     {
      "id": "i4",
-     "name": "Panel tył wyspy",
-     "spec": "MDF 18 lakier gładki, między wodospadami",
+     "name": "Island back panel",
+     "spec": "MDF 18 smooth lacquer, between the waterfalls",
      "qty": "={island.m2}",
      "unit": "m²",
      "price": 400,
-     "src": "szac., lakier gładki",
+     "src": "est., smooth lacquer",
      "refs": [
       "9",
       "C4"
@@ -652,73 +646,73 @@
    ]
   },
   {
-   "cat": "Korpusy",
+   "cat": "Carcasses",
    "rows": [
     {
      "id": "i5",
-     "name": "Płyta wiórowa 18 biała",
-     "spec": "arkusz 2800×2070, + zapas",
+     "name": "White chipboard 18",
+     "spec": "sheet 2800×2070, + waste",
      "qty": "=ROUNDUP({p18.m2}*(1+{waste})/{sheet},0)",
-     "unit": "ark.",
+     "unit": "sheet",
      "price": 210,
-     "src": "Castorama: Kronospan biel alpejska 18 – 191 zł/ark. (X 2026); hurtownia podobnie",
+     "src": "Castorama: Kronospan alpine white 18 – 191 PLN/sheet (October 2026); wholesalers similar",
      "refs": [
       "10"
      ]
     },
     {
      "id": "i6",
-     "name": "Płyta wiórowa 16 biała",
-     "spec": "dna i tyły szuflad",
+     "name": "White chipboard 16",
+     "spec": "drawer bottoms and backs",
      "qty": "=ROUNDUP({p16.m2}*(1+{waste})/{sheet},0)",
-     "unit": "ark.",
+     "unit": "sheet",
      "price": 190,
-     "src": "szac.",
+     "src": "est.",
      "refs": []
     },
     {
      "id": "i7",
-     "name": "HDF 3 biały",
-     "spec": "plecy, arkusz 2800×2070",
+     "name": "HDF 3 white",
+     "spec": "backs, sheet 2800×2070",
      "qty": "=ROUNDUP({hdf.m2}*(1+{waste})/{sheet},0)",
-     "unit": "ark.",
+     "unit": "sheet",
      "price": 80,
-     "src": "szac.",
+     "src": "est.",
      "refs": []
     },
     {
      "id": "i8",
-     "name": "Cięcie formatek",
-     "spec": "płyta 18 + 16",
+     "name": "Panel cutting",
+     "spec": "chipboard 18 + 16",
      "qty": "={p18.cut}+{p16.cut}",
-     "unit": "mb",
+     "unit": "lm",
      "price": 3,
-     "src": "szac., usługa hurtowni",
+     "src": "est., board supplier service",
      "refs": []
     },
     {
      "id": "i9",
-     "name": "Oklejanie ABS 0,8 biały",
-     "spec": "krawędzie przednie +10%",
+     "name": "ABS 0.8 edge banding, white",
+     "spec": "front edges +10%",
      "qty": "={p18.edge}*1.1",
-     "unit": "mb",
+     "unit": "lm",
      "price": 4.5,
-     "src": "szac., z usługą",
+     "src": "est., including the service",
      "refs": []
     }
    ]
   },
   {
-   "cat": "Okucia (system Blum)",
+   "cat": "Hardware (Blum system)",
    "rows": [
     {
      "id": "i10",
-     "name": "Zawias Blum CLIP top BLUMOTION 110° + prowadnik",
-     "spec": "nakładany; 2/3/4 szt. na drzwi wg wys.",
+     "name": "Hinge Blum CLIP top BLUMOTION 110° + mounting plate",
+     "spec": "overlay; 2/3/4 per door by height",
      "qty": 29,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 28,
-     "src": "szac.; alternatywa GTV z hamulcem ok. 10–15 zł/szt.",
+     "src": "est.; alternative GTV soft-close approx. 10–15 PLN/pc",
      "refs": [
       "11"
      ]
@@ -726,11 +720,11 @@
     {
      "id": "i11",
      "name": "TANDEMBOX antaro D (224) NL 500 BLUMOTION",
-     "spec": "front ≥350, w tym 1 szuflada U",
+     "spec": "front ≥350: 3 bottom drawers + sink drawer (standard, no U cut-out)",
      "qty": 4,
-     "unit": "kpl.",
+     "unit": "set",
      "price": 420,
-     "src": "szac.",
+     "src": "est.",
      "refs": [
       "13"
      ]
@@ -738,103 +732,139 @@
     {
      "id": "i12",
      "name": "TANDEMBOX antaro M (83) NL 500 BLUMOTION",
-     "spec": "komplet, front <350",
+     "spec": "set, top drawers (front <350)",
      "qty": 3,
-     "unit": "kpl.",
+     "unit": "set",
      "price": 260,
-     "src": "szac.",
+     "src": "est.",
      "refs": []
     },
     {
+     "id": "i36",
+     "name": "TANDEMBOX antaro inner drawer M (83) NL 500 BLUMOTION",
+     "spec": "for cutlery, above each active top drawer; metal inner front Z31L cut to LW − 132 = 632",
+     "qty": 3,
+     "unit": "set",
+     "price": 330,
+     "src": "est.",
+     "refs": [
+      "15"
+     ]
+    },
+    {
+     "id": "i37",
+     "name": "Cutlery insert for the inner drawer",
+     "spec": "cut to fit, LW 764 × NL 500",
+     "qty": 3,
+     "unit": "pcs",
+     "price": 90,
+     "src": "est.; Blum ORGA-LINE costs more",
+     "refs": [
+      "15"
+     ]
+    },
+    {
+     "id": "i38",
+     "name": "Waste-sorting bin set for an 800 drawer",
+     "spec": "3 bins standing in the sink drawer (D, NL 500)",
+     "qty": 1,
+     "unit": "set",
+     "price": 250,
+     "src": "est.",
+     "refs": [
+      "13"
+     ]
+    },
+    {
      "id": "i13",
-     "name": "Uchwyt IKEA ENERYDA muszelka, mosiądz",
-     "spec": "1 na front",
+     "name": "Handle IKEA ENERYDA cup, brass",
+     "spec": "1 per front",
      "qty": 24,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 25,
-     "src": "szac., IKEA – sprawdź cenę w sklepie",
+     "src": "est., IKEA – check the price in store",
      "refs": []
     },
     {
      "id": "legs",
-     "name": "Nóżki meblowe regulowane 100",
-     "spec": "4 na korpus stojący",
+     "name": "Adjustable furniture legs 100",
+     "spec": "4 per floor-standing carcass, set back behind the plinth",
      "qty": 36,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 3,
-     "src": "szac.",
+     "src": "est.",
      "refs": []
     },
     {
      "id": "i15",
-     "name": "Klipsy cokołu",
-     "spec": "1 na 2 nóżki",
+     "name": "Plinth clips",
+     "spec": "1 per 2 legs",
      "qty": "=ROUNDUP({q:legs}/2,0)",
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 1,
-     "src": "szac.",
+     "src": "est.",
      "refs": []
     },
     {
      "id": "i16",
-     "name": "Podpórki półek 5 mm",
-     "spec": "4 na półkę ruchomą",
+     "name": "Shelf pins 5 mm",
+     "spec": "4 per adjustable shelf",
      "qty": 76,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 0.25,
-     "src": "szac.",
+     "src": "est.",
      "refs": []
     },
     {
      "id": "i17",
-     "name": "Konfirmaty 7×50 + zaślepki",
-     "spec": "ok. 18 na korpus",
+     "name": "Confirmat screws 7×50 + caps",
+     "spec": "approx. 18 per carcass",
      "qty": "=15*18",
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 0.3,
-     "src": "szac.; 15 korpusów",
+     "src": "est.; 15 carcasses",
      "refs": []
     },
     {
      "id": "i18",
-     "name": "Łączniki korpusów, kątowniki do ściany, wkręty",
-     "spec": "komplet",
+     "name": "Carcass connectors, wall brackets, screws",
+     "spec": "set",
      "qty": 1,
-     "unit": "kpl.",
+     "unit": "set",
      "price": 120,
-     "src": "szac.",
+     "src": "est.",
      "refs": []
     },
     {
      "id": "i19",
-     "name": "Mocowanie frontu martwego zlewu",
-     "spec": "kątowniki",
+     "name": "Fixing for the sink dummy front",
+     "spec": "angle brackets",
      "qty": 1,
-     "unit": "kpl.",
+     "unit": "set",
      "price": 10,
-     "src": "szac.",
+     "src": "est.",
      "refs": []
     },
     {
      "id": "i20",
-     "name": "Kratka wentylacyjna w cokole (lodówka)",
-     "spec": "aluminium",
+     "name": "Ventilation grille in the plinth (fridge)",
+     "spec": "aluminium, approx. 500 × 60, ≥ 200 cm² open area, under the fridge column",
      "qty": 1,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 40,
-     "src": "szac.",
+     "src": "est.",
      "refs": [
       "3"
      ]
     },
     {
      "id": "i21",
-     "name": "Łączniki narożnika + podkładki 2 mm",
-     "spec": "korpus 800 z Group 2",
+     "name": "Corner connectors",
+     "spec": "800 carcass with Group 2; no 2 mm packing needed with 18 frames",
      "qty": 1,
-     "unit": "kpl.",
+     "unit": "set",
      "price": 30,
-     "src": "szac.",
+     "src": "est.",
      "refs": [
       "1",
       "14"
@@ -843,58 +873,58 @@
    ]
   },
   {
-   "cat": "Blaty i panele",
+   "cat": "Worktops and panels",
    "rows": [
     {
      "id": "i22",
-     "name": "Blat laminowany dąb 38×600×4100",
-     "spec": "Group 1 3310 + wodospad 820 → 2 płyty",
+     "name": "Laminate oak worktop 38×600×4100",
+     "spec": "Group 1 3302 + waterfall 820 → 2 boards",
      "qty": 2,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 700,
-     "src": "szac., ok. 170 zł/mb",
+     "src": "est., approx. 170 PLN/lm",
      "refs": []
     },
     {
      "id": "i23",
-     "name": "Blat laminowany dąb 38×920×4100",
-     "spec": "wyspa 1660 + 2 wodospady 820",
+     "name": "Laminate oak worktop 38×920×4100",
+     "spec": "island 1654 + 2 waterfalls 820",
      "qty": 1,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 1200,
-     "src": "szac.",
+     "src": "est.",
      "refs": [
       "C1"
      ]
     },
     {
      "id": "i24",
-     "name": "Panel ścienny laminowany jak blat",
-     "spec": "Group 1 2798×222",
+     "name": "Laminate wall panel matching the worktop",
+     "spec": "Group 1 2790×222",
      "qty": 1,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 350,
-     "src": "szac., panel 4100×640",
+     "src": "est., panel 4100×640",
      "refs": []
     },
     {
      "id": "i25",
-     "name": "Obrzeża blatu, łączniki wodospadów, klej, silikon",
-     "spec": "komplet",
+     "name": "Worktop edging, waterfall connectors, glue, silicone",
+     "spec": "set",
      "qty": 1,
-     "unit": "kpl.",
+     "unit": "set",
      "price": 150,
-     "src": "szac.",
+     "src": "est.",
      "refs": []
     },
     {
      "id": "i26",
-     "name": "Usługa: cięcie wodospadów na 45°, wycięcia zlewu i płyty",
-     "spec": "4 połączenia mitre + 2 otwory",
+     "name": "Service: 45° waterfall mitres, sink and hob cut-outs",
+     "spec": "4 mitre joints + 2 cut-outs",
      "qty": 1,
-     "unit": "kpl.",
+     "unit": "set",
      "price": 350,
-     "src": "szac., stolarz/hurtownia blatów",
+     "src": "est., joiner / worktop wholesaler",
      "refs": [
       "8"
      ]
@@ -902,28 +932,40 @@
    ]
   },
   {
-   "cat": "Zlew i bateria",
+   "cat": "Sink and tap",
    "rows": [
     {
      "id": "i27",
-     "name": "Zlewozmywak granitowy 1-komorowy",
-     "spec": "wpuszczany, do szafki 800, z syfonem",
+     "name": "Granite sink, 1 bowl",
+     "spec": "inset, for the 800 unit",
      "qty": 1,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 600,
-     "src": "szac.",
+     "src": "est.",
      "refs": [
       "12"
      ]
     },
     {
-     "id": "i28",
-     "name": "Bateria kuchenna",
-     "spec": "stojąca, wylewka obrotowa",
+     "id": "i39",
+     "name": "Space-saving trap (flat, outlet into the wall)",
+     "spec": "keeps the bottom drawer free for the waste bins; wall drain ≥ 450 above the floor",
      "qty": 1,
-     "unit": "szt.",
+     "unit": "pcs",
+     "price": 150,
+     "src": "est.",
+     "refs": [
+      "13"
+     ]
+    },
+    {
+     "id": "i28",
+     "name": "Kitchen tap",
+     "spec": "deck-mounted, swivel spout",
+     "qty": 1,
+     "unit": "pcs",
      "price": 450,
-     "src": "szac.",
+     "src": "est.",
      "refs": [
       "12"
      ]
@@ -931,16 +973,16 @@
    ]
   },
   {
-   "cat": "AGD",
+   "cat": "Appliances",
    "rows": [
     {
      "id": "i29",
-     "name": "Lodówka Bosch KIS86AFE0",
-     "spec": "zabudowa 1772, zawias płaski",
+     "name": "Fridge Bosch KIS86AFE0",
+     "spec": "built-in 1772, flat hinge",
      "qty": 1,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 3549,
-     "src": "neonet.pl 3549 zł",
+     "src": "neonet.pl 3549 PLN",
      "refs": [
       "2",
       "3"
@@ -948,68 +990,68 @@
     },
     {
      "id": "i30",
-     "name": "Zmywarka Bosch SMV4HVX00E",
-     "spec": "pełna zabudowa 60",
+     "name": "Dishwasher Bosch SMV4HVX00E",
+     "spec": "fully integrated 60",
      "qty": 1,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 1850,
-     "src": "okazje.info.pl ~1800–1900 zł",
+     "src": "okazje.info.pl ~1800–1900 PLN",
      "refs": [
       "5"
      ]
     },
     {
      "id": "i31",
-     "name": "Płyta indukcyjna Electrolux CIT61443",
-     "spec": "60 cm, wycięcie 560×490",
+     "name": "Induction hob Electrolux CIT61443",
+     "spec": "60 cm, cut-out 560×490",
      "qty": 1,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 1600,
-     "src": "okazje.info.pl ~1596 zł",
+     "src": "okazje.info.pl ~1596 PLN",
      "refs": []
     },
     {
      "id": "i32",
-     "name": "Piekarnik Samsung NV7B5785KAK",
+     "name": "Oven Samsung NV7B5785KAK",
      "spec": "595×596×570",
      "qty": 1,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 4600,
-     "src": "okazje.info.pl ~4599 zł",
+     "src": "okazje.info.pl ~4599 PLN",
      "refs": [
       "4"
      ]
     },
     {
      "id": "i33",
-     "name": "Mikrofala Bosch BFL623MB3",
-     "spec": "nisza 362–365×560–568×320",
+     "name": "Microwave Bosch BFL623MB3",
+     "spec": "niche 362–365×560–568×320",
      "qty": 1,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 999,
-     "src": "okazje.info.pl ~999 zł",
+     "src": "okazje.info.pl ~999 PLN",
      "refs": []
     },
     {
      "id": "i34",
-     "name": "Okap Electrolux LFV416K, 60",
-     "spec": "kominowy, wylot fi 150",
+     "name": "Hood Electrolux LFV416K, 60",
+     "spec": "chimney type, outlet Ø150",
      "qty": 1,
-     "unit": "szt.",
+     "unit": "pcs",
      "price": 1959,
-     "src": "neonet.pl 1959 zł (X 2026)",
+     "src": "neonet.pl 1959 PLN (October 2026)",
      "refs": [
       "7"
      ]
     },
     {
      "id": "i35",
-     "name": "Rura/kanał wyciągowy fi 150 albo filtr węglowy",
-     "spec": "zależnie od trybu pracy okapu",
+     "name": "Duct Ø150 or carbon filter",
+     "spec": "depending on the hood mode",
      "qty": 1,
-     "unit": "kpl.",
+     "unit": "set",
      "price": 150,
-     "src": "szac.; filtr węglowy sprzedawany osobno",
+     "src": "est.; carbon filter sold separately",
      "refs": [
       "7"
      ]
@@ -1018,148 +1060,162 @@
   }
  ],
  "excluded": [
-  "Robocizny, transportu, elektryki (płyta 400 V, obwody piekarnik/zmywarka/lodówka), hydrauliki, ścian/g-k (fillery „Wall/plasterboard”)."
+  "Labour, transport, electrics (400 V hob, circuits for oven/dishwasher/fridge), plumbing, walls/plasterboard (fillers \"Wall / plasterboard\")."
  ],
  "notes": [
   {
-   "sec": "A. WAŻNE (konstrukcja / pasowanie AGD)"
+   "sec": "A. IMPORTANT (construction / appliance fit)"
   },
   {
    "nr": "1",
-   "t": "Narożnik L – korpus 800",
-   "o": "Szafka 400 ma korpus 800 wchodzący w narożnik. Reszta narożnika (ok. 230) pusta; blat leży na korpusie i listwach tylnych ram, korpusy skręcone.",
-   "p": "łączniki i podkładki 30 zł.",
-   "d": "listwa przyścienna pod blat nad pustką?"
+   "t": "L corner – 800 carcass",
+   "o": "The 400 cabinet has an 800 carcass reaching into the corner. The rest of the corner (approx. 230) is empty; the worktop rests on the carcass and on the back strips of the frames, carcasses screwed together.",
+   "p": "connectors 30 PLN.",
+   "d": "wall batten under the worktop above the void?"
   },
   {
    "nr": "2",
-   "t": "Lodówka Bosch KIS86AFE0 – podział frontów 716 / 1196",
-   "o": "Fronty montowane na drzwiach lodówki (zawias płaski) muszą odpowiadać podziałowi drzwi zamrażarki/chłodziarki. Sprawdzić w instrukcji montażu wysokości drzwi i dopuszczalny nawis frontu.",
-   "p": "fronty jak w projekcie.",
+   "t": "Fridge Bosch KIS86AFE0 – front split 718 / 1196",
+   "o": "Fronts fixed on the fridge doors (flat hinge) must match the freezer / fridge door split. Check the door heights and the allowed front overhang in the installation manual.",
+   "p": "fronts as designed.",
    "d": ""
   },
   {
    "nr": "3",
-   "t": "Lodówka – wentylacja wylotowa",
-   "o": "Nad korpusem lodówki (1920) stoi osobna szafka 480. Bosch wymaga wylotu powietrza (zwykle ~200 cm2) u góry albo szczeliny za plecami.",
-   "p": "kratka tylko w cokole; szczelina wentylacyjna za plecami szafki 480 (bez kosztu). Potwierdzić z instrukcją.",
+   "t": "Fridge – exhaust ventilation",
+   "o": "Above the fridge carcass (1920) there is a separate 480 cabinet. Bosch requires an air outlet (usually ~200 cm²) at the top or a gap behind the back.",
+   "p": "aluminium grille approx. 500 × 60 in the plinth under the fridge (≥ 200 cm² open area) + ventilation gap behind the back of the 480 cabinet (no cost). Confirm with the manual.",
    "d": ""
   },
   {
    "nr": "4",
-   "t": "Piekarnik Samsung NV7B5785KAK – nisza",
-   "o": "W projekcie nisza 560 x 580 x 550 (z dopiskiem \"verify\"). Dla piekarników 595 zwykle wymagane ok. 590 wys. Moduł ma 600 – po odjęciu półki stałej 18 zostaje ~582. Sprawdzić minimalną wysokość niszy w instrukcji; ewentualnie zmniejszyć szafkę 520 pod piekarnikiem.",
+   "t": "Oven Samsung NV7B5785KAK – niche",
+   "o": "The design has a niche 560 x 580 x 550 (marked \"verify\"). 595 ovens usually need approx. 590 height. The module is 600 – after the 18 fixed shelf ~582 remain. Check the minimum niche height in the manual; if needed reduce the 520 cabinet under the oven.",
    "p": "",
    "d": ""
   },
   {
    "nr": "5",
-   "t": "Zmywarka Bosch SMV4HVX00E – front 596 x 716",
-   "o": "Sprawdzić maks. wysokość i ciężar frontu dla tego modelu przy cokole 100 (zawias drzwi zmywarki / ewentualny zawias Vario).",
+   "t": "Dishwasher Bosch SMV4HVX00E – front 596 x 718",
+   "o": "Check the maximum front height and weight for this model with a 100 plinth (dishwasher door hinge / optional Vario hinge).",
    "p": "",
    "d": ""
   },
   {
    "nr": "6",
-   "t": "Bary 20 mm na sztorc",
-   "o": "MDF 18 + lakier ≈ 18,5 w szczelinie 20.",
-   "p": "",
+   "t": "Frames 18 mm on edge; wider fillers flat",
+   "o": "All frames changed from 20 to 18: MDF 18 set on edge, 100 deep. With lacquer ≈ 18.5, i.e. about +0.5 mm per frame (Group 1: 4 frames ≈ +2 mm at the free waterfall end; Group 2: 7 frames ≈ +3.5 mm, taken up by the plasterboard filler). Any filler wider than 18 (the 80 at the L corner) is installed flat, face-on.",
+   "p": "Group 2 keeps its wall-to-wall length 2870: corner column 560 → 564 (upper corner carcass 582, fronts 578), plasterboard filler 120 → 130. Group 1 3348 → 3340, island 1736 → 1730 (both shorten at the free waterfall ends).",
    "d": ""
   },
   {
-   "sec": "B. ZAKRES / ZAŁOŻENIA CENOWE"
+   "sec": "B. SCOPE / PRICE ASSUMPTIONS"
   },
   {
    "nr": "7",
-   "t": "Okap Electrolux LFV416K – tryb pracy",
-   "o": "Okap nad płytą (nie narysowany). W kosztorysie 1959 zł + 150 zł na rurę fi 150 LUB filtr węglowy.",
+   "t": "Hood Electrolux LFV416K – operating mode",
+   "o": "Hood above the hob (not drawn). Estimate: 1959 PLN + 150 PLN for a Ø150 duct OR a carbon filter.",
    "p": "",
-   "d": "wyciąg do kanału wentylacyjnego czy pochłaniacz? (filtr węglowy nie jest w zestawie)."
+   "d": "extraction to a ventilation duct or recirculation? (carbon filter not included)."
   },
   {
    "nr": "8",
-   "t": "Usługa na blatach (350 zł)",
-   "o": "Wodospady na 45° (mitra) i wycięcia pod zlew i płytę – w laminacie robi to zwykle hurtownia/stolarz. Przy montażu własnym można pominąć, ale mitra piłą ręczną na laminacie rzadko wychodzi czysto.",
+   "t": "Worktop service (350 PLN)",
+   "o": "45° waterfall mitres and the sink and hob cut-outs – on laminate this is normally done by the wholesaler / joiner. You can skip it when self-assembling, but a hand-sawn mitre on laminate rarely comes out clean.",
    "p": "",
    "d": ""
   },
   {
    "nr": "9",
-   "t": "Fronty lakierowane shaker – cena z ogony.pl",
-   "o": "Przyjąłem 900 zł/m2 (wycena ogony.pl). Bary, cokół i panel wyspy zostają na szacunku 480/400 zł/m2 (lakier gładki) – dopytać ogony.pl o cenę elementów gładkich i listew, bo mogą liczyć je osobno (np. za mb).",
+   "t": "Lacquered shaker fronts – price from ogony.pl",
+   "o": "Assumed 900 PLN/m² (ogony.pl quote). Frames, plinth and island panel stay at the 480/400 PLN/m² estimate (smooth lacquer) – ask ogony.pl for the price of smooth pieces and strips; they may charge them separately (e.g. per lm).",
    "p": "",
    "d": ""
   },
   {
    "nr": "10",
-   "t": "Płyta 18 – 7 arkuszy",
-   "o": "32,9 m² + 15% = 6,54 ark. → 7.",
+   "t": "Chipboard 18 – 7 sheets",
+   "o": "32.9 m² + 15% = 6.54 sheets → 7.",
    "p": "",
    "d": ""
   },
   {
    "nr": "11",
-   "t": "Zawiasy Blum vs GTV",
-   "o": "Przyjąłem Blum (zgodnie z projektem). GTV z hamulcem obniża sumę o ok. 400–550 zł.",
+   "t": "Blum vs GTV hinges",
+   "o": "Assumed Blum (as in the design). GTV soft-close reduces the total by approx. 400–550 PLN.",
    "p": "",
    "d": ""
   },
   {
    "nr": "12",
-   "t": "Zlew i bateria – bez konkretnego modelu",
-   "o": "Przyjąłem granit 1-komorowy do szafki 800 (600 zł) i baterię 450 zł.",
+   "t": "Sink and tap – no specific model",
+   "o": "Assumed a 1-bowl granite sink for the 800 unit (600 PLN) and a 450 PLN tap. The trap is costed separately as a space-saving trap (see 13).",
    "p": "",
    "d": ""
   },
   {
    "nr": "13",
-   "t": "Szuflada U pod zlewem",
-   "o": "Front 796 × 416 = szuflada D z wycięciem U 300 na syfon. Front martwy 300 zostaje.",
-   "p": "4 komplety D, −2 zawiasy.",
-   "d": "wysokość odpływu w ścianie (ok. 380)."
+   "t": "Sink unit – bottom drawer with waste-sorting bins",
+   "o": "Front 796 × 416 = standard D drawer (no U cut-out) with a 3-bin waste-sorting set. This works only with a space-saving trap: the flat trap body sits against the back wall and the outlet stays above the drawer (D box with gallery rails reaches ≈ 420 above the floor, bins ≈ 400). The 300 dummy front above stays.",
+   "p": "4 D sets, waste-sorting set 250 PLN, space-saving trap 150 PLN, −2 hinges.",
+   "d": "wall drain height: needs approx. 450 or more above the floor."
   },
   {
    "nr": "14",
-   "t": "Listwy tylne za ramami",
-   "o": "Za każdą ramą 20: listwa z płyty 18 na sztorc, 100 gł., długość ramy. Podkładka 2 mm.",
-   "p": "w Rozkroju płyty 18.",
+   "t": "Back strips behind frames",
+   "o": "Behind every 18 frame: chipboard 18 strip on edge, 100 deep, frame length. Frame and strip are now the same thickness, so the 2 mm packing is no longer needed. The flat 80 filler sits on the front edge of the 800 corner carcass – no strip.",
+   "p": "in the chipboard 18 cutting list.",
    "d": ""
   },
   {
-   "sec": "C. INFORMACYJNIE"
+   "nr": "15",
+   "t": "Inner cutlery drawers in the top drawers",
+   "o": "Each active top drawer (Group 1 hob unit, island ×2; not the sink dummy front) gets a Blum TANDEMBOX antaro inner drawer M (83), NL 500, BLUMOTION, on its own runners on the carcass sides, above the top drawer box and behind the same 300 front: bottom drawer → top drawer → inner mini drawer. Blum needs ≈ 96 mm height per inner drawer, so the 300 zone holds the M top drawer plus the inner drawer. Inner front: Blum metal profile Z31L cut to LW − 132 = 632. Bottom 689 × 490 and back 677 × 84 from chipboard 16 (back height per Blum – confirm in the Blum configurator).",
+   "p": "3 inner drawer sets 330 PLN + 3 cutlery inserts 90 PLN.",
+   "d": "hob unit: inner drawer top ≈ 750 above the floor, worktop top 858 – check the clearance under the hob required in the Electrolux CIT61443 manual."
+  },
+  {
+   "nr": "16",
+   "t": "Front gap at the plinth: Gap H 2",
+   "o": "Fronts standing on the plinth no longer need a 4 mm reveal there: Gap H 2 instead of 4, so these fronts are 2 mm taller (416 → 418, 716 → 718, 516 → 518). The gap model is symmetric (half below, half above), so the joint between that front and the one above becomes 3 mm instead of 4.",
+   "p": "front sizes in the cutting list updated.",
+   "d": "keep the 3 mm joint, or ask to change the model to a 1 mm bottom gap only (joint stays 4 mm)."
+  },
+  {
+   "sec": "C. FOR INFORMATION"
   },
   {
    "nr": "C1",
-   "t": "Wyspa: nawis blatu od strony hokerów ≈ 900 − 550 − 18 − 18 ≈ 314 mm",
-   "o": "minimum na kolana; OK dla hokerów barowych, ciasno dla krzeseł.",
+   "t": "Island: worktop overhang on the stool side ≈ 900 − 550 − 18 − 18 ≈ 314 mm",
+   "o": "minimum knee room; fine for bar stools, tight for chairs.",
    "p": "",
    "d": ""
   },
   {
    "nr": "C2",
-   "t": "Gniazdo elektryczne w wyspie",
-   "o": "nie ma w projekcie; jeśli potrzebne, zaplanować przed wylewką/podłogą.",
+   "t": "Socket in the island",
+   "o": "not in the design; if needed, plan it before the screed / floor.",
    "p": "",
    "d": ""
   },
   {
    "nr": "C3",
-   "t": "Elektryka/hydraulika, ściany g-k (fillery \"Wall/plasterboard\", soffit 220 do sufitu), transport, montaż",
-   "o": "poza kosztorysem.",
+   "t": "Electrics / plumbing, plasterboard walls (fillers \"Wall / plasterboard\", soffit 222 to the ceiling), transport, assembly",
+   "o": "outside the estimate.",
    "p": "",
    "d": ""
   },
   {
    "nr": "C4",
-   "t": "Boki korpusów niewidoczne (zasłonięte barami, wodospadami, ścianą)",
-   "o": "nie dodawałem lakierowanych paneli bocznych.",
+   "t": "Carcass sides not visible (covered by frames, waterfalls, wall)",
+   "o": "no lacquered side panels added.",
    "p": "",
    "d": ""
   },
   {
    "nr": "C5",
-   "t": "Zestawienie",
-   "o": "15 korpusów, 24 fronty (8,19 m²), 29 zawiasów, 7 szuflad (4 D w tym U, 3 M), 24 uchwyty, 36 nóżek, 19 + 5 półek, 15 listew tylnych.",
+   "t": "Summary",
+   "o": "15 carcasses, 24 fronts (8.21 m²), 29 hinges, 7 drawers (4 D incl. the sink drawer, 3 M) + 3 inner cutlery drawers, 24 handles, 36 legs, 19 + 5 shelves, 15 back strips.",
    "p": "",
    "d": ""
   }
@@ -1169,9 +1225,9 @@
 <script>
 'use strict';
 const DATA = JSON.parse(document.getElementById('cost-data').textContent);
-const STORE = 'kosztorys-jaworze-v3';
-const fmt = (v, d = 2) => Number.isFinite(v) ? v.toLocaleString('pl-PL', { minimumFractionDigits: d, maximumFractionDigits: d }) : '–';
-const fmtQ = v => Number.isInteger(v) ? v.toLocaleString('pl-PL') : fmt(v, 2);
+const STORE = 'kitchen-cost-jaworze-v4';
+const fmt = (v, d = 2) => Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '–';
+const fmtQ = v => Number.isInteger(v) ? v.toLocaleString('en-GB') : fmt(v, 2);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // ---------- state: defaults + overrides from browser storage ----------
@@ -1202,7 +1258,7 @@ function blockTotals() {
     b.rows.forEach((r, i) => {
       const [A, B, q] = S.blocks[b.id][i].map(Number);
       const m2 = A * B * q / 1e6;
-      const edge = b.id === 'p18' ? (r[0] === 'Bok' ? B : A) * q / 1000 : null;
+      const edge = b.id === 'p18' ? (r[0] === 'Side' ? B : A) * q / 1000 : null;
       const cut = (b.id === 'p18' || b.id === 'p16') ? (A + B) * q / 1000 : null;
       t.m2 += m2; t.qty += q; t.edge += edge || 0; t.cut += cut || 0;
       t.rows.push({ m2, edge, cut });
@@ -1222,7 +1278,7 @@ function evalQty(expr, T, Q) {
 }
 function compute() {
   const T = blockTotals(), Q = {}, V = {}, cat = {};
-  let meble = 0, agd = 0;
+  let furn = 0, appl = 0;
   for (const c of DATA.cats) {
     let sum = 0;
     for (const r of c.rows) {
@@ -1231,18 +1287,18 @@ function compute() {
       sum += V[r.id];
     }
     cat[c.cat] = sum;
-    if (c.cat === 'AGD') agd += sum; else meble += sum;
+    if (c.cat === 'Appliances') appl += sum; else furn += sum;
   }
-  const reserve = Math.round(meble * Number(S.params.reserve) * 100) / 100;
-  return { T, Q, V, cat, meble, agd, reserve, total: meble + agd + reserve };
+  const reserve = Math.round(furn * Number(S.params.reserve) * 100) / 100;
+  return { T, Q, V, cat, furn, appl, reserve, total: furn + appl + reserve };
 }
 
 // ---------- rendering ----------
 function describe(expr) {
   return expr.replace(/^=/, '')
-    .replace(/\{q:legs\}/g, 'ilość nóżek')
-    .replace(/\{(\w+)\.(\w+)\}/g, (_, b, k) => `${(DATA.blocks.find(x => x.id === b) || {}).title?.split(' –')[0] || b} ${{ m2: 'm²', edge: 'obrzeże mb', cut: 'cięcie mb' }[k]}`)
-    .replace('{waste}', 'zapas').replace('{sheet}', 'arkusz');
+    .replace(/\{q:legs\}/g, 'number of legs')
+    .replace(/\{(\w+)\.(\w+)\}/g, (_, b, k) => `${(DATA.blocks.find(x => x.id === b) || {}).title?.split(' –')[0] || b} ${{ m2: 'm²', edge: 'edging lm', cut: 'cutting lm' }[k]}`)
+    .replace('{waste}', 'waste').replace('{sheet}', 'sheet');
 }
 function renderK() {
   const R = compute(); let lp = 0; const h = [];
@@ -1254,46 +1310,46 @@ function renderK() {
       const qtyCell = typeof r.qty === 'string'
         ? `<td class="num"><span class="calc" title="${esc(describe(r.qty))}">${fmtQ(R.Q[r.id])}</span></td>`
         : `<td class="num"><input type="number" step="any" data-item="${r.id}" data-k="qty" value="${st.qty}" class="${st.qty != d.qty ? 'changed' : ''}"></td>`;
-      const refs = r.refs.map(n => `<a class="ref" data-ref="${n}">patrz Uwagi pkt ${n}</a>`).join(', ');
+      const refs = r.refs.map(n => `<a class="ref" data-ref="${n}">see Notes item ${n}</a>`).join(', ');
       h.push(`<tr><td class="num">${lp}</td><td>${esc(r.name)}</td><td class="muted">${esc(r.spec)}</td>${qtyCell}<td>${esc(r.unit)}</td>
         <td class="num"><input type="number" step="any" data-item="${r.id}" data-k="price" value="${st.price}" class="${st.price != d.price ? 'changed' : ''}"></td>
         <td class="num" data-v="${r.id}">${fmt(R.V[r.id])}</td>
         <td class="src">${esc(r.src)}${refs ? ' – ' + refs : ''}</td></tr>`);
     }
   }
-  h.push(`<tr class="sum"><td></td><td colspan="5">Meble (materiały) razem</td><td class="num">${fmt(R.meble)}</td><td></td></tr>`);
-  h.push(`<tr class="sum"><td></td><td colspan="5">AGD razem</td><td class="num">${fmt(R.agd)}</td><td></td></tr>`);
-  h.push(`<tr class="sum"><td></td><td colspan="5">Rezerwa na drobne / ceny szacunkowe (${fmt(Number(S.params.reserve) * 100, 0)}% od mebli)</td><td class="num">${fmt(R.reserve)}</td><td></td></tr>`);
-  h.push(`<tr class="grand"><td></td><td colspan="5">RAZEM BRUTTO</td><td class="num">${fmt(R.total)}</td><td></td></tr>`);
+  h.push(`<tr class="sum"><td></td><td colspan="5">Furniture (materials) total</td><td class="num">${fmt(R.furn)}</td><td></td></tr>`);
+  h.push(`<tr class="sum"><td></td><td colspan="5">Appliances total</td><td class="num">${fmt(R.appl)}</td><td></td></tr>`);
+  h.push(`<tr class="sum"><td></td><td colspan="5">Contingency for small items / estimated prices (${fmt(Number(S.params.reserve) * 100, 0)}% of furniture)</td><td class="num">${fmt(R.reserve)}</td><td></td></tr>`);
+  h.push(`<tr class="grand"><td></td><td colspan="5">TOTAL GROSS</td><td class="num">${fmt(R.total)}</td><td></td></tr>`);
   document.getElementById('kBody').innerHTML = h.join('');
-  document.getElementById('pillTotal').textContent = fmt(R.total) + ' zł';
+  document.getElementById('pillTotal').textContent = fmt(R.total) + ' PLN';
   return R;
 }
 function renderR() {
   const T = blockTotals(), h = [];
   for (const b of DATA.blocks) {
     h.push(`<tr class="blk"><td colspan="7">${esc(b.title)}</td></tr>`);
-    h.push(`<tr class="bh"><td>${b.cols.map(esc).join('</td><td>')}</td><td>m²</td><td>Obrzeże ABS [mb]</td><td>Cięcie [mb]</td></tr>`);
+    h.push(`<tr class="bh"><td>${b.cols.map(esc).join('</td><td>')}</td><td>m²</td><td>ABS edging [lm]</td><td>Cutting [lm]</td></tr>`);
     b.rows.forEach((r, i) => {
       const cur = S.blocks[b.id][i], def = DEF.blocks[b.id][i], t = T[b.id].rows[i];
       const inp = k => `<td class="num"><input type="number" step="1" data-blk="${b.id}" data-i="${i}" data-k="${k}" value="${cur[k]}" class="${cur[k] != def[k] ? 'changed' : ''}"></td>`;
       h.push(`<tr><td>${esc(r[0])}</td>${inp(0)}${inp(1)}${inp(2)}<td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td></tr>`);
     });
     const t = T[b.id], hasE = b.id === 'p18', hasC = b.id === 'p18' || b.id === 'p16';
-    h.push(`<tr class="sum"><td>Razem</td><td></td><td></td><td class="num">${t.qty}</td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${hasE ? fmt(t.edge) : ''}</td><td class="num">${hasC ? fmt(t.cut) : ''}</td></tr>`);
+    h.push(`<tr class="sum"><td>Total</td><td></td><td></td><td class="num">${t.qty}</td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${hasE ? fmt(t.edge) : ''}</td><td class="num">${hasC ? fmt(t.cut) : ''}</td></tr>`);
   }
   document.getElementById('rBody').innerHTML = h.join('');
 }
 function renderU() {
   document.getElementById('uBody').innerHTML = DATA.notes.map(n => n.sec
     ? `<tr class="cat"><td colspan="5">${esc(n.sec)}</td></tr>`
-    : `<tr id="uwaga-${n.nr}"><td><b>${esc(n.nr)}</b></td><td><b>${esc(n.t)}</b></td><td>${esc(n.o)}</td><td>${esc(n.p)}</td><td class="decide">${esc(n.d)}</td></tr>`).join('');
+    : `<tr id="note-${n.nr}"><td><b>${esc(n.nr)}</b></td><td><b>${esc(n.t)}</b></td><td>${esc(n.o)}</td><td>${esc(n.p)}</td><td class="decide">${esc(n.d)}</td></tr>`).join('');
 }
 function renderStatic() {
   document.getElementById('title').textContent = DATA.title;
   document.getElementById('info').textContent = DATA.info;
-  document.getElementById('excl').innerHTML = '<b>Nie zawiera / uwagi ogólne</b><br>' + DATA.excluded.map(esc).join('<br>') +
-    '<br>Pytania i przyjęte założenia: <a class="ref" data-tab-go="uwagi">patrz zakładka Uwagi</a>.';
+  document.getElementById('excl').innerHTML = '<b>Not included / general notes</b><br>' + DATA.excluded.map(esc).join('<br>') +
+    '<br>Questions and assumptions: <a class="ref" data-tab-go="notes">see the Notes tab</a>.';
   document.querySelectorAll('[data-param]').forEach(i => { i.value = S.params[i.dataset.param]; i.classList.toggle('changed', S.params[i.dataset.param] != DEF.params[i.dataset.param]); });
 }
 function renderAll() { renderStatic(); renderK(); renderR(); renderU(); }
@@ -1301,15 +1357,15 @@ function renderAll() { renderStatic(); renderK(); renderR(); renderU(); }
 // ---------- interaction ----------
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  ['kosztorys', 'rozkroj', 'uwagi'].forEach(n => document.getElementById('tab-' + n).classList.toggle('hidden', n !== name));
+  ['estimate', 'cutting', 'notes'].forEach(n => document.getElementById('tab-' + n).classList.toggle('hidden', n !== name));
 }
 document.querySelector('.tabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) showTab(t.dataset.tab); });
 document.addEventListener('click', e => {
   const a = e.target.closest('a.ref');
   if (!a) return;
   if (a.dataset.tabGo) { showTab(a.dataset.tabGo); return; }
-  showTab('uwagi');
-  const row = document.getElementById('uwaga-' + a.dataset.ref);
+  showTab('notes');
+  const row = document.getElementById('note-' + a.dataset.ref);
   if (row) { row.scrollIntoView({ behavior: 'smooth', block: 'center' }); row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); }
 });
 document.addEventListener('change', e => {
@@ -1324,7 +1380,7 @@ document.addEventListener('change', e => {
   save(); renderAll();
 });
 document.getElementById('btnReset').addEventListener('click', () => {
-  if (!confirm('Przywrócić ceny, ilości i rozkrój z projektu? Twoje zmiany zostaną usunięte.')) return;
+  if (!confirm('Restore prices, quantities and the cutting list from the project? Your changes will be removed.')) return;
   S = defaults(); try { localStorage.removeItem(STORE); } catch (e) {}
   renderAll();
 });
@@ -1335,56 +1391,56 @@ function loadSheetJS() {
   return new Promise((ok, fail) => {
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    s.onload = ok; s.onerror = () => fail(new Error('Nie udało się pobrać biblioteki XLSX (brak internetu?)'));
+    s.onload = ok; s.onerror = () => fail(new Error('Could not load the XLSX library (no internet?)'));
     document.head.appendChild(s);
   });
 }
 function buildWorkbook() {
   const R = compute(), XL = window.XLSX;
   const n = v => ({ t: 'n', v }), s = v => ({ t: 's', v: String(v ?? '') }), f = (formula, v) => ({ t: 'n', f: formula, v });
-  // Rozkrój
-  const rz = [[s('Rozkrój – formatki wyliczone z kitchen_design.html (wymiary mm)')], [s('Korpus = szerokość kolumny, gł. 550; wnętrze = szer. − 36; półka ruchoma = wnętrze − 2 × 530; plecy HDF = korpus − 2; fronty = moduł − 4 mm.')], []];
+  // Cutting list
+  const rz = [[s('Cutting list – panels derived from kitchen_design.html (dimensions mm)')], [s('Carcass = column width, depth 550; interior = width − 36; adjustable shelf = interior − 2 × 530; HDF back = carcass − 2; fronts = module − 4 mm.')], []];
   const totRow = {};
   for (const b of DATA.blocks) {
     rz.push([s(b.title)]);
-    rz.push([...b.cols.map(s), s('m²'), s('Obrzeże ABS [mb]'), s('Cięcie [mb]')]);
+    rz.push([...b.cols.map(s), s('m²'), s('ABS edging [lm]'), s('Cutting [lm]')]);
     const first = rz.length + 1;
     b.rows.forEach((r, i) => {
       const [A, B, q] = S.blocks[b.id][i].map(Number), row = rz.length + 1, t = R.T[b.id].rows[i];
       const line = [s(r[0]), n(A), n(B), n(q), f(`B${row}*C${row}*D${row}/1000000`, t.m2)];
-      if (b.id === 'p18') line.push(f(`${r[0] === 'Bok' ? 'C' : 'B'}${row}*D${row}/1000`, t.edge)); else line.push(s(''));
+      if (b.id === 'p18') line.push(f(`${r[0] === 'Side' ? 'C' : 'B'}${row}*D${row}/1000`, t.edge)); else line.push(s(''));
       if (b.id === 'p18' || b.id === 'p16') line.push(f(`(B${row}+C${row})*D${row}/1000`, t.cut));
       rz.push(line);
     });
     const last = rz.length, row = last + 1, T = R.T[b.id];
-    rz.push([s('Razem'), s(''), s(''), f(`SUM(D${first}:D${last})`, T.qty), f(`SUM(E${first}:E${last})`, T.m2), f(`SUM(F${first}:F${last})`, T.edge), f(`SUM(G${first}:G${last})`, T.cut)]);
+    rz.push([s('Total'), s(''), s(''), f(`SUM(D${first}:D${last})`, T.qty), f(`SUM(E${first}:E${last})`, T.m2), f(`SUM(F${first}:F${last})`, T.edge), f(`SUM(G${first}:G${last})`, T.cut)]);
     totRow[b.id] = row; rz.push([]);
   }
-  // Uwagi
-  const uw = [[s('Uwagi – do wyjaśnienia / przyjęte założenia')], [s('Pozycje kosztorysu odsyłają tu przez „patrz Uwagi pkt N”.')], [], ['Pkt', 'Temat', 'Opis', 'Przyjęte w kosztorysie', 'Do decyzji'].map(s)];
+  // Notes
+  const uw = [[s('Notes – open questions / assumptions')], [s('Estimate items link here with "see Notes item N".')], [], ['No.', 'Topic', 'Description', 'Assumed in the estimate', 'To decide'].map(s)];
   const uRow = {};
   for (const x of DATA.notes) {
     if (x.sec) uw.push([s(x.sec)]);
     else { uRow[x.nr] = uw.length + 1; uw.push([s(x.nr), s(x.t), s(x.o), s(x.p), s(x.d)]); }
   }
-  // Kosztorys
-  const ks = [[s(DATA.title)], [s(DATA.info.replace('; zmiany zapamiętuje przeglądarka', ''))],
-    [s('Zapas na odpad płyt'), s(''), n(Number(S.params.waste))], [s('Arkusz płyty 2800×2070 [m²]'), s(''), n(Number(S.params.sheet))], [],
-    ['Lp.', 'Pozycja', 'Specyfikacja', 'Ilość', 'J.m.', 'Cena jedn. [zł]', 'Wartość [zł]', 'Źródło ceny / uwagi'].map(s)];
+  // Estimate
+  const ks = [[s(DATA.title)], [s(DATA.info.replace('; the browser remembers changes', ''))],
+    [s('Board waste allowance'), s(''), n(Number(S.params.waste))], [s('Board sheet 2800×2070 [m²]'), s(''), n(Number(S.params.sheet))], [],
+    ['No.', 'Item', 'Specification', 'Qty', 'Unit', 'Unit price [PLN]', 'Value [PLN]', 'Price source / notes'].map(s)];
   const itemRow = {}, catRows = [], links = [];
   let lp = 0;
   const toXl = expr => expr.replace(/^=/, '')
     .replace(/\{q:(\w+)\}/g, (_, id) => `D${itemRow[id]}`)
-    .replace(/\{(\w+)\.(\w+)\}/g, (_, b, k) => `'Rozkrój'!$${{ m2: 'E', edge: 'F', cut: 'G' }[k]}$${totRow[b]}`)
+    .replace(/\{(\w+)\.(\w+)\}/g, (_, b, k) => `'Cutting list'!$${{ m2: 'E', edge: 'F', cut: 'G' }[k]}$${totRow[b]}`)
     .replace('{waste}', '$C$3').replace('{sheet}', '$C$4');
   for (const c of DATA.cats) {
     const cr = ks.length + 1; ks.push(null); const first = cr + 1;
     for (const r of c.rows) {
       lp++; const row = ks.length + 1; itemRow[r.id] = row;
       const q = typeof r.qty === 'string' ? f(toXl(r.qty), R.Q[r.id]) : n(Number(S.items[r.id].qty));
-      const src = r.src + (r.refs.length ? ' – patrz Uwagi pkt ' + r.refs.join(', ') : '');
+      const src = r.src + (r.refs.length ? ' – see Notes item ' + r.refs.join(', ') : '');
       const srcCell = s(src);
-      if (r.refs.length) srcCell.l = { Target: `#'Uwagi'!A${uRow[r.refs[0]]}`, Tooltip: 'Przejdź do uwagi' };
+      if (r.refs.length) srcCell.l = { Target: `#'Notes'!A${uRow[r.refs[0]]}`, Tooltip: 'Go to note' };
       ks.push([n(lp), s(r.name), s(r.spec), q, s(r.unit), n(Number(S.items[r.id].price)), f(`ROUND(D${row}*F${row},2)`, R.V[r.id]), srcCell]);
     }
     ks[cr - 1] = [s(''), s(c.cat), s(''), s(''), s(''), s(''), f(`SUM(G${first}:G${ks.length})`, R.cat[c.cat])];
@@ -1392,13 +1448,13 @@ function buildWorkbook() {
   }
   ks.push([]);
   const m = ks.length + 1;
-  ks.push([s(''), s('Meble (materiały) razem'), s(''), s(''), s(''), s(''), f(catRows.filter(c => c[0] !== 'AGD').map(c => 'G' + c[1]).join('+'), R.meble)]);
-  ks.push([s(''), s('AGD razem'), s(''), s(''), s(''), s(''), f(catRows.filter(c => c[0] === 'AGD').map(c => 'G' + c[1]).join('+'), R.agd)]);
-  ks.push([s(''), s('Rezerwa na drobne / ceny szacunkowe'), s('% od mebli'), s(''), s(''), n(Number(S.params.reserve)), f(`ROUND(G${m}*F${m + 2},2)`, R.reserve)]);
-  ks.push([s(''), s('RAZEM BRUTTO'), s(''), s(''), s(''), s(''), f(`G${m}+G${m + 1}+G${m + 2}`, R.total)]);
-  ks.push([]); ks.push([s(''), s('Nie zawiera')]);
+  ks.push([s(''), s('Furniture (materials) total'), s(''), s(''), s(''), s(''), f(catRows.filter(c => c[0] !== 'Appliances').map(c => 'G' + c[1]).join('+'), R.furn)]);
+  ks.push([s(''), s('Appliances total'), s(''), s(''), s(''), s(''), f(catRows.filter(c => c[0] === 'Appliances').map(c => 'G' + c[1]).join('+'), R.appl)]);
+  ks.push([s(''), s('Contingency for small items / estimated prices'), s('% of furniture'), s(''), s(''), n(Number(S.params.reserve)), f(`ROUND(G${m}*F${m + 2},2)`, R.reserve)]);
+  ks.push([s(''), s('TOTAL GROSS'), s(''), s(''), s(''), s(''), f(`G${m}+G${m + 1}+G${m + 2}`, R.total)]);
+  ks.push([]); ks.push([s(''), s('Not included')]);
   DATA.excluded.forEach(e => ks.push([s(''), s('• ' + e)]));
-  const last = s('• Pytania i przyjęte założenia: patrz zakładka Uwagi.'); last.l = { Target: "#'Uwagi'!A1" };
+  const last = s('• Questions and assumptions: see the Notes tab.'); last.l = { Target: "#'Notes'!A1" };
   ks.push([s(''), last]);
 
   const wb = XL.utils.book_new();
@@ -1412,14 +1468,14 @@ function buildWorkbook() {
   ['C3'].forEach(a => wsK[a].z = '0%'); wsK['F' + (m + 2)].z = '0%';
   const wsR = mk(rz, [40, 10, 10, 8, 10, 15, 12]);
   for (let r = 1; r <= rz.length; r++) { const e = wsR['E' + r]; if (e && e.f) e.z = '0.000'; ['F', 'G'].forEach(c => { const x = wsR[c + r]; if (x && x.f) x.z = '0.00'; }); }
-  XL.utils.book_append_sheet(wb, wsK, 'Kosztorys');
-  XL.utils.book_append_sheet(wb, wsR, 'Rozkrój');
-  XL.utils.book_append_sheet(wb, mk(uw, [6, 34, 70, 42, 40]), 'Uwagi');
+  XL.utils.book_append_sheet(wb, wsK, 'Estimate');
+  XL.utils.book_append_sheet(wb, wsR, 'Cutting list');
+  XL.utils.book_append_sheet(wb, mk(uw, [6, 34, 70, 42, 40]), 'Notes');
   return wb;
 }
 document.getElementById('btnXlsx').addEventListener('click', async e => {
   const b = e.currentTarget; b.disabled = true;
-  try { await loadSheetJS(); window.XLSX.writeFile(buildWorkbook(), 'kosztorys_kuchnia_jaworze.xlsx', { compression: true }); }
+  try { await loadSheetJS(); window.XLSX.writeFile(buildWorkbook(), 'kitchen_cost_jaworze.xlsx', { compression: true }); }
   catch (err) { alert(err.message); }
   finally { b.disabled = false; }
 });

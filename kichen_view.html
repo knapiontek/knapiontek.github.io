@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}</style>
-<title>Kuchnia English Navy</title>
+<title>Kitchen English Navy</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: scena 3D na całą stronę; tytuł w lewym górnym rogu, karta z zakładkami po prawej, pasek widoków na dole */
+/* Layout: full-page 3D scene; title top left, tabbed card on the right, view bar at the bottom */
 :root{
   --stage:#d8dbde; --card:#fbfbfa; --ink:#1f2b45; --muted:#5b6474; --line:#d6d9de;
   --brass:#a87c3f; --chip:#eef0f2; --ok:#2f7d4f; --warn:#a2621a;
@@ -121,95 +121,95 @@ body.shut .toggle{display:flex}
 </head>
 <body>
 <div id="stage">
-  <div id="loading">Wczytuję projekt…</div>
+  <div id="loading">Loading project…</div>
   <div class="title">
-    <h1>Kuchnia <span>English Navy</span></h1>
+    <h1>Kitchen <span>English Navy</span></h1>
   </div>
 
   <button class="toggle" id="toggleSpec" aria-expanded="false" aria-controls="spec">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
-    Ustawienia</button>
+    Settings</button>
 
   <div class="spec" id="spec">
-    <div class="spec-head"><h2>Ustawienia</h2><button id="closeSpec">Zwiń</button></div>
+    <div class="spec-head"><h2>Settings</h2><button id="closeSpec">Collapse</button></div>
     <div class="tabs" role="tablist">
-      <button role="tab" id="t-view" aria-selected="true" aria-controls="p-view">Widok</button>
-      <button role="tab" id="t-carc" aria-selected="false" aria-controls="p-carc">Korpusy</button>
-      <button role="tab" id="t-prj" aria-selected="false" aria-controls="p-prj">Projekt</button>
+      <button role="tab" id="t-view" aria-selected="true" aria-controls="p-view">View</button>
+      <button role="tab" id="t-carc" aria-selected="false" aria-controls="p-carc">Carcasses</button>
+      <button role="tab" id="t-prj" aria-selected="false" aria-controls="p-prj">Project</button>
     </div>
 
     <div class="pane" id="p-view" role="tabpanel" aria-labelledby="t-view">
       <section>
-        <h2>Warstwy</h2>
+        <h2>Layers</h2>
         <div class="row chips" id="layers">
-          <button data-l="korpusy" aria-pressed="true">Korpusy</button>
-          <button data-l="polki" aria-pressed="true">Półki</button>
-          <button data-l="szuflady" aria-pressed="true">Szuflady</button>
-          <button data-l="okucia" aria-pressed="true">Zawiasy, prowadnice, nóżki</button>
-          <button data-l="fronty" aria-pressed="true">Fronty i uchwyty</button>
-          <button data-l="ramy" aria-pressed="true">Ramy i cokół</button>
-          <button data-l="agd" aria-pressed="true">AGD</button>
-          <button data-l="blaty" aria-pressed="true">Blaty i zlew</button>
-          <button data-l="room" aria-pressed="true">Ściany, okno, lampy</button>
+          <button data-l="carcasses" aria-pressed="true">Carcasses</button>
+          <button data-l="shelves" aria-pressed="true">Shelves</button>
+          <button data-l="drawers" aria-pressed="true">Drawers</button>
+          <button data-l="hardware" aria-pressed="true">Hinges, runners, legs</button>
+          <button data-l="fronts" aria-pressed="true">Fronts and handles</button>
+          <button data-l="frames" aria-pressed="true">Frames and plinth</button>
+          <button data-l="appliances" aria-pressed="true">Appliances</button>
+          <button data-l="worktops" aria-pressed="true">Worktops and sink</button>
+          <button data-l="room" aria-pressed="true">Walls, window, lamps</button>
         </div>
         <div class="row" id="presets" style="margin-top:10px">
-          <button data-preset="all">Wszystko</button>
-          <button data-preset="inside">Bez frontów i ram</button>
-          <button data-preset="carc">Same korpusy</button>
+          <button data-preset="all">Everything</button>
+          <button data-preset="inside">No fronts or frames</button>
+          <button data-preset="carc">Carcasses only</button>
         </div>
       </section>
       <section>
-        <h2>Fronty</h2>
+        <h2>Fronts</h2>
         <div class="row">
-          <button id="openAll">Otwórz wszystkie</button>
-          <button id="closeAll">Zamknij wszystkie</button>
+          <button id="openAll">Open all</button>
+          <button id="closeAll">Close all</button>
         </div>
-        <p class="hint">Kliknij front, żeby go otworzyć.</p>
+        <p class="hint">Click a front to open it.</p>
       </section>
       <section>
-        <h2>Uchwyty</h2>
+        <h2>Handles</h2>
         <div class="row" id="hstyle" style="margin-bottom:10px">
-          <button data-h="cup" aria-pressed="true">Muszelka IKEA</button>
-          <button data-h="bar" aria-pressed="false">Reling</button>
+          <button data-h="cup" aria-pressed="true">IKEA cup</button>
+          <button data-h="bar" aria-pressed="false">Bar handle</button>
         </div>
         <div class="row" id="metal">
-          <button data-m="brass" aria-pressed="true" class="swatch" aria-label="Złoty (mosiądz)" title="Złoty (mosiądz)"><i style="background:#c49a5c"></i></button>
-          <button data-m="nickel" aria-pressed="false" class="swatch" aria-label="Nikiel" title="Nikiel"><i style="background:#c9c7c0"></i></button>
-          <button data-m="black" aria-pressed="false" class="swatch" aria-label="Czarne" title="Czarne"><i style="background:#1c1d1f"></i></button>
+          <button data-m="brass" aria-pressed="true" class="swatch" aria-label="Gold (brass)" title="Gold (brass)"><i style="background:#c49a5c"></i></button>
+          <button data-m="nickel" aria-pressed="false" class="swatch" aria-label="Nickel" title="Nickel"><i style="background:#c9c7c0"></i></button>
+          <button data-m="black" aria-pressed="false" class="swatch" aria-label="Black" title="Black"><i style="background:#1c1d1f"></i></button>
         </div>
       </section>
       <section>
-        <h2>Kolory</h2>
+        <h2>Colours</h2>
         <div class="row" id="palette">
-          <button data-p="project" aria-pressed="true">Projekt</button>
-          <button data-p="light" aria-pressed="false">Jasne, do detali</button>
-          <button id="edgesBtn" aria-pressed="false">Krawędzie</button>
+          <button data-p="project" aria-pressed="true">Project</button>
+          <button data-p="light" aria-pressed="false">Light, for detail</button>
+          <button id="edgesBtn" aria-pressed="false">Edges</button>
         </div>
       </section>
     </div>
 
     <div class="pane" id="p-carc" role="tabpanel" aria-labelledby="t-carc" hidden>
       <section>
-        <h2>Zestawienie z modelu</h2>
+        <h2>Summary from the model</h2>
         <dl id="kStats"></dl>
       </section>
       <section>
-        <h2>Formatki</h2>
+        <h2>Panels</h2>
         <div class="row">
-          <button id="roleBtn" aria-pressed="false">Kolory formatek</button>
-          <button id="carcPreset">Pokaż same korpusy</button>
+          <button id="roleBtn" aria-pressed="false">Colour by panel</button>
+          <button id="carcPreset">Show carcasses only</button>
         </div>
         <ul class="legend" id="legend"></ul>
-        <label class="slider" for="explode">Rozsunięcie <input type="range" id="explode" min="0" max="100" value="0"></label>
+        <label class="slider" for="explode">Explode <input type="range" id="explode" min="0" max="100" value="0"></label>
       </section>
       <section id="kDetailWrap" hidden><div class="kdet" id="kDetail"></div></section>
       <section>
-        <h2>Korpusy</h2>
+        <h2>Carcasses</h2>
         <ol class="klist" id="klist"></ol>
-        <p class="hint">Kliknij korpus, żeby go podświetlić.</p>
+        <p class="hint">Click a carcass to highlight it.</p>
       </section>
       <section>
-        <h2>Rozkrój: model a kosztorys</h2>
+        <h2>Cutting list: model vs cost estimate</h2>
         <div class="tw"><table class="cut" id="cut"></table></div>
         <p class="note" id="cutNote"></p>
       </section>
@@ -217,23 +217,23 @@ body.shut .toggle{display:flex}
 
     <div class="pane" id="p-prj" role="tabpanel" aria-labelledby="t-prj" hidden>
       <section>
-        <h2>Materiały</h2>
+        <h2>Materials</h2>
         <ul class="mats">
-          <li><i style="background:#222e4c"></i><small>Fronty MDF 18</small><b>English Navy, satyna</b></li>
-          <li><i style="background:linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)"></i><small>Blaty 38, wodospady</small><b>Laminat, dąb</b></li>
-          <li><i style="background:#eeede9"></i><small>Korpusy</small><b>Płyta 18 biała, ABS 0,8</b></li>
-          <li><i style="background:#e4e2dc"></i><small>Plecy</small><b>HDF 3 biały</b></li>
-          <li><i style="background:radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"></i><small>Zlew</small><b>Granit kompozyt</b></li>
-          <li><i style="background:linear-gradient(120deg,#c4c6c7,#b5b8ba 45%,#cfd1d2)"></i><small>Podłoga</small><b>Szary marmur 120 × 60</b></li>
+          <li><i style="background:#222e4c"></i><small>Fronts MDF 18</small><b>English Navy, satin</b></li>
+          <li><i style="background:linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)"></i><small>Worktops 38, waterfalls</small><b>Laminate, oak</b></li>
+          <li><i style="background:#eeede9"></i><small>Carcasses</small><b>Chipboard 18 white, ABS 0.8</b></li>
+          <li><i style="background:#e4e2dc"></i><small>Backs</small><b>HDF 3 white</b></li>
+          <li><i style="background:radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"></i><small>Sink</small><b>Granite composite</b></li>
+          <li><i style="background:linear-gradient(120deg,#c4c6c7,#b5b8ba 45%,#cfd1d2)"></i><small>Floor</small><b>Grey marble 120 × 60</b></li>
         </ul>
       </section>
       <details open>
-        <summary>Wymiary w modelu</summary>
+        <summary>Dimensions in the model</summary>
         <dl id="dims"></dl>
       </details>
       <p class="note" id="src"></p>
       <details>
-        <summary>Notatki projektu</summary>
+        <summary>Project notes</summary>
         <dl class="notes" id="pnotes"></dl>
       </details>
     </div>
@@ -241,28 +241,29 @@ body.shut .toggle{display:flex}
 
   <div id="tip" hidden></div>
 
-  <nav class="dock" id="views" aria-label="Widoki">
+  <nav class="dock" id="views" aria-label="Views">
     <div class="full">
-    <button data-v="all" aria-pressed="true">Ogólny</button>
-    <button data-v="a" aria-pressed="false">Pod oknem</button>
-    <button data-v="b" aria-pressed="false">Wysoka zabudowa</button>
-    <button data-v="c" aria-pressed="false">Wyspa</button>
-    <button data-v="sink" aria-pressed="false">Zlew</button>
-    <button data-v="corner" aria-pressed="false">Narożnik</button>
-    <button data-v="top" aria-pressed="false">Rzut</button>
+    <button data-v="all" aria-pressed="true">Overview</button>
+    <button data-v="a" aria-pressed="false">Under window</button>
+    <button data-v="b" aria-pressed="false">Tall units</button>
+    <button data-v="c" aria-pressed="false">Island</button>
+    <button data-v="sink" aria-pressed="false">Sink</button>
+    <button data-v="corner" aria-pressed="false">Corner</button>
+    <button data-v="top" aria-pressed="false">Plan</button>
     </div>
     <div class="mini">
-      <button type="button" data-step="-1" aria-label="Poprzedni widok">‹</button>
-      <select id="viewSel" aria-label="Widok"><option value="all">Ogólny</option><option value="a">Pod oknem</option><option value="b">Wysoka zabudowa</option><option value="c">Wyspa</option><option value="sink">Zlew</option><option value="corner">Narożnik</option><option value="top">Rzut</option></select>
-      <button type="button" data-step="1" aria-label="Następny widok">›</button>
+      <button type="button" data-step="-1" aria-label="Previous view">‹</button>
+      <select id="viewSel" aria-label="View"><option value="all">Overview</option><option value="a">Under window</option><option value="b">Tall units</option><option value="c">Island</option><option value="sink">Sink</option><option value="corner">Corner</option><option value="top">Plan</option></select>
+      <button type="button" data-step="1" aria-label="Next view">›</button>
     </div>
   </nav>
 </div>
 
 <!-- ===================================================================
-     KOPIA PROJEKTU z kitchen_design.html (blok #kitchen-project).
-     Na GitHub Pages widok czyta projekt bezpośrednio z kitchen_design.html
-     i rozkrój z kitchen_cost.html; ta kopia działa, gdy pliku nie ma obok.
+     COPY OF THE PROJECT from kitchen_design.html (block #kitchen-project).
+     On GitHub Pages the view reads the project directly from kitchen_design.html
+     and the cutting list from kitchen_cost.html; this copy is used when those
+     files are not next to this one.
      =================================================================== -->
 <script type="application/json" id="kitchen-project">
 {
@@ -273,20 +274,22 @@ body.shut .toggle{display:flex}
     ["Scope", "Materials only, owner builds it", "Prices: average market, PLN gross"],
     ["Style", "Shaker, painted", "Overlay fronts; frames between fronts make them look inset"],
     ["Fronts", "MDF 18 mm shaker, English Navy satin", "Ordered lacquered from a front maker"],
-    ["Frame", "MDF like fronts, lacquered, set on edge, 100 deep", "MDF 18 + lacquer ≈ 18.5. Frames wider than 20 are flat"],
+    ["Frame", "MDF 18 like fronts, lacquered; 18 wide frames set on edge, 100 deep", "MDF 18 + lacquer ≈ 18.5. Any filler / frame wider than 18 (e.g. the 80 at the L corner) is installed flat, face-on, not on edge"],
     ["Carcass material", "Chipboard 18 mm white, ABS 0.8 front edge", "Back HDF 3 mm white. Cut and edge-banded by the board supplier"],
     ["Carcass depth", "550", "Almost everywhere"],
     ["Carcasses", "Modular, carcass width = column width", "Stacked fronts in one column form one carcass; under-ceiling cabinets separate. No carcass for the dishwasher. L corner: 800 carcass behind the 400 door, rest empty"],
     ["Base carcasses", "2 top rails 100 deep instead of a full top", ""],
     ["Shelves", "Adjustable, carcass depth minus 20", "1 per door up to 720 high, 3 per taller door; none in the sink unit or the fridge carcass. Fixed shelf between stacked doors in one carcass and under / above built-in appliances"],
     ["Hinges", "Blum CLIP top BLUMOTION 110° + mounting plate", "Cheaper alternative: GTV soft-close. Per door by height: <900: 2, <1600: 3, else 4. None on fronts fixed to appliances or on the sink dummy front"],
-    ["Drawers", "Blum TANDEMBOX antaro NL 500, BLUMOTION", "Front ≥350 → D (224), lower → M (83). Bottom and back: chipboard 16. Under the sink: U drawer (D)"],
-    ["Back strips", "Chipboard 18 behind every 20 frame", "On edge, 100 deep, frame length, + 2 mm packing"],
+    ["Drawers", "Blum TANDEMBOX antaro NL 500, BLUMOTION", "Front ≥350 → D (224), lower → M (83). Bottom and back: chipboard 16. Each active top drawer (note \"inner drawer\") has a shallow inner drawer for cutlery: TANDEMBOX antaro inner drawer M (83) NL 500, on the carcass sides above the top drawer box, behind the same front; Blum metal inner front cut to LW − 132. Stack: bottom drawer, top drawer, inner mini drawer"],
+    ["Sink unit", "Bottom drawer: standard D drawer (no U cut-out) with waste-sorting bins", "Needs a space-saving trap kept above the drawer (wall drain ≥ 450 above floor); top front is a fixed dummy"],
+    ["Back strips", "Chipboard 18 behind every 18 frame", "On edge, 100 deep, frame length; same thickness as the frame, so no packing"],
     ["Handles", "IKEA ENERYDA cup, brass", ""],
     ["Worktop", "Laminate oak 38", "Depth 600 for Group 1 (one piece through the L corner; Group 2 shows its end), 900 for the island. Waterfalls cut from the same worktop"],
     ["Wall panel", "Laminate wall panel matching the worktop", ""],
     ["Island", "Stools on the back side under the worktop overhang", "Back closed with a smooth MDF 18 lacquered panel between the waterfalls"],
-    ["Plinth", "MDF 18 lacquered", "Cut to length on site. Adjustable legs 100 with plinth clips, 4 per carcass. Ventilation grille under the fridge"],
+    ["Plinth", "MDF 18 lacquered", "Cut to length on site. Adjustable legs 100 with plinth clips, 4 per carcass, set back behind the plinth. Aluminium ventilation grille in the plinth under the fridge (≈ 500 × 60, ≥ 200 cm² open)"],
+    ["Front gaps", "4 mm between fronts", "Fronts standing on the plinth use Gap H 2 (no 4 mm reveal needed at the plinth)"],
     ["Filler", "Wall, plasterboard or void - not ordered", ""],
     ["Fixings", "About 18 confirmat screws per carcass", "4 shelf pins per shelf; carcass connectors and wall brackets"],
     ["Sink", "Inset granite 1-bowl, with tap", ""],
@@ -300,9 +303,9 @@ body.shut .toggle{display:flex}
     ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"]
   ],
   "columns": {
-    "1": [38, 20, 800, 20, 600, 20, 800, 20, 400, 80, 550],
-    "2": [20, 560, 20, 20, 600, 20, 600, 20, 600, 20, 250, 20, 120],
-    "3": [38, 20, 800, 20, 800, 20, 38]
+    "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 550],
+    "2": [18, 564, 18, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130],
+    "3": [38, 18, 800, 18, 800, 18, 38]
   },
   "components": [
     {"g": 1, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": "", "gh": "", "note": "Waterfall end"},
@@ -310,64 +313,64 @@ body.shut .toggle{display:flex}
     {"g": 1, "c": 1, "s": 10, "t": "worktop", "h": 222, "hd": "", "gw": "", "gh": "", "note": "Wall panel"},
     {"g": 1, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": "", "gh": ""},
     {"g": 1, "c": 3, "s": 8, "t": "plinth", "h": 100, "hd": "", "gw": "", "gh": "", "note": "Plinth"},
-    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer (deep)"},
-    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer, hob above"},
+    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Drawer (deep)"},
+    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery), hob above"},
     {"g": 1, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": ""},
-    {"g": 1, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 4, "note": "Dishwasher, niche 815-875 x 600 x 550"},
+    {"g": 1, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Dishwasher, niche 815-875 x 600 x 550"},
     {"g": 1, "c": 6, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": ""},
-    {"g": 1, "c": 7, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 4, "note": "Sink unit, U drawer"},
+    {"g": 1, "c": 7, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Sink unit, drawer with waste-sorting bins"},
     {"g": 1, "c": 7, "s": 1, "t": "cabinet", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Sink unit, dummy front"},
     {"g": 1, "c": 8, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": ""},
-    {"g": 1, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 4, "note": "Corner cabinet, carcass 800"},
-    {"g": 1, "c": 10, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Corner cabinet, carcass 800"},
+    {"g": 1, "c": 10, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": "", "note": "Filler 80, installed flat"},
     {"g": 1, "c": 11, "s": 1, "t": "filler", "h": 820, "hd": "", "gw": "", "gh": "", "note": "L corner, empty past the 800 carcass"},
 
     {"g": 2, "c": 1, "s": 2, "t": "filler", "h": 820, "hd": "", "gw": "", "gh": "", "note": "L corner, under the worktop"},
     {"g": 2, "c": 1, "s": 3, "t": "worktop", "h": 38, "hd": "", "gw": "", "gh": "", "note": "Group 1 worktop seen end-on"},
     {"g": 2, "c": 1, "s": 1, "t": "frame", "h": 1642, "hd": "", "gw": "", "gh": ""},
-    {"g": 2, "c": 1, "s": 12, "t": "frame", "h": 20, "hd": "", "gw": "", "gh": ""},
-    {"g": 2, "c": 1, "s": 12, "t": "filler", "h": 220, "hd": "", "gw": "", "gh": "", "note": "Soffit to ceiling"},
+    {"g": 2, "c": 1, "s": 12, "t": "frame", "h": 18, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 1, "s": 12, "t": "filler", "h": 222, "hd": "", "gw": "", "gh": "", "note": "Soffit to ceiling"},
     {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 1162, "hd": "R", "gw": 4, "gh": 4},
     {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 3, "s": 9, "t": "plinth", "h": 100, "hd": "", "gw": "", "gh": "", "note": "Plinth"},
+    {"g": 2, "c": 3, "s": 9, "t": "plinth", "h": 100, "hd": "", "gw": "", "gh": "", "note": "Plinth, ventilation grille under the fridge"},
     {"g": 2, "c": 3, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": ""},
     {"g": 2, "c": 4, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": "", "gh": ""},
-    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
     {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 1200, "hd": "R", "gw": 4, "gh": 4},
     {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
     {"g": 2, "c": 6, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": "", "gh": ""},
-    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 520, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 520, "hd": "T", "gw": 4, "gh": 2},
     {"g": 2, "c": 7, "s": 1, "t": "oven", "h": 600, "hd": "", "gw": "", "gh": "", "note": "Niche 560 x 580 x 550 (verify)"},
     {"g": 2, "c": 7, "s": 1, "t": "micro", "h": 382, "hd": "", "gw": "", "gh": "", "note": "Niche 362-365 x 560-568 x 320"},
     {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 418, "hd": "B", "gw": 4, "gh": 4},
     {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
     {"g": 2, "c": 8, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": "", "gh": ""},
-    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 4, "note": "Freezer door"},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Freezer door"},
     {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4, "note": "Fridge door, niche 1775-1780 x 560 x 550"},
     {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
     {"g": 2, "c": 10, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": "", "gh": ""},
-    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
     {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4},
     {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
     {"g": 2, "c": 12, "s": 1, "t": "frame", "h": 2500, "hd": "", "gw": "", "gh": ""},
-    {"g": 2, "c": 13, "s": 1, "t": "filler", "h": 2740, "hd": "", "gw": "", "gh": "", "note": "Wall / plasterboard"},
+    {"g": 2, "c": 13, "s": 1, "t": "filler", "h": 2740, "hd": "", "gw": "", "gh": "", "note": "Wall / plasterboard (130 keeps the run wall-to-wall with 18 frames)"},
 
     {"g": 3, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": "", "gh": "", "note": "Waterfall end"},
     {"g": 3, "c": 1, "s": 10, "t": "worktop", "h": 38, "hd": "", "gw": "", "gh": "", "note": "Worktop"},
     {"g": 3, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": "", "gh": ""},
     {"g": 3, "c": 3, "s": 3, "t": "plinth", "h": 100, "hd": "", "gw": "", "gh": "", "note": "Plinth"},
-    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 4},
-    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
     {"g": 3, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": ""},
-    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 4},
-    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4},
+    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
     {"g": 3, "c": 6, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": "", "gh": ""},
     {"g": 3, "c": 7, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": "", "gh": "", "note": "Waterfall end"}
   ]
 }
 </script>
 <script type="application/json" id="cost-fallback">
-[{"id": "p18", "rows": [["Bok", 550, 720, 10], ["Wieniec dolny", 764, 550, 5], ["Trawers (listwa górna 100)", 764, 100, 10], ["Półka ruchoma", 762, 530, 1], ["Bok", 550, 1162, 2], ["Wieniec dolny", 544, 550, 2], ["Wieniec górny", 544, 550, 2], ["Półka ruchoma", 542, 530, 4], ["Bok", 550, 480, 10], ["Bok", 550, 1920, 8], ["Wieniec dolny", 564, 550, 6], ["Wieniec górny", 564, 550, 6], ["Półka stała", 564, 530, 4], ["Półka ruchoma", 562, 530, 9], ["Wieniec dolny", 214, 550, 2], ["Wieniec górny", 214, 550, 2], ["Półka stała", 214, 530, 1], ["Półka ruchoma", 212, 530, 5], ["Listwa tylna 100", 100, 820, 3], ["Listwa tylna 100", 100, 720, 5], ["Listwa tylna 100", 100, 1642, 1], ["Listwa tylna 100", 100, 2750, 1], ["Listwa tylna 100", 100, 2400, 4], ["Listwa tylna 100", 100, 2500, 1]]}, {"id": "p16", "rows": [["Dno szuflady", 689, 490, 6], ["Tył szuflady D", 677, 199, 3], ["Tył szuflady M", 677, 68, 3], ["Dno szuflady U", 689, 490, 1], ["Tył szuflady U", 189, 199, 2]]}, {"id": "hdf", "rows": [["Plecy", 798, 718, 5], ["Plecy", 578, 1160, 1], ["Plecy", 578, 478, 1], ["Plecy", 598, 1918, 3], ["Plecy", 598, 478, 3], ["Plecy", 248, 1918, 1], ["Plecy", 248, 478, 1]]}]
+[{"id": "p18", "rows": [["Side", 550, 720, 10], ["Bottom panel", 764, 550, 5], ["Top rail 100", 764, 100, 10], ["Adjustable shelf", 762, 530, 1], ["Side", 550, 1162, 2], ["Bottom panel", 546, 550, 2], ["Top panel", 546, 550, 2], ["Adjustable shelf", 544, 530, 4], ["Side", 550, 480, 10], ["Side", 550, 1920, 8], ["Bottom panel", 564, 550, 6], ["Top panel", 564, 550, 6], ["Fixed shelf", 564, 530, 4], ["Adjustable shelf", 562, 530, 9], ["Bottom panel", 214, 550, 2], ["Top panel", 214, 550, 2], ["Fixed shelf", 214, 530, 1], ["Adjustable shelf", 212, 530, 5], ["Back strip 100", 100, 820, 3], ["Back strip 100", 100, 720, 5], ["Back strip 100", 100, 1642, 1], ["Back strip 100", 100, 2740, 1], ["Back strip 100", 100, 2400, 4], ["Back strip 100", 100, 2500, 1]]}, {"id": "p16", "rows": [["Drawer bottom", 689, 490, 10], ["Drawer back D", 677, 199, 4], ["Drawer back M", 677, 68, 3], ["Inner drawer back", 677, 84, 3]]}, {"id": "hdf", "rows": [["Back", 798, 718, 5], ["Back", 580, 1160, 1], ["Back", 580, 478, 1], ["Back", 598, 1918, 3], ["Back", 598, 478, 3], ["Back", 248, 1918, 1], ["Back", 248, 478, 1]]}]
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -378,9 +381,9 @@ body.shut .toggle{display:flex}
 'use strict';
 const stage=document.getElementById('stage');
 const loading=document.getElementById('loading');
-if(!window.THREE||!THREE.OrbitControls){loading.textContent='Nie udało się wczytać silnika 3D. Odśwież stronę.';return;}
+if(!window.THREE||!THREE.OrbitControls){loading.textContent='Could not load the 3D engine. Reload the page.';return;}
 
-/* ================= 1. DANE PROJEKTU ================= */
+/* ================= 1. PROJECT DATA ================= */
 async function grab(url,id){
   try{const r=await fetch(url,{cache:'no-cache'});if(!r.ok)return null;const t=await r.text();
     const m=t.match(new RegExp('<script[^>]*id="'+id+'"[^>]*>([\\s\\S]*?)<\\/script>'));return m?JSON.parse(m[1]):null;}catch(e){return null;}}
@@ -388,21 +391,21 @@ const live=/^https?:$/.test(location.protocol);
 const embedded=JSON.parse(document.getElementById('kitchen-project').textContent);
 let PRJ=live?await grab('kitchen_design.html','kitchen-project'):null;
 if(!PRJ||!PRJ.columns||!PRJ.components)PRJ=null;
-const SRC=PRJ?'Dane na żywo z kitchen_design.html':'Dane z kopii projektu zapisanej w tym pliku';
+const SRC=PRJ?'Live data from kitchen_design.html':'Data from the project copy saved in this file';
 PRJ=PRJ||embedded;
 const costLive=live?await grab('kitchen_cost.html','cost-data'):null;
 const COSTB=(costLive&&costLive.blocks)||JSON.parse(document.getElementById('cost-fallback').textContent);
-document.getElementById('src').textContent=SRC+(costLive?', rozkrój z kitchen_cost.html.':'.');
+document.getElementById('src').textContent=SRC+(costLive?', cutting list from kitchen_cost.html.':'.');
 const num=(v,d)=>{const x=parseFloat(v);return Number.isFinite(x)?x:d;};
 const GAP=num(PRJ.settings&&PRJ.settings.gapMm,4);
 
-// Group 1 = ciąg pod oknem (A), Group 2 = wysoka zabudowa na prawej ścianie (B), Group 3 = wyspa (C)
+// Group 1 = run under the window (A), Group 2 = tall units on the right wall (B), Group 3 = island (C)
 const RUNOF={1:'A',2:'B',3:'C'},GOF={A:1,B:2,C:3},RUNS3=['A','B','C'];
 const G={A:{w:[],c:[]},B:{w:[],c:[]},C:{w:[],c:[]}};
 for(const [g,w] of Object.entries(PRJ.columns))if(RUNOF[g])G[RUNOF[g]].w=w.map(Number);
-for(const c of PRJ.components){const r=RUNOF[c.g];if(r)G[r].c.push({c:+c.c,s:+c.s,t:c.t,h:+c.h,hd:c.hd||'',gw:c.gw,gh:c.gh,note:c.note||'',cw:num(((c.note||'').match(/carcass (\d{3,4})/i)||[])[1],0)});}   // "carcass 800" w notatce = korpus szerszy niż kolumna
+for(const c of PRJ.components){const r=RUNOF[c.g];if(r)G[r].c.push({c:+c.c,s:+c.s,t:c.t,h:+c.h,hd:c.hd||'',gw:c.gw,gh:c.gh,note:c.note||'',cw:num(((c.note||'').match(/carcass (\d{3,4})/i)||[])[1],0)});}   // "carcass 800" in the note = carcass wider than its column
 
-// wierny port LayoutEngine z kitchen_design: start = najwyższy ciągły stos od 0 w kolumnach zakresu, kolizja = pominięcie
+// faithful port of LayoutEngine from kitchen_design: start = top of the contiguous stack from 0 in the spanned columns, overlap = skipped
 function layout(g){const n=g.w.length,x=[0];g.w.forEach(w=>x.push(x[x.length-1]+w));const occ=g.w.map(()=>[]),out=[];
   const top=r=>{let y=0;for(const [a,b] of [...r].sort((p,q)=>p[0]-q[0])){if(a<=y){if(b>y)y=b;}else break;}return y;};
   for(const it of g.c){const i=it.c-1,j=Math.min(i+it.s,n),h=it.h;if(i<0||i>=n||it.s<1||!(h>0))continue;
@@ -414,24 +417,24 @@ const LA=layout(G.A),LB=layout(G.B),LC=layout(G.C),LAY={A:LA,B:LB,C:LC};
 const cum=w=>w.reduce((a,v)=>(a.push(a[a.length-1]+v),a),[0]);
 const WA=cum(G.A.w),WB=cum(G.B.w),WC=cum(G.C.w);
 
-/* ---------- układ (mm): A na ścianie z oknem z=0, B na prawej ścianie x=RX, C wyspa ---------- */
+/* ---------- layout (mm): A on the window wall z=0, B on the right wall x=RX, C island ---------- */
 const RX=WA[WA.length-1], CW=WC[WC.length-1];
-const OA=10, FN=570, FR=50, HO=28;   // FN: lico frontów od ściany; FR: rama frontu shaker; HO: oś uchwytu na ramie
-const CD=550, CN1=FN-18, CN0=CN1-CD;  // korpus gł. 550: od n=2 do n=552, za frontem 18
-const PF=FN-70;                       // lico cokołu 70 za licem frontów
+const OA=10, FN=570, FR=50, HO=28;   // FN: front face from the wall; FR: shaker front rail width; HO: handle axis on the rail
+const CD=550, CN1=FN-18, CN0=CN1-CD;  // carcass depth 550: from n=2 to n=552, behind the 18 front
+const PF=FN-70;                       // plinth face 70 behind the front face
 const wtA=LA.find(i=>i.t==='worktop'&&i.v1-i.v0<=60&&i.s>1);
 const WTH=wtA?wtA.v1-wtA.v0:38, WT=wtA?wtA.v1:858;
 const HC=Math.max(2400,...LB.map(i=>i.v1));
 const BEND=Math.max(...LB.filter(i=>i.t!=='filler'&&i.t!=='worktop').map(i=>i.u1));
-const IZ=BEND-900;             // wyspa: tył równo z końcem szafek B
-const XF=RX-FN, XA=XF+12;      // lico zabudowy B; AGD osadzone w ramie
+const IZ=BEND-900;             // island: back in line with the end of the B units
+const XF=RX-FN, XA=XF+12;      // B front face; appliances set in the frame
 const RUNS={
   A:(u0,u1,n0,n1)=>[u0,u1,n0+OA,n1+OA],
   B:(u0,u1,n0,n1)=>[RX-n1,RX-n0,u0,u1],
   C:(u0,u1,n0,n1)=>[CW-u1,CW-u0,IZ+600-n1,IZ+600-n0]
 };
 
-/* ================= 2. TEKSTURY ================= */
+/* ================= 2. TEXTURES ================= */
 function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function oakCanvas(){const W=2048,H=512,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d'),r=rng(1907);
   const pxm=H/600, stave=90*pxm;
@@ -471,12 +474,12 @@ function skyCanvas(){const W=1024,H=512,c=document.createElement('canvas');c.wid
 function displayCanvas(txt){const c=document.createElement('canvas');c.width=256;c.height=80;const g=c.getContext('2d');
   g.fillStyle='#000';g.fillRect(0,0,256,80);g.fillStyle='#7dd3fc';g.font='500 52px "JetBrains Mono",monospace';g.textAlign='center';g.textBaseline='middle';g.fillText(txt,128,42);return c;}
 
-/* ================= 3. RENDERER I MATERIAŁY ================= */
+/* ================= 3. RENDERER AND MATERIALS ================= */
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
-renderer.shadowMap.autoUpdate=false;   // cienie liczone tylko po zmianie sceny (fronty, warstwy), nie przy każdym ruchu kamery
+renderer.shadowMap.autoUpdate=false;   // shadows recomputed only when the scene changes (fronts, layers), not on every camera move
 let shadowDirty=true;const dirty=()=>{shadowDirty=true;};
 renderer.physicallyCorrectLights=true;
 stage.prepend(renderer.domElement);
@@ -513,29 +516,31 @@ const M={
   pvc:new THREE.MeshPhysicalMaterial({color:C(0x383e42),roughness:.45,clearcoat:.25,clearcoatRoughness:.4,envMapIntensity:.6}),
   gasket:std({color:C(0x1a1a1a),roughness:.8}),
   glass:new THREE.MeshPhysicalMaterial({color:C(0xe8f2f4),roughness:0,metalness:0,transparent:true,opacity:.12,clearcoat:1,envMapIntensity:1.5,depthWrite:false,side:THREE.DoubleSide}),
-  carcass:std({color:C(0xeeede9),roughness:.75,envMapIntensity:.5}),      // płyta wiórowa biała 18, ABS
-  hdf:std({color:C(0xe4e2dc),roughness:.85,envMapIntensity:.4}),          // plecy HDF 3
+  carcass:std({color:C(0xeeede9),roughness:.75,envMapIntensity:.5}),      // white chipboard 18, ABS
+  hdf:std({color:C(0xe4e2dc),roughness:.85,envMapIntensity:.4}),          // HDF 3 back
   granite:new THREE.MeshPhysicalMaterial({map:tex(graniteCanvas(),4,4),roughness:.55,clearcoat:.15,clearcoatRoughness:.6,envMapIntensity:.5}),
   blackMetal:std({color:C(0x141517),roughness:.42,metalness:.45,envMapIntensity:.8}),
   appBody:std({color:C(0x3a3d42),roughness:.6,metalness:.35}),
-  zinc:std({color:C(0xb9bec4),roughness:.32,metalness:.85,envMapIntensity:1.1}),  // okucia: zawiasy, prowadnice
-  boxSide:std({color:C(0xdcdedf),roughness:.35,metalness:.35,envMapIntensity:.9}), // boki TANDEMBOX antaro
+  zinc:std({color:C(0xb9bec4),roughness:.32,metalness:.85,envMapIntensity:1.1}),  // hardware: hinges, runners
+  boxSide:std({color:C(0xdcdedf),roughness:.35,metalness:.35,envMapIntensity:.9}), // TANDEMBOX antaro sides
   leg:std({color:C(0x2e2f31),roughness:.6}),
   wire:std({color:C(0xc8ccd0),roughness:.35,metalness:.85,transparent:true,opacity:.55,depthWrite:false}),
   fridge:std({color:C(0xf4f5f4),roughness:.35,envMapIntensity:.6}),
   ice:new THREE.MeshPhysicalMaterial({color:C(0xdbe8ee),roughness:.1,transparent:true,opacity:.35,depthWrite:false,envMapIntensity:1}),
   glassShelf:new THREE.MeshPhysicalMaterial({color:C(0xcfe4e6),roughness:.05,transparent:true,opacity:.45,depthWrite:false,envMapIntensity:1.2}),
+  bin:std({color:C(0x8a8f96),roughness:.55,envMapIntensity:.5}),                 // waste-sorting bins, plastic
+  insert:std({color:C(0xd9dadb),roughness:.5,envMapIntensity:.6}),               // cutlery insert
   sel:std({color:C(0x8fd0f5),roughness:.6,emissive:C(0x1a5a80),emissiveIntensity:.6})
 };
 const ledW=new THREE.MeshBasicMaterial({color:C(0xfff6ea)});ledW.color.multiplyScalar(3);
 function setMetal(k){const m=METALS[k];M.handle.color.copy(C(m.color));M.handle.roughness=m.rough;M.handle.metalness=m.metal;}
 
-/* ---------- warstwy: każda to zestaw grup, przełączanych razem ---------- */
-const LNAMES=['korpusy','polki','szuflady','okucia','fronty','ramy','agd','blaty','room'];
+/* ---------- layers: each is a set of groups toggled together ---------- */
+const LNAMES=['carcasses','shelves','drawers','hardware','fronts','frames','appliances','worktops','room'];
 const LYG={};
 function lg(parent,name){const g=new THREE.Group();parent.add(g);(LYG[name]||(LYG[name]=[])).push(g);return g;}
 const WL={};for(const n of LNAMES)WL[n]=lg(scene,n);
-// ciągi jako grupy: lokalnie X wzdłuż ciągu (u), Y w górę (v), Z od ściany do lica (n)
+// runs as groups: local X along the run (u), Y up (v), Z from wall to front face (n)
 const runG={A:new THREE.Group(),B:new THREE.Group(),C:new THREE.Group()};
 runG.A.position.set(0,0,OA/1000);
 runG.B.position.set(RX/1000,0,0);runG.B.rotation.y=-Math.PI/2;
@@ -550,22 +555,24 @@ function bx(x0,x1,y0,y1,z0,z1,mat,parent,noShadow){const w=(x1-x0)/1000,h=(y1-y0
 function rb(run,u0,u1,v0,v1,n0,n1,mat,parent){const [x0,x1,z0,z1]=RUNS[run](u0,u1,n0,n1);return bx(x0,x1,v0,v1,z0,z1,mat,parent);}
 function cyl(r,len,mat,x,y,z,axis,seg){const m=new THREE.Mesh(new THREE.CylinderGeometry(r/1000,r/1000,len/1000,seg||24),mat);m.position.set(x/1000,y/1000,z/1000);
   if(axis==='x')m.rotation.z=Math.PI/2;if(axis==='z')m.rotation.x=Math.PI/2;m.castShadow=true;CUR.add(m);parts.push(m);return m;}
-// lokalne bryły w układzie ciągu (mm)
+// local boxes in run coordinates (mm)
 function lb(P,u0,u1,v0,v1,n0,n1,mat,noShadow){const w=(u1-u0)/1000,h=(v1-v0)/1000,d=(n1-n0)/1000;if(w<=0||h<=0||d<=0)return null;
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set((u0+u1)/2000,(v0+v1)/2000,(n0+n1)/2000);
   m.castShadow=!noShadow;m.receiveShadow=true;P.add(m);parts.push(m);return m;}
 function lc(P,r,len,mat,u,v,n,axis,seg){const m=new THREE.Mesh(new THREE.CylinderGeometry(r/1000,r/1000,len/1000,seg||20),mat);m.position.set(u/1000,v/1000,n/1000);
   if(axis==='x')m.rotation.z=Math.PI/2;if(axis==='z')m.rotation.x=Math.PI/2;m.castShadow=true;m.receiveShadow=true;P.add(m);parts.push(m);return m;}
-function hollow(P,u0,u1,v0,v1,n0,n1,t,mat){   // skrzynia otwarta od przodu (+n)
+function hollow(P,u0,u1,v0,v1,n0,n1,t,mat){   // box open at the front (+n)
   lb(P,u0,u0+t,v0,v1,n0,n1,mat);lb(P,u1-t,u1,v0,v1,n0,n1,mat);lb(P,u0+t,u1-t,v0,v0+t,n0,n1,mat);lb(P,u0+t,u1-t,v1-t,v1,n0,n1,mat);lb(P,u0+t,u1-t,v0+t,v1-t,n0,n0+t,mat);}
+function hollowTop(P,u0,u1,v0,v1,n0,n1,t,mat){   // box open at the top (+v)
+  lb(P,u0,u0+t,v0,v1,n0,n1,mat);lb(P,u1-t,u1,v0,v1,n0,n1,mat);lb(P,u0+t,u1-t,v0,v1,n0,n0+t,mat);lb(P,u0+t,u1-t,v0,v1,n1-t,n1,mat);lb(P,u0+t,u1-t,v0,v0+t,n0+t,n1-t,mat);}
 const ord=(a,b)=>a<b?[a,b]:[b,a];
 
-/* ---------- rozsunięcie korpusów ---------- */
+/* ---------- carcass explode ---------- */
 const EXP=[];
 function exp(m,dir){if(m)EXP.push({o:m,base:m.position.clone(),dir:new THREE.Vector3(...dir)});}
 function setExplode(e){for(const x of EXP)x.o.position.copy(x.base).addScaledVector(x.dir,e*.09);dirty();}
 
-/* ================= 4. FRONTY, UCHWYTY, RUCHOME ELEMENTY ================= */
+/* ================= 4. FRONTS, HANDLES, MOVING PARTS ================= */
 const HCUP=[],HBAR=[],MOV=[];
 const cupGeo=(function(){const L=.089,R=.024,y0=-.012,g=[];
   const sh=new THREE.CylinderGeometry(R,R,L-.006,28,1,true,0,Math.PI/2);sh.rotateZ(Math.PI/2);sh.translate(0,y0,0);g.push(sh);
@@ -589,10 +596,10 @@ function shaker(P,u0,u1,v0,v1){const w=FR,a=FN-18,b=FN;
   lb(P,u0,u1,v1-w,v1,a,b,M.navy);lb(P,u0,u1,v0,v0+w,a,b,M.navy);
   lb(P,u0,u0+w,v0+w,v1-w,a,b,M.navy);lb(P,u1-w,u1,v0+w,v1-w,a,b,M.navy);
   lb(P,u0+w,u1-w,v0+w,v1-w,a,FN-9,M.navy);}
-// element ruchomy: obrót / przesuw wokół punktu (pu,pv,pn) w układzie ciągu
+// moving part: rotation / slide about point (pu,pv,pn) in run coordinates
 function movable(run,kind,pu,pv,pn){const piv=new THREE.Group();piv.position.set(pu/1000,pv/1000,pn/1000);runG[run].add(piv);
   const inner=new THREE.Group();inner.position.set(-pu/1000,-pv/1000,-pn/1000);piv.add(inner);
-  const sub={};for(const n of ['fronty','agd','okucia','szuflady'])sub[n]=lg(inner,n);
+  const sub={};for(const n of ['fronts','appliances','hardware','drawers'])sub[n]=lg(inner,n);
   const mv={run,kind,piv,sub,t:0,goal:0,z0:piv.position.z,sign:1,label:''};piv.userData.mv=mv;MOV.push(mv);return mv;}
 const DEG=Math.PI/180;
 function poseMV(mv){const t=mv.t,e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
@@ -600,9 +607,9 @@ function poseMV(mv){const t=mv.t,e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
   else if(mv.kind==='dish')mv.piv.rotation.x=e*84*DEG;
   else if(mv.kind==='drawer')mv.piv.position.z=mv.z0+e*.44;}
 
-/* ---------- AGD w słupku: piekarnik i mikrofala (zabudowa B, lico x = RX-FN) ---------- */
+/* ---------- appliances in the tower: oven and microwave (run B, face x = RX-FN) ---------- */
 function appliance(u0,u1,v0,v1,kind){const g=2;u0+=g;u1-=g;v0+=g;v1-=g;const uc=(u0+u1)/2;
-  bx(XA-2,XA+6,v0,v1,u0,u1,M.blackMetal);                                 // rama czołowa
+  bx(XA-2,XA+6,v0,v1,u0,u1,M.blackMetal);                                 // front trim
   if(kind==='oven'){
     const cp=v1-95;
     bx(XA-8,XA-2,cp,v1-10,u0+10,u1-10,M.glassBlack);
@@ -629,41 +636,41 @@ function appliance(u0,u1,v0,v1,kind){const g=2;u0+=g;u1-=g;v0+=g;v1-=g;const uc=
     bx(XA-12,XA-8,v0+60,v1-60,u0+10,u0+60,M.glassBlack);bx(XA-12,XA-8,v0+60,v1-60,pz-56,pz-6,M.glassBlack);
   }}
 
-/* ================= 5. ELEMENTY Z RYSUNKU: blaty, ramy, cokoły, wypełnienia ================= */
-const AX=WA,SC=(AX[6]+AX[7])/2;   // oś szafki zlewowej
+/* ================= 5. ELEMENTS FROM THE DRAWING: worktops, frames, plinths, fillers ================= */
+const AX=WA,SC=(AX[6]+AX[7])/2;   // sink unit axis
 const SX0=SC-390,SX1=SC+390,SZ0=40,SZ1=540, KX0=SC-340,KX1=SC+340,KZ0=130,KZ1=510;
 const RIM=8,SW=10,SB=WT-200,TAPZ=85;
 function worktopA(v0,v1){const a=KX0-SW,b=KX1+SW,c=KZ0-SW,d=KZ1+SW;[[0,a,0,600],[b,RX,0,600],[a,b,0,c],[a,b,d,600]].forEach(([a,b,c,d])=>bx(a,b,v0,v1,c,d,M.oak).userData.grain='x');}
-// listwa tylna z płyty 18 za każdą ramą: trzyma rozstaw korpusów z tyłu (rama 20 na sztorc -> listwa na sztorc 100; blenda płaska -> płaska listwa)
+// chipboard 18 back strip behind every frame: keeps carcass spacing at the back (18 frame on edge -> strip on edge 100; flat filler -> flat strip)
 const SPC=[],KM=[];
-// korpusy szersze niż kolumna (pole cw w projekcie): za ich ramami nie ma szczeliny, więc nie ma listwy
+// carcasses wider than their column (cw in the project): no gap behind their frames, so no strip
 const CWX=[];for(const r of RUNS3)for(const it of LAY[r])if(it.cw>it.u1-it.u0)CWX.push({r,u0:it.u0,u1:it.u0+it.cw,v0:it.v0,v1:it.v1});
-function spacer(run,it,flat){const {u0,u1,v0,v1}=it,P=RL[run].korpusy,vert=v1-v0>u1-u0;let m,name,a,b;
+function spacer(run,it,flat){const {u0,u1,v0,v1}=it,P=RL[run].carcasses,vert=v1-v0>u1-u0;let m,name,a,b;
   if(CWX.some(e=>e.r===run&&u0>=e.u0&&u1<=e.u1&&v0<e.v1&&v1>e.v0))return;
-  if(flat){m=lb(P,u0,u1,v0,v1,CN0,CN0+18,M.carcass);name='Listwa tylna płaska';a=u1-u0;b=v1-v0;}
-  else if(vert){m=lb(P,u0+1,u1-1,v0,v1,CN0,CN0+100,M.carcass);name='Listwa tylna 100';a=100;b=v1-v0;}
-  else{m=lb(P,u0,u1,v0+1,v1-1,CN0,CN0+100,M.carcass);name='Listwa tylna 100';a=100;b=u1-u0;}
+  if(flat){m=lb(P,u0,u1,v0,v1,CN0,CN0+18,M.carcass);name='Back strip, flat';a=u1-u0;b=v1-v0;}
+  else if(vert){m=lb(P,u0+1,u1-1,v0,v1,CN0,CN0+100,M.carcass);name='Back strip 100';a=100;b=v1-v0;}
+  else{m=lb(P,u0,u1,v0+1,v1-1,CN0,CN0+100,M.carcass);name='Back strip 100';a=100;b=u1-u0;}
   if(!m)return;m.userData={role:name,a,b,base:M.carcass};KM.push(m);SPC.push({name,a,b});}
 function build(run){
   for(const it of LAY[run]){const {u0,u1,v0,v1,t,s,c}=it,h=v1-v0;
-    if(t==='worktop'){CUR=WL.blaty;
-      if(run==='B')continue;                                   // blat Group 1 widziany z boku: już jest w ciągu A
-      if(run==='A'&&it===wtA){worktopA(v0,v1);continue;}       // blat z otworem na zlew
-      if(run==='A'&&v0>=WT-1&&h<500){bx(u0,XF,v0,v1,0,20,M.oak).userData.grain='x';continue;}   // panel ścienny
+    if(t==='worktop'){CUR=WL.worktops;
+      if(run==='B')continue;                                   // Group 1 worktop seen from the side: already built in run A
+      if(run==='A'&&it===wtA){worktopA(v0,v1);continue;}       // worktop with the sink cut-out
+      if(run==='A'&&v0>=WT-1&&h<500){bx(u0,XF,v0,v1,0,20,M.oak).userData.grain='x';continue;}   // wall panel
       const o=run==='A'?OA:0,m=rb(run,u0,u1,v0,v1,(run==='C'?-300:0)-o,600-o,M.oak);if(m&&h>=500)m.userData.grain='y';}
-    else if(t==='frame'){CUR=WL.ramy;
-      const n0=Math.min(u1-u0,h)>20?FN-18:FN-100;              // rama 20 na sztorc 100 gł.; szersza = płaska blenda
+    else if(t==='frame'){CUR=WL.frames;
+      const n0=Math.min(u1-u0,h)>18?FN-18:FN-100;              // 18 frame on edge, 100 deep; anything wider than 18 = flat filler
       if(run==='A'&&u0<XF&&u1>XF){rb(run,u0,XF,v0,v1,n0,FN,M.navy);rb(run,XF,u1,v0,v1,n0,FN-2,M.navy);}
       else rb(run,u0,u1,v0,v1,n0,FN,M.navy);
       spacer(run,it,n0===FN-18);}
-    else if(t==='plinth'){CUR=WL.ramy;rb(run,u0,u1,v0,v1,PF-18,PF,M.navy);}
+    else if(t==='plinth'){CUR=WL.frames;rb(run,u0,u1,v0,v1,PF-18,PF,M.navy);}
     else if(t==='filler'){if(run==='B'&&(s>=12||c===G.B.w.length)){CUR=WL.room;rb(run,u0,u1,v0,v1,0,600,M.wall);}}
-    else if(t==='oven'||t==='micro'){if(run==='B'){CUR=WL.agd;appliance(u0,u1,v0,v1,t);lb(RL.B.agd,u0+22,u1-22,v0+10,v1-10,25,552,M.appBody);}}
+    else if(t==='oven'||t==='micro'){if(run==='B'){CUR=WL.appliances;appliance(u0,u1,v0,v1,t);lb(RL.B.appliances,u0+22,u1-22,v0+10,v1-10,25,552,M.appBody);}}
   }}
 RUNS3.forEach(build);
 
-// zlew wpuszczany, granit kompozyt
-CUR=WL.blaty;
+// inset sink, granite composite
+CUR=WL.worktops;
 [[SX0,SX1,SZ0,KZ0],[SX0,SX1,KZ1,SZ1],[SX0,KX0,KZ0,KZ1],[KX1,SX1,KZ0,KZ1]].forEach(([a,b,c,d])=>bx(a,b,WT,WT+RIM,c,d,M.granite));
 bx(KX0-SW,KX0,SB,WT,KZ0-SW,KZ1+SW,M.granite);bx(KX1,KX1+SW,SB,WT,KZ0-SW,KZ1+SW,M.granite);
 bx(KX0,KX1,SB,WT,KZ0-SW,KZ0,M.granite);bx(KX0,KX1,SB,WT,KZ1,KZ1+SW,M.granite);bx(KX0,KX1,SB-SW,SB,KZ0,KZ1,M.granite);
@@ -673,24 +680,27 @@ cyl(18,3,M.steel,SC+250,WT+RIM+1.5,TAPZ,null,24);
   cyl(28,8,M.handle,SC,t+4,z,null,32);cyl(20,172,M.handle,SC,t+94,z,null,32);cyl(21,6,M.handle,SC,t+183,z,null,32);
   cyl(11,220,M.handle,SC,t+166,z+110,'z',20);cyl(13,26,M.handle,SC,t+152,z+214,null,20);
   cyl(7,70,M.handle,SC+55,t+140,z,'x',16);})();
-// syfon pod zlewem: pion w wycięciu szuflady U, poziomo do ściany na wys. 380
-CUR=WL.blaty;
-{const pipe=std({color:C(0x8d9196),roughness:.5}),zc=(KZ0+KZ1)/2,yb=SB-SW,yh=380;
-  cyl(20,yb-yh,pipe,SC,(yb+yh)/2,zc,null,20);cyl(36,110,pipe,SC,yh+150,zc,null,24);
-  cyl(20,zc-OA,pipe,SC,yh,(zc+OA)/2,'z',20);cyl(24,40,pipe,SC,yh,zc,'x',20);}
+// space-saving trap under the sink: short drop, flat trap body against the back wall,
+// outlet into the wall at 470 - everything stays above the bottom drawer with the waste bins
+CUR=WL.worktops;
+{const pipe=std({color:C(0x8d9196),roughness:.5}),zc=(KZ0+KZ1)/2,yb=SB-SW,yt=575,yh=470,zb=OA+45;
+  cyl(20,yb-yt,pipe,SC,(yb+yt)/2,zc,null,20);                 // waste pipe down from the bowl
+  cyl(20,zc-zb,pipe,SC,yt,(zc+zb)/2,'z',20);                  // run back towards the wall
+  bx(SC-70,SC+70,yh-25,yt+25,OA+20,OA+70,pipe);               // flat trap body
+  cyl(20,70,pipe,SC+105,yh,zb-25,'z',20);bx(SC+70,SC+125,yh-20,yh+20,OA+20,OA+50,pipe);}   // outlet into the wall
 
-// narożnik L: cokół dochodzi z obu stron do narożnika
-CUR=WL.ramy;
+// L corner: plinth runs into the corner from both sides
+CUR=WL.frames;
 const plA=LA.filter(i=>i.t==='plinth'),plB=LB.filter(i=>i.t==='plinth');
 if(plA.length)rb('A',Math.max(...plA.map(i=>i.u1)),RX-PF,0,100,PF-18,PF,M.navy);
 if(plB.length)rb('B',OA+PF,Math.min(...plB.map(i=>i.u0)),0,100,PF-18,PF,M.navy);
 {const st=LB.find(i=>i.t==='frame'&&i.c===3),fa=LA.find(i=>i.t==='frame'&&i.c===10);
   if(st&&fa&&st.u0>OA+FN)bx(XF,fa.u1,st.v0,st.v1,OA+FN,st.u0,M.navy);}
-// tył wyspy: gładki panel MDF lakier między wodospadami, za plecami korpusów
+// island back: smooth lacquered MDF panel between the waterfalls, behind the carcass backs
 {const wf=G.C.w[0]||38;rb('C',wf,CW-wf,0,820,-19,-1,M.navy);}
 
-// płyta indukcyjna nad szufladami (kolumna z notatką "hob")
-CUR=WL.agd;
+// induction hob above the drawers (column with the note "hob")
+CUR=WL.appliances;
 const hobIt=LA.find(i=>/hob/i.test(i.note))||LA.find(i=>i.t==='drawer');
 const HX=hobIt?(hobIt.u0+hobIt.u1)/2:460;
 (function(){const u0=HX-295,u1=HX+295,v=WT;
@@ -699,7 +709,7 @@ const HX=hobIt?(hobIt.u0+hobIt.u1)/2:460;
     const m=new THREE.Mesh(new THREE.RingGeometry(r-.003,r,64),M.ring);m.rotation.x=-Math.PI/2;m.position.set((HX+du)/1000,(v+5.5)/1000,(OA+n)/1000);CUR.add(m);});
   const s=new THREE.Mesh(new THREE.PlaneGeometry(.22,.03),M.ring);s.rotation.x=-Math.PI/2;s.position.set(HX/1000,(v+5.5)/1000,(OA+530)/1000);CUR.add(s);
 })();
-// okap Electrolux LFV416K: skośny, czarne szkło
+// Electrolux LFV416K hood: angled, black glass
 (function(){const xc=HX,W=598,D=390,yb=1500,BH=380,CWd=250,CDp=220;
   const n0=parts.length;
   const sh=new THREE.Shape();sh.moveTo(0,0);sh.lineTo(D,0);sh.lineTo(D,40);sh.lineTo(110,BH);sh.lineTo(0,BH);sh.lineTo(0,0);
@@ -719,10 +729,11 @@ const HX=hobIt?(hobIt.u0+hobIt.u1)/2:460;
     l.castShadow=true;l.shadow.mapSize.set(512,512);l.shadow.bias=-.001;l.shadow.camera.near=.05;scene.add(l,l.target);});
 })();
 
-/* ================= 6. KORPUSY Z REGUŁ PROJEKTU =================
-   Notatki projektu: korpus = szerokość kolumny, gł. 550; fronty w jednej kolumnie
-   tworzą jeden korpus do 2000 wys., wyżej osobny; szafki pod sufitem zawsze osobno;
-   zmywarka bez korpusu; dolne korpusy mają 2 trawersy 100 zamiast wieńca górnego. */
+/* ================= 6. CARCASSES FROM THE PROJECT RULES =================
+   Project notes: carcass = column width, depth 550; stacked fronts in one column
+   form one carcass up to 2000 high, above that a separate one; under-ceiling
+   cabinets always separate; no carcass for the dishwasher; base carcasses have
+   2 top rails 100 instead of a full top panel. */
 const FRONT_T={cabinet:1,drawer:1,oven:1,micro:1};
 function deriveCarcasses(run,L){const out=[],cols=new Map();
   for(const it of L){if(!FRONT_T[it.t])continue;const k=it.c+':'+it.s;if(!cols.has(k))cols.set(k,[]);cols.get(k).push(it);}
@@ -734,7 +745,7 @@ function deriveCarcasses(run,L){const out=[],cols=new Map();
       if(!cur)cur={run,c:it.c,s:it.s,u0:it.u0,u1:it.cw>it.u1-it.u0?it.u0+it.cw:it.u1,v0:it.v0,v1:it.v1,items:[it]};else{cur.items.push(it);cur.v1=it.v1;}
       if(upper)flush();}
     flush();}
-  // korpus ślepy w narożniku (wypełnienie z notatką "blind carcass"): stoi na nóżkach i niesie blat
+  // blind corner carcass (filler with the note "blind carcass"): stands on legs and carries the worktop
   for(const it of L)if(it.t==='filler'&&/blind carcass/i.test(it.note))
     out.push({run,c:it.c,s:it.s,u0:it.u0,u1:it.u1,v0:it.v0<50?100:it.v0,v1:it.v1,items:[],blind:true});
   return out;}
@@ -742,35 +753,41 @@ const KS=[];for(const r of RUNS3)KS.push(...deriveCarcasses(r,LAY[r]));
 KS.forEach((K,i)=>{K.id=i+1;K.g=GOF[K.run];K.parts=[];K.meshes=[];K.legs=0;K.mvs=[];for(const it of K.items)it.K=K;});
 function regM(K,m,name,a,b){if(m){m.userData={K,role:name,a,b,base:m.material};K.meshes.push(m);KM.push(m);}return m;}
 function regK(K,m,name,a,b){regM(K,m,name,a,b);K.parts.push({name,a,b});return m;}
-const STAT={fronts:0,hinges:0,drawD:0,drawM:0,shelfM:0,shelfF:0,legs:0,handles:0};
+const STAT={fronts:0,hinges:0,drawD:0,drawM:0,drawI:0,shelfM:0,shelfF:0,legs:0,handles:0};
 
 function buildCarcass(K){const R=K.run,{u0,u1,v0,v1}=K,W=u1-u0,H=v1-v0,ui0=u0+18,ui1=u1-18;
   K.base=v0<=150&&v1<=900;K.sink=K.items.some(i=>/sink/i.test(i.note));K.fridge=K.items.some(i=>/fridge|freezer/i.test(i.note));
-  const Lk=RL[R].korpusy,Ls=RL[R].polki,Lo=RL[R].okucia;
+  const Lk=RL[R].carcasses,Ls=RL[R].shelves,Lo=RL[R].hardware;
   const P=(name,a,b,par,x0,x1,y0,y1,z0,z1,mat,dir)=>{const m=lb(par,x0,x1,y0,y1,z0,z1,mat);regK(K,m,name,a,b);exp(m,dir);return m;};
-  P('Bok',CD,H,Lk,u0,ui0,v0,v1,CN0,CN1,M.carcass,[-1,0,0]);
-  P('Bok',CD,H,Lk,ui1,u1,v0,v1,CN0,CN1,M.carcass,[1,0,0]);
-  P('Wieniec dolny',W-36,CD,Lk,ui0,ui1,v0,v0+18,CN0,CN1,M.carcass,[0,0,0]);
-  const TR='Trawers (listwa górna 100)';
+  P('Side',CD,H,Lk,u0,ui0,v0,v1,CN0,CN1,M.carcass,[-1,0,0]);
+  P('Side',CD,H,Lk,ui1,u1,v0,v1,CN0,CN1,M.carcass,[1,0,0]);
+  P('Bottom panel',W-36,CD,Lk,ui0,ui1,v0,v0+18,CN0,CN1,M.carcass,[0,0,0]);
+  const TR='Top rail 100';
   if(K.base){
-    if(K.sink){   // pod zlewem trawersy na sztorc, żeby zmieścić komorę
+    if(K.sink){   // under the sink the rails stand on edge to clear the bowl
       P(TR,W-36,100,Lk,ui0,ui1,v1-100,v1,CN1-18,CN1,M.carcass,[0,.6,1]);P(TR,W-36,100,Lk,ui0,ui1,v1-100,v1,CN0,CN0+18,M.carcass,[0,1,0]);}
     else{P(TR,W-36,100,Lk,ui0,ui1,v1-18,v1,CN1-100,CN1,M.carcass,[0,1,.6]);P(TR,W-36,100,Lk,ui0,ui1,v1-18,v1,CN0,CN0+100,M.carcass,[0,1,0]);}}
-  else P('Wieniec górny',W-36,CD,Lk,ui0,ui1,v1-18,v1,CN0,CN1,M.carcass,[0,1,0]);
-  P('Plecy',W-2,H-2,Lk,u0+1,u1-1,v0+1,v1-1,CN0-3,CN0,M.hdf,[0,0,-.3]);
-  // półki stałe między frontami w jednym korpusie i przy AGD
-  if(!K.base&&!K.fridge)for(let i=1;i<K.items.length;i++){const b=K.items[i].v0;P('Półka stała',W-36,530,Ls,ui0,ui1,b-9,b+9,CN0,CN1-20,M.carcass,[0,0,1]);STAT.shelfF++;}
-  // półki ruchome: 1 na drzwi do 720 wys., 3 na wyższe; bez półek pod zlewem i w lodówce
+  else P('Top panel',W-36,CD,Lk,ui0,ui1,v1-18,v1,CN0,CN1,M.carcass,[0,1,0]);
+  P('Back',W-2,H-2,Lk,u0+1,u1-1,v0+1,v1-1,CN0-3,CN0,M.hdf,[0,0,-.3]);
+  // fixed shelves between fronts in one carcass and at appliances
+  if(!K.base&&!K.fridge)for(let i=1;i<K.items.length;i++){const b=K.items[i].v0;P('Fixed shelf',W-36,530,Ls,ui0,ui1,b-9,b+9,CN0,CN1-20,M.carcass,[0,0,1]);STAT.shelfF++;}
+  // adjustable shelves: 1 per door up to 720 high, 3 per taller door; none in the sink unit or the fridge
   if(!K.sink&&!K.fridge)for(const it of K.items){if(it.t!=='cabinet')continue;
     const lo=it.v0===v0?v0+18:it.v0+9, hi=it.v1===v1?v1-18:it.v1-9, k=(it.v1-it.v0)<=720?1:3;
     for(let j=1;j<=k;j++){const y=Math.round(lo+(hi-lo)*j/(k+1));
-      P('Półka ruchoma',W-38,530,Ls,ui0+1,ui1-1,y-9,y+9,CN0,CN1-20,M.carcass,[0,0,1]);STAT.shelfM++;
+      P('Adjustable shelf',W-38,530,Ls,ui0+1,ui1-1,y-9,y+9,CN0,CN1-20,M.carcass,[0,0,1]);STAT.shelfM++;
       for(const [x0,x1] of [[ui0,ui0+8],[ui1-8,ui1]])for(const z of [CN0+40,CN1-70])exp(lb(Ls,x0,x1,y-14,y-9,z,z+5,M.zinc,true),[0,0,1]);}}
-  // nóżki regulowane 100 pod korpusami stojącymi
-  if(v0<=150){for(const u of [u0+45,u1-45])for(const n of [CN0+45,CN1-60]){lc(Lo,15,v0-12,M.leg,u,(v0-12)/2,n,null,16);lc(Lo,24,12,M.leg,u,v0-6,n,null,20);}K.legs=4;STAT.legs+=4;}
+  // adjustable legs 100 under floor-standing carcasses
+  if(v0<=150){for(const u of [u0+45,u1-45])for(const n of [CN0+45,CN1-100]){lc(Lo,15,v0-12,M.leg,u,(v0-12)/2,n,null,16);lc(Lo,24,12,M.leg,u,v0-6,n,null,20);}K.legs=4;STAT.legs+=4;}
   if(K.fridge)fridgeBody(K);
+  if(K.fridge&&v0<=150)plinthGrille(K);
 }
-function fridgeBody(K){const A=RL[K.run].agd,u0=K.u0+20,u1=K.u1-20,bv0=K.v0+22,bv1=bv0+1772;K.fb=[bv0,bv1];
+// aluminium ventilation grille in the plinth under the fridge (approx. 500 x 60, >= 200 cm2 open)
+function plinthGrille(K){const P=RL[K.run].frames,uc=(K.u0+K.u1)/2,w=Math.min(500,K.u1-K.u0-80),g0=uc-w/2,g1=uc+w/2,h0=20,h1=80;
+  lb(P,g0,g1,h0,h0+5,PF,PF+3,M.zinc);lb(P,g0,g1,h1-5,h1,PF,PF+3,M.zinc);lb(P,g0,g0+5,h0+5,h1-5,PF,PF+3,M.zinc);lb(P,g1-5,g1,h0+5,h1-5,PF,PF+3,M.zinc);
+  lb(P,g0+5,g1-5,h0+5,h1-5,PF-18,PF-1,M.ovenIn,true);                       // opening through the plinth
+  for(let x=g0+5+12;x<g1-8;x+=12)lb(P,x-2,x+2,h0+5,h1-5,PF-2,PF+2,M.zinc);}   // vertical louvres
+function fridgeBody(K){const A=RL[K.run].appliances,u0=K.u0+20,u1=K.u1-20,bv0=K.v0+22,bv1=bv0+1772;K.fb=[bv0,bv1];
   hollow(A,u0,u1,bv0,bv1,CN0+18,500,24,M.fridge);
   const split=K.items[0].v1-20;
   lb(A,u0+24,u1-24,split-14,split+14,CN0+42,500,M.fridge);
@@ -794,55 +811,63 @@ function buildFront(run,it){
   let pu=0,pv=0,pn=0;
   if(kind==='door'||kind==='fridge'){pu=hs==='L'?fu0:fu1;pn=FN;}else if(kind==='dish'){pv=fv0;pn=FN;}
   const mv=movable(run,kind,pu,pv,pn);mv.sign=hs==='L'?1:-1;mv.it=it;if(K)K.mvs.push(mv);
-  shaker(mv.sub.fronty,fu0,fu1,fv0,fv1);handles(mv.sub.fronty,fu0,fu1,fv0,fv1,it.hd);
+  shaker(mv.sub.fronts,fu0,fu1,fv0,fv1);handles(mv.sub.fronts,fu0,fu1,fv0,fv1,it.hd);
   STAT.fronts++;if(it.hd)STAT.handles++;
   const dim=Math.round(fw)+' × '+Math.round(fh);
   if(kind==='door'&&K){
     const n=fh<900?2:fh<1600?3:4;STAT.hinges+=n;
     const side=hs==='L'?K.u0+18:K.u1-18,sd=hs==='L'?1:-1,cu=hs==='L'?fu0+22.5:fu1-22.5;
     for(let j=0;j<n;j++){const v=Math.round(fv0+100+(fh-200)*j/(n-1));
-      exp(lb(RL[run].okucia,...ord(side,side+sd*10),v-22,v+22,CN1-75,CN1-30,M.zinc),[-sd,0,0]);     // prowadnik (płytka montażowa)
-      exp(lb(RL[run].okucia,...ord(side+sd*3,side+sd*20),v-9,v+9,CN1-70,CN1-2,M.zinc),[-sd,0,0]);   // ramię zawiasu
-      lc(mv.sub.okucia,17.5,11.5,M.zinc,cu,v,CN1+6.5,'z',24);                                        // puszka 35 we froncie
-      lc(mv.sub.okucia,24,1.5,M.zinc,cu,v,CN1-1,'z',24);}                                            // kołnierz puszki, 0,2 mm od korpusu
-    mv.label='Drzwi '+dim+' · '+n+' zawiasy Blum';}
+      exp(lb(RL[run].hardware,...ord(side,side+sd*10),v-22,v+22,CN1-75,CN1-30,M.zinc),[-sd,0,0]);     // mounting plate
+      exp(lb(RL[run].hardware,...ord(side+sd*3,side+sd*20),v-9,v+9,CN1-70,CN1-2,M.zinc),[-sd,0,0]);   // hinge arm
+      lc(mv.sub.hardware,17.5,11.5,M.zinc,cu,v,CN1+6.5,'z',24);                                        // 35 cup in the front
+      lc(mv.sub.hardware,24,1.5,M.zinc,cu,v,CN1-1,'z',24);}                                            // cup flange, 0.2 mm off the carcass
+    mv.label='Door '+dim+' · '+n+' Blum hinges';}
   else if(kind==='drawer'&&K){
-    const D=fh>=350,sh=D?224:83,bh=D?199:68,ui0=K.u0+18,ui1=K.u1-18,bw=ui1-ui0-75,S=mv.sub.szuflady,O=mv.sub.okucia;
-    const b0=it.v0+(it.v0-K.v0<5?35:22),U=/U drawer|drawer U|szuflada U/i.test(note);
-    if(U){   // szuflada U pod zlewem: wycięcie 300 × 308 z tyłu na syfon
-      const cu=(ui0+ui1)/2,q0=cu-150,q1=cu+150,nq=360,bwU=Math.round((bw-12-300)/2);
-      regK(K,lb(S,ui0+37.5,q0,b0,b0+16,52,542,M.carcass),'Dno szuflady U',bw,490);regM(K,lb(S,q1,ui1-37.5,b0,b0+16,52,542,M.carcass),'Dno szuflady U',bw,490);
-      regM(K,lb(S,q0,q1,b0,b0+16,nq,542,M.carcass),'Dno szuflady U',bw,490);
-      regK(K,lb(S,ui0+43.5,q0-16,b0+16,b0+16+bh,52,68,M.carcass),'Tył szuflady U',bwU,bh);regK(K,lb(S,q1+16,ui1-43.5,b0+16,b0+16+bh,52,68,M.carcass),'Tył szuflady U',bwU,bh);
-      lb(S,q0-16,q0,b0-4,b0+sh-4,52,nq+16,M.boxSide);lb(S,q1,q1+16,b0-4,b0+sh-4,52,nq+16,M.boxSide);lb(S,q0,q1,b0-4,b0+sh-4,nq,nq+16,M.boxSide);}
-    else{
-      regK(K,lb(S,ui0+37.5,ui1-37.5,b0,b0+16,52,542,M.carcass),'Dno szuflady',bw,490);
-      regK(K,lb(S,ui0+43.5,ui1-43.5,b0+16,b0+16+bh,52,68,M.carcass),'Tył szuflady '+(D?'D':'M'),bw-12,bh);}
-    lb(S,ui0+22,ui0+37.5,b0-4,b0+sh-4,50,548,M.boxSide);lb(S,ui1-37.5,ui1-22,b0-4,b0+sh-4,50,548,M.boxSide);   // boki TANDEMBOX
+    const D=fh>=350,sh=D?224:83,bh=D?199:68,ui0=K.u0+18,ui1=K.u1-18,bw=ui1-ui0-75,S=mv.sub.drawers,O=mv.sub.hardware;
+    const b0=it.v0+(it.v0-K.v0<5?35:22),bins=/waste|bins/i.test(note),inner=/inner drawer/i.test(note);
+    regK(K,lb(S,ui0+37.5,ui1-37.5,b0,b0+16,52,542,M.carcass),'Drawer bottom',bw,490);
+    regK(K,lb(S,ui0+43.5,ui1-43.5,b0+16,b0+16+bh,52,68,M.carcass),'Drawer back '+(D?'D':'M'),bw-12,bh);
+    lb(S,ui0+22,ui0+37.5,b0-4,b0+sh-4,50,548,M.boxSide);lb(S,ui1-37.5,ui1-22,b0-4,b0+sh-4,50,548,M.boxSide);   // TANDEMBOX sides
     if(D){lb(S,ui0+28,ui0+32,b0+sh-4,b0+sh+60,60,540,M.boxSide);lb(S,ui1-32,ui1-28,b0+sh-4,b0+sh+60,60,540,M.boxSide);}
     for(const [a,b,c,d] of [[ui0,ui0+13,ui0+13,ui0+22],[ui1-13,ui1,ui1-22,ui1-13]]){
-      lb(RL[run].okucia,a,b,b0-24,b0-8,50,550,M.zinc);    // prowadnica: część na boku korpusu
-      lb(O,c,d,b0-20,b0-6,58,546,M.zinc);}                 // prowadnica: część na szufladzie
+      lb(RL[run].hardware,a,b,b0-24,b0-8,50,550,M.zinc);    // runner: carcass part
+      lb(O,c,d,b0-20,b0-6,58,546,M.zinc);}                 // runner: drawer part
+    if(bins){   // waste-sorting bins standing in the drawer box (trap is a space-saver above them)
+      const x0=ui0+45,x1=ui1-45,bwid=(x1-x0-20)/3,top=b0+16+235;
+      for(let j=0;j<3;j++){const a=x0+j*(bwid+10),b=a+bwid;
+        hollowTop(S,a,b,b0+16,top,80,520,4,M.bin);lb(S,a+bwid*.3,b-bwid*.3,top-14,top-4,510,524,M.bin);}}
     D?STAT.drawD++:STAT.drawM++;
-    mv.label='Szuflada '+(U?'U pod zlewem':D?'D (224)':'M (83)')+' · front '+dim;}
-  else if(kind==='dish'){const A=RL[run].agd,{u0,u1}=it;
+    mv.label=(bins?'Sink drawer D (224) with waste-sorting bins':D?'Drawer D (224)':'Top drawer M (83)'+(inner?' + inner drawer above':''))+' · front '+dim;
+    if(inner){  // shallow inner drawer for cutlery: own runners on the carcass sides, above the top drawer box, behind the same front
+      const iv=b0+sh+40,mi=movable(run,'drawer',0,0,0),Si=mi.sub.drawers,Oi=mi.sub.hardware;mi.it=it;K.mvs.push(mi);
+      regK(K,lb(Si,ui0+37.5,ui1-37.5,iv,iv+16,52,542,M.carcass),'Drawer bottom',bw,490);
+      regK(K,lb(Si,ui0+43.5,ui1-43.5,iv+16,iv+16+84,52,68,M.carcass),'Inner drawer back',bw-12,84);
+      lb(Si,ui0+22,ui0+37.5,iv-4,iv+80,50,548,M.boxSide);lb(Si,ui1-37.5,ui1-22,iv-4,iv+80,50,548,M.boxSide);
+      lb(Si,ui0+37.5,ui1-37.5,iv-4,iv+80,532,546,M.boxSide);                            // metal inner front (Blum, LW - 132)
+      for(let j=1;j<5;j++){const x=ui0+37.5+(ui1-ui0-75)*j/5;lb(Si,x-3,x+3,iv+16,iv+66,90,520,M.insert,true);}   // cutlery insert dividers
+      lb(Si,ui0+40,ui1-40,iv+16,iv+20,90,520,M.insert,true);
+      for(const [a,b,c,d] of [[ui0,ui0+13,ui0+13,ui0+22],[ui1-13,ui1,ui1-22,ui1-13]]){
+        lb(RL[run].hardware,a,b,iv-24,iv-8,50,550,M.zinc);lb(Oi,c,d,iv-20,iv-6,58,546,M.zinc);}
+      STAT.drawI++;mi.label='Inner drawer M (83) for cutlery · inner front '+(ui1-ui0-132);}}
+  else if(kind==='dish'){const A=RL[run].appliances,{u0,u1}=it;
     hollow(A,u0+4,u1-4,15,fv1-6,CN0+8,CN1-24,2,M.steel);
     rack(A,u0+30,u1-30,95,235,CN0+40,CN1-50);rack(A,u0+30,u1-30,430,560,CN0+40,CN1-50);
     lb(A,(u0+u1)/2-200,(u0+u1)/2+200,78,86,(CN0+CN1)/2-25,(CN0+CN1)/2+25,M.steel);
-    lb(mv.sub.agd,u0+6,u1-6,fv0+4,fv1-10,CN1-22,CN1,M.steel);
-    lb(mv.sub.agd,u0+6,u1-6,fv1-10,fv1-4,CN1-22,CN1,M.glassBlack);
-    mv.label='Zmywarka · front '+dim+' na drzwiach';}
+    lb(mv.sub.appliances,u0+6,u1-6,fv0+4,fv1-10,CN1-22,CN1,M.steel);
+    lb(mv.sub.appliances,u0+6,u1-6,fv1-10,fv1-4,CN1-22,CN1,M.glassBlack);
+    mv.label='Dishwasher · front '+dim+' on the appliance door';}
   else if(kind==='fridge'&&K&&K.fb){const [bv0,bv1]=K.fb,low=it.v0===K.v0;
     const d0=low?bv0+3:Math.max(bv0,it.v0-20)+3,d1=Math.min(bv1,it.v1-20)-3;
-    lb(mv.sub.agd,K.u0+20,K.u1-20,d0,d1,500,CN1-2,M.fridge);
-    if(!low)for(const f of [.25,.5,.75]){const y=d0+(d1-d0)*f;lb(mv.sub.agd,K.u0+55,K.u1-55,y,y+80,446,500,M.ice,true);}
-    mv.label=(low?'Zamrażarka':'Chłodziarka')+' · front '+dim+' na drzwiach';}
-  else if(kind==='fixed')mv.label='Front martwy '+dim+' · stały';
+    lb(mv.sub.appliances,K.u0+20,K.u1-20,d0,d1,500,CN1-2,M.fridge);
+    if(!low)for(const f of [.25,.5,.75]){const y=d0+(d1-d0)*f;lb(mv.sub.appliances,K.u0+55,K.u1-55,y,y+80,446,500,M.ice,true);}
+    mv.label=(low?'Freezer':'Fridge')+' · front '+dim+' on the appliance door';}
+  else if(kind==='fixed')mv.label='Dummy front '+dim+' · fixed';
   if(!mv.label)mv.label='Front '+dim;
 }
 for(const r of RUNS3)for(const it of LAY[r])if(it.t==='cabinet'||it.t==='drawer')buildFront(r,it);
 
-/* ================= 7. POMIESZCZENIE ================= */
+/* ================= 7. ROOM ================= */
 const walls=[];
 function wallGroup(n,mid){const g=new THREE.Group();WL.room.add(g);walls.push({g,n:new THREE.Vector3(...n),mid:new THREE.Vector3(...mid),vis:true});return g;}
 const WX1=XF-20,WX0=WX1-1900,WY0=1080,WY1=WY0+1300,TW=300,RV=150;
@@ -868,7 +893,7 @@ bx(BX0,RX+TW,HC,HC+20,-TW,0,M.wall,back);
 const right=wallGroup([1,0,0],[RX/1000,1.37,1.6]);bx(RX,RX+TW,0,HC+20,-TW,3600,M.wall,right);
 CUR=WL.room;const fl=bx(-900,RX,-20,0,0,4200,M.marble);fl.castShadow=false;
 
-/* ---------- UV w metrach dla dębu, marmuru, granitu ---------- */
+/* ---------- UV in metres for oak, marble, granite ---------- */
 (function(){const p=new THREE.Vector3(),n=new THREE.Vector3();
   for(const m of worldUV){m.updateMatrix();const g=m.geometry.toNonIndexed();g.applyMatrix4(m.matrix);
     m.position.set(0,0,0);m.rotation.set(0,0,0);m.scale.set(1,1,1);m.updateMatrix();
@@ -881,7 +906,7 @@ CUR=WL.room;const fl=bx(-900,RX,-20,0,0,4200,M.marble);fl.castShadow=false;
       else{(vy||sz.y>sz.x)?put(i,p.y,p.x):put(i,p.x,p.y);}}
     g.setAttribute('uv',new THREE.BufferAttribute(uv,2));m.geometry.dispose();m.geometry=g;}})();
 
-/* ---------- lampy nad wyspą ---------- */
+/* ---------- lamps above the island ---------- */
 CUR=WL.room;
 const bulbHot=new THREE.MeshBasicMaterial({color:C(0xffe7c2)});bulbHot.color.multiplyScalar(5);
 const shadeIn=std({color:C(0xf4ead8),roughness:.6,metalness:0,side:THREE.BackSide});
@@ -897,7 +922,7 @@ const shadeIn=std({color:C(0xf4ead8),roughness:.6,metalness:0,side:THREE.BackSid
   const l=new THREE.SpotLight(0xffd9a8,7,5,1.2,.8,2);l.position.copy(b.position);l.target.position.set(x/1000,0,z/1000);
   l.castShadow=true;l.shadow.mapSize.set(1024,1024);l.shadow.bias=-.0008;l.shadow.radius=6;l.shadow.camera.near=.12;scene.add(l,l.target);});
 
-/* ---------- sufit z 4 oprawami natynkowymi ---------- */
+/* ---------- ceiling with 4 surface-mounted downlights ---------- */
 const ceil=wallGroup([0,1,0],[1.2,HC/1000+.02,2]);
 bx(-900,RX,HC,HC+20,0,4200,std({color:C(0xf2f1ee),roughness:.95,emissive:C(0x4a4844)}),ceil,true);
 const DLZ=OA+400-10, DLX=XF-350;
@@ -912,7 +937,7 @@ for(const [x,z] of DL){
   const l=new THREE.SpotLight(0xfff0dc,11,0,1.0,1,2);l.position.set(x/1000,(HC-TH+10)/1000,z/1000);l.target.position.set(x/1000,0,z/1000);
   l.castShadow=true;l.shadow.mapSize.set(512,512);l.shadow.bias=-.001;l.shadow.radius=8;l.shadow.camera.near=.05;scene.add(l,l.target);}
 
-/* ---------- światło dzienne ---------- */
+/* ---------- daylight ---------- */
 scene.add(new THREE.HemisphereLight(0xf4f6f9,0x8a8178,1.5));
 const sun=new THREE.DirectionalLight(0xfff0d8,2.4);sun.position.set(1.4,7.5,-4.2);sun.target.position.set(1.9,.4,1.6);
 sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-4,right:4,top:4,bottom:-4,near:.5,far:16});sun.shadow.bias=-.0005;sun.shadow.normalBias=.02;sun.shadow.radius=10;
@@ -922,7 +947,7 @@ const fill2=new THREE.DirectionalLight(0xf5efe6,.9);fill2.position.set(-2,4,-1);
 scene.updateMatrixWorld(true);
 loading.remove();
 
-/* ================= 8. WIDOKI I KAMERA ================= */
+/* ================= 8. VIEWS AND CAMERA ================= */
 const VIEWS={
   all:{p:[-1.6,2.9,5.4],t:[1.6,.9,1.4]},
   a:{p:[1.6,1.6,3.2],t:[1.6,1.15,.1]},
@@ -952,7 +977,7 @@ document.getElementById('views').addEventListener('click',e=>{const b=e.target.c
   if(b.dataset.step)setView(VK[(VK.indexOf(vsel.value)+ +b.dataset.step+VK.length)%VK.length]);else setView(b.dataset.v);});
 vsel.addEventListener('change',()=>setView(vsel.value));
 
-/* ---------- klik: otwórz front / wybierz korpus; najechanie: podpowiedź ---------- */
+/* ---------- click: open a front / select a carcass; hover: tooltip ---------- */
 const mvOf=o=>{for(;o;o=o.parent)if(o.userData&&o.userData.mv)return o.userData.mv;return null;};
 const kOf=o=>o&&o.userData&&o.userData.K&&o.userData.role?o.userData:null;
 let down=null;
@@ -961,10 +986,10 @@ renderer.domElement.addEventListener('wheel',e=>{if(!anim)repivot(e);},{capture:
 renderer.domElement.addEventListener('pointerup',e=>{if(!down)return;const d=Math.hypot(e.clientX-down.x,e.clientY-down.y),dt=performance.now()-down.t;down=null;
   if(d>6||dt>600)return;const hit=pick(e);if(!hit)return;
   const mv=mvOf(hit.object);
-  if(mv&&mv.kind!=='fixed'&&shown(mv.sub.fronty)){toggle(mv);return;}
+  if(mv&&mv.kind!=='fixed'&&shown(mv.sub.fronts)){toggle(mv);return;}
   const k=kOf(hit.object);if(k&&k.K){selectK(k.K,false);return;}
   if(mv&&mv.kind!=='fixed')toggle(mv);});
-// etykieta pojawia się dopiero, gdy kursor stoi w miejscu przez 1 s
+// the label appears only after the cursor rests for 1 s
 const tip=document.getElementById('tip');let hoverEv=null,hoverT=0;
 function hideTip(){clearTimeout(hoverT);tip.hidden=true;renderer.domElement.style.cursor='';}
 renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;
@@ -972,11 +997,10 @@ renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType==='touch
   hoverT=setTimeout(()=>{hoverEv=e;},1000);});
 renderer.domElement.addEventListener('pointerdown',hideTip);
 renderer.domElement.addEventListener('pointerleave',()=>{hoverEv=null;hideTip();});
-const PL={'Bok':'Bok','Wieniec dolny':'Wieniec dolny','Wieniec górny':'Wieniec górny'};
 function hover(e){const hit=pick(e);let txt='';
   if(hit){const mv=mvOf(hit.object),k=kOf(hit.object);
     if(k&&!k.K)txt=k.role+' '+k.a+' × '+k.b;
-    else if(k&&!(mv&&shown(mv.sub.fronty)))txt='K'+k.K.id+' · '+k.role+' '+k.a+' × '+k.b;
+    else if(k&&!(mv&&shown(mv.sub.fronts)))txt='K'+k.K.id+' · '+k.role+' '+k.a+' × '+k.b;
     else if(mv)txt=mv.label;}
   renderer.domElement.style.cursor=txt?'pointer':'';
   if(!txt){tip.hidden=true;return;}
@@ -986,7 +1010,7 @@ function toggle(mv,on){mv.goal=on===undefined?(mv.goal?0:1):on?1:0;if(reduce){mv
 document.getElementById('openAll').addEventListener('click',()=>MOV.forEach(m=>m.kind!=='fixed'&&toggle(m,true)));
 document.getElementById('closeAll').addEventListener('click',()=>MOV.forEach(m=>toggle(m,false)));
 
-/* ---------- uchwyty, kolory, krawędzie ---------- */
+/* ---------- handles, colours, edges ---------- */
 function setHandles(k){HCUP.forEach(o=>o.visible=k==='cup');HBAR.forEach(o=>o.visible=k==='bar');
   for(const x of document.querySelectorAll('#hstyle button'))x.setAttribute('aria-pressed',x.dataset.h===k);dirty();}
 document.getElementById('hstyle').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setHandles(b.dataset.h);});
@@ -1005,35 +1029,35 @@ setHandles('cup');
 document.getElementById('palette').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b===eb)setEdges(eb.getAttribute('aria-pressed')!=='true');else setPalette(b.dataset.p);});
 
-/* ---------- warstwy ---------- */
+/* ---------- layers ---------- */
 const LB_=document.getElementById('layers');
 function setLayer(n,on){(LYG[n]||[]).forEach(g=>g.visible=on);const b=LB_.querySelector('[data-l="'+n+'"]');if(b)b.setAttribute('aria-pressed',on);dirty();}
 LB_.addEventListener('click',e=>{const b=e.target.closest('button');if(b)setLayer(b.dataset.l,b.getAttribute('aria-pressed')!=='true');});
-const PRESET={all:LNAMES,inside:['korpusy','polki','szuflady','okucia','agd','blaty','room'],carc:['korpusy','polki','szuflady','okucia']};
+const PRESET={all:LNAMES,inside:['carcasses','shelves','drawers','hardware','appliances','worktops','room'],carc:['carcasses','shelves','drawers','hardware']};
 function preset(k){for(const n of LNAMES)setLayer(n,PRESET[k].includes(n));}
 document.getElementById('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(b)preset(b.dataset.preset);});
 
-/* ================= 9. ZAKŁADKA KORPUSY ================= */
-const ROLE={'Bok':'#f0c27b','Wieniec dolny':'#8fcf9f','Wieniec górny':'#4fae6e','Trawers (listwa górna 100)':'#f29e8e','Półka stała':'#5f95da',
-  'Półka ruchoma':'#a9c9f2','Plecy':'#c9b9ea','Dno szuflady':'#f5d76e','Tył szuflady D':'#e3ad3c','Tył szuflady M':'#e3ad3c',
-  'Dno szuflady U':'#f5d76e','Tył szuflady U':'#e3ad3c','Listwa tylna 100':'#e98fc4','Listwa tylna płaska':'#e98fc4'};
+/* ================= 9. CARCASSES TAB ================= */
+const ROLE={'Side':'#f0c27b','Bottom panel':'#8fcf9f','Top panel':'#4fae6e','Top rail 100':'#f29e8e','Fixed shelf':'#5f95da',
+  'Adjustable shelf':'#a9c9f2','Back':'#c9b9ea','Drawer bottom':'#f5d76e','Drawer back D':'#e3ad3c','Drawer back M':'#e3ad3c',
+  'Inner drawer back':'#e3ad3c','Back strip 100':'#e98fc4','Back strip, flat':'#e98fc4'};
 const ROLEMAT={};for(const [k,v] of Object.entries(ROLE))ROLEMAT[k]=std({color:C(v),roughness:.7});
 let roleOn=false,SEL=null;
 function applyK(){for(const m of KM){const u=m.userData;m.material=u.K===SEL?M.sel:roleOn?(ROLEMAT[u.role]||u.base):u.base;}}
 const rbn=document.getElementById('roleBtn');
 rbn.addEventListener('click',()=>{roleOn=!roleOn;rbn.setAttribute('aria-pressed',roleOn);applyK();});
 document.getElementById('carcPreset').addEventListener('click',()=>preset('carc'));
-document.getElementById('legend').innerHTML=[['Bok'],['Wieniec dolny'],['Wieniec górny'],['Trawers (listwa górna 100)','Trawers 100'],['Półka stała'],['Półka ruchoma'],['Plecy','Plecy HDF 3'],['Listwa tylna 100','Listwa tylna za ramą'],['Dno szuflady','Szuflada: dno, tył (płyta 16)']]
+document.getElementById('legend').innerHTML=[['Side'],['Bottom panel'],['Top panel'],['Top rail 100'],['Fixed shelf'],['Adjustable shelf'],['Back','Back HDF 3'],['Back strip 100','Back strip behind frame'],['Drawer bottom','Drawer: bottom, back (chipboard 16)']]
   .map(([k,l])=>'<li><i style="background:'+ROLE[k]+'"></i><span>'+(l||k)+'</span></li>').join('');
 document.getElementById('explode').addEventListener('input',e=>setExplode(e.target.value/100));
 
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function kDesc(K){const t=K.items.map(i=>i.t);
-  if(K.blind)return 'narożna ślepa, podpora blatu';
-  if(K.items.length&&K.u1-K.u0>K.items[0].u1-K.items[0].u0)return 'narożna, drzwi '+(K.items[0].u1-K.items[0].u0);if(K.sink)return 'zlewowa';if(K.fridge)return 'lodówka';if(t.includes('oven')||t.includes('micro'))return 'słupek AGD';
-  if(t.every(x=>x==='drawer'))return 'szuflady';if(K.base)return 'dolna, drzwi';if(K.v0>=1900)return 'górna pod sufitem';if(K.v0>=WT-5)return 'na blacie';return 'wysoka';}
-const runName={A:'pod oknem',B:'wysoka zabudowa',C:'wyspa'};
-function colTxt(K){return 'kol. '+K.c+(K.s>1?'–'+(K.c+K.s-1):'');}
+  if(K.blind)return 'blind corner, worktop support';
+  if(K.items.length&&K.u1-K.u0>K.items[0].u1-K.items[0].u0)return 'corner, door '+(K.items[0].u1-K.items[0].u0);if(K.sink)return 'sink unit';if(K.fridge)return 'fridge';if(t.includes('oven')||t.includes('micro'))return 'appliance tower';
+  if(t.every(x=>x==='drawer'))return 'drawers';if(K.base)return 'base, door';if(K.v0>=1900)return 'upper, under the ceiling';if(K.v0>=WT-5)return 'on the worktop';return 'tall';}
+const runName={A:'under the window',B:'tall units',C:'island'};
+function colTxt(K){return 'col. '+K.c+(K.s>1?'–'+(K.c+K.s-1):'');}
 const kl=document.getElementById('klist');
 kl.innerHTML=KS.map(K=>'<li><button data-k="'+K.id+'" aria-pressed="false"><b>K'+K.id+'</b><span>G'+K.g+' '+colTxt(K)+' · '+kDesc(K)+'</span><em>'+(K.u1-K.u0)+'×'+(K.v1-K.v0)+'</em></button></li>').join('');
 kl.addEventListener('click',e=>{const b=e.target.closest('button');if(b)selectK(KS[b.dataset.k-1],true);});
@@ -1042,12 +1066,12 @@ function selectK(K,fly){SEL=SEL===K&&!fly?null:K;applyK();
   for(const b of kl.querySelectorAll('button'))b.setAttribute('aria-pressed',SEL&&+b.dataset.k===SEL.id);
   const w=document.getElementById('kDetailWrap');w.hidden=!SEL;
   if(!SEL)return;
-  const hinges=SEL.mvs.filter(m=>m.kind==='door').reduce((a,m)=>a+(+m.label.match(/· (\d) zawias/)?.[1]||0),0);
+  const hinges=SEL.mvs.filter(m=>m.kind==='door').reduce((a,m)=>a+(+m.label.match(/· (\d) Blum hinge/)?.[1]||0),0);
   const drawers=SEL.mvs.filter(m=>m.kind==='drawer').length;
   const rows=aggParts(SEL.parts).map(p=>'<tr><td>'+esc(p.name)+'</td><td class="n">'+p.a+' × '+p.b+'</td><td class="n">'+p.q+'</td></tr>').join('');
-  document.getElementById('kDetail').innerHTML='<h3>K'+SEL.id+' · '+kDesc(SEL)+'</h3><p>Group '+SEL.g+' ('+runName[SEL.run]+'), '+colTxt(SEL)+'. Korpus '+(SEL.u1-SEL.u0)+' × '+(SEL.v1-SEL.v0)+' × '+CD+', od '+SEL.v0+' do '+SEL.v1+' mm.</p>'+
-    '<p>Okucia: '+[hinges?hinges+' zawiasy':'',drawers?drawers+' szuflady z prowadnicami':'',SEL.legs?SEL.legs+' nóżki':''].filter(Boolean).join(', ')+(hinges||drawers||SEL.legs?'.':'brak.')+'</p>'+
-    '<div class="tw"><table class="cut" style="margin-top:8px"><tr><th>Formatka</th><th>A × B</th><th>szt.</th></tr>'+rows+'</table></div>';
+  document.getElementById('kDetail').innerHTML='<h3>K'+SEL.id+' · '+kDesc(SEL)+'</h3><p>Group '+SEL.g+' ('+runName[SEL.run]+'), '+colTxt(SEL)+'. Carcass '+(SEL.u1-SEL.u0)+' × '+(SEL.v1-SEL.v0)+' × '+CD+', from '+SEL.v0+' to '+SEL.v1+' mm.</p>'+
+    '<p>Hardware: '+[hinges?hinges+' hinges':'',drawers?drawers+' drawers with runners':'',SEL.legs?SEL.legs+' legs':''].filter(Boolean).join(', ')+(hinges||drawers||SEL.legs?'.':'none.')+'</p>'+
+    '<div class="tw"><table class="cut" style="margin-top:8px"><tr><th>Panel</th><th>A × B</th><th>pcs</th></tr>'+rows+'</table></div>';
   for(const mv of MOV)if(mv.kind!=='fixed'&&SEL.mvs.includes(mv))toggle(mv,true);
   if(fly){const c=new THREE.Vector3((K.u0+K.u1)/2000,(K.v0+K.v1)/2000,(CN0+CN1)/2000);runG[K.run].localToWorld(c);
     const nrm=new THREE.Vector3(0,0,1).applyQuaternion(runG[K.run].quaternion);
@@ -1055,53 +1079,53 @@ function selectK(K,fly){SEL=SEL===K&&!fly?null:K;applyK();
     anim={p0:camera.position.clone(),t0:controls.target.clone(),p,t:c,s:performance.now()};
     if(mob.matches)spec(false);}
 }
-// zestawienie
+// summary
 document.getElementById('kStats').innerHTML=[
-  ['Korpusy',KS.length],['Fronty',STAT.fronts],['Zawiasy',STAT.hinges],['Szuflady',(STAT.drawD+STAT.drawM)+' ('+STAT.drawD+' D + '+STAT.drawM+' M)'],
-  ['Półki',STAT.shelfM+' ruchomych + '+STAT.shelfF+' stałych'],['Nóżki',STAT.legs],['Uchwyty',STAT.handles]].map(([a,b])=>'<dt>'+a+'</dt><dd>'+b+'</dd>').join('');
-// rozkrój: model a kosztorys
+  ['Carcasses',KS.length],['Fronts',STAT.fronts],['Hinges',STAT.hinges],['Drawers',(STAT.drawD+STAT.drawM)+' ('+STAT.drawD+' D + '+STAT.drawM+' M)'+(STAT.drawI?' + '+STAT.drawI+' inner':'')],
+  ['Shelves',STAT.shelfM+' adjustable + '+STAT.shelfF+' fixed'],['Legs',STAT.legs],['Handles',STAT.handles]].map(([a,b])=>'<dt>'+a+'</dt><dd>'+b+'</dd>').join('');
+// cutting list: model vs cost estimate
 (function(){const all=[];for(const K of KS)all.push(...K.parts);all.push(...SPC);const agg=aggParts(all);
-  const MAT=p=>p.name==='Plecy'?'hdf':/szuflady/.test(p.name)?'p16':'p18';
-  const SECT={p18:'Płyta wiórowa 18 biała',p16:'Płyta 16 (szuflady)',hdf:'HDF 3 (plecy)'};
+  const MAT=p=>p.name==='Back'?'hdf':/drawer/i.test(p.name)?'p16':'p18';
+  const SECT={p18:'White chipboard 18',p16:'Chipboard 16 (drawers)',hdf:'HDF 3 (backs)'};
   const cost=new Map();for(const b of COSTB)if(SECT[b.id])for(const r of b.rows){const k=r[0]+'|'+r[1]+'|'+r[2];cost.set(k,(cost.get(k)||0)+r[3]);}
-  let h='<tr><th>Formatka</th><th>A × B</th><th>model</th><th>kosztorys</th></tr>',ok=0,bad=0;const seen=new Set();
+  let h='<tr><th>Panel</th><th>A × B</th><th>model</th><th>estimate</th></tr>',ok=0,bad=0;const seen=new Set();
   for(const id of ['p18','p16','hdf']){const rows=agg.filter(p=>MAT(p)===id);let m2=0,m2c=0;
     h+='<tr class="sec"><td colspan="4">'+SECT[id]+'</td></tr>';
     for(const p of rows){const k=p.name+'|'+p.a+'|'+p.b,c=cost.get(k)||0;seen.add(k);m2+=p.a*p.b*p.q/1e6;const same=c===p.q;same?ok++:bad++;
       h+='<tr><td>'+esc(p.name)+'</td><td class="n">'+p.a+' × '+p.b+'</td><td class="n">'+p.q+'</td><td class="n '+(same?'okk':'bad')+'">'+(same?'✓ '+c:c)+'</td></tr>';}
     const b=COSTB.find(x=>x.id===id);if(b)for(const r of b.rows){const k=r[0]+'|'+r[1]+'|'+r[2];m2c+=r[1]*r[2]*r[3]/1e6;if(!seen.has(k)){seen.add(k);bad++;h+='<tr><td>'+esc(r[0])+'</td><td class="n">'+r[1]+' × '+r[2]+'</td><td class="n">0</td><td class="n bad">'+r[3]+'</td></tr>';}}
-    h+='<tr><td><b>Razem m²</b></td><td></td><td class="n"><b>'+m2.toFixed(2)+'</b></td><td class="n">'+m2c.toFixed(2)+'</td></tr>';}
+    h+='<tr><td><b>Total m²</b></td><td></td><td class="n"><b>'+m2.toFixed(2)+'</b></td><td class="n">'+m2c.toFixed(2)+'</td></tr>';}
   document.getElementById('cut').innerHTML=h;
-  document.getElementById('cutNote').textContent=bad?(bad+' różnic z kosztorysem (kolor).'):('Wszystkie '+ok+' pozycje zgodne z kosztorysem.');})();
+  document.getElementById('cutNote').textContent=bad?(bad+' differences from the cost estimate (coloured).'):('All '+ok+' items match the cost estimate.');})();
 
-/* ---------- zakładka Projekt ---------- */
+/* ---------- Project tab ---------- */
 document.getElementById('dims').innerHTML=[
-  ['Blat pod oknem',RX+' × 600 × '+WTH],['Blat nad szafkami',WT+' od podłogi'],['Wysoka zabudowa',(WB[WB.length-1])+' × '+HC],
-  ['Wyspa',CW+' × 900 × '+WT],['Głębokość korpusu',CD+', plecy HDF 3'],['Lico frontów',FN+' od ściany, szczelina '+GAP],['Rama frontu shaker',FR],
-  ['Ramy 20','na sztorc, gł. 100'],['Cokół','100, lico 70 za frontem'],['Okno','1900 × 1300, antracyt']].map(([a,b])=>'<dt>'+a+'</dt><dd>'+b+'</dd>').join('');
+  ['Worktop under the window',RX+' × 600 × '+WTH],['Worktop height',WT+' above the floor'],['Tall units',(WB[WB.length-1])+' × '+HC],
+  ['Island',CW+' × 900 × '+WT],['Carcass depth',CD+', HDF 3 back'],['Front face',FN+' from the wall, gap '+GAP],['Shaker front rail',FR],
+  ['Frames 18','on edge, 100 deep'],['Fillers wider than 18','flat, face-on'],['Plinth','100, face 70 behind the fronts'],['Window','1900 × 1300, anthracite']].map(([a,b])=>'<dt>'+a+'</dt><dd>'+b+'</dd>').join('');
 document.getElementById('pnotes').innerHTML=(PRJ.notes||[]).map(([n,d,x])=>'<dt>'+esc(n)+'</dt><dd>'+esc(d)+(x?'<small>'+esc(x)+'</small>':'')+'</dd>').join('');
 
-/* ---------- zakładki karty ---------- */
+/* ---------- card tabs ---------- */
 const TABS=[['t-view','p-view'],['t-carc','p-carc'],['t-prj','p-prj']];
 function showTab(id){for(const [t,p] of TABS){const on=t===id;document.getElementById(t).setAttribute('aria-selected',on);document.getElementById(p).hidden=!on;}
   try{localStorage.setItem('kv-tab',id);}catch(e){}}
 for(const [t] of TABS)document.getElementById(t).addEventListener('click',()=>showTab(t));
 {let st=null;try{st=localStorage.getItem('kv-tab');}catch(e){}if(TABS.some(x=>x[0]===st))showTab(st);}
-if(location.hash==='#korpusy')showTab('t-carc');
+if((location.hash==='#carcasses'||location.hash==='#korpusy'))showTab('t-carc');
 
-/* ---------- panel ustawień na telefonie ---------- */
+/* ---------- settings panel on phones ---------- */
 const tg=document.getElementById('toggleSpec'),cl=document.getElementById('closeSpec');
 const mob=matchMedia('(max-width:760px)');
 function spec(on,keep){document.body.classList.toggle('open',on);document.body.classList.toggle('shut',!on);tg.setAttribute('aria-expanded',on);
   if(!keep&&!mob.matches)try{localStorage.setItem('kv-spec',on?'1':'0');}catch(e){}}
-{let st=null;try{st=localStorage.getItem('kv-spec');}catch(e){}spec(!mob.matches&&st==='1',true);}   // domyślnie zwinięte: widok bez zasłon
+{let st=null;try{st=localStorage.getItem('kv-spec');}catch(e){}spec(!mob.matches&&st==='1',true);}   // collapsed by default: unobstructed view
 mob.addEventListener?.('change',e=>spec(!e.matches,true));
 tg.addEventListener('click',()=>{spec(true);cl.focus();});
 cl.addEventListener('click',()=>{spec(false);tg.focus({preventScroll:true});});
 renderer.domElement.addEventListener('pointerdown',()=>{if(mob.matches)spec(false);});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mob.matches)spec(false);});
 
-/* ---------- pętla ---------- */
+/* ---------- loop ---------- */
 function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(stage);resize();
 const tmp=new THREE.Vector3();let last=performance.now();
