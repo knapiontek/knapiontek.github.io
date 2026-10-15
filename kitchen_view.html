@@ -49,6 +49,11 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color
 .pane{display:flex;flex-direction:column;gap:18px}
 .chips button{font-size:13px;padding:5px 11px}
 .chips button[aria-pressed="false"]{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 60%,transparent)}
+.lgrp{display:grid;grid-template-columns:96px 1fr;gap:6px 8px;align-items:start;margin-top:10px}
+#layers .lgrp:first-child{margin-top:0}
+.lgrp>button.gh{border:0;background:none;padding:5px 0;text-align:left;font-size:12px;font-weight:600;color:var(--ink);border-radius:4px}
+.lgrp>button.gh[aria-pressed="false"]{color:var(--muted)}
+.lgrp>button.gh[aria-pressed="mixed"]{color:var(--muted)}
 .hint{font-size:12px;color:var(--muted);line-height:1.45;margin:8px 0 0}
 .mats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0;padding:0;list-style:none}
 .mats li{display:flex;flex-direction:column;gap:5px;min-width:0}
@@ -94,6 +99,8 @@ table.cut tr.sec td{font-weight:600;padding-top:10px;border-bottom:0;color:var(-
 .toggle{display:none;align-items:center;gap:6px;position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px));z-index:3;font-weight:600;font-size:12.5px;
   background:var(--card);border-color:var(--line);padding:5px 10px;opacity:.72;transition:opacity .2s}
 .toggle svg{width:16px;height:16px}
+.spec{padding-top:0!important;overflow-x:hidden;scrollbar-width:thin;scrollbar-gutter:stable}
+.spec-top{position:sticky;top:0;z-index:3;background:var(--card);margin:0 -16px;padding:14px 16px 0;display:flex;flex-direction:column;gap:12px}
 .spec-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .spec-head h2{margin:0}
 .spec-head button{padding:4px 10px;font-size:12.5px}
@@ -131,32 +138,19 @@ body.shut .toggle{display:flex}
     Settings</button>
 
   <div class="spec" id="spec">
+    <div class="spec-top">
     <div class="spec-head"><h2>Settings</h2><button id="closeSpec">Collapse</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="t-view" aria-selected="true" aria-controls="p-view">View</button>
       <button role="tab" id="t-carc" aria-selected="false" aria-controls="p-carc">Carcasses</button>
       <button role="tab" id="t-prj" aria-selected="false" aria-controls="p-prj">Project</button>
     </div>
+    </div>
 
     <div class="pane" id="p-view" role="tabpanel" aria-labelledby="t-view">
       <section>
         <h2>Layers</h2>
-        <div class="row chips" id="layers">
-          <button data-l="carcasses" aria-pressed="true">Carcasses</button>
-          <button data-l="shelves" aria-pressed="true">Shelves</button>
-          <button data-l="drawers" aria-pressed="true">Drawers</button>
-          <button data-l="hardware" aria-pressed="true">Hinges, runners, legs</button>
-          <button data-l="fronts" aria-pressed="true">Fronts and handles</button>
-          <button data-l="frames" aria-pressed="true">Frames and plinth</button>
-          <button data-l="appliances" aria-pressed="true">Appliances</button>
-          <button data-l="worktops" aria-pressed="true">Worktops and sink</button>
-          <button data-l="room" aria-pressed="true">Walls, window, lamps</button>
-        </div>
-        <div class="row" id="presets" style="margin-top:10px">
-          <button data-preset="all">Everything</button>
-          <button data-preset="inside">No fronts or frames</button>
-          <button data-preset="carc">Carcasses only</button>
-        </div>
+        <div id="layers"></div>
       </section>
       <section>
         <h2>Fronts</h2>
@@ -179,18 +173,17 @@ body.shut .toggle{display:flex}
         </div>
       </section>
       <section>
-        <h2>Quality</h2>
-        <div class="row" id="quality">
-          <button data-q="fast" aria-pressed="true">Fast</button>
-          <button data-q="hi" aria-pressed="false">Detailed (lamp shadows)</button>
+        <h2>Light</h2>
+        <div class="row" id="lighting">
+          <button data-q="day" aria-pressed="true">Day</button>
+          <button data-q="night" aria-pressed="false">Night</button>
         </div>
       </section>
       <section>
         <h2>Colours</h2>
         <div class="row" id="palette">
-          <button data-p="project" aria-pressed="true">Project</button>
-          <button data-p="light" aria-pressed="false">Light, for detail</button>
-          <button id="edgesBtn" aria-pressed="false">Edges</button>
+          <button data-p="colour" aria-pressed="true">Colour</button>
+          <button data-p="white" aria-pressed="false">White</button>
         </div>
       </section>
     </div>
@@ -297,10 +290,10 @@ body.shut .toggle{display:flex}
     ["Room", "Floor gres, walls white", "Grey tiles 120 × 60"],
     ["Window", "Above the Group 1 worktop", "1900 × 1300"],
     ["Lighting", "3 ceiling spotlights over the tall units (Group 2)", "1 spotlight over the sink, halfway to the hood; 2 pendants over the island"],
-    ["Carcass material", "Chipboard 18 light grey, ABS 0.8 front edge", "Back HDF 3 light grey. Cut and edge-banded by the board supplier"],
+    ["Carcass material", "Chipboard 18 light grey, ABS 0.8 front edge", "Back HDF 3 light grey, none in the island (covered by the back panel). Cut and edge-banded by the board supplier"],
     ["Carcasses", "Width = column width, depth 550, 14 from the walls", "Stacked fronts = one carcass, upper cabinets separate; no dishwasher carcass"],
     ["Base carcasses", "2 top rails 100 deep instead of a top panel", ""],
-    ["Shelves", "Adjustable, depth − 20; 1 per door ≤ 720 high, 3 per taller door", "None in the sink unit / fridge; fixed between stacked doors and at appliances"],
+    ["Shelves", "Adjustable: depth − 20; 1 per door ≤ 720 high, 3 per taller door", "Fixed (at the joint of 2 fronts and at appliances): full depth 550. None in the sink unit / fridge"],
     ["Back strips", "Chipboard 18 behind every 18 frame", "On edge, 100 deep, frame length; none behind the L-corner fillers"],
     ["Fixings", "About 18 confirmat screws per carcass", "4 shelf pins per shelf; carcass connectors, wall brackets"],
     ["Fronts", "MDF 18 shaker, English Navy satin", "Lacquered by a front maker"],
@@ -315,15 +308,11 @@ body.shut .toggle{display:flex}
     ["Worktop", "Laminate oak 38; Group 1 600 deep, island 900 deep", "Group 1 one piece to the end of the 800 corner carcass; waterfalls same board"],
     ["Corner wall cabinet", "Group 2, stands half on the Group 1 worktop", "Screwed to its neighbour, on supports in the wall corner"],
     ["Wall panel", "Laminate, matching the worktop", ""],
-    ["Island", "Stools on the back side under the overhang", "Back: smooth MDF 18 lacquered panel between the waterfalls"],
+    ["Island", "Stools on the back side under the overhang", "Back: smooth MDF 18 lacquered panel between the waterfalls; island carcasses without HDF back"],
     ["Plinth", "PVC 100, black matte, moisture-resistant, cut on site", "Legs 100 with plinth clips, 4 per carcass; ventilation grille under the fridge"],
     ["Sink", "Inset granite 1-bowl, with tap", ""],
-    ["Hob", "Electrolux CIT61443, cut-out 560 × 490, 54 from the wall; no inner drawer", "Rails on edge: front 18 × 50, rear 18 × 100; chipboard 16 panel at front rail bottom"],
+    ["Hob", "Cut-out 560 × 490, 54 from the wall; no inner drawer", "Rails on edge: front 18 × 50, rear 18 × 100; chipboard 16 panel at front rail bottom"],
     ["Hood / extractor", "Electrolux LFV416K, 600", "Above the hob"],
-    ["Dishwasher", "Bosch SMV4HVX00E", "Front fixed on the appliance door"],
-    ["Fridge / freezer", "Bosch KIS86AFE0, 1772 high, flat hinge", "Fronts on the appliance doors; check the front split against the doors"],
-    ["Oven", "Samsung NV7B5785KAK", "595 × 596 × 570; check the niche in the manual"],
-    ["Microwave", "Bosch BFL623MB3", ""],
     ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"],
     ["Cost estimate", "Materials and prices from this design", "Cutting list, fronts (module − gap), hardware, appliances; waste and reserve"],
     ["3D view", "3D model from this design", "Checks overlaps, gaps, parts sticking out and front alignment"]
@@ -340,9 +329,9 @@ body.shut .toggle{display:flex}
     {"g": 1, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
     {"g": 1, "c": 3, "s": 8, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
     {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Drawer (deep)"},
-    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer, hob above"},
+    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer, hob Electrolux CIT61443 above"},
     {"g": 1, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
-    {"g": 1, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Dishwasher, niche 815-875 x 600 x 550"},
+    {"g": 1, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Dishwasher Bosch SMV4HVX00E"},
     {"g": 1, "c": 6, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
     {"g": 1, "c": 7, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Sink unit, drawer with waste-sorting bins"},
     {"g": 1, "c": 7, "s": 1, "t": "cabinet", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Sink unit, dummy front"},
@@ -366,13 +355,13 @@ body.shut .toggle{display:flex}
     {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
     {"g": 2, "c": 6, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
     {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 520, "hd": "T", "gw": 4, "gh": 2},
-    {"g": 2, "c": 7, "s": 1, "t": "oven", "h": 600, "hd": "", "gw": 0, "gh": 0, "note": "Niche 560 x 580 x 550 (verify)"},
-    {"g": 2, "c": 7, "s": 1, "t": "micro", "h": 382, "hd": "", "gw": 0, "gh": 0, "note": "Niche 362-365 x 560-568 x 320"},
+    {"g": 2, "c": 7, "s": 1, "t": "oven", "h": 600, "hd": "", "gw": 0, "gh": 0, "note": "Oven Samsung NV7B5785KAK"},
+    {"g": 2, "c": 7, "s": 1, "t": "micro", "h": 382, "hd": "", "gw": 0, "gh": 0, "note": "Microwave Bosch BFL623MB3"},
     {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 418, "hd": "B", "gw": 4, "gh": 4},
     {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
     {"g": 2, "c": 8, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
-    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Freezer door"},
-    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4, "note": "Fridge door, niche 1775-1780 x 560 x 550"},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Freezer door, Bosch KIS86AFE0"},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4, "note": "Fridge door, Bosch KIS86AFE0"},
     {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
     {"g": 2, "c": 10, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
     {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
@@ -402,7 +391,7 @@ body.shut .toggle{display:flex}
  "runs": {
    "A": {"group": 1, "name": "under the window", "place": "back wall"},
    "B": {"group": 2, "name": "tall units", "place": "right wall"},
-   "C": {"group": 3, "name": "island", "place": "free-standing"}
+   "C": {"group": 3, "name": "island", "place": "free-standing", "hdfBack": false}
  },
  "carcass": {"frontFace": 570, "depth": 550, "shakerRail": 50, "handleAxis": 28, "plinthSetback": 70, "worktopDepth": 600},
  "rules": {"upperFrom": 1900, "drawerDFrom": 350, "hingesBelow": [[900, 2], [1600, 3], [1e9, 4]], "shelvesUpTo": [[720, 1], [1e9, 3]]},
@@ -590,12 +579,22 @@ const M={
   insert:std({color:C(0xd9dadb),roughness:.5,envMapIntensity:.6}),               // cutlery insert
   sel:std({color:C(0x8fd0f5),roughness:.6,emissive:C(0x1a5a80),emissiveIntensity:.6})
 };
-const SPOTS=[];   // lamps with shadows: only in the 'Detailed' quality
+const SPOTS=[],LAMPS=[],GLOW=[];   // LAMPS: all lamp lights, on only at Night; SPOTS: the ones that cast shadows at Night; GLOW: bulb / LED materials
+const glow=(hex,k)=>{const m=new THREE.MeshBasicMaterial({color:C(hex)});m.userData.on=m.color.clone().multiplyScalar(k);m.userData.off=C(0xd9d6cf);GLOW.push(m);return m;};
 const ledW=new THREE.MeshBasicMaterial({color:C(0xfff6ea)});ledW.color.multiplyScalar(3);
-function setMetal(k){const m=METALS[k];M.handle.color.copy(C(m.color));M.handle.roughness=m.rough;M.handle.metalness=m.metal;}
+const CLAY=new Map();let PALK='colour';   // colour modes (filled after the scene is built): material -> original look
+function setMetal(k){const m=METALS[k],o=CLAY.get(M.handle);
+  if(o){o.color.copy(C(m.color));o.roughness=m.rough;o.metalness=m.metal;}
+  if(PALK==='colour'||!o){M.handle.color.copy(C(m.color));M.handle.roughness=m.rough;M.handle.metalness=m.metal;}dirty();}
 
 /* ---------- layers: each is a set of groups toggled together ---------- */
-const LNAMES=['carcasses','shelves','drawers','hardware','fronts','frames','appliances','worktops','room'];
+const LAYERS=[   // [group, [[layer id, label], ...]]
+  ['Carcasses',[['carcasses','Panels'],['backs','HDF backs'],['shelves','Shelves'],['drawers','Drawer boxes'],['hardware','Hinges, runners'],['legs','Legs']]],
+  ['Fronts',[['fronts','Fronts'],['handles','Handles'],['frames','Frames, fillers'],['plinth','Plinth'],['panel','Island back']]],
+  ['Worktop',[['worktops','Worktops'],['wallpanel','Wall panel'],['sink','Sink, tap'],['trap','Trap']]],
+  ['Appliances',[['hob','Hob'],['hood','Hood'],['ovens','Oven, microwave'],['fridge','Fridge'],['dishwasher','Dishwasher']]],
+  ['Room',[['walls','Walls'],['window','Window'],['floor','Floor'],['ceiling','Ceiling'],['lamps','Pendants']]]];
+const LNAMES=LAYERS.flatMap(([,l])=>l.map(([id])=>id));
 const LYG={};
 function lg(parent,name){const g=new THREE.Group();parent.add(g);(LYG[name]||(LYG[name]=[])).push(g);return g;}
 const WL={};for(const n of LNAMES)WL[n]=lg(scene,n);
@@ -658,7 +657,7 @@ function shaker(P,u0,u1,v0,v1){const w=FR,a=FN-18,b=FN;
 // moving part: rotation / slide about point (pu,pv,pn) in run coordinates
 function movable(run,kind,pu,pv,pn){const piv=new THREE.Group();piv.position.set(pu/1000,pv/1000,pn/1000);runG[run].add(piv);
   const inner=new THREE.Group();inner.position.set(-pu/1000,-pv/1000,-pn/1000);piv.add(inner);
-  const sub={};for(const n of ['fronts','appliances','hardware','drawers'])sub[n]=lg(inner,n);
+  const sub={};for(const n of ['fronts','handles','hardware','drawers','fridge','dishwasher'])sub[n]=lg(inner,n);
   const mv={run,kind,piv,sub,t:0,goal:0,z0:piv.position.z,sign:1,label:''};piv.userData.mv=mv;MOV.push(mv);return mv;}
 const DEG=Math.PI/180;
 function poseMV(mv){const t=mv.t,e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
@@ -722,7 +721,7 @@ function build(run){
     if(t==='worktop'){CUR=WL.worktops;
       if(run==='B')continue;                                   // Group 1 worktop seen from the side: already built in run A
       if(run==='A'&&it===wtA){worktopA(v0,v1);continue;}       // worktop with the sink cut-out
-      if(run==='A'&&v0>=WT-1&&h<500){bx(u0,XF,v0,v1,0,20,M.oak).userData.grain='x';continue;}   // wall panel
+      if(run==='A'&&v0>=WT-1&&h<500){bx(u0,XF,v0,v1,0,20,M.oak,WL.wallpanel).userData.grain='x';continue;}   // wall panel
       const o=run==='A'?OA:0,m=rb(run,u0,u1,v0,v1,(run==='C'?-VD.island.overhang:0)-o,WD-o,M.oak);if(m&&h>=500)m.userData.grain='y';}
     else if(t==='frame'){CUR=WL.frames;
       const n0=Math.min(u1-u0,h)>18?FN-18:FN-100;              // 18 frame on edge, 100 deep; anything wider than 18 = flat filler
@@ -731,15 +730,15 @@ function build(run){
       else if(run==='A'&&u0<XF&&u1>XF){rb(run,u0,XF,v0,v1,n0,FN,M.navy);rb(run,XF,u1,v0,v1,n0,FN-2,M.navy);}
       else rb(run,u0,u1,v0,v1,n0,FN,M.navy);
       spacer(run,it,n0===FN-18);}
-    else if(t==='plinth'){CUR=WL.frames;rb(run,u0,u1,v0,v1,PF-18,PF,M.plinth);}
-    else if(t==='filler'){if(run==='B'&&(s>=12||c===G.B.w.length)){CUR=WL.room;rb(run,u0,u1,v0,v1,0,600,M.wall);}}
-    else if(t==='oven'||t==='micro'){if(run==='B'){CUR=WL.appliances;appliance(u0,u1,v0,v1,t);lb(RL.B.appliances,u0+22,u1-22,v0+10,v1-10,25,552,M.appBody);}}
+    else if(t==='plinth'){CUR=WL.plinth;rb(run,u0,u1,v0,v1,PF-18,PF,M.plinth);}
+    else if(t==='filler'){if(run==='B'&&(s>=12||c===G.B.w.length)){CUR=WL.walls;rb(run,u0,u1,v0,v1,0,600,M.wall);}}
+    else if(t==='oven'||t==='micro'){if(run==='B'){CUR=WL.ovens;appliance(u0,u1,v0,v1,t);lb(RL.B.ovens,u0+22,u1-22,v0+10,v1-10,25,552,M.appBody);}}
     if(kind)tagNew(np,kind,'G'+GOF[run]+' col '+c+(s>1?'–'+(c+s-1):'')+' '+t+' '+(u1-u0)+' × '+h+(it.note?' ('+it.note+')':''));
   }}
 RUNS3.forEach(build);
 
 // inset sink, granite composite
-CUR=WL.worktops;
+CUR=WL.sink;
 [[SX0,SX1,SZ0,KZ0],[SX0,SX1,KZ1,SZ1],[SX0,KX0,KZ0,KZ1],[KX1,SX1,KZ0,KZ1]].forEach(([a,b,c,d])=>bx(a,b,WT,WT+RIM,c,d,M.granite));
 bx(KX0-SW,KX0,SB,WT,KZ0-SW,KZ1+SW,M.granite);bx(KX1,KX1+SW,SB,WT,KZ0-SW,KZ1+SW,M.granite);
 bx(KX0,KX1,SB,WT,KZ0-SW,KZ0,M.granite);bx(KX0,KX1,SB,WT,KZ1,KZ1+SW,M.granite);bx(KX0,KX1,SB-SW,SB,KZ0,KZ1,M.granite);
@@ -751,7 +750,7 @@ cyl(18,3,M.steel,SC+250,WT+RIM+1.5,TAPZ,null,24);
   cyl(7,70,M.handle,SC+55,t+140,z,'x',16);})();
 // space-saving trap under the sink: short drop, flat trap body against the back wall,
 // outlet into the wall at 470 - everything stays above the bottom drawer with the waste bins
-CUR=WL.worktops;
+CUR=WL.trap;
 {const pipe=std({color:C(0x8d9196),roughness:.5}),zc=(KZ0+KZ1)/2,yb=SB-SW,yt=VS.trapTop,yh=VS.wallOutlet,zb=OA+45;
   cyl(20,yb-yt,pipe,SC,(yb+yt)/2,zc,null,20);                 // waste pipe down from the bowl
   cyl(20,zc-zb,pipe,SC,yt,(zc+zb)/2,'z',20);                  // run back towards the wall
@@ -759,17 +758,17 @@ CUR=WL.worktops;
   cyl(20,70,pipe,SC+105,yh,zb-25,'z',20);bx(SC+70,SC+125,yh-20,yh+20,OA+20,OA+50,pipe);}   // outlet into the wall
 
 // L corner: plinth runs into the corner from both sides
-CUR=WL.frames;
+CUR=WL.plinth;
 const plA=LA.filter(i=>i.t==='plinth'),plB=LB.filter(i=>i.t==='plinth');
 {const np=parts.length;if(plA.length)rb('A',Math.max(...plA.map(i=>i.u1)),RX-OB-PF,0,100,PF-18,PF,M.plinth);tagNew(np,'plinth','G1 plinth into the L corner');}
 {const np=parts.length;if(plB.length)rb('B',OA+PF,Math.min(...plB.map(i=>i.u0)),0,100,PF-18,PF,M.plinth);tagNew(np,'plinth','G2 plinth into the L corner');}
 {const st=cornerA&&LB.find(i=>i.t==='frame'&&i.c===cornerA.c+cornerA.s),fa=cornerB&&LA.find(i=>i.t==='frame'&&i.c===cornerB.c-1);   // frames next to the L-corner fillers
-  if(st&&fa&&st.u0>OA+FN)bx(XF,fa.u1,st.v0,st.v1,OA+FN,st.u0,M.navy);}
+  if(st&&fa&&st.u0>OA+FN)bx(XF,fa.u1,st.v0,st.v1,OA+FN,st.u0,M.navy,WL.frames);}
 // island back: smooth lacquered MDF panel between the waterfalls, behind the carcass backs
-{const wf=G.C.w[0]||38,np=parts.length;rb('C',wf,CW-wf,0,VD.island.backPanelHeight,-19,-1,M.navy);tagNew(np,'panel','G3 island back panel');}
+{const wf=G.C.w[0]||38,np=parts.length;CUR=WL.panel;rb('C',wf,CW-wf,0,VD.island.backPanelHeight,-19,-1,M.navy);tagNew(np,'panel','G3 island back panel');}
 
 // induction hob above the drawers (column with the note "hob")
-CUR=WL.appliances;
+CUR=WL.hob;
 const VH=VD.hob,hobIt=LA.find(i=>new RegExp(VH.note,'i').test(i.note))||LA.find(i=>i.t==='drawer');
 const HX=hobIt?(hobIt.u0+hobIt.u1)/2:460;
 (function(){const u0=HX-VH.glass[0]/2,u1=HX+VH.glass[0]/2,v=WT,G0=VH.glassFromWall;
@@ -780,6 +779,7 @@ const HX=hobIt?(hobIt.u0+hobIt.u1)/2:460;
   const s=new THREE.Mesh(new THREE.PlaneGeometry(.22,.03),M.ring);s.rotation.x=-Math.PI/2;s.position.set(HX/1000,(v+5.5)/1000,(G0+490)/1000);CUR.add(s);
 })();
 // hood (VD.hood): angled, black glass
+CUR=WL.hood;
 (function(){const V=VD.hood,xc=HX,W=V.width,D=V.depth,yb=V.bottom,BH=V.height,CWd=V.chimney[0],CDp=V.chimney[1];
   const n0=parts.length;
   const sh=new THREE.Shape();sh.moveTo(0,0);sh.lineTo(D,0);sh.lineTo(D,40);sh.lineTo(110,BH);sh.lineTo(0,BH);sh.lineTo(0,0);
@@ -793,10 +793,10 @@ const HX=hobIt?(hobIt.u0+hobIt.u1)/2:460;
   bx(xc-W/2+20,xc+W/2-20,yb-1,yb,20,D-20,M.ovenIn);
   bx(xc-CWd/2,xc+CWd/2,yb+BH,HC,0,CDp,M.blackMetal,null,true);
   parts.slice(n0).forEach(p=>p.castShadow=false);
-  const led=new THREE.MeshBasicMaterial({color:C(0xfff0dc)});led.color.multiplyScalar(5);
+  const led=glow(0xfff0dc,5);
   [xc-150,xc+150].forEach(x=>{const d=new THREE.Mesh(new THREE.PlaneGeometry(.16,.012),led);d.rotation.x=Math.PI/2;d.position.set(x/1000,(yb-1.5)/1000,(D-90)/1000);CUR.add(d);});
   [xc-150,xc+150].forEach(x=>{const l=new THREE.SpotLight(0xfff0dc,4.5,0,1.05,.8,2);l.position.set(x/1000,(yb-5)/1000,(D-90)/1000);l.target.position.set(x/1000,WT/1000,(D-170)/1000);
-    l.castShadow=true;SPOTS.push(l);l.shadow.mapSize.set(512,512);l.shadow.bias=-.001;l.shadow.camera.near=.05;scene.add(l,l.target);});
+    l.castShadow=false;LAMPS.push(l);scene.add(l,l.target);});
 })();
 
 /* ================= 6. CARCASSES FROM THE PROJECT RULES =================
@@ -827,7 +827,7 @@ const STAT={fronts:0,hinges:0,drawD:0,drawM:0,drawI:0,shelfM:0,shelfF:0,legs:0,h
 
 function buildCarcass(K){const R=K.run,{u0,u1,v0,v1}=K,W=u1-u0,H=v1-v0,ui0=u0+18,ui1=u1-18;
   K.base=v0<=150&&v1<=900;K.sink=K.items.some(i=>/sink/i.test(i.note));K.fridge=K.items.some(i=>/fridge|freezer/i.test(i.note));K.hob=K.items.some(i=>/hob/i.test(i.note));
-  const Lk=RL[R].carcasses,Ls=RL[R].shelves,Lo=RL[R].hardware;
+  const Lk=RL[R].carcasses,Ls=RL[R].shelves,Lb=RL[R].backs,Lg=RL[R].legs;
   const P=(name,a,b,par,x0,x1,y0,y1,z0,z1,mat,dir)=>{const m=lb(par,x0,x1,y0,y1,z0,z1,mat);regK(K,m,name,a,b);exp(m,dir);return m;};
   P('Side',CD,H,Lk,u0,ui0,v0,v1,CN0,CN1,M.carcass,[-1,0,0]);
   P('Side',CD,H,Lk,ui1,u1,v0,v1,CN0,CN1,M.carcass,[1,0,0]);
@@ -838,12 +838,12 @@ function buildCarcass(K){const R=K.run,{u0,u1,v0,v1}=K,W=u1-u0,H=v1-v0,ui0=u0+18
       P(TR,W-36,100,Lk,ui0,ui1,v1-100,v1,CN1-18,CN1,M.carcass,[0,.6,1]);P(TR,W-36,100,Lk,ui0,ui1,v1-100,v1,CN0,CN0+18,M.carcass,[0,1,0]);}
     else if(K.hob){   // under the hob: rails on edge (front 50, rear 100) + chipboard 16 separation panel, bottom flush with the front rail
       P('Top rail 50 (front, on edge)',W-36,50,Lk,ui0,ui1,v1-50,v1,CN1-18,CN1,M.carcass,[0,.6,1]);P(TR,W-36,100,Lk,ui0,ui1,v1-100,v1,CN0,CN0+18,M.carcass,[0,1,0]);
-      P('Hob separation panel',W-36,CN1-CN0-36,Ls,ui0,ui1,v1-50,v1-34,CN0+18,CN1-18,M.carcass,[0,.4,0]);}
+      P('Hob separation panel',W-36,CN1-CN0-36,Lk,ui0,ui1,v1-50,v1-34,CN0+18,CN1-18,M.carcass,[0,.4,0]);}
     else{P(TR,W-36,100,Lk,ui0,ui1,v1-18,v1,CN1-100,CN1,M.carcass,[0,1,.6]);P(TR,W-36,100,Lk,ui0,ui1,v1-18,v1,CN0,CN0+100,M.carcass,[0,1,0]);}}
   else P('Top panel',W-36,CD,Lk,ui0,ui1,v1-18,v1,CN0,CN1,M.carcass,[0,1,0]);
-  P('Back',W-2,H-2,Lk,u0+1,u1-1,v0+1,v1-1,CN0-3,CN0,M.hdf,[0,0,-.3]);
-  // fixed shelves between fronts in one carcass and at appliances
-  if(!K.base&&!K.fridge)for(let i=1;i<K.items.length;i++){const b=K.items[i].v0;P('Fixed shelf',W-36,530,Ls,ui0,ui1,b-9,b+9,CN0,CN1-20,M.carcass,[0,0,1]);STAT.shelfF++;}
+  if(VD.runs[R].hdfBack!==false)P('Back',W-2,H-2,Lb,u0+1,u1-1,v0+1,v1-1,CN0-3,CN0,M.hdf,[0,0,-.3]);   // no HDF where the run says so (island: covered by the back panel)
+  // fixed shelves at the joint of 2 fronts in one carcass and at appliances: full carcass depth
+  if(!K.base&&!K.fridge)for(let i=1;i<K.items.length;i++){const b=K.items[i].v0;P('Fixed shelf',W-36,CD,Ls,ui0,ui1,b-9,b+9,CN0,CN1,M.carcass,[0,0,1]);STAT.shelfF++;}
   // adjustable shelves: 1 per door up to 720 high, 3 per taller door; none in the sink unit or the fridge
   if(!K.sink&&!K.fridge)for(const it of K.items){if(it.t!=='cabinet')continue;
     const lo=it.v0===v0?v0+18:it.v0+9, hi=it.v1===v1?v1-18:it.v1-9, k=VD.rules.shelvesUpTo.find(([h])=>(it.v1-it.v0)<=h)[1];
@@ -851,16 +851,16 @@ function buildCarcass(K){const R=K.run,{u0,u1,v0,v1}=K,W=u1-u0,H=v1-v0,ui0=u0+18
       P('Adjustable shelf',W-38,530,Ls,ui0+1,ui1-1,y-9,y+9,CN0,CN1-20,M.carcass,[0,0,1]);STAT.shelfM++;
       for(const [x0,x1] of [[ui0,ui0+8],[ui1-8,ui1]])for(const z of [CN0+40,CN1-70])exp(lb(Ls,x0,x1,y-14,y-9,z,z+5,M.zinc,true),[0,0,1]);}}
   // adjustable legs 100 under floor-standing carcasses
-  if(v0<=150){for(const u of [u0+45,u1-45])for(const n of [CN0+45,CN1-100]){lc(Lo,15,v0-12,M.leg,u,(v0-12)/2,n,null,16);lc(Lo,24,12,M.leg,u,v0-6,n,null,20);}K.legs=4;STAT.legs+=4;}
+  if(v0<=150){for(const u of [u0+45,u1-45])for(const n of [CN0+45,CN1-100]){lc(Lg,15,v0-12,M.leg,u,(v0-12)/2,n,null,16);lc(Lg,24,12,M.leg,u,v0-6,n,null,20);}K.legs=4;STAT.legs+=4;}
   if(K.fridge)fridgeBody(K);
   if(K.fridge&&v0<=150)plinthGrille(K);
 }
 // aluminium ventilation grille in the plinth under the fridge (approx. 500 x 60, >= 200 cm2 open)
-function plinthGrille(K){const P=RL[K.run].frames,uc=(K.u0+K.u1)/2,w=Math.min(500,K.u1-K.u0-80),g0=uc-w/2,g1=uc+w/2,h0=20,h1=80;
+function plinthGrille(K){const P=RL[K.run].plinth,uc=(K.u0+K.u1)/2,w=Math.min(500,K.u1-K.u0-80),g0=uc-w/2,g1=uc+w/2,h0=20,h1=80;
   lb(P,g0,g1,h0,h0+5,PF,PF+3,M.zinc);lb(P,g0,g1,h1-5,h1,PF,PF+3,M.zinc);lb(P,g0,g0+5,h0+5,h1-5,PF,PF+3,M.zinc);lb(P,g1-5,g1,h0+5,h1-5,PF,PF+3,M.zinc);
   lb(P,g0+5,g1-5,h0+5,h1-5,PF-18,PF-1,M.ovenIn,true);                       // opening through the plinth
   for(let x=g0+5+12;x<g1-8;x+=12)lb(P,x-2,x+2,h0+5,h1-5,PF-2,PF+2,M.zinc);}   // vertical louvres
-function fridgeBody(K){const A=RL[K.run].appliances,u0=K.u0+20,u1=K.u1-20,bv0=K.v0+22,bv1=bv0+VD.fridge.bodyHeight;K.fb=[bv0,bv1];
+function fridgeBody(K){const A=RL[K.run].fridge,u0=K.u0+20,u1=K.u1-20,bv0=K.v0+22,bv1=bv0+VD.fridge.bodyHeight;K.fb=[bv0,bv1];
   hollow(A,u0,u1,bv0,bv1,CN0+18,500,24,M.fridge);
   const split=K.items[0].v1-20;
   lb(A,u0+24,u1-24,split-14,split+14,CN0+42,500,M.fridge);
@@ -886,7 +886,7 @@ function buildFront(run,it){
   if(kind==='door'||kind==='fridge'){pu=hs==='L'?fu0:fu1;pn=FN;}else if(kind==='dish'){pv=fv0;pn=FN;}
   it.F={u0:fu0,u1:fu1,v0:fv0,v1:fv1,gw:num(it.gw,GAP),gh:num(it.gh,GAP)};
   const mv=movable(run,kind,pu,pv,pn);mv.sign=hs==='L'?1:-1;mv.it=it;if(K)K.mvs.push(mv);
-  shaker(mv.sub.fronts,fu0,fu1,fv0,fv1);handles(mv.sub.fronts,fu0,fu1,fv0,fv1,it.hd);
+  shaker(mv.sub.fronts,fu0,fu1,fv0,fv1);handles(mv.sub.handles,fu0,fu1,fv0,fv1,it.hd);
   STAT.fronts++;if(it.hd)STAT.handles++;
   const dim=Math.round(fw)+' × '+Math.round(fh);
   if(kind==='door'&&K){
@@ -925,17 +925,17 @@ function buildFront(run,it){
       for(const [a,b,c,d] of [[ui0,ui0+13,ui0+13,ui0+22],[ui1-13,ui1,ui1-22,ui1-13]]){
         lb(RL[run].hardware,a,b,iv-24,iv-8,50,550,M.zinc);lb(Oi,c,d,iv-20,iv-6,58,546,M.zinc);}
       STAT.drawI++;mi.label='Inner drawer M (83) for cutlery · inner front '+(ui1-ui0-132);}}
-  else if(kind==='dish'){const A=RL[run].appliances,{u0,u1}=it;
+  else if(kind==='dish'){const A=RL[run].dishwasher,{u0,u1}=it;
     hollow(A,u0+4,u1-4,15,fv1-6,CN0+8,CN1-24,2,M.steel);
     rack(A,u0+30,u1-30,95,235,CN0+40,CN1-50);rack(A,u0+30,u1-30,430,560,CN0+40,CN1-50);
     lb(A,(u0+u1)/2-200,(u0+u1)/2+200,78,86,(CN0+CN1)/2-25,(CN0+CN1)/2+25,M.steel);
-    lb(mv.sub.appliances,u0+6,u1-6,fv0+4,fv1-10,CN1-22,CN1,M.steel);
-    lb(mv.sub.appliances,u0+6,u1-6,fv1-10,fv1-4,CN1-22,CN1,M.glassBlack);
+    lb(mv.sub.dishwasher,u0+6,u1-6,fv0+4,fv1-10,CN1-22,CN1,M.steel);
+    lb(mv.sub.dishwasher,u0+6,u1-6,fv1-10,fv1-4,CN1-22,CN1,M.glassBlack);
     mv.label='Dishwasher · front '+dim+' on the appliance door';}
   else if(kind==='fridge'&&K&&K.fb){const [bv0,bv1]=K.fb,low=it.v0===K.v0;
     const d0=low?bv0+3:Math.max(bv0,it.v0-20)+3,d1=Math.min(bv1,it.v1-20)-3;
-    lb(mv.sub.appliances,K.u0+20,K.u1-20,d0,d1,500,CN1-2,M.fridge);
-    if(!low)for(const f of [.25,.5,.75]){const y=d0+(d1-d0)*f;lb(mv.sub.appliances,K.u0+55,K.u1-55,y,y+80,446,500,M.ice,true);}
+    lb(mv.sub.fridge,K.u0+20,K.u1-20,d0,d1,500,CN1-2,M.fridge);
+    if(!low)for(const f of [.25,.5,.75]){const y=d0+(d1-d0)*f;lb(mv.sub.fridge,K.u0+55,K.u1-55,y,y+80,446,500,M.ice,true);}
     mv.label=(low?'Freezer':'Fridge')+' · front '+dim+' on the appliance door';}
   else if(kind==='fixed')mv.label='Dummy front '+dim+' · fixed';
   if(!mv.label)mv.label='Front '+dim;
@@ -1011,13 +1011,13 @@ const GCHK=geomCheck();
 
 /* ================= 7. ROOM ================= */
 const walls=[];
-function wallGroup(n,mid){const g=new THREE.Group();WL.room.add(g);walls.push({g,n:new THREE.Vector3(...n),mid:new THREE.Vector3(...mid),vis:true});return g;}
+function wallGroup(n,mid,layer){const g=new THREE.Group();(layer||WL.walls).add(g);walls.push({g,n:new THREE.Vector3(...n),mid:new THREE.Vector3(...mid),vis:true});return g;}
 const VW=VD.window,VR=VD.room,WX1=XF-VW.gapToTallFront,WX0=WX1-VW.width,WY0=VW.sill,WY1=WY0+VW.height,TW=VR.wallThickness,RV=VW.reveal;
-const back=wallGroup([0,0,-1],[1.3,1.37,0]);
+const back=wallGroup([0,0,-1],[1.3,1.37,0]),backWin=wallGroup([0,0,-1],[1.3,1.37,0],WL.window);
 const BX0=VR.leftEnd;
 [[BX0,WX0,0,HC],[WX1,RX+TW,0,HC],[WX0,WX1,0,WY0],[WX0,WX1,WY1,HC]].forEach(([x0,x1,y0,y1])=>bx(x0,x1,y0,y1,-TW,0,M.wall,back));
 bx(BX0,RX+TW,HC,HC+20,-TW,0,M.wall,back);
-(function(){const g=back,zf=-RV,fd=70,z0=zf-fd,F=45,S=52,MU=28,xm=(WX0+WX1)/2;
+(function(){const g=backWin,zf=-RV,fd=70,z0=zf-fd,F=45,S=52,MU=28,xm=(WX0+WX1)/2;
   bx(WX0-200,WX1+200,WY0-300,WY1+300,-2400,-2390,M.sky,g,true);
   bx(WX0,WX1,WY0,WY0+F,z0,zf,M.pvc,g);bx(WX0,WX1,WY1-F,WY1,z0,zf,M.pvc,g);
   bx(WX0,WX0+F,WY0+F,WY1-F,z0,zf,M.pvc,g);bx(WX1-F,WX1,WY0+F,WY1-F,z0,zf,M.pvc,g);
@@ -1033,7 +1033,7 @@ bx(BX0,RX+TW,HC,HC+20,-TW,0,M.wall,back);
   bx(WX0,WX1,WY0-20,WY0,-RV,0,M.wall,g);
 })();
 const right=wallGroup([1,0,0],[RX/1000,1.37,1.6]);bx(RX,RX+TW,0,HC+20,-TW,VR.rightWallLength,M.wall,right);
-CUR=WL.room;const fl=bx(BX0,RX,-20,0,0,VR.floorDepth,M.marble);fl.castShadow=false;
+CUR=WL.floor;const fl=bx(BX0,RX,-20,0,0,VR.floorDepth,M.marble);fl.castShadow=false;
 
 /* ---------- UV in metres for oak, marble, granite ---------- */
 (function(){const p=new THREE.Vector3(),n=new THREE.Vector3();
@@ -1049,8 +1049,8 @@ CUR=WL.room;const fl=bx(BX0,RX,-20,0,0,VR.floorDepth,M.marble);fl.castShadow=fal
     g.setAttribute('uv',new THREE.BufferAttribute(uv,2));m.geometry.dispose();m.geometry=g;}})();
 
 /* ---------- lamps above the island ---------- */
-CUR=WL.room;
-const bulbHot=new THREE.MeshBasicMaterial({color:C(0xffe7c2)});bulbHot.color.multiplyScalar(5);
+CUR=WL.lamps;
+const bulbHot=glow(0xffe7c2,5);
 const shadeIn=std({color:C(0xf4ead8),roughness:.6,metalness:0,side:THREE.BackSide});
 VD.pendants.xFractions.map(f=>CW*f).forEach(x=>{const z=IZ+VD.pendants.fromIslandBack,y=VD.pendants.bottom;
   cyl(2,HC-y-90,M.gasket,x,(HC+y+90)/2,z,null,6);
@@ -1060,13 +1060,13 @@ VD.pendants.xFractions.map(f=>CW*f).forEach(x=>{const z=IZ+VD.pendants.fromIslan
   const rim=new THREE.Mesh(new THREE.TorusGeometry(.15,.004,8,48),M.handle);rim.rotation.x=Math.PI/2;rim.position.copy(sh.position);CUR.add(rim);
   cyl(14,40,M.gasket,x,y+60+120,z,null,16);
   const b=new THREE.Mesh(new THREE.SphereGeometry(.032,20,12),bulbHot);b.position.set(x/1000,(y+60+75)/1000,z/1000);CUR.add(b);
-  const g=new THREE.PointLight(0xffd9a8,1.2,.9,2);g.position.copy(b.position);scene.add(g);
+  const g=new THREE.PointLight(0xffd9a8,1.2,.9,2);g.position.copy(b.position);LAMPS.push(g);scene.add(g);
   const l=new THREE.SpotLight(0xffd9a8,7,5,1.2,.8,2);l.position.copy(b.position);l.target.position.set(x/1000,0,z/1000);
-  l.castShadow=true;SPOTS.push(l);l.shadow.mapSize.set(1024,1024);l.shadow.bias=-.0008;l.shadow.radius=6;l.shadow.camera.near=.12;scene.add(l,l.target);});
+  SPOTS.push(l);LAMPS.push(l);l.shadow.mapSize.set(1024,1024);l.shadow.bias=-.0008;l.shadow.radius=6;l.shadow.camera.near=.12;scene.add(l,l.target);});
 
 /* ---------- ceiling with 4 surface-mounted downlights ---------- */
-const ceil=wallGroup([0,1,0],[1.2,HC/1000+.02,2]);
-bx(BX0,RX,HC,HC+20,0,VR.floorDepth,std({color:C(COL.wall),roughness:.95,emissive:C(0x4a4844)}),ceil,true);
+const ceil=wallGroup([0,1,0],[1.2,HC/1000+.02,2],WL.ceiling);
+const ceilMat=std({color:C(COL.wall),roughness:.95,emissive:C(0x4a4844)});bx(BX0,RX,HC,HC+20,0,VR.floorDepth,ceilMat,ceil,true);
 const DLZ=OA+VD.downlights.fromBackCarcassLine, DLX=XF-VD.downlights.fromTallFront;
 const DL=[[(HX+DLX)/2,DLZ],...[0,1,2].map(k=>[DLX,DLZ+(BEND-2*DLZ)*k/2])];
 const tube=std({color:C(0xf3f3f0),roughness:.45}),tubeIn=std({color:C(0x2a2a2a),roughness:.7,side:THREE.BackSide});
@@ -1077,10 +1077,10 @@ for(const [x,z] of DL){
   const cap=new THREE.Mesh(new THREE.CircleGeometry(TR/1000,40),tube);cap.rotation.x=-Math.PI/2;cap.position.set(x/1000,(HC-1)/1000,z/1000);ceil.add(cap);
   const d=new THREE.Mesh(new THREE.CircleGeometry((TR-8)/1000,32),bulbHot);d.rotation.x=Math.PI/2;d.position.set(x/1000,(HC-TH+15)/1000,z/1000);ceil.add(d);
   const l=new THREE.SpotLight(0xfff0dc,11,0,1.0,1,2);l.position.set(x/1000,(HC-TH+10)/1000,z/1000);l.target.position.set(x/1000,0,z/1000);
-  l.castShadow=true;SPOTS.push(l);l.shadow.mapSize.set(512,512);l.shadow.bias=-.001;l.shadow.radius=8;l.shadow.camera.near=.05;scene.add(l,l.target);}
+  SPOTS.push(l);LAMPS.push(l);l.shadow.mapSize.set(512,512);l.shadow.bias=-.001;l.shadow.radius=8;l.shadow.camera.near=.05;scene.add(l,l.target);}
 
 /* ---------- daylight ---------- */
-scene.add(new THREE.HemisphereLight(0xf4f6f9,0x8a8178,1.5));
+const hemi=new THREE.HemisphereLight(0xf4f6f9,0x8a8178,1.5);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xfff0d8,2.4);sun.position.set(1.4,7.5,-4.2);sun.target.position.set(1.9,.4,1.6);
 sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-4,right:4,top:4,bottom:-4,near:.5,far:16});sun.shadow.bias=-.0005;sun.shadow.normalBias=.02;sun.shadow.radius=10;
 scene.add(sun,sun.target);
@@ -1163,26 +1163,37 @@ function setHandles(k){HCUP.forEach(o=>o.visible=k==='cup');HBAR.forEach(o=>o.vi
 document.getElementById('hstyle').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setHandles(b.dataset.h);});
 document.getElementById('metal').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;setMetal(b.dataset.m);
   for(const x of document.querySelectorAll('#metal button'))x.setAttribute('aria-pressed',x===b);});
-const PAL={project:{navy:COL.front},light:{navy:COL.frontLight}};   // fronts: project colour / light preview
-const EDGE=[];const eb=document.getElementById('edgesBtn');
-function ensureEdges(){if(EDGE.length)return;const lm=new THREE.LineBasicMaterial({color:0x26324f,transparent:true,opacity:.6});
+/* colours: Colour = project materials; White = matte white model with outlines on every part */
+const EDGE=[];
+function ensureEdges(){if(EDGE.length)return;const lm=new THREE.LineBasicMaterial({color:0x1f2633,transparent:true,opacity:.75});
   scene.traverse(o=>{if(o.isMesh&&!o.material.transparent&&!Array.isArray(o.material))Object.assign(o.material,{polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});});
   for(const m of parts){if(Array.isArray(m.material)||m.material===M.marble||m.material===M.wall||m.material.transparent||m.material===M.sky)continue;
     const e=new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry,20),lm);e.raycast=()=>{};m.add(e);EDGE.push(e);}}
-function setEdges(on){if(on)ensureEdges();EDGE.forEach(e=>e.visible=on);eb.setAttribute('aria-pressed',on);}
-function setPalette(k){M.navy.color.copy(C(PAL[k].navy));M.navy.clearcoat=k==='light'?0:.2;
-  for(const x of document.querySelectorAll('#palette [data-p]'))x.setAttribute('aria-pressed',x.dataset.p===k);setEdges(k==='light');}
+scene.traverse(o=>{for(const m of [].concat(o.material||[]))if(m&&m.isMeshStandardMaterial&&!m.transparent&&!CLAY.has(m))
+  CLAY.set(m,{color:m.color.clone(),map:m.map,metalness:m.metalness,roughness:m.roughness,clearcoat:m.clearcoat||0});});
+function setPalette(k){PALK=k;const white=k!=='colour';
+  for(const [m,o] of CLAY){if(white){m.color.set(m===M.marble?0xcfcfcb:m===M.wall?0xe2e1dd:0xdcdbd7);m.map=null;m.metalness=0;m.roughness=.85;if('clearcoat' in m)m.clearcoat=0;}
+    else{m.color.copy(o.color);m.map=o.map;m.metalness=o.metalness;m.roughness=o.roughness;if('clearcoat' in m)m.clearcoat=o.clearcoat;}m.needsUpdate=true;}
+  if(white)ensureEdges();EDGE.forEach(e=>e.visible=white);
+  for(const x of document.querySelectorAll('#palette [data-p]'))x.setAttribute('aria-pressed',x.dataset.p===k);applyEnv();dirty();}
 setHandles('cup');
-document.getElementById('palette').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-  if(b===eb)setEdges(eb.getAttribute('aria-pressed')!=='true');else setPalette(b.dataset.p);});
+document.getElementById('palette').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setPalette(b.dataset.p);});
 
-/* ---------- layers ---------- */
-const LB_=document.getElementById('layers');
-function setLayer(n,on){(LYG[n]||[]).forEach(g=>g.visible=on);const b=LB_.querySelector('[data-l="'+n+'"]');if(b)b.setAttribute('aria-pressed',on);dirty();}
-LB_.addEventListener('click',e=>{const b=e.target.closest('button');if(b)setLayer(b.dataset.l,b.getAttribute('aria-pressed')!=='true');});
-const PRESET={all:LNAMES,inside:['carcasses','shelves','drawers','hardware','appliances','worktops','room'],carc:['carcasses','shelves','drawers','hardware']};
-function preset(k){for(const n of LNAMES)setLayer(n,PRESET[k].includes(n));}
-document.getElementById('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(b)preset(b.dataset.preset);});
+/* ---------- layers: one chip per layer, the group name toggles the whole group ---------- */
+const LB_=document.getElementById('layers'),LON={};
+LB_.innerHTML=LAYERS.map(([g,l],i)=>'<div class="lgrp"><button class="gh" data-g="'+i+'" aria-pressed="true">'+g+'</button><div class="row chips">'+
+  l.map(([id,lab])=>'<button data-l="'+id+'" aria-pressed="true">'+lab+'</button>').join('')+'</div></div>').join('');
+function syncGroups(){LB_.querySelectorAll('[data-g]').forEach(b=>{const ids=LAYERS[b.dataset.g][1].map(([id])=>id),n=ids.filter(id=>LON[id]).length;
+  b.setAttribute('aria-pressed',n===ids.length?'true':n?'mixed':'false');});}
+function setLayer(n,on,quiet){LON[n]=on;(LYG[n]||[]).forEach(g=>g.visible=on);const b=LB_.querySelector('[data-l="'+n+'"]');if(b)b.setAttribute('aria-pressed',on);if(!quiet){syncGroups();dirty();}}
+LB_.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.l)setLayer(b.dataset.l,!LON[b.dataset.l]);
+  else{const ids=LAYERS[b.dataset.g][1].map(([id])=>id),on=!ids.every(id=>LON[id]);ids.forEach(id=>setLayer(id,on,true));syncGroups();dirty();}});
+const ROOM=['walls','window','floor','ceiling','lamps'],TRIM=['fronts','handles','frames','plinth','panel'];
+const PRESET={all:LNAMES,kitchen:LNAMES.filter(n=>!ROOM.includes(n)),inside:LNAMES.filter(n=>!TRIM.includes(n)),
+  carc:['carcasses','backs','shelves','drawers','hardware','legs']};
+function preset(k){for(const n of LNAMES)setLayer(n,PRESET[k].includes(n),true);syncGroups();dirty();}
+LNAMES.forEach(n=>LON[n]=true);
 
 /* ================= 9. CARCASSES TAB ================= */
 const ROLE={'Side':'#f0c27b','Bottom panel':'#8fcf9f','Top panel':'#4fae6e','Top rail 100':'#f29e8e','Fixed shelf':'#5f95da',
@@ -1271,19 +1282,34 @@ cl.addEventListener('click',()=>{spec(false);tg.focus({preventScroll:true});});
 renderer.domElement.addEventListener('pointerdown',()=>{if(mob.matches)spec(false);});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mob.matches)spec(false);});
 
-/* ---------- quality: Fast = 1 px per screen pixel, shadow only from daylight; Detailed = sharp + lamp shadows ---------- */
-let QUAL='fast';try{if(localStorage.getItem('kv-q')==='hi')QUAL='hi';}catch(e){}
-function setQuality(q){QUAL=q;renderer.setPixelRatio(q==='hi'?Math.min(devicePixelRatio,2):1);
-  for(const l of SPOTS)l.castShadow=q==='hi';
-  for(const b of document.querySelectorAll('#quality button'))b.setAttribute('aria-pressed',b.dataset.q===q);
-  try{localStorage.setItem('kv-q',q);}catch(e){}resize();dirty();}
-document.getElementById('quality').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setQuality(b.dataset.q);});
+/* ---------- light: Day = daylight only, 1 px per screen pixel, shadow only from the sun (fast);
+   Night = sun off, every lamp on (ceiling downlights, pendants, hood LEDs), lamp shadows, sharp (slow) ---------- */
+let QUAL='day';try{if(localStorage.getItem('kv-light')==='night')QUAL='night';}catch(e){}
+function applyEnv(){const night=QUAL==='night',white=PALK!=='colour';   // ambient reflections: dimmer at night and on the white model (gives it shading)
+  for(const [m,k] of ENVK)m.envMapIntensity=k*(night?.12:1)*(white?.3:1);
+  renderer.toneMappingExposure=(night?1.3:1.05)*(white?.92:1);}
+const ENVK=new Map();scene.traverse(o=>{for(const m of [].concat(o.material||[]))if(m&&'envMapIntensity' in m&&!ENVK.has(m))ENVK.set(m,m.envMapIntensity);});
+const SKY0=M.sky.color.clone();
+function setLight(q){QUAL=q;const night=q==='night';
+  renderer.setPixelRatio(night?Math.min(devicePixelRatio,2):1);
+  sun.visible=sun.castShadow=!night;fill.visible=fill2.visible=!night;
+  hemi.intensity=night?.12:1.5;hemi.color.set(night?0x9aa6c4:0xf4f6f9);
+  for(const l of LAMPS)l.visible=night;
+  for(const l of SPOTS)l.castShadow=night;
+  for(const m of GLOW)m.color.copy(night?m.userData.on:m.userData.off);
+  ceilMat.emissive.set(night?0x0b0a09:0x4a4844);
+  M.sky.color.copy(night?C(0x1b2236):SKY0);
+  applyEnv();
+  for(const b of document.querySelectorAll('#lighting button'))b.setAttribute('aria-pressed',b.dataset.q===q);
+  try{localStorage.setItem('kv-light',q);}catch(e){}resize();dirty();}
+const setQuality=q=>setLight(q==='hi'||q==='night'?'night':'day');
+document.getElementById('lighting').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setLight(b.dataset.q);});
 /* ---------- loop: draws a frame only when something changes ---------- */
 function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();wake();}
-new ResizeObserver(resize).observe(stage);setQuality(QUAL);
+new ResizeObserver(resize).observe(stage);setLight(QUAL);
 for(const ev of ['pointerdown','pointermove','pointerup','wheel','click','input','change','keydown'])document.addEventListener(ev,e=>{if(ev!=='pointermove'||e.buttons)wake();},{capture:true,passive:true});
 const tmp=new THREE.Vector3();let last=performance.now();
-window.__kv={scene,GCHK,FCHK,KS,MOV,STAT,SPC,setQuality,setLayer,preset,toggle,selectK,setExplode,camera,controls,go};
+window.__kv={scene,GCHK,FCHK,KS,MOV,STAT,SPC,setLight,setQuality,setLayer,preset,toggle,selectK,setExplode,camera,controls,go};
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   if(anim){const k=Math.min(1,(now-anim.s)/900),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
     camera.position.lerpVectors(anim.p0,anim.p,e);controls.target.lerpVectors(anim.t0,anim.t,e);if(k>=1)anim=null;}
