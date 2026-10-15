@@ -550,7 +550,7 @@ const SX0=SC-390,SX1=SC+390,SZ0=40,SZ1=540, KX0=SC-340,KX1=SC+340,KZ0=130,KZ1=51
 const RIM=8,SW=10,SB=WT-200,TAPZ=85;
 // Group 1 worktop ends with the last carcass under it (incl. a corner carcass wider than its column, "carcass 800")
 function worktopA(v0,v1){const a=KX0-SW,b=KX1+SW,c=KZ0-SW,d=KZ1+SW,e=Math.max(...LA.filter(i=>i.t==='cabinet'||i.t==='drawer').map(i=>i.cw>i.u1-i.u0?i.u0+i.cw:i.u1));[[0,a,0,600],[b,e,0,600],[a,b,0,c],[a,b,d,600]].forEach(([a,b,c,d])=>bx(a,b,v0,v1,c,d,M.oak).userData.grain='x');}
-// chipboard 18 back strip behind every frame: keeps carcass spacing at the back (18 frame on edge -> strip on edge 100; flat filler -> flat strip)
+// chipboard 18 back strip behind every frame, same thickness as the frame (no packing): keeps carcass spacing at the back
 const SPC=[],KM=[];
 // carcasses wider than their column (cw in the project): no gap behind their frames, so no strip
 const CWX=[];for(const r of RUNS3)for(const it of LAY[r])if(it.cw>it.u1-it.u0)CWX.push({r,u0:it.u0,u1:it.u0+it.cw,v0:it.v0,v1:it.v1});
@@ -560,8 +560,8 @@ function spacer(run,it,flat){const {u0,u1,v0,v1}=it,P=RL[run].carcasses,vert=v1-
   const hasK=c=>LAY[run].some(x=>(x.t==='cabinet'||x.t==='drawer'||x.t==='oven'||x.t==='micro')&&x.c<=c&&c<x.c+x.s&&x.v0<v1&&x.v1>v0);
   if(flat&&!(hasK(it.c-1)&&hasK(it.c+it.s)))return;
   if(flat){m=lb(P,u0,u1,v0,v1,CN0,CN0+18,M.carcass);name='Back strip, flat';a=u1-u0;b=v1-v0;}
-  else if(vert){m=lb(P,u0+1,u1-1,v0,v1,CN0,CN0+100,M.carcass);name='Back strip 100';a=100;b=v1-v0;}
-  else{m=lb(P,u0,u1,v0+1,v1-1,CN0,CN0+100,M.carcass);name='Back strip 100';a=100;b=u1-u0;}
+  else if(vert){m=lb(P,u0,u1,v0,v1,CN0,CN0+100,M.carcass);name='Back strip 100';a=100;b=v1-v0;}
+  else{m=lb(P,u0,u1,v0,v1,CN0,CN0+100,M.carcass);name='Back strip 100';a=100;b=u1-u0;}
   if(!m)return;m.userData={role:name,a,b,base:M.carcass};KM.push(m);SPC.push({name,a,b});}
 function build(run){
   for(const it of LAY[run]){const {u0,u1,v0,v1,t,s,c}=it,h=v1-v0;
