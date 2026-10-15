@@ -415,6 +415,18 @@
      PROJECT DATA (JSON) - the only place with values for this kitchen.
      The application script below is project independent; it reads this
      block at start-up. To update the kitchen, edit only this block.
+     DATA FLOW (propagated by an LLM on request, files never write each other):
+       1. kitchen_design.html  #kitchen-project       SOURCE - edit only here
+       2. kitchen_cost.html    #kitchen-project-copy  = exact copy of 1
+                               #cost-data             rules, blocks / items derived from 1 by the design
+                                                      notes (fronts are calculated live); prices are input
+       3. kichen_view.html     #kitchen-project-copy  = exact copy of 2 (same as 1)
+                               #view-data             scene of this kitchen (room, window, appliances,
+                                                      lights, colours, cameras) - input, edit here
+     The view only draws the project and checks it: overlaps / gaps / parts sticking out, front alignment.
+     The JavaScript in the three files is generic: kitchen data lives only in the LLM-DATA blocks.
+     Data sections are marked  LLM-DATA BEGIN <name> ... LLM-DATA END <name>.
+     After propagating, open kichen_view.html, tab Carcasses: geometry and alignment checks must be OK.
        settings.gapMm: default reveal gap between fronts (mm)
        settings.alignFronts: line up fronts in the same line (see note "Front alignment")
        notes:      [name, description, details] - everything the drawing
@@ -428,6 +440,7 @@
          hd handle (T|B|L|R|""), gw/gh front gaps mm ("" = default),
          note: what this piece is (geometry specific)
      =================================================================== -->
+<!-- LLM-DATA BEGIN kitchen-project (SOURCE: edit here) -->
 <script type="application/json" id="kitchen-project">
 {
   "settings": {"gapMm": 4, "alignFronts": true},
@@ -468,7 +481,7 @@
     ["Microwave", "Bosch BFL623MB3", ""],
     ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"],
     ["Cost estimate", "Materials and prices from this design", "Cutting list, fronts (module − gap), hardware, appliances; waste and reserve"],
-    ["3D view", "3D model from this design", "Checks the cutting list against the cost estimate and the front alignment"]
+    ["3D view", "3D model from this design", "Checks overlaps, gaps, parts sticking out and front alignment"]
   ],
   "columns": {
     "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 564],
@@ -537,6 +550,7 @@
   ]
 }
 </script>
+<!-- LLM-DATA END kitchen-project -->
 <script>
 'use strict';
 

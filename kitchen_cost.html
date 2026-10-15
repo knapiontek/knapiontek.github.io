@@ -116,9 +116,22 @@
        {block.m2|edge|cut} = block total from the Cutting list, {q:id} = item qty,
        {waste}, {sheet} = parameters, ROUNDUP(x,0) = round up
      notes: Notes tab; refs in an item = note numbers
+     DATA FLOW (propagated by an LLM on request, files never write each other):
+       1. kitchen_design.html  #kitchen-project       SOURCE - edit only here
+       2. kitchen_cost.html    #kitchen-project-copy  = exact copy of 1
+                               #cost-data             rules, blocks / items derived from 1 by the design
+                                                      notes (fronts are calculated live); prices are input
+       3. kichen_view.html     #kitchen-project-copy  = exact copy of 2 (same as 1)
+                               #view-data             scene of this kitchen (room, window, appliances,
+                                                      lights, colours, cameras) - input, edit here
+     The view only draws the project and checks it: overlaps / gaps / parts sticking out, front alignment.
+     The JavaScript in the three files is generic: kitchen data lives only in the LLM-DATA blocks.
+     Data sections are marked  LLM-DATA BEGIN <name> ... LLM-DATA END <name>.
+     After propagating, open kichen_view.html, tab Carcasses: geometry and alignment checks must be OK.
      =================================================================== -->
 <!-- Copy of the project block from kitchen_design.html, used only when that file
      cannot be fetched (page opened from disk). -->
+<!-- LLM-DATA BEGIN kitchen-project-copy (exact copy of kitchen_design.html #kitchen-project) -->
 <script type="application/json" id="kitchen-project-copy">
 {
   "settings": {"gapMm": 4, "alignFronts": true},
@@ -159,7 +172,7 @@
     ["Microwave", "Bosch BFL623MB3", ""],
     ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"],
     ["Cost estimate", "Materials and prices from this design", "Cutting list, fronts (module − gap), hardware, appliances; waste and reserve"],
-    ["3D view", "3D model from this design", "Checks the cutting list against the cost estimate and the front alignment"]
+    ["3D view", "3D model from this design", "Checks overlaps, gaps, parts sticking out and front alignment"]
   ],
   "columns": {
     "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 564],
@@ -228,7 +241,21 @@
   ]
 }
 </script>
+<!-- LLM-DATA END kitchen-project-copy -->
+<!-- LLM-DATA BEGIN cost-data (blocks and items derived from the design; prices are input) -->
 <script type="application/json" id="cost-data">{
+ "rules": {
+  "storageKey": "kitchen-cost-jaworze-v4",
+  "xlsxFile": "kitchen_cost_jaworze.xlsx",
+  "frontsBlock": "front",
+  "frontKinds": [{"t": "drawer", "note": "waste|bins", "kind": "sink drawer (waste bins)"}, {"t": "drawer", "kind": "drawer"}, {"t": "cabinet", "note": "dummy", "kind": "dummy front"}, {"t": "cabinet", "note": "dishwasher|fridge|freezer", "kind": "appliance-door front"}, {"t": "cabinet", "kind": "door"}],
+  "edgeBlocks": {"p18": {"along": "A", "rows": {"Side": "B"}}},
+  "cutBlocks": ["p18", "p16"],
+  "applianceCats": ["Appliances"],
+  "sheetLabel": "Board sheet 2800×2070 [m²]",
+  "cuttingNote": "Carcass = column width, depth 550; interior = width − 36; adjustable shelf = interior − 2 × 530; HDF back = carcass − 2; fronts = module − 4 mm.",
+  "qtyWords": {"q:legs": "number of legs"}
+ },
  "title": "Material cost estimate – Kitchen Jaworze (Group 1+2 in an L, island Group 3)",
  "info": "PLN gross, average market prices October 2026, materials only (self-assembly). Blue cells are editable; the browser remembers changes. Quantities with a formula are calculated from the Cutting list tab.",
  "params": {
@@ -1369,9 +1396,10 @@
  ],
  "n_carc": 15
 }</script>
+<!-- LLM-DATA END cost-data -->
 <script>
 'use strict';
-const DATA = JSON.parse(document.getElementById('cost-data').textContent);
+const DATA = JSON.parse(document.getElementById('cost-data').textContent), RU = DATA.rules;   // all kitchen data is in the JSON blocks above
 
 // ---------- fronts: calculated from kitchen_design.html (front = module − Gap W / Gap H) ----------
 // The embedded rows are only a fallback for when the page is opened without kitchen_design.html next to it.
@@ -1379,10 +1407,9 @@ function frontsFromProject(P) {
   const gap = Number((P.settings || {}).gapMm ?? 4), agg = new Map();
   const num = (x, d) => { const v = parseFloat(x); return Number.isFinite(v) ? v : d; };
   for (const c of P.components || []) {
-    if (c.t !== 'drawer' && c.t !== 'cabinet') continue;
+    if (!RU.frontKinds.some(k => k.t === c.t)) continue;
     const cols = (P.columns[c.g] || []).map(Number), w = cols.slice(c.c - 1, c.c - 1 + c.s).reduce((a, b) => a + b, 0), n = c.note || '';
-    const f = c.t === 'drawer' ? (/waste|bins/i.test(n) ? 'sink drawer (waste bins)' : 'drawer')
-      : /dummy/i.test(n) ? 'dummy front' : /dishwasher|fridge|freezer/i.test(n) ? 'appliance-door front' : 'door';
+    const f = RU.frontKinds.find(k => k.t === c.t && (!k.note || new RegExp(k.note, 'i').test(n))).kind;   // first matching rule
     const k = [f, w - num(c.gw, gap), Number(c.h) - num(c.gh, gap)].join('|');
     agg.set(k, (agg.get(k) || 0) + 1);
   }
@@ -1398,10 +1425,10 @@ async function loadProject() {
     if (m) { PROJECT = JSON.parse(m[1]); PROJECT_SRC = 'kitchen_design.html'; }
   } catch (e) { /* keep the copy */ }
 }
-function applyProject() { DATA.blocks.find(b => b.id === 'front').rows = frontsFromProject(PROJECT); }
+function applyProject() { DATA.blocks.find(b => b.id === RU.frontsBlock).rows = frontsFromProject(PROJECT); }
 applyProject();
 
-const STORE = 'kitchen-cost-jaworze-v4';
+const STORE = RU.storageKey;
 const fmt = (v, d = 2) => Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '–';
 const fmtQ = v => Number.isInteger(v) ? v.toLocaleString('en-GB') : fmt(v, 2);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -1420,7 +1447,7 @@ try {
   const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
   if (saved) {
     Object.assign(S.params, saved.params || {});
-    for (const [id, rows] of Object.entries(saved.blocks || {})) if (id !== 'front' && S.blocks[id] && rows.length === S.blocks[id].length) S.blocks[id] = rows;
+    for (const [id, rows] of Object.entries(saved.blocks || {})) if (id !== RU.frontsBlock && S.blocks[id] && rows.length === S.blocks[id].length) S.blocks[id] = rows;
     for (const [id, v] of Object.entries(saved.items || {})) if (S.items[id]) Object.assign(S.items[id], v);
   }
 } catch (e) { /* storage unavailable - defaults only */ }
@@ -1434,8 +1461,8 @@ function blockTotals() {
     b.rows.forEach((r, i) => {
       const [A, B, q] = S.blocks[b.id][i].map(Number);
       const m2 = A * B * q / 1e6;
-      const edge = b.id === 'p18' ? (r[0] === 'Side' ? B : A) * q / 1000 : null;
-      const cut = (b.id === 'p18' || b.id === 'p16') ? (A + B) * q / 1000 : null;
+      const E = RU.edgeBlocks[b.id], edge = E ? ((E.rows[r[0]] || E.along) === 'B' ? B : A) * q / 1000 : null;
+      const cut = RU.cutBlocks.includes(b.id) ? (A + B) * q / 1000 : null;
       t.m2 += m2; t.qty += q; t.edge += edge || 0; t.cut += cut || 0;
       t.rows.push({ m2, edge, cut });
     });
@@ -1463,7 +1490,7 @@ function compute() {
       sum += V[r.id];
     }
     cat[c.cat] = sum;
-    if (c.cat === 'Appliances') appl += sum; else furn += sum;
+    if (RU.applianceCats.includes(c.cat)) appl += sum; else furn += sum;
   }
   const reserve = Math.round(furn * Number(S.params.reserve) * 100) / 100;
   return { T, Q, V, cat, furn, appl, reserve, total: furn + appl + reserve };
@@ -1472,7 +1499,7 @@ function compute() {
 // ---------- rendering ----------
 function describe(expr) {
   return expr.replace(/^=/, '')
-    .replace(/\{q:legs\}/g, 'number of legs')
+    .replace(/\{(q:\w+)\}/g, (m, k) => RU.qtyWords[k] || m)
     .replace(/\{(\w+)\.(\w+)\}/g, (_, b, k) => `${(DATA.blocks.find(x => x.id === b) || {}).title?.split(' –')[0] || b} ${{ m2: 'm²', edge: 'edging lm', cut: 'cutting lm' }[k]}`)
     .replace('{waste}', 'waste').replace('{sheet}', 'sheet');
 }
@@ -1511,7 +1538,7 @@ function renderR() {
       const inp = k => b.live ? `<td class="num" title="Calculated from kitchen_design.html – change Gap W / Gap H there">${cur[k]}</td>` : `<td class="num"><input type="number" step="1" data-blk="${b.id}" data-i="${i}" data-k="${k}" value="${cur[k]}" class="${cur[k] != def[k] ? 'changed' : ''}"></td>`;
       h.push(`<tr><td>${esc(r[0])}</td>${inp(0)}${inp(1)}${inp(2)}<td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td></tr>`);
     });
-    const t = T[b.id], hasE = b.id === 'p18', hasC = b.id === 'p18' || b.id === 'p16';
+    const t = T[b.id], hasE = !!RU.edgeBlocks[b.id], hasC = RU.cutBlocks.includes(b.id);
     h.push(`<tr class="sum"><td>Total</td><td></td><td></td><td class="num">${t.qty}</td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${hasE ? fmt(t.edge) : ''}</td><td class="num">${hasC ? fmt(t.cut) : ''}</td></tr>`);
   }
   document.getElementById('rBody').innerHTML = h.join('');
@@ -1575,7 +1602,7 @@ function buildWorkbook() {
   const R = compute(), XL = window.XLSX;
   const n = v => ({ t: 'n', v }), s = v => ({ t: 's', v: String(v ?? '') }), f = (formula, v) => ({ t: 'n', f: formula, v });
   // Cutting list
-  const rz = [[s('Cutting list – panels derived from kitchen_design.html (dimensions mm)')], [s('Carcass = column width, depth 550; interior = width − 36; adjustable shelf = interior − 2 × 530; HDF back = carcass − 2; fronts = module − 4 mm.')], []];
+  const rz = [[s('Cutting list – panels derived from kitchen_design.html (dimensions mm)')], [s(RU.cuttingNote)], []];
   const totRow = {};
   for (const b of DATA.blocks) {
     rz.push([s(b.title)]);
@@ -1584,8 +1611,9 @@ function buildWorkbook() {
     b.rows.forEach((r, i) => {
       const [A, B, q] = S.blocks[b.id][i].map(Number), row = rz.length + 1, t = R.T[b.id].rows[i];
       const line = [s(r[0]), n(A), n(B), n(q), f(`B${row}*C${row}*D${row}/1000000`, t.m2)];
-      if (b.id === 'p18') line.push(f(`${r[0] === 'Side' ? 'C' : 'B'}${row}*D${row}/1000`, t.edge)); else line.push(s(''));
-      if (b.id === 'p18' || b.id === 'p16') line.push(f(`(B${row}+C${row})*D${row}/1000`, t.cut));
+      const E = RU.edgeBlocks[b.id];
+      if (E) line.push(f(`${(E.rows[r[0]] || E.along) === 'B' ? 'C' : 'B'}${row}*D${row}/1000`, t.edge)); else line.push(s(''));
+      if (RU.cutBlocks.includes(b.id)) line.push(f(`(B${row}+C${row})*D${row}/1000`, t.cut));
       rz.push(line);
     });
     const last = rz.length, row = last + 1, T = R.T[b.id];
@@ -1601,7 +1629,7 @@ function buildWorkbook() {
   }
   // Estimate
   const ks = [[s(DATA.title)], [s(DATA.info.replace('; the browser remembers changes', ''))],
-    [s('Board waste allowance'), s(''), n(Number(S.params.waste))], [s('Board sheet 2800×2070 [m²]'), s(''), n(Number(S.params.sheet))], [],
+    [s('Board waste allowance'), s(''), n(Number(S.params.waste))], [s(RU.sheetLabel), s(''), n(Number(S.params.sheet))], [],
     ['No.', 'Item', 'Specification', 'Qty', 'Unit', 'Unit price [PLN]', 'Value [PLN]', 'Price source / notes'].map(s)];
   const itemRow = {}, catRows = [], links = [];
   let lp = 0;
@@ -1624,8 +1652,8 @@ function buildWorkbook() {
   }
   ks.push([]);
   const m = ks.length + 1;
-  ks.push([s(''), s('Furniture (materials) total'), s(''), s(''), s(''), s(''), f(catRows.filter(c => c[0] !== 'Appliances').map(c => 'G' + c[1]).join('+'), R.furn)]);
-  ks.push([s(''), s('Appliances total'), s(''), s(''), s(''), s(''), f(catRows.filter(c => c[0] === 'Appliances').map(c => 'G' + c[1]).join('+'), R.appl)]);
+  ks.push([s(''), s('Furniture (materials) total'), s(''), s(''), s(''), s(''), f(catRows.filter(c => !RU.applianceCats.includes(c[0])).map(c => 'G' + c[1]).join('+'), R.furn)]);
+  ks.push([s(''), s('Appliances total'), s(''), s(''), s(''), s(''), f(catRows.filter(c => RU.applianceCats.includes(c[0])).map(c => 'G' + c[1]).join('+'), R.appl)]);
   ks.push([s(''), s('Contingency for small items / estimated prices'), s('% of furniture'), s(''), s(''), n(Number(S.params.reserve)), f(`ROUND(G${m}*F${m + 2},2)`, R.reserve)]);
   ks.push([s(''), s('TOTAL GROSS'), s(''), s(''), s(''), s(''), f(`G${m}+G${m + 1}+G${m + 2}`, R.total)]);
   ks.push([]); ks.push([s(''), s('Not included')]);
@@ -1651,22 +1679,13 @@ function buildWorkbook() {
 }
 document.getElementById('btnXlsx').addEventListener('click', async e => {
   const b = e.currentTarget; b.disabled = true;
-  try { await loadSheetJS(); window.XLSX.writeFile(buildWorkbook(), 'kitchen_cost_jaworze.xlsx', { compression: true }); }
+  try { await loadSheetJS(); window.XLSX.writeFile(buildWorkbook(), RU.xlsxFile, { compression: true }); }
   catch (err) { alert(err.message); }
   finally { b.disabled = false; }
 });
 
-// Published as window.KITCHEN.ready: project + cutting list.
-window.KITCHEN = {
-  ready: loadProject().then(() => {
-    applyProject(); DEF = defaults(); S.blocks.front = DEF.blocks.front.map(r => [...r]); renderAll();
-    return {
-      source: PROJECT_SRC,
-      project: PROJECT,
-      blocks: DATA.blocks.map(b => ({ id: b.id, rows: b.rows.map((r, i) => [r[0], ...S.blocks[b.id][i].map(Number)]) }))
-    };
-  })
-};
+// fronts from the live kitchen_design.html (when reachable), then redraw
+loadProject().then(() => { applyProject(); DEF = defaults(); S.blocks[RU.frontsBlock] = DEF.blocks[RU.frontsBlock].map(r => [...r]); renderAll(); });
 renderAll();
 </script>
 </body>
