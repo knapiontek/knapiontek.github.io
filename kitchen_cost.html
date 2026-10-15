@@ -96,7 +96,7 @@
         <tbody id="rBody"></tbody>
       </table>
     </div>
-    <div class="excl">Carcass = column width, depth 550; interior = width − 36; adjustable shelf = interior − 2 × 530; HDF back = carcass − 2; fronts = module − 4 mm gap; back strip = 100 × frame length (frames 18); drawer bottom = LW − 75 × 490, back = LW − 87; inner drawer back 84 high. ABS edging on front edges only.</div>
+    <div class="excl">Carcass = column width, depth 550; interior = width − 36; adjustable shelf = interior − 2 × 530; HDF back = carcass − 2; fronts = module − Gap W / Gap H; back strip = 100 × frame length (frames 18); drawer bottom = LW − 75 × 490, back = LW − 87; inner drawer back 84 high. ABS edging on front edges only.</div>
   </section>
 
   <section id="tab-notes" class="hidden">
@@ -117,6 +117,117 @@
        {waste}, {sheet} = parameters, ROUNDUP(x,0) = round up
      notes: Notes tab; refs in an item = note numbers
      =================================================================== -->
+<!-- Copy of the project block from kitchen_design.html, used only when that file
+     cannot be fetched (page opened from disk). -->
+<script type="application/json" id="kitchen-project-copy">
+{
+  "settings": {"gapMm": 4, "alignFronts": true},
+  "notes": [
+    ["Project", "Kitchen – Jaworze", "Group 1 + Group 2 form an L, Group 3 is an island"],
+    ["Location", "Jaworze, Bielsko-Biała county", ""],
+    ["Scope", "Materials only, owner builds it", "Prices: market average, PLN gross"],
+    ["Style", "Shaker, painted", "Overlay fronts; frames between fronts make them look inset"],
+    ["Room", "Floor gres, walls white", "Grey tiles 120 × 60"],
+    ["Window", "Above the Group 1 worktop", "1900 × 1300"],
+    ["Lighting", "3 ceiling spotlights over the tall units (Group 2)", "1 spotlight over the sink, halfway to the hood; 2 pendants over the island"],
+    ["Carcass material", "Chipboard 18 light grey, ABS 0.8 front edge", "Back HDF 3 light grey. Cut and edge-banded by the board supplier"],
+    ["Carcasses", "Width = column width, depth 550, 14 from the walls", "Stacked fronts = one carcass, upper cabinets separate; no dishwasher carcass"],
+    ["Base carcasses", "2 top rails 100 deep instead of a top panel", ""],
+    ["Shelves", "Adjustable, depth − 20; 1 per door ≤ 720 high, 3 per taller door", "None in the sink unit / fridge; fixed between stacked doors and at appliances"],
+    ["Back strips", "Chipboard 18 behind every 18 frame", "On edge, 100 deep, frame length; none behind the L-corner fillers"],
+    ["Fixings", "About 18 confirmat screws per carcass", "4 shelf pins per shelf; carcass connectors, wall brackets"],
+    ["Fronts", "MDF 18 shaker, English Navy satin", "Lacquered by a front maker"],
+    ["Front gaps", "Front = module − Gap W / Gap H (default 4)", "On the plinth: Gap H 2; on the worktop: Gap H 6 (clears the worktop)"],
+    ["Front alignment", "Fronts on one line are aligned", "Joint 2 + 2; at the plinth, worktop or an appliance: the rest of the gap"],
+    ["Frames", "MDF 18 lacquered like the fronts", "18 wide: on edge, 100 deep. Wider: flat. L corner: the 36 covers the end of the 80"],
+    ["Filler", "Wall, plasterboard or void – not ordered", ""],
+    ["Handles", "IKEA ENERYDA cup, brass", ""],
+    ["Hinges", "Blum CLIP top BLUMOTION 110° + plate; cheaper: GTV soft-close", "Per door: < 900 high 2, < 1600 3, else 4; none on appliance / dummy fronts"],
+    ["Drawers", "Blum TANDEMBOX antaro NL 500; front ≥ 350 → D (224), else M (83)", "Bottom, back: chipboard 16; \"inner drawer\": + cutlery drawer M above, same front"],
+    ["Sink unit", "Bottom drawer: D with waste-sorting bins; top front fixed", "Space-saving trap above the drawer (wall drain ≥ 450 above the floor)"],
+    ["Worktop", "Laminate oak 38; Group 1 600 deep, island 900 deep", "Group 1 one piece to the end of the 800 corner carcass; waterfalls same board"],
+    ["Corner wall cabinet", "Group 2, stands half on the Group 1 worktop", "Screwed to its neighbour, on supports in the wall corner"],
+    ["Wall panel", "Laminate, matching the worktop", ""],
+    ["Island", "Stools on the back side under the overhang", "Back: smooth MDF 18 lacquered panel between the waterfalls"],
+    ["Plinth", "PVC 100, black matte, moisture-resistant, cut on site", "Legs 100 with plinth clips, 4 per carcass; ventilation grille under the fridge"],
+    ["Sink", "Inset granite 1-bowl, with tap", ""],
+    ["Hob", "Electrolux CIT61443, cut-out 560 × 490, 54 from the wall; no inner drawer", "Rails on edge: front 18 × 50, rear 18 × 100; chipboard 16 panel at front rail bottom"],
+    ["Hood / extractor", "Electrolux LFV416K, 600", "Above the hob"],
+    ["Dishwasher", "Bosch SMV4HVX00E", "Front fixed on the appliance door"],
+    ["Fridge / freezer", "Bosch KIS86AFE0, 1772 high, flat hinge", "Fronts on the appliance doors; check the front split against the doors"],
+    ["Oven", "Samsung NV7B5785KAK", "595 × 596 × 570; check the niche in the manual"],
+    ["Microwave", "Bosch BFL623MB3", ""],
+    ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"],
+    ["Cost estimate", "Materials and prices from this design", "Cutting list, fronts (module − gap), hardware, appliances; waste and reserve"],
+    ["3D view", "3D model from this design", "Checks the cutting list against the cost estimate and the front alignment"]
+  ],
+  "columns": {
+    "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 564],
+    "2": [18, 546, 36, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130],
+    "3": [38, 18, 800, 18, 800, 18, 38]
+  },
+  "components": [
+    {"g": 1, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
+    {"g": 1, "c": 1, "s": 11, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
+    {"g": 1, "c": 1, "s": 10, "t": "worktop", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Wall panel"},
+    {"g": 1, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+    {"g": 1, "c": 3, "s": 8, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
+    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Drawer (deep)"},
+    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer, hob above"},
+    {"g": 1, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+    {"g": 1, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Dishwasher, niche 815-875 x 600 x 550"},
+    {"g": 1, "c": 6, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+    {"g": 1, "c": 7, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Sink unit, drawer with waste-sorting bins"},
+    {"g": 1, "c": 7, "s": 1, "t": "cabinet", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Sink unit, dummy front"},
+    {"g": 1, "c": 8, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+    {"g": 1, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Corner cabinet, carcass 800"},
+    {"g": 1, "c": 10, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 80, installed flat"},
+    {"g": 1, "c": 11, "s": 1, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, empty past the 800 carcass"},
+
+    {"g": 2, "c": 1, "s": 2, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, under the worktop"},
+    {"g": 2, "c": 1, "s": 3, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Group 1 worktop seen end-on"},
+    {"g": 2, "c": 1, "s": 1, "t": "frame", "h": 1642, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 1, "s": 12, "t": "frame", "h": 18, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 1, "s": 12, "t": "filler", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Soffit to ceiling"},
+    {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 1162, "hd": "R", "gw": 4, "gh": 6, "note": "Stands on the worktop: Gap H 6 so the door clears the worktop when opening"},
+    {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 3, "s": 9, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth, ventilation grille under the fridge"},
+    {"g": 2, "c": 3, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 36, installed flat; the 80 filler of Group 1 overlaps it"},
+    {"g": 2, "c": 4, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 1200, "hd": "R", "gw": 4, "gh": 4},
+    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 6, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 520, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 2, "c": 7, "s": 1, "t": "oven", "h": 600, "hd": "", "gw": 0, "gh": 0, "note": "Niche 560 x 580 x 550 (verify)"},
+    {"g": 2, "c": 7, "s": 1, "t": "micro", "h": 382, "hd": "", "gw": 0, "gh": 0, "note": "Niche 362-365 x 560-568 x 320"},
+    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 418, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 8, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Freezer door"},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4, "note": "Fridge door, niche 1775-1780 x 560 x 550"},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 10, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4},
+    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 12, "s": 1, "t": "frame", "h": 2500, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 13, "s": 1, "t": "filler", "h": 2740, "hd": "", "gw": 0, "gh": 0, "note": "Wall / plasterboard"},
+
+    {"g": 3, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
+    {"g": 3, "c": 1, "s": 10, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
+    {"g": 3, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+    {"g": 3, "c": 3, "s": 3, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
+    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
+    {"g": 3, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
+    {"g": 3, "c": 6, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+    {"g": 3, "c": 7, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"}
+  ]
+}
+</script>
 <script type="application/json" id="cost-data">{
  "title": "Material cost estimate – Kitchen Jaworze (Group 1+2 in an L, island Group 3)",
  "info": "PLN gross, average market prices October 2026, materials only (self-assembly). Blue cells are editable; the browser remembers changes. Quantities with a formula are calculated from the Cutting list tab.",
@@ -128,7 +239,7 @@
  "blocks": [
   {
    "id": "front",
-   "title": "FRONTS – MDF 18 shaker, English Navy satin lacquer (front maker)",
+   "title": "FRONTS – MDF 18 shaker, English Navy satin lacquer (front maker) – calculated from kitchen_design.html: front = module − Gap W / Gap H",
    "cols": [
     "Function",
     "Width",
@@ -175,7 +286,7 @@
     [
      "door",
      578,
-     1158,
+     1156,
      1
     ],
     [
@@ -238,7 +349,8 @@
      476,
      1
     ]
-   ]
+   ],
+   "live": true
   },
   {
    "id": "bar",
@@ -260,7 +372,13 @@
      "Frame 18 on edge (100 deep)",
      100,
      720,
-     5
+     4
+    ],
+    [
+     "Filler 36, installed flat (L corner, Group 2)",
+     36,
+     720,
+     1
     ],
     [
      "Filler 80, installed flat",
@@ -296,7 +414,7 @@
   },
   {
    "id": "plinth",
-   "title": "PLINTH – MDF 18 lacquered (cut to length on site)",
+   "title": "PLINTH – standard kitchen plinth PVC 100, moisture-resistant (bought by the metre, cut to length on site)",
    "cols": [
     "Element",
     "Height",
@@ -313,7 +431,7 @@
     [
      "Plinth",
      100,
-     2140,
+     2158,
      1
     ],
     [
@@ -344,7 +462,7 @@
   },
   {
    "id": "p18",
-   "title": "CARCASSES – white chipboard 18, cut + ABS 0.8 front edge (incl. back strips behind the frames)",
+   "title": "CARCASSES – light grey chipboard 18, cut + ABS 0.8 light grey front edge (incl. back strips behind the frames)",
    "cols": [
     "Element",
     "Width",
@@ -368,7 +486,13 @@
      "Top rail 100",
      764,
      100,
-     10
+     9
+    ],
+    [
+     "Top rail 50 (front, on edge)",
+     764,
+     50,
+     1
     ],
     [
      "Adjustable shelf",
@@ -470,7 +594,7 @@
      "Back strip 100",
      100,
      720,
-     5
+     4
     ],
     [
      "Back strip 100",
@@ -500,7 +624,7 @@
   },
   {
    "id": "p16",
-   "title": "DRAWERS – white chipboard 16 (TANDEMBOX bottoms and backs, incl. inner drawers)",
+   "title": "DRAWERS – light grey chipboard 16 (TANDEMBOX bottoms and backs, incl. inner drawers; hob separation panel)",
    "cols": [
     "Element",
     "Width",
@@ -512,7 +636,7 @@
      "Drawer bottom",
      689,
      490,
-     10
+     9
     ],
     [
      "Drawer back D",
@@ -530,13 +654,19 @@
      "Inner drawer back",
      677,
      84,
-     3
+     2
+    ],
+    [
+     "Hob separation panel",
+     764,
+     514,
+     1
     ]
    ]
   },
   {
    "id": "hdf",
-   "title": "BACKS – HDF 3 white",
+   "title": "BACKS – HDF 3 light grey",
    "cols": [
     "Element",
     "Width",
@@ -591,7 +721,7 @@
  ],
  "cats": [
   {
-   "cat": "Fronts and MDF parts (lacquered)",
+   "cat": "Fronts, frames and plinth",
    "rows": [
     {
      "id": "i1",
@@ -599,15 +729,15 @@
      "spec": "English Navy satin, per cutting list",
      "qty": "={front.m2}",
      "unit": "m²",
-     "price": 900,
-     "src": "ogony.pl: 900 PLN/m² (quote October 2026)",
+     "price": 500,
+     "src": "supplier quote 500 PLN/m² (October 2026)",
      "refs": [
       "9"
      ]
     },
     {
      "id": "i2",
-     "name": "Frames 18 on edge + flat filler 80",
+     "name": "Frames 18 on edge + flat fillers 80 and 36",
      "spec": "MDF 18 lacquered on 3 sides, 100 deep; filler lacquered face + edges",
      "qty": "={bar.m2}",
      "unit": "m²",
@@ -620,15 +750,25 @@
     },
     {
      "id": "i3",
-     "name": "Plinth MDF 18 lacquered",
-     "spec": "lengths from the drawing +20% for cutting",
-     "qty": "={plinth.m2}*1.2",
-     "unit": "m²",
-     "price": 400,
-     "src": "est., smooth lacquer",
+     "name": "Kitchen plinth PVC 100, moisture-resistant",
+     "spec": "length from the Cutting list (m² ÷ 0.1 m height) + 10% for cutting; sold in 4 m lengths",
+     "qty": "={plinth.m2}/0.1*1.1",
+     "unit": "lm",
+     "price": 25,
+     "src": "PVC plinth 100: approx. 17–27 PLN/lm (tmakcesoria.pl, magolodz.pl, October 2026)",
      "refs": [
       "9"
      ]
+    },
+    {
+     "id": "i40",
+     "name": "Plinth corners, end caps, connectors",
+     "spec": "to match the plinth",
+     "qty": 1,
+     "unit": "set",
+     "price": 40,
+     "src": "approx. 3–4 PLN/pc (tmakcesoria.pl, October 2026)",
+     "refs": []
     },
     {
      "id": "i4",
@@ -650,19 +790,19 @@
    "rows": [
     {
      "id": "i5",
-     "name": "White chipboard 18",
+     "name": "Light grey chipboard 18",
      "spec": "sheet 2800×2070, + waste",
      "qty": "=ROUNDUP({p18.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 210,
-     "src": "Castorama: Kronospan alpine white 18 – 191 PLN/sheet (October 2026); wholesalers similar",
+     "src": "est.; white Kronospan 18 at Castorama 191 PLN/sheet (October 2026), light grey similar",
      "refs": [
       "10"
      ]
     },
     {
      "id": "i6",
-     "name": "White chipboard 16",
+     "name": "Light grey chipboard 16",
      "spec": "drawer bottoms and backs",
      "qty": "=ROUNDUP({p16.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
@@ -672,7 +812,7 @@
     },
     {
      "id": "i7",
-     "name": "HDF 3 white",
+     "name": "HDF 3 light grey",
      "spec": "backs, sheet 2800×2070",
      "qty": "=ROUNDUP({hdf.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
@@ -692,7 +832,7 @@
     },
     {
      "id": "i9",
-     "name": "ABS 0.8 edge banding, white",
+     "name": "ABS 0.8 edge banding, light grey",
      "spec": "front edges +10%",
      "qty": "={p18.edge}*1.1",
      "unit": "lm",
@@ -720,7 +860,7 @@
     {
      "id": "i11",
      "name": "TANDEMBOX antaro D (224) NL 500 BLUMOTION",
-     "spec": "front ≥350: 3 bottom drawers + sink drawer (standard, no U cut-out)",
+     "spec": "front ≥350: 3 bottom drawers + sink drawer",
      "qty": 4,
      "unit": "set",
      "price": 420,
@@ -742,8 +882,8 @@
     {
      "id": "i36",
      "name": "TANDEMBOX antaro inner drawer M (83) NL 500 BLUMOTION",
-     "spec": "for cutlery, above each active top drawer; metal inner front Z31L cut to LW − 132 = 632",
-     "qty": 3,
+     "spec": "for cutlery, in the island top drawers; metal inner front Z31L cut to LW − 132 = 632",
+     "qty": 2,
      "unit": "set",
      "price": 330,
      "src": "est.",
@@ -755,7 +895,7 @@
      "id": "i37",
      "name": "Cutlery insert for the inner drawer",
      "spec": "cut to fit, LW 764 × NL 500",
-     "qty": 3,
+     "qty": 2,
      "unit": "pcs",
      "price": 90,
      "src": "est.; Blum ORGA-LINE costs more",
@@ -860,7 +1000,7 @@
     {
      "id": "i21",
      "name": "Corner connectors",
-     "spec": "800 carcass with Group 2; no 2 mm packing needed with 18 frames",
+     "spec": "800 carcass with Group 2",
      "qty": 1,
      "unit": "set",
      "price": 30,
@@ -878,8 +1018,8 @@
     {
      "id": "i22",
      "name": "Laminate oak worktop 38×600×4100",
-     "spec": "Group 1 3302 + waterfall 820 → 2 boards",
-     "qty": 2,
+     "spec": "Group 1 3072 (to the end of the 800 corner carcass) + waterfall 820 → 1 board",
+     "qty": 1,
      "unit": "pcs",
      "price": 700,
      "src": "est., approx. 170 PLN/lm",
@@ -1075,7 +1215,7 @@
   },
   {
    "nr": "2",
-   "t": "Fridge Bosch KIS86AFE0 – front split 718 / 1196",
+   "t": "Fridge Bosch KIS86AFE0 – front split",
    "o": "Fronts fixed on the fridge doors (flat hinge) must match the freezer / fridge door split. Check the door heights and the allowed front overhang in the installation manual.",
    "p": "fronts as designed.",
    "d": ""
@@ -1096,16 +1236,16 @@
   },
   {
    "nr": "5",
-   "t": "Dishwasher Bosch SMV4HVX00E – front 596 x 718",
+   "t": "Dishwasher Bosch SMV4HVX00E – front height",
    "o": "Check the maximum front height and weight for this model with a 100 plinth (dishwasher door hinge / optional Vario hinge).",
    "p": "",
    "d": ""
   },
   {
    "nr": "6",
-   "t": "Frames 18 mm on edge; wider fillers flat",
-   "o": "All frames changed from 20 to 18: MDF 18 set on edge, 100 deep. With lacquer ≈ 18.5, i.e. about +0.5 mm per frame (Group 1: 4 frames ≈ +2 mm at the free waterfall end; Group 2: 7 frames ≈ +3.5 mm, taken up by the plasterboard filler). Any filler wider than 18 (the 80 at the L corner) is installed flat, face-on.",
-   "p": "Group 2 keeps its wall-to-wall length 2870: corner column 560 → 564 (upper corner carcass 582, fronts 578), plasterboard filler 120 → 130. Group 1 3348 → 3340, island 1736 → 1730 (both shorten at the free waterfall ends).",
+   "t": "Frames 18 on edge; wider fillers flat",
+   "o": "Frames: MDF 18 on edge, 100 deep; with lacquer ≈ 18.5. Fillers wider than 18 are installed flat, face-on: 80 (Group 1, L corner) and 36 (Group 2, L corner under the worktop). The 80 filler overlaps the 36 filler, so there is no gap in the corner.",
+   "p": "Group 2 is 2870 wall to wall: corner column 546 + filler 36 (upper corner carcass 582).",
    "d": ""
   },
   {
@@ -1127,8 +1267,8 @@
   },
   {
    "nr": "9",
-   "t": "Lacquered shaker fronts – price from ogony.pl",
-   "o": "Assumed 900 PLN/m² (ogony.pl quote). Frames, plinth and island panel stay at the 480/400 PLN/m² estimate (smooth lacquer) – ask ogony.pl for the price of smooth pieces and strips; they may charge them separately (e.g. per lm).",
+   "t": "Lacquer only on fronts and frames",
+   "o": "Lacquered (front maker): fronts 500 PLN/m² (supplier quote, October 2026) and frames / fillers, estimate 480 PLN/m². Island back panel: smooth lacquered MDF, estimate 400 PLN/m². Plinth: standard PVC plinth, bought by the metre.",
    "p": "",
    "d": ""
   },
@@ -1149,37 +1289,44 @@
   {
    "nr": "12",
    "t": "Sink and tap – no specific model",
-   "o": "Assumed a 1-bowl granite sink for the 800 unit (600 PLN) and a 450 PLN tap. The trap is costed separately as a space-saving trap (see 13).",
+   "o": "1-bowl granite sink for the 800 unit (600 PLN) and a 450 PLN tap. Trap: space-saving, separate item (see 13).",
    "p": "",
    "d": ""
   },
   {
    "nr": "13",
    "t": "Sink unit – bottom drawer with waste-sorting bins",
-   "o": "Front 796 × 416 = standard D drawer (no U cut-out) with a 3-bin waste-sorting set. This works only with a space-saving trap: the flat trap body sits against the back wall and the outlet stays above the drawer (D box with gallery rails reaches ≈ 420 above the floor, bins ≈ 400). The 300 dummy front above stays.",
-   "p": "4 D sets, waste-sorting set 250 PLN, space-saving trap 150 PLN, −2 hinges.",
-   "d": "wall drain height: needs approx. 450 or more above the floor."
+   "o": "Bottom drawer: D drawer, front per the Cutting list, with a 3-bin waste-sorting set. Requires a space-saving trap: flat trap body against the back wall, outlet above the drawer (D box with gallery rails up to ≈ 420 above the floor, bins ≈ 400). Top front 300: fixed dummy front.",
+   "p": "waste-sorting set 250 PLN, space-saving trap 150 PLN; no hinges on the sink fronts.",
+   "d": "wall drain at approx. 450 or more above the floor."
   },
   {
    "nr": "14",
    "t": "Back strips behind frames",
-   "o": "Behind every 18 frame: chipboard 18 strip on edge, 100 deep, frame length. Frame and strip are now the same thickness, so the 2 mm packing is no longer needed. The flat 80 filler sits on the front edge of the 800 corner carcass – no strip.",
+   "o": "Behind every 18 frame: chipboard 18 strip on edge, 100 deep, frame length; no packing. The flat 80 filler is fixed to the front edge of the 800 corner carcass – no strip.",
    "p": "in the chipboard 18 cutting list.",
    "d": ""
   },
   {
    "nr": "15",
-   "t": "Inner cutlery drawers in the top drawers",
-   "o": "Each active top drawer (Group 1 hob unit, island ×2; not the sink dummy front) gets a Blum TANDEMBOX antaro inner drawer M (83), NL 500, BLUMOTION, on its own runners on the carcass sides, above the top drawer box and behind the same 300 front: bottom drawer → top drawer → inner mini drawer. Blum needs ≈ 96 mm height per inner drawer, so the 300 zone holds the M top drawer plus the inner drawer. Inner front: Blum metal profile Z31L cut to LW − 132 = 632. Bottom 689 × 490 and back 677 × 84 from chipboard 16 (back height per Blum – confirm in the Blum configurator).",
-   "p": "3 inner drawer sets 330 PLN + 3 cutlery inserts 90 PLN.",
-   "d": "hob unit: inner drawer top ≈ 750 above the floor, worktop top 858 – check the clearance under the hob required in the Electrolux CIT61443 manual."
+   "t": "Inner cutlery drawers (island)",
+   "o": "Island top drawers (2): Blum TANDEMBOX antaro inner drawer M (83), NL 500, BLUMOTION, own runners on the carcass sides, behind the 300 front; closing the top drawer closes it. Inner front: Blum Z31L cut to LW − 132 = 632. Bottom 689 × 490, back 677 × 84 (chipboard 16; back height per Blum – confirm in the Blum configurator). Hob unit: no inner drawer (no space under the hob).",
+   "p": "2 inner drawer sets + 2 cutlery inserts.",
+   "d": ""
+  },
+  {
+   "nr": "17",
+   "t": "Hob unit – rails and separation panel",
+   "o": "Electrolux CIT61443: cut-out 560 × 490, built-in height 44 (hob bottom ≈ 814). Cut-out 54 from the wall, 56 from the worktop front. Top rails on edge so the hob fits between them: front 18 × 50 (770–820), rear 18 × 100 (720–820). Separation panel chipboard 16, 764 × 514, between the rails, bottom flush with the front rail: 770–786, ≈ 28 mm below the hob.",
+   "p": "rail 764 × 50 and panel 764 × 514 in the cutting list.",
+   "d": "the installation diagram (manual p. 22) lists min. 28 and min. 12 – check which distances they are."
   },
   {
    "nr": "16",
-   "t": "Front gap at the plinth: Gap H 2",
-   "o": "Fronts standing on the plinth no longer need a 4 mm reveal there: Gap H 2 instead of 4, so these fronts are 2 mm taller (416 → 418, 716 → 718, 516 → 518). The gap model is symmetric (half below, half above), so the joint between that front and the one above becomes 3 mm instead of 4.",
-   "p": "front sizes in the cutting list updated.",
-   "d": "keep the 3 mm joint, or ask to change the model to a 1 mm bottom gap only (joint stays 4 mm)."
+   "t": "Front sizes",
+   "o": "Front = module − Gap W / Gap H, taken from kitchen_design.html. Fronts on the plinth: Gap H 2. Upper corner cabinet on the worktop: Gap H 6, so the door clears the worktop when opening. Other fronts: 4. Fronts in the same line are lined up (design note \"Front alignment\"); front sizes do not change.",
+   "p": "fronts priced from the calculated m².",
+   "d": ""
   },
   {
    "sec": "C. FOR INFORMATION"
@@ -1215,7 +1362,7 @@
   {
    "nr": "C5",
    "t": "Summary",
-   "o": "15 carcasses, 24 fronts (8.21 m²), 29 hinges, 7 drawers (4 D incl. the sink drawer, 3 M) + 3 inner cutlery drawers, 24 handles, 36 legs, 19 + 5 shelves, 15 back strips.",
+   "o": "15 carcasses, 24 fronts (see the Cutting list), 29 hinges, 7 drawers (4 D incl. the sink drawer, 3 M) + 2 inner cutlery drawers, 24 handles, 36 legs, 19 + 5 shelves, 15 back strips.",
    "p": "",
    "d": ""
   }
@@ -1225,6 +1372,35 @@
 <script>
 'use strict';
 const DATA = JSON.parse(document.getElementById('cost-data').textContent);
+
+// ---------- fronts: calculated from kitchen_design.html (front = module − Gap W / Gap H) ----------
+// The embedded rows are only a fallback for when the page is opened without kitchen_design.html next to it.
+function frontsFromProject(P) {
+  const gap = Number((P.settings || {}).gapMm ?? 4), agg = new Map();
+  const num = (x, d) => { const v = parseFloat(x); return Number.isFinite(v) ? v : d; };
+  for (const c of P.components || []) {
+    if (c.t !== 'drawer' && c.t !== 'cabinet') continue;
+    const cols = (P.columns[c.g] || []).map(Number), w = cols.slice(c.c - 1, c.c - 1 + c.s).reduce((a, b) => a + b, 0), n = c.note || '';
+    const f = c.t === 'drawer' ? (/waste|bins/i.test(n) ? 'sink drawer (waste bins)' : 'drawer')
+      : /dummy/i.test(n) ? 'dummy front' : /dishwasher|fridge|freezer/i.test(n) ? 'appliance-door front' : 'door';
+    const k = [f, w - num(c.gw, gap), Number(c.h) - num(c.gh, gap)].join('|');
+    agg.set(k, (agg.get(k) || 0) + 1);
+  }
+  return [...agg].map(([k, q]) => { const [f, a, b] = k.split('|'); return [f, Number(a), Number(b), q]; });
+}
+let PROJECT = JSON.parse(document.getElementById('kitchen-project-copy').textContent);
+let PROJECT_SRC = 'copy in kitchen_cost.html (kitchen_design.html not reachable)';
+async function loadProject() {
+  if (!/^https?:$/.test(location.protocol)) return;
+  try {
+    const t = await (await fetch('kitchen_design.html', { cache: 'no-cache' })).text();
+    const m = t.match(/<script[^>]*id="kitchen-project"[^>]*>([\s\S]*?)<\/script>/);
+    if (m) { PROJECT = JSON.parse(m[1]); PROJECT_SRC = 'kitchen_design.html'; }
+  } catch (e) { /* keep the copy */ }
+}
+function applyProject() { DATA.blocks.find(b => b.id === 'front').rows = frontsFromProject(PROJECT); }
+applyProject();
+
 const STORE = 'kitchen-cost-jaworze-v4';
 const fmt = (v, d = 2) => Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '–';
 const fmtQ = v => Number.isInteger(v) ? v.toLocaleString('en-GB') : fmt(v, 2);
@@ -1238,13 +1414,13 @@ function defaults() {
     items: Object.fromEntries(DATA.cats.flatMap(c => c.rows).map(r => [r.id, { qty: r.qty, price: r.price }]))
   };
 }
-const DEF = defaults();
+let DEF = defaults();
 let S = defaults();
 try {
   const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
   if (saved) {
     Object.assign(S.params, saved.params || {});
-    for (const [id, rows] of Object.entries(saved.blocks || {})) if (S.blocks[id] && rows.length === S.blocks[id].length) S.blocks[id] = rows;
+    for (const [id, rows] of Object.entries(saved.blocks || {})) if (id !== 'front' && S.blocks[id] && rows.length === S.blocks[id].length) S.blocks[id] = rows;
     for (const [id, v] of Object.entries(saved.items || {})) if (S.items[id]) Object.assign(S.items[id], v);
   }
 } catch (e) { /* storage unavailable - defaults only */ }
@@ -1328,11 +1504,11 @@ function renderK() {
 function renderR() {
   const T = blockTotals(), h = [];
   for (const b of DATA.blocks) {
-    h.push(`<tr class="blk"><td colspan="7">${esc(b.title)}</td></tr>`);
+    h.push(`<tr class="blk"><td colspan="7">${esc(b.title)}${b.live ? ' · from ' + esc(PROJECT_SRC) : ''}</td></tr>`);
     h.push(`<tr class="bh"><td>${b.cols.map(esc).join('</td><td>')}</td><td>m²</td><td>ABS edging [lm]</td><td>Cutting [lm]</td></tr>`);
     b.rows.forEach((r, i) => {
       const cur = S.blocks[b.id][i], def = DEF.blocks[b.id][i], t = T[b.id].rows[i];
-      const inp = k => `<td class="num"><input type="number" step="1" data-blk="${b.id}" data-i="${i}" data-k="${k}" value="${cur[k]}" class="${cur[k] != def[k] ? 'changed' : ''}"></td>`;
+      const inp = k => b.live ? `<td class="num" title="Calculated from kitchen_design.html – change Gap W / Gap H there">${cur[k]}</td>` : `<td class="num"><input type="number" step="1" data-blk="${b.id}" data-i="${i}" data-k="${k}" value="${cur[k]}" class="${cur[k] != def[k] ? 'changed' : ''}"></td>`;
       h.push(`<tr><td>${esc(r[0])}</td>${inp(0)}${inp(1)}${inp(2)}<td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td></tr>`);
     });
     const t = T[b.id], hasE = b.id === 'p18', hasC = b.id === 'p18' || b.id === 'p16';
@@ -1480,6 +1656,17 @@ document.getElementById('btnXlsx').addEventListener('click', async e => {
   finally { b.disabled = false; }
 });
 
+// Published as window.KITCHEN.ready: project + cutting list.
+window.KITCHEN = {
+  ready: loadProject().then(() => {
+    applyProject(); DEF = defaults(); S.blocks.front = DEF.blocks.front.map(r => [...r]); renderAll();
+    return {
+      source: PROJECT_SRC,
+      project: PROJECT,
+      blocks: DATA.blocks.map(b => ({ id: b.id, rows: b.rows.map((r, i) => [r[0], ...S.blocks[b.id][i].map(Number)]) }))
+    };
+  })
+};
 renderAll();
 </script>
 </body>

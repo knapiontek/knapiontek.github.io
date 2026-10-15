@@ -118,7 +118,7 @@
           font-size: 13px;
           color: var(--text-muted);
           min-height: 18px;
-          text-align: center;
+          text-align: left;
         }
     
         .panel {
@@ -254,6 +254,7 @@
         table.sheet td.col-note textarea {
           font-family: system-ui, -apple-system, sans-serif; width: 100%; min-width: 120px;
           resize: none; overflow: hidden; line-height: 1.35; display: block;
+          field-sizing: content;   /* row height follows the text (browsers that support it) */
         }
         .notes-wrap { max-height: none; }
         #svg-footnote .fn-note { color: var(--accent-hover); }
@@ -415,6 +416,7 @@
      The application script below is project independent; it reads this
      block at start-up. To update the kitchen, edit only this block.
        settings.gapMm: default reveal gap between fronts (mm)
+       settings.alignFronts: line up fronts in the same line (see note "Front alignment")
        notes:      [name, description, details] - everything the drawing
                    does not show (materials, hardware, rules, appliances)
        columns:    group -> column widths in mm, left to right
@@ -428,105 +430,110 @@
      =================================================================== -->
 <script type="application/json" id="kitchen-project">
 {
-  "settings": {"gapMm": 4},
+  "settings": {"gapMm": 4, "alignFronts": true},
   "notes": [
-    ["Project", "Kitchen - Jaworze", "Group 1 + Group 2 form an L, Group 3 is an island"],
+    ["Project", "Kitchen – Jaworze", "Group 1 + Group 2 form an L, Group 3 is an island"],
     ["Location", "Jaworze, Bielsko-Biała county", ""],
-    ["Scope", "Materials only, owner builds it", "Prices: average market, PLN gross"],
+    ["Scope", "Materials only, owner builds it", "Prices: market average, PLN gross"],
     ["Style", "Shaker, painted", "Overlay fronts; frames between fronts make them look inset"],
-    ["Fronts", "MDF 18 mm shaker, English Navy satin", "Ordered lacquered from a front maker"],
-    ["Frame", "MDF 18 like fronts, lacquered; 18 wide frames set on edge, 100 deep", "MDF 18 + lacquer ≈ 18.5. Any filler / frame wider than 18 (e.g. the 80 at the L corner) is installed flat, face-on, not on edge"],
-    ["Carcass material", "Chipboard 18 mm white, ABS 0.8 front edge", "Back HDF 3 mm white. Cut and edge-banded by the board supplier"],
-    ["Carcass depth", "550", "Almost everywhere"],
-    ["Carcasses", "Modular, carcass width = column width", "Stacked fronts in one column form one carcass; under-ceiling cabinets separate. No carcass for the dishwasher. L corner: 800 carcass behind the 400 door, rest empty"],
-    ["Base carcasses", "2 top rails 100 deep instead of a full top", ""],
-    ["Shelves", "Adjustable, carcass depth minus 20", "1 per door up to 720 high, 3 per taller door; none in the sink unit or the fridge carcass. Fixed shelf between stacked doors in one carcass and under / above built-in appliances"],
-    ["Hinges", "Blum CLIP top BLUMOTION 110° + mounting plate", "Cheaper alternative: GTV soft-close. Per door by height: <900: 2, <1600: 3, else 4. None on fronts fixed to appliances or on the sink dummy front"],
-    ["Drawers", "Blum TANDEMBOX antaro NL 500, BLUMOTION", "Front ≥350 → D (224), lower → M (83). Bottom and back: chipboard 16. Each active top drawer (note \"inner drawer\") has a shallow inner drawer for cutlery: TANDEMBOX antaro inner drawer M (83) NL 500, on the carcass sides above the top drawer box, behind the same front; Blum metal inner front cut to LW − 132. Stack: bottom drawer, top drawer, inner mini drawer"],
-    ["Sink unit", "Bottom drawer: standard D drawer (no U cut-out) with waste-sorting bins", "Needs a space-saving trap kept above the drawer (wall drain ≥ 450 above floor); top front is a fixed dummy"],
-    ["Back strips", "Chipboard 18 behind every 18 frame", "On edge, 100 deep, frame length; same thickness as the frame, so no packing"],
+    ["Room", "Floor gres, walls white", "Grey tiles 120 × 60"],
+    ["Window", "Above the Group 1 worktop", "1900 × 1300"],
+    ["Lighting", "3 ceiling spotlights over the tall units (Group 2)", "1 spotlight over the sink, halfway to the hood; 2 pendants over the island"],
+    ["Carcass material", "Chipboard 18 light grey, ABS 0.8 front edge", "Back HDF 3 light grey. Cut and edge-banded by the board supplier"],
+    ["Carcasses", "Width = column width, depth 550, 14 from the walls", "Stacked fronts = one carcass, upper cabinets separate; no dishwasher carcass"],
+    ["Base carcasses", "2 top rails 100 deep instead of a top panel", ""],
+    ["Shelves", "Adjustable, depth − 20; 1 per door ≤ 720 high, 3 per taller door", "None in the sink unit / fridge; fixed between stacked doors and at appliances"],
+    ["Back strips", "Chipboard 18 behind every 18 frame", "On edge, 100 deep, frame length; none behind the L-corner fillers"],
+    ["Fixings", "About 18 confirmat screws per carcass", "4 shelf pins per shelf; carcass connectors, wall brackets"],
+    ["Fronts", "MDF 18 shaker, English Navy satin", "Lacquered by a front maker"],
+    ["Front gaps", "Front = module − Gap W / Gap H (default 4)", "On the plinth: Gap H 2; on the worktop: Gap H 6 (clears the worktop)"],
+    ["Front alignment", "Fronts on one line are aligned", "Joint 2 + 2; at the plinth, worktop or an appliance: the rest of the gap"],
+    ["Frames", "MDF 18 lacquered like the fronts", "18 wide: on edge, 100 deep. Wider: flat. L corner: the 36 covers the end of the 80"],
+    ["Filler", "Wall, plasterboard or void – not ordered", ""],
     ["Handles", "IKEA ENERYDA cup, brass", ""],
-    ["Worktop", "Laminate oak 38", "Depth 600 for Group 1 (one piece through the L corner; Group 2 shows its end), 900 for the island. Waterfalls cut from the same worktop"],
-    ["Wall panel", "Laminate wall panel matching the worktop", ""],
-    ["Island", "Stools on the back side under the worktop overhang", "Back closed with a smooth MDF 18 lacquered panel between the waterfalls"],
-    ["Plinth", "MDF 18 lacquered", "Cut to length on site. Adjustable legs 100 with plinth clips, 4 per carcass, set back behind the plinth. Aluminium ventilation grille in the plinth under the fridge (≈ 500 × 60, ≥ 200 cm² open)"],
-    ["Front gaps", "4 mm between fronts", "Fronts standing on the plinth use Gap H 2 (no 4 mm reveal needed at the plinth)"],
-    ["Filler", "Wall, plasterboard or void - not ordered", ""],
-    ["Fixings", "About 18 confirmat screws per carcass", "4 shelf pins per shelf; carcass connectors and wall brackets"],
+    ["Hinges", "Blum CLIP top BLUMOTION 110° + plate; cheaper: GTV soft-close", "Per door: < 900 high 2, < 1600 3, else 4; none on appliance / dummy fronts"],
+    ["Drawers", "Blum TANDEMBOX antaro NL 500; front ≥ 350 → D (224), else M (83)", "Bottom, back: chipboard 16; \"inner drawer\": + cutlery drawer M above, same front"],
+    ["Sink unit", "Bottom drawer: D with waste-sorting bins; top front fixed", "Space-saving trap above the drawer (wall drain ≥ 450 above the floor)"],
+    ["Worktop", "Laminate oak 38; Group 1 600 deep, island 900 deep", "Group 1 one piece to the end of the 800 corner carcass; waterfalls same board"],
+    ["Corner wall cabinet", "Group 2, stands half on the Group 1 worktop", "Screwed to its neighbour, on supports in the wall corner"],
+    ["Wall panel", "Laminate, matching the worktop", ""],
+    ["Island", "Stools on the back side under the overhang", "Back: smooth MDF 18 lacquered panel between the waterfalls"],
+    ["Plinth", "PVC 100, black matte, moisture-resistant, cut on site", "Legs 100 with plinth clips, 4 per carcass; ventilation grille under the fridge"],
     ["Sink", "Inset granite 1-bowl, with tap", ""],
+    ["Hob", "Electrolux CIT61443, cut-out 560 × 490, 54 from the wall; no inner drawer", "Rails on edge: front 18 × 50, rear 18 × 100; chipboard 16 panel at front rail bottom"],
+    ["Hood / extractor", "Electrolux LFV416K, 600", "Above the hob"],
     ["Dishwasher", "Bosch SMV4HVX00E", "Front fixed on the appliance door"],
-    ["Hob", "Electrolux CIT61443", "Cut-out 560 x 490"],
-    ["Hood / extractor", "Electrolux LFV416K, 600 wide", "Above the hob, not drawn; included in the project"],
-    ["Fridge / freezer", "Bosch KIS86AFE0", "Flat hinge (fronts fixed on the appliance doors, no sliding rails), 1772 high; check the front split against the appliance doors"],
-    ["Oven", "Samsung NV7B5785KAK", "595 x 596 x 570; verify the niche in the installation manual"],
+    ["Fridge / freezer", "Bosch KIS86AFE0, 1772 high, flat hinge", "Fronts on the appliance doors; check the front split against the doors"],
+    ["Oven", "Samsung NV7B5785KAK", "595 × 596 × 570; check the niche in the manual"],
     ["Microwave", "Bosch BFL623MB3", ""],
-    ["Appliances", "Value for money", ""],
-    ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"]
+    ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"],
+    ["Cost estimate", "Materials and prices from this design", "Cutting list, fronts (module − gap), hardware, appliances; waste and reserve"],
+    ["3D view", "3D model from this design", "Checks the cutting list against the cost estimate and the front alignment"]
   ],
   "columns": {
-    "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 550],
-    "2": [18, 564, 18, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130],
+    "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 564],
+    "2": [18, 546, 36, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130],
     "3": [38, 18, 800, 18, 800, 18, 38]
   },
   "components": [
-    {"g": 1, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": "", "gh": "", "note": "Waterfall end"},
-    {"g": 1, "c": 1, "s": 11, "t": "worktop", "h": 38, "hd": "", "gw": "", "gh": "", "note": "Worktop"},
-    {"g": 1, "c": 1, "s": 10, "t": "worktop", "h": 222, "hd": "", "gw": "", "gh": "", "note": "Wall panel"},
-    {"g": 1, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": "", "gh": ""},
-    {"g": 1, "c": 3, "s": 8, "t": "plinth", "h": 100, "hd": "", "gw": "", "gh": "", "note": "Plinth"},
+    {"g": 1, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
+    {"g": 1, "c": 1, "s": 11, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
+    {"g": 1, "c": 1, "s": 10, "t": "worktop", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Wall panel"},
+    {"g": 1, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+    {"g": 1, "c": 3, "s": 8, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
     {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Drawer (deep)"},
-    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery), hob above"},
-    {"g": 1, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer, hob above"},
+    {"g": 1, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
     {"g": 1, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Dishwasher, niche 815-875 x 600 x 550"},
-    {"g": 1, "c": 6, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 6, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
     {"g": 1, "c": 7, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Sink unit, drawer with waste-sorting bins"},
     {"g": 1, "c": 7, "s": 1, "t": "cabinet", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Sink unit, dummy front"},
-    {"g": 1, "c": 8, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": ""},
+    {"g": 1, "c": 8, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
     {"g": 1, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Corner cabinet, carcass 800"},
-    {"g": 1, "c": 10, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": "", "note": "Filler 80, installed flat"},
-    {"g": 1, "c": 11, "s": 1, "t": "filler", "h": 820, "hd": "", "gw": "", "gh": "", "note": "L corner, empty past the 800 carcass"},
+    {"g": 1, "c": 10, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 80, installed flat"},
+    {"g": 1, "c": 11, "s": 1, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, empty past the 800 carcass"},
 
-    {"g": 2, "c": 1, "s": 2, "t": "filler", "h": 820, "hd": "", "gw": "", "gh": "", "note": "L corner, under the worktop"},
-    {"g": 2, "c": 1, "s": 3, "t": "worktop", "h": 38, "hd": "", "gw": "", "gh": "", "note": "Group 1 worktop seen end-on"},
-    {"g": 2, "c": 1, "s": 1, "t": "frame", "h": 1642, "hd": "", "gw": "", "gh": ""},
-    {"g": 2, "c": 1, "s": 12, "t": "frame", "h": 18, "hd": "", "gw": "", "gh": ""},
-    {"g": 2, "c": 1, "s": 12, "t": "filler", "h": 222, "hd": "", "gw": "", "gh": "", "note": "Soffit to ceiling"},
-    {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 1162, "hd": "R", "gw": 4, "gh": 4},
+    {"g": 2, "c": 1, "s": 2, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, under the worktop"},
+    {"g": 2, "c": 1, "s": 3, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Group 1 worktop seen end-on"},
+    {"g": 2, "c": 1, "s": 1, "t": "frame", "h": 1642, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 1, "s": 12, "t": "frame", "h": 18, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 1, "s": 12, "t": "filler", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Soffit to ceiling"},
+    {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 1162, "hd": "R", "gw": 4, "gh": 6, "note": "Stands on the worktop: Gap H 6 so the door clears the worktop when opening"},
     {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 3, "s": 9, "t": "plinth", "h": 100, "hd": "", "gw": "", "gh": "", "note": "Plinth, ventilation grille under the fridge"},
-    {"g": 2, "c": 3, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": ""},
-    {"g": 2, "c": 4, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 3, "s": 9, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth, ventilation grille under the fridge"},
+    {"g": 2, "c": 3, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 36, installed flat; the 80 filler of Group 1 overlaps it"},
+    {"g": 2, "c": 4, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
     {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
     {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 1200, "hd": "R", "gw": 4, "gh": 4},
     {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 6, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 6, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
     {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 520, "hd": "T", "gw": 4, "gh": 2},
-    {"g": 2, "c": 7, "s": 1, "t": "oven", "h": 600, "hd": "", "gw": "", "gh": "", "note": "Niche 560 x 580 x 550 (verify)"},
-    {"g": 2, "c": 7, "s": 1, "t": "micro", "h": 382, "hd": "", "gw": "", "gh": "", "note": "Niche 362-365 x 560-568 x 320"},
+    {"g": 2, "c": 7, "s": 1, "t": "oven", "h": 600, "hd": "", "gw": 0, "gh": 0, "note": "Niche 560 x 580 x 550 (verify)"},
+    {"g": 2, "c": 7, "s": 1, "t": "micro", "h": 382, "hd": "", "gw": 0, "gh": 0, "note": "Niche 362-365 x 560-568 x 320"},
     {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 418, "hd": "B", "gw": 4, "gh": 4},
     {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 8, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 8, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
     {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Freezer door"},
     {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4, "note": "Fridge door, niche 1775-1780 x 560 x 550"},
     {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 10, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": "", "gh": ""},
+    {"g": 2, "c": 10, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
     {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
     {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4},
     {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 12, "s": 1, "t": "frame", "h": 2500, "hd": "", "gw": "", "gh": ""},
-    {"g": 2, "c": 13, "s": 1, "t": "filler", "h": 2740, "hd": "", "gw": "", "gh": "", "note": "Wall / plasterboard (130 keeps the run wall-to-wall with 18 frames)"},
+    {"g": 2, "c": 12, "s": 1, "t": "frame", "h": 2500, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 13, "s": 1, "t": "filler", "h": 2740, "hd": "", "gw": 0, "gh": 0, "note": "Wall / plasterboard"},
 
-    {"g": 3, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": "", "gh": "", "note": "Waterfall end"},
-    {"g": 3, "c": 1, "s": 10, "t": "worktop", "h": 38, "hd": "", "gw": "", "gh": "", "note": "Worktop"},
-    {"g": 3, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": "", "gh": ""},
-    {"g": 3, "c": 3, "s": 3, "t": "plinth", "h": 100, "hd": "", "gw": "", "gh": "", "note": "Plinth"},
+    {"g": 3, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
+    {"g": 3, "c": 1, "s": 10, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
+    {"g": 3, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+    {"g": 3, "c": 3, "s": 3, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
     {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
     {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
-    {"g": 3, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": "", "gh": ""},
+    {"g": 3, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
     {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
     {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
-    {"g": 3, "c": 6, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": "", "gh": ""},
-    {"g": 3, "c": 7, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": "", "gh": "", "note": "Waterfall end"}
+    {"g": 3, "c": 6, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+    {"g": 3, "c": 7, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"}
   ]
 }
 </script>
@@ -1059,6 +1066,12 @@ document.addEventListener('alpine:init', () => {
     init() {
       this.seed(PROJECT);
       this.ensureEmptyRows();
+      this.$nextTick(() => {
+        let w = 0;
+        new ResizeObserver(entries => { const nw = Math.round(entries[0].contentRect.width); if (nw !== w) { w = nw; requestAnimationFrame(() => this.growNotes()); } })
+          .observe(this.$refs.notesTbody.closest('table'));
+      });
+      this.$watch('notes', () => this.$nextTick(() => this.growNotes()));
 
       this.$watch('columns', () => {
         const last = this.columns[this.columns.length - 1];
@@ -1117,6 +1130,8 @@ document.addEventListener('alpine:init', () => {
     },
     newNoteRow(name = '', description = '', details = '') { return { id: this.nextId++, name, description, details }; },
     autoGrow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; },
+    // re-fit every note row when the table width changes (window resize, column widths, import / reload)
+    growNotes() { this.$refs.notesTbody?.querySelectorAll('textarea').forEach(el => this.autoGrow(el)); },
     insertNoteRow(idx) {
       this.notes.splice(idx + 1, 0, this.newNoteRow());
       this.$nextTick(() => this.$refs.notesTbody.querySelectorAll('tr')[idx + 1]?.querySelector('textarea')?.focus());
