@@ -1,730 +1,1344 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kitchen Design</title>
-<style>
-:root { --bg: #0f172a; --panel: #1e293b; --line: #334155; --accent: #38bdf8; --text: #f8fafc; --muted: #94a3b8;
-  --sheet: #fff; --head: #f1f5f9; --grid: #d8dee8; --ink: #1e293b; --ink2: #64748b; --input: #1d4ed8; --input-bg: #eef4ff;
-  --ok: #15803d; --warn: #b45309; --err: #dc2626; }
-* { box-sizing: border-box; }
-body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); font: 13px system-ui, -apple-system, sans-serif; }
-.app { max-width: 1500px; margin: 0 auto; }
-h1 { font-size: 20px; margin: 0 0 4px; color: var(--accent); }
-h3 { font-size: 14px; margin: 0 0 8px; }
-.info { color: var(--muted); margin: 0 0 12px; }
-.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
-.bar .grow { flex: 1; }
-.btn { background: var(--accent); color: var(--bg); border: 0; border-radius: 6px; padding: 7px 12px; font: 600 13px inherit; cursor: pointer; }
-.btn.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
-.btn.danger { background: transparent; color: #f87171; border: 1px solid #f87171; }
-.btn:hover { filter: brightness(1.1); }
-.pill { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font-size: 14px; }
-.pill b { color: var(--accent); }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 14px; }
-.wrap { background: var(--sheet); border: 1px solid var(--grid); overflow: auto; }
-table.grid { border-collapse: collapse; width: 100%; color: var(--ink); }
-.grid th, .grid td { border: 1px solid var(--grid); padding: 3px 6px; text-align: left; vertical-align: top; }
-.grid thead th { position: sticky; top: 0; background: var(--ink); color: #fff; z-index: 1; }
-.grid td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.grid td.m { color: var(--ink2); }
-.grid tr.cat td { background: #e2e8f0; font-weight: 600; }
-.grid tr.sum td { background: #e2e8f0; font-weight: 700; }
-.grid tr.grand td { background: #fff2cc; font-weight: 700; font-size: 15px; }
-.grid input, .grid select, .grid textarea { width: 100%; min-width: 48px; border: 0; background: var(--input-bg); color: var(--input); font: inherit; padding: 2px 4px; }
-.grid textarea { resize: vertical; min-height: 22px; }
-.grid input.changed { background: #fde68a; }
-.grid tr.bad td { background: #fee2e2; }
-.grid tr.empty td input, .grid tr.empty td select { background: transparent; }
-.grid td:last-child { white-space: nowrap; width: 1%; }
-.grid select { min-width: 84px; }
-.x { border: 0; background: none; cursor: pointer; color: var(--ink2); font-size: 15px; padding: 0 4px; }
-.x:hover { color: var(--err); }
-ul.msgs { list-style: none; margin: 0; padding: 0; }
-ul.msgs li { padding: 2px 0 2px 18px; line-height: 1.45; position: relative; color: var(--text); }
-ul.msgs li::before { position: absolute; left: 0; }
-ul.msgs li.ok::before { content: '✓'; color: #4ade80; }
-ul.msgs li.info::before { content: 'i'; color: var(--accent); font-weight: 700; left: 4px; }
-ul.msgs li.warn::before { content: '!'; color: #fbbf24; font-weight: 700; left: 4px; }
-ul.msgs li.error::before { content: '✕'; color: #f87171; }
-.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 0; }
-.tab { padding: 8px 14px; color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; cursor: pointer; font: 600 13px inherit; }
-.tab.on { color: var(--text); border-bottom-color: var(--accent); }
-[hidden] { display: none !important; }
-.cols { display: grid; grid-template-columns: 170px 1fr; gap: 14px; }
-@media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
-.sheet-h { max-height: 420px; }
-#svg { background: #f8fafc; border-radius: 8px; padding: 8px; position: relative; }
-#svg svg { width: 100%; height: auto; display: block; }
-#svg .it:hover > * { filter: brightness(1.12); }
-#tip { position: fixed; pointer-events: none; background: var(--ink); color: #fff; padding: 5px 9px; border-radius: 5px; font-size: 12px; z-index: 9; max-width: 420px; }
-.foot { color: var(--ink2); font-size: 12px; padding: 4px 2px 0; min-height: 18px; }
-.settings { display: flex; gap: 18px; align-items: center; margin-bottom: 10px; }
-.settings input[type=number] { width: 64px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitchen Elevation Layout</title>
+  <style>
+    /* =============================================================
+       STYLES
+       ============================================================= */
+        :root {
+          --bg: #0f172a;
+          --panel: #1e293b;
+          --accent: #38bdf8;
+          --accent-hover: #7dd3fc;
+          --danger: #f87171;
+          --danger-hover: #fca5a5;
+          --text: #f8fafc;
+          --text-muted: #cbd5e1;
+          --text-dim: #e2e8f0;
+          --border: #334155;
+          --border-soft: #475569;
+          --row-hover: #334155;
+    
+          --sheet-bg: #ffffff;
+          --sheet-header-bg: #f1f5f9;
+          --sheet-border: #d8dee8;
+          --sheet-text: #1e293b;
+          --sheet-text-muted: #64748b;
+          --sheet-row-alt: #f8fafc;
+          --sheet-row-hover: #eaf4fe;
+          --sheet-focus: #38bdf8;
+          --sheet-ghost: #94a3b8;
+        }
+    
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+    
+        h1 { max-width: 1400px; margin: 0 auto 18px auto; font-size: 22px; }
+    
+        #action-bar {
+          max-width: 1400px;
+          margin: 0 auto 15px auto;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          justify-content: flex-end;
+          align-items: center;
+        }
+        .action-group { display: flex; gap: 8px; padding-left: 10px; border-left: 1px solid var(--border-soft); }
+        .action-group:first-child { border-left: none; padding-left: 0; }
+    
+        .btn {
+          background: var(--accent);
+          color: var(--bg);
+          border: none;
+          padding: 9px 16px;
+          font-size: 13px;
+          font-weight: 600;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: background 0.15s ease, transform 0.1s ease;
+          white-space: nowrap;
+        }
+        .btn:hover { background: var(--accent-hover); }
+        .btn:active { transform: scale(0.98); }
+        .btn.secondary { background: var(--border-soft); color: var(--text); }
+        .btn.secondary:hover { background: #5b6b83; }
+        .btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+        .btn.danger:hover { background: rgba(248,113,113,0.12); color: var(--danger-hover); border-color: var(--danger-hover); }
+    
+        #status-banner {
+          max-width: 1400px;
+          margin: 0 auto 15px auto;
+          display: none;
+          padding: 10px 14px;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 500;
+        }
+        #status-banner.show { display: block; }
+        #status-banner.error { background: rgba(248,113,113,0.12); color: var(--danger-hover); border: 1px solid var(--danger); }
+        #status-banner.ok { background: rgba(56,189,248,0.12); color: var(--accent-hover); border: 1px solid var(--accent); }
+    
+        #svg-container { width: 100%; max-width: 1400px; margin: 20px auto 0 auto; background: var(--panel); padding: 20px; box-sizing: border-box; border-radius: 8px; position: relative; }
+        #svg-canvas { width: 100%; text-align: center; }
+        svg {
+          display: inline-block;
+          width: auto;
+          height: auto;
+          max-width: 100%;
+          max-height: min(70vh, 700px);
+          overflow: visible;
+        }
+        .component-group { cursor: pointer; }
+        .component-group:hover rect { filter: brightness(1.2); stroke: var(--accent) !important; stroke-width: 3px; }
+        
+        #tooltip {
+          position: absolute;
+          display: none;
+          background: var(--bg);
+          color: var(--accent);
+          border: 2px solid var(--accent);
+          padding: 6px 12px;
+          font-size: 14px;
+          font-weight: bold;
+          border-radius: 4px;
+          pointer-events: none;
+          white-space: nowrap;
+          z-index: 10;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        #svg-footnote {
+          margin-top: 16px;
+          padding-top: 12px;
+          border-top: 1px solid var(--border);
+          font-size: 13px;
+          color: var(--text-muted);
+          min-height: 18px;
+          text-align: left;
+        }
+    
+        .panel {
+          max-width: 1400px;
+          margin: 20px auto 0 auto;
+          background: var(--panel);
+          padding: 20px;
+          border-radius: 8px;
+          box-sizing: border-box;
+        }
+        .panel h3 { margin-top: 0; color: var(--accent); font-size: 16px; }
+    
+        .settings-bar {
+          display: flex;
+          gap: 20px;
+          margin-bottom: 16px;
+          align-items: center;
+          font-size: 13px;
+          color: var(--text-dim);
+          background: var(--bg);
+          padding: 10px 14px;
+          border-radius: 6px;
+          border: 1px solid var(--border);
+        }
+        .settings-bar label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .settings-bar input {
+          width: 90px;
+          background: var(--sheet-bg);
+          border: 1px solid var(--sheet-border);
+          border-radius: 4px;
+          padding: 5px 8px;
+          color: var(--sheet-text);
+          font: inherit;
+          text-align: right;
+        }
+    
+        .input-grid {
+          display: grid;
+          grid-template-columns: minmax(220px, 300px) 1fr;
+          gap: 20px;
+          align-items: start;
+        }
+        .sub-section h4 {
+          margin: 0 0 8px 0;
+          color: var(--text-dim);
+          border-bottom: 1px solid var(--border-soft);
+          padding-bottom: 6px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 14px;
+        }
+        .sub-section h4 span.total { font-size: 12px; color: var(--accent); font-weight: normal; }
+    
+        .sheet-wrap {
+          background: var(--sheet-bg);
+          border: 1px solid var(--sheet-border);
+          border-radius: 6px;
+          overflow: auto;
+          max-height: 360px;
+        }
+    
+        table.sheet {
+          width: 100%;
+          border-collapse: collapse;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          font-size: 12.5px;
+          background: var(--sheet-bg);
+        }
+        table.sheet thead th {
+          position: sticky;
+          top: 0;
+          background: var(--sheet-header-bg);
+          color: var(--sheet-text);
+          font-weight: 700;
+          text-align: left;
+          padding: 7px 10px;
+          border-bottom: 2px solid var(--sheet-border);
+          border-right: 1px solid var(--sheet-border);
+          white-space: nowrap;
+          z-index: 1;
+        }
+        table.sheet thead th:last-child { border-right: none; }
+        table.sheet tbody td {
+          padding: 0;
+          border-bottom: 1px solid var(--sheet-border);
+          border-right: 1px solid var(--sheet-border);
+          color: var(--sheet-text);
+        }
+        table.sheet tbody td:last-child { border-right: none; }
+        table.sheet tbody tr:nth-child(even) td { background: var(--sheet-row-alt); }
+        table.sheet tbody tr:hover td { background: var(--sheet-row-hover); }
+        table.sheet tbody tr.is-empty-row td { color: var(--sheet-ghost); }
+        table.sheet tbody tr.is-invalid td { background: rgba(248,113,113,0.14) !important; }
+    
+        table.sheet input, table.sheet select, table.sheet textarea {
+          width: 100%;
+          border: none;
+          background: transparent;
+          padding: 7px 10px;
+          font: inherit;
+          color: var(--sheet-text);
+          outline: none;
+        }
+        table.sheet input:focus, table.sheet select:focus, table.sheet textarea:focus {
+          background: #fff8e1;
+          box-shadow: inset 0 0 0 2px var(--sheet-focus);
+        }
+        table.sheet input[type="number"] { text-align: right; }
+        table.sheet select { cursor: pointer; }
+    
+        td.col-actions { width: 56px; text-align: center; padding: 0 !important; white-space: nowrap; }
+        td.col-actions button {
+          width: 26px; height: 100%; border: none; background: transparent;
+          color: var(--sheet-ghost); cursor: pointer; font-size: 15px; line-height: 1; padding: 7px 0;
+        }
+        td.col-actions button.row-insert:hover { color: var(--accent-hover); background: rgba(56,189,248,0.12); }
+        td.col-actions button.row-del:hover { color: var(--danger); background: rgba(248,113,113,0.1); }
+    
+        table.sheet.output td { padding: 7px 10px; }
+        table.sheet.output.spacy td { padding: 10px 14px; }
+        table.sheet.output td strong { color: #0f172a; }
+    
+        .hidden-file-input { display: none; }
+
+        /* Notes */
+        table.sheet td.col-note input { font-family: system-ui, -apple-system, sans-serif; min-width: 180px; }
+        table.sheet td.col-note input::placeholder { color: var(--sheet-ghost); }
+        table.sheet td.col-note textarea {
+          font-family: system-ui, -apple-system, sans-serif; width: 100%; min-width: 120px;
+          resize: none; overflow: hidden; line-height: 1.35; display: block;
+          field-sizing: content;   /* row height follows the text (browsers that support it) */
+        }
+        .notes-wrap { max-height: none; }
+        #svg-footnote .fn-note { color: var(--accent-hover); }
+    
+        @media (max-width: 900px) {
+          .input-grid { grid-template-columns: 1fr; }
+        }
+  </style>
 </head>
 <body>
-<div class="app" x-data="designApp">
-  <h1>Kitchen design</h1>
-  <p class="info">Edit the tables; the drawing, front sizes and checks update live. This page is the source:
-    kitchen_cost.html and kitchen_view.html hold a copy of the project JSON.</p>
-  <div class="bar">
-    <button class="btn alt" @click="$refs.file.click()">Import JSON</button>
-    <button class="btn alt" @click="exportJSON()">Export JSON</button>
-    <button class="btn alt" @click="copyJSON()">Copy JSON</button>
-    <button class="btn" @click="exportSVG()">Export SVG</button>
-    <button class="btn danger" @click="reload()">Reload project data</button>
-    <input type="file" accept=".json,application/json" x-ref="file" hidden @change="importJSON($event)">
-    <span class="grow"></span><span class="pill" x-text="status" x-show="status"></span>
+
+<div x-data="kitchenApp()">
+
+  <h1>Kitchen Elevation Layout</h1>
+
+  <div id="action-bar">
+    <div class="action-group">
+      <button class="btn secondary" @click="triggerImport()">Import State CSV</button>
+      <button class="btn secondary" @click="exportStateCSV()">Export State CSV</button>
+      <input type="file" class="hidden-file-input" accept=".csv,text/csv" x-ref="importFile" @change="handleImportFile($event)">
+    </div>
+    <div class="action-group">
+      <button class="btn" @click="exportSVG()">Export SVG</button>
+    </div>
+    <div class="action-group">
+      <button class="btn danger" @click="resetDefaults()">Reload Project Data</button>
+    </div>
   </div>
 
+  <div id="status-banner" :class="{show: bannerType !== '', error: bannerType === 'error', ok: bannerType === 'ok'}" x-text="bannerText"></div>
+
+  <!-- 1. INPUT -->
   <div class="panel">
-    <div class="settings">
-      <label>Default front gap (mm) <input type="number" min="0" step="0.5" x-model.number="settings.gapMm"></label>
-      <label><input type="checkbox" x-model="settings.alignFronts"> Line up fronts on the same line</label>
+    <h3>Input Data</h3>
+    <div class="settings-bar">
+      <label>
+        Default Front Gap (mm):
+        <input type="number" x-model.number="gapMm" min="0" step="0.5">
+      </label>
     </div>
-    <div class="cols">
-      <div><h3>Groups &amp; columns</h3>
-        <div class="wrap sheet-h"><table class="grid">
-          <thead><tr><th>Group</th><th>Width</th><th></th></tr></thead>
-          <tbody><template x-for="(r, i) in columns" :key="r.id">
-            <tr :class="rowClass('columns', i)">
-              <td><input type="number" min="1" x-model.number="r.group"></td>
-              <td><input type="number" min="0" x-model.number="r.width"></td>
-              <td><button class="x" title="Insert copy below" @click="insert('columns', i)">+</button><button class="x" title="Delete" @click="columns.splice(i, 1)">×</button></td>
-            </tr></template></tbody></table></div></div>
-      <div><h3>Components <small style="color:var(--muted)">(stacked bottom-up in their columns, in list order)</small></h3>
-        <div class="wrap sheet-h"><table class="grid">
-          <thead><tr><th>Group</th><th>Col</th><th>Span</th><th>Type</th><th>Height</th><th>Handle</th><th>Gap W</th><th>Gap H</th><th style="width:30%">Note</th><th></th></tr></thead>
-          <tbody><template x-for="(r, i) in components" :key="r.id">
-            <tr :class="rowClass('components', i)">
-              <td><input type="number" min="1" x-model.number="r.group"></td>
-              <td><input type="number" min="1" x-model.number="r.col"></td>
-              <td><input type="number" min="1" x-model.number="r.span"></td>
-              <td><select x-model="r.type"><template x-for="t in KM.TYPES" :key="t"><option :value="t" x-text="t"></option></template></select></td>
-              <td><input type="number" min="0" x-model.number="r.height"></td>
-              <td><select x-model="r.handle"><template x-for="h in ['', 'T', 'B', 'L', 'R']" :key="h"><option :value="h" x-text="h || '–'"></option></template></select></td>
-              <td><input type="number" min="0" :placeholder="settings.gapMm" x-model="r.gapW"></td>
-              <td><input type="number" min="0" :placeholder="settings.gapMm" x-model="r.gapH"></td>
-              <td><input x-model="r.note"></td>
-              <td><button class="x" title="Insert copy below" @click="insert('components', i)">+</button><button class="x" title="Delete" @click="components.splice(i, 1)">×</button></td>
-            </tr></template></tbody></table></div></div>
+    <div class="input-grid">
+      <div class="sub-section">
+        <h4>Groups &amp; Columns</h4>
+        <div class="sheet-wrap">
+          <table class="sheet">
+            <thead>
+              <tr><th style="width:70px">Group</th><th>Width (mm)</th><th class="col-actions"></th></tr>
+            </thead>
+            <tbody x-ref="columnsTbody">
+              <template x-for="(row, idx) in columns" :key="row.id">
+                <tr :class="{'is-invalid': build.colFlags[idx] === 'invalid', 'is-empty-row': build.colFlags[idx] === 'empty'}">
+                  <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
+                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.width"></td>
+                  <td class="col-actions">
+                    <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertColumnRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeColumnRow(idx)">×</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sub-section">
+        <h4>Components</h4>
+        <div class="sheet-wrap">
+          <table class="sheet">
+            <thead>
+              <tr>
+                <th style="width:56px">Group</th>
+                <th style="width:52px">Col</th>
+                <th style="width:52px">Span</th>
+                <th style="width:96px">Type</th>
+                <th style="width:96px">Height (mm)</th>
+                <th style="width:80px">Handle</th>
+                <th style="width:70px">Gap W (mm)</th>
+                <th style="width:70px">Gap H (mm)</th>
+                <th>Notes</th>
+                <th class="col-actions"></th>
+              </tr>
+            </thead>
+            <tbody x-ref="componentsTbody">
+              <template x-for="(row, idx) in components" :key="row.id">
+                <tr :class="{'is-invalid': build.compFlags[idx] === 'invalid', 'is-empty-row': build.compFlags[idx] === 'empty'}">
+                  <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
+                  <td><input type="number" class="cell" min="1" step="1" x-model.number="row.col"></td>
+                  <td><input type="number" class="cell" min="1" step="1" x-model.number="row.span"></td>
+                  <td>
+                    <select class="cell" x-model="row.type">
+                      <template x-for="t in COMPONENT_TYPES" :key="t">
+                        <option :value="t" x-text="t.charAt(0).toUpperCase() + t.slice(1)"></option>
+                      </template>
+                    </select>
+                  </td>
+                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.height"></td>
+                  <td>
+                    <select class="cell" x-model="row.handle">
+                      <template x-for="h in HANDLE_POSITIONS" :key="h || 'none'">
+                        <option :value="h" x-text="h || '—'"></option>
+                      </template>
+                    </select>
+                  </td>
+                  <td><input type="number" class="cell" min="0" step="1" :placeholder="gapMm" x-model.number="row.gapW"></td>
+                  <td><input type="number" class="cell" min="0" step="1" :placeholder="gapMm" x-model.number="row.gapH"></td>
+                  <td class="col-note"><input type="text" class="cell" x-model="row.note"></td>
+                  <td class="col-actions">
+                    <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertComponentRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeComponentRow(idx)">×</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="panel" x-show="out.warn.length">
-    <h3>Checks</h3>
-    <ul class="msgs"><template x-for="w in out.warn"><li :class="w.level" x-text="w.text"></li></template></ul>
+  <!-- 2. SVG DIAGRAM -->
+  <div id="svg-container" x-ref="svgContainer" @mouseover="onSvgHover($event)" @mousemove="onSvgMove($event)" @mouseleave="onSvgLeave()">
+    <div id="svg-canvas" x-ref="svgCanvas" x-show="!build.isEmpty" x-html="build.svg"></div>
+    <div x-show="build.isEmpty" style="padding:60px 20px;text-align:center;color:#94a3b8;">No layout yet — add some groups &amp; columns and components in the tables above.</div>
+    <div id="tooltip" x-show="tooltip.show" :style="`left:${tooltip.x}px; top:${tooltip.y}px`" x-text="tooltip.text"></div>
+    <div id="svg-footnote" x-show="!build.isEmpty" x-text="hoverInfo"></div>
   </div>
 
-  <div id="svg" @mousemove="tip($event)" @mouseleave="tipText = ''">
-    <div x-html="out.svg"></div>
-    <div class="foot" x-text="hover || 'Hover a component for its size, front size and note.'"></div>
+  <!-- 3. GENERAL NOTES -->
+  <div class="panel">
+    <h3>General Notes</h3>
+    <div class="sheet-wrap notes-wrap">
+      <table class="sheet">
+        <thead>
+          <tr>
+            <th style="width:200px">Name</th>
+            <th>Description</th>
+            <th>Details</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody x-ref="notesTbody">
+          <template x-for="(n, idx) in notes" :key="n.id">
+            <tr :class="{'is-empty-row': isRowEmpty(n.name, n.description, n.details)}">
+              <td class="col-note"><textarea class="cell" rows="1" x-model="n.name" x-init="$nextTick(() => autoGrow($el))" @input="autoGrow($el)"></textarea></td>
+              <td class="col-note"><textarea class="cell" rows="1" x-model="n.description" x-init="$nextTick(() => autoGrow($el))" @input="autoGrow($el)"></textarea></td>
+              <td class="col-note"><textarea class="cell" rows="1" x-model="n.details" x-init="$nextTick(() => autoGrow($el))" @input="autoGrow($el)"></textarea></td>
+              <td class="col-actions">
+                <button type="button" class="row-insert" title="Insert row below" @click="insertNoteRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeNoteRow(idx)">×</button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
   </div>
-  <div id="tip" x-show="tipText" :style="`left:${tipX}px;top:${tipY}px`" x-text="tipText"></div>
 
-  <div class="panel" style="margin-top:14px">
-    <h3>Project notes <small style="color:var(--muted)">(what the drawing does not show: materials, hardware, rules, appliances)</small></h3>
-    <div class="wrap"><table class="grid">
-      <thead><tr><th style="width:18%">Name</th><th>Description</th><th>Details</th><th></th></tr></thead>
-      <tbody><template x-for="(r, i) in notes" :key="r.id">
-        <tr :class="rowClass('notes', i)">
-          <td><textarea rows="1" x-model="r.name"></textarea></td>
-          <td><textarea rows="1" x-model="r.description"></textarea></td>
-          <td><textarea rows="1" x-model="r.details"></textarea></td>
-          <td><button class="x" title="Insert below" @click="insert('notes', i)">+</button><button class="x" title="Delete" @click="notes.splice(i, 1)">×</button></td>
-        </tr></template></tbody></table></div>
-  </div>
 </div>
 
-<!-- =====================================================================
-     PROJECT DATA — SOURCE. The only place with values for this kitchen.
-     DATA FLOW (an LLM propagates on request; the files never write each other):
-       1. kitchen_design.html  #kitchen-project       SOURCE – edit here (or with this page + Export JSON)
-       2. kitchen_cost.html    #kitchen-project-copy  exact copy of 1; #cost-data = prices / purchase items
-       3. kitchen_view.html    #kitchen-project-copy  exact copy of 1; #view-data = room / scene
-       The MODEL block is identical in all three files.
-     settings: gapMm default front gap, alignFronts line up fronts (see note "Front alignment")
-     groups:   name; worktop [n from the wall, n of the front edge] (default [0,600]); backPanel (island)
-     notes:    [name, description, details]
-     columns:  group -> column widths, mm, left to right
-     components (stacked bottom-up in their columns, in list order):
-       g group, c first column, s span, h height, t type: filler (wall / void), plinth, worktop
-       (h ≤ 60 top; on the floor = waterfall; above = wall panel), frame (strip between fronts:
-       18 on edge, wider = flat filler), cabinet (door front), drawer (drawer front), oven, micro;
-       hd handle T|B|L|R|"", gw / gh front gaps ("" = default), note (words the model reads:
-       dishwasher, fridge|freezer, dummy, sink, hob, waste|bins, inner drawer, "carcass 800",
-       "end-on" = drawn in another group, "Niche H x W x D")
-     ===================================================================== -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<!-- ===================================================================
+     PROJECT DATA (JSON) - the only place with values for this kitchen.
+     The application script below is project independent; it reads this
+     block at start-up. To update the kitchen, edit only this block.
+     DATA FLOW (propagated by an LLM on request, files never write each other):
+       1. kitchen_design.html  #kitchen-project       SOURCE - edit only here
+       2. kitchen_cost.html    #kitchen-project-copy  = exact copy of 1
+                               #cost-data             rules, blocks / items derived from 1 by the design
+                                                      notes (fronts are calculated live); prices are input
+       3. kichen_view.html     #kitchen-project-copy  = exact copy of 2 (same as 1)
+                               #view-data             scene of this kitchen (room, window, appliances,
+                                                      lights, colours, cameras) - input, edit here
+     The view only draws the project and checks it: overlaps / gaps / parts sticking out, front alignment.
+     The JavaScript in the three files is generic: kitchen data lives only in the LLM-DATA blocks.
+     Data sections are marked  LLM-DATA BEGIN <name> ... LLM-DATA END <name>.
+     After propagating, open kichen_view.html, tab Carcasses: geometry and alignment checks must be OK.
+       settings.gapMm: default reveal gap between fronts (mm)
+       settings.alignFronts: line up fronts in the same line (see note "Front alignment")
+       notes:      [name, description, details] - everything the drawing
+                   does not show (materials, hardware, rules, appliances)
+       columns:    group -> column widths in mm, left to right
+       components: placed bottom-up within their column(s), in list order
+         g group, c first column, s column span, h height mm,
+         t type: filler (wall / void), plinth, worktop, frame (strip
+                 between fronts), cabinet (hinged door front),
+                 drawer (drawer front), oven, micro
+         hd handle (T|B|L|R|""), gw/gh front gaps mm ("" = default),
+         note: what this piece is (geometry specific)
+     =================================================================== -->
 <!-- LLM-DATA BEGIN kitchen-project (SOURCE: edit here) -->
 <script type="application/json" id="kitchen-project">
 {
- "settings": {"gapMm": 4, "alignFronts": true},
- "groups": {
-  "1": {"name": "under the window", "worktop": [0, 600]},
-  "2": {"name": "tall units"},
-  "3": {"name": "island", "worktop": [-300, 600], "backPanel": true}
- },
- "notes": [
-  ["Project", "Kitchen – Jaworze", "Group 1 + Group 2 form an L, Group 3 is an island"],
-  ["Location", "Jaworze, Bielsko-Biała county", ""],
-  ["Scope", "Materials only, owner builds it", "Prices: market average, PLN gross"],
-  ["Style", "Shaker, painted", "Overlay fronts; frames between fronts make them look inset"],
-  ["Room", "Floor gres, walls white", "Grey tiles 120 × 60"],
-  ["Window", "Above the Group 1 worktop", "1900 × 1300"],
-  ["Lighting", "3 ceiling spotlights over the tall units (Group 2)", "1 spotlight over the sink, halfway to the hood; 2 pendants over the island"],
-  ["Carcass material", "Chipboard 18 light grey, ABS 0.8 front edge", "Back HDF 3 light grey. Cut and edge-banded by the board supplier"],
-  ["Carcasses", "Width = column width, depth 550, 14 from the walls", "Stacked fronts = one carcass, upper cabinets separate; no dishwasher carcass"],
-  ["Base carcasses", "2 top rails 100 deep instead of a top panel", ""],
-  ["Shelves", "Adjustable, depth − 20; 1 per door ≤ 720 high, 3 per taller door", "None in the sink unit / fridge; fixed between stacked doors and at appliances"],
-  ["Back strips", "Chipboard 18 behind every 18 frame", "On edge, 100 deep, frame length; none behind the L-corner fillers"],
-  ["Fixings", "About 18 confirmat screws per carcass", "4 shelf pins per shelf; carcass connectors, wall brackets"],
-  ["Fronts", "MDF 18 shaker, English Navy satin", "Lacquered by a front maker"],
-  ["Front gaps", "Front = module − Gap W / Gap H (default 4)", "On the plinth: Gap H 2; on the worktop: Gap H 6 (clears the worktop)"],
-  ["Front alignment", "Fronts on one line are aligned", "Joint 2 + 2; at the plinth, worktop or an appliance: the rest of the gap"],
-  ["Frames", "MDF 18 lacquered like the fronts", "18 wide: on edge, 100 deep. Wider: flat. L corner: the 36 covers the end of the 80"],
-  ["Filler", "Wall, plasterboard or void – not ordered", ""],
-  ["Handles", "IKEA ENERYDA cup, brass", ""],
-  ["Hinges", "Blum CLIP top BLUMOTION 110° + plate; cheaper: GTV soft-close", "Per door: < 900 high 2, < 1600 3, else 4; none on appliance / dummy fronts"],
-  ["Drawers", "Blum TANDEMBOX antaro NL 500; front ≥ 350 → D (224), else M (83)", "Bottom, back: chipboard 16; \"inner drawer\": + cutlery drawer M above, same front"],
-  ["Sink unit", "Bottom drawer: D with waste-sorting bins; top front fixed", "Space-saving trap above the drawer (wall drain ≥ 450 above the floor)"],
-  ["Worktop", "Laminate oak 38; Group 1 600 deep, island 900 deep", "Group 1 one piece to the end of the 800 corner carcass; waterfalls same board"],
-  ["Corner wall cabinet", "Group 2, stands half on the Group 1 worktop", "Screwed to its neighbour, on supports in the wall corner"],
-  ["Wall panel", "Laminate, matching the worktop", ""],
-  ["Island", "Stools on the back side under the overhang", "Back: smooth MDF 18 lacquered panel between the waterfalls"],
-  ["Plinth", "PVC 100, black matte, moisture-resistant, cut on site", "Legs 100 with plinth clips, 4 per carcass; ventilation grille under the fridge"],
-  ["Sink", "Inset granite 1-bowl, with tap", ""],
-  ["Hob", "Electrolux CIT61443, cut-out 560 × 490, 54 from the wall; no inner drawer", "Rails on edge: front 18 × 50, rear 18 × 100; chipboard 16 panel at front rail bottom"],
-  ["Hood / extractor", "Electrolux LFV416K, 600", "Above the hob"],
-  ["Dishwasher", "Bosch SMV4HVX00E", "Front fixed on the appliance door"],
-  ["Fridge / freezer", "Bosch KIS86AFE0, 1772 high, flat hinge", "Fronts on the appliance doors; check the front split against the doors"],
-  ["Oven", "Samsung NV7B5785KAK", "595 × 596 × 570; check the niche in the manual"],
-  ["Microwave", "Bosch BFL623MB3", ""],
-  ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"],
-  ["Appliance niches", "Component note \"Niche H x W x D\" (mm, ranges a-b)", "Checked against the space the design leaves; the fridge carcass gets a fixed shelf on top of its niche"],
-  ["Cost estimate", "Materials and prices from this design", "Cutting list, fronts (module − gap), hardware, appliances; waste and reserve"],
-  ["3D view", "3D model from this design", "Checks overlaps, gaps, parts sticking out and front alignment"]
- ],
- "columns": {
-  "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 564],
-  "2": [18, 546, 36, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130],
-  "3": [38, 18, 800, 18, 800, 18, 38]
- },
- "components": [
-  {"g": 1, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
-  {"g": 1, "c": 1, "s": 11, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
-  {"g": 1, "c": 1, "s": 10, "t": "worktop", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Wall panel"},
-  {"g": 1, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
-  {"g": 1, "c": 3, "s": 8, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
-  {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Drawer (deep)"},
-  {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer, hob above"},
-  {"g": 1, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
-  {"g": 1, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Dishwasher, niche 815-875 x 600 x 550"},
-  {"g": 1, "c": 6, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
-  {"g": 1, "c": 7, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Sink unit, drawer with waste-sorting bins"},
-  {"g": 1, "c": 7, "s": 1, "t": "cabinet", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Sink unit, dummy front"},
-  {"g": 1, "c": 8, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
-  {"g": 1, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Corner cabinet, carcass 800"},
-  {"g": 1, "c": 10, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 80, installed flat"},
-  {"g": 1, "c": 11, "s": 1, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, empty past the 800 carcass"},
+  "settings": {"gapMm": 4, "alignFronts": true},
+  "notes": [
+    ["Project", "Kitchen – Jaworze", "Group 1 + Group 2 form an L, Group 3 is an island"],
+    ["Location", "Jaworze, Bielsko-Biała county", ""],
+    ["Scope", "Materials only, owner builds it", "Prices: market average, PLN gross"],
+    ["Style", "Shaker, painted", "Overlay fronts; frames between fronts make them look inset"],
+    ["Room", "Floor gres, walls white", "Grey tiles 120 × 60"],
+    ["Window", "Above the Group 1 worktop", "1900 × 1300"],
+    ["Lighting", "3 ceiling spotlights over the tall units (Group 2)", "1 spotlight over the sink, halfway to the hood; 2 pendants over the island"],
+    ["Carcass material", "Chipboard 18 light grey, ABS 0.8 front edge", "Back HDF 3 light grey. Cut and edge-banded by the board supplier"],
+    ["Carcasses", "Width = column width, depth 550, 14 from the walls", "Stacked fronts = one carcass, upper cabinets separate; no dishwasher carcass"],
+    ["Base carcasses", "2 top rails 100 deep instead of a top panel", ""],
+    ["Shelves", "Adjustable, depth − 20; 1 per door ≤ 720 high, 3 per taller door", "None in the sink unit / fridge; fixed between stacked doors and at appliances"],
+    ["Back strips", "Chipboard 18 behind every 18 frame", "On edge, 100 deep, frame length; none behind the L-corner fillers"],
+    ["Fixings", "About 18 confirmat screws per carcass", "4 shelf pins per shelf; carcass connectors, wall brackets"],
+    ["Fronts", "MDF 18 shaker, English Navy satin", "Lacquered by a front maker"],
+    ["Front gaps", "Front = module − Gap W / Gap H (default 4)", "On the plinth: Gap H 2; on the worktop: Gap H 6 (clears the worktop)"],
+    ["Front alignment", "Fronts on one line are aligned", "Joint 2 + 2; at the plinth, worktop or an appliance: the rest of the gap"],
+    ["Frames", "MDF 18 lacquered like the fronts", "18 wide: on edge, 100 deep. Wider: flat. L corner: the 36 covers the end of the 80"],
+    ["Filler", "Wall, plasterboard or void – not ordered", ""],
+    ["Handles", "IKEA ENERYDA cup, brass", ""],
+    ["Hinges", "Blum CLIP top BLUMOTION 110° + plate; cheaper: GTV soft-close", "Per door: < 900 high 2, < 1600 3, else 4; none on appliance / dummy fronts"],
+    ["Drawers", "Blum TANDEMBOX antaro NL 500; front ≥ 350 → D (224), else M (83)", "Bottom, back: chipboard 16; \"inner drawer\": + cutlery drawer M above, same front"],
+    ["Sink unit", "Bottom drawer: D with waste-sorting bins; top front fixed", "Space-saving trap above the drawer (wall drain ≥ 450 above the floor)"],
+    ["Worktop", "Laminate oak 38; Group 1 600 deep, island 900 deep", "Group 1 one piece to the end of the 800 corner carcass; waterfalls same board"],
+    ["Corner wall cabinet", "Group 2, stands half on the Group 1 worktop", "Screwed to its neighbour, on supports in the wall corner"],
+    ["Wall panel", "Laminate, matching the worktop", ""],
+    ["Island", "Stools on the back side under the overhang", "Back: smooth MDF 18 lacquered panel between the waterfalls"],
+    ["Plinth", "PVC 100, black matte, moisture-resistant, cut on site", "Legs 100 with plinth clips, 4 per carcass; ventilation grille under the fridge"],
+    ["Sink", "Inset granite 1-bowl, with tap", ""],
+    ["Hob", "Electrolux CIT61443, cut-out 560 × 490, 54 from the wall; no inner drawer", "Rails on edge: front 18 × 50, rear 18 × 100; chipboard 16 panel at front rail bottom"],
+    ["Hood / extractor", "Electrolux LFV416K, 600", "Above the hob"],
+    ["Dishwasher", "Bosch SMV4HVX00E", "Front fixed on the appliance door"],
+    ["Fridge / freezer", "Bosch KIS86AFE0, 1772 high, flat hinge", "Fronts on the appliance doors; check the front split against the doors"],
+    ["Oven", "Samsung NV7B5785KAK", "595 × 596 × 570; check the niche in the manual"],
+    ["Microwave", "Bosch BFL623MB3", ""],
+    ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"],
+    ["Cost estimate", "Materials and prices from this design", "Cutting list, fronts (module − gap), hardware, appliances; waste and reserve"],
+    ["3D view", "3D model from this design", "Checks overlaps, gaps, parts sticking out and front alignment"]
+  ],
+  "columns": {
+    "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 564],
+    "2": [18, 546, 36, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130],
+    "3": [38, 18, 800, 18, 800, 18, 38]
+  },
+  "components": [
+    {"g": 1, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
+    {"g": 1, "c": 1, "s": 11, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
+    {"g": 1, "c": 1, "s": 10, "t": "worktop", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Wall panel"},
+    {"g": 1, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+    {"g": 1, "c": 3, "s": 8, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
+    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Drawer (deep)"},
+    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer, hob above"},
+    {"g": 1, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+    {"g": 1, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Dishwasher, niche 815-875 x 600 x 550"},
+    {"g": 1, "c": 6, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+    {"g": 1, "c": 7, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Sink unit, drawer with waste-sorting bins"},
+    {"g": 1, "c": 7, "s": 1, "t": "cabinet", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Sink unit, dummy front"},
+    {"g": 1, "c": 8, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+    {"g": 1, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Corner cabinet, carcass 800"},
+    {"g": 1, "c": 10, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 80, installed flat"},
+    {"g": 1, "c": 11, "s": 1, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, empty past the 800 carcass"},
 
-  {"g": 2, "c": 1, "s": 2, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, under the worktop"},
-  {"g": 2, "c": 1, "s": 3, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Group 1 worktop seen end-on"},
-  {"g": 2, "c": 1, "s": 1, "t": "frame", "h": 1642, "hd": "", "gw": 0, "gh": 0},
-  {"g": 2, "c": 1, "s": 12, "t": "frame", "h": 18, "hd": "", "gw": 0, "gh": 0},
-  {"g": 2, "c": 1, "s": 12, "t": "filler", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Soffit to ceiling"},
-  {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 1162, "hd": "R", "gw": 4, "gh": 6, "note": "Stands on the worktop: Gap H 6 so the door clears the worktop when opening"},
-  {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-  {"g": 2, "c": 3, "s": 9, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth, ventilation grille under the fridge"},
-  {"g": 2, "c": 3, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 36, installed flat; the 80 filler of Group 1 overlaps it"},
-  {"g": 2, "c": 4, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
-  {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
-  {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 1200, "hd": "R", "gw": 4, "gh": 4},
-  {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-  {"g": 2, "c": 6, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
-  {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 520, "hd": "T", "gw": 4, "gh": 2},
-  {"g": 2, "c": 7, "s": 1, "t": "oven", "h": 600, "hd": "", "gw": 0, "gh": 0, "note": "Niche 580 x 560 x 550 (verify)"},
-  {"g": 2, "c": 7, "s": 1, "t": "micro", "h": 382, "hd": "", "gw": 0, "gh": 0, "note": "Niche 362-365 x 560-568 x 320"},
-  {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 418, "hd": "B", "gw": 4, "gh": 4},
-  {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-  {"g": 2, "c": 8, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
-  {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Freezer door"},
-  {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4, "note": "Fridge door, niche 1775-1780 x 560 x 550"},
-  {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-  {"g": 2, "c": 10, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
-  {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
-  {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4},
-  {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-  {"g": 2, "c": 12, "s": 1, "t": "frame", "h": 2500, "hd": "", "gw": 0, "gh": 0},
-  {"g": 2, "c": 13, "s": 1, "t": "filler", "h": 2740, "hd": "", "gw": 0, "gh": 0, "note": "Wall / plasterboard"},
+    {"g": 2, "c": 1, "s": 2, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, under the worktop"},
+    {"g": 2, "c": 1, "s": 3, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Group 1 worktop seen end-on"},
+    {"g": 2, "c": 1, "s": 1, "t": "frame", "h": 1642, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 1, "s": 12, "t": "frame", "h": 18, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 1, "s": 12, "t": "filler", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Soffit to ceiling"},
+    {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 1162, "hd": "R", "gw": 4, "gh": 6, "note": "Stands on the worktop: Gap H 6 so the door clears the worktop when opening"},
+    {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 3, "s": 9, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth, ventilation grille under the fridge"},
+    {"g": 2, "c": 3, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 36, installed flat; the 80 filler of Group 1 overlaps it"},
+    {"g": 2, "c": 4, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 1200, "hd": "R", "gw": 4, "gh": 4},
+    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 6, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 520, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 2, "c": 7, "s": 1, "t": "oven", "h": 600, "hd": "", "gw": 0, "gh": 0, "note": "Niche 560 x 580 x 550 (verify)"},
+    {"g": 2, "c": 7, "s": 1, "t": "micro", "h": 382, "hd": "", "gw": 0, "gh": 0, "note": "Niche 362-365 x 560-568 x 320"},
+    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 418, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 8, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Freezer door"},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4, "note": "Fridge door, niche 1775-1780 x 560 x 550"},
+    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 10, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4},
+    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+    {"g": 2, "c": 12, "s": 1, "t": "frame", "h": 2500, "hd": "", "gw": 0, "gh": 0},
+    {"g": 2, "c": 13, "s": 1, "t": "filler", "h": 2740, "hd": "", "gw": 0, "gh": 0, "note": "Wall / plasterboard"},
 
-  {"g": 3, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
-  {"g": 3, "c": 1, "s": 7, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
-  {"g": 3, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
-  {"g": 3, "c": 3, "s": 3, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
-  {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
-  {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
-  {"g": 3, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
-  {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
-  {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
-  {"g": 3, "c": 6, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
-  {"g": 3, "c": 7, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"}
- ]
+    {"g": 3, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
+    {"g": 3, "c": 1, "s": 10, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
+    {"g": 3, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+    {"g": 3, "c": 3, "s": 3, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
+    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
+    {"g": 3, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
+    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
+    {"g": 3, "c": 6, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+    {"g": 3, "c": 7, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"}
+  ]
 }
 </script>
 <!-- LLM-DATA END kitchen-project -->
-
 <script>
-/* =====================================================================
-   KITCHEN MODEL — identical copy in kitchen_design / kitchen_cost / kitchen_view.
-   Pure functions: no DOM, no prices, no scene. Input: the project JSON.
-   Output: layout, carcasses, panels (with 3D boxes), fronts, hardware counts,
-   quantities and checks. Cost and view both read these same parts.
-   Coordinates per group, mm: u along the group from its first column,
-   v up from the floor, n from the wall towards the room.
-   ===================================================================== */
-const KM = (() => {
 'use strict';
-// Construction rules (the "Carcasses", "Shelves", "Hinges", "Drawers"... notes in numbers).
-// A project may override any of them with a "rules" object.
-const RULES = {
-  gap: 4, t: 18, t16: 16, hdf: 3,           // default front gap, board thicknesses
-  depth: 550, wall: 14,                      // carcass depth; carcass back from the wall
-  upperFrom: 1900, baseTop: 900, floorMax: 150,  // separate upper carcass / base carcass / stands on legs
-  rail: 100, frameDepth: 100, shelfSetback: 20,
-  plinthSetback: 70, plinthT: 18, wallPanelT: 10,
-  hinges: [[900, 2], [1600, 3], [1e9, 4]],   // door front height below -> hinges
-  shelves: [[720, 1], [1e9, 3]],             // door module height up to -> adjustable shelves
-  hingeZone: 35,                             // shelves keep this far (centre to centre) from a hinge
-  drawerD: 350, box: { D: 224, M: 83 }, drawerBack: { D: 199, M: 68, inner: 84 }, nl: 500,
-  legs: 4, confirmat: 18, pins: 4,
-  worktop: [0, 600],                         // worktop n range when the group does not give one
-  board: 4100, panel: [4100, 640],           // worktop board length; wall panel board length x width
-  kinds: {                                   // what a component note means (case-insensitive regex)
-    dishwasher: 'dishwasher', fridge: 'fridge|freezer', dummy: 'dummy', sink: 'sink', hob: 'hob',
-    bins: 'waste|bins', inner: 'inner drawer', reference: 'end-on', carcassW: 'carcass (\\d{3,4})',
-    niche: 'niche\\s*([\\d\\s\\-–x×]+)'
-  }
+
+/* ===================================================================
+   SECTION 1 — CONFIG & SAMPLE DATA
+   Colors, sizing constants, component-type lists, and the data that
+   pre-fills the tables on first load. Nothing in this section runs
+   any logic - it is just values other sections read from.
+   =================================================================== */
+
+// All tunable numbers and colors live here. Nothing in this file does any
+// work - it's just data that the layout engine and renderer read from.
+
+const CONFIG = {
+  scale: 1,
+  frameThickness: 50,   // front frame border width, in SVG units
+  groupGap: 100,        // horizontal gap between groups, in SVG units
+  gapMm: 4,              // default reveal gap between fronts, in mm
+  viewBoxMargin: 40,
+
+  colors: {
+    canvasBg: '#f8fafc',
+    filler: '#cbd5e1', fillerStroke: '#1e293b',
+    worktop: '#f3c48b', worktopStroke: '#a86c32',
+    frame: '#bfdbfe', frameStroke: '#1e293b',
+    plinth: '#b4bfcc', plinthStroke: '#1e293b',
+    frontOuter: '#bfdbfe', frontOuterStroke: '#1e293b',
+    frontInner: '#dbeafe', frontInnerStroke: '#64748b',
+    handle: '#d97706', handleStroke: '#78350f',
+    applianceBody: '#e2e8f0', applianceBodyStroke: '#1e293b',
+    applianceGlass: '#94a3b8', applianceGlassStroke: '#475569',
+    applianceTrim: '#cbd5e1', applianceTrimStroke: '#475569',
+    controlPanel: '#334155', controlPanelStroke: '#1e293b',
+    knob: '#64748b',
+    glassBlack: '#1c1f24', panelBlack: '#0d0f12', applianceEdge: '#000000',
+    glassWindow: '#2b313a', knobMetal: '#a1a7b0', handleMetal: '#c4c9cf',
+    display: '#06080a', displayText: '#7dd3fc'
+  },
+
+  handle: { thickness: 16, edgeOffset: 20, minSpan: 30, maxSpan: 80 }
 };
-const TYPES = ['filler', 'plinth', 'worktop', 'frame', 'cabinet', 'drawer', 'oven', 'micro'];
-const FRONTS = ['cabinet', 'drawer'], BOXED = ['cabinet', 'drawer', 'oven', 'micro'];
-const num = (v, d) => { const x = parseFloat(v); return Number.isFinite(x) ? x : d; };
-const r1 = x => Math.round(x * 10) / 10;
 
-function rules(P) {
-  const o = P.rules || {};
-  return { ...RULES, ...o, gap: num((P.settings || {}).gapMm, o.gap ?? RULES.gap), kinds: { ...RULES.kinds, ...(o.kinds || {}) } };
-}
-const is = (R, kind, note) => new RegExp(R.kinds[kind], 'i').test(note || '');
-// "Niche 815-875 x 600 x 550" -> [[815,875],[600,600],[550,550]] = height, width, depth
-function niche(R, note) {
-  const m = (note || '').match(new RegExp(R.kinds.niche, 'i'));
-  if (!m) return null;
-  const d = m[1].split(/[x×]/).map(s => s.trim().split(/[-–]/).map(Number).filter(Number.isFinite)).filter(a => a.length);
-  return d.length === 3 ? d.map(a => [a[0], a[a.length - 1]]) : null;
-}
+// Component types that are just a plain colored rectangle. Mapping each one
+// to its fill/stroke pair here means the renderer needs only ONE function
+// for all of them instead of near-identical copies.
+const SIMPLE_RECT_TYPES = {
+  filler: { fill: 'filler', stroke: 'fillerStroke' },
+  worktop: { fill: 'worktop', stroke: 'worktopStroke' },
+  frame: { fill: 'frame', stroke: 'frameStroke' },
+  plinth: { fill: 'plinth', stroke: 'plinthStroke' }
+};
 
-/* ---------- 1. LAYOUT: stack components bottom-up in their columns ---------- */
-function layout(P) {
-  const R = rules(P), warn = [], groups = new Map();
-  for (const [g, ws] of Object.entries(P.columns || {})) {
-    const cols = ws.map(Number), x = [0];
-    cols.forEach(w => x.push(x[x.length - 1] + w));
-    groups.set(+g, { g: +g, cols, x, width: x[x.length - 1], items: [], occ: cols.map(() => []), info: (P.groups || {})[g] || {} });
-  }
-  const top = rs => { let y = 0; for (const [a, b] of [...rs].sort((p, q) => p[0] - q[0])) { if (a > y) break; y = Math.max(y, b); } return y; };
-  (P.components || []).forEach((c, idx) => {
-    const G = groups.get(+c.g), h = +c.h, i = c.c - 1, tag = `Component ${idx + 1} (G${c.g} col ${c.c} ${c.t})`;
-    const bad = text => warn.push({ text: `${tag}: ${text}`, idx });
-    if (!G) return bad(`group ${c.g} has no columns – skipped`);
-    if (!TYPES.includes(c.t)) return bad('unknown type – skipped');
-    if (!(i >= 0 && i < G.cols.length && c.s >= 1 && h > 0)) return bad('column, span or height out of range – skipped');
-    let j = i + +c.s;
-    if (j > G.cols.length) { bad(`span ${c.s} runs past column ${G.cols.length} – clipped`); j = G.cols.length; }
-    const ks = []; for (let k = i; k < j; k++) ks.push(k);
-    const v0 = Math.max(...ks.map(k => top(G.occ[k])));
-    if (ks.some(k => G.occ[k].some(([a, b]) => Math.max(v0, a) < Math.min(v0 + h, b)))) return bad('overlaps a component placed earlier in the list – skipped');
-    ks.forEach(k => G.occ[k].push([v0, v0 + h]));
-    const front = FRONTS.includes(c.t), note = c.note || '';
-    G.items.push({
-      idx, g: +c.g, c: +c.c, s: j - i, t: c.t, h, hd: c.hd || '', note, u0: G.x[i], u1: G.x[j], v0, v1: v0 + h,
-      gw: front ? num(c.gw, R.gap) : 0, gh: front ? num(c.gh, R.gap) : 0,
-      cw: +((note.match(new RegExp(R.kinds.carcassW, 'i')) || [])[1] || 0)   // "carcass 800": carcass wider than its column
-    });
-  });
-  for (const G of groups.values()) delete G.occ;
-  return { R, groups, warn };
-}
+// filler = wall / void, plinth = plinth board, worktop = worktop board, frame = strip between fronts,
+// cabinet = hinged door front, drawer = drawer front, oven / micro = appliance.
+const COMPONENT_TYPES = ['filler', 'plinth', 'worktop', 'frame', 'cabinet', 'drawer', 'oven', 'micro'];
+// Front types: drawn alike; 'cabinet' = hinged door front, 'drawer' = drawer front.
+const FRONT_TYPES = ['cabinet', 'drawer'];
+const HANDLE_POSITIONS = ['', 'T', 'B', 'L', 'R'];
 
-/* ---------- 2. FRONT POSITIONS ("Front alignment" note) ----------
-   On a line with fronts on both sides the joint is gap/2 + gap/2; each front's own gap then fixes
-   its free side (plinth, worktop, appliance). Fronts with nothing known are centred. */
-function alignAxis(fr, a0, a1, gk, dflt, set) {
-  const lo = new Map(), hi = new Map(), ends = new Set(fr.map(a1));
-  for (const f of fr) if (ends.has(a0(f))) { lo.set(a0(f), dflt / 2); hi.set(a0(f), dflt / 2); }
-  const prop = () => { for (let ch = true; ch;) { ch = false; for (const f of fr) {
-    const s = a0(f), e = a1(f);
-    if (lo.has(s) && !hi.has(e)) { hi.set(e, f[gk] - lo.get(s)); ch = true; }
-    else if (hi.has(e) && !lo.has(s)) { lo.set(s, f[gk] - hi.get(e)); ch = true; } } } };
-  prop();
-  for (const f of fr) if (!lo.has(a0(f)) && !hi.has(a1(f))) { lo.set(a0(f), f[gk] / 2); hi.set(a1(f), f[gk] / 2); prop(); }
-  for (const f of fr) set(f, a0(f) + lo.get(a0(f)));
-}
+// Fallbacks used only when the project file leaves a setting out.
+const DEFAULT_SETTINGS = { gapMm: CONFIG.gapMm };
 
-/* ---------- 3. BUILD: carcasses, panels, fronts, frames, plinth, worktops ---------- */
-function build(P) {
-  const L = layout(P), R = L.R, groups = L.groups, align = !!(P.settings || {}).alignFronts;
-  const warn = L.warn.map(w => ({ level: 'error', ...w }));
-  const W = (level, text) => warn.push({ level, text });
-  const t = R.t, n0 = R.wall, n1 = R.wall + R.depth, nf = n1 + t;   // carcass back / front, front face
-  const parts = [], fronts = [], carcasses = [];
-  const part = (p) => { parts.push(p); return p; };
-
-  for (const G of groups.values()) {
-    const I = G.items, g = G.g, fr = I.filter(i => FRONTS.includes(i.t));
-    for (const f of fr) { f.fu0 = f.u0 + f.gw / 2; f.fv0 = f.v0 + f.gh / 2; }
-    if (align) {
-      alignAxis(fr, f => f.v0, f => f.v1, 'gh', R.gap, (f, y) => f.fv0 = y);
-      alignAxis(fr, f => f.u0, f => f.u1, 'gw', R.gap, (f, x) => f.fu0 = x);
-    }
-
-    // carcasses: stacked boxed items in one column span form one carcass; upper ones separate; none for the dishwasher
-    const byCol = new Map();
-    for (const it of I) if (BOXED.includes(it.t)) { const k = it.c + ':' + it.s; byCol.set(k, [...(byCol.get(k) || []), it]); }
-    for (const col of byCol.values()) {
-      let K = null;
-      const flush = () => { if (K) carcasses.push(K); K = null; };
-      for (const it of col.sort((a, b) => a.v0 - b.v0)) {
-        if (is(R, 'dishwasher', it.note)) { flush(); continue; }
-        const upper = it.v0 >= R.upperFrom;
-        if (K && (upper || it.v0 !== K.v1)) flush();
-        if (!K) K = { g, c: it.c, s: it.s, u0: it.u0, u1: Math.max(it.u1, it.u0 + it.cw), v0: it.v0, v1: it.v1, items: [] };
-        K.items.push(it); K.v1 = it.v1; it.K = K;
-        if (upper) flush();
-      }
-      flush();
-    }
-  }
-  carcasses.sort((a, b) => a.g - b.g || a.u0 - b.u0 || a.v0 - b.v0).forEach((K, i) => K.id = i + 1);
-
-  // fronts (before shelves: shelves keep clear of the hinges)
-  for (const G of groups.values()) for (const it of G.items) {
-    if (!FRONTS.includes(it.t)) continue;
-    const K = it.K || null, w = it.u1 - it.u0 - it.gw, h = it.h - it.gh, note = it.note;
-    if (w <= 0 || h <= 0) { W('error', `G${it.g} col ${it.c}: front ${w} × ${h} – gap larger than the module`); continue; }
-    const kind = it.t === 'drawer' ? 'drawer' : is(R, 'dishwasher', note) ? 'dish' : is(R, 'dummy', note) ? 'fixed' : is(R, 'fridge', note) ? 'fridge' : 'door';
-    const name = kind === 'drawer' ? (is(R, 'bins', note) ? 'Sink drawer front (waste bins)' : 'Drawer front')
-      : kind === 'fixed' ? 'Dummy front' : kind === 'door' ? 'Door' : 'Appliance-door front';
-    const col = G.items.filter(x => x.c === it.c && x.s === it.s && x.hd);
-    const hingeSide = it.hd === 'L' ? 'R' : it.hd === 'R' ? 'L' : col.some(x => x.hd === 'L') ? 'R' : 'L';
-    const F = { g: it.g, item: it, K, kind, name, w, h, hd: it.hd, hingeSide, box: [it.fu0, it.fu0 + w, it.fv0, it.fv0 + h, n1, nf], hinges: [] };
-    if (kind === 'door' && K) {
-      const n = R.hinges.find(([lim]) => h < lim)[1];
-      for (let j = 0; j < n; j++) F.hinges.push(Math.round(F.box[2] + 100 + (h - 200) * j / (n - 1)));
-    }
-    if (kind === 'drawer' && K) {
-      const D = h >= R.drawerD, b0 = it.v0 + (it.v0 === K.v0 ? t : 0) + 24;
-      F.drawer = { type: D ? 'D' : 'M', b0, box: R.box[D ? 'D' : 'M'], bins: is(R, 'bins', note) };
-      if (is(R, 'inner', note)) F.drawer.inner = { b0: b0 + F.drawer.box + 40, box: R.box.M };
-    }
-    it.F = F; fronts.push(F);
-    part({ g: it.g, K: K && K.id, name, mat: 'front', a: w, b: h, edge: 0, box: F.box, layer: 'fronts' });
-  }
-
-  // carcass panels
-  for (const K of carcasses) {
-    const { u0, u1, v0, v1 } = K, w = u1 - u0, H = v1 - v0, ui0 = u0 + t, ui1 = u1 - t, iw = w - 2 * t;
-    const notes = K.items.map(i => i.note).join(' | ');
-    Object.assign(K, { base: v0 <= R.floorMax && v1 <= R.baseTop, floor: v0 <= R.floorMax,
-      sink: is(R, 'sink', notes), hob: is(R, 'hob', notes), fridge: is(R, 'fridge', notes),
-      appliance: K.items.some(i => i.t === 'oven' || i.t === 'micro') });
-    const P_ = (name, a, b, box, o = {}) => part({ g: K.g, K: K.id, name, mat: 'p18', a, b, edge: 0, box, layer: 'carcasses', ...o });
-    P_('Side', R.depth, H, [u0, ui0, v0, v1, n0, n1], { edge: H });
-    P_('Side', R.depth, H, [ui1, u1, v0, v1, n0, n1], { edge: H });
-    P_('Bottom panel', iw, R.depth, [ui0, ui1, v0, v0 + t, n0, n1], { edge: iw });
-    if (!K.base) P_('Top panel', iw, R.depth, [ui0, ui1, v1 - t, v1, n0, n1], { edge: iw });
-    else if (K.sink) {          // on edge, clear of the bowl
-      P_('Top rail 100 (on edge)', iw, R.rail, [ui0, ui1, v1 - R.rail, v1, n1 - t, n1], { edge: iw });
-      P_('Top rail 100 (on edge)', iw, R.rail, [ui0, ui1, v1 - R.rail, v1, n0, n0 + t]);
-    } else if (K.hob) {         // on edge so the hob fits between them, 16 separation panel below
-      P_('Top rail 50 (front, on edge)', iw, 50, [ui0, ui1, v1 - 50, v1, n1 - t, n1], { edge: iw });
-      P_('Top rail 100 (on edge)', iw, R.rail, [ui0, ui1, v1 - R.rail, v1, n0, n0 + t]);
-      part({ g: K.g, K: K.id, name: 'Hob separation panel', mat: 'p16', a: iw, b: R.depth - 2 * t, edge: 0,
-        box: [ui0, ui1, v1 - 50, v1 - 50 + R.t16, n0 + t, n1 - t], layer: 'shelves' });
-    } else {
-      P_('Top rail 100', iw, R.rail, [ui0, ui1, v1 - t, v1, n1 - R.rail, n1], { edge: iw });
-      P_('Top rail 100', iw, R.rail, [ui0, ui1, v1 - t, v1, n0, n0 + R.rail]);
-    }
-    part({ g: K.g, K: K.id, name: 'Back HDF', mat: 'hdf', a: w - 2, b: H - 2, edge: 0, box: [u0 + 1, u1 - 1, v0 + 1, v1 - 1, n0 - R.hdf, n0], layer: 'carcasses' });
-    const shelf = (name, y, a, x0, x1, extra) => P_(name, a, R.depth - R.shelfSetback, [x0, x1, y - t / 2, y + t / 2, n0, n1 - R.shelfSetback], { edge: a, layer: 'shelves', ...extra });
-    // fixed shelves between stacked items (not in base units or the fridge carcass)
-    if (!K.base && !K.fridge) for (const it of K.items.slice(1)) shelf('Fixed shelf', it.v0, iw, ui0, ui1);
-    // fridge: fixed shelf on top of the niche when the carcass is taller than the niche
-    const nz = K.items.map(i => niche(R, i.note)).find(Boolean);
-    if (K.fridge && nz && H - 2 * t > nz[0][1]) {
-      const y = v0 + t + Math.round((nz[0][0] + nz[0][1]) / 2) + t / 2;
-      shelf('Fixed shelf', y, iw, ui0, ui1);
-      W('info', `K${K.id} (G${K.g} col ${K.c}): fixed shelf added at ${y - t / 2}–${y + t / 2} so the fridge niche is ${y - t / 2 - v0 - t} (carcass interior ${H - 2 * t})`);
-    }
-    // adjustable shelves in door modules, clear of the hinges (not in the sink or fridge carcass)
-    const hz = fronts.filter(F => F.K === K).flatMap(F => F.hinges);
-    if (!K.sink && !K.fridge) for (const it of K.items) {
-      if (!it.F || it.F.kind !== 'door') continue;
-      const lo = it.v0 === v0 ? v0 + t : it.v0 + t / 2, hi = it.v1 === v1 ? v1 - t : it.v1 - t / 2;
-      const k = R.shelves.find(([lim]) => it.h <= lim)[1];
-      for (let j = 1; j <= k; j++) {
-        let y = Math.round(lo + (hi - lo) * j / (k + 1));
-        for (const hv of hz) if (Math.abs(y - hv) < R.hingeZone) y = hv + (y >= hv ? 1 : -1) * R.hingeZone;
-        if (y - t / 2 < lo + 40 || y + t / 2 > hi - 40) continue;
-        shelf('Adjustable shelf', y, iw - 2, ui0 + 1, ui1 - 1, { adjustable: true });
-      }
-    }
-    // drawer boxes: chipboard 16 bottom and back (TANDEMBOX: bottom LW − 75 × NL − 10, back LW − 87)
-    for (const it of K.items) {
-      const d = it.F && it.F.drawer; if (!d) continue;
-      const box = (b0, back, tag) => {
-        const z0 = n1 - 12 - R.nl, D = (name, a, b, bx) => part({ g: K.g, K: K.id, name, mat: 'p16', a, b, edge: 0, box: bx, layer: 'drawers', item: it.idx, inner: tag === 'inner' });
-        D('Drawer bottom', iw - 75, R.nl - 10, [ui0 + 37.5, ui1 - 37.5, b0, b0 + R.t16, z0, z0 + R.nl - 10]);
-        D(`Drawer back ${tag}`, iw - 87, back, [ui0 + 43.5, ui1 - 43.5, b0 + R.t16, b0 + R.t16 + back, z0, z0 + R.t16]);
-      };
-      box(d.b0, R.drawerBack[d.type], d.type);
-      if (d.inner) box(d.inner.b0, R.drawerBack.inner, 'inner');
-    }
-    K.legs = K.floor ? [[u0 + 45, n0 + 45], [u1 - 45, n0 + 45], [u0 + 45, n1 - 100], [u1 - 45, n1 - 100]] : [];
-    if (nz) K.niche = nz;
-  }
-
-  // frames, back strips, plinth, worktops, island back panel
-  const hasK = (G, c, v0, v1) => G.items.some(x => x.K && x.c <= c && c < x.c + x.s && x.v0 < v1 && x.v1 > v0);
-  for (const G of groups.values()) {
-    const g = G.g, wt = G.info.worktop || R.worktop, tops = [];
-    for (const it of G.items) {
-      const { u0, u1, v0, v1 } = it, w = u1 - u0, h = v1 - v0, label = `G${g} col ${it.c}${it.s > 1 ? '–' + (it.c + it.s - 1) : ''}`;
-      if (it.t === 'frame') {
-        const onEdge = Math.min(w, h) <= t, len = Math.max(w, h), horiz = w > h;
-        if (onEdge) part({ g, name: `${horiz ? 'Horizontal frame' : 'Frame'} 18 on edge (${R.frameDepth} deep)`, mat: 'frame', a: R.frameDepth, b: len, edge: 0, box: [u0, u1, v0, v1, nf - R.frameDepth, nf], layer: 'frames', where: label });
-        else part({ g, name: `Filler ${w}, installed flat`, mat: 'frame', a: w, b: h, edge: 0, box: [u0, u1, v0, v1, n1, nf], layer: 'frames', where: label });
-        // back strip (chipboard 18, same length): keeps carcass spacing at the back
-        const covered = carcasses.some(K => K.g === g && K.u1 > K.items[0].u1 && u0 >= K.items[0].u1 && u1 <= K.u1 && v0 < K.v1 && v1 > K.v0);
-        if (covered) continue;
-        if (onEdge) part({ g, name: 'Back strip 100', mat: 'p18', a: R.frameDepth, b: len, edge: 0, box: [u0, u1, v0, v1, n0, n0 + R.frameDepth], layer: 'carcasses', where: label });
-        else if (hasK(G, it.c - 1, v0, v1) && hasK(G, it.c + it.s, v0, v1)) part({ g, name: 'Back strip, flat', mat: 'p18', a: w, b: h, edge: 0, box: [u0, u1, v0, v1, n0, n0 + t], layer: 'carcasses', where: label });
-      } else if (it.t === 'plinth') {
-        const pf = nf - R.plinthSetback;
-        part({ g, name: 'Plinth', mat: 'plinth', a: h, b: w, edge: 0, box: [u0, u1, v0, v1, pf - R.plinthT, pf], layer: 'frames', where: label });
-      } else if (it.t === 'worktop') {
-        if (is(R, 'reference', it.note)) continue;                     // drawn in another group
-        if (h <= 60) tops.push(it);
-        else if (v0 === 0) part({ g, name: 'Waterfall end', mat: 'worktop', a: h, b: wt[1] - wt[0], edge: 0, box: [u0, u1, v0, v1, wt[0], wt[1]], layer: 'worktops', where: label, waterfall: true });
-        else part({ g, name: 'Wall panel', mat: 'wallpanel', a: w, b: h, edge: 0, box: [u0, u1, v0, v1, 0, R.wallPanelT], layer: 'worktops', where: label });
-      }
-    }
-    for (const it of tops) {   // a worktop ends at its last support (carcass incl. a wider corner carcass, frame, waterfall)
-      const sup = G.items.filter(x => x !== it && x.v1 <= it.v0 && (x.K || x.t === 'frame' || (x.t === 'worktop' && x.v0 === 0) || is(R, 'dishwasher', x.note)) && x.u0 < it.u1 && x.u1 > it.u0);
-      const a = Math.max(it.u0, Math.min(...sup.map(x => x.u0))), b = Math.min(it.u1, Math.max(...sup.map(x => x.K ? Math.max(x.u1, x.K.u1) : x.u1)));
-      if (!sup.length) { W('warn', `G${g}: worktop col ${it.c} has nothing under it`); continue; }
-      if (b < it.u1 || a > it.u0) W('info', `G${g}: worktop ends at its last support: ${a}–${b} (columns span ${it.u0}–${it.u1})`);
-      part({ g, name: 'Worktop', mat: 'worktop', a: b - a, b: wt[1] - wt[0], edge: 0, box: [a, b, it.v0, it.v1, wt[0], wt[1]], layer: 'worktops', where: `G${g}`, top: true });
-      if (b - a > R.board) W('warn', `G${g}: worktop ${b - a} is longer than a ${R.board} board – plan a joint`);
-    }
-    if (G.info.backPanel) {   // smooth panel between the waterfalls, behind the carcass backs
-      const ws = parts.filter(p => p.g === g && p.waterfall), top = tops[0];
-      const a = ws.length ? Math.min(...ws.map(p => p.box[1])) : 0, b = ws.length > 1 ? Math.max(...ws.map(p => p.box[0])) : G.width;
-      if (top) part({ g, name: 'Island back panel', mat: 'panel', a: b - a, b: top.v0, edge: 0, box: [a, b, 0, top.v0, -t, 0], layer: 'frames', where: `G${g}` });
-    }
-  }
-
-  // niche checks: what the design leaves for each appliance vs the "niche H x W x D" in its note
-  for (const G of groups.values()) for (const it of G.items) {
-    const nz = niche(R, it.note); if (!nz) continue;
-    const K = it.K;
-    let have;
-    if (!K) have = [it.v1, it.u1 - it.u0, R.depth];                                       // free-standing niche (dishwasher)
-    else if (K.fridge) { const sh = parts.find(p => p.K === K.id && p.name === 'Fixed shelf'); have = [(sh ? sh.box[2] : K.v1 - t) - K.v0 - t, K.u1 - K.u0 - 2 * t, R.depth]; }
-    else have = [it.h - (it.v0 === K.v0 ? t : t / 2) - (it.v1 === K.v1 ? t : t / 2), K.u1 - K.u0 - 2 * t, R.depth];
-    const bad = ['height', 'width', 'depth'].map((nm, k) => have[k] < nz[k][0] || (nz[k][1] > nz[k][0] && have[k] > nz[k][1]) ? `${nm} ${have[k]} (needs ${nz[k][0]}${nz[k][1] > nz[k][0] ? '–' + nz[k][1] : '+'})` : '').filter(Boolean);
-    it.nicheHave = have;
-    W(bad.length ? 'warn' : 'ok', `G${it.g} col ${it.c} ${FRONTS.includes(it.t) ? it.note.split(',')[0] : it.t}: niche ${have.join(' × ')}${bad.length ? ' – ' + bad.join(', ') : ' fits'}`);
-  }
-
-  // front alignment check (as built)
-  const alignRows = [];
-  for (const G of groups.values()) {
-    const fr = G.items.filter(i => i.F);
-    for (const [ax, a0, a1, b0, b1] of [['height', 'v0', 'v1', 2, 3], ['width', 'u0', 'u1', 0, 1]]) {
-      const lines = [...new Set(fr.flatMap(f => [f[a0], f[a1]]))].sort((a, b) => a - b);
-      for (const Ln of lines) {
-        const up = fr.filter(f => f[a0] === Ln).map(f => r1(f.F.box[b0])), dn = fr.filter(f => f[a1] === Ln).map(f => r1(f.F.box[b1]));
-        const lined = new Set(up).size <= 1 && new Set(dn).size <= 1, joint = up.length && dn.length ? r1(up[0] - dn[0]) : null;
-        const ok = lined && (joint === null || !align || Math.abs(joint - R.gap) < .01);
-        alignRows.push({ g: G.g, ax, line: Ln, n: up.length + dn.length, below: dn.length ? r1(Ln - dn[0]) : '', above: up.length ? r1(up[0] - Ln) : '', joint: joint ?? '', ok });
-        if (align && !ok) W('warn', `G${G.g} ${ax} line ${Ln}: front edges not lined up or joint ${joint} ≠ ${R.gap}`);
-      }
-    }
-  }
-
-  /* ---------- 4. QUANTITIES (what the cost estimate reads) ---------- */
-  const Q = { carcasses: carcasses.length, fronts: fronts.length, handles: fronts.filter(f => f.hd).length };
-  Q.hinges = fronts.reduce((s, f) => s + f.hinges.length, 0);
-  Q.drawersD = fronts.filter(f => f.drawer && f.drawer.type === 'D').length;
-  Q.drawersM = fronts.filter(f => f.drawer && f.drawer.type === 'M').length;
-  Q.innerDrawers = fronts.filter(f => f.drawer && f.drawer.inner).length;
-  Q.binSets = fronts.filter(f => f.drawer && f.drawer.bins).length;
-  Q.dummyFronts = fronts.filter(f => f.kind === 'fixed').length;
-  Q.shelvesAdj = parts.filter(p => p.adjustable).length;
-  Q.shelvesFixed = parts.filter(p => p.name === 'Fixed shelf').length;
-  Q.shelfPins = Q.shelvesAdj * R.pins;
-  Q.legs = carcasses.reduce((s, K) => s + (K.floor ? R.legs : 0), 0);
-  Q.confirmat = carcasses.length * R.confirmat;
-  Q.fridgeGrilles = carcasses.filter(K => K.fridge && K.floor).length;
-  Q.sinks = carcasses.filter(K => K.sink).length;
-  Q.hobs = carcasses.filter(K => K.hob).length;
-  Q.cutouts = Q.sinks + Q.hobs;
-  Q.mitres = parts.filter(p => p.waterfall).length;
-  for (const mat of ['front', 'frame', 'panel', 'p18', 'p16', 'hdf']) {
-    const ps = parts.filter(p => p.mat === mat);
-    Q[mat + '_m2'] = ps.reduce((s, p) => s + p.a * p.b, 0) / 1e6;
-    Q[mat + '_cut'] = ps.reduce((s, p) => s + p.a + p.b, 0) / 1000;     // approx. saw length: A + B per part
-    Q[mat + '_edge'] = ps.reduce((s, p) => s + p.edge, 0) / 1000;      // ABS on visible front edges
-  }
-  Q.plinth_lm = parts.filter(p => p.mat === 'plinth').reduce((s, p) => s + p.b, 0) / 1000;
-  // worktop boards: first-fit decreasing per depth; wall panel strips cut from wider boards
-  const pack = (lens, cap) => { const bins = []; for (const l of [...lens].sort((a, b) => b - a)) { const b = bins.find(x => x + l <= cap); b === undefined ? bins.push(l) : bins[bins.indexOf(b)] += l; } return bins.length; };
-  const wtp = parts.filter(p => p.mat === 'worktop');
-  Q.worktopBoards = {};
-  for (const d of new Set(wtp.map(p => p.b))) Q.worktopBoards[d] = pack(wtp.filter(p => p.b === d).map(p => p.a), R.board);
-  const wp = parts.filter(p => p.mat === 'wallpanel');
-  Q.wallPanelBoards = wp.length ? Math.ceil(pack(wp.map(p => p.a), R.panel[0]) / Math.max(1, Math.floor(R.panel[1] / Math.max(...wp.map(p => p.b))))) : 0;
-
-  return { R, groups, carcasses, fronts, parts, Q, warn, alignRows, n0, n1, nf };
-}
-
-// Same parts, counted: [{mat, name, a, b, qty, m2, edge, cut}] for the cutting list
-function cutList(M) {
-  const m = new Map();
-  for (const p of M.parts) {
-    const k = [p.mat, p.name, p.a, p.b].join('|'), r = m.get(k) || { mat: p.mat, name: p.name, a: p.a, b: p.b, qty: 0, edge: 0 };
-    r.qty++; r.edge += p.edge; m.set(k, r);
-  }
-  return [...m.values()].map(r => ({ ...r, m2: r.a * r.b * r.qty / 1e6, edge: r.edge / 1000, cut: (r.a + r.b) * r.qty / 1000 }));
-}
-
-return { RULES, TYPES, FRONTS, layout, build, cutList, niche };
-})();
-</script>
-<script>
-'use strict';
-/* ---------- tables <-> project (pure) ---------- */
-const SOURCE = JSON.parse(document.getElementById('kitchen-project').textContent);
-const BLANK = { columns: { group: '', width: '' }, components: { group: '', col: '', span: '', type: 'cabinet', height: '', handle: '', gapW: '', gapH: '', note: '' }, notes: { name: '', description: '', details: '' } };
-const KEYS = { columns: ['group', 'width'], components: ['group', 'col', 'span', 'height'], notes: ['name', 'description', 'details'] };
-const isEmpty = (list, r) => KEYS[list].every(k => String(r[k] ?? '').trim() === '');
-const isBad = (list, r) => list !== 'notes' && !isEmpty(list, r) && KEYS[list].some(k => !(Number(r[k]) > 0 || (k === 'width' && Number(r[k]) === 0)));
-
-function toTables(P) {
+// The project itself lives in the JSON block #kitchen-project above.
+// This turns it into the plain shape the UI binds to, so the app never
+// depends on how the data file is written.
+function loadProject(p) {
+  p = p || { columns: {}, components: [] };
+  const columns = [];
+  for (const [g, widths] of Object.entries(p.columns || {})) for (const w of widths) columns.push([Number(g), w]);
   return {
-    settings: { gapMm: 4, alignFronts: true, ...P.settings },
-    columns: Object.entries(P.columns || {}).flatMap(([g, ws]) => ws.map(w => ({ group: +g, width: w }))),
-    components: (P.components || []).map(c => ({ group: c.g, col: c.c, span: c.s, type: c.t, height: c.h, handle: c.hd || '', gapW: c.gw ?? '', gapH: c.gh ?? '', note: c.note || '' })),
-    notes: (P.notes || []).map(([name, description, details]) => ({ name, description, details }))
+    settings: { ...DEFAULT_SETTINGS, ...(p.settings || {}) },
+    notes: (p.notes || []).map(([name, description, details]) => [name ?? '', description ?? '', details ?? '']),
+    columns,
+    components: (p.components || []).map(c => [c.g, c.c, c.s, c.t, c.h, c.hd ?? '', c.gw ?? '', c.gh ?? '', c.note ?? ''])
   };
 }
-function toProject(S, base) {   // base keeps the parts the tables do not edit (groups, rules)
-  const used = list => S[list].filter(r => !isEmpty(list, r) && !isBad(list, r));
-  const columns = {};
-  for (const r of used('columns')) (columns[r.group] = columns[r.group] || []).push(Number(r.width));
-  const out = { settings: { ...S.settings }, ...(base.groups && { groups: base.groups }), ...(base.rules && { rules: base.rules }),
-    notes: S.notes.filter(r => !isEmpty('notes', r)).map(r => [r.name, r.description, r.details]), columns,
-    components: used('components').map(r => { const c = { g: +r.group, c: +r.col, s: +r.span, t: r.type, h: +r.height, hd: r.handle, gw: r.gapW === '' ? '' : +r.gapW, gh: r.gapH === '' ? '' : +r.gapH };
-      if (r.note) c.note = r.note; return c; }) };
-  return out;
-}
-function projectJSON(P) {   // one line per note / column group / component, like the data block
-  const L = (a, f = JSON.stringify) => a.map(x => '  ' + f(x)).join(',\n');
-  return `{\n "settings": ${JSON.stringify(P.settings)},\n` + (P.groups ? ` "groups": {\n${Object.entries(P.groups).map(([k, v]) => `  "${k}": ${JSON.stringify(v)}`).join(',\n')}\n },\n` : '') +
-    (P.rules ? ` "rules": ${JSON.stringify(P.rules)},\n` : '') + ` "notes": [\n${L(P.notes)}\n ],\n "columns": {\n${Object.entries(P.columns).map(([k, v]) => `  "${k}": ${JSON.stringify(v)}`).join(',\n')}\n },\n` +
-    ` "components": [\n${L(P.components)}\n ]\n}`;
-}
-const download = (text, type, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
+const PROJECT = loadProject((() => {
+  const el = document.getElementById('kitchen-project');
+  try { return el ? JSON.parse(el.textContent) : null; }
+  catch (e) { console.error('Project data JSON is invalid:', e); return null; }
+})());
 
-/* ---------- SVG elevation (pure: model -> markup) ---------- */
-const COL = { filler: ['#cbd5e1', '#64748b'], worktop: ['#f3c48b', '#a86c32'], frame: ['#bfdbfe', '#1e293b'], plinth: ['#94a3b8', '#1e293b'],
-  module: ['#e2e8f0', '#94a3b8'], front: ['#bfdbfe', '#1e293b'], panel: ['#dbeafe', '#64748b'], handle: ['#d97706', '#78350f'], appliance: ['#1c1f24', '#000'] };
-const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-function renderSVG(M) {
-  const groups = [...M.groups.values()].filter(G => G.width > 0), GAP = 140, PAD = 40, TOP = 90;
-  if (!groups.length) return '';
-  const off = new Map(); let X = 0;
-  for (const G of groups) { off.set(G.g, X); X += G.width + GAP; }
-  const H = Math.max(1, ...groups.flatMap(G => G.items.map(i => i.v1)));
-  const rect = (x, v, w, h, [f, s], extra = '') => `<rect x="${x}" y="${H - v - h}" width="${w}" height="${h}" fill="${f}" stroke="${s}" stroke-width="2"${extra}/>`;
-  const out = [];
-  for (const G of groups) {
-    const ox = off.get(G.g);
-    out.push(`<rect x="${ox}" y="0" width="${G.width}" height="${H}" fill="#f1f5f9"/>`,
-      `<text x="${ox}" y="${-TOP / 2}" font-size="64" fill="#334155">G${G.g}${G.info.name ? ' · ' + esc(G.info.name) : ''} · ${G.width} mm</text>`);
-    for (const it of G.items) {
-      const x = ox + it.u0, w = it.u1 - it.u0, F = it.F;
-      let tip = `G${G.g} col ${it.c}${it.s > 1 ? '–' + (it.c + it.s - 1) : ''} · ${it.t} ${w} × ${it.h}`, g = '';
-      if (F) {
-        tip += ` · front ${F.w} × ${F.h} (gaps ${it.gw} / ${it.gh})` + (F.hinges.length ? ` · ${F.hinges.length} hinges` : '') + (F.drawer ? ` · drawer ${F.drawer.type}` : '');
-        const [a, b, c, d] = F.box, fx = ox + a, fw = b - a, fh = d - c, r = Math.min(50, fw / 5, fh / 5);
-        g = rect(x, it.v0, w, it.h, COL.module) + rect(fx, c, fw, fh, COL.front) + (fw > 2 * r && fh > 2 * r ? rect(fx + r, c + r, fw - 2 * r, fh - 2 * r, COL.panel) : '');
-        const hs = { T: [fx + fw / 2 - 40, d - 36, 80, 16], B: [fx + fw / 2 - 40, c + 20, 80, 16], L: [fx + 20, c + fh / 2 - 50, 16, 100], R: [fx + fw - 36, c + fh / 2 - 50, 16, 100] }[it.hd];
-        if (hs) g += rect(hs[0], hs[1], hs[2], hs[3], COL.handle);
-      } else if (it.t === 'oven' || it.t === 'micro') {
-        const ov = it.t === 'oven', y = H - it.v1;
-        g = rect(x, it.v0, w, it.h, COL.appliance, ' rx="4"') +
-          (ov ? `<rect x="${x + 6}" y="${y + 6}" width="${w - 12}" height="${Math.min(90, it.h * .16)}" fill="#0d0f12"/><rect x="${x + w * .1}" y="${y + it.h * .24}" width="${w * .8}" height="16" rx="8" fill="#c4c9cf"/><rect x="${x + 70}" y="${y + it.h * .34}" width="${w - 140}" height="${it.h * .55}" rx="10" fill="#2b313a"/>`
-              : `<rect x="${x + 40}" y="${y + 45}" width="${w * .62}" height="${it.h - 90}" rx="8" fill="#2b313a"/><rect x="${x + w * .78}" y="${y + 40}" width="${w * .16}" height="34" rx="3" fill="#06080a"/>`);
-        if (it.nicheHave) tip += ` · niche ${it.nicheHave.join(' × ')}`;
-      } else g = rect(x, it.v0, w, it.h, COL[it.t] || COL.filler);
-      if (it.note) tip += ' — ' + it.note;
-      out.push(`<g class="it" data-tip="${esc(tip)}">${g}</g>`);
-    }
+/* ===================================================================
+   SECTION 2 — GENERIC UTILITIES
+   CSV read/write, number parsing, file download. No kitchen-specific
+   knowledge here - safe to reuse in any other project.
+   =================================================================== */
+
+// Generic helpers with no knowledge of kitchens, layouts, or Alpine.
+// Kept separate so they're easy to test or reuse on their own.
+
+function isRowEmpty(...vals) {
+  return vals.every(v => String(v ?? '').trim() === '');
+}
+
+function escapeAttr(v) {
+  return String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function toNum(v, isInt) {
+  const s = String(v ?? '').trim();
+  if (s === '') return NaN;
+  return isInt ? parseInt(s, 10) : parseFloat(s);
+}
+
+function downloadBlob(content, mimeType, filename) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function toCSV(rows) {
+  return rows.map(r => r.map(val => `"${String(val ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  for (let i = 0; i < normalized.length; i++) {
+    const ch = normalized[i];
+    if (inQuotes) {
+      if (ch === '"') { if (normalized[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; } }
+      else field += ch;
+    } else if (ch === '"') inQuotes = true;
+    else if (ch === ',') { row.push(field); field = ''; }
+    else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
+    else field += ch;
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-PAD} ${-TOP - PAD} ${X - GAP + 2 * PAD} ${H + TOP + 2 * PAD}" role="img" aria-label="Kitchen elevation">${out.join('')}</svg>`;
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(cell => String(cell).trim() !== ''));
 }
 
-/* ---------- UI (Alpine): page state and actions only ---------- */
-document.addEventListener('alpine:init', () => Alpine.data('designApp', () => ({
-  settings: {}, columns: [], components: [], notes: [], status: '', hover: '', tipText: '', tipX: 0, tipY: 0,
-  out: { svg: '', warn: [], bad: {} }, id: 1,
-  init() {
-    this.load(SOURCE);
-    for (const list of Object.keys(BLANK)) this.$watch(list, () => this.tidy(list));
-    Alpine.effect(() => this.compute());
-  },
-  load(P) { const T = toTables(P); this.settings = T.settings; for (const k of Object.keys(BLANK)) this[k] = T[k].map(r => ({ id: this.id++, ...r })); for (const k of Object.keys(BLANK)) this.tidy(k); },
-  tidy(list) {   // always exactly one empty row at the end
-    const a = this[list], e = r => isEmpty(list, r);
-    if (!a.length || !e(a[a.length - 1])) a.push({ id: this.id++, ...BLANK[list] });
-    while (a.length > 1 && e(a[a.length - 1]) && e(a[a.length - 2])) a.pop();
-  },
-  project() { return toProject({ settings: this.settings, columns: this.columns, components: this.components, notes: this.notes }, SOURCE); },
-  compute() {
-    const P = this.project(), M = KM.build(P), rows = this.components.map((r, i) => i).filter(i => !isEmpty('components', this.components[i]) && !isBad('components', this.components[i]));
-    const bad = {}; for (const w of M.warn) if (w.idx !== undefined) bad[rows[w.idx]] = true;
-    this.out = { svg: renderSVG(M), warn: M.warn, bad };
-  },
-  rowClass(list, i) { const r = this[list][i]; return isEmpty(list, r) ? 'empty' : isBad(list, r) || (list === 'components' && this.out.bad[i]) ? 'bad' : ''; },
-  insert(list, i) { this[list].splice(i + 1, 0, { id: this.id++, ...(list === 'notes' ? BLANK.notes : { ...this[list][i], note: '' }) }); },
-  tip(e) {
-    const g = e.target.closest('.it'); this.tipText = g ? g.dataset.tip : '';
-    if (g) { this.hover = this.tipText; this.tipX = e.clientX + 14; this.tipY = e.clientY + 16; }
-  },
-  say(s) { this.status = s; clearTimeout(this._t); this._t = setTimeout(() => this.status = '', 3000); },
-  exportJSON() { download(projectJSON(this.project()), 'application/json', 'kitchen-project.json'); this.say('Project exported.'); },
-  copyJSON() { navigator.clipboard.writeText(projectJSON(this.project())).then(() => this.say('Project JSON copied – paste it into the data blocks.'), () => this.say('Copy failed.')); },
-  importJSON(e) {
-    const f = e.target.files[0]; if (!f) return;
-    f.text().then(t => { this.load(JSON.parse(t)); this.say(`Imported ${f.name}.`); }).catch(err => this.say('Import failed: ' + err.message)).finally(() => e.target.value = '');
-  },
-  exportSVG() { download('<?xml version="1.0" encoding="UTF-8"?>\n' + this.out.svg, 'image/svg+xml', 'kitchen-layout.svg'); },
-  reload() { if (confirm('Replace the tables with the project data in this file?')) { this.load(SOURCE); this.say('Project data reloaded.'); } }
-})));
+/* ===================================================================
+   SECTION 3 — LAYOUT ENGINE (pure geometry)
+   Figures out where each component sits: x, y, width, height. Knows
+   nothing about colors or SVG markup - that is Section 4.
+   =================================================================== */
+
+// LayoutEngine turns "groups + columns + components" into positioned boxes
+// (x, y, width, height for each component). It knows nothing about how
+// those boxes get drawn - that's the SVG renderer's job. Splitting the two
+// apart is what used to make the old KitchenSVGBuilder class hard to follow.
+
+// Where a new component can start, given the ranges already stacked in its
+// column(s): the top of the highest contiguous stack starting from 0.
+function getContiguousTop(ranges) {
+  const sorted = [...ranges].sort((a, b) => a[0] - b[0]);
+  let currY = 0;
+  for (const [start, end] of sorted) {
+    if (start <= currY) { if (end > currY) currY = end; } else break;
+  }
+  return currY;
+}
+
+function rangesOverlap(yStart, yEnd, ranges) {
+  return ranges.some(([start, end]) => Math.max(yStart, start) < Math.min(yEnd, end));
+}
+
+class LayoutEngine {
+  constructor(options = {}) {
+    this.scale = options.scale ?? CONFIG.scale;
+    this.groupGap = options.groupGap ?? CONFIG.groupGap;
+    this.defaultGapMm = options.gapMm ?? CONFIG.gapMm;
+
+    this.groups = new Map();         // groupId -> { colWidths, colX }
+    this.rawComponents = [];
+  }
+
+  setGroupColumns(groupId, widthsInMm) {
+    const colWidths = widthsInMm.map(w => w * this.scale);
+    const colX = [];
+    let x = 0;
+    for (const w of colWidths) { colX.push(x); x += w; }
+    this.groups.set(groupId, { colWidths, colX });
+  }
+
+  addComponent(groupNum, colNum, colSpan, type, heightMm, handlePos = null, gapWMm = null, gapHMm = null, note = '') {
+    this.rawComponents.push({ groupNum, colNum, colSpan, type, heightMm, handlePos, gapWMm, gapHMm, note });
+  }
+
+  // Places every component, left to right by group, bottom to top within a
+  // column. Returns everything the SVG renderer needs.
+  calculate() {
+    const warnings = [];
+    const components = [];
+
+    // occupied[groupId][colIndex] = list of [yStart, yEnd] ranges already filled
+    const occupied = new Map();
+    for (const [groupId, group] of this.groups) occupied.set(groupId, group.colWidths.map(() => []));
+
+    const groupXOffsets = new Map();
+    let cursor = 0;
+    for (const [groupId, group] of this.groups) {
+      const width = group.colWidths.reduce((a, b) => a + b, 0);
+      groupXOffsets.set(groupId, width > 0 ? cursor : 0);
+      if (width > 0) cursor += width + this.groupGap;
+    }
+
+    for (const comp of this.rawComponents) {
+      const group = this.groups.get(comp.groupNum);
+      if (!group) {
+        warnings.push(`Component "${comp.type}" references unknown group ${comp.groupNum}. Skipped.`);
+        continue;
+      }
+      const ranges = occupied.get(comp.groupNum);
+      const colIndex = comp.colNum - 1;
+      const colSpan = comp.colSpan;
+      const height = comp.heightMm * this.scale;
+
+      if (colIndex < 0 || colSpan < 1) {
+        warnings.push(`Component "${comp.type}" at Group ${comp.groupNum} has an invalid column/span. Skipped.`);
+        continue;
+      }
+
+      let yFromBottom = 0;
+      for (let i = 0; i < colSpan; i++) {
+        const cIdx = colIndex + i;
+        if (cIdx < ranges.length) yFromBottom = Math.max(yFromBottom, getContiguousTop(ranges[cIdx]));
+      }
+      const yTop = yFromBottom + height;
+
+      let fits = true;
+      for (let i = 0; i < colSpan; i++) {
+        const cIdx = colIndex + i;
+        if (cIdx < ranges.length && rangesOverlap(yFromBottom, yTop, ranges[cIdx])) { fits = false; break; }
+      }
+      if (!fits) {
+        warnings.push(`Component "${comp.type}" (${comp.heightMm}mm) at Group ${comp.groupNum}, Col ${comp.colNum} overlaps an existing component. Skipped.`);
+        continue;
+      }
+
+      for (let i = 0; i < colSpan; i++) {
+        const cIdx = colIndex + i;
+        if (cIdx < ranges.length) ranges[cIdx].push([yFromBottom, yTop]);
+      }
+
+      const localX = group.colX[colIndex];
+      const x = localX + groupXOffsets.get(comp.groupNum);
+
+      let width = 0;
+      for (let i = 0; i < colSpan; i++) {
+        const cIdx = colIndex + i;
+        if (cIdx < group.colWidths.length) width += group.colWidths[cIdx];
+      }
+
+      const widthMm = width / this.scale;
+      const gapWMm = Number.isFinite(comp.gapWMm) ? comp.gapWMm : this.defaultGapMm;
+      const gapHMm = Number.isFinite(comp.gapHMm) ? comp.gapHMm : this.defaultGapMm;
+      const isFront = FRONT_TYPES.includes(comp.type);
+      const frontWidthMm = isFront ? Math.max(0, widthMm - gapWMm) : widthMm;
+      const frontHeightMm = isFront ? Math.max(0, comp.heightMm - gapHMm) : comp.heightMm;
+
+      components.push({
+        groupNum: comp.groupNum, colNum: comp.colNum, colIndex, colSpan, type: comp.type,
+        x, yFromBottom, width, height, heightMm: comp.heightMm, widthMm, gapWMm, gapHMm, isFront,
+        frontWidthMm, frontHeightMm, handlePos: comp.handlePos,
+        note: comp.note || ''
+      });
+    }
+
+    // Overall canvas size: widest total across groups, tallest column anywhere.
+    const groupWidths = new Map();
+    let totalWidth = 0;
+    let activeGroupsCount = 0;
+    for (const [groupId, group] of this.groups) {
+      const w = group.colWidths.reduce((a, b) => a + b, 0);
+      groupWidths.set(groupId, w);
+      totalWidth += w;
+      if (w > 0) activeGroupsCount++;
+    }
+    if (activeGroupsCount > 1) totalWidth += this.groupGap * (activeGroupsCount - 1);
+
+    let totalHeight = 0;
+    for (const [, ranges] of occupied) {
+      for (const col of ranges) {
+        for (const [, end] of col) totalHeight = Math.max(totalHeight, end);
+      }
+    }
+
+    return {
+      components,
+      groupWidths,
+      groupXOffsets,
+      totalWidth,
+      totalHeight,
+      isEmpty: totalWidth <= 0 || totalHeight <= 0,
+      warnings
+    };
+  }
+}
+
+/* ===================================================================
+   SECTION 4 — SVG RENDERER
+   Turns positioned components (from Section 3) into SVG markup.
+   Only this section touches CONFIG.colors or writes <rect>/<g> tags.
+   =================================================================== */
+
+// Everything here is a pure function: (positioned component) -> SVG string.
+// No state, no layout math - that all happened in the layout engine already.
+
+function renderSimpleRect(c, svgY, colorKey) {
+  const { fill, stroke } = SIMPLE_RECT_TYPES[colorKey];
+  const { [fill]: fillColor, [stroke]: strokeColor } = CONFIG.colors;
+  return `<rect fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" x="${c.x}" y="${svgY}" width="${c.width}" height="${c.height}"/>`;
+}
+
+function renderFront(c, svgY) {
+  const ft = CONFIG.frameThickness;
+  const { frontOuter, frontOuterStroke, frontInner, frontInnerStroke } = CONFIG.colors;
+  const outer = `<rect fill="${frontOuter}" stroke="${frontOuterStroke}" stroke-width="2" x="${c.x}" y="${svgY}" width="${c.width}" height="${c.height}"/>`;
+  if (c.width <= ft * 2 || c.height <= ft * 2) return outer;
+  const inner = `<rect fill="${frontInner}" stroke="${frontInnerStroke}" stroke-width="2" x="${c.x + ft}" y="${svgY + ft}" width="${c.width - ft * 2}" height="${c.height - ft * 2}"/>`;
+  return outer + inner;
+}
+
+// Appliance face = the component's own rectangle from the input table.
+// The type only decides what the face looks like, never its size.
+function applianceFace(c, svgY) {
+  return { x: c.x, y: svgY, w: c.width, h: c.height, slot: '' };
+}
+
+// Built-in oven look: black glass, top control strip with a central
+// display and two knobs, full-width bar handle, tinted glass door.
+function renderOven(c, svgY) {
+  const k = CONFIG.colors;
+  const { x, y, w, h, slot } = applianceFace(c, svgY);
+  const panelH = Math.min(95, h * 0.17);
+  const knobR = Math.min(17, panelH * 0.25);
+  const handleY = y + panelH + 28;
+  return `${slot}
+    <rect fill="${k.glassBlack}" stroke="${k.applianceEdge}" stroke-width="2" x="${x}" y="${y}" width="${w}" height="${h}" rx="4"/>
+    <rect fill="${k.panelBlack}" x="${x + 4}" y="${y + 4}" width="${w - 8}" height="${panelH - 8}" rx="2"/>
+    <circle cx="${x + w * 0.16}" cy="${y + panelH / 2}" r="${knobR}" fill="${k.knobMetal}" stroke="${k.applianceEdge}" stroke-width="1.5"/>
+    <circle cx="${x + w * 0.84}" cy="${y + panelH / 2}" r="${knobR}" fill="${k.knobMetal}" stroke="${k.applianceEdge}" stroke-width="1.5"/>
+    <rect fill="${k.display}" x="${x + w / 2 - 70}" y="${y + panelH / 2 - 14}" width="140" height="28" rx="3"/>
+    <text x="${x + w / 2}" y="${y + panelH / 2 + 7}" fill="${k.displayText}" font-family="monospace" font-size="20" text-anchor="middle">12:00</text>
+    <rect fill="${k.handleMetal}" stroke="${k.applianceEdge}" stroke-width="1" x="${x + w * 0.1}" y="${handleY}" width="${w * 0.8}" height="16" rx="8"/>
+    <rect fill="${k.glassWindow}" stroke="${k.applianceEdge}" stroke-width="1" x="${x + 70}" y="${handleY + 50}" width="${w - 140}" height="${Math.max(0, y + h - handleY - 100)}" rx="10"/>
+  `;
+}
+
+// Built-in microwave look: black glass, window on the left, control column on
+// the right with display and touch buttons, push-button door (no handle).
+function renderMicro(c, svgY) {
+  const k = CONFIG.colors;
+  const { x, y, w, h, slot } = applianceFace(c, svgY);
+  const panelW = Math.min(150, w * 0.25);
+  const winX = x + 40, winY = y + 45, winW = w - panelW - 80, winH = h - 90;
+  const px = x + w - panelW;
+  return `${slot}
+    <rect fill="${k.glassBlack}" stroke="${k.applianceEdge}" stroke-width="2" x="${x}" y="${y}" width="${w}" height="${h}" rx="4"/>
+    <rect fill="${k.glassWindow}" stroke="${k.applianceEdge}" stroke-width="1" x="${winX}" y="${winY}" width="${Math.max(0, winW)}" height="${Math.max(0, winH)}" rx="8"/>
+    <line x1="${px}" y1="${y + 10}" x2="${px}" y2="${y + h - 10}" stroke="${k.applianceEdge}" stroke-width="1.5"/>
+    <rect fill="${k.display}" x="${px + 18}" y="${y + 40}" width="${panelW - 36}" height="34" rx="3"/>
+    <text x="${px + panelW / 2}" y="${y + 64}" fill="${k.displayText}" font-family="monospace" font-size="20" text-anchor="middle">0:30</text>
+    ${[0, 1, 2].map(i => `<circle cx="${px + panelW / 2}" cy="${y + 120 + i * 55}" r="12" fill="none" stroke="${k.knobMetal}" stroke-width="2"/>`).join('')}
+    <rect fill="none" stroke="${k.knobMetal}" stroke-width="2" x="${px + panelW / 2 - 28}" y="${y + h - 60}" width="56" height="26" rx="4"/>
+  `;
+}
+
+function renderHandle(c, svgY) {
+  if (!c.handlePos) return '';
+  const { thickness, edgeOffset, minSpan, maxSpan } = CONFIG.handle;
+  const pos = c.handlePos.toUpperCase();
+  const vSpan = Math.min(120, Math.max(minSpan, c.height - 80));
+  const hSpan = Math.min(maxSpan, Math.max(minSpan, c.width - 80));
+  let hx, hy, hw, hh;
+
+  switch (pos) {
+    case 'T': hw = hSpan; hh = thickness; hx = c.x + (c.width - hw) / 2; hy = svgY + edgeOffset; break;
+    case 'B': hw = hSpan; hh = thickness; hx = c.x + (c.width - hw) / 2; hy = svgY + c.height - edgeOffset - thickness; break;
+    case 'L': hw = thickness; hh = vSpan; hx = c.x + edgeOffset; hy = svgY + (c.height - hh) / 2; break;
+    case 'R':
+    default: hw = thickness; hh = vSpan; hx = c.x + c.width - edgeOffset - thickness; hy = svgY + (c.height - hh) / 2; break;
+  }
+
+  return `<rect fill="${CONFIG.colors.handle}" stroke="${CONFIG.colors.handleStroke}" stroke-width="1.5" x="${hx}" y="${hy}" width="${hw}" height="${hh}"/>`;
+}
+
+// Single dispatch table instead of a big switch statement. Adding a new
+// component type later just means adding one entry here.
+const COMPONENT_RENDERERS = {
+  filler: (c, svgY) => renderSimpleRect(c, svgY, 'filler'),
+  worktop: (c, svgY) => renderSimpleRect(c, svgY, 'worktop'),
+  frame: (c, svgY) => renderSimpleRect(c, svgY, 'frame'),
+  plinth: (c, svgY) => renderSimpleRect(c, svgY, 'plinth'),
+  cabinet: (c, svgY) => renderFront(c, svgY) + renderHandle(c, svgY),
+  drawer: (c, svgY) => renderFront(c, svgY) + renderHandle(c, svgY),
+  oven: renderOven,
+  micro: renderMicro
+};
+
+function renderComponent(c, totalHeight, warnings) {
+  const svgY = totalHeight - c.yFromBottom - c.height;
+  const draw = COMPONENT_RENDERERS[c.type];
+  if (!draw) {
+    warnings.push(`Unknown component type "${c.type}" - not rendered.`);
+    return '';
+  }
+  const content = draw(c, svgY);
+  return `<g class="component-group" data-w="${c.widthMm}" data-h="${c.heightMm}" data-fw="${c.frontWidthMm}" data-fh="${c.frontHeightMm}" data-gap-w="${c.gapWMm}" data-gap-h="${c.gapHMm}" data-type="${c.type}" data-note="${escapeAttr(c.note)}">${content}</g>`;
+}
+
+// layout: the object returned by LayoutEngine.calculate()
+function renderSVG(layout) {
+  if (layout.isEmpty) return '';
+
+  const vbMargin = CONFIG.viewBoxMargin;
+  const viewBox = `-${vbMargin} -${vbMargin} ${layout.totalWidth + vbMargin * 2} ${layout.totalHeight + vbMargin * 2}`;
+
+  const backgroundRects = [...layout.groupWidths.entries()]
+    .map(([groupId, width]) => `<rect fill="${CONFIG.colors.canvasBg}" x="${layout.groupXOffsets.get(groupId)}" y="0" width="${width}" height="${layout.totalHeight}"/>`)
+    .join('');
+
+  const componentShapes = layout.components
+    .map(c => renderComponent(c, layout.totalHeight, layout.warnings))
+    .join('');
+
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Kitchen elevation layout diagram">
+      ${backgroundRects}
+      ${componentShapes}
+    </svg>`;
+}
+
+/* ===================================================================
+   SECTION 5 — COMPUTE LAYOUT (glue)
+   Validates the raw table rows, then runs Sections 3 -> 4 -> 5 and
+   packages the result for the UI. This is the one function Section 7
+   calls whenever the input tables change.
+   =================================================================== */
+
+// The one function the UI calls whenever the input tables change.
+// columnRows / componentRows are the raw {group, width, ...} objects bound
+// to the Alpine tables - this function is what turns them into a diagram.
+function computeLayout(columnRows, componentRows, gapMm) {
+  const warnings = [];
+  const colFlags = columnRows.map(() => null);
+  const compFlags = componentRows.map(() => null);
+  const groupWidths = new Map();
+
+  columnRows.forEach((row, idx) => {
+    if (isRowEmpty(row.group, row.width)) { colFlags[idx] = 'empty'; return; }
+    const group = toNum(row.group, true);
+    const width = toNum(row.width, false);
+    if (!Number.isFinite(group) || group < 1 || !Number.isFinite(width) || width < 0) {
+      colFlags[idx] = 'invalid';
+      warnings.push(`Groups & Columns row ${idx + 1}: Group must be ≥1 and Width ≥0.`);
+      return;
+    }
+    if (!groupWidths.has(group)) groupWidths.set(group, []);
+    groupWidths.get(group).push(width);
+  });
+
+  const comps = [];
+  componentRows.forEach((row, idx) => {
+    if (isRowEmpty(row.group, row.col, row.span, row.height)) { compFlags[idx] = 'empty'; return; }
+    const group = toNum(row.group, true);
+    const col = toNum(row.col, true);
+    const span = toNum(row.span, true);
+    const height = toNum(row.height, false);
+    const type = row.type;
+    const handle = row.handle || null;
+    const gapWRaw = String(row.gapW ?? '').trim();
+    const gapHRaw = String(row.gapH ?? '').trim();
+    const gapW = gapWRaw === '' ? null : toNum(row.gapW, false);
+    const gapH = gapHRaw === '' ? null : toNum(row.gapH, false);
+    if (!Number.isFinite(group) || group < 1 || !Number.isFinite(col) || col < 1 ||
+        !Number.isFinite(span) || span < 1 || !Number.isFinite(height) || height < 0 ||
+        (gapWRaw !== '' && (!Number.isFinite(gapW) || gapW < 0)) ||
+        (gapHRaw !== '' && (!Number.isFinite(gapH) || gapH < 0))) {
+      compFlags[idx] = 'invalid';
+      warnings.push(`Components row ${idx + 1}: Group/Col/Span ≥1, Height/Gap W/Gap H ≥0 required.`);
+      return;
+    }
+    comps.push({ groupNum: group, colNum: col, colSpan: span, type, heightMm: height, handlePos: handle, gapWMm: gapW, gapHMm: gapH, note: String(row.note ?? '').trim() });
+  });
+
+  const engine = new LayoutEngine({ scale: CONFIG.scale, gapMm });
+  for (const [g, widths] of groupWidths) engine.setGroupColumns(g, widths);
+  for (const c of comps) engine.addComponent(c.groupNum, c.colNum, c.colSpan, c.type, c.heightMm, c.handlePos, c.gapWMm, c.gapHMm, c.note);
+
+  const layout = engine.calculate();
+  const svg = renderSVG(layout);
+  warnings.push(...layout.warnings);
+
+  return { svg, isEmpty: layout.isEmpty, warnings, colFlags, compFlags };
+}
+
+/* ===================================================================
+   SECTION 6 — UI / EVENTS (Alpine component)
+   All page state (table rows, status banner, tooltip) and user
+   actions (import/export, add/remove rows, hover tooltip). This is
+   the only section that touches the DOM or Alpine directly.
+   =================================================================== */
+
+// Alpine component: all page state (table rows, status banner, tooltip) and
+// user actions (import/export, add/remove rows). Delegates the actual
+// diagram math to computeLayout().
+
+document.addEventListener('alpine:init', () => {
+  Alpine.data('kitchenApp', () => ({
+    columns: [],
+    components: [],
+    notes: [],
+    gapMm: DEFAULT_SETTINGS.gapMm,
+    status: { message: '', type: '' },
+    tooltip: { show: false, x: 0, y: 0, text: '' },
+    hoverInfo: 'Hover a component in the diagram to see its dimensions.',
+    nextId: 1,
+    CONFIG,
+    COMPONENT_TYPES,
+    HANDLE_POSITIONS,
+    isRowEmpty,
+    _statusTimer: null,
+
+    init() {
+      this.seed(PROJECT);
+      this.ensureEmptyRows();
+      this.$nextTick(() => {
+        let w = 0;
+        new ResizeObserver(entries => { const nw = Math.round(entries[0].contentRect.width); if (nw !== w) { w = nw; requestAnimationFrame(() => this.growNotes()); } })
+          .observe(this.$refs.notesTbody.closest('table'));
+      });
+      this.$watch('notes', () => this.$nextTick(() => this.growNotes()));
+
+      this.$watch('columns', () => {
+        const last = this.columns[this.columns.length - 1];
+        if (last && !isRowEmpty(last.group, last.width)) {
+          this.columns.push(this.newColumnRow());
+        }
+        while (this.columns.length > 1 &&
+               isRowEmpty(this.columns[this.columns.length - 1].group, this.columns[this.columns.length - 1].width) &&
+               isRowEmpty(this.columns[this.columns.length - 2].group, this.columns[this.columns.length - 2].width)) {
+          this.columns.pop();
+        }
+      });
+
+      this.$watch('components', () => {
+        const last = this.components[this.components.length - 1];
+        if (last && !isRowEmpty(last.group, last.col, last.span, last.height)) {
+          this.components.push(this.newComponentRow());
+        }
+        while (this.components.length > 1 &&
+               isRowEmpty(this.components[this.components.length - 1].group, this.components[this.components.length - 1].col, this.components[this.components.length - 1].span, this.components[this.components.length - 1].height) &&
+               isRowEmpty(this.components[this.components.length - 2].group, this.components[this.components.length - 2].col, this.components[this.components.length - 2].span, this.components[this.components.length - 2].height)) {
+          this.components.pop();
+        }
+      });
+
+      this.$watch('notes', () => {
+        const isEmpty = n => isRowEmpty(n.name, n.description, n.details);
+        const last = this.notes[this.notes.length - 1];
+        if (last && !isEmpty(last)) this.notes.push(this.newNoteRow());
+        while (this.notes.length > 1 && isEmpty(this.notes[this.notes.length - 1]) && isEmpty(this.notes[this.notes.length - 2])) {
+          this.notes.pop();
+        }
+      });
+    },
+
+    get build() {
+      return computeLayout(this.columns, this.components, this.gapMm);
+    },
+
+    get bannerType() {
+      if (this.status.type === 'error') return 'error';
+      if (this.build.warnings.length > 0) return 'error';
+      if (this.status.type === 'ok') return 'ok';
+      return '';
+    },
+    get bannerText() {
+      if (this.status.type === 'error') return this.status.message;
+      const w = this.build.warnings;
+      if (w.length > 0) return `${w.length} issue(s) — ${w[0]}${w.length > 1 ? ' …' : ''}`;
+      return this.status.message;
+    },
+
+    newColumnRow(group = '', width = '') { return { id: this.nextId++, group, width }; },
+    newComponentRow(group = '', col = '', span = '', type = 'filler', height = '', handle = '', gapW = '', gapH = '', note = '') {
+      return { id: this.nextId++, group, col, span, type, height, handle, gapW, gapH, note };
+    },
+    newNoteRow(name = '', description = '', details = '') { return { id: this.nextId++, name, description, details }; },
+    autoGrow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; },
+    // re-fit every note row when the table width changes (window resize, column widths, import / reload)
+    growNotes() { this.$refs.notesTbody?.querySelectorAll('textarea').forEach(el => this.autoGrow(el)); },
+    insertNoteRow(idx) {
+      this.notes.splice(idx + 1, 0, this.newNoteRow());
+      this.$nextTick(() => this.$refs.notesTbody.querySelectorAll('tr')[idx + 1]?.querySelector('textarea')?.focus());
+    },
+    removeNoteRow(idx) { this.notes.splice(idx, 1); },
+
+    seed(data) {
+      Object.assign(this, data.settings);
+      this.notes = data.notes.map(([name, description, details]) => this.newNoteRow(name, description, details));
+      this.columns = data.columns.map(([g, w]) => this.newColumnRow(g, w));
+      this.components = data.components.map(([g, c, s, t, h, hp, gw, gh, note]) => this.newComponentRow(g, c, s, t, h, hp, gw, gh, note || ''));
+    },
+
+    ensureEmptyRows() {
+      if (this.columns.length === 0 || !isRowEmpty(this.columns[this.columns.length - 1].group, this.columns[this.columns.length - 1].width)) {
+        this.columns.push(this.newColumnRow());
+      }
+      if (this.components.length === 0 || !isRowEmpty(this.components[this.components.length - 1].group, this.components[this.components.length - 1].col, this.components[this.components.length - 1].span, this.components[this.components.length - 1].height)) {
+        this.components.push(this.newComponentRow());
+      }
+      const lastNote = this.notes[this.notes.length - 1];
+      if (!lastNote || !isRowEmpty(lastNote.name, lastNote.description, lastNote.details)) this.notes.push(this.newNoteRow());
+    },
+
+    insertColumnRow(idx) {
+      const current = this.columns[idx];
+      const cloned = this.newColumnRow(current.group, current.width);
+      this.columns.splice(idx + 1, 0, cloned);
+      this.$nextTick(() => this.$refs.columnsTbody.querySelectorAll('tr')[idx + 1]?.querySelector('input')?.focus());
+    },
+    removeColumnRow(idx) { this.columns.splice(idx, 1); },
+
+    insertComponentRow(idx) {
+      const current = this.components[idx];
+      const cloned = this.newComponentRow(current.group, current.col, current.span, current.type, current.height, current.handle, current.gapW, current.gapH, '');
+      this.components.splice(idx + 1, 0, cloned);
+      this.$nextTick(() => this.$refs.componentsTbody.querySelectorAll('tr')[idx + 1]?.querySelector('input')?.focus());
+    },
+    removeComponentRow(idx) { this.components.splice(idx, 1); },
+
+    resetDefaults() {
+      if (!confirm('Replace the current input tables and notes with the project data? This cannot be undone.')) return;
+      this.seed(PROJECT);
+      this.ensureEmptyRows();
+      this.showStatus('Reloaded project data.', false);
+    },
+
+    showStatus(message, isError) {
+      clearTimeout(this._statusTimer);
+      this.status = { message, type: isError ? 'error' : 'ok' };
+      if (!isError) this._statusTimer = setTimeout(() => { this.status = { message: '', type: '' }; }, 3000);
+    },
+
+    onSvgHover(e) {
+      const group = e.target.closest('.component-group');
+      if (!group) { this.tooltip.show = false; return; }
+      const text = this.describeComponent(group);
+      this.tooltip.text = text;
+      this.tooltip.show = true;
+      // Footnote keeps showing the last-hovered component's dimensions even
+      // after the mouse leaves - handy on touch devices where there's no
+      // hover, and easier to read than a tooltip chasing the cursor.
+      this.hoverInfo = text;
+    },
+    onSvgMove(e) {
+      const group = e.target.closest('.component-group');
+      if (!group) { this.tooltip.show = false; return; }
+      const rect = this.$refs.svgContainer.getBoundingClientRect();
+      this.tooltip.x = e.clientX - rect.left + 15;
+      this.tooltip.y = e.clientY - rect.top - 35;
+    },
+    onSvgLeave() { this.tooltip.show = false; },
+    describeComponent(group) {
+      const base = this.describeDims(group);
+      const note = group.getAttribute('data-note');
+      return note ? `${base} — ${note}` : base;
+    },
+    describeDims(group) {
+      const type = group.getAttribute('data-type');
+      const w = group.getAttribute('data-w');
+      const h = group.getAttribute('data-h');
+      if (FRONT_TYPES.includes(type)) {
+        const fw = group.getAttribute('data-fw');
+        const fh = group.getAttribute('data-fh');
+        const gapW = group.getAttribute('data-gap-w');
+        const gapH = group.getAttribute('data-gap-h');
+        return `${type.toUpperCase()} — Size: ${w}×${h}mm | Front: ${fw}×${fh}mm (Gap W: ${gapW}mm, Gap H: ${gapH}mm)`;
+      }
+      return `${type.toUpperCase()} — W: ${w} × H: ${h}mm`;
+    },
+
+    exportSVG() {
+      const svgEl = this.$refs.svgCanvas.querySelector('svg');
+      if (!svgEl) return;
+      const serializer = new XMLSerializer();
+      const svgString = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' + serializer.serializeToString(svgEl);
+      downloadBlob(svgString, 'image/svg+xml;charset=utf-8', 'kitchen-layout.svg');
+    },
+    exportStateCSV() {
+      const rows = [['RowType', 'Group', 'Col', 'Span', 'Type', 'Value', 'Handle', 'GapW', 'GapH', 'Note']];
+      for (const k of Object.keys(DEFAULT_SETTINGS)) rows.push(['SETTING', '', '', '', k, this[k], '', '', '', '']);
+      // NOTE rows: Type = name, Value = description, Note = details.
+      this.notes.forEach(n => {
+        if (isRowEmpty(n.name, n.description, n.details)) return;
+        rows.push(['NOTE', '', '', '', n.name, n.description, '', '', '', n.details]);
+      });
+      this.columns.forEach(r => {
+        if (isRowEmpty(r.group, r.width)) return;
+        rows.push(['COLUMN', r.group, '', '', '', r.width, '', '', '', '']);
+      });
+      this.components.forEach(r => {
+        if (isRowEmpty(r.group, r.col, r.span, r.height)) return;
+        rows.push(['COMPONENT', r.group, r.col, r.span, r.type, r.height, r.handle, r.gapW, r.gapH, r.note ?? '']);
+      });
+      downloadBlob(toCSV(rows), 'text/csv;charset=utf-8;', 'kitchen-state.csv');
+      this.showStatus('State exported to CSV.', false);
+    },
+
+    triggerImport() {
+      this.$refs.importFile.value = '';
+      this.$refs.importFile.click();
+    },
+    handleImportFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          this.importStateCSV(String(reader.result));
+          this.ensureEmptyRows();
+          this.showStatus(`Imported "${file.name}".`, false);
+        } catch (err) {
+          this.showStatus(`Import failed: ${err.message}`, true);
+        } finally {
+          e.target.value = '';
+        }
+      };
+      reader.onerror = () => { this.showStatus('Could not read the file.', true); e.target.value = ''; };
+      reader.readAsText(file);
+    },
+    importStateCSV(text) {
+      const parsed = parseCSV(text);
+      if (parsed.length === 0) throw new Error('CSV file is empty.');
+
+      let dataRows = parsed;
+      const header = parsed[0].map(h => String(h).trim().toUpperCase());
+      if (header[0] === 'ROWTYPE') dataRows = parsed.slice(1);
+
+      const newColumns = [];
+      const newComponents = [];
+      const newNotes = [];
+      const newSettings = { ...DEFAULT_SETTINGS };
+
+      dataRows.forEach((r, idx) => {
+        const [rowType, group, col, span, type, value, handle, gapW, gapH, note] = r;
+        const rt = String(rowType || '').trim().toUpperCase();
+        if (rt === 'SETTING') {
+          const key = String(type ?? '').trim();
+          const v = parseFloat(value);
+          if (!(key in DEFAULT_SETTINGS) || !Number.isFinite(v)) throw new Error(`Row ${idx + 1}: invalid SETTING "${key}".`);
+          newSettings[key] = v;
+        } else if (rt === 'NOTE') {
+          newNotes.push(this.newNoteRow(String(type ?? ''), String(value ?? ''), String(note ?? '')));
+        } else if (rt === 'COLUMN') {
+          const g = parseInt(group, 10);
+          const w = parseFloat(value);
+          if (!Number.isFinite(g) || !Number.isFinite(w)) throw new Error(`Row ${idx + 1}: invalid COLUMN data.`);
+          newColumns.push(this.newColumnRow(g, w));
+        } else if (rt === 'COMPONENT') {
+          const g = parseInt(group, 10);
+          const c = parseInt(col, 10);
+          const s = parseInt(span, 10);
+          const h = parseFloat(value);
+          const t = String(type || '').trim();
+          const gapWStr = String(gapW ?? '').trim();
+          const gapHStr = String(gapH ?? '').trim();
+          if (!Number.isFinite(g) || !Number.isFinite(c) || !Number.isFinite(s) || !Number.isFinite(h) || !t) {
+            throw new Error(`Row ${idx + 1}: invalid COMPONENT data.`);
+          }
+          newComponents.push(this.newComponentRow(g, c, s, t, h, String(handle || '').trim(), gapWStr, gapHStr, String(note ?? '')));
+        } else if (rt) {
+          throw new Error(`Row ${idx + 1}: unknown RowType "${rowType}" (expected SETTING, NOTE, COLUMN or COMPONENT).`);
+        }
+      });
+
+      Object.assign(this, newSettings);
+      this.columns = newColumns;
+      this.components = newComponents;
+      this.notes = newNotes;
+    }
+  }));
+});
 </script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+
 </body>
 </html>
