@@ -3,1690 +3,834 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kitchen Cost Estimate Jaworze</title>
+<title>Kitchen Cost Estimate</title>
 <style>
-  :root {
-    --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; --text: #f8fafc; --muted: #cbd5e1;
-    --sheet: #ffffff; --head: #f1f5f9; --grid: #d8dee8; --ink: #1e293b; --ink-muted: #64748b;
-    --input: #0000ff; --input-bg: #eef4ff; --sub: #e2e8f0; --total: #fff2cc; --sel: #1d4ed8;
-    --added: #b45309; --link: #1d4ed8;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font-family: Arial, Helvetica, sans-serif; }
-  .app { max-width: 1500px; margin: 0 auto; padding: 16px; }
-  h1 { font-size: 20px; margin: 0 0 4px; color: var(--accent); }
-  .info { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
-  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
-  .btn { background: var(--accent); color: #0f172a; border: 0; border-radius: 6px; padding: 7px 12px; font-weight: bold; cursor: pointer; font-size: 13px; }
-  .btn.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
-  .btn:hover { filter: brightness(1.1); }
-  .btn:disabled { opacity: .5; cursor: wait; }
-  .total-pill { margin-left: auto; background: var(--panel); border: 1px solid #334155; border-radius: 6px; padding: 6px 12px; font-size: 14px; }
-  .total-pill b { color: var(--accent); }
-  .tabs { display: flex; gap: 2px; background: var(--head); border: 1px solid var(--grid); border-bottom: 0; padding: 0 8px; overflow-x: auto; }
-  .tab { padding: 8px 16px; color: var(--ink-muted); cursor: pointer; font-size: 13px; border: 0; background: transparent; border-top: 3px solid transparent; white-space: nowrap; }
-  .tab.active { background: var(--sheet); color: var(--ink); font-weight: bold; border-top-color: #16a34a; }
-  .grid-wrap { background: var(--sheet); border: 1px solid var(--grid); overflow: auto; }
-  table.grid { border-collapse: collapse; font-size: 13px; color: var(--ink); min-width: 100%; }
-  .grid th, .grid td { border: 1px solid var(--grid); padding: 4px 6px; vertical-align: top; }
-  .grid thead th { position: sticky; top: 0; background: var(--ink); color: #fff; font-weight: bold; text-align: left; z-index: 2; }
-  .grid td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .grid td.muted { color: var(--ink-muted); font-size: 12px; }
-  .grid td.src { color: var(--ink-muted); font-size: 12px; min-width: 260px; }
-  .grid td.src.added { color: var(--added); }
-  .grid tr.cat td { background: var(--sub); font-weight: bold; }
-  .grid tr.blk td { background: var(--ink); color: #fff; font-weight: bold; }
-  .grid tr.bh td { background: var(--head); color: var(--ink-muted); }
-  .grid tr.sum td { background: var(--sub); font-weight: bold; }
-  .grid tr.grand td { background: var(--total); font-weight: bold; font-size: 15px; }
-  .grid tr.flash td { animation: flash 1.6s ease-out; }
-  @keyframes flash { from { background: #fde68a; } }
-  .grid input { width: 100%; min-width: 64px; border: 0; background: var(--input-bg); color: var(--input); font: inherit; text-align: right; padding: 2px 4px; }
-  .grid input:focus { outline: 2px solid var(--sel); }
-  .grid input.changed { background: #fde68a; }
-  .calc { cursor: help; border-bottom: 1px dotted var(--ink-muted); }
-  a.ref { color: var(--link); cursor: pointer; text-decoration: underline; white-space: nowrap; }
-  .params { display: flex; flex-wrap: wrap; gap: 16px; padding: 10px; background: var(--sheet); color: var(--ink); border: 1px solid var(--grid); border-bottom: 0; font-size: 13px; align-items: center; }
-  .params label { display: flex; gap: 6px; align-items: center; }
-  .params input { width: 80px; border: 0; background: var(--input-bg); color: var(--input); padding: 3px 5px; text-align: right; font: inherit; }
-  .excl { background: var(--sheet); color: var(--ink-muted); font-size: 12px; padding: 10px 14px; border: 1px solid var(--grid); border-top: 0; }
-  .excl b { color: var(--ink); }
-  .grid td.decide { color: var(--added); }
-  .hidden { display: none; }
-  @media (max-width: 700px) {
-    .total-pill { margin-left: 0; width: 100%; }
-    .grid td.src { min-width: 180px; }
-  }
+:root { --bg: #0f172a; --panel: #1e293b; --line: #334155; --accent: #38bdf8; --text: #f8fafc; --muted: #94a3b8;
+  --sheet: #fff; --head: #f1f5f9; --grid: #d8dee8; --ink: #1e293b; --ink2: #64748b; --input: #1d4ed8; --input-bg: #eef4ff;
+  --ok: #15803d; --warn: #b45309; --err: #dc2626; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); font: 13px system-ui, -apple-system, sans-serif; }
+.app { max-width: 1500px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 4px; color: var(--accent); }
+h3 { font-size: 14px; margin: 0 0 8px; }
+.info { color: var(--muted); margin: 0 0 12px; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.bar .grow { flex: 1; }
+.btn { background: var(--accent); color: var(--bg); border: 0; border-radius: 6px; padding: 7px 12px; font: 600 13px inherit; cursor: pointer; }
+.btn.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.btn.danger { background: transparent; color: #f87171; border: 1px solid #f87171; }
+.btn:hover { filter: brightness(1.1); }
+.pill { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font-size: 14px; }
+.pill b { color: var(--accent); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+.wrap { background: var(--sheet); border: 1px solid var(--grid); overflow: auto; }
+table.grid { border-collapse: collapse; width: 100%; color: var(--ink); }
+.grid th, .grid td { border: 1px solid var(--grid); padding: 3px 6px; text-align: left; vertical-align: top; }
+.grid thead th { position: sticky; top: 0; background: var(--ink); color: #fff; z-index: 1; }
+.grid td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.grid td.m { color: var(--ink2); }
+.grid tr.cat td { background: #e2e8f0; font-weight: 600; }
+.grid tr.sum td { background: #e2e8f0; font-weight: 700; }
+.grid tr.grand td { background: #fff2cc; font-weight: 700; font-size: 15px; }
+.grid input, .grid select, .grid textarea { width: 100%; min-width: 48px; border: 0; background: var(--input-bg); color: var(--input); font: inherit; padding: 2px 4px; }
+.grid textarea { resize: vertical; min-height: 22px; }
+.grid input.changed { background: #fde68a; }
+.grid tr.bad td { background: #fee2e2; }
+.grid tr.empty td input, .grid tr.empty td select { background: transparent; }
+.grid td:last-child { white-space: nowrap; width: 1%; }
+.grid select { min-width: 84px; }
+.x { border: 0; background: none; cursor: pointer; color: var(--ink2); font-size: 15px; padding: 0 4px; }
+.x:hover { color: var(--err); }
+ul.msgs { list-style: none; margin: 0; padding: 0; }
+ul.msgs li { padding: 2px 0 2px 18px; line-height: 1.45; position: relative; color: var(--text); }
+ul.msgs li::before { position: absolute; left: 0; }
+ul.msgs li.ok::before { content: '✓'; color: #4ade80; }
+ul.msgs li.info::before { content: 'i'; color: var(--accent); font-weight: 700; left: 4px; }
+ul.msgs li.warn::before { content: '!'; color: #fbbf24; font-weight: 700; left: 4px; }
+ul.msgs li.error::before { content: '✕'; color: #f87171; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 0; }
+.tab { padding: 8px 14px; color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; cursor: pointer; font: 600 13px inherit; }
+.tab.on { color: var(--text); border-bottom-color: var(--accent); }
+[hidden] { display: none !important; }
+.params { display: flex; flex-wrap: wrap; gap: 18px; padding: 10px; background: var(--sheet); color: var(--ink); border: 1px solid var(--grid); border-bottom: 0; }
+.params input { width: 80px; border: 0; background: var(--input-bg); color: var(--input); padding: 3px 5px; text-align: right; font: inherit; }
+.grid input { text-align: right; }
+.calc { cursor: help; border-bottom: 1px dotted var(--ink2); }
+a.ref { color: var(--input); cursor: pointer; text-decoration: underline; white-space: nowrap; }
+.note { background: var(--sheet); color: var(--ink2); padding: 8px 12px; border: 1px solid var(--grid); border-top: 0; }
+.grid tr.flash td { animation: flash 1.6s ease-out; }
+@keyframes flash { from { background: #fde68a; } }
+dl.sum { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px 16px; margin: 0; }
+dl.sum div { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding: 3px 0; }
+dl.sum dt { color: var(--muted); } dl.sum dd { margin: 0; font-variant-numeric: tabular-nums; }
+#stale { background: #78350f; color: #fef3c7; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; }
 </style>
 </head>
 <body>
 <div class="app">
   <h1 id="title"></h1>
   <p class="info" id="info"></p>
-  <div class="toolbar">
-    <button class="btn" id="btnXlsx">Export XLSX</button>
-    <button class="btn secondary" id="btnReset">Restore data</button>
-    <div class="total-pill">Total gross: <b id="pillTotal"></b></div>
+  <div id="stale" hidden></div>
+  <div class="bar">
+    <button class="btn" id="xlsx">Export XLSX</button>
+    <button class="btn alt" id="reset">Restore prices</button>
+    <span class="grow"></span>
+    <span class="pill" id="checks"></span>
+    <span class="pill">Total gross: <b id="total"></b></span>
   </div>
   <div class="tabs">
-    <button class="tab active" data-tab="estimate">Estimate</button>
+    <button class="tab on" data-tab="estimate">Estimate</button>
     <button class="tab" data-tab="cutting">Cutting list</button>
-    <button class="tab" data-tab="notes">Notes</button>
+    <button class="tab" data-tab="notes">Notes &amp; checks</button>
   </div>
-
   <section id="tab-estimate">
-    <div class="params">
-      <label>Board waste allowance <input type="number" step="0.01" data-param="waste"> </label>
-      <label>Board sheet 2800×2070 [m²] <input type="number" step="0.001" data-param="sheet"></label>
-      <label>Contingency (% of furniture) <input type="number" step="0.01" data-param="reserve"></label>
-    </div>
-    <div class="grid-wrap">
-      <table class="grid">
-        <thead><tr><th>No.</th><th>Item</th><th>Specification</th><th>Qty</th><th>Unit</th><th>Unit price [PLN]</th><th>Value [PLN]</th><th>Price source / notes</th></tr></thead>
-        <tbody id="kBody"></tbody>
-      </table>
-    </div>
-    <div class="excl" id="excl"></div>
+    <div class="params" id="params"></div>
+    <div class="wrap"><table class="grid">
+      <thead><tr><th>No.</th><th>Item</th><th>Specification</th><th>Qty</th><th>Unit</th><th>Unit price [PLN]</th><th>Value [PLN]</th><th>Price source / notes</th></tr></thead>
+      <tbody id="est"></tbody></table></div>
+    <div class="note" id="excl"></div>
   </section>
-
-  <section id="tab-cutting" class="hidden">
-    <div class="grid-wrap">
-      <table class="grid">
-        <thead><tr><th>Element</th><th>A [mm]</th><th>B [mm]</th><th>Qty</th><th>m²</th><th>ABS edging [lm]</th><th>Cutting [lm]</th></tr></thead>
-        <tbody id="rBody"></tbody>
-      </table>
-    </div>
-    <div class="excl">Carcass = column width, depth 550; interior = width − 36; adjustable shelf = interior − 2 × 530; HDF back = carcass − 2; fronts = module − Gap W / Gap H; back strip = 100 × frame length (frames 18); drawer bottom = LW − 75 × 490, back = LW − 87; inner drawer back 84 high. ABS edging on front edges only.</div>
+  <section id="tab-cutting" hidden>
+    <div class="wrap"><table class="grid">
+      <thead><tr><th>Element</th><th>A [mm]</th><th>B [mm]</th><th>Qty</th><th>m²</th><th>ABS edging [lm]</th><th>Cutting [lm]</th></tr></thead>
+      <tbody id="cut"></tbody></table></div>
+    <div class="note">Calculated from the design (same parts as the 3D view). Carcass = column width (or "carcass 800"), depth 550; interior = width − 36;
+      adjustable shelf = interior − 2 × 530; HDF back = carcass − 2; front = module − Gap W / Gap H; back strip 100 × frame length behind every 18 frame;
+      drawer bottom = LW − 75 × 490, back = LW − 87. ABS on visible front edges only. Change sizes in kitchen_design.html.</div>
   </section>
-
-  <section id="tab-notes" class="hidden">
-    <div class="grid-wrap">
-      <table class="grid">
-        <thead><tr><th>No.</th><th>Topic</th><th>Description</th><th>Assumed in the estimate</th><th>To decide</th></tr></thead>
-        <tbody id="uBody"></tbody>
-      </table>
-    </div>
+  <section id="tab-notes" hidden>
+    <div class="panel"><h3>Summary from the design</h3><dl class="sum" id="summary"></dl></div>
+    <div class="panel"><h3>Checks</h3><ul class="msgs" id="warn"></ul></div>
+    <div class="wrap"><table class="grid">
+      <thead><tr><th>No.</th><th>Topic</th><th>Description</th><th>Assumed in the estimate</th><th>To decide</th></tr></thead>
+      <tbody id="notes"></tbody></table></div>
   </section>
 </div>
 
-<!-- ===================================================================
-     COST DATA (JSON) - the only place with values for this project.
-     blocks: panels (mm) derived from kitchen_design.html
-     cats/rows: items; qty = number or formula:
-       {block.m2|edge|cut} = block total from the Cutting list, {q:id} = item qty,
-       {waste}, {sheet} = parameters, ROUNDUP(x,0) = round up
-     notes: Notes tab; refs in an item = note numbers
-     DATA FLOW (propagated by an LLM on request, files never write each other):
-       1. kitchen_design.html  #kitchen-project       SOURCE - edit only here
-       2. kitchen_cost.html    #kitchen-project-copy  = exact copy of 1
-                               #cost-data             rules, blocks / items derived from 1 by the design
-                                                      notes (fronts are calculated live); prices are input
-       3. kichen_view.html     #kitchen-project-copy  = exact copy of 2 (same as 1)
-                               #view-data             scene of this kitchen (room, window, appliances,
-                                                      lights, colours, cameras) - input, edit here
-     The view only draws the project and checks it: overlaps / gaps / parts sticking out, front alignment.
-     The JavaScript in the three files is generic: kitchen data lives only in the LLM-DATA blocks.
-     Data sections are marked  LLM-DATA BEGIN <name> ... LLM-DATA END <name>.
-     After propagating, open kichen_view.html, tab Carcasses: geometry and alignment checks must be OK.
-     =================================================================== -->
-<!-- Copy of the project block from kitchen_design.html, used only when that file
-     cannot be fetched (page opened from disk). -->
+<!-- =====================================================================
+     DATA FLOW (an LLM propagates on request; the files never write each other):
+       1. kitchen_design.html  #kitchen-project       SOURCE
+       2. kitchen_cost.html    #kitchen-project-copy  exact copy of 1  (this file)
+                               #cost-data             purchase items and prices – input, edit here
+       3. kitchen_view.html    #kitchen-project-copy  exact copy of 1; #view-data = scene
+     The cutting list and every quantity with a formula are calculated by the MODEL block
+     (identical in all three files) from the project copy – nothing here is typed by hand.
+     cost-data: params; cats/rows: qty = number or "=formula" over the model quantities
+       (front_m2, frame_m2, panel_m2, p18_m2/_cut/_edge, p16_…, hdf_…, plinth_lm, hinges, drawersD,
+       drawersM, innerDrawers, binSets, handles, legs, shelfPins, confirmat, dummyFronts, fridgeGrilles,
+       sinks, hobs, cutouts, mitres, worktop_<depth>, wallPanelBoards, carcasses) and params
+       (waste, sheet, reserve); ROUNDUP(x) rounds up. refs = note numbers.
+     ===================================================================== -->
 <!-- LLM-DATA BEGIN kitchen-project-copy (exact copy of kitchen_design.html #kitchen-project) -->
 <script type="application/json" id="kitchen-project-copy">
 {
-  "settings": {"gapMm": 4, "alignFronts": true},
-  "notes": [
-    ["Project", "Kitchen – Jaworze", "Group 1 + Group 2 form an L, Group 3 is an island"],
-    ["Location", "Jaworze, Bielsko-Biała county", ""],
-    ["Scope", "Materials only, owner builds it", "Prices: market average, PLN gross"],
-    ["Style", "Shaker, painted", "Overlay fronts; frames between fronts make them look inset"],
-    ["Room", "Floor gres, walls white", "Grey tiles 120 × 60"],
-    ["Window", "Above the Group 1 worktop", "1900 × 1300"],
-    ["Lighting", "3 ceiling spotlights over the tall units (Group 2)", "1 spotlight over the sink, halfway to the hood; 2 pendants over the island"],
-    ["Carcass material", "Chipboard 18 light grey, ABS 0.8 front edge", "Back HDF 3 light grey. Cut and edge-banded by the board supplier"],
-    ["Carcasses", "Width = column width, depth 550, 14 from the walls", "Stacked fronts = one carcass, upper cabinets separate; no dishwasher carcass"],
-    ["Base carcasses", "2 top rails 100 deep instead of a top panel", ""],
-    ["Shelves", "Adjustable, depth − 20; 1 per door ≤ 720 high, 3 per taller door", "None in the sink unit / fridge; fixed between stacked doors and at appliances"],
-    ["Back strips", "Chipboard 18 behind every 18 frame", "On edge, 100 deep, frame length; none behind the L-corner fillers"],
-    ["Fixings", "About 18 confirmat screws per carcass", "4 shelf pins per shelf; carcass connectors, wall brackets"],
-    ["Fronts", "MDF 18 shaker, English Navy satin", "Lacquered by a front maker"],
-    ["Front gaps", "Front = module − Gap W / Gap H (default 4)", "On the plinth: Gap H 2; on the worktop: Gap H 6 (clears the worktop)"],
-    ["Front alignment", "Fronts on one line are aligned", "Joint 2 + 2; at the plinth, worktop or an appliance: the rest of the gap"],
-    ["Frames", "MDF 18 lacquered like the fronts", "18 wide: on edge, 100 deep. Wider: flat. L corner: the 36 covers the end of the 80"],
-    ["Filler", "Wall, plasterboard or void – not ordered", ""],
-    ["Handles", "IKEA ENERYDA cup, brass", ""],
-    ["Hinges", "Blum CLIP top BLUMOTION 110° + plate; cheaper: GTV soft-close", "Per door: < 900 high 2, < 1600 3, else 4; none on appliance / dummy fronts"],
-    ["Drawers", "Blum TANDEMBOX antaro NL 500; front ≥ 350 → D (224), else M (83)", "Bottom, back: chipboard 16; \"inner drawer\": + cutlery drawer M above, same front"],
-    ["Sink unit", "Bottom drawer: D with waste-sorting bins; top front fixed", "Space-saving trap above the drawer (wall drain ≥ 450 above the floor)"],
-    ["Worktop", "Laminate oak 38; Group 1 600 deep, island 900 deep", "Group 1 one piece to the end of the 800 corner carcass; waterfalls same board"],
-    ["Corner wall cabinet", "Group 2, stands half on the Group 1 worktop", "Screwed to its neighbour, on supports in the wall corner"],
-    ["Wall panel", "Laminate, matching the worktop", ""],
-    ["Island", "Stools on the back side under the overhang", "Back: smooth MDF 18 lacquered panel between the waterfalls"],
-    ["Plinth", "PVC 100, black matte, moisture-resistant, cut on site", "Legs 100 with plinth clips, 4 per carcass; ventilation grille under the fridge"],
-    ["Sink", "Inset granite 1-bowl, with tap", ""],
-    ["Hob", "Electrolux CIT61443, cut-out 560 × 490, 54 from the wall; no inner drawer", "Rails on edge: front 18 × 50, rear 18 × 100; chipboard 16 panel at front rail bottom"],
-    ["Hood / extractor", "Electrolux LFV416K, 600", "Above the hob"],
-    ["Dishwasher", "Bosch SMV4HVX00E", "Front fixed on the appliance door"],
-    ["Fridge / freezer", "Bosch KIS86AFE0, 1772 high, flat hinge", "Fronts on the appliance doors; check the front split against the doors"],
-    ["Oven", "Samsung NV7B5785KAK", "595 × 596 × 570; check the niche in the manual"],
-    ["Microwave", "Bosch BFL623MB3", ""],
-    ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"],
-    ["Cost estimate", "Materials and prices from this design", "Cutting list, fronts (module − gap), hardware, appliances; waste and reserve"],
-    ["3D view", "3D model from this design", "Checks overlaps, gaps, parts sticking out and front alignment"]
-  ],
-  "columns": {
-    "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 564],
-    "2": [18, 546, 36, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130],
-    "3": [38, 18, 800, 18, 800, 18, 38]
-  },
-  "components": [
-    {"g": 1, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
-    {"g": 1, "c": 1, "s": 11, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
-    {"g": 1, "c": 1, "s": 10, "t": "worktop", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Wall panel"},
-    {"g": 1, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
-    {"g": 1, "c": 3, "s": 8, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
-    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Drawer (deep)"},
-    {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer, hob above"},
-    {"g": 1, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
-    {"g": 1, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Dishwasher, niche 815-875 x 600 x 550"},
-    {"g": 1, "c": 6, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
-    {"g": 1, "c": 7, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Sink unit, drawer with waste-sorting bins"},
-    {"g": 1, "c": 7, "s": 1, "t": "cabinet", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Sink unit, dummy front"},
-    {"g": 1, "c": 8, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
-    {"g": 1, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Corner cabinet, carcass 800"},
-    {"g": 1, "c": 10, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 80, installed flat"},
-    {"g": 1, "c": 11, "s": 1, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, empty past the 800 carcass"},
+ "settings": {"gapMm": 4, "alignFronts": true},
+ "groups": {
+  "1": {"name": "under the window", "worktop": [0, 600]},
+  "2": {"name": "tall units"},
+  "3": {"name": "island", "worktop": [-300, 600], "backPanel": true}
+ },
+ "notes": [
+  ["Project", "Kitchen – Jaworze", "Group 1 + Group 2 form an L, Group 3 is an island"],
+  ["Location", "Jaworze, Bielsko-Biała county", ""],
+  ["Scope", "Materials only, owner builds it", "Prices: market average, PLN gross"],
+  ["Style", "Shaker, painted", "Overlay fronts; frames between fronts make them look inset"],
+  ["Room", "Floor gres, walls white", "Grey tiles 120 × 60"],
+  ["Window", "Above the Group 1 worktop", "1900 × 1300"],
+  ["Lighting", "3 ceiling spotlights over the tall units (Group 2)", "1 spotlight over the sink, halfway to the hood; 2 pendants over the island"],
+  ["Carcass material", "Chipboard 18 light grey, ABS 0.8 front edge", "Back HDF 3 light grey. Cut and edge-banded by the board supplier"],
+  ["Carcasses", "Width = column width, depth 550, 14 from the walls", "Stacked fronts = one carcass, upper cabinets separate; no dishwasher carcass"],
+  ["Base carcasses", "2 top rails 100 deep instead of a top panel", ""],
+  ["Shelves", "Adjustable, depth − 20; 1 per door ≤ 720 high, 3 per taller door", "None in the sink unit / fridge; fixed between stacked doors and at appliances"],
+  ["Back strips", "Chipboard 18 behind every 18 frame", "On edge, 100 deep, frame length; none behind the L-corner fillers"],
+  ["Fixings", "About 18 confirmat screws per carcass", "4 shelf pins per shelf; carcass connectors, wall brackets"],
+  ["Fronts", "MDF 18 shaker, English Navy satin", "Lacquered by a front maker"],
+  ["Front gaps", "Front = module − Gap W / Gap H (default 4)", "On the plinth: Gap H 2; on the worktop: Gap H 6 (clears the worktop)"],
+  ["Front alignment", "Fronts on one line are aligned", "Joint 2 + 2; at the plinth, worktop or an appliance: the rest of the gap"],
+  ["Frames", "MDF 18 lacquered like the fronts", "18 wide: on edge, 100 deep. Wider: flat. L corner: the 36 covers the end of the 80"],
+  ["Filler", "Wall, plasterboard or void – not ordered", ""],
+  ["Handles", "IKEA ENERYDA cup, brass", ""],
+  ["Hinges", "Blum CLIP top BLUMOTION 110° + plate; cheaper: GTV soft-close", "Per door: < 900 high 2, < 1600 3, else 4; none on appliance / dummy fronts"],
+  ["Drawers", "Blum TANDEMBOX antaro NL 500; front ≥ 350 → D (224), else M (83)", "Bottom, back: chipboard 16; \"inner drawer\": + cutlery drawer M above, same front"],
+  ["Sink unit", "Bottom drawer: D with waste-sorting bins; top front fixed", "Space-saving trap above the drawer (wall drain ≥ 450 above the floor)"],
+  ["Worktop", "Laminate oak 38; Group 1 600 deep, island 900 deep", "Group 1 one piece to the end of the 800 corner carcass; waterfalls same board"],
+  ["Corner wall cabinet", "Group 2, stands half on the Group 1 worktop", "Screwed to its neighbour, on supports in the wall corner"],
+  ["Wall panel", "Laminate, matching the worktop", ""],
+  ["Island", "Stools on the back side under the overhang", "Back: smooth MDF 18 lacquered panel between the waterfalls"],
+  ["Plinth", "PVC 100, black matte, moisture-resistant, cut on site", "Legs 100 with plinth clips, 4 per carcass; ventilation grille under the fridge"],
+  ["Sink", "Inset granite 1-bowl, with tap", ""],
+  ["Hob", "Electrolux CIT61443, cut-out 560 × 490, 54 from the wall; no inner drawer", "Rails on edge: front 18 × 50, rear 18 × 100; chipboard 16 panel at front rail bottom"],
+  ["Hood / extractor", "Electrolux LFV416K, 600", "Above the hob"],
+  ["Dishwasher", "Bosch SMV4HVX00E", "Front fixed on the appliance door"],
+  ["Fridge / freezer", "Bosch KIS86AFE0, 1772 high, flat hinge", "Fronts on the appliance doors; check the front split against the doors"],
+  ["Oven", "Samsung NV7B5785KAK", "595 × 596 × 570; check the niche in the manual"],
+  ["Microwave", "Bosch BFL623MB3", ""],
+  ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"],
+  ["Appliance niches", "Component note \"Niche H x W x D\" (mm, ranges a-b)", "Checked against the space the design leaves; the fridge carcass gets a fixed shelf on top of its niche"],
+  ["Cost estimate", "Materials and prices from this design", "Cutting list, fronts (module − gap), hardware, appliances; waste and reserve"],
+  ["3D view", "3D model from this design", "Checks overlaps, gaps, parts sticking out and front alignment"]
+ ],
+ "columns": {
+  "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 564],
+  "2": [18, 546, 36, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130],
+  "3": [38, 18, 800, 18, 800, 18, 38]
+ },
+ "components": [
+  {"g": 1, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
+  {"g": 1, "c": 1, "s": 11, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
+  {"g": 1, "c": 1, "s": 10, "t": "worktop", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Wall panel"},
+  {"g": 1, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+  {"g": 1, "c": 3, "s": 8, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
+  {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Drawer (deep)"},
+  {"g": 1, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer, hob above"},
+  {"g": 1, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+  {"g": 1, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Dishwasher, niche 815-875 x 600 x 550"},
+  {"g": 1, "c": 6, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+  {"g": 1, "c": 7, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2, "note": "Sink unit, drawer with waste-sorting bins"},
+  {"g": 1, "c": 7, "s": 1, "t": "cabinet", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Sink unit, dummy front"},
+  {"g": 1, "c": 8, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+  {"g": 1, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Corner cabinet, carcass 800"},
+  {"g": 1, "c": 10, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 80, installed flat"},
+  {"g": 1, "c": 11, "s": 1, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, empty past the 800 carcass"},
 
-    {"g": 2, "c": 1, "s": 2, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, under the worktop"},
-    {"g": 2, "c": 1, "s": 3, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Group 1 worktop seen end-on"},
-    {"g": 2, "c": 1, "s": 1, "t": "frame", "h": 1642, "hd": "", "gw": 0, "gh": 0},
-    {"g": 2, "c": 1, "s": 12, "t": "frame", "h": 18, "hd": "", "gw": 0, "gh": 0},
-    {"g": 2, "c": 1, "s": 12, "t": "filler", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Soffit to ceiling"},
-    {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 1162, "hd": "R", "gw": 4, "gh": 6, "note": "Stands on the worktop: Gap H 6 so the door clears the worktop when opening"},
-    {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 3, "s": 9, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth, ventilation grille under the fridge"},
-    {"g": 2, "c": 3, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 36, installed flat; the 80 filler of Group 1 overlaps it"},
-    {"g": 2, "c": 4, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
-    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
-    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 1200, "hd": "R", "gw": 4, "gh": 4},
-    {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 6, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
-    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 520, "hd": "T", "gw": 4, "gh": 2},
-    {"g": 2, "c": 7, "s": 1, "t": "oven", "h": 600, "hd": "", "gw": 0, "gh": 0, "note": "Niche 560 x 580 x 550 (verify)"},
-    {"g": 2, "c": 7, "s": 1, "t": "micro", "h": 382, "hd": "", "gw": 0, "gh": 0, "note": "Niche 362-365 x 560-568 x 320"},
-    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 418, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 8, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
-    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Freezer door"},
-    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4, "note": "Fridge door, niche 1775-1780 x 560 x 550"},
-    {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 10, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
-    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
-    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4},
-    {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
-    {"g": 2, "c": 12, "s": 1, "t": "frame", "h": 2500, "hd": "", "gw": 0, "gh": 0},
-    {"g": 2, "c": 13, "s": 1, "t": "filler", "h": 2740, "hd": "", "gw": 0, "gh": 0, "note": "Wall / plasterboard"},
+  {"g": 2, "c": 1, "s": 2, "t": "filler", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "L corner, under the worktop"},
+  {"g": 2, "c": 1, "s": 3, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Group 1 worktop seen end-on"},
+  {"g": 2, "c": 1, "s": 1, "t": "frame", "h": 1642, "hd": "", "gw": 0, "gh": 0},
+  {"g": 2, "c": 1, "s": 12, "t": "frame", "h": 18, "hd": "", "gw": 0, "gh": 0},
+  {"g": 2, "c": 1, "s": 12, "t": "filler", "h": 222, "hd": "", "gw": 0, "gh": 0, "note": "Soffit to ceiling"},
+  {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 1162, "hd": "R", "gw": 4, "gh": 6, "note": "Stands on the worktop: Gap H 6 so the door clears the worktop when opening"},
+  {"g": 2, "c": 2, "s": 2, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+  {"g": 2, "c": 3, "s": 9, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth, ventilation grille under the fridge"},
+  {"g": 2, "c": 3, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0, "note": "Filler 36, installed flat; the 80 filler of Group 1 overlaps it"},
+  {"g": 2, "c": 4, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+  {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
+  {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 1200, "hd": "R", "gw": 4, "gh": 4},
+  {"g": 2, "c": 5, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+  {"g": 2, "c": 6, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+  {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 520, "hd": "T", "gw": 4, "gh": 2},
+  {"g": 2, "c": 7, "s": 1, "t": "oven", "h": 600, "hd": "", "gw": 0, "gh": 0, "note": "Niche 580 x 560 x 550 (verify)"},
+  {"g": 2, "c": 7, "s": 1, "t": "micro", "h": 382, "hd": "", "gw": 0, "gh": 0, "note": "Niche 362-365 x 560-568 x 320"},
+  {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 418, "hd": "B", "gw": 4, "gh": 4},
+  {"g": 2, "c": 7, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+  {"g": 2, "c": 8, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+  {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2, "note": "Freezer door"},
+  {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4, "note": "Fridge door, niche 1775-1780 x 560 x 550"},
+  {"g": 2, "c": 9, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+  {"g": 2, "c": 10, "s": 1, "t": "frame", "h": 2400, "hd": "", "gw": 0, "gh": 0},
+  {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 720, "hd": "T", "gw": 4, "gh": 2},
+  {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 1200, "hd": "L", "gw": 4, "gh": 4},
+  {"g": 2, "c": 11, "s": 1, "t": "cabinet", "h": 480, "hd": "B", "gw": 4, "gh": 4},
+  {"g": 2, "c": 12, "s": 1, "t": "frame", "h": 2500, "hd": "", "gw": 0, "gh": 0},
+  {"g": 2, "c": 13, "s": 1, "t": "filler", "h": 2740, "hd": "", "gw": 0, "gh": 0, "note": "Wall / plasterboard"},
 
-    {"g": 3, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
-    {"g": 3, "c": 1, "s": 10, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
-    {"g": 3, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
-    {"g": 3, "c": 3, "s": 3, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
-    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
-    {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
-    {"g": 3, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
-    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
-    {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
-    {"g": 3, "c": 6, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
-    {"g": 3, "c": 7, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"}
-  ]
+  {"g": 3, "c": 1, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"},
+  {"g": 3, "c": 1, "s": 7, "t": "worktop", "h": 38, "hd": "", "gw": 0, "gh": 0, "note": "Worktop"},
+  {"g": 3, "c": 2, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+  {"g": 3, "c": 3, "s": 3, "t": "plinth", "h": 100, "hd": "", "gw": 0, "gh": 0, "note": "Plinth"},
+  {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
+  {"g": 3, "c": 3, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
+  {"g": 3, "c": 4, "s": 1, "t": "frame", "h": 720, "hd": "", "gw": 0, "gh": 0},
+  {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 420, "hd": "T", "gw": 4, "gh": 2},
+  {"g": 3, "c": 5, "s": 1, "t": "drawer", "h": 300, "hd": "T", "gw": 4, "gh": 4, "note": "Drawer + inner drawer (cutlery)"},
+  {"g": 3, "c": 6, "s": 1, "t": "frame", "h": 820, "hd": "", "gw": 0, "gh": 0},
+  {"g": 3, "c": 7, "s": 1, "t": "worktop", "h": 820, "hd": "", "gw": 0, "gh": 0, "note": "Waterfall end"}
+ ]
 }
 </script>
 <!-- LLM-DATA END kitchen-project-copy -->
-<!-- LLM-DATA BEGIN cost-data (blocks and items derived from the design; prices are input) -->
-<script type="application/json" id="cost-data">{
- "rules": {
-  "storageKey": "kitchen-cost-jaworze-v4",
-  "xlsxFile": "kitchen_cost_jaworze.xlsx",
-  "frontsBlock": "front",
-  "frontKinds": [{"t": "drawer", "note": "waste|bins", "kind": "sink drawer (waste bins)"}, {"t": "drawer", "kind": "drawer"}, {"t": "cabinet", "note": "dummy", "kind": "dummy front"}, {"t": "cabinet", "note": "dishwasher|fridge|freezer", "kind": "appliance-door front"}, {"t": "cabinet", "kind": "door"}],
-  "edgeBlocks": {"p18": {"along": "A", "rows": {"Side": "B"}}},
-  "cutBlocks": ["p18", "p16"],
-  "applianceCats": ["Appliances"],
-  "sheetLabel": "Board sheet 2800×2070 [m²]",
-  "cuttingNote": "Carcass = column width, depth 550; interior = width − 36; adjustable shelf = interior − 2 × 530; HDF back = carcass − 2; fronts = module − 4 mm.",
-  "qtyWords": {"q:legs": "number of legs"}
- },
+<!-- LLM-DATA BEGIN cost-data (purchase items and prices; edit here) -->
+<script type="application/json" id="cost-data">
+{
  "title": "Material cost estimate – Kitchen Jaworze (Group 1+2 in an L, island Group 3)",
- "info": "PLN gross, average market prices October 2026, materials only (self-assembly). Blue cells are editable; the browser remembers changes. Quantities with a formula are calculated from the Cutting list tab.",
- "params": {
-  "waste": 0.15,
-  "sheet": 5.796,
-  "reserve": 0.05
- },
- "blocks": [
-  {
-   "id": "front",
-   "title": "FRONTS – MDF 18 shaker, English Navy satin lacquer (front maker) – calculated from kitchen_design.html: front = module − Gap W / Gap H",
-   "cols": [
-    "Function",
-    "Width",
-    "Height",
-    "Qty"
-   ],
-   "rows": [
-    [
-     "drawer",
-     796,
-     418,
-     3
-    ],
-    [
-     "drawer",
-     796,
-     296,
-     3
-    ],
-    [
-     "appliance-door front",
-     596,
-     718,
-     2
-    ],
-    [
-     "sink drawer (waste bins)",
-     796,
-     418,
-     1
-    ],
-    [
-     "dummy front",
-     796,
-     296,
-     1
-    ],
-    [
-     "door",
-     396,
-     718,
-     1
-    ],
-    [
-     "door",
-     578,
-     1156,
-     1
-    ],
-    [
-     "door",
-     578,
-     476,
-     1
-    ],
-    [
-     "door",
-     596,
-     718,
-     1
-    ],
-    [
-     "door",
-     596,
-     1196,
-     1
-    ],
-    [
-     "door",
-     596,
-     476,
-     3
-    ],
-    [
-     "door",
-     596,
-     518,
-     1
-    ],
-    [
-     "door",
-     596,
-     414,
-     1
-    ],
-    [
-     "appliance-door front",
-     596,
-     1196,
-     1
-    ],
-    [
-     "door",
-     246,
-     718,
-     1
-    ],
-    [
-     "door",
-     246,
-     1196,
-     1
-    ],
-    [
-     "door",
-     246,
-     476,
-     1
-    ]
-   ],
-   "live": true
-  },
-  {
-   "id": "bar",
-   "title": "FRAMES / FILLERS – MDF 18 lacquered like the fronts; 18 frames on edge 100 deep, wider fillers flat",
-   "cols": [
-    "Element",
-    "Width / depth",
-    "Length",
-    "Qty"
-   ],
-   "rows": [
-    [
-     "Frame 18 on edge (100 deep)",
-     100,
-     820,
-     3
-    ],
-    [
-     "Frame 18 on edge (100 deep)",
-     100,
-     720,
-     4
-    ],
-    [
-     "Filler 36, installed flat (L corner, Group 2)",
-     36,
-     720,
-     1
-    ],
-    [
-     "Filler 80, installed flat",
-     80,
-     720,
-     1
-    ],
-    [
-     "Frame 18 on edge (100 deep)",
-     100,
-     1642,
-     1
-    ],
-    [
-     "Horizontal frame 18 on edge (100 deep)",
-     100,
-     2740,
-     1
-    ],
-    [
-     "Frame 18 on edge (100 deep)",
-     100,
-     2400,
-     4
-    ],
-    [
-     "Frame 18 on edge (100 deep)",
-     100,
-     2500,
-     1
-    ]
-   ]
-  },
-  {
-   "id": "plinth",
-   "title": "PLINTH – standard kitchen plinth PVC 100, moisture-resistant (bought by the metre, cut to length on site)",
-   "cols": [
-    "Element",
-    "Height",
-    "Length",
-    "Qty"
-   ],
-   "rows": [
-    [
-     "Plinth",
-     100,
-     2734,
-     1
-    ],
-    [
-     "Plinth",
-     100,
-     2158,
-     1
-    ],
-    [
-     "Plinth",
-     100,
-     1618,
-     1
-    ]
-   ]
-  },
-  {
-   "id": "island",
-   "title": "ISLAND BACK PANEL – MDF 18, smooth lacquer",
-   "cols": [
-    "Element",
-    "Width",
-    "Height",
-    "Qty"
-   ],
-   "rows": [
-    [
-     "Island back panel",
-     1654,
-     820,
-     1
-    ]
-   ]
-  },
-  {
-   "id": "p18",
-   "title": "CARCASSES – light grey chipboard 18, cut + ABS 0.8 light grey front edge (incl. back strips behind the frames)",
-   "cols": [
-    "Element",
-    "Width",
-    "Height / depth",
-    "Qty"
-   ],
-   "rows": [
-    [
-     "Side",
-     550,
-     720,
-     10
-    ],
-    [
-     "Bottom panel",
-     764,
-     550,
-     5
-    ],
-    [
-     "Top rail 100",
-     764,
-     100,
-     9
-    ],
-    [
-     "Top rail 50 (front, on edge)",
-     764,
-     50,
-     1
-    ],
-    [
-     "Adjustable shelf",
-     762,
-     530,
-     1
-    ],
-    [
-     "Side",
-     550,
-     1162,
-     2
-    ],
-    [
-     "Bottom panel",
-     546,
-     550,
-     2
-    ],
-    [
-     "Top panel",
-     546,
-     550,
-     2
-    ],
-    [
-     "Adjustable shelf",
-     544,
-     530,
-     4
-    ],
-    [
-     "Side",
-     550,
-     480,
-     10
-    ],
-    [
-     "Side",
-     550,
-     1920,
-     8
-    ],
-    [
-     "Bottom panel",
-     564,
-     550,
-     6
-    ],
-    [
-     "Top panel",
-     564,
-     550,
-     6
-    ],
-    [
-     "Fixed shelf",
-     564,
-     530,
-     4
-    ],
-    [
-     "Adjustable shelf",
-     562,
-     530,
-     9
-    ],
-    [
-     "Bottom panel",
-     214,
-     550,
-     2
-    ],
-    [
-     "Top panel",
-     214,
-     550,
-     2
-    ],
-    [
-     "Fixed shelf",
-     214,
-     530,
-     1
-    ],
-    [
-     "Adjustable shelf",
-     212,
-     530,
-     5
-    ],
-    [
-     "Back strip 100",
-     100,
-     820,
-     3
-    ],
-    [
-     "Back strip 100",
-     100,
-     720,
-     4
-    ],
-    [
-     "Back strip 100",
-     100,
-     1642,
-     1
-    ],
-    [
-     "Back strip 100",
-     100,
-     2740,
-     1
-    ],
-    [
-     "Back strip 100",
-     100,
-     2400,
-     4
-    ],
-    [
-     "Back strip 100",
-     100,
-     2500,
-     1
-    ]
-   ]
-  },
-  {
-   "id": "p16",
-   "title": "DRAWERS – light grey chipboard 16 (TANDEMBOX bottoms and backs, incl. inner drawers; hob separation panel)",
-   "cols": [
-    "Element",
-    "Width",
-    "Depth / height",
-    "Qty"
-   ],
-   "rows": [
-    [
-     "Drawer bottom",
-     689,
-     490,
-     9
-    ],
-    [
-     "Drawer back D",
-     677,
-     199,
-     4
-    ],
-    [
-     "Drawer back M",
-     677,
-     68,
-     3
-    ],
-    [
-     "Inner drawer back",
-     677,
-     84,
-     2
-    ],
-    [
-     "Hob separation panel",
-     764,
-     514,
-     1
-    ]
-   ]
-  },
-  {
-   "id": "hdf",
-   "title": "BACKS – HDF 3 light grey",
-   "cols": [
-    "Element",
-    "Width",
-    "Height",
-    "Qty"
-   ],
-   "rows": [
-    [
-     "Back",
-     798,
-     718,
-     5
-    ],
-    [
-     "Back",
-     580,
-     1160,
-     1
-    ],
-    [
-     "Back",
-     580,
-     478,
-     1
-    ],
-    [
-     "Back",
-     598,
-     1918,
-     3
-    ],
-    [
-     "Back",
-     598,
-     478,
-     3
-    ],
-    [
-     "Back",
-     248,
-     1918,
-     1
-    ],
-    [
-     "Back",
-     248,
-     478,
-     1
-    ]
-   ]
-  }
- ],
+ "info": "PLN gross, average market prices October 2026, materials only (self-assembly). Quantities with a formula come from the design (hover them); blue cells are editable and remembered by this browser.",
+ "storageKey": "kitchen-cost-jaworze-v5",
+ "xlsxFile": "kitchen_cost_jaworze.xlsx",
+ "params": {"waste": 0.15, "sheet": 5.796, "reserve": 0.05},
+ "paramLabels": {"waste": "Board waste allowance", "sheet": "Board sheet 2800×2070 [m²]", "reserve": "Contingency (share of furniture)"},
+ "applianceCats": ["Appliances"],
  "cats": [
-  {
-   "cat": "Fronts, frames and plinth",
-   "rows": [
-    {
-     "id": "i1",
-     "name": "Fronts MDF 18 shaker, lacquered",
-     "spec": "English Navy satin, per cutting list",
-     "qty": "={front.m2}",
-     "unit": "m²",
-     "price": 500,
-     "src": "supplier quote 500 PLN/m² (October 2026)",
-     "refs": [
-      "9"
-     ]
-    },
-    {
-     "id": "i2",
-     "name": "Frames 18 on edge + flat fillers 80 and 36",
-     "spec": "MDF 18 lacquered on 3 sides, 100 deep; filler lacquered face + edges",
-     "qty": "={bar.m2}",
-     "unit": "m²",
-     "price": 480,
-     "src": "est., like the fronts; the front maker may charge a minimum area per piece",
-     "refs": [
-      "6",
-      "9"
-     ]
-    },
-    {
-     "id": "i3",
-     "name": "Kitchen plinth PVC 100, moisture-resistant",
-     "spec": "length from the Cutting list (m² ÷ 0.1 m height) + 10% for cutting; sold in 4 m lengths",
-     "qty": "={plinth.m2}/0.1*1.1",
-     "unit": "lm",
-     "price": 25,
-     "src": "PVC plinth 100: approx. 17–27 PLN/lm (tmakcesoria.pl, magolodz.pl, October 2026)",
-     "refs": [
-      "9"
-     ]
-    },
-    {
-     "id": "i40",
-     "name": "Plinth corners, end caps, connectors",
-     "spec": "to match the plinth",
-     "qty": 1,
-     "unit": "set",
-     "price": 40,
-     "src": "approx. 3–4 PLN/pc (tmakcesoria.pl, October 2026)",
-     "refs": []
-    },
-    {
-     "id": "i4",
-     "name": "Island back panel",
-     "spec": "MDF 18 smooth lacquer, between the waterfalls",
-     "qty": "={island.m2}",
-     "unit": "m²",
-     "price": 400,
-     "src": "est., smooth lacquer",
-     "refs": [
-      "9",
-      "C4"
-     ]
-    }
-   ]
-  },
-  {
-   "cat": "Carcasses",
-   "rows": [
-    {
-     "id": "i5",
-     "name": "Light grey chipboard 18",
-     "spec": "sheet 2800×2070, + waste",
-     "qty": "=ROUNDUP({p18.m2}*(1+{waste})/{sheet},0)",
-     "unit": "sheet",
-     "price": 210,
-     "src": "est.; white Kronospan 18 at Castorama 191 PLN/sheet (October 2026), light grey similar",
-     "refs": [
-      "10"
-     ]
-    },
-    {
-     "id": "i6",
-     "name": "Light grey chipboard 16",
-     "spec": "drawer bottoms and backs",
-     "qty": "=ROUNDUP({p16.m2}*(1+{waste})/{sheet},0)",
-     "unit": "sheet",
-     "price": 190,
-     "src": "est.",
-     "refs": []
-    },
-    {
-     "id": "i7",
-     "name": "HDF 3 light grey",
-     "spec": "backs, sheet 2800×2070",
-     "qty": "=ROUNDUP({hdf.m2}*(1+{waste})/{sheet},0)",
-     "unit": "sheet",
-     "price": 80,
-     "src": "est.",
-     "refs": []
-    },
-    {
-     "id": "i8",
-     "name": "Panel cutting",
-     "spec": "chipboard 18 + 16",
-     "qty": "={p18.cut}+{p16.cut}",
-     "unit": "lm",
-     "price": 3,
-     "src": "est., board supplier service",
-     "refs": []
-    },
-    {
-     "id": "i9",
-     "name": "ABS 0.8 edge banding, light grey",
-     "spec": "front edges +10%",
-     "qty": "={p18.edge}*1.1",
-     "unit": "lm",
-     "price": 4.5,
-     "src": "est., including the service",
-     "refs": []
-    }
-   ]
-  },
-  {
-   "cat": "Hardware (Blum system)",
-   "rows": [
-    {
-     "id": "i10",
-     "name": "Hinge Blum CLIP top BLUMOTION 110° + mounting plate",
-     "spec": "overlay; 2/3/4 per door by height",
-     "qty": 29,
-     "unit": "pcs",
-     "price": 28,
-     "src": "est.; alternative GTV soft-close approx. 10–15 PLN/pc",
-     "refs": [
-      "11"
-     ]
-    },
-    {
-     "id": "i11",
-     "name": "TANDEMBOX antaro D (224) NL 500 BLUMOTION",
-     "spec": "front ≥350: 3 bottom drawers + sink drawer",
-     "qty": 4,
-     "unit": "set",
-     "price": 420,
-     "src": "est.",
-     "refs": [
-      "13"
-     ]
-    },
-    {
-     "id": "i12",
-     "name": "TANDEMBOX antaro M (83) NL 500 BLUMOTION",
-     "spec": "set, top drawers (front <350)",
-     "qty": 3,
-     "unit": "set",
-     "price": 260,
-     "src": "est.",
-     "refs": []
-    },
-    {
-     "id": "i36",
-     "name": "TANDEMBOX antaro inner drawer M (83) NL 500 BLUMOTION",
-     "spec": "for cutlery, in the island top drawers; metal inner front Z31L cut to LW − 132 = 632",
-     "qty": 2,
-     "unit": "set",
-     "price": 330,
-     "src": "est.",
-     "refs": [
-      "15"
-     ]
-    },
-    {
-     "id": "i37",
-     "name": "Cutlery insert for the inner drawer",
-     "spec": "cut to fit, LW 764 × NL 500",
-     "qty": 2,
-     "unit": "pcs",
-     "price": 90,
-     "src": "est.; Blum ORGA-LINE costs more",
-     "refs": [
-      "15"
-     ]
-    },
-    {
-     "id": "i38",
-     "name": "Waste-sorting bin set for an 800 drawer",
-     "spec": "3 bins standing in the sink drawer (D, NL 500)",
-     "qty": 1,
-     "unit": "set",
-     "price": 250,
-     "src": "est.",
-     "refs": [
-      "13"
-     ]
-    },
-    {
-     "id": "i13",
-     "name": "Handle IKEA ENERYDA cup, brass",
-     "spec": "1 per front",
-     "qty": 24,
-     "unit": "pcs",
-     "price": 25,
-     "src": "est., IKEA – check the price in store",
-     "refs": []
-    },
-    {
-     "id": "legs",
-     "name": "Adjustable furniture legs 100",
-     "spec": "4 per floor-standing carcass, set back behind the plinth",
-     "qty": 36,
-     "unit": "pcs",
-     "price": 3,
-     "src": "est.",
-     "refs": []
-    },
-    {
-     "id": "i15",
-     "name": "Plinth clips",
-     "spec": "1 per 2 legs",
-     "qty": "=ROUNDUP({q:legs}/2,0)",
-     "unit": "pcs",
-     "price": 1,
-     "src": "est.",
-     "refs": []
-    },
-    {
-     "id": "i16",
-     "name": "Shelf pins 5 mm",
-     "spec": "4 per adjustable shelf",
-     "qty": 76,
-     "unit": "pcs",
-     "price": 0.25,
-     "src": "est.",
-     "refs": []
-    },
-    {
-     "id": "i17",
-     "name": "Confirmat screws 7×50 + caps",
-     "spec": "approx. 18 per carcass",
-     "qty": "=15*18",
-     "unit": "pcs",
-     "price": 0.3,
-     "src": "est.; 15 carcasses",
-     "refs": []
-    },
-    {
-     "id": "i18",
-     "name": "Carcass connectors, wall brackets, screws",
-     "spec": "set",
-     "qty": 1,
-     "unit": "set",
-     "price": 120,
-     "src": "est.",
-     "refs": []
-    },
-    {
-     "id": "i19",
-     "name": "Fixing for the sink dummy front",
-     "spec": "angle brackets",
-     "qty": 1,
-     "unit": "set",
-     "price": 10,
-     "src": "est.",
-     "refs": []
-    },
-    {
-     "id": "i20",
-     "name": "Ventilation grille in the plinth (fridge)",
-     "spec": "aluminium, approx. 500 × 60, ≥ 200 cm² open area, under the fridge column",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 40,
-     "src": "est.",
-     "refs": [
-      "3"
-     ]
-    },
-    {
-     "id": "i21",
-     "name": "Corner connectors",
-     "spec": "800 carcass with Group 2",
-     "qty": 1,
-     "unit": "set",
-     "price": 30,
-     "src": "est.",
-     "refs": [
-      "1",
-      "14"
-     ]
-    }
-   ]
-  },
-  {
-   "cat": "Worktops and panels",
-   "rows": [
-    {
-     "id": "i22",
-     "name": "Laminate oak worktop 38×600×4100",
-     "spec": "Group 1 3072 (to the end of the 800 corner carcass) + waterfall 820 → 1 board",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 700,
-     "src": "est., approx. 170 PLN/lm",
-     "refs": []
-    },
-    {
-     "id": "i23",
-     "name": "Laminate oak worktop 38×920×4100",
-     "spec": "island 1654 + 2 waterfalls 820",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 1200,
-     "src": "est.",
-     "refs": [
-      "C1"
-     ]
-    },
-    {
-     "id": "i24",
-     "name": "Laminate wall panel matching the worktop",
-     "spec": "Group 1 2790×222",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 350,
-     "src": "est., panel 4100×640",
-     "refs": []
-    },
-    {
-     "id": "i25",
-     "name": "Worktop edging, waterfall connectors, glue, silicone",
-     "spec": "set",
-     "qty": 1,
-     "unit": "set",
-     "price": 150,
-     "src": "est.",
-     "refs": []
-    },
-    {
-     "id": "i26",
-     "name": "Service: 45° waterfall mitres, sink and hob cut-outs",
-     "spec": "4 mitre joints + 2 cut-outs",
-     "qty": 1,
-     "unit": "set",
-     "price": 350,
-     "src": "est., joiner / worktop wholesaler",
-     "refs": [
-      "8"
-     ]
-    }
-   ]
-  },
-  {
-   "cat": "Sink and tap",
-   "rows": [
-    {
-     "id": "i27",
-     "name": "Granite sink, 1 bowl",
-     "spec": "inset, for the 800 unit",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 600,
-     "src": "est.",
-     "refs": [
-      "12"
-     ]
-    },
-    {
-     "id": "i39",
-     "name": "Space-saving trap (flat, outlet into the wall)",
-     "spec": "keeps the bottom drawer free for the waste bins; wall drain ≥ 450 above the floor",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 150,
-     "src": "est.",
-     "refs": [
-      "13"
-     ]
-    },
-    {
-     "id": "i28",
-     "name": "Kitchen tap",
-     "spec": "deck-mounted, swivel spout",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 450,
-     "src": "est.",
-     "refs": [
-      "12"
-     ]
-    }
-   ]
-  },
-  {
-   "cat": "Appliances",
-   "rows": [
-    {
-     "id": "i29",
-     "name": "Fridge Bosch KIS86AFE0",
-     "spec": "built-in 1772, flat hinge",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 3549,
-     "src": "neonet.pl 3549 PLN",
-     "refs": [
-      "2",
-      "3"
-     ]
-    },
-    {
-     "id": "i30",
-     "name": "Dishwasher Bosch SMV4HVX00E",
-     "spec": "fully integrated 60",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 1850,
-     "src": "okazje.info.pl ~1800–1900 PLN",
-     "refs": [
-      "5"
-     ]
-    },
-    {
-     "id": "i31",
-     "name": "Induction hob Electrolux CIT61443",
-     "spec": "60 cm, cut-out 560×490",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 1600,
-     "src": "okazje.info.pl ~1596 PLN",
-     "refs": []
-    },
-    {
-     "id": "i32",
-     "name": "Oven Samsung NV7B5785KAK",
-     "spec": "595×596×570",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 4600,
-     "src": "okazje.info.pl ~4599 PLN",
-     "refs": [
-      "4"
-     ]
-    },
-    {
-     "id": "i33",
-     "name": "Microwave Bosch BFL623MB3",
-     "spec": "niche 362–365×560–568×320",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 999,
-     "src": "okazje.info.pl ~999 PLN",
-     "refs": []
-    },
-    {
-     "id": "i34",
-     "name": "Hood Electrolux LFV416K, 60",
-     "spec": "chimney type, outlet Ø150",
-     "qty": 1,
-     "unit": "pcs",
-     "price": 1959,
-     "src": "neonet.pl 1959 PLN (October 2026)",
-     "refs": [
-      "7"
-     ]
-    },
-    {
-     "id": "i35",
-     "name": "Duct Ø150 or carbon filter",
-     "spec": "depending on the hood mode",
-     "qty": 1,
-     "unit": "set",
-     "price": 150,
-     "src": "est.; carbon filter sold separately",
-     "refs": [
-      "7"
-     ]
-    }
-   ]
-  }
+  {"cat": "Fronts, frames and plinth", "rows": [
+   {"id": "fronts", "name": "Fronts MDF 18 shaker, lacquered", "spec": "English Navy satin; front = module − gap", "qty": "=front_m2", "unit": "m²", "price": 500, "src": "supplier quote 500 PLN/m² (October 2026)", "refs": ["9"]},
+   {"id": "frames", "name": "Frames 18 on edge + flat fillers", "spec": "MDF 18 lacquered like the fronts; 18 frames 100 deep", "qty": "=frame_m2", "unit": "m²", "price": 480, "src": "est., like the fronts; the front maker may charge a minimum area per piece", "refs": ["6", "9"]},
+   {"id": "plinth", "name": "Kitchen plinth PVC 100, moisture-resistant", "spec": "black matte, + 10% for cutting; sold in 4 m lengths", "qty": "=plinth_lm*1.1", "unit": "lm", "price": 25, "src": "approx. 17–27 PLN/lm (tmakcesoria.pl, magolodz.pl, October 2026)", "refs": ["9"]},
+   {"id": "plinthAcc", "name": "Plinth corners, end caps, connectors", "spec": "to match the plinth", "qty": 1, "unit": "set", "price": 40, "src": "approx. 3–4 PLN/pc (tmakcesoria.pl, October 2026)", "refs": []},
+   {"id": "backPanel", "name": "Island back panel", "spec": "MDF 18 smooth lacquer, between the waterfalls", "qty": "=panel_m2", "unit": "m²", "price": 400, "src": "est., smooth lacquer", "refs": ["9"]}
+  ]},
+  {"cat": "Carcasses", "rows": [
+   {"id": "p18", "name": "Light grey chipboard 18", "spec": "sheet 2800×2070, + waste; carcasses, shelves, back strips", "qty": "=ROUNDUP(p18_m2*(1+waste)/sheet)", "unit": "sheet", "price": 210, "src": "est.; white Kronospan 18 at Castorama 191 PLN/sheet (October 2026), light grey similar", "refs": []},
+   {"id": "p16", "name": "Light grey chipboard 16", "spec": "drawer bottoms and backs, hob separation panel", "qty": "=ROUNDUP(p16_m2*(1+waste)/sheet)", "unit": "sheet", "price": 190, "src": "est.", "refs": []},
+   {"id": "hdf", "name": "HDF 3 light grey", "spec": "carcass backs, sheet 2800×2070", "qty": "=ROUNDUP(hdf_m2*(1+waste)/sheet)", "unit": "sheet", "price": 80, "src": "est.", "refs": []},
+   {"id": "cutting", "name": "Panel cutting", "spec": "chipboard 18 + 16 + HDF (≈ A + B per part)", "qty": "=p18_cut+p16_cut+hdf_cut", "unit": "lm", "price": 3, "src": "est., board supplier service", "refs": []},
+   {"id": "abs", "name": "ABS 0.8 edge banding, light grey", "spec": "visible front edges + 10%", "qty": "=p18_edge*1.1", "unit": "lm", "price": 4.5, "src": "est., including the service", "refs": []}
+  ]},
+  {"cat": "Hardware (Blum system)", "rows": [
+   {"id": "hinges", "name": "Hinge Blum CLIP top BLUMOTION 110° + mounting plate", "spec": "overlay; 2 / 3 / 4 per door by height", "qty": "=hinges", "unit": "pcs", "price": 28, "src": "est.; alternative GTV soft-close approx. 10–15 PLN/pc", "refs": ["11"]},
+   {"id": "boxD", "name": "TANDEMBOX antaro D (224) NL 500 BLUMOTION", "spec": "drawer fronts ≥ 350 high", "qty": "=drawersD", "unit": "set", "price": 420, "src": "est.", "refs": ["13"]},
+   {"id": "boxM", "name": "TANDEMBOX antaro M (83) NL 500 BLUMOTION", "spec": "drawer fronts < 350 high", "qty": "=drawersM", "unit": "set", "price": 260, "src": "est.", "refs": []},
+   {"id": "inner", "name": "TANDEMBOX antaro inner drawer M (83) NL 500", "spec": "cutlery, behind the top drawer front; inner front Z31L cut to LW − 132", "qty": "=innerDrawers", "unit": "set", "price": 330, "src": "est.", "refs": ["15"]},
+   {"id": "insert", "name": "Cutlery insert for the inner drawer", "spec": "cut to fit", "qty": "=innerDrawers", "unit": "pcs", "price": 90, "src": "est.; Blum ORGA-LINE costs more", "refs": ["15"]},
+   {"id": "bins", "name": "Waste-sorting bin set for an 800 drawer", "spec": "3 bins standing in the sink drawer (D, NL 500)", "qty": "=binSets", "unit": "set", "price": 250, "src": "est.", "refs": ["13"]},
+   {"id": "handles", "name": "Handle IKEA ENERYDA cup, brass", "spec": "1 per front with a handle", "qty": "=handles", "unit": "pcs", "price": 25, "src": "est., IKEA – check the price in store", "refs": []},
+   {"id": "legs", "name": "Adjustable furniture legs 100", "spec": "4 per floor-standing carcass, behind the plinth", "qty": "=legs", "unit": "pcs", "price": 3, "src": "est.", "refs": []},
+   {"id": "clips", "name": "Plinth clips", "spec": "1 per 2 legs", "qty": "=ROUNDUP(legs/2)", "unit": "pcs", "price": 1, "src": "est.", "refs": []},
+   {"id": "pins", "name": "Shelf pins 5 mm", "spec": "4 per adjustable shelf", "qty": "=shelfPins", "unit": "pcs", "price": 0.25, "src": "est.", "refs": []},
+   {"id": "confirmat", "name": "Confirmat screws 7×50 + caps", "spec": "approx. 18 per carcass", "qty": "=confirmat", "unit": "pcs", "price": 0.3, "src": "est.", "refs": []},
+   {"id": "fixings", "name": "Carcass connectors, wall brackets, screws", "spec": "set", "qty": 1, "unit": "set", "price": 120, "src": "est.", "refs": []},
+   {"id": "dummyFix", "name": "Fixing for a dummy front", "spec": "angle brackets", "qty": "=dummyFronts", "unit": "set", "price": 10, "src": "est.", "refs": []},
+   {"id": "grille", "name": "Ventilation grille in the plinth (fridge)", "spec": "aluminium, approx. 500 × 60, ≥ 200 cm² open area", "qty": "=fridgeGrilles", "unit": "pcs", "price": 40, "src": "est.", "refs": ["3"]},
+   {"id": "corner", "name": "Corner connectors", "spec": "800 corner carcass with Group 2", "qty": 1, "unit": "set", "price": 30, "src": "est.", "refs": ["1"]}
+  ]},
+  {"cat": "Worktops and panels", "rows": [
+   {"id": "wt600", "name": "Laminate oak worktop 38 × 600 × 4100", "spec": "boards packed from the design: tops (to the last support) + waterfalls", "qty": "=worktop_600", "unit": "pcs", "price": 700, "src": "est., approx. 170 PLN/lm", "refs": []},
+   {"id": "wt900", "name": "Laminate oak worktop 38 × 920 × 4100", "spec": "island top + waterfalls", "qty": "=worktop_900", "unit": "pcs", "price": 1200, "src": "est.", "refs": ["C1"]},
+   {"id": "wallPanel", "name": "Laminate wall panel matching the worktop", "spec": "board 4100 × 640, strips cut from it", "qty": "=wallPanelBoards", "unit": "pcs", "price": 350, "src": "est.", "refs": []},
+   {"id": "wtAcc", "name": "Worktop edging, waterfall connectors, glue, silicone", "spec": "set", "qty": 1, "unit": "set", "price": 150, "src": "est.", "refs": []},
+   {"id": "mitres", "name": "Service: 45° waterfall mitre", "spec": "one per waterfall end", "qty": "=mitres", "unit": "pcs", "price": 60, "src": "est., joiner / worktop wholesaler", "refs": ["8"]},
+   {"id": "cutouts", "name": "Service: sink and hob cut-outs", "spec": "one per sink / hob", "qty": "=cutouts", "unit": "pcs", "price": 55, "src": "est., joiner / worktop wholesaler", "refs": ["8"]}
+  ]},
+  {"cat": "Sink and tap", "rows": [
+   {"id": "sink", "name": "Granite sink, 1 bowl", "spec": "inset, for the 800 unit", "qty": "=sinks", "unit": "pcs", "price": 600, "src": "est.", "refs": ["12"]},
+   {"id": "trap", "name": "Space-saving trap (flat, outlet into the wall)", "spec": "keeps the bottom drawer free for the bins; wall drain ≥ 450 above the floor", "qty": "=sinks", "unit": "pcs", "price": 150, "src": "est.", "refs": ["13"]},
+   {"id": "tap", "name": "Kitchen tap", "spec": "deck-mounted, swivel spout", "qty": "=sinks", "unit": "pcs", "price": 450, "src": "est.", "refs": ["12"]}
+  ]},
+  {"cat": "Appliances", "rows": [
+   {"id": "fridge", "name": "Fridge Bosch KIS86AFE0", "spec": "built-in 1772, flat hinge", "qty": 1, "unit": "pcs", "price": 3549, "src": "neonet.pl 3549 PLN", "refs": ["2", "3"]},
+   {"id": "dishwasher", "name": "Dishwasher Bosch SMV4HVX00E", "spec": "fully integrated 60", "qty": 1, "unit": "pcs", "price": 1850, "src": "okazje.info.pl ~1800–1900 PLN", "refs": ["5"]},
+   {"id": "hob", "name": "Induction hob Electrolux CIT61443", "spec": "60 cm, cut-out 560 × 490", "qty": "=hobs", "unit": "pcs", "price": 1600, "src": "okazje.info.pl ~1596 PLN", "refs": ["17"]},
+   {"id": "oven", "name": "Oven Samsung NV7B5785KAK", "spec": "595 × 596 × 570", "qty": 1, "unit": "pcs", "price": 4600, "src": "okazje.info.pl ~4599 PLN", "refs": ["4"]},
+   {"id": "micro", "name": "Microwave Bosch BFL623MB3", "spec": "niche 362–365 × 560–568 × 320", "qty": 1, "unit": "pcs", "price": 999, "src": "okazje.info.pl ~999 PLN", "refs": []},
+   {"id": "hood", "name": "Hood Electrolux LFV416K, 60", "spec": "chimney type, outlet Ø150", "qty": 1, "unit": "pcs", "price": 1959, "src": "neonet.pl 1959 PLN (October 2026)", "refs": ["7"]},
+   {"id": "duct", "name": "Duct Ø150 or carbon filter", "spec": "depending on the hood mode", "qty": 1, "unit": "set", "price": 150, "src": "est.; carbon filter sold separately", "refs": ["7"]}
+  ]}
  ],
- "excluded": [
-  "Labour, transport, electrics (400 V hob, circuits for oven/dishwasher/fridge), plumbing, walls/plasterboard (fillers \"Wall / plasterboard\")."
- ],
+ "excluded": ["Labour, transport, electrics (400 V hob, circuits for oven / dishwasher / fridge), plumbing, walls / plasterboard (fillers \"Wall / plasterboard\")."],
  "notes": [
-  {
-   "sec": "A. IMPORTANT (construction / appliance fit)"
-  },
-  {
-   "nr": "1",
-   "t": "L corner – 800 carcass",
-   "o": "The 400 cabinet has an 800 carcass reaching into the corner. The rest of the corner (approx. 230) is empty; the worktop rests on the carcass and on the back strips of the frames, carcasses screwed together.",
-   "p": "connectors 30 PLN.",
-   "d": "wall batten under the worktop above the void?"
-  },
-  {
-   "nr": "2",
-   "t": "Fridge Bosch KIS86AFE0 – front split",
-   "o": "Fronts fixed on the fridge doors (flat hinge) must match the freezer / fridge door split. Check the door heights and the allowed front overhang in the installation manual.",
-   "p": "fronts as designed.",
-   "d": ""
-  },
-  {
-   "nr": "3",
-   "t": "Fridge – exhaust ventilation",
-   "o": "Above the fridge carcass (1920) there is a separate 480 cabinet. Bosch requires an air outlet (usually ~200 cm²) at the top or a gap behind the back.",
-   "p": "aluminium grille approx. 500 × 60 in the plinth under the fridge (≥ 200 cm² open area) + ventilation gap behind the back of the 480 cabinet (no cost). Confirm with the manual.",
-   "d": ""
-  },
-  {
-   "nr": "4",
-   "t": "Oven Samsung NV7B5785KAK – niche",
-   "o": "The design has a niche 560 x 580 x 550 (marked \"verify\"). 595 ovens usually need approx. 590 height. The module is 600 – after the 18 fixed shelf ~582 remain. Check the minimum niche height in the manual; if needed reduce the 520 cabinet under the oven.",
-   "p": "",
-   "d": ""
-  },
-  {
-   "nr": "5",
-   "t": "Dishwasher Bosch SMV4HVX00E – front height",
-   "o": "Check the maximum front height and weight for this model with a 100 plinth (dishwasher door hinge / optional Vario hinge).",
-   "p": "",
-   "d": ""
-  },
-  {
-   "nr": "6",
-   "t": "Frames 18 on edge; wider fillers flat",
-   "o": "Frames: MDF 18 on edge, 100 deep; with lacquer ≈ 18.5. Fillers wider than 18 are installed flat, face-on: 80 (Group 1, L corner) and 36 (Group 2, L corner under the worktop). The 80 filler overlaps the 36 filler, so there is no gap in the corner.",
-   "p": "Group 2 is 2870 wall to wall: corner column 546 + filler 36 (upper corner carcass 582).",
-   "d": ""
-  },
-  {
-   "sec": "B. SCOPE / PRICE ASSUMPTIONS"
-  },
-  {
-   "nr": "7",
-   "t": "Hood Electrolux LFV416K – operating mode",
-   "o": "Hood above the hob (not drawn). Estimate: 1959 PLN + 150 PLN for a Ø150 duct OR a carbon filter.",
-   "p": "",
-   "d": "extraction to a ventilation duct or recirculation? (carbon filter not included)."
-  },
-  {
-   "nr": "8",
-   "t": "Worktop service (350 PLN)",
-   "o": "45° waterfall mitres and the sink and hob cut-outs – on laminate this is normally done by the wholesaler / joiner. You can skip it when self-assembling, but a hand-sawn mitre on laminate rarely comes out clean.",
-   "p": "",
-   "d": ""
-  },
-  {
-   "nr": "9",
-   "t": "Lacquer only on fronts and frames",
-   "o": "Lacquered (front maker): fronts 500 PLN/m² (supplier quote, October 2026) and frames / fillers, estimate 480 PLN/m². Island back panel: smooth lacquered MDF, estimate 400 PLN/m². Plinth: standard PVC plinth, bought by the metre.",
-   "p": "",
-   "d": ""
-  },
-  {
-   "nr": "10",
-   "t": "Chipboard 18 – 7 sheets",
-   "o": "32.9 m² + 15% = 6.54 sheets → 7.",
-   "p": "",
-   "d": ""
-  },
-  {
-   "nr": "11",
-   "t": "Blum vs GTV hinges",
-   "o": "Assumed Blum (as in the design). GTV soft-close reduces the total by approx. 400–550 PLN.",
-   "p": "",
-   "d": ""
-  },
-  {
-   "nr": "12",
-   "t": "Sink and tap – no specific model",
-   "o": "1-bowl granite sink for the 800 unit (600 PLN) and a 450 PLN tap. Trap: space-saving, separate item (see 13).",
-   "p": "",
-   "d": ""
-  },
-  {
-   "nr": "13",
-   "t": "Sink unit – bottom drawer with waste-sorting bins",
-   "o": "Bottom drawer: D drawer, front per the Cutting list, with a 3-bin waste-sorting set. Requires a space-saving trap: flat trap body against the back wall, outlet above the drawer (D box with gallery rails up to ≈ 420 above the floor, bins ≈ 400). Top front 300: fixed dummy front.",
-   "p": "waste-sorting set 250 PLN, space-saving trap 150 PLN; no hinges on the sink fronts.",
-   "d": "wall drain at approx. 450 or more above the floor."
-  },
-  {
-   "nr": "14",
-   "t": "Back strips behind frames",
-   "o": "Behind every 18 frame: chipboard 18 strip on edge, 100 deep, frame length; no packing. The flat 80 filler is fixed to the front edge of the 800 corner carcass – no strip.",
-   "p": "in the chipboard 18 cutting list.",
-   "d": ""
-  },
-  {
-   "nr": "15",
-   "t": "Inner cutlery drawers (island)",
-   "o": "Island top drawers (2): Blum TANDEMBOX antaro inner drawer M (83), NL 500, BLUMOTION, own runners on the carcass sides, behind the 300 front; closing the top drawer closes it. Inner front: Blum Z31L cut to LW − 132 = 632. Bottom 689 × 490, back 677 × 84 (chipboard 16; back height per Blum – confirm in the Blum configurator). Hob unit: no inner drawer (no space under the hob).",
-   "p": "2 inner drawer sets + 2 cutlery inserts.",
-   "d": ""
-  },
-  {
-   "nr": "17",
-   "t": "Hob unit – rails and separation panel",
-   "o": "Electrolux CIT61443: cut-out 560 × 490, built-in height 44 (hob bottom ≈ 814). Cut-out 54 from the wall, 56 from the worktop front. Top rails on edge so the hob fits between them: front 18 × 50 (770–820), rear 18 × 100 (720–820). Separation panel chipboard 16, 764 × 514, between the rails, bottom flush with the front rail: 770–786, ≈ 28 mm below the hob.",
-   "p": "rail 764 × 50 and panel 764 × 514 in the cutting list.",
-   "d": "the installation diagram (manual p. 22) lists min. 28 and min. 12 – check which distances they are."
-  },
-  {
-   "nr": "16",
-   "t": "Front sizes",
-   "o": "Front = module − Gap W / Gap H, taken from kitchen_design.html. Fronts on the plinth: Gap H 2. Upper corner cabinet on the worktop: Gap H 6, so the door clears the worktop when opening. Other fronts: 4. Fronts in the same line are lined up (design note \"Front alignment\"); front sizes do not change.",
-   "p": "fronts priced from the calculated m².",
-   "d": ""
-  },
-  {
-   "sec": "C. FOR INFORMATION"
-  },
-  {
-   "nr": "C1",
-   "t": "Island: worktop overhang on the stool side ≈ 900 − 550 − 18 − 18 ≈ 314 mm",
-   "o": "minimum knee room; fine for bar stools, tight for chairs.",
-   "p": "",
-   "d": ""
-  },
-  {
-   "nr": "C2",
-   "t": "Socket in the island",
-   "o": "not in the design; if needed, plan it before the screed / floor.",
-   "p": "",
-   "d": ""
-  },
-  {
-   "nr": "C3",
-   "t": "Electrics / plumbing, plasterboard walls (fillers \"Wall / plasterboard\", soffit 222 to the ceiling), transport, assembly",
-   "o": "outside the estimate.",
-   "p": "",
-   "d": ""
-  },
-  {
-   "nr": "C4",
-   "t": "Carcass sides not visible (covered by frames, waterfalls, wall)",
-   "o": "no lacquered side panels added.",
-   "p": "",
-   "d": ""
-  },
-  {
-   "nr": "C5",
-   "t": "Summary",
-   "o": "15 carcasses, 24 fronts (see the Cutting list), 29 hinges, 7 drawers (4 D incl. the sink drawer, 3 M) + 2 inner cutlery drawers, 24 handles, 36 legs, 19 + 5 shelves, 15 back strips.",
-   "p": "",
-   "d": ""
-  }
- ],
- "n_carc": 15
-}</script>
+  {"sec": "A. Construction / appliance fit"},
+  {"nr": "1", "t": "L corner – 800 carcass", "o": "The 400 cabinet has an 800 carcass reaching into the corner; the rest of the corner is empty. The worktop rests on the carcass and on the back strips of the frames; carcasses screwed together.", "p": "corner connectors 30 PLN.", "d": "wall batten under the worktop above the void?"},
+  {"nr": "2", "t": "Fridge – front split", "o": "Fronts fixed on the fridge doors (flat hinge) must match the freezer / fridge door split. Check the door heights and the allowed front overhang in the installation manual.", "p": "fronts as designed.", "d": ""},
+  {"nr": "3", "t": "Fridge – ventilation", "o": "Bosch requires an air path (usually ~200 cm²): in at the bottom, out at the top. The model puts a fixed shelf on top of the fridge niche – leave a ventilation gap behind its back or a grille in it.", "p": "aluminium grille in the plinth under the fridge (≥ 200 cm² open area). Confirm with the manual.", "d": "ventilation outlet above the fridge niche."},
+  {"nr": "4", "t": "Oven – niche", "o": "Niche from the design: module 600 minus half of each fixed shelf (see Checks). Compare with the minimum niche height in the Samsung manual; if needed reduce the cabinet under the oven.", "p": "", "d": "confirm the niche height in the manual."},
+  {"nr": "5", "t": "Dishwasher – front height", "o": "Check the maximum front height and weight for this model with a 100 plinth (dishwasher door hinge / optional Vario hinge).", "p": "", "d": ""},
+  {"nr": "6", "t": "Frames on edge; wider fillers flat", "o": "Frames: MDF 18 on edge, 100 deep; with lacquer ≈ 18.5. Fillers wider than 18 are installed flat. In the L corner the two flat fillers meet – the 3D view trims the end of the Group 1 filler to the Group 2 front plane.", "p": "ordered at full width, trimmed on site.", "d": ""},
+  {"nr": "13", "t": "Sink unit – bottom drawer with waste-sorting bins", "o": "Bottom drawer D with a 3-bin waste-sorting set; needs a space-saving trap (flat body against the back wall, outlet above the drawer box). Top front: fixed dummy front.", "p": "bin set and space-saving trap; no hinges on the sink fronts.", "d": "wall drain at approx. 450 or more above the floor."},
+  {"nr": "15", "t": "Inner cutlery drawers", "o": "Blum TANDEMBOX antaro inner drawer M (83), NL 500, own runners on the carcass sides, behind the top drawer front (note \"inner drawer\"). Inner front Z31L cut to LW − 132. Back height 84 per Blum – confirm in the Blum configurator. No inner drawer under the hob.", "p": "inner drawer sets + cutlery inserts.", "d": ""},
+  {"nr": "17", "t": "Hob unit – rails and separation panel", "o": "Top rails on edge so the hob fits between them: front 18 × 50, rear 18 × 100. Separation panel chipboard 16 between the rails, bottom flush with the front rail, ≈ 28 below the hob.", "p": "rails and panel in the Cutting list.", "d": "the hob manual lists min. 28 and min. 12 – check which distances they are."},
+  {"sec": "B. Scope / price assumptions"},
+  {"nr": "7", "t": "Hood – operating mode", "o": "Estimate includes a Ø150 duct OR a carbon filter.", "p": "", "d": "extraction to a duct or recirculation?"},
+  {"nr": "8", "t": "Worktop service", "o": "45° waterfall mitres and the sink and hob cut-outs are normally done by the wholesaler / joiner; a hand-sawn mitre on laminate rarely comes out clean.", "p": "per mitre and per cut-out.", "d": ""},
+  {"nr": "9", "t": "Lacquer only on fronts, frames, island back", "o": "Fronts 500 PLN/m² (supplier quote); frames / fillers est. 480 PLN/m²; island back panel smooth lacquer est. 400 PLN/m². Plinth: standard PVC by the metre.", "p": "", "d": ""},
+  {"nr": "11", "t": "Blum vs GTV hinges", "o": "Assumed Blum (as in the design). GTV soft-close reduces the hinge cost by roughly 50–60%.", "p": "", "d": ""},
+  {"nr": "12", "t": "Sink and tap – no specific model", "o": "1-bowl granite sink for the 800 unit and a mid-range tap; trap is a separate item (see 13).", "p": "", "d": ""},
+  {"sec": "C. For information"},
+  {"nr": "C1", "t": "Island overhang on the stool side", "o": "The island worktop overhangs the back panel by about 300 mm: fine for bar stools, tight for chairs.", "p": "", "d": ""},
+  {"nr": "C2", "t": "Socket in the island", "o": "Not in the design; if needed, plan it before the screed / floor.", "p": "", "d": ""},
+  {"nr": "C3", "t": "Carcass sides not visible", "o": "Covered by frames, waterfalls or the wall – no lacquered side panels added.", "p": "", "d": ""}
+ ]
+}
+</script>
 <!-- LLM-DATA END cost-data -->
+
+<script>
+/* =====================================================================
+   KITCHEN MODEL — identical copy in kitchen_design / kitchen_cost / kitchen_view.
+   Pure functions: no DOM, no prices, no scene. Input: the project JSON.
+   Output: layout, carcasses, panels (with 3D boxes), fronts, hardware counts,
+   quantities and checks. Cost and view both read these same parts.
+   Coordinates per group, mm: u along the group from its first column,
+   v up from the floor, n from the wall towards the room.
+   ===================================================================== */
+const KM = (() => {
+'use strict';
+// Construction rules (the "Carcasses", "Shelves", "Hinges", "Drawers"... notes in numbers).
+// A project may override any of them with a "rules" object.
+const RULES = {
+  gap: 4, t: 18, t16: 16, hdf: 3,           // default front gap, board thicknesses
+  depth: 550, wall: 14,                      // carcass depth; carcass back from the wall
+  upperFrom: 1900, baseTop: 900, floorMax: 150,  // separate upper carcass / base carcass / stands on legs
+  rail: 100, frameDepth: 100, shelfSetback: 20,
+  plinthSetback: 70, plinthT: 18, wallPanelT: 10,
+  hinges: [[900, 2], [1600, 3], [1e9, 4]],   // door front height below -> hinges
+  shelves: [[720, 1], [1e9, 3]],             // door module height up to -> adjustable shelves
+  hingeZone: 35,                             // shelves keep this far (centre to centre) from a hinge
+  drawerD: 350, box: { D: 224, M: 83 }, drawerBack: { D: 199, M: 68, inner: 84 }, nl: 500,
+  legs: 4, confirmat: 18, pins: 4,
+  worktop: [0, 600],                         // worktop n range when the group does not give one
+  board: 4100, panel: [4100, 640],           // worktop board length; wall panel board length x width
+  kinds: {                                   // what a component note means (case-insensitive regex)
+    dishwasher: 'dishwasher', fridge: 'fridge|freezer', dummy: 'dummy', sink: 'sink', hob: 'hob',
+    bins: 'waste|bins', inner: 'inner drawer', reference: 'end-on', carcassW: 'carcass (\\d{3,4})',
+    niche: 'niche\\s*([\\d\\s\\-–x×]+)'
+  }
+};
+const TYPES = ['filler', 'plinth', 'worktop', 'frame', 'cabinet', 'drawer', 'oven', 'micro'];
+const FRONTS = ['cabinet', 'drawer'], BOXED = ['cabinet', 'drawer', 'oven', 'micro'];
+const num = (v, d) => { const x = parseFloat(v); return Number.isFinite(x) ? x : d; };
+const r1 = x => Math.round(x * 10) / 10;
+
+function rules(P) {
+  const o = P.rules || {};
+  return { ...RULES, ...o, gap: num((P.settings || {}).gapMm, o.gap ?? RULES.gap), kinds: { ...RULES.kinds, ...(o.kinds || {}) } };
+}
+const is = (R, kind, note) => new RegExp(R.kinds[kind], 'i').test(note || '');
+// "Niche 815-875 x 600 x 550" -> [[815,875],[600,600],[550,550]] = height, width, depth
+function niche(R, note) {
+  const m = (note || '').match(new RegExp(R.kinds.niche, 'i'));
+  if (!m) return null;
+  const d = m[1].split(/[x×]/).map(s => s.trim().split(/[-–]/).map(Number).filter(Number.isFinite)).filter(a => a.length);
+  return d.length === 3 ? d.map(a => [a[0], a[a.length - 1]]) : null;
+}
+
+/* ---------- 1. LAYOUT: stack components bottom-up in their columns ---------- */
+function layout(P) {
+  const R = rules(P), warn = [], groups = new Map();
+  for (const [g, ws] of Object.entries(P.columns || {})) {
+    const cols = ws.map(Number), x = [0];
+    cols.forEach(w => x.push(x[x.length - 1] + w));
+    groups.set(+g, { g: +g, cols, x, width: x[x.length - 1], items: [], occ: cols.map(() => []), info: (P.groups || {})[g] || {} });
+  }
+  const top = rs => { let y = 0; for (const [a, b] of [...rs].sort((p, q) => p[0] - q[0])) { if (a > y) break; y = Math.max(y, b); } return y; };
+  (P.components || []).forEach((c, idx) => {
+    const G = groups.get(+c.g), h = +c.h, i = c.c - 1, tag = `Component ${idx + 1} (G${c.g} col ${c.c} ${c.t})`;
+    const bad = text => warn.push({ text: `${tag}: ${text}`, idx });
+    if (!G) return bad(`group ${c.g} has no columns – skipped`);
+    if (!TYPES.includes(c.t)) return bad('unknown type – skipped');
+    if (!(i >= 0 && i < G.cols.length && c.s >= 1 && h > 0)) return bad('column, span or height out of range – skipped');
+    let j = i + +c.s;
+    if (j > G.cols.length) { bad(`span ${c.s} runs past column ${G.cols.length} – clipped`); j = G.cols.length; }
+    const ks = []; for (let k = i; k < j; k++) ks.push(k);
+    const v0 = Math.max(...ks.map(k => top(G.occ[k])));
+    if (ks.some(k => G.occ[k].some(([a, b]) => Math.max(v0, a) < Math.min(v0 + h, b)))) return bad('overlaps a component placed earlier in the list – skipped');
+    ks.forEach(k => G.occ[k].push([v0, v0 + h]));
+    const front = FRONTS.includes(c.t), note = c.note || '';
+    G.items.push({
+      idx, g: +c.g, c: +c.c, s: j - i, t: c.t, h, hd: c.hd || '', note, u0: G.x[i], u1: G.x[j], v0, v1: v0 + h,
+      gw: front ? num(c.gw, R.gap) : 0, gh: front ? num(c.gh, R.gap) : 0,
+      cw: +((note.match(new RegExp(R.kinds.carcassW, 'i')) || [])[1] || 0)   // "carcass 800": carcass wider than its column
+    });
+  });
+  for (const G of groups.values()) delete G.occ;
+  return { R, groups, warn };
+}
+
+/* ---------- 2. FRONT POSITIONS ("Front alignment" note) ----------
+   On a line with fronts on both sides the joint is gap/2 + gap/2; each front's own gap then fixes
+   its free side (plinth, worktop, appliance). Fronts with nothing known are centred. */
+function alignAxis(fr, a0, a1, gk, dflt, set) {
+  const lo = new Map(), hi = new Map(), ends = new Set(fr.map(a1));
+  for (const f of fr) if (ends.has(a0(f))) { lo.set(a0(f), dflt / 2); hi.set(a0(f), dflt / 2); }
+  const prop = () => { for (let ch = true; ch;) { ch = false; for (const f of fr) {
+    const s = a0(f), e = a1(f);
+    if (lo.has(s) && !hi.has(e)) { hi.set(e, f[gk] - lo.get(s)); ch = true; }
+    else if (hi.has(e) && !lo.has(s)) { lo.set(s, f[gk] - hi.get(e)); ch = true; } } } };
+  prop();
+  for (const f of fr) if (!lo.has(a0(f)) && !hi.has(a1(f))) { lo.set(a0(f), f[gk] / 2); hi.set(a1(f), f[gk] / 2); prop(); }
+  for (const f of fr) set(f, a0(f) + lo.get(a0(f)));
+}
+
+/* ---------- 3. BUILD: carcasses, panels, fronts, frames, plinth, worktops ---------- */
+function build(P) {
+  const L = layout(P), R = L.R, groups = L.groups, align = !!(P.settings || {}).alignFronts;
+  const warn = L.warn.map(w => ({ level: 'error', ...w }));
+  const W = (level, text) => warn.push({ level, text });
+  const t = R.t, n0 = R.wall, n1 = R.wall + R.depth, nf = n1 + t;   // carcass back / front, front face
+  const parts = [], fronts = [], carcasses = [];
+  const part = (p) => { parts.push(p); return p; };
+
+  for (const G of groups.values()) {
+    const I = G.items, g = G.g, fr = I.filter(i => FRONTS.includes(i.t));
+    for (const f of fr) { f.fu0 = f.u0 + f.gw / 2; f.fv0 = f.v0 + f.gh / 2; }
+    if (align) {
+      alignAxis(fr, f => f.v0, f => f.v1, 'gh', R.gap, (f, y) => f.fv0 = y);
+      alignAxis(fr, f => f.u0, f => f.u1, 'gw', R.gap, (f, x) => f.fu0 = x);
+    }
+
+    // carcasses: stacked boxed items in one column span form one carcass; upper ones separate; none for the dishwasher
+    const byCol = new Map();
+    for (const it of I) if (BOXED.includes(it.t)) { const k = it.c + ':' + it.s; byCol.set(k, [...(byCol.get(k) || []), it]); }
+    for (const col of byCol.values()) {
+      let K = null;
+      const flush = () => { if (K) carcasses.push(K); K = null; };
+      for (const it of col.sort((a, b) => a.v0 - b.v0)) {
+        if (is(R, 'dishwasher', it.note)) { flush(); continue; }
+        const upper = it.v0 >= R.upperFrom;
+        if (K && (upper || it.v0 !== K.v1)) flush();
+        if (!K) K = { g, c: it.c, s: it.s, u0: it.u0, u1: Math.max(it.u1, it.u0 + it.cw), v0: it.v0, v1: it.v1, items: [] };
+        K.items.push(it); K.v1 = it.v1; it.K = K;
+        if (upper) flush();
+      }
+      flush();
+    }
+  }
+  carcasses.sort((a, b) => a.g - b.g || a.u0 - b.u0 || a.v0 - b.v0).forEach((K, i) => K.id = i + 1);
+
+  // fronts (before shelves: shelves keep clear of the hinges)
+  for (const G of groups.values()) for (const it of G.items) {
+    if (!FRONTS.includes(it.t)) continue;
+    const K = it.K || null, w = it.u1 - it.u0 - it.gw, h = it.h - it.gh, note = it.note;
+    if (w <= 0 || h <= 0) { W('error', `G${it.g} col ${it.c}: front ${w} × ${h} – gap larger than the module`); continue; }
+    const kind = it.t === 'drawer' ? 'drawer' : is(R, 'dishwasher', note) ? 'dish' : is(R, 'dummy', note) ? 'fixed' : is(R, 'fridge', note) ? 'fridge' : 'door';
+    const name = kind === 'drawer' ? (is(R, 'bins', note) ? 'Sink drawer front (waste bins)' : 'Drawer front')
+      : kind === 'fixed' ? 'Dummy front' : kind === 'door' ? 'Door' : 'Appliance-door front';
+    const col = G.items.filter(x => x.c === it.c && x.s === it.s && x.hd);
+    const hingeSide = it.hd === 'L' ? 'R' : it.hd === 'R' ? 'L' : col.some(x => x.hd === 'L') ? 'R' : 'L';
+    const F = { g: it.g, item: it, K, kind, name, w, h, hd: it.hd, hingeSide, box: [it.fu0, it.fu0 + w, it.fv0, it.fv0 + h, n1, nf], hinges: [] };
+    if (kind === 'door' && K) {
+      const n = R.hinges.find(([lim]) => h < lim)[1];
+      for (let j = 0; j < n; j++) F.hinges.push(Math.round(F.box[2] + 100 + (h - 200) * j / (n - 1)));
+    }
+    if (kind === 'drawer' && K) {
+      const D = h >= R.drawerD, b0 = it.v0 + (it.v0 === K.v0 ? t : 0) + 24;
+      F.drawer = { type: D ? 'D' : 'M', b0, box: R.box[D ? 'D' : 'M'], bins: is(R, 'bins', note) };
+      if (is(R, 'inner', note)) F.drawer.inner = { b0: b0 + F.drawer.box + 40, box: R.box.M };
+    }
+    it.F = F; fronts.push(F);
+    part({ g: it.g, K: K && K.id, name, mat: 'front', a: w, b: h, edge: 0, box: F.box, layer: 'fronts' });
+  }
+
+  // carcass panels
+  for (const K of carcasses) {
+    const { u0, u1, v0, v1 } = K, w = u1 - u0, H = v1 - v0, ui0 = u0 + t, ui1 = u1 - t, iw = w - 2 * t;
+    const notes = K.items.map(i => i.note).join(' | ');
+    Object.assign(K, { base: v0 <= R.floorMax && v1 <= R.baseTop, floor: v0 <= R.floorMax,
+      sink: is(R, 'sink', notes), hob: is(R, 'hob', notes), fridge: is(R, 'fridge', notes),
+      appliance: K.items.some(i => i.t === 'oven' || i.t === 'micro') });
+    const P_ = (name, a, b, box, o = {}) => part({ g: K.g, K: K.id, name, mat: 'p18', a, b, edge: 0, box, layer: 'carcasses', ...o });
+    P_('Side', R.depth, H, [u0, ui0, v0, v1, n0, n1], { edge: H });
+    P_('Side', R.depth, H, [ui1, u1, v0, v1, n0, n1], { edge: H });
+    P_('Bottom panel', iw, R.depth, [ui0, ui1, v0, v0 + t, n0, n1], { edge: iw });
+    if (!K.base) P_('Top panel', iw, R.depth, [ui0, ui1, v1 - t, v1, n0, n1], { edge: iw });
+    else if (K.sink) {          // on edge, clear of the bowl
+      P_('Top rail 100 (on edge)', iw, R.rail, [ui0, ui1, v1 - R.rail, v1, n1 - t, n1], { edge: iw });
+      P_('Top rail 100 (on edge)', iw, R.rail, [ui0, ui1, v1 - R.rail, v1, n0, n0 + t]);
+    } else if (K.hob) {         // on edge so the hob fits between them, 16 separation panel below
+      P_('Top rail 50 (front, on edge)', iw, 50, [ui0, ui1, v1 - 50, v1, n1 - t, n1], { edge: iw });
+      P_('Top rail 100 (on edge)', iw, R.rail, [ui0, ui1, v1 - R.rail, v1, n0, n0 + t]);
+      part({ g: K.g, K: K.id, name: 'Hob separation panel', mat: 'p16', a: iw, b: R.depth - 2 * t, edge: 0,
+        box: [ui0, ui1, v1 - 50, v1 - 50 + R.t16, n0 + t, n1 - t], layer: 'shelves' });
+    } else {
+      P_('Top rail 100', iw, R.rail, [ui0, ui1, v1 - t, v1, n1 - R.rail, n1], { edge: iw });
+      P_('Top rail 100', iw, R.rail, [ui0, ui1, v1 - t, v1, n0, n0 + R.rail]);
+    }
+    part({ g: K.g, K: K.id, name: 'Back HDF', mat: 'hdf', a: w - 2, b: H - 2, edge: 0, box: [u0 + 1, u1 - 1, v0 + 1, v1 - 1, n0 - R.hdf, n0], layer: 'carcasses' });
+    const shelf = (name, y, a, x0, x1, extra) => P_(name, a, R.depth - R.shelfSetback, [x0, x1, y - t / 2, y + t / 2, n0, n1 - R.shelfSetback], { edge: a, layer: 'shelves', ...extra });
+    // fixed shelves between stacked items (not in base units or the fridge carcass)
+    if (!K.base && !K.fridge) for (const it of K.items.slice(1)) shelf('Fixed shelf', it.v0, iw, ui0, ui1);
+    // fridge: fixed shelf on top of the niche when the carcass is taller than the niche
+    const nz = K.items.map(i => niche(R, i.note)).find(Boolean);
+    if (K.fridge && nz && H - 2 * t > nz[0][1]) {
+      const y = v0 + t + Math.round((nz[0][0] + nz[0][1]) / 2) + t / 2;
+      shelf('Fixed shelf', y, iw, ui0, ui1);
+      W('info', `K${K.id} (G${K.g} col ${K.c}): fixed shelf added at ${y - t / 2}–${y + t / 2} so the fridge niche is ${y - t / 2 - v0 - t} (carcass interior ${H - 2 * t})`);
+    }
+    // adjustable shelves in door modules, clear of the hinges (not in the sink or fridge carcass)
+    const hz = fronts.filter(F => F.K === K).flatMap(F => F.hinges);
+    if (!K.sink && !K.fridge) for (const it of K.items) {
+      if (!it.F || it.F.kind !== 'door') continue;
+      const lo = it.v0 === v0 ? v0 + t : it.v0 + t / 2, hi = it.v1 === v1 ? v1 - t : it.v1 - t / 2;
+      const k = R.shelves.find(([lim]) => it.h <= lim)[1];
+      for (let j = 1; j <= k; j++) {
+        let y = Math.round(lo + (hi - lo) * j / (k + 1));
+        for (const hv of hz) if (Math.abs(y - hv) < R.hingeZone) y = hv + (y >= hv ? 1 : -1) * R.hingeZone;
+        if (y - t / 2 < lo + 40 || y + t / 2 > hi - 40) continue;
+        shelf('Adjustable shelf', y, iw - 2, ui0 + 1, ui1 - 1, { adjustable: true });
+      }
+    }
+    // drawer boxes: chipboard 16 bottom and back (TANDEMBOX: bottom LW − 75 × NL − 10, back LW − 87)
+    for (const it of K.items) {
+      const d = it.F && it.F.drawer; if (!d) continue;
+      const box = (b0, back, tag) => {
+        const z0 = n1 - 12 - R.nl, D = (name, a, b, bx) => part({ g: K.g, K: K.id, name, mat: 'p16', a, b, edge: 0, box: bx, layer: 'drawers', item: it.idx, inner: tag === 'inner' });
+        D('Drawer bottom', iw - 75, R.nl - 10, [ui0 + 37.5, ui1 - 37.5, b0, b0 + R.t16, z0, z0 + R.nl - 10]);
+        D(`Drawer back ${tag}`, iw - 87, back, [ui0 + 43.5, ui1 - 43.5, b0 + R.t16, b0 + R.t16 + back, z0, z0 + R.t16]);
+      };
+      box(d.b0, R.drawerBack[d.type], d.type);
+      if (d.inner) box(d.inner.b0, R.drawerBack.inner, 'inner');
+    }
+    K.legs = K.floor ? [[u0 + 45, n0 + 45], [u1 - 45, n0 + 45], [u0 + 45, n1 - 100], [u1 - 45, n1 - 100]] : [];
+    if (nz) K.niche = nz;
+  }
+
+  // frames, back strips, plinth, worktops, island back panel
+  const hasK = (G, c, v0, v1) => G.items.some(x => x.K && x.c <= c && c < x.c + x.s && x.v0 < v1 && x.v1 > v0);
+  for (const G of groups.values()) {
+    const g = G.g, wt = G.info.worktop || R.worktop, tops = [];
+    for (const it of G.items) {
+      const { u0, u1, v0, v1 } = it, w = u1 - u0, h = v1 - v0, label = `G${g} col ${it.c}${it.s > 1 ? '–' + (it.c + it.s - 1) : ''}`;
+      if (it.t === 'frame') {
+        const onEdge = Math.min(w, h) <= t, len = Math.max(w, h), horiz = w > h;
+        if (onEdge) part({ g, name: `${horiz ? 'Horizontal frame' : 'Frame'} 18 on edge (${R.frameDepth} deep)`, mat: 'frame', a: R.frameDepth, b: len, edge: 0, box: [u0, u1, v0, v1, nf - R.frameDepth, nf], layer: 'frames', where: label });
+        else part({ g, name: `Filler ${w}, installed flat`, mat: 'frame', a: w, b: h, edge: 0, box: [u0, u1, v0, v1, n1, nf], layer: 'frames', where: label });
+        // back strip (chipboard 18, same length): keeps carcass spacing at the back
+        const covered = carcasses.some(K => K.g === g && K.u1 > K.items[0].u1 && u0 >= K.items[0].u1 && u1 <= K.u1 && v0 < K.v1 && v1 > K.v0);
+        if (covered) continue;
+        if (onEdge) part({ g, name: 'Back strip 100', mat: 'p18', a: R.frameDepth, b: len, edge: 0, box: [u0, u1, v0, v1, n0, n0 + R.frameDepth], layer: 'carcasses', where: label });
+        else if (hasK(G, it.c - 1, v0, v1) && hasK(G, it.c + it.s, v0, v1)) part({ g, name: 'Back strip, flat', mat: 'p18', a: w, b: h, edge: 0, box: [u0, u1, v0, v1, n0, n0 + t], layer: 'carcasses', where: label });
+      } else if (it.t === 'plinth') {
+        const pf = nf - R.plinthSetback;
+        part({ g, name: 'Plinth', mat: 'plinth', a: h, b: w, edge: 0, box: [u0, u1, v0, v1, pf - R.plinthT, pf], layer: 'frames', where: label });
+      } else if (it.t === 'worktop') {
+        if (is(R, 'reference', it.note)) continue;                     // drawn in another group
+        if (h <= 60) tops.push(it);
+        else if (v0 === 0) part({ g, name: 'Waterfall end', mat: 'worktop', a: h, b: wt[1] - wt[0], edge: 0, box: [u0, u1, v0, v1, wt[0], wt[1]], layer: 'worktops', where: label, waterfall: true });
+        else part({ g, name: 'Wall panel', mat: 'wallpanel', a: w, b: h, edge: 0, box: [u0, u1, v0, v1, 0, R.wallPanelT], layer: 'worktops', where: label });
+      }
+    }
+    for (const it of tops) {   // a worktop ends at its last support (carcass incl. a wider corner carcass, frame, waterfall)
+      const sup = G.items.filter(x => x !== it && x.v1 <= it.v0 && (x.K || x.t === 'frame' || (x.t === 'worktop' && x.v0 === 0) || is(R, 'dishwasher', x.note)) && x.u0 < it.u1 && x.u1 > it.u0);
+      const a = Math.max(it.u0, Math.min(...sup.map(x => x.u0))), b = Math.min(it.u1, Math.max(...sup.map(x => x.K ? Math.max(x.u1, x.K.u1) : x.u1)));
+      if (!sup.length) { W('warn', `G${g}: worktop col ${it.c} has nothing under it`); continue; }
+      if (b < it.u1 || a > it.u0) W('info', `G${g}: worktop ends at its last support: ${a}–${b} (columns span ${it.u0}–${it.u1})`);
+      part({ g, name: 'Worktop', mat: 'worktop', a: b - a, b: wt[1] - wt[0], edge: 0, box: [a, b, it.v0, it.v1, wt[0], wt[1]], layer: 'worktops', where: `G${g}`, top: true });
+      if (b - a > R.board) W('warn', `G${g}: worktop ${b - a} is longer than a ${R.board} board – plan a joint`);
+    }
+    if (G.info.backPanel) {   // smooth panel between the waterfalls, behind the carcass backs
+      const ws = parts.filter(p => p.g === g && p.waterfall), top = tops[0];
+      const a = ws.length ? Math.min(...ws.map(p => p.box[1])) : 0, b = ws.length > 1 ? Math.max(...ws.map(p => p.box[0])) : G.width;
+      if (top) part({ g, name: 'Island back panel', mat: 'panel', a: b - a, b: top.v0, edge: 0, box: [a, b, 0, top.v0, -t, 0], layer: 'frames', where: `G${g}` });
+    }
+  }
+
+  // niche checks: what the design leaves for each appliance vs the "niche H x W x D" in its note
+  for (const G of groups.values()) for (const it of G.items) {
+    const nz = niche(R, it.note); if (!nz) continue;
+    const K = it.K;
+    let have;
+    if (!K) have = [it.v1, it.u1 - it.u0, R.depth];                                       // free-standing niche (dishwasher)
+    else if (K.fridge) { const sh = parts.find(p => p.K === K.id && p.name === 'Fixed shelf'); have = [(sh ? sh.box[2] : K.v1 - t) - K.v0 - t, K.u1 - K.u0 - 2 * t, R.depth]; }
+    else have = [it.h - (it.v0 === K.v0 ? t : t / 2) - (it.v1 === K.v1 ? t : t / 2), K.u1 - K.u0 - 2 * t, R.depth];
+    const bad = ['height', 'width', 'depth'].map((nm, k) => have[k] < nz[k][0] || (nz[k][1] > nz[k][0] && have[k] > nz[k][1]) ? `${nm} ${have[k]} (needs ${nz[k][0]}${nz[k][1] > nz[k][0] ? '–' + nz[k][1] : '+'})` : '').filter(Boolean);
+    it.nicheHave = have;
+    W(bad.length ? 'warn' : 'ok', `G${it.g} col ${it.c} ${FRONTS.includes(it.t) ? it.note.split(',')[0] : it.t}: niche ${have.join(' × ')}${bad.length ? ' – ' + bad.join(', ') : ' fits'}`);
+  }
+
+  // front alignment check (as built)
+  const alignRows = [];
+  for (const G of groups.values()) {
+    const fr = G.items.filter(i => i.F);
+    for (const [ax, a0, a1, b0, b1] of [['height', 'v0', 'v1', 2, 3], ['width', 'u0', 'u1', 0, 1]]) {
+      const lines = [...new Set(fr.flatMap(f => [f[a0], f[a1]]))].sort((a, b) => a - b);
+      for (const Ln of lines) {
+        const up = fr.filter(f => f[a0] === Ln).map(f => r1(f.F.box[b0])), dn = fr.filter(f => f[a1] === Ln).map(f => r1(f.F.box[b1]));
+        const lined = new Set(up).size <= 1 && new Set(dn).size <= 1, joint = up.length && dn.length ? r1(up[0] - dn[0]) : null;
+        const ok = lined && (joint === null || !align || Math.abs(joint - R.gap) < .01);
+        alignRows.push({ g: G.g, ax, line: Ln, n: up.length + dn.length, below: dn.length ? r1(Ln - dn[0]) : '', above: up.length ? r1(up[0] - Ln) : '', joint: joint ?? '', ok });
+        if (align && !ok) W('warn', `G${G.g} ${ax} line ${Ln}: front edges not lined up or joint ${joint} ≠ ${R.gap}`);
+      }
+    }
+  }
+
+  /* ---------- 4. QUANTITIES (what the cost estimate reads) ---------- */
+  const Q = { carcasses: carcasses.length, fronts: fronts.length, handles: fronts.filter(f => f.hd).length };
+  Q.hinges = fronts.reduce((s, f) => s + f.hinges.length, 0);
+  Q.drawersD = fronts.filter(f => f.drawer && f.drawer.type === 'D').length;
+  Q.drawersM = fronts.filter(f => f.drawer && f.drawer.type === 'M').length;
+  Q.innerDrawers = fronts.filter(f => f.drawer && f.drawer.inner).length;
+  Q.binSets = fronts.filter(f => f.drawer && f.drawer.bins).length;
+  Q.dummyFronts = fronts.filter(f => f.kind === 'fixed').length;
+  Q.shelvesAdj = parts.filter(p => p.adjustable).length;
+  Q.shelvesFixed = parts.filter(p => p.name === 'Fixed shelf').length;
+  Q.shelfPins = Q.shelvesAdj * R.pins;
+  Q.legs = carcasses.reduce((s, K) => s + (K.floor ? R.legs : 0), 0);
+  Q.confirmat = carcasses.length * R.confirmat;
+  Q.fridgeGrilles = carcasses.filter(K => K.fridge && K.floor).length;
+  Q.sinks = carcasses.filter(K => K.sink).length;
+  Q.hobs = carcasses.filter(K => K.hob).length;
+  Q.cutouts = Q.sinks + Q.hobs;
+  Q.mitres = parts.filter(p => p.waterfall).length;
+  for (const mat of ['front', 'frame', 'panel', 'p18', 'p16', 'hdf']) {
+    const ps = parts.filter(p => p.mat === mat);
+    Q[mat + '_m2'] = ps.reduce((s, p) => s + p.a * p.b, 0) / 1e6;
+    Q[mat + '_cut'] = ps.reduce((s, p) => s + p.a + p.b, 0) / 1000;     // approx. saw length: A + B per part
+    Q[mat + '_edge'] = ps.reduce((s, p) => s + p.edge, 0) / 1000;      // ABS on visible front edges
+  }
+  Q.plinth_lm = parts.filter(p => p.mat === 'plinth').reduce((s, p) => s + p.b, 0) / 1000;
+  // worktop boards: first-fit decreasing per depth; wall panel strips cut from wider boards
+  const pack = (lens, cap) => { const bins = []; for (const l of [...lens].sort((a, b) => b - a)) { const b = bins.find(x => x + l <= cap); b === undefined ? bins.push(l) : bins[bins.indexOf(b)] += l; } return bins.length; };
+  const wtp = parts.filter(p => p.mat === 'worktop');
+  Q.worktopBoards = {};
+  for (const d of new Set(wtp.map(p => p.b))) Q.worktopBoards[d] = pack(wtp.filter(p => p.b === d).map(p => p.a), R.board);
+  const wp = parts.filter(p => p.mat === 'wallpanel');
+  Q.wallPanelBoards = wp.length ? Math.ceil(pack(wp.map(p => p.a), R.panel[0]) / Math.max(1, Math.floor(R.panel[1] / Math.max(...wp.map(p => p.b))))) : 0;
+
+  return { R, groups, carcasses, fronts, parts, Q, warn, alignRows, n0, n1, nf };
+}
+
+// Same parts, counted: [{mat, name, a, b, qty, m2, edge, cut}] for the cutting list
+function cutList(M) {
+  const m = new Map();
+  for (const p of M.parts) {
+    const k = [p.mat, p.name, p.a, p.b].join('|'), r = m.get(k) || { mat: p.mat, name: p.name, a: p.a, b: p.b, qty: 0, edge: 0 };
+    r.qty++; r.edge += p.edge; m.set(k, r);
+  }
+  return [...m.values()].map(r => ({ ...r, m2: r.a * r.b * r.qty / 1e6, edge: r.edge / 1000, cut: (r.a + r.b) * r.qty / 1000 }));
+}
+
+return { RULES, TYPES, FRONTS, layout, build, cutList, niche };
+})();
+</script>
 <script>
 'use strict';
-const DATA = JSON.parse(document.getElementById('cost-data').textContent), RU = DATA.rules;   // all kitchen data is in the JSON blocks above
+/* ---------- 1. DATA ---------- */
+const PROJECT = JSON.parse(document.getElementById('kitchen-project-copy').textContent);
+const COST = JSON.parse(document.getElementById('cost-data').textContent);
+const ITEMS = COST.cats.flatMap(c => c.rows);
+const MODEL = KM.build(PROJECT), CUT = KM.cutList(MODEL);
+const MAT = { front: 'FRONTS – MDF 18 shaker, lacquered', frame: 'FRAMES / FILLERS – MDF 18 lacquered', panel: 'PANELS – MDF 18 smooth lacquer',
+  p18: 'CARCASSES – chipboard 18 light grey, ABS 0.8 (incl. back strips)', p16: 'DRAWERS – chipboard 16 light grey', hdf: 'BACKS – HDF 3 light grey',
+  plinth: 'PLINTH – PVC 100 (bought by the metre)', worktop: 'WORKTOPS – laminate oak 38', wallpanel: 'WALL PANEL – laminate' };
 
-// ---------- fronts: calculated from kitchen_design.html (front = module − Gap W / Gap H) ----------
-// The embedded rows are only a fallback for when the page is opened without kitchen_design.html next to it.
-function frontsFromProject(P) {
-  const gap = Number((P.settings || {}).gapMm ?? 4), agg = new Map();
-  const num = (x, d) => { const v = parseFloat(x); return Number.isFinite(v) ? v : d; };
-  for (const c of P.components || []) {
-    if (!RU.frontKinds.some(k => k.t === c.t)) continue;
-    const cols = (P.columns[c.g] || []).map(Number), w = cols.slice(c.c - 1, c.c - 1 + c.s).reduce((a, b) => a + b, 0), n = c.note || '';
-    const f = RU.frontKinds.find(k => k.t === c.t && (!k.note || new RegExp(k.note, 'i').test(n))).kind;   // first matching rule
-    const k = [f, w - num(c.gw, gap), Number(c.h) - num(c.gh, gap)].join('|');
-    agg.set(k, (agg.get(k) || 0) + 1);
-  }
-  return [...agg].map(([k, q]) => { const [f, a, b] = k.split('|'); return [f, Number(a), Number(b), q]; });
+/* ---------- 2. CALCULATION (pure) ---------- */
+function variables(M, params) {
+  const v = { ...params };
+  for (const [k, x] of Object.entries(M.Q)) if (typeof x === 'number') v[k] = x;
+  for (const it of ITEMS) for (const [, k] of String(it.qty).matchAll(/\b(worktop_\d+)\b/g)) v[k] = 0;   // depths the design may not have
+  for (const [d, n] of Object.entries(M.Q.worktopBoards)) v['worktop_' + d] = n;
+  return v;
 }
-let PROJECT = JSON.parse(document.getElementById('kitchen-project-copy').textContent);
-let PROJECT_SRC = 'copy in kitchen_cost.html (kitchen_design.html not reachable)';
-async function loadProject() {
-  if (!/^https?:$/.test(location.protocol)) return;
-  try {
-    const t = await (await fetch('kitchen_design.html', { cache: 'no-cache' })).text();
-    const m = t.match(/<script[^>]*id="kitchen-project"[^>]*>([\s\S]*?)<\/script>/);
-    if (m) { PROJECT = JSON.parse(m[1]); PROJECT_SRC = 'kitchen_design.html'; }
-  } catch (e) { /* keep the copy */ }
+const ROUNDUP = x => Math.ceil(x - 1e-9);
+function evalQty(q, vars) {
+  if (typeof q === 'number') return q;
+  const names = Object.keys(vars);
+  try { return Function('ROUNDUP', ...names, `return (${q.replace(/^=/, '')});`)(ROUNDUP, ...names.map(n => vars[n])); }
+  catch (e) { return NaN; }
 }
-function applyProject() { DATA.blocks.find(b => b.id === RU.frontsBlock).rows = frontsFromProject(PROJECT); }
-applyProject();
-
-const STORE = RU.storageKey;
-const fmt = (v, d = 2) => Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '–';
-const fmtQ = v => Number.isInteger(v) ? v.toLocaleString('en-GB') : fmt(v, 2);
-const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
-// ---------- state: defaults + overrides from browser storage ----------
-function defaults() {
-  return {
-    params: { ...DATA.params },
-    blocks: Object.fromEntries(DATA.blocks.map(b => [b.id, b.rows.map(r => [r[1], r[2], r[3]])])),
-    items: Object.fromEntries(DATA.cats.flatMap(c => c.rows).map(r => [r.id, { qty: r.qty, price: r.price }]))
-  };
-}
-let DEF = defaults();
-let S = defaults();
-try {
-  const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
-  if (saved) {
-    Object.assign(S.params, saved.params || {});
-    for (const [id, rows] of Object.entries(saved.blocks || {})) if (id !== RU.frontsBlock && S.blocks[id] && rows.length === S.blocks[id].length) S.blocks[id] = rows;
-    for (const [id, v] of Object.entries(saved.items || {})) if (S.items[id]) Object.assign(S.items[id], v);
-  }
-} catch (e) { /* storage unavailable - defaults only */ }
-function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }
-
-// ---------- calculations ----------
-function blockTotals() {
-  const T = {};
-  for (const b of DATA.blocks) {
-    const t = { m2: 0, edge: 0, cut: 0, qty: 0, rows: [] };
-    b.rows.forEach((r, i) => {
-      const [A, B, q] = S.blocks[b.id][i].map(Number);
-      const m2 = A * B * q / 1e6;
-      const E = RU.edgeBlocks[b.id], edge = E ? ((E.rows[r[0]] || E.along) === 'B' ? B : A) * q / 1000 : null;
-      const cut = RU.cutBlocks.includes(b.id) ? (A + B) * q / 1000 : null;
-      t.m2 += m2; t.qty += q; t.edge += edge || 0; t.cut += cut || 0;
-      t.rows.push({ m2, edge, cut });
-    });
-    T[b.id] = t;
-  }
-  return T;
-}
-function ROUNDUP(x, d) { const f = Math.pow(10, d || 0); return Math.ceil(x * f - 1e-9) / f; }
-function evalQty(expr, T, Q) {
-  if (typeof expr === 'number') return expr;
-  const js = expr.replace(/^=/, '')
-    .replace(/\{q:(\w+)\}/g, (_, id) => `(${Q[id]})`)
-    .replace(/\{(\w+)\.(\w+)\}/g, (_, b, k) => `(${T[b][k]})`)
-    .replace(/\{(waste|sheet)\}/g, (_, p) => `(${Number(S.params[p])})`);
-  return Function('ROUNDUP', `return (${js});`)(ROUNDUP);
-}
-function compute() {
-  const T = blockTotals(), Q = {}, V = {}, cat = {};
+function estimate(S) {
+  const vars = variables(MODEL, S.params), cats = [];
   let furn = 0, appl = 0;
-  for (const c of DATA.cats) {
-    let sum = 0;
-    for (const r of c.rows) {
-      Q[r.id] = evalQty(S.items[r.id].qty, T, Q);
-      V[r.id] = Math.round(Q[r.id] * Number(S.items[r.id].price) * 100) / 100;
-      sum += V[r.id];
-    }
-    cat[c.cat] = sum;
-    if (RU.applianceCats.includes(c.cat)) appl += sum; else furn += sum;
+  for (const c of COST.cats) {
+    const rows = c.rows.map(r => { const qty = evalQty(S.qty[r.id] ?? r.qty, vars), price = Number(S.price[r.id] ?? r.price);
+      return { r, qty, price, value: Math.round(qty * price * 100) / 100 }; });
+    const sum = rows.reduce((s, x) => s + x.value, 0);
+    COST.applianceCats.includes(c.cat) ? appl += sum : furn += sum;
+    cats.push({ cat: c.cat, rows, sum });
   }
-  const reserve = Math.round(furn * Number(S.params.reserve) * 100) / 100;
-  return { T, Q, V, cat, furn, appl, reserve, total: furn + appl + reserve };
+  const reserve = Math.round(furn * S.params.reserve * 100) / 100;
+  return { cats, furn, appl, reserve, total: furn + appl + reserve };
 }
 
-// ---------- rendering ----------
-function describe(expr) {
-  return expr.replace(/^=/, '')
-    .replace(/\{(q:\w+)\}/g, (m, k) => RU.qtyWords[k] || m)
-    .replace(/\{(\w+)\.(\w+)\}/g, (_, b, k) => `${(DATA.blocks.find(x => x.id === b) || {}).title?.split(' –')[0] || b} ${{ m2: 'm²', edge: 'edging lm', cut: 'cutting lm' }[k]}`)
-    .replace('{waste}', 'waste').replace('{sheet}', 'sheet');
-}
-function renderK() {
-  const R = compute(); let lp = 0; const h = [];
-  for (const c of DATA.cats) {
-    h.push(`<tr class="cat"><td></td><td colspan="5">${esc(c.cat)}</td><td class="num">${fmt(R.cat[c.cat])}</td><td></td></tr>`);
-    for (const r of c.rows) {
-      lp++;
-      const st = S.items[r.id], d = DEF.items[r.id];
-      const qtyCell = typeof r.qty === 'string'
-        ? `<td class="num"><span class="calc" title="${esc(describe(r.qty))}">${fmtQ(R.Q[r.id])}</span></td>`
-        : `<td class="num"><input type="number" step="any" data-item="${r.id}" data-k="qty" value="${st.qty}" class="${st.qty != d.qty ? 'changed' : ''}"></td>`;
-      const refs = r.refs.map(n => `<a class="ref" data-ref="${n}">see Notes item ${n}</a>`).join(', ');
-      h.push(`<tr><td class="num">${lp}</td><td>${esc(r.name)}</td><td class="muted">${esc(r.spec)}</td>${qtyCell}<td>${esc(r.unit)}</td>
-        <td class="num"><input type="number" step="any" data-item="${r.id}" data-k="price" value="${st.price}" class="${st.price != d.price ? 'changed' : ''}"></td>
-        <td class="num" data-v="${r.id}">${fmt(R.V[r.id])}</td>
-        <td class="src">${esc(r.src)}${refs ? ' – ' + refs : ''}</td></tr>`);
+/* ---------- 3. STATE: defaults + this browser's edits ---------- */
+const DEFAULT = () => ({ params: { ...COST.params }, price: {}, qty: {} });
+let S = DEFAULT();
+try { const s = JSON.parse(localStorage.getItem(COST.storageKey) || 'null'); if (s) S = { ...S, ...s, params: { ...S.params, ...s.params } }; } catch (e) {}
+const save = () => { try { localStorage.setItem(COST.storageKey, JSON.stringify(S)); } catch (e) {} };
+
+/* ---------- 4. RENDER ---------- */
+const $ = id => document.getElementById(id);
+const fmt = (v, d = 2) => Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '–';
+const fq = v => Number.isInteger(v) ? String(v) : fmt(v);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const input = (attr, v, dflt) => `<input type="number" step="any" ${attr} value="${v}" class="${v != dflt ? 'changed' : ''}">`;
+
+function renderEstimate() {
+  const E = estimate(S), h = []; let no = 0;
+  for (const c of E.cats) {
+    h.push(`<tr class="cat"><td></td><td colspan="5">${esc(c.cat)}</td><td class="n">${fmt(c.sum)}</td><td></td></tr>`);
+    for (const { r, qty, price, value } of c.rows) {
+      const q = typeof r.qty === 'string' ? `<span class="calc" title="${esc(r.qty.slice(1))}">${fq(qty)}</span>` : input(`data-qty="${r.id}"`, S.qty[r.id] ?? r.qty, r.qty);
+      const refs = r.refs.map(n => `<a class="ref" data-ref="${n}">note ${n}</a>`).join(', ');
+      h.push(`<tr><td class="n">${++no}</td><td>${esc(r.name)}</td><td class="m">${esc(r.spec)}</td><td class="n">${q}</td><td>${esc(r.unit)}</td>
+        <td class="n">${input(`data-price="${r.id}"`, price, r.price)}</td><td class="n">${fmt(value)}</td><td class="m">${esc(r.src)}${refs ? ' – ' + refs : ''}</td></tr>`);
     }
   }
-  h.push(`<tr class="sum"><td></td><td colspan="5">Furniture (materials) total</td><td class="num">${fmt(R.furn)}</td><td></td></tr>`);
-  h.push(`<tr class="sum"><td></td><td colspan="5">Appliances total</td><td class="num">${fmt(R.appl)}</td><td></td></tr>`);
-  h.push(`<tr class="sum"><td></td><td colspan="5">Contingency for small items / estimated prices (${fmt(Number(S.params.reserve) * 100, 0)}% of furniture)</td><td class="num">${fmt(R.reserve)}</td><td></td></tr>`);
-  h.push(`<tr class="grand"><td></td><td colspan="5">TOTAL GROSS</td><td class="num">${fmt(R.total)}</td><td></td></tr>`);
-  document.getElementById('kBody').innerHTML = h.join('');
-  document.getElementById('pillTotal').textContent = fmt(R.total) + ' PLN';
-  return R;
-}
-function renderR() {
-  const T = blockTotals(), h = [];
-  for (const b of DATA.blocks) {
-    h.push(`<tr class="blk"><td colspan="7">${esc(b.title)}${b.live ? ' · from ' + esc(PROJECT_SRC) : ''}</td></tr>`);
-    h.push(`<tr class="bh"><td>${b.cols.map(esc).join('</td><td>')}</td><td>m²</td><td>ABS edging [lm]</td><td>Cutting [lm]</td></tr>`);
-    b.rows.forEach((r, i) => {
-      const cur = S.blocks[b.id][i], def = DEF.blocks[b.id][i], t = T[b.id].rows[i];
-      const inp = k => b.live ? `<td class="num" title="Calculated from kitchen_design.html – change Gap W / Gap H there">${cur[k]}</td>` : `<td class="num"><input type="number" step="1" data-blk="${b.id}" data-i="${i}" data-k="${k}" value="${cur[k]}" class="${cur[k] != def[k] ? 'changed' : ''}"></td>`;
-      h.push(`<tr><td>${esc(r[0])}</td>${inp(0)}${inp(1)}${inp(2)}<td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td></tr>`);
-    });
-    const t = T[b.id], hasE = !!RU.edgeBlocks[b.id], hasC = RU.cutBlocks.includes(b.id);
-    h.push(`<tr class="sum"><td>Total</td><td></td><td></td><td class="num">${t.qty}</td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${hasE ? fmt(t.edge) : ''}</td><td class="num">${hasC ? fmt(t.cut) : ''}</td></tr>`);
-  }
-  document.getElementById('rBody').innerHTML = h.join('');
-}
-function renderU() {
-  document.getElementById('uBody').innerHTML = DATA.notes.map(n => n.sec
-    ? `<tr class="cat"><td colspan="5">${esc(n.sec)}</td></tr>`
-    : `<tr id="note-${n.nr}"><td><b>${esc(n.nr)}</b></td><td><b>${esc(n.t)}</b></td><td>${esc(n.o)}</td><td>${esc(n.p)}</td><td class="decide">${esc(n.d)}</td></tr>`).join('');
+  h.push(`<tr class="sum"><td></td><td colspan="5">Furniture (materials) total</td><td class="n">${fmt(E.furn)}</td><td></td></tr>`,
+    `<tr class="sum"><td></td><td colspan="5">Appliances total</td><td class="n">${fmt(E.appl)}</td><td></td></tr>`,
+    `<tr class="sum"><td></td><td colspan="5">Contingency, ${fmt(S.params.reserve * 100, 0)}% of furniture</td><td class="n">${fmt(E.reserve)}</td><td></td></tr>`,
+    `<tr class="grand"><td></td><td colspan="5">TOTAL GROSS</td><td class="n">${fmt(E.total)}</td><td></td></tr>`);
+  $('est').innerHTML = h.join('');
+  $('total').textContent = fmt(E.total) + ' PLN';
+  $('params').innerHTML = Object.entries(COST.paramLabels).map(([k, l]) => `<label>${esc(l)} ${input(`data-param="${k}"`, S.params[k], COST.params[k])}</label>`).join('');
 }
 function renderStatic() {
-  document.getElementById('title').textContent = DATA.title;
-  document.getElementById('info').textContent = DATA.info;
-  document.getElementById('excl').innerHTML = '<b>Not included / general notes</b><br>' + DATA.excluded.map(esc).join('<br>') +
-    '<br>Questions and assumptions: <a class="ref" data-tab-go="notes">see the Notes tab</a>.';
-  document.querySelectorAll('[data-param]').forEach(i => { i.value = S.params[i.dataset.param]; i.classList.toggle('changed', S.params[i.dataset.param] != DEF.params[i.dataset.param]); });
+  $('title').textContent = COST.title; $('info').textContent = COST.info;
+  $('excl').innerHTML = '<b>Not included:</b> ' + COST.excluded.map(esc).join(' ') + ' Assumptions and open questions: <a class="ref" data-tab-go="notes">Notes &amp; checks</a>.';
+  const h = [];
+  for (const mat of Object.keys(MAT)) {
+    const rows = CUT.filter(r => r.mat === mat); if (!rows.length) continue;
+    const t = rows.reduce((s, r) => ({ q: s.q + r.qty, m2: s.m2 + r.m2, e: s.e + r.edge, c: s.c + r.cut }), { q: 0, m2: 0, e: 0, c: 0 });
+    h.push(`<tr class="cat"><td colspan="7">${MAT[mat]}</td></tr>`, ...rows.map(r =>
+      `<tr><td>${esc(r.name)}</td><td class="n">${r.a}</td><td class="n">${r.b}</td><td class="n">${r.qty}</td><td class="n">${fmt(r.m2, 3)}</td><td class="n">${r.edge ? fmt(r.edge) : ''}</td><td class="n">${fmt(r.cut)}</td></tr>`),
+      `<tr class="sum"><td>Total</td><td></td><td></td><td class="n">${t.q}</td><td class="n">${fmt(t.m2, 3)}</td><td class="n">${t.e ? fmt(t.e) : ''}</td><td class="n">${fmt(t.c)}</td></tr>`);
+  }
+  $('cut').innerHTML = h.join('');
+  const Q = MODEL.Q;
+  $('summary').innerHTML = [['Carcasses', Q.carcasses], ['Fronts', Q.fronts], ['Handles', Q.handles], ['Hinges', Q.hinges],
+    ['Drawers', `${Q.drawersD} D + ${Q.drawersM} M${Q.innerDrawers ? ' + ' + Q.innerDrawers + ' inner' : ''}`], ['Shelves', `${Q.shelvesAdj} adjustable + ${Q.shelvesFixed} fixed`],
+    ['Legs', Q.legs], ['Plinth', fmt(Q.plinth_lm) + ' lm'], ['Chipboard 18', fmt(Q.p18_m2, 1) + ' m²'], ['Chipboard 16', fmt(Q.p16_m2, 1) + ' m²'], ['HDF 3', fmt(Q.hdf_m2, 1) + ' m²'],
+    ['Fronts', fmt(Q.front_m2, 2) + ' m²'], ['Frames', fmt(Q.frame_m2, 2) + ' m²'], ['Worktop boards', Object.entries(Q.worktopBoards).map(([d, n]) => `${n} × ${d}`).join(', ')]]
+    .map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('');
+  const W = MODEL.warn, bad = W.filter(w => w.level === 'warn' || w.level === 'error').length;
+  $('warn').innerHTML = W.map(w => `<li class="${w.level}">${esc(w.text)}</li>`).join('') || '<li class="ok">No issues.</li>';
+  $('checks').innerHTML = bad ? `<b style="color:#fbbf24">${bad} check(s) need attention</b>` : 'Checks OK';
+  const notes = COST.notes.map(n => n.sec ? `<tr class="cat"><td colspan="5">${esc(n.sec)}</td></tr>`
+    : `<tr id="note-${n.nr}"><td><b>${esc(n.nr)}</b></td><td><b>${esc(n.t)}</b></td><td>${esc(n.o)}</td><td>${esc(n.p)}</td><td style="color:var(--warn)">${esc(n.d)}</td></tr>`);
+  notes.push('<tr class="cat"><td colspan="5">D. Project notes (from the design)</td></tr>',
+    ...(PROJECT.notes || []).map(([a, b, c], i) => `<tr><td>P${i + 1}</td><td><b>${esc(a)}</b></td><td>${esc(b)}</td><td colspan="2" class="m">${esc(c)}</td></tr>`));
+  $('notes').innerHTML = notes.join('');
 }
-function renderAll() { renderStatic(); renderK(); renderR(); renderU(); }
 
-// ---------- interaction ----------
+/* ---------- 5. EVENTS ---------- */
 function showTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  ['estimate', 'cutting', 'notes'].forEach(n => document.getElementById('tab-' + n).classList.toggle('hidden', n !== name));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
+  ['estimate', 'cutting', 'notes'].forEach(n => $('tab-' + n).hidden = n !== name);
 }
 document.querySelector('.tabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) showTab(t.dataset.tab); });
 document.addEventListener('click', e => {
-  const a = e.target.closest('a.ref');
-  if (!a) return;
-  if (a.dataset.tabGo) { showTab(a.dataset.tabGo); return; }
-  showTab('notes');
-  const row = document.getElementById('note-' + a.dataset.ref);
+  const a = e.target.closest('a.ref'); if (!a) return;
+  showTab(a.dataset.tabGo || 'notes');
+  const row = a.dataset.ref && $('note-' + a.dataset.ref);
   if (row) { row.scrollIntoView({ behavior: 'smooth', block: 'center' }); row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); }
 });
 document.addEventListener('change', e => {
-  const i = e.target;
-  if (!(i instanceof HTMLInputElement)) return;
-  const v = i.value === '' ? 0 : Number(i.value);
-  if (!Number.isFinite(v)) return;
-  if (i.dataset.param) S.params[i.dataset.param] = v;
-  else if (i.dataset.item) S.items[i.dataset.item][i.dataset.k] = v;
-  else if (i.dataset.blk) S.blocks[i.dataset.blk][+i.dataset.i][+i.dataset.k] = v;
-  else return;
-  save(); renderAll();
+  const i = e.target, v = Number(i.value);
+  if (!(i instanceof HTMLInputElement) || i.value === '' || !Number.isFinite(v)) return;
+  if (i.dataset.param) S.params[i.dataset.param] = v; else if (i.dataset.price) S.price[i.dataset.price] = v; else if (i.dataset.qty) S.qty[i.dataset.qty] = v; else return;
+  save(); renderEstimate();
 });
-document.getElementById('btnReset').addEventListener('click', () => {
-  if (!confirm('Restore prices, quantities and the cutting list from the project? Your changes will be removed.')) return;
-  S = defaults(); try { localStorage.removeItem(STORE); } catch (e) {}
-  renderAll();
+$('reset').addEventListener('click', () => {
+  if (!confirm('Restore prices, fixed quantities and parameters from the data? Your edits are removed.')) return;
+  S = DEFAULT(); try { localStorage.removeItem(COST.storageKey); } catch (e) {} renderEstimate();
 });
+// is the project copy still the same as kitchen_design.html? (only when served over http)
+if (/^https?:$/.test(location.protocol)) fetch('kitchen_design.html', { cache: 'no-cache' }).then(r => r.text()).then(t => {
+  const m = t.match(/<script[^>]*id="kitchen-project"[^>]*>([\s\S]*?)<\/script>/);
+  if (m && JSON.stringify(JSON.parse(m[1])) !== JSON.stringify(PROJECT)) { $('stale').hidden = false; $('stale').textContent = 'kitchen_design.html has changed since this copy was made – the estimate below uses the copy. Propagate the project to update it.'; }
+}).catch(() => {});
 
-// ---------- XLSX export (SheetJS, live formulas) ----------
-function loadSheetJS() {
-  if (window.XLSX) return Promise.resolve();
-  return new Promise((ok, fail) => {
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    s.onload = ok; s.onerror = () => fail(new Error('Could not load the XLSX library (no internet?)'));
-    document.head.appendChild(s);
-  });
-}
-function buildWorkbook() {
-  const R = compute(), XL = window.XLSX;
-  const n = v => ({ t: 'n', v }), s = v => ({ t: 's', v: String(v ?? '') }), f = (formula, v) => ({ t: 'n', f: formula, v });
-  // Cutting list
-  const rz = [[s('Cutting list – panels derived from kitchen_design.html (dimensions mm)')], [s(RU.cuttingNote)], []];
-  const totRow = {};
-  for (const b of DATA.blocks) {
-    rz.push([s(b.title)]);
-    rz.push([...b.cols.map(s), s('m²'), s('ABS edging [lm]'), s('Cutting [lm]')]);
-    const first = rz.length + 1;
-    b.rows.forEach((r, i) => {
-      const [A, B, q] = S.blocks[b.id][i].map(Number), row = rz.length + 1, t = R.T[b.id].rows[i];
-      const line = [s(r[0]), n(A), n(B), n(q), f(`B${row}*C${row}*D${row}/1000000`, t.m2)];
-      const E = RU.edgeBlocks[b.id];
-      if (E) line.push(f(`${(E.rows[r[0]] || E.along) === 'B' ? 'C' : 'B'}${row}*D${row}/1000`, t.edge)); else line.push(s(''));
-      if (RU.cutBlocks.includes(b.id)) line.push(f(`(B${row}+C${row})*D${row}/1000`, t.cut));
-      rz.push(line);
-    });
-    const last = rz.length, row = last + 1, T = R.T[b.id];
-    rz.push([s('Total'), s(''), s(''), f(`SUM(D${first}:D${last})`, T.qty), f(`SUM(E${first}:E${last})`, T.m2), f(`SUM(F${first}:F${last})`, T.edge), f(`SUM(G${first}:G${last})`, T.cut)]);
-    totRow[b.id] = row; rz.push([]);
+/* ---------- 6. XLSX export (SheetJS, values + formulas for values and totals) ---------- */
+function workbook(XL) {
+  const E = estimate(S), s = v => ({ t: 's', v: String(v ?? '') }), n = (v, z) => ({ t: 'n', v, ...(z && { z }) }), f = (fm, v, z) => ({ t: 'n', f: fm, v, ...(z && { z }) });
+  const est = [[s(COST.title)], [s(COST.info)], [], ['No.', 'Item', 'Specification', 'Qty', 'Unit', 'Unit price [PLN]', 'Value [PLN]', 'Price source / notes'].map(s)], cat = [];
+  let no = 0;
+  for (const c of E.cats) {
+    const at = est.length; est.push(null);
+    for (const x of c.rows) { const r = est.length + 1;
+      est.push([n(++no), s(x.r.name), s(x.r.spec), n(Math.round(x.qty * 1000) / 1000), s(x.r.unit), n(x.price, '#,##0.00'), f(`ROUND(D${r}*F${r},2)`, x.value, '#,##0.00'), s(x.r.src)]); }
+    est[at] = [s(''), s(c.cat), s(''), s(''), s(''), s(''), f(`SUM(G${at + 2}:G${est.length})`, c.sum, '#,##0.00')];
+    cat.push([c.cat, at + 1]);
   }
-  // Notes
-  const uw = [[s('Notes – open questions / assumptions')], [s('Estimate items link here with "see Notes item N".')], [], ['No.', 'Topic', 'Description', 'Assumed in the estimate', 'To decide'].map(s)];
-  const uRow = {};
-  for (const x of DATA.notes) {
-    if (x.sec) uw.push([s(x.sec)]);
-    else { uRow[x.nr] = uw.length + 1; uw.push([s(x.nr), s(x.t), s(x.o), s(x.p), s(x.d)]); }
-  }
-  // Estimate
-  const ks = [[s(DATA.title)], [s(DATA.info.replace('; the browser remembers changes', ''))],
-    [s('Board waste allowance'), s(''), n(Number(S.params.waste))], [s(RU.sheetLabel), s(''), n(Number(S.params.sheet))], [],
-    ['No.', 'Item', 'Specification', 'Qty', 'Unit', 'Unit price [PLN]', 'Value [PLN]', 'Price source / notes'].map(s)];
-  const itemRow = {}, catRows = [], links = [];
-  let lp = 0;
-  const toXl = expr => expr.replace(/^=/, '')
-    .replace(/\{q:(\w+)\}/g, (_, id) => `D${itemRow[id]}`)
-    .replace(/\{(\w+)\.(\w+)\}/g, (_, b, k) => `'Cutting list'!$${{ m2: 'E', edge: 'F', cut: 'G' }[k]}$${totRow[b]}`)
-    .replace('{waste}', '$C$3').replace('{sheet}', '$C$4');
-  for (const c of DATA.cats) {
-    const cr = ks.length + 1; ks.push(null); const first = cr + 1;
-    for (const r of c.rows) {
-      lp++; const row = ks.length + 1; itemRow[r.id] = row;
-      const q = typeof r.qty === 'string' ? f(toXl(r.qty), R.Q[r.id]) : n(Number(S.items[r.id].qty));
-      const src = r.src + (r.refs.length ? ' – see Notes item ' + r.refs.join(', ') : '');
-      const srcCell = s(src);
-      if (r.refs.length) srcCell.l = { Target: `#'Notes'!A${uRow[r.refs[0]]}`, Tooltip: 'Go to note' };
-      ks.push([n(lp), s(r.name), s(r.spec), q, s(r.unit), n(Number(S.items[r.id].price)), f(`ROUND(D${row}*F${row},2)`, R.V[r.id]), srcCell]);
-    }
-    ks[cr - 1] = [s(''), s(c.cat), s(''), s(''), s(''), s(''), f(`SUM(G${first}:G${ks.length})`, R.cat[c.cat])];
-    catRows.push([c.cat, cr]);
-  }
-  ks.push([]);
-  const m = ks.length + 1;
-  ks.push([s(''), s('Furniture (materials) total'), s(''), s(''), s(''), s(''), f(catRows.filter(c => !RU.applianceCats.includes(c[0])).map(c => 'G' + c[1]).join('+'), R.furn)]);
-  ks.push([s(''), s('Appliances total'), s(''), s(''), s(''), s(''), f(catRows.filter(c => RU.applianceCats.includes(c[0])).map(c => 'G' + c[1]).join('+'), R.appl)]);
-  ks.push([s(''), s('Contingency for small items / estimated prices'), s('% of furniture'), s(''), s(''), n(Number(S.params.reserve)), f(`ROUND(G${m}*F${m + 2},2)`, R.reserve)]);
-  ks.push([s(''), s('TOTAL GROSS'), s(''), s(''), s(''), s(''), f(`G${m}+G${m + 1}+G${m + 2}`, R.total)]);
-  ks.push([]); ks.push([s(''), s('Not included')]);
-  DATA.excluded.forEach(e => ks.push([s(''), s('• ' + e)]));
-  const last = s('• Questions and assumptions: see the Notes tab.'); last.l = { Target: "#'Notes'!A1" };
-  ks.push([s(''), last]);
-
-  const wb = XL.utils.book_new();
-  const mk = (aoa, cols) => { const ws = XL.utils.aoa_to_sheet(aoa.map(r => r || [])); ws['!cols'] = cols.map(w => ({ wch: w })); return ws; };
-  const wsK = mk(ks, [5, 44, 36, 10, 6, 13, 14, 60]);
-  // number formats
-  for (let r = 7; r <= ks.length; r++) {
-    for (const col of ['F', 'G']) { const c = wsK[col + r]; if (c && c.t === 'n') c.z = '#,##0.00'; }
-    const d = wsK['D' + r]; if (d && d.f && !/ROUNDUP/.test(d.f)) d.z = '#,##0.00';
-  }
-  ['C3'].forEach(a => wsK[a].z = '0%'); wsK['F' + (m + 2)].z = '0%';
-  const wsR = mk(rz, [40, 10, 10, 8, 10, 15, 12]);
-  for (let r = 1; r <= rz.length; r++) { const e = wsR['E' + r]; if (e && e.f) e.z = '0.000'; ['F', 'G'].forEach(c => { const x = wsR[c + r]; if (x && x.f) x.z = '0.00'; }); }
-  XL.utils.book_append_sheet(wb, wsK, 'Estimate');
-  XL.utils.book_append_sheet(wb, wsR, 'Cutting list');
-  XL.utils.book_append_sheet(wb, mk(uw, [6, 34, 70, 42, 40]), 'Notes');
+  const m = est.length + 2, G = list => list.map(c => 'G' + c[1]).join('+') || '0';
+  est.push([], [s(''), s('Furniture (materials) total'), s(''), s(''), s(''), s(''), f(G(cat.filter(c => !COST.applianceCats.includes(c[0]))), E.furn, '#,##0.00')],
+    [s(''), s('Appliances total'), s(''), s(''), s(''), s(''), f(G(cat.filter(c => COST.applianceCats.includes(c[0]))), E.appl, '#,##0.00')],
+    [s(''), s('Contingency'), s('share of furniture'), s(''), s(''), n(S.params.reserve, '0%'), f(`ROUND(G${m}*F${m + 2},2)`, E.reserve, '#,##0.00')],
+    [s(''), s('TOTAL GROSS'), s(''), s(''), s(''), s(''), f(`G${m}+G${m + 1}+G${m + 2}`, E.total, '#,##0.00')], [], [s(''), s('Not included: ' + COST.excluded.join(' '))]);
+  const cut = [['Element', 'A [mm]', 'B [mm]', 'Qty', 'm²', 'ABS edging [lm]', 'Cutting [lm]'].map(s)];
+  for (const mat of Object.keys(MAT)) { const rows = CUT.filter(r => r.mat === mat); if (!rows.length) continue;
+    cut.push([s(MAT[mat])]); for (const r of rows) { const i = cut.length + 1; cut.push([s(r.name), n(r.a), n(r.b), n(r.qty), f(`B${i}*C${i}*D${i}/1000000`, r.m2, '0.000'), n(r.edge, '0.00'), n(r.cut, '0.00')]); } }
+  const notes = [['No.', 'Topic', 'Description', 'Assumed', 'To decide'].map(s), ...COST.notes.map(x => x.sec ? [s(x.sec)] : [s(x.nr), s(x.t), s(x.o), s(x.p), s(x.d)]), [], [s('Checks')], ...MODEL.warn.map(w => [s(w.level), s(w.text)])];
+  const wb = XL.utils.book_new(), sheet = (aoa, w) => { const ws = XL.utils.aoa_to_sheet(aoa.map(r => r || [])); ws['!cols'] = w.map(wch => ({ wch })); return ws; };
+  XL.utils.book_append_sheet(wb, sheet(est, [5, 44, 40, 10, 6, 13, 14, 60]), 'Estimate');
+  XL.utils.book_append_sheet(wb, sheet(cut, [42, 10, 10, 8, 10, 15, 12]), 'Cutting list');
+  XL.utils.book_append_sheet(wb, sheet(notes, [8, 36, 70, 40, 40]), 'Notes');
   return wb;
 }
-document.getElementById('btnXlsx').addEventListener('click', async e => {
-  const b = e.currentTarget; b.disabled = true;
-  try { await loadSheetJS(); window.XLSX.writeFile(buildWorkbook(), RU.xlsxFile, { compression: true }); }
-  catch (err) { alert(err.message); }
-  finally { b.disabled = false; }
+$('xlsx').addEventListener('click', () => {
+  const go = () => window.XLSX.writeFile(workbook(window.XLSX), COST.xlsxFile, { compression: true });
+  if (window.XLSX) return go();
+  const sc = Object.assign(document.createElement('script'), { src: 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', onload: go, onerror: () => alert('Could not load the XLSX library (offline?)') });
+  document.head.appendChild(sc);
 });
 
-// fronts from the live kitchen_design.html (when reachable), then redraw
-loadProject().then(() => { applyProject(); DEF = defaults(); S.blocks[RU.frontsBlock] = DEF.blocks[RU.frontsBlock].map(r => [...r]); renderAll(); });
-renderAll();
+renderStatic(); renderEstimate();
 </script>
 </body>
 </html>
