@@ -11,7 +11,7 @@
      tags   exactly one kind - filler, plinth, worktop, frame, cabinet, drawer, oven, micro
             + feature tags   - hob, sink, bins, dummy, dishwasher, fridge, freezer, inner
      k      carcass name (K1, K2 ...): same name = ONE carcass over all its columns and heights; "" = no carcass
-     gaps   fronts only: [left, right, bottom, top]; front = module minus these four gaps
+     gaps   fronts only: [left, right, top, bottom]; front = module minus these four gaps
      hd     handle position T | B | L | R | ""
 */
 (function (root) {
@@ -62,9 +62,9 @@
     });
   }
 
-  /* ---------- front = module minus its four gaps [left, right, bottom, top] ---------- */
+  /* ---------- front = module minus its four gaps [left, right, top, bottom] ---------- */
   function frontBox(it) {
-    const [l, r, b, t] = it.gaps;
+    const [l, r, t, b] = it.gaps;
     return { u0: it.u0 + l, u1: it.u1 - r, v0: it.v0 + b, v1: it.v1 - t };
   }
 
@@ -185,7 +185,7 @@
     const HG = R.hinges, DR = R.drawers;
     for (const G of Object.values(groups)) for (const it of G.items) {
       if (!FRONT_KINDS.includes(it.t)) continue;
-      if (!it.gaps || it.gaps.length !== 4 || it.gaps.some(x => !Number.isFinite(x))) { warnings.push(`Group ${G.g} col ${it.c}: ${it.t} needs 4 gaps [left, right, bottom, top].`); it.gaps = [0, 0, 0, 0]; }
+      if (!it.gaps || it.gaps.length !== 4 || it.gaps.some(x => !Number.isFinite(x))) { warnings.push(`Group ${G.g} col ${it.c}: ${it.t} needs 4 gaps [left, right, top, bottom].`); it.gaps = [0, 0, 0, 0]; }
       const fb = frontBox(it), K = it.K;
       if (fb.u1 - fb.u0 <= 0 || fb.v1 - fb.v0 <= 0) warnings.push(`Group ${G.g} col ${it.c}: gaps leave no front.`);
       const kind = it.t === 'drawer' ? 'drawer' : has(it, 'dishwasher') ? 'dish' : has(it, 'dummy') ? 'fixed' : has(it, 'fridge', 'freezer') ? 'fridge' : 'door';

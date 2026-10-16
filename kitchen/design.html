@@ -248,7 +248,8 @@
         table.sheet input[type="number"] { text-align: right; }
         table.sheet select { cursor: pointer; }
         .feat-btn { min-width: 150px; }
-        .feat-btn.hd-btn { min-width: 76px; }
+        .feat-btn.hd-btn { min-width: 76px; min-height: 30px; }
+        .feat-btn.hd-btn:hover { background: var(--sheet-row-hover); }
         .feat-pop .pop-sec { display: grid; grid-template-columns: repeat(2, auto); gap: 2px 14px; }
         .feat-pop.one-col .pop-sec { grid-template-columns: auto; }
         .feat-btn { width: 100%; border: none; background: transparent; padding: 7px 10px; font: inherit; color: var(--sheet-text);
@@ -350,8 +351,8 @@
                 <th style="width:84px" title="Handle position on the front">Handle</th>
                 <th style="width:46px" title="Front gap left (mm)">Gap L</th>
                 <th style="width:46px" title="Front gap right (mm)">Gap R</th>
-                <th style="width:46px" title="Front gap bottom (mm)">Gap B</th>
                 <th style="width:46px" title="Front gap top (mm)">Gap T</th>
+                <th style="width:46px" title="Front gap bottom (mm)">Gap B</th>
                 <th>Notes</th>
                 <th class="col-actions"></th>
               </tr>
@@ -366,12 +367,12 @@
                   <td><input type="text" class="cell" spellcheck="false" placeholder="—" x-model="row.k"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.height"></td>
                   <td>
-                    <button type="button" class="feat-btn hd-btn" :class="{empty: !row.handle}" @click="openFeatures(row, $event, 'handle')" x-text="HANDLE_NAMES[row.handle || ''] || row.handle"></button>
+                    <template x-if="isFront(row)"><button type="button" class="feat-btn hd-btn" title="Handle position" @click="openFeatures(row, $event, 'handle')" x-text="row.handle ? HANDLE_NAMES[row.handle] || row.handle : ''"></button></template>
                   </td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gl"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gr"></td>
-                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gb"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gt"></td>
+                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gb"></td>
                   <td class="col-note"><input type="text" class="cell" x-model="row.note"></td>
                   <td class="col-actions">
                     <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertComponentRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeComponentRow(idx)">×</button>
@@ -465,7 +466,7 @@
          tags: exactly ONE kind - filler, plinth, worktop, frame, cabinet, drawer, oven, micro;
                + features - hob, sink, bins, dummy, dishwasher, fridge, freezer, inner;
          k carcass name (K1, K2 ...): same name = ONE carcass over all its columns; "" = no carcass
-         hd handle (T|B|L|R|""), gaps (fronts only) [left, right, bottom, top] mm: front = module minus the 4 gaps, note: free text
+         hd handle (T|B|L|R|""), gaps (fronts only) [left, right, top, bottom] mm: front = module minus the 4 gaps, note: free text
      DATA FLOW: data.js -> engine.js (layout, carcasses, boards, fronts) -> this page, cost.html, view.html
      =================================================================== -->
 <!-- DESIGN CONFIG (JSON): how this page draws the elevations - sizes in SVG units (1 = 1 mm), colours -->
@@ -675,7 +676,7 @@ class LayoutEngine {
         : `Component "${it.comp.type}" at Group ${groupNum} has an invalid column/span. Skipped.`);
       for (const it of st.items) {
         const comp = it.comp, width = it.u1 - it.u0, widthMm = width / this.scale;
-        const [gl, gr, gb, gt] = comp.gaps || [0, 0, 0, 0];
+        const [gl, gr, gt, gb] = comp.gaps || [0, 0, 0, 0];
         const isFront = FRONT_TYPES.includes(comp.type);
         components.push({
           groupNum, colNum: comp.colNum, colIndex: comp.colNum - 1, colSpan: comp.colSpan, type: comp.type,
@@ -897,7 +898,7 @@ function computeLayout(columnRows, componentRows) {
     const tg = parseTags(row.tags);
     const type = tg.kind;
     const handle = row.handle || null;
-    const gapRaw = [row.gl, row.gr, row.gb, row.gt].map(v => String(v ?? '').trim());
+    const gapRaw = [row.gl, row.gr, row.gt, row.gb].map(v => String(v ?? '').trim());
     const gaps = gapRaw.some(v => v !== '') ? gapRaw.map(v => toNum(v, false)) : null;
     if (!Number.isFinite(group) || group < 1 || !Number.isFinite(col) || col < 1 ||
         !Number.isFinite(span) || span < 1 || !Number.isFinite(height) || height < 0 ||
@@ -911,10 +912,11 @@ function computeLayout(columnRows, componentRows) {
       warnings.push(`Components row ${idx + 1}: Tags need exactly one of ${KIND_TAGS.join(', ')}${tg.kinds.length ? ' (found ' + tg.kinds.join(' + ') + ')' : ''}.`);
       return;
     }
+    if (row.handle && !FRONT_TYPES.includes(type)) warnings.push(`Components row ${idx + 1}: a ${type} cannot have a handle.`);
     if (tg.unknown.length) warnings.push(`Components row ${idx + 1}: unknown tag ${tg.unknown.join(', ')} (known: ${[...KIND_TAGS, ...FEATURE_TAGS].join(', ')}).`);
     const k = String(row.k ?? '').trim();
     if (!k && ['cabinet', 'drawer', 'oven', 'micro'].includes(type) && !tg.tags.includes('dishwasher')) warnings.push(`Components row ${idx + 1}: ${type} has no carcass name.`);
-    if (FRONT_TYPES.includes(type) && !gaps) { compFlags[idx] = 'invalid'; warnings.push(`Components row ${idx + 1}: a ${type} front needs 4 gaps (L, R, B, T).`); return; }
+    if (FRONT_TYPES.includes(type) && !gaps) { compFlags[idx] = 'invalid'; warnings.push(`Components row ${idx + 1}: a ${type} front needs 4 gaps (L, R, T, B).`); return; }
     comps.push({ groupNum: group, colNum: col, colSpan: span, type, heightMm: height, handlePos: handle, gaps: FRONT_TYPES.includes(type) ? gaps : null, note: String(row.note ?? '').trim(), tags: tg.tags.join(' '), k });
   });
 
@@ -1016,8 +1018,8 @@ document.addEventListener('alpine:init', () => {
     get bannerText() { return this.status.message; },
 
     newColumnRow(group = '', width = '') { return { id: this.nextId++, group, width }; },
-    newComponentRow(group = '', col = '', span = '', tags = '', height = '', handle = '', gl = '', gr = '', gb = '', gt = '', note = '', k = '') {
-      return { id: this.nextId++, group, col, span, tags, k, height, handle, gl, gr, gb, gt, note };
+    newComponentRow(group = '', col = '', span = '', tags = '', height = '', handle = '', gl = '', gr = '', gt = '', gb = '', note = '', k = '') {
+      return { id: this.nextId++, group, col, span, tags, k, height, handle, gl, gr, gt, gb, note };
     },
     newNoteRow(name = '', description = '', details = '') { return { id: this.nextId++, name, description, details }; },
     autoGrow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; },
@@ -1032,7 +1034,7 @@ document.addEventListener('alpine:init', () => {
     seed(data) {
       this.notes = data.notes.map(([name, description, details]) => this.newNoteRow(name, description, details));
       this.columns = data.columns.map(([g, w]) => this.newColumnRow(g, w));
-      this.components = data.components.map(([g, c, s, t, h, hp, gl, gr, gb, gt, note, k]) => this.newComponentRow(g, c, s, t, h, hp, gl, gr, gb, gt, note || '', k || ''));
+      this.components = data.components.map(([g, c, s, t, h, hp, gl, gr, gt, gb, note, k]) => this.newComponentRow(g, c, s, t, h, hp, gl, gr, gt, gb, note || '', k || ''));
     },
 
     ensureEmptyRows() {
@@ -1056,7 +1058,7 @@ document.addEventListener('alpine:init', () => {
 
     insertComponentRow(idx) {
       const current = this.components[idx];
-      const cloned = this.newComponentRow(current.group, current.col, current.span, current.tags, current.height, current.handle, current.gl, current.gr, current.gb, current.gt, '', current.k);
+      const cloned = this.newComponentRow(current.group, current.col, current.span, current.tags, current.height, current.handle, current.gl, current.gr, current.gt, current.gb, '', current.k);
       this.components.splice(idx + 1, 0, cloned);
       this.$nextTick(() => this.$refs.componentsTbody.querySelectorAll('tr')[idx + 1]?.querySelector('input')?.focus());
     },
@@ -1067,7 +1069,12 @@ document.addEventListener('alpine:init', () => {
     hasFeat(row, f) { return parseTags(row.tags).features.includes(f); },
     featText(row) { return parseTags(row.tags).features.join(' '); },
     writeTags(row, kind, feats) { row.tags = [kind, ...FEATURE_TAGS.filter(f => feats.includes(f))].filter(Boolean).join(' '); },
-    setKind(row, kind) { this.writeTags(row, kind, parseTags(row.tags).features); },
+    isFront(row) { return FRONT_TYPES.includes(this.kindOf(row)); },
+    // a handle and the 4 gaps belong to fronts only: they are cleared when the row stops being a front
+    setKind(row, kind) {
+      this.writeTags(row, kind, parseTags(row.tags).features);
+      if (!FRONT_TYPES.includes(kind)) { row.handle = ''; row.gl = row.gr = row.gt = row.gb = ''; if (this.featPop.mode === 'handle') this.featPop.row = null; }
+    },
     toggleFeat(row, f) {
       const t = parseTags(row.tags), feats = t.features.includes(f) ? t.features.filter(x => x !== f) : [...t.features, f];
       this.writeTags(row, t.kind || '', feats);
@@ -1105,7 +1112,7 @@ document.addEventListener('alpine:init', () => {
     },
     onSvgLeave() { this.tooltip.show = false; },
     // e.g. "G1 · col 5 · cabinet dishwasher · 600 × 720 · front 596 × 718 · gaps 2:2:0:2 · Bosch SMV4HVX00E"
-    // (gaps left:right:bottom:top)
+    // (gaps left:right:top:bottom)
     describeComponent(group) {
       const A = k => group.getAttribute('data-' + k), c = +A('c'), sp = +A('s');
       const parts = [`G${A('g')}`, `col ${sp > 1 ? c + '–' + (c + sp - 1) : c}`, A('k'), A('tags'), `${A('w')} × ${A('h')}`];
@@ -1122,7 +1129,7 @@ document.addEventListener('alpine:init', () => {
       this.columns.forEach(c => { if (!isRowEmpty(c.group, c.width)) (columns[c.group] || (columns[c.group] = [])).push(Number(c.width)); });
       const components = this.components.filter(c => !isRowEmpty(c.group, c.col, c.span, c.height)).map(c => {
         const o = { g: Number(c.group), c: Number(c.col), s: Number(c.span), tags: parseTags(c.tags).tags.join(' '), k: String(c.k ?? '').trim(), h: Number(c.height), hd: c.handle || '' };
-        if (FRONT_TYPES.includes(parseTags(c.tags).kind)) o.gaps = [c.gl, c.gr, c.gb, c.gt].map(v => n(v));
+        if (FRONT_TYPES.includes(parseTags(c.tags).kind)) o.gaps = [c.gl, c.gr, c.gt, c.gb].map(v => n(v));
         if (String(c.note ?? '').trim()) o.note = String(c.note).trim();
         return o;
       });
