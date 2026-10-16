@@ -247,6 +247,17 @@
         }
         table.sheet input[type="number"] { text-align: right; }
         table.sheet select { cursor: pointer; }
+        .feat-btn { min-width: 150px; }
+        .feat-btn { width: 100%; border: none; background: transparent; padding: 7px 10px; font: inherit; color: var(--sheet-text);
+          text-align: left; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .feat-btn.empty { color: var(--sheet-ghost); }
+        .feat-btn:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--sheet-focus); background: #fff8e1; }
+        .feat-pop { position: fixed; z-index: 50; background: var(--sheet-bg); color: var(--sheet-text); border: 1px solid var(--sheet-border);
+          border-radius: 6px; box-shadow: 0 8px 24px rgba(15,23,42,.35); padding: 6px; display: grid; grid-template-columns: repeat(2, auto); gap: 2px 14px;
+          font: 13px ui-monospace, Menlo, Consolas, monospace; }
+        .feat-pop label { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+        .feat-pop label:hover { background: var(--sheet-row-hover); }
+        .feat-pop .pop-h { grid-column: 1 / -1; font: 600 11px system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--sheet-text-muted); padding: 6px 6px 2px; }
     
         td.col-actions { width: 56px; text-align: center; padding: 0 !important; white-space: nowrap; }
         td.col-actions button {
@@ -302,7 +313,7 @@
     <div class="input-grid">
       <div class="sub-section">
         <h4>Groups &amp; Columns</h4>
-        <div class="sheet-wrap">
+        <div class="sheet-wrap" @scroll="featPop.row = null">
           <table class="sheet">
             <thead>
               <tr><th style="width:60px">Group</th><th>Width</th><th class="col-actions"></th></tr>
@@ -323,14 +334,14 @@
       </div>
       <div class="sub-section">
         <h4>Components</h4>
-        <div class="sheet-wrap">
+        <div class="sheet-wrap" @scroll="featPop.row = null">
           <table class="sheet">
             <thead>
               <tr>
                 <th style="width:56px">Group</th>
                 <th style="width:52px">Col</th>
                 <th style="width:52px">Span</th>
-                <th style="width:170px" :title="TAG_HELP">Tags</th>
+                <th style="width:170px" title="One kind (radio) + any features (tick boxes)">Tags</th>
                 <th style="width:70px" title="Carcass name: components with the same name are one carcass (empty = no carcass)">Carcass</th>
                 <th style="width:70px">Height</th>
                 <th style="width:80px">Handle</th>
@@ -348,9 +359,7 @@
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.col"></td>
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.span"></td>
-                  <td>
-                    <input type="text" class="cell" spellcheck="false" placeholder="drawer sink" :title="TAG_HELP" x-model="row.tags">
-                  </td>
+                  <td><button type="button" class="feat-btn" :class="{empty: !row.tags}" @click="openFeatures(row, $event)" x-text="row.tags || '—'"></button></td>
                   <td><input type="text" class="cell" spellcheck="false" placeholder="—" x-model="row.k"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.height"></td>
                   <td>
@@ -373,6 +382,19 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- feature picker for one component row (fixed position, so the table scroll cannot clip it) -->
+  <div class="feat-pop" x-show="featPop.row" x-cloak :style="`left:${featPop.x}px; top:${featPop.y}px`"
+       @click.outside="if (!$event.target.closest('.feat-btn')) featPop.row = null" @keydown.escape.window="featPop.row = null">
+    <div class="pop-h">kind</div>
+    <template x-for="k in KIND_TAGS" :key="k">
+      <label><input type="radio" name="tag-kind" :checked="featPop.row && kindOf(featPop.row) === k" @change="setKind(featPop.row, k)"> <span x-text="k"></span></label>
+    </template>
+    <div class="pop-h">features</div>
+    <template x-for="f in FEATURE_TAGS" :key="f">
+      <label><input type="checkbox" :checked="featPop.row && hasFeat(featPop.row, f)" @change="toggleFeat(featPop.row, f)"> <span x-text="f"></span></label>
+    </template>
   </div>
 
   <div id="data-issues" x-show="build.warnings.length" x-cloak>
@@ -916,6 +938,9 @@ document.addEventListener('alpine:init', () => {
     nextId: 1,
     CONFIG,
     TAG_HELP,
+    KIND_TAGS,
+    FEATURE_TAGS,
+    featPop: { row: null, x: 0, y: 0 },
     HANDLE_POSITIONS,
     isRowEmpty,
     _statusTimer: null,
@@ -1022,6 +1047,23 @@ document.addEventListener('alpine:init', () => {
       this.$nextTick(() => this.$refs.componentsTbody.querySelectorAll('tr')[idx + 1]?.querySelector('input')?.focus());
     },
     removeComponentRow(idx) { this.components.splice(idx, 1); },
+
+    // tags are picked, never typed: one kind (radio) + features (tick boxes); stored as "kind feature feature"
+    kindOf(row) { return parseTags(row.tags).kind || ''; },
+    hasFeat(row, f) { return parseTags(row.tags).features.includes(f); },
+    featText(row) { return parseTags(row.tags).features.join(' '); },
+    writeTags(row, kind, feats) { row.tags = [kind, ...FEATURE_TAGS.filter(f => feats.includes(f))].filter(Boolean).join(' '); },
+    setKind(row, kind) { this.writeTags(row, kind, parseTags(row.tags).features); },
+    toggleFeat(row, f) {
+      const t = parseTags(row.tags), feats = t.features.includes(f) ? t.features.filter(x => x !== f) : [...t.features, f];
+      this.writeTags(row, t.kind || '', feats);
+    },
+    openFeatures(row, e) {
+      if (this.featPop.row === row) { this.featPop.row = null; return; }
+      const r = e.currentTarget.getBoundingClientRect();
+      const h = 330;   // popup height: below the cell, or above it when there is no room
+      this.featPop = { row, x: Math.min(r.left, window.innerWidth - 260), y: r.bottom + h < window.innerHeight ? r.bottom + 2 : Math.max(4, r.top - h - 2) };
+    },
 
     showStatus(message, isError) {
       clearTimeout(this._statusTimer);
