@@ -248,12 +248,15 @@
         table.sheet input[type="number"] { text-align: right; }
         table.sheet select { cursor: pointer; }
         .feat-btn { min-width: 150px; }
+        .feat-btn.hd-btn { min-width: 76px; }
+        .feat-pop .pop-sec { display: grid; grid-template-columns: repeat(2, auto); gap: 2px 14px; }
+        .feat-pop.one-col .pop-sec { grid-template-columns: auto; }
         .feat-btn { width: 100%; border: none; background: transparent; padding: 7px 10px; font: inherit; color: var(--sheet-text);
           text-align: left; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .feat-btn.empty { color: var(--sheet-ghost); }
         .feat-btn:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--sheet-focus); background: #fff8e1; }
         .feat-pop { position: fixed; z-index: 50; background: var(--sheet-bg); color: var(--sheet-text); border: 1px solid var(--sheet-border);
-          border-radius: 6px; box-shadow: 0 8px 24px rgba(15,23,42,.35); padding: 6px; display: grid; grid-template-columns: repeat(2, auto); gap: 2px 14px;
+          border-radius: 6px; box-shadow: 0 8px 24px rgba(15,23,42,.35); padding: 6px;
           font: 13px ui-monospace, Menlo, Consolas, monospace; }
         .feat-pop label { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
         .feat-pop label:hover { background: var(--sheet-row-hover); }
@@ -344,7 +347,7 @@
                 <th style="width:170px" title="One kind (radio) + any features (tick boxes)">Tags</th>
                 <th style="width:70px" title="Carcass name: components with the same name are one carcass (empty = no carcass)">Carcass</th>
                 <th style="width:70px">Height</th>
-                <th style="width:80px">Handle</th>
+                <th style="width:84px" title="Handle position on the front">Handle</th>
                 <th style="width:46px" title="Front gap left (mm)">Gap L</th>
                 <th style="width:46px" title="Front gap right (mm)">Gap R</th>
                 <th style="width:46px" title="Front gap bottom (mm)">Gap B</th>
@@ -363,9 +366,7 @@
                   <td><input type="text" class="cell" spellcheck="false" placeholder="—" x-model="row.k"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.height"></td>
                   <td>
-                    <select class="cell" x-model="row.handle">
-                      <option value="">—</option><option value="T">T</option><option value="B">B</option><option value="L">L</option><option value="R">R</option>
-                    </select>
+                    <button type="button" class="feat-btn hd-btn" :class="{empty: !row.handle}" @click="openFeatures(row, $event, 'handle')" x-text="HANDLE_NAMES[row.handle || ''] || row.handle"></button>
                   </td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gl"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gr"></td>
@@ -384,16 +385,28 @@
     </div>
   </div>
 
-  <!-- feature picker for one component row (fixed position, so the table scroll cannot clip it) -->
-  <div class="feat-pop" x-show="featPop.row" x-cloak :style="`left:${featPop.x}px; top:${featPop.y}px`"
+  <!-- ONE picker popup for a component row: either the handle or the tags (fixed position, so the table scroll cannot clip it) -->
+  <div class="feat-pop" :class="{'one-col': featPop.mode === 'handle'}" x-show="featPop.row" x-cloak :style="`left:${featPop.x}px; top:${featPop.y}px`"
        @click.outside="if (!$event.target.closest('.feat-btn')) featPop.row = null" @keydown.escape.window="featPop.row = null">
-    <div class="pop-h">kind</div>
-    <template x-for="k in KIND_TAGS" :key="k">
-      <label><input type="radio" name="tag-kind" :checked="featPop.row && kindOf(featPop.row) === k" @change="setKind(featPop.row, k)"> <span x-text="k"></span></label>
+    <template x-if="featPop.row && featPop.mode === 'handle'">
+      <div class="pop-sec">
+        <div class="pop-h">handle</div>
+        <template x-for="h in HANDLE_POSITIONS" :key="h || 'none'">
+          <label><input type="radio" name="handle-pos" :checked="(featPop.row.handle || '') === h" @change="featPop.row.handle = h; featPop.row = null"> <span x-text="HANDLE_NAMES[h]"></span></label>
+        </template>
+      </div>
     </template>
-    <div class="pop-h">features</div>
-    <template x-for="f in FEATURE_TAGS" :key="f">
-      <label><input type="checkbox" :checked="featPop.row && hasFeat(featPop.row, f)" @change="toggleFeat(featPop.row, f)"> <span x-text="f"></span></label>
+    <template x-if="featPop.row && featPop.mode === 'tags'">
+      <div class="pop-sec">
+        <div class="pop-h">kind</div>
+        <template x-for="k in KIND_TAGS" :key="k">
+          <label><input type="radio" name="tag-kind" :checked="kindOf(featPop.row) === k" @change="setKind(featPop.row, k)"> <span x-text="k"></span></label>
+        </template>
+        <div class="pop-h">features</div>
+        <template x-for="f in FEATURE_TAGS" :key="f">
+          <label><input type="checkbox" :checked="hasFeat(featPop.row, f)" @change="toggleFeat(featPop.row, f)"> <span x-text="f"></span></label>
+        </template>
+      </div>
     </template>
   </div>
 
@@ -940,7 +953,8 @@ document.addEventListener('alpine:init', () => {
     TAG_HELP,
     KIND_TAGS,
     FEATURE_TAGS,
-    featPop: { row: null, x: 0, y: 0 },
+    featPop: { row: null, mode: 'tags', x: 0, y: 0 },
+    HANDLE_NAMES: { '': 'none', T: 'top', B: 'bottom', L: 'left', R: 'right' },
     HANDLE_POSITIONS,
     isRowEmpty,
     _statusTimer: null,
@@ -1058,11 +1072,11 @@ document.addEventListener('alpine:init', () => {
       const t = parseTags(row.tags), feats = t.features.includes(f) ? t.features.filter(x => x !== f) : [...t.features, f];
       this.writeTags(row, t.kind || '', feats);
     },
-    openFeatures(row, e) {
-      if (this.featPop.row === row) { this.featPop.row = null; return; }
+    openFeatures(row, e, mode = 'tags') {
+      if (this.featPop.row === row && this.featPop.mode === mode) { this.featPop.row = null; return; }
       const r = e.currentTarget.getBoundingClientRect();
-      const h = 330;   // popup height: below the cell, or above it when there is no room
-      this.featPop = { row, x: Math.min(r.left, window.innerWidth - 260), y: r.bottom + h < window.innerHeight ? r.bottom + 2 : Math.max(4, r.top - h - 2) };
+      const h = mode === 'handle' ? 190 : 330;   // popup height: below the cell, or above it when there is no room
+      this.featPop = { row, mode, x: Math.min(r.left, window.innerWidth - 260), y: r.bottom + h < window.innerHeight ? r.bottom + 2 : Math.max(4, r.top - h - 2) };
     },
 
     showStatus(message, isError) {
