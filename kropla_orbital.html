@@ -1,0 +1,554 @@
+<title>Kropla i orbital</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: jedna kolumna tekstu (~68ch), figury szersze na tle karty; sekcje jak rozdziały notatek z laboratorium spektroskopii */
+:root{
+  --bg:#F3F5F7; --surface:#FFFFFF; --fg:#151A22; --muted:#5B6574; --line:#D6DBE2;
+  --accent:#3346C8; --plus:#D2582A; --minus:#16897F; --neutral:#B9BFC8; --chip:#E9EDF2;
+  --f-display:"Spectral",Georgia,"Times New Roman",serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1318; --surface:#161B22; --fg:#E5E9EF; --muted:#98A2B1; --line:#2A313B;
+  --accent:#8C9BFF; --plus:#F0824F; --minus:#3CC0B2; --neutral:#5E6672; --chip:#1E242D; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1318; --surface:#161B22; --fg:#E5E9EF; --muted:#98A2B1; --line:#2A313B;
+  --accent:#8C9BFF; --plus:#F0824F; --minus:#3CC0B2; --neutral:#5E6672; --chip:#1E242D; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+main{max-width:1060px;margin:0 auto;padding-block:48px 64px;display:flex;flex-direction:column;gap:56px}
+section{display:flex;flex-direction:column;gap:18px;min-width:0}
+.prose{max-width:68ch;display:flex;flex-direction:column;gap:14px}
+.prose p,.prose ul{margin:0}
+.prose ul{padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2.4rem,6vw,4rem);letter-spacing:-0.01em}
+h2{font-size:clamp(1.6rem,3.4vw,2.1rem)}
+h3{font-size:1.3rem}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lede{font-family:var(--f-display);font-size:1.25rem;line-height:1.5;max-width:60ch;margin:0}
+header{display:flex;flex-direction:column;gap:14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.sw{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.eq{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:4px 0}
+.eq mjx-container{margin:6px 0!important}
+.figure{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.figgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px}
+@media (max-width:760px){.figgrid{grid-template-columns:minmax(0,1fr)}}
+canvas{display:block;width:100%;touch-action:none}
+.grab{cursor:grab}.grab:active{cursor:grabbing}
+.cap{font-size:14px;color:var(--muted);margin:0;max-width:72ch}
+.status{font-family:var(--f-mono);font-size:13px;color:var(--fg);min-height:1.4em}
+.ctl{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.row>label,.rowlab{font-size:14px;color:var(--muted);min-width:9.5em}
+.row input[type=range]{flex:1;min-width:140px;accent-color:var(--accent)}
+.row output{font-family:var(--f-mono);font-size:14px;min-width:4.5em;text-align:right;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+button{font-family:var(--f-body);font-size:14px;color:var(--fg);background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:5px 11px;cursor:pointer;line-height:1.3}
+button:hover{border-color:var(--muted)}
+button.on{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tablewrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums;min-width:520px}
+th,td{text-align:left;padding:7px 14px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.l{font-family:var(--f-display);font-size:1.2rem}
+.tables{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:28px}
+.gal{display:flex;flex-direction:column;gap:18px}
+.galrow{display:flex;flex-direction:column;gap:8px}
+.galhead{font-size:14px;color:var(--muted)}
+.galhead b{font-family:var(--f-display);font-size:1.15rem;color:var(--fg);font-weight:600;margin-right:6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px}
+.card{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 8px;background:transparent;border:1px solid var(--line);border-radius:8px}
+.card canvas{width:100%;aspect-ratio:1;max-width:100%}
+.card .nm{font-family:var(--f-display);font-size:1.05rem}
+.card .cart{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.card.on{border-color:var(--accent);background:var(--chip)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{display:flex;flex-direction:column;gap:2px;padding:8px 10px;background:var(--chip);border-radius:6px;min-width:0}
+.stat span{font-size:12px;color:var(--muted)}
+.stat b{font-family:var(--f-mono);font-weight:400;font-size:15px;font-variant-numeric:tabular-nums}
+.verdict{font-size:15px;padding:10px 12px;border-radius:6px;background:var(--chip);border-left:3px solid var(--muted)}
+.verdict.ok{border-left-color:var(--plus)}
+.verdict.no{border-left-color:var(--minus)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:14px;color:var(--muted);max-width:80ch}
+sub,sup{font-size:.7em}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<main>
+<header>
+  <span class="eyebrow">Fale stojące na sferze</span>
+  <h1>Kropla i orbital</h1>
+  <p class="lede">Potrząsana kropla wody i elektron w atomie wodoru rozwiązują to samo równanie na powierzchni kuli. Ich dozwolone kształty to harmoniki sferyczne. Poniżej trzy modele: kropla w drgającej misce, katalog orbitali wodoru i superpozycja dwóch stanów, w której elektron zaczyna świecić.</p>
+  <div class="legend"><span><i class="sw" style="background:var(--plus)"></i>znak dodatni / wybrzuszenie</span><span><i class="sw" style="background:var(--minus)"></i>znak ujemny / wgłębienie</span></div>
+</header>
+
+<!-- KROPLA -->
+<section id="kropla">
+  <span class="eyebrow">Model klasyczny</span>
+  <h2>Kropla w drgającej misce</h2>
+  <div class="prose">
+    <p>Powierzchnię kropli o promieniu R rozpisujemy na sumę harmonik sferycznych. Każdy współczynnik a<sub>lm</sub>(t) zachowuje się jak osobny oscylator.</p>
+  </div>
+  <div class="eq">$$ r(\theta,\varphi,t)=R\Big[\,1+\sum_{l\ge 2}\;\sum_{m=-l}^{l} a_{lm}(t)\,Y_{lm}(\theta,\varphi)\Big] $$</div>
+  <div class="prose">
+    <p>Częstotliwości własne wyliczył Rayleigh w 1879 roku dla kropli bez lepkości, którą w kształcie kuli trzyma napięcie powierzchniowe σ przy gęstości ρ:</p>
+  </div>
+  <div class="eq">$$ \omega_l^{2}=\frac{\sigma}{\rho R^{3}}\;l\,(l-1)\,(l+2) $$</div>
+  <div class="prose">
+    <p>Dwa najniższe wyrazy nie drgają. Mod l = 0 zmieniałby objętość, a woda jest praktycznie nieściśliwa. Mod l = 1 przesuwa całą kroplę bez zmiany kształtu, więc ω<sub>1</sub> = 0. Pierwsze prawdziwe drganie to l = 2, które ma kształt orbitalu d.</p>
+    <p>Miska popycha każdy mod siłą F<sub>lm</sub> cos Ωt. W stanie ustalonym amplituda zależy od odległości Ω od ω<sub>l</sub>, dlatego odpowiedź ma ostre piki:</p>
+  </div>
+  <div class="eq">$$ \ddot a_{lm}+\gamma\,\dot a_{lm}+\omega_l^{2}\,a_{lm}=F_{lm}\cos\Omega t
+  \qquad\Longrightarrow\qquad
+  |a_{lm}|=\frac{F_{lm}}{\sqrt{\big(\omega_l^{2}-\Omega^{2}\big)^{2}+\gamma^{2}\Omega^{2}}} $$</div>
+
+  <div class="figure">
+    <canvas id="dropCv" class="grab" style="height:380px" aria-label="Trójwymiarowa kropla wody drgająca w misce"></canvas>
+    <div class="status" id="dropInfo"></div>
+    <canvas id="dropResp" style="height:110px" aria-label="Krzywa rezonansowa kropli"></canvas>
+    <div class="ctl">
+      <div class="row"><label for="dropW">Częstotliwość miski Ω/ω₂</label><input type="range" id="dropW" min="0.3" max="6.5" step="0.01" value="1"><output id="dropWo">1,00</output></div>
+      <div class="row"><label for="dropM">Symetria wymuszenia m</label><input type="range" id="dropM" min="0" max="6" step="1" value="0"><output id="dropMo">0</output></div>
+      <div class="row"><span class="rowlab">Ustaw rezonans</span><div class="chips" id="dropBtns"></div></div>
+      <div class="row"><span class="rowlab">Symulacja</span><div class="chips"><button id="dropPause">Pauza</button><button id="dropReset">Uspokój wodę</button></div></div>
+    </div>
+    <p class="cap">Częstotliwość w jednostkach ω₂, czyli ω<sub>l</sub>/ω₂ = √(l(l−1)(l+2)/8). Symetria m wybiera mody, które miska popycha; mod istnieje tylko dla l ≥ m. Przeciągnij kroplę, żeby ją obrócić.</p>
+  </div>
+
+  <div class="prose">
+    <p>Kształty, które tu powstają, są funkcjami własnymi laplasjanu na sferze. Ten sam operator rządzi kątową częścią funkcji falowej elektronu:</p>
+  </div>
+  <div class="eq">$$ \nabla^{2}_{S^2}\,Y_{lm}=-\,l(l+1)\,Y_{lm},\qquad
+  \nabla^{2}_{S^2}=\frac{1}{\sin\theta}\frac{\partial}{\partial\theta}\Big(\sin\theta\,\frac{\partial}{\partial\theta}\Big)+\frac{1}{\sin^{2}\theta}\frac{\partial^{2}}{\partial\varphi^{2}} $$</div>
+</section>
+
+<!-- ATOM -->
+<section id="atom">
+  <span class="eyebrow">Model kwantowy</span>
+  <h2>Atom wodoru</h2>
+  <div class="prose">
+    <p>Elektron w polu protonu spełnia równanie Schrödingera z potencjałem kulombowskim. Potencjał zależy tylko od odległości r, więc rozwiązanie rozdziela się na część radialną i kątową (μ to masa zredukowana elektronu i protonu):</p>
+  </div>
+  <div class="eq">$$ \Big[-\frac{\hbar^{2}}{2\mu}\nabla^{2}-\frac{e^{2}}{4\pi\varepsilon_0\,r}\Big]\psi=E\,\psi,
+  \qquad \psi_{nlm}(r,\theta,\varphi)=R_{nl}(r)\,Y_{lm}(\theta,\varphi) $$</div>
+  <div class="prose">
+    <p>Część kątowa to te same harmoniki, co w kropli. Są funkcjami własnymi kwadratu momentu pędu i jego rzutu na oś z:</p>
+  </div>
+  <div class="eq">$$ \hat L^{2}\,Y_{lm}=\hbar^{2}\,l(l+1)\,Y_{lm},\qquad \hat L_z\,Y_{lm}=\hbar\,m\,Y_{lm} $$</div>
+  <div class="eq">$$ Y_{lm}(\theta,\varphi)=(-1)^{m}\sqrt{\frac{2l+1}{4\pi}\,\frac{(l-m)!}{(l+m)!}}\;P_l^{m}(\cos\theta)\,e^{im\varphi},
+  \qquad Y_{l,-m}=(-1)^{m}\,Y_{lm}^{*}\quad(m\ge 0) $$</div>
+  <div class="eq">$$ P_l^{m}(x)=(1-x^{2})^{m/2}\,\frac{d^{m}}{dx^{m}}P_l(x),\qquad P_l(x)=\frac{1}{2^{l}\,l!}\,\frac{d^{l}}{dx^{l}}\big(x^{2}-1\big)^{l} $$</div>
+  <div class="prose">
+    <p>Funkcje z e<sup>imφ</sup> są zespolone. Chemicy rysują ich rzeczywiste kombinacje, czyli orbitale p<sub>x</sub>, d<sub>xy</sub> i podobne. Dla m &gt; 0 bierzemy cosinus, dla m &lt; 0 sinus:</p>
+  </div>
+  <div class="eq">$$ S_{lm}(\theta,\varphi)=\sqrt{2}\,N_{l|m|}\,P_l^{|m|}(\cos\theta)\times
+  \begin{cases}\cos m\varphi, & m>0\\[2pt] \sin |m|\varphi, & m<0\end{cases},
+  \qquad S_{l0}=N_{l0}\,P_l(\cos\theta),\qquad N_{lm}=\sqrt{\frac{2l+1}{4\pi}\frac{(l-m)!}{(l+m)!}} $$</div>
+  <div class="prose">
+    <p>Część radialna zawiera uogólnione wielomiany Laguerre’a. Odległości mierzymy w promieniach Bohra a<sub>0</sub> = 0,529 Å:</p>
+  </div>
+  <div class="eq">$$ R_{nl}(r)=\sqrt{\Big(\frac{2}{n a_0}\Big)^{3}\frac{(n-l-1)!}{2n\,(n+l)!}}\;
+  e^{-r/na_0}\Big(\frac{2r}{n a_0}\Big)^{l}\,L^{(2l+1)}_{n-l-1}\Big(\frac{2r}{n a_0}\Big) $$</div>
+  <div class="eq">$$ E_n=-\frac{\mu\,e^{4}}{2\,(4\pi\varepsilon_0)^{2}\hbar^{2}}\,\frac{1}{n^{2}}\approx-\frac{13{,}598\ \mathrm{eV}}{n^{2}},
+  \qquad n=1,2,3,\dots\quad l=0,1,\dots,n-1\quad m=-l,\dots,l $$</div>
+  <div class="prose">
+    <p>Energia zależy tylko od n. Wszystkie stany z tym samym n mają tę samą energię, a ich liczba to n². To przypadkowa degeneracja potencjału 1/r, której kropla nie ma.</p>
+  </div>
+  <div class="eq">$$ \sum_{l=0}^{n-1}(2l+1)=n^{2},\qquad
+  \underbrace{n-l-1}_{\text{węzły radialne}}\;+\;\underbrace{l}_{\text{węzły kątowe}}\;=\;n-1,\qquad
+  \langle r\rangle_{nl}=\frac{a_0}{2}\big[\,3n^{2}-l(l+1)\big] $$</div>
+  <div class="prose">
+    <p>Spośród l kątowych powierzchni węzłowych |m| to płaszczyzny zawierające oś z, a pozostałe l − |m| to stożki wokół tej osi.</p>
+  </div>
+
+  <div class="tables">
+    <div class="tablewrap"><table>
+      <thead><tr><th>Typ</th><th>l</th><th>Orbitali</th><th>Elektronów</th><th>Nazwa linii</th></tr></thead>
+      <tbody>
+        <tr><td class="l">s</td><td>0</td><td>1</td><td>2</td><td>sharp, ostra</td></tr>
+        <tr><td class="l">p</td><td>1</td><td>3</td><td>6</td><td>principal, główna</td></tr>
+        <tr><td class="l">d</td><td>2</td><td>5</td><td>10</td><td>diffuse, rozmyta</td></tr>
+        <tr><td class="l">f</td><td>3</td><td>7</td><td>14</td><td>fundamental, podstawowa</td></tr>
+        <tr><td class="l">g, h, i, k</td><td>4–7</td><td>2l + 1</td><td>2(2l + 1)</td><td>dalej alfabetycznie, bez j</td></tr>
+      </tbody></table></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>n</th><th>Powłoka</th><th>Podpowłoki</th><th>n²</th><th>2n²</th><th>E<sub>n</sub> [eV]</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>K</td><td>1s</td><td>1</td><td>2</td><td>−13,60</td></tr>
+        <tr><td>2</td><td>L</td><td>2s 2p</td><td>4</td><td>8</td><td>−3,40</td></tr>
+        <tr><td>3</td><td>M</td><td>3s 3p 3d</td><td>9</td><td>18</td><td>−1,51</td></tr>
+        <tr><td>4</td><td>N</td><td>4s 4p 4d 4f</td><td>16</td><td>32</td><td>−0,85</td></tr>
+        <tr><td>5</td><td>O</td><td>5s … 5g</td><td>25</td><td>50</td><td>−0,54</td></tr>
+      </tbody></table></div>
+  </div>
+  <p class="cap">Litery s, p, d, f pochodzą z XIX-wiecznej spektroskopii metali alkalicznych, gdzie opisywały wygląd serii linii. Liczby elektronów uwzględniają dwa stany spinu.</p>
+</section>
+
+<!-- ORBITALE -->
+<section id="orbitale">
+  <span class="eyebrow">Katalog</span>
+  <h2>Kształty orbitali</h2>
+  <div class="prose">
+    <p>Każda bryła poniżej to wykres biegunowy rzeczywistej harmoniki: odległość powierzchni od środka równa się |S<sub>lm</sub>(θ, φ)|, a kolor to jej znak. Oś z jest pionowa. Kliknij orbital, żeby zobaczyć go w pełnym atomie w eksploratorze niżej.</p>
+  </div>
+  <div class="figure"><div class="gal" id="gallery"></div></div>
+  <div class="prose"><p>Te same funkcje w postaci kartezjańskiej, gdzie r² = x² + y² + z²:</p></div>
+  <div class="eq">$$ \begin{aligned}
+  s&:\ \tfrac{1}{2}\sqrt{\tfrac{1}{\pi}}
+  && p_x,\,p_y,\,p_z:\ \sqrt{\tfrac{3}{4\pi}}\;\frac{x,\ y,\ z}{r}\\[6pt]
+  d_{z^2}&:\ \tfrac14\sqrt{\tfrac{5}{\pi}}\,\frac{3z^{2}-r^{2}}{r^{2}}
+  && d_{xz},\,d_{yz},\,d_{xy}:\ \tfrac12\sqrt{\tfrac{15}{\pi}}\,\frac{xz,\ yz,\ xy}{r^{2}}
+  \qquad d_{x^2-y^2}:\ \tfrac14\sqrt{\tfrac{15}{\pi}}\,\frac{x^{2}-y^{2}}{r^{2}}\\[6pt]
+  f_{z^3}&:\ \tfrac14\sqrt{\tfrac{7}{\pi}}\,\frac{z\,(5z^{2}-3r^{2})}{r^{3}}
+  && f_{xz^2},\,f_{yz^2}:\ \tfrac18\sqrt{\tfrac{42}{\pi}}\,\frac{x\,(5z^{2}-r^{2}),\ y\,(5z^{2}-r^{2})}{r^{3}}\\[6pt]
+  f_{z(x^2-y^2)}&:\ \tfrac14\sqrt{\tfrac{105}{\pi}}\,\frac{z\,(x^{2}-y^{2})}{r^{3}}
+  && f_{xyz}:\ \tfrac12\sqrt{\tfrac{105}{\pi}}\,\frac{xyz}{r^{3}}\\[6pt]
+  f_{x(x^2-3y^2)}&:\ \tfrac18\sqrt{\tfrac{70}{\pi}}\,\frac{x\,(x^{2}-3y^{2})}{r^{3}}
+  && f_{y(3x^2-y^2)}:\ \tfrac18\sqrt{\tfrac{70}{\pi}}\,\frac{y\,(3x^{2}-y^{2})}{r^{3}}
+  \end{aligned} $$</div>
+
+  <h3 id="explorer">Eksplorator ψ<sub>nlm</sub></h3>
+  <div class="prose">
+    <p>Chmura to 14 000 punktów wylosowanych z rozkładu |ψ|². Kolor punktu to znak ψ, więc węzły radialne widać jako granice między warstwami. Wykres obok pokazuje, na jakiej odległości od jądra najczęściej znajduje się elektron:</p>
+  </div>
+  <div class="eq">$$ P(r)\,dr=r^{2}R_{nl}^{2}(r)\,dr,\qquad \int_0^\infty P(r)\,dr=1 $$</div>
+  <div class="figure">
+    <div class="ctl">
+      <div class="row"><span class="rowlab">Liczba główna n</span><div class="chips" id="exN"></div></div>
+      <div class="row"><span class="rowlab">Typ orbitalu l</span><div class="chips" id="exL"></div></div>
+      <div class="row"><span class="rowlab">Orbital m</span><div class="chips" id="exM"></div></div>
+    </div>
+    <div class="figgrid">
+      <canvas id="cloudCv" class="grab" style="height:360px" aria-label="Chmura prawdopodobieństwa elektronu"></canvas>
+      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+        <canvas id="radCv" style="height:200px" aria-label="Radialny rozkład prawdopodobieństwa"></canvas>
+        <div class="stats" id="exStats"></div>
+      </div>
+    </div>
+    <p class="cap">Przeciągnij chmurę, żeby ją obrócić. Pionowa oś to z. Przerywane linie na wykresie to węzły radialne, pomarańczowa linia to średni promień ⟨r⟩.</p>
+  </div>
+</section>
+
+<!-- SUPERPOZYCJA -->
+<section id="superpozycja">
+  <span class="eyebrow">Dynamika</span>
+  <h2>Superpozycja i światło</h2>
+  <div class="prose">
+    <p>Stan stacjonarny ψ<sub>nlm</sub> nie zmienia się w czasie poza fazą e<sup>−iEt/ħ</sup>, więc gęstość |ψ|² stoi w miejscu. Ruch pojawia się dopiero w mieszance dwóch stanów o różnych energiach. Dla rzeczywistych ψ i współczynników c:</p>
+  </div>
+  <div class="eq">$$ \Psi(\mathbf r,t)=c_1\,\psi_1\,e^{-iE_1t/\hbar}+c_2\,\psi_2\,e^{-iE_2t/\hbar},\qquad c_1^{2}+c_2^{2}=1 $$</div>
+  <div class="eq">$$ |\Psi|^{2}=c_1^{2}\psi_1^{2}+c_2^{2}\psi_2^{2}+2c_1c_2\,\psi_1\psi_2\cos\omega_{21}t,\qquad \omega_{21}=\frac{E_2-E_1}{\hbar} $$</div>
+  <div class="prose">
+    <p>Środek ładunku drga z częstotliwością ω<sub>21</sub>, o ile element macierzowy dipola jest różny od zera. Dla stanów z m = 0 rozkłada się on na całkę radialną i czynnik kątowy:</p>
+  </div>
+  <div class="eq">$$ \langle z\rangle(t)=2c_1c_2\,\langle\psi_1|\,z\,|\psi_2\rangle\cos\omega_{21}t $$</div>
+  <div class="eq">$$ \langle n'l'0|\,z\,|\,nl0\rangle=\int_0^\infty R_{n'l'}(r)\,R_{nl}(r)\,r^{3}\,dr\;\times\;\langle l'0|\cos\theta|l0\rangle,
+  \qquad \langle l{+}1,0|\cos\theta|l,0\rangle=\frac{l+1}{\sqrt{(2l+1)(2l+3)}} $$</div>
+  <div class="prose">
+    <p>Czynnik kątowy znika, jeśli l' ≠ l ± 1. Stąd reguły wyboru dla przejść dipolowych. Drgający dipol promieniuje, a szybkość emisji spontanicznej i długość fali to:</p>
+  </div>
+  <div class="eq">$$ \Delta l=\pm 1,\qquad \Delta m=0,\pm1,\qquad
+  A=\frac{\omega_{21}^{3}\,e^{2}\,\big|\langle\psi_1|z|\psi_2\rangle\big|^{2}}{3\pi\varepsilon_0\,\hbar\,c^{3}},\qquad
+  \lambda=\frac{2\pi c}{\omega_{21}} $$</div>
+
+  <div class="figure">
+    <div class="ctl">
+      <div class="row"><span class="rowlab">Stan 1</span><div class="chips" id="supA"></div></div>
+      <div class="row"><span class="rowlab">Stan 2</span><div class="chips" id="supB"></div></div>
+      <div class="row"><label for="supMix">Udział stanu 2, c₂²</label><input type="range" id="supMix" min="0" max="100" step="1" value="50"><output id="supMixO">50%</output></div>
+    </div>
+    <div class="figgrid">
+      <canvas id="supCv" style="height:360px" aria-label="Przekrój gęstości elektronu w superpozycji"></canvas>
+      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+        <div class="verdict" id="supVerdict"></div>
+        <div class="stats" id="supStats"></div>
+        <canvas id="supTrace" style="height:110px" aria-label="Położenie środka ładunku w czasie"></canvas>
+        <div class="chips"><button id="supPause">Pauza</button></div>
+      </div>
+    </div>
+    <p class="cap" id="supCap">Przekrój płaszczyzną xz przez jądro, oś z pionowo. Stany p, d, f to p<sub>z</sub>, d<sub>z²</sub>, f<sub>z³</sub> (m = 0). Pomarańczowa kropka to środek ładunku ⟨z⟩.</p>
+  </div>
+  <div class="prose">
+    <p>Przejście 2p → 1s ma A ≈ 6,3 × 10⁸ s⁻¹, więc stan 2p żyje około 1,6 ns. Stan 2s nie ma dokąd zejść dipolowo: 1s ma to samo l, a 2p leży na tej samej energii. Rozpada się przez emisję dwóch fotonów naraz i żyje około 0,12 s, czyli sto milionów razy dłużej.</p>
+  </div>
+</section>
+
+<section id="granice">
+  <span class="eyebrow">Uczciwie</span>
+  <h2>Gdzie analogia się kończy</h2>
+  <div class="prose"><ul>
+    <li>Kropla drga naprawdę: jej powierzchnia przesuwa się w przestrzeni. Czysty stan elektronu nie drga. Wiruje tylko faza funkcji falowej, której nie da się zobaczyć.</li>
+    <li>Częstotliwości rosną inaczej. W kropli ω<sub>l</sub> zależy od l, a w wodorze energia zależy tylko od n. Kropla nie ma też modów s i p, które w atomie istnieją.</li>
+    <li>Rolę miski dla atomu pełni pole elektryczne fali świetlnej. Rezonans to absorpcja fotonu, gdy ħΩ = E<sub>2</sub> − E<sub>1</sub>.</li>
+    <li>Prawdziwa kropla w misce drganej pionowo często odpowiada parametrycznie, z połową częstotliwości miski (fale Faradaya). Model powyżej używa prostszego wymuszenia bezpośredniego.</li>
+    <li>Pominięto spin i strukturę subtelną. Równanie Diraca rozszczepia na przykład 2p na 2p<sub>1/2</sub> i 2p<sub>3/2</sub>.</li>
+  </ul></div>
+</section>
+
+<footer>Obliczenia w jednostkach atomowych z masą zredukowaną μ = m<sub>e</sub>/(1 + m<sub>e</sub>/m<sub>p</sub>), bez struktury subtelnej. Długości fal podane w próżni. Funkcje falowe są dokładnymi rozwiązaniami nierelatywistycznymi; dynamika kropli to liniowy model Rayleigha z tłumieniem.</footer>
+</main>
+
+<script>
+window.MathJax={tex:{inlineMath:[],displayMath:[['$$','$$']]},svg:{fontCache:'global'},options:{enableMenu:false}};
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+<script>
+(()=>{
+const PI=Math.PI,$=id=>document.getElementById(id);
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fact=[1];for(let i=1;i<=30;i++)fact[i]=fact[i-1]*i;
+const LET='spdfghik';
+const nf=(v,d)=>v.toLocaleString('pl-PL',{minimumFractionDigits:d,maximumFractionDigits:d});
+const SUPD={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+function sci(v){if(!isFinite(v)||v===0)return '0';const e=Math.floor(Math.log10(Math.abs(v)));const m=v/Math.pow(10,e);if(e>=-2&&e<=3)return nf(v,e<0?3:2);return nf(m,2)+' × 10'+String(e).split('').map(c=>SUPD[c]).join('');}
+
+/* ---------- matematyka ---------- */
+function plm(l,m,x){let pmm=1;if(m>0){const s=Math.sqrt(Math.max(0,1-x*x));let f=1;for(let i=1;i<=m;i++){pmm*=f*s;f+=2;}}
+  if(l===m)return pmm;let p1=x*(2*m+1)*pmm;if(l===m+1)return p1;let pl=0;
+  for(let ll=m+2;ll<=l;ll++){pl=(x*(2*ll-1)*p1-(ll+m-1)*pmm)/(ll-m);pmm=p1;p1=pl;}return pl;}
+const Nlm=(l,m)=>Math.sqrt((2*l+1)/(4*PI)*fact[l-m]/fact[l+m]);
+function Sr(l,m,ct,ph){const a=Math.abs(m),p=Nlm(l,a)*plm(l,a,ct);if(!m)return p;return Math.SQRT2*p*(m>0?Math.cos(a*ph):Math.sin(a*ph));}
+function lag(k,a,x){if(k===0)return 1;let L0=1,L1=1+a-x;for(let i=1;i<k;i++){const L2=((2*i+1+a-x)*L1-(i+a)*L0)/(i+1);L0=L1;L1=L2;}return L1;}
+function Rnl(n,l,r){const rho=2*r/n;const N=Math.sqrt(Math.pow(2/n,3)*fact[n-l-1]/(2*n*fact[n+l]));return N*Math.exp(-r/n)*Math.pow(rho,l)*lag(n-l-1,2*l+1,rho);}
+const rmaxOf=n=>n*(2*n+8);
+const MU=1/(1+1/1836.15267);
+const EH_EV=27.211386, AU_T=2.4188843e-17, ALPHA=1/137.035999;
+const En=n=>-0.5*MU/(n*n);
+
+/* ---------- nazwy ---------- */
+const NAMES={'0,0':['s','1'],'1,0':['p<sub>z</sub>','z'],'1,1':['p<sub>x</sub>','x'],'1,-1':['p<sub>y</sub>','y'],
+'2,0':['d<sub>z²</sub>','3z²−r²'],'2,1':['d<sub>xz</sub>','xz'],'2,-1':['d<sub>yz</sub>','yz'],'2,2':['d<sub>x²−y²</sub>','x²−y²'],'2,-2':['d<sub>xy</sub>','xy'],
+'3,0':['f<sub>z³</sub>','z(5z²−3r²)'],'3,1':['f<sub>xz²</sub>','x(5z²−r²)'],'3,-1':['f<sub>yz²</sub>','y(5z²−r²)'],'3,2':['f<sub>z(x²−y²)</sub>','z(x²−y²)'],'3,-2':['f<sub>xyz</sub>','xyz'],'3,3':['f<sub>x(x²−3y²)</sub>','x(x²−3y²)'],'3,-3':['f<sub>y(3x²−y²)</sub>','y(3x²−y²)']};
+const nameOf=(l,m)=>NAMES[l+','+m]?NAMES[l+','+m][0]:LET[l]+'<sub>m='+m+'</sub>';
+const mOrder=l=>{const a=[0];for(let k=1;k<=l;k++)a.push(k,-k);return a;};
+
+/* ---------- motyw ---------- */
+const T={};
+function hex(h){h=h.replace('#','').trim();return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function readT(){const s=getComputedStyle(document.documentElement);for(const k of['fg','muted','line','accent','plus','minus','neutral','surface','chip'])T[k]=s.getPropertyValue('--'+k).trim();for(const k of['fg','plus','minus','neutral'])T[k+'R']=hex(T[k]);}
+readT();
+const FONT=d=>`${11*d}px "Source Sans 3", system-ui, sans-serif`;
+function fit(c){const d=window.devicePixelRatio||1,w=Math.round(c.clientWidth*d),h=Math.round(c.clientHeight*d);if(c.width!==w||c.height!==h){c.width=w;c.height=h;}return d;}
+
+/* ---------- siatka sfery i renderer ---------- */
+function Mesh(NT,NP){const NV=(NT+1)*(NP+1),m={NT,NP,NV,ux:new Float32Array(NV),uy:new Float32Array(NV),uz:new Float32Array(NV),ph:new Float32Array(NV),
+  X:new Float32Array(NV),Y:new Float32Array(NV),Z:new Float32Array(NV),sx:new Float32Array(NV),sy:new Float32Array(NV),Q:[]};
+  for(let i=0;i<=NT;i++)for(let j=0;j<=NP;j++){const th=PI*i/NT,ph=2*PI*j/NP,k=i*(NP+1)+j;m.ux[k]=Math.sin(th)*Math.cos(ph);m.uy[k]=Math.sin(th)*Math.sin(ph);m.uz[k]=Math.cos(th);m.ph[k]=ph;}
+  for(let i=0;i<NT;i++)for(let j=0;j<NP;j++)m.Q.push({k:i*(NP+1)+j,z:0,c:''});return m;}
+const LX=-0.42,LY=0.62,LZ=0.66;
+function drawMesh(ctx,m,rad,val,yaw,pitch,cx,cy,S){
+  const cyw=Math.cos(yaw),syw=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch),NP1=m.NP+1;
+  for(let k=0;k<m.NV;k++){const r=rad[k],x=m.ux[k]*r,y=m.uy[k]*r,z=m.uz[k]*r,x1=x*cyw-y*syw,y1=x*syw+y*cyw;
+    const X=x1,Y=y1*sp+z*cp,Z=-y1*cp+z*sp,f=3.6/(3.6-Z);m.X[k]=X;m.Y[k]=Y;m.Z[k]=Z;m.sx[k]=cx+X*S*f;m.sy[k]=cy-Y*S*f;}
+  const N=T.neutralR,P=T.plusR,M=T.minusR;
+  for(const q of m.Q){const a=q.k,b=a+1,c=a+NP1,d=c+1;q.z=(m.Z[a]+m.Z[b]+m.Z[c]+m.Z[d])*0.25;
+    const ux=m.X[d]-m.X[a],uy=m.Y[d]-m.Y[a],uz=m.Z[d]-m.Z[a],vx=m.X[c]-m.X[b],vy=m.Y[c]-m.Y[b],vz=m.Z[c]-m.Z[b];
+    let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const nl=Math.hypot(nx,ny,nz)||1;
+    const px=m.X[a]+m.X[d],py=m.Y[a]+m.Y[d],pz=m.Z[a]+m.Z[d];if(nx*px+ny*py+nz*pz<0){nx=-nx;ny=-ny;nz=-nz;}
+    const sh=0.34+0.66*Math.max(0,(nx*LX+ny*LY+nz*LZ)/nl);
+    const v=Math.max(-1,Math.min(1,(val[a]+val[b]+val[c]+val[d])*0.25)),e=Math.abs(v),C=v>=0?P:M;
+    q.c='rgb('+((N[0]+(C[0]-N[0])*e)*sh|0)+','+((N[1]+(C[1]-N[1])*e)*sh|0)+','+((N[2]+(C[2]-N[2])*e)*sh|0)+')';}
+  m.Q.sort((p,q)=>p.z-q.z);ctx.lineWidth=0.7;ctx.lineJoin='round';
+  for(const q of m.Q){const a=q.k,b=a+1,c=a+NP1,d=c+1;ctx.fillStyle=q.c;ctx.strokeStyle=q.c;ctx.beginPath();
+    ctx.moveTo(m.sx[a],m.sy[a]);ctx.lineTo(m.sx[b],m.sy[b]);ctx.lineTo(m.sx[d],m.sy[d]);ctx.lineTo(m.sx[c],m.sy[c]);ctx.closePath();ctx.fill();ctx.stroke();}
+}
+function rotatable(cv,st){let d=null;
+  cv.addEventListener('pointerdown',e=>{d={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId);st.drag=true;});
+  cv.addEventListener('pointermove',e=>{if(!d)return;st.yaw+=(e.clientX-d.x)*0.01;st.pitch=Math.max(-1.45,Math.min(1.45,st.pitch+(e.clientY-d.y)*0.01));d={x:e.clientX,y:e.clientY};});
+  const up=()=>{d=null;st.drag=false;};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);}
+const vis=new Map();const io=new IntersectionObserver(es=>es.forEach(e=>vis.set(e.target,e.isIntersecting)));
+const visible=c=>vis.get(c)!==false;
+
+/* ================= KROPLA ================= */
+const LMIN=2,LMAX=7,G=0.12;
+const wl=l=>Math.sqrt(l*(l-1)*(l+2)/8);
+const D={mesh:Mesh(40,80),M:0,X:new Float64Array(LMAX+1),V:new Float64Array(LMAX+1),Y:[],w:1,t:0,yaw:0.6,pitch:0.32,paused:false,drag:false};
+D.rad=new Float32Array(D.mesh.NV);D.val=new Float32Array(D.mesh.NV);
+function dropBuild(){const m=D.mesh;for(let l=LMIN;l<=LMAX;l++){if(l<D.M){D.Y[l]=null;continue;}const a=new Float32Array(m.NV);let mx=0;
+  for(let k=0;k<m.NV;k++){const v=plm(l,D.M,m.uz[k])*Math.cos(D.M*m.ph[k]);a[k]=v;mx=Math.max(mx,Math.abs(v));}for(let k=0;k<m.NV;k++)a[k]/=mx;D.Y[l]=a;}D.X.fill(0);D.V.fill(0);}
+dropBuild();
+const dropCv=$('dropCv'),dropRe=$('dropResp'),dW=$('dropW'),dWo=$('dropWo'),dM=$('dropM'),dMo=$('dropMo');
+rotatable(dropCv,D);io.observe(dropCv);
+const setW=v=>{D.w=v;dW.value=v.toFixed(2);dWo.textContent=nf(v,2);};
+dW.oninput=()=>setW(+dW.value);
+dM.oninput=()=>{D.M=+dM.value;dMo.textContent=D.M;dropBuild();};
+for(let l=LMIN;l<=LMAX;l++){const b=document.createElement('button');b.textContent='l = '+l+' ('+LET[l]+')';b.onclick=()=>{setW(wl(l));if(D.M>l){D.M=l;dM.value=l;dMo.textContent=l;dropBuild();}};$('dropBtns').appendChild(b);}
+$('dropPause').onclick=e=>{D.paused=!D.paused;e.target.textContent=D.paused?'Wznów':'Pauza';};
+$('dropReset').onclick=()=>{D.X.fill(0);D.V.fill(0);};
+function dropStep(dt){const n=12,h=dt/n;for(let s=0;s<n;s++){const F=Math.cos(D.w*D.t);for(let l=LMIN;l<=LMAX;l++){if(!D.Y[l])continue;const o=wl(l);D.V[l]+=(F-G*D.V[l]-o*o*D.X[l])*h;D.X[l]+=D.V[l]*h;}D.t+=h;}}
+function dropFrame(dt){
+  if(!D.paused){dropStep(dt*4);if(!D.drag&&!reduced)D.yaw+=dt*0.22;}
+  if(!visible(dropCv))return;
+  const d=fit(dropCv),ctx=dropCv.getContext('2d'),W=dropCv.width,H=dropCv.height;ctx.clearRect(0,0,W,H);
+  const m=D.mesh,rel=[];for(let l=LMIN;l<=LMAX;l++)rel[l]=D.Y[l]?D.X[l]*G*wl(l):0;
+  for(let k=0;k<m.NV;k++){let s=0;for(let l=LMIN;l<=LMAX;l++)if(D.Y[l])s+=rel[l]*D.Y[l][k];s=Math.max(-1.4,Math.min(1.4,s));D.val[k]=s;D.rad[k]=1+0.28*s;}
+  const S=Math.min(W,H)*0.29,bob=Math.cos(D.w*D.t)*4*d,cy=H*0.45;
+  ctx.strokeStyle=T.muted;ctx.lineWidth=1.4*d;
+  ctx.beginPath();ctx.ellipse(W/2,cy+S*1.42+bob,S*1.25,S*0.22,0,PI,2*PI);ctx.setLineDash([3*d,4*d]);ctx.stroke();ctx.setLineDash([]);
+  drawMesh(ctx,m,D.rad,D.val,D.yaw,D.pitch,W/2,cy+bob*0.4,S);
+  ctx.strokeStyle=T.muted;ctx.lineWidth=1.4*d;ctx.beginPath();ctx.ellipse(W/2,cy+S*1.42+bob,S*1.25,S*0.22,0,0,PI);ctx.stroke();
+  let best=0,ba=0;for(let l=LMIN;l<=LMAX;l++){if(!D.Y[l])continue;const o=wl(l),A=Math.hypot(D.X[l],D.V[l]/o)*G*o;if(A>ba){ba=A;best=l;}}
+  $('dropInfo').textContent=!best?'Przy tej symetrii miska nie popycha żadnego modu':ba<0.15?'Poza rezonansem: woda ledwo drży':'Dominuje mod l = '+best+', m = '+D.M+' (kształt jak orbital '+LET[best]+')   amplituda '+Math.round(Math.min(ba,1)*100)+'%';
+  drawResp();
+}
+function drawResp(){const d=fit(dropRe),ctx=dropRe.getContext('2d'),W=dropRe.width,H=dropRe.height,p=10*d,lo=0.3,hi=6.5;ctx.clearRect(0,0,W,H);
+  const X0=v=>p+(v-lo)/(hi-lo)*(W-2*p),bot=H-20*d,top=10*d;
+  ctx.strokeStyle=T.line;ctx.lineWidth=d;ctx.beginPath();ctx.moveTo(p,bot);ctx.lineTo(W-p,bot);ctx.stroke();
+  ctx.beginPath();for(let i=0;i<=600;i++){const v=lo+(hi-lo)*i/600;let A=0;for(let l=LMIN;l<=LMAX;l++){if(!D.Y[l])continue;const o=wl(l);A+=G*o/Math.sqrt((o*o-v*v)**2+(G*v)**2);}
+    const y=bot-Math.min(1.05,A)*(bot-top);i?ctx.lineTo(X0(v),y):ctx.moveTo(X0(v),y);}
+  ctx.strokeStyle=T.fg;ctx.lineWidth=1.4*d;ctx.stroke();
+  ctx.fillStyle=T.muted;ctx.font=FONT(d);ctx.textAlign='center';
+  for(let l=LMIN;l<=LMAX;l++){const x=X0(wl(l));ctx.fillStyle=D.Y[l]?T.fg:T.muted;ctx.fillText('l='+l,x,bot+14*d);}
+  ctx.strokeStyle=T.plus;ctx.lineWidth=2*d;ctx.beginPath();ctx.moveTo(X0(D.w),top-4*d);ctx.lineTo(X0(D.w),bot);ctx.stroke();
+  ctx.textAlign='left';ctx.fillStyle=T.muted;ctx.fillText('odpowiedź kropli',p,top+4*d);}
+
+/* ================= GALERIA ================= */
+const thumbMesh=Mesh(34,68),thumbs=[];
+(function buildGallery(){const g=$('gallery');const word=['orbital','orbitale','orbitali','orbitali'];
+  for(let l=0;l<=3;l++){const row=document.createElement('div');row.className='galrow';
+    row.innerHTML='<div class="galhead"><b>'+LET[l]+'</b>l = '+l+', '+(2*l+1)+' '+word[l]+', '+l+' '+(l===1?'węzeł kątowy':l===0?'węzłów kątowych':'węzły kątowe')+'</div>';
+    const cards=document.createElement('div');cards.className='cards';
+    for(const m of mOrder(l)){const b=document.createElement('button');b.className='card';b.dataset.l=l;b.dataset.m=m;
+      b.innerHTML='<canvas></canvas><span class="nm">'+NAMES[l+','+m][0]+'</span><span class="cart">'+NAMES[l+','+m][1]+'</span>';
+      b.setAttribute('aria-label','Orbital '+b.querySelector('.nm').textContent);
+      b.onclick=()=>{EX.l=l;EX.m=m;if(EX.n<l+1)EX.n=l+1;exUpdate();$('explorer').scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'});};
+      cards.appendChild(b);
+      const rad=new Float32Array(thumbMesh.NV),val=new Float32Array(thumbMesh.NV);let mx=0;
+      for(let k=0;k<thumbMesh.NV;k++){const v=Sr(l,m,thumbMesh.uz[k],thumbMesh.ph[k]);rad[k]=Math.abs(v);val[k]=v>=0?1:-1;mx=Math.max(mx,Math.abs(v));}
+      for(let k=0;k<thumbMesh.NV;k++)rad[k]/=mx;
+      thumbs.push({cv:b.querySelector('canvas'),rad,val,btn:b,l,m});}
+    row.appendChild(cards);g.appendChild(row);}
+})();
+function renderGallery(){for(const t of thumbs){const d=fit(t.cv);if(!t.cv.width)continue;const ctx=t.cv.getContext('2d'),W=t.cv.width,H=t.cv.height;ctx.clearRect(0,0,W,H);
+  drawMesh(ctx,thumbMesh,t.rad,t.val,0.72,0.36,W/2,H/2,Math.min(W,H)*0.36);}}
+
+/* ================= EKSPLORATOR ================= */
+const EX={n:3,l:2,m:0,yaw:0.7,pitch:0.3,drag:false,pts:null};
+const cloudCv=$('cloudCv'),radCv=$('radCv');rotatable(cloudCv,EX);io.observe(cloudCv);
+function chipRow(el,items,cur,on){el.innerHTML='';for(const it of items){const b=document.createElement('button');b.innerHTML=it.label;if(it.v===cur)b.classList.add('on');b.onclick=()=>on(it.v);el.appendChild(b);}}
+function sampleOrbital(n,l,m,N){
+  const rmax=rmaxOf(n),G2=3000,cdf=new Float64Array(G2+1),P=new Float64Array(G2+1);let acc=0;
+  for(let i=1;i<=G2;i++){const r=i*rmax/G2,R=Rnl(n,l,r);P[i]=r*r*R*R;acc+=P[i];cdf[i]=acc;}
+  for(let i=0;i<=G2;i++){cdf[i]/=acc;P[i]/=acc*rmax/G2;}
+  let ym=0;for(let a=0;a<=90;a++)for(let b=0;b<120;b++){const v=Sr(l,m,Math.cos(PI*a/90),2*PI*b/120);ym=Math.max(ym,v*v);}ym*=1.08;
+  const xs=new Float32Array(N),ys=new Float32Array(N),zs=new Float32Array(N),sg=new Int8Array(N),rr=new Float32Array(N);
+  for(let i=0;i<N;i++){const u=Math.random();let lo=0,hi=G2;while(hi-lo>1){const mid=(lo+hi)>>1;if(cdf[mid]<u)lo=mid;else hi=mid;}
+    const f=(u-cdf[lo])/((cdf[hi]-cdf[lo])||1),r=(lo+f)*rmax/G2;
+    let ct=0,ph=0,y=0;for(let g=0;g<500;g++){ct=2*Math.random()-1;ph=2*PI*Math.random();y=Sr(l,m,ct,ph);if(Math.random()*ym<y*y)break;}
+    const st=Math.sqrt(1-ct*ct);xs[i]=r*st*Math.cos(ph);ys[i]=r*st*Math.sin(ph);zs[i]=r*ct;rr[i]=r;sg[i]=(Rnl(n,l,r)*y)>=0?1:-1;}
+  const sorted=Array.from(rr).sort((a,b)=>a-b),r99=sorted[Math.floor(N*0.985)];
+  let rplot=rmax;for(let i=0;i<=G2;i++)if(cdf[i]>0.9985){rplot=i*rmax/G2;break;}
+  const nodes=[];let prev=Rnl(n,l,1e-3);for(let i=1;i<=G2;i++){const r=i*rmax/G2;if(r>rplot)break;const v=Rnl(n,l,r);if(v*prev<0)nodes.push(r);prev=v;}
+  return{xs,ys,zs,sg,N,r99,P,G2,rmax,rplot,nodes};}
+function exUpdate(){
+  EX.l=Math.min(EX.l,EX.n-1);if(Math.abs(EX.m)>EX.l)EX.m=0;
+  chipRow($('exN'),[1,2,3,4,5,6].map(v=>({v,label:'n = '+v})),EX.n,v=>{EX.n=v;exUpdate();});
+  chipRow($('exL'),Array.from({length:EX.n},(_,v)=>({v,label:LET[v]+' (l = '+v+')'})),EX.l,v=>{EX.l=v;exUpdate();});
+  chipRow($('exM'),mOrder(EX.l).map(v=>({v,label:nameOf(EX.l,v)+(EX.l>=4?'':'  <span style="opacity:.7">m = '+v+'</span>')})),EX.m,v=>{EX.m=v;exUpdate();});
+  for(const t of thumbs)t.btn.classList.toggle('on',t.l===EX.l&&t.m===EX.m);
+  EX.pts=sampleOrbital(EX.n,EX.l,EX.m,14000);
+  const n=EX.n,l=EX.l,E=En(n)*EH_EV;
+  const st=[['Orbital',n+nameOf(l,EX.m)],['Energia E<sub>n</sub>',nf(E,3)+' eV'],['Węzły radialne',String(n-l-1)],['Węzły kątowe',String(l)],['⟨r⟩',nf((3*n*n-l*(l+1))/2,1)+' a₀'],['Stanów o tym n',String(n*n)]];
+  $('exStats').innerHTML=st.map(s=>'<div class="stat"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('');
+  drawRadial();}
+function drawRadial(){const p=EX.pts,d=fit(radCv),ctx=radCv.getContext('2d'),W=radCv.width,H=radCv.height;ctx.clearRect(0,0,W,H);
+  const L=40*d,R=10*d,Tp=14*d,B=24*d,xm=p.rplot;let ym=0;for(let i=0;i<=p.G2;i++){if(i*p.rmax/p.G2>xm)break;ym=Math.max(ym,p.P[i]);}ym*=1.12;
+  const X=r=>L+r/xm*(W-L-R),Y=v=>H-B-v/ym*(H-B-Tp);
+  const steps=[1,2,5,10,20,50,100];let st=steps.find(s=>xm/s<=7)||100;
+  ctx.font=FONT(d);ctx.fillStyle=T.muted;ctx.textAlign='center';ctx.strokeStyle=T.line;ctx.lineWidth=d;
+  for(let r=0;r<=xm+1e-9;r+=st){ctx.beginPath();ctx.moveTo(X(r),Tp);ctx.lineTo(X(r),H-B);ctx.stroke();ctx.fillText(nf(r,0),X(r),H-B+14*d);}
+  ctx.textAlign='right';ctx.fillText('r / a₀',W-R,H-B-6*d);ctx.textAlign='left';ctx.fillText('P(r) = r²R²',L+4*d,Tp-2*d);
+  ctx.beginPath();ctx.moveTo(X(0),Y(0));for(let i=0;i<=p.G2;i++){const r=i*p.rmax/p.G2;if(r>xm)break;ctx.lineTo(X(r),Y(p.P[i]));}
+  ctx.lineTo(X(xm),Y(0));ctx.closePath();ctx.globalAlpha=0.16;ctx.fillStyle=T.accent;ctx.fill();ctx.globalAlpha=1;
+  ctx.beginPath();for(let i=0;i<=p.G2;i++){const r=i*p.rmax/p.G2;if(r>xm)break;i?ctx.lineTo(X(r),Y(p.P[i])):ctx.moveTo(X(r),Y(p.P[i]));}
+  ctx.strokeStyle=T.accent;ctx.lineWidth=1.8*d;ctx.stroke();
+  ctx.setLineDash([3*d,3*d]);ctx.strokeStyle=T.muted;ctx.lineWidth=d;for(const r of p.nodes){ctx.beginPath();ctx.moveTo(X(r),Tp);ctx.lineTo(X(r),H-B);ctx.stroke();}ctx.setLineDash([]);
+  const rm=(3*EX.n*EX.n-EX.l*(EX.l+1))/2;if(rm<xm){ctx.strokeStyle=T.plus;ctx.lineWidth=1.6*d;ctx.beginPath();ctx.moveTo(X(rm),Tp+10*d);ctx.lineTo(X(rm),H-B);ctx.stroke();ctx.fillStyle=T.plus;ctx.textAlign='center';ctx.fillText('⟨r⟩',X(rm),Tp+8*d);}
+  ctx.strokeStyle=T.line;ctx.beginPath();ctx.moveTo(L,H-B);ctx.lineTo(W-R,H-B);ctx.stroke();}
+function cloudFrame(dt){if(!EX.drag&&!reduced)EX.yaw+=dt*0.25;if(!visible(cloudCv)||!EX.pts)return;
+  const d=fit(cloudCv),ctx=cloudCv.getContext('2d'),W=cloudCv.width,H=cloudCv.height,p=EX.pts;ctx.clearRect(0,0,W,H);
+  const S=Math.min(W,H)*0.44/p.r99,cyw=Math.cos(EX.yaw),syw=Math.sin(EX.yaw),cp=Math.cos(EX.pitch),sp=Math.sin(EX.pitch),cx=W/2,cy=H/2,Rv=p.r99*3.2;
+  const proj=(x,y,z)=>{const x1=x*cyw-y*syw,y1=x*syw+y*cyw,X=x1,Y=y1*sp+z*cp,Z=-y1*cp+z*sp,f=Rv/(Rv-Z);return[cx+X*S*f,cy-Y*S*f];};
+  ctx.font=FONT(d);ctx.strokeStyle=T.line;ctx.fillStyle=T.muted;ctx.lineWidth=d;const o=proj(0,0,0),A=p.r99*1.05;
+  for(const [v,lab] of [[[A,0,0],'x'],[[0,A,0],'y'],[[0,0,A],'z']]){const e=proj(...v);ctx.beginPath();ctx.moveTo(o[0],o[1]);ctx.lineTo(e[0],e[1]);ctx.stroke();ctx.fillText(lab,e[0]+3*d,e[1]-3*d);}
+  const sz=Math.max(1.2,1.5*d)*(p.N>0?1:1);
+  for(const pass of [1,-1]){ctx.fillStyle=pass>0?T.plus:T.minus;ctx.globalAlpha=0.5;
+    for(let i=0;i<p.N;i++){if(p.sg[i]!==pass)continue;const x=p.xs[i],y=p.ys[i],z=p.zs[i],x1=x*cyw-y*syw,y1=x*syw+y*cyw,Z=-y1*cp+z*sp,f=Rv/(Rv-Z);
+      ctx.fillRect(cx+x1*S*f-sz/2,cy-(y1*sp+z*cp)*S*f-sz/2,sz,sz);}}
+  ctx.globalAlpha=1;ctx.fillStyle=T.fg;ctx.beginPath();ctx.arc(o[0],o[1],2.5*d,0,2*PI);ctx.fill();
+  ctx.fillStyle=T.muted;ctx.textAlign='left';ctx.fillText('skala: ±'+nf(p.r99,0)+' a₀',8*d,H-8*d);}
+
+/* ================= SUPERPOZYCJA ================= */
+const SUP=[[1,0],[2,0],[2,1],[3,0],[3,1],[3,2],[4,0],[4,1],[4,2],[4,3]];
+const supLab=s=>s[0]+LET[s[1]];
+const SP={a:0,b:2,c1:Math.SQRT1_2,c2:Math.SQRT1_2,t:0,paused:false,hist:[],N:150};
+const supCv=$('supCv'),supTr=$('supTrace');io.observe(supCv);
+const off=document.createElement('canvas');off.width=off.height=SP.N;const octx=off.getContext('2d'),img=octx.createImageData(SP.N,SP.N);
+function radInt(a,b){const rm=Math.max(rmaxOf(a[0]),rmaxOf(b[0])),K=6000,h=rm/K;let s=0;for(let i=0;i<=K;i++){const r=i*h,w=(i===0||i===K)?1:(i%2?4:2);s+=w*Rnl(a[0],a[1],r)*Rnl(b[0],b[1],r)*r*r*r;}return s*h/3;}
+function zElem(a,b){if(Math.abs(a[1]-b[1])!==1)return 0;const l=Math.min(a[1],b[1]);return Math.abs(radInt(a,b)*(l+1)/Math.sqrt((2*l+1)*(2*l+3)));}
+function wlRGB(w){let r=0,g=0,b=0;if(w>=380&&w<440){r=-(w-440)/60;b=1}else if(w>=440&&w<490){g=(w-440)/50;b=1}else if(w>=490&&w<510){g=1;b=-(w-510)/20}else if(w>=510&&w<580){r=(w-510)/70;g=1}else if(w>=580&&w<645){r=1;g=-(w-645)/65}else if(w>=645&&w<=750){r=1}return 'rgb('+(r*255|0)+','+(g*255|0)+','+(b*255|0)+')';}
+function supBuild(){
+  const A=SUP[SP.a],B=SUP[SP.b],N=SP.N;
+  chipRow($('supA'),SUP.map((s,i)=>({v:i,label:supLab(s)})),SP.a,v=>{SP.a=v;supBuild();});
+  chipRow($('supB'),SUP.map((s,i)=>({v:i,label:supLab(s)})),SP.b,v=>{SP.b=v;supBuild();});
+  const rA=(3*A[0]**2-A[1]*(A[1]+1))/2,rB=(3*B[0]**2-B[1]*(B[1]+1))/2;SP.ext=Math.ceil(1.6*Math.max(rA,rB)+3);
+  SP.P1=new Float32Array(N*N);SP.P2=new Float32Array(N*N);
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){const x=(j/(N-1)*2-1)*SP.ext,z=(1-i/(N-1)*2)*SP.ext,r=Math.hypot(x,z)+1e-9,ct=z/r,k=i*N+j;
+    SP.P1[k]=Rnl(A[0],A[1],r)*Sr(A[1],0,ct,0);SP.P2[k]=Rnl(B[0],B[1],r)*Sr(B[1],0,ct,0);}
+  SP.rhoMax=0;for(let k=0;k<N*N;k++){const u=SP.c1*SP.P1[k],v=SP.c2*SP.P2[k];SP.rhoMax=Math.max(SP.rhoMax,(u+v)**2,(u-v)**2);}
+  SP.same=SP.a===SP.b;SP.dE=Math.abs(En(B[0])-En(A[0]));SP.d=SP.same?0:zElem(A,B);SP.hist=[];
+  const up=En(A[0])>En(B[0])?A:B,lo=up===A?B:A;
+  const st=[],v=$('supVerdict');let cap='';
+  if(SP.same){v.className='verdict';v.innerHTML='To ten sam stan dwa razy. Elektron jest w stanie stacjonarnym i nic się nie rusza.';}
+  else if(SP.dE<1e-12){v.className='verdict';v.innerHTML=SP.d>0?'Stany zdegenerowane, ΔE = 0. Chmura jest trwale przesunięta o ⟨z⟩ = '+nf(2*SP.c1*SP.c2*SP.d,2)+' a₀ (stała polaryzacja, jak w efekcie Starka), ale nie drga, więc nie świeci.':'Stany zdegenerowane i Δl ≠ ±1. Gęstość jest stała w czasie.';}
+  else if(SP.d>0){const lam=45.563353/(SP.dE*1)/1;const lamnm=lam;const om=SP.dE,A_=4/3*ALPHA**3*om**3*SP.d**2/AU_T;
+    const region=lamnm<380?'ultrafiolet':lamnm<=750?'światło widzialne':'podczerwień';
+    v.className='verdict ok';v.innerHTML='Przejście dozwolone: Δl = ±1, Δm = 0. Środek ładunku drga, atom emituje foton '+supLab(up)+' → '+supLab(lo)+'.'+(lamnm>=380&&lamnm<=750?' <i class="sw" style="background:'+wlRGB(lamnm)+';margin-left:6px"></i>':'');
+    st.push(['λ (próżnia)',nf(lamnm,lamnm<1000?1:0)+' nm'],['Zakres',region],['ΔE',nf(SP.dE*EH_EV,3)+' eV'],['|⟨1|z|2⟩|',nf(SP.d,4)+' a₀'],['A w tym kanale',sci(A_)+' s⁻¹'],['1/A',sci(1/A_)+' s']);}
+  else{v.className='verdict no';v.innerHTML='Przejście dipolowo wzbronione: Δl = '+(B[1]-A[1])+'. Chmura pulsuje, ale środek ładunku stoi w miejscu, więc nie ma promieniowania dipolowego.';
+    st.push(['ΔE',nf(SP.dE*EH_EV,3)+' eV'],['|⟨1|z|2⟩|','0']);}
+  if(SP.dE>1e-12){const wr=SP.dE/AU_T,fac=wr/(2*PI*0.5);st.push(['Spowolnienie animacji',sci(fac)+' ×']);}
+  $('supStats').innerHTML=st.map(s=>'<div class="stat"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('');
+}
+const mixEl=$('supMix');mixEl.oninput=()=>{const f=+mixEl.value/100;SP.c1=Math.sqrt(1-f);SP.c2=Math.sqrt(f);$('supMixO').textContent=mixEl.value+'%';supBuild();};
+$('supPause').onclick=e=>{SP.paused=!SP.paused;e.target.textContent=SP.paused?'Wznów':'Pauza';};
+function supFrame(dt){if(!SP.paused)SP.t+=dt;if(!visible(supCv))return;
+  const d=fit(supCv),ctx=supCv.getContext('2d'),W=supCv.width,H=supCv.height,N=SP.N,data=img.data,fg=T.fgR;ctx.clearRect(0,0,W,H);
+  const osc=SP.dE>1e-12,cph=osc?Math.cos(2*PI*0.5*SP.t):1,cc=SP.c1*SP.c1,ss=SP.c2*SP.c2,x2=SP.same?0:2*SP.c1*SP.c2*cph;
+  for(let k=0;k<N*N;k++){const a=SP.P1[k],b=SP.P2[k];const rho=SP.same?a*a:cc*a*a+ss*b*b+x2*a*b;const v=Math.pow(Math.max(0,rho)/SP.rhoMax,0.42);
+    data[4*k]=fg[0];data[4*k+1]=fg[1];data[4*k+2]=fg[2];data[4*k+3]=Math.min(255,v*235)|0;}
+  octx.putImageData(img,0,0);const Sz=Math.min(W,H)*0.96,ox=(W-Sz)/2,oy=(H-Sz)/2;ctx.imageSmoothingEnabled=true;ctx.drawImage(off,ox,oy,Sz,Sz);
+  const cx=W/2,cy=H/2,sc=Sz/(2*SP.ext);
+  ctx.strokeStyle=T.line;ctx.setLineDash([3*d,4*d]);ctx.lineWidth=d;ctx.beginPath();ctx.moveTo(cx,oy);ctx.lineTo(cx,oy+Sz);ctx.moveTo(ox,cy);ctx.lineTo(ox+Sz,cy);ctx.stroke();ctx.setLineDash([]);
+  ctx.font=FONT(d);ctx.fillStyle=T.muted;ctx.textAlign='left';ctx.fillText('z',cx+5*d,oy+12*d);ctx.fillText('x',ox+Sz-12*d,cy-5*d);ctx.fillText('±'+SP.ext+' a₀',ox+4*d,oy+Sz-6*d);
+  ctx.fillStyle=T.fg;ctx.beginPath();ctx.arc(cx,cy,2.5*d,0,2*PI);ctx.fill();
+  const zc=SP.same?0:2*SP.c1*SP.c2*SP.d*cph;
+  ctx.strokeStyle=T.plus;ctx.lineWidth=2*d;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx,cy-zc*sc);ctx.stroke();
+  ctx.fillStyle=T.plus;ctx.beginPath();ctx.arc(cx,cy-zc*sc,5*d,0,2*PI);ctx.fill();
+  if(!SP.paused){SP.hist.push(zc);if(SP.hist.length>300)SP.hist.shift();}
+  const td=fit(supTr),tc=supTr.getContext('2d'),TW=supTr.width,TH=supTr.height,mid=TH/2+6*td;tc.clearRect(0,0,TW,TH);
+  const amp=Math.max(SP.d,0.5),ys=(TH/2-12*td)/amp;
+  tc.strokeStyle=T.line;tc.lineWidth=td;tc.beginPath();tc.moveTo(0,mid);tc.lineTo(TW,mid);tc.stroke();
+  tc.font=FONT(td);tc.fillStyle=T.muted;tc.textAlign='left';tc.fillText('⟨z⟩(t) w a₀',2*td,11*td);tc.textAlign='right';tc.fillText('±'+nf(amp,2),TW-2*td,11*td);
+  tc.strokeStyle=T.plus;tc.lineWidth=1.6*td;tc.beginPath();SP.hist.forEach((v,i)=>{const X=TW-(SP.hist.length-1-i)*TW/300,Y=mid-v*ys;i?tc.lineTo(X,Y):tc.moveTo(X,Y);});tc.stroke();}
+
+/* ================= pętla i motyw ================= */
+exUpdate();supBuild();
+requestAnimationFrame(()=>renderGallery());
+document.fonts&&document.fonts.ready.then(()=>{renderGallery();drawRadial();});
+const retheme=()=>{readT();renderGallery();drawRadial();};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',retheme);
+new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{renderGallery();drawRadial();},120);});
+let last=performance.now();
+function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;dropFrame(dt);cloudFrame(dt);supFrame(dt);requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+})();
+</script>

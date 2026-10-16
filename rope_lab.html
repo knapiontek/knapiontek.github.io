@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Mass–Spring Rope Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: lab notebook with three tabs — rope bench, integrator comparison (phase + physical space), explanation */
+:root{
+  --bg:#f3f5f4; --panel:#ffffff; --fg:#17201d; --muted:#5b6a65; --line:#d6ddda; --grid:#e3e8e6; --soft:#eef2f0;
+  --drive:#c2571a;            /* force / drive */
+  --ee:#b3261e; --se:#1f6f5c; --vv:#2f5fb3; --rk:#7b3f9e;   /* integrator colours */
+  --good:#2c7a3f; --bad:#b3261e;
+  --display:"Fraunces",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1513; --panel:#16201d; --fg:#e4ece9; --muted:#93a39e; --line:#2a3833; --grid:#1d2925; --soft:#121a17;
+  --drive:#f08a4b; --ee:#ff7a6e; --se:#5cc7a8; --vv:#7aa7ff; --rk:#c99af0; --good:#6fd08a; --bad:#ff7a6e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1513; --panel:#16201d; --fg:#e4ece9; --muted:#93a39e; --line:#2a3833; --grid:#1d2925; --soft:#121a17;
+  --drive:#f08a4b; --ee:#ff7a6e; --se:#5cc7a8; --vv:#7aa7ff; --rk:#c99af0; --good:#6fd08a; --bad:#ff7a6e; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:24px 48px;display:grid;gap:18px}
+h1{font-family:var(--display);font-weight:600;font-size:1.7rem;margin:0;text-wrap:balance}
+h2{font-size:1.02rem;margin:0}
+.sub{color:var(--muted);margin:4px 0 0;max-width:68ch}
+p{margin:0}
+.muted{color:var(--muted)}
+/* tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{font:inherit;font-weight:500;font-size:14px;background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 14px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--fg)}
+.tab:focus-visible,.tg:focus-visible,input:focus-visible{outline:2px solid var(--drive);outline-offset:2px}
+[hidden]{display:none!important}
+.pane{display:grid;gap:18px}
+/* shared controls */
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;position:relative}
+.stage canvas{display:block;width:100%;height:320px}
+.status{position:absolute;left:12px;top:10px;font-family:var(--mono);font-size:12px;padding:3px 8px;border-radius:999px;border:1px solid currentColor;background:var(--panel)}
+.status.ok{color:var(--good)} .status.bad{color:var(--bad)}
+.read{display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.read b{color:var(--fg);font-weight:500}
+.panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px 28px}
+.ctl{display:grid;gap:4px;min-width:0}
+.ctl > label,.ctl > .lbl{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+.ctl label span{font-family:var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--fg)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tg{font:inherit;font-size:13px;padding:6px 12px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+.tg[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.tg.dash{border-style:dashed}
+.seg{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:7px;overflow:hidden;width:max-content;max-width:100%}
+.seg .tg{border:0;border-radius:0;border-right:1px solid var(--line)}
+.seg .tg:last-child{border-right:0}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+/* integrator cards */
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px;min-width:0;align-content:start}
+.card h3{margin:0;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+.chips .e{color:var(--fg)}
+.cv-phase{width:100%;aspect-ratio:1/1;max-width:100%;display:block}
+.cv-phys{width:100%;aspect-ratio:16/11;max-width:100%;display:block}
+.cv-energy{width:100%;aspect-ratio:16/6;max-width:100%;display:block}
+.formula{font-family:var(--mono);font-size:12px;line-height:1.6;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;white-space:pre}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;font-size:13.5px;min-width:620px;width:100%}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.prose{display:grid;gap:12px;max-width:70ch}
+.prose h2{margin-top:6px}
+.prose p{color:var(--muted)}
+.prose b{color:var(--fg)}
+code{font-family:var(--mono);font-size:.9em}
+.deriv{display:grid;gap:10px;max-width:76ch;border-top:1px solid var(--line);padding-top:18px}
+.deriv h2{font-family:var(--display);font-weight:600;font-size:1.3rem}
+.deriv h3{font-size:15px;margin:14px 0 0}
+.deriv p{color:var(--muted)}
+.eq{overflow-x:auto;overflow-y:hidden;padding-block:6px;font-size:1.15em;color:var(--fg);font-family:var(--mono)}
+.m{color:var(--fg)}
+.eq.boxed{border:1.5px solid var(--fg);border-radius:6px;padding:10px 12px;width:max-content;max-width:100%}
+math{font-family:"STIX Two Math","Cambria Math","Latin Modern Math",math;color:var(--fg)}
+.eq math{display:block;text-align:center}
+.cv-spec{width:100%;aspect-ratio:16/9;max-width:100%;display:block}
+.cv-shape{width:100%;aspect-ratio:16/8;max-width:100%;display:block}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Mass–Spring Rope Lab</h1>
+    <p class="sub">A rope built only from Newton (a = F/m) and Hooke (F = k·stretch along each segment). Left end driven y = A·sin(ωt), right end fixed. Nothing assumes a wave equation or a sine-shaped solution.</p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="tab-rope" aria-controls="rope" aria-selected="true">Rope</button>
+    <button class="tab" role="tab" id="tab-integrators" aria-controls="integrators" aria-selected="false">Integrators compared</button>
+    <button class="tab" role="tab" id="tab-modes" aria-controls="modes" aria-selected="false">Modes</button>
+    <button class="tab" role="tab" id="tab-why" aria-controls="why" aria-selected="false">Why it works</button>
+  </div>
+
+  <!-- ===================== ROPE ===================== -->
+  <section class="pane" id="rope" role="tabpanel" aria-labelledby="tab-rope">
+    <div class="stage">
+      <canvas id="cv"></canvas>
+      <div id="status" class="status ok">stable</div>
+    </div>
+    <div class="read" id="read"></div>
+
+    <div class="ctl">
+      <span class="lbl">Integrator</span>
+      <div class="seg" id="ropeMethod">
+        <button class="tg" data-m="ee"><i class="sw" style="background:var(--ee)"></i>Explicit Euler</button>
+        <button class="tg" data-m="se"><i class="sw" style="background:var(--se)"></i>Symplectic Euler</button>
+        <button class="tg" data-m="vv"><i class="sw" style="background:var(--vv)"></i>Verlet</button>
+        <button class="tg" data-m="rk"><i class="sw" style="background:var(--rk)"></i>RK4</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="tg dash" id="p1">Stable: taut + damping</button>
+      <button class="tg dash" id="p2">Explicit Euler, no damping</button>
+      <button class="tg dash" id="p3">Step ×12: Euler/Verlet die, RK4 lives</button>
+      <button class="tg dash" id="p4">Hanging rope with gravity</button>
+      <button class="tg dash" id="p5">No damping: RK4 vs Verlet</button>
+    </div>
+
+    <div class="panel">
+      <div class="ctl"><label for="freq">Drive frequency <span id="freqV"></span></label><input id="freq" type="range" min="0.5" max="14" step="0.01"></div>
+      <div class="ctl"><label for="amp">Drive amplitude <span id="ampV"></span></label><input id="amp" type="range" min="0" max="0.15" step="0.005"></div>
+      <div class="ctl"><label for="ten">Pretension <span id="tenV"></span></label><input id="ten" type="range" min="0" max="40" step="1"></div>
+      <div class="ctl"><label for="damp">Internal damping c <span id="dampV"></span></label><input id="damp" type="range" min="0" max="2" step="0.05"></div>
+      <div class="ctl"><label for="dtm">Time step (ω<sub>max</sub>·dt) <span id="dtmV"></span></label><input id="dtm" type="range" min="0.05" max="3.2" step="0.05"></div>
+      <div class="ctl"><span class="lbl">Switches</span>
+        <div class="row">
+          <button class="tg" id="tG" aria-pressed="false">Gravity</button>
+          <button class="tg" id="tReset">Reset rope</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== INTEGRATORS ===================== -->
+  <section class="pane" id="integrators" role="tabpanel" aria-labelledby="tab-integrators" hidden>
+    <p class="muted" style="max-width:72ch">Each card is one mass taken out of the rope with its two neighbours held still. The two segment tensions T cancel sideways and add up vertically to F = −(2T/seg)·y, so the mass is a vertical spring with ω² = 2T/(seg·m). The four methods integrate exactly the same Newton + Hooke system. Top of each card: phase space (x across, v/ω up) with the last step split into its arrows. Bottom: the real vertical motion, with velocity drawn as the tangent to y(t).</p>
+
+    <div class="panel">
+      <div class="ctl"><label for="ih">Step size ω·dt <span id="ihV"></span></label><input id="ih" type="range" min="0.05" max="3" step="0.01"></div>
+      <div class="ctl"><span class="lbl">Fair comparison</span>
+        <div class="row"><button class="tg" id="iEq" aria-pressed="false">Equal work: Euler and Verlet take 4 small steps per RK4 step</button></div>
+      </div>
+      <div class="ctl"><span class="lbl">Playback</span>
+        <div class="row">
+          <button class="tg" id="iStep">One step</button>
+          <button class="tg" id="iPlay" aria-pressed="true">Pause</button>
+          <button class="tg" id="iReset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:var(--drive)"></i>Δv from spring force (Hooke)</span>
+      <span><i style="background:var(--fg)"></i>Δx from velocity / velocity tangent v</span>
+      <span><i style="background:var(--muted)"></i>exact motion, old-velocity tangent (dashed)</span>
+    </div>
+
+    <div class="card">
+      <h3>Total energy of all four, start = 1</h3>
+      <canvas id="cvEnergy" class="cv-energy"></canvas>
+    </div>
+
+    <div class="grid4" id="cards"></div>
+
+    <div class="card">
+      <h3>Measured over 100 periods at ω·dt = 0.3</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Method</th><th>Order</th><th>Force evals / step</th><th>Energy after 100 periods</th><th>Long-run behaviour</th><th>Stable while ω·dt &lt;</th></tr></thead>
+        <tbody>
+          <tr><td><i class="sw" style="background:var(--ee)"></i>Explicit Euler</td><td class="num">1</td><td class="num">1</td><td class="num">explodes</td><td>Gains (1+ω²dt²) every step</td><td class="num">never stable</td></tr>
+          <tr><td><i class="sw" style="background:var(--se)"></i>Symplectic Euler</td><td class="num">1</td><td class="num">1</td><td class="num">0.87 – 1.18, no drift</td><td>Bounded wobble, forever</td><td class="num">2</td></tr>
+          <tr><td><i class="sw" style="background:var(--vv)"></i>Velocity Verlet</td><td class="num">2</td><td class="num">1</td><td class="num">0.978 – 1.00, no drift</td><td>Bounded, much smaller wobble</td><td class="num">2</td></tr>
+          <tr><td><i class="sw" style="background:var(--rk)"></i>Runge–Kutta 4</td><td class="num">4</td><td class="num">4</td><td class="num">0.979 and falling</td><td>Slow leak, acts like hidden damping</td><td class="num">2.83</td></tr>
+          <tr><td><i class="sw" style="background:var(--vv)"></i>Verlet, 4 steps of dt/4</td><td class="num">2</td><td class="num">4 (same as RK4)</td><td class="num">0.999 – 1.00</td><td>Same cost as RK4, better energy</td><td class="num">8 (per RK4 step)</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted">At ω·dt = 1 RK4 keeps 0.05% of the energy after 100 periods. Symplectic Euler and Verlet keep it bounded at any ω·dt below 2.</p>
+    </div>
+  </section>
+
+  <!-- ===================== MODES ===================== -->
+  <section class="pane" id="modes" role="tabpanel" aria-labelledby="tab-modes" hidden>
+    <p class="muted" style="max-width:72ch">The simulation never uses a mode or a sine. Below, the same Newton + Hooke equations are linearised by hand to predict the modes, then checked two independent ways: eigenvalues of the simulation's own force function, and the spectrum of a plucked simulated rope. Rope: N = 40 segments, L = 2 m, total mass 0.2 kg on 39 masses, k = 2000 N/m, pretension T = 20 N, both ends fixed.</p>
+
+    <div class="grid4">
+      <div class="card">
+        <h3>Pluck the simulated rope and read its spectrum</h3>
+        <canvas id="cvSpec" class="cv-spec"></canvas>
+        <div class="legend"><span><i style="background:var(--vv)"></i>spectrum of mass 7</span><span><i style="background:var(--muted)"></i>sideways modes fₙ, formula (numbered)</span><span><i style="background:var(--drive)"></i>axial modes (dashed), barely excited by a sideways pluck</span></div>
+        <div class="row">
+          <div class="ctl" style="flex:1 1 200px"><label for="plx">Pluck position <span id="plxV"></span></label><input id="plx" type="range" min="0.1" max="1.9" step="0.05"></div>
+          <button class="tg" id="plGo">Pluck and analyse</button>
+        </div>
+        <p class="muted" id="plInfo" style="font-size:13px"></p>
+      </div>
+      <div class="card">
+        <h3>Mode shape from the eigenvector</h3>
+        <canvas id="cvShape" class="cv-shape"></canvas>
+        <div class="ctl"><label for="mn">Mode n <span id="mnV"></span></label><input id="mn" type="range" min="1" max="39" step="1"></div>
+        <p class="muted" id="mnInfo" style="font-size:13px"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Peaks found in the simulation vs. theory</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>n</th><th>Continuum n·c/2L</th><th>Discrete formula</th><th>Eigenvalue of Jacobian</th><th>FFT peak, this page</th><th>FFT − formula</th></tr></thead>
+        <tbody id="peakBody"></tbody>
+      </table></div>
+      <p class="muted" style="font-size:13px">Frequencies in Hz. Eigenvalues are computed in this page from the same force function the simulation uses. A pluck at a node of mode n cannot excite it, so that row stays empty.</p>
+    </div>
+
+    <article class="deriv">
+      <h2>Derivation</h2>
+
+      <h3>1. The model: Newton and Hooke only</h3>
+      <p>Mass i sits at <span class="m">\mathbf r_i=(x_i,y_i)</span>. The two springs attached to it pull along themselves:</p>
+      <div class="eq">m\,\ddot{\mathbf r}_i \;=\; \mathbf F_i^{+} + \mathbf F_i^{-}, \qquad i = 1,\dots,N-1</div>
+      <div class="eq">\mathbf F_i^{+} \;=\; k\,\bigl(\ell_i-\ell_0\bigr)\,\frac{\mathbf r_{i+1}-\mathbf r_i}{\ell_i}, \qquad \ell_i \;=\; \bigl\lVert \mathbf r_{i+1}-\mathbf r_i \bigr\rVert</div>
+      <p>and <span class="m">\mathbf F_i^{-}</span> likewise towards mass i − 1. The ends are fixed: <span class="m">\mathbf r_0=(0,0)</span>, <span class="m">\mathbf r_N=(L,0)</span>.</p>
+
+      <h3>2. Equilibrium and tension</h3>
+      <p>At rest the masses are evenly spaced and every spring has the same stretch. That stretch is the tension:</p>
+      <div class="eq">\mathbf r_i^{0} = (i\,s,\;0), \qquad s=\frac{L}{N}, \qquad T = k\,\bigl(s-\ell_0\bigr)</div>
+      <p>For T = 20 N the rest length is <span class="m">\ell_0 = s - T/k = 0.05 - 0.01 = 0.04\ \text{m}</span>.</p>
+
+      <h3>3. Small displacements</h3>
+      <p>Let each mass move a little along the rope (<span class="m">u_i</span>) and sideways (<span class="m">y_i</span>): <span class="m">\mathbf r_i = (i s + u_i,\; y_i)</span>. Expanding the segment length:</p>
+      <div class="eq">\ell_i = \sqrt{\bigl(s+u_{i+1}-u_i\bigr)^2 + \bigl(y_{i+1}-y_i\bigr)^2} \;\approx\; s + \bigl(u_{i+1}-u_i\bigr) + \frac{\bigl(y_{i+1}-y_i\bigr)^2}{2s}</div>
+      <p>The sideways change enters only squared, so to first order the tension stays T. The vertical part of the right-hand spring force is therefore</p>
+      <div class="eq">F^{+}_{i,y} \;=\; k\,\bigl(\ell_i-\ell_0\bigr)\,\frac{y_{i+1}-y_i}{\ell_i} \;\approx\; T\,\frac{y_{i+1}-y_i}{s}</div>
+      <p>Adding the left spring gives two separate equations, one sideways and one along the rope:</p>
+      <div class="eq">m\,\ddot y_i \;=\; \frac{T}{s}\,\bigl(y_{i+1} - 2y_i + y_{i-1}\bigr)</div>
+      <div class="eq">m\,\ddot u_i \;=\; k\,\bigl(u_{i+1} - 2u_i + u_{i-1}\bigr)</div>
+      <p>The sideways stiffness is <span class="m">T/s</span>. With no pretension it is zero, which is why a slack rope has no harmonics.</p>
+
+      <h3>4. Matrix form</h3>
+      <div class="eq">\mathbf M\,\ddot{\mathbf y} + \mathbf K\,\mathbf y = \mathbf 0, \qquad \mathbf M = m\,\mathbf I, \qquad
+        \mathbf K = \frac{T}{s}\begin{pmatrix} 2 &amp; -1 &amp; &amp; &amp; \\ -1 &amp; 2 &amp; -1 &amp; &amp; \\ &amp; \ddots &amp; \ddots &amp; \ddots &amp; \\ &amp; &amp; -1 &amp; 2 &amp; -1 \\ &amp; &amp; &amp; -1 &amp; 2 \end{pmatrix}_{(N-1)\times(N-1)}</div>
+
+      <h3>5. What a mode is</h3>
+      <p>A normal mode is a motion where every mass keeps the same shape <span class="m">\boldsymbol\varphi</span> and only its size changes in time: <span class="m">\mathbf y(t)=\boldsymbol\varphi\,q(t)</span>. Substituting gives <span class="m">m\,\ddot q\,\boldsymbol\varphi = -q\,\mathbf K\boldsymbol\varphi</span>, which works only if</p>
+      <div class="eq">\mathbf K\,\boldsymbol\varphi = \omega^2\,\mathbf M\,\boldsymbol\varphi \qquad\Longrightarrow\qquad \ddot q = -\omega^2 q</div>
+      <p>This is analysis of the linearised equations, used only as a prediction. The simulation itself keeps integrating the full nonlinear forces.</p>
+
+      <h3>6. Solving the eigenproblem exactly</h3>
+      <p>Row i of the eigenproblem reads</p>
+      <div class="eq">\frac{T}{s}\,\bigl(-\varphi_{i-1} + 2\varphi_i - \varphi_{i+1}\bigr) = m\,\omega^2\,\varphi_i</div>
+      <p>Try <span class="m">\varphi_i = \sin(i\theta)</span>. It gives <span class="m">\varphi_0 = 0</span> automatically. The fixed right end needs <span class="m">\varphi_N = \sin(N\theta) = 0</span>, so</p>
+      <div class="eq">\theta_n = \frac{n\pi}{N}, \qquad n = 1,\dots,N-1</div>
+      <p>With the identity</p>
+      <div class="eq">\sin\bigl((i+1)\theta\bigr) + \sin\bigl((i-1)\theta\bigr) = 2\cos\theta\,\sin(i\theta)</div>
+      <p>every row reduces to the same scalar equation:</p>
+      <div class="eq">\frac{T}{s}\,\bigl(2 - 2\cos\theta_n\bigr) = m\,\omega_n^2
+        \qquad\Longrightarrow\qquad
+        \omega_n^2 = \frac{2T}{m s}\bigl(1-\cos\theta_n\bigr) = \frac{4T}{m s}\,\sin^2\!\frac{n\pi}{2N}</div>
+      <div class="eq boxed">f_n = \frac{\omega_n}{2\pi} = \frac{1}{\pi}\sqrt{\frac{T}{m\,s}}\;\sin\frac{n\pi}{2N}, \qquad \varphi^{(n)}_i = \sin\frac{i\,n\pi}{N}</div>
+
+      <h3>7. The continuous string as a limit</h3>
+      <p>With mass per length <span class="m">\mu = m/s</span>, <span class="m">L = N s</span> and wave speed <span class="m">c=\sqrt{T/\mu}</span>, for <span class="m">n \ll N</span> use <span class="m">\sin x \approx x</span>:</p>
+      <div class="eq">f_n \;\approx\; \frac{1}{\pi}\sqrt{\frac{T}{m s}}\cdot\frac{n\pi}{2N} \;=\; \frac{n}{2L}\sqrt{\frac{T}{\mu}} \;=\; \frac{n\,c}{2L}</div>
+      <p>The school formula is the low-mode limit. The discrete rope always lies below it:</p>
+      <div class="eq">\frac{f_n}{n c/2L} = \frac{\sin x_n}{x_n} \;\approx\; 1 - \frac{x_n^2}{6}, \qquad x_n = \frac{n\pi}{2N}</div>
+      <p>For n = 10, <span class="m">x_{10} = 0.393</span> and the ratio is 0.974, i.e. 2.6% low. That matches the table.</p>
+
+      <h3>8. Modes along the rope and the time step</h3>
+      <p>The axial equation has the same matrix with <span class="m">k</span> in place of <span class="m">T/s</span>:</p>
+      <div class="eq">f^{\mathrm{ax}}_n = \frac{1}{\pi}\sqrt{\frac{k}{m}}\;\sin\frac{n\pi}{2N},
+        \qquad
+        \omega_{\max} = 2\sqrt{\frac{k}{m}}\,\sin\frac{(N-1)\pi}{2N} \;\approx\; 2\sqrt{\frac{k}{m}}</div>
+      <p>This fastest axial mode sets the step limit used in the other tabs: <span class="m">\omega_{\max}\,\Delta t &lt; 2</span> for symplectic Euler and Verlet.</p>
+
+      <h3>9. Numbers for this rope</h3>
+      <div class="eq">m = \frac{0.2\ \text{kg}}{39} = 5.128\ \text{g}, \qquad s = 0.05\ \text{m}, \qquad T = 20\ \text{N}, \qquad k = 2000\ \text{N/m}</div>
+      <div class="eq">\sqrt{\frac{T}{m s}} = \sqrt{\frac{20}{0.005128 \cdot 0.05}} = 279.3\ \text{s}^{-1}</div>
+      <div class="eq">f_1 = \frac{279.3}{\pi}\,\sin\frac{\pi}{80} = 88.90 \cdot 0.03926 = 3.490\ \text{Hz}</div>
+      <div class="eq">f_1^{\mathrm{ax}} = \frac{1}{\pi}\sqrt{\frac{2000}{0.005128}}\;\sin\frac{\pi}{80} = 198.8 \cdot 0.03926 = 7.80\ \text{Hz},
+        \qquad f^{\mathrm{ax}}_{39} = 198.6\ \text{Hz}</div>
+
+      <h3>10. Check 1: eigenvalues of the simulation's own forces</h3>
+      <p>No hand algebra here. The full force function <span class="m">\mathbf F(\mathbf q)</span> of the simulation, with all 2(N − 1) = 78 coordinates, is differentiated numerically at equilibrium:</p>
+      <div class="eq">J_{ab} = \frac{\partial F_a}{\partial q_b} \;\approx\; \frac{F_a\bigl(\mathbf q^0 + \varepsilon\,\mathbf e_b\bigr) - F_a\bigl(\mathbf q^0\bigr)}{\varepsilon}, \qquad \varepsilon = 10^{-7}\ \text{m}</div>
+      <div class="eq">\omega^2 \in \operatorname{eig}\!\Bigl(-\frac{1}{m}\,\mathbf J\Bigr)</div>
+      <p>This gives 78 frequencies: 39 sideways and 39 along the rope, interleaved (7.80 Hz axial lies between 6.975 and 10.449 Hz sideways). The sideways ones match the formula of step 6 to within <span class="m">4\cdot 10^{-10}</span> Hz.</p>
+
+      <h3>11. Check 2: spectrum of a plucked simulated rope</h3>
+      <p>A small Gaussian bump (2 mm high, 8 cm wide) is released from rest and integrated with Verlet, <span class="m">\Delta t = 0.2/\omega_{\max}</span>, for 20 s with no damping and no drive. The height of mass 7 is recorded and transformed:</p>
+      <div class="eq">\hat Y(f) = \sum_{j=0}^{N_s-1} w_j\; y_7(t_j)\; e^{-2\pi i f t_j}, \qquad w_j = \sin^2\!\frac{\pi j}{N_s-1}</div>
+      <p>The window <span class="m">w_j</span> (Hann) suppresses leakage from cutting the record. The resolution is <span class="m">\Delta f = 1/T_{\text{rec}} = 0.05\ \text{Hz}</span>, and refining each peak with a parabola through its three highest bins puts it within 0.003 Hz of the formula (table above).</p>
+
+      <h3>12. Where the linear theory stops</h3>
+      <p>The term dropped in step 3 lengthens the rope. For a mode <span class="m">y = A\sin(n\pi x/L)</span>:</p>
+      <div class="eq">\Delta L \;\approx\; \frac{1}{2}\int_0^L \Bigl(\frac{\partial y}{\partial x}\Bigr)^2 dx \;=\; \frac{(n\pi A)^2}{4L}</div>
+      <p>N springs in series act like one spring of stiffness k/N, so the tension and the frequency rise with amplitude:</p>
+      <div class="eq">\Delta T \;\approx\; \frac{k}{N}\,\Delta L, \qquad \frac{\Delta f}{f} \;\approx\; \frac{\Delta T}{2T}</div>
+      <p>For A = 5 cm in mode 1: ΔL = 3.1 mm, ΔT ≈ 0.15 N at full swing, so f rises by at most about 0.4%. The full simulation includes this automatically. The linear modes above do not.</p>
+    </article>
+  </section>
+
+  <!-- ===================== WHY ===================== -->
+  <section class="pane" id="why" role="tabpanel" aria-labelledby="tab-why" hidden>
+    <div class="prose">
+      <h2>1. Explicit Euler always adds energy</h2>
+      <p>It moves the mass with the velocity from <b>before</b> the force acted. Going outward that velocity is too large, so it overshoots. Coming back it is again too large, so it overshoots again. In phase space both arrows start from the old point, so the step always leaves the circle outward: energy × (1 + ω²dt²) per step. A smaller dt only slows this down. That is why your rope blew up eventually even with damping.</p>
+
+      <h2>2. Symplectic Euler and Verlet keep energy bounded</h2>
+      <p>First the spring force changes v, then the mass moves with the <b>new</b> v. Moving outward the force has already braked it, so it goes slightly less far. Coming back it has already been sped up, so it arrives early. The errors have opposite signs in each half of the swing and cancel over a full period. For symplectic Euler the quantity y² + (v/ω)² − ω·dt·y·(v/ω) is conserved exactly, so the true energy can only wobble inside a fixed band. In matrix form: the step map has determinant exactly 1, so it never inflates or shrinks the set of states. Explicit Euler has determinant 1 + ω²dt². Velocity Verlet (half kick, drift, half kick) has the same property and is second order, at the same cost of one force evaluation per step. It is the standard choice in molecular dynamics and cloth simulation.</p>
+
+      <h2>3. Runge–Kutta 4 is precise but leaks energy</h2>
+      <p>RK4 samples the slope four times and averages them, so one step follows the true curve very closely (4th order). It is not symplectic, though: its determinant is 1 − (ω·dt)⁶/72 + …, slightly below 1. Energy drains a little every step, like invisible damping. With real damping in the rope this hardly matters, and RK4 even survives a larger step (ω·dt up to 2.83). For an undamped resonance it underestimates the amplitude, and it costs four force evaluations per step. For the same work, Verlet with four smaller steps keeps the energy better.</p>
+
+      <h2>4. Choosing the step</h2>
+      <p>The rope's fastest motion is the axial vibration of the stiff springs, ω<sub>max</sub> = 2√(k/m). That frequency sets the step for every mass: symplectic Euler and Verlet need ω<sub>max</sub>·dt &lt; 2, RK4 needs &lt; 2.83. The slider in the Rope tab is in these units, so the limits sit at 2.0 and 2.83.</p>
+
+      <h2>5. Tension and damping are physics, not numerics</h2>
+      <p>Without pretension a straight rope has no linear sideways restoring force. Stretch is about y²/(2·seg), so the force goes like y³. There is no wave speed and no harmonics to resonate with. Pretension gives c = √(T/μ) and harmonics fₙ = n·c/(2L). Gravity also provides tension, but uneven along the rope, so its modes are not simple multiples. Damping keeps a driven resonance bounded, as in a real rope.</p>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+(() => {
+/* ============ Math: KaTeX renders TeX to native MathML (no stylesheet needed) ============ */
+document.querySelectorAll('.eq, .m').forEach(el => {
+  if (!window.katex) return;
+  try { katex.render(el.textContent, el, { displayMode: el.classList.contains('eq'), output: 'mathml', throwOnError: false }); } catch (e) {}
+});
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const COL = { ee:'--ee', se:'--se', vv:'--vv', rk:'--rk' };
+function fit(cv) {
+  const dpr = devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight, ctx = cv.getContext('2d');
+  if (cv.width !== Math.round(W*dpr) || cv.height !== Math.round(H*dpr)) { cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); }
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H); return [ctx, W, H];
+}
+function arrow(ctx, x1, y1, x2, y2, col, w, dash) {
+  const L = Math.hypot(x2-x1, y2-y1); if (!(L >= 2) || !isFinite(L)) return;
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []);
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.setLineDash([]);
+  const a = Math.atan2(y2-y1, x2-x1), s = Math.min(9, L*0.45);
+  ctx.beginPath(); ctx.moveTo(x2,y2);
+  ctx.lineTo(x2 - s*Math.cos(a-0.42), y2 - s*Math.sin(a-0.42));
+  ctx.lineTo(x2 - s*Math.cos(a+0.42), y2 - s*Math.sin(a+0.42)); ctx.closePath(); ctx.fill();
+}
+
+/* ============ Tabs ============ */
+const tabs = [...document.querySelectorAll('.tab')];
+let active = 'rope';
+function show(id) {
+  if (!document.getElementById(id)) id = 'rope';
+  active = id;
+  tabs.forEach(t => { const on = t.getAttribute('aria-controls') === id; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1;
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !on; });
+  try { history.replaceState(null, '', '#' + id); } catch (e) {}
+  dispatchEvent(new Event('tabshown'));
+}
+tabs.forEach((t, i) => {
+  t.onclick = () => show(t.getAttribute('aria-controls'));
+  t.onkeydown = e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const j = (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; tabs[j].focus(); tabs[j].click(); } };
+});
+show((location.hash || '#rope').slice(1));
+
+/* ============ Rope ============ */
+(() => {
+  const N = 40, L = 2.0, Mtot = 0.2, K = 2000, n = N + 1, seg = L / N, m = Mtot / (n - 2), g0 = 9.81, cAir = 0.02;
+  const wmax = 2 * Math.sqrt(K / m);
+  const S = { f: 3.49, A: 0.03, T0: 20, c: 0.5, h: 0.2, method: 'se', grav: false };
+  const SZ = 4*n, X0 = 0, Y0 = n, VX = 2*n, VY = 3*n;
+  let s, t, dead, rest, evals, accV, accOk;
+  const k1 = new Float64Array(SZ), k2 = new Float64Array(SZ), k3 = new Float64Array(SZ), k4 = new Float64Array(SZ), tmp = new Float64Array(SZ);
+  const Fx = new Float64Array(n), Fy = new Float64Array(n);
+  function reset() {
+    rest = S.T0 > 0 ? seg - S.T0 / K : seg;
+    s = new Float64Array(SZ); for (let i = 0; i < n; i++) s[X0+i] = i*seg;
+    t = 0; dead = false; evals = 0; accOk = false; accV = new Float64Array(SZ);
+  }
+  function setBC(u, tt) {
+    const w = 2*Math.PI*S.f;
+    u[X0] = 0; u[Y0] = S.A*Math.sin(w*tt); u[VX] = 0; u[VY] = S.A*w*Math.cos(w*tt);
+    u[X0+N] = L; u[Y0+N] = 0; u[VX+N] = 0; u[VY+N] = 0;
+  }
+  function deriv(u, tt, out) {           // Newton + Hooke: out = d(state)/dt
+    setBC(u, tt); evals++;
+    Fx.fill(0); Fy.fill(0);
+    for (let i = 0; i < N; i++) {
+      const dx = u[X0+i+1]-u[X0+i], dy = u[Y0+i+1]-u[Y0+i], l = Math.hypot(dx, dy) + 1e-12, ux = dx/l, uy = dy/l;
+      const rel = (u[VX+i+1]-u[VX+i])*ux + (u[VY+i+1]-u[VY+i])*uy;
+      const F = K*(l-rest) + S.c*rel;
+      Fx[i] += F*ux; Fy[i] += F*uy; Fx[i+1] -= F*ux; Fy[i+1] -= F*uy;
+    }
+    out.fill(0);
+    for (let i = 1; i < N; i++) {
+      out[X0+i] = u[VX+i]; out[Y0+i] = u[VY+i];
+      out[VX+i] = (Fx[i] - cAir*u[VX+i]) / m;
+      out[VY+i] = (Fy[i] - cAir*u[VY+i]) / m - (S.grav ? g0 : 0);
+    }
+  }
+  const axpy = (dst, a, src, b, d) => { for (let i = 0; i < SZ; i++) dst[i] = a[i] + b*d[i]; };
+  function step(dt) {
+    switch (S.method) {
+      case 'ee':  // x and v both from the old state
+        deriv(s, t, k1); for (let i = 0; i < SZ; i++) s[i] += dt*k1[i]; break;
+      case 'se':  // v first, then x with the new v
+        deriv(s, t, k1);
+        for (let i = 1; i < N; i++) { s[VX+i] += dt*k1[VX+i]; s[VY+i] += dt*k1[VY+i]; s[X0+i] += dt*s[VX+i]; s[Y0+i] += dt*s[VY+i]; }
+        break;
+      case 'vv':  // half kick, drift, half kick
+        if (!accOk) { deriv(s, t, accV); accOk = true; }
+        for (let i = 1; i < N; i++) { s[VX+i] += 0.5*dt*accV[VX+i]; s[VY+i] += 0.5*dt*accV[VY+i]; s[X0+i] += dt*s[VX+i]; s[Y0+i] += dt*s[VY+i]; }
+        deriv(s, t + dt, accV);
+        for (let i = 1; i < N; i++) { s[VX+i] += 0.5*dt*accV[VX+i]; s[VY+i] += 0.5*dt*accV[VY+i]; }
+        break;
+      case 'rk':
+        deriv(s, t, k1); axpy(tmp, s, 0, dt/2, k1);
+        deriv(tmp, t+dt/2, k2); axpy(tmp, s, 0, dt/2, k2);
+        deriv(tmp, t+dt/2, k3); axpy(tmp, s, 0, dt, k3);
+        deriv(tmp, t+dt, k4);
+        for (let i = 0; i < SZ; i++) s[i] += dt/6*(k1[i] + 2*k2[i] + 2*k3[i] + k4[i]);
+        break;
+    }
+    t += dt; setBC(s, t);
+  }
+  function energy() {
+    let E = 0;
+    for (let i = 1; i < N; i++) E += 0.5*m*(s[VX+i]**2 + s[VY+i]**2) + (S.grav ? m*g0*s[Y0+i] : 0);
+    for (let i = 0; i < N; i++) { const d = Math.hypot(s[X0+i+1]-s[X0+i], s[Y0+i+1]-s[Y0+i]) - rest; E += 0.5*K*d*d; }
+    return E;
+  }
+  const cv = document.getElementById('cv'), stEl = document.getElementById('status'), rd = document.getElementById('read');
+  function draw() {
+    const [ctx, W, H] = fit(cv);
+    const pad = 28, sx = (W-2*pad)/L, cy = S.grav ? H*0.3 : H/2;
+    const X = v => pad + v*sx, Y = v => cy - v*sx;
+    ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1;
+    for (let k = -2; k <= 2; k += 0.1) { const yy = Y(k); if (yy > 0 && yy < H) { ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(W,yy); ctx.stroke(); } }
+    ctx.fillStyle = css('--muted'); ctx.font = '11px "IBM Plex Mono", monospace'; ctx.fillText('grid 10 cm', W-80, H-10);
+    ctx.fillStyle = css('--fg'); ctx.fillRect(X(L)-2, Y(0)-14, 6, 28);
+    if (!dead) {
+      ctx.strokeStyle = css(COL[S.method]); ctx.lineWidth = 2; ctx.beginPath();
+      for (let i = 0; i < n; i++) i ? ctx.lineTo(X(s[X0+i]), Y(s[Y0+i])) : ctx.moveTo(X(s[X0+i]), Y(s[Y0+i]));
+      ctx.stroke(); ctx.fillStyle = css('--fg');
+      for (let i = 1; i < N; i++) { ctx.beginPath(); ctx.arc(X(s[X0+i]), Y(s[Y0+i]), 2.6, 0, 7); ctx.fill(); }
+      ctx.fillStyle = css('--drive'); ctx.beginPath(); ctx.arc(X(s[X0]), Y(s[Y0]), 5, 0, 7); ctx.fill();
+    } else {
+      ctx.fillStyle = css('--bad'); ctx.font = '600 15px "IBM Plex Sans", sans-serif';
+      ctx.fillText(`Numerically exploded at t = ${t.toFixed(2)} s`, pad, H/2-8);
+      ctx.font = '13px "IBM Plex Sans", sans-serif'; ctx.fillStyle = css('--muted');
+      const lim = S.method === 'rk' ? 2.83 : 2;
+      ctx.fillText(S.method === 'ee' ? 'Explicit Euler adds energy every step. Pick another integrator.'
+        : S.h >= lim ? `ωmax·dt = ${S.h.toFixed(2)} is above this method's limit of ${lim}.` : 'Energy ran away.', pad, H/2+14);
+    }
+  }
+  function readout() {
+    const T0 = K*(seg-rest), c = Math.sqrt(Math.max(T0,1e-9)/(m/seg)), f1 = c/(2*L);
+    let my = 0; for (let i = 1; i < N; i++) my = Math.max(my, Math.abs(s[Y0+i]));
+    stEl.textContent = dead ? 'blew up' : 'stable'; stEl.className = 'status ' + (dead ? 'bad' : 'ok');
+    const hm = S.T0 > 0 ? `<b>${f1.toFixed(2)}</b> · ${(2*f1).toFixed(2)} · ${(3*f1).toFixed(2)} Hz` : '<b>none</b> (no tension)';
+    rd.innerHTML = `<div>t <b>${t.toFixed(1)} s</b></div><div>max |y| <b>${dead?'—':(my*100).toFixed(1)+' cm'}</b></div>`+
+      `<div>energy <b>${dead?'—':energy().toFixed(4)+' J'}</b></div><div>harmonics ${hm}</div>`+
+      `<div>dt <b>${(S.h/wmax*1e6).toFixed(0)} µs</b></div><div>force evals/sim-second <b>${t>0?Math.round(evals/t).toLocaleString('en'):'—'}</b></div>`;
+  }
+  let last = performance.now();
+  function loop(now) {
+    const real = Math.min((now-last)/1000, 1/30); last = now;
+    if (active === 'rope') {
+      if (!dead) {
+        const dt = S.h / wmax; let k = Math.max(1, Math.round(real/dt)); if (k > 300) k = 300;
+        for (let i = 0; i < k; i++) {
+          step(dt);
+          const yc = s[Y0 + (n>>1)], xc = s[X0 + (n>>1)];
+          if (!isFinite(yc) || Math.abs(yc) > 5 || Math.abs(xc - L/2) > 5) { dead = true; break; }
+        }
+      }
+      draw(); readout();
+    }
+    requestAnimationFrame(loop);
+  }
+  const bind = (id, key, fmt, rs) => { const el = document.getElementById(id), v = document.getElementById(id+'V');
+    el.addEventListener('input', () => { S[key] = +el.value; v.textContent = fmt(S[key]); if (rs) reset(); });
+    return () => { el.value = S[key]; v.textContent = fmt(S[key]); }; };
+  const syncs = [
+    bind('freq','f',v=>v.toFixed(2)+' Hz'), bind('amp','A',v=>(v*100).toFixed(1)+' cm'),
+    bind('ten','T0',v=>v+' N',true), bind('damp','c',v=>v.toFixed(2)+' N·s/m'),
+    bind('dtm','h',v=>v.toFixed(2)+(v>=2.83?'  (above every limit)':v>=2?'  (RK4 only)':''), true)];
+  const tG = document.getElementById('tG'), mBtns = [...document.querySelectorAll('#ropeMethod .tg')];
+  function sync() { syncs.forEach(f => f()); tG.setAttribute('aria-pressed', S.grav);
+    mBtns.forEach(b => b.setAttribute('aria-pressed', b.dataset.m === S.method)); }
+  mBtns.forEach(b => b.onclick = () => { S.method = b.dataset.m; reset(); sync(); });
+  tG.onclick = () => { S.grav = !S.grav; reset(); sync(); };
+  document.getElementById('tReset').onclick = reset;
+  const preset = p => () => { Object.assign(S, p); reset(); sync(); };
+  document.getElementById('p1').onclick = preset({f:3.49,A:0.03,T0:20,c:0.5,h:0.2,method:'se',grav:false});
+  document.getElementById('p2').onclick = preset({f:3.49,A:0.03,T0:20,c:0,h:0.2,method:'ee',grav:false});
+  document.getElementById('p3').onclick = preset({f:3.49,A:0.03,T0:20,c:0.5,h:2.4,method:'rk',grav:false});
+  document.getElementById('p4').onclick = preset({f:1.5,A:0.08,T0:0,c:0.5,h:0.2,method:'vv',grav:true});
+  document.getElementById('p5').onclick = preset({f:3.49,A:0.02,T0:20,c:0,h:1.0,method:'rk',grav:false});
+  reset(); sync(); requestAnimationFrame(loop);
+})();
+
+/* ============ Integrators: one rope mass (q = y, p = v/ω, h = ω·dt) ============ */
+(() => {
+  const M = [
+    { k:'ee', name:'Explicit Euler', order:1, evals:1,
+      f:'y += v_old·dt     ← velocity from before the force\nv += F_old/m·dt\nBoth arrows start at the old point.' },
+    { k:'se', name:'Symplectic Euler', order:1, evals:1,
+      f:'v += F/m·dt       ← 1. force changes v\ny += v_new·dt     ← 2. move with the new v\nConserved: y² + (v/ω)² − ω·dt·y·(v/ω)' },
+    { k:'vv', name:'Velocity Verlet', order:2, evals:1,
+      f:'v += ½·F/m·dt     ← half kick\ny += v·dt         ← drift\nv += ½·F_new/m·dt ← half kick at new place' },
+    { k:'rk', name:'Runge–Kutta 4', order:4, evals:4,
+      f:'k1..k4 = slopes at start, 2× middle, end\nstep = dt·(k1 + 2k2 + 2k3 + k4)/6\nVery precise, but energy leaks slowly.' },
+  ];
+  const stepFn = {
+    ee: (q,p,h) => [q + h*p, p - h*q],
+    se: (q,p,h) => { const pn = p - h*q; return [q + h*pn, pn]; },
+    vv: (q,p,h) => { const ph = p - h/2*q, qn = q + h*ph; return [qn, ph - h/2*qn]; },
+    rk: (q,p,h) => { const f = (a,b) => [b, -a];
+      const a = f(q,p), b = f(q+h/2*a[0], p+h/2*a[1]), c = f(q+h/2*b[0], p+h/2*b[1]), d = f(q+h*c[0], p+h*c[1]);
+      return [q + h/6*(a[0]+2*b[0]+2*c[0]+d[0]), p + h/6*(a[1]+2*b[1]+2*c[1]+d[1])]; },
+  };
+  let h = 0.3, eq = false, playing = !matchMedia('(prefers-reduced-motion: reduce)').matches, acc = 0;
+  const H = {}, SUB = {};       // history per method, last sub-step chain (equal-work mode)
+  const BIG = 1e6;
+  function reset() { M.forEach(m => { H[m.k] = [[1,0]]; SUB[m.k] = null; }); }
+  function tick() {
+    M.forEach(m => {
+      const hist = H[m.k]; let [q,p] = hist[hist.length-1];
+      if (!(q*q+p*p < BIG)) { hist.push([q,p]); return; }
+      const nsub = (eq && m.k !== 'rk') ? 4 : 1, chain = [[q,p]];
+      for (let i = 0; i < nsub; i++) { [q,p] = stepFn[m.k](q,p,h/nsub); chain.push([q,p]); }
+      SUB[m.k] = nsub > 1 ? chain : null; hist.push([q,p]);
+      if (hist.length > 6000) hist.shift();
+    });
+  }
+  // ---- cards ----
+  const wrap = document.getElementById('cards'), refs = {};
+  M.forEach(m => {
+    const c = document.createElement('div'); c.className = 'card';
+    c.innerHTML = `<h3><i class="sw" style="background:var(${COL[m.k]})"></i>${m.name}</h3>
+      <div class="chips"><span>order ${m.order}</span><span>${m.evals} force eval${m.evals>1?'s':''}/step</span><span class="e">energy ×1.00</span></div>
+      <canvas class="cv-phase"></canvas><canvas class="cv-phys"></canvas><div class="formula">${m.f}</div>`;
+    wrap.appendChild(c);
+    refs[m.k] = { phase: c.querySelector('.cv-phase'), phys: c.querySelector('.cv-phys'), e: c.querySelector('.e') };
+  });
+  const clipv = (v, L) => Math.max(-L, Math.min(L, v));
+
+  function drawPhase(m) {
+    const [ctx, W] = fit(refs[m.k].phase), hist = H[m.k], col = css(COL[m.k]);
+    const R = 2.2, sc = W/(2*R), c = W/2, X = q => c + clipv(q,R*1.2)*sc, Y = p => c - clipv(p,R*1.2)*sc;
+    ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1;
+    for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(X(k),0); ctx.lineTo(X(k),W); ctx.moveTo(0,Y(k)); ctx.lineTo(W,Y(k)); ctx.stroke(); }
+    ctx.fillStyle = css('--muted'); ctx.font = '11px "IBM Plex Mono", monospace';
+    ctx.fillText('y →', W-30, c-6); ctx.fillText('v/ω ↑', c+6, 13);
+    ctx.strokeStyle = css('--muted'); ctx.setLineDash([4,4]); ctx.beginPath(); ctx.arc(c, c, sc, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+    const recent = hist.slice(-Math.ceil(3*2*Math.PI/h) - 1);
+    ctx.strokeStyle = col; ctx.globalAlpha = 0.6; ctx.lineWidth = 1.5; ctx.beginPath();
+    recent.forEach(([q,p],i) => i ? ctx.lineTo(X(q),Y(p)) : ctx.moveTo(X(q),Y(p))); ctx.stroke(); ctx.globalAlpha = 1;
+    ctx.fillStyle = col; recent.forEach(([q,p]) => { ctx.beginPath(); ctx.arc(X(q),Y(p),2,0,7); ctx.fill(); });
+    if (hist.length < 2) return;
+    const [q0,p0] = hist[hist.length-2], [q1,p1] = hist[hist.length-1];
+    if (!(q0*q0+p0*p0 < 25 && q1*q1+p1*p1 < 25)) return;
+    const fg = css('--fg'), dr = css('--drive');
+    if (SUB[m.k]) {          // equal-work: show the 4 small steps
+      const ch = SUB[m.k]; for (let i = 1; i < ch.length; i++) arrow(ctx, X(ch[i-1][0]),Y(ch[i-1][1]), X(ch[i][0]),Y(ch[i][1]), col, 2);
+    } else if (m.k === 'ee') {
+      arrow(ctx, X(q0),Y(p0), X(q1),Y(p0), fg, 2.4);
+      arrow(ctx, X(q0),Y(p0), X(q0),Y(p1), dr, 2.4);
+      arrow(ctx, X(q1),Y(p0), X(q1),Y(p1), dr, 1.2, [3,3]);
+      arrow(ctx, X(q0),Y(p0), X(q1),Y(p1), col, 1.6, [5,3]);
+    } else if (m.k === 'se') {
+      arrow(ctx, X(q0),Y(p0), X(q0),Y(p1), dr, 2.4);
+      arrow(ctx, X(q0),Y(p1), X(q1),Y(p1), fg, 2.4);
+      arrow(ctx, X(q0),Y(p0), X(q1),Y(p1), col, 1.6, [5,3]);
+    } else if (m.k === 'vv') {
+      const ph = p0 - h/2*q0;
+      arrow(ctx, X(q0),Y(p0), X(q0),Y(ph), dr, 2.4);
+      arrow(ctx, X(q0),Y(ph), X(q1),Y(ph), fg, 2.4);
+      arrow(ctx, X(q1),Y(ph), X(q1),Y(p1), dr, 2.4);
+      arrow(ctx, X(q0),Y(p0), X(q1),Y(p1), col, 1.6, [5,3]);
+    } else {                 // RK4: each stage slope taken for a full step, then the weighted average
+      const f = (a,b) => [b,-a], a = f(q0,p0), b = f(q0+h/2*a[0], p0+h/2*a[1]), cc = f(q0+h/2*b[0], p0+h/2*b[1]), d = f(q0+h*cc[0], p0+h*cc[1]);
+      ctx.font = '10px "IBM Plex Mono", monospace';
+      [a,b,cc,d].forEach((k,i) => { const tx = X(q0+h*k[0]), ty = Y(p0+h*k[1]);
+        ctx.globalAlpha = 0.55; arrow(ctx, X(q0),Y(p0), tx,ty, col, 1.2); ctx.globalAlpha = 1;
+        ctx.fillStyle = col; ctx.fillText('k'+(i+1), tx+3, ty-3); });
+      arrow(ctx, X(q0),Y(p0), X(q1),Y(p1), col, 2.6);
+    }
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(X(q1),Y(p1),3.6,0,7); ctx.fill();
+  }
+
+  function drawPhys(m) {
+    const cv = refs[m.k].phys, [ctx, W, Hh] = fit(cv), hist = H[m.k], col = css(COL[m.k]);
+    const fg = css('--fg'), mu = css('--muted'), gr = css('--grid'), dr = css('--drive');
+    const YM = 2.4, eH = Math.round(Hh*0.22), mH = Hh - eH - 8, cy = mH/2, sy = (mH/2 - 10)/YM, Y = y => cy - clipv(y, YM*1.08)*sy;
+    // rope piece: mass between two fixed neighbours
+    const lw = Math.min(W*0.33, 150), cx = lw/2, d = lw*0.42, n = hist.length - 1, [y, v] = hist[n];
+    ctx.strokeStyle = gr; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(4, cy); ctx.lineTo(lw-4, cy); ctx.stroke();
+    ctx.fillStyle = col; ctx.globalAlpha = 0.35;
+    hist.slice(-30).forEach(([yy]) => { ctx.beginPath(); ctx.arc(cx, Y(yy), 2, 0, 7); ctx.fill(); }); ctx.globalAlpha = 1;
+    const my = Y(y);
+    ctx.strokeStyle = mu; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(cx-d, cy); ctx.lineTo(cx, my); ctx.lineTo(cx+d, cy); ctx.stroke();
+    ctx.fillStyle = fg; [cx-d, cx+d].forEach(px => ctx.fillRect(px-4, cy-4, 8, 8));
+    if (Math.abs(y) < YM) {
+      [[cx-d,cy],[cx+d,cy]].forEach(([nx,ny]) => { const L = Math.hypot(nx-cx, ny-my); arrow(ctx, cx, my, cx+(nx-cx)/L*24, my+(ny-my)/L*24, mu, 1.1); });
+      arrow(ctx, cx, my, cx, my + y*sy*0.9, dr, 3);                 // F = −k·y
+      arrow(ctx, cx+10, my, cx+10, my - clipv(v,YM)*sy*0.9, fg, 2.4); // v
+      ctx.font = '11px "IBM Plex Mono", monospace';
+      ctx.fillStyle = dr; ctx.fillText('F', cx-15, my + (y>0?16:-6));
+      ctx.fillStyle = fg; ctx.fillText('v', cx+15, my + (v>0?-8:15));
+      ctx.fillStyle = mu; ctx.fillText('T', cx-d/2-3, cy-6); ctx.fillText('T', cx+d/2, cy-6);
+    }
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(cx, my, 5.5, 0, 7); ctx.fill();
+    // y over steps
+    const x0 = lw + 8, pw = W - x0 - 6, per = 2*Math.PI/h, span = Math.max(3*per, 24), s0 = Math.max(0, n - span), X = k => x0 + (k - s0)/span*pw;
+    ctx.strokeStyle = gr; ctx.lineWidth = 1;
+    [-2,-1,0,1,2].forEach(k => { ctx.beginPath(); ctx.moveTo(x0, Y(k)); ctx.lineTo(W-6, Y(k)); ctx.stroke(); });
+    ctx.fillStyle = mu; ctx.font = '10px "IBM Plex Mono", monospace';
+    for (let k = Math.max(1, Math.ceil(s0/per)); k*per <= s0+span; k++) { const px = X(k*per);
+      ctx.strokeStyle = gr; ctx.beginPath(); ctx.moveTo(px, 2); ctx.lineTo(px, mH); ctx.stroke(); ctx.fillText('T'+k, px+2, 11); }
+    ctx.strokeStyle = mu; ctx.setLineDash([4,4]); ctx.lineWidth = 1; ctx.beginPath();
+    for (let k = s0; k <= s0+span; k += 0.5) { const px = X(k), py = Y(Math.cos(k*h)); k===s0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py); }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath();
+    for (let k = Math.ceil(s0); k <= n; k++) { const py = Y(hist[k][0]); k===Math.ceil(s0) ? ctx.moveTo(X(k),py) : ctx.lineTo(X(k),py); }
+    ctx.stroke(); ctx.fillStyle = col;
+    for (let k = Math.ceil(s0); k <= n; k++) { ctx.beginPath(); ctx.arc(X(k), Y(hist[k][0]), 1.9, 0, 7); ctx.fill(); }
+    // velocity as tangent: slope per step = h·v
+    if (n >= 1) {
+      const [yp, vp] = hist[n-1], L = Math.max(2, Math.min(6, per/6));
+      if (Math.abs(yp) < YM && Math.abs(y) < YM) {
+        ctx.setLineDash([3,3]); ctx.strokeStyle = mu; ctx.lineWidth = 1.3; ctx.beginPath();
+        ctx.moveTo(X(n-1), Y(yp)); ctx.lineTo(X(n-1+L), Y(yp + L*h*vp)); ctx.stroke(); ctx.setLineDash([]);
+        ctx.strokeStyle = col; ctx.beginPath(); ctx.moveTo(X(n-1), Y(yp)); ctx.lineTo(X(n-1+L), Y(yp + L*(y-yp))); ctx.stroke();
+        arrow(ctx, X(n), Y(y), X(n+L), Y(y + L*h*v), fg, 2.2);
+        ctx.fillStyle = fg; ctx.fillText('v', X(n+L)+3, Y(y + L*h*v)+4);
+      }
+    }
+    ctx.fillStyle = mu; ctx.fillText('y', x0+2, Y(2)-3);
+    // energy strip
+    const e0 = mH + 8, EM = 2.5, EY = e => e0 + eH - Math.min(Math.max(e,0),EM)/EM*eH;
+    ctx.strokeStyle = gr; ctx.strokeRect(x0, e0, pw, eH);
+    ctx.strokeStyle = mu; ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(x0, EY(1)); ctx.lineTo(W-6, EY(1)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath();
+    for (let k = Math.ceil(s0); k <= n; k++) { const [a,b] = hist[k], py = EY(a*a+b*b); k===Math.ceil(s0) ? ctx.moveTo(X(k),py) : ctx.lineTo(X(k),py); }
+    ctx.stroke(); ctx.fillStyle = mu; ctx.fillText('energy', 6, e0+11); ctx.fillText('1', x0-9, EY(1)+3);
+  }
+
+  function drawEnergy() {
+    const cv = document.getElementById('cvEnergy'), [ctx, W, Hh] = fit(cv);
+    const mu = css('--muted'), gr = css('--grid'), padL = 30, padR = 120, padT = 10, padB = 22;
+    const n = H.ee.length - 1, per = 2*Math.PI/h, maxP = Math.max(4, Math.ceil(n/per)), EM = 2;
+    const X = k => padL + (k/per)/maxP*(W-padL-padR), Y = e => padT + (1 - Math.min(Math.max(e,0),EM)/EM)*(Hh-padT-padB);
+    ctx.font = '11px "IBM Plex Mono", monospace'; ctx.lineWidth = 1;
+    [0, 0.5, 1, 1.5, 2].forEach(e => { ctx.strokeStyle = gr; ctx.beginPath(); ctx.moveTo(padL, Y(e)); ctx.lineTo(W-padR, Y(e)); ctx.stroke();
+      ctx.fillStyle = mu; ctx.fillText(e.toFixed(1), 2, Y(e)+4); });
+    const stepP = maxP > 12 ? 4 : maxP > 6 ? 2 : 1;
+    for (let p = 0; p <= maxP; p += stepP) { ctx.fillStyle = mu; ctx.fillText(p ? p + 'T' : '0', X(p*per)-6, Hh-6); }
+    ctx.fillText('periods →', W-padR-70, Hh-6);
+    const labels = [];
+    M.forEach(m => {
+      const hist = H[m.k], col = css(COL[m.k]); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath();
+      const stride = Math.max(1, Math.floor(hist.length/800));
+      for (let k = 0; k < hist.length; k += stride) { const [a,b] = hist[k], py = Y(a*a+b*b); k ? ctx.lineTo(X(k),py) : ctx.moveTo(X(k),py); }
+      ctx.stroke();
+      const [a,b] = hist[hist.length-1]; labels.push({ y: Y(a*a+b*b), col, t: m.name.replace('Velocity ','').replace('Runge–Kutta 4','RK4') });
+    });
+    labels.sort((a,b) => a.y - b.y);
+    for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i-1].y < 13) labels[i].y = labels[i-1].y + 13;
+    labels.forEach(l => { ctx.fillStyle = l.col; ctx.fillText(l.t, W-padR+8, l.y+4); });
+  }
+
+  function render() {
+    if (active !== 'integrators') return;
+    M.forEach(m => { drawPhase(m); drawPhys(m);
+      const [a,b] = H[m.k][H[m.k].length-1], e = a*a+b*b;
+      refs[m.k].e.textContent = 'energy ×' + (e > 99 || !isFinite(e) ? '>99' : e.toFixed(e < 0.01 ? 4 : 2)); });
+    drawEnergy();
+  }
+  const ih = document.getElementById('ih'), ihV = document.getElementById('ihV'), iPlay = document.getElementById('iPlay'), iEq = document.getElementById('iEq');
+  const lab = () => ihV.textContent = `${h.toFixed(2)}  (${(2*Math.PI/h).toFixed(1)} steps/period)`;
+  ih.value = h; lab();
+  ih.addEventListener('input', () => { h = +ih.value; lab(); reset(); prime(); render(); });
+  iEq.onclick = () => { eq = !eq; iEq.setAttribute('aria-pressed', eq); reset(); prime(); render(); };
+  document.getElementById('iStep').onclick = () => { tick(); render(); };
+  document.getElementById('iReset').onclick = () => { reset(); render(); };
+  const setPlay = v => { playing = v; iPlay.setAttribute('aria-pressed', v); iPlay.textContent = v ? 'Pause' : 'Play'; };
+  iPlay.onclick = () => setPlay(!playing); setPlay(playing);
+  function prime() { for (let i = 0, k = Math.round(1.5*2*Math.PI/h); i < k; i++) tick(); }
+  let last = performance.now();
+  function loop(now) {
+    const dtms = now - last; last = now;
+    if (playing && active === 'integrators') {
+      acc += dtms; const interval = Math.min(350, Math.max(12, 3200/(2*Math.PI/h)));
+      let did = 0; while (acc >= interval && did < 8) { acc -= interval; tick(); did++; }
+      if (acc > interval) acc = 0;
+      if (H.ee.length - 1 > 12*2*Math.PI/h) { reset(); prime(); }
+      if (did) render();
+    }
+    requestAnimationFrame(loop);
+  }
+  addEventListener('tabshown', render); addEventListener('resize', render);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', render);
+  reset(); prime(); render(); requestAnimationFrame(loop);
+})();
+
+/* ============ Modes: theory, Jacobian eigenvalues, pluck + FFT ============ */
+(() => {
+  const N = 40, L = 2, Mt = 0.2, K = 2000, T = 20, n = N + 1, s = L / N, m = Mt / (n - 2), rest = s - T / K;
+  const wmax = 2 * Math.sqrt(K / m);
+  const fTr = k => Math.sqrt(T/(m*s))/Math.PI*Math.sin(k*Math.PI/(2*N));
+  const fAx = k => Math.sqrt(K/m)/Math.PI*Math.sin(k*Math.PI/(2*N));
+  const fCo = k => k/(2*L)*Math.sqrt(T/(m/s));
+  const FMAX = 45;
+  let spec = null, df = 0, peaks = {}, pluckX = 0.3, eigTr = null, ran = false;
+
+  // forces of the full nonlinear model, interior masses only (same as the Rope tab, no damping)
+  function forces(x, y, fx, fy) {
+    fx.fill(0); fy.fill(0);
+    for (let i = 0; i < N; i++) {
+      const dx = x[i+1]-x[i], dy = y[i+1]-y[i], l = Math.hypot(dx, dy), F = K*(l-rest);
+      fx[i] += F*dx/l; fy[i] += F*dy/l; fx[i+1] -= F*dx/l; fy[i+1] -= F*dy/l;
+    }
+  }
+  // ---- Check 1: numerical Jacobian + symmetric eigenvalues (Jacobi rotations) ----
+  function eigenTransverse() {
+    const D = 2*(N-1), J = Array.from({length: D}, () => new Float64Array(D));
+    const x0 = new Float64Array(n), y0 = new Float64Array(n), fx = new Float64Array(n), fy = new Float64Array(n);
+    for (let i = 0; i < n; i++) x0[i] = i*s;
+    forces(x0, y0, fx, fy); const f0x = fx.slice(), f0y = fy.slice(), e = 1e-7;
+    for (let b = 0; b < D; b++) {
+      const xp = x0.slice(), yp = y0.slice(), j = (b % (N-1)) + 1;
+      if (b < N-1) xp[j] += e; else yp[j] += e;
+      forces(xp, yp, fx, fy);
+      for (let a = 0; a < D; a++) { const i = (a % (N-1)) + 1;
+        J[a][b] = -((a < N-1 ? fx[i]-f0x[i] : fy[i]-f0y[i]) / e) / m; }
+    }
+    for (let a = 0; a < D; a++) for (let b = a+1; b < D; b++) { const v = 0.5*(J[a][b]+J[b][a]); J[a][b] = J[b][a] = v; }
+    // cyclic Jacobi
+    for (let sweep = 0; sweep < 60; sweep++) {
+      let off = 0; for (let p = 0; p < D; p++) for (let q = p+1; q < D; q++) off += J[p][q]**2;
+      if (off < 1e-18) break;
+      for (let p = 0; p < D; p++) for (let q = p+1; q < D; q++) {
+        if (Math.abs(J[p][q]) < 1e-14) continue;
+        const th = (J[q][q]-J[p][p])/(2*J[p][q]), t = Math.sign(th||1)/(Math.abs(th)+Math.sqrt(th*th+1)), c = 1/Math.sqrt(t*t+1), sn = t*c;
+        for (let k = 0; k < D; k++) { const a = J[k][p], b = J[k][q]; J[k][p] = c*a - sn*b; J[k][q] = sn*a + c*b; }
+        for (let k = 0; k < D; k++) { const a = J[p][k], b = J[q][k]; J[p][k] = c*a - sn*b; J[q][k] = sn*a + c*b; }
+      }
+    }
+    const f = []; for (let i = 0; i < D; i++) f.push(Math.sqrt(Math.abs(J[i][i]))/(2*Math.PI));
+    f.sort((a,b) => a-b);
+    const ax = Array.from({length: N-1}, (_, i) => fAx(i+1));
+    return f.filter(v => !ax.some(a => Math.abs(a - v) < 1e-4));
+  }
+  // ---- Check 2: pluck, Verlet, FFT ----
+  function fft(re, im) {
+    const nn = re.length;
+    for (let i = 1, j = 0; i < nn; i++) { let bit = nn >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit;
+      if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } }
+    for (let len = 2; len <= nn; len <<= 1) {
+      const ang = -2*Math.PI/len, wr = Math.cos(ang), wi = Math.sin(ang);
+      for (let i = 0; i < nn; i += len) { let cr = 1, ci = 0;
+        for (let j = 0; j < len/2; j++) {
+          const ar = re[i+j], ai = im[i+j], br = re[i+j+len/2]*cr - im[i+j+len/2]*ci, bi = re[i+j+len/2]*ci + im[i+j+len/2]*cr;
+          re[i+j] = ar+br; im[i+j] = ai+bi; re[i+j+len/2] = ar-br; im[i+j+len/2] = ai-bi;
+          const t = cr*wr - ci*wi; ci = cr*wi + ci*wr; cr = t; } }
+    }
+  }
+  function pluck() {
+    const dt = 0.2/wmax, Tsim = 20, steps = Math.round(Tsim/dt), every = 10;
+    const x = new Float64Array(n), y = new Float64Array(n), vx = new Float64Array(n), vy = new Float64Array(n), fx = new Float64Array(n), fy = new Float64Array(n);
+    for (let i = 0; i < n; i++) { x[i] = i*s; y[i] = 0.002*Math.exp(-((((i*s)-pluckX)/0.08)**2)); }
+    y[0] = y[N] = 0;
+    const rec = []; forces(x, y, fx, fy);
+    for (let st = 0; st < steps; st++) {
+      for (let i = 1; i < N; i++) { vx[i] += 0.5*dt*fx[i]/m; vy[i] += 0.5*dt*fy[i]/m; x[i] += dt*vx[i]; y[i] += dt*vy[i]; }
+      forces(x, y, fx, fy);
+      for (let i = 1; i < N; i++) { vx[i] += 0.5*dt*fx[i]/m; vy[i] += 0.5*dt*fy[i]/m; }
+      if (st % every === 0) rec.push(y[7]);
+    }
+    const Ns = rec.length; let P = 1; while (P < Ns) P <<= 1; P <<= 1;
+    const re = new Float64Array(P), im = new Float64Array(P);
+    for (let j = 0; j < Ns; j++) re[j] = rec[j]*Math.sin(Math.PI*j/(Ns-1))**2;
+    fft(re, im);
+    df = 1/(P*dt*every);
+    const nb = Math.ceil(FMAX/df) + 2; spec = new Float64Array(nb);
+    let mx = 0; for (let k = 0; k < nb; k++) { spec[k] = Math.hypot(re[k], im[k]); mx = Math.max(mx, spec[k]); }
+    for (let k = 0; k < nb; k++) spec[k] = 20*Math.log10(spec[k]/mx + 1e-12);
+    // peaks: local maxima above −60 dB, refined by parabolic interpolation, matched to nearest mode
+    peaks = {};
+    for (let k = 2; k < nb-2; k++) if (spec[k] > spec[k-1] && spec[k] >= spec[k+1] && spec[k] > -60) {
+      const a = spec[k-1], b = spec[k], c = spec[k+1], d = 0.5*(a-c)/(a-2*b+c), f = (k+d)*df;
+      let best = 1, bd = 1e9; for (let q = 1; q < N; q++) { const dd = Math.abs(fTr(q)-f); if (dd < bd) { bd = dd; best = q; } }
+      if (bd < 0.3 && (!peaks[best] || peaks[best].db < b)) peaks[best] = { f, db: b };
+    }
+    document.getElementById('plInfo').textContent =
+      `Simulated ${Tsim} s with Verlet, ${steps.toLocaleString('en')} steps, ${Ns.toLocaleString('en')} samples of mass 7. Bin width ${df.toFixed(3)} Hz (zero-padded ×2), peaks refined by parabolic interpolation.`;
+  }
+  function table() {
+    const body = document.getElementById('peakBody'); let h = '';
+    for (let q = 1; q <= 10; q++) {
+      const p = peaks[q], ft = fTr(q);
+      h += `<tr><td class="num">${q}</td><td class="num">${fCo(q).toFixed(3)}</td><td class="num">${ft.toFixed(3)}</td>`+
+        `<td class="num">${eigTr ? eigTr[q-1].toFixed(3) : '…'}</td><td class="num">${p ? p.f.toFixed(3) : '—'}</td>`+
+        `<td class="num">${p ? (p.f-ft >= 0 ? '+' : '−') + Math.abs(p.f-ft).toFixed(3) : '—'}</td></tr>`;
+    }
+    body.innerHTML = h;
+  }
+  function drawSpec() {
+    const cv = document.getElementById('cvSpec'); const [ctx, W, H] = fit(cv);
+    const mu = css('--muted'), gr = css('--grid'), fg = css('--fg'), dr = css('--drive'), ac = css('--vv');
+    const pl = 36, pr = 10, pt = 14, pb = 26, X = f => pl + f/FMAX*(W-pl-pr), Y = db => pt + Math.min(1, Math.max(0, -db/80))*(H-pt-pb);
+    ctx.font = '11px "IBM Plex Mono", monospace'; ctx.lineWidth = 1;
+    for (let db = 0; db >= -80; db -= 20) { ctx.strokeStyle = gr; ctx.beginPath(); ctx.moveTo(pl, Y(db)); ctx.lineTo(W-pr, Y(db)); ctx.stroke();
+      ctx.fillStyle = mu; ctx.fillText(db, 4, Y(db)+4); }
+    for (let f = 0; f <= FMAX; f += 5) { ctx.fillStyle = mu; ctx.fillText(f, X(f)-5, H-8); }
+    ctx.fillText('Hz', W-pr-16, H-8); ctx.fillText('dB', 4, 10);
+    for (let q = 1; q < N && fAx(q) < FMAX; q++) { ctx.strokeStyle = dr; ctx.setLineDash([2,4]); ctx.beginPath(); ctx.moveTo(X(fAx(q)), pt); ctx.lineTo(X(fAx(q)), H-pb); ctx.stroke(); }
+    ctx.setLineDash([]);
+    for (let q = 1; q < N && fTr(q) < FMAX; q++) { ctx.strokeStyle = mu; ctx.globalAlpha = .55; ctx.beginPath(); ctx.moveTo(X(fTr(q)), pt); ctx.lineTo(X(fTr(q)), H-pb); ctx.stroke(); ctx.globalAlpha = 1;
+      if (q <= 12) { ctx.fillStyle = mu; ctx.fillText(q, X(fTr(q))-3, pt-3); } }
+    if (spec) { ctx.strokeStyle = ac; ctx.lineWidth = 1.6; ctx.beginPath();
+      for (let k = 0; k < spec.length; k++) { const f = k*df; if (f > FMAX) break; k ? ctx.lineTo(X(f), Y(spec[k])) : ctx.moveTo(X(f), Y(spec[k])); }
+      ctx.stroke(); ctx.fillStyle = fg;
+      Object.values(peaks).forEach(p => { ctx.beginPath(); ctx.arc(X(p.f), Y(p.db), 2.6, 0, 7); ctx.fill(); }); }
+  }
+  let mode = 1, t0 = performance.now();
+  function drawShape(now) {
+    const cv = document.getElementById('cvShape'); const [ctx, W, H] = fit(cv);
+    const mu = css('--muted'), fg = css('--fg'), ac = css('--vv'), gr = css('--grid');
+    const pad = 16, X = x => pad + x/L*(W-2*pad), cy = H/2, A = H*0.36, Y = v => cy - v*A;
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ph = still ? 1 : Math.cos(2*Math.PI*0.5*((now ?? performance.now()) - t0)/1000);
+    ctx.strokeStyle = gr; ctx.beginPath(); ctx.moveTo(pad, cy); ctx.lineTo(W-pad, cy); ctx.stroke();
+    ctx.strokeStyle = mu; ctx.setLineDash([4,4]); ctx.beginPath();
+    for (let k = 0; k <= 400; k++) { const x = k/400*L, v = Math.sin(mode*Math.PI*x/L)*ph; k ? ctx.lineTo(X(x), Y(v)) : ctx.moveTo(X(x), Y(v)); }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = ac; ctx.lineWidth = 1.8; ctx.beginPath();
+    for (let i = 0; i <= N; i++) { const v = Math.sin(i*mode*Math.PI/N)*ph; i ? ctx.lineTo(X(i*s), Y(v)) : ctx.moveTo(X(0), Y(v)); }
+    ctx.stroke(); ctx.fillStyle = fg;
+    for (let i = 1; i < N; i++) { ctx.beginPath(); ctx.arc(X(i*s), Y(Math.sin(i*mode*Math.PI/N)*ph), 2.6, 0, 7); ctx.fill(); }
+    [0, L].forEach(x => ctx.fillRect(X(x)-3, cy-10, 6, 20));
+    ctx.font = '11px "IBM Plex Mono", monospace'; ctx.fillStyle = mu;
+    ctx.fillText('masses: eigenvector φᵢ = sin(i·nπ/N)    dashed: continuous sin(nπx/L)', pad, H-6);
+  }
+  function shapeInfo() {
+    const r = fTr(mode)/fCo(mode);
+    document.getElementById('mnV').textContent = mode;
+    document.getElementById('mnInfo').textContent =
+      `f${mode} = ${fTr(mode).toFixed(3)} Hz on the 40-mass rope, ${fCo(mode).toFixed(3)} Hz for a continuous string (ratio ${r.toFixed(3)}). ` +
+      (mode > N/2 ? 'Above n = 20 the masses can no longer follow the sine: neighbouring masses swing nearly opposite, so the frequency saturates near 88.9 Hz.' : '');
+  }
+  const plx = document.getElementById('plx'), plxV = document.getElementById('plxV'), mn = document.getElementById('mn');
+  plx.value = pluckX; plxV.textContent = pluckX.toFixed(2) + ' m';
+  plx.addEventListener('input', () => { pluckX = +plx.value; plxV.textContent = pluckX.toFixed(2) + ' m'; });
+  mn.value = mode; shapeInfo();
+  mn.addEventListener('input', () => { mode = +mn.value; shapeInfo(); drawShape(); });
+  document.getElementById('plGo').onclick = () => { pluck(); table(); drawSpec(); };
+  function ensure() {
+    if (active !== 'modes') return;
+    if (!ran) { ran = true; eigTr = eigenTransverse(); pluck(); table(); }
+    drawSpec(); drawShape();
+  }
+  function loop(now) { if (active === 'modes') drawShape(now); requestAnimationFrame(loop); }
+  addEventListener('tabshown', ensure); addEventListener('resize', ensure);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', ensure);
+  table(); ensure(); requestAnimationFrame(loop);
+})();
+})();
+</script>
+
+</body>
+</html>
