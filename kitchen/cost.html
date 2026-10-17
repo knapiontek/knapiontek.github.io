@@ -58,12 +58,15 @@
     .total-pill { margin-left: 0; width: 100%; }
     .grid td.src { min-width: 180px; }
   }
+  .issues { margin: 8px 0 12px; padding: 8px 12px; border: 1px solid #f59e0b; border-radius: 6px; background: #fffbeb; color: #92400e; font-size: 13px; }
+  .issues ul { margin: 4px 0 0; padding-left: 18px; }
 </style>
 </head>
 <body>
 <div class="app">
   <h1 id="title"></h1>
   <p class="info" id="info"></p>
+  <div class="issues" id="issues" hidden></div>
   <div class="toolbar">
     <button class="btn" id="btnXlsx">Export XLSX</button>
     <button class="btn secondary" id="btnReset">Restore data</button>
@@ -122,7 +125,7 @@
 <!-- ===================================================================
      COST DATA (JSON) - this page's own input: prices, items, notes and vars. Everything measured comes from
      data.js through engine.js; nothing here repeats a calculated number.
-     blocks: cutting-list tables, built by engine.js (src: front | frames | plinths | panels | p18 | p16 | hdf)
+     blocks: cutting-list tables, built by engine.js (src: front | frames | plinths | panels | plaster | p18 | p16 | hdf)
      cats/rows: items; qty = number or formula; name, spec, src and notes may hold placeholders:
        {n:hinges} engine count ({n:tag.bins} = components with that tag), {r:drawers.dFrom} data.js rule,
        {v:name} vars below, {p:id} unit price, {q:id} item quantity, {p18.m2|edge|cut|len|qty} cutting-list total,
@@ -174,12 +177,12 @@
    "Appliances"
   ],
   "sheetLabel": "Board sheet 2800×2070 [m²]",
-  "cuttingNote": "Carcass = all columns with the same carcass name, depth {r:carcassDepth}, back {r:wallGap} from the wall; interior = width − 2 × {r:board}; adjustable shelf = interior − 2 × {r:shelf.clearance}, depth − {r:shelf.setback}; fixed shelf = interior × full depth; HDF back = carcass − 2 × {r:back.inset} (none in group {r:noHdfBack}); fronts = module − 4 gaps (left, right, top, bottom); back strip = {r:frame.depth} × frame length; drawer bottom = interior − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, back = interior − {r:drawers.back.inset}; inner drawer back {r:drawers.inner.back} high. ABS edging on front edges only.",
+  "cuttingNote": "Carcass = all columns with the same carcass name, depth {r:carcassDepth}, back {r:wallGap} from the wall; interior = width − 2 × {r:board}; adjustable shelf = interior − 2 × {r:shelf.clearance}, depth − {r:shelf.setback}; fixed shelf = interior × full depth; HDF back = carcass − 2 × {r:back.inset} (none in group {r:backPanel.groups}); fronts = module − 4 gaps (left, right, top, bottom); back strip = {r:frame.depth} × frame length; drawer bottom = interior − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, back = interior − {r:drawers.back.inset}; inner drawer back {r:drawers.inner.back} high. ABS edging on front edges only.",
   "qtyWords": {
    "q:legs": "number of legs"
   }
  },
- "title": "Material cost estimate – Kitchen Jaworze (Group 1+2 in an L, island Group 3)",
+ "title": "Material cost estimate – Kitchen Jaworze (group 1+2 in an L, island group 3)",
  "info": "PLN gross, average market prices October 2026, materials only (self-assembly). Blue cells can be changed to try other prices; the change lasts until the page is reloaded - permanent prices go in the cost data of this page. Every quantity with a formula is calculated from data.js.",
  "params": {
   "waste": 0.15,
@@ -202,7 +205,7 @@
   },
   {
    "id": "bar",
-   "title": "FRAMES / FILLERS – MDF 18 lacquered like the fronts; frames {r:frontThickness} on edge, {r:frame.depth} deep; wider fillers flat",
+   "title": "FRAMES – MDF {r:frontThickness} on edge, {r:frame.depth} deep, lacquered like the fronts: edge + both faces",
    "cols": [
     "Element",
     "Width / depth",
@@ -227,8 +230,8 @@
    "src": "plinths"
   },
   {
-   "id": "island",
-   "title": "ISLAND BACK PANEL – MDF 18, smooth lacquer",
+   "id": "panel",
+   "title": "PANELS – MDF {r:frontThickness} laid flat, lacquered on both faces (L corner, island back)",
    "cols": [
     "Element",
     "Width",
@@ -238,6 +241,19 @@
    "rows": [],
    "live": true,
    "src": "panels"
+  },
+  {
+   "id": "plaster",
+   "title": "PLASTERBOARD – GKBI 12.5 on CD60 / UD27 profiles, {r:plasterboard.depth} deep (group 2 soffit and wall stub)",
+   "cols": [
+    "Element",
+    "Width",
+    "Length",
+    "Qty"
+   ],
+   "rows": [],
+   "live": true,
+   "src": "plaster"
   },
   {
    "id": "p18",
@@ -267,7 +283,7 @@
   },
   {
    "id": "hdf",
-   "title": "BACKS – HDF {r:back.thickness} light grey (none in group {r:noHdfBack} – covered by the back panel)",
+   "title": "BACKS – HDF {r:back.thickness} light grey (none in group {r:backPanel.groups} – covered by the back panel)",
    "cols": [
     "Element",
     "Width",
@@ -297,12 +313,12 @@
     },
     {
      "id": "i2",
-     "name": "Frames on edge + flat fillers",
-     "spec": "MDF 18 lacquered on 3 sides, 100 deep; filler lacquered face + edges",
+     "name": "Frames MDF 18 on edge",
+     "spec": "{r:frame.depth} deep; lacquered on the edge and both faces",
      "qty": "={bar.m2}",
      "unit": "m²",
-     "price": 480,
-     "src": "est., like the fronts; the front maker may charge a minimum area per piece",
+     "price": 500,
+     "src": "est.: all blue parts cost the same as the fronts; the front maker may charge a minimum area per piece",
      "refs": [
       "6",
       "9"
@@ -332,12 +348,12 @@
     },
     {
      "id": "i4",
-     "name": "Island back panel",
-     "spec": "MDF 18 smooth lacquer, between the waterfalls",
-     "qty": "={island.m2}",
+     "name": "Panels MDF 18, laid flat",
+     "spec": "lacquered on both faces; L corner (80, 36) and island back",
+     "qty": "={panel.m2}",
      "unit": "m²",
-     "price": 400,
-     "src": "est., smooth lacquer",
+     "price": 500,
+     "src": "est.: all blue parts cost the same as the fronts",
      "refs": [
       "9",
       "C4"
@@ -362,8 +378,8 @@
     },
     {
      "id": "i6",
-     "name": "Light grey chipboard 16",
-     "spec": "drawer bottoms and backs",
+     "name": "Grey chipboard 16",
+     "spec": "drawer bottoms and backs, hob separation panel (separate product)",
      "qty": "=ROUNDUP({p16.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 190,
@@ -560,7 +576,7 @@
     {
      "id": "i21",
      "name": "Corner connectors",
-     "spec": "corner carcass with Group 2",
+     "spec": "corner carcass with group 2",
      "qty": 1,
      "unit": "set",
      "price": 30,
@@ -577,8 +593,8 @@
    "rows": [
     {
      "id": "i22",
-     "name": "Laminate oak worktop 38×{r:worktop.depth}×4100",
-     "spec": "Group 1 worktop + waterfall end → 1 board",
+     "name": "Laminate oak worktop 38×{n:worktop.1}×4100",
+     "spec": "group 1 worktop + waterfall end → 1 board",
      "qty": 1,
      "unit": "pcs",
      "price": 700,
@@ -587,7 +603,7 @@
     },
     {
      "id": "i23",
-     "name": "Laminate oak worktop 38×920×4100",
+     "name": "Laminate oak worktop 38×{n:worktop.3}×4100",
      "spec": "island top + 2 waterfall ends → 1 board",
      "qty": 1,
      "unit": "pcs",
@@ -599,8 +615,8 @@
     },
     {
      "id": "i24",
-     "name": "Laminate wall panel matching the worktop",
-     "spec": "Group 1 wall panel",
+     "name": "Laminate splash 18 matching the worktop",
+     "spec": "group 1, at the window",
      "qty": 1,
      "unit": "pcs",
      "price": 350,
@@ -628,6 +644,53 @@
      "refs": [
       "8"
      ]
+    }
+   ]
+  },
+  {
+   "cat": "Plasterboard (group 2)",
+   "rows": [
+    {
+     "id": "i50",
+     "name": "Plasterboard GKBI 12.5 (moisture-resistant) 1200×2600",
+     "spec": "face + return of each board in the Cutting list, + {waste|%} waste, {v:plasterSheet} m² per board",
+     "qty": "=ROUNDUP({plaster.m2}*(1+{waste})/{v:plasterSheet},0)",
+     "unit": "pcs",
+     "price": 45,
+     "src": "approx. 45 PLN per board (muratordom.pl, prices 2026)",
+     "refs": [
+      "C3"
+     ]
+    },
+    {
+     "id": "i51",
+     "name": "Profile CD60, 3 m",
+     "spec": "outer edge + cross pieces every {r:plasterboard.studSpacing}",
+     "qty": "=ROUNDUP({n:plasterCD}/3000,0)",
+     "unit": "pcs",
+     "price": 22,
+     "src": "21.99 PLN (leroymerlin.pl, October 2026)",
+     "refs": []
+    },
+    {
+     "id": "i52",
+     "name": "Profile UD27, 3 m",
+     "spec": "on the wall and ceiling edges",
+     "qty": "=ROUNDUP({n:plasterUD}/3000,0)",
+     "unit": "pcs",
+     "price": 15,
+     "src": "est.",
+     "refs": []
+    },
+    {
+     "id": "i53",
+     "name": "Plasterboard accessories",
+     "spec": "screws, dowels, connectors, joint tape, compound, corner bead, primer",
+     "qty": 1,
+     "unit": "set",
+     "price": 150,
+     "src": "est.",
+     "refs": []
     }
    ]
   },
@@ -760,7 +823,7 @@
   }
  ],
  "excluded": [
-  "Labour, transport, electrics (400 V hob, circuits for oven/dishwasher/fridge), plumbing, walls/plasterboard (fillers \"Wall / plasterboard\")."
+  "Labour, transport, electrics (400 V hob, circuits for oven/dishwasher/fridge), plumbing, plasterboard work (materials are in the estimate)."
  ],
  "notes": [
   {
@@ -803,8 +866,8 @@
   },
   {
    "nr": "6",
-   "t": "Frames 18 on edge; wider fillers flat",
-   "o": "Frames: MDF {r:frontThickness} on edge, {r:frame.depth} deep; with lacquer ≈ 18.5. Fillers wider than {r:frontThickness} are installed flat, face-on (L corners of Group 1 and Group 2). The Group 1 filler overlaps the Group 2 filler, so there is no gap in the corner.",
+   "t": "Frames on edge, panels flat",
+   "o": "Frames: MDF {r:frontThickness} on edge, {r:frame.depth} deep, lacquered on the edge and both faces; with lacquer ≈ 18.5. Panels: MDF {r:frontThickness} laid flat, lacquered on both faces (L corners of group 1 and group 2, island back). The group 1 panel overlaps the group 2 panel, so there is no gap in the corner.",
    "p": "",
    "d": ""
   },
@@ -818,7 +881,7 @@
   {
    "nr": "19",
    "t": "Island – no HDF backs",
-   "o": "The backs of the island carcasses (group {r:noHdfBack}) are covered by the lacquered back panel between the waterfalls, so they get no HDF back.",
+   "o": "The backs of the island carcasses (group {r:backPanel.groups}) are covered by the lacquered back panel between the waterfalls, so they get no HDF back.",
    "p": "",
    "d": ""
   },
@@ -842,7 +905,7 @@
   {
    "nr": "9",
    "t": "Lacquer only on fronts and frames",
-   "o": "Lacquered (front maker): fronts {p:i1} PLN/m² (supplier quote, October 2026) and frames / fillers, estimate {p:i2} PLN/m². Island back panel: smooth lacquered MDF, estimate {p:i4} PLN/m². Plinth: standard PVC plinth, bought by the metre.",
+   "o": "Lacquered (front maker): fronts {p:i1} PLN/m² (supplier quote, October 2026) and frames {p:i2} PLN/m² and panels (L corner, island back) {p:i4} PLN/m² – estimate: all blue parts cost the same. Plinth: standard PVC plinth, bought by the metre.",
    "p": "",
    "d": ""
   },
@@ -877,7 +940,7 @@
   {
    "nr": "14",
    "t": "Back strips behind frames",
-   "o": "Behind every frame that is not part of a carcass: chipboard {r:board} strip on edge, {r:frame.depth} deep, frame length; no packing. A flat filler gets a strip only with carcasses on both sides.",
+   "o": "Behind every frame that is not part of a carcass: chipboard {r:board} strip on edge, {r:frame.depth} deep, frame length; no packing.",
    "p": "in the chipboard 18 cutting list.",
    "d": ""
   },
@@ -921,8 +984,8 @@
   },
   {
    "nr": "C3",
-   "t": "Electrics / plumbing, plasterboard walls (fillers \"Wall / plasterboard\", soffit to the ceiling), transport, assembly",
-   "o": "outside the estimate.",
+   "t": "Electrics / plumbing, plasterboard work, transport, assembly",
+   "o": "outside the estimate; plasterboard materials (soffit, wall stub) are in it.",
    "p": "",
    "d": ""
   },
@@ -944,7 +1007,8 @@
  "vars": {
   "confirmatPerCarcass": 18,
   "plinthCutAllowance": 0.1,
-  "edgeAllowance": 0.1
+  "edgeAllowance": 0.1,
+  "plasterSheet": 3.12
  }
 }</script>
 <script src="data.js"></script>
@@ -965,12 +1029,16 @@ function rowsFor(src) {
   if (src === 'frames') return KE.cutList(MODEL.frames);
   if (src === 'plinths') return KE.cutList(MODEL.plinths.map(p => ({ name: 'Plinth', a: p.a, b: p.b })));
   if (src === 'panels') return KE.cutList(MODEL.panels);
+  if (src === 'plaster') return KE.cutList(MODEL.plaster);
   return KE.cutList(MODEL.boards.filter(b => b.mat === src));   // p18 | p16 | hdf
 }
 let MAPJ = '';
 function applyProject(P) {
   MODEL = KE.build(P); for (const b of DATA.blocks) b.rows = rowsFor(b.src);
   MAPJ = KE.mapJSON(KE.carcassMap(MODEL)); document.getElementById('mapJson').textContent = MAPJ;
+  // issues found by engine.js in data.js (the 3D geometry check runs in view.html)
+  const iss = document.getElementById('issues'); iss.hidden = !MODEL.warnings.length;
+  iss.innerHTML = MODEL.warnings.length ? '<b>' + MODEL.warnings.length + (MODEL.warnings.length === 1 ? ' issue' : ' issues') + ' in data.js</b><ul>' + MODEL.warnings.map(w => '<li>' + w.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</li>').join('') + '</ul>' : '';
 }
 document.getElementById('mapSave').addEventListener('click', () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([MAPJ], { type: 'application/json' }));
@@ -1018,7 +1086,7 @@ function ROUNDUP(x, d) { const f = Math.pow(10, d || 0); return Math.ceil(x * f 
 function token(key, T, Q) {
   const [, p, rest] = key.match(/^(?:(\w+):)?(.+)$/);
   const path = (o, k) => k.split('.').reduce((a, x) => a == null ? a : a[x], o);
-  if (p === 'n') return MODEL ? (MODEL.counts[rest.replace(/^tag\./, 'tag:')] ?? 0) : NaN;
+  if (p === 'n') return MODEL ? (MODEL.counts[rest.replace(/^(tag|worktop)\./, '$1:')] ?? 0) : NaN;
   if (p === 'r') return MODEL ? path(MODEL.rules, rest) : NaN;
   if (p === 'v') return DATA.vars[rest];
   if (p === 'p') return Number(S.items[rest].price);

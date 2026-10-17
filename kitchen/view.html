@@ -213,7 +213,7 @@ body.shut .toggle{display:flex}
         <p class="hint">Per carcass: x along its group, y up, z from the wall (mm); room = position in the room.</p>
       </section>
       <section>
-        <h2>Geometry check</h2>
+        <h2>Issues</h2>
         <p class="note" id="geoNote"></p>
         <ul class="note" id="geoList" style="padding-left:16px;margin:4px 0 0"></ul>
       </section>
@@ -276,21 +276,23 @@ body.shut .toggle{display:flex}
 <script type="application/json" id="view-data">{
  "about": "Scene data for this kitchen only (room, appliances, lights, colours, cameras). The cabinets come from data.js through engine.js; the code below this block is generic.",
  "runs": {
-   "A": {"group": 1, "name": "under the window", "place": "back wall"},
-   "B": {"group": 2, "name": "tall units", "place": "right wall"},
-   "C": {"group": 3, "name": "island", "place": "free-standing"}
+   "about": "where each design group stands: x, z of its first column at the wall line (n = 0), rot = turn in degrees (0: along the window wall, facing the room)",
+   "A": {"group": 1, "name": "under the window", "x": 0, "z": 0, "rot": 0},
+   "B": {"group": 2, "name": "tall units", "x": 3372, "z": 0, "rot": -90},
+   "C": {"group": 3, "name": "island", "x": 1730, "z": 2440, "rot": 180, "freeStanding": true}
  },
  "carcass": {"shakerRail": 50, "handleAxis": 28},
- "island": {"backFromTallEnd": 900, "overhang": 300, "depth": 600},
- "room": {"ceilingMin": 2400, "leftEnd": -900, "floorDepth": 4200, "wallThickness": 300, "rightWallLength": 3600},
- "window": {"gapToTallFront": 20, "width": 1900, "sill": 1080, "height": 1300, "reveal": 150, "finish": "anthracite"},
+ "fittings": {"about": "drawing only, no effect on the cost", "legFromSide": 45, "legFromBack": 45, "legFromFront": 100, "shelfPinFromBack": 40, "shelfPinFromFront": 70, "applianceInset": 12},
+ "room": {"about": "The room from the notes / measurements, mm. x along the window wall from the start of Group 1, z out from the window wall, y up. The groups are placed into it.",
+   "rightWall": 3372, "ceiling": 2740, "leftEnd": -900, "floorDepth": 4200, "wallThickness": 300, "rightWallLength": 3600},
+ "window": {"x": 870, "width": 1900, "sill": 1080, "height": 1300, "reveal": 150, "finish": "anthracite"},
  "sink": {"outer": [780, 500], "outerFromWall": 40, "bowl": [680, 380], "bowlFromWall": 130, "rim": 8, "wall": 10, "bowlDepth": 200, "tapFromWall": 85, "trapTop": 575, "wallOutlet": 470},
  "hob": {"glass": [590, 520], "glassFromWall": 39, "body": [556, 486], "bodyFromWall": 56, "builtInHeight": 44},
  "hood": {"name": "Electrolux LFV416K", "width": 598, "depth": 390, "bottom": 1500, "height": 380, "chimney": [250, 220]},
  "fridge": {"bodyHeight": 1772},
- "pendants": {"xFractions": [0.276, 0.724], "fromIslandBack": 450, "bottom": 1750},
- "downlights": {"fromWall": 402, "fromTallFront": 350},
- "colors": {"front": "#1c2744", "carcass": "#cfd1d2", "hdf": "#c6c8c9", "plinth": "#1f2022", "wall": "#f2f1ee", "frontLight": "#e3e8ef", "pendant": "#1c2744"},
+ "pendants": {"points": [[477.48, 2290], [1252.52, 2290]], "bottom": 1750},
+ "downlights": {"points": [[1448, 402], [2440, 402], [2440, 1370], [2440, 2338]]},
+ "colors": {"front": "#1c2744", "carcass": "#cfd1d2", "board16": "#9b9fa4", "hdf": "#c6c8c9", "plinth": "#1f2022", "wall": "#f2f1ee", "frontLight": "#e3e8ef", "pendant": "#1c2744"},
  "metals": {
    "brass": {"color": "#c9a063", "rough": 0.32, "metal": 0.7},
    "nickel": {"color": "#c4c4c0", "rough": 0.34, "metal": 0.55},
@@ -332,7 +334,7 @@ const MOD=KE.build(PRJ),RUL=PRJ.rules,num=KE.num;
 if(MOD.warnings.length)console.warn('data.js: '+MOD.warnings.join(' | '));
 
 // runs: A on the back wall, B on the right wall, C free-standing island; which design group is which: VD.runs
-const RUNS3=['A','B','C'],GOF=Object.fromEntries(RUNS3.map(r=>[r,VD.runs[r].group])),RUNOF=Object.fromEntries(RUNS3.map(r=>[VD.runs[r].group,r])),RUN_NAME=Object.fromEntries(RUNS3.map(r=>[r,VD.runs[r].name]));
+const RUNS3=Object.keys(VD.runs).filter(r=>r!=='about'),GOF=Object.fromEntries(RUNS3.map(r=>[r,VD.runs[r].group])),RUNOF=Object.fromEntries(RUNS3.map(r=>[VD.runs[r].group,r])),RUN_NAME=Object.fromEntries(RUNS3.map(r=>[r,VD.runs[r].name]));
 const G={},LAY={};for(const r of RUNS3){const g=MOD.groups[GOF[r]]||{widths:[],items:[]};G[r]={w:g.widths};LAY[r]=g.items;}
 const LA=LAY.A,LB=LAY.B,LC=LAY.C,has=(it,...t)=>t.some(x=>it.tags.includes(x));
 const cum=w=>w.reduce((a,v)=>(a.push(a[a.length-1]+v),a),[0]);
@@ -340,29 +342,22 @@ const WA=cum(G.A.w),WB=cum(G.B.w),WC=cum(G.C.w);
 
 /* ---------- layout (mm): A on the window wall z=0, B on the right wall x=RX, C island ---------- */
 const CW=WC[WC.length-1];
-const VC=VD.carcass,FN=MOD.FN, FR=VC.shakerRail, HO=VC.handleAxis;          // FN: front face from the wall (engine); FR: shaker front rail width; HO: handle axis on the rail
+const VC=VD.carcass,FN=MOD.FN,FT=RUL.frontThickness,BT=RUL.board,PT=RUL.plinthThickness,VF=VD.fittings, FR=VC.shakerRail, HO=VC.handleAxis;          // FN: front face from the wall (engine); FR: shaker front rail width; HO: handle axis on the rail
 const CD=RUL.carcassDepth, CN1=MOD.CN1, CN0=MOD.CN0;  // carcass back (rules.wallGap) and front, from the wall
-// Both wall runs are measured from their wall (carcass back at rules.wallGap). In the L corner the Group 2 filler under
-// the worktop must be exactly the Group 1 depth to its carcass front (wallGap + carcassDepth) - checked below.
-// Group 1 runs to its last front / frame, which meets the Group 2 front; the right wall is Group 2's carcass front
-// distance further. Anything Group 1 lists past that point (the end of a carcass, an empty corner) lies hidden in the L corner.
-const cornerA=LB.find(i=>i.t==='filler'&&i.c===1&&i.v0===0), cornerB=LA.find(i=>i.t==='filler'&&i.c===G.A.w.length);
-const A_END=Math.max(...LA.filter(i=>['frame','cabinet','drawer','oven','micro'].includes(i.t)).map(i=>i.u1));
-const OA=0, OB=0;
-const CORNER_BAD=cornerA&&cornerA.u1!==CN1?'Group 2 corner filler is '+cornerA.u1+' wide; it must equal wallGap + carcassDepth = '+CN1+'.':'';
-const RX=Math.max(WA[WA.length-1],A_END+CN1+OB);
-const PF=MOD.PF, WD=RUL.worktop.depth;   // plinth face; worktop depth from the wall
-const wtA=LA.find(i=>i.t==='worktop'&&i.v1-i.v0<=60&&i.s>1);
+// The room (walls, ceiling, window, island position) is given in the scene data (VD.room ...), not derived from the cabinets.
+// Both wall runs are measured from their wall (carcass back at rules.wallGap): Group 1 from the start of the window wall,
+// Group 2 from the window wall along the right wall at x = room.rightWall.
+const VR=VD.room, RX=VR.rightWall;   // right wall: from the room data
+const PF=MOD.PF, WTG=g=>MOD.worktops[g]||{n0:0,n1:0,depth:0};   // plinth face; worktop of a group from the engine (rules.worktop): n0 back edge, n1 front edge
+const sinkK=MOD.carcasses.find(K=>K.sink);   // sink carcass (tag sink); its worktop gets the cut-out
+const SRUN=sinkK?RUNOF[sinkK.g]:null, wtA=sinkK&&LAY[SRUN].find(i=>i.t==='worktop'&&i.v0===sinkK.v1&&i.c<=sinkK.c+sinkK.s-1&&i.c+i.s-1>=sinkK.c);
 const WTH=wtA?wtA.v1-wtA.v0:38, WT=wtA?wtA.v1:858;
-const HC=Math.max(VD.room.ceilingMin,...LB.map(i=>i.v1));
-const BEND=Math.max(...LB.filter(i=>i.t!=='filler'&&i.t!=='worktop').map(i=>i.u1));
-const IZ=BEND-VD.island.backFromTallEnd, ID=VD.island.depth;   // island back relative to the end of the B units
-const XF=RX-OB-FN, XA=XF+12;   // B front face; appliances set in the frame
-const RUNS={
-  A:(u0,u1,n0,n1)=>[u0,u1,n0+OA,n1+OA],
-  B:(u0,u1,n0,n1)=>[RX-OB-n1,RX-OB-n0,u0,u1],
-  C:(u0,u1,n0,n1)=>[CW-u1,CW-u0,IZ+ID-n1,IZ+ID-n0]
-};
+const HC=VR.ceiling;
+// run -> room: local (u along the run, n out from its wall line) turned by runs[r].rot about the point runs[r].x, z
+const RUNS=Object.fromEntries(RUNS3.map(r=>{const P=VD.runs[r],a=P.rot*Math.PI/180,c=Math.round(Math.cos(a)),sn=Math.round(Math.sin(a));
+  const X=(u,n)=>P.x+u*c+n*sn, Z=(u,n)=>P.z-u*sn+n*c;
+  return [r,(u0,u1,n0,n1)=>{if(u1<=u0||n1<=n0)return [0,0,0,0];   // empty box: nothing drawn
+    const xs=[X(u0,n0),X(u1,n1)],zs=[Z(u0,n0),Z(u1,n1)];return [Math.min(...xs),Math.max(...xs),Math.min(...zs),Math.max(...zs)];}];}));
 
 /* ================= 2. TEXTURES ================= */
 function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
@@ -448,6 +443,7 @@ const M={
   carcass:std({color:C(COL.carcass),roughness:.75,envMapIntensity:.5}),      // light grey chipboard 18, ABS
   plinth:std({color:C(COL.plinth),roughness:.55,envMapIntensity:.5}),       // standard PVC plinth 100, black matte
   hdf:std({color:C(COL.hdf),roughness:.85,envMapIntensity:.4}),          // HDF 3 back, light grey
+  board16:std({color:C(COL.board16),roughness:.75,envMapIntensity:.5}),   // grey chipboard 16: drawer bottoms and backs, hob separation panel
   granite:new THREE.MeshPhysicalMaterial({map:tex(graniteCanvas(),4,4),roughness:.55,clearcoat:.15,clearcoatRoughness:.6,envMapIntensity:.5}),
   blackMetal:std({color:C(0x141517),roughness:.42,metalness:.45,envMapIntensity:.8}),
   appBody:std({color:C(0x3a3d42),roughness:.6,metalness:.35}),
@@ -473,8 +469,8 @@ function setMetal(k){const m=METALS[k],o=CLAY.get(M.handle);
 /* ---------- layers: each is a set of groups toggled together ---------- */
 const LAYERS=[   // [group, [[layer id, label], ...]]
   ['Carcasses',[['carcasses','Panels'],['backs','HDF backs'],['shelves','Shelves'],['drawers','Drawer boxes'],['hardware','Hinges, runners'],['legs','Legs']]],
-  ['Fronts',[['fronts','Fronts'],['handles','Handles'],['frames','Frames, fillers'],['plinth','Plinth'],['panel','Island back']]],
-  ['Worktop',[['worktops','Worktops'],['wallpanel','Wall panel'],['sink','Sink, tap'],['trap','Trap']]],
+  ['Fronts',[['fronts','Fronts'],['handles','Handles'],['frames','Frames'],['panel','Panels'],['plinth','Plinth']]],
+  ['Worktop',[['worktops','Worktops'],['wallpanel','Splash'],['sink','Sink, tap'],['trap','Trap']]],
   ['Appliances',[['hob','Hob'],['hood','Hood'],['ovens','Oven, microwave'],['fridge','Fridge'],['dishwasher','Dishwasher']]],
   ['Room',[['walls','Walls'],['window','Window'],['floor','Floor'],['ceiling','Ceiling'],['lamps','Pendants']]]];
 const LNAMES=LAYERS.flatMap(([,l])=>l.map(([id])=>id));
@@ -482,10 +478,8 @@ const LYG={};
 function lg(parent,name){const g=new THREE.Group();parent.add(g);(LYG[name]||(LYG[name]=[])).push(g);return g;}
 const WL={};for(const n of LNAMES)WL[n]=lg(scene,n);
 // runs as groups: local X along the run (u), Y up (v), Z from wall to front face (n)
-const runG={A:new THREE.Group(),B:new THREE.Group(),C:new THREE.Group()};
-runG.A.position.set(0,0,OA/1000);
-runG.B.position.set((RX-OB)/1000,0,0);runG.B.rotation.y=-Math.PI/2;
-runG.C.position.set(CW/1000,0,(IZ+ID)/1000);runG.C.rotation.y=Math.PI;
+const runG=Object.fromEntries(RUNS3.map(r=>[r,new THREE.Group()]));
+for(const r of RUNS3){const P=VD.runs[r];runG[r].position.set(P.x/1000,0,P.z/1000);runG[r].rotation.y=P.rot*Math.PI/180;runG[r].updateMatrixWorld(true);}
 const RL={};for(const r of RUNS3){scene.add(runG[r]);RL[r]={};for(const n of LNAMES)RL[r][n]=lg(runG[r],n);}
 
 const worldUV=[],parts=[];let CUR=scene;
@@ -528,11 +522,11 @@ function handles(P,u0,u1,v0,v1,hd){if(!hd)return;const L=160,s=FN+4,b=new THREE.
   else{const u=hd==='L'?u0+HO:u1-HO,vc=Math.min(v0+260,(v0+v1)/2);
     cupH(P,u,vc,hd==='L'?Math.PI/2:-Math.PI/2);
     lb(b,u-6,u+6,vc-L/2,vc+L/2,s+20,s+30,M.handle);lb(b,u-5,u+5,vc-L/2+8,vc-L/2+18,s,s+20,M.handle);lb(b,u-5,u+5,vc+L/2-18,vc+L/2-8,s,s+20,M.handle);}}
-function shaker(P,u0,u1,v0,v1){const w=FR,a=FN-18,b=FN;
+function shaker(P,u0,u1,v0,v1){const w=FR,a=FN-FT,b=FN;
   if(u1-u0<=2*w+20||v1-v0<=2*w+20){lb(P,u0,u1,v0,v1,a,b,M.navy);return;}
   lb(P,u0,u1,v1-w,v1,a,b,M.navy);lb(P,u0,u1,v0,v0+w,a,b,M.navy);
   lb(P,u0,u0+w,v0+w,v1-w,a,b,M.navy);lb(P,u1-w,u1,v0+w,v1-w,a,b,M.navy);
-  lb(P,u0+w,u1-w,v0+w,v1-w,a,FN-9,M.navy);}
+  lb(P,u0+w,u1-w,v0+w,v1-w,a,FN-FT/2,M.navy);}
 // moving part: rotation / slide about point (pu,pv,pn) in run coordinates
 function movable(run,kind,pu,pv,pn){const piv=new THREE.Group();piv.position.set(pu/1000,pv/1000,pn/1000);runG[run].add(piv);
   const inner=new THREE.Group();inner.position.set(-pu/1000,-pv/1000,-pn/1000);piv.add(inner);
@@ -544,15 +538,18 @@ function poseMV(mv){const t=mv.t,e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
   else if(mv.kind==='dish')mv.piv.rotation.x=e*84*DEG;
   else if(mv.kind==='drawer')mv.piv.position.z=mv.z0+e*.44;}
 
-/* ---------- appliances in the tower: oven and microwave (run B, face x = RX-FN) ---------- */
-function appliance(u0,u1,v0,v1,kind){const g=2;u0+=g;u1-=g;v0+=g;v1-=g;const uc=(u0+u1)/2;
+/* ---------- built-in oven and microwave, in the run of their component (face set fittings.applianceInset behind the front face) ---------- */
+function appliance(run,u0,u1,v0,v1,kind){const g=2;u0+=g;u1-=g;v0+=g;v1-=g;const uc=(u0+u1)/2,P=RL[run].ovens,XA=FN-VD.fittings.applianceInset;
+  // drawn as before with x = depth (XA - k = k in front of the appliance face) and z = along the run; mapped to run coordinates
+  const bx=(x0,x1,y0,y1,z0,z1,mat,_,ns)=>lb(P,z0,z1,y0,y1,2*XA-x1,2*XA-x0,mat,ns), ax=a=>a==='x'?'z':a==='z'?'x':a;
+  const cyl=(r,len,mat,x,y,z,axis,seg)=>lc(P,r,len,mat,z,y,2*XA-x,ax(axis),seg);
   bx(XA-2,XA+6,v0,v1,u0,u1,M.blackMetal);                                 // front trim
   if(kind==='oven'){
     const cp=v1-95;
     bx(XA-8,XA-2,cp,v1-10,u0+10,u1-10,M.glassBlack);
     [u0+85,u1-85].forEach(z=>{cyl(19,20,M.steel,XA-18,(cp+v1-10)/2,z,'x',32);cyl(21,3,M.steel,XA-9,(cp+v1-10)/2,z,'x',32);});
     const d=new THREE.Mesh(new THREE.PlaneGeometry(.11,.034),new THREE.MeshBasicMaterial({map:tex(displayCanvas('12:30'),1,1)}));
-    d.position.set((XA-8.5)/1000,(cp+v1-10)/2000,uc/1000);d.rotation.y=-Math.PI/2;CUR.add(d);
+    d.position.set(uc/1000,(cp+v1-10)/2000,(XA+8.5)/1000);P.add(d);
     const d0=v0+10,d1=cp-6;
     bx(XA-30,XA-2,d0,d1,u0+10,u1-10,M.ovenIn);
     for(const y of [d0+150,d0+290])cyl(3,u1-u0-90,M.steel,XA-12,y,uc,'z',8);
@@ -565,7 +562,7 @@ function appliance(u0,u1,v0,v1,kind){const g=2;u0+=g;u1-=g;v0+=g;v1-=g;const uc=
     const pz=u1-150;
     bx(XA-8,XA-2,v0+10,v1-10,pz,u1-10,M.glassBlack);
     const d=new THREE.Mesh(new THREE.PlaneGeometry(.09,.028),new THREE.MeshBasicMaterial({map:tex(displayCanvas('0:45'),1,1)}));
-    d.position.set((XA-8.5)/1000,(v1-70)/1000,(pz+u1-10)/2000);d.rotation.y=-Math.PI/2;CUR.add(d);
+    d.position.set((pz+u1-10)/2000,(v1-70)/1000,(XA+8.5)/1000);P.add(d);
     cyl(14,4,M.steel,XA-10,v0+90,(pz+u1-10)/2,'x',32);
     bx(XA-30,XA-2,v0+10,v1-10,u0+10,pz-6,M.ovenIn);
     bx(XA-10,XA-8,v0+60,v1-60,u0+60,pz-56,M.smoke,null,true);
@@ -574,41 +571,38 @@ function appliance(u0,u1,v0,v1,kind){const g=2;u0+=g;u1-=g;v0+=g;v1-=g;const uc=
   }}
 
 /* ================= 5. ELEMENTS FROM THE DRAWING: worktops, frames, plinths, fillers ================= */
-const VS=VD.sink,sinkIt=LA.find(i=>has(i,'sink')),SC=sinkIt?(sinkIt.u0+sinkIt.u1)/2:RX/2;   // sink unit axis (item with the sink note)
+const VS=VD.sink,sinkIt=SRUN&&LAY[SRUN].find(i=>has(i,'sink')),SC=sinkIt?(sinkIt.u0+sinkIt.u1)/2:0;   // sink unit axis (item tagged sink, any group); no tag = no sink
 const SX0=SC-VS.outer[0]/2,SX1=SC+VS.outer[0]/2,SZ0=VS.outerFromWall,SZ1=SZ0+VS.outer[1], KX0=SC-VS.bowl[0]/2,KX1=SC+VS.bowl[0]/2,KZ0=VS.bowlFromWall,KZ1=KZ0+VS.bowl[1];
 const RIM=VS.rim,SW=VS.wall,SB=WT-VS.bowlDepth,TAPZ=VS.tapFromWall;
-// Group 1 worktop ends with the last carcass under it (incl. a corner carcass wider than its column, "carcass 800")
-function worktopA(v0,v1){const a=KX0-SW,b=KX1+SW,c=KZ0-SW,d=KZ1+SW,e=Math.max(...MOD.carcasses.filter(K=>K.g===GOF.A).map(K=>K.u1));[[0,a,0,WD],[b,e,0,WD],[a,b,0,c],[a,b,d,WD]].forEach(([a,b,c,d])=>bx(a,b,v0,v1,c,d,M.oak).userData.grain='x');}
+// worktop with the sink cut-out, over its own columns (run coordinates)
+function worktopA(v0,v1,e){CUR=RL[SRUN].worktops;const W=WTG(GOF[SRUN]),a=KX0-SW,b=KX1+SW,c=KZ0-SW,d=KZ1+SW;[[0,a,W.n0,W.n1],[b,e,W.n0,W.n1],[a,b,W.n0,c],[a,b,d,W.n1]].forEach(([a,b,c,d])=>bx(a,b,v0,v1,c,d,M.oak).userData.grain='x');}
 // back strips behind the frames come from the engine (boards with strip: true)
 const SPC=[],KM=[];
 // name every mesh built for one drawing item, so the geometry check can report it
 function tagNew(n0,kind,name){for(const m of parts.slice(n0))if(!m.userData.part&&!m.userData.role)m.userData.part={kind,name};}
 function build(run){
   for(const it of LAY[run]){const {u0,u1,v0,v1,t,s,c}=it,h=v1-v0,np=parts.length;
-    const kind=t==='worktop'?'worktop':t==='frame'?'frame':t==='plinth'?'plinth':null;
+    const kind=t==='worktop'?'worktop':t==='frame'?'frame':t==='plinth'?'plinth':t==='panel'?'panel':t==='splash'?'splash':null;
     if(t==='worktop'){CUR=WL.worktops;
-      if(run==='B')continue;                                   // Group 1 worktop seen from the side: already built in run A
-      if(run==='A'&&it===wtA){worktopA(v0,v1);continue;}       // worktop with the sink cut-out
-      if(run==='A'&&v0>=WT-1&&h<500){bx(u0,XF,v0,v1,0,20,M.oak,WL.wallpanel).userData.grain='x';continue;}   // wall panel
-      const o=run==='A'?OA:0,m=rb(run,u0,u1,v0,v1,(run==='C'?-VD.island.overhang:0)-o,WD-o,M.oak);if(m&&h>=500)m.userData.grain='y';}
-    else if(t==='frame'){CUR=WL.frames;
-      const n0=Math.min(u1-u0,h)>18?FN-18:FN-100;              // 18 frame on edge, 100 deep; anything wider than 18 = flat filler
-      // L corner: a flat filler of run A ends at the run-B front face; the run-B corner filler covers its end
-      if(run==='A'&&u0<XF&&u1>XF&&n0===FN-18)rb(run,u0,XF,v0,v1,n0,FN,M.navy);
-      else if(run==='A'&&u0<XF&&u1>XF){rb(run,u0,XF,v0,v1,n0,FN,M.navy);rb(run,XF,u1,v0,v1,n0,FN-2,M.navy);}
-      else rb(run,u0,u1,v0,v1,n0,FN,M.navy);
-    }
-    else if(t==='plinth'){CUR=WL.plinth;rb(run,u0,u1,v0,v1,PF-18,PF,M.plinth);}
-    else if(t==='filler'){if(run==='B'&&(s>=12||c===G.B.w.length)){CUR=WL.walls;rb(run,u0,u1,v0,v1,0,600,M.wall);}}
-    else if(t==='oven'||t==='micro'){if(run==='B'){CUR=WL.ovens;appliance(u0,u1,v0,v1,t);lb(RL.B.ovens,u0+22,u1-22,v0+10,v1-10,25,552,M.appBody);}}
+      if(it===wtA){worktopA(v0,v1,u1);continue;}               // worktop with the sink cut-out
+      const W=WTG(GOF[run]),m=rb(run,u0,u1,v0,v1,W.n0,W.n1,M.oak);if(m&&has(it,'end'))m.userData.grain='y';}   // worktop end (waterfall): grain upright
+    else if(t==='frame'){CUR=WL.frames;rb(run,u0,u1,v0,v1,FN-RUL.frame.depth,FN,M.navy);}   // frame: on edge, frame.depth deep
+    else if(t==='panel'){CUR=WL.panel;                                                     // panel: laid flat in the front plane
+      rb(run,u0,u1,v0,v1,FN-FT,FN,M.navy);}
+    else if(t==='plinth'){CUR=WL.plinth;rb(run,u0,u1,v0,v1,PF-PT,PF,M.plinth);}
+    else if(t==='splash'){CUR=WL.wallpanel;const m=rb(run,u0,u1,v0,v1,0,RUL.board,M.oak);if(m)m.userData.grain='x';}   // splash: board thickness, on the wall
+    else if(t==='board'){CUR=WL.walls;rb(run,u0,u1,v0,v1,0,RUL.plasterboard.depth,M.wall);}                          // plasterboard box; a filler is a void: not drawn
+    else if(t==='oven'||t==='micro'){appliance(run,u0,u1,v0,v1,t);lb(RL[run].ovens,u0+22,u1-22,v0+10,v1-10,25,552,M.appBody);}
     if(kind)tagNew(np,kind,'G'+GOF[run]+' col '+c+(s>1?'–'+(c+s-1):'')+' '+t+' '+(u1-u0)+' × '+h+(it.note?' ('+it.note+')':''));
   }}
 RUNS3.forEach(build);
+// back panel instead of HDF backs (rules.backPanel, from the engine)
+for(const p of MOD.panels)if(p.back){const np=parts.length;CUR=WL.panel;rb(RUNOF[p.g],...p.box,M.navy);tagNew(np,'panel','G'+p.g+' back panel '+p.a+' × '+p.b);}
 for(const b of MOD.boards){if(!b.strip)continue;const m=lb(RL[RUNOF[b.g]].carcasses,...b.box,M.carcass);
   if(m){m.userData={role:b.name,a:b.a,b:b.b,base:M.carcass};KM.push(m);SPC.push({name:b.name,a:b.a,b:b.b});}}
 
 // inset sink, granite composite
-CUR=WL.sink;
+if(sinkIt){CUR=RL[SRUN].sink;
 [[SX0,SX1,SZ0,KZ0],[SX0,SX1,KZ1,SZ1],[SX0,KX0,KZ0,KZ1],[KX1,SX1,KZ0,KZ1]].forEach(([a,b,c,d])=>bx(a,b,WT,WT+RIM,c,d,M.granite));
 bx(KX0-SW,KX0,SB,WT,KZ0-SW,KZ1+SW,M.granite);bx(KX1,KX1+SW,SB,WT,KZ0-SW,KZ1+SW,M.granite);
 bx(KX0,KX1,SB,WT,KZ0-SW,KZ0,M.granite);bx(KX0,KX1,SB,WT,KZ1,KZ1+SW,M.granite);bx(KX0,KX1,SB-SW,SB,KZ0,KZ1,M.granite);
@@ -620,37 +614,33 @@ cyl(18,3,M.steel,SC+250,WT+RIM+1.5,TAPZ,null,24);
   cyl(7,70,M.handle,SC+55,t+140,z,'x',16);})();
 // space-saving trap under the sink: short drop, flat trap body against the back wall,
 // outlet into the wall at 470 - everything stays above the bottom drawer with the waste bins
-CUR=WL.trap;
-{const pipe=std({color:C(0x8d9196),roughness:.5}),zc=(KZ0+KZ1)/2,yb=SB-SW,yt=VS.trapTop,yh=VS.wallOutlet,zb=OA+45;
+CUR=RL[SRUN].trap;
+{const pipe=std({color:C(0x8d9196),roughness:.5}),zc=(KZ0+KZ1)/2,yb=SB-SW,yt=VS.trapTop,yh=VS.wallOutlet,zb=45;
   cyl(20,yb-yt,pipe,SC,(yb+yt)/2,zc,null,20);                 // waste pipe down from the bowl
   cyl(20,zc-zb,pipe,SC,yt,(zc+zb)/2,'z',20);                  // run back towards the wall
-  bx(SC-70,SC+70,yh-25,yt+25,OA+20,OA+70,pipe);               // flat trap body
-  cyl(20,70,pipe,SC+105,yh,zb-25,'z',20);bx(SC+70,SC+125,yh-20,yh+20,OA+20,OA+50,pipe);}   // outlet into the wall
+  bx(SC-70,SC+70,yh-25,yt+25,20,70,pipe);               // flat trap body
+  cyl(20,70,pipe,SC+105,yh,zb-25,'z',20);bx(SC+70,SC+125,yh-20,yh+20,20,50,pipe);}}   // outlet into the wall
 
 // L corner: plinth runs into the corner from both sides
 CUR=WL.plinth;
 const plA=LA.filter(i=>i.t==='plinth'),plB=LB.filter(i=>i.t==='plinth');
-{const np=parts.length;if(plA.length)rb('A',Math.max(...plA.map(i=>i.u1)),RX-OB-PF,0,100,PF-18,PF,M.plinth);tagNew(np,'plinth','G1 plinth into the L corner');}
-{const np=parts.length;if(plB.length)rb('B',OA+PF,Math.min(...plB.map(i=>i.u0)),0,100,PF-18,PF,M.plinth);tagNew(np,'plinth','G2 plinth into the L corner');}
-{const st=cornerA&&LB.find(i=>i.t==='frame'&&i.c===cornerA.c+cornerA.s),fa=cornerB&&LA.find(i=>i.t==='frame'&&i.c===cornerB.c-1);   // frames next to the L-corner fillers
-  if(st&&fa&&st.u0>OA+FN)bx(XF,fa.u1,st.v0,st.v1,OA+FN,st.u0,M.navy,WL.frames);}
-// island back: smooth lacquered MDF panel between the waterfalls, behind the carcass backs
-for(const p of MOD.panels){const np=parts.length;CUR=WL.panel;rb(RUNOF[p.g],...p.box,M.navy);tagNew(np,'panel','G'+p.g+' '+p.name.toLowerCase());}
+{const np=parts.length;if(plA.length)rb('A',Math.max(...plA.map(i=>i.u1)),RX-PF,0,Math.max(...plA.map(i=>i.v1)),PF-PT,PF,M.plinth);tagNew(np,'plinth','G1 plinth into the L corner');}
+{const np=parts.length;if(plB.length)rb('B',PF,Math.min(...plB.map(i=>i.u0)),0,Math.max(...plB.map(i=>i.v1)),PF-PT,PF,M.plinth);tagNew(np,'plinth','G2 plinth into the L corner');}
 
 // induction hob above the drawers (column with the note "hob")
-CUR=WL.hob;
-const VH=VD.hob,hobIt=LA.find(i=>has(i,'hob'))||LA.find(i=>i.t==='drawer');
-const HX=hobIt?(hobIt.u0+hobIt.u1)/2:460;
-(function(){const u0=HX-VH.glass[0]/2,u1=HX+VH.glass[0]/2,v=WT,G0=VH.glassFromWall;
-  rb('A',u0,u1,v,v+5,G0-OA,G0+VH.glass[1]-OA,M.glassBlack);            // glass over the cut-out, distance from the wall
-  rb('A',HX-VH.body[0]/2,HX+VH.body[0]/2,v-VH.builtInHeight,v,VH.bodyFromWall-OA,VH.bodyFromWall+VH.body[1]-OA,M.appBody);   // hob body, built-in height
+const HRUN=RUNS3.find(r=>LAY[r].some(i=>has(i,'hob'))), VH=VD.hob, hobIt=HRUN&&LAY[HRUN].find(i=>has(i,'hob'));   // item tagged hob, any group; no tag = no hob and no hood
+if(hobIt)CUR=RL[HRUN].hob;
+const HX=hobIt?(hobIt.u0+hobIt.u1)/2:0;
+if(hobIt)(function(){const u0=HX-VH.glass[0]/2,u1=HX+VH.glass[0]/2,v=WT,G0=VH.glassFromWall;
+  bx(u0,u1,v,v+5,G0,G0+VH.glass[1],M.glassBlack);                       // glass over the cut-out, distance from the wall
+  bx(HX-VH.body[0]/2,HX+VH.body[0]/2,v-VH.builtInHeight,v,VH.bodyFromWall,VH.bodyFromWall+VH.body[1],M.appBody);   // hob body, built-in height
   [[-150,G0+140,.1],[150,G0+140,.085],[-150,G0+370,.085],[150,G0+370,.11]].forEach(([du,n,r])=>{
     const m=new THREE.Mesh(new THREE.RingGeometry(r-.003,r,64),M.ring);m.rotation.x=-Math.PI/2;m.position.set((HX+du)/1000,(v+5.5)/1000,n/1000);CUR.add(m);});
   const s=new THREE.Mesh(new THREE.PlaneGeometry(.22,.03),M.ring);s.rotation.x=-Math.PI/2;s.position.set(HX/1000,(v+5.5)/1000,(G0+490)/1000);CUR.add(s);
 })();
 // hood (VD.hood): angled, black glass
-CUR=WL.hood;
-(function(){const V=VD.hood,xc=HX,W=V.width,D=V.depth,yb=V.bottom,BH=V.height,CWd=V.chimney[0],CDp=V.chimney[1];
+if(hobIt)CUR=RL[HRUN].hood;
+if(hobIt)(function(){const W2=(x,y,z)=>runG[HRUN].localToWorld(new THREE.Vector3(x,y,z));const V=VD.hood,xc=HX,W=V.width,D=V.depth,yb=V.bottom,BH=V.height,CWd=V.chimney[0],CDp=V.chimney[1];
   const n0=parts.length;
   const sh=new THREE.Shape();sh.moveTo(0,0);sh.lineTo(D,0);sh.lineTo(D,40);sh.lineTo(110,BH);sh.lineTo(0,BH);sh.lineTo(0,0);
   const geo=new THREE.ExtrudeGeometry(sh,{depth:W,bevelEnabled:false});geo.scale(.001,.001,.001);geo.rotateY(-Math.PI/2);
@@ -665,7 +655,7 @@ CUR=WL.hood;
   parts.slice(n0).forEach(p=>p.castShadow=false);
   const led=glow(0xfff0dc,5);
   [xc-150,xc+150].forEach(x=>{const d=new THREE.Mesh(new THREE.PlaneGeometry(.16,.012),led);d.rotation.x=Math.PI/2;d.position.set(x/1000,(yb-1.5)/1000,(D-90)/1000);CUR.add(d);});
-  [xc-150,xc+150].forEach(x=>{const l=new THREE.SpotLight(0xfff0dc,4.5,0,1.05,.8,2);l.position.set(x/1000,(yb-5)/1000,(D-90)/1000);l.target.position.set(x/1000,WT/1000,(D-170)/1000);
+  [xc-150,xc+150].forEach(x=>{const l=new THREE.SpotLight(0xfff0dc,4.5,0,1.05,.8,2);l.position.copy(W2(x/1000,(yb-5)/1000,(D-90)/1000));l.target.position.copy(W2(x/1000,WT/1000,(D-170)/1000));
     l.castShadow=false;LAMPS.push(l);scene.add(l,l.target);});
 })();
 
@@ -675,23 +665,23 @@ function regM(K,m,name,a,b){if(m){m.userData={K,role:name,a,b,base:m.material};K
 function regK(K,m,name,a,b){regM(K,m,name,a,b);K.parts.push({name,a,b});return m;}
 const STAT=MOD.counts;
 
-function buildCarcass(K){const R=K.run,{u0,u1,v0}=K,ui0=u0+18,ui1=u1-18;
+function buildCarcass(K){const R=K.run,{u0,u1,v0}=K,ui0=u0+BT,ui1=u1-BT;
   for(const b of MOD.boards){if(b.K!==K.id||b.front)continue;
-    const m=lb(RL[R][b.layer],...b.box,b.mat==='hdf'?M.hdf:M.carcass);regK(K,m,b.name,b.a,b.b);
+    const m=lb(RL[R][b.layer],...b.box,b.mat==='hdf'?M.hdf:b.mat==='p16'?M.board16:M.carcass);regK(K,m,b.name,b.a,b.b);
     if(b.name==='Adjustable shelf'){const y=b.box[2]+9;   // 4 shelf pins
-      for(const [x0,x1] of [[ui0,ui0+8],[ui1-8,ui1]])for(const z of [CN0+40,CN1-70])lb(RL[R].shelves,x0,x1,y-14,y-9,z,z+5,M.zinc,true);}}
+      for(const [x0,x1] of [[ui0,ui0+8],[ui1-8,ui1]])for(const z of [CN0+VF.shelfPinFromBack,CN1-VF.shelfPinFromFront])lb(RL[R].shelves,x0,x1,y-14,y-9,z,z+5,M.zinc,true);}}
   // adjustable legs 100 under floor-standing carcasses
-  if(K.floor)for(const u of [u0+45,u1-45])for(const n of [CN0+45,CN1-100]){lc(RL[R].legs,15,v0-12,M.leg,u,(v0-12)/2,n,null,16);lc(RL[R].legs,24,12,M.leg,u,v0-6,n,null,20);}
+  if(K.floor)for(const u of [u0+VF.legFromSide,u1-VF.legFromSide])for(const n of [CN0+VF.legFromBack,CN1-VF.legFromFront]){lc(RL[R].legs,15,v0-12,M.leg,u,(v0-12)/2,n,null,16);lc(RL[R].legs,24,12,M.leg,u,v0-6,n,null,20);}
   if(K.fridge)fridgeBody(K);
   if(K.fridge&&K.floor)plinthGrille(K);
 }
 // aluminium ventilation grille in the plinth under the fridge (approx. 500 x 60, >= 200 cm2 open)
 function plinthGrille(K){const P=RL[K.run].plinth,uc=(K.u0+K.u1)/2,w=Math.min(500,K.u1-K.u0-80),g0=uc-w/2,g1=uc+w/2,h0=20,h1=80;
   lb(P,g0,g1,h0,h0+5,PF,PF+3,M.zinc);lb(P,g0,g1,h1-5,h1,PF,PF+3,M.zinc);lb(P,g0,g0+5,h0+5,h1-5,PF,PF+3,M.zinc);lb(P,g1-5,g1,h0+5,h1-5,PF,PF+3,M.zinc);
-  lb(P,g0+5,g1-5,h0+5,h1-5,PF-18,PF-1,M.ovenIn,true);                       // opening through the plinth
+  lb(P,g0+5,g1-5,h0+5,h1-5,PF-PT,PF-1,M.ovenIn,true);                       // opening through the plinth
   for(let x=g0+5+12;x<g1-8;x+=12)lb(P,x-2,x+2,h0+5,h1-5,PF-2,PF+2,M.zinc);}   // vertical louvres
 function fridgeBody(K){const A=RL[K.run].fridge,u0=K.u0+20,u1=K.u1-20,bv0=K.v0+22,bv1=bv0+VD.fridge.bodyHeight;K.fb=[bv0,bv1];
-  hollow(A,u0,u1,bv0,bv1,CN0+18,500,24,M.fridge);
+  hollow(A,u0,u1,bv0,bv1,CN0+BT,500,24,M.fridge);
   const split=K.items[0].v1-20;
   lb(A,u0+24,u1-24,split-14,split+14,CN0+42,500,M.fridge);
   const top=bv1-24,lo=split+14;
@@ -723,7 +713,7 @@ function buildFront(run,it){
     mv.label='Door '+dim+' · '+n+' Blum hinges';}
   else if(kind==='drawer'&&K){
     const {D,sh,ui0,ui1,b0,bins,inner}=F.drawer,S=mv.sub.drawers,O=mv.sub.hardware;
-    for(const b of MOD.boards)if(b.front===F.id&&!b.inner)regK(K,lb(S,...b.box,M.carcass),b.name,b.a,b.b);   // drawer bottom and back
+    for(const b of MOD.boards)if(b.front===F.id&&!b.inner)regK(K,lb(S,...b.box,M.board16),b.name,b.a,b.b);   // drawer bottom and back
     lb(S,ui0+22,ui0+37.5,b0-4,b0+sh-4,50,548,M.boxSide);lb(S,ui1-37.5,ui1-22,b0-4,b0+sh-4,50,548,M.boxSide);   // TANDEMBOX sides
     if(D){lb(S,ui0+28,ui0+32,b0+sh-4,b0+sh+60,60,540,M.boxSide);lb(S,ui1-32,ui1-28,b0+sh-4,b0+sh+60,60,540,M.boxSide);}
     for(const [a,b,c,d] of [[ui0,ui0+13,ui0+13,ui0+22],[ui1-13,ui1,ui1-22,ui1-13]]){
@@ -736,7 +726,7 @@ function buildFront(run,it){
     mv.label=(bins?'Sink drawer D (224) with waste-sorting bins':D?'Drawer D (224)':'Top drawer M (83)'+(inner?' + inner drawer above':''))+' · front '+dim;
     if(inner){  // shallow inner drawer for cutlery: own runners on the carcass sides, above the top drawer box, behind the same front
       const iv=F.drawer.iv,mi=movable(run,'drawer',0,0,0),Si=mi.sub.drawers,Oi=mi.sub.hardware;mi.it=it;K.mvs.push(mi);mi.parent=mv;mv.child=mi;
-      for(const b of MOD.boards)if(b.front===F.id&&b.inner)regK(K,lb(Si,...b.box,M.carcass),b.name,b.a,b.b);
+      for(const b of MOD.boards)if(b.front===F.id&&b.inner)regK(K,lb(Si,...b.box,M.board16),b.name,b.a,b.b);
       lb(Si,ui0+22,ui0+37.5,iv-4,iv+80,50,548,M.boxSide);lb(Si,ui1-37.5,ui1-22,iv-4,iv+80,50,548,M.boxSide);
       lb(Si,ui0+37.5,ui1-37.5,iv-4,iv+80,532,546,M.boxSide);                            // metal inner front (Blum, LW - 132)
       for(let j=1;j<5;j++){const x=ui0+37.5+(ui1-ui0-75)*j/5;lb(Si,x-3,x+3,iv+16,iv+66,90,520,M.insert,true);}   // cutlery insert dividers
@@ -765,7 +755,8 @@ for(const r of RUNS3)for(const it of LAY[r])if(it.t==='cabinet'||it.t==='drawer'
 /* ---------- geometry check: overlaps, small gaps, parts sticking out (fronts closed) ---------- */
 function geomCheck(){
   scene.updateMatrixWorld(true);
-  const E=.5,GMAX=6,items=[],r1=x=>Math.round(x*10)/10;
+  const E=.01,GMIN=.01,GMAX=3,items=[]   // overlap: more than 0.01 mm; gap check: 0.01 <= gap <= 3 mm
+  ,r1=x=>Math.round(x*10)/10;
   const box=o=>{const b=new THREE.Box3().setFromObject(o);return [b.min.x*1000,b.max.x*1000,b.min.y*1000,b.max.y*1000,b.min.z*1000,b.max.z*1000];};
   for(const m of parts){const p=m.userData.part;if(p)items.push({kind:p.kind,name:p.name,b:box(m),o:m});}
   for(const m of KM){const u=m.userData;if(!u.role)continue;
@@ -776,31 +767,30 @@ function geomCheck(){
   const ov=(a,b,i)=>Math.min(a[2*i+1],b[2*i+1])-Math.max(a[2*i],b[2*i]);
   const where=b=>'x '+Math.round(b[0])+'–'+Math.round(b[1])+', y '+Math.round(b[2])+'–'+Math.round(b[3])+', z '+Math.round(b[4])+'–'+Math.round(b[5]);
   const overlaps=[],gaps=[],out=[];
-  const gapKinds=new Set(['frame','strip','carcass','plinth','worktop']);
+  const gapKinds=new Set(['frame','panel','strip','carcass','plinth','worktop']);
   for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){const A=items[i],B=items[j];
     if(A.o===B.o||(A.kind==='drawer'&&B.kind==='drawer'))continue;
     const o=[0,1,2].map(k=>ov(A.b,B.b,k));
     if(o.every(x=>x>E)){overlaps.push(A.name+' ⨯ '+B.name+' — '+o.map(r1).join(' × ')+' mm, at '+where(A.b));continue;}
     // small gap: touching area in two axes, a gap of a few mm in the third (strips and frames must fit tight)
     if(!(gapKinds.has(A.kind)&&gapKinds.has(B.kind)))continue;
-    if(!(['frame','strip'].includes(A.kind)||['frame','strip'].includes(B.kind)))continue;
+    if(!(['frame','panel','strip'].includes(A.kind)||['frame','panel','strip'].includes(B.kind)))continue;
     for(let k=0;k<3;k++){const g=-o[k],other=[0,1,2].filter(x=>x!==k);
-      if(g>.3&&g<GMAX&&other.every(x=>o[x]>10)){gaps.push(A.name+' ↔ '+B.name+' — gap '+r1(g)+' mm ('+'xyz'[k]+'), at '+where(A.b));break;}}}
+      if(g>=GMIN-1e-6&&g<=GMAX+1e-6&&other.every(x=>o[x]>10)){gaps.push(A.name+' ↔ '+B.name+' — gap '+r1(g)+' mm ('+'xyz'[k]+'), at '+where(A.b));break;}}}
   // sticking out: in run coordinates, carcass parts stay behind the fronts, legs behind the plinth, nothing below the floor
   for(const it of items){if(it.b[2]<-E)out.push(it.name+' — below the floor ('+r1(it.b[2])+')');
     if(!['carcass','strip','drawer','shelf','leg'].includes(it.kind))continue;
     let g=it.o;while(g&&!Object.values(runG).includes(g))g=g.parent;if(!g)continue;
     const inv=g.matrixWorld.clone().invert(),bb=new THREE.Box3().setFromObject(it.o).applyMatrix4(inv),n1=bb.max.z*1000;
-    const n0=bb.min.z*1000;if(g!==runG.C&&n0<-E)out.push(it.name+' — '+r1(-n0)+' mm behind the wall, at '+where(it.b));   // wall runs: n = 0 is the wall
-    if(it.kind==='leg'?n1>PF-18+E:n1>CN1+E)out.push(it.name+' — sticks out '+r1(n1-(it.kind==='leg'?PF-18:CN1))+' mm in front of the '+(it.kind==='leg'?'plinth':'carcass')+', at '+where(it.b));}
-  if(CORNER_BAD)out.push(CORNER_BAD);
+    const n0=bb.min.z*1000;if(!VD.runs[RUNS3.find(r=>runG[r]===g)].freeStanding&&n0<-E)out.push(it.name+' — '+r1(-n0)+' mm behind the wall, at '+where(it.b));   // wall runs: n = 0 is the wall
+    if(it.kind==='leg'?n1>PF-PT+E:n1>CN1+E)out.push(it.name+' — sticks out '+r1(n1-(it.kind==='leg'?PF-PT:CN1))+' mm in front of the '+(it.kind==='leg'?'plinth':'carcass')+', at '+where(it.b));}
   return {n:items.length,overlaps,gaps,out};}
 const GCHK=geomCheck();
 
 /* ================= 7. ROOM ================= */
 const walls=[];
 function wallGroup(n,mid,layer){const g=new THREE.Group();(layer||WL.walls).add(g);walls.push({g,n:new THREE.Vector3(...n),mid:new THREE.Vector3(...mid),vis:true});return g;}
-const VW=VD.window,VR=VD.room,WX1=XF-VW.gapToTallFront,WX0=WX1-VW.width,WY0=VW.sill,WY1=WY0+VW.height,TW=VR.wallThickness,RV=VW.reveal;
+const VW=VD.window,WX0=VW.x,WX1=WX0+VW.width,WY0=VW.sill,WY1=WY0+VW.height,TW=VR.wallThickness,RV=VW.reveal;
 const back=wallGroup([0,0,-1],[1.3,1.37,0]),backWin=wallGroup([0,0,-1],[1.3,1.37,0],WL.window);
 const BX0=VR.leftEnd;
 [[BX0,WX0,0,HC],[WX1,RX+TW,0,HC],[WX0,WX1,0,WY0],[WX0,WX1,WY1,HC]].forEach(([x0,x1,y0,y1])=>bx(x0,x1,y0,y1,-TW,0,M.wall,back));
@@ -840,7 +830,7 @@ CUR=WL.floor;const fl=bx(BX0,RX,-20,0,0,VR.floorDepth,M.marble);fl.castShadow=fa
 CUR=WL.lamps;
 const bulbHot=glow(0xffe7c2,5);
 const shadeIn=std({color:C(0xf4ead8),roughness:.6,metalness:0,side:THREE.BackSide});
-VD.pendants.xFractions.map(f=>CW*f).forEach(x=>{const z=IZ+VD.pendants.fromIslandBack,y=VD.pendants.bottom;
+VD.pendants.points.forEach(([x,z])=>{const y=VD.pendants.bottom;
   cyl(2,HC-y-90,M.gasket,x,(HC+y+90)/2,z,null,6);
   const sh=new THREE.Mesh(new THREE.SphereGeometry(.15,32,16,0,Math.PI*2,0,Math.PI/2),std({color:C(COL.pendant),roughness:.5,metalness:.2}));
   sh.position.set(x/1000,(y+60)/1000,z/1000);sh.castShadow=true;CUR.add(sh);
@@ -855,8 +845,7 @@ VD.pendants.xFractions.map(f=>CW*f).forEach(x=>{const z=IZ+VD.pendants.fromIslan
 /* ---------- ceiling with 4 surface-mounted downlights ---------- */
 const ceil=wallGroup([0,1,0],[1.2,HC/1000+.02,2],WL.ceiling);
 const ceilMat=std({color:C(COL.wall),roughness:.95,emissive:C(0x4a4844)});bx(BX0,RX,HC,HC+20,0,VR.floorDepth,ceilMat,ceil,true);
-const DLZ=VD.downlights.fromWall, DLX=XF-VD.downlights.fromTallFront;
-const DL=[[(HX+DLX)/2,DLZ],...[0,1,2].map(k=>[DLX,DLZ+(BEND-2*DLZ)*k/2])];
+const DL=VD.downlights.points;   // [x, z] of each downlight, from the room data
 const tube=std({color:C(0xf3f3f0),roughness:.45}),tubeIn=std({color:C(0x2a2a2a),roughness:.7,side:THREE.BackSide});
 const TR=35,TH=100;
 for(const [x,z] of DL){
@@ -1000,9 +989,8 @@ document.getElementById('legend').innerHTML=[['Side'],['Bottom panel'],['Top pan
 
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function kDesc(K){const t=K.items.map(i=>i.t);
-  if(K.blind)return 'blind corner, worktop support';
-  if(K.items.length&&K.u1-K.u0>K.items[0].u1-K.items[0].u0)return 'corner, door '+(K.items[0].u1-K.items[0].u0);if(K.sink)return 'sink unit';if(K.fridge)return 'fridge';if(t.includes('oven')||t.includes('micro'))return 'appliance tower';
-  if(t.every(x=>x==='drawer'))return 'drawers';if(K.base)return 'base, door';if(K.v0>=1900)return 'upper, under the ceiling';if(K.v0>=WT-5)return 'on the worktop';return 'tall';}
+  if(K.sink)return 'sink unit';if(K.fridge)return 'fridge';if(t.includes('oven')||t.includes('micro'))return 'appliance tower';
+  if(t.every(x=>x==='drawer'))return 'drawers';if(K.base)return 'base, door';return K.floor?'tall':'wall cabinet';}
 const runName=RUN_NAME;
 function colTxt(K){return 'col. '+K.c+(K.s>1?'–'+(K.c+K.s-1):'');}
 const kl=document.getElementById('klist');
@@ -1037,16 +1025,16 @@ document.getElementById('kStats').innerHTML=[
   ['Shelves',STAT.shelvesAdjustable+' adjustable + '+STAT.shelvesFixed+' fixed'],['Legs',STAT.legs],['Handles',STAT.handles]].map(([a,b])=>'<dt>'+a+'</dt><dd>'+b+'</dd>').join('');
 
 /* ---------- geometry check output ---------- */
-{const all=[...GCHK.overlaps.map(x=>'Overlap: '+x),...GCHK.gaps.map(x=>'Gap: '+x),...GCHK.out.map(x=>'Sticks out: '+x)];
+{const all=[...MOD.warnings.map(x=>'Data: '+x),...GCHK.overlaps.map(x=>'Overlap: '+x),...GCHK.gaps.map(x=>'Gap: '+x),...GCHK.out.map(x=>'Sticks out: '+x)];
   const gn=document.getElementById('geoNote');gn.className='note '+(all.length?'bad':'okk');
-  gn.textContent=all.length?all.length+' problem(s) in '+GCHK.n+' parts ('+GCHK.overlaps.length+' overlaps, '+GCHK.gaps.length+' gaps, '+GCHK.out.length+' sticking out):'
+  gn.textContent=all.length?all.length+(all.length===1?' issue':' issues')+' in '+GCHK.n+' parts ('+MOD.warnings.length+' in the data, '+GCHK.overlaps.length+' overlaps, '+GCHK.gaps.length+' gaps, '+GCHK.out.length+' sticking out):'
     :'All '+GCHK.n+' parts OK: no overlaps, no gaps between frames / back strips and their neighbours, nothing sticks out.';
   document.getElementById('geoList').innerHTML=all.slice(0,40).map(x=>'<li>'+esc(x)+'</li>').join('')+(all.length>40?'<li>… '+(all.length-40)+' more</li>':'');}
 /* ---------- Project tab ---------- */
 document.getElementById('dims').innerHTML=[
-  ['Worktop '+RUN_NAME.A,RX+' × '+WD+' × '+WTH],['Worktop height',WT+' above the floor'],['Tall units',(WB[WB.length-1])+' × '+HC],
-  ['Island',CW+' × '+(WD+VD.island.overhang)+' × '+WT],['Carcass depth',CD+', HDF '+RUL.back.thickness+' back'],['Carcass back',CN0+' from the wall'],['Front face',FN+' from the wall; 4 gaps per front'],['Shaker front rail',FR],
-  ['Frames '+RUL.frontThickness,'on edge, '+RUL.frame.depth+' deep'],['Fillers wider than '+RUL.frontThickness,'flat, face-on'],['Plinth','face '+RUL.plinthSetback+' behind the fronts'],['Window',VW.width+' × '+VW.height+', '+VW.finish]].map(([a,b])=>'<dt>'+a+'</dt><dd>'+b+'</dd>').join('');
+  ['Worktop '+RUN_NAME.A,(wtA?wtA.u1-wtA.u0:0)+' × '+WTG(GOF.A).depth+' × '+WTH],['Worktop height',WT+' above the floor'],['Tall units',(WB[WB.length-1])+' × '+HC],
+  ['Island',CW+' × '+WTG(GOF.C).depth+' × '+WT],['Carcass depth',CD+', HDF '+RUL.back.thickness+' back'],['Carcass back',CN0+' from the wall'],['Front face',FN+' from the wall; 4 gaps per front'],['Shaker front rail',FR],
+  ['Frames '+RUL.frontThickness,'on edge, '+RUL.frame.depth+' deep'],['Panels '+RUL.frontThickness,'flat, in the front plane'],['Plinth','face '+RUL.plinthSetback+' behind the fronts'],['Window',VW.width+' × '+VW.height+', '+VW.finish]].map(([a,b])=>'<dt>'+a+'</dt><dd>'+b+'</dd>').join('');
 document.getElementById('pnotes').innerHTML=(PRJ.notes||[]).map(([n,d,x])=>'<dt>'+esc(n)+'</dt><dd>'+esc(d)+(x?'<small>'+esc(x)+'</small>':'')+'</dd>').join('');
 
 /* ---------- card tabs ---------- */
