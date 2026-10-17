@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maxwell's Equations</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  .law { display: grid; grid-template-columns: 2.2em 1fr; gap: 0 10px; margin: 1.6em 0; }
+  .law .no { font: 600 1.6em/1 var(--serif); color: var(--accent); padding-top: .55em; }
+  .law h3 { margin: 0 0 .1em; }
+  .law p { margin: .2em 0 .4em; }
+  .law .eq { margin: .5em 0; }
+  @media (max-width: 700px) { .law { grid-template-columns: 1.6em 1fr; } }
+</style>
+</head>
+<body>
+<main>
+<header class="page">
+  <p class="kicker">Electromagnetism</p>
+  <h1>Maxwell's Equations</h1>
+  <p class="lede">Four laws for the electric and magnetic fields, given in integral and differential form. Gaussian units are used throughout, with SI at the end.</p>
+</header>
+
+<div class="law">
+  <div class="no">1</div>
+  <div>
+    <h3>Gauss's law</h3>
+    <p>The electric flux leaving a closed surface is proportional to the charge inside.</p>
+    <div class="eq">\oint_{\partial\Omega}\vec E\cdot d\vec a = 4\pi\int_{\Omega}\rho\,dV
+    \qquad\Longleftrightarrow\qquad \nabla\cdot\vec E = 4\pi\rho</div>
+  </div>
+</div>
+
+<div class="law">
+  <div class="no">2</div>
+  <div>
+    <h3>No magnetic monopoles</h3>
+    <p>The total magnetic flux through any closed surface is zero.</p>
+    <div class="eq">\oint_{\partial\Omega}\vec B\cdot d\vec a = 0
+    \qquad\Longleftrightarrow\qquad \nabla\cdot\vec B = 0</div>
+  </div>
+</div>
+
+<div class="law">
+  <div class="no">3</div>
+  <div>
+    <h3>Faraday's law of induction</h3>
+    <p>The EMF around a closed loop equals minus the rate of change of the magnetic flux through it.</p>
+    <div class="eq">\oint_{\partial\Sigma}\vec E\cdot d\vec l = -\frac{1}{c}\frac{d}{dt}\int_\Sigma\vec B\cdot d\vec a
+    \qquad\Longleftrightarrow\qquad \nabla\times\vec E = -\frac{1}{c}\frac{\partial\vec B}{\partial t}</div>
+  </div>
+</div>
+
+<div class="law">
+  <div class="no">4</div>
+  <div>
+    <h3>Ampère–Maxwell law</h3>
+    <p>The magnetic field around a closed loop is set by the current through it plus the displacement current, which is the changing electric flux.</p>
+    <div class="eq">\oint_{\partial\Sigma}\vec B\cdot d\vec l = \frac{1}{c}\left(4\pi\int_\Sigma\vec J\cdot d\vec a+\frac{d}{dt}\int_\Sigma\vec E\cdot d\vec a\right)
+    \qquad\Longleftrightarrow\qquad \nabla\times\vec B = \frac{1}{c}\left(4\pi\vec J+\frac{\partial\vec E}{\partial t}\right)</div>
+  </div>
+</div>
+
+<p>Each integral form turns into its differential form through the divergence theorem (1, 2) or Stokes' theorem (3, 4), applied to an arbitrarily small volume or surface.</p>
+
+<h2>Two consequences</h2>
+<h3>Charge conservation</h3>
+<p>Take the divergence of law 4. Since <span class="m">\nabla\cdot(\nabla\times\vec B)=0</span>, and law 1 gives <span class="m">\nabla\cdot\vec E = 4\pi\rho</span>,</p>
+<div class="box"><div class="eq">\frac{\partial\rho}{\partial t} + \nabla\cdot\vec J = 0 .</div></div>
+<p>Without Maxwell's displacement-current term this would be violated whenever charge builds up, for example on a charging capacitor.</p>
+
+<h3>Light is an electromagnetic wave</h3>
+<p>In vacuum (<span class="m">\rho=0,\ \vec J=0</span>), take the curl of law 3 and use <span class="m">\nabla\times(\nabla\times\vec E)=\nabla(\nabla\cdot\vec E)-\nabla^2\vec E</span>:</p>
+<div class="box"><div class="eq">\nabla^2\vec E = \frac{1}{c^2}\frac{\partial^2\vec E}{\partial t^2},
+\qquad \nabla^2\vec B = \frac{1}{c^2}\frac{\partial^2\vec B}{\partial t^2}.</div></div>
+<p>Both fields obey a wave equation with speed <span class="m">c</span>.</p>
+
+<h2>SI units</h2>
+<div class="eq">
+\begin{aligned}
+\nabla\cdot\vec E &= \frac{\rho}{\varepsilon_0} &\qquad \nabla\cdot\vec B &= 0 \\[4pt]
+\nabla\times\vec E &= -\frac{\partial\vec B}{\partial t} &\qquad \nabla\times\vec B &= \mu_0\vec J + \mu_0\varepsilon_0\frac{\partial\vec E}{\partial t}
+\end{aligned}
+</div>
+<p>with <span class="m">c = 1/\sqrt{\mu_0\varepsilon_0}</span>. Converting from Gaussian units: <span class="m">\vec E_G = \sqrt{4\pi\varepsilon_0}\,\vec E_{SI}</span>, <span class="m">\vec B_G = \sqrt{4\pi/\mu_0}\,\vec B_{SI}</span> and <span class="m">\rho_G = \rho_{SI}/\sqrt{4\pi\varepsilon_0}</span>.</p>
+
+<p class="note"><strong>What changed:</strong> fixed the "Differencial" typo and the equations, which did not render. Each integral law now sits beside its differential form. Added charge conservation, the wave equation and the SI forms.</p>
+</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="lib.js"></script>
+</body>
+</html>

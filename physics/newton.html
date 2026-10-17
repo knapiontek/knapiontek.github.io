@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Newtonian Gravity</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  #system { background: #0d1020; border-radius: 8px; }
+</style>
+</head>
+<body>
+<main>
+<header class="page">
+  <p class="kicker">Classical mechanics</p>
+  <h1>Newtonian Gravity</h1>
+  <p class="lede">Newton's second law plus the inverse-square law, stepped forward in time for a small stellar system. Bodies that collide merge.</p>
+</header>
+
+<h2>The two laws</h2>
+<div class="box">
+<div class="eq">\vec F = m\,\frac{d^2\vec u}{dt^2}
+\qquad\qquad
+\vec F = -\,G\frac{Mm}{r^2}\,\hat{\mathbf r} = -\,G\frac{Mm}{r^3}\,\vec r</div>
+</div>
+<p>Here <span class="m">\vec r</span> points from the attracting mass <span class="m">M</span> to <span class="m">m</span>. The minus sign makes gravity attractive.</p>
+
+<h2>Stellar system</h2>
+<figure class="sim">
+  <div class="controls">
+    <button id="play" class="on">Pause</button>
+    <button id="reset">Reset</button>
+    <button id="add">Add a body</button>
+    <label>speed <input type="range" id="speed" min="1" max="12" step="1" value="3"><output></output></label>
+    <label><input type="checkbox" id="trails" checked> trails</label>
+    <span class="stat" id="stat"></span>
+  </div>
+  <canvas id="system"></canvas>
+  <figcaption>The central star starts with a small velocity that cancels the planets' momentum, so the system as a whole stays put. Colliding bodies merge, keeping total mass and momentum. Click anywhere to drop in a body on a near-circular orbit.</figcaption>
+</figure>
+
+<h2>Solution method</h2>
+<p>In components, with <span class="m">\vec u = (x, y)</span> the position relative to the attracting mass and <span class="m">r^2 = x^2 + y^2</span>:</p>
+<div class="eq">
+\frac{F_x}{F} = \frac{x}{r},\qquad \frac{F_y}{F} = \frac{y}{r}
+\qquad\Longrightarrow\qquad
+\vec a = \frac{\vec F}{m} = -\,GM\,\frac{\vec u}{r^3}
+</div>
+<p>For many bodies, the accelerations add up:</p>
+<div class="eq">
+\vec a_i = \sum_{j\ne i} G\,m_j\,\frac{\vec u_j - \vec u_i}{\lvert\vec u_j - \vec u_i\rvert^3}
+</div>
+<p>Each time step first computes every acceleration from the current positions, then updates velocities and positions. This is semi-implicit Euler: the new velocity moves the body, which keeps orbits from slowly spiralling outward.</p>
+<div class="eq">
+\begin{aligned}
+\vec v_{n+1} &= \vec v_n + \vec a_n\,\Delta t &&= \vec v_0 + \sum_{k=0}^{n}\vec a_k\,\Delta t \\
+\vec u_{n+1} &= \vec u_n + \vec v_{n+1}\,\Delta t &&= \vec u_0 + \sum_{k=1}^{n+1}\vec v_k\,\Delta t
+\end{aligned}
+</div>
+<p>When two bodies touch, they merge in a perfectly inelastic collision. Mass (volume) and momentum are conserved:</p>
+<div class="eq">
+m = m_1 + m_2,\qquad \vec v = \frac{m_1\vec v_1 + m_2\vec v_2}{m_1 + m_2},\qquad r = \sqrt[3]{\frac{3m}{4\pi}}
+</div>
+
+<p class="note"><strong>What changed:</strong> the canvas tag was self-closed (<code>&lt;canvas/&gt;</code>), which HTML does not allow, so the whole Solution section ended up inside the canvas and was hidden. The acceleration was missing its minus sign, and the sum indices were off by one. Bodies were updated one at a time, so later bodies felt forces from positions already moved this step; all accelerations are now computed first. Added momentum balancing, trails and controls.</p>
+</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="lib.js"></script>
+<script>
+(function () {
+  const G = 30;
+  const DT = 0.0025;
+  const mass = r => r * r * r * Math.PI * 4 / 3;
+  const radius = m => Math.cbrt(m * 3 / 4 / Math.PI);
+  const PALETTE = ['#ff6b6b', '#4fd19a', '#7ea2ff', '#f0c84a', '#c39bff', '#ff9f5a', '#5ad1e6'];
+  let bodies, t, running = true, speed = 4, trails = true;
+
+  function initial() {
+    return [
+      { r: 40, x: 500, y: 500, vx: 0, vy: 0,    c: '#ffd34d', star: true },
+      { r: 2,  x: 400, y: 500, vx: 0, vy: 225,  c: '#ff6b6b' },
+      { r: 3,  x: 500, y: 650, vx: 200, vy: 0,  c: '#4fd19a' },
+      { r: 6,  x: 700, y: 500, vx: 0, vy: -125, c: '#7ea2ff' },
+      { r: 3,  x: 500, y: 300, vx: -150, vy: 5, c: '#e7e4dc' },
+      { r: 2,  x: 200, y: 250, vx: -80, vy: 125, c: '#c39bff' },
+    ];
+  }
+  function balance() {
+    // give the star the velocity that makes total momentum zero
+    const star = bodies.find(b => b.star);
+    if (!star) return;
+    let px = 0, py = 0;
+    for (const b of bodies) if (b !== star) { px += mass(b.r) * b.vx; py += mass(b.r) * b.vy; }
+    star.vx = -px / mass(star.r);
+    star.vy = -py / mass(star.r);
+  }
+  function reset() {
+    bodies = initial().map(b => Object.assign(b, { trail: [] }));
+    balance();
+    t = 0;
+  }
+
+  function step(dt) {
+    const n = bodies.length;
+    const ax = new Float64Array(n), ay = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const a = bodies[i], b = bodies[j];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const r2 = dx * dx + dy * dy, r = Math.sqrt(r2), r3 = r2 * r;
+        ax[i] += G * mass(b.r) * dx / r3; ay[i] += G * mass(b.r) * dy / r3;
+        ax[j] -= G * mass(a.r) * dx / r3; ay[j] -= G * mass(a.r) * dy / r3;
+      }
+    }
+    for (let i = 0; i < n; i++) {
+      const b = bodies[i];
+      b.vx += ax[i] * dt; b.vy += ay[i] * dt;
+      b.x += b.vx * dt;   b.y += b.vy * dt;
+    }
+    // collisions: merge smaller into larger
+    for (let i = 0; i < bodies.length; i++) {
+      for (let j = i + 1; j < bodies.length; j++) {
+        const a = bodies[i], b = bodies[j];
+        if (Math.hypot(b.x - a.x, b.y - a.y) < a.r + b.r) {
+          const [big, small] = a.r >= b.r ? [a, b] : [b, a];
+          const m1 = mass(big.r), m2 = mass(small.r), m = m1 + m2;
+          big.x = (m1 * big.x + m2 * small.x) / m; big.y = (m1 * big.y + m2 * small.y) / m;
+          big.vx = (m1 * big.vx + m2 * small.vx) / m; big.vy = (m1 * big.vy + m2 * small.vy) / m;
+          big.r = radius(m);
+          bodies.splice(bodies.indexOf(small), 1);
+          j = i; // restart inner scan
+        }
+      }
+    }
+    // drop bodies that escaped far away
+    bodies = bodies.filter(b => b.star || Math.hypot(b.x - 500, b.y - 500) < 3000);
+    t += dt;
+  }
+
+  function orbitBody(x, y) {
+    const star = bodies.reduce((a, b) => (a.r >= b.r ? a : b));
+    const dx = x - star.x, dy = y - star.y, r = Math.hypot(dx, dy);
+    if (r < star.r + 8) return;
+    const v = Math.sqrt(G * mass(star.r) / r) * (0.9 + 0.2 * Math.random());
+    const c = PALETTE[(Math.random() * PALETTE.length) | 0];
+    bodies.push({ r: 1.5 + 4 * Math.random(), x, y, vx: star.vx - v * dy / r, vy: star.vy + v * dx / r, c, trail: [] });
+  }
+
+  const fig = new Lab.Figure('#system', { aspect: 0.75, maxHeight: 700, draw: draw });
+  let view;
+  function draw(ctx, f) {
+    const s = Math.min(f.w / 1000, f.h / 750);
+    view = { s, ox: f.w / 2 - 500 * s, oy: f.h / 2 - 500 * s };
+    ctx.fillStyle = '#0d1020';
+    ctx.fillRect(0, 0, f.w, f.h);
+    // faint stars
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    for (let k = 0; k < 90; k++) {
+      const sx = (Math.sin(k * 12.9898) * 43758.5453) % 1, sy = (Math.sin(k * 78.233) * 12345.678) % 1;
+      ctx.fillRect(Math.abs(sx) * f.w, Math.abs(sy) * f.h, 1, 1);
+    }
+    for (const b of bodies) {
+      const X = view.ox + b.x * s, Y = view.oy + b.y * s;
+      if (trails && b.trail.length > 1) {
+        ctx.strokeStyle = b.c;
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.45;
+        ctx.beginPath();
+        ctx.moveTo(view.ox + b.trail[0][0] * s, view.oy + b.trail[0][1] * s);
+        for (const p of b.trail) ctx.lineTo(view.ox + p[0] * s, view.oy + p[1] * s);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+      const R = Math.max(1.6, b.r * s);
+      if (b.star) {
+        const g = ctx.createRadialGradient(X, Y, R * 0.3, X, Y, R * 2.6);
+        g.addColorStop(0, 'rgba(255,211,77,.55)');
+        g.addColorStop(1, 'rgba(255,211,77,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(X, Y, R * 2.6, 0, 2 * Math.PI); ctx.fill();
+      }
+      ctx.fillStyle = b.c;
+      ctx.beginPath(); ctx.arc(X, Y, R, 0, 2 * Math.PI); ctx.fill();
+    }
+    let px = 0, py = 0;
+    for (const b of bodies) { px += mass(b.r) * b.vx; py += mass(b.r) * b.vy; }
+    document.getElementById('stat').textContent = `t = ${t.toFixed(1)} · bodies: ${bodies.length} · |p| = ${Math.hypot(px, py).toExponential(1)}`;
+  }
+
+  reset();
+  Lab.slider('speed', v => { speed = v; }, v => v + '×');
+  const playBtn = document.getElementById('play');
+  playBtn.addEventListener('click', () => {
+    running = !running;
+    playBtn.textContent = running ? 'Pause' : 'Play';
+    playBtn.classList.toggle('on', running);
+  });
+  document.getElementById('reset').addEventListener('click', () => { reset(); fig.draw(); });
+  document.getElementById('add').addEventListener('click', () => {
+    const a = Math.random() * 2 * Math.PI, r = 120 + 260 * Math.random();
+    const star = bodies.reduce((p, b) => (p.r >= b.r ? p : b));
+    orbitBody(star.x + r * Math.cos(a), star.y + r * Math.sin(a));
+  });
+  document.getElementById('trails').addEventListener('change', e => { trails = e.target.checked; });
+  document.getElementById('system').addEventListener('click', e => {
+    const p = fig.pointer(e);
+    orbitBody((p.x - view.ox) / view.s, (p.y - view.oy) / view.s);
+  });
+
+  let frame = 0;
+  (function loop() {
+    if (running) {
+      for (let k = 0; k < speed * 2; k++) step(DT);
+      if (++frame % 2 === 0) for (const b of bodies) { b.trail.push([b.x, b.y]); if (b.trail.length > 260) b.trail.shift(); }
+    }
+    fig.draw();
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>

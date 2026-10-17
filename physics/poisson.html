@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poisson Equation</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<header class="page">
+  <p class="kicker">Fields · finite differences</p>
+  <h1>Poisson Equation</h1>
+  <p class="lede">The equation behind electrostatics, gravity and steady heat flow, solved on a grid in one and two dimensions.</p>
+</header>
+
+<div class="box"><div class="eq">\nabla^2 u = f</div></div>
+
+<h2>One dimension</h2>
+<div class="eq">\frac{d^2u}{dx^2} = f(x)</div>
+
+<h3>Second derivative from Taylor series</h3>
+<div class="eq">
+\begin{aligned}
+u(x-h) &= u(x) - h\,u'(x) + \tfrac{1}{2}h^2u''(x) - \tfrac16 h^3u'''(x) + \mathcal{O}(h^4) \\[4pt]
+u(x+h) &= u(x) + h\,u'(x) + \tfrac{1}{2}h^2u''(x) + \tfrac16 h^3u'''(x) + \mathcal{O}(h^4)
+\end{aligned}
+</div>
+<p>Adding the two cancels the odd terms:</p>
+<div class="eq">
+u(x-h) + u(x+h) = 2u(x) + h^2u''(x) + \mathcal{O}(h^4)
+\quad\Longrightarrow\quad
+u''(x) = \frac{u(x-h) - 2u(x) + u(x+h)}{h^2} + \mathcal{O}(h^2)
+</div>
+
+<h3>The same result from the definition</h3>
+<div class="eq">
+\begin{aligned}
+u'_-(x) &= \frac{u(x)-u(x-h)}{h}, \qquad u'_+(x) = \frac{u(x+h)-u(x)}{h} \\[4pt]
+u''(x) &\approx \frac{u'_+(x)-u'_-(x)}{h} = \frac{u(x-h)-2u(x)+u(x+h)}{h^2}
+\end{aligned}
+</div>
+
+<h3>Finite-difference system</h3>
+<p>On nodes <span class="m">x_n</span> with spacing <span class="m">h</span>, writing <span class="m">u_n \approx u(x_n)</span> and <span class="m">f_n = f(x_n)</span>:</p>
+<div class="eq">u_{n-1} - 2u_n + u_{n+1} = h^2 f_n</div>
+<p>For five interior nodes, with boundary values <span class="m">u_0 = c_0</span> and <span class="m">u_6 = c_6</span> moved to the right-hand side:</p>
+<div class="eq">
+\begin{bmatrix}
+-2 & 1 & 0 & 0 & 0 \\
+1 & -2 & 1 & 0 & 0 \\
+0 & 1 & -2 & 1 & 0 \\
+0 & 0 & 1 & -2 & 1 \\
+0 & 0 & 0 & 1 & -2
+\end{bmatrix}
+\begin{bmatrix} u_1 \\ u_2 \\ u_3 \\ u_4 \\ u_5 \end{bmatrix}
+= h^2
+\begin{bmatrix} f_1 \\ f_2 \\ f_3 \\ f_4 \\ f_5 \end{bmatrix}
+-
+\begin{bmatrix} c_0 \\ 0 \\ 0 \\ 0 \\ c_6 \end{bmatrix}
+</div>
+
+<h3>Example with an exact solution</h3>
+<div class="eq">\frac{d^2u}{dx^2} = e^{-x^2}\left(4x^2 - 2\right),\qquad -3 \le x \le 3</div>
+<p>Integrate once, using integration by parts, <span class="m">\int u'\,v\,dx = uv - \int u\,v'\,dx</span>, on the <span class="m">4x^2e^{-x^2}</span> term with <span class="m">v = -2x</span> and <span class="m">u' = -2xe^{-x^2}</span>:</p>
+<div class="eq">
+\begin{aligned}
+\frac{du}{dx} &= \int 4x^2e^{-x^2}dx - \int 2e^{-x^2}dx \\
+&= \Bigl(-2xe^{-x^2} + \int 2e^{-x^2}dx\Bigr) - \int 2e^{-x^2}dx = -2xe^{-x^2} + C_1
+\end{aligned}
+</div>
+<p>Integrate again with the substitution <span class="m">w = -x^2</span>:</p>
+<div class="eq">u = \int -2xe^{-x^2}dx = e^{-x^2} + C_1x + C_2</div>
+<p>The boundary values <span class="m">u(\pm3) = e^{-9}</span> give <span class="m">C_1 = C_2 = 0</span>, so <span class="m">u = e^{-x^2}</span>.</p>
+
+<figure class="sim">
+  <div class="controls">
+    <label>interior nodes <input type="range" id="n1" min="3" max="60" step="1" value="8"><output></output></label>
+    <span class="stat" id="err1"></span>
+  </div>
+  <canvas id="sim1"></canvas>
+  <div class="legend">
+    <span style="--sw: var(--ink)">exact u = e<sup>−x²</sup></span>
+    <span class="dot" style="--sw: var(--c1)">finite differences</span>
+    <span class="dash" style="--sw: var(--c2)">source f(x)</span>
+  </div>
+  <figcaption>Doubling the number of nodes roughly quarters the error, as expected for an <span class="m">\mathcal{O}(h^2)</span> method.</figcaption>
+</figure>
+
+<h2>Two dimensions</h2>
+<div class="eq">\frac{\partial^2u}{\partial x^2}+\frac{\partial^2u}{\partial y^2} = f(x,y)</div>
+<p>Apply the one-dimensional stencil in each direction and add (the five-point stencil):</p>
+<div class="eq">
+\nabla^2 u \approx \frac{u(x-h,y) + u(x+h,y) + u(x,y-h) + u(x,y+h) - 4u(x,y)}{h^2}
+</div>
+<div class="eq">u_{i-1,j} + u_{i+1,j} + u_{i,j-1} + u_{i,j+1} - 4u_{i,j} = h^2 f_{i,j}</div>
+<p>On a <span class="m">3\times3</span> interior grid with zero boundary values, numbering nodes row by row:</p>
+<div class="eq">
+\left[\begin{array}{ccc|ccc|ccc}
+-4 & 1 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+1 & -4 & 1 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & 1 & -4 & 0 & 0 & 1 & 0 & 0 & 0 \\ \hline
+1 & 0 & 0 & -4 & 1 & 0 & 1 & 0 & 0 \\
+0 & 1 & 0 & 1 & -4 & 1 & 0 & 1 & 0 \\
+0 & 0 & 1 & 0 & 1 & -4 & 0 & 0 & 1 \\ \hline
+0 & 0 & 0 & 1 & 0 & 0 & -4 & 1 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 & 1 & -4 & 1 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 1 & -4
+\end{array}\right]
+\begin{bmatrix} u_{11} \\ u_{12} \\ u_{13} \\ u_{21} \\ u_{22} \\ u_{23} \\ u_{31} \\ u_{32} \\ u_{33} \end{bmatrix}
+= h^2
+\begin{bmatrix} f_{11} \\ f_{12} \\ f_{13} \\ f_{21} \\ f_{22} \\ f_{23} \\ f_{31} \\ f_{32} \\ f_{33} \end{bmatrix}
+</div>
+<p>The matrix is banded: no entry lies more than <span class="m">n</span> places from the diagonal. Gaussian elimination restricted to the band costs <span class="m">\mathcal{O}(n^4)</span> rather than <span class="m">\mathcal{O}(n^6)</span>, so fine grids still solve instantly.</p>
+
+<h3>Example: two charges in a grounded box</h3>
+<p>Take <span class="m">f = -\rho</span>, where <span class="m">\rho</span> is a positive and a negative Gaussian charge, with <span class="m">u = 0</span> on the walls. Then <span class="m">u</span> is the electrostatic potential, and its contour lines are the equipotentials.</p>
+
+<figure class="sim">
+  <div class="controls">
+    <label>grid <input type="range" id="n2" min="9" max="70" step="1" value="41"><output></output></label>
+    <label>separation <input type="range" id="sep" min="0.2" max="1.2" step="0.05" value="0.7"><output></output></label>
+    <span class="stat" id="stat2"></span>
+  </div>
+  <canvas id="sim2"></canvas>
+  <div class="legend">
+    <span style="--sw: var(--c2)">u &gt; 0</span>
+    <span style="--sw: var(--c1)">u &lt; 0</span>
+    <span style="--sw: var(--ink)">equipotentials</span>
+  </div>
+  <figcaption>The equipotentials crowd together between the charges, where the field is strongest, and flatten against the grounded walls.</figcaption>
+</figure>
+
+<p class="note"><strong>What changed:</strong> <span class="m">d^2u/dx</span> and <span class="m">\partial^2u/\partial x</span> were missing their squares. The Taylor remainders had the wrong orders and signs. Dot notation, which means time derivatives, is replaced with primes. Fixed the typos "Dimention" and "boundraries" and filled in the missing integration constants. The 1-D code treated the boundary points as unknowns. The 2-D source was a discontinuous step marked "TODO", and the 2-D plot borrowed its centre from the 1-D canvas. The 2-D solver is now banded, and the plot shows a heat map with equipotentials.</p>
+</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="lib.js"></script>
+<script>
+(function () {
+  /* ---------- 1-D ---------- */
+  const f1 = x => Math.exp(-x * x) * (4 * x * x - 2);
+  const exact1 = x => Math.exp(-x * x);
+  function solve1(N) {
+    const L = 3, h = 2 * L / (N + 1), c = exact1(L);
+    const A = Lab.zeros(N, N), b = new Array(N);
+    for (let i = 0; i < N; i++) {
+      A[i][i] = -2;
+      if (i > 0) A[i][i - 1] = 1;
+      if (i < N - 1) A[i][i + 1] = 1;
+      b[i] = h * h * f1(-L + (i + 1) * h);
+    }
+    b[0] -= c; b[N - 1] -= c;
+    const u = Lab.solve(A, b);
+    const xs = [-L], ys = [c];
+    u.forEach((v, i) => { xs.push(-L + (i + 1) * h); ys.push(v); });
+    xs.push(L); ys.push(c);
+    return [xs, ys];
+  }
+  let n1 = 8;
+  const fig1 = new Lab.Figure('#sim1', { aspect: 0.5, draw: (ctx, f) => {
+    const ax = new Lab.Axes(ctx, f, { x: [-3, 3], y: [-2.2, 1.3], xlabel: 'x', ylabel: 'u' });
+    ax.frame();
+    ax.fn(f1, { color: Lab.color('c2'), width: 1.5, dash: [6, 5] });
+    ax.fn(exact1, { color: Lab.color('ink'), width: 2 });
+    const [xs, ys] = solve1(n1);
+    ax.line(xs, ys, { color: Lab.color('c1'), width: 1.5 });
+    ax.dots(xs, ys, { color: Lab.color('c1'), r: n1 > 30 ? 2.2 : 3.5 });
+    const err = Math.max(...xs.map((x, i) => Math.abs(ys[i] - exact1(x))));
+    document.getElementById('err1').textContent = `h = ${(6 / (n1 + 1)).toFixed(3)} · max error ${err.toExponential(2)}`;
+  }});
+  Lab.slider('n1', v => { n1 = v; fig1.draw(); });
+
+  /* ---------- 2-D ---------- */
+  let n2 = 41, sep = 0.7, field = null;
+  function charge(x, y) {
+    const w = 0.09, g = (cx, cy) => Math.exp(-((x - cx) ** 2 + (y - cy) ** 2) / (2 * w * w));
+    return (g(-sep / 2, 0.08) - g(sep / 2, -0.08)) / (2 * Math.PI * w * w);
+  }
+  function solve2() {
+    const n = n2, N = n * n, h = 2 / (n + 1);
+    const A = new Lab.BandMatrix(N, n), b = new Float64Array(N);
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const k = j * n + i;
+      A.set(k, k, -4);
+      if (i > 0) A.set(k, k - 1, 1);
+      if (i < n - 1) A.set(k, k + 1, 1);
+      if (j > 0) A.set(k, k - n, 1);
+      if (j < n - 1) A.set(k, k + n, 1);
+      b[k] = -h * h * charge(-1 + (i + 1) * h, -1 + (j + 1) * h);
+    }
+    const t0 = performance.now();
+    const u = Lab.solveBanded(A, b);
+    field = { u, n, h, ms: performance.now() - t0 };
+  }
+  // value at grid index including the zero boundary ring
+  const U = (i, j) => (i < 0 || j < 0 || i >= field.n || j >= field.n) ? 0 : field.u[j * field.n + i];
+
+  const fig2 = new Lab.Figure('#sim2', { aspect: 0.82, maxHeight: 640, draw: (ctx, f) => {
+    if (!field) return;
+    const n = field.n;
+    const S = Math.min(f.w, f.h) - 20;
+    const ox = (f.w - S) / 2, oy = (f.h - S) / 2;
+    // heat map on an offscreen canvas, one pixel per node (with boundary)
+    const m = n + 2, off = document.createElement('canvas');
+    off.width = off.height = m;
+    const oc = off.getContext('2d'), img = oc.createImageData(m, m);
+    let umax = 1e-12;
+    for (const v of field.u) umax = Math.max(umax, Math.abs(v));
+    const parse = c => { const d = document.createElement('div'); d.style.color = c; document.body.appendChild(d); const s = getComputedStyle(d).color; d.remove(); return s.match(/\d+/g).map(Number); };
+    const pos = parse(Lab.color('c2')), neg = parse(Lab.color('c1')), bg = parse(Lab.color('paper'));
+    for (let j = 0; j < m; j++) for (let i = 0; i < m; i++) {
+      const v = U(i - 1, j - 1) / umax, a = Math.min(1, Math.abs(v)) * 0.85;
+      const c = v >= 0 ? pos : neg, p = 4 * ((m - 1 - j) * m + i);
+      for (let k = 0; k < 3; k++) img.data[p + k] = bg[k] + (c[k] - bg[k]) * a;
+      img.data[p + 3] = 255;
+    }
+    oc.putImageData(img, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(off, 0, 0, m, m, ox, oy, S, S);
+    ctx.strokeStyle = Lab.color('axis'); ctx.lineWidth = 1; ctx.strokeRect(ox + .5, oy + .5, S - 1, S - 1);
+
+    // marching squares for equipotentials
+    const P = (i, j) => [ox + (i + 1.5) / m * S, oy + S - (j + 1.5) / m * S];
+    ctx.strokeStyle = Lab.color('ink'); ctx.lineWidth = 1.1; ctx.globalAlpha = 0.75;
+    const levels = [];
+    for (let k = 1; k <= 7; k++) { levels.push(umax * k / 8); levels.push(-umax * k / 8); }
+    levels.push(0);
+    ctx.beginPath();
+    for (const L of levels) {
+      for (let j = -1; j < n; j++) for (let i = -1; i < n; i++) {
+        // the zero level would trace the grounded walls themselves; skip wall cells for it
+        if (L === 0 && (i < 0 || j < 0 || i >= n - 1 || j >= n - 1)) continue;
+        const v =[U(i, j) - L, U(i + 1, j) - L, U(i + 1, j + 1) - L, U(i, j + 1) - L];
+        const c = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]];
+        const pts = [];
+        for (let e = 0; e < 4; e++) {
+          const a = v[e], b = v[(e + 1) % 4];
+          if ((a < 0) !== (b < 0)) {
+            const t = a / (a - b), A = c[e], B = c[(e + 1) % 4];
+            pts.push(P(A[0] + t * (B[0] - A[0]), A[1] + t * (B[1] - A[1])));
+          }
+        }
+        for (let q = 0; q + 1 < pts.length; q += 2) { ctx.moveTo(pts[q][0], pts[q][1]); ctx.lineTo(pts[q + 1][0], pts[q + 1][1]); }
+      }
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // charge markers
+    ctx.font = '600 16px ' + getComputedStyle(document.body).getPropertyValue('--sans');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const mark = (x, y, s) => { const X = ox + (x + 1) / 2 * S, Y = oy + S - (y + 1) / 2 * S; ctx.fillStyle = Lab.color('paper'); ctx.beginPath(); ctx.arc(X, Y, 10, 0, 7); ctx.fill(); ctx.fillStyle = Lab.color('ink'); ctx.fillText(s, X, Y + 1); };
+    mark(-sep / 2, 0.08, '+'); mark(sep / 2, -0.08, '−');
+    document.getElementById('stat2').textContent = `${n * n} unknowns · solved in ${field.ms.toFixed(0)} ms`;
+  }});
+  const re2 = () => { solve2(); fig2.draw(); };
+  Lab.slider('n2', v => { n2 = v; re2(); });
+  Lab.slider('sep', v => { sep = v; re2(); }, v => v.toFixed(2));
+})();
+</script>
+</body>
+</html>

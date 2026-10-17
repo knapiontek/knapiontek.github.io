@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lorentz Transformation</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<header class="page">
+  <p class="kicker">Special relativity</p>
+  <h1>Lorentz Transformation</h1>
+  <p class="lede">The transformation between inertial frames follows from one postulate: light moves at the same speed in every one of them.</p>
+</header>
+
+<h2>Derivation</h2>
+<p>Take two inertial frames <span class="m">S</span> and <span class="m">S'</span>. Their origins coincide at <span class="m">t=t'=0</span>, and <span class="m">S'</span> moves along <span class="m">x</span> with velocity <span class="m">v</span>. The Galilean transformation</p>
+<div class="eq">x' = x - vt,\qquad x = x' + vt'\quad(t'=t)</div>
+<p>would make a light pulse move at <span class="m">c-v</span> in <span class="m">S'</span>, which contradicts observation. Keep the transformation linear, so that uniform motion stays uniform, but allow a scale factor <span class="m">\gamma</span>:</p>
+<div class="eq">x' = \gamma\,(x - vt),\qquad x = \gamma\,(x' + vt').</div>
+<p>The first equation puts the origin of <span class="m">S'</span> at <span class="m">x = vt</span>. The second is the same statement seen from <span class="m">S'</span>, where <span class="m">S</span> moves at <span class="m">-v</span>. By symmetry, <span class="m">\gamma</span> must be the same in both.</p>
+
+<p>Now send a light pulse from the common origin. Both frames must measure speed <span class="m">c</span>, so <span class="m">x = ct</span> and <span class="m">x' = ct'</span>:</p>
+<div class="eq">ct' = \gamma\,(c - v)\,t,\qquad ct = \gamma\,(c + v)\,t'.</div>
+<p>Multiply the two equations and cancel <span class="m">tt'</span>:</p>
+<div class="eq">c^2 = \gamma^2\,(c^2 - v^2)\qquad\Longrightarrow\qquad
+\gamma = \frac{1}{\sqrt{1 - v^2/c^2}}.</div>
+<p>Eliminating <span class="m">x'</span> between the two transformation equations gives the rule for time:</p>
+<div class="box">
+<div class="eq">
+x' = \gamma\,(x - vt),\qquad
+t' = \gamma\left(t - \frac{v\,x}{c^2}\right),\qquad
+\gamma = \frac{1}{\sqrt{1 - v^2/c^2}}
+</div>
+</div>
+
+<h2>Invariant interval and time dilation</h2>
+<p>A direct substitution shows that the Lorentz transformation preserves the spacetime interval:</p>
+<div class="eq">s^2 = c^2t'^2 - x'^2 = c^2t^2 - x^2 .</div>
+<p>Take a clock at rest in <span class="m">S'</span> (<span class="m">x'=0</span>), which moves at <span class="m">v</span> in <span class="m">S</span> (<span class="m">x = vt</span>):</p>
+<div class="eq">
+c^2t'^2 = c^2t^2 - v^2t^2
+\qquad\Longrightarrow\qquad
+t' = t\sqrt{1 - \frac{v^2}{c^2}} = \frac{t}{\gamma}.
+</div>
+<p>The moving clock records less time: <span class="m">t = \gamma\,t'</span>.</p>
+
+<h2>Low-speed limit</h2>
+<p>With <span class="m">\beta = v^2/c^2</span>, expand <span class="m">\gamma(\beta) = (1-\beta)^{-1/2}</span> in a Taylor series about <span class="m">\beta = 0</span>:</p>
+<div class="eq">
+\gamma'(\beta) = \tfrac12(1-\beta)^{-3/2},\quad \gamma'(0) = \tfrac12
+\qquad\Longrightarrow\qquad
+\gamma \approx 1 + \frac{\beta}{2} = 1 + \frac{v^2}{2c^2}
+</div>
+<div class="box">
+<div class="eq">E = \gamma mc^2 \approx mc^2 + \tfrac12 mv^2</div>
+</div>
+<p>The rest energy plus the Newtonian kinetic energy.</p>
+
+<h2>Minkowski diagram</h2>
+<p>Lines of constant <span class="m">s^2</span> are hyperbolae. Inside the light cone (<span class="m">s^2&gt;0</span>) intervals are timelike: some frame sees both events at the same place. Outside (<span class="m">s^2&lt;0</span>) they are spacelike: some frame sees them at the same time. A boost tilts the <span class="m">ct'</span> and <span class="m">x'</span> axes symmetrically towards the light line, and every event stays on its own hyperbola.</p>
+
+<figure class="sim">
+  <div class="controls">
+    <label>velocity <span class="m">v/c</span> <input type="range" id="beta" min="-0.9" max="0.9" step="0.01" value="0.5"><output></output></label>
+    <span class="stat" id="readout"></span>
+  </div>
+  <canvas id="mink"></canvas>
+  <div class="legend">
+    <span style="--sw: var(--c5)">light cone x = ±ct</span>
+    <span style="--sw: var(--c1)">S′ axes (ct′, x′)</span>
+    <span class="dash" style="--sw: var(--muted)">hyperbolae s² = const</span>
+    <span class="dot" style="--sw: var(--c2)">event (drag it)</span>
+  </div>
+  <figcaption>Drag the orange event. Its coordinates in both frames are shown at the top right; <span class="m">s^2</span> comes out the same in each.</figcaption>
+</figure>
+
+<p class="note"><strong>What changed:</strong> rewrote the derivation, which had sign slips in <span class="m">b = \pm av</span>, and added the time transformation. Corrected <span class="m">\gamma'</span>, which had been written as <span class="m">1/(2\sqrt{1-\beta})</span>. Fixed the typos "inercial", "beetwen" and "begging". The Minkowski plot had zero height and never showed; it is now interactive.</p>
+</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="lib.js"></script>
+<script>
+(function () {
+  let beta = 0.5;
+  let ev = { x: 1.4, t: 2.2 };
+  let dragging = false, ax = null;
+  const fig = new Lab.Figure('#mink', { aspect: 0.75, draw: draw });
+  Lab.slider('beta', v => { beta = v; fig.draw(); }, v => v.toFixed(2));
+  const cv = document.getElementById('mink');
+  cv.addEventListener('pointerdown', e => {
+    const p = fig.pointer(e);
+    if (Math.hypot(p.x - ax.X(ev.x), p.y - ax.Y(ev.t)) < 18) { dragging = true; cv.setPointerCapture(e.pointerId); }
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const p = fig.pointer(e);
+    ev = { x: Math.max(-3.8, Math.min(3.8, ax.invX(p.x))), t: Math.max(-2.8, Math.min(2.8, ax.invY(p.y))) };
+    fig.draw();
+  });
+  cv.addEventListener('pointerup', () => { dragging = false; });
+
+  function draw(ctx, f) {
+    ax = new Lab.Axes(ctx, f, { x: [-4, 4], y: [-3, 3], equal: true, xlabel: 'x', ylabel: 'ct' });
+    // shade timelike region
+    ax.clip();
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = Lab.color('c5');
+    const R = 10;
+    ctx.beginPath();
+    ctx.moveTo(ax.X(0), ax.Y(0)); ctx.lineTo(ax.X(-R), ax.Y(R)); ctx.lineTo(ax.X(R), ax.Y(R)); ctx.closePath();
+    ctx.moveTo(ax.X(0), ax.Y(0)); ctx.lineTo(ax.X(-R), ax.Y(-R)); ctx.lineTo(ax.X(R), ax.Y(-R)); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    ax.unclip();
+    ax.frame();
+
+    // hyperbolae
+    const hyp = { color: Lab.color('muted'), width: 1, dash: [4, 4] };
+    for (const s of [1, 2, 3]) {
+      const us = [], xa = [], ya = [], xb = [], yb = [];
+      for (let u = -2.5; u <= 2.5; u += 0.02) {
+        xa.push(s * Math.sinh(u)); ya.push(s * Math.cosh(u));
+        xb.push(s * Math.cosh(u)); yb.push(s * Math.sinh(u));
+      }
+      ax.line(xa, ya, hyp); ax.line(xa, ya.map(v => -v), hyp);
+      ax.line(xb, yb, hyp); ax.line(xb.map(v => -v), yb, hyp);
+    }
+    // light cone
+    ax.line([-R, R], [-R, R], { color: Lab.color('c5'), width: 2 });
+    ax.line([-R, R], [R, -R], { color: Lab.color('c5'), width: 2 });
+    // boosted axes: ct' axis is x = beta*ct, x' axis is ct = beta*x
+    const b1 = Lab.color('c1');
+    ax.line([-R * beta, R * beta], [-R, R], { color: b1, width: 2.2 });
+    ax.line([-R, R], [-R * beta, R * beta], { color: b1, width: 2.2 });
+    // ticks on boosted axes at unit proper intervals
+    const g = 1 / Math.sqrt(1 - beta * beta);
+    ctx.fillStyle = b1;
+    for (let k = -4; k <= 4; k++) {
+      if (!k) continue;
+      ax.dots([k * g * beta], [k * g], { color: b1, r: 2.6 });
+      ax.dots([k * g], [k * g * beta], { color: b1, r: 2.6 });
+    }
+    ctx.font = 'italic 14px ' + getComputedStyle(document.body).fontFamily;
+    ctx.fillStyle = b1;
+    const lt = 2.75;
+    ctx.fillText("ct′", ax.X(lt * beta) + 6, ax.Y(lt) + 4);
+    ctx.fillText("x′", ax.X(3.85) - 16, ax.Y(3.85 * beta) - 8);
+
+    // event and its coordinate lines in S'
+    const xp = g * (ev.x - beta * ev.t), tp = g * (ev.t - beta * ev.x);
+    const dash = { color: Lab.color('c2'), width: 1.2, dash: [3, 3] };
+    // line parallel to x' axis through event hits ct' axis at tp
+    ax.line([ev.x, tp * g * beta], [ev.t, tp * g], dash);
+    // line parallel to ct' axis through event hits x' axis at xp
+    ax.line([ev.x, xp * g], [ev.t, xp * g * beta], dash);
+    ax.dots([ev.x], [ev.t], { color: Lab.color('c2'), r: 6.5 });
+
+    const s2 = ev.t * ev.t - ev.x * ev.x;
+    document.getElementById('readout').innerHTML =
+      `γ = ${g.toFixed(3)} · S: (x, ct) = (${ev.x.toFixed(2)}, ${ev.t.toFixed(2)}) · S′: (${xp.toFixed(2)}, ${tp.toFixed(2)}) · s² = ${s2.toFixed(2)}`;
+  }
+})();
+</script>
+</body>
+</html>

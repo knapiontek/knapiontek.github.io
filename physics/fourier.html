@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fourier Series and FFT</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<header class="page">
+  <p class="kicker">Signals</p>
+  <h1>Fourier Series &amp; the FFT</h1>
+  <p class="lede">Any reasonable periodic signal is a sum of sines and cosines. This page finds the coefficients, moves to the discrete transform, and derives the fast algorithm that computes it.</p>
+</header>
+
+<h2>Fourier series</h2>
+<p>A periodic function with period <span class="m">T</span> and <span class="m">\omega_0 = 2\pi/T</span> can be written as a sum of harmonics:</p>
+<div class="box">
+<div class="eq">x(t) = \frac{a_0}{2}+\sum_{n=1}^\infty \Bigl[a_n\cos(n\omega_0t) + b_n\sin(n\omega_0t)\Bigr]</div>
+</div>
+<p>There is no <span class="m">b_0</span> term, because <span class="m">\sin(0)=0</span>.</p>
+
+<h3>Finding the coefficients</h3>
+<p>Start with an even function, which has only cosine terms:</p>
+<div class="eq">x_e(t) = \frac{a_0}{2} + \sum_{n=1}^\infty a_n\cos(n\omega_0t)</div>
+<p>Multiply by <span class="m">\cos(m\omega_0 t)</span> with <span class="m">m \ge 1</span> and integrate over one period:</p>
+<div class="eq">
+\begin{aligned}
+\int_T x_e(t)\cos(m\omega_0t)\,dt
+&= \sum_{n=1}^\infty a_n\int_T\cos(n\omega_0t)\cos(m\omega_0t)\,dt \\[4pt]
+&= \frac12\sum_{n=1}^\infty a_n\int_T\Bigl[\cos\bigl((m+n)\omega_0t\bigr)+\cos\bigl((m-n)\omega_0t\bigr)\Bigr]dt \\[4pt]
+&= 0 + \frac12\,a_m T
+\end{aligned}
+</div>
+<p>The constant term drops out because <span class="m">\cos(m\omega_0t)</span> integrates to zero. The bracket uses the fact that a cosine integrated over a whole number of periods is zero:</p>
+<div class="eq">
+\int_T\cos\bigl((m+n)\omega_0t\bigr)\,dt=0,
+\qquad
+\int_T\cos\bigl((m-n)\omega_0t\bigr)\,dt =
+\begin{cases}
+0 & m\ne n \\
+T & m=n
+\end{cases}
+</div>
+<p>Doing the same with sines for the odd part gives, for <span class="m">n = 0,1,2,\dots</span>:</p>
+<div class="box">
+<div class="eq">
+a_n = \frac{2}{T}\int_T x(t)\cos(n\omega_0t)\,dt,
+\qquad
+b_n = \frac{2}{T}\int_T x(t)\sin(n\omega_0t)\,dt
+</div>
+</div>
+<p>The <span class="m">\tfrac{a_0}{2}</span> in the series makes the same formula work for <span class="m">n=0</span>, where it gives the mean value.</p>
+
+<h2>Discrete Fourier Transform</h2>
+<p>For <span class="m">N</span> equally spaced samples <span class="m">x_n</span>:</p>
+<div class="eq">X_k = \sum_{n=0}^{N-1}x_n\,e^{-2\pi i\,kn/N}
+\qquad\qquad
+x_n = \frac{1}{N}\sum_{k=0}^{N-1}X_k\,e^{2\pi i\,kn/N}</div>
+<p><span class="m">N</span> is the number of samples, <span class="m">n</span> the sample index and <span class="m">k</span> the harmonic index. For a real signal <span class="m">X_{N-k} = \overline{X_k}</span>, so harmonic <span class="m">k</span> appears twice, at <span class="m">k</span> and at <span class="m">N-k</span>.</p>
+
+<h2>Fast Fourier Transform</h2>
+<p>The DFT is periodic in <span class="m">k</span>:</p>
+<div class="eq">
+X_{k+N} = \sum_{n=0}^{N-1}x_n\,e^{-2\pi i\,n}\,e^{-2\pi i\,kn/N} = X_k,
+\qquad\text{since } e^{-2\pi i\,n} = 1 \text{ for integer } n.
+</div>
+<p>Split the sum into even and odd samples, <span class="m">n = 2m</span> and <span class="m">n = 2m+1</span>:</p>
+<div class="eq">
+\begin{aligned}
+X_k &= \sum_{m=0}^{N/2-1}x_{2m}\,e^{-2\pi i\,km/(N/2)} \;+\; e^{-2\pi i\,k/N}\sum_{m=0}^{N/2-1}x_{2m+1}\,e^{-2\pi i\,km/(N/2)} \\[4pt]
+&= E_k + e^{-2\pi i\,k/N}\,O_k
+\end{aligned}
+</div>
+<p><span class="m">E_k</span> and <span class="m">O_k</span> are DFTs of length <span class="m">N/2</span>, so they repeat with period <span class="m">N/2</span>. Because <span class="m">e^{-2\pi i (k+N/2)/N} = -e^{-2\pi i k/N}</span>, each pair of half-size results gives two outputs (the "butterfly"):</p>
+<div class="box">
+<div class="eq">
+X_k = E_k + e^{-2\pi i k/N}O_k,\qquad
+X_{k+N/2} = E_k - e^{-2\pi i k/N}O_k,\qquad 0\le k&lt;N/2
+</div>
+</div>
+<p>Applying the split recursively, <span class="m">\log_2 N</span> times, brings the cost from <span class="m">\mathcal{O}(N^2)</span> down to <span class="m">\mathcal{O}(N\log N)</span>. The simulation below uses exactly this recursion.</p>
+
+<h2>Simulation</h2>
+<figure class="sim">
+  <div class="controls">
+    <span>
+      <button data-wave="square" class="on">Square</button>
+      <button data-wave="saw">Sawtooth</button>
+      <button data-wave="triangle">Triangle</button>
+    </span>
+    <label>harmonics <input type="range" id="K" min="1" max="64" step="1" value="5"><output></output></label>
+  </div>
+  <canvas id="signal"></canvas>
+  <div class="legend">
+    <span style="--sw: var(--muted)">original signal (N = 256)</span>
+    <span style="--sw: var(--c2)">sum of harmonics 0…K</span>
+  </div>
+  <canvas id="spectrum" style="margin-top:14px"></canvas>
+  <div class="legend">
+    <span class="dot" style="--sw: var(--c2)">|X<sub>k</sub>| / N, kept</span>
+    <span class="dot" style="--sw: var(--muted)">discarded</span>
+  </div>
+  <figcaption>The reconstruction overshoots by about 9% next to a jump no matter how many harmonics are kept. This is the Gibbs phenomenon. The triangle wave has no jumps, so its coefficients fall off as <span class="m">1/k^2</span> instead of <span class="m">1/k</span> and it converges much faster.</figcaption>
+</figure>
+
+<p class="note"><strong>What changed:</strong> the series had a spurious <span class="m">b_0/2</span> term, and the even-function form had lost <span class="m">a_0/2</span>. The inverse transform paired harmonic <span class="m">k</span> with <span class="m">N-1-k</span> instead of <span class="m">N-k</span>, so the reconstruction was wrong. Both plots had zero height, and none of the formulas rendered. Fixed a stray <code>&lt;/m&gt;</code> tag. The page explained the FFT but computed a slow DFT; it now runs the recursive FFT on three waveforms.</p>
+</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="lib.js"></script>
+<script>
+(function () {
+  const N = 256;
+
+  // recursive radix-2 FFT on arrays of {re, im}
+  function fft(x) {
+    const n = x.length;
+    if (n === 1) return [x[0]];
+    const even = fft(x.filter((_, i) => i % 2 === 0));
+    const odd = fft(x.filter((_, i) => i % 2 === 1));
+    const out = new Array(n);
+    for (let k = 0; k < n / 2; k++) {
+      const a = -2 * Math.PI * k / n, c = Math.cos(a), s = Math.sin(a);
+      const t = { re: c * odd[k].re - s * odd[k].im, im: c * odd[k].im + s * odd[k].re };
+      out[k] = { re: even[k].re + t.re, im: even[k].im + t.im };
+      out[k + n / 2] = { re: even[k].re - t.re, im: even[k].im - t.im };
+    }
+    return out;
+  }
+
+  const waves = {
+    square: i => (i >= N / 4 && i < 3 * N / 4 ? 5 : -5),
+    saw: i => 10 * ((i / N + 0.5) % 1) - 5,
+    triangle: i => 5 - 20 * Math.abs(i / N - 0.5),
+  };
+  let wave = 'square', K = 5, input, X;
+
+  function compute() {
+    input = Array.from({ length: N }, (_, i) => waves[wave](i));
+    X = fft(input.map(v => ({ re: v, im: 0 })));
+  }
+  function reconstruct(i) {
+    // x_n = (1/N) Σ X_k e^{2πikn/N}, keeping k = 0..K and its mirror N-k
+    let s = X[0].re;
+    for (let k = 1; k <= K && k < N / 2; k++) {
+      const a = 2 * Math.PI * k * i / N;
+      // X_k e^{ia} + X_{N-k} e^{-ia} = 2 Re(X_k e^{ia}) for real input
+      s += 2 * (X[k].re * Math.cos(a) - X[k].im * Math.sin(a));
+    }
+    return s / N;
+  }
+
+  const sig = new Lab.Figure('#signal', { aspect: 0.42, draw: (ctx, f) => {
+    const ax = new Lab.Axes(ctx, f, { x: [0, N], y: [-7.5, 7.5], xlabel: 'n' });
+    ax.frame();
+    const xs = [], ys = [], rs = [];
+    for (let i = 0; i <= N; i += 0.25) { xs.push(i); ys.push(waves[wave](Math.floor(i) % N)); rs.push(reconstruct(i)); }
+    ax.line(xs, ys, { color: Lab.color('muted'), width: 1.5 });
+    ax.line(xs, rs, { color: Lab.color('c2'), width: 2.2 });
+  }});
+  const spec = new Lab.Figure('#spectrum', { aspect: 0.3, draw: (ctx, f) => {
+    const mags = X.slice(0, N / 2).map(z => Math.hypot(z.re, z.im) / N);
+    const top = Math.max(...mags.slice(1)) * 1.15;
+    const ax = new Lab.Axes(ctx, f, { x: [-1, N / 2], y: [0, top], xlabel: 'k' });
+    ax.frame();
+    for (let k = 0; k < N / 2; k++) {
+      const keep = k <= K;
+      const col = keep ? Lab.color('c2') : Lab.color('muted');
+      ax.line([k, k], [0, mags[k]], { color: col, width: keep ? 2 : 1 });
+      if (mags[k] > top * 0.004) ax.dots([k], [Math.min(mags[k], top)], { color: col, r: keep ? 3 : 2 });
+    }
+  }});
+
+  function redraw() { sig.draw(); spec.draw(); }
+  compute();
+  Lab.slider('K', v => { K = v; redraw(); });
+  document.querySelectorAll('[data-wave]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('[data-wave]').forEach(o => o.classList.toggle('on', o === b));
+    wave = b.dataset.wave; compute(); redraw();
+  }));
+})();
+</script>
+</body>
+</html>

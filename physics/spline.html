@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Closed Splines</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<header class="page">
+  <p class="kicker">Numerical methods</p>
+  <h1>Closed Splines</h1>
+  <p class="lede">A smooth closed curve through fixed points, built from polynomial pieces. Quadratic and cubic pieces compared; the points in each figure can be dragged.</p>
+</header>
+
+<h2>Quadratic pieces</h2>
+<p>Join three quadratic polynomials into a loop, each parametrised by <span class="m">t\in[0,1]</span>:</p>
+<div class="eq">
+x_i(t) = a_it^2 + b_it + c_i,\qquad x_i'(t) = 2a_it + b_i,\qquad i = 0,1,2
+</div>
+<p>Evaluated at the ends of each piece:</p>
+<div class="eq">
+x_i(0) = c_i,\quad x_i'(0) = b_i,\quad x_i(1) = a_i + b_i + c_i,\quad x_i'(1) = 2a_i + b_i
+</div>
+<p>Each piece must start at its own point and end at the next. For a smooth joint, the slope at the end of a piece must match the slope at the start of the next one, wrapping round to close the loop:</p>
+<div class="eq">
+x_0'(1) = x_1'(0),\qquad x_1'(1) = x_2'(0),\qquad x_2'(1) = x_0'(0)
+</div>
+<p>For three fixed points <span class="m">x_0, x_1, x_2</span> that gives nine equations for nine unknowns:</p>
+<div class="eq">
+\begin{cases}
+2a_0 + b_0 - b_1 = 0 \\
+a_0 + b_0 + c_0 = x_1 \\
+c_0 = x_0 \\
+2a_1 + b_1 - b_2 = 0 \\
+a_1 + b_1 + c_1 = x_2 \\
+c_1 = x_1 \\
+2a_2 + b_2 - b_0 = 0 \\
+a_2 + b_2 + c_2 = x_0 \\
+c_2 = x_2
+\end{cases}
+\qquad\Longleftrightarrow\qquad
+\left[\begin{array}{ccc|ccc|ccc}
+2 & 1 & 0 & 0 & -1 & 0 & 0 & 0 & 0 \\
+1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
+0 & 0 & 0 & 2 & 1 & 0 & 0 & -1 & 0 \\
+0 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\ \hline
+0 & -1 & 0 & 0 & 0 & 0 & 2 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1
+\end{array}\right]
+\begin{bmatrix}
+a_0 \\ b_0 \\ c_0 \\ a_1 \\ b_1 \\ c_1 \\ a_2 \\ b_2 \\ c_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+0 \\ x_1 \\ x_0 \\ 0 \\ x_2 \\ x_1 \\ 0 \\ x_0 \\ x_2
+\end{bmatrix}
+</div>
+<p>The same system is solved separately for the <span class="m">x</span> and <span class="m">y</span> coordinates, and the pattern extends to any number of points. There is a catch. Eliminating <span class="m">a_i</span> leaves <span class="m">b_i + b_{i+1} = 2(x_{i+1}-x_i)</span>. Around a loop with an <b>even</b> number of points these equations are dependent, so the system is singular. Quadratic closed splines therefore need an odd number of points.</p>
+
+<figure class="sim">
+  <div class="controls">
+    <button data-fig="q" data-act="add">Add point</button>
+    <button data-fig="q" data-act="del">Remove point</button>
+    <span class="stat" id="q-stat"></span>
+  </div>
+  <canvas id="quad"></canvas>
+  <figcaption>Quadratic closed spline. The slope is continuous at the joints but the curvature jumps.</figcaption>
+</figure>
+
+<h2>Cubic pieces</h2>
+<div class="eq">
+x_i(t) = a_it^3 + b_it^2 + c_it + d_i,\qquad
+x_i'(t) = 3a_it^2 + 2b_it + c_i,\qquad
+x_i''(t) = 6a_it + 2b_i
+</div>
+<p>At the ends of each piece:</p>
+<div class="eq">
+\begin{aligned}
+x_i(0) &= d_i, & x_i'(0) &= c_i, & x_i''(0) &= 2b_i, \\
+x_i(1) &= a_i + b_i + c_i + d_i, & x_i'(1) &= 3a_i + 2b_i + c_i, & x_i''(1) &= 6a_i + 2b_i
+\end{aligned}
+</div>
+<p>Now both the slope and the curvature must be continuous at every joint, wrapping round the loop (indices mod 3):</p>
+<div class="eq">
+x_i'(1) = x_{i+1}'(0),\qquad x_i''(1) = x_{i+1}''(0)
+</div>
+<p>That gives four equations per piece:</p>
+<div class="eq">
+\begin{cases}
+6a_i + 2b_i - 2b_{i+1} = 0 \\
+3a_i + 2b_i + c_i - c_{i+1} = 0 \\
+a_i + b_i + c_i + d_i = x_{i+1} \\
+d_i = x_i
+\end{cases}
+</div>
+<div class="eq">
+\left[\begin{array}{cccc|cccc|cccc}
+6 & 2 & 0 & 0 & 0 & -2 & 0 & 0 & 0 & 0 & 0 & 0 \\
+3 & 2 & 1 & 0 & 0 & 0 & -1 & 0 & 0 & 0 & 0 & 0 \\
+1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
+0 & 0 & 0 & 0 & 6 & 2 & 0 & 0 & 0 & -2 & 0 & 0 \\
+0 & 0 & 0 & 0 & 3 & 2 & 1 & 0 & 0 & 0 & -1 & 0 \\
+0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\ \hline
+0 & -2 & 0 & 0 & 0 & 0 & 0 & 0 & 6 & 2 & 0 & 0 \\
+0 & 0 & -1 & 0 & 0 & 0 & 0 & 0 & 3 & 2 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1
+\end{array}\right]
+\begin{bmatrix}
+a_0 \\ b_0 \\ c_0 \\ d_0 \\ a_1 \\ b_1 \\ c_1 \\ d_1 \\ a_2 \\ b_2 \\ c_2 \\ d_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+0 \\ 0 \\ x_1 \\ x_0 \\ 0 \\ 0 \\ x_2 \\ x_1 \\ 0 \\ 0 \\ x_0 \\ x_2
+\end{bmatrix}
+</div>
+
+<figure class="sim">
+  <div class="controls">
+    <button data-fig="c" data-act="add">Add point</button>
+    <button data-fig="c" data-act="del">Remove point</button>
+    <span class="stat" id="c-stat"></span>
+  </div>
+  <canvas id="cubic"></canvas>
+  <figcaption>Cubic closed spline. Slope and curvature are both continuous, and any number of points (three or more) works.</figcaption>
+</figure>
+
+<h2>Conclusion</h2>
+<ul>
+  <li>Quadratic pieces need fewer coefficients (3 per piece instead of 4) and are cheaper to evaluate.</li>
+  <li>Cubic pieces are smoother, with continuous curvature. They work for any number of points, while closed quadratic splines fail for an even number.</li>
+  <li>The linear system can be avoided by fixing the derivatives of the first piece and marching forward. That is not possible here, because the curve has to close on itself.</li>
+  <li>For smooth closed curves the cubic spline is usually the better choice; the quadratic is a lightweight alternative when the number of points is odd.</li>
+</ul>
+
+<p class="note"><strong>What changed:</strong> "square polynomial" is now "quadratic", and "Let's evaluated" is fixed. The concluding <code>&lt;li&gt;</code> items had no list around them. The LU solver had no pivoting and quietly produced NaN for some point layouts; it now uses partial pivoting. Added an explanation of why even point counts fail for quadratics, and the points can be dragged.</p>
+</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="lib.js"></script>
+<script>
+(function () {
+  // world coordinates: x in [0,1000], y in [0,700] (y down)
+  function quadSystem(pts) {
+    const n = pts.length, size = 3 * n;
+    const A = Lab.zeros(size, size), bx = new Array(size).fill(0), by = new Array(size).fill(0);
+    for (let i = 0; i < n; i++) {
+      const j = 3 * i, nx = (i + 1) % n;
+      A[j][j] = 2; A[j][j + 1] = 1; A[j][(j + 4) % size] = -1;   // slope continuity
+      A[j + 1][j] = 1; A[j + 1][j + 1] = 1; A[j + 1][j + 2] = 1; // ends at next point
+      A[j + 2][j + 2] = 1;                                     // starts at own point
+      bx[j + 1] = pts[nx].x; by[j + 1] = pts[nx].y;
+      bx[j + 2] = pts[i].x;  by[j + 2] = pts[i].y;
+    }
+    return [A, bx, by];
+  }
+  function cubicSystem(pts) {
+    const n = pts.length, size = 4 * n;
+    const A = Lab.zeros(size, size), bx = new Array(size).fill(0), by = new Array(size).fill(0);
+    for (let i = 0; i < n; i++) {
+      const j = 4 * i, nx = (i + 1) % n;
+      A[j][j] = 6; A[j][j + 1] = 2; A[j][(j + 5) % size] = -2;                       // curvature
+      A[j + 1][j] = 3; A[j + 1][j + 1] = 2; A[j + 1][j + 2] = 1; A[j + 1][(j + 6) % size] = -1; // slope
+      A[j + 2][j] = 1; A[j + 2][j + 1] = 1; A[j + 2][j + 2] = 1; A[j + 2][j + 3] = 1;  // ends at next
+      A[j + 3][j + 3] = 1;                                                       // starts at own
+      bx[j + 2] = pts[nx].x; by[j + 2] = pts[nx].y;
+      bx[j + 3] = pts[i].x;  by[j + 3] = pts[i].y;
+    }
+    return [A, bx, by];
+  }
+
+  function makeFigure(sel, statId, kind, pts) {
+    let drag = -1, view = null;
+    const fig = new Lab.Figure(sel, { aspect: 0.62, draw: draw });
+    const cv = document.querySelector(sel);
+    const toWorld = p => ({ x: (p.x - view.ox) / view.s, y: (p.y - view.oy) / view.s });
+    const toPx = p => ({ x: view.ox + p.x * view.s, y: view.oy + p.y * view.s });
+
+    cv.addEventListener('pointerdown', e => {
+      const p = fig.pointer(e);
+      drag = pts.findIndex(q => { const s = toPx(q); return Math.hypot(s.x - p.x, s.y - p.y) < 16; });
+      if (drag >= 0) cv.setPointerCapture(e.pointerId);
+    });
+    cv.addEventListener('pointermove', e => {
+      const p = fig.pointer(e);
+      if (drag >= 0) {
+        const w = toWorld(p);
+        pts[drag] = { x: Math.max(10, Math.min(990, w.x)), y: Math.max(10, Math.min(690, w.y)) };
+        fig.draw();
+      } else {
+        const near = pts.some(q => { const s = toPx(q); return Math.hypot(s.x - p.x, s.y - p.y) < 16; });
+        cv.style.cursor = near ? 'grab' : 'default';
+      }
+    });
+    cv.addEventListener('pointerup', () => { drag = -1; });
+
+    function draw(ctx, f) {
+      const s = Math.min(f.w / 1000, f.h / 700);
+      view = { s, ox: (f.w - 1000 * s) / 2, oy: (f.h - 700 * s) / 2 };
+      // background grid
+      ctx.strokeStyle = Lab.color('grid'); ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = 0; x <= 1000; x += 100) { const X = Math.round(view.ox + x * s) + .5; ctx.moveTo(X, view.oy); ctx.lineTo(X, view.oy + 700 * s); }
+      for (let y = 0; y <= 700; y += 100) { const Y = Math.round(view.oy + y * s) + .5; ctx.moveTo(view.ox, Y); ctx.lineTo(view.ox + 1000 * s, Y); }
+      ctx.stroke();
+      // control polygon
+      ctx.strokeStyle = Lab.color('muted'); ctx.setLineDash([4, 5]);
+      ctx.beginPath();
+      pts.forEach((p, i) => { const q = toPx(p); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); });
+      ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+
+      const n = pts.length, k = kind === 'q' ? 3 : 4;
+      const [A, bx, by] = kind === 'q' ? quadSystem(pts) : cubicSystem(pts);
+      let ux, uy, msg;
+      try { ux = Lab.solve(A, bx); uy = Lab.solve(A, by); }
+      catch (err) { msg = `${n} points: the system is singular (even count), so no closed quadratic spline exists`; }
+      if (ux) {
+        ctx.strokeStyle = Lab.color('c1'); ctx.lineWidth = 2.6; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+          const cx = ux.slice(k * i, k * i + k), cy = uy.slice(k * i, k * i + k);
+          for (let t = 0; t <= 1.0001; t += 0.02) {
+            const ev = c => (k === 3 ? (c[0] * t + c[1]) * t + c[2] : ((c[0] * t + c[1]) * t + c[2]) * t + c[3]);
+            const q = toPx({ x: ev(cx), y: ev(cy) });
+            (i === 0 && t === 0) ? ctx.moveTo(q.x, q.y) : ctx.lineTo(q.x, q.y);
+          }
+        }
+        ctx.stroke();
+        const res = Math.hypot(...Lab.matvec(A, ux).map((v, i) => v - bx[i]));
+        msg = `${n} points · ${k * n}×${k * n} system · residual ${res.toExponential(1)}`;
+      }
+      document.getElementById(statId).textContent = msg;
+      pts.forEach((p, i) => {
+        const q = toPx(p);
+        ctx.fillStyle = Lab.color('paper'); ctx.strokeStyle = Lab.color('c2'); ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(q.x, q.y, 7, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = Lab.color('muted'); ctx.font = '12px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+        ctx.fillText('x' + i, q.x + 10, q.y - 9);
+      });
+    }
+    return { fig, pts };
+  }
+
+  const figs = {
+    q: makeFigure('#quad', 'q-stat', 'q', [{ x: 230, y: 170 }, { x: 540, y: 90 }, { x: 830, y: 270 }, { x: 690, y: 600 }, { x: 250, y: 520 }]),
+    c: makeFigure('#cubic', 'c-stat', 'c', [{ x: 200, y: 520 }, { x: 140, y: 120 }, { x: 420, y: 230 }, { x: 700, y: 90 }, { x: 760, y: 520 }]),
+  };
+  document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => {
+    const F = figs[b.dataset.fig], P = F.pts;
+    if (b.dataset.act === 'add') {
+      const a = P[P.length - 1], c = P[0];
+      P.push({ x: (a.x + c.x) / 2 + 40, y: (a.y + c.y) / 2 + 40 });
+    } else if (P.length > 3) P.pop();
+    F.fig.draw();
+  }));
+})();
+</script>
+</body>
+</html>

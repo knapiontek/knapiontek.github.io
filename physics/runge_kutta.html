@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Runge–Kutta Methods</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<header class="page">
+  <p class="kicker">Numerical methods</p>
+  <h1>Runge–Kutta Methods</h1>
+  <p class="lede">From the first-order Euler step to the classic fourth-order scheme, tested on a driven oscillator whose exact solution is known.</p>
+</header>
+
+<h2>First order: the Euler step (RK1)</h2>
+<div class="eq">y' = f(t, y)</div>
+<p>Truncate the Taylor series after the linear term:</p>
+<div class="eq">y_{n+1} = y_n + \Delta t\,y'(t_n) + \mathcal{O}(\Delta t^2)
+\qquad\Longrightarrow\qquad
+y_{n+1} = y_n + \Delta t\,f(t_n, y_n)</div>
+<p>Each step has error <span class="m">\mathcal{O}(\Delta t^2)</span>. Reaching a fixed time takes <span class="m">1/\Delta t</span> steps, so the total error is <span class="m">\mathcal{O}(\Delta t)</span>.</p>
+
+<h2>Fourth order (RK4)</h2>
+<p>Sample the slope four times inside the step and take a weighted average. The weights cancel the Taylor error terms up to <span class="m">\Delta t^4</span>:</p>
+<div class="box">
+<div class="eq">
+\begin{aligned}
+k_1 &= f(t_n,\; y_n) \\
+k_2 &= f(t_n + \tfrac{\Delta t}{2},\; y_n + \tfrac{\Delta t}{2}k_1) \\
+k_3 &= f(t_n + \tfrac{\Delta t}{2},\; y_n + \tfrac{\Delta t}{2}k_2) \\
+k_4 &= f(t_n + \Delta t,\; y_n + \Delta t\,k_3) \\[4pt]
+y_{n+1} &= y_n + \tfrac{\Delta t}{6}\left(k_1 + 2k_2 + 2k_3 + k_4\right)
+\end{aligned}
+</div>
+</div>
+<p>Local error <span class="m">\mathcal{O}(\Delta t^5)</span>, global error <span class="m">\mathcal{O}(\Delta t^4)</span>. Halving the step makes the result about 16 times more accurate, for four function evaluations per step.</p>
+
+<h2>Numerical example</h2>
+<div class="eq">y'' + 2y' + 3y = 2\cos\left(\omega t-\frac{\pi}{3}\right)</div>
+<p>Look for the steady-state solution</p>
+<div class="eq">y = a\cos\omega t + b\sin\omega t</div>
+<p>Expand the right-hand side as <span class="m">2\cos\frac{\pi}{3}\cos\omega t + 2\sin\frac{\pi}{3}\sin\omega t = \cos\omega t + \sqrt3\sin\omega t</span> and substitute:</p>
+<div class="eq">
+\begin{aligned}
+y' &= -a\omega\sin\omega t + b\omega\cos\omega t \\
+y'' &= -a\omega^2\cos\omega t - b\omega^2\sin\omega t \\[4pt]
+y'' + 2y' + 3y &= \bigl[(3-\omega^2)a + 2\omega b\bigr]\cos\omega t + \bigl[-2\omega a + (3-\omega^2)b\bigr]\sin\omega t
+\end{aligned}
+</div>
+<p>Match the coefficients of <span class="m">\cos</span> and <span class="m">\sin</span>:</p>
+<div class="eq">
+\begin{cases}
+(3-\omega^2)a + 2\omega b = 1 \\
+-2\omega a + (3-\omega^2)b = \sqrt{3}
+\end{cases}
+</div>
+<p>At resonance, <span class="m">\omega=\sqrt{3}</span>, the diagonal terms vanish:</p>
+<div class="eq">
+2\sqrt{3}\,b = 1,\quad -2\sqrt{3}\,a = \sqrt{3}
+\qquad\Longrightarrow\qquad
+a = -\tfrac12,\quad b = \tfrac{1}{2\sqrt{3}}
+</div>
+<div class="box">
+<div class="eq">
+\begin{cases}
+y = -\frac{1}{2}\cos\sqrt{3}t + \frac{1}{2\sqrt{3}}\sin\sqrt{3}t \\[6pt]
+y' = \frac{\sqrt{3}}{2}\sin\sqrt{3}t + \frac{1}{2}\cos\sqrt{3}t
+\end{cases}
+</div>
+</div>
+<p>Starting from <span class="m">y(0) = -\tfrac12</span> and <span class="m">y'(0) = \tfrac12</span> the homogeneous part is zero, so this is the exact solution for all <span class="m">t</span>.</p>
+
+<h3>As a first-order system</h3>
+<div class="eq">
+\mathbf u = \begin{bmatrix} y \\ x \end{bmatrix},\qquad
+\mathbf u' = \mathbf f(t,\mathbf u) = \begin{bmatrix} x \\ -2x - 3y + 2\cos(\sqrt3\,t - \frac{\pi}{3}) \end{bmatrix}
+</div>
+<p>Both methods advance the vector <span class="m">\mathbf u</span> with the formulas above.</p>
+
+<figure class="sim">
+  <div class="controls">
+    <label>step <span class="m">\Delta t</span> <input type="range" id="dt" min="0.05" max="1.2" step="0.01" value="0.4"><output></output></label>
+    <span class="stat" id="err"></span>
+  </div>
+  <canvas id="sim"></canvas>
+  <div class="legend">
+    <span style="--sw: var(--ink)">exact</span>
+    <span class="dash" style="--sw: var(--c2)">Euler (RK1)</span>
+    <span class="dot" style="--sw: var(--c1)">RK4 (one dot per step)</span>
+  </div>
+  <figcaption>Even with steps as large as <span class="m">\Delta t = 0.8</span>, RK4 stays on the exact curve while Euler drifts visibly.</figcaption>
+</figure>
+
+<figure class="sim">
+  <canvas id="conv"></canvas>
+  <div class="legend">
+    <span style="--sw: var(--c2)">Euler: error ∝ Δt</span>
+    <span style="--sw: var(--c1)">RK4: error ∝ Δt⁴</span>
+  </div>
+  <figcaption>Maximum error over <span class="m">0 \le t \le 6</span> against step size, on log–log axes. The slopes are the orders of the methods.</figcaption>
+</figure>
+
+<p class="note"><strong>What changed:</strong> the page was titled "Runge–Kutta" but only implemented Euler; RK4 is now added and compared against it. The exact curve began from an undefined value (NaN). The forcing term was evaluated at <span class="m">t_{n+1}</span> instead of <span class="m">t_n</span>. Added a convergence plot, and the numpad-only controls are now a slider.</p>
+</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="lib.js"></script>
+<script>
+(function () {
+  const W = Math.sqrt(3);
+  const exact = t => -0.5 * Math.cos(W * t) + Math.sin(W * t) / (2 * Math.sqrt(3));
+  const f = (t, u) => [u[1], -2 * u[1] - 3 * u[0] + 2 * Math.cos(W * t - Math.PI / 3)];
+  const add = (u, k, h) => [u[0] + h * k[0], u[1] + h * k[1]];
+
+  function euler(dt, tmax) {
+    let u = [-0.5, 0.5]; const ts = [0], ys = [u[0]];
+    for (let n = 1; n * dt <= tmax + 1e-9; n++) { const t = (n - 1) * dt; u = add(u, f(t, u), dt); ts.push(n * dt); ys.push(u[0]); }
+    return [ts, ys];
+  }
+  function rk4(dt, tmax) {
+    let u = [-0.5, 0.5]; const ts = [0], ys = [u[0]];
+    for (let n = 1; n * dt <= tmax + 1e-9; n++) {
+      const t = (n - 1) * dt;
+      const k1 = f(t, u);
+      const k2 = f(t + dt / 2, add(u, k1, dt / 2));
+      const k3 = f(t + dt / 2, add(u, k2, dt / 2));
+      const k4 = f(t + dt, add(u, k3, dt));
+      u = [u[0] + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]),
+           u[1] + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])];
+      ts.push(n * dt); ys.push(u[0]);
+    }
+    return [ts, ys];
+  }
+  const maxErr = ([ts, ys]) => ts.reduce((m, t, i) => Math.max(m, Math.abs(ys[i] - exact(t))), 0);
+
+  let dt = 0.4;
+  const fig = new Lab.Figure('#sim', { aspect: 0.5, draw: draw });
+  Lab.slider('dt', v => { dt = v; fig.draw(); }, v => v.toFixed(2));
+  function draw(ctx, fg) {
+    const tmax = 12;
+    const ax = new Lab.Axes(ctx, fg, { x: [0, tmax], y: [-1, 1], xlabel: 't', ylabel: 'y' });
+    ax.frame();
+    ax.fn(exact, { color: Lab.color('ink'), width: 2 });
+    const e = euler(dt, tmax), r = rk4(dt, tmax);
+    ax.line(e[0], e[1], { color: Lab.color('c2'), width: 1.8, dash: [7, 4] });
+    ax.line(r[0], r[1], { color: Lab.color('c1'), width: 1, dash: [2, 3] });
+    ax.dots(r[0], r[1], { color: Lab.color('c1'), r: 3.2 });
+    document.getElementById('err').textContent = `max error: Euler ${maxErr(e).toExponential(1)} · RK4 ${maxErr(r).toExponential(1)}`;
+  }
+
+  new Lab.Figure('#conv', { aspect: 0.45, draw: (ctx, fg) => {
+    const steps = [], le = [], lr = [];
+    for (let k = 0; k <= 24; k++) {
+      const h = Math.pow(10, -2.5 + k * 0.1);
+      steps.push(Math.log10(h));
+      le.push(Math.log10(maxErr(euler(h, 6))));
+      lr.push(Math.log10(Math.max(1e-15, maxErr(rk4(h, 6)))));
+    }
+    const ax = new Lab.Axes(ctx, fg, { x: [-2.5, 0.1], y: [-12, 1], xlabel: 'log₁₀ Δt', ylabel: 'log₁₀ error' });
+    ax.frame();
+    ax.line(steps, le, { color: Lab.color('c2'), width: 2.2 });
+    ax.dots(steps, le, { color: Lab.color('c2'), r: 2.5 });
+    ax.line(steps, lr, { color: Lab.color('c1'), width: 2.2 });
+    ax.dots(steps, lr, { color: Lab.color('c1'), r: 2.5 });
+  }});
+})();
+</script>
+</body>
+</html>

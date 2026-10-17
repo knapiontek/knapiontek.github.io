@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polar Coordinates</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<header class="page">
+  <p class="kicker">Differential geometry</p>
+  <h1>Polar Coordinates in Euclidean Space</h1>
+  <p class="lede">Basis vectors that change from point to point, and the Christoffel symbols that track the change. This is the first step towards Riemannian geometry.</p>
+</header>
+
+<h2>Derivative of a vector field</h2>
+<p>Write a vector in components on a coordinate basis (summation over repeated indices):</p>
+<div class="eq">\vec V = V^a\,\mathbf e_a</div>
+<p>When the basis vectors depend on position, the product rule gives two terms:</p>
+<div class="eq">
+\frac{\partial\vec V}{\partial x^b}
+= \frac{\partial V^a}{\partial x^b}\,\mathbf e_a
++ V^a\,\frac{\partial \mathbf e_a}{\partial x^b}
+</div>
+
+<h2>Polar basis vectors</h2>
+<div class="eq">
+\begin{cases}
+x = r\cos\phi\\
+y = r\sin\phi
+\end{cases}
+</div>
+<p>A coordinate basis vector is the derivative of the position along that coordinate. With Cartesian <span class="m">x^{b'}\in\{x,y\}</span> and polar <span class="m">x^a\in\{r,\phi\}</span>:</p>
+<div class="eq">
+\mathbf e_a = \frac{\partial x^{b'}}{\partial x^{a}}\,\mathbf e_{b'}
+\qquad\Longrightarrow\qquad
+\begin{bmatrix}\mathbf e_r \\ \mathbf e_\phi\end{bmatrix}
+=
+\begin{bmatrix}
+\dfrac{\partial x}{\partial r} & \dfrac{\partial y}{\partial r} \\[8pt]
+\dfrac{\partial x}{\partial\phi} & \dfrac{\partial y}{\partial\phi}
+\end{bmatrix}
+\begin{bmatrix}\mathbf e_x \\ \mathbf e_y\end{bmatrix}
+</div>
+<div class="eq">
+\begin{cases}
+\mathbf e_r = \cos\phi\,\mathbf e_x + \sin\phi\,\mathbf e_y \\
+\mathbf e_\phi = -r\sin\phi\,\mathbf e_x + r\cos\phi\,\mathbf e_y
+\end{cases}
+</div>
+<p>Note that <span class="m">\mathbf e_\phi</span> is not a unit vector: its length is <span class="m">r</span>. The metric is therefore</p>
+<div class="eq">
+g_{ab} = \mathbf e_a\cdot\mathbf e_b = \begin{pmatrix}1 & 0\\ 0 & r^2\end{pmatrix},
+\qquad ds^2 = dr^2 + r^2\,d\phi^2 .
+</div>
+
+<figure class="sim">
+  <canvas id="basis"></canvas>
+  <div class="legend">
+    <span style="--sw: var(--c1)">e<sub>r</sub> (unit length)</span>
+    <span style="--sw: var(--c2)">e<sub>φ</sub> (length r, scaled)</span>
+  </div>
+  <figcaption>The basis vectors at points of a polar grid. Move the pointer over the plane to see the basis at any point.</figcaption>
+</figure>
+
+<h2>How the basis changes</h2>
+<div class="eq">
+\begin{aligned}
+\frac{\partial \mathbf e_r}{\partial r} &= 0 \\[4pt]
+\frac{\partial \mathbf e_r}{\partial\phi} &= -\sin\phi\,\mathbf e_x + \cos\phi\,\mathbf e_y = \frac{1}{r}\,\mathbf e_\phi \\[4pt]
+\frac{\partial \mathbf e_\phi}{\partial r} &= -\sin\phi\,\mathbf e_x + \cos\phi\,\mathbf e_y = \frac{1}{r}\,\mathbf e_\phi \\[4pt]
+\frac{\partial \mathbf e_\phi}{\partial\phi} &= -r\cos\phi\,\mathbf e_x - r\sin\phi\,\mathbf e_y = -r\,\mathbf e_r
+\end{aligned}
+</div>
+
+<h2>Christoffel symbols</h2>
+<p>Every derivative of a basis vector is again a combination of basis vectors. The coefficients are the Christoffel symbols:</p>
+<div class="box">
+<div class="eq">
+\frac{\partial \mathbf e_a}{\partial x^b} = \Gamma^c_{ab}\,\mathbf e_c
+\qquad\Longrightarrow\qquad
+\Gamma^\phi_{r\phi} = \Gamma^\phi_{\phi r} = \frac1r,\qquad
+\Gamma^r_{\phi\phi} = -r,
+</div>
+</div>
+<p>All other symbols are zero. Substituting into the product rule gives the covariant derivative:</p>
+<div class="eq">
+\frac{\partial\vec V}{\partial x^b} = \left(\frac{\partial V^c}{\partial x^b} + V^a\,\Gamma^c_{ab}\right)\mathbf e_c
+\;\equiv\; \nabla_b V^c\,\mathbf e_c
+</div>
+<p>As a check, the divergence <span class="m">\nabla_a V^a = \partial_r V^r + \partial_\phi V^\phi + \tfrac1r V^r</span> is the familiar polar formula. The same symbols follow from the metric alone:</p>
+<div class="eq">
+\Gamma^c_{ab} = \tfrac12\, g^{cd}\left(\partial_a g_{db} + \partial_b g_{da} - \partial_d g_{ab}\right).
+</div>
+<p>That formula is what carries the idea over to curved spaces, where there is no Cartesian frame to start from.</p>
+
+<p class="note"><strong>What changed:</strong> the title said "Euclidan". The basis-change formula had its indices the wrong way round (<span class="m">\partial x_a/\partial x^b</span>). None of the formulas rendered. Added the metric, the Christoffel symbols, the covariant derivative and a basis-vector figure.</p>
+</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="lib.js"></script>
+<script>
+(function () {
+  let hover = null;
+  const fig = new Lab.Figure('#basis', { aspect: 0.62, draw: draw });
+  const canvas = document.getElementById('basis');
+  canvas.addEventListener('pointermove', e => { hover = fig.pointer(e); fig.draw(); });
+  canvas.addEventListener('pointerleave', () => { hover = null; fig.draw(); });
+
+  function arrow(ctx, x0, y0, x1, y1, col, w) {
+    const a = Math.atan2(y1 - y0, x1 - x0), h = 7;
+    ctx.strokeStyle = ctx.fillStyle = col;
+    ctx.lineWidth = w || 1.8;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - h * Math.cos(a - 0.4), y1 - h * Math.sin(a - 0.4));
+    ctx.lineTo(x1 - h * Math.cos(a + 0.4), y1 - h * Math.sin(a + 0.4));
+    ctx.fill();
+  }
+
+  function draw(ctx, f) {
+    const ax = new Lab.Axes(ctx, f, { x: [-3.4, 3.4], y: [-3.4, 3.4], equal: true, noLabels: true, pad: { l: 10, r: 10, t: 10, b: 10 } });
+    const s = ax.X(1) - ax.X(0);
+    // polar grid
+    ctx.strokeStyle = Lab.color('grid');
+    ctx.lineWidth = 1;
+    for (let r = 1; r <= 3; r++) { ctx.beginPath(); ctx.arc(ax.X(0), ax.Y(0), r * s, 0, 2 * Math.PI); ctx.stroke(); }
+    for (let k = 0; k < 12; k++) {
+      const p = k * Math.PI / 6;
+      ctx.beginPath(); ctx.moveTo(ax.X(0), ax.Y(0)); ctx.lineTo(ax.X(3.3 * Math.cos(p)), ax.Y(3.3 * Math.sin(p))); ctx.stroke();
+    }
+    const L = 0.42; // drawing scale for vectors
+    function basisAt(r, p, w) {
+      const x = r * Math.cos(p), y = r * Math.sin(p);
+      arrow(ctx, ax.X(x), ax.Y(y), ax.X(x + L * Math.cos(p)), ax.Y(y + L * Math.sin(p)), Lab.color('c1'), w);
+      arrow(ctx, ax.X(x), ax.Y(y), ax.X(x - L * r * Math.sin(p) * 0.5), ax.Y(y + L * r * Math.cos(p) * 0.5), Lab.color('c2'), w);
+    }
+    for (let r = 1; r <= 3; r++)
+      for (let k = 0; k < 8; k++) basisAt(r, k * Math.PI / 4 + (r % 2) * Math.PI / 8, 1.6);
+    if (hover) {
+      const x = ax.invX(hover.x), y = ax.invY(hover.y);
+      const r = Math.hypot(x, y), p = Math.atan2(y, x);
+      if (r > 0.15) {
+        ctx.fillStyle = Lab.color('ink');
+        ctx.beginPath(); ctx.arc(hover.x, hover.y, 3.5, 0, 2 * Math.PI); ctx.fill();
+        basisAt(r, p, 3);
+        ctx.font = '13px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+        ctx.fillText(`r = ${r.toFixed(2)}, φ = ${(p * 180 / Math.PI).toFixed(0)}°, |e_φ| = ${r.toFixed(2)}`, 14, 22);
+      }
+    }
+  }
+})();
+</script>
+</body>
+</html>

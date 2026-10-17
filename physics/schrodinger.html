@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schrödinger Equation</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<header class="page">
+  <p class="kicker">Quantum mechanics</p>
+  <h1>Schrödinger Equation</h1>
+  <p class="lede">How a non-relativistic wave function evolves in time, and what its stationary states look like.</p>
+</header>
+
+<h2>Time-dependent form</h2>
+<div class="box">
+<div class="eq">
+i\hbar\,\frac{\partial\psi(\mathbf x,t)}{\partial t} = \hat H\psi
+= \left[-\frac{\hbar^2}{2m}\nabla^2 + V(\mathbf x)\right]\psi(\mathbf x,t)
+</div>
+</div>
+<p>The same wave function <span class="m">\psi</span> appears on both sides. With <span class="m">V=0</span> this is the free-particle equation <span class="m">-\frac{\hbar^2}{2m}\nabla^2\psi = i\hbar\,\partial_t\psi</span>.</p>
+
+<h2>Stationary states</h2>
+<p>If the potential does not depend on time, try separating variables <span class="m">\psi(\mathbf x,t) = \phi(\mathbf x)\,e^{-iEt/\hbar}</span>. The time derivative gives a factor <span class="m">E</span>, leaving the eigenvalue problem</p>
+<div class="box">
+<div class="eq">
+-\frac{\hbar^2}{2m}\nabla^2\phi + V\phi = E\,\phi
+</div>
+</div>
+<p>The probability density <span class="m">|\psi|^2 = |\phi|^2</span> of such a state does not change in time.</p>
+
+<h2>Example: particle in a box</h2>
+<p>Take <span class="m">V=0</span> for <span class="m">0&lt;x&lt;L</span> and infinite walls outside, so <span class="m">\phi(0)=\phi(L)=0</span>. The equation <span class="m">\phi'' = -k^2\phi</span> with <span class="m">k^2 = 2mE/\hbar^2</span> has solutions</p>
+<div class="eq">
+\phi_n(x) = \sqrt{\frac{2}{L}}\,\sin\frac{n\pi x}{L},\qquad
+E_n = \frac{n^2\pi^2\hbar^2}{2mL^2},\qquad n = 1,2,3,\dots
+</div>
+
+<figure class="sim">
+  <div class="controls">
+    <label>level <span class="m">n</span> <input type="range" id="n" min="1" max="8" step="1" value="3"><output></output></label>
+    <label><input type="checkbox" id="mix"> superpose <span class="m">n</span> and <span class="m">n+1</span></label>
+  </div>
+  <canvas id="box"></canvas>
+  <div class="legend">
+    <span style="--sw: var(--c1)">Re ψ</span>
+    <span style="--sw: var(--c2)">|ψ|²</span>
+    <span class="dash" style="--sw: var(--muted)">energy levels Eₙ ∝ n²</span>
+  </div>
+  <figcaption>The node count is <span class="m">n-1</span>. With superposition on, the two energies beat and the density sloshes back and forth at angular frequency <span class="m">(E_{n+1}-E_n)/\hbar</span>.</figcaption>
+</figure>
+
+<p class="note"><strong>What changed:</strong> the original equation mixed <span class="m">\phi</span> and <span class="m">\psi</span> on its two sides and left out the potential. It also did not render. Added the stationary form and an animated particle in a box.</p>
+</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="lib.js"></script>
+<script>
+(function () {
+  let n = 3, mix = false, t0 = performance.now();
+  const fig = new Lab.Figure('#box', { aspect: 0.55, draw: draw });
+  Lab.slider('n', v => { n = v; fig.draw(); });
+  document.getElementById('mix').addEventListener('change', e => { mix = e.target.checked; });
+
+  function draw(ctx, f) {
+    const ax = new Lab.Axes(ctx, f, { x: [0, 1], y: [-2.1, 4.3], xlabel: 'x / L', noLabels: false });
+    ax.frame();
+    // energy levels (scaled)
+    const t = (performance.now() - t0) / 1000;
+    for (let k = 1; k <= 8; k++) {
+      const e = Math.min(4.2, 0.06 * k * k);
+      ax.line([0, 1], [e, e], { color: Lab.color('grid'), width: 1, dash: [4, 4] });
+    }
+    const w = k => 0.9 * k * k;            // E_k / ħ in arbitrary units
+    const re = x => {
+      const a = Math.SQRT2 * Math.sin(n * Math.PI * x);
+      if (!mix) return a * Math.cos(w(n) * t);
+      const b = Math.SQRT2 * Math.sin((n + 1) * Math.PI * x);
+      return (a * Math.cos(w(n) * t) + b * Math.cos(w(n + 1) * t)) / Math.SQRT2;
+    };
+    const dens = x => {
+      const a = Math.SQRT2 * Math.sin(n * Math.PI * x);
+      if (!mix) return a * a;
+      const b = Math.SQRT2 * Math.sin((n + 1) * Math.PI * x);
+      return (a * a + b * b + 2 * a * b * Math.cos((w(n + 1) - w(n)) * t)) / 2;
+    };
+    ax.fn(dens, { color: Lab.color('c2'), width: 2.5 });
+    ax.fn(re, { color: Lab.color('c1'), width: 2 });
+    // walls
+    ctx.fillStyle = Lab.color('muted');
+    ctx.globalAlpha = 0.25;
+    ctx.fillRect(ax.X(0) - 6, ax.y1, 6, ax.y0 - ax.y1);
+    ctx.fillRect(ax.X(1), ax.y1, 6, ax.y0 - ax.y1);
+    ctx.globalAlpha = 1;
+  }
+  (function loop() { fig.draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

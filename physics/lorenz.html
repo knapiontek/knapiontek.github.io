@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lorenz System</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  #attractor { background: #0d1020; border-radius: 8px; }
+</style>
+</head>
+<body>
+<main>
+<header class="page">
+  <p class="kicker">Chaos</p>
+  <h1>The Lorenz System</h1>
+  <p class="lede">Three coupled equations from a simplified model of atmospheric convection, and the first well-known strange attractor.</p>
+</header>
+
+<div class="box">
+<div class="eq">
+\begin{cases}
+\dfrac{dx}{dt} = \sigma(y-x) \\[8pt]
+\dfrac{dy}{dt} = x(\rho-z) - y \\[8pt]
+\dfrac{dz}{dt} = xy - \beta z
+\end{cases}
+\qquad \sigma = 10,\quad \rho = 28,\quad \beta = \tfrac83
+</div>
+</div>
+
+<h2>Simulation</h2>
+<figure class="sim">
+  <div class="controls">
+    <button id="play" class="on">Pause</button>
+    <button id="restart">Restart</button>
+    <label><span class="m">\rho</span> <input type="range" id="rho" min="10" max="40" step="0.5" value="28"><output></output></label>
+    <label>view <input type="range" id="angle" min="-90" max="90" step="1" value="0"><output></output></label>
+    <span class="stat" id="stat"></span>
+  </div>
+  <canvas id="attractor"></canvas>
+  <div class="legend">
+    <span style="--sw: #7ea2ff">trajectory A</span>
+    <span style="--sw: #ff8a5c">trajectory B, starting 10⁻⁶ away</span>
+    <span class="dot" style="--sw: #f0c84a">fixed points C±</span>
+  </div>
+  <figcaption>Two trajectories start almost on top of each other and stay together for a while, then separate completely. That is sensitive dependence on initial conditions. Below <span class="m">\rho \approx 24.74</span> both settle onto a fixed point instead of the attractor. Integrated with RK4, <span class="m">\Delta t = 0.005</span>.</figcaption>
+</figure>
+
+<h2>Fixed points by Newton's method</h2>
+<p>Setting all three derivatives to zero gives the origin and, for <span class="m">\rho &gt; 1</span>, a symmetric pair:</p>
+<div class="eq">
+C_\pm = \left(\pm\sqrt{\beta(\rho-1)},\ \pm\sqrt{\beta(\rho-1)},\ \rho-1\right)
+\;=\;(\pm 8.485,\ \pm 8.485,\ 27)
+</div>
+<p>The same points can be found numerically. Write the right-hand side as <span class="m">\mathbf F(\mathbf u)</span> and iterate <span class="m">J\,\Delta\mathbf u = -\mathbf F</span>, where <span class="m">J</span> is the Jacobian matrix:</p>
+<div class="eq">
+\begin{bmatrix}
+-\sigma & \sigma & 0 \\
+\rho - z_n & -1 & -x_n \\
+y_n & x_n & -\beta
+\end{bmatrix}
+\begin{bmatrix}
+\Delta x_n \\ \Delta y_n \\ \Delta z_n
+\end{bmatrix}
+= -
+\begin{bmatrix}
+\sigma(y_n-x_n) \\
+x_n(\rho-z_n) - y_n \\
+x_ny_n - \beta z_n
+\end{bmatrix},
+\qquad \mathbf u_{n+1} = \mathbf u_n + \Delta\mathbf u_n
+</div>
+<p>Starting from <span class="m">(10, 10, -5)</span>:</p>
+<div id="newton" class="eq"></div>
+
+<p class="note"><strong>What changed:</strong> the code used <span class="m">\rho(y-x)</span> instead of <span class="m">\sigma(y-x)</span> in both the Newton solver and the simulation, so it was simulating a different system. The plot container had no height and never appeared. Explicit Euler is now RK4, the Newton result is printed on the page instead of the console, and there is a second trajectory to show the chaos.</p>
+</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="lib.js"></script>
+<script>
+(function () {
+  const SIGMA = 10, BETA = 8 / 3;
+  let rho = 28;
+  const F = (u, r) => [SIGMA * (u[1] - u[0]), u[0] * (r - u[2]) - u[1], u[0] * u[1] - BETA * u[2]];
+
+  /* ---- Newton ---- */
+  (function newton() {
+    let u = [10, 10, -5];
+    const rows = [];
+    for (let i = 0; i < 30; i++) {
+      const Fv = F(u, 28);
+      const norm = Math.hypot(...Fv);
+      rows.push(`${i} & ${u[0].toFixed(6)} & ${u[1].toFixed(6)} & ${u[2].toFixed(6)} & ${norm.toExponential(2).replace(/e([+-])(\d+)/, '\\times10^{$1$2}').replace('+', '')}`);
+      if (norm < 1e-10) break;
+      const [x, y, z] = u;
+      const J = [[-SIGMA, SIGMA, 0], [28 - z, -1, -x], [y, x, -BETA]];
+      const du = Lab.solve(J, Fv.map(v => -v));
+      u = u.map((v, k) => v + du[k]);
+    }
+    const el = document.getElementById('newton');
+    el.textContent = '\\begin{array}{c|ccc|c} n & x_n & y_n & z_n & \\lVert\\mathbf F\\rVert \\\\ \\hline ' + rows.join(' \\\\ ') + '\\end{array}';
+  })();
+
+  /* ---- attractor ---- */
+  function rk4(u, h) {
+    const k1 = F(u, rho);
+    const k2 = F(u.map((v, i) => v + h / 2 * k1[i]), rho);
+    const k3 = F(u.map((v, i) => v + h / 2 * k2[i]), rho);
+    const k4 = F(u.map((v, i) => v + h * k3[i]), rho);
+    return u.map((v, i) => v + h / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));
+  }
+  let A, B, trailA, trailB, t, running = true, angle = 0;
+  function restart() {
+    // run from (1,1,1) past the initial transient so the trajectory starts on the attractor
+    A = [1, 1, 1];
+    for (let k = 0; k < 4000; k++) A = rk4(A, 0.005);
+    B = [A[0] + 1e-6, A[1], A[2]];
+    trailA = [A]; trailB = [B]; t = 0;
+    advance(1000); // start with a few loops already drawn
+  }
+  function advance(steps) {
+    for (let k = 0; k < steps; k++) {
+      A = rk4(A, 0.005); B = rk4(B, 0.005); t += 0.005;
+      trailA.push(A); trailB.push(B);
+    }
+    if (trailA.length > 6000) { trailA.splice(0, trailA.length - 6000); trailB.splice(0, trailB.length - 6000); }
+  }
+  restart();
+
+  const fig = new Lab.Figure('#attractor', { aspect: 0.72, maxHeight: 640, draw: draw });
+  function project(u, f) {
+    const s = Math.min(f.w / 50, f.h / 56);
+    const c = Math.cos(angle), sn = Math.sin(angle);
+    const xr = u[0] * c - u[1] * sn;
+    return [f.w / 2 + xr * s, f.h - 16 - u[2] * s];
+  }
+  function drawTrail(ctx, f, tr, col) {
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.1;
+    const N = tr.length;
+    const chunk = 200;
+    for (let s = 0; s < N - 1; s += chunk) {
+      ctx.globalAlpha = 0.25 + 0.75 * (s / N);
+      ctx.beginPath();
+      let p = project(tr[s], f); ctx.moveTo(p[0], p[1]);
+      for (let k = s + 1; k <= Math.min(N - 1, s + chunk); k++) { p = project(tr[k], f); ctx.lineTo(p[0], p[1]); }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    const p = project(tr[N - 1], f);
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(p[0], p[1], 4, 0, 2 * Math.PI); ctx.fill();
+  }
+  function draw(ctx, f) {
+    ctx.fillStyle = '#0d1020';
+    ctx.fillRect(0, 0, f.w, f.h);
+    if (rho > 1) {
+      const q = Math.sqrt(BETA * (rho - 1));
+      ctx.fillStyle = '#f0c84a';
+      for (const sgn of [1, -1]) { const p = project([sgn * q, sgn * q, rho - 1], f); ctx.beginPath(); ctx.arc(p[0], p[1], 3.5, 0, 2 * Math.PI); ctx.fill(); }
+    }
+    drawTrail(ctx, f, trailA, '#7ea2ff');
+    drawTrail(ctx, f, trailB, '#ff8a5c');
+    const d = Math.hypot(A[0] - B[0], A[1] - B[1], A[2] - B[2]);
+    document.getElementById('stat').textContent = `t = ${t.toFixed(1)} · separation ${d < 0.01 ? d.toExponential(1) : d.toFixed(2)}`;
+  }
+
+  Lab.slider('rho', v => { rho = v; restart(); }, v => v.toFixed(1));
+  Lab.slider('angle', v => { angle = v * Math.PI / 180; fig.draw(); }, v => v + '°');
+  const play = document.getElementById('play');
+  play.addEventListener('click', () => { running = !running; play.textContent = running ? 'Pause' : 'Play'; play.classList.toggle('on', running); });
+  document.getElementById('restart').addEventListener('click', restart);
+
+  (function loop() {
+    if (running) advance(8);
+    fig.draw();
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>

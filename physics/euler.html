@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Euler's Formula and ODEs</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<header class="page">
+  <p class="kicker">Complex analysis · ODEs</p>
+  <h1>Euler's Formula &amp; Linear ODEs</h1>
+  <p class="lede">Complex exponentials turn oscillations into algebra. Here they solve the damped oscillator, and the result is then checked against Euler's numerical method.</p>
+</header>
+
+<h2>Euler's formula</h2>
+<div class="box">
+<div class="eq">e^{i\omega} = \cos\omega + i\sin\omega</div>
+</div>
+<p>At <span class="m">\omega=\pi</span> this gives Euler's identity:</p>
+<div class="eq">e^{i\pi} + 1 = 0</div>
+
+<h3>A damped phasor</h3>
+<p>Multiplying by a decaying exponential gives a point that spirals in towards the origin:</p>
+<div class="eq">e^{(-\gamma+i\omega)t} = e^{-\gamma t}\left(\cos\omega t + i\sin\omega t\right)</div>
+
+<figure class="sim">
+  <div class="controls">
+    <label>damping <span class="m">\gamma</span> <input type="range" id="gamma" min="0" max="0.5" step="0.01" value="0.12"><output></output></label>
+  </div>
+  <canvas id="spiral"></canvas>
+  <div class="legend">
+    <span style="--sw: var(--c1)">e<sup>(−γ+iω)t</sup> in the complex plane</span>
+    <span style="--sw: var(--c2)">real part e<sup>−γt</sup>cos ωt</span>
+  </div>
+  <figcaption>Left: the phasor traced in the complex plane. Right: its projection on the real axis, a decaying cosine.</figcaption>
+</figure>
+
+<h3>Solving <span class="m">i^i</span></h3>
+<div class="eq">
+\begin{aligned}
+i &= \cos\tfrac{\pi}{2} + i\sin\tfrac{\pi}{2} = e^{i\pi/2} \\[4pt]
+i^i &= \left(e^{i\pi/2}\right)^i = e^{i\cdot i\,\pi/2} = e^{-\pi/2} \approx 0.2079
+\end{aligned}
+</div>
+<p>This is the principal value. Because <span class="m">i = e^{i(\pi/2 + 2\pi k)}</span> for any integer <span class="m">k</span>, <span class="m">i^i</span> takes all the real values <span class="m">e^{-\pi/2 - 2\pi k}</span>.</p>
+
+<h2>Homogeneous linear ODEs</h2>
+<div class="eq">ay'' + by' + cy = 0</div>
+<p>Try an exponential, <span class="m">y = e^{rt}</span>:</p>
+<div class="eq">
+\left(ar^2 + br + c\right)e^{rt} = 0
+\qquad\Longrightarrow\qquad
+ar^2 + br + c = 0
+</div>
+<p>If the two roots are real and distinct, the general solution is</p>
+<div class="eq">y = c_1e^{r_1t} + c_2e^{r_2t}</div>
+<p>and the constants come from the initial values of <span class="m">y</span> and <span class="m">y'</span>:</p>
+<div class="eq">
+\begin{cases}
+y(0) = c_1 + c_2 \\
+y'(0) = c_1r_1 + c_2r_2
+\end{cases}
+</div>
+
+<h3>Complex roots</h3>
+<p>If <span class="m">b^2 &lt; 4ac</span>, the roots are <span class="m">r = -\gamma \pm i\omega</span>, with <span class="m">\gamma = b/2a</span>. Using Euler's formula:</p>
+<div class="eq">
+\begin{aligned}
+y &= c_1e^{(-\gamma+i\omega)t} + c_2e^{(-\gamma-i\omega)t} \\[4pt]
+  &= e^{-\gamma t}\Bigl[c_1(\cos\omega t + i\sin\omega t) + c_2(\cos\omega t - i\sin\omega t)\Bigr] \\[4pt]
+  &= e^{-\gamma t}\Bigl[(c_1+c_2)\cos\omega t + i(c_1-c_2)\sin\omega t\Bigr]
+\end{aligned}
+</div>
+<p>For a real solution, <span class="m">c_2 = \overline{c_1}</span>, so <span class="m">A = c_1+c_2</span> and <span class="m">B = i(c_1-c_2)</span> are real:</p>
+<div class="box">
+<div class="eq">y = e^{-\gamma t}\left(A\cos\omega t + B\sin\omega t\right) = R\,e^{-\gamma t}\cos(\omega t - \varphi)</div>
+</div>
+<p>where <span class="m">A = R\cos\varphi</span> and <span class="m">B = R\sin\varphi</span>.</p>
+
+<h2>Numerical example</h2>
+<div class="eq">y'' + 2y' + 65y = 0,\qquad r^2 + 2r + 65 = 0,\qquad r = -1 \pm 8i</div>
+<div class="eq">
+\begin{cases}
+y = e^{-t}\left(A\cos 8t + B\sin 8t\right) \\
+y' = e^{-t}\left[(8B - A)\cos 8t - (8A + B)\sin 8t\right]
+\end{cases}
+</div>
+<p>With <span class="m">y(0)=0.7</span> and <span class="m">y'(0)=-0.7</span>: <span class="m">A = 0.7</span> and <span class="m">8B - A = -0.7</span>, so <span class="m">B = 0</span>.</p>
+<div class="box"><div class="eq">y = 0.7\,e^{-t}\cos 8t</div></div>
+
+<h3>Euler's numerical method</h3>
+<p>Reduce to a first-order system with <span class="m">x = y'</span>:</p>
+<div class="eq">
+\begin{cases}
+y' = x \\
+x' = -2x - 65y
+\end{cases}
+</div>
+<p>Replacing derivatives by forward differences gives the <b>explicit Euler</b> method, with global error <span class="m">\mathcal{O}(\Delta t)</span>:</p>
+<div class="eq">
+\begin{cases}
+y_{n+1} = y_n + x_n\,\Delta t \\
+x_{n+1} = x_n + (-2x_n - 65\,y_n)\,\Delta t
+\end{cases}
+</div>
+<p>The original page used <span class="m">y_{n+1}</span> in the second line. That is the <b>semi-implicit (symplectic) Euler</b> method: still first order, but much better at keeping the energy of an oscillation.</p>
+<div class="eq">x_{n+1} = x_n + (-2x_n - 65\,y_{n+1})\,\Delta t</div>
+
+<figure class="sim">
+  <div class="controls">
+    <label>step <span class="m">\Delta t</span> <input type="range" id="dt" min="0.005" max="0.06" step="0.001" value="0.03"><output></output></label>
+    <span class="stat" id="err"></span>
+  </div>
+  <canvas id="ode"></canvas>
+  <div class="legend">
+    <span style="--sw: var(--ink)">exact 0.7e<sup>−t</sup>cos 8t</span>
+    <span class="dash" style="--sw: var(--c2)">explicit Euler</span>
+    <span class="dash" style="--sw: var(--c1)">semi-implicit Euler</span>
+  </div>
+  <figcaption>Explicit Euler adds energy at every step: its oscillation decays too slowly, and above <span class="m">\Delta t \approx 0.031</span> it grows without bound. The semi-implicit version stays close to the exact curve.</figcaption>
+</figure>
+
+<p class="note"><strong>What changed:</strong> Euler's identity had been written as <span class="m">e^{i\pi}-1=0</span>. The damped exponential was missing its <span class="m">t</span>. The complex-root algebra was wrong (<span class="m">y_1 \pm y_2</span> was not <span class="m">2(c_1\pm c_2)\dots</span>). The method shown was labelled explicit Euler but was really semi-implicit. A stray diagonal line ran across the spiral plot, and the step size could only be changed with numpad keys; there are now sliders.</p>
+</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="lib.js"></script>
+<script>
+(function () {
+  /* ---- spiral ---- */
+  let gamma = 0.12;
+  const W = 1.0;
+  const sp = new Lab.Figure('#spiral', { aspect: 0.48, draw: drawSpiral });
+  Lab.slider('gamma', v => { gamma = v; sp.draw(); }, v => v.toFixed(2));
+  const T = 40;
+  function drawSpiral(ctx, f) {
+    const half = { w: f.w * 0.42 };
+    // left: complex plane in a square on the left
+    const fl = { w: Math.min(f.h, half.w), h: f.h };
+    const a1 = new Lab.Axes(ctx, fl, { x: [-1.15, 1.15], y: [-1.15, 1.15], equal: true, noLabels: true, pad: { l: 8, r: 8, t: 8, b: 8 } });
+    a1.frame();
+    const ts = [], xs = [], ys = [];
+    for (let t = 0; t <= T; t += 0.02) { const d = Math.exp(-gamma * t); xs.push(d * Math.cos(W * t)); ys.push(d * Math.sin(W * t)); ts.push(t); }
+    a1.line(xs, ys, { color: Lab.color('c1'), width: 1.6 });
+    ctx.font = 'italic 13px ' + getComputedStyle(document.body).fontFamily;
+    ctx.fillStyle = Lab.color('muted');
+    ctx.fillText('Re', a1.x1 - 22, a1.Y(0) - 6);
+    ctx.fillText('Im', a1.X(0) + 6, a1.y1 + 14);
+    // right: real part vs t
+    ctx.save();
+    ctx.translate(fl.w + 16, 0);
+    const fr = { w: f.w - fl.w - 16, h: f.h };
+    const a2 = new Lab.Axes(ctx, fr, { x: [0, T], y: [-1.15, 1.15], xlabel: 't', pad: { l: 38, r: 8, t: 8, b: 26 } });
+    a2.frame();
+    a2.fn(t => Math.exp(-gamma * t) * Math.cos(W * t), { color: Lab.color('c2'), width: 2 });
+    a2.fn(t => Math.exp(-gamma * t), { color: Lab.color('muted'), width: 1, dash: [4, 4] });
+    a2.fn(t => -Math.exp(-gamma * t), { color: Lab.color('muted'), width: 1, dash: [4, 4] });
+    ctx.restore();
+  }
+
+  /* ---- ODE comparison ---- */
+  let dt = 0.03;
+  const ode = new Lab.Figure('#ode', { aspect: 0.5, draw: drawOde });
+  Lab.slider('dt', v => { dt = v; ode.draw(); }, v => v.toFixed(3));
+  const exact = t => 0.7 * Math.exp(-t) * Math.cos(8 * t);
+  function drawOde(ctx, f) {
+    const tmax = 5;
+    const ax = new Lab.Axes(ctx, f, { x: [0, tmax], y: [-0.8, 0.8], xlabel: 't', ylabel: 'y' });
+    ax.frame();
+    ax.fn(exact, { color: Lab.color('ink'), width: 2 });
+    // explicit
+    let y = 0.7, x = -0.7;
+    const te = [0], ye = [y];
+    for (let t = dt; t <= tmax + 1e-9; t += dt) { const yn = y + x * dt; x = x + (-2 * x - 65 * y) * dt; y = yn; te.push(t); ye.push(y); }
+    ax.line(te, ye, { color: Lab.color('c2'), width: 1.8, dash: [7, 4] });
+    const errE = Math.abs(ye[ye.length - 1] - exact(te[te.length - 1]));
+    // semi-implicit
+    y = 0.7; x = -0.7;
+    const ts = [0], ys = [y];
+    let maxS = 0;
+    for (let t = dt; t <= tmax + 1e-9; t += dt) { y = y + x * dt; x = x + (-2 * x - 65 * y) * dt; ts.push(t); ys.push(y); maxS = Math.max(maxS, Math.abs(y - exact(t))); }
+    ax.line(ts, ys, { color: Lab.color('c1'), width: 1.8, dash: [3, 3] });
+    let maxE = 0;
+    for (let i = 0; i < te.length; i++) maxE = Math.max(maxE, Math.abs(ye[i] - exact(te[i])));
+    document.getElementById('err').textContent = `max error: explicit ${maxE.toFixed(3)} · semi-implicit ${maxS.toFixed(3)}`;
+  }
+})();
+</script>
+</body>
+</html>
