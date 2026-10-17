@@ -2,6 +2,7 @@
 
 Everything the pages calculate follows from the data and these rules - nothing else is guessed.
 Update this file with every change to data.js, engine.js, cost.html or view.html.
+The design notes (data.js `notes`) hold the project, materials and products; the rules are here.
 
 Files: `data.js` (shared data + rules, edited in design.html) → `engine.js` (builds the parts) → `design.html`, `cost.html`, `view.html`.
 
@@ -31,7 +32,8 @@ Files: `data.js` (shared data + rules, edited in design.html) → `engine.js` (b
 |---|---|
 | Components stack bottom-up in each column, in list order; columns give the widths | your design |
 | Same carcass name (K1, K2 …) = one carcass over all its columns | you set it |
-| Front = module − 4 gaps (left, right, top, bottom) | you set it |
+| Front = module − 4 gaps (left, right, top, bottom); joints between fronts 2 + 2, bottom 0 on the plinth, 4 on the worktop (door clears it) | you set it |
+| Fronts on one line share the same edge - set by the gaps of each front, nothing is calculated | you set it |
 | Floor carcass = stands on a plinth (legs, fridge grille); base = floor + worktop on top (rails) | accepted |
 | Frame gets a back strip when it is not part of a carcass; panel is laid flat in the front plane | you set it (types) |
 | Hinge side: R when a cabinet in the column has handle L | you kept it |
@@ -64,3 +66,4 @@ Files: `data.js` (shared data + rules, edited in design.html) → `engine.js` (b
 - Waste 15% on sheets, edging +10%, plinth +10%, reserve 5%; ~18 confirmats per carcass; plinth clips 1 per 2 legs.
 - Sheets 2800×2070 (chipboard, HDF), plasterboard 3.12 m², worktop board 4100.
 - Prices: estimates until quoted - blue parts (fronts, frames, panels) 500 PLN/m² for now; every price marked "est." still needs a real quote. Next step.
+- Appliances (October 2026): oven Bosch HBA534BB3 1339, fridge Bosch KIS86AFE0 3209, microwave Bosch BFL623MB3 999.
