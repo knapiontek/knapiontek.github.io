@@ -8,8 +8,9 @@
 
    Component fields (data.components):
      g group, c first column, s column span, h height
-     tags   exactly one type - filler, board, plinth, worktop, splash, panel, frame, cabinet, drawer, oven, micro
-            + feature tags   - hob, sink, bins, dummy, dishwasher, fridge, freezer, inner, end (worktop end / waterfall)
+     tags   exactly one type - filler, board, plinth, worktop, splash, panel, frame, cabinet, drawer, dummy, oven, micro
+            + feature tags   - hob, sink, bins, dishwasher, fridge, freezer, inner, end (worktop end / waterfall), coffee
+     group roles (worktop, tall, island) come from the notes: a note named "group N" with the role as its description
      k      carcass name (K1, K2 ...): same name = ONE carcass over all its columns and heights; "" = no carcass
      gaps   fronts only: [left, right, top, bottom]; front = module minus these four gaps
      hd     handle position T | B | L | R | ""
@@ -18,11 +19,12 @@
   'use strict';
   // filler = void / spacer, nothing built; board = plasterboard box; splash = splash board on the wall (worktop material);
   // panel = MDF board laid flat in the front plane, both faces lacquered; frame = MDF strip on edge, edge + both faces lacquered
-  const TYPE_TAGS = ['filler', 'board', 'plinth', 'worktop', 'splash', 'panel', 'frame', 'cabinet', 'drawer', 'oven', 'micro'];
-  // end = worktop end (waterfall)
-  const FEATURE_TAGS = ['hob', 'sink', 'bins', 'dummy', 'dishwasher', 'fridge', 'freezer', 'inner', 'end'];
-  const FRONT_TYPES = ['cabinet', 'drawer'];
-  const BOX_TYPES = ['cabinet', 'drawer', 'oven', 'micro'];   // pieces that sit in a carcass
+  // dummy = fixed front in a carcass: no hinges, no drawer box, no HDF behind
+  const TYPE_TAGS = ['filler', 'board', 'plinth', 'worktop', 'splash', 'panel', 'frame', 'cabinet', 'drawer', 'dummy', 'oven', 'micro'];
+  // end = worktop end (waterfall); coffee = pull-out shelf at the bottom for a coffee machine, no other shelves
+  const FEATURE_TAGS = ['hob', 'sink', 'bins', 'dishwasher', 'fridge', 'freezer', 'inner', 'end', 'coffee'];
+  const FRONT_TYPES = ['cabinet', 'drawer', 'dummy'];
+  const BOX_TYPES = ['cabinet', 'drawer', 'dummy', 'oven', 'micro'];   // pieces that sit in a carcass
   const num = (v, d) => { const x = parseFloat(v); return Number.isFinite(x) ? x : d; };
 
   function parseTags(str) {
@@ -76,10 +78,13 @@
     const P = project || {}, R = P.rules || {};
     const T = R.board, FT = R.frontThickness, CD = R.carcassDepth;
     const CN0 = R.wallGap, CN1 = CN0 + CD, FN = CN1 + FT, PF = FN - R.plinthSetback;   // carcass back, carcass front, front face, plinth face
-    const BP = R.backPanel || { groups: [] }, noHdf = new Set(BP.groups.map(String));   // groups with a back panel instead of HDF backs
+    // group roles from the project notes: note "group N" -> role (worktop, tall, island); the rules are written per role
+    const ROLE = {};
+    for (const [n, d] of P.notes || []) { const m = /^group\s+(\d+)$/i.exec(String(n ?? '').trim()); if (m) ROLE[m[1]] = String(d ?? '').trim().toLowerCase(); }
+    const islands = R.island && R.island.backPanel ? Object.keys(ROLE).filter(g => ROLE[g] === 'island') : [];   // island: chipboard back panel
     const warnings = [], groups = {}, carcasses = [], fronts = [], boards = [], frames = [], plinths = [], panels = [], plaster = [];
     const counts = { carcasses: 0, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
-      shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0, plasterUD: 0, plasterCD: 0 };
+      shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0, plasterUD: 0, plasterCD: 0, plasterEdge: 0 };
 
     // groups: stack the components
     for (const [g, ws] of Object.entries(P.columns || {})) {
@@ -113,6 +118,7 @@
       K.base = K.floor && GI.some(i => i.t === 'worktop' && over(i) && i.v0 === K.v1);
       K.sink = K.items.some(i => has(i, 'sink'));
       K.fridge = K.items.some(i => has(i, 'fridge', 'freezer'));
+      K.coffee = K.items.some(i => has(i, 'coffee'));
       K.hob = K.items.some(i => has(i, 'hob'));
       K.legs = K.floor ? R.legsPerCarcass : 0;
       K.grille = K.fridge && K.floor;
@@ -138,20 +144,31 @@
         } else if (K.hob) {   // under the hob: front rail on edge (hobFront high), rear rail on edge, separation panel below the front rail
           P_('Top rail ' + RL.hobFront + ' (front, on edge)', IW, RL.hobFront, 'p18', 'carcasses', [ui0, ui1, v1 - RL.hobFront, v1, CN1 - T, CN1], [0, .6, 1]);
           P_(TR, IW, RL.depth, 'p18', 'carcasses', [ui0, ui1, v1 - RL.depth, v1, CN0, CN0 + T], [0, 1, 0]);
-          P_('Hob separation panel', IW, CD - 2 * T, 'p16', 'carcasses', [ui0, ui1, v1 - RL.hobFront, v1 - RL.hobFront + RL.hobPanel, CN0 + T, CN1 - T], [0, .4, 0]);
+          P_('Hob separation panel', IW, CD - 2 * T - RL.hobPanelGap, 'p16', 'carcasses', [ui0, ui1, v1 - RL.hobFront, v1 - RL.hobFront + RL.hobPanel, CN0 + T + RL.hobPanelGap, CN1 - T], [0, .4, 0]);   // air gap at the back
         } else {
           P_(TR, IW, RL.depth, 'p18', 'carcasses', [ui0, ui1, v1 - T, v1, CN1 - RL.depth, CN1], [0, 1, .6]);
           P_(TR, IW, RL.depth, 'p18', 'carcasses', [ui0, ui1, v1 - T, v1, CN0, CN0 + RL.depth], [0, 1, 0]);
         }
       } else P_('Top panel', IW, CD, 'p18', 'carcasses', [ui0, ui1, v1 - T, v1, CN0, CN1], [0, 1, 0]);
-      if (!noHdf.has(String(g))) P_('Back', W - 2 * BK.inset, H - 2 * BK.inset, 'hdf', 'backs', [u0 + BK.inset, u1 - BK.inset, v0 + BK.inset, v1 - BK.inset, CN0 - BK.thickness, CN0], [0, 0, -.3]);
+      // HDF back only behind cabinet doors: not behind drawers, fixed (dummy) fronts or appliances (oven, micro, fridge, freezer); one piece per run of doors
+      const spans = K.items.filter(i => i.t === 'cabinet' && !has(i, 'fridge', 'freezer')).map(i => [Math.max(v0, i.v0), Math.min(v1, i.v1)]).sort((a, b) => a[0] - b[0])
+        .reduce((L, s) => { const p = L[L.length - 1]; if (p && s[0] <= p[1]) p[1] = Math.max(p[1], s[1]); else L.push([...s]); return L; }, []);
+      for (const [s0, s1] of spans) P_('Back', W - 2 * BK.inset, s1 - s0 - 2 * BK.inset, 'hdf', 'backs', [u0 + BK.inset, u1 - BK.inset, s0 + BK.inset, s1 - BK.inset, CN0 - BK.thickness, CN0], [0, 0, -.3]);
       // fixed shelves at the joint of 2 boxes in one carcass: full carcass depth
       if (!K.base && !K.fridge) for (let i = 1; i < K.items.length; i++) {
         const b = K.items[i].v0;
         P_('Fixed shelf', IW, CD, 'p18', 'shelves', [ui0, ui1, b - half, b + half, CN0, CN1], [0, 0, 1]); counts.shelvesFixed++;
       }
       // adjustable shelves: per door by its height (rules.shelf.perDoor); none in the sink unit or the fridge
-      if (!K.sink && !K.fridge) for (const it of K.items) {
+      // tag coffee (rules.pullOutShelf): one pull-out shelf at the bottom on full-extension runners, no other shelves
+      if (K.coffee) { const PS = R.pullOutShelf, y = v0 + T + PS.lift;
+        P_('Pull-out shelf', IW - 2 * PS.clearance, PS.depth, 'p18', 'shelves', [ui0 + PS.clearance, ui1 - PS.clearance, y, y + T, CN1 - PS.depth, CN1], [0, 0, 1]); counts.pullOutShelves++;
+        // shelves above the machine: the first one PS.space above the pull-out shelf, the rest evenly up to the top
+        const lo = y + T + PS.space, hi = v1 - T;
+        for (let j = 0; j < (PS.shelvesAbove || 0); j++) { const yy = Math.round(lo + (hi - lo) * j / PS.shelvesAbove);
+          P_('Adjustable shelf', IW - 2 * SH.clearance, CD - SH.setback, 'p18', 'shelves', [ui0 + SH.clearance, ui1 - SH.clearance, yy - half, yy + half, CN0, CN1 - SH.setback], [0, 0, 1]);
+          counts.shelvesAdjustable++; counts.shelfPins += SH.pins; } }
+      if (!K.sink && !K.fridge && !K.coffee) for (const it of K.items) {
         if (it.t !== 'cabinet') continue;
         const lo = it.v0 === v0 ? v0 + T : it.v0 + half, hi = it.v1 === v1 ? v1 - T : it.v1 - half;
         const n = SH.perDoor.find(([h]) => (it.v1 - it.v0) <= h)[1];
@@ -171,7 +188,7 @@
       if (it.t === 'frame') {
         frames.push({ g: G.g, it, box: [u0, u1, v0, v1, FN - FR.depth, FN],
           name: (h > w ? 'Frame ' : 'Horizontal frame ') + FT + ' on edge (' + FR.depth + ' deep)', a: FR.depth, b: Math.max(w, h) });
-        if (!it.k) B({ name: 'Back strip ' + FR.depth, a: FR.depth, b: Math.max(w, h), mat: 'p18', layer: 'carcasses', g: G.g, box: [u0, u1, v0, v1, CN0, CN0 + FR.depth], strip: true });
+        if (!it.k) B({ name: 'Back strip ' + FR.depth, a: FR.depth, b: Math.max(w, h), mat: 'p18', layer: 'carcasses', g: G.g, c: it.c, box: [u0, u1, v0, v1, CN0, CN0 + FR.depth], strip: true });
       } else if (it.t === 'panel') {
         panels.push({ g: G.g, it, name: 'Panel ' + FT, a: w, b: h, box: [u0, u1, v0, v1, FN - FT, FN] });
       } else if (it.t === 'plinth') {
@@ -182,24 +199,26 @@
         plaster.push({ g: G.g, it, name: 'Plasterboard face', a: S, b: L }, { g: G.g, it, name: 'Plasterboard return', a: D, b: L });
         counts.plasterUD += 2 * L;
         counts.plasterCD += L + (Math.ceil(L / PB.studSpacing) + 1) * (D + S);
+        counts.plasterEdge += L;   // one outer edge (corner bead) and one joint to the furniture (seal) per box
       }
     }
 
-    // worktop of a group (rules.worktop): the depth is the product size; front edge = front face + overhang;
+    // worktop of a group (rules.worktop.depth by the group role): the depth is the product size; front edge = front face + overhang;
     // behind the carcass back = depth - carcassDepth - frontThickness - overhang, e.g. 600 - 550 - 18 - 18 = 14, 900 - 550 - 18 - 18 = 314
     const WT = R.worktop || {}, worktops = {};
     for (const G of Object.values(groups)) if (G.items.some(i => i.t === 'worktop')) {
-      const depth = (WT.depth || {})[G.g];
-      if (!Number.isFinite(depth)) { warnings.push(`Group ${G.g}: worktop needs rules.worktop.depth for group ${G.g}.`); continue; }
+      const role = ROLE[G.g], depth = (WT.depth || {})[role];
+      if (!Number.isFinite(depth)) { warnings.push(`Group ${G.g}: worktop needs a group role in the notes ("group ${G.g}") and rules.worktop.depth for it (role: ${role || 'none'}).`); continue; }
       const back = depth - CD - FT - WT.overhang;
       if (back < 0) warnings.push(`Group ${G.g}: worktop ${depth} is shorter than carcass + front + overhang (${CD + FT + WT.overhang}).`);
       const W = worktops[G.g] = { n0: CN0 - back, n1: FN + WT.overhang, depth, back };
       counts['worktop:' + G.g] = W.depth;
     }
 
-    // back panel (rules.backPanel) instead of HDF backs: between the first and the last column of the group, fixed to the carcass backs
-    for (const g of BP.groups) { const G = groups[g]; if (!G) continue; const wf = G.widths[0] || 0;
-      panels.push({ g: G.g, name: 'Panel ' + FT, a: G.length - 2 * wf, b: BP.height, back: true, box: [wf, G.length - wf, 0, BP.height, CN0 - FT, CN0] }); }
+    // island (rules.island.backPanel): chipboard back panel instead of HDF backs, between the end columns, floor to the carcass tops, on the carcass backs
+    for (const g of islands) { const G = groups[g]; if (!G) continue; const w0 = G.widths[0] || 0, w1 = G.widths[G.widths.length - 1] || 0;
+      const top = Math.max(0, ...carcasses.filter(K => K.g === G.g).map(K => K.v1));
+      B({ name: 'Back panel', a: G.length - w0 - w1, b: top, mat: 'p18', layer: 'carcasses', g: G.g, backPanel: true, box: [w0, G.length - w1, 0, top, CN0 - T, CN0] }); }
 
     // fronts: module minus the four gaps of the component
     const HG = R.hinges, DR = R.drawers;
@@ -208,7 +227,7 @@
       if (!it.gaps || it.gaps.length !== 4 || it.gaps.some(x => !Number.isFinite(x))) { warnings.push(`Group ${G.g} col ${it.c}: ${it.t} needs 4 gaps [left, right, top, bottom].`); it.gaps = [0, 0, 0, 0]; }
       const fb = frontBox(it), K = it.K;
       if (fb.u1 - fb.u0 <= 0 || fb.v1 - fb.v0 <= 0) warnings.push(`Group ${G.g} col ${it.c}: gaps leave no front.`);
-      const kind = it.t === 'drawer' ? 'drawer' : has(it, 'dishwasher') ? 'dish' : has(it, 'dummy') ? 'fixed' : has(it, 'fridge', 'freezer') ? 'fridge' : 'door';
+      const kind = it.t === 'dummy' ? 'fixed' : it.t === 'drawer' ? 'drawer' : has(it, 'dishwasher') ? 'dish' : has(it, 'fridge', 'freezer') ? 'fridge' : 'door';
       // hinges on the side away from a side handle; every door of one column opens the same way
       const hingeSide = G.items.some(x => x.c === it.c && x.s === it.s && x.t === 'cabinet' && x.hd === 'L') ? 'R' : 'L';
       const F = { id: fronts.length + 1, g: G.g, it, K: K ? K.id : null, kind, tags: it.tags, hingeSide, gaps: it.gaps,
@@ -240,7 +259,7 @@
         }
       }
     }
-    return { rules: R, FN, FT, CD, CN0, CN1, PF, warnings, groups, carcasses, fronts, boards, frames, plinths, panels, plaster, worktops, counts };
+    return { rules: R, roles: ROLE, FN, FT, CD, CN0, CN1, PF, warnings, groups, carcasses, fronts, boards, frames, plinths, panels, plaster, worktops, counts };
   }
 
   /* ---------- carcass map: where each carcass is and what it is made of (mm, group coordinates) ---------- */
@@ -250,7 +269,7 @@
         carcass: K.name, group: K.g, cols: K.s > 1 ? [K.c, K.c + K.s - 1] : [K.c],
         x: [K.u0, K.u1], y: [K.v0, K.v1], z: [m.CN0, m.CN1], size: [K.u1 - K.u0, K.v1 - K.v0, m.CD],
         type: K.base ? 'base' : K.floor ? 'tall' : 'wall',
-        flags: ['sink', 'hob', 'fridge'].filter(f => K[f]),
+        flags: ['sink', 'hob', 'fridge', 'coffee'].filter(f => K[f]),
         members: K.members.map(i => ({ col: i.s > 1 ? [i.c, i.c + i.s - 1] : i.c, tags: i.tags.join(' '), x: [i.u0, i.u1], y: [i.v0, i.v1] })),
         boards: cutList(m.boards.filter(b => b.K === K.id)).map(([n, a, b, q]) => (q > 1 ? q + ' × ' : '') + n + ' ' + a + ' × ' + b),
         legs: K.legs
@@ -270,11 +289,12 @@
       : v && typeof v === 'object' ? '{' + Object.entries(v).map(([k, x]) => JSON.stringify(k) + ': ' + json1(x)).join(', ') + '}' : JSON.stringify(v);
   }
 
-  /* ---------- cutting list: parts with the same name and size counted together, in first-seen order ---------- */
+  /* ---------- cutting list: parts with the same name and size counted together, in first-seen order;
+     5th field = where they go (b.at labels, e.g. "K2, K5 ×2") ---------- */
   function cutList(list) {
     const m = new Map();
-    for (const b of list) { const k = b.name + '|' + b.a + '|' + b.b; m.set(k, (m.get(k) || 0) + 1); }
-    return [...m].map(([k, q]) => { const [name, a, b] = k.split('|'); return [name, Number(a), Number(b), q]; });
+    for (const b of list) { const k = b.name + '|' + b.a + '|' + b.b, e = m.get(k) || { q: 0, at: new Map() }; e.q++; if (b.at) e.at.set(b.at, (e.at.get(b.at) || 0) + 1); m.set(k, e); }
+    return [...m].map(([k, e]) => { const [name, a, b] = k.split('|'); return [name, Number(a), Number(b), e.q, [...e.at].map(([s, n]) => n > 1 ? s + ' ×' + n : s).join(', ')]; });
   }
 
   /* ---------- project data: data.js next to the page sets window.KITCHEN_DATA ----------

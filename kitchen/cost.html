@@ -31,6 +31,7 @@
   .grid th, .grid td { border: 1px solid var(--grid); padding: 4px 6px; vertical-align: top; }
   .grid thead th { position: sticky; top: 0; background: var(--ink); color: #fff; font-weight: bold; text-align: left; z-index: 2; }
   .grid td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .grid td.where { font-size: 12px; color: #667; }
   .grid td.muted { color: var(--ink-muted); font-size: 12px; }
   .grid td.src { color: var(--ink-muted); font-size: 12px; min-width: 260px; }
   .grid td.src.added { color: var(--added); }
@@ -52,6 +53,10 @@
   .json { margin: 0; background: var(--sheet); color: var(--ink); border: 1px solid var(--grid); border-top: 0; padding: 12px 14px; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; overflow: auto; white-space: pre; max-height: 75vh; }
   .excl { background: var(--sheet); color: var(--ink-muted); font-size: 12px; padding: 10px 14px; border: 1px solid var(--grid); border-top: 0; }
   .excl b { color: var(--ink); }
+  .asm { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; padding: 10px 0; }
+  .asm .card { background: var(--sheet); border: 1px solid var(--grid); padding: 10px 12px; font-size: 12px; line-height: 1.5; color: var(--ink-muted); break-inside: avoid; }
+  .asm h3 { margin: 0 0 4px; font-size: 14px; color: var(--ink); }
+  .asm b { color: var(--ink); }
   .grid td.decide { color: var(--added); }
   .hidden { display: none; }
   @media (max-width: 700px) {
@@ -76,6 +81,7 @@
     <button class="tab active" data-tab="estimate">Estimate</button>
     <button class="tab" data-tab="cutting">Cutting list</button>
     <button class="tab" data-tab="notes">Notes</button>
+    <button class="tab" data-tab="assembly">Assembly</button>
     <button class="tab" data-tab="map">Carcass map</button>
   </div>
 
@@ -113,6 +119,11 @@
     </div>
   </section>
 
+  <section id="tab-assembly" class="hidden">
+    <div class="excl" style="border-top:1px solid var(--grid)">Everything for one carcass in one place, to group the parts on site. Parts without a carcass are listed per group and column (G1/4 = group 1, column 4). Sizes in mm.</div>
+    <div class="asm" id="asmBody"></div>
+  </section>
+
   <section id="tab-map" class="hidden">
     <div class="excl" style="border-top:1px solid var(--grid);display:flex;gap:12px;align-items:center;flex-wrap:wrap">
       <span>Carcasses as engine.js builds them from data.js: x along the group from its first column, y up from the floor, z from the wall (mm); boards = what each carcass is cut from.</span>
@@ -147,8 +158,7 @@
     "kind": "drawer"
    },
    {
-    "t": "cabinet",
-    "tag": "dummy",
+    "t": "dummy",
     "kind": "dummy front"
    },
    {
@@ -231,7 +241,7 @@
   },
   {
    "id": "panel",
-   "title": "PANELS – MDF {r:frontThickness} laid flat, lacquered on both faces (L corner, island back)",
+   "title": "PANELS – MDF {r:frontThickness} laid flat, lacquered on both faces (L corner)",
    "cols": [
     "Element",
     "Width",
@@ -257,7 +267,7 @@
   },
   {
    "id": "p18",
-   "title": "CARCASSES – light grey chipboard 18, cut + ABS 0.8 light grey front edge (incl. back strips behind the frames)",
+   "title": "CARCASSES – dark grey chipboard 18, cut + ABS 0.8 dark grey front edge (incl. back strips, island back panel, pull-out shelves)",
    "cols": [
     "Element",
     "Width",
@@ -270,7 +280,7 @@
   },
   {
    "id": "p16",
-   "title": "DRAWERS – light grey chipboard 16 (TANDEMBOX bottoms and backs, incl. inner drawers; hob separation panel)",
+   "title": "DRAWERS – dark grey chipboard 16 (TANDEMBOX bottoms and backs, incl. inner drawers; hob separation panel)",
    "cols": [
     "Element",
     "Width",
@@ -283,7 +293,7 @@
   },
   {
    "id": "hdf",
-   "title": "BACKS – HDF {r:back.thickness} light grey (none in group {r:backPanel.groups} – covered by the back panel)",
+   "title": "BACKS – HDF {r:back.thickness} (only behind cabinet doors; none behind drawers or appliances)",
    "cols": [
     "Element",
     "Width",
@@ -349,7 +359,7 @@
     {
      "id": "i4",
      "name": "Panels MDF 18, laid flat",
-     "spec": "lacquered on both faces; L corner (80, 36) and island back",
+     "spec": "lacquered on both faces; L corner (80, 36)",
      "qty": "={panel.m2}",
      "unit": "m²",
      "price": 500,
@@ -366,19 +376,19 @@
    "rows": [
     {
      "id": "i5",
-     "name": "Light grey chipboard 18",
+     "name": "Dark grey chipboard 18",
      "spec": "sheet 2800×2070, + waste",
      "qty": "=ROUNDUP({p18.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 210,
-     "src": "est.; white Kronospan 18 at Castorama 191 PLN/sheet (October 2026), light grey similar",
+     "src": "est.; white Kronospan 18 at Castorama 191 PLN/sheet (October 2026), dark grey similar",
      "refs": [
       "10"
      ]
     },
     {
      "id": "i6",
-     "name": "Grey chipboard 16",
+     "name": "Dark grey chipboard 16",
      "spec": "drawer bottoms and backs, hob separation panel (separate product)",
      "qty": "=ROUNDUP({p16.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
@@ -388,8 +398,8 @@
     },
     {
      "id": "i7",
-     "name": "HDF 3 light grey",
-     "spec": "backs, sheet 2800×2070; none in the island",
+     "name": "HDF 3",
+     "spec": "backs behind cabinet doors, sheet 2800×2070",
      "qty": "=ROUNDUP({hdf.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 80,
@@ -408,7 +418,7 @@
     },
     {
      "id": "i9",
-     "name": "ABS 0.8 edge banding, light grey",
+     "name": "ABS 0.8 edge banding, dark grey",
      "spec": "front edges + {v:edgeAllowance|%}",
      "qty": "={p18.edge}*(1+{v:edgeAllowance})",
      "unit": "lm",
@@ -432,6 +442,16 @@
      "refs": [
       "11"
      ]
+    },
+    {
+     "id": "i56",
+     "name": "Full-extension runners for the pull-out shelf, pair",
+     "spec": "Blum, {r:pullOutShelf.depth} long; shelf in the chipboard 18 cutting list",
+     "qty": "={n:pullOutShelves}",
+     "unit": "pair",
+     "price": 150,
+     "src": "est.",
+     "refs": []
     },
     {
      "id": "i11",
@@ -653,8 +673,8 @@
     {
      "id": "i50",
      "name": "Plasterboard GKBI 12.5 (moisture-resistant) 1200×2600",
-     "spec": "face + return of each board in the Cutting list, + {waste|%} waste, {v:plasterSheet} m² per board",
-     "qty": "=ROUNDUP({plaster.m2}*(1+{waste})/{v:plasterSheet},0)",
+     "spec": "face + return of each board in the Cutting list × {r:plasterboard.layers} layers, + {waste|%} waste, {v:plasterSheet} m² per board",
+     "qty": "=ROUNDUP({plaster.m2}*{r:plasterboard.layers}*(1+{waste})/{v:plasterSheet},0)",
      "unit": "pcs",
      "price": 45,
      "src": "approx. 45 PLN per board (muratordom.pl, prices 2026)",
@@ -685,10 +705,30 @@
     {
      "id": "i53",
      "name": "Plasterboard accessories",
-     "spec": "screws, dowels, connectors, joint tape, compound, corner bead, primer",
+     "spec": "screws, dowels, connectors, joint tape, compound, primer",
      "qty": 1,
      "unit": "set",
      "price": 150,
+     "src": "est.",
+     "refs": []
+    },
+    {
+     "id": "i54",
+     "name": "Corner bead, pressed into the compound, 3 m",
+     "spec": "outer edges of the plasterboard boxes",
+     "qty": "=ROUNDUP({n:plasterEdge}/3000,0)",
+     "unit": "pcs",
+     "price": 12,
+     "src": "est.",
+     "refs": []
+    },
+    {
+     "id": "i55",
+     "name": "Silicone T seal, white, for a 3-5 mm gap",
+     "spec": "joint between the plasterboard and the furniture (plasterboard must not press on the furniture)",
+     "qty": "=ROUNDUP({n:plasterEdge}/1000*(1+{v:edgeAllowance}),0)",
+     "unit": "lm",
+     "price": 5,
      "src": "est.",
      "refs": []
     }
@@ -867,7 +907,7 @@
   {
    "nr": "6",
    "t": "Frames on edge, panels flat",
-   "o": "Frames: MDF {r:frontThickness} on edge, {r:frame.depth} deep, lacquered on the edge and both faces; with lacquer ≈ 18.5. Panels: MDF {r:frontThickness} laid flat, lacquered on both faces (L corners of group 1 and group 2, island back). The group 1 panel overlaps the group 2 panel, so there is no gap in the corner.",
+   "o": "Frames: MDF {r:frontThickness} on edge, {r:frame.depth} deep, lacquered on the edge and both faces; with lacquer ≈ 18.5. Panels: MDF {r:frontThickness} laid flat, lacquered on both faces (L corners of group 1 and group 2). The group 1 panel overlaps the group 2 panel, so there is no gap in the corner.",
    "p": "",
    "d": ""
   },
@@ -880,8 +920,8 @@
   },
   {
    "nr": "19",
-   "t": "Island – no HDF backs",
-   "o": "The backs of the island carcasses (group {r:backPanel.groups}) are covered by the lacquered back panel between the waterfalls, so they get no HDF back.",
+   "t": "HDF backs and the island back panel",
+   "o": "HDF backs only behind cabinet doors; none behind drawers or appliances (air for the oven, microwave, fridge). The island gets a chipboard {r:board} back panel between the waterfalls, floor to the carcass tops, fixed to the carcass backs.",
    "p": "",
    "d": ""
   },
@@ -905,7 +945,7 @@
   {
    "nr": "9",
    "t": "Lacquer only on fronts and frames",
-   "o": "Lacquered (front maker): fronts {p:i1} PLN/m² (supplier quote, October 2026) and frames {p:i2} PLN/m² and panels (L corner, island back) {p:i4} PLN/m² – estimate: all blue parts cost the same. Plinth: standard PVC plinth, bought by the metre.",
+   "o": "Lacquered (front maker): fronts {p:i1} PLN/m² (supplier quote, October 2026) and frames {p:i2} PLN/m² and panels (L corner) {p:i4} PLN/m² – estimate: all blue parts cost the same. Plinth: standard PVC plinth, bought by the metre.",
    "p": "",
    "d": ""
   },
@@ -1025,20 +1065,56 @@ function frontKind(F) {   // label of a front for the Fronts block: kind tag + f
 }
 function rowsFor(src) {
   const r1 = x => Math.round(x * 10) / 10;
-  if (src === 'front') return KE.cutList(MODEL.fronts.map(F => ({ name: frontKind(F), a: r1(F.w), b: r1(F.h) })));
-  if (src === 'frames') return KE.cutList(MODEL.frames);
-  if (src === 'plinths') return KE.cutList(MODEL.plinths.map(p => ({ name: 'Plinth', a: p.a, b: p.b })));
-  if (src === 'panels') return KE.cutList(MODEL.panels);
-  if (src === 'plaster') return KE.cutList(MODEL.plaster);
-  return KE.cutList(MODEL.boards.filter(b => b.mat === src));   // p18 | p16 | hdf
+  // where a part goes: carcass name, else group + column (G1/4 = group 1, column 4)
+  const KN = Object.fromEntries(MODEL.carcasses.map(K => [K.id, K.name]));
+  const at = p => p.K ? KN[p.K] : 'G' + p.g + (p.it ? '/' + p.it.c : p.c ? '/' + p.c : '');
+  const L = list => KE.cutList(list.map(p => ({ ...p, at: at(p) })));
+  if (src === 'front') return L(MODEL.fronts.map(F => ({ ...F, name: frontKind(F), a: r1(F.w), b: r1(F.h) })));
+  if (src === 'frames') return L(MODEL.frames);
+  if (src === 'plinths') return L(MODEL.plinths.map(p => ({ ...p, name: 'Plinth' })));
+  if (src === 'panels') return L(MODEL.panels);
+  if (src === 'plaster') return L(MODEL.plaster);
+  return L(MODEL.boards.filter(b => b.mat === src));   // p18 | p16 | hdf
 }
 let MAPJ = '';
 function applyProject(P) {
   MODEL = KE.build(P); for (const b of DATA.blocks) b.rows = rowsFor(b.src);
   MAPJ = KE.mapJSON(KE.carcassMap(MODEL)); document.getElementById('mapJson').textContent = MAPJ;
+  renderAssembly();
   // issues found by engine.js in data.js (the 3D geometry check runs in view.html)
   const iss = document.getElementById('issues'); iss.hidden = !MODEL.warnings.length;
   iss.innerHTML = MODEL.warnings.length ? '<b>' + MODEL.warnings.length + (MODEL.warnings.length === 1 ? ' issue' : ' issues') + ' in data.js</b><ul>' + MODEL.warnings.map(w => '<li>' + w.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</li>').join('') + '</ul>' : '';
+}
+// ---------- assembly: all parts of one carcass together (boards, fronts, drawers, hardware), then parts without a carcass ----------
+function renderAssembly() {
+  const M = MODEL, MAT = { p18: 'Chipboard 18', p16: 'Chipboard 16', hdf: 'HDF 3' };
+  const r1 = x => Math.round(x * 10) / 10, list = rows => rows.map(t => '<br>– ' + esc(t)).join('');
+  const parts = bs => KE.cutList(bs).map(([n, a, b, q]) => (q > 1 ? q + ' × ' : '') + n + ' ' + a + ' × ' + b);
+  const sec = (title, rows) => rows.length ? '<br><b>' + esc(title) + '</b>' + list(rows) : '';
+  const col = (c, n) => 'col ' + c + (n > 1 ? '–' + (c + n - 1) : '');
+  const cards = M.carcasses.map(K => {
+    const B = M.boards.filter(b => b.K === K.id), F = M.fronts.filter(f => f.K === K.id);
+    const pins = B.filter(b => b.name === 'Adjustable shelf').length * M.rules.shelf.pins, hinges = F.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
+    const fronts = F.map(f => frontKind(f) + ' ' + r1(f.w) + ' × ' + r1(f.h) + (f.hinges ? ', ' + f.hinges.length + ' hinges, side ' + f.hingeSide : '') + (f.handle ? ', handle ' + f.handle : ''));
+    const drawers = F.filter(f => f.drawer).map(f => (f.drawer.D ? 'D' : 'M') + ' drawer box' + (f.drawer.bins ? ' with waste bins' : '') + (f.drawer.inner ? ' + inner drawer M' : ''));
+    const hw = [K.legs ? K.legs + ' legs' : '', hinges ? hinges + ' hinges' : '', pins ? pins + ' shelf pins' : '', B.some(b => b.name === 'Pull-out shelf') ? '1 pair of full-extension runners' : ''].filter(Boolean);
+    const kind = K.base ? 'base' : K.floor ? 'tall' : 'wall', flags = ['sink', 'hob', 'fridge', 'coffee'].filter(x => K[x]);
+    return '<div class="card"><h3>' + esc(K.name) + '</h3>G' + K.g + ' ' + col(K.c, K.s) + ' · ' + kind + ' · ' + r1(K.u1 - K.u0) + ' × ' + r1(K.v1 - K.v0) + ' × ' + M.CD + (flags.length ? ' · ' + flags.join(', ') : '')
+      + ['p18', 'p16', 'hdf'].map(m => sec(MAT[m], parts(B.filter(b => b.mat === m)))).join('')
+      + sec('Fronts', fronts) + sec('Drawers', drawers) + sec('Hardware', hw) + '</div>';
+  });
+  // parts without a carcass, per group
+  const at = p => 'G' + p.g + '/' + (p.it ? p.it.c : p.c || '');
+  const loose = {};
+  const add = (g, t) => (loose[g] = loose[g] || []).push(t);   // sorted by column below, so a frame and its back strip sit together
+  M.fronts.filter(f => !f.K).forEach(f => add(f.g, at(f) + ' – ' + frontKind(f) + ' ' + r1(f.w) + ' × ' + r1(f.h) + (f.handle ? ', handle ' + f.handle : '')));
+  M.frames.forEach(p => add(p.g, at(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
+  M.panels.forEach(p => add(p.g, at(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
+  M.boards.filter(b => !b.K).forEach(b => add(b.g, (b.c ? at(b) : 'G' + b.g) + ' – ' + b.name + ' ' + b.a + ' × ' + b.b + ' (' + (MAT[b.mat] || b.mat) + ')'));
+  M.plinths.forEach(p => add(p.g, at(p) + ' – Plinth ' + p.a + ' × ' + p.b));
+  M.plaster.forEach(p => add(p.g, at(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
+  const extra = Object.keys(loose).sort().map(g => '<div class="card"><h3>Group ' + g + ' – no carcass</h3>' + list(loose[g].map((t, i) => [Number((/^G\d+\/(\d+)/.exec(t) || [, 0])[1]), i, t]).sort((x, y) => x[0] - y[0] || x[1] - y[1]).map(x => x[2])).replace(/^<br>/, '') + '</div>');
+  document.getElementById('asmBody').innerHTML = cards.join('') + extra.join('');
 }
 document.getElementById('mapSave').addEventListener('click', () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([MAPJ], { type: 'application/json' }));
@@ -1163,15 +1239,15 @@ function renderK() {
 function renderR() {
   const T = blockTotals(), h = [];
   for (const b of DATA.blocks) {
-    h.push(`<tr class="blk"><td colspan="7">${esc(fill(b.title))}</td></tr>`);
-    h.push(`<tr class="bh"><td>${b.cols.map(esc).join('</td><td>')}</td><td>m²</td><td>ABS edging [lm]</td><td>Cutting [lm]</td></tr>`);
+    h.push(`<tr class="blk"><td colspan="8">${esc(fill(b.title))}</td></tr>`);
+    h.push(`<tr class="bh"><td>${b.cols.map(esc).join('</td><td>')}</td><td>m²</td><td>ABS edging [lm]</td><td>Cutting [lm]</td><td title="carcass name, else G group / column">Where</td></tr>`);
     b.rows.forEach((r, i) => {
       const cur = S.blocks[b.id][i], def = DEF.blocks[b.id][i], t = T[b.id].rows[i];
       const inp = k => b.live ? `<td class="num" title="Calculated by engine.js from data.js – change the design in design.html">${cur[k]}</td>` : `<td class="num"><input type="number" step="1" data-blk="${b.id}" data-i="${i}" data-k="${k}" value="${cur[k]}" class="${cur[k] != def[k] ? 'changed' : ''}"></td>`;
-      h.push(`<tr><td>${esc(r[0])}</td>${inp(0)}${inp(1)}${inp(2)}<td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td></tr>`);
+      h.push(`<tr><td>${esc(r[0])}</td>${inp(0)}${inp(1)}${inp(2)}<td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="where">${esc(r[4] || '')}</td></tr>`);
     });
     const t = T[b.id], hasE = !!RU.edgeBlocks[b.id], hasC = RU.cutBlocks.includes(b.id);
-    h.push(`<tr class="sum"><td>Total</td><td></td><td></td><td class="num">${t.qty}</td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${hasE ? fmt(t.edge) : ''}</td><td class="num">${hasC ? fmt(t.cut) : ''}</td></tr>`);
+    h.push(`<tr class="sum"><td>Total</td><td></td><td></td><td class="num">${t.qty}</td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${hasE ? fmt(t.edge) : ''}</td><td class="num">${hasC ? fmt(t.cut) : ''}</td><td></td></tr>`);
   }
   document.getElementById('rBody').innerHTML = h.join('');
 }
@@ -1192,7 +1268,7 @@ function renderAll() { renderStatic(); renderK(); renderR(); renderU(); document
 // ---------- interaction ----------
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  ['estimate', 'cutting', 'notes', 'map'].forEach(n => document.getElementById('tab-' + n).classList.toggle('hidden', n !== name));
+  ['estimate', 'cutting', 'notes', 'assembly', 'map'].forEach(n => document.getElementById('tab-' + n).classList.toggle('hidden', n !== name));
 }
 document.querySelector('.tabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) showTab(t.dataset.tab); });
 document.addEventListener('click', e => {
@@ -1237,14 +1313,15 @@ function buildWorkbook() {
   const totRow = {};
   for (const b of DATA.blocks) {
     rz.push([s(fill(b.title))]);
-    rz.push([...b.cols.map(s), s('m²'), s('ABS edging [lm]'), s('Cutting [lm]')]);
+    rz.push([...b.cols.map(s), s('m²'), s('ABS edging [lm]'), s('Cutting [lm]'), s('Where')]);
     const first = rz.length + 1;
     b.rows.forEach((r, i) => {
       const [A, B, q] = S.blocks[b.id][i].map(Number), row = rz.length + 1, t = R.T[b.id].rows[i];
       const line = [s(r[0]), n(A), n(B), n(q), f(`B${row}*C${row}*D${row}/1000000`, t.m2)];
       const E = RU.edgeBlocks[b.id];
       if (E) line.push(f(`${(E.rows[r[0]] || E.along) === 'B' ? 'C' : 'B'}${row}*D${row}/1000`, t.edge)); else line.push(s(''));
-      if (RU.cutBlocks.includes(b.id)) line.push(f(`(B${row}+C${row})*D${row}/1000`, t.cut));
+      line.push(RU.cutBlocks.includes(b.id) ? f(`(B${row}+C${row})*D${row}/1000`, t.cut) : s(''));
+      line.push(s(r[4] || ''));
       rz.push(line);
     });
     const last = rz.length, row = last + 1, T = R.T[b.id];

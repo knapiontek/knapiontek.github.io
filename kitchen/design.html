@@ -246,6 +246,9 @@
           box-shadow: inset 0 0 0 2px var(--sheet-focus);
         }
         table.sheet input[type="number"] { text-align: right; }
+        /* gaps take decimals (1.5): no spin arrows, the mouse wheel does not change them */
+        table.sheet input.gap { -moz-appearance: textfield; }
+        table.sheet input.gap::-webkit-inner-spin-button, table.sheet input.gap::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         table.sheet select { cursor: pointer; }
         .feat-btn { min-width: 150px; }
         .feat-btn.hd-btn { min-width: 76px; min-height: 30px; }
@@ -369,10 +372,10 @@
                   <td>
                     <template x-if="isFront(row)"><button type="button" class="feat-btn hd-btn" title="Handle position" @click="openFeatures(row, $event, 'handle')" x-text="row.handle ? HANDLE_NAMES[row.handle] || row.handle : ''"></button></template>
                   </td>
-                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gl"></td>
-                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gr"></td>
-                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gt"></td>
-                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gb"></td>
+                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gl" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gr" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gt" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gb" @wheel="$event.target.blur()"></td>
                   <td class="col-note"><input type="text" class="cell" x-model="row.note"></td>
                   <td class="col-actions">
                     <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertComponentRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeComponentRow(idx)">×</button>
@@ -463,8 +466,8 @@
        columns:    group -> column widths in mm, left to right
        components: placed bottom-up within their column(s), in list order
          g group, c first column, s column span, h height mm,
-         tags: exactly ONE type - filler, board, plinth, worktop, splash, panel, frame, cabinet, drawer, oven, micro;
-               + features - hob, sink, bins, dummy, dishwasher, fridge, freezer, inner;
+         tags: exactly ONE type - filler, board, plinth, worktop, splash, panel, frame, cabinet, drawer, dummy, oven, micro;
+               + features - hob, sink, bins, dishwasher, fridge, freezer, inner;
          k carcass name (K1, K2 ...): same name = ONE carcass over all its columns; "" = no carcass
          hd handle (T|B|L|R|""), gaps (fronts only) [left, right, top, bottom] mm: front = module minus the 4 gaps, note: free text
      DATA FLOW: data.js -> engine.js (layout, carcasses, boards, fronts) -> this page, cost.html, view.html
@@ -552,13 +555,13 @@ const SIMPLE_RECT_TYPES = {
 };
 
 // filler = void, board = plasterboard box, plinth = plinth board, worktop = worktop board, splash = splash on the wall, panel = MDF board laid flat, frame = MDF strip on edge,
-// cabinet = hinged door front, drawer = drawer front, oven / micro = appliance.
+// cabinet = hinged door front, drawer = drawer front, dummy = fixed front, oven / micro = appliance.
 // Tags come from engine.js: one type tag + feature tags. Without engine.js the page shows an error instead of failing.
 const ENGINE_MISSING = 'engine.js not found next to this page - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.';
 const TYPE_TAGS = KE ? KE.TYPE_TAGS : [], FEATURE_TAGS = KE ? KE.FEATURE_TAGS : [];
 const parseTags = KE ? KE.parseTags : (s => ({ tags: [], types: [], type: null, features: [], unknown: [] }));
 const TAG_HELP = 'One type: ' + TYPE_TAGS.join(', ') + '. Features: ' + FEATURE_TAGS.join(', ') + '.';
-const FRONT_TYPES = ['cabinet', 'drawer'];
+const FRONT_TYPES = KE ? KE.FRONT_TYPES : ['cabinet', 'drawer', 'dummy'];
 const HANDLE_POSITIONS = ['', 'T', 'B', 'L', 'R'];
 
 // Fallbacks used only when the project file leaves a setting out.
@@ -832,6 +835,7 @@ const COMPONENT_RENDERERS = {
   plinth: (c, svgY) => renderSimpleRect(c, svgY, 'plinth'),
   cabinet: (c, svgY) => renderFront(c, svgY) + renderHandle(c, svgY),
   drawer: (c, svgY) => renderFront(c, svgY) + renderHandle(c, svgY),
+  dummy: (c, svgY) => renderFront(c, svgY) + renderHandle(c, svgY),
   oven: renderOven,
   micro: renderMicro
 };
@@ -925,7 +929,7 @@ function computeLayout(columnRows, componentRows) {
     if (row.handle && !FRONT_TYPES.includes(type)) warnings.push(`Components row ${idx + 1}: a ${type} cannot have a handle.`);
     if (tg.unknown.length) warnings.push(`Components row ${idx + 1}: unknown tag ${tg.unknown.join(', ')} (known: ${[...TYPE_TAGS, ...FEATURE_TAGS].join(', ')}).`);
     const k = String(row.k ?? '').trim();
-    if (!k && ['cabinet', 'drawer', 'oven', 'micro'].includes(type) && !tg.tags.includes('dishwasher')) warnings.push(`Components row ${idx + 1}: ${type} has no carcass name.`);
+    if (!k && (KE ? KE.BOX_TYPES : []).includes(type) && !tg.tags.includes('dishwasher')) warnings.push(`Components row ${idx + 1}: ${type} has no carcass name.`);
     if (FRONT_TYPES.includes(type) && !gaps) { compFlags[idx] = 'invalid'; warnings.push(`Components row ${idx + 1}: a ${type} front needs 4 gaps (L, R, T, B).`); return; }
     comps.push({ groupNum: group, colNum: col, colSpan: span, type, heightMm: height, handlePos: handle, gaps: FRONT_TYPES.includes(type) ? gaps : null, note: String(row.note ?? '').trim(), tags: tg.tags.join(' '), k });
   });

@@ -67,6 +67,8 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12px;text
 dl.notes dd{font-family:var(--f-body);font-size:12.5px;text-align:left}
 dl.notes dd small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
 .note{font-size:12px;color:var(--muted);line-height:1.5;margin:10px 0 0}
+.issues{list-style:none;padding:0;margin:6px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
+.issues li{margin:0 0 8px}
 .legend{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;font-size:12px}
 .legend li{display:flex;align-items:center;gap:6px;min-width:0}
 .legend i{width:12px;height:12px;border-radius:3px;flex:none;border:1px solid var(--line)}
@@ -215,7 +217,7 @@ body.shut .toggle{display:flex}
       <section>
         <h2>Issues</h2>
         <p class="note" id="geoNote"></p>
-        <ul class="note" id="geoList" style="padding-left:16px;margin:4px 0 0"></ul>
+        <ul class="issues" id="geoList"></ul>
       </section>
     </div>
 
@@ -225,8 +227,8 @@ body.shut .toggle{display:flex}
         <ul class="mats">
           <li><i style="background:#222e4c"></i><small>Fronts MDF 18</small><b>English Navy, satin</b></li>
           <li><i style="background:linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)"></i><small>Worktops 38, waterfalls</small><b>Laminate, oak</b></li>
-          <li><i style="background:#cfd1d2"></i><small>Carcasses</small><b>Chipboard 18 light grey, ABS 0.8</b></li>
-          <li><i style="background:#c6c8c9"></i><small>Backs</small><b>HDF 3 light grey</b></li>
+          <li><i style="background:#4a4d51"></i><small>Carcasses</small><b>Chipboard 18 dark grey, ABS 0.8</b></li>
+          <li><i style="background:#c6c8c9"></i><small>Backs</small><b>HDF 3</b></li>
           <li><i style="background:radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"></i><small>Sink</small><b>Granite composite</b></li>
           <li><i style="background:#1f2022"></i><small>Plinth</small><b>PVC 100, black matte</b></li>
           <li><i style="background:linear-gradient(120deg,#c4c6c7,#b5b8ba 45%,#cfd1d2)"></i><small>Floor</small><b>Grey marble 120 × 60</b></li>
@@ -290,9 +292,10 @@ body.shut .toggle{display:flex}
  "hob": {"glass": [590, 520], "glassFromWall": 39, "body": [556, 486], "bodyFromWall": 56, "builtInHeight": 44},
  "hood": {"name": "Electrolux LFV416K", "width": 598, "depth": 390, "bottom": 1500, "height": 380, "chimney": [250, 220]},
  "fridge": {"bodyHeight": 1772},
+ "coffee": {"name": "DeLonghi Dinamica", "size": [236, 348, 429]},
  "pendants": {"points": [[477.48, 2290], [1252.52, 2290]], "bottom": 1750},
  "downlights": {"points": [[1448, 402], [2440, 402], [2440, 1370], [2440, 2338]]},
- "colors": {"front": "#1c2744", "carcass": "#cfd1d2", "board16": "#9b9fa4", "hdf": "#c6c8c9", "plinth": "#1f2022", "wall": "#f2f1ee", "frontLight": "#e3e8ef", "pendant": "#1c2744"},
+ "colors": {"front": "#1c2744", "carcass": "#4a4d51", "board16": "#4a4d51", "hdf": "#c6c8c9", "plinth": "#1f2022", "wall": "#f2f1ee", "frontLight": "#e3e8ef", "pendant": "#1c2744"},
  "metals": {
    "brass": {"color": "#c9a063", "rough": 0.32, "metal": 0.7},
    "nickel": {"color": "#c4c4c0", "rough": 0.34, "metal": 0.55},
@@ -440,7 +443,7 @@ const M={
   pvc:new THREE.MeshPhysicalMaterial({color:C(0x383e42),roughness:.45,clearcoat:.25,clearcoatRoughness:.4,envMapIntensity:.6}),
   gasket:std({color:C(0x1a1a1a),roughness:.8}),
   glass:new THREE.MeshPhysicalMaterial({color:C(0xe8f2f4),roughness:0,metalness:0,transparent:true,opacity:.12,clearcoat:1,envMapIntensity:1.5,depthWrite:false,side:THREE.DoubleSide}),
-  carcass:std({color:C(COL.carcass),roughness:.75,envMapIntensity:.5}),      // light grey chipboard 18, ABS
+  carcass:std({color:C(COL.carcass),roughness:.75,envMapIntensity:.5}),      // dark grey chipboard 18, ABS
   plinth:std({color:C(COL.plinth),roughness:.55,envMapIntensity:.5}),       // standard PVC plinth 100, black matte
   hdf:std({color:C(COL.hdf),roughness:.85,envMapIntensity:.4}),          // HDF 3 back, light grey
   board16:std({color:C(COL.board16),roughness:.75,envMapIntensity:.5}),   // grey chipboard 16: drawer bottoms and backs, hob separation panel
@@ -596,9 +599,7 @@ function build(run){
     if(kind)tagNew(np,kind,'G'+GOF[run]+' col '+c+(s>1?'–'+(c+s-1):'')+' '+t+' '+(u1-u0)+' × '+h+(it.note?' ('+it.note+')':''));
   }}
 RUNS3.forEach(build);
-// back panel instead of HDF backs (rules.backPanel, from the engine)
-for(const p of MOD.panels)if(p.back){const np=parts.length;CUR=WL.panel;rb(RUNOF[p.g],...p.box,M.navy);tagNew(np,'panel','G'+p.g+' back panel '+p.a+' × '+p.b);}
-for(const b of MOD.boards){if(!b.strip)continue;const m=lb(RL[RUNOF[b.g]].carcasses,...b.box,M.carcass);
+for(const b of MOD.boards){if(!b.strip&&!b.backPanel)continue;const m=lb(RL[RUNOF[b.g]].carcasses,...b.box,M.carcass);   // back strips and the island back panel
   if(m){m.userData={role:b.name,a:b.a,b:b.b,base:M.carcass};KM.push(m);SPC.push({name:b.name,a:b.a,b:b.b});}}
 
 // inset sink, granite composite
@@ -666,7 +667,7 @@ function regK(K,m,name,a,b){regM(K,m,name,a,b);K.parts.push({name,a,b});return m
 const STAT=MOD.counts;
 
 function buildCarcass(K){const R=K.run,{u0,u1,v0}=K,ui0=u0+BT,ui1=u1-BT;
-  for(const b of MOD.boards){if(b.K!==K.id||b.front)continue;
+  for(const b of MOD.boards){if(b.K!==K.id||b.front||b.name==='Pull-out shelf')continue;   // the pull-out shelf moves: built with the fronts
     const m=lb(RL[R][b.layer],...b.box,b.mat==='hdf'?M.hdf:b.mat==='p16'?M.board16:M.carcass);regK(K,m,b.name,b.a,b.b);
     if(b.name==='Adjustable shelf'){const y=b.box[2]+9;   // 4 shelf pins
       for(const [x0,x1] of [[ui0,ui0+8],[ui1-8,ui1]])for(const z of [CN0+VF.shelfPinFromBack,CN1-VF.shelfPinFromFront])lb(RL[R].shelves,x0,x1,y-14,y-9,z,z+5,M.zinc,true);}}
@@ -675,6 +676,25 @@ function buildCarcass(K){const R=K.run,{u0,u1,v0}=K,ui0=u0+BT,ui1=u1-BT;
   if(K.fridge)fridgeBody(K);
   if(K.fridge&&K.floor)plinthGrille(K);
 }
+// bean-to-cup coffee machine (VD.coffee.size = width, height, depth), front face at n1, standing on y, centred on uc:
+// black body, silver head with display and buttons, brew recess with spout, drip tray with grid and a cup, bean lid, steam wand
+function coffeeMachine(P,uc,y,n1){const [w,h,d]=VD.coffee.size,u0=uc-w/2,u1=uc+w/2,n0=n1-d,top=y+h,head=top-115,F=n1-45;
+  lb(P,u0,u1,y,top,n0,F,M.blackMetal);                                         // body
+  lb(P,u0,u0+28,y,head,F,n1,M.steel);lb(P,u1-28,u1,y,head,F,n1,M.steel);        // front side columns
+  lb(P,u0,u1,head,top,F,n1,M.steel);                                           // head with the controls
+  lb(P,u0+18,u1-18,head+28,top-14,n1,n1+2,M.glassBlack);                       // control glass
+  const dsp=new THREE.Mesh(new THREE.PlaneGeometry(.11,.03),new THREE.MeshBasicMaterial({map:tex(displayCanvas('ESPRESSO'),1,1)}));
+  dsp.position.set(uc/1000,(top-40)/1000,(n1+2.5)/1000);P.add(dsp);
+  for(let i=0;i<4;i++)lc(P,6,3,M.steel,u0+50+i*(w-100)/3,head+40,n1+3,'z',16);   // buttons under the display
+  lb(P,u0+28,u1-28,y+32,head,F,F+3,M.ovenIn);                                  // brew recess
+  lb(P,uc-32,uc+32,head-34,head,F,n1-8,M.steel);                               // spout unit
+  for(const du of [-12,12])lc(P,5,16,M.steel,uc+du,head-42,n1-24,null,12);      // two nozzles
+  lb(P,u0+6,u1-6,y,y+30,F-60,n1+6,M.steel);                                    // drip tray
+  lb(P,u0+22,u1-22,y+30,y+32,F-40,n1-4,M.zinc);                                // tray grid
+  lc(P,32,62,M.fridge,uc,y+32+31,n1-26,null,28);                               // cup
+  lb(P,uc-70,uc+70,top,top+6,n0+30,n0+190,M.blackMetal);                       // bean container lid
+  lc(P,5,150,M.steel,u1+10,head-60,n1-40,null,12);                             // steam wand
+  lc(P,8,20,M.blackMetal,u1+10,head+20,n1-40,null,16);}                        // wand knob
 // aluminium ventilation grille in the plinth under the fridge (approx. 500 x 60, >= 200 cm2 open)
 function plinthGrille(K){const P=RL[K.run].plinth,uc=(K.u0+K.u1)/2,w=Math.min(500,K.u1-K.u0-80),g0=uc-w/2,g1=uc+w/2,h0=20,h1=80;
   lb(P,g0,g1,h0,h0+5,PF,PF+3,M.zinc);lb(P,g0,g1,h1-5,h1,PF,PF+3,M.zinc);lb(P,g0,g0+5,h0+5,h1-5,PF,PF+3,M.zinc);lb(P,g1-5,g1,h0+5,h1-5,PF,PF+3,M.zinc);
@@ -749,7 +769,14 @@ function buildFront(run,it){
   else if(kind==='fixed')mv.label='Dummy front '+dim+' · fixed';
   if(!mv.label)mv.label='Front '+dim;
 }
-for(const r of RUNS3)for(const it of LAY[r])if(it.t==='cabinet'||it.t==='drawer')buildFront(r,it);
+for(const r of RUNS3)for(const it of LAY[r])if(KE.FRONT_TYPES.includes(it.t))buildFront(r,it);
+// pull-out shelf with the coffee machine (tag coffee): slides out like a drawer once its door is open
+for(const K of KS)if(K.coffee){const R=K.run,sh=MOD.boards.find(b=>b.K===K.id&&b.name==='Pull-out shelf'),door=K.mvs.find(m=>m.kind==='door');if(!sh)continue;
+  const mi=movable(R,'drawer',0,0,0),S=mi.sub.drawers,[x0,x1,y0,y1,z0,z1]=sh.box;mi.it=door&&door.it;K.mvs.push(mi);if(door){mi.parent=door;door.child=mi;}
+  regK(K,lb(S,...sh.box,M.carcass),sh.name,sh.a,sh.b);
+  for(const [a,b] of [[K.u0+BT,x0],[x1,K.u1-BT]]){lb(RL[R].hardware,a,b,y0-14,y0,z0,z1,M.zinc);lb(mi.sub.hardware,a,b,y0,y0+12,z0+8,z1-4,M.zinc);}   // runners: carcass part, moving part
+  coffeeMachine(S,(x0+x1)/2,y1,z1-20);
+  mi.label='Pull-out shelf '+sh.a+' × '+sh.b+' with '+VD.coffee.name;}
 
 
 /* ---------- geometry check: overlaps, small gaps, parts sticking out (fronts closed) ---------- */
@@ -765,27 +792,36 @@ function geomCheck(){
   for(const m of parts)if(m.material===M.leg&&m.geometry.parameters.radiusTop*1000>20)items.push({kind:'leg',name:'leg',b:box(m),o:m});
   for(const mv of MOV)if(!mv.parent){const g=mv.sub.fronts;if(g.children.length)items.push({kind:'front',name:mv.label,b:box(g),o:g});}
   const ov=(a,b,i)=>Math.min(a[2*i+1],b[2*i+1])-Math.max(a[2*i],b[2*i]);
-  const where=b=>'x '+Math.round(b[0])+'–'+Math.round(b[1])+', y '+Math.round(b[2])+'–'+Math.round(b[3])+', z '+Math.round(b[4])+'–'+Math.round(b[5]);
+  const where=b=>'at x '+Math.round(b[0])+'–'+Math.round(b[1])+', y '+Math.round(b[2])+'–'+Math.round(b[3])+', z '+Math.round(b[4])+'–'+Math.round(b[5]);
   const overlaps=[],gaps=[],out=[];
   const gapKinds=new Set(['frame','panel','strip','carcass','plinth','worktop']);
   for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){const A=items[i],B=items[j];
     if(A.o===B.o||(A.kind==='drawer'&&B.kind==='drawer'))continue;
     const o=[0,1,2].map(k=>ov(A.b,B.b,k));
-    if(o.every(x=>x>E)){overlaps.push(A.name+' ⨯ '+B.name+' — '+o.map(r1).join(' × ')+' mm, at '+where(A.b));continue;}
+    if(o.every(x=>x>E)){overlaps.push({k:'Overlap',a:A.name,b:B.name,v:o.map(r1).join(' × ')+' mm',at:where(A.b)});continue;}
     // small gap: touching area in two axes, a gap of a few mm in the third (strips and frames must fit tight)
     if(!(gapKinds.has(A.kind)&&gapKinds.has(B.kind)))continue;
     if(!(['frame','panel','strip'].includes(A.kind)||['frame','panel','strip'].includes(B.kind)))continue;
     for(let k=0;k<3;k++){const g=-o[k],other=[0,1,2].filter(x=>x!==k);
-      if(g>=GMIN-1e-6&&g<=GMAX+1e-6&&other.every(x=>o[x]>10)){gaps.push(A.name+' ↔ '+B.name+' — gap '+r1(g)+' mm ('+'xyz'[k]+'), at '+where(A.b));break;}}}
+      if(g>=GMIN-1e-6&&g<=GMAX+1e-6&&other.every(x=>o[x]>10)){gaps.push({k:'Gap',a:A.name,b:B.name,v:r1(g)+' mm ('+'xyz'[k]+')',at:where(A.b)});break;}}}
   // sticking out: in run coordinates, carcass parts stay behind the fronts, legs behind the plinth, nothing below the floor
-  for(const it of items){if(it.b[2]<-E)out.push(it.name+' — below the floor ('+r1(it.b[2])+')');
+  for(const it of items){if(it.b[2]<-E)out.push({k:'Sticks out',a:it.name,b:'below the floor',v:r1(-it.b[2])+' mm',at:where(it.b)});
     if(!['carcass','strip','drawer','shelf','leg'].includes(it.kind))continue;
     let g=it.o;while(g&&!Object.values(runG).includes(g))g=g.parent;if(!g)continue;
     const inv=g.matrixWorld.clone().invert(),bb=new THREE.Box3().setFromObject(it.o).applyMatrix4(inv),n1=bb.max.z*1000;
-    const n0=bb.min.z*1000;if(!VD.runs[RUNS3.find(r=>runG[r]===g)].freeStanding&&n0<-E)out.push(it.name+' — '+r1(-n0)+' mm behind the wall, at '+where(it.b));   // wall runs: n = 0 is the wall
-    if(it.kind==='leg'?n1>PF-PT+E:n1>CN1+E)out.push(it.name+' — sticks out '+r1(n1-(it.kind==='leg'?PF-PT:CN1))+' mm in front of the '+(it.kind==='leg'?'plinth':'carcass')+', at '+where(it.b));}
+    const n0=bb.min.z*1000;if(!VD.runs[RUNS3.find(r=>runG[r]===g)].freeStanding&&n0<-E)out.push({k:'Sticks out',a:it.name,b:'behind the wall',v:r1(-n0)+' mm',at:where(it.b)});   // wall runs: n = 0 is the wall
+    if(it.kind==='leg'?n1>PF-PT+E:n1>CN1+E)out.push({k:'Sticks out',a:it.name,b:'in front of the '+(it.kind==='leg'?'plinth':'carcass'),v:r1(n1-(it.kind==='leg'?PF-PT:CN1))+' mm',at:where(it.b)});}
   return {n:items.length,overlaps,gaps,out};}
 const GCHK=geomCheck();
+/* ---------- visual lines: front tops (and bottoms) a few mm apart should share one line, in all groups ---------- */
+function lineCheck(){const T=20,E=.01,out=[];   // near miss: 0.01 < difference <= 20 mm
+  for(const [side,key] of [['tops','v1'],['bottoms','v0']]){const m=new Map();
+    for(const F of MOD.fronts){const v=Math.round(F[key]*10)/10,w='G'+F.g+'/'+F.it.c;if(!m.has(v))m.set(v,[]);if(!m.get(v).includes(w))m.get(v).push(w);}
+    const ks=[...m.keys()].sort((x,y)=>x-y);
+    for(let i=0;i<ks.length;i++)for(let j=i+1;j<ks.length&&ks[j]-ks[i]<=T;j++)if(ks[j]-ks[i]>E)
+      out.push({k:'Line',a:side+' '+ks[i]+': '+m.get(ks[i]).join(', '),b:side+' '+ks[j]+': '+m.get(ks[j]).join(', '),v:Math.round((ks[j]-ks[i])*10)/10+' mm off',at:''});}
+  return out;}
+const LCHK=lineCheck();
 
 /* ================= 7. ROOM ================= */
 const walls=[];
@@ -1025,11 +1061,12 @@ document.getElementById('kStats').innerHTML=[
   ['Shelves',STAT.shelvesAdjustable+' adjustable + '+STAT.shelvesFixed+' fixed'],['Legs',STAT.legs],['Handles',STAT.handles]].map(([a,b])=>'<dt>'+a+'</dt><dd>'+b+'</dd>').join('');
 
 /* ---------- geometry check output ---------- */
-{const all=[...MOD.warnings.map(x=>'Data: '+x),...GCHK.overlaps.map(x=>'Overlap: '+x),...GCHK.gaps.map(x=>'Gap: '+x),...GCHK.out.map(x=>'Sticks out: '+x)];
+{const all=[...MOD.warnings.map(x=>({k:'Data',a:x,b:'',v:'',at:''})),...GCHK.overlaps,...GCHK.gaps,...GCHK.out,...LCHK];
   const gn=document.getElementById('geoNote');gn.className='note '+(all.length?'bad':'okk');
-  gn.textContent=all.length?all.length+(all.length===1?' issue':' issues')+' in '+GCHK.n+' parts ('+MOD.warnings.length+' in the data, '+GCHK.overlaps.length+' overlaps, '+GCHK.gaps.length+' gaps, '+GCHK.out.length+' sticking out):'
-    :'All '+GCHK.n+' parts OK: no overlaps, no gaps between frames / back strips and their neighbours, nothing sticks out.';
-  document.getElementById('geoList').innerHTML=all.slice(0,40).map(x=>'<li>'+esc(x)+'</li>').join('')+(all.length>40?'<li>… '+(all.length-40)+' more</li>':'');}
+  gn.textContent=all.length?all.length+(all.length===1?' issue':' issues')+' in '+GCHK.n+' parts ('+MOD.warnings.length+' in the data, '+GCHK.overlaps.length+' overlaps, '+GCHK.gaps.length+' gaps, '+GCHK.out.length+' sticking out, '+LCHK.length+' off the line):'
+    :'All '+GCHK.n+' parts OK: no overlaps, no gaps between frames / back strips and their neighbours, nothing sticks out, front lines aligned.';
+  // one issue per item: title line, then the parts and the place, each on its own line after a dash
+  document.getElementById('geoList').innerHTML=all.map(x=>'<li><b>'+esc(x.k)+(x.v!==''?' '+esc(x.v):'')+'</b>'+[x.a,x.b,x.at].filter(Boolean).map(t=>'<br>– '+esc(t)).join('')+'</li>').join('');}
 /* ---------- Project tab ---------- */
 document.getElementById('dims').innerHTML=[
   ['Worktop '+RUN_NAME.A,(wtA?wtA.u1-wtA.u0:0)+' × '+WTG(GOF.A).depth+' × '+WTH],['Worktop height',WT+' above the floor'],['Tall units',(WB[WB.length-1])+' × '+HC],
@@ -1084,7 +1121,7 @@ function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width
 new ResizeObserver(resize).observe(stage);setLight(QUAL);
 for(const ev of ['pointerdown','pointermove','pointerup','wheel','click','input','change','keydown'])document.addEventListener(ev,e=>{if(ev!=='pointermove'||e.buttons)wake();},{capture:true,passive:true});
 const tmp=new THREE.Vector3();let last=performance.now();
-window.__kv={scene,GCHK,KS,MOV,STAT,SPC,setLight,setQuality,setLayer,preset,toggle,selectK,camera,controls,go};
+window.__kv={scene,GCHK,LCHK,KS,MOV,STAT,SPC,setLight,setQuality,setLayer,preset,toggle,selectK,camera,controls,go};
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   if(anim){const k=Math.min(1,(now-anim.s)/900),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
     camera.position.lerpVectors(anim.p0,anim.p,e);controls.target.lerpVectors(anim.t0,anim.t,e);if(k>=1)anim=null;}
