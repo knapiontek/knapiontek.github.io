@@ -73,9 +73,9 @@
   <p class="info" id="info"></p>
   <div class="issues" id="issues" hidden></div>
   <div class="toolbar">
-    <button class="btn" id="btnXlsx">Export XLSX</button>
-    <button class="btn secondary" id="btnReset">Restore data</button>
-    <div class="total-pill">Total gross: <b id="pillTotal"></b></div>
+    <button class="btn" id="exportXlsx">Export XLSX</button>
+    <button class="btn secondary" id="restoreData">Restore data</button>
+    <div class="total-pill">Total gross: <b id="totalGross"></b></div>
   </div>
   <div class="tabs">
     <button class="tab active" data-tab="estimate">Estimate</button>
@@ -94,7 +94,7 @@
     <div class="grid-wrap">
       <table class="grid">
         <thead><tr><th>No.</th><th>Item</th><th>Specification</th><th>Qty</th><th>Unit</th><th>Unit price [PLN]</th><th>Value [PLN]</th><th>Price source / notes</th></tr></thead>
-        <tbody id="kBody"></tbody>
+        <tbody id="estimateBody"></tbody>
       </table>
     </div>
     <div class="excl" id="excl"></div>
@@ -104,7 +104,7 @@
     <div class="grid-wrap">
       <table class="grid">
         <thead><tr><th>Element</th><th>A [mm]</th><th>B [mm]</th><th>Qty</th><th>m²</th><th>ABS edging [lm]</th><th>Cutting [lm]</th></tr></thead>
-        <tbody id="rBody"></tbody>
+        <tbody id="cuttingBody"></tbody>
       </table>
     </div>
     <div class="excl" id="cutNote"></div>
@@ -114,14 +114,14 @@
     <div class="grid-wrap">
       <table class="grid">
         <thead><tr><th>No.</th><th>Topic</th><th>Description</th><th>Assumed in the estimate</th><th>To decide</th></tr></thead>
-        <tbody id="uBody"></tbody>
+        <tbody id="notesBody"></tbody>
       </table>
     </div>
   </section>
 
   <section id="tab-assembly" class="hidden">
     <div class="excl" style="border-top:1px solid var(--grid)">Everything for one carcass in one place, to group the parts on site. Parts without a carcass are listed per group and column (G1/4 = group 1, column 4). Sizes in mm.</div>
-    <div class="asm" id="asmBody"></div>
+    <div class="asm" id="assemblyBody"></div>
   </section>
 
   <section id="tab-map" class="hidden">
@@ -134,41 +134,44 @@
 </div>
 
 <!-- ===================================================================
-     COST DATA (JSON) - this page's own input: prices, items, notes and vars. Everything measured comes from
+     COST DATA (JSON) - this page's own input: prices, items, notes and page settings. Everything measured comes from
      data.js through engine.js; nothing here repeats a calculated number.
-     blocks: cutting-list tables, built by engine.js (src: front | frames | plinths | panels | plaster | p18 | p16 | hdf)
-     cats/rows: items; qty = number or formula; name, spec, src and notes may hold placeholders:
-       {n:hinges} engine count ({n:tag.bins} = components with that tag), {r:drawers.dFrom} data.js rule,
-       {v:name} vars below, {p:id} unit price, {q:id} item quantity, {p18.m2|edge|cut|len|qty} cutting-list total,
-       {waste} {sheet} {reserve} parameters, |% shows a fraction as a percentage, ROUNDUP(x,0) rounds up
-     notes: Notes tab; refs in an item = note numbers
+       settings     page settings: XLSX file name, front functions (label of a front by its type and features),
+                    which blocks get edging / cutting lengths, appliance categories, texts
+       blocks       cutting-list tables, built by engine.js (parts: front | frames | plinths | panels | plaster | p18 | p16 | hdf)
+       categories   estimate items: qty = number or formula; name, spec, source and notes may hold placeholders:
+                      {n:hinges} engine count ({n:tag.bins} = components with that tag), {r:drawers.dFrom} data.js rule,
+                      {v:name} vars below, {p:id} unit price, {q:id} item quantity, {p18.m2|edge|cut|len|qty} cutting-list total,
+                      {waste} {sheet} {reserve} parameters, |% shows a fraction as a percentage, ROUNDUP(x,0) rounds up
+                    refs = numbers of the notes the item links to
+       notes        Notes tab: section headings, or no, topic, description, assumed (in the estimate), decide (open question)
      DATA FLOW: data.js (edited in design.html) -> engine.js -> this page, design.html, view.html
      ====================================================================== -->
 <script type="application/json" id="cost-data">{
- "rules": {
+ "settings": {
   "xlsxFile": "kitchen_cost_jaworze.xlsx",
-  "frontKinds": [
+  "frontFunctions": [
    {
-    "t": "drawer",
-    "tag": "bins",
-    "kind": "sink drawer (waste bins)"
+    "type": "drawer",
+    "features": "bins",
+    "function": "sink drawer (waste bins)"
    },
    {
-    "t": "drawer",
-    "kind": "drawer"
+    "type": "drawer",
+    "function": "drawer"
    },
    {
-    "t": "dummy",
-    "kind": "dummy front"
+    "type": "dummy",
+    "function": "dummy front"
    },
    {
-    "t": "cabinet",
-    "tag": "dishwasher|fridge|freezer",
-    "kind": "appliance-door front"
+    "type": "cabinet",
+    "features": "dishwasher|fridge|freezer",
+    "function": "appliance-door front"
    },
    {
-    "t": "cabinet",
-    "kind": "door"
+    "type": "cabinet",
+    "function": "door"
    }
   ],
   "edgeBlocks": {
@@ -183,7 +186,7 @@
    "p18",
    "p16"
   ],
-  "applianceCats": [
+  "applianceCategories": [
    "Appliances"
   ],
   "sheetLabel": "Board sheet 2800×2070 [m²]",
@@ -203,7 +206,7 @@
   {
    "id": "front",
    "title": "FRONTS – MDF {r:frontThickness} shaker, English Navy satin lacquer (front maker)",
-   "cols": [
+   "columns": [
     "Function",
     "Width",
     "Height",
@@ -211,12 +214,12 @@
    ],
    "rows": [],
    "live": true,
-   "src": "front"
+   "parts": "front"
   },
   {
    "id": "bar",
    "title": "FRAMES – MDF {r:frontThickness} on edge, {r:frame.depth} deep, lacquered like the fronts: edge + both faces",
-   "cols": [
+   "columns": [
     "Element",
     "Width / depth",
     "Length",
@@ -224,12 +227,12 @@
    ],
    "rows": [],
    "live": true,
-   "src": "frames"
+   "parts": "frames"
   },
   {
    "id": "plinth",
    "title": "PLINTH – standard kitchen plinth PVC, moisture-resistant (bought by the metre, cut to length on site)",
-   "cols": [
+   "columns": [
     "Element",
     "Height",
     "Length",
@@ -237,12 +240,12 @@
    ],
    "rows": [],
    "live": true,
-   "src": "plinths"
+   "parts": "plinths"
   },
   {
    "id": "panel",
    "title": "PANELS – MDF {r:frontThickness} laid flat, lacquered on both faces (L corner)",
-   "cols": [
+   "columns": [
     "Element",
     "Width",
     "Height",
@@ -250,12 +253,12 @@
    ],
    "rows": [],
    "live": true,
-   "src": "panels"
+   "parts": "panels"
   },
   {
    "id": "plaster",
    "title": "PLASTERBOARD – GKBI 12.5 on CD60 / UD27 profiles, {r:plasterboard.depth} deep (group 2 soffit and wall stub)",
-   "cols": [
+   "columns": [
     "Element",
     "Width",
     "Length",
@@ -263,12 +266,12 @@
    ],
    "rows": [],
    "live": true,
-   "src": "plaster"
+   "parts": "plaster"
   },
   {
    "id": "p18",
    "title": "CARCASSES – dark grey chipboard 18, cut + ABS 0.8 dark grey front edge (incl. back strips, island back panel, pull-out shelves)",
-   "cols": [
+   "columns": [
     "Element",
     "Width",
     "Height / depth",
@@ -276,12 +279,12 @@
    ],
    "rows": [],
    "live": true,
-   "src": "p18"
+   "parts": "p18"
   },
   {
    "id": "p16",
    "title": "DRAWERS – dark grey chipboard 16 (TANDEMBOX bottoms and backs, incl. inner drawers; hob separation panel)",
-   "cols": [
+   "columns": [
     "Element",
     "Width",
     "Depth / height",
@@ -289,12 +292,12 @@
    ],
    "rows": [],
    "live": true,
-   "src": "p16"
+   "parts": "p16"
   },
   {
    "id": "hdf",
    "title": "BACKS – HDF {r:back.thickness} (only behind cabinet doors; none behind drawers or appliances)",
-   "cols": [
+   "columns": [
     "Element",
     "Width",
     "Height",
@@ -302,13 +305,13 @@
    ],
    "rows": [],
    "live": true,
-   "src": "hdf"
+   "parts": "hdf"
   }
  ],
- "cats": [
+ "categories": [
   {
-   "cat": "Fronts, frames and plinth",
-   "rows": [
+   "name": "Fronts, frames and plinth",
+   "items": [
     {
      "id": "i1",
      "name": "Fronts MDF 18 shaker, lacquered",
@@ -316,7 +319,7 @@
      "qty": "={front.m2}",
      "unit": "m²",
      "price": 500,
-     "src": "supplier quote 500 PLN/m² (October 2026)",
+     "source": "supplier quote 500 PLN/m² (October 2026)",
      "refs": [
       "9"
      ]
@@ -328,7 +331,7 @@
      "qty": "={bar.m2}",
      "unit": "m²",
      "price": 500,
-     "src": "est.: all blue parts cost the same as the fronts; the front maker may charge a minimum area per piece",
+     "source": "est.: all blue parts cost the same as the fronts; the front maker may charge a minimum area per piece",
      "refs": [
       "6",
       "9"
@@ -341,7 +344,7 @@
      "qty": "={plinth.len}*(1+{v:plinthCutAllowance})",
      "unit": "lm",
      "price": 25,
-     "src": "PVC plinth 100: approx. 17–27 PLN/lm (tmakcesoria.pl, magolodz.pl, October 2026)",
+     "source": "PVC plinth 100: approx. 17–27 PLN/lm (tmakcesoria.pl, magolodz.pl, October 2026)",
      "refs": [
       "9"
      ]
@@ -353,7 +356,7 @@
      "qty": 1,
      "unit": "set",
      "price": 40,
-     "src": "approx. 3–4 PLN/pc (tmakcesoria.pl, October 2026)",
+     "source": "approx. 3–4 PLN/pc (tmakcesoria.pl, October 2026)",
      "refs": []
     },
     {
@@ -363,7 +366,7 @@
      "qty": "={panel.m2}",
      "unit": "m²",
      "price": 500,
-     "src": "est.: all blue parts cost the same as the fronts",
+     "source": "est.: all blue parts cost the same as the fronts",
      "refs": [
       "9",
       "C4"
@@ -372,8 +375,8 @@
    ]
   },
   {
-   "cat": "Carcasses",
-   "rows": [
+   "name": "Carcasses",
+   "items": [
     {
      "id": "i5",
      "name": "Dark grey chipboard 18",
@@ -381,7 +384,7 @@
      "qty": "=ROUNDUP({p18.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 210,
-     "src": "est.; white Kronospan 18 at Castorama 191 PLN/sheet (October 2026), dark grey similar",
+     "source": "est.; white Kronospan 18 at Castorama 191 PLN/sheet (October 2026), dark grey similar",
      "refs": [
       "10"
      ]
@@ -393,7 +396,7 @@
      "qty": "=ROUNDUP({p16.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 190,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -403,7 +406,7 @@
      "qty": "=ROUNDUP({hdf.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 80,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -413,7 +416,7 @@
      "qty": "={p18.cut}+{p16.cut}",
      "unit": "lm",
      "price": 3,
-     "src": "est., board supplier service",
+     "source": "est., board supplier service",
      "refs": []
     },
     {
@@ -423,14 +426,14 @@
      "qty": "={p18.edge}*(1+{v:edgeAllowance})",
      "unit": "lm",
      "price": 4.5,
-     "src": "est., including the service",
+     "source": "est., including the service",
      "refs": []
     }
    ]
   },
   {
-   "cat": "Hardware (Blum system)",
-   "rows": [
+   "name": "Hardware (Blum system)",
+   "items": [
     {
      "id": "i10",
      "name": "Hinge Blum CLIP top BLUMOTION 110° + mounting plate",
@@ -438,7 +441,7 @@
      "qty": "={n:hinges}",
      "unit": "pcs",
      "price": 28,
-     "src": "est.; alternative GTV soft-close approx. 10–15 PLN/pc",
+     "source": "est.; alternative GTV soft-close approx. 10–15 PLN/pc",
      "refs": [
       "11"
      ]
@@ -450,7 +453,7 @@
      "qty": "={n:pullOutShelves}",
      "unit": "pair",
      "price": 150,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -460,7 +463,7 @@
      "qty": "={n:drawersD}",
      "unit": "set",
      "price": 420,
-     "src": "est.",
+     "source": "est.",
      "refs": [
       "13"
      ]
@@ -472,7 +475,7 @@
      "qty": "={n:drawersM}",
      "unit": "set",
      "price": 260,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -482,7 +485,7 @@
      "qty": "={n:innerDrawers}",
      "unit": "set",
      "price": 330,
-     "src": "est.",
+     "source": "est.",
      "refs": [
       "15"
      ]
@@ -494,7 +497,7 @@
      "qty": "={n:innerDrawers}",
      "unit": "pcs",
      "price": 90,
-     "src": "est.; Blum ORGA-LINE costs more",
+     "source": "est.; Blum ORGA-LINE costs more",
      "refs": [
       "15"
      ]
@@ -506,7 +509,7 @@
      "qty": "={n:tag.bins}",
      "unit": "set",
      "price": 250,
-     "src": "est.",
+     "source": "est.",
      "refs": [
       "13"
      ]
@@ -518,7 +521,7 @@
      "qty": "={n:handles}",
      "unit": "pcs",
      "price": 25,
-     "src": "est., IKEA – check the price in store",
+     "source": "est., IKEA – check the price in store",
      "refs": []
     },
     {
@@ -528,7 +531,7 @@
      "qty": "={n:legs}",
      "unit": "pcs",
      "price": 3,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -538,7 +541,7 @@
      "qty": "=ROUNDUP({q:legs}/2,0)",
      "unit": "pcs",
      "price": 1,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -548,7 +551,7 @@
      "qty": "={n:shelfPins}",
      "unit": "pcs",
      "price": 0.25,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -558,7 +561,7 @@
      "qty": "={n:carcasses}*{v:confirmatPerCarcass}",
      "unit": "pcs",
      "price": 0.3,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -568,7 +571,7 @@
      "qty": 1,
      "unit": "set",
      "price": 120,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -578,7 +581,7 @@
      "qty": "={n:tag.dummy}",
      "unit": "set",
      "price": 10,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -588,7 +591,7 @@
      "qty": "={n:grilles}",
      "unit": "pcs",
      "price": 40,
-     "src": "est.",
+     "source": "est.",
      "refs": [
       "3"
      ]
@@ -600,7 +603,7 @@
      "qty": 1,
      "unit": "set",
      "price": 30,
-     "src": "est.",
+     "source": "est.",
      "refs": [
       "1",
       "14"
@@ -609,8 +612,8 @@
    ]
   },
   {
-   "cat": "Worktops and panels",
-   "rows": [
+   "name": "Worktops and panels",
+   "items": [
     {
      "id": "i22",
      "name": "Laminate oak worktop 38×{n:worktop.1}×4100",
@@ -618,7 +621,7 @@
      "qty": 1,
      "unit": "pcs",
      "price": 700,
-     "src": "est., approx. 170 PLN/lm",
+     "source": "est., approx. 170 PLN/lm",
      "refs": []
     },
     {
@@ -628,7 +631,7 @@
      "qty": 1,
      "unit": "pcs",
      "price": 1200,
-     "src": "est.",
+     "source": "est.",
      "refs": [
       "C1"
      ]
@@ -640,7 +643,7 @@
      "qty": 1,
      "unit": "pcs",
      "price": 350,
-     "src": "est., panel 4100×640",
+     "source": "est., panel 4100×640",
      "refs": []
     },
     {
@@ -650,7 +653,7 @@
      "qty": 1,
      "unit": "set",
      "price": 150,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -660,7 +663,7 @@
      "qty": 1,
      "unit": "set",
      "price": 350,
-     "src": "est., joiner / worktop wholesaler",
+     "source": "est., joiner / worktop wholesaler",
      "refs": [
       "8"
      ]
@@ -668,8 +671,8 @@
    ]
   },
   {
-   "cat": "Plasterboard (group 2)",
-   "rows": [
+   "name": "Plasterboard (group 2)",
+   "items": [
     {
      "id": "i50",
      "name": "Plasterboard GKBI 12.5 (moisture-resistant) 1200×2600",
@@ -677,7 +680,7 @@
      "qty": "=ROUNDUP({plaster.m2}*{r:plasterboard.layers}*(1+{waste})/{v:plasterSheet},0)",
      "unit": "pcs",
      "price": 45,
-     "src": "approx. 45 PLN per board (muratordom.pl, prices 2026)",
+     "source": "approx. 45 PLN per board (muratordom.pl, prices 2026)",
      "refs": [
       "C3"
      ]
@@ -689,7 +692,7 @@
      "qty": "=ROUNDUP({n:plasterCD}/3000,0)",
      "unit": "pcs",
      "price": 22,
-     "src": "21.99 PLN (leroymerlin.pl, October 2026)",
+     "source": "21.99 PLN (leroymerlin.pl, October 2026)",
      "refs": []
     },
     {
@@ -699,7 +702,7 @@
      "qty": "=ROUNDUP({n:plasterUD}/3000,0)",
      "unit": "pcs",
      "price": 15,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -709,7 +712,7 @@
      "qty": 1,
      "unit": "set",
      "price": 150,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -719,7 +722,7 @@
      "qty": "=ROUNDUP({n:plasterEdge}/3000,0)",
      "unit": "pcs",
      "price": 12,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     },
     {
@@ -729,14 +732,14 @@
      "qty": "=ROUNDUP({n:plasterEdge}/1000*(1+{v:edgeAllowance}),0)",
      "unit": "lm",
      "price": 5,
-     "src": "est.",
+     "source": "est.",
      "refs": []
     }
    ]
   },
   {
-   "cat": "Sink and tap",
-   "rows": [
+   "name": "Sink and tap",
+   "items": [
     {
      "id": "i27",
      "name": "Granite sink, 1 bowl",
@@ -744,7 +747,7 @@
      "qty": "={n:sinks}",
      "unit": "pcs",
      "price": 600,
-     "src": "est.",
+     "source": "est.",
      "refs": [
       "12"
      ]
@@ -756,7 +759,7 @@
      "qty": "={n:sinks}",
      "unit": "pcs",
      "price": 150,
-     "src": "est.",
+     "source": "est.",
      "refs": [
       "13"
      ]
@@ -768,7 +771,7 @@
      "qty": "={n:sinks}",
      "unit": "pcs",
      "price": 450,
-     "src": "est.",
+     "source": "est.",
      "refs": [
       "12"
      ]
@@ -776,8 +779,8 @@
    ]
   },
   {
-   "cat": "Appliances",
-   "rows": [
+   "name": "Appliances",
+   "items": [
     {
      "id": "i29",
      "name": "Fridge Bosch KIS86AFE0",
@@ -785,7 +788,7 @@
      "qty": "={n:fridges}",
      "unit": "pcs",
      "price": 3209,
-     "src": "3209 PLN (okazje.info.pl, Media Markt, October 2026)",
+     "source": "3209 PLN (okazje.info.pl, Media Markt, October 2026)",
      "refs": [
       "2",
       "3"
@@ -798,7 +801,7 @@
      "qty": "={n:tag.dishwasher}",
      "unit": "pcs",
      "price": 1850,
-     "src": "okazje.info.pl ~1800–1900 PLN",
+     "source": "okazje.info.pl ~1800–1900 PLN",
      "refs": [
       "5"
      ]
@@ -810,7 +813,7 @@
      "qty": "={n:hobs}",
      "unit": "pcs",
      "price": 1600,
-     "src": "okazje.info.pl ~1596 PLN",
+     "source": "okazje.info.pl ~1596 PLN",
      "refs": []
     },
     {
@@ -820,7 +823,7 @@
      "qty": "={n:tag.oven}",
      "unit": "pcs",
      "price": 1339,
-     "src": "1339 PLN (okazje.info.pl, RTV EURO AGD, October 2026)",
+     "source": "1339 PLN (okazje.info.pl, RTV EURO AGD, October 2026)",
      "refs": [
       "4"
      ]
@@ -832,7 +835,7 @@
      "qty": "={n:tag.micro}",
      "unit": "pcs",
      "price": 999,
-     "src": "okazje.info.pl ~999 PLN",
+     "source": "okazje.info.pl ~999 PLN",
      "refs": []
     },
     {
@@ -842,7 +845,7 @@
      "qty": 1,
      "unit": "pcs",
      "price": 1959,
-     "src": "neonet.pl 1959 PLN (October 2026)",
+     "source": "neonet.pl 1959 PLN (October 2026)",
      "refs": [
       "7"
      ]
@@ -854,7 +857,7 @@
      "qty": 1,
      "unit": "set",
      "price": 150,
-     "src": "est.; carbon filter sold separately",
+     "source": "est.; carbon filter sold separately",
      "refs": [
       "7"
      ]
@@ -867,181 +870,181 @@
  ],
  "notes": [
   {
-   "sec": "A. IMPORTANT (construction / appliance fit)"
+   "section": "A. IMPORTANT (construction / appliance fit)"
   },
   {
-   "nr": "1",
-   "t": "L corner – corner carcass",
-   "o": "The corner cabinet's carcass runs on behind its filler into the corner: one carcass over three columns (carcass K3 in the design). The rest of the corner is empty; the worktop rests on the carcass and on the back strips of the frames, carcasses screwed together.",
-   "p": "connectors {p:i21} PLN.",
-   "d": "wall batten under the worktop above the void?"
+   "no": "1",
+   "topic": "L corner – corner carcass",
+   "description": "The corner cabinet's carcass runs on behind its filler into the corner: one carcass over three columns (carcass K3 in the design). The rest of the corner is empty; the worktop rests on the carcass and on the back strips of the frames, carcasses screwed together.",
+   "assumed": "connectors {p:i21} PLN.",
+   "decide": "wall batten under the worktop above the void?"
   },
   {
-   "nr": "2",
-   "t": "Fridge Bosch KIS86AFE0 – front split",
-   "o": "Fronts fixed on the fridge doors (flat hinge) must match the freezer / fridge door split. Check the door heights and the allowed front overhang in the installation manual.",
-   "p": "fronts as designed.",
-   "d": ""
+   "no": "2",
+   "topic": "Fridge Bosch KIS86AFE0 – front split",
+   "description": "Fronts fixed on the fridge doors (flat hinge) must match the freezer / fridge door split. Check the door heights and the allowed front overhang in the installation manual.",
+   "assumed": "fronts as designed.",
+   "decide": ""
   },
   {
-   "nr": "3",
-   "t": "Fridge – exhaust ventilation",
-   "o": "Above the fridge carcass there is a separate cabinet. Bosch requires an air outlet (usually ~200 cm²) at the top or a gap behind the back.",
-   "p": "aluminium grille approx. 500 × 60 in the plinth under the fridge (≥ 200 cm² open area) + ventilation gap behind the back of the cabinet above (no cost). Confirm with the manual.",
-   "d": ""
+   "no": "3",
+   "topic": "Fridge – exhaust ventilation",
+   "description": "Above the fridge carcass there is a separate cabinet. Bosch requires an air outlet (usually ~200 cm²) at the top or a gap behind the back.",
+   "assumed": "aluminium grille approx. 500 × 60 in the plinth under the fridge (≥ 200 cm² open area) + ventilation gap behind the back of the cabinet above (no cost). Confirm with the manual.",
+   "decide": ""
   },
   {
-   "nr": "4",
-   "t": "Oven Bosch HBA534BB3 – opening height",
-   "o": "595 ovens usually need approx. 590 height. Check the oven module minus the {r:board} fixed shelf against the minimum niche height in the manual; if needed reduce the cabinet under the oven.",
-   "p": "",
-   "d": ""
+   "no": "4",
+   "topic": "Oven Bosch HBA534BB3 – opening height",
+   "description": "595 ovens usually need approx. 590 height. Check the oven module minus the {r:board} fixed shelf against the minimum niche height in the manual; if needed reduce the cabinet under the oven.",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "5",
-   "t": "Dishwasher Bosch SMV4HVX00E – front height",
-   "o": "Check the maximum front height and weight for this model with a 100 plinth (dishwasher door hinge / optional Vario hinge).",
-   "p": "",
-   "d": ""
+   "no": "5",
+   "topic": "Dishwasher Bosch SMV4HVX00E – front height",
+   "description": "Check the maximum front height and weight for this model with a 100 plinth (dishwasher door hinge / optional Vario hinge).",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "6",
-   "t": "Frames on edge, panels flat",
-   "o": "Frames: MDF {r:frontThickness} on edge, {r:frame.depth} deep, lacquered on the edge and both faces; with lacquer ≈ 18.5. Panels: MDF {r:frontThickness} laid flat, lacquered on both faces (L corners of group 1 and group 2). The group 1 panel overlaps the group 2 panel, so there is no gap in the corner.",
-   "p": "",
-   "d": ""
+   "no": "6",
+   "topic": "Frames on edge, panels flat",
+   "description": "Frames: MDF {r:frontThickness} on edge, {r:frame.depth} deep, lacquered on the edge and both faces; with lacquer ≈ 18.5. Panels: MDF {r:frontThickness} laid flat, lacquered on both faces (L corners of group 1 and group 2). The group 1 panel overlaps the group 2 panel, so there is no gap in the corner.",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "18",
-   "t": "Fixed shelves – full depth",
-   "o": "A fixed shelf at the joint of 2 fronts (and at an appliance) is full carcass depth, {r:carcassDepth} – not {r:shelf.setback} shorter like the adjustable shelves, so both fronts close against it.",
-   "p": "sizes in the Cutting list.",
-   "d": ""
+   "no": "18",
+   "topic": "Fixed shelves – full depth",
+   "description": "A fixed shelf at the joint of 2 fronts (and at an appliance) is full carcass depth, {r:carcassDepth} – not {r:shelf.setback} shorter like the adjustable shelves, so both fronts close against it.",
+   "assumed": "sizes in the Cutting list.",
+   "decide": ""
   },
   {
-   "nr": "19",
-   "t": "HDF backs and the island back panel",
-   "o": "HDF backs only behind cabinet doors; none behind drawers or appliances (air for the oven, microwave, fridge). The island gets a chipboard {r:board} back panel between the waterfalls, floor to the carcass tops, fixed to the carcass backs.",
-   "p": "",
-   "d": ""
+   "no": "19",
+   "topic": "HDF backs and the island back panel",
+   "description": "HDF backs only behind cabinet doors; none behind drawers or appliances (air for the oven, microwave, fridge). The island gets a chipboard {r:board} back panel between the waterfalls, floor to the carcass tops, fixed to the carcass backs.",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "sec": "B. SCOPE / PRICE ASSUMPTIONS"
+   "section": "B. SCOPE / PRICE ASSUMPTIONS"
   },
   {
-   "nr": "7",
-   "t": "Hood Electrolux LFV416K – operating mode",
-   "o": "Hood above the hob. Estimate: {p:i34} PLN + {p:i35} PLN for a Ø150 duct OR a carbon filter.",
-   "p": "",
-   "d": "extraction to a ventilation duct or recirculation? (carbon filter not included)."
+   "no": "7",
+   "topic": "Hood Electrolux LFV416K – operating mode",
+   "description": "Hood above the hob. Estimate: {p:i34} PLN + {p:i35} PLN for a Ø150 duct OR a carbon filter.",
+   "assumed": "",
+   "decide": "extraction to a ventilation duct or recirculation? (carbon filter not included)."
   },
   {
-   "nr": "8",
-   "t": "Worktop service ({p:i26} PLN)",
-   "o": "45° waterfall mitres and the sink and hob cut-outs – on laminate this is normally done by the wholesaler / joiner. You can skip it when self-assembling, but a hand-sawn mitre on laminate rarely comes out clean.",
-   "p": "",
-   "d": ""
+   "no": "8",
+   "topic": "Worktop service ({p:i26} PLN)",
+   "description": "45° waterfall mitres and the sink and hob cut-outs – on laminate this is normally done by the wholesaler / joiner. You can skip it when self-assembling, but a hand-sawn mitre on laminate rarely comes out clean.",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "9",
-   "t": "Lacquer only on fronts and frames",
-   "o": "Lacquered (front maker): fronts {p:i1} PLN/m² (supplier quote, October 2026) and frames {p:i2} PLN/m² and panels (L corner) {p:i4} PLN/m² – estimate: all blue parts cost the same. Plinth: standard PVC plinth, bought by the metre.",
-   "p": "",
-   "d": ""
+   "no": "9",
+   "topic": "Lacquer only on fronts and frames",
+   "description": "Lacquered (front maker): fronts {p:i1} PLN/m² (supplier quote, October 2026) and frames {p:i2} PLN/m² and panels (L corner) {p:i4} PLN/m² – estimate: all blue parts cost the same. Plinth: standard PVC plinth, bought by the metre.",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "10",
-   "t": "Chipboard 18 – {q:i5} sheets",
-   "o": "{p18.m2} m² + {waste|%} waste on sheets of {sheet} m² → {q:i5} sheets.",
-   "p": "",
-   "d": ""
+   "no": "10",
+   "topic": "Chipboard 18 – {q:i5} sheets",
+   "description": "{p18.m2} m² + {waste|%} waste on sheets of {sheet} m² → {q:i5} sheets.",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "11",
-   "t": "Blum vs GTV hinges",
-   "o": "Assumed Blum (as in the design). GTV soft-close reduces the total by approx. 400–550 PLN.",
-   "p": "",
-   "d": ""
+   "no": "11",
+   "topic": "Blum vs GTV hinges",
+   "description": "Assumed Blum (as in the design). GTV soft-close reduces the total by approx. 400–550 PLN.",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "12",
-   "t": "Sink and tap – no specific model",
-   "o": "1-bowl granite sink for the sink unit ({p:i27} PLN) and a {p:i28} PLN tap. Trap: space-saving, separate item (see 13).",
-   "p": "",
-   "d": ""
+   "no": "12",
+   "topic": "Sink and tap – no specific model",
+   "description": "1-bowl granite sink for the sink unit ({p:i27} PLN) and a {p:i28} PLN tap. Trap: space-saving, separate item (see 13).",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "13",
-   "t": "Sink unit – bottom drawer with waste-sorting bins",
-   "o": "Bottom drawer: D drawer, front per the Cutting list, with a 3-bin waste-sorting set. Requires a space-saving trap: flat trap body against the back wall, outlet above the drawer (D box with gallery rails up to ≈ 420 above the floor, bins ≈ 400). Top front 300: fixed dummy front.",
-   "p": "waste-sorting set {p:i38} PLN, space-saving trap {p:i39} PLN; no hinges on the sink fronts.",
-   "d": "wall drain at approx. 450 or more above the floor."
+   "no": "13",
+   "topic": "Sink unit – bottom drawer with waste-sorting bins",
+   "description": "Bottom drawer: D drawer, front per the Cutting list, with a 3-bin waste-sorting set. Requires a space-saving trap: flat trap body against the back wall, outlet above the drawer (D box with gallery rails up to ≈ 420 above the floor, bins ≈ 400). Top front 300: fixed dummy front.",
+   "assumed": "waste-sorting set {p:i38} PLN, space-saving trap {p:i39} PLN; no hinges on the sink fronts.",
+   "decide": "wall drain at approx. 450 or more above the floor."
   },
   {
-   "nr": "14",
-   "t": "Back strips behind frames",
-   "o": "Behind every frame that is not part of a carcass: chipboard {r:board} strip on edge, {r:frame.depth} deep, frame length; no packing.",
-   "p": "in the chipboard 18 cutting list.",
-   "d": ""
+   "no": "14",
+   "topic": "Back strips behind frames",
+   "description": "Behind every frame that is not part of a carcass: chipboard {r:board} strip on edge, {r:frame.depth} deep, frame length; no packing.",
+   "assumed": "in the chipboard 18 cutting list.",
+   "decide": ""
   },
   {
-   "nr": "15",
-   "t": "Inner cutlery drawers (island)",
-   "o": "Island top drawers: Blum TANDEMBOX antaro inner drawer M (83), NL 500, BLUMOTION, own runners on the carcass sides, behind the top front; closing the top drawer closes it. Inner front: Blum Z31L cut to LW − 132. Bottom and back in the Cutting list (chipboard 16; back height per Blum – confirm in the Blum configurator). Hob unit: no inner drawer (no space under the hob).",
-   "p": "{n:innerDrawers} inner drawer sets + {n:innerDrawers} cutlery inserts.",
-   "d": ""
+   "no": "15",
+   "topic": "Inner cutlery drawers (island)",
+   "description": "Island top drawers: Blum TANDEMBOX antaro inner drawer M (83), NL 500, BLUMOTION, own runners on the carcass sides, behind the top front; closing the top drawer closes it. Inner front: Blum Z31L cut to LW − 132. Bottom and back in the Cutting list (chipboard 16; back height per Blum – confirm in the Blum configurator). Hob unit: no inner drawer (no space under the hob).",
+   "assumed": "{n:innerDrawers} inner drawer sets + {n:innerDrawers} cutlery inserts.",
+   "decide": ""
   },
   {
-   "nr": "16",
-   "t": "Front sizes",
-   "o": "Front = module − 4 gaps (left, right, top, bottom), all set per front in the design. Joints between fronts 2 + 2; fronts on the plinth: bottom 0; the upper corner cabinet on the worktop: bottom 4, so the door clears the worktop when opening.",
-   "p": "fronts priced from the calculated m².",
-   "d": ""
+   "no": "16",
+   "topic": "Front sizes",
+   "description": "Front = module − 4 gaps (left, right, top, bottom), all set per front in the design. Joints between fronts 2 + 2; fronts on the plinth: bottom 0; the upper corner cabinet on the worktop: bottom 4, so the door clears the worktop when opening.",
+   "assumed": "fronts priced from the calculated m².",
+   "decide": ""
   },
   {
-   "nr": "17",
-   "t": "Hob unit – rails and separation panel",
-   "o": "Electrolux CIT61443: cut-out 560 × 490, built-in height 44. Cut-out 54 from the wall, 56 from the worktop front. Top rails on edge so the hob fits between them: front {r:board} × {r:rails.hobFront}, rear {r:board} × {r:rails.depth}. Separation panel chipboard 16 between the rails, below the front rail.",
-   "p": "rails and panel in the Cutting list.",
-   "d": "the installation diagram (manual p. 22) lists min. 28 and min. 12 – check which distances they are."
+   "no": "17",
+   "topic": "Hob unit – rails and separation panel",
+   "description": "Electrolux CIT61443: cut-out 560 × 490, built-in height 44. Cut-out 54 from the wall, 56 from the worktop front. Top rails on edge so the hob fits between them: front {r:board} × {r:rails.hobFront}, rear {r:board} × {r:rails.depth}. Separation panel chipboard 16 between the rails, below the front rail.",
+   "assumed": "rails and panel in the Cutting list.",
+   "decide": "the installation diagram (manual p. 22) lists min. 28 and min. 12 – check which distances they are."
   },
   {
-   "sec": "C. FOR INFORMATION"
+   "section": "C. FOR INFORMATION"
   },
   {
-   "nr": "C1",
-   "t": "Island: worktop overhang on the stool side",
-   "o": "see the 3D view; fine for bar stools, tight for chairs.",
-   "p": "",
-   "d": ""
+   "no": "C1",
+   "topic": "Island: worktop overhang on the stool side",
+   "description": "see the 3D view; fine for bar stools, tight for chairs.",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "C2",
-   "t": "Socket in the island",
-   "o": "not in the design; if needed, plan it before the screed / floor.",
-   "p": "",
-   "d": ""
+   "no": "C2",
+   "topic": "Socket in the island",
+   "description": "not in the design; if needed, plan it before the screed / floor.",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "C3",
-   "t": "Electrics / plumbing, plasterboard work, transport, assembly",
-   "o": "outside the estimate; plasterboard materials (soffit, wall stub) are in it.",
-   "p": "",
-   "d": ""
+   "no": "C3",
+   "topic": "Electrics / plumbing, plasterboard work, transport, assembly",
+   "description": "outside the estimate; plasterboard materials (soffit, wall stub) are in it.",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "C4",
-   "t": "Carcass sides not visible (covered by frames, waterfalls, wall)",
-   "o": "no lacquered side panels added.",
-   "p": "",
-   "d": ""
+   "no": "C4",
+   "topic": "Carcass sides not visible (covered by frames, waterfalls, wall)",
+   "description": "no lacquered side panels added.",
+   "assumed": "",
+   "decide": ""
   },
   {
-   "nr": "C5",
-   "t": "Summary",
-   "o": "{n:carcasses} carcasses, {n:fronts} fronts, {n:hinges} hinges, {n:drawersD} D + {n:drawersM} M drawers + {n:innerDrawers} inner drawers, {n:handles} handles, {n:legs} legs, {n:shelvesAdjustable} adjustable + {n:shelvesFixed} fixed shelves.",
-   "p": "",
-   "d": ""
+   "no": "C5",
+   "topic": "Summary",
+   "description": "{n:carcasses} carcasses, {n:fronts} fronts, {n:hinges} hinges, {n:drawersD} D + {n:drawersM} M drawers + {n:innerDrawers} inner drawers, {n:handles} handles, {n:legs} legs, {n:shelvesAdjustable} adjustable + {n:shelvesFixed} fixed shelves.",
+   "assumed": "",
+   "decide": ""
   }
  ],
  "vars": {
@@ -1055,352 +1058,489 @@
 <script src="engine.js"></script>
 <script>
 'use strict';
-const DATA = JSON.parse(document.getElementById('cost-data').textContent), RU = DATA.rules;   // all kitchen data is in the JSON blocks above
+/* ===================================================================
+   cost.html - material cost estimate, cutting list, notes, assembly and carcass map.
 
-// ---------- cutting list from engine.js (data.js): every block is calculated, nothing typed in ----------
+   WHO DOES WHAT
+     data.js     the project; engine.js builds the parts from it (boards, fronts, frames, plinths, panels, plasterboard)
+     #cost-data  this page's own input: prices, items, notes, page settings (JSON block above)
+     this page   cutting-list blocks from the engine parts, item quantities from formulas, totals, XLSX export
+
+   SECTIONS
+     1. model        engine parts -> cutting-list rows, assembly cards
+     2. state        values of the inputs (edits last until reload)
+     3. calculation  block totals, placeholders, quantities, totals
+     4. rendering    Estimate, Cutting list, Notes tabs
+     5. interaction  tabs, links to notes, inputs
+     6. XLSX export  the same tables with live formulas (SheetJS)
+   =================================================================== */
+
+const COST = JSON.parse(document.getElementById('cost-data').textContent); // all cost data of this page
+const SETTINGS = COST.settings;
 const KE = window.KitchenEngine || null;
-let MODEL = null, PROJECT_SRC = 'data.js';
-function frontKind(F) {   // label of a front for the Fronts block: kind tag + feature tags (rules.frontKinds)
-  return RU.frontKinds.find(k => k.t === F.it.t && (!k.tag || k.tag.split('|').some(t => F.tags.includes(t)))).kind;
+const MATERIAL_NAMES = { p18: 'Chipboard 18', p16: 'Chipboard 16', hdf: 'HDF 3' };
+
+const round1 = x => Math.round(x * 10) / 10;
+const fmt = (v, digits = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: digits, maximumFractionDigits: digits }) : '–');
+const fmtQty = v => (Number.isInteger(v) ? v.toLocaleString('en-GB') : fmt(v, 2));
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const colRange = (col, span) => 'col ' + col + (span > 1 ? '–' + (col + span - 1) : '');
+
+/* ---------- 1. model: parts from engine.js (data.js); every block is calculated, nothing typed in ---------- */
+let model = null;
+let carcassMapJSON = '';
+
+// label of a front in the Fronts block ("Function" column): the first settings.frontFunctions entry for its type and features
+function frontFunction(front) {
+  return SETTINGS.frontFunctions.find(f => f.type === front.item.type && (!f.features || f.features.split('|').some(t => front.tags.includes(t)))).function;
 }
-function rowsFor(src) {
-  const r1 = x => Math.round(x * 10) / 10;
+
+// cutting-list rows of one block: block.parts = front | frames | plinths | panels | plaster | p18 | p16 | hdf (board material)
+function blockRows(parts) {
   // where a part goes: carcass name, else group + column (G1/4 = group 1, column 4)
-  const KN = Object.fromEntries(MODEL.carcasses.map(K => [K.id, K.name]));
-  const at = p => p.K ? KN[p.K] : 'G' + p.g + (p.it ? '/' + p.it.c : p.c ? '/' + p.c : '');
-  const L = list => KE.cutList(list.map(p => ({ ...p, at: at(p) })));
-  if (src === 'front') return L(MODEL.fronts.map(F => ({ ...F, name: frontKind(F), a: r1(F.w), b: r1(F.h) })));
-  if (src === 'frames') return L(MODEL.frames);
-  if (src === 'plinths') return L(MODEL.plinths.map(p => ({ ...p, name: 'Plinth' })));
-  if (src === 'panels') return L(MODEL.panels);
-  if (src === 'plaster') return L(MODEL.plaster);
-  return L(MODEL.boards.filter(b => b.mat === src));   // p18 | p16 | hdf
+  const carcassName = Object.fromEntries(model.carcasses.map(K => [K.id, K.name]));
+  const where = p => (p.carcassId ? carcassName[p.carcassId] : 'G' + p.group + (p.item ? '/' + p.item.col : p.col ? '/' + p.col : ''));
+  const list = parts => KE.cutList(parts.map(p => ({ ...p, at: where(p) })));
+  if (parts === 'front') return list(model.fronts.map(f => ({ ...f, name: frontFunction(f), a: round1(f.width), b: round1(f.height) })));
+  if (parts === 'frames') return list(model.frames);
+  if (parts === 'plinths') return list(model.plinths.map(p => ({ ...p, name: 'Plinth' })));
+  if (parts === 'panels') return list(model.panels);
+  if (parts === 'plaster') return list(model.plaster);
+  return list(model.boards.filter(b => b.material === parts));
 }
-let MAPJ = '';
-function applyProject(P) {
-  MODEL = KE.build(P); for (const b of DATA.blocks) b.rows = rowsFor(b.src);
-  MAPJ = KE.mapJSON(KE.carcassMap(MODEL)); document.getElementById('mapJson').textContent = MAPJ;
+
+function applyProject(project) {
+  model = KE.build(project);
+  for (const block of COST.blocks) block.rows = blockRows(block.parts);
+  carcassMapJSON = KE.mapJSON(KE.carcassMap(model));
+  document.getElementById('mapJson').textContent = carcassMapJSON;
   renderAssembly();
   // issues found by engine.js in data.js (the 3D geometry check runs in view.html)
-  const iss = document.getElementById('issues'); iss.hidden = !MODEL.warnings.length;
-  iss.innerHTML = MODEL.warnings.length ? '<b>' + MODEL.warnings.length + (MODEL.warnings.length === 1 ? ' issue' : ' issues') + ' in data.js</b><ul>' + MODEL.warnings.map(w => '<li>' + w.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</li>').join('') + '</ul>' : '';
+  const issues = document.getElementById('issues'), warnings = model.warnings;
+  issues.hidden = !warnings.length;
+  issues.innerHTML = warnings.length
+    ? '<b>' + warnings.length + (warnings.length === 1 ? ' issue' : ' issues') + ' in data.js</b><ul>' + warnings.map(w => '<li>' + w.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</li>').join('') + '</ul>'
+    : '';
 }
-// ---------- assembly: all parts of one carcass together (boards, fronts, drawers, hardware), then parts without a carcass ----------
+
+// assembly: all parts of one carcass together (boards, fronts, drawers, hardware), then the parts without a carcass per group
 function renderAssembly() {
-  const M = MODEL, MAT = { p18: 'Chipboard 18', p16: 'Chipboard 16', hdf: 'HDF 3' };
-  const r1 = x => Math.round(x * 10) / 10, list = rows => rows.map(t => '<br>– ' + esc(t)).join('');
-  const parts = bs => KE.cutList(bs).map(([n, a, b, q]) => (q > 1 ? q + ' × ' : '') + n + ' ' + a + ' × ' + b);
-  const sec = (title, rows) => rows.length ? '<br><b>' + esc(title) + '</b>' + list(rows) : '';
-  const col = (c, n) => 'col ' + c + (n > 1 ? '–' + (c + n - 1) : '');
-  const cards = M.carcasses.map(K => {
-    const B = M.boards.filter(b => b.K === K.id), F = M.fronts.filter(f => f.K === K.id);
-    const pins = B.filter(b => b.name === 'Adjustable shelf').length * M.rules.shelf.pins, hinges = F.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
-    const fronts = F.map(f => frontKind(f) + ' ' + r1(f.w) + ' × ' + r1(f.h) + (f.hinges ? ', ' + f.hinges.length + ' hinges, side ' + f.hingeSide : '') + (f.handle ? ', handle ' + f.handle : ''));
-    const drawers = F.filter(f => f.drawer).map(f => (f.drawer.D ? 'D' : 'M') + ' drawer box' + (f.drawer.bins ? ' with waste bins' : '') + (f.drawer.inner ? ' + inner drawer M' : ''));
-    const hw = [K.legs ? K.legs + ' legs' : '', hinges ? hinges + ' hinges' : '', pins ? pins + ' shelf pins' : '', B.some(b => b.name === 'Pull-out shelf') ? '1 pair of full-extension runners' : ''].filter(Boolean);
-    const kind = K.base ? 'base' : K.floor ? 'tall' : 'wall', flags = ['sink', 'hob', 'fridge', 'coffee'].filter(x => K[x]);
-    return '<div class="card"><h3>' + esc(K.name) + '</h3>G' + K.g + ' ' + col(K.c, K.s) + ' · ' + kind + ' · ' + r1(K.u1 - K.u0) + ' × ' + r1(K.v1 - K.v0) + ' × ' + M.CD + (flags.length ? ' · ' + flags.join(', ') : '')
-      + ['p18', 'p16', 'hdf'].map(m => sec(MAT[m], parts(B.filter(b => b.mat === m)))).join('')
-      + sec('Fronts', fronts) + sec('Drawers', drawers) + sec('Hardware', hw) + '</div>';
+  const lines = rows => rows.map(t => '<br>– ' + esc(t)).join('');
+  const partList = boards => KE.cutList(boards).map(([name, a, b, qty]) => (qty > 1 ? qty + ' × ' : '') + name + ' ' + a + ' × ' + b);
+  const section = (title, rows) => (rows.length ? '<br><b>' + esc(title) + '</b>' + lines(rows) : '');
+
+  const cards = model.carcasses.map(K => {
+    const boards = model.boards.filter(b => b.carcassId === K.id), fronts = model.fronts.filter(f => f.carcassId === K.id);
+    const pins = boards.filter(b => b.name === 'Adjustable shelf').length * model.rules.shelf.pins;
+    const hinges = fronts.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
+    const frontLines = fronts.map(f => frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.hinges ? ', ' + f.hinges.length + ' hinges, side ' + f.hingeSide : '') + (f.handle ? ', handle ' + f.handle : ''));
+    const drawerLines = fronts.filter(f => f.drawer).map(f => f.drawer.size + ' drawer box' + (f.drawer.bins ? ' with waste bins' : '') + (f.drawer.inner ? ' + inner drawer M' : ''));
+    const hardware = [
+      K.legs ? K.legs + ' legs' : '',
+      hinges ? hinges + ' hinges' : '',
+      pins ? pins + ' shelf pins' : '',
+      boards.some(b => b.name === 'Pull-out shelf') ? '1 pair of full-extension runners' : ''
+    ].filter(Boolean);
+    const flags = ['sink', 'hob', 'fridge', 'coffee'].filter(f => K[f]);
+    return '<div class="card"><h3>' + esc(K.name) + '</h3>G' + K.group + ' ' + colRange(K.col, K.span) + ' · ' + K.type + ' · ' + round1(K.u1 - K.u0) + ' × ' + round1(K.v1 - K.v0) + ' × ' + model.carcassDepth + (flags.length ? ' · ' + flags.join(', ') : '') +
+      ['p18', 'p16', 'hdf'].map(m => section(MATERIAL_NAMES[m], partList(boards.filter(b => b.material === m)))).join('') +
+      section('Fronts', frontLines) + section('Drawers', drawerLines) + section('Hardware', hardware) + '</div>';
   });
-  // parts without a carcass, per group
-  const at = p => 'G' + p.g + '/' + (p.it ? p.it.c : p.c || '');
+
+  // parts without a carcass, per group; sorted by column below, so a frame and its back strip sit together
+  const where = p => 'G' + p.group + '/' + (p.item ? p.item.col : p.col || '');
   const loose = {};
-  const add = (g, t) => (loose[g] = loose[g] || []).push(t);   // sorted by column below, so a frame and its back strip sit together
-  M.fronts.filter(f => !f.K).forEach(f => add(f.g, at(f) + ' – ' + frontKind(f) + ' ' + r1(f.w) + ' × ' + r1(f.h) + (f.handle ? ', handle ' + f.handle : '')));
-  M.frames.forEach(p => add(p.g, at(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
-  M.panels.forEach(p => add(p.g, at(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
-  M.boards.filter(b => !b.K).forEach(b => add(b.g, (b.c ? at(b) : 'G' + b.g) + ' – ' + b.name + ' ' + b.a + ' × ' + b.b + ' (' + (MAT[b.mat] || b.mat) + ')'));
-  M.plinths.forEach(p => add(p.g, at(p) + ' – Plinth ' + p.a + ' × ' + p.b));
-  M.plaster.forEach(p => add(p.g, at(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
-  const extra = Object.keys(loose).sort().map(g => '<div class="card"><h3>Group ' + g + ' – no carcass</h3>' + list(loose[g].map((t, i) => [Number((/^G\d+\/(\d+)/.exec(t) || [, 0])[1]), i, t]).sort((x, y) => x[0] - y[0] || x[1] - y[1]).map(x => x[2])).replace(/^<br>/, '') + '</div>');
-  document.getElementById('asmBody').innerHTML = cards.join('') + extra.join('');
+  const add = (group, text) => (loose[group] = loose[group] || []).push(text);
+  model.fronts.filter(f => !f.carcassId).forEach(f => add(f.group, where(f) + ' – ' + frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.handle ? ', handle ' + f.handle : '')));
+  model.frames.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
+  model.panels.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
+  model.boards.filter(b => !b.carcassId).forEach(b => add(b.group, (b.col ? where(b) : 'G' + b.group) + ' – ' + b.name + ' ' + b.a + ' × ' + b.b + ' (' + (MATERIAL_NAMES[b.material] || b.material) + ')'));
+  model.plinths.forEach(p => add(p.group, where(p) + ' – Plinth ' + p.a + ' × ' + p.b));
+  model.plaster.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
+  const columnOf = text => Number((/^G\d+\/(\d+)/.exec(text) || [, 0])[1]);
+  const looseCards = Object.keys(loose).sort().map(group => {
+    const sorted = loose[group].map((text, i) => [columnOf(text), i, text]).sort((x, y) => x[0] - y[0] || x[1] - y[1]).map(x => x[2]);
+    return '<div class="card"><h3>Group ' + group + ' – no carcass</h3>' + lines(sorted).replace(/^<br>/, '') + '</div>';
+  });
+  document.getElementById('assemblyBody').innerHTML = cards.join('') + looseCards.join('');
 }
+
 document.getElementById('mapSave').addEventListener('click', () => {
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([MAPJ], { type: 'application/json' }));
-  a.download = 'carcass_map.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([carcassMapJSON], { type: 'application/json' }));
+  a.download = 'carcass_map.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 
-const fmt = (v, d = 2) => Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }) : '–';
-const fmtQ = v => Number.isInteger(v) ? v.toLocaleString('en-GB') : fmt(v, 2);
-const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
-// ---------- state: the JSON values; edits on the page last until reload (nothing is stored) ----------
-function defaults() {
+/* ---------- 2. state: the values of the inputs; edits on the page last until reload (nothing is stored) ---------- */
+function defaultValues() {
   return {
-    params: { ...DATA.params },
-    blocks: Object.fromEntries(DATA.blocks.map(b => [b.id, b.rows.map(r => [r[1], r[2], r[3]])])),
-    items: Object.fromEntries(DATA.cats.flatMap(c => c.rows).map(r => [r.id, { qty: r.qty, price: r.price }]))
+    params: { ...COST.params },
+    blocks: Object.fromEntries(COST.blocks.map(b => [b.id, b.rows.map(r => [r[1], r[2], r[3]])])), // [a, b, qty] per row
+    items: Object.fromEntries(COST.categories.flatMap(c => c.items).map(item => [item.id, { qty: item.qty, price: item.price }]))
   };
 }
-let DEF = defaults();
-let S = defaults();
+let defaults = defaultValues();
+let values = defaultValues();
 
-
-// ---------- calculations ----------
+/* ---------- 3. calculation ---------- */
+// totals of each cutting-list block: m², edging, cutting length, length, pieces; and the same per row
 function blockTotals() {
-  const T = {};
-  for (const b of DATA.blocks) {
+  const totals = {};
+  for (const block of COST.blocks) {
     const t = { m2: 0, edge: 0, cut: 0, len: 0, qty: 0, rows: [] };
-    b.rows.forEach((r, i) => {
-      const [A, B, q] = S.blocks[b.id][i].map(Number);
-      const m2 = A * B * q / 1e6;
-      const E = RU.edgeBlocks[b.id], edge = E ? ((E.rows[r[0]] || E.along) === 'B' ? B : A) * q / 1000 : null;
-      const cut = RU.cutBlocks.includes(b.id) ? (A + B) * q / 1000 : null;
-      t.m2 += m2; t.len += B * q / 1000; t.qty += q; t.edge += edge || 0; t.cut += cut || 0;
+    const edging = SETTINGS.edgeBlocks[block.id], cutting = SETTINGS.cutBlocks.includes(block.id);
+    block.rows.forEach((row, i) => {
+      const [A, B, qty] = values.blocks[block.id][i].map(Number);
+      const m2 = (A * B * qty) / 1e6;
+      // edging along side A or B (settings.edgeBlocks: per block, per element name)
+      const edge = edging ? (((edging.rows[row[0]] || edging.along) === 'B' ? B : A) * qty) / 1000 : null;
+      const cut = cutting ? ((A + B) * qty) / 1000 : null;
+      t.m2 += m2;
+      t.len += (B * qty) / 1000;
+      t.qty += qty;
+      t.edge += edge || 0;
+      t.cut += cut || 0;
       t.rows.push({ m2, edge, cut });
     });
-    T[b.id] = t;
+    totals[block.id] = t;
   }
-  return T;
+  return totals;
 }
-function ROUNDUP(x, d) { const f = Math.pow(10, d || 0); return Math.ceil(x * f - 1e-9) / f; }
+function ROUNDUP(x, digits) {
+  const f = Math.pow(10, digits || 0);
+  return Math.ceil(x * f - 1e-9) / f;
+}
 // Placeholders in quantities and texts - every value comes from data.js, engine.js or the JSON of this page:
 //   {n:hinges} engine count (engine.js counts; {n:tag.bins} = components with that tag)   {r:drawers.dFrom} data.js rule
 //   {v:name} cost-data vars   {p:i26} unit price of an item   {q:i5} quantity of an item   {p18.m2|edge|cut|len|qty} cutting-list total
 //   {waste} {sheet} {reserve} parameters;  add |% to show a fraction as a percentage, e.g. {v:edgeAllowance|%}
-function token(key, T, Q) {
-  const [, p, rest] = key.match(/^(?:(\w+):)?(.+)$/);
-  const path = (o, k) => k.split('.').reduce((a, x) => a == null ? a : a[x], o);
-  if (p === 'n') return MODEL ? (MODEL.counts[rest.replace(/^(tag|worktop)\./, '$1:')] ?? 0) : NaN;
-  if (p === 'r') return MODEL ? path(MODEL.rules, rest) : NaN;
-  if (p === 'v') return DATA.vars[rest];
-  if (p === 'p') return Number(S.items[rest].price);
-  if (p === 'q') return Q ? Q[rest] : NaN;
-  if (!p && rest in S.params) return Number(S.params[rest]);
-  const [b, k] = rest.split('.');
-  return T && T[b] ? T[b][k] : NaN;
+function placeholder(key, totals, quantities) {
+  const [, prefix, rest] = key.match(/^(?:(\w+):)?(.+)$/);
+  const path = (obj, dotted) => dotted.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
+  if (prefix === 'n') return model ? (model.counts[rest.replace(/^(tag|worktop)\./, '$1:')] ?? 0) : NaN;
+  if (prefix === 'r') return model ? path(model.rules, rest) : NaN;
+  if (prefix === 'v') return COST.vars[rest];
+  if (prefix === 'p') return Number(values.items[rest].price);
+  if (prefix === 'q') return quantities ? quantities[rest] : NaN;
+  if (!prefix && rest in values.params) return Number(values.params[rest]);
+  const [block, total] = rest.split('.');
+  return totals && totals[block] ? totals[block][total] : NaN;
 }
-function evalQty(expr, T, Q) {
+// quantity: a number, or a formula "=..." with placeholders and ROUNDUP
+function evalQty(expr, totals, quantities) {
   if (typeof expr === 'number') return expr;
-  const js = expr.replace(/^=/, '').replace(/\{([^}|]+)\}/g, (_, key) => `(${Number(token(key, T, Q))})`);
+  const js = expr.replace(/^=/, '').replace(/\{([^}|]+)\}/g, (_, key) => `(${Number(placeholder(key, totals, quantities))})`);
   return Function('ROUNDUP', `return (${js});`)(ROUNDUP);
 }
+let lastResult = null; // last compute() result, for the texts
 // text with placeholders, filled with the current values
-let RES = null;   // last compute() result, for texts
 function fill(text) {
-  return String(text ?? '').replace(/\{([^}|]+)(\|%)?\}/g, (m, key, pct) => {
-    const v = token(key, RES && RES.T, RES && RES.Q);
+  return String(text ?? '').replace(/\{([^}|]+)(\|%)?\}/g, (m, key, percent) => {
+    const v = placeholder(key, lastResult && lastResult.totals, lastResult && lastResult.quantities);
     if (Array.isArray(v)) return v.join(', ');
     if (typeof v === 'string') return v;
     if (!Number.isFinite(v)) return '…';
-    return pct ? fmtQ(Math.round(v * 1000) / 10) + '%' : fmtQ(Math.round(v * 1000) / 1000);
+    return percent ? fmtQty(Math.round(v * 1000) / 10) + '%' : fmtQty(Math.round(v * 1000) / 1000);
   });
 }
+// quantities, values, category sums and totals of the estimate
 function compute() {
-  const T = blockTotals(), Q = {}, V = {}, cat = {};
-  let furn = 0, appl = 0;
-  for (const c of DATA.cats) {
+  const totals = blockTotals(), quantities = {}, itemValues = {}, categorySums = {};
+  let furniture = 0, appliances = 0;
+  for (const category of COST.categories) {
     let sum = 0;
-    for (const r of c.rows) {
-      Q[r.id] = evalQty(S.items[r.id].qty, T, Q);
-      V[r.id] = Math.round(Q[r.id] * Number(S.items[r.id].price) * 100) / 100;
-      sum += V[r.id];
+    for (const item of category.items) {
+      quantities[item.id] = evalQty(values.items[item.id].qty, totals, quantities);
+      itemValues[item.id] = Math.round(quantities[item.id] * Number(values.items[item.id].price) * 100) / 100;
+      sum += itemValues[item.id];
     }
-    cat[c.cat] = sum;
-    if (RU.applianceCats.includes(c.cat)) appl += sum; else furn += sum;
+    categorySums[category.name] = sum;
+    if (SETTINGS.applianceCategories.includes(category.name)) appliances += sum;
+    else furniture += sum;
   }
-  const reserve = Math.round(furn * Number(S.params.reserve) * 100) / 100;
-  return RES = { T, Q, V, cat, furn, appl, reserve, total: furn + appl + reserve };
+  const reserve = Math.round(furniture * Number(values.params.reserve) * 100) / 100;
+  return (lastResult = { totals, quantities, itemValues, categorySums, furniture, appliances, reserve, total: furniture + appliances + reserve });
 }
 
-// ---------- rendering ----------
-function describe(expr) {
+/* ---------- 4. rendering ---------- */
+// a quantity formula in words, for the tooltip of a calculated quantity
+function describeFormula(expr) {
   return expr.replace(/^=/, '')
-    .replace(/\{(q:\w+)\}/g, (m, k) => RU.qtyWords[k] || m)
-    .replace(/\{(\w+)\.(\w+)\}/g, (_, b, k) => `${(DATA.blocks.find(x => x.id === b) || {}).title?.split(' –')[0] || b} ${{ m2: 'm²', edge: 'edging lm', cut: 'cutting lm' }[k]}`)
-    .replace('{waste}', 'waste').replace('{sheet}', 'sheet');
+    .replace(/\{(q:\w+)\}/g, (m, k) => SETTINGS.qtyWords[k] || m)
+    .replace(/\{(\w+)\.(\w+)\}/g, (_, block, total) => `${(COST.blocks.find(x => x.id === block) || {}).title?.split(' –')[0] || block} ${{ m2: 'm²', edge: 'edging lm', cut: 'cutting lm' }[total]}`)
+    .replace('{waste}', 'waste')
+    .replace('{sheet}', 'sheet');
 }
-function renderK() {
-  const R = compute(); let lp = 0; const h = [];
-  for (const c of DATA.cats) {
-    h.push(`<tr class="cat"><td></td><td colspan="5">${esc(c.cat)}</td><td class="num">${fmt(R.cat[c.cat])}</td><td></td></tr>`);
-    for (const r of c.rows) {
-      lp++;
-      const st = S.items[r.id], d = DEF.items[r.id];
-      const qtyCell = typeof r.qty === 'string'
-        ? `<td class="num"><span class="calc" title="${esc(describe(r.qty))}">${fmtQ(R.Q[r.id])}</span></td>`
-        : `<td class="num"><input type="number" step="any" data-item="${r.id}" data-k="qty" value="${st.qty}" class="${st.qty != d.qty ? 'changed' : ''}"></td>`;
-      const refs = r.refs.map(n => `<a class="ref" data-ref="${n}">see Notes item ${n}</a>`).join(', ');
-      h.push(`<tr><td class="num">${lp}</td><td>${esc(fill(r.name))}</td><td class="muted">${esc(fill(r.spec))}</td>${qtyCell}<td>${esc(r.unit)}</td>
-        <td class="num"><input type="number" step="any" data-item="${r.id}" data-k="price" value="${st.price}" class="${st.price != d.price ? 'changed' : ''}"></td>
-        <td class="num" data-v="${r.id}">${fmt(R.V[r.id])}</td>
-        <td class="src">${esc(fill(r.src))}${refs ? ' – ' + refs : ''}</td></tr>`);
+
+function renderEstimate() {
+  const result = compute(), html = [];
+  let no = 0;
+  for (const category of COST.categories) {
+    html.push(`<tr class="cat"><td></td><td colspan="5">${esc(category.name)}</td><td class="num">${fmt(result.categorySums[category.name])}</td><td></td></tr>`);
+    for (const item of category.items) {
+      no++;
+      const current = values.items[item.id], original = defaults.items[item.id];
+      const qtyCell = typeof item.qty === 'string'
+        ? `<td class="num"><span class="calc" title="${esc(describeFormula(item.qty))}">${fmtQty(result.quantities[item.id])}</span></td>`
+        : `<td class="num"><input type="number" step="any" data-item="${item.id}" data-field="qty" value="${current.qty}" class="${current.qty != original.qty ? 'changed' : ''}"></td>`;
+      const refs = item.refs.map(n => `<a class="ref" data-ref="${n}">see Notes item ${n}</a>`).join(', ');
+      html.push(`<tr><td class="num">${no}</td><td>${esc(fill(item.name))}</td><td class="muted">${esc(fill(item.spec))}</td>${qtyCell}<td>${esc(item.unit)}</td>
+        <td class="num"><input type="number" step="any" data-item="${item.id}" data-field="price" value="${current.price}" class="${current.price != original.price ? 'changed' : ''}"></td>
+        <td class="num" data-v="${item.id}">${fmt(result.itemValues[item.id])}</td>
+        <td class="src">${esc(fill(item.source))}${refs ? ' – ' + refs : ''}</td></tr>`);
     }
   }
-  h.push(`<tr class="sum"><td></td><td colspan="5">Furniture (materials) total</td><td class="num">${fmt(R.furn)}</td><td></td></tr>`);
-  h.push(`<tr class="sum"><td></td><td colspan="5">Appliances total</td><td class="num">${fmt(R.appl)}</td><td></td></tr>`);
-  h.push(`<tr class="sum"><td></td><td colspan="5">Contingency for small items / estimated prices (${fmt(Number(S.params.reserve) * 100, 0)}% of furniture)</td><td class="num">${fmt(R.reserve)}</td><td></td></tr>`);
-  h.push(`<tr class="grand"><td></td><td colspan="5">TOTAL GROSS</td><td class="num">${fmt(R.total)}</td><td></td></tr>`);
-  document.getElementById('kBody').innerHTML = h.join('');
-  document.getElementById('pillTotal').textContent = fmt(R.total) + ' PLN';
-  return R;
+  html.push(`<tr class="sum"><td></td><td colspan="5">Furniture (materials) total</td><td class="num">${fmt(result.furniture)}</td><td></td></tr>`);
+  html.push(`<tr class="sum"><td></td><td colspan="5">Appliances total</td><td class="num">${fmt(result.appliances)}</td><td></td></tr>`);
+  html.push(`<tr class="sum"><td></td><td colspan="5">Contingency for small items / estimated prices (${fmt(Number(values.params.reserve) * 100, 0)}% of furniture)</td><td class="num">${fmt(result.reserve)}</td><td></td></tr>`);
+  html.push(`<tr class="grand"><td></td><td colspan="5">TOTAL GROSS</td><td class="num">${fmt(result.total)}</td><td></td></tr>`);
+  document.getElementById('estimateBody').innerHTML = html.join('');
+  document.getElementById('totalGross').textContent = fmt(result.total) + ' PLN';
+  return result;
 }
-function renderR() {
-  const T = blockTotals(), h = [];
-  for (const b of DATA.blocks) {
-    h.push(`<tr class="blk"><td colspan="8">${esc(fill(b.title))}</td></tr>`);
-    h.push(`<tr class="bh"><td>${b.cols.map(esc).join('</td><td>')}</td><td>m²</td><td>ABS edging [lm]</td><td>Cutting [lm]</td><td title="carcass name, else G group / column">Where</td></tr>`);
-    b.rows.forEach((r, i) => {
-      const cur = S.blocks[b.id][i], def = DEF.blocks[b.id][i], t = T[b.id].rows[i];
-      const inp = k => b.live ? `<td class="num" title="Calculated by engine.js from data.js – change the design in design.html">${cur[k]}</td>` : `<td class="num"><input type="number" step="1" data-blk="${b.id}" data-i="${i}" data-k="${k}" value="${cur[k]}" class="${cur[k] != def[k] ? 'changed' : ''}"></td>`;
-      h.push(`<tr><td>${esc(r[0])}</td>${inp(0)}${inp(1)}${inp(2)}<td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="where">${esc(r[4] || '')}</td></tr>`);
-    });
-    const t = T[b.id], hasE = !!RU.edgeBlocks[b.id], hasC = RU.cutBlocks.includes(b.id);
-    h.push(`<tr class="sum"><td>Total</td><td></td><td></td><td class="num">${t.qty}</td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${hasE ? fmt(t.edge) : ''}</td><td class="num">${hasC ? fmt(t.cut) : ''}</td><td></td></tr>`);
-  }
-  document.getElementById('rBody').innerHTML = h.join('');
-}
-function renderU() {
-  document.getElementById('uBody').innerHTML = DATA.notes.map(n => n.sec
-    ? `<tr class="cat"><td colspan="5">${esc(n.sec)}</td></tr>`
-    : `<tr id="note-${n.nr}"><td><b>${esc(n.nr)}</b></td><td><b>${esc(fill(n.t))}</b></td><td>${esc(fill(n.o))}</td><td>${esc(fill(n.p))}</td><td class="decide">${esc(fill(n.d))}</td></tr>`).join('');
-}
-function renderStatic() {
-  document.getElementById('title').textContent = DATA.title;
-  document.getElementById('info').textContent = DATA.info;
-  document.getElementById('excl').innerHTML = '<b>Not included / general notes</b><br>' + DATA.excluded.map(e => esc(fill(e))).join('<br>') +
-    '<br>Questions and assumptions: <a class="ref" data-tab-go="notes">see the Notes tab</a>.';
-  document.querySelectorAll('[data-param]').forEach(i => { i.value = S.params[i.dataset.param]; i.classList.toggle('changed', S.params[i.dataset.param] != DEF.params[i.dataset.param]); });
-}
-function renderAll() { renderStatic(); renderK(); renderR(); renderU(); document.getElementById('cutNote').textContent = fill(RU.cuttingNote); }
 
-// ---------- interaction ----------
+function renderCuttingList() {
+  const totals = blockTotals(), html = [];
+  for (const block of COST.blocks) {
+    html.push(`<tr class="blk"><td colspan="8">${esc(fill(block.title))}</td></tr>`);
+    html.push(`<tr class="bh"><td>${block.columns.map(esc).join('</td><td>')}</td><td>m²</td><td>ABS edging [lm]</td><td>Cutting [lm]</td><td title="carcass name, else G group / column">Where</td></tr>`);
+    block.rows.forEach((row, i) => {
+      const current = values.blocks[block.id][i], original = defaults.blocks[block.id][i], t = totals[block.id].rows[i];
+      const cell = field => block.live
+        ? `<td class="num" title="Calculated by engine.js from data.js – change the design in design.html">${current[field]}</td>`
+        : `<td class="num"><input type="number" step="1" data-block="${block.id}" data-row="${i}" data-field="${field}" value="${current[field]}" class="${current[field] != original[field] ? 'changed' : ''}"></td>`;
+      html.push(`<tr><td>${esc(row[0])}</td>${cell(0)}${cell(1)}${cell(2)}<td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="where">${esc(row[4] || '')}</td></tr>`);
+    });
+    const t = totals[block.id], hasEdging = !!SETTINGS.edgeBlocks[block.id], hasCutting = SETTINGS.cutBlocks.includes(block.id);
+    html.push(`<tr class="sum"><td>Total</td><td></td><td></td><td class="num">${t.qty}</td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${hasEdging ? fmt(t.edge) : ''}</td><td class="num">${hasCutting ? fmt(t.cut) : ''}</td><td></td></tr>`);
+  }
+  document.getElementById('cuttingBody').innerHTML = html.join('');
+}
+
+function renderNotes() {
+  document.getElementById('notesBody').innerHTML = COST.notes.map(n => n.section
+    ? `<tr class="cat"><td colspan="5">${esc(n.section)}</td></tr>`
+    : `<tr id="note-${n.no}"><td><b>${esc(n.no)}</b></td><td><b>${esc(fill(n.topic))}</b></td><td>${esc(fill(n.description))}</td><td>${esc(fill(n.assumed))}</td><td class="decide">${esc(fill(n.decide))}</td></tr>`).join('');
+}
+
+function renderStatic() {
+  document.getElementById('title').textContent = COST.title;
+  document.getElementById('info').textContent = COST.info;
+  document.getElementById('excl').innerHTML = '<b>Not included / general notes</b><br>' + COST.excluded.map(e => esc(fill(e))).join('<br>') +
+    '<br>Questions and assumptions: <a class="ref" data-tab-go="notes">see the Notes tab</a>.';
+  document.querySelectorAll('[data-param]').forEach(input => {
+    const name = input.dataset.param;
+    input.value = values.params[name];
+    input.classList.toggle('changed', values.params[name] != defaults.params[name]);
+  });
+}
+
+function renderAll() {
+  renderStatic();
+  renderEstimate();
+  renderCuttingList();
+  renderNotes();
+  document.getElementById('cutNote').textContent = fill(SETTINGS.cuttingNote);
+}
+
+/* ---------- 5. interaction ---------- */
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   ['estimate', 'cutting', 'notes', 'assembly', 'map'].forEach(n => document.getElementById('tab-' + n).classList.toggle('hidden', n !== name));
 }
-document.querySelector('.tabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) showTab(t.dataset.tab); });
-document.addEventListener('click', e => {
-  const a = e.target.closest('a.ref');
-  if (!a) return;
-  if (a.dataset.tabGo) { showTab(a.dataset.tabGo); return; }
-  showTab('notes');
-  const row = document.getElementById('note-' + a.dataset.ref);
-  if (row) { row.scrollIntoView({ behavior: 'smooth', block: 'center' }); row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); }
+document.querySelector('.tabs').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (tab) showTab(tab.dataset.tab);
 });
+// "see Notes item N": open the Notes tab and flash the note
+document.addEventListener('click', e => {
+  const link = e.target.closest('a.ref');
+  if (!link) return;
+  if (link.dataset.tabGo) { showTab(link.dataset.tabGo); return; }
+  showTab('notes');
+  const row = document.getElementById('note-' + link.dataset.ref);
+  if (row) {
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.classList.remove('flash');
+    void row.offsetWidth; // restart the animation
+    row.classList.add('flash');
+  }
+});
+// an edited input: parameter, item quantity / price, or a cutting-list cell
 document.addEventListener('change', e => {
-  const i = e.target;
-  if (!(i instanceof HTMLInputElement)) return;
-  const v = i.value === '' ? 0 : Number(i.value);
+  const input = e.target;
+  if (!(input instanceof HTMLInputElement)) return;
+  const v = input.value === '' ? 0 : Number(input.value);
   if (!Number.isFinite(v)) return;
-  if (i.dataset.param) S.params[i.dataset.param] = v;
-  else if (i.dataset.item) S.items[i.dataset.item][i.dataset.k] = v;
-  else if (i.dataset.blk) S.blocks[i.dataset.blk][+i.dataset.i][+i.dataset.k] = v;
+  const d = input.dataset;
+  if (d.param) values.params[d.param] = v;
+  else if (d.item) values.items[d.item][d.field] = v;
+  else if (d.block) values.blocks[d.block][+d.row][+d.field] = v;
   else return;
   renderAll();
 });
-document.getElementById('btnReset').addEventListener('click', () => {
-  S = defaults();
+document.getElementById('restoreData').addEventListener('click', () => {
+  values = defaultValues();
   renderAll();
 });
 
-// ---------- XLSX export (SheetJS, live formulas) ----------
+/* ---------- 6. XLSX export (SheetJS, live formulas) ---------- */
 function loadSheetJS() {
   if (window.XLSX) return Promise.resolve();
   return new Promise((ok, fail) => {
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    s.onload = ok; s.onerror = () => fail(new Error('Could not load the XLSX library (no internet?)'));
+    s.onload = ok;
+    s.onerror = () => fail(new Error('Could not load the XLSX library (no internet?)'));
     document.head.appendChild(s);
   });
 }
 function buildWorkbook() {
-  const R = compute(), XL = window.XLSX;
-  const n = v => ({ t: 'n', v }), s = v => ({ t: 's', v: String(v ?? '') }), f = (formula, v) => ({ t: 'n', f: formula, v });
-  // Cutting list
-  const rz = [[s('Cutting list – panels calculated by engine.js from data.js (dimensions mm)')], [s(fill(RU.cuttingNote))], []];
-  const totRow = {};
-  for (const b of DATA.blocks) {
-    rz.push([s(fill(b.title))]);
-    rz.push([...b.cols.map(s), s('m²'), s('ABS edging [lm]'), s('Cutting [lm]'), s('Where')]);
-    const first = rz.length + 1;
-    b.rows.forEach((r, i) => {
-      const [A, B, q] = S.blocks[b.id][i].map(Number), row = rz.length + 1, t = R.T[b.id].rows[i];
-      const line = [s(r[0]), n(A), n(B), n(q), f(`B${row}*C${row}*D${row}/1000000`, t.m2)];
-      const E = RU.edgeBlocks[b.id];
-      if (E) line.push(f(`${(E.rows[r[0]] || E.along) === 'B' ? 'C' : 'B'}${row}*D${row}/1000`, t.edge)); else line.push(s(''));
-      line.push(RU.cutBlocks.includes(b.id) ? f(`(B${row}+C${row})*D${row}/1000`, t.cut) : s(''));
-      line.push(s(r[4] || ''));
-      rz.push(line);
-    });
-    const last = rz.length, row = last + 1, T = R.T[b.id];
-    rz.push([s('Total'), s(''), s(''), f(`SUM(D${first}:D${last})`, T.qty), f(`SUM(E${first}:E${last})`, T.m2), f(`SUM(F${first}:F${last})`, T.edge), f(`SUM(G${first}:G${last})`, T.cut)]);
-    totRow[b.id] = row; rz.push([]);
-  }
-  // Notes
-  const uw = [[s('Notes – open questions / assumptions')], [s('Estimate items link here with "see Notes item N".')], [], ['No.', 'Topic', 'Description', 'Assumed in the estimate', 'To decide'].map(s)];
-  const uRow = {};
-  for (const x of DATA.notes) {
-    if (x.sec) uw.push([s(x.sec)]);
-    else { uRow[x.nr] = uw.length + 1; uw.push([s(x.nr), s(fill(x.t)), s(fill(x.o)), s(fill(x.p)), s(fill(x.d))]); }
-  }
-  // Estimate
-  const ks = [[s(DATA.title)], [s(fill(DATA.info))],
-    [s('Board waste allowance'), s(''), n(Number(S.params.waste))], [s(RU.sheetLabel), s(''), n(Number(S.params.sheet))], [],
-    ['No.', 'Item', 'Specification', 'Qty', 'Unit', 'Unit price [PLN]', 'Value [PLN]', 'Price source / notes'].map(s)];
-  const itemRow = {}, catRows = [], links = [];
-  let lp = 0;
-  const toXl = expr => expr.replace(/^=/, '')
-    .replace(/\{q:(\w+)\}/g, (_, id) => `D${itemRow[id]}`)
-    .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, b, k) => `'Cutting list'!$${{ m2: 'E', edge: 'F', cut: 'G' }[k]}$${totRow[b]}`)
-    .replace('{waste}', '$C$3').replace('{sheet}', '$C$4')
-    .replace(/\{([^}|]+)\}/g, (_, key) => String(Number(token(key, R.T, R.Q))));   // engine counts, rules, vars: values
-  for (const c of DATA.cats) {
-    const cr = ks.length + 1; ks.push(null); const first = cr + 1;
-    for (const r of c.rows) {
-      lp++; const row = ks.length + 1; itemRow[r.id] = row;
-      const q = typeof r.qty === 'string' ? f(toXl(r.qty), R.Q[r.id]) : n(Number(S.items[r.id].qty));
-      const src = fill(r.src) + (r.refs.length ? ' – see Notes item ' + r.refs.join(', ') : '');
-      const srcCell = s(src);
-      if (r.refs.length) srcCell.l = { Target: `#'Notes'!A${uRow[r.refs[0]]}`, Tooltip: 'Go to note' };
-      ks.push([n(lp), s(fill(r.name)), s(fill(r.spec)), q, s(r.unit), n(Number(S.items[r.id].price)), f(`ROUND(D${row}*F${row},2)`, R.V[r.id]), srcCell]);
-    }
-    ks[cr - 1] = [s(''), s(c.cat), s(''), s(''), s(''), s(''), f(`SUM(G${first}:G${ks.length})`, R.cat[c.cat])];
-    catRows.push([c.cat, cr]);
-  }
-  ks.push([]);
-  const m = ks.length + 1;
-  ks.push([s(''), s('Furniture (materials) total'), s(''), s(''), s(''), s(''), f(catRows.filter(c => !RU.applianceCats.includes(c[0])).map(c => 'G' + c[1]).join('+'), R.furn)]);
-  ks.push([s(''), s('Appliances total'), s(''), s(''), s(''), s(''), f(catRows.filter(c => RU.applianceCats.includes(c[0])).map(c => 'G' + c[1]).join('+'), R.appl)]);
-  ks.push([s(''), s('Contingency for small items / estimated prices'), s('% of furniture'), s(''), s(''), n(Number(S.params.reserve)), f(`ROUND(G${m}*F${m + 2},2)`, R.reserve)]);
-  ks.push([s(''), s('TOTAL GROSS'), s(''), s(''), s(''), s(''), f(`G${m}+G${m + 1}+G${m + 2}`, R.total)]);
-  ks.push([]); ks.push([s(''), s('Not included')]);
-  DATA.excluded.forEach(e => ks.push([s(''), s('• ' + fill(e))]));
-  const last = s('• Questions and assumptions: see the Notes tab.'); last.l = { Target: "#'Notes'!A1" };
-  ks.push([s(''), last]);
+  const result = compute(), XL = window.XLSX;
+  const num = v => ({ t: 'n', v }), str = v => ({ t: 's', v: String(v ?? '') }), formula = (f, v) => ({ t: 'n', f, v });
 
-  const wb = XL.utils.book_new();
-  const mk = (aoa, cols) => { const ws = XL.utils.aoa_to_sheet(aoa.map(r => r || [])); ws['!cols'] = cols.map(w => ({ wch: w })); return ws; };
-  const wsK = mk(ks, [5, 44, 36, 10, 6, 13, 14, 60]);
-  // number formats
-  for (let r = 7; r <= ks.length; r++) {
-    for (const col of ['F', 'G']) { const c = wsK[col + r]; if (c && c.t === 'n') c.z = '#,##0.00'; }
-    const d = wsK['D' + r]; if (d && d.f && !/ROUNDUP/.test(d.f)) d.z = '#,##0.00';
+  // sheet "Cutting list"
+  const cutting = [[str('Cutting list – panels calculated by engine.js from data.js (dimensions mm)')], [str(fill(SETTINGS.cuttingNote))], []];
+  const blockTotalRow = {};
+  for (const block of COST.blocks) {
+    cutting.push([str(fill(block.title))]);
+    cutting.push([...block.columns.map(str), str('m²'), str('ABS edging [lm]'), str('Cutting [lm]'), str('Where')]);
+    const first = cutting.length + 1;
+    block.rows.forEach((row, i) => {
+      const [A, B, qty] = values.blocks[block.id][i].map(Number), r = cutting.length + 1, t = result.totals[block.id].rows[i];
+      const line = [str(row[0]), num(A), num(B), num(qty), formula(`B${r}*C${r}*D${r}/1000000`, t.m2)];
+      const edging = SETTINGS.edgeBlocks[block.id];
+      if (edging) line.push(formula(`${(edging.rows[row[0]] || edging.along) === 'B' ? 'C' : 'B'}${r}*D${r}/1000`, t.edge));
+      else line.push(str(''));
+      line.push(SETTINGS.cutBlocks.includes(block.id) ? formula(`(B${r}+C${r})*D${r}/1000`, t.cut) : str(''));
+      line.push(str(row[4] || ''));
+      cutting.push(line);
+    });
+    const last = cutting.length, totalRow = last + 1, T = result.totals[block.id];
+    cutting.push([str('Total'), str(''), str(''), formula(`SUM(D${first}:D${last})`, T.qty), formula(`SUM(E${first}:E${last})`, T.m2), formula(`SUM(F${first}:F${last})`, T.edge), formula(`SUM(G${first}:G${last})`, T.cut)]);
+    blockTotalRow[block.id] = totalRow;
+    cutting.push([]);
   }
-  ['C3'].forEach(a => wsK[a].z = '0%'); wsK['F' + (m + 2)].z = '0%';
-  const wsR = mk(rz, [40, 10, 10, 8, 10, 15, 12]);
-  for (let r = 1; r <= rz.length; r++) { const e = wsR['E' + r]; if (e && e.f) e.z = '0.000'; ['F', 'G'].forEach(c => { const x = wsR[c + r]; if (x && x.f) x.z = '0.00'; }); }
-  XL.utils.book_append_sheet(wb, wsK, 'Estimate');
-  XL.utils.book_append_sheet(wb, wsR, 'Cutting list');
-  XL.utils.book_append_sheet(wb, mk(uw, [6, 34, 70, 42, 40]), 'Notes');
-  return wb;
+
+  // sheet "Notes"
+  const notes = [[str('Notes – open questions / assumptions')], [str('Estimate items link here with "see Notes item N".')], [], ['No.', 'Topic', 'Description', 'Assumed in the estimate', 'To decide'].map(str)];
+  const noteRow = {};
+  for (const n of COST.notes) {
+    if (n.section) notes.push([str(n.section)]);
+    else {
+      noteRow[n.no] = notes.length + 1;
+      notes.push([str(n.no), str(fill(n.topic)), str(fill(n.description)), str(fill(n.assumed)), str(fill(n.decide))]);
+    }
+  }
+
+  // sheet "Estimate": waste in C3, sheet size in C4
+  const estimate = [[str(COST.title)], [str(fill(COST.info))],
+    [str('Board waste allowance'), str(''), num(Number(values.params.waste))], [str(SETTINGS.sheetLabel), str(''), num(Number(values.params.sheet))], [],
+    ['No.', 'Item', 'Specification', 'Qty', 'Unit', 'Unit price [PLN]', 'Value [PLN]', 'Price source / notes'].map(str)];
+  const itemRow = {}, categoryRows = [];
+  let no = 0;
+  // quantity formula of this page -> Excel formula: item quantities and cutting-list totals as cell references, the rest as values
+  const toExcel = expr => expr.replace(/^=/, '')
+    .replace(/\{q:(\w+)\}/g, (_, id) => `D${itemRow[id]}`)
+    .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, block, total) => `'Cutting list'!$${{ m2: 'E', edge: 'F', cut: 'G' }[total]}$${blockTotalRow[block]}`)
+    .replace('{waste}', '$C$3')
+    .replace('{sheet}', '$C$4')
+    .replace(/\{([^}|]+)\}/g, (_, key) => String(Number(placeholder(key, result.totals, result.quantities))));
+  for (const category of COST.categories) {
+    const categoryRow = estimate.length + 1;
+    estimate.push(null); // filled with the category sum below
+    const first = categoryRow + 1;
+    for (const item of category.items) {
+      no++;
+      const r = estimate.length + 1;
+      itemRow[item.id] = r;
+      const qty = typeof item.qty === 'string' ? formula(toExcel(item.qty), result.quantities[item.id]) : num(Number(values.items[item.id].qty));
+      const source = str(fill(item.source) + (item.refs.length ? ' – see Notes item ' + item.refs.join(', ') : ''));
+      if (item.refs.length) source.l = { Target: `#'Notes'!A${noteRow[item.refs[0]]}`, Tooltip: 'Go to note' };
+      estimate.push([num(no), str(fill(item.name)), str(fill(item.spec)), qty, str(item.unit), num(Number(values.items[item.id].price)), formula(`ROUND(D${r}*F${r},2)`, result.itemValues[item.id]), source]);
+    }
+    estimate[categoryRow - 1] = [str(''), str(category.name), str(''), str(''), str(''), str(''), formula(`SUM(G${first}:G${estimate.length})`, result.categorySums[category.name])];
+    categoryRows.push([category.name, categoryRow]);
+  }
+  estimate.push([]);
+  const furnitureRow = estimate.length + 1;
+  const sumOf = isAppliance => categoryRows.filter(c => SETTINGS.applianceCategories.includes(c[0]) === isAppliance).map(c => 'G' + c[1]).join('+');
+  estimate.push([str(''), str('Furniture (materials) total'), str(''), str(''), str(''), str(''), formula(sumOf(false), result.furniture)]);
+  estimate.push([str(''), str('Appliances total'), str(''), str(''), str(''), str(''), formula(sumOf(true), result.appliances)]);
+  estimate.push([str(''), str('Contingency for small items / estimated prices'), str('% of furniture'), str(''), str(''), num(Number(values.params.reserve)), formula(`ROUND(G${furnitureRow}*F${furnitureRow + 2},2)`, result.reserve)]);
+  estimate.push([str(''), str('TOTAL GROSS'), str(''), str(''), str(''), str(''), formula(`G${furnitureRow}+G${furnitureRow + 1}+G${furnitureRow + 2}`, result.total)]);
+  estimate.push([]);
+  estimate.push([str(''), str('Not included')]);
+  COST.excluded.forEach(e => estimate.push([str(''), str('• ' + fill(e))]));
+  const notesLink = str('• Questions and assumptions: see the Notes tab.');
+  notesLink.l = { Target: "#'Notes'!A1" };
+  estimate.push([str(''), notesLink]);
+
+  const workbook = XL.utils.book_new();
+  const sheet = (rows, widths) => {
+    const ws = XL.utils.aoa_to_sheet(rows.map(r => r || []));
+    ws['!cols'] = widths.map(w => ({ wch: w }));
+    return ws;
+  };
+  const estimateSheet = sheet(estimate, [5, 44, 36, 10, 6, 13, 14, 60]);
+  // number formats
+  for (let r = 7; r <= estimate.length; r++) {
+    for (const col of ['F', 'G']) {
+      const c = estimateSheet[col + r];
+      if (c && c.t === 'n') c.z = '#,##0.00';
+    }
+    const q = estimateSheet['D' + r];
+    if (q && q.f && !/ROUNDUP/.test(q.f)) q.z = '#,##0.00';
+  }
+  estimateSheet['C3'].z = '0%';
+  estimateSheet['F' + (furnitureRow + 2)].z = '0%';
+  const cuttingSheet = sheet(cutting, [40, 10, 10, 8, 10, 15, 12]);
+  for (let r = 1; r <= cutting.length; r++) {
+    const e = cuttingSheet['E' + r];
+    if (e && e.f) e.z = '0.000';
+    ['F', 'G'].forEach(c => {
+      const x = cuttingSheet[c + r];
+      if (x && x.f) x.z = '0.00';
+    });
+  }
+  XL.utils.book_append_sheet(workbook, estimateSheet, 'Estimate');
+  XL.utils.book_append_sheet(workbook, cuttingSheet, 'Cutting list');
+  XL.utils.book_append_sheet(workbook, sheet(notes, [6, 34, 70, 42, 40]), 'Notes');
+  return workbook;
 }
-document.getElementById('btnXlsx').addEventListener('click', async e => {
-  const b = e.currentTarget; b.disabled = true;
-  try { await loadSheetJS(); window.XLSX.writeFile(buildWorkbook(), RU.xlsxFile, { compression: true }); }
-  catch (err) { alert(err.message); }
-  finally { b.disabled = false; }
+document.getElementById('exportXlsx').addEventListener('click', async e => {
+  const button = e.currentTarget;
+  button.disabled = true;
+  try {
+    await loadSheetJS();
+    window.XLSX.writeFile(buildWorkbook(), SETTINGS.xlsxFile, { compression: true });
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    button.disabled = false;
+  }
 });
 
-// parts from data.js through engine.js, then draw (the page is drawn empty first)
+/* ---------- start: the page is drawn empty first, then with the parts from data.js through engine.js ---------- */
 renderAll();
-if (!KE) { document.getElementById('pillTotal').textContent = 'engine.js not found next to this page'; document.getElementById('mapJson').textContent = 'engine.js not found - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.'; }
-else KE.load().then(P => {
-  applyProject(P); DEF = defaults();
-  for (const b of DATA.blocks) if (b.live) S.blocks[b.id] = DEF.blocks[b.id].map(r => [...r]);
-  renderAll();
-}).catch(e => { document.getElementById('pillTotal').textContent = 'data.js not found next to this page'; console.error(e); });
+if (!KE) {
+  document.getElementById('totalGross').textContent = 'engine.js not found next to this page';
+  document.getElementById('mapJson').textContent = 'engine.js not found - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.';
+} else {
+  KE.load()
+    .then(project => {
+      applyProject(project);
+      defaults = defaultValues();
+      for (const block of COST.blocks) if (block.live) values.blocks[block.id] = defaults.blocks[block.id].map(r => [...r]);
+      renderAll();
+    })
+    .catch(e => {
+      document.getElementById('totalGross').textContent = 'data.js not found next to this page';
+      console.error(e);
+    });
+}
 </script>
 </body>
 </html>

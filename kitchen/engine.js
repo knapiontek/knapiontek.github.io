@@ -1,314 +1,561 @@
 /* engine.js - kitchen construction engine, shared by design.html, cost.html and view.html.
-   Deterministic: build(data) is a pure function of the project data (data.js). Every size comes from data.rules; this file holds no
-   project numbers. No drawing here: it returns positioned parts (mm) that the pages draw, price or list.
 
-   Coordinates are per group: u along the group (from its first column), v up from the floor,
-   n out from the wall: 0 = wall, carcass back at rules.wallGap, front face at wallGap + carcassDepth + frontThickness.
-   The view places each group in the room.
+   build(project) is a pure function of the project data (data.js). Every size comes from project.rules; this file holds no
+   project numbers and draws nothing: it returns positioned parts (mm) that the pages draw (design, view), price or list (cost).
 
-   Component fields (data.components):
-     g group, c first column, s column span, h height
-     tags   exactly one type - filler, board, plinth, worktop, splash, panel, frame, cabinet, drawer, dummy, oven, micro
-            + feature tags   - hob, sink, bins, dishwasher, fridge, freezer, inner, end (worktop end / waterfall), coffee
-     group roles (worktop, tall, island) come from the notes: a note named "group N" with the role as its description
-     k      carcass name (K1, K2 ...): same name = ONE carcass over all its columns and heights; "" = no carcass
-     gaps   fronts only: [left, right, top, bottom]; front = module minus these four gaps
-     hd     handle position T | B | L | R | ""
+   DATA FLOW   data.js -> build() -> model -> design.html (2D elevations), view.html (3D room), cost.html (estimate, cutting list)
+
+   COORDINATES (mm, per group)
+     u  along the group, from the left edge of its first column
+     v  up from the floor
+     n  out from the wall: 0 = wall, carcass back at rules.wallGap, front face at wallGap + carcassDepth + frontThickness
+   view.html turns each group into room coordinates (x, y, z); a box is [u0, u1, v0, v1, n0, n1].
+
+   GLOSSARY - the same words are used in the data, in this file and on the pages
+     group      one run of furniture (data.columns key); its role (worktop, tall, island) comes from the note "group N"
+     column     one width in a group (data.columns[group]); components are placed by first column + column span
+     component  one row of data.components; stacked bottom-up in its columns, in list order
+     item       a component after stacking: the component with readable field names and its position (u0, u1, v0, v1)
+     type       exactly one TYPE_TAGS tag of a component (cabinet, drawer, frame ...)
+     features   the FEATURE_TAGS tags of a component (sink, hob, fridge ...)
+     carcass    all items with the same carcass name in one group: one chipboard box. Its type is base (on a plinth,
+                worktop on top), tall (on a plinth) or wall (anything else)
+     box        an item that sits inside a carcass (BOX_TYPES): a front or a built-in appliance
+     front      the visible face of a cabinet, drawer or dummy item: the item minus its 4 gaps
+     opening    how a front moves: door (hinged), drawer, dishwasher, fridge (on the appliance door), fixed
+     board      a cut chipboard / HDF part (cutting list): a × b = cut size, box = position, material p18 | p16 | hdf
+
+   DATA FORMAT of data.components (short keys, kept as they are in data.js)
+     g group, c first column, s column span, h height, tags (one type + features), k carcass name ("" = no carcass),
+     gaps [left, right, top, bottom] (fronts only), hd handle position T | B | L | R | "", note free text
 */
 (function (root) {
   'use strict';
+
   // filler = void / spacer, nothing built; board = plasterboard box; splash = splash board on the wall (worktop material);
-  // panel = MDF board laid flat in the front plane, both faces lacquered; frame = MDF strip on edge, edge + both faces lacquered
+  // panel = MDF board laid flat in the front plane, both faces lacquered; frame = MDF strip on edge, edge + both faces lacquered;
   // dummy = fixed front in a carcass: no hinges, no drawer box, no HDF behind
   const TYPE_TAGS = ['filler', 'board', 'plinth', 'worktop', 'splash', 'panel', 'frame', 'cabinet', 'drawer', 'dummy', 'oven', 'micro'];
   // end = worktop end (waterfall); coffee = pull-out shelf at the bottom for a coffee machine, no other shelves
   const FEATURE_TAGS = ['hob', 'sink', 'bins', 'dishwasher', 'fridge', 'freezer', 'inner', 'end', 'coffee'];
   const FRONT_TYPES = ['cabinet', 'drawer', 'dummy'];
-  const BOX_TYPES = ['cabinet', 'drawer', 'dummy', 'oven', 'micro'];   // pieces that sit in a carcass
-  const num = (v, d) => { const x = parseFloat(v); return Number.isFinite(x) ? x : d; };
+  const BOX_TYPES = ['cabinet', 'drawer', 'dummy', 'oven', 'micro'];
 
-  function parseTags(str) {
-    const tags = String(str ?? '').toLowerCase().split(/[\s,]+/).filter(Boolean);
+  const num = (value, fallback) => {
+    const x = parseFloat(value);
+    return Number.isFinite(x) ? x : fallback;
+  };
+
+  // "drawer hob" -> { tags, types, type: 'drawer', features: ['hob'], unknown: [] }
+  function parseTags(text) {
+    const tags = String(text ?? '').toLowerCase().split(/[\s,]+/).filter(Boolean);
     const types = tags.filter(t => TYPE_TAGS.includes(t));
-    return { tags, types, type: types.length === 1 ? types[0] : null,
+    return {
+      tags,
+      types,
+      type: types.length === 1 ? types[0] : null,
       features: tags.filter(t => FEATURE_TAGS.includes(t)),
-      unknown: tags.filter(t => !TYPE_TAGS.includes(t) && !FEATURE_TAGS.includes(t)) };
+      unknown: tags.filter(t => !TYPE_TAGS.includes(t) && !FEATURE_TAGS.includes(t))
+    };
   }
-  const has = (it, ...t) => t.some(x => it.tags.includes(x));
+  const hasTag = (item, ...tags) => tags.some(t => item.tags.includes(t));
 
-  /* ---------- stacking: a piece starts on top of the contiguous stack from 0 in the columns it spans ---------- */
-  function stack(widths, comps) {
-    const n = widths.length, x = [0];
-    widths.forEach(w => x.push(x[x.length - 1] + w));
-    const occ = widths.map(() => []), items = [], skipped = [];
-    const top = r => { let y = 0; for (const [a, b] of [...r].sort((p, q) => p[0] - q[0])) { if (a <= y) { if (b > y) y = b; } else break; } return y; };
-    for (const it of comps) {
-      const i = it.c - 1, j = Math.min(i + it.s, n), h = it.h;
-      if (i < 0 || i >= n || !(it.s >= 1) || !(h >= 0)) { skipped.push({ it, why: 'columns' }); continue; }
-      let v = 0;
-      for (let k = i; k < j; k++) v = Math.max(v, top(occ[k]));
-      if (occ.slice(i, j).some(r => r.some(([a, b]) => Math.max(v, a) < Math.min(v + h, b)))) { skipped.push({ it, why: 'overlap' }); continue; }
-      for (let k = i; k < j; k++) occ[k].push([v, v + h]);
-      items.push({ ...it, u0: x[i], u1: x[j], v0: v, v1: v + h });
+  /* ---------- stacking: an item starts on top of the contiguous stack from the floor in the columns it spans ----------
+     widths: column widths of one group; pieces: [{ col, span, height, ... }] in list order.
+     Returns items (the pieces with u0, u1, v0, v1 added), skipped pieces with the reason, and the column edges colX. */
+  function stack(widths, pieces) {
+    const columnCount = widths.length;
+    const colX = [0];
+    widths.forEach(w => colX.push(colX[colX.length - 1] + w));
+    const occupied = widths.map(() => []); // per column: [v0, v1] ranges already taken
+    const items = [], skipped = [];
+    // top of the contiguous stack that starts at the floor
+    const stackTop = ranges => {
+      let top = 0;
+      for (const [a, b] of [...ranges].sort((p, q) => p[0] - q[0])) {
+        if (a <= top) {
+          if (b > top) top = b;
+        } else break;
+      }
+      return top;
+    };
+    for (const piece of pieces) {
+      const first = piece.col - 1, end = Math.min(first + piece.span, columnCount), height = piece.height;
+      if (first < 0 || first >= columnCount || !(piece.span >= 1) || !(height >= 0)) {
+        skipped.push({ piece, why: 'columns' });
+        continue;
+      }
+      let v0 = 0;
+      for (let k = first; k < end; k++) v0 = Math.max(v0, stackTop(occupied[k]));
+      const overlaps = occupied.slice(first, end).some(ranges => ranges.some(([a, b]) => Math.max(v0, a) < Math.min(v0 + height, b)));
+      if (overlaps) {
+        skipped.push({ piece, why: 'overlap' });
+        continue;
+      }
+      for (let k = first; k < end; k++) occupied[k].push([v0, v0 + height]);
+      items.push({ ...piece, u0: colX[first], u1: colX[end], v0, v1: v0 + height });
     }
-    return { items, skipped, x };
+    return { items, skipped, colX };
   }
 
-  /* ---------- carcass areas: all components with the same carcass name (k) in one group ----------
+  /* ---------- carcass areas: all items with the same carcass name in one group ----------
      width = all their columns; height = their boxes (fronts, appliances), or all members if there is no box */
   function carcassAreas(items) {
-    const m = new Map();
-    for (const it of items) if (it.k) (m.get(it.k) || m.set(it.k, []).get(it.k)).push(it);
-    return [...m].map(([name, members]) => {
-      const box = members.filter(i => BOX_TYPES.includes(i.t)), v = box.length ? box : members;
-      return { name, members, u0: Math.min(...members.map(i => i.u0)), u1: Math.max(...members.map(i => i.u1)),
-        v0: Math.min(...v.map(i => i.v0)), v1: Math.max(...v.map(i => i.v1)),
-        c0: Math.min(...members.map(i => i.c)), c1: Math.max(...members.map(i => i.c + i.s - 1)) };
+    const byName = new Map();
+    for (const item of items) {
+      if (!item.carcassName) continue;
+      if (!byName.has(item.carcassName)) byName.set(item.carcassName, []);
+      byName.get(item.carcassName).push(item);
+    }
+    return [...byName].map(([name, members]) => {
+      const boxes = members.filter(i => BOX_TYPES.includes(i.type));
+      const vertical = boxes.length ? boxes : members;
+      return {
+        name,
+        members,
+        u0: Math.min(...members.map(i => i.u0)),
+        u1: Math.max(...members.map(i => i.u1)),
+        v0: Math.min(...vertical.map(i => i.v0)),
+        v1: Math.max(...vertical.map(i => i.v1)),
+        firstCol: Math.min(...members.map(i => i.col)),
+        lastCol: Math.max(...members.map(i => i.col + i.span - 1))
+      };
     });
   }
 
-  /* ---------- front = module minus its four gaps [left, right, top, bottom] ---------- */
-  function frontBox(it) {
-    const [l, r, t, b] = it.gaps;
-    return { u0: it.u0 + l, u1: it.u1 - r, v0: it.v0 + b, v1: it.v1 - t };
+  /* ---------- front = item minus its four gaps [left, right, top, bottom] ---------- */
+  function frontBox(item) {
+    const [left, right, top, bottom] = item.gaps;
+    return { u0: item.u0 + left, u1: item.u1 - right, v0: item.v0 + bottom, v1: item.v1 - top };
+  }
+
+  // a data.js component with readable field names (see DATA FORMAT above)
+  function readComponent(group, c) {
+    const parsed = parseTags(c.tags);
+    return {
+      group: +group,
+      col: +c.c,
+      span: +c.s,
+      height: +c.h,
+      type: parsed.type || '',
+      tags: parsed.tags,
+      carcassName: String(c.k || '').trim(),
+      handle: c.hd || '',
+      gaps: Array.isArray(c.gaps) ? c.gaps.map(Number) : null,
+      note: c.note || ''
+    };
   }
 
   /* ---------- the model ---------- */
   function build(project) {
-    const P = project || {}, R = P.rules || {};
-    const T = R.board, FT = R.frontThickness, CD = R.carcassDepth;
-    const CN0 = R.wallGap, CN1 = CN0 + CD, FN = CN1 + FT, PF = FN - R.plinthSetback;   // carcass back, carcass front, front face, plinth face
+    const P = project || {}, rules = P.rules || {};
+    const board = rules.board, frontThickness = rules.frontThickness, carcassDepth = rules.carcassDepth;
+    // depths from the wall (n)
+    const carcassBack = rules.wallGap;
+    const carcassFront = carcassBack + carcassDepth;
+    const frontFace = carcassFront + frontThickness;
+    const plinthFace = frontFace - rules.plinthSetback;
+
     // group roles from the project notes: note "group N" -> role (worktop, tall, island); the rules are written per role
-    const ROLE = {};
-    for (const [n, d] of P.notes || []) { const m = /^group\s+(\d+)$/i.exec(String(n ?? '').trim()); if (m) ROLE[m[1]] = String(d ?? '').trim().toLowerCase(); }
-    const islands = R.island && R.island.backPanel ? Object.keys(ROLE).filter(g => ROLE[g] === 'island') : [];   // island: chipboard back panel
-    const warnings = [], groups = {}, carcasses = [], fronts = [], boards = [], frames = [], plinths = [], panels = [], plaster = [];
-    const counts = { carcasses: 0, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
-      shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0, plasterUD: 0, plasterCD: 0, plasterEdge: 0 };
-
-    // groups: stack the components
-    for (const [g, ws] of Object.entries(P.columns || {})) {
-      const widths = ws.map(Number);
-      const comps = (P.components || []).filter(c => String(c.g) === g).map(c => {
-        const tg = parseTags(c.tags);
-        return { g: +g, c: +c.c, s: +c.s, h: +c.h, t: tg.type || '', tags: tg.tags, k: String(c.k || '').trim(), hd: c.hd || '',
-          gaps: Array.isArray(c.gaps) ? c.gaps.map(Number) : null, note: c.note || '' };
-      }).filter(c => c.t);
-      const st = stack(widths, comps);
-      for (const { it, why } of st.skipped) warnings.push(`Group ${g} col ${it.c}: ${it.t} ${why === 'overlap' ? 'overlaps another component' : 'is outside the columns'} - skipped.`);
-      groups[g] = { g: +g, widths, x: st.x, length: st.x[st.x.length - 1], items: st.items, areas: carcassAreas(st.items) };
+    const roles = {};
+    for (const [name, description] of P.notes || []) {
+      const m = /^group\s+(\d+)$/i.exec(String(name ?? '').trim());
+      if (m) roles[m[1]] = String(description ?? '').trim().toLowerCase();
     }
-    for (const c of P.components || []) for (const t of String(c.tags || '').toLowerCase().split(/[\s,]+/).filter(Boolean)) counts['tag:' + t] = (counts['tag:' + t] || 0) + 1;
+    const islandGroups = rules.island && rules.island.backPanel ? Object.keys(roles).filter(g => roles[g] === 'island') : [];
 
-    // carcasses: named in the data (component.k); same name = one carcass over all its columns and heights
-    const seen = new Map();
-    for (const G of Object.values(groups)) for (const A of G.areas) {
-      if (seen.has(A.name)) { warnings.push(`Carcass ${A.name} is used in Group ${seen.get(A.name)} and Group ${G.g} - one carcass must stay in one group.`); continue; }
-      seen.set(A.name, G.g);
-      const items = A.members.filter(i => BOX_TYPES.includes(i.t)).sort((a, b) => a.v0 - b.v0 || a.u0 - b.u0);
-      carcasses.push({ name: A.name, g: G.g, c: A.c0, s: A.c1 - A.c0 + 1, u0: A.u0, u1: A.u1, v0: A.v0, v1: A.v1, items, members: A.members });
+    const warnings = [], groups = {}, carcasses = [], fronts = [], boards = [];
+    const frames = [], plinths = [], panels = [], plaster = [];
+    // the names of these counts are used by the cost page as {n:name}
+    const counts = {
+      carcasses: 0, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
+      shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
+      plasterUD: 0, plasterCD: 0, plasterEdge: 0
+    };
+
+    // ---- groups: stack the components ----
+    for (const [g, columnWidths] of Object.entries(P.columns || {})) {
+      const widths = columnWidths.map(Number);
+      const pieces = (P.components || []).filter(c => String(c.g) === g).map(c => readComponent(g, c)).filter(c => c.type);
+      const stacked = stack(widths, pieces);
+      for (const { piece, why } of stacked.skipped) {
+        warnings.push(`Group ${g} col ${piece.col}: ${piece.type} ${why === 'overlap' ? 'overlaps another component' : 'is outside the columns'} - skipped.`);
+      }
+      groups[g] = {
+        group: +g,
+        widths,
+        colX: stacked.colX,
+        length: stacked.colX[stacked.colX.length - 1],
+        items: stacked.items,
+        areas: carcassAreas(stacked.items)
+      };
     }
-    for (const G of Object.values(groups)) for (const it of G.items)
-      if (BOX_TYPES.includes(it.t) && !it.k && !has(it, 'dishwasher')) warnings.push(`Group ${G.g} col ${it.c}: ${it.t} has no carcass name.`);
+    // tag counts ({n:tag.bins} on the cost page)
+    for (const c of P.components || []) {
+      for (const t of String(c.tags || '').toLowerCase().split(/[\s,]+/).filter(Boolean)) counts['tag:' + t] = (counts['tag:' + t] || 0) + 1;
+    }
+
+    // ---- carcasses: same carcass name = one carcass over all its columns and heights ----
+    const groupOfName = new Map();
+    for (const G of Object.values(groups)) {
+      for (const area of G.areas) {
+        if (groupOfName.has(area.name)) {
+          warnings.push(`Carcass ${area.name} is used in Group ${groupOfName.get(area.name)} and Group ${G.group} - one carcass must stay in one group.`);
+          continue;
+        }
+        groupOfName.set(area.name, G.group);
+        const boxes = area.members.filter(i => BOX_TYPES.includes(i.type)).sort((a, b) => a.v0 - b.v0 || a.u0 - b.u0);
+        carcasses.push({
+          name: area.name, group: G.group, col: area.firstCol, span: area.lastCol - area.firstCol + 1,
+          u0: area.u0, u1: area.u1, v0: area.v0, v1: area.v1, boxes, members: area.members
+        });
+      }
+    }
+    for (const G of Object.values(groups)) {
+      for (const item of G.items) {
+        if (BOX_TYPES.includes(item.type) && !item.carcassName && !hasTag(item, 'dishwasher')) warnings.push(`Group ${G.group} col ${item.col}: ${item.type} has no carcass name.`);
+      }
+    }
     carcasses.forEach((K, i) => {
       K.id = i + 1;
       // read from the stack, no heights in the rules: floor = stands on a plinth, base = floor with a worktop on top
-      const over = i => i.c <= K.c + K.s - 1 && i.c + i.s - 1 >= K.c, GI = groups[K.g].items;
-      K.floor = GI.some(i => i.t === 'plinth' && over(i) && i.v1 === K.v0);
-      K.base = K.floor && GI.some(i => i.t === 'worktop' && over(i) && i.v0 === K.v1);
-      K.sink = K.items.some(i => has(i, 'sink'));
-      K.fridge = K.items.some(i => has(i, 'fridge', 'freezer'));
-      K.coffee = K.items.some(i => has(i, 'coffee'));
-      K.hob = K.items.some(i => has(i, 'hob'));
-      K.legs = K.floor ? R.legsPerCarcass : 0;
+      const overlapsColumns = item => item.col <= K.col + K.span - 1 && item.col + item.span - 1 >= K.col;
+      const groupItems = groups[K.group].items;
+      K.floor = groupItems.some(item => item.type === 'plinth' && overlapsColumns(item) && item.v1 === K.v0);
+      K.base = K.floor && groupItems.some(item => item.type === 'worktop' && overlapsColumns(item) && item.v0 === K.v1);
+      K.type = K.base ? 'base' : K.floor ? 'tall' : 'wall';
+      K.sink = K.boxes.some(b => hasTag(b, 'sink'));
+      K.fridge = K.boxes.some(b => hasTag(b, 'fridge', 'freezer'));
+      K.coffee = K.boxes.some(b => hasTag(b, 'coffee'));
+      K.hob = K.boxes.some(b => hasTag(b, 'hob'));
+      K.legs = K.floor ? rules.legsPerCarcass : 0;
       K.grille = K.fridge && K.floor;
-      for (const it of K.members) it.K = K;
-      counts.legs += K.legs; counts.sinks += K.sink; counts.hobs += K.hob; counts.fridges += K.fridge; counts.grilles += K.grille;
+      for (const item of K.members) item.carcass = K;
+      counts.legs += K.legs;
+      counts.sinks += K.sink;
+      counts.hobs += K.hob;
+      counts.fridges += K.fridge;
+      counts.grilles += K.grille;
     });
     counts.carcasses = carcasses.length;
 
-    // boards of each carcass (A × B = cut size; box = position; mat: p18 chipboard 18, p16 chipboard 16, hdf HDF)
-    const B = o => { boards.push(o); return o; };
-    const RL = R.rails, SH = R.shelf, BK = R.back, half = T / 2;
+    // ---- boards of each carcass ----
+    const addBoard = b => {
+      boards.push(b);
+      return b;
+    };
+    const rails = rules.rails, shelf = rules.shelf, back = rules.back, half = board / 2;
     for (const K of carcasses) {
-      const { u0, u1, v0, v1 } = K, W = u1 - u0, H = v1 - v0, ui0 = u0 + T, ui1 = u1 - T, IW = W - 2 * T, g = K.g;
-      const P_ = (name, a, b, mat, layer, box, dir) => B({ name, a, b, mat, layer, g, K: K.id, box, dir });
-      P_('Side', CD, H, 'p18', 'carcasses', [u0, ui0, v0, v1, CN0, CN1], [-1, 0, 0]);
-      P_('Side', CD, H, 'p18', 'carcasses', [ui1, u1, v0, v1, CN0, CN1], [1, 0, 0]);
-      P_('Bottom panel', IW, CD, 'p18', 'carcasses', [ui0, ui1, v0, v0 + T, CN0, CN1], [0, 0, 0]);
-      const TR = 'Top rail ' + RL.depth;
+      const { u0, u1, v0, v1 } = K;
+      const width = u1 - u0, height = v1 - v0;
+      const innerU0 = u0 + board, innerU1 = u1 - board, innerWidth = width - 2 * board;
+      const part = (name, a, b, material, layer, box) => addBoard({ name, a, b, material, layer, group: K.group, carcassId: K.id, box });
+
+      part('Side', carcassDepth, height, 'p18', 'carcasses', [u0, innerU0, v0, v1, carcassBack, carcassFront]);
+      part('Side', carcassDepth, height, 'p18', 'carcasses', [innerU1, u1, v0, v1, carcassBack, carcassFront]);
+      part('Bottom panel', innerWidth, carcassDepth, 'p18', 'carcasses', [innerU0, innerU1, v0, v0 + board, carcassBack, carcassFront]);
+      const railName = 'Top rail ' + rails.depth;
       if (K.base) {
-        if (K.sink) {   // under the sink the rails stand on edge to clear the bowl
-          P_(TR, IW, RL.depth, 'p18', 'carcasses', [ui0, ui1, v1 - RL.depth, v1, CN1 - T, CN1], [0, .6, 1]);
-          P_(TR, IW, RL.depth, 'p18', 'carcasses', [ui0, ui1, v1 - RL.depth, v1, CN0, CN0 + T], [0, 1, 0]);
-        } else if (K.hob) {   // under the hob: front rail on edge (hobFront high), rear rail on edge, separation panel below the front rail
-          P_('Top rail ' + RL.hobFront + ' (front, on edge)', IW, RL.hobFront, 'p18', 'carcasses', [ui0, ui1, v1 - RL.hobFront, v1, CN1 - T, CN1], [0, .6, 1]);
-          P_(TR, IW, RL.depth, 'p18', 'carcasses', [ui0, ui1, v1 - RL.depth, v1, CN0, CN0 + T], [0, 1, 0]);
-          P_('Hob separation panel', IW, CD - 2 * T - RL.hobPanelGap, 'p16', 'carcasses', [ui0, ui1, v1 - RL.hobFront, v1 - RL.hobFront + RL.hobPanel, CN0 + T + RL.hobPanelGap, CN1 - T], [0, .4, 0]);   // air gap at the back
+        if (K.sink) {
+          // under the sink the rails stand on edge to clear the bowl
+          part(railName, innerWidth, rails.depth, 'p18', 'carcasses', [innerU0, innerU1, v1 - rails.depth, v1, carcassFront - board, carcassFront]);
+          part(railName, innerWidth, rails.depth, 'p18', 'carcasses', [innerU0, innerU1, v1 - rails.depth, v1, carcassBack, carcassBack + board]);
+        } else if (K.hob) {
+          // under the hob: front rail on edge (hobFront high), rear rail on edge, separation panel below the front rail, air gap at the back
+          part('Top rail ' + rails.hobFront + ' (front, on edge)', innerWidth, rails.hobFront, 'p18', 'carcasses',
+            [innerU0, innerU1, v1 - rails.hobFront, v1, carcassFront - board, carcassFront]);
+          part(railName, innerWidth, rails.depth, 'p18', 'carcasses', [innerU0, innerU1, v1 - rails.depth, v1, carcassBack, carcassBack + board]);
+          part('Hob separation panel', innerWidth, carcassDepth - 2 * board - rails.hobPanelGap, 'p16', 'carcasses',
+            [innerU0, innerU1, v1 - rails.hobFront, v1 - rails.hobFront + rails.hobPanel, carcassBack + board + rails.hobPanelGap, carcassFront - board]);
         } else {
-          P_(TR, IW, RL.depth, 'p18', 'carcasses', [ui0, ui1, v1 - T, v1, CN1 - RL.depth, CN1], [0, 1, .6]);
-          P_(TR, IW, RL.depth, 'p18', 'carcasses', [ui0, ui1, v1 - T, v1, CN0, CN0 + RL.depth], [0, 1, 0]);
+          // two flat top rails, front and back
+          part(railName, innerWidth, rails.depth, 'p18', 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassFront - rails.depth, carcassFront]);
+          part(railName, innerWidth, rails.depth, 'p18', 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassBack, carcassBack + rails.depth]);
         }
-      } else P_('Top panel', IW, CD, 'p18', 'carcasses', [ui0, ui1, v1 - T, v1, CN0, CN1], [0, 1, 0]);
-      // HDF back only behind cabinet doors: not behind drawers, fixed (dummy) fronts or appliances (oven, micro, fridge, freezer); one piece per run of doors
-      const spans = K.items.filter(i => i.t === 'cabinet' && !has(i, 'fridge', 'freezer')).map(i => [Math.max(v0, i.v0), Math.min(v1, i.v1)]).sort((a, b) => a[0] - b[0])
-        .reduce((L, s) => { const p = L[L.length - 1]; if (p && s[0] <= p[1]) p[1] = Math.max(p[1], s[1]); else L.push([...s]); return L; }, []);
-      for (const [s0, s1] of spans) P_('Back', W - 2 * BK.inset, s1 - s0 - 2 * BK.inset, 'hdf', 'backs', [u0 + BK.inset, u1 - BK.inset, s0 + BK.inset, s1 - BK.inset, CN0 - BK.thickness, CN0], [0, 0, -.3]);
+      } else {
+        part('Top panel', innerWidth, carcassDepth, 'p18', 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassBack, carcassFront]);
+      }
+
+      // HDF back only behind cabinet doors: not behind drawers, fixed (dummy) fronts or appliances (oven, micro, fridge, freezer);
+      // one piece per run of doors
+      const doorSpans = K.boxes
+        .filter(b => b.type === 'cabinet' && !hasTag(b, 'fridge', 'freezer'))
+        .map(b => [Math.max(v0, b.v0), Math.min(v1, b.v1)])
+        .sort((a, b) => a[0] - b[0])
+        .reduce((runs, span) => {
+          const last = runs[runs.length - 1];
+          if (last && span[0] <= last[1]) last[1] = Math.max(last[1], span[1]);
+          else runs.push([...span]);
+          return runs;
+        }, []);
+      for (const [s0, s1] of doorSpans) {
+        part('Back', width - 2 * back.inset, s1 - s0 - 2 * back.inset, 'hdf', 'backs',
+          [u0 + back.inset, u1 - back.inset, s0 + back.inset, s1 - back.inset, carcassBack - back.thickness, carcassBack]);
+      }
+
       // fixed shelves at the joint of 2 boxes in one carcass: full carcass depth
-      if (!K.base && !K.fridge) for (let i = 1; i < K.items.length; i++) {
-        const b = K.items[i].v0;
-        P_('Fixed shelf', IW, CD, 'p18', 'shelves', [ui0, ui1, b - half, b + half, CN0, CN1], [0, 0, 1]); counts.shelvesFixed++;
+      if (!K.base && !K.fridge) {
+        for (let i = 1; i < K.boxes.length; i++) {
+          const joint = K.boxes[i].v0;
+          part('Fixed shelf', innerWidth, carcassDepth, 'p18', 'shelves', [innerU0, innerU1, joint - half, joint + half, carcassBack, carcassFront]);
+          counts.shelvesFixed++;
+        }
+      }
+
+      const adjustableShelf = centre => {
+        part('Adjustable shelf', innerWidth - 2 * shelf.clearance, carcassDepth - shelf.setback, 'p18', 'shelves',
+          [innerU0 + shelf.clearance, innerU1 - shelf.clearance, centre - half, centre + half, carcassBack, carcassFront - shelf.setback]);
+        counts.shelvesAdjustable++;
+        counts.shelfPins += shelf.pins;
+      };
+      // tag coffee (rules.pullOutShelf): one pull-out shelf at the bottom on full-extension runners, no other shelves
+      if (K.coffee) {
+        const pullOut = rules.pullOutShelf, y = v0 + board + pullOut.lift;
+        part('Pull-out shelf', innerWidth - 2 * pullOut.clearance, pullOut.depth, 'p18', 'shelves',
+          [innerU0 + pullOut.clearance, innerU1 - pullOut.clearance, y, y + board, carcassFront - pullOut.depth, carcassFront]);
+        counts.pullOutShelves++;
+        // shelves above the machine: the first one pullOut.space above the pull-out shelf, the rest evenly up to the top
+        const lo = y + board + pullOut.space, hi = v1 - board;
+        for (let j = 0; j < (pullOut.shelvesAbove || 0); j++) adjustableShelf(Math.round(lo + ((hi - lo) * j) / pullOut.shelvesAbove));
       }
       // adjustable shelves: per door by its height (rules.shelf.perDoor); none in the sink unit or the fridge
-      // tag coffee (rules.pullOutShelf): one pull-out shelf at the bottom on full-extension runners, no other shelves
-      if (K.coffee) { const PS = R.pullOutShelf, y = v0 + T + PS.lift;
-        P_('Pull-out shelf', IW - 2 * PS.clearance, PS.depth, 'p18', 'shelves', [ui0 + PS.clearance, ui1 - PS.clearance, y, y + T, CN1 - PS.depth, CN1], [0, 0, 1]); counts.pullOutShelves++;
-        // shelves above the machine: the first one PS.space above the pull-out shelf, the rest evenly up to the top
-        const lo = y + T + PS.space, hi = v1 - T;
-        for (let j = 0; j < (PS.shelvesAbove || 0); j++) { const yy = Math.round(lo + (hi - lo) * j / PS.shelvesAbove);
-          P_('Adjustable shelf', IW - 2 * SH.clearance, CD - SH.setback, 'p18', 'shelves', [ui0 + SH.clearance, ui1 - SH.clearance, yy - half, yy + half, CN0, CN1 - SH.setback], [0, 0, 1]);
-          counts.shelvesAdjustable++; counts.shelfPins += SH.pins; } }
-      if (!K.sink && !K.fridge && !K.coffee) for (const it of K.items) {
-        if (it.t !== 'cabinet') continue;
-        const lo = it.v0 === v0 ? v0 + T : it.v0 + half, hi = it.v1 === v1 ? v1 - T : it.v1 - half;
-        const n = SH.perDoor.find(([h]) => (it.v1 - it.v0) <= h)[1];
-        for (let j = 1; j <= n; j++) {
-          const y = Math.round(lo + (hi - lo) * j / (n + 1));
-          P_('Adjustable shelf', IW - 2 * SH.clearance, CD - SH.setback, 'p18', 'shelves', [ui0 + SH.clearance, ui1 - SH.clearance, y - half, y + half, CN0, CN1 - SH.setback], [0, 0, 1]);
-          counts.shelvesAdjustable++; counts.shelfPins += SH.pins;
+      if (!K.sink && !K.fridge && !K.coffee) {
+        for (const b of K.boxes) {
+          if (b.type !== 'cabinet') continue;
+          const lo = b.v0 === v0 ? v0 + board : b.v0 + half;
+          const hi = b.v1 === v1 ? v1 - board : b.v1 - half;
+          const count = shelf.perDoor.find(([maxHeight]) => b.v1 - b.v0 <= maxHeight)[1];
+          for (let j = 1; j <= count; j++) adjustableShelf(Math.round(lo + ((hi - lo) * j) / (count + 1)));
         }
       }
     }
 
+    // ---- frames, panels, plinths, plasterboard: items without a carcass of their own ----
     // frame: MDF strip on edge (frame.depth deep), with a back strip when it is not part of a carcass.
     // panel: MDF board laid flat in the front plane. board: plasterboard box, rules.plasterboard.depth deep from the wall.
-    const FR = R.frame, PB = R.plasterboard;
-    for (const G of Object.values(groups)) for (const it of G.items) {
-      const { u0, u1, v0, v1 } = it, w = u1 - u0, h = v1 - v0;
-      if (it.t === 'frame') {
-        frames.push({ g: G.g, it, box: [u0, u1, v0, v1, FN - FR.depth, FN],
-          name: (h > w ? 'Frame ' : 'Horizontal frame ') + FT + ' on edge (' + FR.depth + ' deep)', a: FR.depth, b: Math.max(w, h) });
-        if (!it.k) B({ name: 'Back strip ' + FR.depth, a: FR.depth, b: Math.max(w, h), mat: 'p18', layer: 'carcasses', g: G.g, c: it.c, box: [u0, u1, v0, v1, CN0, CN0 + FR.depth], strip: true });
-      } else if (it.t === 'panel') {
-        panels.push({ g: G.g, it, name: 'Panel ' + FT, a: w, b: h, box: [u0, u1, v0, v1, FN - FT, FN] });
-      } else if (it.t === 'plinth') {
-        plinths.push({ g: G.g, it, a: h, b: w, box: [u0, u1, v0, v1, PF - R.plinthThickness, PF] });
-      } else if (it.t === 'board' && PB) {
-        // cladding: the face plus the return along the long side; profiles: UD on both fixed edges, CD on the outer edge + cross pieces
-        const L = Math.max(w, h), S = Math.min(w, h), D = PB.depth;
-        plaster.push({ g: G.g, it, name: 'Plasterboard face', a: S, b: L }, { g: G.g, it, name: 'Plasterboard return', a: D, b: L });
-        counts.plasterUD += 2 * L;
-        counts.plasterCD += L + (Math.ceil(L / PB.studSpacing) + 1) * (D + S);
-        counts.plasterEdge += L;   // one outer edge (corner bead) and one joint to the furniture (seal) per box
-      }
-    }
-
-    // worktop of a group (rules.worktop.depth by the group role): the depth is the product size; front edge = front face + overhang;
-    // behind the carcass back = depth - carcassDepth - frontThickness - overhang, e.g. 600 - 550 - 18 - 18 = 14, 900 - 550 - 18 - 18 = 314
-    const WT = R.worktop || {}, worktops = {};
-    for (const G of Object.values(groups)) if (G.items.some(i => i.t === 'worktop')) {
-      const role = ROLE[G.g], depth = (WT.depth || {})[role];
-      if (!Number.isFinite(depth)) { warnings.push(`Group ${G.g}: worktop needs a group role in the notes ("group ${G.g}") and rules.worktop.depth for it (role: ${role || 'none'}).`); continue; }
-      const back = depth - CD - FT - WT.overhang;
-      if (back < 0) warnings.push(`Group ${G.g}: worktop ${depth} is shorter than carcass + front + overhang (${CD + FT + WT.overhang}).`);
-      const W = worktops[G.g] = { n0: CN0 - back, n1: FN + WT.overhang, depth, back };
-      counts['worktop:' + G.g] = W.depth;
-    }
-
-    // island (rules.island.backPanel): chipboard back panel instead of HDF backs, between the end columns, floor to the carcass tops, on the carcass backs
-    for (const g of islands) { const G = groups[g]; if (!G) continue; const w0 = G.widths[0] || 0, w1 = G.widths[G.widths.length - 1] || 0;
-      const top = Math.max(0, ...carcasses.filter(K => K.g === G.g).map(K => K.v1));
-      B({ name: 'Back panel', a: G.length - w0 - w1, b: top, mat: 'p18', layer: 'carcasses', g: G.g, backPanel: true, box: [w0, G.length - w1, 0, top, CN0 - T, CN0] }); }
-
-    // fronts: module minus the four gaps of the component
-    const HG = R.hinges, DR = R.drawers;
-    for (const G of Object.values(groups)) for (const it of G.items) {
-      if (!FRONT_TYPES.includes(it.t)) continue;
-      if (!it.gaps || it.gaps.length !== 4 || it.gaps.some(x => !Number.isFinite(x))) { warnings.push(`Group ${G.g} col ${it.c}: ${it.t} needs 4 gaps [left, right, top, bottom].`); it.gaps = [0, 0, 0, 0]; }
-      const fb = frontBox(it), K = it.K;
-      if (fb.u1 - fb.u0 <= 0 || fb.v1 - fb.v0 <= 0) warnings.push(`Group ${G.g} col ${it.c}: gaps leave no front.`);
-      const kind = it.t === 'dummy' ? 'fixed' : it.t === 'drawer' ? 'drawer' : has(it, 'dishwasher') ? 'dish' : has(it, 'fridge', 'freezer') ? 'fridge' : 'door';
-      // hinges on the side away from a side handle; every door of one column opens the same way
-      const hingeSide = G.items.some(x => x.c === it.c && x.s === it.s && x.t === 'cabinet' && x.hd === 'L') ? 'R' : 'L';
-      const F = { id: fronts.length + 1, g: G.g, it, K: K ? K.id : null, kind, tags: it.tags, hingeSide, gaps: it.gaps,
-        ...fb, w: fb.u1 - fb.u0, h: fb.v1 - fb.v0, handle: it.hd };
-      it.F = F;
-      fronts.push(F); counts.fronts++; if (it.hd) counts.handles++;
-      if (kind === 'door' && K) {   // hinges by front height (rules.hinges.perDoor), fromEnd from the front ends
-        const n = HG.perDoor.find(([h]) => F.h < h)[1];
-        F.hinges = Array.from({ length: n }, (_, j) => Math.round(F.v0 + HG.fromEnd + (F.h - 2 * HG.fromEnd) * j / (n - 1)));
-        F.hingeU = hingeSide === 'L' ? K.u0 + T : K.u1 - T;
-        counts.hinges += n;
-      }
-      if (kind === 'drawer' && K) {   // drawer box: type D from rules.drawers.dFrom front height, else type M
-        const D = F.h >= DR.dFrom, ty = D ? DR.D : DR.M, ui0 = K.u0 + T, ui1 = K.u1 - T, bw = ui1 - ui0 - DR.bottom.inset;
-        const box = { D, sh: ty.side, bh: ty.back, ui0, ui1, bw, b0: it.v0 + (it.v0 === K.v0 ? DR.liftAtBottom : DR.liftAbove), bins: has(it, 'bins'), inner: has(it, 'inner') };
-        F.drawer = box;
-        const bx0 = ui0 + DR.bottom.inset / 2, bx1 = ui1 - DR.bottom.inset / 2, kx0 = ui0 + DR.back.inset / 2, kx1 = ui1 - DR.back.inset / 2;
-        const z0 = DR.bottom.z, z1 = DR.bottom.z + DR.bottom.depth, BT = DR.bottom.thickness;
-        const drawerBoards = (v, backH, backName, inner) => {
-          B({ name: 'Drawer bottom', a: bw, b: DR.bottom.depth, mat: 'p16', layer: 'drawers', g: G.g, K: K.id, front: F.id, inner, box: [bx0, bx1, v, v + BT, z0, z1] });
-          B({ name: backName, a: ui1 - ui0 - DR.back.inset, b: backH, mat: 'p16', layer: 'drawers', g: G.g, K: K.id, front: F.id, inner, box: [kx0, kx1, v + BT, v + BT + backH, z0, z0 + DR.back.thickness] });
-        };
-        drawerBoards(box.b0, box.bh, 'Drawer back ' + (D ? 'D' : 'M'), false);
-        D ? counts.drawersD++ : counts.drawersM++;
-        if (box.inner) {   // inner drawer above the top drawer box, behind the same front
-          box.iv = box.b0 + box.sh + DR.inner.gap;
-          drawerBoards(box.iv, DR.inner.back, 'Inner drawer back', true);
-          counts.innerDrawers++;
+    const frameRule = rules.frame, plasterRule = rules.plasterboard;
+    for (const G of Object.values(groups)) {
+      for (const item of G.items) {
+        const { u0, u1, v0, v1 } = item, width = u1 - u0, height = v1 - v0;
+        if (item.type === 'frame') {
+          frames.push({
+            group: G.group, item, box: [u0, u1, v0, v1, frontFace - frameRule.depth, frontFace],
+            name: (height > width ? 'Frame ' : 'Horizontal frame ') + frontThickness + ' on edge (' + frameRule.depth + ' deep)',
+            a: frameRule.depth, b: Math.max(width, height)
+          });
+          if (!item.carcassName) {
+            addBoard({
+              name: 'Back strip ' + frameRule.depth, a: frameRule.depth, b: Math.max(width, height), material: 'p18', layer: 'carcasses',
+              group: G.group, col: item.col, box: [u0, u1, v0, v1, carcassBack, carcassBack + frameRule.depth], strip: true
+            });
+          }
+        } else if (item.type === 'panel') {
+          panels.push({ group: G.group, item, name: 'Panel ' + frontThickness, a: width, b: height, box: [u0, u1, v0, v1, frontFace - frontThickness, frontFace] });
+        } else if (item.type === 'plinth') {
+          plinths.push({ group: G.group, item, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - rules.plinthThickness, plinthFace] });
+        } else if (item.type === 'board' && plasterRule) {
+          // cladding: the face plus the return along the long side; profiles: UD on both fixed edges, CD on the outer edge + cross pieces
+          const long = Math.max(width, height), short = Math.min(width, height), depth = plasterRule.depth;
+          plaster.push(
+            { group: G.group, item, name: 'Plasterboard face', a: short, b: long },
+            { group: G.group, item, name: 'Plasterboard return', a: depth, b: long }
+          );
+          counts.plasterUD += 2 * long;
+          counts.plasterCD += long + (Math.ceil(long / plasterRule.studSpacing) + 1) * (depth + short);
+          counts.plasterEdge += long; // one outer edge (corner bead) and one joint to the furniture (seal) per box
         }
       }
     }
-    return { rules: R, roles: ROLE, FN, FT, CD, CN0, CN1, PF, warnings, groups, carcasses, fronts, boards, frames, plinths, panels, plaster, worktops, counts };
+
+    // ---- worktop of a group (rules.worktop.depth by the group role) ----
+    // the depth is the product size; front edge = front face + overhang;
+    // behind the carcass back = depth - carcassDepth - frontThickness - overhang, e.g. 600 - 550 - 18 - 18 = 14, 900 - 550 - 18 - 18 = 314
+    const worktopRule = rules.worktop || {}, worktops = {};
+    for (const G of Object.values(groups)) {
+      if (!G.items.some(i => i.type === 'worktop')) continue;
+      const role = roles[G.group], depth = (worktopRule.depth || {})[role];
+      if (!Number.isFinite(depth)) {
+        warnings.push(`Group ${G.group}: worktop needs a group role in the notes ("group ${G.group}") and rules.worktop.depth for it (role: ${role || 'none'}).`);
+        continue;
+      }
+      const behind = depth - carcassDepth - frontThickness - worktopRule.overhang;
+      if (behind < 0) warnings.push(`Group ${G.group}: worktop ${depth} is shorter than carcass + front + overhang (${carcassDepth + frontThickness + worktopRule.overhang}).`);
+      worktops[G.group] = { n0: carcassBack - behind, n1: frontFace + worktopRule.overhang, depth, back: behind };
+      counts['worktop:' + G.group] = depth;
+    }
+
+    // ---- island (rules.island.backPanel): chipboard back panel between the end columns, floor to the carcass tops, on the carcass backs ----
+    for (const g of islandGroups) {
+      const G = groups[g];
+      if (!G) continue;
+      const firstWidth = G.widths[0] || 0, lastWidth = G.widths[G.widths.length - 1] || 0;
+      const top = Math.max(0, ...carcasses.filter(K => K.group === G.group).map(K => K.v1));
+      addBoard({
+        name: 'Back panel', a: G.length - firstWidth - lastWidth, b: top, material: 'p18', layer: 'carcasses', group: G.group, backPanel: true,
+        box: [firstWidth, G.length - lastWidth, 0, top, carcassBack - board, carcassBack]
+      });
+    }
+
+    // ---- fronts: item minus its four gaps; hinges, drawer boxes ----
+    const hingeRule = rules.hinges, drawerRule = rules.drawers;
+    for (const G of Object.values(groups)) {
+      for (const item of G.items) {
+        if (!FRONT_TYPES.includes(item.type)) continue;
+        if (!item.gaps || item.gaps.length !== 4 || item.gaps.some(x => !Number.isFinite(x))) {
+          warnings.push(`Group ${G.group} col ${item.col}: ${item.type} needs 4 gaps [left, right, top, bottom].`);
+          item.gaps = [0, 0, 0, 0];
+        }
+        const box = frontBox(item), K = item.carcass;
+        if (box.u1 - box.u0 <= 0 || box.v1 - box.v0 <= 0) warnings.push(`Group ${G.group} col ${item.col}: gaps leave no front.`);
+        const opening = item.type === 'dummy' ? 'fixed'
+          : item.type === 'drawer' ? 'drawer'
+          : hasTag(item, 'dishwasher') ? 'dishwasher'
+          : hasTag(item, 'fridge', 'freezer') ? 'fridge'
+          : 'door';
+        // hinges on the side away from a side handle; every door of one column opens the same way
+        const hingeSide = G.items.some(x => x.col === item.col && x.span === item.span && x.type === 'cabinet' && x.handle === 'L') ? 'R' : 'L';
+        const front = {
+          id: fronts.length + 1, group: G.group, item, carcassId: K ? K.id : null, opening, tags: item.tags, hingeSide, gaps: item.gaps,
+          ...box, width: box.u1 - box.u0, height: box.v1 - box.v0, handle: item.handle
+        };
+        item.front = front;
+        fronts.push(front);
+        counts.fronts++;
+        if (item.handle) counts.handles++;
+
+        if (opening === 'door' && K) {
+          // hinges by front height (rules.hinges.perDoor), fromEnd from the front ends
+          const count = hingeRule.perDoor.find(([maxHeight]) => front.height < maxHeight)[1];
+          front.hinges = Array.from({ length: count }, (_, j) => Math.round(front.v0 + hingeRule.fromEnd + ((front.height - 2 * hingeRule.fromEnd) * j) / (count - 1)));
+          front.hingeU = hingeSide === 'L' ? K.u0 + board : K.u1 - board;
+          counts.hinges += count;
+        }
+
+        if (opening === 'drawer' && K) {
+          // drawer box: size D from rules.drawers.dFrom front height, else size M
+          const size = front.height >= drawerRule.dFrom ? 'D' : 'M', sizeRule = drawerRule[size];
+          const innerU0 = K.u0 + board, innerU1 = K.u1 - board;
+          const drawer = {
+            size,
+            sideHeight: sizeRule.side,
+            backHeight: sizeRule.back,
+            innerU0,
+            innerU1,
+            bottomWidth: innerU1 - innerU0 - drawerRule.bottom.inset,
+            bottomV: item.v0 + (item.v0 === K.v0 ? drawerRule.liftAtBottom : drawerRule.liftAbove),
+            bins: hasTag(item, 'bins'),
+            inner: hasTag(item, 'inner')
+          };
+          front.drawer = drawer;
+          const bottomU0 = innerU0 + drawerRule.bottom.inset / 2, bottomU1 = innerU1 - drawerRule.bottom.inset / 2;
+          const backU0 = innerU0 + drawerRule.back.inset / 2, backU1 = innerU1 - drawerRule.back.inset / 2;
+          const n0 = drawerRule.bottom.z, n1 = drawerRule.bottom.z + drawerRule.bottom.depth, bottomThickness = drawerRule.bottom.thickness;
+          const drawerBoards = (v, backHeight, backName, inner) => {
+            addBoard({ name: 'Drawer bottom', a: drawer.bottomWidth, b: drawerRule.bottom.depth, material: 'p16', layer: 'drawers', group: G.group, carcassId: K.id, frontId: front.id, inner,
+              box: [bottomU0, bottomU1, v, v + bottomThickness, n0, n1] });
+            addBoard({ name: backName, a: innerU1 - innerU0 - drawerRule.back.inset, b: backHeight, material: 'p16', layer: 'drawers', group: G.group, carcassId: K.id, frontId: front.id, inner,
+              box: [backU0, backU1, v + bottomThickness, v + bottomThickness + backHeight, n0, n0 + drawerRule.back.thickness] });
+          };
+          drawerBoards(drawer.bottomV, drawer.backHeight, 'Drawer back ' + size, false);
+          size === 'D' ? counts.drawersD++ : counts.drawersM++;
+          if (drawer.inner) {
+            // inner drawer above the top drawer box, behind the same front
+            drawer.innerV = drawer.bottomV + drawer.sideHeight + drawerRule.inner.gap;
+            drawerBoards(drawer.innerV, drawerRule.inner.back, 'Inner drawer back', true);
+            counts.innerDrawers++;
+          }
+        }
+      }
+    }
+
+    return {
+      rules, roles, warnings, counts,
+      // depths from the wall (n), mm
+      frontThickness, carcassDepth, carcassBack, carcassFront, frontFace, plinthFace,
+      groups, carcasses, fronts, boards, frames, plinths, panels, plaster, worktops
+    };
   }
 
-  /* ---------- carcass map: where each carcass is and what it is made of (mm, group coordinates) ---------- */
-  function carcassMap(m, place) {
-    return m.carcasses.map(K => {
-      const o = {
-        carcass: K.name, group: K.g, cols: K.s > 1 ? [K.c, K.c + K.s - 1] : [K.c],
-        x: [K.u0, K.u1], y: [K.v0, K.v1], z: [m.CN0, m.CN1], size: [K.u1 - K.u0, K.v1 - K.v0, m.CD],
-        type: K.base ? 'base' : K.floor ? 'tall' : 'wall',
+  /* ---------- carcass map: where each carcass is and what it is made of (mm, group coordinates) ----------
+     roomPosition(K), optional: where the carcass stands in the room (view.html) */
+  function carcassMap(model, roomPosition) {
+    return model.carcasses.map(K => {
+      const entry = {
+        carcass: K.name,
+        group: K.group,
+        cols: K.span > 1 ? [K.col, K.col + K.span - 1] : [K.col],
+        x: [K.u0, K.u1],
+        y: [K.v0, K.v1],
+        z: [model.carcassBack, model.carcassFront],
+        size: [K.u1 - K.u0, K.v1 - K.v0, model.carcassDepth],
+        type: K.type,
         flags: ['sink', 'hob', 'fridge', 'coffee'].filter(f => K[f]),
-        members: K.members.map(i => ({ col: i.s > 1 ? [i.c, i.c + i.s - 1] : i.c, tags: i.tags.join(' '), x: [i.u0, i.u1], y: [i.v0, i.v1] })),
-        boards: cutList(m.boards.filter(b => b.K === K.id)).map(([n, a, b, q]) => (q > 1 ? q + ' × ' : '') + n + ' ' + a + ' × ' + b),
+        members: K.members.map(i => ({ col: i.span > 1 ? [i.col, i.col + i.span - 1] : i.col, tags: i.tags.join(' '), x: [i.u0, i.u1], y: [i.v0, i.v1] })),
+        boards: cutList(model.boards.filter(b => b.carcassId === K.id)).map(([name, a, b, qty]) => (qty > 1 ? qty + ' × ' : '') + name + ' ' + a + ' × ' + b),
         legs: K.legs
       };
-      if (place) o.room = place(K);
-      return o;
+      if (roomPosition) entry.room = roomPosition(K);
+      return entry;
     });
   }
-  // JSON for reading: one carcass per block, short arrays and members on one line
+
+  // carcass map as JSON for reading: one carcass per block, short arrays and members on one line
   function mapJSON(map) {
-    return '[\n' + map.map(o => '  {\n' + Object.entries(o).map(([k, v]) =>
-      '    ' + JSON.stringify(k) + ': ' + ((k === 'members' || k === 'boards') && v.length ? '[\n' + v.map(x => '      ' + json1(x)).join(',\n') + '\n    ]' : json1(v))).join(',\n') + '\n  }').join(',\n') + '\n]\n';
-  }
-  // compact one-line JSON with spaces after ':' and ','
-  function json1(v) {
-    return Array.isArray(v) ? '[' + v.map(json1).join(', ') + ']'
-      : v && typeof v === 'object' ? '{' + Object.entries(v).map(([k, x]) => JSON.stringify(k) + ': ' + json1(x)).join(', ') + '}' : JSON.stringify(v);
+    const field = ([key, value]) =>
+      '    ' + JSON.stringify(key) + ': ' +
+      ((key === 'members' || key === 'boards') && value.length ? '[\n' + value.map(x => '      ' + json1(x)).join(',\n') + '\n    ]' : json1(value));
+    return '[\n' + map.map(entry => '  {\n' + Object.entries(entry).map(field).join(',\n') + '\n  }').join(',\n') + '\n]\n';
   }
 
-  /* ---------- cutting list: parts with the same name and size counted together, in first-seen order;
-     5th field = where they go (b.at labels, e.g. "K2, K5 ×2") ---------- */
-  function cutList(list) {
-    const m = new Map();
-    for (const b of list) { const k = b.name + '|' + b.a + '|' + b.b, e = m.get(k) || { q: 0, at: new Map() }; e.q++; if (b.at) e.at.set(b.at, (e.at.get(b.at) || 0) + 1); m.set(k, e); }
-    return [...m].map(([k, e]) => { const [name, a, b] = k.split('|'); return [name, Number(a), Number(b), e.q, [...e.at].map(([s, n]) => n > 1 ? s + ' ×' + n : s).join(', ')]; });
+  // compact one-line JSON with a space after ':' and ','
+  function json1(value) {
+    if (Array.isArray(value)) return '[' + value.map(json1).join(', ') + ']';
+    if (value && typeof value === 'object') return '{' + Object.entries(value).map(([k, x]) => JSON.stringify(k) + ': ' + json1(x)).join(', ') + '}';
+    return JSON.stringify(value);
+  }
+
+  /* ---------- cutting list: parts with the same name and size counted together, in first-seen order ----------
+     rows [name, a, b, qty, where]; where = the parts' "at" labels, e.g. "K2, K5 ×2" */
+  function cutList(parts) {
+    const rows = new Map();
+    for (const p of parts) {
+      const key = p.name + '|' + p.a + '|' + p.b;
+      const row = rows.get(key) || { qty: 0, at: new Map() };
+      row.qty++;
+      if (p.at) row.at.set(p.at, (row.at.get(p.at) || 0) + 1);
+      rows.set(key, row);
+    }
+    return [...rows].map(([key, row]) => {
+      const [name, a, b] = key.split('|');
+      const where = [...row.at].map(([label, n]) => (n > 1 ? label + ' ×' + n : label)).join(', ');
+      return [name, Number(a), Number(b), row.qty, where];
+    });
   }
 
   /* ---------- project data: data.js next to the page sets window.KITCHEN_DATA ----------
      loaded with <script src="data.js">, so it works from a local folder (file://) and from a web server alike */
-  const DATA_HEAD = '/* Kitchen project data - shared by design.html, cost.html and view.html.\n   Plain JSON after "window.KITCHEN_DATA =". Edit it in design.html (Import data / Export data). */\nwindow.KITCHEN_DATA = ';
+  const DATA_HEAD =
+    '/* Kitchen project data - shared by design.html, cost.html and view.html.\n' +
+    '   Plain JSON after "window.KITCHEN_DATA =". Edit it in design.html (Import data / Export data). */\n' +
+    'window.KITCHEN_DATA = ';
   function load() {
-    const d = root.KITCHEN_DATA;
-    return d ? Promise.resolve(d) : Promise.reject(new Error('data.js not found next to this page'));
+    const data = root.KITCHEN_DATA;
+    return data ? Promise.resolve(data) : Promise.reject(new Error('data.js not found next to this page'));
   }
-  // data.js text for a project JSON text, and back (also accepts plain JSON)
+  // data.js text for a project JSON text, and back (fromDataJS also accepts plain JSON)
   const toDataJS = json => DATA_HEAD + json.replace(/\n$/, '') + ';\n';
-  const fromDataJS = text => { const i = text.indexOf('{'), j = text.lastIndexOf('}'); if (i < 0 || j < i) throw new Error('no JSON object found'); return JSON.parse(text.slice(i, j + 1)); };
+  const fromDataJS = text => {
+    const i = text.indexOf('{'), j = text.lastIndexOf('}');
+    if (i < 0 || j < i) throw new Error('no JSON object found');
+    return JSON.parse(text.slice(i, j + 1));
+  };
   // one JSON block of a page: <script type="application/json" id="...">
-  function pageData(id) { return JSON.parse(document.getElementById(id).textContent); }
+  const pageData = id => JSON.parse(document.getElementById(id).textContent);
 
-  root.KitchenEngine = { TYPE_TAGS, FEATURE_TAGS, FRONT_TYPES, BOX_TYPES, parseTags, stack, carcassAreas, frontBox, build, cutList, carcassMap, mapJSON, json1, load, toDataJS, fromDataJS, pageData, num };
+  root.KitchenEngine = {
+    TYPE_TAGS, FEATURE_TAGS, FRONT_TYPES, BOX_TYPES,
+    parseTags, readComponent, stack, carcassAreas, frontBox, build,
+    cutList, carcassMap, mapJSON, json1,
+    load, toDataJS, fromDataJS, pageData, num
+  };
 })(typeof window !== 'undefined' ? window : globalThis);

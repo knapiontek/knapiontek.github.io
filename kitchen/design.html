@@ -250,21 +250,21 @@
         table.sheet input.gap { -moz-appearance: textfield; }
         table.sheet input.gap::-webkit-inner-spin-button, table.sheet input.gap::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         table.sheet select { cursor: pointer; }
-        .feat-btn { min-width: 150px; }
-        .feat-btn.hd-btn { min-width: 76px; min-height: 30px; }
-        .feat-btn.hd-btn:hover { background: var(--sheet-row-hover); }
-        .feat-pop .pop-sec { display: grid; grid-template-columns: repeat(2, auto); gap: 2px 14px; }
-        .feat-pop.one-col .pop-sec { grid-template-columns: auto; }
-        .feat-btn { width: 100%; border: none; background: transparent; padding: 7px 10px; font: inherit; color: var(--sheet-text);
+        .pick-btn { min-width: 150px; }
+        .pick-btn.handle-btn { min-width: 76px; min-height: 30px; }
+        .pick-btn.handle-btn:hover { background: var(--sheet-row-hover); }
+        .picker .picker-list { display: grid; grid-template-columns: repeat(2, auto); gap: 2px 14px; }
+        .picker.one-col .picker-list { grid-template-columns: auto; }
+        .pick-btn { width: 100%; border: none; background: transparent; padding: 7px 10px; font: inherit; color: var(--sheet-text);
           text-align: left; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .feat-btn.empty { color: var(--sheet-ghost); }
-        .feat-btn:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--sheet-focus); background: #fff8e1; }
-        .feat-pop { position: fixed; z-index: 50; background: var(--sheet-bg); color: var(--sheet-text); border: 1px solid var(--sheet-border);
+        .pick-btn.empty { color: var(--sheet-ghost); }
+        .pick-btn:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--sheet-focus); background: #fff8e1; }
+        .picker { position: fixed; z-index: 50; background: var(--sheet-bg); color: var(--sheet-text); border: 1px solid var(--sheet-border);
           border-radius: 6px; box-shadow: 0 8px 24px rgba(15,23,42,.35); padding: 6px;
           font: 13px ui-monospace, Menlo, Consolas, monospace; }
-        .feat-pop label { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
-        .feat-pop label:hover { background: var(--sheet-row-hover); }
-        .feat-pop .pop-h { grid-column: 1 / -1; font: 600 11px system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--sheet-text-muted); padding: 6px 6px 2px; }
+        .picker label { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+        .picker label:hover { background: var(--sheet-row-hover); }
+        .picker .picker-title { grid-column: 1 / -1; font: 600 11px system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--sheet-text-muted); padding: 6px 6px 2px; }
     
         td.col-actions { width: 56px; text-align: center; padding: 0 !important; white-space: nowrap; }
         td.col-actions button {
@@ -304,15 +304,15 @@
 
   <div id="action-bar">
     <div class="action-group">
-      <button class="btn secondary" @click="triggerImport()" title="Load a data.js (or .json) file into the tables">Import data</button>
-      <button class="btn" @click="saveDataJSON()" title="Save the tables as data.js">Export data</button>
-      <input type="file" class="hidden-file-input" accept=".js,.json,text/javascript,application/json" x-ref="importFile" @change="handleImportFile($event)">
+      <button class="btn secondary" @click="chooseImportFile()" title="Load a data.js (or .json) file into the tables">Import data</button>
+      <button class="btn" @click="exportData()" title="Save the tables as data.js">Export data</button>
+      <input type="file" class="hidden-file-input" accept=".js,.json,text/javascript,application/json" x-ref="importFile" @change="importFile($event)">
     </div>
     <div class="action-group">
     </div>
   </div>
 
-  <div id="status-banner" :class="{show: bannerType !== '', error: bannerType === 'error', ok: bannerType === 'ok'}" x-text="bannerText"></div>
+  <div id="status-banner" :class="{show: status.type !== '', error: status.type === 'error', ok: status.type === 'ok'}" x-text="status.message"></div>
 
   <!-- 1. INPUT -->
   <div class="panel">
@@ -320,14 +320,14 @@
     <div class="input-grid">
       <div class="sub-section">
         <h4>Groups &amp; Columns</h4>
-        <div class="sheet-wrap" @scroll="featPop.row = null">
+        <div class="sheet-wrap" @scroll="picker.row = null">
           <table class="sheet">
             <thead>
               <tr><th style="width:60px">Group</th><th>Width</th><th class="col-actions"></th></tr>
             </thead>
             <tbody x-ref="columnsTbody">
               <template x-for="(row, idx) in columns" :key="row.id">
-                <tr :class="{'is-invalid': build.colFlags[idx] === 'invalid', 'is-empty-row': build.colFlags[idx] === 'empty'}">
+                <tr :class="{'is-invalid': build.columnFlags[idx] === 'invalid', 'is-empty-row': build.columnFlags[idx] === 'empty'}">
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.width"></td>
                   <td class="col-actions">
@@ -341,7 +341,7 @@
       </div>
       <div class="sub-section">
         <h4>Components</h4>
-        <div class="sheet-wrap" @scroll="featPop.row = null">
+        <div class="sheet-wrap" @scroll="picker.row = null">
           <table class="sheet">
             <thead>
               <tr>
@@ -362,20 +362,20 @@
             </thead>
             <tbody x-ref="componentsTbody">
               <template x-for="(row, idx) in components" :key="row.id">
-                <tr :class="{'is-invalid': build.compFlags[idx] === 'invalid', 'is-empty-row': build.compFlags[idx] === 'empty'}">
+                <tr :class="{'is-invalid': build.componentFlags[idx] === 'invalid', 'is-empty-row': build.componentFlags[idx] === 'empty'}">
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.col"></td>
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.span"></td>
-                  <td><button type="button" class="feat-btn" :class="{empty: !row.tags}" @click="openFeatures(row, $event)" x-text="row.tags || '—'"></button></td>
-                  <td><input type="text" class="cell" spellcheck="false" placeholder="—" x-model="row.k"></td>
+                  <td><button type="button" class="pick-btn" :class="{empty: !row.tags}" @click="openPicker(row, $event)" x-text="row.tags || '—'"></button></td>
+                  <td><input type="text" class="cell" spellcheck="false" placeholder="—" x-model="row.carcass"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.height"></td>
                   <td>
-                    <template x-if="isFront(row)"><button type="button" class="feat-btn hd-btn" title="Handle position" @click="openFeatures(row, $event, 'handle')" x-text="row.handle ? HANDLE_NAMES[row.handle] || row.handle : ''"></button></template>
+                    <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Handle position" @click="openPicker(row, $event, 'handle')" x-text="row.handle ? HANDLE_NAMES[row.handle] || row.handle : ''"></button></template>
                   </td>
-                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gl" @wheel="$event.target.blur()"></td>
-                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gr" @wheel="$event.target.blur()"></td>
-                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gt" @wheel="$event.target.blur()"></td>
-                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gb" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapLeft" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapRight" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapTop" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapBottom" @wheel="$event.target.blur()"></td>
                   <td class="col-note"><input type="text" class="cell" x-model="row.note"></td>
                   <td class="col-actions">
                     <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertComponentRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeComponentRow(idx)">×</button>
@@ -390,25 +390,25 @@
   </div>
 
   <!-- ONE picker popup for a component row: either the handle or the tags (fixed position, so the table scroll cannot clip it) -->
-  <div class="feat-pop" :class="{'one-col': featPop.mode === 'handle'}" x-show="featPop.row" x-cloak :style="`left:${featPop.x}px; top:${featPop.y}px`"
-       @click.outside="if (!$event.target.closest('.feat-btn')) featPop.row = null" @keydown.escape.window="featPop.row = null">
-    <template x-if="featPop.row && featPop.mode === 'handle'">
-      <div class="pop-sec">
-        <div class="pop-h">handle</div>
+  <div class="picker" :class="{'one-col': picker.mode === 'handle'}" x-show="picker.row" x-cloak :style="`left:${picker.x}px; top:${picker.y}px`"
+       @click.outside="if (!$event.target.closest('.pick-btn')) picker.row = null" @keydown.escape.window="picker.row = null">
+    <template x-if="picker.row && picker.mode === 'handle'">
+      <div class="picker-list">
+        <div class="picker-title">handle</div>
         <template x-for="h in HANDLE_POSITIONS" :key="h || 'none'">
-          <label><input type="radio" name="handle-pos" :checked="(featPop.row.handle || '') === h" @change="featPop.row.handle = h; featPop.row = null"> <span x-text="HANDLE_NAMES[h]"></span></label>
+          <label><input type="radio" name="handle-pos" :checked="(picker.row.handle || '') === h" @change="picker.row.handle = h; picker.row = null"> <span x-text="HANDLE_NAMES[h]"></span></label>
         </template>
       </div>
     </template>
-    <template x-if="featPop.row && featPop.mode === 'tags'">
-      <div class="pop-sec">
-        <div class="pop-h">type</div>
-        <template x-for="k in TYPE_TAGS" :key="k">
-          <label><input type="radio" name="tag-type" :checked="typeOf(featPop.row) === k" @change="setType(featPop.row, k)"> <span x-text="k"></span></label>
+    <template x-if="picker.row && picker.mode === 'tags'">
+      <div class="picker-list">
+        <div class="picker-title">type</div>
+        <template x-for="t in TYPE_TAGS" :key="t">
+          <label><input type="radio" name="tag-type" :checked="typeOf(picker.row) === t" @change="setType(picker.row, t)"> <span x-text="t"></span></label>
         </template>
-        <div class="pop-h">features</div>
+        <div class="picker-title">features</div>
         <template x-for="f in FEATURE_TAGS" :key="f">
-          <label><input type="checkbox" :checked="hasFeat(featPop.row, f)" @change="toggleFeat(featPop.row, f)"> <span x-text="f"></span></label>
+          <label><input type="checkbox" :checked="hasFeature(picker.row, f)" @change="toggleFeature(picker.row, f)"> <span x-text="f"></span></label>
         </template>
       </div>
     </template>
@@ -459,19 +459,6 @@
 </div>
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<!-- ===================================================================
-     PROJECT DATA lives in data.js (same folder), loaded with a script tag at start; "Export data" downloads the edited tables as data.js.
-       rules:      construction rules used by engine.js (carcass depth, front face, shelves, hinges, drawers ...)
-       notes:      [name, description, details] - everything the drawing does not show
-       columns:    group -> column widths in mm, left to right
-       components: placed bottom-up within their column(s), in list order
-         g group, c first column, s column span, h height mm,
-         tags: exactly ONE type - filler, board, plinth, worktop, splash, panel, frame, cabinet, drawer, dummy, oven, micro;
-               + features - hob, sink, bins, dishwasher, fridge, freezer, inner;
-         k carcass name (K1, K2 ...): same name = ONE carcass over all its columns; "" = no carcass
-         hd handle (T|B|L|R|""), gaps (fronts only) [left, right, top, bottom] mm: front = module minus the 4 gaps, note: free text
-     DATA FLOW: data.js -> engine.js (layout, carcasses, boards, fronts) -> this page, cost.html, view.html
-     =================================================================== -->
 <!-- DESIGN CONFIG (JSON): how this page draws the elevations - sizes in SVG units (1 = 1 mm), colours -->
 <script type="application/json" id="design-config">
 {
@@ -531,91 +518,58 @@
 'use strict';
 
 /* ===================================================================
-   SECTION 1 — CONFIG & SAMPLE DATA
-   Colors, sizing constants, component-type lists, and the data that
-   pre-fills the tables on first load. Nothing in this section runs
-   any logic - it is just values other sections read from.
+   design.html - the editor of data.js, with 2D elevations of every group.
+
+   WHO DOES WHAT
+     data.js     the project (rules, notes, columns, components)
+     engine.js   stacks the components in their columns (stack) and joins items into carcasses (carcassAreas);
+                 it draws nothing
+     this page   the tables (Alpine.js), the checks of each table row and the SVG drawing of the elevations
+                 (section 4 below); Export data writes the tables back as data.js
+
+   SECTIONS
+     1. settings      drawing config (#design-config), tag lists from engine.js
+     2. utilities     number parsing, escaping, file download
+     3. layout        table rows -> positioned items (engine.js stack), one group after the other
+     4. SVG           positioned items -> SVG markup
+     5. elevations    table rows -> checks + layout + SVG, the one call the page makes
+     6. page          Alpine component: tables, picker, import / export, hover info
+   Field names follow engine.js (see its GLOSSARY): group, col, span, height, type, tags, carcass, handle, gaps, note.
    =================================================================== */
 
+/* ---------- 1. settings ---------- */
 const KE = window.KitchenEngine || null;
-// Drawing settings of this page: the JSON block #design-config (scale, frame width, group gap, colours, handle size).
-const CONFIG = KE ? KE.pageData('design-config') : {"scale": 1, "frameThickness": 50, "groupGap": 100, "viewBoxMargin": 40, "colors": {"canvasBg": "#f8fafc", "filler": "#cbd5e1", "fillerStroke": "#1e293b", "worktop": "#f3c48b", "worktopStroke": "#a86c32", "splash": "#ead7b4", "splashStroke": "#a86c32", "board": "#e7e5e4", "boardStroke": "#78716c", "frame": "#bfdbfe", "frameStroke": "#1e293b", "plinth": "#b4bfcc", "plinthStroke": "#1e293b", "frontOuter": "#bfdbfe", "frontOuterStroke": "#1e293b", "frontInner": "#dbeafe", "frontInnerStroke": "#64748b", "handle": "#d97706", "handleStroke": "#78350f", "applianceBody": "#e2e8f0", "applianceBodyStroke": "#1e293b", "applianceGlass": "#94a3b8", "applianceGlassStroke": "#475569", "applianceTrim": "#cbd5e1", "applianceTrimStroke": "#475569", "controlPanel": "#334155", "controlPanelStroke": "#1e293b", "knob": "#64748b", "glassBlack": "#1c1f24", "panelBlack": "#0d0f12", "applianceEdge": "#000000", "glassWindow": "#2b313a", "knobMetal": "#a1a7b0", "handleMetal": "#c4c9cf", "display": "#06080a", "displayText": "#7dd3fc"}, "handle": {"thickness": 16, "edgeOffset": 20, "minSpan": 30, "maxSpan": 80}};
-
-// Component types that are just a plain colored rectangle. Mapping each one
-// to its fill/stroke pair here means the renderer needs only ONE function
-// for all of them instead of near-identical copies.
-const SIMPLE_RECT_TYPES = {
-  filler: { fill: 'filler', stroke: 'fillerStroke' },
-  board: { fill: 'board', stroke: 'boardStroke' },
-  worktop: { fill: 'worktop', stroke: 'worktopStroke' },
-  splash: { fill: 'splash', stroke: 'splashStroke' },
-  panel: { fill: 'frame', stroke: 'frameStroke' },   // same blue as frames and fronts
-  frame: { fill: 'frame', stroke: 'frameStroke' },
-  plinth: { fill: 'plinth', stroke: 'plinthStroke' }
-};
-
-// filler = void, board = plasterboard box, plinth = plinth board, worktop = worktop board, splash = splash on the wall, panel = MDF board laid flat, frame = MDF strip on edge,
-// cabinet = hinged door front, drawer = drawer front, dummy = fixed front, oven / micro = appliance.
-// Tags come from engine.js: one type tag + feature tags. Without engine.js the page shows an error instead of failing.
+// how this page draws the elevations: the JSON block #design-config (scale, frame width, group gap, colours, handle size)
+const CONFIG = JSON.parse(document.getElementById('design-config').textContent);
 const ENGINE_MISSING = 'engine.js not found next to this page - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.';
-const TYPE_TAGS = KE ? KE.TYPE_TAGS : [], FEATURE_TAGS = KE ? KE.FEATURE_TAGS : [];
-const parseTags = KE ? KE.parseTags : (s => ({ tags: [], types: [], type: null, features: [], unknown: [] }));
-const TAG_HELP = 'One type: ' + TYPE_TAGS.join(', ') + '. Features: ' + FEATURE_TAGS.join(', ') + '.';
+const DATA_MISSING = 'data.js not found next to this page - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.';
+
+// tags: exactly one type + any features (engine.js); without engine.js the page shows an error instead of failing
+const TYPE_TAGS = KE ? KE.TYPE_TAGS : [];
+const FEATURE_TAGS = KE ? KE.FEATURE_TAGS : [];
 const FRONT_TYPES = KE ? KE.FRONT_TYPES : ['cabinet', 'drawer', 'dummy'];
+const BOX_TYPES = KE ? KE.BOX_TYPES : [];
+const parseTags = KE ? KE.parseTags : () => ({ tags: [], types: [], type: null, features: [], unknown: [] });
 const HANDLE_POSITIONS = ['', 'T', 'B', 'L', 'R'];
+const HANDLE_NAMES = { '': 'none', T: 'top', B: 'bottom', L: 'left', R: 'right' };
 
-// Fallbacks used only when the project file leaves a setting out.
-
-// The project lives in data.js. This turns it into the plain shape the UI binds to,
-// so the app never depends on how the data file is written.
-function loadProject(p) {
-  p = p || { columns: {}, components: [] };
-  const columns = [];
-  for (const [g, widths] of Object.entries(p.columns || {})) for (const w of widths) columns.push([Number(g), w]);
-  return {
-    notes: (p.notes || []).map(([name, description, details]) => [name ?? '', description ?? '', details ?? '']),
-    columns,
-    components: (p.components || []).map(c => [c.g, c.c, c.s, c.tags, c.h, c.hd ?? '', ...(Array.isArray(c.gaps) ? c.gaps : ['', '', '', '']), c.note ?? '', c.k ?? ''])
-  };
-}
-let RAW = null;   // project data as loaded: keeps the part this page does not edit (rules)
-
-// project JSON in the same layout as data.js: one note / component per line
-function projectJSON(p) {
-  const J = v => Array.isArray(v) ? '[' + v.map(J).join(', ') + ']' : v && typeof v === 'object' ? '{' + Object.entries(v).map(([k, x]) => JSON.stringify(k) + ': ' + J(x)).join(', ') + '}' : JSON.stringify(v);
-  const L = (arr, f = J) => arr.map(x => '  ' + f(x)).join(',\n');
-  const comps = p.components.map((c, i) => (i && c.g !== p.components[i - 1].g ? '\n' : '') + '  ' + J(c)).join(',\n');
-  return '{\n "rules": {\n' + Object.entries(p.rules || {}).map(([k, v]) => '  ' + J(k) + ': ' + J(v)).join(',\n') +
-    '\n },\n "notes": [\n' + L(p.notes) + '\n ],\n "columns": {\n' + Object.entries(p.columns).map(([g, w]) => '  ' + J(g) + ': ' + J(w)).join(',\n') +
-    '\n },\n "components": [\n' + comps + '\n ]\n}\n';
+/* ---------- 2. utilities (nothing kitchen-specific) ---------- */
+function isRowEmpty(...values) {
+  return values.every(v => String(v ?? '').trim() === '');
 }
 
-/* ===================================================================
-   SECTION 2 — GENERIC UTILITIES
-   Number parsing, file download. No kitchen-specific
-   knowledge here - safe to reuse in any other project.
-   =================================================================== */
-
-// Generic helpers with no knowledge of kitchens, layouts, or Alpine.
-// Kept separate so they're easy to test or reuse on their own.
-
-function isRowEmpty(...vals) {
-  return vals.every(v => String(v ?? '').trim() === '');
+function escapeAttr(value) {
+  return String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function escapeAttr(v) {
-  return String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function toNum(v, isInt) {
-  const s = String(v ?? '').trim();
+function toNum(value, isInt) {
+  const s = String(value ?? '').trim();
   if (s === '') return NaN;
   return isInt ? parseInt(s, 10) : parseFloat(s);
 }
 
 function downloadBlob(content, mimeType, filename) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;
@@ -625,155 +579,131 @@ function downloadBlob(content, mimeType, filename) {
   URL.revokeObjectURL(url);
 }
 
+/* ---------- 3. layout: where each item sits in the drawing (no colours, no SVG) ----------
+   groupWidths: Map group -> column widths (mm); pieces: checked table rows with engine.js field names.
+   The groups are drawn side by side, CONFIG.groupGap apart; v (height) is from the floor. */
+function layoutElevations(groupWidths, pieces) {
+  const scale = CONFIG.scale, groupGap = CONFIG.groupGap;
+  const warnings = [], items = [];
 
-/* ===================================================================
-   SECTION 3 — LAYOUT ENGINE (pure geometry)
-   Figures out where each component sits: x, y, width, height. Knows
-   nothing about colors or SVG markup - that is Section 4.
-   =================================================================== */
-
-// LayoutEngine turns "groups + columns + components" into positioned boxes
-// (x, y, width, height for each component). It knows nothing about how
-// those boxes get drawn - that's the SVG renderer's job. Splitting the two
-// apart is what used to make the old KitchenSVGBuilder class hard to follow.
-
-class LayoutEngine {
-  constructor(options = {}) {
-    this.scale = options.scale ?? CONFIG.scale;
-    this.groupGap = options.groupGap ?? CONFIG.groupGap;
-
-    this.groups = new Map();         // groupId -> { colWidths, colX }
-    this.rawComponents = [];
+  // x of each group in the drawing; empty groups take no room
+  const groupX = new Map(), groupWidth = new Map();
+  let cursor = 0;
+  for (const [group, widths] of groupWidths) {
+    const width = widths.reduce((a, w) => a + w * scale, 0);
+    groupWidth.set(group, width);
+    groupX.set(group, width > 0 ? cursor : 0);
+    if (width > 0) cursor += width + groupGap;
   }
 
-  setGroupColumns(groupId, widthsInMm) {
-    const colWidths = widthsInMm.map(w => w * this.scale);
-    const colX = [];
-    let x = 0;
-    for (const w of colWidths) { colX.push(x); x += w; }
-    this.groups.set(groupId, { colWidths, colX });
-  }
-
-  addComponent(groupNum, colNum, colSpan, type, heightMm, handlePos = null, gaps = null, note = '', tags = '', k = '') {
-    this.rawComponents.push({ groupNum, colNum, colSpan, type, heightMm, handlePos, gaps, note, tags, k });
-  }
-
-  // Places every component, left to right by group, bottom to top within a
-  // column. Returns everything the SVG renderer needs.
-  calculate() {
-    const warnings = [];
-    const components = [];
-
-
-    const groupXOffsets = new Map();
-    let cursor = 0;
-    for (const [groupId, group] of this.groups) {
-      const width = group.colWidths.reduce((a, b) => a + b, 0);
-      groupXOffsets.set(groupId, width > 0 ? cursor : 0);
-      if (width > 0) cursor += width + this.groupGap;
+  // stacking with engine.js, group by group: an item starts on top of the stack in the columns it spans
+  const piecesOfGroup = new Map();
+  for (const piece of pieces) {
+    if (!groupWidths.has(piece.group)) {
+      warnings.push(`Component "${piece.type}" references unknown group ${piece.group}. Skipped.`);
+      continue;
     }
-
-    // stacking per group with engine.js: a piece starts on top of the stack in the columns it spans
-    const byGroup = new Map();
-    for (const comp of this.rawComponents) {
-      if (!this.groups.has(comp.groupNum)) { warnings.push(`Component "${comp.type}" references unknown group ${comp.groupNum}. Skipped.`); continue; }
-      (byGroup.get(comp.groupNum) || byGroup.set(comp.groupNum, []).get(comp.groupNum)).push({ c: comp.colNum, s: comp.colSpan, h: comp.heightMm * this.scale, comp });
+    if (!piecesOfGroup.has(piece.group)) piecesOfGroup.set(piece.group, []);
+    piecesOfGroup.get(piece.group).push({ ...piece, height: piece.height * scale, heightMm: piece.height });
+  }
+  for (const [group, list] of piecesOfGroup) {
+    const stacked = KE.stack(groupWidths.get(group).map(w => w * scale), list);
+    for (const { piece, why } of stacked.skipped) {
+      warnings.push(why === 'overlap'
+        ? `Component "${piece.type}" (${piece.heightMm}mm) at Group ${group}, Col ${piece.col} overlaps an existing component. Skipped.`
+        : `Component "${piece.type}" at Group ${group} has an invalid column/span. Skipped.`);
     }
-    for (const [groupNum, list] of byGroup) {
-      const group = this.groups.get(groupNum), st = KE.stack(group.colWidths, list);
-      for (const { it, why } of st.skipped) warnings.push(why === 'overlap'
-        ? `Component "${it.comp.type}" (${it.comp.heightMm}mm) at Group ${groupNum}, Col ${it.c} overlaps an existing component. Skipped.`
-        : `Component "${it.comp.type}" at Group ${groupNum} has an invalid column/span. Skipped.`);
-      for (const it of st.items) {
-        const comp = it.comp, width = it.u1 - it.u0, widthMm = width / this.scale;
-        const [gl, gr, gt, gb] = comp.gaps || [0, 0, 0, 0];
-        const isFront = FRONT_TYPES.includes(comp.type);
-        components.push({
-          groupNum, colNum: comp.colNum, colIndex: comp.colNum - 1, colSpan: comp.colSpan, type: comp.type,
-          x: it.u0 + groupXOffsets.get(groupNum), yFromBottom: it.v0, width, height: it.v1 - it.v0, heightMm: comp.heightMm, widthMm,
-          gaps: comp.gaps, isFront,
-          frontWidthMm: isFront ? Math.max(0, widthMm - gl - gr) : widthMm, frontHeightMm: isFront ? Math.max(0, comp.heightMm - gb - gt) : comp.heightMm,
-          handlePos: comp.handlePos, note: comp.note || '', tags: comp.tags || comp.type, k: comp.k || '',
-          u0: it.u0, u1: it.u1, v0: it.v0, v1: it.v1, c: it.c, s: it.s, t: comp.type
-        });
+    for (const item of stacked.items) {
+      const width = item.u1 - item.u0, widthMm = width / scale;
+      const isFront = FRONT_TYPES.includes(item.type);
+      const [left, right, top, bottom] = item.gaps || [0, 0, 0, 0];
+      items.push({
+        ...item,
+        x: item.u0 + groupX.get(group),
+        width,
+        height: item.v1 - item.v0,
+        widthMm,
+        frontWidthMm: isFront ? Math.max(0, widthMm - left - right) : widthMm,
+        frontHeightMm: isFront ? Math.max(0, item.heightMm - bottom - top) : item.heightMm
+      });
+    }
+  }
+
+  // one carcass name must stay in one group (engine.js joins the items of one name into one carcass)
+  const groupOfCarcass = new Map();
+  for (const group of piecesOfGroup.keys()) {
+    for (const area of KE.carcassAreas(items.filter(i => i.group === group))) {
+      if (groupOfCarcass.has(area.name) && groupOfCarcass.get(area.name) !== group) {
+        warnings.push(`Carcass ${area.name} is used in Group ${groupOfCarcass.get(area.name)} and Group ${group} - one carcass must stay in one group.`);
       }
+      groupOfCarcass.set(area.name, group);
     }
-
-    // carcasses (engine.js): area of all components with the same carcass name; tinted when it runs over several columns
-    const carcasses = [];
-    for (const groupNum of byGroup.keys()) for (const A of KE.carcassAreas(components.filter(c => c.groupNum === groupNum))) {
-      carcasses.push({ groupNum, name: A.name, joined: new Set(A.members.map(m => m.c + ':' + m.s)).size > 1, x: A.u0 + groupXOffsets.get(groupNum), width: A.u1 - A.u0, yFromBottom: A.v0 * this.scale, height: (A.v1 - A.v0) * this.scale });
-    }
-    const dup = new Map();
-    for (const K of carcasses) { if (dup.has(K.name) && dup.get(K.name) !== K.groupNum) warnings.push(`Carcass ${K.name} is used in Group ${dup.get(K.name)} and Group ${K.groupNum} - one carcass must stay in one group.`); dup.set(K.name, K.groupNum); }
-
-    // Overall canvas size: widest total across groups, tallest column anywhere.
-    const groupWidths = new Map();
-    let totalWidth = 0;
-    let activeGroupsCount = 0;
-    for (const [groupId, group] of this.groups) {
-      const w = group.colWidths.reduce((a, b) => a + b, 0);
-      groupWidths.set(groupId, w);
-      totalWidth += w;
-      if (w > 0) activeGroupsCount++;
-    }
-    if (activeGroupsCount > 1) totalWidth += this.groupGap * (activeGroupsCount - 1);
-
-    let totalHeight = 0;
-    for (const c of components) totalHeight = Math.max(totalHeight, c.yFromBottom + c.height);
-
-    return {
-      components,
-      carcasses,
-      groupWidths,
-      groupXOffsets,
-      totalWidth,
-      totalHeight,
-      isEmpty: totalWidth <= 0 || totalHeight <= 0,
-      warnings
-    };
   }
+
+  // drawing size: all groups side by side, the tallest stack
+  let totalWidth = 0, groupsWithWidth = 0;
+  for (const width of groupWidth.values()) {
+    totalWidth += width;
+    if (width > 0) groupsWithWidth++;
+  }
+  if (groupsWithWidth > 1) totalWidth += groupGap * (groupsWithWidth - 1);
+  const totalHeight = items.reduce((h, i) => Math.max(h, i.v0 + i.height), 0);
+
+  return { items, groupX, groupWidth, totalWidth, totalHeight, isEmpty: totalWidth <= 0 || totalHeight <= 0, warnings };
 }
 
-/* ===================================================================
-   SECTION 4 — SVG RENDERER
-   Turns positioned components (from Section 3) into SVG markup.
-   Only this section touches CONFIG.colors or writes <rect>/<g> tags.
-   =================================================================== */
+/* ---------- 4. SVG: positioned items -> SVG markup (the only code that uses CONFIG.colors) ----------
+   Every function gets an item and y = its top edge in SVG coordinates (y grows down). */
 
-// Everything here is a pure function: (positioned component) -> SVG string.
-// No state, no layout math - that all happened in the layout engine already.
+// types drawn as a plain rectangle: fill and stroke colour names in CONFIG.colors
+const RECT_COLORS = {
+  filler: ['filler', 'fillerStroke'],
+  board: ['board', 'boardStroke'],
+  worktop: ['worktop', 'worktopStroke'],
+  splash: ['splash', 'splashStroke'],
+  panel: ['frame', 'frameStroke'], // same blue as frames and fronts
+  frame: ['frame', 'frameStroke'],
+  plinth: ['plinth', 'plinthStroke']
+};
 
-function renderSimpleRect(c, svgY, colorKey) {
-  const { fill, stroke } = SIMPLE_RECT_TYPES[colorKey];
-  const { [fill]: fillColor, [stroke]: strokeColor } = CONFIG.colors;
-  return `<rect fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" x="${c.x}" y="${svgY}" width="${c.width}" height="${c.height}"/>`;
+function drawRect(item, y) {
+  const [fill, stroke] = RECT_COLORS[item.type];
+  return `<rect fill="${CONFIG.colors[fill]}" stroke="${CONFIG.colors[stroke]}" stroke-width="2" x="${item.x}" y="${y}" width="${item.width}" height="${item.height}"/>`;
 }
 
-function renderFront(c, svgY) {
+// front: outer rectangle + the inner panel of a shaker front (frameThickness in from every edge)
+function drawFront(item, y) {
   const ft = CONFIG.frameThickness;
   const { frontOuter, frontOuterStroke, frontInner, frontInnerStroke } = CONFIG.colors;
-  const outer = `<rect fill="${frontOuter}" stroke="${frontOuterStroke}" stroke-width="2" x="${c.x}" y="${svgY}" width="${c.width}" height="${c.height}"/>`;
-  if (c.width <= ft * 2 || c.height <= ft * 2) return outer;
-  const inner = `<rect fill="${frontInner}" stroke="${frontInnerStroke}" stroke-width="2" x="${c.x + ft}" y="${svgY + ft}" width="${c.width - ft * 2}" height="${c.height - ft * 2}"/>`;
+  const outer = `<rect fill="${frontOuter}" stroke="${frontOuterStroke}" stroke-width="2" x="${item.x}" y="${y}" width="${item.width}" height="${item.height}"/>`;
+  if (item.width <= ft * 2 || item.height <= ft * 2) return outer;
+  const inner = `<rect fill="${frontInner}" stroke="${frontInnerStroke}" stroke-width="2" x="${item.x + ft}" y="${y + ft}" width="${item.width - ft * 2}" height="${item.height - ft * 2}"/>`;
   return outer + inner;
 }
 
-// Appliance face = the component's own rectangle from the input table.
-// The type only decides what the face looks like, never its size.
-function applianceFace(c, svgY) {
-  return { x: c.x, y: svgY, w: c.width, h: c.height, slot: '' };
+function drawHandle(item, y) {
+  if (!item.handle) return '';
+  const { thickness, edgeOffset, minSpan, maxSpan } = CONFIG.handle;
+  const verticalSpan = Math.min(120, Math.max(minSpan, item.height - 80));
+  const horizontalSpan = Math.min(maxSpan, Math.max(minSpan, item.width - 80));
+  let hx, hy, hw, hh;
+  switch (item.handle.toUpperCase()) {
+    case 'T': hw = horizontalSpan; hh = thickness; hx = item.x + (item.width - hw) / 2; hy = y + edgeOffset; break;
+    case 'B': hw = horizontalSpan; hh = thickness; hx = item.x + (item.width - hw) / 2; hy = y + item.height - edgeOffset - thickness; break;
+    case 'L': hw = thickness; hh = verticalSpan; hx = item.x + edgeOffset; hy = y + (item.height - hh) / 2; break;
+    case 'R':
+    default: hw = thickness; hh = verticalSpan; hx = item.x + item.width - edgeOffset - thickness; hy = y + (item.height - hh) / 2; break;
+  }
+  return `<rect fill="${CONFIG.colors.handle}" stroke="${CONFIG.colors.handleStroke}" stroke-width="1.5" x="${hx}" y="${hy}" width="${hw}" height="${hh}"/>`;
 }
 
-// Built-in oven look: black glass, top control strip with a central
-// display and two knobs, full-width bar handle, tinted glass door.
-function renderOven(c, svgY) {
-  const k = CONFIG.colors;
-  const { x, y, w, h, slot } = applianceFace(c, svgY);
+// built-in oven: black glass, top control strip with a central display and two knobs, full-width bar handle, tinted glass door
+function drawOven(item, y) {
+  const k = CONFIG.colors, { x, width: w, height: h } = item;
   const panelH = Math.min(95, h * 0.17);
   const knobR = Math.min(17, panelH * 0.25);
   const handleY = y + panelH + 28;
-  return `${slot}
+  return `
     <rect fill="${k.glassBlack}" stroke="${k.applianceEdge}" stroke-width="2" x="${x}" y="${y}" width="${w}" height="${h}" rx="4"/>
     <rect fill="${k.panelBlack}" x="${x + 4}" y="${y + 4}" width="${w - 8}" height="${panelH - 8}" rx="2"/>
     <circle cx="${x + w * 0.16}" cy="${y + panelH / 2}" r="${knobR}" fill="${k.knobMetal}" stroke="${k.applianceEdge}" stroke-width="1.5"/>
@@ -785,15 +715,13 @@ function renderOven(c, svgY) {
   `;
 }
 
-// Built-in microwave look: black glass, window on the left, control column on
-// the right with display and touch buttons, push-button door (no handle).
-function renderMicro(c, svgY) {
-  const k = CONFIG.colors;
-  const { x, y, w, h, slot } = applianceFace(c, svgY);
+// built-in microwave: black glass, window on the left, control column on the right with display and touch buttons, no handle
+function drawMicro(item, y) {
+  const k = CONFIG.colors, { x, width: w, height: h } = item;
   const panelW = Math.min(150, w * 0.25);
   const winX = x + 40, winY = y + 45, winW = w - panelW - 80, winH = h - 90;
   const px = x + w - panelW;
-  return `${slot}
+  return `
     <rect fill="${k.glassBlack}" stroke="${k.applianceEdge}" stroke-width="2" x="${x}" y="${y}" width="${w}" height="${h}" rx="4"/>
     <rect fill="${k.glassWindow}" stroke="${k.applianceEdge}" stroke-width="1" x="${winX}" y="${winY}" width="${Math.max(0, winW)}" height="${Math.max(0, winH)}" rx="8"/>
     <line x1="${px}" y1="${y + 10}" x2="${px}" y2="${y + h - 10}" stroke="${k.applianceEdge}" stroke-width="1.5"/>
@@ -804,97 +732,62 @@ function renderMicro(c, svgY) {
   `;
 }
 
-function renderHandle(c, svgY) {
-  if (!c.handlePos) return '';
-  const { thickness, edgeOffset, minSpan, maxSpan } = CONFIG.handle;
-  const pos = c.handlePos.toUpperCase();
-  const vSpan = Math.min(120, Math.max(minSpan, c.height - 80));
-  const hSpan = Math.min(maxSpan, Math.max(minSpan, c.width - 80));
-  let hx, hy, hw, hh;
-
-  switch (pos) {
-    case 'T': hw = hSpan; hh = thickness; hx = c.x + (c.width - hw) / 2; hy = svgY + edgeOffset; break;
-    case 'B': hw = hSpan; hh = thickness; hx = c.x + (c.width - hw) / 2; hy = svgY + c.height - edgeOffset - thickness; break;
-    case 'L': hw = thickness; hh = vSpan; hx = c.x + edgeOffset; hy = svgY + (c.height - hh) / 2; break;
-    case 'R':
-    default: hw = thickness; hh = vSpan; hx = c.x + c.width - edgeOffset - thickness; hy = svgY + (c.height - hh) / 2; break;
-  }
-
-  return `<rect fill="${CONFIG.colors.handle}" stroke="${CONFIG.colors.handleStroke}" stroke-width="1.5" x="${hx}" y="${hy}" width="${hw}" height="${hh}"/>`;
-}
-
-// Single dispatch table instead of a big switch statement. Adding a new
-// component type later just means adding one entry here.
-const COMPONENT_RENDERERS = {
-  filler: (c, svgY) => renderSimpleRect(c, svgY, 'filler'),
-  board: (c, svgY) => renderSimpleRect(c, svgY, 'board'),
-  worktop: (c, svgY) => renderSimpleRect(c, svgY, 'worktop'),
-  splash: (c, svgY) => renderSimpleRect(c, svgY, 'splash'),
-  panel: (c, svgY) => renderSimpleRect(c, svgY, 'panel'),
-  frame: (c, svgY) => renderSimpleRect(c, svgY, 'frame'),
-  plinth: (c, svgY) => renderSimpleRect(c, svgY, 'plinth'),
-  cabinet: (c, svgY) => renderFront(c, svgY) + renderHandle(c, svgY),
-  drawer: (c, svgY) => renderFront(c, svgY) + renderHandle(c, svgY),
-  dummy: (c, svgY) => renderFront(c, svgY) + renderHandle(c, svgY),
-  oven: renderOven,
-  micro: renderMicro
+// one drawing function per type
+const DRAW = {
+  filler: drawRect,
+  board: drawRect,
+  worktop: drawRect,
+  splash: drawRect,
+  panel: drawRect,
+  frame: drawRect,
+  plinth: drawRect,
+  cabinet: (item, y) => drawFront(item, y) + drawHandle(item, y),
+  drawer: (item, y) => drawFront(item, y) + drawHandle(item, y),
+  dummy: (item, y) => drawFront(item, y) + drawHandle(item, y),
+  oven: drawOven,
+  micro: drawMicro
 };
 
-function renderComponent(c, totalHeight, warnings) {
-  const svgY = totalHeight - c.yFromBottom - c.height;
-  const draw = COMPONENT_RENDERERS[c.type];
+// one item as an SVG group; its data-* attributes (data.js short keys) feed the hover info
+function drawItem(item, totalHeight, warnings) {
+  const y = totalHeight - item.v0 - item.height;
+  const draw = DRAW[item.type];
   if (!draw) {
-    warnings.push(`Unknown component type "${c.type}" - not rendered.`);
+    warnings.push(`Unknown component type "${item.type}" - not rendered.`);
     return '';
   }
-  const content = draw(c, svgY);
-  return `<g class="component-group" data-g="${c.groupNum}" data-c="${c.colNum}" data-s="${c.colSpan}" data-tags="${escapeAttr(c.tags)}" data-k="${escapeAttr(c.k)}" data-w="${c.widthMm}" data-h="${c.heightMm}" data-fw="${c.frontWidthMm}" data-fh="${c.frontHeightMm}" data-gaps="${(c.gaps || []).join(' ')}" data-type="${c.type}" data-note="${escapeAttr(c.note)}">${content}</g>`;
+  return `<g class="component-group" data-g="${item.group}" data-c="${item.col}" data-s="${item.span}" data-tags="${escapeAttr(item.tags)}" data-k="${escapeAttr(item.carcassName)}" data-w="${item.widthMm}" data-h="${item.heightMm}" data-fw="${item.frontWidthMm}" data-fh="${item.frontHeightMm}" data-gaps="${(item.gaps || []).join(' ')}" data-type="${item.type}" data-note="${escapeAttr(item.note)}">${draw(item, y)}</g>`;
 }
 
-// layout: the object returned by LayoutEngine.calculate()
-function renderSVG(layout) {
+function drawSVG(layout) {
   if (layout.isEmpty) return '';
-
-  const vbMargin = CONFIG.viewBoxMargin;
-  const viewBox = `-${vbMargin} -${vbMargin} ${layout.totalWidth + vbMargin * 2} ${layout.totalHeight + vbMargin * 2}`;
-
-  const backgroundRects = [...layout.groupWidths.entries()]
-    .map(([groupId, width]) => `<rect fill="${CONFIG.colors.canvasBg}" x="${layout.groupXOffsets.get(groupId)}" y="0" width="${width}" height="${layout.totalHeight}"/>`)
+  const margin = CONFIG.viewBoxMargin;
+  const viewBox = `-${margin} -${margin} ${layout.totalWidth + margin * 2} ${layout.totalHeight + margin * 2}`;
+  const backgrounds = [...layout.groupWidth]
+    .map(([group, width]) => `<rect fill="${CONFIG.colors.canvasBg}" x="${layout.groupX.get(group)}" y="0" width="${width}" height="${layout.totalHeight}"/>`)
     .join('');
-
-  const componentShapes = layout.components
-    .map(c => renderComponent(c, layout.totalHeight, layout.warnings))
-    .join('');
-
+  const shapes = layout.items.map(item => drawItem(item, layout.totalHeight, layout.warnings)).join('');
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Kitchen elevation layout diagram">
-      ${backgroundRects}
-      ${componentShapes}
+      ${backgrounds}
+      ${shapes}
     </svg>`;
 }
 
-/* ===================================================================
-   SECTION 5 — COMPUTE LAYOUT (glue)
-   Validates the raw table rows, then runs Sections 3 -> 4 -> 5 and
-   packages the result for the UI. This is the one function Section 7
-   calls whenever the input tables change.
-   =================================================================== */
-
-// The one function the UI calls whenever the input tables change.
-// columnRows / componentRows are the raw {group, width, ...} objects bound
-// to the Alpine tables - this function is what turns them into a diagram.
-function computeLayout(columnRows, componentRows) {
+/* ---------- 5. elevations: table rows -> checks, layout and SVG ----------
+   columnRows, componentRows: the rows bound to the tables. Returns the SVG, the warnings and a flag per row
+   ('empty' | 'invalid' | null) for the row colours. */
+function buildElevations(columnRows, componentRows) {
   const warnings = [];
-  const colFlags = columnRows.map(() => null);
-  const compFlags = componentRows.map(() => null);
-  const groupWidths = new Map();
+  const columnFlags = columnRows.map(() => null);
+  const componentFlags = componentRows.map(() => null);
 
+  const groupWidths = new Map();
   columnRows.forEach((row, idx) => {
-    if (isRowEmpty(row.group, row.width)) { colFlags[idx] = 'empty'; return; }
-    const group = toNum(row.group, true);
-    const width = toNum(row.width, false);
+    if (isRowEmpty(row.group, row.width)) { columnFlags[idx] = 'empty'; return; }
+    const group = toNum(row.group, true), width = toNum(row.width, false);
     if (!Number.isFinite(group) || group < 1 || !Number.isFinite(width) || width < 0) {
-      colFlags[idx] = 'invalid';
+      columnFlags[idx] = 'invalid';
       warnings.push(`Groups & Columns row ${idx + 1}: Group must be ≥1 and Width ≥0.`);
       return;
     }
@@ -902,202 +795,224 @@ function computeLayout(columnRows, componentRows) {
     groupWidths.get(group).push(width);
   });
 
-  const comps = [];
+  const pieces = [];
   componentRows.forEach((row, idx) => {
-    if (isRowEmpty(row.group, row.col, row.span, row.height)) { compFlags[idx] = 'empty'; return; }
-    const group = toNum(row.group, true);
-    const col = toNum(row.col, true);
-    const span = toNum(row.span, true);
-    const height = toNum(row.height, false);
-    const tg = parseTags(row.tags);
-    const type = tg.type;
-    const handle = row.handle || null;
-    const gapRaw = [row.gl, row.gr, row.gt, row.gb].map(v => String(v ?? '').trim());
-    const gaps = gapRaw.some(v => v !== '') ? gapRaw.map(v => toNum(v, false)) : null;
+    if (isRowEmpty(row.group, row.col, row.span, row.height)) { componentFlags[idx] = 'empty'; return; }
+    const rowName = `Components row ${idx + 1}`;
+    const invalid = message => { componentFlags[idx] = 'invalid'; warnings.push(`${rowName}: ${message}`); };
+    const group = toNum(row.group, true), col = toNum(row.col, true), span = toNum(row.span, true), height = toNum(row.height, false);
+    const parsed = parseTags(row.tags), type = parsed.type;
+    const gapTexts = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom].map(v => String(v ?? '').trim());
+    const gaps = gapTexts.some(v => v !== '') ? gapTexts.map(v => toNum(v, false)) : null;
     if (!Number.isFinite(group) || group < 1 || !Number.isFinite(col) || col < 1 ||
         !Number.isFinite(span) || span < 1 || !Number.isFinite(height) || height < 0 ||
         (gaps && gaps.some(g => !Number.isFinite(g) || g < 0))) {
-      compFlags[idx] = 'invalid';
-      warnings.push(`Components row ${idx + 1}: Group/Col/Span ≥1, Height ≥0 and all 4 gaps ≥0 required.`);
-      return;
+      return invalid('Group/Col/Span ≥1, Height ≥0 and all 4 gaps ≥0 required.');
     }
     if (!type) {
-      compFlags[idx] = 'invalid';
-      warnings.push(`Components row ${idx + 1}: Tags need exactly one type: ${TYPE_TAGS.join(', ')}${tg.types.length ? ' (found ' + tg.types.join(' + ') + ')' : ''}.`);
-      return;
+      return invalid(`Tags need exactly one type: ${TYPE_TAGS.join(', ')}${parsed.types.length ? ' (found ' + parsed.types.join(' + ') + ')' : ''}.`);
     }
-    if (row.handle && !FRONT_TYPES.includes(type)) warnings.push(`Components row ${idx + 1}: a ${type} cannot have a handle.`);
-    if (tg.unknown.length) warnings.push(`Components row ${idx + 1}: unknown tag ${tg.unknown.join(', ')} (known: ${[...TYPE_TAGS, ...FEATURE_TAGS].join(', ')}).`);
-    const k = String(row.k ?? '').trim();
-    if (!k && (KE ? KE.BOX_TYPES : []).includes(type) && !tg.tags.includes('dishwasher')) warnings.push(`Components row ${idx + 1}: ${type} has no carcass name.`);
-    if (FRONT_TYPES.includes(type) && !gaps) { compFlags[idx] = 'invalid'; warnings.push(`Components row ${idx + 1}: a ${type} front needs 4 gaps (L, R, T, B).`); return; }
-    comps.push({ groupNum: group, colNum: col, colSpan: span, type, heightMm: height, handlePos: handle, gaps: FRONT_TYPES.includes(type) ? gaps : null, note: String(row.note ?? '').trim(), tags: tg.tags.join(' '), k });
+    const isFront = FRONT_TYPES.includes(type);
+    if (row.handle && !isFront) warnings.push(`${rowName}: a ${type} cannot have a handle.`);
+    if (parsed.unknown.length) warnings.push(`${rowName}: unknown tag ${parsed.unknown.join(', ')} (known: ${[...TYPE_TAGS, ...FEATURE_TAGS].join(', ')}).`);
+    const carcassName = String(row.carcass ?? '').trim();
+    if (!carcassName && BOX_TYPES.includes(type) && !parsed.tags.includes('dishwasher')) warnings.push(`${rowName}: ${type} has no carcass name.`);
+    if (isFront && !gaps) return invalid(`a ${type} front needs 4 gaps (L, R, T, B).`);
+    pieces.push({
+      group, col, span, height, type, tags: parsed.tags.join(' '), carcassName,
+      handle: row.handle || null, gaps: isFront ? gaps : null, note: String(row.note ?? '').trim()
+    });
   });
 
-  const engine = new LayoutEngine({ scale: CONFIG.scale });
-  for (const [g, widths] of groupWidths) engine.setGroupColumns(g, widths);
-  for (const c of comps) engine.addComponent(c.groupNum, c.colNum, c.colSpan, c.type, c.heightMm, c.handlePos, c.gaps, c.note, c.tags, c.k);
-
-  const layout = engine.calculate();
-  const svg = renderSVG(layout);
+  const layout = layoutElevations(groupWidths, pieces);
+  const svg = drawSVG(layout);
   warnings.push(...layout.warnings);
-
-  return { svg, isEmpty: layout.isEmpty, warnings, colFlags, compFlags };
+  return { svg, isEmpty: layout.isEmpty, warnings, columnFlags, componentFlags };
 }
 
-/* ===================================================================
-   SECTION 6 — UI / EVENTS (Alpine component)
-   All page state (table rows, status banner, tooltip) and user
-   actions (import/export, add/remove rows, hover tooltip). This is
-   the only section that touches the DOM or Alpine directly.
-   =================================================================== */
+/* ---------- data.js <-> table rows ---------- */
+let loadedProject = null; // the project as loaded: keeps the part this page does not edit (rules) for Export data
 
-// Alpine component: all page state (table rows, status banner, tooltip) and
-// user actions (import/export, add/remove rows). Delegates the actual
-// diagram math to computeLayout().
+// project JSON in the same layout as data.js: one note / component per line, a blank line between groups
+function projectJSON(project) {
+  const J = KE.json1;
+  const lines = list => list.map(x => '  ' + J(x)).join(',\n');
+  const components = project.components.map((c, i) => (i && c.g !== project.components[i - 1].g ? '\n' : '') + '  ' + J(c)).join(',\n');
+  return '{\n "rules": {\n' + Object.entries(project.rules || {}).map(([k, v]) => '  ' + J(k) + ': ' + J(v)).join(',\n') +
+    '\n },\n "notes": [\n' + lines(project.notes) +
+    '\n ],\n "columns": {\n' + Object.entries(project.columns).map(([g, w]) => '  ' + J(g) + ': ' + J(w)).join(',\n') +
+    '\n },\n "components": [\n' + components + '\n ]\n}\n';
+}
 
+// data.js components -> component table rows (data.js short keys -> row field names)
+function componentRow(c) {
+  const gaps = Array.isArray(c.gaps) ? c.gaps : ['', '', '', ''];
+  return {
+    group: c.g, col: c.c, span: c.s, tags: c.tags, carcass: c.k || '', height: c.h, handle: c.hd ?? '',
+    gapLeft: gaps[0], gapRight: gaps[1], gapTop: gaps[2], gapBottom: gaps[3], note: c.note || ''
+  };
+}
+
+// component table row -> data.js component (short keys, in the order data.js uses)
+function dataComponent(row) {
+  const asNumber = v => (v === '' || v == null ? '' : Number(v));
+  const parsed = parseTags(row.tags);
+  const c = { g: Number(row.group), c: Number(row.col), s: Number(row.span), tags: parsed.tags.join(' '), k: String(row.carcass ?? '').trim(), h: Number(row.height), hd: row.handle || '' };
+  if (FRONT_TYPES.includes(parsed.type)) c.gaps = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom].map(asNumber);
+  if (String(row.note ?? '').trim()) c.note = String(row.note).trim();
+  return c;
+}
+
+/* ---------- 6. page: Alpine component (tables, picker, status, hover info, import / export) ---------- */
 document.addEventListener('alpine:init', () => {
   Alpine.data('kitchenApp', () => ({
     columns: [],
     components: [],
     notes: [],
-    status: { message: '', type: '' },
+    status: { message: '', type: '' }, // message under the buttons: Import data / Export data / loading
     tooltip: { show: false, x: 0, y: 0, text: '' },
     hoverInfo: 'Hover a component in the diagram to see its dimensions.',
+    picker: { row: null, mode: 'tags', x: 0, y: 0 }, // one popup for a component row: its tags or its handle
     nextId: 1,
-    CONFIG,
-    TAG_HELP,
     TYPE_TAGS,
     FEATURE_TAGS,
-    featPop: { row: null, mode: 'tags', x: 0, y: 0 },
-    HANDLE_NAMES: { '': 'none', T: 'top', B: 'bottom', L: 'left', R: 'right' },
+    HANDLE_NAMES,
     HANDLE_POSITIONS,
     isRowEmpty,
     _statusTimer: null,
 
     init() {
       if (!KE) { this.showStatus(ENGINE_MISSING, true); return; }
-      KE.load().then(p => {
-        RAW = p;
-        this.seed(loadProject(p));
-        this.ensureEmptyRows();
-      }).catch(e => this.showStatus('data.js not found next to this page - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.', true));
+      KE.load()
+        .then(project => {
+          this.setProject(project);
+          this.ensureEmptyRows();
+        })
+        .catch(() => this.showStatus(DATA_MISSING, true));
       this.$nextTick(() => {
-        let w = 0;
-        new ResizeObserver(entries => { const nw = Math.round(entries[0].contentRect.width); if (nw !== w) { w = nw; requestAnimationFrame(() => this.growNotes()); } })
-          .observe(this.$refs.notesTbody.closest('table'));
+        let width = 0;
+        new ResizeObserver(entries => {
+          const w = Math.round(entries[0].contentRect.width);
+          if (w !== width) { width = w; requestAnimationFrame(() => this.growNotes()); }
+        }).observe(this.$refs.notesTbody.closest('table'));
       });
       this.$watch('notes', () => this.$nextTick(() => this.growNotes()));
-
-      this.$watch('columns', () => {
-        const last = this.columns[this.columns.length - 1];
-        if (last && !isRowEmpty(last.group, last.width)) {
-          this.columns.push(this.newColumnRow());
-        }
-        while (this.columns.length > 1 &&
-               isRowEmpty(this.columns[this.columns.length - 1].group, this.columns[this.columns.length - 1].width) &&
-               isRowEmpty(this.columns[this.columns.length - 2].group, this.columns[this.columns.length - 2].width)) {
-          this.columns.pop();
-        }
-      });
-
-      this.$watch('components', () => {
-        const last = this.components[this.components.length - 1];
-        if (last && !isRowEmpty(last.group, last.col, last.span, last.height)) {
-          this.components.push(this.newComponentRow());
-        }
-        while (this.components.length > 1 &&
-               isRowEmpty(this.components[this.components.length - 1].group, this.components[this.components.length - 1].col, this.components[this.components.length - 1].span, this.components[this.components.length - 1].height) &&
-               isRowEmpty(this.components[this.components.length - 2].group, this.components[this.components.length - 2].col, this.components[this.components.length - 2].span, this.components[this.components.length - 2].height)) {
-          this.components.pop();
-        }
-      });
-
-      this.$watch('notes', () => {
-        const isEmpty = n => isRowEmpty(n.name, n.description, n.details);
-        const last = this.notes[this.notes.length - 1];
-        if (last && !isEmpty(last)) this.notes.push(this.newNoteRow());
-        while (this.notes.length > 1 && isEmpty(this.notes[this.notes.length - 1]) && isEmpty(this.notes[this.notes.length - 2])) {
-          this.notes.pop();
-        }
-      });
+      // every table keeps exactly one empty row at the end
+      this.$watch('columns', () => this.keepOneEmptyRow(this.columns, r => isRowEmpty(r.group, r.width), () => this.newColumnRow()));
+      this.$watch('components', () => this.keepOneEmptyRow(this.components, r => isRowEmpty(r.group, r.col, r.span, r.height), () => this.newComponentRow()));
+      this.$watch('notes', () => this.keepOneEmptyRow(this.notes, r => isRowEmpty(r.name, r.description, r.details), () => this.newNoteRow()));
     },
 
+    // the elevations of the current tables (re-built by Alpine whenever a table changes)
     get build() {
-      return computeLayout(this.columns, this.components);
+      return buildElevations(this.columns, this.components);
     },
 
-    // under the buttons: messages of Import data / Export data / loading only; data issues are listed under the tables
-    get bannerType() { return this.status.type; },
-    get bannerText() { return this.status.message; },
-
-    newColumnRow(group = '', width = '') { return { id: this.nextId++, group, width }; },
-    newComponentRow(group = '', col = '', span = '', tags = '', height = '', handle = '', gl = '', gr = '', gt = '', gb = '', note = '', k = '') {
-      return { id: this.nextId++, group, col, span, tags, k, height, handle, gl, gr, gt, gb, note };
+    keepOneEmptyRow(rows, isEmpty, newRow) {
+      const last = rows[rows.length - 1];
+      if (last && !isEmpty(last)) rows.push(newRow());
+      while (rows.length > 1 && isEmpty(rows[rows.length - 1]) && isEmpty(rows[rows.length - 2])) rows.pop();
     },
-    newNoteRow(name = '', description = '', details = '') { return { id: this.nextId++, name, description, details }; },
-    autoGrow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; },
-    // re-fit every note row when the table width changes (window resize, column widths, import / reload)
-    growNotes() { this.$refs.notesTbody?.querySelectorAll('textarea').forEach(el => this.autoGrow(el)); },
-    insertNoteRow(idx) {
-      this.notes.splice(idx + 1, 0, this.newNoteRow());
-      this.$nextTick(() => this.$refs.notesTbody.querySelectorAll('tr')[idx + 1]?.querySelector('textarea')?.focus());
-    },
-    removeNoteRow(idx) { this.notes.splice(idx, 1); },
-
-    seed(data) {
-      this.notes = data.notes.map(([name, description, details]) => this.newNoteRow(name, description, details));
-      this.columns = data.columns.map(([g, w]) => this.newColumnRow(g, w));
-      this.components = data.components.map(([g, c, s, t, h, hp, gl, gr, gt, gb, note, k]) => this.newComponentRow(g, c, s, t, h, hp, gl, gr, gt, gb, note || '', k || ''));
-    },
-
     ensureEmptyRows() {
-      if (this.columns.length === 0 || !isRowEmpty(this.columns[this.columns.length - 1].group, this.columns[this.columns.length - 1].width)) {
-        this.columns.push(this.newColumnRow());
-      }
-      if (this.components.length === 0 || !isRowEmpty(this.components[this.components.length - 1].group, this.components[this.components.length - 1].col, this.components[this.components.length - 1].span, this.components[this.components.length - 1].height)) {
-        this.components.push(this.newComponentRow());
-      }
+      const lastColumn = this.columns[this.columns.length - 1];
+      if (!lastColumn || !isRowEmpty(lastColumn.group, lastColumn.width)) this.columns.push(this.newColumnRow());
+      const lastComponent = this.components[this.components.length - 1];
+      if (!lastComponent || !isRowEmpty(lastComponent.group, lastComponent.col, lastComponent.span, lastComponent.height)) this.components.push(this.newComponentRow());
       const lastNote = this.notes[this.notes.length - 1];
       if (!lastNote || !isRowEmpty(lastNote.name, lastNote.description, lastNote.details)) this.notes.push(this.newNoteRow());
     },
 
+    // ---- rows ----
+    newColumnRow(group = '', width = '') {
+      return { id: this.nextId++, group, width };
+    },
+    newComponentRow(fields = {}) {
+      return {
+        id: this.nextId++, group: '', col: '', span: '', tags: '', carcass: '', height: '', handle: '',
+        gapLeft: '', gapRight: '', gapTop: '', gapBottom: '', note: '', ...fields
+      };
+    },
+    newNoteRow(name = '', description = '', details = '') {
+      return { id: this.nextId++, name, description, details };
+    },
+    // the project (data.js) into the three tables
+    setProject(project) {
+      loadedProject = project;
+      this.notes = (project.notes || []).map(([name, description, details]) => this.newNoteRow(name ?? '', description ?? '', details ?? ''));
+      this.columns = Object.entries(project.columns || {}).flatMap(([group, widths]) => widths.map(w => this.newColumnRow(Number(group), w)));
+      this.components = (project.components || []).map(c => this.newComponentRow(componentRow(c)));
+    },
+
     insertColumnRow(idx) {
       const current = this.columns[idx];
-      const cloned = this.newColumnRow(current.group, current.width);
-      this.columns.splice(idx + 1, 0, cloned);
+      this.columns.splice(idx + 1, 0, this.newColumnRow(current.group, current.width));
       this.$nextTick(() => this.$refs.columnsTbody.querySelectorAll('tr')[idx + 1]?.querySelector('input')?.focus());
     },
-    removeColumnRow(idx) { this.columns.splice(idx, 1); },
-
+    removeColumnRow(idx) {
+      this.columns.splice(idx, 1);
+    },
+    // a new component row is a copy of the current one, without its note
     insertComponentRow(idx) {
-      const current = this.components[idx];
-      const cloned = this.newComponentRow(current.group, current.col, current.span, current.tags, current.height, current.handle, current.gl, current.gr, current.gt, current.gb, '', current.k);
-      this.components.splice(idx + 1, 0, cloned);
+      const { id, ...fields } = this.components[idx];
+      this.components.splice(idx + 1, 0, this.newComponentRow({ ...fields, note: '' }));
       this.$nextTick(() => this.$refs.componentsTbody.querySelectorAll('tr')[idx + 1]?.querySelector('input')?.focus());
     },
-    removeComponentRow(idx) { this.components.splice(idx, 1); },
+    removeComponentRow(idx) {
+      this.components.splice(idx, 1);
+    },
+    insertNoteRow(idx) {
+      this.notes.splice(idx + 1, 0, this.newNoteRow());
+      this.$nextTick(() => this.$refs.notesTbody.querySelectorAll('tr')[idx + 1]?.querySelector('textarea')?.focus());
+    },
+    removeNoteRow(idx) {
+      this.notes.splice(idx, 1);
+    },
+    autoGrow(el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    },
+    // re-fit every note row when the table width changes (window resize, column widths, import / reload)
+    growNotes() {
+      this.$refs.notesTbody?.querySelectorAll('textarea').forEach(el => this.autoGrow(el));
+    },
 
-    // tags are picked, never typed: one type (radio) + features (tick boxes); stored as "type feature feature"
-    typeOf(row) { return parseTags(row.tags).type || ''; },
-    hasFeat(row, f) { return parseTags(row.tags).features.includes(f); },
-    featText(row) { return parseTags(row.tags).features.join(' '); },
-    writeTags(row, type, feats) { row.tags = [type, ...FEATURE_TAGS.filter(f => feats.includes(f))].filter(Boolean).join(' '); },
-    isFront(row) { return FRONT_TYPES.includes(this.typeOf(row)); },
+    // ---- tags and handle: picked, never typed; tags are stored as "type feature feature" ----
+    typeOf(row) {
+      return parseTags(row.tags).type || '';
+    },
+    hasFeature(row, feature) {
+      return parseTags(row.tags).features.includes(feature);
+    },
+    isFront(row) {
+      return FRONT_TYPES.includes(this.typeOf(row));
+    },
+    writeTags(row, type, features) {
+      row.tags = [type, ...FEATURE_TAGS.filter(f => features.includes(f))].filter(Boolean).join(' ');
+    },
     // a handle and the 4 gaps belong to fronts only: they are cleared when the row stops being a front
     setType(row, type) {
       this.writeTags(row, type, parseTags(row.tags).features);
-      if (!FRONT_TYPES.includes(type)) { row.handle = ''; row.gl = row.gr = row.gt = row.gb = ''; if (this.featPop.mode === 'handle') this.featPop.row = null; }
+      if (!FRONT_TYPES.includes(type)) {
+        row.handle = '';
+        row.gapLeft = row.gapRight = row.gapTop = row.gapBottom = '';
+        if (this.picker.mode === 'handle') this.picker.row = null;
+      }
     },
-    toggleFeat(row, f) {
-      const t = parseTags(row.tags), feats = t.features.includes(f) ? t.features.filter(x => x !== f) : [...t.features, f];
-      this.writeTags(row, t.type || '', feats);
+    toggleFeature(row, feature) {
+      const parsed = parseTags(row.tags);
+      const features = parsed.features.includes(feature) ? parsed.features.filter(f => f !== feature) : [...parsed.features, feature];
+      this.writeTags(row, parsed.type || '', features);
     },
-    openFeatures(row, e, mode = 'tags') {
-      if (this.featPop.row === row && this.featPop.mode === mode) { this.featPop.row = null; return; }
-      const r = e.currentTarget.getBoundingClientRect();
-      const h = mode === 'handle' ? 190 : 330;   // popup height: below the cell, or above it when there is no room
-      this.featPop = { row, mode, x: Math.min(r.left, window.innerWidth - 260), y: r.bottom + h < window.innerHeight ? r.bottom + 2 : Math.max(4, r.top - h - 2) };
+    // the popup opens below the cell, or above it when there is no room
+    openPicker(row, event, mode = 'tags') {
+      if (this.picker.row === row && this.picker.mode === mode) { this.picker.row = null; return; }
+      const r = event.currentTarget.getBoundingClientRect();
+      const popupHeight = mode === 'handle' ? 190 : 330;
+      this.picker = {
+        row, mode,
+        x: Math.min(r.left, window.innerWidth - 260),
+        y: r.bottom + popupHeight < window.innerHeight ? r.bottom + 2 : Math.max(4, r.top - popupHeight - 2)
+      };
     },
 
     showStatus(message, isError) {
@@ -1106,15 +1021,13 @@ document.addEventListener('alpine:init', () => {
       if (!isError) this._statusTimer = setTimeout(() => { this.status = { message: '', type: '' }; }, 3000);
     },
 
+    // ---- hover info: tooltip at the cursor; the footnote keeps the last one (handy on touch screens) ----
     onSvgHover(e) {
       const group = e.target.closest('.component-group');
       if (!group) { this.tooltip.show = false; return; }
       const text = this.describeComponent(group);
       this.tooltip.text = text;
       this.tooltip.show = true;
-      // Footnote keeps showing the last-hovered component's dimensions even
-      // after the mouse leaves - handy on touch devices where there's no
-      // hover, and easier to read than a tooltip chasing the cursor.
       this.hoverInfo = text;
     },
     onSvgMove(e) {
@@ -1124,38 +1037,38 @@ document.addEventListener('alpine:init', () => {
       this.tooltip.x = e.clientX - rect.left + 15;
       this.tooltip.y = e.clientY - rect.top - 35;
     },
-    onSvgLeave() { this.tooltip.show = false; },
-    // e.g. "G1 · col 5 · cabinet dishwasher · 600 × 720 · front 596 × 718 · gaps 2:2:0:2 · Bosch SMV4HVX00E"
-    // (gaps left:right:top:bottom)
+    onSvgLeave() {
+      this.tooltip.show = false;
+    },
+    // e.g. "G1 · col 5 · cabinet dishwasher · 600 × 720 · front 594 × 717 · gaps 3:3:3:0 · Bosch SMV4HVX00E" (gaps left:right:top:bottom)
     describeComponent(group) {
-      const A = k => group.getAttribute('data-' + k), c = +A('c'), sp = +A('s');
-      const parts = [`G${A('g')}`, `col ${sp > 1 ? c + '–' + (c + sp - 1) : c}`, A('k'), A('tags'), `${A('w')} × ${A('h')}`];
-      if (FRONT_TYPES.includes(A('type'))) parts.push(`front ${A('fw')} × ${A('fh')}`, `gaps ${A('gaps').split(' ').join(':')}`);
-      parts.push(A('note'));
+      const attr = name => group.getAttribute('data-' + name), col = +attr('c'), span = +attr('s');
+      const parts = [`G${attr('g')}`, `col ${span > 1 ? col + '–' + (col + span - 1) : col}`, attr('k'), attr('tags'), `${attr('w')} × ${attr('h')}`];
+      if (FRONT_TYPES.includes(attr('type'))) parts.push(`front ${attr('fw')} × ${attr('fh')}`, `gaps ${attr('gaps').split(' ').join(':')}`);
+      parts.push(attr('note'));
       return parts.filter(Boolean).join(' · ');
     },
 
+    // ---- import / export ----
     // the tables as data.js (rules kept from the loaded file)
-    saveDataJSON() {
-      const r = computeLayout(this.columns, this.components);
-      const n = v => (v === '' || v == null ? '' : Number(v));
+    exportData() {
+      const issues = this.build.warnings.length;
       const columns = {};
-      this.columns.forEach(c => { if (!isRowEmpty(c.group, c.width)) (columns[c.group] || (columns[c.group] = [])).push(Number(c.width)); });
-      const components = this.components.filter(c => !isRowEmpty(c.group, c.col, c.span, c.height)).map(c => {
-        const o = { g: Number(c.group), c: Number(c.col), s: Number(c.span), tags: parseTags(c.tags).tags.join(' '), k: String(c.k ?? '').trim(), h: Number(c.height), hd: c.handle || '' };
-        if (FRONT_TYPES.includes(parseTags(c.tags).type)) o.gaps = [c.gl, c.gr, c.gt, c.gb].map(v => n(v));
-        if (String(c.note ?? '').trim()) o.note = String(c.note).trim();
-        return o;
-      });
-      const notes = this.notes.filter(x => !isRowEmpty(x.name, x.description, x.details)).map(x => [x.name, x.description, x.details]);
-      downloadBlob(KE.toDataJS(projectJSON({ rules: (RAW && RAW.rules) || {}, notes, columns, components })), 'text/javascript;charset=utf-8', 'data.js');
-      this.showStatus('data.js exported' + (r.warnings.length ? ' with ' + r.warnings.length + ' data issue(s) - see the list under the tables' : '') + '. Replace the one in the kitchen folder, then reload the pages.', r.warnings.length > 0);
+      for (const c of this.columns) {
+        if (isRowEmpty(c.group, c.width)) continue;
+        (columns[c.group] || (columns[c.group] = [])).push(Number(c.width));
+      }
+      const components = this.components.filter(c => !isRowEmpty(c.group, c.col, c.span, c.height)).map(dataComponent);
+      const notes = this.notes.filter(n => !isRowEmpty(n.name, n.description, n.details)).map(n => [n.name, n.description, n.details]);
+      const rules = (loadedProject && loadedProject.rules) || {};
+      downloadBlob(KE.toDataJS(projectJSON({ rules, notes, columns, components })), 'text/javascript;charset=utf-8', 'data.js');
+      this.showStatus('data.js exported' + (issues ? ' with ' + issues + ' data issue(s) - see the list under the tables' : '') + '. Replace the one in the kitchen folder, then reload the pages.', issues > 0);
     },
-    triggerImport() {
+    chooseImportFile() {
       this.$refs.importFile.value = '';
       this.$refs.importFile.click();
     },
-    handleImportFile(e) {
+    importFile(e) {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
@@ -1173,17 +1086,17 @@ document.addEventListener('alpine:init', () => {
       reader.onerror = () => { this.showStatus('Could not read the file.', true); e.target.value = ''; };
       reader.readAsText(file);
     },
-    // a data.js (or plain JSON) file: replaces the tables; its rules are kept for Export data
+    // a data.js (or plain JSON) file replaces the tables; its rules are kept for Export data
     importData(text) {
-      let p;
-      try { p = KE.fromDataJS(text); } catch (err) { throw new Error('not valid project data (' + err.message + ').'); }
-      if (!p || typeof p.columns !== 'object' || !Array.isArray(p.components)) throw new Error('this is not kitchen project data: "columns" and "components" are missing.');
-      RAW = p;
-      this.seed(loadProject(p));
+      let project;
+      try { project = KE.fromDataJS(text); } catch (err) { throw new Error('not valid project data (' + err.message + ').'); }
+      if (!project || typeof project.columns !== 'object' || !Array.isArray(project.components)) throw new Error('this is not kitchen project data: "columns" and "components" are missing.');
+      this.setProject(project);
     }
   }));
 });
 </script>
+
 
 </body>
 </html>
