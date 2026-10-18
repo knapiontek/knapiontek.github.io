@@ -319,29 +319,9 @@ body.shut .toggle{display:flex}
 <script src="data.js"></script>
 <script src="engine.js"></script>
 <script>
-/* ===================================================================
-   view.html - the kitchen in 3D (three.js r128).
-
-   WHO DOES WHAT
-     data.js      the project; engine.js builds carcasses, boards, fronts, frames, plinths and panels from it
-     #view-data   the scene of this kitchen (SCENE below): where each group stands in the room, the room, window,
-                  appliances, lamps, colours, camera views
-     this page    places the engine's parts in the room, draws them, checks them (overlaps, gaps, front lines)
-                  and adds the scene: worktops with the sink cut-out, sink, hob, hood, appliances, room and lights
-
-   COORDINATES
-     run      a group placed in the room (SCENE.runs: A, B, C). Inside a run the engine's coordinates are used:
-              u along the run, v up from the floor, n out from the wall (mm). runGroup[run] turns them into the room.
-     room     x along the window wall from the start of group 1, y up, z out from the window wall (mm);
-              three.js works in metres, so every mm value is divided by 1000 when a mesh is placed.
-
-   SECTIONS
-     1. project data and layout        6. carcasses, fronts, moving parts
-     2. textures                       7. checks: geometry and front lines
-     3. renderer and materials         8. room, lamps, daylight
-     4. drawing helpers, handles       9. camera, picking, settings panel
-     5. worktops, sink, hob, hood     10. render loop
-   =================================================================== */
+/* view.html - the kitchen in 3D (three.js r128): the engine's parts placed in the room (#view-data), checked and lit.
+   A run is a group placed in the room (SCENE.runs); inside a run: u along, v up, n out from the wall (mm).
+   Room: x along the window wall, y up, z out from it; three.js units are metres. */
 (async function () {
 'use strict';
 const stage = document.getElementById('stage');
@@ -350,15 +330,13 @@ if (!window.THREE || !THREE.OrbitControls) { loading.textContent = 'Could not lo
 
 /* ================= 1. PROJECT DATA AND LAYOUT ================= */
 const KE = window.KitchenEngine;
-if (!KE) { loading.textContent = 'engine.js not found next to this page - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.'; return; }
 let project;
-try { project = await KE.load(); } catch (e) { loading.textContent = 'data.js not found next to this page - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.'; return; }
-const SCENE = JSON.parse(document.getElementById('view-data').textContent); // scene data of this kitchen
+try { project = await KE.load(); } catch (err) { loading.textContent = err.message; return; }
+const SCENE = JSON.parse(document.getElementById('view-data').textContent);
 document.getElementById('src').textContent = 'Data: data.js, parts from engine.js.';
 const model = KE.build(project), rules = project.rules;
 if (model.warnings.length) console.warn('data.js: ' + model.warnings.join(' | '));
 
-// runs: A on the window wall, B on the right wall, C the free-standing island; which design group is which: SCENE.runs
 const RUN_IDS = Object.keys(SCENE.runs).filter(r => r !== 'about');
 const groupOfRun = Object.fromEntries(RUN_IDS.map(r => [r, SCENE.runs[r].group]));
 const runOfGroup = Object.fromEntries(RUN_IDS.map(r => [SCENE.runs[r].group, r]));
@@ -371,15 +349,11 @@ for (const r of RUN_IDS) {
 }
 const hasTag = (item, ...tags) => tags.some(t => item.tags.includes(t));
 
-// sizes (mm): from the engine (data.js rules) and from the scene data
 const { frontFace, frontThickness, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the wall
 const board = rules.board, plinthThickness = rules.plinthThickness;
 const fittings = SCENE.fittings;
 const shakerRail = SCENE.carcass.shakerRail; // width of the shaker frame of a front
 const handleAxis = SCENE.carcass.handleAxis; // handle axis from the front edge
-// The room (walls, ceiling, window, island position) is given in the scene data (SCENE.room ...), not derived from the cabinets.
-// Both wall runs are measured from their wall (carcass back at rules.wallGap): group 1 from the start of the window wall,
-// group 2 from the window wall along the right wall at x = room.rightWall.
 const room = SCENE.room, rightWall = room.rightWall, ceiling = room.ceiling;
 const worktopOf = group => model.worktops[group] || { n0: 0, n1: 0, depth: 0 }; // n0 back edge, n1 front edge
 const sinkCarcass = model.carcasses.find(K => K.sink); // its worktop gets the sink cut-out
@@ -389,7 +363,7 @@ const sinkWorktop = sinkCarcass && itemsOfRun[sinkRun].find(i =>
 const worktopThickness = sinkWorktop ? sinkWorktop.v1 - sinkWorktop.v0 : 38;
 const worktopTop = sinkWorktop ? sinkWorktop.v1 : 858;
 
-// run -> room: a box [u0, u1, n0, n1] of a run as [x0, x1, z0, z1] in the room (turned by runs[r].rot about runs[r].x, z)
+// [u0, u1, n0, n1] of a run -> [x0, x1, z0, z1] in the room
 const toRoom = Object.fromEntries(RUN_IDS.map(r => {
   const P = SCENE.runs[r], a = (P.rot * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
   const X = (u, n) => P.x + u * cos + n * sin, Z = (u, n) => P.z - u * sin + n * cos;
@@ -400,7 +374,7 @@ const toRoom = Object.fromEntries(RUN_IDS.map(r => {
   }];
 }));
 
-/* ================= 2. TEXTURES (drawn on canvases, seeded so they look the same every time) ================= */
+/* ================= 2. TEXTURES (seeded canvases) ================= */
 function seededRandom(seed) {
   return function () {
     seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
@@ -630,7 +604,7 @@ function setMetal(name) {
   sceneChanged();
 }
 
-/* ---------- layers: each layer is a set of three.js groups shown / hidden together ---------- */
+/* ---------- layers ---------- */
 const LAYERS = [ // [layer group label, [[layer id, label], ...]]
   ['Carcasses', [['carcasses', 'Panels'], ['backs', 'HDF backs'], ['shelves', 'Shelves'], ['drawers', 'Drawer boxes'], ['hardware', 'Hinges, runners'], ['legs', 'Legs']]],
   ['Fronts', [['fronts', 'Fronts'], ['handles', 'Handles'], ['frames', 'Frames'], ['panel', 'Panels'], ['plinth', 'Plinth']]],
@@ -648,7 +622,6 @@ function layerGroup(parent, layer) {
 }
 const roomLayer = {}; // layer -> group in room coordinates
 for (const id of LAYER_IDS) roomLayer[id] = layerGroup(scene, id);
-// runs as groups: local x along the run (u), y up (v), z from the wall to the front face (n)
 const runGroup = Object.fromEntries(RUN_IDS.map(r => [r, new THREE.Group()]));
 for (const r of RUN_IDS) {
   const P = SCENE.runs[r];
@@ -696,7 +669,7 @@ function roomCylinder(radius, length, mat, x, y, z, axis, segments) {
   meshes.push(m);
   return m;
 }
-// box in the coordinates of its parent group P (a run, or a moving part of it), mm
+// box in the coordinates of its parent P (a run or a moving part), mm
 function localBox(P, u0, u1, v0, v1, n0, n1, mat, noShadow) {
   const w = (u1 - u0) / 1000, h = (v1 - v0) / 1000, d = (n1 - n0) / 1000;
   if (w <= 0 || h <= 0 || d <= 0) return null;
@@ -735,7 +708,7 @@ function openTopBox(P, u0, u1, v0, v1, n0, n1, t, mat) { // box open at the top 
 }
 const ordered = (a, b) => (a < b ? [a, b] : [b, a]);
 
-// handles: an IKEA cup handle and a bar handle on every front; the Handles setting shows one of them
+// every front gets a cup and a bar handle; the Handles setting shows one
 const cupHandles = [], barHandles = [], movers = []; // movers: moving parts (doors, drawers ...)
 const cupGeometry = (function () {
   const L = 0.089, R = 0.024, y0 = -0.012, parts = [];
@@ -787,7 +760,7 @@ function shakerFront(P, u0, u1, v0, v1) {
   localBox(P, u1 - w, u1, v0 + w, v1 - w, n0, n1, MAT.navy);
   localBox(P, u0 + w, u1 - w, v0 + w, v1 - w, n0, frontFace - frontThickness / 2, MAT.navy);
 }
-// moving part: turns / slides about the point (pu, pv, pn) of its run; opening = door | fridge | dishwasher | drawer | fixed
+// a door / drawer turning or sliding about (pu, pv, pn) of its run
 function movingPart(run, opening, pu, pv, pn) {
   const pivot = new THREE.Group();
   pivot.position.set(pu / 1000, pv / 1000, pn / 1000);
@@ -797,7 +770,7 @@ function movingPart(run, opening, pu, pv, pn) {
   pivot.add(inner);
   const layers = {};
   for (const id of ['fronts', 'handles', 'hardware', 'drawers', 'fridge', 'dishwasher']) layers[id] = layerGroup(inner, id);
-  // progress: 0 closed .. 1 open; goal: where it is moving to; parent / child: an inner drawer and the drawer whose front covers it
+  // progress 0 closed .. 1 open; parent / child: an inner drawer and the drawer whose front covers it
   const mover = { run, opening, pivot, layers, progress: 0, goal: 0, z0: pivot.position.z, sign: 1, label: '' };
   pivot.userData.mover = mover;
   movers.push(mover);
@@ -811,12 +784,12 @@ function poseMovingPart(mover) {
   else if (mover.opening === 'drawer') mover.pivot.position.z = mover.z0 + eased * 0.44;
 }
 
-/* ---------- built-in oven and microwave, in the run of their item (face fittings.applianceInset behind the front face) ---------- */
+/* ---------- built-in oven and microwave ---------- */
 function builtInAppliance(run, u0, u1, v0, v1, type) {
   const g = 2;
   u0 += g; u1 -= g; v0 += g; v1 -= g;
   const uc = (u0 + u1) / 2, P = runLayer[run].ovens, face = frontFace - SCENE.fittings.applianceInset;
-  // drawn with d = depth (face - k = k behind the appliance face), along = position along the run; mapped to run coordinates
+  // d = depth behind the appliance face, along = position along the run
   const box = (d0, d1, y0, y1, a0, a1, mat, noShadow) => localBox(P, a0, a1, y0, y1, 2 * face - d1, 2 * face - d0, mat, noShadow);
   const swapAxis = axis => (axis === 'x' ? 'z' : axis === 'z' ? 'x' : axis);
   const cylinder = (radius, length, mat, d, y, along, axis, segments) => localCylinder(P, radius, length, mat, along, y, 2 * face - d, swapAxis(axis), segments);
@@ -857,7 +830,7 @@ function builtInAppliance(run, u0, u1, v0, v1, type) {
   }
 }
 
-/* ================= 5. ITEMS FROM THE DESIGN: worktops, frames, plinths, panels; sink, hob, hood ================= */
+/* ================= 5. WORKTOPS, FRAMES, PLINTHS, PANELS; SINK, HOB, HOOD ================= */
 const sinkData = SCENE.sink;
 const sinkItem = sinkRun && itemsOfRun[sinkRun].find(i => hasTag(i, 'sink')); // item tagged sink, any group; no tag = no sink
 const sinkU = sinkItem ? (sinkItem.u0 + sinkItem.u1) / 2 : 0; // sink axis along its run
@@ -874,7 +847,7 @@ function worktopWithSinkCutOut(v0, v1, uEnd) {
     .forEach(([u0, u1, n0, n1]) => { roomBox(u0, u1, v0, v1, n0, n1, MAT.oak).userData.grain = 'x'; });
 }
 const stripParts = [], carcassMeshes = []; // stripParts: back strips and island back panel; carcassMeshes: every board of the carcasses
-// name every mesh built for one design item, so the geometry check can report it
+// names the meshes of one item for the geometry check
 function nameNewMeshes(firstIndex, kind, name) {
   for (const m of meshes.slice(firstIndex)) if (!m.userData.part && !m.userData.role) m.userData.part = { kind, name };
 }
@@ -1037,16 +1010,14 @@ if (hobItem) (function hood() {
   });
 })();
 
-/* ================= 6. CARCASSES (engine.js): boards drawn here, plus legs, shelf pins, the fridge; fronts and moving parts ================= */
+/* ================= 6. CARCASSES, FRONTS, MOVING PARTS ================= */
 const carcasses = model.carcasses;
-// per carcass, for this page: its run, its parts (Carcasses tab), its meshes and its moving parts
 carcasses.forEach(K => { K.run = runOfGroup[K.group]; K.parts = []; K.meshes = []; K.movers = []; });
-// a board mesh of a carcass: highlighted / coloured by panel in the Carcasses tab
+// a carcass board: highlighted / coloured in the Carcasses tab; registerPart also lists it there
 function registerMesh(K, m, name, a, b) {
   if (m) { m.userData = { K, role: name, a, b, base: m.material }; K.meshes.push(m); carcassMeshes.push(m); }
   return m;
 }
-// ... and listed in the panel table of the carcass
 function registerPart(K, m, name, a, b) {
   registerMesh(K, m, name, a, b);
   K.parts.push({ name, a, b });
@@ -1079,8 +1050,7 @@ function buildCarcass(K) {
   if (K.fridge) fridgeBody(K);
   if (K.fridge && K.floor) plinthGrille(K);
 }
-// bean-to-cup coffee machine (SCENE.coffee.size = width, height, depth), front face at n1, standing on y, centred on uc:
-// black body, silver head with display and buttons, brew recess with spout, drip tray with grid and a cup, bean lid, steam wand
+// bean-to-cup coffee machine (SCENE.coffee.size = width, height, depth), front face at n1, standing on y, centred on uc
 function coffeeMachine(P, uc, y, n1) {
   const [w, h, d] = SCENE.coffee.size, u0 = uc - w / 2, u1 = uc + w / 2, n0 = n1 - d, top = y + h, head = top - 115, F = n1 - 45;
   localBox(P, u0, u1, y, top, n0, F, MAT.blackMetal); // body
@@ -1127,7 +1097,6 @@ function fridgeBody(K) {
 }
 carcasses.forEach(buildCarcass);
 
-// dishwasher rack: wire basket
 function dishRack(P, u0, u1, v0, v1, n0, n1) {
   localBox(P, u0, u1, v0, v0 + 4, n0, n1, MAT.wire, true);
   localBox(P, u0, u0 + 3, v0, v1, n0, n1, MAT.wire, true);
@@ -1135,7 +1104,7 @@ function dishRack(P, u0, u1, v0, v1, n0, n1) {
   localBox(P, u0 + 3, u1 - 3, v0, v1, n0, n0 + 3, MAT.wire, true);
   localBox(P, u0 + 3, u1 - 3, v0, v1, n1 - 3, n1, MAT.wire, true);
 }
-// a front from the engine (item minus its 4 gaps) as a moving part, with what moves with it
+// a front as a moving part, with what moves with it
 function buildFront(run, item) {
   const front = item.front, K = item.carcass, opening = front.opening, hingeSide = front.hingeSide;
   const { u0: fu0, u1: fu1, v0: fv0, v1: fv1, width: fw, height: fh } = front;
@@ -1246,7 +1215,7 @@ function geometryCheck() {
   const OVERLAP = 0.01, GAP_MIN = 0.01, GAP_MAX = 3; // overlap: more than 0.01 mm; gap check: 0.01 <= gap <= 3 mm
   const round1 = x => Math.round(x * 10) / 10;
   const boxOf = o => { const b = new THREE.Box3().setFromObject(o); return [b.min.x * 1000, b.max.x * 1000, b.min.y * 1000, b.max.y * 1000, b.min.z * 1000, b.max.z * 1000]; };
-  // checked parts: design items, carcass boards, legs, closed fronts; kind decides which checks apply
+  // kind decides which checks apply
   const parts = [];
   for (const m of meshes) { const p = m.userData.part; if (p) parts.push({ kind: p.kind, name: p.name, box: boxOf(m), object: m }); }
   for (const m of carcassMeshes) {
@@ -1303,7 +1272,7 @@ function geometryCheck() {
   return { n: parts.length, overlaps, gaps, out };
 }
 const geometry = geometryCheck();
-/* ---------- front lines: front tops (and bottoms) a few mm apart should share one line, in all groups ---------- */
+/* ---------- front lines: tops (and bottoms) a few mm apart should be one line ---------- */
 function lineCheck() {
   const NEAR = 20, SAME = 0.01, out = []; // near miss: 0.01 < difference <= 20 mm
   for (const [side, edge] of [['tops', 'v1'], ['bottoms', 'v0']]) {
@@ -1325,7 +1294,7 @@ function lineCheck() {
 const lines = lineCheck();
 
 /* ================= 8. ROOM, LAMPS, DAYLIGHT ================= */
-// walls hide when the camera is behind them (normal n, a point mid on the wall)
+// a wall hides when the camera is behind it
 const walls = [];
 function wallGroup(normal, mid, layer) {
   const g = new THREE.Group();
@@ -1371,7 +1340,7 @@ target = roomLayer.floor;
 const floor = roomBox(leftEnd, rightWall, -20, 0, 0, room.floorDepth, MAT.marble);
 floor.castShadow = false;
 
-/* ---------- texture coordinates in metres for oak, marble, granite, so the pattern keeps its size on every box ---------- */
+/* ---------- texture coordinates in metres: the pattern keeps its size on every box ---------- */
 (function worldUV() {
   const p = new THREE.Vector3(), n = new THREE.Vector3();
   for (const m of worldUVMeshes) {
@@ -1435,7 +1404,7 @@ SCENE.pendants.points.forEach(([x, z]) => {
   scene.add(light, light.target);
 });
 
-/* ---------- ceiling with surface-mounted downlights (SCENE.downlights: [x, z] of each) ---------- */
+/* ---------- ceiling with downlights ---------- */
 const ceilingGroup = wallGroup([0, 1, 0], [1.2, ceiling / 1000 + 0.02, 2], roomLayer.ceiling);
 const ceilingMaterial = standard({ color: linear(COLORS.wall), roughness: 0.95, emissive: linear(0x4a4844) });
 roomBox(leftEnd, rightWall, ceiling, ceiling + 20, 0, room.floorDepth, ceilingMaterial, ceilingGroup, true);
@@ -1490,7 +1459,6 @@ const VIEWS = SCENE.views;
 let flight = null; // camera flight to a view: from p0, t0 to p, t, started at s
 const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2(), forward = new THREE.Vector3(), hitPoint = new THREE.Vector3();
 const NOT_PICKABLE = new Set([MAT.glass, MAT.sky, MAT.smoke]);
-// the visible, solid mesh under the pointer
 function pick(e) {
   const r = renderer.domElement.getBoundingClientRect();
   pointer.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
@@ -1498,7 +1466,6 @@ function pick(e) {
   return raycaster.intersectObjects(scene.children, true).find(h =>
     h.object.isMesh && !NOT_PICKABLE.has(h.object.material) && !(h.object.material.transparent && h.object.material.opacity < 0.5) && isShown(h.object));
 }
-// orbit about the point under the pointer
 function repivot(e) {
   const hit = pick(e);
   if (!hit) return;
@@ -1609,8 +1576,7 @@ function setGoal(mover, goal) {
   mover.goal = goal;
   if (reducedMotion) { mover.progress = goal; poseMovingPart(mover); sceneChanged(); }
 }
-// open / close a moving part (on: true, false, or toggle when left out).
-// An inner drawer (mover.parent = the drawer whose front covers it) opens only with that drawer open; closing that drawer closes it.
+// on: true / false / undefined = toggle; an inner drawer opens with its drawer, closing the drawer closes it
 function toggle(mover, on) {
   const goal = on === undefined ? (mover.goal ? 0 : 1) : on ? 1 : 0;
   if (goal && mover.parent && !mover.parent.goal) { setGoal(mover.parent, 1); return; }
@@ -1676,7 +1642,7 @@ function setPalette(name) {
 setHandles('cup');
 document.getElementById('palette').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setPalette(b.dataset.p); });
 
-/* ---------- layers: one chip per layer, the layer group name toggles the whole group ---------- */
+/* ---------- layer chips ---------- */
 const layerPanel = document.getElementById('layers'), layerOn = {};
 layerPanel.innerHTML = LAYERS.map(([label, layers], i) => '<div class="lgrp"><button class="gh" data-g="' + i + '" aria-pressed="true">' + label + '</button><div class="row chips">' +
   layers.map(([id, name]) => '<button data-l="' + id + '" aria-pressed="true">' + name + '</button>').join('') + '</div></div>').join('');
@@ -1745,7 +1711,6 @@ document.getElementById('legend').innerHTML = [['Side'], ['Bottom panel'], ['Top
   .map(([name, label]) => '<li><i style="background:' + PANEL_COLORS[name] + '"></i><span>' + (label || name) + '</span></li>').join('');
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-// what a carcass holds, in words
 function carcassDescription(K) {
   const types = K.boxes.map(b => b.type);
   if (K.sink) return 'sink unit';
@@ -1759,7 +1724,6 @@ const columnsText = K => 'col. ' + K.col + (K.span > 1 ? '–' + (K.col + K.span
 const carcassList = document.getElementById('klist');
 carcassList.innerHTML = carcasses.map(K => '<li><button data-k="' + K.id + '" aria-pressed="false"><b>' + esc(K.name) + '</b><span>G' + K.group + ' ' + columnsText(K) + ' · ' + carcassDescription(K) + '</span><em>' + (K.u1 - K.u0) + '×' + (K.v1 - K.v0) + '</em></button></li>').join('');
 carcassList.addEventListener('click', e => { const b = e.target.closest('button'); if (b) selectCarcass(carcasses[b.dataset.k - 1], true); });
-// parts with the same name and size counted together
 function countParts(parts) {
   const rows = new Map();
   for (const p of parts) {
@@ -1769,7 +1733,7 @@ function countParts(parts) {
   }
   return [...rows.values()];
 }
-// select a carcass (again: deselect): highlight it, open its fronts, show its parts; fly = move the camera to it
+// select (again: deselect) a carcass, open its fronts, list its parts; fly = move the camera to it
 function selectCarcass(K, fly) {
   selected = selected === K && !fly ? null : K;
   applyCarcassColours();
@@ -1795,7 +1759,6 @@ function selectCarcass(K, fly) {
     if (isPhone.matches) showSettings(false);
   }
 }
-// carcass map: engine data + where each carcass stands in the room
 const carcassMapJSON = KE.mapJSON(KE.carcassMap(model, K => {
   const [x0, x1, z0, z1] = toRoom[K.run](K.u0, K.u1, carcassBack, carcassFront);
   return { x: [Math.round(x0), Math.round(x1)], y: [K.v0, K.v1], z: [Math.round(z0), Math.round(z1)] };
@@ -1812,7 +1775,6 @@ document.getElementById('mapSave').addEventListener('click', () => {
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
-// summary from the model
 document.getElementById('kStats').innerHTML = [
   ['Carcasses', carcasses.length],
   ['Fronts', counts.fronts],
@@ -1831,7 +1793,6 @@ document.getElementById('kStats').innerHTML = [
   note.textContent = issues.length
     ? issues.length + (issues.length === 1 ? ' issue' : ' issues') + ' in ' + geometry.n + ' parts (' + model.warnings.length + ' in the data, ' + geometry.overlaps.length + ' overlaps, ' + geometry.gaps.length + ' gaps, ' + geometry.out.length + ' sticking out, ' + lines.length + ' off the line):'
     : 'All ' + geometry.n + ' parts OK: no overlaps, no gaps between frames / back strips and their neighbours, nothing sticks out, front lines aligned.';
-  // one issue per item: title line, then the parts and the place, each on its own line after a dash
   document.getElementById('geoList').innerHTML = issues.map(x => '<li><b>' + esc(x.k) + (x.v !== '' ? ' ' + esc(x.v) : '') + '</b>' + [x.a, x.b, x.at].filter(Boolean).map(t => '<br>– ' + esc(t)).join('') + '</li>').join('');
 }
 
@@ -1853,7 +1814,7 @@ document.getElementById('dims').innerHTML = [
 ].map(([name, value]) => '<dt>' + name + '</dt><dd>' + value + '</dd>').join('');
 document.getElementById('pnotes').innerHTML = (project.notes || []).map(([name, description, details]) => '<dt>' + esc(name) + '</dt><dd>' + esc(description) + (details ? '<small>' + esc(details) + '</small>' : '') + '</dd>').join('');
 
-/* ---------- settings tabs (remembered per browser) ---------- */
+/* ---------- settings tabs ---------- */
 const TABS = [['t-view', 'p-view'], ['t-carc', 'p-carc'], ['t-prj', 'p-prj']]; // [tab button, panel]
 function showTab(id) {
   for (const [tab, panel] of TABS) {
@@ -1871,7 +1832,7 @@ for (const [tab] of TABS) document.getElementById(tab).addEventListener('click',
 }
 if (location.hash === '#carcasses' || location.hash === '#korpusy') showTab('t-carc');
 
-/* ---------- settings panel: collapsed by default (unobstructed view), a sheet on phones ---------- */
+/* ---------- settings panel ---------- */
 const openButton = document.getElementById('toggleSpec'), closeButton = document.getElementById('closeSpec');
 const isPhone = matchMedia('(max-width:760px)');
 function showSettings(on, keep) {
@@ -1923,10 +1884,9 @@ function setLight(mode) {
   resize();
   sceneChanged();
 }
-const setQuality = quality => setLight(quality === 'hi' || quality === 'night' ? 'night' : 'day'); // older name, kept for the console
 document.getElementById('lighting').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setLight(b.dataset.q); });
 
-/* ================= 10. RENDER LOOP: draws a frame only when something changes ================= */
+/* ================= 10. RENDER LOOP (only after a change) ================= */
 function resize() {
   const r = stage.getBoundingClientRect();
   renderer.setSize(r.width, r.height, false);
@@ -1941,8 +1901,7 @@ for (const type of ['pointerdown', 'pointermove', 'pointerup', 'wheel', 'click',
 }
 const toCamera = new THREE.Vector3();
 let lastTime = performance.now();
-// for the browser console and tests; the key names are kept stable
-window.__kv = { scene, GCHK: geometry, LCHK: lines, KS: carcasses, MOV: movers, STAT: counts, SPC: stripParts, setLight, setQuality, setLayer, preset, toggle, selectK: selectCarcass, camera, controls, go: flyTo };
+window.kitchenView = { scene, camera, controls, geometry, lines, carcasses, movers, counts, stripParts, setLight, setLayer, preset, toggle, selectCarcass, flyTo }; // for the console
 function frame(now) {
   const dt = Math.min(0.05, (now - lastTime) / 1000);
   lastTime = now;

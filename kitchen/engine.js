@@ -1,34 +1,7 @@
-/* engine.js - kitchen construction engine, shared by design.html, cost.html and view.html.
-
-   build(project) is a pure function of the project data (data.js). Every size comes from project.rules; this file holds no
-   project numbers and draws nothing: it returns positioned parts (mm) that the pages draw (design, view), price or list (cost).
-
-   DATA FLOW   data.js -> build() -> model -> design.html (2D elevations), view.html (3D room), cost.html (estimate, cutting list)
-
-   COORDINATES (mm, per group)
-     u  along the group, from the left edge of its first column
-     v  up from the floor
-     n  out from the wall: 0 = wall, carcass back at rules.wallGap, front face at wallGap + carcassDepth + frontThickness
-   view.html turns each group into room coordinates (x, y, z); a box is [u0, u1, v0, v1, n0, n1].
-
-   GLOSSARY - the same words are used in the data, in this file and on the pages
-     group      one run of furniture (data.columns key); its role (worktop, tall, island) comes from the note "group N"
-     column     one width in a group (data.columns[group]); components are placed by first column + column span
-     component  one row of data.components; stacked bottom-up in its columns, in list order
-     item       a component after stacking: the component with readable field names and its position (u0, u1, v0, v1)
-     type       exactly one TYPE_TAGS tag of a component (cabinet, drawer, frame ...)
-     features   the FEATURE_TAGS tags of a component (sink, hob, fridge ...)
-     carcass    all items with the same carcass name in one group: one chipboard box. Its type is base (on a plinth,
-                worktop on top), tall (on a plinth) or wall (anything else)
-     box        an item that sits inside a carcass (BOX_TYPES): a front or a built-in appliance
-     front      the visible face of a cabinet, drawer or dummy item: the item minus its 4 gaps
-     opening    how a front moves: door (hinged), drawer, dishwasher, fridge (on the appliance door), fixed
-     board      a cut chipboard / HDF part (cutting list): a × b = cut size, box = position, material p18 | p16 | hdf
-
-   DATA FORMAT of data.components (short keys, kept as they are in data.js)
-     g group, c first column, s column span, h height, tags (one type + features), k carcass name ("" = no carcass),
-     gaps [left, right, top, bottom] (fronts only), hd handle position T | B | L | R | "", note free text
-*/
+/* engine.js - builds the kitchen model from data.js for design.html, cost.html and view.html. No drawing, no project numbers.
+   Coordinates in mm per group: u along the group, v up from the floor, n out from the wall; a box is [u0, u1, v0, v1, n0, n1].
+   data.components: g group, c first column, s column span, h height, tags (one type + features), k carcass name,
+   hd handle (T | B | L | R), gaps [left, right, top, bottom] on fronts, note. */
 (function (root) {
   'use strict';
 
@@ -40,13 +13,8 @@
   const FEATURE_TAGS = ['hob', 'sink', 'bins', 'dishwasher', 'fridge', 'freezer', 'inner', 'end', 'coffee'];
   const FRONT_TYPES = ['cabinet', 'drawer', 'dummy'];
   const BOX_TYPES = ['cabinet', 'drawer', 'dummy', 'oven', 'micro'];
+  const HANDLE_POSITIONS = ['T', 'B', 'L', 'R']; // top, bottom, left, right; "" = no handle
 
-  const num = (value, fallback) => {
-    const x = parseFloat(value);
-    return Number.isFinite(x) ? x : fallback;
-  };
-
-  // "drawer hob" -> { tags, types, type: 'drawer', features: ['hob'], unknown: [] }
   function parseTags(text) {
     const tags = String(text ?? '').toLowerCase().split(/[\s,]+/).filter(Boolean);
     const types = tags.filter(t => TYPE_TAGS.includes(t));
@@ -60,16 +28,13 @@
   }
   const hasTag = (item, ...tags) => tags.some(t => item.tags.includes(t));
 
-  /* ---------- stacking: an item starts on top of the contiguous stack from the floor in the columns it spans ----------
-     widths: column widths of one group; pieces: [{ col, span, height, ... }] in list order.
-     Returns items (the pieces with u0, u1, v0, v1 added), skipped pieces with the reason, and the column edges colX. */
+  // each piece starts on top of the stack in the columns it spans; returns the pieces with u0, u1, v0, v1
   function stack(widths, pieces) {
     const columnCount = widths.length;
     const colX = [0];
     widths.forEach(w => colX.push(colX[colX.length - 1] + w));
-    const occupied = widths.map(() => []); // per column: [v0, v1] ranges already taken
+    const occupied = widths.map(() => []); // [v0, v1] ranges per column
     const items = [], skipped = [];
-    // top of the contiguous stack that starts at the floor
     const stackTop = ranges => {
       let top = 0;
       for (const [a, b] of [...ranges].sort((p, q) => p[0] - q[0])) {
@@ -98,8 +63,7 @@
     return { items, skipped, colX };
   }
 
-  /* ---------- carcass areas: all items with the same carcass name in one group ----------
-     width = all their columns; height = their boxes (fronts, appliances), or all members if there is no box */
+  // items with the same carcass name: width over all their columns, height of their boxes (fronts, appliances)
   function carcassAreas(items) {
     const byName = new Map();
     for (const item of items) {
@@ -123,17 +87,17 @@
     });
   }
 
-  /* ---------- front = item minus its four gaps [left, right, top, bottom] ---------- */
   function frontBox(item) {
     const [left, right, top, bottom] = item.gaps;
     return { u0: item.u0 + left, u1: item.u1 - right, v0: item.v0 + bottom, v1: item.v1 - top };
   }
 
-  // a data.js component with readable field names (see DATA FORMAT above)
-  function readComponent(group, c) {
+  // data.js component -> item fields
+  function readComponent(c, index) {
     const parsed = parseTags(c.tags);
     return {
-      group: +group,
+      index,
+      group: +c.g,
       col: +c.c,
       span: +c.s,
       height: +c.h,
@@ -141,12 +105,11 @@
       tags: parsed.tags,
       carcassName: String(c.k || '').trim(),
       handle: c.hd || '',
-      gaps: Array.isArray(c.gaps) ? c.gaps.map(Number) : null,
+      gaps: Array.isArray(c.gaps) ? c.gaps.map(x => (x === '' || x == null ? NaN : Number(x))) : null, // an empty gap is not 0
       note: c.note || ''
     };
   }
 
-  /* ---------- the model ---------- */
   function build(project) {
     const P = project || {}, rules = P.rules || {};
     const board = rules.board, frontThickness = rules.frontThickness, carcassDepth = rules.carcassDepth;
@@ -164,22 +127,41 @@
     }
     const islandGroups = rules.island && rules.island.backPanel ? Object.keys(roles).filter(g => roles[g] === 'island') : [];
 
-    const warnings = [], groups = {}, carcasses = [], fronts = [], boards = [];
+    // issues: { index of the component, text, skipped }; warnings: their texts
+    const issues = [], warnings = [];
+    const warn = (text, index = null, skipped = false) => {
+      issues.push({ index, text, skipped });
+      warnings.push(text);
+    };
+    const groups = {}, carcasses = [], fronts = [], boards = [];
     const frames = [], plinths = [], panels = [], plaster = [];
-    // the names of these counts are used by the cost page as {n:name}
+    // used by cost.html as {n:name}
     const counts = {
       carcasses: 0, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
       shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
       plasterUD: 0, plasterCD: 0, plasterEdge: 0
     };
 
-    // ---- groups: stack the components ----
-    for (const [g, columnWidths] of Object.entries(P.columns || {})) {
+    // ---- components ----
+    const columns = P.columns || {}, pieces = [];
+    (P.components || []).forEach((c, index) => {
+      const piece = readComponent(c, index), parsed = parseTags(c.tags), at = `Group ${c.g} col ${c.c}`;
+      if (!(String(c.g) in columns)) return warn(`${at}: group ${c.g} has no columns - skipped.`, index, true);
+      if (!piece.type) {
+        return warn(`${at}: tags need exactly one type: ${TYPE_TAGS.join(', ')}${parsed.types.length ? ' (found ' + parsed.types.join(' + ') + ')' : ''} - skipped.`, index, true);
+      }
+      if (parsed.unknown.length) warn(`${at}: unknown tag ${parsed.unknown.join(', ')} (known: ${[...TYPE_TAGS, ...FEATURE_TAGS].join(', ')}).`, index);
+      if (piece.handle && !FRONT_TYPES.includes(piece.type)) warn(`${at}: a ${piece.type} cannot have a handle.`, index);
+      else if (piece.handle && !HANDLE_POSITIONS.includes(piece.handle)) warn(`${at}: handle "${piece.handle}" must be one of ${HANDLE_POSITIONS.join(', ')}.`, index);
+      pieces.push(piece);
+    });
+
+    // ---- groups ----
+    for (const [g, columnWidths] of Object.entries(columns)) {
       const widths = columnWidths.map(Number);
-      const pieces = (P.components || []).filter(c => String(c.g) === g).map(c => readComponent(g, c)).filter(c => c.type);
-      const stacked = stack(widths, pieces);
+      const stacked = stack(widths, pieces.filter(p => String(p.group) === g));
       for (const { piece, why } of stacked.skipped) {
-        warnings.push(`Group ${g} col ${piece.col}: ${piece.type} ${why === 'overlap' ? 'overlaps another component' : 'is outside the columns'} - skipped.`);
+        warn(`Group ${g} col ${piece.col}: ${piece.type} ${why === 'overlap' ? 'overlaps another component' : 'is outside the columns'} - skipped.`, piece.index, true);
       }
       groups[g] = {
         group: +g,
@@ -190,17 +172,16 @@
         areas: carcassAreas(stacked.items)
       };
     }
-    // tag counts ({n:tag.bins} on the cost page)
     for (const c of P.components || []) {
       for (const t of String(c.tags || '').toLowerCase().split(/[\s,]+/).filter(Boolean)) counts['tag:' + t] = (counts['tag:' + t] || 0) + 1;
     }
 
-    // ---- carcasses: same carcass name = one carcass over all its columns and heights ----
+    // ---- carcasses: one per carcass name ----
     const groupOfName = new Map();
     for (const G of Object.values(groups)) {
       for (const area of G.areas) {
         if (groupOfName.has(area.name)) {
-          warnings.push(`Carcass ${area.name} is used in Group ${groupOfName.get(area.name)} and Group ${G.group} - one carcass must stay in one group.`);
+          warn(`Carcass ${area.name} is used in Group ${groupOfName.get(area.name)} and Group ${G.group} - one carcass must stay in one group.`, area.members[0].index);
           continue;
         }
         groupOfName.set(area.name, G.group);
@@ -213,12 +194,12 @@
     }
     for (const G of Object.values(groups)) {
       for (const item of G.items) {
-        if (BOX_TYPES.includes(item.type) && !item.carcassName && !hasTag(item, 'dishwasher')) warnings.push(`Group ${G.group} col ${item.col}: ${item.type} has no carcass name.`);
+        if (BOX_TYPES.includes(item.type) && !item.carcassName && !hasTag(item, 'dishwasher')) warn(`Group ${G.group} col ${item.col}: ${item.type} has no carcass name.`, item.index);
       }
     }
     carcasses.forEach((K, i) => {
       K.id = i + 1;
-      // read from the stack, no heights in the rules: floor = stands on a plinth, base = floor with a worktop on top
+      // floor: stands on a plinth; base: floor with a worktop on top
       const overlapsColumns = item => item.col <= K.col + K.span - 1 && item.col + item.span - 1 >= K.col;
       const groupItems = groups[K.group].items;
       K.floor = groupItems.some(item => item.type === 'plinth' && overlapsColumns(item) && item.v1 === K.v0);
@@ -239,7 +220,7 @@
     });
     counts.carcasses = carcasses.length;
 
-    // ---- boards of each carcass ----
+    // ---- carcass boards ----
     const addBoard = b => {
       boards.push(b);
       return b;
@@ -330,9 +311,7 @@
       }
     }
 
-    // ---- frames, panels, plinths, plasterboard: items without a carcass of their own ----
-    // frame: MDF strip on edge (frame.depth deep), with a back strip when it is not part of a carcass.
-    // panel: MDF board laid flat in the front plane. board: plasterboard box, rules.plasterboard.depth deep from the wall.
+    // ---- frames (with a back strip outside a carcass), panels, plinths, plasterboard ----
     const frameRule = rules.frame, plasterRule = rules.plasterboard;
     for (const G of Object.values(groups)) {
       for (const item of G.items) {
@@ -367,24 +346,22 @@
       }
     }
 
-    // ---- worktop of a group (rules.worktop.depth by the group role) ----
-    // the depth is the product size; front edge = front face + overhang;
-    // behind the carcass back = depth - carcassDepth - frontThickness - overhang, e.g. 600 - 550 - 18 - 18 = 14, 900 - 550 - 18 - 18 = 314
+    // ---- worktops: depth by group role; behind the carcass = depth - carcass - front - overhang (600 -> 14, 900 -> 314) ----
     const worktopRule = rules.worktop || {}, worktops = {};
     for (const G of Object.values(groups)) {
       if (!G.items.some(i => i.type === 'worktop')) continue;
       const role = roles[G.group], depth = (worktopRule.depth || {})[role];
       if (!Number.isFinite(depth)) {
-        warnings.push(`Group ${G.group}: worktop needs a group role in the notes ("group ${G.group}") and rules.worktop.depth for it (role: ${role || 'none'}).`);
+        warn(`Group ${G.group}: worktop needs a group role in the notes ("group ${G.group}") and rules.worktop.depth for it (role: ${role || 'none'}).`);
         continue;
       }
       const behind = depth - carcassDepth - frontThickness - worktopRule.overhang;
-      if (behind < 0) warnings.push(`Group ${G.group}: worktop ${depth} is shorter than carcass + front + overhang (${carcassDepth + frontThickness + worktopRule.overhang}).`);
+      if (behind < 0) warn(`Group ${G.group}: worktop ${depth} is shorter than carcass + front + overhang (${carcassDepth + frontThickness + worktopRule.overhang}).`);
       worktops[G.group] = { n0: carcassBack - behind, n1: frontFace + worktopRule.overhang, depth, back: behind };
       counts['worktop:' + G.group] = depth;
     }
 
-    // ---- island (rules.island.backPanel): chipboard back panel between the end columns, floor to the carcass tops, on the carcass backs ----
+    // ---- island back panel: between the end columns, floor to the carcass tops ----
     for (const g of islandGroups) {
       const G = groups[g];
       if (!G) continue;
@@ -396,17 +373,17 @@
       });
     }
 
-    // ---- fronts: item minus its four gaps; hinges, drawer boxes ----
+    // ---- fronts, hinges, drawer boxes ----
     const hingeRule = rules.hinges, drawerRule = rules.drawers;
     for (const G of Object.values(groups)) {
       for (const item of G.items) {
         if (!FRONT_TYPES.includes(item.type)) continue;
         if (!item.gaps || item.gaps.length !== 4 || item.gaps.some(x => !Number.isFinite(x))) {
-          warnings.push(`Group ${G.group} col ${item.col}: ${item.type} needs 4 gaps [left, right, top, bottom].`);
+          warn(`Group ${G.group} col ${item.col}: ${item.type} needs 4 gaps [left, right, top, bottom] - drawn without gaps.`, item.index);
           item.gaps = [0, 0, 0, 0];
         }
         const box = frontBox(item), K = item.carcass;
-        if (box.u1 - box.u0 <= 0 || box.v1 - box.v0 <= 0) warnings.push(`Group ${G.group} col ${item.col}: gaps leave no front.`);
+        if (box.u1 - box.u0 <= 0 || box.v1 - box.v0 <= 0) warn(`Group ${G.group} col ${item.col}: gaps leave no front.`, item.index);
         const opening = item.type === 'dummy' ? 'fixed'
           : item.type === 'drawer' ? 'drawer'
           : hasTag(item, 'dishwasher') ? 'dishwasher'
@@ -424,7 +401,6 @@
         if (item.handle) counts.handles++;
 
         if (opening === 'door' && K) {
-          // hinges by front height (rules.hinges.perDoor), fromEnd from the front ends
           const count = hingeRule.perDoor.find(([maxHeight]) => front.height < maxHeight)[1];
           front.hinges = Array.from({ length: count }, (_, j) => Math.round(front.v0 + hingeRule.fromEnd + ((front.height - 2 * hingeRule.fromEnd) * j) / (count - 1)));
           front.hingeU = hingeSide === 'L' ? K.u0 + board : K.u1 - board;
@@ -432,7 +408,6 @@
         }
 
         if (opening === 'drawer' && K) {
-          // drawer box: size D from rules.drawers.dFrom front height, else size M
           const size = front.height >= drawerRule.dFrom ? 'D' : 'M', sizeRule = drawerRule[size];
           const innerU0 = K.u0 + board, innerU1 = K.u1 - board;
           const drawer = {
@@ -469,15 +444,13 @@
     }
 
     return {
-      rules, roles, warnings, counts,
-      // depths from the wall (n), mm
+      rules, roles, warnings, issues, counts,
       frontThickness, carcassDepth, carcassBack, carcassFront, frontFace, plinthFace,
       groups, carcasses, fronts, boards, frames, plinths, panels, plaster, worktops
     };
   }
 
-  /* ---------- carcass map: where each carcass is and what it is made of (mm, group coordinates) ----------
-     roomPosition(K), optional: where the carcass stands in the room (view.html) */
+  // where each carcass is and what it is made of; roomPosition(K) adds its place in the room (view.html)
   function carcassMap(model, roomPosition) {
     return model.carcasses.map(K => {
       const entry = {
@@ -499,7 +472,7 @@
     });
   }
 
-  // carcass map as JSON for reading: one carcass per block, short arrays and members on one line
+  // one carcass per block, short arrays on one line
   function mapJSON(map) {
     const field = ([key, value]) =>
       '    ' + JSON.stringify(key) + ': ' +
@@ -507,15 +480,13 @@
     return '[\n' + map.map(entry => '  {\n' + Object.entries(entry).map(field).join(',\n') + '\n  }').join(',\n') + '\n]\n';
   }
 
-  // compact one-line JSON with a space after ':' and ','
   function json1(value) {
     if (Array.isArray(value)) return '[' + value.map(json1).join(', ') + ']';
     if (value && typeof value === 'object') return '{' + Object.entries(value).map(([k, x]) => JSON.stringify(k) + ': ' + json1(x)).join(', ') + '}';
     return JSON.stringify(value);
   }
 
-  /* ---------- cutting list: parts with the same name and size counted together, in first-seen order ----------
-     rows [name, a, b, qty, where]; where = the parts' "at" labels, e.g. "K2, K5 ×2" */
+  // parts with the same name and size counted together: [name, a, b, qty, where], where = "at" labels, e.g. "K2, K5 ×2"
   function cutList(parts) {
     const rows = new Map();
     for (const p of parts) {
@@ -532,30 +503,32 @@
     });
   }
 
-  /* ---------- project data: data.js next to the page sets window.KITCHEN_DATA ----------
-     loaded with <script src="data.js">, so it works from a local folder (file://) and from a web server alike */
-  const DATA_HEAD =
-    '/* Kitchen project data - shared by design.html, cost.html and view.html.\n' +
-    '   Plain JSON after "window.KITCHEN_DATA =". Edit it in design.html (Import data / Export data). */\n' +
-    'window.KITCHEN_DATA = ';
+  // data.js sets window.KITCHEN_DATA (a script tag, so the pages also work from file://)
   function load() {
     const data = root.KITCHEN_DATA;
     return data ? Promise.resolve(data) : Promise.reject(new Error('data.js not found next to this page'));
   }
-  // data.js text for a project JSON text, and back (fromDataJS also accepts plain JSON)
-  const toDataJS = json => DATA_HEAD + json.replace(/\n$/, '') + ';\n';
-  const fromDataJS = text => {
+  // one rule / note / component per line, a blank line between groups
+  function dataJS(project) {
+    const J = json1;
+    const entries = obj => Object.entries(obj || {}).map(([k, v]) => '  ' + J(k) + ': ' + J(v)).join(',\n');
+    const components = project.components.map((c, i) => (i && c.g !== project.components[i - 1].g ? '\n' : '') + '  ' + J(c)).join(',\n');
+    return '/* Kitchen project data - shared by design.html, cost.html and view.html.\n' +
+      '   Plain JSON after "window.KITCHEN_DATA =". Edit it in design.html (Import data / Export data). */\n' +
+      'window.KITCHEN_DATA = {\n "rules": {\n' + entries(project.rules) +
+      '\n },\n "notes": [\n' + project.notes.map(n => '  ' + J(n)).join(',\n') +
+      '\n ],\n "columns": {\n' + entries(project.columns) +
+      '\n },\n "components": [\n' + components + '\n ]\n};\n';
+  }
+  function fromDataJS(text) {
     const i = text.indexOf('{'), j = text.lastIndexOf('}');
     if (i < 0 || j < i) throw new Error('no JSON object found');
     return JSON.parse(text.slice(i, j + 1));
-  };
-  // one JSON block of a page: <script type="application/json" id="...">
-  const pageData = id => JSON.parse(document.getElementById(id).textContent);
+  }
 
   root.KitchenEngine = {
-    TYPE_TAGS, FEATURE_TAGS, FRONT_TYPES, BOX_TYPES,
-    parseTags, readComponent, stack, carcassAreas, frontBox, build,
-    cutList, carcassMap, mapJSON, json1,
-    load, toDataJS, fromDataJS, pageData, num
+    TYPE_TAGS, FEATURE_TAGS, FRONT_TYPES, BOX_TYPES, HANDLE_POSITIONS,
+    parseTags, build, cutList, carcassMap, mapJSON,
+    load, dataJS, fromDataJS
   };
 })(typeof window !== 'undefined' ? window : globalThis);

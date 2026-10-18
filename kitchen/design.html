@@ -516,39 +516,15 @@
 <script>
 'use strict';
 
-/* ===================================================================
-   design.html - the editor of data.js, with 2D elevations of every group.
-
-   WHO DOES WHAT
-     data.js     the project (rules, notes, columns, components)
-     engine.js   builds the project: stacks the components, joins carcasses, sizes the fronts and checks the data
-                 (model.warnings); writes data.js (dataJS); it draws nothing
-     this page   the tables (Alpine.js); turns them into a project, builds it with engine.js and draws the model as
-                 SVG elevations; Export data writes the project as data.js
-
-   SECTIONS
-     1. settings      drawing config (#design-config), tag lists from engine.js
-     2. utilities     number parsing, escaping, file download
-     3. tables        table rows <-> project (data.js format); only what is typed into the cells is checked here
-     4. SVG           engine.js model -> SVG markup, the groups side by side
-     5. elevations    tables -> project -> engine.js model -> SVG, the one call the page makes
-     6. page          Alpine component: tables, picker, import / export, hover info
-   Field names follow engine.js (see its GLOSSARY): group, col, span, height, type, tags, carcass, handle, gaps, note.
-   =================================================================== */
+/* design.html - edits data.js in three tables and draws the elevations.
+   Tables -> project (data.js format) -> KE.build -> model -> SVG. Field names follow the engine.js glossary.
+   Data checks are in engine.js; this page only checks the table cells. */
 
 /* ---------- 1. settings ---------- */
-const KE = window.KitchenEngine || null;
-// how this page draws the elevations: the JSON block #design-config (frame width, group gap, margin, colours, handle size); 1 SVG unit = 1 mm
-const CONFIG = JSON.parse(document.getElementById('design-config').textContent);
-const ENGINE_MISSING = 'engine.js not found next to this page - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.';
-const DATA_MISSING = 'data.js not found next to this page - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.';
-
-// tags: exactly one type + any features (engine.js); without engine.js the page shows an error instead of failing
-const TYPE_TAGS = KE ? KE.TYPE_TAGS : [];
-const FEATURE_TAGS = KE ? KE.FEATURE_TAGS : [];
-const FRONT_TYPES = KE ? KE.FRONT_TYPES : ['cabinet', 'drawer', 'dummy'];
-const parseTags = KE ? KE.parseTags : () => ({ tags: [], types: [], type: null, features: [], unknown: [] });
-const HANDLE_POSITIONS = ['', ...(KE ? KE.HANDLE_POSITIONS : [])];
+const KE = window.KitchenEngine;
+const CONFIG = JSON.parse(document.getElementById('design-config').textContent); // drawing sizes and colours, 1 SVG unit = 1 mm
+const TYPE_TAGS = KE.TYPE_TAGS, FEATURE_TAGS = KE.FEATURE_TAGS, FRONT_TYPES = KE.FRONT_TYPES, parseTags = KE.parseTags;
+const HANDLE_POSITIONS = ['', ...KE.HANDLE_POSITIONS];
 const HANDLE_NAMES = { '': 'none', T: 'top', B: 'bottom', L: 'left', R: 'right' };
 
 /* ---------- 2. utilities (nothing kitchen-specific) ---------- */
@@ -577,9 +553,8 @@ function downloadBlob(content, mimeType, filename) {
   URL.revokeObjectURL(url);
 }
 
-/* ---------- 3. tables <-> project (data.js format) ----------
-   Only what is typed into the cells is checked here (empty rows, numbers); every check of the project itself is in engine.js. */
-let loadedProject = null; // the project as loaded: keeps the part this page does not edit (rules)
+/* ---------- 3. tables <-> project (data.js format) ---------- */
+let loadedProject = null; // keeps the rules, which this page does not edit
 
 // data.js component -> component table row
 function componentRow(c) {
@@ -600,7 +575,7 @@ function dataComponent(row) {
   return c;
 }
 
-// the three tables as a project; rows that cannot be read are left out and flagged ('empty' | 'invalid' per row)
+// the tables as a project; rows that cannot be read are left out and flagged 'empty' or 'invalid'
 function readTables(columnRows, componentRows, noteRows) {
   const warnings = [];
   const columnFlags = columnRows.map(() => null), componentFlags = componentRows.map(() => null);
@@ -615,7 +590,7 @@ function readTables(columnRows, componentRows, noteRows) {
     }
     (columns[group] || (columns[group] = [])).push(width);
   });
-  const components = [], rowOfComponent = []; // rowOfComponent: component index -> table row
+  const components = [], rowOfComponent = []; // component index -> table row
   componentRows.forEach((row, idx) => {
     if (isRowEmpty(row.group, row.col, row.span, row.height)) { componentFlags[idx] = 'empty'; return; }
     const numbers = [toNum(row.group, true), toNum(row.col, true), toNum(row.span, true)];
@@ -635,8 +610,8 @@ function readTables(columnRows, componentRows, noteRows) {
   return { project, warnings, columnFlags, componentFlags, rowOfComponent };
 }
 
-/* ---------- 4. SVG: engine.js model -> SVG markup (the only code that uses CONFIG.colors) ----------
-   Every draw function gets a shape { type, x, width, height, handle } and y = its top edge in SVG coordinates (y grows down). */
+/* ---------- 4. SVG: model -> SVG ----------
+   A draw function gets a shape { type, x, width, height, handle } and y, its top edge (SVG y grows down). */
 
 // types drawn as a plain rectangle: fill and stroke colour names in CONFIG.colors
 const RECT_COLORS = {
@@ -731,7 +706,7 @@ const DRAW = {
   micro: drawMicro
 };
 
-// one item of the model as an SVG group at x; its data-* attributes (data.js short keys) feed the hover info
+// one item as an SVG group; the data-* attributes feed the hover info
 function drawItem(item, x, totalHeight) {
   const width = item.u1 - item.u0, height = item.v1 - item.v0, front = item.front;
   const shape = { type: item.type, x, width, height, handle: item.handle };
@@ -740,7 +715,7 @@ function drawItem(item, x, totalHeight) {
   return `<g class="component-group" data-g="${item.group}" data-c="${item.col}" data-s="${item.span}" data-tags="${escapeAttr(item.tags.join(' '))}" data-k="${escapeAttr(item.carcassName)}" data-w="${width}" data-h="${item.height}" data-fw="${frontWidth}" data-fh="${frontHeight}" data-gaps="${front ? item.gaps.join(' ') : ''}" data-type="${item.type}" data-note="${escapeAttr(item.note)}">${DRAW[item.type](shape, y)}</g>`;
 }
 
-// the groups of the model side by side, CONFIG.groupGap apart (empty groups take no room); '' when there is nothing to draw
+// the groups side by side, CONFIG.groupGap apart; '' when there is nothing to draw
 function drawSVG(model) {
   const groups = Object.values(model.groups), gap = CONFIG.groupGap;
   const groupX = new Map();
@@ -764,34 +739,30 @@ function drawSVG(model) {
     </svg>`;
 }
 
-/* ---------- 5. elevations: tables -> project -> engine.js model -> SVG ----------
-   Returns the SVG, the project (for Export data), the warnings (cells, then engine.js) and a flag per table row. */
+/* ---------- 5. elevations: tables -> project -> model -> SVG ---------- */
 function buildElevations(columnRows, componentRows, noteRows) {
   const tables = readTables(columnRows, componentRows, noteRows);
-  const warnings = [...tables.warnings];
-  let svg = '';
-  try {
-    const model = KE.build(tables.project);
-    warnings.push(...model.warnings);
-    // a component that engine.js leaves out of the model is flagged in its table row
-    for (const issue of model.issues) if (issue.skipped && issue.index != null) tables.componentFlags[tables.rowOfComponent[issue.index]] = 'invalid';
-    svg = drawSVG(model);
-  } catch (err) {
-    warnings.push('engine.js could not build the project: ' + err.message);
+  const model = KE.build(tables.project);
+  for (const issue of model.issues) {
+    if (issue.skipped && issue.index != null) tables.componentFlags[tables.rowOfComponent[issue.index]] = 'invalid';
   }
-  return { svg, isEmpty: !svg, project: tables.project, warnings, columnFlags: tables.columnFlags, componentFlags: tables.componentFlags };
+  const svg = drawSVG(model);
+  return {
+    svg, isEmpty: !svg, project: tables.project, warnings: [...tables.warnings, ...model.warnings],
+    columnFlags: tables.columnFlags, componentFlags: tables.componentFlags
+  };
 }
 
-/* ---------- 6. page: Alpine component (tables, picker, status, hover info, import / export) ---------- */
+/* ---------- 6. page (Alpine.js) ---------- */
 document.addEventListener('alpine:init', () => {
   Alpine.data('kitchenApp', () => ({
     columns: [],
     components: [],
     notes: [],
-    status: { message: '', type: '' }, // message under the buttons: Import data / Export data / loading
+    status: { message: '', type: '' }, // message under the buttons
     tooltip: { show: false, x: 0, y: 0, text: '' },
     hoverInfo: 'Hover a component in the diagram to see its dimensions.',
-    picker: { row: null, mode: 'tags', x: 0, y: 0 }, // one popup for a component row: its tags or its handle
+    picker: { row: null, mode: 'tags', x: 0, y: 0 }, // popup for the tags or the handle of a component row
     nextId: 1,
     TYPE_TAGS,
     FEATURE_TAGS,
@@ -801,13 +772,12 @@ document.addEventListener('alpine:init', () => {
     _statusTimer: null,
 
     init() {
-      if (!KE) { this.showStatus(ENGINE_MISSING, true); return; }
       KE.load()
         .then(project => {
           this.setProject(project);
           this.ensureEmptyRows();
         })
-        .catch(() => this.showStatus(DATA_MISSING, true));
+        .catch(err => this.showStatus(err.message, true));
       this.$nextTick(() => {
         let width = 0;
         new ResizeObserver(entries => {
@@ -822,7 +792,7 @@ document.addEventListener('alpine:init', () => {
       this.$watch('notes', () => this.keepOneEmptyRow(this.notes, r => isRowEmpty(r.name, r.description, r.details), () => this.newNoteRow()));
     },
 
-    // the elevations of the current tables (re-built by Alpine whenever a table changes)
+    // re-built by Alpine whenever a table changes
     get build() {
       return buildElevations(this.columns, this.components, this.notes);
     },
@@ -890,12 +860,12 @@ document.addEventListener('alpine:init', () => {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
     },
-    // re-fit every note row when the table width changes (window resize, column widths, import / reload)
+    // re-fit the note rows when the table width changes
     growNotes() {
       this.$refs.notesTbody?.querySelectorAll('textarea').forEach(el => this.autoGrow(el));
     },
 
-    // ---- tags and handle: picked, never typed; tags are stored as "type feature feature" ----
+    // ---- tags and handle: picked in the popup; tags are stored as "type feature feature" ----
     typeOf(row) {
       return parseTags(row.tags).type || '';
     },
@@ -908,7 +878,7 @@ document.addEventListener('alpine:init', () => {
     writeTags(row, type, features) {
       row.tags = [type, ...FEATURE_TAGS.filter(f => features.includes(f))].filter(Boolean).join(' ');
     },
-    // a handle and the 4 gaps belong to fronts only: they are cleared when the row stops being a front
+    // a handle and gaps belong to fronts only
     setType(row, type) {
       this.writeTags(row, type, parseTags(row.tags).features);
       if (!FRONT_TYPES.includes(type)) {
@@ -940,7 +910,7 @@ document.addEventListener('alpine:init', () => {
       if (!isError) this._statusTimer = setTimeout(() => { this.status = { message: '', type: '' }; }, 3000);
     },
 
-    // ---- hover info: tooltip at the cursor; the footnote keeps the last one (handy on touch screens) ----
+    // ---- hover info: tooltip at the cursor; the footnote keeps the last one ----
     onSvgHover(e) {
       const group = e.target.closest('.component-group');
       if (!group) { this.tooltip.show = false; return; }
@@ -969,7 +939,6 @@ document.addEventListener('alpine:init', () => {
     },
 
     // ---- import / export ----
-    // the tables as data.js (rules kept from the loaded file); rows that cannot be read are left out
     exportData() {
       const { project, warnings } = this.build, issues = warnings.length;
       downloadBlob(KE.dataJS(project), 'text/javascript;charset=utf-8', 'data.js');
@@ -997,17 +966,15 @@ document.addEventListener('alpine:init', () => {
       reader.onerror = () => { this.showStatus('Could not read the file.', true); e.target.value = ''; };
       reader.readAsText(file);
     },
-    // a data.js (or plain JSON) file replaces the tables; its rules are kept for Export data
+    // a data.js (or plain JSON) file replaces the tables
     importData(text) {
       let project;
       try { project = KE.fromDataJS(text); } catch (err) { throw new Error('not valid project data (' + err.message + ').'); }
-      if (!project || typeof project.columns !== 'object' || !Array.isArray(project.components)) throw new Error('this is not kitchen project data: "columns" and "components" are missing.');
+      if (!project || !project.rules || !project.columns || !Array.isArray(project.components)) throw new Error('this is not kitchen project data: "rules", "columns" or "components" is missing.');
       this.setProject(project);
     }
   }));
 });
 </script>
-
-
 </body>
 </html>

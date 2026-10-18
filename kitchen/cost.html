@@ -1058,26 +1058,11 @@
 <script src="engine.js"></script>
 <script>
 'use strict';
-/* ===================================================================
-   cost.html - material cost estimate, cutting list, notes, assembly and carcass map.
+/* cost.html - estimate, cutting list, notes, assembly and carcass map: engine.js parts priced with #cost-data. */
 
-   WHO DOES WHAT
-     data.js     the project; engine.js builds the parts from it (boards, fronts, frames, plinths, panels, plasterboard)
-     #cost-data  this page's own input: prices, items, notes, page settings (JSON block above)
-     this page   cutting-list blocks from the engine parts, item quantities from formulas, totals, XLSX export
-
-   SECTIONS
-     1. model        engine parts -> cutting-list rows, assembly cards
-     2. state        values of the inputs (edits last until reload)
-     3. calculation  block totals, placeholders, quantities, totals
-     4. rendering    Estimate, Cutting list, Notes tabs
-     5. interaction  tabs, links to notes, inputs
-     6. XLSX export  the same tables with live formulas (SheetJS)
-   =================================================================== */
-
-const COST = JSON.parse(document.getElementById('cost-data').textContent); // all cost data of this page
+const COST = JSON.parse(document.getElementById('cost-data').textContent);
 const SETTINGS = COST.settings;
-const KE = window.KitchenEngine || null;
+const KE = window.KitchenEngine;
 const MATERIAL_NAMES = { p18: 'Chipboard 18', p16: 'Chipboard 16', hdf: 'HDF 3' };
 
 const round1 = x => Math.round(x * 10) / 10;
@@ -1523,24 +1508,16 @@ document.getElementById('exportXlsx').addEventListener('click', async e => {
   }
 });
 
-/* ---------- start: the page is drawn empty first, then with the parts from data.js through engine.js ---------- */
+/* ---------- start ---------- */
 renderAll();
-if (!KE) {
-  document.getElementById('totalGross').textContent = 'engine.js not found next to this page';
-  document.getElementById('mapJson').textContent = 'engine.js not found - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.';
-} else {
-  KE.load()
-    .then(project => {
-      applyProject(project);
-      defaults = defaultValues();
-      for (const block of COST.blocks) if (block.live) values.blocks[block.id] = defaults.blocks[block.id].map(r => [...r]);
-      renderAll();
-    })
-    .catch(e => {
-      document.getElementById('totalGross').textContent = 'data.js not found next to this page';
-      console.error(e);
-    });
-}
+KE.load()
+  .then(project => {
+    applyProject(project);
+    defaults = defaultValues();
+    for (const block of COST.blocks) if (block.live) values.blocks[block.id] = defaults.blocks[block.id].map(r => [...r]);
+    renderAll();
+  })
+  .catch(err => { document.getElementById('totalGross').textContent = err.message; });
 </script>
 </body>
 </html>
