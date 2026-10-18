@@ -462,7 +462,6 @@
 <!-- DESIGN CONFIG (JSON): how this page draws the elevations - sizes in SVG units (1 = 1 mm), colours -->
 <script type="application/json" id="design-config">
 {
- "scale": 1,
  "frameThickness": 50,
  "groupGap": 100,
  "viewBoxMargin": 40,
@@ -522,24 +521,24 @@
 
    WHO DOES WHAT
      data.js     the project (rules, notes, columns, components)
-     engine.js   stacks the components in their columns (stack) and joins items into carcasses (carcassAreas);
-                 it draws nothing
-     this page   the tables (Alpine.js), the checks of each table row and the SVG drawing of the elevations
-                 (section 4 below); Export data writes the tables back as data.js
+     engine.js   builds the project: stacks the components, joins carcasses, sizes the fronts and checks the data
+                 (model.warnings); writes data.js (dataJS); it draws nothing
+     this page   the tables (Alpine.js); turns them into a project, builds it with engine.js and draws the model as
+                 SVG elevations; Export data writes the project as data.js
 
    SECTIONS
      1. settings      drawing config (#design-config), tag lists from engine.js
      2. utilities     number parsing, escaping, file download
-     3. layout        table rows -> positioned items (engine.js stack), one group after the other
-     4. SVG           positioned items -> SVG markup
-     5. elevations    table rows -> checks + layout + SVG, the one call the page makes
+     3. tables        table rows <-> project (data.js format); only what is typed into the cells is checked here
+     4. SVG           engine.js model -> SVG markup, the groups side by side
+     5. elevations    tables -> project -> engine.js model -> SVG, the one call the page makes
      6. page          Alpine component: tables, picker, import / export, hover info
    Field names follow engine.js (see its GLOSSARY): group, col, span, height, type, tags, carcass, handle, gaps, note.
    =================================================================== */
 
 /* ---------- 1. settings ---------- */
 const KE = window.KitchenEngine || null;
-// how this page draws the elevations: the JSON block #design-config (scale, frame width, group gap, colours, handle size)
+// how this page draws the elevations: the JSON block #design-config (frame width, group gap, margin, colours, handle size); 1 SVG unit = 1 mm
 const CONFIG = JSON.parse(document.getElementById('design-config').textContent);
 const ENGINE_MISSING = 'engine.js not found next to this page - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.';
 const DATA_MISSING = 'data.js not found next to this page - keep design.html, cost.html, view.html, engine.js and data.js together in one folder.';
@@ -548,9 +547,8 @@ const DATA_MISSING = 'data.js not found next to this page - keep design.html, co
 const TYPE_TAGS = KE ? KE.TYPE_TAGS : [];
 const FEATURE_TAGS = KE ? KE.FEATURE_TAGS : [];
 const FRONT_TYPES = KE ? KE.FRONT_TYPES : ['cabinet', 'drawer', 'dummy'];
-const BOX_TYPES = KE ? KE.BOX_TYPES : [];
 const parseTags = KE ? KE.parseTags : () => ({ tags: [], types: [], type: null, features: [], unknown: [] });
-const HANDLE_POSITIONS = ['', 'T', 'B', 'L', 'R'];
+const HANDLE_POSITIONS = ['', ...(KE ? KE.HANDLE_POSITIONS : [])];
 const HANDLE_NAMES = { '': 'none', T: 'top', B: 'bottom', L: 'left', R: 'right' };
 
 /* ---------- 2. utilities (nothing kitchen-specific) ---------- */
@@ -579,81 +577,66 @@ function downloadBlob(content, mimeType, filename) {
   URL.revokeObjectURL(url);
 }
 
-/* ---------- 3. layout: where each item sits in the drawing (no colours, no SVG) ----------
-   groupWidths: Map group -> column widths (mm); pieces: checked table rows with engine.js field names.
-   The groups are drawn side by side, CONFIG.groupGap apart; v (height) is from the floor. */
-function layoutElevations(groupWidths, pieces) {
-  const scale = CONFIG.scale, groupGap = CONFIG.groupGap;
-  const warnings = [], items = [];
+/* ---------- 3. tables <-> project (data.js format) ----------
+   Only what is typed into the cells is checked here (empty rows, numbers); every check of the project itself is in engine.js. */
+let loadedProject = null; // the project as loaded: keeps the part this page does not edit (rules)
 
-  // x of each group in the drawing; empty groups take no room
-  const groupX = new Map(), groupWidth = new Map();
-  let cursor = 0;
-  for (const [group, widths] of groupWidths) {
-    const width = widths.reduce((a, w) => a + w * scale, 0);
-    groupWidth.set(group, width);
-    groupX.set(group, width > 0 ? cursor : 0);
-    if (width > 0) cursor += width + groupGap;
-  }
-
-  // stacking with engine.js, group by group: an item starts on top of the stack in the columns it spans
-  const piecesOfGroup = new Map();
-  for (const piece of pieces) {
-    if (!groupWidths.has(piece.group)) {
-      warnings.push(`Component "${piece.type}" references unknown group ${piece.group}. Skipped.`);
-      continue;
-    }
-    if (!piecesOfGroup.has(piece.group)) piecesOfGroup.set(piece.group, []);
-    piecesOfGroup.get(piece.group).push({ ...piece, height: piece.height * scale, heightMm: piece.height });
-  }
-  for (const [group, list] of piecesOfGroup) {
-    const stacked = KE.stack(groupWidths.get(group).map(w => w * scale), list);
-    for (const { piece, why } of stacked.skipped) {
-      warnings.push(why === 'overlap'
-        ? `Component "${piece.type}" (${piece.heightMm}mm) at Group ${group}, Col ${piece.col} overlaps an existing component. Skipped.`
-        : `Component "${piece.type}" at Group ${group} has an invalid column/span. Skipped.`);
-    }
-    for (const item of stacked.items) {
-      const width = item.u1 - item.u0, widthMm = width / scale;
-      const isFront = FRONT_TYPES.includes(item.type);
-      const [left, right, top, bottom] = item.gaps || [0, 0, 0, 0];
-      items.push({
-        ...item,
-        x: item.u0 + groupX.get(group),
-        width,
-        height: item.v1 - item.v0,
-        widthMm,
-        frontWidthMm: isFront ? Math.max(0, widthMm - left - right) : widthMm,
-        frontHeightMm: isFront ? Math.max(0, item.heightMm - bottom - top) : item.heightMm
-      });
-    }
-  }
-
-  // one carcass name must stay in one group (engine.js joins the items of one name into one carcass)
-  const groupOfCarcass = new Map();
-  for (const group of piecesOfGroup.keys()) {
-    for (const area of KE.carcassAreas(items.filter(i => i.group === group))) {
-      if (groupOfCarcass.has(area.name) && groupOfCarcass.get(area.name) !== group) {
-        warnings.push(`Carcass ${area.name} is used in Group ${groupOfCarcass.get(area.name)} and Group ${group} - one carcass must stay in one group.`);
-      }
-      groupOfCarcass.set(area.name, group);
-    }
-  }
-
-  // drawing size: all groups side by side, the tallest stack
-  let totalWidth = 0, groupsWithWidth = 0;
-  for (const width of groupWidth.values()) {
-    totalWidth += width;
-    if (width > 0) groupsWithWidth++;
-  }
-  if (groupsWithWidth > 1) totalWidth += groupGap * (groupsWithWidth - 1);
-  const totalHeight = items.reduce((h, i) => Math.max(h, i.v0 + i.height), 0);
-
-  return { items, groupX, groupWidth, totalWidth, totalHeight, isEmpty: totalWidth <= 0 || totalHeight <= 0, warnings };
+// data.js component -> component table row
+function componentRow(c) {
+  const gaps = Array.isArray(c.gaps) ? c.gaps : ['', '', '', ''];
+  return {
+    group: c.g, col: c.c, span: c.s, tags: c.tags, carcass: c.k || '', height: c.h, handle: c.hd ?? '',
+    gapLeft: gaps[0], gapRight: gaps[1], gapTop: gaps[2], gapBottom: gaps[3], note: c.note || ''
+  };
 }
 
-/* ---------- 4. SVG: positioned items -> SVG markup (the only code that uses CONFIG.colors) ----------
-   Every function gets an item and y = its top edge in SVG coordinates (y grows down). */
+// component table row -> data.js component (short keys, in the order data.js uses); gaps on fronts only
+function dataComponent(row) {
+  const parsed = parseTags(row.tags);
+  const c = { g: Number(row.group), c: Number(row.col), s: Number(row.span), tags: parsed.tags.join(' '), k: String(row.carcass ?? '').trim(), h: Number(row.height), hd: row.handle || '' };
+  const gaps = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
+  if (FRONT_TYPES.includes(parsed.type) && !isRowEmpty(...gaps)) c.gaps = gaps.map(Number);
+  if (String(row.note ?? '').trim()) c.note = String(row.note).trim();
+  return c;
+}
+
+// the three tables as a project; rows that cannot be read are left out and flagged ('empty' | 'invalid' per row)
+function readTables(columnRows, componentRows, noteRows) {
+  const warnings = [];
+  const columnFlags = columnRows.map(() => null), componentFlags = componentRows.map(() => null);
+  const columns = {};
+  columnRows.forEach((row, idx) => {
+    if (isRowEmpty(row.group, row.width)) { columnFlags[idx] = 'empty'; return; }
+    const group = toNum(row.group, true), width = toNum(row.width, false);
+    if (!Number.isFinite(group) || group < 1 || !Number.isFinite(width) || width < 0) {
+      columnFlags[idx] = 'invalid';
+      warnings.push(`Groups & Columns row ${idx + 1}: Group must be ≥1 and Width ≥0.`);
+      return;
+    }
+    (columns[group] || (columns[group] = [])).push(width);
+  });
+  const components = [], rowOfComponent = []; // rowOfComponent: component index -> table row
+  componentRows.forEach((row, idx) => {
+    if (isRowEmpty(row.group, row.col, row.span, row.height)) { componentFlags[idx] = 'empty'; return; }
+    const numbers = [toNum(row.group, true), toNum(row.col, true), toNum(row.span, true)];
+    const height = toNum(row.height, false);
+    const gapCells = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
+    const gaps = isRowEmpty(...gapCells) ? [] : gapCells.map(v => toNum(v, false));
+    if (numbers.some(n => !Number.isFinite(n) || n < 1) || !Number.isFinite(height) || height < 0 || gaps.some(g => !Number.isFinite(g) || g < 0)) {
+      componentFlags[idx] = 'invalid';
+      warnings.push(`Components row ${idx + 1}: Group/Col/Span ≥1, Height ≥0 and all 4 gaps ≥0 required.`);
+      return;
+    }
+    components.push(dataComponent(row));
+    rowOfComponent.push(idx);
+  });
+  const notes = noteRows.filter(n => !isRowEmpty(n.name, n.description, n.details)).map(n => [n.name, n.description, n.details]);
+  const project = { rules: (loadedProject && loadedProject.rules) || {}, notes, columns, components };
+  return { project, warnings, columnFlags, componentFlags, rowOfComponent };
+}
+
+/* ---------- 4. SVG: engine.js model -> SVG markup (the only code that uses CONFIG.colors) ----------
+   Every draw function gets a shape { type, x, width, height, handle } and y = its top edge in SVG coordinates (y grows down). */
 
 // types drawn as a plain rectangle: fill and stroke colour names in CONFIG.colors
 const RECT_COLORS = {
@@ -748,25 +731,32 @@ const DRAW = {
   micro: drawMicro
 };
 
-// one item as an SVG group; its data-* attributes (data.js short keys) feed the hover info
-function drawItem(item, totalHeight, warnings) {
-  const y = totalHeight - item.v0 - item.height;
-  const draw = DRAW[item.type];
-  if (!draw) {
-    warnings.push(`Unknown component type "${item.type}" - not rendered.`);
-    return '';
-  }
-  return `<g class="component-group" data-g="${item.group}" data-c="${item.col}" data-s="${item.span}" data-tags="${escapeAttr(item.tags)}" data-k="${escapeAttr(item.carcassName)}" data-w="${item.widthMm}" data-h="${item.heightMm}" data-fw="${item.frontWidthMm}" data-fh="${item.frontHeightMm}" data-gaps="${(item.gaps || []).join(' ')}" data-type="${item.type}" data-note="${escapeAttr(item.note)}">${draw(item, y)}</g>`;
+// one item of the model as an SVG group at x; its data-* attributes (data.js short keys) feed the hover info
+function drawItem(item, x, totalHeight) {
+  const width = item.u1 - item.u0, height = item.v1 - item.v0, front = item.front;
+  const shape = { type: item.type, x, width, height, handle: item.handle };
+  const y = totalHeight - item.v0 - height;
+  const frontWidth = front ? Math.max(0, front.width) : width, frontHeight = front ? Math.max(0, front.height) : item.height;
+  return `<g class="component-group" data-g="${item.group}" data-c="${item.col}" data-s="${item.span}" data-tags="${escapeAttr(item.tags.join(' '))}" data-k="${escapeAttr(item.carcassName)}" data-w="${width}" data-h="${item.height}" data-fw="${frontWidth}" data-fh="${frontHeight}" data-gaps="${front ? item.gaps.join(' ') : ''}" data-type="${item.type}" data-note="${escapeAttr(item.note)}">${DRAW[item.type](shape, y)}</g>`;
 }
 
-function drawSVG(layout) {
-  if (layout.isEmpty) return '';
+// the groups of the model side by side, CONFIG.groupGap apart (empty groups take no room); '' when there is nothing to draw
+function drawSVG(model) {
+  const groups = Object.values(model.groups), gap = CONFIG.groupGap;
+  const groupX = new Map();
+  let cursor = 0, totalWidth = 0, groupsWithWidth = 0;
+  for (const G of groups) {
+    groupX.set(G, G.length > 0 ? cursor : 0);
+    if (G.length > 0) { cursor += G.length + gap; groupsWithWidth++; }
+    totalWidth += G.length;
+  }
+  if (groupsWithWidth > 1) totalWidth += gap * (groupsWithWidth - 1);
+  const totalHeight = groups.reduce((h, G) => G.items.reduce((hh, item) => Math.max(hh, item.v0 + (item.v1 - item.v0)), h), 0);
+  if (totalWidth <= 0 || totalHeight <= 0) return '';
   const margin = CONFIG.viewBoxMargin;
-  const viewBox = `-${margin} -${margin} ${layout.totalWidth + margin * 2} ${layout.totalHeight + margin * 2}`;
-  const backgrounds = [...layout.groupWidth]
-    .map(([group, width]) => `<rect fill="${CONFIG.colors.canvasBg}" x="${layout.groupX.get(group)}" y="0" width="${width}" height="${layout.totalHeight}"/>`)
-    .join('');
-  const shapes = layout.items.map(item => drawItem(item, layout.totalHeight, layout.warnings)).join('');
+  const viewBox = `-${margin} -${margin} ${totalWidth + margin * 2} ${totalHeight + margin * 2}`;
+  const backgrounds = groups.map(G => `<rect fill="${CONFIG.colors.canvasBg}" x="${groupX.get(G)}" y="0" width="${G.length}" height="${totalHeight}"/>`).join('');
+  const shapes = groups.flatMap(G => G.items.map(item => drawItem(item, item.u0 + groupX.get(G), totalHeight))).join('');
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Kitchen elevation layout diagram">
       ${backgrounds}
@@ -774,93 +764,22 @@ function drawSVG(layout) {
     </svg>`;
 }
 
-/* ---------- 5. elevations: table rows -> checks, layout and SVG ----------
-   columnRows, componentRows: the rows bound to the tables. Returns the SVG, the warnings and a flag per row
-   ('empty' | 'invalid' | null) for the row colours. */
-function buildElevations(columnRows, componentRows) {
-  const warnings = [];
-  const columnFlags = columnRows.map(() => null);
-  const componentFlags = componentRows.map(() => null);
-
-  const groupWidths = new Map();
-  columnRows.forEach((row, idx) => {
-    if (isRowEmpty(row.group, row.width)) { columnFlags[idx] = 'empty'; return; }
-    const group = toNum(row.group, true), width = toNum(row.width, false);
-    if (!Number.isFinite(group) || group < 1 || !Number.isFinite(width) || width < 0) {
-      columnFlags[idx] = 'invalid';
-      warnings.push(`Groups & Columns row ${idx + 1}: Group must be ≥1 and Width ≥0.`);
-      return;
-    }
-    if (!groupWidths.has(group)) groupWidths.set(group, []);
-    groupWidths.get(group).push(width);
-  });
-
-  const pieces = [];
-  componentRows.forEach((row, idx) => {
-    if (isRowEmpty(row.group, row.col, row.span, row.height)) { componentFlags[idx] = 'empty'; return; }
-    const rowName = `Components row ${idx + 1}`;
-    const invalid = message => { componentFlags[idx] = 'invalid'; warnings.push(`${rowName}: ${message}`); };
-    const group = toNum(row.group, true), col = toNum(row.col, true), span = toNum(row.span, true), height = toNum(row.height, false);
-    const parsed = parseTags(row.tags), type = parsed.type;
-    const gapTexts = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom].map(v => String(v ?? '').trim());
-    const gaps = gapTexts.some(v => v !== '') ? gapTexts.map(v => toNum(v, false)) : null;
-    if (!Number.isFinite(group) || group < 1 || !Number.isFinite(col) || col < 1 ||
-        !Number.isFinite(span) || span < 1 || !Number.isFinite(height) || height < 0 ||
-        (gaps && gaps.some(g => !Number.isFinite(g) || g < 0))) {
-      return invalid('Group/Col/Span ≥1, Height ≥0 and all 4 gaps ≥0 required.');
-    }
-    if (!type) {
-      return invalid(`Tags need exactly one type: ${TYPE_TAGS.join(', ')}${parsed.types.length ? ' (found ' + parsed.types.join(' + ') + ')' : ''}.`);
-    }
-    const isFront = FRONT_TYPES.includes(type);
-    if (row.handle && !isFront) warnings.push(`${rowName}: a ${type} cannot have a handle.`);
-    if (parsed.unknown.length) warnings.push(`${rowName}: unknown tag ${parsed.unknown.join(', ')} (known: ${[...TYPE_TAGS, ...FEATURE_TAGS].join(', ')}).`);
-    const carcassName = String(row.carcass ?? '').trim();
-    if (!carcassName && BOX_TYPES.includes(type) && !parsed.tags.includes('dishwasher')) warnings.push(`${rowName}: ${type} has no carcass name.`);
-    if (isFront && !gaps) return invalid(`a ${type} front needs 4 gaps (L, R, T, B).`);
-    pieces.push({
-      group, col, span, height, type, tags: parsed.tags.join(' '), carcassName,
-      handle: row.handle || null, gaps: isFront ? gaps : null, note: String(row.note ?? '').trim()
-    });
-  });
-
-  const layout = layoutElevations(groupWidths, pieces);
-  const svg = drawSVG(layout);
-  warnings.push(...layout.warnings);
-  return { svg, isEmpty: layout.isEmpty, warnings, columnFlags, componentFlags };
-}
-
-/* ---------- data.js <-> table rows ---------- */
-let loadedProject = null; // the project as loaded: keeps the part this page does not edit (rules) for Export data
-
-// project JSON in the same layout as data.js: one note / component per line, a blank line between groups
-function projectJSON(project) {
-  const J = KE.json1;
-  const lines = list => list.map(x => '  ' + J(x)).join(',\n');
-  const components = project.components.map((c, i) => (i && c.g !== project.components[i - 1].g ? '\n' : '') + '  ' + J(c)).join(',\n');
-  return '{\n "rules": {\n' + Object.entries(project.rules || {}).map(([k, v]) => '  ' + J(k) + ': ' + J(v)).join(',\n') +
-    '\n },\n "notes": [\n' + lines(project.notes) +
-    '\n ],\n "columns": {\n' + Object.entries(project.columns).map(([g, w]) => '  ' + J(g) + ': ' + J(w)).join(',\n') +
-    '\n },\n "components": [\n' + components + '\n ]\n}\n';
-}
-
-// data.js components -> component table rows (data.js short keys -> row field names)
-function componentRow(c) {
-  const gaps = Array.isArray(c.gaps) ? c.gaps : ['', '', '', ''];
-  return {
-    group: c.g, col: c.c, span: c.s, tags: c.tags, carcass: c.k || '', height: c.h, handle: c.hd ?? '',
-    gapLeft: gaps[0], gapRight: gaps[1], gapTop: gaps[2], gapBottom: gaps[3], note: c.note || ''
-  };
-}
-
-// component table row -> data.js component (short keys, in the order data.js uses)
-function dataComponent(row) {
-  const asNumber = v => (v === '' || v == null ? '' : Number(v));
-  const parsed = parseTags(row.tags);
-  const c = { g: Number(row.group), c: Number(row.col), s: Number(row.span), tags: parsed.tags.join(' '), k: String(row.carcass ?? '').trim(), h: Number(row.height), hd: row.handle || '' };
-  if (FRONT_TYPES.includes(parsed.type)) c.gaps = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom].map(asNumber);
-  if (String(row.note ?? '').trim()) c.note = String(row.note).trim();
-  return c;
+/* ---------- 5. elevations: tables -> project -> engine.js model -> SVG ----------
+   Returns the SVG, the project (for Export data), the warnings (cells, then engine.js) and a flag per table row. */
+function buildElevations(columnRows, componentRows, noteRows) {
+  const tables = readTables(columnRows, componentRows, noteRows);
+  const warnings = [...tables.warnings];
+  let svg = '';
+  try {
+    const model = KE.build(tables.project);
+    warnings.push(...model.warnings);
+    // a component that engine.js leaves out of the model is flagged in its table row
+    for (const issue of model.issues) if (issue.skipped && issue.index != null) tables.componentFlags[tables.rowOfComponent[issue.index]] = 'invalid';
+    svg = drawSVG(model);
+  } catch (err) {
+    warnings.push('engine.js could not build the project: ' + err.message);
+  }
+  return { svg, isEmpty: !svg, project: tables.project, warnings, columnFlags: tables.columnFlags, componentFlags: tables.componentFlags };
 }
 
 /* ---------- 6. page: Alpine component (tables, picker, status, hover info, import / export) ---------- */
@@ -905,7 +824,7 @@ document.addEventListener('alpine:init', () => {
 
     // the elevations of the current tables (re-built by Alpine whenever a table changes)
     get build() {
-      return buildElevations(this.columns, this.components);
+      return buildElevations(this.columns, this.components, this.notes);
     },
 
     keepOneEmptyRow(rows, isEmpty, newRow) {
@@ -1050,18 +969,10 @@ document.addEventListener('alpine:init', () => {
     },
 
     // ---- import / export ----
-    // the tables as data.js (rules kept from the loaded file)
+    // the tables as data.js (rules kept from the loaded file); rows that cannot be read are left out
     exportData() {
-      const issues = this.build.warnings.length;
-      const columns = {};
-      for (const c of this.columns) {
-        if (isRowEmpty(c.group, c.width)) continue;
-        (columns[c.group] || (columns[c.group] = [])).push(Number(c.width));
-      }
-      const components = this.components.filter(c => !isRowEmpty(c.group, c.col, c.span, c.height)).map(dataComponent);
-      const notes = this.notes.filter(n => !isRowEmpty(n.name, n.description, n.details)).map(n => [n.name, n.description, n.details]);
-      const rules = (loadedProject && loadedProject.rules) || {};
-      downloadBlob(KE.toDataJS(projectJSON({ rules, notes, columns, components })), 'text/javascript;charset=utf-8', 'data.js');
+      const { project, warnings } = this.build, issues = warnings.length;
+      downloadBlob(KE.dataJS(project), 'text/javascript;charset=utf-8', 'data.js');
       this.showStatus('data.js exported' + (issues ? ' with ' + issues + ' data issue(s) - see the list under the tables' : '') + '. Replace the one in the kitchen folder, then reload the pages.', issues > 0);
     },
     chooseImportFile() {

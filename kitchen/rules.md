@@ -1,7 +1,7 @@
 # Kitchen rules
 
 Generic rules for any kitchen built with these pages. Project specifics (groups, materials, products, design choices such as front gaps) live in the design notes (`data.js` notes) and in the view / cost JSON.
-Files: `data.js` (design + rules) → `engine.js` (parts) → `design.html`, `cost.html`, `view.html`. Update this file with every change.
+Files: `data.js` (design + rules) → `engine.js` (parts, data checks, writes data.js) → `design.html` (edits and draws), `cost.html`, `view.html`. Update this file with every change.
 
 ## 1. General rules
 
@@ -40,8 +40,8 @@ Types: filler (void), board (plasterboard), plinth, worktop, splash, panel, fram
 
 ## 3. Checks
 
-- Design: fronts need 4 gaps; only fronts have a handle; boxes need a carcass name (not a dishwasher); one carcass name per group; unknown tags, two types.
-- Engine: worktop needs a group role and a depth; worktop shorter than carcass + front + overhang.
+- Data (engine, shown on all three pages): exactly one type, unknown tags; group has columns; inside the columns, no overlap; only fronts have a handle, handle T / B / L / R; fronts need 4 gaps; boxes need a carcass name (not a dishwasher); one carcass name per group; worktop needs a group role and a depth; worktop shorter than carcass + front + overhang. A component without one type, outside its group or overlapping is left out of the model.
+- Design table cells: group, column, span ≥ 1, height ≥ 0, gaps ≥ 0, numbers.
 - View: overlap > 0.01 mm; gap 0.01 ≤ gap ≤ 3 mm; front tops / bottoms 0.01-20 mm apart (off the line, all groups); nothing behind the wall (free-standing groups excepted) or in front of the carcass / plinth.
 
 ## 4. Cost assumptions (`cost.html`) - estimates, not rules
