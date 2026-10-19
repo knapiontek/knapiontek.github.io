@@ -924,7 +924,7 @@ target = roomLayer.panel;
 for (const p of model.panels) {
   if (p.item) continue;
   const firstMesh = meshes.length;
-  localBox(runLayer[runOfGroup[p.group]].panel, ...p.box, BOARD[p.material]); // edges painted on site: drawn finished
+  edgeLook(localBox(runLayer[runOfGroup[p.group]].panel, ...p.box, BOARD[p.material]), p.edges, p.material);
   nameNewMeshes(firstMesh, 'panel', 'G' + p.group + ' ' + p.name + ' ' + p.a + ' × ' + p.b);
 }
 
