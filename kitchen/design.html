@@ -329,7 +329,7 @@
               <template x-for="(row, idx) in columns" :key="row.id">
                 <tr :class="{'is-invalid': build.columnFlags[idx] === 'invalid', 'is-empty-row': build.columnFlags[idx] === 'empty'}">
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
-                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.width"></td>
+                  <td><input type="text" class="cell" spellcheck="false" title="mm, or a part: front, worktop ..." x-model="row.width"></td>
                   <td class="col-actions">
                     <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertColumnRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeColumnRow(idx)">×</button>
                   </td>
@@ -368,7 +368,7 @@
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.span"></td>
                   <td><button type="button" class="pick-btn" :class="{empty: !row.tags}" @click="openPicker(row, $event)" x-text="row.tags || '—'"></button></td>
                   <td><input type="text" class="cell" spellcheck="false" placeholder="—" x-model="row.carcass"></td>
-                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.height"></td>
+                  <td><input type="text" class="cell" spellcheck="false" title="mm, or a part: front, worktop ..." x-model="row.height"></td>
                   <td>
                     <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Handle position" @click="openPicker(row, $event, 'handle')" x-text="row.handle ? HANDLE_NAMES[row.handle] || row.handle : ''"></button></template>
                   </td>
@@ -533,6 +533,15 @@ function escapeAttr(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// a size cell: mm, or the name of a part with a material (rules.front, rules.worktop ...); NaN when it is neither
+function toSize(value) {
+  const s = String(value ?? '').trim();
+  const rules = (loadedProject && loadedProject.rules) || {};
+  if (/^[a-z]+$/i.test(s)) return rules[s] && rules[s].material ? s : NaN;
+  return s === '' ? NaN : Number(s);
+}
+const isSize = v => typeof v === 'string' || (Number.isFinite(v) && v >= 0);
+
 function toNum(value, isInt) {
   const s = String(value ?? '').trim();
   if (s === '') return NaN;
@@ -565,7 +574,7 @@ function componentRow(c) {
 // component table row -> data.js component (short keys, in the order data.js uses); gaps on fronts only
 function dataComponent(row) {
   const parsed = parseTags(row.tags);
-  const c = { g: Number(row.group), c: Number(row.col), s: Number(row.span), tags: parsed.tags.join(' '), k: String(row.carcass ?? '').trim(), h: Number(row.height), hd: row.handle || '' };
+  const c = { g: Number(row.group), c: Number(row.col), s: Number(row.span), tags: parsed.tags.join(' '), k: String(row.carcass ?? '').trim(), h: toSize(row.height), hd: row.handle || '' };
   const gaps = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
   if (FRONT_TYPES.includes(parsed.type) && !isRowEmpty(...gaps)) c.gaps = gaps.map(Number);
   if (String(row.note ?? '').trim()) c.note = String(row.note).trim();
@@ -579,10 +588,10 @@ function readTables(columnRows, componentRows, noteRows) {
   const columns = {};
   columnRows.forEach((row, idx) => {
     if (isRowEmpty(row.group, row.width)) { columnFlags[idx] = 'empty'; return; }
-    const group = toNum(row.group, true), width = toNum(row.width, false);
-    if (!Number.isFinite(group) || group < 1 || !Number.isFinite(width) || width < 0) {
+    const group = toNum(row.group, true), width = toSize(row.width);
+    if (!Number.isFinite(group) || group < 1 || !isSize(width)) {
       columnFlags[idx] = 'invalid';
-      warnings.push(`Groups & Columns row ${idx + 1}: Group must be ≥1 and Width ≥0.`);
+      warnings.push(`Groups & Columns row ${idx + 1}: Group must be ≥1 and Width mm ≥0 or a part (front, worktop ...).`);
       return;
     }
     (columns[group] || (columns[group] = [])).push(width);
@@ -591,12 +600,12 @@ function readTables(columnRows, componentRows, noteRows) {
   componentRows.forEach((row, idx) => {
     if (isRowEmpty(row.group, row.col, row.span, row.height)) { componentFlags[idx] = 'empty'; return; }
     const numbers = [toNum(row.group, true), toNum(row.col, true), toNum(row.span, true)];
-    const height = toNum(row.height, false);
+    const height = toSize(row.height);
     const gapCells = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
     const gaps = isRowEmpty(...gapCells) ? [] : gapCells.map(v => toNum(v, false));
-    if (numbers.some(n => !Number.isFinite(n) || n < 1) || !Number.isFinite(height) || height < 0 || gaps.some(g => !Number.isFinite(g) || g < 0)) {
+    if (numbers.some(n => !Number.isFinite(n) || n < 1) || !isSize(height) || gaps.some(g => !Number.isFinite(g) || g < 0)) {
       componentFlags[idx] = 'invalid';
-      warnings.push(`Components row ${idx + 1}: Group/Col/Span ≥1, Height ≥0 and all 4 gaps ≥0 required.`);
+      warnings.push(`Components row ${idx + 1}: Group/Col/Span ≥1, Height mm ≥0 or a part (front, worktop ...), all 4 gaps ≥0 required.`);
       return;
     }
     components.push(dataComponent(row));

@@ -1,5 +1,6 @@
 /* engine.js - builds the kitchen model from data.js for design.html, cost.html and view.html. No drawing, no project numbers.
    Coordinates in mm per group: u along the group, v up from the floor, n out from the wall; a box is [u0, u1, v0, v1, n0, n1].
+   A column width or a component height is mm, or the name of a part with a material ("front", "worktop" ...): its thickness.
    data.components: g group, c first column, s column span, h height, tags (one type + features), k carcass name,
    hd handle (T | B | L | R), gaps [left, right, top, bottom] on fronts, note. */
 (function (root) {
@@ -92,15 +93,15 @@
     return { u0: item.u0 + left, u1: item.u1 - right, v0: item.v0 + bottom, v1: item.v1 - top };
   }
 
-  // data.js component -> item fields
-  function readComponent(c, index) {
+  // data.js component -> item fields; sizeOf turns a size (mm or a part name) into mm
+  function readComponent(c, index, sizeOf) {
     const parsed = parseTags(c.tags);
     return {
       index,
       group: +c.g,
       col: +c.c,
       span: +c.s,
-      height: +c.h,
+      height: sizeOf(c.h),
       type: parsed.type || '',
       tags: parsed.tags,
       carcassName: String(c.k || '').trim(),
@@ -117,8 +118,11 @@
     const thickness = {
       carcass: thicknessOf(rules.carcass.material), front: thicknessOf(rules.front.material), plinth: thicknessOf(rules.plinth.material),
       back: thicknessOf(rules.back.material), drawer: thicknessOf(rules.drawers.material), hobPanel: thicknessOf(rules.rails.hobPanelMaterial),
-      splash: thicknessOf(rules.splash.material)
+      splash: thicknessOf(rules.splash.material), worktop: thicknessOf(rules.worktop.material)
     };
+    // a size in the data: mm, or a part name (rules[name].material) for the thickness of that part
+    const isPart = name => !!(rules[name] && rules.materials[rules[name].material]);
+    const sizeOf = v => (typeof v === 'string' && isPart(v) ? thicknessOf(rules[v].material) : typeof v === 'number' ? v : NaN);
     // label of each material: name + thickness, e.g. "Chipboard dark grey 18"
     const materials = Object.fromEntries(Object.entries(rules.materials).map(([code, m]) => [code, { ...m, label: m.name + ' ' + m.thickness }]));
     const board = thickness.carcass, frontThickness = thickness.front, carcassDepth = rules.carcass.depth;
@@ -148,14 +152,15 @@
     const counts = {
       carcasses: 0, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
       shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
-      plasterUD: 0, plasterCD: 0, plasterEdge: 0, plinthHeight: 0, worktopThickness: 0
+      plasterUD: 0, plasterCD: 0, plasterEdge: 0, plinthHeight: 0
     };
 
     // ---- components ----
     const columns = P.columns || {}, pieces = [];
     (P.components || []).forEach((c, index) => {
-      const piece = readComponent(c, index), parsed = parseTags(c.tags), at = `Group ${c.g} col ${c.c}`;
+      const piece = readComponent(c, index, sizeOf), parsed = parseTags(c.tags), at = `Group ${c.g} col ${c.c}`;
       if (!(String(c.g) in columns)) return warn(`${at}: group ${c.g} has no columns - skipped.`, index, true);
+      if (!Number.isFinite(piece.height)) return warn(`${at}: height "${c.h}" must be mm or a part with a material - skipped.`, index, true);
       if (!piece.type) {
         return warn(`${at}: tags need exactly one type: ${TYPE_TAGS.join(', ')}${parsed.types.length ? ' (found ' + parsed.types.join(' + ') + ')' : ''} - skipped.`, index, true);
       }
@@ -167,7 +172,8 @@
 
     // ---- groups ----
     for (const [g, columnWidths] of Object.entries(columns)) {
-      const widths = columnWidths.map(Number);
+      const widths = columnWidths.map(sizeOf);
+      widths.forEach((w, i) => { if (!Number.isFinite(w)) warn(`Group ${g} column ${i + 1}: width "${columnWidths[i]}" must be mm or a part with a material.`); });
       const stacked = stack(widths, pieces.filter(p => String(p.group) === g));
       for (const { piece, why } of stacked.skipped) {
         warn(`Group ${g} col ${piece.col}: ${piece.type} ${why === 'overlap' ? 'overlaps another component' : 'is outside the columns'} - skipped.`, piece.index, true);
@@ -372,7 +378,6 @@
       const top = G.items.find(i => i.type === 'worktop' && !hasTag(i, 'end')); // the top board, not a waterfall end
       worktops[G.group] = { n0: carcassBack - behind, n1: frontFace + worktopRule.overhang, depth, back: behind, v0: top.v0, v1: top.v1, thickness: top.v1 - top.v0 };
       counts['worktop:' + G.group] = depth;
-      counts.worktopThickness = Math.max(counts.worktopThickness, top.v1 - top.v0);
     }
 
     // ---- island back panel: MDF like the fronts, between the end columns, floor to the carcass tops ----

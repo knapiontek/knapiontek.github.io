@@ -7,8 +7,9 @@ Files: `data.js` (design + rules) → `engine.js` (parts, data checks, writes da
 
 | Rule | Value |
 |---|---|
-| Materials | `materials`: name, thickness, colour of each board. Every part names its material (`carcass`, `front`, `plinth`, `back`, `drawers`, `rails.hobPanelMaterial`, `splash`), so each thickness is set once |
+| Materials | `materials`: name, thickness, colour of each board. Every part names its material (`carcass`, `front`, `plinth`, `back`, `drawers`, `rails.hobPanelMaterial`, `splash`, `worktop`), so each thickness is set once |
 | Stacking | components stack bottom-up in each column, in list order; columns give the widths |
+| Sizes | a column width or component height is mm, or a part name (`front`, `worktop` ...) = the thickness of its material |
 | Carcass | same carcass name = one carcass over all its columns; `carcass.depth` deep, back `carcass.wallGap` from the wall |
 | Back | only behind cabinet doors, one piece per run of doors, `back.inset` in from the carcass; none behind drawers, fixed fronts or appliances |
 | Front | module − its 4 gaps (left, right, top, bottom) from the data; shaker frame `front.shakerRail` wide |
