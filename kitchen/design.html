@@ -462,7 +462,6 @@
 <!-- DESIGN CONFIG (JSON): how this page draws the elevations - sizes in SVG units (1 = 1 mm), colours -->
 <script type="application/json" id="design-config">
 {
- "frameThickness": 50,
  "groupGap": 100,
  "viewBoxMargin": 40,
  "colors": {
@@ -477,8 +476,6 @@
   "boardStroke": "#78716c",
   "frame": "#bfdbfe",
   "frameStroke": "#1e293b",
-  "plinth": "#b4bfcc",
-  "plinthStroke": "#1e293b",
   "frontOuter": "#bfdbfe",
   "frontOuterStroke": "#1e293b",
   "frontInner": "#dbeafe",
@@ -611,7 +608,7 @@ function readTables(columnRows, componentRows, noteRows) {
 }
 
 /* ---------- 4. SVG: model -> SVG ----------
-   A draw function gets a shape { type, x, width, height, handle } and y, its top edge (SVG y grows down). */
+   A draw function gets a shape { type, x, width, height, handle, shakerRail } and y, its top edge (SVG y grows down). */
 
 // types drawn as a plain rectangle: fill and stroke colour names in CONFIG.colors
 const RECT_COLORS = {
@@ -621,7 +618,7 @@ const RECT_COLORS = {
   splash: ['splash', 'splashStroke'],
   panel: ['frame', 'frameStroke'], // same blue as frames and fronts
   frame: ['frame', 'frameStroke'],
-  plinth: ['plinth', 'plinthStroke']
+  plinth: ['frame', 'frameStroke']
 };
 
 function drawRect(item, y) {
@@ -629,9 +626,9 @@ function drawRect(item, y) {
   return `<rect fill="${CONFIG.colors[fill]}" stroke="${CONFIG.colors[stroke]}" stroke-width="2" x="${item.x}" y="${y}" width="${item.width}" height="${item.height}"/>`;
 }
 
-// front: outer rectangle + the inner panel of a shaker front (frameThickness in from every edge)
+// front: outer rectangle + the inner panel of a shaker front (rules.front.shakerRail in from every edge)
 function drawFront(item, y) {
-  const ft = CONFIG.frameThickness;
+  const ft = item.shakerRail;
   const { frontOuter, frontOuterStroke, frontInner, frontInnerStroke } = CONFIG.colors;
   const outer = `<rect fill="${frontOuter}" stroke="${frontOuterStroke}" stroke-width="2" x="${item.x}" y="${y}" width="${item.width}" height="${item.height}"/>`;
   if (item.width <= ft * 2 || item.height <= ft * 2) return outer;
@@ -707,9 +704,9 @@ const DRAW = {
 };
 
 // one item as an SVG group; the data-* attributes feed the hover info
-function drawItem(item, x, totalHeight) {
+function drawItem(item, x, totalHeight, shakerRail) {
   const width = item.u1 - item.u0, height = item.v1 - item.v0, front = item.front;
-  const shape = { type: item.type, x, width, height, handle: item.handle };
+  const shape = { type: item.type, x, width, height, handle: item.handle, shakerRail };
   const y = totalHeight - item.v0 - height;
   const frontWidth = front ? Math.max(0, front.width) : width, frontHeight = front ? Math.max(0, front.height) : item.height;
   return `<g class="component-group" data-g="${item.group}" data-c="${item.col}" data-s="${item.span}" data-tags="${escapeAttr(item.tags.join(' '))}" data-k="${escapeAttr(item.carcassName)}" data-w="${width}" data-h="${item.height}" data-fw="${frontWidth}" data-fh="${frontHeight}" data-gaps="${front ? item.gaps.join(' ') : ''}" data-type="${item.type}" data-note="${escapeAttr(item.note)}">${DRAW[item.type](shape, y)}</g>`;
@@ -731,7 +728,7 @@ function drawSVG(model) {
   const margin = CONFIG.viewBoxMargin;
   const viewBox = `-${margin} -${margin} ${totalWidth + margin * 2} ${totalHeight + margin * 2}`;
   const backgrounds = groups.map(G => `<rect fill="${CONFIG.colors.canvasBg}" x="${groupX.get(G)}" y="0" width="${G.length}" height="${totalHeight}"/>`).join('');
-  const shapes = groups.flatMap(G => G.items.map(item => drawItem(item, item.u0 + groupX.get(G), totalHeight))).join('');
+  const shapes = groups.flatMap(G => G.items.map(item => drawItem(item, item.u0 + groupX.get(G), totalHeight, model.rules.front.shakerRail))).join('');
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Kitchen elevation layout diagram">
       ${backgrounds}
@@ -741,6 +738,7 @@ function drawSVG(model) {
 
 /* ---------- 5. elevations: tables -> project -> model -> SVG ---------- */
 function buildElevations(columnRows, componentRows, noteRows) {
+  if (!loadedProject) return { svg: '', isEmpty: true, project: null, warnings: [], columnFlags: [], componentFlags: [] }; // until data.js is loaded
   const tables = readTables(columnRows, componentRows, noteRows);
   const model = KE.build(tables.project);
   for (const issue of model.issues) {

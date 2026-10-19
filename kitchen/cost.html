@@ -88,7 +88,7 @@
   <section id="tab-estimate">
     <div class="params">
       <label>Board waste allowance <input type="number" step="0.01" data-param="waste"> </label>
-      <label>Board sheet 2800×2070 [m²] <input type="number" step="0.001" data-param="sheet"></label>
+      <label><span id="sheetLabel"></span> <input type="number" step="0.001" data-param="sheet"></label>
       <label>Contingency (% of furniture) <input type="number" step="0.01" data-param="reserve"></label>
     </div>
     <div class="grid-wrap">
@@ -140,7 +140,7 @@
                     which blocks get edging / cutting lengths, appliance categories, texts
        blocks       cutting-list tables, built by engine.js (parts: front | frames | plinths | panels | plaster | p18 | p16 | hdf)
        categories   estimate items: qty = number or formula; name, spec, source and notes may hold placeholders:
-                      {n:hinges} engine count ({n:tag.bins} = components with that tag), {r:drawers.dFrom} data.js rule,
+                      {n:hinges} engine count ({n:tag.bins} = components with that tag), {r:drawers.dFrom} data.js rule, {t:carcass} thickness, {m:front} material,
                       {v:name} vars below, {p:id} unit price, {q:id} item quantity, {p18.m2|edge|cut|len|qty} cutting-list total,
                       {waste} {sheet} {reserve} parameters, |% shows a fraction as a percentage, ROUNDUP(x,0) rounds up
                     refs = numbers of the notes the item links to
@@ -189,8 +189,8 @@
   "applianceCategories": [
    "Appliances"
   ],
-  "sheetLabel": "Board sheet 2800×2070 [m²]",
-  "cuttingNote": "Carcass = all columns with the same carcass name, depth {r:carcassDepth}, back {r:wallGap} from the wall; interior = width − 2 × {r:board}; adjustable shelf = interior − 2 × {r:shelf.clearance}, depth − {r:shelf.setback}; fixed shelf = interior × full depth; HDF back = carcass − 2 × {r:back.inset} (none in group {r:backPanel.groups}); fronts = module − 4 gaps (left, right, top, bottom); back strip = {r:frame.depth} × frame length; drawer bottom = interior − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, back = interior − {r:drawers.back.inset}; inner drawer back {r:drawers.inner.back} high. ABS edging on front edges only.",
+  "sheetLabel": "Board sheet {v:sheetLength}×{v:sheetWidth} [m²]",
+  "cuttingNote": "Carcass = all columns with the same carcass name, depth {r:carcass.depth}, back {r:carcass.wallGap} from the wall; interior = width − 2 × {t:carcass}; adjustable shelf = interior − 2 × {r:shelf.clearance}, depth − {r:shelf.setback}; fixed shelf = interior × full depth; HDF back = carcass − 2 × {r:back.inset} (none in the island); fronts = module − 4 gaps (left, right, top, bottom); back strip = {r:frame.depth} × frame length; drawer bottom = interior − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, back = interior − {r:drawers.back.inset}; inner drawer back {r:drawers.inner.back} high. ABS edging on front edges only.",
   "qtyWords": {
    "q:legs": "number of legs"
   }
@@ -199,13 +199,13 @@
  "info": "PLN gross, average market prices October 2026, materials only (self-assembly). Blue cells can be changed to try other prices; the change lasts until the page is reloaded - permanent prices go in the cost data of this page. Every quantity with a formula is calculated from data.js.",
  "params": {
   "waste": 0.15,
-  "sheet": 5.796,
+  "sheet": "={v:sheetLength}*{v:sheetWidth}/1000000",
   "reserve": 0.05
  },
  "blocks": [
   {
    "id": "front",
-   "title": "FRONTS – MDF {r:frontThickness} shaker, English Navy satin lacquer (front maker)",
+   "title": "FRONTS – {m:front}, shaker, lacquered (front maker)",
    "columns": [
     "Function",
     "Width",
@@ -218,7 +218,7 @@
   },
   {
    "id": "bar",
-   "title": "FRAMES – MDF {r:frontThickness} on edge, {r:frame.depth} deep, lacquered like the fronts: edge + both faces",
+   "title": "FRAMES – {m:front} on edge, {r:frame.depth} deep, lacquered like the fronts: edge + both faces",
    "columns": [
     "Element",
     "Width / depth",
@@ -231,7 +231,7 @@
   },
   {
    "id": "plinth",
-   "title": "PLINTH – standard kitchen plinth PVC, moisture-resistant (bought by the metre, cut to length on site)",
+   "title": "PLINTH – {m:plinth}, moisture-resistant, lacquered like the fronts",
    "columns": [
     "Element",
     "Height",
@@ -244,7 +244,7 @@
   },
   {
    "id": "panel",
-   "title": "PANELS – MDF {r:frontThickness} laid flat, lacquered on both faces (L corner)",
+   "title": "PANELS – {m:front} laid flat, lacquered on both faces (L corner, island back)",
    "columns": [
     "Element",
     "Width",
@@ -270,7 +270,7 @@
   },
   {
    "id": "p18",
-   "title": "CARCASSES – dark grey chipboard 18, cut + ABS 0.8 dark grey front edge (incl. back strips, island back panel, pull-out shelves)",
+   "title": "CARCASSES – {m:carcass}, cut + ABS 0.8 front edge (incl. back strips, pull-out shelves)",
    "columns": [
     "Element",
     "Width",
@@ -283,7 +283,7 @@
   },
   {
    "id": "p16",
-   "title": "DRAWERS – dark grey chipboard 16 (TANDEMBOX bottoms and backs, incl. inner drawers; hob separation panel)",
+   "title": "DRAWERS – {m:drawers} (TANDEMBOX bottoms and backs, incl. inner drawers; hob separation panel)",
    "columns": [
     "Element",
     "Width",
@@ -296,7 +296,7 @@
   },
   {
    "id": "hdf",
-   "title": "BACKS – HDF {r:back.thickness} (only behind cabinet doors; none behind drawers or appliances)",
+   "title": "BACKS – {m:back} (only behind cabinet doors; none behind drawers or appliances)",
    "columns": [
     "Element",
     "Width",
@@ -314,7 +314,7 @@
    "items": [
     {
      "id": "i1",
-     "name": "Fronts MDF 18 shaker, lacquered",
+     "name": "Fronts, shaker: {m:front}",
      "spec": "English Navy satin, per cutting list",
      "qty": "={front.m2}",
      "unit": "m²",
@@ -326,7 +326,7 @@
     },
     {
      "id": "i2",
-     "name": "Frames MDF 18 on edge",
+     "name": "Frames on edge: {m:front}",
      "spec": "{r:frame.depth} deep; lacquered on the edge and both faces",
      "qty": "={bar.m2}",
      "unit": "m²",
@@ -339,30 +339,20 @@
     },
     {
      "id": "i3",
-     "name": "Kitchen plinth PVC 100, moisture-resistant",
-     "spec": "length from the Cutting list + {v:plinthCutAllowance|%} for cutting; sold in 4 m lengths",
-     "qty": "={plinth.len}*(1+{v:plinthCutAllowance})",
-     "unit": "lm",
-     "price": 25,
-     "source": "PVC plinth 100: approx. 17–27 PLN/lm (tmakcesoria.pl, magolodz.pl, October 2026)",
+     "name": "Plinth: {m:plinth}",
+     "spec": "moisture-resistant MDF, lacquered like the fronts",
+     "qty": "={plinth.m2}",
+     "unit": "m²",
+     "price": 500,
+     "source": "est.: all blue parts cost the same as the fronts",
      "refs": [
       "9"
      ]
     },
     {
-     "id": "i40",
-     "name": "Plinth corners, end caps, connectors",
-     "spec": "to match the plinth",
-     "qty": 1,
-     "unit": "set",
-     "price": 40,
-     "source": "approx. 3–4 PLN/pc (tmakcesoria.pl, October 2026)",
-     "refs": []
-    },
-    {
      "id": "i4",
-     "name": "Panels MDF 18, laid flat",
-     "spec": "lacquered on both faces; L corner (80, 36)",
+     "name": "Panels laid flat: {m:front}",
+     "spec": "lacquered on both faces; L corner (80, 36), island back panel",
      "qty": "={panel.m2}",
      "unit": "m²",
      "price": 500,
@@ -379,8 +369,8 @@
    "items": [
     {
      "id": "i5",
-     "name": "Dark grey chipboard 18",
-     "spec": "sheet 2800×2070, + waste",
+     "name": "{m:carcass}",
+     "spec": "sheet {v:sheetLength}×{v:sheetWidth}, + waste",
      "qty": "=ROUNDUP({p18.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 210,
@@ -391,7 +381,7 @@
     },
     {
      "id": "i6",
-     "name": "Dark grey chipboard 16",
+     "name": "{m:drawers}",
      "spec": "drawer bottoms and backs, hob separation panel (separate product)",
      "qty": "=ROUNDUP({p16.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
@@ -401,8 +391,8 @@
     },
     {
      "id": "i7",
-     "name": "HDF 3",
-     "spec": "backs behind cabinet doors, sheet 2800×2070",
+     "name": "{m:back}",
+     "spec": "backs behind cabinet doors, sheet {v:sheetLength}×{v:sheetWidth}",
      "qty": "=ROUNDUP({hdf.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 80,
@@ -412,7 +402,7 @@
     {
      "id": "i8",
      "name": "Panel cutting",
-     "spec": "chipboard 18 + 16",
+     "spec": "{m:carcass} + {m:drawers}",
      "qty": "={p18.cut}+{p16.cut}",
      "unit": "lm",
      "price": 3,
@@ -449,7 +439,7 @@
     {
      "id": "i56",
      "name": "Full-extension runners for the pull-out shelf, pair",
-     "spec": "Blum, {r:pullOutShelf.depth} long; shelf in the chipboard 18 cutting list",
+     "spec": "Blum, {r:pullOutShelf.depth} long; shelf in the {m:carcass} cutting list",
      "qty": "={n:pullOutShelves}",
      "unit": "pair",
      "price": 150,
@@ -526,7 +516,7 @@
     },
     {
      "id": "legs",
-     "name": "Adjustable furniture legs 100",
+     "name": "Adjustable furniture legs {n:plinthHeight}",
      "spec": "{r:legsPerCarcass} per floor-standing carcass, set back behind the plinth",
      "qty": "={n:legs}",
      "unit": "pcs",
@@ -616,7 +606,7 @@
    "items": [
     {
      "id": "i22",
-     "name": "Laminate oak worktop 38×{n:worktop.1}×4100",
+     "name": "Laminate oak worktop {n:worktopThickness}×{n:worktop.1}×{v:worktopLength}",
      "spec": "group 1 worktop + waterfall end → 1 board",
      "qty": 1,
      "unit": "pcs",
@@ -626,7 +616,7 @@
     },
     {
      "id": "i23",
-     "name": "Laminate oak worktop 38×{n:worktop.3}×4100",
+     "name": "Laminate oak worktop {n:worktopThickness}×{n:worktop.3}×{v:worktopLength}",
      "spec": "island top + 2 waterfall ends → 1 board",
      "qty": 1,
      "unit": "pcs",
@@ -638,12 +628,12 @@
     },
     {
      "id": "i24",
-     "name": "Laminate splash 18 matching the worktop",
+     "name": "Splash {m:splash}, matching the worktop",
      "spec": "group 1, at the window",
      "qty": 1,
      "unit": "pcs",
      "price": 350,
-     "source": "est., panel 4100×640",
+     "source": "est., panel {v:worktopLength}×640",
      "refs": []
     },
     {
@@ -896,35 +886,35 @@
   {
    "no": "4",
    "topic": "Oven Bosch HBA534BB3 – opening height",
-   "description": "595 ovens usually need approx. 590 height. Check the oven module minus the {r:board} fixed shelf against the minimum niche height in the manual; if needed reduce the cabinet under the oven.",
+   "description": "595 ovens usually need approx. 590 height. Check the oven module minus the {t:carcass} fixed shelf against the minimum niche height in the manual; if needed reduce the cabinet under the oven.",
    "assumed": "",
    "decide": ""
   },
   {
    "no": "5",
    "topic": "Dishwasher Bosch SMV4HVX00E – front height",
-   "description": "Check the maximum front height and weight for this model with a 100 plinth (dishwasher door hinge / optional Vario hinge).",
+   "description": "Check the maximum front height and weight for this model with a 150 plinth (dishwasher door hinge / optional Vario hinge).",
    "assumed": "",
    "decide": ""
   },
   {
    "no": "6",
    "topic": "Frames on edge, panels flat",
-   "description": "Frames: MDF {r:frontThickness} on edge, {r:frame.depth} deep, lacquered on the edge and both faces; with lacquer ≈ 18.5. Panels: MDF {r:frontThickness} laid flat, lacquered on both faces (L corners of group 1 and group 2). The group 1 panel overlaps the group 2 panel, so there is no gap in the corner.",
+   "description": "Frames: MDF {t:front} on edge, {r:frame.depth} deep, lacquered on the edge and both faces; with lacquer ≈ 18.5. Panels: MDF {t:front} laid flat, lacquered on both faces (L corners of group 1 and group 2). The group 1 panel overlaps the group 2 panel, so there is no gap in the corner.",
    "assumed": "",
    "decide": ""
   },
   {
    "no": "18",
    "topic": "Fixed shelves – full depth",
-   "description": "A fixed shelf at the joint of 2 fronts (and at an appliance) is full carcass depth, {r:carcassDepth} – not {r:shelf.setback} shorter like the adjustable shelves, so both fronts close against it.",
+   "description": "A fixed shelf at the joint of 2 fronts (and at an appliance) is full carcass depth, {r:carcass.depth} – not {r:shelf.setback} shorter like the adjustable shelves, so both fronts close against it.",
    "assumed": "sizes in the Cutting list.",
    "decide": ""
   },
   {
    "no": "19",
    "topic": "HDF backs and the island back panel",
-   "description": "HDF backs only behind cabinet doors; none behind drawers or appliances (air for the oven, microwave, fridge). The island gets a chipboard {r:board} back panel between the waterfalls, floor to the carcass tops, fixed to the carcass backs.",
+   "description": "HDF backs only behind cabinet doors; none behind drawers or appliances (air for the oven, microwave, fridge). The island gets an MDF {t:front} back panel, lacquered like the fronts, between the waterfalls, floor to the carcass tops, fixed to the carcass backs.",
    "assumed": "",
    "decide": ""
   },
@@ -948,7 +938,7 @@
   {
    "no": "9",
    "topic": "Lacquer only on fronts and frames",
-   "description": "Lacquered (front maker): fronts {p:i1} PLN/m² (supplier quote, October 2026) and frames {p:i2} PLN/m² and panels (L corner) {p:i4} PLN/m² – estimate: all blue parts cost the same. Plinth: standard PVC plinth, bought by the metre.",
+   "description": "Lacquered (front maker): fronts {p:i1} PLN/m² (supplier quote, October 2026) and frames {p:i2} PLN/m² and panels (L corner) {p:i4} PLN/m² – estimate: all blue parts cost the same. Plinth and island back panel: MDF lacquered like the fronts, same price.",
    "assumed": "",
    "decide": ""
   },
@@ -983,7 +973,7 @@
   {
    "no": "14",
    "topic": "Back strips behind frames",
-   "description": "Behind every frame that is not part of a carcass: chipboard {r:board} strip on edge, {r:frame.depth} deep, frame length; no packing.",
+   "description": "Behind every frame that is not part of a carcass: chipboard {t:carcass} strip on edge, {r:frame.depth} deep, frame length; no packing.",
    "assumed": "in the chipboard 18 cutting list.",
    "decide": ""
   },
@@ -1004,7 +994,7 @@
   {
    "no": "17",
    "topic": "Hob unit – rails and separation panel",
-   "description": "Electrolux CIT61443: cut-out 560 × 490, built-in height 44. Cut-out 54 from the wall, 56 from the worktop front. Top rails on edge so the hob fits between them: front {r:board} × {r:rails.hobFront}, rear {r:board} × {r:rails.depth}. Separation panel chipboard 16 between the rails, below the front rail.",
+   "description": "Electrolux CIT61443: cut-out 560 × 490, built-in height 44. Cut-out 54 from the wall, 56 from the worktop front. Top rails on edge so the hob fits between them: front {t:carcass} × {r:rails.hobFront}, rear {t:carcass} × {r:rails.depth}. Separation panel chipboard 16 between the rails, below the front rail.",
    "assumed": "rails and panel in the Cutting list.",
    "decide": "the installation diagram (manual p. 22) lists min. 28 and min. 12 – check which distances they are."
   },
@@ -1049,9 +1039,11 @@
  ],
  "vars": {
   "confirmatPerCarcass": 18,
-  "plinthCutAllowance": 0.1,
   "edgeAllowance": 0.1,
-  "plasterSheet": 3.12
+  "plasterSheet": 3.12,
+  "sheetLength": 2800,
+  "sheetWidth": 2070,
+  "worktopLength": 4100
  }
 }</script>
 <script src="data.js"></script>
@@ -1063,7 +1055,6 @@
 const COST = JSON.parse(document.getElementById('cost-data').textContent);
 const SETTINGS = COST.settings;
 const KE = window.KitchenEngine;
-const MATERIAL_NAMES = { p18: 'Chipboard 18', p16: 'Chipboard 16', hdf: 'HDF 3' };
 
 const round1 = x => Math.round(x * 10) / 10;
 const fmt = (v, digits = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', { minimumFractionDigits: digits, maximumFractionDigits: digits }) : '–');
@@ -1116,7 +1107,7 @@ function renderAssembly() {
 
   const cards = model.carcasses.map(K => {
     const boards = model.boards.filter(b => b.carcassId === K.id), fronts = model.fronts.filter(f => f.carcassId === K.id);
-    const pins = boards.filter(b => b.name === 'Adjustable shelf').length * model.rules.shelf.pins;
+    const pins = boards.filter(b => b.id === 'adjustableShelf').length * model.rules.shelf.pins;
     const hinges = fronts.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
     const frontLines = fronts.map(f => frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.hinges ? ', ' + f.hinges.length + ' hinges, side ' + f.hingeSide : '') + (f.handle ? ', handle ' + f.handle : ''));
     const drawerLines = fronts.filter(f => f.drawer).map(f => f.drawer.size + ' drawer box' + (f.drawer.bins ? ' with waste bins' : '') + (f.drawer.inner ? ' + inner drawer M' : ''));
@@ -1124,11 +1115,11 @@ function renderAssembly() {
       K.legs ? K.legs + ' legs' : '',
       hinges ? hinges + ' hinges' : '',
       pins ? pins + ' shelf pins' : '',
-      boards.some(b => b.name === 'Pull-out shelf') ? '1 pair of full-extension runners' : ''
+      boards.some(b => b.id === 'pullOutShelf') ? '1 pair of full-extension runners' : ''
     ].filter(Boolean);
     const flags = ['sink', 'hob', 'fridge', 'coffee'].filter(f => K[f]);
     return '<div class="card"><h3>' + esc(K.name) + '</h3>G' + K.group + ' ' + colRange(K.col, K.span) + ' · ' + K.type + ' · ' + round1(K.u1 - K.u0) + ' × ' + round1(K.v1 - K.v0) + ' × ' + model.carcassDepth + (flags.length ? ' · ' + flags.join(', ') : '') +
-      ['p18', 'p16', 'hdf'].map(m => section(MATERIAL_NAMES[m], partList(boards.filter(b => b.material === m)))).join('') +
+      [...new Set(boards.map(b => b.material))].map(m => section(model.materials[m].label, partList(boards.filter(b => b.material === m)))).join('') +
       section('Fronts', frontLines) + section('Drawers', drawerLines) + section('Hardware', hardware) + '</div>';
   });
 
@@ -1139,7 +1130,7 @@ function renderAssembly() {
   model.fronts.filter(f => !f.carcassId).forEach(f => add(f.group, where(f) + ' – ' + frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.handle ? ', handle ' + f.handle : '')));
   model.frames.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
   model.panels.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
-  model.boards.filter(b => !b.carcassId).forEach(b => add(b.group, (b.col ? where(b) : 'G' + b.group) + ' – ' + b.name + ' ' + b.a + ' × ' + b.b + ' (' + (MATERIAL_NAMES[b.material] || b.material) + ')'));
+  model.boards.filter(b => !b.carcassId).forEach(b => add(b.group, (b.col ? where(b) : 'G' + b.group) + ' – ' + b.name + ' ' + b.a + ' × ' + b.b + ' (' + model.materials[b.material].label + ')'));
   model.plinths.forEach(p => add(p.group, where(p) + ' – Plinth ' + p.a + ' × ' + p.b));
   model.plaster.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
   const columnOf = text => Number((/^G\d+\/(\d+)/.exec(text) || [, 0])[1]);
@@ -1161,7 +1152,7 @@ document.getElementById('mapSave').addEventListener('click', () => {
 /* ---------- 2. state: the values of the inputs; edits on the page last until reload (nothing is stored) ---------- */
 function defaultValues() {
   return {
-    params: { ...COST.params },
+    params: Object.fromEntries(Object.entries(COST.params).map(([name, value]) => [name, evalQty(value)])),
     blocks: Object.fromEntries(COST.blocks.map(b => [b.id, b.rows.map(r => [r[1], r[2], r[3]])])), // [a, b, qty] per row
     items: Object.fromEntries(COST.categories.flatMap(c => c.items).map(item => [item.id, { qty: item.qty, price: item.price }]))
   };
@@ -1199,6 +1190,7 @@ function ROUNDUP(x, digits) {
 }
 // Placeholders in quantities and texts - every value comes from data.js, engine.js or the JSON of this page:
 //   {n:hinges} engine count (engine.js counts; {n:tag.bins} = components with that tag)   {r:drawers.dFrom} data.js rule
+//   {t:carcass} thickness of a part, {m:front} material of a part (data.js rules.materials)
 //   {v:name} cost-data vars   {p:i26} unit price of an item   {q:i5} quantity of an item   {p18.m2|edge|cut|len|qty} cutting-list total
 //   {waste} {sheet} {reserve} parameters;  add |% to show a fraction as a percentage, e.g. {v:edgeAllowance|%}
 function placeholder(key, totals, quantities) {
@@ -1206,6 +1198,8 @@ function placeholder(key, totals, quantities) {
   const path = (obj, dotted) => dotted.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
   if (prefix === 'n') return model ? (model.counts[rest.replace(/^(tag|worktop)\./, '$1:')] ?? 0) : NaN;
   if (prefix === 'r') return model ? path(model.rules, rest) : NaN;
+  if (prefix === 't') return model ? model.thickness[rest] : NaN;
+  if (prefix === 'm') return model ? model.materials[model.rules[rest].material].label : '…';
   if (prefix === 'v') return COST.vars[rest];
   if (prefix === 'p') return Number(values.items[rest].price);
   if (prefix === 'q') return quantities ? quantities[rest] : NaN;
@@ -1227,7 +1221,7 @@ function fill(text) {
     if (Array.isArray(v)) return v.join(', ');
     if (typeof v === 'string') return v;
     if (!Number.isFinite(v)) return '…';
-    return percent ? fmtQty(Math.round(v * 1000) / 10) + '%' : fmtQty(Math.round(v * 1000) / 1000);
+    return percent ? Math.round(v * 1000) / 10 + '%' : String(Math.round(v * 1000) / 1000); // plain numbers: sizes read 2800, not 2,800
   });
 }
 // quantities, values, category sums and totals of the estimate
@@ -1313,6 +1307,7 @@ function renderNotes() {
 function renderStatic() {
   document.getElementById('title').textContent = COST.title;
   document.getElementById('info').textContent = COST.info;
+  document.getElementById('sheetLabel').textContent = fill(SETTINGS.sheetLabel);
   document.getElementById('excl').innerHTML = '<b>Not included / general notes</b><br>' + COST.excluded.map(e => esc(fill(e))).join('<br>') +
     '<br>Questions and assumptions: <a class="ref" data-tab-go="notes">see the Notes tab</a>.';
   document.querySelectorAll('[data-param]').forEach(input => {
@@ -1422,7 +1417,7 @@ function buildWorkbook() {
 
   // sheet "Estimate": waste in C3, sheet size in C4
   const estimate = [[str(COST.title)], [str(fill(COST.info))],
-    [str('Board waste allowance'), str(''), num(Number(values.params.waste))], [str(SETTINGS.sheetLabel), str(''), num(Number(values.params.sheet))], [],
+    [str('Board waste allowance'), str(''), num(Number(values.params.waste))], [str(fill(SETTINGS.sheetLabel)), str(''), num(Number(values.params.sheet))], [],
     ['No.', 'Item', 'Specification', 'Qty', 'Unit', 'Unit price [PLN]', 'Value [PLN]', 'Price source / notes'].map(str)];
   const itemRow = {}, categoryRows = [];
   let no = 0;

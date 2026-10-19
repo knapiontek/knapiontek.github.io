@@ -225,12 +225,8 @@ body.shut .toggle{display:flex}
       <section>
         <h2>Materials</h2>
         <ul class="mats">
-          <li><i style="background:#222e4c"></i><small>Fronts MDF 18</small><b>English Navy, satin</b></li>
-          <li><i style="background:linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)"></i><small>Worktops 38, waterfalls</small><b>Laminate, oak</b></li>
-          <li><i style="background:#4a4d51"></i><small>Carcasses</small><b>Chipboard 18 dark grey, ABS 0.8</b></li>
-          <li><i style="background:#c6c8c9"></i><small>Backs</small><b>HDF 3</b></li>
+          <li><i style="background:linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)"></i><small>Worktops, waterfalls</small><b>Laminate, oak</b></li>
           <li><i style="background:radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"></i><small>Sink</small><b>Granite composite</b></li>
-          <li><i style="background:#1f2022"></i><small>Plinth</small><b>PVC 100, black matte</b></li>
           <li><i style="background:linear-gradient(120deg,#c4c6c7,#b5b8ba 45%,#cfd1d2)"></i><small>Floor</small><b>Grey marble 120 × 60</b></li>
         </ul>
       </section>
@@ -283,19 +279,28 @@ body.shut .toggle{display:flex}
    "B": {"group": 2, "name": "tall units", "x": 3372, "z": 0, "rot": -90},
    "C": {"group": 3, "name": "island", "x": 1730, "z": 2440, "rot": 180, "freeStanding": true}
  },
- "carcass": {"shakerRail": 50, "handleAxis": 28},
- "fittings": {"about": "drawing only, no effect on the cost", "legFromSide": 45, "legFromBack": 45, "legFromFront": 100, "shelfPinFromBack": 40, "shelfPinFromFront": 70, "applianceInset": 12},
+ "fittings": {
+   "about": "hardware and appliance sizes for the drawing only, no effect on the cost",
+   "handleAxis": 28,
+   "leg": {"radius": 15, "footRadius": 24, "footHeight": 12, "fromSide": 45, "fromBack": 45, "fromFront": 100},
+   "shelfPin": {"fromBack": 40, "fromFront": 70},
+   "hinge": {"cup": 35, "cupDepth": 11.5, "cupFromEdge": 22.5},
+   "drawer": {"runner": 13, "sideFromCarcass": 22, "sideThickness": 15.5, "n0": 50, "n1": 548, "innerSide": 84},
+   "bins": {"count": 3, "height": 235},
+   "appliance": {"inset": 12, "bodyGap": 12, "bodySide": 22},
+   "plinthGrille": {"width": 500, "bottom": 20, "top": 80}
+ },
  "room": {"about": "The room from the notes / measurements, mm. x along the window wall from the start of Group 1, z out from the window wall, y up. The groups are placed into it.",
    "rightWall": 3372, "ceiling": 2740, "leftEnd": -900, "floorDepth": 4200, "wallThickness": 300, "rightWallLength": 3600},
  "window": {"x": 870, "width": 1900, "sill": 1080, "height": 1300, "reveal": 150, "finish": "anthracite"},
  "sink": {"outer": [780, 500], "outerFromWall": 40, "bowl": [680, 380], "bowlFromWall": 130, "rim": 8, "wall": 10, "bowlDepth": 200, "tapFromWall": 85, "trapTop": 575, "wallOutlet": 470},
  "hob": {"glass": [590, 520], "glassFromWall": 39, "body": [556, 486], "bodyFromWall": 56, "builtInHeight": 44},
  "hood": {"name": "Electrolux LFV416K", "width": 598, "depth": 390, "bottom": 1500, "height": 380, "chimney": [250, 220]},
- "fridge": {"bodyHeight": 1772},
+ "fridge": {"bodyHeight": 1772, "sideGap": 20, "bottomGap": 4, "front": 500},
  "coffee": {"name": "DeLonghi Dinamica", "size": [236, 348, 429]},
  "pendants": {"points": [[477.48, 2290], [1252.52, 2290]], "bottom": 1750},
  "downlights": {"points": [[1448, 402], [2440, 402], [2440, 1370], [2440, 2338]]},
- "colors": {"front": "#1c2744", "carcass": "#4a4d51", "board16": "#4a4d51", "hdf": "#c6c8c9", "plinth": "#1f2022", "wall": "#f2f1ee", "frontLight": "#e3e8ef", "pendant": "#1c2744"},
+ "colors": {"wall": "#f2f1ee", "pendant": "#1c2744"},
  "metals": {
    "brass": {"color": "#c9a063", "rough": 0.32, "metal": 0.7},
    "nickel": {"color": "#c4c4c0", "rough": 0.34, "metal": 0.55},
@@ -349,19 +354,18 @@ for (const r of RUN_IDS) {
 }
 const hasTag = (item, ...tags) => tags.some(t => item.tags.includes(t));
 
-const { frontFace, frontThickness, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the wall
-const board = rules.board, plinthThickness = rules.plinthThickness;
+const { frontFace, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the wall
+const { carcass: board, front: frontThickness, plinth: plinthThickness, splash: splashThickness } = model.thickness;
 const fittings = SCENE.fittings;
-const shakerRail = SCENE.carcass.shakerRail; // width of the shaker frame of a front
-const handleAxis = SCENE.carcass.handleAxis; // handle axis from the front edge
+const shakerRail = rules.front.shakerRail; // width of the shaker frame of a front
+const handleAxis = fittings.handleAxis; // handle axis from the front edge
 const room = SCENE.room, rightWall = room.rightWall, ceiling = room.ceiling;
 const worktopOf = group => model.worktops[group] || { n0: 0, n1: 0, depth: 0 }; // n0 back edge, n1 front edge
 const sinkCarcass = model.carcasses.find(K => K.sink); // its worktop gets the sink cut-out
 const sinkRun = sinkCarcass ? runOfGroup[sinkCarcass.group] : null;
 const sinkWorktop = sinkCarcass && itemsOfRun[sinkRun].find(i =>
   i.type === 'worktop' && i.v0 === sinkCarcass.v1 && i.col <= sinkCarcass.col + sinkCarcass.span - 1 && i.col + i.span - 1 >= sinkCarcass.col);
-const worktopThickness = sinkWorktop ? sinkWorktop.v1 - sinkWorktop.v0 : 38;
-const worktopTop = sinkWorktop ? sinkWorktop.v1 : 858;
+const worktopTopOf = run => worktopOf(groupOfRun[run]).v1;
 
 // [u0, u1, n0, n1] of a run -> [x0, x1, z0, z1] in the room
 const toRoom = Object.fromEntries(RUN_IDS.map(r => {
@@ -552,7 +556,6 @@ const METALS = SCENE.metals, COLORS = SCENE.colors, handleMetal = METALS[SCENE.h
 const standard = options => new THREE.MeshStandardMaterial(options);
 const physical = options => new THREE.MeshPhysicalMaterial(options);
 const MAT = {
-  navy: physical({ color: linear(COLORS.front), roughness: 0.42, clearcoat: 0.2, clearcoatRoughness: 0.45, envMapIntensity: 0.7 }), // fronts, frames, panels
   oak: physical({ map: texture(oakCanvas(), 1 / 2.4, 1 / 0.6), roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, envMapIntensity: 0.5 }),
   wall: standard({ color: linear(COLORS.wall), roughness: 0.95, envMapIntensity: 0.45 }),
   marble: physical({ map: texture(marbleCanvas(), 1 / 1.2, 1 / 0.6), roughness: 0.22, clearcoat: 0.5, clearcoatRoughness: 0.15, envMapIntensity: 0.7 }),
@@ -566,10 +569,6 @@ const MAT = {
   pvc: physical({ color: linear(0x383e42), roughness: 0.45, clearcoat: 0.25, clearcoatRoughness: 0.4, envMapIntensity: 0.6 }), // window frame
   gasket: standard({ color: linear(0x1a1a1a), roughness: 0.8 }),
   glass: physical({ color: linear(0xe8f2f4), roughness: 0, metalness: 0, transparent: true, opacity: 0.12, clearcoat: 1, envMapIntensity: 1.5, depthWrite: false, side: THREE.DoubleSide }),
-  carcass: standard({ color: linear(COLORS.carcass), roughness: 0.75, envMapIntensity: 0.5 }), // dark grey chipboard 18, ABS
-  plinth: standard({ color: linear(COLORS.plinth), roughness: 0.55, envMapIntensity: 0.5 }), // standard PVC plinth 100, black matte
-  hdf: standard({ color: linear(COLORS.hdf), roughness: 0.85, envMapIntensity: 0.4 }), // HDF 3 back, light grey
-  board16: standard({ color: linear(COLORS.board16), roughness: 0.75, envMapIntensity: 0.5 }), // grey chipboard 16: drawer bottoms and backs, hob separation panel
   granite: physical({ map: texture(graniteCanvas(), 4, 4), roughness: 0.55, clearcoat: 0.15, clearcoatRoughness: 0.6, envMapIntensity: 0.5 }),
   blackMetal: standard({ color: linear(0x141517), roughness: 0.42, metalness: 0.45, envMapIntensity: 0.8 }),
   applianceBody: standard({ color: linear(0x3a3d42), roughness: 0.6, metalness: 0.35 }),
@@ -584,6 +583,12 @@ const MAT = {
   insert: standard({ color: linear(0xd9dadb), roughness: 0.5, envMapIntensity: 0.6 }), // cutlery insert
   selected: standard({ color: linear(0x8fd0f5), roughness: 0.6, emissive: linear(0x1a5a80), emissiveIntensity: 0.6 }) // selected carcass
 };
+// board materials of data.js (rules.materials): lacquered ones get a satin clearcoat; without a colour: the oak texture
+const BOARD = Object.fromEntries(Object.entries(rules.materials).map(([code, m]) => [code,
+  !m.color ? MAT.oak
+    : m.lacquered ? physical({ color: linear(m.color), roughness: 0.42, clearcoat: 0.2, clearcoatRoughness: 0.45, envMapIntensity: 0.7 })
+    : standard({ color: linear(m.color), roughness: 0.8, envMapIntensity: 0.45 })]));
+const frontMaterial = BOARD[rules.front.material], plinthMaterial = BOARD[rules.plinth.material], splashMaterial = BOARD[rules.splash.material];
 const lamps = [], shadowLamps = [], glowMaterials = []; // lamps: on only at Night; shadowLamps: the ones that cast shadows at Night
 // bulb / LED material: bright at Night, plain off-white by day
 const glowMaterial = (hex, brightness) => {
@@ -753,12 +758,12 @@ function addHandles(P, u0, u1, v0, v1, position) {
 // shaker front: frame of shakerRail wide rails, recessed centre panel
 function shakerFront(P, u0, u1, v0, v1) {
   const w = shakerRail, n0 = frontFace - frontThickness, n1 = frontFace;
-  if (u1 - u0 <= 2 * w + 20 || v1 - v0 <= 2 * w + 20) { localBox(P, u0, u1, v0, v1, n0, n1, MAT.navy); return; }
-  localBox(P, u0, u1, v1 - w, v1, n0, n1, MAT.navy);
-  localBox(P, u0, u1, v0, v0 + w, n0, n1, MAT.navy);
-  localBox(P, u0, u0 + w, v0 + w, v1 - w, n0, n1, MAT.navy);
-  localBox(P, u1 - w, u1, v0 + w, v1 - w, n0, n1, MAT.navy);
-  localBox(P, u0 + w, u1 - w, v0 + w, v1 - w, n0, frontFace - frontThickness / 2, MAT.navy);
+  if (u1 - u0 <= 2 * w + 20 || v1 - v0 <= 2 * w + 20) { localBox(P, u0, u1, v0, v1, n0, n1, frontMaterial); return; }
+  localBox(P, u0, u1, v1 - w, v1, n0, n1, frontMaterial);
+  localBox(P, u0, u1, v0, v0 + w, n0, n1, frontMaterial);
+  localBox(P, u0, u0 + w, v0 + w, v1 - w, n0, n1, frontMaterial);
+  localBox(P, u1 - w, u1, v0 + w, v1 - w, n0, n1, frontMaterial);
+  localBox(P, u0 + w, u1 - w, v0 + w, v1 - w, n0, frontFace - frontThickness / 2, frontMaterial);
 }
 // a door / drawer turning or sliding about (pu, pv, pn) of its run
 function movingPart(run, opening, pu, pv, pn) {
@@ -788,7 +793,7 @@ function poseMovingPart(mover) {
 function builtInAppliance(run, u0, u1, v0, v1, type) {
   const g = 2;
   u0 += g; u1 -= g; v0 += g; v1 -= g;
-  const uc = (u0 + u1) / 2, P = runLayer[run].ovens, face = frontFace - SCENE.fittings.applianceInset;
+  const uc = (u0 + u1) / 2, P = runLayer[run].ovens, face = frontFace - fittings.appliance.inset;
   // d = depth behind the appliance face, along = position along the run
   const box = (d0, d1, y0, y1, a0, a1, mat, noShadow) => localBox(P, a0, a1, y0, y1, 2 * face - d1, 2 * face - d0, mat, noShadow);
   const swapAxis = axis => (axis === 'x' ? 'z' : axis === 'z' ? 'x' : axis);
@@ -837,7 +842,8 @@ const sinkU = sinkItem ? (sinkItem.u0 + sinkItem.u1) / 2 : 0; // sink axis along
 // sink outline (S) and bowl (B), along the run (u) and from the wall (n)
 const sinkU0 = sinkU - sinkData.outer[0] / 2, sinkU1 = sinkU + sinkData.outer[0] / 2, sinkN0 = sinkData.outerFromWall, sinkN1 = sinkN0 + sinkData.outer[1];
 const bowlU0 = sinkU - sinkData.bowl[0] / 2, bowlU1 = sinkU + sinkData.bowl[0] / 2, bowlN0 = sinkData.bowlFromWall, bowlN1 = bowlN0 + sinkData.bowl[1];
-const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = worktopTop - sinkData.bowlDepth, tapN = sinkData.tapFromWall;
+const sinkTop = sinkRun ? worktopTopOf(sinkRun) : 0;
+const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowlDepth, tapN = sinkData.tapFromWall;
 // worktop with the sink cut-out: four pieces around the bowl
 function worktopWithSinkCutOut(v0, v1, uEnd) {
   target = runLayer[sinkRun].worktops;
@@ -862,23 +868,24 @@ function buildRun(run) {
       if (m && hasTag(item, 'end')) m.userData.grain = 'y'; // worktop end (waterfall): grain upright
     } else if (type === 'frame') { // on edge, frame.depth deep
       target = roomLayer.frames;
-      runBox(run, u0, u1, v0, v1, frontFace - rules.frame.depth, frontFace, MAT.navy);
+      runBox(run, u0, u1, v0, v1, frontFace - rules.frame.depth, frontFace, frontMaterial);
     } else if (type === 'panel') { // laid flat in the front plane
       target = roomLayer.panel;
-      runBox(run, u0, u1, v0, v1, frontFace - frontThickness, frontFace, MAT.navy);
+      runBox(run, u0, u1, v0, v1, frontFace - frontThickness, frontFace, frontMaterial);
     } else if (type === 'plinth') {
       target = roomLayer.plinth;
-      runBox(run, u0, u1, v0, v1, plinthFace - plinthThickness, plinthFace, MAT.plinth);
-    } else if (type === 'splash') { // board thickness, on the wall
+      runBox(run, u0, u1, v0, v1, plinthFace - plinthThickness, plinthFace, plinthMaterial);
+    } else if (type === 'splash') { // on the wall
       target = roomLayer.wallpanel;
-      const m = runBox(run, u0, u1, v0, v1, 0, rules.board, MAT.oak);
+      const m = runBox(run, u0, u1, v0, v1, 0, splashThickness, splashMaterial);
       if (m) m.userData.grain = 'x';
     } else if (type === 'board') { // plasterboard box; a filler is a void: not drawn
       target = roomLayer.walls;
       runBox(run, u0, u1, v0, v1, 0, rules.plasterboard.depth, MAT.wall);
     } else if (type === 'oven' || type === 'micro') {
       builtInAppliance(run, u0, u1, v0, v1, type);
-      localBox(runLayer[run].ovens, u0 + 22, u1 - 22, v0 + 10, v1 - 10, 25, 552, MAT.applianceBody);
+      const A = fittings.appliance;
+      localBox(runLayer[run].ovens, u0 + A.bodySide, u1 - A.bodySide, v0 + A.bodyGap, v1 - A.bodyGap, carcassBack + A.bodyGap, carcassFront - A.bodyGap, MAT.applianceBody);
     }
     if (CHECKED_TYPES.includes(type)) {
       nameNewMeshes(firstMesh, type, 'G' + groupOfRun[run] + ' col ' + col + (span > 1 ? '–' + (col + span - 1) : '') + ' ' + type + ' ' + (u1 - u0) + ' × ' + height + (item.note ? ' (' + item.note + ')' : ''));
@@ -886,32 +893,40 @@ function buildRun(run) {
   }
 }
 RUN_IDS.forEach(buildRun);
-// back strips behind the frames and the island back panel: boards of the engine without a carcass
+// back strips behind the frames
 for (const b of model.boards) {
-  if (!b.strip && !b.backPanel) continue;
-  const m = localBox(runLayer[runOfGroup[b.group]].carcasses, ...b.box, MAT.carcass);
+  if (!b.strip) continue;
+  const m = localBox(runLayer[runOfGroup[b.group]].carcasses, ...b.box, BOARD[b.material]);
   if (m) {
-    m.userData = { role: b.name, a: b.a, b: b.b, base: MAT.carcass };
+    m.userData = { id: b.id, role: b.name, a: b.a, b: b.b, base: m.material };
     carcassMeshes.push(m);
     stripParts.push({ name: b.name, a: b.a, b: b.b });
   }
+}
+// island back panel
+target = roomLayer.panel;
+for (const p of model.panels) {
+  if (p.item) continue;
+  const firstMesh = meshes.length;
+  localBox(runLayer[runOfGroup[p.group]].panel, ...p.box, BOARD[p.material]);
+  nameNewMeshes(firstMesh, 'panel', 'G' + p.group + ' ' + p.name + ' ' + p.a + ' × ' + p.b);
 }
 
 // inset sink, granite composite, with tap and a space-saving trap
 if (sinkItem) {
   target = runLayer[sinkRun].sink;
   [[sinkU0, sinkU1, sinkN0, bowlN0], [sinkU0, sinkU1, bowlN1, sinkN1], [sinkU0, bowlU0, bowlN0, bowlN1], [bowlU1, sinkU1, bowlN0, bowlN1]]
-    .forEach(([u0, u1, n0, n1]) => roomBox(u0, u1, worktopTop, worktopTop + sinkRim, n0, n1, MAT.granite)); // rim
-  roomBox(bowlU0 - sinkWall, bowlU0, bowlBottom, worktopTop, bowlN0 - sinkWall, bowlN1 + sinkWall, MAT.granite); // bowl walls
-  roomBox(bowlU1, bowlU1 + sinkWall, bowlBottom, worktopTop, bowlN0 - sinkWall, bowlN1 + sinkWall, MAT.granite);
-  roomBox(bowlU0, bowlU1, bowlBottom, worktopTop, bowlN0 - sinkWall, bowlN0, MAT.granite);
-  roomBox(bowlU0, bowlU1, bowlBottom, worktopTop, bowlN1, bowlN1 + sinkWall, MAT.granite);
+    .forEach(([u0, u1, n0, n1]) => roomBox(u0, u1, sinkTop, sinkTop + sinkRim, n0, n1, MAT.granite)); // rim
+  roomBox(bowlU0 - sinkWall, bowlU0, bowlBottom, sinkTop, bowlN0 - sinkWall, bowlN1 + sinkWall, MAT.granite); // bowl walls
+  roomBox(bowlU1, bowlU1 + sinkWall, bowlBottom, sinkTop, bowlN0 - sinkWall, bowlN1 + sinkWall, MAT.granite);
+  roomBox(bowlU0, bowlU1, bowlBottom, sinkTop, bowlN0 - sinkWall, bowlN0, MAT.granite);
+  roomBox(bowlU0, bowlU1, bowlBottom, sinkTop, bowlN1, bowlN1 + sinkWall, MAT.granite);
   roomBox(bowlU0, bowlU1, bowlBottom - sinkWall, bowlBottom, bowlN0, bowlN1, MAT.granite); // bowl bottom
   roomCylinder(45, 3, MAT.steel, sinkU, bowlBottom + 1.5, (bowlN0 + bowlN1) / 2, null, 32); // drain
   roomCylinder(30, 4, MAT.ovenInside, sinkU, bowlBottom + 2, (bowlN0 + bowlN1) / 2, null, 32);
-  roomCylinder(18, 3, MAT.steel, sinkU + 250, worktopTop + sinkRim + 1.5, tapN, null, 24); // dispenser plate
+  roomCylinder(18, 3, MAT.steel, sinkU + 250, sinkTop + sinkRim + 1.5, tapN, null, 24); // dispenser plate
   (function tap() {
-    const n = tapN, top = worktopTop + sinkRim;
+    const n = tapN, top = sinkTop + sinkRim;
     roomCylinder(28, 8, MAT.handle, sinkU, top + 4, n, null, 32);
     roomCylinder(20, 172, MAT.handle, sinkU, top + 94, n, null, 32);
     roomCylinder(21, 6, MAT.handle, sinkU, top + 183, n, null, 32);
@@ -938,12 +953,12 @@ target = roomLayer.plinth;
 const plinthsA = itemsOfRun.A.filter(i => i.type === 'plinth'), plinthsB = itemsOfRun.B.filter(i => i.type === 'plinth');
 {
   const firstMesh = meshes.length;
-  if (plinthsA.length) runBox('A', Math.max(...plinthsA.map(i => i.u1)), rightWall - plinthFace, 0, Math.max(...plinthsA.map(i => i.v1)), plinthFace - plinthThickness, plinthFace, MAT.plinth);
+  if (plinthsA.length) runBox('A', Math.max(...plinthsA.map(i => i.u1)), rightWall - plinthFace, 0, Math.max(...plinthsA.map(i => i.v1)), plinthFace - plinthThickness, plinthFace, plinthMaterial);
   nameNewMeshes(firstMesh, 'plinth', 'G1 plinth into the L corner');
 }
 {
   const firstMesh = meshes.length;
-  if (plinthsB.length) runBox('B', plinthFace, Math.min(...plinthsB.map(i => i.u0)), 0, Math.max(...plinthsB.map(i => i.v1)), plinthFace - plinthThickness, plinthFace, MAT.plinth);
+  if (plinthsB.length) runBox('B', plinthFace, Math.min(...plinthsB.map(i => i.u0)), 0, Math.max(...plinthsB.map(i => i.v1)), plinthFace - plinthThickness, plinthFace, plinthMaterial);
   nameNewMeshes(firstMesh, 'plinth', 'G2 plinth into the L corner');
 }
 
@@ -953,7 +968,7 @@ const hobData = SCENE.hob, hobItem = hobRun && itemsOfRun[hobRun].find(i => hasT
 if (hobItem) target = runLayer[hobRun].hob;
 const hobU = hobItem ? (hobItem.u0 + hobItem.u1) / 2 : 0;
 if (hobItem) (function hob() {
-  const u0 = hobU - hobData.glass[0] / 2, u1 = hobU + hobData.glass[0] / 2, v = worktopTop, glassN = hobData.glassFromWall;
+  const u0 = hobU - hobData.glass[0] / 2, u1 = hobU + hobData.glass[0] / 2, v = worktopTopOf(hobRun), glassN = hobData.glassFromWall;
   roomBox(u0, u1, v, v + 5, glassN, glassN + hobData.glass[1], MAT.glassBlack); // glass over the cut-out
   roomBox(hobU - hobData.body[0] / 2, hobU + hobData.body[0] / 2, v - hobData.builtInHeight, v, hobData.bodyFromWall, hobData.bodyFromWall + hobData.body[1], MAT.applianceBody); // body, built-in height
   [[-150, glassN + 140, 0.1], [150, glassN + 140, 0.085], [-150, glassN + 370, 0.085], [150, glassN + 370, 0.11]].forEach(([du, n, r]) => { // cooking zones
@@ -1003,7 +1018,7 @@ if (hobItem) (function hood() {
   [uc - 150, uc + 150].forEach(x => {
     const light = new THREE.SpotLight(0xfff0dc, 4.5, 0, 1.05, 0.8, 2);
     light.position.copy(toWorld(x / 1000, (bottom - 5) / 1000, (D - 90) / 1000));
-    light.target.position.copy(toWorld(x / 1000, worktopTop / 1000, (D - 170) / 1000));
+    light.target.position.copy(toWorld(x / 1000, worktopTopOf(hobRun) / 1000, (D - 170) / 1000));
     light.castShadow = false;
     lamps.push(light);
     scene.add(light, light.target);
@@ -1014,13 +1029,13 @@ if (hobItem) (function hood() {
 const carcasses = model.carcasses;
 carcasses.forEach(K => { K.run = runOfGroup[K.group]; K.parts = []; K.meshes = []; K.movers = []; });
 // a carcass board: highlighted / coloured in the Carcasses tab; registerPart also lists it there
-function registerMesh(K, m, name, a, b) {
-  if (m) { m.userData = { K, role: name, a, b, base: m.material }; K.meshes.push(m); carcassMeshes.push(m); }
+function registerMesh(K, m, board) {
+  if (m) { m.userData = { K, id: board.id, role: board.name, a: board.a, b: board.b, base: m.material }; K.meshes.push(m); carcassMeshes.push(m); }
   return m;
 }
-function registerPart(K, m, name, a, b) {
-  registerMesh(K, m, name, a, b);
-  K.parts.push({ name, a, b });
+function registerPart(K, m, board) {
+  registerMesh(K, m, board);
+  K.parts.push({ name: board.name, a: board.a, b: board.b });
   return m;
 }
 const counts = model.counts;
@@ -1028,22 +1043,22 @@ const counts = model.counts;
 function buildCarcass(K) {
   const run = K.run, { u0, u1, v0 } = K, innerU0 = u0 + board, innerU1 = u1 - board;
   for (const b of model.boards) {
-    if (b.carcassId !== K.id || b.frontId || b.name === 'Pull-out shelf') continue; // drawer boards and the pull-out shelf move: built with the fronts
-    const m = localBox(runLayer[run][b.layer], ...b.box, b.material === 'hdf' ? MAT.hdf : b.material === 'p16' ? MAT.board16 : MAT.carcass);
-    registerPart(K, m, b.name, b.a, b.b);
-    if (b.name === 'Adjustable shelf') { // 4 shelf pins
-      const y = b.box[2] + 9;
+    if (b.carcassId !== K.id || b.frontId || b.id === 'pullOutShelf') continue; // drawer boards and the pull-out shelf move: built with the fronts
+    registerPart(K, localBox(runLayer[run][b.layer], ...b.box, BOARD[b.material]), b);
+    if (b.id === 'adjustableShelf') { // 4 shelf pins
+      const y = (b.box[2] + b.box[3]) / 2;
       for (const [x0, x1] of [[innerU0, innerU0 + 8], [innerU1 - 8, innerU1]]) {
-        for (const n of [carcassBack + fittings.shelfPinFromBack, carcassFront - fittings.shelfPinFromFront]) localBox(runLayer[run].shelves, x0, x1, y - 14, y - 9, n, n + 5, MAT.zinc, true);
+        for (const n of [carcassBack + fittings.shelfPin.fromBack, carcassFront - fittings.shelfPin.fromFront]) localBox(runLayer[run].shelves, x0, x1, y - 14, y - 9, n, n + 5, MAT.zinc, true);
       }
     }
   }
-  // adjustable legs 100 under floor-standing carcasses
+  // adjustable legs under floor-standing carcasses, as tall as the plinth
   if (K.floor) {
-    for (const u of [u0 + fittings.legFromSide, u1 - fittings.legFromSide]) {
-      for (const n of [carcassBack + fittings.legFromBack, carcassFront - fittings.legFromFront]) {
-        localCylinder(runLayer[run].legs, 15, v0 - 12, MAT.leg, u, (v0 - 12) / 2, n, null, 16);
-        localCylinder(runLayer[run].legs, 24, 12, MAT.leg, u, v0 - 6, n, null, 20);
+    const leg = fittings.leg;
+    for (const u of [u0 + leg.fromSide, u1 - leg.fromSide]) {
+      for (const n of [carcassBack + leg.fromBack, carcassFront - leg.fromFront]) {
+        localCylinder(runLayer[run].legs, leg.radius, v0 - leg.footHeight, MAT.leg, u, (v0 - leg.footHeight) / 2, n, null, 16);
+        localCylinder(runLayer[run].legs, leg.footRadius, leg.footHeight, MAT.leg, u, v0 - leg.footHeight / 2, n, null, 20);
       }
     }
   }
@@ -1071,9 +1086,9 @@ function coffeeMachine(P, uc, y, n1) {
   localCylinder(P, 5, 150, MAT.steel, u1 + 10, head - 60, n1 - 40, null, 12); // steam wand
   localCylinder(P, 8, 20, MAT.blackMetal, u1 + 10, head + 20, n1 - 40, null, 16); // wand knob
 }
-// aluminium ventilation grille in the plinth under the fridge (approx. 500 x 60, >= 200 cm2 open)
+// aluminium ventilation grille in the plinth under the fridge (fittings.plinthGrille)
 function plinthGrille(K) {
-  const P = runLayer[K.run].plinth, uc = (K.u0 + K.u1) / 2, w = Math.min(500, K.u1 - K.u0 - 80), g0 = uc - w / 2, g1 = uc + w / 2, h0 = 20, h1 = 80;
+  const G = fittings.plinthGrille, P = runLayer[K.run].plinth, uc = (K.u0 + K.u1) / 2, w = Math.min(G.width, K.u1 - K.u0 - 80), g0 = uc - w / 2, g1 = uc + w / 2, h0 = G.bottom, h1 = G.top;
   localBox(P, g0, g1, h0, h0 + 5, plinthFace, plinthFace + 3, MAT.zinc);
   localBox(P, g0, g1, h1 - 5, h1, plinthFace, plinthFace + 3, MAT.zinc);
   localBox(P, g0, g0 + 5, h0 + 5, h1 - 5, plinthFace, plinthFace + 3, MAT.zinc);
@@ -1083,11 +1098,11 @@ function plinthGrille(K) {
 }
 // built-in fridge-freezer body (SCENE.fridge.bodyHeight), split at the top of its lowest front
 function fridgeBody(K) {
-  const P = runLayer[K.run].fridge, u0 = K.u0 + 20, u1 = K.u1 - 20, bodyV0 = K.v0 + 22, bodyV1 = bodyV0 + SCENE.fridge.bodyHeight;
+  const F = SCENE.fridge, P = runLayer[K.run].fridge, u0 = K.u0 + F.sideGap, u1 = K.u1 - F.sideGap, bodyV0 = K.v0 + board + F.bottomGap, bodyV1 = bodyV0 + F.bodyHeight;
   K.fridgeBody = [bodyV0, bodyV1];
-  openFrontBox(P, u0, u1, bodyV0, bodyV1, carcassBack + board, 500, 24, MAT.fridge);
+  openFrontBox(P, u0, u1, bodyV0, bodyV1, carcassBack + board, F.front, 24, MAT.fridge);
   const split = K.boxes[0].v1 - 20;
-  localBox(P, u0 + 24, u1 - 24, split - 14, split + 14, carcassBack + 42, 500, MAT.fridge);
+  localBox(P, u0 + 24, u1 - 24, split - 14, split + 14, carcassBack + 42, F.front, MAT.fridge);
   const top = bodyV1 - 24, lo = split + 14;
   for (const f of [0.34, 0.56, 0.78]) { const y = lo + (top - lo) * f; localBox(P, u0 + 26, u1 - 26, y, y + 5, carcassBack + 44, 440, MAT.glassShelf, true); }
   localBox(P, u0 + 40, u1 - 40, lo + 8, lo + 190, carcassBack + 60, 430, MAT.ice, true);
@@ -1120,54 +1135,61 @@ function buildFront(run, item) {
   const size = Math.round(fw) + ' × ' + Math.round(fh);
 
   if (opening === 'door' && K) {
-    const count = front.hinges.length, side = front.hingeU, dir = hingeSide === 'L' ? 1 : -1, cupU = hingeSide === 'L' ? fu0 + 22.5 : fu1 - 22.5;
+    const H = fittings.hinge, count = front.hinges.length, side = front.hingeU, dir = hingeSide === 'L' ? 1 : -1, cupU = hingeSide === 'L' ? fu0 + H.cupFromEdge : fu1 - H.cupFromEdge;
     for (const v of front.hinges) {
       localBox(runLayer[run].hardware, ...ordered(side, side + dir * 10), v - 22, v + 22, carcassFront - 75, carcassFront - 30, MAT.zinc); // mounting plate
       localBox(runLayer[run].hardware, ...ordered(side + dir * 3, side + dir * 20), v - 9, v + 9, carcassFront - 70, carcassFront - 2, MAT.zinc); // hinge arm
-      localCylinder(mover.layers.hardware, 17.5, 11.5, MAT.zinc, cupU, v, carcassFront + 6.5, 'z', 24); // 35 cup in the front
+      localCylinder(mover.layers.hardware, H.cup / 2, H.cupDepth, MAT.zinc, cupU, v, frontFace - frontThickness + H.cupDepth / 2, 'z', 24); // cup in the front
       localCylinder(mover.layers.hardware, 24, 1.5, MAT.zinc, cupU, v, carcassFront - 1, 'z', 24); // cup flange, 0.2 mm off the carcass
     }
     mover.label = 'Door ' + size + ' · ' + count + ' Blum hinges';
   } else if (opening === 'drawer' && K) {
     const { size: drawerSize, sideHeight, innerU0, innerU1, bottomV: b0, bins, inner } = front.drawer;
     const deep = drawerSize === 'D', box = mover.layers.drawers, hardware = mover.layers.hardware;
-    for (const b of model.boards) if (b.frontId === front.id && !b.inner) registerPart(K, localBox(box, ...b.box, MAT.board16), b.name, b.a, b.b); // drawer bottom and back
-    localBox(box, innerU0 + 22, innerU0 + 37.5, b0 - 4, b0 + sideHeight - 4, 50, 548, MAT.drawerSide); // TANDEMBOX sides
-    localBox(box, innerU1 - 37.5, innerU1 - 22, b0 - 4, b0 + sideHeight - 4, 50, 548, MAT.drawerSide);
+    // the runner (carcass part, then drawer part) fills the gap between the carcass side and the drawer side
+    const R = fittings.drawer, s0 = R.sideFromCarcass, s1 = s0 + R.sideThickness;
+    const sides = (P, v0, v1) => {
+      localBox(P, innerU0 + s0, innerU0 + s1, v0, v1, R.n0, R.n1, MAT.drawerSide);
+      localBox(P, innerU1 - s1, innerU1 - s0, v0, v1, R.n0, R.n1, MAT.drawerSide);
+    };
+    const runners = (moving, v) => {
+      for (const [a, b, c, e] of [[innerU0, innerU0 + R.runner, innerU0 + R.runner, innerU0 + s0], [innerU1 - R.runner, innerU1, innerU1 - s0, innerU1 - R.runner]]) {
+        localBox(runLayer[run].hardware, a, b, v - 24, v - 8, R.n0, R.n1 + 2, MAT.zinc); // carcass part
+        localBox(moving, c, e, v - 20, v - 6, R.n0 + 8, R.n1 - 2, MAT.zinc); // drawer part
+      }
+    };
+    for (const b of model.boards) if (b.frontId === front.id && !b.inner) registerPart(K, localBox(box, ...b.box, BOARD[b.material]), b); // drawer bottom and back
+    sides(box, b0 - 4, b0 + sideHeight - 4); // TANDEMBOX sides
     if (deep) { // gallery rails of a D drawer
       localBox(box, innerU0 + 28, innerU0 + 32, b0 + sideHeight - 4, b0 + sideHeight + 60, 60, 540, MAT.drawerSide);
       localBox(box, innerU1 - 32, innerU1 - 28, b0 + sideHeight - 4, b0 + sideHeight + 60, 60, 540, MAT.drawerSide);
     }
-    for (const [a, b, c, d] of [[innerU0, innerU0 + 13, innerU0 + 13, innerU0 + 22], [innerU1 - 13, innerU1, innerU1 - 22, innerU1 - 13]]) {
-      localBox(runLayer[run].hardware, a, b, b0 - 24, b0 - 8, 50, 550, MAT.zinc); // runner: carcass part
-      localBox(hardware, c, d, b0 - 20, b0 - 6, 58, 546, MAT.zinc); // runner: drawer part
-    }
+    runners(hardware, b0);
     if (bins) { // waste-sorting bins standing in the drawer box (the trap is a space-saver above them)
-      const x0 = innerU0 + 45, x1 = innerU1 - 45, binWidth = (x1 - x0 - 20) / 3, top = b0 + 16 + 235;
-      for (let j = 0; j < 3; j++) {
+      const count = fittings.bins.count, x0 = innerU0 + 45, x1 = innerU1 - 45, binWidth = (x1 - x0 - 10 * (count - 1)) / count;
+      const floor = b0 + model.thickness.drawer, top = floor + fittings.bins.height;
+      for (let j = 0; j < count; j++) {
         const a = x0 + j * (binWidth + 10), b = a + binWidth;
-        openTopBox(box, a, b, b0 + 16, top, 80, 520, 4, MAT.bin);
+        openTopBox(box, a, b, floor, top, 80, 520, 4, MAT.bin);
         localBox(box, a + binWidth * 0.3, b - binWidth * 0.3, top - 14, top - 4, 510, 524, MAT.bin);
       }
     }
-    mover.label = (bins ? 'Sink drawer D (224) with waste-sorting bins' : deep ? 'Drawer D (224)' : 'Top drawer M (83)' + (inner ? ' + inner drawer above' : '')) + ' · front ' + size;
+    const drawerName = 'drawer ' + drawerSize + ' (' + sideHeight + ')';
+    mover.label = (bins ? 'Sink ' + drawerName + ' with waste-sorting bins' : deep ? 'Drawer ' + drawerSize + ' (' + sideHeight + ')' : 'Top ' + drawerName + (inner ? ' + inner drawer above' : '')) + ' · front ' + size;
     if (inner) { // shallow inner drawer for cutlery: own runners on the carcass sides, above the top drawer box, behind the same front
       const iv = front.drawer.innerV, innerMover = movingPart(run, 'drawer', 0, 0, 0), innerBox = innerMover.layers.drawers, innerHardware = innerMover.layers.hardware;
       innerMover.item = item;
       K.movers.push(innerMover);
       innerMover.parent = mover;
       mover.child = innerMover;
-      for (const b of model.boards) if (b.frontId === front.id && b.inner) registerPart(K, localBox(innerBox, ...b.box, MAT.board16), b.name, b.a, b.b);
-      localBox(innerBox, innerU0 + 22, innerU0 + 37.5, iv - 4, iv + 80, 50, 548, MAT.drawerSide);
-      localBox(innerBox, innerU1 - 37.5, innerU1 - 22, iv - 4, iv + 80, 50, 548, MAT.drawerSide);
-      localBox(innerBox, innerU0 + 37.5, innerU1 - 37.5, iv - 4, iv + 80, 532, 546, MAT.drawerSide); // metal inner front (Blum, LW - 132)
-      for (let j = 1; j < 5; j++) { const x = innerU0 + 37.5 + ((innerU1 - innerU0 - 75) * j) / 5; localBox(innerBox, x - 3, x + 3, iv + 16, iv + 66, 90, 520, MAT.insert, true); } // cutlery insert dividers
+      for (const b of model.boards) if (b.frontId === front.id && b.inner) registerPart(K, localBox(innerBox, ...b.box, BOARD[b.material]), b);
+      const innerTop = iv - 4 + R.innerSide;
+      sides(innerBox, iv - 4, innerTop);
+      localBox(innerBox, innerU0 + s1, innerU1 - s1, iv - 4, innerTop, R.n1 - 16, R.n1 - 2, MAT.drawerSide); // metal inner front
+      for (let j = 1; j < 5; j++) { const x = innerU0 + s1 + ((innerU1 - innerU0 - 2 * s1) * j) / 5; localBox(innerBox, x - 3, x + 3, iv + 16, iv + 66, 90, 520, MAT.insert, true); } // cutlery insert dividers
       localBox(innerBox, innerU0 + 40, innerU1 - 40, iv + 16, iv + 20, 90, 520, MAT.insert, true);
-      for (const [a, b, c, d] of [[innerU0, innerU0 + 13, innerU0 + 13, innerU0 + 22], [innerU1 - 13, innerU1, innerU1 - 22, innerU1 - 13]]) {
-        localBox(runLayer[run].hardware, a, b, iv - 24, iv - 8, 50, 550, MAT.zinc);
-        localBox(innerHardware, c, d, iv - 20, iv - 6, 58, 546, MAT.zinc);
-      }
-      innerMover.label = 'Inner drawer M (83) for cutlery · inner front ' + (innerU1 - innerU0 - 132);
+      runners(innerHardware, iv);
+      innerMover.label = 'Inner drawer M (' + rules.drawers.M.side + ') for cutlery · inner front ' + (innerU1 - innerU0 - rules.drawers.inner.frontDeduction);
     }
   } else if (opening === 'dishwasher') {
     const P = runLayer[run].dishwasher, { u0, u1 } = item;
@@ -1181,7 +1203,7 @@ function buildFront(run, item) {
   } else if (opening === 'fridge' && K && K.fridgeBody) {
     const [bodyV0, bodyV1] = K.fridgeBody, lowest = item.v0 === K.v0;
     const d0 = lowest ? bodyV0 + 3 : Math.max(bodyV0, item.v0 - 20) + 3, d1 = Math.min(bodyV1, item.v1 - 20) - 3;
-    localBox(mover.layers.fridge, K.u0 + 20, K.u1 - 20, d0, d1, 500, carcassFront - 2, MAT.fridge); // appliance door
+    localBox(mover.layers.fridge, K.u0 + SCENE.fridge.sideGap, K.u1 - SCENE.fridge.sideGap, d0, d1, SCENE.fridge.front, carcassFront - 2, MAT.fridge); // appliance door
     if (!lowest) for (const f of [0.25, 0.5, 0.75]) { const y = d0 + (d1 - d0) * f; localBox(mover.layers.fridge, K.u0 + 55, K.u1 - 55, y, y + 80, 446, 500, MAT.ice, true); } // door shelves
     mover.label = (lowest ? 'Freezer' : 'Fridge') + ' · front ' + size + ' on the appliance door';
   } else if (opening === 'fixed') {
@@ -1193,13 +1215,13 @@ for (const r of RUN_IDS) for (const item of itemsOfRun[r]) if (KE.FRONT_TYPES.in
 // pull-out shelf with the coffee machine (tag coffee): slides out like a drawer once its door is open
 for (const K of carcasses) {
   if (!K.coffee) continue;
-  const run = K.run, shelf = model.boards.find(b => b.carcassId === K.id && b.name === 'Pull-out shelf'), door = K.movers.find(m => m.opening === 'door');
+  const run = K.run, shelf = model.boards.find(b => b.carcassId === K.id && b.id === 'pullOutShelf'), door = K.movers.find(m => m.opening === 'door');
   if (!shelf) continue;
   const mover = movingPart(run, 'drawer', 0, 0, 0), box = mover.layers.drawers, [x0, x1, y0, y1, z0, z1] = shelf.box;
   mover.item = door && door.item;
   K.movers.push(mover);
   if (door) { mover.parent = door; door.child = mover; }
-  registerPart(K, localBox(box, ...shelf.box, MAT.carcass), shelf.name, shelf.a, shelf.b);
+  registerPart(K, localBox(box, ...shelf.box, BOARD[shelf.material]), shelf);
   for (const [a, b] of [[K.u0 + board, x0], [x1, K.u1 - board]]) { // runners: carcass part, moving part
     localBox(runLayer[run].hardware, a, b, y0 - 14, y0, z0, z1, MAT.zinc);
     localBox(mover.layers.hardware, a, b, y0, y0 + 12, z0 + 8, z1 - 4, MAT.zinc);
@@ -1221,7 +1243,7 @@ function geometryCheck() {
   for (const m of carcassMeshes) {
     const u = m.userData;
     if (!u.role) continue;
-    const kind = /drawer/i.test(u.role) ? 'drawer' : /Back strip/.test(u.role) ? 'strip' : u.role === 'Adjustable shelf' ? 'shelf' : 'carcass';
+    const kind = { drawerBottom: 'drawer', drawerBack: 'drawer', backStrip: 'strip', adjustableShelf: 'shelf' }[u.id] || 'carcass';
     parts.push({ kind, name: (u.K ? u.K.name + ' ' : '') + u.role + ' ' + u.a + ' × ' + u.b, box: boxOf(m), object: m });
   }
   for (const m of meshes) if (m.material === MAT.leg && m.geometry.parameters.radiusTop * 1000 > 20) parts.push({ kind: 'leg', name: 'leg', box: boxOf(m), object: m });
@@ -1685,19 +1707,20 @@ function preset(name) {
 LAYER_IDS.forEach(id => { layerOn[id] = true; });
 
 /* ---------- Carcasses tab ---------- */
-// colour of each board name in "Colour by panel"
+// "Colour by panel": colour and legend label of each board id (engine.js)
 const PANEL_COLORS = {
-  'Side': '#f0c27b', 'Bottom panel': '#8fcf9f', 'Top panel': '#4fae6e', 'Top rail 100': '#f29e8e', 'Fixed shelf': '#5f95da',
-  'Adjustable shelf': '#a9c9f2', 'Back': '#c9b9ea', 'Drawer bottom': '#f5d76e', 'Drawer back D': '#e3ad3c', 'Drawer back M': '#e3ad3c',
-  'Inner drawer back': '#e3ad3c', 'Top rail 50 (front, on edge)': '#f29e8e', 'Hob separation panel': '#7fd0c8', 'Back strip 100': '#e98fc4', 'Back strip, flat': '#e98fc4'
+  side: ['#f0c27b', 'Side'], bottom: ['#8fcf9f', 'Bottom panel'], top: ['#4fae6e', 'Top panel'], rail: ['#f29e8e', 'Top rail'],
+  fixedShelf: ['#5f95da', 'Fixed shelf'], adjustableShelf: ['#a9c9f2', 'Adjustable shelf'], pullOutShelf: ['#a9c9f2', 'Pull-out shelf'],
+  back: ['#c9b9ea', 'Back, ' + model.materials[rules.back.material].label], backStrip: ['#e98fc4', 'Back strip behind frame'],
+  hobPanel: ['#7fd0c8', 'Hob separation panel'], drawerBottom: ['#f5d76e', 'Drawer bottom'], drawerBack: ['#e3ad3c', 'Drawer back']
 };
 const panelMaterial = {};
-for (const [name, color] of Object.entries(PANEL_COLORS)) panelMaterial[name] = standard({ color: linear(color), roughness: 0.7 });
+for (const [id, [color]] of Object.entries(PANEL_COLORS)) panelMaterial[id] = standard({ color: linear(color), roughness: 0.7 });
 let colourByPanel = false, selected = null;
 function applyCarcassColours() {
   for (const m of carcassMeshes) {
     const u = m.userData;
-    m.material = u.K === selected ? MAT.selected : colourByPanel ? panelMaterial[u.role] || u.base : u.base;
+    m.material = u.K === selected ? MAT.selected : colourByPanel ? panelMaterial[u.id] || u.base : u.base;
   }
 }
 const colourButton = document.getElementById('roleBtn');
@@ -1707,8 +1730,7 @@ colourButton.addEventListener('click', () => {
   applyCarcassColours();
 });
 document.getElementById('carcPreset').addEventListener('click', () => preset('carc'));
-document.getElementById('legend').innerHTML = [['Side'], ['Bottom panel'], ['Top panel'], ['Top rail 100'], ['Fixed shelf'], ['Adjustable shelf'], ['Back', 'Back HDF 3'], ['Back strip 100', 'Back strip behind frame'], ['Drawer bottom', 'Drawer: bottom, back (chipboard 16)']]
-  .map(([name, label]) => '<li><i style="background:' + PANEL_COLORS[name] + '"></i><span>' + (label || name) + '</span></li>').join('');
+document.getElementById('legend').innerHTML = Object.values(PANEL_COLORS).map(([color, label]) => '<li><i style="background:' + color + '"></i><span>' + label + '</span></li>').join('');
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 function carcassDescription(K) {
@@ -1799,19 +1821,26 @@ document.getElementById('kStats').innerHTML = [
 /* ---------- Project tab ---------- */
 const islandWorktop = worktopOf(groupOfRun.C);
 document.getElementById('dims').innerHTML = [
-  ['Worktop ' + runName.A, (sinkWorktop ? sinkWorktop.u1 - sinkWorktop.u0 : 0) + ' × ' + worktopOf(groupOfRun.A).depth + ' × ' + worktopThickness],
-  ['Worktop height', worktopTop + ' above the floor'],
+  ['Worktop ' + runName.A, (sinkWorktop ? sinkWorktop.u1 - sinkWorktop.u0 : 0) + ' × ' + worktopOf(groupOfRun.A).depth + ' × ' + worktopOf(groupOfRun.A).thickness],
+  ['Worktop height', worktopTopOf('A') + ' above the floor'],
   ['Tall units', runLength.B + ' × ' + ceiling],
-  ['Island', runLength.C + ' × ' + islandWorktop.depth + ' × ' + worktopTop],
-  ['Carcass depth', carcassDepth + ', HDF ' + rules.back.thickness + ' back'],
+  ['Island', runLength.C + ' × ' + islandWorktop.depth + ' × ' + islandWorktop.v1],
+  ['Carcass depth', carcassDepth + ', back ' + model.materials[rules.back.material].label],
   ['Carcass back', carcassBack + ' from the wall'],
   ['Front face', frontFace + ' from the wall; 4 gaps per front'],
   ['Shaker front rail', shakerRail],
-  ['Frames ' + rules.frontThickness, 'on edge, ' + rules.frame.depth + ' deep'],
-  ['Panels ' + rules.frontThickness, 'flat, in the front plane'],
-  ['Plinth', 'face ' + rules.plinthSetback + ' behind the fronts'],
+  ['Frames ' + frontThickness, 'on edge, ' + rules.frame.depth + ' deep'],
+  ['Panels ' + frontThickness, 'flat, in the front plane'],
+  ['Plinth', 'face ' + rules.plinth.setback + ' behind the fronts'],
   ['Window', win.width + ' × ' + win.height + ', ' + win.finish]
 ].map(([name, value]) => '<dt>' + name + '</dt><dd>' + value + '</dd>').join('');
+// furniture materials of data.js, before the scene materials (worktop, sink, floor)
+const usedFor = {};
+const addUse = (code, what) => { usedFor[code] = usedFor[code] ? usedFor[code] + ', ' + what : what; };
+addUse(rules.carcass.material, 'carcasses'); addUse(rules.back.material, 'backs'); addUse(rules.drawers.material, 'drawer boxes');
+addUse(rules.front.material, 'fronts, frames, panels'); addUse(rules.plinth.material, 'plinth');
+document.querySelector('ul.mats').insertAdjacentHTML('afterbegin', Object.entries(usedFor).filter(([code]) => rules.materials[code].color)
+  .map(([code, what]) => '<li><i style="background:' + rules.materials[code].color + '"></i><small>' + esc(what) + '</small><b>' + esc(model.materials[code].label) + '</b></li>').join(''));
 document.getElementById('pnotes').innerHTML = (project.notes || []).map(([name, description, details]) => '<dt>' + esc(name) + '</dt><dd>' + esc(description) + (details ? '<small>' + esc(details) + '</small>' : '') + '</dd>').join('');
 
 /* ---------- settings tabs ---------- */
