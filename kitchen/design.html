@@ -391,6 +391,7 @@
                 <th style="width:46px" title="Front gap right (mm)">Gap R</th>
                 <th style="width:46px" title="Front gap top (mm)">Gap T</th>
                 <th style="width:46px" title="Front gap bottom (mm)">Gap B</th>
+                <th style="width:56px" title="ABS-edged sides of a panel: T top, B bottom, L left, R right">ABS</th>
                 <th>Notes</th>
                 <th class="col-actions"></th>
               </tr>
@@ -414,6 +415,7 @@
                   <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapRight" @wheel="$event.target.blur()"></td>
                   <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapTop" @wheel="$event.target.blur()"></td>
                   <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapBottom" @wheel="$event.target.blur()"></td>
+                  <td><template x-if="typeOf(row) === 'panel'"><input type="text" class="cell" spellcheck="false" placeholder="B L" title="T top, B bottom, L left, R right" x-model="row.abs"></template></td>
                   <td class="col-note"><input type="text" class="cell" x-model="row.note"></td>
                   <td class="col-actions">
                     <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertComponentRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeComponentRow(idx)">×</button>
@@ -599,7 +601,7 @@ function componentRow(c) {
   const gaps = Array.isArray(c.gaps) ? c.gaps : ['', '', '', ''];
   return {
     group: c.g, col: c.c, span: c.s, tags: c.tags, carcass: c.k || '', height: c.h, handle: c.hd ?? '', hinge: c.hg ?? '',
-    gapLeft: gaps[0], gapRight: gaps[1], gapTop: gaps[2], gapBottom: gaps[3], note: c.note || ''
+    gapLeft: gaps[0], gapRight: gaps[1], gapTop: gaps[2], gapBottom: gaps[3], abs: c.abs || '', note: c.note || ''
   };
 }
 
@@ -614,6 +616,8 @@ function dataComponent(row) {
   if (row.hinge) c.hg = row.hinge;
   const gaps = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
   if (FRONT_TYPES.includes(parsed.type) && !isRowEmpty(...gaps)) c.gaps = gaps.map(Number);
+  const abs = String(row.abs ?? '').toUpperCase().split(/[\s,]+/).filter(Boolean).join(' '); // ABS sides of a panel
+  if (parsed.type === 'panel' && abs) c.abs = abs;
   if (String(row.note ?? '').trim()) c.note = String(row.note).trim();
   return c;
 }
@@ -869,7 +873,7 @@ document.addEventListener('alpine:init', () => {
     newComponentRow(fields = {}) {
       return {
         id: this.nextId++, group: '', col: '', span: '', tags: '', carcass: '', height: '', handle: '', hinge: '',
-        gapLeft: '', gapRight: '', gapTop: '', gapBottom: '', note: '', ...fields
+        gapLeft: '', gapRight: '', gapTop: '', gapBottom: '', abs: '', note: '', ...fields
       };
     },
     newNoteRow(name = '', description = '', details = '') {
@@ -880,7 +884,9 @@ document.addEventListener('alpine:init', () => {
       loadedProject = project;
       // shown, not edited; parts: the carcass parts whose rule names the material (KE.PART_RULES)
       const rules = project.rules || {}, ruleAt = path => path.split('.').reduce((o, k) => (o ? o[k] : undefined), rules);
-      this.materials = Object.entries(rules.materials || {}).map(([code, m]) => ({ code, ...m, parts: Object.keys(KE.PART_RULES).filter(part => ruleAt(KE.PART_RULES[part]) === code) }));
+      this.materials = Object.entries(rules.materials || {})
+        .map(([code, m]) => ({ code, ...m, parts: Object.keys(KE.PART_RULES).filter(part => ruleAt(KE.PART_RULES[part]) === code) }))
+        .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: data.js order
       this.notes = (project.notes || []).map(([name, description, details]) => this.newNoteRow(name ?? '', description ?? '', details ?? ''));
       this.columns = Object.entries(project.columns || {}).flatMap(([group, widths]) => widths.map(w => this.newColumnRow(Number(group), w)));
       this.components = (project.components || []).map(c => this.newComponentRow(componentRow(c)));
@@ -940,6 +946,7 @@ document.addEventListener('alpine:init', () => {
     // a handle, a hinge and gaps belong to fronts only
     setType(row, type) {
       this.writeTags(row, type, parseTags(row.tags).features.filter(f => TAG_TYPES[f].includes(type))); // keep the tags the new type allows
+      if (type !== 'panel') row.abs = ''; // ABS sides belong to panels only
       if (!FRONT_TYPES.includes(type)) {
         row.handle = row.hinge = '';
         row.gapLeft = row.gapRight = row.gapTop = row.gapBottom = '';

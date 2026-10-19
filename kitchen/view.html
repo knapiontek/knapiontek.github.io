@@ -609,6 +609,22 @@ function setMetal(name) {
   sceneChanged();
 }
 
+// a board with a core colour in data.js (chipboard, the frames' MDF): faces and finished edges (ABS: board.edges; frames: lacquered edges)
+// in the board colour, bare cut edges in the core colour – so the view shows where the edges are finished.
+// Fronts and the plinth are lacquered all round and are drawn without this.
+const coreMaterial = {}, edgedMeshes = new Set();
+const BOX_SIDES = ['right', 'left', 'top', 'bottom', 'front', 'back']; // BoxGeometry faces: +u, −u, +v, −v, +n, −n
+function edgeLook(m, edges, code) {
+  const material = rules.materials[code];
+  if (!m || !material || !material.core) return m;
+  const core = coreMaterial[code] || (coreMaterial[code] = standard({ color: linear(material.core), roughness: 0.9 }));
+  const p = m.geometry.parameters, sizes = [p.width, p.height, p.depth], thin = sizes.indexOf(Math.min(...sizes)); // the axis through the faces
+  const banded = new Set((edges || []).map(([side]) => side));
+  m.material = BOX_SIDES.map((side, i) => (Math.floor(i / 2) === thin || banded.has(side) ? m.material : core));
+  edgedMeshes.add(m);
+  return m;
+}
+
 /* ---------- layers ---------- */
 const LAYERS = [ // [layer group label, [[layer id, label], ...]]
   ['Carcasses', [['carcasses', 'Panels'], ['backs', 'HDF backs'], ['shelves', 'Shelves'], ['drawers', 'Drawer boxes'], ['hardware', 'Hinges, runners'], ['legs', 'Legs']]],
@@ -866,12 +882,12 @@ function buildRun(run) {
       if (item === sinkWorktop) { worktopWithSinkCutOut(v0, v1, u1); continue; }
       const W = worktopOf(groupOfRun[run]), m = runBox(run, u0, u1, v0, v1, W.n0, W.n1, worktopMaterial);
       if (m && hasTag(item, 'fall')) m.userData.grain = 'y'; // worktop fall: grain upright
-    } else if (type === 'frame') { // on edge, frame.depth deep
-      target = roomLayer.frames;
-      runBox(run, u0, u1, v0, v1, frontFace - rules.frame.depth, frontFace, boardFor('frame'));
-    } else if (type === 'panel') { // laid flat in the front plane
-      target = roomLayer.panel;
-      runBox(run, u0, u1, v0, v1, frontFace - panelThickness, frontFace, boardFor('panel'));
+    } else if (type === 'frame') { // on edge, frame.depth deep; lacquered on both faces and rules.frame.lacqueredEdges, the other edges bare
+      const lacquered = (rules.frame.lacqueredEdges || []).map(side => [side]);
+      edgeLook(localBox(runLayer[run].frames, u0, u1, v0, v1, frontFace - rules.frame.depth, frontFace, boardFor('frame')), lacquered, model.materialFor.frame);
+    } else if (type === 'panel') { // laid flat in the front plane; in run coordinates, so its edges keep their sides
+      const panel = model.panels.find(p => p.item === item);
+      edgeLook(localBox(runLayer[run].panel, u0, u1, v0, v1, frontFace - panelThickness, frontFace, boardFor('panel')), panel && panel.edges, model.materialFor.panel);
     } else if (type === 'plinth') {
       target = roomLayer.plinth;
       runBox(run, u0, u1, v0, v1, plinthFace - plinthThickness, plinthFace, plinthMaterial);
@@ -896,7 +912,7 @@ RUN_IDS.forEach(buildRun);
 // back strips behind the frames
 for (const b of model.boards) {
   if (!b.strip) continue;
-  const m = localBox(runLayer[runOfGroup[b.group]].carcasses, ...b.box, BOARD[b.material]);
+  const m = edgeLook(localBox(runLayer[runOfGroup[b.group]].carcasses, ...b.box, BOARD[b.material]), b.edges, b.material);
   if (m) {
     m.userData = { id: b.id, role: b.name, a: b.a, b: b.b, base: m.material };
     carcassMeshes.push(m);
@@ -908,7 +924,7 @@ target = roomLayer.panel;
 for (const p of model.panels) {
   if (p.item) continue;
   const firstMesh = meshes.length;
-  localBox(runLayer[runOfGroup[p.group]].panel, ...p.box, BOARD[p.material]);
+  localBox(runLayer[runOfGroup[p.group]].panel, ...p.box, BOARD[p.material]); // edges painted on site: drawn finished
   nameNewMeshes(firstMesh, 'panel', 'G' + p.group + ' ' + p.name + ' ' + p.a + ' × ' + p.b);
 }
 
@@ -1044,7 +1060,7 @@ function buildCarcass(K) {
   const run = K.run, { u0, u1, v0 } = K, innerU0 = u0 + board, innerU1 = u1 - board;
   for (const b of model.boards) {
     if (b.carcassId !== K.id || b.frontId || b.id === 'pullOutShelf') continue; // drawer boards and the pull-out shelf move: built with the fronts
-    registerPart(K, localBox(runLayer[run][b.layer], ...b.box, BOARD[b.material]), b);
+    registerPart(K, edgeLook(localBox(runLayer[run][b.layer], ...b.box, BOARD[b.material]), b.edges, b.material), b);
     if (b.id === 'adjustableShelf') { // 4 shelf pins
       const y = (b.box[2] + b.box[3]) / 2;
       for (const [x0, x1] of [[innerU0, innerU0 + 8], [innerU1 - 8, innerU1]]) {
@@ -1158,7 +1174,7 @@ function buildFront(run, item) {
         localBox(moving, c, e, v - 20, v - 6, R.n0 + 8, R.n1 - 2, MAT.zinc); // drawer part
       }
     };
-    for (const b of model.boards) if (b.frontId === front.id && !b.inner) registerPart(K, localBox(box, ...b.box, BOARD[b.material]), b); // drawer bottom and back
+    for (const b of model.boards) if (b.frontId === front.id && !b.inner) registerPart(K, edgeLook(localBox(box, ...b.box, BOARD[b.material]), b.edges, b.material), b); // drawer bottom and back
     sides(box, b0 - 4, b0 + sideHeight - 4); // TANDEMBOX sides
     if (deep) { // gallery rails of a D drawer
       localBox(box, innerU0 + 28, innerU0 + 32, b0 + sideHeight - 4, b0 + sideHeight + 60, 60, 540, MAT.drawerSide);
@@ -1182,7 +1198,7 @@ function buildFront(run, item) {
       K.movers.push(innerMover);
       innerMover.parent = mover;
       mover.child = innerMover;
-      for (const b of model.boards) if (b.frontId === front.id && b.inner) registerPart(K, localBox(innerBox, ...b.box, BOARD[b.material]), b);
+      for (const b of model.boards) if (b.frontId === front.id && b.inner) registerPart(K, edgeLook(localBox(innerBox, ...b.box, BOARD[b.material]), b.edges, b.material), b);
       const innerTop = iv - 4 + R.innerSide;
       sides(innerBox, iv - 4, innerTop);
       localBox(innerBox, innerU0 + s1, innerU1 - s1, iv - 4, innerTop, R.n1 - 16, R.n1 - 2, MAT.drawerSide); // metal inner front
@@ -1221,7 +1237,7 @@ for (const K of carcasses) {
   mover.item = door && door.item;
   K.movers.push(mover);
   if (door) { mover.parent = door; door.child = mover; }
-  registerPart(K, localBox(box, ...shelf.box, BOARD[shelf.material]), shelf);
+  registerPart(K, edgeLook(localBox(box, ...shelf.box, BOARD[shelf.material]), shelf.edges, shelf.material), shelf);
   for (const [a, b] of [[K.u0 + board, x0], [x1, K.u1 - board]]) { // runners: carcass part, moving part
     localBox(runLayer[run].hardware, a, b, y0 - 14, y0, z0, z1, MAT.zinc);
     localBox(mover.layers.hardware, a, b, y0, y0 + 12, z0 + 8, z1 - 4, MAT.zinc);
@@ -1627,9 +1643,11 @@ const outlines = [];
 function ensureOutlines() {
   if (outlines.length) return;
   const lineMaterial = new THREE.LineBasicMaterial({ color: 0x1f2633, transparent: true, opacity: 0.75 });
-  scene.traverse(o => { if (o.isMesh && !o.material.transparent && !Array.isArray(o.material)) Object.assign(o.material, { polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }); });
+  scene.traverse(o => {
+    if (o.isMesh && (edgedMeshes.has(o) || !Array.isArray(o.material))) [].concat(o.material).forEach(m => { if (!m.transparent) Object.assign(m, { polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }); });
+  });
   for (const m of meshes) {
-    if (Array.isArray(m.material) || m.material === MAT.marble || m.material === MAT.wall || m.material.transparent || m.material === MAT.sky) continue;
+    if ((Array.isArray(m.material) && !edgedMeshes.has(m)) || m.material === MAT.marble || m.material === MAT.wall || m.material.transparent || m.material === MAT.sky) continue;
     const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 20), lineMaterial);
     e.raycast = () => {};
     m.add(e);

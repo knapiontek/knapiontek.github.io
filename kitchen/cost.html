@@ -103,7 +103,7 @@
   <section id="tab-cutting" class="hidden">
     <div class="grid-wrap">
       <table class="grid">
-        <thead><tr><th>Element</th><th>A [mm]</th><th>B [mm]</th><th>Qty</th><th>m²</th><th>ABS edging [lm]</th><th>Cutting [lm]</th></tr></thead>
+        <thead><tr><th>Element</th><th>Length [mm]</th><th>Width [mm]</th><th>m²</th><th>Qty</th><th>ABS per piece</th><th>ABS total [lm]</th><th title="(length + width) × qty: the length the board supplier saws – priced by the Panel cutting item">Saw cuts [lm]</th><th>Where</th></tr></thead>
         <tbody id="cuttingBody"></tbody>
       </table>
     </div>
@@ -137,7 +137,7 @@
      COST DATA (JSON) - this page's own input: prices, items, notes and page settings. Everything measured comes from
      data.js through engine.js; nothing here repeats a calculated number.
        settings     page settings: XLSX file name, front functions (label of a front by its type and features),
-                    which blocks get edging / cutting lengths, appliance categories, texts
+                    which blocks get cutting lengths, appliance categories, texts; ABS edges come from engine.js
        blocks       cutting-list tables, built by engine.js (parts: front | frames | plinths | panels | plaster | a material use: every board of that material)
        categories   estimate items: qty = number or formula; name, spec, source and notes may hold placeholders:
                       {n:hinges} engine count ({n:tag.bins} = components with that tag), {r:drawers.dFrom} data.js rule, {t:carcass} thickness, {m:cabinet} material (by use),
@@ -181,14 +181,6 @@
     "function": "door"
    }
   ],
-  "edgeBlocks": {
-   "carcass": {
-    "along": "A",
-    "rows": {
-     "Side": "B"
-    }
-   }
-  },
   "cutBlocks": [
    "carcass",
    "drawerBox"
@@ -197,7 +189,7 @@
    "Appliances"
   ],
   "sheetLabel": "Board sheet {v:sheetLength}×{v:sheetWidth} [m²]",
-  "cuttingNote": "Carcass = all columns with the same carcass name, depth {r:carcass.depth}, back {r:carcass.wallGap} from the wall; interior = width − 2 × {t:carcass}; adjustable shelf = interior − 2 × {r:shelf.clearance}, depth − {r:shelf.setback}; fixed shelf = interior × full depth; back {m:back} = carcass − 2 × {r:back.inset} (none in the island); fronts = module − 4 gaps (left, right, top, bottom); back strip = {r:frame.depth} × frame length; drawer bottom = interior − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, back = interior − {r:drawers.back.inset}; inner drawer back {r:drawers.inner.back} high. ABS edging on front edges only.",
+  "cuttingNote": "Columns: Length = the longer side, Width = the shorter (fronts: height × width, as the front maker needs them); rows sorted by element, longest first. ABS per piece = how many long and short edges of one piece get ABS, as the board supplier marks them; ABS total = their length × qty. Where each ABS edge faces (front, bottom, left … seen from the room) is in the Assembly tab. Saw cuts = (length + width) × qty: the length the board supplier saws, which the Panel cutting item prices – each part needs about one cut along its length and one across, its other two edges are shared with the next part or the sheet edge. Carcass = all columns with the same carcass name, depth {r:carcass.depth}, back {r:carcass.wallGap} from the wall; interior = width − 2 × {t:carcass}; adjustable shelf = interior − 2 × {r:shelf.clearance}, depth − {r:shelf.setback}; fixed shelf = interior × full depth; back {m:back} = carcass − 2 × {r:back.inset}; fronts = module − 4 gaps (left, right, top, bottom); back strip = {r:frame.depth} × frame length; drawer bottom = interior − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, back = interior − {r:drawers.back.inset}; inner drawer back {r:drawers.inner.back} high. ABS on carcass parts: the edge seen from the front (sides: the long front edge; bottoms, tops, shelves, front rails: the front edge); rails on edge: the bottom edge; rear rails, back strips, backs and drawer parts: none. Panels: lacquered on both faces only, ABS on the sides set in data.js (abs). Lacquer: fronts all round, frames both faces + the front edge, plinth both faces – no ABS on them; the plinth and island back panel edges are painted on site (waterproof).",
   "qtyWords": {
    "q:legs": "number of legs"
   }
@@ -212,11 +204,11 @@
  "blocks": [
   {
    "id": "front",
-   "title": "FRONTS – {m:cabinet}, shaker, lacquered (front maker)",
+   "title": "FRONTS – {m:cabinet}, shaker, lacquered all round: both faces and all edges (front maker)",
    "columns": [
     "Function",
-    "Width",
     "Height",
+    "Width",
     "Qty"
    ],
    "rows": [],
@@ -225,11 +217,11 @@
   },
   {
    "id": "bar",
-   "title": "FRAMES – {m:frame} on edge, {r:frame.depth} deep, lacquered like the fronts: edge + both faces",
+   "title": "FRAMES – {m:frame} on edge, {r:frame.depth} deep, lacquered on both faces and the front edge",
    "columns": [
     "Element",
-    "Width / depth",
     "Length",
+    "Width",
     "Qty"
    ],
    "rows": [],
@@ -238,11 +230,11 @@
   },
   {
    "id": "plinth",
-   "title": "PLINTH – {m:plinth}, moisture-resistant, lacquered like the fronts",
+   "title": "PLINTH – {m:plinth}, moisture-resistant, lacquered on both faces; edges painted on site (waterproof)",
    "columns": [
     "Element",
-    "Height",
     "Length",
+    "Width",
     "Qty"
    ],
    "rows": [],
@@ -251,11 +243,11 @@
   },
   {
    "id": "panel",
-   "title": "PANELS – {m:panel} laid flat, lacquered on both faces (L corner, island back)",
+   "title": "PANELS – {m:panel} laid flat, lacquered on both faces only; L corner: ABS on the edges seen; island back: edges painted on site",
    "columns": [
     "Element",
+    "Length",
     "Width",
-    "Height",
     "Qty"
    ],
    "rows": [],
@@ -263,25 +255,12 @@
    "parts": "panels"
   },
   {
-   "id": "plaster",
-   "title": "PLASTERBOARD – GKBI 12.5 on CD60 / UD27 profiles, {r:plasterboard.depth} deep (group 2 soffit and wall stub)",
-   "columns": [
-    "Element",
-    "Width",
-    "Length",
-    "Qty"
-   ],
-   "rows": [],
-   "live": true,
-   "parts": "plaster"
-  },
-  {
    "id": "carcass",
    "title": "CARCASSES – {m:carcass}, cut + ABS 0.8 front edge (incl. back strips, pull-out shelves)",
    "columns": [
     "Element",
+    "Length",
     "Width",
-    "Height / depth",
     "Qty"
    ],
    "rows": [],
@@ -293,8 +272,8 @@
    "title": "DRAWERS – {m:drawerBox} (TANDEMBOX bottoms and backs, incl. inner drawers; hob separation panel)",
    "columns": [
     "Element",
+    "Length",
     "Width",
-    "Depth / height",
     "Qty"
    ],
    "rows": [],
@@ -306,13 +285,26 @@
    "title": "BACKS – {m:back} (only behind cabinet doors; none behind drawers or appliances)",
    "columns": [
     "Element",
+    "Length",
     "Width",
-    "Height",
     "Qty"
    ],
    "rows": [],
    "live": true,
    "parts": "back"
+  },
+  {
+   "id": "plaster",
+   "title": "PLASTERBOARD – GKBI 12.5 on CD60 / UD27 profiles, {r:plasterboard.depth} deep (group 2 soffit and wall stub)",
+   "columns": [
+    "Element",
+    "Length",
+    "Width",
+    "Qty"
+   ],
+   "rows": [],
+   "live": true,
+   "parts": "plaster"
   }
  ],
  "categories": [
@@ -334,7 +326,7 @@
     {
      "id": "i2",
      "name": "Frames on edge: {m:frame}",
-     "spec": "{r:frame.depth} deep; lacquered on the edge and both faces",
+     "spec": "{r:frame.depth} deep; lacquered on both faces and the front edge",
      "qty": "={bar.m2}",
      "unit": "m²",
      "price": 500,
@@ -347,7 +339,7 @@
     {
      "id": "i3",
      "name": "Plinth: {m:plinth}",
-     "spec": "{m:plinth}, moisture-resistant, lacquered like the fronts",
+     "spec": "{m:plinth}, moisture-resistant, lacquered on both faces; edges painted on site",
      "qty": "={plinth.m2}",
      "unit": "m²",
      "price": 500,
@@ -360,7 +352,7 @@
     {
      "id": "i4",
      "name": "Panels laid flat: {m:panel}",
-     "spec": "lacquered on both faces; L corner (80, 36), island back panel",
+     "spec": "lacquered on both faces only (edges: ABS, item below in Carcasses); L corner, island back panel",
      "qty": "={panel.m2}",
      "unit": "m²",
      "price": 500,
@@ -368,6 +360,18 @@
      "refs": [
       "17",
       "25"
+     ]
+    },
+    {
+     "id": "i58",
+     "name": "Waterproof paint for the cut edges, colour of the fronts",
+     "spec": "plinth and island back panel edges, painted by the owner (small tin + brush)",
+     "qty": 1,
+     "unit": "set",
+     "price": 80,
+     "source": "est.",
+     "refs": [
+      "17"
      ]
     }
    ]
@@ -410,7 +414,7 @@
     {
      "id": "i8",
      "name": "Panel cutting",
-     "spec": "{m:carcass} + {m:drawerBox}",
+     "spec": "saw cuts of {m:carcass} + {m:drawerBox}, per the Cutting list",
      "qty": "={carcass.cut}+{drawerBox.cut}",
      "unit": "lm",
      "price": 3,
@@ -420,12 +424,24 @@
     {
      "id": "i9",
      "name": "ABS 0.8 edge banding, dark grey",
-     "spec": "front edges + {v:edgeAllowance|%}",
+     "spec": "carcass edges per the ABS total of the Cutting list + {v:edgeAllowance|%}",
      "qty": "={carcass.edge}*(1+{v:edgeAllowance})",
      "unit": "lm",
      "price": 4.5,
      "source": "est., including the service",
      "refs": []
+    },
+    {
+     "id": "i57",
+     "name": "ABS edge banding for the panels, colour of {m:panel}",
+     "spec": "panel edges per the ABS total of the Cutting list + {v:edgeAllowance|%}",
+     "qty": "={panel.edge}*(1+{v:edgeAllowance})",
+     "unit": "lm",
+     "price": 4.5,
+     "source": "est., as the carcass edging",
+     "refs": [
+      "8"
+     ]
     }
    ]
   },
@@ -924,8 +940,8 @@
   },
   {
    "no": "8",
-   "topic": "Frames on edge, panels flat",
-   "description": "Frames: {m:frame} on edge, {r:frame.depth} deep, lacquered on the edge and both faces (lacquer adds about 0.5). Panels: {m:panel} laid flat, lacquered on both faces (L corner of group 1 and group 2). The group 2 panel covers the end of the group 1 panel, so there is no gap in the corner.",
+   "topic": "Frames on edge, panels flat – lacquer",
+   "description": "Fronts: lacquered all round. Frames: {m:frame} on edge, {r:frame.depth} deep, lacquered on both faces and the front edge (lacquer adds about 0.5). Panels: {m:panel} laid flat, lacquered on both faces only – the edges seen get ABS in the panel colour (data.js abs, sides seen from the room: the 80 panel on its left, long edge; the 36 panel none); the island back panel edges are painted on site. The group 2 panel covers the end of the group 1 panel, so there is no gap in the corner.",
    "assumed": "",
    "decide": ""
   },
@@ -991,14 +1007,14 @@
   {
    "no": "17",
    "topic": "Lacquer: fronts, frames, panels, plinth",
-   "description": "Lacquered by the front maker: fronts {p:i1} PLN/m² (supplier quote, October 2026). Frames {p:i2}, panels {p:i4} and plinth {p:i3} PLN/m² are estimates at the front price; the maker may charge a minimum area per piece. The plinth is moisture-resistant MDF – say so when ordering.",
+   "description": "Lacquered by the front maker: fronts {p:i1} PLN/m² (supplier quote, October 2026), all round. Frames {p:i2} (both faces + front edge), panels {p:i4} ({m:panel}, both faces only) and plinth {p:i3} PLN/m² (both faces only) are estimates at the front price; the maker may charge a minimum area per piece. The plinth is moisture-resistant MDF – say so when ordering. Edges of the plinth and the island back panel are not lacquered: the owner paints them with a waterproof product ({p:i58} PLN).",
    "assumed": "",
    "decide": ""
   },
   {
    "no": "18",
    "topic": "{m:carcass} – {q:i5} sheets",
-   "description": "{carcass.m2} m² + {waste|%} waste on sheets of {sheet} m² → {q:i5} sheets (a nesting of the Cutting list also fits on {q:i5}).",
+   "description": "{carcass.m2} m² + {waste|%} waste on sheets of {sheet} m² → {q:i5} sheets.",
    "assumed": "",
    "decide": ""
   },
@@ -1086,6 +1102,17 @@ const fmt = (v, digits = 2) => (Number.isFinite(v) ? v.toLocaleString('en-GB', {
 const fmtQty = v => (Number.isInteger(v) ? v.toLocaleString('en-GB') : fmt(v, 2));
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const colRange = (col, span) => 'col ' + col + (span > 1 ? '–' + (col + span - 1) : '');
+// ABS edges of one part, e.g. "bottom 80 + left 720"; their total length in mm
+const edgeText = edges => (edges || []).map(([side, length]) => side + ' ' + length).join(' + ');
+const edgeLength = edges => (edges || []).reduce((sum, [, length]) => sum + length, 0);
+// ABS of one piece as the board supplier marks it: how many long and short edges, e.g. "1 long + 1 short" (row: [name, length, width, …, edges])
+const edgeCount = row => {
+  const edges = row[5] || [], long = edges.filter(([, length]) => length === row[1]).length, short = edges.length - long;
+  return [long ? long + ' long' : '', short ? short + ' short' : ''].filter(Boolean).join(' + ');
+};
+// cut-list rows [name, a, b, qty, where, edges]: the longer side first, sorted by name, then longest first
+const longFirst = rows => rows.map(r => (r[1] >= r[2] ? r : [r[0], r[2], r[1], ...r.slice(3)]));
+const sortRows = rows => rows.sort((x, y) => x[0].localeCompare(y[0]) || y[1] - x[1] || y[2] - x[2]);
 
 /* ---------- 1. model: parts from engine.js (data.js); every block is calculated, nothing typed in ---------- */
 let model = null;
@@ -1101,8 +1128,9 @@ function blockRows(parts) {
   // where a part goes: carcass name, else group + column (G1/4 = group 1, column 4)
   const carcassName = Object.fromEntries(model.carcasses.map(K => [K.id, K.name]));
   const where = p => (p.carcassId ? carcassName[p.carcassId] : 'G' + p.group + (p.item ? '/' + p.item.col : p.col ? '/' + p.col : ''));
-  const list = parts => KE.cutList(parts.map(p => ({ ...p, at: where(p) })));
-  if (parts === 'front') return list(model.fronts.map(f => ({ ...f, name: frontFunction(f), a: round1(f.width), b: round1(f.height) })));
+  const list = parts => sortRows(longFirst(KE.cutList(parts.map(p => ({ ...p, at: where(p) })))));
+  // fronts: height × width, as the front maker needs them
+  if (parts === 'front') return sortRows(KE.cutList(model.fronts.map(f => ({ ...f, name: frontFunction(f), a: round1(f.height), b: round1(f.width), at: where(f) }))));
   if (parts === 'frames') return list(model.frames);
   if (parts === 'plinths') return list(model.plinths.map(p => ({ ...p, name: 'Plinth' })));
   if (parts === 'panels') return list(model.panels);
@@ -1127,14 +1155,16 @@ function applyProject(project) {
 // assembly: all parts of one carcass together (boards, fronts, drawers, hardware), then the parts without a carcass per group
 function renderAssembly() {
   const lines = rows => rows.map(t => '<br>– ' + esc(t)).join('');
-  const partList = boards => KE.cutList(boards).map(([name, a, b, qty]) => (qty > 1 ? qty + ' × ' : '') + name + ' ' + a + ' × ' + b);
+  const withEdges = edges => (edges && edges.length ? ' (ABS ' + edgeText(edges) + ')' : '');
+  const partList = boards => sortRows(longFirst(KE.cutList(boards))).map(([name, a, b, qty, , edges]) => (qty > 1 ? qty + ' × ' : '') + name + ' ' + a + ' × ' + b + withEdges(edges));
+  const size = (a, b) => Math.max(a, b) + ' × ' + Math.min(a, b); // the longer side first, as in the Cutting list
   const section = (title, rows) => (rows.length ? '<br><b>' + esc(title) + '</b>' + lines(rows) : '');
 
   const cards = model.carcasses.map(K => {
     const boards = model.boards.filter(b => b.carcassId === K.id), fronts = model.fronts.filter(f => f.carcassId === K.id);
     const pins = boards.filter(b => b.id === 'adjustableShelf').length * model.rules.shelf.pins;
     const hinges = fronts.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
-    const frontLines = fronts.map(f => frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.hinges ? ', ' + f.hinges.length + ' hinges, side ' + f.hingeSide : '') + (f.handle ? ', handle ' + f.handle : ''));
+    const frontLines = fronts.map(f => frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.hinges ? ', ' + f.hinges.length + ' hinges, side ' + f.hingeSide : '') + (f.handle ? ', handle ' + f.handle : ''));
     const drawerLines = fronts.filter(f => f.drawer).map(f => f.drawer.size + ' drawer box' + (f.drawer.bins ? ' with waste bins' : '') + (f.drawer.inner ? ' + inner drawer M' : ''));
     const hardware = [
       K.legs ? K.legs + ' legs' : '',
@@ -1152,12 +1182,12 @@ function renderAssembly() {
   const where = p => 'G' + p.group + '/' + (p.item ? p.item.col : p.col || '');
   const loose = {};
   const add = (group, text) => (loose[group] = loose[group] || []).push(text);
-  model.fronts.filter(f => !f.carcassId).forEach(f => add(f.group, where(f) + ' – ' + frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.handle ? ', handle ' + f.handle : '')));
-  model.frames.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
-  model.panels.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
-  model.boards.filter(b => !b.carcassId).forEach(b => add(b.group, (b.col ? where(b) : 'G' + b.group) + ' – ' + b.name + ' ' + b.a + ' × ' + b.b + ' (' + model.materials[b.material].label + ')'));
-  model.plinths.forEach(p => add(p.group, where(p) + ' – Plinth ' + p.a + ' × ' + p.b));
-  model.plaster.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + p.a + ' × ' + p.b));
+  model.fronts.filter(f => !f.carcassId).forEach(f => add(f.group, where(f) + ' – ' + frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.handle ? ', handle ' + f.handle : '')));
+  model.frames.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + size(p.a, p.b)));
+  model.panels.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + size(p.a, p.b) + withEdges(p.edges)));
+  model.boards.filter(b => !b.carcassId).forEach(b => add(b.group, (b.col ? where(b) : 'G' + b.group) + ' – ' + b.name + ' ' + size(b.a, b.b) + ' (' + model.materials[b.material].label + ')'));
+  model.plinths.forEach(p => add(p.group, where(p) + ' – Plinth ' + size(p.a, p.b)));
+  model.plaster.forEach(p => add(p.group, where(p) + ' – ' + p.name + ' ' + size(p.a, p.b)));
   const columnOf = text => Number((/^G\d+\/(\d+)/.exec(text) || [, 0])[1]);
   const looseCards = Object.keys(loose).sort().map(group => {
     const sorted = loose[group].map((text, i) => [columnOf(text), i, text]).sort((x, y) => x[0] - y[0] || x[1] - y[1]).map(x => x[2]);
@@ -1191,12 +1221,12 @@ function blockTotals() {
   const totals = {};
   for (const block of COST.blocks) {
     const t = { m2: 0, edge: 0, cut: 0, len: 0, qty: 0, rows: [] };
-    const edging = SETTINGS.edgeBlocks[block.id], cutting = SETTINGS.cutBlocks.includes(block.id);
+    const cutting = SETTINGS.cutBlocks.includes(block.id);
     block.rows.forEach((row, i) => {
       const [A, B, qty] = values.blocks[block.id][i].map(Number);
       const m2 = (A * B * qty) / 1e6;
-      // edging along side A or B (settings.edgeBlocks: per block, per element name)
-      const edge = edging ? (((edging.rows[row[0]] || edging.along) === 'B' ? B : A) * qty) / 1000 : null;
+      // ABS edges from engine.js (row[5]); none on parts with lacquered edges
+      const edge = row[5] && row[5].length ? (edgeLength(row[5]) * qty) / 1000 : null;
       const cut = cutting ? ((A + B) * qty) / 1000 : null;
       t.m2 += m2;
       t.len += (B * qty) / 1000;
@@ -1308,17 +1338,18 @@ function renderEstimate() {
 function renderCuttingList() {
   const totals = blockTotals(), html = [];
   for (const block of COST.blocks) {
-    html.push(`<tr class="blk"><td colspan="8">${esc(fill(block.title))}</td></tr>`);
-    html.push(`<tr class="bh"><td>${block.columns.map(esc).join('</td><td>')}</td><td>m²</td><td>ABS edging [lm]</td><td>Cutting [lm]</td><td title="carcass name, else G group / column">Where</td></tr>`);
+    html.push(`<tr class="blk"><td colspan="9">${esc(fill(block.title))}</td></tr>`);
+    const [label, size1, size2, qtyLabel] = block.columns.map(esc); // m² right after the size
+    html.push(`<tr class="bh"><td>${label}</td><td>${size1}</td><td>${size2}</td><td>m²</td><td>${qtyLabel}</td><td>ABS per piece</td><td>ABS total [lm]</td><td>Saw cuts [lm]</td><td title="carcass name, else G group / column">Where</td></tr>`);
     block.rows.forEach((row, i) => {
       const current = values.blocks[block.id][i], original = defaults.blocks[block.id][i], t = totals[block.id].rows[i];
       const cell = field => block.live
         ? `<td class="num" title="Calculated by engine.js from data.js – change the design in design.html">${current[field]}</td>`
         : `<td class="num"><input type="number" step="1" data-block="${block.id}" data-row="${i}" data-field="${field}" value="${current[field]}" class="${current[field] != original[field] ? 'changed' : ''}"></td>`;
-      html.push(`<tr><td>${esc(row[0])}</td>${cell(0)}${cell(1)}${cell(2)}<td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="where">${esc(row[4] || '')}</td></tr>`);
+      html.push(`<tr><td>${esc(row[0])}</td>${cell(0)}${cell(1)}<td class="num">${fmt(t.m2, 3)}</td>${cell(2)}<td>${esc(edgeCount(row))}</td><td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="where">${esc(row[4] || '')}</td></tr>`);
     });
-    const t = totals[block.id], hasEdging = !!SETTINGS.edgeBlocks[block.id], hasCutting = SETTINGS.cutBlocks.includes(block.id);
-    html.push(`<tr class="sum"><td>Total</td><td></td><td></td><td class="num">${t.qty}</td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${hasEdging ? fmt(t.edge) : ''}</td><td class="num">${hasCutting ? fmt(t.cut) : ''}</td><td></td></tr>`);
+    const t = totals[block.id], hasEdging = t.rows.some(r => r.edge != null), hasCutting = SETTINGS.cutBlocks.includes(block.id);
+    html.push(`<tr class="sum"><td>Total</td><td></td><td></td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.qty}</td><td></td><td class="num">${hasEdging ? fmt(t.edge) : ''}</td><td class="num">${hasCutting ? fmt(t.cut) : ''}</td><td></td></tr>`);
   }
   document.getElementById('cuttingBody').innerHTML = html.join('');
 }
@@ -1411,20 +1442,19 @@ function buildWorkbook() {
   const blockTotalRow = {};
   for (const block of COST.blocks) {
     cutting.push([str(fill(block.title))]);
-    cutting.push([...block.columns.map(str), str('m²'), str('ABS edging [lm]'), str('Cutting [lm]'), str('Where')]);
+    const [labelCell, sizeCell1, sizeCell2, qtyCell] = block.columns.map(str);
+    cutting.push([labelCell, sizeCell1, sizeCell2, str('m²'), qtyCell, str('ABS per piece'), str('ABS total [lm]'), str('Saw cuts [lm]'), str('Where')]);
     const first = cutting.length + 1;
     block.rows.forEach((row, i) => {
       const [A, B, qty] = values.blocks[block.id][i].map(Number), r = cutting.length + 1, t = result.totals[block.id].rows[i];
-      const line = [str(row[0]), num(A), num(B), num(qty), formula(`B${r}*C${r}*D${r}/1000000`, t.m2)];
-      const edging = SETTINGS.edgeBlocks[block.id];
-      if (edging) line.push(formula(`${(edging.rows[row[0]] || edging.along) === 'B' ? 'C' : 'B'}${r}*D${r}/1000`, t.edge));
-      else line.push(str(''));
-      line.push(SETTINGS.cutBlocks.includes(block.id) ? formula(`(B${r}+C${r})*D${r}/1000`, t.cut) : str(''));
+      const line = [str(row[0]), num(A), num(B), formula(`B${r}*C${r}*E${r}/1000000`, t.m2), num(qty), str(edgeCount(row))];
+      line.push(t.edge != null ? formula(`${edgeLength(row[5])}*E${r}/1000`, t.edge) : str(''));
+      line.push(SETTINGS.cutBlocks.includes(block.id) ? formula(`(B${r}+C${r})*E${r}/1000`, t.cut) : str(''));
       line.push(str(row[4] || ''));
       cutting.push(line);
     });
     const last = cutting.length, totalRow = last + 1, T = result.totals[block.id];
-    cutting.push([str('Total'), str(''), str(''), formula(`SUM(D${first}:D${last})`, T.qty), formula(`SUM(E${first}:E${last})`, T.m2), formula(`SUM(F${first}:F${last})`, T.edge), formula(`SUM(G${first}:G${last})`, T.cut)]);
+    cutting.push([str('Total'), str(''), str(''), formula(`SUM(D${first}:D${last})`, T.m2), formula(`SUM(E${first}:E${last})`, T.qty), str(''), formula(`SUM(G${first}:G${last})`, T.edge), formula(`SUM(H${first}:H${last})`, T.cut)]);
     blockTotalRow[block.id] = totalRow;
     cutting.push([]);
   }
@@ -1449,7 +1479,7 @@ function buildWorkbook() {
   // quantity formula of this page -> Excel formula: item quantities and cutting-list totals as cell references, the rest as values
   const toExcel = expr => expr.replace(/^=/, '')
     .replace(/\{q:(\w+)\}/g, (_, id) => `D${itemRow[id]}`)
-    .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, block, total) => `'Cutting list'!$${{ m2: 'E', edge: 'F', cut: 'G' }[total]}$${blockTotalRow[block]}`)
+    .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, block, total) => `'Cutting list'!$${{ m2: 'D', edge: 'G', cut: 'H' }[total]}$${blockTotalRow[block]}`)
     .replace('{waste}', '$C$3')
     .replace('{sheet}', '$C$4')
     .replace(/\{([^}|]+)\}/g, (_, key) => String(Number(placeholder(key, result.totals, result.quantities))));
@@ -1501,11 +1531,11 @@ function buildWorkbook() {
   }
   estimateSheet['C3'].z = '0%';
   estimateSheet['F' + (furnitureRow + 2)].z = '0%';
-  const cuttingSheet = sheet(cutting, [40, 10, 10, 8, 10, 15, 12]);
+  const cuttingSheet = sheet(cutting, [40, 10, 10, 10, 8, 26, 15, 12, 30]);
   for (let r = 1; r <= cutting.length; r++) {
-    const e = cuttingSheet['E' + r];
+    const e = cuttingSheet['D' + r];
     if (e && e.f) e.z = '0.000';
-    ['F', 'G'].forEach(c => {
+    ['G', 'H'].forEach(c => {
       const x = cuttingSheet[c + r];
       if (x && x.f) x.z = '0.00';
     });

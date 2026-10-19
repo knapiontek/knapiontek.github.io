@@ -2,7 +2,9 @@
    Coordinates in mm per group: u along the group, v up from the floor, n out from the wall; a box is [u0, u1, v0, v1, n0, n1].
    data.columns: column widths per group, integer mm.
    data.components: g group, c first column, s column span, h height, tags (one type + features), k carcass name,
-   hd handle (T | B | L | R), hg hinge side of a door (L | R), gaps [left, right, top, bottom] on fronts, note. */
+   hd handle (T | B | L | R), hg hinge side of a door (L | R), gaps [left, right, top, bottom] on fronts,
+   abs ABS-edged sides of a panel (T B L R), note.
+   ABS: carcass boards get it on the edge seen from the front (parts that are hidden get none); panels on their abs sides. */
 (function (root) {
   'use strict';
 
@@ -24,6 +26,7 @@
   const PART_RULES = { carcass: 'carcass.material', back: 'back.material', drawerBox: 'drawers.material', hobPanel: 'rails.hobPanelMaterial' };
   const HANDLE_POSITIONS = ['T', 'B', 'L', 'R']; // top, bottom, left, right; "" = no handle
   const HINGE_SIDES = ['L', 'R']; // left, right; doors and fridge doors only
+  const EDGE_NAMES = { T: 'top', B: 'bottom', L: 'left', R: 'right' }; // ABS sides of a panel (data.js abs)
 
   function parseTags(text) {
     const tags = String(text ?? '').toLowerCase().split(/[\s,]+/).filter(Boolean);
@@ -116,6 +119,7 @@
       carcassName: String(c.k || '').trim(),
       handle: c.hd || '',
       hinge: c.hg || '',
+      abs: String(c.abs || '').toUpperCase().split(/[\s,]+/).filter(Boolean),
       gaps: Array.isArray(c.gaps) ? c.gaps.map(x => (x === '' || x == null ? NaN : Number(x))) : null, // an empty gap is not 0
       note: c.note || ''
     };
@@ -194,6 +198,8 @@
       if (parsed.unknown.length) warn(`${at}: unknown tag ${parsed.unknown.join(', ')} (known: ${[...TYPE_TAGS, ...FEATURE_TAGS].join(', ')}).`, index);
       if (piece.handle && !FRONT_TYPES.includes(piece.type)) warn(`${at}: a ${piece.type} cannot have a handle.`, index);
       else if (piece.handle && !HANDLE_POSITIONS.includes(piece.handle)) warn(`${at}: handle "${piece.handle}" must be one of ${HANDLE_POSITIONS.join(', ')}.`, index);
+      if (piece.abs.length && piece.type !== 'panel') warn(`${at}: ABS sides (abs) are set on panels only.`, index);
+      else if (piece.abs.some(x => !EDGE_NAMES[x])) warn(`${at}: ABS sides "${c.abs}" must be T, B, L or R.`, index);
       pieces.push(piece);
     });
 
@@ -280,32 +286,35 @@
       const width = u1 - u0, height = v1 - v0;
       const innerU0 = u0 + board, innerU1 = u1 - board, innerWidth = width - 2 * board;
       const carcassMaterial = materialFor.carcass;
-      // id: kind of board, the same for all sizes (used for colours and counts on the pages)
-      const part = (id, name, a, b, material, layer, box) => addBoard({ id, name, a, b, material, layer, group: K.group, carcassId: K.id, box });
+      // id: kind of board, the same for all sizes (used for colours and counts on the pages); edges: ABS edges [[side, length]]
+      const part = (id, name, a, b, material, layer, box, edges = []) => addBoard({ id, name, a, b, material, layer, group: K.group, carcassId: K.id, box, edges });
+      const front = length => [['front', length]];
 
-      part('side', 'Side', carcassDepth, height, carcassMaterial, 'carcasses', [u0, innerU0, v0, v1, carcassBack, carcassFront]);
-      part('side', 'Side', carcassDepth, height, carcassMaterial, 'carcasses', [innerU1, u1, v0, v1, carcassBack, carcassFront]);
-      part('bottom', 'Bottom panel', innerWidth, carcassDepth, carcassMaterial, 'carcasses', [innerU0, innerU1, v0, v0 + board, carcassBack, carcassFront]);
+      part('side', 'Side', carcassDepth, height, carcassMaterial, 'carcasses', [u0, innerU0, v0, v1, carcassBack, carcassFront], front(height));
+      part('side', 'Side', carcassDepth, height, carcassMaterial, 'carcasses', [innerU1, u1, v0, v1, carcassBack, carcassFront], front(height));
+      part('bottom', 'Bottom panel', innerWidth, carcassDepth, carcassMaterial, 'carcasses', [innerU0, innerU1, v0, v0 + board, carcassBack, carcassFront], front(innerWidth));
       const railName = 'Top rail ' + rails.depth;
+      // a rail on edge shows its bottom edge when the drawer below is open; a rear rail is hidden
+      const bottomEdge = [['bottom', innerWidth]];
       if (K.base) {
         if (K.sink) {
           // under the sink the rails stand on edge to clear the bowl
-          part('rail', railName, innerWidth, rails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - rails.depth, v1, carcassFront - board, carcassFront]);
-          part('rail', railName, innerWidth, rails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - rails.depth, v1, carcassBack, carcassBack + board]);
+          part('rail', railName + ' front, on edge', innerWidth, rails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - rails.depth, v1, carcassFront - board, carcassFront], bottomEdge);
+          part('rail', railName + ' back, on edge', innerWidth, rails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - rails.depth, v1, carcassBack, carcassBack + board]);
         } else if (K.hob) {
           // under the hob: front rail on edge (hobFront high), rear rail on edge, separation panel below the front rail, air gap at the back
-          part('rail', 'Top rail ' + rails.hobFront + ' (front, on edge)', innerWidth, rails.hobFront, carcassMaterial, 'carcasses',
-            [innerU0, innerU1, v1 - rails.hobFront, v1, carcassFront - board, carcassFront]);
-          part('rail', railName, innerWidth, rails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - rails.depth, v1, carcassBack, carcassBack + board]);
+          part('rail', 'Top rail ' + rails.hobFront + ' front, on edge', innerWidth, rails.hobFront, carcassMaterial, 'carcasses',
+            [innerU0, innerU1, v1 - rails.hobFront, v1, carcassFront - board, carcassFront], bottomEdge);
+          part('rail', railName + ' back, on edge', innerWidth, rails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - rails.depth, v1, carcassBack, carcassBack + board]);
           part('hobPanel', 'Hob separation panel', innerWidth, carcassDepth - 2 * board - rails.hobPanelGap, materialFor.hobPanel, 'carcasses',
             [innerU0, innerU1, v1 - rails.hobFront, v1 - rails.hobFront + thickness.hobPanel, carcassBack + board + rails.hobPanelGap, carcassFront - board]);
         } else {
           // two flat top rails, front and back
-          part('rail', railName, innerWidth, rails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassFront - rails.depth, carcassFront]);
-          part('rail', railName, innerWidth, rails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassBack, carcassBack + rails.depth]);
+          part('rail', railName + ' front', innerWidth, rails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassFront - rails.depth, carcassFront], front(innerWidth));
+          part('rail', railName + ' back', innerWidth, rails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassBack, carcassBack + rails.depth]);
         }
       } else {
-        part('top', 'Top panel', innerWidth, carcassDepth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassBack, carcassFront]);
+        part('top', 'Top panel', innerWidth, carcassDepth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassBack, carcassFront], front(innerWidth));
       }
 
       // back only behind cabinet doors: not behind drawers, fixed (dummy) fronts or appliances (oven, micro, fridge, freezer);
@@ -329,14 +338,14 @@
       if (!K.base && !K.fridge) {
         for (let i = 1; i < K.boxes.length; i++) {
           const joint = K.boxes[i].v0;
-          part('fixedShelf', 'Fixed shelf', innerWidth, carcassDepth, carcassMaterial, 'shelves', [innerU0, innerU1, joint - half, joint + half, carcassBack, carcassFront]);
+          part('fixedShelf', 'Fixed shelf', innerWidth, carcassDepth, carcassMaterial, 'shelves', [innerU0, innerU1, joint - half, joint + half, carcassBack, carcassFront], front(innerWidth));
           counts.shelvesFixed++;
         }
       }
 
       const adjustableShelf = centre => {
         part('adjustableShelf', 'Adjustable shelf', innerWidth - 2 * shelf.clearance, carcassDepth - shelf.setback, carcassMaterial, 'shelves',
-          [innerU0 + shelf.clearance, innerU1 - shelf.clearance, centre - half, centre + half, carcassBack, carcassFront - shelf.setback]);
+          [innerU0 + shelf.clearance, innerU1 - shelf.clearance, centre - half, centre + half, carcassBack, carcassFront - shelf.setback], front(innerWidth - 2 * shelf.clearance));
         counts.shelvesAdjustable++;
         counts.shelfPins += shelf.pins;
       };
@@ -344,7 +353,7 @@
       if (K.coffee) {
         const pullOut = rules.pullOutShelf, y = v0 + board + pullOut.lift;
         part('pullOutShelf', 'Pull-out shelf', innerWidth - 2 * pullOut.clearance, pullOut.depth, carcassMaterial, 'shelves',
-          [innerU0 + pullOut.clearance, innerU1 - pullOut.clearance, y, y + board, carcassFront - pullOut.depth, carcassFront]);
+          [innerU0 + pullOut.clearance, innerU1 - pullOut.clearance, y, y + board, carcassFront - pullOut.depth, carcassFront], front(innerWidth - 2 * pullOut.clearance));
         counts.pullOutShelves++;
         // shelves above the machine: the first one pullOut.space above the pull-out shelf, the rest evenly up to the top
         const lo = y + board + pullOut.space, hi = v1 - board;
@@ -376,11 +385,12 @@
           if (!item.carcassName) {
             addBoard({
               id: 'backStrip', name: 'Back strip ' + frameRule.depth, a: frameRule.depth, b: Math.max(width, height), material: materialFor.carcass, layer: 'carcasses',
-              group: G.group, col: item.col, box: [u0, u1, v0, v1, carcassBack, carcassBack + frameRule.depth], strip: true
+              group: G.group, col: item.col, box: [u0, u1, v0, v1, carcassBack, carcassBack + frameRule.depth], strip: true, edges: [] // hidden behind its frame
             });
           }
         } else if (item.type === 'panel') {
-          panels.push({ group: G.group, item, material: materialFor.panel, name: 'Panel ' + thickness.panel, a: width, b: height, box: [u0, u1, v0, v1, frontFace - thickness.panel, frontFace] });
+          const edges = item.abs.filter(x => EDGE_NAMES[x]).map(x => [EDGE_NAMES[x], x === 'T' || x === 'B' ? width : height]);
+          panels.push({ group: G.group, item, material: materialFor.panel, name: 'Panel ' + thickness.panel, a: width, b: height, box: [u0, u1, v0, v1, frontFace - thickness.panel, frontFace], edges });
         } else if (item.type === 'plinth') {
           plinths.push({ group: G.group, item, material: materialFor.plinth, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - thickness.plinth, plinthFace] });
           counts.plinthHeight = Math.max(counts.plinthHeight, height);
@@ -414,14 +424,14 @@
       counts['worktop:' + G.group] = depth;
     }
 
-    // ---- island back panel: MDF like the fronts, between the end columns, floor to the carcass tops ----
+    // ---- island back panel: in the panel material, between the end columns, floor to the carcass tops ----
     for (const g of islandGroups) {
       const G = groups[g];
       if (!G) continue;
       const firstWidth = G.widths[0] || 0, lastWidth = G.widths[G.widths.length - 1] || 0;
       const top = Math.max(0, ...carcasses.filter(K => K.group === G.group).map(K => K.v1));
       panels.push({
-        group: G.group, material: materialFor.panel, name: 'Island back panel ' + thickness.panel, a: G.length - firstWidth - lastWidth, b: top,
+        group: G.group, material: materialFor.panel, name: 'Island back panel ' + thickness.panel, a: G.length - firstWidth - lastWidth, b: top, edges: [],
         box: [firstWidth, G.length - lastWidth, 0, top, carcassBack - thickness.panel, carcassBack]
       });
     }
@@ -544,20 +554,21 @@
     return JSON.stringify(value);
   }
 
-  // parts with the same name and size counted together: [name, a, b, qty, where], where = "at" labels, e.g. "K2, K5 ×2"
+  // parts with the same name, size and ABS edges counted together: [name, a, b, qty, where, edges],
+  // where = "at" labels, e.g. "K2, K5 ×2"; edges = ABS edges of one part [[side, length]]
   function cutList(parts) {
     const rows = new Map();
     for (const p of parts) {
-      const key = p.name + '|' + p.a + '|' + p.b;
+      const key = p.name + '|' + p.a + '|' + p.b + '|' + JSON.stringify(p.edges || []);
       const row = rows.get(key) || { qty: 0, at: new Map() };
       row.qty++;
       if (p.at) row.at.set(p.at, (row.at.get(p.at) || 0) + 1);
       rows.set(key, row);
     }
     return [...rows].map(([key, row]) => {
-      const [name, a, b] = key.split('|');
+      const [name, a, b, edges] = key.split('|');
       const where = [...row.at].map(([label, n]) => (n > 1 ? label + ' ×' + n : label)).join(', ');
-      return [name, Number(a), Number(b), row.qty, where];
+      return [name, Number(a), Number(b), row.qty, where, JSON.parse(edges)];
     });
   }
 
@@ -590,7 +601,7 @@
   }
 
   root.KitchenEngine = {
-    TYPE_TAGS, FEATURE_TAGS, FRONT_TYPES, BOX_TYPES, HANDLE_POSITIONS, HINGE_SIDES,
+    TYPE_TAGS, FEATURE_TAGS, FRONT_TYPES, BOX_TYPES, HANDLE_POSITIONS, HINGE_SIDES, EDGE_NAMES,
     BOARD_TYPES, PART_RULES, TAG_TYPES, checkMaterials, parseTags, build, cutList, carcassMap, mapJSON,
     load, dataJS, fromDataJS
   };
