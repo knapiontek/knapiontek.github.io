@@ -446,6 +446,10 @@
         if (hinged && !HINGE_SIDES.includes(item.hinge)) warn(`Group ${G.group} col ${item.col}: a door needs a hinge side ${HINGE_SIDES.join(' or ')}.`, item.index);
         if (hinged && item.hinge === item.handle) warn(`Group ${G.group} col ${item.col}: hinge and handle on the same side.`, item.index);
         if (!hinged && item.hinge) warn(`Group ${G.group} col ${item.col}: only doors have a hinge side.`, item.index);
+        // hinges are screwed to a carcass side: on the hinge side the door must reach the carcass edge
+        if (hinged && K && HINGE_SIDES.includes(item.hinge) && (item.hinge === 'L' ? item.u0 !== K.u0 : item.u1 !== K.u1)) {
+          warn(`Group ${G.group} col ${item.col}: hinge side ${item.hinge} has no side of carcass ${K.name} to fix the hinges to.`, item.index);
+        }
         const front = {
           id: fronts.length + 1, group: G.group, item, carcassId: K ? K.id : null, opening, tags: item.tags, gaps: item.gaps,
           ...box, width: box.u1 - box.u0, height: box.v1 - box.v0, handle: item.handle, hingeSide: hinged ? item.hinge : '', material: materialFor[item.type]

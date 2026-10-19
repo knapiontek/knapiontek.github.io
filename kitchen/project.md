@@ -54,7 +54,7 @@ Plain JSON after `window.KITCHEN_DATA =`, written so a person can read and edit 
 ### engine.js
 Deterministic: the same project gives the same model.
 - `build(project)` returns the model: carcasses, boards, fronts, frames, panels, plinths, worktops, plasterboard, counts, thicknesses, `materialFor` (type or part → material code) and `warnings`.
-- Checks the data and reports problems as warnings instead of failing: one type per component, tags allowed on their type, every board type in one material, sizes matching their material, hinge and handle sides ...
+- Checks the data and reports problems as warnings instead of failing: one type per component, tags allowed on their type, every board type in one material, sizes matching their material, hinge and handle sides, a carcass side behind each hinge side ...
 - Coordinates per group: `u` along the group, `v` up from the floor, `n` out from the wall; a box is `[u0, u1, v0, v1, n0, n1]`.
 
 ### design.html

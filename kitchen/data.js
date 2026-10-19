@@ -76,7 +76,7 @@ window.KITCHEN_DATA = {
   {"g": 1, "c": 7, "s": 1, "tags": "drawer sink bins", "k": "K2", "h": 420, "hd": "T", "gaps": [3, 3, 1.5, 0]},
   {"g": 1, "c": 7, "s": 1, "tags": "dummy sink", "k": "K2", "h": 300, "hd": "T", "gaps": [3, 3, 3, 1.5]},
   {"g": 1, "c": 8, "s": 1, "tags": "frame", "h": 720},
-  {"g": 1, "c": 9, "s": 1, "tags": "cabinet", "k": "K3", "h": 720, "hd": "T", "hg": "R", "gaps": [3, 3, 3, 0]},
+  {"g": 1, "c": 9, "s": 1, "tags": "cabinet", "k": "K3", "h": 720, "hd": "T", "hg": "L", "gaps": [3, 3, 3, 0]},
   {"g": 1, "c": 10, "s": 1, "tags": "panel", "k": "K3", "h": 720},
   {"g": 1, "c": 11, "s": 1, "tags": "filler", "k": "K3", "h": 720, "note": "hidden in the L corner"},
 

@@ -289,8 +289,8 @@ body.shut .toggle{display:flex}
    "appliance": {"inset": 12, "bodyGap": 12, "bodySide": 22},
    "plinthGrille": {"width": 500, "bottom": 20, "top": 80}
  },
- "room": {"about": "The room from the notes / measurements, mm. x along the window wall from the start of Group 1, z out from the window wall, y up. The groups are placed into it.",
-   "rightWall": 3372, "ceiling": 2740, "leftEnd": -900, "floorDepth": 4200, "wallThickness": 300, "rightWallLength": 3600},
+ "room": {"about": "The room, mm: ceiling measured, the other sizes rounded to whole metres. x along the window wall from the start of Group 1, z out from the window wall, y up. The right wall is where group 2 stands (runs.B.x).",
+   "ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallLength": 4000},
  "window": {"x": 870, "width": 1900, "sill": 1080, "height": 1300, "reveal": 150, "finish": "anthracite"},
  "sink": {"outer": [780, 500], "outerFromWall": 40, "bowl": [680, 380], "bowlFromWall": 130, "rim": 8, "wall": 10, "bowlDepth": 200, "tapFromWall": 85, "trapTop": 575, "wallOutlet": 470},
  "hob": {"glass": [590, 520], "glassFromWall": 39, "body": [556, 486], "bodyFromWall": 56, "builtInHeight": 44},
@@ -358,7 +358,7 @@ const { carcass: board, plinth: plinthThickness, splash: splashThickness, frame:
 const fittings = SCENE.fittings;
 const shakerRail = rules.front.shakerRail; // width of the shaker frame of a front
 const handleAxis = fittings.handleAxis; // handle axis from the front edge
-const room = SCENE.room, rightWall = room.rightWall, ceiling = room.ceiling;
+const room = SCENE.room, rightWall = SCENE.runs.B.x, ceiling = room.ceiling; // group 2 stands against the right wall
 const worktopOf = group => model.worktops[group] || { n0: 0, n1: 0, depth: 0 }; // n0 back edge, n1 front edge
 const sinkCarcass = model.carcasses.find(K => K.sink); // its worktop gets the sink cut-out
 const sinkRun = sinkCarcass ? runOfGroup[sinkCarcass.group] : null;

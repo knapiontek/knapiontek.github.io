@@ -20,7 +20,7 @@ Files: `data.js` (design + rules) → `engine.js` (parts, data checks, writes da
 | Plinth | face `plinth.setback` behind the fronts |
 | Frame / panel | frame on edge, `frame.depth` deep, back strip when not in a carcass; panel laid flat in the front plane |
 | Shelves | adjustable: depth − `shelf.setback`, `shelf.clearance` each side, `shelf.pins` pins; count by door height (`shelf.perDoor`); fixed shelf at the joint of 2 boxes (not in base carcasses) |
-| Hinges | doors only; `hinges.fromEnd` from the ends; count by door height (`hinges.perDoor`); side from the data (`hg` L / R), required on doors and fridge doors, never on the side of the handle |
+| Hinges | doors only; `hinges.fromEnd` from the ends; count by door height (`hinges.perDoor`); side from the data (`hg` L / R), required on doors and fridge doors, never on the side of the handle, and only on a side where the door reaches a carcass side (the hinges are screwed to it) |
 | Drawers | front ≥ `drawers.dFrom` → D, else M; lift `drawers.liftAtBottom` at the bottom, `drawers.liftAbove` above |
 | Plasterboard | `plasterboard.depth` deep, studs every `plasterboard.studSpacing`, `plasterboard.layers` layers; corner bead and T seal along each box; 3-5 mm gap to the furniture |
 
@@ -43,7 +43,7 @@ Types: filler (void), board (plasterboard), plinth, worktop, splash, panel, fram
 
 ## 3. Checks
 
-- Data (engine, shown on all three pages): every board type in exactly one material, every part rule names a material, each with a thickness; a tag only on its types; a worktop height (end: width) and a frame's narrow side match the thickness of their material; hinge and handle not on the same side; exactly one type, unknown tags; group has columns; inside the columns, no overlap; only fronts have a handle, handle T / B / L / R; fronts need 4 gaps; boxes need a carcass name (not a dishwasher); one carcass name per group; worktop needs a group role and a depth; worktop shorter than carcass + front + overhang. A component without one type, outside its group or overlapping is left out of the model.
+- Data (engine, shown on all three pages): every board type in exactly one material, every part rule names a material, each with a thickness; a tag only on its types; a worktop height (end: width) and a frame's narrow side match the thickness of their material; hinge and handle not on the same side; a hinge side needs a carcass side behind it; exactly one type, unknown tags; group has columns; inside the columns, no overlap; only fronts have a handle, handle T / B / L / R; fronts need 4 gaps; boxes need a carcass name (not a dishwasher); one carcass name per group; worktop needs a group role and a depth; worktop shorter than carcass + front + overhang. A component without one type, outside its group or overlapping is left out of the model.
 - Design table cells: group, column, span ≥ 1, height ≥ 0, gaps ≥ 0, numbers.
 - View: overlap > 0.01 mm; gap 0.01 ≤ gap ≤ 3 mm; front tops / bottoms 0.01-20 mm apart (off the line, all groups); nothing behind the wall (free-standing groups excepted) or in front of the carcass / plinth.
 

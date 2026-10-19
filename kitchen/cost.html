@@ -478,7 +478,7 @@
     {
      "id": "i36",
      "name": "TANDEMBOX antaro inner drawer M (83) NL 500 BLUMOTION",
-     "spec": "for cutlery, behind the top drawer front; metal inner front Z31L cut to LW − 132",
+     "spec": "for cutlery, behind the top drawer front; metal inner front Z31L cut to LW − {r:drawers.inner.frontDeduction}",
      "qty": "={n:innerDrawers}",
      "unit": "set",
      "price": 330,
@@ -961,7 +961,7 @@
   {
    "no": "13",
    "topic": "Sink unit – bottom drawer with waste-sorting bins",
-   "description": "Bottom drawer: D drawer, front per the Cutting list, with a 3-bin waste-sorting set. Requires a space-saving trap: flat trap body against the back wall, outlet above the drawer (D box with gallery rails up to ≈ 420 above the floor, bins ≈ 400). Top front 300: fixed dummy front.",
+   "description": "Bottom drawer: D drawer, front per the Cutting list, with a 3-bin waste-sorting set. Requires a space-saving trap: flat trap body against the back wall, outlet above the drawer box (D box, {r:drawers.D.side} sides). Top front: fixed dummy front.",
    "assumed": "waste-sorting set {p:i38} PLN, space-saving trap {p:i39} PLN; no hinges on the sink fronts.",
    "decide": "wall drain at approx. 450 or more above the floor."
   },
@@ -975,14 +975,14 @@
   {
    "no": "15",
    "topic": "Inner cutlery drawers (island)",
-   "description": "Island top drawers: Blum TANDEMBOX antaro inner drawer M (83), NL 500, BLUMOTION, own runners on the carcass sides, behind the top front; closing the top drawer closes it. Inner front: Blum Z31L cut to LW − 132. Bottom and back in the Cutting list ({m:drawerBox}; back height per Blum – confirm in the Blum configurator). Hob unit: no inner drawer (no space under the hob).",
+   "description": "Island top drawers: Blum TANDEMBOX antaro inner drawer M (83), NL 500, BLUMOTION, own runners on the carcass sides, behind the top front; closing the top drawer closes it. Inner front: Blum Z31L cut to LW − {r:drawers.inner.frontDeduction}. Bottom and back in the Cutting list ({m:drawerBox}; back height per Blum – confirm in the Blum configurator). Hob unit: no inner drawer (no space under the hob).",
    "assumed": "{n:innerDrawers} inner drawer sets + {n:innerDrawers} cutlery inserts.",
    "decide": ""
   },
   {
    "no": "16",
    "topic": "Front sizes",
-   "description": "Front = module − 4 gaps (left, right, top, bottom), all set per front in the design. Joints between fronts 2 + 2; fronts on the plinth: bottom 0; the upper corner cabinet on the worktop: bottom 4, so the door clears the worktop when opening.",
+   "description": "Front = module − 4 gaps (left, right, top, bottom), all set per front in data.js; the values are in the data.js note \"Front gaps\". The corner wall cabinet on the worktop has a larger bottom gap, so the door clears the worktop when opening.",
    "assumed": "fronts priced from the calculated m².",
    "decide": ""
   },
