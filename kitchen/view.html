@@ -1192,11 +1192,11 @@ function buildFront(run, item) {
       innerMover.label = 'Inner drawer M (' + rules.drawers.M.side + ') for cutlery · inner front ' + (innerU1 - innerU0 - rules.drawers.inner.frontDeduction);
     }
   } else if (opening === 'dishwasher') {
-    const P = runLayer[run].dishwasher, { u0, u1 } = item;
-    openFrontBox(P, u0 + 4, u1 - 4, 15, fv1 - 6, carcassBack + 8, carcassFront - 24, 2, MAT.steel); // tub
-    dishRack(P, u0 + 30, u1 - 30, 95, 235, carcassBack + 40, carcassFront - 50);
-    dishRack(P, u0 + 30, u1 - 30, 430, 560, carcassBack + 40, carcassFront - 50);
-    localBox(P, (u0 + u1) / 2 - 200, (u0 + u1) / 2 + 200, 78, 86, (carcassBack + carcassFront) / 2 - 25, (carcassBack + carcassFront) / 2 + 25, MAT.steel);
+    const P = runLayer[run].dishwasher, { u0, u1 } = item, t0 = fv0, t1 = fv1 - 6; // tub above the plinth, under the door top
+    openFrontBox(P, u0 + 4, u1 - 4, t0, t1, carcassBack + 8, carcassFront - 24, 2, MAT.steel); // tub
+    dishRack(P, u0 + 30, u1 - 30, t0 + 80, t0 + 220, carcassBack + 40, carcassFront - 50);
+    dishRack(P, u0 + 30, u1 - 30, t1 - 380, t1 - 250, carcassBack + 40, carcassFront - 50);
+    localBox(P, (u0 + u1) / 2 - 200, (u0 + u1) / 2 + 200, t0 + 63, t0 + 71, (carcassBack + carcassFront) / 2 - 25, (carcassBack + carcassFront) / 2 + 25, MAT.steel); // spray arm
     localBox(mover.layers.dishwasher, u0 + 6, u1 - 6, fv0 + 4, fv1 - 10, carcassFront - 22, carcassFront, MAT.steel); // appliance door
     localBox(mover.layers.dishwasher, u0 + 6, u1 - 6, fv1 - 10, fv1 - 4, carcassFront - 22, carcassFront, MAT.glassBlack); // control strip
     mover.label = 'Dishwasher · front ' + size + ' on the appliance door';
