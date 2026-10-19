@@ -264,6 +264,7 @@
           font: 13px ui-monospace, Menlo, Consolas, monospace; }
         .picker label { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
         .picker label:hover { background: var(--sheet-row-hover); }
+        .picker label.disabled { opacity: 0.4; cursor: default; }
         .picker .picker-title { grid-column: 1 / -1; font: 600 11px system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--sheet-text-muted); padding: 6px 6px 2px; }
     
         td.col-actions { width: 56px; text-align: center; padding: 0 !important; white-space: nowrap; }
@@ -329,7 +330,7 @@
               <template x-for="(row, idx) in columns" :key="row.id">
                 <tr :class="{'is-invalid': build.columnFlags[idx] === 'invalid', 'is-empty-row': build.columnFlags[idx] === 'empty'}">
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
-                  <td><input type="text" class="cell" spellcheck="false" title="mm, or a part: front, worktop ..." x-model="row.width"></td>
+                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.width"></td>
                   <td class="col-actions">
                     <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertColumnRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeColumnRow(idx)">×</button>
                   </td>
@@ -352,6 +353,7 @@
                 <th style="width:70px" title="Carcass name: components with the same name are one carcass (empty = no carcass)">Carcass</th>
                 <th style="width:70px">Height</th>
                 <th style="width:84px" title="Handle position on the front">Handle</th>
+                <th style="width:84px" title="Hinge side of a door">Hinge</th>
                 <th style="width:46px" title="Front gap left (mm)">Gap L</th>
                 <th style="width:46px" title="Front gap right (mm)">Gap R</th>
                 <th style="width:46px" title="Front gap top (mm)">Gap T</th>
@@ -368,9 +370,12 @@
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.span"></td>
                   <td><button type="button" class="pick-btn" :class="{empty: !row.tags}" @click="openPicker(row, $event)" x-text="row.tags || '—'"></button></td>
                   <td><input type="text" class="cell" spellcheck="false" placeholder="—" x-model="row.carcass"></td>
-                  <td><input type="text" class="cell" spellcheck="false" title="mm, or a part: front, worktop ..." x-model="row.height"></td>
+                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.height"></td>
                   <td>
                     <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Handle position" @click="openPicker(row, $event, 'handle')" x-text="row.handle ? HANDLE_NAMES[row.handle] || row.handle : ''"></button></template>
+                  </td>
+                  <td>
+                    <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Hinge side of a door" @click="openPicker(row, $event, 'hinge')" x-text="row.hinge ? HANDLE_NAMES[row.hinge] : ''"></button></template>
                   </td>
                   <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapLeft" @wheel="$event.target.blur()"></td>
                   <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapRight" @wheel="$event.target.blur()"></td>
@@ -389,14 +394,14 @@
     </div>
   </div>
 
-  <!-- ONE picker popup for a component row: either the handle or the tags (fixed position, so the table scroll cannot clip it) -->
-  <div class="picker" :class="{'one-col': picker.mode === 'handle'}" x-show="picker.row" x-cloak :style="`left:${picker.x}px; top:${picker.y}px`"
+  <!-- ONE picker popup for a component row: the tags, the handle or the hinge (fixed position, so the table scroll cannot clip it) -->
+  <div class="picker" :class="{'one-col': picker.mode !== 'tags'}" x-show="picker.row" x-cloak :style="`left:${picker.x}px; top:${picker.y}px`"
        @click.outside="if (!$event.target.closest('.pick-btn')) picker.row = null" @keydown.escape.window="picker.row = null">
-    <template x-if="picker.row && picker.mode === 'handle'">
+    <template x-if="picker.row && picker.mode !== 'tags'">
       <div class="picker-list">
-        <div class="picker-title">handle</div>
-        <template x-for="h in HANDLE_POSITIONS" :key="h || 'none'">
-          <label><input type="radio" name="handle-pos" :checked="(picker.row.handle || '') === h" @change="picker.row.handle = h; picker.row = null"> <span x-text="HANDLE_NAMES[h]"></span></label>
+        <div class="picker-title" x-text="picker.mode"></div>
+        <template x-for="h in (picker.mode === 'handle' ? HANDLE_POSITIONS : HINGE_SIDES)" :key="h || 'none'">
+          <label :class="{disabled: h && fightsHandle(picker.row, picker.mode, h)}"><input type="radio" name="side-pick" :disabled="h && fightsHandle(picker.row, picker.mode, h)" :checked="(picker.row[picker.mode] || '') === h" @change="picker.row[picker.mode] = h; picker.row = null"> <span x-text="HANDLE_NAMES[h]"></span></label>
         </template>
       </div>
     </template>
@@ -523,6 +528,7 @@ const CONFIG = JSON.parse(document.getElementById('design-config').textContent);
 const TYPE_TAGS = KE.TYPE_TAGS, FEATURE_TAGS = KE.FEATURE_TAGS, FRONT_TYPES = KE.FRONT_TYPES, parseTags = KE.parseTags;
 const HANDLE_POSITIONS = ['', ...KE.HANDLE_POSITIONS];
 const HANDLE_NAMES = { '': 'none', T: 'top', B: 'bottom', L: 'left', R: 'right' };
+const HINGE_SIDES = ['', ...KE.HINGE_SIDES];
 
 /* ---------- 2. utilities (nothing kitchen-specific) ---------- */
 function isRowEmpty(...values) {
@@ -532,15 +538,6 @@ function isRowEmpty(...values) {
 function escapeAttr(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-
-// a size cell: mm, or the name of a part with a material (rules.front, rules.worktop ...); NaN when it is neither
-function toSize(value) {
-  const s = String(value ?? '').trim();
-  const rules = (loadedProject && loadedProject.rules) || {};
-  if (/^[a-z]+$/i.test(s)) return rules[s] && rules[s].material ? s : NaN;
-  return s === '' ? NaN : Number(s);
-}
-const isSize = v => typeof v === 'string' || (Number.isFinite(v) && v >= 0);
 
 function toNum(value, isInt) {
   const s = String(value ?? '').trim();
@@ -566,7 +563,7 @@ let loadedProject = null; // keeps the rules, which this page does not edit
 function componentRow(c) {
   const gaps = Array.isArray(c.gaps) ? c.gaps : ['', '', '', ''];
   return {
-    group: c.g, col: c.c, span: c.s, tags: c.tags, carcass: c.k || '', height: c.h, handle: c.hd ?? '',
+    group: c.g, col: c.c, span: c.s, tags: c.tags, carcass: c.k || '', height: c.h, handle: c.hd ?? '', hinge: c.hg ?? '',
     gapLeft: gaps[0], gapRight: gaps[1], gapTop: gaps[2], gapBottom: gaps[3], note: c.note || ''
   };
 }
@@ -574,7 +571,12 @@ function componentRow(c) {
 // component table row -> data.js component (short keys, in the order data.js uses); gaps on fronts only
 function dataComponent(row) {
   const parsed = parseTags(row.tags);
-  const c = { g: Number(row.group), c: Number(row.col), s: Number(row.span), tags: parsed.tags.join(' '), k: String(row.carcass ?? '').trim(), h: toSize(row.height), hd: row.handle || '' };
+  const c = { g: Number(row.group), c: Number(row.col), s: Number(row.span), tags: parsed.tags.join(' ') }; // empty fields are left out
+  const carcass = String(row.carcass ?? '').trim();
+  if (carcass) c.k = carcass;
+  c.h = toNum(row.height, true);
+  if (row.handle) c.hd = row.handle;
+  if (row.hinge) c.hg = row.hinge;
   const gaps = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
   if (FRONT_TYPES.includes(parsed.type) && !isRowEmpty(...gaps)) c.gaps = gaps.map(Number);
   if (String(row.note ?? '').trim()) c.note = String(row.note).trim();
@@ -588,10 +590,10 @@ function readTables(columnRows, componentRows, noteRows) {
   const columns = {};
   columnRows.forEach((row, idx) => {
     if (isRowEmpty(row.group, row.width)) { columnFlags[idx] = 'empty'; return; }
-    const group = toNum(row.group, true), width = toSize(row.width);
-    if (!Number.isFinite(group) || group < 1 || !isSize(width)) {
+    const group = toNum(row.group, true), width = toNum(row.width, true);
+    if (!Number.isFinite(group) || group < 1 || !Number.isFinite(width) || width < 0) {
       columnFlags[idx] = 'invalid';
-      warnings.push(`Groups & Columns row ${idx + 1}: Group must be ≥1 and Width mm ≥0 or a part (front, worktop ...).`);
+      warnings.push(`Groups & Columns row ${idx + 1}: Group must be ≥1 and Width mm ≥0.`);
       return;
     }
     (columns[group] || (columns[group] = [])).push(width);
@@ -600,12 +602,12 @@ function readTables(columnRows, componentRows, noteRows) {
   componentRows.forEach((row, idx) => {
     if (isRowEmpty(row.group, row.col, row.span, row.height)) { componentFlags[idx] = 'empty'; return; }
     const numbers = [toNum(row.group, true), toNum(row.col, true), toNum(row.span, true)];
-    const height = toSize(row.height);
+    const height = toNum(row.height, true);
     const gapCells = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
     const gaps = isRowEmpty(...gapCells) ? [] : gapCells.map(v => toNum(v, false));
-    if (numbers.some(n => !Number.isFinite(n) || n < 1) || !isSize(height) || gaps.some(g => !Number.isFinite(g) || g < 0)) {
+    if (numbers.some(n => !Number.isFinite(n) || n < 1) || !Number.isFinite(height) || height < 0 || gaps.some(g => !Number.isFinite(g) || g < 0)) {
       componentFlags[idx] = 'invalid';
-      warnings.push(`Components row ${idx + 1}: Group/Col/Span ≥1, Height mm ≥0 or a part (front, worktop ...), all 4 gaps ≥0 required.`);
+      warnings.push(`Components row ${idx + 1}: Group/Col/Span ≥1, Height mm ≥0, all 4 gaps ≥0 required.`);
       return;
     }
     components.push(dataComponent(row));
@@ -775,6 +777,7 @@ document.addEventListener('alpine:init', () => {
     FEATURE_TAGS,
     HANDLE_NAMES,
     HANDLE_POSITIONS,
+    HINGE_SIDES,
     isRowEmpty,
     _statusTimer: null,
 
@@ -824,7 +827,7 @@ document.addEventListener('alpine:init', () => {
     },
     newComponentRow(fields = {}) {
       return {
-        id: this.nextId++, group: '', col: '', span: '', tags: '', carcass: '', height: '', handle: '',
+        id: this.nextId++, group: '', col: '', span: '', tags: '', carcass: '', height: '', handle: '', hinge: '',
         gapLeft: '', gapRight: '', gapTop: '', gapBottom: '', note: '', ...fields
       };
     },
@@ -879,19 +882,23 @@ document.addEventListener('alpine:init', () => {
     hasFeature(row, feature) {
       return parseTags(row.tags).features.includes(feature);
     },
+    // the hinge and a side handle never on the same side
+    fightsHandle(row, mode, side) {
+      return mode === 'hinge' ? row.handle === side : mode === 'handle' && row.hinge === side;
+    },
     isFront(row) {
       return FRONT_TYPES.includes(this.typeOf(row));
     },
     writeTags(row, type, features) {
       row.tags = [type, ...FEATURE_TAGS.filter(f => features.includes(f))].filter(Boolean).join(' ');
     },
-    // a handle and gaps belong to fronts only
+    // a handle, a hinge and gaps belong to fronts only
     setType(row, type) {
       this.writeTags(row, type, parseTags(row.tags).features);
       if (!FRONT_TYPES.includes(type)) {
-        row.handle = '';
+        row.handle = row.hinge = '';
         row.gapLeft = row.gapRight = row.gapTop = row.gapBottom = '';
-        if (this.picker.mode === 'handle') this.picker.row = null;
+        if (this.picker.mode !== 'tags') this.picker.row = null;
       }
     },
     toggleFeature(row, feature) {
@@ -903,7 +910,7 @@ document.addEventListener('alpine:init', () => {
     openPicker(row, event, mode = 'tags') {
       if (this.picker.row === row && this.picker.mode === mode) { this.picker.row = null; return; }
       const r = event.currentTarget.getBoundingClientRect();
-      const popupHeight = mode === 'handle' ? 190 : 330;
+      const popupHeight = mode === 'tags' ? 330 : mode === 'handle' ? 190 : 120;
       this.picker = {
         row, mode,
         x: Math.min(r.left, window.innerWidth - 260),

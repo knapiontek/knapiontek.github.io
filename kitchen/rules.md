@@ -9,7 +9,7 @@ Files: `data.js` (design + rules) → `engine.js` (parts, data checks, writes da
 |---|---|
 | Materials | `materials`: name, thickness, colour of each board. Every part names its material (`carcass`, `front`, `plinth`, `back`, `drawers`, `rails.hobPanelMaterial`, `splash`, `worktop`), so each thickness is set once |
 | Stacking | components stack bottom-up in each column, in list order; columns give the widths |
-| Sizes | a column width or component height is mm, or a part name (`front`, `worktop` ...) = the thickness of its material |
+| Sizes | column widths and component heights are integer mm |
 | Carcass | same carcass name = one carcass over all its columns; `carcass.depth` deep, back `carcass.wallGap` from the wall |
 | Back | only behind cabinet doors, one piece per run of doors, `back.inset` in from the carcass; none behind drawers, fixed fronts or appliances |
 | Front | module − its 4 gaps (left, right, top, bottom) from the data; shaker frame `front.shakerRail` wide |
@@ -20,7 +20,7 @@ Files: `data.js` (design + rules) → `engine.js` (parts, data checks, writes da
 | Plinth | plinth material, face `plinth.setback` behind the fronts |
 | Frame / panel | frame on edge, `frame.depth` deep, back strip when not in a carcass; panel laid flat in the front plane |
 | Shelves | adjustable: depth − `shelf.setback`, `shelf.clearance` each side, `shelf.pins` pins; count by door height (`shelf.perDoor`); fixed shelf at the joint of 2 boxes (not in base carcasses) |
-| Hinges | doors only; `hinges.fromEnd` from the ends; count by door height (`hinges.perDoor`); side R when a cabinet in the column has handle L |
+| Hinges | doors only; `hinges.fromEnd` from the ends; count by door height (`hinges.perDoor`); side from the data (`hg` L / R), required on doors and fridge doors, never on the side of the handle |
 | Drawers | front ≥ `drawers.dFrom` → D, else M; lift `drawers.liftAtBottom` at the bottom, `drawers.liftAbove` above |
 | Plasterboard | `plasterboard.depth` deep, studs every `plasterboard.studSpacing`, `plasterboard.layers` layers; corner bead and T seal along each box; 3-5 mm gap to the furniture |
 

@@ -1,8 +1,8 @@
 /* engine.js - builds the kitchen model from data.js for design.html, cost.html and view.html. No drawing, no project numbers.
    Coordinates in mm per group: u along the group, v up from the floor, n out from the wall; a box is [u0, u1, v0, v1, n0, n1].
-   A column width or a component height is mm, or the name of a part with a material ("front", "worktop" ...): its thickness.
+   data.columns: column widths per group, integer mm.
    data.components: g group, c first column, s column span, h height, tags (one type + features), k carcass name,
-   hd handle (T | B | L | R), gaps [left, right, top, bottom] on fronts, note. */
+   hd handle (T | B | L | R), hg hinge side of a door (L | R), gaps [left, right, top, bottom] on fronts, note. */
 (function (root) {
   'use strict';
 
@@ -15,6 +15,7 @@
   const FRONT_TYPES = ['cabinet', 'drawer', 'dummy'];
   const BOX_TYPES = ['cabinet', 'drawer', 'dummy', 'oven', 'micro'];
   const HANDLE_POSITIONS = ['T', 'B', 'L', 'R']; // top, bottom, left, right; "" = no handle
+  const HINGE_SIDES = ['L', 'R']; // left, right; doors and fridge doors only
 
   function parseTags(text) {
     const tags = String(text ?? '').toLowerCase().split(/[\s,]+/).filter(Boolean);
@@ -93,19 +94,20 @@
     return { u0: item.u0 + left, u1: item.u1 - right, v0: item.v0 + bottom, v1: item.v1 - top };
   }
 
-  // data.js component -> item fields; sizeOf turns a size (mm or a part name) into mm
-  function readComponent(c, index, sizeOf) {
+  // data.js component -> item fields
+  function readComponent(c, index) {
     const parsed = parseTags(c.tags);
     return {
       index,
       group: +c.g,
       col: +c.c,
       span: +c.s,
-      height: sizeOf(c.h),
+      height: c.h,
       type: parsed.type || '',
       tags: parsed.tags,
       carcassName: String(c.k || '').trim(),
       handle: c.hd || '',
+      hinge: c.hg || '',
       gaps: Array.isArray(c.gaps) ? c.gaps.map(x => (x === '' || x == null ? NaN : Number(x))) : null, // an empty gap is not 0
       note: c.note || ''
     };
@@ -120,9 +122,6 @@
       back: thicknessOf(rules.back.material), drawer: thicknessOf(rules.drawers.material), hobPanel: thicknessOf(rules.rails.hobPanelMaterial),
       splash: thicknessOf(rules.splash.material), worktop: thicknessOf(rules.worktop.material)
     };
-    // a size in the data: mm, or a part name (rules[name].material) for the thickness of that part
-    const isPart = name => !!(rules[name] && rules.materials[rules[name].material]);
-    const sizeOf = v => (typeof v === 'string' && isPart(v) ? thicknessOf(rules[v].material) : typeof v === 'number' ? v : NaN);
     // label of each material: name + thickness, e.g. "Chipboard dark grey 18"
     const materials = Object.fromEntries(Object.entries(rules.materials).map(([code, m]) => [code, { ...m, label: m.name + ' ' + m.thickness }]));
     const board = thickness.carcass, frontThickness = thickness.front, carcassDepth = rules.carcass.depth;
@@ -158,9 +157,9 @@
     // ---- components ----
     const columns = P.columns || {}, pieces = [];
     (P.components || []).forEach((c, index) => {
-      const piece = readComponent(c, index, sizeOf), parsed = parseTags(c.tags), at = `Group ${c.g} col ${c.c}`;
+      const piece = readComponent(c, index), parsed = parseTags(c.tags), at = `Group ${c.g} col ${c.c}`;
       if (!(String(c.g) in columns)) return warn(`${at}: group ${c.g} has no columns - skipped.`, index, true);
-      if (!Number.isFinite(piece.height)) return warn(`${at}: height "${c.h}" must be mm or a part with a material - skipped.`, index, true);
+      if (!Number.isInteger(piece.height)) return warn(`${at}: height "${c.h}" must be an integer mm - skipped.`, index, true);
       if (!piece.type) {
         return warn(`${at}: tags need exactly one type: ${TYPE_TAGS.join(', ')}${parsed.types.length ? ' (found ' + parsed.types.join(' + ') + ')' : ''} - skipped.`, index, true);
       }
@@ -172,8 +171,8 @@
 
     // ---- groups ----
     for (const [g, columnWidths] of Object.entries(columns)) {
-      const widths = columnWidths.map(sizeOf);
-      widths.forEach((w, i) => { if (!Number.isFinite(w)) warn(`Group ${g} column ${i + 1}: width "${columnWidths[i]}" must be mm or a part with a material.`); });
+      const widths = columnWidths;
+      widths.forEach((w, i) => { if (!Number.isInteger(w)) warn(`Group ${g} column ${i + 1}: width "${w}" must be an integer mm.`); });
       const stacked = stack(widths, pieces.filter(p => String(p.group) === g));
       for (const { piece, why } of stacked.skipped) {
         warn(`Group ${g} col ${piece.col}: ${piece.type} ${why === 'overlap' ? 'overlaps another component' : 'is outside the columns'} - skipped.`, piece.index, true);
@@ -408,11 +407,13 @@
           : hasTag(item, 'dishwasher') ? 'dishwasher'
           : hasTag(item, 'fridge', 'freezer') ? 'fridge'
           : 'door';
-        // hinges on the side away from a side handle; every door of one column opens the same way
-        const hingeSide = G.items.some(x => x.col === item.col && x.span === item.span && x.type === 'cabinet' && x.handle === 'L') ? 'R' : 'L';
+        const hinged = opening === 'door' || opening === 'fridge';
+        if (hinged && !HINGE_SIDES.includes(item.hinge)) warn(`Group ${G.group} col ${item.col}: a door needs a hinge side ${HINGE_SIDES.join(' or ')}.`, item.index);
+        if (hinged && item.hinge === item.handle) warn(`Group ${G.group} col ${item.col}: hinge and handle on the same side.`, item.index);
+        if (!hinged && item.hinge) warn(`Group ${G.group} col ${item.col}: only doors have a hinge side.`, item.index);
         const front = {
-          id: fronts.length + 1, group: G.group, item, carcassId: K ? K.id : null, opening, tags: item.tags, hingeSide, gaps: item.gaps,
-          ...box, width: box.u1 - box.u0, height: box.v1 - box.v0, handle: item.handle, material: frontMaterial
+          id: fronts.length + 1, group: G.group, item, carcassId: K ? K.id : null, opening, tags: item.tags, gaps: item.gaps,
+          ...box, width: box.u1 - box.u0, height: box.v1 - box.v0, handle: item.handle, hingeSide: hinged ? item.hinge : '', material: frontMaterial
         };
         item.front = front;
         fronts.push(front);
@@ -422,7 +423,7 @@
         if (opening === 'door' && K) {
           const count = hingeRule.perDoor.find(([maxHeight]) => front.height < maxHeight)[1];
           front.hinges = Array.from({ length: count }, (_, j) => Math.round(front.v0 + hingeRule.fromEnd + ((front.height - 2 * hingeRule.fromEnd) * j) / (count - 1)));
-          front.hingeU = hingeSide === 'L' ? K.u0 + board : K.u1 - board;
+          front.hingeU = front.hingeSide === 'R' ? K.u1 - board : K.u0 + board;
           counts.hinges += count;
         }
 
@@ -550,7 +551,7 @@
   }
 
   root.KitchenEngine = {
-    TYPE_TAGS, FEATURE_TAGS, FRONT_TYPES, BOX_TYPES, HANDLE_POSITIONS,
+    TYPE_TAGS, FEATURE_TAGS, FRONT_TYPES, BOX_TYPES, HANDLE_POSITIONS, HINGE_SIDES,
     parseTags, build, cutList, carcassMap, mapJSON,
     load, dataJS, fromDataJS
   };
