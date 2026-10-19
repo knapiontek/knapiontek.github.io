@@ -6,14 +6,13 @@ window.KITCHEN_DATA = {
    "p18": {"name": "Chipboard dark grey", "thickness": 18, "color": "#4a4d51"},
    "p16": {"name": "Chipboard dark grey", "thickness": 16, "color": "#4a4d51"},
    "hdf": {"name": "HDF", "thickness": 3, "color": "#c6c8c9"},
-   "mdf": {"name": "MDF English Navy satin", "thickness": 18, "color": "#1c2744", "lacquered": true},
-   "oak18": {"name": "Laminate oak", "thickness": 18},
-   "oak38": {"name": "Laminate oak", "thickness": 38}
+   "mdf": {"name": "MDF English Navy satin", "thickness": 18, "color": "#1c2744", "lacquered": true, "types": ["plinth", "panel", "frame", "cabinet", "drawer", "dummy", "dishwasher", "fridge", "freezer"]},
+   "oak18": {"name": "Laminate oak", "thickness": 18, "types": ["splash"]},
+   "oak38": {"name": "Laminate oak", "thickness": 38, "types": ["worktop"], "depth": {"worktop": 600, "island": 900}}
   },
   "carcass": {"material": "p18", "depth": 550, "wallGap": 14},
-  "front": {"material": "mdf", "shakerRail": 50},
-  "plinth": {"material": "mdf", "setback": 70},
-  "splash": {"material": "oak18"},
+  "front": {"shakerRail": 50},
+  "plinth": {"setback": 70},
   "rails": {"depth": 100, "hobFront": 50, "hobPanelMaterial": "p16", "hobPanelGap": 20},
   "back": {"material": "hdf", "inset": 1},
   "shelf": {"setback": 20, "clearance": 1, "pins": 4, "perDoor": [[720, 1], [99999, 3]]},
@@ -23,7 +22,7 @@ window.KITCHEN_DATA = {
   "legsPerCarcass": 4,
   "island": {"backPanel": true},
   "pullOutShelf": {"depth": 500, "clearance": 5, "lift": 10, "space": 450, "shelvesAbove": 2},
-  "worktop": {"material": "oak38", "overhang": 18, "depth": {"worktop": 600, "island": 900}},
+  "worktop": {"overhang": 18},
   "plasterboard": {"depth": 600, "studSpacing": 600, "layers": 2}
  },
  "notes": [
@@ -47,7 +46,7 @@ window.KITCHEN_DATA = {
   ["Hinges", "Blum CLIP top BLUMOTION 110° + plate; cheaper: GTV soft-close", ""],
   ["Drawers", "Blum TANDEMBOX antaro NL 500", "Bottom, back: dark grey chipboard"],
   ["Sink unit", "Bottom drawer: D with waste-sorting bins; top front fixed", "Space-saving trap above the drawer (wall drain ≥ 450 above the floor)"],
-  ["Worktop", "Laminate oak", "group 1 one piece to the end of the corner carcass; waterfalls same board"],
+  ["Worktop", "Laminate oak", "group 1 one piece to the end of the corner carcass; worktop falls same board"],
   ["Corner wall cabinet", "group 2, stands half on the group 1 worktop", "Screwed to its neighbour, on supports in the wall corner"],
   ["Splash", "Laminate oak at the window, matching the worktop", ""],
   ["Plinth", "MDF lacquered like the fronts, moisture-resistant MDF (MR)", "Legs 150 with plinth clips"],
@@ -64,7 +63,7 @@ window.KITCHEN_DATA = {
   "3": [38, 18, 800, 18, 800, 18, 38]
  },
  "components": [
-  {"g": 1, "c": 1, "s": 1, "tags": "worktop end", "h": 870},
+  {"g": 1, "c": 1, "s": 1, "tags": "worktop fall", "h": 870},
   {"g": 1, "c": 1, "s": 11, "tags": "worktop", "h": 38},
   {"g": 1, "c": 1, "s": 10, "tags": "splash", "h": 172},
   {"g": 1, "c": 2, "s": 1, "tags": "frame", "h": 870},
@@ -72,7 +71,7 @@ window.KITCHEN_DATA = {
   {"g": 1, "c": 3, "s": 1, "tags": "drawer", "k": "K1", "h": 420, "hd": "T", "gaps": [3, 3, 1.5, 0]},
   {"g": 1, "c": 3, "s": 1, "tags": "drawer hob", "k": "K1", "h": 300, "hd": "T", "gaps": [3, 3, 3, 1.5], "note": "Electrolux CIT61443"},
   {"g": 1, "c": 4, "s": 1, "tags": "frame", "h": 720},
-  {"g": 1, "c": 5, "s": 1, "tags": "cabinet dishwasher", "h": 720, "hd": "T", "gaps": [3, 3, 3, 0], "note": "Bosch SMV4HVX00E"},
+  {"g": 1, "c": 5, "s": 1, "tags": "dishwasher", "h": 720, "hd": "T", "gaps": [3, 3, 3, 0], "note": "Bosch SMV4HVX00E"},
   {"g": 1, "c": 6, "s": 1, "tags": "frame", "h": 720},
   {"g": 1, "c": 7, "s": 1, "tags": "drawer sink bins", "k": "K2", "h": 420, "hd": "T", "gaps": [3, 3, 1.5, 0]},
   {"g": 1, "c": 7, "s": 1, "tags": "dummy sink", "k": "K2", "h": 300, "hd": "T", "gaps": [3, 3, 3, 1.5]},
@@ -101,8 +100,8 @@ window.KITCHEN_DATA = {
   {"g": 2, "c": 7, "s": 1, "tags": "cabinet", "k": "K8", "h": 418, "hd": "B", "hg": "L", "gaps": [3, 3, 1.5, 3]},
   {"g": 2, "c": 7, "s": 1, "tags": "cabinet", "k": "K9", "h": 480, "hd": "B", "hg": "L", "gaps": [3, 3, 3, 1.5]},
   {"g": 2, "c": 8, "s": 1, "tags": "frame", "h": 2400},
-  {"g": 2, "c": 9, "s": 1, "tags": "cabinet freezer", "k": "K10", "h": 720, "hd": "T", "hg": "R", "gaps": [3, 3, 1.5, 0], "note": "Bosch KIS86AFE0"},
-  {"g": 2, "c": 9, "s": 1, "tags": "cabinet fridge", "k": "K10", "h": 1200, "hd": "L", "hg": "R", "gaps": [3, 3, 1.5, 1.5], "note": "Bosch KIS86AFE0"},
+  {"g": 2, "c": 9, "s": 1, "tags": "freezer", "k": "K10", "h": 720, "hd": "T", "hg": "R", "gaps": [3, 3, 1.5, 0], "note": "Bosch KIS86AFE0"},
+  {"g": 2, "c": 9, "s": 1, "tags": "fridge", "k": "K10", "h": 1200, "hd": "L", "hg": "R", "gaps": [3, 3, 1.5, 1.5], "note": "Bosch KIS86AFE0"},
   {"g": 2, "c": 9, "s": 1, "tags": "cabinet", "k": "K11", "h": 480, "hd": "B", "hg": "R", "gaps": [3, 3, 3, 1.5]},
   {"g": 2, "c": 10, "s": 1, "tags": "frame", "h": 2400},
   {"g": 2, "c": 11, "s": 1, "tags": "cabinet", "k": "K12", "h": 720, "hd": "T", "hg": "R", "gaps": [3, 3, 1.5, 0]},
@@ -111,7 +110,7 @@ window.KITCHEN_DATA = {
   {"g": 2, "c": 12, "s": 1, "tags": "frame", "h": 2550},
   {"g": 2, "c": 13, "s": 1, "tags": "board", "h": 2740, "note": "wall stub"},
 
-  {"g": 3, "c": 1, "s": 1, "tags": "worktop end", "h": 870},
+  {"g": 3, "c": 1, "s": 1, "tags": "worktop fall", "h": 870},
   {"g": 3, "c": 1, "s": 7, "tags": "worktop", "h": 38},
   {"g": 3, "c": 2, "s": 1, "tags": "frame", "h": 870},
   {"g": 3, "c": 3, "s": 3, "tags": "plinth", "h": 150},
@@ -121,6 +120,6 @@ window.KITCHEN_DATA = {
   {"g": 3, "c": 5, "s": 1, "tags": "drawer", "k": "K15", "h": 420, "hd": "T", "gaps": [3, 3, 1.5, 0]},
   {"g": 3, "c": 5, "s": 1, "tags": "drawer inner", "k": "K15", "h": 300, "hd": "T", "gaps": [3, 3, 3, 1.5], "note": "cutlery"},
   {"g": 3, "c": 6, "s": 1, "tags": "frame", "h": 870},
-  {"g": 3, "c": 7, "s": 1, "tags": "worktop end", "h": 870}
+  {"g": 3, "c": 7, "s": 1, "tags": "worktop fall", "h": 870}
  ]
 };

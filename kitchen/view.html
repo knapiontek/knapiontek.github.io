@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}</style>
-<title>Kitchen English Navy</title>
+<title>Kitchen</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -131,7 +131,7 @@ body.shut .toggle{display:flex}
 <div id="stage">
   <div id="loading">Loading project…</div>
   <div class="title">
-    <h1>Kitchen <span>English Navy</span></h1>
+    <h1>Kitchen <span id="frontName"></span></h1>
   </div>
 
   <button class="toggle" id="toggleSpec" aria-expanded="false" aria-controls="spec">
@@ -224,8 +224,7 @@ body.shut .toggle{display:flex}
     <div class="pane" id="p-prj" role="tabpanel" aria-labelledby="t-prj" hidden>
       <section>
         <h2>Materials</h2>
-        <ul class="mats">
-          <li><i style="background:linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)"></i><small>Worktops, waterfalls</small><b>Laminate, oak</b></li>
+        <ul class="mats" id="mats">
           <li><i style="background:radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"></i><small>Sink</small><b>Granite composite</b></li>
           <li><i style="background:linear-gradient(120deg,#c4c6c7,#b5b8ba 45%,#cfd1d2)"></i><small>Floor</small><b>Grey marble 120 × 60</b></li>
         </ul>
@@ -300,7 +299,7 @@ body.shut .toggle{display:flex}
  "coffee": {"name": "DeLonghi Dinamica", "size": [236, 348, 429]},
  "pendants": {"points": [[477.48, 2290], [1252.52, 2290]], "bottom": 1750},
  "downlights": {"points": [[1448, 402], [2440, 402], [2440, 1370], [2440, 2338]]},
- "colors": {"wall": "#f2f1ee", "pendant": "#1c2744"},
+ "colors": {"wall": "#f2f1ee"},
  "metals": {
    "brass": {"color": "#c9a063", "rough": 0.32, "metal": 0.7},
    "nickel": {"color": "#c4c4c0", "rough": 0.34, "metal": 0.55},
@@ -355,7 +354,7 @@ for (const r of RUN_IDS) {
 const hasTag = (item, ...tags) => tags.some(t => item.tags.includes(t));
 
 const { frontFace, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the wall
-const { carcass: board, front: frontThickness, plinth: plinthThickness, splash: splashThickness } = model.thickness;
+const { carcass: board, plinth: plinthThickness, splash: splashThickness, frame: frameThickness, panel: panelThickness } = model.thickness, frontThickness = model.frontThickness;
 const fittings = SCENE.fittings;
 const shakerRail = rules.front.shakerRail; // width of the shaker frame of a front
 const handleAxis = fittings.handleAxis; // handle axis from the front edge
@@ -588,7 +587,8 @@ const BOARD = Object.fromEntries(Object.entries(rules.materials).map(([code, m])
   !m.color ? MAT.oak
     : m.lacquered ? physical({ color: linear(m.color), roughness: 0.42, clearcoat: 0.2, clearcoatRoughness: 0.45, envMapIntensity: 0.7 })
     : standard({ color: linear(m.color), roughness: 0.8, envMapIntensity: 0.45 })]));
-const frontMaterial = BOARD[rules.front.material], plinthMaterial = BOARD[rules.plinth.material], splashMaterial = BOARD[rules.splash.material];
+const boardFor = use => BOARD[model.materialFor[use]]; // the material of a use (component type or part)
+const plinthMaterial = boardFor('plinth'), splashMaterial = boardFor('splash'), worktopMaterial = boardFor('worktop');
 const lamps = [], shadowLamps = [], glowMaterials = []; // lamps: on only at Night; shadowLamps: the ones that cast shadows at Night
 // bulb / LED material: bright at Night, plain off-white by day
 const glowMaterial = (hex, brightness) => {
@@ -756,7 +756,7 @@ function addHandles(P, u0, u1, v0, v1, position) {
   }
 }
 // shaker front: frame of shakerRail wide rails, recessed centre panel
-function shakerFront(P, u0, u1, v0, v1) {
+function shakerFront(P, u0, u1, v0, v1, frontMaterial) {
   const w = shakerRail, n0 = frontFace - frontThickness, n1 = frontFace;
   if (u1 - u0 <= 2 * w + 20 || v1 - v0 <= 2 * w + 20) { localBox(P, u0, u1, v0, v1, n0, n1, frontMaterial); return; }
   localBox(P, u0, u1, v1 - w, v1, n0, n1, frontMaterial);
@@ -850,7 +850,7 @@ function worktopWithSinkCutOut(v0, v1, uEnd) {
   const W = worktopOf(groupOfRun[sinkRun]);
   const a = bowlU0 - sinkWall, b = bowlU1 + sinkWall, c = bowlN0 - sinkWall, d = bowlN1 + sinkWall;
   [[0, a, W.n0, W.n1], [b, uEnd, W.n0, W.n1], [a, b, W.n0, c], [a, b, d, W.n1]]
-    .forEach(([u0, u1, n0, n1]) => { roomBox(u0, u1, v0, v1, n0, n1, MAT.oak).userData.grain = 'x'; });
+    .forEach(([u0, u1, n0, n1]) => { roomBox(u0, u1, v0, v1, n0, n1, worktopMaterial).userData.grain = 'x'; });
 }
 const stripParts = [], carcassMeshes = []; // stripParts: back strips and island back panel; carcassMeshes: every board of the carcasses
 // names the meshes of one item for the geometry check
@@ -864,14 +864,14 @@ function buildRun(run) {
     if (type === 'worktop') {
       target = roomLayer.worktops;
       if (item === sinkWorktop) { worktopWithSinkCutOut(v0, v1, u1); continue; }
-      const W = worktopOf(groupOfRun[run]), m = runBox(run, u0, u1, v0, v1, W.n0, W.n1, MAT.oak);
-      if (m && hasTag(item, 'end')) m.userData.grain = 'y'; // worktop end (waterfall): grain upright
+      const W = worktopOf(groupOfRun[run]), m = runBox(run, u0, u1, v0, v1, W.n0, W.n1, worktopMaterial);
+      if (m && hasTag(item, 'fall')) m.userData.grain = 'y'; // worktop fall: grain upright
     } else if (type === 'frame') { // on edge, frame.depth deep
       target = roomLayer.frames;
-      runBox(run, u0, u1, v0, v1, frontFace - rules.frame.depth, frontFace, frontMaterial);
+      runBox(run, u0, u1, v0, v1, frontFace - rules.frame.depth, frontFace, boardFor('frame'));
     } else if (type === 'panel') { // laid flat in the front plane
       target = roomLayer.panel;
-      runBox(run, u0, u1, v0, v1, frontFace - frontThickness, frontFace, frontMaterial);
+      runBox(run, u0, u1, v0, v1, frontFace - panelThickness, frontFace, boardFor('panel'));
     } else if (type === 'plinth') {
       target = roomLayer.plinth;
       runBox(run, u0, u1, v0, v1, plinthFace - plinthThickness, plinthFace, plinthMaterial);
@@ -1130,7 +1130,7 @@ function buildFront(run, item) {
   mover.sign = hingeSide === 'L' ? 1 : -1;
   mover.item = item;
   if (K) K.movers.push(mover);
-  shakerFront(mover.layers.fronts, fu0, fu1, fv0, fv1);
+  shakerFront(mover.layers.fronts, fu0, fu1, fv0, fv1, BOARD[front.material]);
   addHandles(mover.layers.handles, fu0, fu1, fv0, fv1, item.handle);
   const size = Math.round(fw) + ' × ' + Math.round(fh);
 
@@ -1167,7 +1167,7 @@ function buildFront(run, item) {
     runners(hardware, b0);
     if (bins) { // waste-sorting bins standing in the drawer box (the trap is a space-saver above them)
       const count = fittings.bins.count, x0 = innerU0 + 45, x1 = innerU1 - 45, binWidth = (x1 - x0 - 10 * (count - 1)) / count;
-      const floor = b0 + model.thickness.drawer, top = floor + fittings.bins.height;
+      const floor = b0 + model.thickness.drawerBox, top = floor + fittings.bins.height;
       for (let j = 0; j < count; j++) {
         const a = x0 + j * (binWidth + 10), b = a + binWidth;
         openTopBox(box, a, b, floor, top, 80, 520, 4, MAT.bin);
@@ -1398,7 +1398,7 @@ const shadeInside = standard({ color: linear(0xf4ead8), roughness: 0.6, metalnes
 SCENE.pendants.points.forEach(([x, z]) => {
   const y = SCENE.pendants.bottom;
   roomCylinder(2, ceiling - y - 90, MAT.gasket, x, (ceiling + y + 90) / 2, z, null, 6); // cable
-  const shade = new THREE.Mesh(new THREE.SphereGeometry(0.15, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), standard({ color: linear(COLORS.pendant), roughness: 0.5, metalness: 0.2 }));
+  const shade = new THREE.Mesh(new THREE.SphereGeometry(0.15, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), standard({ color: linear(rules.materials[model.materialFor.cabinet].color), roughness: 0.5, metalness: 0.2 })); // shade in the cabinet front colour
   shade.position.set(x / 1000, (y + 60) / 1000, z / 1000);
   shade.castShadow = true;
   target.add(shade);
@@ -1711,7 +1711,7 @@ LAYER_IDS.forEach(id => { layerOn[id] = true; });
 const PANEL_COLORS = {
   side: ['#f0c27b', 'Side'], bottom: ['#8fcf9f', 'Bottom panel'], top: ['#4fae6e', 'Top panel'], rail: ['#f29e8e', 'Top rail'],
   fixedShelf: ['#5f95da', 'Fixed shelf'], adjustableShelf: ['#a9c9f2', 'Adjustable shelf'], pullOutShelf: ['#a9c9f2', 'Pull-out shelf'],
-  back: ['#c9b9ea', 'Back, ' + model.materials[rules.back.material].label], backStrip: ['#e98fc4', 'Back strip behind frame'],
+  back: ['#c9b9ea', 'Back, ' + model.materials[model.materialFor.back].label], backStrip: ['#e98fc4', 'Back strip behind frame'],
   hobPanel: ['#7fd0c8', 'Hob separation panel'], drawerBottom: ['#f5d76e', 'Drawer bottom'], drawerBack: ['#e3ad3c', 'Drawer back']
 };
 const panelMaterial = {};
@@ -1820,27 +1820,29 @@ document.getElementById('kStats').innerHTML = [
 
 /* ---------- Project tab ---------- */
 const islandWorktop = worktopOf(groupOfRun.C);
+// the page title and the board materials of data.js, with the parts made of each
+const frontName = rules.materials[model.materialFor.cabinet].name;
+document.getElementById('frontName').textContent = frontName;
+document.title = 'Kitchen ' + frontName;
+const oakSwatch = 'linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)'; // the oak texture, for a material without a colour
+document.getElementById('mats').insertAdjacentHTML('afterbegin', Object.entries(model.materials).map(([code, m]) => {
+  const parts = Object.keys(model.materialFor).filter(use => model.materialFor[use] === code);
+  return parts.length ? '<li><i style="background:' + (m.color || oakSwatch) + '"></i><small>' + esc(parts.join(', ')) + '</small><b>' + esc(m.label) + '</b></li>' : '';
+}).join(''));
 document.getElementById('dims').innerHTML = [
   ['Worktop ' + runName.A, (sinkWorktop ? sinkWorktop.u1 - sinkWorktop.u0 : 0) + ' × ' + worktopOf(groupOfRun.A).depth + ' × ' + worktopOf(groupOfRun.A).thickness],
   ['Worktop height', worktopTopOf('A') + ' above the floor'],
   ['Tall units', runLength.B + ' × ' + ceiling],
   ['Island', runLength.C + ' × ' + islandWorktop.depth + ' × ' + islandWorktop.v1],
-  ['Carcass depth', carcassDepth + ', back ' + model.materials[rules.back.material].label],
+  ['Carcass depth', carcassDepth + ', back ' + model.materials[model.materialFor.back].label],
   ['Carcass back', carcassBack + ' from the wall'],
   ['Front face', frontFace + ' from the wall; 4 gaps per front'],
   ['Shaker front rail', shakerRail],
-  ['Frames ' + frontThickness, 'on edge, ' + rules.frame.depth + ' deep'],
-  ['Panels ' + frontThickness, 'flat, in the front plane'],
+  ['Frames ' + frameThickness, 'on edge, ' + rules.frame.depth + ' deep'],
+  ['Panels ' + panelThickness, 'flat, in the front plane'],
   ['Plinth', 'face ' + rules.plinth.setback + ' behind the fronts'],
   ['Window', win.width + ' × ' + win.height + ', ' + win.finish]
 ].map(([name, value]) => '<dt>' + name + '</dt><dd>' + value + '</dd>').join('');
-// furniture materials of data.js, before the scene materials (worktop, sink, floor)
-const usedFor = {};
-const addUse = (code, what) => { usedFor[code] = usedFor[code] ? usedFor[code] + ', ' + what : what; };
-addUse(rules.carcass.material, 'carcasses'); addUse(rules.back.material, 'backs'); addUse(rules.drawers.material, 'drawer boxes');
-addUse(rules.front.material, 'fronts, frames, panels'); addUse(rules.plinth.material, 'plinth');
-document.querySelector('ul.mats').insertAdjacentHTML('afterbegin', Object.entries(usedFor).filter(([code]) => rules.materials[code].color)
-  .map(([code, what]) => '<li><i style="background:' + rules.materials[code].color + '"></i><small>' + esc(what) + '</small><b>' + esc(model.materials[code].label) + '</b></li>').join(''));
 document.getElementById('pnotes').innerHTML = (project.notes || []).map(([name, description, details]) => '<dt>' + esc(name) + '</dt><dd>' + esc(description) + (details ? '<small>' + esc(details) + '</small>' : '') + '</dd>').join('');
 
 /* ---------- settings tabs ---------- */

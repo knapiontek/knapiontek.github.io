@@ -138,10 +138,10 @@
      data.js through engine.js; nothing here repeats a calculated number.
        settings     page settings: XLSX file name, front functions (label of a front by its type and features),
                     which blocks get edging / cutting lengths, appliance categories, texts
-       blocks       cutting-list tables, built by engine.js (parts: front | frames | plinths | panels | plaster | p18 | p16 | hdf)
+       blocks       cutting-list tables, built by engine.js (parts: front | frames | plinths | panels | plaster | a material use: every board of that material)
        categories   estimate items: qty = number or formula; name, spec, source and notes may hold placeholders:
-                      {n:hinges} engine count ({n:tag.bins} = components with that tag), {r:drawers.dFrom} data.js rule, {t:carcass} thickness, {m:front} material,
-                      {v:name} vars below, {p:id} unit price, {q:id} item quantity, {p18.m2|edge|cut|len|qty} cutting-list total,
+                      {n:hinges} engine count ({n:tag.bins} = components with that tag), {r:drawers.dFrom} data.js rule, {t:carcass} thickness, {m:cabinet} material (by use),
+                      {v:name} vars below, {p:id} unit price, {q:id} item quantity, {carcass.m2|edge|cut|len|qty} cutting-list total,
                       {waste} {sheet} {reserve} parameters, |% shows a fraction as a percentage, ROUNDUP(x,0) rounds up
                     refs = numbers of the notes the item links to
        notes        Notes tab: section headings, or no, topic, description, assumed (in the estimate), decide (open question)
@@ -165,8 +165,15 @@
     "function": "dummy front"
    },
    {
-    "type": "cabinet",
-    "features": "dishwasher|fridge|freezer",
+    "type": "dishwasher",
+    "function": "appliance-door front"
+   },
+   {
+    "type": "fridge",
+    "function": "appliance-door front"
+   },
+   {
+    "type": "freezer",
     "function": "appliance-door front"
    },
    {
@@ -175,7 +182,7 @@
    }
   ],
   "edgeBlocks": {
-   "p18": {
+   "carcass": {
     "along": "A",
     "rows": {
      "Side": "B"
@@ -183,14 +190,14 @@
    }
   },
   "cutBlocks": [
-   "p18",
-   "p16"
+   "carcass",
+   "drawerBox"
   ],
   "applianceCategories": [
    "Appliances"
   ],
   "sheetLabel": "Board sheet {v:sheetLength}×{v:sheetWidth} [m²]",
-  "cuttingNote": "Carcass = all columns with the same carcass name, depth {r:carcass.depth}, back {r:carcass.wallGap} from the wall; interior = width − 2 × {t:carcass}; adjustable shelf = interior − 2 × {r:shelf.clearance}, depth − {r:shelf.setback}; fixed shelf = interior × full depth; HDF back = carcass − 2 × {r:back.inset} (none in the island); fronts = module − 4 gaps (left, right, top, bottom); back strip = {r:frame.depth} × frame length; drawer bottom = interior − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, back = interior − {r:drawers.back.inset}; inner drawer back {r:drawers.inner.back} high. ABS edging on front edges only.",
+  "cuttingNote": "Carcass = all columns with the same carcass name, depth {r:carcass.depth}, back {r:carcass.wallGap} from the wall; interior = width − 2 × {t:carcass}; adjustable shelf = interior − 2 × {r:shelf.clearance}, depth − {r:shelf.setback}; fixed shelf = interior × full depth; back {m:back} = carcass − 2 × {r:back.inset} (none in the island); fronts = module − 4 gaps (left, right, top, bottom); back strip = {r:frame.depth} × frame length; drawer bottom = interior − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, back = interior − {r:drawers.back.inset}; inner drawer back {r:drawers.inner.back} high. ABS edging on front edges only.",
   "qtyWords": {
    "q:legs": "number of legs"
   }
@@ -205,7 +212,7 @@
  "blocks": [
   {
    "id": "front",
-   "title": "FRONTS – {m:front}, shaker, lacquered (front maker)",
+   "title": "FRONTS – {m:cabinet}, shaker, lacquered (front maker)",
    "columns": [
     "Function",
     "Width",
@@ -218,7 +225,7 @@
   },
   {
    "id": "bar",
-   "title": "FRAMES – {m:front} on edge, {r:frame.depth} deep, lacquered like the fronts: edge + both faces",
+   "title": "FRAMES – {m:frame} on edge, {r:frame.depth} deep, lacquered like the fronts: edge + both faces",
    "columns": [
     "Element",
     "Width / depth",
@@ -244,7 +251,7 @@
   },
   {
    "id": "panel",
-   "title": "PANELS – {m:front} laid flat, lacquered on both faces (L corner, island back)",
+   "title": "PANELS – {m:panel} laid flat, lacquered on both faces (L corner, island back)",
    "columns": [
     "Element",
     "Width",
@@ -269,7 +276,7 @@
    "parts": "plaster"
   },
   {
-   "id": "p18",
+   "id": "carcass",
    "title": "CARCASSES – {m:carcass}, cut + ABS 0.8 front edge (incl. back strips, pull-out shelves)",
    "columns": [
     "Element",
@@ -279,11 +286,11 @@
    ],
    "rows": [],
    "live": true,
-   "parts": "p18"
+   "parts": "carcass"
   },
   {
-   "id": "p16",
-   "title": "DRAWERS – {m:drawers} (TANDEMBOX bottoms and backs, incl. inner drawers; hob separation panel)",
+   "id": "drawerBox",
+   "title": "DRAWERS – {m:drawerBox} (TANDEMBOX bottoms and backs, incl. inner drawers; hob separation panel)",
    "columns": [
     "Element",
     "Width",
@@ -292,10 +299,10 @@
    ],
    "rows": [],
    "live": true,
-   "parts": "p16"
+   "parts": "drawerBox"
   },
   {
-   "id": "hdf",
+   "id": "back",
    "title": "BACKS – {m:back} (only behind cabinet doors; none behind drawers or appliances)",
    "columns": [
     "Element",
@@ -305,7 +312,7 @@
    ],
    "rows": [],
    "live": true,
-   "parts": "hdf"
+   "parts": "back"
   }
  ],
  "categories": [
@@ -314,8 +321,8 @@
    "items": [
     {
      "id": "i1",
-     "name": "Fronts, shaker: {m:front}",
-     "spec": "English Navy satin, per cutting list",
+     "name": "Fronts, shaker: {m:cabinet}",
+     "spec": "per cutting list",
      "qty": "={front.m2}",
      "unit": "m²",
      "price": 500,
@@ -326,7 +333,7 @@
     },
     {
      "id": "i2",
-     "name": "Frames on edge: {m:front}",
+     "name": "Frames on edge: {m:frame}",
      "spec": "{r:frame.depth} deep; lacquered on the edge and both faces",
      "qty": "={bar.m2}",
      "unit": "m²",
@@ -340,7 +347,7 @@
     {
      "id": "i3",
      "name": "Plinth: {m:plinth}",
-     "spec": "moisture-resistant MDF, lacquered like the fronts",
+     "spec": "{m:plinth}, moisture-resistant, lacquered like the fronts",
      "qty": "={plinth.m2}",
      "unit": "m²",
      "price": 500,
@@ -351,7 +358,7 @@
     },
     {
      "id": "i4",
-     "name": "Panels laid flat: {m:front}",
+     "name": "Panels laid flat: {m:panel}",
      "spec": "lacquered on both faces; L corner (80, 36), island back panel",
      "qty": "={panel.m2}",
      "unit": "m²",
@@ -371,7 +378,7 @@
      "id": "i5",
      "name": "{m:carcass}",
      "spec": "sheet {v:sheetLength}×{v:sheetWidth}, + waste",
-     "qty": "=ROUNDUP({p18.m2}*(1+{waste})/{sheet},0)",
+     "qty": "=ROUNDUP({carcass.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 210,
      "source": "est.; white Kronospan 18 at Castorama 191 PLN/sheet (October 2026), dark grey similar",
@@ -381,9 +388,9 @@
     },
     {
      "id": "i6",
-     "name": "{m:drawers}",
+     "name": "{m:drawerBox}",
      "spec": "drawer bottoms and backs, hob separation panel (separate product)",
-     "qty": "=ROUNDUP({p16.m2}*(1+{waste})/{sheet},0)",
+     "qty": "=ROUNDUP({drawerBox.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 190,
      "source": "est.",
@@ -393,7 +400,7 @@
      "id": "i7",
      "name": "{m:back}",
      "spec": "backs behind cabinet doors, sheet {v:sheetLength}×{v:sheetWidth}",
-     "qty": "=ROUNDUP({hdf.m2}*(1+{waste})/{sheet},0)",
+     "qty": "=ROUNDUP({back.m2}*(1+{waste})/{sheet},0)",
      "unit": "sheet",
      "price": 80,
      "source": "est.",
@@ -402,8 +409,8 @@
     {
      "id": "i8",
      "name": "Panel cutting",
-     "spec": "{m:carcass} + {m:drawers}",
-     "qty": "={p18.cut}+{p16.cut}",
+     "spec": "{m:carcass} + {m:drawerBox}",
+     "qty": "={carcass.cut}+{drawerBox.cut}",
      "unit": "lm",
      "price": 3,
      "source": "est., board supplier service",
@@ -413,7 +420,7 @@
      "id": "i9",
      "name": "ABS 0.8 edge banding, dark grey",
      "spec": "front edges + {v:edgeAllowance|%}",
-     "qty": "={p18.edge}*(1+{v:edgeAllowance})",
+     "qty": "={carcass.edge}*(1+{v:edgeAllowance})",
      "unit": "lm",
      "price": 4.5,
      "source": "est., including the service",
@@ -606,8 +613,8 @@
    "items": [
     {
      "id": "i22",
-     "name": "Laminate oak worktop {t:worktop}×{n:worktop.1}×{v:worktopLength}",
-     "spec": "group 1 worktop + waterfall end → 1 board",
+     "name": "Worktop {m:worktop}, {n:worktop.1} × {v:worktopLength}",
+     "spec": "group 1 worktop + worktop fall → 1 board",
      "qty": 1,
      "unit": "pcs",
      "price": 700,
@@ -616,8 +623,8 @@
     },
     {
      "id": "i23",
-     "name": "Laminate oak worktop {t:worktop}×{n:worktop.3}×{v:worktopLength}",
-     "spec": "island top + 2 waterfall ends → 1 board",
+     "name": "Worktop {m:worktop}, {n:worktop.3} × {v:worktopLength}",
+     "spec": "island top + 2 worktop falls → 1 board",
      "qty": 1,
      "unit": "pcs",
      "price": 1200,
@@ -638,25 +645,13 @@
     },
     {
      "id": "i25",
-     "name": "Worktop edging, waterfall connectors, glue, silicone",
+     "name": "Worktop edging, worktop fall connectors, glue, silicone",
      "spec": "set",
      "qty": 1,
      "unit": "set",
      "price": 150,
      "source": "est.",
      "refs": []
-    },
-    {
-     "id": "i26",
-     "name": "Service: 45° waterfall mitres, sink and hob cut-outs",
-     "spec": "4 mitre joints + 2 cut-outs",
-     "qty": 1,
-     "unit": "set",
-     "price": 350,
-     "source": "est., joiner / worktop wholesaler",
-     "refs": [
-      "8"
-     ]
     }
    ]
   },
@@ -900,7 +895,7 @@
   {
    "no": "6",
    "topic": "Frames on edge, panels flat",
-   "description": "Frames: MDF {t:front} on edge, {r:frame.depth} deep, lacquered on the edge and both faces; with lacquer ≈ 18.5. Panels: MDF {t:front} laid flat, lacquered on both faces (L corners of group 1 and group 2). The group 1 panel overlaps the group 2 panel, so there is no gap in the corner.",
+   "description": "Frames: {m:frame} on edge, {r:frame.depth} deep, lacquered on the edge and both faces (lacquer adds about 0.5). Panels: {m:panel} laid flat, lacquered on both faces (L corners of group 1 and group 2). The group 1 panel overlaps the group 2 panel, so there is no gap in the corner.",
    "assumed": "",
    "decide": ""
   },
@@ -913,8 +908,8 @@
   },
   {
    "no": "19",
-   "topic": "HDF backs and the island back panel",
-   "description": "HDF backs only behind cabinet doors; none behind drawers or appliances (air for the oven, microwave, fridge). The island gets an MDF {t:front} back panel, lacquered like the fronts, between the waterfalls, floor to the carcass tops, fixed to the carcass backs.",
+   "topic": "Backs and the island back panel",
+   "description": "{m:back} backs only behind cabinet doors; none behind drawers or appliances (air for the oven, microwave, fridge). The island gets a back panel of {m:panel}, between the worktop falls, floor to the carcass tops, fixed to the carcass backs.",
    "assumed": "",
    "decide": ""
   },
@@ -930,22 +925,22 @@
   },
   {
    "no": "8",
-   "topic": "Worktop service ({p:i26} PLN)",
-   "description": "45° waterfall mitres and the sink and hob cut-outs – on laminate this is normally done by the wholesaler / joiner. You can skip it when self-assembling, but a hand-sawn mitre on laminate rarely comes out clean.",
+   "topic": "Worktop cut-outs and joint",
+   "description": "Worktops, worktop falls and the sink and hob cut-outs are cut by the owner. Classic joint: the worktop sits on top of the worktop falls (butt joint, no mitre), fixed with worktop fall connectors.",
    "assumed": "",
    "decide": ""
   },
   {
    "no": "9",
    "topic": "Lacquer only on fronts and frames",
-   "description": "Lacquered (front maker): fronts {p:i1} PLN/m² (supplier quote, October 2026) and frames {p:i2} PLN/m² and panels (L corner) {p:i4} PLN/m² – estimate: all blue parts cost the same. Plinth and island back panel: MDF lacquered like the fronts, same price.",
+   "description": "Lacquered (front maker): fronts {p:i1} PLN/m² (supplier quote, October 2026) and frames {p:i2} PLN/m² and panels (L corner) {p:i4} PLN/m² – estimate: all blue parts cost the same. Plinth and island back panel: {m:plinth}, same price.",
    "assumed": "",
    "decide": ""
   },
   {
    "no": "10",
-   "topic": "Chipboard 18 – {q:i5} sheets",
-   "description": "{p18.m2} m² + {waste|%} waste on sheets of {sheet} m² → {q:i5} sheets.",
+   "topic": "{m:carcass} – {q:i5} sheets",
+   "description": "{carcass.m2} m² + {waste|%} waste on sheets of {sheet} m² → {q:i5} sheets.",
    "assumed": "",
    "decide": ""
   },
@@ -973,14 +968,14 @@
   {
    "no": "14",
    "topic": "Back strips behind frames",
-   "description": "Behind every frame that is not part of a carcass: chipboard {t:carcass} strip on edge, {r:frame.depth} deep, frame length; no packing.",
-   "assumed": "in the chipboard 18 cutting list.",
+   "description": "Behind every frame that is not part of a carcass: {m:carcass} strip on edge, {r:frame.depth} deep, frame length; no packing.",
+   "assumed": "in the {m:carcass} cutting list.",
    "decide": ""
   },
   {
    "no": "15",
    "topic": "Inner cutlery drawers (island)",
-   "description": "Island top drawers: Blum TANDEMBOX antaro inner drawer M (83), NL 500, BLUMOTION, own runners on the carcass sides, behind the top front; closing the top drawer closes it. Inner front: Blum Z31L cut to LW − 132. Bottom and back in the Cutting list (chipboard 16; back height per Blum – confirm in the Blum configurator). Hob unit: no inner drawer (no space under the hob).",
+   "description": "Island top drawers: Blum TANDEMBOX antaro inner drawer M (83), NL 500, BLUMOTION, own runners on the carcass sides, behind the top front; closing the top drawer closes it. Inner front: Blum Z31L cut to LW − 132. Bottom and back in the Cutting list ({m:drawerBox}; back height per Blum – confirm in the Blum configurator). Hob unit: no inner drawer (no space under the hob).",
    "assumed": "{n:innerDrawers} inner drawer sets + {n:innerDrawers} cutlery inserts.",
    "decide": ""
   },
@@ -994,7 +989,7 @@
   {
    "no": "17",
    "topic": "Hob unit – rails and separation panel",
-   "description": "Electrolux CIT61443: cut-out 560 × 490, built-in height 44. Cut-out 54 from the wall, 56 from the worktop front. Top rails on edge so the hob fits between them: front {t:carcass} × {r:rails.hobFront}, rear {t:carcass} × {r:rails.depth}. Separation panel chipboard 16 between the rails, below the front rail.",
+   "description": "Electrolux CIT61443: cut-out 560 × 490, built-in height 44. Cut-out 54 from the wall, 56 from the worktop front. Top rails on edge so the hob fits between them: front {t:carcass} × {r:rails.hobFront}, rear {t:carcass} × {r:rails.depth}. Separation panel {m:hobPanel} between the rails, below the front rail.",
    "assumed": "rails and panel in the Cutting list.",
    "decide": "the installation diagram (manual p. 22) lists min. 28 and min. 12 – check which distances they are."
   },
@@ -1024,7 +1019,7 @@
   },
   {
    "no": "C4",
-   "topic": "Carcass sides not visible (covered by frames, waterfalls, wall)",
+   "topic": "Carcass sides not visible (covered by frames, worktop falls, wall)",
    "description": "no lacquered side panels added.",
    "assumed": "",
    "decide": ""
@@ -1071,7 +1066,7 @@ function frontFunction(front) {
   return SETTINGS.frontFunctions.find(f => f.type === front.item.type && (!f.features || f.features.split('|').some(t => front.tags.includes(t)))).function;
 }
 
-// cutting-list rows of one block: block.parts = front | frames | plinths | panels | plaster | p18 | p16 | hdf (board material)
+// cutting-list rows of one block: block.parts = front | frames | plinths | panels | plaster | a material use (carcass, drawerBox, back ...): the boards of its material
 function blockRows(parts) {
   // where a part goes: carcass name, else group + column (G1/4 = group 1, column 4)
   const carcassName = Object.fromEntries(model.carcasses.map(K => [K.id, K.name]));
@@ -1082,7 +1077,7 @@ function blockRows(parts) {
   if (parts === 'plinths') return list(model.plinths.map(p => ({ ...p, name: 'Plinth' })));
   if (parts === 'panels') return list(model.panels);
   if (parts === 'plaster') return list(model.plaster);
-  return list(model.boards.filter(b => b.material === parts));
+  return list(model.boards.filter(b => b.material === model.materialFor[parts]));
 }
 
 function applyProject(project) {
@@ -1190,8 +1185,8 @@ function ROUNDUP(x, digits) {
 }
 // Placeholders in quantities and texts - every value comes from data.js, engine.js or the JSON of this page:
 //   {n:hinges} engine count (engine.js counts; {n:tag.bins} = components with that tag)   {r:drawers.dFrom} data.js rule
-//   {t:carcass} thickness of a part, {m:front} material of a part (data.js rules.materials)
-//   {v:name} cost-data vars   {p:i26} unit price of an item   {q:i5} quantity of an item   {p18.m2|edge|cut|len|qty} cutting-list total
+//   {t:carcass} thickness, {m:cabinet} material label of a board type or a carcass part (engine BOARD_TYPES, PART_RULES: carcass, back, drawerBox, hobPanel)
+//   {v:name} cost-data vars   {p:i25} unit price of an item   {q:i5} quantity of an item   {carcass.m2|edge|cut|len|qty} cutting-list total
 //   {waste} {sheet} {reserve} parameters;  add |% to show a fraction as a percentage, e.g. {v:edgeAllowance|%}
 function placeholder(key, totals, quantities) {
   const [, prefix, rest] = key.match(/^(?:(\w+):)?(.+)$/);
@@ -1199,7 +1194,7 @@ function placeholder(key, totals, quantities) {
   if (prefix === 'n') return model ? (model.counts[rest.replace(/^(tag|worktop)\./, '$1:')] ?? 0) : NaN;
   if (prefix === 'r') return model ? path(model.rules, rest) : NaN;
   if (prefix === 't') return model ? model.thickness[rest] : NaN;
-  if (prefix === 'm') return model ? model.materials[model.rules[rest].material].label : '…';
+  if (prefix === 'm') return model ? model.materials[model.materialFor[rest]].label : '…';
   if (prefix === 'v') return COST.vars[rest];
   if (prefix === 'p') return Number(values.items[rest].price);
   if (prefix === 'q') return quantities ? quantities[rest] : NaN;
