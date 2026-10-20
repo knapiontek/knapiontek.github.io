@@ -472,12 +472,12 @@
         if (hinged && item.hinge === item.handle) warn(`${placeOf(item)}: hinge and handle on the same side.`, item.index);
         if (!hinged && item.hinge) warn(`${placeOf(item)}: only doors have a hinge side.`, item.index);
         // hinges are screwed to a carcass side: when the door does not reach one on its hinge side, the engine adds an ortho panel
-        // (a board across the carcass, in the carcass material) at the hinge edge of the door, as high as the door
+        // (a board in the carcass material, hinges.supportDepth deep, at the front) at the hinge edge of the door, as high as the door
         if (hinged && K && HINGE_SIDES.includes(item.hinge) && (item.hinge === 'L' ? item.u0 !== K.u0 : item.u1 !== K.u1)) {
           const panelU0 = item.hinge === 'L' ? item.u0 : item.u1 - board, panelV0 = Math.max(item.v0, K.v0 + board), panelV1 = Math.min(item.v1, K.v1 - board);
           addBoard({
-            id: 'side', name: 'Ortho panel', a: carcassDepth, b: panelV1 - panelV0, material: materialFor.carcass, layer: 'carcasses', group: G.group, carcassId: K.id,
-            box: [panelU0, panelU0 + board, panelV0, panelV1, carcassBack, carcassFront], edges: [['front', panelV1 - panelV0]]
+            id: 'side', name: 'Ortho panel', a: hingeRule.supportDepth, b: panelV1 - panelV0, material: materialFor.carcass, layer: 'carcasses', group: G.group, carcassId: K.id,
+            box: [panelU0, panelU0 + board, panelV0, panelV1, carcassFront - hingeRule.supportDepth, carcassFront], edges: [['front', panelV1 - panelV0]]
           });
         }
         const front = {

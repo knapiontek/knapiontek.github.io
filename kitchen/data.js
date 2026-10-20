@@ -18,7 +18,7 @@ window.KITCHEN_DATA = {
   "back": {"material": "hdf3", "inset": 1},
   "shelf": {"setback": 20, "clearance": 1, "pins": 4, "perDoor": [[720, 1], [99999, 3]]},
   "frame": {"depth": 100},
-  "hinges": {"fromEnd": 100, "perDoor": [[900, 2], [1600, 3], [99999, 4]]},
+  "hinges": {"fromEnd": 100, "supportDepth": 100, "perDoor": [[900, 2], [1600, 3], [99999, 4]]},
   "drawers": {"material": "grey16", "dFrom": 350, "D": {"side": 224, "back": 199}, "M": {"side": 83, "back": 68}, "bottom": {"inset": 75, "depth": 490, "z": 52}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "back": 84, "frontDeduction": 132}},
   "legsPerCarcass": 4,
   "island": {"backPanel": true},
