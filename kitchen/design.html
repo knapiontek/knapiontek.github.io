@@ -995,10 +995,10 @@ document.addEventListener('alpine:init', () => {
     onSvgLeave() {
       this.tooltip.show = false;
     },
-    // e.g. "G1 · col 5 · dishwasher · 600 × 720 · front 594 × 717 · gaps 3:3:3:0 · Bosch SMV4HVX00E" (gaps left:right:top:bottom)
+    // e.g. "G1[5] · dishwasher · 600 × 720 · front 594 × 717 · gaps 3:3:3:0 · Bosch SMV4HVX00E" (gaps left:right:top:bottom)
     describeComponent(group) {
-      const attr = name => group.getAttribute('data-' + name), col = +attr('c'), span = +attr('s');
-      const parts = [`G${attr('g')}`, `col ${span > 1 ? col + '–' + (col + span - 1) : col}`, attr('k'), attr('tags'), `${attr('w')} × ${attr('h')}`];
+      const attr = name => group.getAttribute('data-' + name);
+      const parts = [KE.placeLabel(+attr('g'), +attr('c'), +attr('s')), attr('k'), attr('tags'), `${attr('w')} × ${attr('h')}`];
       if (FRONT_TYPES.includes(attr('type'))) parts.push(`front ${attr('fw')} × ${attr('fh')}`, `gaps ${attr('gaps').split(' ').join(':')}`);
       parts.push(attr('note'));
       return parts.filter(Boolean).join(' · ');

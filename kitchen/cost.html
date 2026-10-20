@@ -103,7 +103,7 @@
   <section id="tab-cutting" class="hidden">
     <div class="grid-wrap">
       <table class="grid">
-        <thead><tr><th>Element</th><th>Length [mm]</th><th>Width [mm]</th><th>m²</th><th>Qty</th><th>ABS per piece</th><th>ABS total [lm]</th><th title="(length + width) × qty: the length the board supplier saws – priced by the Panel cutting item">Saw cuts [lm]</th><th>Where</th></tr></thead>
+        <thead><tr><th>Element</th><th>Length [mm]</th><th>Width [mm]</th><th>m²</th><th>Qty</th><th>ABS/Lacquer</th><th>ABS total [lm]</th><th title="(length + width) × qty: the length the board supplier saws – priced by the Panel cutting item">Saw cuts [lm]</th><th>Where</th></tr></thead>
         <tbody id="cuttingBody"></tbody>
       </table>
     </div>
@@ -120,7 +120,7 @@
   </section>
 
   <section id="tab-assembly" class="hidden">
-    <div class="excl" style="border-top:1px solid var(--grid)">Everything for one carcass in one place, to group the parts on site. Parts without a carcass are listed per group and column (G1/4 = group 1, column 4). Sizes in mm.</div>
+    <div class="excl" style="border-top:1px solid var(--grid)">Everything for one carcass in one place, to group the parts on site. Parts without a carcass are listed per group and column (G1[4] = group 1, column 4; G1[1-3] = columns 1 to 3). Sizes in mm.</div>
     <div class="asm" id="assemblyBody"></div>
   </section>
 
@@ -189,7 +189,7 @@
    "Appliances"
   ],
   "sheetLabel": "Board sheet {v:sheetLength}×{v:sheetWidth} [m²]",
-  "cuttingNote": "Columns: Length = the longer side, Width = the shorter (fronts: height × width, as the front maker needs them); rows sorted by element, longest first. ABS per piece = how many long and short edges of one piece get ABS, as the board supplier marks them; ABS total = their length × qty. Where each ABS edge faces (front, bottom, left … seen from the room) is in the Assembly tab. Saw cuts = (length + width) × qty: the length the board supplier saws, which the Panel cutting item prices – each part needs about one cut along its length and one across, its other two edges are shared with the next part or the sheet edge. Carcass = all columns with the same carcass name, depth {r:carcass.depth}, back {r:carcass.wallGap} from the wall; interior = width − 2 × {t:carcass}; adjustable shelf = interior − 2 × {r:shelf.clearance}, depth − {r:shelf.setback}; fixed shelf = interior × full depth; back {m:back} = carcass − 2 × {r:back.inset}; fronts = module − 4 gaps (left, right, top, bottom); back strip = {r:frame.depth} × frame length; drawer bottom = interior − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, back = interior − {r:drawers.back.inset}; inner drawer back {r:drawers.inner.back} high. ABS on carcass parts: the edge seen from the front (sides: the long front edge; bottoms, tops, shelves, front rails: the front edge); rails on edge: the bottom edge; rear rails, back strips, backs and drawer parts: none. Panels: lacquered on both faces only, ABS on the sides set in data.js (abs). Lacquer: fronts all round, frames both faces + the front edge, plinth both faces – no ABS on them; the plinth and island back panel edges are painted on site (waterproof).",
+  "cuttingNote": "Columns: Length = the longer side, Width = the shorter (fronts: height × width, as the front maker needs them); rows sorted by element, longest first. ABS/Lacquer = how many edges of one piece are finished: ABS on boards and panels (long and short edges, as the board supplier marks them), lacquer on fronts (4 = all round), frames (1 long) and the plinth (none) – lacquer is done by the front maker, no ABS; 4 = all four edges; ABS total = ABS length × qty. Where each ABS edge faces (front, bottom, left … seen from the room) is in the Assembly tab. Saw cuts = (length + width) × qty: the length the board supplier saws, which the Panel cutting item prices – each part needs about one cut along its length and one across, its other two edges are shared with the next part or the sheet edge. Carcass = all columns with the same carcass name, depth {r:carcass.depth}, back {r:carcass.wallGap} from the wall; interior = width − 2 × {t:carcass}; adjustable shelf = interior − 2 × {r:shelf.clearance}, depth − {r:shelf.setback}; fixed shelf = interior × full depth; back {m:back} = carcass − 2 × {r:back.inset}; fronts = module − 4 gaps (left, right, top, bottom); back strip = {r:frame.depth} × frame length; drawer bottom = interior − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, back = interior − {r:drawers.back.inset}; inner drawer back {r:drawers.inner.back} high. ABS on carcass parts: the edge seen from the front (sides: the long front edge; bottoms, tops, shelves, front rails: the front edge); rails on edge: the bottom edge; rear rails, back strips, backs and drawer parts: none. Panels: lacquered on both faces only, ABS on the sides set in data.js (abs). Lacquer: fronts all round, frames both faces + the front edge, plinth both faces only – no ABS on them.",
   "qtyWords": {
    "q:legs": "number of legs"
   }
@@ -230,7 +230,7 @@
   },
   {
    "id": "plinth",
-   "title": "PLINTH – {m:plinth}, moisture-resistant, lacquered on both faces; edges painted on site (waterproof)",
+   "title": "PLINTH – {m:plinth}, moisture-resistant, lacquered on both faces",
    "columns": [
     "Element",
     "Length",
@@ -243,7 +243,7 @@
   },
   {
    "id": "panel",
-   "title": "PANELS – {m:panel} laid flat, lacquered on both faces only; L corner: ABS on the edges seen; island back: edges painted on site",
+   "title": "PANELS – {m:panel} laid flat, lacquered on both faces only; L corner: ABS on the edges seen",
    "columns": [
     "Element",
     "Length",
@@ -339,7 +339,7 @@
     {
      "id": "i3",
      "name": "Plinth: {m:plinth}",
-     "spec": "{m:plinth}, moisture-resistant, lacquered on both faces; edges painted on site",
+     "spec": "{m:plinth}, moisture-resistant, lacquered on both faces",
      "qty": "={plinth.m2}",
      "unit": "m²",
      "price": 500,
@@ -360,18 +360,6 @@
      "refs": [
       "17",
       "25"
-     ]
-    },
-    {
-     "id": "i58",
-     "name": "Waterproof paint for the cut edges, colour of the fronts",
-     "spec": "plinth and island back panel edges, painted by the owner (small tin + brush)",
-     "qty": 1,
-     "unit": "set",
-     "price": 80,
-     "source": "est.",
-     "refs": [
-      "17"
      ]
     }
    ]
@@ -941,7 +929,7 @@
   {
    "no": "8",
    "topic": "Frames on edge, panels flat – lacquer",
-   "description": "Fronts: lacquered all round. Frames: {m:frame} on edge, {r:frame.depth} deep, lacquered on both faces and the front edge (lacquer adds about 0.5). Panels: {m:panel} laid flat, lacquered on both faces only – the edges seen get ABS in the panel colour (data.js abs, sides seen from the room: the 80 panel on its left, long edge; the 36 panel none); the island back panel edges are painted on site. The group 2 panel covers the end of the group 1 panel, so there is no gap in the corner.",
+   "description": "Fronts: lacquered all round. Frames: {m:frame} on edge, {r:frame.depth} deep, lacquered on both faces and the front edge (lacquer adds about 0.5). Panels: {m:panel} laid flat, lacquered on both faces only – the edges seen get ABS in the panel colour (data.js abs, sides seen from the room: the 80 panel on its left, long edge; the 36 panel none; the island back panel none). The group 2 panel covers the end of the group 1 panel, so there is no gap in the corner.",
    "assumed": "",
    "decide": ""
   },
@@ -1007,7 +995,7 @@
   {
    "no": "17",
    "topic": "Lacquer: fronts, frames, panels, plinth",
-   "description": "Lacquered by the front maker: fronts {p:i1} PLN/m² (supplier quote, October 2026), all round. Frames {p:i2} (both faces + front edge), panels {p:i4} ({m:panel}, both faces only) and plinth {p:i3} PLN/m² (both faces only) are estimates at the front price; the maker may charge a minimum area per piece. The plinth is moisture-resistant MDF – say so when ordering. Edges of the plinth and the island back panel are not lacquered: the owner paints them with a waterproof product ({p:i58} PLN).",
+   "description": "Lacquered by the front maker: fronts {p:i1} PLN/m² (supplier quote, October 2026), all round. Frames {p:i2} (both faces + front edge), panels {p:i4} ({m:panel}, both faces only) and plinth {p:i3} PLN/m² (both faces only) are estimates at the front price; the maker may charge a minimum area per piece. The plinth must be moisture-resistant – say so when ordering.",
    "assumed": "",
    "decide": ""
   },
@@ -1105,10 +1093,13 @@ const colRange = (col, span) => 'col ' + col + (span > 1 ? '–' + (col + span -
 // ABS edges of one part, e.g. "bottom 80 + left 720"; their total length in mm
 const edgeText = edges => (edges || []).map(([side, length]) => side + ' ' + length).join(' + ');
 const edgeLength = edges => (edges || []).reduce((sum, [, length]) => sum + length, 0);
-// ABS of one piece as the board supplier marks it: how many long and short edges, e.g. "1 long + 1 short" (row: [name, length, width, …, edges])
+// finished edges of one piece: ABS (boards, panels) or lacquer (fronts, frames, plinth; from engine.js), e.g. "4", "1 long", "1 long + 1 short"
+// (row: [name, length, width, qty, where, ABS edges, lacquered edges])
 const edgeCount = row => {
-  const edges = row[5] || [], long = edges.filter(([, length]) => length === row[1]).length, short = edges.length - long;
-  return [long ? long + ' long' : '', short ? short + ' short' : ''].filter(Boolean).join(' + ');
+  const abs = row[5] || [], long = abs.filter(([, length]) => length === row[1]).length;
+  const { long: longEdges, short: shortEdges } = abs.length ? { long, short: abs.length - long } : (row[6] || { long: 0, short: 0 });
+  if (longEdges === 2 && shortEdges === 2) return '4';
+  return [longEdges ? longEdges + ' long' : '', shortEdges ? shortEdges + ' short' : ''].filter(Boolean).join(' + ');
 };
 // cut-list rows [name, a, b, qty, where, edges]: the longer side first, sorted by name, then longest first
 const longFirst = rows => rows.map(r => (r[1] >= r[2] ? r : [r[0], r[2], r[1], ...r.slice(3)]));
@@ -1124,10 +1115,12 @@ function frontFunction(front) {
 }
 
 // cutting-list rows of one block: block.parts = front | frames | plinths | panels | plaster | a material use (carcass, drawerBox, back ...): the boards of its material
+// G1[4], G1[1-3]; a part without a column is just its group
+const place = p => (p.item ? KE.placeLabel(p.group, p.item.col, p.item.span) : p.col ? KE.placeLabel(p.group, p.col) : 'G' + p.group);
 function blockRows(parts) {
-  // where a part goes: carcass name, else group + column (G1/4 = group 1, column 4)
+  // where a part goes: carcass name, else group + column (G1[4] = group 1, column 4)
   const carcassName = Object.fromEntries(model.carcasses.map(K => [K.id, K.name]));
-  const where = p => (p.carcassId ? carcassName[p.carcassId] : 'G' + p.group + (p.item ? '/' + p.item.col : p.col ? '/' + p.col : ''));
+  const where = p => (p.carcassId ? carcassName[p.carcassId] : place(p));
   const list = parts => sortRows(longFirst(KE.cutList(parts.map(p => ({ ...p, at: where(p) })))));
   // fronts: height × width, as the front maker needs them
   if (parts === 'front') return sortRows(KE.cutList(model.fronts.map(f => ({ ...f, name: frontFunction(f), a: round1(f.height), b: round1(f.width), at: where(f) }))));
@@ -1179,7 +1172,7 @@ function renderAssembly() {
   });
 
   // parts without a carcass, per group; sorted by column below, so a frame and its back strip sit together
-  const where = p => 'G' + p.group + '/' + (p.item ? p.item.col : p.col || '');
+  const where = place;
   const loose = {};
   const add = (group, text) => (loose[group] = loose[group] || []).push(text);
   model.fronts.filter(f => !f.carcassId).forEach(f => add(f.group, where(f) + ' – ' + frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.handle ? ', handle ' + f.handle : '')));
@@ -1225,7 +1218,7 @@ function blockTotals() {
     block.rows.forEach((row, i) => {
       const [A, B, qty] = values.blocks[block.id][i].map(Number);
       const m2 = (A * B * qty) / 1e6;
-      // ABS edges from engine.js (row[5]); none on parts with lacquered edges
+      // ABS edges from engine.js (row[5]); fronts, frames and the plinth have no ABS
       const edge = row[5] && row[5].length ? (edgeLength(row[5]) * qty) / 1000 : null;
       const cut = cutting ? ((A + B) * qty) / 1000 : null;
       t.m2 += m2;
@@ -1340,7 +1333,7 @@ function renderCuttingList() {
   for (const block of COST.blocks) {
     html.push(`<tr class="blk"><td colspan="9">${esc(fill(block.title))}</td></tr>`);
     const [label, size1, size2, qtyLabel] = block.columns.map(esc); // m² right after the size
-    html.push(`<tr class="bh"><td>${label}</td><td>${size1}</td><td>${size2}</td><td>m²</td><td>${qtyLabel}</td><td>ABS per piece</td><td>ABS total [lm]</td><td>Saw cuts [lm]</td><td title="carcass name, else G group / column">Where</td></tr>`);
+    html.push(`<tr class="bh"><td>${label}</td><td>${size1}</td><td>${size2}</td><td>m²</td><td>${qtyLabel}</td><td>ABS/Lacquer</td><td>ABS total [lm]</td><td>Saw cuts [lm]</td><td title="carcass name, else G group / column">Where</td></tr>`);
     block.rows.forEach((row, i) => {
       const current = values.blocks[block.id][i], original = defaults.blocks[block.id][i], t = totals[block.id].rows[i];
       const cell = field => block.live
@@ -1443,7 +1436,7 @@ function buildWorkbook() {
   for (const block of COST.blocks) {
     cutting.push([str(fill(block.title))]);
     const [labelCell, sizeCell1, sizeCell2, qtyCell] = block.columns.map(str);
-    cutting.push([labelCell, sizeCell1, sizeCell2, str('m²'), qtyCell, str('ABS per piece'), str('ABS total [lm]'), str('Saw cuts [lm]'), str('Where')]);
+    cutting.push([labelCell, sizeCell1, sizeCell2, str('m²'), qtyCell, str('ABS/Lacquer'), str('ABS total [lm]'), str('Saw cuts [lm]'), str('Where')]);
     const first = cutting.length + 1;
     block.rows.forEach((row, i) => {
       const [A, B, qty] = values.blocks[block.id][i].map(Number), r = cutting.length + 1, t = result.totals[block.id].rows[i];

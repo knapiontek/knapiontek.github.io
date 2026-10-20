@@ -609,9 +609,9 @@ function setMetal(name) {
   sceneChanged();
 }
 
-// a board with a core colour in data.js (chipboard, the frames' MDF): faces and finished edges (ABS: board.edges; frames: lacquered edges)
-// in the board colour, bare cut edges in the core colour – so the view shows where the edges are finished.
-// Fronts and the plinth are lacquered all round and are drawn without this.
+// a board with a core colour in data.js (chipboard, the MDF of frames and plinth): faces and finished edges (ABS: board.edges;
+// frames: lacquered edges from engine.js) in the board colour, bare cut edges in the core colour – so the view shows where the edges are finished.
+// Fronts are lacquered all round and are drawn without this; the plinth has no finished edge.
 const coreMaterial = {}, edgedMeshes = new Set();
 const BOX_SIDES = ['right', 'left', 'top', 'bottom', 'front', 'back']; // BoxGeometry faces: +u, −u, +v, −v, +n, −n
 function edgeLook(m, edges, code) {
@@ -882,15 +882,15 @@ function buildRun(run) {
       if (item === sinkWorktop) { worktopWithSinkCutOut(v0, v1, u1); continue; }
       const W = worktopOf(groupOfRun[run]), m = runBox(run, u0, u1, v0, v1, W.n0, W.n1, worktopMaterial);
       if (m && hasTag(item, 'fall')) m.userData.grain = 'y'; // worktop fall: grain upright
-    } else if (type === 'frame') { // on edge, frame.depth deep; lacquered on both faces and rules.frame.lacqueredEdges, the other edges bare
-      const lacquered = (rules.frame.lacqueredEdges || []).map(side => [side]);
+    } else if (type === 'frame') { // on edge, frame.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
+      const frame = model.frames.find(f => f.item === item), lacquered = ((frame && frame.lacqueredSides) || []).map(side => [side]);
       edgeLook(localBox(runLayer[run].frames, u0, u1, v0, v1, frontFace - rules.frame.depth, frontFace, boardFor('frame')), lacquered, model.materialFor.frame);
     } else if (type === 'panel') { // laid flat in the front plane; in run coordinates, so its edges keep their sides
       const panel = model.panels.find(p => p.item === item);
       edgeLook(localBox(runLayer[run].panel, u0, u1, v0, v1, frontFace - panelThickness, frontFace, boardFor('panel')), panel && panel.edges, model.materialFor.panel);
     } else if (type === 'plinth') {
       target = roomLayer.plinth;
-      runBox(run, u0, u1, v0, v1, plinthFace - plinthThickness, plinthFace, plinthMaterial);
+      edgeLook(runBox(run, u0, u1, v0, v1, plinthFace - plinthThickness, plinthFace, plinthMaterial), [], model.materialFor.plinth);
     } else if (type === 'splash') { // on the wall
       target = roomLayer.wallpanel;
       const m = runBox(run, u0, u1, v0, v1, 0, splashThickness, splashMaterial);
@@ -904,7 +904,7 @@ function buildRun(run) {
       localBox(runLayer[run].ovens, u0 + A.bodySide, u1 - A.bodySide, v0 + A.bodyGap, v1 - A.bodyGap, carcassBack + A.bodyGap, carcassFront - A.bodyGap, MAT.applianceBody);
     }
     if (CHECKED_TYPES.includes(type)) {
-      nameNewMeshes(firstMesh, type, 'G' + groupOfRun[run] + ' col ' + col + (span > 1 ? '–' + (col + span - 1) : '') + ' ' + type + ' ' + (u1 - u0) + ' × ' + height + (item.note ? ' (' + item.note + ')' : ''));
+      nameNewMeshes(firstMesh, type, KE.placeLabel(groupOfRun[run], col, span) + ' ' + type + ' ' + (u1 - u0) + ' × ' + height + (item.note ? ' (' + item.note + ')' : ''));
     }
   }
 }
@@ -969,12 +969,12 @@ target = roomLayer.plinth;
 const plinthsA = itemsOfRun.A.filter(i => i.type === 'plinth'), plinthsB = itemsOfRun.B.filter(i => i.type === 'plinth');
 {
   const firstMesh = meshes.length;
-  if (plinthsA.length) runBox('A', Math.max(...plinthsA.map(i => i.u1)), rightWall - plinthFace, 0, Math.max(...plinthsA.map(i => i.v1)), plinthFace - plinthThickness, plinthFace, plinthMaterial);
+  if (plinthsA.length) edgeLook(runBox('A', Math.max(...plinthsA.map(i => i.u1)), rightWall - plinthFace, 0, Math.max(...plinthsA.map(i => i.v1)), plinthFace - plinthThickness, plinthFace, plinthMaterial), [], model.materialFor.plinth);
   nameNewMeshes(firstMesh, 'plinth', 'G1 plinth into the L corner');
 }
 {
   const firstMesh = meshes.length;
-  if (plinthsB.length) runBox('B', plinthFace, Math.min(...plinthsB.map(i => i.u0)), 0, Math.max(...plinthsB.map(i => i.v1)), plinthFace - plinthThickness, plinthFace, plinthMaterial);
+  if (plinthsB.length) edgeLook(runBox('B', plinthFace, Math.min(...plinthsB.map(i => i.u0)), 0, Math.max(...plinthsB.map(i => i.v1)), plinthFace - plinthThickness, plinthFace, plinthMaterial), [], model.materialFor.plinth);
   nameNewMeshes(firstMesh, 'plinth', 'G2 plinth into the L corner');
 }
 
@@ -1314,9 +1314,9 @@ const geometry = geometryCheck();
 function lineCheck() {
   const NEAR = 20, SAME = 0.01, out = []; // near miss: 0.01 < difference <= 20 mm
   for (const [side, edge] of [['tops', 'v1'], ['bottoms', 'v0']]) {
-    const fronts = new Map(); // height -> fronts at it ("G1/3" = group 1, column 3)
+    const fronts = new Map(); // height -> fronts at it ("G1[3]" = group 1, column 3)
     for (const f of model.fronts) {
-      const v = Math.round(f[edge] * 10) / 10, label = 'G' + f.group + '/' + f.item.col;
+      const v = Math.round(f[edge] * 10) / 10, label = KE.placeLabel(f.group, f.item.col, f.item.span);
       if (!fronts.has(v)) fronts.set(v, []);
       if (!fronts.get(v).includes(label)) fronts.get(v).push(label);
     }
@@ -1594,11 +1594,11 @@ function hover(e) {
   let text = '';
   if (hit) {
     const mover = moverOf(hit.object), board = boardOf(hit.object), part = hit.object.userData.part;
-    const where = (group, col, span) => 'G' + group + ' · col ' + (span > 1 ? col + '–' + (col + span - 1) : col) + ' · ';
+    const where = (group, col, span) => KE.placeLabel(group, col, span) + ' · ';
     if (board && !board.K) text = board.role + ' ' + board.a + ' × ' + board.b;
     else if (board && !(mover && isShown(mover.layers.fronts))) text = where(board.K.group, board.K.col, board.K.span) + board.K.name + ' · ' + board.role + ' ' + board.a + ' × ' + board.b;
     else if (mover) text = (mover.item ? where(groupOfRun[mover.run], mover.item.col, mover.item.span) : '') + mover.label;
-    else if (part) text = part.name.replace(/^G(\d+) col /, 'G$1 · col ').replace(/^(G\d+ · col [\d–]+) /, '$1 · ');
+    else if (part) text = part.name.replace(/^(G\d+\[[\d-]+\]) /, '$1 · ');
   }
   renderer.domElement.style.cursor = text ? 'pointer' : '';
   if (!text) { tip.hidden = true; return; }

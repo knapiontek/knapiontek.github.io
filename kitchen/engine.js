@@ -27,6 +27,15 @@
   const HANDLE_POSITIONS = ['T', 'B', 'L', 'R']; // top, bottom, left, right; "" = no handle
   const HINGE_SIDES = ['L', 'R']; // left, right; doors and fridge doors only
   const EDGE_NAMES = { T: 'top', B: 'bottom', L: 'left', R: 'right' }; // ABS sides of a panel (data.js abs)
+  // Lacquered edges of the finished parts (they get no ABS): how many long and short edges one piece has. It follows from how the
+  // kitchen is seen (from the front and from above; the island from all sides), so it is fixed here and data.js knows nothing about it.
+  const LACQUERED_EDGES = { front: { long: 2, short: 2 }, frame: { long: 1, short: 0 }, plinth: { long: 0, short: 0 } };
+  const FRAME_LACQUERED_SIDES = ['front']; // the long edge of a frame on edge that faces the room
+
+  // how a component's place is printed (warnings, lists, tooltips): "G1[4]" = group 1, column 4; "G1[1-11]" = group 1, columns 1 to 11.
+  // The data keeps group, column and span (g, c, s).
+  const placeLabel = (group, col, span = 1) => `G${group}[${col}${span > 1 ? '-' + (col + span - 1) : ''}]`;
+  const placeOf = item => placeLabel(item.group, item.col, item.span);
 
   function parseTags(text) {
     const tags = String(text ?? '').toLowerCase().split(/[\s,]+/).filter(Boolean);
@@ -188,7 +197,7 @@
     // ---- components ----
     const columns = P.columns || {}, pieces = [];
     (P.components || []).forEach((c, index) => {
-      const piece = readComponent(c, index), parsed = parseTags(c.tags), at = `Group ${c.g} col ${c.c}`;
+      const piece = readComponent(c, index), parsed = parseTags(c.tags), at = placeOf(piece);
       if (!(String(c.g) in columns)) return warn(`${at}: group ${c.g} has no columns - skipped.`, index, true);
       if (!Number.isInteger(piece.height)) return warn(`${at}: height "${c.h}" must be an integer mm - skipped.`, index, true);
       if (!piece.type) {
@@ -206,10 +215,10 @@
     // ---- groups ----
     for (const [g, columnWidths] of Object.entries(columns)) {
       const widths = columnWidths;
-      widths.forEach((w, i) => { if (!Number.isInteger(w)) warn(`Group ${g} column ${i + 1}: width "${w}" must be an integer mm.`); });
+      widths.forEach((w, i) => { if (!Number.isInteger(w)) warn(`${placeLabel(g, i + 1)}: column width "${w}" must be an integer mm.`); });
       const stacked = stack(widths, pieces.filter(p => String(p.group) === g));
       for (const { piece, why } of stacked.skipped) {
-        warn(`Group ${g} col ${piece.col}: ${piece.type} ${why === 'overlap' ? 'overlaps another component' : 'is outside the columns'} - skipped.`, piece.index, true);
+        warn(`${placeOf(piece)}: ${piece.type} ${why === 'overlap' ? 'overlaps another component' : 'is outside the columns'} - skipped.`, piece.index, true);
       }
       groups[g] = {
         group: +g,
@@ -224,7 +233,7 @@
         const width = item.u1 - item.u0, height = item.v1 - item.v0;
         const [part, size, what] = item.type === 'worktop' ? ['worktop', hasTag(item, 'fall') ? width : height, hasTag(item, 'fall') ? 'width' : 'height']
           : item.type === 'frame' ? ['frame', Math.min(width, height), height > width ? 'width' : 'height'] : [];
-        if (part && size !== thickness[part]) warn(`Group ${g} col ${item.col}: ${item.type} ${what} ${size} does not match its material ${materials[materialFor[part]].label}.`, item.index);
+        if (part && size !== thickness[part]) warn(`${placeOf(item)}: ${item.type} ${what} ${size} does not match its material ${materials[materialFor[part]].label}.`, item.index);
       }
     }
     for (const c of P.components || []) {
@@ -249,7 +258,7 @@
     }
     for (const G of Object.values(groups)) {
       for (const item of G.items) {
-        if (BOX_TYPES.includes(item.type) && !item.carcassName) warn(`Group ${G.group} col ${item.col}: ${item.type} has no carcass name.`, item.index);
+        if (BOX_TYPES.includes(item.type) && !item.carcassName) warn(`${placeOf(item)}: ${item.type} has no carcass name.`, item.index);
       }
     }
     carcasses.forEach((K, i) => {
@@ -380,7 +389,7 @@
           frames.push({
             group: G.group, item, material: materialFor.frame, box: [u0, u1, v0, v1, frontFace - frameRule.depth, frontFace],
             name: (height > width ? 'Frame ' : 'Horizontal frame ') + thickness.frame + ' on edge (' + frameRule.depth + ' deep)',
-            a: frameRule.depth, b: Math.max(width, height)
+            a: frameRule.depth, b: Math.max(width, height), lacquer: LACQUERED_EDGES.frame, lacqueredSides: FRAME_LACQUERED_SIDES
           });
           if (!item.carcassName) {
             addBoard({
@@ -392,7 +401,7 @@
           const edges = item.abs.filter(x => EDGE_NAMES[x]).map(x => [EDGE_NAMES[x], x === 'T' || x === 'B' ? width : height]);
           panels.push({ group: G.group, item, material: materialFor.panel, name: 'Panel ' + thickness.panel, a: width, b: height, box: [u0, u1, v0, v1, frontFace - thickness.panel, frontFace], edges });
         } else if (item.type === 'plinth') {
-          plinths.push({ group: G.group, item, material: materialFor.plinth, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - thickness.plinth, plinthFace] });
+          plinths.push({ group: G.group, item, material: materialFor.plinth, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - thickness.plinth, plinthFace], lacquer: LACQUERED_EDGES.plinth });
           counts.plinthHeight = Math.max(counts.plinthHeight, height);
         } else if (item.type === 'board' && plasterRule) {
           // cladding: the face plus the return along the long side; profiles: UD on both fixed edges, CD on the outer edge + cross pieces
@@ -442,27 +451,27 @@
       for (const item of G.items) {
         if (!FRONT_TYPES.includes(item.type)) continue;
         if (!item.gaps || item.gaps.length !== 4 || item.gaps.some(x => !Number.isFinite(x))) {
-          warn(`Group ${G.group} col ${item.col}: ${item.type} needs 4 gaps [left, right, top, bottom] - drawn without gaps.`, item.index);
+          warn(`${placeOf(item)}: ${item.type} needs 4 gaps [left, right, top, bottom] - drawn without gaps.`, item.index);
           item.gaps = [0, 0, 0, 0];
         }
         const box = frontBox(item), K = item.carcass;
-        if (box.u1 - box.u0 <= 0 || box.v1 - box.v0 <= 0) warn(`Group ${G.group} col ${item.col}: gaps leave no front.`, item.index);
+        if (box.u1 - box.u0 <= 0 || box.v1 - box.v0 <= 0) warn(`${placeOf(item)}: gaps leave no front.`, item.index);
         const opening = item.type === 'dummy' ? 'fixed'
           : item.type === 'drawer' ? 'drawer'
           : item.type === 'dishwasher' ? 'dishwasher'
           : item.type === 'fridge' || item.type === 'freezer' ? 'fridge'
           : 'door';
         const hinged = opening === 'door' || opening === 'fridge';
-        if (hinged && !HINGE_SIDES.includes(item.hinge)) warn(`Group ${G.group} col ${item.col}: a door needs a hinge side ${HINGE_SIDES.join(' or ')}.`, item.index);
-        if (hinged && item.hinge === item.handle) warn(`Group ${G.group} col ${item.col}: hinge and handle on the same side.`, item.index);
-        if (!hinged && item.hinge) warn(`Group ${G.group} col ${item.col}: only doors have a hinge side.`, item.index);
+        if (hinged && !HINGE_SIDES.includes(item.hinge)) warn(`${placeOf(item)}: a door needs a hinge side ${HINGE_SIDES.join(' or ')}.`, item.index);
+        if (hinged && item.hinge === item.handle) warn(`${placeOf(item)}: hinge and handle on the same side.`, item.index);
+        if (!hinged && item.hinge) warn(`${placeOf(item)}: only doors have a hinge side.`, item.index);
         // hinges are screwed to a carcass side: on the hinge side the door must reach the carcass edge
         if (hinged && K && HINGE_SIDES.includes(item.hinge) && (item.hinge === 'L' ? item.u0 !== K.u0 : item.u1 !== K.u1)) {
-          warn(`Group ${G.group} col ${item.col}: hinge side ${item.hinge} has no side of carcass ${K.name} to fix the hinges to.`, item.index);
+          warn(`${placeOf(item)}: hinge side ${item.hinge} has no side of carcass ${K.name} to fix the hinges to.`, item.index);
         }
         const front = {
           id: fronts.length + 1, group: G.group, item, carcassId: K ? K.id : null, opening, tags: item.tags, gaps: item.gaps,
-          ...box, width: box.u1 - box.u0, height: box.v1 - box.v0, handle: item.handle, hingeSide: hinged ? item.hinge : '', material: materialFor[item.type]
+          ...box, width: box.u1 - box.u0, height: box.v1 - box.v0, handle: item.handle, hingeSide: hinged ? item.hinge : '', material: materialFor[item.type], lacquer: LACQUERED_EDGES.front
         };
         item.front = front;
         fronts.push(front);
@@ -555,20 +564,20 @@
   }
 
   // parts with the same name, size and ABS edges counted together: [name, a, b, qty, where, edges],
-  // where = "at" labels, e.g. "K2, K5 ×2"; edges = ABS edges of one part [[side, length]]
+  // where = "at" labels, e.g. "K2, K5 ×2"; edges = ABS edges of one part [[side, length]]; lacquer = lacquered edges of one part
   function cutList(parts) {
     const rows = new Map();
     for (const p of parts) {
-      const key = p.name + '|' + p.a + '|' + p.b + '|' + JSON.stringify(p.edges || []);
+      const key = p.name + '|' + p.a + '|' + p.b + '|' + JSON.stringify(p.edges || []) + '|' + JSON.stringify(p.lacquer || null);
       const row = rows.get(key) || { qty: 0, at: new Map() };
       row.qty++;
       if (p.at) row.at.set(p.at, (row.at.get(p.at) || 0) + 1);
       rows.set(key, row);
     }
     return [...rows].map(([key, row]) => {
-      const [name, a, b, edges] = key.split('|');
+      const [name, a, b, edges, lacquer] = key.split('|');
       const where = [...row.at].map(([label, n]) => (n > 1 ? label + ' ×' + n : label)).join(', ');
-      return [name, Number(a), Number(b), row.qty, where, JSON.parse(edges)];
+      return [name, Number(a), Number(b), row.qty, where, JSON.parse(edges), JSON.parse(lacquer)]; // edges: ABS [[side, length]]; lacquer: {long, short} edges of a front, frame, plinth
     });
   }
 
@@ -601,7 +610,7 @@
   }
 
   root.KitchenEngine = {
-    TYPE_TAGS, FEATURE_TAGS, FRONT_TYPES, BOX_TYPES, HANDLE_POSITIONS, HINGE_SIDES, EDGE_NAMES,
+    TYPE_TAGS, FEATURE_TAGS, FRONT_TYPES, BOX_TYPES, HANDLE_POSITIONS, HINGE_SIDES, EDGE_NAMES, LACQUERED_EDGES, placeLabel,
     BOARD_TYPES, PART_RULES, TAG_TYPES, checkMaterials, parseTags, build, cutList, carcassMap, mapJSON,
     load, dataJS, fromDataJS
   };
