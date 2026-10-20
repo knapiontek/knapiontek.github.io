@@ -49,13 +49,14 @@ Plain JSON after `window.KITCHEN_DATA =`, written so a person can read and edit 
 - `rules`: construction values (setbacks, gaps, overhang, hinges, shelves, drawers ...).
 - `notes`: `[name, description, details]`; `group N` notes give each group its role (worktop, tall, island).
 - `columns`: column widths per group, integer mm.
-- `components`: one per line, empty fields left out: `g` group, `c` first column, `s` span, `tags`, `k` carcass name, `h` height, `hd` handle, `hg` hinge side, `gaps`, `abs` ABS-edged sides of a panel, `note`.
+- `components`: one per line, empty fields left out: `g` group, `c` first column, `s` span, `tags`, `k` carcass name, `h` height, `hd` handle, `hg` hinge side, `gaps`, `note`.
 
 ### engine.js
 Deterministic: the same project gives the same model.
 - `build(project)` returns the model: carcasses, boards, fronts, frames, panels, plinths, worktops, plasterboard, counts, thicknesses, `materialFor` (type or part → material code) and `warnings`.
-- Checks the data and reports problems as warnings instead of failing: one type per component, tags allowed on their type, every board type in one material, sizes matching their material, hinge and handle sides, a carcass side behind each hinge side ...
-- Marks the ABS edges of each board and panel (`edges`: side and length); the pages list them, nothing else decides where ABS goes.
+- Checks the data and reports problems as warnings instead of failing: one type per component, tags allowed on their type, every board type in one material, sizes matching their material, hinge and handle sides ...
+- Marks the ABS edges of each board and panel (`edges`: side and length); the pages list them, nothing else decides where ABS goes. A panel gets ABS on each edge next to a front that opens (a door, a drawer, an appliance door; not a fixed front), found from the neighbouring components.
+- Adds an ortho panel (a carcass-material board across the carcass, as high as the door) when a hinged door does not reach a carcass side on its hinge side.
 - Fixes the lacquered edges of the finished parts (`LACQUERED_EDGES`, long and short edges of one piece): fronts all round (2 long + 2 short), frames 1 long side (the front edge, `lacqueredSides`), plinth none. It follows from how the kitchen is seen (front and top; the island from all sides), so it lives in the engine, not in `data.js`. Each front, frame and plinth carries it as `lacquer`; `cutList` returns it after the ABS edges, and the pages show one column, ABS/Lacquer ("4", "1 long", "1 long + 1 short"; nothing = no finished edge).
 - Prints the place of a component as `G1[4]` (group 1, column 4) or `G1[1-11]` (columns 1 to 11) with `placeLabel`: warnings, lists and tooltips in every page use it. The data keeps `g`, `c`, `s`.
 - Coordinates per group: `u` along the group, `v` up from the floor, `n` out from the wall; a box is `[u0, u1, v0, v1, n0, n1]`.

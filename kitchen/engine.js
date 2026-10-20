@@ -2,9 +2,9 @@
    Coordinates in mm per group: u along the group, v up from the floor, n out from the wall; a box is [u0, u1, v0, v1, n0, n1].
    data.columns: column widths per group, integer mm.
    data.components: g group, c first column, s column span, h height, tags (one type + features), k carcass name,
-   hd handle (T | B | L | R), hg hinge side of a door (L | R), gaps [left, right, top, bottom] on fronts,
-   abs ABS-edged sides of a panel (T B L R), note.
-   ABS: carcass boards get it on the edge seen from the front (parts that are hidden get none); panels on their abs sides. */
+   hd handle (T | B | L | R), hg hinge side of a door (L | R), gaps [left, right, top, bottom] on fronts, note.
+   ABS: carcass boards get it on the edge seen from the front (parts that are hidden get none); a panel on each edge next to a front
+   that opens (a door, a drawer, an appliance door), because that edge shows when the front is open. */
 (function (root) {
   'use strict';
 
@@ -26,7 +26,8 @@
   const PART_RULES = { carcass: 'carcass.material', back: 'back.material', drawerBox: 'drawers.material', hobPanel: 'rails.hobPanelMaterial' };
   const HANDLE_POSITIONS = ['T', 'B', 'L', 'R']; // top, bottom, left, right; "" = no handle
   const HINGE_SIDES = ['L', 'R']; // left, right; doors and fridge doors only
-  const EDGE_NAMES = { T: 'top', B: 'bottom', L: 'left', R: 'right' }; // ABS sides of a panel (data.js abs)
+  const EDGE_NAMES = { T: 'top', B: 'bottom', L: 'left', R: 'right' }; // the four sides of a panel
+  const OPENING_FRONT_TYPES = FRONT_TYPES.filter(type => type !== 'dummy'); // fronts that open; a dummy is fixed
   // Lacquered edges of the finished parts (they get no ABS): how many long and short edges one piece has. It follows from how the
   // kitchen is seen (from the front and from above; the island from all sides), so it is fixed here and data.js knows nothing about it.
   const LACQUERED_EDGES = { front: { long: 2, short: 2 }, frame: { long: 1, short: 0 }, plinth: { long: 0, short: 0 } };
@@ -128,7 +129,6 @@
       carcassName: String(c.k || '').trim(),
       handle: c.hd || '',
       hinge: c.hg || '',
-      abs: String(c.abs || '').toUpperCase().split(/[\s,]+/).filter(Boolean),
       gaps: Array.isArray(c.gaps) ? c.gaps.map(x => (x === '' || x == null ? NaN : Number(x))) : null, // an empty gap is not 0
       note: c.note || ''
     };
@@ -207,8 +207,6 @@
       if (parsed.unknown.length) warn(`${at}: unknown tag ${parsed.unknown.join(', ')} (known: ${[...TYPE_TAGS, ...FEATURE_TAGS].join(', ')}).`, index);
       if (piece.handle && !FRONT_TYPES.includes(piece.type)) warn(`${at}: a ${piece.type} cannot have a handle.`, index);
       else if (piece.handle && !HANDLE_POSITIONS.includes(piece.handle)) warn(`${at}: handle "${piece.handle}" must be one of ${HANDLE_POSITIONS.join(', ')}.`, index);
-      if (piece.abs.length && piece.type !== 'panel') warn(`${at}: ABS sides (abs) are set on panels only.`, index);
-      else if (piece.abs.some(x => !EDGE_NAMES[x])) warn(`${at}: ABS sides "${c.abs}" must be T, B, L or R.`, index);
       pieces.push(piece);
     });
 
@@ -398,7 +396,15 @@
             });
           }
         } else if (item.type === 'panel') {
-          const edges = item.abs.filter(x => EDGE_NAMES[x]).map(x => [EDGE_NAMES[x], x === 'T' || x === 'B' ? width : height]);
+          // an edge shows when the front next to it opens: ABS on each side whose neighbour (touching, overlapping) is a front that opens
+          const overlaps = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0) > 0;
+          const neighbour = {
+            L: o => o.u1 === item.u0 && overlaps(o.v0, o.v1, item.v0, item.v1), R: o => o.u0 === item.u1 && overlaps(o.v0, o.v1, item.v0, item.v1),
+            T: o => o.v0 === item.v1 && overlaps(o.u0, o.u1, item.u0, item.u1), B: o => o.v1 === item.v0 && overlaps(o.u0, o.u1, item.u0, item.u1)
+          };
+          const edges = Object.keys(EDGE_NAMES)
+            .filter(side => G.items.some(other => OPENING_FRONT_TYPES.includes(other.type) && neighbour[side](other)))
+            .map(side => [EDGE_NAMES[side], side === 'T' || side === 'B' ? width : height]);
           panels.push({ group: G.group, item, material: materialFor.panel, name: 'Panel ' + thickness.panel, a: width, b: height, box: [u0, u1, v0, v1, frontFace - thickness.panel, frontFace], edges });
         } else if (item.type === 'plinth') {
           plinths.push({ group: G.group, item, material: materialFor.plinth, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - thickness.plinth, plinthFace], lacquer: LACQUERED_EDGES.plinth });
@@ -465,9 +471,14 @@
         if (hinged && !HINGE_SIDES.includes(item.hinge)) warn(`${placeOf(item)}: a door needs a hinge side ${HINGE_SIDES.join(' or ')}.`, item.index);
         if (hinged && item.hinge === item.handle) warn(`${placeOf(item)}: hinge and handle on the same side.`, item.index);
         if (!hinged && item.hinge) warn(`${placeOf(item)}: only doors have a hinge side.`, item.index);
-        // hinges are screwed to a carcass side: on the hinge side the door must reach the carcass edge
+        // hinges are screwed to a carcass side: when the door does not reach one on its hinge side, the engine adds an ortho panel
+        // (a board across the carcass, in the carcass material) at the hinge edge of the door, as high as the door
         if (hinged && K && HINGE_SIDES.includes(item.hinge) && (item.hinge === 'L' ? item.u0 !== K.u0 : item.u1 !== K.u1)) {
-          warn(`${placeOf(item)}: hinge side ${item.hinge} has no side of carcass ${K.name} to fix the hinges to.`, item.index);
+          const panelU0 = item.hinge === 'L' ? item.u0 : item.u1 - board, panelV0 = Math.max(item.v0, K.v0 + board), panelV1 = Math.min(item.v1, K.v1 - board);
+          addBoard({
+            id: 'side', name: 'Ortho panel', a: carcassDepth, b: panelV1 - panelV0, material: materialFor.carcass, layer: 'carcasses', group: G.group, carcassId: K.id,
+            box: [panelU0, panelU0 + board, panelV0, panelV1, carcassBack, carcassFront], edges: [['front', panelV1 - panelV0]]
+          });
         }
         const front = {
           id: fronts.length + 1, group: G.group, item, carcassId: K ? K.id : null, opening, tags: item.tags, gaps: item.gaps,
@@ -481,7 +492,7 @@
         if (opening === 'door' && K) {
           const count = hingeRule.perDoor.find(([maxHeight]) => front.height < maxHeight)[1];
           front.hinges = Array.from({ length: count }, (_, j) => Math.round(front.v0 + hingeRule.fromEnd + ((front.height - 2 * hingeRule.fromEnd) * j) / (count - 1)));
-          front.hingeU = front.hingeSide === 'R' ? K.u1 - board : K.u0 + board;
+          front.hingeU = front.hingeSide === 'R' ? item.u1 - board : item.u0 + board; // on the carcass side or the ortho panel
           counts.hinges += count;
         }
 
