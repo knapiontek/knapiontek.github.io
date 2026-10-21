@@ -18,7 +18,7 @@ Files: `data.js` (design + rules) → `engine.js` (parts, data checks, writes da
 | Island | back panel in the panel material, between the end columns, floor to the carcass tops, on the carcass backs (`island.backPanel`) |
 | Floor / base | floor carcass = on a plinth: `legsPerCarcass` legs; base = floor + worktop on top: 2 top rails `rails.depth`, otherwise a top panel |
 | Plinth | face `plinth.setback` behind the fronts |
-| Lacquer | fixed in engine.js, not in data.js (how the kitchen is seen: front and top, the island from all sides): fronts all round (both faces and all edges); frames both faces and 1 long side (the front edge); plinth none; panels both faces only, so their edges seen get ABS. |
+| Lacquer | fixed in engine.js, not in data.js (how the kitchen is seen: front and top, the island from all sides): fronts all round (both faces and all edges); frames both faces and 1 long side (the front edge); plinth both faces, no lacquered edge; panels both faces only, so their edges seen get ABS. |
 | ABS | carcass boards on the edge seen from the front: sides on the long front edge, bottoms, tops, shelves and front rails on the front edge, rails on edge on the bottom edge; rear rails, back strips, backs and drawer parts none. Panels on each edge next to a front that opens (a door, a drawer, an appliance door; not a fixed front): that edge shows when the front is open. Next to anything else (another panel, a frame, a filler, the worktop, the plinth) none. The cutting list gives ABS as long / short edges (what the board supplier needs); the Assembly tab says where each one faces. Fronts and frames have lacquered edges, the plinth none: no ABS. The cutting list column "ABS/Lacquer" shows ABS for boards and panels (e.g. "1 long", "1 long + 1 short") and the lacquered edges for fronts ("4"), frames ("1 long") and the plinth (nothing); "4" = all four edges |
 | Frame / panel | frame on edge, `frame.depth` deep, back strip when not in a carcass; panel laid flat in the front plane |
 | Shelves | adjustable: depth − `shelf.setback`, `shelf.clearance` each side, `shelf.pins` pins; count by door height (`shelf.perDoor`); fixed shelf at the joint of 2 boxes (not in base carcasses) |
@@ -41,7 +41,7 @@ Type = what a component is (one per component); tag = an extra on a type, allowe
 | `coffee` (cabinet) | pull-out shelf at the bottom (`pullOutShelf`: depth, side clearance, lift) on full-extension runners; `pullOutShelf.space` free above it, then `pullOutShelf.shelvesAbove` adjustable shelves; no other shelves |
 | `fall` (worktop) | worktop fall: the worktop board turned down to the floor, upright grain |
 
-Types: filler (void), board (plasterboard), plinth, worktop, splash, panel, frame, cabinet, drawer, dummy (fixed front in a carcass: no hinges, no drawer box, no back), dishwasher, fridge, freezer, oven, micro.
+Types: filler (void; inside a carcass - same carcass name - it is closed with a `Filler cover`: a board in the carcass material, in the front plane, no ABS), board (plasterboard), plinth, worktop, splash, panel, frame, cabinet, drawer, dummy (fixed front in a carcass: no hinges, no drawer box, no back), dishwasher, fridge, freezer, oven, micro.
 
 ## 3. Checks
 

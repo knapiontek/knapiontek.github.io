@@ -9,7 +9,7 @@
   'use strict';
 
   // type = what a component is (one per component); tag = an extra on some types
-  // filler = void / spacer, nothing built; board = plasterboard box; splash = board on the wall; panel = board laid flat in the front plane;
+  // filler = void / spacer, nothing built (inside a carcass: closed with a board in the carcass material); board = plasterboard box; splash = board on the wall; panel = board laid flat in the front plane;
   // frame = strip on edge in the front plane; dummy = fixed front in a carcass: no hinges, no drawer box, no back;
   // dishwasher = front on the appliance door, no carcass; fridge, freezer = front on the appliance door in a carcass
   const TYPE_TAGS = ['filler', 'board', 'plinth', 'worktop', 'splash', 'panel', 'frame', 'cabinet', 'drawer', 'dummy', 'dishwasher', 'fridge', 'freezer', 'oven', 'micro'];
@@ -406,6 +406,13 @@
             .filter(side => G.items.some(other => OPENING_FRONT_TYPES.includes(other.type) && neighbour[side](other)))
             .map(side => [EDGE_NAMES[side], side === 'T' || side === 'B' ? width : height]);
           panels.push({ group: G.group, item, material: materialFor.panel, name: 'Panel ' + thickness.panel, a: width, b: height, box: [u0, u1, v0, v1, frontFace - thickness.panel, frontFace], edges });
+        } else if (item.type === 'filler' && item.carcassName) {
+          // a filler inside a carcass is a hole in its front (e.g. the hidden end of an L corner): closed with a board in the carcass
+          // material, in the front plane; hidden, so no ABS
+          addBoard({
+            id: 'fillerCover', name: 'Filler cover', a: width, b: height, material: materialFor.carcass, layer: 'carcasses', group: G.group, carcassId: item.carcass.id,
+            box: [u0, u1, v0, v1, frontFace - board, frontFace], edges: []
+          });
         } else if (item.type === 'plinth') {
           plinths.push({ group: G.group, item, material: materialFor.plinth, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - thickness.plinth, plinthFace], lacquer: LACQUERED_EDGES.plinth });
           counts.plinthHeight = Math.max(counts.plinthHeight, height);
