@@ -225,7 +225,7 @@ body.shut .toggle{display:flex}
       <section>
         <h2>Materials</h2>
         <ul class="mats" id="mats">
-          <li><i style="background:radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"></i><small>Sink</small><b>Granite composite</b></li>
+          <li><i style="background:radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"></i><small>Sink</small><b>Quartz composite</b></li>
           <li><i style="background:linear-gradient(120deg,#c4c6c7,#b5b8ba 45%,#cfd1d2)"></i><small>Floor</small><b>Grey marble 120 × 60</b></li>
         </ul>
       </section>
@@ -292,7 +292,7 @@ body.shut .toggle{display:flex}
  "room": {"about": "The room, mm: ceiling measured, the other sizes rounded to whole metres. x along the window wall from the start of Group 1, z out from the window wall, y up. The right wall is where group 2 stands (runs.B.x).",
    "ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallLength": 4000},
  "window": {"x": 870, "width": 1900, "sill": 1080, "height": 1300, "reveal": 150, "finish": "anthracite"},
- "sink": {"outer": [780, 500], "outerFromWall": 40, "bowl": [680, 380], "bowlFromWall": 130, "rim": 8, "wall": 10, "bowlDepth": 200, "tapFromWall": 85, "trapTop": 575, "wallOutlet": 470},
+ "sink": {"outer": [720, 460], "outerFromWall": 90, "bowl": [660, 400], "bowlFromWall": 120, "rim": 8, "wall": 10, "bowlDepth": 180, "tapFromWall": 45, "trapTop": 575, "wallOutlet": 470},
  "hob": {"glass": [590, 520], "glassFromWall": 39, "body": [556, 486], "bodyFromWall": 56, "builtInHeight": 44},
  "hood": {"name": "Electrolux LFV416K", "width": 598, "depth": 390, "bottom": 1500, "height": 380, "chimney": [250, 220]},
  "fridge": {"bodyHeight": 1772, "sideGap": 20, "bottomGap": 4, "front": 500},
@@ -609,7 +609,7 @@ function setMetal(name) {
   sceneChanged();
 }
 
-// a board with a core colour in data.js (chipboard, the MDF of frames and plinth): faces and finished edges (ABS: board.edges;
+// a board with a core colour in data.js (chipboard, the lacquered board): faces and finished edges (ABS: board.edges;
 // frames: lacquered edges from engine.js) in the board colour, bare cut edges in the core colour – so the view shows where the edges are finished.
 // Fronts are lacquered all round and are drawn without this; the plinth has no finished edge.
 const coreMaterial = {}, edgedMeshes = new Set();
@@ -928,7 +928,7 @@ for (const p of model.panels) {
   nameNewMeshes(firstMesh, 'panel', 'G' + p.group + ' ' + p.name + ' ' + p.a + ' × ' + p.b);
 }
 
-// inset sink, granite composite, with tap and a space-saving trap
+// inset sink (IKEA KILSVIKEN, quartz composite), with tap and a space-saving trap
 if (sinkItem) {
   target = runLayer[sinkRun].sink;
   [[sinkU0, sinkU1, sinkN0, bowlN0], [sinkU0, sinkU1, bowlN1, sinkN1], [sinkU0, bowlU0, bowlN0, bowlN1], [bowlU1, sinkU1, bowlN0, bowlN1]]
