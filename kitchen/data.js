@@ -57,7 +57,7 @@ window.KITCHEN_DATA = {
   ["Hood / extractor", "Electrolux LFV416K, 600", "Above the hob"],
   ["Fridge", "Bosch KIS86AFE0, built-in 1772", "No shelf above it: the free space is for ventilation"],
   ["Coffee machine", "DeLonghi Dinamica (owned)", "On the pull-out shelf of the corner wall cabinet (group 2)"],
-  ["Plumbing & electrics", "Hob 400 V 2-phase", "Dedicated circuits for oven, dishwasher, fridge"]
+  ["Oven Microwave", "Top shelf: 18 [top overhang: ~10 | ~8 exposed]\nMicrowave: 362 [front 382]\nMid shelf: 18 [overhangs: 10 bottom + 5.5 top = 15.5 -> ~2.5 gap]\nOven: 584 [front 595]\nBottom shelf: 18  [bottom overhang: ~5.5 | ~12.5 exposed]", "H: 18 + 362 + 18 + 584 + 18 = 1000 mm"]
  ],
  "columns": {
   "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 320],
