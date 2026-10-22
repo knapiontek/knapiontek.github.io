@@ -20,7 +20,6 @@
           --text-dim: #e2e8f0;
           --border: #334155;
           --border-soft: #475569;
-          --row-hover: #334155;
     
           --sheet-bg: #ffffff;
           --sheet-header-bg: #f1f5f9;
@@ -66,8 +65,6 @@
         .btn:active { transform: scale(0.98); }
         .btn.secondary { background: var(--border-soft); color: var(--text); }
         .btn.secondary:hover { background: #5b6b83; }
-        .btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
-        .btn.danger:hover { background: rgba(248,113,113,0.12); color: var(--danger-hover); border-color: var(--danger-hover); }
     
         #status-banner {
           max-width: 1400px;
@@ -136,48 +133,19 @@
         }
         .panel h3 { margin-top: 0; color: var(--accent); font-size: 16px; }
     
-        .settings-bar {
-          display: flex;
-          gap: 20px;
-          margin-bottom: 16px;
-          align-items: center;
-          font-size: 13px;
-          color: var(--text-dim);
-          background: var(--bg);
-          padding: 10px 14px;
-          border-radius: 6px;
-          border: 1px solid var(--border);
-        }
-        .settings-bar label {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .settings-bar input {
-          width: 90px;
-          background: var(--sheet-bg);
-          border: 1px solid var(--sheet-border);
-          border-radius: 4px;
-          padding: 5px 8px;
-          color: var(--sheet-text);
-          font: inherit;
-          text-align: right;
-        }
-    
         .input-grid {
           display: grid;
           grid-template-columns: 1fr minmax(220px, 300px);
           gap: 20px;
+          align-items: stretch;
         }
         .input-grid .wide { grid-column: 1 / -1; }
         /* first row: Materials as high as its rows; Groups & Columns takes that height and scrolls */
-        .input-grid { align-items: stretch; }
         .input-grid .sub-section:not(.wide) { display: flex; flex-direction: column; min-height: 0; }
         .input-grid .sub-section:not(.wide) .sheet-wrap { flex: 1 1 auto; max-height: none; }
         .input-grid .sub-section.columns .sheet-wrap { contain: size; min-height: 120px; }
-        .sheet .cell.text { text-align: left; }
         .sheet td.center { text-align: center; }
-                .sheet.read-only td { padding: 7px 10px; color: var(--sheet-text); white-space: normal; }
+        .sheet.read-only td { padding: 7px 10px; color: var(--sheet-text); white-space: normal; }
         .sheet.read-only td.num { text-align: right; }
         .sheet .swatch { display: block; width: 32px; height: 16px; border-radius: 3px; border: 1px solid var(--sheet-border); }
         .sub-section h4 {
@@ -190,7 +158,6 @@
           align-items: center;
           font-size: 14px;
         }
-        .sub-section h4 span.total { font-size: 12px; color: var(--accent); font-weight: normal; }
     
         .sheet-wrap {
           background: var(--sheet-bg);
@@ -260,12 +227,11 @@
         table.sheet input.gap { -moz-appearance: textfield; }
         table.sheet input.gap::-webkit-inner-spin-button, table.sheet input.gap::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         table.sheet select { cursor: pointer; }
-        .pick-btn { min-width: 150px; }
         .pick-btn.handle-btn { min-width: 76px; min-height: 30px; }
         .pick-btn.handle-btn:hover { background: var(--sheet-row-hover); }
         .picker .picker-list { display: grid; grid-template-columns: repeat(2, auto); gap: 2px 14px; }
         .picker.one-col .picker-list { grid-template-columns: auto; }
-        .pick-btn { width: 100%; border: none; background: transparent; padding: 7px 10px; font: inherit; color: var(--sheet-text);
+        .pick-btn { min-width: 150px; width: 100%; border: none; background: transparent; padding: 7px 10px; font: inherit; color: var(--sheet-text);
           text-align: left; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .pick-btn.empty { color: var(--sheet-ghost); }
         .pick-btn:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--sheet-focus); background: #fff8e1; }
@@ -285,10 +251,6 @@
         td.col-actions button.row-insert:hover { color: var(--accent-hover); background: rgba(56,189,248,0.12); }
         td.col-actions button.row-del:hover { color: var(--danger); background: rgba(248,113,113,0.1); }
     
-        table.sheet.output td { padding: 7px 10px; }
-        table.sheet.output.spacy td { padding: 10px 14px; }
-        table.sheet.output td strong { color: #0f172a; }
-    
         .hidden-file-input { display: none; }
 
         /* Notes */
@@ -300,7 +262,6 @@
           field-sizing: content;   /* row height follows the text (browsers that support it) */
         }
         .notes-wrap { max-height: none; }
-        #svg-footnote .fn-note { color: var(--accent-hover); }
     
         @media (max-width: 900px) {
           .input-grid { grid-template-columns: 1fr; }
@@ -318,8 +279,6 @@
       <button class="btn secondary" @click="chooseImportFile()" title="Load a data.js (or .json) file into the tables">Import data</button>
       <button class="btn" @click="exportData()" title="Save the tables as data.js">Export data</button>
       <input type="file" class="hidden-file-input" accept=".js,.json,text/javascript,application/json" x-ref="importFile" @change="importFile($event)">
-    </div>
-    <div class="action-group">
     </div>
   </div>
 
@@ -383,7 +342,7 @@
                 <th style="width:56px">Group</th>
                 <th style="width:52px">Col</th>
                 <th style="width:52px">Span</th>
-                <th style="width:170px" title="One type (radio) + any features (tick boxes)">Tags</th>
+                <th style="width:170px" title="One type (radio) + the tags allowed on it (tick boxes)">Tags</th>
                 <th style="width:70px" title="Carcass name: components with the same name are one carcass (empty = no carcass)">Carcass</th>
                 <th style="width:70px">Height</th>
                 <th style="width:84px" title="Handle position on the front">Handle</th>
@@ -406,10 +365,10 @@
                   <td><input type="text" class="cell" spellcheck="false" placeholder="—" x-model="row.carcass"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.height"></td>
                   <td>
-                    <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Handle position" @click="openPicker(row, $event, 'handle')" x-text="row.handle ? HANDLE_NAMES[row.handle] || row.handle : ''"></button></template>
+                    <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Handle position" @click="openPicker(row, $event, 'handle')" x-text="row.handle ? SIDE_NAMES[row.handle] || row.handle : ''"></button></template>
                   </td>
                   <td>
-                    <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Hinge side of a door" @click="openPicker(row, $event, 'hinge')" x-text="row.hinge ? HANDLE_NAMES[row.hinge] : ''"></button></template>
+                    <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Hinge side of a door" @click="openPicker(row, $event, 'hinge')" x-text="row.hinge ? SIDE_NAMES[row.hinge] || row.hinge : ''"></button></template>
                   </td>
                   <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapLeft" @wheel="$event.target.blur()"></td>
                   <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapRight" @wheel="$event.target.blur()"></td>
@@ -435,19 +394,19 @@
       <div class="picker-list">
         <div class="picker-title" x-text="picker.mode"></div>
         <template x-for="h in (picker.mode === 'handle' ? HANDLE_POSITIONS : HINGE_SIDES)" :key="h || 'none'">
-          <label><input type="radio" name="side-pick" :checked="(picker.row[picker.mode] || '') === h" @change="picker.row[picker.mode] = h; picker.row = null"> <span x-text="HANDLE_NAMES[h]"></span></label>
+          <label><input type="radio" name="side-pick" :checked="(picker.row[picker.mode] || '') === h" @change="picker.row[picker.mode] = h; picker.row = null"> <span x-text="SIDE_NAMES[h]"></span></label>
         </template>
       </div>
     </template>
     <template x-if="picker.row && picker.mode === 'tags'">
       <div class="picker-list">
         <div class="picker-title">type</div>
-        <template x-for="t in TYPE_TAGS" :key="t">
+        <template x-for="t in TYPES" :key="t">
           <label><input type="radio" name="tag-type" :checked="typeOf(picker.row) === t" @change="setType(picker.row, t)"> <span x-text="t"></span></label>
         </template>
-        <div class="picker-title">features</div>
-        <template x-for="f in featuresFor(picker.row)" :key="f">
-          <label><input type="checkbox" :checked="hasFeature(picker.row, f)" @change="toggleFeature(picker.row, f)"> <span x-text="f"></span></label>
+        <div class="picker-title">tags</div>
+        <template x-for="tag in tagsFor(picker.row)" :key="tag">
+          <label><input type="checkbox" :checked="hasTag(picker.row, tag)" @change="toggleTag(picker.row, tag)"> <span x-text="tag"></span></label>
         </template>
       </div>
     </template>
@@ -497,7 +456,7 @@
 
 </div>
 
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 <!-- DESIGN CONFIG (JSON): how this page draws the elevations - sizes in SVG units (1 = 1 mm), colours -->
 <script type="application/json" id="design-config">
 {
@@ -543,7 +502,9 @@
   "thickness": 16,
   "edgeOffset": 20,
   "minSpan": 30,
-  "maxSpan": 80
+  "maxSpan": 80,
+  "maxSpanVertical": 120,
+  "endClearance": 80
  }
 }
 </script>
@@ -553,17 +514,17 @@
 'use strict';
 
 /* design.html - edits data.js in three tables and draws the elevations.
-   Tables -> project (data.js format) -> KE.build -> model -> SVG. Field names follow the engine.js glossary.
-   Data checks are in engine.js; this page only checks the table cells. */
+   Tables -> project (data.js format) -> KE.build -> model -> SVG. Field names follow engine.js.
+   Data checks are in engine.js; this page only checks that the table cells are numbers. */
 
 /* ---------- 1. settings ---------- */
 const KE = window.KitchenEngine;
 const CONFIG = JSON.parse(document.getElementById('design-config').textContent); // drawing sizes and colours, 1 SVG unit = 1 mm
-const TYPE_TAGS = KE.TYPE_TAGS, FEATURE_TAGS = KE.FEATURE_TAGS, TAG_TYPES = KE.TAG_TYPES, FRONT_TYPES = KE.FRONT_TYPES, parseTags = KE.parseTags;
+const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags } = KE;
 const OAK_SWATCH = 'linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)'; // a material without a colour is drawn with the oak texture
 const HANDLE_POSITIONS = ['', ...KE.HANDLE_POSITIONS];
-const HANDLE_NAMES = { '': 'none', T: 'top', B: 'bottom', L: 'left', R: 'right' };
 const HINGE_SIDES = ['', ...KE.HINGE_SIDES];
+const SIDE_NAMES = { '': 'none', T: 'top', B: 'bottom', L: 'left', R: 'right' }; // handle positions and hinge sides
 
 /* ---------- 2. utilities (nothing kitchen-specific) ---------- */
 function isRowEmpty(...values) {
@@ -574,10 +535,10 @@ function escapeAttr(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function toNum(value, isInt) {
+// a table cell as a number; '' = NaN (an empty cell is not 0). Decimals are kept: the engine reports what must be an integer.
+function toNumber(value) {
   const s = String(value ?? '').trim();
-  if (s === '') return NaN;
-  return isInt ? parseInt(s, 10) : parseFloat(s);
+  return s === '' ? NaN : Number(s);
 }
 
 function downloadBlob(content, mimeType, filename) {
@@ -594,7 +555,6 @@ function downloadBlob(content, mimeType, filename) {
 /* ---------- 3. tables <-> project (data.js format) ---------- */
 let loadedProject = null; // keeps the rules and materials, which this page does not edit
 
-
 // data.js component -> component table row
 function componentRow(c) {
   const gaps = Array.isArray(c.gaps) ? c.gaps : ['', '', '', ''];
@@ -604,17 +564,17 @@ function componentRow(c) {
   };
 }
 
-// component table row -> data.js component (short keys, in the order data.js uses); gaps on fronts only
+// component table row -> data.js component (short keys, in the order data.js uses); empty fields are left out; gaps on fronts only
 function dataComponent(row) {
   const parsed = parseTags(row.tags);
-  const c = { g: Number(row.group), c: Number(row.col), s: Number(row.span), tags: parsed.tags.join(' ') }; // empty fields are left out
+  const c = { g: toNumber(row.group), c: toNumber(row.col), s: toNumber(row.span), tags: parsed.words.join(' ') };
   const carcass = String(row.carcass ?? '').trim();
   if (carcass) c.k = carcass;
-  c.h = toNum(row.height, true);
+  c.h = toNumber(row.height);
   if (row.handle) c.hd = row.handle;
   if (row.hinge) c.hg = row.hinge;
   const gaps = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
-  if (FRONT_TYPES.includes(parsed.type) && !isRowEmpty(...gaps)) c.gaps = gaps.map(Number);
+  if (FRONT_TYPES.includes(parsed.type) && !isRowEmpty(...gaps)) c.gaps = gaps.map(toNumber);
   if (String(row.note ?? '').trim()) c.note = String(row.note).trim();
   return c;
 }
@@ -623,13 +583,14 @@ function dataComponent(row) {
 function readTables(columnRows, componentRows, noteRows) {
   const warnings = [];
   const columnFlags = columnRows.map(() => null), componentFlags = componentRows.map(() => null);
+  const isWhole = (n, min) => Number.isInteger(n) && n >= min;
   const columns = {};
   columnRows.forEach((row, idx) => {
     if (isRowEmpty(row.group, row.width)) { columnFlags[idx] = 'empty'; return; }
-    const group = toNum(row.group, true), width = toNum(row.width, true);
-    if (!Number.isFinite(group) || group < 1 || !Number.isFinite(width) || width < 0) {
+    const group = toNumber(row.group), width = toNumber(row.width);
+    if (!isWhole(group, 1) || !(width >= 0)) {
       columnFlags[idx] = 'invalid';
-      warnings.push(`Groups & Columns row ${idx + 1}: Group must be ≥1 and Width mm ≥0.`);
+      warnings.push(`Groups & Columns row ${idx + 1}: Group must be a whole number ≥ 1 and Width ≥ 0.`);
       return;
     }
     (columns[group] || (columns[group] = [])).push(width);
@@ -637,13 +598,12 @@ function readTables(columnRows, componentRows, noteRows) {
   const components = [], rowOfComponent = []; // component index -> table row
   componentRows.forEach((row, idx) => {
     if (isRowEmpty(row.group, row.col, row.span, row.height)) { componentFlags[idx] = 'empty'; return; }
-    const numbers = [toNum(row.group, true), toNum(row.col, true), toNum(row.span, true)];
-    const height = toNum(row.height, true);
+    const places = [row.group, row.col, row.span].map(toNumber), height = toNumber(row.height);
     const gapCells = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
-    const gaps = isRowEmpty(...gapCells) ? [] : gapCells.map(v => toNum(v, false));
-    if (numbers.some(n => !Number.isFinite(n) || n < 1) || !Number.isFinite(height) || height < 0 || gaps.some(g => !Number.isFinite(g) || g < 0)) {
+    const gaps = isRowEmpty(...gapCells) ? [] : gapCells.map(toNumber);
+    if (!places.every(n => isWhole(n, 1)) || !(height >= 0) || !gaps.every(g => g >= 0)) {
       componentFlags[idx] = 'invalid';
-      warnings.push(`Components row ${idx + 1}: Group/Col/Span ≥1, Height mm ≥0, all 4 gaps ≥0 required.`);
+      warnings.push(`Components row ${idx + 1}: Group, Col, Span whole numbers ≥ 1, Height ≥ 0, gaps empty or all 4 ≥ 0.`);
       return;
     }
     components.push(dataComponent(row));
@@ -655,9 +615,10 @@ function readTables(columnRows, componentRows, noteRows) {
 }
 
 /* ---------- 4. SVG: model -> SVG ----------
-   A draw function gets a shape { type, x, width, height, handle, shakerRail } and y, its top edge (SVG y grows down). */
+   A draw function gets a shape { type, x, width, height, handle, shakerRail } and y, its top edge (SVG y grows down).
+   The elevation shows the modules (the columns and heights of data.js); front sizes are in the hover info. */
 
-// types drawn as a plain rectangle: fill and stroke colour names in CONFIG.colors
+// fill and stroke colour names in CONFIG.colors, per type drawn as a plain rectangle
 const RECT_COLORS = {
   filler: ['filler', 'fillerStroke'],
   board: ['board', 'boardStroke'],
@@ -675,27 +636,27 @@ function drawRect(item, y) {
 
 // front: outer rectangle + the inner panel of a shaker front (rules.front.shakerRail in from every edge)
 function drawFront(item, y) {
-  const ft = item.shakerRail;
+  const rail = item.shakerRail;
   const { frontOuter, frontOuterStroke, frontInner, frontInnerStroke } = CONFIG.colors;
   const outer = `<rect fill="${frontOuter}" stroke="${frontOuterStroke}" stroke-width="2" x="${item.x}" y="${y}" width="${item.width}" height="${item.height}"/>`;
-  if (item.width <= ft * 2 || item.height <= ft * 2) return outer;
-  const inner = `<rect fill="${frontInner}" stroke="${frontInnerStroke}" stroke-width="2" x="${item.x + ft}" y="${y + ft}" width="${item.width - ft * 2}" height="${item.height - ft * 2}"/>`;
+  if (item.width <= rail * 2 || item.height <= rail * 2) return outer;
+  const inner = `<rect fill="${frontInner}" stroke="${frontInnerStroke}" stroke-width="2" x="${item.x + rail}" y="${y + rail}" width="${item.width - rail * 2}" height="${item.height - rail * 2}"/>`;
   return outer + inner;
 }
 
+// handle T | B along the top / bottom rail, L | R along a side rail (the engine checks the position)
 function drawHandle(item, y) {
-  if (!item.handle) return '';
-  const { thickness, edgeOffset, minSpan, maxSpan } = CONFIG.handle;
-  const verticalSpan = Math.min(120, Math.max(minSpan, item.height - 80));
-  const horizontalSpan = Math.min(maxSpan, Math.max(minSpan, item.width - 80));
-  let hx, hy, hw, hh;
-  switch (item.handle.toUpperCase()) {
-    case 'T': hw = horizontalSpan; hh = thickness; hx = item.x + (item.width - hw) / 2; hy = y + edgeOffset; break;
-    case 'B': hw = horizontalSpan; hh = thickness; hx = item.x + (item.width - hw) / 2; hy = y + item.height - edgeOffset - thickness; break;
-    case 'L': hw = thickness; hh = verticalSpan; hx = item.x + edgeOffset; hy = y + (item.height - hh) / 2; break;
-    case 'R':
-    default: hw = thickness; hh = verticalSpan; hx = item.x + item.width - edgeOffset - thickness; hy = y + (item.height - hh) / 2; break;
-  }
+  const { thickness, edgeOffset, minSpan, maxSpan, maxSpanVertical, endClearance } = CONFIG.handle;
+  const along = Math.min(maxSpan, Math.max(minSpan, item.width - endClearance));
+  const upright = Math.min(maxSpanVertical, Math.max(minSpan, item.height - endClearance));
+  const box = {
+    T: [item.x + (item.width - along) / 2, y + edgeOffset, along, thickness],
+    B: [item.x + (item.width - along) / 2, y + item.height - edgeOffset - thickness, along, thickness],
+    L: [item.x + edgeOffset, y + (item.height - upright) / 2, thickness, upright],
+    R: [item.x + item.width - edgeOffset - thickness, y + (item.height - upright) / 2, thickness, upright]
+  }[item.handle];
+  if (!box) return '';
+  const [hx, hy, hw, hh] = box;
   return `<rect fill="${CONFIG.colors.handle}" stroke="${CONFIG.colors.handleStroke}" stroke-width="1.5" x="${hx}" y="${hy}" width="${hw}" height="${hh}"/>`;
 }
 
@@ -734,7 +695,7 @@ function drawMicro(item, y) {
   `;
 }
 
-// one drawing function per type
+// one drawing function per type (every type of KE.TYPES has one)
 const DRAW = {
   filler: drawRect,
   board: drawRect,
@@ -753,24 +714,23 @@ const DRAW = {
 function drawItem(item, x, totalHeight, shakerRail) {
   const width = item.u1 - item.u0, height = item.v1 - item.v0, front = item.front;
   const shape = { type: item.type, x, width, height, handle: item.handle, shakerRail };
-  const y = totalHeight - item.v0 - height;
-  const frontWidth = front ? Math.max(0, front.width) : width, frontHeight = front ? Math.max(0, front.height) : item.height;
-  return `<g class="component-group" data-g="${item.group}" data-c="${item.col}" data-s="${item.span}" data-tags="${escapeAttr(item.tags.join(' '))}" data-k="${escapeAttr(item.carcassName)}" data-w="${width}" data-h="${item.height}" data-fw="${frontWidth}" data-fh="${frontHeight}" data-gaps="${front ? item.gaps.join(' ') : ''}" data-type="${item.type}" data-note="${escapeAttr(item.note)}">${DRAW[item.type](shape, y)}</g>`;
+  const y = totalHeight - item.v1;
+  const frontWidth = front ? Math.max(0, front.width) : width, frontHeight = front ? Math.max(0, front.height) : height;
+  return `<g class="component-group" data-g="${item.group}" data-c="${item.col}" data-s="${item.span}" data-tags="${escapeAttr([item.type, ...item.tags].join(' '))}" data-k="${escapeAttr(item.carcassName)}" data-w="${width}" data-h="${height}" data-fw="${frontWidth}" data-fh="${frontHeight}" data-gaps="${front ? item.gaps.join(' ') : ''}" data-type="${item.type}" data-note="${escapeAttr(item.note)}">${DRAW[item.type](shape, y)}</g>`;
 }
 
 // the groups side by side, CONFIG.groupGap apart; '' when there is nothing to draw
 function drawSVG(model) {
-  const groups = Object.values(model.groups), gap = CONFIG.groupGap;
+  const groups = Object.values(model.groups).filter(G => G.length > 0), gap = CONFIG.groupGap;
   const groupX = new Map();
-  let cursor = 0, totalWidth = 0, groupsWithWidth = 0;
+  let cursor = 0;
   for (const G of groups) {
-    groupX.set(G, G.length > 0 ? cursor : 0);
-    if (G.length > 0) { cursor += G.length + gap; groupsWithWidth++; }
-    totalWidth += G.length;
+    groupX.set(G, cursor);
+    cursor += G.length + gap;
   }
-  if (groupsWithWidth > 1) totalWidth += gap * (groupsWithWidth - 1);
-  const totalHeight = groups.reduce((h, G) => G.items.reduce((hh, item) => Math.max(hh, item.v0 + (item.v1 - item.v0)), h), 0);
-  if (totalWidth <= 0 || totalHeight <= 0) return '';
+  const totalWidth = cursor - gap;
+  const totalHeight = Math.max(0, ...groups.flatMap(G => G.items.map(item => item.v1)));
+  if (!groups.length || totalHeight <= 0) return '';
   const margin = CONFIG.viewBoxMargin;
   const viewBox = `-${margin} -${margin} ${totalWidth + margin * 2} ${totalHeight + margin * 2}`;
   const backgrounds = groups.map(G => `<rect fill="${CONFIG.colors.canvasBg}" x="${groupX.get(G)}" y="0" width="${G.length}" height="${totalHeight}"/>`).join('');
@@ -784,19 +744,18 @@ function drawSVG(model) {
 
 /* ---------- 5. elevations: tables -> project -> model -> SVG ---------- */
 function buildElevations(columnRows, componentRows, noteRows) {
-  if (!loadedProject) return { svg: '', isEmpty: true, project: null, warnings: [], columnFlags: [], componentFlags: [] }; // until data.js is loaded
+  const empty = { svg: '', isEmpty: true, project: null, warnings: [], columnFlags: [], componentFlags: [] };
+  if (!loadedProject) return empty; // until data.js is loaded
   const tables = readTables(columnRows, componentRows, noteRows);
-  const stops = KE.checkMaterials(tables.project.rules);
-  if (stops.length) return { svg: '', isEmpty: true, project: tables.project, warnings: [...tables.warnings, ...stops], columnFlags: tables.columnFlags, componentFlags: tables.componentFlags };
+  const result = { ...empty, project: tables.project, warnings: tables.warnings, columnFlags: tables.columnFlags, componentFlags: tables.componentFlags };
+  const stops = KE.checkRules(tables.project.rules); // problems in the rules: no model can be built
+  if (stops.length) return { ...result, warnings: [...tables.warnings, ...stops] };
   const model = KE.build(tables.project);
   for (const issue of model.issues) {
     if (issue.skipped && issue.index != null) tables.componentFlags[tables.rowOfComponent[issue.index]] = 'invalid';
   }
   const svg = drawSVG(model);
-  return {
-    svg, isEmpty: !svg, project: tables.project, warnings: [...tables.warnings, ...model.warnings],
-    columnFlags: tables.columnFlags, componentFlags: tables.componentFlags
-  };
+  return { ...result, svg, isEmpty: !svg, warnings: [...tables.warnings, ...model.warnings] };
 }
 
 /* ---------- 6. page (Alpine.js) ---------- */
@@ -809,11 +768,11 @@ document.addEventListener('alpine:init', () => {
     status: { message: '', type: '' }, // message under the buttons
     tooltip: { show: false, x: 0, y: 0, text: '' },
     hoverInfo: 'Hover a component in the diagram to see its dimensions.',
-    picker: { row: null, mode: 'tags', x: 0, y: 0 }, // popup for the tags or the handle of a component row
+    picker: { row: null, mode: 'tags', x: 0, y: 0 }, // popup for the tags, the handle or the hinge of a component row
     nextId: 1,
-    TYPE_TAGS,
+    TYPES,
     OAK_SWATCH,
-    HANDLE_NAMES,
+    SIDE_NAMES,
     HANDLE_POSITIONS,
     HINGE_SIDES,
     isRowEmpty,
@@ -823,7 +782,7 @@ document.addEventListener('alpine:init', () => {
       KE.load()
         .then(project => {
           this.setProject(project);
-          this.ensureEmptyRows();
+          this.keepEmptyRows();
         })
         .catch(err => this.showStatus(err.message, true));
       this.$nextTick(() => {
@@ -834,10 +793,9 @@ document.addEventListener('alpine:init', () => {
         }).observe(this.$refs.notesTbody.closest('table'));
       });
       this.$watch('notes', () => this.$nextTick(() => this.growNotes()));
-      // every table keeps exactly one empty row at the end
-      this.$watch('columns', () => this.keepOneEmptyRow(this.columns, r => isRowEmpty(r.group, r.width), () => this.newColumnRow()));
-      this.$watch('components', () => this.keepOneEmptyRow(this.components, r => isRowEmpty(r.group, r.col, r.span, r.height), () => this.newComponentRow()));
-      this.$watch('notes', () => this.keepOneEmptyRow(this.notes, r => isRowEmpty(r.name, r.description, r.details), () => this.newNoteRow()));
+      this.$watch('columns', () => this.keepEmptyRows());
+      this.$watch('components', () => this.keepEmptyRows());
+      this.$watch('notes', () => this.keepEmptyRows());
     },
 
     // re-built by Alpine whenever a table changes
@@ -845,18 +803,15 @@ document.addEventListener('alpine:init', () => {
       return buildElevations(this.columns, this.components, this.notes);
     },
 
-    keepOneEmptyRow(rows, isEmpty, newRow) {
-      const last = rows[rows.length - 1];
-      if (last && !isEmpty(last)) rows.push(newRow());
-      while (rows.length > 1 && isEmpty(rows[rows.length - 1]) && isEmpty(rows[rows.length - 2])) rows.pop();
-    },
-    ensureEmptyRows() {
-      const lastColumn = this.columns[this.columns.length - 1];
-      if (!lastColumn || !isRowEmpty(lastColumn.group, lastColumn.width)) this.columns.push(this.newColumnRow());
-      const lastComponent = this.components[this.components.length - 1];
-      if (!lastComponent || !isRowEmpty(lastComponent.group, lastComponent.col, lastComponent.span, lastComponent.height)) this.components.push(this.newComponentRow());
-      const lastNote = this.notes[this.notes.length - 1];
-      if (!lastNote || !isRowEmpty(lastNote.name, lastNote.description, lastNote.details)) this.notes.push(this.newNoteRow());
+    // every table keeps exactly one empty row at the end
+    keepEmptyRows() {
+      const keep = (rows, isEmpty, newRow) => {
+        if (!rows.length || !isEmpty(rows[rows.length - 1])) rows.push(newRow());
+        while (rows.length > 1 && isEmpty(rows[rows.length - 1]) && isEmpty(rows[rows.length - 2])) rows.pop();
+      };
+      keep(this.columns, r => isRowEmpty(r.group, r.width), () => this.newColumnRow());
+      keep(this.components, r => isRowEmpty(r.group, r.col, r.span, r.height), () => this.newComponentRow());
+      keep(this.notes, r => isRowEmpty(r.name, r.description, r.details), () => this.newNoteRow());
     },
 
     // ---- rows ----
@@ -918,37 +873,37 @@ document.addEventListener('alpine:init', () => {
       this.$refs.notesTbody?.querySelectorAll('textarea').forEach(el => this.autoGrow(el));
     },
 
-    // ---- tags and handle: picked in the popup; tags are stored as "type feature feature" ----
+    // ---- type and tags: picked in the popup; stored as "type tag tag" ----
     typeOf(row) {
       return parseTags(row.tags).type || '';
     },
-    hasFeature(row, feature) {
-      return parseTags(row.tags).features.includes(feature);
+    hasTag(row, tag) {
+      return parseTags(row.tags).tags.includes(tag);
     },
-    // the tags allowed on the row's type
-    featuresFor(row) {
+    // the tags allowed on the row's type (KE.TAGS)
+    tagsFor(row) {
       const type = this.typeOf(row);
-      return FEATURE_TAGS.filter(f => TAG_TYPES[f].includes(type));
+      return TAG_NAMES.filter(tag => TAGS[tag].includes(type));
     },
     isFront(row) {
       return FRONT_TYPES.includes(this.typeOf(row));
     },
-    writeTags(row, type, features) {
-      row.tags = [type, ...FEATURE_TAGS.filter(f => features.includes(f))].filter(Boolean).join(' ');
+    writeTags(row, type, tags) {
+      row.tags = [type, ...TAG_NAMES.filter(tag => tags.includes(tag))].filter(Boolean).join(' ');
     },
-    // a handle, a hinge and gaps belong to fronts only
+    // a new type keeps the tags it allows; a handle, a hinge and gaps belong to fronts only
     setType(row, type) {
-      this.writeTags(row, type, parseTags(row.tags).features.filter(f => TAG_TYPES[f].includes(type))); // keep the tags the new type allows
+      this.writeTags(row, type, parseTags(row.tags).tags.filter(tag => TAGS[tag].includes(type)));
       if (!FRONT_TYPES.includes(type)) {
         row.handle = row.hinge = '';
         row.gapLeft = row.gapRight = row.gapTop = row.gapBottom = '';
         if (this.picker.mode !== 'tags') this.picker.row = null;
       }
     },
-    toggleFeature(row, feature) {
+    toggleTag(row, tag) {
       const parsed = parseTags(row.tags);
-      const features = parsed.features.includes(feature) ? parsed.features.filter(f => f !== feature) : [...parsed.features, feature];
-      this.writeTags(row, parsed.type || '', features);
+      const tags = parsed.tags.includes(tag) ? parsed.tags.filter(t => t !== tag) : [...parsed.tags, tag];
+      this.writeTags(row, parsed.type || '', tags);
     },
     // the popup opens below the cell, or above it when there is no room
     openPicker(row, event, mode = 'tags') {
@@ -987,7 +942,7 @@ document.addEventListener('alpine:init', () => {
     onSvgLeave() {
       this.tooltip.show = false;
     },
-    // e.g. "G1[5] · dishwasher · 600 × 720 · front 594 × 717 · gaps 3:3:3:0 · Bosch SMV4HVX00E" (gaps left:right:top:bottom)
+    // e.g. "G1[5] · cabinet dishwasher · 600 × 720 · front 594 × 717 · gaps 3:3:3:0 · Bosch SMV4HVX00E" (gaps left:right:top:bottom)
     describeComponent(group) {
       const attr = name => group.getAttribute('data-' + name);
       const parts = [KE.placeLabel(+attr('g'), +attr('c'), +attr('s')), attr('k'), attr('tags'), `${attr('w')} × ${attr('h')}`];
@@ -999,6 +954,7 @@ document.addEventListener('alpine:init', () => {
     // ---- import / export ----
     exportData() {
       const { project, warnings } = this.build, issues = warnings.length;
+      if (!project) { this.showStatus('Nothing to export: data.js is not loaded.', true); return; }
       downloadBlob(KE.dataJS(project), 'text/javascript;charset=utf-8', 'data.js');
       this.showStatus('data.js exported' + (issues ? ' with ' + issues + ' data issue(s) - see the list under the tables' : '') + '. Replace the one in the kitchen folder, then reload the pages.', issues > 0);
     },
@@ -1013,7 +969,7 @@ document.addEventListener('alpine:init', () => {
       reader.onload = () => {
         try {
           this.importData(String(reader.result));
-          this.ensureEmptyRows();
+          this.keepEmptyRows();
           this.showStatus(`Imported "${file.name}".`, false);
         } catch (err) {
           this.showStatus(`Import failed: ${err.message}`, true);

@@ -224,10 +224,7 @@ body.shut .toggle{display:flex}
     <div class="pane" id="p-prj" role="tabpanel" aria-labelledby="t-prj" hidden>
       <section>
         <h2>Materials</h2>
-        <ul class="mats" id="mats">
-          <li><i style="background:radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"></i><small>Sink</small><b>Quartz composite</b></li>
-          <li><i style="background:linear-gradient(120deg,#c4c6c7,#b5b8ba 45%,#cfd1d2)"></i><small>Floor</small><b>Grey marble 120 × 60</b></li>
-        </ul>
+        <ul class="mats" id="mats"></ul>
       </section>
       <details open>
         <summary>Dimensions in the model</summary>
@@ -244,18 +241,10 @@ body.shut .toggle{display:flex}
   <div id="tip" hidden></div>
 
   <nav class="dock" id="views" aria-label="Views">
-    <div class="full">
-    <button data-v="all" aria-pressed="true">Overview</button>
-    <button data-v="a" aria-pressed="false">Under window</button>
-    <button data-v="b" aria-pressed="false">Tall units</button>
-    <button data-v="c" aria-pressed="false">Island</button>
-    <button data-v="sink" aria-pressed="false">Sink</button>
-    <button data-v="corner" aria-pressed="false">Corner</button>
-    <button data-v="top" aria-pressed="false">Plan</button>
-    </div>
+    <div class="full" id="viewButtons"></div>
     <div class="mini">
       <button type="button" data-step="-1" aria-label="Previous view">‹</button>
-      <select id="viewSel" aria-label="View"><option value="all">Overview</option><option value="a">Under window</option><option value="b">Tall units</option><option value="c">Island</option><option value="sink">Sink</option><option value="corner">Corner</option><option value="top">Plan</option></select>
+      <select id="viewSel" aria-label="View"></select>
       <button type="button" data-step="1" aria-label="Next view">›</button>
     </div>
   </nav>
@@ -271,16 +260,17 @@ body.shut .toggle{display:flex}
      =================================================================== -->
 <!-- VIEW DATA (JSON): this kitchen's scene - room, appliances, lights, colours, cameras -->
 <script type="application/json" id="view-data">{
- "about": "Scene data for this kitchen only (room, appliances, lights, colours, cameras). The cabinets come from data.js through engine.js; the code below this block is generic.",
+ "about": "Scene data for this kitchen only (where the groups stand, room, appliances, lights, colours, cameras), used only for drawing. The cabinets come from data.js through engine.js; the code below this block names no group, run or size of this kitchen.",
  "runs": {
-   "about": "where each design group stands: x, z of its first column at the wall line (n = 0), rot = turn in degrees (0: along the window wall, facing the room)",
+   "about": "where each design group stands: x, z of its first column at the wall line (n = 0), rot = turn in degrees (0: along the window wall, facing the room). A group with the role island (data.js notes) stands free: no wall behind it.",
    "A": {"group": 1, "name": "under the window", "x": 0, "z": 0, "rot": 0},
    "B": {"group": 2, "name": "tall units", "x": 3372, "z": 0, "rot": -90},
-   "C": {"group": 3, "name": "island", "x": 1730, "z": 2440, "rot": 180, "freeStanding": true}
+   "C": {"group": 3, "name": "island", "x": 1730, "z": 2440, "rot": 180}
  },
  "fittings": {
    "about": "hardware and appliance sizes for the drawing only, no effect on the cost",
-   "handleAxis": 28,
+   "handle": {"axis": 28, "cupLength": 89, "barLength": 160, "sideHeight": 260},
+   "open": {"door": 105, "fridge": 95, "dishwasher": 84, "drawer": 440},
    "leg": {"radius": 15, "footRadius": 24, "footHeight": 12, "fromSide": 45, "fromBack": 45, "fromFront": 100},
    "shelfPin": {"fromBack": 40, "fromFront": 70},
    "hinge": {"cup": 35, "cupDepth": 11.5, "cupFromEdge": 22.5},
@@ -289,8 +279,15 @@ body.shut .toggle{display:flex}
    "appliance": {"inset": 12, "bodyGap": 12, "bodySide": 22},
    "plinthGrille": {"width": 500, "bottom": 20, "top": 80}
  },
- "room": {"about": "The room, mm: ceiling measured, the other sizes rounded to whole metres. x along the window wall from the start of Group 1, z out from the window wall, y up. The right wall is where group 2 stands (runs.B.x).",
-   "ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallLength": 4000},
+ "finishes": {
+   "about": "finishes shown in the Project tab next to the data.js materials: [use, name, CSS swatch]",
+   "list": [
+     ["Sink", "Quartz composite", "radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"],
+     ["Floor", "Grey tiles 120 × 60, marble look", "linear-gradient(120deg,#c4c6c7,#b5b8ba 45%,#cfd1d2)"]
+   ]
+ },
+ "room": {"about": "The room, mm: ceiling measured, the other sizes rounded to whole metres. x along the window wall from the start of Group 1, z out from the window wall, y up. rightWallRun: the run that stands against the right wall (the wall is at its x).",
+   "ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallRun": "B", "rightWallLength": 4000, "floorTile": [1200, 600]},
  "window": {"x": 870, "width": 1900, "sill": 1080, "height": 1300, "reveal": 150, "finish": "anthracite"},
  "sink": {"outer": [720, 460], "outerFromWall": 90, "bowl": [660, 400], "bowlFromWall": 120, "rim": 8, "wall": 10, "bowlDepth": 180, "tapFromWall": 45, "trapTop": 575, "wallOutlet": 470},
  "hob": {"glass": [590, 520], "glassFromWall": 39, "body": [556, 486], "bodyFromWall": 56, "builtInHeight": 44},
@@ -307,13 +304,14 @@ body.shut .toggle{display:flex}
  },
  "handleMetal": "brass",
  "views": {
-   "all": {"p": [-1.6, 2.9, 5.4], "t": [1.6, 0.9, 1.4]},
-   "a": {"p": [1.6, 1.6, 3.2], "t": [1.6, 1.15, 0.1]},
-   "b": {"p": [0.4, 1.55, 1.7], "t": [3.2, 1.35, 1.5]},
-   "c": {"p": [1.7, 1.45, 0.85], "t": [0.85, 0.6, 2.25]},
-   "sink": {"p": [1.9, 1.95, 1.75], "t": [1.9, 0.85, 0.3]},
-   "corner": {"p": [2.1, 1.05, 2.3], "t": [2.95, 0.35, 0.5]},
-   "top": {"p": [1.33, 8.2, 1.91], "t": [1.32, 0, 1.9]}
+   "about": "camera views in the dock, in order: p = camera position, t = target (m, room coordinates); the first one opens",
+   "all": {"name": "Overview", "p": [-1.6, 2.9, 5.4], "t": [1.6, 0.9, 1.4]},
+   "a": {"name": "Under window", "p": [1.6, 1.6, 3.2], "t": [1.6, 1.15, 0.1]},
+   "b": {"name": "Tall units", "p": [0.4, 1.55, 1.7], "t": [3.2, 1.35, 1.5]},
+   "c": {"name": "Island", "p": [1.7, 1.45, 0.85], "t": [0.85, 0.6, 2.25]},
+   "sink": {"name": "Sink", "p": [1.9, 1.95, 1.75], "t": [1.9, 0.85, 0.3]},
+   "corner": {"name": "Corner", "p": [2.1, 1.05, 2.3], "t": [2.95, 0.35, 0.5]},
+   "top": {"name": "Plan", "p": [1.33, 8.2, 1.91], "t": [1.32, 0, 1.9]}
  }
 }</script>
 
@@ -334,17 +332,20 @@ if (!window.THREE || !THREE.OrbitControls) { loading.textContent = 'Could not lo
 
 /* ================= 1. PROJECT DATA AND LAYOUT ================= */
 const KE = window.KitchenEngine;
-let project;
-try { project = await KE.load(); } catch (err) { loading.textContent = err.message; return; }
-const SCENE = JSON.parse(document.getElementById('view-data').textContent);
+let project, model;
+try {
+  project = await KE.load();
+  model = KE.build(project);
+} catch (err) { loading.textContent = err.message; return; }
+const SCENE = JSON.parse(document.getElementById('view-data').textContent), rules = project.rules;
 document.getElementById('src').textContent = 'Data: data.js, parts from engine.js.';
-const model = KE.build(project), rules = project.rules;
 if (model.warnings.length) console.warn('data.js: ' + model.warnings.join(' | '));
 
 const RUN_IDS = Object.keys(SCENE.runs).filter(r => r !== 'about');
 const groupOfRun = Object.fromEntries(RUN_IDS.map(r => [r, SCENE.runs[r].group]));
 const runOfGroup = Object.fromEntries(RUN_IDS.map(r => [SCENE.runs[r].group, r]));
 const runName = Object.fromEntries(RUN_IDS.map(r => [r, SCENE.runs[r].name]));
+const freeStanding = Object.fromEntries(RUN_IDS.map(r => [r, model.roles[groupOfRun[r]] === 'island'])); // no wall behind an island
 const itemsOfRun = {}, runLength = {};
 for (const r of RUN_IDS) {
   const g = model.groups[groupOfRun[r]] || { widths: [], items: [] };
@@ -352,13 +353,14 @@ for (const r of RUN_IDS) {
   runLength[r] = g.widths.reduce((sum, w) => sum + w, 0);
 }
 const hasTag = (item, ...tags) => tags.some(t => item.tags.includes(t));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 const { frontFace, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the wall
 const { carcass: board, plinth: plinthThickness, splash: splashThickness, frame: frameThickness, panel: panelThickness } = model.thickness, frontThickness = model.frontThickness;
 const fittings = SCENE.fittings;
 const shakerRail = rules.front.shakerRail; // width of the shaker frame of a front
-const handleAxis = fittings.handleAxis; // handle axis from the front edge
-const room = SCENE.room, rightWall = SCENE.runs.B.x, ceiling = room.ceiling; // group 2 stands against the right wall
+const room = SCENE.room, ceiling = room.ceiling;
+const rightWall = SCENE.runs[room.rightWallRun].x; // the wall line (n = 0) of the run that stands against the right wall
 const worktopOf = group => model.worktops[group] || { n0: 0, n1: 0, depth: 0 }; // n0 back edge, n1 front edge
 const sinkCarcass = model.carcasses.find(K => K.sink); // its worktop gets the sink cut-out
 const sinkRun = sinkCarcass ? runOfGroup[sinkCarcass.group] : null;
@@ -557,7 +559,7 @@ const physical = options => new THREE.MeshPhysicalMaterial(options);
 const MAT = {
   oak: physical({ map: texture(oakCanvas(), 1 / 2.4, 1 / 0.6), roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, envMapIntensity: 0.5 }),
   wall: standard({ color: linear(COLORS.wall), roughness: 0.95, envMapIntensity: 0.45 }),
-  marble: physical({ map: texture(marbleCanvas(), 1 / 1.2, 1 / 0.6), roughness: 0.22, clearcoat: 0.5, clearcoatRoughness: 0.15, envMapIntensity: 0.7 }),
+  marble: physical({ map: texture(marbleCanvas(), 1000 / room.floorTile[0], 1000 / room.floorTile[1]), roughness: 0.22, clearcoat: 0.5, clearcoatRoughness: 0.15, envMapIntensity: 0.7 }),
   handle: standard({ color: linear(handleMetal.color), metalness: handleMetal.metal, roughness: handleMetal.rough, envMapIntensity: 1.4, side: THREE.DoubleSide }),
   steel: standard({ color: linear(0xd2d5d8), metalness: 1, roughness: 0.3 }),
   glassBlack: physical({ color: linear(0x060708), roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.1 }),
@@ -732,7 +734,7 @@ const ordered = (a, b) => (a < b ? [a, b] : [b, a]);
 // every front gets a cup and a bar handle; the Handles setting shows one
 const cupHandles = [], barHandles = [], movers = []; // movers: moving parts (doors, drawers ...)
 const cupGeometry = (function () {
-  const L = 0.089, R = 0.024, y0 = -0.012, parts = [];
+  const L = fittings.handle.cupLength / 1000, R = 0.024, y0 = -0.012, parts = [];
   const shell = new THREE.CylinderGeometry(R, R, L - 0.006, 28, 1, true, 0, Math.PI / 2);
   shell.rotateZ(Math.PI / 2); shell.translate(0, y0, 0); parts.push(shell);
   for (const sx of [-1, 1]) { const c = new THREE.CircleGeometry(R, 20, 0, Math.PI / 2); c.rotateY(-Math.PI / 2); c.translate(sx * (L / 2 - 0.003), y0, 0); parts.push(c); }
@@ -751,20 +753,20 @@ function cupHandle(P, uc, vc, rotation) {
   P.add(o);
   cupHandles.push(o);
 }
-// handle position T | B (along the top / bottom rail) or L | R (on a side rail)
+// handle position T | B (along the top / bottom rail) or L | R (on a side rail, fittings.handle.sideHeight up, at most halfway)
 function addHandles(P, u0, u1, v0, v1, position) {
   if (!position) return;
-  const L = 160, n = frontFace + 4, bar = new THREE.Group();
+  const L = fittings.handle.barLength, axis = fittings.handle.axis, n = frontFace + 4, bar = new THREE.Group();
   P.add(bar);
   barHandles.push(bar);
   if (position === 'T' || position === 'B') {
-    const v = position === 'T' ? v1 - handleAxis : v0 + handleAxis, uc = (u0 + u1) / 2;
+    const v = position === 'T' ? v1 - axis : v0 + axis, uc = (u0 + u1) / 2;
     cupHandle(P, uc, v, 0);
     localBox(bar, uc - L / 2, uc + L / 2, v - 6, v + 6, n + 20, n + 30, MAT.handle);
     localBox(bar, uc - L / 2 + 8, uc - L / 2 + 18, v - 5, v + 5, n, n + 20, MAT.handle);
     localBox(bar, uc + L / 2 - 18, uc + L / 2 - 8, v - 5, v + 5, n, n + 20, MAT.handle);
   } else {
-    const u = position === 'L' ? u0 + handleAxis : u1 - handleAxis, vc = Math.min(v0 + 260, (v0 + v1) / 2);
+    const u = position === 'L' ? u0 + axis : u1 - axis, vc = Math.min(v0 + fittings.handle.sideHeight, (v0 + v1) / 2);
     cupHandle(P, u, vc, position === 'L' ? Math.PI / 2 : -Math.PI / 2);
     localBox(bar, u - 6, u + 6, vc - L / 2, vc + L / 2, n + 20, n + 30, MAT.handle);
     localBox(bar, u - 5, u + 5, vc - L / 2 + 8, vc - L / 2 + 18, n, n + 20, MAT.handle);
@@ -798,11 +800,12 @@ function movingPart(run, opening, pu, pv, pn) {
   return mover;
 }
 const DEG = Math.PI / 180;
+// how far each opening goes: fittings.open (degrees; drawer: mm)
 function poseMovingPart(mover) {
-  const t = mover.progress, eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-  if (mover.opening === 'door' || mover.opening === 'fridge') mover.pivot.rotation.y = -mover.sign * eased * (mover.opening === 'fridge' ? 95 : 105) * DEG;
-  else if (mover.opening === 'dishwasher') mover.pivot.rotation.x = eased * 84 * DEG;
-  else if (mover.opening === 'drawer') mover.pivot.position.z = mover.z0 + eased * 0.44;
+  const t = mover.progress, eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2, open = fittings.open[mover.opening];
+  if (mover.opening === 'door' || mover.opening === 'fridge') mover.pivot.rotation.y = -mover.sign * eased * open * DEG;
+  else if (mover.opening === 'dishwasher') mover.pivot.rotation.x = eased * open * DEG;
+  else if (mover.opening === 'drawer') mover.pivot.position.z = mover.z0 + (eased * open) / 1000;
 }
 
 /* ---------- built-in oven and microwave ---------- */
@@ -861,14 +864,14 @@ const bowlU0 = sinkU - sinkData.bowl[0] / 2, bowlU1 = sinkU + sinkData.bowl[0] /
 const sinkTop = sinkRun ? worktopTopOf(sinkRun) : 0;
 const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowlDepth, tapN = sinkData.tapFromWall;
 // worktop with the sink cut-out: four pieces around the bowl
-function worktopWithSinkCutOut(v0, v1, uEnd) {
+function worktopWithSinkCutOut(uStart, uEnd, v0, v1) {
   target = runLayer[sinkRun].worktops;
   const W = worktopOf(groupOfRun[sinkRun]);
   const a = bowlU0 - sinkWall, b = bowlU1 + sinkWall, c = bowlN0 - sinkWall, d = bowlN1 + sinkWall;
-  [[0, a, W.n0, W.n1], [b, uEnd, W.n0, W.n1], [a, b, W.n0, c], [a, b, d, W.n1]]
+  [[uStart, a, W.n0, W.n1], [b, uEnd, W.n0, W.n1], [a, b, W.n0, c], [a, b, d, W.n1]]
     .forEach(([u0, u1, n0, n1]) => { roomBox(u0, u1, v0, v1, n0, n1, worktopMaterial).userData.grain = 'x'; });
 }
-const stripParts = [], carcassMeshes = []; // stripParts: back strips and island back panel; carcassMeshes: every board of the carcasses
+const carcassMeshes = []; // every board of the carcasses and the back strips
 // names the meshes of one item for the geometry check
 function nameNewMeshes(firstIndex, kind, name) {
   for (const m of meshes.slice(firstIndex)) if (!m.userData.part && !m.userData.role) m.userData.part = { kind, name };
@@ -879,7 +882,7 @@ function buildRun(run) {
     const { u0, u1, v0, v1, type, span, col } = item, height = v1 - v0, firstMesh = meshes.length;
     if (type === 'worktop') {
       target = roomLayer.worktops;
-      if (item === sinkWorktop) { worktopWithSinkCutOut(v0, v1, u1); continue; }
+      if (item === sinkWorktop) { worktopWithSinkCutOut(u0, u1, v0, v1); continue; }
       const W = worktopOf(groupOfRun[run]), m = runBox(run, u0, u1, v0, v1, W.n0, W.n1, worktopMaterial);
       if (m && hasTag(item, 'fall')) m.userData.grain = 'y'; // worktop fall: grain upright
     } else if (type === 'frame') { // on edge, frame.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
@@ -916,7 +919,6 @@ for (const b of model.boards) {
   if (m) {
     m.userData = { id: b.id, role: b.name, a: b.a, b: b.b, base: m.material };
     carcassMeshes.push(m);
-    stripParts.push({ name: b.name, a: b.a, b: b.b });
   }
 }
 // island back panel
@@ -962,20 +964,6 @@ if (sinkItem) {
     roomCylinder(20, 70, pipe, sinkU + 105, yOutlet, nBack - 25, 'z', 20);
     roomBox(sinkU + 70, sinkU + 125, yOutlet - 20, yOutlet + 20, 20, 50, pipe); // outlet into the wall
   }
-}
-
-// L corner: the plinth runs into the corner from both sides
-target = roomLayer.plinth;
-const plinthsA = itemsOfRun.A.filter(i => i.type === 'plinth'), plinthsB = itemsOfRun.B.filter(i => i.type === 'plinth');
-{
-  const firstMesh = meshes.length;
-  if (plinthsA.length) edgeLook(runBox('A', Math.max(...plinthsA.map(i => i.u1)), rightWall - plinthFace, 0, Math.max(...plinthsA.map(i => i.v1)), plinthFace - plinthThickness, plinthFace, plinthMaterial), [], model.materialFor.plinth);
-  nameNewMeshes(firstMesh, 'plinth', 'G1 plinth into the L corner');
-}
-{
-  const firstMesh = meshes.length;
-  if (plinthsB.length) edgeLook(runBox('B', plinthFace, Math.min(...plinthsB.map(i => i.u0)), 0, Math.max(...plinthsB.map(i => i.v1)), plinthFace - plinthThickness, plinthFace, plinthMaterial), [], model.materialFor.plinth);
-  nameNewMeshes(firstMesh, 'plinth', 'G2 plinth into the L corner');
 }
 
 // induction hob above the drawers (item tagged hob, any group; no tag = no hob and no hood)
@@ -1074,7 +1062,7 @@ function buildCarcass(K) {
     for (const u of [u0 + leg.fromSide, u1 - leg.fromSide]) {
       for (const n of [carcassBack + leg.fromBack, carcassFront - leg.fromFront]) {
         localCylinder(runLayer[run].legs, leg.radius, v0 - leg.footHeight, MAT.leg, u, (v0 - leg.footHeight) / 2, n, null, 16);
-        localCylinder(runLayer[run].legs, leg.footRadius, leg.footHeight, MAT.leg, u, v0 - leg.footHeight / 2, n, null, 20);
+        localCylinder(runLayer[run].legs, leg.footRadius, leg.footHeight, MAT.leg, u, v0 - leg.footHeight / 2, n, null, 20).userData.part = { kind: 'leg', name: K.name + ' leg' };
       }
     }
   }
@@ -1262,7 +1250,6 @@ function geometryCheck() {
     const kind = { drawerBottom: 'drawer', drawerBack: 'drawer', backStrip: 'strip', adjustableShelf: 'shelf' }[u.id] || 'carcass';
     parts.push({ kind, name: (u.K ? u.K.name + ' ' : '') + u.role + ' ' + u.a + ' × ' + u.b, box: boxOf(m), object: m });
   }
-  for (const m of meshes) if (m.material === MAT.leg && m.geometry.parameters.radiusTop * 1000 > 20) parts.push({ kind: 'leg', name: 'leg', box: boxOf(m), object: m });
   for (const mover of movers) {
     if (mover.parent) continue;
     const g = mover.layers.fronts;
@@ -1302,8 +1289,7 @@ function geometryCheck() {
     if (!g) continue;
     const local = new THREE.Box3().setFromObject(p.object).applyMatrix4(g.matrixWorld.clone().invert());
     const n0 = local.min.z * 1000, n1 = local.max.z * 1000;
-    const freeStanding = SCENE.runs[RUN_IDS.find(r => runGroup[r] === g)].freeStanding;
-    if (!freeStanding && n0 < -OVERLAP) out.push({ k: 'Sticks out', a: p.name, b: 'behind the wall', v: round1(-n0) + ' mm', at: where(p.box) }); // wall runs: n = 0 is the wall
+    if (!freeStanding[RUN_IDS.find(r => runGroup[r] === g)] && n0 < -OVERLAP) out.push({ k: 'Sticks out', a: p.name, b: 'behind the wall', v: round1(-n0) + ' mm', at: where(p.box) }); // wall runs: n = 0 is the wall
     const limit = p.kind === 'leg' ? plinthFace - plinthThickness : carcassFront;
     if (n1 > limit + OVERLAP) out.push({ k: 'Sticks out', a: p.name, b: 'in front of the ' + (p.kind === 'leg' ? 'plinth' : 'carcass'), v: round1(n1 - limit) + ' mm', at: where(p.box) });
   }
@@ -1493,7 +1479,10 @@ scene.updateMatrixWorld(true);
 loading.remove();
 
 /* ================= 9. CAMERA, PICKING, SETTINGS PANEL ================= */
-const VIEWS = SCENE.views;
+const VIEWS = Object.fromEntries(Object.entries(SCENE.views).filter(([key]) => key !== 'about'));
+const VIEW_KEYS = Object.keys(VIEWS);
+document.getElementById('viewButtons').innerHTML = VIEW_KEYS.map((key, i) => '<button data-v="' + key + '" aria-pressed="' + (i === 0) + '">' + esc(VIEWS[key].name) + '</button>').join('');
+document.getElementById('viewSel').innerHTML = VIEW_KEYS.map(key => '<option value="' + key + '">' + esc(VIEWS[key].name) + '</option>').join('');
 let flight = null; // camera flight to a view: from p0, t0 to p, t, started at s
 const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2(), forward = new THREE.Vector3(), hitPoint = new THREE.Vector3();
 const NOT_PICKABLE = new Set([MAT.glass, MAT.sky, MAT.smoke]);
@@ -1516,9 +1505,9 @@ function flyTo(view, instant) {
   if (instant) { camera.position.copy(p); controls.target.copy(t); controls.update(); return; }
   flight = { p0: camera.position.clone(), t0: controls.target.clone(), p, t, s: performance.now() };
 }
-flyTo('all', true);
+flyTo(VIEW_KEYS[0], true);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const viewSelect = document.getElementById('viewSel'), VIEW_KEYS = [...viewSelect.options].map(o => o.value);
+const viewSelect = document.getElementById('viewSel');
 function setView(view) {
   for (const b of document.querySelectorAll('#views .full button')) b.setAttribute('aria-pressed', b.dataset.v === view);
   viewSelect.value = view;
@@ -1603,7 +1592,7 @@ function hover(e) {
   renderer.domElement.style.cursor = text ? 'pointer' : '';
   if (!text) { tip.hidden = true; return; }
   const r = stage.getBoundingClientRect();
-  tip.innerHTML = text;
+  tip.textContent = text;
   tip.hidden = false;
   tip._x = e.clientX;
   tip._y = e.clientY;
@@ -1750,19 +1739,13 @@ colourButton.addEventListener('click', () => {
 document.getElementById('carcPreset').addEventListener('click', () => preset('carc'));
 document.getElementById('legend').innerHTML = Object.values(PANEL_COLORS).map(([color, label]) => '<li><i style="background:' + color + '"></i><span>' + label + '</span></li>').join('');
 
-const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+// e.g. "base · drawers · hob": the engine's carcass type (base | tall | wall), what its boxes are, its flags
 function carcassDescription(K) {
-  const types = K.boxes.map(b => b.type);
-  if (K.sink) return 'sink unit';
-  if (K.fridge) return 'fridge';
-  if (types.includes('oven') || types.includes('micro')) return 'appliance tower';
-  if (types.every(t => t === 'drawer')) return 'drawers';
-  if (K.base) return 'base, door';
-  return K.floor ? 'tall' : 'wall cabinet';
+  const boxTypes = [...new Set(K.boxes.map(b => b.type))];
+  return [K.type, boxTypes.map(t => t + 's').join(' + '), ...K.flags].join(' · ');
 }
-const columnsText = K => 'col. ' + K.col + (K.span > 1 ? '–' + (K.col + K.span - 1) : '');
 const carcassList = document.getElementById('klist');
-carcassList.innerHTML = carcasses.map(K => '<li><button data-k="' + K.id + '" aria-pressed="false"><b>' + esc(K.name) + '</b><span>G' + K.group + ' ' + columnsText(K) + ' · ' + carcassDescription(K) + '</span><em>' + (K.u1 - K.u0) + '×' + (K.v1 - K.v0) + '</em></button></li>').join('');
+carcassList.innerHTML = carcasses.map(K => '<li><button data-k="' + K.id + '" aria-pressed="false"><b>' + esc(K.name) + '</b><span>' + KE.placeLabel(K.group, K.col, K.span) + ' · ' + esc(carcassDescription(K)) + '</span><em>' + (K.u1 - K.u0) + '×' + (K.v1 - K.v0) + '</em></button></li>').join('');
 carcassList.addEventListener('click', e => { const b = e.target.closest('button'); if (b) selectCarcass(carcasses[b.dataset.k - 1], true); });
 function countParts(parts) {
   const rows = new Map();
@@ -1780,11 +1763,11 @@ function selectCarcass(K, fly) {
   for (const b of carcassList.querySelectorAll('button')) b.setAttribute('aria-pressed', selected && +b.dataset.k === selected.id);
   document.getElementById('kDetailWrap').hidden = !selected;
   if (!selected) return;
-  const hinges = selected.movers.filter(m => m.opening === 'door').reduce((sum, m) => sum + (+m.label.match(/· (\d) Blum hinge/)?.[1] || 0), 0);
+  const hinges = model.fronts.filter(f => f.carcassId === selected.id).reduce((sum, f) => sum + (f.hinges ? f.hinges.length : 0), 0);
   const drawers = selected.movers.filter(m => m.opening === 'drawer').length;
   const rows = countParts(selected.parts).map(p => '<tr><td>' + esc(p.name) + '</td><td class="n">' + p.a + ' × ' + p.b + '</td><td class="n">' + p.q + '</td></tr>').join('');
   const hardware = [hinges ? hinges + ' hinges' : '', drawers ? drawers + ' drawers with runners' : '', selected.legs ? selected.legs + ' legs' : ''].filter(Boolean).join(', ');
-  document.getElementById('kDetail').innerHTML = '<h3>' + esc(selected.name) + ' · ' + carcassDescription(selected) + '</h3><p>Group ' + selected.group + ' (' + runName[selected.run] + '), ' + columnsText(selected) +
+  document.getElementById('kDetail').innerHTML = '<h3>' + esc(selected.name) + ' · ' + carcassDescription(selected) + '</h3><p>' + KE.placeLabel(selected.group, selected.col, selected.span) + ' (' + esc(runName[selected.run]) + ')' +
     '. Carcass ' + (selected.u1 - selected.u0) + ' × ' + (selected.v1 - selected.v0) + ' × ' + carcassDepth + ', from ' + selected.v0 + ' to ' + selected.v1 + ' mm.</p>' +
     '<p>Hardware: ' + hardware + (hinges || drawers || selected.legs ? '.' : 'none.') + '</p>' +
     '<div class="tw"><table class="cut" style="margin-top:8px"><tr><th>Panel</th><th>A × B</th><th>pcs</th></tr>' + rows + '</table></div>';
@@ -1837,21 +1820,27 @@ document.getElementById('kStats').innerHTML = [
 }
 
 /* ---------- Project tab ---------- */
-const islandWorktop = worktopOf(groupOfRun.C);
 // the page title and the board materials of data.js, with the parts made of each
 const frontName = rules.materials[model.materialFor.cabinet].name;
 document.getElementById('frontName').textContent = frontName;
 document.title = 'Kitchen ' + frontName;
 const oakSwatch = 'linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)'; // the oak texture, for a material without a colour
-document.getElementById('mats').insertAdjacentHTML('afterbegin', Object.entries(model.materials).map(([code, m]) => {
-  const parts = Object.keys(model.materialFor).filter(use => model.materialFor[use] === code);
-  return parts.length ? '<li><i style="background:' + (m.color || oakSwatch) + '"></i><small>' + esc(parts.join(', ')) + '</small><b>' + esc(m.label) + '</b></li>' : '';
-}).join(''));
+const swatch = (background, use, name) => '<li><i style="background:' + background + '"></i><small>' + esc(use) + '</small><b>' + esc(name) + '</b></li>';
+document.getElementById('mats').innerHTML = Object.entries(model.materials).map(([code, m]) => {
+  const uses = Object.keys(model.materialFor).filter(use => model.materialFor[use] === code);
+  return uses.length ? swatch(m.color || oakSwatch, uses.join(', '), m.label) : '';
+}).join('') + SCENE.finishes.list.map(([use, name, background]) => swatch(background, use, name)).join('');
+// per run: its length, and its worktop (top board length × depth × thickness, top above the floor)
+const runDims = RUN_IDS.flatMap(r => {
+  const W = model.worktops[groupOfRun[r]], top = itemsOfRun[r].find(i => i.type === 'worktop' && !hasTag(i, 'fall'));
+  return [
+    ['G' + groupOfRun[r] + ' ' + runName[r], runLength[r] + ' long'],
+    ...(W && top ? [['G' + groupOfRun[r] + ' worktop', (top.u1 - top.u0) + ' × ' + W.depth + ' × ' + W.thickness + ', top ' + W.v1 + ' above the floor']] : [])
+  ];
+});
 document.getElementById('dims').innerHTML = [
-  ['Worktop ' + runName.A, (sinkWorktop ? sinkWorktop.u1 - sinkWorktop.u0 : 0) + ' × ' + worktopOf(groupOfRun.A).depth + ' × ' + worktopOf(groupOfRun.A).thickness],
-  ['Worktop height', worktopTopOf('A') + ' above the floor'],
-  ['Tall units', runLength.B + ' × ' + ceiling],
-  ['Island', runLength.C + ' × ' + islandWorktop.depth + ' × ' + islandWorktop.v1],
+  ...runDims,
+  ['Ceiling', ceiling],
   ['Carcass depth', carcassDepth + ', back ' + model.materials[model.materialFor.back].label],
   ['Carcass back', carcassBack + ' from the wall'],
   ['Front face', frontFace + ' from the wall; 4 gaps per front'],
@@ -1879,7 +1868,7 @@ for (const [tab] of TABS) document.getElementById(tab).addEventListener('click',
   try { stored = localStorage.getItem('kv-tab'); } catch (e) {}
   if (TABS.some(t => t[0] === stored)) showTab(stored);
 }
-if (location.hash === '#carcasses' || location.hash === '#korpusy') showTab('t-carc');
+if (location.hash === '#carcasses') showTab('t-carc');
 
 /* ---------- settings panel ---------- */
 const openButton = document.getElementById('toggleSpec'), closeButton = document.getElementById('closeSpec');
@@ -1950,7 +1939,7 @@ for (const type of ['pointerdown', 'pointermove', 'pointerup', 'wheel', 'click',
 }
 const toCamera = new THREE.Vector3();
 let lastTime = performance.now();
-window.kitchenView = { scene, camera, controls, geometry, lines, carcasses, movers, counts, stripParts, setLight, setLayer, preset, toggle, selectCarcass, flyTo }; // for the console
+window.kitchenView = { scene, camera, controls, geometry, lines, carcasses, movers, counts, setLight, setLayer, preset, toggle, selectCarcass, flyTo }; // for the console
 function frame(now) {
   const dt = Math.min(0.05, (now - lastTime) / 1000);
   lastTime = now;
