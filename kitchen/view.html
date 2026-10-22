@@ -277,7 +277,7 @@ body.shut .toggle{display:flex}
    "drawer": {"runner": 13, "sideFromCarcass": 22, "sideThickness": 15.5, "n0": 50, "n1": 548, "innerSide": 84},
    "bins": {"count": 3, "height": 235},
    "appliance": {"inset": 12, "bodyGap": 12, "bodySide": 22},
-   "plinthGrille": {"width": 500, "bottom": 20, "top": 80}
+   "plinthGrille": {"width": 480, "bottom": 20, "top": 80}
  },
  "finishes": {
    "about": "finishes shown in the Project tab next to the data.js materials: [use, name, CSS swatch]",
@@ -295,7 +295,7 @@ body.shut .toggle{display:flex}
  "fridge": {"bodyHeight": 1772, "sideGap": 20, "bottomGap": 4, "front": 500},
  "coffee": {"name": "DeLonghi Dinamica", "size": [236, 348, 429]},
  "pendants": {"points": [[477.48, 2290], [1252.52, 2290]], "bottom": 1750},
- "downlights": {"points": [[1448, 402], [2440, 402], [2440, 1370], [2440, 2338]]},
+ "downlights": {"about": "[x, z]; the first: over the sink, halfway to the hood (x = (sink axis 1892 + hob axis 456) / 2)", "points": [[1174, 402], [2440, 402], [2440, 1370], [2440, 2338]]},
  "colors": {"wall": "#f2f1ee"},
  "metals": {
    "brass": {"color": "#c9a063", "rough": 0.32, "metal": 0.7},
@@ -1256,8 +1256,7 @@ function geometryCheck() {
     if (g.children.length) parts.push({ kind: 'front', name: mover.label, box: boxOf(g), object: g });
   }
   const overlapOn = (a, b, axis) => Math.min(a[2 * axis + 1], b[2 * axis + 1]) - Math.max(a[2 * axis], b[2 * axis]);
-  const where = b => 'at x ' + Math.round(b[0]) + '–' + Math.round(b[1]) + ', y ' + Math.round(b[2]) + '–' + Math.round(b[3]) + ', z ' + Math.round(b[4]) + '–' + Math.round(b[5]);
-  // an issue: k = kind of issue, a / b = the parts, v = the amount, at = where
+  // an issue: k = kind of issue, a / b = the parts (names with their real sizes), v = the amount
   const overlaps = [], gaps = [], out = [];
   const GAP_KINDS = new Set(['frame', 'panel', 'strip', 'carcass', 'plinth', 'worktop']);
   const TIGHT_KINDS = ['frame', 'panel', 'strip'];
@@ -1266,14 +1265,14 @@ function geometryCheck() {
       const A = parts[i], B = parts[j];
       if (A.object === B.object || (A.kind === 'drawer' && B.kind === 'drawer')) continue;
       const o = [0, 1, 2].map(axis => overlapOn(A.box, B.box, axis));
-      if (o.every(x => x > OVERLAP)) { overlaps.push({ k: 'Overlap', a: A.name, b: B.name, v: o.map(round1).join(' × ') + ' mm', at: where(A.box) }); continue; }
+      if (o.every(x => x > OVERLAP)) { overlaps.push({ k: 'Overlap', a: A.name, b: B.name, v: o.map(round1).join(' × ') + ' mm' }); continue; }
       // small gap: touching area in two axes, a gap of a few mm in the third (strips and frames must fit tight)
       if (!(GAP_KINDS.has(A.kind) && GAP_KINDS.has(B.kind))) continue;
       if (!(TIGHT_KINDS.includes(A.kind) || TIGHT_KINDS.includes(B.kind))) continue;
       for (let axis = 0; axis < 3; axis++) {
         const gap = -o[axis], others = [0, 1, 2].filter(x => x !== axis);
         if (gap >= GAP_MIN - 1e-6 && gap <= GAP_MAX + 1e-6 && others.every(x => o[x] > 10)) {
-          gaps.push({ k: 'Gap', a: A.name, b: B.name, v: round1(gap) + ' mm (' + 'xyz'[axis] + ')', at: where(A.box) });
+          gaps.push({ k: 'Gap', a: A.name, b: B.name, v: round1(gap) + ' mm (' + 'xyz'[axis] + ')' });
           break;
         }
       }
@@ -1282,16 +1281,16 @@ function geometryCheck() {
   // sticking out: in run coordinates, carcass parts stay behind the fronts, legs behind the plinth, nothing below the floor
   const runGroups = Object.values(runGroup);
   for (const p of parts) {
-    if (p.box[2] < -OVERLAP) out.push({ k: 'Sticks out', a: p.name, b: 'below the floor', v: round1(-p.box[2]) + ' mm', at: where(p.box) });
+    if (p.box[2] < -OVERLAP) out.push({ k: 'Sticks out', a: p.name, b: 'below the floor', v: round1(-p.box[2]) + ' mm' });
     if (!['carcass', 'strip', 'drawer', 'shelf', 'leg'].includes(p.kind)) continue;
     let g = p.object;
     while (g && !runGroups.includes(g)) g = g.parent;
     if (!g) continue;
     const local = new THREE.Box3().setFromObject(p.object).applyMatrix4(g.matrixWorld.clone().invert());
     const n0 = local.min.z * 1000, n1 = local.max.z * 1000;
-    if (!freeStanding[RUN_IDS.find(r => runGroup[r] === g)] && n0 < -OVERLAP) out.push({ k: 'Sticks out', a: p.name, b: 'behind the wall', v: round1(-n0) + ' mm', at: where(p.box) }); // wall runs: n = 0 is the wall
+    if (!freeStanding[RUN_IDS.find(r => runGroup[r] === g)] && n0 < -OVERLAP) out.push({ k: 'Sticks out', a: p.name, b: 'behind the wall', v: round1(-n0) + ' mm' }); // wall runs: n = 0 is the wall
     const limit = p.kind === 'leg' ? plinthFace - plinthThickness : carcassFront;
-    if (n1 > limit + OVERLAP) out.push({ k: 'Sticks out', a: p.name, b: 'in front of the ' + (p.kind === 'leg' ? 'plinth' : 'carcass'), v: round1(n1 - limit) + ' mm', at: where(p.box) });
+    if (n1 > limit + OVERLAP) out.push({ k: 'Sticks out', a: p.name, b: 'in front of the ' + (p.kind === 'leg' ? 'plinth' : 'carcass'), v: round1(n1 - limit) + ' mm' });
   }
   return { n: parts.length, overlaps, gaps, out };
 }
@@ -1309,7 +1308,7 @@ function lineCheck() {
     const heights = [...fronts.keys()].sort((x, y) => x - y);
     for (let i = 0; i < heights.length; i++) {
       for (let j = i + 1; j < heights.length && heights[j] - heights[i] <= NEAR; j++) {
-        if (heights[j] - heights[i] > SAME) out.push({ k: 'Line', a: side + ' ' + heights[i] + ': ' + fronts.get(heights[i]).join(', '), b: side + ' ' + heights[j] + ': ' + fronts.get(heights[j]).join(', '), v: Math.round((heights[j] - heights[i]) * 10) / 10 + ' mm off', at: '' });
+        if (heights[j] - heights[i] > SAME) out.push({ k: 'Line', a: side + ' ' + heights[i] + ': ' + fronts.get(heights[i]).join(', '), b: side + ' ' + heights[j] + ': ' + fronts.get(heights[j]).join(', '), v: Math.round((heights[j] - heights[i]) * 10) / 10 + ' mm off' });
       }
     }
   }
@@ -1810,13 +1809,13 @@ document.getElementById('kStats').innerHTML = [
 
 // issues: data warnings, geometry check, front lines
 {
-  const issues = [...model.warnings.map(w => ({ k: 'Data', a: w, b: '', v: '', at: '' })), ...geometry.overlaps, ...geometry.gaps, ...geometry.out, ...lines];
+  const issues = [...model.warnings.map(w => ({ k: 'Data', a: w, b: '', v: '' })), ...geometry.overlaps, ...geometry.gaps, ...geometry.out, ...lines];
   const note = document.getElementById('geoNote');
   note.className = 'note ' + (issues.length ? 'bad' : 'okk');
   note.textContent = issues.length
     ? issues.length + (issues.length === 1 ? ' issue' : ' issues') + ' in ' + geometry.n + ' parts (' + model.warnings.length + ' in the data, ' + geometry.overlaps.length + ' overlaps, ' + geometry.gaps.length + ' gaps, ' + geometry.out.length + ' sticking out, ' + lines.length + ' off the line):'
     : 'All ' + geometry.n + ' parts OK: no overlaps, no gaps between frames / back strips and their neighbours, nothing sticks out, front lines aligned.';
-  document.getElementById('geoList').innerHTML = issues.map(x => '<li><b>' + esc(x.k) + (x.v !== '' ? ' ' + esc(x.v) : '') + '</b>' + [x.a, x.b, x.at].filter(Boolean).map(t => '<br>– ' + esc(t)).join('') + '</li>').join('');
+  document.getElementById('geoList').innerHTML = issues.map(x => '<li><b>' + esc(x.k) + (x.v !== '' ? ' ' + esc(x.v) : '') + '</b>' + [x.a, x.b].filter(Boolean).map(t => '<br>– ' + esc(t)).join('') + '</li>').join('');
 }
 
 /* ---------- Project tab ---------- */
