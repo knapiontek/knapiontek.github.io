@@ -103,7 +103,6 @@
   <section id="tab-cutting" class="hidden">
     <div class="grid-wrap">
       <table class="grid">
-        <thead><tr><th>Element</th><th>Długość [mm]</th><th>Szerokość [mm]</th><th>m²</th><th>Ilość</th><th>ABS/Lakier</th><th>ABS razem [mb]</th><th title="(długość + szerokość) × ilość: długość cięcia w hurtowni – wyceniona w pozycji Cięcie płyt">Cięcia [mb]</th><th>Gdzie</th></tr></thead>
         <tbody id="cuttingBody"></tbody>
       </table>
     </div>
@@ -185,7 +184,7 @@
    "AGD"
   ],
   "sheetLabel": "Arkusz płyty {v:sheetLength}×{v:sheetWidth} [m²]",
-  "cuttingNote": "Długość = dłuższy bok, Szerokość = krótszy (fronty: wysokość × szerokość, jak potrzebuje producent frontów); wiersze wg elementu, najdłuższe pierwsze. ABS/Lakier = wykończone krawędzie jednej sztuki, jako długość:ilość w mm (np. 564:1, 720:1 80:1): ABS na płytach i panelach, lakier na frontach (dookoła, np. 1197:2 594:2) i listwach (krawędź przednia); cokół bez. ABS razem = długość ABS × ilość; strona każdej krawędzi ABS jest w zakładce Montaż. Cięcia = (długość + szerokość) × ilość, wyceniane w pozycji Cięcie płyt. Korpus = wszystkie kolumny z jedną nazwą korpusu, głębokość {r:carcass.depth}, {r:carcass.wallGap} od ściany; wnętrze = szerokość − 2 × {t:carcass}; półka ruchoma = wnętrze − 2 × {r:shelf.clearance}, głębokość − {r:shelf.setback}; półka stała = wnętrze × pełna głębokość; plecy {m:back} = korpus − 2 × {r:back.inset}; front = moduł − 4 szczeliny; listwa tylna = {r:frame.depth} × długość listwy; dno szuflady = wnętrze − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, tył = wnętrze − {r:drawers.back.inset}; tył szuflady wewnętrznej wys. {r:drawers.inner.back}. ABS na częściach korpusu: krawędź widoczna z przodu (boki: długa krawędź przednia; wieńce, półki, trawersy przednie: krawędź przednia; trawersy na sztorc: krawędź dolna); trawersy tylne, listwy tylne, plecy, części szuflad, panele wpuszczane: brak. Panele: ABS na każdej krawędzi przy otwieranym froncie."
+  "cuttingNote": "Długość = dłuższy bok, Szerokość = krótszy (fronty: wysokość × szerokość, jak potrzebuje producent frontów); wiersze wg elementu, najdłuższe pierwsze. Krawędź = liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1 lub 2), jak w formularzu hurtowni (np. Bok 1920 | 1 | 550 | 0); ABS na płytach i panelach, lakier na frontach (2 i 2), listwach (krawędź przednia) i cokole (brak). ABS razem = długość ABS × ilość; strona każdej krawędzi ABS jest w zakładce Montaż. Cięcia = (długość + szerokość) × ilość, wyceniane w pozycji Cięcie płyt. Korpus = wszystkie kolumny z jedną nazwą korpusu, głębokość {r:carcass.depth}, {r:carcass.wallGap} od ściany; wnętrze = szerokość − 2 × {t:carcass}; półka ruchoma = wnętrze − 2 × {r:shelf.clearance}, głębokość − {r:shelf.setback}; półka stała = wnętrze × pełna głębokość; plecy {m:back} = korpus − 2 × {r:back.inset}; front = moduł − 4 szczeliny; listwa tylna = {r:frame.depth} × długość listwy; dno szuflady = wnętrze − {r:drawers.bottom.inset} × {r:drawers.bottom.depth}, tył = wnętrze − {r:drawers.back.inset}; tył szuflady wewnętrznej wys. {r:drawers.inner.back}. ABS na częściach korpusu: krawędź widoczna z przodu (boki: długa krawędź przednia; wieńce, półki, trawersy przednie: krawędź przednia; trawersy na sztorc: krawędź dolna); trawersy tylne, listwy tylne, plecy, części szuflad, panele wpuszczane: brak. Panele: ABS na każdej krawędzi przy otwieranym froncie."
  },
  "title": "Kosztorys materiałów – Kuchnia Jaworze (grupa 1+2 w L, wyspa grupa 3)",
  "info": "PLN brutto, ceny sklepów internetowych z października 2026 (każda pozycja ma link do sklepu), tylko materiały (montaż własny). Niebieskie pola można zmieniać, by sprawdzić inne ceny do odświeżenia strony; stałe ceny wpisuje się w dane kosztorysu na tej stronie. Ilości z formułą pochodzą z data.js.",
@@ -1453,16 +1452,13 @@ const plural = (n, one, few, many) => (n === 1 ? one : n % 10 >= 2 && n % 10 <= 
 // ABS edges of one part, e.g. "dół 80 + lewa 720"; their total length in mm
 const edgeText = edges => (edges || []).map(([side, length]) => KE.LABELS.edge[side] + ' ' + length).join(' + ');
 const edgeLength = edges => (edges || []).reduce((sum, [, length]) => sum + length, 0);
-// finished edges of one piece as length:count in mm, e.g. "564:1", "720:1 80:1", a front lacquered all round "1197:2 594:2".
-// ABS edges (boards, panels) come from engine.js as [side, length]; lacquered edges (fronts, frames, plinth) as {long, short} counts.
-// (row: [name, length, width, qty, where, ABS edges, lacquered edges]; length >= width)
-const edgeCount = row => {
-  const lacquer = row[6] || { long: 0, short: 0 };
-  const lengths = (row[5] || []).length ? row[5].map(([, length]) => length)
-    : [...Array(lacquer.long).fill(row[1]), ...Array(lacquer.short).fill(row[2])];
-  const counted = new Map();
-  for (const length of [...lengths].sort((a, b) => b - a)) counted.set(length, (counted.get(length) || 0) + 1);
-  return [...counted].map(([length, n]) => length + ':' + n).join(' ');
+// finished edges of one piece per side, as an order form for the board supplier has them: [edges along the length, edges along the width],
+// 0, 1 or 2 each. ABS edges (boards, panels) come from engine.js as [side, length]; lacquered edges (fronts, frames, plinth) as {long, short}.
+// (row: [name, length, width, qty, where, ABS edges, lacquered edges]; fronts are height × width, so the long side can be either)
+const edgeCounts = row => {
+  if (row[6]) return row[1] >= row[2] ? [row[6].long, row[6].short] : [row[6].short, row[6].long];
+  const alongLength = Math.min(2, (row[5] || []).filter(([, length]) => length === row[1]).length);
+  return [alongLength, (row[5] || []).length - alongLength];
 };
 // cut-list rows [name, a, b, qty, where, edges, lacquer]: the longer side first, sorted by name, then longest first
 const longFirst = rows => rows.map(r => (r[1] >= r[2] ? r : [r[0], r[2], r[1], ...r.slice(3)]));
@@ -1721,16 +1717,17 @@ function renderEstimate() {
 function renderCuttingList() {
   const totals = blockTotals(), html = [];
   for (const block of COST.blocks) {
-    html.push(`<tr class="blk"><td colspan="9">${esc(fill(block.title))}</td></tr>`);
-    const [label, size1, size2, qtyLabel] = block.columns.map(esc); // m² right after the size
-    html.push(`<tr class="bh"><td>${label}</td><td>${size1}</td><td>${size2}</td><td>m²</td><td>${qtyLabel}</td><td>ABS/Lakier</td><td>ABS razem [mb]</td><td>Cięcia [mb]</td><td title="nazwa korpusu, inaczej G grupa [kolumna]">Gdzie</td></tr>`);
+    html.push(`<tr class="blk"><td colspan="10">${esc(fill(block.title))}</td></tr>`);
+    // as an order form: each size followed by the number of finished edges along it (ABS or lacquer)
+    const [label, size1, size2, qtyLabel] = block.columns.map(esc);
+    html.push(`<tr class="bh"><td>${label}</td><td>${size1} [mm]</td><td>Krawędź</td><td>${size2} [mm]</td><td>Krawędź</td><td>m²</td><td>${qtyLabel}</td><td>ABS razem [mb]</td><td title="(długość + szerokość) × ilość: długość cięcia w hurtowni – wyceniona w pozycji Cięcie płyt">Cięcia [mb]</td><td title="nazwa korpusu, inaczej G grupa [kolumna]">Gdzie</td></tr>`);
     block.rows.forEach((row, i) => {
-      const t = totals[block.id].rows[i];
+      const t = totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
       const cell = value => `<td class="num" title="Obliczone przez engine.js z data.js – zmiany projektu w design.html">${value}</td>`;
-      html.push(`<tr><td>${esc(row[0])}</td>${cell(row[1])}${cell(row[2])}<td class="num">${fmt(t.m2, 3)}</td>${cell(row[3])}<td>${esc(edgeCount(row))}</td><td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="where">${esc(row[4] || '')}</td></tr>`);
+      html.push(`<tr><td>${esc(row[0])}</td>${cell(row[1])}${cell(alongLength)}${cell(row[2])}${cell(alongWidth)}<td class="num">${fmt(t.m2, 3)}</td>${cell(row[3])}<td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="where">${esc(row[4] || '')}</td></tr>`);
     });
     const t = totals[block.id], hasEdging = t.rows.some(r => r.edge != null), hasCutting = SETTINGS.cutBlocks.includes(block.id);
-    html.push(`<tr class="sum"><td>Razem</td><td></td><td></td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.qty}</td><td></td><td class="num">${hasEdging ? fmt(t.edge) : ''}</td><td class="num">${hasCutting ? fmt(t.cut) : ''}</td><td></td></tr>`);
+    html.push(`<tr class="sum"><td>Razem</td><td></td><td></td><td></td><td></td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.qty}</td><td class="num">${hasEdging ? fmt(t.edge) : ''}</td><td class="num">${hasCutting ? fmt(t.cut) : ''}</td><td></td></tr>`);
   }
   document.getElementById('cuttingBody').innerHTML = html.join('');
 }
@@ -1822,19 +1819,20 @@ function buildWorkbook() {
   const blockTotalRow = {};
   for (const block of COST.blocks) {
     cutting.push([str(fill(block.title))]);
-    const [labelCell, sizeCell1, sizeCell2, qtyCell] = block.columns.map(str);
-    cutting.push([labelCell, sizeCell1, sizeCell2, str('m²'), qtyCell, str('ABS/Lakier'), str('ABS razem [mb]'), str('Cięcia [mb]'), str('Gdzie')]);
+    // as an order form: each size followed by the number of finished edges along it
+    const [labelCell, size1, size2, qtyCell] = block.columns;
+    cutting.push([str(labelCell), str(size1 + ' [mm]'), str('Krawędź'), str(size2 + ' [mm]'), str('Krawędź'), str('m²'), str(qtyCell), str('ABS razem [mb]'), str('Cięcia [mb]'), str('Gdzie')]);
     const first = cutting.length + 1;
     block.rows.forEach((row, i) => {
-      const [, A, B, qty] = row, r = cutting.length + 1, t = result.totals[block.id].rows[i];
-      const line = [str(row[0]), num(A), num(B), formula(`B${r}*C${r}*E${r}/1000000`, t.m2), num(qty), str(edgeCount(row))];
-      line.push(t.edge != null ? formula(`${edgeLength(row[5])}*E${r}/1000`, t.edge) : str(''));
-      line.push(SETTINGS.cutBlocks.includes(block.id) ? formula(`(B${r}+C${r})*E${r}/1000`, t.cut) : str(''));
+      const [, A, B, qty] = row, r = cutting.length + 1, t = result.totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
+      const line = [str(row[0]), num(A), num(alongLength), num(B), num(alongWidth), formula(`B${r}*D${r}*G${r}/1000000`, t.m2), num(qty)];
+      line.push(t.edge != null ? formula(`${edgeLength(row[5])}*G${r}/1000`, t.edge) : str(''));
+      line.push(SETTINGS.cutBlocks.includes(block.id) ? formula(`(B${r}+D${r})*G${r}/1000`, t.cut) : str(''));
       line.push(str(row[4] || ''));
       cutting.push(line);
     });
     const last = cutting.length, totalRow = last + 1, T = result.totals[block.id];
-    cutting.push([str('Razem'), str(''), str(''), formula(`SUM(D${first}:D${last})`, T.m2), formula(`SUM(E${first}:E${last})`, T.qty), str(''), formula(`SUM(G${first}:G${last})`, T.edge), formula(`SUM(H${first}:H${last})`, T.cut)]);
+    cutting.push([str('Razem'), str(''), str(''), str(''), str(''), formula(`SUM(F${first}:F${last})`, T.m2), formula(`SUM(G${first}:G${last})`, T.qty), formula(`SUM(H${first}:H${last})`, T.edge), formula(`SUM(I${first}:I${last})`, T.cut)]);
     blockTotalRow[block.id] = totalRow;
     cutting.push([]);
   }
@@ -1859,7 +1857,7 @@ function buildWorkbook() {
   // quantity formula of this page -> Excel formula: item quantities and cutting-list totals as cell references, the rest as values
   const toExcel = expr => expr.replace(/^=/, '')
     .replace(/\{q:(\w+)\}/g, (_, id) => `D${itemRow[id]}`)
-    .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, block, total) => `'Lista cięć'!$${{ m2: 'D', edge: 'G', cut: 'H' }[total]}$${blockTotalRow[block]}`)
+    .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, block, total) => `'Lista cięć'!$${{ m2: 'F', edge: 'H', cut: 'I' }[total]}$${blockTotalRow[block]}`)
     .replace('{waste}', '$C$3')
     .replace('{sheet}', '$C$4')
     .replace(/\{([^}|]+)\}/g, (_, key) => String(Number(placeholder(key, result.totals, result.quantities))));
@@ -1913,11 +1911,11 @@ function buildWorkbook() {
   }
   estimateSheet['C3'].z = '0%';
   estimateSheet['F' + (furnitureRow + 2)].z = '0%';
-  const cuttingSheet = sheet(cutting, [40, 10, 10, 10, 8, 26, 15, 12, 30]);
+  const cuttingSheet = sheet(cutting, [40, 12, 6, 12, 6, 10, 8, 15, 12, 30]);
   for (let r = 1; r <= cutting.length; r++) {
-    const e = cuttingSheet['D' + r];
+    const e = cuttingSheet['F' + r];
     if (e && e.f) e.z = '0.000';
-    ['G', 'H'].forEach(c => {
+    ['H', 'I'].forEach(c => {
       const x = cuttingSheet[c + r];
       if (x && x.f) x.z = '0.00';
     });
