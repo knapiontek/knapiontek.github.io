@@ -223,9 +223,6 @@
           box-shadow: inset 0 0 0 2px var(--sheet-focus);
         }
         table.sheet input[type="number"] { text-align: right; }
-        /* gaps: no spin arrows, the mouse wheel does not change them */
-        table.sheet input.gap { -moz-appearance: textfield; }
-        table.sheet input.gap::-webkit-inner-spin-button, table.sheet input.gap::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         table.sheet select { cursor: pointer; }
         .pick-btn.handle-btn { min-width: 76px; min-height: 30px; }
         .pick-btn.handle-btn:hover { background: var(--sheet-row-hover); }
@@ -370,10 +367,10 @@
                   <td>
                     <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Strona zawiasów drzwi" @click="openPicker(row, $event, 'hinge')" x-text="row.hinge ? SIDE_NAMES[row.hinge] || row.hinge : ''"></button></template>
                   </td>
-                  <td><input type="number" class="cell gap" min="0" step="1" inputmode="numeric" x-model.number="row.gapLeft" @wheel="$event.target.blur()"></td>
-                  <td><input type="number" class="cell gap" min="0" step="1" inputmode="numeric" x-model.number="row.gapRight" @wheel="$event.target.blur()"></td>
-                  <td><input type="number" class="cell gap" min="0" step="1" inputmode="numeric" x-model.number="row.gapTop" @wheel="$event.target.blur()"></td>
-                  <td><input type="number" class="cell gap" min="0" step="1" inputmode="numeric" x-model.number="row.gapBottom" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gapLeft"></td>
+                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gapRight"></td>
+                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gapTop"></td>
+                  <td><input type="number" class="cell" min="0" step="1" x-model.number="row.gapBottom"></td>
                   <td class="col-note"><input type="text" class="cell" x-model="row.note"></td>
                   <td class="col-actions">
                     <button type="button" class="row-insert" title="Wstaw wiersz poniżej (kopia bieżącego)" @click="insertComponentRow(idx)">+</button><button type="button" class="row-del" title="Usuń wiersz" @click="removeComponentRow(idx)">×</button>
@@ -784,6 +781,14 @@ document.addEventListener('alpine:init', () => {
     _statusTimer: null,
 
     init() {
+      // number cells hold whole mm: only digits can be typed or pasted (no letters, dots, commas, signs)
+      const isNumberCell = target => target.matches && target.matches('table.sheet input[type="number"]');
+      document.addEventListener('keydown', e => {
+        if (isNumberCell(e.target) && e.key.length === 1 && !/[0-9]/.test(e.key) && !e.ctrlKey && !e.metaKey) e.preventDefault();
+      });
+      document.addEventListener('paste', e => {
+        if (isNumberCell(e.target) && !/^\d+$/.test(e.clipboardData.getData('text').trim())) e.preventDefault();
+      });
       KE.load()
         .then(project => {
           this.setProject(project);
