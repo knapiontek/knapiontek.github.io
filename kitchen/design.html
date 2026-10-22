@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kitchen Elevation Layout</title>
+  <title>Kuchnia - widok frontów</title>
   <style>
     /* =============================================================
        STYLES
@@ -272,12 +272,12 @@
 
 <div x-data="kitchenApp()">
 
-  <h1>Kitchen Elevation Layout</h1>
+  <h1>Kuchnia - widok frontów</h1>
 
   <div id="action-bar">
     <div class="action-group">
-      <button class="btn secondary" @click="chooseImportFile()" title="Load a data.js (or .json) file into the tables">Import data</button>
-      <button class="btn" @click="exportData()" title="Save the tables as data.js">Export data</button>
+      <button class="btn secondary" @click="chooseImportFile()" title="Wczytaj plik data.js (lub .json) do tabel">Importuj dane</button>
+      <button class="btn" @click="exportData()" title="Zapisz tabele jako data.js">Eksportuj dane</button>
       <input type="file" class="hidden-file-input" accept=".js,.json,text/javascript,application/json" x-ref="importFile" @change="importFile($event)">
     </div>
   </div>
@@ -286,14 +286,14 @@
 
   <!-- 1. INPUT -->
   <div class="panel">
-    <h3>Input Data</h3>
+    <h3>Dane wejściowe</h3>
     <div class="input-grid">
       <div class="sub-section">
-        <h4>Materials</h4>
+        <h4>Materiały</h4>
         <div class="sheet-wrap">
           <table class="sheet read-only">
             <thead>
-              <tr><th style="width:64px">Code</th><th style="width:200px">Name</th><th style="width:72px">Thickness</th><th style="width:56px" title="Board colour; oak texture when the material has none">Colour</th><th style="width:56px" title="Lacquered (satin)">Lacq.</th><th title="Component types made of this material">Types</th><th style="width:150px" title="Carcass parts made of this material (named by a rule)">Parts</th><th style="width:150px" title="Depth by group role">Depth</th></tr>
+              <tr><th style="width:64px">Kod</th><th style="width:200px">Nazwa</th><th style="width:72px">Grubość</th><th style="width:56px" title="Kolor płyty; tekstura dębu, gdy materiał nie ma koloru">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Typy elementów z tego materiału">Typy</th><th style="width:150px" title="Części korpusu z tego materiału (wskazane regułą)">Części</th><th style="width:150px" title="Głębokość wg roli grupy">Głębokość</th></tr>
             </thead>
             <tbody>
               <template x-for="m in materials" :key="m.code">
@@ -301,11 +301,11 @@
                   <td x-text="m.code"></td>
                   <td x-text="m.name"></td>
                   <td class="num" x-text="m.thickness"></td>
-                  <td><i class="swatch" :style="`background:${m.color || OAK_SWATCH}`" :title="m.color || 'oak texture'"></i></td>
+                  <td><i class="swatch" :style="`background:${m.color || OAK_SWATCH}`" :title="m.color || 'tekstura dębu'"></i></td>
                   <td class="center" x-text="m.lacquered ? '✓' : ''"></td>
-                  <td x-text="(m.types || []).join(' ')"></td>
-                  <td x-text="m.parts.join(' ')"></td>
-                  <td x-text="Object.entries(m.depth || {}).map(([role, mm]) => role + ' ' + mm).join(', ')"></td>
+                  <td x-text="(m.types || []).map(KE.typeLabel).join(', ')"></td>
+                  <td x-text="m.parts.map(part => KE.LABELS.part[part]).join(', ')"></td>
+                  <td x-text="Object.entries(m.depth || {}).map(([role, mm]) => (KE.LABELS.role[role] || role) + ' ' + mm).join(', ')"></td>
                 </tr>
               </template>
             </tbody>
@@ -313,11 +313,11 @@
         </div>
       </div>
       <div class="sub-section columns">
-        <h4>Groups &amp; Columns</h4>
+        <h4>Grupy i kolumny</h4>
         <div class="sheet-wrap" @scroll="picker.row = null">
           <table class="sheet">
             <thead>
-              <tr><th style="width:60px">Group</th><th>Width</th><th class="col-actions"></th></tr>
+              <tr><th style="width:60px">Grupa</th><th>Szerokość</th><th class="col-actions"></th></tr>
             </thead>
             <tbody x-ref="columnsTbody">
               <template x-for="(row, idx) in columns" :key="row.id">
@@ -325,7 +325,7 @@
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.width"></td>
                   <td class="col-actions">
-                    <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertColumnRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeColumnRow(idx)">×</button>
+                    <button type="button" class="row-insert" title="Wstaw wiersz poniżej (kopia bieżącego)" @click="insertColumnRow(idx)">+</button><button type="button" class="row-del" title="Usuń wiersz" @click="removeColumnRow(idx)">×</button>
                   </td>
                 </tr>
               </template>
@@ -334,24 +334,24 @@
         </div>
       </div>
       <div class="sub-section wide">
-        <h4>Components</h4>
+        <h4>Elementy</h4>
         <div class="sheet-wrap" @scroll="picker.row = null">
           <table class="sheet">
             <thead>
               <tr>
-                <th style="width:56px">Group</th>
-                <th style="width:52px">Col</th>
-                <th style="width:52px">Span</th>
-                <th style="width:170px" title="One type (radio) + the tags allowed on it (tick boxes)">Tags</th>
-                <th style="width:70px" title="Carcass name: components with the same name are one carcass (empty = no carcass)">Carcass</th>
-                <th style="width:70px">Height</th>
-                <th style="width:84px" title="Handle position on the front">Handle</th>
-                <th style="width:84px" title="Hinge side of a door">Hinge</th>
-                <th style="width:46px" title="Front gap left (mm)">Gap L</th>
-                <th style="width:46px" title="Front gap right (mm)">Gap R</th>
-                <th style="width:46px" title="Front gap top (mm)">Gap T</th>
-                <th style="width:46px" title="Front gap bottom (mm)">Gap B</th>
-                <th>Notes</th>
+                <th style="width:56px">Grupa</th>
+                <th style="width:52px">Kol.</th>
+                <th style="width:52px">Rozp.</th>
+                <th style="width:170px" title="Jeden typ (wybór) + dozwolone dla niego tagi (pola wyboru)">Typ i tagi</th>
+                <th style="width:70px" title="Nazwa korpusu: elementy o tej samej nazwie tworzą jeden korpus (puste = bez korpusu)">Korpus</th>
+                <th style="width:70px">Wysokość</th>
+                <th style="width:84px" title="Położenie uchwytu na froncie">Uchwyt</th>
+                <th style="width:84px" title="Strona zawiasów drzwi">Zawiasy</th>
+                <th style="width:46px" title="Szczelina frontu z lewej (mm)">Szcz. L</th>
+                <th style="width:46px" title="Szczelina frontu z prawej (mm)">Szcz. P</th>
+                <th style="width:46px" title="Szczelina frontu u góry (mm)">Szcz. G</th>
+                <th style="width:46px" title="Szczelina frontu u dołu (mm)">Szcz. D</th>
+                <th>Uwagi</th>
                 <th class="col-actions"></th>
               </tr>
             </thead>
@@ -361,14 +361,14 @@
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.col"></td>
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.span"></td>
-                  <td><button type="button" class="pick-btn" :class="{empty: !row.tags}" @click="openPicker(row, $event)" x-text="row.tags || '—'"></button></td>
+                  <td><button type="button" class="pick-btn" :class="{empty: !row.tags}" @click="openPicker(row, $event)" x-text="row.tags ? KE.tagsLabel(parseTags(row.tags).words) : '—'"></button></td>
                   <td><input type="text" class="cell" spellcheck="false" placeholder="—" x-model="row.carcass"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.height"></td>
                   <td>
-                    <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Handle position" @click="openPicker(row, $event, 'handle')" x-text="row.handle ? SIDE_NAMES[row.handle] || row.handle : ''"></button></template>
+                    <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Położenie uchwytu" @click="openPicker(row, $event, 'handle')" x-text="row.handle ? SIDE_NAMES[row.handle] || row.handle : ''"></button></template>
                   </td>
                   <td>
-                    <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Hinge side of a door" @click="openPicker(row, $event, 'hinge')" x-text="row.hinge ? SIDE_NAMES[row.hinge] || row.hinge : ''"></button></template>
+                    <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Strona zawiasów drzwi" @click="openPicker(row, $event, 'hinge')" x-text="row.hinge ? SIDE_NAMES[row.hinge] || row.hinge : ''"></button></template>
                   </td>
                   <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapLeft" @wheel="$event.target.blur()"></td>
                   <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapRight" @wheel="$event.target.blur()"></td>
@@ -376,7 +376,7 @@
                   <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapBottom" @wheel="$event.target.blur()"></td>
                   <td class="col-note"><input type="text" class="cell" x-model="row.note"></td>
                   <td class="col-actions">
-                    <button type="button" class="row-insert" title="Insert row below (clones current)" @click="insertComponentRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeComponentRow(idx)">×</button>
+                    <button type="button" class="row-insert" title="Wstaw wiersz poniżej (kopia bieżącego)" @click="insertComponentRow(idx)">+</button><button type="button" class="row-del" title="Usuń wiersz" @click="removeComponentRow(idx)">×</button>
                   </td>
                 </tr>
               </template>
@@ -392,7 +392,7 @@
        @click.outside="if (!$event.target.closest('.pick-btn')) picker.row = null" @keydown.escape.window="picker.row = null">
     <template x-if="picker.row && (picker.mode === 'handle' || picker.mode === 'hinge')">
       <div class="picker-list">
-        <div class="picker-title" x-text="picker.mode"></div>
+        <div class="picker-title" x-text="picker.mode === 'handle' ? 'uchwyt' : 'zawiasy'"></div>
         <template x-for="h in (picker.mode === 'handle' ? HANDLE_POSITIONS : HINGE_SIDES)" :key="h || 'none'">
           <label><input type="radio" name="side-pick" :checked="(picker.row[picker.mode] || '') === h" @change="picker.row[picker.mode] = h; picker.row = null"> <span x-text="SIDE_NAMES[h]"></span></label>
         </template>
@@ -400,41 +400,41 @@
     </template>
     <template x-if="picker.row && picker.mode === 'tags'">
       <div class="picker-list">
-        <div class="picker-title">type</div>
+        <div class="picker-title">typ</div>
         <template x-for="t in TYPES" :key="t">
-          <label><input type="radio" name="tag-type" :checked="typeOf(picker.row) === t" @change="setType(picker.row, t)"> <span x-text="t"></span></label>
+          <label><input type="radio" name="tag-type" :checked="typeOf(picker.row) === t" @change="setType(picker.row, t)"> <span x-text="KE.typeLabel(t)"></span></label>
         </template>
-        <div class="picker-title">tags</div>
+        <div class="picker-title">tagi</div>
         <template x-for="tag in tagsFor(picker.row)" :key="tag">
-          <label><input type="checkbox" :checked="hasTag(picker.row, tag)" @change="toggleTag(picker.row, tag)"> <span x-text="tag"></span></label>
+          <label><input type="checkbox" :checked="hasTag(picker.row, tag)" @change="toggleTag(picker.row, tag)"> <span x-text="KE.LABELS.tag[tag]"></span></label>
         </template>
       </div>
     </template>
   </div>
 
   <div id="data-issues" x-show="build.warnings.length" x-cloak>
-    <b x-text="build.warnings.length + (build.warnings.length === 1 ? ' issue' : ' issues') + ' in the data'"></b>
+    <b x-text="build.warnings.length + ' ' + plural(build.warnings.length, 'problem', 'problemy', 'problemów') + ' w danych'"></b>
     <ul><template x-for="(w, i) in build.warnings" :key="i"><li x-text="w"></li></template></ul>
   </div>
 
   <!-- 2. SVG DIAGRAM -->
   <div id="svg-container" x-ref="svgContainer" @mouseover="onSvgHover($event)" @mousemove="onSvgMove($event)" @mouseleave="onSvgLeave()">
     <div id="svg-canvas" x-ref="svgCanvas" x-show="!build.isEmpty" x-html="build.svg"></div>
-    <div x-show="build.isEmpty" style="padding:60px 20px;text-align:center;color:#94a3b8;">No layout yet — add some groups &amp; columns and components in the tables above.</div>
+    <div x-show="build.isEmpty" style="padding:60px 20px;text-align:center;color:#94a3b8;">Brak układu — dodaj grupy, kolumny i elementy w tabelach powyżej.</div>
     <div id="tooltip" x-show="tooltip.show" :style="`left:${tooltip.x}px; top:${tooltip.y}px`" x-text="tooltip.text"></div>
     <div id="svg-footnote" x-show="!build.isEmpty" x-text="hoverInfo"></div>
   </div>
 
   <!-- 3. GENERAL NOTES -->
   <div class="panel">
-    <h3>General Notes</h3>
+    <h3>Notatki</h3>
     <div class="sheet-wrap notes-wrap">
       <table class="sheet">
         <thead>
           <tr>
-            <th style="width:200px">Name</th>
-            <th>Description</th>
-            <th>Details</th>
+            <th style="width:200px">Nazwa</th>
+            <th>Opis</th>
+            <th>Szczegóły</th>
             <th class="col-actions"></th>
           </tr>
         </thead>
@@ -445,7 +445,7 @@
               <td class="col-note"><textarea class="cell" rows="1" x-model="n.description" x-init="$nextTick(() => autoGrow($el))" @input="autoGrow($el)"></textarea></td>
               <td class="col-note"><textarea class="cell" rows="1" x-model="n.details" x-init="$nextTick(() => autoGrow($el))" @input="autoGrow($el)"></textarea></td>
               <td class="col-actions">
-                <button type="button" class="row-insert" title="Insert row below" @click="insertNoteRow(idx)">+</button><button type="button" class="row-del" title="Delete row" @click="removeNoteRow(idx)">×</button>
+                <button type="button" class="row-insert" title="Wstaw wiersz poniżej" @click="insertNoteRow(idx)">+</button><button type="button" class="row-del" title="Usuń wiersz" @click="removeNoteRow(idx)">×</button>
               </td>
             </tr>
           </template>
@@ -524,7 +524,9 @@ const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags } = KE;
 const OAK_SWATCH = 'linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)'; // a material without a colour is drawn with the oak texture
 const HANDLE_POSITIONS = ['', ...KE.HANDLE_POSITIONS];
 const HINGE_SIDES = ['', ...KE.HINGE_SIDES];
-const SIDE_NAMES = { '': 'none', T: 'top', B: 'bottom', L: 'left', R: 'right' }; // handle positions and hinge sides
+const SIDE_NAMES = { '': 'brak', ...KE.LABELS.handle }; // handle positions and hinge sides
+// Polish plural: 1 problem, 2-4 problemy, 5+ problemów (12-14: many)
+const plural = (n, one, few, many) => (n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14) ? few : many);
 
 /* ---------- 2. utilities (nothing kitchen-specific) ---------- */
 function isRowEmpty(...values) {
@@ -590,7 +592,7 @@ function readTables(columnRows, componentRows, noteRows) {
     const group = toNumber(row.group), width = toNumber(row.width);
     if (!isWhole(group, 1) || !(width >= 0)) {
       columnFlags[idx] = 'invalid';
-      warnings.push(`Groups & Columns row ${idx + 1}: Group must be a whole number ≥ 1 and Width ≥ 0.`);
+      warnings.push(`Grupy i kolumny, wiersz ${idx + 1}: grupa musi być liczbą całkowitą ≥ 1, szerokość ≥ 0.`);
       return;
     }
     (columns[group] || (columns[group] = [])).push(width);
@@ -603,7 +605,7 @@ function readTables(columnRows, componentRows, noteRows) {
     const gaps = isRowEmpty(...gapCells) ? [] : gapCells.map(toNumber);
     if (!places.every(n => isWhole(n, 1)) || !(height >= 0) || !gaps.every(g => g >= 0)) {
       componentFlags[idx] = 'invalid';
-      warnings.push(`Components row ${idx + 1}: Group, Col, Span whole numbers ≥ 1, Height ≥ 0, gaps empty or all 4 ≥ 0.`);
+      warnings.push(`Elementy, wiersz ${idx + 1}: grupa, kolumna, rozpiętość liczby całkowite ≥ 1, wysokość ≥ 0, szczeliny puste lub wszystkie 4 ≥ 0.`);
       return;
     }
     components.push(dataComponent(row));
@@ -736,7 +738,7 @@ function drawSVG(model) {
   const backgrounds = groups.map(G => `<rect fill="${CONFIG.colors.canvasBg}" x="${groupX.get(G)}" y="0" width="${G.length}" height="${totalHeight}"/>`).join('');
   const shapes = groups.flatMap(G => G.items.map(item => drawItem(item, item.u0 + groupX.get(G), totalHeight, model.rules.front.shakerRail))).join('');
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Kitchen elevation layout diagram">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Widok frontów kuchni">
       ${backgrounds}
       ${shapes}
     </svg>`;
@@ -767,7 +769,7 @@ document.addEventListener('alpine:init', () => {
     notes: [],
     status: { message: '', type: '' }, // message under the buttons
     tooltip: { show: false, x: 0, y: 0, text: '' },
-    hoverInfo: 'Hover a component in the diagram to see its dimensions.',
+    hoverInfo: 'Najedź na element rysunku, aby zobaczyć jego wymiary.',
     picker: { row: null, mode: 'tags', x: 0, y: 0 }, // popup for the tags, the handle or the hinge of a component row
     nextId: 1,
     TYPES,
@@ -776,6 +778,9 @@ document.addEventListener('alpine:init', () => {
     HANDLE_POSITIONS,
     HINGE_SIDES,
     isRowEmpty,
+    plural,
+    KE,
+    parseTags,
     _statusTimer: null,
 
     init() {
@@ -942,11 +947,11 @@ document.addEventListener('alpine:init', () => {
     onSvgLeave() {
       this.tooltip.show = false;
     },
-    // e.g. "G1[5] · cabinet dishwasher · 600 × 720 · front 594 × 717 · gaps 3:3:3:0 · Bosch SMV4HVX00E" (gaps left:right:top:bottom)
+    // e.g. "G1[5] · szafka zmywarka · 600 × 720 · front 594 × 717 · szczeliny 3:3:3:0 · Bosch SMV4HVX00E" (gaps left:right:top:bottom)
     describeComponent(group) {
       const attr = name => group.getAttribute('data-' + name);
-      const parts = [KE.placeLabel(+attr('g'), +attr('c'), +attr('s')), attr('k'), attr('tags'), `${attr('w')} × ${attr('h')}`];
-      if (FRONT_TYPES.includes(attr('type'))) parts.push(`front ${attr('fw')} × ${attr('fh')}`, `gaps ${attr('gaps').split(' ').join(':')}`);
+      const parts = [KE.placeLabel(+attr('g'), +attr('c'), +attr('s')), attr('k'), KE.tagsLabel(attr('tags').split(' ')), `${attr('w')} × ${attr('h')}`];
+      if (FRONT_TYPES.includes(attr('type'))) parts.push(`front ${attr('fw')} × ${attr('fh')}`, `szczeliny ${attr('gaps').split(' ').join(':')}`);
       parts.push(attr('note'));
       return parts.filter(Boolean).join(' · ');
     },
@@ -954,9 +959,9 @@ document.addEventListener('alpine:init', () => {
     // ---- import / export ----
     exportData() {
       const { project, warnings } = this.build, issues = warnings.length;
-      if (!project) { this.showStatus('Nothing to export: data.js is not loaded.', true); return; }
+      if (!project) { this.showStatus('Nie ma czego eksportować: data.js nie jest wczytany.', true); return; }
       downloadBlob(KE.dataJS(project), 'text/javascript;charset=utf-8', 'data.js');
-      this.showStatus('data.js exported' + (issues ? ' with ' + issues + ' data issue(s) - see the list under the tables' : '') + '. Replace the one in the kitchen folder, then reload the pages.', issues > 0);
+      this.showStatus('Wyeksportowano data.js' + (issues ? ' z ' + issues + ' ' + plural(issues, 'problemem', 'problemami', 'problemami') + ' w danych - lista pod tabelami' : '') + '. Zastąp plik w folderze kuchni i odśwież strony.', issues > 0);
     },
     chooseImportFile() {
       this.$refs.importFile.value = '';
@@ -970,21 +975,21 @@ document.addEventListener('alpine:init', () => {
         try {
           this.importData(String(reader.result));
           this.keepEmptyRows();
-          this.showStatus(`Imported "${file.name}".`, false);
+          this.showStatus(`Zaimportowano "${file.name}".`, false);
         } catch (err) {
-          this.showStatus(`Import failed: ${err.message}`, true);
+          this.showStatus(`Import nieudany: ${err.message}`, true);
         } finally {
           e.target.value = '';
         }
       };
-      reader.onerror = () => { this.showStatus('Could not read the file.', true); e.target.value = ''; };
+      reader.onerror = () => { this.showStatus('Nie można odczytać pliku.', true); e.target.value = ''; };
       reader.readAsText(file);
     },
     // a data.js (or plain JSON) file replaces the tables
     importData(text) {
       let project;
-      try { project = KE.fromDataJS(text); } catch (err) { throw new Error('not valid project data (' + err.message + ').'); }
-      if (!project || !project.rules || !project.columns || !Array.isArray(project.components)) throw new Error('this is not kitchen project data: "rules", "columns" or "components" is missing.');
+      try { project = KE.fromDataJS(text); } catch (err) { throw new Error('to nie są poprawne dane projektu (' + err.message + ').'); }
+      if (!project || !project.rules || !project.columns || !Array.isArray(project.components)) throw new Error('to nie są dane projektu kuchni: brakuje "rules", "columns" lub "components".');
       this.setProject(project);
     }
   }));

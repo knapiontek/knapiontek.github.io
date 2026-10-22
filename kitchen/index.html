@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Index</title>
+<title>Spis plików</title>
 <style>
   :root {
     --ink: #1c1b22;
@@ -82,13 +82,13 @@
 </head>
 <body>
 <div class="wrap">
-  <h1 id="title">Index</h1>
-  <p class="path">Directory: <code id="pathLabel">/</code></p>
+  <h1 id="title">Spis plików</h1>
+  <p class="path">Folder: <code id="pathLabel">/</code></p>
 
-  <div id="status" class="status">Loading directory listing&hellip;</div>
+  <div id="status" class="status">Wczytywanie listy plików&hellip;</div>
   <ul class="file-list" id="fileList" style="display:none;"></ul>
 
-  <footer>Auto-generated from the GitHub repository contents.</footer>
+  <footer>Utworzone automatycznie z zawartości repozytorium GitHub.</footer>
 </div>
 
 <script>
@@ -106,8 +106,8 @@
   dir = dir.replace(/^\/+/, "").replace(/\/+$/, ""); // trim leading/trailing slashes
 
   document.getElementById("pathLabel").textContent = "/" + dir;
-  document.title = "Index — /" + dir;
-  document.getElementById("title").textContent = dir === "" ? "Index of /" : "Index of /" + dir + "/";
+  document.title = "Spis plików — /" + dir;
+  document.getElementById("title").textContent = dir === "" ? "Spis plików /" : "Spis plików /" + dir + "/";
 
   var apiPath = dir.split("/").filter(Boolean).map(encodeURIComponent).join("/");
   var apiUrl = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents" + (apiPath ? "/" + apiPath : "");
@@ -159,13 +159,13 @@
       upLi.className = "parent";
       var upA = document.createElement("a");
       upA.href = "../";
-      upA.innerHTML = '<span class="icon">\u2B06\uFE0F</span><span class="name">.. (parent directory)</span>';
+      upA.innerHTML = '<span class="icon">\u2B06\uFE0F</span><span class="name">.. (folder nadrzędny)</span>';
       upLi.appendChild(upA);
       listEl.appendChild(upLi);
     }
 
     if (visible.length === 0 && dir === "") {
-      statusEl.textContent = "This directory is empty.";
+      statusEl.textContent = "Ten folder jest pusty.";
       statusEl.style.display = "";
       listEl.style.display = "none";
       return;
@@ -190,16 +190,16 @@
 
   fetch(apiUrl, { headers: { "Accept": "application/vnd.github+json" } })
     .then(function (res) {
-      if (!res.ok) throw new Error("GitHub API returned " + res.status);
+      if (!res.ok) throw new Error("GitHub API zwróciło " + res.status);
       return res.json();
     })
     .then(function (data) {
-      if (!Array.isArray(data)) throw new Error("Unexpected response (is this path a file, not a directory?)");
+      if (!Array.isArray(data)) throw new Error("Nieoczekiwana odpowiedź (czy ta ścieżka to plik, a nie folder?)");
       render(data);
     })
     .catch(function (err) {
       var statusEl = document.getElementById("status");
-      statusEl.textContent = "Could not load directory listing (" + err.message + "). GitHub's API is rate-limited for anonymous requests \u2014 try again in a bit.";
+      statusEl.textContent = "Nie można wczytać listy plików (" + err.message + "). API GitHub ogranicza anonimowe zapytania \u2014 spróbuj za chwilę.";
       statusEl.className = "status error";
     });
 })();

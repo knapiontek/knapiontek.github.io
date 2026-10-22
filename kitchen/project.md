@@ -91,6 +91,7 @@ A new feature that changes what gets built is a new type; one that adds to an ex
 - No hidden rules: what gets built follows from the type, the tags and the `data.js` rules, through the tables at the top of `engine.js`. No guessing from names, labels or sizes.
 - No hardcoded project numbers or duplicated values: every number comes from `data.js`, the engine or the page's own JSON.
 - Library versions pinned (deterministic pages).
+- Language: everything the pages show is Polish (texts, part names, warnings, the cost and view JSON, data.js notes); code, identifiers, data keys and comments are English. The Polish names of the identifiers (types, tags, carcass types, flags, openings, edges, roles, parts) are in `LABELS` at the top of `engine.js`. Keywords the engine reads stay English in the data: the `group N` notes and their roles (worktop, tall, island).
 - Short comments that say why, not long narration.
 - No backward compatibility code: when the format changes, `data.js` is migrated.
 - Every change keeps `rules.md` and this file up to date.
