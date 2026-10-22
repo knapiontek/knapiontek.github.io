@@ -1061,9 +1061,9 @@ function buildCarcass(K) {
   for (const b of model.boards) {
     if (b.carcassId !== K.id || b.frontId || b.id === 'pullOutShelf') continue; // drawer boards and the pull-out shelf move: built with the fronts
     registerPart(K, edgeLook(localBox(runLayer[run][b.layer], ...b.box, BOARD[b.material]), b.edges, b.material), b);
-    if (b.id === 'adjustableShelf') { // 4 shelf pins
+    if (b.id === 'adjustableShelf') { // 4 shelf pins, at the ends of the shelf (the carcass sides)
       const y = (b.box[2] + b.box[3]) / 2;
-      for (const [x0, x1] of [[innerU0, innerU0 + 8], [innerU1 - 8, innerU1]]) {
+      for (const [x0, x1] of [[b.box[0] - 1, b.box[0] + 7], [b.box[1] - 7, b.box[1] + 1]]) {
         for (const n of [carcassBack + fittings.shelfPin.fromBack, carcassFront - fittings.shelfPin.fromFront]) localBox(runLayer[run].shelves, x0, x1, y - 14, y - 9, n, n + 5, MAT.zinc, true);
       }
     }
@@ -1730,7 +1730,7 @@ const PANEL_COLORS = {
   side: ['#f0c27b', 'Side'], bottom: ['#8fcf9f', 'Bottom panel'], top: ['#4fae6e', 'Top panel'], rail: ['#f29e8e', 'Top rail'],
   fixedShelf: ['#5f95da', 'Fixed shelf'], adjustableShelf: ['#a9c9f2', 'Adjustable shelf'], pullOutShelf: ['#a9c9f2', 'Pull-out shelf'],
   back: ['#c9b9ea', 'Back, ' + model.materials[model.materialFor.back].label], backStrip: ['#e98fc4', 'Back strip behind frame'],
-  hobPanel: ['#7fd0c8', 'Hob separation panel'], drawerBottom: ['#f5d76e', 'Drawer bottom'], drawerBack: ['#e3ad3c', 'Drawer back']
+  hobPanel: ['#7fd0c8', 'Hob separation panel'], hingePost: ['#e07b39', 'Hinge post'], insetPanel: ['#d9a35c', 'Inset panel'], drawerBottom: ['#f5d76e', 'Drawer bottom'], drawerBack: ['#e3ad3c', 'Drawer back']
 };
 const panelMaterial = {};
 for (const [id, [color]] of Object.entries(PANEL_COLORS)) panelMaterial[id] = standard({ color: linear(color), roughness: 0.7 });

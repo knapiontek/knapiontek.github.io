@@ -9,17 +9,18 @@
   'use strict';
 
   // type = what a component is (one per component); tag = an extra on some types
-  // filler = void / spacer, nothing built (inside a carcass: closed with a board in the carcass material); board = plasterboard box; splash = board on the wall; panel = board laid flat in the front plane;
-  // frame = strip on edge in the front plane; dummy = fixed front in a carcass: no hinges, no drawer box, no back;
-  // dishwasher = front on the appliance door, no carcass; fridge, freezer = front on the appliance door in a carcass
-  const TYPE_TAGS = ['filler', 'board', 'plinth', 'worktop', 'splash', 'panel', 'frame', 'cabinet', 'drawer', 'dummy', 'dishwasher', 'fridge', 'freezer', 'oven', 'micro'];
-  // the types each tag is allowed on; fall = worktop fall (the worktop board turned down to the floor); coffee = pull-out shelf at the bottom, no other shelves
+  // filler = void / spacer, nothing built (at the end of a carcass: its front closed by an inset board); board = plasterboard box; splash = board on the wall;
+  // panel = board laid flat in the front plane; frame = strip on edge in the front plane
+  const TYPE_TAGS = ['filler', 'board', 'plinth', 'worktop', 'splash', 'panel', 'frame', 'cabinet', 'drawer', 'oven', 'micro'];
+  // the types each tag is allowed on; fall = worktop fall (the worktop board turned down to the floor); coffee = pull-out shelf at the bottom, no other shelves;
+  // fridge, freezer = a cabinet whose front is on the door of a built-in appliance: hinge side from the data, no shelves, no back;
+  // dishwasher = a cabinet whose front is on the door of a built-in dishwasher: no carcass, no hinges; dummy = a drawer front that is fixed: no drawer box
   const TAG_TYPES = {
-    hob: ['cabinet', 'drawer'], sink: ['cabinet', 'drawer', 'dummy'], bins: ['drawer'], inner: ['drawer'], fall: ['worktop'], coffee: ['cabinet']
+    dummy: ['drawer'], hob: ['cabinet', 'drawer'], sink: ['cabinet', 'drawer'], bins: ['drawer'], inner: ['drawer'], fall: ['worktop'], coffee: ['cabinet'], fridge: ['cabinet'], freezer: ['cabinet'], dishwasher: ['cabinet']
   };
   const FEATURE_TAGS = Object.keys(TAG_TYPES);
-  const FRONT_TYPES = ['cabinet', 'drawer', 'dummy', 'dishwasher', 'fridge', 'freezer'];
-  const BOX_TYPES = ['cabinet', 'drawer', 'dummy', 'fridge', 'freezer', 'oven', 'micro']; // in a carcass
+  const FRONT_TYPES = ['cabinet', 'drawer'];
+  const BOX_TYPES = ['cabinet', 'drawer', 'oven', 'micro']; // in a carcass
   // the component types made of a board: each is in the types of exactly one material (materials[code].types)
   const BOARD_TYPES = ['worktop', 'splash', 'plinth', 'panel', 'frame', ...FRONT_TYPES];
   // parts the engine adds inside a carcass: their material is named by a rule
@@ -27,7 +28,7 @@
   const HANDLE_POSITIONS = ['T', 'B', 'L', 'R']; // top, bottom, left, right; "" = no handle
   const HINGE_SIDES = ['L', 'R']; // left, right; doors and fridge doors only
   const EDGE_NAMES = { T: 'top', B: 'bottom', L: 'left', R: 'right' }; // the four sides of a panel
-  const OPENING_FRONT_TYPES = FRONT_TYPES.filter(type => type !== 'dummy'); // fronts that open; a dummy is fixed
+  const opens = item => FRONT_TYPES.includes(item.type) && !item.tags.includes('dummy'); // a front that opens; a dummy is fixed
   // Lacquered edges of the finished parts (they get no ABS): how many long and short edges one piece has. It follows from how the
   // kitchen is seen (from the front and from above; the island from all sides), so it is fixed here and data.js knows nothing about it.
   const LACQUERED_EDGES = { front: { long: 2, short: 2 }, frame: { long: 1, short: 0 }, plinth: { long: 0, short: 0 } };
@@ -203,6 +204,7 @@
       if (!piece.type) {
         return warn(`${at}: tags need exactly one type: ${TYPE_TAGS.join(', ')}${parsed.types.length ? ' (found ' + parsed.types.join(' + ') + ')' : ''} - skipped.`, index, true);
       }
+      if (['fridge', 'freezer', 'dishwasher'].filter(tag => parsed.features.includes(tag)).length > 1) warn(`${at}: tags fridge, freezer and dishwasher exclude each other.`, index);
       for (const tag of parsed.features) if (!TAG_TYPES[tag].includes(parsed.type)) warn(`${at}: tag ${tag} is only for ${TAG_TYPES[tag].join(', ')}.`, index);
       if (parsed.unknown.length) warn(`${at}: unknown tag ${parsed.unknown.join(', ')} (known: ${[...TYPE_TAGS, ...FEATURE_TAGS].join(', ')}).`, index);
       if (piece.handle && !FRONT_TYPES.includes(piece.type)) warn(`${at}: a ${piece.type} cannot have a handle.`, index);
@@ -256,7 +258,7 @@
     }
     for (const G of Object.values(groups)) {
       for (const item of G.items) {
-        if (BOX_TYPES.includes(item.type) && !item.carcassName) warn(`${placeOf(item)}: ${item.type} has no carcass name.`, item.index);
+        if (BOX_TYPES.includes(item.type) && !item.carcassName && !hasTag(item, 'dishwasher')) warn(`${placeOf(item)}: ${item.type} has no carcass name.`, item.index);
       }
     }
     carcasses.forEach((K, i) => {
@@ -268,7 +270,7 @@
       K.base = K.floor && groupItems.some(item => item.type === 'worktop' && overlapsColumns(item) && item.v0 === K.v1);
       K.type = K.base ? 'base' : K.floor ? 'tall' : 'wall';
       K.sink = K.boxes.some(b => hasTag(b, 'sink'));
-      K.fridge = K.boxes.some(b => b.type === 'fridge' || b.type === 'freezer');
+      K.fridge = K.boxes.some(b => hasTag(b, 'fridge', 'freezer'));
       K.coffee = K.boxes.some(b => hasTag(b, 'coffee'));
       K.hob = K.boxes.some(b => hasTag(b, 'hob'));
       K.legs = K.floor ? rules.legsPerCarcass : 0;
@@ -324,10 +326,10 @@
         part('top', 'Top panel', innerWidth, carcassDepth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassBack, carcassFront], front(innerWidth));
       }
 
-      // back only behind cabinet doors: not behind drawers, fixed (dummy) fronts or appliances (oven, micro, fridge, freezer);
+      // back only behind cabinet doors: not behind drawers (dummy fronts included) or appliances (oven, micro, fridge, freezer);
       // one piece per run of doors
       const doorSpans = K.boxes
-        .filter(b => b.type === 'cabinet')
+        .filter(b => b.type === 'cabinet' && !hasTag(b, 'fridge', 'freezer'))
         .map(b => [Math.max(v0, b.v0), Math.min(v1, b.v1)])
         .sort((a, b) => a[0] - b[0])
         .reduce((runs, span) => {
@@ -350,13 +352,29 @@
         }
       }
 
+      // filler at one end of a carcass (e.g. the hidden end of an L corner): the carcass runs on behind it, its front is closed by
+      // an inset board in the carcass material, from the last box to the carcass side, between the bottom and the top rail
+      // (behind a panel of the carcass, in parallel to it and touching it); the shelves span the whole carcass
+      const topBoard = K.base && K.sink ? rails.depth : K.base && K.hob ? rails.hobFront : board;
+      for (const f of K.members.filter(i => i.type === 'filler')) {
+        const atRight = f.u1 === K.u1, atLeft = f.u0 === K.u0;
+        if (atRight === atLeft) {
+          warn(`${placeOf(f)}: a filler in a carcass must be at one end of it.`, f.index);
+          continue;
+        }
+        const s0 = atRight ? Math.max(...K.boxes.map(b => b.u1)) : innerU0, s1 = atRight ? innerU1 : Math.min(...K.boxes.map(b => b.u0));
+        part('insetPanel', 'Inset panel', s1 - s0, height - board - topBoard, carcassMaterial, 'carcasses',
+          [s0, s1, v0 + board, v1 - topBoard, carcassFront - board, carcassFront]); // hidden behind the panel and the corner: no ABS
+      }
+      const shelfFrom = innerU0, shelfTo = innerU1;
+      // an adjustable shelf: one plain board from side to side (a hinge post, when there is one, crosses it)
       const adjustableShelf = centre => {
-        part('adjustableShelf', 'Adjustable shelf', innerWidth - 2 * shelf.clearance, carcassDepth - shelf.setback, carcassMaterial, 'shelves',
-          [innerU0 + shelf.clearance, innerU1 - shelf.clearance, centre - half, centre + half, carcassBack, carcassFront - shelf.setback], front(innerWidth - 2 * shelf.clearance));
+        const width = shelfTo - shelfFrom - 2 * shelf.clearance, boardU0 = shelfFrom + shelf.clearance;
+        part('adjustableShelf', 'Adjustable shelf', width, carcassDepth - shelf.setback, carcassMaterial, 'shelves',
+          [boardU0, boardU0 + width, centre - half, centre + half, carcassBack, carcassFront - shelf.setback], front(width));
         counts.shelvesAdjustable++;
         counts.shelfPins += shelf.pins;
       };
-      // tag coffee (rules.pullOutShelf): one pull-out shelf at the bottom on full-extension runners, no other shelves
       if (K.coffee) {
         const pullOut = rules.pullOutShelf, y = v0 + board + pullOut.lift;
         part('pullOutShelf', 'Pull-out shelf', innerWidth - 2 * pullOut.clearance, pullOut.depth, carcassMaterial, 'shelves',
@@ -403,16 +421,9 @@
             T: o => o.v0 === item.v1 && overlaps(o.u0, o.u1, item.u0, item.u1), B: o => o.v1 === item.v0 && overlaps(o.u0, o.u1, item.u0, item.u1)
           };
           const edges = Object.keys(EDGE_NAMES)
-            .filter(side => G.items.some(other => OPENING_FRONT_TYPES.includes(other.type) && neighbour[side](other)))
+            .filter(side => G.items.some(other => opens(other) && neighbour[side](other)))
             .map(side => [EDGE_NAMES[side], side === 'T' || side === 'B' ? width : height]);
           panels.push({ group: G.group, item, material: materialFor.panel, name: 'Panel ' + thickness.panel, a: width, b: height, box: [u0, u1, v0, v1, frontFace - thickness.panel, frontFace], edges });
-        } else if (item.type === 'filler' && item.carcassName) {
-          // a filler inside a carcass is a hole in its front (e.g. the hidden end of an L corner): closed with a board in the carcass
-          // material, in the front plane; hidden, so no ABS
-          addBoard({
-            id: 'fillerCover', name: 'Filler cover', a: width, b: height, material: materialFor.carcass, layer: 'carcasses', group: G.group, carcassId: item.carcass.id,
-            box: [u0, u1, v0, v1, frontFace - board, frontFace], edges: []
-          });
         } else if (item.type === 'plinth') {
           plinths.push({ group: G.group, item, material: materialFor.plinth, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - thickness.plinth, plinthFace], lacquer: LACQUERED_EDGES.plinth });
           counts.plinthHeight = Math.max(counts.plinthHeight, height);
@@ -469,21 +480,21 @@
         }
         const box = frontBox(item), K = item.carcass;
         if (box.u1 - box.u0 <= 0 || box.v1 - box.v0 <= 0) warn(`${placeOf(item)}: gaps leave no front.`, item.index);
-        const opening = item.type === 'dummy' ? 'fixed'
+        const opening = hasTag(item, 'dummy') ? 'fixed'
           : item.type === 'drawer' ? 'drawer'
-          : item.type === 'dishwasher' ? 'dishwasher'
-          : item.type === 'fridge' || item.type === 'freezer' ? 'fridge'
+          : hasTag(item, 'dishwasher') ? 'dishwasher'
+          : hasTag(item, 'fridge', 'freezer') ? 'fridge'
           : 'door';
         const hinged = opening === 'door' || opening === 'fridge';
         if (hinged && !HINGE_SIDES.includes(item.hinge)) warn(`${placeOf(item)}: a door needs a hinge side ${HINGE_SIDES.join(' or ')}.`, item.index);
         if (hinged && item.hinge === item.handle) warn(`${placeOf(item)}: hinge and handle on the same side.`, item.index);
         if (!hinged && item.hinge) warn(`${placeOf(item)}: only doors have a hinge side.`, item.index);
-        // hinges are screwed to a carcass side: when the door does not reach one on its hinge side, the engine adds an ortho panel
+        // hinges are screwed to a carcass side: when the door does not reach one on its hinge side, the engine adds a hinge post
         // (a board in the carcass material, hinges.supportDepth deep, at the front) at the hinge edge of the door, as high as the door
         if (hinged && K && HINGE_SIDES.includes(item.hinge) && (item.hinge === 'L' ? item.u0 !== K.u0 : item.u1 !== K.u1)) {
           const panelU0 = item.hinge === 'L' ? item.u0 : item.u1 - board, panelV0 = Math.max(item.v0, K.v0 + board), panelV1 = Math.min(item.v1, K.v1 - board);
           addBoard({
-            id: 'side', name: 'Ortho panel', a: hingeRule.supportDepth, b: panelV1 - panelV0, material: materialFor.carcass, layer: 'carcasses', group: G.group, carcassId: K.id,
+            id: 'hingePost', name: 'Hinge post', a: hingeRule.supportDepth, b: panelV1 - panelV0, material: materialFor.carcass, layer: 'carcasses', group: G.group, carcassId: K.id,
             box: [panelU0, panelU0 + board, panelV0, panelV1, carcassFront - hingeRule.supportDepth, carcassFront], edges: [['front', panelV1 - panelV0]]
           });
         }
@@ -499,7 +510,7 @@
         if (opening === 'door' && K) {
           const count = hingeRule.perDoor.find(([maxHeight]) => front.height < maxHeight)[1];
           front.hinges = Array.from({ length: count }, (_, j) => Math.round(front.v0 + hingeRule.fromEnd + ((front.height - 2 * hingeRule.fromEnd) * j) / (count - 1)));
-          front.hingeU = front.hingeSide === 'R' ? item.u1 - board : item.u0 + board; // on the carcass side or the ortho panel
+          front.hingeU = front.hingeSide === 'R' ? item.u1 - board : item.u0 + board; // on the carcass side or the hinge post
           counts.hinges += count;
         }
 

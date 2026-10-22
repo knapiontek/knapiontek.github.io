@@ -56,8 +56,8 @@ Deterministic: the same project gives the same model.
 - `build(project)` returns the model: carcasses, boards, fronts, frames, panels, plinths, worktops, plasterboard, counts, thicknesses, `materialFor` (type or part → material code) and `warnings`.
 - Checks the data and reports problems as warnings instead of failing: one type per component, tags allowed on their type, every board type in one material, sizes matching their material, hinge and handle sides ...
 - Marks the ABS edges of each board and panel (`edges`: side and length); the pages list them, nothing else decides where ABS goes. A panel gets ABS on each edge next to a front that opens (a door, a drawer, an appliance door; not a fixed front), found from the neighbouring components.
-- Closes a filler that belongs to a carcass (it has a carcass name: a hole in the front, e.g. the hidden end of an L corner) with a `Filler cover`: a board in the carcass material in the front plane, without ABS.
-- Adds an ortho panel (a carcass-material board `hinges.supportDepth` deep at the front, as high as the door) when a hinged door does not reach a carcass side on its hinge side.
+- Closes a filler at one end of a carcass (same carcass name, e.g. the hidden end of an L corner) with an `Inset panel`: a carcass-material board at the carcass front, from the last box to the far side, touching the panel in front of it. Adjustable shelves are plain boards over the whole carcass; a hinge post crosses them (the view reports it).
+- Adds a `Hinge post` (a carcass-material board `hinges.supportDepth` deep at the front, as high as the door) when a hinged door does not reach a carcass side on its hinge side.
 - Fixes the lacquered edges of the finished parts (`LACQUERED_EDGES`, long and short edges of one piece): fronts all round (2 long + 2 short), frames 1 long side (the front edge, `lacqueredSides`), plinth none. It follows from how the kitchen is seen (front and top; the island from all sides), so it lives in the engine, not in `data.js`. Each front, frame and plinth carries it as `lacquer`; `cutList` returns it after the ABS edges, and the pages show one column, ABS/Lacquer ("4", "1 long", "1 long + 1 short"; nothing = no finished edge).
 - Prints the place of a component as `G1[4]` (group 1, column 4) or `G1[1-11]` (columns 1 to 11) with `placeLabel`: warnings, lists and tooltips in every page use it. The data keeps `g`, `c`, `s`.
 - Coordinates per group: `u` along the group, `v` up from the floor, `n` out from the wall; a box is `[u0, u1, v0, v1, n0, n1]`.
@@ -69,7 +69,7 @@ Deterministic, and agnostic of the project and of its data: it knows the format,
 - Problems are listed under the tables; Import / Export messages appear under the buttons.
 
 ### cost.html (LLM generated)
-Uses `data.js` and the engine model to estimate prices, list the boards to cut and edge, and help with assembly. Its `#cost-data` JSON holds prices, items, notes and page settings; texts refer to the model through placeholders (`{n:count}`, `{r:rule.path}`, `{t:type}`, `{m:type}` ...), never through copied numbers.
+Uses `data.js` and the engine model to estimate prices, list the boards to cut and edge, and help with assembly. Its `#cost-data` JSON holds prices (each with the shop `links` it comes from), items, notes and page settings; texts refer to the model through placeholders (`{n:count}`, `{r:rule.path}`, `{t:type}`, `{m:type}` ...), never through copied numbers.
 
 ### view.html (LLM generated)
 Uses `data.js` and the engine model to render carcasses, fronts, frames, appliances and the room around them: walls, window, floor, lamps. It checks the geometry (overlaps, gaps, fronts off the line, parts sticking out) and lists the issues. Its `#view-data` JSON holds the room, lights, appliance and hardware sizes, used only for drawing.
@@ -78,7 +78,7 @@ Uses `data.js` and the engine model to render carcasses, fronts, frames, applian
 
 - **Material**: what you buy (a board with its thickness and colour).
 - **Type**: what a component is and how it is used. One per component. The type drives the engine and the pages: it decides what gets built (a carcass, a front on a door or on an appliance, a frame, a worktop ...).
-- **Tag**: a special case of a type (`sink`, `hob`, `bins`, `inner`, `coffee`, `fall`). It adds a feature to the same build, and each tag is allowed only on some types. Pages use tags to render or handle that feature.
+- **Tag**: a special case of a type (`dummy`, `sink`, `hob`, `bins`, `inner`, `coffee`, `fall`, `fridge`, `freezer`, `dishwasher`). It adds a feature to the same build, and each tag is allowed only on some types. Pages use tags to render or handle that feature.
 
 A new feature that changes what gets built is a new type; one that adds to an existing build is a tag.
 
