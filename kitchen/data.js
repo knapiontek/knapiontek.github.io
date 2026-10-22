@@ -56,7 +56,9 @@ window.KITCHEN_DATA = {
   ["Hood / extractor", "Electrolux LFV416K, 600", "Above the hob"],
   ["Fridge", "Bosch KIS86AFE0, built-in 1772", "No shelf above it: the free space is for ventilation"],
   ["Coffee machine", "DeLonghi Dinamica (owned)", "On the pull-out shelf of the corner wall cabinet (group 2)"],
-  ["Oven Microwave", "Top shelf: 18 [top overhang: ~10 | ~8 exposed]\nMicrowave: 362 [front 382]\nMid shelf: 18 [overhangs: 10 bottom + 5.5 top = 15.5 -> ~2.5 gap]\nOven: 584 [front 595]\nBottom shelf: 18  [bottom overhang: ~5.5 | ~12.5 exposed]", "H: 18 + 362 + 18 + 584 + 18 = 1000 mm"]
+  ["Oven", "Bosch HBA534BB3: front 595, body 570", "Opening 585–595 × 560–568, depth min 550; vent: 20 at the shelf back, 200 cm² in the plinth. Manual p. 26–27: https://media3.bosch-home.com/Documents/9001910274_B.pdf"],
+  ["Microwave", "Bosch BFL623MB3, 20 l: front 382", "Opening 380+2 (feet) or 362+3, 560–568; 20 l only in a wall cabinet (16.4) - confirm with Bosch. Manual p. 24–25: https://maxelektro.pl/storage/file/pimcore_import/2024/12/17/94c9b8f85ca9df2e0ed5ed5def050d92/kuchenka-mikrofalowa-bosch-serie-2-bfl623mb3-instrukcja-montazu.pdf"],
+  ["Oven + microwave column", "K8: fronts 600 + 400; fixed shelves set on site", "Drawn 9 + 582 + 18 + 382 + 9, on site 3 + 590 + 18 + 380 + 9"]
  ],
  "columns": {
   "1": [38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 320],
@@ -75,7 +77,7 @@ window.KITCHEN_DATA = {
   {"g": 1, "c": 5, "s": 1, "tags": "cabinet dishwasher", "h": 720, "hd": "T", "gaps": [3, 3, 3, 0], "note": "Bosch SMV4HVX00E"},
   {"g": 1, "c": 6, "s": 1, "tags": "frame", "h": 720},
   {"g": 1, "c": 7, "s": 1, "tags": "drawer sink bins", "k": "K2", "h": 420, "hd": "T", "gaps": [3, 3, 2, 0]},
-  {"g": 1, "c": 7, "s": 1, "tags": "drawer dummy sink", "k": "K2", "h": 300, "hd": "T", "gaps": [3, 3, 3, 1]},
+  {"g": 1, "c": 7, "s": 1, "tags": "drawer dummy sink", "k": "K2", "h": 300, "hd": "T", "gaps": [3, 3, 3, 1], "note": "IKEA KILSVIKEN"},
   {"g": 1, "c": 8, "s": 1, "tags": "frame", "h": 720},
   {"g": 1, "c": 9, "s": 1, "tags": "cabinet", "k": "K3", "h": 720, "hd": "T", "hg": "R", "gaps": [3, 3, 3, 0]},
   {"g": 1, "c": 10, "s": 1, "tags": "panel", "k": "K3", "h": 720},
@@ -96,8 +98,8 @@ window.KITCHEN_DATA = {
   {"g": 2, "c": 5, "s": 1, "tags": "cabinet", "k": "K7", "h": 480, "hd": "B", "hg": "L", "gaps": [3, 3, 3, 1]},
   {"g": 2, "c": 6, "s": 1, "tags": "frame", "h": 2400},
   {"g": 2, "c": 7, "s": 1, "tags": "cabinet", "k": "K8", "h": 520, "hd": "T", "hg": "L", "gaps": [3, 3, 3, 0]},
-  {"g": 2, "c": 7, "s": 1, "tags": "oven", "k": "K8", "h": 600, "note": "Bosch HBA534BB3"},
-  {"g": 2, "c": 7, "s": 1, "tags": "micro", "k": "K8", "h": 400, "note": "Bosch BFL623MB3"},
+  {"g": 2, "c": 7, "s": 1, "tags": "oven", "k": "K8", "h": 600, "note": "Bosch HBA534BB3; opening 590 on site"},
+  {"g": 2, "c": 7, "s": 1, "tags": "micro", "k": "K8", "h": 400, "note": "Bosch BFL623MB3; opening 380 on site"},
   {"g": 2, "c": 7, "s": 1, "tags": "cabinet", "k": "K8", "h": 400, "hd": "B", "hg": "L", "gaps": [3, 3, 2, 3]},
   {"g": 2, "c": 7, "s": 1, "tags": "cabinet", "k": "K9", "h": 480, "hd": "B", "hg": "L", "gaps": [3, 3, 3, 1]},
   {"g": 2, "c": 8, "s": 1, "tags": "frame", "h": 2400},
