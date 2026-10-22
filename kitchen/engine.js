@@ -312,6 +312,8 @@
         if (!piece.gaps || piece.gaps.length !== 4 || piece.gaps.some(x => !Number.isFinite(x))) {
           warn(`${at}: ${typeLabel(piece.type)} potrzebuje 4 szczelin [lewa, prawa, góra, dół] - narysowano bez szczelin.`, index);
           piece.gaps = [0, 0, 0, 0];
+        } else if (!piece.gaps.every(Number.isInteger)) {
+          warn(`${at}: szczeliny [${piece.gaps.join(', ')}] muszą być całkowitymi mm.`, index);
         }
         const hinged = HINGED.includes(openingOf(piece));
         if (hinged && !HINGE_SIDES.includes(piece.hinge)) warn(`${at}: drzwi potrzebują strony zawiasów ${HINGE_SIDES.join(' lub ')}.`, index);

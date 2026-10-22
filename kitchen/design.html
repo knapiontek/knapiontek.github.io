@@ -223,7 +223,7 @@
           box-shadow: inset 0 0 0 2px var(--sheet-focus);
         }
         table.sheet input[type="number"] { text-align: right; }
-        /* gaps take decimals (1.5): no spin arrows, the mouse wheel does not change them */
+        /* gaps: no spin arrows, the mouse wheel does not change them */
         table.sheet input.gap { -moz-appearance: textfield; }
         table.sheet input.gap::-webkit-inner-spin-button, table.sheet input.gap::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         table.sheet select { cursor: pointer; }
@@ -370,10 +370,10 @@
                   <td>
                     <template x-if="isFront(row)"><button type="button" class="pick-btn handle-btn" title="Strona zawiasów drzwi" @click="openPicker(row, $event, 'hinge')" x-text="row.hinge ? SIDE_NAMES[row.hinge] || row.hinge : ''"></button></template>
                   </td>
-                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapLeft" @wheel="$event.target.blur()"></td>
-                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapRight" @wheel="$event.target.blur()"></td>
-                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapTop" @wheel="$event.target.blur()"></td>
-                  <td><input type="number" class="cell gap" min="0" step="any" inputmode="decimal" x-model.number="row.gapBottom" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell gap" min="0" step="1" inputmode="numeric" x-model.number="row.gapLeft" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell gap" min="0" step="1" inputmode="numeric" x-model.number="row.gapRight" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell gap" min="0" step="1" inputmode="numeric" x-model.number="row.gapTop" @wheel="$event.target.blur()"></td>
+                  <td><input type="number" class="cell gap" min="0" step="1" inputmode="numeric" x-model.number="row.gapBottom" @wheel="$event.target.blur()"></td>
                   <td class="col-note"><input type="text" class="cell" x-model="row.note"></td>
                   <td class="col-actions">
                     <button type="button" class="row-insert" title="Wstaw wiersz poniżej (kopia bieżącego)" @click="insertComponentRow(idx)">+</button><button type="button" class="row-del" title="Usuń wiersz" @click="removeComponentRow(idx)">×</button>

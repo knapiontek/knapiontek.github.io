@@ -1,76 +1,97 @@
-# Kitchen rules
+# Zasady projektowania kuchni
 
-Generic rules for any kitchen built with these pages. Every value lives once, in `data.js` `rules` (names in `code` below); project specifics (groups, products, design choices such as front gaps) are in the `data.js` notes and in the `cost.html` / `view.html` JSON.
-Every rule here is implemented in `engine.js`, and every rule the engine applies is written here. Update this file with every change.
+Ogólne zasady, wspólne dla każdego projektu kuchni. Wartości liczbowe (głębokości, odstępy, luzy, tabele półek i zawiasów) ustala się w danych projektu. Decyzje konkretnego projektu, jak szczeliny frontów czy produkty, zapisuje się w jego notatkach.
 
-## 1. General rules
+## 1. Układ
 
-| Rule | Value |
+- **Grupa** to ciąg szafek przy jednej ścianie albo wyspa. Grupa ma kolumny o szerokości w mm i rolę: blat, zabudowa wysoka albo wyspa.
+- **Element** leży w grupie, zaczyna się w danej kolumnie i może zajmować kilka kolumn. Elementy układa się od podłogi w kolejności listy: element staje na najwyższym elemencie w swoich kolumnach. Może też wypełnić lukę pod szerszym elementem dodanym wcześniej.
+- **Miejsce** elementu zapisuje się jako grupa i kolumny: G1[4] to grupa 1, kolumna 4; G1[1-11] to kolumny 1 do 11.
+
+## 2. Typy i tagi
+
+Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi** dodają cechy do typu i każdy tag pasuje tylko do wymienionych typów.
+
+| Typ | Co powstaje |
 |---|---|
-| Materials | what you buy, set in `rules.materials` (shown read-only in design.html): name, thickness, colour (none = oak texture), lacquered, core (colour of a bare cut edge), depth by group role, and `types`: the component types made of it. Every board type (worktop, splash, plinth, panel, frame, cabinet, drawer) is in exactly one material; all front types (cabinet, drawer) have one thickness, the front plane. Parts the engine adds take the material their rule names: `carcass.material`, `back.material`, `drawers.material` (drawer box), `rails.hobPanelMaterial` |
-| Stacking | components are placed in list order. In each column the stack is the run of components that reaches up from the floor without a gap; a component starts on the highest of those tops over the columns it spans (so it can fill a gap left under a wider component placed before it). A component outside the columns or overlapping another is skipped |
-| Place | printed `G1[4]` (group 1, column 4) or `G1[1-11]` (group 1, columns 1 to 11) in warnings, lists and tooltips; the data keeps group, column, span |
-| Sizes | column widths and component heights are integer mm; front gaps may be decimals |
-| Group roles | each group has a role in the notes (`group N` → worktop, tall, island). The worktop depth is per role; an island gets a back panel and stands free (no wall behind it, no wall hangers) |
-| Carcass | same carcass name = one carcass over all its columns (one group only); `carcass.depth` deep, back `carcass.wallGap` from the wall. Floor carcass = stands on a plinth (`legsPerCarcass` legs); base = floor carcass with a worktop on top; tall = floor carcass without; wall = not on a plinth |
-| Top | base carcass: 2 flat top rails `rails.depth` deep (on edge under a sink or a hob, see the tags); any other carcass: a top panel |
-| Back | only behind cabinet doors, one piece per run of doors, `back.inset` in from the carcass; none behind drawers, dummy fronts, ovens, microwaves, fridges or freezers |
-| Front | cabinet and drawer: module − its 4 gaps (left, right, top, bottom) from the data; shaker frame `front.shakerRail` wide. How it opens comes from type and tags: dummy → fixed; drawer → drawer; dishwasher → appliance door, folds down; fridge / freezer → appliance door, hinged; else a door |
-| Worktop | depth by group role from the worktop material (`depth`, e.g. worktop 600, island 900); `worktop.overhang` past the fronts; gap behind the carcass = depth − carcass depth − front − overhang |
-| Island | when `island.backPanel`: a back panel in the panel material, between the end columns, floor to the carcass tops, on the carcass backs |
-| Plinth | face `plinth.setback` behind the fronts |
-| Lacquer | fixed in engine.js, not in data.js (how the kitchen is seen: from the front and from above, the island from all sides): fronts all round (both faces and all 4 edges); frames both faces and 1 long edge (the front edge); plinth both faces, no lacquered edge; panels both faces only, so their seen edges get ABS |
-| ABS | carcass boards on the edge seen from the front: sides on the long front edge; bottoms, tops, fixed, adjustable and pull-out shelves, flat front rails and hinge posts on the front edge; a front rail on edge on its bottom edge (seen when the drawer below opens). None: rear rails, back strips, backs, inset panels, the hob separation panel, drawer parts. Panels: ABS on each edge next to a front that opens (a door, a drawer, an appliance door; not a dummy front); next to anything else (a panel, a frame, a filler, the worktop, the plinth) none. Fronts and frames are lacquered, the plinth has no finished edge: no ABS. The cutting list gives each size with the number of finished edges along it, as the board supplier's order form has it: columns Długość | Krawędź | Szerokość | Krawędź, e.g. 1920 | 1 | 550 | 0 (ABS on boards and panels, lacquer on fronts, frames and the plinth), on the page and in the XLSX. The Assembly tab ("Montaż") says where each ABS edge faces. Fronts and frames are lacquered, the plinth has no finished edge: no ABS |
-| Frame / panel | frame on edge, `frame.depth` deep, with a back strip (carcass material, same size, at the carcass back) when it has no carcass name; panel laid flat in the front plane |
-| Shelves | fixed shelf at each joint of 2 boxes, full carcass depth; none in a base carcass (it has rails) or a fridge carcass (ventilation). Adjustable shelves only behind cabinet doors: count by the front height of the door (`shelf.perDoor`), evenly spaced; depth − `shelf.setback`; `shelf.clearance` each side; `shelf.pins` pins. A shelf is one plain board over the whole inside, side to side (also behind an inset panel); a hinge post crosses it (the 3D view reports the crossing, fixed on site). No adjustable shelves in a sink or fridge carcass; a coffee carcass has its own (see the tag). At a built-in appliance the fixed shelves are set on site to the maker's opening (appliance note) |
-| Hinges | doors only (not dummy, dishwasher, fridge or freezer fronts); count by the front height (`hinges.perDoor`), `hinges.fromEnd` from the ends, evenly between. Hinge side from the data (`hg` L / R), required on doors and on fridge / freezer fronts, never on the side of the handle. Hinges are screwed to a carcass side: when the door does not reach one on its hinge side, the engine adds a **hinge post** there (carcass material, `hinges.supportDepth` deep at the carcass front, as high as the door inside the carcass) |
-| Per-height tables | `shelf.perDoor`, `hinges.perDoor`: rows `[maxHeight, count]`, ascending; the first row with front height ≤ maxHeight gives the count |
-| Drawers | front ≥ `drawers.dFrom` → D box, else M; bottom lifted `drawers.liftAtBottom` in the lowest box, `drawers.liftAbove` above; bottom `drawers.bottom.fromWall` from the wall, `drawers.bottom.depth` deep, interior − `drawers.bottom.inset` wide; back interior − `drawers.back.inset` wide |
-| Filler | a void: nothing built. At one end of a carcass (same carcass name), the carcass runs on behind it and an **inset panel** closes its front: carcass material, from the last box (the hinge post) to the far carcass side, between the bottom and the top board, one board thick at the carcass front, touching the panel in front of it; no ABS |
-| Plasterboard | `plasterboard.depth` deep (face + return), studs every `plasterboard.studSpacing`, `plasterboard.layers` layers; UD profile on both fixed edges, CD on the outer edge and the cross pieces; corner bead and T seal along each box; 3-5 mm gap to the furniture |
+| wypełnienie | nic, to pusta przestrzeń; na końcu korpusu: panel wpuszczany |
+| zabudowa GK | zabudowa z płyt gipsowych |
+| cokół | cokół |
+| blat | blat; jego grubość = wysokość elementu |
+| panel ścienny | płyta na ścianie |
+| panel | płyta na płasko w płaszczyźnie frontów |
+| listwa | listwa na sztorc w płaszczyźnie frontów |
+| szafka | miejsce w korpusie z drzwiami |
+| szuflada | miejsce w korpusie z szufladą |
+| piekarnik, mikrofalówka | urządzenie do zabudowy w korpusie, bez frontu |
 
-## 2. Types and tags
-
-Type = what a component is (exactly one per component); it decides what gets built. Tag = an extra on a type, allowed only on the types listed; it adds to the same build. Both are written in the component's `tags` field, type first: `"drawer sink bins"`.
-A new feature that changes what gets built is a new type; one that adds to an existing build is a tag.
-
-| Type | Builds |
-|---|---|
-| `filler` | nothing (a void); at one end of a carcass: the inset panel (see Filler) |
-| `board` | plasterboard box (see Plasterboard) |
-| `plinth` | plinth board |
-| `worktop` | worktop board; its thickness must equal the component height (a fall: its width) |
-| `splash` | board on the wall |
-| `panel` | board laid flat in the front plane |
-| `frame` | strip on edge in the front plane; its narrow side must equal its thickness |
-| `cabinet` | a box in a carcass with a door (front, hinges, back, shelves) |
-| `drawer` | a box in a carcass with a drawer (front, drawer box) |
-| `oven`, `micro` | a built-in appliance in a carcass; no front, no back |
-
-| Tag | Allowed on | Effect |
+| Tag | Dla | Co zmienia |
 |---|---|---|
-| `dummy` | drawer | fixed drawer front: no drawer box, no runners; fixed with angle brackets |
-| `sink` | cabinet, drawer | base carcass: both top rails on edge, `rails.depth` high, to clear the bowl; no adjustable shelves; sink cut-out in the worktop on that carcass; sink, tap, trap drawn there |
-| `hob` | cabinet, drawer | base carcass: front rail on edge `rails.hobFront` high, rear rail on edge `rails.depth` high, separation panel (`rails.hobPanelMaterial`) under the front rail with a `rails.hobPanelGap` air gap at the back; hob and hood drawn there |
-| `bins` | drawer | waste-sorting bins in the drawer |
-| `inner` | drawer | inner drawer M above the drawer box, behind the same front, `drawers.inner.gap` above it; back `drawers.inner.back` high; inner front cut to the interior − `drawers.inner.frontDeduction` |
-| `coffee` | cabinet | pull-out shelf at the bottom (`pullOutShelf`: depth, side clearance, lift) on full-extension runners; `pullOutShelf.space` free above it, then `pullOutShelf.shelvesAbove` adjustable shelves evenly up to the top; no other shelves |
-| `fridge`, `freezer` | cabinet | front on the appliance door (hinge side `hg`), no hinges counted, no shelves, no fixed shelf, no back; plinth grille when on the floor; in the 3D view the fridge body splits at the top of its lowest front |
-| `dishwasher` | cabinet | no carcass (no carcass name); front on the appliance door, no hinges |
-| `fall` | worktop | worktop fall: the worktop board turned down to the floor, upright grain |
+| atrapa | szuflada | stały front, bez szuflady |
+| zlew | szafka, szuflada | trawersy na sztorc, bez półek ruchomych, wycięcie w blacie |
+| płyta grzewcza | szafka, szuflada | przedni trawers niski, przegroda pod płytą |
+| kosze | szuflada | kosze na odpady w szufladzie |
+| szuflada wewnętrzna | szuflada | szuflada M nad szufladą, za tym samym frontem |
+| ekspres | szafka | półka wysuwana na dole, nad nią półki ruchome |
+| lodówka, zamrażarka | szafka | front na drzwiach urządzenia, bez zawiasów, półek i pleców |
+| zmywarka | szafka | front na drzwiach urządzenia, bez korpusu |
+| bok blatu | blat | blat opuszczony do podłogi |
 
-At most one of `fridge`, `freezer`, `dishwasher` per component.
+Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 
-## 3. Checks
+## 3. Korpus
 
-- Rules (stop the build; listed in design.html, shown as an error in cost.html and view.html): every board type in exactly one material, every part rule names a material, each material with a thickness > 0, all fronts one thickness; every rule the engine reads is present; `shelf.perDoor` and `hinges.perDoor` are `[maxHeight, count]` tables, at least 2 hinges per door.
-- Data (engine warnings, shown on all three pages): group has columns; height an integer; exactly one type; known tags, each on its types, at most one appliance tag; column widths integers; inside the columns, no overlap (else skipped); only fronts have a handle, handle T / B / L / R; fronts need 4 gaps, and the gaps must leave a front; a door or fridge / freezer front needs a hinge side L / R, not on the handle side; only those have a hinge side; boxes need a carcass name (not a dishwasher, which must have none); a carcass name stays in one group; a filler in a carcass is at one end of it; a worktop height (fall: width) and a frame's narrow side match the thickness of their material; a worktop needs a group role with a depth, a top board, and is not shorter than carcass + front + overhang; a front height above the last row of a per-height table. A component without one type, outside its group or overlapping is left out of the model.
-- Design table cells: group, column, span whole numbers ≥ 1, height ≥ 0, gaps empty or all 4 ≥ 0.
-- View: overlap > 0.01 mm; gap 0.01 ≤ gap ≤ 3 mm between a frame, panel or back strip and its neighbour; front tops / bottoms 0.01-20 mm apart (off the line, all groups); nothing below the floor, behind the wall (an island excepted) or, for carcass parts and legs, in front of the carcass / plinth.
+- **Korpus** tworzą wszystkie elementy tej samej grupy z tą samą nazwą korpusu. Wszystkie korpusy mają jedną głębokość i stoją w jednym odstępie od ściany.
+- **Rodzaje korpusu:**
+  - dolna: stoi na cokole i ma nad sobą blat;
+  - słupek: stoi na cokole i nie ma blatu;
+  - górna: nie stoi na cokole.
+- Korpus stojący na cokole ma nóżki.
+- **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
+- **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
+- **Półka stała** jest na styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki ani przy lodówce. Przy piekarniku i mikrofalówce ustawia się ją na miejscu na wnękę podaną przez producenta (patrz notatka urządzenia).
+- **Półki ruchome** są tylko za drzwiami szafki:
+  - liczba zależy od wysokości frontu;
+  - półka jest płytsza od korpusu i ma luz z obu stron;
+  - to jedna płyta przez cały korpus.
+- **Zawiasy** mają tylko drzwi:
+  - liczba zależy od wysokości frontu;
+  - strona zawiasów nie może być stroną uchwytu.
+- **Słupek zawiasowy:** gdy drzwi nie sięgają boku korpusu po stronie zawiasów, staje tam słupek zawiasowy.
+- **Panel wpuszczany:** wypełnienie na końcu korpusu (np. ukryty narożnik L) zamyka panel wpuszczany.
+- **Szuflada** jest wysoka (D), gdy front przekracza ustaloną wysokość, a inaczej niska (M).
 
-## 4. Cost assumptions (`cost.html` vars and params) - estimates, not rules
+## 4. Fronty, listwy, panele, blat
 
-- Board waste, edging allowance, contingency, confirmats per carcass.
-- Board sheet size (`sheetLength` × `sheetWidth`), plasterboard sheet size (`plasterLength` × `plasterWidth`), worktop board length (`worktopLength`) and the island board depth (`islandBoardDepth`).
-- Every price links to the online shop it was taken from (`links` of each item).
-- Prices are shop prices on the date in the page header, until quoted.
+- **Front** = moduł minus 4 szczeliny (lewa, prawa, góra, dół). Front shaker ma ramę o stałej szerokości.
+- **Listwa** stoi na sztorc. Gdy nie należy do korpusu, dostaje listwę tylną przy ścianie.
+- **Panel** leży na płasko w płaszczyźnie frontów.
+- **Blat:**
+  - głębokość zależy od roli grupy;
+  - wystaje przed fronty o nawis;
+  - z tyłu zostaje głębokość minus korpus, front i nawis.
+- **Wyspa** ma panel tylny między skrajnymi kolumnami, od podłogi do góry korpusów.
+- **Cokół** jest cofnięty za fronty.
+
+## 5. Krawędzie
+
+- **Lakier:**
+  - fronty: obie strony i wszystkie krawędzie;
+  - listwy: obie strony i krawędź przednia;
+  - cokół i panele: tylko obie strony.
+- **ABS na płytach korpusu** jest tylko na krawędzi widocznej z przodu:
+  - boki, wieńce, półki, trawersy płaskie i słupek zawiasowy mają ABS na krawędzi przedniej;
+  - trawers na sztorc ma ABS na krawędzi dolnej.
+- **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad.
+- **ABS na panelu** jest na każdej krawędzi przy froncie, który się otwiera.
+- **Lista cięć** podaje przy każdym wymiarze liczbę wykończonych krawędzi wzdłuż niego (0, 1 lub 2), jak formularz hurtowni. Opis montażu mówi, gdzie jest każda krawędź z ABS.
+
+## 6. Kontrole
+
+- Błędy w danych są zgłaszane, np. brak typu, tag do złego typu, nakładanie się elementów, brak szczelin albo strony zawiasów, element poza kolumnami.
+- Element bez jednego typu, poza kolumnami albo nachodzący na inny jest pomijany.
+- Widok 3D pokazuje kolizje, szczeliny do 3 mm przy listwach i panelach, części wystające oraz fronty, które o kilka mm nie trzymają linii.
+
+## 7. Kosztorys (szacunek, nie zasady)
+
+Odpad płyt, naddatek na oklejanie, rezerwa, rozmiary arkuszy i ceny są ustawieniami kosztorysu. Każda cena ma link do sklepu i obowiązuje na dzień podany w nagłówku, do czasu oferty.

@@ -7,7 +7,7 @@ How the files of this folder work together. `rules.md` holds the kitchen rules; 
 | File | Kind | Owns | Written by |
 |---|---|---|---|
 | `data.js` | data, this project | materials, rules, notes, columns, components | design.html (Export) |
-| `rules.md` | text, every project | the kitchen rules, written for people and for an LLM starting a new project | by hand |
+| `rules.md` | text, every project | the kitchen rules in Polish, as the app names things; for the designer and an LLM starting a new project; no implementation details | by hand |
 | `engine.js` | code, every project | the model: carcasses, boards, fronts, frames, panels, plinths, worktops, plasterboard, counts, checks | by hand |
 | `design.html` | page, every project | editing the tables, the elevation drawing | by hand |
 | `cost.html` | page, LLM generated | prices, cutting lists, notes, assembly help, carcass map | LLM, per project |
@@ -57,7 +57,7 @@ Deterministic: the same project gives the same model. Read top-down:
 1. **Vocabulary**: `TYPES`, `TAGS` (tag → the types it is allowed on), `FRONT_TYPES`, `BOX_TYPES`, `BOARD_TYPES`, `PART_RULES`, `CARCASS_FLAGS`, `openingOf` (how a front opens), `LACQUER`, `REQUIRED_RULES`. Every decision below is made from these tables, the item's type and tags, and `data.js` rules.
 2. **Helpers**: `parseTags`, `placeLabel` (`G1[4]`, `G1[1-11]`), `countByHeight` (per-height tables).
 3. **Checks that stop the build**: `checkRules` (materials, required rules). `build` throws when it finds one; design.html lists them first.
-4. **Layout**: `stack` places the components in their columns (rule "Stacking"); `carcassAreas` joins the items of one carcass name.
+4. **Layout**: `stack` places the components in their columns (rules.md, "Układ"); `carcassAreas` joins the items of one carcass name.
 5. **Build**, in this order: component checks → groups → carcasses (floor, base, type, flags, legs) → carcass boards (sides, bottom, top / rails, backs, fixed shelves, inset panels, shelves) → frames, back strips, panels (ABS from the neighbouring fronts), plinths, plasterboard → worktops → island back panel → fronts (hinge posts, hinges, drawer boxes).
 6. **Lists and files**: `cutList`, `carcassMap` / `mapJSON`, `dataJS` / `fromDataJS`, `load`.
 
