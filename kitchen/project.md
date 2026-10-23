@@ -50,11 +50,11 @@ Plain JSON after `window.KITCHEN_DATA =`, written so a person can read and edit 
 - `rules`: construction values (setbacks, gaps, overhang, hinges, shelves, drawers ...). Every rule the engine reads must be present (`REQUIRED_RULES` in engine.js).
 - `notes`: `[name, description, details]`; `group N` notes give each group its role (worktop, tall, island).
 - `columns`: column widths per group, integer mm.
-- `components`: one per line, empty fields left out: `g` group, `c` first column, `s` span, `tags` (type first, then its tags), `k` carcass name, `h` height, `hd` handle, `hg` hinge side, `gaps` [left, right, top, bottom], `note`.
+- `components`: one per line, empty fields left out: `g` group, `c` first column, `s` span, `type` (one of `TYPES`), `tags` (tags of that type, space separated; left out when none), `k` carcass name, `h` height, `hd` handle, `hg` hinge side, `gaps` [left, right, top, bottom], `note`.
 
 ### engine.js
 Deterministic: the same project gives the same model. Read top-down:
-1. **Vocabulary**: `TYPES`, `TAGS` (tag → the types it is allowed on), `FRONT_TYPES`, `BOX_TYPES`, `BOARD_TYPES`, `PART_RULES`, `CARCASS_FLAGS`, `openingOf` (how a front opens), `LACQUER`, `REQUIRED_RULES`. Every decision below is made from these tables, the item's type and tags, and `data.js` rules.
+1. **Vocabulary**: `TYPES`, `TAGS` (tag → the types it is allowed on), `FRONT_TYPES`, `BOX_TYPES`, `BOARD_TYPES`, `PART_RULES`, `CARCASS_FLAGS`, `GRILLE_FOR` (what puts a ventilation grille in the plinth), `openingOf` (how a front opens), `LACQUER`, `REQUIRED_RULES`. Every decision below is made from these tables, the item's type and tags, and `data.js` rules.
 2. **Helpers**: `parseTags`, `placeLabel` (`G1[4]`, `G1[1-11]`), `countByHeight` (per-height tables).
 3. **Checks that stop the build**: `checkRules` (materials, required rules). `build` throws when it finds one; design.html lists them first.
 4. **Layout**: `stack` places the components in their columns (rules.md, "Układ"); `carcassAreas` joins the items of one carcass name.
@@ -66,7 +66,7 @@ Coordinates per group: `u` along the group, `v` up from the floor, `n` out from 
 
 ### design.html
 Deterministic, and agnostic of the project: it knows the format, not the kitchen.
-- Tables: Materials (read-only), Groups & Columns, Components, Notes. The type and tags of a component are picked from `KE.TYPES` and `KE.TAGS` (only the tags its type allows).
+- Tables: Materials (read-only), Groups & Columns, Components, Notes. Type and Tags are two columns, each with its own popup: the type from `KE.TYPES`; the tags popup lists only the tags the row's type allows (`KE.tagsOf`), and a type with no tags shows no tag button. Changing the type drops the tags it does not allow.
 - The tables become a project, the engine builds the model, and the page draws the elevations (the modules) as SVG; hover shows front sizes and gaps. Drawing sizes and colours are in its `#design-config` JSON.
 - Problems are listed under the tables; Import / Export messages appear under the buttons.
 

@@ -47,6 +47,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
   - słupek: stoi na cokole i nie ma blatu;
   - górna: nie stoi na cokole.
 - Korpus stojący na cokole ma nóżki.
+- **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka lub zamrażarka.
 - **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
 - **Półka stała** jest na styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki ani przy lodówce. Przy piekarniku i mikrofalówce ustawia się ją na miejscu na wnękę podaną przez producenta (patrz notatka urządzenia).

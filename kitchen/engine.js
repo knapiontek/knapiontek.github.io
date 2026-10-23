@@ -4,7 +4,7 @@
 
    Coordinates in mm per group: u along the group, v up from the floor, n out from the wall; a box is [u0, u1, v0, v1, n0, n1].
    data.columns:    column widths per group, integer mm.
-   data.components: g group, c first column, s column span, h height, tags (one type + its tags), k carcass name,
+   data.components: g group, c first column, s column span, h height, type (one of TYPES), tags (tags of that type, space separated), k carcass name,
                     hd handle (T | B | L | R), hg hinge side (L | R), gaps [left, right, top, bottom] of a front, note. */
 (function (root) {
   'use strict';
@@ -44,6 +44,9 @@
 
   // carcass flags: a carcass has the flag when one of its boxes has one of the tags
   const CARCASS_FLAGS = { sink: ['sink'], hob: ['hob'], fridge: ['fridge', 'freezer'], coffee: ['coffee'] };
+
+  // a carcass on a plinth gets a ventilation grille in the plinth when it holds one of these (air intake for the appliance)
+  const GRILLE_FOR = { types: ['oven'], tags: ['fridge', 'freezer'] };
 
   // visible names (Polish) of the identifiers above; the code keeps the English identifiers
   const LABELS = {
@@ -113,18 +116,14 @@
   // a per-height table [[maxHeight, count], ...] (ascending): the count of the first row with height <= maxHeight
   const countByHeight = (table, height) => (table.find(([maxHeight]) => height <= maxHeight) || [null, null])[1];
 
-  // the tags field: one type + its tags
+  // the tags field: tag names separated by spaces (the type has its own field)
   function parseTags(text) {
     const words = String(text ?? '').toLowerCase().split(/[\s,]+/).filter(Boolean);
-    const types = words.filter(w => TYPES.includes(w));
-    return {
-      words,
-      types,
-      type: types.length === 1 ? types[0] : null,
-      tags: words.filter(w => TAG_NAMES.includes(w)),
-      unknown: words.filter(w => !TYPES.includes(w) && !TAG_NAMES.includes(w))
-    };
+    return { words, tags: words.filter(w => TAG_NAMES.includes(w)), unknown: words.filter(w => !TAG_NAMES.includes(w)) };
   }
+  // the tags a type allows (TAGS), in TAG_NAMES order
+  const tagsOf = type => TAG_NAMES.filter(tag => TAGS[tag].includes(type));
+  const readType = value => { const t = String(value ?? '').trim().toLowerCase(); return TYPES.includes(t) ? t : ''; };
 
   // the module of a front minus its 4 gaps
   function frontBox(item) {
@@ -175,15 +174,14 @@
 
   // data.js component -> item fields
   function readComponent(c, index) {
-    const parsed = parseTags(c.tags);
     return {
       index,
       group: +c.g,
       col: +c.c,
       span: +c.s,
       height: c.h,
-      type: parsed.type || '',
-      tags: parsed.tags,
+      type: readType(c.type),
+      tags: parseTags(c.tags).tags,
       carcassName: String(c.k || '').trim(),
       handle: c.hd || '',
       hinge: c.hg || '',
@@ -299,11 +297,11 @@
       if (!(String(c.g) in columns)) return warn(`${at}: grupa ${c.g} nie ma kolumn - pominięty.`, index, true);
       if (!Number.isInteger(piece.height)) return warn(`${at}: wysokość "${c.h}" musi być całkowitą liczbą mm - pominięty.`, index, true);
       if (!piece.type) {
-        return warn(`${at}: tagi muszą mieć dokładnie jeden typ: ${TYPES.map(typeLabel).join(', ')}${parsed.types.length ? ' (jest ' + parsed.types.map(typeLabel).join(' + ') + ')' : ''} - pominięty.`, index, true);
+        return warn(`${at}: ${String(c.type ?? '').trim() ? 'nieznany typ "' + c.type + '"' : 'brak typu'}; typ musi być jednym z: ${TYPES.map(typeLabel).join(', ')} - pominięty.`, index, true);
       }
       if (APPLIANCE_TAGS.filter(tag => parsed.tags.includes(tag)).length > 1) warn(`${at}: tagi ${tagsLabel(APPLIANCE_TAGS)} wykluczają się.`, index);
       for (const tag of parsed.tags) if (!TAGS[tag].includes(piece.type)) warn(`${at}: tag ${tagsLabel([tag])} jest tylko dla: ${TAGS[tag].map(typeLabel).join(', ')}.`, index);
-      if (parsed.unknown.length) warn(`${at}: nieznany tag ${parsed.unknown.join(', ')} (znane: ${[...TYPES, ...TAG_NAMES].join(', ')}).`, index);
+      if (parsed.unknown.length) warn(`${at}: nieznany tag ${parsed.unknown.join(', ')} (dla typu ${typeLabel(piece.type)}: ${tagsOf(piece.type).map(t => LABELS.tag[t]).join(', ') || 'brak tagów'}).`, index);
       const isFront = FRONT_TYPES.includes(piece.type);
       if (piece.handle && !isFront) warn(`${at}: ${typeLabel(piece.type)} nie może mieć uchwytu.`, index);
       else if (piece.handle && !HANDLE_POSITIONS.includes(piece.handle)) warn(`${at}: uchwyt "${piece.handle}" musi być jednym z ${HANDLE_POSITIONS.join(', ')}.`, index);
@@ -377,7 +375,7 @@
       for (const [flag, tags] of Object.entries(CARCASS_FLAGS)) K[flag] = K.boxes.some(b => hasTag(b, ...tags));
       K.flags = Object.keys(CARCASS_FLAGS).filter(flag => K[flag]);
       K.legs = K.floor ? rules.legsPerCarcass : 0;
-      K.grille = K.fridge && K.floor; // ventilation grille in the plinth under a fridge
+      K.grille = K.floor && K.boxes.some(b => GRILLE_FOR.types.includes(b.type) || hasTag(b, ...GRILLE_FOR.tags));
       for (const item of K.members) item.carcass = K;
       counts.legs += K.legs;
       counts.floorCarcasses += K.floor;
@@ -743,8 +741,8 @@
   }
 
   root.KitchenEngine = {
-    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PART_RULES, CARCASS_FLAGS, LACQUER,
-    HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, openingOf, checkRules, build, cutList, carcassMap, mapJSON,
+    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PART_RULES, CARCASS_FLAGS, GRILLE_FOR, LACQUER,
+    HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, checkRules, build, cutList, carcassMap, mapJSON,
     load, dataJS, fromDataJS
   };
 })(typeof window !== 'undefined' ? window : globalThis);

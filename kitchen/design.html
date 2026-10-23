@@ -339,7 +339,8 @@
                 <th style="width:56px">Grupa</th>
                 <th style="width:52px">Kol.</th>
                 <th style="width:52px">Rozp.</th>
-                <th style="width:170px" title="Jeden typ (wybór) + dozwolone dla niego tagi (pola wyboru)">Typ i tagi</th>
+                <th style="width:120px" title="Co to za element: decyduje, co powstaje">Typ</th>
+                <th style="width:150px" title="Cechy dodatkowe; lista zależy od typu">Tagi</th>
                 <th style="width:70px" title="Nazwa korpusu: elementy o tej samej nazwie tworzą jeden korpus (puste = bez korpusu)">Korpus</th>
                 <th style="width:70px">Wysokość</th>
                 <th style="width:84px" title="Położenie uchwytu na froncie">Uchwyt</th>
@@ -358,7 +359,10 @@
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.col"></td>
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.span"></td>
-                  <td><button type="button" class="pick-btn" :class="{empty: !row.tags}" @click="openPicker(row, $event)" x-text="row.tags ? KE.tagsLabel(parseTags(row.tags).words) : '—'"></button></td>
+                  <td><button type="button" class="pick-btn" :class="{empty: !row.type}" title="Wybierz typ" @click="openPicker(row, $event, 'type')" x-text="row.type ? KE.typeLabel(row.type) : '—'"></button></td>
+                  <td>
+                    <template x-if="tagsFor(row).length"><button type="button" class="pick-btn" :class="{empty: !row.tags}" title="Dodaj lub usuń tagi" @click="openPicker(row, $event, 'tags')" x-text="row.tags ? KE.tagsLabel(parseTags(row.tags).words) : '+ tag'"></button></template>
+                  </td>
                   <td><input type="text" class="cell" spellcheck="false" placeholder="—" x-model="row.carcass"></td>
                   <td><input type="number" class="cell" min="0" step="1" x-model.number="row.height"></td>
                   <td>
@@ -384,24 +388,28 @@
     </div>
   </div>
 
-  <!-- ONE picker popup for a component row: the tags, the handle or the hinge (fixed position, so the table scroll cannot clip it) -->
-  <div class="picker" :class="{'one-col': picker.mode === 'handle' || picker.mode === 'hinge'}" x-show="picker.row" x-cloak :style="`left:${picker.x}px; top:${picker.y}px`"
+  <!-- ONE picker popup for a component row: the type, the tags, the handle or the hinge (fixed position, so the table scroll cannot clip it) -->
+  <div class="picker" :class="{'one-col': picker.mode !== 'type'}" x-show="picker.row" x-cloak :style="`left:${picker.x}px; top:${picker.y}px`"
        @click.outside="if (!$event.target.closest('.pick-btn')) picker.row = null" @keydown.escape.window="picker.row = null">
     <template x-if="picker.row && (picker.mode === 'handle' || picker.mode === 'hinge')">
       <div class="picker-list">
         <div class="picker-title" x-text="picker.mode === 'handle' ? 'uchwyt' : 'zawiasy'"></div>
         <template x-for="h in (picker.mode === 'handle' ? HANDLE_POSITIONS : HINGE_SIDES)" :key="h || 'none'">
-          <label><input type="radio" name="side-pick" :checked="(picker.row[picker.mode] || '') === h" @change="picker.row[picker.mode] = h; picker.row = null"> <span x-text="SIDE_NAMES[h]"></span></label>
+          <label><input type="radio" name="side-pick" :checked="(picker.row?.[picker.mode] || '') === h" @change="picker.row[picker.mode] = h; picker.row = null"> <span x-text="SIDE_NAMES[h]"></span></label>
+        </template>
+      </div>
+    </template>
+    <template x-if="picker.row && picker.mode === 'type'">
+      <div class="picker-list">
+        <div class="picker-title">typ</div>
+        <template x-for="t in TYPES" :key="t">
+          <label><input type="radio" name="type-pick" :checked="picker.row?.type === t" @change="setType(picker.row, t); picker.row = null"> <span x-text="KE.typeLabel(t)"></span></label>
         </template>
       </div>
     </template>
     <template x-if="picker.row && picker.mode === 'tags'">
       <div class="picker-list">
-        <div class="picker-title">typ</div>
-        <template x-for="t in TYPES" :key="t">
-          <label><input type="radio" name="tag-type" :checked="typeOf(picker.row) === t" @change="setType(picker.row, t)"> <span x-text="KE.typeLabel(t)"></span></label>
-        </template>
-        <div class="picker-title">tagi</div>
+        <div class="picker-title" x-text="'tagi: ' + KE.typeLabel(picker.row?.type)"></div>
         <template x-for="tag in tagsFor(picker.row)" :key="tag">
           <label><input type="checkbox" :checked="hasTag(picker.row, tag)" @change="toggleTag(picker.row, tag)"> <span x-text="KE.LABELS.tag[tag]"></span></label>
         </template>
@@ -558,22 +566,23 @@ let loadedProject = null; // keeps the rules and materials, which this page does
 function componentRow(c) {
   const gaps = Array.isArray(c.gaps) ? c.gaps : ['', '', '', ''];
   return {
-    group: c.g, col: c.c, span: c.s, tags: c.tags, carcass: c.k || '', height: c.h, handle: c.hd ?? '', hinge: c.hg ?? '',
+    group: c.g, col: c.c, span: c.s, type: KE.readType(c.type), tags: parseTags(c.tags).tags.join(' '), carcass: c.k || '', height: c.h, handle: c.hd ?? '', hinge: c.hg ?? '',
     gapLeft: gaps[0], gapRight: gaps[1], gapTop: gaps[2], gapBottom: gaps[3], note: c.note || ''
   };
 }
 
 // component table row -> data.js component (short keys, in the order data.js uses); empty fields are left out; gaps on fronts only
 function dataComponent(row) {
-  const parsed = parseTags(row.tags);
-  const c = { g: toNumber(row.group), c: toNumber(row.col), s: toNumber(row.span), tags: parsed.words.join(' ') };
+  const c = { g: toNumber(row.group), c: toNumber(row.col), s: toNumber(row.span), type: row.type };
+  const tags = parseTags(row.tags).words.join(' ');
+  if (tags) c.tags = tags;
   const carcass = String(row.carcass ?? '').trim();
   if (carcass) c.k = carcass;
   c.h = toNumber(row.height);
   if (row.handle) c.hd = row.handle;
   if (row.hinge) c.hg = row.hinge;
   const gaps = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
-  if (FRONT_TYPES.includes(parsed.type) && !isRowEmpty(...gaps)) c.gaps = gaps.map(toNumber);
+  if (FRONT_TYPES.includes(row.type) && !isRowEmpty(...gaps)) c.gaps = gaps.map(toNumber);
   if (String(row.note ?? '').trim()) c.note = String(row.note).trim();
   return c;
 }
@@ -767,7 +776,7 @@ document.addEventListener('alpine:init', () => {
     status: { message: '', type: '' }, // message under the buttons
     tooltip: { show: false, x: 0, y: 0, text: '' },
     hoverInfo: 'Najedź na element rysunku, aby zobaczyć jego wymiary.',
-    picker: { row: null, mode: 'tags', x: 0, y: 0 }, // popup for the tags, the handle or the hinge of a component row
+    picker: { row: null, mode: 'type', x: 0, y: 0 }, // popup for the type, the tags, the handle or the hinge of a component row
     nextId: 1,
     TYPES,
     OAK_SWATCH,
@@ -830,7 +839,7 @@ document.addEventListener('alpine:init', () => {
     },
     newComponentRow(fields = {}) {
       return {
-        id: this.nextId++, group: '', col: '', span: '', tags: '', carcass: '', height: '', handle: '', hinge: '',
+        id: this.nextId++, group: '', col: '', span: '', type: '', tags: '', carcass: '', height: '', handle: '', hinge: '',
         gapLeft: '', gapRight: '', gapTop: '', gapBottom: '', note: '', ...fields
       };
     },
@@ -883,43 +892,38 @@ document.addEventListener('alpine:init', () => {
       this.$refs.notesTbody?.querySelectorAll('textarea').forEach(el => this.autoGrow(el));
     },
 
-    // ---- type and tags: picked in the popup; stored as "type tag tag" ----
-    typeOf(row) {
-      return parseTags(row.tags).type || '';
-    },
+    // ---- type and tags: each picked in its own popup; the tags popup lists only the tags of the row's type ----
     hasTag(row, tag) {
-      return parseTags(row.tags).tags.includes(tag);
+      return !!row && parseTags(row.tags).tags.includes(tag);
     },
     // the tags allowed on the row's type (KE.TAGS)
     tagsFor(row) {
-      const type = this.typeOf(row);
-      return TAG_NAMES.filter(tag => TAGS[tag].includes(type));
+      return row ? KE.tagsOf(row.type) : [];
     },
     isFront(row) {
-      return FRONT_TYPES.includes(this.typeOf(row));
+      return FRONT_TYPES.includes(row.type);
     },
-    writeTags(row, type, tags) {
-      row.tags = [type, ...TAG_NAMES.filter(tag => tags.includes(tag))].filter(Boolean).join(' ');
+    writeTags(row, tags) {
+      row.tags = TAG_NAMES.filter(tag => tags.includes(tag)).join(' '); // TAG_NAMES order, so the data stays stable
     },
-    // a new type keeps the tags it allows; a handle, a hinge and gaps belong to fronts only
+    // a new type keeps only the tags it allows; a handle, a hinge and gaps belong to fronts only
     setType(row, type) {
-      this.writeTags(row, type, parseTags(row.tags).tags.filter(tag => TAGS[tag].includes(type)));
+      row.type = type;
+      this.writeTags(row, parseTags(row.tags).tags.filter(tag => TAGS[tag].includes(type)));
       if (!FRONT_TYPES.includes(type)) {
         row.handle = row.hinge = '';
         row.gapLeft = row.gapRight = row.gapTop = row.gapBottom = '';
-        if (this.picker.mode !== 'tags') this.picker.row = null;
       }
     },
     toggleTag(row, tag) {
-      const parsed = parseTags(row.tags);
-      const tags = parsed.tags.includes(tag) ? parsed.tags.filter(t => t !== tag) : [...parsed.tags, tag];
-      this.writeTags(row, parsed.type || '', tags);
+      const tags = parseTags(row.tags).tags;
+      this.writeTags(row, tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag]);
     },
     // the popup opens below the cell, or above it when there is no room
     openPicker(row, event, mode = 'tags') {
       if (this.picker.row === row && this.picker.mode === mode) { this.picker.row = null; return; }
       const r = event.currentTarget.getBoundingClientRect();
-      const popupHeight = mode === 'tags' ? 400 : mode === 'handle' ? 190 : 120;
+      const popupHeight = { type: 220, tags: 40 + 30 * this.tagsFor(row).length, handle: 190, hinge: 120 }[mode];
       this.picker = {
         row, mode,
         x: Math.min(r.left, window.innerWidth - 260),

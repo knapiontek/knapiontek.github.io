@@ -1068,7 +1068,7 @@ function buildCarcass(K) {
     }
   }
   if (K.fridge) fridgeBody(K);
-  if (K.fridge && K.floor) plinthGrille(K);
+  if (K.grille) plinthGrille(K);
 }
 // bean-to-cup coffee machine (SCENE.coffee.size = width, height, depth), front face at n1, standing on y, centred on uc
 function coffeeMachine(P, uc, y, n1) {
@@ -1091,7 +1091,7 @@ function coffeeMachine(P, uc, y, n1) {
   localCylinder(P, 5, 150, MAT.steel, u1 + 10, head - 60, n1 - 40, null, 12); // steam wand
   localCylinder(P, 8, 20, MAT.blackMetal, u1 + 10, head + 20, n1 - 40, null, 16); // wand knob
 }
-// aluminium ventilation grille in the plinth under the fridge (fittings.plinthGrille)
+// aluminium ventilation grille in the plinth under a carcass with K.grille: fridge, oven (fittings.plinthGrille)
 function plinthGrille(K) {
   const G = fittings.plinthGrille, P = runLayer[K.run].plinth, uc = (K.u0 + K.u1) / 2, w = Math.min(G.width, K.u1 - K.u0 - 80), g0 = uc - w / 2, g1 = uc + w / 2, h0 = G.bottom, h1 = G.top;
   localBox(P, g0, g1, h0, h0 + 5, plinthFace, plinthFace + 3, MAT.zinc);
