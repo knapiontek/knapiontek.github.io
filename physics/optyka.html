@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ciemnia Optyczna</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+
+/* Layout: ciemnia optyczna — stół optyczny (duża plansza) po lewej, panel ucznia + podgląd oka/ekranu po prawej. Jeden, celowo ciemny motyw: promienie mają świecić. */
+:root{
+  color-scheme: dark;
+  --ink:#0c0d18; --bench:#13152a; --panel:#1a1d35; --line:#2d3253; --text:#ece8f4; --muted:#a19eba;
+  --amber:#ffb347; --cyan:#5fd8f0; --pink:#ff79b0; --lime:#a8ef6a; --good:#7ee2a8; --bad:#ff7a6b;
+  --f-display:"Baloo 2", "Nunito", system-ui, sans-serif;
+  --f-body:"Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+html,body{background:var(--ink);color:var(--text)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.45}
+.app{max-width:1240px;margin:0 auto;padding-block:18px 40px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,4vw,40px);line-height:1;margin:0;letter-spacing:.01em}
+h1 span{color:var(--amber);text-shadow:0 0 18px rgba(255,179,71,.55)}
+.sub{margin:4px 0 0;color:var(--muted);max-width:60ch}
+.modes{display:flex;background:var(--bench);border:1px solid var(--line);border-radius:999px;padding:3px}
+.modes button{font:800 14px var(--f-body);color:var(--muted);background:none;border:0;padding:8px 16px;border-radius:999px;cursor:pointer}
+.modes button.on{background:var(--amber);color:#2a1700}
+button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.levels{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.lv{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:118px;background:var(--bench);border:1px solid var(--line);border-radius:10px;padding:7px 10px;color:var(--text);cursor:pointer;text-align:left;font-family:var(--f-body)}
+.lv .n{font:500 11px var(--f-mono);color:var(--muted);letter-spacing:.06em}
+.lv .t{font-weight:800;font-size:13px;white-space:nowrap}
+.lv .st{font-size:12px;color:var(--line);letter-spacing:1px}
+.lv .st b{color:var(--amber);font-weight:400}
+.lv.on{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+@media (max-width:940px){.main{grid-template-columns:minmax(0,1fr)}}
+.stage{background:var(--bench);border:1px solid var(--line);border-radius:14px;padding:12px;min-width:0}
+.stage-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 14px;padding:2px 4px 10px}
+.eyebrow{font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.12em;color:var(--amber)}
+h2{font-family:var(--f-display);font-weight:800;font-size:24px;margin:0;line-height:1.1;text-wrap:balance}
+.tag{margin:2px 0 0;color:var(--muted);max-width:62ch}
+.elname{font:500 12px var(--f-mono);color:var(--cyan);white-space:nowrap}
+canvas#cv{display:block;width:100%;touch-action:none;border-radius:10px;cursor:crosshair}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 4px 0;color:var(--muted);font-size:12.5px}
+.legend i{display:inline-block;width:22px;height:0;border-top:2px solid;vertical-align:middle;margin-right:6px}
+.legend i.dash{border-top-style:dashed}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.coach .instr{margin:0;font-weight:600;font-size:15.5px}
+.coach .fb{margin:10px 0 0;padding:9px 11px;border-radius:9px;font-size:14px}
+.coach .fb.ok{background:rgba(126,226,168,.12);color:var(--good)}
+.coach .fb.bad{background:rgba(255,122,107,.12);color:#ffb2a8}
+.step{font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 8px}
+.rays{display:flex;flex-direction:column;gap:6px}
+.rb{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--bench);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 10px;font:700 14px var(--f-body);cursor:pointer}
+.rb .sw{width:26px;height:4px;border-radius:2px;flex:0 0 auto;box-shadow:0 0 8px currentColor}
+.rb .lab{flex:1;min-width:0}
+.rb .why{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.rb .ck{font-size:15px}
+.rb.on{border-color:currentColor}
+.rb.done{opacity:.85}
+.rb:disabled{cursor:not-allowed;opacity:.5}
+.actions{display:flex;flex-direction:column;gap:10px}
+.btn{font:800 14px var(--f-body);border-radius:10px;padding:10px 14px;border:1px solid var(--line);background:var(--bench);color:var(--text);cursor:pointer}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:#2a1700}
+.btn.ghost{background:none;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.cls{display:flex;flex-direction:column;gap:10px}
+.cls .g .gt{font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600}
+.chip{font:700 13.5px var(--f-body);background:var(--bench);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:6px 12px;cursor:pointer}
+.chip.sel{background:var(--cyan);border-color:var(--cyan);color:#062028}
+.chip.sel.bad{background:var(--bad);border-color:var(--bad);color:#2a0702}
+.why2{font-size:12.5px;color:#ffb2a8;margin-top:4px}
+.stars{font-size:30px;letter-spacing:4px;color:var(--line);line-height:1}
+.stars b{color:var(--amber);font-weight:400;text-shadow:0 0 12px rgba(255,179,71,.6)}
+.fact{margin:0;color:var(--text)}
+.viewer .tabs{display:flex;gap:6px;margin-bottom:10px}
+.viewer .tabs button{flex:1;font:800 13px var(--f-body);background:var(--bench);border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.viewer .tabs button.on{color:var(--text);border-color:var(--cyan)}
+canvas#vc{display:block;width:100%;height:200px;border-radius:10px}
+.vcap{margin:8px 0 0;font-size:13.5px;color:var(--muted)}
+.vcap strong{color:var(--text)}
+.readout{font:500 13px/1.7 var(--f-mono);color:var(--text);font-variant-numeric:tabular-nums}
+.readout .k{color:var(--muted)}
+.formula{font:500 13px var(--f-mono);color:var(--cyan);background:var(--bench);border-radius:8px;padding:8px 10px;margin-top:8px;overflow-x:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13.5px;margin-top:10px;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>Ciemnia <span>Optyczna</span></h1>
+      <p class="sub">Świeca, soczewka albo lustro. Poprowadź promienie z czubka płomienia, znajdź obraz i sprawdź, co naprawdę zobaczy oko.</p>
+    </div>
+    <div class="modes" role="tablist">
+      <button id="modeTask" class="on" role="tab">Zadania</button>
+      <button id="modeLab" role="tab">Laboratorium</button>
+    </div>
+  </header>
+
+  <nav id="levels" class="levels" aria-label="Zadania"></nav>
+
+  <div class="main">
+    <section class="stage">
+      <div class="stage-head">
+        <div>
+          <div class="eyebrow" id="lvlNum"></div>
+          <h2 id="lvlName"></h2>
+          <p class="tag" id="lvlTag"></p>
+        </div>
+        <div class="elname" id="elName"></div>
+      </div>
+      <canvas id="cv" aria-label="Stół optyczny"></canvas>
+      <div class="legend">
+        <span><i style="border-color:var(--amber)"></i>promień</span>
+        <span><i class="dash" style="border-color:var(--muted)"></i>przedłużenie promienia</span>
+        <span>F, F′ ognisko · C środek krzywizny · podziałka w cm</span>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="card coach" id="coach"><p class="instr"></p><p class="fb" hidden></p></div>
+
+      <div id="taskTools" class="card">
+        <p class="step">Promienie charakterystyczne</p>
+        <div class="rays" id="rayBtns"></div>
+        <div class="actions" id="actionArea" style="margin-top:12px"></div>
+      </div>
+
+      <div id="labTools" class="card" hidden>
+        <p class="step">Element optyczny</p>
+        <div class="chips" id="elChips"></div>
+        <label class="toggle"><input type="checkbox" id="extToggle" checked> pokaż przedłużenia promieni</label>
+        <div class="readout" id="readout" style="margin-top:12px"></div>
+        <div class="formula" id="formula"></div>
+      </div>
+
+      <div class="card viewer">
+        <div class="tabs">
+          <button id="tabEye" class="on"><svg width="18" height="12" viewBox="0 0 18 12" aria-hidden="true"><path d="M1 6c2.5-4 5-5 8-5s5.5 1 8 5c-2.5 4-5 5-8 5S3.5 10 1 6z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="6" r="2.4" fill="currentColor"/></svg>Co widzi oko</button>
+          <button id="tabScreen"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="1" width="10" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 10v3M4 13h6" stroke="currentColor" stroke-width="1.6"/></svg>Co pada na ekran</button>
+        </div>
+        <canvas id="vc"></canvas>
+        <p class="vcap" id="vcap"></p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const COL={par:'#ffb347',mid:'#5fd8f0',foc:'#ff79b0',cc:'#a8ef6a'};
+const APER=160;
+
+const EL={
+  plane:{name:'Zwierciadło płaskie',mirror:true,f:Infinity,types:['par','mid']},
+  conv:{name:'Soczewka skupiająca',mirror:false,f:100,types:['par','mid','foc']},
+  div:{name:'Soczewka rozpraszająca',mirror:false,f:-100,types:['par','mid','foc']},
+  concave:{name:'Zwierciadło wklęsłe',mirror:true,f:100,types:['par','mid','foc','cc']},
+  convex:{name:'Zwierciadło wypukłe',mirror:true,f:-100,types:['par','mid','foc','cc']}
+};
+const LEVELS=[
+ {el:'plane',d:150,h:70,name:'Lustro w łazience',tag:'Dlaczego w lustrze widzisz siebie „za szybą”?',fact:'Lustro płaskie daje obraz pozorny, prosty i tej samej wielkości. Leży tak samo daleko za lustrem, jak świeca przed nim.'},
+ {el:'conv',d:300,h:60,name:'Oko aparatu',tag:'Obiektyw aparatu rzuca obraz dalekiej świecy na matrycę. Jaki to obraz?',fact:'Przedmiot dalej niż 2F: obraz rzeczywisty, odwrócony, pomniejszony. Tak działa aparat — i Twoje oko! Siatkówka dostaje obraz do góry nogami, a mózg go odwraca.'},
+ {el:'conv',d:200,h:70,name:'Kopia 1:1',tag:'Świeca stoi dokładnie w podwójnej ogniskowej (2F).',fact:'Przedmiot w 2F daje obraz w 2F′: rzeczywisty, odwrócony i tej samej wielkości.'},
+ {el:'conv',d:150,h:55,name:'Projektor',tag:'Świeca tuż za ogniskiem. Jak duży będzie obraz na ścianie?',fact:'Przedmiot między F a 2F: obraz rzeczywisty, odwrócony, powiększony. Dlatego w starych projektorach slajdy wkładało się do góry nogami!'},
+ {el:'conv',d:50,h:50,name:'Lupa',tag:'Świeca bliżej soczewki niż ognisko. Co zobaczy oko?',fact:'Przedmiot bliżej niż F: obraz pozorny, prosty, powiększony. Ekran go nie złapie — widzi go tylko oko patrzące przez lupę.'},
+ {el:'conv',d:100,h:60,name:'Latarka',tag:'Świeca stoi dokładnie w ognisku. Uwaga, zadanie z pułapką!',fact:'Przedmiot w ognisku: promienie wychodzą równolegle i nigdzie się nie spotykają, więc obraz nie powstaje. Tak latarka i reflektor wysyłają równą wiązkę światła.',noImg:true},
+ {el:'div',d:200,h:80,name:'Wizjer w drzwiach',tag:'Soczewka rozpraszająca. Jak wygląda gość za drzwiami?',fact:'Soczewka rozpraszająca zawsze daje obraz pozorny, prosty i pomniejszony — za to mieści się w nim cały korytarz.'},
+ {el:'concave',d:300,h:60,name:'Teleskop zwierciadlany',tag:'Wklęsłe lustro zbiera światło z daleka.',fact:'Wklęsłe lustro i daleki przedmiot: obraz rzeczywisty, odwrócony, pomniejszony. Tak wielkie teleskopy zbierają obraz gwiazd.'},
+ {el:'concave',d:50,h:50,name:'Lusterko do golenia',tag:'Świeca blisko wklęsłego lusterka. Co widać w lustrze?',fact:'Przedmiot bliżej niż F: obraz pozorny, prosty i powiększony — dlatego w lusterku kosmetycznym twarz jest duża.'},
+ {el:'convex',d:200,h:90,name:'Lustro na zakręcie',tag:'Wypukłe lustro wisi przy wyjeździe z bramy.',fact:'Lustro wypukłe zawsze daje obraz pozorny, prosty i pomniejszony. Widać w nim mniejsze auta, ale za to całą ulicę.'}
+];
+
+function rayLabel(el,t){const E=EL[el];const conv=isFinite(E.f)&&E.f>0;
+  if(t==='par')return 'Równoległy do osi';
+  if(t==='mid')return E.mirror?'Na wierzchołek lustra':'Przez środek soczewki';
+  if(t==='foc')return conv?'Przez ognisko F':'W stronę ogniska '+(E.mirror?'F':'F′');
+  return conv?'Przez środek krzywizny C':'W stronę środka krzywizny C';}
+function ruleText(el,t){
+  const R={
+    conv:{par:'Po soczewce skupiającej promień równoległy biegnie przez ognisko F′ po drugiej stronie.',mid:'Promień przez środek soczewki nie zmienia kierunku — leci dalej prosto.',foc:'Promień biegnący przez ognisko F (albo jakby z niego) po soczewce leci równolegle do osi.'},
+    div:{par:'Soczewka rozpraszająca odchyla promień od osi tak, jakby wychodził z ogniska F po stronie świecy.',mid:'Promień przez środek soczewki nie zmienia kierunku — leci dalej prosto.',foc:'Promień skierowany w ognisko F′ po soczewce leci równolegle do osi.'},
+    plane:{par:'Promień padający prostopadle na lustro wraca dokładnie tą samą drogą.',mid:'Kąt odbicia równa się kątowi padania: promień odbija się od lustra jak piłka od ściany.'},
+    concave:{par:'Promień równoległy odbija się od lustra wklęsłego i biegnie przez ognisko F.',mid:'Promień padający na wierzchołek odbija się symetrycznie względem osi, jak piłka od ściany.',foc:'Promień biegnący przez ognisko F (albo jakby z niego) po odbiciu leci równolegle do osi.',cc:'Promień przez środek krzywizny C pada prostopadle na lustro i wraca tą samą drogą.'},
+    convex:{par:'Promień równoległy odbija się tak, jakby wychodził z ogniska F schowanego za lustrem.',mid:'Promień padający na wierzchołek odbija się symetrycznie względem osi, jak piłka od ściany.',foc:'Promień skierowany w ognisko F za lustrem po odbiciu leci równolegle do osi.',cc:'Promień skierowany w środek krzywizny C wraca dokładnie tą samą drogą.'}
+  };return R[el][t];}
+
+function optics(el,d,h){const E=EL[el];const P=isFinite(E.f)?1/E.f:0;const den=P-1/d;
+  if(Math.abs(den)<1e-5)return {none:true};
+  const dp=1/den,m=-dp/d;return {none:false,dp,m,x:E.mirror?-dp:dp,y:m*h,real:dp>0};}
+function rayGeom(el,d,h,t){const E=EL[el],f=E.f,P=isFinite(f)?1/f:0;let y0,s;const what=E.mirror?'lustro':'soczewkę';
+  if(t==='par'){y0=h;s=0}
+  else if(t==='mid'){y0=0;s=-h/d}
+  else if(t==='foc'){if(Math.abs(d-f)<15)return {ok:false,why:'Świeca stoi w ognisku — ten promień biegłby pionowo i ominąłby '+what+'.'};y0=-f*h/(d-f);s=(y0-h)/d}
+  else {if(Math.abs(d-2*f)<15)return {ok:false,why:'Świeca stoi w punkcie C — ten promień biegłby pionowo.'};y0=-2*f*h/(d-2*f);s=(y0-h)/d}
+  if(Math.abs(y0)>APER)return {ok:false,why:'Ten promień ominąłby '+what+'.'};
+  const sp=s-y0*P;const dx=E.mirror?-1:1,L=Math.hypot(dx,sp);
+  const G=t==='foc'?{x:-f,y:0}:t==='cc'?{x:-2*f,y:0}:null;
+  return {ok:true,tip:{x:-d,y:h},H:{x:0,y:y0},dir:{x:dx/L,y:sp/L},G};}
+function traits(o){if(o.none)return null;const a=Math.abs(o.m);
+  return {rp:o.real?'r':'p',po:o.m<0?'o':'p',size:a>1.04?'pow':a<0.96?'pom':'same'};}
+const TXT={rp:{r:'rzeczywisty',p:'pozorny'},po:{p:'prosty',o:'odwrócony'},size:{pow:'powiększony',pom:'pomniejszony',same:'tej samej wielkości'}};
+const fmt=(n,k=1)=>n.toFixed(k).replace('.',',').replace('-','−');
+
+/* ---------- stan ---------- */
+let stars={};try{stars=JSON.parse(localStorage.getItem('ciemnia-stars')||'{}')||{}}catch(e){stars={}}
+function saveStars(){try{localStorage.setItem('ciemnia-stars',JSON.stringify(stars))}catch(e){}}
+const st={mode:'task',lvl:0,view:'eye',lab:{el:'conv',d:250,h:60,ext:true},screenX:220};
+
+function cur(){if(st.mode==='lab'){const L=st.lab;return {el:L.el,d:L.d,h:L.h,opt:optics(L.el,L.d,L.h)}}
+  const L=LEVELS[st.lvl];return {el:L.el,d:L.d,h:L.h,opt:optics(L.el,L.d,L.h)};}
+
+function loadLevel(i){st.lvl=i;Object.assign(st,{phase:'rays',rays:{},active:null,ext:{},extAnim:{},mistakes:0,located:false,imgAnim:0,cls:{},clsBad:null,done:false,fb:null,drag:null,handle:null});
+  const L=LEVELS[i];st.screenX=EL[L.el].mirror?-110:240;st.view='eye';updateAll();}
+
+/* ---------- canvas ---------- */
+const cv=$('#cv'),ctx=cv.getContext('2d');let CW=600,CH=300,s=1,ox=300,oy=150,dpr=1;
+const vc=$('#vc'),vctx=vc.getContext('2d');let VW=300,VH=200;
+function resize(){dpr=window.devicePixelRatio||1;CW=cv.clientWidth||600;CH=Math.round(Math.max(190,CW*0.5));cv.style.height=CH+'px';cv.width=CW*dpr;cv.height=CH*dpr;
+  s=Math.min(CW/770,CH/378);ox=CW/2;oy=CH/2;
+  VW=vc.clientWidth||300;VH=200;vc.width=VW*dpr;vc.height=VH*dpr;}
+new ResizeObserver(resize).observe(cv);new ResizeObserver(resize).observe(vc);
+const X=x=>ox+x*s,Y=y=>oy-y*s;const S2W=(px,py)=>({x:(px-ox)/s,y:(oy-py)/s});
+const XB=392,YB=170;
+function toEdge(p,d){let t=1e9;if(d.x>1e-9)t=Math.min(t,(XB-p.x)/d.x);if(d.x<-1e-9)t=Math.min(t,(-XB-p.x)/d.x);if(d.y>1e-9)t=Math.min(t,(YB-p.y)/d.y);if(d.y<-1e-9)t=Math.min(t,(-YB-p.y)/d.y);return {x:p.x+d.x*t,y:p.y+d.y*t};}
+
+let T=0;
+function strokeRay(pts,color,o={}){const a=o.alpha??1;ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+  const path=()=>{ctx.beginPath();ctx.moveTo(X(pts[0].x),Y(pts[0].y));for(let i=1;i<pts.length;i++)ctx.lineTo(X(pts[i].x),Y(pts[i].y));};
+  path();ctx.strokeStyle=color;
+  if(!o.dash){ctx.globalAlpha=0.16*a;ctx.lineWidth=8;ctx.stroke();}
+  ctx.globalAlpha=a;ctx.lineWidth=o.w||2;if(o.dash)ctx.setLineDash(o.dash);ctx.stroke();
+  if(o.flow){ctx.setLineDash([2,15]);ctx.lineDashOffset=reduced?0:-T*55;ctx.strokeStyle='#fff8e8';ctx.globalAlpha=.8*a;ctx.lineWidth=2.6;ctx.stroke();}
+  ctx.restore();}
+
+function candle(c,Hs,t,alpha=1,ghost=false){c.save();c.globalAlpha*=alpha;const w=Hs*0.2;
+  const fy=-Hs*0.8;let g=c.createRadialGradient(0,fy,0,0,fy,Hs*0.6);g.addColorStop(0,'rgba(255,190,90,0.38)');g.addColorStop(1,'rgba(255,190,90,0)');c.fillStyle=g;c.beginPath();c.arc(0,fy,Hs*0.6,0,7);c.fill();
+  let bg=c.createLinearGradient(-w/2,0,w/2,0);bg.addColorStop(0,ghost?'#8b86a8':'#c9b48e');bg.addColorStop(.45,ghost?'#d8d3ee':'#f8eed6');bg.addColorStop(1,ghost?'#7a7698':'#b59c74');
+  c.fillStyle=bg;c.beginPath();c.moveTo(-w/2,0);c.lineTo(-w/2,-Hs*0.6);c.quadraticCurveTo(0,-Hs*0.64,w/2,-Hs*0.6);c.lineTo(w/2,0);c.closePath();c.fill();
+  c.fillStyle=ghost?'#cfc9ea':'#fff6e2';c.beginPath();c.ellipse(-w*0.2,-Hs*0.57,w*0.12,Hs*0.07,0,0,7);c.fill();
+  c.strokeStyle='#2a2320';c.lineWidth=Math.max(1,Hs*0.018);c.beginPath();c.moveTo(0,-Hs*0.6);c.lineTo(0,-Hs*0.66);c.stroke();
+  const fl=reduced?0:Math.sin(t*9)*0.025+Math.sin(t*23)*0.012;const tx=fl*Hs,b=-0.63*Hs,top=-Hs,fw=Hs*0.085,mid=top+(b-top)*0.6;
+  let fg=c.createLinearGradient(0,top,0,b);fg.addColorStop(0,'#fff7cf');fg.addColorStop(.45,'#ffc24f');fg.addColorStop(1,'#ff6a24');
+  c.fillStyle=fg;c.beginPath();c.moveTo(tx,top);c.bezierCurveTo(fw*1.3,mid,fw,b,0,b);c.bezierCurveTo(-fw,b,-fw*1.3,mid,tx,top);c.fill();
+  c.fillStyle='rgba(140,190,255,.75)';c.beginPath();c.ellipse(0,b-Hs*0.035,fw*0.4,Hs*0.045,0,0,7);c.fill();
+  c.restore();}
+
+function drawBench(){
+  let g=ctx.createRadialGradient(ox,oy,10,ox,oy,CW*0.7);g.addColorStop(0,'#181a33');g.addColorStop(1,'#0b0c17');ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
+  // podziałka
+  const yr=-168;ctx.fillStyle='rgba(45,50,83,.55)';ctx.fillRect(X(-385),Y(yr),770*s,16*s);
+  ctx.strokeStyle='#5b5f86';ctx.fillStyle='#8d8aab';ctx.font=`500 ${Math.max(9,10*s*1.3)}px JetBrains Mono, monospace`;ctx.textAlign='center';
+  for(let x=-380;x<=380;x+=10){const maj=x%50===0;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(X(x),Y(yr));ctx.lineTo(X(x),Y(yr)+(maj?7:3.5)*s*1.4);ctx.stroke();
+    if(x%100===0&&s>0.55)ctx.fillText(Math.abs(x/10)+'',X(x),Y(yr)+14*s*1.4);}
+  // oś
+  ctx.strokeStyle='rgba(161,158,186,.45)';ctx.setLineDash([12,6,2,6]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(X(-385),Y(0));ctx.lineTo(X(385),Y(0));ctx.stroke();ctx.setLineDash([]);
+  if(s>0.6){ctx.fillStyle='#6f6c8c';ctx.font=`600 ${11}px Nunito, sans-serif`;ctx.textAlign='right';ctx.fillText('oś optyczna',X(380),Y(0)-6);}
+}
+function marker(x,label,faint){ctx.fillStyle=faint?'#8d8aab':'#ece8f4';ctx.beginPath();ctx.arc(X(x),Y(0),3.2,0,7);ctx.fill();
+  ctx.font=`800 ${Math.max(11,13*s*1.2)}px Nunito, sans-serif`;ctx.textAlign='center';ctx.fillText(label,X(x),Y(0)+16*Math.max(1,s*1.2));}
+function drawMarkers(el){const E=EL[el];if(!isFinite(E.f))return;const f=Math.abs(E.f);
+  if(!E.mirror){marker(-f,'F');marker(f,'F′');marker(-2*f,'2F',true);marker(2*f,'2F′',true);}
+  else{const sg=E.f>0?-1:1;marker(sg*f,'F');marker(sg*2*f,'C');}}
+function drawElement(el){const E=EL[el],a=APER*s;ctx.save();ctx.translate(X(0),Y(0));
+  if(!E.mirror){ctx.beginPath();
+    if(E.f>0){const b=12*s;ctx.moveTo(0,-a);ctx.quadraticCurveTo(2*b,0,0,a);ctx.quadraticCurveTo(-2*b,0,0,-a);}
+    else{const w=9*s,c=-4*s;ctx.moveTo(-w,-a);ctx.lineTo(w,-a);ctx.quadraticCurveTo(c,0,w,a);ctx.lineTo(-w,a);ctx.quadraticCurveTo(-c,0,-w,-a);}
+    let g=ctx.createLinearGradient(-20,0,20,0);g.addColorStop(0,'rgba(120,190,255,.10)');g.addColorStop(.5,'rgba(170,220,255,.28)');g.addColorStop(1,'rgba(120,190,255,.10)');
+    ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(170,220,255,.85)';ctx.lineWidth=1.4;ctx.stroke();
+  }else{const c=E.f>0?-0.00045:(isFinite(E.f)?0.00045:0);const xa=y=>c*y*y*s;
+    ctx.strokeStyle='rgba(161,158,186,.55)';ctx.lineWidth=1;
+    for(let y=-APER;y<=APER;y+=12){ctx.beginPath();ctx.moveTo(xa(y)+2,-y*s);ctx.lineTo(xa(y)+10,-y*s-8);ctx.stroke();}
+    ctx.beginPath();for(let y=-APER;y<=APER;y+=4){const px=xa(y),py=-y*s;y===-APER?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+    ctx.strokeStyle='#e8eef8';ctx.lineWidth=3;ctx.shadowColor='rgba(180,210,255,.6)';ctx.shadowBlur=8;ctx.stroke();}
+  ctx.restore();}
+
+function drawObject(d,h){ctx.save();ctx.translate(X(-d),Y(0));candle(ctx,h*s,T);ctx.restore();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(X(-d),Y(h),2.6,0,7);ctx.fill();}
+function drawImage(o,h,k,virtual){if(o.none||k<=0)return;ctx.save();ctx.translate(X(o.x),Y(0));const m=o.m*k;ctx.scale(Math.abs(m)||0.001,m||0.001);
+  candle(ctx,h*s,T,virtual?0.55:0.92,virtual);ctx.restore();
+  if(k>=1){ctx.save();ctx.fillStyle=virtual?'#cfc9ea':'#fff';ctx.strokeStyle=ctx.fillStyle;ctx.beginPath();ctx.arc(X(o.x),Y(o.y),3.4,0,7);ctx.fill();
+    ctx.font=`800 12px Nunito, sans-serif`;ctx.textAlign='center';ctx.fillText(virtual?'obraz pozorny':'obraz',X(o.x),Y(o.y)+(o.y<0?18:-10));ctx.restore();}}
+
+function drawGuide(g){if(!g.G)return;const pts=[g.tip,g.H,g.G].sort((a,b)=>a.x-b.x);
+  ctx.save();ctx.setLineDash([2,5]);ctx.strokeStyle='rgba(255,121,176,.45)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(X(pts[0].x),Y(pts[0].y));ctx.lineTo(X(pts[2].x),Y(pts[2].y));ctx.stroke();ctx.restore();}
+
+function drawRay(sc,t,state){const g=rayGeom(sc.el,sc.d,sc.h,t);if(!g.ok)return;const c=COL[t];
+  if(state==='active')drawGuide(g);
+  strokeRay([g.tip,g.H],c,{flow:true});
+  if(state==='locked'){strokeRay([g.H,toEdge(g.H,g.dir)],c,{flow:true});
+    const ex=sc.ext[t];if(ex!=null){const k=Math.min(1,(T-ex)/0.7);const back={x:-g.dir.x,y:-g.dir.y};const end=toEdge(g.H,back);
+      strokeRay([g.H,{x:g.H.x+(end.x-g.H.x)*k,y:g.H.y+(end.y-g.H.y)*k}],c,{dash:[7,7],alpha:.65,w:1.6});}}
+  if(state==='active'){
+    const r=st.rays[t]||{};
+    if(r.attempts>=2){ctx.save();ctx.setLineDash([3,6]);ctx.strokeStyle='rgba(255,255,255,.38)';ctx.lineWidth=1.5;const e=toEdge(g.H,g.dir);ctx.beginPath();ctx.moveTo(X(g.H.x),Y(g.H.y));ctx.lineTo(X(e.x),Y(e.y));ctx.stroke();ctx.restore();}
+    if(st.handle){const u={x:st.handle.x-g.H.x,y:st.handle.y-g.H.y},L=Math.hypot(u.x,u.y);if(L>3){const dd={x:u.x/L,y:u.y/L};
+      strokeRay([g.H,toEdge(g.H,dd)],st.fb&&st.fb.k==='bad'&&!st.drag?'#ff7a6b':c,{alpha:.9});
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(X(st.handle.x),Y(st.handle.y),6,0,7);ctx.fill();}}
+    const pulse=reduced?0.5:(Math.sin(T*5)+1)/2;ctx.strokeStyle=c;ctx.globalAlpha=.4+.6*pulse;ctx.lineWidth=2;ctx.beginPath();ctx.arc(X(g.H.x),Y(g.H.y),7+5*pulse,0,7);ctx.stroke();ctx.globalAlpha=1;}
+}
+
+function scene(){const c=cur();
+  if(st.mode==='lab'){const types=EL[c.el].types;const ext={};const virt=!c.opt.none&&!c.opt.real;types.forEach(t=>{if(virt&&st.lab.ext)ext[t]=-10});
+    return {...c,types,locked:types,active:null,ext,showImg:!c.opt.none,imgK:1};}
+  const locked=Object.keys(st.rays).filter(t=>st.rays[t].locked);
+  return {...c,types:EL[c.el].types,locked,active:st.active,ext:st.ext,showImg:st.located||st.done,imgK:st.located?Math.min(1,(T-st.imgAnim)/0.8):0};}
+function viewerOpen(){return st.mode==='lab'||st.done;}
+
+function drawScreenBar(){const x=st.screenX;ctx.save();ctx.fillStyle='rgba(228,223,211,.9)';ctx.fillRect(X(x)-3,Y(150),6,300*s);
+  ctx.fillStyle='rgba(120,116,150,.8)';ctx.fillRect(X(x)-10,Y(-158),20,4);
+  ctx.fillStyle='#e4dfd3';ctx.font='800 12px Nunito, sans-serif';ctx.textAlign='center';ctx.fillText('ekran ⇆',X(x),Y(150)-8);ctx.restore();}
+
+function draw(){ctx.setTransform(dpr,0,0,dpr,0,0);const sc=scene();
+  drawBench();drawMarkers(sc.el);
+  if(sc.showImg)drawImage(sc.opt,sc.h,sc.imgK,!sc.opt.real);
+  drawElement(sc.el);
+  sc.locked.forEach(t=>drawRay(sc,t,'locked'));
+  if(sc.active&&!(st.rays[sc.active]||{}).locked)drawRay(sc,sc.active,'active');
+  drawObject(sc.d,sc.h);
+  if(viewerOpen()&&st.view==='screen')drawScreenBar();
+}
+
+/* ---------- podgląd: oko / ekran ---------- */
+function blurred(c,fn,b){if(b<0.6){fn();return;}const N=12;c.save();c.globalAlpha=0.2;
+  for(let i=0;i<N;i++){const a=i/N*Math.PI*2,r=b*(i%2?1:0.5);c.save();c.translate(Math.cos(a)*r,Math.sin(a)*r);fn();c.restore();}c.restore();}
+function drawViewer(){const c=vctx;c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#0a0b14';c.fillRect(0,0,VW,VH);
+  const sc=scene(),o=sc.opt,E=EL[sc.el],cap=$('#vcap');
+  if(!viewerOpen()){c.fillStyle='#1a1d35';c.fillRect(0,0,VW,VH);c.fillStyle='#4a4f78';c.font='800 40px Nunito, sans-serif';c.textAlign='center';c.fillText('?',VW/2,VH/2+14);
+    cap.innerHTML='Ukończ zadanie, a zobaczysz, co widzi oko i co pada na ekran.';return;}
+  const H0=VH*0.0042*sc.h;
+  if(st.view==='eye'){
+    c.font='700 11px Nunito, sans-serif';c.fillStyle='#8d8aab';c.textAlign='center';
+    const lx=VW*0.17;c.fillText('sama świeca',lx,16);c.save();c.translate(lx,VH*0.5+H0/2);candle(c,H0,T);c.restore();
+    const cx=VW*0.62,cy=VH*0.52,R=Math.min(VW*0.3,VH*0.42);
+    c.fillText(E.mirror?'w lustrze':'przez soczewkę',cx,16);
+    c.save();c.beginPath();c.arc(cx,cy,R,0,7);c.clip();
+    let g=c.createRadialGradient(cx,cy,R*0.2,cx,cy,R);g.addColorStop(0,E.mirror?'#1d2140':'#16243a');g.addColorStop(1,'#0c0f1d');c.fillStyle=g;c.fillRect(cx-R,cy-R,2*R,2*R);
+    if(o.none){let w=c.createRadialGradient(cx,cy,0,cx,cy,R);w.addColorStop(0,'rgba(255,210,130,.9)');w.addColorStop(1,'rgba(255,170,80,.25)');c.fillStyle=w;c.fillRect(cx-R,cy-R,2*R,2*R);}
+    else{const Hs=H0*Math.abs(o.m),base=o.m>0?cy+Hs/2:cy-Hs/2;c.translate(cx,base);c.scale(1,o.m>0?1:-1);candle(c,Hs,T);}
+    c.restore();
+    c.lineWidth=E.mirror?5:3;c.strokeStyle=E.mirror?'#cfd8e8':'rgba(170,220,255,.8)';c.beginPath();c.arc(cx,cy,R,0,7);c.stroke();
+    // oko
+    const ex=VW-22,ey=VH-18;c.strokeStyle='#ece8f4';c.lineWidth=1.5;c.beginPath();c.moveTo(ex-12,ey);c.quadraticCurveTo(ex,ey-10,ex+12,ey);c.quadraticCurveTo(ex,ey+10,ex-12,ey);c.stroke();c.fillStyle='#5fd8f0';c.beginPath();c.arc(ex,ey,3.5,0,7);c.fill();
+    if(o.none)cap.innerHTML='<strong>Tylko jasna, rozmyta plama.</strong> Promienie biegną równolegle, więc oko nie składa ich w żaden obraz świecy.';
+    else{const tr=traits(o);cap.innerHTML=`<strong>Obraz ${TXT.rp[tr.rp]}, ${TXT.po[tr.po]}, ${TXT.size[tr.size]}</strong> — ${fmt(Math.abs(o.m),2)}× wielkości świecy. `+(o.real?'Oko musi patrzeć z daleka, zza miejsca, w którym powstał obraz.':(E.mirror?'Oko widzi go „w głębi” lustra, za jego powierzchnią.':'Oko widzi go po stronie świecy, jakby za soczewką.'));}
+  }else{
+    const sx=VW*0.1,sy=10,sw=VW*0.8,sh=VH-20;c.fillStyle='#2a2b3a';c.fillRect(sx,sy,sw,sh);
+    c.save();c.beginPath();c.rect(sx,sy,sw,sh);c.clip();const cx=VW/2,cy=VH/2;
+    const dist=E.mirror?(-st.screenX):st.screenX;
+    if(o.none){let w=c.createRadialGradient(cx,cy,0,cx,cy,sw*0.4);w.addColorStop(0,'rgba(255,205,130,.55)');w.addColorStop(1,'rgba(255,205,130,0)');c.fillStyle=w;c.fillRect(sx,sy,sw,sh);
+      cap.innerHTML='<strong>Jasne koło, ale bez obrazu.</strong> Równoległa wiązka oświetla ekran jak latarka — gdziekolwiek go postawisz.';}
+    else if(!o.real){let w=c.createRadialGradient(cx,cy,0,cx,cy,sw*0.45);w.addColorStop(0,'rgba(255,205,130,.35)');w.addColorStop(1,'rgba(255,205,130,0)');c.fillStyle=w;c.fillRect(sx,sy,sw,sh);
+      cap.innerHTML='<strong>Rozmyta poświata — nic więcej.</strong> Obrazu pozornego nie da się złapać na ekranie. Przesuwaj ekran (biała belka na stole) — i tak nie wyostrzysz. Widzi go tylko oko.';}
+    else{const gap=Math.abs(st.screenX-o.x),b=Math.min(26,gap*0.22),Hs=H0*Math.abs(o.m);
+      blurred(c,()=>{c.save();c.translate(cx,cy-Hs/2);c.scale(1,-1);candle(c,Hs,T);c.restore();},b);
+      if(b>1){c.fillStyle=`rgba(255,205,130,${Math.min(.25,b/80)})`;c.fillRect(sx,sy,sw,sh);}
+      cap.innerHTML=gap<6?`<strong>Ostro!</strong> Ekran stoi ${fmt(dist/10)} cm od ${E.mirror?'lustra':'soczewki'} — dokładnie tam, gdzie powstaje obraz rzeczywisty. Zauważ: świeca jest do góry nogami.`
+        :`Ekran: ${fmt(dist/10)} cm od ${E.mirror?'lustra':'soczewki'}. <strong>Obraz jest rozmyty.</strong> Przeciągnij białą belkę na stole optycznym, aż płomień będzie ostry.`;}
+    c.restore();
+  }}
+
+function loop(ts){T=ts/1000;draw();drawViewer();requestAnimationFrame(loop);}
+
+/* ---------- UI ---------- */
+function setFb(k,text){st.fb={k,text};renderCoach();}
+function instr(){const c=cur(),E=EL[c.el],thing=E.mirror?'lustra':'soczewki';
+  if(st.mode==='lab')return 'Laboratorium: przeciągnij płomień świecy (zmienisz odległość i wysokość) albo samą świecę. Obserwuj, jak zmienia się obraz.';
+  if(st.done)return 'Zadanie ukończone! Zajrzyj niżej: co widzi oko, a co pada na ekran?';
+  if(st.active&&!st.rays[st.active]?.locked)return `Promień „${rayLabel(c.el,st.active).toLowerCase()}” dociera do ${thing}. Dotknij planszy i przeciągnij — wskaż, dokąd poleci dalej.`;
+  if(st.phase==='rays'){const n=Object.values(st.rays).filter(r=>r.locked).length;return n===0?'Z czubka płomienia wychodzi mnóstwo promieni. Wybierz jeden z promieni charakterystycznych — wiesz, jak się zachowają.':'Świetnie! Wybierz drugi promień. Dwa wystarczą, żeby znaleźć obraz.';}
+  if(st.phase==='extend')return 'Promienie się rozchodzą i nigdy się nie spotkają! Oko widzi je jednak tak, jakby wychodziły z jednego punktu. Kliknij każdy promień, żeby przedłużyć go wstecz.';
+  if(st.phase==='locate')return 'Kliknij punkt, w którym przecinają się promienie '+(cur().opt.none?'':(!cur().opt.real?'(a dokładniej ich przedłużenia) ':''))+'— tam jest czubek płomienia obrazu.';
+  if(st.phase==='classify')return 'Obraz gotowy. Opisz go: zaznacz trzy cechy i sprawdź.';
+  return '';}
+function renderCoach(){$('#coach .instr').textContent=instr();const fb=$('#coach .fb');if(st.fb&&st.mode==='task'){fb.hidden=false;fb.className='fb '+st.fb.k;fb.textContent=st.fb.text;}else fb.hidden=true;}
+
+function renderRays(){const c=cur(),box=$('#rayBtns');box.innerHTML='';
+  EL[c.el].types.forEach(t=>{const g=rayGeom(c.el,c.d,c.h,t),r=st.rays[t]||{};const b=document.createElement('button');b.className='rb';b.style.color=COL[t];
+    if(r.locked)b.classList.add('done');if(st.active===t&&!r.locked)b.classList.add('on');
+    b.innerHTML=`<span class="sw" style="background:${COL[t]}"></span><span class="lab" style="color:var(--text)">${rayLabel(c.el,t)}${!g.ok?`<span class="why">${g.why}</span>`:''}</span><span class="ck">${r.locked?'✓':''}</span>`;
+    if(!g.ok||r.locked||st.done)b.disabled=true;
+    b.onclick=()=>{st.active=t;st.handle=null;if(!st.rays[t])st.rays[t]={attempts:0,locked:false};st.fb=null;renderAll();};box.appendChild(b);});}
+
+function renderActions(){const a=$('#actionArea'),L=LEVELS[st.lvl];a.innerHTML='';
+  if(st.done){const n=stars[st.lvl]||0;const tr=traits(cur().opt);
+    a.innerHTML=`<div class="stars">${'<b>★</b>'.repeat(n)}${'★'.repeat(3-n)}</div>${tr?`<p class="fact"><strong>${TXT.rp[tr.rp]}, ${TXT.po[tr.po]}, ${TXT.size[tr.size]}</strong></p>`:''}<p class="fact">${L.fact}</p>
+      <div class="row">${st.lvl<LEVELS.length-1?'<button class="btn primary" id="next">Następne zadanie →</button>':'<button class="btn primary" id="toLab">Wszystko zrobione! Otwórz laboratorium</button>'}<button class="btn ghost" id="again">Jeszcze raz</button></div>`;
+    $('#next')&&($('#next').onclick=()=>loadLevel(st.lvl+1));$('#toLab')&&($('#toLab').onclick=()=>setMode('lab'));$('#again').onclick=()=>loadLevel(st.lvl);return;}
+  if(st.phase==='locate'){const b=document.createElement('button');b.className='btn';b.textContent='Promienie się nie przecinają — obraz nie powstaje';b.onclick=noImage;a.appendChild(b);}
+  if(st.phase==='classify'){const o=cur().opt,tr=traits(o);const box=document.createElement('div');box.className='cls';
+    const groups=[['rp','Rodzaj obrazu'],['po','Ustawienie'],['size','Wielkość']];
+    box.innerHTML=groups.map(([k,t])=>`<div class="g"><div class="gt">${t}</div><div class="row">${Object.entries(TXT[k]).map(([v,l])=>`<button class="chip${st.cls[k]===v?' sel':''}${st.clsBad&&st.clsBad[k]&&st.cls[k]===v?' bad':''}" data-k="${k}" data-v="${v}">${l}</button>`).join('')}</div>${st.clsBad&&st.clsBad[k]?`<div class="why2">${st.clsBad[k]}</div>`:''}</div>`).join('')+'<button class="btn primary" id="chk">Sprawdź</button>';
+    a.appendChild(box);box.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{st.cls[ch.dataset.k]=ch.dataset.v;if(st.clsBad)delete st.clsBad[ch.dataset.k];renderActions();});
+    $('#chk').onclick=checkCls;}
+  const r=document.createElement('button');r.className='btn ghost';r.textContent='Zacznij zadanie od nowa';r.onclick=()=>loadLevel(st.lvl);a.appendChild(r);}
+
+function renderLevels(){const nav=$('#levels');nav.innerHTML='';LEVELS.forEach((L,i)=>{const b=document.createElement('button');b.className='lv'+(st.mode==='task'&&i===st.lvl?' on':'');const n=stars[i]||0;
+  b.innerHTML=`<span class="n">ZADANIE ${String(i+1).padStart(2,'0')}</span><span class="t">${L.name}</span><span class="st">${'<b>★</b>'.repeat(n)}${'★'.repeat(3-n)}</span>`;
+  b.onclick=()=>{if(st.mode!=='task')setMode('task');loadLevel(i);};nav.appendChild(b);});}
+
+function renderHead(){const c=cur();if(st.mode==='lab'){$('#lvlNum').textContent='Laboratorium';$('#lvlName').textContent='Wolne eksperymenty';$('#lvlTag').textContent='Zmieniaj element i przesuwaj świecę. Wszystkie promienie rysują się same.';}
+  else{const L=LEVELS[st.lvl];$('#lvlNum').textContent=`Zadanie ${st.lvl+1} z ${LEVELS.length}`;$('#lvlName').textContent=L.name;$('#lvlTag').textContent=L.tag;}
+  $('#elName').textContent=EL[c.el].name;}
+
+function renderLab(){const L=st.lab,box=$('#elChips');box.innerHTML='';Object.entries(EL).forEach(([k,E])=>{const b=document.createElement('button');b.className='chip'+(L.el===k?' sel':'');b.textContent=E.name;b.onclick=()=>{L.el=k;st.screenX=E.mirror?-110:240;renderAll();};box.appendChild(b);});
+  const o=cur().opt,E=EL[L.el],fstr=isFinite(E.f)?fmt(E.f/10,0)+' cm':'∞';
+  let h=`<div><span class="k">x (świeca)</span> = ${fmt(L.d/10)} cm</div><div><span class="k">f</span> = ${fstr}</div>`;
+  if(o.none)h+=`<div><span class="k">obraz</span>: nie powstaje (świeca w ognisku)</div>`;
+  else{const tr=traits(o);h+=`<div><span class="k">y (obraz)</span> = ${fmt(o.dp/10)} cm${o.dp<0?' (pozorny)':''}</div><div><span class="k">p</span> = |y| / x = ${fmt(Math.abs(o.m),2)}</div><div style="font-family:var(--f-body);font-weight:800;margin-top:4px">${TXT.rp[tr.rp]}, ${TXT.po[tr.po]}, ${TXT.size[tr.size]}</div>`;}
+  $('#readout').innerHTML=h;
+  $('#formula').textContent=isFinite(E.f)?(o.none?`1/f = 1/x + 1/y → 1/y = 0`:`1/f = 1/x + 1/y   ·   1/${fmt(E.f/10,0)} = 1/${fmt(L.d/10)} + 1/${fmt(o.dp/10)}`):'Lustro płaskie: y = −x, p = 1';
+  $('#extToggle').checked=L.ext;}
+
+function renderTabs(){$('#tabEye').classList.toggle('on',st.view==='eye');$('#tabScreen').classList.toggle('on',st.view==='screen');}
+function renderAll(){renderHead();renderLevels();renderCoach();renderTabs();
+  $('#taskTools').hidden=st.mode!=='task';$('#labTools').hidden=st.mode!=='lab';
+  if(st.mode==='task'){renderRays();renderActions();}else renderLab();}
+const updateAll=renderAll;
+
+function setMode(m){st.mode=m;$('#modeTask').classList.toggle('on',m==='task');$('#modeLab').classList.toggle('on',m==='lab');
+  if(m==='lab'){st.screenX=EL[st.lab.el].mirror?-110:240;renderAll();}else loadLevel(st.lvl);}
+$('#modeTask').onclick=()=>setMode('task');$('#modeLab').onclick=()=>setMode('lab');
+$('#tabEye').onclick=()=>{st.view='eye';renderTabs();};$('#tabScreen').onclick=()=>{st.view='screen';renderTabs();};
+$('#extToggle').onchange=e=>{st.lab.ext=e.target.checked;};
+
+/* ---------- logika zadania ---------- */
+function lockedList(){return Object.keys(st.rays).filter(t=>st.rays[t].locked);}
+function afterLock(t){const o=cur().opt;
+  if(st.phase!=='rays'){if(!o.none&&!o.real)st.ext[t]=T;}
+  else if(lockedList().length>=2){st.phase=(!o.none&&!o.real)?'extend':'locate';}
+  st.active=null;st.handle=null;renderAll();}
+function checkAim(){const c=cur(),t=st.active,r=st.rays[t],g=rayGeom(c.el,c.d,c.h,t);const u={x:st.handle.x-g.H.x,y:st.handle.y-g.H.y};
+  if(Math.hypot(u.x,u.y)*s<12)return;
+  const cross=g.dir.x*u.y-g.dir.y*u.x,dot=g.dir.x*u.x+g.dir.y*u.y,ang=Math.abs(Math.atan2(cross,dot))*180/Math.PI;
+  const E=EL[c.el];
+  if(ang<4){r.locked=true;setFb('ok','Brawo! '+ruleText(c.el,t));afterLock(t);return;}
+  r.attempts++;st.mistakes++;
+  let msg;if(dot<0)msg=E.mirror?'Lustro nie przepuszcza światła — promień się od niego odbija i wraca na stronę świecy.':'Światło przechodzi przez soczewkę na drugą stronę, nie zawraca.';
+  else msg=(ang<12?'Blisko! ':'Jeszcze nie. ')+ruleText(c.el,t)+(r.attempts>=2?' Podpowiedź: biała kropkowana linia pokazuje kierunek.':'');
+  setFb('bad',msg);renderRays();}
+function noImage(){const o=cur().opt;if(o.none){st.done=true;st.located=false;finish();setFb('ok','Dokładnie! Promienie wychodzą równolegle — obrazu nie ma.');}
+  else{st.mistakes++;setFb('bad','Promienie '+(!o.real?'(a dokładniej ich przedłużenia) ':'')+'gdzieś się jednak przecinają. Poszukaj tego miejsca na planszy.');}}
+function finish(){st.done=true;const n=st.mistakes===0?3:st.mistakes<=3?2:1;stars[st.lvl]=Math.max(stars[st.lvl]||0,n);saveStars();
+  st.view=cur().opt.none||cur().opt.real?'screen':'eye';renderAll();}
+function checkCls(){const o=cur().opt,tr=traits(o),bad={};let ok=true;
+  const why={rp:o.real?'Prawdziwe promienie naprawdę się przecinają — obraz jest rzeczywisty i da się go złapać na ekranie.':'Przecinają się tylko przedłużenia (linie przerywane), więc obraz jest pozorny.',
+    po:o.m<0?'Płomień obrazu jest pod osią, a płomień świecy nad nią — obraz jest odwrócony.':'Płomień obrazu jest po tej samej stronie osi co płomień świecy — obraz jest prosty.',
+    size:`Porównaj wysokości: obraz ma ${fmt(Math.abs(o.m),2)} wysokości świecy.`};
+  for(const k of ['rp','po','size']){if(!st.cls[k]){ok=false;bad[k]='Wybierz jedną z opcji.';}else if(st.cls[k]!==tr[k]){ok=false;bad[k]=why[k];}}
+  if(ok){st.clsBad=null;setFb('ok','Wszystko się zgadza!');finish();}
+  else{if(Object.values(bad).some(v=>v!=='Wybierz jedną z opcji.'))st.mistakes++;st.clsBad=bad;setFb('bad','Nie wszystko się zgadza — czerwone podpowiedzi mówią, gdzie szukać.');renderActions();}}
+
+function distSeg(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,L=dx*dx+dy*dy;let t=L?((px-ax)*dx+(py-ay)*dy)/L:0;t=Math.max(0,Math.min(1,t));return Math.hypot(px-(ax+dx*t),py-(ay+dy*t));}
+
+/* ---------- wskaźnik ---------- */
+function pos(e){const r=cv.getBoundingClientRect();return {px:e.clientX-r.left,py:e.clientY-r.top};}
+cv.addEventListener('pointerdown',e=>{const {px,py}=pos(e),w=S2W(px,py),c=cur();
+  if(viewerOpen()&&st.view==='screen'&&Math.abs(px-X(st.screenX))<18&&Math.abs(w.y)<165){st.drag='screen';cv.setPointerCapture(e.pointerId);return;}
+  if(st.mode==='lab'){if(Math.hypot(px-X(-c.d),py-Y(c.h))<26)st.drag='tip';else if(Math.abs(px-X(-c.d))<26&&w.y>-10&&w.y<c.h)st.drag='candle';if(st.drag)cv.setPointerCapture(e.pointerId);return;}
+  if(st.done)return;
+  if(st.active&&!st.rays[st.active].locked){st.drag='aim';st.handle=w;st.fb=null;renderCoach();cv.setPointerCapture(e.pointerId);return;}
+  if(st.phase==='extend'){let best=null,bd=20;lockedList().forEach(t=>{if(st.ext[t]!=null)return;const g=rayGeom(c.el,c.d,c.h,t),e2=toEdge(g.H,g.dir);const dd=distSeg(px,py,X(g.H.x),Y(g.H.y),X(e2.x),Y(e2.y));if(dd<bd){bd=dd;best=t;}});
+    if(best){st.ext[best]=T;setFb('ok','Przedłużone! Linia przerywana to nie światło — to droga, którą „cofa się” oko.');
+      if(lockedList().every(t=>st.ext[t]!=null)){st.phase='locate';}renderAll();}
+    else setFb('bad','Kliknij dokładnie w kolorowy promień '+(EL[c.el].mirror?'odbity od lustra.':'za soczewką.'));return;}
+  if(st.phase==='locate'){const o=c.opt;if(!o.none&&Math.hypot(px-X(o.x),py-Y(o.y))<20){st.located=true;st.imgAnim=T;st.phase='classify';setFb('ok','Trafione! W tym miejscu powstaje obraz czubka płomienia. Reszta świecy układa się tak samo.');renderAll();}
+    else{st.mistakes++;setFb('bad',o.none?'Tu nic się nie przecina… Przyjrzyj się kierunkom promieni.':'Nie tutaj. Szukaj miejsca, gdzie krzyżują się '+(o.real?'kolorowe promienie.':'linie przerywane.'));}return;}
+  if(st.phase==='rays')setFb('bad','Najpierw wybierz promień z listy po prawej.');});
+cv.addEventListener('pointermove',e=>{if(!st.drag)return;const {px,py}=pos(e),w=S2W(px,py);
+  if(st.drag==='aim')st.handle=w;
+  else if(st.drag==='screen'){const m=EL[cur().el].mirror;st.screenX=m?Math.max(-375,Math.min(-12,w.x)):Math.max(12,Math.min(375,w.x));}
+  else if(st.drag==='tip'){st.lab.d=Math.max(20,Math.min(370,-w.x));st.lab.h=Math.max(20,Math.min(130,w.y));renderLab();}
+  else if(st.drag==='candle'){st.lab.d=Math.max(20,Math.min(370,-w.x));renderLab();}});
+function up(){const d=st.drag;st.drag=null;if(d==='aim'&&st.handle)checkAim();}
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',()=>{st.drag=null;});
+cv.addEventListener('pointermove',e=>{if(st.drag)return;const {px,py}=pos(e),c=cur();let cur2='crosshair';
+  if(viewerOpen()&&st.view==='screen'&&Math.abs(px-X(st.screenX))<18)cur2='ew-resize';
+  else if(st.mode==='lab'&&Math.abs(px-X(-c.d))<26)cur2='grab';cv.style.cursor=cur2;});
+
+resize();loadLevel(0);requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>
