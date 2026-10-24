@@ -54,7 +54,7 @@ Plain JSON after `window.KITCHEN_DATA =`, written so a person can read and edit 
 
 ### engine.js
 Deterministic: the same project gives the same model. Read top-down:
-1. **Vocabulary**: `TYPES`, `TAGS` (tag → the types it is allowed on), `FRONT_TYPES`, `BOX_TYPES`, `BOARD_TYPES`, `PART_RULES`, `CARCASS_FLAGS`, `GRILLE_FOR` (what puts a ventilation grille in the plinth), `VENTED_SHELF_OVER` (a fixed shelf over these types is `shelf.ventGap` shallower, the gap at the back), `openingOf` (how a front opens), `LACQUER`, `REQUIRED_RULES`. Every decision below is made from these tables, the item's type and tags, and `data.js` rules.
+1. **Vocabulary**: `TYPES`, `TAGS` (tag → the types it is allowed on), `FRONT_TYPES`, `BOX_TYPES`, `BOARD_TYPES`, `PART_RULES`, `CARCASS_FLAGS`, `GRILLE_FOR` (what puts a ventilation grille in the plinth), `VENTED_SHELF_OVER` (a fixed shelf over these types is `shelf.ventGap` shallower, the gap at the back), `SHELF_UNDER_JOINT` (a fixed shelf under these types sits below the joint, not centred on it), `openingOf` (how a front opens), `LACQUER`, `REQUIRED_RULES`. Every decision below is made from these tables, the item's type and tags, and `data.js` rules.
 2. **Helpers**: `parseTags`, `placeLabel` (`G1[4]`, `G1[1-11]`), `countByHeight` (per-height tables).
 3. **Checks that stop the build**: `checkRules` (materials, required rules). `build` throws when it finds one; design.html lists them first.
 4. **Layout**: `stack` places the components in their columns (rules.md, "Układ"); `carcassAreas` joins the items of one carcass name.

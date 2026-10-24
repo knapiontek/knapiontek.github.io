@@ -48,6 +48,7 @@
   // a carcass on a plinth gets a ventilation grille in the plinth when it holds one of these (air intake for the appliance)
   const GRILLE_FOR = { types: ['oven'], tags: ['fridge', 'freezer'] };
   const VENTED_SHELF_OVER = ['oven']; // a fixed shelf over these types is shallower: rules.shelf.ventGap of air behind it
+  const SHELF_UNDER_JOINT = ['oven'];  // a fixed shelf under these types sits below the joint, not centred: the front under it can cover it fully
 
   // visible names (Polish) of the identifiers above; the code keeps the English identifiers
   const LABELS = {
@@ -458,12 +459,14 @@
       }
 
       // fixed shelf at each joint of 2 boxes, full carcass depth; not in a base carcass (rails), not in a fridge carcass (ventilation);
-      // over a VENTED_SHELF_OVER box (oven) it is rules.shelf.ventGap shallower, the gap at the back lets the hot air out
+      // over a VENTED_SHELF_OVER box (oven) it is rules.shelf.ventGap shallower, the gap at the back lets the hot air out;
+      // under a SHELF_UNDER_JOINT box (oven) it sits below the joint
       if (!K.base && !K.fridge) {
         const joints = [...new Set(K.boxes.map(b => b.v0))].filter(joint => joint > v0);
         for (const joint of joints) {
           const vented = K.boxes.some(b => b.v1 === joint && VENTED_SHELF_OVER.includes(b.type)), gap = vented ? rules.shelf.ventGap : 0;
-          part('fixedShelf', 'Półka stała', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerU0, innerU1, joint - half, joint + half, carcassBack + gap, carcassFront], frontEdge(innerWidth));
+          const top = K.boxes.some(b => b.v0 === joint && SHELF_UNDER_JOINT.includes(b.type)) ? joint : joint + half;
+          part('fixedShelf', 'Półka stała', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerU0, innerU1, top - board, top, carcassBack + gap, carcassFront], frontEdge(innerWidth));
           counts.shelvesFixed++;
         }
       }
@@ -896,7 +899,7 @@
   }
 
   root.KitchenEngine = {
-    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PART_RULES, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, LACQUER,
+    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PART_RULES, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, SHELF_UNDER_JOINT, LACQUER,
     HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, drillingOf, checkRules, build, cutList, carcassMap, mapJSON,
     load, dataJS, fromDataJS
   };
