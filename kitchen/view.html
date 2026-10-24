@@ -291,18 +291,18 @@ body.shut .toggle{display:flex}
  "sink": {"outer": [720, 460], "outerFromWall": 90, "bowl": [660, 400], "bowlFromWall": 120, "rim": 8, "wall": 10, "bowlDepth": 180, "tapFromWall": 45, "trapTop": 575, "wallOutlet": 470},
  "hob": {"about": "Electrolux CIT61443 (electrolux.pl): glass 590 × 520, built-in 560 × 490 × 44; the body sits in the worktop cut-out (data.js rules.cutouts.hob), the glass centred on it", "glass": [590, 520], "builtInHeight": 44},
  "appliances": {
-   "about": "appliances as they are built in, mm. front = the visible fascia [width, height]; body = the part behind the carcass front [width, height, depth]; projection = how far the front stands out of the carcass front; feet = height of the body bottom above the board it stands on; frontBottom = front bottom from the body bottom; topOverlap (optional) = flexible feet: the front covers the board above by this much and the feet follow. Every value names its source; 'assumed' = not found in the documents, to check in the installation drawing. niche = the manufacturer's installation niche, for reference only (not checked).",
+   "about": "appliances as they are built in, mm. front = the visible fascia [width, height]; body = the part behind the carcass front [width, height, depth]; projection = how far the front stands out of the carcass front; feet = height of the body bottom above the board it stands on (\"auto\": adjustable, the front centred in its module); frontBottom = front bottom from the body bottom. Every value names its source; 'assumed' = not found in the documents, to check in the installation drawing. niche = the manufacturer's installation niche, for reference only (not checked).",
    "oven": {"name": "Bosch HBA534BB3", "front": [594, 595], "body": [558, 570, 528.5], "projection": 19.5, "feet": 0, "frontBottom": 0,
      "source": "installation drawing HBA534BB0A: housing 570 and front 594 × 595 (19.5 thick) both stand on the board, the front ends 25 above the housing; overall depth 548 (body 548 − 19.5); body width 558: assumed (drawing gives only the niche 560 +8)",
-     "niche": {"h": [585, 595], "w": [560, 568], "d": 550}, "link": "https://media3.bosch-home.com/Documents/specsheet/en-AU/HBA534BB0A.pdf"},
-   "micro": {"name": "Bosch BFL623MB3", "front": [595, 382], "body": [442, 338, 315], "projection": 20, "feet": 0, "frontBottom": -14, "topOverlap": 1,
-     "source": "installation drawings BFL623MB3: front 595 × 382, 20 thick; body 442 × 338 × 315, 350 on its 12 feet (tall cabinet); the front reaches 14 below the body bottom (wall cabinet); here the front covers the shelf above by topOverlap (1) and the feet follow (12)",
-     "niche": {"h": [380, 382], "w": [560, 568], "d": 550}, "link": "https://media3.bosch-home.com/Documents/specsheet/fr-CH/BFL623MB3.pdf"},
+     "niche": {"h": [585, 595], "w": [560, 568], "d": 550}, "link": "https://media3.bosch-home.com/Documents/specsheet/pl-PL/HBA534BB3.pdf"},
+   "micro": {"name": "Bosch BFL623MB3", "front": [595, 382], "body": [442, 338, 315], "projection": 20, "feet": "auto", "frontBottom": -13,
+     "source": "installation drawing BFL623MB3, tall cabinet: front 595 × 382, 20 thick; body 442 × 338 × 315 on adjustable feet (12 in the drawing); the front 13 below the body; here the front is centred in its module and the feet follow",
+     "niche": {"h": [380, 382], "w": [560, 568], "d": 550}, "link": "https://www.bosch-home.pl/pl/product/gotowanie-i-pieczenie/kuchenki-mikrofalowe/kuchenki-mikrofalowe-do-zabudowy/BFL623MB3"},
    "fridge": {"name": "Bosch KIS86AFE0", "body": [558, 1772, 545], "freezerDoor": [8, 702], "fridgeDoor": [733, 1745],
      "source": "installation drawing KIS86AFE0: 1772 × 558 × 545; doors from the appliance bottom: freezer 694 high, top at 702 (8 above the bottom); fridge 1012 high, bottom at 733",
-     "niche": {"h": [1775, 1775], "w": [560, 560], "d": 550}, "link": "https://www.bosch-home.com/mt/en/mkt-product/fridgesandfreezers/fridgefreezers/builtinfridgefreezerswithfreezeratbottom/KIS86AFE0"},
+     "niche": {"h": [1775, 1775], "w": [560, 560], "d": 550}, "link": "https://www.bosch-home.pl/pl/product/chlodzenie-i-zamrazanie/chlodziarko-zamrazarki/chlodziarko-zamrazarki-do-zabudowy/KIS86AFE0"},
    "dishwasher": {"name": "Bosch SMV4HVX00E", "body": [598, 815, 550], "feet": 60, "door": [655, 725], "baseSetback": 100,
-     "source": "installation drawing SMV4HVX00E: 598 × 550, height 815–875 (feet +60), appliance door 655–725 (grows with the height), plinth zone 90–220, feet 100 behind the front: the base is open in front for the plinth", "niche": {"h": [815, 875], "w": [600, 600], "d": 550}, "link": "https://media3.bsh-group.com/Documents/specsheet/fr-BE/SMV4HVX00E.pdf"}
+     "source": "installation drawing SMV4HVX00E: 598 × 550, height 815–875 (feet +60), appliance door 655–725 (grows with the height), plinth zone 90–220, feet 100 behind the front: the base is open in front for the plinth", "niche": {"h": [815, 875], "w": [600, 600], "d": 550}, "link": "https://www.galaxus.ch/en/s2/product/bosch-hausgeraete-serie-4-smv4hvx00e-built-in-dishwashers-37002331"}
  },
  "hood": {"name": "Electrolux LFV416K", "width": 598, "depth": 390, "bottom": 1500, "height": 380, "chimney": [250, 220]},
  "fridge": {"about": "front: where the fridge body ends and its doors start (n from the wall); the body size is in appliances.fridge", "front": 500},
@@ -831,18 +831,13 @@ function floorOf(item) {
   const own = model.boards.filter(b => b.carcassId === item.carcass.id && ['bottom', 'fixedShelf'].includes(b.id));
   return Math.max(...own.filter(b => b.box[3] <= item.v0 + board / 2 + 0.5).map(b => b.box[3]));
 }
-// the underside of the board over a built-in appliance item (the board over its module)
-function ceilingOf(item) {
-  const own = model.boards.filter(b => b.carcassId === item.carcass.id && ['top', 'fixedShelf'].includes(b.id));
-  return Math.min(...own.filter(b => b.box[2] >= item.v1 - board / 2 - 0.5).map(b => b.box[2]));
-}
 // built-in oven / microwave (APPLIANCES[type]): the body on its feet on the board under it, behind the carcass front; the front
-// frontBottom from the body bottom, projection in front of the carcass front; both centred on the item.
-// Flexible feet (topOverlap): the front covers the board over it by topOverlap and the feet are as high as that needs
+// frontBottom from the body bottom, projection in front of the carcass front; both centred on the item
 function builtInAppliance(run, item, type) {
   const A = APPLIANCES[type], floor = floorOf(item), uc = (item.u0 + item.u1) / 2;
-  const v1 = A.topOverlap !== undefined ? ceilingOf(item) + A.topOverlap : floor + A.feet + A.frontBottom + A.front[1];
-  const v0 = v1 - A.front[1], b0 = v0 - A.frontBottom, feet = b0 - floor;
+  // adjustable feet ("auto"): the front is centred in the item's module, the feet are as high as that needs
+  const feet = A.feet === 'auto' ? (item.v0 + item.v1) / 2 - A.front[1] / 2 - A.frontBottom - floor : A.feet;
+  const b0 = floor + feet, v0 = b0 + A.frontBottom, v1 = v0 + A.front[1];
   const u0 = uc - A.front[0] / 2, u1 = uc + A.front[0] / 2;
   const P = runLayer[run].ovens, face = carcassFront + A.projection, [bw, bh, bd] = A.body;
   localBox(P, uc - bw / 2, uc + bw / 2, b0, b0 + bh, carcassFront - bd, carcassFront, MAT.applianceBody); // body
