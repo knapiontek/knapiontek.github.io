@@ -105,7 +105,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 
 - Błędy w danych są zgłaszane, np. brak typu, tag do złego typu, nakładanie się elementów, brak szczelin albo strony zawiasów, element poza kolumnami.
 - Element bez jednego typu, poza kolumnami albo nachodzący na inny jest pomijany.
-- Widok 3D rysuje urządzenia (piekarnik, mikrofalówka, lodówka, zmywarka, płyta, zlew, ekspres) w wymiarach producenta: osobno front i korpus (z nóżkami), i sprawdza ich kolizje z korpusem.
+- Widok 3D rysuje urządzenia (piekarnik, mikrofalówka, lodówka, zmywarka, płyta, zlew, ekspres) w wymiarach producenta: osobno front i korpus (z nóżkami), i sprawdza ich kolizje z korpusem. Szczegóły dopasowania każdego urządzenia są w notatkach kosztorysu.
 - Widok 3D pokazuje kolizje, szczeliny do 3 mm przy listwach i panelach, części wystające oraz fronty, które o kilka mm nie trzymają linii.
 
 ## 8. Kosztorys (szacunek, nie zasady)

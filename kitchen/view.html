@@ -291,12 +291,12 @@ body.shut .toggle{display:flex}
  "sink": {"outer": [720, 460], "outerFromWall": 90, "bowl": [660, 400], "bowlFromWall": 120, "rim": 8, "wall": 10, "bowlDepth": 180, "tapFromWall": 45, "trapTop": 575, "wallOutlet": 470},
  "hob": {"about": "Electrolux CIT61443 (electrolux.pl): glass 590 × 520, built-in 560 × 490 × 44; the body sits in the worktop cut-out (data.js rules.cutouts.hob), the glass centred on it", "glass": [590, 520], "builtInHeight": 44},
  "appliances": {
-   "about": "appliances as they are built in, mm. front = the visible fascia [width, height]; body = the part behind the carcass front [width, height, depth]; projection = how far the front stands out of the carcass front; feet = height of the body bottom above the board it stands on; frontBottom = the same for the front. Every value names its source; 'assumed' = not found in the documents, to check in the installation drawing. niche = the manufacturer's installation niche, for reference only (not checked).",
+   "about": "appliances as they are built in, mm. front = the visible fascia [width, height]; body = the part behind the carcass front [width, height, depth]; projection = how far the front stands out of the carcass front; feet = height of the body bottom above the board it stands on; frontBottom = front bottom from the body bottom; topOverlap (optional) = flexible feet: the front covers the board above by this much and the feet follow. Every value names its source; 'assumed' = not found in the documents, to check in the installation drawing. niche = the manufacturer's installation niche, for reference only (not checked).",
    "oven": {"name": "Bosch HBA534BB3", "front": [594, 595], "body": [558, 570, 528.5], "projection": 19.5, "feet": 0, "frontBottom": 0,
      "source": "installation drawing HBA534BB0A: housing 570 and front 594 × 595 (19.5 thick) both stand on the board, the front ends 25 above the housing; overall depth 548 (body 548 − 19.5); body width 558: assumed (drawing gives only the niche 560 +8)",
      "niche": {"h": [585, 595], "w": [560, 568], "d": 550}, "link": "https://media3.bosch-home.com/Documents/specsheet/en-AU/HBA534BB0A.pdf"},
-   "micro": {"name": "Bosch BFL623MB3", "front": [595, 382], "body": [442, 338, 315], "projection": 20, "feet": 12, "frontBottom": -1,
-     "source": "installation drawing BFL623MB3, tall cabinet: front 595 × 382, 20 thick; body 442 × 338 × 315, 350 high on its feet; niche 380–382, front 1 mm over it at the top and the bottom; cabinet depth min. 550",
+   "micro": {"name": "Bosch BFL623MB3", "front": [595, 382], "body": [442, 338, 315], "projection": 20, "feet": 0, "frontBottom": -14, "topOverlap": 1,
+     "source": "installation drawings BFL623MB3: front 595 × 382, 20 thick; body 442 × 338 × 315, 350 on its 12 feet (tall cabinet); the front reaches 14 below the body bottom (wall cabinet); here the front covers the shelf above by topOverlap (1) and the feet follow (12)",
      "niche": {"h": [380, 382], "w": [560, 568], "d": 550}, "link": "https://media3.bosch-home.com/Documents/specsheet/fr-CH/BFL623MB3.pdf"},
    "fridge": {"name": "Bosch KIS86AFE0", "body": [558, 1772, 545], "freezerDoor": [8, 702], "fridgeDoor": [733, 1745],
      "source": "installation drawing KIS86AFE0: 1772 × 558 × 545; doors from the appliance bottom: freezer 694 high, top at 702 (8 above the bottom); fridge 1012 high, bottom at 733",
@@ -831,18 +831,26 @@ function floorOf(item) {
   const own = model.boards.filter(b => b.carcassId === item.carcass.id && ['bottom', 'fixedShelf'].includes(b.id));
   return Math.max(...own.filter(b => b.box[3] <= item.v0 + board / 2 + 0.5).map(b => b.box[3]));
 }
-// built-in oven / microwave (APPLIANCES[type]): the body feet above that board, behind the carcass front; the front frontBottom
-// above it, projection in front of the carcass front; both centred on the item
+// the underside of the board over a built-in appliance item (the board over its module)
+function ceilingOf(item) {
+  const own = model.boards.filter(b => b.carcassId === item.carcass.id && ['top', 'fixedShelf'].includes(b.id));
+  return Math.min(...own.filter(b => b.box[2] >= item.v1 - board / 2 - 0.5).map(b => b.box[2]));
+}
+// built-in oven / microwave (APPLIANCES[type]): the body on its feet on the board under it, behind the carcass front; the front
+// frontBottom from the body bottom, projection in front of the carcass front; both centred on the item.
+// Flexible feet (topOverlap): the front covers the board over it by topOverlap and the feet are as high as that needs
 function builtInAppliance(run, item, type) {
   const A = APPLIANCES[type], floor = floorOf(item), uc = (item.u0 + item.u1) / 2;
-  const u0 = uc - A.front[0] / 2, u1 = uc + A.front[0] / 2, v0 = floor + A.frontBottom, v1 = v0 + A.front[1];
-  const P = runLayer[run].ovens, face = carcassFront + A.projection, [bw, bh, bd] = A.body, b0 = floor + A.feet;
+  const v1 = A.topOverlap !== undefined ? ceilingOf(item) + A.topOverlap : floor + A.feet + A.frontBottom + A.front[1];
+  const v0 = v1 - A.front[1], b0 = v0 - A.frontBottom, feet = b0 - floor;
+  const u0 = uc - A.front[0] / 2, u1 = uc + A.front[0] / 2;
+  const P = runLayer[run].ovens, face = carcassFront + A.projection, [bw, bh, bd] = A.body;
   localBox(P, uc - bw / 2, uc + bw / 2, b0, b0 + bh, carcassFront - bd, carcassFront, MAT.applianceBody); // body
-  if (A.feet > 0) { // feet: the body stands on them, on the board under it
-    for (const fu of [uc - bw / 2 + 30, uc + bw / 2 - 30]) for (const fn of [carcassFront - bd + 30, carcassFront - 30]) localCylinder(P, 10, A.feet, MAT.blackMetal, fu, floor + A.feet / 2, fn, null, 16);
+  if (feet > 0) { // feet: the body stands on them, on the board under it
+    for (const fu of [uc - bw / 2 + 30, uc + bw / 2 - 30]) for (const fn of [carcassFront - bd + 30, carcassFront - 30]) localCylinder(P, 10, feet, MAT.blackMetal, fu, floor + feet / 2, fn, null, 16);
   }
   localBox(P, u0, u1, v0, v1, carcassFront, face - 6, MAT.blackMetal); // front
-  envelope(P, uc - bw / 2, uc + bw / 2, b0, b0 + bh, carcassFront - bd, carcassFront, A.name + ' – korpus ' + bw + ' × ' + bh + ' × ' + bd + (A.feet ? ' na nóżkach ' + A.feet : ''));
+  envelope(P, uc - bw / 2, uc + bw / 2, b0, b0 + bh, carcassFront - bd, carcassFront, A.name + ' – korpus ' + bw + ' × ' + bh + ' × ' + bd + (feet > 0 ? ' na nóżkach ' + Math.round(feet * 10) / 10 : ''));
   envelope(P, u0, u1, v0, v1, carcassFront, face, A.name + ' – front ' + A.front[0] + ' × ' + A.front[1]);
   // d = depth behind the appliance face, along = position along the run
   const box = (d0, d1, y0, y1, a0, a1, mat, noShadow) => localBox(P, a0, a1, y0, y1, 2 * face - d1, 2 * face - d0, mat, noShadow);
