@@ -276,8 +276,7 @@ body.shut .toggle{display:flex}
       "hinge": {"cupDepth": 11.5},
    "drawer": {"runner": 13, "sideFromCarcass": 22, "sideThickness": 15.5, "n0": 50, "n1": 548, "innerSide": 84},
    "bins": {"count": 3, "height": 235},
-   "appliance": {"inset": 12, "bodyGap": 12, "bodySide": 22},
-   "plinthGrille": {"width": 480, "bottom": 20, "top": 80}
+      "plinthGrille": {"width": 480, "bottom": 20, "top": 80}
  },
  "finishes": {
    "about": "finishes shown in the Project tab next to the data.js materials: [use, name, CSS swatch]",
@@ -290,9 +289,23 @@ body.shut .toggle{display:flex}
    "ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallRun": "B", "rightWallLength": 4000, "floorTile": [1200, 600]},
  "window": {"x": 870, "width": 1900, "sill": 1080, "height": 1300, "reveal": 150, "finish": "antracyt"},
  "sink": {"outer": [720, 460], "outerFromWall": 90, "bowl": [660, 400], "bowlFromWall": 120, "rim": 8, "wall": 10, "bowlDepth": 180, "tapFromWall": 45, "trapTop": 575, "wallOutlet": 470},
- "hob": {"glass": [590, 520], "glassFromWall": 39, "body": [556, 486], "bodyFromWall": 56, "builtInHeight": 44},
+ "hob": {"about": "Electrolux CIT61443 (electrolux.pl): glass 590 × 520, built-in 560 × 490 × 44; the body sits in the worktop cut-out (data.js rules.cutouts.hob), the glass centred on it", "glass": [590, 520], "builtInHeight": 44},
+ "appliances": {
+   "about": "appliances as they are built in, mm. front = the visible fascia [width, height]; body = the part behind the carcass front [width, height, depth]; projection = how far the front stands out of the carcass front; feet = height of the body bottom above the board it stands on; frontBottom = the same for the front. Every value names its source; 'assumed' = not found in the documents, to check in the installation drawing. niche = the manufacturer's installation niche, for reference only (not checked).",
+   "oven": {"name": "Bosch HBA534BB3", "front": [594, 595], "body": [558, 577.5, 528.5], "projection": 19.5, "feet": 0, "frontBottom": 7.5,
+     "source": "installation drawing HBA534BB0A (side view): the appliance stands on the board; housing 570 on a 7.5 base, so 577.5 overall; the front 594 × 595, 19.5 thick, starts on top of the base (7.5 above the board) and ends 25 above the housing; overall depth 548 (body 548 − 19.5); body width 558: assumed (drawing gives only the niche 560 +8)",
+     "niche": {"h": [585, 595], "w": [560, 568], "d": 550}, "link": "https://media3.bosch-home.com/Documents/specsheet/en-AU/HBA534BB0A.pdf"},
+   "micro": {"name": "Bosch BFL623MB3", "front": [595, 382], "body": [442, 338, 315], "projection": 20, "feet": 12, "frontBottom": -1,
+     "source": "installation drawing BFL623MB3, tall cabinet: front 595 × 382, 20 thick; body 442 × 338 × 315, 350 high on its feet; niche 380–382, front 1 mm over it at the top and the bottom; cabinet depth min. 550",
+     "niche": {"h": [380, 382], "w": [560, 568], "d": 550}, "link": "https://media3.bosch-home.com/Documents/specsheet/fr-CH/BFL623MB3.pdf"},
+   "fridge": {"name": "Bosch KIS86AFE0", "body": [558, 1772, 545], "freezerDoor": [8, 702], "fridgeDoor": [733, 1745],
+     "source": "installation drawing KIS86AFE0: 1772 × 558 × 545; doors from the appliance bottom: freezer 694 high, top at 702 (8 above the bottom); fridge 1012 high, bottom at 733",
+     "niche": {"h": [1775, 1775], "w": [560, 560], "d": 550}, "link": "https://www.bosch-home.com/mt/en/mkt-product/fridgesandfreezers/fridgefreezers/builtinfridgefreezerswithfreezeratbottom/KIS86AFE0"},
+   "dishwasher": {"name": "Bosch SMV4HVX00E", "body": [598, 815, 550], "feet": 60, "door": [655, 725], "baseSetback": 100,
+     "source": "installation drawing SMV4HVX00E: 598 × 550, height 815–875 (feet +60), appliance door 655–725 (grows with the height), plinth zone 90–220, feet 100 behind the front: the base is open in front for the plinth", "niche": {"h": [815, 875], "w": [600, 600], "d": 550}, "link": "https://media3.bsh-group.com/Documents/specsheet/fr-BE/SMV4HVX00E.pdf"}
+ },
  "hood": {"name": "Electrolux LFV416K", "width": 598, "depth": 390, "bottom": 1500, "height": 380, "chimney": [250, 220]},
- "fridge": {"bodyHeight": 1772, "sideGap": 20, "bottomGap": 4, "front": 500},
+ "fridge": {"about": "front: where the fridge body ends and its doors start (n from the wall); the body size is in appliances.fridge", "front": 500},
  "coffee": {"name": "DeLonghi Dinamica", "size": [236, 348, 429]},
  "pendants": {"points": [[477.48, 2290], [1252.52, 2290]], "bottom": 1750},
  "downlights": {"about": "[x, z]; the first: over the sink, halfway to the hood (x = (sink axis 1892 + hob axis 456) / 2)", "points": [[1174, 402], [2440, 402], [2440, 1370], [2440, 2338]]},
@@ -803,10 +816,34 @@ function poseMovingPart(mover) {
 }
 
 /* ---------- built-in oven and microwave ---------- */
-function builtInAppliance(run, u0, u1, v0, v1, type) {
-  const g = 2;
-  u0 += g; u1 -= g; v0 += g; v1 -= g;
-  const uc = (u0 + u1) / 2, P = runLayer[run].ovens, face = frontFace - fittings.appliance.inset;
+/* appliances at the manufacturer's sizes (SCENE.appliances): each gets an envelope, its outer box, for the geometry check
+   (an invisible mesh, not in meshes, so it is never drawn or picked) */
+const APPLIANCES = SCENE.appliances, envelopes = [];
+function envelope(P, u0, u1, v0, v1, n0, n1, name) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry((u1 - u0) / 1000, (v1 - v0) / 1000, (n1 - n0) / 1000));
+  m.position.set((u0 + u1) / 2000, (v0 + v1) / 2000, (n0 + n1) / 2000);
+  m.visible = false;
+  P.add(m);
+  envelopes.push({ kind: 'appliance', name, object: m });
+}
+// the top of the board a built-in appliance item stands on (the board under its module)
+function floorOf(item) {
+  const own = model.boards.filter(b => b.carcassId === item.carcass.id && ['bottom', 'fixedShelf'].includes(b.id));
+  return Math.max(...own.filter(b => b.box[3] <= item.v0 + board / 2 + 0.5).map(b => b.box[3]));
+}
+// built-in oven / microwave (APPLIANCES[type]): the body feet above that board, behind the carcass front; the front frontBottom
+// above it, projection in front of the carcass front; both centred on the item
+function builtInAppliance(run, item, type) {
+  const A = APPLIANCES[type], floor = floorOf(item), uc = (item.u0 + item.u1) / 2;
+  const u0 = uc - A.front[0] / 2, u1 = uc + A.front[0] / 2, v0 = floor + A.frontBottom, v1 = v0 + A.front[1];
+  const P = runLayer[run].ovens, face = carcassFront + A.projection, [bw, bh, bd] = A.body, b0 = floor + A.feet;
+  localBox(P, uc - bw / 2, uc + bw / 2, b0, b0 + bh, carcassFront - bd, carcassFront, MAT.applianceBody); // body
+  if (A.feet > 0) { // feet: the body stands on them, on the board under it
+    for (const fu of [uc - bw / 2 + 30, uc + bw / 2 - 30]) for (const fn of [carcassFront - bd + 30, carcassFront - 30]) localCylinder(P, 10, A.feet, MAT.blackMetal, fu, floor + A.feet / 2, fn, null, 16);
+  }
+  localBox(P, u0, u1, v0, v1, carcassFront, face - 6, MAT.blackMetal); // front
+  envelope(P, uc - bw / 2, uc + bw / 2, b0, b0 + bh, carcassFront - bd, carcassFront, A.name + ' – korpus ' + bw + ' × ' + bh + ' × ' + bd + (A.feet ? ' na nóżkach ' + A.feet : ''));
+  envelope(P, u0, u1, v0, v1, carcassFront, face, A.name + ' – front ' + A.front[0] + ' × ' + A.front[1]);
   // d = depth behind the appliance face, along = position along the run
   const box = (d0, d1, y0, y1, a0, a1, mat, noShadow) => localBox(P, a0, a1, y0, y1, 2 * face - d1, 2 * face - d0, mat, noShadow);
   const swapAxis = axis => (axis === 'x' ? 'z' : axis === 'z' ? 'x' : axis);
@@ -905,9 +942,7 @@ function buildRun(run) {
       target = roomLayer.walls;
       runBox(run, u0, u1, v0, v1, 0, rules.plasterboard.depth, MAT.wall);
     } else if (type === 'oven' || type === 'micro') {
-      builtInAppliance(run, u0, u1, v0, v1, type);
-      const A = fittings.appliance;
-      localBox(runLayer[run].ovens, u0 + A.bodySide, u1 - A.bodySide, v0 + A.bodyGap, v1 - A.bodyGap, carcassBack + A.bodyGap, carcassFront - A.bodyGap, MAT.applianceBody);
+      builtInAppliance(run, item, type);
     }
     if (CHECKED_TYPES.includes(type)) {
       nameNewMeshes(firstMesh, type, KE.placeLabel(groupOfRun[run], col, span) + ' ' + KE.typeLabel(type) + ' ' + (u1 - u0) + ' × ' + height + (item.note ? ' (' + item.note + ')' : ''));
@@ -943,6 +978,8 @@ if (sinkItem) {
   roomBox(bowlU0, bowlU1, bowlBottom, sinkTop, bowlN0 - sinkWall, bowlN0, MAT.granite);
   roomBox(bowlU0, bowlU1, bowlBottom, sinkTop, bowlN1, bowlN1 + sinkWall, MAT.granite);
   roomBox(bowlU0, bowlU1, bowlBottom - sinkWall, bowlBottom, bowlN0, bowlN1, MAT.granite); // bowl bottom
+  envelope(runLayer[sinkRun].sink, bowlU0 - sinkWall, bowlU1 + sinkWall, bowlBottom - sinkWall, sinkTop, bowlN0 - sinkWall, bowlN1 + sinkWall,
+    'Zlew – komora ' + (bowlU1 - bowlU0 + 2 * sinkWall) + ' × ' + (bowlN1 - bowlN0 + 2 * sinkWall) + ' × ' + (sinkTop - bowlBottom + sinkWall));
   roomCylinder(45, 3, MAT.steel, sinkU, bowlBottom + 1.5, (bowlN0 + bowlN1) / 2, null, 32); // drain
   roomCylinder(30, 4, MAT.ovenInside, sinkU, bowlBottom + 2, (bowlN0 + bowlN1) / 2, null, 32);
   roomCylinder(18, 3, MAT.steel, sinkU + 250, sinkTop + sinkRim + 1.5, tapN, null, 24); // dispenser plate
@@ -973,11 +1010,14 @@ if (sinkItem) {
 const hobRun = RUN_IDS.find(r => itemsOfRun[r].some(i => hasTag(i, 'hob')));
 const hobData = SCENE.hob, hobItem = hobRun && itemsOfRun[hobRun].find(i => hasTag(i, 'hob'));
 if (hobItem) target = runLayer[hobRun].hob;
-const hobU = hobItem ? (hobItem.u0 + hobItem.u1) / 2 : 0;
-if (hobItem) (function hob() {
-  const u0 = hobU - hobData.glass[0] / 2, u1 = hobU + hobData.glass[0] / 2, v = worktopTopOf(hobRun), glassN = hobData.glassFromWall;
+// the hob body fills the worktop cut-out (engine.js, data.js rules.cutouts.hob), the glass is centred on it
+const hobCut = hobItem && (worktopOf(groupOfRun[hobRun]).cutouts || []).find(c => c.kind === 'hob');
+const hobU = hobCut ? (hobCut.u0 + hobCut.u1) / 2 : hobItem ? (hobItem.u0 + hobItem.u1) / 2 : 0;
+if (hobItem && hobCut) (function hob() {
+  const u0 = hobU - hobData.glass[0] / 2, u1 = hobU + hobData.glass[0] / 2, v = worktopTopOf(hobRun), glassN = (hobCut.n0 + hobCut.n1) / 2 - hobData.glass[1] / 2;
   roomBox(u0, u1, v, v + 5, glassN, glassN + hobData.glass[1], MAT.glassBlack); // glass over the cut-out
-  roomBox(hobU - hobData.body[0] / 2, hobU + hobData.body[0] / 2, v - hobData.builtInHeight, v, hobData.bodyFromWall, hobData.bodyFromWall + hobData.body[1], MAT.applianceBody); // body, built-in height
+  roomBox(hobCut.u0, hobCut.u1, v - hobData.builtInHeight, v, hobCut.n0, hobCut.n1, MAT.applianceBody); // body, built-in height
+  envelope(runLayer[hobRun].hob, hobCut.u0, hobCut.u1, v - hobData.builtInHeight, v, hobCut.n0, hobCut.n1, 'Płyta grzewcza – korpus ' + (hobCut.u1 - hobCut.u0) + ' × ' + (hobCut.n1 - hobCut.n0) + ' × ' + hobData.builtInHeight);
   [[-150, glassN + 140, 0.1], [150, glassN + 140, 0.085], [-150, glassN + 370, 0.085], [150, glassN + 370, 0.11]].forEach(([du, n, r]) => { // cooking zones
     const m = new THREE.Mesh(new THREE.RingGeometry(r - 0.003, r, 64), MAT.ring);
     m.rotation.x = -Math.PI / 2;
@@ -1088,6 +1128,7 @@ function buildCarcass(K) {
 // bean-to-cup coffee machine (SCENE.coffee.size = width, height, depth), front face at n1, standing on y, centred on uc
 function coffeeMachine(P, uc, y, n1) {
   const [w, h, d] = SCENE.coffee.size, u0 = uc - w / 2, u1 = uc + w / 2, n0 = n1 - d, top = y + h, head = top - 115, F = n1 - 45;
+  envelope(P, u0, u1, y, top, n0, n1, SCENE.coffee.name + ' ' + w + ' × ' + h + ' × ' + d);
   localBox(P, u0, u1, y, top, n0, F, MAT.blackMetal); // body
   localBox(P, u0, u0 + 28, y, head, F, n1, MAT.steel); localBox(P, u1 - 28, u1, y, head, F, n1, MAT.steel); // front side columns
   localBox(P, u0, u1, head, top, F, n1, MAT.steel); // head with the controls
@@ -1116,12 +1157,15 @@ function plinthGrille(K) {
   localBox(P, g0 + 5, g1 - 5, h0 + 5, h1 - 5, plinthFace - plinthThickness, plinthFace - 1, MAT.ovenInside, true); // opening through the plinth
   for (let x = g0 + 5 + 12; x < g1 - 8; x += 12) localBox(P, x - 2, x + 2, h0 + 5, h1 - 5, plinthFace - 2, plinthFace + 2, MAT.zinc); // vertical louvres
 }
-// built-in fridge-freezer body (SCENE.fridge.bodyHeight), split at the top of its lowest front
+// built-in fridge-freezer at the manufacturer's size (APPLIANCES.fridge.body), standing on the carcass bottom, centred,
+// its doors at the carcass front (SCENE.fridge.front: where the body ends and the doors start); split at the top of its lowest front
 function fridgeBody(K) {
-  const F = SCENE.fridge, P = runLayer[K.run].fridge, u0 = K.u0 + F.sideGap, u1 = K.u1 - F.sideGap, bodyV0 = K.v0 + board + F.bottomGap, bodyV1 = bodyV0 + F.bodyHeight;
-  K.fridgeBody = [bodyV0, bodyV1];
-  openFrontBox(P, u0, u1, bodyV0, bodyV1, carcassBack + board, F.front, 24, MAT.fridge);
-  const split = K.boxes[0].v1 - 20;
+  const F = SCENE.fridge, A = APPLIANCES.fridge, P = runLayer[K.run].fridge, uc = (K.u0 + K.u1) / 2;
+  const u0 = uc - A.body[0] / 2, u1 = uc + A.body[0] / 2, bodyV0 = K.v0 + board, bodyV1 = bodyV0 + A.body[1];
+  K.fridgeBody = [bodyV0, bodyV1, u0, u1];
+  envelope(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body[2], F.front, A.name + ' – korpus ' + A.body[0] + ' × ' + A.body[1] + ' (bez drzwi)');
+  openFrontBox(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body[2], F.front, 24, MAT.fridge);
+  const split = bodyV0 + (A.freezerDoor[1] + A.fridgeDoor[0]) / 2; // the middle of the gap between the appliance doors
   localBox(P, u0 + 24, u1 - 24, split - 14, split + 14, carcassBack + 42, F.front, MAT.fridge);
   const top = bodyV1 - 24, lo = split + 14;
   for (const f of [0.34, 0.56, 0.78]) { const y = lo + (top - lo) * f; localBox(P, u0 + 26, u1 - 26, y, y + 5, carcassBack + 44, 440, MAT.glassShelf, true); }
@@ -1222,10 +1266,18 @@ function buildFront(run, item) {
     localBox(mover.layers.dishwasher, u0 + 6, u1 - 6, fv0 + 4, fv1 - 10, carcassFront - 22, carcassFront, MAT.steel); // appliance door
     localBox(mover.layers.dishwasher, u0 + 6, u1 - 6, fv1 - 10, fv1 - 4, carcassFront - 22, carcassFront, MAT.glassBlack); // control strip
     mover.label = 'Zmywarka · front ' + size + ' na drzwiach urządzenia';
+    // the appliance at the manufacturer's size (APPLIANCES.dishwasher): on the floor, feet up to the worktop; its door grows with the
+    // height (door[0] at the lowest, door[1] at the highest); below the door the base is open baseSetback deep for the plinth
+    const A = APPLIANCES.dishwasher, uc = (u0 + u1) / 2, nicheH = worktopOf(item.group).v0, h = Math.min(A.body[1] + A.feet, Math.max(A.body[1], nicheH));
+    const doorHeight = A.door[0] + ((A.door[1] - A.door[0]) * (h - A.body[1])) / A.feet, doorBottom = h - doorHeight, w0 = uc - A.body[0] / 2, w1 = uc + A.body[0] / 2;
+    envelope(P, w0, w1, doorBottom, h, carcassFront - A.body[2], carcassFront, A.name + ' – ' + A.body[0] + ' × ' + Math.round(h) + ' × ' + A.body[2] + ', drzwi ' + Math.round(doorHeight));
+    envelope(P, w0, w1, 0, doorBottom, carcassFront - A.body[2], carcassFront - A.baseSetback, A.name + ' – podstawa, ' + A.baseSetback + ' za frontem');
   } else if (opening === 'fridge' && K && K.fridgeBody) {
-    const [bodyV0, bodyV1] = K.fridgeBody, lowest = item.v0 === K.v0;
-    const d0 = lowest ? bodyV0 + 3 : Math.max(bodyV0, item.v0 - 20) + 3, d1 = Math.min(bodyV1, item.v1 - 20) - 3;
-    localBox(mover.layers.fridge, K.u0 + SCENE.fridge.sideGap, K.u1 - SCENE.fridge.sideGap, d0, d1, SCENE.fridge.front, carcassFront - 2, MAT.fridge); // appliance door
+    // the appliance door behind this front, from the installation drawing (APPLIANCES.fridge freezerDoor / fridgeDoor)
+    const [bodyV0] = K.fridgeBody, lowest = item.v0 === K.v0, A = APPLIANCES.fridge, door = lowest ? A.freezerDoor : A.fridgeDoor;
+    const d0 = bodyV0 + door[0], d1 = bodyV0 + door[1];
+    envelope(mover.layers.fridge, K.fridgeBody[2], K.fridgeBody[3], d0, d1, SCENE.fridge.front, carcassFront, A.name + ' – drzwi ' + (lowest ? 'zamrażarki ' : 'lodówki ') + (door[1] - door[0]));
+    localBox(mover.layers.fridge, K.fridgeBody[2], K.fridgeBody[3], d0, d1, SCENE.fridge.front, carcassFront - 2, MAT.fridge); // appliance door
     if (!lowest) for (const f of [0.25, 0.5, 0.75]) { const y = d0 + (d1 - d0) * f; localBox(mover.layers.fridge, K.u0 + 55, K.u1 - 55, y, y + 80, 446, 500, MAT.ice, true); } // door shelves
     mover.label = (lowest ? 'Zamrażarka' : 'Lodówka') + ' · front ' + size + ' na drzwiach urządzenia';
   } else if (opening === 'fixed') {
@@ -1277,6 +1329,7 @@ function geometryCheck() {
     for (const c of solid) box.expandByObject(c);
     parts.push({ kind: 'front', name: mover.label, box: [box.min.x * 1000, box.max.x * 1000, box.min.y * 1000, box.max.y * 1000, box.min.z * 1000, box.max.z * 1000], object: g });
   }
+  for (const e of envelopes) parts.push({ kind: e.kind, name: e.name, box: boxOf(e.object), object: e.object });
   const overlapOn = (a, b, axis) => Math.min(a[2 * axis + 1], b[2 * axis + 1]) - Math.max(a[2 * axis], b[2 * axis]);
   // an issue: k = kind of issue, a / b = the parts (names with their real sizes), v = the amount
   const overlaps = [], gaps = [], out = [];

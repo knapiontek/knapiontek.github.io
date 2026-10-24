@@ -50,7 +50,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka lub zamrażarka.
 - **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
-- **Półka stała** jest na styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki ani przy lodówce. Przy piekarniku i mikrofalówce ustawia się ją na miejscu na wnękę podaną przez producenta (patrz notatka urządzenia).
+- **Półka stała** jest na styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki ani przy lodówce. Przy piekarniku i mikrofalówce ustawia się ją na miejscu na wnękę podaną przez producenta (patrz notatka urządzenia w kosztorysie). Półka nad piekarnikiem jest płytsza: szczelina z tyłu wypuszcza ciepłe powietrze.
 - **Półki ruchome** są tylko za drzwiami szafki:
   - liczba zależy od wysokości frontu;
   - półka jest płytsza od korpusu i ma luz z obu stron;
@@ -105,6 +105,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 
 - Błędy w danych są zgłaszane, np. brak typu, tag do złego typu, nakładanie się elementów, brak szczelin albo strony zawiasów, element poza kolumnami.
 - Element bez jednego typu, poza kolumnami albo nachodzący na inny jest pomijany.
+- Widok 3D rysuje urządzenia (piekarnik, mikrofalówka, lodówka, zmywarka, płyta, zlew, ekspres) w wymiarach producenta: osobno front i korpus (z nóżkami), i sprawdza ich kolizje z korpusem.
 - Widok 3D pokazuje kolizje, szczeliny do 3 mm przy listwach i panelach, części wystające oraz fronty, które o kilka mm nie trzymają linii.
 
 ## 8. Kosztorys (szacunek, nie zasady)

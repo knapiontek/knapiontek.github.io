@@ -47,6 +47,7 @@
 
   // a carcass on a plinth gets a ventilation grille in the plinth when it holds one of these (air intake for the appliance)
   const GRILLE_FOR = { types: ['oven'], tags: ['fridge', 'freezer'] };
+  const VENTED_SHELF_OVER = ['oven']; // a fixed shelf over these types is shallower: rules.shelf.ventGap of air behind it
 
   // visible names (Polish) of the identifiers above; the code keeps the English identifiers
   const LABELS = {
@@ -98,7 +99,7 @@
   const REQUIRED_RULES = [
     'carcass.depth', 'carcass.wallGap', 'front.shakerRail', 'plinth.setback',
     'rails.depth', 'rails.hobFront', 'rails.hobPanelGap', 'back.inset',
-    'shelf.setback', 'shelf.clearance', 'shelf.pins', 'shelf.perDoor', 'frame.depth',
+    'shelf.setback', 'shelf.clearance', 'shelf.pins', 'shelf.perDoor', 'shelf.ventGap', 'frame.depth',
     'hinges.fromEnd', 'hinges.supportDepth', 'hinges.aboveShelf', 'hinges.perDoor',
     'drawers.dFrom', 'drawers.D.side', 'drawers.D.back', 'drawers.M.side', 'drawers.M.back',
     'drawers.bottom.inset', 'drawers.bottom.depth', 'drawers.bottom.fromWall', 'drawers.back.inset',
@@ -456,11 +457,13 @@
           [u0 + back.inset, u1 - back.inset, s0 + back.inset, s1 - back.inset, carcassBack - thickness.back, carcassBack]);
       }
 
-      // fixed shelf at each joint of 2 boxes, full carcass depth; not in a base carcass (rails), not in a fridge carcass (ventilation)
+      // fixed shelf at each joint of 2 boxes, full carcass depth; not in a base carcass (rails), not in a fridge carcass (ventilation);
+      // over a VENTED_SHELF_OVER box (oven) it is rules.shelf.ventGap shallower, the gap at the back lets the hot air out
       if (!K.base && !K.fridge) {
         const joints = [...new Set(K.boxes.map(b => b.v0))].filter(joint => joint > v0);
         for (const joint of joints) {
-          part('fixedShelf', 'Półka stała', innerWidth, carcassDepth, carcassMaterial, 'shelves', [innerU0, innerU1, joint - half, joint + half, carcassBack, carcassFront], frontEdge(innerWidth));
+          const vented = K.boxes.some(b => b.v1 === joint && VENTED_SHELF_OVER.includes(b.type)), gap = vented ? rules.shelf.ventGap : 0;
+          part('fixedShelf', 'Półka stała', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerU0, innerU1, joint - half, joint + half, carcassBack + gap, carcassFront], frontEdge(innerWidth));
           counts.shelvesFixed++;
         }
       }
@@ -893,7 +896,7 @@
   }
 
   root.KitchenEngine = {
-    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PART_RULES, CARCASS_FLAGS, GRILLE_FOR, LACQUER,
+    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PART_RULES, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, LACQUER,
     HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, drillingOf, checkRules, build, cutList, carcassMap, mapJSON,
     load, dataJS, fromDataJS
   };
