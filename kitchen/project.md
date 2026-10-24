@@ -47,7 +47,7 @@ How the files of this folder work together. `rules.md` holds the kitchen rules; 
 ### data.js
 Plain JSON after `window.KITCHEN_DATA =`, written so a person can read and edit it:
 - `rules.materials`: what you buy. Name, thickness, colour (none = oak texture), lacquered, core (colour of a bare cut edge), depth by group role, and `types`: the component types made of it. Parts the engine adds take the material their rule names (`carcass.material`, `back.material`, `drawers.material`, `rails.hobPanelMaterial`).
-- `rules`: construction values (setbacks, gaps, overhang, hinges, shelves, drawers ...). Every rule the engine reads must be present (`REQUIRED_RULES` in engine.js).
+- `rules`: construction values (setbacks, gaps, overhang, hinges, shelves, drawers ...); `drilling` (hinge cups, mounting plates, shelf pins, runners: diameter, depth, distances), `hinges.aboveShelf` (a hinge that meets a shelf goes this far above it) and `cutouts` (sink, hob: width, depth, distance from the worktop back edge) are what the manufacturer drills and cuts. Every rule the engine reads must be present (`REQUIRED_RULES` in engine.js).
 - `notes`: `[name, description, details]`; `group N` notes give each group its role (worktop, tall, island).
 - `columns`: column widths per group, integer mm.
 - `components`: one per line, empty fields left out: `g` group, `c` first column, `s` span, `type` (one of `TYPES`), `tags` (tags of that type, space separated; left out when none), `k` carcass name, `h` height, `hd` handle, `hg` hinge side, `gaps` [left, right, top, bottom], `note`.
@@ -58,10 +58,11 @@ Deterministic: the same project gives the same model. Read top-down:
 2. **Helpers**: `parseTags`, `placeLabel` (`G1[4]`, `G1[1-11]`), `countByHeight` (per-height tables).
 3. **Checks that stop the build**: `checkRules` (materials, required rules). `build` throws when it finds one; design.html lists them first.
 4. **Layout**: `stack` places the components in their columns (rules.md, "Układ"); `carcassAreas` joins the items of one carcass name.
-5. **Build**, in this order: component checks → groups → carcasses (floor, base, type, flags, legs) → carcass boards (sides, bottom, top / rails, backs, fixed shelves, inset panels, shelves) → frames, back strips, panels (ABS from the neighbouring fronts), plinths, plasterboard → worktops → island back panel → fronts (hinge posts, hinges, drawer boxes).
+5. **Build**, in this order: component checks → groups → carcasses (floor, base, type, flags, legs) → carcass boards (sides, bottom, top / rails, backs, fixed shelves, inset panels, shelves) → frames, back strips, panels (ABS from the neighbouring fronts), plinths, plasterboard → worktops → island back panel → fronts (hinge posts, hinges, drawer boxes) → holes (cups, mounting plates, shelf pins, drawer and pull-out runners; clashes and holes in a horizontal board reported). Hinge heights are set with the fronts: a hinge at a shelf moves above it (`hingeClearOfShelves`) → worktop pieces and cut-outs.
+   A hole has its centre on the part (`x`, `y` from the edges in `part.holeFrom`) for the cutting list, and in group coordinates (`u`, `v`, `n`, `axis`, `dir`) for the 3D view. `drillingOf(part)` is the manufacturer's view of it; `cutList` keeps parts with different drilling in different rows.
 6. **Lists and files**: `cutList`, `carcassMap` / `mapJSON`, `dataJS` / `fromDataJS`, `load`.
 
-The model: `carcasses`, `boards` (each with `id`, `name`, size `a × b`, `material`, `box`, ABS `edges`), `fronts` (with `opening`, `hinges`, `drawer`, `lacquer`), `frames`, `panels`, `plinths`, `worktops`, `plaster`, `counts` (incl. `type` and `tag`: items per type / tag), `thickness`, `materials`, `materialFor` (type or part → material code), `roles`, `warnings` / `issues`.
+The model: `carcasses`, `boards` (each with `id`, `name`, size `a × b`, `material`, `box`, ABS `edges`, `holes`), `fronts` (with `opening`, `hinges`, `holes`, `drawer`, `lacquer`), `worktopPieces` (worktops and falls with their `cutouts`), `frames`, `panels`, `plinths`, `worktops`, `plaster`, `counts` (incl. `type` and `tag`: items per type / tag), `thickness`, `materials`, `materialFor` (type or part → material code), `roles`, `warnings` / `issues`.
 Coordinates per group: `u` along the group, `v` up from the floor, `n` out from the wall; a box is `[u0, u1, v0, v1, n0, n1]`.
 
 ### design.html
@@ -71,10 +72,10 @@ Deterministic, and agnostic of the project: it knows the format, not the kitchen
 - Problems are listed under the tables; Import / Export messages appear under the buttons.
 
 ### cost.html (LLM generated JSON, generic code)
-Uses the engine model to estimate prices, list the boards to cut and edge, and help with assembly. Its `#cost-data` JSON holds prices (each with the shop `links` it comes from), items, notes and page settings. Texts and quantities refer to the model through placeholders, never through copied numbers: `{n:count}` (`{n:type.oven}`, `{n:tag.bins}`), `{r:rule.path}`, `{t:use}` thickness, `{m:use}` material, `{w:group.depth}` worktop, `{v:var}`, `{p:item}` price, `{q:item}` quantity, `{block.m2|edge|cut|len|qty}` cutting-list totals.
+Uses the engine model to estimate prices, list the boards to cut and edge (with a Wiercenie / wycięcia column in short codes, `LABELS.holeCode`, and a legend built from `rules.drilling` / `rules.cutouts`; also in the XLSX), and help with assembly. Its `#cost-data` JSON holds prices (each with the shop `links` it comes from), items, notes and page settings. Texts and quantities refer to the model through placeholders, never through copied numbers: `{n:count}` (`{n:type.oven}`, `{n:tag.bins}`), `{r:rule.path}`, `{t:use}` thickness, `{m:use}` material, `{w:group.depth}` worktop, `{v:var}`, `{p:item}` price, `{q:item}` quantity, `{block.m2|edge|cut|len|qty}` cutting-list totals.
 
 ### view.html (LLM generated JSON, generic code)
-Uses the engine model to render carcasses, fronts, frames, appliances and the room around them: walls, window, floor, lamps. It checks the geometry (overlaps, gaps, fronts off the line, parts sticking out) and lists the issues. Its `#view-data` JSON holds where each group stands in the room (`runs`), the room, lights, cameras, appliance and hardware sizes, used only for drawing. The shapes of the appliances themselves (an oven door, a tap) are drawing details in the code.
+Uses the engine model to render carcasses, fronts, frames, appliances and the room around them: walls, window, floor, lamps. It draws the holes of the model (layer Otwory, one colour per use, 12 mm markers for small holes) and the worktop cut-outs, checks the geometry (overlaps, gaps, fronts off the line, parts sticking out) and lists the issues. Its `#view-data` JSON holds where each group stands in the room (`runs`), the room, lights, cameras, appliance and hardware sizes, used only for drawing. The shapes of the appliances themselves (an oven door, a tap) are drawing details in the code.
 
 ## Types, tags, materials
 

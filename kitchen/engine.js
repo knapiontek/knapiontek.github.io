@@ -60,7 +60,11 @@
     edge: { front: 'przód', top: 'góra', bottom: 'dół', left: 'lewa', right: 'prawa' },
     handle: { T: 'góra', B: 'dół', L: 'lewa', R: 'prawa' },
     part: { carcass: 'korpus', back: 'plecy', drawerBox: 'szuflady', hobPanel: 'przegroda pod płytą' },
-    role: { worktop: 'blat', tall: 'zabudowa wysoka', island: 'wyspa' }
+    role: { worktop: 'blat', tall: 'zabudowa wysoka', island: 'wyspa' },
+    hole: { cup: 'puszka zawiasu', plate: 'prowadnik zawiasu', shelfPin: 'podpórka półki', runner: 'prowadnica szuflady / półki wysuwanej', sink: 'wycięcie na zlew', hob: 'wycięcie na płytę grzewczą' },
+    // short codes of the holes and cut-outs in the cutting list (its legend explains them)
+    holeCode: { cup: 'Z', plate: 'P', shelfPin: 'K', runner: 'S', sink: 'ZL', hob: 'PG' },
+    holeFrom: { front: 'od przodu', back: 'od tyłu', bottom: 'od dołu', hinge: 'od krawędzi zawiasów', left: 'od lewego końca' }
   };
   const typeLabel = type => LABELS.type[type] || type;
   const tagsLabel = words => words.map(w => LABELS.type[w] || LABELS.tag[w] || w).join(' ');
@@ -95,14 +99,22 @@
     'carcass.depth', 'carcass.wallGap', 'front.shakerRail', 'plinth.setback',
     'rails.depth', 'rails.hobFront', 'rails.hobPanelGap', 'back.inset',
     'shelf.setback', 'shelf.clearance', 'shelf.pins', 'shelf.perDoor', 'frame.depth',
-    'hinges.fromEnd', 'hinges.supportDepth', 'hinges.perDoor',
+    'hinges.fromEnd', 'hinges.supportDepth', 'hinges.aboveShelf', 'hinges.perDoor',
     'drawers.dFrom', 'drawers.D.side', 'drawers.D.back', 'drawers.M.side', 'drawers.M.back',
     'drawers.bottom.inset', 'drawers.bottom.depth', 'drawers.bottom.fromWall', 'drawers.back.inset',
     'drawers.liftAtBottom', 'drawers.liftAbove', 'drawers.inner.gap', 'drawers.inner.back', 'drawers.inner.frontDeduction',
     'legsPerCarcass', 'island.backPanel', 'worktop.overhang',
     'pullOutShelf.depth', 'pullOutShelf.clearance', 'pullOutShelf.lift', 'pullOutShelf.space', 'pullOutShelf.shelvesAbove',
-    'plasterboard.depth', 'plasterboard.studSpacing', 'plasterboard.layers'
+    'plasterboard.depth', 'plasterboard.studSpacing', 'plasterboard.layers',
+    'drilling.cup.diameter', 'drilling.cup.depth', 'drilling.cup.fromEdge',
+    'drilling.plate.diameter', 'drilling.plate.depth', 'drilling.plate.fromFront', 'drilling.plate.spacing',
+    'drilling.shelfPin.diameter', 'drilling.shelfPin.depth', 'drilling.shelfPin.fromFront', 'drilling.shelfPin.fromBack',
+    'drilling.shelfPin.belowShelf', 'drilling.shelfPin.extra', 'drilling.shelfPin.pitch',
+    'drilling.runner.diameter', 'drilling.runner.depth', 'drilling.runner.fromFront', 'drilling.runner.belowDrawer'
   ];
+
+  // cut-outs in a worktop: the carcass flag that asks for one -> rules.cutouts[flag] {width, depth, fromBack}, centred on the carcass
+  const CUTOUT_FLAGS = ['sink', 'hob'];
 
   /* ================= 2. SMALL HELPERS ================= */
 
@@ -287,7 +299,7 @@
     const counts = {
       carcasses: 0, floorCarcasses: 0, wallFixedCarcasses: 0, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
       shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
-      plasterUD: 0, plasterCD: 0, plasterEdge: 0, plinthHeight: 0, type: {}, tag: {}
+      plasterUD: 0, plasterCD: 0, plasterEdge: 0, plinthHeight: 0, drillHoles: 0, cupHoles: 0, cutouts: 0, type: {}, tag: {}
     };
 
     // ---- components: checks on one component; what cannot be placed is skipped ----
@@ -472,7 +484,7 @@
       const adjustableShelf = centre => {
         const shelfWidth = innerWidth - 2 * shelf.clearance, shelfU0 = innerU0 + shelf.clearance;
         part('adjustableShelf', 'Półka ruchoma', shelfWidth, carcassDepth - shelf.setback, carcassMaterial, 'shelves',
-          [shelfU0, shelfU0 + shelfWidth, centre - half, centre + half, carcassBack, carcassFront - shelf.setback], frontEdge(shelfWidth));
+          [shelfU0, shelfU0 + shelfWidth, centre - half, centre + half, carcassBack, carcassFront - shelf.setback], frontEdge(shelfWidth)).centre = centre;
         counts.shelvesAdjustable++;
         counts.shelfPins += shelf.pins;
       };
@@ -575,6 +587,24 @@
 
     // ---- fronts, hinges, hinge posts, drawer boxes ----
     const hingeRule = rules.hinges, drawerRule = rules.drawers;
+    // a hinge that meets a shelf (closer than half a board + hinges.aboveShelf to its centre) goes above it: to the lowest height
+    // at least hinges.aboveShelf over the shelf where its mounting-plate holes miss every shelf-pin hole (rules.drilling)
+    function hingeClearOfShelves(v, K, front, item) {
+      const plate = rules.drilling.plate, pin = rules.drilling.shelfPin;
+      const shelves = boards.filter(b => b.carcassId === K.id && (b.id === 'adjustableShelf' || b.id === 'pullOutShelf'))
+        .map(b => (b.box[2] + b.box[3]) / 2).filter(c => c > front.v0 && c < front.v1);
+      const reach = half + hingeRule.aboveShelf;
+      const hit = shelves.find(c => Math.abs(v - c) < reach);
+      if (hit === undefined) return v;
+      const samePinLine = [pin.fromFront, carcassDepth - pin.fromBack].includes(plate.fromFront);
+      const pinRows = samePinLine ? shelves.flatMap(c => { const m = c - half - pin.belowShelf; return Array.from({ length: 2 * pin.extra + 1 }, (_, k) => m + (k - pin.extra) * pin.pitch); }) : [];
+      const clear = h => shelves.every(c => Math.abs(h - c) >= reach) &&
+        [h - plate.spacing / 2, h + plate.spacing / 2].every(y => pinRows.every(p => Math.abs(y - p) >= (plate.diameter + pin.diameter) / 2 + 1));
+      let h = Math.ceil(hit + reach);
+      while (!clear(h) && h < front.v1) h++;
+      if (h > front.v1 - hingeRule.fromEnd / 2) warn(`${placeOf(item)}: zawias nad półką wychodzi poza drzwi - przesuń półkę.`, item.index);
+      return h;
+    }
     for (const G of Object.values(groups)) {
       for (const item of G.items) {
         if (!FRONT_TYPES.includes(item.type)) continue;
@@ -604,7 +634,8 @@
           const count = countByHeight(hingeRule.perDoor, front.height);
           if (count === null) warn(`${placeOf(item)}: wysokość frontu ${front.height} przekracza ostatni wiersz rules.hinges.perDoor.`, item.index);
           else {
-            front.hinges = Array.from({ length: count }, (_, j) => Math.round(front.v0 + hingeRule.fromEnd + ((front.height - 2 * hingeRule.fromEnd) * j) / (count - 1)));
+            front.hinges = Array.from({ length: count }, (_, j) => Math.round(front.v0 + hingeRule.fromEnd + ((front.height - 2 * hingeRule.fromEnd) * j) / (count - 1)))
+              .map(v => hingeClearOfShelves(v, K, front, item));
             front.hingeU = front.hingeSide === 'R' ? item.u1 - board : item.u0 + board; // on the carcass side or the hinge post
             counts.hinges += count;
           }
@@ -647,8 +678,117 @@
       }
     }
 
+    // ---- holes: hinge cups in the doors, mounting plates and shelf pins in the carcass sides and hinge posts ----
+    // a hole: kind, diameter, depth, x / y on the part (from the edges in part.holeFrom), u / v / n of its centre on the drilled face,
+    // axis it is drilled along and dir (+1 / -1) into the part
+    const drill = rules.drilling;
+    const holeAt = (part, hole) => {
+      (part.holes || (part.holes = [])).push(hole);
+      return hole;
+    };
+    for (const K of carcasses) {
+      const own = boards.filter(b => b.carcassId === K.id);
+      // horizontal boards of the carcass: a shelf pin must not land in one
+      const bands = own.filter(b => ['bottom', 'top', 'rail', 'fixedShelf', 'hobPanel'].includes(b.id)).map(b => [b.box[2], b.box[3]]);
+      const faceBoard = u => own.find(b => (b.id === 'side' || b.id === 'hingePost') && (b.box[0] === u || b.box[1] === u));
+      // mounting plates: on the side or hinge post at the hinge edge of each door, plate.spacing apart around each hinge
+      for (const front of fronts.filter(f => f.carcassId === K.id && f.hinges)) {
+        const target = faceBoard(front.hingeU);
+        if (!target) { warn(`${K.name}: brak boku lub słupka pod zawiasy frontu ${placeOf(front.item)}.`); continue; }
+        target.holeFrom = { x: 'front', y: 'bottom' };
+        const dir = target.box[1] === front.hingeU ? -1 : 1; // drilled from the face towards the inside of the board
+        for (const v of front.hinges) {
+          for (const dv of [-drill.plate.spacing / 2, drill.plate.spacing / 2]) {
+            holeAt(target, { kind: 'plate', diameter: drill.plate.diameter, depth: drill.plate.depth, x: drill.plate.fromFront, y: v + dv - target.box[2],
+              u: front.hingeU, v: v + dv, n: carcassFront - drill.plate.fromFront, axis: 'u', dir });
+          }
+        }
+        // hinge cups: in the back of the door, cup.fromEdge from its hinge edge
+        front.holeFrom = { x: 'hinge', y: 'bottom' };
+        const cupU = front.hingeSide === 'L' ? front.u0 + drill.cup.fromEdge : front.u1 - drill.cup.fromEdge;
+        for (const v of front.hinges) {
+          holeAt(front, { kind: 'cup', diameter: drill.cup.diameter, depth: drill.cup.depth, x: drill.cup.fromEdge, y: v - front.v0,
+            u: cupU, v, n: frontFace - frontThickness, axis: 'n', dir: 1 });
+          counts.cupHoles++;
+        }
+      }
+      // shelf pins: under each adjustable shelf, in both sides, at fromFront and fromBack; extra rows pitch above and below
+      const pin = drill.shelfPin, sides = own.filter(b => b.id === 'side');
+      for (const shelfBoard of own.filter(b => b.id === 'adjustableShelf')) {
+        const main = shelfBoard.centre - half - pin.belowShelf;
+        const rows = [main];
+        for (let k = 1; k <= pin.extra; k++) rows.push(main - k * pin.pitch, main + k * pin.pitch);
+        const clear = y => bands.every(([b0, b1]) => y + pin.diameter / 2 < b0 || y - pin.diameter / 2 > b1) && y > K.v0 && y < K.v1;
+        for (const y of rows.filter((y, i) => i === 0 || clear(y))) {
+          for (const side of sides) {
+            side.holeFrom = { x: 'front', y: 'bottom' };
+            const inner = side.box[0] === K.u0 ? side.box[1] : side.box[0], dir = side.box[0] === K.u0 ? -1 : 1;
+            for (const x of [pin.fromFront, carcassDepth - pin.fromBack]) {
+              holeAt(side, { kind: 'shelfPin', diameter: pin.diameter, depth: pin.depth, x, y: y - side.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
+            }
+          }
+        }
+      }
+      // drawer runners (and the pull-out shelf runners): in both sides, runner.belowDrawer under the drawer bottom, at runner.fromFront
+      const runner = drill.runner;
+      const runnerRows = [
+        ...fronts.filter(f => f.carcassId === K.id && f.drawer).flatMap(f => [f.drawer.bottomV, ...(f.drawer.inner ? [f.drawer.innerV] : [])]),
+        ...own.filter(b => b.id === 'pullOutShelf').map(b => b.box[2])
+      ];
+      for (const bottom of runnerRows) {
+        for (const side of sides) {
+          side.holeFrom = { x: 'front', y: 'bottom' };
+          const inner = side.box[0] === K.u0 ? side.box[1] : side.box[0], dir = side.box[0] === K.u0 ? -1 : 1, y = bottom - runner.belowDrawer;
+          for (const x of runner.fromFront) holeAt(side, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x, y: y - side.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
+        }
+      }
+      // holes too close on one face of one part; a hole in a horizontal board (once per kind and carcass)
+      const boardHits = new Set();
+      for (const b of own.filter(b => b.holes)) {
+        b.holes.sort((h, g) => h.y - g.y || h.x - g.x);
+        const near = (h, g) => Math.hypot(g.x - h.x, g.y - h.y) < (g.diameter + h.diameter) / 2 + 1;
+        const pairs = b.holes.flatMap((h, i) => b.holes.slice(i + 1).filter(g => near(h, g)).map(g => [h, g]));
+        // a hole in a side or a hinge post must not land where a horizontal board meets it
+        const inBoard = b.holes.find(h => h.axis === 'u' && bands.some(([b0, b1]) => h.v + h.diameter / 2 > b0 && h.v - h.diameter / 2 < b1));
+        if (inBoard && !boardHits.has(inBoard.kind)) (boardHits.add(inBoard.kind), warn(`${K.name}: ${b.name.toLowerCase()} - ${LABELS.hole[inBoard.kind]} trafia w płytę poziomą (${inBoard.x} od przodu, ${Math.round(inBoard.y)} od dołu): sprawdź reguły drilling.`));
+        for (const [h, g] of pairs.filter(([h, g], i) => pairs.findIndex(([h2, g2]) => h2.kind === h.kind && g2.kind === g.kind) === i)) {
+          warn(`${K.name}: ${b.name.toLowerCase()} - ${LABELS.hole[h.kind]} i ${LABELS.hole[g.kind]} w tym samym miejscu (${h.x} od przodu, ${Math.round(h.y)} od dołu): przesuń półkę albo zawias.`);
+        }
+        counts.drillHoles += b.holes.length;
+      }
+    }
+
+    // ---- worktop pieces and their cut-outs (sink, hob): rules.cutouts[flag], centred on the carcass, fromBack from the worktop back edge ----
+    const worktopPieces = [];
+    for (const G of Object.values(groups)) {
+      const W = worktops[G.group];
+      if (!W) continue;
+      for (const item of G.items.filter(i => i.type === 'worktop')) {
+        const fall = hasTag(item, 'fall');
+        worktopPieces.push({ group: G.group, item, name: fall ? 'Bok blatu' : 'Blat', material: materialFor.worktop, a: fall ? item.v1 - item.v0 : item.u1 - item.u0, b: W.depth, edges: [] });
+      }
+      W.cutouts = [];
+    }
+    for (const K of carcasses.filter(K => K.base)) {
+      for (const flag of CUTOUT_FLAGS.filter(f => K[f])) {
+        const cut = (rules.cutouts || {})[flag], W = worktops[K.group];
+        if (!cut) { warn(`${K.name}: brak wymiarów wycięcia w rules.cutouts.${flag}.`); continue; }
+        if (!W) continue;
+        const centre = (K.u0 + K.u1) / 2, u0 = centre - cut.width / 2, u1 = centre + cut.width / 2, n0 = W.n0 + cut.fromBack, n1 = n0 + cut.depth;
+        const piece = worktopPieces.find(p => p.group === K.group && !hasTag(p.item, 'fall') && p.item.u0 <= u0 && p.item.u1 >= u1);
+        if (!piece) { warn(`${K.name}: wycięcie (${LABELS.hole[flag]}) nie mieści się w jednym blacie.`); continue; }
+        if (u0 < K.u0 + board || u1 > K.u1 - board) warn(`${K.name}: ${LABELS.hole[flag]} ${cut.width} szersze niż wnętrze korpusu ${K.u1 - K.u0 - 2 * board}.`);
+        if (n1 > W.n1) warn(`${K.name}: ${LABELS.hole[flag]} wychodzi poza przód blatu.`);
+        const cutout = { kind: flag, width: cut.width, depth: cut.depth, u0, u1, n0, n1, x: u0 - piece.item.u0, y: cut.fromBack, carcassId: K.id };
+        W.cutouts.push(cutout);
+        piece.holeFrom = { x: 'left', y: 'back' };
+        (piece.cutouts || (piece.cutouts = [])).push(cutout);
+        counts.cutouts++;
+      }
+    }
+
     return {
-      rules, roles, warnings, issues, counts, thickness, materials, materialFor, frontThickness,
+      rules, roles, warnings, issues, counts, thickness, materials, materialFor, frontThickness, worktopPieces,
       carcassDepth, carcassBack, carcassFront, frontFace, plinthFace, // n: from the wall
       groups, carcasses, fronts, boards, frames, plinths, panels, plaster, worktops
     };
@@ -661,17 +801,29 @@
   function cutList(parts) {
     const rows = new Map();
     for (const p of parts) {
-      const key = p.name + '|' + p.a + '|' + p.b + '|' + JSON.stringify(p.edges || []) + '|' + JSON.stringify(p.lacquer || null);
+      const key = p.name + '|' + p.a + '|' + p.b + '|' + JSON.stringify(p.edges || []) + '|' + JSON.stringify(p.lacquer || null) + '|' + JSON.stringify(drillingOf(p));
       const row = rows.get(key) || { qty: 0, at: new Map() };
       row.qty++;
       if (p.at) row.at.set(p.at, (row.at.get(p.at) || 0) + 1);
       rows.set(key, row);
     }
     return [...rows].map(([key, row]) => {
-      const [name, a, b, edges, lacquer] = key.split('|');
+      const [name, a, b, edges, lacquer, drilling] = key.split('|');
       const where = [...row.at].map(([label, n]) => (n > 1 ? label + ' ×' + n : label)).join(', ');
-      return [name, Number(a), Number(b), row.qty, where, JSON.parse(edges), JSON.parse(lacquer)];
+      return [name, Number(a), Number(b), row.qty, where, JSON.parse(edges), JSON.parse(lacquer), JSON.parse(drilling)];
     });
+  }
+
+  // what a manufacturer drills or cuts in one part, in part coordinates: {from: {x, y}, holes: [[kind, diameter, depth, x, y]], cutouts: [[kind, width, depth, x, y]]}
+  // or null; mirrored parts (a left and a right side with the same pattern) give the same value, so they share a cut-list row
+  function drillingOf(part) {
+    if (!part.holes && !part.cutouts) return null;
+    const r = x => Math.round(x * 10) / 10;
+    return {
+      from: part.holeFrom,
+      holes: (part.holes || []).map(h => [h.kind, h.diameter, h.depth, r(h.x), r(h.y)]).sort((p, q) => p[0].localeCompare(q[0]) || p[4] - q[4] || p[3] - q[3]),
+      cutouts: (part.cutouts || []).map(c => [c.kind, c.width, c.depth, r(c.x), r(c.y)])
+    };
   }
 
   // where each carcass is and what it is made of; roomPosition(K) adds its place in the room (view.html)
@@ -742,7 +894,7 @@
 
   root.KitchenEngine = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PART_RULES, CARCASS_FLAGS, GRILLE_FOR, LACQUER,
-    HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, checkRules, build, cutList, carcassMap, mapJSON,
+    HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, drillingOf, checkRules, build, cutList, carcassMap, mapJSON,
     load, dataJS, fromDataJS
   };
 })(typeof window !== 'undefined' ? window : globalThis);

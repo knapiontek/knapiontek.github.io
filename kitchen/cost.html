@@ -32,6 +32,8 @@
   .grid thead th { position: sticky; top: 0; background: var(--ink); color: #fff; font-weight: bold; text-align: left; z-index: 2; }
   .grid td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .grid td.where { font-size: 12px; color: #667; }
+  .grid td.drill { font-size: 12px; color: #334; max-width: 420px; font-family: ui-monospace, Consolas, monospace; }
+  .grid td.code { font-family: ui-monospace, Consolas, monospace; font-weight: bold; }
   .grid td.muted { color: var(--ink-muted); font-size: 12px; }
   .grid td.src { color: var(--ink-muted); font-size: 12px; min-width: 260px; }
   .grid td.src.added { color: var(--added); }
@@ -279,6 +281,18 @@
    "parts": "back"
   },
   {
+   "id": "worktop",
+   "title": "BLATY – {m:worktop}: blaty i boki blatu; wycięcia na zlew (ZL) i płytę (PG) wg legendy",
+   "columns": [
+    "Element",
+    "Długość",
+    "Szerokość",
+    "Ilość"
+   ],
+   "rows": [],
+   "parts": "worktops"
+  },
+  {
    "id": "plaster",
    "title": "ZABUDOWA GK – GKBI 12,5 na CD60 / UD27, gł. {r:plasterboard.depth} (zabudowa do sufitu i pilaster grupy 2)",
    "columns": [
@@ -496,11 +510,11 @@
      "qty": "={panel.edge}*(1+{v:edgeAllowance})",
      "unit": "mb",
      "price": 6,
-     "source": "M-HM - cena do potwierdzenia; szacunek wg ciecieoklejanie.pl (usługa oklejania jak wyżej; obrzeże granatowe dobrane do lakieru)",
+     "source": "panele robi producent frontów (lakierowane.pl) - zapytać o oklejanie; szacunek wg ciecieoklejanie.pl; obrzeże granatowe dobrane do lakieru",
      "links": [
       {
-       "shop": "m-hm.pl",
-       "url": "https://m-hm.pl/pl/i/Uslugi/16"
+       "shop": "lakierowane.pl",
+       "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"
       },
       {
        "shop": "ciecieoklejanie.pl",
@@ -1376,7 +1390,7 @@
   {
    "no": "15",
    "topic": "Blaty",
-   "description": "Blat grupy 1 + bok z jednej płyty {v:worktopLength}; blat wyspy + 2 boki z jednej płyty {v:islandBoardDepth}, przycięty do {w:3.depth}. Blat stoi na bokach (łączenie na styk), {q:i25} złącza. Wycięcia na zlew i płytę wykonuje właściciel.",
+   "description": "Blat grupy 1 + bok z jednej płyty {v:worktopLength}; blat wyspy + 2 boki z jednej płyty {v:islandBoardDepth}, przycięty do {w:3.depth}. Blat stoi na bokach (łączenie na styk), {q:i25} złącza. Wycięcia na zlew i płytę: wymiary i położenie w liście cięć (blok BLATY, kolumna Wiercenie / wycięcia) – do zlecenia w hurtowni (CNC); wymiar otworu zlewu sprawdzić z szablonem IKEA.",
    "assumed": "",
    "decide": ""
   },
@@ -1495,6 +1509,39 @@ const plural = (n, one, few, many) => (n === 1 ? one : n % 10 >= 2 && n % 10 <= 
 // ABS edges of one part, e.g. "dół 80 + lewa 720"; their total length in mm
 const edgeText = edges => (edges || []).map(([side, length]) => KE.LABELS.edge[side] + ' ' + length).join(' + ');
 const edgeLength = edges => (edges || []).reduce((sum, [, length]) => sum + length, 0);
+// drilling and cut-outs of a cut-list row (row[7], from engine.js) in short codes (KE.LABELS.holeCode), explained by drillLegend():
+// "CODE x… ⊗ y…" per kind of hole: ⊗ is the Cartesian product of the x list and the y list (mm from the reference edges);
+// holes that do not form one full product are written as one product per x ("CODE x1 ⊗ y… ; x2 ⊗ y…")
+const num1 = x => String(x).replace('.', ',');
+function drillText(drilling) {
+  if (!drilling) return '';
+  const code = KE.LABELS.holeCode, out = [];
+  for (const kind of [...new Set(drilling.holes.map(h => h[0]))]) {
+    const holes = drilling.holes.filter(h => h[0] === kind);
+    const xs = [...new Set(holes.map(h => h[3]))].sort((a, b) => a - b), ys = [...new Set(holes.map(h => h[4]))].sort((a, b) => a - b);
+    const product = (x, y) => x.map(num1).join(' ') + ' ⊗ ' + y.map(num1).join(' ');
+    out.push(code[kind] + ' ' + (xs.length * ys.length === holes.length
+      ? product(xs, ys)
+      : xs.map(x => product([x], holes.filter(h => h[3] === x).map(h => h[4]).sort((a, b) => a - b))).join('; ')));
+  }
+  for (const [kind, width, depth, x, y] of drilling.cutouts) out.push(code[kind] + ' ' + width + '×' + depth + ' @ ' + num1(x) + 'x' + num1(y));
+  return out.join(' | ');
+}
+// the legend of the codes, from data.js rules.drilling and rules.cutouts: [code, text]
+function drillLegend() {
+  const L = KE.LABELS, d = model.rules.drilling, c = model.rules.cutouts || {}, code = L.holeCode;
+  const carcassFace = 'boki / słupki zawiasowe, strona wewnętrzna; x od przodu, y od dołu';
+  const hole = (kind, rule, where) => [code[kind], L.hole[kind] + ' Ø' + num1(rule.diameter) + ', gł. ' + rule.depth + ' – ' + where];
+  const rows = [
+    hole('cup', d.cup, 'fronty (drzwi), strona tylna; x od krawędzi zawiasów, y od dołu frontu'),
+    hole('plate', d.plate, carcassFace),
+    hole('shelfPin', d.shelfPin, carcassFace),
+    hole('runner', d.runner, carcassFace + ' (pozycje do potwierdzenia wg Blum)'),
+    ...Object.entries(c).map(([kind, r]) => [code[kind], L.hole[kind] + ' ' + r.width + ' × ' + r.depth + ' – blat; x od lewego końca (patrząc od przodu), y od tylnej krawędzi; wymiar sprawdzić z szablonem producenta'])
+  ];
+  rows.push(['Zapis', 'KOD x… ⊗ y…: iloczyn kartezjański – otwór w każdym x dla każdego y (np. K 37 513 ⊗ 353 1010 = 4 otwory); wycięcie: KOD szer.×gł. @ x x y lewego tylnego narożnika (np. PG 560×490 @ 176x54); wymiary w mm']);
+  return rows;
+}
 // finished edges of one piece per side, as an order form for the board supplier has them: [edges along the length, edges along the width],
 // 0, 1 or 2 each. ABS edges (boards, panels) come from engine.js as [side, length]; lacquered edges (fronts, frames, plinth) as {long, short}.
 // (row: [name, length, width, qty, where, ABS edges, lacquered edges]; fronts are height × width, so the long side can be either)
@@ -1533,7 +1580,8 @@ function blockRows(parts) {
     frames: () => list(model.frames),
     plinths: () => list(model.plinths.map(p => ({ ...p, name: 'Cokół' }))),
     panels: () => list(model.panels),
-    plaster: () => list(model.plaster)
+    plaster: () => list(model.plaster),
+    worktops: () => list(model.worktopPieces)
   };
   return PARTS[parts] ? PARTS[parts]() : list(model.boards.filter(b => b.material === model.materialFor[parts]));
 }
@@ -1760,17 +1808,22 @@ function renderEstimate() {
 function renderCuttingList() {
   const totals = blockTotals(), html = [];
   for (const block of COST.blocks) {
-    html.push(`<tr class="blk"><td colspan="10">${esc(fill(block.title))}</td></tr>`);
+    html.push(`<tr class="blk"><td colspan="11">${esc(fill(block.title))}</td></tr>`);
     // as an order form: each size followed by the number of finished edges along it (ABS or lacquer)
     const [label, size1, size2, qtyLabel] = block.columns.map(esc);
-    html.push(`<tr class="bh"><td>${label}</td><td>${size1} [mm]</td><td>Krawędź</td><td>${size2} [mm]</td><td>Krawędź</td><td>m²</td><td>${qtyLabel}</td><td>ABS razem [mb]</td><td title="(długość + szerokość) × ilość: długość cięcia w hurtowni – wyceniona w pozycji Cięcie płyt">Cięcia [mb]</td><td title="nazwa korpusu, inaczej G grupa [kolumna]">Gdzie</td></tr>`);
+    html.push(`<tr class="bh"><td>${label}</td><td>${size1} [mm]</td><td>Krawędź</td><td>${size2} [mm]</td><td>Krawędź</td><td>m²</td><td>${qtyLabel}</td><td>ABS razem [mb]</td><td title="(długość + szerokość) × ilość: długość cięcia w hurtowni – wyceniona w pozycji Cięcie płyt">Cięcia [mb]</td><td title="otwory i wycięcia jednej części, kody w legendzie nad tabelą; wartości z data.js (rules.drilling, rules.cutouts)">Wiercenie / wycięcia</td><td title="nazwa korpusu, inaczej G grupa [kolumna]">Gdzie</td></tr>`);
     block.rows.forEach((row, i) => {
       const t = totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
       const cell = value => `<td class="num" title="Obliczone przez engine.js z data.js – zmiany projektu w design.html">${value}</td>`;
-      html.push(`<tr><td>${esc(row[0])}</td>${cell(row[1])}${cell(alongLength)}${cell(row[2])}${cell(alongWidth)}<td class="num">${fmt(t.m2, 3)}</td>${cell(row[3])}<td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="where">${esc(row[4] || '')}</td></tr>`);
+      html.push(`<tr><td>${esc(row[0])}</td>${cell(row[1])}${cell(alongLength)}${cell(row[2])}${cell(alongWidth)}<td class="num">${fmt(t.m2, 3)}</td>${cell(row[3])}<td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="drill">${esc(drillText(row[7]))}</td><td class="where">${esc(row[4] || '')}</td></tr>`);
     });
     const t = totals[block.id], hasEdging = t.rows.some(r => r.edge != null), hasCutting = SETTINGS.cutBlocks.includes(block.id);
-    html.push(`<tr class="sum"><td>Razem</td><td></td><td></td><td></td><td></td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.qty}</td><td class="num">${hasEdging ? fmt(t.edge) : ''}</td><td class="num">${hasCutting ? fmt(t.cut) : ''}</td><td></td></tr>`);
+    html.push(`<tr class="sum"><td>Razem</td><td></td><td></td><td></td><td></td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.qty}</td><td class="num">${hasEdging ? fmt(t.edge) : ''}</td><td class="num">${hasCutting ? fmt(t.cut) : ''}</td><td></td><td></td></tr>`);
+  }
+  // legend of the drilling codes, under the last block
+  if (model) {
+    html.push(`<tr class="blk"><td colspan="11">WIERCENIE / WYCIĘCIA – legenda kolumny</td></tr>`);
+    drillLegend().forEach(([code, text]) => html.push(`<tr><td class="code">${esc(code)}</td><td colspan="10">${esc(text)}</td></tr>`));
   }
   document.getElementById('cuttingBody').innerHTML = html.join('');
 }
@@ -1864,13 +1917,14 @@ function buildWorkbook() {
     cutting.push([str(fill(block.title))]);
     // as an order form: each size followed by the number of finished edges along it
     const [labelCell, size1, size2, qtyCell] = block.columns;
-    cutting.push([str(labelCell), str(size1 + ' [mm]'), str('Krawędź'), str(size2 + ' [mm]'), str('Krawędź'), str('m²'), str(qtyCell), str('ABS razem [mb]'), str('Cięcia [mb]'), str('Gdzie')]);
+    cutting.push([str(labelCell), str(size1 + ' [mm]'), str('Krawędź'), str(size2 + ' [mm]'), str('Krawędź'), str('m²'), str(qtyCell), str('ABS razem [mb]'), str('Cięcia [mb]'), str('Wiercenie / wycięcia (legenda na dole)'), str('Gdzie')]);
     const first = cutting.length + 1;
     block.rows.forEach((row, i) => {
       const [, A, B, qty] = row, r = cutting.length + 1, t = result.totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
       const line = [str(row[0]), num(A), num(alongLength), num(B), num(alongWidth), formula(`B${r}*D${r}*G${r}/1000000`, t.m2), num(qty)];
       line.push(t.edge != null ? formula(`${edgeLength(row[5])}*G${r}/1000`, t.edge) : str(''));
       line.push(SETTINGS.cutBlocks.includes(block.id) ? formula(`(B${r}+D${r})*G${r}/1000`, t.cut) : str(''));
+      line.push(str(drillText(row[7])));
       line.push(str(row[4] || ''));
       cutting.push(line);
     });
@@ -1879,6 +1933,7 @@ function buildWorkbook() {
     blockTotalRow[block.id] = totalRow;
     cutting.push([]);
   }
+  cutting.push([str('WIERCENIE / WYCIĘCIA – legenda kolumny J')], ...drillLegend().map(([code, text]) => [str(code), str(text)]));
 
   // sheet "Notes"
   const notes = [[str('Notatki – pytania otwarte / założenia')], [str('Pozycje kosztorysu odsyłają tu przez „patrz notatka N”.')], [], ['Lp.', 'Temat', 'Opis', 'Przyjęte w kosztorysie', 'Do decyzji'].map(str)];

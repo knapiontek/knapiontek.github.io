@@ -51,6 +51,7 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color
 .chips button[aria-pressed="false"]{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 60%,transparent)}
 .lgrp{display:grid;grid-template-columns:96px 1fr;gap:6px 8px;align-items:start;margin-top:10px}
 #layers .lgrp:first-child{margin-top:0}
+.holes-legend{font-size:12px;margin-top:8px;color:var(--muted)}
 .lgrp>button.gh{border:0;background:none;padding:5px 0;text-align:left;font-size:12px;font-weight:600;color:var(--ink);border-radius:4px}
 .lgrp>button.gh[aria-pressed="false"]{color:var(--muted)}
 .lgrp>button.gh[aria-pressed="mixed"]{color:var(--muted)}
@@ -272,8 +273,7 @@ body.shut .toggle{display:flex}
    "handle": {"axis": 28, "cupLength": 89, "barLength": 160, "sideHeight": 260},
    "open": {"door": 105, "fridge": 95, "dishwasher": 84, "drawer": 440},
    "leg": {"radius": 15, "footRadius": 24, "footHeight": 12, "fromSide": 45, "fromBack": 45, "fromFront": 100},
-   "shelfPin": {"fromBack": 40, "fromFront": 70},
-   "hinge": {"cup": 35, "cupDepth": 11.5, "cupFromEdge": 22.5},
+      "hinge": {"cupDepth": 11.5},
    "drawer": {"runner": 13, "sideFromCarcass": 22, "sideThickness": 15.5, "n0": 50, "n1": 548, "innerSide": 84},
    "bins": {"count": 3, "height": 235},
    "appliance": {"inset": 12, "bodyGap": 12, "bodySide": 22},
@@ -362,10 +362,8 @@ const shakerRail = rules.front.shakerRail; // width of the shaker frame of a fro
 const room = SCENE.room, ceiling = room.ceiling;
 const rightWall = SCENE.runs[room.rightWallRun].x; // the wall line (n = 0) of the run that stands against the right wall
 const worktopOf = group => model.worktops[group] || { n0: 0, n1: 0, depth: 0 }; // n0 back edge, n1 front edge
-const sinkCarcass = model.carcasses.find(K => K.sink); // its worktop gets the sink cut-out
+const sinkCarcass = model.carcasses.find(K => K.sink); // the run with the sink
 const sinkRun = sinkCarcass ? runOfGroup[sinkCarcass.group] : null;
-const sinkWorktop = sinkCarcass && itemsOfRun[sinkRun].find(i =>
-  i.type === 'worktop' && i.v0 === sinkCarcass.v1 && i.col <= sinkCarcass.col + sinkCarcass.span - 1 && i.col + i.span - 1 >= sinkCarcass.col);
 const worktopTopOf = run => worktopOf(groupOfRun[run]).v1;
 
 // [u0, u1, n0, n1] of a run -> [x0, x1, z0, z1] in the room
@@ -547,6 +545,9 @@ function texture(canvas, repeatX, repeatY) {
 const METALS = SCENE.metals, COLORS = SCENE.colors, handleMetal = METALS[SCENE.handleMetal];
 const standard = options => new THREE.MeshStandardMaterial(options);
 const physical = options => new THREE.MeshPhysicalMaterial(options);
+// colour of the holes by kind (engine.js hole.kind): hinges (cup, mounting plate), shelf pins, runners; [hex, legend label]
+const HOLE_COLORS = { hinge: ['#f26b1d', 'zawiasy'], shelfPin: ['#22b35e', 'półki'], runner: ['#2f8fe0', 'szuflady, prowadnice'] };
+const holeUse = kind => (kind === 'cup' || kind === 'plate' ? 'hinge' : kind);
 const MAT = {
   oak: physical({ map: texture(oakCanvas(), 1 / 4.8, 1 / 0.6), roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, envMapIntensity: 0.5 }),
   wall: standard({ color: linear(COLORS.wall), roughness: 0.95, envMapIntensity: 0.45 }),
@@ -555,6 +556,7 @@ const MAT = {
   steel: standard({ color: linear(0xd2d5d8), metalness: 1, roughness: 0.3 }),
   glassBlack: physical({ color: linear(0x060708), roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.1 }),
   ovenInside: standard({ color: linear(0x23262a), roughness: 0.6, metalness: 0.3 }),
+  // drilled holes: a coloured disc on the face, one colour per use (HOLE_COLORS, also the legend under the layers)
   smoke: physical({ color: linear(0x0a0b0d), roughness: 0.04, transparent: true, opacity: 0.62, clearcoat: 1, envMapIntensity: 1.2, depthWrite: false }),
   ring: new THREE.MeshBasicMaterial({ color: linear(0x5b5f66) }),
   sky: new THREE.MeshBasicMaterial({ map: texture(skyCanvas(), 1, 1) }),
@@ -620,7 +622,7 @@ function edgeLook(m, edges, code) {
 
 /* ---------- layers ---------- */
 const LAYERS = [ // [layer group label, [[layer id, label], ...]]
-  ['Korpusy', [['carcasses', 'Płyty'], ['backs', 'Plecy HDF'], ['shelves', 'Półki'], ['drawers', 'Szuflady'], ['hardware', 'Zawiasy, prowadnice'], ['legs', 'Nóżki']]],
+  ['Korpusy', [['carcasses', 'Płyty'], ['backs', 'Plecy HDF'], ['shelves', 'Półki'], ['drawers', 'Szuflady'], ['hardware', 'Zawiasy, prowadnice'], ['holes', 'Otwory'], ['legs', 'Nóżki']]],
   ['Fronty', [['fronts', 'Fronty'], ['handles', 'Uchwyty'], ['frames', 'Listwy'], ['panel', 'Panele'], ['plinth', 'Cokół']]],
   ['Blat', [['worktops', 'Blaty'], ['wallpanel', 'Panel ścienny'], ['sink', 'Zlew, bateria'], ['trap', 'Syfon']]],
   ['AGD', [['hob', 'Płyta grzewcza'], ['hood', 'Okap'], ['ovens', 'Piekarnik, mikrofalówka'], ['fridge', 'Lodówka'], ['dishwasher', 'Zmywarka']]],
@@ -784,6 +786,7 @@ function movingPart(run, opening, pu, pv, pn) {
   pivot.add(inner);
   const layers = {};
   for (const id of ['fronts', 'handles', 'hardware', 'drawers', 'fridge', 'dishwasher']) layers[id] = layerGroup(inner, id);
+  layers.holes = layerGroup(layers.fronts, 'holes'); // holes in a door: shown with the door and the Otwory layer
   // progress 0 closed .. 1 open; parent / child: an inner drawer and the drawer whose front covers it
   const mover = { run, opening, pivot, layers, progress: 0, goal: 0, z0: pivot.position.z, sign: 1, label: '' };
   pivot.userData.mover = mover;
@@ -854,13 +857,11 @@ const sinkU0 = sinkU - sinkData.outer[0] / 2, sinkU1 = sinkU + sinkData.outer[0]
 const bowlU0 = sinkU - sinkData.bowl[0] / 2, bowlU1 = sinkU + sinkData.bowl[0] / 2, bowlN0 = sinkData.bowlFromWall, bowlN1 = bowlN0 + sinkData.bowl[1];
 const sinkTop = sinkRun ? worktopTopOf(sinkRun) : 0;
 const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowlDepth, tapN = sinkData.tapFromWall;
-// worktop with the sink cut-out: four pieces around the bowl
-// the sink worktop: one board with the cut-out (an outline with a hole, extruded to the worktop thickness), no joints
-function worktopWithSinkCutOut(uStart, uEnd, v0, v1) {
-  const W = worktopOf(groupOfRun[sinkRun]);
-  const a = bowlU0 - sinkWall, b = bowlU1 + sinkWall, c = bowlN0 - sinkWall, d = bowlN1 + sinkWall;
+// a worktop with cut-outs (engine.js: sink, hob from data.js rules.cutouts): one board, an outline with holes extruded to the worktop thickness
+function worktopWithCutOuts(run, uStart, uEnd, v0, v1, cutouts) {
+  const W = worktopOf(groupOfRun[run]);
   const outline = new THREE.Shape([new THREE.Vector2(uStart, W.n0), new THREE.Vector2(uEnd, W.n0), new THREE.Vector2(uEnd, W.n1), new THREE.Vector2(uStart, W.n1)]);
-  outline.holes.push(new THREE.Path([new THREE.Vector2(a, c), new THREE.Vector2(a, d), new THREE.Vector2(b, d), new THREE.Vector2(b, c)]));
+  for (const c of cutouts) outline.holes.push(new THREE.Path([new THREE.Vector2(c.u0, c.n0), new THREE.Vector2(c.u0, c.n1), new THREE.Vector2(c.u1, c.n1), new THREE.Vector2(c.u1, c.n0)]));
   const geometry = new THREE.ExtrudeGeometry(outline, { depth: v1 - v0, bevelEnabled: false });
   geometry.rotateX(Math.PI / 2); // outline in (u, n), extruded downwards: (u, n, depth) -> (u, -depth, n)
   geometry.translate(0, v1, 0);
@@ -868,7 +869,7 @@ function worktopWithSinkCutOut(uStart, uEnd, v0, v1) {
   const m = new THREE.Mesh(geometry, worktopMaterial);
   m.castShadow = m.receiveShadow = true;
   m.userData.grain = 'x';
-  runLayer[sinkRun].worktops.add(m);
+  runLayer[run].worktops.add(m);
   worldUVMeshes.push(m);
   meshes.push(m);
 }
@@ -883,7 +884,8 @@ function buildRun(run) {
     const { u0, u1, v0, v1, type, span, col } = item, height = v1 - v0, firstMesh = meshes.length;
     if (type === 'worktop') {
       target = roomLayer.worktops;
-      if (item === sinkWorktop) { worktopWithSinkCutOut(u0, u1, v0, v1); continue; }
+      const cutouts = (worktopOf(groupOfRun[run]).cutouts || []).filter(c => c.u0 >= u0 && c.u1 <= u1 && !hasTag(item, 'fall'));
+      if (cutouts.length) { worktopWithCutOuts(run, u0, u1, v0, v1, cutouts); continue; }
       const W = worktopOf(groupOfRun[run]), m = runBox(run, u0, u1, v0, v1, W.n0, W.n1, worktopMaterial);
       if (m && hasTag(item, 'fall')) m.userData.grain = 'y'; // worktop fall: grain upright
     } else if (type === 'frame') { // on edge, frame.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
@@ -1045,15 +1047,28 @@ function registerPart(K, m, board) {
 }
 const counts = model.counts;
 
+const holeMaterial = Object.fromEntries(Object.entries(HOLE_COLORS).map(([use, [hex]]) => [use, standard({ color: linear(parseInt(hex.slice(1), 16)), emissive: linear(parseInt(hex.slice(1), 16)), emissiveIntensity: 0.35, roughness: 0.8 })]));
+// the holes engine.js drilled in a part (data.js rules.drilling): a coloured disc on the drilled face (HOLE_COLORS), half a millimetre proud,
+// so it shows on the board; the Otwory layer turns them on and off
+function drawHoles(P, part) {
+  for (const h of part.holes || []) {
+    const out = -h.dir * 0.6; // centre 0.6 mm outside the face: the 1 mm disc never shares a plane with the board or the hinge cup
+    const at = { u: [h.u + out, h.v, h.n], n: [h.u, h.v, h.n + out] }[h.axis];
+    const marker = Math.max(h.diameter / 2, 6); // small holes drawn as 12 mm markers so they can be found; real sizes are in the cutting list
+    const m = localCylinder(P, marker, 1, holeMaterial[holeUse(h.kind)], ...at, h.axis === 'u' ? 'x' : 'z', 32);
+    m.castShadow = m.receiveShadow = false; // a received shadow would stripe the disc
+  }
+}
 function buildCarcass(K) {
   const run = K.run, { u0, u1, v0 } = K, innerU0 = u0 + board, innerU1 = u1 - board;
   for (const b of model.boards) {
     if (b.carcassId !== K.id || b.frontId || b.id === 'pullOutShelf') continue; // drawer boards and the pull-out shelf move: built with the fronts
     registerPart(K, edgeLook(localBox(runLayer[run][b.layer], ...b.box, BOARD[b.material]), b.edges, b.material), b);
-    if (b.id === 'adjustableShelf') { // 4 shelf pins, at the ends of the shelf (the carcass sides)
-      const y = (b.box[2] + b.box[3]) / 2;
+    drawHoles(runLayer[run].holes, b);
+    if (b.id === 'adjustableShelf') { // 4 shelf pins under the shelf, in the holes data.js places (rules.drilling.shelfPin)
+      const pin = rules.drilling.shelfPin, y = b.box[2] - pin.belowShelf;
       for (const [x0, x1] of [[b.box[0] - 1, b.box[0] + 7], [b.box[1] - 7, b.box[1] + 1]]) {
-        for (const n of [carcassBack + fittings.shelfPin.fromBack, carcassFront - fittings.shelfPin.fromFront]) localBox(runLayer[run].shelves, x0, x1, y - 14, y - 9, n, n + 5, MAT.zinc, true);
+        for (const n of [carcassBack + pin.fromBack, carcassFront - pin.fromFront]) localBox(runLayer[run].shelves, x0, x1, y - pin.diameter / 2, y + pin.diameter / 2, n - pin.diameter / 2, n + pin.diameter / 2, MAT.zinc, true);
       }
     }
   }
@@ -1140,11 +1155,13 @@ function buildFront(run, item) {
   const size = Math.round(fw) + ' × ' + Math.round(fh);
 
   if (opening === 'door' && K) {
-    const H = fittings.hinge, count = front.hinges.length, side = front.hingeU, dir = hingeSide === 'L' ? 1 : -1, cupU = hingeSide === 'L' ? fu0 + H.cupFromEdge : fu1 - H.cupFromEdge;
+    const H = fittings.hinge, cup = rules.drilling.cup, count = front.hinges.length, side = front.hingeU, dir = hingeSide === 'L' ? 1 : -1;
+    const cupU = hingeSide === 'L' ? fu0 + cup.fromEdge : fu1 - cup.fromEdge;
+    drawHoles(mover.layers.holes, front);
     for (const v of front.hinges) {
       localBox(runLayer[run].hardware, ...ordered(side, side + dir * 10), v - 22, v + 22, carcassFront - 75, carcassFront - 30, MAT.zinc); // mounting plate
       localBox(runLayer[run].hardware, ...ordered(side + dir * 3, side + dir * 20), v - 9, v + 9, carcassFront - 70, carcassFront - 2, MAT.zinc); // hinge arm
-      localCylinder(mover.layers.hardware, H.cup / 2, H.cupDepth, MAT.zinc, cupU, v, frontFace - frontThickness + H.cupDepth / 2, 'z', 24); // cup in the front
+      localCylinder(mover.layers.hardware, cup.diameter / 2 - 0.5, H.cupDepth, MAT.zinc, cupU, v, frontFace - frontThickness + H.cupDepth / 2, 'z', 24); // cup in the front
       localCylinder(mover.layers.hardware, 24, 1.5, MAT.zinc, cupU, v, carcassFront - 1, 'z', 24); // cup flange, 0.2 mm off the carcass
     }
     mover.label = 'Drzwi ' + size + ' · zawiasy Blum: ' + count;
@@ -1253,8 +1270,12 @@ function geometryCheck() {
   }
   for (const mover of movers) {
     if (mover.parent) continue;
-    const g = mover.layers.fronts;
-    if (g.children.length) parts.push({ kind: 'front', name: mover.label, box: boxOf(g), object: g });
+    // the door without its hole markers (drawing aids just off its back face)
+    const g = mover.layers.fronts, solid = g.children.filter(c => c !== mover.layers.holes);
+    if (!solid.length) continue;
+    const box = new THREE.Box3();
+    for (const c of solid) box.expandByObject(c);
+    parts.push({ kind: 'front', name: mover.label, box: [box.min.x * 1000, box.max.x * 1000, box.min.y * 1000, box.max.y * 1000, box.min.z * 1000, box.max.z * 1000], object: g });
   }
   const overlapOn = (a, b, axis) => Math.min(a[2 * axis + 1], b[2 * axis + 1]) - Math.max(a[2 * axis], b[2 * axis]);
   // an issue: k = kind of issue, a / b = the parts (names with their real sizes), v = the amount
@@ -1674,7 +1695,8 @@ document.getElementById('palette').addEventListener('click', e => { const b = e.
 /* ---------- layer chips ---------- */
 const layerPanel = document.getElementById('layers'), layerOn = {};
 layerPanel.innerHTML = LAYERS.map(([label, layers], i) => '<div class="lgrp"><button class="gh" data-g="' + i + '" aria-pressed="true">' + label + '</button><div class="row chips">' +
-  layers.map(([id, name]) => '<button data-l="' + id + '" aria-pressed="true">' + name + '</button>').join('') + '</div></div>').join('');
+  layers.map(([id, name]) => '<button data-l="' + id + '" aria-pressed="true">' + name + '</button>').join('') + '</div></div>').join('') +
+  '<div class="holes-legend">Otwory: ' + Object.values(HOLE_COLORS).map(([hex, label]) => '<span style="color:' + hex + '">●</span> ' + label).join(' &nbsp;') + '</div>';
 function syncLayerGroups() {
   layerPanel.querySelectorAll('[data-g]').forEach(b => {
     const ids = LAYERS[b.dataset.g][1].map(([id]) => id), on = ids.filter(id => layerOn[id]).length;

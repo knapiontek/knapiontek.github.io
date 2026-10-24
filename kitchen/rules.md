@@ -74,7 +74,21 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Wyspa** ma panel tylny między skrajnymi kolumnami, od podłogi do góry korpusów.
 - **Cokół** jest cofnięty za fronty.
 
-## 5. Krawędzie
+## 5. Otwory i wycięcia
+
+Średnice, głębokości i odległości otworów oraz wymiary wycięć ustala się w danych projektu (`drilling`, `cutouts`).
+
+- **Puszka zawiasu:** w tylnej stronie drzwi, przy każdym zawiasie, w stałej odległości od krawędzi zawiasów.
+- **Prowadnik zawiasu:** dwa otwory na wewnętrznej stronie boku albo słupka zawiasowego, w stałej odległości od przodu, symetrycznie wokół wysokości zawiasu.
+- **Podpórki półki ruchomej:** pod każdą półką, w obu bokach, przy przodzie i przy tyle; dodatkowe rzędy w stałym odstępie powyżej i poniżej, ale nie w płycie poziomej (wieniec, trawers, półka stała).
+- **Prowadnice szuflad i półki wysuwanej:** w obu bokach, w stałej odległości pod dnem szuflady (także szuflady wewnętrznej) i pod półką wysuwaną, w pozycjach od przodu podanych w danych.
+- **Zawias nad półką:** zawias, który wypada przy półce, przechodzi nad nią: najniżej, gdzie jest co najmniej ustalony odstęp nad półką i gdzie otwory prowadnika nie trafiają w otwory podpórek.
+- Otwory, które nachodzą na siebie na jednej części albo trafiają w płytę poziomą, są zgłaszane.
+- **Wycięcia w blacie:** na zlew i płytę grzewczą, nad korpusem z tagiem zlew lub płyta grzewcza, na środku korpusu, w stałej odległości od tylnej krawędzi blatu; wycięcie musi zmieścić się w jednym blacie i we wnętrzu korpusu.
+- Lista cięć podaje otwory każdej części skrótami z legendą: Z puszka zawiasu, P prowadnik zawiasu, K podpórka półki, S prowadnica, ZL wycięcie na zlew, PG wycięcie na płytę; zapis „KOD x… ⊗ y…” to iloczyn kartezjański (otwór w każdym x dla każdego y), w mm od krawędzi z legendy.
+- Widok 3D pokazuje otwory kolorami (warstwa Otwory): zawiasy pomarańczowe, półki zielone, prowadnice niebieskie.
+
+## 6. Krawędzie
 
 - **Lakier:**
   - fronty: obie strony i wszystkie krawędzie;
@@ -87,12 +101,12 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **ABS na panelu** jest na każdej krawędzi przy froncie, który się otwiera.
 - **Lista cięć** podaje przy każdym wymiarze liczbę wykończonych krawędzi wzdłuż niego (0, 1 lub 2), jak formularz hurtowni. Opis montażu mówi, gdzie jest każda krawędź z ABS.
 
-## 6. Kontrole
+## 7. Kontrole
 
 - Błędy w danych są zgłaszane, np. brak typu, tag do złego typu, nakładanie się elementów, brak szczelin albo strony zawiasów, element poza kolumnami.
 - Element bez jednego typu, poza kolumnami albo nachodzący na inny jest pomijany.
 - Widok 3D pokazuje kolizje, szczeliny do 3 mm przy listwach i panelach, części wystające oraz fronty, które o kilka mm nie trzymają linii.
 
-## 7. Kosztorys (szacunek, nie zasady)
+## 8. Kosztorys (szacunek, nie zasady)
 
 Odpad płyt, naddatek na oklejanie, rezerwa, rozmiary arkuszy i ceny są ustawieniami kosztorysu. Każda cena ma link do sklepu i obowiązuje na dzień podany w nagłówku, do czasu oferty.
