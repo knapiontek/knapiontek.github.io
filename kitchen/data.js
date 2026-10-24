@@ -19,8 +19,16 @@ window.KITCHEN_DATA = {
   "shelf": {"setback": 18, "clearance": 1, "pins": 4, "perDoor": [[720, 1], [99999, 3]], "ventGap": 150},
   "frame": {"depth": 100},
   "hinges": {"fromEnd": 100, "supportDepth": 80, "aboveShelf": 30, "perDoor": [[900, 2], [1600, 3], [99999, 4]]},
-  "drilling": {"cup": {"diameter": 35, "depth": 13, "fromEdge": 22}, "plate": {"diameter": 2.5, "depth": 10, "fromFront": 37, "spacing": 32}, "shelfPin": {"diameter": 5, "depth": 10, "fromFront": 37, "fromBack": 37, "belowShelf": 3, "extra": 0, "pitch": 32}, "runner": {"diameter": 2.5, "depth": 10, "fromFront": [37, 261, 485], "belowDrawer": 10}},
-  "cutouts": {"sink": {"width": 680, "depth": 420, "fromBack": 110}, "hob": {"width": 560, "depth": 490, "fromBack": 54}},
+  "drilling": {
+   "cup": {"diameter": 35, "depth": 13, "fromEdge": 22},
+   "plate": {"diameter": 2.5, "depth": 10, "fromFront": 37, "spacing": 32},
+   "shelfPin": {"diameter": 5, "depth": 10, "fromFront": 37, "fromBack": 37, "belowShelf": 3, "extra": 0, "pitch": 32},
+   "runner": {"diameter": 2.5, "depth": 10, "fromFront": [37, 261, 485], "belowDrawer": 10}
+  },
+  "cutouts": {
+   "sink": {"width": 680, "depth": 420, "fromBack": 110},
+   "hob": {"width": 560, "depth": 490, "fromBack": 54}
+  },
   "drawers": {"material": "grey16", "dFrom": 350, "D": {"side": 224, "back": 199}, "M": {"side": 83, "back": 84}, "bottom": {"inset": 75, "depth": 476, "fromWall": 52}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "back": 84, "frontDeduction": 132}},
   "legsPerCarcass": 4,
   "island": {"backPanel": true},
@@ -91,7 +99,7 @@ window.KITCHEN_DATA = {
   {"g": 2, "c": 5, "s": 1, "type": "cabinet", "k": "K6", "h": 1200, "hd": "R", "hg": "L", "gaps": [3, 3, 2, 1]},
   {"g": 2, "c": 5, "s": 1, "type": "cabinet", "k": "K7", "h": 480, "hd": "B", "hg": "L", "gaps": [3, 3, 3, 1]},
   {"g": 2, "c": 6, "s": 1, "type": "frame", "h": 2400},
-  {"g": 2, "c": 7, "s": 1, "type": "cabinet", "k": "K8", "h": 520, "hd": "T", "hg": "L", "gaps": [3, 3, 0, 0]},
+  {"g": 2, "c": 7, "s": 1, "type": "cabinet", "k": "K8", "h": 520, "hd": "T", "hg": "L", "gaps": [3, 3, 3, 0]},
   {"g": 2, "c": 7, "s": 1, "type": "oven", "k": "K8", "h": 600, "note": "Bosch HBA534BB3"},
   {"g": 2, "c": 7, "s": 1, "type": "micro", "k": "K8", "h": 382, "note": "Bosch BFL623MB3"},
   {"g": 2, "c": 7, "s": 1, "type": "cabinet", "k": "K8", "h": 418, "hd": "B", "hg": "L", "gaps": [3, 3, 2, 0]},
