@@ -102,7 +102,7 @@ window.KITCHEN_DATA = {
   {"g": 2, "c": 7, "s": 1, "type": "cabinet", "k": "K8", "h": 520, "hd": "T", "hg": "L", "gaps": [3, 3, 3, 0]},
   {"g": 2, "c": 7, "s": 1, "type": "oven", "k": "K8", "h": 600, "note": "Bosch HBA534BB3"},
   {"g": 2, "c": 7, "s": 1, "type": "micro", "k": "K8", "h": 382, "note": "Bosch BFL623MB3"},
-  {"g": 2, "c": 7, "s": 1, "type": "cabinet", "k": "K8", "h": 418, "hd": "B", "hg": "L", "gaps": [3, 3, 2, 0]},
+  {"g": 2, "c": 7, "s": 1, "type": "cabinet", "k": "K8", "h": 418, "hd": "B", "hg": "L", "gaps": [3, 3, 2, 3]},
   {"g": 2, "c": 7, "s": 1, "type": "cabinet", "k": "K9", "h": 480, "hd": "B", "hg": "L", "gaps": [3, 3, 3, 1]},
   {"g": 2, "c": 8, "s": 1, "type": "frame", "h": 2400},
   {"g": 2, "c": 9, "s": 1, "type": "cabinet", "tags": "freezer", "k": "K10", "h": 720, "hd": "T", "hg": "R", "gaps": [3, 3, 2, 0], "note": "Bosch KIS86AFE0"},
