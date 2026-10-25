@@ -38,9 +38,9 @@ window.KITCHEN_DESIGN = {
  },
  "notes": [
   ["Projekt", "Kuchnia – Jaworze", "grupa 1 + grupa 2 tworzą L"],
-  ["group 1", "worktop", "pod oknem"],
-  ["group 2", "tall", "zabudowa wysoka przy prawej ścianie"],
-  ["group 3", "island", "wolnostojąca, hokery od tyłu"],
+  ["Grupa 1", "Blat", "pod oknem"],
+  ["Grupa 2", "Zabudowa wysoka", "zabudowa wysoka przy prawej ścianie"],
+  ["Grupa 3", "Wyspa", "wolnostojąca, hokery od tyłu"],
   ["Lokalizacja", "Jaworze, powiat bielski", ""],
   ["Zakres", "Tylko materiały, montaż własny", "Ceny: średnie rynkowe, PLN brutto"],
   ["Styl", "Shaker, lakierowany", "Fronty nakładane; listwy między frontami dają wygląd frontów wpuszczanych"],
@@ -116,7 +116,7 @@ window.KITCHEN_DESIGN = {
   {"group": 2, "column": 13, "span": 1, "type": "board", "height": 2740},
 
   {"group": 3, "column": 1, "span": 1, "type": "worktop", "tags": "fall", "height": 870},
-  {"group": 3, "column": 1, "span": 7, "type": "worktop", "height": 38},
+  {"group": 3, "column": 1, "span": 7, "type": "worktop", "tags": "island", "height": 38},
   {"group": 3, "column": 2, "span": 1, "type": "frame", "height": 870},
   {"group": 3, "column": 3, "span": 3, "type": "plinth", "height": 150},
   {"group": 3, "column": 3, "span": 1, "type": "drawer", "carcass": "K14", "height": 420, "handle": "T", "gaps": [3, 3, 2, 0]},

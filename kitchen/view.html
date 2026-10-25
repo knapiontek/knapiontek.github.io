@@ -292,7 +292,7 @@ const RUN_IDS = Object.keys(SCENE.runs).filter(r => r !== 'about');
 const groupOfRun = Object.fromEntries(RUN_IDS.map(r => [r, SCENE.runs[r].group]));
 const runOfGroup = Object.fromEntries(RUN_IDS.map(r => [SCENE.runs[r].group, r]));
 const runName = Object.fromEntries(RUN_IDS.map(r => [r, SCENE.runs[r].name]));
-const freeStanding = Object.fromEntries(RUN_IDS.map(r => [r, model.roles[groupOfRun[r]] === 'island'])); // no wall behind an island
+const freeStanding = Object.fromEntries(RUN_IDS.map(r => [r, !!(model.groups[groupOfRun[r]] || {}).island])); // no wall behind an island
 const itemsOfRun = {}, runLength = {};
 for (const r of RUN_IDS) {
   const g = model.groups[groupOfRun[r]] || { widths: [], items: [] };
@@ -1873,14 +1873,8 @@ document.getElementById('dims').innerHTML = [
   ['Cokół', 'lico ' + rules.plinth.setback + ' za frontami'],
   ['Okno', win.width + ' × ' + win.height + ', ' + win.finish]
 ].map(([name, value]) => '<dt>' + name + '</dt><dd>' + value + '</dd>').join('');
-// a "group N" note holds the group's role (a keyword the engine reads): shown as "grupa N" and the role's Polish name
-const noteText = (name, description) => {
-  const m = /^group\s+(\d+)$/i.exec(String(name).trim());
-  return m ? ['grupa ' + m[1], KE.LABELS.role[String(description).trim().toLowerCase()] || description] : [name, description];
-};
 document.getElementById('pnotes').innerHTML = (project.notes || []).map(([name, description, details]) => {
-  const [shownName, shownDescription] = noteText(name, description);
-  return '<dt>' + esc(shownName) + '</dt><dd>' + esc(shownDescription) + (details ? '<small>' + esc(details) + '</small>' : '') + '</dd>';
+  return '<dt>' + esc(name) + '</dt><dd>' + esc(description) + (details ? '<small>' + esc(details) + '</small>' : '') + '</dd>';
 }).join('');
 
 /* ---------- settings tabs ---------- */

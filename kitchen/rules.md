@@ -6,7 +6,7 @@ Ogólne zasady, wspólne dla każdego projektu kuchni. Wartości liczbowe (głę
 
 ## 1. Układ
 
-- **Grupa** to ciąg szafek przy jednej ścianie albo wyspa. Grupa ma kolumny o szerokości w mm i rolę: blat, zabudowa wysoka albo wyspa.
+- **Grupa** to ciąg szafek przy jednej ścianie albo wyspa. Grupa ma kolumny o szerokości w mm.
 - **Element** leży w grupie, zaczyna się w danej kolumnie i może zajmować kilka kolumn. Elementy układa się od podłogi w kolejności listy: element staje na najwyższym elemencie w swoich kolumnach. Może też wypełnić lukę pod szerszym elementem dodanym wcześniej.
 - **Miejsce** elementu zapisuje się jako grupa i kolumny: G1[4] to grupa 1, kolumna 4; G1[1-11] to kolumny 1 do 11.
 
@@ -38,6 +38,7 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | lodówka, zamrażarka | szafka | front na drzwiach urządzenia, bez zawiasów, półek i pleców |
 | zmywarka | szafka | front na drzwiach urządzenia, bez korpusu |
 | bok blatu | blat | blat opuszczony do podłogi |
+| wyspa | blat | głębokość blatu wyspy, panel tylny wyspy, wyspa stoi wolno (bez ściany) |
 
 Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 
@@ -70,10 +71,10 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Listwa** stoi na sztorc. Gdy nie należy do korpusu, dostaje listwę tylną przy ścianie.
 - **Panel** leży na płasko w płaszczyźnie frontów.
 - **Blat:**
-  - głębokość zależy od roli grupy;
+  - głębokość podaje materiał blatu, osobno dla blatu z tagiem wyspa;
   - wystaje przed fronty o nawis;
   - z tyłu zostaje głębokość minus korpus, front i nawis.
-- **Wyspa** ma panel tylny między skrajnymi kolumnami, od podłogi do góry korpusów.
+- **Wyspa** (blat z tagiem wyspa) ma panel tylny między skrajnymi kolumnami, od podłogi do góry korpusów.
 - **Cokół** jest cofnięty za fronty.
 
 ## 5. Otwory i wycięcia

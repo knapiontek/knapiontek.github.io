@@ -3,7 +3,7 @@
 window.KITCHEN_VIEW = {
  "about": "Scene data for this kitchen only (where the groups stand, room, appliances, lights, colours, cameras), used only for drawing. The cabinets come from design.js through engine.js; the code below this block names no group, run or size of this kitchen.",
  "runs": {
-   "about": "where each design group stands: x, z of its first column at the wall line (n = 0), rot = turn in degrees (0: along the window wall, facing the room). A group with the role island (design.js notes) stands free: no wall behind it.",
+   "about": "where each design group stands: x, z of its first column at the wall line (n = 0), rot = turn in degrees (0: along the window wall, facing the room). A group whose worktop has the tag island (design.js) stands free: no wall behind it.",
    "A": {"group": 1, "name": "pod oknem", "x": 0, "z": 0, "rot": 0},
    "B": {"group": 2, "name": "zabudowa wysoka", "x": 3372, "z": 0, "rot": -90},
    "C": {"group": 3, "name": "wyspa", "x": 1730, "z": 2440, "rot": 180}

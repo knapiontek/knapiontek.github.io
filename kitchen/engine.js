@@ -27,6 +27,7 @@
     bins: ['drawer'],        // waste-sorting bins in the drawer
     inner: ['drawer'],       // inner cutlery drawer above the drawer box, behind the same front
     fall: ['worktop'],       // worktop fall: the worktop board turned down to the floor
+    island: ['worktop'],     // island worktop: the island depth of the worktop material, the island back panel, no wall
     coffee: ['cabinet'],     // pull-out shelf at the bottom, shelves above it, no other shelves
     fridge: ['cabinet'],     // front on a built-in fridge door: no hinges, no shelves, no back
     freezer: ['cabinet'],    // the same, freezer door
@@ -54,7 +55,7 @@
   const LABELS = {
     type: { filler: 'wypełnienie', board: 'zabudowa GK', plinth: 'cokół', worktop: 'blat', splash: 'panel ścienny', panel: 'panel',
       frame: 'listwa', cabinet: 'szafka', drawer: 'szuflada', oven: 'piekarnik', micro: 'mikrofalówka' },
-    tag: { dummy: 'atrapa', hob: 'płyta grzewcza', sink: 'zlew', bins: 'kosze', inner: 'szuflada wewnętrzna', fall: 'bok blatu',
+    tag: { dummy: 'atrapa', hob: 'płyta grzewcza', sink: 'zlew', bins: 'kosze', inner: 'szuflada wewnętrzna', fall: 'bok blatu', island: 'wyspa',
       coffee: 'ekspres', fridge: 'lodówka', freezer: 'zamrażarka', dishwasher: 'zmywarka' },
     carcassType: { base: 'dolna', tall: 'słupek', wall: 'górna' },
     flag: { sink: 'zlew', hob: 'płyta grzewcza', fridge: 'lodówka', coffee: 'ekspres' },
@@ -62,7 +63,7 @@
     edge: { front: 'przód', top: 'góra', bottom: 'dół', left: 'lewa', right: 'prawa' },
     handle: { T: 'góra', B: 'dół', L: 'lewa', R: 'prawa' },
     part: { carcass: 'korpus', back: 'plecy', drawerBox: 'szuflady', hobPanel: 'przegroda pod płytą' },
-    role: { worktop: 'blat', tall: 'zabudowa wysoka', island: 'wyspa' },
+    worktopDepth: { worktop: 'blat', island: 'wyspa' },
     hole: { cup: 'puszka zawiasu', plate: 'prowadnik zawiasu', shelfPin: 'podpórka półki', runner: 'prowadnica szuflady / półki wysuwanej', sink: 'wycięcie na zlew', hob: 'wycięcie na płytę grzewczą' },
     // short codes of the holes and cut-outs in the cutting list (its legend explains them)
     holeCode: { cup: 'Z', plate: 'P', shelfPin: 'K', runner: 'S', sink: 'ZL', hob: 'PG' },
@@ -282,13 +283,6 @@
     const frontFace = carcassFront + frontThickness;
     const plinthFace = frontFace - rules.plinth.setback;
 
-    // group roles from the project notes: note "group N" -> role (worktop, tall, island); some rules are per role
-    const roles = {};
-    for (const [name, description] of P.notes || []) {
-      const m = /^group\s+(\d+)$/i.exec(String(name ?? '').trim());
-      if (m) roles[m[1]] = String(description ?? '').trim().toLowerCase();
-    }
-
     // issues: { index of the component, text, skipped }; warnings: their texts
     const issues = [], warnings = [];
     const warn = (text, index = null, skipped = false) => {
@@ -346,6 +340,7 @@
         colX: stacked.colX,
         length: stacked.colX[stacked.colX.length - 1],
         items: stacked.items,
+        island: stacked.items.some(item => item.type === 'worktop' && hasTag(item, 'island')), // a free-standing island: its worktop has the tag island
         areas: carcassAreas(stacked.items)
       };
       for (const item of stacked.items) {
@@ -393,7 +388,7 @@
       for (const item of K.members) item.carcass = K;
       counts.legs += K.legs;
       counts.floorCarcasses += K.floor;
-      counts.wallFixedCarcasses += K.floor && roles[K.group] !== 'island'; // the island stands free
+      counts.wallFixedCarcasses += K.floor && !groups[K.group].island; // the island stands free
       counts.sinks += K.sink;
       counts.hobs += K.hob;
       counts.fridges += K.fridge;
@@ -561,17 +556,17 @@
       }
     }
 
-    // ---- worktops: depth by group role; behind the carcass = depth - carcass - front - overhang ----
+    // ---- worktops: depth from the worktop material (island: its island depth); behind the carcass = depth - carcass - front - overhang ----
     for (const G of Object.values(groups)) {
       const top = G.items.find(i => i.type === 'worktop' && !hasTag(i, 'fall')); // the top board, not a worktop fall
       if (!G.items.some(i => i.type === 'worktop')) continue;
-      const role = roles[G.group], depth = (rules.materials[materialFor.worktop].depth || {})[role];
-      if (!Number.isFinite(depth)) {
-        warn(`Grupa ${G.group}: blat potrzebuje roli grupy w notatkach (notatka grupy ${G.group}) i głębokości dla niej w materiale blatu (rola: ${LABELS.role[role] || role || 'brak'}).`);
-        continue;
-      }
       if (!top) {
         warn(`Grupa ${G.group}: boki blatu bez blatu na górze.`);
+        continue;
+      }
+      const kind = G.island ? 'island' : 'worktop', depth = (rules.materials[materialFor.worktop].depth || {})[kind];
+      if (!Number.isFinite(depth)) {
+        warn(`Grupa ${G.group}: materiał blatu nie ma głębokości dla: ${LABELS.worktopDepth[kind]}.`);
         continue;
       }
       const behind = depth - carcassDepth - frontThickness - rules.worktop.overhang;
@@ -581,7 +576,7 @@
 
     // ---- island back panel: panel material, between the end columns, floor to the carcass tops, on the carcass backs ----
     if (rules.island.backPanel) {
-      for (const G of Object.values(groups).filter(G => roles[G.group] === 'island')) {
+      for (const G of Object.values(groups).filter(G => G.island)) {
         const firstWidth = G.widths[0] || 0, lastWidth = G.widths[G.widths.length - 1] || 0;
         const top = Math.max(0, ...carcasses.filter(K => K.group === G.group).map(K => K.v1));
         panels.push({
@@ -794,7 +789,7 @@
     }
 
     return {
-      rules, roles, warnings, issues, counts, thickness, materials, materialFor, frontThickness, worktopPieces,
+      rules, warnings, issues, counts, thickness, materials, materialFor, frontThickness, worktopPieces,
       carcassDepth, carcassBack, carcassFront, frontFace, plinthFace, // n: from the wall
       groups, carcasses, fronts, boards, frames, plinths, panels, plaster, worktops
     };
