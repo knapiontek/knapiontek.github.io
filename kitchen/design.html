@@ -273,8 +273,8 @@
 
   <div id="action-bar">
     <div class="action-group">
-      <button class="btn secondary" @click="chooseImportFile()" title="Wczytaj plik data.js (lub .json) do tabel">Importuj dane</button>
-      <button class="btn" @click="exportData()" title="Zapisz tabele jako data.js">Eksportuj dane</button>
+      <button class="btn secondary" @click="chooseImportFile()" title="Wczytaj plik design.js (lub .json) do tabel">Importuj dane</button>
+      <button class="btn" @click="exportData()" title="Zapisz tabele jako design.js">Eksportuj dane</button>
       <input type="file" class="hidden-file-input" accept=".js,.json,text/javascript,application/json" x-ref="importFile" @change="importFile($event)">
     </div>
   </div>
@@ -513,13 +513,13 @@
  }
 }
 </script>
-<script src="data.js"></script>
+<script src="design.js"></script>
 <script src="engine.js"></script>
 <script>
 'use strict';
 
-/* design.html - edits data.js in three tables and draws the elevations.
-   Tables -> project (data.js format) -> KE.build -> model -> SVG. Field names follow engine.js.
+/* design.html - edits design.js in three tables and draws the elevations.
+   Tables -> project (design.js format) -> KE.build -> model -> SVG. Field names follow engine.js.
    Data checks are in engine.js; this page only checks that the table cells are numbers. */
 
 /* ---------- 1. settings ---------- */
@@ -559,28 +559,42 @@ function downloadBlob(content, mimeType, filename) {
   URL.revokeObjectURL(url);
 }
 
-/* ---------- 3. tables <-> project (data.js format) ---------- */
+/* ---------- 3. tables <-> project (design.js format) ---------- */
 let loadedProject = null; // keeps the rules and materials, which this page does not edit
 
-// data.js component -> component table row
+// a group note: design.js has "group N" and a role keyword (worktop, tall, island) the engine reads; the table shows "grupa N" and the Polish role
+const ROLE_NOTE = /^group\s+(\d+)$/i, ROLE_NOTE_SHOWN = /^grupa\s+(\d+)$/i;
+function shownNote([name, description, details]) {
+  const m = ROLE_NOTE.exec(String(name ?? '').trim());
+  if (!m) return [name, description, details];
+  return ['grupa ' + m[1], KE.LABELS.role[String(description ?? '').trim().toLowerCase()] || description, details];
+}
+function storedNote([name, description, details]) {
+  const m = ROLE_NOTE_SHOWN.exec(String(name ?? '').trim());
+  if (!m) return [name, description, details];
+  const role = Object.keys(KE.LABELS.role).find(key => KE.LABELS.role[key] === String(description ?? '').trim().toLowerCase());
+  return ['group ' + m[1], role || description, details];
+}
+
+// design.js component -> component table row
 function componentRow(c) {
   const gaps = Array.isArray(c.gaps) ? c.gaps : ['', '', '', ''];
   return {
-    group: c.g, col: c.c, span: c.s, type: KE.readType(c.type), tags: parseTags(c.tags).tags.join(' '), carcass: c.k || '', height: c.h, handle: c.hd ?? '', hinge: c.hg ?? '',
+    group: c.group, col: c.column, span: c.span, type: KE.readType(c.type), tags: parseTags(c.tags).tags.join(' '), carcass: c.carcass || '', height: c.height, handle: c.handle ?? '', hinge: c.hinge ?? '',
     gapLeft: gaps[0], gapRight: gaps[1], gapTop: gaps[2], gapBottom: gaps[3], note: c.note || ''
   };
 }
 
-// component table row -> data.js component (short keys, in the order data.js uses); empty fields are left out; gaps on fronts only
+// component table row -> design.js component (in the order design.js uses); empty fields are left out; gaps on fronts only
 function dataComponent(row) {
-  const c = { g: toNumber(row.group), c: toNumber(row.col), s: toNumber(row.span), type: row.type };
+  const c = { group: toNumber(row.group), column: toNumber(row.col), span: toNumber(row.span), type: row.type };
   const tags = parseTags(row.tags).words.join(' ');
   if (tags) c.tags = tags;
   const carcass = String(row.carcass ?? '').trim();
-  if (carcass) c.k = carcass;
-  c.h = toNumber(row.height);
-  if (row.handle) c.hd = row.handle;
-  if (row.hinge) c.hg = row.hinge;
+  if (carcass) c.carcass = carcass;
+  c.height = toNumber(row.height);
+  if (row.handle) c.handle = row.handle;
+  if (row.hinge) c.hinge = row.hinge;
   const gaps = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
   if (FRONT_TYPES.includes(row.type) && !isRowEmpty(...gaps)) c.gaps = gaps.map(toNumber);
   if (String(row.note ?? '').trim()) c.note = String(row.note).trim();
@@ -617,14 +631,14 @@ function readTables(columnRows, componentRows, noteRows) {
     components.push(dataComponent(row));
     rowOfComponent.push(idx);
   });
-  const notes = noteRows.filter(n => !isRowEmpty(n.name, n.description, n.details)).map(n => [n.name, n.description, n.details]);
+  const notes = noteRows.filter(n => !isRowEmpty(n.name, n.description, n.details)).map(n => storedNote([n.name, n.description, n.details]));
   const project = { rules: (loadedProject && loadedProject.rules) || {}, notes, columns, components };
   return { project, warnings, columnFlags, componentFlags, rowOfComponent };
 }
 
 /* ---------- 4. SVG: model -> SVG ----------
    A draw function gets a shape { type, x, width, height, handle, shakerRail } and y, its top edge (SVG y grows down).
-   The elevation shows the modules (the columns and heights of data.js); front sizes are in the hover info. */
+   The elevation shows the modules (the columns and heights of design.js); front sizes are in the hover info. */
 
 // fill and stroke colour names in CONFIG.colors, per type drawn as a plain rectangle
 const RECT_COLORS = {
@@ -753,7 +767,7 @@ function drawSVG(model) {
 /* ---------- 5. elevations: tables -> project -> model -> SVG ---------- */
 function buildElevations(columnRows, componentRows, noteRows) {
   const empty = { svg: '', isEmpty: true, project: null, warnings: [], columnFlags: [], componentFlags: [] };
-  if (!loadedProject) return empty; // until data.js is loaded
+  if (!loadedProject) return empty; // until design.js is loaded
   const tables = readTables(columnRows, componentRows, noteRows);
   const result = { ...empty, project: tables.project, warnings: tables.warnings, columnFlags: tables.columnFlags, componentFlags: tables.componentFlags };
   const stops = KE.checkRules(tables.project.rules); // problems in the rules: no model can be built
@@ -846,15 +860,15 @@ document.addEventListener('alpine:init', () => {
     newNoteRow(name = '', description = '', details = '') {
       return { id: this.nextId++, name, description, details };
     },
-    // the project (data.js) into the tables
+    // the project (design.js) into the tables
     setProject(project) {
       loadedProject = project;
       // shown, not edited; parts: the carcass parts whose rule names the material (KE.PART_RULES)
       const rules = project.rules || {}, ruleAt = path => path.split('.').reduce((o, k) => (o ? o[k] : undefined), rules);
       this.materials = Object.entries(rules.materials || {})
         .map(([code, m]) => ({ code, ...m, parts: Object.keys(KE.PART_RULES).filter(part => ruleAt(KE.PART_RULES[part]) === code) }))
-        .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: data.js order
-      this.notes = (project.notes || []).map(([name, description, details]) => this.newNoteRow(name ?? '', description ?? '', details ?? ''));
+        .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: design.js order
+      this.notes = (project.notes || []).map(note => shownNote(note)).map(([name, description, details]) => this.newNoteRow(name ?? '', description ?? '', details ?? ''));
       this.columns = Object.entries(project.columns || {}).flatMap(([group, widths]) => widths.map(w => this.newColumnRow(Number(group), w)));
       this.components = (project.components || []).map(c => this.newComponentRow(componentRow(c)));
     },
@@ -968,9 +982,9 @@ document.addEventListener('alpine:init', () => {
     // ---- import / export ----
     exportData() {
       const { project, warnings } = this.build, issues = warnings.length;
-      if (!project) { this.showStatus('Nie ma czego eksportować: data.js nie jest wczytany.', true); return; }
-      downloadBlob(KE.dataJS(project), 'text/javascript;charset=utf-8', 'data.js');
-      this.showStatus('Wyeksportowano data.js' + (issues ? ' z ' + issues + ' ' + plural(issues, 'problemem', 'problemami', 'problemami') + ' w danych - lista pod tabelami' : '') + '. Zastąp plik w folderze kuchni i odśwież strony.', issues > 0);
+      if (!project) { this.showStatus('Nie ma czego eksportować: design.js nie jest wczytany.', true); return; }
+      downloadBlob(KE.designJS(project), 'text/javascript;charset=utf-8', 'design.js');
+      this.showStatus('Wyeksportowano design.js' + (issues ? ' z ' + issues + ' ' + plural(issues, 'problemem', 'problemami', 'problemami') + ' w danych - lista pod tabelami' : '') + '. Zastąp plik w folderze kuchni i odśwież strony.', issues > 0);
     },
     chooseImportFile() {
       this.$refs.importFile.value = '';
@@ -994,10 +1008,10 @@ document.addEventListener('alpine:init', () => {
       reader.onerror = () => { this.showStatus('Nie można odczytać pliku.', true); e.target.value = ''; };
       reader.readAsText(file);
     },
-    // a data.js (or plain JSON) file replaces the tables
+    // a design.js (or plain JSON) file replaces the tables
     importData(text) {
       let project;
-      try { project = KE.fromDataJS(text); } catch (err) { throw new Error('to nie są poprawne dane projektu (' + err.message + ').'); }
+      try { project = KE.fromDesignJS(text); } catch (err) { throw new Error('to nie są poprawne dane projektu (' + err.message + ').'); }
       if (!project || !project.rules || !project.columns || !Array.isArray(project.components)) throw new Error('to nie są dane projektu kuchni: brakuje "rules", "columns" lub "components".');
       this.setProject(project);
     }

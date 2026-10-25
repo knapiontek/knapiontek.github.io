@@ -1,11 +1,11 @@
-/* engine.js - builds the kitchen model from data.js for design.html, cost.html and view.html.
+/* engine.js - builds the kitchen model from design.js for design.html, cost.html and view.html.
    Deterministic: the same project always gives the same model. No drawing, no project numbers: every number comes
-   from data.js (rules, columns, components) or from the tables at the top of this file.
+   from design.js (rules, columns, components) or from the tables at the top of this file.
 
    Coordinates in mm per group: u along the group, v up from the floor, n out from the wall; a box is [u0, u1, v0, v1, n0, n1].
    data.columns:    column widths per group, integer mm.
-   data.components: g group, c first column, s column span, h height, type (one of TYPES), tags (tags of that type, space separated), k carcass name,
-                    hd handle (T | B | L | R), hg hinge side (L | R), gaps [left, right, top, bottom] of a front, note. */
+   data.components: group, column (the first one), span (number of columns), height, type (one of TYPES), tags (tags of that type, space separated),
+                    carcass (carcass name), handle (T | B | L | R), hinge (hinge side L | R), gaps [left, right, top, bottom] of a front, note. */
 (function (root) {
   'use strict';
 
@@ -87,7 +87,7 @@
   const EDGE_NAMES = { T: 'top', B: 'bottom', L: 'left', R: 'right' }; // the four edges of a panel
 
   // Lacquered edges of the finished parts: how many long and short edges one piece has (they get no ABS), and for a
-  // frame which edge (the one facing the room). Fixed here, not in data.js: it follows from how the kitchen is seen
+  // frame which edge (the one facing the room). Fixed here, not in design.js: it follows from how the kitchen is seen
   // (from the front and from above; the island from all sides).
   const LACQUER = {
     front: { long: 2, short: 2 },   // all round
@@ -169,7 +169,7 @@
     return { materialFor, problems };
   }
 
-  // problems in data.js rules that make a build impossible; design.html lists them, build() throws them
+  // problems in design.js rules that make a build impossible; design.html lists them, build() throws them
   function checkRules(rules) {
     const problems = [...materialUses(rules).problems];
     for (const path of REQUIRED_RULES) if (valueAt(rules, path) === undefined) problems.push(`Brak reguły ${path}.`);
@@ -186,19 +186,19 @@
 
   /* ================= 4. LAYOUT: components -> items stacked in their columns ================= */
 
-  // data.js component -> item fields
+  // design.js component -> item fields
   function readComponent(c, index) {
     return {
       index,
-      group: +c.g,
-      col: +c.c,
-      span: +c.s,
-      height: c.h,
+      group: +c.group,
+      col: +c.column,
+      span: +c.span,
+      height: c.height,
       type: readType(c.type),
       tags: parseTags(c.tags).tags,
-      carcassName: String(c.k || '').trim(),
-      handle: c.hd || '',
-      hinge: c.hg || '',
+      carcassName: String(c.carcass || '').trim(),
+      handle: c.handle || '',
+      hinge: c.hinge || '',
       gaps: Array.isArray(c.gaps) ? c.gaps.map(x => (x === '' || x == null ? NaN : Number(x))) : null, // an empty gap is not 0
       note: c.note || ''
     };
@@ -268,7 +268,7 @@
   function build(project) {
     const P = project || {}, rules = P.rules || {};
     const stops = checkRules(rules);
-    if (stops.length) throw new Error('Reguły w data.js: ' + stops.join(' '));
+    if (stops.length) throw new Error('Reguły w design.js: ' + stops.join(' '));
 
     // every thickness comes from the material of the type or part
     const { materialFor } = materialUses(rules);
@@ -308,8 +308,8 @@
     const columns = P.columns || {}, pieces = [];
     (P.components || []).forEach((c, index) => {
       const piece = readComponent(c, index), parsed = parseTags(c.tags), at = placeOf(piece);
-      if (!(String(c.g) in columns)) return warn(`${at}: grupa ${c.g} nie ma kolumn - pominięty.`, index, true);
-      if (!Number.isInteger(piece.height)) return warn(`${at}: wysokość "${c.h}" musi być całkowitą liczbą mm - pominięty.`, index, true);
+      if (!(String(c.group) in columns)) return warn(`${at}: grupa ${c.group} nie ma kolumn - pominięty.`, index, true);
+      if (!Number.isInteger(piece.height)) return warn(`${at}: wysokość "${c.height}" musi być całkowitą liczbą mm - pominięty.`, index, true);
       if (!piece.type) {
         return warn(`${at}: ${String(c.type ?? '').trim() ? 'nieznany typ "' + c.type + '"' : 'brak typu'}; typ musi być jednym z: ${TYPES.map(typeLabel).join(', ')} - pominięty.`, index, true);
       }
@@ -567,7 +567,7 @@
       if (!G.items.some(i => i.type === 'worktop')) continue;
       const role = roles[G.group], depth = (rules.materials[materialFor.worktop].depth || {})[role];
       if (!Number.isFinite(depth)) {
-        warn(`Grupa ${G.group}: blat potrzebuje roli grupy w notatkach ("group ${G.group}") i głębokości dla niej w materiale blatu (rola: ${role || 'brak'}).`);
+        warn(`Grupa ${G.group}: blat potrzebuje roli grupy w notatkach (notatka grupy ${G.group}) i głębokości dla niej w materiale blatu (rola: ${LABELS.role[role] || role || 'brak'}).`);
         continue;
       }
       if (!top) {
@@ -647,9 +647,9 @@
           }
         }
 
-        // drawer box: D when the front is at least drawers.dFrom high, else M; bottom and back in rules.drawers.material
+        // drawer box: D when the front is higher than drawers.dFrom, else M; bottom and back in rules.drawers.material
         if (opening === 'drawer' && K) {
-          const size = front.height >= drawerRule.dFrom ? 'D' : 'M', sizeRule = drawerRule[size];
+          const size = front.height > drawerRule.dFrom ? 'D' : 'M', sizeRule = drawerRule[size];
           const innerU0 = K.u0 + board, innerU1 = K.u1 - board;
           const drawer = {
             size,
@@ -869,30 +869,30 @@
     return '[\n' + map.map(entry => '  {\n' + Object.entries(entry).map(field).join(',\n') + '\n  }').join(',\n') + '\n]\n';
   }
 
-  // data.js sets window.KITCHEN_DATA (a script tag, so the pages also work from file://)
+  // design.js sets window.KITCHEN_DESIGN (a script tag, so the pages also work from file://)
   function load() {
-    const data = root.KITCHEN_DATA;
-    return data ? Promise.resolve(data) : Promise.reject(new Error('Nie znaleziono pliku data.js obok tej strony'));
+    const data = root.KITCHEN_DESIGN;
+    return data ? Promise.resolve(data) : Promise.reject(new Error('Nie znaleziono pliku design.js obok tej strony'));
   }
 
-  // the text of data.js: one rule / note / component per line, a blank line between groups
-  function dataJS(project) {
+  // the text of design.js: one rule / note / component per line, a blank line between groups
+  function designJS(project) {
     const isObject = v => v && typeof v === 'object' && !Array.isArray(v);
     // a table (an object of objects, e.g. rules.materials) gets one line per entry
     const value = v => (isObject(v) && Object.values(v).every(isObject)
       ? '{\n' + Object.entries(v).map(([k, x]) => '   ' + json1(k) + ': ' + json1(x)).join(',\n') + '\n  }'
       : json1(v));
     const entries = obj => Object.entries(obj || {}).map(([k, v]) => '  ' + json1(k) + ': ' + value(v)).join(',\n');
-    const components = project.components.map((c, i) => (i && c.g !== project.components[i - 1].g ? '\n' : '') + '  ' + json1(c)).join(',\n');
-    return '/* Kitchen project data - shared by design.html, cost.html and view.html.\n' +
-      '   Plain JSON after "window.KITCHEN_DATA =". Edit it in design.html (Import data / Export data). */\n' +
-      'window.KITCHEN_DATA = {\n "rules": {\n' + entries(project.rules) +
+    const components = project.components.map((c, i) => (i && c.group !== project.components[i - 1].group ? '\n' : '') + '  ' + json1(c)).join(',\n');
+    return '/* Kitchen project design - shared by design.html, cost.html and view.html.\n' +
+      '   Plain JSON after "window.KITCHEN_DESIGN =". Edit it in design.html (Import data / Export data). */\n' +
+      'window.KITCHEN_DESIGN = {\n "rules": {\n' + entries(project.rules) +
       '\n },\n "notes": [\n' + project.notes.map(n => '  ' + json1(n)).join(',\n') +
       '\n ],\n "columns": {\n' + entries(project.columns) +
       '\n },\n "components": [\n' + components + '\n ]\n};\n';
   }
-  // the project object from the text of data.js (or plain JSON)
-  function fromDataJS(text) {
+  // the project object from the text of design.js (or plain JSON)
+  function fromDesignJS(text) {
     const i = text.indexOf('{'), j = text.lastIndexOf('}');
     if (i < 0 || j < i) throw new Error('brak obiektu JSON');
     return JSON.parse(text.slice(i, j + 1));
@@ -901,6 +901,6 @@
   root.KitchenEngine = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PART_RULES, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, SHELF_UNDER_JOINT, LACQUER,
     HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, drillingOf, checkRules, build, cutList, carcassMap, mapJSON,
-    load, dataJS, fromDataJS
+    load, designJS, fromDesignJS
   };
 })(typeof window !== 'undefined' ? window : globalThis);
