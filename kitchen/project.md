@@ -10,8 +10,8 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 |---|---|---|---|
 | design.js | data, this project | materials, settings, notes, columns, components | design.html (export) |
 | cost.js | data, this project | prices, items, notes and settings of cost.html | LLM, per project |
-| view.js | data, this project | placement of the groups, room, lights and cameras of view.html | LLM, per project |
-| appliances.js | data, this project | the appliances at the manufacturer's sizes, for cost.html and view.html | LLM, per project |
+| view.js | data, this project | placement of the groups, room, how the appliances are fitted, lights and cameras of view.html | LLM, per project |
+| appliances.js | data, this project | the appliances as the manufacturer gives them (sizes, documents), for cost.html and view.html | LLM, per project |
 | rules.md | text, every project | the kitchen rules in Polish, as the app names things | by hand |
 | engine.js | code, every project | the model: carcasses, boards, fronts, frames, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
@@ -30,12 +30,11 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
   design.html    cost.html      view.html        each page reads design.js
       │             │              │             and passes it to the engine
       └──────► engine.js ◄─────────┘
-               project → model
-
-  appliances.js ──► cost.html, view.html
-      │
+      │        project → model
       ▼
   export → design.js                             only design.html writes design.js
+
+  appliances.js ──► cost.html, view.html         design.html does not read it
 ```
 
 - Every page loads design.js directly, so the pages also work opened from disk.

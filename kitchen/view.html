@@ -777,8 +777,8 @@ function floorOf(item) {
 // frontBottom from the body bottom, projection in front of the carcass front; both centred on the item
 function builtInAppliance(run, item, type) {
   const A = APPLIANCES[type], floor = floorOf(item), uc = (item.u0 + item.u1) / 2;
-  // adjustable feet ("auto"): the front is centred in the item's module, the feet are as high as that needs
-  const feet = A.feet === 'auto' ? (item.v0 + item.v1) / 2 - A.front[1] / 2 - A.frontBottom - floor : A.feet;
+  // adjustable feet: the front is centred in the item's module, the feet are as high as that needs
+  const feet = A.feet === 'adjustable' ? (item.v0 + item.v1) / 2 - A.front[1] / 2 - A.frontBottom - floor : A.feet;
   const b0 = floor + feet, v0 = b0 + A.frontBottom, v1 = v0 + A.front[1];
   const u0 = uc - A.front[0] / 2, u1 = uc + A.front[0] / 2;
   const P = runLayer[run].ovens, face = carcassFront + A.projection, [bw, bh, bd] = A.body;
@@ -841,7 +841,7 @@ const sinkU0 = sinkU - sinkData.outer[0] / 2, sinkU1 = sinkU + sinkData.outer[0]
 const bowlU0 = sinkU - sinkData.bowl[0] / 2, bowlU1 = sinkU + sinkData.bowl[0] / 2, bowlN0 = sinkN - sinkData.bowl[1] / 2, bowlN1 = sinkN + sinkData.bowl[1] / 2;
 const sinkTop = sinkRun ? worktopTopOf(sinkRun) : 0;
 const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowl[2];
-const tapN = sinkRun ? worktopOf(groupOfRun[sinkRun]).n0 + sinkData.tapFromBack : 0; // from the back edge of the worktop
+const tapN = sinkRun ? worktopOf(groupOfRun[sinkRun]).n0 + SCENE.installation.sink.tapFromBack : 0; // from the back edge of the worktop
 // a worktop with cut-outs (engine.js: sink, hob from design.js settings.cutouts): one board, an outline with holes extruded to the worktop thickness
 function worktopWithCutOuts(run, uStart, uEnd, v0, v1, cutouts) {
   const W = worktopOf(groupOfRun[run]);
@@ -941,11 +941,11 @@ if (sinkItem) {
     roomCylinder(7, 70, MAT.handle, sinkU + 55, top + 140, n, 'x', 16);
   })();
   // space-saving trap under the sink: short drop, flat trap body against the back wall,
-  // outlet into the wall at sink.wallOutlet - everything stays above the bottom drawer with the waste bins
+  // outlet into the wall at view.js installation.sink.wallOutlet - everything stays above the bottom drawer with the waste bins
   target = runLayer[sinkRun].trap;
   {
     const pipe = standard({ color: linear(0x8d9196), roughness: 0.5 });
-    const nc = (bowlN0 + bowlN1) / 2, yBowl = bowlBottom - sinkWall, yTrap = sinkData.trapTop, yOutlet = sinkData.wallOutlet, nBack = carcassBack + 31;
+    const nc = (bowlN0 + bowlN1) / 2, yBowl = bowlBottom - sinkWall, yTrap = SCENE.installation.sink.trapTop, yOutlet = SCENE.installation.sink.wallOutlet, nBack = carcassBack + 31;
     roomCylinder(20, yBowl - yTrap, pipe, sinkU, (yBowl + yTrap) / 2, nc, null, 20); // waste pipe down from the bowl
     roomCylinder(20, nc - nBack, pipe, sinkU, yTrap, (nc + nBack) / 2, 'z', 20); // run back towards the wall
     roomBox(sinkU - 70, sinkU + 70, yOutlet - 25, yTrap + 25, carcassBack + 6, carcassBack + 56, pipe); // flat trap body
@@ -981,7 +981,7 @@ if (hobItem && hobCut) (function hob() {
 if (hobItem) target = runLayer[hobRun].hood;
 if (hobItem) (function hood() {
   const toWorld = (x, y, z) => runGroup[hobRun].localToWorld(new THREE.Vector3(x, y, z));
-  const H = APPLIANCES.hood, uc = hobU, W = H.width, D = H.depth, bottom = H.bottom, height = H.height, chimneyW = H.chimney[0], chimneyD = H.chimney[1];
+  const H = APPLIANCES.hood, uc = hobU, W = H.width, D = H.depth, bottom = SCENE.installation.hood.bottom, height = H.height, chimneyW = H.chimney[0], chimneyD = H.chimney[1];
   const firstMesh = meshes.length;
   const profile = new THREE.Shape();
   profile.moveTo(0, 0); profile.lineTo(D, 0); profile.lineTo(D, 40); profile.lineTo(110, height); profile.lineTo(0, height); profile.lineTo(0, 0);

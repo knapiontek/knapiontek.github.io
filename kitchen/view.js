@@ -7,6 +7,9 @@
                  A group whose worktop has the tag island (design.js) stands free: no wall behind it.
      room        ceiling (measured), the other sizes rounded to whole metres; rightWallGroup: the group against the right
                  wall (the wall is at its x); floorTile [length, width]; wallColor
+     installation  how appliances are fitted here: sink tap (tapFromBack: from the back edge of the worktop), its trap
+                 (trapTop, wallOutlet: heights above the floor); hood (bottom: height above the floor). An appliance on
+                 adjustable feet (appliances.js) gets its front centred in its module.
      window      x of its left edge, width, sill and height above the floor, reveal depth, frame finish
      finishes    finishes shown in the Project tab next to the design.js materials: [use, name, CSS swatch]
      hardware    sizes for the drawing only, no effect on the cost: handle (metal: a key of metals), open (degrees; drawer: mm),
@@ -22,6 +25,10 @@ window.KITCHEN_VIEW = {
   "3": {"name": "wyspa", "x": 1730, "z": 2440, "rot": 180}
  },
  "room": {"ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallGroup": 2, "rightWallLength": 4000, "floorTile": [1200, 600], "wallColor": "#f2f1ee"},
+ "installation": {
+  "sink": {"tapFromBack": 45, "trapTop": 575, "wallOutlet": 470},
+  "hood": {"bottom": 1500}
+ },
  "window": {"x": 870, "width": 1900, "sill": 1080, "height": 1300, "reveal": 150, "finish": "antracyt"},
  "finishes": [
   ["Zlew", "Kompozyt kwarcowy", "radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"],
