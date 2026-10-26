@@ -3,6 +3,9 @@
    from design.js (rules, columns, components) or from the tables at the top of this file.
 
    Coordinates in mm per group: u along the group, v up from the floor, n out from the wall; a box is [u0, u1, v0, v1, n0, n1].
+   data.materials:  what you buy, by code: name, thickness, color, lacquered, core, depth (worktop), uses (USES: the board types and
+                    carcass parts made of it; each use in exactly one material).
+   data.rules:      construction rules (REQUIRED_RULES).
    data.columns:    column widths per group, integer mm.
    data.components: group, column (the first one), span (number of columns), height, type (one of TYPES), tags (tags of that type, space separated),
                     carcass (carcass name), handle (T | B | L | R), hinge (hinge side L | R), gaps [left, right, top, bottom] of a front, note. */
@@ -40,8 +43,9 @@
   const BOX_TYPES = [...FRONT_TYPES, 'oven', 'micro'];    // stand in a carcass (need a carcass name, except a dishwasher)
   const BOARD_TYPES = ['worktop', 'splash', 'plinth', 'panel', 'frame', ...FRONT_TYPES]; // each in the types of exactly one material
 
-  // parts the engine adds inside a carcass: the rule that names their material
-  const PART_RULES = { carcass: 'carcass.material', back: 'back.material', drawerBox: 'drawers.material', hobPanel: 'rails.hobPanelMaterial' };
+  // parts the engine adds inside a carcass; with the board types they are the uses a material lists
+  const PARTS = ['carcass', 'back', 'drawerBox', 'hobPanel'];
+  const USES = [...BOARD_TYPES, ...PARTS];
 
   // carcass flags: a carcass has the flag when one of its boxes has one of the tags
   const CARCASS_FLAGS = { sink: ['sink'], hob: ['hob'], fridge: ['fridge', 'freezer'], coffee: ['coffee'] };
@@ -106,7 +110,7 @@
     'drawers.dFrom', 'drawers.D.side', 'drawers.D.back', 'drawers.M.side', 'drawers.M.back',
     'drawers.bottom.inset', 'drawers.bottom.depth', 'drawers.bottom.fromWall', 'drawers.back.inset',
     'drawers.liftAtBottom', 'drawers.liftAbove', 'drawers.inner.gap', 'drawers.inner.back', 'drawers.inner.frontDeduction',
-    'legsPerCarcass', 'island.backPanel', 'worktop.overhang',
+    'carcass.legs', 'island.backPanel', 'worktop.overhang',
     'pullOutShelf.depth', 'pullOutShelf.clearance', 'pullOutShelf.lift', 'pullOutShelf.space', 'pullOutShelf.shelvesAbove',
     'plasterboard.depth', 'plasterboard.studSpacing', 'plasterboard.layers',
     'drilling.cup.diameter', 'drilling.cup.depth', 'drilling.cup.fromEdge',
@@ -148,31 +152,26 @@
 
   /* ================= 3. CHECKS THAT STOP THE BUILD: materials and rules ================= */
 
-  // board type or part -> material code: types from materials[code].types, parts from their rule
-  function materialUses(rules) {
-    const materials = (rules && rules.materials) || {}, materialFor = {}, problems = [];
-    for (const [code, m] of Object.entries(materials)) {
+  // use (board type or part) -> material code, from materials[code].uses
+  function materialUses(materials) {
+    const materialFor = {}, problems = [];
+    for (const [code, m] of Object.entries(materials || {})) {
       if (!(m.thickness > 0)) problems.push(`Materiał ${code}: grubość musi być > 0.`);
-      for (const type of m.types || []) {
-        if (!BOARD_TYPES.includes(type)) problems.push(`Materiał ${code}: "${type}" nie jest typem płyty (${BOARD_TYPES.join(', ')}).`);
-        else if (materialFor[type]) problems.push(`Typ ${type} jest w dwóch materiałach: ${materialFor[type]} i ${code}.`);
-        else materialFor[type] = code;
+      for (const use of m.uses || []) {
+        if (!USES.includes(use)) problems.push(`Materiał ${code}: "${use}" nie jest typem płyty ani częścią korpusu (${USES.join(', ')}).`);
+        else if (materialFor[use]) problems.push(`${use} jest w dwóch materiałach: ${materialFor[use]} i ${code}.`);
+        else materialFor[use] = code;
       }
     }
-    for (const type of BOARD_TYPES) if (!materialFor[type]) problems.push(`Żaden materiał nie ma typu ${type}.`);
-    for (const [part, path] of Object.entries(PART_RULES)) {
-      const code = valueAt(rules, path);
-      if (materials[code]) materialFor[part] = code;
-      else problems.push(`Reguła ${path}: materiału "${code ?? ''}" nie ma w materiałach.`);
-    }
-    const frontThicknesses = new Set(FRONT_TYPES.filter(t => materialFor[t]).map(t => materials[materialFor[t]].thickness));
+    for (const use of USES) if (!materialFor[use]) problems.push(`Żaden materiał nie ma użycia ${use}.`);
+    const frontThicknesses = new Set(FRONT_TYPES.filter(t => materialFor[t]).map(t => (materials || {})[materialFor[t]].thickness));
     if (frontThicknesses.size > 1) problems.push(`Materiały frontów (${FRONT_TYPES.join(', ')}) muszą mieć jedną grubość: płaszczyzna frontów.`);
     return { materialFor, problems };
   }
 
-  // problems in design.js rules that make a build impossible; design.html lists them, build() throws them
-  function checkRules(rules) {
-    const problems = [...materialUses(rules).problems];
+  // problems in design.js materials and rules that make a build impossible; design.html lists them, build() throws them
+  function checkRules(project) {
+    const rules = (project && project.rules) || {}, problems = [...materialUses(project && project.materials).problems];
     for (const path of REQUIRED_RULES) if (valueAt(rules, path) === undefined) problems.push(`Brak reguły ${path}.`);
     for (const path of ['shelf.perDoor', 'hinges.perDoor']) {
       const table = valueAt(rules, path);
@@ -268,14 +267,14 @@
 
   function build(project) {
     const P = project || {}, rules = P.rules || {};
-    const stops = checkRules(rules);
+    const stops = checkRules(P);
     if (stops.length) throw new Error('Reguły w design.js: ' + stops.join(' '));
 
     // every thickness comes from the material of the type or part
-    const { materialFor } = materialUses(rules);
-    const thickness = Object.fromEntries(Object.entries(materialFor).map(([use, code]) => [use, rules.materials[code].thickness]));
+    const { materialFor } = materialUses(P.materials);
+    const thickness = Object.fromEntries(Object.entries(materialFor).map(([use, code]) => [use, P.materials[code].thickness]));
     // label of each material: name + thickness, e.g. "Chipboard Egger U963 ST9 diamond grey 18"
-    const materials = Object.fromEntries(Object.entries(rules.materials).map(([code, m]) => [code, { ...m, label: m.name + ' ' + m.thickness }]));
+    const materials = Object.fromEntries(Object.entries(P.materials).map(([code, m]) => [code, { ...m, label: m.name + ' ' + m.thickness }]));
     const board = thickness.carcass, half = board / 2, frontThickness = thickness.cabinet, carcassDepth = rules.carcass.depth;
     // depths from the wall (n)
     const carcassBack = rules.carcass.wallGap;
@@ -383,7 +382,7 @@
       K.type = K.base ? 'base' : K.floor ? 'tall' : 'wall';
       for (const [flag, tags] of Object.entries(CARCASS_FLAGS)) K[flag] = K.boxes.some(b => hasTag(b, ...tags));
       K.flags = Object.keys(CARCASS_FLAGS).filter(flag => K[flag]);
-      K.legs = K.floor ? rules.legsPerCarcass : 0;
+      K.legs = K.floor ? rules.carcass.legs : 0;
       K.grille = K.floor && K.boxes.some(b => GRILLE_FOR.types.includes(b.type) || hasTag(b, ...GRILLE_FOR.tags));
       for (const item of K.members) item.carcass = K;
       counts.legs += K.legs;
@@ -564,7 +563,7 @@
         warn(`Grupa ${G.group}: boki blatu bez blatu na górze.`);
         continue;
       }
-      const kind = G.island ? 'island' : 'worktop', depth = (rules.materials[materialFor.worktop].depth || {})[kind];
+      const kind = G.island ? 'island' : 'worktop', depth = (P.materials[materialFor.worktop].depth || {})[kind];
       if (!Number.isFinite(depth)) {
         warn(`Grupa ${G.group}: materiał blatu nie ma głębokości dla: ${LABELS.worktopDepth[kind]}.`);
         continue;
@@ -642,7 +641,7 @@
           }
         }
 
-        // drawer box: D when the front is higher than drawers.dFrom, else M; bottom and back in rules.drawers.material
+        // drawer box: D when the front is higher than drawers.dFrom, else M; bottom and back in the drawerBox material
         if (opening === 'drawer' && K) {
           const size = front.height > drawerRule.dFrom ? 'D' : 'M', sizeRule = drawerRule[size];
           const innerU0 = K.u0 + board, innerU1 = K.u1 - board;
@@ -870,18 +869,19 @@
     return data ? Promise.resolve(data) : Promise.reject(new Error('Nie znaleziono pliku design.js obok tej strony'));
   }
 
-  // the text of design.js: one rule / note / component per line, a blank line between groups
+  // the text of design.js: one material / rule / note / component per line, a blank line between groups
   function designJS(project) {
     const isObject = v => v && typeof v === 'object' && !Array.isArray(v);
-    // a table (an object of objects, e.g. rules.materials) gets one line per entry
+    // a table (an object of objects, e.g. rules.drilling) gets one line per entry
     const value = v => (isObject(v) && Object.values(v).every(isObject)
       ? '{\n' + Object.entries(v).map(([k, x]) => '   ' + json1(k) + ': ' + json1(x)).join(',\n') + '\n  }'
       : json1(v));
-    const entries = obj => Object.entries(obj || {}).map(([k, v]) => '  ' + json1(k) + ': ' + value(v)).join(',\n');
+    const entries = (obj, line = v => value(v)) => Object.entries(obj || {}).map(([k, v]) => '  ' + json1(k) + ': ' + line(v)).join(',\n');
     const components = project.components.map((c, i) => (i && c.group !== project.components[i - 1].group ? '\n' : '') + '  ' + json1(c)).join(',\n');
     return '/* Kitchen project design - shared by design.html, cost.html and view.html.\n' +
       '   Plain JSON after "window.KITCHEN_DESIGN =". Edit it in design.html (Import data / Export data). */\n' +
-      'window.KITCHEN_DESIGN = {\n "rules": {\n' + entries(project.rules) +
+      'window.KITCHEN_DESIGN = {\n "materials": {\n' + entries(project.materials, json1) +
+      '\n },\n "rules": {\n' + entries(project.rules) +
       '\n },\n "notes": [\n' + project.notes.map(n => '  ' + json1(n)).join(',\n') +
       '\n ],\n "columns": {\n' + entries(project.columns) +
       '\n },\n "components": [\n' + components + '\n ]\n};\n';
@@ -894,7 +894,7 @@
   }
 
   root.KitchenEngine = {
-    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PART_RULES, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, SHELF_UNDER_JOINT, LACQUER,
+    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PARTS, USES, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, SHELF_UNDER_JOINT, LACQUER,
     HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, drillingOf, checkRules, build, cutList, carcassMap, mapJSON,
     load, designJS, fromDesignJS
   };

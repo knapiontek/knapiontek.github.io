@@ -290,7 +290,7 @@
         <div class="sheet-wrap">
           <table class="sheet read-only">
             <thead>
-              <tr><th style="width:64px">Kod</th><th style="width:200px">Nazwa</th><th style="width:72px">Grubość</th><th style="width:56px" title="Kolor płyty; tekstura dębu, gdy materiał nie ma koloru">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Typy elementów z tego materiału">Typy</th><th style="width:150px" title="Części korpusu z tego materiału (wskazane regułą)">Części</th><th style="width:150px" title="Głębokość blatu; wyspa: blat z tagiem wyspa">Głębokość</th></tr>
+              <tr><th style="width:64px">Kod</th><th style="width:200px">Nazwa</th><th style="width:72px">Grubość</th><th style="width:56px" title="Kolor płyty; tekstura dębu, gdy materiał nie ma koloru">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Typy elementów z tego materiału">Typy</th><th style="width:150px" title="Części korpusu z tego materiału">Części</th><th style="width:150px" title="Głębokość blatu; wyspa: blat z tagiem wyspa">Głębokość</th></tr>
             </thead>
             <tbody>
               <template x-for="m in materials" :key="m.code">
@@ -300,7 +300,7 @@
                   <td class="num" x-text="m.thickness"></td>
                   <td><i class="swatch" :style="`background:${m.color || OAK_SWATCH}`" :title="m.color || 'tekstura dębu'"></i></td>
                   <td class="center" x-text="m.lacquered ? '✓' : ''"></td>
-                  <td x-text="(m.types || []).map(KE.typeLabel).join(', ')"></td>
+                  <td x-text="m.types.map(KE.typeLabel).join(', ')"></td>
                   <td x-text="m.parts.map(part => KE.LABELS.part[part]).join(', ')"></td>
                   <td x-text="Object.entries(m.depth || {}).map(([kind, mm]) => (KE.LABELS.worktopDepth[kind] || kind) + ' ' + mm).join(', ')"></td>
                 </tr>
@@ -560,7 +560,7 @@ function downloadBlob(content, mimeType, filename) {
 }
 
 /* ---------- 3. tables <-> project (design.js format) ---------- */
-let loadedProject = null; // keeps the rules and materials, which this page does not edit
+let loadedProject = null; // keeps the materials and rules, which this page does not edit
 
 
 // design.js component -> component table row
@@ -619,7 +619,7 @@ function readTables(columnRows, componentRows, noteRows) {
     rowOfComponent.push(idx);
   });
   const notes = noteRows.filter(n => !isRowEmpty(n.name, n.description, n.details)).map(n => [n.name, n.description, n.details]);
-  const project = { rules: (loadedProject && loadedProject.rules) || {}, notes, columns, components };
+  const project = { materials: (loadedProject && loadedProject.materials) || {}, rules: (loadedProject && loadedProject.rules) || {}, notes, columns, components };
   return { project, warnings, columnFlags, componentFlags, rowOfComponent };
 }
 
@@ -757,7 +757,7 @@ function buildElevations(columnRows, componentRows, noteRows) {
   if (!loadedProject) return empty; // until design.js is loaded
   const tables = readTables(columnRows, componentRows, noteRows);
   const result = { ...empty, project: tables.project, warnings: tables.warnings, columnFlags: tables.columnFlags, componentFlags: tables.componentFlags };
-  const stops = KE.checkRules(tables.project.rules); // problems in the rules: no model can be built
+  const stops = KE.checkRules(tables.project); // problems in the materials or rules: no model can be built
   if (stops.length) return { ...result, warnings: [...tables.warnings, ...stops] };
   const model = KE.build(tables.project);
   for (const issue of model.issues) {
@@ -850,10 +850,9 @@ document.addEventListener('alpine:init', () => {
     // the project (design.js) into the tables
     setProject(project) {
       loadedProject = project;
-      // shown, not edited; parts: the carcass parts whose rule names the material (KE.PART_RULES)
-      const rules = project.rules || {}, ruleAt = path => path.split('.').reduce((o, k) => (o ? o[k] : undefined), rules);
-      this.materials = Object.entries(rules.materials || {})
-        .map(([code, m]) => ({ code, ...m, parts: Object.keys(KE.PART_RULES).filter(part => ruleAt(KE.PART_RULES[part]) === code) }))
+      // shown, not edited; uses split into board types and carcass parts (KE.PARTS)
+      this.materials = Object.entries(project.materials || {})
+        .map(([code, m]) => ({ code, ...m, types: (m.uses || []).filter(u => !KE.PARTS.includes(u)), parts: (m.uses || []).filter(u => KE.PARTS.includes(u)) }))
         .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: design.js order
       this.notes = (project.notes || []).map(([name, description, details]) => this.newNoteRow(name ?? '', description ?? '', details ?? ''));
       this.columns = Object.entries(project.columns || {}).flatMap(([group, widths]) => widths.map(w => this.newColumnRow(Number(group), w)));
@@ -999,7 +998,7 @@ document.addEventListener('alpine:init', () => {
     importData(text) {
       let project;
       try { project = KE.fromDesignJS(text); } catch (err) { throw new Error('to nie są poprawne dane projektu (' + err.message + ').'); }
-      if (!project || !project.rules || !project.columns || !Array.isArray(project.components)) throw new Error('to nie są dane projektu kuchni: brakuje "rules", "columns" lub "components".');
+      if (!project || !project.materials || !project.rules || !project.columns || !Array.isArray(project.components)) throw new Error('to nie są dane projektu kuchni: brakuje "materials", "rules", "columns" lub "components".');
       this.setProject(project);
     }
   }));

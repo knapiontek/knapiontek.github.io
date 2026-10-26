@@ -136,40 +136,30 @@
 </div>
 
 <!-- ===================================================================
-     COST DATA - cost.js (window.KITCHEN_COST), this page's own input: prices, items, notes and page settings. Everything
-     measured comes from design.js through engine.js; nothing there repeats a calculated number.
-       settings     page settings: XLSX file name, front functions (label of a front by its type and tags; first match),
-                    which blocks get saw cuts, appliance categories, texts, legendNotes (a remark per hole kind in the
-                    drilling legend); ABS and lacquered edges come from engine.js
-       blocks       cutting-list tables, rows built by engine.js (parts: front | frames | plinths | panels | plaster,
-                    or a material use - carcass, drawerBox, back ...: every board of that use's material)
-       categories   estimate items: qty = number or formula; name, spec, source and notes may hold placeholders:
-                      {n:hinges} engine count ({n:type.oven}, {n:tag.bins} = items with that type / tag), {r:drawers.dFrom} design.js rule,
-                      {t:carcass} thickness and {m:cabinet} material label of a board type or part, {w:1.depth} worktop of group 1,
-                      {k:K8.innerWidth} carcass by name: width, height, innerWidth, v0, v1,
-                      {i:K8/oven.niche} item by carcass name or place (G1[5]) and type or tag, #2 = the second from the bottom:
-                        width, height, v0, v1 (module), frontWidth, frontHeight, frontV0, frontV1 (front),
-                        nicheBottom, nicheTop, niche (clear height between the horizontal boards of the carcass around it),
-                      {v:name} vars (dotted path, e.g. {v:oven.front.1}), {p:id} unit price, {q:id} item quantity,
-                      {carcass.m2|edge|cut|len|qty} cutting-list total, {waste} {sheet} {reserve} parameters,
-                      {=expression} a calculation with placeholders in angle brackets, e.g. {=(<v:oven.front.0> - <k:K8.innerWidth>) / 2},
-                        with ROUND, ROUNDUP, MIN, MAX; |% shows a fraction as a percentage, ROUNDUP(x,0) rounds up
-                    links = the shops of the price [{shop, url}]; refs = numbers of the notes the item links to
-       notes        Notes tab: section headings, or no, topic, description, assumed (in the estimate), decide (open question),
-                    links = the documents the note comes from [{name, url}]; \n in a text starts a new line
-     DATA FLOW: design.js (edited in design.html) -> engine.js -> this page, design.html, view.html; cost.js -> this page
+     DATA FLOW: design.js (edited in design.html) -> engine.js -> this page, design.html, view.html;
+     cost.js (prices, items, notes; its format is described at its top) and appliances.js (shared with view.html) -> this page
      ====================================================================== -->
 <script src="cost.js"></script>
+<script src="appliances.js"></script>
 <script src="design.js"></script>
 <script src="engine.js"></script>
 <script>
 'use strict';
 /* cost.html - estimate, cutting list, notes, assembly and carcass map: engine.js parts priced with cost.js. */
 
-const COST = window.KITCHEN_COST;
+const COST = window.KITCHEN_COST, APPLIANCES = window.KITCHEN_APPLIANCES;
 if (!COST) document.body.textContent = 'Nie znaleziono pliku cost.js obok tej strony.';
-const SETTINGS = COST.settings;
+if (!APPLIANCES) document.body.textContent = 'Nie znaleziono pliku appliances.js obok tej strony.';
 const KE = window.KitchenEngine;
+const DEFAULT_COLUMNS = ['Element', 'Długość', 'Szerokość', 'Ilość']; // header of a cutting-list block without its own columns
+const columnsOf = block => block.columns || DEFAULT_COLUMNS;
+const ITEMS = COST.categories.flatMap(c => c.items);
+// notes are numbered in their order, sections lettered: note id -> number ("patrz notatka 20")
+const NOTES = COST.notes.flatMap(section => section.notes);
+const noteNumber = Object.fromEntries(NOTES.map((n, i) => [n.id, String(i + 1)]));
+const sectionTitle = (section, i) => String.fromCharCode(65 + i) + '. ' + section.section;
+// the documents of a note: its appliance's (appliances.js), then its own
+const noteDocuments = n => [...(n.appliance ? APPLIANCES[n.appliance].links : []), ...(n.links || [])];
 
 const round1 = x => Math.round(x * 10) / 10;
 const fmt = (v, digits = 2) => (Number.isFinite(v) ? v.toLocaleString('pl-PL', { minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: true }) : '–');
@@ -202,7 +192,7 @@ function drillText(drilling) {
 function drillLegend() {
   const L = KE.LABELS, d = model.rules.drilling, c = model.rules.cutouts || {}, code = L.holeCode;
   const carcassFace = 'boki / słupki zawiasowe, strona wewnętrzna; x od przodu, y od dołu';
-  const remark = kind => ((SETTINGS.legendNotes || {})[kind] ? ' (' + SETTINGS.legendNotes[kind] + ')' : '');
+  const remark = kind => ((COST.labels.legend || {})[kind] ? ' (' + COST.labels.legend[kind] + ')' : '');
   const hole = (kind, rule, where) => [code[kind], L.hole[kind] + ' Ø' + num1(rule.diameter) + ', gł. ' + rule.depth + ' – ' + where + remark(kind)];
   const rows = [
     hole('cup', d.cup, 'fronty (drzwi), strona tylna; x od krawędzi zawiasów, y od dołu frontu'),
@@ -230,9 +220,9 @@ const sortRows = rows => rows.sort((x, y) => x[0].localeCompare(y[0]) || y[1] - 
 let model = null;
 let carcassMapJSON = '';
 
-// label of a front ("Function" column): the first settings.frontFunctions entry for its type and tags; none = its type
+// label of a front ("Function" column): the first labels.fronts entry for its type and tags; none = its type
 function frontFunction(front) {
-  const entry = SETTINGS.frontFunctions.find(f => f.type === front.item.type && (!f.tags || f.tags.split('|').some(t => front.tags.includes(t))));
+  const entry = COST.labels.fronts.find(f => f.type === front.item.type && (!f.tags || f.tags.some(t => front.tags.includes(t))));
   return entry ? entry.function : KE.typeLabel(front.item.type);
 }
 
@@ -240,15 +230,16 @@ function frontFunction(front) {
 const place = p => (p.item ? KE.placeLabel(p.group, p.item.col, p.item.span) : p.col ? KE.placeLabel(p.group, p.col) : 'G' + p.group);
 const columnOfPart = p => (p.item ? p.item.col : p.col || 0);
 
-// cutting-list rows of one block: block.parts = front | frames | plinths | panels | plaster, or a material use
+// cutting-list rows of one block: its id = fronts | frames | plinths | panels | plaster | worktops, or a material use
 // (carcass, drawerBox, back ...): every board of that use's material
+let rowsOf = {}; // block id -> its rows, from the model
 function blockRows(parts) {
   const carcassName = Object.fromEntries(model.carcasses.map(K => [K.id, K.name]));
   const where = p => (p.carcassId ? carcassName[p.carcassId] : place(p)); // carcass name, else group + column
   const list = items => sortRows(longFirst(KE.cutList(items.map(p => ({ ...p, at: where(p) })))));
   const PARTS = {
     // fronts: height × width, as the front maker needs them
-    front: () => sortRows(KE.cutList(model.fronts.map(f => ({ ...f, name: frontFunction(f), a: round1(f.height), b: round1(f.width), at: where(f) })))),
+    fronts: () => sortRows(KE.cutList(model.fronts.map(f => ({ ...f, name: frontFunction(f), a: round1(f.height), b: round1(f.width), at: where(f) })))),
     frames: () => list(model.frames),
     plinths: () => list(model.plinths.map(p => ({ ...p, name: 'Cokół' }))),
     panels: () => list(model.panels),
@@ -260,7 +251,7 @@ function blockRows(parts) {
 
 function applyProject(project) {
   model = KE.build(project);
-  for (const block of COST.blocks) block.rows = blockRows(block.parts);
+  rowsOf = Object.fromEntries(COST.blocks.map(block => [block.id, blockRows(block.id)]));
   carcassMapJSON = KE.mapJSON(KE.carcassMap(model));
   document.getElementById('mapJson').textContent = carcassMapJSON;
   renderAssembly();
@@ -325,7 +316,7 @@ document.getElementById('mapSave').addEventListener('click', () => {
 function defaultValues() {
   return {
     params: Object.fromEntries(Object.entries(COST.params).map(([name, value]) => [name, evalQty(value)])),
-    items: Object.fromEntries(COST.categories.flatMap(c => c.items).map(item => [item.id, { qty: item.qty, price: item.price }]))
+    items: Object.fromEntries(ITEMS.map(item => [item.id, { qty: item.qty, price: item.price }]))
   };
 }
 const defaults = defaultValues();
@@ -337,13 +328,12 @@ function blockTotals() {
   const totals = {};
   for (const block of COST.blocks) {
     const t = { m2: 0, edge: 0, cut: 0, len: 0, qty: 0, rows: [] };
-    const cutting = SETTINGS.cutBlocks.includes(block.id);
-    block.rows.forEach(row => {
+    (rowsOf[block.id] || []).forEach(row => {
       const [, A, B, qty] = row;
       const m2 = (A * B * qty) / 1e6;
       // ABS edges from engine.js (row[5]); fronts, frames and the plinth have no ABS
       const edge = row[5] && row[5].length ? (edgeLength(row[5]) * qty) / 1000 : null;
-      const cut = cutting ? ((A + B) * qty) / 1000 : null;
+      const cut = block.cut ? ((A + B) * qty) / 1000 : null;
       t.m2 += m2;
       t.len += (B * qty) / 1000;
       t.qty += qty;
@@ -362,11 +352,13 @@ function ROUNDUP(x, digits) {
 // Placeholders in quantities and texts - every value comes from design.js, engine.js or the JSON of this page:
 //   {n:hinges} engine count (model.counts; {n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
 //   {r:drawers.dFrom} design.js rule   {t:carcass} thickness, {m:cabinet} material label of a board type or a carcass part
-//   (engine BOARD_TYPES, PART_RULES: carcass, back, drawerBox, hobPanel)   {w:1.depth} worktop of group 1 (model.worktops)
+//   (engine USES: the board types and the parts carcass, back, drawerBox, hobPanel)   {w:1.depth} worktop of group 1 (model.worktops)
 //   {k:K8.innerWidth} carcass   {i:K8/oven.niche} item (carcassValue, itemValue)
-//   {v:name} cost.js vars (dotted path)   {p:i25} unit price of an item   {q:i5} quantity of an item   {carcass.m2|edge|cut|len|qty} cutting-list total
+//   {a:oven.front.1} appliances.js   {v:sheet.length} cost.js values   {p:hinges} unit price of an item   {q:hinges} quantity of an item
+//   {note:hinges} the number of a note
+//   {carcass.m2|edge|cut|len|qty} cutting-list total
 //   {waste} {sheet} {reserve} parameters;  add |% to show a fraction as a percentage, e.g. {v:edgeAllowance|%}
-//   {=...} a calculation (calculate): placeholders in angle brackets, e.g. {=<i:K8/oven.niche> - <v:oven.housing.1>}
+//   {=...} a calculation (calculate): placeholders in angle brackets, e.g. {=<i:K8/oven.niche> - <a:oven.body.1>}
 
 // a carcass by name: width, height, innerWidth, v0, v1
 function carcassValue(rest) {
@@ -411,7 +403,9 @@ function placeholder(key, totals, quantities) {
   if (prefix === 'm') return model ? model.materials[model.materialFor[rest]].label : '…';
   if (prefix === 'k') return model ? carcassValue(rest) : NaN;
   if (prefix === 'i') return model ? itemValue(rest) : NaN;
-  if (prefix === 'v') return path(COST.vars, rest);
+  if (prefix === 'note') return noteNumber[rest] ?? NaN;
+  if (prefix === 'a') return path(APPLIANCES, rest);
+  if (prefix === 'v') return path(COST.values, rest);
   if (prefix === 'p') return Number(values.items[rest].price);
   if (prefix === 'q') return quantities ? quantities[rest] : NaN;
   if (!prefix && rest in values.params) return Number(values.params[rest]);
@@ -450,7 +444,7 @@ function compute() {
       sum += itemValues[item.id];
     }
     categorySums[category.name] = sum;
-    if (SETTINGS.applianceCategories.includes(category.name)) appliances += sum;
+    if (category.appliances) appliances += sum;
     else furniture += sum;
   }
   const reserve = Math.round(furniture * Number(values.params.reserve) * 100) / 100;
@@ -460,7 +454,7 @@ function compute() {
 /* ---------- 4. rendering ---------- */
 // a quantity formula in words, for the tooltip of a calculated quantity: every placeholder as its name and value
 function describeFormula(expr) {
-  const items = Object.fromEntries(COST.categories.flatMap(c => c.items).map(item => [item.id, item]));
+  const items = Object.fromEntries(ITEMS.map(item => [item.id, item]));
   const TOTALS = { m2: 'm²', edge: 'ABS mb', cut: 'cięcia mb', len: 'mb', qty: 'szt.' };
   return expr.replace(/^=/, '')
     .replace(/\{q:(\w+)\}/g, (m, id) => (items[id] ? 'ilość „' + fill(items[id].name) + '”' : m))
@@ -502,7 +496,7 @@ function renderEstimate() {
       const qtyCell = typeof item.qty === 'string'
         ? `<td class="num"><span class="calc" title="${esc(describeFormula(item.qty))}">${fmtQty(result.quantities[item.id])}</span></td>`
         : `<td class="num"><input type="number" step="any" data-item="${item.id}" data-field="qty" value="${current.qty}" class="${current.qty != original.qty ? 'changed' : ''}"></td>`;
-      const refs = item.refs.map(n => `<a class="ref" data-ref="${n}">patrz notatka ${n}</a>`).join(', ');
+      const refs = (item.refs || []).map(id => `<a class="ref" data-ref="${noteNumber[id]}">patrz notatka ${noteNumber[id]}</a>`).join(', ');
       html.push(`<tr><td class="num">${no}</td><td>${esc(fill(item.name))}</td><td class="muted">${esc(fill(item.spec))}</td>${qtyCell}<td>${esc(item.unit)}</td>
         <td class="num"><input type="number" step="any" data-item="${item.id}" data-field="price" value="${current.price}" class="${current.price != original.price ? 'changed' : ''}"></td>
         <td class="num" data-v="${item.id}">${fmt(result.itemValues[item.id])}</td>
@@ -523,14 +517,14 @@ function renderCuttingList() {
   for (const block of COST.blocks) {
     html.push(`<tr class="blk"><td colspan="11">${esc(fill(block.title))}</td></tr>`);
     // as an order form: each size followed by the number of finished edges along it (ABS or lacquer)
-    const [label, size1, size2, qtyLabel] = block.columns.map(esc);
+    const [label, size1, size2, qtyLabel] = columnsOf(block).map(esc);
     html.push(`<tr class="bh"><td>${label}</td><td>${size1} [mm]</td><td>Krawędź</td><td>${size2} [mm]</td><td>Krawędź</td><td>m²</td><td>${qtyLabel}</td><td>ABS razem [mb]</td><td title="(długość + szerokość) × ilość: długość cięcia w hurtowni – wyceniona w pozycji Cięcie płyt">Cięcia [mb]</td><td title="otwory i wycięcia jednej części, kody w legendzie nad tabelą; wartości z design.js (rules.drilling, rules.cutouts)">Wiercenie / wycięcia</td><td title="nazwa korpusu, inaczej G grupa [kolumna]">Gdzie</td></tr>`);
-    block.rows.forEach((row, i) => {
+    (rowsOf[block.id] || []).forEach((row, i) => {
       const t = totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
       const cell = value => `<td class="num" title="Obliczone przez engine.js z design.js – zmiany projektu w design.html">${value}</td>`;
       html.push(`<tr><td>${esc(row[0])}</td>${cell(row[1])}${cell(alongLength)}${cell(row[2])}${cell(alongWidth)}<td class="num">${fmt(t.m2, 3)}</td>${cell(row[3])}<td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="drill">${esc(drillText(row[7]))}</td><td class="where">${esc(row[4] || '')}</td></tr>`);
     });
-    const t = totals[block.id], hasEdging = t.rows.some(r => r.edge != null), hasCutting = SETTINGS.cutBlocks.includes(block.id);
+    const t = totals[block.id], hasEdging = t.rows.some(r => r.edge != null), hasCutting = !!block.cut;
     html.push(`<tr class="sum"><td>Razem</td><td></td><td></td><td></td><td></td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.qty}</td><td class="num">${hasEdging ? fmt(t.edge) : ''}</td><td class="num">${hasCutting ? fmt(t.cut) : ''}</td><td></td><td></td></tr>`);
   }
   // legend of the drilling codes, under the last block
@@ -541,21 +535,24 @@ function renderCuttingList() {
   document.getElementById('cuttingBody').innerHTML = html.join('');
 }
 
-// note texts: \n starts a new line; links = the documents the note comes from [{name, url}]
+// note texts: \n starts a new line; under the description the documents the note comes from (noteDocuments)
 const lines = text => esc(text).replace(/\n/g, '<br>');
-const noteLinks = n => ((n.links || []).length ? '<div class="note-src">' + n.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a>`).join(' · ') + '</div>' : '');
+const noteLinks = n => (noteDocuments(n).length ? '<div class="note-src">' + noteDocuments(n).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a>`).join(' · ') + '</div>' : '');
 function renderNotes() {
-  document.getElementById('notesBody').innerHTML = COST.notes.map(n => n.section
-    ? `<tr class="cat"><td colspan="5">${esc(n.section)}</td></tr>`
-    : `<tr id="note-${n.no}"><td><b>${esc(n.no)}</b></td><td><b>${esc(fill(n.topic))}</b></td><td>${lines(fill(n.description))}${noteLinks(n)}</td><td>${lines(fill(n.assumed))}</td><td class="decide">${lines(fill(n.decide))}</td></tr>`).join('');
+  document.getElementById('notesBody').innerHTML = COST.notes.map((section, i) =>
+    `<tr class="cat"><td colspan="5">${esc(sectionTitle(section, i))}</td></tr>` +
+    section.notes.map(n => {
+      const no = noteNumber[n.id];
+      return `<tr id="note-${no}"><td><b>${esc(no)}</b></td><td><b>${esc(fill(n.topic))}</b></td><td>${lines(fill(n.description))}${noteLinks(n)}</td><td>${lines(fill(n.assumed))}</td><td class="decide">${lines(fill(n.decide))}</td></tr>`;
+    }).join('')).join('');
 }
 
 function renderStatic() {
-  document.getElementById('title').textContent = COST.title;
-  if (COST.pageTitle) document.title = COST.pageTitle;
-  document.getElementById('info').textContent = COST.info;
-  document.getElementById('sheetLabel').textContent = fill(SETTINGS.sheetLabel);
-  document.getElementById('excl').innerHTML = '<b>Nie obejmuje / uwagi ogólne</b><br>' + COST.excluded.map(e => esc(fill(e))).join('<br>') +
+  document.getElementById('title').textContent = COST.page.heading;
+  document.title = COST.page.title;
+  document.getElementById('info').textContent = COST.page.info;
+  document.getElementById('sheetLabel').textContent = fill(COST.labels.sheet);
+  document.getElementById('excl').innerHTML = '<b>Nie obejmuje / uwagi ogólne</b><br>' + COST.page.excluded.map(e => esc(fill(e))).join('<br>') +
     '<br>Pytania i założenia: <a class="ref" data-tab-go="notes">patrz zakładka Notatki</a>.';
   document.querySelectorAll('[data-param]').forEach(input => {
     const name = input.dataset.param;
@@ -569,7 +566,7 @@ function renderAll() {
   renderEstimate();
   renderCuttingList();
   renderNotes();
-  document.getElementById('cutNote').textContent = fill(SETTINGS.cuttingNote);
+  document.getElementById('cutNote').textContent = fill(COST.labels.cuttingNote);
 }
 
 /* ---------- 5. interaction ---------- */
@@ -628,19 +625,19 @@ function buildWorkbook() {
   const num = v => ({ t: 'n', v }), str = v => ({ t: 's', v: String(v ?? '') }), formula = (f, v) => ({ t: 'n', f, v });
 
   // sheet "Cutting list"
-  const cutting = [[str('Lista cięć – płyty obliczone przez engine.js z design.js (wymiary w mm)')], [str(fill(SETTINGS.cuttingNote))], []];
+  const cutting = [[str('Lista cięć – płyty obliczone przez engine.js z design.js (wymiary w mm)')], [str(fill(COST.labels.cuttingNote))], []];
   const blockTotalRow = {};
   for (const block of COST.blocks) {
     cutting.push([str(fill(block.title))]);
     // as an order form: each size followed by the number of finished edges along it
-    const [labelCell, size1, size2, qtyCell] = block.columns;
+    const [labelCell, size1, size2, qtyCell] = columnsOf(block);
     cutting.push([str(labelCell), str(size1 + ' [mm]'), str('Krawędź'), str(size2 + ' [mm]'), str('Krawędź'), str('m²'), str(qtyCell), str('ABS razem [mb]'), str('Cięcia [mb]'), str('Wiercenie / wycięcia (legenda na dole)'), str('Gdzie')]);
     const first = cutting.length + 1;
-    block.rows.forEach((row, i) => {
+    (rowsOf[block.id] || []).forEach((row, i) => {
       const [, A, B, qty] = row, r = cutting.length + 1, t = result.totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
       const line = [str(row[0]), num(A), num(alongLength), num(B), num(alongWidth), formula(`B${r}*D${r}*G${r}/1000000`, t.m2), num(qty)];
       line.push(t.edge != null ? formula(`${edgeLength(row[5])}*G${r}/1000`, t.edge) : str(''));
-      line.push(SETTINGS.cutBlocks.includes(block.id) ? formula(`(B${r}+D${r})*G${r}/1000`, t.cut) : str(''));
+      line.push(block.cut ? formula(`(B${r}+D${r})*G${r}/1000`, t.cut) : str(''));
       line.push(str(drillText(row[7])));
       line.push(str(row[4] || ''));
       cutting.push(line);
@@ -655,17 +652,17 @@ function buildWorkbook() {
   // sheet "Notes"
   const notes = [[str('Notatki – pytania otwarte / założenia')], [str('Pozycje kosztorysu odsyłają tu przez „patrz notatka N”.')], [], ['Lp.', 'Temat', 'Opis', 'Przyjęte w kosztorysie', 'Do decyzji'].map(str)];
   const noteRow = {};
-  for (const n of COST.notes) {
-    if (n.section) notes.push([str(n.section)]);
-    else {
-      noteRow[n.no] = notes.length + 1;
-      notes.push([str(n.no), str(fill(n.topic)), str(fill(n.description) + (n.links || []).map(l => '\n' + l.name + ': ' + l.url).join('')), str(fill(n.assumed)), str(fill(n.decide))]);
+  COST.notes.forEach((section, i) => {
+    notes.push([str(sectionTitle(section, i))]);
+    for (const n of section.notes) {
+      noteRow[n.id] = notes.length + 1;
+      notes.push([str(noteNumber[n.id]), str(fill(n.topic)), str(fill(n.description) + noteDocuments(n).map(l => '\n' + l.name + ': ' + l.url).join('')), str(fill(n.assumed)), str(fill(n.decide))]);
     }
-  }
+  });
 
   // sheet "Estimate": waste in C3, sheet size in C4
-  const estimate = [[str(COST.title)], [str(fill(COST.info))],
-    [str('Naddatek na odpad płyt'), str(''), num(Number(values.params.waste))], [str(fill(SETTINGS.sheetLabel)), str(''), num(Number(values.params.sheet))], [],
+  const estimate = [[str(COST.page.heading)], [str(fill(COST.page.info))],
+    [str('Naddatek na odpad płyt'), str(''), num(Number(values.params.waste))], [str(fill(COST.labels.sheet)), str(''), num(Number(values.params.sheet))], [],
     ['Lp.', 'Pozycja', 'Specyfikacja', 'Ilość', 'J.m.', 'Cena jedn. [PLN]', 'Wartość [PLN]', 'Źródło ceny / uwagi'].map(str)];
   const itemRow = {}, categoryRows = [];
   let no = 0;
@@ -686,24 +683,25 @@ function buildWorkbook() {
       itemRow[item.id] = r;
       const qty = typeof item.qty === 'string' ? formula(toExcel(item.qty), result.quantities[item.id]) : num(Number(values.items[item.id].qty));
       const links = item.links || [];
-      const source = str(fill(item.source) + links.map(l => ' ' + l.url).join('') + (item.refs.length ? ' – patrz notatka ' + item.refs.join(', ') : ''));
+      const refs = item.refs || [];
+      const source = str(fill(item.source) + links.map(l => ' ' + l.url).join('') + (refs.length ? ' – patrz notatka ' + refs.map(id => noteNumber[id]).join(', ') : ''));
       if (links.length) source.l = { Target: links[0].url, Tooltip: links[0].shop }; // the first shop; the others are in the text
-      else if (item.refs.length) source.l = { Target: `#'Notatki'!A${noteRow[item.refs[0]]}`, Tooltip: 'Przejdź do notatki' };
+      else if (refs.length) source.l = { Target: `#'Notatki'!A${noteRow[refs[0]]}`, Tooltip: 'Przejdź do notatki' };
       estimate.push([num(no), str(fill(item.name)), str(fill(item.spec)), qty, str(item.unit), num(Number(values.items[item.id].price)), formula(`ROUND(D${r}*F${r},2)`, result.itemValues[item.id]), source]);
     }
     estimate[categoryRow - 1] = [str(''), str(category.name), str(''), str(''), str(''), str(''), formula(`SUM(G${first}:G${estimate.length})`, result.categorySums[category.name])];
-    categoryRows.push([category.name, categoryRow]);
+    categoryRows.push([category.name, categoryRow, category.appliances]);
   }
   estimate.push([]);
   const furnitureRow = estimate.length + 1;
-  const sumOf = isAppliance => categoryRows.filter(c => SETTINGS.applianceCategories.includes(c[0]) === isAppliance).map(c => 'G' + c[1]).join('+');
+  const sumOf = isAppliance => categoryRows.filter(c => !!c[2] === isAppliance).map(c => 'G' + c[1]).join('+');
   estimate.push([str(''), str('Meble (materiały) razem'), str(''), str(''), str(''), str(''), formula(sumOf(false), result.furniture)]);
   estimate.push([str(''), str('AGD razem'), str(''), str(''), str(''), str(''), formula(sumOf(true), result.appliances)]);
   estimate.push([str(''), str('Rezerwa na drobne pozycje / ceny szacunkowe'), str('% mebli'), str(''), str(''), num(Number(values.params.reserve)), formula(`ROUND(G${furnitureRow}*F${furnitureRow + 2},2)`, result.reserve)]);
   estimate.push([str(''), str('RAZEM BRUTTO'), str(''), str(''), str(''), str(''), formula(`G${furnitureRow}+G${furnitureRow + 1}+G${furnitureRow + 2}`, result.total)]);
   estimate.push([]);
   estimate.push([str(''), str('Nie obejmuje')]);
-  COST.excluded.forEach(e => estimate.push([str(''), str('• ' + fill(e))]));
+  COST.page.excluded.forEach(e => estimate.push([str(''), str('• ' + fill(e))]));
   const notesLink = str('• Pytania i założenia: patrz arkusz Notatki.');
   notesLink.l = { Target: "#'Notatki'!A1" };
   estimate.push([str(''), notesLink]);
@@ -745,7 +743,7 @@ document.getElementById('exportXlsx').addEventListener('click', async e => {
   button.disabled = true;
   try {
     await loadSheetJS();
-    window.XLSX.writeFile(buildWorkbook(), SETTINGS.xlsxFile, { compression: true });
+    window.XLSX.writeFile(buildWorkbook(), COST.page.xlsxFile, { compression: true });
   } catch (err) {
     alert(err.message);
   } finally {

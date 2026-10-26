@@ -1,24 +1,29 @@
 /* Kitchen project design - shared by design.html, cost.html and view.html.
    Plain JSON after "window.KITCHEN_DESIGN =". Edit it in design.html (Import data / Export data). */
 window.KITCHEN_DESIGN = {
+ "materials": {
+  "grey18": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 18, "color": "#4a4d51", "core": "#f2efe8", "uses": ["carcass"]},
+  "grey16": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 16, "color": "#4a4d51", "core": "#f2efe8", "uses": ["drawerBox", "hobPanel"]},
+  "hdf3": {"name": "HDF szary lakierowany", "thickness": 3, "color": "#c6c8c9", "uses": ["back"]},
+  "mdfnavy18": {"name": "Front shaker English Navy satyna", "thickness": 18, "color": "#1c2744", "lacquered": true, "core": "#f2efe8", "uses": ["frame", "cabinet", "drawer"]},
+  "navy18": {"name": "Panel gładki English Navy satyna", "thickness": 18, "color": "#1c2744", "lacquered": true, "core": "#f2efe8", "uses": ["panel", "plinth"]},
+  "oak18": {"name": "Płyta laminowana Egger H1180 ST37 dąb Halifax", "thickness": 18, "uses": ["splash"]},
+  "oak38": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "depth": {"worktop": 600, "island": 900}, "uses": ["worktop"]}
+ },
  "rules": {
-  "materials": {
-   "grey18": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 18, "color": "#4a4d51", "core": "#f2efe8"},
-   "grey16": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 16, "color": "#4a4d51", "core": "#f2efe8"},
-   "hdf3": {"name": "HDF szary lakierowany", "thickness": 3, "color": "#c6c8c9"},
-   "mdfnavy18": {"name": "Front shaker English Navy satyna", "thickness": 18, "color": "#1c2744", "lacquered": true, "core": "#f2efe8", "types": ["frame", "cabinet", "drawer"]},
-   "navy18": {"name": "Panel gładki English Navy satyna", "thickness": 18, "color": "#1c2744", "lacquered": true, "core": "#f2efe8", "types": ["panel", "plinth"]},
-   "oak18": {"name": "Płyta laminowana Egger H1180 ST37 dąb Halifax", "thickness": 18, "types": ["splash"]},
-   "oak38": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "types": ["worktop"], "depth": {"worktop": 600, "island": 900}}
-  },
-  "carcass": {"material": "grey18", "depth": 550, "wallGap": 14},
-  "front": {"shakerRail": 50},
-  "plinth": {"setback": 70},
-  "rails": {"depth": 100, "hobFront": 50, "hobPanelMaterial": "grey16", "hobPanelGap": 20},
-  "back": {"material": "hdf3", "inset": 1},
+  "carcass": {"depth": 550, "wallGap": 14, "legs": 4},
+  "back": {"inset": 1},
+  "rails": {"depth": 100, "hobFront": 50, "hobPanelGap": 20},
   "shelf": {"setback": 18, "clearance": 1, "pins": 4, "perDoor": [[720, 1], [99999, 3]], "ventGap": 150},
-  "frame": {"depth": 100},
+  "pullOutShelf": {"depth": 500, "clearance": 5, "lift": 20, "space": 450, "shelvesAbove": 2},
   "hinges": {"fromEnd": 100, "supportDepth": 80, "aboveShelf": 30, "perDoor": [[900, 2], [1600, 3], [99999, 4]]},
+  "drawers": {"dFrom": 350, "D": {"side": 224, "back": 199}, "M": {"side": 83, "back": 84}, "bottom": {"inset": 75, "depth": 476, "fromWall": 52}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "back": 84, "frontDeduction": 132}},
+  "front": {"shakerRail": 50},
+  "frame": {"depth": 100},
+  "plinth": {"setback": 70},
+  "worktop": {"overhang": 18},
+  "island": {"backPanel": true},
+  "plasterboard": {"depth": 600, "studSpacing": 600, "layers": 2},
   "drilling": {
    "cup": {"diameter": 35, "depth": 13, "fromEdge": 22},
    "plate": {"diameter": 2.5, "depth": 10, "fromFront": 37, "spacing": 32},
@@ -28,13 +33,7 @@ window.KITCHEN_DESIGN = {
   "cutouts": {
    "sink": {"width": 680, "depth": 420, "fromBack": 110},
    "hob": {"width": 560, "depth": 490, "fromBack": 54}
-  },
-  "drawers": {"material": "grey16", "dFrom": 350, "D": {"side": 224, "back": 199}, "M": {"side": 83, "back": 84}, "bottom": {"inset": 75, "depth": 476, "fromWall": 52}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "back": 84, "frontDeduction": 132}},
-  "legsPerCarcass": 4,
-  "island": {"backPanel": true},
-  "pullOutShelf": {"depth": 500, "clearance": 5, "lift": 20, "space": 450, "shelvesAbove": 2},
-  "worktop": {"overhang": 18},
-  "plasterboard": {"depth": 600, "studSpacing": 600, "layers": 2}
+  }
  },
  "notes": [
   ["Projekt", "Kuchnia – Jaworze", "grupa 1 + grupa 2 tworzą L"],

@@ -256,7 +256,8 @@ body.shut .toggle{display:flex}
      DATA FLOW:
        design.js   project (rules, notes, columns, components) - SOURCE, edited in design.html
        engine.js   carcasses, boards, fronts, frames, plinths, panels - shared by the three pages
-       view.js     scene of this kitchen (room, window, appliances, lights, colours, cameras) - edit there
+       view.js     scene of this kitchen (placement of the groups, room, window, hardware, lights, cameras) - edit there
+       appliances.js  the appliances at the manufacturer's sizes - shared with cost.html
        this page   places the engine's parts in the room, draws them and checks them (overlaps, gaps, fronts)
      =================================================================== -->
 
@@ -264,11 +265,12 @@ body.shut .toggle{display:flex}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
 <script src="view.js"></script>
+<script src="appliances.js"></script>
 <script src="design.js"></script>
 <script src="engine.js"></script>
 <script>
 /* view.html - the kitchen in 3D (three.js r128): the engine's parts placed in the room (view.js), checked and lit.
-   A run is a group placed in the room (SCENE.runs); inside a run: u along, v up, n out from the wall (mm).
+   A run is a design.js group placed in the room (SCENE.placement, by group number); inside a run: u along, v up, n out from the wall (mm).
    Room: x along the window wall, y up, z out from it; three.js units are metres. */
 (async function () {
 'use strict';
@@ -283,15 +285,16 @@ try {
   project = await KE.load();
   model = KE.build(project);
 } catch (err) { loading.textContent = err.message; return; }
-const SCENE = window.KITCHEN_VIEW, rules = project.rules;
+const SCENE = window.KITCHEN_VIEW, APPLIANCES = window.KITCHEN_APPLIANCES, rules = project.rules;
 if (!SCENE) { loading.textContent = 'Nie znaleziono pliku view.js obok tej strony'; return; }
-document.getElementById('src').textContent = 'Dane: design.js i view.js, części z engine.js.';
+if (!APPLIANCES) { loading.textContent = 'Nie znaleziono pliku appliances.js obok tej strony'; return; }
+document.getElementById('src').textContent = 'Dane: design.js, view.js i appliances.js, części z engine.js.';
 if (model.warnings.length) console.warn('design.js: ' + model.warnings.join(' | '));
 
-const RUN_IDS = Object.keys(SCENE.runs).filter(r => r !== 'about');
-const groupOfRun = Object.fromEntries(RUN_IDS.map(r => [r, SCENE.runs[r].group]));
-const runOfGroup = Object.fromEntries(RUN_IDS.map(r => [SCENE.runs[r].group, r]));
-const runName = Object.fromEntries(RUN_IDS.map(r => [r, SCENE.runs[r].name]));
+const RUN_IDS = Object.keys(SCENE.placement); // a run is keyed by its group number
+const groupOfRun = Object.fromEntries(RUN_IDS.map(r => [r, Number(r)]));
+const runOfGroup = Object.fromEntries(RUN_IDS.map(r => [Number(r), r]));
+const runName = Object.fromEntries(RUN_IDS.map(r => [r, SCENE.placement[r].name]));
 const freeStanding = Object.fromEntries(RUN_IDS.map(r => [r, !!(model.groups[groupOfRun[r]] || {}).island])); // no wall behind an island
 const itemsOfRun = {}, runLength = {};
 for (const r of RUN_IDS) {
@@ -304,10 +307,10 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 const { frontFace, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the wall
 const { carcass: board, plinth: plinthThickness, splash: splashThickness, frame: frameThickness, panel: panelThickness } = model.thickness, frontThickness = model.frontThickness;
-const fittings = SCENE.fittings;
+const fittings = SCENE.hardware;
 const shakerRail = rules.front.shakerRail; // width of the shaker frame of a front
 const room = SCENE.room, ceiling = room.ceiling;
-const rightWall = SCENE.runs[room.rightWallRun].x; // the wall line (n = 0) of the run that stands against the right wall
+const rightWall = SCENE.placement[room.rightWallGroup].x; // the wall line (n = 0) of the group that stands against the right wall
 const worktopOf = group => model.worktops[group] || { n0: 0, n1: 0, depth: 0 }; // n0 back edge, n1 front edge
 const sinkCarcass = model.carcasses.find(K => K.sink); // the run with the sink
 const sinkRun = sinkCarcass ? runOfGroup[sinkCarcass.group] : null;
@@ -315,7 +318,7 @@ const worktopTopOf = run => worktopOf(groupOfRun[run]).v1;
 
 // [u0, u1, n0, n1] of a run -> [x0, x1, z0, z1] in the room
 const toRoom = Object.fromEntries(RUN_IDS.map(r => {
-  const P = SCENE.runs[r], a = (P.rot * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
+  const P = SCENE.placement[r], a = (P.rot * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
   const X = (u, n) => P.x + u * cos + n * sin, Z = (u, n) => P.z - u * sin + n * cos;
   return [r, (u0, u1, n0, n1) => {
     if (u1 <= u0 || n1 <= n0) return [0, 0, 0, 0]; // empty box: nothing drawn
@@ -325,7 +328,7 @@ const toRoom = Object.fromEntries(RUN_IDS.map(r => {
 }));
 // [u, n] of a run -> [x, z] in the room
 const pointToRoom = Object.fromEntries(RUN_IDS.map(r => {
-  const P = SCENE.runs[r], a = (P.rot * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
+  const P = SCENE.placement[r], a = (P.rot * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
   return [r, (u, n) => [P.x + u * cos + n * sin, P.z - u * sin + n * cos]];
 }));
 
@@ -494,7 +497,7 @@ function texture(canvas, repeatX, repeatY) {
   t.repeat.set(repeatX, repeatY);
   return t;
 }
-const METALS = SCENE.metals, COLORS = SCENE.colors, handleMetal = METALS[SCENE.handleMetal];
+const METALS = SCENE.metals, handleMetal = METALS[fittings.handle.metal];
 const standard = options => new THREE.MeshStandardMaterial(options);
 const physical = options => new THREE.MeshPhysicalMaterial(options);
 // colour of the holes by kind (engine.js hole.kind): hinges (cup, mounting plate), shelf pins, runners; [hex, legend label]
@@ -502,7 +505,7 @@ const HOLE_COLORS = { hinge: ['#f26b1d', 'zawiasy'], shelfPin: ['#22b35e', 'pó�
 const holeUse = kind => (kind === 'cup' || kind === 'plate' ? 'hinge' : kind);
 const MAT = {
   oak: physical({ map: texture(oakCanvas(), 1 / 4.8, 1 / 0.6), roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, envMapIntensity: 0.5 }),
-  wall: standard({ color: linear(COLORS.wall), roughness: 0.95, envMapIntensity: 0.45 }),
+  wall: standard({ color: linear(room.wallColor), roughness: 0.95, envMapIntensity: 0.45 }),
   marble: physical({ map: texture(marbleCanvas(), 1000 / room.floorTile[0], 1000 / room.floorTile[1]), roughness: 0.22, clearcoat: 0.5, clearcoatRoughness: 0.15, envMapIntensity: 0.7 }),
   handle: standard({ color: linear(handleMetal.color), metalness: handleMetal.metal, roughness: handleMetal.rough, envMapIntensity: 1.4, side: THREE.DoubleSide }),
   steel: standard({ color: linear(0xd2d5d8), metalness: 1, roughness: 0.3 }),
@@ -529,8 +532,8 @@ const MAT = {
   insert: standard({ color: linear(0xd9dadb), roughness: 0.5, envMapIntensity: 0.6 }), // cutlery insert
   selected: standard({ color: linear(0x8fd0f5), roughness: 0.6, emissive: linear(0x1a5a80), emissiveIntensity: 0.6 }) // selected carcass
 };
-// board materials of design.js (rules.materials): lacquered ones get a satin clearcoat; without a colour: the oak texture
-const BOARD = Object.fromEntries(Object.entries(rules.materials).map(([code, m]) => [code,
+// board materials of design.js (materials): lacquered ones get a satin clearcoat; without a colour: the oak texture
+const BOARD = Object.fromEntries(Object.entries(model.materials).map(([code, m]) => [code,
   !m.color ? MAT.oak
     : m.lacquered ? physical({ color: linear(m.color), roughness: 0.42, clearcoat: 0.2, clearcoatRoughness: 0.45, envMapIntensity: 0.7 })
     : standard({ color: linear(m.color), roughness: 0.8, envMapIntensity: 0.45 })]));
@@ -562,7 +565,7 @@ function setMetal(name) {
 const coreMaterial = {}, edgedMeshes = new Set();
 const BOX_SIDES = ['right', 'left', 'top', 'bottom', 'front', 'back']; // BoxGeometry faces: +u, −u, +v, −v, +n, −n
 function edgeLook(m, edges, code) {
-  const material = rules.materials[code];
+  const material = model.materials[code];
   if (!m || !material || !material.core) return m;
   const core = coreMaterial[code] || (coreMaterial[code] = standard({ color: linear(material.core), roughness: 0.9 }));
   const p = m.geometry.parameters, sizes = [p.width, p.height, p.depth], thin = sizes.indexOf(Math.min(...sizes)); // the axis through the faces
@@ -592,7 +595,7 @@ const roomLayer = {}; // layer -> group in room coordinates
 for (const id of LAYER_IDS) roomLayer[id] = layerGroup(scene, id);
 const runGroup = Object.fromEntries(RUN_IDS.map(r => [r, new THREE.Group()]));
 for (const r of RUN_IDS) {
-  const P = SCENE.runs[r];
+  const P = SCENE.placement[r];
   runGroup[r].position.set(P.x / 1000, 0, P.z / 1000);
   runGroup[r].rotation.y = (P.rot * Math.PI) / 180;
   runGroup[r].updateMatrixWorld(true);
@@ -755,9 +758,9 @@ function poseMovingPart(mover) {
 }
 
 /* ---------- built-in oven and microwave ---------- */
-/* appliances at the manufacturer's sizes (SCENE.appliances): each gets an envelope, its outer box, for the geometry check
+/* appliances at the manufacturer's sizes (appliances.js): each gets an envelope, its outer box, for the geometry check
    (an invisible mesh, not in meshes, so it is never drawn or picked) */
-const APPLIANCES = SCENE.appliances, envelopes = [];
+const envelopes = [];
 function envelope(P, u0, u1, v0, v1, n0, n1, name) {
   const m = new THREE.Mesh(new THREE.BoxGeometry((u1 - u0) / 1000, (v1 - v0) / 1000, (n1 - n0) / 1000));
   m.position.set((u0 + u1) / 2000, (v0 + v1) / 2000, (n0 + n1) / 2000);
@@ -828,7 +831,7 @@ function builtInAppliance(run, item, type) {
 }
 
 /* ================= 5. WORKTOPS, FRAMES, PLINTHS, PANELS; SINK, HOB, HOOD ================= */
-const sinkData = SCENE.sink;
+const sinkData = APPLIANCES.sink;
 // the sink sits centred on the worktop cut-out engine.js makes over the carcass tagged sink (design.js rules.cutouts.sink); no cut-out = no sink
 const sinkCut = sinkRun && (worktopOf(groupOfRun[sinkRun]).cutouts || []).find(c => c.kind === 'sink');
 const sinkItem = sinkCut && itemsOfRun[sinkRun].find(i => hasTag(i, 'sink'));
@@ -837,7 +840,7 @@ const sinkU = sinkCut ? (sinkCut.u0 + sinkCut.u1) / 2 : 0, sinkN = sinkCut ? (si
 const sinkU0 = sinkU - sinkData.outer[0] / 2, sinkU1 = sinkU + sinkData.outer[0] / 2, sinkN0 = sinkN - sinkData.outer[1] / 2, sinkN1 = sinkN + sinkData.outer[1] / 2;
 const bowlU0 = sinkU - sinkData.bowl[0] / 2, bowlU1 = sinkU + sinkData.bowl[0] / 2, bowlN0 = sinkN - sinkData.bowl[1] / 2, bowlN1 = sinkN + sinkData.bowl[1] / 2;
 const sinkTop = sinkRun ? worktopTopOf(sinkRun) : 0;
-const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowlDepth;
+const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowl[2];
 const tapN = sinkRun ? worktopOf(groupOfRun[sinkRun]).n0 + sinkData.tapFromBack : 0; // from the back edge of the worktop
 // a worktop with cut-outs (engine.js: sink, hob from design.js rules.cutouts): one board, an outline with holes extruded to the worktop thickness
 function worktopWithCutOuts(run, uStart, uEnd, v0, v1, cutouts) {
@@ -913,7 +916,7 @@ for (const p of model.panels) {
   nameNewMeshes(firstMesh, 'panel', 'G' + p.group + ' ' + p.name + ' ' + p.a + ' × ' + p.b);
 }
 
-// inset sink (one bowl, view.js sink), with tap and a space-saving trap
+// inset sink (one bowl, appliances.js sink), with tap and a space-saving trap
 if (sinkItem) {
   target = runLayer[sinkRun].sink;
   [[sinkU0, sinkU1, sinkN0, bowlN0], [sinkU0, sinkU1, bowlN1, sinkN1], [sinkU0, bowlU0, bowlN0, bowlN1], [bowlU1, sinkU1, bowlN0, bowlN1]]
@@ -953,7 +956,7 @@ if (sinkItem) {
 
 // induction hob above the drawers (item tagged hob, any group; no tag = no hob and no hood)
 const hobRun = RUN_IDS.find(r => itemsOfRun[r].some(i => hasTag(i, 'hob')));
-const hobData = SCENE.hob, hobItem = hobRun && itemsOfRun[hobRun].find(i => hasTag(i, 'hob'));
+const hobData = APPLIANCES.hob, hobItem = hobRun && itemsOfRun[hobRun].find(i => hasTag(i, 'hob'));
 if (hobItem) target = runLayer[hobRun].hob;
 // the hob body fills the worktop cut-out (engine.js, design.js rules.cutouts.hob), the glass is centred on it
 const hobCut = hobItem && (worktopOf(groupOfRun[hobRun]).cutouts || []).find(c => c.kind === 'hob');
@@ -961,8 +964,8 @@ const hobU = hobCut ? (hobCut.u0 + hobCut.u1) / 2 : hobItem ? (hobItem.u0 + hobI
 if (hobItem && hobCut) (function hob() {
   const u0 = hobU - hobData.glass[0] / 2, u1 = hobU + hobData.glass[0] / 2, v = worktopTopOf(hobRun), glassN = (hobCut.n0 + hobCut.n1) / 2 - hobData.glass[1] / 2;
   roomBox(u0, u1, v, v + 5, glassN, glassN + hobData.glass[1], MAT.glassBlack); // glass over the cut-out
-  roomBox(hobCut.u0, hobCut.u1, v - hobData.builtInHeight, v, hobCut.n0, hobCut.n1, MAT.applianceBody); // body, built-in height
-  envelope(runLayer[hobRun].hob, hobCut.u0, hobCut.u1, v - hobData.builtInHeight, v, hobCut.n0, hobCut.n1, 'Płyta grzewcza – korpus ' + (hobCut.u1 - hobCut.u0) + ' × ' + (hobCut.n1 - hobCut.n0) + ' × ' + hobData.builtInHeight);
+  roomBox(hobCut.u0, hobCut.u1, v - hobData.body[2], v, hobCut.n0, hobCut.n1, MAT.applianceBody); // body, built-in height
+  envelope(runLayer[hobRun].hob, hobCut.u0, hobCut.u1, v - hobData.body[2], v, hobCut.n0, hobCut.n1, 'Płyta grzewcza – korpus ' + (hobCut.u1 - hobCut.u0) + ' × ' + (hobCut.n1 - hobCut.n0) + ' × ' + hobData.body[2]);
   [[-150, glassN + 140, 0.1], [150, glassN + 140, 0.085], [-150, glassN + 370, 0.085], [150, glassN + 370, 0.11]].forEach(([du, n, r]) => { // cooking zones
     const m = new THREE.Mesh(new THREE.RingGeometry(r - 0.003, r, 64), MAT.ring);
     m.rotation.x = -Math.PI / 2;
@@ -974,11 +977,11 @@ if (hobItem && hobCut) (function hob() {
   slider.position.set(hobU / 1000, (v + 5.5) / 1000, (glassN + 490) / 1000);
   target.add(slider);
 })();
-// hood (SCENE.hood): angled, black glass, with two LED spots
+// hood (appliances.js hood): angled, black glass, with two LED spots
 if (hobItem) target = runLayer[hobRun].hood;
 if (hobItem) (function hood() {
   const toWorld = (x, y, z) => runGroup[hobRun].localToWorld(new THREE.Vector3(x, y, z));
-  const H = SCENE.hood, uc = hobU, W = H.width, D = H.depth, bottom = H.bottom, height = H.height, chimneyW = H.chimney[0], chimneyD = H.chimney[1];
+  const H = APPLIANCES.hood, uc = hobU, W = H.width, D = H.depth, bottom = H.bottom, height = H.height, chimneyW = H.chimney[0], chimneyD = H.chimney[1];
   const firstMesh = meshes.length;
   const profile = new THREE.Shape();
   profile.moveTo(0, 0); profile.lineTo(D, 0); profile.lineTo(D, 40); profile.lineTo(110, height); profile.lineTo(0, height); profile.lineTo(0, 0);
@@ -1070,10 +1073,10 @@ function buildCarcass(K) {
   if (K.fridge) fridgeBody(K);
   if (K.grille) plinthGrille(K);
 }
-// bean-to-cup coffee machine (SCENE.coffee.size = width, height, depth), front face at n1, standing on y, centred on uc
+// bean-to-cup coffee machine (appliances.js coffee.body = width, height, depth), front face at n1, standing on y, centred on uc
 function coffeeMachine(P, uc, y, n1) {
-  const [w, h, d] = SCENE.coffee.size, u0 = uc - w / 2, u1 = uc + w / 2, n0 = n1 - d, top = y + h, head = top - 115, F = n1 - 45;
-  envelope(P, u0, u1, y, top, n0, n1, SCENE.coffee.name + ' ' + w + ' × ' + h + ' × ' + d);
+  const [w, h, d] = APPLIANCES.coffee.body, u0 = uc - w / 2, u1 = uc + w / 2, n0 = n1 - d, top = y + h, head = top - 115, F = n1 - 45;
+  envelope(P, u0, u1, y, top, n0, n1, APPLIANCES.coffee.name + ' ' + w + ' × ' + h + ' × ' + d);
   localBox(P, u0, u1, y, top, n0, F, MAT.blackMetal); // body
   localBox(P, u0, u0 + 28, y, head, F, n1, MAT.steel); localBox(P, u1 - 28, u1, y, head, F, n1, MAT.steel); // front side columns
   localBox(P, u0, u1, head, top, F, n1, MAT.steel); // head with the controls
@@ -1104,7 +1107,7 @@ function plinthGrille(K) {
 }
 // built-in fridge-freezer at the manufacturer's size (APPLIANCES.fridge.body), standing on the carcass bottom, centred,
 // its doors at the carcass front (fridgeDoorPlane: where the body ends and the doors start); split between the appliance doors
-const fridgeDoorPlane = carcassFront - SCENE.fridge.doorDepth;
+const fridgeDoorPlane = carcassFront - APPLIANCES.fridge.doorDepth;
 function fridgeBody(K) {
   const A = APPLIANCES.fridge, P = runLayer[K.run].fridge, uc = (K.u0 + K.u1) / 2;
   const u0 = uc - A.body[0] / 2, u1 = uc + A.body[0] / 2, bodyV0 = K.v0 + board, bodyV1 = bodyV0 + A.body[1];
@@ -1247,7 +1250,7 @@ for (const K of carcasses) {
     localBox(mover.layers.hardware, a, b, y0, y0 + 12, z0 + 8, z1 - 4, MAT.zinc);
   }
   coffeeMachine(box, (x0 + x1) / 2, y1, z1 - 20);
-  mover.label = 'Półka wysuwana ' + shelf.a + ' × ' + shelf.b + ' z ' + SCENE.coffee.name;
+  mover.label = 'Półka wysuwana ' + shelf.a + ' × ' + shelf.b + ' z ' + APPLIANCES.coffee.name;
 }
 
 /* ================= 7. CHECKS ================= */
@@ -1417,10 +1420,10 @@ floor.castShadow = false;
 target = roomLayer.lamps;
 const bulbHot = glowMaterial(0xffe7c2, 5);
 const shadeInside = standard({ color: linear(0xf4ead8), roughness: 0.6, metalness: 0, side: THREE.BackSide });
-SCENE.pendants.points.forEach(([x, z]) => {
-  const y = SCENE.pendants.bottom;
+SCENE.lights.pendants.points.forEach(([x, z]) => {
+  const y = SCENE.lights.pendants.bottom;
   roomCylinder(2, ceiling - y - 90, MAT.gasket, x, (ceiling + y + 90) / 2, z, null, 6); // cable
-  const shade = new THREE.Mesh(new THREE.SphereGeometry(0.15, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), standard({ color: linear(rules.materials[model.materialFor.cabinet].color), roughness: 0.5, metalness: 0.2 })); // shade in the cabinet front colour
+  const shade = new THREE.Mesh(new THREE.SphereGeometry(0.15, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), standard({ color: linear(model.materials[model.materialFor.cabinet].color), roughness: 0.5, metalness: 0.2 })); // shade in the cabinet front colour
   shade.position.set(x / 1000, (y + 60) / 1000, z / 1000);
   shade.castShadow = true;
   target.add(shade);
@@ -1450,13 +1453,13 @@ SCENE.pendants.points.forEach(([x, z]) => {
 
 /* ---------- ceiling with downlights ---------- */
 const ceilingGroup = wallGroup([0, 1, 0], [1.2, ceiling / 1000 + 0.02, 2], roomLayer.ceiling);
-const ceilingMaterial = standard({ color: linear(COLORS.wall), roughness: 0.95, emissive: linear(0x4a4844) });
+const ceilingMaterial = standard({ color: linear(room.wallColor), roughness: 0.95, emissive: linear(0x4a4844) });
 roomBox(leftEnd, rightWall, ceiling, ceiling + 20, 0, room.floorDepth, ceilingMaterial, ceilingGroup, true);
 const tube = standard({ color: linear(0xf3f3f0), roughness: 0.45 }), tubeInside = standard({ color: linear(0x2a2a2a), roughness: 0.7, side: THREE.BackSide });
 const TUBE_RADIUS = 35, TUBE_HEIGHT = 100;
 const axisPoint = { sink: sinkCut && pointToRoom[sinkRun](sinkU, sinkN), hob: hobCut && pointToRoom[hobRun](hobU, (hobCut.n0 + hobCut.n1) / 2) };
 const downlightAt = p => (Array.isArray(p) ? p : [p.between.reduce((sum, what) => sum + axisPoint[what][0], 0) / p.between.length, p.z]);
-for (const [x, z] of SCENE.downlights.points.map(downlightAt)) {
+for (const [x, z] of SCENE.lights.downlights.map(downlightAt)) {
   const t = new THREE.Mesh(new THREE.CylinderGeometry(TUBE_RADIUS / 1000, TUBE_RADIUS / 1000, TUBE_HEIGHT / 1000, 40, 1, true), tube);
   t.position.set(x / 1000, (ceiling - TUBE_HEIGHT / 2) / 1000, z / 1000);
   ceilingGroup.add(t);
@@ -1501,7 +1504,7 @@ scene.updateMatrixWorld(true);
 loading.remove();
 
 /* ================= 9. CAMERA, PICKING, SETTINGS PANEL ================= */
-const VIEWS = Object.fromEntries(Object.entries(SCENE.views).filter(([key]) => key !== 'about'));
+const VIEWS = SCENE.cameras;
 const VIEW_KEYS = Object.keys(VIEWS);
 document.getElementById('viewButtons').innerHTML = VIEW_KEYS.map((key, i) => '<button data-v="' + key + '" aria-pressed="' + (i === 0) + '">' + esc(VIEWS[key].name) + '</button>').join('');
 document.getElementById('viewSel').innerHTML = VIEW_KEYS.map(key => '<option value="' + key + '">' + esc(VIEWS[key].name) + '</option>').join('');
@@ -1844,7 +1847,7 @@ document.getElementById('kStats').innerHTML = [
 
 /* ---------- Project tab ---------- */
 // the page title and the board materials of design.js, with the parts made of each
-const frontName = rules.materials[model.materialFor.cabinet].name;
+const frontName = model.materials[model.materialFor.cabinet].name;
 document.getElementById('frontName').textContent = frontName;
 document.title = 'Kuchnia ' + frontName;
 const oakSwatch = 'linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)'; // the oak texture, for a material without a colour
@@ -1852,7 +1855,7 @@ const swatch = (background, use, name) => '<li><i style="background:' + backgrou
 document.getElementById('mats').innerHTML = Object.entries(model.materials).map(([code, m]) => {
   const uses = Object.keys(model.materialFor).filter(use => model.materialFor[use] === code);
   return uses.length ? swatch(m.color || oakSwatch, uses.map(use => KE.LABELS.part[use] || KE.typeLabel(use)).join(', '), m.label) : '';
-}).join('') + SCENE.finishes.list.map(([use, name, background]) => swatch(background, use, name)).join('');
+}).join('') + SCENE.finishes.map(([use, name, background]) => swatch(background, use, name)).join('');
 // per run: its length, and its worktop (top board length × depth × thickness, top above the floor)
 const runDims = RUN_IDS.flatMap(r => {
   const W = model.worktops[groupOfRun[r]], top = itemsOfRun[r].find(i => i.type === 'worktop' && !hasTag(i, 'fall'));
