@@ -188,9 +188,9 @@ function drillText(drilling) {
   for (const [kind, width, depth, x, y] of drilling.cutouts) out.push(code[kind] + ' ' + width + '×' + depth + ' @ ' + num1(x) + 'x' + num1(y));
   return out.join(' | ');
 }
-// the legend of the codes, from design.js rules.drilling and rules.cutouts: [code, text]
+// the legend of the codes, from design.js settings.drilling and settings.cutouts: [code, text]
 function drillLegend() {
-  const L = KE.LABELS, d = model.rules.drilling, c = model.rules.cutouts || {}, code = L.holeCode;
+  const L = KE.LABELS, d = model.settings.drilling, c = model.settings.cutouts || {}, code = L.holeCode;
   const carcassFace = 'boki / słupki zawiasowe, strona wewnętrzna; x od przodu, y od dołu';
   const remark = kind => ((COST.labels.legend || {})[kind] ? ' (' + COST.labels.legend[kind] + ')' : '');
   const hole = (kind, rule, where) => [code[kind], L.hole[kind] + ' Ø' + num1(rule.diameter) + ', gł. ' + rule.depth + ' – ' + where + remark(kind)];
@@ -273,7 +273,7 @@ function renderAssembly() {
 
   const cards = model.carcasses.map(K => {
     const boards = model.boards.filter(b => b.carcassId === K.id), fronts = model.fronts.filter(f => f.carcassId === K.id);
-    const pins = boards.filter(b => b.id === 'adjustableShelf').length * model.rules.shelf.pins;
+    const pins = boards.filter(b => b.id === 'adjustableShelf').length * model.settings.shelf.pins;
     const hinges = fronts.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
     const frontLines = fronts.map(f => frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.hinges ? ', zawiasy: ' + f.hinges.length + ', strona ' + KE.LABELS.handle[f.hingeSide] : '') + (f.handle ? ', uchwyt ' + KE.LABELS.handle[f.handle] : ''));
     const drawerLines = fronts.filter(f => f.drawer).map(f => 'szuflada ' + f.drawer.size + (f.drawer.bins ? ' z koszami na odpady' : '') + (f.drawer.inner ? ' + szuflada wewnętrzna M' : ''));
@@ -351,7 +351,7 @@ function ROUNDUP(x, digits) {
 }
 // Placeholders in quantities and texts - every value comes from design.js, engine.js or the JSON of this page:
 //   {n:hinges} engine count (model.counts; {n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
-//   {r:drawers.dFrom} design.js rule   {t:carcass} thickness, {m:cabinet} material label of a board type or a carcass part
+//   {s:drawers.dFrom} design.js setting  {t:carcass} thickness, {m:cabinet} material label of a board type or a carcass part
 //   (engine USES: the board types and the parts carcass, back, drawerBox, hobPanel)   {w:1.depth} worktop of group 1 (model.worktops)
 //   {k:K8.innerWidth} carcass   {i:K8/oven.niche} item (carcassValue, itemValue)
 //   {a:oven.front.1} appliances.js   {v:sheet.length} cost.js values   {p:hinges} unit price of an item   {q:hinges} quantity of an item
@@ -398,7 +398,7 @@ function placeholder(key, totals, quantities) {
   const path = (obj, dotted) => dotted.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
   if (prefix === 'n') return model ? (path(model.counts, rest) ?? 0) : NaN;
   if (prefix === 'w') return model ? path(model.worktops, rest) : NaN;
-  if (prefix === 'r') return model ? path(model.rules, rest) : NaN;
+  if (prefix === 's') return model ? path(model.settings, rest) : NaN;
   if (prefix === 't') return model ? model.thickness[rest] : NaN;
   if (prefix === 'm') return model ? model.materials[model.materialFor[rest]].label : '…';
   if (prefix === 'k') return model ? carcassValue(rest) : NaN;
@@ -465,7 +465,7 @@ function describeFormula(expr) {
     .replace(/\{([^}|]+)\}/g, (m, key) => placeholderName(key) + ' (' + fill(m) + ')')
     .replace(/ROUNDUP/g, 'ZAOKR.W.GÓRĘ');
 }
-// the visible name of a placeholder in a tooltip: engine counts and parameters in Polish; rule and var paths as written in the data
+// the visible name of a placeholder in a tooltip: engine counts and parameters in Polish; setting and var paths as written in the data
 const COUNT_NAMES = {
   carcasses: 'korpusy', floorCarcasses: 'korpusy stojące', wallFixedCarcasses: 'korpusy przy ścianie', fronts: 'fronty', handles: 'uchwyty',
   hinges: 'zawiasy', drawersD: 'szuflady D', drawersM: 'szuflady M', innerDrawers: 'szuflady wewnętrzne', shelvesAdjustable: 'półki ruchome',
@@ -518,7 +518,7 @@ function renderCuttingList() {
     html.push(`<tr class="blk"><td colspan="11">${esc(fill(block.title))}</td></tr>`);
     // as an order form: each size followed by the number of finished edges along it (ABS or lacquer)
     const [label, size1, size2, qtyLabel] = columnsOf(block).map(esc);
-    html.push(`<tr class="bh"><td>${label}</td><td>${size1} [mm]</td><td>Krawędź</td><td>${size2} [mm]</td><td>Krawędź</td><td>m²</td><td>${qtyLabel}</td><td>ABS razem [mb]</td><td title="(długość + szerokość) × ilość: długość cięcia w hurtowni – wyceniona w pozycji Cięcie płyt">Cięcia [mb]</td><td title="otwory i wycięcia jednej części, kody w legendzie nad tabelą; wartości z design.js (rules.drilling, rules.cutouts)">Wiercenie / wycięcia</td><td title="nazwa korpusu, inaczej G grupa [kolumna]">Gdzie</td></tr>`);
+    html.push(`<tr class="bh"><td>${label}</td><td>${size1} [mm]</td><td>Krawędź</td><td>${size2} [mm]</td><td>Krawędź</td><td>m²</td><td>${qtyLabel}</td><td>ABS razem [mb]</td><td title="(długość + szerokość) × ilość: długość cięcia w hurtowni – wyceniona w pozycji Cięcie płyt">Cięcia [mb]</td><td title="otwory i wycięcia jednej części, kody w legendzie nad tabelą; wartości z design.js (settings.drilling, settings.cutouts)">Wiercenie / wycięcia</td><td title="nazwa korpusu, inaczej G grupa [kolumna]">Gdzie</td></tr>`);
     (rowsOf[block.id] || []).forEach((row, i) => {
       const t = totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
       const cell = value => `<td class="num" title="Obliczone przez engine.js z design.js – zmiany projektu w design.html">${value}</td>`;

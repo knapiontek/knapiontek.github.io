@@ -8,7 +8,7 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 
 | File | Kind | Owns | Written by |
 |---|---|---|---|
-| design.js | data, this project | materials, rules, notes, columns, components | design.html (export) |
+| design.js | data, this project | materials, settings, notes, columns, components | design.html (export) |
 | cost.js | data, this project | prices, items, notes and settings of cost.html | LLM, per project |
 | view.js | data, this project | placement of the groups, room, lights and cameras of view.html | LLM, per project |
 | appliances.js | data, this project | the appliances at the manufacturer's sizes, for cost.html and view.html | LLM, per project |
@@ -51,8 +51,8 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 
 ## The files in short
 
-- **design.js**: plain data a person can read and edit: materials (what you buy, and what each is used for), construction rules (setbacks, gaps, hinges, shelves, drawers, drilling, cut-outs), notes (the design notes; the group notes give each group its role), column widths, and the components, one per line.
-- **engine.js**: deterministic, the same project gives the same model. It places the components in their columns, joins them into carcasses, builds the boards, fronts, frames, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the rules in design.js.
+- **design.js**: plain data a person can read and edit: materials (what you buy, and what each is used for), construction settings (setbacks, gaps, hinges, shelves, drawers, drilling, cut-outs), notes (the design notes; the group notes give each group its role), column widths, and the components, one per line.
+- **engine.js**: deterministic, the same project gives the same model. It places the components in their columns, joins them into carcasses, builds the boards, fronts, frames, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.js.
 - **design.html**: knows the format, not the kitchen. Tables for materials, groups and columns, components and notes; the elevation drawing; problems listed under the tables.
 - **cost.html**: the estimate, the cutting list with drilling and cut-outs, the notes (the detailed geometry of the appliances, written by the LLM), assembly help and the carcass map; exports the XLSX. Its texts refer to the model, not to copied numbers.
 - **view.html**: the room in 3D with the carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs; it checks the geometry (collisions, gaps, fronts off the line, parts sticking out).
@@ -69,7 +69,7 @@ A new feature that changes what gets built is a new type; one that adds to an ex
 
 - Human readable: consistent indentation, short functions, one idea per line.
 - Meaningful names that match what the page shows, no abbreviations a reader has to decode.
-- No hidden rules: what gets built follows from the type, the tags and the rules in design.js. No guessing from names, labels or sizes.
+- No hidden rules: what gets built follows from the type, the tags and the settings in design.js. No guessing from names, labels or sizes.
 - No numbers of this kitchen in the code and no duplicated values.
 - Library versions pinned (deterministic pages).
 - Language: everything the pages show is Polish; code and comments are English.

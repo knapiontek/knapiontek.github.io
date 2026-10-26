@@ -12,9 +12,9 @@
    Appliance-specific fields are described where they are used: fridge (freezerDoor, fridgeDoor: [bottom, top] from the
    appliance bottom; doorDepth: how far behind the carcass front the body ends and the doors start), dishwasher (door:
    [lowest, highest] door height as the feet grow; baseSetback: how far behind the front the base is open for the plinth),
-   hob (glass [width, depth]; body sits in the worktop cut-out, design.js rules.cutouts.hob), sink (outer [width, depth];
+   hob (glass [width, depth]; body sits in the worktop cut-out, design.js settings.cutouts.hob), sink (outer [width, depth];
    bowl [width, depth, depth down]; rim and wall thickness; tapFromBack from the back edge of the worktop; trapTop and
-   wallOutlet heights above the floor; centred on design.js rules.cutouts.sink), hood (bottom = height above the floor;
+   wallOutlet heights above the floor; centred on design.js settings.cutouts.sink), hood (bottom = height above the floor;
    chimney [width, depth]). */
 window.KITCHEN_APPLIANCES = {
  "oven": {"name": "Bosch HBA534BB3", "body": [558, 570, 528.5], "front": [594, 595], "projection": 19.5, "feet": 0, "frontBottom": 0,

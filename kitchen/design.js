@@ -10,7 +10,7 @@ window.KITCHEN_DESIGN = {
   "oak18": {"name": "Płyta laminowana Egger H1180 ST37 dąb Halifax", "thickness": 18, "uses": ["splash"]},
   "oak38": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "depth": {"worktop": 600, "island": 900}, "uses": ["worktop"]}
  },
- "rules": {
+ "settings": {
   "carcass": {"depth": 550, "wallGap": 14, "legs": 4},
   "back": {"inset": 1},
   "rails": {"depth": 100, "hobFront": 50, "hobPanelGap": 20},

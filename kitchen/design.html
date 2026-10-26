@@ -560,7 +560,7 @@ function downloadBlob(content, mimeType, filename) {
 }
 
 /* ---------- 3. tables <-> project (design.js format) ---------- */
-let loadedProject = null; // keeps the materials and rules, which this page does not edit
+let loadedProject = null; // keeps the materials and settings, which this page does not edit
 
 
 // design.js component -> component table row
@@ -619,7 +619,7 @@ function readTables(columnRows, componentRows, noteRows) {
     rowOfComponent.push(idx);
   });
   const notes = noteRows.filter(n => !isRowEmpty(n.name, n.description, n.details)).map(n => [n.name, n.description, n.details]);
-  const project = { materials: (loadedProject && loadedProject.materials) || {}, rules: (loadedProject && loadedProject.rules) || {}, notes, columns, components };
+  const project = { materials: (loadedProject && loadedProject.materials) || {}, settings: (loadedProject && loadedProject.settings) || {}, notes, columns, components };
   return { project, warnings, columnFlags, componentFlags, rowOfComponent };
 }
 
@@ -643,7 +643,7 @@ function drawRect(item, y) {
   return `<rect fill="${CONFIG.colors[fill]}" stroke="${CONFIG.colors[stroke]}" stroke-width="2" x="${item.x}" y="${y}" width="${item.width}" height="${item.height}"/>`;
 }
 
-// front: outer rectangle + the inner panel of a shaker front (rules.front.shakerRail in from every edge)
+// front: outer rectangle + the inner panel of a shaker front (settings.front.shakerRail in from every edge)
 function drawFront(item, y) {
   const rail = item.shakerRail;
   const { frontOuter, frontOuterStroke, frontInner, frontInnerStroke } = CONFIG.colors;
@@ -743,7 +743,7 @@ function drawSVG(model) {
   const margin = CONFIG.viewBoxMargin;
   const viewBox = `-${margin} -${margin} ${totalWidth + margin * 2} ${totalHeight + margin * 2}`;
   const backgrounds = groups.map(G => `<rect fill="${CONFIG.colors.canvasBg}" x="${groupX.get(G)}" y="0" width="${G.length}" height="${totalHeight}"/>`).join('');
-  const shapes = groups.flatMap(G => G.items.map(item => drawItem(item, item.u0 + groupX.get(G), totalHeight, model.rules.front.shakerRail))).join('');
+  const shapes = groups.flatMap(G => G.items.map(item => drawItem(item, item.u0 + groupX.get(G), totalHeight, model.settings.front.shakerRail))).join('');
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Widok frontów kuchni">
       ${backgrounds}
@@ -757,7 +757,7 @@ function buildElevations(columnRows, componentRows, noteRows) {
   if (!loadedProject) return empty; // until design.js is loaded
   const tables = readTables(columnRows, componentRows, noteRows);
   const result = { ...empty, project: tables.project, warnings: tables.warnings, columnFlags: tables.columnFlags, componentFlags: tables.componentFlags };
-  const stops = KE.checkRules(tables.project); // problems in the materials or rules: no model can be built
+  const stops = KE.checkSettings(tables.project); // problems in the materials or settings: no model can be built
   if (stops.length) return { ...result, warnings: [...tables.warnings, ...stops] };
   const model = KE.build(tables.project);
   for (const issue of model.issues) {
@@ -998,7 +998,7 @@ document.addEventListener('alpine:init', () => {
     importData(text) {
       let project;
       try { project = KE.fromDesignJS(text); } catch (err) { throw new Error('to nie są poprawne dane projektu (' + err.message + ').'); }
-      if (!project || !project.materials || !project.rules || !project.columns || !Array.isArray(project.components)) throw new Error('to nie są dane projektu kuchni: brakuje "materials", "rules", "columns" lub "components".');
+      if (!project || !project.materials || !project.settings || !project.columns || !Array.isArray(project.components)) throw new Error('to nie są dane projektu kuchni: brakuje "materials", "settings", "columns" lub "components".');
       this.setProject(project);
     }
   }));

@@ -254,7 +254,7 @@ body.shut .toggle{display:flex}
 
 <!-- ===================================================================
      DATA FLOW:
-       design.js   project (rules, notes, columns, components) - SOURCE, edited in design.html
+       design.js   project (settings, notes, columns, components) - SOURCE, edited in design.html
        engine.js   carcasses, boards, fronts, frames, plinths, panels - shared by the three pages
        view.js     scene of this kitchen (placement of the groups, room, window, hardware, lights, cameras) - edit there
        appliances.js  the appliances at the manufacturer's sizes - shared with cost.html
@@ -285,7 +285,7 @@ try {
   project = await KE.load();
   model = KE.build(project);
 } catch (err) { loading.textContent = err.message; return; }
-const SCENE = window.KITCHEN_VIEW, APPLIANCES = window.KITCHEN_APPLIANCES, rules = project.rules;
+const SCENE = window.KITCHEN_VIEW, APPLIANCES = window.KITCHEN_APPLIANCES, settings = project.settings;
 if (!SCENE) { loading.textContent = 'Nie znaleziono pliku view.js obok tej strony'; return; }
 if (!APPLIANCES) { loading.textContent = 'Nie znaleziono pliku appliances.js obok tej strony'; return; }
 document.getElementById('src').textContent = 'Dane: design.js, view.js i appliances.js, części z engine.js.';
@@ -308,7 +308,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const { frontFace, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the wall
 const { carcass: board, plinth: plinthThickness, splash: splashThickness, frame: frameThickness, panel: panelThickness } = model.thickness, frontThickness = model.frontThickness;
 const fittings = SCENE.hardware;
-const shakerRail = rules.front.shakerRail; // width of the shaker frame of a front
+const shakerRail = settings.front.shakerRail; // width of the shaker frame of a front
 const room = SCENE.room, ceiling = room.ceiling;
 const rightWall = SCENE.placement[room.rightWallGroup].x; // the wall line (n = 0) of the group that stands against the right wall
 const worktopOf = group => model.worktops[group] || { n0: 0, n1: 0, depth: 0 }; // n0 back edge, n1 front edge
@@ -832,7 +832,7 @@ function builtInAppliance(run, item, type) {
 
 /* ================= 5. WORKTOPS, FRAMES, PLINTHS, PANELS; SINK, HOB, HOOD ================= */
 const sinkData = APPLIANCES.sink;
-// the sink sits centred on the worktop cut-out engine.js makes over the carcass tagged sink (design.js rules.cutouts.sink); no cut-out = no sink
+// the sink sits centred on the worktop cut-out engine.js makes over the carcass tagged sink (design.js settings.cutouts.sink); no cut-out = no sink
 const sinkCut = sinkRun && (worktopOf(groupOfRun[sinkRun]).cutouts || []).find(c => c.kind === 'sink');
 const sinkItem = sinkCut && itemsOfRun[sinkRun].find(i => hasTag(i, 'sink'));
 const sinkU = sinkCut ? (sinkCut.u0 + sinkCut.u1) / 2 : 0, sinkN = sinkCut ? (sinkCut.n0 + sinkCut.n1) / 2 : 0; // sink centre on its run
@@ -842,7 +842,7 @@ const bowlU0 = sinkU - sinkData.bowl[0] / 2, bowlU1 = sinkU + sinkData.bowl[0] /
 const sinkTop = sinkRun ? worktopTopOf(sinkRun) : 0;
 const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowl[2];
 const tapN = sinkRun ? worktopOf(groupOfRun[sinkRun]).n0 + sinkData.tapFromBack : 0; // from the back edge of the worktop
-// a worktop with cut-outs (engine.js: sink, hob from design.js rules.cutouts): one board, an outline with holes extruded to the worktop thickness
+// a worktop with cut-outs (engine.js: sink, hob from design.js settings.cutouts): one board, an outline with holes extruded to the worktop thickness
 function worktopWithCutOuts(run, uStart, uEnd, v0, v1, cutouts) {
   const W = worktopOf(groupOfRun[run]);
   const outline = new THREE.Shape([new THREE.Vector2(uStart, W.n0), new THREE.Vector2(uEnd, W.n0), new THREE.Vector2(uEnd, W.n1), new THREE.Vector2(uStart, W.n1)]);
@@ -875,7 +875,7 @@ function buildRun(run) {
       if (m && hasTag(item, 'fall')) m.userData.grain = 'y'; // worktop fall: grain upright
     } else if (type === 'frame') { // on edge, frame.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
       const frame = model.frames.find(f => f.item === item), lacquered = ((frame && frame.lacqueredSides) || []).map(side => [side]);
-      edgeLook(localBox(runLayer[run].frames, u0, u1, v0, v1, frontFace - rules.frame.depth, frontFace, boardFor('frame')), lacquered, model.materialFor.frame);
+      edgeLook(localBox(runLayer[run].frames, u0, u1, v0, v1, frontFace - settings.frame.depth, frontFace, boardFor('frame')), lacquered, model.materialFor.frame);
     } else if (type === 'panel') { // laid flat in the front plane; in run coordinates, so its edges keep their sides
       const panel = model.panels.find(p => p.item === item);
       edgeLook(localBox(runLayer[run].panel, u0, u1, v0, v1, frontFace - panelThickness, frontFace, boardFor('panel')), panel && panel.edges, model.materialFor.panel);
@@ -888,7 +888,7 @@ function buildRun(run) {
       if (m) m.userData.grain = 'x';
     } else if (type === 'board') { // plasterboard box; a filler is a void: not drawn
       target = roomLayer.walls;
-      runBox(run, u0, u1, v0, v1, 0, rules.plasterboard.depth, MAT.wall);
+      runBox(run, u0, u1, v0, v1, 0, settings.plasterboard.depth, MAT.wall);
     } else if (type === 'oven' || type === 'micro') {
       builtInAppliance(run, item, type);
     }
@@ -958,7 +958,7 @@ if (sinkItem) {
 const hobRun = RUN_IDS.find(r => itemsOfRun[r].some(i => hasTag(i, 'hob')));
 const hobData = APPLIANCES.hob, hobItem = hobRun && itemsOfRun[hobRun].find(i => hasTag(i, 'hob'));
 if (hobItem) target = runLayer[hobRun].hob;
-// the hob body fills the worktop cut-out (engine.js, design.js rules.cutouts.hob), the glass is centred on it
+// the hob body fills the worktop cut-out (engine.js, design.js settings.cutouts.hob), the glass is centred on it
 const hobCut = hobItem && (worktopOf(groupOfRun[hobRun]).cutouts || []).find(c => c.kind === 'hob');
 const hobU = hobCut ? (hobCut.u0 + hobCut.u1) / 2 : hobItem ? (hobItem.u0 + hobItem.u1) / 2 : 0;
 if (hobItem && hobCut) (function hob() {
@@ -1036,7 +1036,7 @@ function registerPart(K, m, board) {
 const counts = model.counts;
 
 const holeMaterial = Object.fromEntries(Object.entries(HOLE_COLORS).map(([use, [hex]]) => [use, standard({ color: linear(parseInt(hex.slice(1), 16)), emissive: linear(parseInt(hex.slice(1), 16)), emissiveIntensity: 0.35, roughness: 0.8 })]));
-// the holes engine.js drilled in a part (design.js rules.drilling): a coloured disc on the drilled face (HOLE_COLORS), half a millimetre proud,
+// the holes engine.js drilled in a part (design.js settings.drilling): a coloured disc on the drilled face (HOLE_COLORS), half a millimetre proud,
 // so it shows on the board; the Otwory layer turns them on and off
 function drawHoles(P, part) {
   for (const h of part.holes || []) {
@@ -1053,8 +1053,8 @@ function buildCarcass(K) {
     if (b.carcassId !== K.id || b.frontId || b.id === 'pullOutShelf') continue; // drawer boards and the pull-out shelf move: built with the fronts
     registerPart(K, edgeLook(localBox(runLayer[run][b.layer], ...b.box, BOARD[b.material]), b.edges, b.material), b);
     drawHoles(runLayer[run].holes, b);
-    if (b.id === 'adjustableShelf') { // 4 shelf pins under the shelf, in the holes design.js places (rules.drilling.shelfPin)
-      const pin = rules.drilling.shelfPin, y = b.box[2] - pin.belowShelf;
+    if (b.id === 'adjustableShelf') { // 4 shelf pins under the shelf, in the holes design.js places (settings.drilling.shelfPin)
+      const pin = settings.drilling.shelfPin, y = b.box[2] - pin.belowShelf;
       for (const [x0, x1] of [[b.box[0] - 1, b.box[0] + 7], [b.box[1] - 7, b.box[1] + 1]]) {
         for (const n of [carcassBack + pin.fromBack, carcassFront - pin.fromFront]) localBox(runLayer[run].shelves, x0, x1, y - pin.diameter / 2, y + pin.diameter / 2, n - pin.diameter / 2, n + pin.diameter / 2, MAT.zinc, true);
       }
@@ -1148,7 +1148,7 @@ function buildFront(run, item) {
   const size = Math.round(fw) + ' × ' + Math.round(fh);
 
   if (opening === 'door' && K) {
-    const H = fittings.hinge, cup = rules.drilling.cup, count = front.hinges.length, side = front.hingeU, dir = hingeSide === 'L' ? 1 : -1;
+    const H = fittings.hinge, cup = settings.drilling.cup, count = front.hinges.length, side = front.hingeU, dir = hingeSide === 'L' ? 1 : -1;
     const cupU = hingeSide === 'L' ? fu0 + cup.fromEdge : fu1 - cup.fromEdge;
     drawHoles(mover.layers.holes, front);
     for (const v of front.hinges) {
@@ -1204,7 +1204,7 @@ function buildFront(run, item) {
       for (let j = 1; j < 5; j++) { const x = innerU0 + s1 + ((innerU1 - innerU0 - 2 * s1) * j) / 5; localBox(innerBox, x - 3, x + 3, iv + 16, iv + 66, carcassBack + 76, carcassFront - 44, MAT.insert, true); } // cutlery insert dividers
       localBox(innerBox, innerU0 + 40, innerU1 - 40, iv + 16, iv + 20, carcassBack + 76, carcassFront - 44, MAT.insert, true);
       runners(innerHardware, iv);
-      innerMover.label = 'Szuflada wewnętrzna M (' + rules.drawers.M.side + ') na sztućce · front wewnętrzny ' + (innerU1 - innerU0 - rules.drawers.inner.frontDeduction);
+      innerMover.label = 'Szuflada wewnętrzna M (' + settings.drawers.M.side + ') na sztućce · front wewnętrzny ' + (innerU1 - innerU0 - settings.drawers.inner.frontDeduction);
     }
   } else if (opening === 'dishwasher') {
     const P = runLayer[run].dishwasher, { u0, u1 } = item, t0 = fv0, t1 = fv1 - 6; // tub above the plinth, under the door top
@@ -1871,9 +1871,9 @@ document.getElementById('dims').innerHTML = [
   ['Tył korpusu', carcassBack + ' od ściany'],
   ['Lico frontów', frontFace + ' od ściany; 4 szczeliny na front'],
   ['Rama frontu shaker', shakerRail],
-  ['Listwy ' + frameThickness, 'na sztorc, gł. ' + rules.frame.depth],
+  ['Listwy ' + frameThickness, 'na sztorc, gł. ' + settings.frame.depth],
   ['Panele ' + panelThickness, 'na płasko, w płaszczyźnie frontów'],
-  ['Cokół', 'lico ' + rules.plinth.setback + ' za frontami'],
+  ['Cokół', 'lico ' + settings.plinth.setback + ' za frontami'],
   ['Okno', win.width + ' × ' + win.height + ', ' + win.finish]
 ].map(([name, value]) => '<dt>' + name + '</dt><dd>' + value + '</dd>').join('');
 document.getElementById('pnotes').innerHTML = (project.notes || []).map(([name, description, details]) => {
