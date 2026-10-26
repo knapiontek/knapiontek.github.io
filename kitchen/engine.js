@@ -105,7 +105,7 @@
   const REQUIRED_RULES = [
     'carcass.depth', 'carcass.wallGap', 'front.shakerRail', 'plinth.setback',
     'rails.depth', 'rails.hobFront', 'rails.hobPanelGap', 'back.inset',
-    'shelf.setback', 'shelf.clearance', 'shelf.pins', 'shelf.perDoor', 'shelf.ventGap', 'frame.depth',
+    'shelf.setback', 'shelf.clearance', 'shelf.pins', 'shelf.perDoor', 'shelf.ventGap', 'shelf.fridgeNiche', 'frame.depth',
     'hinges.fromEnd', 'hinges.supportDepth', 'hinges.aboveShelf', 'hinges.perDoor',
     'drawers.dFrom', 'drawers.D.side', 'drawers.D.back', 'drawers.M.side', 'drawers.M.back',
     'drawers.bottom.inset', 'drawers.bottom.depth', 'drawers.bottom.fromWall', 'drawers.back.inset',
@@ -460,6 +460,16 @@
         for (const joint of joints) {
           const vented = K.boxes.some(b => b.v1 === joint && VENTED_SHELF_OVER.includes(b.type)), gap = vented ? rules.shelf.ventGap : 0;
           const top = K.boxes.some(b => b.v0 === joint && SHELF_UNDER_JOINT.includes(b.type)) ? joint : joint + half;
+          part('fixedShelf', 'Półka stała', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerU0, innerU1, top - board, top, carcassBack + gap, carcassFront], frontEdge(innerWidth));
+          counts.shelvesFixed++;
+        }
+      }
+      // a fridge carcass: no shelf at the joints (they are inside the appliance), one fixed shelf above the appliance closing its
+      // niche, rules.shelf.fridgeNiche clear above the bottom board; rules.shelf.ventGap shallower, the gap at the back lets the air out
+      if (K.fridge) {
+        const top = v0 + board + rules.shelf.fridgeNiche + board, gap = rules.shelf.ventGap;
+        if (top > v1 - board) warn(`${K.name}: wnęka lodówki ${rules.shelf.fridgeNiche} nie mieści się w korpusie (wnętrze ${height - 2 * board}).`);
+        else {
           part('fixedShelf', 'Półka stała', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerU0, innerU1, top - board, top, carcassBack + gap, carcassFront], frontEdge(innerWidth));
           counts.shelvesFixed++;
         }

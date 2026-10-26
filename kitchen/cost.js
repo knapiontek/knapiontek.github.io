@@ -737,13 +737,13 @@ window.KITCHEN_COST = {
      "id": "fridge",
      "appliance": "fridge",
      "topic": "Lodówka Bosch KIS86AFE0 – K10",
-     "description": "Urządzenie {a:fridge.body.0} × {a:fridge.body.1} × {a:fridge.body.2} na dnie korpusu; nad nim {=<i:K10/fridge.niche> - <a:fridge.body.1>} luzu.\nWnęka {i:K10/fridge.niche} × {k:K10.innerWidth} × {r:carcass.depth}.\nZamrażarka: front {i:K10/freezer.frontHeight} na drzwiach {=<a:fridge.freezerDoor.1> - <a:fridge.freezerDoor.0>} – wystaje {=<i:K10/freezer.nicheBottom> + <a:fridge.freezerDoor.0> - <i:K10/freezer.frontV0>} w dół, po {=(<i:K10/freezer.frontWidth> - <a:fridge.body.0>) / 2} na boki; góra drzwi {=<i:K10/freezer.nicheBottom> + <a:fridge.freezerDoor.1> - <i:K10/freezer.frontV1>} wyżej niż front ({a:fridge.freezerDoor.1} + {t:carcass} = {=<a:fridge.freezerDoor.1> + <t:carcass>}), widać krawędź drzwi w szczelinie.\nLodówka: front {i:K10/fridge.frontHeight} na drzwiach {=<a:fridge.fridgeDoor.1> - <a:fridge.fridgeDoor.0>} – wystaje {=<i:K10/fridge.nicheBottom> + <a:fridge.fridgeDoor.0> - <i:K10/fridge.frontV0>} w dół, {=<i:K10/fridge.frontV1> - <i:K10/fridge.nicheBottom> - <a:fridge.fridgeDoor.1>} w górę, po {=(<i:K10/fridge.frontWidth> - <a:fridge.body.0>) / 2} na boki.\nSzczelina między frontami {=<i:K10/fridge.frontV0> - <i:K10/freezer.frontV1>}; fronty przykręcone do drzwi urządzenia.",
+     "description": "Urządzenie {a:fridge.body.0} × {a:fridge.body.1} × {a:fridge.body.2} na dnie korpusu; nad nim {=<i:K10/fridge.niche> - <a:fridge.body.1>} luzu.\nWnęka {i:K10/fridge.niche} × {k:K10.innerWidth} × {r:carcass.depth} (Bosch {a:fridge.niche.h.0}), zamknięta półką stałą nad urządzeniem, płytszą o {r:shelf.ventGap}.\nZamrażarka: front {i:K10/freezer.frontHeight} na drzwiach {=<a:fridge.freezerDoor.1> - <a:fridge.freezerDoor.0>} – wystaje {=<i:K10/freezer.nicheBottom> + <a:fridge.freezerDoor.0> - <i:K10/freezer.frontV0>} w dół, po {=(<i:K10/freezer.frontWidth> - <a:fridge.body.0>) / 2} na boki; góra drzwi {=<i:K10/freezer.nicheBottom> + <a:fridge.freezerDoor.1> - <i:K10/freezer.frontV1>} wyżej niż front ({a:fridge.freezerDoor.1} + {t:carcass} = {=<a:fridge.freezerDoor.1> + <t:carcass>}), widać krawędź drzwi w szczelinie.\nLodówka: front {i:K10/fridge.frontHeight} na drzwiach {=<a:fridge.fridgeDoor.1> - <a:fridge.fridgeDoor.0>} – wystaje {=<i:K10/fridge.nicheBottom> + <a:fridge.fridgeDoor.0> - <i:K10/fridge.frontV0>} w dół, {=<i:K10/fridge.frontV1> - <i:K10/fridge.nicheBottom> - <a:fridge.fridgeDoor.1>} w górę, po {=(<i:K10/fridge.frontWidth> - <a:fridge.body.0>) / 2} na boki.\nSzczelina między frontami {=<i:K10/fridge.frontV0> - <i:K10/freezer.frontV1>}; fronty przykręcone do drzwi urządzenia.",
      "assumed": "Front lodówki wystaje {=<i:K10/fridge.frontV1> - <i:K10/fridge.nicheBottom> - <a:fridge.fridgeDoor.1>} nad drzwi urządzenia – normalne w tej zabudowie."
     },
     {
      "id": "fridgeAir",
      "topic": "Lodówka – wentylacja",
-     "description": "Wlot: kratka w cokole pod lodówką. Wylot: {=<i:K10/fridge.niche> - <a:fridge.body.1>} nad urządzeniem i {r:carcass.wallGap} za korpusem.",
+     "description": "Wlot: kratka w cokole pod lodówką. Wylot: {=<i:K10/fridge.niche> - <a:fridge.body.1>} nad urządzeniem, przez szczelinę {r:shelf.ventGap} za półką nad lodówką, i {r:carcass.wallGap} za korpusem.",
      "assumed": "Kratka {p:grilles} PLN."
     },
     {
@@ -802,7 +802,7 @@ window.KITCHEN_COST = {
     {
      "id": "fixedShelves",
      "topic": "Półki stałe – pełna głębokość",
-     "description": "Na styku 2 frontów: pełna głębokość korpusu {r:carcass.depth}, więc oba fronty się o nią zamykają; półki ruchome są o {r:shelf.setback} krótsze. Przy piekarniku: półka nad nim płytsza o {r:shelf.ventGap}, półka pod nim pod złączem: front piekarnika na nią nie zachodzi, po otwarciu frontu szafki pod nią widać ją w całości.",
+     "description": "Na styku 2 frontów: pełna głębokość korpusu {r:carcass.depth}, więc oba fronty się o nią zamykają; półki ruchome są o {r:shelf.setback} krótsze. Przy piekarniku: półka nad nim płytsza o {r:shelf.ventGap}, półka pod nim pod złączem: front piekarnika na nią nie zachodzi, po otwarciu frontu szafki pod nią widać ją w całości. Przy lodówce: tylko półka nad urządzeniem, wnęka {r:shelf.fridgeNiche}, płytsza o {r:shelf.ventGap}.",
      "assumed": "Na liście cięć."
     },
     {
