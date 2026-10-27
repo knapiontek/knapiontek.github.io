@@ -1,0 +1,1077 @@
+<title>Atom jako fala stojąca</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: przypięty pasek zakładek; w każdej zakładce kolumna tekstu ~68ch i szersze karty laboratoryjne */
+:root{
+  --bg:#F3F5F7; --surface:#FFFFFF; --fg:#151A22; --muted:#5B6574; --line:#D6DBE2;
+  --accent:#3346C8; --plus:#D2582A; --minus:#16897F; --neutral:#B9BFC8; --chip:#E9EDF2;
+  --gap:#E8E3F6; --core:#E8E3F6; --r1:#8A93A3; --r2:#C7832A; --r3:#16897F;
+  --f-display:"Spectral",Georgia,"Times New Roman",serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1318; --surface:#161B22; --fg:#E5E9EF; --muted:#98A2B1; --line:#2A313B;
+  --accent:#8C9BFF; --plus:#F0824F; --minus:#3CC0B2; --neutral:#5E6672; --chip:#1E242D;
+  --gap:#26223A; --core:#26223A; --r1:#8F98A8; --r2:#E3A24A; --r3:#3CC0B2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1318; --surface:#161B22; --fg:#E5E9EF; --muted:#98A2B1; --line:#2A313B;
+  --accent:#8C9BFF; --plus:#F0824F; --minus:#3CC0B2; --neutral:#5E6672; --chip:#1E242D;
+  --gap:#26223A; --core:#26223A; --r1:#8F98A8; --r2:#E3A24A; --r3:#3CC0B2; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17px;line-height:1.65;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.tabbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+.tabin{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding-block:8px}
+.brand{font-family:var(--f-display);font-weight:600;font-size:1.1rem}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{background:transparent;border:1px solid transparent;border-radius:6px;padding:6px 12px;font-size:15px;color:var(--muted)}
+.tabs button:hover{color:var(--fg);border-color:var(--line)}
+.tabs button.on{background:var(--chip);color:var(--fg);border-color:var(--line);font-weight:600}
+main{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:36px 64px}
+.panel{display:flex;flex-direction:column;gap:52px}
+section{display:flex;flex-direction:column;gap:16px;min-width:0}
+.prose{max-width:68ch;display:flex;flex-direction:column;gap:12px}
+.prose p,.prose ul{margin:0}
+.prose ul{padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+h2,h3,h4{font-family:var(--f-display);font-weight:600;text-wrap:balance;margin:0;line-height:1.15}
+.ptitle{font-size:clamp(2rem,5vw,3.2rem)}
+h3{font-size:clamp(1.5rem,3.2vw,2rem)}
+h4{font-size:1.3rem}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lede{font-family:var(--f-display);font-size:1.22rem;line-height:1.5;max-width:62ch;margin:0}
+.phead{display:flex;flex-direction:column;gap:14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.eq{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.eq mjx-container{margin:6px 0!important}
+canvas{display:block;width:100%}
+.grab{cursor:grab;touch-action:none}.grab:active{cursor:grabbing}
+.status{font-family:var(--f-mono);font-size:13px;min-height:1.4em}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.cap{font-size:14px;color:var(--muted);margin:0;max-width:72ch}
+.ctl,.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.grp{display:flex;flex-direction:column;gap:8px}
+.grp>span{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.row>label,.rowlab{font-size:14px;color:var(--muted);min-width:10.5em}
+.row input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+.row output{font-family:var(--f-mono);font-size:14px;min-width:4.4em;text-align:right;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+button{font-family:var(--f-body);font-size:14px;color:var(--fg);background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:5px 11px;cursor:pointer;line-height:1.3}
+button:hover{border-color:var(--muted)}
+.chips button.on,.card.on{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+#t2 .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.stat{display:flex;flex-direction:column;gap:2px;padding:8px 10px;background:var(--chip);border-radius:6px;min-width:0}
+.stat span{font-size:12px;color:var(--muted)}
+.stat b{font-family:var(--f-mono);font-weight:400;font-size:15px;font-variant-numeric:tabular-nums}
+.verdict{font-size:15px;padding:10px 12px;border-radius:6px;background:var(--chip);border-left:3px solid var(--muted)}
+#t1 .verdict.ok{border-left-color:var(--plus)} #t1 .verdict.no{border-left-color:var(--minus)}
+#t2 .verdict.ok{border-left-color:var(--minus)} #t2 .verdict.no{border-left-color:var(--plus)}
+.note{font-size:15px;padding:10px 12px;border-radius:6px;background:var(--chip)}
+.figure{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.figgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px}
+.lab{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+#t2 .lab{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px}
+#t3 .lab{display:flex;flex-direction:column;gap:16px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media (max-width:820px){.figgrid,#t2 .lab,.two{grid-template-columns:minmax(0,1fr)}}
+#field{aspect-ratio:1;max-width:100%;border-radius:6px;background:var(--bg)}
+.tablewrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums;min-width:440px}
+#t3 table{width:100%}
+th,td{text-align:left;padding:7px 12px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.l{font-family:var(--f-display);font-size:1.2rem}
+td.num{font-family:var(--f-mono);text-align:right}
+.tables{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:28px}
+.gal{display:flex;flex-direction:column;gap:18px}
+.galrow{display:flex;flex-direction:column;gap:8px}
+.galhead{font-size:14px;color:var(--muted)}
+.galhead b{font-family:var(--f-display);font-size:1.15rem;color:var(--fg);font-weight:600;margin-right:6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px}
+.card{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 8px;background:transparent;border:1px solid var(--line);border-radius:8px}
+.card.on{background:var(--chip);color:var(--fg);border-color:var(--accent)}
+.card canvas{width:100%;aspect-ratio:1;max-width:100%}
+.card .nm{font-family:var(--f-display);font-size:1.05rem}
+.card .cart{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:14px;color:var(--muted);max-width:80ch}
+sub,sup{font-size:.7em}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+
+</style>
+<div class="tabbar"><div class="tabin">
+  <span class="brand">Atom jako fala stojąca</span>
+  <div class="tabs" role="tablist" aria-label="Symulacje">
+    <button role="tab" id="b1" aria-controls="t1" data-t="1">Kropla i orbitale</button>
+    <button role="tab" id="b2" aria-controls="t2" data-t="2">Ośrodek sprężysty 2D</button>
+    <button role="tab" id="b3" aria-controls="t3" data-t="3">Lina 1D i breather</button>
+  </div>
+</div></div>
+<main>
+<div class="panel" id="t1" role="tabpanel" aria-labelledby="b1">
+<header class="phead">
+  <span class="eyebrow">Fale stojące na sferze</span>
+  <h2 class="ptitle">Kropla i orbital</h2>
+  <p class="lede">Potrząsana kropla wody i elektron w atomie wodoru rozwiązują to samo równanie na powierzchni kuli. Ich dozwolone kształty to harmoniki sferyczne. Poniżej trzy modele: kropla w drgającej misce, katalog orbitali wodoru i superpozycja dwóch stanów, w której elektron zaczyna świecić.</p>
+  <div class="legend"><span><i class="sw" style="background:var(--plus)"></i>znak dodatni / wybrzuszenie</span><span><i class="sw" style="background:var(--minus)"></i>znak ujemny / wgłębienie</span></div>
+</header>
+
+<!-- KROPLA -->
+<section id="kropla">
+  <span class="eyebrow">Model klasyczny</span>
+  <h3>Kropla w drgającej misce</h3>
+  <div class="prose">
+    <p>Powierzchnię kropli o promieniu R rozpisujemy na sumę harmonik sferycznych. Każdy współczynnik a<sub>lm</sub>(t) zachowuje się jak osobny oscylator.</p>
+  </div>
+  <div class="eq">$$ r(\theta,\varphi,t)=R\Big[\,1+\sum_{l\ge 2}\;\sum_{m=-l}^{l} a_{lm}(t)\,Y_{lm}(\theta,\varphi)\Big] $$</div>
+  <div class="prose">
+    <p>Częstotliwości własne wyliczył Rayleigh w 1879 roku dla kropli bez lepkości, którą w kształcie kuli trzyma napięcie powierzchniowe σ przy gęstości ρ:</p>
+  </div>
+  <div class="eq">$$ \omega_l^{2}=\frac{\sigma}{\rho R^{3}}\;l\,(l-1)\,(l+2) $$</div>
+  <div class="prose">
+    <p>Dwa najniższe wyrazy nie drgają. Mod l = 0 zmieniałby objętość, a woda jest praktycznie nieściśliwa. Mod l = 1 przesuwa całą kroplę bez zmiany kształtu, więc ω<sub>1</sub> = 0. Pierwsze prawdziwe drganie to l = 2, które ma kształt orbitalu d.</p>
+    <p>Miska popycha każdy mod siłą F<sub>lm</sub> cos Ωt. W stanie ustalonym amplituda zależy od odległości Ω od ω<sub>l</sub>, dlatego odpowiedź ma ostre piki:</p>
+  </div>
+  <div class="eq">$$ \ddot a_{lm}+\gamma\,\dot a_{lm}+\omega_l^{2}\,a_{lm}=F_{lm}\cos\Omega t
+  \qquad\Longrightarrow\qquad
+  |a_{lm}|=\frac{F_{lm}}{\sqrt{\big(\omega_l^{2}-\Omega^{2}\big)^{2}+\gamma^{2}\Omega^{2}}} $$</div>
+
+  <div class="figure">
+    <canvas id="dropCv" class="grab" style="height:380px" aria-label="Trójwymiarowa kropla wody drgająca w misce"></canvas>
+    <div class="status" id="dropInfo"></div>
+    <canvas id="dropResp" style="height:110px" aria-label="Krzywa rezonansowa kropli"></canvas>
+    <div class="ctl">
+      <div class="row"><label for="dropW">Częstotliwość miski Ω/ω₂</label><input type="range" id="dropW" min="0.3" max="6.5" step="0.01" value="1"><output id="dropWo">1,00</output></div>
+      <div class="row"><label for="dropM">Symetria wymuszenia m</label><input type="range" id="dropM" min="0" max="6" step="1" value="0"><output id="dropMo">0</output></div>
+      <div class="row"><span class="rowlab">Ustaw rezonans</span><div class="chips" id="dropBtns"></div></div>
+      <div class="row"><span class="rowlab">Symulacja</span><div class="chips"><button id="dropPause">Pauza</button><button id="dropReset">Uspokój wodę</button></div></div>
+    </div>
+    <p class="cap">Częstotliwość w jednostkach ω₂, czyli ω<sub>l</sub>/ω₂ = √(l(l−1)(l+2)/8). Symetria m wybiera mody, które miska popycha; mod istnieje tylko dla l ≥ m. Przeciągnij kroplę, żeby ją obrócić.</p>
+  </div>
+
+  <div class="prose">
+    <p>Kształty, które tu powstają, są funkcjami własnymi laplasjanu na sferze. Ten sam operator rządzi kątową częścią funkcji falowej elektronu:</p>
+  </div>
+  <div class="eq">$$ \nabla^{2}_{S^2}\,Y_{lm}=-\,l(l+1)\,Y_{lm},\qquad
+  \nabla^{2}_{S^2}=\frac{1}{\sin\theta}\frac{\partial}{\partial\theta}\Big(\sin\theta\,\frac{\partial}{\partial\theta}\Big)+\frac{1}{\sin^{2}\theta}\frac{\partial^{2}}{\partial\varphi^{2}} $$</div>
+</section>
+
+<!-- ATOM -->
+<section id="atom">
+  <span class="eyebrow">Model kwantowy</span>
+  <h3>Atom wodoru</h3>
+  <div class="prose">
+    <p>Elektron w polu protonu spełnia równanie Schrödingera z potencjałem kulombowskim. Potencjał zależy tylko od odległości r, więc rozwiązanie rozdziela się na część radialną i kątową (μ to masa zredukowana elektronu i protonu):</p>
+  </div>
+  <div class="eq">$$ \Big[-\frac{\hbar^{2}}{2\mu}\nabla^{2}-\frac{e^{2}}{4\pi\varepsilon_0\,r}\Big]\psi=E\,\psi,
+  \qquad \psi_{nlm}(r,\theta,\varphi)=R_{nl}(r)\,Y_{lm}(\theta,\varphi) $$</div>
+  <div class="prose">
+    <p>Część kątowa to te same harmoniki, co w kropli. Są funkcjami własnymi kwadratu momentu pędu i jego rzutu na oś z:</p>
+  </div>
+  <div class="eq">$$ \hat L^{2}\,Y_{lm}=\hbar^{2}\,l(l+1)\,Y_{lm},\qquad \hat L_z\,Y_{lm}=\hbar\,m\,Y_{lm} $$</div>
+  <div class="eq">$$ Y_{lm}(\theta,\varphi)=(-1)^{m}\sqrt{\frac{2l+1}{4\pi}\,\frac{(l-m)!}{(l+m)!}}\;P_l^{m}(\cos\theta)\,e^{im\varphi},
+  \qquad Y_{l,-m}=(-1)^{m}\,Y_{lm}^{*}\quad(m\ge 0) $$</div>
+  <div class="eq">$$ P_l^{m}(x)=(1-x^{2})^{m/2}\,\frac{d^{m}}{dx^{m}}P_l(x),\qquad P_l(x)=\frac{1}{2^{l}\,l!}\,\frac{d^{l}}{dx^{l}}\big(x^{2}-1\big)^{l} $$</div>
+  <div class="prose">
+    <p>Funkcje z e<sup>imφ</sup> są zespolone. Chemicy rysują ich rzeczywiste kombinacje, czyli orbitale p<sub>x</sub>, d<sub>xy</sub> i podobne. Dla m &gt; 0 bierzemy cosinus, dla m &lt; 0 sinus:</p>
+  </div>
+  <div class="eq">$$ S_{lm}(\theta,\varphi)=\sqrt{2}\,N_{l|m|}\,P_l^{|m|}(\cos\theta)\times
+  \begin{cases}\cos m\varphi, & m>0\\[2pt] \sin |m|\varphi, & m<0\end{cases},
+  \qquad S_{l0}=N_{l0}\,P_l(\cos\theta),\qquad N_{lm}=\sqrt{\frac{2l+1}{4\pi}\frac{(l-m)!}{(l+m)!}} $$</div>
+  <div class="prose">
+    <p>Część radialna zawiera uogólnione wielomiany Laguerre’a. Odległości mierzymy w promieniach Bohra a<sub>0</sub> = 0,529 Å:</p>
+  </div>
+  <div class="eq">$$ R_{nl}(r)=\sqrt{\Big(\frac{2}{n a_0}\Big)^{3}\frac{(n-l-1)!}{2n\,(n+l)!}}\;
+  e^{-r/na_0}\Big(\frac{2r}{n a_0}\Big)^{l}\,L^{(2l+1)}_{n-l-1}\Big(\frac{2r}{n a_0}\Big) $$</div>
+  <div class="eq">$$ E_n=-\frac{\mu\,e^{4}}{2\,(4\pi\varepsilon_0)^{2}\hbar^{2}}\,\frac{1}{n^{2}}\approx-\frac{13{,}598\ \mathrm{eV}}{n^{2}},
+  \qquad n=1,2,3,\dots\quad l=0,1,\dots,n-1\quad m=-l,\dots,l $$</div>
+  <div class="prose">
+    <p>Energia zależy tylko od n. Wszystkie stany z tym samym n mają tę samą energię, a ich liczba to n². To przypadkowa degeneracja potencjału 1/r, której kropla nie ma.</p>
+  </div>
+  <div class="eq">$$ \sum_{l=0}^{n-1}(2l+1)=n^{2},\qquad
+  \underbrace{n-l-1}_{\text{węzły radialne}}\;+\;\underbrace{l}_{\text{węzły kątowe}}\;=\;n-1,\qquad
+  \langle r\rangle_{nl}=\frac{a_0}{2}\big[\,3n^{2}-l(l+1)\big] $$</div>
+  <div class="prose">
+    <p>Spośród l kątowych powierzchni węzłowych |m| to płaszczyzny zawierające oś z, a pozostałe l − |m| to stożki wokół tej osi.</p>
+  </div>
+
+  <div class="tables">
+    <div class="tablewrap"><table>
+      <thead><tr><th>Typ</th><th>l</th><th>Orbitali</th><th>Elektronów</th><th>Nazwa linii</th></tr></thead>
+      <tbody>
+        <tr><td class="l">s</td><td>0</td><td>1</td><td>2</td><td>sharp, ostra</td></tr>
+        <tr><td class="l">p</td><td>1</td><td>3</td><td>6</td><td>principal, główna</td></tr>
+        <tr><td class="l">d</td><td>2</td><td>5</td><td>10</td><td>diffuse, rozmyta</td></tr>
+        <tr><td class="l">f</td><td>3</td><td>7</td><td>14</td><td>fundamental, podstawowa</td></tr>
+        <tr><td class="l">g, h, i, k</td><td>4–7</td><td>2l + 1</td><td>2(2l + 1)</td><td>dalej alfabetycznie, bez j</td></tr>
+      </tbody></table></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>n</th><th>Powłoka</th><th>Podpowłoki</th><th>n²</th><th>2n²</th><th>E<sub>n</sub> [eV]</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>K</td><td>1s</td><td>1</td><td>2</td><td>−13,60</td></tr>
+        <tr><td>2</td><td>L</td><td>2s 2p</td><td>4</td><td>8</td><td>−3,40</td></tr>
+        <tr><td>3</td><td>M</td><td>3s 3p 3d</td><td>9</td><td>18</td><td>−1,51</td></tr>
+        <tr><td>4</td><td>N</td><td>4s 4p 4d 4f</td><td>16</td><td>32</td><td>−0,85</td></tr>
+        <tr><td>5</td><td>O</td><td>5s … 5g</td><td>25</td><td>50</td><td>−0,54</td></tr>
+      </tbody></table></div>
+  </div>
+  <p class="cap">Litery s, p, d, f pochodzą z XIX-wiecznej spektroskopii metali alkalicznych, gdzie opisywały wygląd serii linii. Liczby elektronów uwzględniają dwa stany spinu.</p>
+</section>
+
+<!-- ORBITALE -->
+<section id="orbitale">
+  <span class="eyebrow">Katalog</span>
+  <h3>Kształty orbitali</h3>
+  <div class="prose">
+    <p>Każda bryła poniżej to wykres biegunowy rzeczywistej harmoniki: odległość powierzchni od środka równa się |S<sub>lm</sub>(θ, φ)|, a kolor to jej znak. Oś z jest pionowa. Kliknij orbital, żeby zobaczyć go w pełnym atomie w eksploratorze niżej.</p>
+  </div>
+  <div class="figure"><div class="gal" id="gallery"></div></div>
+  <div class="prose"><p>Te same funkcje w postaci kartezjańskiej, gdzie r² = x² + y² + z²:</p></div>
+  <div class="eq">$$ \begin{aligned}
+  s&:\ \tfrac{1}{2}\sqrt{\tfrac{1}{\pi}}
+  && p_x,\,p_y,\,p_z:\ \sqrt{\tfrac{3}{4\pi}}\;\frac{x,\ y,\ z}{r}\\[6pt]
+  d_{z^2}&:\ \tfrac14\sqrt{\tfrac{5}{\pi}}\,\frac{3z^{2}-r^{2}}{r^{2}}
+  && d_{xz},\,d_{yz},\,d_{xy}:\ \tfrac12\sqrt{\tfrac{15}{\pi}}\,\frac{xz,\ yz,\ xy}{r^{2}}
+  \qquad d_{x^2-y^2}:\ \tfrac14\sqrt{\tfrac{15}{\pi}}\,\frac{x^{2}-y^{2}}{r^{2}}\\[6pt]
+  f_{z^3}&:\ \tfrac14\sqrt{\tfrac{7}{\pi}}\,\frac{z\,(5z^{2}-3r^{2})}{r^{3}}
+  && f_{xz^2},\,f_{yz^2}:\ \tfrac18\sqrt{\tfrac{42}{\pi}}\,\frac{x\,(5z^{2}-r^{2}),\ y\,(5z^{2}-r^{2})}{r^{3}}\\[6pt]
+  f_{z(x^2-y^2)}&:\ \tfrac14\sqrt{\tfrac{105}{\pi}}\,\frac{z\,(x^{2}-y^{2})}{r^{3}}
+  && f_{xyz}:\ \tfrac12\sqrt{\tfrac{105}{\pi}}\,\frac{xyz}{r^{3}}\\[6pt]
+  f_{x(x^2-3y^2)}&:\ \tfrac18\sqrt{\tfrac{70}{\pi}}\,\frac{x\,(x^{2}-3y^{2})}{r^{3}}
+  && f_{y(3x^2-y^2)}:\ \tfrac18\sqrt{\tfrac{70}{\pi}}\,\frac{y\,(3x^{2}-y^{2})}{r^{3}}
+  \end{aligned} $$</div>
+
+  <h4 id="explorer">Eksplorator ψ<sub>nlm</sub></h4>
+  <div class="prose">
+    <p>Chmura to 14 000 punktów wylosowanych z rozkładu |ψ|². Kolor punktu to znak ψ, więc węzły radialne widać jako granice między warstwami. Wykres obok pokazuje, na jakiej odległości od jądra najczęściej znajduje się elektron:</p>
+  </div>
+  <div class="eq">$$ P(r)\,dr=r^{2}R_{nl}^{2}(r)\,dr,\qquad \int_0^\infty P(r)\,dr=1 $$</div>
+  <div class="figure">
+    <div class="ctl">
+      <div class="row"><span class="rowlab">Liczba główna n</span><div class="chips" id="exN"></div></div>
+      <div class="row"><span class="rowlab">Typ orbitalu l</span><div class="chips" id="exL"></div></div>
+      <div class="row"><span class="rowlab">Orbital m</span><div class="chips" id="exM"></div></div>
+    </div>
+    <div class="figgrid">
+      <canvas id="cloudCv" class="grab" style="height:360px" aria-label="Chmura prawdopodobieństwa elektronu"></canvas>
+      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+        <canvas id="radCv" style="height:200px" aria-label="Radialny rozkład prawdopodobieństwa"></canvas>
+        <div class="stats" id="exStats"></div>
+      </div>
+    </div>
+    <p class="cap">Przeciągnij chmurę, żeby ją obrócić. Pionowa oś to z. Przerywane linie na wykresie to węzły radialne, pomarańczowa linia to średni promień ⟨r⟩.</p>
+  </div>
+</section>
+
+<!-- SUPERPOZYCJA -->
+<section id="superpozycja">
+  <span class="eyebrow">Dynamika</span>
+  <h3>Superpozycja i światło</h3>
+  <div class="prose">
+    <p>Stan stacjonarny ψ<sub>nlm</sub> nie zmienia się w czasie poza fazą e<sup>−iEt/ħ</sup>, więc gęstość |ψ|² stoi w miejscu. Ruch pojawia się dopiero w mieszance dwóch stanów o różnych energiach. Dla rzeczywistych ψ i współczynników c:</p>
+  </div>
+  <div class="eq">$$ \Psi(\mathbf r,t)=c_1\,\psi_1\,e^{-iE_1t/\hbar}+c_2\,\psi_2\,e^{-iE_2t/\hbar},\qquad c_1^{2}+c_2^{2}=1 $$</div>
+  <div class="eq">$$ |\Psi|^{2}=c_1^{2}\psi_1^{2}+c_2^{2}\psi_2^{2}+2c_1c_2\,\psi_1\psi_2\cos\omega_{21}t,\qquad \omega_{21}=\frac{E_2-E_1}{\hbar} $$</div>
+  <div class="prose">
+    <p>Środek ładunku drga z częstotliwością ω<sub>21</sub>, o ile element macierzowy dipola jest różny od zera. Dla stanów z m = 0 rozkłada się on na całkę radialną i czynnik kątowy:</p>
+  </div>
+  <div class="eq">$$ \langle z\rangle(t)=2c_1c_2\,\langle\psi_1|\,z\,|\psi_2\rangle\cos\omega_{21}t $$</div>
+  <div class="eq">$$ \langle n'l'0|\,z\,|\,nl0\rangle=\int_0^\infty R_{n'l'}(r)\,R_{nl}(r)\,r^{3}\,dr\;\times\;\langle l'0|\cos\theta|l0\rangle,
+  \qquad \langle l{+}1,0|\cos\theta|l,0\rangle=\frac{l+1}{\sqrt{(2l+1)(2l+3)}} $$</div>
+  <div class="prose">
+    <p>Czynnik kątowy znika, jeśli l' ≠ l ± 1. Stąd reguły wyboru dla przejść dipolowych. Drgający dipol promieniuje, a szybkość emisji spontanicznej i długość fali to:</p>
+  </div>
+  <div class="eq">$$ \Delta l=\pm 1,\qquad \Delta m=0,\pm1,\qquad
+  A=\frac{\omega_{21}^{3}\,e^{2}\,\big|\langle\psi_1|z|\psi_2\rangle\big|^{2}}{3\pi\varepsilon_0\,\hbar\,c^{3}},\qquad
+  \lambda=\frac{2\pi c}{\omega_{21}} $$</div>
+
+  <div class="figure">
+    <div class="ctl">
+      <div class="row"><span class="rowlab">Stan 1</span><div class="chips" id="supA"></div></div>
+      <div class="row"><span class="rowlab">Stan 2</span><div class="chips" id="supB"></div></div>
+      <div class="row"><label for="supMix">Udział stanu 2, c₂²</label><input type="range" id="supMix" min="0" max="100" step="1" value="50"><output id="supMixO">50%</output></div>
+    </div>
+    <div class="figgrid">
+      <canvas id="supCv" style="height:360px" aria-label="Przekrój gęstości elektronu w superpozycji"></canvas>
+      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+        <div class="verdict" id="supVerdict"></div>
+        <div class="stats" id="supStats"></div>
+        <canvas id="supTrace" style="height:110px" aria-label="Położenie środka ładunku w czasie"></canvas>
+        <div class="chips"><button id="supPause">Pauza</button></div>
+      </div>
+    </div>
+    <p class="cap" id="supCap">Przekrój płaszczyzną xz przez jądro, oś z pionowo. Stany p, d, f to p<sub>z</sub>, d<sub>z²</sub>, f<sub>z³</sub> (m = 0). Pomarańczowa kropka to środek ładunku ⟨z⟩.</p>
+  </div>
+  <div class="prose">
+    <p>Przejście 2p → 1s ma A ≈ 6,3 × 10⁸ s⁻¹, więc stan 2p żyje około 1,6 ns. Stan 2s nie ma dokąd zejść dipolowo: 1s ma to samo l, a 2p leży na tej samej energii. Rozpada się przez emisję dwóch fotonów naraz i żyje około 0,12 s, czyli sto milionów razy dłużej.</p>
+  </div>
+</section>
+
+<section id="granice">
+  <span class="eyebrow">Uczciwie</span>
+  <h3>Gdzie analogia się kończy</h3>
+  <div class="prose"><ul>
+    <li>Kropla drga naprawdę: jej powierzchnia przesuwa się w przestrzeni. Czysty stan elektronu nie drga. Wiruje tylko faza funkcji falowej, której nie da się zobaczyć.</li>
+    <li>Częstotliwości rosną inaczej. W kropli ω<sub>l</sub> zależy od l, a w wodorze energia zależy tylko od n. Kropla nie ma też modów s i p, które w atomie istnieją.</li>
+    <li>Rolę miski dla atomu pełni pole elektryczne fali świetlnej. Rezonans to absorpcja fotonu, gdy ħΩ = E<sub>2</sub> − E<sub>1</sub>.</li>
+    <li>Prawdziwa kropla w misce drganej pionowo często odpowiada parametrycznie, z połową częstotliwości miski (fale Faradaya). Model powyżej używa prostszego wymuszenia bezpośredniego.</li>
+    <li>Pominięto spin i strukturę subtelną. Równanie Diraca rozszczepia na przykład 2p na 2p<sub>1/2</sub> i 2p<sub>3/2</sub>.</li>
+  </ul></div>
+</section>
+
+<footer>Obliczenia w jednostkach atomowych z masą zredukowaną μ = m<sub>e</sub>/(1 + m<sub>e</sub>/m<sub>p</sub>), bez struktury subtelnej. Długości fal podane w próżni. Funkcje falowe są dokładnymi rozwiązaniami nierelatywistycznymi; dynamika kropli to liniowy model Rayleigha z tłumieniem.</footer>
+</div>
+<div class="panel" id="t2" role="tabpanel" aria-labelledby="b2" hidden>
+<header class="phead">
+  <span class="eyebrow">Model klasyczny, bez postulatów kwantowych</span>
+  <h2 class="ptitle">Atom w ośrodku sprężystym</h2>
+  <p class="lede">Przestrzeń jako sprężysty ośrodek podlegający prawu Hooke’a. Proton zmienia lokalnie własności ośrodka, a elektron to wzorzec naprężeń wokół niego. Pytanie: czy taki „atom” może drgać bez wypromieniowywania energii na zewnątrz?</p>
+</header>
+
+<section id="lab">
+  <div class="lab">
+    <div class="col">
+      <canvas id="field" aria-label="Pole wychylenia ośrodka wokół atomu"></canvas>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--plus)"></i>wychylenie u &gt; 0</span>
+        <span><i class="sw" style="background:var(--minus)"></i>u &lt; 0</span>
+        <span>okrąg: granica atomu</span>
+        <span>przyciemniona ramka: pochłaniacz fal</span>
+      </div>
+    </div>
+    <div class="col">
+      <div class="verdict" id="verdict">Liczę mody własne…</div>
+      <div class="grp"><span>Eksperyment</span>
+        <div class="chips" id="exps">
+          <button data-e="s">Stan związany s</button>
+          <button data-e="p">Stan związany p</button>
+          <button data-e="kick">Uderzenie elektronem</button>
+          <button data-e="drive">Elektron drga z Ω</button>
+        </div>
+      </div>
+      <div class="row" id="omRow"><label for="om">Częstotliwość elektronu Ω</label><input type="range" id="om" min="0.05" max="0.45" step="0.005" value="0.15"><output id="omO"></output></div>
+      <div class="grp"><span>Ośrodek</span>
+        <div class="row"><label for="kap">Sztywność podłoża κ</label><input type="range" id="kap" min="0" max="0.08" step="0.002" value="0.04"><output id="kapO"></output></div>
+        <div class="row"><label for="pa">Rozmiar protonu a</label><input type="range" id="pa" min="6" max="14" step="0.5" value="10"><output id="paO"></output></div>
+        <div class="row"><label for="ps">Spowolnienie fal w rdzeniu</label><input type="range" id="ps" min="0" max="0.9" step="0.01" value="0.85"><output id="psO"></output></div>
+        <div class="chips"><button id="hooke">Sam Hooke (κ = 0)</button><button id="pause">Pauza</button></div>
+      </div>
+      <div class="stats" id="stats"></div>
+      <canvas id="energy" style="height:150px" aria-label="Energia w atomie i energia wypromieniowana w czasie"></canvas>
+      <div class="legend"><span><i class="sw" style="background:var(--accent)"></i>energia w atomie</span><span><i class="sw" style="background:var(--plus)"></i>energia, która uciekła</span></div>
+      <canvas id="disp" style="height:170px" aria-label="Relacja dyspersji ośrodka"></canvas>
+      <p class="cap">Relacja dyspersji ω(k) ośrodka poza atomem. Fioletowe pasmo to zakres częstotliwości, w którym fala nie może się rozchodzić. Poziome kreski to częstotliwości modów związanych.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Równania</span>
+  <h3>Ośrodek Hooke’a na sprężystym podłożu</h3>
+  <div class="prose"><p>Wychylenie ośrodka u(<b>r</b>, t) opisuje równanie membrany: napięcie T(<b>r</b>) to sprężystość Hooke’a między sąsiednimi elementami, a K(<b>r</b>) to sprężyny łączące każdy element z podłożem. Proton zmniejsza T i K w swoim rdzeniu.</p></div>
+  <div class="eq">$$ \rho\,\frac{\partial^{2}u}{\partial t^{2}}=\nabla\cdot\big(T(\mathbf r)\,\nabla u\big)-K(\mathbf r)\,u
+  \qquad\xrightarrow{\;c^{2}=T/\rho,\ \kappa=K/\rho\;}\qquad
+  \frac{\partial^{2}u}{\partial t^{2}}=\nabla\cdot\big(c^{2}\nabla u\big)-\kappa\,u $$</div>
+  <div class="prose"><p>W symulacji proton ma kształt gaussowski o promieniu a:</p></div>
+  <div class="eq">$$ c^{2}(\mathbf r)=1-s\,e^{-r^{2}/a^{2}},\qquad \kappa(\mathbf r)=\kappa_\infty\big(1-e^{-r^{2}/a^{2}}\big) $$</div>
+  <div class="prose"><p>Energia jest zachowana, a jej przepływ opisuje wektor <b>S</b>. Promieniowanie to niezerowy średni strumień <b>S</b> przez daleki okrąg:</p></div>
+  <div class="eq">$$ E=\int\Big[\tfrac12\dot u^{2}+\tfrac12c^{2}|\nabla u|^{2}+\tfrac12\kappa u^{2}\Big]\,d^{2}r,
+  \qquad \frac{\partial e}{\partial t}+\nabla\cdot\mathbf S=0,\qquad \mathbf S=-c^{2}\,\dot u\,\nabla u $$</div>
+  <div class="prose"><p>Daleko od protonu ośrodek jest jednorodny. Fala płaska e<sup>i(kx−ωt)</sup> spełnia relację dyspersji z przerwą:</p></div>
+  <div class="eq">$$ \omega^{2}=\kappa_\infty+c^{2}k^{2}\qquad\Longrightarrow\qquad \omega_c=\sqrt{\kappa_\infty} $$</div>
+  <div class="prose"><p>Dla ω &lt; ω<sub>c</sub> liczba falowa jest urojona. Zaburzenie nie rozchodzi się, tylko zanika wykładniczo z odległością, a średni strumień energii znika (K<sub>0</sub> to zmodyfikowana funkcja Bessela):</p></div>
+  <div class="eq">$$ k=i\,\frac{\sqrt{\kappa_\infty-\omega^{2}}}{c}\qquad\Longrightarrow\qquad u\propto K_0\!\big(r/\ell\big)\sim\frac{e^{-r/\ell}}{\sqrt{r}},\qquad \ell=\frac{c}{\sqrt{\kappa_\infty-\omega^{2}}},\qquad \langle \mathbf S\rangle_{t}=0 $$</div>
+  <div class="prose"><p>Mody związane atomu to rozwiązania u = φ(<b>r</b>) cos ωt. Równanie na φ ma postać zagadnienia własnego:</p></div>
+  <div class="eq">$$ -\nabla\cdot\big(c^{2}\nabla\varphi\big)+\kappa(\mathbf r)\,\varphi=\omega^{2}\varphi,\qquad \omega<\omega_c\ \Longrightarrow\ \text{mod nie promieniuje} $$</div>
+  <div class="prose"><p>Przy κ = 0 (sam Hooke) przerwy nie ma. Każda częstotliwość się rozchodzi, więc każde drganie traci energię. Rdzeń protonu może wtedy co najwyżej przez chwilę zatrzymać falę jako rezonans o skończonym czasie życia.</p></div>
+</section>
+
+<section>
+  <span class="eyebrow">Związek z fizyką kwantową</span>
+  <h3>To jest równanie Kleina–Gordona</h3>
+  <div class="prose"><p>Ośrodek na sprężynach ma dokładnie postać relatywistycznego równania falowego dla cząstki o masie m. Sztywność podłoża odpowiada masie:</p></div>
+  <div class="eq">$$ \frac{\partial^{2}\psi}{\partial t^{2}}=c^{2}\nabla^{2}\psi-\Big(\frac{mc^{2}}{\hbar}\Big)^{2}\psi
+  \qquad\Longleftrightarrow\qquad \kappa_\infty=\Big(\frac{mc^{2}}{\hbar}\Big)^{2} $$</div>
+  <div class="prose"><p>Jeśli zapisać pole jako szybkie drganie z częstotliwością ω<sub>c</sub> razy wolną obwiednię φ, obwiednia spełnia równanie Schrödingera:</p></div>
+  <div class="eq">$$ \psi=\varphi\,e^{-i\omega_c t},\quad |\ddot\varphi|\ll\omega_c|\dot\varphi|
+  \qquad\Longrightarrow\qquad i\hbar\,\frac{\partial\varphi}{\partial t}=-\frac{\hbar^{2}}{2m}\nabla^{2}\varphi+V\varphi,
+  \qquad V\approx\frac{\hbar}{2\omega_c}\,\big(\kappa(\mathbf r)-\kappa_\infty\big) $$</div>
+  <div class="prose"><p>Stany związane w symulacji odpowiadają więc stanom związanym w studni potencjału. Energia wiązania to odległość ich częstotliwości od krawędzi przerwy ω<sub>c</sub>.</p></div>
+</section>
+
+<section>
+  <span class="eyebrow">Zakres modelu</span>
+  <h3>Co ta symulacja pokazuje, a czego nie</h3>
+  <div class="prose"><ul>
+    <li>Pokazuje, że w ośrodku Hooke’a z podłożem istnieją drgania zlokalizowane, które trwale nie wypromieniowują energii. Wystarcza do tego klasyczna mechanika ośrodków ciągłych, bez postulatów.</li>
+    <li>Warunkiem jest przerwa w widmie, czyli człon κu. W samym ośrodku Hooke’a (κ = 0) wszystko się wypromieniowuje. Można to sprawdzić przyciskiem „Sam Hooke”, także w trakcie trwania stanu związanego.</li>
+    <li>Ten sam człon κ skraca zasięg statycznych naprężeń. Statyczne pole od punktowego źródła maleje jak e<sup>−r/ℓ</sup> (potencjał Yukawy), a nie jak 1/r jak pole kulombowskie. Model, który ma i stany nie promieniujące, i długozasięgowe przyciąganie protonu, potrzebuje więc dwóch różnych pól albo innego mechanizmu.</li>
+    <li>Ośrodek jest liniowy. Superpozycja stanów s i p też tutaj nie promieniuje. W prawdziwym atomie przejście 2p → 1s emituje światło. Do tego potrzebne byłoby sprzężenie ośrodka „elektronowego” z drugim polem, które nie ma przerwy.</li>
+    <li>Model jest dwuwymiarowy i skalarny. Prawdziwy ośrodek sprężysty w 3D ma fale podłużne i poprzeczne, a podłoże musi działać na obie, żeby przerwa była pełna.</li>
+  </ul></div>
+</section>
+
+<footer>Siatka 201 × 201, krok czasowy 0,4, schemat Verleta z dywergencyjną dyskretyzacją, która zachowuje dyskretną energię. Brzeg pochłania fale warstwą tłumiącą σ(r)u̇. Energię, która uciekła, liczy się jako całkę mocy pochłoniętej ∫Σσu̇² dt. Mody własne wyznaczono relaksacją w czasie urojonym. Jednostki: c = 1 daleko od protonu, odległość w oczkach siatki.</footer>
+</div>
+<div class="panel" id="t3" role="tabpanel" aria-labelledby="b3" hidden>
+<header class="phead">
+  <span class="eyebrow">Model klasyczny w jednym wymiarze</span>
+  <h2 class="ptitle">Atom na linie</h2>
+  <p class="lede">Trzy liny z tym samym „atomem” pośrodku i tym samym pobudzeniem. Różnią się tylko tym, co dzieje się z falą na granicy atomu: przechodzi, odbija się częściowo albo odbija się całkowicie. Niżej ten sam efekt bez żadnego atomu, w ośrodku jednorodnym.</p>
+</header>
+
+<section>
+  <div class="lab">
+    <canvas id="ropes" style="height:420px" aria-label="Trzy liny z atomem pośrodku"></canvas>
+    <div class="two">
+      <div class="col">
+        <div class="grp"><span>Pobudzenie</span>
+          <div class="chips" id="l_exps">
+            <button data-e="mode">Mod związany</button>
+            <button data-e="pulse">Uderzenie</button>
+            <button data-e="drive">Elektron drga z Ω</button>
+          </div>
+        </div>
+        <div class="row" id="l_omRow"><label for="l_om">Częstotliwość Ω</label><input type="range" id="l_om" min="0.05" max="0.5" step="0.005" value="0.15"><output id="l_omO"></output></div>
+        <div class="grp"><span>Ośrodek</span>
+          <div class="row"><label for="l_kap">Sprężyny pod liną 3, κ</label><input type="range" id="l_kap" min="0.005" max="0.08" step="0.001" value="0.04"><output id="l_kapO"></output></div>
+          <div class="row"><label for="core">Prędkość fali w atomie</label><input type="range" id="core" min="0.1" max="0.9" step="0.01" value="0.35"><output id="coreO"></output></div>
+          <div class="chips"><button id="l_pause">Pauza</button><button id="restart">Od nowa</button></div>
+        </div>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Lina</th><th style="text-align:right">|R|² przy Ω</th><th style="text-align:right">Energia w atomie</th><th style="text-align:right">Uciekło</th></tr></thead>
+          <tbody id="tbl"></tbody></table></div>
+      </div>
+      <div class="col">
+        <canvas id="l_energy" style="height:170px" aria-label="Udział energii w atomie w czasie dla trzech lin"></canvas>
+        <canvas id="refl" style="height:170px" aria-label="Współczynnik odbicia na granicy atomu w funkcji częstotliwości"></canvas>
+        <p class="cap">Górny wykres: jaka część energii zostaje w atomie. Dolny: jaka część fali odbija się od granicy atomu przy danej częstotliwości ω. Pionowa kreska to Ω albo częstotliwość modu związanego.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Dlaczego tak się dzieje</span>
+  <h3>Odbicie na granicy atomu</h3>
+  <div class="prose"><p>Wszystkie trzy liny spełniają to samo równanie. Atom to odcinek |x| &lt; a, na którym lina jest cięższa, więc fala biegnie w nim wolniej (c<sub>a</sub> &lt; 1). Lina 3 ma dodatkowo na zewnątrz atomu sprężyny łączące ją z podłożem.</p></div>
+  <div class="eq">$$ \frac{\partial^{2}u}{\partial t^{2}}=\frac{\partial}{\partial x}\Big(c^{2}(x)\,\frac{\partial u}{\partial x}\Big)-\kappa(x)\,u,
+  \qquad c(x)=\begin{cases}c_a,&|x|<a\\ 1,&|x|>a\end{cases},
+  \qquad \kappa(x)=\begin{cases}0,&|x|<a\\ \kappa,&|x|>a\ \text{(tylko lina 3)}\end{cases} $$</div>
+  <div class="prose"><p>Fala biegnąca e<sup>i(kx−ωt)</sup> w każdym odcinku ma swoją liczbę falową i impedancję. Impedancja mówi, jak trudno odcinek liny „rozbujać” przy tej częstotliwości:</p></div>
+  <div class="eq">$$ k=\frac{\sqrt{\omega^{2}-\kappa}}{c},\qquad Z=\frac{c^{2}k}{\omega}=c\,\sqrt{1-\frac{\kappa}{\omega^{2}}} $$</div>
+  <div class="prose"><p>Na granicy dwóch odcinków odbija się ułamek |R|² energii fali, a reszta przechodzi:</p></div>
+  <div class="eq">$$ R=\frac{Z_{a}-Z_{\text{zew}}}{Z_{a}+Z_{\text{zew}}},\qquad |R|^{2}+\frac{4\,\mathrm{Re}\,Z_{a}\,\mathrm{Re}\,Z_{\text{zew}}}{|Z_a+Z_{\text{zew}}|^{2}}=1 $$</div>
+  <div class="prose"><ul>
+    <li><b>Lina 1, jednorodna:</b> Z<sub>a</sub> = Z<sub>zew</sub>, więc R = 0. Fala przechodzi bez odbicia i atom traci wszystko za pierwszym przejściem.</li>
+    <li><b>Lina 2, cięższy odcinek:</b> R = (c<sub>a</sub> − 1)/(c<sub>a</sub> + 1), niezależnie od ω. Fala odbija się częściowo i krąży w atomie, ale przy każdym odbiciu traci ułamek 1 − |R|². Energia maleje wykładniczo, jak w rezonatorze o skończonej dobroci.</li>
+    <li><b>Lina 3, sprężyny na zewnątrz:</b> dla ω &lt; √κ impedancja zewnętrzna jest czysto urojona, Z<sub>zew</sub> = i|Z|. Wtedy |R| = 1 dokładnie. Na zewnątrz nie ma fali biegnącej, tylko zanikający ogon u ∝ e<sup>−|x|/ℓ</sup>, który nie przenosi średniej energii.</li>
+  </ul></div>
+  <div class="eq">$$ \omega<\sqrt{\kappa}:\qquad Z_{\text{zew}}=i\,\sqrt{\frac{\kappa}{\omega^{2}}-1}\;\Longrightarrow\;|R|=\frac{|c_a-i\beta|}{|c_a+i\beta|}=1,
+  \qquad \ell=\frac{1}{\sqrt{\kappa-\omega^{2}}} $$</div>
+  <div class="prose"><p>Mod związany liny 3 to fala stojąca w atomie, dopasowana do zanikających ogonów. Dla modu parzystego warunek dopasowania daje dyskretne częstotliwości:</p></div>
+  <div class="eq">$$ c_a\,k_a\,\tan(k_a a)=\sqrt{\kappa-\omega^{2}},\qquad k_a=\frac{\omega}{c_a} $$</div>
+  <div class="prose"><p>To ten sam warunek, co dla cząstki kwantowej w skończonej studni potencjału. W 1D taki stan istnieje zawsze, nawet dla płytkiej studni.</p></div>
+</section>
+
+<section id="jednorodny">
+  <span class="eyebrow">Bez atomu</span>
+  <h3>Ośrodek jednorodny: breather</h3>
+  <div class="prose">
+    <p>Teraz lina jest wszędzie taka sama: nie ma cięższego odcinka ani granicy, od której fala mogłaby się odbić. Porównujemy dwie liny na podłożu. W linie liniowej sprężyny działają siłą κu, zgodnie z prawem Hooke’a. Druga to łańcuch wahadeł połączonych sprężynami: siła powrotna to κ·sin u, więc przy dużych wychyleniach słabnie.</p>
+  </div>
+  <div class="eq">$$ \text{liniowa:}\quad u_{tt}=u_{xx}-\kappa\,u
+  \qquad\qquad \text{wahadła (sine-Gordon):}\quad u_{tt}=u_{xx}-\kappa\,\sin u $$</div>
+  <div class="prose"><p>W linie liniowej każde zlokalizowane zaburzenie rozkłada się na fale o różnych k. Ich prędkości grupowe są różne i niezerowe, więc paczka zawsze się rozpływa:</p></div>
+  <div class="eq">$$ \omega(k)=\sqrt{\kappa+k^{2}},\qquad v_g=\frac{d\omega}{dk}=\frac{k}{\sqrt{\kappa+k^{2}}}\neq 0\ \ \text{dla}\ k\neq 0 $$</div>
+  <div class="prose"><p>Równanie sine-Gordona ma dokładne rozwiązanie, które drga w miejscu i nie rozpływa się. Ze zmiennymi m = √κ oraz η = √(1 − ϖ²), gdzie 0 &lt; ϖ &lt; 1 to częstotliwość w jednostkach przerwy:</p></div>
+  <div class="eq">$$ u_B(x,t)=4\arctan\!\left[\frac{\eta}{\varpi}\;\frac{\sin(\varpi\,m\,t)}{\cosh(\eta\,m\,x)}\right],
+  \qquad \omega_B=\varpi\,m<\sqrt{\kappa},\qquad E_B=16\,\eta\,m $$</div>
+  <div class="prose"><p>Breather drga z częstotliwością leżącą w przerwie, więc tak jak atom z liny 3 nie ma do czego wypromieniować energii. Różnica polega na tym, że nie potrzebuje żadnej niejednorodności: sam utrzymuje się w miejscu dzięki nieliniowości. Obie liny poniżej startują z tym samym profilem prędkości, u(x, 0) = 0 oraz u<sub>t</sub>(x, 0) = 4ηm / cosh(ηmx).</p></div>
+
+  <div class="lab">
+    <canvas id="hropes" style="height:300px" aria-label="Lina liniowa i łańcuch wahadeł z tym samym pobudzeniem"></canvas>
+    <div class="two">
+      <div class="col">
+        <div class="row"><label for="bw">Częstotliwość breathera ϖ</label><input type="range" id="bw" min="0.3" max="0.95" step="0.01" value="0.7"><output id="bwO"></output></div>
+        <div class="row"><label for="bA">Mnożnik amplitudy startu</label><input type="range" id="bA" min="0.5" max="1.5" step="0.01" value="1"><output id="bAO"></output></div>
+        <div class="chips"><button id="bExact">Dokładny breather (×1)</button><button id="bPause">Pauza</button><button id="bRestart">Od nowa</button></div>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Lina</th><th style="text-align:right">Energia w środku</th><th style="text-align:right">Uciekło</th></tr></thead>
+          <tbody id="btbl"></tbody></table></div>
+        <div class="note" id="bnote"></div>
+      </div>
+      <div class="col">
+        <canvas id="benergy" style="height:190px" aria-label="Energia w środkowym obszarze w czasie"></canvas>
+        <p class="cap">Udział energii w obszarze |x| &lt; 80 wokół miejsca startu. κ = 0,01, czyli przerwa ω<sub>c</sub> = 0,1. Wychylenie rysowane w tej samej skali na obu linach.</p>
+      </div>
+    </div>
+  </div>
+  <div class="prose">
+    <p>Co warto sprawdzić. Przy mnożniku ×1 breather zachowuje energię bez końca. Przy niewielkim zaburzeniu kształtu, np. ×1,3 przy ϖ = 0,8, zrzuca kilka procent energii jako falę i dalej żyje jako trochę inny breather. Przy małym ϖ i za dużej amplitudzie rozpada się na dwa kinki: skok liny o 2π i skok o −2π, które odlatują w przeciwne strony. W tym ośrodku kinki zachowują się jak cząstki. Ich energia zależy od prędkości tak jak energia relatywistycznej cząstki o masie 8m:</p>
+  </div>
+  <div class="eq">$$ u_K=4\arctan\!\Big[\exp\Big(\frac{m\,(x-vt)}{\sqrt{1-v^{2}}}\Big)\Big],\qquad E_K=\frac{8m}{\sqrt{1-v^{2}}} $$</div>
+</section>
+
+<section>
+  <span class="eyebrow">Na marginesie</span>
+  <h3>A bicz?</h3>
+  <div class="prose">
+    <p>Bicz robi rzecz odwrotną. Zwęża się płynnie, więc jego impedancja zmienia się stopniowo i fala prawie się nie odbija. Cała energia płynie do końcówki, a ponieważ masa końcówki jest mała, jej prędkość rośnie aż do przekroczenia prędkości dźwięku. Stąd trzask. Płynna zmiana ośrodka przepuszcza energię, a skok impedancji ją odbija.</p>
+  </div>
+  <div class="note">W atomie z liny 3 przyczyną odbicia nie jest skok, tylko przerwa w widmie. Granica może być nawet rozmyta, a |R| = 1 zostaje, bo na zewnątrz po prostu nie ma fali o tej częstotliwości, która mogłaby zabrać energię.</div>
+</section>
+
+<footer>Lina: 900 punktów, krok czasowy 0,5, schemat Verleta zachowujący dyskretną energię. Atom: |x| &lt; 24 oczek. Końce liny pochłaniają fale warstwą tłumiącą σ(x)u̇, więc lina zachowuje się jak nieskończona. Energię, która uciekła, liczy się jako całkę pochłoniętej mocy ∫Σσu̇²dt. Wzory na |R|² dotyczą ostrej granicy; w symulacji krawędź ma szerokość około 1 oczka.</footer>
+</div>
+</main>
+<script>
+(()=>{const keys={'1':'kropla','2':'osrodek','3':'lina'},inv={kropla:'1',osrodek:'2',lina:'3'};
+function show(n,push){for(const k of ['1','2','3']){const on=k===n;document.getElementById('t'+k).hidden=!on;const b=document.getElementById('b'+k);b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;b.classList.toggle('on',on);}
+  try{localStorage.setItem('tab',n)}catch(e){}if(push){try{history.replaceState(null,'','#'+keys[n])}catch(e){}}
+  requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));}
+document.querySelectorAll('.tabs button').forEach(b=>{b.onclick=()=>{show(b.dataset.t,true);window.scrollTo(0,0);};
+  b.onkeydown=e=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;const n=((+b.dataset.t+(e.key==='ArrowRight'?0:1))%3)+1;show(String(n),true);document.getElementById('b'+n).focus();};});
+let start=inv[location.hash.slice(1)];if(!start){try{start=localStorage.getItem('tab')}catch(e){}}show(start&&keys[start]?start:'1',false);})();
+</script>
+<script>
+(()=>{
+const PI=Math.PI,$=id=>document.getElementById(id);
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fact=[1];for(let i=1;i<=30;i++)fact[i]=fact[i-1]*i;
+const LET='spdfghik';
+const nf=(v,d)=>v.toLocaleString('pl-PL',{minimumFractionDigits:d,maximumFractionDigits:d});
+const SUPD={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+function sci(v){if(!isFinite(v)||v===0)return '0';const e=Math.floor(Math.log10(Math.abs(v)));const m=v/Math.pow(10,e);if(e>=-2&&e<=3)return nf(v,e<0?3:2);return nf(m,2)+' × 10'+String(e).split('').map(c=>SUPD[c]).join('');}
+
+/* ---------- matematyka ---------- */
+function plm(l,m,x){let pmm=1;if(m>0){const s=Math.sqrt(Math.max(0,1-x*x));let f=1;for(let i=1;i<=m;i++){pmm*=f*s;f+=2;}}
+  if(l===m)return pmm;let p1=x*(2*m+1)*pmm;if(l===m+1)return p1;let pl=0;
+  for(let ll=m+2;ll<=l;ll++){pl=(x*(2*ll-1)*p1-(ll+m-1)*pmm)/(ll-m);pmm=p1;p1=pl;}return pl;}
+const Nlm=(l,m)=>Math.sqrt((2*l+1)/(4*PI)*fact[l-m]/fact[l+m]);
+function Sr(l,m,ct,ph){const a=Math.abs(m),p=Nlm(l,a)*plm(l,a,ct);if(!m)return p;return Math.SQRT2*p*(m>0?Math.cos(a*ph):Math.sin(a*ph));}
+function lag(k,a,x){if(k===0)return 1;let L0=1,L1=1+a-x;for(let i=1;i<k;i++){const L2=((2*i+1+a-x)*L1-(i+a)*L0)/(i+1);L0=L1;L1=L2;}return L1;}
+function Rnl(n,l,r){const rho=2*r/n;const N=Math.sqrt(Math.pow(2/n,3)*fact[n-l-1]/(2*n*fact[n+l]));return N*Math.exp(-r/n)*Math.pow(rho,l)*lag(n-l-1,2*l+1,rho);}
+const rmaxOf=n=>n*(2*n+8);
+const MU=1/(1+1/1836.15267);
+const EH_EV=27.211386, AU_T=2.4188843e-17, ALPHA=1/137.035999;
+const En=n=>-0.5*MU/(n*n);
+
+/* ---------- nazwy ---------- */
+const NAMES={'0,0':['s','1'],'1,0':['p<sub>z</sub>','z'],'1,1':['p<sub>x</sub>','x'],'1,-1':['p<sub>y</sub>','y'],
+'2,0':['d<sub>z²</sub>','3z²−r²'],'2,1':['d<sub>xz</sub>','xz'],'2,-1':['d<sub>yz</sub>','yz'],'2,2':['d<sub>x²−y²</sub>','x²−y²'],'2,-2':['d<sub>xy</sub>','xy'],
+'3,0':['f<sub>z³</sub>','z(5z²−3r²)'],'3,1':['f<sub>xz²</sub>','x(5z²−r²)'],'3,-1':['f<sub>yz²</sub>','y(5z²−r²)'],'3,2':['f<sub>z(x²−y²)</sub>','z(x²−y²)'],'3,-2':['f<sub>xyz</sub>','xyz'],'3,3':['f<sub>x(x²−3y²)</sub>','x(x²−3y²)'],'3,-3':['f<sub>y(3x²−y²)</sub>','y(3x²−y²)']};
+const nameOf=(l,m)=>NAMES[l+','+m]?NAMES[l+','+m][0]:LET[l]+'<sub>m='+m+'</sub>';
+const mOrder=l=>{const a=[0];for(let k=1;k<=l;k++)a.push(k,-k);return a;};
+
+/* ---------- motyw ---------- */
+const T={};
+function hex(h){h=h.replace('#','').trim();return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function readT(){const s=getComputedStyle(document.documentElement);for(const k of['fg','muted','line','accent','plus','minus','neutral','surface','chip'])T[k]=s.getPropertyValue('--'+k).trim();for(const k of['fg','plus','minus','neutral'])T[k+'R']=hex(T[k]);}
+readT();
+const FONT=d=>`${11*d}px "Source Sans 3", system-ui, sans-serif`;
+function fit(c){const d=window.devicePixelRatio||1,w=Math.round(c.clientWidth*d),h=Math.round(c.clientHeight*d);if(c.width!==w||c.height!==h){c.width=w;c.height=h;}return d;}
+
+/* ---------- siatka sfery i renderer ---------- */
+function Mesh(NT,NP){const NV=(NT+1)*(NP+1),m={NT,NP,NV,ux:new Float32Array(NV),uy:new Float32Array(NV),uz:new Float32Array(NV),ph:new Float32Array(NV),
+  X:new Float32Array(NV),Y:new Float32Array(NV),Z:new Float32Array(NV),sx:new Float32Array(NV),sy:new Float32Array(NV),Q:[]};
+  for(let i=0;i<=NT;i++)for(let j=0;j<=NP;j++){const th=PI*i/NT,ph=2*PI*j/NP,k=i*(NP+1)+j;m.ux[k]=Math.sin(th)*Math.cos(ph);m.uy[k]=Math.sin(th)*Math.sin(ph);m.uz[k]=Math.cos(th);m.ph[k]=ph;}
+  for(let i=0;i<NT;i++)for(let j=0;j<NP;j++)m.Q.push({k:i*(NP+1)+j,z:0,c:''});return m;}
+const LX=-0.42,LY=0.62,LZ=0.66;
+function drawMesh(ctx,m,rad,val,yaw,pitch,cx,cy,S){
+  const cyw=Math.cos(yaw),syw=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch),NP1=m.NP+1;
+  for(let k=0;k<m.NV;k++){const r=rad[k],x=m.ux[k]*r,y=m.uy[k]*r,z=m.uz[k]*r,x1=x*cyw-y*syw,y1=x*syw+y*cyw;
+    const X=x1,Y=y1*sp+z*cp,Z=-y1*cp+z*sp,f=3.6/(3.6-Z);m.X[k]=X;m.Y[k]=Y;m.Z[k]=Z;m.sx[k]=cx+X*S*f;m.sy[k]=cy-Y*S*f;}
+  const N=T.neutralR,P=T.plusR,M=T.minusR;
+  for(const q of m.Q){const a=q.k,b=a+1,c=a+NP1,d=c+1;q.z=(m.Z[a]+m.Z[b]+m.Z[c]+m.Z[d])*0.25;
+    const ux=m.X[d]-m.X[a],uy=m.Y[d]-m.Y[a],uz=m.Z[d]-m.Z[a],vx=m.X[c]-m.X[b],vy=m.Y[c]-m.Y[b],vz=m.Z[c]-m.Z[b];
+    let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const nl=Math.hypot(nx,ny,nz)||1;
+    const px=m.X[a]+m.X[d],py=m.Y[a]+m.Y[d],pz=m.Z[a]+m.Z[d];if(nx*px+ny*py+nz*pz<0){nx=-nx;ny=-ny;nz=-nz;}
+    const sh=0.34+0.66*Math.max(0,(nx*LX+ny*LY+nz*LZ)/nl);
+    const v=Math.max(-1,Math.min(1,(val[a]+val[b]+val[c]+val[d])*0.25)),e=Math.abs(v),C=v>=0?P:M;
+    q.c='rgb('+((N[0]+(C[0]-N[0])*e)*sh|0)+','+((N[1]+(C[1]-N[1])*e)*sh|0)+','+((N[2]+(C[2]-N[2])*e)*sh|0)+')';}
+  m.Q.sort((p,q)=>p.z-q.z);ctx.lineWidth=0.7;ctx.lineJoin='round';
+  for(const q of m.Q){const a=q.k,b=a+1,c=a+NP1,d=c+1;ctx.fillStyle=q.c;ctx.strokeStyle=q.c;ctx.beginPath();
+    ctx.moveTo(m.sx[a],m.sy[a]);ctx.lineTo(m.sx[b],m.sy[b]);ctx.lineTo(m.sx[d],m.sy[d]);ctx.lineTo(m.sx[c],m.sy[c]);ctx.closePath();ctx.fill();ctx.stroke();}
+}
+function rotatable(cv,st){let d=null;
+  cv.addEventListener('pointerdown',e=>{d={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId);st.drag=true;});
+  cv.addEventListener('pointermove',e=>{if(!d)return;st.yaw+=(e.clientX-d.x)*0.01;st.pitch=Math.max(-1.45,Math.min(1.45,st.pitch+(e.clientY-d.y)*0.01));d={x:e.clientX,y:e.clientY};});
+  const up=()=>{d=null;st.drag=false;};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);}
+const vis=new Map();const io=new IntersectionObserver(es=>es.forEach(e=>vis.set(e.target,e.isIntersecting)));
+const visible=c=>vis.get(c)!==false;
+
+/* ================= KROPLA ================= */
+const LMIN=2,LMAX=7,G=0.12;
+const wl=l=>Math.sqrt(l*(l-1)*(l+2)/8);
+const D={mesh:Mesh(40,80),M:0,X:new Float64Array(LMAX+1),V:new Float64Array(LMAX+1),Y:[],w:1,t:0,yaw:0.6,pitch:0.32,paused:false,drag:false};
+D.rad=new Float32Array(D.mesh.NV);D.val=new Float32Array(D.mesh.NV);
+function dropBuild(){const m=D.mesh;for(let l=LMIN;l<=LMAX;l++){if(l<D.M){D.Y[l]=null;continue;}const a=new Float32Array(m.NV);let mx=0;
+  for(let k=0;k<m.NV;k++){const v=plm(l,D.M,m.uz[k])*Math.cos(D.M*m.ph[k]);a[k]=v;mx=Math.max(mx,Math.abs(v));}for(let k=0;k<m.NV;k++)a[k]/=mx;D.Y[l]=a;}D.X.fill(0);D.V.fill(0);}
+dropBuild();
+const dropCv=$('dropCv'),dropRe=$('dropResp'),dW=$('dropW'),dWo=$('dropWo'),dM=$('dropM'),dMo=$('dropMo');
+rotatable(dropCv,D);io.observe(dropCv);
+const setW=v=>{D.w=v;dW.value=v.toFixed(2);dWo.textContent=nf(v,2);};
+dW.oninput=()=>setW(+dW.value);
+dM.oninput=()=>{D.M=+dM.value;dMo.textContent=D.M;dropBuild();};
+for(let l=LMIN;l<=LMAX;l++){const b=document.createElement('button');b.textContent='l = '+l+' ('+LET[l]+')';b.onclick=()=>{setW(wl(l));if(D.M>l){D.M=l;dM.value=l;dMo.textContent=l;dropBuild();}};$('dropBtns').appendChild(b);}
+$('dropPause').onclick=e=>{D.paused=!D.paused;e.target.textContent=D.paused?'Wznów':'Pauza';};
+$('dropReset').onclick=()=>{D.X.fill(0);D.V.fill(0);};
+function dropStep(dt){const n=12,h=dt/n;for(let s=0;s<n;s++){const F=Math.cos(D.w*D.t);for(let l=LMIN;l<=LMAX;l++){if(!D.Y[l])continue;const o=wl(l);D.V[l]+=(F-G*D.V[l]-o*o*D.X[l])*h;D.X[l]+=D.V[l]*h;}D.t+=h;}}
+function dropFrame(dt){
+  if(!D.paused){dropStep(dt*4);if(!D.drag&&!reduced)D.yaw+=dt*0.22;}
+  if(!visible(dropCv))return;
+  const d=fit(dropCv),ctx=dropCv.getContext('2d'),W=dropCv.width,H=dropCv.height;ctx.clearRect(0,0,W,H);
+  const m=D.mesh,rel=[];for(let l=LMIN;l<=LMAX;l++)rel[l]=D.Y[l]?D.X[l]*G*wl(l):0;
+  for(let k=0;k<m.NV;k++){let s=0;for(let l=LMIN;l<=LMAX;l++)if(D.Y[l])s+=rel[l]*D.Y[l][k];s=Math.max(-1.4,Math.min(1.4,s));D.val[k]=s;D.rad[k]=1+0.28*s;}
+  const S=Math.min(W,H)*0.29,bob=Math.cos(D.w*D.t)*4*d,cy=H*0.45;
+  ctx.strokeStyle=T.muted;ctx.lineWidth=1.4*d;
+  ctx.beginPath();ctx.ellipse(W/2,cy+S*1.42+bob,S*1.25,S*0.22,0,PI,2*PI);ctx.setLineDash([3*d,4*d]);ctx.stroke();ctx.setLineDash([]);
+  drawMesh(ctx,m,D.rad,D.val,D.yaw,D.pitch,W/2,cy+bob*0.4,S);
+  ctx.strokeStyle=T.muted;ctx.lineWidth=1.4*d;ctx.beginPath();ctx.ellipse(W/2,cy+S*1.42+bob,S*1.25,S*0.22,0,0,PI);ctx.stroke();
+  let best=0,ba=0;for(let l=LMIN;l<=LMAX;l++){if(!D.Y[l])continue;const o=wl(l),A=Math.hypot(D.X[l],D.V[l]/o)*G*o;if(A>ba){ba=A;best=l;}}
+  $('dropInfo').textContent=!best?'Przy tej symetrii miska nie popycha żadnego modu':ba<0.15?'Poza rezonansem: woda ledwo drży':'Dominuje mod l = '+best+', m = '+D.M+' (kształt jak orbital '+LET[best]+')   amplituda '+Math.round(Math.min(ba,1)*100)+'%';
+  drawResp();
+}
+function drawResp(){const d=fit(dropRe),ctx=dropRe.getContext('2d'),W=dropRe.width,H=dropRe.height,p=10*d,lo=0.3,hi=6.5;ctx.clearRect(0,0,W,H);
+  const X0=v=>p+(v-lo)/(hi-lo)*(W-2*p),bot=H-20*d,top=10*d;
+  ctx.strokeStyle=T.line;ctx.lineWidth=d;ctx.beginPath();ctx.moveTo(p,bot);ctx.lineTo(W-p,bot);ctx.stroke();
+  ctx.beginPath();for(let i=0;i<=600;i++){const v=lo+(hi-lo)*i/600;let A=0;for(let l=LMIN;l<=LMAX;l++){if(!D.Y[l])continue;const o=wl(l);A+=G*o/Math.sqrt((o*o-v*v)**2+(G*v)**2);}
+    const y=bot-Math.min(1.05,A)*(bot-top);i?ctx.lineTo(X0(v),y):ctx.moveTo(X0(v),y);}
+  ctx.strokeStyle=T.fg;ctx.lineWidth=1.4*d;ctx.stroke();
+  ctx.fillStyle=T.muted;ctx.font=FONT(d);ctx.textAlign='center';
+  for(let l=LMIN;l<=LMAX;l++){const x=X0(wl(l));ctx.fillStyle=D.Y[l]?T.fg:T.muted;ctx.fillText('l='+l,x,bot+14*d);}
+  ctx.strokeStyle=T.plus;ctx.lineWidth=2*d;ctx.beginPath();ctx.moveTo(X0(D.w),top-4*d);ctx.lineTo(X0(D.w),bot);ctx.stroke();
+  ctx.textAlign='left';ctx.fillStyle=T.muted;ctx.fillText('odpowiedź kropli',p,top+4*d);}
+
+/* ================= GALERIA ================= */
+const thumbMesh=Mesh(34,68),thumbs=[];
+(function buildGallery(){const g=$('gallery');const word=['orbital','orbitale','orbitali','orbitali'];
+  for(let l=0;l<=3;l++){const row=document.createElement('div');row.className='galrow';
+    row.innerHTML='<div class="galhead"><b>'+LET[l]+'</b>l = '+l+', '+(2*l+1)+' '+word[l]+', '+l+' '+(l===1?'węzeł kątowy':l===0?'węzłów kątowych':'węzły kątowe')+'</div>';
+    const cards=document.createElement('div');cards.className='cards';
+    for(const m of mOrder(l)){const b=document.createElement('button');b.className='card';b.dataset.l=l;b.dataset.m=m;
+      b.innerHTML='<canvas></canvas><span class="nm">'+NAMES[l+','+m][0]+'</span><span class="cart">'+NAMES[l+','+m][1]+'</span>';
+      b.setAttribute('aria-label','Orbital '+b.querySelector('.nm').textContent);
+      b.onclick=()=>{EX.l=l;EX.m=m;if(EX.n<l+1)EX.n=l+1;exUpdate();$('explorer').scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'});};
+      cards.appendChild(b);
+      const rad=new Float32Array(thumbMesh.NV),val=new Float32Array(thumbMesh.NV);let mx=0;
+      for(let k=0;k<thumbMesh.NV;k++){const v=Sr(l,m,thumbMesh.uz[k],thumbMesh.ph[k]);rad[k]=Math.abs(v);val[k]=v>=0?1:-1;mx=Math.max(mx,Math.abs(v));}
+      for(let k=0;k<thumbMesh.NV;k++)rad[k]/=mx;
+      thumbs.push({cv:b.querySelector('canvas'),rad,val,btn:b,l,m});}
+    row.appendChild(cards);g.appendChild(row);}
+})();
+function renderGallery(){for(const t of thumbs){const d=fit(t.cv);if(!t.cv.width)continue;const ctx=t.cv.getContext('2d'),W=t.cv.width,H=t.cv.height;ctx.clearRect(0,0,W,H);
+  drawMesh(ctx,thumbMesh,t.rad,t.val,0.72,0.36,W/2,H/2,Math.min(W,H)*0.36);}}
+
+/* ================= EKSPLORATOR ================= */
+const EX={n:3,l:2,m:0,yaw:0.7,pitch:0.3,drag:false,pts:null};
+const cloudCv=$('cloudCv'),radCv=$('radCv');rotatable(cloudCv,EX);io.observe(cloudCv);
+function chipRow(el,items,cur,on){el.innerHTML='';for(const it of items){const b=document.createElement('button');b.innerHTML=it.label;if(it.v===cur)b.classList.add('on');b.onclick=()=>on(it.v);el.appendChild(b);}}
+function sampleOrbital(n,l,m,N){
+  const rmax=rmaxOf(n),G2=3000,cdf=new Float64Array(G2+1),P=new Float64Array(G2+1);let acc=0;
+  for(let i=1;i<=G2;i++){const r=i*rmax/G2,R=Rnl(n,l,r);P[i]=r*r*R*R;acc+=P[i];cdf[i]=acc;}
+  for(let i=0;i<=G2;i++){cdf[i]/=acc;P[i]/=acc*rmax/G2;}
+  let ym=0;for(let a=0;a<=90;a++)for(let b=0;b<120;b++){const v=Sr(l,m,Math.cos(PI*a/90),2*PI*b/120);ym=Math.max(ym,v*v);}ym*=1.08;
+  const xs=new Float32Array(N),ys=new Float32Array(N),zs=new Float32Array(N),sg=new Int8Array(N),rr=new Float32Array(N);
+  for(let i=0;i<N;i++){const u=Math.random();let lo=0,hi=G2;while(hi-lo>1){const mid=(lo+hi)>>1;if(cdf[mid]<u)lo=mid;else hi=mid;}
+    const f=(u-cdf[lo])/((cdf[hi]-cdf[lo])||1),r=(lo+f)*rmax/G2;
+    let ct=0,ph=0,y=0;for(let g=0;g<500;g++){ct=2*Math.random()-1;ph=2*PI*Math.random();y=Sr(l,m,ct,ph);if(Math.random()*ym<y*y)break;}
+    const st=Math.sqrt(1-ct*ct);xs[i]=r*st*Math.cos(ph);ys[i]=r*st*Math.sin(ph);zs[i]=r*ct;rr[i]=r;sg[i]=(Rnl(n,l,r)*y)>=0?1:-1;}
+  const sorted=Array.from(rr).sort((a,b)=>a-b),r99=sorted[Math.floor(N*0.985)];
+  let rplot=rmax;for(let i=0;i<=G2;i++)if(cdf[i]>0.9985){rplot=i*rmax/G2;break;}
+  const nodes=[];let prev=Rnl(n,l,1e-3);for(let i=1;i<=G2;i++){const r=i*rmax/G2;if(r>rplot)break;const v=Rnl(n,l,r);if(v*prev<0)nodes.push(r);prev=v;}
+  return{xs,ys,zs,sg,N,r99,P,G2,rmax,rplot,nodes};}
+function exUpdate(){
+  EX.l=Math.min(EX.l,EX.n-1);if(Math.abs(EX.m)>EX.l)EX.m=0;
+  chipRow($('exN'),[1,2,3,4,5,6].map(v=>({v,label:'n = '+v})),EX.n,v=>{EX.n=v;exUpdate();});
+  chipRow($('exL'),Array.from({length:EX.n},(_,v)=>({v,label:LET[v]+' (l = '+v+')'})),EX.l,v=>{EX.l=v;exUpdate();});
+  chipRow($('exM'),mOrder(EX.l).map(v=>({v,label:nameOf(EX.l,v)+(EX.l>=4?'':'  <span style="opacity:.7">m = '+v+'</span>')})),EX.m,v=>{EX.m=v;exUpdate();});
+  for(const t of thumbs)t.btn.classList.toggle('on',t.l===EX.l&&t.m===EX.m);
+  EX.pts=sampleOrbital(EX.n,EX.l,EX.m,14000);
+  const n=EX.n,l=EX.l,E=En(n)*EH_EV;
+  const st=[['Orbital',n+nameOf(l,EX.m)],['Energia E<sub>n</sub>',nf(E,3)+' eV'],['Węzły radialne',String(n-l-1)],['Węzły kątowe',String(l)],['⟨r⟩',nf((3*n*n-l*(l+1))/2,1)+' a₀'],['Stanów o tym n',String(n*n)]];
+  $('exStats').innerHTML=st.map(s=>'<div class="stat"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('');
+  drawRadial();}
+function drawRadial(){const p=EX.pts,d=fit(radCv),ctx=radCv.getContext('2d'),W=radCv.width,H=radCv.height;ctx.clearRect(0,0,W,H);
+  const L=40*d,R=10*d,Tp=14*d,B=24*d,xm=p.rplot;let ym=0;for(let i=0;i<=p.G2;i++){if(i*p.rmax/p.G2>xm)break;ym=Math.max(ym,p.P[i]);}ym*=1.12;
+  const X=r=>L+r/xm*(W-L-R),Y=v=>H-B-v/ym*(H-B-Tp);
+  const steps=[1,2,5,10,20,50,100];let st=steps.find(s=>xm/s<=7)||100;
+  ctx.font=FONT(d);ctx.fillStyle=T.muted;ctx.textAlign='center';ctx.strokeStyle=T.line;ctx.lineWidth=d;
+  for(let r=0;r<=xm+1e-9;r+=st){ctx.beginPath();ctx.moveTo(X(r),Tp);ctx.lineTo(X(r),H-B);ctx.stroke();ctx.fillText(nf(r,0),X(r),H-B+14*d);}
+  ctx.textAlign='right';ctx.fillText('r / a₀',W-R,H-B-6*d);ctx.textAlign='left';ctx.fillText('P(r) = r²R²',L+4*d,Tp-2*d);
+  ctx.beginPath();ctx.moveTo(X(0),Y(0));for(let i=0;i<=p.G2;i++){const r=i*p.rmax/p.G2;if(r>xm)break;ctx.lineTo(X(r),Y(p.P[i]));}
+  ctx.lineTo(X(xm),Y(0));ctx.closePath();ctx.globalAlpha=0.16;ctx.fillStyle=T.accent;ctx.fill();ctx.globalAlpha=1;
+  ctx.beginPath();for(let i=0;i<=p.G2;i++){const r=i*p.rmax/p.G2;if(r>xm)break;i?ctx.lineTo(X(r),Y(p.P[i])):ctx.moveTo(X(r),Y(p.P[i]));}
+  ctx.strokeStyle=T.accent;ctx.lineWidth=1.8*d;ctx.stroke();
+  ctx.setLineDash([3*d,3*d]);ctx.strokeStyle=T.muted;ctx.lineWidth=d;for(const r of p.nodes){ctx.beginPath();ctx.moveTo(X(r),Tp);ctx.lineTo(X(r),H-B);ctx.stroke();}ctx.setLineDash([]);
+  const rm=(3*EX.n*EX.n-EX.l*(EX.l+1))/2;if(rm<xm){ctx.strokeStyle=T.plus;ctx.lineWidth=1.6*d;ctx.beginPath();ctx.moveTo(X(rm),Tp+10*d);ctx.lineTo(X(rm),H-B);ctx.stroke();ctx.fillStyle=T.plus;ctx.textAlign='center';ctx.fillText('⟨r⟩',X(rm),Tp+8*d);}
+  ctx.strokeStyle=T.line;ctx.beginPath();ctx.moveTo(L,H-B);ctx.lineTo(W-R,H-B);ctx.stroke();}
+function cloudFrame(dt){if(!EX.drag&&!reduced)EX.yaw+=dt*0.25;if(!visible(cloudCv)||!EX.pts)return;
+  const d=fit(cloudCv),ctx=cloudCv.getContext('2d'),W=cloudCv.width,H=cloudCv.height,p=EX.pts;ctx.clearRect(0,0,W,H);
+  const S=Math.min(W,H)*0.44/p.r99,cyw=Math.cos(EX.yaw),syw=Math.sin(EX.yaw),cp=Math.cos(EX.pitch),sp=Math.sin(EX.pitch),cx=W/2,cy=H/2,Rv=p.r99*3.2;
+  const proj=(x,y,z)=>{const x1=x*cyw-y*syw,y1=x*syw+y*cyw,X=x1,Y=y1*sp+z*cp,Z=-y1*cp+z*sp,f=Rv/(Rv-Z);return[cx+X*S*f,cy-Y*S*f];};
+  ctx.font=FONT(d);ctx.strokeStyle=T.line;ctx.fillStyle=T.muted;ctx.lineWidth=d;const o=proj(0,0,0),A=p.r99*1.05;
+  for(const [v,lab] of [[[A,0,0],'x'],[[0,A,0],'y'],[[0,0,A],'z']]){const e=proj(...v);ctx.beginPath();ctx.moveTo(o[0],o[1]);ctx.lineTo(e[0],e[1]);ctx.stroke();ctx.fillText(lab,e[0]+3*d,e[1]-3*d);}
+  const sz=Math.max(1.2,1.5*d)*(p.N>0?1:1);
+  for(const pass of [1,-1]){ctx.fillStyle=pass>0?T.plus:T.minus;ctx.globalAlpha=0.5;
+    for(let i=0;i<p.N;i++){if(p.sg[i]!==pass)continue;const x=p.xs[i],y=p.ys[i],z=p.zs[i],x1=x*cyw-y*syw,y1=x*syw+y*cyw,Z=-y1*cp+z*sp,f=Rv/(Rv-Z);
+      ctx.fillRect(cx+x1*S*f-sz/2,cy-(y1*sp+z*cp)*S*f-sz/2,sz,sz);}}
+  ctx.globalAlpha=1;ctx.fillStyle=T.fg;ctx.beginPath();ctx.arc(o[0],o[1],2.5*d,0,2*PI);ctx.fill();
+  ctx.fillStyle=T.muted;ctx.textAlign='left';ctx.fillText('skala: ±'+nf(p.r99,0)+' a₀',8*d,H-8*d);}
+
+/* ================= SUPERPOZYCJA ================= */
+const SUP=[[1,0],[2,0],[2,1],[3,0],[3,1],[3,2],[4,0],[4,1],[4,2],[4,3]];
+const supLab=s=>s[0]+LET[s[1]];
+const SP={a:0,b:2,c1:Math.SQRT1_2,c2:Math.SQRT1_2,t:0,paused:false,hist:[],N:150};
+const supCv=$('supCv'),supTr=$('supTrace');io.observe(supCv);
+const off=document.createElement('canvas');off.width=off.height=SP.N;const octx=off.getContext('2d'),img=octx.createImageData(SP.N,SP.N);
+function radInt(a,b){const rm=Math.max(rmaxOf(a[0]),rmaxOf(b[0])),K=6000,h=rm/K;let s=0;for(let i=0;i<=K;i++){const r=i*h,w=(i===0||i===K)?1:(i%2?4:2);s+=w*Rnl(a[0],a[1],r)*Rnl(b[0],b[1],r)*r*r*r;}return s*h/3;}
+function zElem(a,b){if(Math.abs(a[1]-b[1])!==1)return 0;const l=Math.min(a[1],b[1]);return Math.abs(radInt(a,b)*(l+1)/Math.sqrt((2*l+1)*(2*l+3)));}
+function wlRGB(w){let r=0,g=0,b=0;if(w>=380&&w<440){r=-(w-440)/60;b=1}else if(w>=440&&w<490){g=(w-440)/50;b=1}else if(w>=490&&w<510){g=1;b=-(w-510)/20}else if(w>=510&&w<580){r=(w-510)/70;g=1}else if(w>=580&&w<645){r=1;g=-(w-645)/65}else if(w>=645&&w<=750){r=1}return 'rgb('+(r*255|0)+','+(g*255|0)+','+(b*255|0)+')';}
+function supBuild(){
+  const A=SUP[SP.a],B=SUP[SP.b],N=SP.N;
+  chipRow($('supA'),SUP.map((s,i)=>({v:i,label:supLab(s)})),SP.a,v=>{SP.a=v;supBuild();});
+  chipRow($('supB'),SUP.map((s,i)=>({v:i,label:supLab(s)})),SP.b,v=>{SP.b=v;supBuild();});
+  const rA=(3*A[0]**2-A[1]*(A[1]+1))/2,rB=(3*B[0]**2-B[1]*(B[1]+1))/2;SP.ext=Math.ceil(1.6*Math.max(rA,rB)+3);
+  SP.P1=new Float32Array(N*N);SP.P2=new Float32Array(N*N);
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){const x=(j/(N-1)*2-1)*SP.ext,z=(1-i/(N-1)*2)*SP.ext,r=Math.hypot(x,z)+1e-9,ct=z/r,k=i*N+j;
+    SP.P1[k]=Rnl(A[0],A[1],r)*Sr(A[1],0,ct,0);SP.P2[k]=Rnl(B[0],B[1],r)*Sr(B[1],0,ct,0);}
+  SP.rhoMax=0;for(let k=0;k<N*N;k++){const u=SP.c1*SP.P1[k],v=SP.c2*SP.P2[k];SP.rhoMax=Math.max(SP.rhoMax,(u+v)**2,(u-v)**2);}
+  SP.same=SP.a===SP.b;SP.dE=Math.abs(En(B[0])-En(A[0]));SP.d=SP.same?0:zElem(A,B);SP.hist=[];
+  const up=En(A[0])>En(B[0])?A:B,lo=up===A?B:A;
+  const st=[],v=$('supVerdict');let cap='';
+  if(SP.same){v.className='verdict';v.innerHTML='To ten sam stan dwa razy. Elektron jest w stanie stacjonarnym i nic się nie rusza.';}
+  else if(SP.dE<1e-12){v.className='verdict';v.innerHTML=SP.d>0?'Stany zdegenerowane, ΔE = 0. Chmura jest trwale przesunięta o ⟨z⟩ = '+nf(2*SP.c1*SP.c2*SP.d,2)+' a₀ (stała polaryzacja, jak w efekcie Starka), ale nie drga, więc nie świeci.':'Stany zdegenerowane i Δl ≠ ±1. Gęstość jest stała w czasie.';}
+  else if(SP.d>0){const lam=45.563353/(SP.dE*1)/1;const lamnm=lam;const om=SP.dE,A_=4/3*ALPHA**3*om**3*SP.d**2/AU_T;
+    const region=lamnm<380?'ultrafiolet':lamnm<=750?'światło widzialne':'podczerwień';
+    v.className='verdict ok';v.innerHTML='Przejście dozwolone: Δl = ±1, Δm = 0. Środek ładunku drga, atom emituje foton '+supLab(up)+' → '+supLab(lo)+'.'+(lamnm>=380&&lamnm<=750?' <i class="sw" style="background:'+wlRGB(lamnm)+';margin-left:6px"></i>':'');
+    st.push(['λ (próżnia)',nf(lamnm,lamnm<1000?1:0)+' nm'],['Zakres',region],['ΔE',nf(SP.dE*EH_EV,3)+' eV'],['|⟨1|z|2⟩|',nf(SP.d,4)+' a₀'],['A w tym kanale',sci(A_)+' s⁻¹'],['1/A',sci(1/A_)+' s']);}
+  else{v.className='verdict no';v.innerHTML='Przejście dipolowo wzbronione: Δl = '+(B[1]-A[1])+'. Chmura pulsuje, ale środek ładunku stoi w miejscu, więc nie ma promieniowania dipolowego.';
+    st.push(['ΔE',nf(SP.dE*EH_EV,3)+' eV'],['|⟨1|z|2⟩|','0']);}
+  if(SP.dE>1e-12){const wr=SP.dE/AU_T,fac=wr/(2*PI*0.5);st.push(['Spowolnienie animacji',sci(fac)+' ×']);}
+  $('supStats').innerHTML=st.map(s=>'<div class="stat"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('');
+}
+const mixEl=$('supMix');mixEl.oninput=()=>{const f=+mixEl.value/100;SP.c1=Math.sqrt(1-f);SP.c2=Math.sqrt(f);$('supMixO').textContent=mixEl.value+'%';supBuild();};
+$('supPause').onclick=e=>{SP.paused=!SP.paused;e.target.textContent=SP.paused?'Wznów':'Pauza';};
+function supFrame(dt){if(!SP.paused)SP.t+=dt;if(!visible(supCv))return;
+  const d=fit(supCv),ctx=supCv.getContext('2d'),W=supCv.width,H=supCv.height,N=SP.N,data=img.data,fg=T.fgR;ctx.clearRect(0,0,W,H);
+  const osc=SP.dE>1e-12,cph=osc?Math.cos(2*PI*0.5*SP.t):1,cc=SP.c1*SP.c1,ss=SP.c2*SP.c2,x2=SP.same?0:2*SP.c1*SP.c2*cph;
+  for(let k=0;k<N*N;k++){const a=SP.P1[k],b=SP.P2[k];const rho=SP.same?a*a:cc*a*a+ss*b*b+x2*a*b;const v=Math.pow(Math.max(0,rho)/SP.rhoMax,0.42);
+    data[4*k]=fg[0];data[4*k+1]=fg[1];data[4*k+2]=fg[2];data[4*k+3]=Math.min(255,v*235)|0;}
+  octx.putImageData(img,0,0);const Sz=Math.min(W,H)*0.96,ox=(W-Sz)/2,oy=(H-Sz)/2;ctx.imageSmoothingEnabled=true;ctx.drawImage(off,ox,oy,Sz,Sz);
+  const cx=W/2,cy=H/2,sc=Sz/(2*SP.ext);
+  ctx.strokeStyle=T.line;ctx.setLineDash([3*d,4*d]);ctx.lineWidth=d;ctx.beginPath();ctx.moveTo(cx,oy);ctx.lineTo(cx,oy+Sz);ctx.moveTo(ox,cy);ctx.lineTo(ox+Sz,cy);ctx.stroke();ctx.setLineDash([]);
+  ctx.font=FONT(d);ctx.fillStyle=T.muted;ctx.textAlign='left';ctx.fillText('z',cx+5*d,oy+12*d);ctx.fillText('x',ox+Sz-12*d,cy-5*d);ctx.fillText('±'+SP.ext+' a₀',ox+4*d,oy+Sz-6*d);
+  ctx.fillStyle=T.fg;ctx.beginPath();ctx.arc(cx,cy,2.5*d,0,2*PI);ctx.fill();
+  const zc=SP.same?0:2*SP.c1*SP.c2*SP.d*cph;
+  ctx.strokeStyle=T.plus;ctx.lineWidth=2*d;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx,cy-zc*sc);ctx.stroke();
+  ctx.fillStyle=T.plus;ctx.beginPath();ctx.arc(cx,cy-zc*sc,5*d,0,2*PI);ctx.fill();
+  if(!SP.paused){SP.hist.push(zc);if(SP.hist.length>300)SP.hist.shift();}
+  const td=fit(supTr),tc=supTr.getContext('2d'),TW=supTr.width,TH=supTr.height,mid=TH/2+6*td;tc.clearRect(0,0,TW,TH);
+  const amp=Math.max(SP.d,0.5),ys=(TH/2-12*td)/amp;
+  tc.strokeStyle=T.line;tc.lineWidth=td;tc.beginPath();tc.moveTo(0,mid);tc.lineTo(TW,mid);tc.stroke();
+  tc.font=FONT(td);tc.fillStyle=T.muted;tc.textAlign='left';tc.fillText('⟨z⟩(t) w a₀',2*td,11*td);tc.textAlign='right';tc.fillText('±'+nf(amp,2),TW-2*td,11*td);
+  tc.strokeStyle=T.plus;tc.lineWidth=1.6*td;tc.beginPath();SP.hist.forEach((v,i)=>{const X=TW-(SP.hist.length-1-i)*TW/300,Y=mid-v*ys;i?tc.lineTo(X,Y):tc.moveTo(X,Y);});tc.stroke();}
+
+/* ================= pętla i motyw ================= */
+exUpdate();supBuild();
+requestAnimationFrame(()=>renderGallery());
+document.fonts&&document.fonts.ready.then(()=>{renderGallery();drawRadial();});
+const retheme=()=>{readT();renderGallery();drawRadial();};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',retheme);
+new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{renderGallery();drawRadial();},120);});
+let last=performance.now();
+function loop(now){if(document.getElementById("t1").hidden){requestAnimationFrame(loop);return;}const dt=Math.min(0.05,(now-last)/1000);last=now;dropFrame(dt);cloudFrame(dt);supFrame(dt);requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+})();
+</script>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),PI=Math.PI;
+const nf=(v,d)=>v.toLocaleString('pl-PL',{minimumFractionDigits:d,maximumFractionDigits:d});
+const N=201,NN=N*N,C=100,SP=34,dt=0.4,EX=C+6;
+const u=new Float64Array(NN),v=new Float64Array(NN),acc=new Float64Array(NN);
+const c2=new Float64Array(NN),kap=new Float64Array(NN),sig=new Float64Array(NN),fx=new Float64Array(NN),fy=new Float64Array(NN),inR=new Uint8Array(NN);
+const P={kap:0.04,a:10,s:0.85,om:0.15},S={exp:'s',t:0,paused:false,rad:0,hist:[],modes:null,busy:false,Rat:33};
+for(let i=0;i<N;i++)for(let j=0;j<N;j++){const e=Math.min(i,j,N-1-i,N-1-j);sig[i*N+j]=e<SP?0.12*((SP-e)/SP)**2:0;}
+function buildMedium(){S.Rat=Math.min(60,3.3*P.a);
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){const k=i*N+j,r2=(i-C)**2+(j-C)**2,g=Math.exp(-r2/(P.a*P.a));c2[k]=1-P.s*g;kap[k]=P.kap*(1-g);inR[k]=r2<S.Rat*S.Rat?1:0;}
+  for(let k=0;k<NN;k++){fx[k]=(k%N<N-1)?(c2[k]+c2[k+1])/2:0;fy[k]=(k<NN-N)?(c2[k]+c2[k+N])/2:0;}}
+function force(uu,vv,out,t){for(let i=1;i<N-1;i++){const b=i*N;for(let j=1;j<N-1;j++){const k=b+j;
+  out[k]=fx[k]*(uu[k+1]-uu[k])-fx[k-1]*(uu[k]-uu[k-1])+fy[k]*(uu[k+N]-uu[k])-fy[k-N]*(uu[k]-uu[k-N])-kap[k]*uu[k]-sig[k]*vv[k];}}
+  if(S.exp==='drive'&&t!==undefined){const A=0.03*Math.sin(P.om*t)*Math.min(1,t/120);for(let di=-4;di<=4;di++)for(let dj=-4;dj<=4;dj++){const r2=di*di+dj*dj;if(r2>16)continue;out[(C+di)*N+EX+dj]+=A*Math.exp(-r2/4);}}}
+function energy(){let Ea=0,Eo=0;for(let i=1;i<N-1;i++){const b=i*N;for(let j=1;j<N-1;j++){const k=b+j;if(sig[k])continue;
+  const gx=u[k+1]-u[k],gy=u[k+N]-u[k],e=0.5*v[k]*v[k]+0.5*(fx[k]*gx*gx+fy[k]*gy*gy)+0.5*kap[k]*u[k]*u[k];if(inR[k])Ea+=e;else Eo+=e;}}return[Ea,Eo];}
+function step(){for(let k=0;k<NN;k++)v[k]+=0.5*dt*acc[k];for(let k=0;k<NN;k++)u[k]+=dt*v[k];S.t+=dt;force(u,v,acc,S.t);
+  let p=0;for(let k=0;k<NN;k++){v[k]+=0.5*dt*acc[k];if(sig[k])p+=sig[k]*v[k]*v[k];}S.rad+=p*dt;S.pow=p;}
+
+/* mody własne: relaksacja w czasie urojonym, liczona w kawałkach */
+let relaxJob=0;
+function computeModes(){const job=++relaxJob;S.busy=true;setVerdict();
+  const M2=101,h=2,MM=M2*M2,cc=50;
+  const k2=new Float64Array(MM),gx=new Float64Array(MM),gy=new Float64Array(MM);
+  for(let i=0;i<M2;i++)for(let j=0;j<M2;j++){const k=i*M2+j,r2=((i-cc)*h)**2+((j-cc)*h)**2,g=Math.exp(-r2/(P.a*P.a));k2[k]=P.kap*(1-g);gx[k]=1-P.s*g;}
+  const ex=new Float64Array(MM),ey=new Float64Array(MM);for(let k=0;k<MM;k++){ex[k]=(k%M2<M2-1)?(gx[k]+gx[k+1])/2:0;ey[k]=(k<MM-M2)?(gx[k]+gx[k+M2])/2:0;}
+  const op=(w,o,F,X,Y,K,n,hh)=>{const q=1/(hh*hh);for(let i=1;i<n-1;i++)for(let j=1;j<n-1;j++){const k=i*n+j;o[k]=q*(X[k]*(w[k+1]-w[k])-X[k-1]*(w[k]-w[k-1])+Y[k]*(w[k+n]-w[k])-Y[k-n]*(w[k]-w[k-n]))-K[k]*w[k];}};
+  const nrm=(w)=>{let n=0;for(let k=0;k<w.length;k++)n+=w[k]*w[k];n=Math.sqrt(n);for(let k=0;k<w.length;k++)w[k]/=n;};
+  const orth=(w,s)=>{let d=0;for(let k=0;k<w.length;k++)d+=w[k]*s[k];for(let k=0;k<w.length;k++)w[k]-=d*s[k];};
+  const mk=(n,c,hh,odd)=>{const w=new Float64Array(n*n);for(let i=1;i<n-1;i++)for(let j=1;j<n-1;j++)w[i*n+j]=Math.exp(-(((i-c)*hh)**2+((j-c)*hh)**2)/(2*P.a*P.a))*(odd?(j-c)*hh/P.a:1);return w;};
+  let A={s:mk(M2,cc,h,0),p:mk(M2,cc,h,1)},f2=new Float64Array(MM);
+  const ITC=3000,ITF=250;let it=0,stage=0,F={};
+  const f=new Float64Array(NN),z=new Float64Array(NN);
+  function relaxStep(W,n,hh,o,X,Y,K,tau){for(const key of ['s','p']){const w=W[key];op(w,o,null,X,Y,K,n,hh);for(let k=0;k<w.length;k++)w[k]+=tau*o[k];if(key==='p')orth(w,W.s);nrm(w);}}
+  const eig=w=>{force(w,z,f);let s=0;for(let k=0;k<NN;k++)s-=w[k]*f[k];return Math.sqrt(Math.max(0,s));};
+  function chunk(){if(job!==relaxJob)return;const t0=performance.now();
+    while(performance.now()-t0<14){
+      if(stage===0){relaxStep(A,M2,h,f2,ex,ey,k2,0.9);if(++it>=ITC){stage=1;it=0;
+        for(const key of ['s','p']){const w=new Float64Array(NN),a=A[key];for(let i=0;i<N;i++)for(let j=0;j<N;j++){const y=i/h,x=j/h,i0=Math.min(M2-2,Math.floor(y)),j0=Math.min(M2-2,Math.floor(x)),fy=y-i0,fx_=x-j0;
+          if(i===0||j===0||i===N-1||j===N-1)continue;w[i*N+j]=(1-fy)*((1-fx_)*a[i0*M2+j0]+fx_*a[i0*M2+j0+1])+fy*((1-fx_)*a[(i0+1)*M2+j0]+fx_*a[(i0+1)*M2+j0+1]);}nrm(w);F[key]=w;}}}
+      else if(stage===1){relaxStep(F,N,1,f,fx,fy,kap,0.23);if(++it>=ITF){stage=2;break;}}}
+    if(stage<2){const pr=stage===0?it/ITC*0.8:0.8+it/ITF*0.2;$('verdict').textContent='Liczę mody własne… '+Math.round(pr*100)+'%';setTimeout(chunk,0);return;}
+    S.modes={s:F.s,p:F.p,ws:eig(F.s),wp:eig(F.p)};S.busy=false;if(S.pending){const e=S.pending;S.pending=null;startExp(e);}setVerdict();drawDisp();}
+  setTimeout(chunk,0);}
+
+function startExp(e){S.exp=e;document.querySelectorAll('#exps button').forEach(b=>b.classList.toggle('on',b.dataset.e===e));
+  $('omRow').hidden=e!=='drive';
+  S.pending=null;if((e==='s'||e==='p')&&!S.modes){S.pending=e;u.fill(0);v.fill(0);return;}
+  u.fill(0);v.fill(0);S.t=0;S.rad=0;S.hist=[];S.peak=0;
+  if(e==='s'||e==='p'){const m=S.modes[e];let mx=0;for(let k=0;k<NN;k++)mx=Math.max(mx,Math.abs(m[k]));for(let k=0;k<NN;k++)u[k]=m[k]/mx;}
+  if(e==='kick'){for(let i=0;i<N;i++)for(let j=0;j<N;j++)u[i*N+j]=Math.exp(-((i-C)**2+(j-EX)**2)/9);}
+  force(u,v,acc,0);S.E0=energy();setVerdict();drawDisp();}
+
+/* UI */
+const bind=(id,key,fmt,after)=>{const el=$(id),o=$(id+'O');const upd=()=>{P[key]=+el.value;o.textContent=fmt(P[key]);};upd();el.addEventListener('input',()=>{upd();after&&after();});};
+let mediumTimer;const mediumChanged=()=>{buildMedium();force(u,v,acc,S.t);S.modes=null;clearTimeout(mediumTimer);mediumTimer=setTimeout(computeModes,200);setVerdict();drawDisp();};
+bind('kap','kap',v=>nf(v,3),mediumChanged);bind('pa','a',v=>nf(v,1),mediumChanged);bind('ps','s',v=>nf(v,2),mediumChanged);
+bind('om','om',v=>nf(v,3),()=>{setVerdict();drawDisp();});
+document.querySelectorAll('#exps button').forEach(b=>b.onclick=()=>startExp(b.dataset.e));
+$('hooke').onclick=()=>{$('kap').value=0;$('kap').dispatchEvent(new Event('input'));};
+$('pause').onclick=e=>{S.paused=!S.paused;e.target.textContent=S.paused?'Wznów':'Pauza';};
+
+function setVerdict(){const el=$('verdict'),wc=Math.sqrt(P.kap);
+  if(S.busy&&(S.exp==='s'||S.exp==='p')&&!S.modes){el.className='verdict';el.textContent='Liczę mody własne…';return;}
+  let txt='',cls='verdict';
+  if(S.exp==='drive'){if(P.om<wc){cls+=' ok';txt='Ω = '+nf(P.om,3)+' leży w przerwie (ω_c = '+nf(wc,3)+'). Drgania elektronu odkształcają ośrodek tylko lokalnie. Fala nie może się rozchodzić, więc energia nie ucieka.';}
+    else{cls+=' no';txt='Ω = '+nf(P.om,3)+' jest powyżej ω_c = '+nf(wc,3)+'. Ośrodek przenosi fale o tej częstotliwości i elektron promieniuje bez przerwy.';}}
+  else if(S.exp==='kick'){txt='Krótkie uderzenie zawiera wiele częstotliwości. Część powyżej ω_c ucieka jako pierścień fali. Część pasująca do modów związanych zostaje w atomie, o ile one istnieją.';}
+  else if(S.modes){const w=S.exp==='s'?S.modes.ws:S.modes.wp;
+    if(P.kap===0){cls+=' no';txt='Bez podłoża (κ = 0) nie ma przerwy w widmie, więc nie ma prawdziwych stanów związanych. Kształt z rdzenia protonu przecieka na zewnątrz.';}
+    else if(w<wc){cls+=' ok';txt='Mod '+S.exp+' drga z ω = '+nf(w,4)+' < ω_c = '+nf(wc,4)+'. Jest stanem związanym: przy tych parametrach nie promieniuje. Zasięg ogona ℓ = '+nf(1/Math.sqrt(P.kap-w*w),1)+' oczek.'+(1/Math.sqrt(P.kap-w*w)>20?' Ogon jest długi i jego koniec sięga pochłaniacza na brzegu siatki, więc kilka procent energii znika na starcie. To ograniczenie rozmiaru symulacji, nie promieniowanie.':'');}
+    else{cls+=' no';txt='Przy tych parametrach mod '+S.exp+' ma ω = '+nf(w,4)+' ≥ ω_c = '+nf(wc,4)+'. Nie jest związany i powoli wycieka. Powiększ proton albo zwiększ spowolnienie w rdzeniu.';}}
+  el.className=cls;el.textContent=txt;}
+
+/* rysowanie */
+const T={};const hex=h=>{h=h.trim().replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];};
+function readT(){const s=getComputedStyle(document.documentElement);for(const k of['fg','muted','line','accent','plus','minus','bg','gap','surface'])T[k]=s.getPropertyValue('--'+k).trim();T.bgR=hex(T.bg);T.plusR=hex(T.plus);T.minusR=hex(T.minus);T.fgR=hex(T.fg);}
+readT();
+const fit=c=>{const d=window.devicePixelRatio||1,w=Math.round(c.clientWidth*d),h=Math.round(c.clientHeight*d);if(c.width!==w||c.height!==h){c.width=w;c.height=h;}return d;};
+const FONT=d=>`${11*d}px "Source Sans 3", system-ui, sans-serif`;
+const off=document.createElement('canvas');off.width=off.height=N;const octx=off.getContext('2d'),img=octx.createImageData(N,N);
+let umax=1;
+function drawField(){const cv=$('field'),d=fit(cv),ctx=cv.getContext('2d'),W=cv.width,H=cv.height,data=img.data;
+  let m=0;for(let k=0;k<NN;k++){const a=Math.abs(u[k]);if(a>m)m=a;}umax=Math.max(m,umax*0.985,1e-6);
+  const B=T.bgR,Pp=T.plusR,Mm=T.minusR;
+  for(let k=0;k<NN;k++){const x=u[k]/umax,e=Math.min(1,Math.pow(Math.abs(x),0.5)),Cc=x>=0?Pp:Mm,dim=sig[k]?0.55:1;
+    data[4*k]=(B[0]+(Cc[0]-B[0])*e*dim)|0;data[4*k+1]=(B[1]+(Cc[1]-B[1])*e*dim)|0;data[4*k+2]=(B[2]+(Cc[2]-B[2])*e*dim)|0;data[4*k+3]=255;}
+  octx.putImageData(img,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(off,0,0,W,H);
+  const sc=W/N;ctx.fillStyle=T.fg;ctx.globalAlpha=0.06;ctx.fillRect(0,0,W,SP*sc);ctx.fillRect(0,H-SP*sc,W,SP*sc);ctx.fillRect(0,SP*sc,SP*sc,H-2*SP*sc);ctx.fillRect(W-SP*sc,SP*sc,SP*sc,H-2*SP*sc);ctx.globalAlpha=1;
+  ctx.strokeStyle=T.fg;ctx.globalAlpha=0.5;ctx.setLineDash([4*d,4*d]);ctx.lineWidth=d;ctx.beginPath();ctx.arc((C+0.5)*sc,(C+0.5)*sc,S.Rat*sc,0,2*PI);ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.arc((C+0.5)*sc,(C+0.5)*sc,P.a*sc,0,2*PI);ctx.stroke();ctx.globalAlpha=1;
+  ctx.fillStyle=T.fg;ctx.beginPath();ctx.arc((C+0.5)*sc,(C+0.5)*sc,3*d,0,2*PI);ctx.fill();
+  if(S.exp==='drive'||S.exp==='kick'){ctx.strokeStyle=T.fg;ctx.lineWidth=1.5*d;ctx.beginPath();ctx.arc((EX+0.5)*sc,(C+0.5)*sc,4*d,0,2*PI);ctx.stroke();}
+  ctx.font=FONT(d);ctx.fillStyle=T.fg;ctx.fillText('t = '+nf(S.t,0),8*d,(SP*sc)+16*d);}
+function drawEnergy(){const cv=$('energy'),d=fit(cv),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  const L=34*d,R=8*d,Tp=10*d,Bt=20*d,h=S.hist,n=h.length;let mx=1e-12;for(const p of h)mx=Math.max(mx,p[0],p[1]);mx*=1.1;
+  const tmax=Math.max(400,S.t),X=t=>L+t/tmax*(W-L-R),Y=val=>H-Bt-val/mx*(H-Bt-Tp);
+  ctx.strokeStyle=T.line;ctx.lineWidth=d;ctx.beginPath();ctx.moveTo(L,Tp);ctx.lineTo(L,H-Bt);ctx.lineTo(W-R,H-Bt);ctx.stroke();
+  ctx.font=FONT(d);ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.fillText('0',L-4*d,H-Bt+4*d);ctx.fillText(nf(mx,mx<1?3:2),L-4*d,Tp+8*d);
+  ctx.textAlign='center';ctx.fillText('czas t',(L+W-R)/2,H-4*d);ctx.textAlign='left';ctx.fillText(nf(tmax,0),W-R-30*d,H-4*d);
+  for(const [idx,col] of [[0,T.accent],[1,T.plus]]){ctx.strokeStyle=col;ctx.lineWidth=1.8*d;ctx.beginPath();h.forEach((p,i)=>{const x=X(p[2]),y=Y(p[idx]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}}
+function drawDisp(){const cv=$('disp'),d=fit(cv),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  const L=34*d,R=8*d,Tp=10*d,Bt=22*d,km=0.5,wm=0.5,X=k=>L+k/km*(W-L-R),Y=w=>H-Bt-w/wm*(H-Bt-Tp),wc=Math.sqrt(P.kap);
+  ctx.fillStyle=T.gap;ctx.fillRect(L,Y(wc),W-L-R,Y(0)-Y(wc));
+  ctx.strokeStyle=T.line;ctx.lineWidth=d;ctx.beginPath();ctx.moveTo(L,Tp);ctx.lineTo(L,H-Bt);ctx.lineTo(W-R,H-Bt);ctx.stroke();
+  ctx.strokeStyle=T.fg;ctx.lineWidth=1.8*d;ctx.beginPath();for(let i=0;i<=200;i++){const k=km*i/200,w=Math.sqrt(P.kap+k*k);if(w>wm)break;i?ctx.lineTo(X(k),Y(w)):ctx.moveTo(X(k),Y(w));}ctx.stroke();
+  ctx.font=FONT(d);ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.fillText('ω',L-6*d,Tp+8*d);ctx.fillText('ω_c',L-4*d,Y(wc)+4*d);ctx.textAlign='center';ctx.fillText('liczba falowa k',(L+W-R)/2,H-4*d);
+  if(wc>0.02){ctx.textAlign='left';ctx.fillStyle=T.muted;ctx.fillText('fale nie rozchodzą się',X(0.3),Y(wc/2)+4*d);}
+  if(S.modes){for(const [key,w] of [['s',S.modes.ws],['p',S.modes.wp]]){ctx.strokeStyle=w<wc?T.minus:T.muted;ctx.lineWidth=2*d;ctx.setLineDash(w<wc?[]:[3*d,3*d]);
+    ctx.beginPath();ctx.moveTo(L,Y(w));ctx.lineTo(L+70*d,Y(w));ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=ctx.strokeStyle;ctx.textAlign='left';ctx.fillText(key,L+74*d,Y(w)+4*d);}}
+  if(S.exp==='drive'){ctx.strokeStyle=T.plus;ctx.lineWidth=1.5*d;ctx.setLineDash([5*d,3*d]);ctx.beginPath();ctx.moveTo(L,Y(P.om));ctx.lineTo(W-R,Y(P.om));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=T.plus;ctx.textAlign='right';ctx.fillText('Ω',W-R-2*d,Y(P.om)-4*d);}}
+function drawStats(){const [Ea,Eo]=energy(),tot=Ea+Eo+S.rad;const pr=tot>0?S.rad/tot*100:0;
+  if(!S.paused&&S.t-(S.lastH||-99)>=4){S.hist.push([Ea,S.rad,S.t]);S.lastH=S.t;if(S.hist.length>700)S.hist=S.hist.filter((_,i)=>i%2===0);}
+  $('stats').innerHTML=[['Energia w atomie',nf(Ea,4)],['W drodze na zewnątrz',nf(Eo,4)],['Uciekło łącznie',nf(pr,1)+'%']].map(s=>'<div class="stat"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('');}
+
+const retheme=()=>{readT();drawDisp();};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',retheme);
+new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+window.addEventListener('resize',drawDisp);
+
+buildMedium();computeModes();startExp('s');
+let frame=0;
+function loop(){if(document.getElementById("t2").hidden){requestAnimationFrame(loop);return;}if(!S.paused&&!(S.pending)){for(let i=0;i<6;i++)step();}
+  drawField();if(frame++%3===0){drawStats();drawEnergy();}requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+})();
+</script>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),PI=Math.PI;
+const nf=(v,d)=>v.toLocaleString('pl-PL',{minimumFractionDigits:d,maximumFractionDigits:d});
+const N=900,C=450,A=24,SP=170,dt=0.5,RAT=A+36;
+const P={kap:0.04,ca:0.35,om:0.15},S={exp:'mode',t:0,paused:false,hist:[]};
+const NAMES=['Lina 1: jednorodna','Lina 2: cięższy odcinek','Lina 3: sprężyny na zewnątrz'];
+const sig=new Float64Array(N);for(let i=0;i<N;i++){const e=Math.min(i,N-1-i);sig[i]=e<SP?0.08*((SP-e)/SP)**2:0;}
+const g=x=>0.5*(1-Math.tanh((Math.abs(x)-A)/0.8));
+function Rope(kind){const r={kind,u:new Float64Array(N),v:new Float64Array(N),acc:new Float64Array(N),f:new Float64Array(N),k:new Float64Array(N),rad:0,E0:0};return r;}
+const ropes=[Rope(0),Rope(1),Rope(2)];
+function buildMedium(){for(const r of ropes){for(let i=0;i<N;i++){const x=i-C,gi=g(x),c2=r.kind===0?1:1-(1-P.ca*P.ca)*gi;r.k[i]=r.kind===2?P.kap*(1-gi):0;r._c2=r._c2||new Float64Array(N);r._c2[i]=c2;}
+  for(let i=0;i<N-1;i++)r.f[i]=(r._c2[i]+r._c2[i+1])/2;r.f[N-1]=0;}}
+function force(r,uu,out,t){for(let i=1;i<N-1;i++)out[i]=r.f[i]*(uu[i+1]-uu[i])-r.f[i-1]*(uu[i]-uu[i-1])-r.k[i]*uu[i]-sig[i]*r.v[i];
+  if(S.exp==='drive'&&t!==undefined){const F=0.02*Math.sin(P.om*t)*Math.min(1,t/150);for(let d=-3;d<=3;d++)out[C+d]+=F*Math.exp(-d*d/2);}}
+function energy(r){let Ea=0,Eo=0;for(let i=1;i<N-1;i++){if(sig[i])continue;const gx=r.u[i+1]-r.u[i],e=0.5*r.v[i]**2+0.5*r.f[i]*gx*gx+0.5*r.k[i]*r.u[i]**2;if(Math.abs(i-C)<RAT)Ea+=e;else Eo+=e;}return[Ea,Eo];}
+function step(r){const a=r.acc;for(let i=0;i<N;i++)r.v[i]+=0.5*dt*a[i];for(let i=0;i<N;i++)r.u[i]+=dt*r.v[i];force(r,r.u,a,S.t+dt);let p=0;for(let i=0;i<N;i++){r.v[i]+=0.5*dt*a[i];if(sig[i])p+=sig[i]*r.v[i]**2;}r.rad+=p*dt;}
+
+/* mod związany liny 3: relaksacja w czasie urojonym */
+let modeU=null,modeW=0;
+function computeMode(){const r=ropes[2],w=new Float64Array(N),o=new Float64Array(N);
+  for(let i=1;i<N-1;i++)w[i]=Math.cos(PI*(i-C)/(4*A))**2*(Math.abs(i-C)<2*A?1:0);
+  const nrm=()=>{let n=0;for(let i=0;i<N;i++)n+=w[i]*w[i];n=Math.sqrt(n);for(let i=0;i<N;i++)w[i]/=n;};nrm();
+  for(let it=0;it<30000;it++){for(let i=1;i<N-1;i++)o[i]=r.f[i]*(w[i+1]-w[i])-r.f[i-1]*(w[i]-w[i-1])-r.k[i]*w[i];for(let i=1;i<N-1;i++)w[i]+=0.45*o[i];if(it%50===0)nrm();}
+  nrm();for(let i=1;i<N-1;i++)o[i]=r.f[i]*(w[i+1]-w[i])-r.f[i-1]*(w[i]-w[i-1])-r.k[i]*w[i];let s=0;for(let i=0;i<N;i++)s-=w[i]*o[i];
+  modeW=Math.sqrt(Math.max(0,s));let mx=0;for(let i=0;i<N;i++)mx=Math.max(mx,Math.abs(w[i]));for(let i=0;i<N;i++)w[i]/=mx;modeU=w;}
+
+function start(e){S.exp=e;S.t=0;S.hist=[];document.querySelectorAll('#l_exps button').forEach(b=>b.classList.toggle('on',b.dataset.e===e));$('l_omRow').hidden=e!=='drive';
+  for(const r of ropes){r.u.fill(0);r.v.fill(0);r.rad=0;
+    if(e==='mode')r.u.set(modeU);
+    if(e==='pulse')for(let i=0;i<N;i++)r.u[i]=Math.exp(-(((i-C)/6)**2));
+    force(r,r.u,r.acc,0);r.E0=energy(r)[0];}
+  drawRefl();}
+
+/* odbicie przy ostrej granicy */
+function R2(kind,w){if(kind===0)return 0;const Za=P.ca;
+  if(kind===1){const R=(Za-1)/(Za+1);return R*R;}
+  const q=1-P.kap/(w*w);if(q<=0)return 1;const Zo=Math.sqrt(q);const R=(Za-Zo)/(Za+Zo);return R*R;}
+
+/* rysowanie */
+const T={};function readT(){const s=getComputedStyle(document.documentElement);for(const k of['fg','muted','line','accent','plus','minus','core','r1','r2','r3','surface'])T[k]=s.getPropertyValue('--'+k).trim();}
+readT();const COL=()=>[T.r1,T.r2,T.r3];
+const fit=c=>{const d=window.devicePixelRatio||1,w=Math.round(c.clientWidth*d),h=Math.round(c.clientHeight*d);if(c.width!==w||c.height!==h){c.width=w;c.height=h;}return d;};
+const FONT=(d,s=11)=>`${s*d}px "Source Sans 3", system-ui, sans-serif`;
+let umax=1;
+function drawRopes(){const cv=$('ropes'),d=fit(cv),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  const X=i=>i/(N-1)*W,band=H/3;let m=0;for(const r of ropes)for(let i=0;i<N;i++)m=Math.max(m,Math.abs(r.u[i]));umax=Math.max(m,umax*0.995,1e-6);
+  ctx.fillStyle=T.core;ctx.fillRect(X(C-A),0,X(C+A)-X(C-A),H);
+  ctx.fillStyle=T.fg;ctx.globalAlpha=0.05;ctx.fillRect(0,0,X(SP),H);ctx.fillRect(X(N-SP),0,W-X(N-SP),H);ctx.globalAlpha=1;
+  ctx.strokeStyle=T.muted;ctx.setLineDash([3*d,4*d]);ctx.lineWidth=d;for(const x of [C-RAT,C+RAT]){ctx.beginPath();ctx.moveTo(X(x),0);ctx.lineTo(X(x),H);ctx.stroke();}ctx.setLineDash([]);
+  ropes.forEach((r,ri)=>{const y0=band*ri+band*0.55,amp=band*0.36;
+    ctx.strokeStyle=T.line;ctx.lineWidth=d;ctx.beginPath();ctx.moveTo(0,y0);ctx.lineTo(W,y0);ctx.stroke();
+    if(r.kind===2){ctx.strokeStyle=T.muted;ctx.globalAlpha=0.55;ctx.lineWidth=d;for(let i=SP;i<N-SP;i+=10){if(Math.abs(i-C)<A+2)continue;const x=X(i),y=y0-r.u[i]/umax*amp,yb=y0+amp*0.78;
+      ctx.beginPath();const n=6;ctx.moveTo(x,y);for(let s=1;s<=n;s++){ctx.lineTo(x+(s%2?3:-3)*d,y+(yb-y)*s/(n+1));}ctx.lineTo(x,yb);ctx.stroke();}
+      ctx.globalAlpha=1;ctx.fillStyle=T.muted;ctx.fillRect(X(SP),y0+amp*0.78,X(C-A)-X(SP),1.5*d);ctx.fillRect(X(C+A),y0+amp*0.78,X(N-SP)-X(C+A),1.5*d);}
+    ctx.strokeStyle=COL()[ri];ctx.lineWidth=(r.kind>0?1:0)*0+2*d;ctx.beginPath();
+    for(let i=0;i<N;i++){const x=X(i),y=y0-r.u[i]/umax*amp;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
+    if(r.kind>0){ctx.lineWidth=5*d;ctx.globalAlpha=0.35;ctx.beginPath();for(let i=C-A;i<=C+A;i++){const x=X(i),y=y0-r.u[i]/umax*amp;i>C-A?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();ctx.globalAlpha=1;}
+    ctx.font=FONT(d,12);ctx.fillStyle=T.fg;ctx.textAlign='left';ctx.fillText(NAMES[ri],8*d,band*ri+16*d);});
+  ctx.font=FONT(d);ctx.fillStyle=T.muted;ctx.textAlign='center';ctx.fillText('atom',X(C),H-6*d);ctx.textAlign='left';ctx.fillText('pochłaniacz',6*d,H-6*d);ctx.textAlign='right';ctx.fillText('pochłaniacz',W-6*d,H-6*d);
+  ctx.textAlign='right';ctx.fillText('t = '+nf(S.t,0),W-8*d,16*d);}
+function drawEnergy(){const cv=$('l_energy'),d=fit(cv),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  const L=34*d,R=8*d,Tp=12*d,B=20*d,tmax=Math.max(600,S.t),X=t=>L+t/tmax*(W-L-R),Y=v=>H-B-v*(H-B-Tp);
+  ctx.strokeStyle=T.line;ctx.lineWidth=d;ctx.beginPath();ctx.moveTo(L,Tp);ctx.lineTo(L,H-B);ctx.lineTo(W-R,H-B);ctx.stroke();
+  ctx.font=FONT(d);ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.fillText('100%',L-4*d,Tp+4*d);ctx.fillText('0',L-4*d,H-B+4*d);ctx.textAlign='center';ctx.fillText('czas',(L+W)/2,H-4*d);
+  ctx.textAlign='left';ctx.fillText(S.exp==='drive'?'energia w atomie / energia dostarczona':'energia w atomie / energia początkowa',L+4*d,Tp-2*d);
+  for(let ri=0;ri<3;ri++){ctx.strokeStyle=COL()[ri];ctx.lineWidth=1.8*d;ctx.beginPath();S.hist.forEach((h,i)=>{const x=X(h[0]),y=Y(Math.min(1.05,h[ri+1]));i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}}
+function drawRefl(){const cv=$('refl'),d=fit(cv),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  const L=34*d,R=8*d,Tp=12*d,B=22*d,wm=0.5,X=w=>L+w/wm*(W-L-R),Y=v=>H-B-v*(H-B-Tp),wc=Math.sqrt(P.kap);
+  ctx.fillStyle=T.core;ctx.fillRect(X(0),Tp,X(wc)-X(0),H-B-Tp);
+  ctx.strokeStyle=T.line;ctx.lineWidth=d;ctx.beginPath();ctx.moveTo(L,Tp);ctx.lineTo(L,H-B);ctx.lineTo(W-R,H-B);ctx.stroke();
+  ctx.font=FONT(d);ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.fillText('1',L-4*d,Tp+4*d);ctx.fillText('0',L-4*d,H-B+4*d);ctx.textAlign='center';ctx.fillText('częstotliwość ω',(L+W)/2,H-4*d);
+  ctx.textAlign='left';ctx.fillText('|R|²',L+4*d,Tp-2*d);ctx.fillText('przerwa liny 3',X(0)+4*d,H-B-6*d);
+  for(let ri=0;ri<3;ri++){ctx.strokeStyle=COL()[ri];ctx.lineWidth=2*d;ctx.beginPath();for(let i=1;i<=300;i++){const w=wm*i/300,y=Y(R2(ri,w));i>1?ctx.lineTo(X(w),y):ctx.moveTo(X(w),y);}ctx.stroke();}
+  const wmark=S.exp==='drive'?P.om:S.exp==='mode'?modeW:null;
+  if(wmark){ctx.strokeStyle=T.plus;ctx.setLineDash([4*d,3*d]);ctx.lineWidth=1.5*d;ctx.beginPath();ctx.moveTo(X(wmark),Tp);ctx.lineTo(X(wmark),H-B);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=T.plus;ctx.textAlign='left';ctx.fillText(S.exp==='drive'?'Ω':'ω modu',X(wmark)+4*d,Tp+10*d);}}
+function stats(){const row=[S.t];const w=S.exp==='drive'?P.om:S.exp==='mode'?modeW:null;let html='';
+  ropes.forEach((r,ri)=>{const [Ea,Eo]=energy(r),tot=Ea+Eo+r.rad,base=S.exp==='drive'?tot:r.E0||1;row.push(base>0?Ea/base:0);
+    html+='<tr><td><i class="sw" style="background:var(--r'+(ri+1)+')"></i>'+NAMES[ri].split(': ')[1]+'</td><td class="num">'+(w?nf(R2(ri,w),2):'zależy od ω')+'</td><td class="num">'+nf(base>0?Ea/base*100:0,1)+'%</td><td class="num">'+nf(tot>0?r.rad/tot*100:0,1)+'%</td></tr>';});
+  $('tbl').innerHTML=html;if(!S.paused&&(!S.hist.length||S.t-S.hist[S.hist.length-1][0]>=3)){S.hist.push(row);if(S.hist.length>800)S.hist=S.hist.filter((_,i)=>i%2===0);}}
+
+/* UI */
+const bind=(id,key,fmt,after)=>{const el=$(id),o=$(id+'O');const upd=()=>{P[key]=+el.value;o.textContent=fmt(P[key]);};upd();el.addEventListener('input',()=>{upd();after&&after();});};
+let tmr;const medium=()=>{buildMedium();clearTimeout(tmr);tmr=setTimeout(()=>{computeMode();start(S.exp);},150);drawRefl();};
+bind('l_kap','kap',v=>nf(v,3),medium);bind('core','ca',v=>nf(v,2),medium);bind('l_om','om',v=>nf(v,3),drawRefl);
+document.querySelectorAll('#l_exps button').forEach(b=>b.onclick=()=>start(b.dataset.e));
+$('l_pause').onclick=e=>{S.paused=!S.paused;e.target.textContent=S.paused?'Wznów':'Pauza';};
+$('restart').onclick=()=>start(S.exp);
+const retheme=()=>{readT();drawRefl();};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',retheme);
+new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+window.addEventListener('resize',drawRefl);
+
+buildMedium();computeMode();start('mode');
+let fr=0;function loop(){if(document.getElementById("t3").hidden){requestAnimationFrame(loop);return;}if(!S.paused){for(let s=0;s<8;s++){for(const r of ropes)step(r);S.t+=dt;}}drawRopes();if(fr++%3===0){stats();drawEnergy();}requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+})();
+</script>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),PI=Math.PI;
+const nf=(v,d)=>v.toLocaleString('pl-PL',{minimumFractionDigits:d,maximumFractionDigits:d});
+const N=1400,C=700,SP=250,dt=0.5,K=0.01,M=Math.sqrt(K),WIN=80;
+const B={w:0.7,A:1,t:0,paused:false,hist:[]};
+const sig=new Float64Array(N);for(let i=0;i<N;i++){const e=Math.min(i,N-1-i);sig[i]=e<SP?0.08*((SP-e)/SP)**2:0;}
+const R=[{nl:0,name:'Liniowa (κu)'},{nl:1,name:'Wahadła (κ sin u)'}].map(r=>Object.assign(r,{u:new Float64Array(N),v:new Float64Array(N),a:new Float64Array(N),rad:0,E0:1}));
+const force=r=>{const u=r.u,a=r.a,v=r.v;for(let i=1;i<N-1;i++)a[i]=u[i+1]-2*u[i]+u[i-1]-K*(r.nl?Math.sin(u[i]):u[i])-sig[i]*v[i];};
+const energy=r=>{let Ea=0,Eo=0;for(let i=1;i<N-1;i++){if(sig[i])continue;const e=0.5*r.v[i]**2+0.5*(r.u[i+1]-r.u[i])**2+K*(r.nl?1-Math.cos(r.u[i]):r.u[i]**2/2);if(Math.abs(i-C)<WIN)Ea+=e;else Eo+=e;}return[Ea,Eo];};
+function step(r){for(let i=0;i<N;i++)r.v[i]+=0.5*dt*r.a[i];for(let i=0;i<N;i++)r.u[i]+=dt*r.v[i];force(r);let p=0;for(let i=0;i<N;i++){r.v[i]+=0.5*dt*r.a[i];if(sig[i])p+=sig[i]*r.v[i]**2;}r.rad+=p*dt;}
+let scale=1;
+function start(){const eta=Math.sqrt(1-B.w*B.w);B.t=0;B.hist=[];scale=Math.max(1,4*Math.atan(eta/B.w))*1.05;
+  for(const r of R){r.u.fill(0);r.rad=0;for(let i=0;i<N;i++)r.v[i]=B.A*4*eta*M/Math.cosh(eta*M*(i-C));force(r);r.E0=energy(r)[0];}
+  const Est=16*eta*M*B.A*B.A,kinkThr=Est>16*M;
+  $('bnote').textContent=Math.abs(B.A-1)<0.005?'Dokładny breather: ω_B = '+nf(B.w*M,3)+' leży w przerwie poniżej ω_c = '+nf(M,3)+'. Teoretyczna energia E_B = 16ηm = '+nf(16*Math.sqrt(1-B.w*B.w)*M,3)+'.'
+    :kinkThr?'Energia startu 16ηmA² = '+nf(Est,3)+' przekracza energię spoczynkową pary kink–antykink 16m = '+nf(16*M,3)+'. Wahadła przekręcają się przez górę i lina rozpada się na dwa kinki, które odlatują.'
+    :'Start nie jest dokładnym breatherem. Nadmiar albo niedobór kształtu odpływa jako fala, a w środku zostaje breather o innej częstotliwości.';}
+const bind=(id,key,fmt)=>{const el=$(id),o=$(id+'O');const upd=()=>{B[key]=+el.value;o.textContent=fmt(B[key]);};upd();el.addEventListener('input',()=>{upd();start();});};
+bind('bw','w',v=>nf(v,2));bind('bA','A',v=>'×'+nf(v,2));
+$('bExact').onclick=()=>{$('bA').value=1;$('bA').dispatchEvent(new Event('input'));};
+$('bPause').onclick=e=>{B.paused=!B.paused;e.target.textContent=B.paused?'Wznów':'Pauza';};
+$('bRestart').onclick=start;
+const T={};const readT=()=>{const s=getComputedStyle(document.documentElement);for(const k of['fg','muted','line','r1','r3','core'])T[k]=s.getPropertyValue('--'+k).trim();};readT();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readT);
+new MutationObserver(readT).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+const fit=c=>{const d=window.devicePixelRatio||1,w=Math.round(c.clientWidth*d),h=Math.round(c.clientHeight*d);if(c.width!==w||c.height!==h){c.width=w;c.height=h;}return d;};
+const FONT=(d,s=11)=>`${s*d}px "Source Sans 3", system-ui, sans-serif`;
+const COLS=()=>[T.r1,T.r3];
+function draw(){const cv=$('hropes'),d=fit(cv),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  const X=i=>i/(N-1)*W,band=H/2;
+  ctx.fillStyle=T.fg;ctx.globalAlpha=0.05;ctx.fillRect(0,0,X(SP),H);ctx.fillRect(X(N-SP),0,W-X(N-SP),H);ctx.globalAlpha=1;
+  ctx.strokeStyle=T.muted;ctx.setLineDash([3*d,4*d]);ctx.lineWidth=d;for(const x of [C-WIN,C+WIN]){ctx.beginPath();ctx.moveTo(X(x),0);ctx.lineTo(X(x),H);ctx.stroke();}ctx.setLineDash([]);
+  R.forEach((r,ri)=>{const y0=band*ri+band*0.55,amp=band*0.38;ctx.strokeStyle=T.line;ctx.lineWidth=d;ctx.beginPath();ctx.moveTo(0,y0);ctx.lineTo(W,y0);ctx.stroke();
+    ctx.strokeStyle=COLS()[ri];ctx.lineWidth=2*d;ctx.beginPath();for(let i=0;i<N;i++){const x=X(i),y=y0-Math.max(-1.2,Math.min(1.2,r.u[i]/scale))*amp;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
+    ctx.font=FONT(d,12);ctx.fillStyle=T.fg;ctx.textAlign='left';ctx.fillText(r.name,8*d,band*ri+16*d);});
+  ctx.font=FONT(d);ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.fillText('t = '+nf(B.t,0),W-8*d,16*d);}
+function stats(){const row=[B.t];let html='';R.forEach((r,ri)=>{const [Ea,Eo]=energy(r),tot=Ea+Eo+r.rad;row.push(Ea/r.E0);
+  html+='<tr><td><i class="sw" style="background:var(--r'+(ri?3:1)+')"></i>'+r.name+'</td><td class="num">'+nf(Ea/r.E0*100,1)+'%</td><td class="num">'+nf(tot>0?r.rad/tot*100:0,1)+'%</td></tr>';});
+  $('btbl').innerHTML=html;if(!B.paused&&(!B.hist.length||B.t-B.hist[B.hist.length-1][0]>=4)){B.hist.push(row);if(B.hist.length>800)B.hist=B.hist.filter((_,i)=>i%2===0);}
+  const cv=$('benergy'),d=fit(cv),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  const L=34*d,Rr=8*d,Tp=12*d,Bt=20*d,tmax=Math.max(1000,B.t),X=t=>L+t/tmax*(W-L-Rr),Y=v=>H-Bt-v*(H-Bt-Tp);
+  ctx.strokeStyle=T.line;ctx.lineWidth=d;ctx.beginPath();ctx.moveTo(L,Tp);ctx.lineTo(L,H-Bt);ctx.lineTo(W-Rr,H-Bt);ctx.stroke();
+  ctx.font=FONT(d);ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.fillText('100%',L-4*d,Tp+4*d);ctx.fillText('0',L-4*d,H-Bt+4*d);ctx.textAlign='center';ctx.fillText('czas',(L+W)/2,H-4*d);
+  for(let ri=0;ri<2;ri++){ctx.strokeStyle=COLS()[ri];ctx.lineWidth=1.8*d;ctx.beginPath();B.hist.forEach((h,i)=>{const x=X(h[0]),y=Y(Math.min(1.05,h[ri+1]));i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}}
+start();let fr=0;
+function loop(){if(document.getElementById("t3").hidden){requestAnimationFrame(loop);return;}if(!B.paused){for(let s=0;s<10;s++){for(const r of R)step(r);B.t+=dt;}}draw();if(fr++%3===0)stats();requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+})();
+</script>
+<script>
+window.MathJax={tex:{inlineMath:[],displayMath:[['$$','$$']]},svg:{fontCache:'global'},options:{enableMenu:false}};
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
