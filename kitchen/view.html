@@ -809,8 +809,9 @@ function builtInAppliance(run, item, type) {
   }
   envelope(P, bu0, bu1, b0, b0 + bh, carcassFront - bd, carcassFront, A.name + ' – korpus ' + bw + ' × ' + bh + ' × ' + bd + (feet > 0 ? ' na nóżkach ' + Math.round(feet * 10) / 10 : ''));
   envelope(P, u0, u1, v0, v1, carcassFront, face, A.name + ' – front ' + A.front[0] + ' × ' + A.front[1]);
-  // the door: oven below its control panel, microwave beside its control column
-  const door = type === 'oven' ? { u0, u1, v0, v1: v1 - 98 } : { u0, u1: u1 - 153, v0, v1 };
+  // the door: oven below its control panel, full width; microwave over the body opening, left of its control column, set into the
+  // fascia with a shadow gap (the fascia is wider and higher than the body: it fills the niche)
+  const door = type === 'oven' ? { u0, u1, v0, v1: v1 - 98 } : { u0: bu0 + 2, u1: u1 - 153, v0: b0 + 4, v1: b0 + bh - 4 };
   const hinge = A.door.hinge, bottomHinged = hinge === 'bottom';
   const mover = movingPart(run, type, bottomHinged ? 0 : hinge === 'left' ? door.u0 : door.u1, bottomHinged ? door.v0 : 0, face);
   mover.sign = hinge === 'left' ? 1 : -1;
@@ -822,7 +823,12 @@ function builtInAppliance(run, item, type) {
   localBox(P, bu0 + 4, bu1 - 4, b0 + 4, b0 + bh - 4, carcassFront - bd + 4, carcassFront - bd + 6, MAT.ovenInside, true); // cavity back
   const fascia = (a0, a1, y0, y1) => localBox(P, a0, a1, y0, y1, carcassFront, face - 6, MAT.blackMetal);
   if (type === 'oven') fascia(u0, u1, door.v1, v1);
-  else fascia(door.u1, u1, v0, v1);
+  else { // the frame around the door: left, right (control column), below, above
+    fascia(u0, door.u0 - 2, v0, v1);
+    fascia(door.u1 + 2, u1, v0, v1);
+    fascia(door.u0 - 2, door.u1 + 2, v0, door.v0 - 2);
+    fascia(door.u0 - 2, door.u1 + 2, door.v1 + 2, v1);
+  }
   // d = how far a detail stands out of the appliance face (n = 2 * face - d), along = position along the run
   const box = (Q, d0, d1, y0, y1, a0, a1, mat, noShadow) => localBox(Q, a0, a1, y0, y1, 2 * face - d1, 2 * face - d0, mat, noShadow);
   const swapAxis = axis => (axis === 'x' ? 'z' : axis === 'z' ? 'x' : axis);
@@ -851,18 +857,20 @@ function builtInAppliance(run, item, type) {
     [u0 + 80, u1 - 80].forEach(a => cylinder(D, 7, 36, MAT.steel, face - 28, d1 - 40, a, 'x', 16));
   } else {
     const panelLeft = door.u1 + 3; // control column
-    box(P, face - 2, face + 6, v0, v1, door.u1, u1, MAT.blackMetal);
-    box(P, face - 8, face - 2, v0 + 10, v1 - 10, panelLeft, u1 - 10, MAT.glassBlack);
+    for (const [a0, a1, y0, y1] of [[u0, door.u0 - 2, v0, v1], [door.u1 + 2, u1, v0, v1], [door.u0 - 2, door.u1 + 2, v0, door.v0 - 2], [door.u0 - 2, door.u1 + 2, door.v1 + 2, v1]]) {
+      box(P, face - 4, face + 6, y0, y1, a0, a1, MAT.blackMetal); // fascia trim, 2 proud of the door
+    }
+    box(P, face - 10, face - 4, v0 + 10, v1 - 10, panelLeft + 8, u1 - 10, MAT.glassBlack);
     const display = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.028), new THREE.MeshBasicMaterial({ map: texture(displayCanvas('0:45'), 1, 1) }));
-    display.position.set((panelLeft + u1 - 10) / 2000, (v1 - 70) / 1000, (face + 8.5) / 1000);
+    display.position.set((panelLeft + u1) / 2000, (v1 - 70) / 1000, (face + 10.5) / 1000);
     P.add(display);
-    cylinder(P, 14, 4, MAT.steel, face - 10, v0 + 90, (panelLeft + u1 - 10) / 2, 'x', 32);
-    const a1 = door.u1 - 3; // the glass of the door
-    box(D, face - 10, face - 8, v0 + 60, v1 - 60, u0 + 60, a1 - 50, MAT.smoke, true); // window
-    box(D, face - 12, face - 8, v1 - 60, v1 - 10, u0 + 10, a1, MAT.glassBlack);
-    box(D, face - 12, face - 8, v0 + 10, v0 + 60, u0 + 10, a1, MAT.glassBlack);
-    box(D, face - 12, face - 8, v0 + 60, v1 - 60, u0 + 10, u0 + 60, MAT.glassBlack);
-    box(D, face - 12, face - 8, v0 + 60, v1 - 60, a1 - 50, a1, MAT.glassBlack);
+    cylinder(P, 14, 4, MAT.steel, face - 12, v0 + 90, (panelLeft + u1) / 2, 'x', 32);
+    const { u0: a0, u1: a1, v0: y0, v1: y1 } = door, frame = 40; // the door glass: a black border round the window
+    box(D, face - 10, face - 8, y0 + frame, y1 - frame, a0 + frame, a1 - frame, MAT.smoke, true); // window
+    box(D, face - 12, face - 8, y1 - frame, y1, a0, a1, MAT.glassBlack);
+    box(D, face - 12, face - 8, y0, y0 + frame, a0, a1, MAT.glassBlack);
+    box(D, face - 12, face - 8, y0 + frame, y1 - frame, a0, a0 + frame, MAT.glassBlack);
+    box(D, face - 12, face - 8, y0 + frame, y1 - frame, a1 - frame, a1, MAT.glassBlack);
   }
 }
 
