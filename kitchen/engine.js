@@ -624,7 +624,7 @@
       return h;
     }
     // drawers behind a door (tag pullouts): boxes of drawerBox board on ball runners, settings.pullouts.perDoor of them by the front height,
-    // evenly between the boards above and below the door. The hinges take hinges.supportDepth at the carcass front (as a hinge post):
+    // evenly between the horizontal boards below and above the door. The hinges take hinges.supportDepth at the carcass front (as a hinge post):
     // behind that depth a spacer of carcass board on the hinge side carries the runners there, so the boxes pass the hinges and the
     // open door; the boxes start at the same depth. Box: the front over the whole box face hides the ends of the sides and of the bottom;
     // the bottom and the back between the sides, the back on the bottom; runner.gap per side. ABS on the edges seen when the drawer is out: the tops,
@@ -636,7 +636,12 @@
       if (count === null) return warn(`${at}: wysokość frontu ${front.height} przekracza ostatni wiersz settings.pullouts.perDoor.`, item.index);
       const n1 = carcassFront - hingeSettings.supportDepth, length = Math.max(...S.runner.lengths.filter(l => l <= n1 - carcassBack));
       if (!Number.isFinite(length)) return warn(`${at}: żadna prowadnica z settings.pullouts.runner.lengths nie mieści się w ${n1 - carcassBack}.`, item.index);
-      const lo = item.v0 === K.v0 ? K.v0 + board : item.v0 + half, hi = item.v1 === K.v1 ? K.v1 - board : item.v1 - half;
+      // the drawers stand between the horizontal boards next to the door's ends (bottom, fixed shelf, top ...: a fixed shelf need not be
+      // centred on the joint, e.g. under an oven)
+      const horizontal = boards.filter(b => b.carcassId === K.id && ['bottom', 'top', 'rail', 'fixedShelf', 'hobPanel'].includes(b.id));
+      const lo = Math.max(...horizontal.filter(b => b.box[3] >= item.v0 - board && b.box[3] <= item.v0 + board).map(b => b.box[3]));
+      const hi = Math.min(...horizontal.filter(b => b.box[2] >= item.v1 - board && b.box[2] <= item.v1 + board).map(b => b.box[2]));
+      if (!Number.isFinite(lo) || !Number.isFinite(hi)) return warn(`${at}: szuflady za drzwiami - brak płyty poziomej nad lub pod drzwiami.`, item.index);
       const innerU0 = K.u0 + board, innerU1 = K.u1 - board, right = item.hinge === 'R';
       const spacer = right ? [innerU1 - board, innerU1] : [innerU0, innerU0 + board];
       addBoard({ id: 'spacer', name: 'Płyta dystansowa', a: n1 - carcassBack, b: hi - lo, material: materialFor.carcass, layer: 'carcasses', group: K.group, carcassId: K.id,

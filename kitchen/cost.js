@@ -441,9 +441,9 @@ window.KITCHEN_COST = {
      "spec": "grupa 1, przy oknie: jeden pas",
      "qty": 1,
      "unit": "ark.",
-     "price": 695.29,
-     "source": "płyta 18 mm (M-HM Bielsko-Biała ma tylko 18,6); bez wysyłki",
-     "links": [{"shop": "wiprumia.pl", "url": "https://wiprumia.pl/produkt/plyta-18-mm-dab-halifax-nat-h1180-st37/"}]
+     "price": 667.18,
+     "source": "M-HM Bielsko-Biała, płyta 18,6 mm (0,6 mm różnicy niewidoczne na ścianie)",
+     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-H1180-ST37-2800x2070x18.6MM-Dab-Halifax-naturalny/135"}]
     },
     {
      "id": "worktopJoints",
@@ -850,10 +850,10 @@ window.KITCHEN_COST = {
     },
     {
      "id": "pullouts",
-     "topic": "Szuflady za drzwiami z płyty (K12, dół)",
-     "description": "Za drzwiami {i:K12/pullouts.frontHeight} × {i:K12/pullouts.frontWidth}: {i:K12/pullouts.count} szuflady z {m:drawerBox} na prowadnicach kulkowych L = {i:K12/pullouts.runner}; skrzynka {i:K12/pullouts.boxWidth} × {i:K12/pullouts.runner} × {i:K12/pullouts.boxHeight} (czoło na całą skrzynkę zakrywa boki i dno, dno i tył między bokami; ABS na górnych krawędziach i bokach czoła), {s:pullouts.runner.gap} luzu na prowadnicę z każdej strony.\nZawiasy zajmują {s:hinges.supportDepth} przy przodzie korpusu (jak słupek zawiasowy): po stronie zawiasów płyta dystansowa z {m:carcass} ({t:carcass}) od pleców do {s:hinges.supportDepth} przed przodem korpusu niesie prowadnicę, a skrzynki zaczynają się na tej samej głębokości. Szuflada mija ramię zawiasu i otwarte drzwi o {t:carcass} + {s:pullouts.runner.gap}; drzwi zamykają się przed szufladami.\nBez półek ruchomych w tej części korpusu.",
+     "topic": "Szuflady za drzwiami z płyty (K8 i K12, dół)",
+     "description": "K8 (pod piekarnikiem): za drzwiami {i:K8/pullouts.frontHeight} × {i:K8/pullouts.frontWidth} {i:K8/pullouts.count} szuflady, skrzynka {i:K8/pullouts.boxWidth} × {i:K8/pullouts.runner} × {i:K8/pullouts.boxHeight}, zawiasy po lewej. K12: za drzwiami {i:K12/pullouts.frontHeight} × {i:K12/pullouts.frontWidth} {i:K12/pullouts.count} szuflady, skrzynka {i:K12/pullouts.boxWidth} × {i:K12/pullouts.runner} × {i:K12/pullouts.boxHeight}, zawiasy po prawej.\nSkrzynki z {m:drawerBox} na prowadnicach kulkowych L = {i:K12/pullouts.runner} (czoło na całą skrzynkę zakrywa boki i dno, dno i tył między bokami; ABS na górnych krawędziach i bokach czoła), {s:pullouts.runner.gap} luzu na prowadnicę z każdej strony.\nZawiasy zajmują {s:hinges.supportDepth} przy przodzie korpusu (jak słupek zawiasowy): po stronie zawiasów płyta dystansowa z {m:carcass} ({t:carcass}) od pleców do {s:hinges.supportDepth} przed przodem korpusu niesie prowadnicę, a skrzynki zaczynają się na tej samej głębokości. Szuflada mija ramię zawiasu i otwarte drzwi o {t:carcass} + {s:pullouts.runner.gap}; drzwi zamykają się przed szufladami. Szuflady stoją między płytami poziomymi nad i pod drzwiami (w K8: dno i półka pod piekarnikiem).\nBez półek ruchomych w tej części korpusu.",
      "assumed": "{n:pullouts} kompletów prowadnic po {p:pulloutRunners} PLN zamiast {p:innerDrawers} PLN za szufladę Blum.",
-     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka."
+     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka. Uwaga: z szufladami za drzwiami płyta {m:drawerBox} to {q:drawerBoard} ark., ostatni słabo wykorzystany; w tej kuchni skrzynki zmieściłyby się w odpadach {m:carcass} – zdecydować przy zamówieniu wszystkich szaf."
     },
     {
      "id": "worktops",
