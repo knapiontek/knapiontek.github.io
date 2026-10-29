@@ -266,6 +266,7 @@ body.shut .toggle{display:flex}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
 <script src="view.js"></script>
 <script src="appliances.js"></script>
+<script src="textures.js"></script>
 <script src="design.js"></script>
 <script src="engine.js"></script>
 <script>
@@ -497,6 +498,19 @@ function texture(canvas, repeatX, repeatY) {
   t.repeat.set(repeatX, repeatY);
   return t;
 }
+// the wood decor: the material's own scan from textures.js (repeat = the size it covers), else the drawn oak below (one tile 4.8 × 0.6 m)
+function oakTexture() {
+  const decor = (window.KITCHEN_TEXTURES || {}).oak;
+  if (!decor) return texture(oakCanvas(), 1 / 4.8, 1 / 0.6);
+  const image = new Image(), t = new THREE.Texture(image);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.encoding = THREE.sRGBEncoding;
+  t.anisotropy = anisotropy;
+  t.repeat.set(1000 / decor.size[0], 1000 / decor.size[1]); // texture coordinates are in metres
+  image.onload = () => { t.needsUpdate = true; if (typeof sceneChanged === 'function') sceneChanged(); };
+  image.src = decor.image;
+  return t;
+}
 const METALS = SCENE.metals, handleMetal = METALS[fittings.handle.metal];
 const standard = options => new THREE.MeshStandardMaterial(options);
 const physical = options => new THREE.MeshPhysicalMaterial(options);
@@ -504,7 +518,7 @@ const physical = options => new THREE.MeshPhysicalMaterial(options);
 const HOLE_COLORS = { hinge: ['#f26b1d', 'zawiasy'], shelfPin: ['#22b35e', 'półki'], runner: ['#2f8fe0', 'szuflady, prowadnice'] };
 const holeUse = kind => (kind === 'cup' || kind === 'plate' ? 'hinge' : kind);
 const MAT = {
-  oak: physical({ map: texture(oakCanvas(), 1 / 4.8, 1 / 0.6), roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, envMapIntensity: 0.5 }),
+  oak: physical({ map: oakTexture(), roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, envMapIntensity: 0.5 }),
   wall: standard({ color: linear(room.wallColor), roughness: 0.95, envMapIntensity: 0.45 }),
   marble: physical({ map: texture(marbleCanvas(), 1000 / room.floorTile[0], 1000 / room.floorTile[1]), roughness: 0.22, clearcoat: 0.5, clearcoatRoughness: 0.15, envMapIntensity: 0.7 }),
   handle: standard({ color: linear(handleMetal.color), metalness: handleMetal.metal, roughness: handleMetal.rough, envMapIntensity: 1.4, side: THREE.DoubleSide }),
@@ -1307,7 +1321,7 @@ function geometryCheck() {
   for (const m of carcassMeshes) {
     const u = m.userData;
     if (!u.role) continue;
-    const kind = { drawerBottom: 'drawer', drawerBack: 'drawer', pulloutBottom: 'drawer', pulloutSide: 'drawer', pulloutEnd: 'drawer', backStrip: 'strip', adjustableShelf: 'shelf' }[u.id] || 'carcass';
+    const kind = { drawerBottom: 'drawer', drawerBack: 'drawer', pulloutFront: 'drawer', pulloutBottom: 'drawer', pulloutSide: 'drawer', pulloutBack: 'drawer', backStrip: 'strip', adjustableShelf: 'shelf' }[u.id] || 'carcass';
     parts.push({ kind, name: (u.K ? u.K.name + ' ' : '') + u.role + ' ' + u.a + ' × ' + u.b, box: boxOf(m), object: m });
   }
   for (const mover of movers) {
@@ -1788,7 +1802,7 @@ const PANEL_COLORS = {
   back: ['#c9b9ea', 'Plecy, ' + model.materials[model.materialFor.back].label], backStrip: ['#e98fc4', 'Listwa tylna za listwą'],
   hobPanel: ['#7fd0c8', 'Przegroda pod płytą'], hingePost: ['#e07b39', 'Słupek zawiasowy'], spacer: ['#c46a2b', 'Płyta dystansowa'], insetPanel: ['#d9a35c', 'Panel wpuszczany'],
   drawerBottom: ['#f5d76e', 'Dno szuflady'], drawerBack: ['#e3ad3c', 'Tył szuflady'],
-  pulloutBottom: ['#f5d76e', 'Dno szuflady za drzwiami'], pulloutSide: ['#ecc45a', 'Bok szuflady za drzwiami'], pulloutEnd: ['#e3ad3c', 'Czoło, tył szuflady za drzwiami']
+  pulloutFront: ['#d99a2b', 'Czoło szuflady za drzwiami'], pulloutBottom: ['#f5d76e', 'Dno szuflady za drzwiami'], pulloutSide: ['#ecc45a', 'Bok szuflady za drzwiami'], pulloutBack: ['#e3ad3c', 'Tył szuflady za drzwiami']
 };
 const panelMaterial = {};
 for (const [id, [color]] of Object.entries(PANEL_COLORS)) panelMaterial[id] = standard({ color: linear(color), roughness: 0.7 });

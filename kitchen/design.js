@@ -5,8 +5,8 @@ window.KITCHEN_DESIGN = {
   "chipGrey18": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 18, "color": "#4a4d51", "core": "#f2efe8", "uses": ["carcass"]},
   "chipGrey16": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 16, "color": "#4a4d51", "core": "#f2efe8", "uses": ["drawerBox", "hobPanel"]},
   "hdfGrey3": {"name": "HDF szary lakierowany", "thickness": 3, "color": "#c6c8c9", "uses": ["back"]},
-  "shakerNavy18": {"name": "Front shaker English Navy satyna", "thickness": 18, "color": "#1c2744", "lacquered": true, "core": "#f2efe8", "uses": ["frame", "cabinet", "drawer"]},
-  "mdfNavy18": {"name": "Panel gładki English Navy satyna", "thickness": 18, "color": "#1c2744", "lacquered": true, "core": "#f2efe8", "uses": ["panel", "plinth"]},
+  "shakerNavy18": {"name": "Front shaker English Navy satyna", "thickness": 18, "color": "#3a4868", "lacquered": true, "core": "#f2efe8", "uses": ["frame", "cabinet", "drawer"]},
+  "mdfNavy18": {"name": "Panel gładki English Navy satyna", "thickness": 18, "color": "#3a4868", "lacquered": true, "core": "#f2efe8", "uses": ["panel", "plinth"]},
   "chipOak18": {"name": "Płyta laminowana Egger H1180 ST37 dąb Halifax", "thickness": 18, "uses": ["splash"]},
   "topOak38x600": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "depth": 600, "uses": ["worktop"]},
   "topOak38x900": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "depth": 900, "uses": ["islandWorktop"]}

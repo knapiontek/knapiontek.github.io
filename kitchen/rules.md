@@ -66,7 +66,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Panel wpuszczany:** wypełnienie na końcu korpusu (np. ukryty narożnik L) zamyka panel wpuszczany.
 - **Szuflada** jest wysoka (D), gdy front przekracza ustaloną wysokość, a inaczej niska (M).
 - **Szuflady za drzwiami** (tag szuflady za drzwiami):
-  - skrzynka z płyty szuflad: dno pod skrzynką, czoło i tył między bokami; prowadnice kulkowe pełnego wysuwu, luz na prowadnicę z każdej strony;
+  - skrzynka z płyty szuflad: czoło na całą skrzynkę zakrywa boki i dno, dno i tył między bokami; prowadnice kulkowe pełnego wysuwu, luz na prowadnicę z każdej strony;
   - zawiasy zajmują przód korpusu na głębokość słupka zawiasowego; za nią, po stronie zawiasów, płyta dystansowa z płyty korpusu niesie prowadnicę;
   - skrzynki zaczynają się na tej samej głębokości, więc mijają zawiasy i otwarte drzwi, a drzwi zamykają się przed nimi;
   - liczba szuflad zależy od wysokości frontu; leżą równo między płytami nad i pod drzwiami.
@@ -106,7 +106,8 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **ABS na płytach korpusu** jest tylko na krawędzi widocznej z przodu:
   - boki, wieńce, półki, trawersy płaskie, słupek zawiasowy i płyta dystansowa mają ABS na krawędzi przedniej;
   - trawers na sztorc ma ABS na krawędzi dolnej.
-- **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad.
+- **Szuflady za drzwiami:** ABS na górnych krawędziach boków, tyłu i czoła oraz na bokach czoła; dno i krawędzie zakryte czołem bez ABS.
+- **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad TANDEMBOX.
 - **ABS na panelu** jest na każdej krawędzi przy froncie, który się otwiera.
 - **Lista cięć** podaje przy każdym wymiarze liczbę wykończonych krawędzi wzdłuż niego (0, 1 lub 2), jak formularz hurtowni. Opis montażu mówi, gdzie jest każda krawędź z ABS.
 

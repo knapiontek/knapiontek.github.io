@@ -626,7 +626,9 @@
     // drawers behind a door (tag pullouts): boxes of drawerBox board on ball runners, settings.pullouts.perDoor of them by the front height,
     // evenly between the boards above and below the door. The hinges take hinges.supportDepth at the carcass front (as a hinge post):
     // behind that depth a spacer of carcass board on the hinge side carries the runners there, so the boxes pass the hinges and the
-    // open door; the boxes start at the same depth. Box: bottom under, sides, front and back between the sides; runner.gap per side.
+    // open door; the boxes start at the same depth. Box: the front over the whole box face hides the ends of the sides and of the bottom;
+    // the bottom and the back between the sides, the back on the bottom; runner.gap per side. ABS on the edges seen when the drawer is out: the tops,
+    // and the front's ends.
     function addPullouts(item, front, K) {
       const S = settings.pullouts, t = thickness.drawerBox, at = placeOf(item);
       if (item.hinge === 'L' ? item.u0 !== K.u0 : item.u1 !== K.u1) return warn(`${at}: szuflady za drzwiami - drzwi muszą sięgać boku korpusu po stronie zawiasów.`, item.index);
@@ -644,12 +646,12 @@
       for (let j = 0; j < count; j++) {
         const v = Math.round(lo + S.lift + j * pitch), top = v + t + S.side, next = j + 1 < count ? Math.round(lo + S.lift + (j + 1) * pitch) : hi;
         if (top > next) warn(`${at}: szuflada za drzwiami ${j + 1} (${t + S.side}) nie mieści się pod następną płytą.`, item.index);
-        const common = { material: materialFor.drawerBox, layer: 'drawers', group: K.group, carcassId: K.id, frontId: front.id, pullout: j, edges: [] };
-        addBoard({ id: 'pulloutBottom', name: 'Dno szuflady za drzwiami', a: u1 - u0, b: length, ...common, box: [u0, u1, v, v + t, n0, n1] });
-        for (const s of [u0, u1 - t]) addBoard({ id: 'pulloutSide', name: 'Bok szuflady za drzwiami', a: length, b: S.side, ...common, box: [s, s + t, v + t, top, n0, n1] });
-        for (const [b0, b1, name] of [[n1 - t, n1, 'Czoło'], [n0, n0 + t, 'Tył']]) {
-          addBoard({ id: 'pulloutEnd', name: name + ' szuflady za drzwiami', a: u1 - u0 - 2 * t, b: S.side, ...common, box: [u0 + t, u1 - t, v + t, top, b0, b1] });
-        }
+        const common = { material: materialFor.drawerBox, layer: 'drawers', group: K.group, carcassId: K.id, frontId: front.id, pullout: j }, inner = length - t;
+        addBoard({ id: 'pulloutFront', name: 'Czoło szuflady za drzwiami', a: u1 - u0, b: t + S.side, ...common, box: [u0, u1, v, top, n1 - t, n1],
+          edges: [['top', u1 - u0], ['left', t + S.side], ['right', t + S.side]] });
+        addBoard({ id: 'pulloutBottom', name: 'Dno szuflady za drzwiami', a: u1 - u0 - 2 * t, b: inner, ...common, box: [u0 + t, u1 - t, v, v + t, n0, n1 - t], edges: [] });
+        for (const s of [u0, u1 - t]) addBoard({ id: 'pulloutSide', name: 'Bok szuflady za drzwiami', a: inner, b: t + S.side, ...common, box: [s, s + t, v, top, n0, n1 - t], edges: [['top', inner]] });
+        addBoard({ id: 'pulloutBack', name: 'Tył szuflady za drzwiami', a: u1 - u0 - 2 * t, b: S.side, ...common, box: [u0 + t, u1 - t, v + t, top, n0, n0 + t], edges: [['top', u1 - u0 - 2 * t]] });
         front.pullouts.boxes.push({ u0, u1, v0: v, v1: top, n0, n1 });
       }
       counts.pullouts += count;
