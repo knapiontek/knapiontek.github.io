@@ -12,7 +12,7 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 | cost.js | data, this project | prices, items, notes and settings of cost.html | LLM, per project |
 | view.js | data, this project | placement of the groups, room, how the appliances are fitted, lights and cameras of view.html | LLM, per project |
 | appliances.js | data, this project | the appliances as the manufacturer gives them (sizes, documents), for cost.html and view.html | LLM, per project |
-| textures.js | data, this project | decor images of the materials (the oak scan from the manufacturer), for view.html | LLM, per project |
+| textures.js | data, this project | decor images from the manufacturers: the oak of the materials, the floor tiles to choose from, for view.html | LLM, per project |
 | rules.md | text, every project | the kitchen rules in Polish, as the app names things | by hand |
 | engine.js | code, every project | the model: carcasses, boards, fronts, frames, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |

@@ -6,7 +6,8 @@
                  rot = turn in degrees (0: along the window wall, facing the room), name = its label in the view.
                  A group whose worktop has the tag island (design.js) stands free: no wall behind it.
      room        ceiling (measured), the other sizes rounded to whole metres; rightWallGroup: the group against the right
-                 wall (the wall is at its x); floorTile [length, width]; wallColor
+                 wall (the wall is at its x); floorJoint: the tile joint, mm (the tiles: textures.js floors);
+                 floorTile [length, width]: the drawn floor when textures.js has no floors; wallColor
      installation  how appliances are fitted here: sink tap (tapFromBack: from the back edge of the worktop), its trap
                  (trapTop, wallOutlet: heights above the floor); hood (bottom: height above the floor). An appliance on
                  adjustable feet (appliances.js) gets its front centred in its module.
@@ -24,15 +25,14 @@ window.KITCHEN_VIEW = {
   "2": {"name": "zabudowa wysoka", "x": 3372, "z": 0, "rot": -90},
   "3": {"name": "wyspa", "x": 1730, "z": 2440, "rot": 180}
  },
- "room": {"ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallGroup": 2, "rightWallLength": 4000, "floorTile": [1200, 600], "wallColor": "#f2f1ee"},
+ "room": {"ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallGroup": 2, "rightWallLength": 4000, "floorJoint": 2, "floorTile": [900, 900], "wallColor": "#f2f1ee"},
  "installation": {
   "sink": {"tapFromBack": 45, "trapTop": 575, "wallOutlet": 470},
   "hood": {"bottom": 1500}
  },
  "window": {"x": 870, "width": 1900, "sill": 1080, "height": 1300, "reveal": 150, "finish": "antracyt"},
  "finishes": [
-  ["Zlew", "Kompozyt kwarcowy", "radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"],
-  ["Podłoga", "Szare płytki 120 × 60, wygląd marmuru", "linear-gradient(120deg,#c4c6c7,#b5b8ba 45%,#cfd1d2)"]
+  ["Zlew", "Kompozyt kwarcowy", "radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"]
  ],
  "hardware": {
   "handle": {"metal": "brass", "axis": 28, "cupLength": 89, "barLength": 160, "sideHeight": 260},

@@ -56,6 +56,9 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color
 .lgrp>button.gh[aria-pressed="false"]{color:var(--muted)}
 .lgrp>button.gh[aria-pressed="mixed"]{color:var(--muted)}
 .json{font:11px/1.45 var(--f-mono,monospace);background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:8px;max-height:360px;overflow:auto;white-space:pre;margin:8px 0 0}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tile{display:flex;align-items:center;gap:8px;text-align:left;padding:4px 8px 4px 4px;font-size:12px;line-height:1.2}
+.tile i{width:30px;height:30px;border-radius:4px;flex:none;display:block}
 .hint{font-size:12px;color:var(--muted);line-height:1.45;margin:8px 0 0}
 .mats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0;padding:0;list-style:none}
 .mats li{display:flex;flex-direction:column;gap:5px;min-width:0}
@@ -180,6 +183,11 @@ body.shut .toggle{display:flex}
           <button data-q="day" aria-pressed="true">Dzień</button>
           <button data-q="night" aria-pressed="false">Noc</button>
         </div>
+      </section>
+      <section>
+        <h2>Podłoga</h2>
+        <div class="row tiles" id="floorTiles"></div>
+        <p class="hint" id="floorInfo"></p>
       </section>
       <section>
         <h2>Kolory</h2>
@@ -511,6 +519,39 @@ function oakTexture() {
   image.src = decor.image;
   return t;
 }
+// floor tiles (textures.js floors): a square of FLOOR_TILES × FLOOR_TILES tiles, each a face of the tile chosen at random and
+// turned 0 or 180 degrees, with room.floorJoint wide joints in the grout colour; without textures.js: the drawn marble (room.floorTile)
+const FLOORS = (window.KITCHEN_TEXTURES || {}).floors || {}, FLOOR_KEYS = Object.keys(FLOORS), FLOOR_TILES = 4;
+function floorTexture(key) {
+  const F = FLOORS[key];
+  if (!F) return texture(marbleCanvas(), 1000 / room.floorTile[0], 1000 / room.floorTile[1]);
+  const S = 512, c = document.createElement('canvas');
+  c.width = c.height = FLOOR_TILES * S;
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.encoding = THREE.sRGBEncoding;
+  t.anisotropy = anisotropy;
+  t.repeat.set(1000 / (FLOOR_TILES * (F.size[0] + room.floorJoint)), 1000 / (FLOOR_TILES * (F.size[1] + room.floorJoint))); // metres
+  const faces = F.faces.map(src => { const image = new Image(); image.src = src; return image; });
+  Promise.all(faces.map(image => image.decode())).then(() => {
+    const g = c.getContext('2d'), r = seededRandom(19), joint = Math.max(1, (S * room.floorJoint) / (F.size[0] + room.floorJoint));
+    g.fillStyle = F.grout;
+    g.fillRect(0, 0, c.width, c.height);
+    for (let y = 0; y < FLOOR_TILES; y++) {
+      for (let x = 0; x < FLOOR_TILES; x++) {
+        const face = faces[Math.floor(r() * faces.length)], turn = r() < 0.5;
+        g.save();
+        g.translate(x * S + S / 2, y * S + S / 2);
+        if (turn) g.rotate(Math.PI);
+        g.drawImage(face, -S / 2 + joint / 2, -S / 2 + joint / 2, S - joint, S - joint);
+        g.restore();
+      }
+    }
+    t.needsUpdate = true;
+    if (typeof sceneChanged === 'function') sceneChanged();
+  });
+  return t;
+}
 const METALS = SCENE.metals, handleMetal = METALS[fittings.handle.metal];
 const standard = options => new THREE.MeshStandardMaterial(options);
 const physical = options => new THREE.MeshPhysicalMaterial(options);
@@ -520,7 +561,7 @@ const holeUse = kind => (kind === 'cup' || kind === 'plate' ? 'hinge' : kind);
 const MAT = {
   oak: physical({ map: oakTexture(), roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, envMapIntensity: 0.5 }),
   wall: standard({ color: linear(room.wallColor), roughness: 0.95, envMapIntensity: 0.45 }),
-  marble: physical({ map: texture(marbleCanvas(), 1000 / room.floorTile[0], 1000 / room.floorTile[1]), roughness: 0.22, clearcoat: 0.5, clearcoatRoughness: 0.15, envMapIntensity: 0.7 }),
+  floor: standard({ map: floorTexture(FLOOR_KEYS[0]), roughness: 0.55, envMapIntensity: 0.6 }), // matt porcelain tiles
   handle: standard({ color: linear(handleMetal.color), metalness: handleMetal.metal, roughness: handleMetal.rough, envMapIntensity: 1.4, side: THREE.DoubleSide }),
   steel: standard({ color: linear(0xd2d5d8), metalness: 1, roughness: 0.3 }),
   glassBlack: physical({ color: linear(0x060708), roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.1 }),
@@ -636,7 +677,7 @@ function roomBox(x0, x1, y0, y1, z0, z1, mat, parent, noShadow) {
   m.castShadow = !noShadow;
   m.receiveShadow = true;
   (parent || target).add(m);
-  if (mat === MAT.oak || mat === MAT.marble || mat === MAT.granite) worldUVMeshes.push(m);
+  if (mat === MAT.oak || mat === MAT.floor || mat === MAT.granite) worldUVMeshes.push(m);
   meshes.push(m);
   return m;
 }
@@ -1447,7 +1488,7 @@ roomBox(leftEnd, rightWall + wallThickness, ceiling, ceiling + 20, -wallThicknes
 const rightWallGroup = wallGroup([1, 0, 0], [rightWall / 1000, 1.37, 1.6]);
 roomBox(rightWall, rightWall + wallThickness, 0, ceiling + 20, -wallThickness, room.rightWallLength, MAT.wall, rightWallGroup);
 target = roomLayer.floor;
-const floor = roomBox(leftEnd, rightWall, -20, 0, 0, room.floorDepth, MAT.marble);
+const floor = roomBox(leftEnd, rightWall, -20, 0, 0, room.floorDepth, MAT.floor);
 floor.castShadow = false;
 
 /* ---------- texture coordinates in metres: the pattern keeps its size on every box ---------- */
@@ -1483,6 +1524,16 @@ floor.castShadow = false;
 target = roomLayer.lamps;
 const bulbHot = glowMaterial(0xffe7c2, 5);
 const shadeInside = standard({ color: linear(0xf4ead8), roughness: 0.6, metalness: 0, side: THREE.BackSide });
+// a lamp's shadow: its depth range only from the lamp to just below the floor (the default reaches 500 m, so the depth is coarse
+// and a large bias is needed, which lifts every shadow off the object casting it: things seem to float); normalBias against acne
+function shadowSetup(light, size, near, far) {
+  light.shadow.mapSize.set(size, size);
+  light.shadow.camera.near = near;
+  light.shadow.camera.far = far;
+  light.shadow.bias = -0.0002;
+  light.shadow.normalBias = 0.015;
+  light.shadow.radius = 4;
+}
 SCENE.lights.pendants.points.forEach(([x, z]) => {
   const y = SCENE.lights.pendants.bottom;
   roomCylinder(2, ceiling - y - 90, MAT.gasket, x, (ceiling + y + 90) / 2, z, null, 6); // cable
@@ -1510,7 +1561,7 @@ SCENE.lights.pendants.points.forEach(([x, z]) => {
   light.target.position.set(x / 1000, 0, z / 1000);
   shadowLamps.push(light);
   lamps.push(light);
-  light.shadow.mapSize.set(1024, 1024); light.shadow.bias = -0.0008; light.shadow.radius = 6; light.shadow.camera.near = 0.12;
+  shadowSetup(light, 1024, 0.12, y / 1000 + 0.3);
   scene.add(light, light.target);
 });
 
@@ -1542,7 +1593,7 @@ for (const [x, z] of SCENE.lights.downlights.map(downlightAt)) {
   light.target.position.set(x / 1000, 0, z / 1000);
   shadowLamps.push(light);
   lamps.push(light);
-  light.shadow.mapSize.set(512, 512); light.shadow.bias = -0.001; light.shadow.radius = 8; light.shadow.camera.near = 0.05;
+  shadowSetup(light, 1024, 0.1, ceiling / 1000 + 0.2);
   scene.add(light, light.target);
 }
 
@@ -1724,7 +1775,7 @@ function ensureOutlines() {
     if (o.isMesh && (edgedMeshes.has(o) || !Array.isArray(o.material))) [].concat(o.material).forEach(m => { if (!m.transparent) Object.assign(m, { polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }); });
   });
   for (const m of meshes) {
-    if ((Array.isArray(m.material) && !edgedMeshes.has(m)) || m.material === MAT.marble || m.material === MAT.wall || m.material.transparent || m.material === MAT.sky) continue;
+    if ((Array.isArray(m.material) && !edgedMeshes.has(m)) || m.material === MAT.floor || m.material === MAT.wall || m.material.transparent || m.material === MAT.sky) continue;
     const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 20), lineMaterial);
     e.raycast = () => {};
     m.add(e);
@@ -1741,7 +1792,7 @@ function setPalette(name) {
   const white = name !== 'colour';
   for (const [m, look] of originalLook) {
     if (white) {
-      m.color.set(m === MAT.marble ? 0xcfcfcb : m === MAT.wall ? 0xe2e1dd : 0xdcdbd7);
+      m.color.set(m === MAT.floor ? 0xcfcfcb : m === MAT.wall ? 0xe2e1dd : 0xdcdbd7);
       m.map = null; m.metalness = 0; m.roughness = 0.85;
       if ('clearcoat' in m) m.clearcoat = 0;
     } else {
@@ -1758,6 +1809,24 @@ function setPalette(name) {
 }
 setHandles('cup');
 document.getElementById('palette').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setPalette(b.dataset.p); });
+// floor tiles: one button per textures.js floor; the choice also shows in the Project tab
+const floorPanel = document.getElementById('floorTiles'), floorInfo = document.getElementById('floorInfo');
+let floorKey = FLOOR_KEYS[0];
+floorPanel.innerHTML = FLOOR_KEYS.map(key => '<button data-f="' + key + '" class="tile" title="' + esc(FLOORS[key].name) + '"><i style="background:url(' + FLOORS[key].faces[0] + ') center/cover"></i><span>' + esc(FLOORS[key].name.replace(/^\S+ (My Way )?/, '')) + '</span></button>').join('');
+floorPanel.closest('section').hidden = !FLOOR_KEYS.length;
+function setFloor(key) {
+  floorKey = key;
+  const F = FLOORS[key], map = floorTexture(key), look = originalLook.get(MAT.floor);
+  if (look) { if (look.map) look.map.dispose(); look.map = map; }
+  if (palette === 'colour') MAT.floor.map = map;
+  MAT.floor.needsUpdate = true;
+  for (const b of floorPanel.querySelectorAll('[data-f]')) b.setAttribute('aria-pressed', b.dataset.f === key);
+  floorInfo.innerHTML = '<b>' + esc(F.name) + '</b> ' + F.size.join(' × ') + ' – ' + esc(F.look) + '; ' + esc(F.finish) + '; ' + esc(F.price) +
+    ' (<a href="' + F.link + '" target="_blank" rel="noopener">sklep</a>). Fuga epoksydowa ' + room.floorJoint + ' mm w kolorze tła płytki.';
+  renderFinishes();
+  sceneChanged();
+}
+floorPanel.addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) setFloor(b.dataset.f); });
 
 /* ---------- layer chips ---------- */
 const layerPanel = document.getElementById('layers'), layerOn = {};
@@ -1917,10 +1986,17 @@ document.getElementById('frontName').textContent = frontName;
 document.title = 'Kuchnia ' + frontName;
 const oakSwatch = 'linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)'; // the oak texture, for a material without a colour
 const swatch = (background, use, name) => '<li><i style="background:' + background + '"></i><small>' + esc(use) + '</small><b>' + esc(name) + '</b></li>';
-document.getElementById('mats').innerHTML = Object.entries(model.materials).map(([code, m]) => {
-  const uses = Object.keys(model.materialFor).filter(use => model.materialFor[use] === code);
-  return uses.length ? swatch(m.color || oakSwatch, uses.map(KE.useLabel).join(', '), m.label) : '';
-}).join('') + SCENE.finishes.map(([use, name, background]) => swatch(background, use, name)).join('');
+// the board materials, the finishes of view.js and the floor tiles chosen in Widok › Podłoga
+function renderFinishes() {
+  const F = FLOORS[floorKey];
+  document.getElementById('mats').innerHTML = Object.entries(model.materials).map(([code, m]) => {
+    const uses = Object.keys(model.materialFor).filter(use => model.materialFor[use] === code);
+    return uses.length ? swatch(m.color || oakSwatch, uses.map(KE.useLabel).join(', '), m.label) : '';
+  }).join('') + SCENE.finishes.map(([use, name, background]) => swatch(background, use, name)).join('') +
+    (F ? swatch('url(' + F.faces[0] + ') center/cover', 'Podłoga', F.name + ' ' + F.size.join(' × ')) : '');
+}
+if (FLOOR_KEYS.length) setFloor(floorKey);
+else renderFinishes();
 // per run: its length, and its worktop (top board length × depth × thickness, top above the floor)
 const runDims = RUN_IDS.flatMap(r => {
   const W = model.worktops[groupOfRun[r]], top = itemsOfRun[r].find(i => i.type === 'worktop' && !hasTag(i, 'fall'));

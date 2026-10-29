@@ -45,7 +45,7 @@ window.KITCHEN_DESIGN = {
   ["Lokalizacja", "Jaworze, powiat bielski", ""],
   ["Zakres", "Tylko materiały, montaż własny", "Ceny: średnie rynkowe, PLN brutto"],
   ["Styl", "Shaker, lakierowany", "Fronty nakładane; listwy między frontami dają wygląd frontów wpuszczanych"],
-  ["Pomieszczenie", "Podłoga gres, ściany białe", "Szare płytki 120 × 60"],
+  ["Pomieszczenie", "Podłoga gres, ściany białe", "Gres szary 89,8 × 89,8 Paradyż My Way (wzór do wyboru w widoku 3D), fuga epoksydowa w kolorze płytki"],
   ["Okno", "Nad blatem grupy 1", "1900 × 1300"],
   ["Oświetlenie", "Oczka nad zabudową wysoką i nad zlewem", "Lampy wiszące nad wyspą"],
   ["Korpusy", "Płyta wiórowa Egger U708 ST9 szary jasny", "Cięcie i oklejanie w hurtowni płyt"],
