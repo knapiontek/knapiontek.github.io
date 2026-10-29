@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin:0">
+<title>Sciama's Origin of Inertia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="A plain-language, modern walkthrough of Dennis Sciama's 1953 paper On the Origin of Inertia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a single reading column like a journal reprint, with wide "equation plates" and two interactive bench instruments. */
+:root{
+  --paper:#eef1f4; --sheet:#f8fafb; --ink:#17202b; --muted:#55606e; --rule:#cdd4dc;
+  --cosmos:#2848a8; --local:#b5651d; --plate:#e3e8ee;
+  --f-display:"Young Serif", Georgia, "Times New Roman", serif;
+  --f-body:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#11161d; --sheet:#171d26; --ink:#e4e9ef; --muted:#9aa5b3; --rule:#2c3541;
+  --cosmos:#86a2f5; --local:#e8a15c; --plate:#1d2530; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --paper:#11161d; --sheet:#171d26; --ink:#e4e9ef; --muted:#9aa5b3; --rule:#2c3541;
+  --cosmos:#86a2f5; --local:#e8a15c; --plate:#1d2530; color-scheme:dark }
+
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:18px;line-height:1.62;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));}
+.wrap{max-width:720px;margin:0 auto;padding-block:48px 80px;display:flex;flex-direction:column;gap:8px}
+header{padding-bottom:28px;border-bottom:1px solid var(--rule);margin-bottom:12px}
+.cite{font-family:var(--f-mono);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,6vw,52px);line-height:1.08;margin:14px 0 14px;text-wrap:balance}
+h1 em{font-style:normal;color:var(--cosmos)}
+.lede{font-size:20px;color:var(--muted);margin:0;max-width:62ch}
+h2{font-family:var(--f-display);font-weight:400;font-size:27px;line-height:1.2;margin:44px 0 6px;text-wrap:balance;display:flex;gap:14px;align-items:baseline}
+h2 .n{font-family:var(--f-mono);font-size:14px;color:var(--cosmos);flex:none}
+p{margin:10px 0;max-width:65ch}
+.u{color:var(--cosmos);font-weight:600}
+.l{color:var(--local);font-weight:600}
+.eq{background:var(--plate);border-radius:6px;padding:16px 20px;margin:14px 0;font-family:var(--f-mono);font-size:16px;line-height:1.7;overflow-x:auto;white-space:nowrap}
+.eq .tag{float:right;color:var(--muted);font-size:13px;padding-left:24px}
+.eq small{display:block;white-space:normal;font-family:var(--f-body);font-size:14.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+.big{font-size:22px;font-weight:600}
+figure{margin:18px 0;overflow-x:auto}
+figure svg{display:block;width:100%;max-width:680px;height:auto}
+figcaption{font-size:14.5px;color:var(--muted);margin-top:8px}
+.bench{background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:20px;margin:18px 0;display:flex;flex-direction:column;gap:12px}
+.bench h3{margin:0;font-family:var(--f-mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.bench label{font-size:15.5px}
+input[type=range]{width:100%;accent-color:var(--cosmos)}
+input[type=range]:focus-visible{outline:2px solid var(--cosmos);outline-offset:4px}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.readout div{min-width:0}
+.readout .k{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.readout .v{font-family:var(--f-mono);font-size:24px;font-variant-numeric:tabular-nums}
+.meter{height:12px;background:var(--plate);border-radius:6px;position:relative;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--cosmos);border-radius:6px;transition:width .15s}
+.meter b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.presets button{font:inherit;font-size:14px;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.presets button:hover{border-color:var(--cosmos)}
+.presets button:focus-visible{outline:2px solid var(--cosmos);outline-offset:2px}
+.note{font-size:15px;color:var(--muted);margin:0}
+ol.steps{padding-left:22px;margin:10px 0;max-width:65ch}
+ol.steps li{margin:6px 0}
+table{border-collapse:collapse;font-size:15.5px;width:100%}
+.tbl{overflow-x:auto}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-size:14.5px;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){ .meter i{transition:none} }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="cite">D. W. Sciama · Monthly Notices of the Royal Astronomical Society 113, 34 (1953)</div>
+  <h1>Why is it hard to push things? <em>Because the universe is there.</em></h1>
+  <p class="lede">A modern, plain-language walkthrough of Sciama's “On the Origin of Inertia”, the first quantitative model of Mach's principle. Written in my own words, not a reprint of the paper.</p>
+</header>
+
+<h2><span class="n">§1</span>The puzzle</h2>
+<p>Newton's second law, <b>F = m·a</b>, says acceleration is measured against something. Newton called that something absolute space. Ernst Mach objected: nobody can observe absolute space. What we can observe is that the frame where no inertial forces appear is the frame where the distant galaxies do not rotate. Mach suggested this is no coincidence. Inertia might be an <span class="u">interaction with all the matter in the universe</span>.</p>
+<p>Mach never gave a formula. In 1953 Dennis Sciama, then a young PhD student in Cambridge, built a deliberately simple model that does. His goal was not a complete theory of gravity, but a working example showing that Mach's idea can produce real numbers.</p>
+
+<h2><span class="n">§2</span>The key idea: gravity copied from electromagnetism</h2>
+<p>A charge at rest makes an electric field. A <i>moving</i> charge also makes a magnetic field, described by a vector potential <b>A</b>. And when a charge <i>accelerates</i>, its field picks up an extra piece that points against the acceleration and falls off only as 1/r, much more slowly than the static 1/r² field.</p>
+<p>Sciama gave gravity the same structure. Masses have a scalar potential Φ, and moving masses also produce a gravitational vector potential:</p>
+<div class="eq">Φ = −G ∫ ρ / r dV<br>A = Φ · v / c<span class="tag">(1)</span>
+<small>ρ is mass density, v the velocity of the matter producing the field, c the speed of light.</small></div>
+<p>The gravitational field felt by a body then has two parts, just like the electric field:</p>
+<div class="eq">E = −∇Φ − (1/c) · ∂A/∂t<span class="tag">(2)</span>
+<small>The first term is ordinary Newtonian gravity. The second appears only when the source matter changes its velocity.</small></div>
+
+<h2><span class="n">§3</span>Look at the universe from the moving body</h2>
+<p>Take a small test body. Around it are some <span class="l">nearby masses</span> (the Earth, the Sun) and, far beyond, the <span class="u">smoothed-out universe</span> of galaxies with average density ρ.</p>
+<p>Now switch to the body's own rest frame. If the body moves with velocity v, then in its frame the whole universe streams past it with velocity −v. If the body accelerates, the entire universe accelerates the other way.</p>
+
+<figure>
+<svg viewBox="0 0 680 300" role="img" aria-label="A test body in the centre accelerates to the right. In its rest frame the shells of distant galaxies accelerate to the left and produce a field on the body that points to the left, opposing the acceleration.">
+  <g fill="none" stroke="var(--cosmos)" stroke-opacity=".35">
+    <circle cx="340" cy="150" r="70"/><circle cx="340" cy="150" r="105"/><circle cx="340" cy="150" r="140"/>
+  </g>
+  <g fill="var(--cosmos)">
+    <circle cx="270" cy="150" r="3"/><circle cx="410" cy="150" r="3"/><circle cx="340" cy="80" r="3"/><circle cx="340" cy="220" r="3"/>
+    <circle cx="266" cy="76" r="3"/><circle cx="414" cy="224" r="3"/><circle cx="414" cy="76" r="3"/><circle cx="266" cy="224" r="3"/>
+    <circle cx="200" cy="150" r="3"/><circle cx="480" cy="150" r="3"/><circle cx="340" cy="10" r="3"/><circle cx="340" cy="290" r="3"/>
+    <circle cx="241" cy="51" r="3"/><circle cx="439" cy="249" r="3"/><circle cx="439" cy="51" r="3"/><circle cx="241" cy="249" r="3"/>
+  </g>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+  </defs>
+  <g stroke="var(--cosmos)" stroke-width="1.5" marker-end="url(#ah)">
+    <line x1="490" y1="40" x2="455" y2="40"/><line x1="530" y1="110" x2="495" y2="110"/><line x1="530" y1="200" x2="495" y2="200"/><line x1="490" y1="268" x2="455" y2="268"/>
+  </g>
+  <circle cx="340" cy="150" r="14" fill="var(--ink)"/>
+  <line x1="358" y1="150" x2="420" y2="150" stroke="var(--local)" stroke-width="3" marker-end="url(#ah)"/>
+  <line x1="322" y1="150" x2="262" y2="150" stroke="var(--cosmos)" stroke-width="3" marker-end="url(#ah)"/>
+  <g font-family="JetBrains Mono, monospace" font-size="13" fill="var(--ink)">
+    <text x="372" y="140" fill="var(--local)">push → a</text>
+    <text x="232" y="174" fill="var(--cosmos)">← field from universe</text>
+    <text x="540" y="160" fill="var(--cosmos)">universe</text>
+    <text x="540" y="176" fill="var(--cosmos)">accelerates −a</text>
+  </g>
+</svg>
+<figcaption>In the body's rest frame, the accelerating universe produces a field through the second term of equation (2). That field pulls back against the acceleration. Sciama identifies it with inertia.</figcaption>
+</figure>
+
+<p>For a uniform universe the first term of (2) cancels: matter pulls equally from every side. Only the second term survives. Working it through with (1), the universe produces a field on the body of:</p>
+<div class="eq"><span class="big">E<sub>universe</sub> = − (|Φ| / c²) · a</span><span class="tag">(3)</span>
+<small>A field proportional to the body's acceleration and pointing against it. That is exactly what an inertial force looks like.</small></div>
+
+<h2><span class="n">§4</span>The postulate, and Newton's law falls out</h2>
+<p>Sciama's single assumption: <b>in its own rest frame, the total gravitational field on any body is zero.</b> A body never feels itself pulled, because it is always moving with the net field. Adding the <span class="l">local gravity g</span> from nearby masses to the <span class="u">universe term (3)</span>:</p>
+<div class="eq">g − (|Φ|/c²) · a = 0 &nbsp;&nbsp;⇒&nbsp;&nbsp; a = g · c² / |Φ|<span class="tag">(4)</span></div>
+<p>This is Newton's law of free fall, a = g, <i>exactly when</i></p>
+<div class="eq"><span class="big">|Φ<sub>universe</sub>| = c²</span> &nbsp;&nbsp;or equivalently&nbsp;&nbsp; G·M / (R·c²) ≈ 1<span class="tag">(5)</span>
+<small>M and R are the mass and size of the observable universe. Multiply both sides of (4) by m and you get F = m·a, with the mass m now measuring how strongly the body couples to the distant universe.</small></div>
+
+<h2><span class="n">§5</span>Does the real universe satisfy this?</h2>
+<p>Here is the striking part. Galaxies beyond about R ≈ c/H (H is the Hubble constant) recede faster than light and cannot contribute, so Sciama cuts the integral off there. For a uniform sphere the potential at the centre is Φ = −2πGρR². With R = c/H:</p>
+<div class="eq">|Φ| / c² = 2πGρ / H²<span class="tag">(6)</span></div>
+<p>Cosmology has its own natural density, the critical density ρ<sub>c</sub> = 3H²/(8πG), and we write the actual density as Ω·ρ<sub>c</sub>. Put that into (6) and the Hubble constant drops out completely:</p>
+<div class="eq"><span class="big">|Φ| / c² = ¾ · Ω</span><span class="tag">(7)</span>
+<small>Sciama's condition (5) becomes a statement about the density of the universe alone.</small></div>
+
+<section class="bench" aria-labelledby="b1">
+  <h3 id="b1">Bench 1 · Is the universe heavy enough?</h3>
+  <label for="omega">Density of the universe, as a fraction of critical: <b id="omegaOut">1.00</b></label>
+  <input id="omega" type="range" min="0.01" max="2" step="0.01" value="1">
+  <div class="presets" role="group" aria-label="Density presets">
+    <button type="button" data-o="0.05">Ordinary atoms only (Ω ≈ 0.05)</button>
+    <button type="button" data-o="0.31">All matter, incl. dark (Ω ≈ 0.31)</button>
+    <button type="button" data-o="1">Everything, incl. dark energy (Ω = 1)</button>
+    <button type="button" data-o="1.33">Exact Sciama value (Ω = 4/3)</button>
+  </div>
+  <div class="meter" aria-hidden="true"><i id="omBar"></i><b style="left:50%"></b></div>
+  <div class="readout">
+    <div><div class="k">|Φ| / c²</div><div class="v" id="phiOut">0.75</div></div>
+    <div><div class="k">Needed for a = g</div><div class="v">1.00</div></div>
+    <div><div class="k">Predicted a for g = 9.81 m/s²</div><div class="v" id="aOut">13.1</div></div>
+  </div>
+  <p class="note">The black mark is the value Newton's law needs. With all of today's measured energy content (Ω ≈ 1) the model lands within a factor of about 1.3. Using ordinary matter only, it misses by a factor of about 25. Whether dark energy should count is a question the 1953 model cannot answer.</p>
+</section>
+
+<p>In 1953 the numbers were far less precise, and Sciama's point was the order of magnitude. Nobody had a reason to expect G, the density of the universe and the Hubble rate to combine into a number near 1. In his model it is not a coincidence but a necessity: <b>G is set by the universe</b>.</p>
+<div class="eq">G ≈ c² / (2πρR²) &nbsp;&nbsp;or&nbsp;&nbsp; c² / G ≈ Σ m<sub>i</sub> / r<sub>i</sub><span class="tag">(8)</span>
+<small>The second form, summing over all masses m<sub>i</sub> at distances r<sub>i</sub>, is the version Alexander Unzicker uses in his own papers.</small></div>
+
+<h2><span class="n">§6</span>Where does your inertia come from?</h2>
+<p>Each shell of the universe at distance r contains mass proportional to r², while its potential falls off only as 1/r. So <b>farther shells contribute more</b>. The share of inertia coming from everything within distance r is (r/R)².</p>
+
+<section class="bench" aria-labelledby="b2">
+  <h3 id="b2">Bench 2 · Share of inertia from within a radius</h3>
+  <label for="rad">Radius: <b id="radOut"></b></label>
+  <input id="rad" type="range" min="-5" max="10.15" step="0.01" value="5">
+  <div class="presets" role="group" aria-label="Radius presets">
+    <button type="button" data-r="-4.8">Earth to Sun</button>
+    <button type="button" data-r="4.9">Milky Way</button>
+    <button type="button" data-r="6.7">Local Group</button>
+    <button type="button" data-r="9">1 billion light years</button>
+    <button type="button" data-r="10.15">Hubble radius</button>
+  </div>
+  <div class="readout">
+    <div><div class="k">Share of inertia</div><div class="v" id="shareOut"></div></div>
+    <div><div class="k">From beyond</div><div class="v" id="restOut"></div></div>
+  </div>
+  <p class="note">Uniform-density estimate with R = c/H ≈ 14 billion light years. The real Galaxy is denser than average, but even then the Sun adds about 10⁻⁸ and the Milky Way about 10⁻⁶ to Earth's |Φ|/c². Practically all inertia comes from the most distant galaxies.</p>
+</section>
+
+<h2><span class="n">§7</span>Rotation and Newton's bucket</h2>
+<p>The same reasoning works for rotation. In the frame of a spinning bucket the universe rotates around it. Rotating matter is a mass current, which produces the gravitational analogue of a magnetic field. Sciama showed that this field gives the water exactly the centrifugal and Coriolis forces, with the same factor |Φ|/c² = 1 as before. The curved water surface is caused by the rotating galaxies, as Mach suggested, rather than by absolute space.</p>
+
+<h2><span class="n">§8</span>What follows from it</h2>
+<ol class="steps">
+  <li><b>Inertial and gravitational mass are equal.</b> Both measure the same coupling, one to nearby matter and one to the whole universe. In Newton's theory this equality is an unexplained coincidence.</li>
+  <li><b>An empty universe has no inertia.</b> Remove the distant galaxies and |Φ| goes to zero, so equation (4) loses its meaning.</li>
+  <li><b>G may change over cosmic time.</b> If the universe expands and ρR² changes, G must change with it to keep (5) true. This connects to ideas of Dirac and later Brans and Dicke.</li>
+  <li><b>Nearby matter should matter a tiny bit.</b> If c²/G is a sum over masses, the varying Earth–Sun distance should change G by a part in a billion over the year. Unzicker and Fabian looked for this in superconducting-gravimeter data in 2006 and found no significant signal.</li>
+</ol>
+
+<h2><span class="n">§9</span>Limits of the model</h2>
+<p>Sciama presented this as a simplified model, not a replacement for general relativity. It is a linear theory, copying electromagnetism, while real gravity is non-linear. The cutoff at c/H and the instantaneous treatment of distant matter are rough. And the agreement in (7) depends on what you count as “the universe”. Sciama himself later worked mainly within general relativity, where Mach's principle is only partly realized, for example through frame dragging, which Gravity Probe B measured around the Earth.</p>
+<p>The paper remains the clearest example of the Machian idea worked out with numbers: inertia appears as the field of the whole universe acting back on an accelerating body.</p>
+
+<section aria-labelledby="sym">
+<h2 id="sym"><span class="n">§10</span>Symbols at a glance</h2>
+<div class="tbl"><table>
+  <thead><tr><th>Symbol</th><th>Meaning</th><th>Typical value</th></tr></thead>
+  <tbody>
+    <tr><td class="num">G</td><td>Gravitational constant</td><td class="num">6.674 × 10⁻¹¹ m³ kg⁻¹ s⁻²</td></tr>
+    <tr><td class="num">c</td><td>Speed of light</td><td class="num">2.998 × 10⁸ m/s</td></tr>
+    <tr><td class="num">H</td><td>Hubble constant</td><td class="num">≈ 70 km/s/Mpc ≈ 2.3 × 10⁻¹⁸ s⁻¹</td></tr>
+    <tr><td class="num">R = c/H</td><td>Hubble radius, cutoff of the integral</td><td class="num">≈ 1.3 × 10²⁶ m ≈ 14 billion ly</td></tr>
+    <tr><td class="num">ρ<sub>c</sub></td><td>Critical density 3H²/(8πG)</td><td class="num">≈ 9 × 10⁻²⁷ kg/m³</td></tr>
+    <tr><td class="num">Φ</td><td>Gravitational potential of the universe</td><td class="num">≈ −c² (Sciama's condition)</td></tr>
+    <tr><td class="num">A</td><td>Gravitational vector potential Φv/c</td><td class="num">—</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<footer>
+  Original: D. W. Sciama, “On the Origin of Inertia”, <i>Monthly Notices of the Royal Astronomical Society</i> 113 (1953) 34–42, available through the MNRAS / Oxford Academic archive and the NASA ADS. Numerical factors here follow the simple uniform-sphere version of the argument. Sciama's own presentation differs in details. Follow-ups: A. Unzicker, “Mach's Principle and a Variable Speed of Light”, arXiv:gr-qc/0511038; A. Unzicker &amp; K. Fabian, arXiv:gr-qc/0610028.
+</footer>
+</div>
+
+<script>
+(function(){
+  var om=document.getElementById('omega'), omOut=document.getElementById('omegaOut'),
+      phi=document.getElementById('phiOut'), aOut=document.getElementById('aOut'), bar=document.getElementById('omBar');
+  function upd(){
+    var o=parseFloat(om.value), p=0.75*o;
+    omOut.textContent=o.toFixed(2);
+    phi.textContent=p.toFixed(2);
+    aOut.textContent=(9.81/p).toFixed(1)+' m/s²';
+    bar.style.width=Math.min(100,p/2*100)+'%';
+  }
+  om.addEventListener('input',upd);
+  document.querySelectorAll('[data-o]').forEach(function(b){b.addEventListener('click',function(){om.value=b.dataset.o;upd();});});
+  upd();
+
+  var R=1.4e10, rad=document.getElementById('rad'), rOut=document.getElementById('radOut'),
+      sOut=document.getElementById('shareOut'), restOut=document.getElementById('restOut');
+  function fmtLy(ly){
+    if(ly<0.01){return (ly*63241).toPrecision(2)+' AU';}
+    if(ly<1e6){return Math.round(ly).toLocaleString('en')+' light years';}
+    if(ly<1e9){return (ly/1e6).toPrecision(3)+' million light years';}
+    return (ly/1e9).toPrecision(3)+' billion light years';
+  }
+  function sci(x){
+    if(x>=0.01){return (x*100).toFixed(x>=0.1?1:2)+' %';}
+    var e=Math.floor(Math.log10(x)), m=x/Math.pow(10,e);
+    var sup={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+    return m.toFixed(1)+' × 10'+String(e).split('').map(function(c){return sup[c];}).join('');
+  }
+  function upr(){
+    var ly=Math.min(R,Math.pow(10,parseFloat(rad.value)));
+    var f=Math.min(1,(ly/R)*(ly/R));
+    rOut.textContent=fmtLy(ly);
+    sOut.textContent=sci(f);
+    restOut.textContent=f>=0.9999?'0 %':(f<1e-4?'≈ 100 %':((1-f)*100).toFixed(2)+' %');
+  }
+  rad.addEventListener('input',upr);
+  document.querySelectorAll('[data-r]').forEach(function(b){b.addEventListener('click',function(){rad.value=b.dataset.r;upr();});});
+  upr();
+})();
+</script>
+
+</body>
+</html>
