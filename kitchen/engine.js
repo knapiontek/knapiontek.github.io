@@ -278,7 +278,7 @@
     // every thickness comes from the material of the type or part
     const { materialFor } = materialUses(P.materials);
     const thickness = Object.fromEntries(Object.entries(materialFor).map(([use, code]) => [use, P.materials[code].thickness]));
-    // label of each material: name + thickness, e.g. "Chipboard Egger U963 ST9 diamond grey 18"
+    // label of each material: name + thickness, e.g. "Chipboard Egger U708 ST9 light grey 18"
     const materials = Object.fromEntries(Object.entries(P.materials).map(([code, m]) => [code, { ...m, label: m.name + ' ' + m.thickness }]));
     const board = thickness.carcass, half = board / 2, frontThickness = thickness.cabinet, carcassDepth = settings.carcass.depth;
     // depths from the wall (n)

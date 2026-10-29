@@ -2,9 +2,9 @@
    Plain JSON after "window.KITCHEN_DESIGN =". Edit it in design.html (Import data / Export data). */
 window.KITCHEN_DESIGN = {
  "materials": {
-  "chipGrey18": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 18, "color": "#4a4d51", "core": "#f2efe8", "uses": ["carcass"]},
-  "chipGrey16": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 16, "color": "#4a4d51", "core": "#f2efe8", "uses": ["drawerBox", "hobPanel"]},
-  "hdfGrey3": {"name": "HDF szary lakierowany", "thickness": 3, "color": "#c6c8c9", "uses": ["back"]},
+  "chipGrey18": {"name": "Płyta wiórowa Egger U708 ST9 szary jasny", "thickness": 18, "color": "#9a9d9c", "core": "#f2efe8", "uses": ["carcass"]},
+  "chipGrey16": {"name": "Płyta wiórowa Egger U708 ST9 szary jasny", "thickness": 16, "color": "#9a9d9c", "core": "#f2efe8", "uses": ["drawerBox", "hobPanel"]},
+  "hdfGrey3": {"name": "HDF szary lakierowany", "thickness": 3, "color": "#a2a4a6", "uses": ["back"]},
   "shakerNavy18": {"name": "Front shaker English Navy satyna", "thickness": 18, "color": "#3a4868", "lacquered": true, "core": "#f2efe8", "uses": ["frame", "cabinet", "drawer"]},
   "mdfNavy18": {"name": "Panel gładki English Navy satyna", "thickness": 18, "color": "#3a4868", "lacquered": true, "core": "#f2efe8", "uses": ["panel", "plinth"]},
   "chipOak18": {"name": "Płyta laminowana Egger H1180 ST37 dąb Halifax", "thickness": 18, "uses": ["splash"]},
@@ -48,7 +48,7 @@ window.KITCHEN_DESIGN = {
   ["Pomieszczenie", "Podłoga gres, ściany białe", "Szare płytki 120 × 60"],
   ["Okno", "Nad blatem grupy 1", "1900 × 1300"],
   ["Oświetlenie", "Oczka nad zabudową wysoką i nad zlewem", "Lampy wiszące nad wyspą"],
-  ["Korpusy", "Płyta wiórowa Egger U963 ST9 szary diamentowy", "Cięcie i oklejanie w hurtowni płyt"],
+  ["Korpusy", "Płyta wiórowa Egger U708 ST9 szary jasny", "Cięcie i oklejanie w hurtowni płyt"],
   ["Fronty", "Shaker, English Navy satyna", "Lakierowane dookoła"],
   ["Szczeliny frontów", "Każda widoczna szczelina 3: między frontami 3 (góra dolnego) + 0 (dół górnego); 3 do listew i blatu; przy AGD zależnie od urządzenia (kosztorys, Notatki)", "0 przy cokole, 5 nad blatem"],
   ["Listwy, panele", "Lakierowane, w płaszczyźnie frontów", "Narożnik L: panel grupy 2 zakrywa koniec panelu grupy 1"],

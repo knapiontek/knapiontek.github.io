@@ -142,10 +142,10 @@ window.KITCHEN_COST = {
      "spec": "arkusz {v:sheet.length}×{v:sheet.width}, + odpad",
      "qty": "=ROUNDUP({carcass.m2}*(1+{waste})/{sheet},0)",
      "unit": "ark.",
-     "price": 329.44,
+     "price": 268.18,
      "refs": ["carcassBoard"],
      "source": "Bielsko-Biała",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-U963-ST9-2800x2070x18MM-Szary-diamentowy/2224"}]
+     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-U708-ST9-2800x2070x18MM-Szary-jasny/2219"}]
     },
     {
      "id": "drawerBoard",
@@ -153,9 +153,9 @@ window.KITCHEN_COST = {
      "spec": "dna i tyły szuflad, szuflady za drzwiami, przegroda pod płytą",
      "qty": "=ROUNDUP({drawerBox.m2}*(1+{waste})/{sheet},0)",
      "unit": "ark.",
-     "price": 392.74,
+     "price": 344.40,
      "source": "Bielsko-Biała",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-U963U963-ST9-2800x2070x16MM-Szary-diamentowy/2419"}]
+     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-U708-ST9-2800x2070x16MM-Szary-jasny/2190"}]
     },
     {
      "id": "backBoard",
@@ -179,16 +179,16 @@ window.KITCHEN_COST = {
     },
     {
      "id": "carcassEdging",
-     "name": "Oklejanie ABS 0,8, Egger U963 ST9 szary diamentowy (dekor korpusu)",
+     "name": "Oklejanie ABS 0,8, Egger U708 ST9 szary jasny (dekor korpusu)",
      "spec": "krawędzie korpusów i szuflad za drzwiami wg sumy ABS z listy cięć + {v:edgeAllowance|%}",
      "qty": "=({carcass.edge}+{drawerBox.edge})*(1+{v:edgeAllowance})",
      "unit": "mb",
      "price": 6,
-     "source": "M-HM - cena do potwierdzenia; szacunek wg ciecieoklejanie.pl (usługa oklejania, płyty 10–18 mm, 6/mb z obrzeżem (samo obrzeże U963 ST9 23/0,8: 2,48/mb))",
+     "source": "M-HM - cena do potwierdzenia; szacunek wg ciecieoklejanie.pl (usługa oklejania, płyty 10–18 mm, 6/mb z obrzeżem (samo obrzeże U708 ST9 23/0,8: 1,77/mb w M-HM))",
      "links": [
       {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/i/Uslugi/16"},
       {"shop": "ciecieoklejanie.pl", "url": "https://ciecieoklejanie.pl/cennik/"},
-      {"shop": "belladlamebli.com", "url": "https://belladlamebli.com/pozostale/5507-absb-obrzeze-u963-st9-szary-diamentowy-23-0-8.html"}
+      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-U708-ST9-230.8MM-Szary-jasny/1146"}
      ]
     },
     {
