@@ -7,6 +7,7 @@
      front       the visible fascia [width, height]; projection = its thickness, in front of the niche
      feet        height of the body bottom above the floor it stands on; "adjustable" = adjustable feet
      frontBottom front bottom from the body bottom
+     door        the appliance door: hinge = the edge it turns about (bottom | left | right, seen from the front)
      niche       the installation niche {h, w: [min, max], d}
      source      where every value comes from; "assumed" = not in the documents, to check
      links       the documents [{name, url}]; the first one is the installation drawing or the product page
@@ -15,16 +16,16 @@
    baseSetback: how far behind the front the base is open), hob (glass [width, depth]), sink (outer [width, depth];
    bowl [width, depth, depth down]; rim and wall thickness), hood (chimney [width, depth]). */
 window.KITCHEN_APPLIANCES = {
- "oven": {"name": "Bosch HBA534BB3", "body": [558, 570, 528.5], "front": [594, 595], "projection": 19.5, "feet": 0, "frontBottom": 0,
+ "oven": {"name": "Bosch HBA534BB3", "body": [558, 570, 528.5], "front": [594, 595], "projection": 19.5, "feet": 0, "frontBottom": 0, "door": {"hinge": "bottom"},
   "niche": {"h": [585, 595], "w": [560, 568], "d": 550},
   "source": "installation drawing HBA534BB0A: housing 570 and front 594 × 595 (19.5 thick) both stand on the board, the front ends 25 above the housing; overall depth 548 (body 548 − 19.5); body width 558: assumed (drawing gives only the niche 560 +8)",
   "links": [
    {"name": "Karta produktu z rysunkiem zabudowy (PDF, PL)", "url": "https://media3.bosch-home.com/Documents/specsheet/pl-PL/HBA534BB3.pdf"},
    {"name": "Instrukcja, montaż s. 26–27 (PDF)", "url": "https://media3.bosch-home.com/Documents/9001910274_B.pdf"}
   ]},
- "micro": {"name": "Bosch BFL623MB3", "body": [442, 338, 315], "front": [595, 382], "projection": 20, "feet": "adjustable", "frontBottom": -13,
+ "micro": {"name": "Bosch BFL623MB3", "body": [442, 338, 315], "front": [595, 382], "projection": 20, "feet": "adjustable", "frontBottom": -13, "door": {"hinge": "left"},
   "niche": {"h": [380, 382], "w": [560, 568], "d": 550},
-  "source": "installation drawing BFL623MB3, tall cabinet: front 595 × 382, 20 thick; body 442 × 338 × 315 on adjustable feet (12 in the drawing); the front 13 below the body",
+  "source": "installation drawing BFL623MB3, tall cabinet: front 595 × 382, 20 thick; body 442 × 338 × 315 on adjustable feet (12 in the drawing); the front 13 below the body; door hinged on the left (controls on the right)",
   "links": [
    {"name": "Strona produktu z dokumentami (PL)", "url": "https://www.bosch-home.pl/pl/product/gotowanie-i-pieczenie/kuchenki-mikrofalowe/kuchenki-mikrofalowe-do-zabudowy/BFL623MB3"},
    {"name": "Instrukcja montażu, s. 24–25 (PDF, PL)", "url": "https://maxelektro.pl/storage/file/pimcore_import/2024/12/17/94c9b8f85ca9df2e0ed5ed5def050d92/kuchenka-mikrofalowa-bosch-serie-2-bfl623mb3-instrukcja-montazu.pdf"}

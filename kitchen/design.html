@@ -290,19 +290,17 @@
         <div class="sheet-wrap">
           <table class="sheet read-only">
             <thead>
-              <tr><th style="width:64px">Kod</th><th style="width:200px">Nazwa</th><th style="width:72px">Grubość</th><th style="width:56px" title="Kolor płyty; tekstura dębu, gdy materiał nie ma koloru">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Typy elementów z tego materiału">Typy</th><th style="width:150px" title="Części korpusu z tego materiału">Części</th><th style="width:150px" title="Głębokość blatu; wyspa: blat z tagiem wyspa">Głębokość</th></tr>
+              <tr><th style="width:64px">Kod</th><th style="width:200px">Nazwa</th><th style="width:96px" title="Grubość; × głębokość, gdy materiał ją podaje (blat)">Wymiar</th><th style="width:56px" title="Kolor płyty; tekstura dębu, gdy materiał nie ma koloru">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w design.js)">Użycie</th></tr>
             </thead>
             <tbody>
               <template x-for="m in materials" :key="m.code">
                 <tr>
                   <td x-text="m.code"></td>
                   <td x-text="m.name"></td>
-                  <td class="num" x-text="m.thickness"></td>
+                  <td class="num" x-text="m.thickness + (m.depth ? ' × ' + m.depth : '')"></td>
                   <td><i class="swatch" :style="`background:${m.color || OAK_SWATCH}`" :title="m.color || 'tekstura dębu'"></i></td>
                   <td class="center" x-text="m.lacquered ? '✓' : ''"></td>
-                  <td x-text="m.types.map(KE.typeLabel).join(', ')"></td>
-                  <td x-text="m.parts.map(part => KE.LABELS.part[part]).join(', ')"></td>
-                  <td x-text="Object.entries(m.depth || {}).map(([kind, mm]) => (KE.LABELS.worktopDepth[kind] || kind) + ' ' + mm).join(', ')"></td>
+                  <td x-text="(m.uses || []).map(KE.useLabel).join(', ')"></td>
                 </tr>
               </template>
             </tbody>
@@ -850,9 +848,9 @@ document.addEventListener('alpine:init', () => {
     // the project (design.js) into the tables
     setProject(project) {
       loadedProject = project;
-      // shown, not edited; uses split into board types and carcass parts (KE.PARTS)
+      // shown, not edited; uses as design.js lists them
       this.materials = Object.entries(project.materials || {})
-        .map(([code, m]) => ({ code, ...m, types: (m.uses || []).filter(u => !KE.PARTS.includes(u)), parts: (m.uses || []).filter(u => KE.PARTS.includes(u)) }))
+        .map(([code, m]) => ({ code, ...m }))
         .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: design.js order
       this.notes = (project.notes || []).map(([name, description, details]) => this.newNoteRow(name ?? '', description ?? '', details ?? ''));
       this.columns = Object.entries(project.columns || {}).flatMap(([group, widths]) => widths.map(w => this.newColumnRow(Number(group), w)));

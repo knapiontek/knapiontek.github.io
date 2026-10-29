@@ -2,13 +2,14 @@
    Plain JSON after "window.KITCHEN_DESIGN =". Edit it in design.html (Import data / Export data). */
 window.KITCHEN_DESIGN = {
  "materials": {
-  "grey18": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 18, "color": "#4a4d51", "core": "#f2efe8", "uses": ["carcass"]},
-  "grey16": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 16, "color": "#4a4d51", "core": "#f2efe8", "uses": ["drawerBox", "hobPanel"]},
-  "hdf3": {"name": "HDF szary lakierowany", "thickness": 3, "color": "#c6c8c9", "uses": ["back"]},
-  "mdfnavy18": {"name": "Front shaker English Navy satyna", "thickness": 18, "color": "#1c2744", "lacquered": true, "core": "#f2efe8", "uses": ["frame", "cabinet", "drawer"]},
-  "navy18": {"name": "Panel gładki English Navy satyna", "thickness": 18, "color": "#1c2744", "lacquered": true, "core": "#f2efe8", "uses": ["panel", "plinth"]},
-  "oak18": {"name": "Płyta laminowana Egger H1180 ST37 dąb Halifax", "thickness": 18, "uses": ["splash"]},
-  "oak38": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "depth": {"worktop": 600, "island": 900}, "uses": ["worktop"]}
+  "chipGrey18": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 18, "color": "#4a4d51", "core": "#f2efe8", "uses": ["carcass"]},
+  "chipGrey16": {"name": "Płyta wiórowa Egger U963 ST9 szary diamentowy", "thickness": 16, "color": "#4a4d51", "core": "#f2efe8", "uses": ["drawerBox", "hobPanel"]},
+  "hdfGrey3": {"name": "HDF szary lakierowany", "thickness": 3, "color": "#c6c8c9", "uses": ["back"]},
+  "shakerNavy18": {"name": "Front shaker English Navy satyna", "thickness": 18, "color": "#1c2744", "lacquered": true, "core": "#f2efe8", "uses": ["frame", "cabinet", "drawer"]},
+  "mdfNavy18": {"name": "Panel gładki English Navy satyna", "thickness": 18, "color": "#1c2744", "lacquered": true, "core": "#f2efe8", "uses": ["panel", "plinth"]},
+  "chipOak18": {"name": "Płyta laminowana Egger H1180 ST37 dąb Halifax", "thickness": 18, "uses": ["splash"]},
+  "topOak38x600": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "depth": 600, "uses": ["worktop"]},
+  "topOak38x900": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "depth": 900, "uses": ["islandWorktop"]}
  },
  "settings": {
   "carcass": {"depth": 550, "wallGap": 14, "legs": 4},
@@ -16,6 +17,7 @@ window.KITCHEN_DESIGN = {
   "rails": {"depth": 100, "hobFront": 50, "hobPanelGap": 20},
   "shelf": {"setback": 18, "clearance": 1, "pins": 4, "perDoor": [[720, 1], [99999, 3]], "ventGap": 150, "fridgeNiche": 1775},
   "pullOutShelf": {"depth": 500, "clearance": 5, "lift": 20, "space": 450, "shelvesAbove": 2},
+  "pullouts": {"perDoor": [[99999, 2]], "side": 150, "lift": 10, "runner": {"gap": 13, "lengths": [250, 300, 350, 400, 450, 500, 550]}},
   "hinges": {"fromEnd": 100, "supportDepth": 80, "aboveShelf": 30, "perDoor": [[900, 2], [1600, 3], [99999, 4]]},
   "drawers": {"dFrom": 350, "D": {"side": 224, "back": 199}, "M": {"side": 83, "back": 84}, "bottom": {"inset": 75, "depth": 476, "fromWall": 52}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "back": 84, "frontDeduction": 132}},
   "front": {"shakerRail": 50},
@@ -52,7 +54,7 @@ window.KITCHEN_DESIGN = {
   ["Listwy, panele", "Lakierowane, w płaszczyźnie frontów", "Narożnik L: panel grupy 2 zakrywa koniec panelu grupy 1"],
   ["Zabudowa GK", "Płyta GK na profilach", "Do sufitu, także na końcu grupy 2"],
   ["Uchwyty", "IKEA ENERYDA muszelka, mosiądz", ""],
-  ["Okucia", "Blum: zawiasy z cichym domykaniem, szuflady TANDEMBOX", ""],
+  ["Okucia", "Blum: zawiasy z cichym domykaniem, szuflady TANDEMBOX", "K12 dół: 2 szuflady z płyty na prowadnicach kulkowych GTV za drzwiami"],
   ["Blat", "Egger H1180 ST37 dąb Halifax", "Grupa 1 jednym kawałkiem; boki blatu z tej samej płyty"],
   ["Panel ścienny", "Egger H1180 ST37 dąb Halifax przy oknie, pod kolor blatu", ""],
   ["Cokół", "Lakierowany, wilgocioodporny, na nóżkach", "Kratki pod lodówką i piekarnikiem"],
@@ -108,7 +110,7 @@ window.KITCHEN_DESIGN = {
   {"group": 2, "column": 9, "span": 1, "type": "cabinet", "tags": "fridge", "carcass": "K10", "height": 1200, "handle": "L", "hinge": "R", "gaps": [3, 3, 3, 0], "note": "Bosch KIS86AFE0"},
   {"group": 2, "column": 9, "span": 1, "type": "cabinet", "carcass": "K11", "height": 480, "handle": "B", "hinge": "R", "gaps": [3, 3, 3, 0]},
   {"group": 2, "column": 10, "span": 1, "type": "frame", "height": 2400},
-  {"group": 2, "column": 11, "span": 1, "type": "cabinet", "carcass": "K12", "height": 720, "handle": "T", "hinge": "R", "gaps": [3, 3, 3, 0]},
+  {"group": 2, "column": 11, "span": 1, "type": "cabinet", "tags": "pullouts", "carcass": "K12", "height": 720, "handle": "T", "hinge": "R", "gaps": [3, 3, 3, 0], "note": "2 szuflady z płyty na prowadnicach kulkowych"},
   {"group": 2, "column": 11, "span": 1, "type": "cabinet", "carcass": "K12", "height": 1200, "handle": "L", "hinge": "R", "gaps": [3, 3, 3, 0]},
   {"group": 2, "column": 11, "span": 1, "type": "cabinet", "carcass": "K13", "height": 480, "handle": "B", "hinge": "R", "gaps": [3, 3, 3, 0]},
   {"group": 2, "column": 12, "span": 1, "type": "frame", "height": 2550},

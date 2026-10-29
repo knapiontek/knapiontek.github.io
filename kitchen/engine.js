@@ -3,8 +3,8 @@
    from design.js (settings, columns, components) or from the tables at the top of this file.
 
    Coordinates in mm per group: u along the group, v up from the floor, n out from the wall; a box is [u0, u1, v0, v1, n0, n1].
-   data.materials:  what you buy, by code: name, thickness, color, lacquered, core, depth (worktop), uses (USES: the board types and
-                    carcass parts made of it; each use in exactly one material).
+   data.materials:  what you buy, by code: name, thickness, color, lacquered, core, depth (a worktop: its depth), uses (USES: the
+                    board types and carcass parts made of it; each use in exactly one material).
    data.settings:   construction settings (REQUIRED_SETTINGS).
    data.columns:    column widths per group, integer mm.
    data.components: group, column (the first one), span (number of columns), height, type (one of TYPES), tags (tags of that type, space separated),
@@ -30,8 +30,9 @@
     bins: ['drawer'],        // waste-sorting bins in the drawer
     inner: ['drawer'],       // inner cutlery drawer above the drawer box, behind the same front
     fall: ['worktop'],       // worktop fall: the worktop board turned down to the floor
-    island: ['worktop'],     // island worktop: the island depth of the worktop material, the island back panel, no wall
+    island: ['worktop'],     // island worktop: made of the islandWorktop material, the island back panel, no wall
     coffee: ['cabinet'],     // pull-out shelf at the bottom, shelves above it, no other shelves
+    pullouts: ['cabinet'],   // drawers of board on ball runners behind the door, a spacer on the hinge side, no shelves
     fridge: ['cabinet'],     // front on a built-in fridge door: no hinges, no shelves, no back
     freezer: ['cabinet'],    // the same, freezer door
     dishwasher: ['cabinet']  // front on a built-in dishwasher door: no carcass, no hinges
@@ -45,10 +46,12 @@
 
   // parts the engine adds inside a carcass; with the board types they are the uses a material lists
   const PARTS = ['carcass', 'back', 'drawerBox', 'hobPanel'];
-  const USES = [...BOARD_TYPES, ...PARTS];
+  // the worktop of a group whose worktop has the tag island: its own material (its depth and thickness), needed only when there is an island
+  const ISLAND_USE = 'islandWorktop';
+  const USES = [...BOARD_TYPES, ISLAND_USE, ...PARTS];
 
   // carcass flags: a carcass has the flag when one of its boxes has one of the tags
-  const CARCASS_FLAGS = { sink: ['sink'], hob: ['hob'], fridge: ['fridge', 'freezer'], coffee: ['coffee'] };
+  const CARCASS_FLAGS = { sink: ['sink'], hob: ['hob'], fridge: ['fridge', 'freezer'], coffee: ['coffee'], pullouts: ['pullouts'] };
 
   // a carcass on a plinth gets a ventilation grille in the plinth when it holds one of these (air intake for the appliance)
   const GRILLE_FOR = { types: ['oven'], tags: ['fridge', 'freezer'] };
@@ -60,14 +63,14 @@
     type: { filler: 'wypełnienie', board: 'zabudowa GK', plinth: 'cokół', worktop: 'blat', splash: 'panel ścienny', panel: 'panel',
       frame: 'listwa', cabinet: 'szafka', drawer: 'szuflada', oven: 'piekarnik', micro: 'mikrofalówka' },
     tag: { dummy: 'atrapa', hob: 'płyta grzewcza', sink: 'zlew', bins: 'kosze', inner: 'szuflada wewnętrzna', fall: 'bok blatu', island: 'wyspa',
-      coffee: 'ekspres', fridge: 'lodówka', freezer: 'zamrażarka', dishwasher: 'zmywarka' },
+      coffee: 'ekspres', pullouts: 'szuflady za drzwiami', fridge: 'lodówka', freezer: 'zamrażarka', dishwasher: 'zmywarka' },
     carcassType: { base: 'dolna', tall: 'słupek', wall: 'górna' },
-    flag: { sink: 'zlew', hob: 'płyta grzewcza', fridge: 'lodówka', coffee: 'ekspres' },
+    flag: { sink: 'zlew', hob: 'płyta grzewcza', fridge: 'lodówka', coffee: 'ekspres', pullouts: 'szuflady za drzwiami' },
     opening: { door: 'drzwi', drawer: 'szuflada', fixed: 'atrapa', fridge: 'drzwi lodówki', dishwasher: 'drzwi zmywarki' },
     edge: { front: 'przód', top: 'góra', bottom: 'dół', left: 'lewa', right: 'prawa' },
     handle: { T: 'góra', B: 'dół', L: 'lewa', R: 'prawa' },
-    part: { carcass: 'korpus', back: 'plecy', drawerBox: 'szuflady', hobPanel: 'przegroda pod płytą' },
-    worktopDepth: { worktop: 'blat', island: 'wyspa' },
+    // uses that are not a type (the types have their own label)
+    use: { islandWorktop: 'blat wyspy', carcass: 'korpus', back: 'plecy', drawerBox: 'szuflady', hobPanel: 'przegroda pod płytą' },
     hole: { cup: 'puszka zawiasu', plate: 'prowadnik zawiasu', shelfPin: 'podpórka półki', runner: 'prowadnica szuflady / półki wysuwanej', sink: 'wycięcie na zlew', hob: 'wycięcie na płytę grzewczą' },
     // short codes of the holes and cut-outs in the cutting list (its legend explains them)
     holeCode: { cup: 'Z', plate: 'P', shelfPin: 'K', runner: 'S', sink: 'ZL', hob: 'PG' },
@@ -75,6 +78,7 @@
   };
   const typeLabel = type => LABELS.type[type] || type;
   const tagsLabel = words => words.map(w => LABELS.type[w] || LABELS.tag[w] || w).join(' ');
+  const useLabel = use => LABELS.use[use] || typeLabel(use); // a material use: a type or a part
 
   // how a front opens, from its type and tags (first rule that matches)
   function openingOf(item) {
@@ -112,6 +116,7 @@
     'drawers.liftAtBottom', 'drawers.liftAbove', 'drawers.inner.gap', 'drawers.inner.back', 'drawers.inner.frontDeduction',
     'carcass.legs', 'island.backPanel', 'worktop.overhang',
     'pullOutShelf.depth', 'pullOutShelf.clearance', 'pullOutShelf.lift', 'pullOutShelf.space', 'pullOutShelf.shelvesAbove',
+    'pullouts.perDoor', 'pullouts.side', 'pullouts.lift', 'pullouts.runner.gap', 'pullouts.runner.lengths',
     'plasterboard.depth', 'plasterboard.studSpacing', 'plasterboard.layers',
     'drilling.cup.diameter', 'drilling.cup.depth', 'drilling.cup.fromEdge',
     'drilling.plate.diameter', 'drilling.plate.depth', 'drilling.plate.fromFront', 'drilling.plate.spacing',
@@ -163,7 +168,7 @@
         else materialFor[use] = code;
       }
     }
-    for (const use of USES) if (!materialFor[use]) problems.push(`Żaden materiał nie ma użycia ${use}.`);
+    for (const use of USES) if (!materialFor[use] && use !== ISLAND_USE) problems.push(`Żaden materiał nie ma użycia ${use}.`);
     const frontThicknesses = new Set(FRONT_TYPES.filter(t => materialFor[t]).map(t => (materials || {})[materialFor[t]].thickness));
     if (frontThicknesses.size > 1) problems.push(`Materiały frontów (${FRONT_TYPES.join(', ')}) muszą mieć jedną grubość: płaszczyzna frontów.`);
     return { materialFor, problems };
@@ -173,7 +178,7 @@
   function checkSettings(project) {
     const settings = (project && project.settings) || {}, problems = [...materialUses(project && project.materials).problems];
     for (const path of REQUIRED_SETTINGS) if (valueAt(settings, path) === undefined) problems.push(`Brak ustawienia ${path}.`);
-    for (const path of ['shelf.perDoor', 'hinges.perDoor']) {
+    for (const path of ['shelf.perDoor', 'hinges.perDoor', 'pullouts.perDoor']) {
       const table = valueAt(settings, path);
       if (table !== undefined && !(Array.isArray(table) && table.every(row => Array.isArray(row) && row.length === 2))) {
         problems.push(`Ustawienie ${path} musi być tabelą [[maxHeight, count], ...].`);
@@ -293,7 +298,7 @@
     // engine counts, used by cost.html as {n:name}; type and tag: items per type / tag ({n:type.oven}, {n:tag.bins})
     const counts = {
       carcasses: 0, floorCarcasses: 0, wallFixedCarcasses: 0, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
-      shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
+      shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, pullouts: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
       plasterUD: 0, plasterCD: 0, plasterEdge: 0, plinthHeight: 0, drillHoles: 0, cupHoles: 0, cutouts: 0, type: {}, tag: {}
     };
 
@@ -347,9 +352,10 @@
         for (const tag of item.tags) counts.tag[tag] = (counts.tag[tag] || 0) + 1;
         // a board seen on edge must be as thick as its material: worktop (fall: its width), frame (its narrow side)
         const width = item.u1 - item.u0, height = item.v1 - item.v0;
-        const [part, size, what] = item.type === 'worktop' ? ['worktop', hasTag(item, 'fall') ? width : height, hasTag(item, 'fall') ? 'szerokość' : 'wysokość']
+        const [part, size, what] = item.type === 'worktop' ? [groups[g].island ? ISLAND_USE : 'worktop', hasTag(item, 'fall') ? width : height, hasTag(item, 'fall') ? 'szerokość' : 'wysokość']
           : item.type === 'frame' ? ['frame', Math.min(width, height), height > width ? 'szerokość' : 'wysokość'] : [];
-        if (part && size !== thickness[part]) warn(`${placeOf(item)}: ${typeLabel(item.type)} - ${what} ${size} nie zgadza się z materiałem ${materials[materialFor[part]].label}.`, item.index);
+        if (part && !materialFor[part]) warn(`Grupa ${g}: wyspa potrzebuje materiału z użyciem ${part}.`, item.index);
+        else if (part && size !== thickness[part]) warn(`${placeOf(item)}: ${typeLabel(item.type)} - ${what} ${size} nie zgadza się z materiałem ${materials[materialFor[part]].label}.`, item.index);
       }
     }
 
@@ -509,7 +515,7 @@
       } else if (!K.sink && !K.fridge) {
         // per door, by its front height (settings.shelf.perDoor), evenly between the boards above and below the door
         for (const b of K.boxes) {
-          if (b.type !== 'cabinet') continue;
+          if (b.type !== 'cabinet' || hasTag(b, 'pullouts')) continue; // behind a door with pullouts: the drawers, no shelves
           const lo = b.v0 === v0 ? v0 + board : b.v0 + half;
           const hi = b.v1 === v1 ? v1 - board : b.v1 - half;
           const frontHeight = frontBox(b).v1 - frontBox(b).v0, count = countByHeight(shelf.perDoor, frontHeight);
@@ -565,7 +571,7 @@
       }
     }
 
-    // ---- worktops: depth from the worktop material (island: its island depth); behind the carcass = depth - carcass - front - overhang ----
+    // ---- worktops: depth and thickness from the worktop material (island: the islandWorktop material); behind the carcass = depth - carcass - front - overhang ----
     for (const G of Object.values(groups)) {
       const top = G.items.find(i => i.type === 'worktop' && !hasTag(i, 'fall')); // the top board, not a worktop fall
       if (!G.items.some(i => i.type === 'worktop')) continue;
@@ -573,14 +579,16 @@
         warn(`Grupa ${G.group}: boki blatu bez blatu na górze.`);
         continue;
       }
-      const kind = G.island ? 'island' : 'worktop', depth = (P.materials[materialFor.worktop].depth || {})[kind];
+      const use = G.island ? ISLAND_USE : 'worktop', material = materialFor[use];
+      if (!material) continue; // reported with the worktop thickness
+      const depth = P.materials[material].depth;
       if (!Number.isFinite(depth)) {
-        warn(`Grupa ${G.group}: materiał blatu nie ma głębokości dla: ${LABELS.worktopDepth[kind]}.`);
+        warn(`Grupa ${G.group}: materiał ${material} (${useLabel(use)}) nie ma głębokości.`);
         continue;
       }
       const behind = depth - carcassDepth - frontThickness - settings.worktop.overhang;
       if (behind < 0) warn(`Grupa ${G.group}: blat ${depth} jest krótszy niż korpus + front + nawis (${carcassDepth + frontThickness + settings.worktop.overhang}).`);
-      worktops[G.group] = { n0: carcassBack - behind, n1: frontFace + settings.worktop.overhang, depth, back: behind, v0: top.v0, v1: top.v1, thickness: thickness.worktop };
+      worktops[G.group] = { n0: carcassBack - behind, n1: frontFace + settings.worktop.overhang, depth, back: behind, v0: top.v0, v1: top.v1, use, material, thickness: thickness[use] };
     }
 
     // ---- island back panel: panel material, between the end columns, floor to the carcass tops, on the carcass backs ----
@@ -614,6 +622,37 @@
       while (!clear(h) && h < front.v1) h++;
       if (h > front.v1 - hingeSettings.fromEnd / 2) warn(`${placeOf(item)}: zawias nad półką wychodzi poza drzwi - przesuń półkę.`, item.index);
       return h;
+    }
+    // drawers behind a door (tag pullouts): boxes of drawerBox board on ball runners, settings.pullouts.perDoor of them by the front height,
+    // evenly between the boards above and below the door. The hinges take hinges.supportDepth at the carcass front (as a hinge post):
+    // behind that depth a spacer of carcass board on the hinge side carries the runners there, so the boxes pass the hinges and the
+    // open door; the boxes start at the same depth. Box: bottom under, sides, front and back between the sides; runner.gap per side.
+    function addPullouts(item, front, K) {
+      const S = settings.pullouts, t = thickness.drawerBox, at = placeOf(item);
+      if (item.hinge === 'L' ? item.u0 !== K.u0 : item.u1 !== K.u1) return warn(`${at}: szuflady za drzwiami - drzwi muszą sięgać boku korpusu po stronie zawiasów.`, item.index);
+      const count = countByHeight(S.perDoor, front.height);
+      if (count === null) return warn(`${at}: wysokość frontu ${front.height} przekracza ostatni wiersz settings.pullouts.perDoor.`, item.index);
+      const n1 = carcassFront - hingeSettings.supportDepth, length = Math.max(...S.runner.lengths.filter(l => l <= n1 - carcassBack));
+      if (!Number.isFinite(length)) return warn(`${at}: żadna prowadnica z settings.pullouts.runner.lengths nie mieści się w ${n1 - carcassBack}.`, item.index);
+      const lo = item.v0 === K.v0 ? K.v0 + board : item.v0 + half, hi = item.v1 === K.v1 ? K.v1 - board : item.v1 - half;
+      const innerU0 = K.u0 + board, innerU1 = K.u1 - board, right = item.hinge === 'R';
+      const spacer = right ? [innerU1 - board, innerU1] : [innerU0, innerU0 + board];
+      addBoard({ id: 'spacer', name: 'Płyta dystansowa', a: n1 - carcassBack, b: hi - lo, material: materialFor.carcass, layer: 'carcasses', group: K.group, carcassId: K.id,
+        box: [...spacer, lo, hi, carcassBack, n1], edges: [['front', hi - lo]] });
+      const u0 = (right ? innerU0 : spacer[1]) + S.runner.gap, u1 = (right ? spacer[0] : innerU1) - S.runner.gap, n0 = n1 - length, pitch = (hi - lo) / count;
+      front.pullouts = { count, runner: length, width: u1 - u0, depth: length, height: t + S.side, boxes: [] };
+      for (let j = 0; j < count; j++) {
+        const v = Math.round(lo + S.lift + j * pitch), top = v + t + S.side, next = j + 1 < count ? Math.round(lo + S.lift + (j + 1) * pitch) : hi;
+        if (top > next) warn(`${at}: szuflada za drzwiami ${j + 1} (${t + S.side}) nie mieści się pod następną płytą.`, item.index);
+        const common = { material: materialFor.drawerBox, layer: 'drawers', group: K.group, carcassId: K.id, frontId: front.id, pullout: j, edges: [] };
+        addBoard({ id: 'pulloutBottom', name: 'Dno szuflady za drzwiami', a: u1 - u0, b: length, ...common, box: [u0, u1, v, v + t, n0, n1] });
+        for (const s of [u0, u1 - t]) addBoard({ id: 'pulloutSide', name: 'Bok szuflady za drzwiami', a: length, b: S.side, ...common, box: [s, s + t, v + t, top, n0, n1] });
+        for (const [b0, b1, name] of [[n1 - t, n1, 'Czoło'], [n0, n0 + t, 'Tył']]) {
+          addBoard({ id: 'pulloutEnd', name: name + ' szuflady za drzwiami', a: u1 - u0 - 2 * t, b: S.side, ...common, box: [u0 + t, u1 - t, v + t, top, b0, b1] });
+        }
+        front.pullouts.boxes.push({ u0, u1, v0: v, v1: top, n0, n1 });
+      }
+      counts.pullouts += count;
     }
     for (const G of Object.values(groups)) {
       for (const item of G.items) {
@@ -650,6 +689,8 @@
             counts.hinges += count;
           }
         }
+
+        if (opening === 'door' && K && hasTag(item, 'pullouts')) addPullouts(item, front, K);
 
         // drawer box: D when the front is higher than drawers.dFrom, else M; bottom and back in the drawerBox material
         if (opening === 'drawer' && K) {
@@ -775,7 +816,7 @@
       if (!W) continue;
       for (const item of G.items.filter(i => i.type === 'worktop')) {
         const fall = hasTag(item, 'fall');
-        worktopPieces.push({ group: G.group, item, name: fall ? 'Bok blatu' : 'Blat', material: materialFor.worktop, a: fall ? item.v1 - item.v0 : item.u1 - item.u0, b: W.depth, edges: [] });
+        worktopPieces.push({ group: G.group, item, name: fall ? 'Bok blatu' : 'Blat', material: W.material, a: fall ? item.v1 - item.v0 : item.u1 - item.u0, b: W.depth, edges: [] });
       }
       W.cutouts = [];
     }
@@ -904,7 +945,7 @@
   }
 
   root.KitchenEngine = {
-    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PARTS, USES, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, SHELF_UNDER_JOINT, LACQUER,
+    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PARTS, USES, ISLAND_USE, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, SHELF_UNDER_JOINT, LACQUER,
     HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, drillingOf, checkSettings, build, cutList, carcassMap, mapJSON,
     load, designJS, fromDesignJS
   };

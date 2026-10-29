@@ -35,10 +35,11 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | kosze | szuflada | kosze na odpady w szufladzie |
 | szuflada wewnętrzna | szuflada | szuflada M nad szufladą, za tym samym frontem |
 | ekspres | szafka | półka wysuwana na dole, nad nią półki ruchome |
+| szuflady za drzwiami | szafka | szuflady z płyty na prowadnicach kulkowych za drzwiami, bez półek ruchomych |
 | lodówka, zamrażarka | szafka | front na drzwiach urządzenia, bez zawiasów, półek i pleców |
 | zmywarka | szafka | front na drzwiach urządzenia, bez korpusu |
 | bok blatu | blat | blat opuszczony do podłogi |
-| wyspa | blat | głębokość blatu wyspy, panel tylny wyspy, wyspa stoi wolno (bez ściany) |
+| wyspa | blat | blat z materiału wyspy, panel tylny wyspy, wyspa stoi wolno (bez ściany) |
 
 Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 
@@ -53,7 +54,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka lub zamrażarka.
 - **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
-- **Półka stała** leży na środku styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki. W korpusie lodówki jest tylko jedna, nad urządzeniem: zamyka jego wnękę i jest płytsza z tyłu, by wypuścić powietrze. Wnęka na urządzenie wynika z modułów i półek; jej wymiary są w notatce urządzenia.
+- **Półka stała** leży na środku styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki. Nad piekarnikiem jest płytsza z tyłu, by wypuścić gorące powietrze; pod piekarnikiem leży pod stykiem, więc front piekarnika na nią nie zachodzi. W korpusie lodówki jest tylko jedna, nad urządzeniem: zamyka jego wnękę i jest płytsza z tyłu, by wypuścić powietrze. Wnęka na urządzenie wynika z modułów i półek; jej wymiary są w notatce urządzenia.
 - **Półki ruchome** są tylko za drzwiami szafki:
   - liczba zależy od wysokości frontu;
   - półka jest płytsza od korpusu i ma luz z obu stron;
@@ -64,6 +65,11 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Słupek zawiasowy:** gdy drzwi nie sięgają boku korpusu po stronie zawiasów, staje tam słupek zawiasowy.
 - **Panel wpuszczany:** wypełnienie na końcu korpusu (np. ukryty narożnik L) zamyka panel wpuszczany.
 - **Szuflada** jest wysoka (D), gdy front przekracza ustaloną wysokość, a inaczej niska (M).
+- **Szuflady za drzwiami** (tag szuflady za drzwiami):
+  - skrzynka z płyty szuflad: dno pod skrzynką, czoło i tył między bokami; prowadnice kulkowe pełnego wysuwu, luz na prowadnicę z każdej strony;
+  - zawiasy zajmują przód korpusu na głębokość słupka zawiasowego; za nią, po stronie zawiasów, płyta dystansowa z płyty korpusu niesie prowadnicę;
+  - skrzynki zaczynają się na tej samej głębokości, więc mijają zawiasy i otwarte drzwi, a drzwi zamykają się przed nimi;
+  - liczba szuflad zależy od wysokości frontu; leżą równo między płytami nad i pod drzwiami.
 
 ## 4. Fronty, listwy, panele, blat
 
@@ -71,7 +77,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Listwa** stoi na sztorc. Gdy nie należy do korpusu, dostaje listwę tylną przy ścianie.
 - **Panel** leży na płasko w płaszczyźnie frontów.
 - **Blat:**
-  - głębokość podaje materiał blatu, osobno dla blatu z tagiem wyspa;
+  - głębokość i grubość podaje materiał blatu; blat z tagiem wyspa ma osobny materiał (blat wyspy);
   - wystaje przed fronty o nawis;
   - z tyłu zostaje głębokość minus korpus, front i nawis.
 - **Wyspa** (blat z tagiem wyspa) ma panel tylny między skrajnymi kolumnami, od podłogi do góry korpusów.
@@ -84,7 +90,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Puszka zawiasu:** w tylnej stronie drzwi, przy każdym zawiasie, w stałej odległości od krawędzi zawiasów.
 - **Prowadnik zawiasu:** dwa otwory na wewnętrznej stronie boku albo słupka zawiasowego, w stałej odległości od przodu, symetrycznie wokół wysokości zawiasu.
 - **Podpórki półki ruchomej:** pod każdą półką, w obu bokach, przy przodzie i przy tyle; dodatkowe rzędy w stałym odstępie powyżej i poniżej, ale nie w płycie poziomej (wieniec, trawers, półka stała).
-- **Prowadnice szuflad i półki wysuwanej:** w obu bokach, w stałej odległości pod dnem szuflady (także szuflady wewnętrznej) i pod półką wysuwaną, w pozycjach od przodu podanych w danych.
+- **Prowadnice szuflad i półki wysuwanej:** w obu bokach, w stałej odległości pod dnem szuflady (także szuflady wewnętrznej) i pod półką wysuwaną, w pozycjach od przodu podanych w danych. Prowadnice kulkowe szuflad za drzwiami przykręca się na miejscu, bez wierceń w hurtowni.
 - **Zawias nad półką:** zawias, który wypada przy półce, przechodzi nad nią: najniżej, gdzie jest co najmniej ustalony odstęp nad półką i gdzie otwory prowadnika nie trafiają w otwory podpórek.
 - Otwory, które nachodzą na siebie na jednej części albo trafiają w płytę poziomą, są zgłaszane.
 - **Wycięcia w blacie:** na zlew i płytę grzewczą, nad korpusem z tagiem zlew lub płyta grzewcza, na środku korpusu, w stałej odległości od tylnej krawędzi blatu; wycięcie musi zmieścić się w jednym blacie i we wnętrzu korpusu.
@@ -98,7 +104,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
   - listwy: obie strony i krawędź przednia;
   - cokół i panele: tylko obie strony.
 - **ABS na płytach korpusu** jest tylko na krawędzi widocznej z przodu:
-  - boki, wieńce, półki, trawersy płaskie i słupek zawiasowy mają ABS na krawędzi przedniej;
+  - boki, wieńce, półki, trawersy płaskie, słupek zawiasowy i płyta dystansowa mają ABS na krawędzi przedniej;
   - trawers na sztorc ma ABS na krawędzi dolnej.
 - **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad.
 - **ABS na panelu** jest na każdej krawędzi przy froncie, który się otwiera.

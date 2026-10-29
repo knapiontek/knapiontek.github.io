@@ -50,6 +50,7 @@ window.KITCHEN_COST = {
    {"type": "drawer", "tags": ["bins"], "function": "szuflada zlewowa (kosze)"},
    {"type": "drawer", "function": "szuflada"},
    {"type": "cabinet", "tags": ["fridge", "freezer", "dishwasher"], "function": "front na drzwiach AGD"},
+   {"type": "cabinet", "tags": ["pullouts"], "function": "drzwi, za nimi szuflady"},
    {"type": "cabinet", "function": "drzwi"}
   ],
   "sheet": "Arkusz płyty {v:sheet.length}×{v:sheet.width} [m²]",
@@ -63,16 +64,16 @@ window.KITCHEN_COST = {
   {"id": "panels", "title": "PANELE – {m:panel} na płasko, lakierowane obustronnie; ABS na widocznych krawędziach"},
   {
    "id": "carcass",
-   "title": "KORPUSY – wszystkie części z {m:carcass}: cięcie + ABS 0,8 na krawędziach przednich (z listwami tylnymi, półką wysuwaną, słupkami zawiasowymi, panelami wpuszczanymi)",
+   "title": "KORPUSY – wszystkie części z {m:carcass}: cięcie + ABS 0,8 na krawędziach przednich (z listwami tylnymi, półką wysuwaną, słupkami zawiasowymi, panelami wpuszczanymi, płytami dystansowymi)",
    "cut": true
   },
   {
    "id": "drawerBox",
-   "title": "SZUFLADY – wszystkie części z {m:drawerBox}: dna i tyły TANDEMBOX (z szufladami wewnętrznymi) i przegroda pod płytą",
+   "title": "SZUFLADY – wszystkie części z {m:drawerBox}: dna i tyły TANDEMBOX (z szufladami wewnętrznymi), szuflady za drzwiami i przegroda pod płytą",
    "cut": true
   },
   {"id": "back", "title": "PLECY – {m:back}, tylko za drzwiami szafek"},
-  {"id": "worktops", "title": "BLATY – {m:worktop}: blaty i boki blatu; wycięcia na zlew (ZL) i płytę (PG) wg legendy"},
+  {"id": "worktops", "title": "BLATY – {m:worktop} (blat), {m:islandWorktop} (wyspa): blaty i boki blatu; wycięcia na zlew (ZL) i płytę (PG) wg legendy"},
   {"id": "plaster", "title": "ZABUDOWA GK – GKBI 12,5 na CD60 / UD27, gł. {s:plasterboard.depth} (zabudowa do sufitu, grupa 2)"}
  ],
  "categories": [
@@ -149,7 +150,7 @@ window.KITCHEN_COST = {
     {
      "id": "drawerBoard",
      "name": "{m:drawerBox}",
-     "spec": "dna i tyły szuflad, przegroda pod płytą",
+     "spec": "dna i tyły szuflad, szuflady za drzwiami, przegroda pod płytą",
      "qty": "=ROUNDUP({drawerBox.m2}*(1+{waste})/{sheet},0)",
      "unit": "ark.",
      "price": 392.74,
@@ -207,7 +208,7 @@ window.KITCHEN_COST = {
    ]
   },
   {
-   "name": "Okucia (system Blum)",
+   "name": "Okucia",
    "items": [
     {
      "id": "hinges",
@@ -269,6 +270,17 @@ window.KITCHEN_COST = {
      "refs": ["innerDrawers"],
      "source": "szare boki 378M5002SA, prowadnice 578.5001M, front wewnętrzny Z31L1036A",
      "links": [{"shop": "meblownia.pl", "url": "https://meblownia.pl/blum-szuflada-wewnetrzna-tandembox-antaro-500-m-biala-30-kg-19272.html"}]
+    },
+    {
+     "id": "pulloutRunners",
+     "name": "Prowadnice kulkowe GTV H45, pełny wysuw, 30 kg (PK-0H45450HK), komplet L + P",
+     "spec": "do szuflad za drzwiami; L = {i:K12/pullouts.runner}, {s:pullouts.runner.gap} na stronę; szuflady z {m:drawerBox} na liście cięć",
+     "qty": "={n:pullouts}",
+     "unit": "kpl.",
+     "price": 17.44,
+     "refs": ["pullouts"],
+     "source": "zamiast szuflad wewnętrznych Blum ({p:innerDrawers} za szufladę)",
+     "links": [{"shop": "meblownia.pl", "url": "https://meblownia.pl/gtv-prowadnica-pelny-wys-l-450-hk-pk-oh45450kh.html"}]
     },
     {
      "id": "cutleryTrays",
@@ -403,7 +415,7 @@ window.KITCHEN_COST = {
     },
     {
      "id": "islandWorktop",
-     "name": "{m:worktop}, {v:worktopBoard.islandDepth} × {v:worktopBoard.length} × {t:worktop}",
+     "name": "{m:islandWorktop}, {v:worktopBoard.islandDepth} × {v:worktopBoard.length} × {t:islandWorktop}",
      "spec": "blat wyspy ({w:3.depth}) + 2 boki blatu z 1 płyty; prosta krawędź Egger 100/1.5; tylna krawędź po przycięciu do oklejenia",
      "qty": 1,
      "unit": "szt.",
@@ -575,7 +587,8 @@ window.KITCHEN_COST = {
    ]
   },
   {
-   "name": "Zlew i bateria",
+   "name": "AGD",
+   "appliances": true,
    "items": [
     {
      "id": "sink",
@@ -614,13 +627,18 @@ window.KITCHEN_COST = {
        "url": "https://www.mediaexpert.pl/agd-do-zabudowy/baterie-kuchenne/baterie-kuchenne/bateria-deante-silia-bqs-z73m-zloty"
       }
      ]
-    }
-   ]
-  },
-  {
-   "name": "AGD",
-   "appliances": true,
-   "items": [
+    },
+    {
+     "id": "coffee",
+     "name": "Ekspres DeLonghi Dinamica (posiadany)",
+     "spec": "na półce wysuwanej szafki z tagiem ekspres",
+     "qty": "={n:tag.coffee}",
+     "unit": "szt.",
+     "price": 0,
+     "refs": ["pullOutShelf"],
+     "source": "posiadany, bez zakupu",
+     "links": []
+    },
     {
      "id": "fridge",
      "name": "Lodówka Bosch KIS86AFE0",
@@ -829,6 +847,13 @@ window.KITCHEN_COST = {
      "description": "Górne szuflady wyspy: TANDEMBOX antaro szuflada wewnętrzna M 500 za górnym frontem, własne prowadnice; zamknięcie frontu zamyka ją. Front wewnętrzny Z31L przycięty do LW − {s:drawers.inner.frontDeduction} (LW = szerokość wnętrza korpusu). Dno i tył na liście cięć ({m:drawerBox}). Bez szuflady wewnętrznej pod płytą.",
      "assumed": "{n:innerDrawers} szuflady wewnętrzne + {n:innerDrawers} wkłady na sztućce.",
      "decide": "Wysokość tyłu i dopasowanie wkładu: konfigurator Blum."
+    },
+    {
+     "id": "pullouts",
+     "topic": "Szuflady za drzwiami z płyty (K12, dół)",
+     "description": "Za drzwiami {i:K12/pullouts.frontHeight} × {i:K12/pullouts.frontWidth}: {i:K12/pullouts.count} szuflady z {m:drawerBox} na prowadnicach kulkowych L = {i:K12/pullouts.runner}; skrzynka {i:K12/pullouts.boxWidth} × {i:K12/pullouts.runner} × {i:K12/pullouts.boxHeight} (dno pod skrzynką, czoło i tył między bokami), {s:pullouts.runner.gap} luzu na prowadnicę z każdej strony.\nZawiasy zajmują {s:hinges.supportDepth} przy przodzie korpusu (jak słupek zawiasowy): po stronie zawiasów płyta dystansowa z {m:carcass} ({t:carcass}) od pleców do {s:hinges.supportDepth} przed przodem korpusu niesie prowadnicę, a skrzynki zaczynają się na tej samej głębokości. Szuflada mija ramię zawiasu i otwarte drzwi o {t:carcass} + {s:pullouts.runner.gap}; drzwi zamykają się przed szufladami.\nBez półek ruchomych w tej części korpusu.",
+     "assumed": "{n:pullouts} kompletów prowadnic po {p:pulloutRunners} PLN zamiast {p:innerDrawers} PLN za szufladę Blum.",
+     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka; ABS na górnych krawędziach skrzynek (rules.md: części szuflad bez ABS)."
     },
     {
      "id": "worktops",

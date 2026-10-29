@@ -276,12 +276,17 @@ function renderAssembly() {
     const pins = boards.filter(b => b.id === 'adjustableShelf').length * model.settings.shelf.pins;
     const hinges = fronts.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
     const frontLines = fronts.map(f => frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.hinges ? ', zawiasy: ' + f.hinges.length + ', strona ' + KE.LABELS.handle[f.hingeSide] : '') + (f.handle ? ', uchwyt ' + KE.LABELS.handle[f.handle] : ''));
-    const drawerLines = fronts.filter(f => f.drawer).map(f => 'szuflada ' + f.drawer.size + (f.drawer.bins ? ' z koszami na odpady' : '') + (f.drawer.inner ? ' + szuflada wewnętrzna M' : ''));
+    const drawerLines = [
+      ...fronts.filter(f => f.drawer).map(f => 'szuflada ' + f.drawer.size + (f.drawer.bins ? ' z koszami na odpady' : '') + (f.drawer.inner ? ' + szuflada wewnętrzna M' : '')),
+      ...fronts.filter(f => f.pullouts).map(f => f.pullouts.count + ' × szuflada za drzwiami ' + f.pullouts.width + ' × ' + f.pullouts.depth + ' × ' + f.pullouts.height + ' (płyta dystansowa po stronie zawiasów)')
+    ];
+    const pullouts = fronts.reduce((n, f) => n + (f.pullouts ? f.pullouts.count : 0), 0);
     const hardware = [
       K.legs ? 'nóżki: ' + K.legs : '',
       hinges ? 'zawiasy: ' + hinges : '',
       pins ? 'podpórki półek: ' + pins : '',
-      boards.some(b => b.id === 'pullOutShelf') ? '1 para prowadnic pełnego wysuwu' : ''
+      boards.some(b => b.id === 'pullOutShelf') ? '1 para prowadnic pełnego wysuwu' : '',
+      pullouts ? 'prowadnice kulkowe ' + fronts.find(f => f.pullouts).pullouts.runner + ': ' + pullouts + ' kpl.' : ''
     ].filter(Boolean);
     return '<div class="card"><h3>' + esc(K.name) + '</h3>' + KE.placeLabel(K.group, K.col, K.span) + ' · ' + KE.LABELS.carcassType[K.type] + ' · ' + round1(K.u1 - K.u0) + ' × ' + round1(K.v1 - K.v0) + ' × ' + model.carcassDepth + (K.flags.length ? ' · ' + K.flags.map(f => KE.LABELS.flag[f]).join(', ') : '') +
       [...new Set(boards.map(b => b.material))].map(m => section(model.materials[m].label, partList(boards.filter(b => b.material === m)))).join('') +
@@ -352,7 +357,7 @@ function ROUNDUP(x, digits) {
 // Placeholders in quantities and texts - every value comes from design.js, engine.js or the JSON of this page:
 //   {n:hinges} engine count (model.counts; {n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
 //   {s:drawers.dFrom} design.js setting  {t:carcass} thickness, {m:cabinet} material label of a board type or a carcass part
-//   (engine USES: the board types and the parts carcass, back, drawerBox, hobPanel)   {w:1.depth} worktop of group 1 (model.worktops)
+//   (engine USES: the board types, islandWorktop and the parts carcass, back, drawerBox, hobPanel)   {w:1.depth} worktop of group 1 (model.worktops)
 //   {k:K8.innerWidth} carcass   {i:K8/oven.niche} item (carcassValue, itemValue)
 //   {a:oven.front.1} appliances.js   {v:sheet.length} cost.js values   {p:hinges} unit price of an item   {q:hinges} quantity of an item
 //   {note:hinges} the number of a note
@@ -371,7 +376,8 @@ function carcassValue(rest) {
 const HORIZONTAL_BOARDS = ['bottom', 'top', 'rail', 'fixedShelf', 'hobPanel'];
 // an item by carcass name or place and type or tag ("K8/oven", "G1[5]/dishwasher", "K8/cabinet#2" = the second from the bottom):
 // module width, height, v0, v1; its front frontWidth, frontHeight, frontV0, frontV1; niche = the clear height between the
-// nearest horizontal boards of its carcass below (nicheBottom) and above (nicheTop) its middle
+// nearest horizontal boards of its carcass below (nicheBottom) and above (nicheTop) its middle; drawers behind its door (tag pullouts):
+// count, runner (length), boxWidth, boxHeight
 function itemValue(rest) {
   const dot = rest.lastIndexOf('.'), field = rest.slice(dot + 1), [where, what = ''] = rest.slice(0, dot).split('/'), [kind, n] = what.split('#');
   const item = Object.values(model.groups).flatMap(G => G.items)
@@ -385,7 +391,8 @@ function itemValue(rest) {
   return {
     width: item.u1 - item.u0, height: item.v1 - item.v0, v0: item.v0, v1: item.v1,
     frontWidth: f ? f.width : NaN, frontHeight: f ? f.height : NaN, frontV0: f ? f.v0 : NaN, frontV1: f ? f.v1 : NaN,
-    nicheBottom, nicheTop, niche: nicheTop - nicheBottom
+    nicheBottom, nicheTop, niche: nicheTop - nicheBottom,
+    ...(f && f.pullouts ? { count: f.pullouts.count, runner: f.pullouts.runner, boxWidth: f.pullouts.width, boxHeight: f.pullouts.height } : {})
   }[field] ?? NaN;
 }
 // {=...}: the expression with each <placeholder> as its value
