@@ -54,7 +54,7 @@ window.KITCHEN_DESIGN = {
   ["Listwy, panele", "Lakierowane, w płaszczyźnie frontów", "Narożnik L: panel grupy 2 zakrywa koniec panelu grupy 1"],
   ["Zabudowa GK", "Płyta GK na profilach", "Do sufitu, także na końcu grupy 2"],
   ["Uchwyty", "IKEA ENERYDA muszelka, mosiądz", ""],
-  ["Okucia", "Blum: zawiasy z cichym domykaniem, szuflady TANDEMBOX", "K8 i K12 dół: po 2 szuflady z płyty na prowadnicach kulkowych GTV za drzwiami"],
+  ["Okucia", "Blum: zawiasy z cichym domykaniem, szuflady TANDEMBOX", "K8 i K12 dół: po 2 szuflady z płyty na prowadnicach kulkowych Häfele z cichym domykiem za drzwiami"],
   ["Blat", "Egger H1180 ST37 dąb Halifax", "Grupa 1 jednym kawałkiem; boki blatu z tej samej płyty"],
   ["Panel ścienny", "Egger H1180 ST37 dąb Halifax przy oknie, pod kolor blatu", ""],
   ["Cokół", "Lakierowany, wilgocioodporny, na nóżkach", "Kratki pod lodówką i piekarnikiem"],

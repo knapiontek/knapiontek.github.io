@@ -273,14 +273,14 @@ window.KITCHEN_COST = {
     },
     {
      "id": "pulloutRunners",
-     "name": "Prowadnice kulkowe GTV H45, pełny wysuw, 30 kg (PK-0H45450HK), komplet L + P",
+     "name": "Prowadnice kulkowe Häfele z cichym domykiem (hamulcem) H45, pełny wysuw, 30 kg (494.02.184), komplet L + P",
      "spec": "do szuflad za drzwiami; L = {i:K12/pullouts.runner}, {s:pullouts.runner.gap} na stronę; szuflady z {m:drawerBox} na liście cięć",
      "qty": "={n:pullouts}",
      "unit": "kpl.",
-     "price": 17.44,
+     "price": 29.52,
      "refs": ["pullouts"],
-     "source": "zamiast szuflad wewnętrznych Blum ({p:innerDrawers} za szufladę)",
-     "links": [{"shop": "meblownia.pl", "url": "https://meblownia.pl/gtv-prowadnica-pelny-wys-l-450-hk-pk-oh45450kh.html"}]
+     "source": "M-HM Bielsko-Biała; zamiast szuflad wewnętrznych Blum ({p:innerDrawers} za szufladę) – patrz uwaga w notatce",
+     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PROW.KULKOWA-Z-HAMUL.PW450-30KG45MM-494.02.184/1986"}]
     },
     {
      "id": "cutleryTrays",
@@ -851,9 +851,9 @@ window.KITCHEN_COST = {
     {
      "id": "pullouts",
      "topic": "Szuflady za drzwiami z płyty (K8 i K12, dół)",
-     "description": "K8 (pod piekarnikiem): za drzwiami {i:K8/pullouts.frontHeight} × {i:K8/pullouts.frontWidth} {i:K8/pullouts.count} szuflady, skrzynka {i:K8/pullouts.boxWidth} × {i:K8/pullouts.runner} × {i:K8/pullouts.boxHeight}, zawiasy po lewej. K12: za drzwiami {i:K12/pullouts.frontHeight} × {i:K12/pullouts.frontWidth} {i:K12/pullouts.count} szuflady, skrzynka {i:K12/pullouts.boxWidth} × {i:K12/pullouts.runner} × {i:K12/pullouts.boxHeight}, zawiasy po prawej.\nSkrzynki z {m:drawerBox} na prowadnicach kulkowych L = {i:K12/pullouts.runner} (czoło na całą skrzynkę zakrywa boki i dno, dno i tył między bokami; ABS na górnych krawędziach i bokach czoła), {s:pullouts.runner.gap} luzu na prowadnicę z każdej strony.\nZawiasy zajmują {s:hinges.supportDepth} przy przodzie korpusu (jak słupek zawiasowy): po stronie zawiasów płyta dystansowa z {m:carcass} ({t:carcass}) od pleców do {s:hinges.supportDepth} przed przodem korpusu niesie prowadnicę, a skrzynki zaczynają się na tej samej głębokości. Szuflada mija ramię zawiasu i otwarte drzwi o {t:carcass} + {s:pullouts.runner.gap}; drzwi zamykają się przed szufladami. Szuflady stoją między płytami poziomymi nad i pod drzwiami (w K8: dno i półka pod piekarnikiem).\nBez półek ruchomych w tej części korpusu.",
+     "description": "K8 (pod piekarnikiem): za drzwiami {i:K8/pullouts.frontHeight} × {i:K8/pullouts.frontWidth} {i:K8/pullouts.count} szuflady, skrzynka {i:K8/pullouts.boxWidth} × {i:K8/pullouts.runner} × {i:K8/pullouts.boxHeight}, zawiasy po lewej. K12: za drzwiami {i:K12/pullouts.frontHeight} × {i:K12/pullouts.frontWidth} {i:K12/pullouts.count} szuflady, skrzynka {i:K12/pullouts.boxWidth} × {i:K12/pullouts.runner} × {i:K12/pullouts.boxHeight}, zawiasy po prawej.\nSkrzynki z {m:drawerBox} na prowadnicach kulkowych Häfele z cichym domykiem, L = {i:K12/pullouts.runner} (czoło na całą skrzynkę zakrywa boki i dno, dno i tył między bokami; ABS na górnych krawędziach i bokach czoła), {s:pullouts.runner.gap} luzu na prowadnicę z każdej strony.\nZawiasy zajmują {s:hinges.supportDepth} przy przodzie korpusu (jak słupek zawiasowy): po stronie zawiasów płyta dystansowa z {m:carcass} ({t:carcass}) od pleców do {s:hinges.supportDepth} przed przodem korpusu niesie prowadnicę, a skrzynki zaczynają się na tej samej głębokości. Szuflada mija ramię zawiasu i otwarte drzwi o {t:carcass} + {s:pullouts.runner.gap}; drzwi zamykają się przed szufladami. Szuflady stoją między płytami poziomymi nad i pod drzwiami (w K8: dno i półka pod piekarnikiem).\nBez półek ruchomych w tej części korpusu.",
      "assumed": "{n:pullouts} kompletów prowadnic po {p:pulloutRunners} PLN zamiast {p:innerDrawers} PLN za szufladę Blum.",
-     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka. Uwaga: z szufladami za drzwiami płyta {m:drawerBox} to {q:drawerBoard} ark., ostatni słabo wykorzystany; w tej kuchni skrzynki zmieściłyby się w odpadach {m:carcass} – zdecydować przy zamówieniu wszystkich szaf."
+     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka. Uwaga – Blum zamiast płyty: szuflada wewnętrzna TANDEMBOX antaro M ({p:innerDrawers} za komplet + dno i tył z płyty) zamiast skrzynki z płyty na prowadnicach Häfele (ok. 84 zł z płytą, cięciem i ABS) to ok. 140 zł więcej za szufladę, ok. {=ROUND(140 * <n:pullouts>)} zł za wszystkie ({n:pullouts}); boki Blum M tylko 84 mm (płyta: {s:pullouts.side}); w K12 (wnętrze po płycie dystansowej {=<k:K12.innerWidth> - <t:carcass>}) sprawdzić minimalną szerokość szuflady Blum. Uwaga: z szufladami za drzwiami płyta {m:drawerBox} to {q:drawerBoard} ark., ostatni słabo wykorzystany; w tej kuchni skrzynki zmieściłyby się w odpadach {m:carcass} – zdecydować przy zamówieniu wszystkich szaf."
     },
     {
      "id": "worktops",
