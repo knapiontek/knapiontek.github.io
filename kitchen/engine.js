@@ -511,12 +511,13 @@
         // pull-out shelf at the bottom; the first shelf pullOutShelf.space above it, the rest evenly up to the top
         // the door in front of it (full overlay, open about 90°) reaches about as far into the opening as the runner clearance:
         // a spacer of carcass board on the hinge side, from the bottom board to pullOut.lift above the shelf, carries that runner
+        // (ABS on the front and on the top, seen above the shelf)
         const pullOut = settings.pullOutShelf, y = v0 + board + pullOut.lift, door = K.boxes.find(b => b.type === 'cabinet' && HINGE_SIDES.includes(b.hinge));
         let s0 = innerU0, s1 = innerU1;
         if (door) {
           const right = door.hinge === 'R', spacer = right ? [innerU1 - board, innerU1] : [innerU0, innerU0 + board], top = y + board + pullOut.lift;
           part('spacer', 'Płyta dystansowa', carcassDepth, top - (v0 + board), carcassMaterial, 'carcasses',
-            [...spacer, v0 + board, top, carcassBack, carcassFront], [['front', top - (v0 + board)]]);
+            [...spacer, v0 + board, top, carcassBack, carcassFront], [['front', top - (v0 + board)], ['top', carcassDepth]]); // the top is seen above the shelf
           if (right) s1 = spacer[0]; else s0 = spacer[1];
         }
         const shelfWidth = s1 - s0 - 2 * pullOut.clearance;

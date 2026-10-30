@@ -101,7 +101,8 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
   - cokół i panele: tylko obie strony.
 - **ABS na płytach korpusu** jest tylko na krawędzi widocznej z przodu:
   - boki, wieńce, półki, trawersy płaskie, słupek zawiasowy i płyta dystansowa mają ABS na krawędzi przedniej;
-  - trawers na sztorc ma ABS na krawędzi dolnej.
+  - trawers na sztorc ma ABS na krawędzi dolnej;
+  - płyta dystansowa w szafce z ekspresem kończy się tuż nad półką wysuwaną, więc ma ABS także na górze; przy szufladach za drzwiami sięga do płyty nad nią i góra jest zakryta.
 - **Szuflady za drzwiami:** ABS na krawędziach widocznych po wysunięciu.
 - **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad systemowych.
 - **ABS na panelu** jest na każdej krawędzi przy froncie, który się otwiera.
