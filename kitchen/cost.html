@@ -173,25 +173,38 @@ const plural = (n, one, few, many) => (n === 1 ? one : n % 10 >= 2 && n % 10 <= 
 // ABS edges of one part, e.g. "dół 80 + lewa 720"; their total length in mm
 const edgeText = edges => (edges || []).map(([side, length]) => KE.LABELS.edge[side] + ' ' + length).join(' + ');
 const edgeLength = edges => (edges || []).reduce((sum, [, length]) => sum + length, 0);
-// drilling and cut-outs of a cut-list row (row[7], from engine.js) in two-letter codes (KE.LABELS.holeCode), explained by drillLegend(),
-// one line each: "L-ZP 37 ⊗ 84 116 601 633" = hand (L- / P-, KE.LABELS.hand: which of two mirrored parts) + code + the Cartesian
-// product of the x list and the y list (mm from the reference edges); holes that do not form one full product: one line per x
+// drilling and cut-outs of a cut-list row in two-letter codes (KE.LABELS.holeCode), explained by drillLegend(); one line per kind of
+// hole: code + the Cartesian product of the x list and the y list (mm from the reference edges), "PR 37 261 485 ⊗ 25 432"; holes that
+// do not form one full product: one line per x. Each set of holes of the parts of a row (mergeHands) is written once, under a line
+// saying how many left and right parts have it ("L: 1  P: 1"; KE.LABELS.hand); different sets each under their own line
 const num1 = x => String(x).replace('.', ',');
-function drillLines(drilling) {
-  if (!drilling) return [];
-  if (drilling.none) return []; // an undrilled part of the row: nothing to show
-  // a row of several parts of one size (mergeHands): the lines of each (where each hole is: the 3D view)
-  if (drilling.parts) return drilling.parts.flatMap(p => drillLines(p.drilling));
-  const code = KE.LABELS.holeCode, hand = drilling.hand ? KE.LABELS.hand[drilling.hand] + '-' : '', out = [];
+function holeLines(drilling) {
+  const code = KE.LABELS.holeCode, out = [];
   for (const kind of [...new Set(drilling.holes.map(h => h[0]))]) {
     const holes = drilling.holes.filter(h => h[0] === kind);
     const xs = [...new Set(holes.map(h => h[3]))].sort((a, b) => a - b), ys = [...new Set(holes.map(h => h[4]))].sort((a, b) => a - b);
-    const line = (x, y) => hand + code[kind] + ' ' + x.map(num1).join(' ') + ' ⊗ ' + y.map(num1).join(' ');
+    const line = (x, y) => code[kind] + ' ' + x.map(num1).join(' ') + ' ⊗ ' + y.map(num1).join(' ');
     if (xs.length * ys.length === holes.length) out.push(line(xs, ys));
     else for (const x of xs) out.push(line([x], holes.filter(h => h[3] === x).map(h => h[4]).sort((a, b) => a - b)));
   }
   for (const [kind, width, depth, x, y] of drilling.cutouts) out.push(code[kind] + ' ' + width + '×' + depth + ' @ ' + num1(x) + 'x' + num1(y));
   return out;
+}
+function drillLines(row) {
+  const drilling = row[7];
+  if (!drilling) return [];
+  const parts = drilling.parts || [{ drilling, qty: row[3] }];
+  // each set of holes once, with the number of left / right parts that have it, in the order met
+  const sets = new Map();
+  for (const p of parts) {
+    if (p.drilling.none) continue;
+    const lines = holeLines(p.drilling), key = lines.join('\n');
+    if (!lines.length) continue;
+    if (!sets.has(key)) sets.set(key, { lines, count: {} });
+    sets.get(key).count[p.drilling.hand] = (sets.get(key).count[p.drilling.hand] || 0) + p.qty;
+  }
+  const header = count => Object.keys(KE.LABELS.hand).filter(h => count[h]).map(h => KE.LABELS.hand[h] + ': ' + count[h]).join('  ');
+  return [...sets.values()].flatMap(({ lines, count }) => (header(count) ? [header(count), ...lines.map(line => '  ' + line)] : lines));
 }
 // the legend of the codes, from design.js settings.drilling and settings.cutouts: [code, text]
 function drillLegend() {
@@ -200,8 +213,8 @@ function drillLegend() {
   const remark = kind => ((COST.labels.legend || {})[kind] ? ' (' + COST.labels.legend[kind] + ')' : '');
   const hole = (kind, rule, where) => [code[kind], L.hole[kind] + ' Ø' + num1(rule.diameter) + ', gł. ' + rule.depth + ' – ' + where + remark(kind)];
   const rows = [
-    ['Etykieta', 'kod w pierwszej kolumnie (np. KO-07): jeden kod na każdy rozmiar części w liście cięć, części lewe i prawe razem\notwory wszystkich części wiersza w kolumnie Wiercenie (L- / P-); gdzie jest który: widok 3D (warstwa Otwory)\nten sam kod w zakładce Montaż – nakleić na części przy odbiorze z hurtowni'],
-    ['L- / P-', 'boki i słupki zawiasowe: L- lewy, P- prawy, patrząc na szafkę od przodu; otwory na stronie wewnętrznej\ndrzwi: L- zawiasy po lewej, P- zawiasy po prawej, patrząc na front od przodu (od pokoju); otwory w tylnej stronie'],
+    ['Etykieta', 'kod w pierwszej kolumnie (np. KO-07): jeden kod na każdy rozmiar części w liście cięć, części lewe i prawe razem\notwory wszystkich części wiersza w kolumnie Wiercenie; gdzie jest który: widok 3D (warstwa Otwory)\nten sam kod w zakładce Montaż – nakleić na części przy odbiorze z hurtowni'],
+    ['L / P', 'boki i słupki zawiasowe: lewy / prawy, patrząc na szafkę od przodu; otwory na stronie wewnętrznej\ndrzwi: zawiasy po lewej / po prawej, patrząc na front od przodu (od pokoju); otwory w tylnej stronie'],
     hole('cup', d.cup, 'fronty (drzwi), strona tylna; x od krawędzi zawiasów, y od dołu frontu'),
     hole('plate', d.plate, carcassFace),
     hole('shelfPin', d.shelfPin, carcassFace),
@@ -209,9 +222,10 @@ function drillLegend() {
     ...Object.entries(c).map(([kind, r]) => [code[kind], L.hole[kind] + ' ' + r.width + ' × ' + r.depth + ' – blat; x od lewego końca (patrząc od przodu), y od tylnej krawędzi; wymiar sprawdzić z szablonem producenta'])
   ];
   rows.push(['Zapis', [
-    'jedna linia na rodzaj otworu: L-KOD x… ⊗ y…',
+    'L: 1  P: 1 – ile części lewych i prawych (patrząc od przodu) ma otwory podane pod tą linią; prawe w lustrzanym odbiciu',
+    'jedna linia na rodzaj otworu: KOD x… ⊗ y…',
     '⊗ – iloczyn kartezjański: otwór w każdym x dla każdego y',
-    'np. L-PO 69 485 ⊗ 353 1010 = 4 otwory: (69, 353) (69, 1010) (485, 353) (485, 1010)',
+    'np. PO 69 485 ⊗ 353 1010 = 4 otwory: (69, 353) (69, 1010) (485, 353) (485, 1010)',
     'wycięcie: KOD szer.×gł. @ x x y lewego tylnego narożnika',
     'np. WP 560×490 @ 176x54',
     'wymiary w mm'
@@ -251,7 +265,7 @@ let codeOfRow = {}; // cutKey of a row -> its label
 // a front as a cut-list part: height × width, as the front maker needs them
 const frontPart = f => ({ ...f, name: frontFunction(f), a: round1(f.height), b: round1(f.width) });
 // the drilling is done by hand on site, so parts of one size share a row (one label), left and right ones too: the rows that differ
-// only in their drilling become one, with the qty added up and the drilling of each kept (drillLines shows them all, L- / P- first);
+// only in their drilling become one, with the qty added up and the drilling of each kept (drillLines lists each set of holes);
 // row[9] = the keys of the rows merged, so the same parts elsewhere (Montaż) still find their label
 function mergeHands(rows) {
   const out = [], groups = new Map();
@@ -579,7 +593,7 @@ function renderCuttingList() {
     (rowsOf[block.id] || []).forEach((row, i) => {
       const t = totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
       const cell = value => `<td class="num" title="Obliczone przez engine.js z design.js – zmiany projektu w design.html">${value}</td>`;
-      html.push(`<tr><td class="label">${esc(codeOfRow[row[8]] || '')}</td><td>${esc(row[0])}</td>${cell(row[1])}${cell(alongLength)}${cell(row[2])}${cell(alongWidth)}<td class="num">${fmt(t.m2, 3)}</td>${cell(row[3])}<td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="drill">${drillLines(row[7]).map(line => esc(line).replace(/⊗/g, '<span class="cp">⊗</span>')).join('<br>')}</td><td class="where">${esc(row[4] || '')}</td></tr>`);
+      html.push(`<tr><td class="label">${esc(codeOfRow[row[8]] || '')}</td><td>${esc(row[0])}</td>${cell(row[1])}${cell(alongLength)}${cell(row[2])}${cell(alongWidth)}<td class="num">${fmt(t.m2, 3)}</td>${cell(row[3])}<td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="drill">${drillLines(row).map(line => esc(line).replace(/^ +/, sp => '&nbsp;'.repeat(sp.length)).replace(/⊗/g, '<span class="cp">⊗</span>')).join('<br>')}</td><td class="where">${esc(row[4] || '')}</td></tr>`);
     });
     const t = totals[block.id], hasEdging = t.rows.some(r => r.edge != null), hasCutting = !!block.cut;
     html.push(`<tr class="sum"><td></td><td>Razem</td><td></td><td></td><td></td><td></td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.qty}</td><td class="num">${hasEdging ? fmt(t.edge) : ''}</td><td class="num">${hasCutting ? fmt(t.cut) : ''}</td><td></td><td></td></tr>`);
@@ -696,7 +710,7 @@ function buildWorkbook() {
       const line = [str(codeOfRow[row[8]] || ''), str(row[0]), num(A), num(alongLength), num(B), num(alongWidth), formula(`C${r}*E${r}*H${r}/1000000`, t.m2), num(qty)];
       line.push(t.edge != null ? formula(`${edgeLength(row[5])}*H${r}/1000`, t.edge) : str(''));
       line.push(block.cut ? formula(`(C${r}+E${r})*H${r}/1000`, t.cut) : str(''));
-      line.push(str(drillLines(row[7]).join('\n')));
+      line.push(str(drillLines(row).join('\n')));
       line.push(str(row[4] || ''));
       cutting.push(line);
     });
