@@ -325,21 +325,17 @@ const sinkCarcass = model.carcasses.find(K => K.sink); // the run with the sink
 const sinkRun = sinkCarcass ? runOfGroup[sinkCarcass.group] : null;
 const worktopTopOf = run => worktopOf(groupOfRun[run]).v1;
 
-// [u0, u1, n0, n1] of a run -> [x0, x1, z0, z1] in the room
-const toRoom = Object.fromEntries(RUN_IDS.map(r => {
-  const P = SCENE.placement[r], a = (P.rot * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
-  const X = (u, n) => P.x + u * cos + n * sin, Z = (u, n) => P.z - u * sin + n * cos;
-  return [r, (u0, u1, n0, n1) => {
-    if (u1 <= u0 || n1 <= n0) return [0, 0, 0, 0]; // empty box: nothing drawn
-    const xs = [X(u0, n0), X(u1, n1)], zs = [Z(u0, n0), Z(u1, n1)];
-    return [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
-  }];
-}));
-// [u, n] of a run -> [x, z] in the room
+// [u, n] of a run -> [x, z] in the room (rot is a multiple of 90°)
 const pointToRoom = Object.fromEntries(RUN_IDS.map(r => {
   const P = SCENE.placement[r], a = (P.rot * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
   return [r, (u, n) => [P.x + u * cos + n * sin, P.z - u * sin + n * cos]];
 }));
+// [u0, u1, n0, n1] of a run -> [x0, x1, z0, z1] in the room
+const toRoom = Object.fromEntries(RUN_IDS.map(r => [r, (u0, u1, n0, n1) => {
+  if (u1 <= u0 || n1 <= n0) return [0, 0, 0, 0]; // empty box: nothing drawn
+  const [xa, za] = pointToRoom[r](u0, n0), [xb, zb] = pointToRoom[r](u1, n1);
+  return [Math.min(xa, xb), Math.max(xa, xb), Math.min(za, zb), Math.max(za, zb)];
+}]));
 
 /* ================= 2. TEXTURES (seeded canvases) ================= */
 function seededRandom(seed) {
@@ -1066,7 +1062,7 @@ if (hobItem && hobCut) (function hob() {
 if (hobItem) target = runLayer[hobRun].hood;
 if (hobItem) (function hood() {
   const toWorld = (x, y, z) => runGroup[hobRun].localToWorld(new THREE.Vector3(x, y, z));
-  const H = APPLIANCES.hood, uc = hobU, W = H.width, D = H.depth, bottom = SCENE.installation.hood.bottom, height = H.height, chimneyW = H.chimney[0], chimneyD = H.chimney[1];
+  const H = APPLIANCES.hood, uc = hobU, [W, height, D] = H.body, bottom = SCENE.installation.hood.bottom, [chimneyW, chimneyD] = H.chimney;
   const firstMesh = meshes.length;
   const profile = new THREE.Shape();
   profile.moveTo(0, 0); profile.lineTo(D, 0); profile.lineTo(D, 40); profile.lineTo(110, height); profile.lineTo(0, height); profile.lineTo(0, 0);
@@ -1302,9 +1298,9 @@ function buildFront(run, item) {
     localBox(mover.layers.dishwasher, u0 + 6, u1 - 6, fv1 - 10, fv1 - 4, carcassFront - 22, carcassFront, MAT.glassBlack); // control strip
     mover.label = 'Zmywarka · front ' + size + ' na drzwiach urządzenia';
     // the appliance at the manufacturer's size (APPLIANCES.dishwasher): on the floor, feet up to the worktop; its door grows with the
-    // height (door[0] at the lowest, door[1] at the highest); below the door the base is open baseSetback deep for the plinth
+    // height (doorHeight[0] at the lowest, doorHeight[1] at the highest); below the door the base is open baseSetback deep for the plinth
     const A = APPLIANCES.dishwasher, uc = (u0 + u1) / 2, nicheH = worktopOf(item.group).v0, h = Math.min(A.body[1] + A.feet, Math.max(A.body[1], nicheH));
-    const doorHeight = A.door[0] + ((A.door[1] - A.door[0]) * (h - A.body[1])) / A.feet, doorBottom = h - doorHeight, w0 = uc - A.body[0] / 2, w1 = uc + A.body[0] / 2;
+    const doorHeight = A.doorHeight[0] + ((A.doorHeight[1] - A.doorHeight[0]) * (h - A.body[1])) / A.feet, doorBottom = h - doorHeight, w0 = uc - A.body[0] / 2, w1 = uc + A.body[0] / 2;
     envelope(P, w0, w1, doorBottom, h, carcassFront - A.body[2], carcassFront, A.name + ' – ' + A.body[0] + ' × ' + Math.round(h) + ' × ' + A.body[2] + ', drzwi ' + Math.round(doorHeight));
     envelope(P, w0, w1, 0, doorBottom, carcassFront - A.body[2], carcassFront - A.baseSetback, A.name + ' – podstawa, ' + A.baseSetback + ' za frontem');
   } else if (opening === 'fridge' && K && K.fridgeBody) {

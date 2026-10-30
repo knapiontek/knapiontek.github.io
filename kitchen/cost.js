@@ -17,8 +17,9 @@
                  description, assumed (in the estimate), decide (open question), links [{name, url}]; \n starts a new line.
                  Notes and sections are numbered in this order.
    Texts and formulas may hold placeholders:
-     {n:hinges}        engine count ({n:type.oven}, {n:tag.bins} = items with that type / tag)
+     {n:hinges}        engine count ({n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
      {s:drawers.dFrom} design.js setting     {t:carcass} thickness and {m:cabinet} material label of a board type or part
+                       (a material use of engine.js: a board type, islandWorktop, carcass, back, drawerBox, hobPanel)
      {w:1.depth}       worktop of group 1  {k:K8.innerWidth} carcass by name: width, height, innerWidth, v0, v1
      {i:K8/oven.niche} item by carcass name or place (G1[5]) and type or tag, #2 = the second from the bottom:
                        width, height, v0, v1 (module), frontWidth, frontHeight, frontV0, frontV1 (front),
@@ -27,7 +28,8 @@
      {p:hinges}        unit price          {q:hinges} item quantity          {note:hinges} the number of a note
      {carcass.m2}      cutting-list total of a block (m2, edge, cut, len, qty)    {waste} {sheet} {reserve} params
      {=expression}     a calculation with placeholders in angle brackets, e.g. {=(<a:oven.front.0> - <k:K8.innerWidth>) / 2},
-                       with ROUND, ROUNDUP, MIN, MAX;  |% shows a fraction as a percentage */
+                       with ROUND, ROUNDUP, MIN, MAX;  |% shows a fraction as a percentage
+   A quantity formula ("=..." in qty) uses the placeholders in braces and ROUNDUP only: it is exported as an Excel formula. */
 window.KITCHEN_COST = {
  "page": {
   "title": "Kosztorys kuchni Jaworze",
@@ -770,7 +772,7 @@ window.KITCHEN_COST = {
      "id": "dishwasher",
      "appliance": "dishwasher",
      "topic": "Zmywarka Bosch SMV4HVX00E – G1[5]",
-     "description": "Urządzenie {a:dishwasher.body.0} × {=MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>))} × {a:dishwasher.body.2}, nóżki wykręcone do spodu blatu; drzwi {=ROUND((<a:dishwasher.door.0> + (<a:dishwasher.door.1> - <a:dishwasher.door.0>) * (MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - <a:dishwasher.body.1>) / <a:dishwasher.feet>))}.\nWnęka {w:1.v0} × {i:G1[5]/dishwasher.width} × {s:carcass.depth}.\nFront {i:G1[5]/dishwasher.frontWidth} × {i:G1[5]/dishwasher.frontHeight}: sięga {=ROUND(MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - (<a:dishwasher.door.0> + (<a:dishwasher.door.1> - <a:dishwasher.door.0>) * (MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - <a:dishwasher.body.1>) / <a:dishwasher.feet>) - <i:G1[5]/dishwasher.frontV0>)} niżej niż drzwi, kończy się {=MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - <i:G1[5]/dishwasher.frontV1>} pod ich górą, po {=(<a:dishwasher.body.0> - <i:G1[5]/dishwasher.frontWidth>) / 2} węższy z boków.\nNóżki {a:dishwasher.baseSetback} za frontem, cokół przed nimi.",
+     "description": "Urządzenie {a:dishwasher.body.0} × {=MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>))} × {a:dishwasher.body.2}, nóżki wykręcone do spodu blatu; drzwi {=ROUND((<a:dishwasher.doorHeight.0> + (<a:dishwasher.doorHeight.1> - <a:dishwasher.doorHeight.0>) * (MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - <a:dishwasher.body.1>) / <a:dishwasher.feet>))}.\nWnęka {w:1.v0} × {i:G1[5]/dishwasher.width} × {s:carcass.depth}.\nFront {i:G1[5]/dishwasher.frontWidth} × {i:G1[5]/dishwasher.frontHeight}: sięga {=ROUND(MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - (<a:dishwasher.doorHeight.0> + (<a:dishwasher.doorHeight.1> - <a:dishwasher.doorHeight.0>) * (MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - <a:dishwasher.body.1>) / <a:dishwasher.feet>) - <i:G1[5]/dishwasher.frontV0>)} niżej niż drzwi, kończy się {=MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - <i:G1[5]/dishwasher.frontV1>} pod ich górą, po {=(<a:dishwasher.body.0> - <i:G1[5]/dishwasher.frontWidth>) / 2} węższy z boków.\nNóżki {a:dishwasher.baseSetback} za frontem, cokół przed nimi.",
      "decide": "Ciężar frontu: sprawdzić w instrukcji (Bosch ma zawias SMZ5003 do ciężkich frontów)."
     },
     {

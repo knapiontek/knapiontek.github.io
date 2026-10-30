@@ -151,8 +151,12 @@
 /* cost.html - estimate, cutting list, notes, assembly and carcass map: engine.js parts priced with cost.js. */
 
 const COST = window.KITCHEN_COST, APPLIANCES = window.KITCHEN_APPLIANCES;
-if (!COST) document.body.textContent = 'Nie znaleziono pliku cost.js obok tej strony.';
-if (!APPLIANCES) document.body.textContent = 'Nie znaleziono pliku appliances.js obok tej strony.';
+for (const [data, file] of [[COST, 'cost.js'], [APPLIANCES, 'appliances.js']]) {
+  if (!data) {
+    document.body.textContent = 'Nie znaleziono pliku ' + file + ' obok tej strony.';
+    throw new Error(file + ' missing'); // nothing below can run without it
+  }
+}
 const KE = window.KitchenEngine;
 const DEFAULT_COLUMNS = ['Element', 'Długość', 'Szerokość', 'Ilość']; // header of a cutting-list block without its own columns
 const columnsOf = block => block.columns || DEFAULT_COLUMNS;
@@ -191,9 +195,9 @@ function holeLines(drilling) {
   return out;
 }
 function drillLines(row) {
-  const drilling = row[7];
+  const drilling = row.drilling;
   if (!drilling) return [];
-  const parts = drilling.parts || [{ drilling, qty: row[3] }];
+  const parts = drilling.parts || [{ drilling, qty: row.qty }];
   // each set of holes once, with the number of left / right parts that have it, in the order met
   const sets = new Map();
   for (const p of parts) {
@@ -234,15 +238,16 @@ function drillLegend() {
 }
 // finished edges of one piece per side, as an order form for the board supplier has them: [edges along the length, edges along the width],
 // 0, 1 or 2 each. ABS edges (boards, panels) come from engine.js as [side, length]; lacquered edges (fronts, frames, plinth) as {long, short}.
-// (row: [name, length, width, qty, where, ABS edges, lacquered edges]; fronts are height × width, so the long side can be either)
+// (a cut-list row, KE.cutList: a = the length, b = the width; fronts are height × width, so the long side can be either)
 const edgeCounts = row => {
-  if (row[6]) return row[1] >= row[2] ? [row[6].long, row[6].short] : [row[6].short, row[6].long];
-  const alongLength = Math.min(2, (row[5] || []).filter(([, length]) => length === row[1]).length);
-  return [alongLength, (row[5] || []).length - alongLength];
+  const { lacquer, edges = [] } = row;
+  if (lacquer) return row.a >= row.b ? [lacquer.long, lacquer.short] : [lacquer.short, lacquer.long];
+  const alongLength = Math.min(2, edges.filter(([, length]) => length === row.a).length);
+  return [alongLength, edges.length - alongLength];
 };
-// cut-list rows [name, a, b, qty, where, edges, lacquer]: the longer side first, sorted by name, then longest first
-const longFirst = rows => rows.map(r => (r[1] >= r[2] ? r : [r[0], r[2], r[1], ...r.slice(3)]));
-const sortRows = rows => rows.sort((x, y) => x[0].localeCompare(y[0]) || y[1] - x[1] || y[2] - x[2]);
+// cut-list rows: the longer side first (a), sorted by name, then longest first
+const longFirst = rows => rows.map(row => (row.a >= row.b ? row : { ...row, a: row.b, b: row.a }));
+const sortRows = rows => rows.sort((x, y) => x.name.localeCompare(y.name) || y.a - x.a || y.b - x.b);
 
 /* ---------- 1. model: parts from engine.js (design.js); every block is calculated, nothing typed in ---------- */
 let model = null;
@@ -265,29 +270,30 @@ let codeOfRow = {}; // cutKey of a row -> its label
 // a front as a cut-list part: height × width, as the front maker needs them
 const frontPart = f => ({ ...f, name: frontFunction(f), a: round1(f.height), b: round1(f.width) });
 // the drilling is done by hand on site, so parts of one size share a row (one label), left and right ones too: the rows that differ
-// only in their drilling become one, with the qty added up and the drilling of each kept (drillLines lists each set of holes);
-// row[9] = the keys of the rows merged, so the same parts elsewhere (Montaż) still find their label
+// only in their drilling become one, with the qty added up and the drilling of each kept in drilling.parts (drillLines lists each set
+// of holes); keys = the keys of the rows merged, so the same parts elsewhere (Montaż) still find their label
 function mergeHands(rows) {
-  const out = [], groups = new Map();
+  const bySize = new Map(); // in the order met
   for (const row of rows) {
-    const size = [row[0], row[1], row[2], JSON.stringify(row[5]), JSON.stringify(row[6])].join('|');
-    if (!groups.has(size)) { groups.set(size, []); out.push(groups.get(size)); }
-    groups.get(size).push(row);
+    const size = [row.name, row.a, row.b, JSON.stringify(row.edges), JSON.stringify(row.lacquer)].join('|');
+    if (!bySize.has(size)) bySize.set(size, []);
+    bySize.get(size).push(row);
   }
-  return out.map(item => {
-    if (!Array.isArray(item[0])) return item; // an ordinary row
-    const order = r => ({ L: 0, R: 1 }[(r[7] && r[7].hand) || ''] ?? 2); // left, right, then the others (undrilled last)
-    const group = item.sort((a, b) => order(a) - order(b) || (b[7] ? 1 : 0) - (a[7] ? 1 : 0)), [first] = group;
+  const order = row => ({ L: 0, R: 1 }[(row.drilling && row.drilling.hand) || ''] ?? 2); // left, right, then the others (undrilled last)
+  return [...bySize.values()].map(group => {
+    group.sort((x, y) => order(x) - order(y) || (y.drilling ? 1 : 0) - (x.drilling ? 1 : 0));
+    const [first] = group;
     if (group.length === 1) return first;
-    const parts = group.map(r => ({ drilling: r[7] || { holes: [], cutouts: [], none: true }, qty: r[3], where: r[4] }));
+    const parts = group.map(row => ({ drilling: row.drilling || { holes: [], cutouts: [], none: true }, qty: row.qty, where: row.where }));
     // where: the "at" labels of all, counted again ("K4" + "K4" = "K4 ×2"), as engine.js cutList writes them
     const at = new Map();
-    for (const r of group) for (const label of String(r[4] || '').split(', ').filter(Boolean)) {
+    for (const row of group) for (const label of String(row.where || '').split(', ').filter(Boolean)) {
       const [, name, n] = label.match(/^(.*?)(?: ×(\d+))?$/);
       at.set(name, (at.get(name) || 0) + Number(n || 1));
     }
-    const whereText = [...at].map(([name, n]) => (n > 1 ? name + ' ×' + n : name)).join(', ');
-    return [first[0], first[1], first[2], group.reduce((n, r) => n + r[3], 0), whereText, first[5], first[6], { parts }, first[8], group.map(r => r[8])];
+    const where = [...at].map(([name, n]) => (n > 1 ? name + ' ×' + n : name)).join(', ');
+    const qty = group.reduce((sum, row) => sum + row.qty, 0);
+    return { ...first, qty, where, drilling: { parts }, keys: group.map(row => row.key) };
   });
 }
 function blockRows(parts) {
@@ -312,7 +318,7 @@ function applyProject(project) {
   // a label per cut-list row: the block code (cost.js blocks) and its number, e.g. KO-07; the same part elsewhere finds it by its cutKey
   codeOfRow = {};
   for (const block of COST.blocks) {
-    (rowsOf[block.id] || []).forEach((row, i) => { for (const key of row[9] || [row[8]]) codeOfRow[key] = block.code + '-' + String(i + 1).padStart(2, '0'); });
+    (rowsOf[block.id] || []).forEach((row, i) => { for (const key of row.keys || [row.key]) codeOfRow[key] = block.code + '-' + String(i + 1).padStart(2, '0'); });
   }
   carcassMapJSON = KE.mapJSON(KE.carcassMap(model));
   document.getElementById('mapJson').textContent = carcassMapJSON;
@@ -330,7 +336,7 @@ function renderAssembly() {
   const lines = rows => rows.map(t => '<br>– ' + esc(t)).join('');
   const withEdges = edges => (edges && edges.length ? ' (ABS ' + edgeText(edges) + ')' : '');
   const label = key => (codeOfRow[key] ? codeOfRow[key] + ' ' : '');
-  const partList = boards => sortRows(longFirst(KE.cutList(boards))).map(([name, a, b, qty, , edges, , drilling, key]) =>
+  const partList = boards => sortRows(longFirst(KE.cutList(boards))).map(({ name, a, b, qty, edges, drilling, key }) =>
     label(key) + (qty > 1 ? qty + ' × ' : '') + name + (drilling && drilling.hand ? ' ' + KE.LABELS.hand[drilling.hand] : '') + ' ' + a + ' × ' + b + withEdges(edges));
   const size = (a, b) => Math.max(a, b) + ' × ' + Math.min(a, b); // the longer side first, as in the Cutting list
   const section = (title, rows) => (rows.length ? '<br><b>' + esc(title) + '</b>' + lines(rows) : '');
@@ -398,13 +404,13 @@ function blockTotals() {
   for (const block of COST.blocks) {
     const t = { m2: 0, edge: 0, cut: 0, len: 0, qty: 0, rows: [] };
     (rowsOf[block.id] || []).forEach(row => {
-      const [, A, B, qty] = row;
-      const m2 = (A * B * qty) / 1e6;
-      // ABS edges from engine.js (row[5]); fronts, frames and the plinth have no ABS
-      const edge = row[5] && row[5].length ? (edgeLength(row[5]) * qty) / 1000 : null;
-      const cut = block.cut ? ((A + B) * qty) / 1000 : null;
+      const { a, b, qty, edges } = row;
+      const m2 = (a * b * qty) / 1e6;
+      // ABS edges from engine.js; fronts, frames and the plinth have none
+      const edge = edges && edges.length ? (edgeLength(edges) * qty) / 1000 : null;
+      const cut = block.cut ? ((a + b) * qty) / 1000 : null;
       t.m2 += m2;
-      t.len += (B * qty) / 1000;
+      t.len += (b * qty) / 1000;
       t.qty += qty;
       t.edge += edge || 0;
       t.cut += cut || 0;
@@ -418,16 +424,8 @@ function ROUNDUP(x, digits) {
   const f = Math.pow(10, digits || 0);
   return Math.ceil(x * f - 1e-9) / f;
 }
-// Placeholders in quantities and texts - every value comes from design.js, engine.js or the JSON of this page:
-//   {n:hinges} engine count (model.counts; {n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
-//   {s:drawers.dFrom} design.js setting  {t:carcass} thickness, {m:cabinet} material label of a board type or a carcass part
-//   (engine USES: the board types, islandWorktop and the parts carcass, back, drawerBox, hobPanel)   {w:1.depth} worktop of group 1 (model.worktops)
-//   {k:K8.innerWidth} carcass   {i:K8/oven.niche} item (carcassValue, itemValue)
-//   {a:oven.front.1} appliances.js   {v:sheet.length} cost.js values   {p:hinges} unit price of an item   {q:hinges} quantity of an item
-//   {note:hinges} the number of a note
-//   {carcass.m2|edge|cut|len|qty} cutting-list total
-//   {waste} {sheet} {reserve} parameters;  add |% to show a fraction as a percentage, e.g. {v:edgeAllowance|%}
-//   {=...} a calculation (calculate): placeholders in angle brackets, e.g. {=<i:K8/oven.niche> - <a:oven.body.1>}
+// Placeholders in quantities and texts ({n:hinges}, {i:K8/oven.niche}, {=...} ...): the full list is at the top of cost.js.
+// Every value comes from design.js (through engine.js), appliances.js or cost.js.
 
 // a carcass by name: width, height, innerWidth, v0, v1
 function carcassValue(rest) {
@@ -436,8 +434,6 @@ function carcassValue(rest) {
   const width = K.u1 - K.u0;
   return { width, height: K.v1 - K.v0, innerWidth: width - 2 * model.thickness.carcass, v0: K.v0, v1: K.v1 }[field] ?? NaN;
 }
-// boards that close a niche from below or above: the horizontal boards of a carcass
-const HORIZONTAL_BOARDS = ['bottom', 'top', 'rail', 'fixedShelf', 'hobPanel'];
 // an item by carcass name or place and type or tag ("K8/oven", "G1[5]/dishwasher", "K8/cabinet#2" = the second from the bottom):
 // module width, height, v0, v1; its front frontWidth, frontHeight, frontV0, frontV1; niche = the clear height between the
 // nearest horizontal boards of its carcass below (nicheBottom) and above (nicheTop) its middle; drawers behind its door (tag pullouts):
@@ -449,7 +445,7 @@ function itemValue(rest) {
     .sort((a, b) => a.v0 - b.v0)[(Number(n) || 1) - 1];
   if (!item) return NaN;
   const f = item.front, mid = (item.v0 + item.v1) / 2, K = item.carcass;
-  const bands = K ? model.boards.filter(b => b.carcassId === K.id && HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[2], b.box[3]]) : [];
+  const bands = K ? model.boards.filter(b => b.carcassId === K.id && KE.HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[2], b.box[3]]) : [];
   const below = bands.filter(([a, b]) => (a + b) / 2 <= mid).map(([, b]) => b), above = bands.filter(([a, b]) => (a + b) / 2 > mid).map(([a]) => a);
   const nicheBottom = below.length ? Math.max(...below) : NaN, nicheTop = above.length ? Math.min(...above) : NaN;
   return {
@@ -483,7 +479,8 @@ function placeholder(key, totals, quantities) {
   const [block, total] = rest.split('.');
   return totals && totals[block] ? totals[block][total] : NaN;
 }
-// quantity: a number, or a formula "=..." with placeholders and ROUNDUP
+// quantity: a number, or a formula "=..." with placeholders and ROUNDUP only: the XLSX export writes it as an Excel formula,
+// and ROUNDUP(x, digits) is the same there (the texts' {=...} may also use ROUND, MIN, MAX)
 function evalQty(expr, totals, quantities) {
   if (typeof expr === 'number') return expr;
   const js = expr.replace(/^=/, '').replace(/\{([^}|]+)\}/g, (_, key) => `(${Number(placeholder(key, totals, quantities))})`);
@@ -593,7 +590,14 @@ function renderCuttingList() {
     (rowsOf[block.id] || []).forEach((row, i) => {
       const t = totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
       const cell = value => `<td class="num" title="Obliczone przez engine.js z design.js – zmiany projektu w design.html">${value}</td>`;
-      html.push(`<tr><td class="label">${esc(codeOfRow[row[8]] || '')}</td><td>${esc(row[0])}</td>${cell(row[1])}${cell(alongLength)}${cell(row[2])}${cell(alongWidth)}<td class="num">${fmt(t.m2, 3)}</td>${cell(row[3])}<td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td><td class="drill">${drillLines(row).map(line => esc(line).replace(/^ +/, sp => '&nbsp;'.repeat(sp.length)).replace(/⊗/g, '<span class="cp">⊗</span>')).join('<br>')}</td><td class="where">${esc(row[4] || '')}</td></tr>`);
+      const drilling = drillLines(row).map(line => esc(line).replace(/^ +/, sp => '&nbsp;'.repeat(sp.length)).replace(/⊗/g, '<span class="cp">⊗</span>')).join('<br>');
+      html.push('<tr>' +
+        `<td class="label">${esc(codeOfRow[row.key] || '')}</td><td>${esc(row.name)}</td>` +
+        `${cell(row.a)}${cell(alongLength)}${cell(row.b)}${cell(alongWidth)}` +
+        `<td class="num">${fmt(t.m2, 3)}</td>${cell(row.qty)}` +
+        `<td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td>` +
+        `<td class="drill">${drilling}</td><td class="where">${esc(row.where || '')}</td>` +
+        '</tr>');
     });
     const t = totals[block.id], hasEdging = t.rows.some(r => r.edge != null), hasCutting = !!block.cut;
     html.push(`<tr class="sum"><td></td><td>Razem</td><td></td><td></td><td></td><td></td><td class="num">${fmt(t.m2, 3)}</td><td class="num">${t.qty}</td><td class="num">${hasEdging ? fmt(t.edge) : ''}</td><td class="num">${hasCutting ? fmt(t.cut) : ''}</td><td></td><td></td></tr>`);
@@ -705,13 +709,13 @@ function buildWorkbook() {
     cutting.push([str('Etykieta'), str(labelCell), str(size1 + ' [mm]'), str('Krawędź'), str(size2 + ' [mm]'), str('Krawędź'), str('m²'), str(qtyCell), str('ABS razem [mb]'), str('Cięcia [mb]'), str('Wiercenie / wycięcia (legenda na dole)'), str('Gdzie')]);
     const first = cutting.length + 1;
     (rowsOf[block.id] || []).forEach((row, i) => {
-      const [, A, B, qty] = row, r = cutting.length + 1, t = result.totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
+      const r = cutting.length + 1, t = result.totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
       // columns: A label, B name, C length, D edges, E width, F edges, G m², H qty, I ABS, J cuts, K drilling, L where
-      const line = [str(codeOfRow[row[8]] || ''), str(row[0]), num(A), num(alongLength), num(B), num(alongWidth), formula(`C${r}*E${r}*H${r}/1000000`, t.m2), num(qty)];
-      line.push(t.edge != null ? formula(`${edgeLength(row[5])}*H${r}/1000`, t.edge) : str(''));
+      const line = [str(codeOfRow[row.key] || ''), str(row.name), num(row.a), num(alongLength), num(row.b), num(alongWidth), formula(`C${r}*E${r}*H${r}/1000000`, t.m2), num(row.qty)];
+      line.push(t.edge != null ? formula(`${edgeLength(row.edges)}*H${r}/1000`, t.edge) : str(''));
       line.push(block.cut ? formula(`(C${r}+E${r})*H${r}/1000`, t.cut) : str(''));
       line.push(str(drillLines(row).join('\n')));
-      line.push(str(row[4] || ''));
+      line.push(str(row.where || ''));
       cutting.push(line);
     });
     const last = cutting.length, totalRow = last + 1, T = result.totals[block.id];

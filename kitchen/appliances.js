@@ -8,13 +8,14 @@
      feet        height of the body bottom above the floor it stands on; "adjustable" = adjustable feet
      frontBottom front bottom from the body bottom
      door        the appliance door: hinge = the edge it turns about (bottom | left | right, seen from the front)
+     doorHeight  [lowest, highest] height of a door that grows with the feet (dishwasher)
      niche       the installation niche {h, w: [min, max], d}
      source      where every value comes from; "assumed" = not in the documents, to check
      links       the documents [{name, url}]; the first one is the installation drawing or the product page
    Other fields: fridge (freezerDoor, fridgeDoor: [bottom, top] from the appliance bottom; doorDepth: how far behind the
-   niche front the body ends and the doors start), dishwasher (door: [lowest, highest] door height as the feet grow;
-   baseSetback: how far behind the front the base is open), hob (glass [width, depth]), sink (outer [width, depth];
-   bowl [width, depth, depth down]; rim and wall thickness), hood (chimney [width, depth]). */
+   niche front the body ends and the doors start), dishwasher (baseSetback: how far behind the front the base is open),
+   hob (glass [width, depth]), sink (outer [width, depth]; bowl [width, depth, depth down]; rim and wall thickness),
+   hood (chimney [width, depth]). */
 window.KITCHEN_APPLIANCES = {
  "oven": {"name": "Bosch HBA534BB3", "body": [558, 570, 528.5], "front": [594, 595], "projection": 19.5, "feet": 0, "frontBottom": 0, "door": {"hinge": "bottom"},
   "niche": {"h": [585, 595], "w": [560, 568], "d": 550},
@@ -36,7 +37,7 @@ window.KITCHEN_APPLIANCES = {
   "links": [
    {"name": "Strona produktu z instrukcją montażu (PL)", "url": "https://www.bosch-home.pl/pl/product/chlodzenie-i-zamrazanie/chlodziarko-zamrazarki/chlodziarko-zamrazarki-do-zabudowy/KIS86AFE0"}
   ]},
- "dishwasher": {"name": "Bosch SMV4HVX00E", "body": [598, 815, 550], "feet": 60, "door": [655, 725], "baseSetback": 100,
+ "dishwasher": {"name": "Bosch SMV4HVX00E", "body": [598, 815, 550], "feet": 60, "doorHeight": [655, 725], "baseSetback": 100,
   "niche": {"h": [815, 875], "w": [600, 600], "d": 550},
   "source": "installation drawing SMV4HVX00E: 598 × 550, height 815–875 (feet +60), appliance door 655–725 (grows with the height), plinth zone 90–220, feet 100 behind the front: the base is open in front for the plinth",
   "links": [
@@ -52,7 +53,7 @@ window.KITCHEN_APPLIANCES = {
   "links": [
    {"name": "Instrukcja montażu z szablonem (PDF)", "url": "https://www.ikea.com/pl/pl/assembly_instructions/kilsviken-zlew-wpuszczany-1-komorowy-czarny-kompozyt-kwarcowy__AA-2382156-2-2.pdf"}
   ]},
- "hood": {"name": "Electrolux LFV416K", "width": 598, "depth": 390, "height": 380, "chimney": [250, 220],
+ "hood": {"name": "Electrolux LFV416K", "body": [598, 380, 390], "chimney": [250, 220],
   "source": "",
   "links": []},
  "coffee": {"name": "DeLonghi Dinamica", "body": [236, 348, 429],

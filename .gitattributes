@@ -1,0 +1,15 @@
+# Text files: LF in the repository and in the working folder, on every system (overrides core.autocrlf)
+* text=auto eol=lf
+
+# Binary files: never touched
+*.pdf  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.xlsx binary
+*.zip  binary
+*.woff binary
+*.woff2 binary

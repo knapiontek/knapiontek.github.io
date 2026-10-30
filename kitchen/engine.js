@@ -131,6 +131,9 @@
   // cut-outs in a worktop: the carcass flag that asks for one -> settings.cutouts[flag] {width, depth, fromBack}, centred on the carcass
   const CUTOUT_FLAGS = ['sink', 'hob'];
 
+  // the horizontal boards of a carcass (board ids): they close a niche, carry drawers behind a door, and no hole may land in one
+  const HORIZONTAL_BOARDS = ['bottom', 'top', 'rail', 'fixedShelf', 'hobPanel'];
+
   /* ================= 2. SMALL HELPERS ================= */
 
   const valueAt = (obj, dotted) => dotted.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
@@ -151,6 +154,18 @@
   // the tags a type allows (TAGS), in TAG_NAMES order
   const tagsOf = type => TAG_NAMES.filter(tag => TAGS[tag].includes(type));
   const readType = value => { const t = String(value ?? '').trim().toLowerCase(); return TYPES.includes(t) ? t : ''; };
+
+  // a board seen on edge must be as thick as its material: a worktop (its height; a worktop fall: its width), a frame (its narrow side).
+  // Returns the use whose material sets the thickness, the size to compare and its name, or null for the other types.
+  function onEdgeSize(item, island) {
+    const width = item.u1 - item.u0, height = item.v1 - item.v0;
+    if (item.type === 'worktop') {
+      const use = island ? ISLAND_USE : 'worktop';
+      return hasTag(item, 'fall') ? { use, size: width, what: 'szerokość' } : { use, size: height, what: 'wysokość' };
+    }
+    if (item.type === 'frame') return { use: 'frame', size: Math.min(width, height), what: height > width ? 'szerokość' : 'wysokość' };
+    return null;
+  }
 
   // the module of a front minus its 4 gaps
   function frontBox(item) {
@@ -353,12 +368,11 @@
       for (const item of stacked.items) {
         counts.type[item.type] = (counts.type[item.type] || 0) + 1;
         for (const tag of item.tags) counts.tag[tag] = (counts.tag[tag] || 0) + 1;
-        // a board seen on edge must be as thick as its material: worktop (fall: its width), frame (its narrow side)
-        const width = item.u1 - item.u0, height = item.v1 - item.v0;
-        const [part, size, what] = item.type === 'worktop' ? [groups[g].island ? ISLAND_USE : 'worktop', hasTag(item, 'fall') ? width : height, hasTag(item, 'fall') ? 'szerokość' : 'wysokość']
-          : item.type === 'frame' ? ['frame', Math.min(width, height), height > width ? 'szerokość' : 'wysokość'] : [];
-        if (part && !materialFor[part]) warn(`Grupa ${g}: wyspa potrzebuje materiału z użyciem ${part}.`, item.index);
-        else if (part && size !== thickness[part]) warn(`${placeOf(item)}: ${typeLabel(item.type)} - ${what} ${size} nie zgadza się z materiałem ${materials[materialFor[part]].label}.`, item.index);
+        const onEdge = onEdgeSize(item, groups[g].island);
+        if (!onEdge) continue;
+        const { use, size, what } = onEdge;
+        if (!materialFor[use]) warn(`Grupa ${g}: wyspa potrzebuje materiału z użyciem ${use}.`, item.index);
+        else if (size !== thickness[use]) warn(`${placeOf(item)}: ${typeLabel(item.type)} - ${what} ${size} nie zgadza się z materiałem ${materials[materialFor[use]].label}.`, item.index);
       }
     }
 
@@ -652,7 +666,7 @@
       if (!Number.isFinite(length)) return warn(`${at}: żadna prowadnica z settings.pullouts.runner.lengths nie mieści się w ${n1 - carcassBack}.`, item.index);
       // the drawers stand between the horizontal boards next to the door's ends (bottom, fixed shelf, top ...: a fixed shelf need not be
       // centred on the joint, e.g. under an oven)
-      const horizontal = boards.filter(b => b.carcassId === K.id && ['bottom', 'top', 'rail', 'fixedShelf', 'hobPanel'].includes(b.id));
+      const horizontal = boards.filter(b => b.carcassId === K.id && HORIZONTAL_BOARDS.includes(b.id));
       const lo = Math.max(...horizontal.filter(b => b.box[3] >= item.v0 - board && b.box[3] <= item.v0 + board).map(b => b.box[3]));
       const hi = Math.min(...horizontal.filter(b => b.box[2] >= item.v1 - board && b.box[2] <= item.v1 + board).map(b => b.box[2]));
       if (!Number.isFinite(lo) || !Number.isFinite(hi)) return warn(`${at}: szuflady za drzwiami - brak płyty poziomej nad lub pod drzwiami.`, item.index);
@@ -761,7 +775,7 @@
     for (const K of carcasses) {
       const own = boards.filter(b => b.carcassId === K.id);
       // horizontal boards of the carcass: a shelf pin must not land in one
-      const bands = own.filter(b => ['bottom', 'top', 'rail', 'fixedShelf', 'hobPanel'].includes(b.id)).map(b => [b.box[2], b.box[3]]);
+      const bands = own.filter(b => HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[2], b.box[3]]);
       const faceBoard = u => own.find(b => (b.id === 'side' || b.id === 'hingePost') && (b.box[0] === u || b.box[1] === u));
       // mounting plates: on the side or hinge post at the hinge edge of each door, plate.spacing apart around each hinge
       for (const front of fronts.filter(f => f.carcassId === K.id && f.hinges)) {
@@ -819,18 +833,25 @@
           for (const x of runner.fromFront) holeAt(target, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x, y: y - target.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
         }
       }
-      // holes too close on one face of one part; a hole in a horizontal board (once per kind and carcass)
+      // holes too close on one face of one part (once per pair of kinds and part); a hole in a horizontal board (once per kind and carcass)
       const boardHits = new Set();
       for (const b of own.filter(b => b.holes)) {
         b.holes.sort((h, g) => h.y - g.y || h.x - g.x);
         const near = (h, g) => Math.hypot(g.x - h.x, g.y - h.y) < (g.diameter + h.diameter) / 2 + 1;
-        const pairs = b.holes.flatMap((h, i) => b.holes.slice(i + 1).filter(g => near(h, g)).map(g => [h, g]));
         // a hole in a side or a hinge post must not land where a horizontal board meets it
         const inBoard = b.holes.find(h => h.axis === 'u' && bands.some(([b0, b1]) => h.v + h.diameter / 2 > b0 && h.v - h.diameter / 2 < b1));
-        if (inBoard && !boardHits.has(inBoard.kind)) (boardHits.add(inBoard.kind), warn(`${K.name}: ${b.name.toLowerCase()} - ${LABELS.hole[inBoard.kind]} trafia w płytę poziomą (${inBoard.x} od przodu, ${Math.round(inBoard.y)} od dołu): sprawdź ustawienia drilling.`));
-        for (const [h, g] of pairs.filter(([h, g], i) => pairs.findIndex(([h2, g2]) => h2.kind === h.kind && g2.kind === g.kind) === i)) {
-          warn(`${K.name}: ${b.name.toLowerCase()} - ${LABELS.hole[h.kind]} i ${LABELS.hole[g.kind]} w tym samym miejscu (${h.x} od przodu, ${Math.round(h.y)} od dołu): przesuń półkę albo zawias.`);
+        if (inBoard && !boardHits.has(inBoard.kind)) {
+          boardHits.add(inBoard.kind);
+          warn(`${K.name}: ${b.name.toLowerCase()} - ${LABELS.hole[inBoard.kind]} trafia w płytę poziomą (${inBoard.x} od przodu, ${Math.round(inBoard.y)} od dołu): sprawdź ustawienia drilling.`);
         }
+        const pairsMet = new Set();
+        b.holes.forEach((h, i) => {
+          for (const g of b.holes.slice(i + 1).filter(g => near(h, g))) {
+            if (pairsMet.has(h.kind + '|' + g.kind)) continue;
+            pairsMet.add(h.kind + '|' + g.kind);
+            warn(`${K.name}: ${b.name.toLowerCase()} - ${LABELS.hole[h.kind]} i ${LABELS.hole[g.kind]} w tym samym miejscu (${h.x} od przodu, ${Math.round(h.y)} od dołu): przesuń półkę albo zawias.`);
+          }
+        });
         counts.drillHoles += b.holes.length;
       }
     }
@@ -873,9 +894,10 @@
 
   /* ================= 6. LISTS AND FILES ================= */
 
-  // parts with the same name, size, ABS edges, lacquer and drilling counted together: [name, a, b, qty, where, edges, lacquer, drilling, key];
-  // where = their "at" labels, e.g. "K2, K5 ×2"; edges = ABS edges of one part [[side, length]]; lacquer = {long, short} lacquered edges;
-  // key = cutKey of the row (the same parts listed elsewhere, e.g. per carcass, find their row by it)
+  // parts with the same name, size, ABS edges, lacquer and drilling counted together, one row each:
+  //   {name, a, b, qty, where, edges, lacquer, drilling, key}
+  //   where = their "at" labels, e.g. "K2, K5 ×2"; edges = ABS edges of one part [[side, length]]; lacquer = {long, short} lacquered
+  //   edges or null; drilling = drillingOf(part) or null; key = cutKey (the same parts listed elsewhere, e.g. per carcass, find their row by it)
   function cutList(parts) {
     const rows = new Map();
     for (const p of parts) {
@@ -888,7 +910,7 @@
     return [...rows].map(([key, row]) => {
       const [name, a, b, edges, lacquer, drilling] = key.split('|');
       const where = [...row.at].map(([label, n]) => (n > 1 ? label + ' ×' + n : label)).join(', ');
-      return [name, Number(a), Number(b), row.qty, where, JSON.parse(edges), JSON.parse(lacquer), JSON.parse(drilling), key];
+      return { name, a: Number(a), b: Number(b), qty: row.qty, where, edges: JSON.parse(edges), lacquer: JSON.parse(lacquer), drilling: JSON.parse(drilling), key };
     });
   }
   const cutKey = p => p.name + '|' + p.a + '|' + p.b + '|' + JSON.stringify(p.edges || []) + '|' + JSON.stringify(p.lacquer || null) + '|' + JSON.stringify(drillingOf(p));
@@ -920,7 +942,7 @@
         type: LABELS.carcassType[K.type],
         flags: K.flags.map(flag => LABELS.flag[flag]),
         members: K.members.map(i => ({ col: i.span > 1 ? [i.col, i.col + i.span - 1] : i.col, tags: tagsLabel([i.type, ...i.tags]), x: [i.u0, i.u1], y: [i.v0, i.v1] })),
-        boards: cutList(model.boards.filter(b => b.carcassId === K.id)).map(([name, a, b, qty]) => (qty > 1 ? qty + ' × ' : '') + name + ' ' + a + ' × ' + b),
+        boards: cutList(model.boards.filter(b => b.carcassId === K.id)).map(row => (row.qty > 1 ? row.qty + ' × ' : '') + row.name + ' ' + row.a + ' × ' + row.b),
         legs: K.legs
       };
       if (roomPosition) entry.room = roomPosition(K);
@@ -974,7 +996,7 @@
   }
 
   root.KitchenEngine = {
-    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PARTS, USES, ISLAND_USE, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, SHELF_UNDER_JOINT, LACQUER,
+    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PARTS, USES, ISLAND_USE, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, SHELF_UNDER_JOINT, LACQUER, HORIZONTAL_BOARDS,
     HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, drillingOf, cutKey, checkSettings, build, cutList, carcassMap, mapJSON,
     load, designJS, fromDesignJS
   };
