@@ -1,16 +1,21 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Łazienka L grafit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: scena 3D zawsze widoczna; widoki jako pasek na scenie; panel po prawej (desktop) lub kompaktowy pod sceną (telefon).
-   Priorytet panelu: powierzchnia -> wzór -> format -> armatura i przełączniki -> wymiary (zwinięte) */
+/* Układ: scena 3D zawsze widoczna, pasek widoków i przełącznik dzień/noc na scenie,
+   panel ustawień po prawej (desktop) albo pod sceną (telefon). */
 :root{
   --bg:#eceeef; --panel:#f7f8f8; --fg:#1d2124; --muted:#5d666c; --line:#d4d9dc;
   --accent:#b07a3c; --stage:#c9ced1; --chip:#e7eaec;
   --f-display:"Big Shoulders Display","Arial Narrow",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#121516; --panel:#1a1e20; --fg:#e7eaec; --muted:#9aa4aa; --line:#2c3337;
@@ -18,10 +23,15 @@
 :root[data-theme="dark"]{
   --bg:#121516; --panel:#1a1e20; --fg:#e7eaec; --muted:#9aa4aa; --line:#2c3337;
   --accent:#d39a58; --stage:#24292c; --chip:#22272a; color-scheme:dark}
-html,body{height:100%}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px}
+a{color:var(--accent)}
+
 .app{display:grid;grid-template-columns:minmax(0,1fr) 320px;height:100%}
+.app.nopanel{grid-template-columns:minmax(0,1fr)}
 #stage{position:relative;min-height:0;min-width:0;background:var(--stage)}
 #stage canvas{display:block;width:100%;height:100%;touch-action:none}
 #err{position:absolute;inset:0;display:grid;place-items:center;padding-inline:16px;text-align:center;color:var(--muted)}
@@ -31,40 +41,41 @@ button:hover{border-color:var(--accent)}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 button[aria-pressed="true"]{background:var(--fg);color:var(--panel);border-color:var(--fg)}
 
-.app.nopanel{grid-template-columns:minmax(0,1fr)}
+/* --- pasek na scenie --- */
 .topbar{position:absolute;top:12px;left:16px;right:16px;z-index:3;display:flex;align-items:flex-start;gap:8px}
-.panelbtn{flex:none;margin-left:auto;display:flex;align-items:center;gap:7px;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;
-  background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(6px)}
-.panelbtn svg{width:17px;height:17px;flex:none}
-.nopanel .panelbtn{background:var(--fg);color:var(--panel);border-color:var(--fg)}
-.cap{margin:0;display:flex;flex-direction:column;gap:2px;font-size:12.5px;line-height:1.35;min-height:2.7em}
-.cap b{font-weight:600}
-.cap span{color:var(--muted)}
-.tip{position:fixed;z-index:20;max-width:240px;pointer-events:none;background:var(--fg);color:var(--panel);border-radius:6px;padding:7px 10px;font-size:12.5px;line-height:1.35;display:flex;flex-direction:column;gap:2px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-.tip span{opacity:.8}
-/* widoki na scenie */
+.glass{background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(6px)}
 .views{display:flex;flex-wrap:wrap;gap:6px;min-width:0;flex:1}
-.views button{flex:none;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;font-size:13px}
-.views button[aria-pressed="true"]{background:var(--fg);color:var(--panel)}
-.hint{position:absolute;left:16px;bottom:14px;font-family:var(--f-mono);font-size:11px;color:var(--fg);
-  background:color-mix(in srgb,var(--panel) 82%,transparent);padding:6px 10px;border-radius:4px;margin-right:16px}
+.views button{flex:none;padding:6px 11px;border-radius:999px;font-size:13px}
+.daynight{flex:none;display:flex;padding:2px;gap:2px;border:1px solid var(--line);border-radius:999px}
+.daynight button{border:0;background:transparent;border-radius:999px;padding:4px 10px;font-size:13px;display:flex;align-items:center;gap:6px}
+.daynight button[aria-pressed="true"]{background:var(--fg);color:var(--panel)}
+.daynight svg,.panelbtn svg{width:16px;height:16px;flex:none}
+.panelbtn{flex:none;display:flex;align-items:center;gap:7px;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+.nopanel .panelbtn{background:var(--fg);color:var(--panel);border-color:var(--fg)}
+.hint{position:absolute;left:16px;bottom:14px;margin-right:16px;font-family:var(--f-mono);font-size:11px;color:var(--fg);
+  background:color-mix(in srgb,var(--panel) 82%,transparent);padding:6px 10px;border-radius:4px}
 
-/* panel */
-aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding-block:18px 24px;padding-inline:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
+/* --- panel --- */
+aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:18px 18px 24px;display:flex;flex-direction:column;gap:18px;min-width:0}
 h1{font-family:var(--f-display);font-weight:800;font-size:26px;line-height:1;letter-spacing:.01em;margin:0}
 h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:600}
 .block{display:flex;flex-direction:column;gap:10px}
 
+/* powierzchnia: ściany / podłoga / prysznic */
 .surf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--chip);padding:3px;border-radius:9px;border:1px solid var(--line)}
 .surf button{border:0;background:transparent;border-radius:7px;padding:7px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:600;font-size:13px}
 .surf button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .surf i{width:30px;height:14px;border-radius:3px;border:1px solid var(--line);display:block;background-size:cover}
 .surf small{font-family:var(--f-mono);font-size:10.5px;color:var(--muted);font-weight:400}
 
-.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:6px}
-.sw button{padding:0;aspect-ratio:1;border-radius:6px;border:2px solid transparent;background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
-.sw button:hover{border-color:var(--line)}
-.sw button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--panel)}
+/* wzory płytek */
+.swatches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.swatches button{padding:0;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;text-align:left;background:var(--chip);border:2px solid transparent}
+.swatches button[aria-pressed="true"]{border-color:var(--accent);background:var(--chip);color:var(--fg)}
+.swatches img{display:block;width:100%;aspect-ratio:2/1;object-fit:cover}
+.swatches span{padding:6px 8px;font-size:12.5px;font-weight:600}
+.cap{margin:0;display:flex;flex-direction:column;gap:2px;font-size:12.5px;line-height:1.4}
+.cap span{color:var(--muted)}
 
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .row > span{color:var(--muted);font-size:12.5px;min-width:52px}
@@ -74,11 +85,11 @@ h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute
 .metals{display:flex;gap:10px}
 .metals button{width:34px;height:34px;padding:0;border-radius:50%;border:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
 .metals button[aria-pressed="true"]{border-color:var(--accent);background-clip:padding-box}
-.metals button[data-m="brass"]{background:radial-gradient(circle at 35% 30%,#ead2a2,#b8935a 55%,#7e6233)}
-.metals button[data-m="nickel"]{background:radial-gradient(circle at 35% 30%,#f2f1ed,#bab8b1 55%,#7f7d77)}
+.metals button[data-metal="brass"]{background:radial-gradient(circle at 35% 30%,#ead2a2,#b8935a 55%,#7e6233)}
+.metals button[data-metal="nickel"]{background:radial-gradient(circle at 35% 30%,#f2f1ed,#bab8b1 55%,#7f7d77)}
+
 .toggles{display:flex;gap:6px;flex-wrap:wrap}
-.toggles button{font-size:13px}
-.finish{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.toggles button{font-size:13px;padding:6px 10px}
 
 details{border-top:1px solid var(--line);padding-top:12px}
 summary{cursor:pointer;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
@@ -88,63 +99,84 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;te
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
   .hint,h1{display:none}
-  .cap{min-height:0;flex-direction:row;flex-wrap:wrap;gap:0 6px}
-  .topbar{left:12px;right:12px;top:10px}
-  .views{gap:5px}
+  .topbar{left:12px;right:12px;top:10px;flex-wrap:wrap}
+  .views{gap:5px;flex-basis:100%;order:2}
+  .daynight{margin-left:auto}
   .views button,.panelbtn{font-size:12px;padding:5px 9px}
-  aside{border-left:0;border-top:1px solid var(--line);max-height:50vh;padding-block:12px calc(14px + env(safe-area-inset-bottom,0px));gap:12px}
+  .daynight .label,.panelbtn .label{display:none}
+  aside{border-left:0;border-top:1px solid var(--line);max-height:50vh;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));gap:14px}
 }
 </style>
+</head>
+<body>
 
 <div class="app">
   <div id="stage">
     <div class="topbar">
-    <div class="views" id="views" role="group" aria-label="Widok">
-      <button data-v="all" aria-pressed="true">Ogólny</button>
-      <button data-v="door" aria-pressed="false">Od drzwi</button>
-      <button data-v="left" aria-pressed="false">Umywalka i WC</button>
-      <button data-v="shower" aria-pressed="false">Prysznic</button>
-      <button data-v="top" aria-pressed="false">Rzut</button>
-    </div>
-    <button class="panelbtn" id="panelBtn" aria-expanded="true" aria-controls="settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
-      <span>Ustawienia</span>
-    </button>
+      <div class="views" id="views" role="group" aria-label="Widok">
+        <button class="glass" data-view="overview" aria-pressed="true">Ogólny</button>
+        <button class="glass" data-view="door" aria-pressed="false">Od drzwi</button>
+        <button class="glass" data-view="vanity" aria-pressed="false">Umywalka i WC</button>
+        <button class="glass" data-view="shower" aria-pressed="false">Prysznic</button>
+        <button class="glass" data-view="plan" aria-pressed="false">Rzut</button>
+      </div>
+      <div class="daynight glass" id="lighting" role="group" aria-label="Oświetlenie">
+        <button data-lighting="day" aria-pressed="true" title="Światło dzienne">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <span class="label">Dzień</span>
+        </button>
+        <button data-lighting="night" aria-pressed="false" title="Noc, światło sztuczne">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+          <span class="label">Noc</span>
+        </button>
+      </div>
+      <button class="panelbtn glass" id="panelBtn" aria-expanded="true" aria-controls="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+        <span class="label">Ustawienia</span>
+      </button>
     </div>
     <div class="hint">kliknij drzwi: otwórz · przeciągnij: obrót · kółko / szczypanie: zoom · prawy przycisk: przesuń</div>
   </div>
+
   <aside id="settings">
     <h1>Łazienka L grafit</h1>
 
     <section class="block" aria-label="Płytki">
-      <div class="surf" id="slots" role="group" aria-label="Powierzchnia">
-        <button data-slot="wall" aria-pressed="true"><i></i>Ściany<small></small></button>
-        <button data-slot="floor" aria-pressed="false"><i></i>Podłoga<small></small></button>
-        <button data-slot="shower" aria-pressed="false"><i></i>Prysznic<small></small></button>
+      <h2>Płytki</h2>
+      <div class="surf" id="surfaces" role="group" aria-label="Powierzchnia">
+        <button data-surface="wall" aria-pressed="true"><i></i>Ściany<small></small></button>
+        <button data-surface="floor" aria-pressed="false"><i></i>Podłoga<small></small></button>
+        <button data-surface="shower" aria-pressed="false"><i></i>Prysznic<small></small></button>
       </div>
-      <div class="sw" id="tiles" role="group" aria-label="Wzór płytki"></div>
-      <p class="cap"><b id="tileName"></b><span id="tileSrc"></span></p>
-      <div class="row"><span>Format</span><div class="chips" id="fmt"></div></div>
-      <div class="row" id="oriRow"><span>Układ</span><div class="chips" id="orient">
-        <button data-o="h" aria-pressed="true">poziomo</button>
-        <button data-o="v" aria-pressed="false">pionowo</button>
+      <div class="swatches" id="swatches" role="group" aria-label="Wzór płytki"></div>
+      <p class="cap" id="tileInfo"></p>
+      <div class="row"><span>Format</span><div class="chips" id="formats"></div></div>
+      <div class="row" id="layoutRow"><span>Układ</span><div class="chips" id="layouts">
+        <button data-layout="h" aria-pressed="true">poziomo</button>
+        <button data-layout="v" aria-pressed="false">pionowo</button>
       </div></div>
     </section>
 
-    <section class="finish">
-      <div class="block"><h2>Armatura</h2>
-        <div class="metals" id="metal" role="group" aria-label="Armatura">
-          <button data-m="brass" aria-pressed="true" aria-label="Mosiądz szczotkowany" title="Mosiądz szczotkowany"></button>
-          <button data-m="nickel" aria-pressed="false" aria-label="Nikiel szczotkowany" title="Nikiel szczotkowany"></button>
-        </div>
+    <section class="block">
+      <h2>Warstwy</h2>
+      <div class="toggles" id="layers" role="group" aria-label="Warstwy">
+        <button data-layer="walls">Ściany</button>
+        <button data-layer="ceiling">Sufit</button>
+        <button data-layer="floor">Podłoga</button>
+        <button data-layer="furniture">Meble</button>
+        <button data-layer="sanitary">Ceramika i armatura</button>
+        <button data-layer="glass">Kabina</button>
+        <button data-layer="installations">Pion i stelaż</button>
       </div>
-      <div class="block"><h2>Pokaż</h2>
-        <div class="toggles">
-          <button id="glassBtn" aria-pressed="false">Wszystkie drzwi otwarte</button>
-          <button id="xrayBtn" aria-pressed="false">Pion i stelaż</button>
-        </div>
-      </div>
+      <div class="toggles"><button id="doorsBtn" aria-pressed="false">Wszystkie drzwi otwarte</button></div>
+    </section>
 
+    <section class="block">
+      <h2>Armatura</h2>
+      <div class="metals" id="metals" role="group" aria-label="Armatura">
+        <button data-metal="brass" aria-pressed="true" aria-label="Mosiądz szczotkowany" title="Mosiądz szczotkowany"></button>
+        <button data-metal="nickel" aria-pressed="false" aria-label="Nikiel szczotkowany" title="Nikiel szczotkowany"></button>
+      </div>
     </section>
 
     <details id="dims">
@@ -152,7 +184,9 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;te
       <dl>
         <dt>Pomieszczenie</dt><dd>240 × 160 cm</dd>
         <dt>Wnęka prysznica</dt><dd>90 × 100 cm</dd>
-        <dt>Wysokość</dt><dd>260 cm</dd>
+        <dt>Wysokość (strop)</dt><dd>260 cm</dd>
+        <dt>Sufit podwieszany</dt><dd>245 cm, szczelina LED 5 cm</dd>
+        <dt>Oprawy</dt><dd>4 × wpuszczane 3000 K, 1 × IP65 w prysznicu</dd>
         <dt>Drzwi</dt><dd>80 × 205, 10 cm w prawo od środka</dd>
         <dt>Okno</dt><dd>80 × 90, parapet 120</dd>
         <dt>Szpaleta okna</dt><dd>15 cm, w płytce</dd>
@@ -169,571 +203,1072 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;te
     </details>
   </aside>
 </div>
-<div class="tip" id="tip" role="tooltip" hidden><b></b><span></span></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="textures.js"></script>
 <script>
-(function(){
-const stage=document.getElementById('stage');
-if(!window.THREE||!THREE.OrbitControls){stage.insertAdjacentHTML('beforeend','<div id="err">Nie udało się wczytać silnika 3D. Odśwież stronę.</div>');return;}
+'use strict';
+(async function main() {
 
-/* ---------- katalog płytek ---------- */
-// paleta wzorów; src = kolekcja, na której wzorowano próbkę (null = wzór poglądowy bez sprawdzonego odpowiednika)
-const TILES=[
-  // marmury
-  {id:'mw', name:'Marmur biały', src:null, kind:'marble', base:'#ece9e3', rough:.25},
-  {id:'mg', name:'Marmur szary', src:null, kind:'marble', base:'#8d8e8f', rough:.3},
-  {id:'mv', name:'Marmur zielony', src:'Paradyż Abstract green poler', kind:'marble', base:'#2f4a40', rough:.3},
-  {id:'ve', name:'Marmur czarny', src:'Tubądzin Arte Veneto black', kind:'marble', base:'#18191a', rough:.3},
-  // kamień
-  {id:'mu', name:'Kamień kremowy', src:'Paradyż Muna creme', kind:'stone', base:'#ddd3c4', rough:.7},
-  {id:'sd', name:'Kamień piaskowy', src:'Tubądzin Arte Sandio beige mat', kind:'stone', base:'#cbbba3', rough:.8},
-  {id:'cs', name:'Kamień beżowy', src:'Paradyż Castelis beige', kind:'stone', base:'#c6b49b', rough:.75},
-  {id:'lv', name:'Kamień taupe', src:'Paradyż Lovstone grey taupe półpoler', kind:'stone', base:'#9a928a', rough:.5},
-  {id:'gc', name:'Kamień grafitowy', src:'Tubądzin Monolith Grand Cave graphite STR', kind:'stone', base:'#3b3c3e', rough:.72},
-  {id:'tr', name:'Trawertyn jasny', src:'Tubądzin Echo', kind:'travertine', base:'#d8c7ab', rough:.7},
-  {id:'tw', name:'Trawertyn ciepły', src:'Tubądzin Echo', kind:'travertine', base:'#bfa98c', rough:.7},
-  {id:'sl', name:'Łupek', src:'Paradyż Naturstone antracite', kind:'slate', base:'#2c2e30', rough:.85},
-  // beton
-  {id:'pl', name:'Beton jasnoszary', src:'Paradyż Play light grey lappato', kind:'concrete', base:'#bdbdba', rough:.45},
-  {id:'pg', name:'Beton szary', src:'Paradyż Play grey lappato', kind:'concrete', base:'#8f908e', rough:.6},
-  {id:'rm', name:'Beton szary mat', src:'Tubądzin Arte Remos grey', kind:'concrete', base:'#8c8c8a', rough:.75},
-  {id:'bw', name:'Beton ciemny', src:'Tubądzin Arte Blackwall grey', kind:'concrete', base:'#5a5b5c', rough:.8},
-  {id:'aa', name:'Beton antracyt', src:'Paradyż Architeq anthracite', kind:'concrete', base:'#303133', rough:.78},
-  // lastryko
-  {id:'tzw', name:'Lastryko białe', src:null, kind:'terrazzo', base:'#e6e4df', rough:.7},
-  {id:'tz', name:'Lastryko szare', src:'Tubądzin Terrazzo grey', kind:'terrazzo', base:'#a9aaa7', rough:.8},
-  {id:'tzd', name:'Lastryko grafitowe', src:'Tubądzin Terrazzo graphite mat', kind:'terrazzo', base:'#3c3d3f', rough:.8},
-  // drewno
-  {id:'wo', name:'Drewno dąb', src:'Paradyż Woodic naturale (format 20×60)', kind:'wood', base:'#b08a5e', rough:.7},
-  {id:'wa', name:'Drewno szare', src:'Paradyż Carrizo', kind:'wood', base:'#9c968c', rough:.75},
-  {id:'wn', name:'Drewno orzech', src:'Paradyż Woodskin', kind:'wood', base:'#6b4e36', rough:.7},
-  // gładkie kolory
-  {id:'fw', name:'Biały mat', src:null, kind:'flat', base:'#efefec', rough:.85},
-  {id:'fs', name:'Szałwia', src:null, kind:'flat', base:'#9aa592', rough:.85},
-  {id:'ft', name:'Terakota', src:null, kind:'flat', base:'#b86a4b', rough:.85},
-  {id:'fn', name:'Granat', src:'Tubądzin House of Tones navy blue', kind:'flat', base:'#2a3446', rough:.85},
-  {id:'fb', name:'Czarny mat', src:'Tubądzin Arte Vanilla black mat', kind:'flat', base:'#1e1e1f', rough:.85}
-];
-const srcText=t=>t.src||'Wzór poglądowy';
-const T_BY={};TILES.forEach(t=>T_BY[t.id]=t);
-const FORMATS=['60x60','60x120','80x80','90x90','100x100','120x120'];
-const state={wall:'gc',floor:'bw',shower:'ve',active:'wall',metal:'brass',
-  fmt:{wall:'60x120',floor:'60x120',shower:'60x120'},ori:{wall:'h',floor:'h',shower:'h'}};
+const stage = document.getElementById('stage');
+const fail = message => stage.insertAdjacentHTML('beforeend', `<div id="err">${message}</div>`);
+if (!window.THREE || !THREE.OrbitControls) return fail('Nie udało się wczytać silnika 3D. Odśwież stronę.');
+if (!window.BATH_TEXTURES) return fail('Brak pliku textures.js obok view.html.');
 
-/* ---------- generator tekstur ---------- */
-function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-function hexShade(h,k){const n=parseInt(h.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.max(0,Math.min(255,Math.round(k<0?v*(1+k):v+(255-v)*k)));return'rgb('+f(r)+','+f(g)+','+f(b)+')';}
-function lum(h){const n=parseInt(h.slice(1),16);return((n>>16)*.3+(n>>8&255)*.59+(n&255)*.11)/255;}
-function seedOf(s){let h=7;for(const c of s)h=h*31+c.charCodeAt(0)|0;return h;}
-function drawTile(spec,tw,th){
-  const PXM=440,W=Math.round(tw*PXM),H=Math.round(th*PXM),S=PXM/520,A=(tw*th)/.72;   // A: skala liczby detali względem 60×120
-  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');const r=rng(seedOf(spec.id+W+'x'+H));
-  const N=n=>Math.round(n*A);
-  g.fillStyle=spec.base;g.fillRect(0,0,W,H);
-  const cloud=(n,a,rad)=>{for(let i=0;i<n;i++){const x=r()*W,y=r()*H,rr=(rad[0]+r()*rad[1])*S;const gr=g.createRadialGradient(x,y,0,x,y,rr);const lt=r()>.5;
-    gr.addColorStop(0,lt?'rgba(255,255,255,'+a+')':'rgba(0,0,0,'+a*1.5+')');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,W,H);}};
-  const speck=(n,a,sz)=>{for(let i=0;i<n;i++){g.fillStyle=r()>.5?'rgba(255,255,255,'+r()*a+')':'rgba(0,0,0,'+r()*a*1.4+')';const s=(r()*sz+.4)*S;g.fillRect(r()*W,r()*H,s,s);}};
-  const veins=(n,a,lw,col,steps)=>{for(let i=0;i<n;i++){g.strokeStyle='rgba('+col+','+(a*(.4+r()*.6))+')';g.lineWidth=(lw*.3+r()*lw)*S;g.beginPath();
-    let x=r()*W,y=r()*H*.2-H*.1;g.moveTo(x,y);for(let k=0;k<steps;k++){const nx=x+(r()-.5)*W*.55,ny=y+H/(steps-1);g.quadraticCurveTo(x+(r()-.5)*W*.35,y+H/(steps*2),nx,ny);x=nx;y=ny;}g.stroke();}};
-  const light=lum(spec.base)>.5,vc=light?'110,100,90':'215,215,210';
-  const along=W>=H;   // dłuższy bok płytki: kierunek słojów, warstw, pasów
-  const streaks=(n,a,len,lw,col)=>{for(let i=0;i<n;i++){g.strokeStyle='rgba('+col+','+r()*a+')';g.lineWidth=(lw*.4+r()*lw)*S;const x=r()*W,y=r()*H,l=(len*.3+r()*len)*S;
-    g.beginPath();g.moveTo(x,y);along?g.lineTo(x+l,y+(r()-.5)*3*S):g.lineTo(x+(r()-.5)*3*S,y+l);g.stroke();}};
-  if(spec.kind==='stone'){cloud(N(16),.07,[60,200]);speck(N(9000),light?.12:.22,2);veins(N(9),light?.12:.17,2.2,vc,5);speck(N(1200),light?.18:.35,1);}
-  else if(spec.kind==='concrete'){cloud(N(26),.08,[40,180]);speck(N(14000),.18,1.6);for(let i=0;i<N(500);i++){g.fillStyle='rgba(0,0,0,'+(.2+r()*.3)+')';g.beginPath();g.arc(r()*W,r()*H,(r()*1.6+.4)*S,0,7);g.fill();}}
-  else if(spec.kind==='terrazzo'){cloud(N(10),.05,[60,180]);speck(N(5000),.15,1.4);
-    const cols=light?['#b9b7b1','#8d8c88','#d8d2c6','#6e6d6a','#c9b9a2']:['#77787a','#a1a2a3','#232425','#cfcfcb','#5a5b5e'];
-    for(let i=0;i<N(900);i++){g.fillStyle=cols[Math.floor(r()*cols.length)];const x=r()*W,y=r()*H,s=(1.5+r()*r()*9)*S;g.beginPath();const k=4+Math.floor(r()*3);for(let j=0;j<k;j++){const a=j/k*6.283+r()*.8,d=s*(.6+r()*.5);g[j?'lineTo':'moveTo'](x+Math.cos(a)*d,y+Math.sin(a)*d);}g.closePath();g.fill();}}
-  else if(spec.kind==='marble'){const mv=light?'120,118,114':'230,230,226';cloud(N(12),.06,[80,220]);speck(N(3000),.06,1.2);veins(Math.max(3,N(5)),light?.45:.55,2.6,mv,7);veins(N(22),light?.18:.25,.9,mv,6);}
-  else if(spec.kind==='travertine'){cloud(N(10),.05,[60,200]);
-    for(let i=0;i<N(70);i++){const p=r()*(along?H:W),w=(2+r()*14)*S;g.fillStyle=(r()>.5?'rgba(255,255,255,':'rgba(90,60,30,')+(r()*.08)+')';along?g.fillRect(0,p,W,w):g.fillRect(p,0,w,H);}
-    for(let i=0;i<N(260);i++){g.fillStyle='rgba(80,60,40,'+(.15+r()*.25)+')';const x=r()*W,y=r()*H,l=(3+r()*14)*S,t=(.8+r()*1.6)*S;along?g.fillRect(x,y,l,t):g.fillRect(x,y,t,l);}speck(N(4000),.08,1.2);}
-  else if(spec.kind==='slate'){cloud(N(18),.07,[40,160]);streaks(N(900),.08,160,2.5,'255,255,255');streaks(N(700),.12,120,2,'0,0,0');speck(N(3000),.1,1.2);}
-  else if(spec.kind==='wood'){
-    const lines=Math.round((along?H:W)/(2.2*S));
-    for(let i=0;i<lines;i++){const p=i*2.2*S+r()*S,a=r()*.1,dark=r()>.45;g.strokeStyle=(dark?'rgba(40,25,10,':'rgba(255,240,215,')+a+')';g.lineWidth=(.6+r()*1.8)*S;g.beginPath();
-      const ph=r()*6.28,amp=(1+r()*4)*S,f=.004+r()*.006;
-      for(let k=0;k<=(along?W:H);k+=12){const o=Math.sin(k*f+ph)*amp;along?(k?g.lineTo(k,p+o):g.moveTo(k,p+o)):(k?g.lineTo(p+o,k):g.moveTo(p+o,k));}g.stroke();}
-    for(let i=0;i<N(3);i++){const x=r()*W,y=r()*H,rx=(6+r()*10)*S,ry=(3+r()*5)*S;g.fillStyle='rgba(50,30,15,.35)';g.beginPath();along?g.ellipse(x,y,rx,ry,0,0,7):g.ellipse(x,y,ry,rx,0,0,7);g.fill();}
-    cloud(N(10),.05,[60,180]);}
-  else {cloud(N(8),.035,[80,220]);speck(N(8000),.06,1.2);}
-  // fuga 3 mm: każda krawędź płytki dostaje połowę (1,5 mm), kolor zbliżony do płytki
-  const pxPerM=PXM,gw=Math.max(.7,.0015*pxPerM);
-  g.fillStyle=lum(spec.base)<.14?hexShade(spec.base,.07):hexShade(spec.base,light?-.1:-.16);
-  g.fillRect(0,0,W,gw);g.fillRect(0,H-gw,W,gw);g.fillRect(0,0,gw,H);g.fillRect(W-gw,0,gw,H);
-  return c;
-}
-const canvasCache={};
-function tileCanvas(id,tw,th){const k=id+'|'+tw+'x'+th;if(!canvasCache[k])canvasCache[k]=drawTile(T_BY[id],tw,th);return canvasCache[k];}
 
-/* ---------- renderer / scena ---------- */
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.outputEncoding=THREE.sRGBEncoding;
-renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.15;
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-stage.prepend(renderer.domElement);
-const scene=new THREE.Scene();
-function stageColor(){scene.background=new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--stage').trim()||'#c9ced1');}
-stageColor();
-try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',stageColor);}catch(e){}
-new MutationObserver(stageColor).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+/* ==========================================================================
+   1. STAN
+   Wszystko, co użytkownik może zmienić w panelu, w jednym miejscu.
+   ========================================================================== */
 
-// otoczenie do odbić (metal, ceramika, lustro)
-(function(){const pm=new THREE.PMREMGenerator(renderer);const env=new THREE.Scene();
-  env.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16),new THREE.MeshBasicMaterial({color:0x6f7276,side:THREE.BackSide})));
-  const lm=new THREE.MeshBasicMaterial({color:0xffffff});lm.color.setScalar(5);
-  const p1=new THREE.Mesh(new THREE.BoxGeometry(3,.1,3),lm);p1.position.set(0,5,0);env.add(p1);
-  const p2=new THREE.Mesh(new THREE.BoxGeometry(2.5,2,.1),lm);p2.position.set(0,2,6);env.add(p2);
-  const dm=new THREE.MeshBasicMaterial({color:0x202122});const fl=new THREE.Mesh(new THREE.BoxGeometry(20,.1,20),dm);fl.position.y=-3;env.add(fl);
-  scene.environment=pm.fromScene(env,.04).texture;})();
+const SURFACES = ['wall', 'floor', 'shower'];
+const FORMATS = ['60x60', '60x120', '80x80', '90x90', '100x100', '120x120'];   // cm
 
-const camera=new THREE.PerspectiveCamera(50,1,0.05,60);
-const controls=new THREE.OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true;controls.minDistance=0.3;controls.maxDistance=10;
-// Przy przybliżeniu punkt obrotu bywał przed ścianami, które oglądamy — wtedy obraz kręcił się odwrotnie.
-// Na początku przeciągania przesuwamy punkt obrotu wzdłuż osi widoku na powierzchnię na środku ekranu,
-// więc widok nie skacze, a wszystko, co widać, leży przed punktem obrotu i podąża za ruchem ręki.
-const pivotRay=new THREE.Raycaster(),pivotCenter=new THREE.Vector2(0,0),pivotDir=new THREE.Vector3();
-function shown(o){for(;o;o=o.parent)if(!o.visible)return false;return true;}
-renderer.domElement.addEventListener('pointerdown',e=>{
-  if(anim||(e.pointerType==='mouse'&&e.button!==0))return;
-  pivotRay.setFromCamera(pivotCenter,camera);
-  const hit=pivotRay.intersectObjects(scene.children,true).find(h=>h.object.isMesh&&shown(h.object)&&
-    !(h.object.material&&(h.object.material.visible===false||h.object.material.opacity<.5)));
-  if(!hit)return;
-  const d=Math.min(controls.maxDistance,Math.max(controls.minDistance,hit.distance));
-  camera.getWorldDirection(pivotDir);controls.target.copy(camera.position).addScaledVector(pivotDir,d);
-});
-const maxAniso=renderer.capabilities.getMaxAnisotropy();
-
-const H=2.6,T=0.1;
-const tileMeshes=[];   // {mesh,slot,w,h,ox,oy}
-function dims(slot){const [a,b]=state.fmt[slot].split('x').map(v=>v/100);if(a===b)return{tw:a,th:a};
-  return state.ori[slot]==='v'?{tw:Math.min(a,b),th:Math.max(a,b)}:{tw:Math.max(a,b),th:Math.min(a,b)};}
-function tileMat(slot,w,h,ox,oy){
-  const d=dims(slot),spec=T_BY[state[slot]];
-  const t=new THREE.CanvasTexture(tileCanvas(spec.id,d.tw,d.th));t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=maxAniso;
-  t.repeat.set(1/d.tw,1/d.th);   // UV w metrach (patrz bakeTiles), siatka płytek liczona od narożnika pokoju
-  return new THREE.MeshStandardMaterial({map:t,roughness:spec.rough,metalness:spec.kind==='metal'?.25:.04,envMapIntensity:.45});
-}
-function tiled(slot,geo,w,h,ox,oy,parent){const m=new THREE.Mesh(geo,tileMat(slot,w,h,ox,oy));m.castShadow=m.receiveShadow=true;(parent||scene).add(m);tileMeshes.push({mesh:m,slot,w,h,ox,oy});return m;}
-function retile(slots){for(const m of tileMeshes){if(!slots.includes(m.slot))continue;const old=m.mesh.material;m.mesh.material=tileMat(m.slot,m.w,m.h,m.ox,m.oy);old.map&&old.map.dispose();old.dispose();}}
-
-/* ---------- materiały ---------- */
-const METALS={brass:{color:0xb8935a,rough:.32},nickel:{color:0xbab8b1,rough:.28}};
-const M={
-  ceramic:new THREE.MeshPhysicalMaterial({color:0xf4f4f2,roughness:.1,clearcoat:.6,clearcoatRoughness:.08}),
-  ceramicIn:new THREE.MeshPhysicalMaterial({color:0xeeeeec,roughness:.12,clearcoat:.5,side:THREE.DoubleSide}),
-  metal:new THREE.MeshStandardMaterial({color:METALS.brass.color,metalness:1,roughness:METALS.brass.rough}),
-  oak:new THREE.MeshStandardMaterial({color:0x9a7650,roughness:.6}),
-  doorWood:new THREE.MeshStandardMaterial({color:0x8a6d50,roughness:.55}),
-  glass:new THREE.MeshPhysicalMaterial({color:0xdaeaec,roughness:.03,metalness:0,transparent:true,opacity:.18,depthWrite:false,side:THREE.DoubleSide}),
-  mirror:new THREE.MeshStandardMaterial({color:0xd4dade,roughness:.03,metalness:1}),
-  sky:new THREE.MeshBasicMaterial({color:0xdfeefa}),
-  led:new THREE.MeshBasicMaterial({color:0xffe2b0}),
-  frame:new THREE.MeshStandardMaterial({color:0x2a2c2e,roughness:.5,metalness:.3}),
-  white:new THREE.MeshStandardMaterial({color:0xf1f1ef,roughness:.4}),
-  gap:new THREE.MeshStandardMaterial({color:0x2a211a,roughness:.8})
+const state = {
+  tiles: {   // format: krótszy×dłuższy bok w cm; layout: h = dłuższy bok poziomo, v = pionowo
+    wall:   { tile: 'authorityGraphite', format: '60x120', layout: 'h' },
+    floor:  { tile: 'authorityGrey',     format: '80x80',  layout: 'h' },
+    shower: { tile: 'authorityGraphite', format: '60x120', layout: 'h' },
+  },
+  surface: 'wall',      // powierzchnia edytowana w panelu
+  metal: 'brass',
+  lighting: 'day',      // day | night
+  layers: {
+    walls: true, ceiling: true, floor: true,
+    furniture: true, sanitary: true, glass: true,
+    installations: false,
+  },
 };
-function setMetal(k){state.metal=k;M.metal.color.setHex(METALS[k].color);M.metal.roughness=METALS[k].rough;}
-function box(w,h,d,mat,x,y,z,parent){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;(parent||scene).add(m);return m;}
-/* drzwi otwierane: obj obraca się wokół osi Y swojej grupy od 0 (zamknięte) do kąta open */
-const doors=[];
-function door(obj,open){const d={obj,open,v:0,t:0};obj.traverse(o=>o.userData.door=d);doors.push(d);return d;}
-function cyl(r1,r2,h,mat,x,y,z,parent,seg){const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg||32),mat);m.position.set(x,y,z);m.castShadow=true;(parent||scene).add(m);return m;}
 
-/* ---------- loft: bryła z przekrojów superelipsy (miska WC, umywalka) ---------- */
-function se(t,n){const c=Math.cos(t),s=Math.sin(t);return[Math.sign(c)*Math.pow(Math.abs(c),2/n),Math.sign(s)*Math.pow(Math.abs(s),2/n)];}
-function loft(secs,opt){
-  opt=opt||{};const seg=72,pos=[],idx=[];
-  const ring=sc=>{const pts=[];for(let j=0;j<seg;j++){const t=j/seg*Math.PI*2;const n=Math.sin(t)<0?(sc.nb||sc.n||2.5):(sc.n||2.5);const [cx,cz]=se(t,n);
-    pts.push([sc.a*cx+(sc.cx||0),sc.y,sc.b*cz+(sc.cz||0)]);}return pts;};
-  const rings=secs.map(ring);
-  rings.forEach(r=>r.forEach(p=>pos.push(...p)));
-  for(let i=0;i<rings.length-1;i++)for(let j=0;j<seg;j++){const a=i*seg+j,b=i*seg+(j+1)%seg,c=(i+1)*seg+j,d=(i+1)*seg+(j+1)%seg;idx.push(a,c,b,b,c,d);}
-  const cap=(r,sc,up)=>{const base=pos.length/3;r.forEach(p=>pos.push(...p));pos.push(sc.cx||0,sc.y,sc.cz||0);const c=base+seg;
-    for(let j=0;j<seg;j++){const a=base+j,b=base+(j+1)%seg;up?idx.push(c,b,a):idx.push(c,a,b);}};
-  if(opt.bottom!==false)cap(rings[0],secs[0],false);
-  if(opt.top!==false)cap(rings[rings.length-1],secs[secs.length-1],true);
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g;
+/** Wymiary jednej płytki na danej powierzchni, w metrach: { w: poziomo, h: pionowo / w głąb }. */
+function tileSize(surface) {
+  const { format, layout } = state.tiles[surface];
+  const [a, b] = format.split('x').map(cm => cm / 100);
+  const long = Math.max(a, b), short = Math.min(a, b);
+  return layout === 'v' ? { w: short, h: long } : { w: long, h: short };
+}
+const sizeLabel = ({ w, h }) => `${Math.round(w * 100)}×${Math.round(h * 100)}`;
+
+
+/* ==========================================================================
+   2. PŁYTKI z textures.js
+   Każde zdjęcie to jedna cała płytka. Z kilku zdjęć składamy blok płytek
+   (losowe zdjęcie, obrót i wycinek, fuga), który powtarza się na powierzchni.
+   ========================================================================== */
+
+const TILES = {};
+for (const [id, data] of Object.entries(BATH_TEXTURES.tiles)) TILES[id] = { id, ...data, images: [] };
+
+const loadImage = src => { const img = new Image(); img.src = src; return img.decode().then(() => img); };
+try {
+  await Promise.all(Object.values(TILES).map(async tile => { tile.images = await Promise.all(tile.faces.map(loadImage)); }));
+} catch (e) {
+  return fail('Nie udało się wczytać zdjęć płytek z textures.js.');
 }
 
-/* ---------- ściany ----------
-   Patrząc od drzwi (z=0) w stronę okna (z=2.4): lewa ściana x=1.6, prawa x=0, wnęka prysznica x -1.0..0, z 1.5..2.4 */
-const walls=[];
-function wall(a,b,n,slot,ext,hole,th){
-  const T=th||0.1;
-  const g=new THREE.Group();scene.add(g);
-  const dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz),ux=dx/L,uz=dz/L,rot=-Math.atan2(uz,ux);
-  const pieces=hole?[[0,hole.u0,0,H],[hole.u1,L,0,H],[hole.u0,hole.u1,0,hole.y0],[hole.u0,hole.u1,hole.y1,H]]:[[0,L,0,H]];
-  for(const [u0,u1,y0,y1] of pieces){if(u1-u0<.001||y1-y0<.001)continue;
-    const e0=u0===0?ext[0]:0,e1=Math.abs(u1-L)<1e-6?ext[1]:0;
-    const w=u1-u0+e0+e1,h=y1-y0,uc=(u0-e0+u1+e1)/2;
-    const m=tiled(slot,new THREE.BoxGeometry(w,h,T),w,h,u0-e0,y0,g);
-    m.position.set(a[0]+ux*uc+n[0]*T/2,y0+h/2,a[1]+uz*uc+n[1]*T/2);m.rotation.y=rot;}
-  const rec={g,n:new THREE.Vector3(n[0],0,n[1]),mid:new THREE.Vector3((a[0]+b[0])/2,H/2,(a[1]+b[1])/2)};walls.push(rec);return rec;
+const GROUT_WIDTH = 0.003;          // m
+const TEXTURE_PX_PER_M = 512;
+const TEXTURE_MAX_PX = 2048;
+const MAX_TILES_PER_BLOCK_SIDE = 6;
+
+function seededRandom(seed) {   // mulberry32: ten sam układ płytek po każdym odświeżeniu
+  return function () {
+    seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
 }
-const RV=0.15, TW=0.25;            // szpaleta okna 15 cm, ściana z oknem 25 cm
-const WX0=0.03, WX1=0.83;          // okno tuż przy linii szkła prysznica (x=0)
-const DX0=0.30, DX1=1.10;          // drzwi przesunięte 10 cm w prawo
-const wA=wall([0,0],[1.6,0],[0,-1],'wall',[.1,.1],{u0:DX0,u1:DX1,y0:0,y1:2.05});
-const wB=wall([1.6,0],[1.6,2.4],[1,0],'wall',[.1,TW]);
-const wC1=wall([1.6,2.4],[0,2.4],[0,1],'wall',[.1,0],{u0:1.6-WX1,u1:1.6-WX0,y0:1.2,y1:2.1},TW);
-const wC2=wall([0,2.4],[-1,2.4],[0,1],'shower',[0,.1]);
-const wD=wall([-1,2.4],[-1,1.5],[-1,0],'shower',[.1,.1]);
-const wE=wall([-1,1.5],[0,1.5],[0,-1],'shower',[.1,-.1]);  // ścianka z narożnikiem: baterie (kończy się przed wF, bez nakładania = bez migania)
-const wF=wall([0,1.5],[0,0],[-1,0],'wall',[0,0]);
-// czoło narożnika od strony prysznica: płytka prysznicowa, minimalnie przed licem wF
-tiled('shower',new THREE.PlaneGeometry(.1,H),.1,H,0,0,wE.g).position.set(-.05,H/2,1.5006);
-box(.006,H,.006,M.metal,.001,H/2,1.5015,wE.g);   // profil narożnikowy
+const hashString = s => [...s].reduce((h, c) => h * 31 + c.charCodeAt(0) | 0, 7);
+const powerOfTwo = px => Math.min(TEXTURE_MAX_PX, 2 ** Math.round(Math.log2(px)));
+
+const textureCache = new Map();
+
+/** Tekstura powierzchni z płytek `tile` o wymiarach w × h (m). UV powierzchni są w metrach. */
+function tileTexture(tile, w, h) {
+  const key = `${tile.id}|${w}x${h}`;
+  if (textureCache.has(key)) return textureCache.get(key);
+
+  const cols = Math.max(1, Math.min(MAX_TILES_PER_BLOCK_SIDE, Math.floor(TEXTURE_MAX_PX / (w * TEXTURE_PX_PER_M))));
+  const rows = Math.max(1, Math.min(MAX_TILES_PER_BLOCK_SIDE, Math.floor(TEXTURE_MAX_PX / (h * TEXTURE_PX_PER_M))));
+  const blockW = cols * w, blockH = rows * h;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = powerOfTwo(blockW * TEXTURE_PX_PER_M);
+  canvas.height = powerOfTwo(blockH * TEXTURE_PX_PER_M);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(canvas.width / blockW, canvas.height / blockH);   // od tej chwili rysujemy w metrach
+
+  const random = seededRandom(hashString(key));
+  const photoSide = tile.size[0] / 1000;                       // bok płytki na zdjęciu, m
+  const drawn = Math.max(photoSide, w, h);                      // zdjęcie musi przykryć całą płytkę
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const image = tile.images[Math.floor(random() * tile.images.length)];
+      const quarterTurns = Math.floor(random() * 4);
+      // zasięg płytki w układzie obróconego zdjęcia
+      const [ex, ey] = quarterTurns % 2 ? [h, w] : [w, h];
+      const dx = (random() - .5) * (drawn - ex), dy = (random() - .5) * (drawn - ey);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(c * w, r * h, w, h); ctx.clip();
+      ctx.translate(c * w + w / 2, r * h + h / 2);
+      ctx.rotate(quarterTurns * Math.PI / 2);
+      ctx.drawImage(image, -drawn / 2 + dx, -drawn / 2 + dy, drawn, drawn);
+      ctx.restore();
+    }
+  }
+
+  // fuga: linia na każdej krawędzi płytki (na brzegach bloku połowa — dopełni ją sąsiedni blok)
+  const pxPerM = canvas.width / blockW;
+  const grout = Math.max(GROUT_WIDTH, 1.3 / pxPerM);
+  ctx.fillStyle = tile.grout;
+  for (let c = 0; c <= cols; c++) ctx.fillRect(c * w - grout / 2, 0, grout, blockH);
+  for (let r = 0; r <= rows; r++) ctx.fillRect(0, r * h - grout / 2, blockW, grout);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.encoding = THREE.sRGBEncoding;
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  texture.repeat.set(1 / blockW, 1 / blockH);
+  textureCache.set(key, texture);
+  return texture;
+}
+
+/** Miniatura do panelu (wycinek zdjęcia, proporcje 2:1). */
+function tileThumbnail(tile) {
+  const canvas = document.createElement('canvas'), img = tile.images[0];
+  canvas.width = 192; canvas.height = 96;
+  canvas.getContext('2d').drawImage(img, 0, img.height / 4, img.width, img.height / 2, 0, 0, 192, 96);
+  return canvas.toDataURL('image/jpeg', .85);
+}
+for (const tile of Object.values(TILES)) tile.thumbnail = tileThumbnail(tile);
+
+// Jeden materiał na powierzchnię: zmiana płytki podmienia tylko jego teksturę.
+const tileMaterials = {};
+for (const surface of SURFACES) {
+  tileMaterials[surface] = new THREE.MeshStandardMaterial({ roughness: .78, metalness: 0, envMapIntensity: .35 });
+}
+function applyTiles(surface) {
+  const { w, h } = tileSize(surface);
+  const material = tileMaterials[surface];
+  material.map = tileTexture(TILES[state.tiles[surface].tile], w, h);
+  material.needsUpdate = true;
+}
+
+
+/* ==========================================================================
+   3. RENDERER, SCENA, KAMERA
+   ========================================================================== */
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.prepend(renderer.domElement);
+
+for (const surface of SURFACES) applyTiles(surface);
+
+const scene = new THREE.Scene();
+function syncStageColor() {
+  const css = getComputedStyle(document.documentElement).getPropertyValue('--stage').trim();
+  scene.background = new THREE.Color(css || '#c9ced1');
+}
+syncStageColor();
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncStageColor); } catch (e) {}
+new MutationObserver(syncStageColor).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+// otoczenie do odbić (metal, ceramika, lustro): szara kula z dwoma jasnymi panelami
+(function buildEnvironmentMap() {
+  const pmrem = new THREE.PMREMGenerator(renderer), env = new THREE.Scene();
+  env.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), new THREE.MeshBasicMaterial({ color: 0x6f7276, side: THREE.BackSide })));
+  const glow = new THREE.MeshBasicMaterial({ color: 0xffffff }); glow.color.setScalar(5);
+  const top = new THREE.Mesh(new THREE.BoxGeometry(3, .1, 3), glow); top.position.set(0, 5, 0); env.add(top);
+  const front = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2, .1), glow); front.position.set(0, 2, 6); env.add(front);
+  const ground = new THREE.Mesh(new THREE.BoxGeometry(20, .1, 20), new THREE.MeshBasicMaterial({ color: 0x202122 })); ground.position.y = -3; env.add(ground);
+  scene.environment = pmrem.fromScene(env, .04).texture;
+})();
+
+const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 60);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.minDistance = 0.3;
+controls.maxDistance = 10;
+
+
+/* ==========================================================================
+   4. MATERIAŁY I KLOCKI
+   ========================================================================== */
+
+const METALS = { brass: { color: 0xb8935a, roughness: .32 }, nickel: { color: 0xbab8b1, roughness: .28 } };
+const LED_ON = 0xffe2b0, LED_OFF = 0xd8d6d0;
+
+const M = {
+  ceramic:   new THREE.MeshPhysicalMaterial({ color: 0xf4f4f2, roughness: .1, clearcoat: .6, clearcoatRoughness: .08 }),
+  ceramicIn: new THREE.MeshPhysicalMaterial({ color: 0xeeeeec, roughness: .12, clearcoat: .5, side: THREE.DoubleSide }),
+  metal:     new THREE.MeshStandardMaterial({ color: METALS.brass.color, metalness: 1, roughness: METALS.brass.roughness }),
+  oak:       new THREE.MeshStandardMaterial({ color: 0x9a7650, roughness: .6 }),
+  doorWood:  new THREE.MeshStandardMaterial({ color: 0x8a6d50, roughness: .55 }),
+  glass:     new THREE.MeshPhysicalMaterial({ color: 0xdaeaec, roughness: .03, transparent: true, opacity: .18, depthWrite: false, side: THREE.DoubleSide }),
+  mirror:    new THREE.MeshStandardMaterial({ color: 0xd4dade, roughness: .03, metalness: 1 }),
+  sky:       new THREE.MeshBasicMaterial({ color: 0xdfeefa }),
+  led:       new THREE.MeshBasicMaterial({ color: LED_ON }),     // świecące listwy i oprawy
+  frame:     new THREE.MeshStandardMaterial({ color: 0x2a2c2e, roughness: .5, metalness: .3 }),
+  white:     new THREE.MeshStandardMaterial({ color: 0xf1f1ef, roughness: .4 }),
+  ceiling:   new THREE.MeshStandardMaterial({ color: 0xf3f2ef, roughness: .9 }),
+  gap:       new THREE.MeshStandardMaterial({ color: 0x2a211a, roughness: .8 }),
+  black:     new THREE.MeshBasicMaterial({ color: 0x050505 }),
+};
+
+function setMetal(name) {
+  state.metal = name;
+  M.metal.color.setHex(METALS[name].color);
+  M.metal.roughness = METALS[name].roughness;
+}
+
+/** Prostopadłościan o środku w (x, y, z). */
+function box(w, h, d, material, x, y, z, parent = scene) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+  mesh.position.set(x, y, z);
+  mesh.castShadow = mesh.receiveShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+/** Walec pionowy o środku w (x, y, z). */
+function cyl(rTop, rBottom, h, material, x, y, z, parent = scene, segments = 32) {
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBottom, h, segments), material);
+  mesh.position.set(x, y, z);
+  mesh.castShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+/** Rura wzdłuż krzywej przez punkty [x, y, z]. */
+function tube(points, radius, material, parent = scene, segments = 24) {
+  const curve = new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p)));
+  const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, segments, radius, 12, false), material);
+  mesh.castShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+
+/** Element wyłożony płytką danej powierzchni. UV dostaje później w układzie świata (patrz assignTileUVs). */
+const tiledMeshes = [];
+function tiled(surface, geometry, parent = scene) {
+  const mesh = new THREE.Mesh(geometry, tileMaterials[surface]);
+  mesh.castShadow = mesh.receiveShadow = true;
+  parent.add(mesh);
+  tiledMeshes.push(mesh);
+  return mesh;
+}
+
+/** Drzwi otwierane: obiekt obraca się wokół osi Y od 0 (zamknięte) do kąta `openAngle`. */
+const doors = [];
+function makeDoor(pivot, openAngle) {
+  const door = { pivot, openAngle, progress: 0, target: 0 };
+  pivot.traverse(o => o.userData.door = door);
+  doors.push(door);
+}
+
+/** Grupa należąca do warstwy z panelu (Meble, Ceramika i armatura, …). */
+const layerGroups = {};
+function layerGroup(layer, parent = scene) {
+  const group = new THREE.Group();
+  parent.add(group);
+  (layerGroups[layer] = layerGroups[layer] || []).push(group);
+  return group;
+}
+
+/* Przekrój: ściany, sufit i zabudowa chowają się, gdy zasłaniają widok albo gdy warstwa jest wyłączona.
+   Schowane nie rysują się, ale nadal rzucają cień — światło dzienne wpada tylko przez okno. */
+const GHOST = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
+const cutaways = [];   // { root, isHidden(), hidden }
+function cutaway(root, isHidden) { const c = { root, isHidden, hidden: false }; cutaways.push(c); return c; }
+function setGhost(root, ghost) {
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    if (ghost && !o.userData.realMaterial) { o.userData.realMaterial = o.material; o.material = GHOST; }
+    if (!ghost && o.userData.realMaterial) { o.material = o.userData.realMaterial; delete o.userData.realMaterial; }
+  });
+}
+const isShown = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+const isSolidHit = hit => hit.object.isMesh && isShown(hit.object) && hit.object.material !== GHOST && hit.object.material.visible !== false;
+
+
+/* ==========================================================================
+   5. BRYŁA POMIESZCZENIA
+   Układ: patrząc od drzwi (z = 0) w stronę okna (z = 2.4): lewa ściana x = 1.6,
+   prawa x = 0, wnęka prysznica x −1.0…0, z 1.5…2.4. Wysokość stropu 2.6.
+   ========================================================================== */
+
+const H = 2.6;            // strop
+const CEILING_Y = 2.45;   // sufit podwieszany
+const T = 0.1;            // grubość ścian
+
+const WINDOW_REVEAL = 0.15, WINDOW_WALL_T = 0.25;   // szpaleta okna 15 cm, ściana z oknem 25 cm
+const WX0 = 0.03, WX1 = 0.83;                       // okno tuż przy linii szkła prysznica (x = 0)
+const DX0 = 0.30, DX1 = 1.10;                       // drzwi przesunięte 10 cm w prawo
+
+/* ---------- ściany ---------- */
+const walls = [];
+/**
+ * Ściana od punktu a do b ([x, z]), lico po stronie pokoju, grubość narasta w kierunku `normal`.
+ * extend: [przedłużenie na początku, na końcu] (narożniki), hole: otwór {u0, u1, y0, y1} wzdłuż ściany.
+ */
+function wall(a, b, normal, surface, extend, hole = null, thickness = T) {
+  const group = new THREE.Group(); scene.add(group);
+  const dx = b[0] - a[0], dz = b[1] - a[1], length = Math.hypot(dx, dz), ux = dx / length, uz = dz / length;
+  const pieces = hole
+    ? [[0, hole.u0, 0, H], [hole.u1, length, 0, H], [hole.u0, hole.u1, 0, hole.y0], [hole.u0, hole.u1, hole.y1, H]]
+    : [[0, length, 0, H]];
+  for (const [u0, u1, y0, y1] of pieces) {
+    if (u1 - u0 < .001 || y1 - y0 < .001) continue;
+    const e0 = u0 === 0 ? extend[0] : 0, e1 = Math.abs(u1 - length) < 1e-6 ? extend[1] : 0;
+    const w = u1 - u0 + e0 + e1, h = y1 - y0, uc = (u0 - e0 + u1 + e1) / 2;
+    const mesh = tiled(surface, new THREE.BoxGeometry(w, h, thickness), group);
+    mesh.position.set(a[0] + ux * uc + normal[0] * thickness / 2, y0 + h / 2, a[1] + uz * uc + normal[1] * thickness / 2);
+    mesh.rotation.y = -Math.atan2(uz, ux);
+  }
+  const record = {
+    group,
+    normal: new THREE.Vector3(normal[0], 0, normal[1]),
+    middle: new THREE.Vector3((a[0] + b[0]) / 2, H / 2, (a[1] + b[1]) / 2),
+  };
+  // ściana znika, gdy kamera jest za nią (patrzymy na jej zewnętrzną stronę)
+  record.cut = cutaway(group, () => !state.layers.walls || camera.position.clone().sub(record.middle).dot(record.normal) >= .05);
+  walls.push(record);
+  return record;
+}
+
+const wallDoor   = wall([0, 0],     [1.6, 0],   [0, -1], 'wall',   [.1, .1], { u0: DX0, u1: DX1, y0: 0, y1: 2.05 });
+const wallLeft   = wall([1.6, 0],   [1.6, 2.4], [1, 0],  'wall',   [.1, WINDOW_WALL_T]);
+const wallWindow = wall([1.6, 2.4], [0, 2.4],   [0, 1],  'wall',   [.1, 0], { u0: 1.6 - WX1, u1: 1.6 - WX0, y0: 1.2, y1: 2.1 }, WINDOW_WALL_T);
+wall([0, 2.4],  [-1, 2.4], [0, 1],  'shower', [0, .1]);
+wall([-1, 2.4], [-1, 1.5], [-1, 0], 'shower', [.1, .1]);
+const wallShowerValves = wall([-1, 1.5], [0, 1.5], [0, -1], 'shower', [.1, -.1]);   // kończy się przed prawą ścianą: bez nakładania, bez migotania
+const wallRight  = wall([0, 1.5],   [0, 0],     [-1, 0], 'wall',   [0, 0]);
+
+// czoło narożnika od strony prysznica: płytka prysznicowa minimalnie przed licem prawej ściany + profil narożnikowy
+tiled('shower', new THREE.PlaneGeometry(.1, H), wallShowerValves.group).position.set(-.05, H / 2, 1.5006);
+box(.006, H, .006, M.metal, .001, H / 2, 1.5015, wallShowerValves.group);
 
 /* ---------- podłoga ---------- */
-function floor(x0,z0,x1,z1){const w=x1-x0,d=z1-z0;const m=tiled('floor',new THREE.PlaneGeometry(w,d),w,d,x0,-z1);m.rotation.x=-Math.PI/2;m.position.set((x0+x1)/2,0,(z0+z1)/2);m.castShadow=false;}
-floor(0,0,1.6,2.4);floor(-1,1.5,0,2.4);
-box(1.6+T*2,.12,2.4+T*2,M.frame,.8,-.061,1.2);box(1+T,.12,.9+T*2,M.frame,-.5-T/2,-.061,1.95);
+const floorGroup = new THREE.Group(); scene.add(floorGroup);
+cutaway(floorGroup, () => !state.layers.floor);
+function floorPlane(x0, z0, x1, z1) {
+  const mesh = tiled('floor', new THREE.PlaneGeometry(x1 - x0, z1 - z0), floorGroup);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2);
+  mesh.castShadow = false;
+}
+floorPlane(0, 0, 1.6, 2.4);
+floorPlane(-1, 1.5, 0, 2.4);
+box(1.6 + T * 2, .12, 2.4 + T * 2, M.frame, .8, -.061, 1.2, floorGroup);       // wylewka pod pokojem
+box(1 + T, .12, .9 + T * 2, M.frame, -.5 - T / 2, -.061, 1.95, floorGroup);    // wylewka pod prysznicem
 
 /* ---------- drzwi wejściowe ---------- */
-(function(){const g=wA.g,c=(DX0+DX1)/2;
-  box(.07,2.1,.02,M.white,DX0-.035,1.05,.01,g);box(.07,2.1,.02,M.white,DX1+.035,1.05,.01,g);box(DX1-DX0+.14,.05,.02,M.white,c,2.075,.01,g);
-  const piv=new THREE.Group();piv.position.set(DX0,0,-.02);g.add(piv);
-  box(.8,2.02,.04,M.doorWood,.4,1.01,0,piv);
-  box(.13,.016,.016,M.metal,.66,1.0,.05,piv);cyl(.022,.022,.008,M.metal,.72,1.0,.024,piv).rotation.x=Math.PI/2;
-  door(piv,-1.45);})();
+(function entranceDoor() {
+  const g = wallDoor.group, cx = (DX0 + DX1) / 2;
+  box(.07, 2.1, .02, M.white, DX0 - .035, 1.05, .01, g);     // ościeżnica
+  box(.07, 2.1, .02, M.white, DX1 + .035, 1.05, .01, g);
+  box(DX1 - DX0 + .14, .05, .02, M.white, cx, 2.075, .01, g);
+  const pivot = new THREE.Group(); pivot.position.set(DX0, 0, -.02); g.add(pivot);
+  box(.8, 2.02, .04, M.doorWood, .4, 1.01, 0, pivot);         // skrzydło
+  box(.13, .016, .016, M.metal, .66, 1.0, .05, pivot);        // klamka
+  cyl(.022, .022, .008, M.metal, .72, 1.0, .024, pivot).rotation.x = Math.PI / 2;
+  makeDoor(pivot, -1.45);
+})();
 
 /* ---------- okno ze szpaletą 15 cm ---------- */
-(function(){const g=wC1.g,zr=2.4+RV/2,z=2.4+RV+.035,cx=(WX0+WX1)/2,ww=WX1-WX0;
-  box(ww,.9,.01,M.sky,cx,1.65,2.4+TW-.005,g);
-  tiled('wall',new THREE.BoxGeometry(.012,.9,RV),RV,.9,0,1.2,g).position.set(WX0+.006,1.65,zr);
-  tiled('wall',new THREE.BoxGeometry(.012,.9,RV),RV,.9,0,1.2,g).position.set(WX1-.006,1.65,zr);
-  tiled('wall',new THREE.BoxGeometry(ww,.012,RV),ww,RV,WX0,0,g).position.set(cx,2.094,zr);
-  tiled('wall',new THREE.BoxGeometry(ww,.02,RV),ww,RV,WX0,0,g).position.set(cx,1.21,zr);   // parapet z płytki, bez nawisu (drzwi prysznica go mijają)
-  box(.06,.9,.07,M.frame,WX0+.03,1.65,z,g);box(.06,.9,.07,M.frame,WX1-.03,1.65,z,g);
-  box(ww,.06,.07,M.frame,cx,1.25,z,g);box(ww,.06,.07,M.frame,cx,2.07,z,g);box(.04,.84,.06,M.frame,cx,1.65,z,g);
-  box(.012,.13,.02,M.white,cx+.05,1.65,z-.045,g);})();
+(function windowWithReveal() {
+  const g = wallWindow.group, zReveal = 2.4 + WINDOW_REVEAL / 2, zFrame = 2.4 + WINDOW_REVEAL + .035;
+  const cx = (WX0 + WX1) / 2, width = WX1 - WX0;
+  box(width, .9, .01, M.sky, cx, 1.65, 2.4 + WINDOW_WALL_T - .005, g).castShadow = false;   // niebo za oknem
+  // szpalety i parapet z płytki ściennej (parapet bez nawisu — drzwi prysznica go mijają)
+  tiled('wall', new THREE.BoxGeometry(.012, .9, WINDOW_REVEAL), g).position.set(WX0 + .006, 1.65, zReveal);
+  tiled('wall', new THREE.BoxGeometry(.012, .9, WINDOW_REVEAL), g).position.set(WX1 - .006, 1.65, zReveal);
+  tiled('wall', new THREE.BoxGeometry(width, .012, WINDOW_REVEAL), g).position.set(cx, 2.094, zReveal);
+  tiled('wall', new THREE.BoxGeometry(width, .02, WINDOW_REVEAL), g).position.set(cx, 1.21, zReveal);
+  // rama, słupek, klamka
+  box(.06, .9, .07, M.frame, WX0 + .03, 1.65, zFrame, g);
+  box(.06, .9, .07, M.frame, WX1 - .03, 1.65, zFrame, g);
+  box(width, .06, .07, M.frame, cx, 1.25, zFrame, g);
+  box(width, .06, .07, M.frame, cx, 2.07, zFrame, g);
+  box(.04, .84, .06, M.frame, cx, 1.65, zFrame, g);
+  box(.012, .13, .02, M.white, cx + .05, 1.65, zFrame - .045, g);
+})();
 
-/* ---------- wysoka zabudowa: pion Ø160 w narożniku + stelaż Geberit obok ----------
-   strefa pionu z 2.08..2.40 (lita, do sufitu), strefa stelaża z 1.55..2.08 (WC + 2 wnęki nad nim) */
-const ZX0=1.32, ZD=.28, ZZ0=1.55, ZZ1=2.4, PZ0=2.08;       // głębokość zabudowy 28 cm
-const NDEP=.15, ZXB=ZX0+NDEP;                               // szafka wpuszczona 15 cm
-const WCZ=(ZZ0+PZ0)/2;
-/* szafka nad stelażem z frontem IKEA HEJSTA 40×80 (antracyt, szkło ryflowane, 39,7×79,7×1,9 cm)
-   40 szer. × 80 wys., w osi miski i przycisku; dół 120 cm na fudze rzędu płytek 60 cm, nad stelażem Geberit
+
+/* ==========================================================================
+   6. ZABUDOWA: pion Ø160 w narożniku + stelaż Geberit obok, szafka nad stelażem
+   Strefa pionu z 2.08…2.40 (lita, do stropu), strefa stelaża z 1.55…2.08.
+   ========================================================================== */
+
+const ZX0 = 1.32;                 // lico zabudowy (głębokość 28 cm od lewej ściany)
+const ZZ0 = 1.55, ZZ1 = 2.4;      // zakres zabudowy wzdłuż lewej ściany
+const PZ0 = 2.08;                 // początek strefy pionu
+const NICHE_DEPTH = .15;          // szafka wpuszczona 15 cm
+const ZXB = ZX0 + NICHE_DEPTH;    // tylna płaszczyzna wnęki
+const WC_Z = (ZZ0 + PZ0) / 2;     // oś WC i szafki
+
+/* szafka z frontem IKEA HEJSTA 40×80 (antracyt, szkło ryflowane, 39,7×79,7×1,9 cm):
+   w osi miski i przycisku, dół 120 cm na fudze rzędu płytek 60 cm, nad stelażem Geberit
    Duofix (112 cm) i przyciskiem (góra ~108 cm); góra 200 cm. Zawiasy od strony pionu. */
-const CW=.40, CH=.80, CY0=1.20, CZC=WCZ;
-const zab=new THREE.Group();scene.add(zab);
-function zfront(z0,z1,y0,y1,g){const w=z1-z0,h=y1-y0;if(w<.001||h<.001)return;
-  tiled('wall',new THREE.BoxGeometry(NDEP,h,w),w,h,z0,y0,g).position.set(ZX0+NDEP/2,y0+h/2,z0+w/2);}
-(function(){
-  const g=zab;
-  const dB=1.6-ZXB,wz=ZZ1-ZZ0;
-  tiled('wall',new THREE.BoxGeometry(dB,H,wz),wz,H,ZZ0,0,g).position.set(ZXB+dB/2,H/2,ZZ0+wz/2);
-  zfront(ZZ0,ZZ1,0,CY0,g);                              // dół: stelaż
-})();
-// szkło ryflowane: pionowe żebra ~11 mm w osi frontu (u = szerokość, v = wysokość)
-function ribTex(alongV){const c=document.createElement('canvas'),n=32;c.width=alongV?2:n;c.height=alongV?n:2;const x=c.getContext('2d');
-  for(let i=0;i<n;i++){const t=i/n,v=Math.round(120+75*Math.pow(Math.sin(t*Math.PI),.6)-40*Math.pow(t,3));x.fillStyle='rgb('+v+','+v+','+v+')';
-    alongV?x.fillRect(0,i,2,1):x.fillRect(i,0,1,2);}
-  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;}
-const cabFrame=new THREE.MeshStandardMaterial({color:0x1c1d1f,roughness:.55,metalness:0,envMapIntensity:.4});
-const cabG=new THREE.Group();zab.add(cabG);
-function buildCab(){
-  for(let i=tileMeshes.length-1;i>=0;i--){const m=tileMeshes[i].mesh;if(m.parent===cabG){m.material.map&&m.material.map.dispose();m.material.dispose();tileMeshes.splice(i,1);}}
-  cabG.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(o.userData.own){o.material.map&&o.material.map.dispose();o.material.dispose();}}});
-  while(cabG.children.length)cabG.remove(cabG.children[0]);
-  const g=cabG,w=CW,h=CH,z0=CZC-w/2,z1=CZC+w/2,y0=CY0,y1=CY0+h,zc=CZC,yc=y0+h/2;
-  // obudowa wokół otworu
-  zfront(ZZ0,z0,y0,H,g);zfront(z1,ZZ1,y0,H,g);zfront(z0,z1,y1,H,g);
-  // korpus (biały, płyta 16 mm), wnętrze za frontem
-  const DT=.019,x0=ZX0+DT,dd=ZXB-x0,xc=x0+dd/2,p=.016;
-  box(.01,h,w,M.white,ZXB-.005,yc,zc,g);
-  box(dd,p,w,M.white,xc,y0+p/2,zc,g);box(dd,p,w,M.white,xc,y1-p/2,zc,g);
-  box(dd,h,p,M.white,xc,yc,z0+p/2,g);box(dd,h,p,M.white,xc,yc,z1-p/2,g);
-  box(dd-.02,p,w-2*p,M.white,xc+.01,yc,zc,g);              // półka w środku
-  box(.008,.006,w-.06,M.led,x0+.012,y1-p-.006,zc,g);                     // listwa LED pod wieńcem
-  // drobiazgi w środku (widać je rozmyte przez ryflowane szkło)
-  const amber=new THREE.MeshPhysicalMaterial({color:0x7a4a1c,roughness:.15,transparent:true,opacity:.85});
-  const stone=new THREE.MeshStandardMaterial({color:0xd9d4cb,roughness:.5});
-  const tw=new THREE.MeshStandardMaterial({color:0xcfc8bc,roughness:.95});
-  for(const m of [amber,stone,tw])m.userData.own=true;
-  const yb=y0+p;
-  cyl(.03,.03,.17,amber,xc,yb+.085,z0+.09,g);cyl(.012,.012,.03,M.metal,xc,yb+.185,z0+.09,g);
-  cyl(.028,.028,.12,stone,xc,yb+.06,z0+.17,g);
-  const ty=yc+p/2;
-  box(.09,.08,.2,tw,xc,ty+.04,z1-.13,g);box(.09,.06,.2,tw,xc,ty+.11,z1-.13,g);
-  // front HEJSTA: rama aluminiowa antracyt + szkło ryflowane (żebra wzdłuż dłuższego boku)
-  // front bezprzylgowy (wpuszczany): lico równo z płytką, szczelina 1,5 mm, zawias przy krawędzi od pionu
-  const dw=w-.003,dh=h-.003,fw=.04,zh=zc+dw/2;
-  const P=new THREE.Group();P.position.set(ZX0,0,zh);g.add(P);
-  const fx=DT/2,dz=-dw/2;                                                    // w układzie zawiasu
-  const rt=ribTex(false),bt=ribTex(false);rt.repeat.set(dw/.011,1);bt.repeat.set(dw/.011,1);   // żebra pionowe
-  rt.encoding=THREE.sRGBEncoding;
-  const fluted=new THREE.MeshPhysicalMaterial({color:0x8a9295,map:rt,bumpMap:bt,bumpScale:.004,roughness:.3,metalness:0,
-    transparent:true,opacity:.55,depthWrite:false});fluted.userData.own=true;
-  box(.005,dh-2*fw+.008,dw-2*fw+.008,fluted,fx+.003,yc,dz,P).castShadow=false;
-  box(DT,fw,dw,cabFrame,fx,yc-dh/2+fw/2,dz,P);box(DT,fw,dw,cabFrame,fx,yc+dh/2-fw/2,dz,P);
-  box(DT,dh-2*fw,fw,cabFrame,fx,yc,dz-dw/2+fw/2,P);box(DT,dh-2*fw,fw,cabFrame,fx,yc,dz+dw/2-fw/2,P);
-  // uchwyt w komplecie: krótki pręt przy krawędzi bez zawiasów (od strony umywalki)
-  const hz=-dw+fw/2,hl=.12,hy=yc-dh/2+.14;
-  box(.012,hl,.012,cabFrame,-.026,hy,hz,P);
-  box(.022,.01,.01,cabFrame,-.011,hy-hl/2+.012,hz,P);box(.022,.01,.01,cabFrame,-.011,hy+hl/2-.012,hz,P);
-  door(P,1.92);                                                              // zawiasy UTRUSTA 110°
-}
-buildCab();
+const CAB_W = .40, CAB_H = .80, CAB_Y0 = 1.20;
 
-/* ---------- instalacje w zabudowie (podgląd „przekrój”) ---------- */
-const xray=new THREE.Group();xray.visible=false;scene.add(xray);
-(function(){const g=xray;
-  const pvc=new THREE.MeshStandardMaterial({color:0x8f969c,roughness:.5});
-  const steel=new THREE.MeshStandardMaterial({color:0x7d8a93,roughness:.45,metalness:.5});
-  const blue=new THREE.MeshStandardMaterial({color:0x2f6db5,roughness:.5});
-  const px=1.6-.03-.08,pz=2.4-.03-.08;
-  cyl(.08,.08,H,pvc,px,H/2,pz,g,32);                                     // pion Ø160
-  cyl(.095,.095,.12,pvc,px,.35,pz,g,32);                                 // trójnik / rewizja
-  box(.006,.2,.2,M.metal,ZX0-.003,.35,ZZ1-.17,zab);   // klapka rewizyjna na obudowie
-  // stelaż Geberit Duofix 50 cm
-  const fx=ZX0+.08;
-  box(.04,1.12,.04,steel,fx,.56,WCZ-.23,g);box(.04,1.12,.04,steel,fx,.56,WCZ+.23,g);
-  box(.04,.04,.5,steel,fx,1.1,WCZ,g);box(.04,.04,.5,steel,fx,.42,WCZ,g);
-  box(.08,.42,.38,blue,fx+.02,.86,WCZ,g);                                // spłuczka
-  box(.12,.03,.05,steel,fx,.01,WCZ-.23,g);box(.12,.03,.05,steel,fx,.01,WCZ+.23,g);
-  // podejście Ø90 z WC do pionu
-  const dp=cyl(.045,.045,pz-WCZ,pvc,fx+.02,.23,(WCZ+pz)/2,g,24);dp.rotation.x=Math.PI/2;
+const casing = new THREE.Group(); scene.add(casing);
+// zabudowa stoi przy lewej ścianie i ścianie z oknem: znika razem z nimi albo przy podglądzie instalacji
+cutaway(casing, () => !state.layers.walls || state.layers.installations || wallLeft.cut.hidden || wallWindow.cut.hidden);
+
+/** Lico zabudowy (wyłożone płytką) od z0 do z1, od y0 do y1. */
+function casingFront(z0, z1, y0, y1, parent) {
+  const w = z1 - z0, h = y1 - y0;
+  if (w < .001 || h < .001) return;
+  tiled('wall', new THREE.BoxGeometry(NICHE_DEPTH, h, w), parent).position.set(ZX0 + NICHE_DEPTH / 2, y0 + h / 2, z0 + w / 2);
+}
+
+(function casingBody() {
+  const depthBehind = 1.6 - ZXB, length = ZZ1 - ZZ0;
+  tiled('wall', new THREE.BoxGeometry(depthBehind, H, length), casing).position.set(ZXB + depthBehind / 2, H / 2, ZZ0 + length / 2);
+  casingFront(ZZ0, ZZ1, 0, CAB_Y0, casing);                              // dół: przed stelażem
+  box(.006, .2, .2, M.metal, ZX0 - .003, .35, ZZ1 - .17, casing);       // klapka rewizyjna pionu
 })();
+
+/** Tekstura szkła ryflowanego: pionowe żebra (jeden okres na teksturę). */
+function flutedTexture() {
+  const canvas = document.createElement('canvas'), n = 32;
+  canvas.width = n; canvas.height = 2;
+  const ctx = canvas.getContext('2d');
+  for (let i = 0; i < n; i++) {
+    const t = i / n, v = Math.round(120 + 75 * Math.pow(Math.sin(t * Math.PI), .6) - 40 * Math.pow(t, 3));
+    ctx.fillStyle = `rgb(${v},${v},${v})`; ctx.fillRect(i, 0, 1, 2);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
+(function wallCabinet() {
+  const g = layerGroup('furniture', casing);
+  const z0 = WC_Z - CAB_W / 2, z1 = WC_Z + CAB_W / 2, y0 = CAB_Y0, y1 = CAB_Y0 + CAB_H, zc = WC_Z, yc = y0 + CAB_H / 2;
+
+  // obudowa wokół otworu (do stropu)
+  casingFront(ZZ0, z0, y0, H, casing);
+  casingFront(z1, ZZ1, y0, H, casing);
+  casingFront(z0, z1, y1, H, casing);
+
+  // korpus (biały, płyta 16 mm) wewnątrz wnęki
+  const FRONT_T = .019, x0 = ZX0 + FRONT_T, depth = ZXB - x0, xc = x0 + depth / 2, board = .016;
+  box(.01, CAB_H, CAB_W, M.white, ZXB - .005, yc, zc, g);                         // plecy
+  box(depth, board, CAB_W, M.white, xc, y0 + board / 2, zc, g);                   // dno
+  box(depth, board, CAB_W, M.white, xc, y1 - board / 2, zc, g);                   // wieniec
+  box(depth, CAB_H, board, M.white, xc, yc, z0 + board / 2, g);                   // boki
+  box(depth, CAB_H, board, M.white, xc, yc, z1 - board / 2, g);
+  box(depth - .02, board, CAB_W - 2 * board, M.white, xc + .01, yc, zc, g);       // półka
+  box(.008, .006, CAB_W - .06, M.led, x0 + .012, y1 - board - .006, zc, g);       // listwa LED pod wieńcem
+
+  // drobiazgi w środku (widać je rozmyte przez szkło ryflowane)
+  const amber = new THREE.MeshPhysicalMaterial({ color: 0x7a4a1c, roughness: .15, transparent: true, opacity: .85 });
+  const stone = new THREE.MeshStandardMaterial({ color: 0xd9d4cb, roughness: .5 });
+  const towel = new THREE.MeshStandardMaterial({ color: 0xcfc8bc, roughness: .95 });
+  const bottom = y0 + board, shelf = yc + board / 2;
+  cyl(.03, .03, .17, amber, xc, bottom + .085, z0 + .09, g);
+  cyl(.012, .012, .03, M.metal, xc, bottom + .185, z0 + .09, g);
+  cyl(.028, .028, .12, stone, xc, bottom + .06, z0 + .17, g);
+  box(.09, .08, .2, towel, xc, shelf + .04, z1 - .13, g);
+  box(.09, .06, .2, towel, xc, shelf + .11, z1 - .13, g);
+
+  // front bezprzylgowy: lico równo z płytką, szczelina 1,5 mm, zawias przy krawędzi od pionu
+  const doorW = CAB_W - .003, doorH = CAB_H - .003, rail = .04;
+  const pivot = new THREE.Group(); pivot.position.set(ZX0, 0, zc + doorW / 2); g.add(pivot);
+  const fx = FRONT_T / 2, dz = -doorW / 2;                                        // w układzie zawiasu
+  const ribs = flutedTexture(), bump = flutedTexture();
+  ribs.repeat.set(doorW / .011, 1); bump.repeat.set(doorW / .011, 1);             // żebra co ~11 mm
+  ribs.encoding = THREE.sRGBEncoding;
+  const fluted = new THREE.MeshPhysicalMaterial({ color: 0x8a9295, map: ribs, bumpMap: bump, bumpScale: .004, roughness: .3, transparent: true, opacity: .55, depthWrite: false });
+  box(.005, doorH - 2 * rail + .008, doorW - 2 * rail + .008, fluted, fx + .003, yc, dz, pivot).castShadow = false;
+  const frame = new THREE.MeshStandardMaterial({ color: 0x1c1d1f, roughness: .55, envMapIntensity: .4 });  // rama aluminiowa antracyt
+  box(FRONT_T, rail, doorW, frame, fx, yc - doorH / 2 + rail / 2, dz, pivot);
+  box(FRONT_T, rail, doorW, frame, fx, yc + doorH / 2 - rail / 2, dz, pivot);
+  box(FRONT_T, doorH - 2 * rail, rail, frame, fx, yc, dz - doorW / 2 + rail / 2, pivot);
+  box(FRONT_T, doorH - 2 * rail, rail, frame, fx, yc, dz + doorW / 2 - rail / 2, pivot);
+  // uchwyt: krótki pręt przy krawędzi bez zawiasów (od strony umywalki)
+  const hz = -doorW + rail / 2, hl = .12, hy = yc - doorH / 2 + .14;
+  box(.012, hl, .012, frame, -.026, hy, hz, pivot);
+  box(.022, .01, .01, frame, -.011, hy - hl / 2 + .012, hz, pivot);
+  box(.022, .01, .01, frame, -.011, hy + hl / 2 - .012, hz, pivot);
+  makeDoor(pivot, 1.92);                                                          // zawiasy UTRUSTA 110°
+})();
+
+/* ---------- instalacje w zabudowie (warstwa „Pion i stelaż”) ---------- */
+(function installations() {
+  const g = layerGroup('installations');
+  const pvc = new THREE.MeshStandardMaterial({ color: 0x8f969c, roughness: .5 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x7d8a93, roughness: .45, metalness: .5 });
+  const blue = new THREE.MeshStandardMaterial({ color: 0x2f6db5, roughness: .5 });
+  const px = 1.6 - .03 - .08, pz = 2.4 - .03 - .08;
+  cyl(.08, .08, H, pvc, px, H / 2, pz, g);                          // pion Ø160
+  cyl(.095, .095, .12, pvc, px, .35, pz, g);                         // trójnik / rewizja
+  // stelaż Geberit Duofix 50 cm
+  const fx = ZX0 + .08;
+  box(.04, 1.12, .04, steel, fx, .56, WC_Z - .23, g);
+  box(.04, 1.12, .04, steel, fx, .56, WC_Z + .23, g);
+  box(.04, .04, .5, steel, fx, 1.1, WC_Z, g);
+  box(.04, .04, .5, steel, fx, .42, WC_Z, g);
+  box(.08, .42, .38, blue, fx + .02, .86, WC_Z, g);                 // spłuczka
+  box(.12, .03, .05, steel, fx, .01, WC_Z - .23, g);
+  box(.12, .03, .05, steel, fx, .01, WC_Z + .23, g);
+  cyl(.045, .045, pz - WC_Z, pvc, fx + .02, .23, (WC_Z + pz) / 2, g, 24).rotation.x = Math.PI / 2;   // podejście Ø90 do pionu
+})();
+
+
+/* ==========================================================================
+   7. CERAMIKA, ARMATURA, MEBLE
+   ========================================================================== */
+
+/* Bryła z przekrojów superelipsy (miska WC, umywalka). Przekrój: {y, a, b, n, nb, cx, cz}. */
+function superellipse(t, n) {
+  const c = Math.cos(t), s = Math.sin(t);
+  return [Math.sign(c) * Math.pow(Math.abs(c), 2 / n), Math.sign(s) * Math.pow(Math.abs(s), 2 / n)];
+}
+function loft(sections, { bottom = true, top = true } = {}) {
+  const SEG = 72, positions = [], index = [];
+  const ring = s => {
+    const pts = [];
+    for (let j = 0; j < SEG; j++) {
+      const t = j / SEG * Math.PI * 2;
+      const n = Math.sin(t) < 0 ? (s.nb || s.n || 2.5) : (s.n || 2.5);
+      const [cx, cz] = superellipse(t, n);
+      pts.push([s.a * cx + (s.cx || 0), s.y, s.b * cz + (s.cz || 0)]);
+    }
+    return pts;
+  };
+  const rings = sections.map(ring);
+  rings.forEach(r => r.forEach(p => positions.push(...p)));
+  for (let i = 0; i < rings.length - 1; i++) {
+    for (let j = 0; j < SEG; j++) {
+      const a = i * SEG + j, b = i * SEG + (j + 1) % SEG, c = (i + 1) * SEG + j, d = (i + 1) * SEG + (j + 1) % SEG;
+      index.push(a, c, b, b, c, d);
+    }
+  }
+  const cap = (r, s, up) => {
+    const base = positions.length / 3;
+    r.forEach(p => positions.push(...p));
+    positions.push(s.cx || 0, s.y, s.cz || 0);
+    const centre = base + SEG;
+    for (let j = 0; j < SEG; j++) {
+      const a = base + j, b = base + (j + 1) % SEG;
+      up ? index.push(centre, b, a) : index.push(centre, a, b);
+    }
+  };
+  if (bottom) cap(rings[0], sections[0], false);
+  if (top) cap(rings[rings.length - 1], sections[sections.length - 1], true);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(index);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+function loftMesh(sections, material, parent, options) {
+  const mesh = new THREE.Mesh(loft(sections, options), material);
+  mesh.castShadow = mesh.receiveShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+
+/** Prostokąt z zaokrąglonymi narożnikami dopisany do Shape/Path. */
+function roundedRect(path, x, y, w, h, r) {
+  path.moveTo(x + r, y);
+  path.lineTo(x + w - r, y); path.quadraticCurveTo(x + w, y, x + w, y + r);
+  path.lineTo(x + w, y + h - r); path.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  path.lineTo(x + r, y + h); path.quadraticCurveTo(x, y + h, x, y + h - r);
+  path.lineTo(x, y + r); path.quadraticCurveTo(x, y, x + r, y);
+  return path;
+}
 
 /* ---------- WC podwieszane bezrantowe + przycisk Geberit ---------- */
-(function(){
-  const cz=WCZ;
-  const g=new THREE.Group();g.position.set(ZX0,0,cz);g.rotation.y=-Math.PI/2;scene.add(g);   // lokalne z = od ściany w głąb pokoju
-  const body=new THREE.Mesh(loft([
-    {y:.245,a:.105,b:.19,n:2.4,nb:5,cz:.19},
-    {y:.27,a:.135,b:.225,n:2.4,nb:5,cz:.225},
-    {y:.31,a:.163,b:.252,n:2.5,nb:5.5,cz:.252},
-    {y:.355,a:.176,b:.264,n:2.5,nb:6,cz:.264},
-    {y:.392,a:.179,b:.267,n:2.5,nb:6,cz:.267},
-    {y:.4,a:.176,b:.264,n:2.5,nb:6,cz:.264}
-  ]),M.ceramic);body.castShadow=body.receiveShadow=true;g.add(body);
-  const seat=new THREE.Mesh(loft([
-    {y:.401,a:.181,b:.27,n:2.5,nb:6,cz:.27},{y:.414,a:.181,b:.27,n:2.5,nb:6,cz:.27},{y:.417,a:.179,b:.268,n:2.5,nb:6,cz:.268}
-  ]),M.ceramic);seat.castShadow=true;g.add(seat);
-  const lid=new THREE.Mesh(loft([
-    {y:.418,a:.179,b:.266,n:2.5,nb:6,cz:.268},{y:.43,a:.177,b:.263,n:2.5,nb:6,cz:.268},{y:.436,a:.168,b:.252,n:2.5,nb:6,cz:.268}
-  ]),M.ceramic);lid.castShadow=true;g.add(lid);
-  cyl(.012,.012,.03,M.metal,-.12,.425,.03,g).rotation.z=Math.PI/2;cyl(.012,.012,.03,M.metal,.12,.425,.03,g).rotation.z=Math.PI/2;
-  // przycisk spłukujący (format Sigma 246×164)
-  box(.008,.164,.246,M.metal,ZX0-.004,1.0,cz,zab);
-  const inset=new THREE.MeshStandardMaterial({color:0x000000,roughness:.6});
-  box(.002,.13,.003,inset,ZX0-.0085,1.0,cz,zab);
+(function toilet() {
+  const g = new THREE.Group();
+  g.position.set(ZX0, 0, WC_Z); g.rotation.y = -Math.PI / 2;   // lokalne z = od ściany w głąb pokoju
+  layerGroup('sanitary').add(g);
+  loftMesh([
+    { y: .245, a: .105, b: .19,  n: 2.4, nb: 5,   cz: .19 },
+    { y: .27,  a: .135, b: .225, n: 2.4, nb: 5,   cz: .225 },
+    { y: .31,  a: .163, b: .252, n: 2.5, nb: 5.5, cz: .252 },
+    { y: .355, a: .176, b: .264, n: 2.5, nb: 6,   cz: .264 },
+    { y: .392, a: .179, b: .267, n: 2.5, nb: 6,   cz: .267 },
+    { y: .4,   a: .176, b: .264, n: 2.5, nb: 6,   cz: .264 },
+  ], M.ceramic, g);                                                                       // miska
+  loftMesh([
+    { y: .401, a: .181, b: .27, n: 2.5, nb: 6, cz: .27 },
+    { y: .414, a: .181, b: .27, n: 2.5, nb: 6, cz: .27 },
+    { y: .417, a: .179, b: .268, n: 2.5, nb: 6, cz: .268 },
+  ], M.ceramic, g);                                                                       // deska
+  loftMesh([
+    { y: .418, a: .179, b: .266, n: 2.5, nb: 6, cz: .268 },
+    { y: .43,  a: .177, b: .263, n: 2.5, nb: 6, cz: .268 },
+    { y: .436, a: .168, b: .252, n: 2.5, nb: 6, cz: .268 },
+  ], M.ceramic, g);                                                                       // klapa
+  cyl(.012, .012, .03, M.metal, -.12, .425, .03, g).rotation.z = Math.PI / 2;            // zawiasy
+  cyl(.012, .012, .03, M.metal, .12, .425, .03, g).rotation.z = Math.PI / 2;
+
+  // przycisk spłukujący (format Sigma 246×164) na licu zabudowy
+  const flush = layerGroup('sanitary', casing);
+  box(.008, .164, .246, M.metal, ZX0 - .004, 1.0, WC_Z, flush);
+  box(.002, .13, .003, new THREE.MeshStandardMaterial({ color: 0x000000, roughness: .6 }), ZX0 - .0085, 1.0, WC_Z, flush);
 })();
 
 /* ---------- szafka z umywalką meblową + lustro ---------- */
-(function(){
-  const z0=.55,z1=1.35,zc=(z0+z1)/2,L=z1-z0,D=.46,X=1.6-D;
+(function vanity() {
+  const z0 = .55, z1 = 1.35, zc = (z0 + z1) / 2, L = z1 - z0, D = .46, X = 1.6 - D;
+
   // korpus podwieszany, dwie szuflady bezuchwytowe
-  box(D-.02,.4,L,M.oak,1.6-(D-.02)/2,.62,zc);
-  box(.018,.205,L-.004,M.oak,X+.009,.715,zc);box(.018,.19,L-.004,M.oak,X+.009,.51,zc);
-  box(.01,.004,L-.01,M.gap,X+.02,.613,zc);
-  box(.006,.012,L-.06,M.metal,X+.002,.81,zc);                                   // listwa uchwytowa
+  const cabinet = layerGroup('furniture');
+  box(D - .02, .4, L, M.oak, 1.6 - (D - .02) / 2, .62, zc, cabinet);
+  box(.018, .205, L - .004, M.oak, X + .009, .715, zc, cabinet);
+  box(.018, .19, L - .004, M.oak, X + .009, .51, zc, cabinet);
+  box(.01, .004, L - .01, M.gap, X + .02, .613, zc, cabinet);
+  box(.006, .012, L - .06, M.metal, X + .002, .81, zc, cabinet);                 // listwa uchwytowa
+
   // ceramika: cienki blat z otworem + misa
-  const s=new THREE.Shape();const rr=(sh,x,y,w,h,r)=>{sh.moveTo(x+r,y);sh.lineTo(x+w-r,y);sh.quadraticCurveTo(x+w,y,x+w,y+r);sh.lineTo(x+w,y+h-r);sh.quadraticCurveTo(x+w,y+h,x+w-r,y+h);sh.lineTo(x+r,y+h);sh.quadraticCurveTo(x,y+h,x,y+h-r);sh.lineTo(x,y+r);sh.quadraticCurveTo(x,y,x+r,y);};
-  rr(s,X-.005,z0-.005,D+.005,L+.01,.012);
-  const hole=new THREE.Path();const hx0=X+.06,hz0=zc-.29,hw=.33,hl=.58,hr=.07;
-  hole.moveTo(hx0+hr,hz0);hole.lineTo(hx0+hw-hr,hz0);hole.quadraticCurveTo(hx0+hw,hz0,hx0+hw,hz0+hr);hole.lineTo(hx0+hw,hz0+hl-hr);hole.quadraticCurveTo(hx0+hw,hz0+hl,hx0+hw-hr,hz0+hl);
-  hole.lineTo(hx0+hr,hz0+hl);hole.quadraticCurveTo(hx0,hz0+hl,hx0,hz0+hl-hr);hole.lineTo(hx0,hz0+hr);hole.quadraticCurveTo(hx0,hz0,hx0+hr,hz0);s.holes.push(hole);
-  const top=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:.016,bevelEnabled:true,bevelThickness:.003,bevelSize:.003,bevelSegments:3,curveSegments:14}),M.ceramic);
-  top.rotation.x=Math.PI/2;top.position.y=.857;top.castShadow=top.receiveShadow=true;scene.add(top);
-  const bx=hx0+hw/2;
-  const bowl=new THREE.Mesh(loft([
-    {y:.735,a:.12,b:.23,n:3.2,cx:bx,cz:zc},{y:.75,a:.148,b:.27,n:3.4,cx:bx,cz:zc},{y:.79,a:.16,b:.284,n:3.6,cx:bx,cz:zc},{y:.84,a:.165,b:.29,n:3.8,cx:bx,cz:zc}
-  ],{top:false}),M.ceramicIn);bowl.receiveShadow=true;scene.add(bowl);
-  cyl(.022,.022,.004,M.metal,bx,.738,zc);
+  const sanitary = layerGroup('sanitary');
+  const shape = roundedRect(new THREE.Shape(), X - .005, z0 - .005, D + .005, L + .01, .012);
+  const hx0 = X + .06, hz0 = zc - .29, hw = .33, hl = .58;
+  shape.holes.push(roundedRect(new THREE.Path(), hx0, hz0, hw, hl, .07));
+  const top = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: .016, bevelEnabled: true, bevelThickness: .003, bevelSize: .003, bevelSegments: 3, curveSegments: 14 }), M.ceramic);
+  top.rotation.x = Math.PI / 2; top.position.y = .857; top.castShadow = top.receiveShadow = true;
+  sanitary.add(top);
+  const bx = hx0 + hw / 2;
+  loftMesh([
+    { y: .735, a: .12,  b: .23,  n: 3.2, cx: bx, cz: zc },
+    { y: .75,  a: .148, b: .27,  n: 3.4, cx: bx, cz: zc },
+    { y: .79,  a: .16,  b: .284, n: 3.6, cx: bx, cz: zc },
+    { y: .84,  a: .165, b: .29,  n: 3.8, cx: bx, cz: zc },
+  ], M.ceramicIn, sanitary, { top: false }).castShadow = false;
+  cyl(.022, .022, .004, M.metal, bx, .738, zc, sanitary);                         // korek
+
   // bateria sztorcowa wysoka, jednouchwytowa
-  const fx=1.6-.045;
-  cyl(.019,.021,.19,M.metal,fx,.955,zc);
-  const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(fx,1.04,zc),new THREE.Vector3(fx-.03,1.09,zc),new THREE.Vector3(fx-.1,1.095,zc),new THREE.Vector3(fx-.15,1.06,zc)]);
-  const sp=new THREE.Mesh(new THREE.TubeGeometry(curve,24,.011,16,false),M.metal);sp.castShadow=true;scene.add(sp);
-  cyl(.011,.011,.01,M.metal,fx-.15,1.055,zc);
-  const lev=box(.008,.008,.07,M.metal,fx+.005,1.02,zc+.035);
-  cyl(.009,.009,.03,M.metal,fx,1.02,zc+.02).rotation.x=Math.PI/2;
-  // lustro z podświetleniem
-  const g=wB.g;box(.02,.8,.72,M.led,1.6-.004,1.6,zc,g);box(.02,.76,.68,M.mirror,1.6-.02,1.6,zc,g);
-  box(.006,.77,.006,M.metal,1.6-.03,1.6,zc-.343,g);box(.006,.77,.006,M.metal,1.6-.03,1.6,zc+.343,g);
-  box(.006,.006,.69,M.metal,1.6-.03,1.983,zc,g);box(.006,.006,.69,M.metal,1.6-.03,1.217,zc,g);
+  const fx = 1.6 - .045;
+  cyl(.019, .021, .19, M.metal, fx, .955, zc, sanitary);
+  tube([[fx, 1.04, zc], [fx - .03, 1.09, zc], [fx - .1, 1.095, zc], [fx - .15, 1.06, zc]], .011, M.metal, sanitary);
+  cyl(.011, .011, .01, M.metal, fx - .15, 1.055, zc, sanitary);
+  box(.008, .008, .07, M.metal, fx + .005, 1.02, zc + .035, sanitary);
+  cyl(.009, .009, .03, M.metal, fx, 1.02, zc + .02, sanitary).rotation.x = Math.PI / 2;
+
+  // lustro z podświetleniem (na lewej ścianie: znika razem z nią)
+  const mirror = layerGroup('furniture', wallLeft.group);
+  box(.02, .8, .72, M.led, 1.6 - .004, 1.6, zc, mirror);
+  box(.02, .76, .68, M.mirror, 1.6 - .02, 1.6, zc, mirror);
+  box(.006, .77, .006, M.metal, 1.6 - .03, 1.6, zc - .343, mirror);
+  box(.006, .77, .006, M.metal, 1.6 - .03, 1.6, zc + .343, mirror);
+  box(.006, .006, .69, M.metal, 1.6 - .03, 1.983, zc, mirror);
+  box(.006, .006, .69, M.metal, 1.6 - .03, 1.217, zc, mirror);
 })();
 
 /* ---------- grzejnik drabinkowy (prawa ściana przy drzwiach) ---------- */
-(function(){const g=wF.g;
-  for(let y=.45;y<=1.55;y+=.08)cyl(.011,.011,.46,M.metal,.065,y,.62,g,16).rotation.x=Math.PI/2;
-  cyl(.016,.016,1.2,M.metal,.065,1.0,.38,g,16);cyl(.016,.016,1.2,M.metal,.065,1.0,.86,g,16);})();
+(function towelRadiator() {
+  const g = layerGroup('sanitary', wallRight.group);
+  for (let y = .45; y <= 1.55; y += .08) cyl(.011, .011, .46, M.metal, .065, y, .62, g, 16).rotation.x = Math.PI / 2;
+  cyl(.016, .016, 1.2, M.metal, .065, 1.0, .38, g, 16);
+  cyl(.016, .016, 1.2, M.metal, .065, 1.0, .86, g, 16);
+})();
 
-/* ---------- prysznic: odpływ (bez zmian), baterie na ściance z narożnikiem ---------- */
+/* ---------- prysznic ---------- */
 // odpływ przyścienny Vogi Duo na wymiar: ruszt wypełniony płytką podłogową, rama w kolorze armatury
-(function(){const DL=.88,DW=.06,zc=1.95,xc=-1+DW/2+.002,fh=.004;
-  tiled('floor',new THREE.BoxGeometry(DW-.008,.003,DL-.008),DW,DL,0,0).position.set(xc,.0015,zc);
-  box(.002,fh,DL,M.metal,xc-DW/2+.001,fh/2,zc);box(.002,fh,DL,M.metal,xc+DW/2-.001,fh/2,zc);
-  box(DW,fh,.002,M.metal,xc,fh/2,zc-DL/2+.001);box(DW,fh,.002,M.metal,xc,fh/2,zc+DL/2-.001);
-  const sh=new THREE.MeshBasicMaterial({color:0x050505});
-  box(.0015,.0045,DL-.006,sh,xc-DW/2+.0035,fh/2,zc);box(.0015,.0045,DL-.006,sh,xc+DW/2-.0035,fh/2,zc);})();
-(function(){const zw=1.5;   // lico ścianki z narożnikiem (wewnątrz prysznica)
+(function showerDrain() {
+  const length = .88, width = .06, zc = 1.95, xc = -1 + width / 2 + .002, rim = .004, g = floorGroup;
+  tiled('floor', new THREE.BoxGeometry(width - .008, .003, length - .008), g).position.set(xc, .0015, zc);
+  box(.002, rim, length, M.metal, xc - width / 2 + .001, rim / 2, zc, g);
+  box(.002, rim, length, M.metal, xc + width / 2 - .001, rim / 2, zc, g);
+  box(width, rim, .002, M.metal, xc, rim / 2, zc - length / 2 + .001, g);
+  box(width, rim, .002, M.metal, xc, rim / 2, zc + length / 2 - .001, g);
+  box(.0015, .0045, length - .006, M.black, xc - width / 2 + .0035, rim / 2, zc, g);   // szczeliny
+  box(.0015, .0045, length - .006, M.black, xc + width / 2 - .0035, rim / 2, zc, g);
+})();
+
+// baterie na ściance z narożnikiem (lico wewnątrz prysznica: z = 1.5)
+(function showerFittings() {
+  const g = layerGroup('sanitary'), zw = 1.5;
   // deszczownica na ramieniu ściennym
-  const arm=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-.5,2.2,zw),new THREE.Vector3(-.5,2.22,zw+.2),new THREE.Vector3(-.5,2.24,zw+.4)]),12,.011,12,false),M.metal);arm.castShadow=true;scene.add(arm);
-  cyl(.03,.03,.012,M.metal,-.5,2.2,zw+.006).rotation.x=Math.PI/2;
-  cyl(.15,.15,.012,M.metal,-.5,2.235,zw+.42,null,48);
-  cyl(.13,.13,.002,new THREE.MeshStandardMaterial({color:0x222222,roughness:.8}),-.5,2.228,zw+.42,null,48);
+  tube([[-.5, 2.2, zw], [-.5, 2.22, zw + .2], [-.5, 2.24, zw + .4]], .011, M.metal, g, 12);
+  cyl(.03, .03, .012, M.metal, -.5, 2.2, zw + .006, g).rotation.x = Math.PI / 2;
+  cyl(.15, .15, .012, M.metal, -.5, 2.235, zw + .42, g, 48);
+  cyl(.13, .13, .002, new THREE.MeshStandardMaterial({ color: 0x222222, roughness: .8 }), -.5, 2.228, zw + .42, g, 48);
   // termostat podtynkowy z dwoma pokrętłami
-  const pl=box(.24,.13,.008,M.metal,-.5,1.1,zw+.004);
-  cyl(.028,.028,.04,M.metal,-.56,1.1,zw+.028).rotation.x=Math.PI/2;
-  cyl(.028,.028,.04,M.metal,-.44,1.1,zw+.028).rotation.x=Math.PI/2;
-  // przyłącze + uchwyt i słuchawka
-  cyl(.02,.02,.03,M.metal,-.22,1.0,zw+.015).rotation.x=Math.PI/2;
-  box(.03,.06,.03,M.metal,-.22,1.25,zw+.02);
-  const hs=cyl(.013,.016,.2,M.metal,-.22,1.32,zw+.06);hs.rotation.x=-.25;
-  cyl(.04,.04,.02,M.metal,-.22,1.43,zw+.09).rotation.x=Math.PI/2-.25;
-  const hose=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-.22,1.0,zw+.03),new THREE.Vector3(-.2,.7,zw+.08),new THREE.Vector3(-.24,.55,zw+.1),new THREE.Vector3(-.23,.85,zw+.09),new THREE.Vector3(-.22,1.22,zw+.06)]),40,.007,8,false),M.metal);scene.add(hose);
-})();
-/* szkło (linia x=0, otwór 90 cm z 1.5..2.4):
-   szyba stała 30 cm (1/3) przy oknie; drzwi 60 cm (2/3) na zawiasach szkło-szkło przy szybie stałej.
-   Drzwi otwierają się do łazienki w stronę okna, więc idąc od wejścia wchodzisz prosto pod prysznic, przy termostacie. */
-box(.008,2.0,.3,M.glass,0,1.0,2.25).castShadow=false;
-box(.025,.012,.3,M.metal,0,.006,2.25);box(.025,2.0,.012,M.metal,0,1.0,2.394);
-box(.022,.075,.04,M.metal,0,1.75,2.125);box(.022,.075,.04,M.metal,0,.3,2.125);   // zawiasy szkło-szkło (połowa na szybie stałej)
-box(.012,2.0,.012,M.metal,-.004,1.0,1.508);                                        // listwa przymykowa przy ścianie
-const glassPivot=new THREE.Group();glassPivot.position.set(0,0,2.1);scene.add(glassPivot);
-(function(){const p=glassPivot;
-  box(.008,2.0,.59,M.glass,0,1.0,-.3,p).castShadow=false;
-  box(.022,.075,.04,M.metal,0,1.75,-.02,p);box(.022,.075,.04,M.metal,0,.3,-.02,p);
-  box(.03,.42,.012,M.metal,.03,1.05,-.54,p);box(.03,.42,.012,M.metal,-.03,1.05,-.54,p);
-  box(.06,.01,.01,M.metal,0,1.24,-.54,p);box(.06,.01,.01,M.metal,0,.86,-.54,p);
-  door(p,-1.4);
+  box(.24, .13, .008, M.metal, -.5, 1.1, zw + .004, g);
+  cyl(.028, .028, .04, M.metal, -.56, 1.1, zw + .028, g).rotation.x = Math.PI / 2;
+  cyl(.028, .028, .04, M.metal, -.44, 1.1, zw + .028, g).rotation.x = Math.PI / 2;
+  // przyłącze, uchwyt, słuchawka i wąż
+  cyl(.02, .02, .03, M.metal, -.22, 1.0, zw + .015, g).rotation.x = Math.PI / 2;
+  box(.03, .06, .03, M.metal, -.22, 1.25, zw + .02, g);
+  cyl(.013, .016, .2, M.metal, -.22, 1.32, zw + .06, g).rotation.x = -.25;
+  cyl(.04, .04, .02, M.metal, -.22, 1.43, zw + .09, g).rotation.x = Math.PI / 2 - .25;
+  tube([[-.22, 1.0, zw + .03], [-.2, .7, zw + .08], [-.24, .55, zw + .1], [-.23, .85, zw + .09], [-.22, 1.22, zw + .06]], .007, M.metal, g, 40);
 })();
 
-/* ---------- UV w układzie świata: każda ściana i bok zabudowy dostaje płytki w prawdziwej skali ---------- */
-(function bakeTiles(){
-  const p=new THREE.Vector3(),n=new THREE.Vector3();
-  for(const t of tileMeshes){const m=t.mesh;m.updateMatrix();
-    const g=m.geometry.index?m.geometry.toNonIndexed():m.geometry.clone();g.applyMatrix4(m.matrix);
-    m.position.set(0,0,0);m.rotation.set(0,0,0);m.scale.set(1,1,1);m.updateMatrix();
-    const P=g.attributes.position,N=g.attributes.normal,uv=new Float32Array(P.count*2);
-    for(let i=0;i<P.count;i++){p.fromBufferAttribute(P,i);n.fromBufferAttribute(N,i);
-      const ax=Math.abs(n.x),ay=Math.abs(n.y),az=Math.abs(n.z);
-      if(ax>=ay&&ax>=az){uv[i*2]=p.z;uv[i*2+1]=p.y;}
-      else if(ay>=az){uv[i*2]=p.x;uv[i*2+1]=p.z;}
-      else{uv[i*2]=p.x;uv[i*2+1]=p.y;}}
-    g.setAttribute('uv',new THREE.BufferAttribute(uv,2));m.geometry.dispose();m.geometry=g;}
+/* Kabina (linia x = 0, otwór 90 cm z 1.5…2.4): szyba stała 30 cm przy oknie, drzwi 60 cm na zawiasach
+   szkło–szkło przy szybie stałej. Drzwi otwierają się do łazienki w stronę okna, więc idąc od wejścia
+   wchodzisz prosto pod prysznic, przy termostacie. */
+(function showerScreen() {
+  const g = layerGroup('glass');
+  box(.008, 2.0, .3, M.glass, 0, 1.0, 2.25, g).castShadow = false;           // szyba stała
+  box(.025, .012, .3, M.metal, 0, .006, 2.25, g);                            // profil dolny
+  box(.025, 2.0, .012, M.metal, 0, 1.0, 2.394, g);                           // profil przyścienny
+  box(.022, .075, .04, M.metal, 0, 1.75, 2.125, g);                          // zawiasy (połowa na szybie stałej)
+  box(.022, .075, .04, M.metal, 0, .3, 2.125, g);
+  box(.012, 2.0, .012, M.metal, -.004, 1.0, 1.508, g);                       // listwa przymykowa przy ścianie
+  const pivot = new THREE.Group(); pivot.position.set(0, 0, 2.1); g.add(pivot);
+  box(.008, 2.0, .59, M.glass, 0, 1.0, -.3, pivot).castShadow = false;
+  box(.022, .075, .04, M.metal, 0, 1.75, -.02, pivot);
+  box(.022, .075, .04, M.metal, 0, .3, -.02, pivot);
+  box(.03, .42, .012, M.metal, .03, 1.05, -.54, pivot);                      // uchwyt obustronny
+  box(.03, .42, .012, M.metal, -.03, 1.05, -.54, pivot);
+  box(.06, .01, .01, M.metal, 0, 1.24, -.54, pivot);
+  box(.06, .01, .01, M.metal, 0, .86, -.54, pivot);
+  makeDoor(pivot, -1.4);
 })();
 
-/* ---------- światło ---------- */
-scene.add(new THREE.HemisphereLight(0xf2f4f6,0x3a3836,.35));
-const sun=new THREE.DirectionalLight(0xfff1dc,1.8);sun.position.set(.3,4.4,6.2);sun.target.position.set(.5,0,1.0);
-sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-3,right:3,top:3,bottom:-3,near:.5,far:14});sun.shadow.bias=-.0004;sun.shadow.normalBias=.02;
-scene.add(sun,sun.target);
-[[.8,.7],[.8,1.8],[-.5,1.95]].forEach(([x,z])=>{const l=new THREE.PointLight(0xffe6c4,.55,4.2,1.8);l.position.set(x,2.5,z);scene.add(l);});
-scene.add(new THREE.AmbientLight(0xffffff,.08));
 
-/* ---------- widoki ---------- */
-const VIEWS={
-  all:{p:[-2.1,4.3,-1.7],t:[.55,.8,1.35]},
-  door:{p:[.7,1.62,.12],t:[.45,1.2,2.4]},
-  left:{p:[.1,1.6,.35],t:[1.45,1.15,1.7]},
-  shower:{p:[1.2,1.65,2.25],t:[-.5,1.15,1.7]},
-  top:{p:[.31,7.4,1.21],t:[.3,0,1.2]}
+/* ==========================================================================
+   8. SUFIT PODWIESZANY (G-K, 245 cm) ze szczeliną LED wokół ścian i oprawami
+   ========================================================================== */
+
+const CEILING_GAP = .05;             // szczelina przy ścianach, w niej taśma LED
+const PANEL_T = .0125;               // płyta G-K
+// obrys pomieszczenia (L): pokój + wnęka prysznica, w rzucie [x, z]
+const ROOM_OUTLINE = [[0, 0], [1.6, 0], [1.6, 2.4], [-1, 2.4], [-1, 1.5], [0, 1.5]];
+// obrys przesunięty do środka o szczelinę (dla tego kształtu wystarczy przesunąć każdy wierzchołek)
+const PANEL_OUTLINE = [[1, 1], [-1, 1], [-1, -1], [1, -1], [1, 1], [1, 1]]
+  .map(([sx, sz], i) => [ROOM_OUTLINE[i][0] + sx * CEILING_GAP, ROOM_OUTLINE[i][1] + sz * CEILING_GAP]);
+// oprawy wpuszczane [x, z]: wejście, środek, umywalka, okno/WC, prysznic (IP65)
+const DOWNLIGHTS = [[.45, .5], [.55, 1.35], [1.2, .95], [.85, 2.0], [-.5, 2.2]];
+
+const ceiling = new THREE.Group(); scene.add(ceiling);
+cutaway(ceiling, () => !state.layers.ceiling || camera.position.y > CEILING_Y - .02);
+
+const outlineShape = (points, Kind = THREE.Shape) => {
+  const s = new Kind(); s.moveTo(...points[0]); points.slice(1).forEach(p => s.lineTo(...p)); s.closePath(); return s;
 };
-let anim=null;
-function go(v,instant){const V=VIEWS[v],p=new THREE.Vector3(...V.p),t=new THREE.Vector3(...V.t);
-  if(instant){camera.position.copy(p);controls.target.copy(t);controls.update();return;}
-  anim={p0:camera.position.clone(),t0:controls.target.clone(),p,t,s:performance.now()};}
-go('all',true);
-const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-document.getElementById('views').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-  for(const x of document.querySelectorAll('#views button'))x.setAttribute('aria-pressed',x===b);go(b.dataset.v,reduce);});
-document.getElementById('metal').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;setMetal(b.dataset.m);
-  for(const x of document.querySelectorAll('#metal button'))x.setAttribute('aria-pressed',x===b);});
-let xrayOn=false;
-const xb=document.getElementById('xrayBtn');
-xb.addEventListener('click',()=>{xrayOn=!xrayOn;xb.setAttribute('aria-pressed',xrayOn);});
-const gb=document.getElementById('glassBtn');
-function syncDoors(){gb.setAttribute('aria-pressed',doors.every(d=>d.t===1));}
-gb.addEventListener('click',()=>{const all=doors.every(d=>d.t===1);for(const d of doors)d.t=all?0:1;syncDoors();});
-// kliknięcie (bez przeciągania) w drzwi na scenie otwiera/zamyka tylko te drzwi
-(function(){const el=renderer.domElement,ray=new THREE.Raycaster(),v=new THREE.Vector2();let sx=0,sy=0;
-  el.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;});
-  el.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-sx,e.clientY-sy)>5||(e.pointerType==='mouse'&&e.button!==0))return;
-    const r=el.getBoundingClientRect();v.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(v,camera);
-    const hit=ray.intersectObjects(scene.children,true).find(h=>h.object.isMesh&&shown(h.object)&&h.object.material.visible!==false);
-    const d=hit&&hit.object.userData.door;if(!d)return;d.t=d.t?0:1;syncDoors();});
-  let busy=false;
-  el.addEventListener('pointermove',e=>{if(busy||e.buttons||e.pointerType!=='mouse')return;busy=true;requestAnimationFrame(()=>busy=false);
-    const r=el.getBoundingClientRect();v.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(v,camera);
-    const hit=ray.intersectObjects(scene.children,true).find(h=>h.object.isMesh&&shown(h.object)&&h.object.material.visible!==false);
-    el.style.cursor=hit&&hit.object.userData.door?'pointer':'';});
+(function suspendedCeiling() {
+  // płyta: kształt w płaszczyźnie XY obrócony tak, że y → z, wyciągnięcie w dół
+  const panel = new THREE.Mesh(new THREE.ExtrudeGeometry(outlineShape(PANEL_OUTLINE), { depth: PANEL_T, bevelEnabled: false }), M.ceiling);
+  panel.rotation.x = Math.PI / 2;
+  panel.position.y = CEILING_Y + PANEL_T;
+  panel.castShadow = panel.receiveShadow = true;
+  ceiling.add(panel);
+
+  // taśma LED nad szczeliną (widać ją z dołu jako świecący pas wokół płyty)
+  const strip = outlineShape(ROOM_OUTLINE);
+  strip.holes.push(outlineShape(PANEL_OUTLINE, THREE.Path));
+  const led = new THREE.Mesh(new THREE.ShapeGeometry(strip), M.led);
+  led.rotation.x = Math.PI / 2;     // twarzą w dół
+  led.position.y = CEILING_Y + .04;
+  ceiling.add(led);
+
+  // oprawy: biały pierścień + świecący dyfuzor
+  for (const [x, z] of DOWNLIGHTS) {
+    cyl(.045, .045, .004, M.white, x, CEILING_Y - .002, z, ceiling, 32).castShadow = false;
+    cyl(.033, .033, .002, M.led, x, CEILING_Y - .004, z, ceiling, 32).castShadow = false;
+  }
 })();
-try{if(!matchMedia('(max-width:760px)').matches)document.getElementById('dims').open=false;}catch(e){}
 
-/* ---------- panel płytek: same próbki, bez nazw ---------- */
-const tilesEl=document.getElementById('tiles'),thumbs={};
-for(const t of TILES){
-  const src=tileCanvas(t.id,.6,.6),c=document.createElement('canvas');c.width=c.height=96;
-  c.getContext('2d').drawImage(src,8,8,src.width-16,src.height-16,0,0,96,96);thumbs[t.id]=c.toDataURL('image/jpeg',.85);
-  const b=document.createElement('button');b.dataset.id=t.id;b.setAttribute('aria-label',t.name+'. '+srcText(t));
-  b.style.backgroundImage='url('+thumbs[t.id]+')';tilesEl.appendChild(b);
+
+/* ==========================================================================
+   9. UV PŁYTEK W UKŁADZIE ŚWIATA
+   Każda ściana, bok zabudowy i podłoga dostaje płytki w prawdziwej skali (1 UV = 1 m),
+   a siatka fug zaczyna się w tym samym miejscu na wszystkich powierzchniach.
+   ========================================================================== */
+
+(function assignTileUVs() {
+  scene.updateMatrixWorld(true);
+  const p = new THREE.Vector3(), n = new THREE.Vector3(), normalMatrix = new THREE.Matrix3();
+  for (const mesh of tiledMeshes) {
+    const geometry = mesh.geometry, P = geometry.attributes.position, N = geometry.attributes.normal;
+    normalMatrix.getNormalMatrix(mesh.matrixWorld);
+    const uv = new Float32Array(P.count * 2);
+    for (let i = 0; i < P.count; i++) {
+      p.fromBufferAttribute(P, i).applyMatrix4(mesh.matrixWorld);
+      n.fromBufferAttribute(N, i).applyMatrix3(normalMatrix);
+      const ax = Math.abs(n.x), ay = Math.abs(n.y), az = Math.abs(n.z);
+      if (ax >= ay && ax >= az) { uv[i * 2] = p.z; uv[i * 2 + 1] = p.y; }        // ściana prostopadła do X
+      else if (ay >= az)        { uv[i * 2] = p.x; uv[i * 2 + 1] = p.z; }        // podłoga, parapet
+      else                      { uv[i * 2] = p.x; uv[i * 2 + 1] = p.y; }        // ściana prostopadła do Z
+    }
+    geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  }
+})();
+
+
+/* ==========================================================================
+   10. ŚWIATŁO: dzień i noc
+   Dzień: słońce przez okno + rozproszone światło nieba. Noc: oprawy w suficie,
+   taśma LED w szczelinie, podświetlenie lustra i szafki.
+   ========================================================================== */
+
+const WARM = 0xffdcb4;   // 3000 K
+
+// [światło, natężenie w dzień, natężenie w nocy]
+const lightRig = [];
+function addLight(light, day, night) { scene.add(light); lightRig.push([light, day, night]); return light; }
+
+addLight(new THREE.HemisphereLight(0xf2f4f6, 0x3a3836, 1), .5, .05);
+addLight(new THREE.AmbientLight(0xffffff, 1), .1, .04);
+
+const sun = addLight(new THREE.DirectionalLight(0xfff1dc, 1), 2.6, 0);
+sun.position.set(.3, 4.4, 6.2);
+sun.target.position.set(.5, 0, 1.0);
+scene.add(sun.target);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: .5, far: 14 });
+sun.shadow.bias = -.0004;
+sun.shadow.normalBias = .02;
+
+// światło nieba wpadające przez okno (rozjaśnia wnętrze w dzień)
+addLight(new THREE.PointLight(0xe4eefa, 1, 3.5, 1.5), .9, 0).position.set((WX0 + WX1) / 2, 1.7, 2.2);
+
+// oprawy wpuszczane: reflektory skierowane w dół, środkowa rzuca cień
+DOWNLIGHTS.forEach(([x, z], i) => {
+  const spot = addLight(new THREE.SpotLight(WARM, 1, 4.5, .75, .65, 1.6), 0, 2.0);
+  spot.position.set(x, CEILING_Y - .01, z);
+  spot.target.position.set(x, 0, z);
+  scene.add(spot.target);
+  if (i === 1) {
+    spot.castShadow = true;
+    spot.shadow.mapSize.set(1024, 1024);
+    spot.shadow.bias = -.0005;
+    spot.shadow.normalBias = .02;
+  }
+});
+
+// taśma LED w szczelinie: kilka słabych świateł tuż pod sufitem, przy ścianach
+for (const [x, z] of [[.8, .06], [1.54, .9], [.06, .75], [.75, 2.34], [-.5, 2.34], [-.94, 1.95], [-.5, 1.56]]) {
+  addLight(new THREE.PointLight(WARM, 1, 1.3, 2), 0, .45).position.set(x, CEILING_Y + .01, z);
 }
-const fmtEl=document.getElementById('fmt');
-for(const f of FORMATS){const b=document.createElement('button');b.dataset.f=f;b.textContent=f.replace('x','×');fmtEl.appendChild(b);}
-function syncPanel(){
-  const s=state.active;
-  for(const b of document.querySelectorAll('#slots button')){const k=b.dataset.slot;b.setAttribute('aria-pressed',k===s);
-    b.querySelector('i').style.backgroundImage='url('+thumbs[state[k]]+')';
-    const [a,c]=state.fmt[k].split('x');b.querySelector('small').textContent=(a!==c&&state.ori[k]==='h'?c+'×'+a:a+'×'+c);}
-  for(const b of tilesEl.children)b.setAttribute('aria-pressed',b.dataset.id===state[s]);
-  const cur=T_BY[state[s]];document.getElementById('tileName').textContent=cur.name;document.getElementById('tileSrc').textContent=srcText(cur);
-  for(const b of fmtEl.children)b.setAttribute('aria-pressed',b.dataset.f===state.fmt[s]);
-  const [a,c]=state.fmt[s].split('x');document.getElementById('oriRow').hidden=a===c;
-  for(const b of document.querySelectorAll('#orient button'))b.setAttribute('aria-pressed',b.dataset.o===state.ori[s]);
+// podświetlenie lustra
+addLight(new THREE.PointLight(WARM, 1, 1.8, 2), 0, .6).position.set(1.45, 1.6, .95);
+
+const LIGHTING = {
+  day:   { exposure: 1.15, sky: 0xdfeefa, led: LED_OFF },
+  night: { exposure: 1.0,  sky: 0x18202c, led: LED_ON },
+};
+function setLighting(mode) {
+  state.lighting = mode;
+  const preset = LIGHTING[mode];
+  for (const [light, day, night] of lightRig) light.intensity = mode === 'day' ? day : night;
+  renderer.toneMappingExposure = preset.exposure;
+  M.sky.color.setHex(preset.sky);
+  M.led.color.setHex(preset.led);
 }
-document.getElementById('slots').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.active=b.dataset.slot;syncPanel();});
-tilesEl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state[state.active]=b.dataset.id;retile([state.active]);syncPanel();});
-fmtEl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.fmt[state.active]=b.dataset.f;retile([state.active]);syncPanel();});
-document.getElementById('orient').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.ori[state.active]=b.dataset.o;retile([state.active]);syncPanel();});
-syncPanel();
 
-// podpowiedź po najechaniu na próbkę
-const tip=document.getElementById('tip');
-function showTip(b){const t=T_BY[b.dataset.id];tip.querySelector('b').textContent=t.name;tip.querySelector('span').textContent=srcText(t);tip.hidden=false;
-  const r=b.getBoundingClientRect(),tw=tip.offsetWidth;let x=r.left+r.width/2-tw/2;x=Math.max(8,Math.min(innerWidth-tw-8,x));
-  let y=r.top-tip.offsetHeight-8;if(y<8)y=r.bottom+8;tip.style.left=x+'px';tip.style.top=y+'px';}
-tilesEl.addEventListener('pointerover',e=>{const b=e.target.closest('button');if(b&&e.pointerType==='mouse')showTip(b);});
-tilesEl.addEventListener('pointerleave',()=>tip.hidden=true);
-tilesEl.addEventListener('focusin',e=>{const b=e.target.closest('button');if(b)showTip(b);});
-tilesEl.addEventListener('focusout',()=>tip.hidden=true);
-tilesEl.addEventListener('scroll',()=>tip.hidden=true);
 
-// chowanie panelu ustawień
-const app=document.querySelector('.app'),aside=document.querySelector('aside'),pb=document.getElementById('panelBtn');
-function panel(on){aside.hidden=!on;app.classList.toggle('nopanel',!on);pb.setAttribute('aria-expanded',on);
-  try{localStorage.setItem('panel',on?'1':'0');}catch(e){}}
-pb.addEventListener('click',()=>panel(aside.hidden));
-let startOn=true;try{startOn=localStorage.getItem('panel')!=='0';}catch(e){}
-panel(startOn);
+/* ==========================================================================
+   11. KAMERA: widoki, punkt obrotu, klikanie w drzwi
+   ========================================================================== */
 
-/* ---------- pętla ---------- */
-function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
-new ResizeObserver(resize).observe(stage);resize();
-const tmp=new THREE.Vector3();
-function frame(now){
-  if(anim){const k=Math.min(1,(now-anim.s)/900),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
-    camera.position.lerpVectors(anim.p0,anim.p,e);controls.target.lerpVectors(anim.t0,anim.t,e);if(k>=1)anim=null;}
+const VIEWS = {
+  overview: { position: [-2.1, 4.3, -1.7], target: [.55, .8, 1.35] },
+  door:     { position: [.7, 1.62, .12],   target: [.45, 1.2, 2.4] },
+  vanity:   { position: [.1, 1.6, .35],    target: [1.45, 1.15, 1.7] },
+  shower:   { position: [1.2, 1.65, 2.25], target: [-.5, 1.15, 1.7] },
+  plan:     { position: [.31, 7.4, 1.21],  target: [.3, 0, 1.2] },
+};
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let flight = null;   // trwające przejście kamery
+function goTo(name, instant) {
+  const view = VIEWS[name], position = new THREE.Vector3(...view.position), target = new THREE.Vector3(...view.target);
+  if (instant) { camera.position.copy(position); controls.target.copy(target); controls.update(); return; }
+  flight = { fromPosition: camera.position.clone(), fromTarget: controls.target.clone(), position, target, start: performance.now() };
+}
+
+const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
+function hitAt(clientX, clientY) {
+  const r = renderer.domElement.getBoundingClientRect();
+  pointer.set((clientX - r.left) / r.width * 2 - 1, -(clientY - r.top) / r.height * 2 + 1);
+  raycaster.setFromCamera(pointer, camera);
+  return raycaster.intersectObjects(scene.children, true).find(isSolidHit);
+}
+
+/* Przy przybliżeniu punkt obrotu bywał przed oglądanymi ścianami — wtedy obraz kręcił się odwrotnie.
+   Na początku przeciągania przesuwamy punkt obrotu wzdłuż osi widoku na powierzchnię na środku ekranu:
+   widok nie skacze, a wszystko, co widać, leży przed punktem obrotu i podąża za ruchem ręki. */
+const canvas = renderer.domElement, viewDir = new THREE.Vector3();
+canvas.addEventListener('pointerdown', e => {
+  if (flight || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const hit = raycaster.intersectObjects(scene.children, true).find(h => isSolidHit(h) && !(h.object.material.opacity < .5));
+  if (!hit) return;
+  const distance = THREE.MathUtils.clamp(hit.distance, controls.minDistance, controls.maxDistance);
+  camera.getWorldDirection(viewDir);
+  controls.target.copy(camera.position).addScaledVector(viewDir, distance);
+});
+
+// kliknięcie (bez przeciągania) w drzwi otwiera/zamyka tylko te drzwi
+let downX = 0, downY = 0;
+canvas.addEventListener('pointerdown', e => { downX = e.clientX; downY = e.clientY; });
+canvas.addEventListener('pointerup', e => {
+  if (Math.hypot(e.clientX - downX, e.clientY - downY) > 5 || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  const door = hitAt(e.clientX, e.clientY)?.object.userData.door;
+  if (!door) return;
+  door.target = door.target ? 0 : 1;
+  syncDoorsButton();
+});
+let hoverPending = false;
+canvas.addEventListener('pointermove', e => {
+  if (hoverPending || e.buttons || e.pointerType !== 'mouse') return;
+  hoverPending = true;
+  requestAnimationFrame(() => {
+    hoverPending = false;
+    canvas.style.cursor = hitAt(e.clientX, e.clientY)?.object.userData.door ? 'pointer' : '';
+  });
+});
+
+
+/* ==========================================================================
+   12. PANEL
+   ========================================================================== */
+
+const $ = id => document.getElementById(id);
+const pressed = (buttons, isOn) => { for (const b of buttons) b.setAttribute('aria-pressed', isOn(b)); };
+/** Kliknięcie w przycisk wewnątrz kontenera. */
+const onButton = (container, handler) => container.addEventListener('click', e => { const b = e.target.closest('button'); if (b) handler(b); });
+
+// wzory płytek
+for (const tile of Object.values(TILES)) {
+  const button = document.createElement('button');
+  button.dataset.tile = tile.id;
+  button.innerHTML = `<img alt="" src="${tile.thumbnail}"><span></span>`;
+  button.querySelector('span').textContent = tile.name.replace(/^.*Authority\s*/, '') || tile.name;
+  button.title = tile.name;
+  $('swatches').appendChild(button);
+}
+// formaty
+for (const format of FORMATS) {
+  const button = document.createElement('button');
+  button.dataset.format = format;
+  button.textContent = format.replace('x', '×');
+  $('formats').appendChild(button);
+}
+
+function syncTilePanel() {
+  const active = state.tiles[state.surface];
+  for (const b of $('surfaces').children) {
+    const surface = b.dataset.surface;
+    b.setAttribute('aria-pressed', surface === state.surface);
+    b.querySelector('i').style.backgroundImage = `url(${TILES[state.tiles[surface].tile].thumbnail})`;
+    b.querySelector('small').textContent = sizeLabel(tileSize(surface));
+  }
+  pressed($('swatches').children, b => b.dataset.tile === active.tile);
+  pressed($('formats').children, b => b.dataset.format === active.format);
+  pressed($('layouts').children, b => b.dataset.layout === active.layout);
+  const [a, b] = active.format.split('x');
+  $('layoutRow').hidden = a === b;
+
+  const tile = TILES[active.tile], info = $('tileInfo');
+  info.innerHTML = '<b></b><span></span><span></span>';
+  info.children[0].textContent = tile.name;
+  info.children[1].textContent = `${tile.finish}`;
+  info.children[2].innerHTML = `${tile.price} · <a target="_blank" rel="noopener"></a>`;
+  info.querySelector('a').href = tile.link;
+  info.querySelector('a').textContent = new URL(tile.link).hostname.replace(/^www\./, '') + ' ↗';
+}
+function changeActiveTiles(change) {
+  Object.assign(state.tiles[state.surface], change);
+  applyTiles(state.surface);
+  syncTilePanel();
+}
+onButton($('surfaces'), b => { state.surface = b.dataset.surface; syncTilePanel(); });
+onButton($('swatches'), b => changeActiveTiles({ tile: b.dataset.tile }));
+onButton($('formats'),  b => changeActiveTiles({ format: b.dataset.format }));
+onButton($('layouts'),  b => changeActiveTiles({ layout: b.dataset.layout }));
+syncTilePanel();
+
+// widoki
+onButton($('views'), b => { pressed($('views').children, x => x === b); goTo(b.dataset.view, reduceMotion); });
+
+// dzień / noc
+onButton($('lighting'), b => { setLighting(b.dataset.lighting); pressed($('lighting').children, x => x === b); });
+
+// armatura
+onButton($('metals'), b => { setMetal(b.dataset.metal); pressed($('metals').children, x => x === b); });
+
+// warstwy
+function syncLayers() {
+  for (const [layer, groups] of Object.entries(layerGroups)) for (const g of groups) g.visible = state.layers[layer];
+  pressed($('layers').children, b => state.layers[b.dataset.layer]);
+}
+onButton($('layers'), b => { state.layers[b.dataset.layer] = !state.layers[b.dataset.layer]; syncLayers(); });
+syncLayers();
+
+// wszystkie drzwi
+const syncDoorsButton = () => $('doorsBtn').setAttribute('aria-pressed', doors.every(d => d.target === 1));
+$('doorsBtn').addEventListener('click', () => {
+  const allOpen = doors.every(d => d.target === 1);
+  for (const d of doors) d.target = allOpen ? 0 : 1;
+  syncDoorsButton();
+});
+
+// wymiary zwinięte na desktopie
+try { if (!matchMedia('(max-width:760px)').matches) $('dims').open = false; } catch (e) {}
+
+// chowanie panelu (zapamiętane w przeglądarce)
+const app = document.querySelector('.app'), aside = $('settings');
+function showPanel(on) {
+  aside.hidden = !on;
+  app.classList.toggle('nopanel', !on);
+  $('panelBtn').setAttribute('aria-expanded', on);
+  try { localStorage.setItem('panel', on ? '1' : '0'); } catch (e) {}
+}
+$('panelBtn').addEventListener('click', () => showPanel(aside.hidden));
+let panelOn = true;
+try { panelOn = localStorage.getItem('panel') !== '0'; } catch (e) {}
+showPanel(panelOn);
+
+
+/* ==========================================================================
+   13. PĘTLA
+   ========================================================================== */
+
+function resize() {
+  const r = stage.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  camera.aspect = r.width / Math.max(1, r.height);
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+resize();
+
+setLighting(state.lighting);
+goTo('overview', true);
+
+const easeInOut = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+function frame(now) {
+  if (flight) {
+    const k = Math.min(1, (now - flight.start) / 900), e = easeInOut(k);
+    camera.position.lerpVectors(flight.fromPosition, flight.position, e);
+    controls.target.lerpVectors(flight.fromTarget, flight.target, e);
+    if (k >= 1) flight = null;
+  }
   controls.update();
-  for(const w of walls){tmp.copy(camera.position).sub(w.mid);w.g.visible=tmp.dot(w.n)<.05;}
-  // zabudowa stoi przy lewej ścianie i ścianie z oknem: znika razem z nimi
-  zab.visible=!xrayOn&&wB.g.visible&&wC1.g.visible;xray.visible=xrayOn;
-  for(const d of doors){d.v+=(d.t-d.v)*(reduce?1:.08);d.obj.rotation.y=d.open*d.v;}
-  renderer.render(scene,camera);requestAnimationFrame(frame);
+
+  for (const c of cutaways) {   // kolejność ma znaczenie: zabudowa zależy od stanu ścian
+    const hidden = c.isHidden();
+    if (hidden !== c.hidden) { setGhost(c.root, hidden); c.hidden = hidden; }
+  }
+  for (const d of doors) {
+    d.progress += (d.target - d.progress) * (reduceMotion ? 1 : .08);
+    d.pivot.rotation.y = d.openAngle * d.progress;
+  }
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// do podglądu w konsoli przeglądarki
+window.bath = { state, scene, camera, controls, goTo, setLighting };
 })();
 </script>
-
-</body></html>
+</body>
+</html>
