@@ -526,7 +526,7 @@ const CONFIG = JSON.parse(document.getElementById('design-config').textContent);
 const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags, plural, OAK_SWATCH } = KE; // OAK_SWATCH: a material without a colour
 const HANDLE_POSITIONS = ['', ...KE.HANDLE_POSITIONS];
 const HINGE_SIDES = ['', ...KE.HINGE_SIDES];
-const SIDE_NAMES = { '': 'brak', ...KE.LABELS.handle }; // handle positions and hinge sides
+const SIDE_NAMES = { '': 'brak', ...KE.LABELS.side }; // handle positions and hinge sides
 
 /* ---------- 2. utilities (nothing kitchen-specific) ---------- */
 function isRowEmpty(...values) {
@@ -559,25 +559,25 @@ let loadedProject = null; // keeps the materials and settings, which this page d
 
 // design.js component -> component table row
 function componentRow(c) {
-  const gaps = Array.isArray(c.gaps) ? c.gaps : ['', '', '', ''];
+  const gaps = c.gaps || {};
   return {
     group: c.group, col: c.column, span: c.span, type: KE.readType(c.type), tags: parseTags(c.tags).tags.join(' '), carcass: c.carcass || '', height: c.height, handle: c.handle ?? '', hinge: c.hinge ?? '',
-    gapLeft: gaps[0], gapRight: gaps[1], gapTop: gaps[2], gapBottom: gaps[3], note: c.note || ''
+    gapLeft: gaps.left ?? '', gapRight: gaps.right ?? '', gapTop: gaps.top ?? '', gapBottom: gaps.bottom ?? '', note: c.note || ''
   };
 }
 
 // component table row -> design.js component (in the order design.js uses); empty fields are left out; gaps on fronts only
 function dataComponent(row) {
   const c = { group: toNumber(row.group), column: toNumber(row.col), span: toNumber(row.span), type: row.type };
-  const tags = parseTags(row.tags).words.join(' ');
-  if (tags) c.tags = tags;
+  const tags = parseTags(row.tags).words;
+  if (tags.length) c.tags = tags;
   const carcass = String(row.carcass ?? '').trim();
   if (carcass) c.carcass = carcass;
   c.height = toNumber(row.height);
   if (row.handle) c.handle = row.handle;
   if (row.hinge) c.hinge = row.hinge;
-  const gaps = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
-  if (FRONT_TYPES.includes(row.type) && !isRowEmpty(...gaps)) c.gaps = gaps.map(toNumber);
+  const gaps = { left: row.gapLeft, right: row.gapRight, top: row.gapTop, bottom: row.gapBottom };
+  if (FRONT_TYPES.includes(row.type) && !isRowEmpty(...Object.values(gaps))) c.gaps = Object.fromEntries(Object.entries(gaps).map(([side, gap]) => [side, toNumber(gap)]));
   if (String(row.note ?? '').trim()) c.note = String(row.note).trim();
   return c;
 }
@@ -612,7 +612,7 @@ function readTables(columnRows, componentRows, noteRows) {
     components.push(dataComponent(row));
     rowOfComponent.push(idx);
   });
-  const notes = noteRows.filter(n => !isRowEmpty(n.name, n.description, n.details)).map(n => [n.name, n.description, n.details]);
+  const notes = noteRows.filter(n => !isRowEmpty(n.name, n.description, n.details)).map(({ name, description, details }) => ({ name, description, details }));
   const project = { materials: (loadedProject && loadedProject.materials) || {}, settings: (loadedProject && loadedProject.settings) || {}, notes, columns, components };
   return { project, warnings, columnFlags, componentFlags, rowOfComponent };
 }
@@ -647,16 +647,16 @@ function drawFront(item, y) {
   return outer + inner;
 }
 
-// handle T | B along the top / bottom rail, L | R along a side rail (the engine checks the position)
+// handle at the top / bottom along the rail, left / right along a side rail (the engine checks the position)
 function drawHandle(item, y) {
   const { thickness, edgeOffset, minSpan, maxSpan, maxSpanVertical, endClearance } = CONFIG.handle;
   const along = Math.min(maxSpan, Math.max(minSpan, item.width - endClearance));
   const upright = Math.min(maxSpanVertical, Math.max(minSpan, item.height - endClearance));
   const box = {
-    T: [item.x + (item.width - along) / 2, y + edgeOffset, along, thickness],
-    B: [item.x + (item.width - along) / 2, y + item.height - edgeOffset - thickness, along, thickness],
-    L: [item.x + edgeOffset, y + (item.height - upright) / 2, thickness, upright],
-    R: [item.x + item.width - edgeOffset - thickness, y + (item.height - upright) / 2, thickness, upright]
+    top: [item.x + (item.width - along) / 2, y + edgeOffset, along, thickness],
+    bottom: [item.x + (item.width - along) / 2, y + item.height - edgeOffset - thickness, along, thickness],
+    left: [item.x + edgeOffset, y + (item.height - upright) / 2, thickness, upright],
+    right: [item.x + item.width - edgeOffset - thickness, y + (item.height - upright) / 2, thickness, upright]
   }[item.handle];
   if (!box) return '';
   const [hx, hy, hw, hh] = box;
@@ -719,7 +719,7 @@ function drawItem(item, x, totalHeight, shakerRail) {
   const shape = { type: item.type, x, width, height, handle: item.handle, shakerRail };
   const y = totalHeight - item.v1;
   const frontWidth = front ? Math.max(0, front.width) : width, frontHeight = front ? Math.max(0, front.height) : height;
-  return `<g class="component-group" data-g="${item.group}" data-c="${item.col}" data-s="${item.span}" data-tags="${escapeAttr([item.type, ...item.tags].join(' '))}" data-k="${escapeAttr(item.carcassName)}" data-w="${width}" data-h="${height}" data-fw="${frontWidth}" data-fh="${frontHeight}" data-gaps="${front ? item.gaps.join(' ') : ''}" data-type="${item.type}" data-note="${escapeAttr(item.note)}">${DRAW[item.type](shape, y)}</g>`;
+  return `<g class="component-group" data-g="${item.group}" data-c="${item.col}" data-s="${item.span}" data-tags="${escapeAttr([item.type, ...item.tags].join(' '))}" data-k="${escapeAttr(item.carcassName)}" data-w="${width}" data-h="${height}" data-fw="${frontWidth}" data-fh="${frontHeight}" data-gaps="${front ? KE.gapsText(item.gaps) : ''}" data-type="${item.type}" data-note="${escapeAttr(item.note)}">${DRAW[item.type](shape, y)}</g>`;
 }
 
 // the groups side by side, CONFIG.groupGap apart; '' when there is nothing to draw
@@ -848,7 +848,7 @@ document.addEventListener('alpine:init', () => {
       this.materials = Object.entries(project.materials || {})
         .map(([code, m]) => ({ code, ...m }))
         .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: design.js order
-      this.notes = (project.notes || []).map(([name, description, details]) => this.newNoteRow(name ?? '', description ?? '', details ?? ''));
+      this.notes = (project.notes || []).map(n => this.newNoteRow(n.name ?? '', n.description ?? '', n.details ?? ''));
       this.columns = Object.entries(project.columns || {}).flatMap(([group, widths]) => widths.map(w => this.newColumnRow(Number(group), w)));
       this.components = (project.components || []).map(c => this.newComponentRow(componentRow(c)));
     },
@@ -954,7 +954,7 @@ document.addEventListener('alpine:init', () => {
     describeComponent(group) {
       const attr = name => group.getAttribute('data-' + name);
       const parts = [KE.placeLabel(+attr('g'), +attr('c'), +attr('s')), attr('k'), KE.tagsLabel(attr('tags').split(' ')), `${attr('w')} × ${attr('h')}`];
-      if (FRONT_TYPES.includes(attr('type'))) parts.push(`front ${attr('fw')} × ${attr('fh')}`, `szczeliny ${attr('gaps').split(' ').join(':')}`);
+      if (FRONT_TYPES.includes(attr('type'))) parts.push(`front ${attr('fw')} × ${attr('fh')}`, `szczeliny ${attr('gaps')}`);
       parts.push(attr('note'));
       return parts.filter(Boolean).join(' · ');
     },

@@ -10,10 +10,10 @@
      blocks      cutting-list tables, code = the two letters of their row labels (KO-07), rows built by engine.js: parts = front | frames | plinths | panels | plaster | worktops,
                  or a material use (carcass, drawerBox, back ...: every board of that use's material); cut = priced saw
                  cuts; columns = the header when not Element / Długość / Szerokość / Ilość
-     categories  estimate items; appliances = the category counts as AGD, not furniture. An item: id, name, spec,
-                 qty (a number or a formula), unit, price, refs (ids of the notes it links to), source, links (the shops
-                 of the price [{shop, url}])
-     notes       Notes tab, by section; a note: id, appliance (its documents come from appliances.js), topic,
+     categories  estimate items, by category {name, appliances, items}; appliances = the category counts as AGD, not
+                 furniture. An item: id, name, spec, qty (a number or a formula), unit, price, refs (ids of the notes it
+                 links to), source, links (the shops of the price [{name, url}], as every link in the data)
+     notes       Notes tab, by section {name, notes}; a note: id, appliance (its documents come from appliances.js), topic,
                  description, assumed (in the estimate), decide (open question), links [{name, url}]; \n starts a new line.
                  Notes and sections are numbered in this order.
    Texts and formulas may hold placeholders:
@@ -24,10 +24,10 @@
      {i:K8/oven.niche} item by carcass name or place (G1[5]) and type or tag, #2 = the second from the bottom:
                        width, height, v0, v1 (module), frontWidth, frontHeight, frontV0, frontV1 (front),
                        nicheBottom, nicheTop, niche (clear height between the horizontal boards of the carcass around it)
-     {a:oven.front.1}  appliances.js       {v:sheet.length} values
+     {a:oven.front.height}  appliances.js       {v:sheet.length} values
      {p:hinges}        unit price          {q:hinges} item quantity          {note:hinges} the number of a note
      {carcass.m2}      cutting-list total of a block (m2, edge, cut, len, qty)    {waste} {sheet} {reserve} params
-     {=expression}     a calculation with placeholders in angle brackets, e.g. {=(<a:oven.front.0> - <k:K8.innerWidth>) / 2},
+     {=expression}     a calculation with placeholders in angle brackets, e.g. {=(<a:oven.front.width> - <k:K8.innerWidth>) / 2},
                        with ROUND, ROUNDUP, MIN, MAX;  |% shows a fraction as a percentage
    A quantity formula ("=..." in qty) uses the placeholders in braces and ROUNDUP only: it is exported as an Excel formula. */
 window.KITCHEN_COST = {
@@ -94,12 +94,12 @@ window.KITCHEN_COST = {
      "refs": ["lacquered"],
      "source": "NIESPRAWDZONE – kwota właściciela. Ceny katalogowe online: ogony.pl 990 + 400 (2. strona), fronty.com.pl 820, zakupynawymiar.pl 796 (1 strona), gama-sklep 699 (1 strona), frontlakierowany.pl 630 netto + 70 % (2. strona), lakierowane.pl 370 netto (1 strona)",
      "links": [
-      {"shop": "ogony.pl", "url": "https://ogony.pl/products/shaker-front-ikea"},
-      {"shop": "fronty.com.pl", "url": "https://fronty.com.pl/pl/p/Art.-301-Front-lakierowany/76"},
-      {"shop": "zakupynawymiar.pl", "url": "https://zakupynawymiar.pl/pl/p/front-F2-lakierowany-na-wymiar-/2967"},
-      {"shop": "gama-sklep.com.pl", "url": "https://www.gama-sklep.com.pl/item/front-kuchenny-mdf-lakierowany-profil-b-269976"},
-      {"shop": "frontlakierowany.pl", "url": "https://frontlakierowany.pl/#cennik"},
-      {"shop": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"}
+      {"name": "ogony.pl", "url": "https://ogony.pl/products/shaker-front-ikea"},
+      {"name": "fronty.com.pl", "url": "https://fronty.com.pl/pl/p/Art.-301-Front-lakierowany/76"},
+      {"name": "zakupynawymiar.pl", "url": "https://zakupynawymiar.pl/pl/p/front-F2-lakierowany-na-wymiar-/2967"},
+      {"name": "gama-sklep.com.pl", "url": "https://www.gama-sklep.com.pl/item/front-kuchenny-mdf-lakierowany-profil-b-269976"},
+      {"name": "frontlakierowany.pl", "url": "https://frontlakierowany.pl/#cennik"},
+      {"name": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"}
      ]
     },
     {
@@ -111,7 +111,7 @@ window.KITCHEN_COST = {
      "price": 332.1,
      "refs": ["framesPanels", "lacquered"],
      "source": "MDF gładki 18, mat: 270 netto/m² (jedna strona; druga strona: zapytać)",
-     "links": [{"shop": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"}]
+     "links": [{"name": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"}]
     },
     {
      "id": "plinth",
@@ -122,7 +122,7 @@ window.KITCHEN_COST = {
      "price": 332.1,
      "refs": ["lacquered", "corner"],
      "source": "MDF gładki 18, mat: 270 netto/m² (jedna strona; druga strona: zapytać)",
-     "links": [{"shop": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"}]
+     "links": [{"name": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"}]
     },
     {
      "id": "panels",
@@ -133,7 +133,7 @@ window.KITCHEN_COST = {
      "price": 332.1,
      "refs": ["lacquered", "hiddenSides"],
      "source": "MDF gładki 18, mat: 270 netto/m² (jedna strona; druga strona: zapytać)",
-     "links": [{"shop": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"}]
+     "links": [{"name": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"}]
     }
    ]
   },
@@ -149,7 +149,7 @@ window.KITCHEN_COST = {
      "price": 268.18,
      "refs": ["carcassBoard"],
      "source": "Bielsko-Biała",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-U708-ST9-2800x2070x18MM-Szary-jasny/2219"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-U708-ST9-2800x2070x18MM-Szary-jasny/2219"}]
     },
     {
      "id": "drawerBoard",
@@ -159,7 +159,7 @@ window.KITCHEN_COST = {
      "unit": "ark.",
      "price": 344.40,
      "source": "Bielsko-Biała",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-U708-ST9-2800x2070x16MM-Szary-jasny/2190"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-U708-ST9-2800x2070x16MM-Szary-jasny/2190"}]
     },
     {
      "id": "backBoard",
@@ -169,7 +169,7 @@ window.KITCHEN_COST = {
      "unit": "ark.",
      "price": 124.32,
      "source": "Bielsko-Biała",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/HDF-SZARY-LAKIEROWANY-2800x2070x3.0MM/2804"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/HDF-SZARY-LAKIEROWANY-2800x2070x3.0MM/2804"}]
     },
     {
      "id": "cutting",
@@ -179,7 +179,7 @@ window.KITCHEN_COST = {
      "unit": "mb",
      "price": 5,
      "source": "M-HM - cena do potwierdzenia; szacunek wg ciecieoklejanie.pl (płyty 3–20 mm)",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/i/Uslugi/16"}, {"shop": "ciecieoklejanie.pl", "url": "https://ciecieoklejanie.pl/cennik/"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/i/Uslugi/16"}, {"name": "ciecieoklejanie.pl", "url": "https://ciecieoklejanie.pl/cennik/"}]
     },
     {
      "id": "carcassEdging",
@@ -190,9 +190,9 @@ window.KITCHEN_COST = {
      "price": 6,
      "source": "M-HM - cena do potwierdzenia; szacunek wg ciecieoklejanie.pl (usługa oklejania, płyty 10–18 mm, 6/mb z obrzeżem (samo obrzeże U708 ST9 23/0,8: 1,77/mb w M-HM))",
      "links": [
-      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/i/Uslugi/16"},
-      {"shop": "ciecieoklejanie.pl", "url": "https://ciecieoklejanie.pl/cennik/"},
-      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-U708-ST9-230.8MM-Szary-jasny/1146"}
+      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/i/Uslugi/16"},
+      {"name": "ciecieoklejanie.pl", "url": "https://ciecieoklejanie.pl/cennik/"},
+      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-U708-ST9-230.8MM-Szary-jasny/1146"}
      ]
     },
     {
@@ -205,8 +205,8 @@ window.KITCHEN_COST = {
      "refs": ["framesPanels"],
      "source": "panele robi producent frontów (lakierowane.pl) - zapytać o oklejanie; szacunek wg ciecieoklejanie.pl; obrzeże granatowe dobrane do lakieru",
      "links": [
-      {"shop": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"},
-      {"shop": "ciecieoklejanie.pl", "url": "https://ciecieoklejanie.pl/cennik/"}
+      {"name": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"},
+      {"name": "ciecieoklejanie.pl", "url": "https://ciecieoklejanie.pl/cennik/"}
      ]
     }
    ]
@@ -224,8 +224,8 @@ window.KITCHEN_COST = {
      "refs": ["hinges"],
      "source": "zawias 14,25 + prowadnik 2,48 (meblownia: 11,53 + 2,00)",
      "links": [
-      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CLIP-top-BLUMOTION-Zawias-110%2C-Drzwi-nakladane%2C-puszka-na-wkrety-71B3550/2253"},
-      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CLIP-prowadnik%2C-krzyzakowy%2C-00-mm%2C-Stal%2C-Wkrety%2C-RW-mimosrod-173H7100/1376"}
+      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CLIP-top-BLUMOTION-Zawias-110%2C-Drzwi-nakladane%2C-puszka-na-wkrety-71B3550/2253"},
+      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CLIP-prowadnik%2C-krzyzakowy%2C-00-mm%2C-Stal%2C-Wkrety%2C-RW-mimosrod-173H7100/1376"}
      ]
     },
     {
@@ -238,9 +238,9 @@ window.KITCHEN_COST = {
      "refs": ["pullOutShelf"],
      "source": "prowadnice 136,36 + sprzęgła 2 × 7,46 (meblownia: 121,84)",
      "links": [
-      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/MOVENTO-z-BLUMOTION-S%2C-40-kg%2C-L500-mm%2C-lewaprawa-760H5000S/2312"},
-      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/MOVENTO-Sprzeglo-Lewe-z-regulacja-boczna-T51.7601-LEWE/3109"},
-      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/MOVENTO-Sprzeglo-Prawe-z-regulacja-boczna-T51.7601-PRAWE/3110"}
+      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/MOVENTO-z-BLUMOTION-S%2C-40-kg%2C-L500-mm%2C-lewaprawa-760H5000S/2312"},
+      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/MOVENTO-Sprzeglo-Lewe-z-regulacja-boczna-T51.7601-LEWE/3109"},
+      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/MOVENTO-Sprzeglo-Prawe-z-regulacja-boczna-T51.7601-PRAWE/3110"}
      ]
     },
     {
@@ -252,7 +252,7 @@ window.KITCHEN_COST = {
      "price": 169.05,
      "refs": ["sinkCabinet"],
      "source": "",
-     "links": [{"shop": "meblownia.pl", "url": "https://meblownia.pl/blum-szuflada-tandembox-antaro-500-d-z-relingiem-szara-30-kg.html"}]
+     "links": [{"name": "meblownia.pl", "url": "https://meblownia.pl/blum-szuflada-tandembox-antaro-500-d-z-relingiem-szara-30-kg.html"}]
     },
     {
      "id": "drawersM",
@@ -262,7 +262,7 @@ window.KITCHEN_COST = {
      "unit": "kpl.",
      "price": 136.39,
      "source": "",
-     "links": [{"shop": "meblownia.pl", "url": "https://meblownia.pl/blum-szuflada-tandembox-antaro-500-m-szara-30-kg.html"}]
+     "links": [{"name": "meblownia.pl", "url": "https://meblownia.pl/blum-szuflada-tandembox-antaro-500-m-szara-30-kg.html"}]
     },
     {
      "id": "innerDrawers",
@@ -273,7 +273,7 @@ window.KITCHEN_COST = {
      "price": 207.81,
      "refs": ["innerDrawers"],
      "source": "szare boki 378M5002SA, prowadnice 578.5001M, front wewnętrzny Z31L1036A",
-     "links": [{"shop": "meblownia.pl", "url": "https://meblownia.pl/blum-szuflada-wewnetrzna-tandembox-antaro-500-m-biala-30-kg-19272.html"}]
+     "links": [{"name": "meblownia.pl", "url": "https://meblownia.pl/blum-szuflada-wewnetrzna-tandembox-antaro-500-m-biala-30-kg-19272.html"}]
     },
     {
      "id": "pulloutRunners",
@@ -284,7 +284,7 @@ window.KITCHEN_COST = {
      "price": 29.52,
      "refs": ["pullouts"],
      "source": "M-HM Bielsko-Biała; zamiast szuflad wewnętrznych Blum ({p:innerDrawers} za szufladę) – patrz uwaga w notatce",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PROW.KULKOWA-Z-HAMUL.PW450-30KG45MM-494.02.184/1986"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PROW.KULKOWA-Z-HAMUL.PW450-30KG45MM-494.02.184/1986"}]
     },
     {
      "id": "cutleryTrays",
@@ -295,7 +295,7 @@ window.KITCHEN_COST = {
      "price": 128.56,
      "refs": ["innerDrawers"],
      "source": "zamiast Blum ORGA-LINE ZSI.80VEI6 (495,25); na zamówienie 3–10 dni rob.",
-     "links": [{"shop": "akcesoriameble24.pl", "url": "https://akcesoriameble24.pl/product/wklad-orgatray-440-hettich-do-szuflady/"}]
+     "links": [{"name": "akcesoriameble24.pl", "url": "https://akcesoriameble24.pl/product/wklad-orgatray-440-hettich-do-szuflady/"}]
     },
     {
      "id": "bins",
@@ -306,7 +306,7 @@ window.KITCHEN_COST = {
      "price": 129.25,
      "refs": ["sinkCabinet"],
      "source": "",
-     "links": [{"shop": "amix.pl", "url": "https://amix.pl/pl/segregatory-rubio/2000-rubio-80-3x15"}]
+     "links": [{"name": "amix.pl", "url": "https://amix.pl/pl/segregatory-rubio/2000-rubio-80-3x15"}]
     },
     {
      "id": "handles",
@@ -316,7 +316,7 @@ window.KITCHEN_COST = {
      "unit": "op.",
      "price": 20,
      "source": "",
-     "links": [{"shop": "ikea.com/pl", "url": "https://www.ikea.com/pl/pl/p/eneryda-uchwyt-kolor-mosiadzu-70610837/"}]
+     "links": [{"name": "ikea.com/pl", "url": "https://www.ikea.com/pl/pl/p/eneryda-uchwyt-kolor-mosiadzu-70610837/"}]
     },
     {
      "id": "legs",
@@ -327,8 +327,8 @@ window.KITCHEN_COST = {
      "price": 4.33,
      "source": "nóżka 3,23 + klips 1,10; regulacja kluczem od frontu przez cokół",
      "links": [
-      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/AXILO-Nozka-meblowa-H-150-mm-140-170mm-637.76.355/2210"},
-      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/AXILO%2CHE-Zatrzask-Klips-do-cokolu-do-przykrecania-do-nozki-637.38.054/2195"}
+      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/AXILO-Nozka-meblowa-H-150-mm-140-170mm-637.76.355/2210"},
+      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/AXILO%2CHE-Zatrzask-Klips-do-cokolu-do-przykrecania-do-nozki-637.38.054/2195"}
      ]
     },
     {
@@ -339,7 +339,7 @@ window.KITCHEN_COST = {
      "unit": "op.",
      "price": 8.4,
      "source": "",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/Podporka-polki-ocynk-fi5-z-tuleja-plastikowa-opak100-szt./4482"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/Podporka-polki-ocynk-fi5-z-tuleja-plastikowa-opak100-szt./4482"}]
     },
     {
      "id": "confirmats",
@@ -349,7 +349,7 @@ window.KITCHEN_COST = {
      "unit": "op.",
      "price": 119.39,
      "source": "w M-HM tylko 6,4 × 50 po 1000 szt.; meblownia 7 × 50: 12,57 za 100",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/Konfirmat-M-6.4-x-50-OC.BIALY-opak1000-szt./4511"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/Konfirmat-M-6.4-x-50-OC.BIALY-opak1000-szt./4511"}]
     },
     {
      "id": "connectors",
@@ -360,7 +360,7 @@ window.KITCHEN_COST = {
      "price": 29.52,
      "refs": ["corner"],
      "source": "",
-     "links": [{"shop": "g-s.com.pl", "url": "https://g-s.com.pl/zlacze-skrecane-meblowe-fi-5-m4-nikiel.html"}]
+     "links": [{"name": "g-s.com.pl", "url": "https://g-s.com.pl/zlacze-skrecane-meblowe-fi-5-m4-nikiel.html"}]
     },
     {
      "id": "wallHangers",
@@ -371,8 +371,8 @@ window.KITCHEN_COST = {
      "price": 26.44,
      "source": "2 × 13,22 (L + P)",
      "links": [
-      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CAMAR-807-Zawieszka-meblowa-do-szafek-dolnych-na-wcisk-udzwig-240kgpare-Lewa-290.40.902/1755"},
-      {"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CAMAR-807-Zawieszka-meblowa-do-szafek-dolnych-na-wcisk-udzwig-240kgpare-Prawa-290.40.901/1754"}
+      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CAMAR-807-Zawieszka-meblowa-do-szafek-dolnych-na-wcisk-udzwig-240kgpare-Lewa-290.40.902/1755"},
+      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CAMAR-807-Zawieszka-meblowa-do-szafek-dolnych-na-wcisk-udzwig-240kgpare-Prawa-290.40.901/1754"}
      ]
     },
     {
@@ -383,7 +383,7 @@ window.KITCHEN_COST = {
      "unit": "op.",
      "price": 6,
      "source": "sprzedawca Lun Fix",
-     "links": [{"shop": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/katownik-meblowy-20x20x16x1-5-10szt-74065876.html"}]
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/katownik-meblowy-20x20x16x1-5-10szt-74065876.html"}]
     },
     {
      "id": "grilles",
@@ -396,7 +396,7 @@ window.KITCHEN_COST = {
      "source": "",
      "links": [
       {
-       "shop": "leroymerlin.pl",
+       "name": "leroymerlin.pl",
        "url": "https://www.leroymerlin.pl/produkty/kratka-wentylacyjna-do-mebli-480-x-60-mm-aluminiowa-srebrna-gtv-42083426.html"
       }
      ]
@@ -415,7 +415,7 @@ window.KITCHEN_COST = {
      "price": 1201.01,
      "refs": ["worktops"],
      "source": "M-HM Bielsko-Biała, duża ilość; cięcie i oklejanie ABS 43/1,5 H1180 - zapytać o cenę (tel. 720 890 335)",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/BLAT-H1180-ST37-4100x650x38MM-Dab-Halifax-naturalny/1313"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/BLAT-H1180-ST37-4100x650x38MM-Dab-Halifax-naturalny/1313"}]
     },
     {
      "id": "islandWorktop",
@@ -426,7 +426,7 @@ window.KITCHEN_COST = {
      "price": 2056.93,
      "refs": ["worktops"],
      "source": "M-HM Bielsko-Biała, duża ilość; cięcie i oklejanie ABS 43/1,5 H1180 - zapytać o cenę (tel. 720 890 335)",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/BLAT-H1180-ST37-4100x920x38MM-Dab-Halifax-naturalny/1259"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/BLAT-H1180-ST37-4100x920x38MM-Dab-Halifax-naturalny/1259"}]
     },
     {
      "id": "worktopEdging",
@@ -437,7 +437,7 @@ window.KITCHEN_COST = {
      "price": 10.1,
      "refs": ["worktops"],
      "source": "blaty Egger 100/1.5 bez obrzeża; oklejanie maszynowe - zapytać M-HM",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-H1180-ST37-431.5MM-Dab-Halifax-naturalny/1401"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-H1180-ST37-431.5MM-Dab-Halifax-naturalny/1401"}]
     },
     {
      "id": "splash",
@@ -447,7 +447,7 @@ window.KITCHEN_COST = {
      "unit": "ark.",
      "price": 667.18,
      "source": "M-HM Bielsko-Biała, płyta 18,6 mm (0,6 mm różnicy niewidoczne na ścianie)",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-H1180-ST37-2800x2070x18.6MM-Dab-Halifax-naturalny/135"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-H1180-ST37-2800x2070x18.6MM-Dab-Halifax-naturalny/135"}]
     },
     {
      "id": "worktopJoints",
@@ -458,7 +458,7 @@ window.KITCHEN_COST = {
      "price": 3.3,
      "refs": ["worktops"],
      "source": "",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/ZLACZE-DO-BLATOW-ZLM-26-L-100MM/500"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/ZLACZE-DO-BLATOW-ZLM-26-L-100MM/500"}]
     },
     {
      "id": "silicone",
@@ -468,7 +468,7 @@ window.KITCHEN_COST = {
      "unit": "szt.",
      "price": 25.0,
      "source": "",
-     "links": [{"shop": "m-hm.pl", "url": "https://m-hm.pl/pl/p/Silikon-SANITARNY-BIALY-300ML/3100"}]
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/Silikon-SANITARNY-BIALY-300ML/3100"}]
     }
    ]
   },
@@ -486,7 +486,7 @@ window.KITCHEN_COST = {
      "source": "",
      "links": [
       {
-       "shop": "castorama.pl",
+       "name": "castorama.pl",
        "url": "https://www.castorama.pl/plyta-gipsowo-kartonowa-impregnowana-1200-x-2600-x-12-5-mm-gkbi-typ-h2-norgips/5907651691616_CAPL.prd"
       }
      ]
@@ -500,7 +500,7 @@ window.KITCHEN_COST = {
      "price": 9.98,
      "refs": ["plaster"],
      "source": "",
-     "links": [{"shop": "castorama.pl", "url": "https://www.castorama.pl/profil-sufitowy-budmat-cd60-0-5-mm-3-m/5907595734011_CAPL.prd"}]
+     "links": [{"name": "castorama.pl", "url": "https://www.castorama.pl/profil-sufitowy-budmat-cd60-0-5-mm-3-m/5907595734011_CAPL.prd"}]
     },
     {
      "id": "profileUD",
@@ -511,7 +511,7 @@ window.KITCHEN_COST = {
      "price": 5.98,
      "refs": ["plaster"],
      "source": "",
-     "links": [{"shop": "castorama.pl", "url": "https://www.castorama.pl/profil-budmat-ud27-3-m/5907738940163_CAPL.prd"}]
+     "links": [{"name": "castorama.pl", "url": "https://www.castorama.pl/profil-budmat-ud27-3-m/5907738940163_CAPL.prd"}]
     },
     {
      "id": "jointFiller",
@@ -521,7 +521,7 @@ window.KITCHEN_COST = {
      "unit": "szt.",
      "price": 31.29,
      "source": "",
-     "links": [{"shop": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/masa-szpachlowa-uniflott-5-kg-knauf-43360653.html"}]
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/masa-szpachlowa-uniflott-5-kg-knauf-43360653.html"}]
     },
     {
      "id": "plasterScrews",
@@ -533,7 +533,7 @@ window.KITCHEN_COST = {
      "source": "",
      "links": [
       {
-       "shop": "castorama.pl",
+       "name": "castorama.pl",
        "url": "https://www.castorama.pl/wkrety-na-tasmie-do-metalu-plyt-g-k-4pro-3-5-x-35-mm-1000-szt-/5904433424875_CAPL.prd"
       }
      ]
@@ -546,7 +546,7 @@ window.KITCHEN_COST = {
      "unit": "op.",
      "price": 22.49,
      "source": "",
-     "links": [{"shop": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/wkret-do-plyt-g-k-3-5-x-9-5-mm-250-szt-standers-45530233.html"}]
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/wkret-do-plyt-g-k-3-5-x-9-5-mm-250-szt-standers-45530233.html"}]
     },
     {
      "id": "anchors",
@@ -556,7 +556,7 @@ window.KITCHEN_COST = {
      "unit": "op.",
      "price": 14.29,
      "source": "sprzedawca Robimet",
-     "links": [{"shop": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/kolki-szybkie-montazu-6x40-mm-standers-45746715.html"}]
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/kolki-szybkie-montazu-6x40-mm-standers-45746715.html"}]
     },
     {
      "id": "jointTape",
@@ -566,7 +566,7 @@ window.KITCHEN_COST = {
      "unit": "szt.",
      "price": 8.99,
      "source": "",
-     "links": [{"shop": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/tasma-fizelinowa-50-mm-25-mb-82738326.html"}]
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/tasma-fizelinowa-50-mm-25-mb-82738326.html"}]
     },
     {
      "id": "cornerBead",
@@ -576,7 +576,7 @@ window.KITCHEN_COST = {
      "unit": "szt.",
      "price": 9.67,
      "source": "",
-     "links": [{"shop": "sklep.sewera.pl", "url": "https://sklep.sewera.pl/naroznik-aluminiowy-23-5x23-5mm-3m-rigips-p7500"}]
+     "links": [{"name": "sklep.sewera.pl", "url": "https://sklep.sewera.pl/naroznik-aluminiowy-23-5x23-5mm-3m-rigips-p7500"}]
     },
     {
      "id": "seal",
@@ -586,7 +586,7 @@ window.KITCHEN_COST = {
      "unit": "mb",
      "price": 21.53,
      "source": "sprawdzić rozmiar do szczeliny",
-     "links": [{"shop": "centrumuszczelek.pl", "url": "https://centrumuszczelek.pl/uszczelka-typu-t/uszczelka-silikonowa-biala-wciskana-typ-t-0995462-6199"}]
+     "links": [{"name": "centrumuszczelek.pl", "url": "https://centrumuszczelek.pl/uszczelka-typu-t/uszczelka-silikonowa-biala-wciskana-typ-t-0995462-6199"}]
     }
    ]
   },
@@ -603,7 +603,7 @@ window.KITCHEN_COST = {
      "price": 1279,
      "refs": ["sink", "sinkTap"],
      "source": "",
-     "links": [{"shop": "ikea.com/pl", "url": "https://www.ikea.com/pl/pl/p/kilsviken-zlew-wpuszczany-1-komora-czarny-kompozyt-kwarcowy-s29337025/"}]
+     "links": [{"name": "ikea.com/pl", "url": "https://www.ikea.com/pl/pl/p/kilsviken-zlew-wpuszczany-1-komora-czarny-kompozyt-kwarcowy-s29337025/"}]
     },
     {
      "id": "trap",
@@ -614,7 +614,7 @@ window.KITCHEN_COST = {
      "price": 119,
      "refs": ["sinkCabinet", "sinkTap"],
      "source": "",
-     "links": [{"shop": "sklep.deante.pl", "url": "https://sklep.deante.pl/pl/Syfon-do-zlewozmywaka-granitowego-1-komorowego-Space-Saver/ZXY-9917"}]
+     "links": [{"name": "sklep.deante.pl", "url": "https://sklep.deante.pl/pl/Syfon-do-zlewozmywaka-granitowego-1-komorowego-Space-Saver/ZXY-9917"}]
     },
     {
      "id": "tap",
@@ -627,7 +627,7 @@ window.KITCHEN_COST = {
      "source": "",
      "links": [
       {
-       "shop": "mediaexpert.pl",
+       "name": "mediaexpert.pl",
        "url": "https://www.mediaexpert.pl/agd-do-zabudowy/baterie-kuchenne/baterie-kuchenne/bateria-deante-silia-bqs-z73m-zloty"
       }
      ]
@@ -646,13 +646,13 @@ window.KITCHEN_COST = {
     {
      "id": "fridge",
      "name": "Lodówka Bosch KIS86AFE0",
-     "spec": "do zabudowy {a:fridge.body.1}, zawias płaski",
+     "spec": "do zabudowy {a:fridge.body.height}, zawias płaski",
      "qty": "={n:fridges}",
      "unit": "szt.",
      "price": 3949,
      "refs": ["fridge", "fridgeAir"],
      "source": "",
-     "links": [{"shop": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/lodowka-do-zabudowy-kis86afe0-bosch-82744412.html"}]
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/lodowka-do-zabudowy-kis86afe0-bosch-82744412.html"}]
     },
     {
      "id": "dishwasher",
@@ -663,7 +663,7 @@ window.KITCHEN_COST = {
      "price": 1899,
      "refs": ["dishwasher"],
      "source": "",
-     "links": [{"shop": "oleole.pl", "url": "https://www.oleole.pl/zmywarki-do-zabudowy/bosch-zmywarka-smv4hvx00e-bosch.bhtml"}]
+     "links": [{"name": "oleole.pl", "url": "https://www.oleole.pl/zmywarki-do-zabudowy/bosch-zmywarka-smv4hvx00e-bosch.bhtml"}]
     },
     {
      "id": "hob",
@@ -674,19 +674,19 @@ window.KITCHEN_COST = {
      "price": 1579,
      "refs": ["hob"],
      "source": "1449 z kodem do 9 lis 2026",
-     "links": [{"shop": "neonet.pl", "url": "https://www.neonet.pl/plyty-do-zabudowy/electrolux-cit61443.html"}]
+     "links": [{"name": "neonet.pl", "url": "https://www.neonet.pl/plyty-do-zabudowy/electrolux-cit61443.html"}]
     },
     {
      "id": "oven",
      "name": "Piekarnik Bosch Serie 4 HBA534BB3",
-     "spec": "wys. {a:oven.front.1}, czarny, 71 l",
+     "spec": "wys. {a:oven.front.height}, czarny, 71 l",
      "qty": "={n:type.oven}",
      "unit": "szt.",
      "price": 1899,
      "refs": ["oven", "ovenColumn"],
      "source": "RTV EURO AGD i OleOle!",
      "links": [
-      {"shop": "okazje.info.pl", "url": "https://www.okazje.info.pl/szukaj/bosch-serie-4-hba534bb3-termoobieg-czarny-piekarnik-elektryczny/ceny.html"}
+      {"name": "okazje.info.pl", "url": "https://www.okazje.info.pl/szukaj/bosch-serie-4-hba534bb3-termoobieg-czarny-piekarnik-elektryczny/ceny.html"}
      ]
     },
     {
@@ -698,7 +698,7 @@ window.KITCHEN_COST = {
      "price": 999,
      "refs": ["micro", "ovenColumn"],
      "source": "",
-     "links": [{"shop": "oleole.pl", "url": "https://www.oleole.pl/kuchenki-mikrofalowe-do-zabudowy/bosch-bfl623mb3.bhtml"}]
+     "links": [{"name": "oleole.pl", "url": "https://www.oleole.pl/kuchenki-mikrofalowe-do-zabudowy/bosch-bfl623mb3.bhtml"}]
     },
     {
      "id": "hood",
@@ -709,7 +709,7 @@ window.KITCHEN_COST = {
      "price": 1999.99,
      "refs": ["hood"],
      "source": "",
-     "links": [{"shop": "mediaexpert.pl", "url": "https://www.mediaexpert.pl/agd-do-zabudowy/okapy-do-zabudowy/okap-electrolux-lfv416k"}]
+     "links": [{"name": "mediaexpert.pl", "url": "https://www.mediaexpert.pl/agd-do-zabudowy/okapy-do-zabudowy/okap-electrolux-lfv416k"}]
     },
     {
      "id": "duct",
@@ -722,7 +722,7 @@ window.KITCHEN_COST = {
      "source": "",
      "links": [
       {
-       "shop": "leroymerlin.pl",
+       "name": "leroymerlin.pl",
        "url": "https://www.leroymerlin.pl/produkty/rura-odprowadzajaca-aluminiowa-wentylacyjna-150-mm-2-7-mb-equation-40418021.html"
       }
      ]
@@ -732,54 +732,54 @@ window.KITCHEN_COST = {
  ],
  "notes": [
   {
-   "section": "AGD – WYMIARY I DOPASOWANIE DO KORPUSÓW (mm; szer. × wys. × gł.)",
+   "name": "AGD – WYMIARY I DOPASOWANIE DO KORPUSÓW (mm; szer. × wys. × gł.)",
    "notes": [
     {
      "id": "oven",
      "appliance": "oven",
      "topic": "Piekarnik Bosch HBA534BB3 – K8, dół",
-     "description": "Obudowa {a:oven.body.0} × {a:oven.body.1} × {a:oven.body.2} i front {a:oven.front.0} × {a:oven.front.1} × {a:oven.projection} stoją na półce; front kończy się {=<a:oven.front.1> - <a:oven.body.1>} nad obudową.\nFront zachodzi: {=<a:oven.front.1> - <i:K8/oven.niche>} na półkę nad, po {=(<a:oven.front.0> - <k:K8.innerWidth>) / 2} na boki korpusu; na półkę pod nie zachodzi.\nWnęka {i:K8/oven.niche} × {k:K8.innerWidth} × {s:carcass.depth}; nad obudową {=<i:K8/oven.niche> - <a:oven.body.1>} luzu.\nPółka pod piekarnikiem leży pod złączem, za frontem szafki pod nim: po otwarciu tego frontu widać ją w całości. Szczelina między frontem szafki a frontem piekarnika {=<i:K8/oven.nicheBottom> - <i:K8/cabinet#1.frontV1>}; do frontu mikrofalówki {=<i:K8/micro.v0> - <i:K8/oven.nicheBottom> - <a:oven.front.1>}.",
+     "description": "Obudowa {a:oven.body.width} × {a:oven.body.height} × {a:oven.body.depth} i front {a:oven.front.width} × {a:oven.front.height} × {a:oven.front.thickness} stoją na półce; front kończy się {=<a:oven.front.height> - <a:oven.body.height>} nad obudową.\nFront zachodzi: {=<a:oven.front.height> - <i:K8/oven.niche>} na półkę nad, po {=(<a:oven.front.width> - <k:K8.innerWidth>) / 2} na boki korpusu; na półkę pod nie zachodzi.\nWnęka {i:K8/oven.niche} × {k:K8.innerWidth} × {s:carcass.depth}; nad obudową {=<i:K8/oven.niche> - <a:oven.body.height>} luzu.\nPółka pod piekarnikiem leży pod złączem, za frontem szafki pod nim: po otwarciu tego frontu widać ją w całości. Szczelina między frontem szafki a frontem piekarnika {=<i:K8/oven.nicheBottom> - <i:K8/cabinet#1.frontV1>}; do frontu mikrofalówki {=<i:K8/micro.v0> - <i:K8/oven.nicheBottom> - <a:oven.front.height>}.",
      "assumed": "Kratka w cokole ({p:grilles} PLN), półka nad piekarnikiem płytsza o {s:shelf.ventGap}."
     },
     {
      "id": "micro",
      "appliance": "micro",
      "topic": "Mikrofalówka Bosch BFL623MB3 – K8, nad piekarnikiem",
-     "description": "Urządzenie {a:micro.body.0} × {a:micro.body.1} × {a:micro.body.2} na regulowanych nóżkach {=((<i:K8/micro.v0> + <i:K8/micro.v1> - <a:micro.front.1>) / 2 - <a:micro.frontBottom> - <i:K8/micro.nicheBottom>)}; front {a:micro.front.0} × {a:micro.front.1} × {a:micro.projection} ({=-<a:micro.frontBottom>} poniżej spodu urządzenia).\nFront zachodzi: {=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} na półkę pod, {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} na półkę nad ({=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} + {i:K8/micro.niche} + {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} = {i:K8/micro.height}), po {=(<a:micro.front.0> - <k:K8.innerWidth>) / 2} na boki korpusu.\nWnęka {i:K8/micro.niche} × {k:K8.innerWidth} × {s:carcass.depth}; tył otwarty; nad urządzeniem {=<i:K8/micro.niche> - (((<i:K8/micro.v0> + <i:K8/micro.v1> - <a:micro.front.1>) / 2 - <a:micro.frontBottom> - <i:K8/micro.nicheBottom>)) - <a:micro.body.1>} luzu.\nSzczelina do frontu piekarnika {=<i:K8/micro.v0> - <i:K8/oven.nicheBottom> - <a:oven.front.1>}; front szafki nad: szczelina {=<i:K8/cabinet#2.frontV0> - <i:K8/micro.v1>} nad frontem mikrofalówki, zachodzi {=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/cabinet#2.frontV0>} na tę samą półkę.",
+     "description": "Urządzenie {a:micro.body.width} × {a:micro.body.height} × {a:micro.body.depth} na regulowanych nóżkach {=((<i:K8/micro.v0> + <i:K8/micro.v1> - <a:micro.front.height>) / 2 - <a:micro.frontBottom> - <i:K8/micro.nicheBottom>)}; front {a:micro.front.width} × {a:micro.front.height} × {a:micro.front.thickness} ({=-<a:micro.frontBottom>} poniżej spodu urządzenia).\nFront zachodzi: {=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} na półkę pod, {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} na półkę nad ({=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} + {i:K8/micro.niche} + {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} = {i:K8/micro.height}), po {=(<a:micro.front.width> - <k:K8.innerWidth>) / 2} na boki korpusu.\nWnęka {i:K8/micro.niche} × {k:K8.innerWidth} × {s:carcass.depth}; tył otwarty; nad urządzeniem {=<i:K8/micro.niche> - (((<i:K8/micro.v0> + <i:K8/micro.v1> - <a:micro.front.height>) / 2 - <a:micro.frontBottom> - <i:K8/micro.nicheBottom>)) - <a:micro.body.height>} luzu.\nSzczelina do frontu piekarnika {=<i:K8/micro.v0> - <i:K8/oven.nicheBottom> - <a:oven.front.height>}; front szafki nad: szczelina {=<i:K8/cabinet#2.frontV0> - <i:K8/micro.v1>} nad frontem mikrofalówki, zachodzi {=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/cabinet#2.frontV0>} na tę samą półkę.",
      "assumed": "Stoi na półce płytszej o {s:shelf.ventGap}; nóżki ustawione na 4.",
      "decide": "Rysunek Bosch (szafka wysoka) pokazuje 35 wolnego za korpusem; półka nad mikrofalówką sięga do {s:carcass.wallGap} od ściany – sprawdzić, czy wystarczy."
     },
     {
      "id": "ovenColumn",
      "topic": "Słupek K8: piekarnik + mikrofalówka",
-     "description": "Od podstawy piekarnika: {a:oven.front.1} piekarnik (ostatnie {=<a:oven.front.1> - <i:K8/oven.niche>} na półce środkowej), {=<i:K8/micro.v0> - <i:K8/oven.nicheBottom> - <a:oven.front.1>} szczeliny, {=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} mikrofalówka na półce środkowej, {i:K8/micro.niche} mikrofalówka, {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} mikrofalówka na półce górnej, {=<i:K8/cabinet#2.frontV0> - <i:K8/micro.v1>} szczeliny, {=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/cabinet#2.frontV0>} szafka górna na półce górnej.\nPółka środkowa {=<i:K8/oven.nicheTop> - <i:K8/oven.nicheBottom>}–{=<i:K8/micro.nicheBottom> - <i:K8/oven.nicheBottom>} (płytsza o {s:shelf.ventGap}), półka górna {=<i:K8/micro.nicheTop> - <i:K8/oven.nicheBottom>}–{=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/oven.nicheBottom>}; szafka pod piekarnikiem {i:K8/cabinet#1.height} (front = korpus), szafka górna od {=<i:K8/cabinet#2.v0> - <i:K8/oven.nicheBottom>}.\nWnęki: piekarnik {i:K8/oven.niche}, mikrofalówka {i:K8/micro.niche}.",
+     "description": "Od podstawy piekarnika: {a:oven.front.height} piekarnik (ostatnie {=<a:oven.front.height> - <i:K8/oven.niche>} na półce środkowej), {=<i:K8/micro.v0> - <i:K8/oven.nicheBottom> - <a:oven.front.height>} szczeliny, {=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} mikrofalówka na półce środkowej, {i:K8/micro.niche} mikrofalówka, {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} mikrofalówka na półce górnej, {=<i:K8/cabinet#2.frontV0> - <i:K8/micro.v1>} szczeliny, {=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/cabinet#2.frontV0>} szafka górna na półce górnej.\nPółka środkowa {=<i:K8/oven.nicheTop> - <i:K8/oven.nicheBottom>}–{=<i:K8/micro.nicheBottom> - <i:K8/oven.nicheBottom>} (płytsza o {s:shelf.ventGap}), półka górna {=<i:K8/micro.nicheTop> - <i:K8/oven.nicheBottom>}–{=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/oven.nicheBottom>}; szafka pod piekarnikiem {i:K8/cabinet#1.height} (front = korpus), szafka górna od {=<i:K8/cabinet#2.v0> - <i:K8/oven.nicheBottom>}.\nWnęki: piekarnik {i:K8/oven.niche}, mikrofalówka {i:K8/micro.niche}.",
      "assumed": "Półki przymierzyć na miejscu przed zamocowaniem."
     },
     {
      "id": "fridge",
      "appliance": "fridge",
      "topic": "Lodówka Bosch KIS86AFE0 – K10",
-     "description": "Urządzenie {a:fridge.body.0} × {a:fridge.body.1} × {a:fridge.body.2} na dnie korpusu; nad nim {=<i:K10/fridge.niche> - <a:fridge.body.1>} luzu.\nWnęka {i:K10/fridge.niche} × {k:K10.innerWidth} × {s:carcass.depth} (Bosch {a:fridge.niche.h.0}), zamknięta półką stałą nad urządzeniem, płytszą o {s:shelf.ventGap}.\nZamrażarka: front {i:K10/freezer.frontHeight} na drzwiach {=<a:fridge.freezerDoor.1> - <a:fridge.freezerDoor.0>} – wystaje {=<i:K10/freezer.nicheBottom> + <a:fridge.freezerDoor.0> - <i:K10/freezer.frontV0>} w dół, po {=(<i:K10/freezer.frontWidth> - <a:fridge.body.0>) / 2} na boki; góra drzwi {=<i:K10/freezer.nicheBottom> + <a:fridge.freezerDoor.1> - <i:K10/freezer.frontV1>} wyżej niż front ({a:fridge.freezerDoor.1} + {t:carcass} = {=<a:fridge.freezerDoor.1> + <t:carcass>}), widać krawędź drzwi w szczelinie.\nLodówka: front {i:K10/fridge.frontHeight} na drzwiach {=<a:fridge.fridgeDoor.1> - <a:fridge.fridgeDoor.0>} – wystaje {=<i:K10/fridge.nicheBottom> + <a:fridge.fridgeDoor.0> - <i:K10/fridge.frontV0>} w dół, {=<i:K10/fridge.frontV1> - <i:K10/fridge.nicheBottom> - <a:fridge.fridgeDoor.1>} w górę, po {=(<i:K10/fridge.frontWidth> - <a:fridge.body.0>) / 2} na boki.\nSzczelina między frontami {=<i:K10/fridge.frontV0> - <i:K10/freezer.frontV1>}; fronty przykręcone do drzwi urządzenia.",
-     "assumed": "Front lodówki wystaje {=<i:K10/fridge.frontV1> - <i:K10/fridge.nicheBottom> - <a:fridge.fridgeDoor.1>} nad drzwi urządzenia – normalne w tej zabudowie."
+     "description": "Urządzenie {a:fridge.body.width} × {a:fridge.body.height} × {a:fridge.body.depth} na dnie korpusu; nad nim {=<i:K10/fridge.niche> - <a:fridge.body.height>} luzu.\nWnęka {i:K10/fridge.niche} × {k:K10.innerWidth} × {s:carcass.depth} (Bosch {a:fridge.niche.height.min}), zamknięta półką stałą nad urządzeniem, płytszą o {s:shelf.ventGap}.\nZamrażarka: front {i:K10/freezer.frontHeight} na drzwiach {=<a:fridge.doors.freezer.top> - <a:fridge.doors.freezer.bottom>} – wystaje {=<i:K10/freezer.nicheBottom> + <a:fridge.doors.freezer.bottom> - <i:K10/freezer.frontV0>} w dół, po {=(<i:K10/freezer.frontWidth> - <a:fridge.body.width>) / 2} na boki; góra drzwi {=<i:K10/freezer.nicheBottom> + <a:fridge.doors.freezer.top> - <i:K10/freezer.frontV1>} wyżej niż front ({a:fridge.doors.freezer.top} + {t:carcass} = {=<a:fridge.doors.freezer.top> + <t:carcass>}), widać krawędź drzwi w szczelinie.\nLodówka: front {i:K10/fridge.frontHeight} na drzwiach {=<a:fridge.doors.fridge.top> - <a:fridge.doors.fridge.bottom>} – wystaje {=<i:K10/fridge.nicheBottom> + <a:fridge.doors.fridge.bottom> - <i:K10/fridge.frontV0>} w dół, {=<i:K10/fridge.frontV1> - <i:K10/fridge.nicheBottom> - <a:fridge.doors.fridge.top>} w górę, po {=(<i:K10/fridge.frontWidth> - <a:fridge.body.width>) / 2} na boki.\nSzczelina między frontami {=<i:K10/fridge.frontV0> - <i:K10/freezer.frontV1>}; fronty przykręcone do drzwi urządzenia.",
+     "assumed": "Front lodówki wystaje {=<i:K10/fridge.frontV1> - <i:K10/fridge.nicheBottom> - <a:fridge.doors.fridge.top>} nad drzwi urządzenia – normalne w tej zabudowie."
     },
     {
      "id": "fridgeAir",
      "topic": "Lodówka – wentylacja",
-     "description": "Wlot: kratka w cokole pod lodówką. Wylot: {=<i:K10/fridge.niche> - <a:fridge.body.1>} nad urządzeniem, przez szczelinę {s:shelf.ventGap} za półką nad lodówką, i {s:carcass.wallGap} za korpusem.",
+     "description": "Wlot: kratka w cokole pod lodówką. Wylot: {=<i:K10/fridge.niche> - <a:fridge.body.height>} nad urządzeniem, przez szczelinę {s:shelf.ventGap} za półką nad lodówką, i {s:carcass.wallGap} za korpusem.",
      "assumed": "Kratka {p:grilles} PLN."
     },
     {
      "id": "dishwasher",
      "appliance": "dishwasher",
      "topic": "Zmywarka Bosch SMV4HVX00E – G1[5]",
-     "description": "Urządzenie {a:dishwasher.body.0} × {=MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>))} × {a:dishwasher.body.2}, nóżki wykręcone do spodu blatu; drzwi {=ROUND((<a:dishwasher.doorHeight.0> + (<a:dishwasher.doorHeight.1> - <a:dishwasher.doorHeight.0>) * (MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - <a:dishwasher.body.1>) / <a:dishwasher.feet>))}.\nWnęka {w:1.v0} × {i:G1[5]/dishwasher.width} × {s:carcass.depth}.\nFront {i:G1[5]/dishwasher.frontWidth} × {i:G1[5]/dishwasher.frontHeight}: sięga {=ROUND(MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - (<a:dishwasher.doorHeight.0> + (<a:dishwasher.doorHeight.1> - <a:dishwasher.doorHeight.0>) * (MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - <a:dishwasher.body.1>) / <a:dishwasher.feet>) - <i:G1[5]/dishwasher.frontV0>)} niżej niż drzwi, kończy się {=MIN(<a:dishwasher.body.1> + <a:dishwasher.feet>, MAX(<a:dishwasher.body.1>, <w:1.v0>)) - <i:G1[5]/dishwasher.frontV1>} pod ich górą, po {=(<a:dishwasher.body.0> - <i:G1[5]/dishwasher.frontWidth>) / 2} węższy z boków.\nNóżki {a:dishwasher.baseSetback} za frontem, cokół przed nimi.",
+     "description": "Urządzenie {a:dishwasher.body.width} × {=MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height>, <w:1.v0>))} × {a:dishwasher.body.depth}, nóżki wykręcone do spodu blatu; drzwi {=ROUND((<a:dishwasher.door.height.min> + (<a:dishwasher.door.height.max> - <a:dishwasher.door.height.min>) * (MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height>, <w:1.v0>)) - <a:dishwasher.body.height>) / <a:dishwasher.feet.max>))}.\nWnęka {w:1.v0} × {i:G1[5]/dishwasher.width} × {s:carcass.depth}.\nFront {i:G1[5]/dishwasher.frontWidth} × {i:G1[5]/dishwasher.frontHeight}: sięga {=ROUND(MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height>, <w:1.v0>)) - (<a:dishwasher.door.height.min> + (<a:dishwasher.door.height.max> - <a:dishwasher.door.height.min>) * (MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height>, <w:1.v0>)) - <a:dishwasher.body.height>) / <a:dishwasher.feet.max>) - <i:G1[5]/dishwasher.frontV0>)} niżej niż drzwi, kończy się {=MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height>, <w:1.v0>)) - <i:G1[5]/dishwasher.frontV1>} pod ich górą, po {=(<a:dishwasher.body.width> - <i:G1[5]/dishwasher.frontWidth>) / 2} węższy z boków.\nNóżki {a:dishwasher.baseSetback} za frontem, cokół przed nimi.",
      "decide": "Ciężar frontu: sprawdzić w instrukcji (Bosch ma zawias SMZ5003 do ciężkich frontów)."
     },
     {
      "id": "hob",
      "appliance": "hob",
      "topic": "Płyta grzewcza Electrolux CIT61443 – K1",
-     "description": "Szkło {a:hob.glass.0} × {a:hob.glass.1}; korpus {a:hob.body.0} × {a:hob.body.1} × {a:hob.body.2} w wycięciu {s:cutouts.hob.width} × {s:cutouts.hob.depth}, {s:cutouts.hob.fromBack} od tylnej krawędzi blatu.\nSzkło zachodzi na blat po {=(<a:hob.glass.0> - <s:cutouts.hob.width>) / 2} z każdej strony; {=<s:cutouts.hob.fromBack> - (<a:hob.glass.1> - <s:cutouts.hob.depth>) / 2} od tylnej i {=<w:1.depth> - <s:cutouts.hob.fromBack> - (<a:hob.glass.1> + <s:cutouts.hob.depth>) / 2} od przedniej krawędzi blatu.\nPod płytą: trawers przedni {t:carcass} × {s:rails.hobFront}, tylny {t:carcass} × {s:rails.depth}; przegroda {m:hobPanel} pod przednim trawersem, {s:rails.hobPanelGap} szczeliny z tyłu.",
+     "description": "Szkło {a:hob.glass.width} × {a:hob.glass.depth}; korpus {a:hob.body.width} × {a:hob.body.depth} × {a:hob.body.height} w wycięciu {s:cutouts.hob.width} × {s:cutouts.hob.depth}, {s:cutouts.hob.fromBack} od tylnej krawędzi blatu.\nSzkło zachodzi na blat po {=(<a:hob.glass.width> - <s:cutouts.hob.width>) / 2} z każdej strony; {=<s:cutouts.hob.fromBack> - (<a:hob.glass.depth> - <s:cutouts.hob.depth>) / 2} od tylnej i {=<w:1.depth> - <s:cutouts.hob.fromBack> - (<a:hob.glass.depth> + <s:cutouts.hob.depth>) / 2} od przedniej krawędzi blatu.\nPod płytą: trawers przedni {t:carcass} × {s:rails.hobFront}, tylny {t:carcass} × {s:rails.depth}; przegroda {m:hobPanel} pod przednim trawersem, {s:rails.hobPanelGap} szczeliny z tyłu.",
      "assumed": "Na liście cięć.",
      "decide": "Odstęp korpusu płyty od przegrody: sprawdzić w instrukcji (s. 22)."
     },
@@ -787,7 +787,7 @@ window.KITCHEN_COST = {
      "id": "sink",
      "appliance": "sink",
      "topic": "Zlew IKEA KILSVIKEN – K2",
-     "description": "Zlew {a:sink.outer.0} × {a:sink.outer.1}, komora {a:sink.bowl.0} × {a:sink.bowl.1} × {a:sink.bowl.2}; wycięcie {s:cutouts.sink.width} × {s:cutouts.sink.depth}, {s:cutouts.sink.fromBack} od tylnej krawędzi blatu.\nRant zachodzi na blat po {=(<a:sink.outer.0> - <s:cutouts.sink.width>) / 2}; zlew {=<s:cutouts.sink.fromBack> - (<a:sink.outer.1> - <s:cutouts.sink.depth>) / 2} od tylnej i {=<w:1.depth> - <s:cutouts.sink.fromBack> - (<a:sink.outer.1> + <s:cutouts.sink.depth>) / 2} od przedniej krawędzi blatu.",
+     "description": "Zlew {a:sink.outer.width} × {a:sink.outer.depth}, komora {a:sink.bowl.width} × {a:sink.bowl.depth} × {a:sink.bowl.height}; wycięcie {s:cutouts.sink.width} × {s:cutouts.sink.depth}, {s:cutouts.sink.fromBack} od tylnej krawędzi blatu.\nRant zachodzi na blat po {=(<a:sink.outer.width> - <s:cutouts.sink.width>) / 2}; zlew {=<s:cutouts.sink.fromBack> - (<a:sink.outer.depth> - <s:cutouts.sink.depth>) / 2} od tylnej i {=<w:1.depth> - <s:cutouts.sink.fromBack> - (<a:sink.outer.depth> + <s:cutouts.sink.depth>) / 2} od przedniej krawędzi blatu.",
      "assumed": "Wycięcie w liście cięć (blok BLATY).",
      "decide": "Wycięcie sprawdzić z szablonem IKEA przed CNC."
     },
@@ -801,7 +801,7 @@ window.KITCHEN_COST = {
    ]
   },
   {
-   "section": "KONSTRUKCJA",
+   "name": "KONSTRUKCJA",
    "notes": [
     {
      "id": "corner",
@@ -873,7 +873,7 @@ window.KITCHEN_COST = {
    ]
   },
   {
-   "section": "CENY I ZAKRES",
+   "name": "CENY I ZAKRES",
    "notes": [
     {
      "id": "lacquered",
@@ -913,7 +913,7 @@ window.KITCHEN_COST = {
    ]
   },
   {
-   "section": "DO WIADOMOŚCI",
+   "name": "DO WIADOMOŚCI",
    "notes": [
     {"id": "islandOverhang", "topic": "Nawis blatu wyspy od strony hokerów", "description": "Patrz widok 3D: dobry dla hokerów, ciasny dla krzeseł."},
     {"id": "islandSocket", "topic": "Gniazdko w wyspie", "description": "Nie ma w projekcie; zaplanować przed podłogą."},

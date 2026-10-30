@@ -164,7 +164,7 @@ const ITEMS = COST.categories.flatMap(c => c.items);
 // notes are numbered in their order, sections lettered: note id -> number ("patrz notatka 20")
 const NOTES = COST.notes.flatMap(section => section.notes);
 const noteNumber = Object.fromEntries(NOTES.map((n, i) => [n.id, String(i + 1)]));
-const sectionTitle = (section, i) => String.fromCharCode(65 + i) + '. ' + section.section;
+const sectionTitle = (section, i) => String.fromCharCode(65 + i) + '. ' + section.name;
 // the documents of a note: its appliance's (appliances.js), then its own
 const noteDocuments = n => [...(n.appliance ? APPLIANCES[n.appliance].links : []), ...(n.links || [])];
 
@@ -278,7 +278,7 @@ function mergeHands(rows) {
     if (!bySize.has(size)) bySize.set(size, []);
     bySize.get(size).push(row);
   }
-  const order = row => ({ L: 0, R: 1 }[(row.drilling && row.drilling.hand) || ''] ?? 2); // left, right, then the others (undrilled last)
+  const order = row => ({ left: 0, right: 1 }[(row.drilling && row.drilling.hand) || ''] ?? 2); // left, right, then the others (undrilled last)
   return [...bySize.values()].map(group => {
     group.sort((x, y) => order(x) - order(y) || (y.drilling ? 1 : 0) - (x.drilling ? 1 : 0));
     const [first] = group;
@@ -344,7 +344,7 @@ function renderAssembly() {
     const boards = model.boards.filter(b => b.carcassId === K.id), fronts = model.fronts.filter(f => f.carcassId === K.id);
     const pins = boards.filter(b => b.id === 'adjustableShelf').length * model.settings.shelf.pins;
     const hinges = fronts.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
-    const frontLines = fronts.map(f => label(KE.cutKey(frontPart(f))) + frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.hinges ? ', zawiasy: ' + f.hinges.length + ', strona ' + KE.LABELS.handle[f.hingeSide] : '') + (f.handle ? ', uchwyt ' + KE.LABELS.handle[f.handle] : ''));
+    const frontLines = fronts.map(f => label(KE.cutKey(frontPart(f))) + frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.hinges ? ', zawiasy: ' + f.hinges.length + ', strona ' + KE.LABELS.side[f.hingeSide] : '') + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : ''));
     const drawerLines = [
       ...fronts.filter(f => f.drawer).map(f => 'szuflada ' + f.drawer.size + (f.drawer.bins ? ' z koszami na odpady' : '') + (f.drawer.inner ? ' + szuflada wewnętrzna M' : '')),
       ...fronts.filter(f => f.pullouts).map(f => f.pullouts.count + ' × szuflada za drzwiami ' + f.pullouts.width + ' × ' + f.pullouts.depth + ' × ' + f.pullouts.height + ' (płyta dystansowa po stronie zawiasów)')
@@ -365,7 +365,7 @@ function renderAssembly() {
   // parts without a carcass, per group, sorted by column (a frame and its back strip sit together)
   const loose = {};
   const add = (p, text) => (loose[p.group] = loose[p.group] || []).push([columnOfPart(p), place(p) + ' – ' + text]);
-  model.fronts.filter(f => !f.carcassId).forEach(f => add(f, frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.handle ? ', uchwyt ' + KE.LABELS.handle[f.handle] : '')));
+  model.fronts.filter(f => !f.carcassId).forEach(f => add(f, frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : '')));
   model.frames.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
   model.panels.forEach(p => add(p, p.name + ' ' + size(p.a, p.b) + withEdges(p.edges)));
   model.boards.filter(b => !b.carcassId).forEach(b => add(b, b.name + ' ' + size(b.a, b.b) + ' (' + model.materials[b.material].label + ')'));
@@ -550,7 +550,7 @@ function placeholderName(key) {
 }
 
 // the shops an item is priced at: links that open in a new tab
-const shopLinks = item => (item.links || []).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.shop)}</a> `).join('');
+const shopLinks = item => (item.links || []).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a> `).join('');
 
 function renderEstimate() {
   const result = compute(), html = [];
@@ -760,7 +760,7 @@ function buildWorkbook() {
       const links = item.links || [];
       const refs = item.refs || [];
       const source = str(fill(item.source) + links.map(l => ' ' + l.url).join('') + (refs.length ? ' – patrz notatka ' + refs.map(id => noteNumber[id]).join(', ') : ''));
-      if (links.length) source.l = { Target: links[0].url, Tooltip: links[0].shop }; // the first shop; the others are in the text
+      if (links.length) source.l = { Target: links[0].url, Tooltip: links[0].name }; // the first shop; the others are in the text
       else if (refs.length) source.l = { Target: `#'Notatki'!A${noteRow[refs[0]]}`, Tooltip: 'Przejdź do notatki' };
       estimate.push([num(no), str(fill(item.name)), str(fill(item.spec)), qty, str(item.unit), num(Number(values.items[item.id].price)), formula(`ROUND(D${r}*F${r},2)`, result.itemValues[item.id]), source]);
     }

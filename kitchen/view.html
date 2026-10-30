@@ -325,9 +325,9 @@ const sinkCarcass = model.carcasses.find(K => K.sink); // the run with the sink
 const sinkRun = sinkCarcass ? runOfGroup[sinkCarcass.group] : null;
 const worktopTopOf = run => worktopOf(groupOfRun[run]).v1;
 
-// [u, n] of a run -> [x, z] in the room (rot is a multiple of 90°)
+// [u, n] of a run -> [x, z] in the room (rotation is a multiple of 90°)
 const pointToRoom = Object.fromEntries(RUN_IDS.map(r => {
-  const P = SCENE.placement[r], a = (P.rot * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
+  const P = SCENE.placement[r], a = (P.rotation * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
   return [r, (u, n) => [P.x + u * cos + n * sin, P.z - u * sin + n * cos]];
 }));
 // [u0, u1, n0, n1] of a run -> [x0, x1, z0, z1] in the room
@@ -510,7 +510,7 @@ function oakTexture() {
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.encoding = THREE.sRGBEncoding;
   t.anisotropy = anisotropy;
-  t.repeat.set(1000 / decor.size[0], 1000 / decor.size[1]); // texture coordinates are in metres
+  t.repeat.set(1000 / decor.size.length, 1000 / decor.size.width); // texture coordinates are in metres
   image.onload = () => { t.needsUpdate = true; if (typeof sceneChanged === 'function') sceneChanged(); };
   image.src = decor.image;
   return t;
@@ -520,17 +520,17 @@ function oakTexture() {
 const FLOORS = (window.KITCHEN_TEXTURES || {}).floors || {}, FLOOR_KEYS = Object.keys(FLOORS), FLOOR_TILES = 4;
 function floorTexture(key) {
   const F = FLOORS[key];
-  if (!F) return texture(marbleCanvas(), 1000 / room.floorTile[0], 1000 / room.floorTile[1]);
+  if (!F) return texture(marbleCanvas(), 1000 / room.floorTile.length, 1000 / room.floorTile.width);
   const S = 512, c = document.createElement('canvas');
   c.width = c.height = FLOOR_TILES * S;
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.encoding = THREE.sRGBEncoding;
   t.anisotropy = anisotropy;
-  t.repeat.set(1000 / (FLOOR_TILES * (F.size[0] + room.floorJoint)), 1000 / (FLOOR_TILES * (F.size[1] + room.floorJoint))); // metres
+  t.repeat.set(1000 / (FLOOR_TILES * (F.size.width + room.floorJoint)), 1000 / (FLOOR_TILES * (F.size.length + room.floorJoint))); // metres
   const faces = F.faces.map(src => { const image = new Image(); image.src = src; return image; });
   Promise.all(faces.map(image => image.decode())).then(() => {
-    const g = c.getContext('2d'), r = seededRandom(19), joint = Math.max(1, (S * room.floorJoint) / (F.size[0] + room.floorJoint));
+    const g = c.getContext('2d'), r = seededRandom(19), joint = Math.max(1, (S * room.floorJoint) / (F.size.width + room.floorJoint));
     g.fillStyle = F.grout;
     g.fillRect(0, 0, c.width, c.height);
     for (let y = 0; y < FLOOR_TILES; y++) {
@@ -558,7 +558,7 @@ const MAT = {
   oak: physical({ map: oakTexture(), roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, envMapIntensity: 0.5 }),
   wall: standard({ color: linear(room.wallColor), roughness: 0.95, envMapIntensity: 0.45 }),
   floor: standard({ map: floorTexture(FLOOR_KEYS[0]), roughness: 0.55, envMapIntensity: 0.6 }), // matt porcelain tiles
-  handle: standard({ color: linear(handleMetal.color), metalness: handleMetal.metal, roughness: handleMetal.rough, envMapIntensity: 1.4, side: THREE.DoubleSide }),
+  handle: standard({ color: linear(handleMetal.color), metalness: handleMetal.metalness, roughness: handleMetal.roughness, envMapIntensity: 1.4, side: THREE.DoubleSide }),
   steel: standard({ color: linear(0xd2d5d8), metalness: 1, roughness: 0.3 }),
   glassBlack: physical({ color: linear(0x060708), roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.1 }),
   ovenInside: standard({ color: linear(0x23262a), roughness: 0.6, metalness: 0.3 }),
@@ -606,8 +606,8 @@ const originalLook = new Map(); // colour modes (filled after the scene is built
 let palette = 'colour';
 function setMetal(name) {
   const metal = METALS[name], original = originalLook.get(MAT.handle);
-  if (original) { original.color.copy(linear(metal.color)); original.roughness = metal.rough; original.metalness = metal.metal; }
-  if (palette === 'colour' || !original) { MAT.handle.color.copy(linear(metal.color)); MAT.handle.roughness = metal.rough; MAT.handle.metalness = metal.metal; }
+  if (original) { original.color.copy(linear(metal.color)); original.roughness = metal.roughness; original.metalness = metal.metalness; }
+  if (palette === 'colour' || !original) { MAT.handle.color.copy(linear(metal.color)); MAT.handle.roughness = metal.roughness; MAT.handle.metalness = metal.metalness; }
   sceneChanged();
 }
 
@@ -650,7 +650,7 @@ const runGroup = Object.fromEntries(RUN_IDS.map(r => [r, new THREE.Group()]));
 for (const r of RUN_IDS) {
   const P = SCENE.placement[r];
   runGroup[r].position.set(P.x / 1000, 0, P.z / 1000);
-  runGroup[r].rotation.y = (P.rot * Math.PI) / 180;
+  runGroup[r].rotation.y = (P.rotation * Math.PI) / 180;
   runGroup[r].updateMatrixWorld(true);
 }
 const runLayer = {}; // run -> layer -> group in run coordinates
@@ -754,21 +754,21 @@ function cupHandle(P, uc, vc, rotation) {
   P.add(o);
   cupHandles.push(o);
 }
-// handle position T | B (along the top / bottom rail) or L | R (on a side rail, fittings.handle.sideHeight up, at most halfway)
+// handle position top | bottom (along the rail) or left | right (on a side rail, fittings.handle.sideHeight up, at most halfway)
 function addHandles(P, u0, u1, v0, v1, position) {
   if (!position) return;
   const L = fittings.handle.barLength, axis = fittings.handle.axis, n = frontFace + 4, bar = new THREE.Group();
   P.add(bar);
   barHandles.push(bar);
-  if (position === 'T' || position === 'B') {
-    const v = position === 'T' ? v1 - axis : v0 + axis, uc = (u0 + u1) / 2;
+  if (position === 'top' || position === 'bottom') {
+    const v = position === 'top' ? v1 - axis : v0 + axis, uc = (u0 + u1) / 2;
     cupHandle(P, uc, v, 0);
     localBox(bar, uc - L / 2, uc + L / 2, v - 6, v + 6, n + 20, n + 30, MAT.handle);
     localBox(bar, uc - L / 2 + 8, uc - L / 2 + 18, v - 5, v + 5, n, n + 20, MAT.handle);
     localBox(bar, uc + L / 2 - 18, uc + L / 2 - 8, v - 5, v + 5, n, n + 20, MAT.handle);
   } else {
-    const u = position === 'L' ? u0 + axis : u1 - axis, vc = Math.min(v0 + fittings.handle.sideHeight, (v0 + v1) / 2);
-    cupHandle(P, u, vc, position === 'L' ? Math.PI / 2 : -Math.PI / 2);
+    const u = position === 'left' ? u0 + axis : u1 - axis, vc = Math.min(v0 + fittings.handle.sideHeight, (v0 + v1) / 2);
+    cupHandle(P, u, vc, position === 'left' ? Math.PI / 2 : -Math.PI / 2);
     localBox(bar, u - 6, u + 6, vc - L / 2, vc + L / 2, n + 20, n + 30, MAT.handle);
     localBox(bar, u - 5, u + 5, vc - L / 2 + 8, vc - L / 2 + 18, n, n + 20, MAT.handle);
     localBox(bar, u - 5, u + 5, vc + L / 2 - 18, vc + L / 2 - 8, n, n + 20, MAT.handle);
@@ -807,7 +807,7 @@ const DEG = Math.PI / 180;
 const SWING = { door: 'y', fridge: 'y', micro: 'y', dishwasher: 'x', oven: 'x', drawer: 'slide' };
 const linkTo = (parent, child) => { child.parent = parent; parent.children.push(child); };
 function poseMovingPart(mover) {
-  const t = mover.progress, eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2, open = mover.travel || fittings.open[mover.opening];
+  const t = mover.progress, eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2, open = mover.travel || (mover.opening === 'drawer' ? fittings.open.drawer : fittings.open.angle[mover.opening]);
   const swing = SWING[mover.opening];
   if (swing === 'y') mover.pivot.rotation.y = -mover.sign * eased * open * DEG;
   else if (swing === 'x') mover.pivot.rotation.x = eased * open * DEG;
@@ -831,21 +831,22 @@ function floorOf(item) {
   return Math.max(...own.filter(b => b.box[3] <= item.v0 + board / 2 + 0.5).map(b => b.box[3]));
 }
 // built-in oven / microwave (APPLIANCES[type]): the body on its feet on the board under it, behind the carcass front; the front
-// frontBottom from the body bottom, projection in front of the carcass front; both centred on the item. The appliance door
+// frontBottom from the body bottom, its thickness in front of the carcass front; both centred on the item. The appliance door
 // (APPLIANCES[type].door: its hinge edge bottom | left | right) is a moving part; the controls stay, the cavity shows behind it.
 function builtInAppliance(run, item, type) {
   const A = APPLIANCES[type], floor = floorOf(item), uc = (item.u0 + item.u1) / 2;
-  // adjustable feet: the front is centred in the item's module, the feet are as high as that needs
-  const feet = A.feet === 'adjustable' ? (item.v0 + item.v1) / 2 - A.front[1] / 2 - A.frontBottom - floor : A.feet;
-  const b0 = floor + feet, v0 = b0 + A.frontBottom, v1 = v0 + A.front[1];
-  const u0 = uc - A.front[0] / 2, u1 = uc + A.front[0] / 2;
-  const P = runLayer[run][type], face = carcassFront + A.projection, [bw, bh, bd] = A.body;
+  // adjustable feet: the front is centred in the item's module, the feet as high as that needs within their range
+  const centred = (item.v0 + item.v1) / 2 - A.front.height / 2 - A.frontBottom - floor;
+  const feet = Math.min(A.feet.max, Math.max(A.feet.min, centred));
+  const b0 = floor + feet, v0 = b0 + A.frontBottom, v1 = v0 + A.front.height;
+  const u0 = uc - A.front.width / 2, u1 = uc + A.front.width / 2;
+  const P = runLayer[run][type], face = carcassFront + A.front.thickness, { width: bw, height: bh, depth: bd } = A.body;
   const bu0 = uc - bw / 2, bu1 = uc + bw / 2;
   if (feet > 0) { // feet: the body stands on them, on the board under it
     for (const fu of [bu0 + 30, bu1 - 30]) for (const fn of [carcassFront - bd + 30, carcassFront - 30]) localCylinder(P, 10, feet, MAT.blackMetal, fu, floor + feet / 2, fn, null, 16);
   }
   envelope(P, bu0, bu1, b0, b0 + bh, carcassFront - bd, carcassFront, A.name + ' – korpus ' + bw + ' × ' + bh + ' × ' + bd + (feet > 0 ? ' na nóżkach ' + Math.round(feet * 10) / 10 : ''));
-  envelope(P, u0, u1, v0, v1, carcassFront, face, A.name + ' – front ' + A.front[0] + ' × ' + A.front[1]);
+  envelope(P, u0, u1, v0, v1, carcassFront, face, A.name + ' – front ' + A.front.width + ' × ' + A.front.height);
   // the door: oven below its control panel, full width; microwave over the body opening, left of its control column, set into the
   // fascia with a shadow gap (the fascia is wider and higher than the body: it fills the niche)
   const door = type === 'oven' ? { u0, u1, v0, v1: v1 - 98 } : { u0: bu0 + 2, u1: u1 - 153, v0: b0 + 4, v1: b0 + bh - 4 };
@@ -918,10 +919,10 @@ const sinkCut = sinkRun && (worktopOf(groupOfRun[sinkRun]).cutouts || []).find(c
 const sinkItem = sinkCut && itemsOfRun[sinkRun].find(i => hasTag(i, 'sink'));
 const sinkU = sinkCut ? (sinkCut.u0 + sinkCut.u1) / 2 : 0, sinkN = sinkCut ? (sinkCut.n0 + sinkCut.n1) / 2 : 0; // sink centre on its run
 // sink outline (S) and bowl (B), along the run (u) and from the wall (n)
-const sinkU0 = sinkU - sinkData.outer[0] / 2, sinkU1 = sinkU + sinkData.outer[0] / 2, sinkN0 = sinkN - sinkData.outer[1] / 2, sinkN1 = sinkN + sinkData.outer[1] / 2;
-const bowlU0 = sinkU - sinkData.bowl[0] / 2, bowlU1 = sinkU + sinkData.bowl[0] / 2, bowlN0 = sinkN - sinkData.bowl[1] / 2, bowlN1 = sinkN + sinkData.bowl[1] / 2;
+const sinkU0 = sinkU - sinkData.outer.width / 2, sinkU1 = sinkU + sinkData.outer.width / 2, sinkN0 = sinkN - sinkData.outer.depth / 2, sinkN1 = sinkN + sinkData.outer.depth / 2;
+const bowlU0 = sinkU - sinkData.bowl.width / 2, bowlU1 = sinkU + sinkData.bowl.width / 2, bowlN0 = sinkN - sinkData.bowl.depth / 2, bowlN1 = sinkN + sinkData.bowl.depth / 2;
 const sinkTop = sinkRun ? worktopTopOf(sinkRun) : 0;
-const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowl[2];
+const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowl.height;
 const tapN = sinkRun ? worktopOf(groupOfRun[sinkRun]).n0 + SCENE.installation.sink.tapFromBack : 0; // from the back edge of the worktop
 // a worktop with cut-outs (engine.js: sink, hob from design.js settings.cutouts): one board, an outline with holes extruded to the worktop thickness
 function worktopWithCutOuts(run, uStart, uEnd, v0, v1, cutouts) {
@@ -1043,10 +1044,10 @@ if (hobItem) target = runLayer[hobRun].hob;
 const hobCut = hobItem && (worktopOf(groupOfRun[hobRun]).cutouts || []).find(c => c.kind === 'hob');
 const hobU = hobCut ? (hobCut.u0 + hobCut.u1) / 2 : hobItem ? (hobItem.u0 + hobItem.u1) / 2 : 0;
 if (hobItem && hobCut) (function hob() {
-  const u0 = hobU - hobData.glass[0] / 2, u1 = hobU + hobData.glass[0] / 2, v = worktopTopOf(hobRun), glassN = (hobCut.n0 + hobCut.n1) / 2 - hobData.glass[1] / 2;
-  roomBox(u0, u1, v, v + 5, glassN, glassN + hobData.glass[1], MAT.glassBlack); // glass over the cut-out
-  roomBox(hobCut.u0, hobCut.u1, v - hobData.body[2], v, hobCut.n0, hobCut.n1, MAT.applianceBody); // body, built-in height
-  envelope(runLayer[hobRun].hob, hobCut.u0, hobCut.u1, v - hobData.body[2], v, hobCut.n0, hobCut.n1, 'Płyta grzewcza – korpus ' + (hobCut.u1 - hobCut.u0) + ' × ' + (hobCut.n1 - hobCut.n0) + ' × ' + hobData.body[2]);
+  const u0 = hobU - hobData.glass.width / 2, u1 = hobU + hobData.glass.width / 2, v = worktopTopOf(hobRun), glassN = (hobCut.n0 + hobCut.n1) / 2 - hobData.glass.depth / 2;
+  roomBox(u0, u1, v, v + 5, glassN, glassN + hobData.glass.depth, MAT.glassBlack); // glass over the cut-out
+  roomBox(hobCut.u0, hobCut.u1, v - hobData.body.height, v, hobCut.n0, hobCut.n1, MAT.applianceBody); // body, built-in height
+  envelope(runLayer[hobRun].hob, hobCut.u0, hobCut.u1, v - hobData.body.height, v, hobCut.n0, hobCut.n1, 'Płyta grzewcza – korpus ' + (hobCut.u1 - hobCut.u0) + ' × ' + (hobCut.n1 - hobCut.n0) + ' × ' + hobData.body.height);
   [[-150, glassN + 140, 0.1], [150, glassN + 140, 0.085], [-150, glassN + 370, 0.085], [150, glassN + 370, 0.11]].forEach(([du, n, r]) => { // cooking zones
     const m = new THREE.Mesh(new THREE.RingGeometry(r - 0.003, r, 64), MAT.ring);
     m.rotation.x = -Math.PI / 2;
@@ -1062,7 +1063,7 @@ if (hobItem && hobCut) (function hob() {
 if (hobItem) target = runLayer[hobRun].hood;
 if (hobItem) (function hood() {
   const toWorld = (x, y, z) => runGroup[hobRun].localToWorld(new THREE.Vector3(x, y, z));
-  const H = APPLIANCES.hood, uc = hobU, [W, height, D] = H.body, bottom = SCENE.installation.hood.bottom, [chimneyW, chimneyD] = H.chimney;
+  const H = APPLIANCES.hood, uc = hobU, { width: W, height, depth: D } = H.body, bottom = SCENE.installation.hood.bottom, { width: chimneyW, depth: chimneyD } = H.chimney;
   const firstMesh = meshes.length;
   const profile = new THREE.Shape();
   profile.moveTo(0, 0); profile.lineTo(D, 0); profile.lineTo(D, 40); profile.lineTo(110, height); profile.lineTo(0, height); profile.lineTo(0, 0);
@@ -1154,9 +1155,9 @@ function buildCarcass(K) {
   if (K.fridge) fridgeBody(K);
   if (K.grille) plinthGrille(K);
 }
-// bean-to-cup coffee machine (appliances.js coffee.body = width, height, depth), front face at n1, standing on y, centred on uc
+// bean-to-cup coffee machine (appliances.js coffee.body), front face at n1, standing on y, centred on uc
 function coffeeMachine(P, uc, y, n1) {
-  const [w, h, d] = APPLIANCES.coffee.body, u0 = uc - w / 2, u1 = uc + w / 2, n0 = n1 - d, top = y + h, head = top - 115, F = n1 - 45;
+  const { width: w, height: h, depth: d } = APPLIANCES.coffee.body, u0 = uc - w / 2, u1 = uc + w / 2, n0 = n1 - d, top = y + h, head = top - 115, F = n1 - 45;
   envelope(P, u0, u1, y, top, n0, n1, APPLIANCES.coffee.name + ' ' + w + ' × ' + h + ' × ' + d);
   localBox(P, u0, u1, y, top, n0, F, MAT.blackMetal); // body
   localBox(P, u0, u0 + 28, y, head, F, n1, MAT.steel); localBox(P, u1 - 28, u1, y, head, F, n1, MAT.steel); // front side columns
@@ -1188,14 +1189,14 @@ function plinthGrille(K) {
 }
 // built-in fridge-freezer at the manufacturer's size (APPLIANCES.fridge.body), standing on the carcass bottom, centred,
 // its doors at the carcass front (fridgeDoorPlane: where the body ends and the doors start); split between the appliance doors
-const fridgeDoorPlane = carcassFront - APPLIANCES.fridge.doorDepth;
+const fridgeDoorPlane = carcassFront - APPLIANCES.fridge.doors.setback;
 function fridgeBody(K) {
   const A = APPLIANCES.fridge, P = runLayer[K.run].fridge, uc = (K.u0 + K.u1) / 2;
-  const u0 = uc - A.body[0] / 2, u1 = uc + A.body[0] / 2, bodyV0 = K.v0 + board, bodyV1 = bodyV0 + A.body[1];
+  const u0 = uc - A.body.width / 2, u1 = uc + A.body.width / 2, bodyV0 = K.v0 + board, bodyV1 = bodyV0 + A.body.height;
   K.fridgeBody = [bodyV0, bodyV1, u0, u1];
-  envelope(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body[2], fridgeDoorPlane, A.name + ' – korpus ' + A.body[0] + ' × ' + A.body[1] + ' (bez drzwi)');
-  openFrontBox(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body[2], fridgeDoorPlane, 24, MAT.fridge);
-  const split = bodyV0 + (A.freezerDoor[1] + A.fridgeDoor[0]) / 2; // the middle of the gap between the appliance doors
+  envelope(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body.depth, fridgeDoorPlane, A.name + ' – korpus ' + A.body.width + ' × ' + A.body.height + ' (bez drzwi)');
+  openFrontBox(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body.depth, fridgeDoorPlane, 24, MAT.fridge);
+  const split = bodyV0 + (A.doors.freezer.top + A.doors.fridge.bottom) / 2; // the middle of the gap between the appliance doors
   localBox(P, u0 + 24, u1 - 24, split - 14, split + 14, carcassBack + 42, fridgeDoorPlane, MAT.fridge);
   const top = bodyV1 - 24, lo = split + 14;
   for (const f of [0.34, 0.56, 0.78]) { const y = lo + (top - lo) * f; localBox(P, u0 + 26, u1 - 26, y, y + 5, carcassBack + 44, carcassFront - 124, MAT.glassShelf, true); }
@@ -1218,10 +1219,10 @@ function buildFront(run, item) {
   const front = item.front, K = item.carcass, opening = front.opening, hingeSide = front.hingeSide;
   const { u0: fu0, u1: fu1, v0: fv0, v1: fv1, width: fw, height: fh } = front;
   let pu = 0, pv = 0, pn = 0; // pivot: hinge side of a door, bottom edge of the dishwasher door
-  if (opening === 'door' || opening === 'fridge') { pu = hingeSide === 'L' ? fu0 : fu1; pn = frontFace; }
+  if (opening === 'door' || opening === 'fridge') { pu = hingeSide === 'left' ? fu0 : fu1; pn = frontFace; }
   else if (opening === 'dishwasher') { pv = fv0; pn = frontFace; }
   const mover = movingPart(run, opening, pu, pv, pn);
-  mover.sign = hingeSide === 'L' ? 1 : -1;
+  mover.sign = hingeSide === 'left' ? 1 : -1;
   mover.item = item;
   if (opening === 'door' && K && (fittings.open.doorStop || {})[K.name]) mover.travel = fittings.open.doorStop[K.name];
   if (K) K.movers.push(mover);
@@ -1230,8 +1231,8 @@ function buildFront(run, item) {
   const size = Math.round(fw) + ' × ' + Math.round(fh);
 
   if (opening === 'door' && K) {
-    const H = fittings.hinge, cup = settings.drilling.cup, count = front.hinges.length, side = front.hingeU, dir = hingeSide === 'L' ? 1 : -1;
-    const cupU = hingeSide === 'L' ? fu0 + cup.fromEdge : fu1 - cup.fromEdge;
+    const H = fittings.hinge, cup = settings.drilling.cup, count = front.hinges.length, side = front.hingeU, dir = hingeSide === 'left' ? 1 : -1;
+    const cupU = hingeSide === 'left' ? fu0 + cup.fromEdge : fu1 - cup.fromEdge;
     drawHoles(mover.layers.holes, front);
     for (const v of front.hinges) {
       localBox(runLayer[run].hardware, ...ordered(side, side + dir * 10), v - 22, v + 22, carcassFront - 75, carcassFront - 30, MAT.zinc); // mounting plate
@@ -1298,16 +1299,17 @@ function buildFront(run, item) {
     localBox(mover.layers.dishwasher, u0 + 6, u1 - 6, fv1 - 10, fv1 - 4, carcassFront - 22, carcassFront, MAT.glassBlack); // control strip
     mover.label = 'Zmywarka · front ' + size + ' na drzwiach urządzenia';
     // the appliance at the manufacturer's size (APPLIANCES.dishwasher): on the floor, feet up to the worktop; its door grows with the
-    // height (doorHeight[0] at the lowest, doorHeight[1] at the highest); below the door the base is open baseSetback deep for the plinth
-    const A = APPLIANCES.dishwasher, uc = (u0 + u1) / 2, nicheH = worktopOf(item.group).v0, h = Math.min(A.body[1] + A.feet, Math.max(A.body[1], nicheH));
-    const doorHeight = A.doorHeight[0] + ((A.doorHeight[1] - A.doorHeight[0]) * (h - A.body[1])) / A.feet, doorBottom = h - doorHeight, w0 = uc - A.body[0] / 2, w1 = uc + A.body[0] / 2;
-    envelope(P, w0, w1, doorBottom, h, carcassFront - A.body[2], carcassFront, A.name + ' – ' + A.body[0] + ' × ' + Math.round(h) + ' × ' + A.body[2] + ', drzwi ' + Math.round(doorHeight));
-    envelope(P, w0, w1, 0, doorBottom, carcassFront - A.body[2], carcassFront - A.baseSetback, A.name + ' – podstawa, ' + A.baseSetback + ' za frontem');
+    // height (door.height.min at the lowest feet, max at the highest); below the door the base is open baseSetback deep for the plinth
+    const A = APPLIANCES.dishwasher, uc = (u0 + u1) / 2, nicheH = worktopOf(item.group).v0;
+    const h = Math.min(A.body.height + A.feet.max, Math.max(A.body.height + A.feet.min, nicheH)), lift = (h - A.body.height - A.feet.min) / (A.feet.max - A.feet.min);
+    const doorHeight = A.door.height.min + (A.door.height.max - A.door.height.min) * lift, doorBottom = h - doorHeight, w0 = uc - A.body.width / 2, w1 = uc + A.body.width / 2;
+    envelope(P, w0, w1, doorBottom, h, carcassFront - A.body.depth, carcassFront, A.name + ' – ' + A.body.width + ' × ' + Math.round(h) + ' × ' + A.body.depth + ', drzwi ' + Math.round(doorHeight));
+    envelope(P, w0, w1, 0, doorBottom, carcassFront - A.body.depth, carcassFront - A.baseSetback, A.name + ' – podstawa, ' + A.baseSetback + ' za frontem');
   } else if (opening === 'fridge' && K && K.fridgeBody) {
-    // the appliance door behind this front, from the installation drawing (APPLIANCES.fridge freezerDoor / fridgeDoor)
-    const [bodyV0] = K.fridgeBody, freezer = hasTag(item, 'freezer'), A = APPLIANCES.fridge, door = freezer ? A.freezerDoor : A.fridgeDoor;
-    const d0 = bodyV0 + door[0], d1 = bodyV0 + door[1];
-    envelope(mover.layers.fridge, K.fridgeBody[2], K.fridgeBody[3], d0, d1, fridgeDoorPlane, carcassFront, A.name + ' – drzwi ' + (freezer ? 'zamrażarki ' : 'lodówki ') + (door[1] - door[0]));
+    // the appliance door behind this front, from the installation drawing (APPLIANCES.fridge.doors)
+    const [bodyV0] = K.fridgeBody, freezer = hasTag(item, 'freezer'), A = APPLIANCES.fridge, door = freezer ? A.doors.freezer : A.doors.fridge;
+    const d0 = bodyV0 + door.bottom, d1 = bodyV0 + door.top;
+    envelope(mover.layers.fridge, K.fridgeBody[2], K.fridgeBody[3], d0, d1, fridgeDoorPlane, carcassFront, A.name + ' – drzwi ' + (freezer ? 'zamrażarki ' : 'lodówki ') + (door.top - door.bottom));
     localBox(mover.layers.fridge, K.fridgeBody[2], K.fridgeBody[3], d0, d1, fridgeDoorPlane, carcassFront - 2, MAT.fridge); // appliance door
     if (!freezer) for (const f of [0.25, 0.5, 0.75]) { const y = d0 + (d1 - d0) * f; localBox(mover.layers.fridge, K.u0 + 55, K.u1 - 55, y, y + 80, fridgeDoorPlane - 54, fridgeDoorPlane, MAT.ice, true); } // door shelves
     mover.label = (freezer ? 'Zamrażarka' : 'Lodówka') + ' · front ' + size + ' na drzwiach urządzenia';
@@ -1533,7 +1535,7 @@ function shadowSetup(light, size, near, far) {
   light.shadow.normalBias = 0.015;
   light.shadow.radius = 4;
 }
-SCENE.lights.pendants.points.forEach(([x, z]) => {
+SCENE.lights.pendants.positions.forEach(({ x, z }) => {
   const y = SCENE.lights.pendants.bottom;
   roomCylinder(2, ceiling - y - 90, MAT.gasket, x, (ceiling + y + 90) / 2, z, null, 6); // cable
   const shade = new THREE.Mesh(new THREE.SphereGeometry(0.15, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), standard({ color: linear(model.materials[model.materialFor.cabinet].color), roughness: 0.5, metalness: 0.2 })); // shade in the cabinet front colour
@@ -1571,8 +1573,9 @@ roomBox(leftEnd, rightWall, ceiling, ceiling + 20, 0, room.floorDepth, ceilingMa
 const tube = standard({ color: linear(0xf3f3f0), roughness: 0.45 }), tubeInside = standard({ color: linear(0x2a2a2a), roughness: 0.7, side: THREE.BackSide });
 const TUBE_RADIUS = 35, TUBE_HEIGHT = 100;
 const axisPoint = { sink: sinkCut && pointToRoom[sinkRun](sinkU, sinkN), hob: hobCut && pointToRoom[hobRun](hobU, (hobCut.n0 + hobCut.n1) / 2) };
-const downlightAt = p => (Array.isArray(p) ? p : [p.between.reduce((sum, what) => sum + axisPoint[what][0], 0) / p.between.length, p.z]);
-for (const [x, z] of SCENE.lights.downlights.map(downlightAt)) {
+// a downlight at {x, z}, or between the axes of the sink and the hob: {between: [sink, hob], z}
+const downlightAt = p => (p.between ? { x: p.between.reduce((sum, what) => sum + axisPoint[what][0], 0) / p.between.length, z: p.z } : p);
+for (const { x, z } of SCENE.lights.downlights.map(downlightAt)) {
   const t = new THREE.Mesh(new THREE.CylinderGeometry(TUBE_RADIUS / 1000, TUBE_RADIUS / 1000, TUBE_HEIGHT / 1000, 40, 1, true), tube);
   t.position.set(x / 1000, (ceiling - TUBE_HEIGHT / 2) / 1000, z / 1000);
   ceilingGroup.add(t);
@@ -1639,7 +1642,8 @@ function repivot(e) {
   controls.target.copy(camera.position).addScaledVector(forward, d);
 }
 function flyTo(view, instant) {
-  const V = VIEWS[view], p = new THREE.Vector3(...V.p), t = new THREE.Vector3(...V.t);
+  const metres = point => new THREE.Vector3(point.x / 1000, point.y / 1000, point.z / 1000);
+  const V = VIEWS[view], p = metres(V.position), t = metres(V.target);
   if (instant) { camera.position.copy(p); controls.target.copy(t); controls.update(); return; }
   flight = { p0: camera.position.clone(), t0: controls.target.clone(), p, t, s: performance.now() };
 }
@@ -1820,8 +1824,8 @@ function setFloor(key) {
   if (palette === 'colour') MAT.floor.map = map;
   MAT.floor.needsUpdate = true;
   for (const b of floorPanel.querySelectorAll('[data-f]')) b.setAttribute('aria-pressed', b.dataset.f === key);
-  floorInfo.innerHTML = '<b>' + esc(F.name) + '</b> ' + F.size.join(' × ') + ' – ' + esc(F.look) + '; ' + esc(F.finish) + '; ' + esc(F.price) +
-    ' (<a href="' + F.link + '" target="_blank" rel="noopener">sklep</a>). Fuga epoksydowa ' + room.floorJoint + ' mm w kolorze tła płytki.';
+  floorInfo.innerHTML = '<b>' + esc(F.name) + '</b> ' + F.size.length + ' × ' + F.size.width + ' – ' + esc(F.look) + '; ' + esc(F.finish) + '; ' + esc(F.price) +
+    ' (<a href="' + F.links[0].url + '" target="_blank" rel="noopener">sklep</a>). Fuga epoksydowa ' + room.floorJoint + ' mm w kolorze tła płytki.';
   renderFinishes();
   sceneChanged();
 }
@@ -1990,8 +1994,8 @@ function renderFinishes() {
   document.getElementById('mats').innerHTML = Object.entries(model.materials).map(([code, m]) => {
     const uses = Object.keys(model.materialFor).filter(use => model.materialFor[use] === code);
     return uses.length ? swatch(m.color || KE.OAK_SWATCH, uses.map(KE.useLabel).join(', '), m.label) : '';
-  }).join('') + SCENE.finishes.map(([use, name, background]) => swatch(background, use, name)).join('') +
-    (F ? swatch('url(' + F.faces[0] + ') center/cover', 'Podłoga', F.name + ' ' + F.size.join(' × ')) : '');
+  }).join('') + SCENE.finishes.map(f => swatch(f.swatch, f.use, f.name)).join('') +
+    (F ? swatch('url(' + F.faces[0] + ') center/cover', 'Podłoga', F.name + ' ' + F.size.length + ' × ' + F.size.width) : '');
 }
 if (FLOOR_KEYS.length) setFloor(floorKey);
 else renderFinishes();
@@ -2015,7 +2019,7 @@ document.getElementById('dims').innerHTML = [
   ['Cokół', 'lico ' + settings.plinth.setback + ' za frontami'],
   ['Okno', win.width + ' × ' + win.height + ', ' + win.finish]
 ].map(([name, value]) => '<dt>' + name + '</dt><dd>' + value + '</dd>').join('');
-document.getElementById('pnotes').innerHTML = (project.notes || []).map(([name, description, details]) => {
+document.getElementById('pnotes').innerHTML = (project.notes || []).map(({ name, description, details }) => {
   return '<dt>' + esc(name) + '</dt><dd>' + esc(description) + (details ? '<small>' + esc(details) + '</small>' : '') + '</dd>';
 }).join('');
 
