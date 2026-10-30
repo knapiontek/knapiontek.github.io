@@ -1983,14 +1983,13 @@ document.getElementById('kStats').innerHTML = [
 const frontName = model.materials[model.materialFor.cabinet].name;
 document.getElementById('frontName').textContent = frontName;
 document.title = 'Kuchnia ' + frontName;
-const oakSwatch = 'linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)'; // the oak texture, for a material without a colour
 const swatch = (background, use, name) => '<li><i style="background:' + background + '"></i><small>' + esc(use) + '</small><b>' + esc(name) + '</b></li>';
 // the board materials, the finishes of view.js and the floor tiles chosen in Widok › Podłoga
 function renderFinishes() {
   const F = FLOORS[floorKey];
   document.getElementById('mats').innerHTML = Object.entries(model.materials).map(([code, m]) => {
     const uses = Object.keys(model.materialFor).filter(use => model.materialFor[use] === code);
-    return uses.length ? swatch(m.color || oakSwatch, uses.map(KE.useLabel).join(', '), m.label) : '';
+    return uses.length ? swatch(m.color || KE.OAK_SWATCH, uses.map(KE.useLabel).join(', '), m.label) : '';
   }).join('') + SCENE.finishes.map(([use, name, background]) => swatch(background, use, name)).join('') +
     (F ? swatch('url(' + F.faces[0] + ') center/cover', 'Podłoga', F.name + ' ' + F.size.join(' × ')) : '');
 }

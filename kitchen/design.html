@@ -523,13 +523,10 @@
 /* ---------- 1. settings ---------- */
 const KE = window.KitchenEngine;
 const CONFIG = JSON.parse(document.getElementById('design-config').textContent); // drawing sizes and colours, 1 SVG unit = 1 mm
-const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags } = KE;
-const OAK_SWATCH = 'linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)'; // a material without a colour is drawn with the oak texture
+const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags, plural, OAK_SWATCH } = KE; // OAK_SWATCH: a material without a colour
 const HANDLE_POSITIONS = ['', ...KE.HANDLE_POSITIONS];
 const HINGE_SIDES = ['', ...KE.HINGE_SIDES];
 const SIDE_NAMES = { '': 'brak', ...KE.LABELS.handle }; // handle positions and hinge sides
-// Polish plural: 1 problem, 2-4 problemy, 5+ problemów (12-14: many)
-const plural = (n, one, few, many) => (n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14) ? few : many);
 
 /* ---------- 2. utilities (nothing kitchen-specific) ---------- */
 function isRowEmpty(...values) {

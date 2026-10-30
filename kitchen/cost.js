@@ -900,6 +900,7 @@ window.KITCHEN_COST = {
     },
     {
      "id": "hood",
+     "appliance": "hood",
      "topic": "Okap Electrolux LFV416K – tryb pracy",
      "description": "Wyciąg: okap {p:hood} PLN + rura {p:duct} PLN.",
      "decide": "Wyciąg czy pochłaniacz (filtr węglowy, poza kosztorysem)?"

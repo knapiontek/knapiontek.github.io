@@ -136,6 +136,12 @@
 
   /* ================= 2. SMALL HELPERS ================= */
 
+  // shared by the pages (nothing in the model uses them):
+  // Polish plural: 1 problem, 2-4 problemy, 5+ problemów (12-14: many)
+  const plural = (n, one, few, many) => (n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14) ? few : many);
+  // the swatch of a material without a colour (the oak decor), as a CSS background
+  const OAK_SWATCH = 'linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)';
+
   const valueAt = (obj, dotted) => dotted.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
   const hasTag = (item, ...tags) => tags.some(t => item.tags.includes(t));
 
@@ -352,6 +358,7 @@
     });
 
     // ---- groups: stack the components in their columns ----
+    const missingIslandMaterial = new Set(); // groups already reported
     for (const [g, widths] of Object.entries(columns)) {
       widths.forEach((w, i) => { if (!Number.isInteger(w)) warn(`${placeLabel(g, i + 1)}: szerokość kolumny "${w}" musi być całkowitą liczbą mm.`); });
       const stacked = stack(widths, pieces.filter(p => String(p.group) === g));
@@ -371,8 +378,10 @@
         const onEdge = onEdgeSize(item, groups[g].island);
         if (!onEdge) continue;
         const { use, size, what } = onEdge;
-        if (!materialFor[use]) warn(`Grupa ${g}: wyspa potrzebuje materiału z użyciem ${use}.`, item.index);
-        else if (size !== thickness[use]) warn(`${placeOf(item)}: ${typeLabel(item.type)} - ${what} ${size} nie zgadza się z materiałem ${materials[materialFor[use]].label}.`, item.index);
+        if (!materialFor[use]) {
+          if (!missingIslandMaterial.has(g)) warn(`Grupa ${g}: wyspa potrzebuje materiału z użyciem ${use}.`, item.index); // once per group
+          missingIslandMaterial.add(g);
+        } else if (size !== thickness[use]) warn(`${placeOf(item)}: ${typeLabel(item.type)} - ${what} ${size} nie zgadza się z materiałem ${materials[materialFor[use]].label}.`, item.index);
       }
     }
 
@@ -998,6 +1007,6 @@
   root.KitchenEngine = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PARTS, USES, ISLAND_USE, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, SHELF_UNDER_JOINT, LACQUER, HORIZONTAL_BOARDS,
     HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, drillingOf, cutKey, checkSettings, build, cutList, carcassMap, mapJSON,
-    load, designJS, fromDesignJS
+    load, designJS, fromDesignJS, plural, OAK_SWATCH
   };
 })(typeof window !== 'undefined' ? window : globalThis);
