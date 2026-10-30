@@ -62,10 +62,11 @@ h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute
 .block{display:flex;flex-direction:column;gap:10px}
 
 /* powierzchnia: ściany / podłoga / prysznic */
-.surf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--chip);padding:3px;border-radius:9px;border:1px solid var(--line)}
+.surf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;background:var(--chip);padding:3px;border-radius:9px;border:1px solid var(--line)}
 .surf button{border:0;background:transparent;border-radius:7px;padding:7px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:600;font-size:13px}
 .surf button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .surf i{width:30px;height:14px;border-radius:3px;border:1px solid var(--line);display:block;background-size:cover}
+.surf .col{text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:4px 0 1px}
 .surf small{font-family:var(--f-mono);font-size:10.5px;color:var(--muted);font-weight:400}
 
 /* wzory płytek */
@@ -144,9 +145,11 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;te
     <section class="block" aria-label="Płytki">
       <h2>Płytki</h2>
       <div class="surf" id="surfaces" role="group" aria-label="Powierzchnia">
-        <button data-surface="wall" aria-pressed="true"><i></i>Ściany<small></small></button>
-        <button data-surface="floor" aria-pressed="false"><i></i>Podłoga<small></small></button>
-        <button data-surface="shower" aria-pressed="false"><i></i>Prysznic<small></small></button>
+        <span class="col">Pokój</span><span class="col">Prysznic</span>
+        <button data-surface="wall" aria-pressed="true" aria-label="Ściany pokoju"><i></i>Ściany<small></small></button>
+        <button data-surface="shower" aria-pressed="false" aria-label="Ściany prysznica"><i></i>Ściany<small></small></button>
+        <button data-surface="floor" aria-pressed="false" aria-label="Podłoga pokoju"><i></i>Podłoga<small></small></button>
+        <button data-surface="showerFloor" aria-pressed="false" aria-label="Podłoga prysznica"><i></i>Podłoga<small></small></button>
       </div>
       <div class="swatches" id="swatches" role="group" aria-label="Wzór płytki"></div>
       <p class="cap" id="tileInfo"></p>
@@ -222,14 +225,16 @@ if (!window.BATH_TEXTURES) return fail('Brak pliku textures.js obok view.html.')
    Wszystko, co użytkownik może zmienić w panelu, w jednym miejscu.
    ========================================================================== */
 
-const SURFACES = ['wall', 'floor', 'shower'];
+// wall / floor: pokój główny; shower / showerFloor: wnęka prysznica
+const SURFACES = ['wall', 'floor', 'shower', 'showerFloor'];
 const FORMATS = ['60x60', '60x120', '80x80', '90x90', '100x100', '120x120'];   // cm
 
 const state = {
   tiles: {   // format: krótszy×dłuższy bok w cm; layout: h = dłuższy bok poziomo, v = pionowo
     wall:   { tile: 'authorityGraphite', format: '60x120', layout: 'h' },
     floor:  { tile: 'authorityGrey',     format: '80x80',  layout: 'h' },
-    shower: { tile: 'authorityGraphite', format: '60x120', layout: 'h' },
+    shower:      { tile: 'authorityGraphite', format: '60x120', layout: 'h' },
+    showerFloor: { tile: 'authorityGrey',     format: '80x80',  layout: 'h' },
   },
   surface: 'wall',      // powierzchnia edytowana w panelu
   metal: 'brass',
@@ -557,14 +562,14 @@ box(.006, H, .006, M.metal, .001, H / 2, 1.5015, wallShowerValves.group);
 /* ---------- podłoga ---------- */
 const floorGroup = new THREE.Group(); scene.add(floorGroup);
 cutaway(floorGroup, () => !state.layers.floor);
-function floorPlane(x0, z0, x1, z1) {
-  const mesh = tiled('floor', new THREE.PlaneGeometry(x1 - x0, z1 - z0), floorGroup);
+function floorPlane(surface, x0, z0, x1, z1) {
+  const mesh = tiled(surface, new THREE.PlaneGeometry(x1 - x0, z1 - z0), floorGroup);
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2);
   mesh.castShadow = false;
 }
-floorPlane(0, 0, 1.6, 2.4);
-floorPlane(-1, 1.5, 0, 2.4);
+floorPlane('floor', 0, 0, 1.6, 2.4);         // pokój
+floorPlane('showerFloor', -1, 1.5, 0, 2.4);  // prysznic
 box(1.6 + T * 2, .12, 2.4 + T * 2, M.frame, .8, -.061, 1.2, floorGroup);       // wylewka pod pokojem
 box(1 + T, .12, .9 + T * 2, M.frame, -.5 - T / 2, -.061, 1.95, floorGroup);    // wylewka pod prysznicem
 
@@ -879,7 +884,7 @@ function roundedRect(path, x, y, w, h, r) {
 // odpływ przyścienny Vogi Duo na wymiar: ruszt wypełniony płytką podłogową, rama w kolorze armatury
 (function showerDrain() {
   const length = .88, width = .06, zc = 1.95, xc = -1 + width / 2 + .002, rim = .004, g = floorGroup;
-  tiled('floor', new THREE.BoxGeometry(width - .008, .003, length - .008), g).position.set(xc, .0015, zc);
+  tiled('showerFloor', new THREE.BoxGeometry(width - .008, .003, length - .008), g).position.set(xc, .0015, zc);
   box(.002, rim, length, M.metal, xc - width / 2 + .001, rim / 2, zc, g);
   box(.002, rim, length, M.metal, xc + width / 2 - .001, rim / 2, zc, g);
   box(width, rim, .002, M.metal, xc, rim / 2, zc - length / 2 + .001, g);
@@ -1154,7 +1159,7 @@ for (const format of FORMATS) {
 
 function syncTilePanel() {
   const active = state.tiles[state.surface];
-  for (const b of $('surfaces').children) {
+  for (const b of $('surfaces').querySelectorAll('button')) {
     const surface = b.dataset.surface;
     b.setAttribute('aria-pressed', surface === state.surface);
     b.querySelector('i').style.backgroundImage = `url(${TILES[state.tiles[surface].tile].thumbnail})`;
