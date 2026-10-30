@@ -54,7 +54,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka lub zamrażarka.
 - **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
-- **Półka stała** leży na środku styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki. Nad piekarnikiem jest płytsza z tyłu, by wypuścić gorące powietrze; pod piekarnikiem leży pod stykiem, więc front piekarnika na nią nie zachodzi. W korpusie lodówki jest tylko jedna, nad urządzeniem: zamyka jego wnękę i jest płytsza z tyłu, by wypuścić powietrze. Wnęka na urządzenie wynika z modułów i półek; jej wymiary są w notatce urządzenia.
+- **Półka stała** leży na środku styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki. Przy piekarniku: nad nim płytsza z tyłu (gorące powietrze), pod nim niżej, poza frontem piekarnika. W korpusie lodówki jest tylko jedna, nad urządzeniem: zamyka jego wnękę i jest płytsza z tyłu, by wypuścić powietrze. Wnęka na urządzenie wynika z modułów i półek; jej wymiary są w notatce urządzenia.
 - **Półki ruchome** są tylko za drzwiami szafki:
   - liczba zależy od wysokości frontu;
   - półka jest płytsza od korpusu i ma luz z obu stron;
@@ -65,11 +65,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Słupek zawiasowy:** gdy drzwi nie sięgają boku korpusu po stronie zawiasów, staje tam słupek zawiasowy.
 - **Panel wpuszczany:** wypełnienie na końcu korpusu (np. ukryty narożnik L) zamyka panel wpuszczany.
 - **Szuflada** jest wysoka (D), gdy front przekracza ustaloną wysokość, a inaczej niska (M).
-- **Szuflady za drzwiami** (tag szuflady za drzwiami):
-  - skrzynka z płyty szuflad: czoło na całą skrzynkę zakrywa boki i dno, dno i tył między bokami; prowadnice kulkowe pełnego wysuwu, luz na prowadnicę z każdej strony;
-  - zawiasy zajmują przód korpusu na głębokość słupka zawiasowego; za nią, po stronie zawiasów, płyta dystansowa z płyty korpusu niesie prowadnicę;
-  - skrzynki zaczynają się na tej samej głębokości, więc mijają zawiasy i otwarte drzwi, a drzwi zamykają się przed nimi;
-  - liczba szuflad zależy od wysokości frontu; leżą równo między płytami nad i pod drzwiami.
+- **Szuflady za drzwiami:** skrzynki z płyty na prowadnicach kulkowych; po stronie zawiasów płyta dystansowa, żeby szuflady mijały zawiasy i otwarte drzwi.
 
 ## 4. Fronty, listwy, panele, blat
 
@@ -77,7 +73,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Listwa** stoi na sztorc. Gdy nie należy do korpusu, dostaje listwę tylną przy ścianie.
 - **Panel** leży na płasko w płaszczyźnie frontów.
 - **Blat:**
-  - głębokość i grubość podaje materiał blatu; blat z tagiem wyspa ma osobny materiał (blat wyspy);
+  - głębokość podaje materiał blatu; wyspa ma osobny materiał;
   - wystaje przed fronty o nawis;
   - z tyłu zostaje głębokość minus korpus, front i nawis.
 - **Wyspa** (blat z tagiem wyspa) ma panel tylny między skrajnymi kolumnami, od podłogi do góry korpusów.
@@ -90,11 +86,11 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Puszka zawiasu:** w tylnej stronie drzwi, przy każdym zawiasie, w stałej odległości od krawędzi zawiasów.
 - **Prowadnik zawiasu:** dwa otwory na wewnętrznej stronie boku albo słupka zawiasowego, w stałej odległości od przodu, symetrycznie wokół wysokości zawiasu.
 - **Podpórki półki ruchomej:** pod każdą półką, w obu bokach, przy przodzie i przy tyle; dodatkowe rzędy w stałym odstępie powyżej i poniżej, ale nie w płycie poziomej (wieniec, trawers, półka stała).
-- **Prowadnice szuflad i półki wysuwanej:** w obu bokach, w stałej odległości pod dnem szuflady (także szuflady wewnętrznej) i pod półką wysuwaną, w pozycjach od przodu podanych w danych. Prowadnice kulkowe szuflad za drzwiami przykręca się na miejscu, bez wierceń w hurtowni.
+- **Prowadnice szuflad i półki wysuwanej:** w obu bokach, w stałej odległości pod dnem szuflady (także szuflady wewnętrznej) i pod półką wysuwaną, w pozycjach od przodu podanych w danych.
 - **Zawias nad półką:** zawias, który wypada przy półce, przechodzi nad nią: najniżej, gdzie jest co najmniej ustalony odstęp nad półką i gdzie otwory prowadnika nie trafiają w otwory podpórek.
 - Otwory, które nachodzą na siebie na jednej części albo trafiają w płytę poziomą, są zgłaszane.
 - **Wycięcia w blacie:** na zlew i płytę grzewczą, nad korpusem z tagiem zlew lub płyta grzewcza, na środku korpusu, w stałej odległości od tylnej krawędzi blatu; wycięcie musi zmieścić się w jednym blacie i we wnętrzu korpusu.
-- Lista cięć podaje otwory każdej części skrótami z legendą: Z puszka zawiasu, P prowadnik zawiasu, K podpórka półki, S prowadnica, ZL wycięcie na zlew, PG wycięcie na płytę; zapis „KOD x… ⊗ y…” to iloczyn kartezjański (otwór w każdym x dla każdego y), w mm od krawędzi z legendy.
+- Lista cięć: każdy rozmiar części ma etykietę (ta sama w opisie montażu); otwory są podane kodami, objaśnionymi w legendzie listy.
 - Widok 3D pokazuje otwory kolorami (warstwa Otwory): zawiasy pomarańczowe, półki zielone, prowadnice niebieskie.
 
 ## 6. Krawędzie
@@ -106,8 +102,8 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **ABS na płytach korpusu** jest tylko na krawędzi widocznej z przodu:
   - boki, wieńce, półki, trawersy płaskie, słupek zawiasowy i płyta dystansowa mają ABS na krawędzi przedniej;
   - trawers na sztorc ma ABS na krawędzi dolnej.
-- **Szuflady za drzwiami:** ABS na górnych krawędziach boków, tyłu i czoła oraz na bokach czoła; dno i krawędzie zakryte czołem bez ABS.
-- **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad TANDEMBOX.
+- **Szuflady za drzwiami:** ABS na krawędziach widocznych po wysunięciu.
+- **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad systemowych.
 - **ABS na panelu** jest na każdej krawędzi przy froncie, który się otwiera.
 - **Lista cięć** podaje przy każdym wymiarze liczbę wykończonych krawędzi wzdłuż niego (0, 1 lub 2), jak formularz hurtowni. Opis montażu mówi, gdzie jest każda krawędź z ABS.
 

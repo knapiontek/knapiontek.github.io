@@ -72,8 +72,11 @@
     // uses that are not a type (the types have their own label)
     use: { islandWorktop: 'blat wyspy', carcass: 'korpus', back: 'plecy', drawerBox: 'szuflady', hobPanel: 'przegroda pod płytą' },
     hole: { cup: 'puszka zawiasu', plate: 'prowadnik zawiasu', shelfPin: 'podpórka półki', runner: 'prowadnica szuflady / półki wysuwanej', sink: 'wycięcie na zlew', hob: 'wycięcie na płytę grzewczą' },
-    // short codes of the holes and cut-outs in the cutting list (its legend explains them)
-    holeCode: { cup: 'Z', plate: 'P', shelfPin: 'K', runner: 'S', sink: 'ZL', hob: 'PG' },
+    // short codes of the holes and cut-outs in the cutting list (its legend explains them): always two letters, the first one the
+    // group (Z zawias, P półka / prowadnica, W wycięcie), the second the part
+    holeCode: { cup: 'ZA', plate: 'ZP', shelfPin: 'PO', runner: 'PR', sink: 'WZ', hob: 'WP' },
+    // hand of a drilled part, as seen from the front of the kitchen: a carcass side or hinge post (left / right), a door (its hinge side)
+    hand: { L: 'L', R: 'P' },
     holeFrom: { front: 'od przodu', back: 'od tyłu', bottom: 'od dołu', hinge: 'od krawędzi zawiasów', left: 'od lewego końca' }
   };
   const typeLabel = type => LABELS.type[type] || type;
@@ -418,8 +421,8 @@
       const frontEdge = length => [['front', length]];
       const bottomEdge = [['bottom', innerWidth]]; // a rail on edge shows its bottom edge when the drawer below is open
 
-      part('side', 'Bok', carcassDepth, height, carcassMaterial, 'carcasses', [u0, innerU0, v0, v1, carcassBack, carcassFront], frontEdge(height));
-      part('side', 'Bok', carcassDepth, height, carcassMaterial, 'carcasses', [innerU1, u1, v0, v1, carcassBack, carcassFront], frontEdge(height));
+      part('side', 'Bok', carcassDepth, height, carcassMaterial, 'carcasses', [u0, innerU0, v0, v1, carcassBack, carcassFront], frontEdge(height)).hand = 'L';
+      part('side', 'Bok', carcassDepth, height, carcassMaterial, 'carcasses', [innerU1, u1, v0, v1, carcassBack, carcassFront], frontEdge(height)).hand = 'R';
       part('bottom', 'Wieniec dolny', innerWidth, carcassDepth, carcassMaterial, 'carcasses', [innerU0, innerU1, v0, v0 + board, carcassBack, carcassFront], frontEdge(innerWidth));
 
       // top: a base carcass has 2 top rails (flat; on edge under a sink or a hob), any other carcass a top panel
@@ -672,12 +675,12 @@
           const postU0 = item.hinge === 'L' ? item.u0 : item.u1 - board, postV0 = Math.max(item.v0, K.v0 + board), postV1 = Math.min(item.v1, K.v1 - board);
           addBoard({
             id: 'hingePost', name: 'Słupek zawiasowy', a: hingeSettings.supportDepth, b: postV1 - postV0, material: materialFor.carcass, layer: 'carcasses', group: G.group, carcassId: K.id,
-            box: [postU0, postU0 + board, postV0, postV1, carcassFront - hingeSettings.supportDepth, carcassFront], edges: [['front', postV1 - postV0]]
+            box: [postU0, postU0 + board, postV0, postV1, carcassFront - hingeSettings.supportDepth, carcassFront], edges: [['front', postV1 - postV0]], hand: item.hinge
           });
         }
         const front = {
           id: fronts.length + 1, group: G.group, item, carcassId: K ? K.id : null, opening, tags: item.tags, gaps: item.gaps,
-          ...box, width: box.u1 - box.u0, height: box.v1 - box.v0, handle: item.handle, hingeSide: hinged ? item.hinge : '', material: materialFor[item.type],
+          ...box, width: box.u1 - box.u0, height: box.v1 - box.v0, handle: item.handle, hingeSide: hinged ? item.hinge : '', hand: hinged ? item.hinge : '', material: materialFor[item.type],
           lacquer: LACQUER.front
         };
         item.front = front;
@@ -854,12 +857,13 @@
 
   /* ================= 6. LISTS AND FILES ================= */
 
-  // parts with the same name, size, ABS edges and lacquer counted together: [name, a, b, qty, where, edges, lacquer];
-  // where = their "at" labels, e.g. "K2, K5 ×2"; edges = ABS edges of one part [[side, length]]; lacquer = {long, short} lacquered edges
+  // parts with the same name, size, ABS edges, lacquer and drilling counted together: [name, a, b, qty, where, edges, lacquer, drilling, key];
+  // where = their "at" labels, e.g. "K2, K5 ×2"; edges = ABS edges of one part [[side, length]]; lacquer = {long, short} lacquered edges;
+  // key = cutKey of the row (the same parts listed elsewhere, e.g. per carcass, find their row by it)
   function cutList(parts) {
     const rows = new Map();
     for (const p of parts) {
-      const key = p.name + '|' + p.a + '|' + p.b + '|' + JSON.stringify(p.edges || []) + '|' + JSON.stringify(p.lacquer || null) + '|' + JSON.stringify(drillingOf(p));
+      const key = cutKey(p);
       const row = rows.get(key) || { qty: 0, at: new Map() };
       row.qty++;
       if (p.at) row.at.set(p.at, (row.at.get(p.at) || 0) + 1);
@@ -868,17 +872,19 @@
     return [...rows].map(([key, row]) => {
       const [name, a, b, edges, lacquer, drilling] = key.split('|');
       const where = [...row.at].map(([label, n]) => (n > 1 ? label + ' ×' + n : label)).join(', ');
-      return [name, Number(a), Number(b), row.qty, where, JSON.parse(edges), JSON.parse(lacquer), JSON.parse(drilling)];
+      return [name, Number(a), Number(b), row.qty, where, JSON.parse(edges), JSON.parse(lacquer), JSON.parse(drilling), key];
     });
   }
+  const cutKey = p => p.name + '|' + p.a + '|' + p.b + '|' + JSON.stringify(p.edges || []) + '|' + JSON.stringify(p.lacquer || null) + '|' + JSON.stringify(drillingOf(p));
 
-  // what a manufacturer drills or cuts in one part, in part coordinates: {from: {x, y}, holes: [[kind, diameter, depth, x, y]], cutouts: [[kind, width, depth, x, y]]}
-  // or null; mirrored parts (a left and a right side with the same pattern) give the same value, so they share a cut-list row
+  // what a manufacturer drills or cuts in one part, in part coordinates: {from: {x, y}, hand, holes: [[kind, diameter, depth, x, y]], cutouts: [[kind, width, depth, x, y]]}
+  // or null; hand (L | R) tells a left part from a right one with the same pattern (sides, hinge posts, doors): each gets its own row
   function drillingOf(part) {
     if (!part.holes && !part.cutouts) return null;
     const r = x => Math.round(x * 10) / 10;
     return {
       from: part.holeFrom,
+      hand: part.hand || '',
       holes: (part.holes || []).map(h => [h.kind, h.diameter, h.depth, r(h.x), r(h.y)]).sort((p, q) => p[0].localeCompare(q[0]) || p[4] - q[4] || p[3] - q[3]),
       cutouts: (part.cutouts || []).map(c => [c.kind, c.width, c.depth, r(c.x), r(c.y)])
     };
@@ -953,7 +959,7 @@
 
   root.KitchenEngine = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, FRONT_TYPES, BOX_TYPES, BOARD_TYPES, PARTS, USES, ISLAND_USE, CARCASS_FLAGS, GRILLE_FOR, VENTED_SHELF_OVER, SHELF_UNDER_JOINT, LACQUER,
-    HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, drillingOf, checkSettings, build, cutList, carcassMap, mapJSON,
+    HANDLE_POSITIONS, HINGE_SIDES, placeLabel, parseTags, tagsOf, readType, openingOf, drillingOf, cutKey, checkSettings, build, cutList, carcassMap, mapJSON,
     load, designJS, fromDesignJS
   };
 })(typeof window !== 'undefined' ? window : globalThis);

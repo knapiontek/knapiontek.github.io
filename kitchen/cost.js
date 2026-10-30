@@ -7,7 +7,7 @@
      labels      fronts: the label of a front in the cutting list, by its type and tags (first match; none = its type);
                  sheet: the label of the sheet input; cuttingNote: the text under the cutting list; legend: a remark per
                  hole kind in the drilling legend
-     blocks      cutting-list tables, rows built by engine.js: parts = front | frames | plinths | panels | plaster | worktops,
+     blocks      cutting-list tables, code = the two letters of their row labels (KO-07), rows built by engine.js: parts = front | frames | plinths | panels | plaster | worktops,
                  or a material use (carcass, drawerBox, back ...: every board of that use's material); cut = priced saw
                  cuts; columns = the header when not Element / Długość / Szerokość / Ilość
      categories  estimate items; appliances = the category counts as AGD, not furniture. An item: id, name, spec,
@@ -58,23 +58,25 @@ window.KITCHEN_COST = {
   "legend": {"runner": "pozycje do potwierdzenia wg Blum"}
  },
  "blocks": [
-  {"id": "fronts", "title": "FRONTY – {m:cabinet}, shaker, lakierowane dookoła", "columns": ["Funkcja", "Wysokość", "Szerokość", "Ilość"]},
-  {"id": "frames", "title": "LISTWY – {m:frame} na sztorc, gł. {s:frame.depth}, lakierowane obustronnie i krawędź przednia"},
-  {"id": "plinths", "title": "COKÓŁ – {m:plinth}, wilgocioodporny, lakierowany obustronnie"},
-  {"id": "panels", "title": "PANELE – {m:panel} na płasko, lakierowane obustronnie; ABS na widocznych krawędziach"},
+  {"id": "fronts", "code": "FR", "title": "FRONTY – {m:cabinet}, shaker, lakierowane dookoła", "columns": ["Funkcja", "Wysokość", "Szerokość", "Ilość"]},
+  {"id": "frames", "code": "LI", "title": "LISTWY – {m:frame} na sztorc, gł. {s:frame.depth}, lakierowane obustronnie i krawędź przednia"},
+  {"id": "plinths", "code": "CO", "title": "COKÓŁ – {m:plinth}, wilgocioodporny, lakierowany obustronnie"},
+  {"id": "panels", "code": "PA", "title": "PANELE – {m:panel} na płasko, lakierowane obustronnie; ABS na widocznych krawędziach"},
   {
    "id": "carcass",
+   "code": "KO",
    "title": "KORPUSY – wszystkie części z {m:carcass}: cięcie + ABS 0,8 na krawędziach przednich (z listwami tylnymi, półką wysuwaną, słupkami zawiasowymi, panelami wpuszczanymi, płytami dystansowymi)",
    "cut": true
   },
   {
    "id": "drawerBox",
+   "code": "SZ",
    "title": "SZUFLADY – wszystkie części z {m:drawerBox}: dna i tyły TANDEMBOX (z szufladami wewnętrznymi), szuflady za drzwiami i przegroda pod płytą",
    "cut": true
   },
-  {"id": "back", "title": "PLECY – {m:back}, tylko za drzwiami szafek"},
-  {"id": "worktops", "title": "BLATY – {m:worktop} (blat), {m:islandWorktop} (wyspa): blaty i boki blatu; wycięcia na zlew (ZL) i płytę (PG) wg legendy"},
-  {"id": "plaster", "title": "ZABUDOWA GK – GKBI 12,5 na CD60 / UD27, gł. {s:plasterboard.depth} (zabudowa do sufitu, grupa 2)"}
+  {"id": "back", "code": "PL", "title": "PLECY – {m:back}, tylko za drzwiami szafek"},
+  {"id": "worktops", "code": "BL", "title": "BLATY – {m:worktop} (blat), {m:islandWorktop} (wyspa): blaty i boki blatu; wycięcia na zlew (WZ) i płytę (WP) wg legendy"},
+  {"id": "plaster", "code": "GK", "title": "ZABUDOWA GK – GKBI 12,5 na CD60 / UD27, gł. {s:plasterboard.depth} (zabudowa do sufitu, grupa 2)"}
  ],
  "categories": [
   {
