@@ -46,9 +46,10 @@ button[aria-pressed="true"]{background:var(--fg);color:var(--panel);border-color
 .glass{background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(6px)}
 .views{display:flex;flex-wrap:wrap;gap:6px;min-width:0;flex:1}
 .views button{flex:none;padding:6px 11px;border-radius:999px;font-size:13px}
-.daynight{flex:none;display:flex;padding:2px;gap:2px;border:1px solid var(--line);border-radius:999px}
-.daynight button{border:0;background:transparent;border-radius:999px;padding:4px 10px;font-size:13px;display:flex;align-items:center;gap:6px}
-.daynight button[aria-pressed="true"]{background:var(--fg);color:var(--panel)}
+.daynight{align-self:flex-start;padding:7px 14px;font-size:13px;font-weight:600}
+.daynight > span{display:flex;align-items:center;gap:6px}
+.daynight[aria-pressed="true"]{background:#1d2a3a;color:#ffe2b0;border-color:#1d2a3a}   /* noc */
+.daynight[aria-pressed="false"] .night,.daynight[aria-pressed="true"] .day{display:none}
 .daynight svg,.panelbtn svg{width:16px;height:16px;flex:none}
 .panelbtn{flex:none;display:flex;align-items:center;gap:7px;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
 .nopanel .panelbtn{background:var(--fg);color:var(--panel);border-color:var(--fg)}
@@ -100,11 +101,9 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;te
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
   .hint,h1{display:none}
-  .topbar{left:12px;right:12px;top:10px;flex-wrap:wrap}
-  .views{gap:5px;flex-basis:100%;order:2}
-  .daynight{margin-left:auto}
+  .topbar{left:12px;right:12px;top:10px}
+  .views{gap:5px}
   .views button,.panelbtn{font-size:12px;padding:5px 9px}
-  .daynight .label,.panelbtn .label{display:none}
   aside{border-left:0;border-top:1px solid var(--line);max-height:50vh;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));gap:14px}
 }
 </style>
@@ -120,16 +119,6 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;te
         <button class="glass" data-view="vanity" aria-pressed="false">Umywalka i WC</button>
         <button class="glass" data-view="shower" aria-pressed="false">Prysznic</button>
         <button class="glass" data-view="plan" aria-pressed="false">Rzut</button>
-      </div>
-      <div class="daynight glass" id="lighting" role="group" aria-label="Oświetlenie">
-        <button data-lighting="day" aria-pressed="true" title="Światło dzienne">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-          <span class="label">Dzień</span>
-        </button>
-        <button data-lighting="night" aria-pressed="false" title="Noc, światło sztuczne">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
-          <span class="label">Noc</span>
-        </button>
       </div>
       <button class="panelbtn glass" id="panelBtn" aria-expanded="true" aria-controls="settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
@@ -158,6 +147,15 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;te
         <button data-layout="h" aria-pressed="true">poziomo</button>
         <button data-layout="v" aria-pressed="false">pionowo</button>
       </div></div>
+    </section>
+
+    <section class="block">
+      <h2>Oświetlenie</h2>
+        <!-- jeden przycisk: dzień (słońce) albo noc (lampy); pokazuje bieżący tryb -->
+        <button class="daynight" id="lightingBtn" aria-pressed="false" title="Przełącz: słońce / lampy">
+          <span class="day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span class="label">Dzień · słońce</span></span>
+          <span class="night"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><span class="label">Noc · lampy</span></span>
+        </button>
     </section>
 
     <section class="block">
@@ -951,6 +949,12 @@ const PANEL_OUTLINE = [[1, 1], [-1, 1], [-1, -1], [1, -1], [1, 1], [1, 1]]
 const DOWNLIGHTS = [[.45, .5], [.55, 1.35], [1.2, .95], [.85, 2.0], [-.5, 2.2]];
 
 const ceiling = new THREE.Group(); scene.add(ceiling);
+
+// strop żelbetowy nad sufitem: niewidoczny, ale rzuca cień — inaczej słońce wpadałoby przez szczelinę LED
+const slab = new THREE.Mesh(new THREE.BoxGeometry(2.9, .15, 2.8), GHOST);
+slab.position.set(.3, H + .075, 1.2);
+slab.castShadow = true;
+scene.add(slab);
 cutaway(ceiling, () => !state.layers.ceiling || camera.position.y > CEILING_Y - .02);
 
 const outlineShape = (points, Kind = THREE.Shape) => {
@@ -1194,7 +1198,10 @@ syncTilePanel();
 onButton($('views'), b => { pressed($('views').children, x => x === b); goTo(b.dataset.view, reduceMotion); });
 
 // dzień / noc
-onButton($('lighting'), b => { setLighting(b.dataset.lighting); pressed($('lighting').children, x => x === b); });
+$('lightingBtn').addEventListener('click', () => {
+  setLighting(state.lighting === 'day' ? 'night' : 'day');
+  $('lightingBtn').setAttribute('aria-pressed', state.lighting === 'night');
+});
 
 // armatura
 onButton($('metals'), b => { setMetal(b.dataset.metal); pressed($('metals').children, x => x === b); });
