@@ -13,7 +13,8 @@
                  adjustable feet (appliances.js) gets its front centred in its module.
      window      x of its left edge, width, sill and height above the floor, reveal depth, frame finish
      finishes    finishes shown in the Project tab next to the design.js materials: [use, name, CSS swatch]
-     hardware    sizes for the drawing only, no effect on the cost: handle (metal: a key of metals), open (degrees; drawer: mm),
+     hardware    sizes for the drawing only, no effect on the cost: handle (metal: a key of metals), open (degrees; drawer: mm;
+                 doorStop: carcass → degrees where a stop holds its door, e.g. a bumper on the wall panel),
                  leg, hinge, drawer, bins, plinthGrille
      metals      colour, roughness, metalness of each metal
      lights      pendants: [x, z] points and the shade bottom height; downlights: [x, z], or {between: [sink, hob], z}:
@@ -36,7 +37,7 @@ window.KITCHEN_VIEW = {
  ],
  "hardware": {
   "handle": {"metal": "brass", "axis": 28, "cupLength": 89, "barLength": 160, "sideHeight": 260},
-  "open": {"door": 105, "fridge": 95, "dishwasher": 84, "oven": 88, "micro": 100, "drawer": 440},
+  "open": {"door": 110, "fridge": 95, "dishwasher": 84, "oven": 88, "micro": 100, "drawer": 440, "doorStop": {"K4": 90}},
   "leg": {"radius": 15, "footRadius": 24, "footHeight": 12, "fromSide": 45, "fromBack": 45, "fromFront": 100},
   "hinge": {"cupDepth": 11.5},
   "drawer": {"runner": 13, "sideFromCarcass": 22, "sideThickness": 15.5, "fromBack": 36, "fromFront": 16, "innerSide": 84},

@@ -34,7 +34,7 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | płyta grzewcza | szafka, szuflada | przedni trawers niski, przegroda pod płytą |
 | kosze | szuflada | kosze na odpady w szufladzie |
 | szuflada wewnętrzna | szuflada | szuflada M nad szufladą, za tym samym frontem |
-| ekspres | szafka | półka wysuwana na dole, nad nią półki ruchome |
+| ekspres | szafka | półka wysuwana na dole (po stronie zawiasów płyta dystansowa), nad nią półki ruchome |
 | szuflady za drzwiami | szafka | szuflady z płyty na prowadnicach kulkowych za drzwiami, bez półek ruchomych |
 | lodówka, zamrażarka | szafka | front na drzwiach urządzenia, bez zawiasów, półek i pleców |
 | zmywarka | szafka | front na drzwiach urządzenia, bez korpusu |

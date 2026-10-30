@@ -800,7 +800,7 @@ function movingPart(run, opening, pu, pv, pn) {
   for (const id of ['fronts', 'handles', 'hardware', 'drawers', 'fridge', 'dishwasher', 'oven', 'micro', 'coffee']) layers[id] = layerGroup(inner, id);
   layers.holes = layerGroup(layers.fronts, 'holes'); // holes in a door: shown with the door and the Otwory layer
   // progress 0 closed .. 1 open; parent / children: what opens only behind it (an inner drawer and the drawer whose front covers
-  // it, drawers and a pull-out shelf behind a door); travel: how far a drawer slides when not fittings.open.drawer
+  // it, drawers and a pull-out shelf behind a door); travel: how far a drawer slides when not fittings.open.drawer, or the angle of a door held by fittings.open.doorStop
   const mover = { run, opening, pivot, layers, progress: 0, goal: 0, z0: pivot.position.z, sign: 1, label: '', children: [] };
   pivot.userData.mover = mover;
   movers.push(mover);
@@ -1227,6 +1227,7 @@ function buildFront(run, item) {
   const mover = movingPart(run, opening, pu, pv, pn);
   mover.sign = hingeSide === 'L' ? 1 : -1;
   mover.item = item;
+  if (opening === 'door' && K && (fittings.open.doorStop || {})[K.name]) mover.travel = fittings.open.doorStop[K.name];
   if (K) K.movers.push(mover);
   shakerFront(mover.layers.fronts, fu0, fu1, fv0, fv1, BOARD[front.material]);
   addHandles(mover.layers.handles, fu0, fu1, fv0, fv1, item.handle);
@@ -1349,7 +1350,9 @@ for (const K of carcasses) {
   K.movers.push(mover);
   if (door) linkTo(door, mover);
   registerPart(K, edgeLook(localBox(box, ...shelf.box, BOARD[shelf.material]), shelf.edges, shelf.material), shelf);
-  for (const [a, b] of [[K.u0 + board, x0], [x1, K.u1 - board]]) { // runners: carcass part, moving part
+  const spacer = model.boards.find(b => b.carcassId === K.id && b.id === 'spacer'); // carries the runner on the hinge side
+  const left = spacer && spacer.box[1] <= x0 ? spacer.box[1] : K.u0 + board, right = spacer && spacer.box[0] >= x1 ? spacer.box[0] : K.u1 - board;
+  for (const [a, b] of [[left, x0], [x1, right]]) { // runners: carcass part, moving part
     localBox(runLayer[run].hardware, a, b, y0 - 14, y0, z0, z1, MAT.zinc);
     localBox(mover.layers.hardware, a, b, y0, y0 + 12, z0 + 8, z1 - 4, MAT.zinc);
   }

@@ -509,9 +509,19 @@
       };
       if (K.coffee) {
         // pull-out shelf at the bottom; the first shelf pullOutShelf.space above it, the rest evenly up to the top
-        const pullOut = settings.pullOutShelf, y = v0 + board + pullOut.lift, shelfWidth = innerWidth - 2 * pullOut.clearance;
+        // the door in front of it (full overlay, open about 90°) reaches about as far into the opening as the runner clearance:
+        // a spacer of carcass board on the hinge side, from the bottom board to pullOut.lift above the shelf, carries that runner
+        const pullOut = settings.pullOutShelf, y = v0 + board + pullOut.lift, door = K.boxes.find(b => b.type === 'cabinet' && HINGE_SIDES.includes(b.hinge));
+        let s0 = innerU0, s1 = innerU1;
+        if (door) {
+          const right = door.hinge === 'R', spacer = right ? [innerU1 - board, innerU1] : [innerU0, innerU0 + board], top = y + board + pullOut.lift;
+          part('spacer', 'Płyta dystansowa', carcassDepth, top - (v0 + board), carcassMaterial, 'carcasses',
+            [...spacer, v0 + board, top, carcassBack, carcassFront], [['front', top - (v0 + board)]]);
+          if (right) s1 = spacer[0]; else s0 = spacer[1];
+        }
+        const shelfWidth = s1 - s0 - 2 * pullOut.clearance;
         part('pullOutShelf', 'Półka wysuwana', shelfWidth, pullOut.depth, carcassMaterial, 'shelves',
-          [innerU0 + pullOut.clearance, innerU1 - pullOut.clearance, y, y + board, carcassFront - pullOut.depth, carcassFront], frontEdge(shelfWidth));
+          [s0 + pullOut.clearance, s1 - pullOut.clearance, y, y + board, carcassFront - pullOut.depth, carcassFront], frontEdge(shelfWidth));
         counts.pullOutShelves++;
         const lo = y + board + pullOut.space, hi = v1 - board;
         for (let j = 0; j < pullOut.shelvesAbove; j++) adjustableShelf(Math.round(lo + ((hi - lo) * j) / pullOut.shelvesAbove));
@@ -796,11 +806,16 @@
         ...fronts.filter(f => f.carcassId === K.id && f.drawer).flatMap(f => [f.drawer.bottomV, ...(f.drawer.inner ? [f.drawer.innerV] : [])]),
         ...own.filter(b => b.id === 'pullOutShelf').map(b => b.box[2])
       ];
+      // a spacer next to the pull-out shelf (tag coffee) carries the runner on its side instead of the carcass side
+      const shelfSpacer = own.find(b => b.id === 'spacer' && K.coffee);
       for (const bottom of runnerRows) {
         for (const side of sides) {
-          side.holeFrom = { x: 'front', y: 'bottom' };
-          const inner = side.box[0] === K.u0 ? side.box[1] : side.box[0], dir = side.box[0] === K.u0 ? -1 : 1, y = bottom - runner.belowDrawer;
-          for (const x of runner.fromFront) holeAt(side, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x, y: y - side.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
+          const left = side.box[0] === K.u0, y = bottom - runner.belowDrawer;
+          const covered = shelfSpacer && (left ? shelfSpacer.box[0] === side.box[1] : shelfSpacer.box[1] === side.box[0]) && y > shelfSpacer.box[2] && y < shelfSpacer.box[3];
+          const target = covered ? shelfSpacer : side;
+          target.holeFrom = { x: 'front', y: 'bottom' };
+          const inner = left ? target.box[1] : target.box[0], dir = left ? -1 : 1;
+          for (const x of runner.fromFront) holeAt(target, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x, y: y - target.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
         }
       }
       // holes too close on one face of one part; a hole in a horizontal board (once per kind and carcass)
