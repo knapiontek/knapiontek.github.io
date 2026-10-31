@@ -51,7 +51,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
   - słupek: stoi na cokole i nie ma blatu;
   - górna: nie stoi na cokole.
 - Korpus stojący na cokole ma nóżki.
-- **Mocowanie:** każdy korpus przy ścianie jest przymocowany do ściany (stabilność); słupek z regulacją pionu u góry. Wyspa stoi wolno.
+- **Mocowanie:** listwa tylna jest przymocowana do ściany kątownikiem na jej górze (stabilność). Listwę i listwę tylną przykręca się do pierwszego korpusu zwykłym wkrętem, a drugi korpus do nich wkrętem od środka. Wyspa stoi wolno.
 - **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka lub zamrażarka.
 - **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
@@ -71,7 +71,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 ## 4. Fronty, listwy, panele, blat
 
 - **Front** = moduł minus 4 szczeliny (lewa, prawa, góra, dół). Front shaker ma ramę o stałej szerokości.
-- **Listwa** stoi na sztorc. Gdy nie należy do korpusu, dostaje listwę tylną przy ścianie.
+- **Listwa** stoi na sztorc. Gdy nie należy do korpusu, dostaje listwy tylne przy ścianie, tak wysokie jak korpusy obok: jedną na każdy korpus jeden nad drugim, z miejscem na kątownik nad listwą pod spodem.
 - **Panel** leży na płasko w płaszczyźnie frontów.
 - **Blat:**
   - głębokość podaje materiał blatu; wyspa ma osobny materiał;

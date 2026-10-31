@@ -45,8 +45,8 @@ window.KITCHEN_COST = {
   "plasterboard": {"length": 2600, "width": 1200},
   "edgeAllowance": 0.1,
   "confirmatsPerCarcass": 18,
-  "wallFixingsPerCarcass": 2,
-  "camarPlateScrews": 2
+  "screwsPerMetre": 4,
+  "backScrewsPerM2": 30
  },
  "labels": {
   "fronts": [
@@ -200,12 +200,12 @@ window.KITCHEN_COST = {
     {
      "id": "panelEdging",
      "name": "Oklejanie paneli, kolor {m:panel}",
-     "spec": "krawędzie paneli wg sumy ABS z listy cięć + {v:edgeAllowance|%}",
+     "spec": "krawędzie paneli wg sumy ABS z listy cięć + {v:edgeAllowance|%}; obrzeże granatowe dobrane do lakieru",
      "qty": "={panels.edge}*(1+{v:edgeAllowance})",
      "unit": "mb",
      "price": 6,
      "refs": ["framesPanels"],
-     "source": "panele robi producent frontów (lakierowane.pl) - zapytać o oklejanie; szacunek wg ciecieoklejanie.pl; obrzeże granatowe dobrane do lakieru",
+     "source": "panele robi producent frontów (lakierowane.pl) - zapytać o oklejanie; szacunek wg ciecieoklejanie.pl",
      "links": [
       {"name": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"},
       {"name": "ciecieoklejanie.pl", "url": "https://ciecieoklejanie.pl/cennik/"}
@@ -269,34 +269,34 @@ window.KITCHEN_COST = {
     {
      "id": "innerDrawers",
      "name": "TANDEMBOX antaro szuflada wewnętrzna M 500 szara, 30 kg",
-     "spec": "na sztućce, za górnym frontem; front wewnętrzny Z31L przycięty do LW − {s:drawers.inner.frontDeduction}",
+     "spec": "na sztućce, za górnym frontem; szare boki 378M5002SA, prowadnice 578.5001M; front wewnętrzny Z31L1036A przycięty do LW − {s:drawers.inner.frontDeduction}",
      "qty": "={n:innerDrawers}",
      "unit": "kpl.",
      "price": 207.81,
      "refs": ["innerDrawers"],
-     "source": "szare boki 378M5002SA, prowadnice 578.5001M, front wewnętrzny Z31L1036A",
+     "source": "",
      "links": [{"name": "meblownia.pl", "url": "https://meblownia.pl/blum-szuflada-wewnetrzna-tandembox-antaro-500-m-biala-30-kg-19272.html"}]
     },
     {
      "id": "pulloutRunners",
      "name": "Prowadnice kulkowe Häfele z cichym domykiem (hamulcem) H45, pełny wysuw, 30 kg (494.02.184), komplet L + P",
-     "spec": "do szuflad za drzwiami; L = {i:K12/pullouts.runner}, {s:pullouts.runner.gap} na stronę; szuflady z {m:drawerBox} na liście cięć",
+     "spec": "do szuflad za drzwiami; L = {i:K12/pullouts.runner}, {s:pullouts.runner.gap} na stronę; szuflady z {m:drawerBox} na liście cięć; zamiast szuflad wewnętrznych Blum ({p:innerDrawers} za szufladę) – patrz uwaga w notatce",
      "qty": "={n:pullouts}",
      "unit": "kpl.",
      "price": 29.52,
      "refs": ["pullouts"],
-     "source": "M-HM Bielsko-Biała; zamiast szuflad wewnętrznych Blum ({p:innerDrawers} za szufladę) – patrz uwaga w notatce",
+     "source": "M-HM Bielsko-Biała",
      "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PROW.KULKOWA-Z-HAMUL.PW450-30KG45MM-494.02.184/1986"}]
     },
     {
      "id": "cutleryTrays",
      "name": "Wkład na sztućce Hettich OrgaTray 440 9195001, antracyt, gł. 441–520 / szer. 701–800",
-     "spec": "zamówić: kolor antracyt, głębokość 441–520 (prowadnice 500), szerokość 701–800 (korpus {k:K14.width}); wys. 55",
+     "spec": "zamówić: kolor antracyt, głębokość 441–520 (prowadnice 500), szerokość 701–800 (korpus {k:K14.width}); wys. 55; zamiast Blum ORGA-LINE ZSI.80VEI6 (495,25)",
      "qty": "={n:innerDrawers}",
      "unit": "szt.",
      "price": 128.56,
      "refs": ["innerDrawers"],
-     "source": "zamiast Blum ORGA-LINE ZSI.80VEI6 (495,25); na zamówienie 3–10 dni rob.",
+     "source": "na zamówienie 3–10 dni rob.",
      "links": [{"name": "akcesoriameble24.pl", "url": "https://akcesoriameble24.pl/product/wklad-orgatray-440-hettich-do-szuflady/"}]
     },
     {
@@ -322,16 +322,23 @@ window.KITCHEN_COST = {
     },
     {
      "id": "legs",
-     "name": "Nóżka Häfele AXILO H 150 (140–170) 637.76.355 + klips cokołu przykręcany 637.38.054",
-     "spec": "{s:carcass.legs} na korpus stojący, cofnięte za cokół",
+     "name": "Nóżka Häfele AXILO H 150 (140–170) 637.76.355",
+     "spec": "{s:carcass.legs} na korpus stojący, cofnięte za cokół; regulacja kluczem od przodu, przed założeniem cokołu",
      "qty": "={n:legs}",
      "unit": "szt.",
-     "price": 4.33,
-     "source": "nóżka 3,23 + klips 1,10; regulacja kluczem od frontu przez cokół",
-     "links": [
-      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/AXILO-Nozka-meblowa-H-150-mm-140-170mm-637.76.355/2210"},
-      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/AXILO%2CHE-Zatrzask-Klips-do-cokolu-do-przykrecania-do-nozki-637.38.054/2195"}
-     ]
+     "price": 3.23,
+     "source": "",
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/AXILO-Nozka-meblowa-H-150-mm-140-170mm-637.76.355/2210"}]
+    },
+    {
+     "id": "plinthClips",
+     "name": "Klips cokołu przykręcany Häfele 637.38.054",
+     "spec": "na przednich nóżkach",
+     "qty": "={n:legs}/2",
+     "unit": "szt.",
+     "price": 1.1,
+     "source": "",
+     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/AXILO%2CHE-Zatrzask-Klips-do-cokolu-do-przykrecania-do-nozki-637.38.054/2195"}]
     },
     {
      "id": "shelfPins",
@@ -365,35 +372,10 @@ window.KITCHEN_COST = {
      "links": [{"name": "g-s.com.pl", "url": "https://g-s.com.pl/zlacze-skrecane-meblowe-fi-5-m4-nikiel.html"}]
     },
     {
-     "id": "wallHangers",
-     "name": "Zawieszka CAMAR 807 z regulacją, kpl. L + P",
-     "spec": "słupki: pion u góry (regulacja głębokości 19, wysokości 22), zabezpieczenie przed przewróceniem; ciężar niosą nóżki",
-     "qty": "={n:wallFixed.tall}",
-     "unit": "kpl.",
-     "price": 26.44,
-     "refs": ["wallFixing"],
-     "source": "2 × 13,22 (L + P)",
-     "links": [
-      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CAMAR-807-Zawieszka-meblowa-do-szafek-dolnych-na-wcisk-udzwig-240kgpare-Lewa-290.40.902/1755"},
-      {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CAMAR-807-Zawieszka-meblowa-do-szafek-dolnych-na-wcisk-udzwig-240kgpare-Prawa-290.40.901/1754"}
-     ]
-    },
-    {
-     "id": "wallPlates",
-     "name": "Płytka ścienna CAMAR 897 60 × 70 do zawieszki 807",
-     "spec": "1 na zawieszkę",
-     "qty": "={n:wallFixed.tall}*2",
-     "unit": "szt.",
-     "price": 9,
-     "refs": ["wallFixing"],
-     "source": "szacunek: bricozor.com 1,67 € netto; w PL zapytać M-HM",
-     "links": [{"name": "bricozor.com", "url": "https://www.bricozor.com/ferrures-fixation-elements-suspendus-bas-807-camar-plaquette.html"}]
-    },
-    {
      "id": "wallBrackets",
      "name": "Kątownik meblowy wąski 40 × 40 × 17 Domax",
-     "spec": "korpusy dolne i górne do ściany: {v:wallFixingsPerCarcass} na korpus, na trawersie tylnym / wieńcu górnym; wkręty 4 × 16 do płyty",
-     "qty": "=({n:wallFixed.base}+{n:wallFixed.wall})*{v:wallFixingsPerCarcass}",
+     "spec": "listwa tylna do ściany: 1 na górze każdej listwy tylnej, w szczelinie między korpusami",
+     "qty": "={n:wallStrips}",
      "unit": "szt.",
      "price": 3.79,
      "refs": ["wallFixing"],
@@ -402,14 +384,47 @@ window.KITCHEN_COST = {
     },
     {
      "id": "wallAnchors",
-     "name": "Kołek rozporowy fischer SX Plus S 8 × 40 z wkrętem 5,5 × 55, opak. 10 szt.",
-     "spec": "1 na kątownik, {v:camarPlateScrews} na płytkę CAMAR; ściana pełna",
-     "qty": "=ROUNDUP((({n:wallFixed.base}+{n:wallFixed.wall})*{v:wallFixingsPerCarcass}+{n:wallFixed.tall}*2*{v:camarPlateScrews})/10,0)",
+     "name": "Kołek fischer DuoPower 8 × 65 z wkrętem, opak. 20 + 5 szt.",
+     "spec": "1 na kątownik; gazobeton",
+     "qty": "=ROUNDUP({n:wallStrips}/25,0)",
      "unit": "op.",
-     "price": 21.49,
+     "price": 30.99,
      "refs": ["wallFixing"],
      "source": "",
-     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/kolek-rozporowy-sx-plus-s-z-wkretem-8-x-40-mm-10-szt-fischer-88791045.html"}]
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/kolki-montazowe-8x65-mm-z-wkretem-duopower-20-sztuk-5-gratis-94769354.html"}]
+    },
+    {
+     "id": "smallScrews",
+     "name": "Wkręt do drewna 4 × 16 Standers, łeb wpuszczany, opak. 35 szt.",
+     "spec": "kątownik do listwy tylnej (2 na kątownik), plecy HDF do korpusów (ok. {v:backScrewsPerM2} na m²); 16 nie przebija płyty 18",
+     "qty": "=ROUNDUP(({n:wallStrips}*2+{back.m2}*{v:backScrewsPerM2})/35,0)",
+     "unit": "op.",
+     "price": 4.19,
+     "refs": ["wallFixing"],
+     "source": "",
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/wkret-4-x-16-mm-35-szt-standers-82231803.html"}]
+    },
+    {
+     "id": "jointScrews",
+     "name": "Wkręt do drewna 4 × 30 Standers, łeb wpuszczany, opak. 25 szt.",
+     "spec": "listwa i listwa tylna do pierwszego korpusu, {v:screwsPerMetre} na mb każdej",
+     "qty": "=ROUNDUP({n:joints.screwed}/1000*{v:screwsPerMetre}*2/25,0)",
+     "unit": "op.",
+     "price": 3.79,
+     "refs": ["wallFixing"],
+     "source": "",
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/wkret-4-x-30-mm-25-szt-standers-82231806.html"}]
+    },
+    {
+     "id": "brassScrews",
+     "name": "Wkręt mosiądzowany 4 × 30 PZ, łeb stożkowy",
+     "spec": "drugi korpus do listwy i listwy tylnej, od środka korpusu (widoczne), {v:screwsPerMetre} na mb każdej",
+     "qty": "=ROUNDUP({n:joints.fromInside}/1000*{v:screwsPerMetre}*2,0)",
+     "unit": "szt.",
+     "price": 0.4,
+     "refs": ["wallFixing"],
+     "source": "szacunek wg agas.pl (mosiądzowane 4 × 50, 40 zł / 100 szt.); 4 × 30 do znalezienia",
+     "links": [{"name": "agas.pl", "url": "https://agas.pl/wkrety-i-gwozdzie/10724-wkrety-mosiadzowane-4x50-pz-leb-stozkowy-panelvit-100szt-8014174019531.html"}]
     },
     {
      "id": "brackets",
@@ -467,22 +482,22 @@ window.KITCHEN_COST = {
     {
      "id": "worktopEdging",
      "name": "Obrzeże ABS-H1180 ST37 43/1,5 Dąb Halifax naturalny",
-     "spec": "do blatów: krawędzie z ABS wg listy cięć (blok BLATY): przód, koniec blatu nad bokiem blatu, w wyspie także tył",
+     "spec": "do blatów: krawędzie z ABS wg listy cięć (blok BLATY): przód, koniec blatu nad bokiem blatu, w wyspie także tył; blaty Egger 100/1.5 bez obrzeża",
      "qty": "={worktops.edge}*(1+{v:edgeAllowance})",
      "unit": "m",
      "price": 10.1,
      "refs": ["worktops"],
-     "source": "blaty Egger 100/1.5 bez obrzeża; oklejanie maszynowe - zapytać M-HM",
+     "source": "oklejanie maszynowe - zapytać M-HM",
      "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-H1180-ST37-431.5MM-Dab-Halifax-naturalny/1401"}]
     },
     {
      "id": "splash",
      "name": "Panel ścienny {m:splash}, arkusz {v:sheet.length} × {v:sheet.width} × {t:splash}",
-     "spec": "grupa 1, przy oknie: jeden pas",
+     "spec": "grupa 1, przy oknie: jeden pas; płyta 18,6 mm (0,6 mm różnicy niewidoczne na ścianie)",
      "qty": 1,
      "unit": "ark.",
      "price": 667.18,
-     "source": "M-HM Bielsko-Biała, płyta 18,6 mm (0,6 mm różnicy niewidoczne na ścianie)",
+     "source": "M-HM Bielsko-Biała",
      "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-H1180-ST37-2800x2070x18.6MM-Dab-Halifax-naturalny/135"}]
     },
     {
@@ -617,11 +632,11 @@ window.KITCHEN_COST = {
     {
      "id": "seal",
      "name": "Uszczelka silikonowa T, biała, wciskana",
-     "spec": "szczelina między GK a meblami (3–5)",
+     "spec": "szczelina między GK a meblami (3–5); sprawdzić rozmiar do szczeliny",
      "qty": "=ROUNDUP({n:plasterEdge}/1000*(1+{v:edgeAllowance}),0)",
      "unit": "mb",
      "price": 21.53,
-     "source": "sprawdzić rozmiar do szczeliny",
+     "source": "",
      "links": [{"name": "centrumuszczelek.pl", "url": "https://centrumuszczelek.pl/uszczelka-typu-t/uszczelka-silikonowa-biala-wciskana-typ-t-0995462-6199"}]
     }
    ]
@@ -842,10 +857,8 @@ window.KITCHEN_COST = {
     {
      "id": "wallFixing",
      "topic": "Mocowanie korpusów do ściany",
-     "description": "Każdy korpus przy ścianie jest przymocowany do ściany, wyspa stoi wolno. Słupki ({n:wallFixed.tall}): zawieszki CAMAR 807 u góry, na płytkach 897; pion ustawia się regulacją głębokości. Dolne ({n:wallFixed.base}) i górne ({n:wallFixed.wall}): po {v:wallFixingsPerCarcass} kątowniki na górze korpusu; ramię na ścianie mostkuje {s:carcass.wallGap} odstępu.",
-     "assumed": "Ściana pełna (kołki 8 mm). Górne korpusy przykręcić przed korpusem nad nimi i przed zabudową GK.",
-     "decide": "CAMAR 807: 4 otwory Ø10 w boku wg szablonu Camar (nie ma ich na liście cięć) i wycięcie w plecach HDF przy zawieszce – sprawdzić z próbką przed wierceniem.",
-     "links": [{"name": "camar.it – system 807", "url": "https://camar.it/prodotti_sistemi_807.php"}]
+     "description": "Listwy tylne tak wysokie jak korpusy obok; na styku dwóch korpusów jeden nad drugim górna listwa zaczyna się {s:frame.bracketSpace} wyżej: miejsce na kątownik. Kątownik na górze każdej listwy tylnej, do ściany ({n:wallStrips}). Listwa i listwa tylna przykręcone do pierwszego korpusu zwykłym wkrętem; drugi korpus do listwy wkrętem mosiądzowanym od środka. Wyspa stoi wolno.",
+     "assumed": "Gazobeton, kołki DuoPower 8."
     },
     {
      "id": "corner",

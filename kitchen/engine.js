@@ -104,7 +104,7 @@
 
   // settings the engine reads: a missing one stops the build (checkSettings)
   const REQUIRED_SETTINGS = [
-    'carcass.depth', 'carcass.wallGap', 'front.shakerRail', 'plinth.setback',
+    'carcass.depth', 'carcass.wallGap', 'front.shakerRail', 'plinth.setback', 'frame.bracketSpace',
     'rails.depth', 'rails.hobFront', 'rails.hobPanelGap', 'back.inset',
     'shelf.setback', 'shelf.clearance', 'shelf.pins', 'shelf.perDoor', 'shelf.ventGap', 'shelf.fridgeNiche', 'frame.depth',
     'hinges.fromEnd', 'hinges.supportDepth', 'hinges.aboveShelf', 'hinges.perDoor',
@@ -319,9 +319,10 @@
     const groups = {}, carcasses = [], fronts = [], boards = [];
     const frames = [], plinths = [], panels = [], plaster = [], worktops = {};
     // engine counts, used by cost.html as {n:name}; type and tag: items per type / tag ({n:type.oven}, {n:tag.bins});
-    // wallFixed: carcasses fixed to the wall, per carcass type ({n:wallFixed.tall})
+    // wallStrips: back strips at a wall, each fixed to it with a bracket on top; joints: mm of carcass side screwed to a frame and its
+    // back strip, screwed (the first carcass) or fromInside (the second one, the frame between them)
     const counts = {
-      carcasses: 0, floorCarcasses: 0, wallFixed: { base: 0, tall: 0, wall: 0 }, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
+      carcasses: 0, floorCarcasses: 0, wallStrips: 0, joints: { screwed: 0, fromInside: 0 }, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
       shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, pullouts: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
       plasterUD: 0, plasterCD: 0, plasterEdge: 0, plinthHeight: 0, drillHoles: 0, cupHoles: 0, cutouts: 0, type: {}, tag: {}
     };
@@ -419,7 +420,6 @@
       for (const item of K.members) item.carcass = K;
       counts.legs += K.legs;
       counts.floorCarcasses += K.floor;
-      if (!groups[K.group].island) counts.wallFixed[K.type]++; // every carcass at a wall is fixed to it (stability); the island stands free
       counts.sinks += K.sink;
       counts.hobs += K.hob;
       counts.fridges += K.fridge;
@@ -575,10 +575,29 @@
             lacquer: LACQUER.frame, lacqueredSides: FRAME_LACQUERED_SIDES
           });
           if (!item.carcassName) {
-            addBoard({
-              id: 'backStrip', name: 'Listwa tylna ' + frameSettings.depth, a: frameSettings.depth, b: Math.max(width, height), material: materialFor.carcass, layer: 'carcasses',
-              group: G.group, col: item.col, box: [u0, u1, v0, v1, carcassBack, carcassBack + frameSettings.depth], strip: true, edges: [] // hidden behind its frame
-            });
+            // back strips: as high as the carcasses beside the frame, one per carcass one above the other; a strip on another one starts
+            // frame.bracketSpace higher, room for the wall bracket on top of the strip below (the island stands free: no bracket)
+            const along = height > width;
+            const beside = along ? carcasses.filter(K => K.group === G.group && (K.u0 === u1 || K.u1 === u0) && K.v0 < v1 && K.v1 > v0) : [];
+            let spans = [[v0, v1]];
+            if (beside.length) {
+              const joints = [...new Set(beside.filter(K => beside.some(L => L.v0 === K.v1 && L.u0 === K.u0)).map(K => K.v1))].sort((a, b) => a - b);
+              const ends = [Math.max(v0, Math.min(...beside.map(K => K.v0))), ...joints, Math.min(v1, Math.max(...beside.map(K => K.v1)))];
+              spans = ends.slice(0, -1).map((a, i) => [i ? a + frameSettings.bracketSpace : a, ends[i + 1]]);
+              if (!G.island) counts.wallStrips += spans.length;
+              // the frame and its strips are screwed to the carcass on one side; the carcass on the other side from inside
+              const length = Ks => Ks.reduce((sum, K) => sum + Math.min(K.v1, v1) - Math.max(K.v0, v0), 0);
+              const left = beside.filter(K => K.u1 === u0), right = beside.filter(K => K.u0 === u1);
+              counts.joints.screwed += length(left.length ? left : right);
+              if (left.length) counts.joints.fromInside += length(right);
+            }
+            for (const [s0, s1] of spans) {
+              addBoard({
+                id: 'backStrip', name: 'Listwa tylna ' + frameSettings.depth, a: frameSettings.depth, b: along ? s1 - s0 : width, material: materialFor.carcass, layer: 'carcasses',
+                group: G.group, col: item.col, box: along ? [u0, u1, s0, s1, carcassBack, carcassBack + frameSettings.depth] : [u0, u1, v0, v1, carcassBack, carcassBack + frameSettings.depth],
+                strip: true, edges: [] // hidden behind its frame
+              });
+            }
           }
         } else if (item.type === 'panel') {
           // an edge shows when the front next to it opens: ABS on each edge whose neighbour (touching, overlapping) is a front that opens

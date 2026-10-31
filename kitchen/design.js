@@ -21,7 +21,7 @@ window.KITCHEN_DESIGN = {
   "hinges": {"fromEnd": 100, "supportDepth": 80, "aboveShelf": 30, "perDoor": [{"maxHeight": 900, "count": 2}, {"maxHeight": 1600, "count": 3}, {"count": 4}]},
   "drawers": {"dFrom": 350, "D": {"side": 224, "back": 199}, "M": {"side": 83, "back": 84}, "bottom": {"inset": 75, "depth": 476, "fromWall": 52}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "back": 84, "frontDeduction": 132}},
   "front": {"shakerRail": 50},
-  "frame": {"depth": 100},
+  "frame": {"depth": 100, "bracketSpace": 40},
   "plinth": {"setback": 70},
   "worktop": {"overhang": 18},
   "island": {"backPanel": true},
