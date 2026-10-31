@@ -471,7 +471,7 @@ window.KITCHEN_COST = {
     {
      "id": "islandWorktop",
      "name": "{m:islandWorktop}, {v:worktopBoard.islandDepth} × {v:worktopBoard.length} × {t:islandWorktop}",
-     "spec": "blat wyspy ({w:3.depth}) + 2 boki blatu z 1 płyty; prosta krawędź Egger 100/1.5; tylna krawędź po przycięciu do oklejenia",
+     "spec": "blat wyspy ({w:3.depth}) + 2 boki blatu; boki muszą być dwustronne - rozważ klejenie dwóch paneli 18.6; prosta krawędź Egger 100/1.5; tylna krawędź po przycięciu do oklejenia",
      "qty": 1,
      "unit": "szt.",
      "price": 2056.93,
