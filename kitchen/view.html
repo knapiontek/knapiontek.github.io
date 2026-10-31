@@ -514,7 +514,7 @@ function oakTexture() {
   image.onload = () => {
     t.needsUpdate = true;
     if (typeof sceneChanged === 'function') sceneChanged();
-    if (typeof renderFinishes === 'function') renderFinishes(); // the swatches show the decor once it is loaded
+    if (typeof renderFinishes === 'function') renderFinishes(); // swatches with the real decor
   };
   image.src = decor.image;
   return t;
@@ -615,10 +615,7 @@ function setMetal(name) {
   sceneChanged();
 }
 
-// a board with a core colour in design.js (chipboard, the lacquered board, the worktop): faces and finished edges (ABS: board.edges;
-// frames: lacquered edges from engine.js) in the board colour, bare cut edges in the core colour with chips in it – so a bare edge never
-// looks like a light board. Fronts are lacquered all round and are drawn without this; the plinth has no finished edge.
-// The chips come from the position in the room, so they keep their size on every face, without texture coordinates.
+// finished edges in the board colour, bare edges as speckled chipboard, so a bare edge never looks like a light board
 const coreMaterial = {}, edgedMeshes = new Set();
 function coreLook(code) {
   if (coreMaterial[code]) return coreMaterial[code];
@@ -628,10 +625,10 @@ function coreLook(code) {
       '#include <project_vertex>\nvRoomPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;');
     shader.fragmentShader = 'varying vec3 vRoomPosition;\nfloat chipHash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }\n' +
       shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
-        float chip = chipHash(floor(vRoomPosition * 600.0));          // chips of about 1.7 mm
-        float flake = chipHash(floor(vRoomPosition * 160.0) + 17.0);  // flakes of about 6 mm
+        float chip = chipHash(floor(vRoomPosition * 600.0));          // small chips
+        float flake = chipHash(floor(vRoomPosition * 160.0) + 17.0);  // larger brown flakes
         diffuseColor.rgb *= 0.74 + 0.32 * chip;
-        if (flake > 0.8) diffuseColor.rgb *= vec3(0.78, 0.68, 0.52);  // brown wood flakes`);
+        if (flake > 0.8) diffuseColor.rgb *= vec3(0.78, 0.68, 0.52);`);
   };
   return (coreMaterial[code] = m);
 }
@@ -944,27 +941,25 @@ const bowlU0 = sinkU - sinkData.bowl.width / 2, bowlU1 = sinkU + sinkData.bowl.w
 const sinkTop = sinkRun ? worktopTopOf(sinkRun) : 0;
 const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowl.height;
 const tapN = sinkRun ? worktopOf(groupOfRun[sinkRun]).n0 + SCENE.installation.sink.tapFromBack : 0; // from the back edge of the worktop
-// a worktop piece (engine.js worktopPieces): the top board, or a worktop fall in its own layer, in run coordinates so its edges keep
-// their sides. ABS edges (piece.edges) in the decor, the other edges bare (the core). The top board with cut-outs (sink, hob: design.js
-// settings.cutouts) is built of boxes around the holes: their walls are bare too.
+// a worktop or a worktop fall (own layer): ABS edges in the decor, the rest bare; built of boxes around its cut-outs
 function worktopPiece(run, piece) {
   const { u0, u1, v0, v1 } = piece.item, W = worktopOf(groupOfRun[run]), fall = hasTag(piece.item, 'fall');
   const P = runLayer[run][fall ? 'worktopFalls' : 'worktops'], decor = worktopMaterialOf(run), banded = new Set(piece.edges.map(([side]) => side));
-  const faces = fall ? ['left', 'right'] : ['top', 'bottom']; // the decor faces of the board
+  const faces = fall ? ['left', 'right'] : ['top', 'bottom']; // the decor faces
   const holes = (piece.cutouts || []).map(c => [c.u0, c.u1, c.n0, c.n1]);
-  // along the run: strips between the hole ends; across: each strip minus its holes
+  // strips along the board, each split around its cut-outs
   const cuts = [...new Set([u0, u1, ...holes.flatMap(([a, b]) => [a, b])])].sort((x, y) => x - y);
   for (let i = 0; i + 1 < cuts.length; i++) {
     const a = cuts[i], b = cuts[i + 1];
     const across = holes.filter(([h0, h1]) => h0 <= a && h1 >= b).sort((x, y) => x[2] - y[2]);
-    const spans = []; // [n0, n1] of the board in this strip, around its holes
+    const spans = [];
     let n = W.n0;
     for (const [, , h0, h1] of across) { spans.push([n, h0]); n = h1; }
     spans.push([n, W.n1]);
     for (const [n0, n1] of spans) {
       const m = localBox(P, a, b, v0, v1, n0, n1, decor);
       if (!m) continue;
-      // a face on the outline of the board: ABS when engine.js names that edge; any other face (a hole wall) is bare
+      // an outer edge gets ABS if the engine says so; a cut-out wall stays bare
       const onOutline = { left: a === u0, right: b === u1, back: n0 === W.n0, front: n1 === W.n1, top: true, bottom: true };
       m.material = BOX_SIDES.map(side => (faces.includes(side) || (onOutline[side] && banded.has(side)) ? decor : coreLook(piece.material)));
       m.userData.grain = fall ? 'y' : 'x';
@@ -2018,14 +2013,12 @@ const frontName = model.materials[model.materialFor.cabinet].name;
 document.getElementById('frontName').textContent = frontName;
 document.title = 'Kuchnia ' + frontName;
 const swatch = (background, use, name) => '<li><i style="background:' + background + '"></i><small>' + esc(use) + '</small><b>' + esc(name) + '</b></li>';
-// a swatch as the view draws the material: a flat piece lit by the room's ambient light and a lamp from the front, read back as an
-// image – so the colours match the 3D view (its light, tone mapping, texture, clearcoat). A board with a core: its face above and
-// its bare edge (coreLook) in the lower part. Size in metres, texture coordinates in metres as on the boxes of the scene.
+// swatches drawn with the 3D materials, so they match the view; a board with a core also shows its bare edge at the bottom
 const SWATCH = { width: 0.16, height: 0.034, edge: 0.01, pixels: 2000 }; // pixels per metre
 const swatchScene = new THREE.Scene(), swatchCamera = new THREE.OrthographicCamera(-SWATCH.width / 2, SWATCH.width / 2, SWATCH.height / 2, -SWATCH.height / 2, 0.01, 1);
 swatchCamera.position.set(0, 0, 0.5);
 const swatchLight = new THREE.DirectionalLight(0xffffff, 2.5);
-swatchLight.position.set(0, 1, 0.5); // from above: no highlight towards the camera
+swatchLight.position.set(0, 1, 0.5); // from above: no glare
 swatchScene.add(swatchLight);
 function swatchPiece(material, y0, y1) {
   const geometry = new THREE.PlaneGeometry(SWATCH.width, y1 - y0), uv = geometry.attributes.uv;

@@ -1,14 +1,6 @@
-/* Kitchen textures - read by view.html. Written for each project (LLM). Plain JSON after "window.KITCHEN_TEXTURES =".
-   The decor images of the project materials, as data URLs (so the page also works opened from disk). Sizes in mm.
-     oak         the wood decor drawn on every design.js material without a colour (worktops, wall panel)
-       name      decor        size  {length along the grain, width} the image covers
-       source    where the image comes from; "assumed" = not in the documents, to check
-       image     JPEG data URL
-     floors      the floor tiles to choose from in view.html (Widok › Podłoga), by key; the first is the default:
-       name      manufacturer and pattern     look, finish   what it is     size  {length, width} of one tile
-       grout     colour of the joint (epoxy grout matched to the tile)     price   per m²
-       links     where it is sold [{name, url}]
-       faces     JPEG data URLs of the tile faces (one image = one whole tile), laid at random */
+/* Kitchen textures for view.html: decor images as data URLs (so the page works from disk). Written per project (LLM).
+     oak      the wood decor of every material without a colour; size = the area the image covers, mm
+     floors   the floor tiles to choose from; the first one is the default */
 window.KITCHEN_TEXTURES = {
  "oak": {"name": "Egger H1180 ST37 dąb Halifax naturalny", "size": {"length": 2800, "width": 1575},
   "source": "egger.com, decor H1180_37 (scan 4096 × 2304, here 2048 × 1152); size the scan covers: assumed",

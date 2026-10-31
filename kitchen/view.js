@@ -1,26 +1,12 @@
-/* Kitchen project scene - read by view.html. Written for each project (LLM). Plain JSON after "window.KITCHEN_VIEW =".
-   Only what the 3D view needs and design.js does not hold: the cabinets come from design.js through engine.js, the
-   appliances from appliances.js; view.html names no group, run or size of this kitchen.
-   Room coordinates in mm: x along the window wall from the start of group 1, z out from the window wall, y up;
-   a point is {x, y, z} (on the floor plan {x, z}), a size {length, width}.
-     placement     where each design.js group stands, by group number: x, z of its first column at the wall line (n = 0),
-                   rotation = turn in degrees (0: along the window wall, facing the room), name = its label in the view.
-                   A group whose worktop has the tag island (design.js) stands free: no wall behind it.
-     room          ceiling (measured), the other sizes rounded to whole metres; rightWallGroup: the group against the right
-                   wall (the wall is at its x); floorJoint: the tile joint (the tiles: textures.js floors);
-                   floorTile: the drawn floor when textures.js has no floors; wallColor
-     installation  how appliances are fitted here: sink tap (tapFromBack: from the back edge of the worktop), its trap
-                   (trapTop, wallOutlet: heights above the floor); hood (bottom: height above the floor)
-     window        x of its left edge, width, sill and height above the floor, reveal depth, frame finish
-     finishes      finishes shown in the Project tab next to the design.js materials: use, name, material (the material
-                   view.html draws it with, e.g. granite = the sink composite)
-     hardware      sizes for the drawing only, no effect on the cost: handle (metal: a key of metals); open: angle of each
-                   kind of door in degrees, drawer travel, doorStop (carcass → degrees where a stop holds its door, e.g. a
-                   bumper on the wall panel); leg, hinge, drawer, bins, plinthGrille
-     metals        color, roughness, metalness of each metal (as three.js names them)
-     lights        pendants: positions and the shade bottom height; downlights: a position, or {between: [sink, hob], z}:
-                   x halfway between the sink axis and the hob axis
-     cameras       the views in the dock, in order: position of the camera and the target it looks at; the first one opens */
+/* Kitchen scene for view.html: only what the 3D view needs beyond design.js and appliances.js. Written per project (LLM).
+   Room coordinates in mm: x along the window wall, z out from it, y up.
+     placement     where each group stands (by group number) and how it is turned; an island stands free
+     room          walls, floor and ceiling; rightWallGroup: the group against the right wall
+     installation  how the sink, its trap and the hood are fitted here
+     finishes      extra finishes for the Project tab, drawn with a material of the view
+     hardware      sizes for the drawing only (no effect on the cost); open: how far doors and drawers open
+     lights        pendants and downlights; a downlight can sit halfway between the sink and the hob
+     cameras       the views in the dock; the first one opens */
 window.KITCHEN_VIEW = {
  "placement": {
   "1": {"name": "pod oknem", "x": 0, "z": 0, "rotation": 0},

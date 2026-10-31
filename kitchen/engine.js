@@ -1,17 +1,8 @@
 /* engine.js - builds the kitchen model from design.js for design.html, cost.html and view.html.
-   Deterministic: the same project always gives the same model. No drawing, no project numbers: every number comes
-   from design.js (settings, columns, components) or from the tables at the top of this file.
-
+   The same project always gives the same model. No drawing and no numbers of this kitchen: they all come from design.js.
    Coordinates in mm per group: u along the group, v up from the floor, n out from the wall; a box is [u0, u1, v0, v1, n0, n1].
-   data.materials:  what you buy, by code: name, thickness, color, lacquered, core, depth (a worktop: its depth), uses (USES: the
-                    board types and carcass parts made of it; each use in exactly one material).
-   data.settings:   construction settings (REQUIRED_SETTINGS).
-   data.columns:    column widths per group, integer mm.
-   data.notes:      the design notes {name, description, details}.
-   data.components: group, column (the first one), span (number of columns), height, type (one of TYPES), tags (a list of tags of
-                    that type), carcass (carcass name), handle (top | bottom | left | right), hinge (hinge side left | right),
-                    gaps {left, right, top, bottom} of a front, note.
-   A per-height table (settings ...perDoor) is a list of rows {maxHeight, count}, ascending; the last row has no maxHeight. */
+   design.js: materials (what you buy and what it is used for), settings, notes, columns (widths per group) and components
+   (each in a group, from a column over a span, with a type, tags and for a front its handle, hinge side and gaps). */
 (function (root) {
   'use strict';
 
@@ -134,15 +125,14 @@
   // cut-outs in a worktop: the carcass flag that asks for one -> settings.cutouts[flag] {width, depth, fromBack}, centred on the carcass
   const CUTOUT_FLAGS = ['sink', 'hob'];
 
-  // the horizontal boards of a carcass (board ids): they close a niche, carry drawers behind a door, and no hole may land in one
+  // boards lying flat in a carcass: no hole may hit them
   const HORIZONTAL_BOARDS = ['bottom', 'top', 'rail', 'fixedShelf', 'hobPanel'];
 
   /* ================= 2. SMALL HELPERS ================= */
 
-  // shared by the pages (nothing in the model uses them):
-  // Polish plural: 1 problem, 2-4 problemy, 5+ problemów (12-14: many)
+  // for the pages: the Polish plural form of a count (1 problem, 2 problemy, 5 problemów)
   const plural = (n, one, few, many) => (n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14) ? few : many);
-  // the swatch of a material without a colour (the oak decor), as a CSS background
+  // swatch of a material without a colour (oak)
   const OAK_SWATCH = 'linear-gradient(90deg,#b98a55,#a7774a 40%,#c0935f)';
 
   const valueAt = (obj, dotted) => dotted.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
@@ -152,13 +142,13 @@
   const placeLabel = (group, col, span = 1) => `G${group}[${col}${span > 1 ? '-' + (col + span - 1) : ''}]`;
   const placeOf = item => placeLabel(item.group, item.col, item.span);
 
-  // a per-height table [{maxHeight, count}, ..., {count}] (ascending): the count of the first row the height fits in; null = none
+  // how many shelves, hinges ... a front of this height gets
   const countByHeight = (table, height) => {
     const row = table.find(r => r.maxHeight === undefined || height <= r.maxHeight);
     return row ? row.count : null;
   };
 
-  // tags: a list of tag names (design.js), or text with the names separated by spaces (a table cell in design.html)
+  // tags come as a list (design.js) or as typed text (design.html)
   function parseTags(tags) {
     const words = (Array.isArray(tags) ? tags : String(tags ?? '').split(/[\s,]+/)).map(w => String(w).trim().toLowerCase()).filter(Boolean);
     return { words, tags: words.filter(w => TAG_NAMES.includes(w)), unknown: words.filter(w => !TAG_NAMES.includes(w)) };
@@ -167,8 +157,7 @@
   const tagsOf = type => TAG_NAMES.filter(tag => TAGS[tag].includes(type));
   const readType = value => { const t = String(value ?? '').trim().toLowerCase(); return TYPES.includes(t) ? t : ''; };
 
-  // a board seen on edge must be as thick as its material: a worktop (its height; a worktop fall: its width), a frame (its narrow side).
-  // Returns the use whose material sets the thickness, the size to compare and its name, or null for the other types.
+  // a worktop or a frame is as thick as its material: which size to compare
   function onEdgeSize(item, island) {
     const width = item.u1 - item.u0, height = item.v1 - item.v0;
     if (item.type === 'worktop') {
@@ -223,7 +212,7 @@
   /* ================= 4. LAYOUT: components -> items stacked in their columns ================= */
 
   const readGap = x => (x === '' || x == null ? NaN : Number(x)); // an empty gap is not 0
-  const gapsText = gaps => [gaps.left, gaps.right, gaps.top, gaps.bottom].join(':'); // as the pages print them: left:right:top:bottom
+  const gapsText = gaps => [gaps.left, gaps.right, gaps.top, gaps.bottom].join(':'); // left:right:top:bottom
 
   // design.js component -> item fields
   function readComponent(c, index) {
@@ -880,8 +869,7 @@
     for (const G of Object.values(groups)) {
       const W = worktops[G.group];
       if (!W) continue;
-      // ABS on the edges seen in the room: the front; the back of an island; an end of the top board over a worktop fall (the corner
-      // of the waterfall). The other edges meet a wall, the floor, a fall or a cabinet; the cut-outs stay bare (the sink and the hob cover them)
+      // ABS where an edge is seen; cut-outs stay bare (the sink and the hob cover them)
       const items = G.items.filter(i => i.type === 'worktop'), falls = items.filter(i => hasTag(i, 'fall'));
       for (const item of items) {
         const fall = hasTag(item, 'fall'), length = fall ? item.v1 - item.v0 : item.u1 - item.u0;

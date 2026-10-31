@@ -1,22 +1,10 @@
-/* Kitchen appliances - manufacturer data only: what each appliance is, its sizes and where they come from. It names
-   no cabinet, worktop or room; how an appliance is fitted in this kitchen is decided by the pages that read it
-   (cost.html, view.html). Written for each project (LLM), from the manufacturers' documents.
-   Plain JSON after "window.KITCHEN_APPLIANCES =", one entry per appliance. Sizes in mm as {width, height, depth}
-   (the parts a size has), a range as {min, max}, a vertical span as {bottom, top}.
-     name         make and model
-     body         the appliance body (built-in appliances: the part that goes into the niche)
-     front        the visible fascia {width, height, thickness}, in front of the niche
-     frontBottom  front bottom from the body bottom
-     feet         height of the feet {min, max}; min = max: fixed. On adjustable feet the front is centred in its module
-     door         the appliance door: hinge = the edge it turns about (bottom | left | right, seen from the front);
-                  height = {min, max} of a door that grows with the feet (dishwasher)
-     doors        fridge: the freezer and the fridge door {bottom, top} from the appliance bottom; setback = how far
-                  behind the niche front the body ends and the doors start
-     niche        the installation niche {height: {min, max}, width: {min, max}, depth}
-     source       where every value comes from; "assumed" = not in the documents, to check
-     links        the documents [{name, url}]; the first one is the installation drawing or the product page
-   Other fields: dishwasher baseSetback (how far behind the front the base is open); hob glass; sink outer and bowl
-   (height = how deep the bowl goes down), rim and wall thickness; hood chimney. */
+/* Kitchen appliances: what the manufacturers give - sizes and documents. Written per project (LLM).
+   How an appliance fits in this kitchen is decided by cost.html and view.html, not here.
+   Sizes in mm; a range is {min, max}. Less obvious fields:
+     feet      min = max: fixed feet; adjustable feet: the front is centred in its place
+     door      hinge: the edge the door turns on; height: a door that grows with the feet (dishwasher)
+     doors     fridge doors from the appliance bottom; setback: where the doors start behind the front
+     source    where the values come from; "assumed" = still to check */
 window.KITCHEN_APPLIANCES = {
  "oven": {"name": "Bosch HBA534BB3", "body": {"width": 558, "height": 570, "depth": 528.5}, "front": {"width": 594, "height": 595, "thickness": 19.5}, "frontBottom": 0, "feet": {"min": 0, "max": 0}, "door": {"hinge": "bottom"},
   "niche": {"height": {"min": 585, "max": 595}, "width": {"min": 560, "max": 568}, "depth": 550},
