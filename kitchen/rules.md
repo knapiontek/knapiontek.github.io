@@ -51,7 +51,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
   - słupek: stoi na cokole i nie ma blatu;
   - górna: nie stoi na cokole.
 - Korpus stojący na cokole ma nóżki.
-- **Mocowanie:** listwa tylna jest przymocowana do ściany kątownikiem na jej górze (stabilność). Listwę i listwę tylną przykręca się do pierwszego korpusu zwykłym wkrętem, a drugi korpus do nich wkrętem od środka. Wyspa stoi wolno.
+- **Mocowanie:** listwa tylna jest przymocowana do ściany kątownikiem na jej górze (stabilność); najwyższa listwa w stosie nie ma kątownika. Listwę i listwę tylną przykręca się do pierwszego korpusu zwykłym wkrętem, a drugi korpus do nich wkrętem od środka. Wyspa stoi wolno.
 - **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka lub zamrażarka.
 - **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.

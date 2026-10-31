@@ -319,7 +319,7 @@
     const groups = {}, carcasses = [], fronts = [], boards = [];
     const frames = [], plinths = [], panels = [], plaster = [], worktops = {};
     // engine counts, used by cost.html as {n:name}; type and tag: items per type / tag ({n:type.oven}, {n:tag.bins});
-    // wallStrips: back strips at a wall, each fixed to it with a bracket on top; joints: mm of carcass side screwed to a frame and its
+    // wallStrips: back strips at a wall fixed to it with a bracket (not the top one of a stack: no room above it); joints: mm of carcass side screwed to a frame and its
     // back strip, screwed (the first carcass) or fromInside (the second one, the frame between them)
     const counts = {
       carcasses: 0, floorCarcasses: 0, wallStrips: 0, joints: { screwed: 0, fromInside: 0 }, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
@@ -584,7 +584,7 @@
               const joints = [...new Set(beside.filter(K => beside.some(L => L.v0 === K.v1 && L.u0 === K.u0)).map(K => K.v1))].sort((a, b) => a - b);
               const ends = [Math.max(v0, Math.min(...beside.map(K => K.v0))), ...joints, Math.min(v1, Math.max(...beside.map(K => K.v1)))];
               spans = ends.slice(0, -1).map((a, i) => [i ? a + frameSettings.bracketSpace : a, ends[i + 1]]);
-              if (!G.island) counts.wallStrips += spans.length;
+              if (!G.island) counts.wallStrips += Math.max(1, spans.length - 1);
               // the frame and its strips are screwed to the carcass on one side; the carcass on the other side from inside
               const length = Ks => Ks.reduce((sum, K) => sum + Math.min(K.v1, v1) - Math.max(K.v0, v0), 0);
               const left = beside.filter(K => K.u1 === u0), right = beside.filter(K => K.u0 === u1);

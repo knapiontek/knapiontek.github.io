@@ -374,7 +374,7 @@ window.KITCHEN_COST = {
     {
      "id": "wallBrackets",
      "name": "Kątownik meblowy wąski 40 × 40 × 17 Domax",
-     "spec": "listwa tylna do ściany: 1 na górze każdej listwy tylnej, w szczelinie między korpusami",
+     "spec": "listwa tylna do ściany: na górze listwy pod korpusem nad nią (w szczelinie); pod blatem od środka korpusu; górna listwa w stosie bez kątownika",
      "qty": "={n:wallStrips}",
      "unit": "szt.",
      "price": 3.79,
@@ -857,7 +857,7 @@ window.KITCHEN_COST = {
     {
      "id": "wallFixing",
      "topic": "Mocowanie korpusów do ściany",
-     "description": "Listwy tylne tak wysokie jak korpusy obok; na styku dwóch korpusów jeden nad drugim górna listwa zaczyna się {s:frame.bracketSpace} wyżej: miejsce na kątownik. Kątownik na górze każdej listwy tylnej, do ściany ({n:wallStrips}). Listwa i listwa tylna przykręcone do pierwszego korpusu zwykłym wkrętem; drugi korpus do listwy wkrętem mosiądzowanym od środka. Wyspa stoi wolno.",
+     "description": "Listwy tylne tak wysokie jak korpusy obok; na styku dwóch korpusów jeden nad drugim górna listwa zaczyna się {s:frame.bracketSpace} wyżej: miejsce na kątownik. Kątowniki do ściany ({n:wallStrips}): na górze listwy tylnej pod korpusem nad nią; pod blatem od środka korpusu; górnej listwy w stosie nie (nad nią listwa pozioma i GK). Listwa i listwa tylna przykręcone do pierwszego korpusu zwykłym wkrętem; drugi korpus do listwy wkrętem mosiądzowanym od środka. Wyspa stoi wolno.",
      "assumed": "Gazobeton, kołki DuoPower 8."
     },
     {
