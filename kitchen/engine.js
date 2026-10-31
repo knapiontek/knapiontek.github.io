@@ -85,7 +85,7 @@
     if (hasTag(item, 'fridge', 'freezer')) return 'fridge';
     return 'door';
   }
-  const HINGED = ['door', 'fridge']; // openings with a hinge side (hg); only 'door' gets hinges counted
+  const HINGED = ['door', 'fridge']; // openings with a hinge side; only 'door' gets hinges counted
   const opens = item => FRONT_TYPES.includes(item.type) && openingOf(item) !== 'fixed'; // a front that opens
 
   const SIDES = ['top', 'bottom', 'left', 'right']; // the four edges of a front or a panel
@@ -113,7 +113,7 @@
     'drawers.liftAtBottom', 'drawers.liftAbove', 'drawers.inner.gap', 'drawers.inner.back', 'drawers.inner.frontDeduction',
     'carcass.legs', 'island.backPanel', 'worktop.overhang',
     'pullOutShelf.depth', 'pullOutShelf.clearance', 'pullOutShelf.lift', 'pullOutShelf.space', 'pullOutShelf.shelvesAbove',
-    'pullouts.perDoor', 'pullouts.side', 'pullouts.lift', 'pullouts.runner.gap', 'pullouts.runner.lengths',
+    'pullouts.perDoor', 'pullouts.side', 'pullouts.lift', 'pullouts.runner.gap', 'pullouts.runner.lengths', 'pullouts.runner.holes', 'pullouts.runner.axis',
     'plasterboard.depth', 'plasterboard.studSpacing', 'plasterboard.layers',
     'drilling.cup.diameter', 'drilling.cup.depth', 'drilling.cup.fromEdge',
     'drilling.plate.diameter', 'drilling.plate.depth', 'drilling.plate.fromFront', 'drilling.plate.spacing',
@@ -301,7 +301,7 @@
     // every thickness comes from the material of the type or part
     const { materialFor } = materialUses(P.materials);
     const thickness = Object.fromEntries(Object.entries(materialFor).map(([use, code]) => [use, P.materials[code].thickness]));
-    // label of each material: name + thickness, e.g. "Chipboard Egger U708 ST9 light grey 18"
+    // label of each material: name + thickness, e.g. "Płyta wiórowa Egger U708 ST9 szary jasny 18"
     const materials = Object.fromEntries(Object.entries(P.materials).map(([code, m]) => [code, { ...m, label: m.name + ' ' + m.thickness }]));
     const board = thickness.carcass, half = board / 2, frontThickness = thickness.cabinet, carcassDepth = settings.carcass.depth;
     // depths from the wall (n)
@@ -318,9 +318,10 @@
     };
     const groups = {}, carcasses = [], fronts = [], boards = [];
     const frames = [], plinths = [], panels = [], plaster = [], worktops = {};
-    // engine counts, used by cost.html as {n:name}; type and tag: items per type / tag ({n:type.oven}, {n:tag.bins})
+    // engine counts, used by cost.html as {n:name}; type and tag: items per type / tag ({n:type.oven}, {n:tag.bins});
+    // wallFixed: carcasses fixed to the wall, per carcass type ({n:wallFixed.tall})
     const counts = {
-      carcasses: 0, floorCarcasses: 0, wallFixedCarcasses: 0, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
+      carcasses: 0, floorCarcasses: 0, wallFixed: { base: 0, tall: 0, wall: 0 }, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
       shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, pullouts: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
       plasterUD: 0, plasterCD: 0, plasterEdge: 0, plinthHeight: 0, drillHoles: 0, cupHoles: 0, cutouts: 0, type: {}, tag: {}
     };
@@ -418,7 +419,7 @@
       for (const item of K.members) item.carcass = K;
       counts.legs += K.legs;
       counts.floorCarcasses += K.floor;
-      counts.wallFixedCarcasses += K.floor && !groups[K.group].island; // the island stands free
+      if (!groups[K.group].island) counts.wallFixed[K.type]++; // every carcass at a wall is fixed to it (stability); the island stands free
       counts.sinks += K.sink;
       counts.hobs += K.hob;
       counts.fridges += K.fridge;
@@ -483,7 +484,7 @@
           [u0 + back.inset, u1 - back.inset, s0 + back.inset, s1 - back.inset, carcassBack - thickness.back, carcassBack]);
       }
 
-      // fixed shelf at each joint of 2 boxes, full carcass depth; not in a base carcass (rails), not in a fridge carcass (ventilation);
+      // fixed shelf at each joint of 2 boxes, full carcass depth; not in a base carcass (rails), not in a fridge carcass (its own shelf, below);
       // over a VENTED_SHELF_OVER box (oven) it is settings.shelf.ventGap shallower, the gap at the back lets the hot air out;
       // under a SHELF_UNDER_JOINT box (oven) it sits below the joint
       if (!K.base && !K.fridge) {
@@ -839,6 +840,25 @@
           target.holeFrom = { x: 'front', y: 'bottom' };
           const inner = left ? target.box[1] : target.box[0], dir = left ? -1 : 1;
           for (const x of runner.fromFront) holeAt(target, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x, y: y - target.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
+        }
+      }
+      // ball runners of the drawers behind a door (tag pullouts): on the spacer (hinge side) and on the carcass side opposite,
+      // pullouts.runner.holes from the runner front, pullouts.runner.axis above the box bottom
+      const pulloutRunner = settings.pullouts.runner;
+      for (const front of fronts.filter(f => f.carcassId === K.id && f.pullouts)) {
+        const right = front.hingeSide === 'right';
+        for (const box of front.pullouts.boxes) {
+          const y = box.v0 + pulloutRunner.axis;
+          const spacer = own.find(b => b.id === 'spacer' && b.box[2] <= y && b.box[3] >= y && (right ? b.box[0] >= box.u1 : b.box[1] <= box.u0));
+          const side = sides.find(b => (right ? b.box[0] === K.u0 : b.box[1] === K.u1));
+          for (const target of [spacer, side].filter(Boolean)) {
+            target.holeFrom = { x: 'front', y: 'bottom' };
+            const atRight = target.box[0] >= box.u1, inner = atRight ? target.box[0] : target.box[1], dir = atRight ? 1 : -1;
+            for (const p of pulloutRunner.holes) {
+              const n = box.n1 - p;
+              holeAt(target, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x: target.box[5] - n, y: y - target.box[2], u: inner, v: y, n, axis: 'u', dir });
+            }
+          }
         }
       }
       // holes too close on one face of one part (once per pair of kinds and part); a hole in a horizontal board (once per kind and carcass)

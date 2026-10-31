@@ -19,7 +19,7 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | wypełnienie | nic, to pusta przestrzeń; na końcu korpusu: panel wpuszczany |
 | zabudowa GK | zabudowa z płyt gipsowych |
 | cokół | cokół |
-| blat | blat; jego grubość = wysokość elementu |
+| blat | blat; jego grubość = wysokość elementu (bok blatu: szerokość) |
 | panel ścienny | płyta na ścianie |
 | panel | płyta na płasko w płaszczyźnie frontów |
 | listwa | listwa na sztorc w płaszczyźnie frontów |
@@ -31,7 +31,7 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 |---|---|---|
 | atrapa | szuflada | stały front, bez szuflady |
 | zlew | szafka, szuflada | trawersy na sztorc, bez półek ruchomych, wycięcie w blacie |
-| płyta grzewcza | szafka, szuflada | przedni trawers niski, przegroda pod płytą |
+| płyta grzewcza | szafka, szuflada | przedni trawers niski, tylny na sztorc, przegroda pod płytą |
 | kosze | szuflada | kosze na odpady w szufladzie |
 | szuflada wewnętrzna | szuflada | szuflada M nad szufladą, za tym samym frontem |
 | ekspres | szafka | półka wysuwana na dole (po stronie zawiasów płyta dystansowa), nad nią półki ruchome |
@@ -51,6 +51,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
   - słupek: stoi na cokole i nie ma blatu;
   - górna: nie stoi na cokole.
 - Korpus stojący na cokole ma nóżki.
+- **Mocowanie:** każdy korpus przy ścianie jest przymocowany do ściany (stabilność); słupek z regulacją pionu u góry. Wyspa stoi wolno.
 - **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka lub zamrażarka.
 - **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
@@ -86,7 +87,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Puszka zawiasu:** w tylnej stronie drzwi, przy każdym zawiasie, w stałej odległości od krawędzi zawiasów.
 - **Prowadnik zawiasu:** dwa otwory na wewnętrznej stronie boku albo słupka zawiasowego, w stałej odległości od przodu, symetrycznie wokół wysokości zawiasu.
 - **Podpórki półki ruchomej:** pod każdą półką, w obu bokach, przy przodzie i przy tyle; dodatkowe rzędy w stałym odstępie powyżej i poniżej, ale nie w płycie poziomej (wieniec, trawers, półka stała).
-- **Prowadnice szuflad i półki wysuwanej:** w obu bokach, w stałej odległości pod dnem szuflady (także szuflady wewnętrznej) i pod półką wysuwaną, w pozycjach od przodu podanych w danych.
+- **Prowadnice szuflad i półki wysuwanej:** w obu bokach (przy płycie dystansowej: w niej), w stałej odległości pod dnem szuflady (także szuflady wewnętrznej) i pod półką wysuwaną, w pozycjach od przodu podanych w danych.
 - **Zawias nad półką:** zawias, który wypada przy półce, przechodzi nad nią: najniżej, gdzie jest co najmniej ustalony odstęp nad półką i gdzie otwory prowadnika nie trafiają w otwory podpórek.
 - Otwory, które nachodzą na siebie na jednej części albo trafiają w płytę poziomą, są zgłaszane.
 - **Wycięcia w blacie:** na zlew i płytę grzewczą, nad korpusem z tagiem zlew lub płyta grzewcza, na środku korpusu, w stałej odległości od tylnej krawędzi blatu; wycięcie musi zmieścić się w jednym blacie i we wnętrzu korpusu.
@@ -112,7 +113,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 
 - Błędy w danych są zgłaszane, np. brak typu, tag do złego typu, nakładanie się elementów, brak szczelin albo strony zawiasów, element poza kolumnami.
 - Element bez jednego typu, poza kolumnami albo nachodzący na inny jest pomijany.
-- Widok 3D pokazuje kolizje, szczeliny do 3 mm przy listwach i panelach, części wystające oraz fronty, które o kilka mm nie trzymają linii.
+- Widok 3D pokazuje kolizje, szczeliny do 3 mm przy listwach i panelach, części wystające oraz fronty, które nieznacznie nie trzymają linii (większa różnica jest zamierzona).
 
 ## 8. Kosztorys (szacunek, nie zasady)
 

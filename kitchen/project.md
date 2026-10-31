@@ -8,7 +8,7 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 
 | File | Kind | Owns | Written by |
 |---|---|---|---|
-| design.js | data, this project | materials, settings, notes, columns, components | design.html (export) |
+| design.js | data, this project | materials, settings, notes, columns, components | design.html (export); materials and settings by hand |
 | cost.js | data, this project | prices, items, notes and settings of cost.html | LLM, per project |
 | view.js | data, this project | placement of the groups, room, how the appliances are fitted, lights and cameras of view.html | LLM, per project |
 | appliances.js | data, this project | the appliances as the manufacturer gives them (sizes, documents), for cost.html and view.html | LLM, per project |
@@ -40,9 +40,10 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 ```
 
 - Every page loads design.js directly, so the pages also work opened from disk.
-- Only design.html changes design.js (import / export). cost.html and view.html only read it.
+- Only design.html changes design.js (import / export); it shows the materials read only and keeps the settings as they are, so both are edited by hand. cost.html and view.html only read it.
 - engine.js does not know where the data comes from: a page hands it the project and gets the model back. The engine has no numbers of this kitchen and draws nothing.
 - cost.html and view.html each keep their own data in cost.js and view.js, for what only that page needs: prices and notes, or the room, lights and cameras. The appliance sizes, which both need, are in appliances.js. A value that the engine needs belongs in design.js.
+- appliances.js says what the manufacturer gives, design.js what the project chose; the same number can be in both. The notes of cost.html put them side by side.
 
 ## What is project specific and what is not
 
@@ -54,7 +55,7 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 
 - **design.js**: plain data a person can read and edit: materials (what you buy, and what each is used for), construction settings (setbacks, gaps, hinges, shelves, drawers, drilling, cut-outs), notes (the design notes; the group notes give each group its role), column widths, and the components, one per line.
 - **engine.js**: deterministic, the same project gives the same model. It places the components in their columns, joins them into carcasses, builds the boards, fronts, frames, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.js.
-- **design.html**: knows the format, not the kitchen. Tables for materials, groups and columns, components and notes; the elevation drawing; problems listed under the tables.
+- **design.html**: knows the format, not the kitchen. Tables for materials (read only: they define what each type is made of), groups and columns, components and notes; the elevation drawing; problems listed under the tables.
 - **cost.html**: the estimate, the cutting list with drilling and cut-outs, the notes (the detailed geometry of the appliances, written by the LLM), assembly help and the carcass map; exports the XLSX. Its texts refer to the model, not to copied numbers.
 - **view.html**: the room in 3D with the carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs; it checks the geometry (collisions, gaps, fronts off the line, parts sticking out).
 

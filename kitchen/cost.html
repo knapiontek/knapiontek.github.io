@@ -534,7 +534,7 @@ function describeFormula(expr) {
 }
 // the visible name of a placeholder in a tooltip: engine counts and parameters in Polish; setting and var paths as written in the data
 const COUNT_NAMES = {
-  carcasses: 'korpusy', floorCarcasses: 'korpusy stojące', wallFixedCarcasses: 'korpusy przy ścianie', fronts: 'fronty', handles: 'uchwyty',
+  carcasses: 'korpusy', floorCarcasses: 'korpusy stojące', fronts: 'fronty', handles: 'uchwyty',
   hinges: 'zawiasy', drawersD: 'szuflady D', drawersM: 'szuflady M', innerDrawers: 'szuflady wewnętrzne', shelvesAdjustable: 'półki ruchome',
   shelvesFixed: 'półki stałe', shelfPins: 'podpórki półek', pullOutShelves: 'półki wysuwane', legs: 'nóżki', sinks: 'zlewy', hobs: 'płyty grzewcze',
   fridges: 'lodówki', grilles: 'kratki', plasterUD: 'profil UD [mm]', plasterCD: 'profil CD [mm]', plasterEdge: 'krawędzie GK [mm]', plinthHeight: 'wysokość cokołu'
@@ -544,7 +544,8 @@ function placeholderName(key) {
   const [, prefix, rest] = key.match(/^(?:(\w+):)?(.+)$/);
   if (prefix === 'n') {
     const [kind, name] = rest.split('.');
-    return kind === 'type' ? 'typ ' + KE.typeLabel(name) : kind === 'tag' ? 'tag ' + KE.LABELS.tag[name] : COUNT_NAMES[rest] || rest;
+    return kind === 'type' ? 'typ ' + KE.typeLabel(name) : kind === 'tag' ? 'tag ' + KE.LABELS.tag[name]
+      : kind === 'wallFixed' ? 'korpusy przy ścianie: ' + KE.LABELS.carcassType[name] : COUNT_NAMES[rest] || rest;
   }
   return !prefix && PARAM_NAMES[rest] ? PARAM_NAMES[rest] : rest;
 }

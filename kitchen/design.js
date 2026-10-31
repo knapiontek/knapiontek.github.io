@@ -17,7 +17,7 @@ window.KITCHEN_DESIGN = {
   "rails": {"depth": 100, "hobFront": 50, "hobPanelGap": 20},
   "shelf": {"setback": 18, "clearance": 1, "pins": 4, "perDoor": [{"maxHeight": 720, "count": 1}, {"count": 3}], "ventGap": 150, "fridgeNiche": 1775},
   "pullOutShelf": {"depth": 500, "clearance": 5, "lift": 20, "space": 450, "shelvesAbove": 2},
-  "pullouts": {"perDoor": [{"count": 2}], "side": 150, "lift": 10, "runner": {"gap": 13, "lengths": [250, 300, 350, 400, 450, 500, 550]}},
+  "pullouts": {"perDoor": [{"count": 2}], "side": 150, "lift": 10, "runner": {"gap": 13, "lengths": [250, 300, 350, 400, 450, 500, 550], "holes": [37, 229, 421], "axis": 23}},
   "hinges": {"fromEnd": 100, "supportDepth": 80, "aboveShelf": 30, "perDoor": [{"maxHeight": 900, "count": 2}, {"maxHeight": 1600, "count": 3}, {"count": 4}]},
   "drawers": {"dFrom": 350, "D": {"side": 224, "back": 199}, "M": {"side": 83, "back": 84}, "bottom": {"inset": 75, "depth": 476, "fromWall": 52}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "back": 84, "frontDeduction": 132}},
   "front": {"shakerRail": 50},

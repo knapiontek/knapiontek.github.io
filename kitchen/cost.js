@@ -44,7 +44,9 @@ window.KITCHEN_COST = {
   "worktopBoard": {"length": 4100, "depth": 650, "islandDepth": 920},
   "plasterboard": {"length": 2600, "width": 1200},
   "edgeAllowance": 0.1,
-  "confirmatsPerCarcass": 18
+  "confirmatsPerCarcass": 18,
+  "wallFixingsPerCarcass": 2,
+  "camarPlateScrews": 2
  },
  "labels": {
   "fronts": [
@@ -57,7 +59,7 @@ window.KITCHEN_COST = {
   ],
   "sheet": "Arkusz płyty {v:sheet.length}×{v:sheet.width} [m²]",
   "cuttingNote": "Długość = dłuższy bok, Szerokość = krótszy (fronty: wysokość × szerokość, jak potrzebuje producent frontów); wiersze wg elementu, najdłuższe pierwsze. Krawędź = liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1 lub 2), jak w formularzu hurtowni (np. Bok 1920 | 1 | 550 | 0); ABS na płytach i panelach, lakier na frontach (2 i 2), listwach (krawędź przednia) i cokole (brak). ABS razem = długość ABS × ilość; strona każdej krawędzi ABS jest w zakładce Montaż. Cięcia = (długość + szerokość) × ilość, wyceniane w pozycji Cięcie płyt. Korpus = wszystkie kolumny z jedną nazwą korpusu, głębokość {s:carcass.depth}, {s:carcass.wallGap} od ściany; wnętrze = szerokość − 2 × {t:carcass}; półka ruchoma = wnętrze − 2 × {s:shelf.clearance}, głębokość − {s:shelf.setback}; półka stała = wnętrze × pełna głębokość; plecy {m:back} = korpus − 2 × {s:back.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:frame.depth} × długość listwy; dno szuflady = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}, tył = wnętrze − {s:drawers.back.inset}; tył szuflady wewnętrznej wys. {s:drawers.inner.back}. ABS na częściach korpusu: krawędź widoczna z przodu (boki: długa krawędź przednia; wieńce, półki, trawersy przednie: krawędź przednia; trawersy na sztorc: krawędź dolna); trawersy tylne, listwy tylne, plecy, części szuflad TANDEMBOX, panele wpuszczane: brak; szuflady za drzwiami: górne krawędzie i boki czoła. Panele: ABS na każdej krawędzi przy otwieranym froncie. Blaty: ABS na przodzie i na końcu blatu nad bokiem blatu, w wyspie także z tyłu; boki blatu: przód (w wyspie także tył); wycięcia bez ABS.",
-  "legend": {"runner": "pozycje do potwierdzenia wg Blum"}
+  "legend": {"runner": "pozycje do potwierdzenia wg Blum i Häfele"}
  },
  "blocks": [
   {"id": "fronts", "code": "FR", "title": "FRONTY – {m:cabinet}, shaker, lakierowane dookoła", "columns": ["Funkcja", "Wysokość", "Szerokość", "Ilość"]},
@@ -67,7 +69,7 @@ window.KITCHEN_COST = {
   {
    "id": "carcass",
    "code": "KO",
-   "title": "KORPUSY – wszystkie części z {m:carcass}: cięcie + ABS 0,8 na krawędziach przednich (z listwami tylnymi, półką wysuwaną, słupkami zawiasowymi, panelami wpuszczanymi, płytami dystansowymi)",
+   "title": "KORPUSY – wszystkie części z {m:carcass}: cięcie + ABS 0,8 na krawędziach widocznych (z listwami tylnymi, półką wysuwaną, słupkami zawiasowymi, panelami wpuszczanymi, płytami dystansowymi)",
    "cut": true
   },
   {
@@ -364,16 +366,50 @@ window.KITCHEN_COST = {
     },
     {
      "id": "wallHangers",
-     "name": "Zawieszka szafki CAMAR 807, kpl. L+P",
-     "spec": "korpusy stojące mocowane do ściany (bez wyspy)",
-     "qty": "={n:wallFixedCarcasses}",
+     "name": "Zawieszka CAMAR 807 z regulacją, kpl. L + P",
+     "spec": "słupki: pion u góry (regulacja głębokości 19, wysokości 22), zabezpieczenie przed przewróceniem; ciężar niosą nóżki",
+     "qty": "={n:wallFixed.tall}",
      "unit": "kpl.",
      "price": 26.44,
+     "refs": ["wallFixing"],
      "source": "2 × 13,22 (L + P)",
      "links": [
       {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CAMAR-807-Zawieszka-meblowa-do-szafek-dolnych-na-wcisk-udzwig-240kgpare-Lewa-290.40.902/1755"},
       {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/CAMAR-807-Zawieszka-meblowa-do-szafek-dolnych-na-wcisk-udzwig-240kgpare-Prawa-290.40.901/1754"}
      ]
+    },
+    {
+     "id": "wallPlates",
+     "name": "Płytka ścienna CAMAR 897 60 × 70 do zawieszki 807",
+     "spec": "1 na zawieszkę",
+     "qty": "={n:wallFixed.tall}*2",
+     "unit": "szt.",
+     "price": 9,
+     "refs": ["wallFixing"],
+     "source": "szacunek: bricozor.com 1,67 € netto; w PL zapytać M-HM",
+     "links": [{"name": "bricozor.com", "url": "https://www.bricozor.com/ferrures-fixation-elements-suspendus-bas-807-camar-plaquette.html"}]
+    },
+    {
+     "id": "wallBrackets",
+     "name": "Kątownik meblowy wąski 40 × 40 × 17 Domax",
+     "spec": "korpusy dolne i górne do ściany: {v:wallFixingsPerCarcass} na korpus, na trawersie tylnym / wieńcu górnym; wkręty 4 × 16 do płyty",
+     "qty": "=({n:wallFixed.base}+{n:wallFixed.wall})*{v:wallFixingsPerCarcass}",
+     "unit": "szt.",
+     "price": 3.79,
+     "refs": ["wallFixing"],
+     "source": "",
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/katownik-meblowy-waski-40-x-40-x-17-mm-domax-42855092.html"}]
+    },
+    {
+     "id": "wallAnchors",
+     "name": "Kołek rozporowy fischer SX Plus S 8 × 40 z wkrętem 5,5 × 55, opak. 10 szt.",
+     "spec": "1 na kątownik, {v:camarPlateScrews} na płytkę CAMAR; ściana pełna",
+     "qty": "=ROUNDUP((({n:wallFixed.base}+{n:wallFixed.wall})*{v:wallFixingsPerCarcass}+{n:wallFixed.tall}*2*{v:camarPlateScrews})/10,0)",
+     "unit": "op.",
+     "price": 21.49,
+     "refs": ["wallFixing"],
+     "source": "",
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/kolek-rozporowy-sx-plus-s-z-wkretem-8-x-40-mm-10-szt-fischer-88791045.html"}]
     },
     {
      "id": "brackets",
@@ -452,8 +488,8 @@ window.KITCHEN_COST = {
     {
      "id": "worktopJoints",
      "name": "Złącze do blatów ZŁM-26 L-100",
-     "spec": "blat z bokami blatu",
-     "qty": 6,
+     "spec": "blat z bokami blatu: 2 na bok blatu",
+     "qty": "={n:tag.fall}*2",
      "unit": "szt.",
      "price": 3.3,
      "refs": ["worktops"],
@@ -803,6 +839,14 @@ window.KITCHEN_COST = {
   {
    "name": "KONSTRUKCJA",
    "notes": [
+    {
+     "id": "wallFixing",
+     "topic": "Mocowanie korpusów do ściany",
+     "description": "Każdy korpus przy ścianie jest przymocowany do ściany, wyspa stoi wolno. Słupki ({n:wallFixed.tall}): zawieszki CAMAR 807 u góry, na płytkach 897; pion ustawia się regulacją głębokości. Dolne ({n:wallFixed.base}) i górne ({n:wallFixed.wall}): po {v:wallFixingsPerCarcass} kątowniki na górze korpusu; ramię na ścianie mostkuje {s:carcass.wallGap} odstępu.",
+     "assumed": "Ściana pełna (kołki 8 mm). Górne korpusy przykręcić przed korpusem nad nimi i przed zabudową GK.",
+     "decide": "CAMAR 807: 4 otwory Ø10 w boku wg szablonu Camar (nie ma ich na liście cięć) i wycięcie w plecach HDF przy zawieszce – sprawdzić z próbką przed wierceniem.",
+     "links": [{"name": "camar.it – system 807", "url": "https://camar.it/prodotti_sistemi_807.php"}]
+    },
     {
      "id": "corner",
      "topic": "Narożnik L – korpus narożny",
