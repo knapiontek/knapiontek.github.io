@@ -511,7 +511,11 @@ function oakTexture() {
   t.encoding = THREE.sRGBEncoding;
   t.anisotropy = anisotropy;
   t.repeat.set(1000 / decor.size.length, 1000 / decor.size.width); // texture coordinates are in metres
-  image.onload = () => { t.needsUpdate = true; if (typeof sceneChanged === 'function') sceneChanged(); };
+  image.onload = () => {
+    t.needsUpdate = true;
+    if (typeof sceneChanged === 'function') sceneChanged();
+    if (typeof renderFinishes === 'function') renderFinishes(); // the swatches show the decor once it is loaded
+  };
   image.src = decor.image;
   return t;
 }
@@ -611,15 +615,31 @@ function setMetal(name) {
   sceneChanged();
 }
 
-// a board with a core colour in design.js (chipboard, the lacquered board): faces and finished edges (ABS: board.edges;
-// frames: lacquered edges from engine.js) in the board colour, bare cut edges in the core colour – so the view shows where the edges are finished.
-// Fronts are lacquered all round and are drawn without this; the plinth has no finished edge.
+// a board with a core colour in design.js (chipboard, the lacquered board, the worktop): faces and finished edges (ABS: board.edges;
+// frames: lacquered edges from engine.js) in the board colour, bare cut edges in the core colour with chips in it – so a bare edge never
+// looks like a light board. Fronts are lacquered all round and are drawn without this; the plinth has no finished edge.
+// The chips come from the position in the room, so they keep their size on every face, without texture coordinates.
 const coreMaterial = {}, edgedMeshes = new Set();
+function coreLook(code) {
+  if (coreMaterial[code]) return coreMaterial[code];
+  const m = standard({ color: linear(model.materials[code].core), roughness: 0.92 });
+  m.onBeforeCompile = shader => {
+    shader.vertexShader = 'varying vec3 vRoomPosition;\n' + shader.vertexShader.replace('#include <project_vertex>',
+      '#include <project_vertex>\nvRoomPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    shader.fragmentShader = 'varying vec3 vRoomPosition;\nfloat chipHash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }\n' +
+      shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+        float chip = chipHash(floor(vRoomPosition * 600.0));          // chips of about 1.7 mm
+        float flake = chipHash(floor(vRoomPosition * 160.0) + 17.0);  // flakes of about 6 mm
+        diffuseColor.rgb *= 0.74 + 0.32 * chip;
+        if (flake > 0.8) diffuseColor.rgb *= vec3(0.78, 0.68, 0.52);  // brown wood flakes`);
+  };
+  return (coreMaterial[code] = m);
+}
 const BOX_SIDES = ['right', 'left', 'top', 'bottom', 'front', 'back']; // BoxGeometry faces: +u, −u, +v, −v, +n, −n
 function edgeLook(m, edges, code) {
   const material = model.materials[code];
   if (!m || !material || !material.core) return m;
-  const core = coreMaterial[code] || (coreMaterial[code] = standard({ color: linear(material.core), roughness: 0.9 }));
+  const core = coreLook(code);
   const p = m.geometry.parameters, sizes = [p.width, p.height, p.depth], thin = sizes.indexOf(Math.min(...sizes)); // the axis through the faces
   const banded = new Set((edges || []).map(([side]) => side));
   m.material = BOX_SIDES.map((side, i) => (Math.floor(i / 2) === thin || banded.has(side) ? m.material : core));
@@ -631,7 +651,7 @@ function edgeLook(m, edges, code) {
 const LAYERS = [ // [layer group label, [[layer id, label], ...]]
   ['Korpusy', [['carcasses', 'Płyty'], ['backs', 'Plecy HDF'], ['shelves', 'Półki'], ['drawers', 'Szuflady'], ['hardware', 'Zawiasy, prowadnice'], ['holes', 'Otwory'], ['legs', 'Nóżki']]],
   ['Fronty', [['fronts', 'Fronty'], ['handles', 'Uchwyty'], ['frames', 'Listwy'], ['panel', 'Panele'], ['plinth', 'Cokół']]],
-  ['Blat', [['worktops', 'Blaty'], ['wallpanel', 'Panel ścienny']]],
+  ['Blat', [['worktops', 'Blaty'], ['worktopFalls', 'Boki blatu'], ['wallpanel', 'Panel ścienny']]],
   ['AGD', [['sink', 'Zlew, bateria'], ['trap', 'Syfon'], ['hob', 'Płyta grzewcza'], ['hood', 'Okap'], ['oven', 'Piekarnik'], ['micro', 'Mikrofalówka'],
     ['coffee', 'Ekspres'], ['fridge', 'Lodówka'], ['dishwasher', 'Zmywarka']]],
   ['Pomieszczenie', [['walls', 'Ściany'], ['window', 'Okno'], ['floor', 'Podłoga'], ['ceiling', 'Sufit'], ['lamps', 'Lampy wiszące']]]
@@ -924,21 +944,34 @@ const bowlU0 = sinkU - sinkData.bowl.width / 2, bowlU1 = sinkU + sinkData.bowl.w
 const sinkTop = sinkRun ? worktopTopOf(sinkRun) : 0;
 const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowl.height;
 const tapN = sinkRun ? worktopOf(groupOfRun[sinkRun]).n0 + SCENE.installation.sink.tapFromBack : 0; // from the back edge of the worktop
-// a worktop with cut-outs (engine.js: sink, hob from design.js settings.cutouts): one board, an outline with holes extruded to the worktop thickness
-function worktopWithCutOuts(run, uStart, uEnd, v0, v1, cutouts) {
-  const W = worktopOf(groupOfRun[run]);
-  const outline = new THREE.Shape([new THREE.Vector2(uStart, W.n0), new THREE.Vector2(uEnd, W.n0), new THREE.Vector2(uEnd, W.n1), new THREE.Vector2(uStart, W.n1)]);
-  for (const c of cutouts) outline.holes.push(new THREE.Path([new THREE.Vector2(c.u0, c.n0), new THREE.Vector2(c.u0, c.n1), new THREE.Vector2(c.u1, c.n1), new THREE.Vector2(c.u1, c.n0)]));
-  const geometry = new THREE.ExtrudeGeometry(outline, { depth: v1 - v0, bevelEnabled: false });
-  geometry.rotateX(Math.PI / 2); // outline in (u, n), extruded downwards: (u, n, depth) -> (u, -depth, n)
-  geometry.translate(0, v1, 0);
-  geometry.scale(0.001, 0.001, 0.001);
-  const m = new THREE.Mesh(geometry, worktopMaterialOf(run));
-  m.castShadow = m.receiveShadow = true;
-  m.userData.grain = 'x';
-  runLayer[run].worktops.add(m);
-  worldUVMeshes.push(m);
-  meshes.push(m);
+// a worktop piece (engine.js worktopPieces): the top board, or a worktop fall in its own layer, in run coordinates so its edges keep
+// their sides. ABS edges (piece.edges) in the decor, the other edges bare (the core). The top board with cut-outs (sink, hob: design.js
+// settings.cutouts) is built of boxes around the holes: their walls are bare too.
+function worktopPiece(run, piece) {
+  const { u0, u1, v0, v1 } = piece.item, W = worktopOf(groupOfRun[run]), fall = hasTag(piece.item, 'fall');
+  const P = runLayer[run][fall ? 'worktopFalls' : 'worktops'], decor = worktopMaterialOf(run), banded = new Set(piece.edges.map(([side]) => side));
+  const faces = fall ? ['left', 'right'] : ['top', 'bottom']; // the decor faces of the board
+  const holes = (piece.cutouts || []).map(c => [c.u0, c.u1, c.n0, c.n1]);
+  // along the run: strips between the hole ends; across: each strip minus its holes
+  const cuts = [...new Set([u0, u1, ...holes.flatMap(([a, b]) => [a, b])])].sort((x, y) => x - y);
+  for (let i = 0; i + 1 < cuts.length; i++) {
+    const a = cuts[i], b = cuts[i + 1];
+    const across = holes.filter(([h0, h1]) => h0 <= a && h1 >= b).sort((x, y) => x[2] - y[2]);
+    const spans = []; // [n0, n1] of the board in this strip, around its holes
+    let n = W.n0;
+    for (const [, , h0, h1] of across) { spans.push([n, h0]); n = h1; }
+    spans.push([n, W.n1]);
+    for (const [n0, n1] of spans) {
+      const m = localBox(P, a, b, v0, v1, n0, n1, decor);
+      if (!m) continue;
+      // a face on the outline of the board: ABS when engine.js names that edge; any other face (a hole wall) is bare
+      const onOutline = { left: a === u0, right: b === u1, back: n0 === W.n0, front: n1 === W.n1, top: true, bottom: true };
+      m.material = BOX_SIDES.map(side => (faces.includes(side) || (onOutline[side] && banded.has(side)) ? decor : coreLook(piece.material)));
+      m.userData.grain = fall ? 'y' : 'x';
+      edgedMeshes.add(m);
+      worldUVMeshes.push(m);
+    }
+  }
 }
 const carcassMeshes = []; // every board of the carcasses and the back strips
 // names the meshes of one item for the geometry check
@@ -950,11 +983,8 @@ function buildRun(run) {
   for (const item of itemsOfRun[run]) {
     const { u0, u1, v0, v1, type, span, col } = item, height = v1 - v0, firstMesh = meshes.length;
     if (type === 'worktop') {
-      target = roomLayer.worktops;
-      const cutouts = (worktopOf(groupOfRun[run]).cutouts || []).filter(c => c.u0 >= u0 && c.u1 <= u1 && !hasTag(item, 'fall'));
-      if (cutouts.length) { worktopWithCutOuts(run, u0, u1, v0, v1, cutouts); continue; }
-      const W = worktopOf(groupOfRun[run]), m = runBox(run, u0, u1, v0, v1, W.n0, W.n1, worktopMaterialOf(run));
-      if (m && hasTag(item, 'fall')) m.userData.grain = 'y'; // worktop fall: grain upright
+      const piece = model.worktopPieces.find(p => p.item === item);
+      if (piece) worktopPiece(run, piece);
     } else if (type === 'frame') { // on edge, frame.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
       const frame = model.frames.find(f => f.item === item), lacquered = ((frame && frame.lacqueredSides) || []).map(side => [side]);
       edgeLook(localBox(runLayer[run].frames, u0, u1, v0, v1, frontFace - settings.frame.depth, frontFace, boardFor('frame')), lacquered, model.materialFor.frame);
@@ -1988,13 +2018,52 @@ const frontName = model.materials[model.materialFor.cabinet].name;
 document.getElementById('frontName').textContent = frontName;
 document.title = 'Kuchnia ' + frontName;
 const swatch = (background, use, name) => '<li><i style="background:' + background + '"></i><small>' + esc(use) + '</small><b>' + esc(name) + '</b></li>';
+// a swatch as the view draws the material: a flat piece lit by the room's ambient light and a lamp from the front, read back as an
+// image – so the colours match the 3D view (its light, tone mapping, texture, clearcoat). A board with a core: its face above and
+// its bare edge (coreLook) in the lower part. Size in metres, texture coordinates in metres as on the boxes of the scene.
+const SWATCH = { width: 0.16, height: 0.034, edge: 0.01, pixels: 2000 }; // pixels per metre
+const swatchScene = new THREE.Scene(), swatchCamera = new THREE.OrthographicCamera(-SWATCH.width / 2, SWATCH.width / 2, SWATCH.height / 2, -SWATCH.height / 2, 0.01, 1);
+swatchCamera.position.set(0, 0, 0.5);
+const swatchLight = new THREE.DirectionalLight(0xffffff, 2.5);
+swatchLight.position.set(0, 1, 0.5); // from above: no highlight towards the camera
+swatchScene.add(swatchLight);
+function swatchPiece(material, y0, y1) {
+  const geometry = new THREE.PlaneGeometry(SWATCH.width, y1 - y0), uv = geometry.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * SWATCH.width, uv.getY(i) * (y1 - y0));
+  const m = new THREE.Mesh(geometry, material);
+  m.position.y = (y0 + y1) / 2;
+  return m;
+}
+function swatchImage(material, core) {
+  const { width, height, edge, pixels } = SWATCH, w = Math.round(width * pixels), h = Math.round(height * pixels), bottom = -height / 2;
+  const pieces = core ? [swatchPiece(material, bottom + edge, -bottom), swatchPiece(core, bottom, bottom + edge)] : [swatchPiece(material, bottom, -bottom)];
+  swatchScene.environment = scene.environment;
+  swatchScene.add(...pieces);
+  const target = new THREE.WebGLRenderTarget(w, h);
+  target.texture.encoding = THREE.sRGBEncoding;
+  renderer.setRenderTarget(target);
+  renderer.render(swatchScene, swatchCamera);
+  const pixelsRead = new Uint8Array(w * h * 4);
+  renderer.readRenderTargetPixels(target, 0, 0, w, h, pixelsRead);
+  renderer.setRenderTarget(null);
+  swatchScene.remove(...pieces);
+  pieces.forEach(p => p.geometry.dispose());
+  target.dispose();
+  const canvas = document.createElement('canvas'), g = canvas.getContext('2d'), image = g.createImageData(w, h);
+  canvas.width = w;
+  canvas.height = h;
+  for (let y = 0; y < h; y++) image.data.set(pixelsRead.subarray((h - 1 - y) * w * 4, (h - y) * w * 4), y * w * 4); // the target is bottom-up
+  g.putImageData(image, 0, 0);
+  return 'url(' + canvas.toDataURL() + ') center/cover';
+}
 // the board materials, the finishes of view.js and the floor tiles chosen in Widok › Podłoga
 function renderFinishes() {
   const F = FLOORS[floorKey];
   document.getElementById('mats').innerHTML = Object.entries(model.materials).map(([code, m]) => {
     const uses = Object.keys(model.materialFor).filter(use => model.materialFor[use] === code);
-    return uses.length ? swatch(m.color || KE.OAK_SWATCH, uses.map(KE.useLabel).join(', '), m.label) : '';
-  }).join('') + SCENE.finishes.map(f => swatch(f.swatch, f.use, f.name)).join('') +
+    return uses.length ? swatch(swatchImage(BOARD[code], m.core && coreLook(code)), uses.map(KE.useLabel).join(', '), m.label) : '';
+  }).join('') + SCENE.finishes.map(f => swatch(swatchImage(MAT[f.material]), f.use, f.name)).join('') +
+    swatch(swatchImage(coreLook(model.materialFor.carcass)), 'Krawędź bez obrzeża', 'rdzeń płyty, jak dolny pasek próbek') +
     (F ? swatch('url(' + F.faces[0] + ') center/cover', 'Podłoga', F.name + ' ' + F.size.length + ' × ' + F.size.width) : '');
 }
 if (FLOOR_KEYS.length) setFloor(floorKey);

@@ -880,9 +880,16 @@
     for (const G of Object.values(groups)) {
       const W = worktops[G.group];
       if (!W) continue;
-      for (const item of G.items.filter(i => i.type === 'worktop')) {
-        const fall = hasTag(item, 'fall');
-        worktopPieces.push({ group: G.group, item, name: fall ? 'Bok blatu' : 'Blat', material: W.material, a: fall ? item.v1 - item.v0 : item.u1 - item.u0, b: W.depth, edges: [] });
+      // ABS on the edges seen in the room: the front; the back of an island; an end of the top board over a worktop fall (the corner
+      // of the waterfall). The other edges meet a wall, the floor, a fall or a cabinet; the cut-outs stay bare (the sink and the hob cover them)
+      const items = G.items.filter(i => i.type === 'worktop'), falls = items.filter(i => hasTag(i, 'fall'));
+      for (const item of items) {
+        const fall = hasTag(item, 'fall'), length = fall ? item.v1 - item.v0 : item.u1 - item.u0;
+        const edges = [['front', length]];
+        if (G.island) edges.push(['back', length]);
+        if (!fall && falls.some(f => f.u0 === item.u0)) edges.push(['left', W.depth]);
+        if (!fall && falls.some(f => f.u1 === item.u1)) edges.push(['right', W.depth]);
+        worktopPieces.push({ group: G.group, item, name: fall ? 'Bok blatu' : 'Blat', material: W.material, a: length, b: W.depth, edges });
       }
       W.cutouts = [];
     }

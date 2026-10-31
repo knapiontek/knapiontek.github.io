@@ -12,7 +12,8 @@
      installation  how appliances are fitted here: sink tap (tapFromBack: from the back edge of the worktop), its trap
                    (trapTop, wallOutlet: heights above the floor); hood (bottom: height above the floor)
      window        x of its left edge, width, sill and height above the floor, reveal depth, frame finish
-     finishes      finishes shown in the Project tab next to the design.js materials: use, name, swatch (CSS background)
+     finishes      finishes shown in the Project tab next to the design.js materials: use, name, material (the material
+                   view.html draws it with, e.g. granite = the sink composite)
      hardware      sizes for the drawing only, no effect on the cost: handle (metal: a key of metals); open: angle of each
                    kind of door in degrees, drawer travel, doorStop (carcass → degrees where a stop holds its door, e.g. a
                    bumper on the wall panel); leg, hinge, drawer, bins, plinthGrille
@@ -33,7 +34,7 @@ window.KITCHEN_VIEW = {
  },
  "window": {"x": 870, "width": 1900, "sill": 1080, "height": 1300, "reveal": 150, "finish": "antracyt"},
  "finishes": [
-  {"use": "Zlew", "name": "Kompozyt kwarcowy", "swatch": "radial-gradient(circle at 30% 40%,#8a8a88 0 1px,transparent 1.5px) 0 0/5px 5px,#2a2b2d"}
+  {"use": "Zlew", "name": "Kompozyt kwarcowy", "material": "granite"}
  ],
  "hardware": {
   "handle": {"metal": "brass", "axis": 28, "cupLength": 89, "barLength": 160, "sideHeight": 260},
