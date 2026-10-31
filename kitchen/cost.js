@@ -460,7 +460,7 @@ window.KITCHEN_COST = {
     {
      "id": "worktop",
      "name": "{m:worktop}, {v:worktopBoard.depth} × {v:worktopBoard.length} × {t:worktop}",
-     "spec": "blat grupy 1 + bok blatu z 1 płyty, przycięty do {w:1.depth}; prosta krawędź Egger 100/1.5",
+     "spec": "blat grupy 1 + bok blatu, przycięty do {w:1.depth}; boki muszą być dwustronne - rozważ klejenie dwóch paneli 18.6; prosta krawędź Egger 100/1.5",
      "qty": 1,
      "unit": "szt.",
      "price": 1201.01,
