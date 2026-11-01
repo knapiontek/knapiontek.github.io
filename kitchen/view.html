@@ -311,6 +311,14 @@ for (const r of GROUP_IDS) {
   itemsOfGroup[r] = g.items;
   groupLength[r] = g.widths.reduce((sum, w) => sum + w, 0);
 }
+// where a group stands: placement x, z is the point of the group named by its anchor (start: u = 0, end: u = length,
+// centre: the middle), so a group keeps that point when its columns change (e.g. a group counted from a corner)
+const ANCHORS = { start: 0, centre: 0.5, end: 1 };
+const origin = Object.fromEntries(GROUP_IDS.map(r => {
+  const P = SCENE.placement[r], a = (P.rotation * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
+  const along = (ANCHORS[P.anchor || 'start'] ?? 0) * groupLength[r];
+  return [r, { x: P.x - along * cos, z: P.z + along * sin, cos, sin, rotation: P.rotation }];
+}));
 const hasTag = KE.hasTag;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -319,7 +327,7 @@ const { carcass: board, plinth: plinthThickness, splash: splashThickness, frame:
 const fittings = SCENE.hardware;
 const shakerRail = settings.front.shakerRail; // width of the shaker frame of a front
 const room = SCENE.room, ceiling = room.ceiling;
-const rightWall = SCENE.placement[room.rightWallGroup].x; // the wall line (n = 0) of the group that stands against the right wall
+const rightWall = origin[room.rightWallGroup].x; // the wall line (n = 0) of the group that stands against the right wall
 const worktopOf = group => model.worktops[group] || { n0: 0, n1: 0, depth: 0 }; // n0 back edge, n1 front edge
 const sinkCarcass = model.carcasses.find(K => K.sink); // the group with the sink
 const sinkGroup = sinkCarcass ? sinkCarcass.group : null;
@@ -327,8 +335,8 @@ const worktopTopOf = group => worktopOf(group).v1;
 
 // [u, n] of a group -> [x, z] in the room (rotation is a multiple of 90°)
 const pointToRoom = Object.fromEntries(GROUP_IDS.map(r => {
-  const P = SCENE.placement[r], a = (P.rotation * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
-  return [r, (u, n) => [P.x + u * cos + n * sin, P.z - u * sin + n * cos]];
+  const { x, z, cos, sin } = origin[r];
+  return [r, (u, n) => [x + u * cos + n * sin, z - u * sin + n * cos]];
 }));
 // [u0, u1, n0, n1] of a group -> [x0, x1, z0, z1] in the room
 const toRoom = Object.fromEntries(GROUP_IDS.map(r => [r, (u0, u1, n0, n1) => {
@@ -642,9 +650,9 @@ const roomLayer = {}; // layer -> its THREE.Group in room coordinates
 for (const id of LAYER_IDS) roomLayer[id] = newLayer(scene, id);
 const groupRoot = Object.fromEntries(GROUP_IDS.map(r => [r, new THREE.Group()]));
 for (const r of GROUP_IDS) {
-  const P = SCENE.placement[r];
-  groupRoot[r].position.set(P.x / 1000, 0, P.z / 1000);
-  groupRoot[r].rotation.y = (P.rotation * Math.PI) / 180;
+  const O = origin[r];
+  groupRoot[r].position.set(O.x / 1000, 0, O.z / 1000);
+  groupRoot[r].rotation.y = (O.rotation * Math.PI) / 180;
   groupRoot[r].updateMatrixWorld(true);
 }
 const groupLayer = {}; // design.js group -> layer -> its THREE.Group, in the coordinates of that design.js group
@@ -911,7 +919,7 @@ const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - s
 const tapN = sinkGroup ? worktopOf(sinkGroup).n0 + SCENE.installation.sink.tapFromBack : 0; // from the back edge of the worktop
 // a worktop or a side panel (own layer): finished edges (ABS or factory) in the decor, the rest bare; built of boxes around its cut-outs
 function worktopPiece(group, piece) {
-  const { u0, u1, v0, v1 } = piece.item, W = worktopOf(group), fall = piece.item.type === 'fall';
+  const { u0, u1, v0, v1 } = piece.item, fall = piece.item.type === 'fall';
   const P = groupLayer[group][fall ? 'falls' : 'worktops'], decor = BOARD[piece.material];
   const finished = new Set([...piece.edges.map(edge => edge.side), ...piece.factoryEdges]);
   // the decor faces: both on a two-sided material, else the top of a worktop or the outer face of a side panel
@@ -924,14 +932,14 @@ function worktopPiece(group, piece) {
     const a = cuts[i], b = cuts[i + 1];
     const across = holes.filter(([h0, h1]) => h0 <= a && h1 >= b).sort((x, y) => x[2] - y[2]);
     const spans = [];
-    let n = W.n0;
+    let n = piece.n0;
     for (const [, , h0, h1] of across) { spans.push([n, h0]); n = h1; }
-    spans.push([n, W.n1]);
+    spans.push([n, piece.n1]);
     for (const [n0, n1] of spans) {
       const m = localBox(P, a, b, v0, v1, n0, n1, decor);
       if (!m) continue;
       // a cut-out wall stays bare
-      const onOutline = { left: a === u0, right: b === u1, back: n0 === W.n0, front: n1 === W.n1, top: true, bottom: true };
+      const onOutline = { left: a === u0, right: b === u1, back: n0 === piece.n0, front: n1 === piece.n1, top: true, bottom: true };
       m.material = BOX_SIDES.map(side => (faces.includes(side) || (onOutline[side] && finished.has(side)) ? decor : coreLook(piece.material)));
       m.userData.grain = fall ? 'y' : 'x';
       edgedMeshes.add(m);

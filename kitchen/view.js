@@ -1,6 +1,7 @@
 /* Kitchen scene for view.html: only what the 3D view needs beyond design.js and appliances.js. Written per project (LLM).
    Room coordinates in mm: x along the window wall, z out from it, y up.
-     placement     where each group stands (by group number) and how it is turned; an island stands free
+     placement     where each group stands (by group number) and how it is turned; an island stands free;
+                   x, z = the point of the group its anchor names: start (default), end or centre
      room          walls, floor and ceiling; rightWallGroup: the group against the right wall
      installation  how the sink, its trap and the hood are fitted here
      window        the window in the window wall
@@ -11,9 +12,9 @@
      cameras       the views in the dock; the first one opens */
 window.KITCHEN_VIEW = {
  "placement": {
-  "1": {"name": "pod oknem", "x": 0, "z": 0, "rotation": 0},
+  "1": {"name": "pod oknem", "x": 3110, "z": 0, "rotation": 0, "anchor": "end"},
   "2": {"name": "zabudowa wysoka", "x": 3372, "z": 0, "rotation": -90},
-  "3": {"name": "wyspa", "x": 1730, "z": 2440, "rotation": 180}
+  "3": {"name": "wyspa", "x": 865, "z": 2440, "rotation": 180, "anchor": "centre"}
  },
  "room": {"ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallGroup": 2, "rightWallLength": 4000, "floorJoint": 2, "floorTile": {"length": 900, "width": 900}, "wallColor": "#f2f1ee"},
  "installation": {

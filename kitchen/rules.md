@@ -79,8 +79,8 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
   - z tyłu zostaje głębokość minus korpus, front i nawis.
 - **Panel boczny** stoi pod końcem blatu, od podłogi do spodu blatu, a blat leży na nim:
   - jest z osobnego materiału, dwustronnego, bo widać obie jego strony; wyspa ma osobny materiał;
-  - ma głębokość blatu.
-- **Wyspa** (blat z tagiem wyspa) ma panel tylny między skrajnymi kolumnami, od podłogi do góry korpusów.
+  - blat wystaje poza niego o nawis panelu bocznego: z boku (wypełnienie), z przodu, w wyspie także z tyłu.
+- **Wyspa** (blat z tagiem wyspa) ma panel tylny między panelami bocznymi, od podłogi do góry korpusów.
 - **Cokół** jest cofnięty za fronty.
 
 ## 5. Otwory i wycięcia

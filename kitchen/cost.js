@@ -85,7 +85,7 @@ window.KITCHEN_COST = {
   },
   {"id": "back", "code": "PL", "title": "PLECY – {m:back}, tylko za drzwiami szafek"},
   {"id": "worktops", "code": "BL", "title": "BLATY – {m:worktop} (blat), {m:islandWorktop} (wyspa); wycięcia na zlew (WZ) i płytę (WP) wg legendy"},
-  {"id": "falls", "code": "PB", "title": "PANELE BOCZNE – materiał dwustronny do wyboru, {t:fall}, dekor jak blat; głębokość jak blat"},
+  {"id": "falls", "code": "PB", "title": "PANELE BOCZNE – materiał dwustronny do wyboru, {t:fall}, dekor jak blat; blat wystaje {s:worktop.fallOverhang} mm poza panel boczny (bok, przód, w wyspie tył)"},
   {"id": "plaster", "code": "GK", "title": "ZABUDOWA GK – GKBI 12,5 na CD60 / UD27, gł. {s:plasterboard.depth} (zabudowa do sufitu, grupa 2)"}
  ],
  "categories": [
@@ -488,7 +488,7 @@ window.KITCHEN_COST = {
     {
      "id": "fallBoard",
      "name": "Panele boczne: materiał dwustronny do wyboru, {t:fall}, dekor jak blat",
-     "spec": "głębokość jak blat: {w:1.depth} (grupa 1), {w:3.depth} (wyspa); wymiary w liście cięć (blok PANELE BOCZNE)",
+     "spec": "głębokość blatu ({w:1.depth} grupa 1, {w:3.depth} wyspa) minus nawis {s:worktop.fallOverhang} mm z przodu (w wyspie także z tyłu); wymiary w liście cięć (blok PANELE BOCZNE)",
      "qty": "={falls.m2}",
      "unit": "m²",
      "price": 451,
@@ -940,7 +940,7 @@ window.KITCHEN_COST = {
      "id": "worktops",
      "topic": "Blaty",
      "decide": "Materiał paneli bocznych: dwustronny, dekor jak blat.",
-     "description": "Blat grupy 1 z jednej płyty {v:worktopBoard.length}; blat wyspy z jednej płyty {v:worktopBoard.islandDepth}, przycięty do {w:3.depth}. Panele boczne z osobnego materiału, dwustronnego, głębokie jak blat ({w:1.depth} i {w:3.depth}): widać obie strony (w wyspie od strony hokerów). Blat stoi na panelach bocznych (łączenie na styk), {q:worktopJoints} złącza. Wycięcia na zlew i płytę: wymiary i położenie w liście cięć (blok BLATY, kolumna Wiercenie / wycięcia) – do zlecenia w hurtowni (CNC); wymiar otworu zlewu sprawdzić z szablonem IKEA."
+     "description": "Blat grupy 1 z jednej płyty {v:worktopBoard.length}; blat wyspy z jednej płyty {v:worktopBoard.islandDepth}, przycięty do {w:3.depth}. Panele boczne z osobnego materiału, dwustronnego: widać obie strony (w wyspie od strony hokerów). Blat stoi na panelach bocznych i wystaje poza nie o {s:worktop.fallOverhang} mm z boku, z przodu i (w wyspie) z tyłu – nawis chowa szczelinę łączenia; z boku daje go kolumna wypełnienia obok panelu bocznego. Złącza blatu z panelami: {q:worktopJoints}. Wycięcia na zlew i płytę: wymiary i położenie w liście cięć (blok BLATY, kolumna Wiercenie / wycięcia) – do zlecenia w hurtowni (CNC); wymiar otworu zlewu sprawdzić z szablonem IKEA."
     },
     {
      "id": "plaster",

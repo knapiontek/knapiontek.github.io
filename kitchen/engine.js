@@ -102,7 +102,7 @@
     'drawers.dFrom', 'drawers.D.side', 'drawers.D.back', 'drawers.M.side', 'drawers.M.back',
     'drawers.bottom.inset', 'drawers.bottom.depth', 'drawers.bottom.fromBack', 'drawers.back.inset',
     'drawers.liftAtBottom', 'drawers.liftAbove', 'drawers.inner.gap', 'drawers.inner.back', 'drawers.inner.frontDeduction',
-    'carcass.legs', 'island.backPanel', 'worktop.overhang',
+    'carcass.legs', 'island.backPanel', 'worktop.overhang', 'worktop.fallOverhang',
     'pullOutShelf.depth', 'pullOutShelf.clearance', 'pullOutShelf.lift', 'pullOutShelf.space', 'pullOutShelf.shelvesAbove',
     'pullouts.perDoor', 'pullouts.side', 'pullouts.lift', 'pullouts.runner.gap', 'pullouts.runner.lengths', 'pullouts.runner.holes', 'pullouts.runner.axis',
     'plasterboard.depth', 'plasterboard.studSpacing', 'plasterboard.layers',
@@ -622,14 +622,19 @@
       worktops[G.group] = { n0: carcassBack - behind, n1: frontFace + settings.worktop.overhang, depth, back: behind, v0: top.v0, v1: top.v1, use, material, thickness: thickness[use] };
     }
 
-    // ---- island back panel: panel material, between the end columns, floor to the carcass tops, on the carcass backs ----
+    // ---- island back panel: panel material, between the side panels (none: the end columns), floor to the carcass tops, on the carcass backs ----
     if (settings.island.backPanel) {
       for (const G of Object.values(groups).filter(G => G.island)) {
-        const firstWidth = G.widths[0] || 0, lastWidth = G.widths[G.widths.length - 1] || 0;
-        const top = Math.max(0, ...carcasses.filter(K => K.group === G.group).map(K => K.v1));
+        const own = carcasses.filter(K => K.group === G.group);
+        const top = Math.max(0, ...own.map(K => K.v1));
+        const first = Math.min(...own.map(K => K.u0)), last = Math.max(...own.map(K => K.u1));
+        const falls = G.items.filter(i => i.type === 'fall');
+        const left = falls.filter(f => f.u1 <= first), right = falls.filter(f => f.u0 >= last);
+        const u0 = left.length ? Math.max(...left.map(f => f.u1)) : G.widths[0] || 0;
+        const u1 = right.length ? Math.min(...right.map(f => f.u0)) : G.length - (G.widths[G.widths.length - 1] || 0);
         panels.push({
-          group: G.group, material: materialFor.panel, name: 'Panel tylny wyspy ' + thickness.panel, a: G.length - firstWidth - lastWidth, b: top, edges: [],
-          box: [firstWidth, G.length - lastWidth, 0, top, carcassBack - thickness.panel, carcassBack]
+          group: G.group, material: materialFor.panel, name: 'Panel tylny wyspy ' + thickness.panel, a: u1 - u0, b: top, edges: [],
+          box: [u0, u1, 0, top, carcassBack - thickness.panel, carcassBack]
         });
       }
     }
@@ -903,18 +908,26 @@
       if (!W) continue;
       // finished where an edge is seen: ABS, unless the material comes with that edge (factoryEdges); cut-outs stay bare
       const items = G.items.filter(i => i.type === 'worktop' || i.type === 'fall'), falls = items.filter(i => i.type === 'fall');
+      // a worktop end is seen over a side panel at that end: nothing but fillers between them (the filler = the worktop overhanging the panel)
+      const onlyFillers = (a, b) => G.items.every(i => i.type === 'filler' || i.u1 <= a || i.u0 >= b || i.v0 >= W.v0);
+      const fallAt = {
+        left: item => falls.some(f => f.u0 >= item.u0 && onlyFillers(item.u0, f.u0)),
+        right: item => falls.some(f => f.u1 <= item.u1 && onlyFillers(f.u1, item.u1))
+      };
+      // a side panel stands worktop.fallOverhang behind the worktop front (and its back on an island): the joint stays hidden
+      const fallN0 = W.n0 + (G.island ? settings.worktop.fallOverhang : 0), fallN1 = W.n1 - settings.worktop.fallOverhang;
       for (const item of items) {
         const fall = item.type === 'fall', length = fall ? item.v1 - item.v0 : item.u1 - item.u0;
         const material = fall ? materialFor[G.island ? ISLAND_FALL_USE : 'fall'] : W.material;
+        const n0 = fall ? fallN0 : W.n0, n1 = fall ? fallN1 : W.n1, depth = n1 - n0;
         const materialDepth = P.materials[material].depth;
-        if (fall && materialDepth !== W.depth) warn(`${placeOf(item)}: panel boczny ${W.depth} głęboki jak blat, materiał ${materials[material].label} ma ${materialDepth}.`, item.index);
+        if (fall && materialDepth < depth) warn(`${placeOf(item)}: panel boczny ${depth} głęboki, materiał ${materials[material].label} ma ${materialDepth}.`, item.index);
         const seen = [{ side: 'front', length, along: 'a' }];
         if (G.island) seen.push({ side: 'back', length, along: 'a' });
-        if (!fall && falls.some(f => f.u0 === item.u0)) seen.push({ side: 'left', length: W.depth, along: 'b' });
-        if (!fall && falls.some(f => f.u1 === item.u1)) seen.push({ side: 'right', length: W.depth, along: 'b' });
+        if (!fall) for (const side of ['left', 'right']) if (fallAt[side](item)) seen.push({ side, length: depth, along: 'b' });
         const factory = P.materials[material].factoryEdges || [];
         worktopPieces.push({
-          group: G.group, item, name: fall ? 'Panel boczny' : 'Blat', material, a: length, b: W.depth,
+          group: G.group, item, name: fall ? 'Panel boczny' : 'Blat', material, a: length, b: depth, n0, n1,
           edges: seen.filter(edge => !factory.includes(edge.side)), factoryEdges: seen.map(edge => edge.side).filter(side => factory.includes(side))
         });
       }
