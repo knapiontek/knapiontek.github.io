@@ -7,7 +7,7 @@
      labels      fronts: the label of a front in the cutting list, by its type and tags (first match; none = its type);
                  sheet: the label of the sheet input; cuttingNote: the text under the cutting list; legend: a remark per
                  hole kind in the drilling legend
-     blocks      cutting-list tables, code = the two letters of their row labels (KO-07), rows built by engine.js: parts = front | frames | plinths | panels | plaster | worktops,
+     blocks      cutting-list tables, code = the two letters of their row labels (KO-07), rows built by engine.js: parts = front | frames | plinths | panels | plaster | worktops | falls,
                  or a material use (carcass, drawerBox, back ...: every board of that use's material); cut = priced saw
                  cuts; columns = the header when not Element / Długość / Szerokość / Ilość
      categories  estimate items, by category {name, appliances, items}; appliances = the category counts as AGD, not
@@ -16,16 +16,18 @@
      notes       Notes tab, by section {name, notes}; a note: id, appliance (its documents come from appliances.js), topic,
                  description, assumed (in the estimate), decide (open question), links [{name, url}]; \n starts a new line.
                  Notes and sections are numbered in this order.
+     formulas    named calculations used in several texts ({f:name}), written like {=...} without the braces
    Texts and formulas may hold placeholders:
      {n:hinges}        engine count ({n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
      {s:drawers.dFrom} design.js setting     {t:carcass} thickness and {m:cabinet} material label of a board type or part
-                       (a material use of engine.js: a board type, islandWorktop, carcass, back, drawerBox, hobPanel)
+                       (a material use of engine.js: a board type, islandWorktop, fall, islandFall, carcass, back, drawerBox, hobPanel)
      {w:1.depth}       worktop of group 1  {k:K8.innerWidth} carcass by name: width, height, innerWidth, v0, v1
      {i:K8/oven.niche} item by carcass name or place (G1[5]) and type or tag, #2 = the second from the bottom:
                        width, height, v0, v1 (module), frontWidth, frontHeight, frontV0, frontV1 (front),
                        nicheBottom, nicheTop, niche (clear height between the horizontal boards of the carcass around it)
      {a:oven.front.height}  appliances.js       {v:sheet.length} values
      {p:hinges}        unit price          {q:hinges} item quantity          {note:hinges} the number of a note
+     {f:dishwasherHeight}  a named formula of "formulas"
      {carcass.m2}      cutting-list total of a block (m2, edge, cut, len, qty)    {waste} {sheet} {reserve} params
      {=expression}     a calculation with placeholders in angle brackets, e.g. {=(<a:oven.front.width> - <k:K8.innerWidth>) / 2},
                        with ROUND, ROUNDUP, MIN, MAX;  |% shows a fraction as a percentage
@@ -58,7 +60,7 @@ window.KITCHEN_COST = {
    {"type": "cabinet", "function": "drzwi"}
   ],
   "sheet": "Arkusz płyty {v:sheet.length}×{v:sheet.width} [m²]",
-  "cuttingNote": "Długość = dłuższy bok, Szerokość = krótszy (fronty: wysokość × szerokość, jak potrzebuje producent frontów); wiersze wg elementu, najdłuższe pierwsze. Krawędź = liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1 lub 2), jak w formularzu hurtowni (np. Bok 1920 | 1 | 550 | 0); ABS na płytach i panelach, lakier na frontach (2 i 2), listwach (krawędź przednia) i cokole (brak). ABS razem = długość ABS × ilość; strona każdej krawędzi ABS jest w zakładce Montaż. Cięcia = (długość + szerokość) × ilość, wyceniane w pozycji Cięcie płyt. Korpus = wszystkie kolumny z jedną nazwą korpusu, głębokość {s:carcass.depth}, {s:carcass.wallGap} od ściany; wnętrze = szerokość − 2 × {t:carcass}; półka ruchoma = wnętrze − 2 × {s:shelf.clearance}, głębokość − {s:shelf.setback}; półka stała = wnętrze × pełna głębokość; plecy {m:back} = korpus − 2 × {s:back.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:frame.depth} × długość listwy; dno szuflady = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}, tył = wnętrze − {s:drawers.back.inset}; tył szuflady wewnętrznej wys. {s:drawers.inner.back}. ABS na częściach korpusu: krawędź widoczna z przodu (boki: długa krawędź przednia; wieńce, półki, trawersy przednie: krawędź przednia; trawersy na sztorc: krawędź dolna); trawersy tylne, listwy tylne, plecy, części szuflad TANDEMBOX, panele wpuszczane: brak; szuflady za drzwiami: górne krawędzie i boki czoła. Panele: ABS na każdej krawędzi przy otwieranym froncie. Blaty: ABS na przodzie i na końcu blatu nad bokiem blatu, w wyspie także z tyłu; boki blatu: przód (w wyspie także tył); wycięcia bez ABS.",
+  "cuttingNote": "Długość = dłuższy bok, Szerokość = krótszy (fronty: wysokość × szerokość, jak potrzebuje producent frontów); wiersze wg elementu, najdłuższe pierwsze. Krawędź = liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1 lub 2), jak w formularzu hurtowni (np. Bok {k:K6.height} | 1 | {s:carcass.depth} | 0); ABS na płytach i panelach, lakier na frontach (2 i 2), listwach (krawędź przednia) i cokole (brak). ABS razem = długość ABS × ilość; strona każdej krawędzi ABS jest w zakładce Montaż. Cięcia = (długość + szerokość) × ilość, wyceniane w pozycji Cięcie płyt. Korpus = wszystkie kolumny z jedną nazwą korpusu, głębokość {s:carcass.depth}, {s:carcass.wallGap} od ściany; wnętrze = szerokość − 2 × {t:carcass}; półka ruchoma = wnętrze − 2 × {s:shelf.clearance}, głębokość − {s:shelf.setback}; półka stała = wnętrze × pełna głębokość; plecy {m:back} = korpus − 2 × {s:back.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:frame.depth} × długość listwy; dno szuflady = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}, tył = wnętrze − {s:drawers.back.inset}; tył szuflady wewnętrznej wys. {s:drawers.inner.back}. ABS na częściach korpusu: krawędź widoczna z przodu (boki: długa krawędź przednia; wieńce, półki, trawersy przednie: krawędź przednia; trawersy na sztorc: krawędź dolna); trawersy tylne, listwy tylne, plecy, części szuflad TANDEMBOX, panele wpuszczane: brak; szuflady za drzwiami: górne krawędzie i boki czoła. Panele: ABS na każdej krawędzi przy otwieranym froncie. Blaty: krawędź przednia wykończona fabrycznie (bez ABS), ABS na krawędzi bocznej nad panelem bocznym, w wyspie także na krawędzi tylnej; panele boczne: krawędź przednia (w wyspie także tylna); wycięcia bez ABS.",
   "legend": {"runner": "pozycje do potwierdzenia wg Blum i Häfele"}
  },
  "blocks": [
@@ -79,7 +81,8 @@ window.KITCHEN_COST = {
    "cut": true
   },
   {"id": "back", "code": "PL", "title": "PLECY – {m:back}, tylko za drzwiami szafek"},
-  {"id": "worktops", "code": "BL", "title": "BLATY – {m:worktop} (blat), {m:islandWorktop} (wyspa): blaty i boki blatu; wycięcia na zlew (WZ) i płytę (WP) wg legendy"},
+  {"id": "worktops", "code": "BL", "title": "BLATY – {m:worktop} (blat), {m:islandWorktop} (wyspa); wycięcia na zlew (WZ) i płytę (WP) wg legendy"},
+  {"id": "falls", "code": "PB", "title": "PANELE BOCZNE – materiał dwustronny do wyboru, {t:fall}, dekor jak blat; głębokość jak blat"},
   {"id": "plaster", "code": "GK", "title": "ZABUDOWA GK – GKBI 12,5 na CD60 / UD27, gł. {s:plasterboard.depth} (zabudowa do sufitu, grupa 2)"}
  ],
  "categories": [
@@ -374,7 +377,7 @@ window.KITCHEN_COST = {
     {
      "id": "wallBrackets",
      "name": "Kątownik meblowy wąski 40 × 40 × 17 Domax",
-     "spec": "listwa tylna do ściany: na górze listwy pod korpusem nad nią (w szczelinie); pod blatem od środka korpusu; górna listwa w stosie bez kątownika",
+     "spec": "listwa tylna do ściany: na górze listwy pod korpusem nad nią (w szczelinie); górna listwa w stosie bez kątownika",
      "qty": "={n:wallStrips}",
      "unit": "szt.",
      "price": 3.79,
@@ -460,7 +463,7 @@ window.KITCHEN_COST = {
     {
      "id": "worktop",
      "name": "{m:worktop}, {v:worktopBoard.depth} × {v:worktopBoard.length} × {t:worktop}",
-     "spec": "blat grupy 1 + bok blatu, przycięty do {w:1.depth}; boki muszą być dwustronne - rozważ klejenie dwóch paneli 18.6; prosta krawędź Egger 100/1.5",
+     "spec": "blat grupy 1, przycięty do {w:1.depth}; krawędź przednia fabryczna Egger 100/1.5",
      "qty": 1,
      "unit": "szt.",
      "price": 1201.01,
@@ -471,7 +474,7 @@ window.KITCHEN_COST = {
     {
      "id": "islandWorktop",
      "name": "{m:islandWorktop}, {v:worktopBoard.islandDepth} × {v:worktopBoard.length} × {t:islandWorktop}",
-     "spec": "blat wyspy ({w:3.depth}) + 2 boki blatu; boki muszą być dwustronne - rozważ klejenie dwóch paneli 18.6; prosta krawędź Egger 100/1.5; tylna krawędź po przycięciu do oklejenia",
+     "spec": "blat wyspy, przycięty do {w:3.depth}; krawędź przednia fabryczna Egger 100/1.5, krawędź tylna po przycięciu do oklejenia",
      "qty": 1,
      "unit": "szt.",
      "price": 2056.93,
@@ -480,14 +483,25 @@ window.KITCHEN_COST = {
      "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/BLAT-H1180-ST37-4100x920x38MM-Dab-Halifax-naturalny/1259"}]
     },
     {
+     "id": "fallBoard",
+     "name": "Panele boczne: materiał dwustronny do wyboru, {t:fall}, dekor jak blat",
+     "spec": "głębokość jak blat: {w:1.depth} (grupa 1), {w:3.depth} (wyspa); wymiary w liście cięć (blok PANELE BOCZNE)",
+     "qty": "={falls.m2}",
+     "unit": "m²",
+     "price": 451,
+     "refs": ["worktops"],
+     "source": "NIESPRAWDZONE – materiał nie wybrany; szacunek: cena m² blatu {m:worktop} w M-HM",
+     "links": []
+    },
+    {
      "id": "worktopEdging",
      "name": "Obrzeże ABS-H1180 ST37 43/1,5 Dąb Halifax naturalny",
-     "spec": "do blatów: krawędzie z ABS wg listy cięć (blok BLATY): przód, koniec blatu nad bokiem blatu, w wyspie także tył; blaty Egger 100/1.5 bez obrzeża",
-     "qty": "={worktops.edge}*(1+{v:edgeAllowance})",
+     "spec": "krawędzie z ABS wg listy cięć (bloki BLATY i PANELE BOCZNE): krawędź boczna blatu nad panelem bocznym, w wyspie krawędź tylna blatu; panele boczne: krawędź przednia, w wyspie także tylna; krawędź przednia blatów fabryczna",
+     "qty": "=({worktops.edge}+{falls.edge})*(1+{v:edgeAllowance})",
      "unit": "m",
      "price": 10.1,
      "refs": ["worktops"],
-     "source": "oklejanie maszynowe - zapytać M-HM",
+     "source": "oklejanie maszynowe - zapytać M-HM (czy krawędź przednia blatu jest fabryczna; obrzeże paneli bocznych dobrać do ich materiału)",
      "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-H1180-ST37-431.5MM-Dab-Halifax-naturalny/1401"}]
     },
     {
@@ -503,8 +517,8 @@ window.KITCHEN_COST = {
     {
      "id": "worktopJoints",
      "name": "Złącze do blatów ZŁM-26 L-100",
-     "spec": "blat z bokami blatu: 2 na bok blatu",
-     "qty": "={n:tag.fall}*2",
+     "spec": "blat z panelami bocznymi: 2 na panel boczny",
+     "qty": "={n:type.fall}*2",
      "unit": "szt.",
      "price": 3.3,
      "refs": ["worktops"],
@@ -648,7 +662,7 @@ window.KITCHEN_COST = {
     {
      "id": "sink",
      "name": "Zlew IKEA KILSVIKEN, 1 komora, czarny kompozyt kwarcowy, 72 × 46 (293.370.25)",
-     "spec": "komora 66 × 40 × 18; syfon LILLVIKEN, sitko i pokrywa w zestawie",
+     "spec": "komora {a:sink.bowl.width} × {a:sink.bowl.depth} × {a:sink.bowl.height}; syfon LILLVIKEN, sitko i pokrywa w zestawie",
      "qty": "={n:sinks}",
      "unit": "szt.",
      "price": 1279,
@@ -781,6 +795,12 @@ window.KITCHEN_COST = {
    ]
   }
  ],
+ "formulas": {
+  "dishwasherHeight": "MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height> + <a:dishwasher.feet.min>, <w:1.v0>))",
+  "dishwasherDoor": "<a:dishwasher.door.height.min> + (<a:dishwasher.door.height.max> - <a:dishwasher.door.height.min>) * (<f:dishwasherHeight> - <a:dishwasher.body.height> - <a:dishwasher.feet.min>) / (<a:dishwasher.feet.max> - <a:dishwasher.feet.min>)",
+  "microFeet": "MIN(<a:micro.feet.max>, MAX(<a:micro.feet.min>, (<i:K8/micro.v0> + <i:K8/micro.v1> - <a:micro.front.height>) / 2 - <a:micro.frontBottom> - <i:K8/micro.nicheBottom>))",
+  "ovenMicroGap": "<i:K8/micro.v0> - <i:K8/oven.nicheBottom> - <a:oven.front.height>"
+ },
  "notes": [
   {
    "name": "AGD – WYMIARY I DOPASOWANIE DO KORPUSÓW (mm; szer. × wys. × gł.)",
@@ -789,21 +809,21 @@ window.KITCHEN_COST = {
      "id": "oven",
      "appliance": "oven",
      "topic": "Piekarnik Bosch HBA534BB3 – K8, dół",
-     "description": "Obudowa {a:oven.body.width} × {a:oven.body.height} × {a:oven.body.depth} i front {a:oven.front.width} × {a:oven.front.height} × {a:oven.front.thickness} stoją na półce; front kończy się {=<a:oven.front.height> - <a:oven.body.height>} nad obudową.\nFront zachodzi: {=<a:oven.front.height> - <i:K8/oven.niche>} na półkę nad, po {=(<a:oven.front.width> - <k:K8.innerWidth>) / 2} na boki korpusu; na półkę pod nie zachodzi.\nWnęka {i:K8/oven.niche} × {k:K8.innerWidth} × {s:carcass.depth}; nad obudową {=<i:K8/oven.niche> - <a:oven.body.height>} luzu.\nPółka pod piekarnikiem leży pod złączem, za frontem szafki pod nim: po otwarciu tego frontu widać ją w całości. Szczelina między frontem szafki a frontem piekarnika {=<i:K8/oven.nicheBottom> - <i:K8/cabinet#1.frontV1>}; do frontu mikrofalówki {=<i:K8/micro.v0> - <i:K8/oven.nicheBottom> - <a:oven.front.height>}.",
+     "description": "Obudowa {a:oven.body.width} × {a:oven.body.height} × {a:oven.body.depth} i front {a:oven.front.width} × {a:oven.front.height} × {a:oven.front.thickness} stoją na półce; front kończy się {=<a:oven.front.height> - <a:oven.body.height>} nad obudową.\nFront zachodzi: {=<a:oven.front.height> - <i:K8/oven.niche>} na półkę nad, po {=(<a:oven.front.width> - <k:K8.innerWidth>) / 2} na boki korpusu; na półkę pod nie zachodzi.\nWnęka {i:K8/oven.niche} × {k:K8.innerWidth} × {s:carcass.depth}; nad obudową {=<i:K8/oven.niche> - <a:oven.body.height>} luzu.\nPółka pod piekarnikiem leży pod złączem, za frontem szafki pod nim: po otwarciu tego frontu widać ją w całości. Szczelina między frontem szafki a frontem piekarnika {=<i:K8/oven.nicheBottom> - <i:K8/cabinet#1.frontV1>}; do frontu mikrofalówki {f:ovenMicroGap}.",
      "assumed": "Kratka w cokole ({p:grilles} PLN), półka nad piekarnikiem płytsza o {s:shelf.ventGap}."
     },
     {
      "id": "micro",
      "appliance": "micro",
      "topic": "Mikrofalówka Bosch BFL623MB3 – K8, nad piekarnikiem",
-     "description": "Urządzenie {a:micro.body.width} × {a:micro.body.height} × {a:micro.body.depth} na regulowanych nóżkach {=((<i:K8/micro.v0> + <i:K8/micro.v1> - <a:micro.front.height>) / 2 - <a:micro.frontBottom> - <i:K8/micro.nicheBottom>)}; front {a:micro.front.width} × {a:micro.front.height} × {a:micro.front.thickness} ({=-<a:micro.frontBottom>} poniżej spodu urządzenia).\nFront zachodzi: {=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} na półkę pod, {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} na półkę nad ({=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} + {i:K8/micro.niche} + {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} = {i:K8/micro.height}), po {=(<a:micro.front.width> - <k:K8.innerWidth>) / 2} na boki korpusu.\nWnęka {i:K8/micro.niche} × {k:K8.innerWidth} × {s:carcass.depth}; tył otwarty; nad urządzeniem {=<i:K8/micro.niche> - (((<i:K8/micro.v0> + <i:K8/micro.v1> - <a:micro.front.height>) / 2 - <a:micro.frontBottom> - <i:K8/micro.nicheBottom>)) - <a:micro.body.height>} luzu.\nSzczelina do frontu piekarnika {=<i:K8/micro.v0> - <i:K8/oven.nicheBottom> - <a:oven.front.height>}; front szafki nad: szczelina {=<i:K8/cabinet#2.frontV0> - <i:K8/micro.v1>} nad frontem mikrofalówki, zachodzi {=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/cabinet#2.frontV0>} na tę samą półkę.",
-     "assumed": "Stoi na półce płytszej o {s:shelf.ventGap}; nóżki ustawione na 4.",
+     "description": "Urządzenie {a:micro.body.width} × {a:micro.body.height} × {a:micro.body.depth} na regulowanych nóżkach {f:microFeet}; front {a:micro.front.width} × {a:micro.front.height} × {a:micro.front.thickness} ({=-<a:micro.frontBottom>} poniżej spodu urządzenia).\nFront zachodzi: {=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} na półkę pod, {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} na półkę nad ({=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} + {i:K8/micro.niche} + {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} = {i:K8/micro.height}), po {=(<a:micro.front.width> - <k:K8.innerWidth>) / 2} na boki korpusu.\nWnęka {i:K8/micro.niche} × {k:K8.innerWidth} × {s:carcass.depth}; tył otwarty; nad urządzeniem {=<i:K8/micro.niche> - <f:microFeet> - <a:micro.body.height>} luzu.\nSzczelina do frontu piekarnika {f:ovenMicroGap}; front szafki nad: szczelina {=<i:K8/cabinet#2.frontV0> - <i:K8/micro.v1>} nad frontem mikrofalówki, zachodzi {=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/cabinet#2.frontV0>} na tę samą półkę.",
+     "assumed": "Stoi na półce płytszej o {s:shelf.ventGap}; nóżki ustawione na {f:microFeet}.",
      "decide": "Rysunek Bosch (szafka wysoka) pokazuje 35 wolnego za korpusem; półka nad mikrofalówką sięga do {s:carcass.wallGap} od ściany – sprawdzić, czy wystarczy."
     },
     {
      "id": "ovenColumn",
      "topic": "Słupek K8: piekarnik + mikrofalówka",
-     "description": "Od podstawy piekarnika: {a:oven.front.height} piekarnik (ostatnie {=<a:oven.front.height> - <i:K8/oven.niche>} na półce środkowej), {=<i:K8/micro.v0> - <i:K8/oven.nicheBottom> - <a:oven.front.height>} szczeliny, {=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} mikrofalówka na półce środkowej, {i:K8/micro.niche} mikrofalówka, {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} mikrofalówka na półce górnej, {=<i:K8/cabinet#2.frontV0> - <i:K8/micro.v1>} szczeliny, {=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/cabinet#2.frontV0>} szafka górna na półce górnej.\nPółka środkowa {=<i:K8/oven.nicheTop> - <i:K8/oven.nicheBottom>}–{=<i:K8/micro.nicheBottom> - <i:K8/oven.nicheBottom>} (płytsza o {s:shelf.ventGap}), półka górna {=<i:K8/micro.nicheTop> - <i:K8/oven.nicheBottom>}–{=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/oven.nicheBottom>}; szafka pod piekarnikiem {i:K8/cabinet#1.height} (front = korpus), szafka górna od {=<i:K8/cabinet#2.v0> - <i:K8/oven.nicheBottom>}.\nWnęki: piekarnik {i:K8/oven.niche}, mikrofalówka {i:K8/micro.niche}.",
+     "description": "Od podstawy piekarnika: {a:oven.front.height} piekarnik (ostatnie {=<a:oven.front.height> - <i:K8/oven.niche>} na półce środkowej), {f:ovenMicroGap} szczeliny, {=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} mikrofalówka na półce środkowej, {i:K8/micro.niche} mikrofalówka, {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} mikrofalówka na półce górnej, {=<i:K8/cabinet#2.frontV0> - <i:K8/micro.v1>} szczeliny, {=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/cabinet#2.frontV0>} szafka górna na półce górnej.\nPółka środkowa {=<i:K8/oven.nicheTop> - <i:K8/oven.nicheBottom>}–{=<i:K8/micro.nicheBottom> - <i:K8/oven.nicheBottom>} (płytsza o {s:shelf.ventGap}), półka górna {=<i:K8/micro.nicheTop> - <i:K8/oven.nicheBottom>}–{=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/oven.nicheBottom>}; szafka pod piekarnikiem {i:K8/cabinet#1.height} (front = korpus), szafka górna od {=<i:K8/cabinet#2.v0> - <i:K8/oven.nicheBottom>}.\nWnęki: piekarnik {i:K8/oven.niche}, mikrofalówka {i:K8/micro.niche}.",
      "assumed": "Półki przymierzyć na miejscu przed zamocowaniem."
     },
     {
@@ -823,7 +843,7 @@ window.KITCHEN_COST = {
      "id": "dishwasher",
      "appliance": "dishwasher",
      "topic": "Zmywarka Bosch SMV4HVX00E – G1[5]",
-     "description": "Urządzenie {a:dishwasher.body.width} × {=MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height>, <w:1.v0>))} × {a:dishwasher.body.depth}, nóżki wykręcone do spodu blatu; drzwi {=ROUND((<a:dishwasher.door.height.min> + (<a:dishwasher.door.height.max> - <a:dishwasher.door.height.min>) * (MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height>, <w:1.v0>)) - <a:dishwasher.body.height>) / <a:dishwasher.feet.max>))}.\nWnęka {w:1.v0} × {i:G1[5]/dishwasher.width} × {s:carcass.depth}.\nFront {i:G1[5]/dishwasher.frontWidth} × {i:G1[5]/dishwasher.frontHeight}: sięga {=ROUND(MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height>, <w:1.v0>)) - (<a:dishwasher.door.height.min> + (<a:dishwasher.door.height.max> - <a:dishwasher.door.height.min>) * (MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height>, <w:1.v0>)) - <a:dishwasher.body.height>) / <a:dishwasher.feet.max>) - <i:G1[5]/dishwasher.frontV0>)} niżej niż drzwi, kończy się {=MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height>, <w:1.v0>)) - <i:G1[5]/dishwasher.frontV1>} pod ich górą, po {=(<a:dishwasher.body.width> - <i:G1[5]/dishwasher.frontWidth>) / 2} węższy z boków.\nNóżki {a:dishwasher.baseSetback} za frontem, cokół przed nimi.",
+     "description": "Urządzenie {a:dishwasher.body.width} × {f:dishwasherHeight} × {a:dishwasher.body.depth}, nóżki wykręcone do spodu blatu; drzwi {=ROUND(<f:dishwasherDoor>)}.\nWnęka {w:1.v0} × {i:G1[5]/dishwasher.width} × {s:carcass.depth}.\nFront {i:G1[5]/dishwasher.frontWidth} × {i:G1[5]/dishwasher.frontHeight}: sięga {=ROUND(<f:dishwasherHeight> - <f:dishwasherDoor> - <i:G1[5]/dishwasher.frontV0>)} niżej niż drzwi, kończy się {=<f:dishwasherHeight> - <i:G1[5]/dishwasher.frontV1>} pod ich górą, po {=(<a:dishwasher.body.width> - <i:G1[5]/dishwasher.frontWidth>) / 2} węższy z boków.\nNóżki {a:dishwasher.baseSetback} za frontem, cokół przed nimi.",
      "decide": "Ciężar frontu: sprawdzić w instrukcji (Bosch ma zawias SMZ5003 do ciężkich frontów)."
     },
     {
@@ -857,7 +877,7 @@ window.KITCHEN_COST = {
     {
      "id": "wallFixing",
      "topic": "Mocowanie korpusów do ściany",
-     "description": "Listwy tylne tak wysokie jak korpusy obok; na styku dwóch korpusów jeden nad drugim górna listwa zaczyna się {s:frame.bracketSpace} wyżej: miejsce na kątownik. Kątowniki do ściany ({n:wallStrips}): na górze listwy tylnej pod korpusem nad nią; pod blatem od środka korpusu; górnej listwy w stosie nie (nad nią listwa pozioma i GK). Listwa i listwa tylna przykręcone do pierwszego korpusu zwykłym wkrętem; drugi korpus do listwy wkrętem mosiądzowanym od środka. Wyspa stoi wolno.",
+     "description": "Listwy tylne tak wysokie jak korpusy obok; na styku dwóch korpusów jeden nad drugim górna listwa zaczyna się {s:frame.bracketSpace} wyżej: miejsce na kątownik. Kątowniki do ściany ({n:wallStrips}): na górze listwy tylnej pod korpusem nad nią; górna listwa w stosie bez kątownika. Listwa i listwa tylna przykręcone do pierwszego korpusu zwykłym wkrętem; drugi korpus do listwy wkrętem mosiądzowanym od środka. Wyspa stoi wolno.",
      "assumed": "Gazobeton, kołki DuoPower 8."
     },
     {
@@ -887,7 +907,7 @@ window.KITCHEN_COST = {
     {
      "id": "backs",
      "topic": "Plecy i panel tylny wyspy",
-     "description": "Plecy {m:back} tylko za drzwiami szafek (powietrze dla piekarnika, mikrofalówki, lodówki). Wyspa: panel tylny {m:panel} między bokami blatu, od podłogi do góry korpusów, na plecach korpusów."
+     "description": "Plecy {m:back} tylko za drzwiami szafek (powietrze dla piekarnika, mikrofalówki, lodówki). Wyspa: panel tylny {m:panel} między panelami bocznymi, od podłogi do góry korpusów, na plecach korpusów."
     },
     {
      "id": "frontSizes",
@@ -914,12 +934,13 @@ window.KITCHEN_COST = {
      "topic": "Szuflady za drzwiami z płyty (K8 i K12, dół)",
      "description": "K8 (pod piekarnikiem): za drzwiami {i:K8/pullouts.frontHeight} × {i:K8/pullouts.frontWidth} {i:K8/pullouts.count} szuflady, skrzynka {i:K8/pullouts.boxWidth} × {i:K8/pullouts.runner} × {i:K8/pullouts.boxHeight}, zawiasy po lewej. K12: za drzwiami {i:K12/pullouts.frontHeight} × {i:K12/pullouts.frontWidth} {i:K12/pullouts.count} szuflady, skrzynka {i:K12/pullouts.boxWidth} × {i:K12/pullouts.runner} × {i:K12/pullouts.boxHeight}, zawiasy po prawej.\nSkrzynki z {m:drawerBox} na prowadnicach kulkowych Häfele z cichym domykiem, L = {i:K12/pullouts.runner} (czoło na całą skrzynkę zakrywa boki i dno, dno i tył między bokami; ABS na górnych krawędziach i bokach czoła), {s:pullouts.runner.gap} luzu na prowadnicę z każdej strony.\nZawiasy zajmują {s:hinges.supportDepth} przy przodzie korpusu (jak słupek zawiasowy): po stronie zawiasów płyta dystansowa z {m:carcass} ({t:carcass}) od pleców do {s:hinges.supportDepth} przed przodem korpusu niesie prowadnicę, a skrzynki zaczynają się na tej samej głębokości. Szuflada mija ramię zawiasu i otwarte drzwi o {t:carcass} + {s:pullouts.runner.gap}; drzwi zamykają się przed szufladami. Szuflady stoją między płytami poziomymi nad i pod drzwiami (w K8: dno i półka pod piekarnikiem).\nBez półek ruchomych w tej części korpusu.",
      "assumed": "{n:pullouts} kompletów prowadnic po {p:pulloutRunners} PLN zamiast {p:innerDrawers} PLN za szufladę Blum.",
-     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka. Uwaga – Blum zamiast płyty: szuflada wewnętrzna TANDEMBOX antaro M ({p:innerDrawers} za komplet + dno i tył z płyty) zamiast skrzynki z płyty na prowadnicach Häfele (ok. 84 zł z płytą, cięciem i ABS) to ok. 140 zł więcej za szufladę, ok. {=ROUND(140 * <n:pullouts>)} zł za wszystkie ({n:pullouts}); boki Blum M tylko 84 mm (płyta: {s:pullouts.side}); w K12 (wnętrze po płycie dystansowej {=<k:K12.innerWidth> - <t:carcass>}) sprawdzić minimalną szerokość szuflady Blum. Uwaga: z szufladami za drzwiami płyta {m:drawerBox} to {q:drawerBoard} ark., ostatni słabo wykorzystany; w tej kuchni skrzynki zmieściłyby się w odpadach {m:carcass} – zdecydować przy zamówieniu wszystkich szaf."
+     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka. Uwaga – Blum zamiast płyty: szuflada wewnętrzna TANDEMBOX antaro M ({p:innerDrawers} za komplet + dno i tył z płyty) zamiast prowadnic Häfele ({p:pulloutRunners}) i skrzynki z płyty: okucia {=ROUND(<p:innerDrawers> - <p:pulloutRunners>)} zł więcej za szufladę, {=ROUND((<p:innerDrawers> - <p:pulloutRunners>) * <n:pullouts>)} zł za wszystkie ({n:pullouts}), mniej płyty na skrzynki; boki Blum M tylko 84 mm (płyta: {s:pullouts.side}); w K12 (wnętrze po płycie dystansowej {=<k:K12.innerWidth> - <t:carcass>}) sprawdzić minimalną szerokość szuflady Blum. Uwaga: z szufladami za drzwiami płyta {m:drawerBox} to {q:drawerBoard} ark., ostatni słabo wykorzystany; w tej kuchni skrzynki zmieściłyby się w odpadach {m:carcass} – zdecydować przy zamówieniu wszystkich szaf."
     },
     {
      "id": "worktops",
      "topic": "Blaty",
-     "description": "Blat grupy 1 + bok z jednej płyty {v:worktopBoard.length}; blat wyspy + 2 boki z jednej płyty {v:worktopBoard.islandDepth}, przycięty do {w:3.depth}. Blat stoi na bokach (łączenie na styk), {q:worktopJoints} złącza. Wycięcia na zlew i płytę: wymiary i położenie w liście cięć (blok BLATY, kolumna Wiercenie / wycięcia) – do zlecenia w hurtowni (CNC); wymiar otworu zlewu sprawdzić z szablonem IKEA."
+     "decide": "Materiał paneli bocznych: dwustronny, dekor jak blat.",
+     "description": "Blat grupy 1 z jednej płyty {v:worktopBoard.length}; blat wyspy z jednej płyty {v:worktopBoard.islandDepth}, przycięty do {w:3.depth}. Panele boczne z osobnego materiału, dwustronnego, głębokie jak blat ({w:1.depth} i {w:3.depth}): widać obie strony (w wyspie od strony hokerów). Blat stoi na panelach bocznych (łączenie na styk), {q:worktopJoints} złącza. Wycięcia na zlew i płytę: wymiary i położenie w liście cięć (blok BLATY, kolumna Wiercenie / wycięcia) – do zlecenia w hurtowni (CNC); wymiar otworu zlewu sprawdzić z szablonem IKEA."
     },
     {
      "id": "plaster",
@@ -951,7 +972,7 @@ window.KITCHEN_COST = {
     {
      "id": "sinkTap",
      "topic": "Zlew i bateria",
-     "description": "IKEA KILSVIKEN 72 × 46, komora 66 × 40 × 18, kompozyt kwarcowy, {p:sink} PLN; wymaga szafki 80; syfon LILLVIKEN i pokrywa w zestawie. Bateria Deante Silia BQS_Z73M, {p:tap} PLN, otwór Ø35. Syfon oszczędzający miejsce Deante ZXY 9917, {p:trap} PLN (patrz {note:sinkCabinet}).",
+     "description": "IKEA KILSVIKEN {a:sink.outer.width} × {a:sink.outer.depth}, komora {a:sink.bowl.width} × {a:sink.bowl.depth} × {a:sink.bowl.height}, kompozyt kwarcowy, {p:sink} PLN; wymaga szafki 80; syfon LILLVIKEN i pokrywa w zestawie. Bateria Deante Silia BQS_Z73M, {p:tap} PLN, otwór Ø35. Syfon oszczędzający miejsce Deante ZXY 9917, {p:trap} PLN (patrz {note:sinkCabinet}).",
      "assumed": "Czarny; syfon IKEA nieużywany.",
      "decide": "Czy syfon IKEA mieści się nad szufladą z koszami? Jeśli tak, zrezygnować z syfonu Deante."
     },
@@ -977,7 +998,7 @@ window.KITCHEN_COST = {
     {
      "id": "hiddenSides",
      "topic": "Niewidoczne boki korpusów",
-     "description": "Zakryte listwami, bokami blatu lub ścianą: bez lakierowanych paneli bocznych."
+     "description": "Zakryte listwami, panelami bocznymi lub ścianą: bez lakierowanych osłon."
     },
     {
      "id": "summary",

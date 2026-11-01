@@ -19,7 +19,8 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | wypełnienie | nic, to pusta przestrzeń; na końcu korpusu: panel wpuszczany |
 | zabudowa GK | zabudowa z płyt gipsowych |
 | cokół | cokół |
-| blat | blat; jego grubość = wysokość elementu (bok blatu: szerokość) |
+| blat | blat; jego grubość = wysokość elementu |
+| panel boczny | pionowa płyta pod końcem blatu, do podłogi; jego grubość = szerokość elementu |
 | panel ścienny | płyta na ścianie |
 | panel | płyta na płasko w płaszczyźnie frontów |
 | listwa | listwa na sztorc w płaszczyźnie frontów |
@@ -38,7 +39,6 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | szuflady za drzwiami | szafka | szuflady z płyty na prowadnicach kulkowych za drzwiami, bez półek ruchomych |
 | lodówka, zamrażarka | szafka | front na drzwiach urządzenia, bez zawiasów, półek i pleców |
 | zmywarka | szafka | front na drzwiach urządzenia, bez korpusu |
-| bok blatu | blat | blat opuszczony do podłogi |
 | wyspa | blat | blat z materiału wyspy, panel tylny wyspy, wyspa stoi wolno (bez ściany) |
 
 Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
@@ -77,6 +77,9 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
   - głębokość podaje materiał blatu; wyspa ma osobny materiał;
   - wystaje przed fronty o nawis;
   - z tyłu zostaje głębokość minus korpus, front i nawis.
+- **Panel boczny** stoi pod końcem blatu, od podłogi do spodu blatu, a blat leży na nim:
+  - jest z osobnego materiału, dwustronnego, bo widać obie jego strony; wyspa ma osobny materiał;
+  - ma głębokość blatu.
 - **Wyspa** (blat z tagiem wyspa) ma panel tylny między skrajnymi kolumnami, od podłogi do góry korpusów.
 - **Cokół** jest cofnięty za fronty.
 
@@ -107,6 +110,11 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Szuflady za drzwiami:** ABS na krawędziach widocznych po wysunięciu.
 - **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad systemowych.
 - **ABS na panelu** jest na każdej krawędzi przy froncie, który się otwiera.
+- **Blat i panel boczny** mają ABS na krawędziach widocznych:
+  - blat: krawędź boczna nad panelem bocznym, w wyspie także krawędź tylna;
+  - panel boczny: krawędź przednia, w wyspie także krawędź tylna;
+  - krawędź, którą materiał ma wykończoną fabrycznie (np. krawędź przednia blatu), nie dostaje ABS;
+  - wycięcia na zlew i płytę zostają bez ABS.
 - **Lista cięć** podaje przy każdym wymiarze liczbę wykończonych krawędzi wzdłuż niego (0, 1 lub 2), jak formularz hurtowni. Opis montażu mówi, gdzie jest każda krawędź z ABS.
 
 ## 7. Kontrole

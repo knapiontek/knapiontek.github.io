@@ -8,8 +8,10 @@ window.KITCHEN_DESIGN = {
   "shakerNavy18": {"name": "Front shaker English Navy satyna", "thickness": 18, "color": "#3a4868", "lacquered": true, "core": "#f2efe8", "uses": ["frame", "cabinet", "drawer"]},
   "mdfNavy18": {"name": "Panel gładki English Navy satyna", "thickness": 18, "color": "#3a4868", "lacquered": true, "core": "#f2efe8", "uses": ["panel", "plinth"]},
   "chipOak18": {"name": "Płyta laminowana Egger H1180 ST37 dąb Halifax", "thickness": 18.6, "core": "#f2efe8", "uses": ["splash"]},
-  "topOak38x600": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "core": "#f2efe8", "depth": 600, "uses": ["worktop"]},
-  "topOak38x900": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "core": "#f2efe8", "depth": 900, "uses": ["islandWorktop"]}
+  "topOak38x600": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "core": "#f2efe8", "depth": 600, "factoryEdges": ["front"], "uses": ["worktop"]},
+  "topOak38x900": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "core": "#f2efe8", "depth": 900, "factoryEdges": ["front"], "uses": ["islandWorktop"]},
+  "fallOak38x600": {"name": "Panel boczny dwustronny, dekor jak blat H1180 ST37 (materiał do wyboru)", "thickness": 38, "core": "#f2efe8", "depth": 600, "twoSided": true, "uses": ["fall"]},
+  "fallOak38x900": {"name": "Panel boczny dwustronny, dekor jak blat H1180 ST37 (materiał do wyboru)", "thickness": 38, "core": "#f2efe8", "depth": 900, "twoSided": true, "uses": ["islandFall"]}
  },
  "settings": {
   "carcass": {"depth": 550, "wallGap": 14, "legs": 4},
@@ -19,7 +21,7 @@ window.KITCHEN_DESIGN = {
   "pullOutShelf": {"depth": 500, "clearance": 5, "lift": 20, "space": 450, "shelvesAbove": 2},
   "pullouts": {"perDoor": [{"count": 2}], "side": 150, "lift": 10, "runner": {"gap": 13, "lengths": [250, 300, 350, 400, 450, 500, 550], "holes": [37, 229, 421], "axis": 23}},
   "hinges": {"fromEnd": 100, "supportDepth": 80, "aboveShelf": 30, "perDoor": [{"maxHeight": 900, "count": 2}, {"maxHeight": 1600, "count": 3}, {"count": 4}]},
-  "drawers": {"dFrom": 350, "D": {"side": 224, "back": 199}, "M": {"side": 83, "back": 84}, "bottom": {"inset": 75, "depth": 476, "fromWall": 52}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "back": 84, "frontDeduction": 132}},
+  "drawers": {"dFrom": 350, "D": {"side": 224, "back": 199}, "M": {"side": 83, "back": 84}, "bottom": {"inset": 75, "depth": 476, "fromBack": 38}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "back": 84, "frontDeduction": 132}},
   "front": {"shakerRail": 50},
   "frame": {"depth": 100, "bracketSpace": 40},
   "plinth": {"setback": 70},
@@ -55,7 +57,7 @@ window.KITCHEN_DESIGN = {
   {"name": "Zabudowa GK", "description": "Płyta GK na profilach", "details": "Do sufitu, także na końcu grupy 2"},
   {"name": "Uchwyty", "description": "IKEA ENERYDA muszelka, mosiądz", "details": ""},
   {"name": "Okucia", "description": "Blum: zawiasy z cichym domykaniem, szuflady TANDEMBOX", "details": "K8 i K12 dół: po 2 szuflady z płyty na prowadnicach kulkowych Häfele z cichym domykiem za drzwiami"},
-  {"name": "Blat", "description": "Egger H1180 ST37 dąb Halifax", "details": "Grupa 1 jednym kawałkiem; boki blatu z tej samej płyty"},
+  {"name": "Blat", "description": "Egger H1180 ST37 dąb Halifax", "details": "Grupa 1 jednym kawałkiem; panele boczne z osobnego materiału, dwustronnego"},
   {"name": "Panel ścienny", "description": "Egger H1180 ST37 dąb Halifax przy oknie, pod kolor blatu", "details": ""},
   {"name": "Cokół", "description": "Lakierowany, wilgocioodporny, na nóżkach", "details": "Kratki pod lodówką i piekarnikiem"},
   {"name": "Narożna szafka górna", "description": "Grupa 2, stoi w połowie na blacie grupy 1", "details": "Skręcona z sąsiednią"},
@@ -69,7 +71,7 @@ window.KITCHEN_DESIGN = {
   "3": [38, 18, 800, 18, 800, 18, 38]
  },
  "components": [
-  {"group": 1, "column": 1, "span": 1, "type": "worktop", "tags": ["fall"], "height": 870},
+  {"group": 1, "column": 1, "span": 1, "type": "fall", "height": 870},
   {"group": 1, "column": 1, "span": 11, "type": "worktop", "height": 38},
   {"group": 1, "column": 1, "span": 10, "type": "splash", "height": 172},
   {"group": 1, "column": 2, "span": 1, "type": "frame", "height": 870},
@@ -116,7 +118,7 @@ window.KITCHEN_DESIGN = {
   {"group": 2, "column": 12, "span": 1, "type": "frame", "height": 2550},
   {"group": 2, "column": 13, "span": 1, "type": "board", "height": 2740},
 
-  {"group": 3, "column": 1, "span": 1, "type": "worktop", "tags": ["fall"], "height": 870},
+  {"group": 3, "column": 1, "span": 1, "type": "fall", "height": 870},
   {"group": 3, "column": 1, "span": 7, "type": "worktop", "tags": ["island"], "height": 38},
   {"group": 3, "column": 2, "span": 1, "type": "frame", "height": 870},
   {"group": 3, "column": 3, "span": 3, "type": "plinth", "height": 150},
@@ -126,6 +128,6 @@ window.KITCHEN_DESIGN = {
   {"group": 3, "column": 5, "span": 1, "type": "drawer", "carcass": "K15", "height": 420, "handle": "top", "gaps": {"left": 3, "right": 3, "top": 3, "bottom": 0}},
   {"group": 3, "column": 5, "span": 1, "type": "drawer", "tags": ["inner"], "carcass": "K15", "height": 300, "handle": "top", "gaps": {"left": 3, "right": 3, "top": 3, "bottom": 0}, "note": "sztućce"},
   {"group": 3, "column": 6, "span": 1, "type": "frame", "height": 870},
-  {"group": 3, "column": 7, "span": 1, "type": "worktop", "tags": ["fall"], "height": 870}
+  {"group": 3, "column": 7, "span": 1, "type": "fall", "height": 870}
  ]
 };

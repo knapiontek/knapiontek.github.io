@@ -172,7 +172,7 @@ const round1 = x => Math.round(x * 10) / 10;
 const fmt = (v, digits = 2) => (Number.isFinite(v) ? v.toLocaleString('pl-PL', { minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: true }) : '–');
 const fmtQty = v => (Number.isInteger(v) ? v.toLocaleString('pl-PL', { useGrouping: true }) : fmt(v, 2));
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const plural = KE.plural; // Polish plural: 1 problem, 2-4 problemy, 5+ problemów
+const plural = KE.plural;
 // ABS edges of one part, e.g. "dół 80 + lewa 720"; their total length in mm
 const edgeText = edges => (edges || []).map(([side, length]) => KE.LABELS.edge[side] + ' ' + length).join(' + ');
 const edgeLength = edges => (edges || []).reduce((sum, [, length]) => sum + length, 0);
@@ -228,9 +228,8 @@ function drillLegend() {
     'L: 1  P: 1 – ile części lewych i prawych (patrząc od przodu) ma otwory podane pod tą linią; prawe w lustrzanym odbiciu',
     'jedna linia na rodzaj otworu: KOD x… ⊗ y…',
     '⊗ – iloczyn kartezjański: otwór w każdym x dla każdego y',
-    'np. PO 69 485 ⊗ 353 1010 = 4 otwory: (69, 353) (69, 1010) (485, 353) (485, 1010)',
+    'np. PO x1 x2 ⊗ y1 y2 = 4 otwory: (x1, y1) (x1, y2) (x2, y1) (x2, y2)',
     'wycięcie: KOD szer.×gł. @ x x y lewego tylnego narożnika',
-    'np. WP 560×490 @ 176x54',
     'wymiary w mm'
   ].join('\n')]);
   return rows;
@@ -262,7 +261,7 @@ function frontFunction(front) {
 const place = p => (p.item ? KE.placeLabel(p.group, p.item.col, p.item.span) : p.col ? KE.placeLabel(p.group, p.col) : 'G' + p.group);
 const columnOfPart = p => (p.item ? p.item.col : p.col || 0);
 
-// cutting-list rows of one block: its id = fronts | frames | plinths | panels | plaster | worktops, or a material use
+// cutting-list rows of one block: its id = fronts | frames | plinths | panels | plaster | worktops | falls, or a material use
 // (carcass, drawerBox, back ...): every board of that use's material
 let rowsOf = {}; // block id -> its rows, from the model
 let codeOfRow = {}; // cutKey of a row -> its label
@@ -306,7 +305,8 @@ function blockRows(parts) {
     plinths: () => list(model.plinths.map(p => ({ ...p, name: 'Cokół' }))),
     panels: () => list(model.panels),
     plaster: () => list(model.plaster),
-    worktops: () => list(model.worktopPieces)
+    worktops: () => list(model.worktopPieces.filter(p => p.item.type === 'worktop')),
+    falls: () => list(model.worktopPieces.filter(p => p.item.type === 'fall'))
   };
   return PARTS[parts] ? PARTS[parts]() : list(model.boards.filter(b => b.material === model.materialFor[parts]));
 }
@@ -470,6 +470,7 @@ function placeholder(key, totals, quantities) {
   if (prefix === 'k') return model ? carcassValue(rest) : NaN;
   if (prefix === 'i') return model ? itemValue(rest) : NaN;
   if (prefix === 'note') return noteNumber[rest] ?? NaN;
+  if (prefix === 'f') return model && COST.formulas && COST.formulas[rest] ? calculate(COST.formulas[rest], totals, quantities) : NaN;
   if (prefix === 'a') return path(APPLIANCES, rest);
   if (prefix === 'v') return path(COST.values, rest);
   if (prefix === 'p') return Number(values.items[rest].price);

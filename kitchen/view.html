@@ -312,7 +312,7 @@ for (const r of RUN_IDS) {
   itemsOfRun[r] = g.items;
   runLength[r] = g.widths.reduce((sum, w) => sum + w, 0);
 }
-const hasTag = (item, ...tags) => tags.some(t => item.tags.includes(t));
+const hasTag = KE.hasTag;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 const { frontFace, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the wall
@@ -595,7 +595,6 @@ const BOARD = Object.fromEntries(Object.entries(model.materials).map(([code, m])
     : standard({ color: linear(m.color), roughness: 0.8, envMapIntensity: 0.45 })]));
 const boardFor = use => BOARD[model.materialFor[use]]; // the material of a use (component type or part)
 const plinthMaterial = boardFor('plinth'), splashMaterial = boardFor('splash');
-const worktopMaterialOf = run => BOARD[worktopOf(groupOfRun[run]).material]; // a worktop: its group's material (an island has its own)
 const lamps = [], shadowLamps = [], glowMaterials = []; // lamps: on only at Night; shadowLamps: the ones that cast shadows at Night
 // bulb / LED material: bright at Night, plain off-white by day
 const glowMaterial = (hex, brightness) => {
@@ -649,7 +648,7 @@ function edgeLook(m, edges, code) {
 const LAYERS = [ // [layer group label, [[layer id, label], ...]]
   ['Korpusy', [['carcasses', 'Płyty'], ['backs', 'Plecy HDF'], ['shelves', 'Półki'], ['drawers', 'Szuflady'], ['hardware', 'Zawiasy, prowadnice'], ['holes', 'Otwory'], ['legs', 'Nóżki']]],
   ['Fronty', [['fronts', 'Fronty'], ['handles', 'Uchwyty'], ['frames', 'Listwy'], ['panel', 'Panele'], ['plinth', 'Cokół']]],
-  ['Blat', [['worktops', 'Blaty'], ['worktopFalls', 'Boki blatu'], ['wallpanel', 'Panel ścienny']]],
+  ['Blat', [['worktops', 'Blaty'], ['falls', 'Panele boczne'], ['wallpanel', 'Panel ścienny']]],
   ['AGD', [['sink', 'Zlew, bateria'], ['trap', 'Syfon'], ['hob', 'Płyta grzewcza'], ['hood', 'Okap'], ['oven', 'Piekarnik'], ['micro', 'Mikrofalówka'],
     ['coffee', 'Ekspres'], ['fridge', 'Lodówka'], ['dishwasher', 'Zmywarka']]],
   ['Pomieszczenie', [['walls', 'Ściany'], ['window', 'Okno'], ['floor', 'Podłoga'], ['ceiling', 'Sufit'], ['lamps', 'Lampy wiszące']]]
@@ -942,11 +941,14 @@ const bowlU0 = sinkU - sinkData.bowl.width / 2, bowlU1 = sinkU + sinkData.bowl.w
 const sinkTop = sinkRun ? worktopTopOf(sinkRun) : 0;
 const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowl.height;
 const tapN = sinkRun ? worktopOf(groupOfRun[sinkRun]).n0 + SCENE.installation.sink.tapFromBack : 0; // from the back edge of the worktop
-// a worktop or a worktop fall (own layer): ABS edges in the decor, the rest bare; built of boxes around its cut-outs
+// a worktop or a side panel (own layer): finished edges (ABS or factory) in the decor, the rest bare; built of boxes around its cut-outs
 function worktopPiece(run, piece) {
-  const { u0, u1, v0, v1 } = piece.item, W = worktopOf(groupOfRun[run]), fall = hasTag(piece.item, 'fall');
-  const P = runLayer[run][fall ? 'worktopFalls' : 'worktops'], decor = worktopMaterialOf(run), banded = new Set(piece.edges.map(([side]) => side));
-  const faces = fall ? ['left', 'right'] : ['top', 'bottom']; // the decor faces
+  const { u0, u1, v0, v1 } = piece.item, W = worktopOf(groupOfRun[run]), fall = piece.item.type === 'fall';
+  const P = runLayer[run][fall ? 'falls' : 'worktops'], decor = BOARD[piece.material];
+  const finished = new Set([...piece.edges.map(([side]) => side), ...piece.factoryEdges]);
+  // the decor faces: both on a two-sided material, else the top of a worktop or the outer face of a side panel
+  const outer = u0 + u1 < runLength[run] ? 'left' : 'right';
+  const faces = model.materials[piece.material].twoSided ? (fall ? ['left', 'right'] : ['top', 'bottom']) : [fall ? outer : 'top'];
   const holes = (piece.cutouts || []).map(c => [c.u0, c.u1, c.n0, c.n1]);
   // strips along the board, each split around its cut-outs
   const cuts = [...new Set([u0, u1, ...holes.flatMap(([a, b]) => [a, b])])].sort((x, y) => x - y);
@@ -960,9 +962,9 @@ function worktopPiece(run, piece) {
     for (const [n0, n1] of spans) {
       const m = localBox(P, a, b, v0, v1, n0, n1, decor);
       if (!m) continue;
-      // an outer edge gets ABS if the engine says so; a cut-out wall stays bare
+      // a cut-out wall stays bare
       const onOutline = { left: a === u0, right: b === u1, back: n0 === W.n0, front: n1 === W.n1, top: true, bottom: true };
-      m.material = BOX_SIDES.map(side => (faces.includes(side) || (onOutline[side] && banded.has(side)) ? decor : coreLook(piece.material)));
+      m.material = BOX_SIDES.map(side => (faces.includes(side) || (onOutline[side] && finished.has(side)) ? decor : coreLook(piece.material)));
       m.userData.grain = fall ? 'y' : 'x';
       edgedMeshes.add(m);
       worldUVMeshes.push(m);
@@ -974,11 +976,11 @@ const carcassMeshes = []; // every board of the carcasses and the back strips
 function nameNewMeshes(firstIndex, kind, name) {
   for (const m of meshes.slice(firstIndex)) if (!m.userData.part && !m.userData.role) m.userData.part = { kind, name };
 }
-const CHECKED_TYPES = ['worktop', 'frame', 'plinth', 'panel', 'splash']; // items named for the geometry check
+const CHECKED_TYPES = ['worktop', 'fall', 'frame', 'plinth', 'panel', 'splash']; // items named for the geometry check
 function buildRun(run) {
   for (const item of itemsOfRun[run]) {
     const { u0, u1, v0, v1, type, span, col } = item, height = v1 - v0, firstMesh = meshes.length;
-    if (type === 'worktop') {
+    if (type === 'worktop' || type === 'fall') {
       const piece = model.worktopPieces.find(p => p.item === item);
       if (piece) worktopPiece(run, piece);
     } else if (type === 'frame') { // on edge, frame.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
@@ -1413,7 +1415,7 @@ function geometryCheck() {
   const overlapOn = (a, b, axis) => Math.min(a[2 * axis + 1], b[2 * axis + 1]) - Math.max(a[2 * axis], b[2 * axis]);
   // an issue: k = kind of issue, a / b = the parts (names with their real sizes), v = the amount
   const overlaps = [], gaps = [], out = [];
-  const GAP_KINDS = new Set(['frame', 'panel', 'strip', 'carcass', 'plinth', 'worktop']);
+  const GAP_KINDS = new Set(['frame', 'panel', 'strip', 'carcass', 'plinth', 'worktop', 'fall']);
   const TIGHT_KINDS = ['frame', 'panel', 'strip'];
   for (let i = 0; i < parts.length; i++) {
     for (let j = i + 1; j < parts.length; j++) {
@@ -2064,7 +2066,7 @@ if (FLOOR_KEYS.length) setFloor(floorKey);
 else renderFinishes();
 // per run: its length, and its worktop (top board length × depth × thickness, top above the floor)
 const runDims = RUN_IDS.flatMap(r => {
-  const W = model.worktops[groupOfRun[r]], top = itemsOfRun[r].find(i => i.type === 'worktop' && !hasTag(i, 'fall'));
+  const W = model.worktops[groupOfRun[r]], top = itemsOfRun[r].find(i => i.type === 'worktop');
   return [
     ['G' + groupOfRun[r] + ' ' + runName[r], 'długość ' + runLength[r]],
     ...(W && top ? [['G' + groupOfRun[r] + ' blat', (top.u1 - top.u0) + ' × ' + W.depth + ' × ' + W.thickness + ', wierzch ' + W.v1 + ' nad podłogą']] : [])
