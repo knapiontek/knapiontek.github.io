@@ -174,8 +174,8 @@ const fmtQty = v => (Number.isInteger(v) ? v.toLocaleString('pl-PL', { useGroupi
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const plural = KE.plural;
 // ABS edges of one part, e.g. "dół 80 + lewa 720"; their total length in mm
-const edgeText = edges => (edges || []).map(([side, length]) => KE.LABELS.edge[side] + ' ' + length).join(' + ');
-const edgeLength = edges => (edges || []).reduce((sum, [, length]) => sum + length, 0);
+const edgeText = edges => (edges || []).map(edge => KE.LABELS.edge[edge.side] + ' ' + edge.length).join(' + ');
+const edgeLength = edges => (edges || []).reduce((sum, edge) => sum + edge.length, 0);
 // drilling and cut-outs of a cut-list row in two-letter codes (KE.LABELS.holeCode), explained by drillLegend(); one line per kind of
 // hole: code + the Cartesian product of the x list and the y list (mm from the reference edges), "PR 37 261 485 ⊗ 25 432"; holes that
 // do not form one full product: one line per x. Each set of holes of the parts of a row (mergeHands) is written once, under a line
@@ -183,14 +183,14 @@ const edgeLength = edges => (edges || []).reduce((sum, [, length]) => sum + leng
 const num1 = x => String(x).replace('.', ',');
 function holeLines(drilling) {
   const code = KE.LABELS.holeCode, out = [];
-  for (const kind of [...new Set(drilling.holes.map(h => h[0]))]) {
-    const holes = drilling.holes.filter(h => h[0] === kind);
-    const xs = [...new Set(holes.map(h => h[3]))].sort((a, b) => a - b), ys = [...new Set(holes.map(h => h[4]))].sort((a, b) => a - b);
+  for (const kind of [...new Set(drilling.holes.map(h => h.kind))]) {
+    const holes = drilling.holes.filter(h => h.kind === kind);
+    const xs = [...new Set(holes.map(h => h.x))].sort((a, b) => a - b), ys = [...new Set(holes.map(h => h.y))].sort((a, b) => a - b);
     const line = (x, y) => code[kind] + ' ' + x.map(num1).join(' ') + ' ⊗ ' + y.map(num1).join(' ');
     if (xs.length * ys.length === holes.length) out.push(line(xs, ys));
-    else for (const x of xs) out.push(line([x], holes.filter(h => h[3] === x).map(h => h[4]).sort((a, b) => a - b)));
+    else for (const x of xs) out.push(line([x], holes.filter(h => h.x === x).map(h => h.y).sort((a, b) => a - b)));
   }
-  for (const [kind, width, depth, x, y] of drilling.cutouts) out.push(code[kind] + ' ' + width + '×' + depth + ' @ ' + num1(x) + 'x' + num1(y));
+  for (const c of drilling.cutouts) out.push(code[c.kind] + ' ' + c.width + '×' + c.depth + ' @ ' + num1(c.x) + 'x' + num1(c.y));
   return out;
 }
 function drillLines(row) {
@@ -209,39 +209,39 @@ function drillLines(row) {
   const header = count => Object.keys(KE.LABELS.hand).filter(h => count[h]).map(h => KE.LABELS.hand[h] + ': ' + count[h]).join('  ');
   return [...sets.values()].flatMap(({ lines, count }) => (header(count) ? [header(count), ...lines.map(line => '  ' + line)] : lines));
 }
-// the legend of the codes, from design.js settings.drilling and settings.cutouts: [code, text]
+// the legend of the codes, from design.js settings.drilling and settings.cutouts: [{code, text}]
 function drillLegend() {
   const L = KE.LABELS, d = model.settings.drilling, c = model.settings.cutouts || {}, code = L.holeCode;
   const carcassFace = 'boki / słupki zawiasowe, strona wewnętrzna; x od przodu, y od dołu';
   const remark = kind => ((COST.labels.legend || {})[kind] ? ' (' + COST.labels.legend[kind] + ')' : '');
-  const hole = (kind, rule, where) => [code[kind], L.hole[kind] + ' Ø' + num1(rule.diameter) + ', gł. ' + rule.depth + ' – ' + where + remark(kind)];
+  const hole = (kind, rule, where) => ({ code: code[kind], text: L.hole[kind] + ' Ø' + num1(rule.diameter) + ', gł. ' + rule.depth + ' – ' + where + remark(kind) });
   const rows = [
-    ['Etykieta', 'kod w pierwszej kolumnie (np. KO-07): jeden kod na każdy rozmiar części w liście cięć, części lewe i prawe razem\notwory wszystkich części wiersza w kolumnie Wiercenie; gdzie jest który: widok 3D (warstwa Otwory)\nten sam kod w zakładce Montaż – nakleić na części przy odbiorze z hurtowni'],
-    ['L / P', 'boki i słupki zawiasowe: lewy / prawy, patrząc na szafkę od przodu; otwory na stronie wewnętrznej\ndrzwi: zawiasy po lewej / po prawej, patrząc na front od przodu (od pokoju); otwory w tylnej stronie'],
+    { code: 'Etykieta', text: 'kod w pierwszej kolumnie (np. KO-07): jeden kod na każdy rozmiar części w liście cięć, części lewe i prawe razem\notwory wszystkich części wiersza w kolumnie Wiercenie; gdzie jest który: widok 3D (warstwa Otwory)\nten sam kod w zakładce Montaż – nakleić na części przy odbiorze z hurtowni' },
+    { code: 'L / P', text: 'boki i słupki zawiasowe: lewy / prawy, patrząc na szafkę od przodu; otwory na stronie wewnętrznej\ndrzwi: zawiasy po lewej / po prawej, patrząc na front od przodu (od pokoju); otwory w tylnej stronie' },
     hole('cup', d.cup, 'fronty (drzwi), strona tylna; x od krawędzi zawiasów, y od dołu frontu'),
     hole('plate', d.plate, carcassFace),
     hole('shelfPin', d.shelfPin, carcassFace),
     hole('runner', d.runner, carcassFace),
-    ...Object.entries(c).map(([kind, r]) => [code[kind], L.hole[kind] + ' ' + r.width + ' × ' + r.depth + ' – blat; x od lewego końca (patrząc od przodu), y od tylnej krawędzi; wymiar sprawdzić z szablonem producenta'])
+    ...Object.entries(c).map(([kind, r]) => ({ code: code[kind], text: L.hole[kind] + ' ' + r.width + ' × ' + r.depth + ' – blat; x od lewego końca (patrząc od przodu), y od tylnej krawędzi; wymiar sprawdzić z szablonem producenta' }))
   ];
-  rows.push(['Zapis', [
+  rows.push({ code: 'Zapis', text: [
     'L: 1  P: 1 – ile części lewych i prawych (patrząc od przodu) ma otwory podane pod tą linią; prawe w lustrzanym odbiciu',
     'jedna linia na rodzaj otworu: KOD x… ⊗ y…',
     '⊗ – iloczyn kartezjański: otwór w każdym x dla każdego y',
     'np. PO x1 x2 ⊗ y1 y2 = 4 otwory: (x1, y1) (x1, y2) (x2, y1) (x2, y2)',
     'wycięcie: KOD szer.×gł. @ x x y lewego tylnego narożnika',
     'wymiary w mm'
-  ].join('\n')]);
+  ].join('\n') });
   return rows;
 }
-// finished edges of one piece per side, as an order form for the board supplier has them: [edges along the length, edges along the width],
-// 0, 1 or 2 each. ABS edges (boards, panels) come from engine.js as [side, length]; lacquered edges (fronts, frames, plinth) as {long, short}.
+// finished edges of one piece per side, as an order form for the board supplier has them: {length, width} = edges along each, 0, 1 or 2.
+// ABS edges (boards, panels) come from engine.js as [{side, length}]; lacquered edges (fronts, frames, plinth) as {long, short}.
 // (a cut-list row, KE.cutList: a = the length, b = the width; fronts are height × width, so the long side can be either)
 const edgeCounts = row => {
   const { lacquer, edges = [] } = row;
-  if (lacquer) return row.a >= row.b ? [lacquer.long, lacquer.short] : [lacquer.short, lacquer.long];
-  const alongLength = Math.min(2, edges.filter(([, length]) => length === row.a).length);
-  return [alongLength, edges.length - alongLength];
+  if (lacquer) return row.a >= row.b ? { length: lacquer.long, width: lacquer.short } : { length: lacquer.short, width: lacquer.long };
+  const alongLength = Math.min(2, edges.filter(edge => edge.length === row.a).length);
+  return { length: alongLength, width: edges.length - alongLength };
 };
 // cut-list rows: the longer side first (a), sorted by name, then longest first
 const longFirst = rows => rows.map(row => (row.a >= row.b ? row : { ...row, a: row.b, b: row.a }));
@@ -294,11 +294,11 @@ function mergeHands(rows) {
     return { ...first, qty, where, drilling: { parts }, keys: group.map(row => row.key) };
   });
 }
-function blockRows(parts) {
+function blockRows(blockId) {
   const carcassName = Object.fromEntries(model.carcasses.map(K => [K.id, K.name]));
   const where = p => (p.carcassId ? carcassName[p.carcassId] : place(p)); // carcass name, else group + column
   const list = items => sortRows(longFirst(mergeHands(KE.cutList(items.map(p => ({ ...p, at: where(p) }))))));
-  const PARTS = {
+  const FROM_MODEL = {
     // fronts: height × width, as the front maker needs them
     fronts: () => sortRows(mergeHands(KE.cutList(model.fronts.map(f => ({ ...frontPart(f), at: where(f) }))))),
     frames: () => list(model.frames),
@@ -308,7 +308,7 @@ function blockRows(parts) {
     worktops: () => list(model.worktopPieces.filter(p => p.item.type === 'worktop')),
     falls: () => list(model.worktopPieces.filter(p => p.item.type === 'fall'))
   };
-  return PARTS[parts] ? PARTS[parts]() : list(model.boards.filter(b => b.material === model.materialFor[parts]));
+  return FROM_MODEL[blockId] ? FROM_MODEL[blockId]() : list(model.boards.filter(b => b.material === model.materialFor[blockId]));
 }
 
 function applyProject(project) {
@@ -332,13 +332,13 @@ function applyProject(project) {
 
 // assembly: all parts of one carcass together (boards, fronts, drawers, hardware), then the parts without a carcass per group
 function renderAssembly() {
-  const lines = rows => rows.map(t => '<br>– ' + esc(t)).join('');
+  const listLines = rows => rows.map(t => '<br>– ' + esc(t)).join('');
   const withEdges = edges => (edges && edges.length ? ' (ABS ' + edgeText(edges) + ')' : '');
   const label = key => (codeOfRow[key] ? codeOfRow[key] + ' ' : '');
   const partList = boards => sortRows(longFirst(KE.cutList(boards))).map(({ name, a, b, qty, edges, drilling, key }) =>
     label(key) + (qty > 1 ? qty + ' × ' : '') + name + (drilling && drilling.hand ? ' ' + KE.LABELS.hand[drilling.hand] : '') + ' ' + a + ' × ' + b + withEdges(edges));
   const size = (a, b) => Math.max(a, b) + ' × ' + Math.min(a, b); // the longer side first, as in the Cutting list
-  const section = (title, rows) => (rows.length ? '<br><b>' + esc(title) + '</b>' + lines(rows) : '');
+  const section = (title, rows) => (rows.length ? '<br><b>' + esc(title) + '</b>' + listLines(rows) : '');
 
   const cards = model.carcasses.map(K => {
     const boards = model.boards.filter(b => b.carcassId === K.id), fronts = model.fronts.filter(f => f.carcassId === K.id);
@@ -347,14 +347,15 @@ function renderAssembly() {
     const frontLines = fronts.map(f => label(KE.cutKey(frontPart(f))) + frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.hinges ? ', zawiasy: ' + f.hinges.length + ', strona ' + KE.LABELS.side[f.hingeSide] : '') + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : ''));
     const drawerLines = [
       ...fronts.filter(f => f.drawer).map(f => 'szuflada ' + f.drawer.size + (f.drawer.bins ? ' z koszami na odpady' : '') + (f.drawer.inner ? ' + szuflada wewnętrzna M' : '')),
-      ...fronts.filter(f => f.pullouts).map(f => f.pullouts.count + ' × szuflada za drzwiami ' + f.pullouts.width + ' × ' + f.pullouts.depth + ' × ' + f.pullouts.height + ' (płyta dystansowa po stronie zawiasów)')
+      ...fronts.filter(f => f.pullouts).map(f => f.pullouts.count + ' × szuflada za drzwiami ' + f.pullouts.width + ' × ' + f.pullouts.runner + ' × ' + f.pullouts.height + ' (płyta dystansowa po stronie zawiasów)')
     ];
     const pullouts = fronts.reduce((n, f) => n + (f.pullouts ? f.pullouts.count : 0), 0);
+    const pullOutShelves = boards.filter(b => b.id === 'pullOutShelf').length;
     const hardware = [
       K.legs ? 'nóżki: ' + K.legs : '',
       hinges ? 'zawiasy: ' + hinges : '',
       pins ? 'podpórki półek: ' + pins : '',
-      boards.some(b => b.id === 'pullOutShelf') ? '1 para prowadnic pełnego wysuwu' : '',
+      pullOutShelves ? pullOutShelves + ' ' + plural(pullOutShelves, 'para', 'pary', 'par') + ' prowadnic pełnego wysuwu' : '',
       pullouts ? 'prowadnice kulkowe ' + fronts.find(f => f.pullouts).pullouts.runner + ': ' + pullouts + ' kpl.' : ''
     ].filter(Boolean);
     return '<div class="card"><h3>' + esc(K.name) + '</h3>' + KE.placeLabel(K.group, K.col, K.span) + ' · ' + KE.LABELS.carcassType[K.type] + ' · ' + round1(K.u1 - K.u0) + ' × ' + round1(K.v1 - K.v0) + ' × ' + model.carcassDepth + (K.flags.length ? ' · ' + K.flags.map(f => KE.LABELS.flag[f]).join(', ') : '') +
@@ -364,7 +365,7 @@ function renderAssembly() {
 
   // parts without a carcass, per group, sorted by column (a frame and its back strip sit together)
   const loose = {};
-  const add = (p, text) => (loose[p.group] = loose[p.group] || []).push([columnOfPart(p), place(p) + ' – ' + text]);
+  const add = (p, text) => (loose[p.group] = loose[p.group] || []).push({ col: columnOfPart(p), text: place(p) + ' – ' + text });
   model.fronts.filter(f => !f.carcassId).forEach(f => add(f, frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : '')));
   model.frames.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
   model.panels.forEach(p => add(p, p.name + ' ' + size(p.a, p.b) + withEdges(p.edges)));
@@ -372,8 +373,8 @@ function renderAssembly() {
   model.plinths.forEach(p => add(p, 'Cokół ' + size(p.a, p.b)));
   model.plaster.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
   const looseCards = Object.keys(loose).sort().map(group => {
-    const sorted = loose[group].map(([col, text], i) => [col, i, text]).sort((x, y) => x[0] - y[0] || x[1] - y[1]).map(x => x[2]);
-    return '<div class="card"><h3>Grupa ' + group + ' – bez korpusu</h3>' + lines(sorted).replace(/^<br>/, '') + '</div>';
+    const sorted = [...loose[group]].sort((x, y) => x.col - y.col).map(x => x.text); // a stable sort: the order met within a column
+    return '<div class="card"><h3>Grupa ' + group + ' – bez korpusu</h3>' + listLines(sorted).replace(/^<br>/, '') + '</div>';
   });
   document.getElementById('assemblyBody').innerHTML = cards.join('') + looseCards.join('');
 }
@@ -397,11 +398,11 @@ const defaults = defaultValues();
 let values = defaultValues();
 
 /* ---------- 3. calculation ---------- */
-// totals of each cutting-list block: m², edging, cutting length, length, pieces; and the same per row
+// totals of each cutting-list block: m², edging, cutting length, pieces; and the same per row
 function blockTotals() {
   const totals = {};
   for (const block of COST.blocks) {
-    const t = { m2: 0, edge: 0, cut: 0, len: 0, qty: 0, rows: [] };
+    const t = { m2: 0, edge: 0, cut: 0, qty: 0, rows: [] };
     (rowsOf[block.id] || []).forEach(row => {
       const { a, b, qty, edges } = row;
       const m2 = (a * b * qty) / 1e6;
@@ -409,7 +410,6 @@ function blockTotals() {
       const edge = edges && edges.length ? (edgeLength(edges) * qty) / 1000 : null;
       const cut = block.cut ? ((a + b) * qty) / 1000 : null;
       t.m2 += m2;
-      t.len += (b * qty) / 1000;
       t.qty += qty;
       t.edge += edge || 0;
       t.cut += cut || 0;
@@ -523,10 +523,10 @@ function compute() {
 // a quantity formula in words, for the tooltip of a calculated quantity: every placeholder as its name and value
 function describeFormula(expr) {
   const items = Object.fromEntries(ITEMS.map(item => [item.id, item]));
-  const TOTALS = { m2: 'm²', edge: 'ABS mb', cut: 'cięcia mb', len: 'mb', qty: 'szt.' };
+  const TOTALS = { m2: 'm²', edge: 'ABS mb', cut: 'cięcia mb', qty: 'szt.' };
   return expr.replace(/^=/, '')
     .replace(/\{q:(\w+)\}/g, (m, id) => (items[id] ? 'ilość „' + fill(items[id].name) + '”' : m))
-    .replace(/\{(\w+)\.(m2|edge|cut|len|qty)\}/g, (m, block, total) => {
+    .replace(/\{(\w+)\.(m2|edge|cut|qty)\}/g, (m, block, total) => {
       const title = (COST.blocks.find(x => x.id === block) || {}).title;
       return (title ? title.split(' –')[0] : block) + ' ' + TOTALS[total] + ' (' + fill(m) + ')';
     })
@@ -535,10 +535,10 @@ function describeFormula(expr) {
 }
 // the visible name of a placeholder in a tooltip: engine counts and parameters in Polish; setting and var paths as written in the data
 const COUNT_NAMES = {
-  carcasses: 'korpusy', floorCarcasses: 'korpusy stojące', wallStrips: 'listwy tylne przy ścianie', fronts: 'fronty', handles: 'uchwyty',
+  carcasses: 'korpusy', wallStrips: 'listwy tylne przy ścianie', fronts: 'fronty', handles: 'uchwyty',
   hinges: 'zawiasy', drawersD: 'szuflady D', drawersM: 'szuflady M', innerDrawers: 'szuflady wewnętrzne', shelvesAdjustable: 'półki ruchome',
   shelvesFixed: 'półki stałe', shelfPins: 'podpórki półek', pullOutShelves: 'półki wysuwane', legs: 'nóżki', sinks: 'zlewy', hobs: 'płyty grzewcze',
-  fridges: 'lodówki', grilles: 'kratki', plasterUD: 'profil UD [mm]', plasterCD: 'profil CD [mm]', plasterEdge: 'krawędzie GK [mm]', plinthHeight: 'wysokość cokołu'
+  fridges: 'lodówki', grilles: 'kratki', plasterUD: 'profil UD [mm]', plasterCD: 'profil CD [mm]', plasterEdge: 'krawędzie GK [mm]'
 };
 const PARAM_NAMES = { waste: 'odpad', sheet: 'arkusz [m²]', reserve: 'rezerwa' };
 function placeholderName(key) {
@@ -589,12 +589,12 @@ function renderCuttingList() {
     const [label, size1, size2, qtyLabel] = columnsOf(block).map(esc);
     html.push(`<tr class="bh"><td title="kod części do naklejenia; ten sam w zakładce Montaż">Etykieta</td><td>${label}</td><td>${size1} [mm]</td><td>Krawędź</td><td>${size2} [mm]</td><td>Krawędź</td><td>m²</td><td>${qtyLabel}</td><td>ABS razem [mb]</td><td title="(długość + szerokość) × ilość: długość cięcia w hurtowni – wyceniona w pozycji Cięcie płyt">Cięcia [mb]</td><td title="otwory i wycięcia jednej części, kody w legendzie nad tabelą; wartości z design.js (settings.drilling, settings.cutouts)">Wiercenie / wycięcia</td><td title="nazwa korpusu, inaczej G grupa [kolumna]">Gdzie</td></tr>`);
     (rowsOf[block.id] || []).forEach((row, i) => {
-      const t = totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
+      const t = totals[block.id].rows[i], along = edgeCounts(row);
       const cell = value => `<td class="num" title="Obliczone przez engine.js z design.js – zmiany projektu w design.html">${value}</td>`;
       const drilling = drillLines(row).map(line => esc(line).replace(/^ +/, sp => '&nbsp;'.repeat(sp.length)).replace(/⊗/g, '<span class="cp">⊗</span>')).join('<br>');
       html.push('<tr>' +
         `<td class="label">${esc(codeOfRow[row.key] || '')}</td><td>${esc(row.name)}</td>` +
-        `${cell(row.a)}${cell(alongLength)}${cell(row.b)}${cell(alongWidth)}` +
+        `${cell(row.a)}${cell(along.length)}${cell(row.b)}${cell(along.width)}` +
         `<td class="num">${fmt(t.m2, 3)}</td>${cell(row.qty)}` +
         `<td class="num">${t.edge == null ? '' : fmt(t.edge)}</td><td class="num">${t.cut == null ? '' : fmt(t.cut)}</td>` +
         `<td class="drill">${drilling}</td><td class="where">${esc(row.where || '')}</td>` +
@@ -606,7 +606,7 @@ function renderCuttingList() {
   // legend of the drilling codes, under the last block
   if (model) {
     html.push(`<tr class="blk"><td colspan="12">WIERCENIE / WYCIĘCIA – legenda kolumny</td></tr>`);
-    drillLegend().forEach(([code, text]) => html.push(`<tr><td class="code">${esc(code)}</td><td colspan="11">${esc(text).replace(/\n/g, '<br>')}</td></tr>`));
+    drillLegend().forEach(({ code, text }) => html.push(`<tr><td class="code">${esc(code)}</td><td colspan="11">${esc(text).replace(/\n/g, '<br>')}</td></tr>`));
   }
   document.getElementById('cuttingBody').innerHTML = html.join('');
 }
@@ -710,9 +710,9 @@ function buildWorkbook() {
     cutting.push([str('Etykieta'), str(labelCell), str(size1 + ' [mm]'), str('Krawędź'), str(size2 + ' [mm]'), str('Krawędź'), str('m²'), str(qtyCell), str('ABS razem [mb]'), str('Cięcia [mb]'), str('Wiercenie / wycięcia (legenda na dole)'), str('Gdzie')]);
     const first = cutting.length + 1;
     (rowsOf[block.id] || []).forEach((row, i) => {
-      const r = cutting.length + 1, t = result.totals[block.id].rows[i], [alongLength, alongWidth] = edgeCounts(row);
+      const r = cutting.length + 1, t = result.totals[block.id].rows[i], along = edgeCounts(row);
       // columns: A label, B name, C length, D edges, E width, F edges, G m², H qty, I ABS, J cuts, K drilling, L where
-      const line = [str(codeOfRow[row.key] || ''), str(row.name), num(row.a), num(alongLength), num(row.b), num(alongWidth), formula(`C${r}*E${r}*H${r}/1000000`, t.m2), num(row.qty)];
+      const line = [str(codeOfRow[row.key] || ''), str(row.name), num(row.a), num(along.length), num(row.b), num(along.width), formula(`C${r}*E${r}*H${r}/1000000`, t.m2), num(row.qty)];
       line.push(t.edge != null ? formula(`${edgeLength(row.edges)}*H${r}/1000`, t.edge) : str(''));
       line.push(block.cut ? formula(`(C${r}+E${r})*H${r}/1000`, t.cut) : str(''));
       line.push(str(drillLines(row).join('\n')));
@@ -724,7 +724,7 @@ function buildWorkbook() {
     blockTotalRow[block.id] = totalRow;
     cutting.push([]);
   }
-  cutting.push([str('WIERCENIE / WYCIĘCIA – legenda kolumny K')], ...drillLegend().map(([code, text]) => [str(code), str(text)]));
+  cutting.push([str('WIERCENIE / WYCIĘCIA – legenda kolumny K')], ...drillLegend().map(({ code, text }) => [str(code), str(text)]));
 
   // sheet "Notes"
   const notes = [[str('Notatki – pytania otwarte / założenia')], [str('Pozycje kosztorysu odsyłają tu przez „patrz notatka N”.')], [], ['Lp.', 'Temat', 'Opis', 'Przyjęte w kosztorysie', 'Do decyzji'].map(str)];
@@ -743,7 +743,8 @@ function buildWorkbook() {
     ['Lp.', 'Pozycja', 'Specyfikacja', 'Ilość', 'J.m.', 'Cena jedn. [PLN]', 'Wartość [PLN]', 'Źródło ceny / uwagi'].map(str)];
   const itemRow = {}, categoryRows = [];
   let no = 0;
-  // quantity formula of this page -> Excel formula: item quantities and cutting-list totals as cell references, the rest as values
+  // quantity formula of this page -> Excel formula: item quantities, the parameters and the m², ABS and cut totals of the cutting list
+  // as cell references, the rest as values
   const toExcel = expr => expr.replace(/^=/, '')
     .replace(/\{q:(\w+)\}/g, (_, id) => `D${itemRow[id]}`)
     .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, block, total) => `'Lista cięć'!$${{ m2: 'G', edge: 'I', cut: 'J' }[total]}$${blockTotalRow[block]}`)
@@ -767,11 +768,11 @@ function buildWorkbook() {
       estimate.push([num(no), str(fill(item.name)), str(fill(item.spec)), qty, str(item.unit), num(Number(values.items[item.id].price)), formula(`ROUND(D${r}*F${r},2)`, result.itemValues[item.id]), source]);
     }
     estimate[categoryRow - 1] = [str(''), str(category.name), str(''), str(''), str(''), str(''), formula(`SUM(G${first}:G${estimate.length})`, result.categorySums[category.name])];
-    categoryRows.push([category.name, categoryRow, category.appliances]);
+    categoryRows.push({ row: categoryRow, appliances: !!category.appliances });
   }
   estimate.push([]);
   const furnitureRow = estimate.length + 1;
-  const sumOf = isAppliance => categoryRows.filter(c => !!c[2] === isAppliance).map(c => 'G' + c[1]).join('+');
+  const sumOf = isAppliance => categoryRows.filter(c => c.appliances === isAppliance).map(c => 'G' + c.row).join('+');
   estimate.push([str(''), str('Meble (materiały) razem'), str(''), str(''), str(''), str(''), formula(sumOf(false), result.furniture)]);
   estimate.push([str(''), str('AGD razem'), str(''), str(''), str(''), str(''), formula(sumOf(true), result.appliances)]);
   estimate.push([str(''), str('Rezerwa na drobne pozycje / ceny szacunkowe'), str('% mebli'), str(''), str(''), num(Number(values.params.reserve)), formula(`ROUND(G${furnitureRow}*F${furnitureRow + 2},2)`, result.reserve)]);

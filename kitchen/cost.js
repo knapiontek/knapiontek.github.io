@@ -7,7 +7,7 @@
      labels      fronts: the label of a front in the cutting list, by its type and tags (first match; none = its type);
                  sheet: the label of the sheet input; cuttingNote: the text under the cutting list; legend: a remark per
                  hole kind in the drilling legend
-     blocks      cutting-list tables, code = the two letters of their row labels (KO-07), rows built by engine.js: parts = front | frames | plinths | panels | plaster | worktops | falls,
+     blocks      cutting-list tables, code = the two letters of their row labels (KO-07), rows built by engine.js: id = fronts | frames | plinths | panels | plaster | worktops | falls,
                  or a material use (carcass, drawerBox, back ...: every board of that use's material); cut = priced saw
                  cuts; columns = the header when not Element / Długość / Szerokość / Ilość
      categories  estimate items, by category {name, appliances, items}; appliances = the category counts as AGD, not
@@ -28,7 +28,7 @@
      {a:oven.front.height}  appliances.js       {v:sheet.length} values
      {p:hinges}        unit price          {q:hinges} item quantity          {note:hinges} the number of a note
      {f:dishwasherHeight}  a named formula of "formulas"
-     {carcass.m2}      cutting-list total of a block (m2, edge, cut, len, qty)    {waste} {sheet} {reserve} params
+     {carcass.m2}      cutting-list total of a block (m2, edge, cut, qty)    {waste} {sheet} {reserve} params
      {=expression}     a calculation with placeholders in angle brackets, e.g. {=(<a:oven.front.width> - <k:K8.innerWidth>) / 2},
                        with ROUND, ROUNDUP, MIN, MAX;  |% shows a fraction as a percentage
    A quantity formula ("=..." in qty) uses the placeholders in braces and ROUNDUP only: it is exported as an Excel formula. */
@@ -357,7 +357,7 @@ window.KITCHEN_COST = {
      "id": "confirmats",
      "name": "Konfirmaty 6,4 × 50, ocynk biały, opak. 1000 szt.",
      "spec": "ok. {v:confirmatsPerCarcass} na korpus ({n:carcasses} korpusów); wiertło do konfirmatów 6,4 (nie 7)",
-     "qty": 1,
+     "qty": "=ROUNDUP({n:carcasses}*{v:confirmatsPerCarcass}/1000,0)",
      "unit": "op.",
      "price": 119.39,
      "source": "w M-HM tylko 6,4 × 50 po 1000 szt.; meblownia 7 × 50: 12,57 za 100",
@@ -934,7 +934,7 @@ window.KITCHEN_COST = {
      "topic": "Szuflady za drzwiami z płyty (K8 i K12, dół)",
      "description": "K8 (pod piekarnikiem): za drzwiami {i:K8/pullouts.frontHeight} × {i:K8/pullouts.frontWidth} {i:K8/pullouts.count} szuflady, skrzynka {i:K8/pullouts.boxWidth} × {i:K8/pullouts.runner} × {i:K8/pullouts.boxHeight}, zawiasy po lewej. K12: za drzwiami {i:K12/pullouts.frontHeight} × {i:K12/pullouts.frontWidth} {i:K12/pullouts.count} szuflady, skrzynka {i:K12/pullouts.boxWidth} × {i:K12/pullouts.runner} × {i:K12/pullouts.boxHeight}, zawiasy po prawej.\nSkrzynki z {m:drawerBox} na prowadnicach kulkowych Häfele z cichym domykiem, L = {i:K12/pullouts.runner} (czoło na całą skrzynkę zakrywa boki i dno, dno i tył między bokami; ABS na górnych krawędziach i bokach czoła), {s:pullouts.runner.gap} luzu na prowadnicę z każdej strony.\nZawiasy zajmują {s:hinges.supportDepth} przy przodzie korpusu (jak słupek zawiasowy): po stronie zawiasów płyta dystansowa z {m:carcass} ({t:carcass}) od pleców do {s:hinges.supportDepth} przed przodem korpusu niesie prowadnicę, a skrzynki zaczynają się na tej samej głębokości. Szuflada mija ramię zawiasu i otwarte drzwi o {t:carcass} + {s:pullouts.runner.gap}; drzwi zamykają się przed szufladami. Szuflady stoją między płytami poziomymi nad i pod drzwiami (w K8: dno i półka pod piekarnikiem).\nBez półek ruchomych w tej części korpusu.",
      "assumed": "{n:pullouts} kompletów prowadnic po {p:pulloutRunners} PLN zamiast {p:innerDrawers} PLN za szufladę Blum.",
-     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka. Uwaga – Blum zamiast płyty: szuflada wewnętrzna TANDEMBOX antaro M ({p:innerDrawers} za komplet + dno i tył z płyty) zamiast prowadnic Häfele ({p:pulloutRunners}) i skrzynki z płyty: okucia {=ROUND(<p:innerDrawers> - <p:pulloutRunners>)} zł więcej za szufladę, {=ROUND((<p:innerDrawers> - <p:pulloutRunners>) * <n:pullouts>)} zł za wszystkie ({n:pullouts}), mniej płyty na skrzynki; boki Blum M tylko 84 mm (płyta: {s:pullouts.side}); w K12 (wnętrze po płycie dystansowej {=<k:K12.innerWidth> - <t:carcass>}) sprawdzić minimalną szerokość szuflady Blum. Uwaga: z szufladami za drzwiami płyta {m:drawerBox} to {q:drawerBoard} ark., ostatni słabo wykorzystany; w tej kuchni skrzynki zmieściłyby się w odpadach {m:carcass} – zdecydować przy zamówieniu wszystkich szaf."
+     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka. Uwaga – Blum zamiast płyty: szuflada wewnętrzna TANDEMBOX antaro M ({p:innerDrawers} za komplet + dno i tył z płyty) zamiast prowadnic Häfele ({p:pulloutRunners}) i skrzynki z płyty: okucia {=ROUND(<p:innerDrawers> - <p:pulloutRunners>)} zł więcej za szufladę, {=ROUND((<p:innerDrawers> - <p:pulloutRunners>) * <n:pullouts>)} zł za wszystkie ({n:pullouts}), mniej płyty na skrzynki; boki Blum M tylko {s:drawers.M.side} mm (płyta: {s:pullouts.side}); w K12 (wnętrze po płycie dystansowej {=<k:K12.innerWidth> - <t:carcass>}) sprawdzić minimalną szerokość szuflady Blum. Uwaga: z szufladami za drzwiami płyta {m:drawerBox} to {q:drawerBoard} ark., ostatni słabo wykorzystany; w tej kuchni skrzynki zmieściłyby się w odpadach {m:carcass} – zdecydować przy zamówieniu wszystkich szaf."
     },
     {
      "id": "worktops",

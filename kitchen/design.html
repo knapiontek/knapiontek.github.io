@@ -392,7 +392,7 @@
     <template x-if="picker.row && (picker.mode === 'handle' || picker.mode === 'hinge')">
       <div class="picker-list">
         <div class="picker-title" x-text="picker.mode === 'handle' ? 'uchwyt' : 'zawiasy'"></div>
-        <template x-for="h in (picker.mode === 'handle' ? HANDLE_POSITIONS : HINGE_SIDES)" :key="h || 'none'">
+        <template x-for="h in (picker.mode === 'handle' ? HANDLE_CHOICES : HINGE_CHOICES)" :key="h || 'none'">
           <label><input type="radio" name="side-pick" :checked="(picker.row?.[picker.mode] || '') === h" @change="picker.row[picker.mode] = h; picker.row = null"> <span x-text="SIDE_NAMES[h]"></span></label>
         </template>
       </div>
@@ -409,7 +409,7 @@
       <div class="picker-list">
         <div class="picker-title" x-text="'tagi: ' + KE.typeLabel(picker.row?.type)"></div>
         <template x-for="tag in tagsFor(picker.row)" :key="tag">
-          <label><input type="checkbox" :checked="hasTag(picker.row, tag)" @change="toggleTag(picker.row, tag)"> <span x-text="KE.LABELS.tag[tag]"></span></label>
+          <label><input type="checkbox" :checked="rowHasTag(picker.row, tag)" @change="toggleTag(picker.row, tag)"> <span x-text="KE.LABELS.tag[tag]"></span></label>
         </template>
       </div>
     </template>
@@ -483,15 +483,6 @@
   "frontInnerStroke": "#64748b",
   "handle": "#d97706",
   "handleStroke": "#78350f",
-  "applianceBody": "#e2e8f0",
-  "applianceBodyStroke": "#1e293b",
-  "applianceGlass": "#94a3b8",
-  "applianceGlassStroke": "#475569",
-  "applianceTrim": "#cbd5e1",
-  "applianceTrimStroke": "#475569",
-  "controlPanel": "#334155",
-  "controlPanelStroke": "#1e293b",
-  "knob": "#64748b",
   "glassBlack": "#1c1f24",
   "panelBlack": "#0d0f12",
   "applianceEdge": "#000000",
@@ -524,8 +515,8 @@
 const KE = window.KitchenEngine;
 const CONFIG = JSON.parse(document.getElementById('design-config').textContent); // drawing sizes and colours, 1 SVG unit = 1 mm
 const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags, plural, OAK_SWATCH } = KE; // OAK_SWATCH: a material without a colour
-const HANDLE_POSITIONS = ['', ...KE.HANDLE_POSITIONS];
-const HINGE_SIDES = ['', ...KE.HINGE_SIDES];
+const HANDLE_CHOICES = ['', ...KE.HANDLE_POSITIONS]; // '' = no handle
+const HINGE_CHOICES = ['', ...KE.HINGE_SIDES];
 const SIDE_NAMES = { '': 'brak', ...KE.LABELS.side }; // handle positions and hinge sides
 
 /* ---------- 2. utilities (nothing kitchen-specific) ---------- */
@@ -623,18 +614,18 @@ function readTables(columnRows, componentRows, noteRows) {
 
 // fill and stroke colour names in CONFIG.colors, per type drawn as a plain rectangle
 const RECT_COLORS = {
-  filler: ['filler', 'fillerStroke'],
-  board: ['board', 'boardStroke'],
-  worktop: ['worktop', 'worktopStroke'],
-  fall: ['worktop', 'worktopStroke'],
-  splash: ['splash', 'splashStroke'],
-  panel: ['frame', 'frameStroke'], // same blue as frames and fronts
-  frame: ['frame', 'frameStroke'],
-  plinth: ['frame', 'frameStroke']
+  filler: { fill: 'filler', stroke: 'fillerStroke' },
+  board: { fill: 'board', stroke: 'boardStroke' },
+  worktop: { fill: 'worktop', stroke: 'worktopStroke' },
+  fall: { fill: 'worktop', stroke: 'worktopStroke' },
+  splash: { fill: 'splash', stroke: 'splashStroke' },
+  panel: { fill: 'frame', stroke: 'frameStroke' }, // same blue as frames and fronts
+  frame: { fill: 'frame', stroke: 'frameStroke' },
+  plinth: { fill: 'frame', stroke: 'frameStroke' }
 };
 
 function drawRect(item, y) {
-  const [fill, stroke] = RECT_COLORS[item.type];
+  const { fill, stroke } = RECT_COLORS[item.type];
   return `<rect fill="${CONFIG.colors[fill]}" stroke="${CONFIG.colors[stroke]}" stroke-width="2" x="${item.x}" y="${y}" width="${item.width}" height="${item.height}"/>`;
 }
 
@@ -778,8 +769,8 @@ document.addEventListener('alpine:init', () => {
     TYPES,
     OAK_SWATCH,
     SIDE_NAMES,
-    HANDLE_POSITIONS,
-    HINGE_SIDES,
+    HANDLE_CHOICES,
+    HINGE_CHOICES,
     isRowEmpty,
     plural,
     KE,
@@ -808,10 +799,9 @@ document.addEventListener('alpine:init', () => {
           if (w !== width) { width = w; requestAnimationFrame(() => this.growNotes()); }
         }).observe(this.$refs.notesTbody.closest('table'));
       });
-      this.$watch('notes', () => this.$nextTick(() => this.growNotes()));
       this.$watch('columns', () => this.keepEmptyRows());
       this.$watch('components', () => this.keepEmptyRows());
-      this.$watch('notes', () => this.keepEmptyRows());
+      this.$watch('notes', () => { this.keepEmptyRows(); this.$nextTick(() => this.growNotes()); });
     },
 
     // re-built by Alpine whenever a table changes
@@ -889,7 +879,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     // ---- type and tags: each picked in its own popup; the tags popup lists only the tags of the row's type ----
-    hasTag(row, tag) {
+    rowHasTag(row, tag) {
       return !!row && parseTags(row.tags).tags.includes(tag);
     },
     // the tags allowed on the row's type (KE.TAGS)
@@ -917,7 +907,7 @@ document.addEventListener('alpine:init', () => {
       this.writeTags(row, tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag]);
     },
     // the popup opens below the cell, or above it when there is no room
-    openPicker(row, event, mode = 'tags') {
+    openPicker(row, event, mode) {
       if (this.picker.row === row && this.picker.mode === mode) { this.picker.row = null; return; }
       const r = event.currentTarget.getBoundingClientRect();
       const popupHeight = { type: 220, tags: 40 + 30 * this.tagsFor(row).length, handle: 190, hinge: 120 }[mode];

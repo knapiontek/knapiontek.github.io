@@ -29,7 +29,7 @@ window.KITCHEN_VIEW = {
   "open": {"angle": {"door": 110, "fridge": 95, "dishwasher": 84, "oven": 88, "micro": 100}, "drawer": 440, "doorStop": {"K4": 90}},
   "leg": {"radius": 15, "footRadius": 24, "footHeight": 12, "fromSide": 45, "fromBack": 45, "fromFront": 100},
   "hinge": {"cupDepth": 11.5},
-  "drawer": {"runner": 13, "sideFromCarcass": 22, "sideThickness": 15.5, "fromBack": 36, "fromFront": 16, "innerSide": 84},
+  "drawer": {"runner": 13, "sideFromCarcass": 22, "sideThickness": 15.5, "fromBack": 36, "fromFront": 16},
   "bins": {"count": 3, "height": 235},
   "plinthGrille": {"width": 480, "bottom": 20, "top": 80}
  },

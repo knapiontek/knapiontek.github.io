@@ -556,8 +556,8 @@ function floorTexture(key) {
 const METALS = SCENE.metals, handleMetal = METALS[fittings.handle.metal];
 const standard = options => new THREE.MeshStandardMaterial(options);
 const physical = options => new THREE.MeshPhysicalMaterial(options);
-// colour of the holes by kind (engine.js hole.kind): hinges (cup, mounting plate), shelf pins, runners; [hex, legend label]
-const HOLE_COLORS = { hinge: ['#f26b1d', 'zawiasy'], shelfPin: ['#22b35e', 'półki'], runner: ['#2f8fe0', 'szuflady, prowadnice'] };
+// colour of the holes by kind (engine.js hole.kind): hinges (cup, mounting plate), shelf pins, runners
+const HOLE_COLORS = { hinge: { hex: '#f26b1d', label: 'zawiasy' }, shelfPin: { hex: '#22b35e', label: 'półki' }, runner: { hex: '#2f8fe0', label: 'szuflady, prowadnice' } };
 const holeUse = kind => (kind === 'cup' || kind === 'plate' ? 'hinge' : kind);
 const MAT = {
   oak: physical({ map: oakTexture(), roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, envMapIntensity: 0.5 }),
@@ -567,7 +567,6 @@ const MAT = {
   steel: standard({ color: linear(0xd2d5d8), metalness: 1, roughness: 0.3 }),
   glassBlack: physical({ color: linear(0x060708), roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.1 }),
   ovenInside: standard({ color: linear(0x23262a), roughness: 0.6, metalness: 0.3 }),
-  // drilled holes: a coloured disc on the face, one colour per use (HOLE_COLORS, also the legend under the layers)
   smoke: physical({ color: linear(0x0a0b0d), roughness: 0.04, transparent: true, opacity: 0.62, clearcoat: 1, envMapIntensity: 1.2, depthWrite: false }),
   ring: new THREE.MeshBasicMaterial({ color: linear(0x5b5f66) }),
   sky: new THREE.MeshBasicMaterial({ map: texture(skyCanvas(), 1, 1) }),
@@ -638,22 +637,23 @@ function edgeLook(m, edges, code) {
   if (!m || !material || !material.core) return m;
   const core = coreLook(code);
   const p = m.geometry.parameters, sizes = [p.width, p.height, p.depth], thin = sizes.indexOf(Math.min(...sizes)); // the axis through the faces
-  const banded = new Set((edges || []).map(([side]) => side));
+  const banded = new Set((edges || []).map(edge => edge.side));
   m.material = BOX_SIDES.map((side, i) => (Math.floor(i / 2) === thin || banded.has(side) ? m.material : core));
   edgedMeshes.add(m);
   return m;
 }
 
 /* ---------- layers ---------- */
-const LAYERS = [ // [layer group label, [[layer id, label], ...]]
-  ['Korpusy', [['carcasses', 'Płyty'], ['backs', 'Plecy HDF'], ['shelves', 'Półki'], ['drawers', 'Szuflady'], ['hardware', 'Zawiasy, prowadnice'], ['holes', 'Otwory'], ['legs', 'Nóżki']]],
-  ['Fronty', [['fronts', 'Fronty'], ['handles', 'Uchwyty'], ['frames', 'Listwy'], ['panel', 'Panele'], ['plinth', 'Cokół']]],
-  ['Blat', [['worktops', 'Blaty'], ['falls', 'Panele boczne'], ['wallpanel', 'Panel ścienny']]],
-  ['AGD', [['sink', 'Zlew, bateria'], ['trap', 'Syfon'], ['hob', 'Płyta grzewcza'], ['hood', 'Okap'], ['oven', 'Piekarnik'], ['micro', 'Mikrofalówka'],
-    ['coffee', 'Ekspres'], ['fridge', 'Lodówka'], ['dishwasher', 'Zmywarka']]],
-  ['Pomieszczenie', [['walls', 'Ściany'], ['window', 'Okno'], ['floor', 'Podłoga'], ['ceiling', 'Sufit'], ['lamps', 'Lampy wiszące']]]
+// layer groups of the Layers panel: each layer id -> its label
+const LAYERS = [
+  { label: 'Korpusy', layers: { carcasses: 'Płyty', backs: 'Plecy HDF', shelves: 'Półki', drawers: 'Szuflady', hardware: 'Zawiasy, prowadnice', holes: 'Otwory', legs: 'Nóżki' } },
+  { label: 'Fronty', layers: { fronts: 'Fronty', handles: 'Uchwyty', frames: 'Listwy', panel: 'Panele', plinth: 'Cokół' } },
+  { label: 'Blat', layers: { worktops: 'Blaty', falls: 'Panele boczne', wallpanel: 'Panel ścienny' } },
+  { label: 'AGD', layers: { sink: 'Zlew, bateria', trap: 'Syfon', hob: 'Płyta grzewcza', hood: 'Okap', oven: 'Piekarnik', micro: 'Mikrofalówka',
+    coffee: 'Ekspres', fridge: 'Lodówka', dishwasher: 'Zmywarka' } },
+  { label: 'Pomieszczenie', layers: { walls: 'Ściany', window: 'Okno', floor: 'Podłoga', ceiling: 'Sufit', lamps: 'Lampy wiszące' } }
 ];
-const LAYER_IDS = LAYERS.flatMap(([, layers]) => layers.map(([id]) => id));
+const LAYER_IDS = LAYERS.flatMap(group => Object.keys(group.layers));
 const groupsOfLayer = {};
 function layerGroup(parent, layer) {
   const g = new THREE.Group();
@@ -821,11 +821,11 @@ function movingPart(run, opening, pu, pv, pn) {
 }
 const DEG = Math.PI / 180;
 // how each opening moves: turns about its vertical hinge edge (y) or its bottom edge (x), or slides out; fittings.open: degrees, drawer mm
-const SWING = { door: 'y', fridge: 'y', micro: 'y', dishwasher: 'x', oven: 'x', drawer: 'slide' };
+const SWING = { door: 'y', fridge: 'y', dishwasher: 'x', drawer: 'slide' }; // an oven or microwave door: mover.swing, from appliances.js
 const linkTo = (parent, child) => { child.parent = parent; parent.children.push(child); };
 function poseMovingPart(mover) {
   const t = mover.progress, eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2, open = mover.travel || (mover.opening === 'drawer' ? fittings.open.drawer : fittings.open.angle[mover.opening]);
-  const swing = SWING[mover.opening];
+  const swing = mover.swing || SWING[mover.opening];
   if (swing === 'y') mover.pivot.rotation.y = -mover.sign * eased * open * DEG;
   else if (swing === 'x') mover.pivot.rotation.x = eased * open * DEG;
   else if (swing === 'slide') mover.pivot.position.z = mover.z0 + (eased * open) / 1000;
@@ -870,6 +870,7 @@ function builtInAppliance(run, item, type) {
   const hinge = A.door.hinge, bottomHinged = hinge === 'bottom';
   const mover = movingPart(run, type, bottomHinged ? 0 : hinge === 'left' ? door.u0 : door.u1, bottomHinged ? door.v0 : 0, face);
   mover.sign = hinge === 'left' ? 1 : -1;
+  mover.swing = bottomHinged ? 'x' : 'y';
   mover.item = item;
   mover.label = A.name + ' – drzwi ' + Math.round(door.u1 - door.u0) + ' × ' + Math.round(door.v1 - door.v0);
   const D = mover.layers[type];
@@ -945,7 +946,7 @@ const tapN = sinkRun ? worktopOf(groupOfRun[sinkRun]).n0 + SCENE.installation.si
 function worktopPiece(run, piece) {
   const { u0, u1, v0, v1 } = piece.item, W = worktopOf(groupOfRun[run]), fall = piece.item.type === 'fall';
   const P = runLayer[run][fall ? 'falls' : 'worktops'], decor = BOARD[piece.material];
-  const finished = new Set([...piece.edges.map(([side]) => side), ...piece.factoryEdges]);
+  const finished = new Set([...piece.edges.map(edge => edge.side), ...piece.factoryEdges]);
   // the decor faces: both on a two-sided material, else the top of a worktop or the outer face of a side panel
   const outer = u0 + u1 < runLength[run] ? 'left' : 'right';
   const faces = model.materials[piece.material].twoSided ? (fall ? ['left', 'right'] : ['top', 'bottom']) : [fall ? outer : 'top'];
@@ -984,7 +985,7 @@ function buildRun(run) {
       const piece = model.worktopPieces.find(p => p.item === item);
       if (piece) worktopPiece(run, piece);
     } else if (type === 'frame') { // on edge, frame.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
-      const frame = model.frames.find(f => f.item === item), lacquered = ((frame && frame.lacqueredSides) || []).map(side => [side]);
+      const frame = model.frames.find(f => f.item === item), lacquered = ((frame && frame.lacqueredSides) || []).map(side => ({ side }));
       edgeLook(localBox(runLayer[run].frames, u0, u1, v0, v1, frontFace - settings.frame.depth, frontFace, boardFor('frame')), lacquered, model.materialFor.frame);
     } else if (type === 'panel') { // laid flat in the front plane; in run coordinates, so its edges keep their sides
       const panel = model.panels.find(p => p.item === item);
@@ -1145,7 +1146,7 @@ function registerPart(K, m, board) {
 }
 const counts = model.counts;
 
-const holeMaterial = Object.fromEntries(Object.entries(HOLE_COLORS).map(([use, [hex]]) => [use, standard({ color: linear(parseInt(hex.slice(1), 16)), emissive: linear(parseInt(hex.slice(1), 16)), emissiveIntensity: 0.35, roughness: 0.8 })]));
+const holeMaterial = Object.fromEntries(Object.entries(HOLE_COLORS).map(([use, { hex }]) => [use, standard({ color: linear(parseInt(hex.slice(1), 16)), emissive: linear(parseInt(hex.slice(1), 16)), emissiveIntensity: 0.35, roughness: 0.8 })]));
 // the holes engine.js drilled in a part (design.js settings.drilling): a coloured disc on the drilled face (HOLE_COLORS), half a millimetre proud,
 // so it shows on the board; the Otwory layer turns them on and off
 function drawHoles(P, part) {
@@ -1158,7 +1159,7 @@ function drawHoles(P, part) {
   }
 }
 function buildCarcass(K) {
-  const run = K.run, { u0, u1, v0 } = K, innerU0 = u0 + board, innerU1 = u1 - board;
+  const run = K.run, { u0, u1, v0 } = K;
   for (const b of model.boards) {
     if (b.carcassId !== K.id || b.frontId || b.id === 'pullOutShelf') continue; // drawer boards and the pull-out shelf move: built with the fronts
     registerPart(K, edgeLook(localBox(runLayer[run][b.layer], ...b.box, BOARD[b.material]), b.edges, b.material), b);
@@ -1221,7 +1222,7 @@ const fridgeDoorPlane = carcassFront - APPLIANCES.fridge.doors.setback;
 function fridgeBody(K) {
   const A = APPLIANCES.fridge, P = runLayer[K.run].fridge, uc = (K.u0 + K.u1) / 2;
   const u0 = uc - A.body.width / 2, u1 = uc + A.body.width / 2, bodyV0 = K.v0 + board, bodyV1 = bodyV0 + A.body.height;
-  K.fridgeBody = [bodyV0, bodyV1, u0, u1];
+  K.fridgeBody = { u0, u1, v0: bodyV0, v1: bodyV1 };
   envelope(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body.depth, fridgeDoorPlane, A.name + ' – korpus ' + A.body.width + ' × ' + A.body.height + ' (bez drzwi)');
   openFrontBox(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body.depth, fridgeDoorPlane, 24, MAT.fridge);
   const split = bodyV0 + (A.doors.freezer.top + A.doors.fridge.bottom) / 2; // the middle of the gap between the appliance doors
@@ -1309,7 +1310,7 @@ function buildFront(run, item) {
       K.movers.push(innerMover);
       linkTo(mover, innerMover);
       for (const b of model.boards) if (b.frontId === front.id && b.inner) registerPart(K, edgeLook(localBox(innerBox, ...b.box, BOARD[b.material]), b.edges, b.material), b);
-      const innerTop = iv - 4 + R.innerSide;
+      const innerTop = iv - 4 + settings.drawers.M.side;
       sides(innerBox, iv - 4, innerTop);
       localBox(innerBox, innerU0 + s1, innerU1 - s1, iv - 4, innerTop, n1 - 16, n1 - 2, MAT.drawerSide); // metal inner front
       for (let j = 1; j < 5; j++) { const x = innerU0 + s1 + ((innerU1 - innerU0 - 2 * s1) * j) / 5; localBox(innerBox, x - 3, x + 3, iv + 16, iv + 66, carcassBack + 76, carcassFront - 44, MAT.insert, true); } // cutlery insert dividers
@@ -1335,10 +1336,10 @@ function buildFront(run, item) {
     envelope(P, w0, w1, 0, doorBottom, carcassFront - A.body.depth, carcassFront - A.baseSetback, A.name + ' – podstawa, ' + A.baseSetback + ' za frontem');
   } else if (opening === 'fridge' && K && K.fridgeBody) {
     // the appliance door behind this front, from the installation drawing (APPLIANCES.fridge.doors)
-    const [bodyV0] = K.fridgeBody, freezer = hasTag(item, 'freezer'), A = APPLIANCES.fridge, door = freezer ? A.doors.freezer : A.doors.fridge;
-    const d0 = bodyV0 + door.bottom, d1 = bodyV0 + door.top;
-    envelope(mover.layers.fridge, K.fridgeBody[2], K.fridgeBody[3], d0, d1, fridgeDoorPlane, carcassFront, A.name + ' – drzwi ' + (freezer ? 'zamrażarki ' : 'lodówki ') + (door.top - door.bottom));
-    localBox(mover.layers.fridge, K.fridgeBody[2], K.fridgeBody[3], d0, d1, fridgeDoorPlane, carcassFront - 2, MAT.fridge); // appliance door
+    const body = K.fridgeBody, freezer = hasTag(item, 'freezer'), A = APPLIANCES.fridge, door = freezer ? A.doors.freezer : A.doors.fridge;
+    const d0 = body.v0 + door.bottom, d1 = body.v0 + door.top;
+    envelope(mover.layers.fridge, body.u0, body.u1, d0, d1, fridgeDoorPlane, carcassFront, A.name + ' – drzwi ' + (freezer ? 'zamrażarki ' : 'lodówki ') + (door.top - door.bottom));
+    localBox(mover.layers.fridge, body.u0, body.u1, d0, d1, fridgeDoorPlane, carcassFront - 2, MAT.fridge); // appliance door
     if (!freezer) for (const f of [0.25, 0.5, 0.75]) { const y = d0 + (d1 - d0) * f; localBox(mover.layers.fridge, K.u0 + 55, K.u1 - 55, y, y + 80, fridgeDoorPlane - 54, fridgeDoorPlane, MAT.ice, true); } // door shelves
     mover.label = (freezer ? 'Zamrażarka' : 'Lodówka') + ' · front ' + size + ' na drzwiach urządzenia';
   } else if (opening === 'fixed') {
@@ -1354,7 +1355,7 @@ function pulloutDrawers(run, item, door) {
     const mover = movingPart(run, 'drawer', 0, 0, 0), box = mover.layers.drawers;
     mover.item = item;
     mover.travel = P.runner;
-    mover.label = 'Szuflada za drzwiami ' + (j + 1) + '/' + P.count + ' · ' + P.width + ' × ' + P.depth + ' × ' + P.height + ', prowadnice kulkowe ' + P.runner;
+    mover.label = 'Szuflada za drzwiami ' + (j + 1) + '/' + P.count + ' · ' + P.width + ' × ' + P.runner + ' × ' + P.height + ', prowadnice kulkowe ' + P.runner;
     K.movers.push(mover);
     linkTo(door, mover);
     for (const b of model.boards) if (b.frontId === front.id && b.pullout === j) registerPart(K, edgeLook(localBox(box, ...b.box, BOARD[b.material]), b.edges, b.material), b);
@@ -1861,12 +1862,12 @@ floorPanel.addEventListener('click', e => { const b = e.target.closest('[data-f]
 
 /* ---------- layer chips ---------- */
 const layerPanel = document.getElementById('layers'), layerOn = {};
-layerPanel.innerHTML = LAYERS.map(([label, layers], i) => '<div class="lgrp"><button class="gh" data-g="' + i + '" aria-pressed="true">' + label + '</button><div class="row chips">' +
-  layers.map(([id, name]) => '<button data-l="' + id + '" aria-pressed="true">' + name + '</button>').join('') + '</div></div>').join('') +
-  '<div class="holes-legend">Otwory: ' + Object.values(HOLE_COLORS).map(([hex, label]) => '<span style="color:' + hex + '">●</span> ' + label).join(' &nbsp;') + '</div>';
+layerPanel.innerHTML = LAYERS.map(({ label, layers }, i) => '<div class="lgrp"><button class="gh" data-g="' + i + '" aria-pressed="true">' + label + '</button><div class="row chips">' +
+  Object.entries(layers).map(([id, name]) => '<button data-l="' + id + '" aria-pressed="true">' + name + '</button>').join('') + '</div></div>').join('') +
+  '<div class="holes-legend">Otwory: ' + Object.values(HOLE_COLORS).map(({ hex, label }) => '<span style="color:' + hex + '">●</span> ' + label).join(' &nbsp;') + '</div>';
 function syncLayerGroups() {
   layerPanel.querySelectorAll('[data-g]').forEach(b => {
-    const ids = LAYERS[b.dataset.g][1].map(([id]) => id), on = ids.filter(id => layerOn[id]).length;
+    const ids = Object.keys(LAYERS[b.dataset.g].layers), on = ids.filter(id => layerOn[id]).length;
     b.setAttribute('aria-pressed', on === ids.length ? 'true' : on ? 'mixed' : 'false');
   });
 }
@@ -1882,7 +1883,7 @@ layerPanel.addEventListener('click', e => {
   if (!b) return;
   if (b.dataset.l) setLayer(b.dataset.l, !layerOn[b.dataset.l]);
   else {
-    const ids = LAYERS[b.dataset.g][1].map(([id]) => id), on = !ids.every(id => layerOn[id]);
+    const ids = Object.keys(LAYERS[b.dataset.g].layers), on = !ids.every(id => layerOn[id]);
     ids.forEach(id => setLayer(id, on, true));
     syncLayerGroups();
     sceneChanged();
@@ -2089,20 +2090,20 @@ document.getElementById('pnotes').innerHTML = (project.notes || []).map(({ name,
 }).join('');
 
 /* ---------- settings tabs ---------- */
-const TABS = [['t-view', 'p-view'], ['t-carc', 'p-carc'], ['t-prj', 'p-prj']]; // [tab button, panel]
+const TABS = [{ tab: 't-view', panel: 'p-view' }, { tab: 't-carc', panel: 'p-carc' }, { tab: 't-prj', panel: 'p-prj' }]; // ids of the tab button and its panel
 function showTab(id) {
-  for (const [tab, panel] of TABS) {
+  for (const { tab, panel } of TABS) {
     const on = tab === id;
     document.getElementById(tab).setAttribute('aria-selected', on);
     document.getElementById(panel).hidden = !on;
   }
   try { localStorage.setItem('kv-tab', id); } catch (e) {}
 }
-for (const [tab] of TABS) document.getElementById(tab).addEventListener('click', () => showTab(tab));
+for (const { tab } of TABS) document.getElementById(tab).addEventListener('click', () => showTab(tab));
 {
   let stored = null;
   try { stored = localStorage.getItem('kv-tab'); } catch (e) {}
-  if (TABS.some(t => t[0] === stored)) showTab(stored);
+  if (TABS.some(t => t.tab === stored)) showTab(stored);
 }
 if (location.hash === '#carcasses') showTab('t-carc');
 

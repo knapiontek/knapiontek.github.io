@@ -73,6 +73,7 @@ A new feature that changes what gets built is a new type; one that adds to an ex
 - Meaningful names that match what the page shows, no abbreviations a reader has to decode.
 - No hidden rules: what gets built follows from the type, the tags and the settings in design.js. No guessing from names, labels or sizes.
 - No numbers of this kitchen in the code and no duplicated values.
+- A list or an array host homogenic values - the same type and meaning.
 - Library versions pinned (deterministic pages).
 - Language: everything the pages show is Polish; code and comments are English.
 - Short comments that say why, not long narration.
