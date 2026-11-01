@@ -1324,7 +1324,7 @@ function pulloutDrawers(group, item, door) {
     const mover = movingPart(group, 'drawer', 0, 0, 0), box = mover.layers.drawers;
     mover.item = item;
     mover.travel = P.runner;
-    mover.label = 'Szuflada za drzwiami ' + (j + 1) + '/' + P.count + ' · ' + P.width + ' × ' + P.runner + ' × ' + P.height + ', prowadnice kulkowe ' + P.runner;
+    mover.label = 'Szuflada za drzwiami ' + (j + 1) + '/' + P.count + ' · ' + P.boxWidth + ' × ' + P.runner + ' × ' + P.boxHeight + ', prowadnice kulkowe ' + P.runner;
     K.movers.push(mover);
     linkTo(door, mover);
     for (const b of model.boards) if (b.frontId === front.id && b.pullout === j) registerPart(K, edgeLook(localBox(box, ...b.box, BOARD[b.material]), b.edges, b.material), b);

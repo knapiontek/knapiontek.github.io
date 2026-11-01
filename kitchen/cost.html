@@ -262,7 +262,7 @@ function frontFunction(front) {
 const place = p => (p.item ? KE.placeLabel(p.group, p.item.col, p.item.span) : p.col ? KE.placeLabel(p.group, p.col) : 'G' + p.group);
 const columnOfPart = p => (p.item ? p.item.col : p.col || 0);
 
-// cutting-list rows of one block: its id = fronts | frames | plinths | panels | plaster | worktops | falls, or a material use
+// cutting-list rows of one block: its id = fronts | frames | plinths | panels | splashes | plaster | worktops | falls, or a material use
 // (carcass, drawerBox, back ...): every board of that use's material
 let rowsOf = {}; // block id -> its rows, from the model
 let codeOfRow = {}; // cutKey of a row -> its label
@@ -305,6 +305,7 @@ function blockRows(blockId) {
     frames: () => list(model.frames),
     plinths: () => list(model.plinths.map(p => ({ ...p, name: 'Cokół' }))),
     panels: () => list(model.panels),
+    splashes: () => list(model.splashes),
     plaster: () => list(model.plaster),
     worktops: () => list(model.worktopPieces.filter(p => p.item.type === 'worktop')),
     falls: () => list(model.worktopPieces.filter(p => p.item.type === 'fall'))
@@ -348,7 +349,7 @@ function renderAssembly() {
     const frontLines = fronts.map(f => label(KE.cutKey(frontPart(f))) + frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.hinges ? ', zawiasy: ' + f.hinges.length + ', strona ' + KE.LABELS.side[f.hand] : '') + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : ''));
     const drawerLines = [
       ...fronts.filter(f => f.drawer).map(f => 'szuflada ' + f.drawer.size + (f.drawer.bins ? ' z koszami na odpady' : '') + (f.drawer.inner ? ' + szuflada wewnętrzna M' : '')),
-      ...fronts.filter(f => f.pullouts).map(f => f.pullouts.count + ' × szuflada za drzwiami ' + f.pullouts.width + ' × ' + f.pullouts.runner + ' × ' + f.pullouts.height + ' (płyta dystansowa po stronie zawiasów)')
+      ...fronts.filter(f => f.pullouts).map(f => f.pullouts.count + ' × szuflada za drzwiami ' + f.pullouts.boxWidth + ' × ' + f.pullouts.runner + ' × ' + f.pullouts.boxHeight + ' (płyta dystansowa po stronie zawiasów)')
     ];
     const pullouts = fronts.reduce((n, f) => n + (f.pullouts ? f.pullouts.count : 0), 0);
     const pullOutShelves = boards.filter(b => b.id === 'pullOutShelf').length;
@@ -370,6 +371,7 @@ function renderAssembly() {
   model.fronts.filter(f => !f.carcassId).forEach(f => add(f, frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : '')));
   model.frames.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
   model.panels.forEach(p => add(p, p.name + ' ' + size(p.a, p.b) + withEdges(p.edges)));
+  model.splashes.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
   model.boards.filter(b => !b.carcassId).forEach(b => add(b, b.name + ' ' + size(b.a, b.b) + ' (' + model.materials[b.material].label + ')'));
   model.plinths.forEach(p => add(p, 'Cokół ' + size(p.a, p.b)));
   model.plaster.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
@@ -445,21 +447,19 @@ function itemValue(rest) {
     .filter(i => (i.carcassName === where || KE.placeLabel(i.group, i.col, i.span) === where) && (i.type === kind || i.tags.includes(kind)))
     .sort((a, b) => a.v0 - b.v0)[(Number(n) || 1) - 1];
   if (!item) return NaN;
-  const f = item.front, mid = (item.v0 + item.v1) / 2, K = item.carcass;
-  const bands = K ? model.boards.filter(b => b.carcassId === K.id && KE.HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[2], b.box[3]]) : [];
-  const below = bands.filter(([a, b]) => (a + b) / 2 <= mid).map(([, b]) => b), above = bands.filter(([a, b]) => (a + b) / 2 > mid).map(([a]) => a);
-  const nicheBottom = below.length ? Math.max(...below) : NaN, nicheTop = above.length ? Math.min(...above) : NaN;
+  const f = item.front, K = item.carcass;
+  const { bottom: nicheBottom, top: nicheTop } = K ? KE.nicheAround(model.boards, K, item.v0, item.v1) : { bottom: NaN, top: NaN };
   const panel = model.panels.find(p => p.item === item);
   const values = {
     width: item.u1 - item.u0, height: item.v1 - item.v0, v0: item.v0, v1: item.v1,
     frontWidth: f ? f.width : NaN, frontHeight: f ? f.height : NaN, frontV0: f ? f.v0 : NaN, frontV1: f ? f.v1 : NaN,
     nicheBottom, nicheTop, niche: nicheTop - nicheBottom,
-    ...(f && f.pullouts ? { count: f.pullouts.count, runner: f.pullouts.runner, boxWidth: f.pullouts.width, boxHeight: f.pullouts.height } : {}),
+    ...(f && f.pullouts ? { count: f.pullouts.count, runner: f.pullouts.runner, boxWidth: f.pullouts.boxWidth, boxHeight: f.pullouts.boxHeight } : {}),
     ...(f && f.hand ? { hinge: KE.LABELS.side[f.hand] } : {}),
     ...(panel ? { edges: edgeText(panel.edges) || 'brak' } : {}),
     fit: item.fit
   };
-  return field.split('.').reduce((o, k) => (o == null ? undefined : o[k]), values) ?? NaN;
+  return KE.valueAt(values, field) ?? NaN;
 }
 // {=...}: the expression with each <placeholder> as its value
 function calculate(expr, totals, quantities) {
@@ -468,7 +468,7 @@ function calculate(expr, totals, quantities) {
 }
 function placeholder(key, totals, quantities) {
   const [, prefix, rest] = key.match(/^(?:(\w+):)?(.+)$/);
-  const path = (obj, dotted) => dotted.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
+  const path = KE.valueAt;
   if (prefix === 'n') return model ? (path(model.counts, rest) ?? 0) : NaN;
   if (prefix === 'w') return model ? path(model.worktops, rest) : NaN;
   if (prefix === 's') return model ? path(model.settings, rest) : NaN;
@@ -542,9 +542,9 @@ function describeFormula(expr) {
 }
 // the visible name of a placeholder in a tooltip: engine counts and parameters in Polish; setting and var paths as written in the data
 const COUNT_NAMES = {
-  carcasses: 'korpusy', wallStrips: 'listwy tylne przy ścianie', fronts: 'fronty', handles: 'uchwyty',
+  carcasses: 'korpusy', wallBrackets: 'kątowniki listew tylnych do ściany', fronts: 'fronty', handles: 'uchwyty',
   hinges: 'zawiasy', drawersD: 'szuflady D', drawersM: 'szuflady M', innerDrawers: 'szuflady wewnętrzne', shelvesAdjustable: 'półki ruchome',
-  shelvesFixed: 'półki stałe', shelfPins: 'podpórki półek', pullOutShelves: 'półki wysuwane', legs: 'nóżki', sinks: 'zlewy', hobs: 'płyty grzewcze',
+  shelvesFixed: 'półki stałe', shelfPins: 'podpórki półek', pullOutShelves: 'półki wysuwane', pullouts: 'szuflady za drzwiami', legs: 'nóżki', sinks: 'zlewy', hobs: 'płyty grzewcze',
   fridges: 'lodówki', grilles: 'kratki', plasterUD: 'profil UD [mm]', plasterCD: 'profil CD [mm]', plasterEdge: 'krawędzie GK [mm]'
 };
 const PARAM_NAMES = { waste: 'odpad', sheet: 'arkusz [m²]', reserve: 'rezerwa' };
@@ -553,7 +553,7 @@ function placeholderName(key) {
   if (prefix === 'n') {
     const [kind, name] = rest.split('.');
     return kind === 'type' ? 'typ ' + KE.typeLabel(name) : kind === 'tag' ? 'tag ' + KE.LABELS.tag[name]
-      : kind === 'joints' ? (name === 'fromInside' ? 'styki listew z drugim korpusem [mm]' : 'styki listew z pierwszym korpusem [mm]') : COUNT_NAMES[rest] || rest;
+      : kind === 'jointLength' ? (name === 'fromInside' ? 'styki listew z drugim korpusem [mm]' : 'styki listew z pierwszym korpusem [mm]') : COUNT_NAMES[rest] || rest;
   }
   return !prefix && PARAM_NAMES[rest] ? PARAM_NAMES[rest] : rest;
 }
