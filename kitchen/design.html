@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kuchnia - widok frontów</title>
+  <title>Projekt zabudowy</title>
   <style>
     /* =============================================================
        STYLES
@@ -269,7 +269,7 @@
 
 <div x-data="kitchenApp()">
 
-  <h1>Kuchnia - widok frontów</h1>
+  <h1>Projekt zabudowy</h1>
 
   <div id="action-bar">
     <div class="action-group">
@@ -290,7 +290,7 @@
         <div class="sheet-wrap">
           <table class="sheet read-only">
             <thead>
-              <tr><th style="width:64px">Kod</th><th style="width:200px">Nazwa</th><th style="width:96px" title="Grubość; × głębokość, gdy materiał ją podaje (blat)">Wymiar</th><th style="width:56px" title="Kolor płyty; tekstura dębu, gdy materiał nie ma koloru">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w design.js)">Użycie</th></tr>
+              <tr><th style="width:64px">Kod</th><th style="width:200px">Nazwa</th><th style="width:96px" title="Grubość; × głębokość, gdy materiał ją podaje (blat, panel boczny)">Wymiar</th><th style="width:56px" title="Kolor płyty; widok 3D pokazuje teksturę, gdy materiał ją podaje">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w design.js)">Użycie</th></tr>
             </thead>
             <tbody>
               <template x-for="m in materials" :key="m.code">
@@ -298,7 +298,7 @@
                   <td x-text="m.code"></td>
                   <td x-text="m.name"></td>
                   <td class="num" x-text="m.thickness + (m.depth ? ' × ' + m.depth : '')"></td>
-                  <td><i class="swatch" :style="`background:${m.color || OAK_SWATCH}`" :title="m.color || 'tekstura dębu'"></i></td>
+                  <td><i class="swatch" :style="`background:${m.color}`" :title="m.color + (m.texture ? ', tekstura ' + m.texture : '')"></i></td>
                   <td class="center" x-text="m.lacquered ? '✓' : ''"></td>
                   <td x-text="(m.uses || []).map(KE.useLabel).join(', ')"></td>
                 </tr>
@@ -514,8 +514,8 @@
 /* ---------- 1. settings ---------- */
 const KE = window.KitchenEngine;
 const CONFIG = JSON.parse(document.getElementById('design-config').textContent); // drawing sizes and colours, 1 SVG unit = 1 mm
-const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags, plural, OAK_SWATCH } = KE; // OAK_SWATCH: a material without a colour
-const HANDLE_CHOICES = ['', ...KE.HANDLE_POSITIONS]; // '' = no handle
+const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags, plural } = KE;
+const HANDLE_CHOICES = ['', ...KE.SIDES]; // '' = no handle
 const HINGE_CHOICES = ['', ...KE.HINGE_SIDES];
 const SIDE_NAMES = { '': 'brak', ...KE.LABELS.side }; // handle positions and hinge sides
 
@@ -732,7 +732,7 @@ function drawSVG(model) {
   const backgrounds = groups.map(G => `<rect fill="${CONFIG.colors.canvasBg}" x="${groupX.get(G)}" y="0" width="${G.length}" height="${totalHeight}"/>`).join('');
   const shapes = groups.flatMap(G => G.items.map(item => drawItem(item, item.u0 + groupX.get(G), totalHeight, model.settings.front.shakerRail))).join('');
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Widok frontów kuchni">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Widok frontów">
       ${backgrounds}
       ${shapes}
     </svg>`;
@@ -767,7 +767,6 @@ document.addEventListener('alpine:init', () => {
     picker: { row: null, mode: 'type', x: 0, y: 0 }, // popup for the type, the tags, the handle or the hinge of a component row
     nextId: 1,
     TYPES,
-    OAK_SWATCH,
     SIDE_NAMES,
     HANDLE_CHOICES,
     HINGE_CHOICES,
@@ -957,7 +956,7 @@ document.addEventListener('alpine:init', () => {
       const { project, warnings } = this.build, issues = warnings.length;
       if (!project) { this.showStatus('Nie ma czego eksportować: design.js nie jest wczytany.', true); return; }
       downloadBlob(KE.designJS(project), 'text/javascript;charset=utf-8', 'design.js');
-      this.showStatus('Wyeksportowano design.js' + (issues ? ' z ' + issues + ' ' + plural(issues, 'problemem', 'problemami', 'problemami') + ' w danych - lista pod tabelami' : '') + '. Zastąp plik w folderze kuchni i odśwież strony.', issues > 0);
+      this.showStatus('Wyeksportowano design.js' + (issues ? ' z ' + issues + ' ' + plural(issues, 'problemem', 'problemami', 'problemami') + ' w danych - lista pod tabelami' : '') + '. Zastąp plik w folderze projektu i odśwież strony.', issues > 0);
     },
     chooseImportFile() {
       this.$refs.importFile.value = '';
@@ -985,7 +984,7 @@ document.addEventListener('alpine:init', () => {
     importData(text) {
       let project;
       try { project = KE.fromDesignJS(text); } catch (err) { throw new Error('to nie są poprawne dane projektu (' + err.message + ').'); }
-      if (!project || !project.materials || !project.settings || !project.columns || !Array.isArray(project.components)) throw new Error('to nie są dane projektu kuchni: brakuje "materials", "settings", "columns" lub "components".');
+      if (!project || !project.materials || !project.settings || !project.columns || !Array.isArray(project.components)) throw new Error('to nie są dane projektu: brakuje "materials", "settings", "columns" lub "components".');
       this.setProject(project);
     }
   }));

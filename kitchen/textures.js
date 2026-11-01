@@ -1,5 +1,5 @@
 /* Kitchen textures for view.html: decor images as data URLs (so the page works from disk). Written per project (LLM).
-     oak      the wood decor of every material without a colour; size = the area the image covers, mm
+     oak      a decor, named by the texture of the materials that show it (design.js); size = the area the image covers, mm
      floors   the floor tiles to choose from; the first one is the default */
 window.KITCHEN_TEXTURES = {
  "oak": {"name": "Egger H1180 ST37 dąb Halifax naturalny", "size": {"length": 2800, "width": 1575},

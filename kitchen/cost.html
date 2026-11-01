@@ -235,16 +235,17 @@ function drillLegend() {
   return rows;
 }
 // finished edges of one piece per side, as an order form for the board supplier has them: {length, width} = edges along each, 0, 1 or 2.
-// ABS edges (boards, panels) come from engine.js as [{side, length}]; lacquered edges (fronts, frames, plinth) as {long, short}.
+// ABS edges (boards, panels) come from engine.js as [{side, length, along}] (along: a | b); lacquered edges (fronts, frames, plinth) as {long, short}.
 // (a cut-list row, KE.cutList: a = the length, b = the width; fronts are height × width, so the long side can be either)
 const edgeCounts = row => {
   const { lacquer, edges = [] } = row;
   if (lacquer) return row.a >= row.b ? { length: lacquer.long, width: lacquer.short } : { length: lacquer.short, width: lacquer.long };
-  const alongLength = Math.min(2, edges.filter(edge => edge.length === row.a).length);
-  return { length: alongLength, width: edges.length - alongLength };
+  const along = size => edges.filter(edge => edge.along === size).length;
+  return { length: along('a'), width: along('b') };
 };
-// cut-list rows: the longer side first (a), sorted by name, then longest first
-const longFirst = rows => rows.map(row => (row.a >= row.b ? row : { ...row, a: row.b, b: row.a }));
+// cut-list rows: the longer side first (a; the edges turn with it), sorted by name, then longest first
+const turnEdges = edges => (edges || []).map(edge => ({ ...edge, along: edge.along === 'a' ? 'b' : 'a' }));
+const longFirst = rows => rows.map(row => (row.a >= row.b ? row : { ...row, a: row.b, b: row.a, edges: turnEdges(row.edges) }));
 const sortRows = rows => rows.sort((x, y) => x.name.localeCompare(y.name) || y.a - x.a || y.b - x.b);
 
 /* ---------- 1. model: parts from engine.js (design.js); every block is calculated, nothing typed in ---------- */
@@ -312,7 +313,7 @@ function blockRows(blockId) {
 }
 
 function applyProject(project) {
-  model = KE.build(project);
+  model = KE.build(project, APPLIANCES);
   rowsOf = Object.fromEntries(COST.blocks.map(block => [block.id, blockRows(block.id)]));
   // a label per cut-list row: the block code (cost.js blocks) and its number, e.g. KO-07; the same part elsewhere finds it by its cutKey
   codeOfRow = {};
@@ -344,7 +345,7 @@ function renderAssembly() {
     const boards = model.boards.filter(b => b.carcassId === K.id), fronts = model.fronts.filter(f => f.carcassId === K.id);
     const pins = boards.filter(b => b.id === 'adjustableShelf').length * model.settings.shelf.pins;
     const hinges = fronts.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
-    const frontLines = fronts.map(f => label(KE.cutKey(frontPart(f))) + frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.hinges ? ', zawiasy: ' + f.hinges.length + ', strona ' + KE.LABELS.side[f.hingeSide] : '') + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : ''));
+    const frontLines = fronts.map(f => label(KE.cutKey(frontPart(f))) + frontFunction(f) + ' ' + round1(f.height) + ' × ' + round1(f.width) + (f.hinges ? ', zawiasy: ' + f.hinges.length + ', strona ' + KE.LABELS.side[f.hand] : '') + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : ''));
     const drawerLines = [
       ...fronts.filter(f => f.drawer).map(f => 'szuflada ' + f.drawer.size + (f.drawer.bins ? ' z koszami na odpady' : '') + (f.drawer.inner ? ' + szuflada wewnętrzna M' : '')),
       ...fronts.filter(f => f.pullouts).map(f => f.pullouts.count + ' × szuflada za drzwiami ' + f.pullouts.width + ' × ' + f.pullouts.runner + ' × ' + f.pullouts.height + ' (płyta dystansowa po stronie zawiasów)')
@@ -436,9 +437,10 @@ function carcassValue(rest) {
 // an item by carcass name or place and type or tag ("K8/oven", "G1[5]/dishwasher", "K8/cabinet#2" = the second from the bottom):
 // module width, height, v0, v1; its front frontWidth, frontHeight, frontV0, frontV1; niche = the clear height between the
 // nearest horizontal boards of its carcass below (nicheBottom) and above (nicheTop) its middle; drawers behind its door (tag pullouts):
-// count, runner (length), boxWidth, boxHeight
+// count, runner (length), boxWidth, boxHeight; hinge = the hinge side of its door; edges = the ABS edges of a panel ("lewa 717", "brak");
+// fit.* = how its appliance sits in it (engine.js fitAppliances: fit.feet, fit.frontV0, fit.height ...)
 function itemValue(rest) {
-  const dot = rest.lastIndexOf('.'), field = rest.slice(dot + 1), [where, what = ''] = rest.slice(0, dot).split('/'), [kind, n] = what.split('#');
+  const dot = rest.indexOf('.'), field = rest.slice(dot + 1), [where, what = ''] = rest.slice(0, dot).split('/'), [kind, n] = what.split('#');
   const item = Object.values(model.groups).flatMap(G => G.items)
     .filter(i => (i.carcassName === where || KE.placeLabel(i.group, i.col, i.span) === where) && (i.type === kind || i.tags.includes(kind)))
     .sort((a, b) => a.v0 - b.v0)[(Number(n) || 1) - 1];
@@ -447,12 +449,17 @@ function itemValue(rest) {
   const bands = K ? model.boards.filter(b => b.carcassId === K.id && KE.HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[2], b.box[3]]) : [];
   const below = bands.filter(([a, b]) => (a + b) / 2 <= mid).map(([, b]) => b), above = bands.filter(([a, b]) => (a + b) / 2 > mid).map(([a]) => a);
   const nicheBottom = below.length ? Math.max(...below) : NaN, nicheTop = above.length ? Math.min(...above) : NaN;
-  return {
+  const panel = model.panels.find(p => p.item === item);
+  const values = {
     width: item.u1 - item.u0, height: item.v1 - item.v0, v0: item.v0, v1: item.v1,
     frontWidth: f ? f.width : NaN, frontHeight: f ? f.height : NaN, frontV0: f ? f.v0 : NaN, frontV1: f ? f.v1 : NaN,
     nicheBottom, nicheTop, niche: nicheTop - nicheBottom,
-    ...(f && f.pullouts ? { count: f.pullouts.count, runner: f.pullouts.runner, boxWidth: f.pullouts.width, boxHeight: f.pullouts.height } : {})
-  }[field] ?? NaN;
+    ...(f && f.pullouts ? { count: f.pullouts.count, runner: f.pullouts.runner, boxWidth: f.pullouts.width, boxHeight: f.pullouts.height } : {}),
+    ...(f && f.hand ? { hinge: KE.LABELS.side[f.hand] } : {}),
+    ...(panel ? { edges: edgeText(panel.edges) || 'brak' } : {}),
+    fit: item.fit
+  };
+  return field.split('.').reduce((o, k) => (o == null ? undefined : o[k]), values) ?? NaN;
 }
 // {=...}: the expression with each <placeholder> as its value
 function calculate(expr, totals, quantities) {

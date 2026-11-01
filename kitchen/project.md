@@ -12,7 +12,7 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 | cost.js | data, this project | prices, items, notes and settings of cost.html | LLM, per project |
 | view.js | data, this project | placement of the groups, room, how the appliances are fitted, lights and cameras of view.html | LLM, per project |
 | appliances.js | data, this project | the appliances as the manufacturer gives them (sizes, documents), for cost.html and view.html | LLM, per project |
-| textures.js | data, this project | decor images from the manufacturers: the oak of the materials, the floor tiles to choose from, for view.html | LLM, per project |
+| textures.js | data, this project | decor images from the manufacturers: the textures the materials name, the floor tiles to choose from, for view.html | LLM, per project |
 | rules.md | text, every project | the kitchen rules in Polish, as the app names things | by hand |
 | engine.js | code, every project | the model: carcasses, boards, fronts, frames, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
@@ -35,14 +35,14 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
       ▼
   export → design.js                             only design.html writes design.js
 
-  appliances.js ──► cost.html, view.html         design.html does not read it
-  textures.js   ──► view.html                    without it view.html draws its own oak
+  appliances.js ──► cost.html, view.html         passed on to engine.js; design.html does not read it
+  textures.js   ──► view.html                    without it a material shows its colour
 ```
 
 - Every page loads design.js directly, so the pages also work opened from disk.
 - Only design.html changes design.js (import / export); it shows the materials read only and keeps the settings as they are, so both are edited by hand. cost.html and view.html only read it.
-- engine.js does not know where the data comes from: a page hands it the project and gets the model back. The engine has no numbers of this kitchen and draws nothing.
-- cost.html and view.html each keep their own data in cost.js and view.js, for what only that page needs: prices and notes, or the room, lights and cameras. The appliance sizes, which both need, are in appliances.js. A value that the engine needs belongs in design.js.
+- engine.js does not know where the data comes from: a page hands it the project (and appliances.js, to fit the appliances in their places) and gets the model back. The engine has no numbers of this kitchen and draws nothing.
+- cost.html and view.html each keep their own data in cost.js and view.js, for what only that page needs: prices and notes, or the room, lights and cameras. The appliance sizes, which both need, are in appliances.js. A choice of the project that the engine needs belongs in design.js.
 - appliances.js says what the manufacturer gives, design.js what the project chose; the same number can be in both. The notes of cost.html put them side by side.
 
 ## What is project specific and what is not

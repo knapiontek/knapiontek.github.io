@@ -24,10 +24,12 @@
      {w:1.depth}       worktop of group 1  {k:K8.innerWidth} carcass by name: width, height, innerWidth, v0, v1
      {i:K8/oven.niche} item by carcass name or place (G1[5]) and type or tag, #2 = the second from the bottom:
                        width, height, v0, v1 (module), frontWidth, frontHeight, frontV0, frontV1 (front),
-                       nicheBottom, nicheTop, niche (clear height between the horizontal boards of the carcass around it)
+                       nicheBottom, nicheTop, niche (clear height between the horizontal boards of the carcass around it),
+                       hinge (hinge side of its door), edges (ABS edges of a panel), fit.feet, fit.frontV0 ... (its appliance:
+                       engine.js fitAppliances)
      {a:oven.front.height}  appliances.js       {v:sheet.length} values
      {p:hinges}        unit price          {q:hinges} item quantity          {note:hinges} the number of a note
-     {f:dishwasherHeight}  a named formula of "formulas"
+     {f:ovenMicroGap}  a named formula of "formulas"
      {carcass.m2}      cutting-list total of a block (m2, edge, cut, qty)    {waste} {sheet} {reserve} params
      {=expression}     a calculation with placeholders in angle brackets, e.g. {=(<a:oven.front.width> - <k:K8.innerWidth>) / 2},
                        with ROUND, ROUNDUP, MIN, MAX;  |% shows a fraction as a percentage
@@ -48,7 +50,8 @@ window.KITCHEN_COST = {
   "edgeAllowance": 0.1,
   "confirmatsPerCarcass": 18,
   "screwsPerMetre": 4,
-  "backScrewsPerM2": 30
+  "backScrewsPerM2": 30,
+  "bracketsPerDummy": 4
  },
  "labels": {
   "fronts": [
@@ -432,8 +435,8 @@ window.KITCHEN_COST = {
     {
      "id": "brackets",
      "name": "Kątowniki 20×20×16, opak. 10 szt.",
-     "spec": "mocowanie frontów atrap",
-     "qty": "={n:tag.dummy}",
+     "spec": "mocowanie frontów atrap, {v:bracketsPerDummy} na front",
+     "qty": "=ROUNDUP({n:tag.dummy}*{v:bracketsPerDummy}/10,0)",
      "unit": "op.",
      "price": 6,
      "source": "sprzedawca Lun Fix",
@@ -796,10 +799,7 @@ window.KITCHEN_COST = {
   }
  ],
  "formulas": {
-  "dishwasherHeight": "MIN(<a:dishwasher.body.height> + <a:dishwasher.feet.max>, MAX(<a:dishwasher.body.height> + <a:dishwasher.feet.min>, <w:1.v0>))",
-  "dishwasherDoor": "<a:dishwasher.door.height.min> + (<a:dishwasher.door.height.max> - <a:dishwasher.door.height.min>) * (<f:dishwasherHeight> - <a:dishwasher.body.height> - <a:dishwasher.feet.min>) / (<a:dishwasher.feet.max> - <a:dishwasher.feet.min>)",
-  "microFeet": "MIN(<a:micro.feet.max>, MAX(<a:micro.feet.min>, (<i:K8/micro.v0> + <i:K8/micro.v1> - <a:micro.front.height>) / 2 - <a:micro.frontBottom> - <i:K8/micro.nicheBottom>))",
-  "ovenMicroGap": "<i:K8/micro.v0> - <i:K8/oven.nicheBottom> - <a:oven.front.height>"
+  "ovenMicroGap": "<i:K8/micro.fit.frontV0> - <i:K8/oven.fit.frontV1>"
  },
  "notes": [
   {
@@ -816,8 +816,8 @@ window.KITCHEN_COST = {
      "id": "micro",
      "appliance": "micro",
      "topic": "Mikrofalówka Bosch BFL623MB3 – K8, nad piekarnikiem",
-     "description": "Urządzenie {a:micro.body.width} × {a:micro.body.height} × {a:micro.body.depth} na regulowanych nóżkach {f:microFeet}; front {a:micro.front.width} × {a:micro.front.height} × {a:micro.front.thickness} ({=-<a:micro.frontBottom>} poniżej spodu urządzenia).\nFront zachodzi: {=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} na półkę pod, {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} na półkę nad ({=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} + {i:K8/micro.niche} + {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} = {i:K8/micro.height}), po {=(<a:micro.front.width> - <k:K8.innerWidth>) / 2} na boki korpusu.\nWnęka {i:K8/micro.niche} × {k:K8.innerWidth} × {s:carcass.depth}; tył otwarty; nad urządzeniem {=<i:K8/micro.niche> - <f:microFeet> - <a:micro.body.height>} luzu.\nSzczelina do frontu piekarnika {f:ovenMicroGap}; front szafki nad: szczelina {=<i:K8/cabinet#2.frontV0> - <i:K8/micro.v1>} nad frontem mikrofalówki, zachodzi {=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/cabinet#2.frontV0>} na tę samą półkę.",
-     "assumed": "Stoi na półce płytszej o {s:shelf.ventGap}; nóżki ustawione na {f:microFeet}.",
+     "description": "Urządzenie {a:micro.body.width} × {a:micro.body.height} × {a:micro.body.depth} na regulowanych nóżkach {i:K8/micro.fit.feet}; front {a:micro.front.width} × {a:micro.front.height} × {a:micro.front.thickness} ({=-<a:micro.frontBottom>} poniżej spodu urządzenia).\nFront zachodzi: {=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} na półkę pod, {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} na półkę nad ({=<i:K8/micro.nicheBottom> - <i:K8/micro.v0>} + {i:K8/micro.niche} + {=<i:K8/micro.v1> - <i:K8/micro.nicheTop>} = {i:K8/micro.height}), po {=(<a:micro.front.width> - <k:K8.innerWidth>) / 2} na boki korpusu.\nWnęka {i:K8/micro.niche} × {k:K8.innerWidth} × {s:carcass.depth}; tył otwarty; nad urządzeniem {=<i:K8/micro.niche> - <i:K8/micro.fit.feet> - <a:micro.body.height>} luzu.\nSzczelina do frontu piekarnika {f:ovenMicroGap}; front szafki nad: szczelina {=<i:K8/cabinet#2.frontV0> - <i:K8/micro.v1>} nad frontem mikrofalówki, zachodzi {=<i:K8/micro.nicheTop> + <t:carcass> - <i:K8/cabinet#2.frontV0>} na tę samą półkę.",
+     "assumed": "Stoi na półce płytszej o {s:shelf.ventGap}; nóżki ustawione na {i:K8/micro.fit.feet}.",
      "decide": "Rysunek Bosch (szafka wysoka) pokazuje 35 wolnego za korpusem; półka nad mikrofalówką sięga do {s:carcass.wallGap} od ściany – sprawdzić, czy wystarczy."
     },
     {
@@ -843,7 +843,7 @@ window.KITCHEN_COST = {
      "id": "dishwasher",
      "appliance": "dishwasher",
      "topic": "Zmywarka Bosch SMV4HVX00E – G1[5]",
-     "description": "Urządzenie {a:dishwasher.body.width} × {f:dishwasherHeight} × {a:dishwasher.body.depth}, nóżki wykręcone do spodu blatu; drzwi {=ROUND(<f:dishwasherDoor>)}.\nWnęka {w:1.v0} × {i:G1[5]/dishwasher.width} × {s:carcass.depth}.\nFront {i:G1[5]/dishwasher.frontWidth} × {i:G1[5]/dishwasher.frontHeight}: sięga {=ROUND(<f:dishwasherHeight> - <f:dishwasherDoor> - <i:G1[5]/dishwasher.frontV0>)} niżej niż drzwi, kończy się {=<f:dishwasherHeight> - <i:G1[5]/dishwasher.frontV1>} pod ich górą, po {=(<a:dishwasher.body.width> - <i:G1[5]/dishwasher.frontWidth>) / 2} węższy z boków.\nNóżki {a:dishwasher.baseSetback} za frontem, cokół przed nimi.",
+     "description": "Urządzenie {a:dishwasher.body.width} × {i:G1[5]/dishwasher.fit.height} × {a:dishwasher.body.depth}, nóżki wykręcone do spodu blatu; drzwi {=ROUND(<i:G1[5]/dishwasher.fit.doorHeight>)}.\nWnęka {w:1.v0} × {i:G1[5]/dishwasher.width} × {s:carcass.depth}.\nFront {i:G1[5]/dishwasher.frontWidth} × {i:G1[5]/dishwasher.frontHeight}: sięga {=ROUND(<i:G1[5]/dishwasher.fit.doorV0> - <i:G1[5]/dishwasher.frontV0>)} niżej niż drzwi, kończy się {=<i:G1[5]/dishwasher.fit.height> - <i:G1[5]/dishwasher.frontV1>} pod ich górą, po {=(<a:dishwasher.body.width> - <i:G1[5]/dishwasher.frontWidth>) / 2} węższy z boków.\nNóżki {a:dishwasher.baseSetback} za frontem, cokół przed nimi.",
      "decide": "Ciężar frontu: sprawdzić w instrukcji (Bosch ma zawias SMZ5003 do ciężkich frontów)."
     },
     {
@@ -890,7 +890,7 @@ window.KITCHEN_COST = {
     {
      "id": "framesPanels",
      "topic": "Listwy na sztorc, panele na płasko",
-     "description": "Listwy: {m:frame} na sztorc, gł. {s:frame.depth}, lakierowane obustronnie i krawędź przednia. Panele: {m:panel} na płasko, lakierowane obustronnie; ABS w kolorze panelu na krawędzi przy otwieranym froncie (panel {i:K3/panel.width}: lewa krawędź, przy drzwiach; panel {i:G2[3]/panel.width} i panel tylny wyspy: brak). Panel {i:G2[3]/panel.width} zakrywa koniec panelu {i:K3/panel.width}."
+     "description": "Listwy: {m:frame} na sztorc, gł. {s:frame.depth}, lakierowane obustronnie i krawędź przednia. Panele: {m:panel} na płasko, lakierowane obustronnie; ABS w kolorze panelu na krawędzi przy otwieranym froncie (panel {i:K3/panel.width}: {i:K3/panel.edges}; panel {i:G2[3]/panel.width}: {i:G2[3]/panel.edges}; panel tylny wyspy: bez ABS). Panel {i:G2[3]/panel.width} zakrywa koniec panelu {i:K3/panel.width}."
     },
     {
      "id": "backStrips",
@@ -932,7 +932,7 @@ window.KITCHEN_COST = {
     {
      "id": "pullouts",
      "topic": "Szuflady za drzwiami z płyty (K8 i K12, dół)",
-     "description": "K8 (pod piekarnikiem): za drzwiami {i:K8/pullouts.frontHeight} × {i:K8/pullouts.frontWidth} {i:K8/pullouts.count} szuflady, skrzynka {i:K8/pullouts.boxWidth} × {i:K8/pullouts.runner} × {i:K8/pullouts.boxHeight}, zawiasy po lewej. K12: za drzwiami {i:K12/pullouts.frontHeight} × {i:K12/pullouts.frontWidth} {i:K12/pullouts.count} szuflady, skrzynka {i:K12/pullouts.boxWidth} × {i:K12/pullouts.runner} × {i:K12/pullouts.boxHeight}, zawiasy po prawej.\nSkrzynki z {m:drawerBox} na prowadnicach kulkowych Häfele z cichym domykiem, L = {i:K12/pullouts.runner} (czoło na całą skrzynkę zakrywa boki i dno, dno i tył między bokami; ABS na górnych krawędziach i bokach czoła), {s:pullouts.runner.gap} luzu na prowadnicę z każdej strony.\nZawiasy zajmują {s:hinges.supportDepth} przy przodzie korpusu (jak słupek zawiasowy): po stronie zawiasów płyta dystansowa z {m:carcass} ({t:carcass}) od pleców do {s:hinges.supportDepth} przed przodem korpusu niesie prowadnicę, a skrzynki zaczynają się na tej samej głębokości. Szuflada mija ramię zawiasu i otwarte drzwi o {t:carcass} + {s:pullouts.runner.gap}; drzwi zamykają się przed szufladami. Szuflady stoją między płytami poziomymi nad i pod drzwiami (w K8: dno i półka pod piekarnikiem).\nBez półek ruchomych w tej części korpusu.",
+     "description": "K8 (pod piekarnikiem): za drzwiami {i:K8/pullouts.frontHeight} × {i:K8/pullouts.frontWidth} {i:K8/pullouts.count} szuflady, skrzynka {i:K8/pullouts.boxWidth} × {i:K8/pullouts.runner} × {i:K8/pullouts.boxHeight}, zawiasy: {i:K8/pullouts.hinge}. K12: za drzwiami {i:K12/pullouts.frontHeight} × {i:K12/pullouts.frontWidth} {i:K12/pullouts.count} szuflady, skrzynka {i:K12/pullouts.boxWidth} × {i:K12/pullouts.runner} × {i:K12/pullouts.boxHeight}, zawiasy: {i:K12/pullouts.hinge}.\nSkrzynki z {m:drawerBox} na prowadnicach kulkowych Häfele z cichym domykiem, L = {i:K12/pullouts.runner} (czoło na całą skrzynkę zakrywa boki i dno, dno i tył między bokami; ABS na górnych krawędziach i bokach czoła), {s:pullouts.runner.gap} luzu na prowadnicę z każdej strony.\nZawiasy zajmują {s:hinges.supportDepth} przy przodzie korpusu (jak słupek zawiasowy): po stronie zawiasów płyta dystansowa z {m:carcass} ({t:carcass}) od pleców do {s:hinges.supportDepth} przed przodem korpusu niesie prowadnicę, a skrzynki zaczynają się na tej samej głębokości. Szuflada mija ramię zawiasu i otwarte drzwi o {t:carcass} + {s:pullouts.runner.gap}; drzwi zamykają się przed szufladami. Szuflady stoją między płytami poziomymi nad i pod drzwiami (w K8: dno i półka pod piekarnikiem).\nBez półek ruchomych w tej części korpusu.",
      "assumed": "{n:pullouts} kompletów prowadnic po {p:pulloutRunners} PLN zamiast {p:innerDrawers} PLN za szufladę Blum.",
      "decide": "Uchwyt szuflad: wycięcie w czole albo gałka. Uwaga – Blum zamiast płyty: szuflada wewnętrzna TANDEMBOX antaro M ({p:innerDrawers} za komplet + dno i tył z płyty) zamiast prowadnic Häfele ({p:pulloutRunners}) i skrzynki z płyty: okucia {=ROUND(<p:innerDrawers> - <p:pulloutRunners>)} zł więcej za szufladę, {=ROUND((<p:innerDrawers> - <p:pulloutRunners>) * <n:pullouts>)} zł za wszystkie ({n:pullouts}), mniej płyty na skrzynki; boki Blum M tylko {s:drawers.M.side} mm (płyta: {s:pullouts.side}); w K12 (wnętrze po płycie dystansowej {=<k:K12.innerWidth> - <t:carcass>}) sprawdzić minimalną szerokość szuflady Blum. Uwaga: z szufladami za drzwiami płyta {m:drawerBox} to {q:drawerBoard} ark., ostatni słabo wykorzystany; w tej kuchni skrzynki zmieściłyby się w odpadach {m:carcass} – zdecydować przy zamówieniu wszystkich szaf."
     },
@@ -982,11 +982,6 @@ window.KITCHEN_COST = {
      "topic": "Okap Electrolux LFV416K – tryb pracy",
      "description": "Wyciąg: okap {p:hood} PLN + rura {p:duct} PLN.",
      "decide": "Wyciąg czy pochłaniacz (filtr węglowy, poza kosztorysem)?"
-    },
-    {
-     "id": "excluded",
-     "topic": "Poza kosztorysem",
-     "description": "Robocizna, transport, elektryka, hydraulika, prace GK (materiały GK są w kosztorysie): lista pod kosztorysem."
     }
    ]
   },

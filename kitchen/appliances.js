@@ -1,21 +1,22 @@
 /* Kitchen appliances: what the manufacturers give - sizes and documents. Written per project (LLM).
-   How an appliance fits in this kitchen is decided by cost.html and view.html, not here.
+   How an appliance fits in this kitchen is decided by engine.js (fitAppliances), not here.
    Sizes in mm; a range is {min, max}. Less obvious fields:
      feet      min = max: fixed feet; adjustable feet: the front is centred in its place
      door      hinge: the edge the door turns on; height: a door that grows with the feet (dishwasher)
+     controls  the part of the front that does not open: height of the control panel above the door, width of the control column beside it
      doors     fridge doors from the appliance bottom; setback: where the doors start behind the front
      source    where the values come from; "assumed" = still to check */
 window.KITCHEN_APPLIANCES = {
- "oven": {"name": "Bosch HBA534BB3", "body": {"width": 558, "height": 570, "depth": 528.5}, "front": {"width": 594, "height": 595, "thickness": 19.5}, "frontBottom": 0, "feet": {"min": 0, "max": 0}, "door": {"hinge": "bottom"},
+ "oven": {"name": "Bosch HBA534BB3", "body": {"width": 558, "height": 570, "depth": 528.5}, "front": {"width": 594, "height": 595, "thickness": 19.5}, "frontBottom": 0, "feet": {"min": 0, "max": 0}, "door": {"hinge": "bottom"}, "controls": {"height": 98},
   "niche": {"height": {"min": 585, "max": 595}, "width": {"min": 560, "max": 568}, "depth": 550},
-  "source": "installation drawing HBA534BB0A: housing 570 and front 594 × 595 (19.5 thick) both stand on the board, the front ends 25 above the housing; overall depth 548 (body 548 − 19.5); body width 558: assumed (drawing gives only the niche 560 +8)",
+  "source": "installation drawing HBA534BB0A: housing 570 and front 594 × 595 (19.5 thick) both stand on the board, the front ends 25 above the housing; overall depth 548 (body 548 − 19.5); body width 558: assumed (drawing gives only the niche 560 +8); control panel 98: assumed (photo)",
   "links": [
    {"name": "Karta produktu z rysunkiem zabudowy (PDF, PL)", "url": "https://media3.bosch-home.com/Documents/specsheet/pl-PL/HBA534BB3.pdf"},
    {"name": "Instrukcja, montaż s. 26–27 (PDF)", "url": "https://media3.bosch-home.com/Documents/9001910274_B.pdf"}
   ]},
- "micro": {"name": "Bosch BFL623MB3", "body": {"width": 442, "height": 338, "depth": 315}, "front": {"width": 595, "height": 382, "thickness": 20}, "frontBottom": -13, "feet": {"min": 0, "max": 12}, "door": {"hinge": "left"},
+ "micro": {"name": "Bosch BFL623MB3", "body": {"width": 442, "height": 338, "depth": 315}, "front": {"width": 595, "height": 382, "thickness": 20}, "frontBottom": -13, "feet": {"min": 0, "max": 12}, "door": {"hinge": "left"}, "controls": {"width": 153},
   "niche": {"height": {"min": 380, "max": 382}, "width": {"min": 560, "max": 568}, "depth": 550},
-  "source": "installation drawing BFL623MB3, tall cabinet: front 595 × 382, 20 thick; body 442 × 338 × 315 on adjustable feet (12 in the drawing; range 0–12 assumed); the front 13 below the body; door hinged on the left (controls on the right)",
+  "source": "installation drawing BFL623MB3, tall cabinet: front 595 × 382, 20 thick; body 442 × 338 × 315 on adjustable feet (12 in the drawing; range 0–12 assumed); the front 13 below the body; door hinged on the left (controls on the right; control column 153: assumed, photo)",
   "links": [
    {"name": "Strona produktu z dokumentami (PL)", "url": "https://www.bosch-home.pl/pl/product/gotowanie-i-pieczenie/kuchenki-mikrofalowe/kuchenki-mikrofalowe-do-zabudowy/BFL623MB3"},
    {"name": "Instrukcja montażu, s. 24–25 (PDF, PL)", "url": "https://maxelektro.pl/storage/file/pimcore_import/2024/12/17/94c9b8f85ca9df2e0ed5ed5def050d92/kuchenka-mikrofalowa-bosch-serie-2-bfl623mb3-instrukcja-montazu.pdf"}
