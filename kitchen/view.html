@@ -260,7 +260,7 @@ body.shut .toggle{display:flex}
 <!-- ===================================================================
      DATA FLOW:
        design.js   project (settings, notes, columns, components) - SOURCE, edited in design.html
-       engine.js   carcasses, boards, fronts, frames, plinths, panels - shared by the three pages
+       engine.js   carcasses, boards, fronts, strips, plinths, frontPanels - shared by the three pages
        view.js     scene of this kitchen (placement of the groups, room, window, hardware, lights, cameras) - edit there
        appliances.js  the appliances at the manufacturer's sizes - shared with cost.html
        textures.js    decor images (a material's texture, floor tiles); without it a material shows its colour
@@ -312,20 +312,20 @@ for (const r of GROUP_IDS) {
 // centre: the middle), so a group keeps that point when its columns change (e.g. a group counted from a corner)
 const ANCHORS = { start: 0, centre: 0.5, end: 1 };
 const origin = Object.fromEntries(GROUP_IDS.map(r => {
-  const P = SCENE.placement[r], a = (P.rotation * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
-  const along = (ANCHORS[P.anchor || 'start'] ?? 0) * groupLength[r];
-  return [r, { x: P.x - along * cos, z: P.z + along * sin, cos, sin, rotation: P.rotation }];
+  const placement = SCENE.placement[r], a = (placement.rotation * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
+  const along = (ANCHORS[placement.anchor || 'start'] ?? 0) * groupLength[r];
+  return [r, { x: placement.x - along * cos, z: placement.z + along * sin, cos, sin, rotation: placement.rotation }];
 }));
 const hasTag = KE.hasTag;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 const { frontFace, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the wall
-const { carcass: board, plinth: plinthThickness, wallPanel: wallPanelThickness, frame: frameThickness, panel: panelThickness } = model.thickness, frontThickness = model.frontThickness;
+const { carcass: board, plinth: plinthThickness, wallPanel: wallPanelThickness, strip: stripThickness, frontPanel: frontPanelThickness } = model.thickness, frontThickness = model.frontThickness;
 const shakerRail = settings.front.shakerRail; // width of the shaker frame of a front
 const room = SCENE.room, ceiling = room.ceiling;
 const rightWall = origin[room.rightWallGroup].x; // the wall line (n = 0) of the group that stands against the right wall
 const worktopOf = group => model.worktops[group] || { n0: 0, n1: 0, depth: 0 }; // n0 back edge, n1 front edge
-const sinkCarcass = model.carcasses.find(K => K.sink); // the group with the sink
+const sinkCarcass = model.carcasses.find(carcass => carcass.sink); // the group with the sink
 const sinkGroup = sinkCarcass ? sinkCarcass.group : null;
 const worktopTopOf = group => worktopOf(group).v1;
 
@@ -351,31 +351,31 @@ function seededRandom(seed) {
   };
 }
 function marbleCanvas() {
-  const W = 1024, H = 512, c = document.createElement('canvas');
-  c.width = W; c.height = H;
+  const canvasWidth = 1024, canvasHeight = 512, c = document.createElement('canvas');
+  c.width = canvasWidth; c.height = canvasHeight;
   const g = c.getContext('2d'), r = seededRandom(77);
   g.fillStyle = '#bfc1c3';
-  g.fillRect(0, 0, W, H);
+  g.fillRect(0, 0, canvasWidth, canvasHeight);
   for (let i = 0; i < 18; i++) {
-    const x = r() * W, y = r() * H, rr = 80 + r() * 260;
+    const x = r() * canvasWidth, y = r() * canvasHeight, rr = 80 + r() * 260;
     const gr = g.createRadialGradient(x, y, 0, x, y, rr);
     const light = r() > 0.45;
     gr.addColorStop(0, light ? 'rgba(255,255,255,.14)' : 'rgba(70,72,76,.1)');
     gr.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = gr;
-    g.fillRect(0, 0, W, H);
+    g.fillRect(0, 0, canvasWidth, canvasHeight);
   }
-  for (let i = 0; i < 6000; i++) { g.fillStyle = r() > 0.5 ? 'rgba(255,255,255,' + r() * 0.08 + ')' : 'rgba(40,40,45,' + r() * 0.08 + ')'; g.fillRect(r() * W, r() * H, 1.2, 1.2); }
+  for (let i = 0; i < 6000; i++) { g.fillStyle = r() > 0.5 ? 'rgba(255,255,255,' + r() * 0.08 + ')' : 'rgba(40,40,45,' + r() * 0.08 + ')'; g.fillRect(r() * canvasWidth, r() * canvasHeight, 1.2, 1.2); }
   const vein = (count, alpha, lineWidth) => {
     for (let i = 0; i < count; i++) {
       g.strokeStyle = 'rgba(88,92,98,' + alpha * (0.4 + r() * 0.6) + ')';
       g.lineWidth = lineWidth * (0.3 + r());
       g.beginPath();
-      let x = -20, y = r() * H;
+      let x = -20, y = r() * canvasHeight;
       g.moveTo(x, y);
       for (let k = 0; k < 8; k++) {
-        const nx = x + W / 6.5, ny = y + (r() - 0.5) * H * 0.5;
-        g.quadraticCurveTo(x + W / 13, y + (r() - 0.5) * H * 0.3, nx, ny);
+        const nx = x + canvasWidth / 6.5, ny = y + (r() - 0.5) * canvasHeight * 0.5;
+        g.quadraticCurveTo(x + canvasWidth / 13, y + (r() - 0.5) * canvasHeight * 0.3, nx, ny);
         x = nx; y = ny;
       }
       g.stroke();
@@ -384,42 +384,42 @@ function marbleCanvas() {
   vein(3, 0.5, 2.6); vein(14, 0.22, 0.9); vein(5, 0.28, 1.5);
   g.fillStyle = '#9fa2a5'; // tile joint
   const joint = 1;
-  g.fillRect(0, 0, W, joint); g.fillRect(0, 0, joint, H); g.fillRect(0, H - joint, W, joint); g.fillRect(W - joint, 0, joint, H);
+  g.fillRect(0, 0, canvasWidth, joint); g.fillRect(0, 0, joint, canvasHeight); g.fillRect(0, canvasHeight - joint, canvasWidth, joint); g.fillRect(canvasWidth - joint, 0, joint, canvasHeight);
   return c;
 }
 function graniteCanvas() {
-  const W = 256, c = document.createElement('canvas');
-  c.width = c.height = W;
+  const canvasSize = 256, c = document.createElement('canvas');
+  c.width = c.height = canvasSize;
   const g = c.getContext('2d'), r = seededRandom(311);
   g.fillStyle = '#2a2b2d';
-  g.fillRect(0, 0, W, W);
+  g.fillRect(0, 0, canvasSize, canvasSize);
   for (let i = 0; i < 5200; i++) {
     const v = r();
     g.fillStyle = v > 0.78 ? 'rgba(190,190,186,' + (0.2 + r() * 0.3) + ')' : v > 0.35 ? 'rgba(90,90,92,.6)' : 'rgba(10,10,11,.7)';
     const s = 0.6 + r() * 1.4;
-    g.fillRect(r() * W, r() * W, s, s);
+    g.fillRect(r() * canvasSize, r() * canvasSize, s, s);
   }
   return c;
 }
 function skyCanvas() {
-  const W = 1024, H = 512, c = document.createElement('canvas');
-  c.width = W; c.height = H;
+  const canvasWidth = 1024, canvasHeight = 512, c = document.createElement('canvas');
+  c.width = canvasWidth; c.height = canvasHeight;
   const g = c.getContext('2d'), r = seededRandom(5);
-  const gr = g.createLinearGradient(0, 0, 0, H);
+  const gr = g.createLinearGradient(0, 0, 0, canvasHeight);
   gr.addColorStop(0, '#8fb6dc'); gr.addColorStop(0.65, '#cfe1ef'); gr.addColorStop(1, '#e9eef0');
   g.fillStyle = gr;
-  g.fillRect(0, 0, W, H);
+  g.fillRect(0, 0, canvasWidth, canvasHeight);
   for (let i = 0; i < 26; i++) { // clouds
-    const x = r() * W, y = r() * H * 0.5, rr = 40 + r() * 110;
+    const x = r() * canvasWidth, y = r() * canvasHeight * 0.5, rr = 40 + r() * 110;
     const cg = g.createRadialGradient(x, y, 0, x, y, rr);
     cg.addColorStop(0, 'rgba(255,255,255,.55)'); cg.addColorStop(1, 'rgba(255,255,255,0)');
     g.fillStyle = cg;
-    g.fillRect(0, 0, W, H);
+    g.fillRect(0, 0, canvasWidth, canvasHeight);
   }
   g.fillStyle = '#7c8f7a'; // hedge
-  for (let x = 0; x < W; x += 6) { const h = 40 + Math.sin(x * 0.013) * 18 + Math.sin(x * 0.051) * 9 + r() * 8; g.fillRect(x, H - h, 6, h); }
+  for (let x = 0; x < canvasWidth; x += 6) { const h = 40 + Math.sin(x * 0.013) * 18 + Math.sin(x * 0.051) * 9 + r() * 8; g.fillRect(x, canvasHeight - h, 6, h); }
   g.fillStyle = '#62735f'; // trees
-  for (let i = 0; i < 9; i++) { const x = r() * W, rr = 30 + r() * 40; g.beginPath(); g.ellipse(x, H - 70 - r() * 20, rr, rr * 1.3, 0, 0, 7); g.fill(); }
+  for (let i = 0; i < 9; i++) { const x = r() * canvasWidth, rr = 30 + r() * 40; g.beginPath(); g.ellipse(x, canvasHeight - 70 - r() * 20, rr, rr * 1.3, 0, 0, 7); g.fill(); }
   return c;
 }
 function displayCanvas(text) {
@@ -497,27 +497,27 @@ function decorTexture(decor) {
 // turned 0 or 180 degrees, with room.floorJoint wide joints in the grout colour; without textures.js: the drawn marble (room.floorTile)
 const FLOORS = (window.KITCHEN_TEXTURES || {}).floors || {}, FLOOR_KEYS = Object.keys(FLOORS), FLOOR_TILES = 4;
 function floorTexture(key) {
-  const F = FLOORS[key];
-  if (!F) return texture(marbleCanvas(), 1000 / room.floorTile.length, 1000 / room.floorTile.width);
-  const S = 512, c = document.createElement('canvas');
-  c.width = c.height = FLOOR_TILES * S;
+  const floorTile = FLOORS[key];
+  if (!floorTile) return texture(marbleCanvas(), 1000 / room.floorTile.length, 1000 / room.floorTile.width);
+  const canvasSize = 512, c = document.createElement('canvas');
+  c.width = c.height = FLOOR_TILES * canvasSize;
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.encoding = THREE.sRGBEncoding;
   t.anisotropy = anisotropy;
-  t.repeat.set(1000 / (FLOOR_TILES * (F.size.width + room.floorJoint)), 1000 / (FLOOR_TILES * (F.size.length + room.floorJoint))); // metres
-  const faces = F.faces.map(src => { const image = new Image(); image.src = src; return image; });
+  t.repeat.set(1000 / (FLOOR_TILES * (floorTile.size.width + room.floorJoint)), 1000 / (FLOOR_TILES * (floorTile.size.length + room.floorJoint))); // metres
+  const faces = floorTile.faces.map(src => { const image = new Image(); image.src = src; return image; });
   Promise.all(faces.map(image => image.decode())).then(() => {
-    const g = c.getContext('2d'), r = seededRandom(19), joint = Math.max(1, (S * room.floorJoint) / (F.size.width + room.floorJoint));
-    g.fillStyle = F.grout;
+    const g = c.getContext('2d'), r = seededRandom(19), joint = Math.max(1, (canvasSize * room.floorJoint) / (floorTile.size.width + room.floorJoint));
+    g.fillStyle = floorTile.grout;
     g.fillRect(0, 0, c.width, c.height);
     for (let y = 0; y < FLOOR_TILES; y++) {
       for (let x = 0; x < FLOOR_TILES; x++) {
         const face = faces[Math.floor(r() * faces.length)], turn = r() < 0.5;
         g.save();
-        g.translate(x * S + S / 2, y * S + S / 2);
+        g.translate(x * canvasSize + canvasSize / 2, y * canvasSize + canvasSize / 2);
         if (turn) g.rotate(Math.PI);
-        g.drawImage(face, -S / 2 + joint / 2, -S / 2 + joint / 2, S - joint, S - joint);
+        g.drawImage(face, -canvasSize / 2 + joint / 2, -canvasSize / 2 + joint / 2, canvasSize - joint, canvasSize - joint);
         g.restore();
       }
     }
@@ -630,7 +630,7 @@ function edgeLook(m, edges, code) {
 // layer groups of the Layers panel: each layer id -> its label
 const LAYERS = [
   { label: 'Korpusy', layers: { carcasses: 'Płyty', backs: 'Plecy HDF', shelves: 'Półki', drawers: 'Szuflady', hardware: 'Zawiasy, prowadnice', holes: 'Otwory', legs: 'Nóżki' } },
-  { label: 'Fronty', layers: { fronts: 'Fronty', handles: 'Uchwyty', frames: 'Listwy', panel: 'Panele', plinth: 'Cokół' } },
+  { label: 'Fronty', layers: { fronts: 'Fronty', handles: 'Uchwyty', strips: 'Listwy', frontPanel: 'Panele', plinth: 'Cokół' } },
   { label: 'Blat', layers: { worktops: 'Blaty', endPanels: 'Panele końcowe', wallPanel: 'Panel ścienny' } },
   { label: 'AGD', layers: { sink: 'Zlew, bateria', trap: 'Syfon', hob: 'Płyta grzewcza', hood: 'Okap', oven: 'Piekarnik', microwave: 'Mikrofalówka',
     coffee: 'Ekspres', fridge: 'Lodówka', dishwasher: 'Zmywarka' } },
@@ -649,9 +649,9 @@ const roomLayer = {}; // layer -> its THREE.Group in room coordinates
 for (const id of LAYER_IDS) roomLayer[id] = newLayer(scene, id);
 const groupRoot = Object.fromEntries(GROUP_IDS.map(r => [r, new THREE.Group()]));
 for (const r of GROUP_IDS) {
-  const O = origin[r];
-  groupRoot[r].position.set(O.x / 1000, 0, O.z / 1000);
-  groupRoot[r].rotation.y = (O.rotation * Math.PI) / 180;
+  const groupOrigin = origin[r];
+  groupRoot[r].position.set(groupOrigin.x / 1000, 0, groupOrigin.z / 1000);
+  groupRoot[r].rotation.y = (groupOrigin.rotation * Math.PI) / 180;
   groupRoot[r].updateMatrixWorld(true);
 }
 const groupLayer = {}; // design.js group -> layer -> its THREE.Group, in the coordinates of that design.js group
@@ -694,95 +694,95 @@ function roomCylinder(parent, radius, length, mat, x, y, z, axis, segments) {
   return m;
 }
 // box in the coordinates of its parent P (a group or a moving part), mm
-function localBox(P, u0, u1, v0, v1, n0, n1, mat, noShadow) {
+function localBox(parent, u0, u1, v0, v1, n0, n1, mat, noShadow) {
   const w = (u1 - u0) / 1000, h = (v1 - v0) / 1000, d = (n1 - n0) / 1000;
   if (w <= 0 || h <= 0 || d <= 0) return null;
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
   m.position.set((u0 + u1) / 2000, (v0 + v1) / 2000, (n0 + n1) / 2000);
   m.castShadow = !noShadow;
   m.receiveShadow = true;
-  P.add(m);
+  parent.add(m);
   meshes.push(m);
   return m;
 }
-function localCylinder(P, radius, length, mat, u, v, n, axis, segments) {
+function localCylinder(parent, radius, length, mat, u, v, n, axis, segments) {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(radius / 1000, radius / 1000, length / 1000, segments || 20), mat);
   m.position.set(u / 1000, v / 1000, n / 1000);
   if (axis === 'x') m.rotation.z = Math.PI / 2;
   if (axis === 'z') m.rotation.x = Math.PI / 2;
   m.castShadow = true;
   m.receiveShadow = true;
-  P.add(m);
+  parent.add(m);
   meshes.push(m);
   return m;
 }
-function openFrontBox(P, u0, u1, v0, v1, n0, n1, t, mat) { // box open at the front (+n), walls t thick
-  localBox(P, u0, u0 + t, v0, v1, n0, n1, mat);
-  localBox(P, u1 - t, u1, v0, v1, n0, n1, mat);
-  localBox(P, u0 + t, u1 - t, v0, v0 + t, n0, n1, mat);
-  localBox(P, u0 + t, u1 - t, v1 - t, v1, n0, n1, mat);
-  localBox(P, u0 + t, u1 - t, v0 + t, v1 - t, n0, n0 + t, mat);
+function openFrontBox(parent, u0, u1, v0, v1, n0, n1, t, mat) { // box open at the front (+n), walls t thick
+  localBox(parent, u0, u0 + t, v0, v1, n0, n1, mat);
+  localBox(parent, u1 - t, u1, v0, v1, n0, n1, mat);
+  localBox(parent, u0 + t, u1 - t, v0, v0 + t, n0, n1, mat);
+  localBox(parent, u0 + t, u1 - t, v1 - t, v1, n0, n1, mat);
+  localBox(parent, u0 + t, u1 - t, v0 + t, v1 - t, n0, n0 + t, mat);
 }
-function openTopBox(P, u0, u1, v0, v1, n0, n1, t, mat) { // box open at the top (+v), walls t thick
-  localBox(P, u0, u0 + t, v0, v1, n0, n1, mat);
-  localBox(P, u1 - t, u1, v0, v1, n0, n1, mat);
-  localBox(P, u0 + t, u1 - t, v0, v1, n0, n0 + t, mat);
-  localBox(P, u0 + t, u1 - t, v0, v1, n1 - t, n1, mat);
-  localBox(P, u0 + t, u1 - t, v0, v0 + t, n0 + t, n1 - t, mat);
+function openTopBox(parent, u0, u1, v0, v1, n0, n1, t, mat) { // box open at the top (+v), walls t thick
+  localBox(parent, u0, u0 + t, v0, v1, n0, n1, mat);
+  localBox(parent, u1 - t, u1, v0, v1, n0, n1, mat);
+  localBox(parent, u0 + t, u1 - t, v0, v1, n0, n0 + t, mat);
+  localBox(parent, u0 + t, u1 - t, v0, v1, n1 - t, n1, mat);
+  localBox(parent, u0 + t, u1 - t, v0, v0 + t, n0 + t, n1 - t, mat);
 }
 const ordered = (a, b) => (a < b ? [a, b] : [b, a]);
 
 // every front gets a cup and a bar handle; the Handles setting shows one
 const cupHandles = [], barHandles = [], movers = []; // movers: moving parts (doors, drawers ...)
 const cupGeometry = (function () {
-  const L = SCENE.hardware.handle.cupLength / 1000, R = 0.024, y0 = -0.012, parts = [];
-  const shell = new THREE.CylinderGeometry(R, R, L - 0.006, 28, 1, true, 0, Math.PI / 2);
+  const cupLength = SCENE.hardware.handle.cupLength / 1000, cupRadius = 0.024, y0 = -0.012, parts = [];
+  const shell = new THREE.CylinderGeometry(cupRadius, cupRadius, cupLength - 0.006, 28, 1, true, 0, Math.PI / 2);
   shell.rotateZ(Math.PI / 2); shell.translate(0, y0, 0); parts.push(shell);
-  for (const sx of [-1, 1]) { const c = new THREE.CircleGeometry(R, 20, 0, Math.PI / 2); c.rotateY(-Math.PI / 2); c.translate(sx * (L / 2 - 0.003), y0, 0); parts.push(c); }
-  const lip = new THREE.CylinderGeometry(0.0022, 0.0022, L - 0.006, 10);
-  lip.rotateZ(Math.PI / 2); lip.translate(0, y0, R); parts.push(lip);
+  for (const sx of [-1, 1]) { const c = new THREE.CircleGeometry(cupRadius, 20, 0, Math.PI / 2); c.rotateY(-Math.PI / 2); c.translate(sx * (cupLength / 2 - 0.003), y0, 0); parts.push(c); }
+  const lip = new THREE.CylinderGeometry(0.0022, 0.0022, cupLength - 0.006, 10);
+  lip.rotateZ(Math.PI / 2); lip.translate(0, y0, cupRadius); parts.push(lip);
   for (const sx of [-1, 1]) { const pad = new THREE.BoxGeometry(0.012, 0.026, 0.004); pad.translate(sx * 0.032, y0 + 0.013, 0.002); parts.push(pad); }
   return parts;
 })();
-function cupHandle(P, uc, vc, rotation) {
+function cupHandle(parent, uc, vc, rotation) {
   const o = new THREE.Group();
   o.position.set(uc / 1000, vc / 1000, frontFace / 1000);
   const inner = new THREE.Group();
   inner.rotation.z = rotation;
   o.add(inner);
   for (const geometry of cupGeometry) { const m = new THREE.Mesh(geometry, MAT.handle); m.castShadow = true; inner.add(m); meshes.push(m); }
-  P.add(o);
+  parent.add(o);
   cupHandles.push(o);
 }
 // handle position top | bottom (along the rail) or left | right (on a side rail, SCENE.hardware.handle.sideHeight up, at most halfway)
-function addHandles(P, u0, u1, v0, v1, position) {
+function addHandles(parent, u0, u1, v0, v1, position) {
   if (!position) return;
-  const L = SCENE.hardware.handle.barLength, axis = SCENE.hardware.handle.axis, n = frontFace + 4, bar = new THREE.Group();
-  P.add(bar);
+  const barLength = SCENE.hardware.handle.barLength, axis = SCENE.hardware.handle.axis, n = frontFace + 4, bar = new THREE.Group();
+  parent.add(bar);
   barHandles.push(bar);
   if (position === 'top' || position === 'bottom') {
     const v = position === 'top' ? v1 - axis : v0 + axis, uc = (u0 + u1) / 2;
-    cupHandle(P, uc, v, 0);
-    localBox(bar, uc - L / 2, uc + L / 2, v - 6, v + 6, n + 20, n + 30, MAT.handle);
-    localBox(bar, uc - L / 2 + 8, uc - L / 2 + 18, v - 5, v + 5, n, n + 20, MAT.handle);
-    localBox(bar, uc + L / 2 - 18, uc + L / 2 - 8, v - 5, v + 5, n, n + 20, MAT.handle);
+    cupHandle(parent, uc, v, 0);
+    localBox(bar, uc - barLength / 2, uc + barLength / 2, v - 6, v + 6, n + 20, n + 30, MAT.handle);
+    localBox(bar, uc - barLength / 2 + 8, uc - barLength / 2 + 18, v - 5, v + 5, n, n + 20, MAT.handle);
+    localBox(bar, uc + barLength / 2 - 18, uc + barLength / 2 - 8, v - 5, v + 5, n, n + 20, MAT.handle);
   } else {
     const u = position === 'left' ? u0 + axis : u1 - axis, vc = Math.min(v0 + SCENE.hardware.handle.sideHeight, (v0 + v1) / 2);
-    cupHandle(P, u, vc, position === 'left' ? Math.PI / 2 : -Math.PI / 2);
-    localBox(bar, u - 6, u + 6, vc - L / 2, vc + L / 2, n + 20, n + 30, MAT.handle);
-    localBox(bar, u - 5, u + 5, vc - L / 2 + 8, vc - L / 2 + 18, n, n + 20, MAT.handle);
-    localBox(bar, u - 5, u + 5, vc + L / 2 - 18, vc + L / 2 - 8, n, n + 20, MAT.handle);
+    cupHandle(parent, u, vc, position === 'left' ? Math.PI / 2 : -Math.PI / 2);
+    localBox(bar, u - 6, u + 6, vc - barLength / 2, vc + barLength / 2, n + 20, n + 30, MAT.handle);
+    localBox(bar, u - 5, u + 5, vc - barLength / 2 + 8, vc - barLength / 2 + 18, n, n + 20, MAT.handle);
+    localBox(bar, u - 5, u + 5, vc + barLength / 2 - 18, vc + barLength / 2 - 8, n, n + 20, MAT.handle);
   }
 }
 // shaker front: frame of shakerRail wide rails, recessed centre panel
-function shakerFront(P, u0, u1, v0, v1, frontMaterial) {
+function shakerFront(parent, u0, u1, v0, v1, frontMaterial) {
   const w = shakerRail, n0 = frontFace - frontThickness, n1 = frontFace;
-  if (u1 - u0 <= 2 * w + 20 || v1 - v0 <= 2 * w + 20) { localBox(P, u0, u1, v0, v1, n0, n1, frontMaterial); return; }
-  localBox(P, u0, u1, v1 - w, v1, n0, n1, frontMaterial);
-  localBox(P, u0, u1, v0, v0 + w, n0, n1, frontMaterial);
-  localBox(P, u0, u0 + w, v0 + w, v1 - w, n0, n1, frontMaterial);
-  localBox(P, u1 - w, u1, v0 + w, v1 - w, n0, n1, frontMaterial);
-  localBox(P, u0 + w, u1 - w, v0 + w, v1 - w, n0, frontFace - frontThickness / 2, frontMaterial);
+  if (u1 - u0 <= 2 * w + 20 || v1 - v0 <= 2 * w + 20) { localBox(parent, u0, u1, v0, v1, n0, n1, frontMaterial); return; }
+  localBox(parent, u0, u1, v1 - w, v1, n0, n1, frontMaterial);
+  localBox(parent, u0, u1, v0, v0 + w, n0, n1, frontMaterial);
+  localBox(parent, u0, u0 + w, v0 + w, v1 - w, n0, n1, frontMaterial);
+  localBox(parent, u1 - w, u1, v0 + w, v1 - w, n0, n1, frontMaterial);
+  localBox(parent, u0 + w, u1 - w, v0 + w, v1 - w, n0, frontFace - frontThickness / 2, frontMaterial);
 }
 // a part turning or sliding about (pu, pv, pn) of its group; kind = how a front opens (engine.js opening) or the appliance type
 function movingPart(group, kind, pu, pv, pn) {
@@ -818,40 +818,40 @@ function poseMovingPart(mover) {
 /* appliances at the manufacturer's sizes (appliances.js): each gets an envelope, its outer box, for the geometry check
    (an invisible mesh, not in meshes, so it is never drawn or picked) */
 const envelopes = [];
-function envelope(P, u0, u1, v0, v1, n0, n1, name) {
+function envelope(parent, u0, u1, v0, v1, n0, n1, name) {
   const m = new THREE.Mesh(new THREE.BoxGeometry((u1 - u0) / 1000, (v1 - v0) / 1000, (n1 - n0) / 1000));
   m.position.set((u0 + u1) / 2000, (v0 + v1) / 2000, (n0 + n1) / 2000);
   m.visible = false;
-  P.add(m);
+  parent.add(m);
   envelopes.push({ kind: 'appliance', name, object: m });
 }
 // built-in oven / microwave (APPLIANCES[type]) where engine.js placed it (item.fit): the body on its feet on the board under it,
 // behind the carcass front; the front in front of the carcass front; both centred on the item. The appliance door
 // (APPLIANCES[type].door: its hinge edge bottom | left | right) is a moving part; the controls stay, the cavity shows behind it.
 function builtInAppliance(group, item, type) {
-  const A = APPLIANCES[type], { feet, bodyV0: b0, fasciaV0: v0, fasciaV1: v1 } = item.fit, floor = b0 - feet, uc = (item.u0 + item.u1) / 2;
-  const u0 = uc - A.fascia.width / 2, u1 = uc + A.fascia.width / 2;
-  const P = groupLayer[group][type], face = carcassFront + A.fascia.thickness, { width: bw, height: bh, depth: bd } = A.body;
+  const appliance = APPLIANCES[type], { feet, bodyV0: b0, fasciaV0: v0, fasciaV1: v1 } = item.fit, floor = b0 - feet, uc = (item.u0 + item.u1) / 2;
+  const u0 = uc - appliance.fascia.width / 2, u1 = uc + appliance.fascia.width / 2;
+  const layer = groupLayer[group][type], face = carcassFront + appliance.fascia.thickness, { width: bw, height: bh, depth: bd } = appliance.body;
   const bu0 = uc - bw / 2, bu1 = uc + bw / 2;
   if (feet > 0) { // feet: the body stands on them, on the board under it
-    for (const fu of [bu0 + 30, bu1 - 30]) for (const fn of [carcassFront - bd + 30, carcassFront - 30]) localCylinder(P, 10, feet, MAT.blackMetal, fu, floor + feet / 2, fn, null, 16);
+    for (const fu of [bu0 + 30, bu1 - 30]) for (const fn of [carcassFront - bd + 30, carcassFront - 30]) localCylinder(layer, 10, feet, MAT.blackMetal, fu, floor + feet / 2, fn, null, 16);
   }
-  envelope(P, bu0, bu1, b0, b0 + bh, carcassFront - bd, carcassFront, A.name + ' – korpus ' + bw + ' × ' + bh + ' × ' + bd + (feet > 0 ? ' na nóżkach ' + Math.round(feet * 10) / 10 : ''));
-  envelope(P, u0, u1, v0, v1, carcassFront, face, A.name + ' – front urządzenia ' + A.fascia.width + ' × ' + A.fascia.height);
-  // the door: oven below its control panel (A.controls.height), full width; microwave over the body opening, left of its control
-  // column (A.controls.width), set into the fascia with a shadow gap (the fascia is wider and higher than the body)
-  const door = type === 'oven' ? { u0, u1, v0, v1: v1 - A.controls.height } : { u0: bu0 + 2, u1: u1 - A.controls.width, v0: b0 + 4, v1: b0 + bh - 4 };
-  const hinge = A.door.hinge, bottomHinged = hinge === 'bottom';
+  envelope(layer, bu0, bu1, b0, b0 + bh, carcassFront - bd, carcassFront, appliance.name + ' – korpus ' + bw + ' × ' + bh + ' × ' + bd + (feet > 0 ? ' na nóżkach ' + Math.round(feet * 10) / 10 : ''));
+  envelope(layer, u0, u1, v0, v1, carcassFront, face, appliance.name + ' – front urządzenia ' + appliance.fascia.width + ' × ' + appliance.fascia.height);
+  // the door: oven below its control panel (appliance.controls.height), full width; microwave over the body opening, left of its control
+  // column (appliance.controls.width), set into the fascia with a shadow gap (the fascia is wider and higher than the body)
+  const door = type === 'oven' ? { u0, u1, v0, v1: v1 - appliance.controls.height } : { u0: bu0 + 2, u1: u1 - appliance.controls.width, v0: b0 + 4, v1: b0 + bh - 4 };
+  const hinge = appliance.door.hinge, bottomHinged = hinge === 'bottom';
   const mover = movingPart(group, type, bottomHinged ? 0 : hinge === 'left' ? door.u0 : door.u1, bottomHinged ? door.v0 : 0, face);
   mover.sign = hinge === 'left' ? 1 : -1;
   mover.swing = bottomHinged ? 'x' : 'y';
   mover.item = item;
-  mover.label = A.name + ' – drzwi ' + Math.round(door.u1 - door.u0) + ' × ' + Math.round(door.v1 - door.v0);
-  const D = mover.layers[type];
+  mover.label = appliance.name + ' – drzwi ' + Math.round(door.u1 - door.u0) + ' × ' + Math.round(door.v1 - door.v0);
+  const doorLayer = mover.layers[type];
   // body: an open-front box, the cavity behind the door; the fascia around the door
-  openFrontBox(P, bu0, bu1, b0, b0 + bh, carcassFront - bd, carcassFront, 4, MAT.applianceBody);
-  localBox(P, bu0 + 4, bu1 - 4, b0 + 4, b0 + bh - 4, carcassFront - bd + 4, carcassFront - bd + 6, MAT.ovenInside, true); // cavity back
-  const fascia = (a0, a1, y0, y1) => localBox(P, a0, a1, y0, y1, carcassFront, face - 6, MAT.blackMetal);
+  openFrontBox(layer, bu0, bu1, b0, b0 + bh, carcassFront - bd, carcassFront, 4, MAT.applianceBody);
+  localBox(layer, bu0 + 4, bu1 - 4, b0 + 4, b0 + bh - 4, carcassFront - bd + 4, carcassFront - bd + 6, MAT.ovenInside, true); // cavity back
+  const fascia = (a0, a1, y0, y1) => localBox(layer, a0, a1, y0, y1, carcassFront, face - 6, MAT.blackMetal);
   if (type === 'oven') fascia(u0, u1, door.v1, v1);
   else { // the frame around the door: left, right (control column), below, above
     fascia(u0, door.u0 - 2, v0, v1);
@@ -860,47 +860,47 @@ function builtInAppliance(group, item, type) {
     fascia(door.u0 - 2, door.u1 + 2, door.v1 + 2, v1);
   }
   // d = how far a detail stands out of the appliance face (n = 2 * face - d), along = position along the group
-  const box = (Q, d0, d1, y0, y1, a0, a1, mat, noShadow) => localBox(Q, a0, a1, y0, y1, 2 * face - d1, 2 * face - d0, mat, noShadow);
+  const box = (targetLayer, d0, d1, y0, y1, a0, a1, mat, noShadow) => localBox(targetLayer, a0, a1, y0, y1, 2 * face - d1, 2 * face - d0, mat, noShadow);
   const swapAxis = axis => (axis === 'x' ? 'z' : axis === 'z' ? 'x' : axis);
-  const cylinder = (Q, radius, length, mat, d, y, along, axis, segments) => localCylinder(Q, radius, length, mat, along, y, 2 * face - d, swapAxis(axis), segments);
-  localBox(D, door.u0, door.u1, door.v0, door.v1, carcassFront + 2, face - 6, MAT.blackMetal); // door leaf, 2 off the carcass front
-  box(D, face - 2, face + 6, door.v0, door.v1, door.u0, door.u1, MAT.blackMetal); // door trim
+  const cylinder = (targetLayer, radius, length, mat, d, y, along, axis, segments) => localCylinder(targetLayer, radius, length, mat, along, y, 2 * face - d, swapAxis(axis), segments);
+  localBox(doorLayer, door.u0, door.u1, door.v0, door.v1, carcassFront + 2, face - 6, MAT.blackMetal); // door leaf, 2 off the carcass front
+  box(doorLayer, face - 2, face + 6, door.v0, door.v1, door.u0, door.u1, MAT.blackMetal); // door trim
   if (type === 'oven') {
-    box(P, face - 2, face + 6, door.v1, v1, u0, u1, MAT.blackMetal); // trim of the control panel
+    box(layer, face - 2, face + 6, door.v1, v1, u0, u1, MAT.blackMetal); // trim of the control panel
     const panelBottom = door.v1 + 3; // control panel
-    box(P, face - 8, face - 2, panelBottom, v1 - 10, u0 + 10, u1 - 10, MAT.glassBlack);
+    box(layer, face - 8, face - 2, panelBottom, v1 - 10, u0 + 10, u1 - 10, MAT.glassBlack);
     [u0 + 85, u1 - 85].forEach(a => { // knobs
-      cylinder(P, 19, 20, MAT.steel, face - 18, (panelBottom + v1 - 10) / 2, a, 'x', 32);
-      cylinder(P, 21, 3, MAT.steel, face - 9, (panelBottom + v1 - 10) / 2, a, 'x', 32);
+      cylinder(layer, 19, 20, MAT.steel, face - 18, (panelBottom + v1 - 10) / 2, a, 'x', 32);
+      cylinder(layer, 21, 3, MAT.steel, face - 9, (panelBottom + v1 - 10) / 2, a, 'x', 32);
     });
     const display = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.034), new THREE.MeshBasicMaterial({ map: texture(displayCanvas('12:30'), 1, 1) }));
     display.position.set(uc / 1000, (panelBottom + v1 - 10) / 2000, (face + 8.5) / 1000);
-    P.add(display);
+    layer.add(display);
     const d0 = door.v0 + 10, d1 = door.v1 - 3; // the glass of the door
-    for (const y of [b0 + 150, b0 + 290]) localCylinder(P, 3, bw - 40, MAT.steel, uc, y, carcassFront - bd / 2, 'x', 8); // shelf rails in the cavity
-    box(D, face - 10, face - 8, d0, d1, u0 + 10, u1 - 10, MAT.smoke, true); // door glass
-    box(D, face - 12, face - 8, d1 - 80, d1, u0 + 10, u1 - 10, MAT.glassBlack);
-    box(D, face - 12, face - 8, d0, d0 + 70, u0 + 10, u1 - 10, MAT.glassBlack);
-    box(D, face - 12, face - 8, d0 + 70, d1 - 80, u0 + 10, u0 + 70, MAT.glassBlack);
-    box(D, face - 12, face - 8, d0 + 70, d1 - 80, u1 - 70, u1 - 10, MAT.glassBlack);
-    cylinder(D, 10, u1 - u0 - 140, MAT.steel, face - 48, d1 - 40, uc, 'z', 24); // bar handle
-    [u0 + 80, u1 - 80].forEach(a => cylinder(D, 7, 36, MAT.steel, face - 28, d1 - 40, a, 'x', 16));
+    for (const y of [b0 + 150, b0 + 290]) localCylinder(layer, 3, bw - 40, MAT.steel, uc, y, carcassFront - bd / 2, 'x', 8); // shelf rails in the cavity
+    box(doorLayer, face - 10, face - 8, d0, d1, u0 + 10, u1 - 10, MAT.smoke, true); // door glass
+    box(doorLayer, face - 12, face - 8, d1 - 80, d1, u0 + 10, u1 - 10, MAT.glassBlack);
+    box(doorLayer, face - 12, face - 8, d0, d0 + 70, u0 + 10, u1 - 10, MAT.glassBlack);
+    box(doorLayer, face - 12, face - 8, d0 + 70, d1 - 80, u0 + 10, u0 + 70, MAT.glassBlack);
+    box(doorLayer, face - 12, face - 8, d0 + 70, d1 - 80, u1 - 70, u1 - 10, MAT.glassBlack);
+    cylinder(doorLayer, 10, u1 - u0 - 140, MAT.steel, face - 48, d1 - 40, uc, 'z', 24); // bar handle
+    [u0 + 80, u1 - 80].forEach(a => cylinder(doorLayer, 7, 36, MAT.steel, face - 28, d1 - 40, a, 'x', 16));
   } else {
     const panelLeft = door.u1 + 3; // control column
     for (const [a0, a1, y0, y1] of [[u0, door.u0 - 2, v0, v1], [door.u1 + 2, u1, v0, v1], [door.u0 - 2, door.u1 + 2, v0, door.v0 - 2], [door.u0 - 2, door.u1 + 2, door.v1 + 2, v1]]) {
-      box(P, face - 4, face + 6, y0, y1, a0, a1, MAT.blackMetal); // fascia trim, 2 proud of the door
+      box(layer, face - 4, face + 6, y0, y1, a0, a1, MAT.blackMetal); // fascia trim, 2 proud of the door
     }
-    box(P, face - 10, face - 4, v0 + 10, v1 - 10, panelLeft + 8, u1 - 10, MAT.glassBlack);
+    box(layer, face - 10, face - 4, v0 + 10, v1 - 10, panelLeft + 8, u1 - 10, MAT.glassBlack);
     const display = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.028), new THREE.MeshBasicMaterial({ map: texture(displayCanvas('0:45'), 1, 1) }));
     display.position.set((panelLeft + u1) / 2000, (v1 - 70) / 1000, (face + 10.5) / 1000);
-    P.add(display);
-    cylinder(P, 14, 4, MAT.steel, face - 12, v0 + 90, (panelLeft + u1) / 2, 'x', 32);
+    layer.add(display);
+    cylinder(layer, 14, 4, MAT.steel, face - 12, v0 + 90, (panelLeft + u1) / 2, 'x', 32);
     const { u0: a0, u1: a1, v0: y0, v1: y1 } = door, frame = 40; // the door glass: a black border round the window
-    box(D, face - 10, face - 8, y0 + frame, y1 - frame, a0 + frame, a1 - frame, MAT.smoke, true); // window
-    box(D, face - 12, face - 8, y1 - frame, y1, a0, a1, MAT.glassBlack);
-    box(D, face - 12, face - 8, y0, y0 + frame, a0, a1, MAT.glassBlack);
-    box(D, face - 12, face - 8, y0 + frame, y1 - frame, a0, a0 + frame, MAT.glassBlack);
-    box(D, face - 12, face - 8, y0 + frame, y1 - frame, a1 - frame, a1, MAT.glassBlack);
+    box(doorLayer, face - 10, face - 8, y0 + frame, y1 - frame, a0 + frame, a1 - frame, MAT.smoke, true); // window
+    box(doorLayer, face - 12, face - 8, y1 - frame, y1, a0, a1, MAT.glassBlack);
+    box(doorLayer, face - 12, face - 8, y0, y0 + frame, a0, a1, MAT.glassBlack);
+    box(doorLayer, face - 12, face - 8, y0 + frame, y1 - frame, a0, a0 + frame, MAT.glassBlack);
+    box(doorLayer, face - 12, face - 8, y0 + frame, y1 - frame, a1 - frame, a1, MAT.glassBlack);
   }
 }
 
@@ -919,7 +919,7 @@ const tapN = sinkGroup ? worktopOf(sinkGroup).n0 + SCENE.installation.sink.tapFr
 // a worktop or an end panel (own layer): finished edges (ABS or factory) in the decor, the rest bare; built of boxes around its cut-outs
 function worktopPiece(group, piece) {
   const { u0, u1, v0, v1 } = piece.item, endPanel = piece.item.type === 'endPanel';
-  const P = groupLayer[group][endPanel ? 'endPanels' : 'worktops'], decor = BOARD[piece.material];
+  const layer = groupLayer[group][endPanel ? 'endPanels' : 'worktops'], decor = BOARD[piece.material];
   const finished = new Set([...piece.edges.map(edge => edge.side), ...piece.factoryEdges]);
   // the decor faces: both on a two-sided material, else the top of a worktop or the outer face of an end panel
   const outer = u0 + u1 < groupLength[group] ? 'left' : 'right';
@@ -935,7 +935,7 @@ function worktopPiece(group, piece) {
     for (const [, , h0, h1] of across) { spans.push([n, h0]); n = h1; }
     spans.push([n, piece.n1]);
     for (const [n0, n1] of spans) {
-      const m = localBox(P, a, b, v0, v1, n0, n1, decor);
+      const m = localBox(layer, a, b, v0, v1, n0, n1, decor);
       if (!m) continue;
       // a cut-out wall stays bare
       const onOutline = { left: a === u0, right: b === u1, back: n0 === piece.n0, front: n1 === piece.n1, top: true, bottom: true };
@@ -951,25 +951,25 @@ const carcassMeshes = []; // every board of the carcasses and the back strips
 function nameNewMeshes(firstIndex, kind, name) {
   for (const m of meshes.slice(firstIndex)) if (!m.userData.part && !m.userData.role) m.userData.part = { kind, name };
 }
-const CHECKED_TYPES = ['worktop', 'endPanel', 'frame', 'plinth', 'panel', 'wallPanel']; // items named for the geometry check
+const CHECKED_TYPES = ['worktop', 'endPanel', 'strip', 'plinth', 'frontPanel', 'wallPanel']; // items named for the geometry check
 function buildGroup(group) {
   for (const item of itemsOfGroup[group]) {
     const { u0, u1, v0, v1, type, span, column } = item, height = v1 - v0, firstMesh = meshes.length;
     if (type === 'worktop' || type === 'endPanel') {
       const piece = model.worktopPieces.find(p => p.item === item);
       if (piece) worktopPiece(group, piece);
-    } else if (type === 'frame') { // on edge, frame.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
-      const frame = model.frames.find(f => f.item === item), lacquered = ((frame && frame.lacqueredSides) || []).map(side => ({ side }));
-      edgeLook(localBox(groupLayer[group].frames, u0, u1, v0, v1, frontFace - settings.frame.depth, frontFace, boardFor('frame')), lacquered, model.materialFor.frame);
-    } else if (type === 'panel') { // laid flat in the front plane; in group coordinates, so its edges keep their sides
-      const panel = model.panels.find(p => p.item === item);
-      edgeLook(localBox(groupLayer[group].panel, u0, u1, v0, v1, frontFace - panelThickness, frontFace, boardFor('panel')), panel && panel.edges, model.materialFor.panel);
+    } else if (type === 'strip') { // on edge, strip.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
+      const strip = model.strips.find(f => f.item === item), lacquered = ((strip && strip.lacqueredSides) || []).map(side => ({ side }));
+      edgeLook(localBox(groupLayer[group].strips, u0, u1, v0, v1, frontFace - settings.strip.depth, frontFace, boardFor('strip')), lacquered, model.materialFor.strip);
+    } else if (type === 'frontPanel') { // laid flat in the front plane; in group coordinates, so its edges keep their sides
+      const panel = model.frontPanels.find(p => p.item === item);
+      edgeLook(localBox(groupLayer[group].frontPanel, u0, u1, v0, v1, frontFace - frontPanelThickness, frontFace, boardFor('frontPanel')), panel && panel.edges, model.materialFor.frontPanel);
     } else if (type === 'plinth') {
       edgeLook(groupBox(roomLayer.plinth, group, u0, u1, v0, v1, plinthFace - plinthThickness, plinthFace, plinthMaterial), [], model.materialFor.plinth);
     } else if (type === 'wallPanel') { // on the wall
       const m = groupBox(roomLayer.wallPanel, group, u0, u1, v0, v1, 0, wallPanelThickness, wallPanelMaterial);
       if (m) m.userData.grain = 'x';
-    } else if (type === 'plasterboard') { // plasterboard box; a filler is a void: not drawn
+    } else if (type === 'plasterboard') { // plasterboard box; a space is not drawn
       groupBox(roomLayer.walls, group, u0, u1, v0, v1, 0, settings.plasterboard.depth, MAT.wall);
     } else if (type === 'oven' || type === 'microwave') {
       builtInAppliance(group, item, type);
@@ -980,9 +980,9 @@ function buildGroup(group) {
   }
 }
 GROUP_IDS.forEach(buildGroup);
-// back strips behind the frames
+// back strips behind the strips
 for (const b of model.boards) {
-  if (!b.strip) continue;
+  if (b.id !== 'backStrip') continue;
   const m = edgeLook(localBox(groupLayer[b.group].carcasses, ...b.box, BOARD[b.material]), b.edges, b.material);
   if (m) {
     m.userData = { id: b.id, role: b.name, a: b.a, b: b.b, base: m.material };
@@ -990,11 +990,11 @@ for (const b of model.boards) {
   }
 }
 // island back panel
-for (const p of model.panels) {
+for (const p of model.frontPanels) {
   if (p.item) continue;
   const firstMesh = meshes.length;
-  edgeLook(localBox(groupLayer[p.group].panel, ...p.box, BOARD[p.material]), p.edges, p.material);
-  nameNewMeshes(firstMesh, 'panel', 'G' + p.group + ' ' + p.name + ' ' + p.a + ' × ' + p.b);
+  edgeLook(localBox(groupLayer[p.group].frontPanel, ...p.box, BOARD[p.material]), p.edges, p.material);
+  nameNewMeshes(firstMesh, 'frontPanel', 'G' + p.group + ' ' + p.name + ' ' + p.a + ' × ' + p.b);
 }
 
 // inset sink (one bowl, appliances.js sink), with tap and a space-saving trap
@@ -1062,39 +1062,39 @@ if (hobItem && hobCut) (function hob() {
 if (hobItem) (function hood() {
   const hoodLayer = groupLayer[hobGroup].hood;
   const toWorld = (x, y, z) => groupRoot[hobGroup].localToWorld(new THREE.Vector3(x, y, z));
-  const H = APPLIANCES.hood, uc = hobU, { width: W, height, depth: D } = H.body, bottom = SCENE.installation.hood.bottom, { width: chimneyW, depth: chimneyD } = H.chimney;
+  const hoodAppliance = APPLIANCES.hood, uc = hobU, { width: hoodWidth, height, depth: hoodDepth } = hoodAppliance.body, bottom = SCENE.installation.hood.bottom, { width: chimneyW, depth: chimneyD } = hoodAppliance.chimney;
   const firstMesh = meshes.length;
   const profile = new THREE.Shape();
-  profile.moveTo(0, 0); profile.lineTo(D, 0); profile.lineTo(D, 40); profile.lineTo(110, height); profile.lineTo(0, height); profile.lineTo(0, 0);
-  const geometry = new THREE.ExtrudeGeometry(profile, { depth: W, bevelEnabled: false });
+  profile.moveTo(0, 0); profile.lineTo(hoodDepth, 0); profile.lineTo(hoodDepth, 40); profile.lineTo(110, height); profile.lineTo(0, height); profile.lineTo(0, 0);
+  const geometry = new THREE.ExtrudeGeometry(profile, { depth: hoodWidth, bevelEnabled: false });
   geometry.scale(0.001, 0.001, 0.001);
   geometry.rotateY(-Math.PI / 2);
   const body = new THREE.Mesh(geometry, [MAT.blackMetal, MAT.glassBlack]);
-  body.position.set((uc + W / 2) / 1000, bottom / 1000, 0);
+  body.position.set((uc + hoodWidth / 2) / 1000, bottom / 1000, 0);
   body.receiveShadow = true;
   hoodLayer.add(body);
   meshes.push(body);
-  const angle = Math.atan2(height - 40, D - 110);
+  const angle = Math.atan2(height - 40, hoodDepth - 110);
   const touchPanel = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.012), new THREE.MeshBasicMaterial({ color: linear(0x7dd3fc) }));
   const nz = Math.sin(angle), ny = Math.cos(angle);
-  touchPanel.position.set(uc / 1000, (bottom + 40 + (height - 40) * 0.18) / 1000 + ny * 0.0012, (D - (D - 110) * 0.18) / 1000 + nz * 0.0012);
+  touchPanel.position.set(uc / 1000, (bottom + 40 + (height - 40) * 0.18) / 1000 + ny * 0.0012, (hoodDepth - (hoodDepth - 110) * 0.18) / 1000 + nz * 0.0012);
   touchPanel.rotation.x = -(Math.PI / 2 - angle);
   touchPanel.material.color.multiplyScalar(0.6);
   hoodLayer.add(touchPanel);
-  roomBox(hoodLayer, uc - W / 2 + 20, uc + W / 2 - 20, bottom - 1, bottom, 20, D - 20, MAT.ovenInside); // filter
+  roomBox(hoodLayer, uc - hoodWidth / 2 + 20, uc + hoodWidth / 2 - 20, bottom - 1, bottom, 20, hoodDepth - 20, MAT.ovenInside); // filter
   roomBox(hoodLayer, uc - chimneyW / 2, uc + chimneyW / 2, bottom + height, ceiling, 0, chimneyD, MAT.blackMetal, true); // chimney
   meshes.slice(firstMesh).forEach(m => { m.castShadow = false; });
   const led = glowMaterial(0xfff0dc, 5);
   [uc - 150, uc + 150].forEach(x => {
     const strip = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.012), led);
     strip.rotation.x = Math.PI / 2;
-    strip.position.set(x / 1000, (bottom - 1.5) / 1000, (D - 90) / 1000);
+    strip.position.set(x / 1000, (bottom - 1.5) / 1000, (hoodDepth - 90) / 1000);
     hoodLayer.add(strip);
   });
   [uc - 150, uc + 150].forEach(x => {
     const light = new THREE.SpotLight(0xfff0dc, 4.5, 0, 1.05, 0.8, 2);
-    light.position.copy(toWorld(x / 1000, (bottom - 5) / 1000, (D - 90) / 1000));
-    light.target.position.copy(toWorld(x / 1000, worktopTopOf(hobGroup) / 1000, (D - 170) / 1000));
+    light.position.copy(toWorld(x / 1000, (bottom - 5) / 1000, (hoodDepth - 90) / 1000));
+    light.target.position.copy(toWorld(x / 1000, worktopTopOf(hobGroup) / 1000, (hoodDepth - 170) / 1000));
     light.castShadow = false;
     lamps.push(light);
     scene.add(light, light.target);
@@ -1103,15 +1103,15 @@ if (hobItem) (function hood() {
 
 /* ================= 6. CARCASSES, FRONTS, MOVING PARTS ================= */
 const carcasses = model.carcasses;
-carcasses.forEach(K => { K.parts = []; K.meshes = []; K.movers = movers.filter(m => m.item && m.item.carcassId === K.id); }); // appliance doors so far
+carcasses.forEach(carcass => { carcass.parts = []; carcass.meshes = []; carcass.movers = movers.filter(m => m.item && m.item.carcassId === carcass.id); }); // appliance doors so far
 // a carcass board: highlighted / coloured in the Carcasses tab; registerPart also lists it there
-function registerMesh(K, m, board) {
-  if (m) { m.userData = { K, id: board.id, role: board.name, a: board.a, b: board.b, base: m.material }; K.meshes.push(m); carcassMeshes.push(m); }
+function registerMesh(carcass, m, board) {
+  if (m) { m.userData = { carcass, id: board.id, role: board.name, a: board.a, b: board.b, base: m.material }; carcass.meshes.push(m); carcassMeshes.push(m); }
   return m;
 }
-function registerPart(K, m, board) {
-  registerMesh(K, m, board);
-  K.parts.push({ name: board.name, a: board.a, b: board.b });
+function registerPart(carcass, m, board) {
+  registerMesh(carcass, m, board);
+  carcass.parts.push({ name: board.name, a: board.a, b: board.b });
   return m;
 }
 const counts = model.counts;
@@ -1119,20 +1119,20 @@ const counts = model.counts;
 const holeMaterial = Object.fromEntries(Object.entries(HOLE_COLORS).map(([use, { hex }]) => [use, standard({ color: linear(parseInt(hex.slice(1), 16)), emissive: linear(parseInt(hex.slice(1), 16)), emissiveIntensity: 0.35, roughness: 0.8 })]));
 // the holes engine.js drilled in a part (design.js settings.drilling): a coloured disc on the drilled face (HOLE_COLORS), half a millimetre proud,
 // so it shows on the board; the Otwory layer turns them on and off
-function drawHoles(P, part) {
+function drawHoles(parent, part) {
   for (const h of part.holes || []) {
     const out = -h.dir * 0.6; // centre 0.6 mm outside the face: the 1 mm disc never shares a plane with the board or the hinge cup
     const at = { u: [h.u + out, h.v, h.n], n: [h.u, h.v, h.n + out] }[h.axis];
     const marker = Math.max(h.diameter / 2, 6); // small holes drawn as 12 mm markers so they can be found; real sizes are in the cutting list
-    const m = localCylinder(P, marker, 1, holeMaterial[holeUse(h.kind)], ...at, h.axis === 'u' ? 'x' : 'z', 32);
+    const m = localCylinder(parent, marker, 1, holeMaterial[holeUse(h.kind)], ...at, h.axis === 'u' ? 'x' : 'z', 32);
     m.castShadow = m.receiveShadow = false; // a received shadow would stripe the disc
   }
 }
-function buildCarcass(K) {
-  const group = K.group, { u0, u1, v0 } = K;
+function buildCarcass(carcass) {
+  const group = carcass.group, { u0, u1, v0 } = carcass;
   for (const b of model.boards) {
-    if (b.carcassId !== K.id || b.frontId || b.id === 'pullOutShelf') continue; // drawer boards and the pull-out shelf move: built with the fronts
-    registerPart(K, edgeLook(localBox(groupLayer[group][b.layer], ...b.box, BOARD[b.material]), b.edges, b.material), b);
+    if (b.carcassId !== carcass.id || b.frontId || b.id === 'pullOutShelf') continue; // drawer boards and the pull-out shelf move: built with the fronts
+    registerPart(carcass, edgeLook(localBox(groupLayer[group][b.layer], ...b.box, BOARD[b.material]), b.edges, b.material), b);
     drawHoles(groupLayer[group].holes, b);
     if (b.id === 'adjustableShelf') { // 4 shelf pins under the shelf, in the holes design.js places (settings.drilling.shelfPin)
       const pin = settings.drilling.shelfPin, y = b.box[2] - pin.belowShelf;
@@ -1142,78 +1142,78 @@ function buildCarcass(K) {
     }
   }
   // adjustable legs under floor-standing carcasses, as tall as the plinth
-  if (K.floor) {
+  if (carcass.floor) {
     const leg = SCENE.hardware.leg;
     for (const u of [u0 + leg.fromSide, u1 - leg.fromSide]) {
       for (const n of [carcassBack + leg.fromBack, carcassFront - leg.fromFront]) {
         localCylinder(groupLayer[group].legs, leg.radius, v0 - leg.footHeight, MAT.leg, u, (v0 - leg.footHeight) / 2, n, null, 16);
-        localCylinder(groupLayer[group].legs, leg.footRadius, leg.footHeight, MAT.leg, u, v0 - leg.footHeight / 2, n, null, 20).userData.part = { kind: 'leg', name: K.name + ' nóżka' };
+        localCylinder(groupLayer[group].legs, leg.footRadius, leg.footHeight, MAT.leg, u, v0 - leg.footHeight / 2, n, null, 20).userData.part = { kind: 'leg', name: carcass.name + ' nóżka' };
       }
     }
   }
-  if (K.fridge && K.boxes.some(b => b.fit)) fridgeBody(K);
-  if (K.grille) plinthGrille(K);
+  if (carcass.fridge && carcass.boxes.some(b => b.fit)) fridgeBody(carcass);
+  if (carcass.grille) plinthGrille(carcass);
 }
 // bean-to-cup coffee machine (appliances.js coffee.body), front face at n1, standing on y, centred on uc
-function coffeeMachine(P, uc, y, n1) {
-  const { width: w, height: h, depth: d } = APPLIANCES.coffee.body, u0 = uc - w / 2, u1 = uc + w / 2, n0 = n1 - d, top = y + h, head = top - 115, F = n1 - 45;
-  envelope(P, u0, u1, y, top, n0, n1, APPLIANCES.coffee.name + ' ' + w + ' × ' + h + ' × ' + d);
-  localBox(P, u0, u1, y, top, n0, F, MAT.blackMetal); // body
-  localBox(P, u0, u0 + 28, y, head, F, n1, MAT.steel); localBox(P, u1 - 28, u1, y, head, F, n1, MAT.steel); // front side columns
-  localBox(P, u0, u1, head, top, F, n1, MAT.steel); // head with the controls
-  localBox(P, u0 + 18, u1 - 18, head + 28, top - 14, n1, n1 + 2, MAT.glassBlack); // control glass
+function coffeeMachine(parent, uc, y, n1) {
+  const { width: w, height: h, depth: d } = APPLIANCES.coffee.body, u0 = uc - w / 2, u1 = uc + w / 2, n0 = n1 - d, top = y + h, head = top - 115, frontPlane = n1 - 45;
+  envelope(parent, u0, u1, y, top, n0, n1, APPLIANCES.coffee.name + ' ' + w + ' × ' + h + ' × ' + d);
+  localBox(parent, u0, u1, y, top, n0, frontPlane, MAT.blackMetal); // body
+  localBox(parent, u0, u0 + 28, y, head, frontPlane, n1, MAT.steel); localBox(parent, u1 - 28, u1, y, head, frontPlane, n1, MAT.steel); // front side columns
+  localBox(parent, u0, u1, head, top, frontPlane, n1, MAT.steel); // head with the controls
+  localBox(parent, u0 + 18, u1 - 18, head + 28, top - 14, n1, n1 + 2, MAT.glassBlack); // control glass
   const display = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.03), new THREE.MeshBasicMaterial({ map: texture(displayCanvas('ESPRESSO'), 1, 1) }));
   display.position.set(uc / 1000, (top - 40) / 1000, (n1 + 2.5) / 1000);
-  P.add(display);
-  for (let i = 0; i < 4; i++) localCylinder(P, 6, 3, MAT.steel, u0 + 50 + (i * (w - 100)) / 3, head + 40, n1 + 3, 'z', 16); // buttons under the display
-  localBox(P, u0 + 28, u1 - 28, y + 32, head, F, F + 3, MAT.ovenInside); // brew recess
-  localBox(P, uc - 32, uc + 32, head - 34, head, F, n1 - 8, MAT.steel); // spout unit
-  for (const du of [-12, 12]) localCylinder(P, 5, 16, MAT.steel, uc + du, head - 42, n1 - 24, null, 12); // two nozzles
-  localBox(P, u0 + 6, u1 - 6, y, y + 30, F - 60, n1 + 6, MAT.steel); // drip tray
-  localBox(P, u0 + 22, u1 - 22, y + 30, y + 32, F - 40, n1 - 4, MAT.zinc); // tray grid
-  localCylinder(P, 32, 62, MAT.fridge, uc, y + 32 + 31, n1 - 26, null, 28); // cup
-  localBox(P, uc - 70, uc + 70, top, top + 6, n0 + 30, n0 + 190, MAT.blackMetal); // bean container lid
-  localCylinder(P, 5, 150, MAT.steel, u1 + 10, head - 60, n1 - 40, null, 12); // steam wand
-  localCylinder(P, 8, 20, MAT.blackMetal, u1 + 10, head + 20, n1 - 40, null, 16); // wand knob
+  parent.add(display);
+  for (let i = 0; i < 4; i++) localCylinder(parent, 6, 3, MAT.steel, u0 + 50 + (i * (w - 100)) / 3, head + 40, n1 + 3, 'z', 16); // buttons under the display
+  localBox(parent, u0 + 28, u1 - 28, y + 32, head, frontPlane, frontPlane + 3, MAT.ovenInside); // brew recess
+  localBox(parent, uc - 32, uc + 32, head - 34, head, frontPlane, n1 - 8, MAT.steel); // spout unit
+  for (const du of [-12, 12]) localCylinder(parent, 5, 16, MAT.steel, uc + du, head - 42, n1 - 24, null, 12); // two nozzles
+  localBox(parent, u0 + 6, u1 - 6, y, y + 30, frontPlane - 60, n1 + 6, MAT.steel); // drip tray
+  localBox(parent, u0 + 22, u1 - 22, y + 30, y + 32, frontPlane - 40, n1 - 4, MAT.zinc); // tray grid
+  localCylinder(parent, 32, 62, MAT.fridge, uc, y + 32 + 31, n1 - 26, null, 28); // cup
+  localBox(parent, uc - 70, uc + 70, top, top + 6, n0 + 30, n0 + 190, MAT.blackMetal); // bean container lid
+  localCylinder(parent, 5, 150, MAT.steel, u1 + 10, head - 60, n1 - 40, null, 12); // steam wand
+  localCylinder(parent, 8, 20, MAT.blackMetal, u1 + 10, head + 20, n1 - 40, null, 16); // wand knob
 }
-// aluminium ventilation grille in the plinth under a carcass with K.grille: fridge, oven (SCENE.hardware.plinthGrille)
-function plinthGrille(K) {
-  const G = SCENE.hardware.plinthGrille, P = groupLayer[K.group].plinth, uc = (K.u0 + K.u1) / 2, w = Math.min(G.width, K.u1 - K.u0 - 80), g0 = uc - w / 2, g1 = uc + w / 2, h0 = G.bottom, h1 = G.top;
-  localBox(P, g0, g1, h0, h0 + 5, plinthFace, plinthFace + 3, MAT.zinc);
-  localBox(P, g0, g1, h1 - 5, h1, plinthFace, plinthFace + 3, MAT.zinc);
-  localBox(P, g0, g0 + 5, h0 + 5, h1 - 5, plinthFace, plinthFace + 3, MAT.zinc);
-  localBox(P, g1 - 5, g1, h0 + 5, h1 - 5, plinthFace, plinthFace + 3, MAT.zinc);
-  localBox(P, g0 + 5, g1 - 5, h0 + 5, h1 - 5, plinthFace - plinthThickness, plinthFace - 1, MAT.ovenInside, true); // opening through the plinth
-  for (let x = g0 + 5 + 12; x < g1 - 8; x += 12) localBox(P, x - 2, x + 2, h0 + 5, h1 - 5, plinthFace - 2, plinthFace + 2, MAT.zinc); // vertical louvres
+// aluminium ventilation grille in the plinth under a carcass with carcass.grille: fridge, oven (SCENE.hardware.plinthGrille)
+function plinthGrille(carcass) {
+  const grille = SCENE.hardware.plinthGrille, layer = groupLayer[carcass.group].plinth, uc = (carcass.u0 + carcass.u1) / 2, w = Math.min(grille.width, carcass.u1 - carcass.u0 - 80), g0 = uc - w / 2, g1 = uc + w / 2, h0 = grille.bottom, h1 = grille.top;
+  localBox(layer, g0, g1, h0, h0 + 5, plinthFace, plinthFace + 3, MAT.zinc);
+  localBox(layer, g0, g1, h1 - 5, h1, plinthFace, plinthFace + 3, MAT.zinc);
+  localBox(layer, g0, g0 + 5, h0 + 5, h1 - 5, plinthFace, plinthFace + 3, MAT.zinc);
+  localBox(layer, g1 - 5, g1, h0 + 5, h1 - 5, plinthFace, plinthFace + 3, MAT.zinc);
+  localBox(layer, g0 + 5, g1 - 5, h0 + 5, h1 - 5, plinthFace - plinthThickness, plinthFace - 1, MAT.ovenInside, true); // opening through the plinth
+  for (let x = g0 + 5 + 12; x < g1 - 8; x += 12) localBox(layer, x - 2, x + 2, h0 + 5, h1 - 5, plinthFace - 2, plinthFace + 2, MAT.zinc); // vertical louvres
 }
 // built-in fridge-freezer where engine.js fits it (item.fit, at the manufacturer's size), its doors at the carcass front (fridgeDoorPlane: where the body ends and the doors start); split between the appliance doors
 const fridgeDoorPlane = carcassFront - APPLIANCES.fridgeFreezer.doors.setback;
-function fridgeBody(K) {
-  const A = APPLIANCES.fridgeFreezer, P = groupLayer[K.group].fridge, fit = K.boxes.find(b => b.fit).fit;
+function fridgeBody(carcass) {
+  const appliance = APPLIANCES.fridgeFreezer, layer = groupLayer[carcass.group].fridge, fit = carcass.boxes.find(b => b.fit).fit;
   const u0 = fit.bodyU0, u1 = fit.bodyU1, bodyV0 = fit.bodyV0, bodyV1 = fit.bodyV1;
-  envelope(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body.depth, fridgeDoorPlane, A.name + ' – korpus ' + A.body.width + ' × ' + A.body.height + ' (bez drzwi)');
-  openFrontBox(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body.depth, fridgeDoorPlane, 24, MAT.fridge);
-  const split = bodyV0 + (A.doors.freezer.top + A.doors.fridge.bottom) / 2; // the middle of the gap between the appliance doors
-  localBox(P, u0 + 24, u1 - 24, split - 14, split + 14, carcassBack + 42, fridgeDoorPlane, MAT.fridge);
+  envelope(layer, u0, u1, bodyV0, bodyV1, carcassFront - appliance.body.depth, fridgeDoorPlane, appliance.name + ' – korpus ' + appliance.body.width + ' × ' + appliance.body.height + ' (bez drzwi)');
+  openFrontBox(layer, u0, u1, bodyV0, bodyV1, carcassFront - appliance.body.depth, fridgeDoorPlane, 24, MAT.fridge);
+  const split = bodyV0 + (appliance.doors.freezer.top + appliance.doors.fridge.bottom) / 2; // the middle of the gap between the appliance doors
+  localBox(layer, u0 + 24, u1 - 24, split - 14, split + 14, carcassBack + 42, fridgeDoorPlane, MAT.fridge);
   const top = bodyV1 - 24, lo = split + 14;
-  for (const f of [0.34, 0.56, 0.78]) { const y = lo + (top - lo) * f; localBox(P, u0 + 26, u1 - 26, y, y + 5, carcassBack + 44, carcassFront - 124, MAT.glassShelf, true); }
-  localBox(P, u0 + 40, u1 - 40, lo + 8, lo + 190, carcassBack + 60, carcassFront - 134, MAT.ice, true);
+  for (const f of [0.34, 0.56, 0.78]) { const y = lo + (top - lo) * f; localBox(layer, u0 + 26, u1 - 26, y, y + 5, carcassBack + 44, carcassFront - 124, MAT.glassShelf, true); }
+  localBox(layer, u0 + 40, u1 - 40, lo + 8, lo + 190, carcassBack + 60, carcassFront - 134, MAT.ice, true);
   const f0 = bodyV0 + 24, f1 = split - 14, drawerHeight = (f1 - f0) / 3;
-  for (let j = 0; j < 3; j++) localBox(P, u0 + 34, u1 - 34, f0 + j * drawerHeight + 8, f0 + (j + 1) * drawerHeight - 8, carcassBack + 50, carcassFront - 84, MAT.ice, true);
-  localBox(P, u0 + 140, u1 - 140, top - 5, top, carcassBack + 226, carcassBack + 316, ledWhite, true);
+  for (let j = 0; j < 3; j++) localBox(layer, u0 + 34, u1 - 34, f0 + j * drawerHeight + 8, f0 + (j + 1) * drawerHeight - 8, carcassBack + 50, carcassFront - 84, MAT.ice, true);
+  localBox(layer, u0 + 140, u1 - 140, top - 5, top, carcassBack + 226, carcassBack + 316, ledWhite, true);
 }
 carcasses.forEach(buildCarcass);
 
-function dishRack(P, u0, u1, v0, v1, n0, n1) {
-  localBox(P, u0, u1, v0, v0 + 4, n0, n1, MAT.wire, true);
-  localBox(P, u0, u0 + 3, v0, v1, n0, n1, MAT.wire, true);
-  localBox(P, u1 - 3, u1, v0, v1, n0, n1, MAT.wire, true);
-  localBox(P, u0 + 3, u1 - 3, v0, v1, n0, n0 + 3, MAT.wire, true);
-  localBox(P, u0 + 3, u1 - 3, v0, v1, n1 - 3, n1, MAT.wire, true);
+function dishRack(parent, u0, u1, v0, v1, n0, n1) {
+  localBox(parent, u0, u1, v0, v0 + 4, n0, n1, MAT.wire, true);
+  localBox(parent, u0, u0 + 3, v0, v1, n0, n1, MAT.wire, true);
+  localBox(parent, u1 - 3, u1, v0, v1, n0, n1, MAT.wire, true);
+  localBox(parent, u0 + 3, u1 - 3, v0, v1, n0, n0 + 3, MAT.wire, true);
+  localBox(parent, u0 + 3, u1 - 3, v0, v1, n1 - 3, n1, MAT.wire, true);
 }
 // a front as a moving part, with what moves with it
 function buildFront(group, item) {
-  const front = item.front, K = carcasses.find(c => c.id === item.carcassId), opening = front.opening, hand = front.hand;
+  const front = item.front, carcass = carcasses.find(c => c.id === item.carcassId), opening = front.opening, hand = front.hand;
   const { u0: fu0, u1: fu1, v0: fv0, v1: fv1, width: fw, height: fh } = front;
   let pu = 0, pv = 0, pn = 0; // pivot: hinge side of a door, bottom edge of the dishwasher door
   if (opening === 'door' || opening === 'fridge') { pu = hand === 'left' ? fu0 : fu1; pn = frontFace; }
@@ -1221,40 +1221,40 @@ function buildFront(group, item) {
   const mover = movingPart(group, opening, pu, pv, pn);
   mover.sign = hand === 'left' ? 1 : -1;
   mover.item = item;
-  if (opening === 'door' && K && (SCENE.hardware.open.doorStop || {})[K.name]) mover.travel = SCENE.hardware.open.doorStop[K.name];
-  if (K) K.movers.push(mover);
+  if (opening === 'door' && carcass && (SCENE.hardware.open.doorStop || {})[carcass.name]) mover.travel = SCENE.hardware.open.doorStop[carcass.name];
+  if (carcass) carcass.movers.push(mover);
   shakerFront(mover.layers.fronts, fu0, fu1, fv0, fv1, BOARD[front.material]);
   addHandles(mover.layers.handles, fu0, fu1, fv0, fv1, item.handle);
   const size = Math.round(fw) + ' × ' + Math.round(fh);
 
-  if (opening === 'door' && K) {
-    const H = SCENE.hardware.hinge, cup = settings.drilling.cup, count = front.hinges.length, side = front.hingeU, dir = hand === 'left' ? 1 : -1;
+  if (opening === 'door' && carcass) {
+    const hingeHardware = SCENE.hardware.hinge, cup = settings.drilling.cup, count = front.hinges.length, side = front.hingeU, dir = hand === 'left' ? 1 : -1;
     const cupU = hand === 'left' ? fu0 + cup.fromEdge : fu1 - cup.fromEdge;
     drawHoles(mover.layers.holes, front);
     for (const v of front.hinges) {
       localBox(groupLayer[group].hardware, ...ordered(side, side + dir * 10), v - 22, v + 22, carcassFront - 75, carcassFront - 30, MAT.zinc); // mounting plate
       localBox(groupLayer[group].hardware, ...ordered(side + dir * 3, side + dir * 20), v - 9, v + 9, carcassFront - 70, carcassFront - 2, MAT.zinc); // hinge arm
-      localCylinder(mover.layers.hardware, cup.diameter / 2 - 0.5, H.cupDepth, MAT.zinc, cupU, v, frontFace - frontThickness + H.cupDepth / 2, 'z', 24); // cup in the front
+      localCylinder(mover.layers.hardware, cup.diameter / 2 - 0.5, hingeHardware.cupDepth, MAT.zinc, cupU, v, frontFace - frontThickness + hingeHardware.cupDepth / 2, 'z', 24); // cup in the front
       localCylinder(mover.layers.hardware, 24, 1.5, MAT.zinc, cupU, v, carcassFront - 1, 'z', 24); // cup flange, 0.2 mm off the carcass
     }
     mover.label = 'Drzwi ' + size + ' · zawiasy: ' + count + (front.doorDrawers ? ' · za nimi szuflady: ' + front.doorDrawers.count : '');
     if (front.doorDrawers) doorDrawerDrawers(group, item, mover);
-  } else if (opening === 'drawer' && K) {
+  } else if (opening === 'drawer' && carcass) {
     const { size: drawerSize, sideHeight, innerU0, innerU1, bottomV: b0, bins, inner } = front.drawer;
     const deep = drawerSize === 'D', box = mover.layers.drawers, hardware = mover.layers.hardware;
     // the runner (carcass part, then drawer part) fills the gap between the carcass side and the drawer side
-    const R = SCENE.hardware.drawer, s0 = R.sideFromCarcass, s1 = s0 + R.sideThickness, n0 = carcassBack + R.fromBack, n1 = carcassFront - R.fromFront;
-    const sides = (P, v0, v1) => {
-      localBox(P, innerU0 + s0, innerU0 + s1, v0, v1, n0, n1, MAT.drawerSide);
-      localBox(P, innerU1 - s1, innerU1 - s0, v0, v1, n0, n1, MAT.drawerSide);
+    const drawerHardware = SCENE.hardware.drawer, s0 = drawerHardware.sideFromCarcass, s1 = s0 + drawerHardware.sideThickness, n0 = carcassBack + drawerHardware.fromBack, n1 = carcassFront - drawerHardware.fromFront;
+    const sides = (parent, v0, v1) => {
+      localBox(parent, innerU0 + s0, innerU0 + s1, v0, v1, n0, n1, MAT.drawerSide);
+      localBox(parent, innerU1 - s1, innerU1 - s0, v0, v1, n0, n1, MAT.drawerSide);
     };
     const runners = (moving, v) => {
-      for (const [a, b, c, e] of [[innerU0, innerU0 + R.runnerWidth, innerU0 + R.runnerWidth, innerU0 + s0], [innerU1 - R.runnerWidth, innerU1, innerU1 - s0, innerU1 - R.runnerWidth]]) {
+      for (const [a, b, c, e] of [[innerU0, innerU0 + drawerHardware.runnerWidth, innerU0 + drawerHardware.runnerWidth, innerU0 + s0], [innerU1 - drawerHardware.runnerWidth, innerU1, innerU1 - s0, innerU1 - drawerHardware.runnerWidth]]) {
         localBox(groupLayer[group].hardware, a, b, v - 24, v - 8, n0, n1 + 2, MAT.zinc); // carcass part
         localBox(moving, c, e, v - 20, v - 6, n0 + 8, n1 - 2, MAT.zinc); // drawer part
       }
     };
-    for (const b of model.boards) if (b.frontId === front.id && !b.inner) registerPart(K, edgeLook(localBox(box, ...b.box, BOARD[b.material]), b.edges, b.material), b); // drawer bottom and back
+    for (const b of model.boards) if (b.frontId === front.id && !b.inner) registerPart(carcass, edgeLook(localBox(box, ...b.box, BOARD[b.material]), b.edges, b.material), b); // drawer bottom and back
     sides(box, b0 - 4, b0 + sideHeight - 4); // TANDEMBOX sides
     if (deep) { // gallery rails of a D drawer
       localBox(box, innerU0 + 28, innerU0 + 32, b0 + sideHeight - 4, b0 + sideHeight + 60, carcassBack + 46, carcassFront - 24, MAT.drawerSide);
@@ -1275,9 +1275,9 @@ function buildFront(group, item) {
     if (inner) { // shallow inner drawer for cutlery: own runners on the carcass sides, above the top drawer box, behind the same front
       const iv = front.drawer.innerV, innerMover = movingPart(group, 'drawer', 0, 0, 0), innerBox = innerMover.layers.drawers, innerHardware = innerMover.layers.hardware;
       innerMover.item = item;
-      K.movers.push(innerMover);
+      carcass.movers.push(innerMover);
       linkTo(mover, innerMover);
-      for (const b of model.boards) if (b.frontId === front.id && b.inner) registerPart(K, edgeLook(localBox(innerBox, ...b.box, BOARD[b.material]), b.edges, b.material), b);
+      for (const b of model.boards) if (b.frontId === front.id && b.inner) registerPart(carcass, edgeLook(localBox(innerBox, ...b.box, BOARD[b.material]), b.edges, b.material), b);
       const innerTop = iv - 4 + settings.drawers.M.sideHeight;
       sides(innerBox, iv - 4, innerTop);
       localBox(innerBox, innerU0 + s1, innerU1 - s1, iv - 4, innerTop, n1 - 16, n1 - 2, MAT.drawerSide); // metal inner front
@@ -1289,24 +1289,24 @@ function buildFront(group, item) {
   } else if (opening === 'dishwasher') {
     // the appliance and its door at the manufacturer's size (APPLIANCES.dishwasher), as engine.js fits it (item.fit: its height on
     // the feet, its door); the furniture front (design.js) is drawn above; below the door the base is open baseSetback deep for the plinth
-    const P = groupLayer[group].dishwasher, A = APPLIANCES.dishwasher, uc = (item.u0 + item.u1) / 2, { height: h, doorHeight, doorV0: doorBottom } = item.fit;
-    const w0 = uc - A.body.width / 2, w1 = uc + A.body.width / 2, t0 = doorBottom, t1 = h - 6; // tub: from the door bottom to under the appliance top
-    openFrontBox(P, w0 + 3, w1 - 3, t0, t1, carcassBack + 8, carcassFront - 24, 2, MAT.steel); // tub
-    dishRack(P, w0 + 29, w1 - 29, t0 + 80, t0 + 220, carcassBack + 40, carcassFront - 50);
-    dishRack(P, w0 + 29, w1 - 29, t1 - 380, t1 - 250, carcassBack + 40, carcassFront - 50);
-    localBox(P, uc - 200, uc + 200, t0 + 63, t0 + 71, (carcassBack + carcassFront) / 2 - 25, (carcassBack + carcassFront) / 2 + 25, MAT.steel); // spray arm
+    const layer = groupLayer[group].dishwasher, appliance = APPLIANCES.dishwasher, uc = (item.u0 + item.u1) / 2, { height: h, doorHeight, doorV0: doorBottom } = item.fit;
+    const w0 = uc - appliance.body.width / 2, w1 = uc + appliance.body.width / 2, t0 = doorBottom, t1 = h - 6; // tub: from the door bottom to under the appliance top
+    openFrontBox(layer, w0 + 3, w1 - 3, t0, t1, carcassBack + 8, carcassFront - 24, 2, MAT.steel); // tub
+    dishRack(layer, w0 + 29, w1 - 29, t0 + 80, t0 + 220, carcassBack + 40, carcassFront - 50);
+    dishRack(layer, w0 + 29, w1 - 29, t1 - 380, t1 - 250, carcassBack + 40, carcassFront - 50);
+    localBox(layer, uc - 200, uc + 200, t0 + 63, t0 + 71, (carcassBack + carcassFront) / 2 - 25, (carcassBack + carcassFront) / 2 + 25, MAT.steel); // spray arm
     localBox(mover.layers.dishwasher, w0, w1, doorBottom, h - 6, carcassFront - 22, carcassFront, MAT.steel); // appliance door
     localBox(mover.layers.dishwasher, w0, w1, h - 6, h, carcassFront - 22, carcassFront, MAT.glassBlack); // control strip on the door top
     mover.label = 'Zmywarka · front ' + size + ' na drzwiach urządzenia';
-    envelope(P, w0, w1, doorBottom, h, carcassFront - A.body.depth, carcassFront, A.name + ' – ' + A.body.width + ' × ' + Math.round(h) + ' × ' + A.body.depth + ', drzwi ' + Math.round(doorHeight));
-    envelope(P, w0, w1, 0, doorBottom, carcassFront - A.body.depth, carcassFront - A.baseSetback, A.name + ' – podstawa, ' + A.baseSetback + ' za frontem');
+    envelope(layer, w0, w1, doorBottom, h, carcassFront - appliance.body.depth, carcassFront, appliance.name + ' – ' + appliance.body.width + ' × ' + Math.round(h) + ' × ' + appliance.body.depth + ', drzwi ' + Math.round(doorHeight));
+    envelope(layer, w0, w1, 0, doorBottom, carcassFront - appliance.body.depth, carcassFront - appliance.baseSetback, appliance.name + ' – podstawa, ' + appliance.baseSetback + ' za frontem');
   } else if (opening === 'fridge' && item.fit) {
     // the appliance door behind this front, from the installation drawing (APPLIANCES.fridgeFreezer.doors)
-    const body = { u0: item.fit.bodyU0, u1: item.fit.bodyU1, v0: item.fit.bodyV0 }, freezer = hasTag(item, 'freezer'), A = APPLIANCES.fridgeFreezer, door = freezer ? A.doors.freezer : A.doors.fridge;
+    const body = { u0: item.fit.bodyU0, u1: item.fit.bodyU1, v0: item.fit.bodyV0 }, freezer = hasTag(item, 'freezer'), appliance = APPLIANCES.fridgeFreezer, door = freezer ? appliance.doors.freezer : appliance.doors.fridge;
     const d0 = body.v0 + door.bottom, d1 = body.v0 + door.top;
-    envelope(mover.layers.fridge, body.u0, body.u1, d0, d1, fridgeDoorPlane, carcassFront, A.name + ' – drzwi ' + (freezer ? 'zamrażarki ' : 'lodówki ') + (door.top - door.bottom));
+    envelope(mover.layers.fridge, body.u0, body.u1, d0, d1, fridgeDoorPlane, carcassFront, appliance.name + ' – drzwi ' + (freezer ? 'zamrażarki ' : 'lodówki ') + (door.top - door.bottom));
     localBox(mover.layers.fridge, body.u0, body.u1, d0, d1, fridgeDoorPlane, carcassFront - 2, MAT.fridge); // appliance door
-    if (!freezer) for (const f of [0.25, 0.5, 0.75]) { const y = d0 + (d1 - d0) * f; localBox(mover.layers.fridge, K.u0 + 55, K.u1 - 55, y, y + 80, fridgeDoorPlane - 54, fridgeDoorPlane, MAT.ice, true); } // door shelves
+    if (!freezer) for (const f of [0.25, 0.5, 0.75]) { const y = d0 + (d1 - d0) * f; localBox(mover.layers.fridge, carcass.u0 + 55, carcass.u1 - 55, y, y + 80, fridgeDoorPlane - 54, fridgeDoorPlane, MAT.ice, true); } // door shelves
     mover.label = (freezer ? 'Zamrażarka' : 'Lodówka') + ' · front ' + size + ' na drzwiach urządzenia';
   } else if (opening === 'fixed') {
     mover.label = 'Front atrapa ' + size + ' · stały';
@@ -1316,34 +1316,34 @@ function buildFront(group, item) {
 // drawers behind a door (engine.js: tag doorDrawers): each box slides out on its ball runners once the door is open, full extension;
 // the runner's carcass part on the carcass side or on the spacer, its moving part on the box side
 function doorDrawerDrawers(group, item, door) {
-  const front = item.front, K = carcasses.find(c => c.id === item.carcassId), P = front.doorDrawers, clearance = settings.doorDrawers.clearance;
-  P.boxes.forEach((B, j) => {
+  const front = item.front, carcass = carcasses.find(c => c.id === item.carcassId), doorDrawers = front.doorDrawers, clearance = settings.doorDrawers.clearance;
+  doorDrawers.boxes.forEach((drawerBox, j) => {
     const mover = movingPart(group, 'drawer', 0, 0, 0), box = mover.layers.drawers;
     mover.item = item;
-    mover.travel = P.runnerLength;
-    mover.label = 'Szuflada za drzwiami ' + (j + 1) + '/' + P.count + ' · ' + P.boxWidth + ' × ' + P.runnerLength + ' × ' + P.boxHeight + ', prowadnice kulkowe ' + P.runnerLength;
-    K.movers.push(mover);
+    mover.travel = doorDrawers.runnerLength;
+    mover.label = 'Szuflada za drzwiami ' + (j + 1) + '/' + doorDrawers.count + ' · ' + doorDrawers.boxWidth + ' × ' + doorDrawers.runnerLength + ' × ' + doorDrawers.boxHeight + ', prowadnice kulkowe ' + doorDrawers.runnerLength;
+    carcass.movers.push(mover);
     linkTo(door, mover);
-    for (const b of model.boards) if (b.frontId === front.id && b.doorDrawer === j) registerPart(K, edgeLook(localBox(box, ...b.box, BOARD[b.material]), b.edges, b.material), b);
-    const y0 = B.v0 + model.thickness.drawerBox + 20, y1 = y0 + 35; // 35 high runner bars on the box sides
-    for (const [a, b] of [[B.u0 - clearance, B.u0], [B.u1, B.u1 + clearance]]) {
-      localBox(groupLayer[group].hardware, ...(a < B.u0 ? [a, a + clearance / 2] : [b - clearance / 2, b]), y0, y1, B.n0, B.n1, MAT.zinc); // carcass part
-      localBox(mover.layers.hardware, ...(a < B.u0 ? [a + clearance / 2, B.u0] : [B.u1, b - clearance / 2]), y0 + 4, y1 - 4, B.n0 + 4, B.n1 - 2, MAT.zinc); // moving part
+    for (const b of model.boards) if (b.frontId === front.id && b.doorDrawer === j) registerPart(carcass, edgeLook(localBox(box, ...b.box, BOARD[b.material]), b.edges, b.material), b);
+    const y0 = drawerBox.v0 + model.thickness.drawerBox + 20, y1 = y0 + 35; // 35 high runner bars on the box sides
+    for (const [a, b] of [[drawerBox.u0 - clearance, drawerBox.u0], [drawerBox.u1, drawerBox.u1 + clearance]]) {
+      localBox(groupLayer[group].hardware, ...(a < drawerBox.u0 ? [a, a + clearance / 2] : [b - clearance / 2, b]), y0, y1, drawerBox.n0, drawerBox.n1, MAT.zinc); // carcass part
+      localBox(mover.layers.hardware, ...(a < drawerBox.u0 ? [a + clearance / 2, drawerBox.u0] : [drawerBox.u1, b - clearance / 2]), y0 + 4, y1 - 4, drawerBox.n0 + 4, drawerBox.n1 - 2, MAT.zinc); // moving part
     }
   });
 }
 for (const r of GROUP_IDS) for (const item of itemsOfGroup[r]) if (KE.FRONT_TYPES.includes(item.type)) buildFront(r, item);
 // pull-out shelf with the coffee machine (tag coffee): slides out like a drawer once its door (shelf.item) is open
 for (const shelf of model.boards.filter(b => b.id === 'pullOutShelf')) {
-  const K = carcasses.find(c => c.id === shelf.carcassId), group = K.group, door = K.movers.find(m => m.kind === 'door' && m.item === shelf.item);
+  const carcass = carcasses.find(c => c.id === shelf.carcassId), group = carcass.group, door = carcass.movers.find(m => m.kind === 'door' && m.item === shelf.item);
   const mover = movingPart(group, 'drawer', 0, 0, 0), box = mover.layers.drawers, [x0, x1, y0, y1, z0, z1] = shelf.box;
   mover.item = shelf.item;
-  K.movers.push(mover);
+  carcass.movers.push(mover);
   if (door) linkTo(door, mover);
-  registerPart(K, edgeLook(localBox(box, ...shelf.box, BOARD[shelf.material]), shelf.edges, shelf.material), shelf);
+  registerPart(carcass, edgeLook(localBox(box, ...shelf.box, BOARD[shelf.material]), shelf.edges, shelf.material), shelf);
   // the spacer beside the shelf carries the runner on the hinge side
-  const spacer = model.boards.find(b => b.carcassId === K.id && b.id === 'spacer' && b.box[2] < y0 && b.box[3] > y0 && (b.box[1] <= x0 || b.box[0] >= x1));
-  const left = spacer && spacer.box[1] <= x0 ? spacer.box[1] : K.u0 + board, right = spacer && spacer.box[0] >= x1 ? spacer.box[0] : K.u1 - board;
+  const spacer = model.boards.find(b => b.carcassId === carcass.id && b.id === 'spacer' && b.box[2] < y0 && b.box[3] > y0 && (b.box[1] <= x0 || b.box[0] >= x1));
+  const left = spacer && spacer.box[1] <= x0 ? spacer.box[1] : carcass.u0 + board, right = spacer && spacer.box[0] >= x1 ? spacer.box[0] : carcass.u1 - board;
   for (const [a, b] of [[left, x0], [x1, right]]) { // runners: carcass part, moving part
     localBox(groupLayer[group].hardware, a, b, y0 - 14, y0, z0, z1, MAT.zinc);
     localBox(mover.layers.hardware, a, b, y0, y0 + 12, z0 + 8, z1 - 4, MAT.zinc);
@@ -1365,8 +1365,8 @@ function geometryCheck() {
   for (const m of carcassMeshes) {
     const u = m.userData;
     if (!u.role) continue;
-    const kind = { drawerBottom: 'drawer', drawerBack: 'drawer', doorDrawerFront: 'drawer', doorDrawerBottom: 'drawer', doorDrawerSide: 'drawer', doorDrawerBack: 'drawer', backStrip: 'strip', adjustableShelf: 'shelf' }[u.id] || 'carcass';
-    parts.push({ kind, name: (u.K ? u.K.name + ' ' : '') + u.role + ' ' + u.a + ' × ' + u.b, box: boxOf(m), object: m });
+    const kind = { drawerBottom: 'drawer', drawerBack: 'drawer', doorDrawerFront: 'drawer', doorDrawerBottom: 'drawer', doorDrawerSide: 'drawer', doorDrawerBack: 'drawer', backStrip: 'backStrip', adjustableShelf: 'shelf' }[u.id] || 'carcass';
+    parts.push({ kind, name: (u.carcass ? u.carcass.name + ' ' : '') + u.role + ' ' + u.a + ' × ' + u.b, box: boxOf(m), object: m });
   }
   for (const mover of movers) {
     if (mover.parent) continue;
@@ -1381,21 +1381,21 @@ function geometryCheck() {
   const overlapOn = (a, b, axis) => Math.min(a[2 * axis + 1], b[2 * axis + 1]) - Math.max(a[2 * axis], b[2 * axis]);
   // an issue: k = kind of issue, a / b = the parts (names with their real sizes), v = the amount
   const overlaps = [], gaps = [], out = [];
-  const GAP_KINDS = new Set(['frame', 'panel', 'strip', 'carcass', 'plinth', 'worktop', 'endPanel']);
-  const TIGHT_KINDS = ['frame', 'panel', 'strip'];
+  const GAP_KINDS = new Set(['strip', 'frontPanel', 'backStrip', 'carcass', 'plinth', 'worktop', 'endPanel']);
+  const TIGHT_KINDS = ['strip', 'frontPanel', 'backStrip'];
   for (let i = 0; i < parts.length; i++) {
     for (let j = i + 1; j < parts.length; j++) {
-      const A = parts[i], B = parts[j];
-      if (A.object === B.object || (A.kind === 'drawer' && B.kind === 'drawer')) continue;
-      const o = [0, 1, 2].map(axis => overlapOn(A.box, B.box, axis));
-      if (o.every(x => x > OVERLAP)) { overlaps.push({ k: 'Kolizja', a: A.name, b: B.name, v: o.map(round1).join(' × ') + ' mm' }); continue; }
-      // small gap: touching area in two axes, a gap of a few mm in the third (strips and frames must fit tight)
-      if (!(GAP_KINDS.has(A.kind) && GAP_KINDS.has(B.kind))) continue;
-      if (!(TIGHT_KINDS.includes(A.kind) || TIGHT_KINDS.includes(B.kind))) continue;
+      const part = parts[i], other = parts[j];
+      if (part.object === other.object || (part.kind === 'drawer' && other.kind === 'drawer')) continue;
+      const o = [0, 1, 2].map(axis => overlapOn(part.box, other.box, axis));
+      if (o.every(x => x > OVERLAP)) { overlaps.push({ k: 'Kolizja', a: part.name, b: other.name, v: o.map(round1).join(' × ') + ' mm' }); continue; }
+      // small gap: touching area in two axes, a gap of a few mm in the third (strips and back strips must fit tight)
+      if (!(GAP_KINDS.has(part.kind) && GAP_KINDS.has(other.kind))) continue;
+      if (!(TIGHT_KINDS.includes(part.kind) || TIGHT_KINDS.includes(other.kind))) continue;
       for (let axis = 0; axis < 3; axis++) {
         const gap = -o[axis], others = [0, 1, 2].filter(x => x !== axis);
         if (gap >= GAP_MIN - 1e-6 && gap <= GAP_MAX + 1e-6 && others.every(x => o[x] > 10)) {
-          gaps.push({ k: 'Szczelina', a: A.name, b: B.name, v: round1(gap) + ' mm (' + 'xyz'[axis] + ')' });
+          gaps.push({ k: 'Szczelina', a: part.name, b: other.name, v: round1(gap) + ' mm (' + 'xyz'[axis] + ')' });
           break;
         }
       }
@@ -1405,7 +1405,7 @@ function geometryCheck() {
   const groupRoots = Object.values(groupRoot);
   for (const p of parts) {
     if (p.box[2] < -OVERLAP) out.push({ k: 'Wystaje', a: p.name, b: 'pod podłogę', v: round1(-p.box[2]) + ' mm' });
-    if (!['carcass', 'strip', 'drawer', 'shelf', 'leg'].includes(p.kind)) continue;
+    if (!['carcass', 'backStrip', 'drawer', 'shelf', 'leg'].includes(p.kind)) continue;
     let g = p.object;
     while (g && !groupRoots.includes(g)) g = g.parent;
     if (!g) continue;
@@ -1455,26 +1455,26 @@ const backWall = wallGroup([0, 0, -1], [1.3, 1.37, 0]), backWallWindow = wallGro
   .forEach(([x0, x1, y0, y1]) => roomBox(backWall, x0, x1, y0, y1, -wallThickness, 0, MAT.wall)); // window wall around the opening
 roomBox(backWall, leftEnd, rightWall + wallThickness, ceiling, ceiling + 20, -wallThickness, 0, MAT.wall);
 (function windowFrame() { // two-pane window: frame F, mullion, sashes S, gaskets, glass, handles
-  const g = backWallWindow, zFront = -reveal, frameDepth = 70, z0 = zFront - frameDepth, F = 45, S = 52, MULLION = 28, xm = (winX0 + winX1) / 2;
+  const g = backWallWindow, zFront = -reveal, frameDepth = 70, z0 = zFront - frameDepth, frameWidth = 45, sashWidth = 52, MULLION = 28, xm = (winX0 + winX1) / 2;
   roomBox(g, winX0 - 200, winX1 + 200, winY0 - 300, winY1 + 300, -2400, -2390, MAT.sky, true); // view outside
-  roomBox(g, winX0, winX1, winY0, winY0 + F, z0, zFront, MAT.pvc);
-  roomBox(g, winX0, winX1, winY1 - F, winY1, z0, zFront, MAT.pvc);
-  roomBox(g, winX0, winX0 + F, winY0 + F, winY1 - F, z0, zFront, MAT.pvc);
-  roomBox(g, winX1 - F, winX1, winY0 + F, winY1 - F, z0, zFront, MAT.pvc);
-  roomBox(g, xm - MULLION, xm + MULLION, winY0 + F, winY1 - F, z0, zFront, MAT.pvc);
-  for (const [a, b] of [[winX0 + F, xm - MULLION], [xm + MULLION, winX1 - F]]) {
+  roomBox(g, winX0, winX1, winY0, winY0 + frameWidth, z0, zFront, MAT.pvc);
+  roomBox(g, winX0, winX1, winY1 - frameWidth, winY1, z0, zFront, MAT.pvc);
+  roomBox(g, winX0, winX0 + frameWidth, winY0 + frameWidth, winY1 - frameWidth, z0, zFront, MAT.pvc);
+  roomBox(g, winX1 - frameWidth, winX1, winY0 + frameWidth, winY1 - frameWidth, z0, zFront, MAT.pvc);
+  roomBox(g, xm - MULLION, xm + MULLION, winY0 + frameWidth, winY1 - frameWidth, z0, zFront, MAT.pvc);
+  for (const [a, b] of [[winX0 + frameWidth, xm - MULLION], [xm + MULLION, winX1 - frameWidth]]) {
     const zs0 = zFront - 55, zs1 = zFront + 8;
-    roomBox(g, a, b, winY0 + F, winY0 + F + S, zs0, zs1, MAT.pvc);
-    roomBox(g, a, b, winY1 - F - S, winY1 - F, zs0, zs1, MAT.pvc);
-    roomBox(g, a, a + S, winY0 + F + S, winY1 - F - S, zs0, zs1, MAT.pvc);
-    roomBox(g, b - S, b, winY0 + F + S, winY1 - F - S, zs0, zs1, MAT.pvc);
-    const ga = a + S, gb = b - S, gy0 = winY0 + F + S, gy1 = winY1 - F - S;
+    roomBox(g, a, b, winY0 + frameWidth, winY0 + frameWidth + sashWidth, zs0, zs1, MAT.pvc);
+    roomBox(g, a, b, winY1 - frameWidth - sashWidth, winY1 - frameWidth, zs0, zs1, MAT.pvc);
+    roomBox(g, a, a + sashWidth, winY0 + frameWidth + sashWidth, winY1 - frameWidth - sashWidth, zs0, zs1, MAT.pvc);
+    roomBox(g, b - sashWidth, b, winY0 + frameWidth + sashWidth, winY1 - frameWidth - sashWidth, zs0, zs1, MAT.pvc);
+    const ga = a + sashWidth, gb = b - sashWidth, gy0 = winY0 + frameWidth + sashWidth, gy1 = winY1 - frameWidth - sashWidth;
     roomBox(g, ga, gb, gy0, gy0 + 6, zs0 + 10, zs1 - 4, MAT.gasket);
     roomBox(g, ga, gb, gy1 - 6, gy1, zs0 + 10, zs1 - 4, MAT.gasket);
     roomBox(g, ga, ga + 6, gy0, gy1, zs0 + 10, zs1 - 4, MAT.gasket);
     roomBox(g, gb - 6, gb, gy0, gy1, zs0 + 10, zs1 - 4, MAT.gasket);
     roomBox(g, ga + 6, gb - 6, gy0 + 6, gy1 - 6, zs0 + 20, zs0 + 44, MAT.glass, true);
-    const hx = a < xm ? b - S / 2 : a + S / 2; // handle on the mullion side
+    const hx = a < xm ? b - sashWidth / 2 : a + sashWidth / 2; // handle on the mullion side
     roomBox(g, hx - 14, hx + 14, (winY0 + winY1) / 2 - 40, (winY0 + winY1) / 2 + 40, zs1, zs1 + 16, MAT.pvc);
     roomBox(g, hx - 10, hx + 10, (winY0 + winY1) / 2 - 110, (winY0 + winY1) / 2 + 10, zs1 + 16, zs1 + 30, MAT.pvc);
   }
@@ -1498,11 +1498,11 @@ floor.castShadow = false;
     const size = new THREE.Vector3();
     g.boundingBox.getSize(size);
     const grainY = m.userData.grain === 'y', grainX = m.userData.grain === 'x';
-    const P = g.attributes.position, N = g.attributes.normal, uv = new Float32Array(P.count * 2);
+    const positions = g.attributes.position, normals = g.attributes.normal, uv = new Float32Array(positions.count * 2);
     const put = (i, a, b) => { uv[i * 2] = a; uv[i * 2 + 1] = b; };
-    for (let i = 0; i < P.count; i++) {
-      p.fromBufferAttribute(P, i);
-      n.fromBufferAttribute(N, i);
+    for (let i = 0; i < positions.count; i++) {
+      p.fromBufferAttribute(positions, i);
+      n.fromBufferAttribute(normals, i);
       const ax = Math.abs(n.x), ay = Math.abs(n.y), az = Math.abs(n.z);
       if (ax >= ay && ax >= az) (grainY || size.y >= size.z) ? put(i, p.y, p.z) : put(i, p.z, p.y);
       else if (ay >= az) (grainX || size.x >= size.z) ? put(i, p.x, p.z) : put(i, p.z, p.x);
@@ -1636,7 +1636,7 @@ function repivot(e) {
 }
 function flyTo(view, instant) {
   const metres = point => new THREE.Vector3(point.x / 1000, point.y / 1000, point.z / 1000);
-  const V = VIEWS[view], p = metres(V.position), t = metres(V.target);
+  const cameraView = VIEWS[view], p = metres(cameraView.position), t = metres(cameraView.target);
   if (instant) { camera.position.copy(p); controls.target.copy(t); controls.update(); return; }
   flight = { p0: camera.position.clone(), t0: controls.target.clone(), p, t, s: performance.now() };
 }
@@ -1658,7 +1658,7 @@ viewSelect.addEventListener('change', () => setView(viewSelect.value));
 
 /* ---------- click: open a front / select a carcass; hover: tooltip ---------- */
 const moverOf = o => { for (; o; o = o.parent) if (o.userData && o.userData.mover) return o.userData.mover; return null; };
-const boardOf = o => (o && o.userData && o.userData.K && o.userData.role ? o.userData : null); // { K, role, a, b } of a carcass board
+const boardOf = o => (o && o.userData && o.userData.carcass && o.userData.role ? o.userData : null); // { carcass, role, a, b } of a carcass board
 let pointerDown = null;
 renderer.domElement.addEventListener('pointerdown', e => {
   pointerDown = { x: e.clientX, y: e.clientY, t: performance.now() };
@@ -1693,7 +1693,7 @@ renderer.domElement.addEventListener('pointerup', e => {
   const mover = moverOf(hit.object);
   if (mover && mover.kind !== 'fixed' && isShown(mover.layers.fronts)) { toggle(mover); return; }
   const board = boardOf(hit.object);
-  if (board && board.K) { selectCarcass(board.K, false); return; }
+  if (board && board.carcass) { selectCarcass(board.carcass, false); return; }
   if (mover && mover.kind !== 'fixed') toggle(mover);
 });
 // the label appears only after the cursor rests for 1 s
@@ -1719,8 +1719,8 @@ function hover(e) {
   if (hit) {
     const mover = moverOf(hit.object), board = boardOf(hit.object), part = hit.object.userData.part;
     const where = (group, column, span) => KE.placeLabel(group, column, span) + ' · ';
-    if (board && !board.K) text = board.role + ' ' + board.a + ' × ' + board.b;
-    else if (board && !(mover && isShown(mover.layers.fronts))) text = where(board.K.group, board.K.column, board.K.span) + board.K.name + ' · ' + board.role + ' ' + board.a + ' × ' + board.b;
+    if (board && !board.carcass) text = board.role + ' ' + board.a + ' × ' + board.b;
+    else if (board && !(mover && isShown(mover.layers.fronts))) text = where(board.carcass.group, board.carcass.column, board.carcass.span) + board.carcass.name + ' · ' + board.role + ' ' + board.a + ' × ' + board.b;
     else if (mover) text = (mover.item ? where(mover.group, mover.item.column, mover.item.span) : '') + mover.label;
     else if (part) text = part.name.replace(/^(G\d+\[[\d-]+\]) /, '$1 · ');
   }
@@ -1812,13 +1812,13 @@ floorPanel.innerHTML = FLOOR_KEYS.map(key => '<button data-f="' + key + '" class
 floorPanel.closest('section').hidden = !FLOOR_KEYS.length;
 function setFloor(key) {
   floorKey = key;
-  const F = FLOORS[key], map = floorTexture(key), look = originalLook.get(MAT.floor);
+  const floorTile = FLOORS[key], map = floorTexture(key), look = originalLook.get(MAT.floor);
   if (look) { if (look.map) look.map.dispose(); look.map = map; }
   if (palette === 'colour') MAT.floor.map = map;
   MAT.floor.needsUpdate = true;
   for (const b of floorPanel.querySelectorAll('[data-f]')) b.setAttribute('aria-pressed', b.dataset.f === key);
-  floorInfo.innerHTML = '<b>' + esc(F.name) + '</b> ' + F.size.length + ' × ' + F.size.width + ' – ' + esc(F.look) + '; ' + esc(F.finish) + '; ' + esc(F.price) +
-    ' (<a href="' + F.links[0].url + '" target="_blank" rel="noopener">sklep</a>). Fuga epoksydowa ' + room.floorJoint + ' mm w kolorze tła płytki.';
+  floorInfo.innerHTML = '<b>' + esc(floorTile.name) + '</b> ' + floorTile.size.length + ' × ' + floorTile.size.width + ' – ' + esc(floorTile.look) + '; ' + esc(floorTile.finish) + '; ' + esc(floorTile.price) +
+    ' (<a href="' + floorTile.links[0].url + '" target="_blank" rel="noopener">sklep</a>). Fuga epoksydowa ' + room.floorJoint + ' mm w kolorze tła płytki.';
   renderFinishes();
   sceneChanged();
 }
@@ -1853,7 +1853,7 @@ layerPanel.addEventListener('click', e => {
     sceneChanged();
   }
 });
-const ROOM_LAYERS = ['walls', 'window', 'floor', 'ceiling', 'lamps'], TRIM_LAYERS = ['fronts', 'handles', 'frames', 'plinth', 'panel'];
+const ROOM_LAYERS = ['walls', 'window', 'floor', 'ceiling', 'lamps'], TRIM_LAYERS = ['fronts', 'handles', 'strips', 'plinth', 'frontPanel'];
 const PRESETS = {
   all: LAYER_IDS,
   kitchen: LAYER_IDS.filter(id => !ROOM_LAYERS.includes(id)),
@@ -1870,9 +1870,9 @@ LAYER_IDS.forEach(id => { layerOn[id] = true; });
 /* ---------- Carcasses tab ---------- */
 // "Colour by panel": colour and legend label of each board id (engine.js)
 const PANEL_COLORS = {
-  side: { color: '#f0c27b', label: 'Bok' }, bottom: { color: '#8fcf9f', label: 'Wieniec dolny' }, top: { color: '#4fae6e', label: 'Wieniec górny' }, rail: { color: '#f29e8e', label: 'Trawers' },
+  side: { color: '#f0c27b', label: 'Bok' }, bottomBoard: { color: '#8fcf9f', label: 'Wieniec dolny' }, topBoard: { color: '#4fae6e', label: 'Wieniec górny' }, crossRail: { color: '#f29e8e', label: 'Trawers' },
   fixedShelf: { color: '#5f95da', label: 'Półka stała' }, adjustableShelf: { color: '#a9c9f2', label: 'Półka ruchoma' }, pullOutShelf: { color: '#a9c9f2', label: 'Półka wysuwana' },
-  back: { color: '#c9b9ea', label: 'Plecy, ' + model.materials[model.materialFor.back].label }, backStrip: { color: '#e98fc4', label: 'Listwa tylna za listwą' },
+  backPanel: { color: '#c9b9ea', label: 'Plecy, ' + model.materials[model.materialFor.backPanel].label }, backStrip: { color: '#e98fc4', label: 'Listwa tylna za listwą' },
   hobPanel: { color: '#7fd0c8', label: 'Przegroda pod płytą' }, hingePost: { color: '#e07b39', label: 'Słupek zawiasowy' }, spacer: { color: '#c46a2b', label: 'Płyta dystansowa' }, insetPanel: { color: '#d9a35c', label: 'Panel wpuszczany' },
   drawerBottom: { color: '#f5d76e', label: 'Dno szuflady' }, drawerBack: { color: '#e3ad3c', label: 'Tył szuflady' },
   doorDrawerFront: { color: '#d99a2b', label: 'Czoło szuflady za drzwiami' }, doorDrawerBottom: { color: '#f5d76e', label: 'Dno szuflady za drzwiami' }, doorDrawerSide: { color: '#ecc45a', label: 'Bok szuflady za drzwiami' }, doorDrawerBack: { color: '#e3ad3c', label: 'Tył szuflady za drzwiami' }
@@ -1883,7 +1883,7 @@ let colourByPanel = false, selected = null;
 function applyCarcassColours() {
   for (const m of carcassMeshes) {
     const u = m.userData;
-    m.material = u.K === selected ? MAT.selected : colourByPanel ? panelMaterial[u.id] || u.base : u.base;
+    m.material = u.carcass === selected ? MAT.selected : colourByPanel ? panelMaterial[u.id] || u.base : u.base;
   }
 }
 const colourButton = document.getElementById('roleBtn');
@@ -1896,12 +1896,12 @@ document.getElementById('carcPreset').addEventListener('click', () => preset('ca
 document.getElementById('legend').innerHTML = Object.values(PANEL_COLORS).map(({ color, label }) => '<li><i style="background:' + color + '"></i><span>' + label + '</span></li>').join('');
 
 // e.g. "dolna · szuflada · płyta grzewcza": the engine's carcass type (base | tall | wall), what its boxes are, its flags
-function carcassDescription(K) {
-  const boxTypes = [...new Set(K.boxes.map(b => b.type))];
-  return [KE.LABELS.carcassType[K.type], boxTypes.map(KE.typeLabel).join(' + '), ...K.flags.map(f => KE.LABELS.flag[f])].join(' · ');
+function carcassDescription(carcass) {
+  const boxTypes = [...new Set(carcass.boxes.map(b => b.type))];
+  return [KE.LABELS.carcassKind[carcass.kind], boxTypes.map(KE.typeLabel).join(' + '), ...carcass.flags.map(f => KE.LABELS.flag[f])].join(' · ');
 }
 const carcassList = document.getElementById('klist');
-carcassList.innerHTML = carcasses.map(K => '<li><button data-k="' + K.id + '" aria-pressed="false"><b>' + esc(K.name) + '</b><span>' + KE.placeLabel(K.group, K.column, K.span) + ' · ' + esc(carcassDescription(K)) + '</span><em>' + (K.u1 - K.u0) + '×' + (K.v1 - K.v0) + '</em></button></li>').join('');
+carcassList.innerHTML = carcasses.map(carcass => '<li><button data-k="' + carcass.id + '" aria-pressed="false"><b>' + esc(carcass.name) + '</b><span>' + KE.placeLabel(carcass.group, carcass.column, carcass.span) + ' · ' + esc(carcassDescription(carcass)) + '</span><em>' + (carcass.u1 - carcass.u0) + '×' + (carcass.v1 - carcass.v0) + '</em></button></li>').join('');
 carcassList.addEventListener('click', e => { const b = e.target.closest('button'); if (b) selectCarcass(carcasses[b.dataset.k - 1], true); });
 function countParts(parts) {
   const rows = new Map();
@@ -1913,8 +1913,8 @@ function countParts(parts) {
   return [...rows.values()];
 }
 // select (again: deselect) a carcass, open its fronts, list its parts; fly = move the camera to it
-function selectCarcass(K, fly) {
-  selected = selected === K && !fly ? null : K;
+function selectCarcass(carcass, fly) {
+  selected = selected === carcass && !fly ? null : carcass;
   applyCarcassColours();
   for (const b of carcassList.querySelectorAll('button')) b.setAttribute('aria-pressed', selected && +b.dataset.k === selected.id);
   document.getElementById('kDetailWrap').hidden = !selected;
@@ -1929,18 +1929,18 @@ function selectCarcass(K, fly) {
     '<div class="tw"><table class="cut" style="margin-top:8px"><tr><th>Płyta</th><th>A × B</th><th>szt.</th></tr>' + rows + '</table></div>';
   for (const mover of movers) if (mover.kind !== 'fixed' && selected.movers.includes(mover)) toggle(mover, true);
   if (fly) {
-    const centre = new THREE.Vector3((K.u0 + K.u1) / 2000, (K.v0 + K.v1) / 2000, (carcassBack + carcassFront) / 2000);
-    groupRoot[K.group].localToWorld(centre);
-    const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(groupRoot[K.group].quaternion);
-    const distance = Math.max(1.7, ((K.v1 - K.v0) / 1000) * 1.2 + 1.1);
-    const p = centre.clone().addScaledVector(normal, distance).add(new THREE.Vector3(0.35, 0.45, 0).applyQuaternion(groupRoot[K.group].quaternion));
+    const centre = new THREE.Vector3((carcass.u0 + carcass.u1) / 2000, (carcass.v0 + carcass.v1) / 2000, (carcassBack + carcassFront) / 2000);
+    groupRoot[carcass.group].localToWorld(centre);
+    const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(groupRoot[carcass.group].quaternion);
+    const distance = Math.max(1.7, ((carcass.v1 - carcass.v0) / 1000) * 1.2 + 1.1);
+    const p = centre.clone().addScaledVector(normal, distance).add(new THREE.Vector3(0.35, 0.45, 0).applyQuaternion(groupRoot[carcass.group].quaternion));
     flight = { p0: camera.position.clone(), t0: controls.target.clone(), p, t: centre, s: performance.now() };
     if (isPhone.matches) showSettings(false);
   }
 }
-const carcassMapJSON = KE.mapJSON(KE.carcassMap(model, K => {
-  const [x0, x1, z0, z1] = toRoom[K.group](K.u0, K.u1, carcassBack, carcassFront);
-  return { x: [Math.round(x0), Math.round(x1)], y: [K.v0, K.v1], z: [Math.round(z0), Math.round(z1)] };
+const carcassMapJSON = KE.mapJSON(KE.carcassMap(model, carcass => {
+  const [x0, x1, z0, z1] = toRoom[carcass.group](carcass.u0, carcass.u1, carcassBack, carcassFront);
+  return { x: [Math.round(x0), Math.round(x1)], y: [carcass.v0, carcass.v1], z: [Math.round(z0), Math.round(z1)] };
 }));
 document.getElementById('mapJson').textContent = carcassMapJSON;
 document.getElementById('mapCopy').addEventListener('click', e => {
@@ -2020,33 +2020,33 @@ function swatchImage(material, core) {
 }
 // the board materials, the finishes of view.js and the floor tiles chosen in Widok › Podłoga
 function renderFinishes() {
-  const F = FLOORS[floorKey];
+  const floorTile = FLOORS[floorKey];
   document.getElementById('mats').innerHTML = Object.entries(model.materials).map(([code, m]) => {
     const uses = Object.keys(model.materialFor).filter(use => model.materialFor[use] === code);
     return uses.length ? swatch(swatchImage(BOARD[code], m.core && coreLook(code)), uses.map(KE.useLabel).join(', '), m.label) : '';
   }).join('') + SCENE.finishes.map(f => swatch(swatchImage(MAT[f.material]), f.use, f.name)).join('') +
     swatch(swatchImage(coreLook(model.materialFor.carcass)), 'Krawędź bez obrzeża', 'rdzeń płyty, jak dolny pasek próbek') +
-    (F ? swatch('url(' + F.faces[0] + ') center/cover', 'Podłoga', F.name + ' ' + F.size.length + ' × ' + F.size.width) : '');
+    (floorTile ? swatch('url(' + floorTile.faces[0] + ') center/cover', 'Podłoga', floorTile.name + ' ' + floorTile.size.length + ' × ' + floorTile.size.width) : '');
 }
 if (FLOOR_KEYS.length) setFloor(floorKey);
 else renderFinishes();
 // per group: its length, and its worktop (top board length × depth × thickness, top above the floor)
 const groupDims = GROUP_IDS.flatMap(r => {
-  const W = model.worktops[r], top = itemsOfGroup[r].find(i => i.type === 'worktop');
+  const worktop = model.worktops[r], top = itemsOfGroup[r].find(i => i.type === 'worktop');
   return [
     { name: 'G' + r + ' ' + groupName[r], value: 'długość ' + groupLength[r] },
-    ...(W && top ? [{ name: 'G' + r + ' blat', value: (top.u1 - top.u0) + ' × ' + W.depth + ' × ' + W.thickness + ', wierzch ' + W.v1 + ' nad podłogą' }] : [])
+    ...(worktop && top ? [{ name: 'G' + r + ' blat', value: (top.u1 - top.u0) + ' × ' + worktop.depth + ' × ' + worktop.thickness + ', wierzch ' + worktop.v1 + ' nad podłogą' }] : [])
   ];
 });
 document.getElementById('dims').innerHTML = definitions([
   ...groupDims,
   { name: 'Sufit', value: ceiling },
-  { name: 'Głębokość korpusu', value: carcassDepth + ', plecy ' + model.materials[model.materialFor.back].label },
+  { name: 'Głębokość korpusu', value: carcassDepth + ', plecy ' + model.materials[model.materialFor.backPanel].label },
   { name: 'Tył korpusu', value: carcassBack + ' od ściany' },
   { name: 'Lico frontów', value: frontFace + ' od ściany; 4 szczeliny na front' },
   { name: 'Rama frontu shaker', value: shakerRail },
-  { name: 'Listwy ' + frameThickness, value: 'na sztorc, gł. ' + settings.frame.depth },
-  { name: 'Panele ' + panelThickness, value: 'na płasko, w płaszczyźnie frontów' },
+  { name: 'Listwy ' + stripThickness, value: 'na sztorc, gł. ' + settings.strip.depth },
+  { name: 'Panele ' + frontPanelThickness, value: 'na płasko, w płaszczyźnie frontów' },
   { name: 'Cokół', value: 'lico ' + settings.plinth.setback + ' za frontami' },
   { name: 'Okno', value: win.width + ' × ' + win.height + ', ' + win.finish }
 ]);

@@ -207,10 +207,10 @@ function drillLines(row) {
 }
 // the legend of the codes, from design.js settings.drilling and settings.cutouts: [{code, text}]
 function drillLegend() {
-  const L = KE.LABELS, d = model.settings.drilling, c = model.settings.cutouts || {}, code = L.holeCode;
+  const labels = KE.LABELS, d = model.settings.drilling, c = model.settings.cutouts || {}, code = labels.holeCode;
   const carcassFace = 'boki / słupki zawiasowe, strona wewnętrzna; x od przodu, y od dołu';
   const remark = kind => ((COST.labels.legend || {})[kind] ? ' (' + COST.labels.legend[kind] + ')' : '');
-  const hole = (kind, rule, where) => ({ code: code[kind], text: L.hole[kind] + ' Ø' + num1(rule.diameter) + ', gł. ' + rule.depth + ' – ' + where + remark(kind) });
+  const hole = (kind, rule, where) => ({ code: code[kind], text: labels.hole[kind] + ' Ø' + num1(rule.diameter) + ', gł. ' + rule.depth + ' – ' + where + remark(kind) });
   const rows = [
     { code: 'Etykieta', text: 'kod w pierwszej kolumnie (np. KO-07): jeden kod na każdy rozmiar części w liście cięć, części lewe i prawe razem\notwory wszystkich części wiersza w kolumnie Wiercenie; gdzie jest który: widok 3D (warstwa Otwory)\nten sam kod w zakładce Montaż – nakleić na części przy odbiorze z hurtowni' },
     { code: 'L / P', text: 'boki i słupki zawiasowe: lewy / prawy, patrząc na szafkę od przodu; otwory na stronie wewnętrznej\ndrzwi: zawiasy po lewej / po prawej, patrząc na front od przodu (od pokoju); otwory w tylnej stronie' },
@@ -218,7 +218,7 @@ function drillLegend() {
     hole('plate', d.plate, carcassFace),
     hole('shelfPin', d.shelfPin, carcassFace),
     hole('runner', d.runner, carcassFace),
-    ...Object.entries(c).map(([kind, r]) => ({ code: code[kind], text: L.hole[kind] + ' ' + r.width + ' × ' + r.depth + ' – blat; x od lewego końca (patrząc od przodu), y od tylnej krawędzi; wymiar sprawdzić z szablonem producenta' }))
+    ...Object.entries(c).map(([kind, r]) => ({ code: code[kind], text: labels.hole[kind] + ' ' + r.width + ' × ' + r.depth + ' – blat; x od lewego końca (patrząc od przodu), y od tylnej krawędzi; wymiar sprawdzić z szablonem producenta' }))
   ];
   rows.push({ code: 'Zapis', text: [
     'L: 1  P: 1 – ile części lewych i prawych (patrząc od przodu) ma otwory podane pod tą linią; prawe w lustrzanym odbiciu',
@@ -231,7 +231,7 @@ function drillLegend() {
   return rows;
 }
 // finished edges of one piece per side, as an order form for the board supplier has them: {length, width} = edges along each, 0, 1 or 2.
-// ABS edges (boards, panels) come from engine.js as [{side, length, along}] (along: a | b); lacquered edges (fronts, frames, plinth) as {long, short}.
+// ABS edges (boards, front panels) come from engine.js as [{side, length, along}] (along: a | b); lacquered edges (fronts, strips, plinth) as {long, short}.
 // (a cut-list row, KE.cutList: a = the length, b = the width; fronts are width × height, so the long side can be either)
 const edgeCounts = row => {
   const { lacquer, edges = [] } = row;
@@ -258,22 +258,22 @@ function frontFunction(front) {
 const place = p => (p.item ? KE.placeLabel(p.group, p.item.column, p.item.span) : p.column ? KE.placeLabel(p.group, p.column) : 'G' + p.group);
 const columnOfPart = p => (p.item ? p.item.column : p.column || 0);
 
-// cutting-list rows of one block: its id = fronts | frames | plinths | panels | wallPanels | plaster | worktops | endPanels, or a material use
-// (carcass, drawerBox, back ...): every board of that use's material
+// cutting-list rows of one block: its id = fronts | strips | plinths | frontPanels | wallPanels | plaster | worktops | endPanels, or a material use
+// (carcass, drawerBox, backPanel ...): every board of that use's material
 let rowsOf = {}; // block id -> its rows, from the model
 let codeOfRow = {}; // cutKey of a row -> its label
 // a front as a cut-list part: width × height, as fronts are always given
 const frontPart = f => ({ ...f, name: frontFunction(f), a: round1(f.width), b: round1(f.height) });
 function blockRows(blockId) {
-  const carcassName = Object.fromEntries(model.carcasses.map(K => [K.id, K.name]));
+  const carcassName = Object.fromEntries(model.carcasses.map(carcass => [carcass.id, carcass.name]));
   const where = p => (p.carcassId ? carcassName[p.carcassId] : place(p)); // carcass name, else group + column
   const list = items => sortRows(longFirst(KE.cutList(items.map(p => ({ ...p, at: where(p) })))));
   const FROM_MODEL = {
     // fronts: width × height
     fronts: () => sortRows(KE.cutList(model.fronts.map(f => ({ ...frontPart(f), at: where(f) })))),
-    frames: () => list(model.frames),
+    strips: () => list(model.strips),
     plinths: () => list(model.plinths.map(p => ({ ...p, name: 'Cokół' }))),
-    panels: () => list(model.panels),
+    frontPanels: () => list(model.frontPanels),
     wallPanels: () => list(model.wallPanels),
     plaster: () => list(model.plaster),
     worktops: () => list(model.worktopPieces.filter(p => p.item.type === 'worktop')),
@@ -319,8 +319,8 @@ function renderAssembly() {
   const size = (a, b) => Math.max(a, b) + ' × ' + Math.min(a, b); // the longer side first, as in the Cutting list
   const section = (title, rows) => (rows.length ? '<br><b>' + esc(title) + '</b>' + listLines(rows) : '');
 
-  const cards = model.carcasses.map(K => {
-    const boards = model.boards.filter(b => b.carcassId === K.id), fronts = model.fronts.filter(f => f.carcassId === K.id);
+  const cards = model.carcasses.map(carcass => {
+    const boards = model.boards.filter(b => b.carcassId === carcass.id), fronts = model.fronts.filter(f => f.carcassId === carcass.id);
     const pins = boards.filter(b => b.id === 'adjustableShelf').length * KE.PINS_PER_SHELF;
     const hinges = fronts.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
     const frontLines = fronts.map(f => label(KE.cutKey(frontPart(f))) + frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.hinges ? ', zawiasy: ' + f.hinges.length + ', strona ' + KE.LABELS.side[f.hand] : '') + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : ''));
@@ -331,13 +331,13 @@ function renderAssembly() {
     const doorDrawers = fronts.reduce((n, f) => n + (f.doorDrawers ? f.doorDrawers.count : 0), 0);
     const pullOutShelves = boards.filter(b => b.id === 'pullOutShelf').length;
     const hardware = [
-      K.legs ? 'nóżki: ' + K.legs : '',
+      carcass.legs ? 'nóżki: ' + carcass.legs : '',
       hinges ? 'zawiasy: ' + hinges : '',
       pins ? 'podpórki półek: ' + pins : '',
       pullOutShelves ? pullOutShelves + ' ' + plural(pullOutShelves, 'para', 'pary', 'par') + ' prowadnic pełnego wysuwu' : '',
       doorDrawers ? 'prowadnice kulkowe ' + fronts.find(f => f.doorDrawers).doorDrawers.runnerLength + ': ' + doorDrawers + ' kpl.' : ''
     ].filter(Boolean);
-    return '<div class="card"><h3>' + esc(K.name) + '</h3>' + KE.placeLabel(K.group, K.column, K.span) + ' · ' + KE.LABELS.carcassType[K.type] + ' · ' + round1(K.u1 - K.u0) + ' × ' + round1(K.v1 - K.v0) + ' × ' + model.carcassDepth + (K.flags.length ? ' · ' + K.flags.map(f => KE.LABELS.flag[f]).join(', ') : '') +
+    return '<div class="card"><h3>' + esc(carcass.name) + '</h3>' + KE.placeLabel(carcass.group, carcass.column, carcass.span) + ' · ' + KE.LABELS.carcassKind[carcass.kind] + ' · ' + round1(carcass.u1 - carcass.u0) + ' × ' + round1(carcass.v1 - carcass.v0) + ' × ' + model.carcassDepth + (carcass.flags.length ? ' · ' + carcass.flags.map(f => KE.LABELS.flag[f]).join(', ') : '') +
       [...new Set(boards.map(b => b.material))].map(m => section(model.materials[m].label, partList(boards.filter(b => b.material === m)))).join('') +
       section('Fronty', frontLines) + section('Szuflady', drawerLines) + section('Okucia', hardware) + '</div>';
   });
@@ -346,8 +346,8 @@ function renderAssembly() {
   const loose = {};
   const add = (p, text) => (loose[p.group] = loose[p.group] || []).push({ column: columnOfPart(p), text: place(p) + ' – ' + text });
   model.fronts.filter(f => !f.carcassId).forEach(f => add(f, frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : '')));
-  model.frames.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
-  model.panels.forEach(p => add(p, p.name + ' ' + size(p.a, p.b) + withEdges(p.edges)));
+  model.strips.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
+  model.frontPanels.forEach(p => add(p, p.name + ' ' + size(p.a, p.b) + withEdges(p.edges)));
   model.wallPanels.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
   model.boards.filter(b => !b.carcassId).forEach(b => add(b, b.name + ' ' + size(b.a, b.b) + ' (' + model.materials[b.material].label + ')'));
   model.plinths.forEach(p => add(p, 'Cokół ' + size(p.a, p.b)));
@@ -386,7 +386,7 @@ function blockTotals() {
     (rowsOf[block.id] || []).forEach(row => {
       const { a, b, qty, edges } = row;
       const m2 = (a * b * qty) / 1e6;
-      // ABS edges from engine.js; fronts, frames and the plinth have none
+      // ABS edges from engine.js; fronts, strips and the plinth have none
       const edge = edges && edges.length ? (edgeLength(edges) * qty) / 1000 : null;
       const cut = block.cut ? ((a + b) * qty) / 1000 : null;
       t.m2 += m2;
@@ -408,10 +408,10 @@ function ROUNDUP(x, digits) {
 
 // a carcass by name: width, height, innerWidth, v0, v1
 function carcassValue(rest) {
-  const [name, field] = rest.split('.'), K = model.carcasses.find(c => c.name === name);
-  if (!K) return NaN;
-  const width = K.u1 - K.u0;
-  return { width, height: K.v1 - K.v0, innerWidth: width - 2 * model.thickness.carcass, v0: K.v0, v1: K.v1 }[field] ?? NaN;
+  const [name, field] = rest.split('.'), carcass = model.carcasses.find(c => c.name === name);
+  if (!carcass) return NaN;
+  const width = carcass.u1 - carcass.u0;
+  return { width, height: carcass.v1 - carcass.v0, innerWidth: width - 2 * model.thickness.carcass, v0: carcass.v0, v1: carcass.v1 }[field] ?? NaN;
 }
 // an item by carcass name or place and type or tag ("K8/oven", "G1[5]/dishwasher", "K8/cabinet#2" = the second from the bottom):
 // module width, height, v0, v1; its front frontWidth, frontHeight, frontV0, frontV1; space = the clear height between the
@@ -420,13 +420,13 @@ function carcassValue(rest) {
 // fit.* = how its appliance sits in it (engine.js fitAppliances: fit.feet, fit.fasciaV0, fit.height ...)
 function itemValue(rest) {
   const dot = rest.indexOf('.'), field = rest.slice(dot + 1), [where, what = ''] = rest.slice(0, dot).split('/'), [kind, n] = what.split('#');
-  const item = Object.values(model.groups).flatMap(G => G.items)
+  const item = Object.values(model.groups).flatMap(groupModel => groupModel.items)
     .filter(i => (i.carcass === where || KE.placeLabel(i.group, i.column, i.span) === where) && (i.type === kind || i.tags.includes(kind)))
     .sort((a, b) => a.v0 - b.v0)[(Number(n) || 1) - 1];
   if (!item) return NaN;
-  const f = item.front, K = model.carcasses.find(c => c.id === item.carcassId);
-  const { bottom: spaceBottom, top: spaceTop } = K ? KE.spaceAround(model.boards, K, item.v0, item.v1) : { bottom: NaN, top: NaN };
-  const panel = model.panels.find(p => p.item === item);
+  const f = item.front, carcass = model.carcasses.find(c => c.id === item.carcassId);
+  const { bottom: spaceBottom, top: spaceTop } = carcass ? KE.spaceAround(model.boards, carcass, item.v0, item.v1) : { bottom: NaN, top: NaN };
+  const panel = model.frontPanels.find(p => p.item === item);
   const values = {
     width: item.u1 - item.u0, height: item.v1 - item.v0, v0: item.v0, v1: item.v1,
     frontWidth: f ? f.width : NaN, frontHeight: f ? f.height : NaN, frontV0: f ? f.v0 : NaN, frontV1: f ? f.v1 : NaN,
@@ -703,8 +703,8 @@ function buildWorkbook() {
       line.push(str(row.where || ''));
       cutting.push(line);
     });
-    const last = cutting.length, totalRow = last + 1, T = result.totals[block.id];
-    cutting.push([str(''), str('Razem'), str(''), str(''), str(''), str(''), formula(`SUM(G${first}:G${last})`, T.m2), formula(`SUM(H${first}:H${last})`, T.qty), formula(`SUM(I${first}:I${last})`, T.edge), formula(`SUM(J${first}:J${last})`, T.cut)]);
+    const last = cutting.length, totalRow = last + 1, totals = result.totals[block.id];
+    cutting.push([str(''), str('Razem'), str(''), str(''), str(''), str(''), formula(`SUM(G${first}:G${last})`, totals.m2), formula(`SUM(H${first}:H${last})`, totals.qty), formula(`SUM(I${first}:I${last})`, totals.edge), formula(`SUM(J${first}:J${last})`, totals.cut)]);
     blockTotalRow[block.id] = totalRow;
     cutting.push([]);
   }

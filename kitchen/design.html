@@ -467,16 +467,16 @@
  "viewBoxMargin": 40,
  "colors": {
   "canvasBg": "#f8fafc",
-  "filler": "#cbd5e1",
-  "fillerStroke": "#1e293b",
+  "space": "#cbd5e1",
+  "spaceStroke": "#1e293b",
   "worktop": "#f3c48b",
   "worktopStroke": "#a86c32",
   "wallPanel": "#ead7b4",
   "wallPanelStroke": "#a86c32",
   "board": "#e7e5e4",
   "boardStroke": "#78716c",
-  "frame": "#bfdbfe",
-  "frameStroke": "#1e293b",
+  "strip": "#bfdbfe",
+  "stripStroke": "#1e293b",
   "frontOuter": "#bfdbfe",
   "frontOuterStroke": "#1e293b",
   "frontInner": "#dbeafe",
@@ -614,14 +614,14 @@ function readTables(columnRows, componentRows, noteRows) {
 
 // fill and stroke colour names in CONFIG.colors, per type drawn as a plain rectangle
 const RECT_COLORS = {
-  filler: { fill: 'filler', stroke: 'fillerStroke' },
+  space: { fill: 'space', stroke: 'spaceStroke' },
   plasterboard: { fill: 'board', stroke: 'boardStroke' },
   worktop: { fill: 'worktop', stroke: 'worktopStroke' },
   endPanel: { fill: 'worktop', stroke: 'worktopStroke' },
   wallPanel: { fill: 'wallPanel', stroke: 'wallPanelStroke' },
-  panel: { fill: 'frame', stroke: 'frameStroke' }, // same blue as frames and fronts
-  frame: { fill: 'frame', stroke: 'frameStroke' },
-  plinth: { fill: 'frame', stroke: 'frameStroke' }
+  frontPanel: { fill: 'strip', stroke: 'stripStroke' }, // same blue as strips and fronts
+  strip: { fill: 'strip', stroke: 'stripStroke' },
+  plinth: { fill: 'strip', stroke: 'stripStroke' }
 };
 
 function drawRect(item, y) {
@@ -692,13 +692,13 @@ function drawMicrowave(item, y) {
 
 // one drawing function per type (every type of KE.TYPES has one)
 const DRAW = {
-  filler: drawRect,
+  space: drawRect,
   plasterboard: drawRect,
   worktop: drawRect,
   endPanel: drawRect,
   wallPanel: drawRect,
-  panel: drawRect,
-  frame: drawRect,
+  frontPanel: drawRect,
+  strip: drawRect,
   plinth: drawRect,
   cabinet: (item, y) => drawFront(item, y) + drawHandle(item, y),
   drawer: (item, y) => drawFront(item, y) + drawHandle(item, y),
@@ -717,20 +717,20 @@ function drawItem(item, x, totalHeight, shakerRail) {
 
 // the groups side by side, CONFIG.groupGap apart; '' when there is nothing to draw
 function drawSVG(model) {
-  const groups = Object.values(model.groups).filter(G => G.length > 0), gap = CONFIG.groupGap;
+  const groups = Object.values(model.groups).filter(groupModel => groupModel.length > 0), gap = CONFIG.groupGap;
   const groupX = new Map();
   let cursor = 0;
-  for (const G of groups) {
-    groupX.set(G, cursor);
-    cursor += G.length + gap;
+  for (const groupModel of groups) {
+    groupX.set(groupModel, cursor);
+    cursor += groupModel.length + gap;
   }
   const totalWidth = cursor - gap;
-  const totalHeight = Math.max(0, ...groups.flatMap(G => G.items.map(item => item.v1)));
+  const totalHeight = Math.max(0, ...groups.flatMap(groupModel => groupModel.items.map(item => item.v1)));
   if (!groups.length || totalHeight <= 0) return '';
   const margin = CONFIG.viewBoxMargin;
   const viewBox = `-${margin} -${margin} ${totalWidth + margin * 2} ${totalHeight + margin * 2}`;
-  const backgrounds = groups.map(G => `<rect fill="${CONFIG.colors.canvasBg}" x="${groupX.get(G)}" y="0" width="${G.length}" height="${totalHeight}"/>`).join('');
-  const shapes = groups.flatMap(G => G.items.map(item => drawItem(item, item.u0 + groupX.get(G), totalHeight, model.settings.front.shakerRail))).join('');
+  const backgrounds = groups.map(groupModel => `<rect fill="${CONFIG.colors.canvasBg}" x="${groupX.get(groupModel)}" y="0" width="${groupModel.length}" height="${totalHeight}"/>`).join('');
+  const shapes = groups.flatMap(groupModel => groupModel.items.map(item => drawItem(item, item.u0 + groupX.get(groupModel), totalHeight, model.settings.front.shakerRail))).join('');
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Widok frontów">
       ${backgrounds}

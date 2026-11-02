@@ -7,8 +7,8 @@
      labels      fronts: the label of a front in the cutting list, by its type and tags (first match; none = its type);
                  sheet: the label of the sheet input; cuttingNote: the text under the cutting list; legend: a remark per
                  hole kind in the drilling legend
-     blocks      cutting-list tables, code = the two letters of their row labels (KO-07), rows built by engine.js: id = fronts | frames | plinths | panels | wallPanels | plaster | worktops | endPanels,
-                 or a material use (carcass, drawerBox, back ...: every board of that use's material); cut = priced saw
+     blocks      cutting-list tables, code = the two letters of their row labels (KO-07), rows built by engine.js: id = fronts | strips | plinths | frontPanels | wallPanels | plaster | worktops | endPanels,
+                 or a material use (carcass, drawerBox, backPanel ...: every board of that use's material); cut = priced saw
                  cuts; columns = the header when not Element / Długość / Szerokość / Ilość
      categories  estimate items, by category {name, appliances, items}; appliances = the category counts as AGD, not
                  furniture. An item: id, name, spec, qty (a number or a formula), unit, price, refs (ids of the notes it
@@ -20,7 +20,7 @@
    Texts and formulas may hold placeholders:
      {n:hinges}        engine count ({n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
      {s:drawers.D.frontAbove} design.js setting     {t:carcass} thickness and {m:cabinet} material label of a board type or part
-                       (a material use of engine.js: a board type, islandWorktop, endPanel, islandEndPanel, carcass, back, drawerBox, hobPanel)
+                       (a material use of engine.js: a board type, islandWorktop, endPanel, islandEndPanel, carcass, backPanel, drawerBox, hobPanel)
      {w:1.depth}       worktop of group 1  {k:K8.innerWidth} carcass by name: width, height, innerWidth, v0, v1
      {i:K8/oven.space} item by carcass name or place (G1[6]) and type or tag, #2 = the second from the bottom:
                        width, height, v0, v1 (module), frontWidth, frontHeight, frontV0, frontV1 (front),
@@ -63,14 +63,14 @@ window.KITCHEN_COST = {
    {"type": "cabinet", "function": "drzwi"}
   ],
   "sheet": "Arkusz płyty {v:sheet.length}×{v:sheet.width} [m²]",
-  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: ABS razem = długość ABS × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, {s:carcass.wallGap} od ściany; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:back.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:frame.depth} × długość listwy.\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nABS: tylko krawędzie widoczne; strona każdej krawędzi w zakładce Montaż.\nLakier: fronty dookoła, listwy krawędź przednia, cokół i panele bez krawędzi.\nBlaty: krawędź przednia fabryczna, wycięcia bez ABS.",
+  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: ABS razem = długość ABS × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, {s:carcass.wallGap} od ściany; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:backPanel.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:strip.depth} × długość listwy.\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nABS: tylko krawędzie widoczne; strona każdej krawędzi w zakładce Montaż.\nLakier: fronty dookoła, listwy krawędź przednia, cokół i panele bez krawędzi.\nBlaty: krawędź przednia fabryczna, wycięcia bez ABS.",
   "legend": {"runner": "pozycje do potwierdzenia wg Blum i Häfele"}
  },
  "blocks": [
   {"id": "fronts", "code": "FR", "title": "FRONTY – {m:cabinet}, shaker, lakierowane dookoła", "columns": ["Funkcja", "Szerokość", "Wysokość", "Ilość"]},
-  {"id": "frames", "code": "LI", "title": "LISTWY – {m:frame} na sztorc, gł. {s:frame.depth}, lakierowane obustronnie i krawędź przednia"},
+  {"id": "strips", "code": "LI", "title": "LISTWY – {m:strip} na sztorc, gł. {s:strip.depth}, lakierowane obustronnie i krawędź przednia"},
   {"id": "plinths", "code": "CO", "title": "COKÓŁ – {m:plinth}, wilgocioodporny, lakierowany obustronnie"},
-  {"id": "panels", "code": "PA", "title": "PANELE – {m:panel} na płasko, lakierowane obustronnie; ABS na widocznych krawędziach"},
+  {"id": "frontPanels", "code": "PA", "title": "PANELE – {m:frontPanel} na płasko, lakierowane obustronnie; ABS na widocznych krawędziach"},
   {"id": "wallPanels", "code": "PS", "title": "PANEL ŚCIENNY – {m:wallPanel}, na ścianie nad blatem"},
   {
    "id": "carcass",
@@ -84,7 +84,7 @@ window.KITCHEN_COST = {
    "title": "SZUFLADY – wszystkie części z {m:drawerBox}: dna i tyły TANDEMBOX (z szufladami wewnętrznymi), szuflady za drzwiami i przegroda pod płytą",
    "cut": true
   },
-  {"id": "back", "code": "PL", "title": "PLECY – {m:back}, tylko za drzwiami szafek"},
+  {"id": "backPanel", "code": "PL", "title": "PLECY – {m:backPanel}, tylko za drzwiami szafek"},
   {"id": "worktops", "code": "BL", "title": "BLATY – {m:worktop} (blat), {m:islandWorktop} (wyspa); wycięcia na zlew (WZ) i płytę (WP) wg legendy"},
   {"id": "endPanels", "code": "PK", "title": "PANELE KOŃCOWE – {m:endPanel}; blat wystaje {s:worktop.endPanelOverhang} mm poza panel końcowy (bok, przód, w wyspie tył)"},
   {"id": "plaster", "code": "GK", "title": "ZABUDOWA GK – GKBI 12,5 na CD60 / UD27, gł. {s:plasterboard.depth} (zabudowa do sufitu, grupa 2)"}
@@ -112,13 +112,13 @@ window.KITCHEN_COST = {
      ]
     },
     {
-     "id": "frames",
-     "name": "Listwy na sztorc: {m:frame}",
-     "spec": "gł. {s:frame.depth}; lakierowane obustronnie i krawędź przednia",
-     "qty": "={frames.m2}",
+     "id": "strips",
+     "name": "Listwy na sztorc: {m:strip}",
+     "spec": "gł. {s:strip.depth}; lakierowane obustronnie i krawędź przednia",
+     "qty": "={strips.m2}",
      "unit": "m²",
      "price": 332.1,
-     "refs": ["framesPanels", "lacquered"],
+     "refs": ["stripsPanels", "lacquered"],
      "source": "MDF gładki 18, mat: 270 netto/m² (jedna strona; druga strona: zapytać)",
      "links": [{"name": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"}]
     },
@@ -134,10 +134,10 @@ window.KITCHEN_COST = {
      "links": [{"name": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"}]
     },
     {
-     "id": "panels",
-     "name": "Panele na płasko: {m:panel}",
+     "id": "frontPanels",
+     "name": "Panele na płasko: {m:frontPanel}",
      "spec": "lakierowane obustronnie; narożnik L, panel tylny wyspy",
-     "qty": "={panels.m2}",
+     "qty": "={frontPanels.m2}",
      "unit": "m²",
      "price": 332.1,
      "refs": ["lacquered", "hiddenSides"],
@@ -172,9 +172,9 @@ window.KITCHEN_COST = {
     },
     {
      "id": "backBoard",
-     "name": "{m:back}",
+     "name": "{m:backPanel}",
      "spec": "plecy za drzwiami szafek, arkusz {v:sheet.length}×{v:sheet.width}",
-     "qty": "=ROUNDUP({back.m2}*(1+{waste})/{sheet},0)",
+     "qty": "=ROUNDUP({backPanel.m2}*(1+{waste})/{sheet},0)",
      "unit": "ark.",
      "price": 124.32,
      "source": "Bielsko-Biała",
@@ -206,12 +206,12 @@ window.KITCHEN_COST = {
     },
     {
      "id": "panelEdging",
-     "name": "Oklejanie paneli, kolor {m:panel}",
+     "name": "Oklejanie paneli, kolor {m:frontPanel}",
      "spec": "krawędzie paneli wg sumy ABS z listy cięć + {v:edgeAllowance|%}; obrzeże granatowe dobrane do lakieru",
-     "qty": "={panels.edge}*(1+{v:edgeAllowance})",
+     "qty": "={frontPanels.edge}*(1+{v:edgeAllowance})",
      "unit": "mb",
      "price": 6,
-     "refs": ["framesPanels"],
+     "refs": ["stripsPanels"],
      "source": "panele robi producent frontów (lakierowane.pl) - zapytać o oklejanie; szacunek wg ciecieoklejanie.pl",
      "links": [
       {"name": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"},
@@ -404,7 +404,7 @@ window.KITCHEN_COST = {
      "id": "smallScrews",
      "name": "Wkręt do drewna 4 × 16 Standers, łeb wpuszczany, opak. 35 szt.",
      "spec": "kątownik do listwy tylnej (2 na kątownik), plecy HDF do korpusów (ok. {v:backScrewsPerM2} na m²); 16 nie przebija płyty 18",
-     "qty": "=ROUNDUP(({n:wallBrackets}*2+{back.m2}*{v:backScrewsPerM2})/35,0)",
+     "qty": "=ROUNDUP(({n:wallBrackets}*2+{backPanel.m2}*{v:backScrewsPerM2})/35,0)",
      "unit": "op.",
      "price": 4.19,
      "refs": ["wallFixing"],
@@ -856,7 +856,7 @@ window.KITCHEN_COST = {
      "id": "hob",
      "appliance": "hob",
      "topic": "Płyta grzewcza Electrolux CIT61443 – K1",
-     "description": "Wymiary: szkło {a:hob.glass.width} × {a:hob.glass.depth}, korpus {a:hob.body.width} × {a:hob.body.depth} × {a:hob.body.height}.\nWycięcie: {s:cutouts.hob.width} × {s:cutouts.hob.depth}, {s:cutouts.hob.fromBack} od tylnej krawędzi blatu.\nSzkło na blacie: po {=(<a:hob.glass.width> - <s:cutouts.hob.width>) / 2} z boków; {=<s:cutouts.hob.fromBack> - (<a:hob.glass.depth> - <s:cutouts.hob.depth>) / 2} od tylnej, {=<w:1.depth> - <s:cutouts.hob.fromBack> - (<a:hob.glass.depth> + <s:cutouts.hob.depth>) / 2} od przedniej krawędzi blatu.\nPod płytą: trawers przedni {s:rails.hobFront}, tylny {s:rails.depth}; przegroda {m:hobPanel} za przednim trawersem, {s:rails.hobPanelGap} szczeliny z tyłu.",
+     "description": "Wymiary: szkło {a:hob.glass.width} × {a:hob.glass.depth}, korpus {a:hob.body.width} × {a:hob.body.depth} × {a:hob.body.height}.\nWycięcie: {s:cutouts.hob.width} × {s:cutouts.hob.depth}, {s:cutouts.hob.fromBack} od tylnej krawędzi blatu.\nSzkło na blacie: po {=(<a:hob.glass.width> - <s:cutouts.hob.width>) / 2} z boków; {=<s:cutouts.hob.fromBack> - (<a:hob.glass.depth> - <s:cutouts.hob.depth>) / 2} od tylnej, {=<w:1.depth> - <s:cutouts.hob.fromBack> - (<a:hob.glass.depth> + <s:cutouts.hob.depth>) / 2} od przedniej krawędzi blatu.\nPod płytą: trawers przedni {s:crossRails.hobFront}, tylny {s:crossRails.depth}; przegroda {m:hobPanel} za przednim trawersem, {s:crossRails.hobPanelGap} szczeliny z tyłu.",
      "assumed": "Na liście cięć.",
      "decide": "Odstęp korpusu płyty od przegrody: instrukcja, s. 22."
     },
@@ -883,25 +883,25 @@ window.KITCHEN_COST = {
     {
      "id": "wallFixing",
      "topic": "Mocowanie korpusów do ściany",
-     "description": "Listwy tylne: tak wysokie jak korpusy obok; między korpusami jeden nad drugim {s:frame.bracketSpace} na kątownik.\nKątowniki ({n:wallBrackets}): na górze listwy tylnej; górna listwa w stosie bez kątownika.\nWkręty: listwy do pierwszego korpusu zwykłe, drugi korpus mosiądzowane od środka.\nWyspa stoi wolno.",
+     "description": "Listwy tylne: tak wysokie jak korpusy obok; między korpusami jeden nad drugim {s:strip.bracketSpace} na kątownik.\nKątowniki ({n:wallBrackets}): na górze listwy tylnej; górna listwa w stosie bez kątownika.\nWkręty: listwy do pierwszego korpusu zwykłe, drugi korpus mosiądzowane od środka.\nWyspa stoi wolno.",
      "assumed": "Gazobeton, kołki DuoPower 8."
     },
     {
      "id": "corner",
      "topic": "Narożnik L – korpus narożny",
-     "description": "Korpus K3: drzwi, panel {i:K3/panel.width} i ukryte wypełnienie.\nSłupek zawiasowy: {m:carcass}, gł. {s:hinges.postDepth}, niesie zawiasy.\nPanel wpuszczany: za panelem {i:K3/panel.width}, od słupka do boku korpusu.\nPółka: jedna płyta przez cały korpus; słupek ją przecina (widok 3D to zgłasza).\nCokoły grupy 1 i 2: lista cięć podaje obie pełne długości, jeden przyciąć na miejscu.",
+     "description": "Korpus K3: drzwi, panel {i:K3/frontPanel.width} i ukryte wypełnienie.\nSłupek zawiasowy: {m:carcass}, gł. {s:hinges.postDepth}, niesie zawiasy.\nPanel wpuszczany: za panelem {i:K3/frontPanel.width}, od słupka do boku korpusu.\nPółka: jedna płyta przez cały korpus; słupek ją przecina (widok 3D to zgłasza).\nCokoły grupy 1 i 2: lista cięć podaje obie pełne długości, jeden przyciąć na miejscu.",
      "assumed": "Złącza: jedno opakowanie ({p:connectors} PLN).",
      "decide": "Listwa ścienna pod blatem w narożniku?"
     },
     {
-     "id": "framesPanels",
+     "id": "stripsPanels",
      "topic": "Listwy na sztorc, panele na płasko",
-     "description": "Listwy: {m:frame}, na sztorc, gł. {s:frame.depth}; lakierowane obustronnie i krawędź przednia.\nPanele: {m:panel}, na płasko; lakierowane obustronnie.\nABS przy otwieranym froncie: panel {i:K3/panel.width} – {i:K3/panel.edges}; panel {i:G2[3]/panel.width} – {i:G2[3]/panel.edges}; panel tylny wyspy – brak.\nPanel {i:G2[3]/panel.width} zakrywa koniec panelu {i:K3/panel.width}."
+     "description": "Listwy: {m:strip}, na sztorc, gł. {s:strip.depth}; lakierowane obustronnie i krawędź przednia.\nPanele: {m:frontPanel}, na płasko; lakierowane obustronnie.\nABS przy otwieranym froncie: panel {i:K3/frontPanel.width} – {i:K3/frontPanel.edges}; panel {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel {i:G2[3]/frontPanel.width} zakrywa koniec panelu {i:K3/frontPanel.width}."
     },
     {
      "id": "backStrips",
      "topic": "Listwy tylne za listwami",
-     "description": "Za każdą listwą poza korpusem: listwa tylna z {m:carcass}, gł. {s:frame.depth}, długość listwy.",
+     "description": "Za każdą listwą poza korpusem: listwa tylna z {m:carcass}, gł. {s:strip.depth}, długość listwy.",
      "assumed": "Na liście cięć."
     },
     {
@@ -913,7 +913,7 @@ window.KITCHEN_COST = {
     {
      "id": "backs",
      "topic": "Plecy i panel tylny wyspy",
-     "description": "Plecy {m:back}: tylko za drzwiami szafek.\nWyspa: panel tylny {m:panel} między panelami końcowymi, od podłogi do góry korpusów."
+     "description": "Plecy {m:backPanel}: tylko za drzwiami szafek.\nWyspa: panel tylny {m:frontPanel} między panelami końcowymi, od podłogi do góry korpusów."
     },
     {
      "id": "frontSizes",
@@ -940,7 +940,7 @@ window.KITCHEN_COST = {
      "topic": "Szuflady za drzwiami z płyty (K8 i K12, dół)",
      "description": "K8: drzwi {i:K8/doorDrawers.frontWidth} × {i:K8/doorDrawers.frontHeight}, {i:K8/doorDrawers.count} szuflady {i:K8/doorDrawers.boxWidth} × {i:K8/doorDrawers.runnerLength} × {i:K8/doorDrawers.boxHeight}, zawiasy {i:K8/doorDrawers.hinge}.\nK12: drzwi {i:K12/doorDrawers.frontWidth} × {i:K12/doorDrawers.frontHeight}, {i:K12/doorDrawers.count} szuflady {i:K12/doorDrawers.boxWidth} × {i:K12/doorDrawers.runnerLength} × {i:K12/doorDrawers.boxHeight}, zawiasy {i:K12/doorDrawers.hinge}.\nSkrzynki: {m:drawerBox}, prowadnice kulkowe Häfele L = {i:K12/doorDrawers.runnerLength}, {s:doorDrawers.clearance} luzu z każdej strony.\nPłyta dystansowa po stronie zawiasów: kończy się {s:hinges.postDepth} przed przodem korpusu, tak jak skrzynki; szuflady mijają zawiasy i otwarte drzwi.\nBez półek ruchomych za tymi drzwiami.",
      "assumed": "{n:doorDrawers} kpl. prowadnic po {p:ballRunners} PLN.",
-     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka.\nBlum zamiast płyty (TANDEMBOX M, {p:innerDrawers} za kpl.): {=ROUND(<f:innerDrawerExtra>)} zł więcej za szufladę, {=ROUND(<f:innerDrawerExtra> * <n:doorDrawers>)} zł razem; boki {s:drawers.M.sideHeight} zamiast {s:doorDrawers.side}; w K12 sprawdzić minimalną szerokość ({=<k:K12.innerWidth> - <t:carcass>}).\nPłyta {m:drawerBox}: {q:drawerBoard} ark., ostatni słabo wykorzystany; skrzynki zmieszczą się w odpadach {m:carcass}."
+     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka.\nBlum zamiast płyty (TANDEMBOX M, {p:innerDrawers} za kpl.): {=ROUND(<f:innerDrawerExtra>)} zł więcej za szufladę, {=ROUND(<f:innerDrawerExtra> * <n:doorDrawers>)} zł razem; boki {s:drawers.M.sideHeight} zamiast {s:doorDrawers.sideHeight}; w K12 sprawdzić minimalną szerokość ({=<k:K12.innerWidth> - <t:carcass>}).\nPłyta {m:drawerBox}: {q:drawerBoard} ark., ostatni słabo wykorzystany; skrzynki zmieszczą się w odpadach {m:carcass}."
     },
     {
      "id": "worktops",
@@ -962,7 +962,7 @@ window.KITCHEN_COST = {
     {
      "id": "lacquered",
      "topic": "Części lakierowane",
-     "description": "Fronty shaker: {p:fronts} PLN/m², NIESPRAWDZONE (kwota właściciela).\nListwy, panele, cokół: {p:frames} PLN/m² (lakierowane.pl, jedna strona).\nCokół wilgocioodporny; wszystko od jednego producenta, jeden kolor.",
+     "description": "Fronty shaker: {p:fronts} PLN/m², NIESPRAWDZONE (kwota właściciela).\nListwy, panele, cokół: {p:strips} PLN/m² (lakierowane.pl, jedna strona).\nCokół wilgocioodporny; wszystko od jednego producenta, jeden kolor.",
      "decide": "Pisemna oferta na wszystkie części lakierowane, obustronnie."
     },
     {
