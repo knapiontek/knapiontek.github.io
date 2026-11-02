@@ -10,9 +10,8 @@
      finishes      extra finishes for the Project tab, drawn with a material of the view
      hardware      sizes for the drawing only (no effect on the cost); open: how far doors and drawers open
      metals        the metal finishes of the handles to choose from; hardware.handle.metal is the default
-     lights        pendantBottom: the height of the pendants' bottom; pendants: count of them, spacing apart, centred over the
-                   worktop of their group; downlights, each at {group, u, n}: u along that group, n from its wall line, so
-                   it moves with the group; between [sink, hob] instead of u: halfway between their axes
+     lights        pendantBottom: the height of the pendants' bottom; pendants: centred over the worktop of their group;
+                   downlights at {group, u, n} (n from the wall), between [sink, hob] instead of u: halfway between their axes
      cameras       the views in the dock; the first one opens */
 window.KITCHEN_VIEW = {
  "placement": {

@@ -1,7 +1,7 @@
 /* engine.js - builds the kitchen model from design.js for design.html, cost.html and view.html.
    The same project always gives the same model. No drawing and no numbers of this kitchen: they all come from design.js.
-   Coordinates in mm per group: u along the group, v up from the floor, n out from the carcass backs (the same in every group;
-   the wall of a group lies settings.carcass.wallGap of that group behind them: groups[g].wall); a box is [u0, u1, v0, v1, n0, n1]. */
+   Coordinates in mm per group: u along the group, v up from the floor, n out from the carcass backs (groups[g].wall: n of
+   the wall); a box is [u0, u1, v0, v1, n0, n1]. */
 (function (root) {
   'use strict';
 
@@ -49,7 +49,7 @@
 
   // visible names (Polish) of the identifiers above; the code keeps the English identifiers
   const LABELS = {
-    type: { space: 'wypełnienie', plasterboard: 'zabudowa GK', plinth: 'cokół', worktop: 'blat', endPanel: 'panel końcowy', wallPanel: 'panel ścienny', frontPanel: 'panel',
+    type: { space: 'wypełnienie', plasterboard: 'zabudowa GK', plinth: 'cokół', worktop: 'blat', endPanel: 'panel końcowy', wallPanel: 'panel ścienny', frontPanel: 'panel przedni',
       strip: 'listwa', cabinet: 'szafka', drawer: 'szuflada', oven: 'piekarnik', microwave: 'mikrofalówka' },
     tag: { dummy: 'atrapa', hob: 'płyta grzewcza', sink: 'zlew', bins: 'kosze', innerDrawer: 'szuflada wewnętrzna', island: 'wyspa',
       coffee: 'ekspres', doorDrawers: 'szuflady za drzwiami', fridge: 'lodówka', freezer: 'zamrażarka', dishwasher: 'zmywarka' },
@@ -86,10 +86,9 @@
   const HINGE_SIDES = ['left', 'right'];
   LABELS.side = Object.fromEntries(SIDES.map(side => [side, LABELS.edge[side]]));
 
-  // Lacquered edges of the finished parts (they get no ABS): fixed here, not in design.js, because they follow from how
-  // the kitchen is seen. A strip on edge shows only its long edge facing the room.
+  // a lacquered material is lacquered on both faces; its edges only where the room sees them (a strip on edge: its front)
   const STRIP_LACQUERED_SIDES = ['front'];
-  const LACQUER = {
+  const LACQUERED_EDGES = {
     front: { long: 2, short: 2 },
     strip: { long: STRIP_LACQUERED_SIDES.length, short: 0 },
     plinth: { long: 0, short: 0 }
@@ -327,14 +326,13 @@
     const thickness = Object.fromEntries(Object.entries(materialFor).map(([use, code]) => [use, projectData.materials[code].thickness]));
     // label, e.g. "Płyta wiórowa Egger U708 ST9 szary jasny 18"
     const materials = Object.fromEntries(Object.entries(projectData.materials).map(([code, m]) => [code, { ...m, label: m.name + ' ' + m.thickness }]));
+    const lacquerOf = (kind, use) => (projectData.materials[materialFor[use]].lacquered ? LACQUERED_EDGES[kind] : null);
     const board = thickness.carcass, half = board / 2, frontThickness = thickness.cabinet, carcassDepth = settings.carcass.depth;
-    // depths (n) from the carcass backs; a front stands carcass.frontGap in front of its carcass
     const carcassBack = 0;
     const carcassFront = carcassBack + carcassDepth;
     const frontFace = carcassFront + settings.carcass.frontGap + frontThickness;
     const plinthFace = frontFace - settings.plinth.setback;
-    // a front panel of a carcass is screwed onto it (no gap, unlike a front); one outside a carcass stands in the front plane,
-    // screwed to its neighbour
+    // a front panel outside a carcass is screwed to its neighbour, in the front plane
     const panelFace = carcassFront + thickness.frontPanel;
     // [u0, u1] of a spacer of carcass board inside the carcass side on the hinge side (it carries runners past the hinges)
     const spacerOnHingeSide = (carcass, hinge) => (hinge === 'right' ? [carcass.u1 - 2 * board, carcass.u1 - board] : [carcass.u0 + board, carcass.u0 + 2 * board]);
@@ -388,7 +386,6 @@
       const stacked = stack(widths, pieces.filter(p => String(p.group) === g));
       for (const { piece, why } of stacked.skipped) warn(`${placeOf(piece)}: ${typeLabel(piece.type)} ${why} - pominięty.`, piece.index, true);
       const island = stacked.items.some(item => item.type === 'worktop' && hasTag(item, 'island')); // a free-standing island: its worktop has the tag island
-      // an island has no wall: its line is the carcass backs
       let wallGap = island ? 0 : settings.carcass.wallGap[g];
       if (!(wallGap >= 0)) {
         warn(`Grupa ${g}: brak ustawienia carcass.wallGap.${g} (odstęp od ściany) - przyjęto 0.`);
@@ -402,7 +399,7 @@
         items: stacked.items,
         island,
         wallGap,
-        wall: carcassBack - wallGap, // n of the wall line
+        wall: carcassBack - wallGap,
         areas: carcassAreas(stacked.items)
       };
       for (const item of stacked.items) {
@@ -592,7 +589,7 @@
     }
 
     // ---- strips (with a back strip outside a carcass), front panels, wall panels, plinths, plasterboard ----
-    const stripSettings = settings.strip, plasterSettings = settings.plasterboard;
+    const stripSettings = settings.strip, plasterSettings = settings.plasterboard, stripLacquer = lacquerOf('strip', 'strip');
     for (const groupModel of Object.values(groups)) {
       for (const item of groupModel.items) {
         const { u0, u1, v0, v1 } = item, width = u1 - u0, height = v1 - v0;
@@ -601,11 +598,10 @@
             group: groupModel.group, item, material: materialFor.strip, box: [u0, u1, v0, v1, frontFace - stripSettings.depth, frontFace],
             name: (height > width ? 'Listwa ' : 'Listwa pozioma ') + thickness.strip + ' na sztorc (gł. ' + stripSettings.depth + ')',
             a: stripSettings.depth, b: Math.max(width, height),
-            lacquer: LACQUER.strip, lacqueredSides: STRIP_LACQUERED_SIDES
+            lacquer: stripLacquer, lacqueredSides: stripLacquer ? STRIP_LACQUERED_SIDES : []
           });
           if (!item.carcass) {
-            // back strips: as high as the carcasses beside the strip, one per carcass one above the other; a wall bracket at each
-            // joint of the stack (the back strip is shortened on site to make room for it; the island stands free: no bracket)
+            // back strips: one per carcass beside the strip; a wall bracket at each joint of the stack (cut in on site), none on an island
             const along = height > width;
             const beside = along ? carcasses.filter(carcass => carcass.group === groupModel.group && (carcass.u0 === u1 || carcass.u1 === u0) && carcass.v0 < v1 && carcass.v1 > v0) : [];
             let spans = [[v0, v1]];
@@ -638,11 +634,11 @@
           const edges = SIDES
             .filter(side => groupModel.items.some(other => opens(other) && neighbour[side](other)))
             .map(side => (side === 'top' || side === 'bottom' ? { side, length: width, along: 'a' } : { side, length: height, along: 'b' }));
-          frontPanels.push({ group: groupModel.group, item, material: materialFor.frontPanel, name: 'Panel ' + thickness.frontPanel, a: width, b: height, box: [u0, u1, v0, v1, ...(item.carcass ? [carcassFront, panelFace] : [frontFace - thickness.frontPanel, frontFace])], edges });
+          frontPanels.push({ group: groupModel.group, item, material: materialFor.frontPanel, name: 'Panel przedni ' + thickness.frontPanel, a: width, b: height, box: [u0, u1, v0, v1, ...(item.carcass ? [carcassFront, panelFace] : [frontFace - thickness.frontPanel, frontFace])], edges });
         } else if (item.type === 'wallPanel') {
           wallPanels.push({ group: groupModel.group, item, material: materialFor.wallPanel, name: 'Panel ścienny ' + thickness.wallPanel, a: width, b: height, box: [u0, u1, v0, v1, groupModel.wall, groupModel.wall + thickness.wallPanel], edges: [] });
         } else if (item.type === 'plinth') {
-          plinths.push({ group: groupModel.group, item, material: materialFor.plinth, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - thickness.plinth, plinthFace], lacquer: LACQUER.plinth });
+          plinths.push({ group: groupModel.group, item, material: materialFor.plinth, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - thickness.plinth, plinthFace], lacquer: lacquerOf('plinth', 'plinth') });
         } else if (item.type === 'plasterboard') {
           // cladding: the face plus the return along the long side; profiles: UD on both fixed edges, CD on the outer edge + cross pieces
           const long = Math.max(width, height), short = Math.min(width, height), depth = plasterSettings.depth;
@@ -657,8 +653,7 @@
       }
     }
 
-    // ---- worktops: front edge worktop.overhang before the fronts; at a wall the worktop reaches the wall (the material, as bought,
-    // is cut at the back), an island worktop keeps the depth of its material (islandWorktop) ----
+    // ---- worktops: at a wall cut at the back to reach the wall; an island keeps the depth of its material ----
     for (const groupModel of Object.values(groups)) {
       const top = groupModel.items.find(i => i.type === 'worktop');
       if (!top) {
@@ -765,7 +760,7 @@
         const front = {
           id: fronts.length + 1, group: groupModel.group, item, carcassId: carcass ? carcass.id : null, opening, tags: item.tags, gaps: item.gaps,
           ...box, width: box.u1 - box.u0, height: box.v1 - box.v0, handle: item.handle, hand: hinged ? item.hinge : '', material: materialFor[item.type],
-          lacquer: LACQUER.front
+          lacquer: lacquerOf('front', item.type)
         };
         item.front = front;
         fronts.push(front);
@@ -1064,7 +1059,7 @@
         columns: carcass.span > 1 ? [carcass.column, carcass.column + carcass.span - 1] : [carcass.column],
         x: [carcass.u0, carcass.u1],
         y: [carcass.v0, carcass.v1],
-        z: [model.carcassBack, model.carcassFront].map(n => n - model.groups[carcass.group].wall), // from the wall (an island: from its back)
+        z: [model.carcassBack, model.carcassFront].map(n => n - model.groups[carcass.group].wall), // from the wall
         size: [carcass.u1 - carcass.u0, carcass.v1 - carcass.v0, model.carcassDepth],
         kind: LABELS.carcassKind[carcass.kind],
         flags: carcass.flags.map(flag => LABELS.flag[flag]),

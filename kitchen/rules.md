@@ -22,7 +22,7 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | blat | blat; jego grubość = wysokość elementu |
 | panel końcowy | pionowa płyta pod końcem blatu, do podłogi; jego grubość = szerokość elementu |
 | panel ścienny | płyta na ścianie |
-| panel | płyta na płasko |
+| panel przedni | płyta na płasko |
 | listwa | listwa na sztorc w płaszczyźnie frontów |
 | szafka | miejsce w korpusie z drzwiami |
 | szuflada | miejsce w korpusie z szufladą |
@@ -68,11 +68,11 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 - **Szuflada** jest wysoka (D), gdy front przekracza ustaloną wysokość, a inaczej niska (M).
 - **Szuflady za drzwiami:** skrzynki z płyty na prowadnicach kulkowych; po stronie zawiasów płyta dystansowa, żeby szuflady mijały zawiasy i otwarte drzwi.
 
-## 4. Fronty, listwy, panele, blat
+## 4. Fronty, listwy, panele przednie, blat
 
 - **Front** = moduł minus 4 szczeliny (lewa, prawa, góra, dół). Front stoi w ustalonej szczelinie przed korpusem. Front shaker ma ramę o stałej szerokości.
 - **Listwa** stoi na sztorc w płaszczyźnie frontów. Gdy nie należy do korpusu, dostaje listwy tylne przy tyle korpusów, tak wysokie jak korpusy obok: jedną na każdy korpus jeden nad drugim.
-- **Panel** leży na płasko. Panel w korpusie jest przykręcony do korpusu, bez szczeliny; panel poza korpusem stoi w płaszczyźnie frontów i jest przykręcony do sąsiedniego panelu.
+- **Panel przedni** leży na płasko. W korpusie jest przykręcony do korpusu, bez szczeliny; poza korpusem stoi w płaszczyźnie frontów i jest przykręcony do sąsiedniego panelu.
 - **Blat:**
   - materiał blatu podaje głębokość płyty, którą się kupuje; wyspa ma osobny materiał;
   - wystaje przed fronty o nawis;
@@ -100,17 +100,14 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
 ## 6. Krawędzie
 
-- **Lakier:**
-  - fronty: obie strony i wszystkie krawędzie;
-  - listwy: obie strony i krawędź przednia;
-  - cokół i panele: tylko obie strony.
+- **Lakier:** materiał lakierowany ma lakier na obu stronach. Krawędzie są lakierowane tylko we frontach (wszystkie) i w listwach (krawędź przednia).
 - **ABS na płytach korpusu** jest tylko na krawędziach widocznych:
   - boki, wieńce, półki, trawersy płaskie, słupek zawiasowy i płyta dystansowa mają ABS na krawędzi przedniej;
   - trawers na sztorc ma ABS na krawędzi dolnej;
   - płyta dystansowa w szafce z ekspresem kończy się tuż nad półką wysuwaną, więc ma ABS także na górze; przy szufladach za drzwiami sięga do płyty nad nią i góra jest zakryta.
 - **Szuflady za drzwiami:** ABS na krawędziach widocznych po wysunięciu.
 - **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad systemowych.
-- **ABS na panelu** jest na każdej krawędzi przy froncie, który się otwiera.
+- **ABS na panelu przednim** jest na każdej krawędzi przy froncie, który się otwiera.
 - **Blat i panel końcowy** mają ABS na krawędziach widocznych:
   - blat: krawędź boczna nad panelem końcowym, w wyspie także krawędź tylna;
   - panel końcowy: krawędź przednia, w wyspie także krawędź tylna;
