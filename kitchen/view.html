@@ -172,9 +172,6 @@ body.shut .toggle{display:flex}
           <button data-h="bar" aria-pressed="false">Reling</button>
         </div>
         <div class="row" id="metal">
-          <button data-m="brass" aria-pressed="true" class="swatch" aria-label="Złoty (mosiądz)" title="Złoty (mosiądz)"><i style="background:#c49a5c"></i></button>
-          <button data-m="nickel" aria-pressed="false" class="swatch" aria-label="Nikiel" title="Nikiel"><i style="background:#c9c7c0"></i></button>
-          <button data-m="black" aria-pressed="false" class="swatch" aria-label="Czarny" title="Czarny"><i style="background:#1c1d1f"></i></button>
         </div>
       </section>
       <section>
@@ -531,6 +528,9 @@ function floorTexture(key) {
   return t;
 }
 const METALS = SCENE.metals, handleMetal = METALS[fittings.handle.metal];
+// a swatch per metal of view.js, the default one pressed
+document.getElementById('metal').innerHTML = Object.entries(METALS).map(([key, m]) =>
+  `<button data-m="${key}" aria-pressed="${key === fittings.handle.metal}" class="swatch" aria-label="${esc(m.name)}" title="${esc(m.name)}"><i style="background:${m.color}"></i></button>`).join('');
 const standard = options => new THREE.MeshStandardMaterial(options);
 const physical = options => new THREE.MeshPhysicalMaterial(options);
 // colour of the holes by kind (engine.js hole.kind): hinges (cup, mounting plate), shelf pins, runners
@@ -565,7 +565,7 @@ const MAT = {
 };
 // board materials of design.js (materials): with a texture its decor scan (textures.js; missing there: the material's colour),
 // lacquered ones a satin clearcoat
-const DECORS = (window.KITCHEN_TEXTURES || {}), decorMaterials = new Set();
+const DECORS = (window.KITCHEN_TEXTURES || {}).decors || {}, decorMaterials = new Set();
 const decorMaterial = name => {
   const m = physical({ map: decorTexture(DECORS[name]), roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, envMapIntensity: 0.5 });
   decorMaterials.add(m);
@@ -912,7 +912,7 @@ const sinkCut = sinkGroup && (worktopOf(sinkGroup).cutouts || []).find(c => c.ki
 const sinkItem = sinkCut && itemsOfGroup[sinkGroup].find(i => hasTag(i, 'sink'));
 const sinkU = sinkCut ? (sinkCut.u0 + sinkCut.u1) / 2 : 0, sinkN = sinkCut ? (sinkCut.n0 + sinkCut.n1) / 2 : 0; // sink centre on its group
 // sink outline (S) and bowl (B), along the group (u) and from the wall (n)
-const sinkU0 = sinkU - sinkData.outer.width / 2, sinkU1 = sinkU + sinkData.outer.width / 2, sinkN0 = sinkN - sinkData.outer.depth / 2, sinkN1 = sinkN + sinkData.outer.depth / 2;
+const sinkU0 = sinkU - sinkData.body.width / 2, sinkU1 = sinkU + sinkData.body.width / 2, sinkN0 = sinkN - sinkData.body.depth / 2, sinkN1 = sinkN + sinkData.body.depth / 2;
 const bowlU0 = sinkU - sinkData.bowl.width / 2, bowlU1 = sinkU + sinkData.bowl.width / 2, bowlN0 = sinkN - sinkData.bowl.depth / 2, bowlN1 = sinkN + sinkData.bowl.depth / 2;
 const sinkTop = sinkGroup ? worktopTopOf(sinkGroup) : 0;
 const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowl.height;
@@ -970,7 +970,7 @@ function buildGroup(group) {
     } else if (type === 'splash') { // on the wall
       const m = groupBox(roomLayer.wallpanel, group, u0, u1, v0, v1, 0, splashThickness, splashMaterial);
       if (m) m.userData.grain = 'x';
-    } else if (type === 'board') { // plasterboard box; a filler is a void: not drawn
+    } else if (type === 'plasterboard') { // plasterboard box; a filler is a void: not drawn
       groupBox(roomLayer.walls, group, u0, u1, v0, v1, 0, settings.plasterboard.depth, MAT.wall);
     } else if (type === 'oven' || type === 'micro') {
       builtInAppliance(group, item, type);
@@ -1152,7 +1152,7 @@ function buildCarcass(K) {
       }
     }
   }
-  if (K.fridge) fridgeBody(K);
+  if (K.fridge && K.boxes.some(b => b.fit)) fridgeBody(K);
   if (K.grille) plinthGrille(K);
 }
 // bean-to-cup coffee machine (appliances.js coffee.body), front face at n1, standing on y, centred on uc
@@ -1187,13 +1187,11 @@ function plinthGrille(K) {
   localBox(P, g0 + 5, g1 - 5, h0 + 5, h1 - 5, plinthFace - plinthThickness, plinthFace - 1, MAT.ovenInside, true); // opening through the plinth
   for (let x = g0 + 5 + 12; x < g1 - 8; x += 12) localBox(P, x - 2, x + 2, h0 + 5, h1 - 5, plinthFace - 2, plinthFace + 2, MAT.zinc); // vertical louvres
 }
-// built-in fridge-freezer at the manufacturer's size (APPLIANCES.fridge.body), standing on the carcass bottom, centred,
-// its doors at the carcass front (fridgeDoorPlane: where the body ends and the doors start); split between the appliance doors
+// built-in fridge-freezer where engine.js fits it (item.fit, at the manufacturer's size), its doors at the carcass front (fridgeDoorPlane: where the body ends and the doors start); split between the appliance doors
 const fridgeDoorPlane = carcassFront - APPLIANCES.fridge.doors.setback;
 function fridgeBody(K) {
-  const A = APPLIANCES.fridge, P = groupLayer[K.group].fridge, uc = (K.u0 + K.u1) / 2;
-  const u0 = uc - A.body.width / 2, u1 = uc + A.body.width / 2, bodyV0 = K.v0 + board, bodyV1 = bodyV0 + A.body.height;
-  K.fridgeBody = { u0, u1, v0: bodyV0, v1: bodyV1 };
+  const A = APPLIANCES.fridge, P = groupLayer[K.group].fridge, fit = K.boxes.find(b => b.fit).fit;
+  const u0 = fit.bodyU0, u1 = fit.bodyU1, bodyV0 = fit.bodyV0, bodyV1 = fit.bodyV1;
   envelope(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body.depth, fridgeDoorPlane, A.name + ' – korpus ' + A.body.width + ' × ' + A.body.height + ' (bez drzwi)');
   openFrontBox(P, u0, u1, bodyV0, bodyV1, carcassFront - A.body.depth, fridgeDoorPlane, 24, MAT.fridge);
   const split = bodyV0 + (A.doors.freezer.top + A.doors.fridge.bottom) / 2; // the middle of the gap between the appliance doors
@@ -1240,8 +1238,8 @@ function buildFront(group, item) {
       localCylinder(mover.layers.hardware, cup.diameter / 2 - 0.5, H.cupDepth, MAT.zinc, cupU, v, frontFace - frontThickness + H.cupDepth / 2, 'z', 24); // cup in the front
       localCylinder(mover.layers.hardware, 24, 1.5, MAT.zinc, cupU, v, carcassFront - 1, 'z', 24); // cup flange, 0.2 mm off the carcass
     }
-    mover.label = 'Drzwi ' + size + ' · zawiasy: ' + count + (front.pullouts ? ' · za nimi szuflady: ' + front.pullouts.count : '');
-    if (front.pullouts) pulloutDrawers(group, item, mover);
+    mover.label = 'Drzwi ' + size + ' · zawiasy: ' + count + (front.doorDrawers ? ' · za nimi szuflady: ' + front.doorDrawers.count : '');
+    if (front.doorDrawers) doorDrawerDrawers(group, item, mover);
   } else if (opening === 'drawer' && K) {
     const { size: drawerSize, sideHeight, innerU0, innerU1, bottomV: b0, bins, inner } = front.drawer;
     const deep = drawerSize === 'D', box = mover.layers.drawers, hardware = mover.layers.hardware;
@@ -1281,13 +1279,13 @@ function buildFront(group, item) {
       K.movers.push(innerMover);
       linkTo(mover, innerMover);
       for (const b of model.boards) if (b.frontId === front.id && b.inner) registerPart(K, edgeLook(localBox(innerBox, ...b.box, BOARD[b.material]), b.edges, b.material), b);
-      const innerTop = iv - 4 + settings.drawers.M.side;
+      const innerTop = iv - 4 + settings.drawers.M.sideHeight;
       sides(innerBox, iv - 4, innerTop);
       localBox(innerBox, innerU0 + s1, innerU1 - s1, iv - 4, innerTop, n1 - 16, n1 - 2, MAT.drawerSide); // metal inner front
       for (let j = 1; j < 5; j++) { const x = innerU0 + s1 + ((innerU1 - innerU0 - 2 * s1) * j) / 5; localBox(innerBox, x - 3, x + 3, iv + 16, iv + 66, carcassBack + 76, carcassFront - 44, MAT.insert, true); } // cutlery insert dividers
       localBox(innerBox, innerU0 + 40, innerU1 - 40, iv + 16, iv + 20, carcassBack + 76, carcassFront - 44, MAT.insert, true);
       runners(innerHardware, iv);
-      innerMover.label = 'Szuflada wewnętrzna M (' + settings.drawers.M.side + ') na sztućce · front wewnętrzny ' + (innerU1 - innerU0 - settings.drawers.inner.frontDeduction);
+      innerMover.label = 'Szuflada wewnętrzna M (' + settings.drawers.M.sideHeight + ') na sztućce · front wewnętrzny ' + (innerU1 - innerU0 - settings.drawers.inner.frontDeduction);
     }
   } else if (opening === 'dishwasher') {
     const P = groupLayer[group].dishwasher, { u0, u1 } = item, t0 = fv0, t1 = fv1 - 6; // tub above the plinth, under the door top
@@ -1303,9 +1301,9 @@ function buildFront(group, item) {
     const A = APPLIANCES.dishwasher, uc = (u0 + u1) / 2, { height: h, doorHeight, doorV0: doorBottom } = item.fit, w0 = uc - A.body.width / 2, w1 = uc + A.body.width / 2;
     envelope(P, w0, w1, doorBottom, h, carcassFront - A.body.depth, carcassFront, A.name + ' – ' + A.body.width + ' × ' + Math.round(h) + ' × ' + A.body.depth + ', drzwi ' + Math.round(doorHeight));
     envelope(P, w0, w1, 0, doorBottom, carcassFront - A.body.depth, carcassFront - A.baseSetback, A.name + ' – podstawa, ' + A.baseSetback + ' za frontem');
-  } else if (opening === 'fridge' && K && K.fridgeBody) {
+  } else if (opening === 'fridge' && item.fit) {
     // the appliance door behind this front, from the installation drawing (APPLIANCES.fridge.doors)
-    const body = K.fridgeBody, freezer = hasTag(item, 'freezer'), A = APPLIANCES.fridge, door = freezer ? A.doors.freezer : A.doors.fridge;
+    const body = { u0: item.fit.bodyU0, u1: item.fit.bodyU1, v0: item.fit.bodyV0 }, freezer = hasTag(item, 'freezer'), A = APPLIANCES.fridge, door = freezer ? A.doors.freezer : A.doors.fridge;
     const d0 = body.v0 + door.bottom, d1 = body.v0 + door.top;
     envelope(mover.layers.fridge, body.u0, body.u1, d0, d1, fridgeDoorPlane, carcassFront, A.name + ' – drzwi ' + (freezer ? 'zamrażarki ' : 'lodówki ') + (door.top - door.bottom));
     localBox(mover.layers.fridge, body.u0, body.u1, d0, d1, fridgeDoorPlane, carcassFront - 2, MAT.fridge); // appliance door
@@ -1316,10 +1314,10 @@ function buildFront(group, item) {
   }
   if (!mover.label) mover.label = 'Front ' + size;
 }
-// drawers behind a door (engine.js: tag pullouts): each box slides out on its ball runners once the door is open, full extension;
+// drawers behind a door (engine.js: tag doorDrawers): each box slides out on its ball runners once the door is open, full extension;
 // the runner's carcass part on the carcass side or on the spacer, its moving part on the box side
-function pulloutDrawers(group, item, door) {
-  const front = item.front, K = item.carcass, P = front.pullouts, R = settings.pullouts.runner;
+function doorDrawerDrawers(group, item, door) {
+  const front = item.front, K = item.carcass, P = front.doorDrawers, R = settings.doorDrawers.runner;
   P.boxes.forEach((B, j) => {
     const mover = movingPart(group, 'drawer', 0, 0, 0), box = mover.layers.drawers;
     mover.item = item;
@@ -1327,7 +1325,7 @@ function pulloutDrawers(group, item, door) {
     mover.label = 'Szuflada za drzwiami ' + (j + 1) + '/' + P.count + ' · ' + P.boxWidth + ' × ' + P.runner + ' × ' + P.boxHeight + ', prowadnice kulkowe ' + P.runner;
     K.movers.push(mover);
     linkTo(door, mover);
-    for (const b of model.boards) if (b.frontId === front.id && b.pullout === j) registerPart(K, edgeLook(localBox(box, ...b.box, BOARD[b.material]), b.edges, b.material), b);
+    for (const b of model.boards) if (b.frontId === front.id && b.doorDrawer === j) registerPart(K, edgeLook(localBox(box, ...b.box, BOARD[b.material]), b.edges, b.material), b);
     const y0 = B.v0 + model.thickness.drawerBox + 20, y1 = y0 + 35; // 35 high runner bars on the box sides
     for (const [a, b] of [[B.u0 - R.gap, B.u0], [B.u1, B.u1 + R.gap]]) {
       localBox(groupLayer[group].hardware, ...(a < B.u0 ? [a, a + R.gap / 2] : [b - R.gap / 2, b]), y0, y1, B.n0, B.n1, MAT.zinc); // carcass part
@@ -1369,7 +1367,7 @@ function geometryCheck() {
   for (const m of carcassMeshes) {
     const u = m.userData;
     if (!u.role) continue;
-    const kind = { drawerBottom: 'drawer', drawerBack: 'drawer', pulloutFront: 'drawer', pulloutBottom: 'drawer', pulloutSide: 'drawer', pulloutBack: 'drawer', backStrip: 'strip', adjustableShelf: 'shelf' }[u.id] || 'carcass';
+    const kind = { drawerBottom: 'drawer', drawerBack: 'drawer', doorDrawerFront: 'drawer', doorDrawerBottom: 'drawer', doorDrawerSide: 'drawer', doorDrawerBack: 'drawer', backStrip: 'strip', adjustableShelf: 'shelf' }[u.id] || 'carcass';
     parts.push({ kind, name: (u.K ? u.K.name + ' ' : '') + u.role + ' ' + u.a + ' × ' + u.b, box: boxOf(m), object: m });
   }
   for (const mover of movers) {
@@ -1879,7 +1877,7 @@ const PANEL_COLORS = {
   back: { color: '#c9b9ea', label: 'Plecy, ' + model.materials[model.materialFor.back].label }, backStrip: { color: '#e98fc4', label: 'Listwa tylna za listwą' },
   hobPanel: { color: '#7fd0c8', label: 'Przegroda pod płytą' }, hingePost: { color: '#e07b39', label: 'Słupek zawiasowy' }, spacer: { color: '#c46a2b', label: 'Płyta dystansowa' }, insetPanel: { color: '#d9a35c', label: 'Panel wpuszczany' },
   drawerBottom: { color: '#f5d76e', label: 'Dno szuflady' }, drawerBack: { color: '#e3ad3c', label: 'Tył szuflady' },
-  pulloutFront: { color: '#d99a2b', label: 'Czoło szuflady za drzwiami' }, pulloutBottom: { color: '#f5d76e', label: 'Dno szuflady za drzwiami' }, pulloutSide: { color: '#ecc45a', label: 'Bok szuflady za drzwiami' }, pulloutBack: { color: '#e3ad3c', label: 'Tył szuflady za drzwiami' }
+  doorDrawerFront: { color: '#d99a2b', label: 'Czoło szuflady za drzwiami' }, doorDrawerBottom: { color: '#f5d76e', label: 'Dno szuflady za drzwiami' }, doorDrawerSide: { color: '#ecc45a', label: 'Bok szuflady za drzwiami' }, doorDrawerBack: { color: '#e3ad3c', label: 'Tył szuflady za drzwiami' }
 };
 const panelMaterial = {};
 for (const [id, { color }] of Object.entries(PANEL_COLORS)) panelMaterial[id] = standard({ color: linear(color), roughness: 0.7 });

@@ -615,7 +615,7 @@ function readTables(columnRows, componentRows, noteRows) {
 // fill and stroke colour names in CONFIG.colors, per type drawn as a plain rectangle
 const RECT_COLORS = {
   filler: { fill: 'filler', stroke: 'fillerStroke' },
-  board: { fill: 'board', stroke: 'boardStroke' },
+  plasterboard: { fill: 'board', stroke: 'boardStroke' },
   worktop: { fill: 'worktop', stroke: 'worktopStroke' },
   fall: { fill: 'worktop', stroke: 'worktopStroke' },
   splash: { fill: 'splash', stroke: 'splashStroke' },
@@ -693,7 +693,7 @@ function drawMicro(item, y) {
 // one drawing function per type (every type of KE.TYPES has one)
 const DRAW = {
   filler: drawRect,
-  board: drawRect,
+  plasterboard: drawRect,
   worktop: drawRect,
   fall: drawRect,
   splash: drawRect,

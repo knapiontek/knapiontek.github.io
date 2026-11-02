@@ -7,7 +7,7 @@
   /* ================= 1. VOCABULARY: types, tags and what they build ================= */
 
   // type = what a component is; exactly one per component, it decides what gets built (rules.md, section 2)
-  const TYPES = ['filler', 'board', 'plinth', 'worktop', 'fall', 'splash', 'panel', 'frame', 'cabinet', 'drawer', 'oven', 'micro'];
+  const TYPES = ['filler', 'plasterboard', 'plinth', 'worktop', 'fall', 'splash', 'panel', 'frame', 'cabinet', 'drawer', 'oven', 'micro'];
 
   // tag = an extra on a type: it adds to the same build. Each tag is allowed only on the types listed.
   const TAGS = {
@@ -18,13 +18,14 @@
     inner: ['drawer'],       // inner cutlery drawer above the drawer box, behind the same front
     island: ['worktop'],     // island worktop: of the islandWorktop material, the island back panel, no wall
     coffee: ['cabinet'],     // pull-out shelf at the bottom, shelves above it, no other shelves
-    pullouts: ['cabinet'],   // drawers of board on ball runners behind the door, a spacer on the hinge side, no shelves
+    doorDrawers: ['cabinet'],   // drawers of board on ball runners behind the door, a spacer on the hinge side, no shelves
     fridge: ['cabinet'],     // front on a built-in fridge door: no hinges, no shelves, no back
     freezer: ['cabinet'],    // the same, freezer door
     dishwasher: ['cabinet']  // front on a built-in dishwasher door: no carcass, no hinges
   };
   const TAG_NAMES = Object.keys(TAGS);
-  const APPLIANCE_TAGS = ['fridge', 'freezer', 'dishwasher']; // a front on an appliance door: at most one per component
+  // at most one tag of each set per component
+  const EXCLUSIVE_TAGS = [['fridge', 'freezer', 'dishwasher'], ['dummy', 'bins'], ['dummy', 'inner'], ['coffee', 'doorDrawers']];
 
   const FRONT_TYPES = ['cabinet', 'drawer'];              // have a front: 4 gaps, a handle
   const BOX_TYPES = [...FRONT_TYPES, 'oven', 'micro'];    // stand in a carcass (need a carcass name, except a dishwasher)
@@ -38,7 +39,7 @@
   const USES = [...BOARD_TYPES, ISLAND_USE, ISLAND_FALL_USE, ...PARTS];
 
   // carcass flags: a carcass has the flag when one of its boxes has one of the tags
-  const CARCASS_FLAGS = { sink: ['sink'], hob: ['hob'], fridge: ['fridge', 'freezer'], coffee: ['coffee'], pullouts: ['pullouts'] };
+  const CARCASS_FLAGS = { sink: ['sink'], hob: ['hob'], fridge: ['fridge', 'freezer'], coffee: ['coffee'], doorDrawers: ['doorDrawers'] };
 
   // a carcass on a plinth gets a ventilation grille in the plinth when it holds one of these (air intake for the appliance)
   const GRILLE_FOR = { types: ['oven'], tags: ['fridge', 'freezer'] };
@@ -47,10 +48,10 @@
 
   // visible names (Polish) of the identifiers above; the code keeps the English identifiers
   const LABELS = {
-    type: { filler: 'wypełnienie', board: 'zabudowa GK', plinth: 'cokół', worktop: 'blat', fall: 'panel boczny', splash: 'panel ścienny', panel: 'panel',
+    type: { filler: 'wypełnienie', plasterboard: 'zabudowa GK', plinth: 'cokół', worktop: 'blat', fall: 'panel boczny', splash: 'panel ścienny', panel: 'panel',
       frame: 'listwa', cabinet: 'szafka', drawer: 'szuflada', oven: 'piekarnik', micro: 'mikrofalówka' },
     tag: { dummy: 'atrapa', hob: 'płyta grzewcza', sink: 'zlew', bins: 'kosze', inner: 'szuflada wewnętrzna', island: 'wyspa',
-      coffee: 'ekspres', pullouts: 'szuflady za drzwiami', fridge: 'lodówka', freezer: 'zamrażarka', dishwasher: 'zmywarka' },
+      coffee: 'ekspres', doorDrawers: 'szuflady za drzwiami', fridge: 'lodówka', freezer: 'zamrażarka', dishwasher: 'zmywarka' },
     carcassType: { base: 'dolna', tall: 'słupek', wall: 'górna' },
     opening: { door: 'drzwi', drawer: 'szuflada', fixed: 'atrapa', fridge: 'drzwi lodówki', dishwasher: 'drzwi zmywarki' },
     edge: { front: 'przód', top: 'góra', bottom: 'dół', left: 'lewa', right: 'prawa' },
@@ -98,18 +99,17 @@
     'carcass.depth', 'carcass.wallGap', 'carcass.legs',
     'back.inset',
     'rails.depth', 'rails.hobFront', 'rails.hobPanelGap',
-    'shelf.setback', 'shelf.clearance', 'shelf.pins', 'shelf.perDoor', 'shelf.ventGap', 'shelf.fridgeNiche',
+    'shelf.setback', 'shelf.clearance', 'shelf.perDoor', 'shelf.ventGap', 'shelf.fridgeGap',
     'pullOutShelf.depth', 'pullOutShelf.clearance', 'pullOutShelf.lift', 'pullOutShelf.space', 'pullOutShelf.shelvesAbove',
-    'pullouts.perDoor', 'pullouts.side', 'pullouts.lift', 'pullouts.runner.gap', 'pullouts.runner.lengths', 'pullouts.runner.holes', 'pullouts.runner.axis',
-    'hinges.fromEnd', 'hinges.supportDepth', 'hinges.aboveShelf', 'hinges.perDoor',
-    'drawers.dFrom', 'drawers.D.side', 'drawers.D.back', 'drawers.M.side', 'drawers.M.back',
+    'doorDrawers.perDoor', 'doorDrawers.side', 'doorDrawers.lift', 'doorDrawers.runner.gap', 'doorDrawers.runner.lengths', 'doorDrawers.runner.fromFront', 'doorDrawers.runner.axis',
+    'hinges.fromEnd', 'hinges.postDepth', 'hinges.aboveShelf', 'hinges.perDoor',
+    'drawers.dAbove', 'drawers.D.sideHeight', 'drawers.D.backHeight', 'drawers.M.sideHeight', 'drawers.M.backHeight',
     'drawers.bottom.inset', 'drawers.bottom.depth', 'drawers.bottom.fromBack', 'drawers.back.inset',
-    'drawers.liftAtBottom', 'drawers.liftAbove', 'drawers.inner.gap', 'drawers.inner.back', 'drawers.inner.frontDeduction',
+    'drawers.liftAtBottom', 'drawers.liftAbove', 'drawers.inner.gap', 'drawers.inner.backHeight', 'drawers.inner.frontDeduction',
     'front.shakerRail',
     'frame.bracketSpace', 'frame.depth',
     'plinth.setback',
     'worktop.overhang', 'worktop.fallOverhang',
-    'island.backPanel',
     'plasterboard.depth', 'plasterboard.studSpacing', 'plasterboard.layers',
     'drilling.cup.diameter', 'drilling.cup.depth', 'drilling.cup.fromEdge',
     'drilling.plate.diameter', 'drilling.plate.depth', 'drilling.plate.fromFront', 'drilling.plate.spacing',
@@ -120,6 +120,9 @@
 
   // cut-outs in a worktop: the carcass flag that asks for one -> settings.cutouts[flag] {width, depth, fromBack}, centred on the carcass
   const CUTOUT_FLAGS = ['sink', 'hob'];
+
+  // a shelf rests on a pin in each side at the front and at the back (rules.md, section 5)
+  const PINS_PER_SHELF = 4;
 
   // boards lying flat in a carcass: no hole may hit them
   const HORIZONTAL_BOARDS = ['bottom', 'top', 'rail', 'fixedShelf', 'hobPanel'];
@@ -145,15 +148,17 @@
 
   // the clear space of a module in its carcass: the nearest horizontal boards below and above its middle (a fixed shelf need not be
   // centred on a joint, e.g. under an oven); NaN where there is none
-  function nicheAround(boards, K, v0, v1) {
+  function spaceAround(boards, K, v0, v1) {
     const mid = (v0 + v1) / 2, bands = boards.filter(b => b.carcassId === K.id && HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[2], b.box[3]]);
     const below = bands.filter(([a, b]) => (a + b) / 2 <= mid).map(([, b]) => b), above = bands.filter(([a, b]) => (a + b) / 2 > mid).map(([a]) => a);
     return { bottom: below.length ? Math.max(...below) : NaN, top: above.length ? Math.min(...above) : NaN };
   }
 
   // tags come as a list (design.js) or as typed text (design.html)
+  const TAG_BY_LOWER = Object.fromEntries(TAG_NAMES.map(tag => [tag.toLowerCase(), tag])); // typed tags match in any letter case
   function parseTags(tags) {
-    const words = (Array.isArray(tags) ? tags : String(tags ?? '').split(/[\s,]+/)).map(w => String(w).trim().toLowerCase()).filter(Boolean);
+    const words = (Array.isArray(tags) ? tags : String(tags ?? '').split(/[\s,]+/)).map(w => String(w).trim()).filter(Boolean)
+      .map(w => TAG_BY_LOWER[w.toLowerCase()] || w);
     return { words, tags: words.filter(w => TAG_NAMES.includes(w)), unknown: words.filter(w => !TAG_NAMES.includes(w)) };
   }
   // the tags a type allows (TAGS), in TAG_NAMES order
@@ -204,7 +209,7 @@
   function settingProblems(settings) {
     const problems = [];
     for (const path of REQUIRED_SETTINGS) if (valueAt(settings, path) === undefined) problems.push(`Brak ustawienia ${path}.`);
-    for (const path of ['shelf.perDoor', 'hinges.perDoor', 'pullouts.perDoor']) {
+    for (const path of ['shelf.perDoor', 'hinges.perDoor', 'doorDrawers.perDoor']) {
       const table = valueAt(settings, path);
       const isRow = (row, last) => row && Number.isInteger(row.count) && (last ? row.maxHeight === undefined : row.maxHeight > 0);
       if (table !== undefined && !(Array.isArray(table) && table.length && table.every((row, i) => isRow(row, i === table.length - 1)))) {
@@ -329,7 +334,7 @@
     // screwed to a frame and its back strip, from the first carcass (screwed) or from inside the second one (fromInside)
     const counts = {
       carcasses: 0, wallBrackets: 0, jointLength: { screwed: 0, fromInside: 0 }, fronts: 0, handles: 0, hinges: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
-      shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, pullouts: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
+      shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, doorDrawers: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
       plasterUD: 0, plasterCD: 0, plasterEdge: 0, type: {}, tag: {}
     };
 
@@ -342,7 +347,7 @@
       if (!piece.type) {
         return warn(`${at}: ${String(c.type ?? '').trim() ? 'nieznany typ "' + c.type + '"' : 'brak typu'}; typ musi być jednym z: ${TYPES.map(typeLabel).join(', ')} - pominięty.`, index, true);
       }
-      if (APPLIANCE_TAGS.filter(tag => piece.tags.includes(tag)).length > 1) warn(`${at}: tagi ${tagsLabel(APPLIANCE_TAGS)} wykluczają się.`, index);
+      for (const set of EXCLUSIVE_TAGS) if (set.filter(tag => piece.tags.includes(tag)).length > 1) warn(`${at}: tagi ${tagsLabel(set)} wykluczają się.`, index);
       for (const tag of piece.tags) if (!TAGS[tag].includes(piece.type)) warn(`${at}: tag ${tagsLabel([tag])} jest tylko dla: ${TAGS[tag].map(typeLabel).join(', ')}.`, index);
       if (piece.unknownTags.length) warn(`${at}: nieznany tag ${piece.unknownTags.join(', ')} (dla typu ${typeLabel(piece.type)}: ${tagsOf(piece.type).map(t => LABELS.tag[t]).join(', ') || 'brak tagów'}).`, index);
       const isFront = FRONT_TYPES.includes(piece.type);
@@ -417,6 +422,7 @@
       K.type = K.base ? 'base' : K.floor ? 'tall' : 'wall';
       for (const [flag, tags] of Object.entries(CARCASS_FLAGS)) K[flag] = K.boxes.some(b => hasTag(b, ...tags));
       K.flags = Object.keys(CARCASS_FLAGS).filter(flag => K[flag]);
+      if (K.sink && K.hob) warn(`${K.name}: zlew i płyta grzewcza w jednym korpusie wykluczają się.`, K.members[0].index);
       K.legs = K.floor ? settings.carcass.legs : 0;
       K.grille = K.floor && K.boxes.some(b => GRILLE_FOR.types.includes(b.type) || hasTag(b, ...GRILLE_FOR.tags));
       for (const item of K.members) item.carcass = K;
@@ -496,10 +502,12 @@
           counts.shelvesFixed++;
         }
       }
-      // a fridge carcass: its joints are inside the appliance; one fixed shelf closes the niche, shallower to let the air out
-      if (K.fridge) {
-        const top = v0 + board + settings.shelf.fridgeNiche + board, gap = settings.shelf.ventGap;
-        if (top > v1 - board) warn(`${K.name}: wnęka lodówki ${settings.shelf.fridgeNiche} nie mieści się w korpusie (wnętrze ${height - 2 * board}).`);
+      // a fridge carcass: its joints are inside the appliance; one fixed shelf over the appliance (appliances.fridge.body,
+      // + settings.shelf.fridgeGap), shallower to let the air out; without appliances.js (design.html) no shelf
+      const fridgeSpace = K.fridge && appliances && appliances.fridge ? appliances.fridge.body.height + settings.shelf.fridgeGap : null;
+      if (fridgeSpace) {
+        const top = v0 + board + fridgeSpace + board, gap = settings.shelf.ventGap;
+        if (top > v1 - board) warn(`${K.name}: lodówka z luzem ${fridgeSpace} nie mieści się w korpusie (wnętrze ${height - 2 * board}).`);
         else {
           part('fixedShelf', 'Półka stała', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerU0, innerU1, top - board, top, carcassBack + gap, carcassFront], frontEdge(innerWidth, 'a'));
           counts.shelvesFixed++;
@@ -526,7 +534,7 @@
         part('adjustableShelf', 'Półka ruchoma', shelfWidth, carcassDepth - shelf.setback, carcassMaterial, 'shelves',
           [shelfU0, shelfU0 + shelfWidth, centre - half, centre + half, carcassBack, carcassFront - shelf.setback], frontEdge(shelfWidth, 'a')).centre = centre;
         counts.shelvesAdjustable++;
-        counts.shelfPins += shelf.pins;
+        counts.shelfPins += PINS_PER_SHELF;
       };
       if (K.coffee) {
         // the open door reaches about as far into the opening as the runner clearance: a spacer on the hinge side carries that runner
@@ -547,8 +555,8 @@
       } else if (!K.sink && !K.fridge) {
         // per door, by its front height (settings.shelf.perDoor), evenly between the boards above and below the door
         for (const b of K.boxes) {
-          if (b.type !== 'cabinet' || hasTag(b, 'pullouts')) continue; // behind a door with pullouts: the drawers, no shelves
-          const { bottom: lo, top: hi } = nicheAround(boards, K, b.v0, b.v1);
+          if (b.type !== 'cabinet' || hasTag(b, 'doorDrawers')) continue; // behind a door with doorDrawers: the drawers, no shelves
+          const { bottom: lo, top: hi } = spaceAround(boards, K, b.v0, b.v1);
           const front = frontBox(b), frontHeight = front.v1 - front.v0, count = countByHeight(shelf.perDoor, frontHeight);
           if (count === null) { warn(`${placeOf(b)}: wysokość frontu ${frontHeight} przekracza ostatni wiersz settings.shelf.perDoor.`, b.index); continue; }
           for (let j = 1; j <= count; j++) adjustableShelf(Math.round(lo + ((hi - lo) * j) / (count + 1)));
@@ -608,7 +616,7 @@
           splashes.push({ group: G.group, item, material: materialFor.splash, name: 'Panel ścienny ' + thickness.splash, a: width, b: height, box: [u0, u1, v0, v1, 0, thickness.splash], edges: [] });
         } else if (item.type === 'plinth') {
           plinths.push({ group: G.group, item, material: materialFor.plinth, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - thickness.plinth, plinthFace], lacquer: LACQUER.plinth });
-        } else if (item.type === 'board') {
+        } else if (item.type === 'plasterboard') {
           // cladding: the face plus the return along the long side; profiles: UD on both fixed edges, CD on the outer edge + cross pieces
           const long = Math.max(width, height), short = Math.min(width, height), depth = plasterSettings.depth;
           plaster.push(
@@ -636,20 +644,18 @@
     }
 
     // ---- island back panel: panel material, between the side panels (none: the end columns), floor to the carcass tops, on the carcass backs ----
-    if (settings.island.backPanel) {
-      for (const G of Object.values(groups).filter(G => G.island)) {
-        const own = carcasses.filter(K => K.group === G.group);
-        const top = Math.max(0, ...own.map(K => K.v1));
-        const first = Math.min(...own.map(K => K.u0)), last = Math.max(...own.map(K => K.u1));
-        const falls = G.items.filter(i => i.type === 'fall');
-        const left = falls.filter(f => f.u1 <= first), right = falls.filter(f => f.u0 >= last);
-        const u0 = left.length ? Math.max(...left.map(f => f.u1)) : G.widths[0] || 0;
-        const u1 = right.length ? Math.min(...right.map(f => f.u0)) : G.length - (G.widths[G.widths.length - 1] || 0);
-        panels.push({
-          group: G.group, material: materialFor.panel, name: 'Panel tylny wyspy ' + thickness.panel, a: u1 - u0, b: top, edges: [],
-          box: [u0, u1, 0, top, carcassBack - thickness.panel, carcassBack]
-        });
-      }
+    for (const G of Object.values(groups).filter(G => G.island)) {
+      const own = carcasses.filter(K => K.group === G.group);
+      const top = Math.max(0, ...own.map(K => K.v1));
+      const first = Math.min(...own.map(K => K.u0)), last = Math.max(...own.map(K => K.u1));
+      const falls = G.items.filter(i => i.type === 'fall');
+      const left = falls.filter(f => f.u1 <= first), right = falls.filter(f => f.u0 >= last);
+      const u0 = left.length ? Math.max(...left.map(f => f.u1)) : G.widths[0] || 0;
+      const u1 = right.length ? Math.min(...right.map(f => f.u0)) : G.length - (G.widths[G.widths.length - 1] || 0);
+      panels.push({
+        group: G.group, material: materialFor.panel, name: 'Panel tylny wyspy ' + thickness.panel, a: u1 - u0, b: top, edges: [],
+        box: [u0, u1, 0, top, carcassBack - thickness.panel, carcassBack]
+      });
     }
 
     // ---- fronts, hinges, hinge posts, drawer boxes ----
@@ -685,35 +691,35 @@
       if (h > front.v1 - hingeSettings.fromEnd / 2) warn(`${placeOf(item)}: zawias nad półką wychodzi poza drzwi - przesuń półkę.`, item.index);
       return h;
     }
-    // drawers behind a door (tag pullouts): the hinges take hinges.supportDepth at the carcass front, so the spacer and the boxes
+    // drawers behind a door (tag doorDrawers): the hinges take hinges.postDepth at the carcass front, so the spacer and the boxes
     // stop there; the box front covers the ends of the sides and of the bottom
-    function addPullouts(item, front, K) {
-      const S = settings.pullouts, t = thickness.drawerBox, at = placeOf(item);
+    function addDoorDrawers(item, front, K) {
+      const S = settings.doorDrawers, t = thickness.drawerBox, at = placeOf(item);
       if (!reachesHingeSide(item, K)) return warn(`${at}: szuflady za drzwiami - drzwi muszą sięgać boku korpusu po stronie zawiasów.`, item.index);
       const count = countByHeight(S.perDoor, front.height);
-      if (count === null) return warn(`${at}: wysokość frontu ${front.height} przekracza ostatni wiersz settings.pullouts.perDoor.`, item.index);
-      const n1 = carcassFront - hingeSettings.supportDepth, length = Math.max(...S.runner.lengths.filter(l => l <= n1 - carcassBack));
-      if (!Number.isFinite(length)) return warn(`${at}: żadna prowadnica z settings.pullouts.runner.lengths nie mieści się w ${n1 - carcassBack}.`, item.index);
-      const { bottom: lo, top: hi } = nicheAround(boards, K, item.v0, item.v1);
+      if (count === null) return warn(`${at}: wysokość frontu ${front.height} przekracza ostatni wiersz settings.doorDrawers.perDoor.`, item.index);
+      const n1 = carcassFront - hingeSettings.postDepth, length = Math.max(...S.runner.lengths.filter(l => l <= n1 - carcassBack));
+      if (!Number.isFinite(length)) return warn(`${at}: żadna prowadnica z settings.doorDrawers.runner.lengths nie mieści się w ${n1 - carcassBack}.`, item.index);
+      const { bottom: lo, top: hi } = spaceAround(boards, K, item.v0, item.v1);
       if (!Number.isFinite(lo) || !Number.isFinite(hi)) return warn(`${at}: szuflady za drzwiami - brak płyty poziomej nad lub pod drzwiami.`, item.index);
       const innerU0 = K.u0 + board, innerU1 = K.u1 - board, right = item.hinge === 'right';
       const spacer = spacerOnHingeSide(K, item.hinge);
       addBoard({ id: 'spacer', name: 'Płyta dystansowa', a: n1 - carcassBack, b: hi - lo, material: materialFor.carcass, layer: 'carcasses', group: K.group, carcassId: K.id,
         box: [...spacer, lo, hi, carcassBack, n1], edges: [{ side: 'front', length: hi - lo, along: 'b' }] });
       const u0 = (right ? innerU0 : spacer[1]) + S.runner.gap, u1 = (right ? spacer[0] : innerU1) - S.runner.gap, n0 = n1 - length, pitch = (hi - lo) / count;
-      front.pullouts = { count, runner: length, boxWidth: u1 - u0, boxHeight: t + S.side, boxes: [] }; // runner length = the box depth
+      front.doorDrawers = { count, runner: length, boxWidth: u1 - u0, boxHeight: t + S.side, boxes: [] }; // runner length = the box depth
       for (let j = 0; j < count; j++) {
         const v = Math.round(lo + S.lift + j * pitch), top = v + t + S.side, next = j + 1 < count ? Math.round(lo + S.lift + (j + 1) * pitch) : hi;
         if (top > next) warn(`${at}: szuflada za drzwiami ${j + 1} (${t + S.side}) nie mieści się pod następną płytą.`, item.index);
-        const common = { material: materialFor.drawerBox, layer: 'drawers', group: K.group, carcassId: K.id, frontId: front.id, pullout: j }, inner = length - t;
-        addBoard({ id: 'pulloutFront', name: 'Czoło szuflady za drzwiami', a: u1 - u0, b: t + S.side, ...common, box: [u0, u1, v, top, n1 - t, n1],
+        const common = { material: materialFor.drawerBox, layer: 'drawers', group: K.group, carcassId: K.id, frontId: front.id, doorDrawer: j }, inner = length - t;
+        addBoard({ id: 'doorDrawerFront', name: 'Czoło szuflady za drzwiami', a: u1 - u0, b: t + S.side, ...common, box: [u0, u1, v, top, n1 - t, n1],
           edges: [{ side: 'top', length: u1 - u0, along: 'a' }, { side: 'left', length: t + S.side, along: 'b' }, { side: 'right', length: t + S.side, along: 'b' }] });
-        addBoard({ id: 'pulloutBottom', name: 'Dno szuflady za drzwiami', a: u1 - u0 - 2 * t, b: inner, ...common, box: [u0 + t, u1 - t, v, v + t, n0, n1 - t], edges: [] });
-        for (const s of [u0, u1 - t]) addBoard({ id: 'pulloutSide', name: 'Bok szuflady za drzwiami', a: inner, b: t + S.side, ...common, box: [s, s + t, v, top, n0, n1 - t], edges: [{ side: 'top', length: inner, along: 'a' }] });
-        addBoard({ id: 'pulloutBack', name: 'Tył szuflady za drzwiami', a: u1 - u0 - 2 * t, b: S.side, ...common, box: [u0 + t, u1 - t, v + t, top, n0, n0 + t], edges: [{ side: 'top', length: u1 - u0 - 2 * t, along: 'a' }] });
-        front.pullouts.boxes.push({ u0, u1, v0: v, v1: top, n0, n1 });
+        addBoard({ id: 'doorDrawerBottom', name: 'Dno szuflady za drzwiami', a: u1 - u0 - 2 * t, b: inner, ...common, box: [u0 + t, u1 - t, v, v + t, n0, n1 - t], edges: [] });
+        for (const s of [u0, u1 - t]) addBoard({ id: 'doorDrawerSide', name: 'Bok szuflady za drzwiami', a: inner, b: t + S.side, ...common, box: [s, s + t, v, top, n0, n1 - t], edges: [{ side: 'top', length: inner, along: 'a' }] });
+        addBoard({ id: 'doorDrawerBack', name: 'Tył szuflady za drzwiami', a: u1 - u0 - 2 * t, b: S.side, ...common, box: [u0 + t, u1 - t, v + t, top, n0, n0 + t], edges: [{ side: 'top', length: u1 - u0 - 2 * t, along: 'a' }] });
+        front.doorDrawers.boxes.push({ u0, u1, v0: v, v1: top, n0, n1 });
       }
-      counts.pullouts += count;
+      counts.doorDrawers += count;
     }
     for (const G of Object.values(groups)) {
       for (const item of G.items) {
@@ -724,8 +730,8 @@
         if (opening === 'door' && K && HINGE_SIDES.includes(item.hinge) && !reachesHingeSide(item, K)) {
           const postU0 = item.hinge === 'left' ? item.u0 : item.u1 - board, postV0 = Math.max(item.v0, K.v0 + board), postV1 = Math.min(item.v1, K.v1 - board);
           addBoard({
-            id: 'hingePost', name: 'Słupek zawiasowy', a: hingeSettings.supportDepth, b: postV1 - postV0, material: materialFor.carcass, layer: 'carcasses', group: G.group, carcassId: K.id,
-            box: [postU0, postU0 + board, postV0, postV1, carcassFront - hingeSettings.supportDepth, carcassFront], edges: [{ side: 'front', length: postV1 - postV0, along: 'b' }], hand: item.hinge
+            id: 'hingePost', name: 'Słupek zawiasowy', a: hingeSettings.postDepth, b: postV1 - postV0, material: materialFor.carcass, layer: 'carcasses', group: G.group, carcassId: K.id,
+            box: [postU0, postU0 + board, postV0, postV1, carcassFront - hingeSettings.postDepth, carcassFront], edges: [{ side: 'front', length: postV1 - postV0, along: 'b' }], hand: item.hinge
           });
         }
         const front = {
@@ -749,15 +755,15 @@
           }
         }
 
-        if (opening === 'door' && K && hasTag(item, 'pullouts')) addPullouts(item, front, K);
+        if (opening === 'door' && K && hasTag(item, 'doorDrawers')) addDoorDrawers(item, front, K);
 
         if (opening === 'drawer' && K) {
-          const size = front.height > drawerSettings.dFrom ? 'D' : 'M', sizeSettings = drawerSettings[size];
+          const size = front.height > drawerSettings.dAbove ? 'D' : 'M', sizeSettings = drawerSettings[size];
           const innerU0 = K.u0 + board, innerU1 = K.u1 - board;
           const drawer = {
             size,
-            sideHeight: sizeSettings.side,
-            backHeight: sizeSettings.back,
+            sideHeight: sizeSettings.sideHeight,
+            backHeight: sizeSettings.backHeight,
             innerU0,
             innerU1,
             bottomWidth: innerU1 - innerU0 - drawerSettings.bottom.inset,
@@ -779,7 +785,7 @@
           else counts.drawersM++;
           if (drawer.inner) {
             drawer.innerV = drawer.bottomV + drawer.sideHeight + drawerSettings.inner.gap;
-            drawerBoards(drawer.innerV, drawerSettings.inner.back, 'Tył szuflady wewnętrznej', true);
+            drawerBoards(drawer.innerV, drawerSettings.inner.backHeight, 'Tył szuflady wewnętrznej', true);
             counts.innerDrawers++;
           }
         }
@@ -848,19 +854,19 @@
           for (const x of runner.fromFront) holeAt(target, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x, y: y - target.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
         }
       }
-      // ball runners of the drawers behind a door (tag pullouts): on the spacer (hinge side) and on the carcass side opposite,
-      // pullouts.runner.holes from the runner front, pullouts.runner.axis above the box bottom
-      const pulloutRunner = settings.pullouts.runner;
-      for (const front of fronts.filter(f => f.carcassId === K.id && f.pullouts)) {
+      // ball runners of the drawers behind a door (tag doorDrawers): on the spacer (hinge side) and on the carcass side opposite,
+      // doorDrawers.runner.fromFront from the runner front, doorDrawers.runner.axis above the box bottom
+      const doorDrawerRunner = settings.doorDrawers.runner;
+      for (const front of fronts.filter(f => f.carcassId === K.id && f.doorDrawers)) {
         const right = front.hand === 'right';
-        for (const box of front.pullouts.boxes) {
-          const y = box.v0 + pulloutRunner.axis;
+        for (const box of front.doorDrawers.boxes) {
+          const y = box.v0 + doorDrawerRunner.axis;
           const spacer = own.find(b => b.id === 'spacer' && b.box[2] <= y && b.box[3] >= y && (right ? b.box[0] >= box.u1 : b.box[1] <= box.u0));
           const side = sides.find(b => (right ? b.box[0] === K.u0 : b.box[1] === K.u1));
           for (const target of [spacer, side].filter(Boolean)) {
             target.holeFrom = { x: 'front', y: 'bottom' };
             const atRight = target.box[0] >= box.u1, inner = atRight ? target.box[0] : target.box[1], dir = atRight ? 1 : -1;
-            for (const p of pulloutRunner.holes) {
+            for (const p of doorDrawerRunner.fromFront) {
               const n = box.n1 - p;
               holeAt(target, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x: target.box[5] - n, y: y - target.box[2], u: inner, v: y, n, axis: 'u', dir });
             }
@@ -890,25 +896,24 @@
     }
 
     // ---- appliances in their places: item.fit, shown by cost.html (notes) and drawn by view.html ----
-    // an oven or a microwave stands on the board under its module, on its feet; adjustable feet put its front in the middle
-    // of the module: fit {feet, bodyV0, frontV0, frontV1}. A dishwasher stands on the floor, its feet raise it up to the
-    // worktop, its door grows with them: fit {height, doorHeight, doorV0}.
+    // an oven or a microwave stands on its feet (appliances.js) on the board under its module: fit {feet, bodyV0, frontV0, frontV1}. A fridge stands on the carcass bottom, centred: fit {bodyU0, bodyU1,
+    // bodyV0, bodyV1} on both its fronts. A dishwasher stands on the floor on its feet, up to the worktop: fit {height, doorHeight, doorV0}.
     function fitAppliances(A) {
-      const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
       for (const G of Object.values(groups)) {
         for (const item of G.items) {
           if ((item.type === 'oven' || item.type === 'micro') && A[item.type] && item.carcass) {
             const a = A[item.type];
             const floor = Math.max(...boards.filter(b => b.carcassId === item.carcass.id && (b.id === 'bottom' || b.id === 'fixedShelf') && b.box[3] <= item.v0 + half).map(b => b.box[3]));
-            const centred = (item.v0 + item.v1) / 2 - a.front.height / 2 - a.frontBottom - floor;
-            const feet = clamp(centred, a.feet.min, a.feet.max), bodyV0 = floor + feet, frontV0 = bodyV0 + a.frontBottom;
-            item.fit = { feet, bodyV0, frontV0, frontV1: frontV0 + a.front.height };
+            const bodyV0 = floor + a.feet, frontV0 = bodyV0 + a.front.bottom;
+            item.fit = { feet: a.feet, bodyV0, frontV0, frontV1: frontV0 + a.front.height };
+          }
+          if (hasTag(item, 'fridge', 'freezer') && A.fridge && item.carcass) {
+            const K = item.carcass, uc = (K.u0 + K.u1) / 2, bodyV0 = spaceAround(boards, K, K.v0, K.v0 + 2 * board).bottom;
+            item.fit = { bodyU0: uc - A.fridge.body.width / 2, bodyU1: uc + A.fridge.body.width / 2, bodyV0, bodyV1: bodyV0 + A.fridge.body.height };
           }
           if (hasTag(item, 'dishwasher') && A.dishwasher && worktops[G.group]) {
-            const a = A.dishwasher, range = a.feet.max - a.feet.min;
-            const height = clamp(worktops[G.group].v0, a.body.height + a.feet.min, a.body.height + a.feet.max);
-            const lift = range > 0 ? (height - a.body.height - a.feet.min) / range : 0;
-            const doorHeight = a.door.height.min + (a.door.height.max - a.door.height.min) * lift;
+            const a = A.dishwasher, height = a.body.height + a.feet, doorHeight = a.door.height;
+            if (height !== worktops[G.group].v0) warn(`${placeOf(item)}: zmywarka na nóżkach ma ${height}, spód blatu jest na ${worktops[G.group].v0}.`, item.index);
             item.fit = { height, doorHeight, doorV0: height - doorHeight };
           }
         }
@@ -1078,7 +1083,7 @@
 
   root.KitchenEngine = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, hasTag, FRONT_TYPES, HORIZONTAL_BOARDS, SIDES, HINGE_SIDES,
-    placeLabel, gapsText, parseTags, nicheAround, valueAt, tagsOf, readType, cutKey, checkSettings, build, cutList, carcassMap, mapJSON,
+    placeLabel, gapsText, parseTags, spaceAround, valueAt, PINS_PER_SHELF, tagsOf, readType, cutKey, checkSettings, build, cutList, carcassMap, mapJSON,
     load, designJS, fromDesignJS, plural
   };
 })(typeof window !== 'undefined' ? window : globalThis);

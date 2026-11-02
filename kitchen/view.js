@@ -7,7 +7,7 @@
      window        the window in the window wall
      finishes      extra finishes for the Project tab, drawn with a material of the view
      hardware      sizes for the drawing only (no effect on the cost); open: how far doors and drawers open
-     metals        the metal finishes hardware refers to
+     metals        the metal finishes of the handles to choose from; hardware.handle.metal is the default
      lights        pendants and downlights; a downlight can sit halfway between the sink and the hob
      cameras       the views in the dock; the first one opens */
 window.KITCHEN_VIEW = {
@@ -35,9 +35,9 @@ window.KITCHEN_VIEW = {
   "plinthGrille": {"width": 480, "bottom": 20, "top": 80}
  },
  "metals": {
-  "brass": {"color": "#c9a063", "roughness": 0.32, "metalness": 0.7},
-  "nickel": {"color": "#c4c4c0", "roughness": 0.34, "metalness": 0.55},
-  "black": {"color": "#222326", "roughness": 0.5, "metalness": 0.3}
+  "brass": {"name": "Złoty (mosiądz)", "color": "#c9a063", "roughness": 0.32, "metalness": 0.7},
+  "nickel": {"name": "Nikiel", "color": "#c4c4c0", "roughness": 0.34, "metalness": 0.55},
+  "black": {"name": "Czarny", "color": "#222326", "roughness": 0.5, "metalness": 0.3}
  },
  "lights": {
   "pendants": {"positions": [{"x": 477.48, "z": 2290}, {"x": 1252.52, "z": 2290}], "bottom": 1750},
