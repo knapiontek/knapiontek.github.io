@@ -54,7 +54,6 @@
     tag: { dummy: 'atrapa', hob: 'płyta grzewcza', sink: 'zlew', bins: 'kosze', innerDrawer: 'szuflada wewnętrzna', island: 'wyspa',
       coffee: 'ekspres', doorDrawers: 'szuflady za drzwiami', fridge: 'lodówka', freezer: 'zamrażarka', dishwasher: 'zmywarka' },
     carcassKind: { base: 'dolna', tall: 'słupek', wall: 'górna' },
-    opening: { door: 'drzwi', drawer: 'szuflada', fixed: 'atrapa', fridge: 'drzwi lodówki', dishwasher: 'drzwi zmywarki' },
     edge: { front: 'przód', top: 'góra', bottom: 'dół', left: 'lewa', right: 'prawa' },
     // uses that are not a type (the types have their own label)
     use: { islandWorktop: 'blat wyspy', islandEndPanel: 'panel końcowy wyspy', carcass: 'korpus', backPanel: 'plecy', drawerBox: 'szuflady', hobPanel: 'przegroda pod płytą' },
@@ -324,7 +323,7 @@
     // every thickness comes from the material of the type or part
     const { materialFor } = materialUses(projectData.materials);
     const thickness = Object.fromEntries(Object.entries(materialFor).map(([use, code]) => [use, projectData.materials[code].thickness]));
-    // label, e.g. "Płyta wiórowa Egger U708 ST9 szary jasny 18"
+    // label: name + thickness
     const materials = Object.fromEntries(Object.entries(projectData.materials).map(([code, m]) => [code, { ...m, label: m.name + ' ' + m.thickness }]));
     const lacquerOf = (kind, use) => (projectData.materials[materialFor[use]].lacquered ? LACQUERED_EDGES[kind] : null);
     const board = thickness.carcass, half = board / 2, frontThickness = thickness.cabinet, carcassDepth = settings.carcass.depth;
@@ -512,26 +511,27 @@
           [u0 + backPanel.inset, u1 - backPanel.inset, s0 + backPanel.inset, s1 - backPanel.inset, carcassBack - thickness.backPanel, carcassBack]);
       }
 
+      // a fixed shelf with its top at top; ventGap of air behind it when vented
+      const fixedShelf = (top, gap) => {
+        part('fixedShelf', 'Półka stała', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerU0, innerU1, top - board, top, carcassBack + gap, carcassFront], frontEdge(innerWidth, 'a'));
+        counts.shelvesFixed++;
+      };
       // fixed shelf at each joint of 2 boxes; a base carcass has its rails, a fridge carcass its own shelf (below)
       if (!carcass.base && !carcass.fridge) {
         const joints = [...new Set(carcass.boxes.map(b => b.v0))].filter(joint => joint > v0);
         for (const joint of joints) {
-          const vented = carcass.boxes.some(b => b.v1 === joint && VENTED_SHELF_OVER.includes(b.type)), gap = vented ? settings.shelf.ventGap : 0;
+          const vented = carcass.boxes.some(b => b.v1 === joint && VENTED_SHELF_OVER.includes(b.type));
           const top = carcass.boxes.some(b => b.v0 === joint && SHELF_UNDER_JOINT.includes(b.type)) ? joint : joint + half;
-          part('fixedShelf', 'Półka stała', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerU0, innerU1, top - board, top, carcassBack + gap, carcassFront], frontEdge(innerWidth, 'a'));
-          counts.shelvesFixed++;
+          fixedShelf(top, vented ? settings.shelf.ventGap : 0);
         }
       }
       // a fridge carcass: its joints are inside the appliance; one fixed shelf right on the appliance top, which is screwed to it;
       // shallower to let the air out
       const fridgeHeight = carcass.fridge && appliances && appliances.fridgeFreezer ? appliances.fridgeFreezer.body.height : null;
       if (fridgeHeight) {
-        const top = v0 + board + fridgeHeight + board, gap = settings.shelf.ventGap;
+        const top = v0 + board + fridgeHeight + board;
         if (top > v1 - board) warn(`${carcass.name}: lodówka ${fridgeHeight} nie mieści się w korpusie (wnętrze ${height - 2 * board}).`);
-        else {
-          part('fixedShelf', 'Półka stała', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerU0, innerU1, top - board, top, carcassBack + gap, carcassFront], frontEdge(innerWidth, 'a'));
-          counts.shelvesFixed++;
-        }
+        else fixedShelf(top, settings.shelf.ventGap);
       }
 
       // a space at one end of a carcass (e.g. the hidden end of an L corner): the carcass runs on behind it, an inset panel

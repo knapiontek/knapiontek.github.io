@@ -208,17 +208,18 @@ function drillLines(row) {
 // the legend of the codes, from design.js settings.drilling and settings.cutouts: [{code, text}]
 function drillLegend() {
   const labels = KE.LABELS, d = model.settings.drilling, c = model.settings.cutouts || {}, code = labels.holeCode;
-  const carcassFace = 'boki / słupki zawiasowe, strona wewnętrzna; x od przodu, y od dołu';
+  const from = (x, y) => 'x ' + labels.holeFrom[x] + ', y ' + labels.holeFrom[y]; // the reference edges engine.js drills from (part.holeFrom)
+  const inside = parts => parts + ', strona wewnętrzna; ' + from('front', 'bottom');
   const remark = kind => ((COST.labels.legend || {})[kind] ? ' (' + COST.labels.legend[kind] + ')' : '');
   const hole = (kind, rule, where) => ({ code: code[kind], text: labels.hole[kind] + ' Ø' + num1(rule.diameter) + ', gł. ' + rule.depth + ' – ' + where + remark(kind) });
   const rows = [
     { code: 'Etykieta', text: 'kod w pierwszej kolumnie (np. KO-07): jeden kod na każdy rozmiar części w liście cięć, części lewe i prawe razem\notwory wszystkich części wiersza w kolumnie Wiercenie; gdzie jest który: widok 3D (warstwa Otwory)\nten sam kod w zakładce Montaż – nakleić na części przy odbiorze z hurtowni' },
     { code: 'L / P', text: 'boki i słupki zawiasowe: lewy / prawy, patrząc na szafkę od przodu; otwory na stronie wewnętrznej\ndrzwi: zawiasy po lewej / po prawej, patrząc na front od przodu (od pokoju); otwory w tylnej stronie' },
-    hole('cup', d.cup, 'fronty (drzwi), strona tylna; x od krawędzi zawiasów, y od dołu frontu'),
-    hole('plate', d.plate, carcassFace),
-    hole('shelfPin', d.shelfPin, carcassFace),
-    hole('runner', d.runner, carcassFace),
-    ...Object.entries(c).map(([kind, r]) => ({ code: code[kind], text: labels.hole[kind] + ' ' + r.width + ' × ' + r.depth + ' – blat; x od lewego końca (patrząc od przodu), y od tylnej krawędzi; wymiar sprawdzić z szablonem producenta' }))
+    hole('cup', d.cup, 'drzwi, strona tylna; ' + from('hinge', 'bottom')),
+    hole('plate', d.plate, inside('boki i słupki zawiasowe')),
+    hole('shelfPin', d.shelfPin, inside('boki')),
+    hole('runner', d.runner, inside('boki i płyty dystansowe')),
+    ...Object.entries(c).map(([kind, r]) => ({ code: code[kind], text: labels.hole[kind] + ' ' + r.width + ' × ' + r.depth + ' – blat; ' + from('left', 'back') + ' (patrząc od przodu); wymiar sprawdzić z szablonem producenta' }))
   ];
   rows.push({ code: 'Zapis', text: [
     'L: 1  P: 1 – ile części lewych i prawych (patrząc od przodu) ma otwory podane pod tą linią; prawe w lustrzanym odbiciu',
@@ -413,10 +414,10 @@ function carcassValue(rest) {
   const width = carcass.u1 - carcass.u0;
   return { width, height: carcass.v1 - carcass.v0, innerWidth: width - 2 * model.thickness.carcass, v0: carcass.v0, v1: carcass.v1 }[field] ?? NaN;
 }
-// an item by carcass name or place and type or tag ("K8/oven", "G1[5]/dishwasher", "K8/cabinet#2" = the second from the bottom):
+// an item by carcass name or place and type or tag ("K1/oven", "G1[5]/dishwasher", "K1/cabinet#2" = the second from the bottom):
 // module width, height, v0, v1; its front frontWidth, frontHeight, frontV0, frontV1; space = the clear height between the
 // nearest horizontal boards of its carcass below (spaceBottom) and above (spaceTop) its middle; drawers behind its door (tag doorDrawers):
-// count, runner (length), boxWidth, boxHeight; hinge = the hinge side of its door; edges = the ABS edges of a panel ("lewa 717", "brak");
+// count, runnerLength, boxWidth, boxHeight; hinge = the hinge side of its door; edges = the ABS edges of a panel ("lewa 717", "brak");
 // fit.* = how its appliance sits in it (engine.js fitAppliances: fit.bodyV0, fit.feet, fit.fasciaV0, fit.doorV0 ...)
 function itemValue(rest) {
   const dot = rest.indexOf('.'), field = rest.slice(dot + 1), [where, what = ''] = rest.slice(0, dot).split('/'), [kind, n] = what.split('#');

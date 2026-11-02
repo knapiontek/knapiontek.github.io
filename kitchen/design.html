@@ -942,7 +942,7 @@ document.addEventListener('alpine:init', () => {
     onSvgLeave() {
       this.tooltip.show = false;
     },
-    // e.g. "G1[5] · szafka zmywarka · 600 × 720 · front 594 × 717 · szczeliny 3:3:3:0 · Bosch SMV4HVX00E" (gaps left:right:top:bottom)
+    // place · carcass · type and tags · module size · front size · gaps left:right:top:bottom · note
     describeComponent(group) {
       const attr = name => group.getAttribute('data-' + name);
       const parts = [KE.placeLabel(+attr('g'), +attr('c'), +attr('s')), attr('k'), KE.tagsLabel(attr('tags').split(' ')), `${attr('w')} × ${attr('h')}`];

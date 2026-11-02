@@ -53,11 +53,11 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 
 ## The files in short
 
-- **design.js**: plain data a person can read and edit: materials (what you buy, and what each is used for), construction settings (setbacks, gaps, hinges, shelves, drawers, drilling, cut-outs), notes (the design notes; the group notes give each group its role), column widths, and the components, one per line.
-- **engine.js**: deterministic, the same project and appliances give the same model. It places the components in their columns, joins them into carcasses, builds the boards, fronts, strips, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.js.
-- **design.html**: knows the format, not the kitchen. Tables for materials (read only: they define what each type is made of), groups and columns, components and notes; the elevation drawing; problems listed under the tables.
+- **design.js**: plain data a person can read and edit: materials (what you buy, and what each is used for), construction settings (setbacks, gaps, hinges, shelves, drawers, drilling, cut-outs), user notes (LLM can infer from it but cannot create a regex code to scrap it), column widths, and the components, one per line.
+- **engine.js**: agnostic! It places the components in their columns, joins them into carcasses, builds the boards, fronts, strips, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.js.
+- **design.html**: knows the format, not the kitchen. Tables for materials (read only: they define what each type is made of), groups and columns, components and user free notes (not for regex scraping); the elevation drawing; problems listed under the tables.
 - **cost.html**: the estimate, the cutting list with drilling and cut-outs, the notes (the detailed geometry of the appliances, written by the LLM), assembly help and the carcass map; exports the XLSX. Its texts refer to the model, not to copied numbers.
-- **view.html**: the room in 3D with the carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs; it checks the geometry (collisions, gaps, fronts off the line, parts sticking out).
+- **view.html**: the room in 3D with the carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs; it checks the geometry (collisions, gaps, fronts off the line, parts sticking out). It does not halucinate - based on hard data.
 
 ## Types, tags, materials
 

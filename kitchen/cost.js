@@ -25,8 +25,8 @@
      {i:K8/oven.space} item by carcass name or place (G1[6]) and type or tag, #2 = the second from the bottom:
                        width, height, v0, v1 (module), frontWidth, frontHeight, frontV0, frontV1 (front),
                        spaceBottom, spaceTop, space (clear height between the horizontal boards of the carcass around it),
-                       hinge (hinge side of its door), edges (ABS edges of a panel), fit.feet, fit.fasciaV0 ... (its appliance:
-                       engine.js fitAppliances)
+                       count, runnerLength, boxWidth, boxHeight (drawers behind its door), hinge (hinge side of its door),
+                       edges (ABS edges of a panel), fit.feet, fit.fasciaV0 ... (its appliance: engine.js fitAppliances)
      {a:oven.fascia.height}  appliances.js       {v:sheet.length} values
      {p:hinges}        unit price          {q:hinges} item quantity          {note:hinges} the number of a note
      {f:ovenMicrowaveGap}  a named formula of "formulas"
@@ -72,18 +72,8 @@ window.KITCHEN_COST = {
   {"id": "plinths", "code": "CO", "title": "COKÓŁ – {m:plinth}, wilgocioodporny, lakierowany obustronnie"},
   {"id": "frontPanels", "code": "PA", "title": "PANELE PRZEDNIE I PANEL TYLNY WYSPY – {m:frontPanel} na płasko, lakierowane obustronnie; ABS na widocznych krawędziach"},
   {"id": "wallPanels", "code": "PS", "title": "PANEL ŚCIENNY – {m:wallPanel}, na ścianie nad blatem"},
-  {
-   "id": "carcass",
-   "code": "KO",
-   "title": "KORPUSY – wszystkie części z {m:carcass}: cięcie + ABS 0,8 na krawędziach widocznych (z listwami tylnymi, półką wysuwaną, słupkami zawiasowymi, panelami wpuszczanymi, płytami dystansowymi)",
-   "cut": true
-  },
-  {
-   "id": "drawerBox",
-   "code": "SZ",
-   "title": "SZUFLADY – wszystkie części z {m:drawerBox}: dna i tyły TANDEMBOX (z szufladami wewnętrznymi), szuflady za drzwiami i przegroda pod płytą",
-   "cut": true
-  },
+  {"id": "carcass", "code": "KO", "title": "KORPUSY – wszystkie części z {m:carcass}: cięcie + ABS 0,8 na krawędziach widocznych (z listwami tylnymi, półką wysuwaną, słupkami zawiasowymi, panelami wpuszczanymi, płytami dystansowymi)", "cut": true},
+  {"id": "drawerBox", "code": "SZ", "title": "SZUFLADY – wszystkie części z {m:drawerBox}: dna i tyły TANDEMBOX (z szufladami wewnętrznymi), szuflady za drzwiami i przegroda pod płytą", "cut": true},
   {"id": "backPanel", "code": "PL", "title": "PLECY – {m:backPanel}, tylko za drzwiami szafek"},
   {"id": "worktops", "code": "BL", "title": "BLATY – {m:worktop} (blat), {m:islandWorktop} (wyspa); wycięcia na zlew (WZ) i płytę (WP) wg legendy"},
   {"id": "endPanels", "code": "PK", "title": "PANELE KOŃCOWE – {m:endPanel} ({d:endPanel} grupa 1, {d:islandEndPanel} wyspa); blat wystaje {s:worktop.endPanelOverhang} mm poza panel końcowy (bok, przód, w wyspie tył)"},
@@ -166,7 +156,7 @@ window.KITCHEN_COST = {
      "spec": "dna i tyły szuflad, szuflady za drzwiami, przegroda pod płytą",
      "qty": "=ROUNDUP({drawerBox.m2}*(1+{waste})/{sheet},0)",
      "unit": "ark.",
-     "price": 344.40,
+     "price": 344.4,
      "source": "Bielsko-Biała",
      "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/PLYTA-U708-ST9-2800x2070x16MM-Szary-jasny/2190"}]
     },
@@ -452,12 +442,7 @@ window.KITCHEN_COST = {
      "price": 33.99,
      "refs": ["oven", "fridgeAir"],
      "source": "",
-     "links": [
-      {
-       "name": "leroymerlin.pl",
-       "url": "https://www.leroymerlin.pl/produkty/kratka-wentylacyjna-do-mebli-480-x-60-mm-aluminiowa-srebrna-gtv-42083426.html"
-      }
-     ]
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/kratka-wentylacyjna-do-mebli-480-x-60-mm-aluminiowa-srebrna-gtv-42083426.html"}]
     }
    ]
   },
@@ -502,7 +487,7 @@ window.KITCHEN_COST = {
      "name": "Obrzeże ABS-H1180 ST37 43/1,5 Dąb Halifax naturalny",
      "spec": "krawędzie z ABS wg listy cięć (bloki BLATY i PANELE KOŃCOWE): krawędź boczna blatu nad panelem końcowym, w wyspie krawędź tylna blatu; panele końcowe: krawędź przednia, w wyspie także tylna; krawędź przednia blatów fabryczna",
      "qty": "=({worktops.edge}+{endPanels.edge})*(1+{v:edgeAllowance})",
-     "unit": "m",
+     "unit": "mb",
      "price": 10.1,
      "refs": ["worktops"],
      "source": "oklejanie maszynowe - zapytać M-HM (czy krawędź przednia blatu jest fabryczna; obrzeże paneli końcowych dobrać do ich materiału)",
@@ -535,7 +520,7 @@ window.KITCHEN_COST = {
      "spec": "blat do ściany, zlew",
      "qty": 2,
      "unit": "szt.",
-     "price": 25.0,
+     "price": 25,
      "source": "",
      "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/Silikon-SANITARNY-BIALY-300ML/3100"}]
     }
@@ -553,12 +538,7 @@ window.KITCHEN_COST = {
      "price": 46.99,
      "refs": ["plaster"],
      "source": "",
-     "links": [
-      {
-       "name": "castorama.pl",
-       "url": "https://www.castorama.pl/plyta-gipsowo-kartonowa-impregnowana-1200-x-2600-x-12-5-mm-gkbi-typ-h2-norgips/5907651691616_CAPL.prd"
-      }
-     ]
+     "links": [{"name": "castorama.pl", "url": "https://www.castorama.pl/plyta-gipsowo-kartonowa-impregnowana-1200-x-2600-x-12-5-mm-gkbi-typ-h2-norgips/5907651691616_CAPL.prd"}]
     },
     {
      "id": "profileCD",
@@ -600,12 +580,7 @@ window.KITCHEN_COST = {
      "unit": "op.",
      "price": 69.98,
      "source": "",
-     "links": [
-      {
-       "name": "castorama.pl",
-       "url": "https://www.castorama.pl/wkrety-na-tasmie-do-metalu-plyt-g-k-4pro-3-5-x-35-mm-1000-szt-/5904433424875_CAPL.prd"
-      }
-     ]
+     "links": [{"name": "castorama.pl", "url": "https://www.castorama.pl/wkrety-na-tasmie-do-metalu-plyt-g-k-4pro-3-5-x-35-mm-1000-szt-/5904433424875_CAPL.prd"}]
     },
     {
      "id": "profileScrews",
@@ -694,12 +669,7 @@ window.KITCHEN_COST = {
      "price": 610.84,
      "refs": ["sinkTap"],
      "source": "",
-     "links": [
-      {
-       "name": "mediaexpert.pl",
-       "url": "https://www.mediaexpert.pl/agd-do-zabudowy/baterie-kuchenne/baterie-kuchenne/bateria-deante-silia-bqs-z73m-zloty"
-      }
-     ]
+     "links": [{"name": "mediaexpert.pl", "url": "https://www.mediaexpert.pl/agd-do-zabudowy/baterie-kuchenne/baterie-kuchenne/bateria-deante-silia-bqs-z73m-zloty"}]
     },
     {
      "id": "coffee",
@@ -754,9 +724,7 @@ window.KITCHEN_COST = {
      "price": 1899,
      "refs": ["oven", "ovenColumn"],
      "source": "RTV EURO AGD i OleOle!",
-     "links": [
-      {"name": "okazje.info.pl", "url": "https://www.okazje.info.pl/szukaj/bosch-serie-4-hba534bb3-termoobieg-czarny-piekarnik-elektryczny/ceny.html"}
-     ]
+     "links": [{"name": "okazje.info.pl", "url": "https://www.okazje.info.pl/szukaj/bosch-serie-4-hba534bb3-termoobieg-czarny-piekarnik-elektryczny/ceny.html"}]
     },
     {
      "id": "microwave",
@@ -789,12 +757,7 @@ window.KITCHEN_COST = {
      "price": 68.49,
      "refs": ["hood"],
      "source": "",
-     "links": [
-      {
-       "name": "leroymerlin.pl",
-       "url": "https://www.leroymerlin.pl/produkty/rura-odprowadzajaca-aluminiowa-wentylacyjna-150-mm-2-7-mb-equation-40418021.html"
-      }
-     ]
+     "links": [{"name": "leroymerlin.pl", "url": "https://www.leroymerlin.pl/produkty/rura-odprowadzajaca-aluminiowa-wentylacyjna-150-mm-2-7-mb-equation-40418021.html"}]
     }
    ]
   }
