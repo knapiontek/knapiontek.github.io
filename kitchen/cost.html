@@ -417,7 +417,7 @@ function carcassValue(rest) {
 // module width, height, v0, v1; its front frontWidth, frontHeight, frontV0, frontV1; space = the clear height between the
 // nearest horizontal boards of its carcass below (spaceBottom) and above (spaceTop) its middle; drawers behind its door (tag doorDrawers):
 // count, runner (length), boxWidth, boxHeight; hinge = the hinge side of its door; edges = the ABS edges of a panel ("lewa 717", "brak");
-// fit.* = how its appliance sits in it (engine.js fitAppliances: fit.feet, fit.fasciaV0, fit.height ...)
+// fit.* = how its appliance sits in it (engine.js fitAppliances: fit.bodyV0, fit.feet, fit.fasciaV0, fit.doorV0 ...)
 function itemValue(rest) {
   const dot = rest.indexOf('.'), field = rest.slice(dot + 1), [where, what = ''] = rest.slice(0, dot).split('/'), [kind, n] = what.split('#');
   const item = Object.values(model.groups).flatMap(groupModel => groupModel.items)

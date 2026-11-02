@@ -849,7 +849,7 @@ window.KITCHEN_COST = {
      "id": "dishwasher",
      "appliance": "dishwasher",
      "topic": "Zmywarka Bosch SMV4HVX00E – G1[6]",
-     "description": "Wymiary: {a:dishwasher.body.width} × {i:G1[6]/dishwasher.fit.height} × {a:dishwasher.body.depth}, nóżki wykręcone do spodu blatu; drzwi {i:G1[6]/dishwasher.fit.doorHeight}.\nFront {i:G1[6]/dishwasher.frontWidth} × {i:G1[6]/dishwasher.frontHeight}: {=<i:G1[6]/dishwasher.fit.doorV0> - <i:G1[6]/dishwasher.frontV0>} niżej niż drzwi, {=<i:G1[6]/dishwasher.fit.height> - <i:G1[6]/dishwasher.frontV1>} pod ich górą, po {=(<a:dishwasher.body.width> - <i:G1[6]/dishwasher.frontWidth>) / 2} węższy z boków.\nNóżki: {a:dishwasher.baseSetback} za frontem, cokół przed nimi.",
+     "description": "Wymiary: {a:dishwasher.body.width} × {i:G1[6]/dishwasher.fit.bodyV1} × {a:dishwasher.body.depth}, nóżki wykręcone do spodu blatu; drzwi {a:dishwasher.door.height}.\nFront {i:G1[6]/dishwasher.frontWidth} × {i:G1[6]/dishwasher.frontHeight}: {=<i:G1[6]/dishwasher.fit.doorV0> - <i:G1[6]/dishwasher.frontV0>} niżej niż drzwi, {=<i:G1[6]/dishwasher.fit.doorV1> - <i:G1[6]/dishwasher.frontV1>} pod ich górą, po {=(<a:dishwasher.body.width> - <i:G1[6]/dishwasher.frontWidth>) / 2} węższy z boków.\nNóżki: {a:dishwasher.baseSetback} za frontem, cokół przed nimi.",
      "decide": "Ciężar frontu: sprawdzić w instrukcji (zawias SMZ5003 do ciężkich frontów)."
     },
     {

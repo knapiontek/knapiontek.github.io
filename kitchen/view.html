@@ -838,9 +838,9 @@ function builtInAppliance(group, item, type) {
   }
   envelope(layer, bu0, bu1, b0, b0 + bh, carcassFront - bd, carcassFront, appliance.name + ' – korpus ' + bw + ' × ' + bh + ' × ' + bd + (feet > 0 ? ' na nóżkach ' + Math.round(feet * 10) / 10 : ''));
   envelope(layer, u0, u1, v0, v1, carcassFront, face, appliance.name + ' – front urządzenia ' + appliance.fascia.width + ' × ' + appliance.fascia.height);
-  // the door: oven below its control panel (appliance.controls.height), full width; microwave over the body opening, left of its control
-  // column (appliance.controls.width), set into the fascia with a shadow gap (the fascia is wider and higher than the body)
-  const door = type === 'oven' ? { u0, u1, v0, v1: v1 - appliance.controls.height } : { u0: bu0 + 2, u1: u1 - appliance.controls.width, v0: b0 + 4, v1: b0 + bh - 4 };
+  // the door: oven below its control panel (appliance.controlPanelHeight), full width; microwave over the body opening, left of its control
+  // column (appliance.controlColumnWidth), set into the fascia with a shadow gap (the fascia is wider and higher than the body)
+  const door = type === 'oven' ? { u0, u1, v0, v1: v1 - appliance.controlPanelHeight } : { u0: bu0 + 2, u1: u1 - appliance.controlColumnWidth, v0: b0 + 4, v1: b0 + bh - 4 };
   const hinge = appliance.door.hinge, bottomHinged = hinge === 'bottom';
   const mover = movingPart(group, type, bottomHinged ? 0 : hinge === 'left' ? door.u0 : door.u1, bottomHinged ? door.v0 : 0, face);
   mover.sign = hinge === 'left' ? 1 : -1;
@@ -1187,7 +1187,7 @@ function plinthGrille(carcass) {
   for (let x = g0 + 5 + 12; x < g1 - 8; x += 12) localBox(layer, x - 2, x + 2, h0 + 5, h1 - 5, plinthFace - 2, plinthFace + 2, MAT.zinc); // vertical louvres
 }
 // built-in fridge-freezer where engine.js fits it (item.fit, at the manufacturer's size), its doors at the carcass front (fridgeDoorPlane: where the body ends and the doors start); split between the appliance doors
-const fridgeDoorPlane = carcassFront - APPLIANCES.fridgeFreezer.doors.setback;
+const fridgeDoorPlane = carcassFront - APPLIANCES.fridgeFreezer.doorDepth;
 function fridgeBody(carcass) {
   const appliance = APPLIANCES.fridgeFreezer, layer = groupLayer[carcass.group].fridge, fit = carcass.boxes.find(b => b.fit).fit;
   const u0 = fit.bodyU0, u1 = fit.bodyU1, bodyV0 = fit.bodyV0, bodyV1 = fit.bodyV1;
@@ -1287,10 +1287,11 @@ function buildFront(group, item) {
       innerMover.label = 'Szuflada wewnętrzna M (' + settings.drawers.M.sideHeight + ') na sztućce · front wewnętrzny ' + (innerU1 - innerU0 - settings.drawers.inner.frontDeduction);
     }
   } else if (opening === 'dishwasher') {
-    // the appliance and its door at the manufacturer's size (APPLIANCES.dishwasher), as engine.js fits it (item.fit: its height on
+    // the appliance and its door at the manufacturer's size (APPLIANCES.dishwasher), as engine.js fits it (item.fit: its body on
     // the feet, its door); the furniture front (design.js) is drawn above; below the door the base is open baseSetback deep for the plinth
-    const layer = groupLayer[group].dishwasher, appliance = APPLIANCES.dishwasher, uc = (item.u0 + item.u1) / 2, { height: h, doorHeight, doorV0: doorBottom } = item.fit;
-    const w0 = uc - appliance.body.width / 2, w1 = uc + appliance.body.width / 2, t0 = doorBottom, t1 = h - 6; // tub: from the door bottom to under the appliance top
+    const layer = groupLayer[group].dishwasher, appliance = APPLIANCES.dishwasher, uc = (item.u0 + item.u1) / 2;
+    const { bodyU0: w0, bodyU1: w1, bodyV1: h, doorV0: doorBottom, doorV1: doorTop } = item.fit, doorHeight = doorTop - doorBottom;
+    const t0 = doorBottom, t1 = h - 6; // tub: from the door bottom to under the appliance top
     openFrontBox(layer, w0 + 3, w1 - 3, t0, t1, carcassBack + 8, carcassFront - 24, 2, MAT.steel); // tub
     dishRack(layer, w0 + 29, w1 - 29, t0 + 80, t0 + 220, carcassBack + 40, carcassFront - 50);
     dishRack(layer, w0 + 29, w1 - 29, t1 - 380, t1 - 250, carcassBack + 40, carcassFront - 50);
@@ -1528,8 +1529,8 @@ function shadowSetup(light, size, near, far) {
   light.shadow.normalBias = 0.015;
   light.shadow.radius = 4;
 }
-SCENE.lights.pendants.positions.forEach(({ x, z }) => {
-  const y = SCENE.lights.pendants.bottom;
+SCENE.lights.pendants.forEach(({ x, z }) => {
+  const y = SCENE.lights.pendantBottom;
   roomCylinder(lampLayer, 2, ceiling - y - 90, MAT.gasket, x, (ceiling + y + 90) / 2, z, null, 6); // cable
   const shade = new THREE.Mesh(new THREE.SphereGeometry(0.15, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), standard({ color: linear(model.materials[model.materialFor.cabinet].color), roughness: 0.5, metalness: 0.2 })); // shade in the cabinet front colour
   shade.position.set(x / 1000, (y + 60) / 1000, z / 1000);
@@ -1817,8 +1818,7 @@ function setFloor(key) {
   if (palette === 'colour') MAT.floor.map = map;
   MAT.floor.needsUpdate = true;
   for (const b of floorPanel.querySelectorAll('[data-f]')) b.setAttribute('aria-pressed', b.dataset.f === key);
-  floorInfo.innerHTML = '<b>' + esc(floorTile.name) + '</b> ' + floorTile.size.length + ' × ' + floorTile.size.width + ' – ' + esc(floorTile.look) + '; ' + esc(floorTile.finish) + '; ' + esc(floorTile.price) +
-    ' (<a href="' + floorTile.links[0].url + '" target="_blank" rel="noopener">sklep</a>). Fuga epoksydowa ' + room.floorJoint + ' mm w kolorze tła płytki.';
+  floorInfo.innerHTML = '<b>' + esc(floorTile.name) + '</b> ' + floorTile.size.length + ' × ' + floorTile.size.width + '. Fuga ' + room.floorJoint + ' mm.';
   renderFinishes();
   sceneChanged();
 }

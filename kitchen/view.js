@@ -8,7 +8,8 @@
      finishes      extra finishes for the Project tab, drawn with a material of the view
      hardware      sizes for the drawing only (no effect on the cost); open: how far doors and drawers open
      metals        the metal finishes of the handles to choose from; hardware.handle.metal is the default
-     lights        pendants and downlights; a downlight can sit halfway between the sink and the hob
+     lights        pendants (pendantBottom: the height of their bottom) and downlights, each at {x, z}; a downlight can sit
+                   halfway between the sink and the hob instead of x
      cameras       the views in the dock; the first one opens */
 window.KITCHEN_VIEW = {
  "placement": {
@@ -40,7 +41,8 @@ window.KITCHEN_VIEW = {
   "black": {"name": "Czarny", "color": "#222326", "roughness": 0.5, "metalness": 0.3}
  },
  "lights": {
-  "pendants": {"positions": [{"x": 477.48, "z": 2290}, {"x": 1252.52, "z": 2290}], "bottom": 1750},
+  "pendantBottom": 1750,
+  "pendants": [{"x": 477.48, "z": 2290}, {"x": 1252.52, "z": 2290}],
   "downlights": [
    {"between": ["sink", "hob"], "z": 402},
    {"x": 2440, "z": 402},

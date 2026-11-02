@@ -11,10 +11,10 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 | design.js | data, this project | materials, settings, notes, columns, components | design.html (export); materials and settings by hand |
 | cost.js | data, this project | prices, items, notes and settings of cost.html | LLM, per project |
 | view.js | data, this project | placement of the groups, room, how the appliances are fitted, lights and cameras of view.html | LLM, per project |
-| appliances.js | data, this project | the appliances as the manufacturer gives them (sizes, documents), for cost.html and view.html | LLM, per project |
-| textures.js | data, this project | decor images from the manufacturers: the textures the materials name, the floor tiles to choose from, for view.html | LLM, per project |
+| appliances.js | data, this project | the appliances as the manufacturer gives them: overall sizes as fixed values (no niches, no ranges) and documents, for cost.html and view.html | LLM, per project |
+| textures.js | data, this project | texture images and their names only (the textures the materials name, the floor tiles to choose from), with what drawing them needs: the size an image covers, the grout colour of a tile; for view.html | LLM, per project |
 | rules.md | text, every project | the kitchen rules in Polish, as the app names things | by hand |
-| engine.js | code, every project | the model: carcasses, boards, fronts, frames, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
+| engine.js | code, every project | the model: carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
 | cost.html | page, LLM generated | prices, cutting lists, notes, assembly help, carcass map | LLM, per project |
 | view.html | page, LLM generated | the 3D view of the room and its geometry check | LLM, per project |
@@ -54,7 +54,7 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 ## The files in short
 
 - **design.js**: plain data a person can read and edit: materials (what you buy, and what each is used for), construction settings (setbacks, gaps, hinges, shelves, drawers, drilling, cut-outs), notes (the design notes; the group notes give each group its role), column widths, and the components, one per line.
-- **engine.js**: deterministic, the same project gives the same model. It places the components in their columns, joins them into carcasses, builds the boards, fronts, frames, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.js.
+- **engine.js**: deterministic, the same project and appliances give the same model. It places the components in their columns, joins them into carcasses, builds the boards, fronts, strips, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.js.
 - **design.html**: knows the format, not the kitchen. Tables for materials (read only: they define what each type is made of), groups and columns, components and notes; the elevation drawing; problems listed under the tables.
 - **cost.html**: the estimate, the cutting list with drilling and cut-outs, the notes (the detailed geometry of the appliances, written by the LLM), assembly help and the carcass map; exports the XLSX. Its texts refer to the model, not to copied numbers.
 - **view.html**: the room in 3D with the carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs; it checks the geometry (collisions, gaps, fronts off the line, parts sticking out).
@@ -73,7 +73,7 @@ A new feature that changes what gets built is a new type; one that adds to an ex
 - Meaningful names that match what the page shows, no abbreviations a reader has to decode.
 - No hidden rules: what gets built follows from the type, the tags and the settings in design.js. No guessing from names, labels or sizes.
 - No numbers of this kitchen in the code and no duplicated values.
-- A list or an array host homogenic values - the same type and meaning.
+- A list or an array holds homogeneous values - the same type and meaning.
 - Library versions pinned (deterministic pages).
 - Language: everything the pages show is Polish; code and comments are English.
 - Short comments that say why, not long narration.

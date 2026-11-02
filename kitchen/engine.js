@@ -101,7 +101,7 @@
     'crossRails.depth', 'crossRails.hobFront', 'crossRails.hobPanelGap',
     'shelf.setback', 'shelf.clearance', 'shelf.perDoor', 'shelf.ventGap',
     'pullOutShelf.depth', 'pullOutShelf.clearance', 'pullOutShelf.lift', 'pullOutShelf.spacerAbove', 'pullOutShelf.machineHeight', 'pullOutShelf.shelvesAbove',
-    'doorDrawers.perDoor', 'doorDrawers.sideHeight', 'doorDrawers.lift', 'doorDrawers.clearance', 'doorDrawers.runnerLengths',
+    'doorDrawers.count', 'doorDrawers.sideHeight', 'doorDrawers.lift', 'doorDrawers.clearance', 'doorDrawers.runnerLengths',
     'hinges.fromEnd', 'hinges.postDepth', 'hinges.aboveShelf', 'hinges.perDoor',
     'drawers.D.frontAbove', 'drawers.D.sideHeight', 'drawers.D.backHeight', 'drawers.M.sideHeight', 'drawers.M.backHeight',
     'drawers.bottom.inset', 'drawers.bottom.depth', 'drawers.bottom.fromBack', 'drawers.back.inset',
@@ -214,7 +214,7 @@
   function settingProblems(settings) {
     const problems = [];
     for (const path of REQUIRED_SETTINGS) if (valueAt(settings, path) === undefined) problems.push(`Brak ustawienia ${path}.`);
-    for (const path of ['shelf.perDoor', 'hinges.perDoor', 'doorDrawers.perDoor']) {
+    for (const path of ['shelf.perDoor', 'hinges.perDoor']) {
       const table = valueAt(settings, path);
       const isRow = (row, last) => row && Number.isInteger(row.count) && (last ? row.maxHeight === undefined : row.maxHeight > 0);
       if (table !== undefined && !(Array.isArray(table) && table.length && table.every((row, i) => isRow(row, i === table.length - 1)))) {
@@ -223,6 +223,8 @@
     }
     const hingeTable = valueAt(settings, 'hinges.perDoor');
     if (Array.isArray(hingeTable) && hingeTable.some(row => !(row && row.count >= 2))) problems.push('Ustawienie hinges.perDoor: każde drzwi potrzebują co najmniej 2 zawiasów.');
+    const doorDrawerCount = valueAt(settings, 'doorDrawers.count');
+    if (doorDrawerCount !== undefined && !(Number.isInteger(doorDrawerCount) && doorDrawerCount >= 1)) problems.push('Ustawienie doorDrawers.count musi być liczbą całkowitą ≥ 1.');
     return problems;
   }
 
@@ -706,8 +708,7 @@
     function addDoorDrawers(item, front, carcass) {
       const doorDrawerSettings = settings.doorDrawers, t = thickness.drawerBox, at = placeOf(item);
       if (!reachesHingeSide(item, carcass)) return warn(`${at}: szuflady za drzwiami - drzwi muszą sięgać boku korpusu po stronie zawiasów.`, item.index);
-      const count = countByHeight(doorDrawerSettings.perDoor, front.height);
-      if (count === null) return warn(`${at}: wysokość frontu ${front.height} przekracza ostatni wiersz settings.doorDrawers.perDoor.`, item.index);
+      const count = doorDrawerSettings.count;
       const n1 = carcassFront - hingeSettings.postDepth, length = Math.max(...doorDrawerSettings.runnerLengths.filter(l => l <= n1 - carcassBack));
       if (!Number.isFinite(length)) return warn(`${at}: żadna prowadnica z settings.doorDrawers.runnerLengths nie mieści się w ${n1 - carcassBack}.`, item.index);
       const { bottom: lo, top: hi } = spaceAround(boards, carcass, item.v0, item.v1);
@@ -908,8 +909,10 @@
     }
 
     // ---- appliances in their places: item.fit, shown by cost.html (notes) and drawn by view.html ----
-    // an oven or a microwave stands on its feet (appliances.js) on the board under its module: fit {feet, bodyV0, fasciaV0, fasciaV1}. A fridge stands on the carcass bottom, centred: fit {bodyU0, bodyU1,
-    // bodyV0, bodyV1} on both its fronts. A dishwasher stands on the floor on its feet, up to the worktop: fit {height, doorHeight, doorV0}.
+    // every fit has the body, centred on its module or carcass: {bodyU0, bodyU1, bodyV0, bodyV1}; an oven or a microwave stands on its feet
+    // (appliances.js) on the board under its module: + {feet, fasciaV0, fasciaV1}; a fridge stands on the carcass bottom, one fit on both
+    // its fronts; a dishwasher stands on the floor on its feet, up to the worktop: + {feet, doorV0, doorV1}
+    const bodyAcross = (place, appliance) => { const centre = (place.u0 + place.u1) / 2; return { bodyU0: centre - appliance.body.width / 2, bodyU1: centre + appliance.body.width / 2 }; };
     function fitAppliances(applianceData) {
       for (const groupModel of Object.values(groups)) {
         for (const item of groupModel.items) {
@@ -918,19 +921,19 @@
             const floor = spaceAround(boards, carcassOf(item), item.v0, item.v1).bottom;
             if (!Number.isFinite(floor)) { warn(`${placeOf(item)}: ${typeLabel(item.type)} nie ma płyty pod sobą.`, item.index); continue; }
             const bodyV0 = floor + a.feet, fasciaV0 = bodyV0 + a.fascia.bottom;
-            item.fit = { feet: a.feet, bodyV0, fasciaV0, fasciaV1: fasciaV0 + a.fascia.height };
+            item.fit = { ...bodyAcross(item, a), bodyV0, bodyV1: bodyV0 + a.body.height, feet: a.feet, fasciaV0, fasciaV1: fasciaV0 + a.fascia.height };
           }
           if (hasTag(item, 'dishwasher') && applianceData.dishwasher && worktops[groupModel.group]) {
-            const a = applianceData.dishwasher, height = a.body.height + a.feet, doorHeight = a.door.height;
-            if (height !== worktops[groupModel.group].v0) warn(`${placeOf(item)}: zmywarka na nóżkach ma ${height}, spód blatu jest na ${worktops[groupModel.group].v0}.`, item.index);
-            item.fit = { height, doorHeight, doorV0: height - doorHeight };
+            const a = applianceData.dishwasher, bodyV1 = a.feet + a.body.height;
+            if (bodyV1 !== worktops[groupModel.group].v0) warn(`${placeOf(item)}: zmywarka na nóżkach ma ${bodyV1}, spód blatu jest na ${worktops[groupModel.group].v0}.`, item.index);
+            item.fit = { ...bodyAcross(item, a), bodyV0: a.feet, bodyV1, feet: a.feet, doorV0: bodyV1 - a.door.height, doorV1: bodyV1 };
           }
         }
       }
       // one fit for the fridge and the freezer front of a fridge carcass
       for (const carcass of carcasses.filter(candidate => candidate.fridge && applianceData.fridgeFreezer)) {
-        const uc = (carcass.u0 + carcass.u1) / 2, bodyV0 = carcass.v0 + board, { width, height } = applianceData.fridgeFreezer.body;
-        const fit = { bodyU0: uc - width / 2, bodyU1: uc + width / 2, bodyV0, bodyV1: bodyV0 + height };
+        const a = applianceData.fridgeFreezer, bodyV0 = carcass.v0 + board;
+        const fit = { ...bodyAcross(carcass, a), bodyV0, bodyV1: bodyV0 + a.body.height };
         for (const item of carcass.boxes.filter(b => hasTag(b, 'fridge', 'freezer'))) item.fit = fit;
       }
     }
