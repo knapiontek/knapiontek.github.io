@@ -1,6 +1,7 @@
 /* engine.js - builds the kitchen model from design.js for design.html, cost.html and view.html.
    The same project always gives the same model. No drawing and no numbers of this kitchen: they all come from design.js.
-   Coordinates in mm per group: u along the group, v up from the floor, n out from the wall; a box is [u0, u1, v0, v1, n0, n1]. */
+   Coordinates in mm per group: u along the group, v up from the floor, n out from the carcass backs (the same in every group;
+   the wall of a group lies settings.carcass.wallGap of that group behind them: groups[g].wall); a box is [u0, u1, v0, v1, n0, n1]. */
 (function (root) {
   'use strict';
 
@@ -96,7 +97,7 @@
 
   // settings the engine and the pages read: a missing one stops the build (checkSettings)
   const REQUIRED_SETTINGS = [
-    'carcass.depth', 'carcass.wallGap', 'carcass.legs',
+    'carcass.depth', 'carcass.wallGap', 'carcass.frontGap', 'carcass.legs',
     'backPanel.inset',
     'crossRails.depth', 'crossRails.hobFront', 'crossRails.hobPanelGap',
     'shelf.setback', 'shelf.clearance', 'shelf.perDoor', 'shelf.ventGap',
@@ -107,7 +108,7 @@
     'drawers.bottom.inset', 'drawers.bottom.depth', 'drawers.bottom.fromBack', 'drawers.back.inset',
     'drawers.liftAtBottom', 'drawers.liftAbove', 'drawers.inner.gap', 'drawers.inner.backHeight', 'drawers.inner.frontDeduction',
     'front.shakerRail',
-    'strip.bracketSpace', 'strip.depth',
+    'strip.depth',
     'plinth.setback',
     'worktop.overhang', 'worktop.endPanelOverhang',
     'plasterboard.depth', 'plasterboard.studSpacing', 'plasterboard.layers',
@@ -221,6 +222,10 @@
     }
     const hingeTable = valueAt(settings, 'hinges.perDoor');
     if (Array.isArray(hingeTable) && hingeTable.some(row => !(row && row.count >= 2))) problems.push('Ustawienie hinges.perDoor: każde drzwi potrzebują co najmniej 2 zawiasów.');
+    const wallGap = valueAt(settings, 'carcass.wallGap');
+    if (wallGap !== undefined && !(wallGap && typeof wallGap === 'object' && !Array.isArray(wallGap) && Object.values(wallGap).every(gap => gap >= 0))) {
+      problems.push('Ustawienie carcass.wallGap musi być obiektem {grupa: odstęp od ściany ≥ 0}.');
+    }
     const doorDrawerCount = valueAt(settings, 'doorDrawers.count');
     if (doorDrawerCount !== undefined && !(Number.isInteger(doorDrawerCount) && doorDrawerCount >= 1)) problems.push('Ustawienie doorDrawers.count musi być liczbą całkowitą ≥ 1.');
     return problems;
@@ -323,11 +328,14 @@
     // label, e.g. "Płyta wiórowa Egger U708 ST9 szary jasny 18"
     const materials = Object.fromEntries(Object.entries(projectData.materials).map(([code, m]) => [code, { ...m, label: m.name + ' ' + m.thickness }]));
     const board = thickness.carcass, half = board / 2, frontThickness = thickness.cabinet, carcassDepth = settings.carcass.depth;
-    // depths from the wall (n)
-    const carcassBack = settings.carcass.wallGap;
+    // depths (n) from the carcass backs; a front stands carcass.frontGap in front of its carcass
+    const carcassBack = 0;
     const carcassFront = carcassBack + carcassDepth;
-    const frontFace = carcassFront + frontThickness;
+    const frontFace = carcassFront + settings.carcass.frontGap + frontThickness;
     const plinthFace = frontFace - settings.plinth.setback;
+    // a front panel of a carcass is screwed onto it (no gap, unlike a front); one outside a carcass stands in the front plane,
+    // screwed to its neighbour
+    const panelFace = carcassFront + thickness.frontPanel;
     // [u0, u1] of a spacer of carcass board inside the carcass side on the hinge side (it carries runners past the hinges)
     const spacerOnHingeSide = (carcass, hinge) => (hinge === 'right' ? [carcass.u1 - 2 * board, carcass.u1 - board] : [carcass.u0 + board, carcass.u0 + 2 * board]);
 
@@ -379,13 +387,22 @@
       widths.forEach((w, i) => { if (!Number.isInteger(w)) warn(`${placeLabel(g, i + 1)}: szerokość kolumny "${w}" musi być całkowitą liczbą mm.`); });
       const stacked = stack(widths, pieces.filter(p => String(p.group) === g));
       for (const { piece, why } of stacked.skipped) warn(`${placeOf(piece)}: ${typeLabel(piece.type)} ${why} - pominięty.`, piece.index, true);
+      const island = stacked.items.some(item => item.type === 'worktop' && hasTag(item, 'island')); // a free-standing island: its worktop has the tag island
+      // an island has no wall: its line is the carcass backs
+      let wallGap = island ? 0 : settings.carcass.wallGap[g];
+      if (!(wallGap >= 0)) {
+        warn(`Grupa ${g}: brak ustawienia carcass.wallGap.${g} (odstęp od ściany) - przyjęto 0.`);
+        wallGap = 0;
+      }
       groups[g] = {
         group: +g,
         widths,
         columnX: stacked.columnX,
         length: stacked.columnX[stacked.columnX.length - 1],
         items: stacked.items,
-        island: stacked.items.some(item => item.type === 'worktop' && hasTag(item, 'island')), // a free-standing island: its worktop has the tag island
+        island,
+        wallGap,
+        wall: carcassBack - wallGap, // n of the wall line
         areas: carcassAreas(stacked.items)
       };
       for (const item of stacked.items) {
@@ -587,15 +604,15 @@
             lacquer: LACQUER.strip, lacqueredSides: STRIP_LACQUERED_SIDES
           });
           if (!item.carcass) {
-            // back strips: as high as the carcasses beside the strip, one per carcass one above the other; a strip on another one starts
-            // strip.bracketSpace higher, room for the wall bracket on top of the strip below (the island stands free: no bracket)
+            // back strips: as high as the carcasses beside the strip, one per carcass one above the other; a wall bracket at each
+            // joint of the stack (the back strip is shortened on site to make room for it; the island stands free: no bracket)
             const along = height > width;
             const beside = along ? carcasses.filter(carcass => carcass.group === groupModel.group && (carcass.u0 === u1 || carcass.u1 === u0) && carcass.v0 < v1 && carcass.v1 > v0) : [];
             let spans = [[v0, v1]];
             if (beside.length) {
               const joints = [...new Set(beside.filter(carcass => beside.some(upper => upper.v0 === carcass.v1 && upper.u0 === carcass.u0)).map(carcass => carcass.v1))].sort((a, b) => a - b);
               const ends = [Math.max(v0, Math.min(...beside.map(carcass => carcass.v0))), ...joints, Math.min(v1, Math.max(...beside.map(carcass => carcass.v1)))];
-              spans = ends.slice(0, -1).map((a, i) => [i ? a + stripSettings.bracketSpace : a, ends[i + 1]]);
+              spans = ends.slice(0, -1).map((a, i) => [a, ends[i + 1]]);
               if (!groupModel.island) counts.wallBrackets += spans.length - 1; // the top strip of a stack has no bracket
               // the strip and its back strips are screwed to the carcass on one side; the carcass on the other side from inside
               const length = Ks => Ks.reduce((sum, carcass) => sum + Math.min(carcass.v1, v1) - Math.max(carcass.v0, v0), 0);
@@ -621,9 +638,9 @@
           const edges = SIDES
             .filter(side => groupModel.items.some(other => opens(other) && neighbour[side](other)))
             .map(side => (side === 'top' || side === 'bottom' ? { side, length: width, along: 'a' } : { side, length: height, along: 'b' }));
-          frontPanels.push({ group: groupModel.group, item, material: materialFor.frontPanel, name: 'Panel ' + thickness.frontPanel, a: width, b: height, box: [u0, u1, v0, v1, frontFace - thickness.frontPanel, frontFace], edges });
+          frontPanels.push({ group: groupModel.group, item, material: materialFor.frontPanel, name: 'Panel ' + thickness.frontPanel, a: width, b: height, box: [u0, u1, v0, v1, ...(item.carcass ? [carcassFront, panelFace] : [frontFace - thickness.frontPanel, frontFace])], edges });
         } else if (item.type === 'wallPanel') {
-          wallPanels.push({ group: groupModel.group, item, material: materialFor.wallPanel, name: 'Panel ścienny ' + thickness.wallPanel, a: width, b: height, box: [u0, u1, v0, v1, 0, thickness.wallPanel], edges: [] });
+          wallPanels.push({ group: groupModel.group, item, material: materialFor.wallPanel, name: 'Panel ścienny ' + thickness.wallPanel, a: width, b: height, box: [u0, u1, v0, v1, groupModel.wall, groupModel.wall + thickness.wallPanel], edges: [] });
         } else if (item.type === 'plinth') {
           plinths.push({ group: groupModel.group, item, material: materialFor.plinth, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - thickness.plinth, plinthFace], lacquer: LACQUER.plinth });
         } else if (item.type === 'plasterboard') {
@@ -640,17 +657,19 @@
       }
     }
 
-    // ---- worktops: depth and thickness from the worktop material (island: the islandWorktop material); behind the carcass = depth - carcass - front - overhang ----
+    // ---- worktops: front edge worktop.overhang before the fronts; at a wall the worktop reaches the wall (the material, as bought,
+    // is cut at the back), an island worktop keeps the depth of its material (islandWorktop) ----
     for (const groupModel of Object.values(groups)) {
       const top = groupModel.items.find(i => i.type === 'worktop');
       if (!top) {
         if (groupModel.items.some(i => i.type === 'endPanel')) warn(`Grupa ${groupModel.group}: panele końcowe bez blatu na górze.`);
         continue;
       }
-      const use = groupModel.island ? ISLAND_USE : 'worktop', material = materialFor[use], depth = projectData.materials[material].depth;
-      const behind = depth - carcassDepth - frontThickness - settings.worktop.overhang;
-      if (behind < 0) warn(`Grupa ${groupModel.group}: blat ${depth} jest krótszy niż korpus + front + nawis (${carcassDepth + frontThickness + settings.worktop.overhang}).`);
-      worktops[groupModel.group] = { n0: carcassBack - behind, n1: frontFace + settings.worktop.overhang, depth, back: behind, v0: top.v0, v1: top.v1, use, material, thickness: thickness[use] };
+      const use = groupModel.island ? ISLAND_USE : 'worktop', material = materialFor[use], materialDepth = projectData.materials[material].depth;
+      const n1 = frontFace + settings.worktop.overhang, n0 = groupModel.island ? n1 - materialDepth : groupModel.wall, depth = n1 - n0;
+      if (depth > materialDepth) warn(`Grupa ${groupModel.group}: blat do ściany ma ${depth}, materiał ${materials[material].label} ma ${materialDepth}.`);
+      if (n0 > carcassBack) warn(`Grupa ${groupModel.group}: blat ${depth} nie sięga tyłu korpusów (korpus + front + nawis = ${n1 - carcassBack}).`);
+      worktops[groupModel.group] = { n0, n1, depth, back: carcassBack - n0, v0: top.v0, v1: top.v1, use, material, thickness: thickness[use] };
     }
 
     // ---- island back panel: panel material, between the end panels (none: the end columns), floor to the carcass tops, on the carcass backs ----
@@ -989,7 +1008,7 @@
 
     return {
       settings, warnings: issues.map(issue => issue.text), issues, counts, thickness, materials, materialFor, frontThickness, worktopPieces,
-      carcassDepth, carcassBack, carcassFront, frontFace, plinthFace, // n: from the wall
+      carcassDepth, carcassBack, carcassFront, frontFace, panelFace, plinthFace, // n: from the carcass backs
       groups, carcasses, fronts, boards, strips, plinths, frontPanels, wallPanels, plaster, worktops
     };
   }
@@ -1045,7 +1064,7 @@
         columns: carcass.span > 1 ? [carcass.column, carcass.column + carcass.span - 1] : [carcass.column],
         x: [carcass.u0, carcass.u1],
         y: [carcass.v0, carcass.v1],
-        z: [model.carcassBack, model.carcassFront],
+        z: [model.carcassBack, model.carcassFront].map(n => n - model.groups[carcass.group].wall), // from the wall (an island: from its back)
         size: [carcass.u1 - carcass.u0, carcass.v1 - carcass.v0, model.carcassDepth],
         kind: LABELS.carcassKind[carcass.kind],
         flags: carcass.flags.map(flag => LABELS.flag[flag]),

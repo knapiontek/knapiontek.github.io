@@ -19,7 +19,7 @@
      formulas    named calculations used in several texts ({f:name}), written like {=...} without the braces
    Texts and formulas may hold placeholders:
      {n:hinges}        engine count ({n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
-     {s:drawers.D.frontAbove} design.js setting     {t:carcass} thickness and {m:cabinet} material label of a board type or part
+     {s:drawers.D.frontAbove} design.js setting     {t:carcass} thickness, {d:worktop} depth (as bought) and {m:cabinet} material label of a board type or part
                        (a material use of engine.js: a board type, islandWorktop, endPanel, islandEndPanel, carcass, backPanel, drawerBox, hobPanel)
      {w:1.depth}       worktop of group 1  {k:K8.innerWidth} carcass by name: width, height, innerWidth, v0, v1
      {i:K8/oven.space} item by carcass name or place (G1[6]) and type or tag, #2 = the second from the bottom:
@@ -45,7 +45,7 @@ window.KITCHEN_COST = {
  "params": {"waste": 0.15, "sheet": "={v:sheet.length}*{v:sheet.width}/1000000", "reserve": 0.05},
  "values": {
   "sheet": {"length": 2800, "width": 2070},
-  "worktopBoard": {"length": 4100, "depth": 650, "islandDepth": 920},
+  "worktopBoard": {"length": 4100},
   "plasterboard": {"length": 2600, "width": 1200},
   "edgeAllowance": 0.1,
   "confirmatsPerCarcass": 18,
@@ -63,7 +63,7 @@ window.KITCHEN_COST = {
    {"type": "cabinet", "function": "drzwi"}
   ],
   "sheet": "Arkusz płyty {v:sheet.length}×{v:sheet.width} [m²]",
-  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: ABS razem = długość ABS × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, {s:carcass.wallGap} od ściany; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:backPanel.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:strip.depth} × długość listwy.\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nABS: tylko krawędzie widoczne; strona każdej krawędzi w zakładce Montaż.\nLakier: fronty dookoła, listwy krawędź przednia, cokół i panele bez krawędzi.\nBlaty: krawędź przednia fabryczna, wycięcia bez ABS.",
+  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: ABS razem = długość ABS × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, od ściany {s:carcass.wallGap.1} (grupa 1), {s:carcass.wallGap.2} (grupa 2); front {s:carcass.frontGap} przed korpusem; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:backPanel.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:strip.depth} × wysokość korpusu obok (skrócić na miejscu pod kątownik).\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nABS: tylko krawędzie widoczne; strona każdej krawędzi w zakładce Montaż.\nLakier: fronty dookoła, listwy krawędź przednia, cokół i panele bez krawędzi.\nBlaty: krawędź przednia fabryczna, wycięcia bez ABS.",
   "legend": {"runner": "pozycje do potwierdzenia wg Blum i Häfele"}
  },
  "blocks": [
@@ -86,7 +86,7 @@ window.KITCHEN_COST = {
   },
   {"id": "backPanel", "code": "PL", "title": "PLECY – {m:backPanel}, tylko za drzwiami szafek"},
   {"id": "worktops", "code": "BL", "title": "BLATY – {m:worktop} (blat), {m:islandWorktop} (wyspa); wycięcia na zlew (WZ) i płytę (WP) wg legendy"},
-  {"id": "endPanels", "code": "PK", "title": "PANELE KOŃCOWE – {m:endPanel}; blat wystaje {s:worktop.endPanelOverhang} mm poza panel końcowy (bok, przód, w wyspie tył)"},
+  {"id": "endPanels", "code": "PK", "title": "PANELE KOŃCOWE – {m:endPanel} ({d:endPanel} grupa 1, {d:islandEndPanel} wyspa); blat wystaje {s:worktop.endPanelOverhang} mm poza panel końcowy (bok, przód, w wyspie tył)"},
   {"id": "plaster", "code": "GK", "title": "ZABUDOWA GK – GKBI 12,5 na CD60 / UD27, gł. {s:plasterboard.depth} (zabudowa do sufitu, grupa 2)"}
  ],
  "categories": [
@@ -381,7 +381,7 @@ window.KITCHEN_COST = {
     {
      "id": "wallBrackets",
      "name": "Kątownik meblowy wąski 40 × 40 × 17 Domax",
-     "spec": "listwa tylna do ściany: na górze listwy pod korpusem nad nią (w szczelinie); górna listwa w stosie bez kątownika",
+     "spec": "listwa tylna do ściany: na styku listew tylnych w stosie (listwę skrócić na miejscu); górna listwa w stosie bez kątownika",
      "qty": "={n:wallBrackets}",
      "unit": "szt.",
      "price": 3.79,
@@ -466,8 +466,8 @@ window.KITCHEN_COST = {
    "items": [
     {
      "id": "worktop",
-     "name": "{m:worktop}, {v:worktopBoard.depth} × {v:worktopBoard.length} × {t:worktop}",
-     "spec": "blat grupy 1, przycięty do {w:1.depth}; krawędź przednia fabryczna Egger 100/1.5",
+     "name": "{m:worktop}, {d:worktop} × {v:worktopBoard.length} × {t:worktop}",
+     "spec": "blat grupy 1, przycięty z tyłu do {w:1.depth} (do ściany); krawędź przednia fabryczna Egger 100/1.5",
      "qty": 1,
      "unit": "szt.",
      "price": 1201.01,
@@ -477,8 +477,8 @@ window.KITCHEN_COST = {
     },
     {
      "id": "islandWorktop",
-     "name": "{m:islandWorktop}, {v:worktopBoard.islandDepth} × {v:worktopBoard.length} × {t:islandWorktop}",
-     "spec": "blat wyspy, przycięty do {w:3.depth}; krawędź przednia fabryczna Egger 100/1.5, krawędź tylna po przycięciu do oklejenia",
+     "name": "{m:islandWorktop}, {d:islandWorktop} × {v:worktopBoard.length} × {t:islandWorktop}",
+     "spec": "blat wyspy, pełna głębokość płyty ({w:3.depth}, bez cięcia na głębokość); krawędź przednia fabryczna Egger 100/1.5; krawędź tylna: ABS wg listy cięć (zapytać, czy fabryczna)",
      "qty": 1,
      "unit": "szt.",
      "price": 2056.93,
@@ -488,7 +488,7 @@ window.KITCHEN_COST = {
     },
     {
      "id": "endPanelBoard",
-     "name": "Panele końcowe: {m:endPanel}",
+     "name": "Panele końcowe: {m:endPanel}, gł. {d:endPanel} i {d:islandEndPanel}",
      "spec": "głębokość blatu ({w:1.depth} grupa 1, {w:3.depth} wyspa) minus nawis {s:worktop.endPanelOverhang} mm z przodu (w wyspie także z tyłu); wymiary w liście cięć (blok PANELE KOŃCOWE)",
      "qty": "={endPanels.m2}",
      "unit": "m²",
@@ -842,7 +842,7 @@ window.KITCHEN_COST = {
     {
      "id": "fridgeAir",
      "topic": "Lodówka – wentylacja",
-     "description": "Wlot: kratka w cokole.\nWylot: szczelina {s:shelf.ventGap} za półką stałą nad urządzeniem, {s:carcass.wallGap} za korpusem.",
+     "description": "Wlot: kratka w cokole.\nWylot: szczelina {s:shelf.ventGap} za półką stałą nad urządzeniem, {s:carcass.wallGap.2} za korpusem.",
      "assumed": "Kratka {p:grilles} PLN."
     },
     {
@@ -883,7 +883,7 @@ window.KITCHEN_COST = {
     {
      "id": "wallFixing",
      "topic": "Mocowanie korpusów do ściany",
-     "description": "Listwy tylne: tak wysokie jak korpusy obok; między korpusami jeden nad drugim {s:strip.bracketSpace} na kątownik.\nKątowniki ({n:wallBrackets}): na górze listwy tylnej; górna listwa w stosie bez kątownika.\nWkręty: listwy do pierwszego korpusu zwykłe, drugi korpus mosiądzowane od środka.\nWyspa stoi wolno.",
+     "description": "Listwy tylne: z {m:carcass}, gł. {s:strip.depth}, tak wysokie jak korpusy obok, jedna na korpus.\nKątowniki ({n:wallBrackets}): na styku listew tylnych w stosie, listwę skrócić na miejscu; górna listwa w stosie bez kątownika.\nWkręty: listwy do pierwszego korpusu zwykłe, drugi korpus mosiądzowane od środka.\nWyspa stoi wolno.",
      "assumed": "Gazobeton, kołki DuoPower 8."
     },
     {
@@ -897,12 +897,6 @@ window.KITCHEN_COST = {
      "id": "stripsPanels",
      "topic": "Listwy na sztorc, panele na płasko",
      "description": "Listwy: {m:strip}, na sztorc, gł. {s:strip.depth}; lakierowane obustronnie i krawędź przednia.\nPanele: {m:frontPanel}, na płasko; lakierowane obustronnie.\nABS przy otwieranym froncie: panel {i:K3/frontPanel.width} – {i:K3/frontPanel.edges}; panel {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel {i:G2[3]/frontPanel.width} zakrywa koniec panelu {i:K3/frontPanel.width}."
-    },
-    {
-     "id": "backStrips",
-     "topic": "Listwy tylne za listwami",
-     "description": "Za każdą listwą poza korpusem: listwa tylna z {m:carcass}, gł. {s:strip.depth}, długość listwy.",
-     "assumed": "Na liście cięć."
     },
     {
      "id": "fixedShelves",
@@ -945,7 +939,7 @@ window.KITCHEN_COST = {
     {
      "id": "worktops",
      "topic": "Blaty",
-     "description": "Grupa 1: blat z jednej płyty {v:worktopBoard.length}.\nWyspa: blat z płyty {v:worktopBoard.islandDepth}, przycięty do {w:3.depth}.\nPanele końcowe: osobny materiał, dwustronny; blat wystaje {s:worktop.endPanelOverhang} z boku, z przodu i w wyspie z tyłu.\nZłącza blatu z panelami: {q:worktopJoints}.\nWycięcia na zlew i płytę: lista cięć (BLATY), CNC w hurtowni.",
+     "description": "Grupa 1: blat z jednej płyty {d:worktop} × {v:worktopBoard.length}, przycięty z tyłu do {w:1.depth} (do ściany).\nWyspa: pełna płyta {d:islandWorktop}, bez cięcia na głębokość.\nPanele końcowe: osobny materiał, dwustronny; blat wystaje {s:worktop.endPanelOverhang} z boku, z przodu i w wyspie z tyłu.\nZłącza blatu z panelami: {q:worktopJoints}.\nWycięcia na zlew i płytę: lista cięć (BLATY), CNC w hurtowni.",
      "decide": "Panele końcowe: szukam jeszcze rozwiązania na dąb dwustronny (dekor jak blat, obie strony widoczne)."
     },
     {

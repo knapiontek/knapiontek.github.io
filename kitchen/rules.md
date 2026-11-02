@@ -22,7 +22,7 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | blat | blat; jego grubość = wysokość elementu |
 | panel końcowy | pionowa płyta pod końcem blatu, do podłogi; jego grubość = szerokość elementu |
 | panel ścienny | płyta na ścianie |
-| panel | płyta na płasko w płaszczyźnie frontów |
+| panel | płyta na płasko |
 | listwa | listwa na sztorc w płaszczyźnie frontów |
 | szafka | miejsce w korpusie z drzwiami |
 | szuflada | miejsce w korpusie z szufladą |
@@ -41,17 +41,17 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | zmywarka | szafka | front na drzwiach urządzenia, bez korpusu |
 | wyspa | blat | blat z materiału wyspy, panel tylny wyspy, wyspa stoi wolno (bez ściany) |
 
-Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
+Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wykluczają się też: atrapa z koszami, atrapa ze szufladą wewnętrzną, ekspres z szufladami za drzwiami, a w jednym korpusie zlew z płytą grzewczą.
 
 ## 3. Korpus
 
-- **Korpus** tworzą wszystkie elementy tej samej grupy z tą samą nazwą korpusu. Wszystkie korpusy mają jedną głębokość i stoją w jednym odstępie od ściany.
+- **Korpus** tworzą wszystkie elementy tej samej grupy z tą samą nazwą korpusu. Wszystkie korpusy mają jedną głębokość. Odstęp od ściany ustala się dla każdej grupy przy ścianie; wyspa stoi wolno.
 - **Rodzaje korpusu:**
   - dolna: stoi na cokole i ma nad sobą blat;
   - słupek: stoi na cokole i nie ma blatu;
   - górna: nie stoi na cokole.
 - Korpus stojący na cokole ma nóżki.
-- **Mocowanie:** listwa tylna jest przymocowana do ściany kątownikiem na jej górze (stabilność); najwyższa listwa w stosie nie ma kątownika. Listwę i listwę tylną przykręca się do pierwszego korpusu zwykłym wkrętem, a drugi korpus do nich wkrętem od środka. Wyspa stoi wolno.
+- **Mocowanie:** listwa tylna jest przymocowana do ściany kątownikiem na styku z listwą tylną nad nią (stabilność; listwę skraca się na miejscu pod kątownik); najwyższa listwa w stosie nie ma kątownika. Listwę i listwę tylną przykręca się do pierwszego korpusu zwykłym wkrętem, a drugi korpus do nich wkrętem od środka. Wyspa stoi wolno.
 - **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka lub zamrażarka.
 - **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
@@ -70,13 +70,14 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 
 ## 4. Fronty, listwy, panele, blat
 
-- **Front** = moduł minus 4 szczeliny (lewa, prawa, góra, dół). Front shaker ma ramę o stałej szerokości.
-- **Listwa** stoi na sztorc. Gdy nie należy do korpusu, dostaje listwy tylne przy ścianie, tak wysokie jak korpusy obok: jedną na każdy korpus jeden nad drugim, z miejscem na kątownik nad listwą pod spodem.
-- **Panel** leży na płasko w płaszczyźnie frontów.
+- **Front** = moduł minus 4 szczeliny (lewa, prawa, góra, dół). Front stoi w ustalonej szczelinie przed korpusem. Front shaker ma ramę o stałej szerokości.
+- **Listwa** stoi na sztorc w płaszczyźnie frontów. Gdy nie należy do korpusu, dostaje listwy tylne przy tyle korpusów, tak wysokie jak korpusy obok: jedną na każdy korpus jeden nad drugim.
+- **Panel** leży na płasko. Panel w korpusie jest przykręcony do korpusu, bez szczeliny; panel poza korpusem stoi w płaszczyźnie frontów i jest przykręcony do sąsiedniego panelu.
 - **Blat:**
-  - głębokość podaje materiał blatu; wyspa ma osobny materiał;
+  - materiał blatu podaje głębokość płyty, którą się kupuje; wyspa ma osobny materiał;
   - wystaje przed fronty o nawis;
-  - z tyłu zostaje głębokość minus korpus, front i nawis.
+  - blat przy ścianie sięga do ściany, nadmiar płyty odcina się z tyłu;
+  - blat wyspy ma pełną głębokość swojego materiału, bez cięcia.
 - **Panel końcowy** stoi pod końcem blatu, od podłogi do spodu blatu, a blat leży na nim:
   - jest z osobnego materiału, dwustronnego, bo widać obie jego strony; wyspa ma osobny materiał;
   - blat wystaje poza niego o nawis panelu końcowego: z boku (wypełnienie), z przodu, w wyspie także z tyłu.
@@ -119,7 +120,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 
 ## 7. Kontrole
 
-- Błędy w danych są zgłaszane, np. brak typu, tag do złego typu, nakładanie się elementów, brak szczelin albo strony zawiasów, element poza kolumnami.
+- Błędy w danych są zgłaszane, np. brak typu, tag do złego typu, nakładanie się elementów, brak szczelin albo strony zawiasów, element poza kolumnami, materiał blatu za płytki.
 - Element bez jednego typu, poza kolumnami albo nachodzący na inny jest pomijany.
 - Widok 3D pokazuje kolizje, szczeliny do 3 mm przy listwach i panelach, części wystające oraz fronty, które nieznacznie nie trzymają linii (większa różnica jest zamierzona).
 

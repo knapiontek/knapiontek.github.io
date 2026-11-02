@@ -9,13 +9,13 @@ window.KITCHEN_DESIGN = {
   "shakerNavy18": {"name": "Front shaker English Navy satyna", "thickness": 18, "color": "#3a4868", "lacquered": true, "core": "#f2efe8", "uses": ["cabinet", "drawer"]},
   "mdfNavy18": {"name": "Panel gładki English Navy satyna", "thickness": 18, "color": "#3a4868", "lacquered": true, "core": "#f2efe8", "uses": ["frontPanel", "strip", "plinth"]},
   "chipOak18": {"name": "Płyta laminowana Egger H1180 ST37 dąb Halifax", "thickness": 18.6, "color": "#b69671", "texture": "oak", "core": "#f2efe8", "uses": ["wallPanel"]},
-  "topOak38x600": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "color": "#b69671", "texture": "oak", "core": "#f2efe8", "depth": 600, "factoryEdges": ["front"], "uses": ["worktop"]},
-  "topOak38x900": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "color": "#b69671", "texture": "oak", "core": "#f2efe8", "depth": 900, "factoryEdges": ["front"], "uses": ["islandWorktop"]},
-  "endOak38x600": {"name": "Panel końcowy dwustronny, dekor jak blat H1180 ST37", "thickness": 38, "color": "#b69671", "texture": "oak", "core": "#f2efe8", "depth": 600, "twoSided": true, "uses": ["endPanel"]},
-  "endOak38x900": {"name": "Panel końcowy dwustronny, dekor jak blat H1180 ST37", "thickness": 38, "color": "#b69671", "texture": "oak", "core": "#f2efe8", "depth": 900, "twoSided": true, "uses": ["islandEndPanel"]}
+  "topOak38x650": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "color": "#b69671", "texture": "oak", "core": "#f2efe8", "depth": 650, "factoryEdges": ["front"], "uses": ["worktop"]},
+  "topOak38x920": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "color": "#b69671", "texture": "oak", "core": "#f2efe8", "depth": 920, "factoryEdges": ["front"], "uses": ["islandWorktop"]},
+  "endOak38x650": {"name": "Panel końcowy dwustronny, dekor jak blat H1180 ST37", "thickness": 38, "color": "#b69671", "texture": "oak", "core": "#f2efe8", "depth": 650, "twoSided": true, "uses": ["endPanel"]},
+  "endOak38x920": {"name": "Panel końcowy dwustronny, dekor jak blat H1180 ST37", "thickness": 38, "color": "#b69671", "texture": "oak", "core": "#f2efe8", "depth": 920, "twoSided": true, "uses": ["islandEndPanel"]}
  },
  "settings": {
-  "carcass": {"depth": 550, "wallGap": 14, "legs": 4},
+  "carcass": {"depth": 550, "wallGap": {"1": 28, "2": 14}, "frontGap": 2, "legs": 4},
   "backPanel": {"inset": 1},
   "crossRails": {"depth": 100, "hobFront": 50, "hobPanelGap": 20},
   "shelf": {"setback": 18, "clearance": 1, "perDoor": [{"maxHeight": 720, "count": 1}, {"count": 3}], "ventGap": 150},
@@ -24,9 +24,9 @@ window.KITCHEN_DESIGN = {
   "hinges": {"fromEnd": 100, "postDepth": 80, "aboveShelf": 30, "perDoor": [{"maxHeight": 900, "count": 2}, {"maxHeight": 1600, "count": 3}, {"count": 4}]},
   "drawers": {"D": {"frontAbove": 350, "sideHeight": 224, "backHeight": 199}, "M": {"sideHeight": 83, "backHeight": 84}, "bottom": {"inset": 75, "depth": 476, "fromBack": 38}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "backHeight": 84, "frontDeduction": 132}},
   "front": {"shakerRail": 50},
-  "strip": {"depth": 100, "bracketSpace": 40},
+  "strip": {"depth": 100},
   "plinth": {"setback": 70},
-  "worktop": {"overhang": 18, "endPanelOverhang": 3},
+  "worktop": {"overhang": 20, "endPanelOverhang": 3},
   "plasterboard": {"depth": 600, "studSpacing": 600, "layers": 2},
   "drilling": {
    "cup": {"diameter": 35, "depth": 13, "fromEdge": 22},
@@ -68,7 +68,7 @@ window.KITCHEN_DESIGN = {
  ],
  "columns": {
   "1": [3, 38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 320],
-  "2": [18, 546, 36, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130],
+  "2": [18, 560, 40, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130],
   "3": [3, 38, 18, 800, 18, 800, 18, 38, 3]
  },
  "components": [

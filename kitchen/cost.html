@@ -450,6 +450,7 @@ function placeholder(key, totals, quantities) {
   if (prefix === 'w') return model ? path(model.worktops, rest) : NaN;
   if (prefix === 's') return model ? path(model.settings, rest) : NaN;
   if (prefix === 't') return model ? model.thickness[rest] : NaN;
+  if (prefix === 'd') return model ? model.materials[model.materialFor[rest]].depth : NaN;
   if (prefix === 'm') return model ? model.materials[model.materialFor[rest]].label : '…';
   if (prefix === 'k') return model ? carcassValue(rest) : NaN;
   if (prefix === 'i') return model ? itemValue(rest) : NaN;

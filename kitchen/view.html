@@ -52,6 +52,7 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color
 .lgrp{display:grid;grid-template-columns:96px 1fr;gap:6px 8px;align-items:start;margin-top:10px}
 #layers .lgrp:first-child{margin-top:0}
 .holes-legend{font-size:12px;margin-top:8px;color:var(--muted)}
+.lgrp>span.gh{padding:5px 0;font-size:12px;font-weight:600;color:var(--ink)}
 .lgrp>button.gh{border:0;background:none;padding:5px 0;text-align:left;font-size:12px;font-weight:600;color:var(--ink);border-radius:4px}
 .lgrp>button.gh[aria-pressed="false"]{color:var(--muted)}
 .lgrp>button.gh[aria-pressed="mixed"]{color:var(--muted)}
@@ -308,31 +309,38 @@ for (const r of GROUP_IDS) {
   itemsOfGroup[r] = g.items;
   groupLength[r] = g.widths.reduce((sum, w) => sum + w, 0);
 }
-// where a group stands: placement x, z is the point of the group named by its anchor (start: u = 0, end: u = length,
-// centre: the middle), so a group keeps that point when its columns change (e.g. a group counted from a corner).
-// against {group, column}: the front of this group lies on the end of that column of a group placed before it (an L corner);
-// it sets the coordinate across this group, x or z is then not given for it
+// where a group stands: placement x, z is the point on its wall line (an island: the line of its carcass backs) named by its
+// anchor: start (u = 0), end (u = length), centre, or {column: k} (the end of column k), so the group keeps that point when its
+// columns change. against {group}: instead of the x or z along this group, its anchor lies on the front plane of that group
+// (an L corner: when the other group gets deeper, this one moves along)
 const ANCHORS = { start: 0, centre: 0.5, end: 1 };
+const anchorU = r => {
+  const anchor = SCENE.placement[r].anchor || 'start';
+  return typeof anchor === 'object' ? model.groups[r].columnX[anchor.column] : (ANCHORS[anchor] ?? 0) * groupLength[r];
+};
 const origin = {};
-for (const r of GROUP_IDS) {
+const placeGroup = r => {
   const placement = SCENE.placement[r], a = (placement.rotation * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
-  const along = (ANCHORS[placement.anchor || 'start'] ?? 0) * groupLength[r];
-  const place = { x: placement.x - along * cos, z: placement.z + along * sin, cos, sin, rotation: placement.rotation };
+  const along = anchorU(r);
+  // origin = the point u = 0, n = 0 (carcass backs); the wall line lies at n = model.groups[r].wall
+  const wallGap = model.groups[r].wallGap;
+  const place = { x: placement.x - along * cos + wallGap * sin, z: placement.z + along * sin + wallGap * cos, cos, sin, rotation: placement.rotation };
   if (placement.against) {
-    const other = origin[placement.against.group], u = model.groups[placement.against.group].columnX[placement.against.column];
-    const cornerX = other.x + u * other.cos, cornerZ = other.z - u * other.sin; // the end of that column, on the other group's wall line
-    if (sin) place.x = cornerX - model.frontFace * sin; else place.z = cornerZ - model.frontFace * cos;
+    const other = origin[placement.against.group], frontX = other.x + model.frontFace * other.sin, frontZ = other.z + model.frontFace * other.cos;
+    if (cos) place.x = frontX - along * cos; else place.z = frontZ + along * sin;
   }
   origin[r] = place;
-}
+};
+GROUP_IDS.filter(r => !SCENE.placement[r].against).forEach(placeGroup);
+GROUP_IDS.filter(r => SCENE.placement[r].against).forEach(placeGroup);
 const hasTag = KE.hasTag;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
-const { frontFace, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the wall
+const { frontFace, panelFace, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the carcass backs; the wall of group r at model.groups[r].wall
 const { carcass: board, plinth: plinthThickness, wallPanel: wallPanelThickness, strip: stripThickness, frontPanel: frontPanelThickness } = model.thickness, frontThickness = model.frontThickness;
 const shakerRail = settings.front.shakerRail; // width of the shaker frame of a front
 const room = SCENE.room, ceiling = room.ceiling;
-const rightWall = origin[room.rightWallGroup].x; // the wall line (n = 0) of the group that stands against the right wall
+const rightWall = origin[room.rightWallGroup].x + model.groups[room.rightWallGroup].wall * origin[room.rightWallGroup].sin; // the wall line of the group that stands against the right wall
 const worktopOf = group => model.worktops[group] || { n0: 0, n1: 0, depth: 0 }; // n0 back edge, n1 front edge
 const sinkCarcass = model.carcasses.find(carcass => carcass.sink); // the group with the sink
 const sinkGroup = sinkCarcass ? sinkCarcass.group : null;
@@ -650,9 +658,12 @@ function roomBox(parent, x0, x1, y0, y1, z0, z1, mat, noShadow) {
   return m;
 }
 // box of a group (u, v, n) placed in room coordinates
+const groupRoomMeshes = {}; // design.js group -> its meshes drawn in room layers (hidden with the group)
 function groupBox(parent, group, u0, u1, v0, v1, n0, n1, mat) {
   const [x0, x1, z0, z1] = toRoom[group](u0, u1, n0, n1);
-  return roomBox(parent, x0, x1, v0, v1, z0, z1, mat);
+  const m = roomBox(parent, x0, x1, v0, v1, z0, z1, mat);
+  if (m) (groupRoomMeshes[group] || (groupRoomMeshes[group] = [])).push(m);
+  return m;
 }
 // cylinder in room coordinates, along y unless axis is 'x' or 'z'
 function roomCylinder(parent, radius, length, mat, x, y, z, axis, segments) {
@@ -930,19 +941,19 @@ function buildGroup(group) {
     if (type === 'worktop' || type === 'endPanel') {
       const piece = model.worktopPieces.find(p => p.item === item);
       if (piece) worktopPiece(group, piece);
-    } else if (type === 'strip') { // on edge, strip.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
+    } else if (type === 'strip') { // on edge, strip.depth deep, in the front plane; lacquered on both faces and the edges engine.js names, the other edges bare
       const strip = model.strips.find(f => f.item === item), lacquered = ((strip && strip.lacqueredSides) || []).map(side => ({ side }));
       edgeLook(localBox(groupLayer[group].strips, u0, u1, v0, v1, frontFace - settings.strip.depth, frontFace, boardFor('strip')), lacquered, model.materialFor.strip);
-    } else if (type === 'frontPanel') { // laid flat in the front plane; in group coordinates, so its edges keep their sides
+    } else if (type === 'frontPanel') { // laid flat, where engine.js puts it; in group coordinates, so its edges keep their sides
       const panel = model.frontPanels.find(p => p.item === item);
-      edgeLook(localBox(groupLayer[group].frontPanel, u0, u1, v0, v1, frontFace - frontPanelThickness, frontFace, boardFor('frontPanel')), panel && panel.edges, model.materialFor.frontPanel);
+      edgeLook(localBox(groupLayer[group].frontPanel, u0, u1, v0, v1, panel.box[4], panel.box[5], boardFor('frontPanel')), panel && panel.edges, model.materialFor.frontPanel);
     } else if (type === 'plinth') {
       edgeLook(groupBox(roomLayer.plinth, group, u0, u1, v0, v1, plinthFace - plinthThickness, plinthFace, plinthMaterial), [], model.materialFor.plinth);
     } else if (type === 'wallPanel') { // on the wall
-      const m = groupBox(roomLayer.wallPanel, group, u0, u1, v0, v1, 0, wallPanelThickness, wallPanelMaterial);
+      const wall = model.groups[group].wall, m = groupBox(roomLayer.wallPanel, group, u0, u1, v0, v1, wall, wall + wallPanelThickness, wallPanelMaterial);
       if (m) m.userData.grain = 'x';
     } else if (type === 'plasterboard') { // plasterboard box; a space is not drawn
-      groupBox(roomLayer.walls, group, u0, u1, v0, v1, 0, settings.plasterboard.depth, MAT.wall);
+      groupBox(roomLayer.walls, group, u0, u1, v0, v1, model.groups[group].wall, model.groups[group].wall + settings.plasterboard.depth, MAT.wall); // depth from the wall
     } else if (type === 'oven' || type === 'microwave') {
       builtInAppliance(group, item, type);
     }
@@ -1384,7 +1395,8 @@ function geometryCheck() {
     if (!g) continue;
     const local = new THREE.Box3().setFromObject(p.object).applyMatrix4(g.matrixWorld.clone().invert());
     const n0 = local.min.z * 1000, n1 = local.max.z * 1000;
-    if (!freeStanding[GROUP_IDS.find(r => groupRoot[r] === g)] && n0 < -OVERLAP) out.push({ k: 'Wystaje', a: p.name, b: 'za ścianę', v: round1(-n0) + ' mm' }); // groups at a wall: n = 0 is the wall
+    const r = GROUP_IDS.find(id => groupRoot[id] === g), wall = model.groups[r].wall;
+    if (!freeStanding[r] && n0 < wall - OVERLAP) out.push({ k: 'Wystaje', a: p.name, b: 'za ścianę', v: round1(wall - n0) + ' mm' });
     const limit = p.kind === 'leg' ? plinthFace - plinthThickness : carcassFront;
     if (n1 > limit + OVERLAP) out.push({ k: 'Wystaje', a: p.name, b: 'przed ' + (p.kind === 'leg' ? 'cokół' : 'korpus'), v: round1(n1 - limit) + ' mm' });
   }
@@ -1501,8 +1513,11 @@ function shadowSetup(light, size, near, far) {
   light.shadow.normalBias = 0.015;
   light.shadow.radius = 4;
 }
-const lightAt = light => pointToRoom[light.group](light.u, light.n); // a lamp in the coordinates of a group
-SCENE.lights.pendants.map(lightAt).forEach(([x, z]) => {
+const lightAt = light => pointToRoom[light.group](light.u, model.groups[light.group].wall + light.n); // a lamp at {u, n from the wall} of a group
+// pendants: count of them, spacing apart along the group, centred over its worktop
+const pendants = SCENE.lights.pendants, pendantTop = worktopOf(pendants.group), pendantItem = itemsOfGroup[pendants.group].find(i => i.type === 'worktop');
+const pendantCentre = pendantItem ? (pendantItem.u0 + pendantItem.u1) / 2 : groupLength[pendants.group] / 2;
+Array.from({ length: pendants.count }, (_, i) => pointToRoom[pendants.group](pendantCentre + (i - (pendants.count - 1) / 2) * pendants.spacing, (pendantTop.n0 + pendantTop.n1) / 2)).forEach(([x, z]) => {
   const y = SCENE.lights.pendantBottom;
   roomCylinder(lampLayer, 2, ceiling - y - 90, MAT.gasket, x, (ceiling + y + 90) / 2, z, null, 6); // cable
   const shade = new THREE.Mesh(new THREE.SphereGeometry(0.15, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), standard({ color: linear(model.materials[model.materialFor.cabinet].color), roughness: 0.5, metalness: 0.2 })); // shade in the cabinet front colour
@@ -1799,7 +1814,10 @@ floorPanel.addEventListener('click', e => { const b = e.target.closest('[data-f]
 
 /* ---------- layer chips ---------- */
 const layerPanel = document.getElementById('layers'), layerOn = {};
-layerPanel.innerHTML = LAYERS.map(({ label, layers }, i) => '<div class="lgrp"><button class="gh" data-g="' + i + '" aria-pressed="true">' + label + '</button><div class="row chips">' +
+layerPanel.innerHTML =
+  '<div class="lgrp"><span class="gh">Grupy</span><div class="row chips">' +
+  GROUP_IDS.map(r => '<button data-r="' + r + '" aria-pressed="true">' + esc(groupName[r]) + '</button>').join('') + '</div></div>' +
+  LAYERS.map(({ label, layers }, i) => '<div class="lgrp"><button class="gh" data-g="' + i + '" aria-pressed="true">' + label + '</button><div class="row chips">' +
   Object.entries(layers).map(([id, name]) => '<button data-l="' + id + '" aria-pressed="true">' + name + '</button>').join('') + '</div></div>').join('') +
   '<div class="holes-legend">Otwory: ' + Object.values(HOLE_COLORS).map(({ hex, label }) => '<span style="color:' + hex + '">●</span> ' + label).join(' &nbsp;') + '</div>';
 function syncLayerGroups() {
@@ -1807,6 +1825,13 @@ function syncLayerGroups() {
     const ids = Object.keys(LAYERS[b.dataset.g].layers), on = ids.filter(id => layerOn[id]).length;
     b.setAttribute('aria-pressed', on === ids.length ? 'true' : on ? 'mixed' : 'false');
   });
+}
+// a whole design.js group on or off (e.g. the island, to see what stands behind it)
+function setGroupShown(r, on) {
+  groupRoot[r].visible = on;
+  (groupRoomMeshes[r] || []).forEach(m => { m.visible = on; });
+  layerPanel.querySelector('[data-r="' + r + '"]').setAttribute('aria-pressed', on);
+  sceneChanged();
 }
 function setLayer(id, on, quiet) {
   layerOn[id] = on;
@@ -1818,7 +1843,8 @@ function setLayer(id, on, quiet) {
 layerPanel.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b) return;
-  if (b.dataset.l) setLayer(b.dataset.l, !layerOn[b.dataset.l]);
+  if (b.dataset.r) setGroupShown(b.dataset.r, b.getAttribute('aria-pressed') !== 'true');
+  else if (b.dataset.l) setLayer(b.dataset.l, !layerOn[b.dataset.l]);
   else {
     const ids = Object.keys(LAYERS[b.dataset.g].layers), on = !ids.every(id => layerOn[id]);
     ids.forEach(id => setLayer(id, on, true));
@@ -2015,11 +2041,11 @@ document.getElementById('dims').innerHTML = definitions([
   ...groupDims,
   { name: 'Sufit', value: ceiling },
   { name: 'Głębokość korpusu', value: carcassDepth + ', plecy ' + model.materials[model.materialFor.backPanel].label },
-  { name: 'Tył korpusu', value: carcassBack + ' od ściany' },
-  { name: 'Lico frontów', value: frontFace + ' od ściany; 4 szczeliny na front' },
+  ...GROUP_IDS.filter(r => !freeStanding[r]).map(r => ({ name: 'G' + r + ' tył korpusu', value: model.groups[r].wallGap + ' od ściany' })),
+  { name: 'Lico frontów', value: (frontFace - carcassFront) + ' przed korpusem (szczelina ' + settings.carcass.frontGap + '); 4 szczeliny na front' },
   { name: 'Rama frontu shaker', value: shakerRail },
-  { name: 'Listwy ' + stripThickness, value: 'na sztorc, gł. ' + settings.strip.depth },
-  { name: 'Panele ' + frontPanelThickness, value: 'na płasko, w płaszczyźnie frontów' },
+  { name: 'Listwy ' + stripThickness, value: 'na sztorc, gł. ' + settings.strip.depth + ', w płaszczyźnie frontów' },
+  { name: 'Panele ' + frontPanelThickness, value: 'na płasko; w korpusie przykręcone do niego (' + (frontFace - panelFace) + ' za licem frontów), poza korpusem w płaszczyźnie frontów' },
   { name: 'Cokół', value: 'lico ' + settings.plinth.setback + ' za frontami' },
   { name: 'Okno', value: win.width + ' × ' + win.height + ', ' + win.finish }
 ]);
