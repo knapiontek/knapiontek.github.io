@@ -1,5 +1,6 @@
 /* Kitchen project design - shared by design.html, cost.html and view.html.
-   Plain JSON after "window.KITCHEN_DESIGN =". Edit it in design.html (Import data / Export data). */
+   Plain JSON after "window.KITCHEN_DESIGN =". Notes, columns and components: design.html (Import data / Export data);
+   materials and settings: by hand (design.html keeps them as they are). */
 window.KITCHEN_DESIGN = {
  "materials": {
   "chipGrey18": {"name": "Płyta wiórowa Egger U708 ST9 szary jasny", "thickness": 18, "color": "#9a9d9c", "core": "#f2efe8", "uses": ["carcass"]},
@@ -18,7 +19,7 @@ window.KITCHEN_DESIGN = {
   "back": {"inset": 1},
   "rails": {"depth": 100, "hobFront": 50, "hobPanelGap": 20},
   "shelf": {"setback": 18, "clearance": 1, "perDoor": [{"maxHeight": 720, "count": 1}, {"count": 3}], "ventGap": 150},
-  "pullOutShelf": {"depth": 500, "clearance": 5, "lift": 20, "space": 450, "shelvesAbove": 2},
+  "pullOutShelf": {"depth": 500, "clearance": 5, "lift": 20, "spacerAbove": 20, "space": 450, "shelvesAbove": 2},
   "doorDrawers": {"perDoor": [{"count": 2}], "side": 150, "lift": 10, "runner": {"gap": 13, "lengths": [250, 300, 350, 400, 450, 500, 550], "fromFront": [37, 229, 421], "axis": 23}},
   "hinges": {"fromEnd": 100, "postDepth": 80, "aboveShelf": 30, "perDoor": [{"maxHeight": 900, "count": 2}, {"maxHeight": 1600, "count": 3}, {"count": 4}]},
   "drawers": {"dAbove": 350, "D": {"sideHeight": 224, "backHeight": 199}, "M": {"sideHeight": 83, "backHeight": 84}, "bottom": {"inset": 75, "depth": 476, "fromBack": 38}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "backHeight": 84, "frontDeduction": 132}},

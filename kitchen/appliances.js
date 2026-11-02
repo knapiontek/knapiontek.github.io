@@ -1,7 +1,8 @@
 /* Kitchen appliances: what the manufacturers give - sizes and documents. Written per project (LLM).
    How an appliance fits in this kitchen is decided by engine.js (fitAppliances), not here.
    Sizes in mm, one value each. Less obvious fields:
-     body      the appliance without its door or front; a sink: its outline on the worktop
+     body      the appliance's overall size: an oven or a microwave without its front (front), a fridge or a dishwasher with its
+               doors; a sink: its outline on the worktop
      front     bottom: where the front starts, measured from the body bottom (below it: negative)
      feet      the height of its feet as set in this kitchen
      door      hinge: the edge the door turns on; height: the appliance door at these feet (dishwasher)

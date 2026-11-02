@@ -100,7 +100,7 @@
     'back.inset',
     'rails.depth', 'rails.hobFront', 'rails.hobPanelGap',
     'shelf.setback', 'shelf.clearance', 'shelf.perDoor', 'shelf.ventGap',
-    'pullOutShelf.depth', 'pullOutShelf.clearance', 'pullOutShelf.lift', 'pullOutShelf.space', 'pullOutShelf.shelvesAbove',
+    'pullOutShelf.depth', 'pullOutShelf.clearance', 'pullOutShelf.lift', 'pullOutShelf.spacerAbove', 'pullOutShelf.space', 'pullOutShelf.shelvesAbove',
     'doorDrawers.perDoor', 'doorDrawers.side', 'doorDrawers.lift', 'doorDrawers.runner.gap', 'doorDrawers.runner.lengths', 'doorDrawers.runner.fromFront', 'doorDrawers.runner.axis',
     'hinges.fromEnd', 'hinges.postDepth', 'hinges.aboveShelf', 'hinges.perDoor',
     'drawers.dAbove', 'drawers.D.sideHeight', 'drawers.D.backHeight', 'drawers.M.sideHeight', 'drawers.M.backHeight',
@@ -536,27 +536,31 @@
         counts.shelvesAdjustable++;
         counts.shelfPins += PINS_PER_SHELF;
       };
-      if (K.coffee) {
-        // the open door reaches about as far into the opening as the runner clearance: a spacer on the hinge side carries that runner
-        const pullOut = settings.pullOutShelf, y = v0 + board + pullOut.lift, door = K.boxes.find(b => b.type === 'cabinet' && HINGE_SIDES.includes(b.hinge));
+      // a door with coffee: a pull-out shelf on the board under the door, shelves above it up to the board over the door. The open
+      // door reaches about as far into the opening as the runner clearance: a spacer on the hinge side carries that runner
+      const addPullOutShelf = (door, lo, hi) => {
+        const pullOut = settings.pullOutShelf, y = lo + pullOut.lift;
         let s0 = innerU0, s1 = innerU1;
-        if (door) {
-          const right = door.hinge === 'right', spacer = spacerOnHingeSide(K, door.hinge), top = y + board + pullOut.lift;
-          part('spacer', 'Płyta dystansowa', carcassDepth, top - (v0 + board), carcassMaterial, 'carcasses',
-            [...spacer, v0 + board, top, carcassBack, carcassFront], [{ side: 'front', length: top - (v0 + board), along: 'b' }, { side: 'top', length: carcassDepth, along: 'a' }]); // the top is seen above the shelf
-          if (right) s1 = spacer[0]; else s0 = spacer[1];
+        if (!reachesHingeSide(door, K)) warn(`${placeOf(door)}: ekspres - drzwi muszą sięgać boku korpusu po stronie zawiasów.`, door.index);
+        else {
+          const spacer = spacerOnHingeSide(K, door.hinge), top = y + board + pullOut.spacerAbove;
+          part('spacer', 'Płyta dystansowa', carcassDepth, top - lo, carcassMaterial, 'carcasses',
+            [...spacer, lo, top, carcassBack, carcassFront], [{ side: 'front', length: top - lo, along: 'b' }, { side: 'top', length: carcassDepth, along: 'a' }]); // the top is seen above the shelf
+          if (door.hinge === 'right') s1 = spacer[0]; else s0 = spacer[1];
         }
         const shelfWidth = s1 - s0 - 2 * pullOut.clearance;
         part('pullOutShelf', 'Półka wysuwana', shelfWidth, pullOut.depth, carcassMaterial, 'shelves',
-          [s0 + pullOut.clearance, s1 - pullOut.clearance, y, y + board, carcassFront - pullOut.depth, carcassFront], frontEdge(shelfWidth, 'a'));
+          [s0 + pullOut.clearance, s1 - pullOut.clearance, y, y + board, carcassFront - pullOut.depth, carcassFront], frontEdge(shelfWidth, 'a')).item = door;
         counts.pullOutShelves++;
-        const lo = y + board + pullOut.space, hi = v1 - board;
-        for (let j = 0; j < pullOut.shelvesAbove; j++) adjustableShelf(Math.round(lo + ((hi - lo) * j) / pullOut.shelvesAbove));
-      } else if (!K.sink && !K.fridge) {
+        const above = y + board + pullOut.space;
+        for (let j = 0; j < pullOut.shelvesAbove; j++) adjustableShelf(Math.round(above + ((hi - above) * j) / pullOut.shelvesAbove));
+      };
+      if (!K.sink && !K.fridge) {
         // per door, by its front height (settings.shelf.perDoor), evenly between the boards above and below the door
         for (const b of K.boxes) {
           if (b.type !== 'cabinet' || hasTag(b, 'doorDrawers')) continue; // behind a door with doorDrawers: the drawers, no shelves
           const { bottom: lo, top: hi } = spaceAround(boards, K, b.v0, b.v1);
+          if (hasTag(b, 'coffee')) { addPullOutShelf(b, lo, hi); continue; }
           const front = frontBox(b), frontHeight = front.v1 - front.v0, count = countByHeight(shelf.perDoor, frontHeight);
           if (count === null) { warn(`${placeOf(b)}: wysokość frontu ${frontHeight} przekracza ostatni wiersz settings.shelf.perDoor.`, b.index); continue; }
           for (let j = 1; j <= count; j++) adjustableShelf(Math.round(lo + ((hi - lo) * j) / (count + 1)));
@@ -787,6 +791,9 @@
             drawer.innerV = drawer.bottomV + drawer.sideHeight + drawerSettings.inner.gap;
             drawerBoards(drawer.innerV, drawerSettings.inner.backHeight, 'Tył szuflady wewnętrznej', true);
             counts.innerDrawers++;
+            const innerTop = drawer.innerV + Math.max(t + drawerSettings.inner.backHeight, drawerSettings.M.sideHeight);
+            const boardAbove = spaceAround(boards, K, item.v0, item.v1).top;
+            if (innerTop > boardAbove) warn(`${placeOf(item)}: szuflada wewnętrzna sięga ${innerTop}, płyta nad nią zaczyna się na ${boardAbove}.`, item.index);
           }
         }
       }
@@ -842,13 +849,12 @@
         ...fronts.filter(f => f.carcassId === K.id && f.drawer).flatMap(f => [f.drawer.bottomV, ...(f.drawer.inner ? [f.drawer.innerV] : [])]),
         ...own.filter(b => b.id === 'pullOutShelf').map(b => b.box[2])
       ];
-      // a spacer next to the pull-out shelf (tag coffee) carries the runner on its side instead of the carcass side
-      const shelfSpacer = own.find(b => b.id === 'spacer' && K.coffee);
+      // a spacer on a side (next to the pull-out shelf) carries the runner instead of that side
+      const spacers = own.filter(b => b.id === 'spacer');
       for (const bottom of runnerRows) {
         for (const side of sides) {
           const left = side.box[0] === K.u0, y = bottom - runner.belowDrawer;
-          const covered = shelfSpacer && (left ? shelfSpacer.box[0] === side.box[1] : shelfSpacer.box[1] === side.box[0]) && y > shelfSpacer.box[2] && y < shelfSpacer.box[3];
-          const target = covered ? shelfSpacer : side;
+          const target = spacers.find(s => (left ? s.box[0] === side.box[1] : s.box[1] === side.box[0]) && y > s.box[2] && y < s.box[3]) || side;
           target.holeFrom = { x: 'front', y: 'bottom' };
           const inner = left ? target.box[1] : target.box[0], dir = left ? -1 : 1;
           for (const x of runner.fromFront) holeAt(target, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x, y: y - target.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
@@ -903,7 +909,8 @@
         for (const item of G.items) {
           if ((item.type === 'oven' || item.type === 'micro') && A[item.type] && item.carcass) {
             const a = A[item.type];
-            const floor = Math.max(...boards.filter(b => b.carcassId === item.carcass.id && (b.id === 'bottom' || b.id === 'fixedShelf') && b.box[3] <= item.v0 + half).map(b => b.box[3]));
+            const floor = spaceAround(boards, item.carcass, item.v0, item.v1).bottom;
+            if (!Number.isFinite(floor)) { warn(`${placeOf(item)}: ${typeLabel(item.type)} nie ma płyty pod sobą.`, item.index); continue; }
             const bodyV0 = floor + a.feet, frontV0 = bodyV0 + a.front.bottom;
             item.fit = { feet: a.feet, bodyV0, frontV0, frontV1: frontV0 + a.front.height };
           }
@@ -1067,7 +1074,8 @@
     const entries = (obj, line = v => value(v)) => Object.entries(obj || {}).map(([k, v]) => '  ' + json1(k) + ': ' + line(v)).join(',\n');
     const components = project.components.map((c, i) => (i && c.group !== project.components[i - 1].group ? '\n' : '') + '  ' + json1(c)).join(',\n');
     return '/* Kitchen project design - shared by design.html, cost.html and view.html.\n' +
-      '   Plain JSON after "window.KITCHEN_DESIGN =". Edit it in design.html (Import data / Export data). */\n' +
+      '   Plain JSON after "window.KITCHEN_DESIGN =". Notes, columns and components: design.html (Import data / Export data);\n' +
+      '   materials and settings: by hand (design.html keeps them as they are). */\n' +
       'window.KITCHEN_DESIGN = {\n "materials": {\n' + entries(project.materials, json1) +
       '\n },\n "settings": {\n' + entries(project.settings) +
       '\n },\n "notes": [\n' + project.notes.map(n => '  ' + json1(n)).join(',\n') +

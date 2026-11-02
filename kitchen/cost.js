@@ -872,7 +872,7 @@ window.KITCHEN_COST = {
     {
      "id": "pullOutShelf",
      "topic": "Szafka z ekspresem – półka wysuwana",
-     "description": "Półka: gł. {s:pullOutShelf.depth}, {s:pullOutShelf.clearance} luzu z boków, prowadnice Blum MOVENTO.\nPłyta dystansowa po stronie zawiasów: od wieńca dolnego do {s:pullOutShelf.lift} nad półkę; niesie prowadnicę i odsuwa półkę od otwartych drzwi.",
+     "description": "Półka: gł. {s:pullOutShelf.depth}, {s:pullOutShelf.clearance} luzu z boków, prowadnice Blum MOVENTO.\nPłyta dystansowa po stronie zawiasów: od płyty pod drzwiami do {s:pullOutShelf.spacerAbove} nad półkę; niesie prowadnicę i odsuwa półkę od otwartych drzwi.",
      "assumed": "Prowadnice {p:pullOutShelfRunners} PLN za komplet.",
      "decide": "Plan wierceń prowadnic pod półką (Blum)."
     }

@@ -1218,7 +1218,7 @@ function buildFront(group, item) {
   const { u0: fu0, u1: fu1, v0: fv0, v1: fv1, width: fw, height: fh } = front;
   let pu = 0, pv = 0, pn = 0; // pivot: hinge side of a door, bottom edge of the dishwasher door
   if (opening === 'door' || opening === 'fridge') { pu = hand === 'left' ? fu0 : fu1; pn = frontFace; }
-  else if (opening === 'dishwasher') { pv = fv0; pn = frontFace; }
+  else if (opening === 'dishwasher') { pv = item.fit.doorV0; pn = frontFace; }
   const mover = movingPart(group, opening, pu, pv, pn);
   mover.sign = hand === 'left' ? 1 : -1;
   mover.item = item;
@@ -1288,17 +1288,17 @@ function buildFront(group, item) {
       innerMover.label = 'Szuflada wewnętrzna M (' + settings.drawers.M.sideHeight + ') na sztućce · front wewnętrzny ' + (innerU1 - innerU0 - settings.drawers.inner.frontDeduction);
     }
   } else if (opening === 'dishwasher') {
-    const P = groupLayer[group].dishwasher, { u0, u1 } = item, t0 = fv0, t1 = fv1 - 6; // tub above the plinth, under the door top
-    openFrontBox(P, u0 + 4, u1 - 4, t0, t1, carcassBack + 8, carcassFront - 24, 2, MAT.steel); // tub
-    dishRack(P, u0 + 30, u1 - 30, t0 + 80, t0 + 220, carcassBack + 40, carcassFront - 50);
-    dishRack(P, u0 + 30, u1 - 30, t1 - 380, t1 - 250, carcassBack + 40, carcassFront - 50);
-    localBox(P, (u0 + u1) / 2 - 200, (u0 + u1) / 2 + 200, t0 + 63, t0 + 71, (carcassBack + carcassFront) / 2 - 25, (carcassBack + carcassFront) / 2 + 25, MAT.steel); // spray arm
-    localBox(mover.layers.dishwasher, u0 + 6, u1 - 6, fv0 + 4, fv1 - 10, carcassFront - 22, carcassFront, MAT.steel); // appliance door
-    localBox(mover.layers.dishwasher, u0 + 6, u1 - 6, fv1 - 10, fv1 - 4, carcassFront - 22, carcassFront, MAT.glassBlack); // control strip
+    // the appliance and its door at the manufacturer's size (APPLIANCES.dishwasher), as engine.js fits it (item.fit: its height on
+    // the feet, its door); the furniture front (design.js) is drawn above; below the door the base is open baseSetback deep for the plinth
+    const P = groupLayer[group].dishwasher, A = APPLIANCES.dishwasher, uc = (item.u0 + item.u1) / 2, { height: h, doorHeight, doorV0: doorBottom } = item.fit;
+    const w0 = uc - A.body.width / 2, w1 = uc + A.body.width / 2, t0 = doorBottom, t1 = h - 6; // tub: from the door bottom to under the appliance top
+    openFrontBox(P, w0 + 3, w1 - 3, t0, t1, carcassBack + 8, carcassFront - 24, 2, MAT.steel); // tub
+    dishRack(P, w0 + 29, w1 - 29, t0 + 80, t0 + 220, carcassBack + 40, carcassFront - 50);
+    dishRack(P, w0 + 29, w1 - 29, t1 - 380, t1 - 250, carcassBack + 40, carcassFront - 50);
+    localBox(P, uc - 200, uc + 200, t0 + 63, t0 + 71, (carcassBack + carcassFront) / 2 - 25, (carcassBack + carcassFront) / 2 + 25, MAT.steel); // spray arm
+    localBox(mover.layers.dishwasher, w0, w1, doorBottom, h - 6, carcassFront - 22, carcassFront, MAT.steel); // appliance door
+    localBox(mover.layers.dishwasher, w0, w1, h - 6, h, carcassFront - 22, carcassFront, MAT.glassBlack); // control strip on the door top
     mover.label = 'Zmywarka · front ' + size + ' na drzwiach urządzenia';
-    // the appliance at the manufacturer's size (APPLIANCES.dishwasher), as engine.js fits it (item.fit: its height on the feet,
-    // its door); below the door the base is open baseSetback deep for the plinth
-    const A = APPLIANCES.dishwasher, uc = (u0 + u1) / 2, { height: h, doorHeight, doorV0: doorBottom } = item.fit, w0 = uc - A.body.width / 2, w1 = uc + A.body.width / 2;
     envelope(P, w0, w1, doorBottom, h, carcassFront - A.body.depth, carcassFront, A.name + ' – ' + A.body.width + ' × ' + Math.round(h) + ' × ' + A.body.depth + ', drzwi ' + Math.round(doorHeight));
     envelope(P, w0, w1, 0, doorBottom, carcassFront - A.body.depth, carcassFront - A.baseSetback, A.name + ' – podstawa, ' + A.baseSetback + ' za frontem');
   } else if (opening === 'fridge' && item.fit) {
@@ -1334,17 +1334,16 @@ function doorDrawerDrawers(group, item, door) {
   });
 }
 for (const r of GROUP_IDS) for (const item of itemsOfGroup[r]) if (KE.FRONT_TYPES.includes(item.type)) buildFront(r, item);
-// pull-out shelf with the coffee machine (tag coffee): slides out like a drawer once its door is open
-for (const K of carcasses) {
-  if (!K.coffee) continue;
-  const group = K.group, shelf = model.boards.find(b => b.carcassId === K.id && b.id === 'pullOutShelf'), door = K.movers.find(m => m.kind === 'door');
-  if (!shelf) continue;
+// pull-out shelf with the coffee machine (tag coffee): slides out like a drawer once its door (shelf.item) is open
+for (const shelf of model.boards.filter(b => b.id === 'pullOutShelf')) {
+  const K = carcasses.find(c => c.id === shelf.carcassId), group = K.group, door = K.movers.find(m => m.kind === 'door' && m.item === shelf.item);
   const mover = movingPart(group, 'drawer', 0, 0, 0), box = mover.layers.drawers, [x0, x1, y0, y1, z0, z1] = shelf.box;
-  mover.item = door && door.item;
+  mover.item = shelf.item;
   K.movers.push(mover);
   if (door) linkTo(door, mover);
   registerPart(K, edgeLook(localBox(box, ...shelf.box, BOARD[shelf.material]), shelf.edges, shelf.material), shelf);
-  const spacer = model.boards.find(b => b.carcassId === K.id && b.id === 'spacer'); // carries the runner on the hinge side
+  // the spacer beside the shelf carries the runner on the hinge side
+  const spacer = model.boards.find(b => b.carcassId === K.id && b.id === 'spacer' && b.box[2] < y0 && b.box[3] > y0 && (b.box[1] <= x0 || b.box[0] >= x1));
   const left = spacer && spacer.box[1] <= x0 ? spacer.box[1] : K.u0 + board, right = spacer && spacer.box[0] >= x1 ? spacer.box[0] : K.u1 - board;
   for (const [a, b] of [[left, x0], [x1, right]]) { // runners: carcass part, moving part
     localBox(groupLayer[group].hardware, a, b, y0 - 14, y0, z0, z1, MAT.zinc);
