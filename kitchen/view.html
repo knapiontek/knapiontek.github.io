@@ -840,7 +840,7 @@ function builtInAppliance(group, item, type) {
   envelope(P, bu0, bu1, b0, b0 + bh, carcassFront - bd, carcassFront, A.name + ' – korpus ' + bw + ' × ' + bh + ' × ' + bd + (feet > 0 ? ' na nóżkach ' + Math.round(feet * 10) / 10 : ''));
   envelope(P, u0, u1, v0, v1, carcassFront, face, A.name + ' – front ' + A.front.width + ' × ' + A.front.height);
   // the door: oven below its control panel (A.controls.height), full width; microwave over the body opening, left of its control
-  // column (A.controls.width), set into the fascia with a shadow gap (the fascia is wider and higher than the body: it fills the niche)
+  // column (A.controls.width), set into the fascia with a shadow gap (the fascia is wider and higher than the body)
   const door = type === 'oven' ? { u0, u1, v0, v1: v1 - A.controls.height } : { u0: bu0 + 2, u1: u1 - A.controls.width, v0: b0 + 4, v1: b0 + bh - 4 };
   const hinge = A.door.hinge, bottomHinged = hinge === 'bottom';
   const mover = movingPart(group, type, bottomHinged ? 0 : hinge === 'left' ? door.u0 : door.u1, bottomHinged ? door.v0 : 0, face);

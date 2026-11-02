@@ -178,7 +178,7 @@ const edgeText = edges => (edges || []).map(edge => KE.LABELS.edge[edge.side] + 
 const edgeLength = edges => (edges || []).reduce((sum, edge) => sum + edge.length, 0);
 // drilling and cut-outs of a cut-list row in two-letter codes (KE.LABELS.holeCode), explained by drillLegend(); one line per kind of
 // hole: code + the Cartesian product of the x list and the y list (mm from the reference edges), "PR 37 261 485 ⊗ 25 432"; holes that
-// do not form one full product: one line per x. Each set of holes of the parts of a row (mergeHands) is written once, under a line
+// do not form one full product: one line per x. Each set of holes of the parts of a row (row.drillings) is written once, under a line
 // saying how many left and right parts have it ("L: 1  P: 1"; KE.LABELS.hand); different sets each under their own line
 const num1 = x => String(x).replace('.', ',');
 function holeLines(drilling) {
@@ -194,17 +194,13 @@ function holeLines(drilling) {
   return out;
 }
 function drillLines(row) {
-  const drilling = row.drilling;
-  if (!drilling) return [];
-  const parts = drilling.parts || [{ drilling, qty: row.qty }];
   // each set of holes once, with the number of left / right parts that have it, in the order met
   const sets = new Map();
-  for (const p of parts) {
-    if (p.drilling.none) continue;
-    const lines = holeLines(p.drilling), key = lines.join('\n');
+  for (const { drilling, qty } of row.drillings) {
+    const lines = holeLines(drilling), key = lines.join('\n');
     if (!lines.length) continue;
     if (!sets.has(key)) sets.set(key, { lines, count: {} });
-    sets.get(key).count[p.drilling.hand] = (sets.get(key).count[p.drilling.hand] || 0) + p.qty;
+    sets.get(key).count[drilling.hand] = (sets.get(key).count[drilling.hand] || 0) + qty;
   }
   const header = count => Object.keys(KE.LABELS.hand).filter(h => count[h]).map(h => KE.LABELS.hand[h] + ': ' + count[h]).join('  ');
   return [...sets.values()].flatMap(({ lines, count }) => (header(count) ? [header(count), ...lines.map(line => '  ' + line)] : lines));
@@ -268,40 +264,13 @@ let rowsOf = {}; // block id -> its rows, from the model
 let codeOfRow = {}; // cutKey of a row -> its label
 // a front as a cut-list part: width × height, as fronts are always given
 const frontPart = f => ({ ...f, name: frontFunction(f), a: round1(f.width), b: round1(f.height) });
-// the drilling is done by hand on site, so parts of one size share a row (one label), left and right ones too: the rows that differ
-// only in their drilling become one, with the qty added up and the drilling of each kept in drilling.parts (drillLines lists each set
-// of holes); keys = the keys of the rows merged, so the same parts elsewhere (Montaż) still find their label
-function mergeHands(rows) {
-  const bySize = new Map(); // in the order met
-  for (const row of rows) {
-    const size = [row.name, row.a, row.b, JSON.stringify(row.edges), JSON.stringify(row.lacquer)].join('|');
-    if (!bySize.has(size)) bySize.set(size, []);
-    bySize.get(size).push(row);
-  }
-  const order = row => ({ left: 0, right: 1 }[(row.drilling && row.drilling.hand) || ''] ?? 2); // left, right, then the others (undrilled last)
-  return [...bySize.values()].map(group => {
-    group.sort((x, y) => order(x) - order(y) || (y.drilling ? 1 : 0) - (x.drilling ? 1 : 0));
-    const [first] = group;
-    if (group.length === 1) return first;
-    const parts = group.map(row => ({ drilling: row.drilling || { holes: [], cutouts: [], none: true }, qty: row.qty, where: row.where }));
-    // where: the "at" labels of all, counted again ("K4" + "K4" = "K4 ×2"), as engine.js cutList writes them
-    const at = new Map();
-    for (const row of group) for (const label of String(row.where || '').split(', ').filter(Boolean)) {
-      const [, name, n] = label.match(/^(.*?)(?: ×(\d+))?$/);
-      at.set(name, (at.get(name) || 0) + Number(n || 1));
-    }
-    const where = [...at].map(([name, n]) => (n > 1 ? name + ' ×' + n : name)).join(', ');
-    const qty = group.reduce((sum, row) => sum + row.qty, 0);
-    return { ...first, qty, where, drilling: { parts }, keys: group.map(row => row.key) };
-  });
-}
 function blockRows(blockId) {
   const carcassName = Object.fromEntries(model.carcasses.map(K => [K.id, K.name]));
   const where = p => (p.carcassId ? carcassName[p.carcassId] : place(p)); // carcass name, else group + column
-  const list = items => sortRows(longFirst(mergeHands(KE.cutList(items.map(p => ({ ...p, at: where(p) }))))));
+  const list = items => sortRows(longFirst(KE.cutList(items.map(p => ({ ...p, at: where(p) })))));
   const FROM_MODEL = {
     // fronts: width × height
-    fronts: () => sortRows(mergeHands(KE.cutList(model.fronts.map(f => ({ ...frontPart(f), at: where(f) }))))),
+    fronts: () => sortRows(KE.cutList(model.fronts.map(f => ({ ...frontPart(f), at: where(f) })))),
     frames: () => list(model.frames),
     plinths: () => list(model.plinths.map(p => ({ ...p, name: 'Cokół' }))),
     panels: () => list(model.panels),
@@ -319,7 +288,7 @@ function applyProject(project) {
   // a label per cut-list row: the block code (cost.js blocks) and its number, e.g. KO-07; the same part elsewhere finds it by its cutKey
   codeOfRow = {};
   for (const block of COST.blocks) {
-    (rowsOf[block.id] || []).forEach((row, i) => { for (const key of row.keys || [row.key]) codeOfRow[key] = block.code + '-' + String(i + 1).padStart(2, '0'); });
+    (rowsOf[block.id] || []).forEach((row, i) => { codeOfRow[row.key] = block.code + '-' + String(i + 1).padStart(2, '0'); });
   }
   carcassMapJSON = KE.mapJSON(KE.carcassMap(model));
   document.getElementById('mapJson').textContent = carcassMapJSON;
@@ -337,8 +306,16 @@ function renderAssembly() {
   const listLines = rows => rows.map(t => '<br>– ' + esc(t)).join('');
   const withEdges = edges => (edges && edges.length ? ' (ABS ' + edgeText(edges) + ')' : '');
   const label = key => (codeOfRow[key] ? codeOfRow[key] + ' ' : '');
-  const partList = boards => sortRows(longFirst(KE.cutList(boards))).map(({ name, a, b, qty, edges, drilling, key }) =>
-    label(key) + (qty > 1 ? qty + ' × ' : '') + name + (drilling && drilling.hand ? ' ' + KE.LABELS.hand[drilling.hand] : '') + ' ' + a + ' × ' + b + withEdges(edges));
+  // one line per hand (left, right, then the rest): which side of the carcass a drilled part goes on
+  const byHand = row => {
+    const count = new Map();
+    for (const { drilling, qty } of row.drillings) count.set(drilling.hand, (count.get(drilling.hand) || 0) + qty);
+    const drilled = [...count.values()].reduce((sum, n) => sum + n, 0);
+    if (drilled < row.qty) count.set('', (count.get('') || 0) + row.qty - drilled);
+    return [...count];
+  };
+  const partList = boards => sortRows(longFirst(KE.cutList(boards))).flatMap(row => byHand(row).map(([hand, qty]) =>
+    label(row.key) + (qty > 1 ? qty + ' × ' : '') + row.name + (hand ? ' ' + KE.LABELS.hand[hand] : '') + ' ' + row.a + ' × ' + row.b + withEdges(row.edges)));
   const size = (a, b) => Math.max(a, b) + ' × ' + Math.min(a, b); // the longer side first, as in the Cutting list
   const section = (title, rows) => (rows.length ? '<br><b>' + esc(title) + '</b>' + listLines(rows) : '');
 

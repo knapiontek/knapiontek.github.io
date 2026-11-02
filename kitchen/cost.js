@@ -824,8 +824,7 @@ window.KITCHEN_COST = {
      "appliance": "micro",
      "topic": "Mikrofalówka Bosch BFL623MB3 – K8, nad piekarnikiem",
      "description": "Wymiary: urządzenie {a:micro.body.width} × {a:micro.body.height} × {a:micro.body.depth} na nóżkach {i:K8/micro.fit.feet}; front {a:micro.front.width} × {a:micro.front.height} × {a:micro.front.thickness}, {=-<a:micro.front.bottom>} poniżej spodu urządzenia.\nFront: {f:microOnShelfBelow} na półkę pod, {f:microOnShelfAbove} na półkę nad, po {=(<a:micro.front.width> - <k:K8.innerWidth>) / 2} na boki korpusu.\nLuz nad urządzeniem: {=<i:K8/micro.space> - <i:K8/micro.fit.feet> - <a:micro.body.height>}; tył otwarty.\nSzczeliny: do piekarnika {f:ovenMicroGap}, do szafki nad {f:microCabinetGap}.",
-     "assumed": "Stoi na półce płytszej o {s:shelf.ventGap}.",
-     "decide": "Bosch pokazuje 35 wolnego za korpusem, tu półka sięga do {s:carcass.wallGap} od ściany – sprawdzić."
+     "assumed": "Stoi na półce płytszej o {s:shelf.ventGap}."
     },
     {
      "id": "ovenColumn",

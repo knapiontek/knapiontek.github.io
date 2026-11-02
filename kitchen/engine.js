@@ -146,10 +146,13 @@
     return row ? row.count : null;
   };
 
+  // [v0, v1] of the boards lying flat in a carcass
+  const horizontalBands = (boards, K) => boards.filter(b => b.carcassId === K.id && HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[2], b.box[3]]);
+
   // the clear space of a module in its carcass: the nearest horizontal boards below and above its middle (a fixed shelf need not be
   // centred on a joint, e.g. under an oven); NaN where there is none
   function spaceAround(boards, K, v0, v1) {
-    const mid = (v0 + v1) / 2, bands = boards.filter(b => b.carcassId === K.id && HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[2], b.box[3]]);
+    const mid = (v0 + v1) / 2, bands = horizontalBands(boards, K);
     const below = bands.filter(([a, b]) => (a + b) / 2 <= mid).map(([, b]) => b), above = bands.filter(([a, b]) => (a + b) / 2 > mid).map(([a]) => a);
     return { bottom: below.length ? Math.max(...below) : NaN, top: above.length ? Math.min(...above) : NaN };
   }
@@ -437,17 +440,17 @@
     // ---- carcass boards ----
     // id: kind of board, the same for all sizes (colours and counts on the pages); a, b: size; box: place;
     // edges: ABS edges [{side, length, along}] - the edge seen from the front, along = the size it runs along (a | b); hidden parts get none
-    const addBoard = b => {
-      boards.push(b);
-      return b;
-    };
     const rails = settings.rails, shelf = settings.shelf, back = settings.back;
     for (const K of carcasses) {
       const { u0, u1, v0, v1 } = K;
       const width = u1 - u0, height = v1 - v0;
       const innerU0 = u0 + board, innerU1 = u1 - board, innerWidth = width - 2 * board;
       const carcassMaterial = materialFor.carcass;
-      const part = (id, name, a, b, material, layer, box, edges = []) => addBoard({ id, name, a, b, material, layer, group: K.group, carcassId: K.id, box, edges });
+      const part = (id, name, a, b, material, layer, box, edges = []) => {
+        const piece = { id, name, a, b, material, layer, group: K.group, carcassId: K.id, box, edges };
+        boards.push(piece);
+        return piece;
+      };
       const frontEdge = (length, along) => [{ side: 'front', length, along }];
       const bottomEdge = [{ side: 'bottom', length: innerWidth, along: 'a' }]; // a rail on edge shows its bottom edge when the drawer below is open
 
@@ -598,7 +601,7 @@
               if (left.length) counts.jointLength.fromInside += length(right);
             }
             for (const [s0, s1] of spans) {
-              addBoard({
+              boards.push({
                 id: 'backStrip', name: 'Listwa tylna ' + frameSettings.depth, a: frameSettings.depth, b: along ? s1 - s0 : width, material: materialFor.carcass, layer: 'carcasses',
                 group: G.group, col: item.col, box: along ? [u0, u1, s0, s1, carcassBack, carcassBack + frameSettings.depth] : [u0, u1, v0, v1, carcassBack, carcassBack + frameSettings.depth],
                 strip: true, edges: [] // hidden behind its frame
@@ -670,7 +673,7 @@
     // only where they miss the horizontal boards and stay in the carcass
     function shelfPinRows(shelfBoard, K) {
       const pin = settings.drilling.shelfPin, main = shelfBoard.centre - half - pin.belowShelf;
-      const bands = boards.filter(b => b.carcassId === K.id && HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[2], b.box[3]]);
+      const bands = horizontalBands(boards, K);
       const clear = y => bands.every(([b0, b1]) => y + pin.diameter / 2 < b0 || y - pin.diameter / 2 > b1) && y > K.v0 && y < K.v1;
       const extra = [];
       for (let k = 1; k <= pin.extra; k++) extra.push(main - k * pin.pitch, main + k * pin.pitch);
@@ -708,7 +711,7 @@
       if (!Number.isFinite(lo) || !Number.isFinite(hi)) return warn(`${at}: szuflady za drzwiami - brak płyty poziomej nad lub pod drzwiami.`, item.index);
       const innerU0 = K.u0 + board, innerU1 = K.u1 - board, right = item.hinge === 'right';
       const spacer = spacerOnHingeSide(K, item.hinge);
-      addBoard({ id: 'spacer', name: 'Płyta dystansowa', a: n1 - carcassBack, b: hi - lo, material: materialFor.carcass, layer: 'carcasses', group: K.group, carcassId: K.id,
+      boards.push({ id: 'spacer', name: 'Płyta dystansowa', a: n1 - carcassBack, b: hi - lo, material: materialFor.carcass, layer: 'carcasses', group: K.group, carcassId: K.id,
         box: [...spacer, lo, hi, carcassBack, n1], edges: [{ side: 'front', length: hi - lo, along: 'b' }] });
       const u0 = (right ? innerU0 : spacer[1]) + S.runner.gap, u1 = (right ? spacer[0] : innerU1) - S.runner.gap, n0 = n1 - length, pitch = (hi - lo) / count;
       front.doorDrawers = { count, runner: length, boxWidth: u1 - u0, boxHeight: t + S.side, boxes: [] }; // runner length = the box depth
@@ -716,11 +719,11 @@
         const v = Math.round(lo + S.lift + j * pitch), top = v + t + S.side, next = j + 1 < count ? Math.round(lo + S.lift + (j + 1) * pitch) : hi;
         if (top > next) warn(`${at}: szuflada za drzwiami ${j + 1} (${t + S.side}) nie mieści się pod następną płytą.`, item.index);
         const common = { material: materialFor.drawerBox, layer: 'drawers', group: K.group, carcassId: K.id, frontId: front.id, doorDrawer: j }, inner = length - t;
-        addBoard({ id: 'doorDrawerFront', name: 'Czoło szuflady za drzwiami', a: u1 - u0, b: t + S.side, ...common, box: [u0, u1, v, top, n1 - t, n1],
+        boards.push({ id: 'doorDrawerFront', name: 'Czoło szuflady za drzwiami', a: u1 - u0, b: t + S.side, ...common, box: [u0, u1, v, top, n1 - t, n1],
           edges: [{ side: 'top', length: u1 - u0, along: 'a' }, { side: 'left', length: t + S.side, along: 'b' }, { side: 'right', length: t + S.side, along: 'b' }] });
-        addBoard({ id: 'doorDrawerBottom', name: 'Dno szuflady za drzwiami', a: u1 - u0 - 2 * t, b: inner, ...common, box: [u0 + t, u1 - t, v, v + t, n0, n1 - t], edges: [] });
-        for (const s of [u0, u1 - t]) addBoard({ id: 'doorDrawerSide', name: 'Bok szuflady za drzwiami', a: inner, b: t + S.side, ...common, box: [s, s + t, v, top, n0, n1 - t], edges: [{ side: 'top', length: inner, along: 'a' }] });
-        addBoard({ id: 'doorDrawerBack', name: 'Tył szuflady za drzwiami', a: u1 - u0 - 2 * t, b: S.side, ...common, box: [u0 + t, u1 - t, v + t, top, n0, n0 + t], edges: [{ side: 'top', length: u1 - u0 - 2 * t, along: 'a' }] });
+        boards.push({ id: 'doorDrawerBottom', name: 'Dno szuflady za drzwiami', a: u1 - u0 - 2 * t, b: inner, ...common, box: [u0 + t, u1 - t, v, v + t, n0, n1 - t], edges: [] });
+        for (const s of [u0, u1 - t]) boards.push({ id: 'doorDrawerSide', name: 'Bok szuflady za drzwiami', a: inner, b: t + S.side, ...common, box: [s, s + t, v, top, n0, n1 - t], edges: [{ side: 'top', length: inner, along: 'a' }] });
+        boards.push({ id: 'doorDrawerBack', name: 'Tył szuflady za drzwiami', a: u1 - u0 - 2 * t, b: S.side, ...common, box: [u0 + t, u1 - t, v + t, top, n0, n0 + t], edges: [{ side: 'top', length: u1 - u0 - 2 * t, along: 'a' }] });
         front.doorDrawers.boxes.push({ u0, u1, v0: v, v1: top, n0, n1 });
       }
       counts.doorDrawers += count;
@@ -733,7 +736,7 @@
         // hinges are screwed to a carcass side: a door that does not reach one gets a hinge post (an appliance front has no hinges)
         if (opening === 'door' && K && HINGE_SIDES.includes(item.hinge) && !reachesHingeSide(item, K)) {
           const postU0 = item.hinge === 'left' ? item.u0 : item.u1 - board, postV0 = Math.max(item.v0, K.v0 + board), postV1 = Math.min(item.v1, K.v1 - board);
-          addBoard({
+          boards.push({
             id: 'hingePost', name: 'Słupek zawiasowy', a: hingeSettings.postDepth, b: postV1 - postV0, material: materialFor.carcass, layer: 'carcasses', group: G.group, carcassId: K.id,
             box: [postU0, postU0 + board, postV0, postV1, carcassFront - hingeSettings.postDepth, carcassFront], edges: [{ side: 'front', length: postV1 - postV0, along: 'b' }], hand: item.hinge
           });
@@ -781,8 +784,8 @@
           const n0 = carcassBack + drawerSettings.bottom.fromBack, n1 = n0 + drawerSettings.bottom.depth, t = thickness.drawerBox;
           const drawerBoards = (v, backHeight, backName, inner) => {
             const common = { material: materialFor.drawerBox, layer: 'drawers', group: G.group, carcassId: K.id, frontId: front.id, inner };
-            addBoard({ id: 'drawerBottom', name: 'Dno szuflady', a: drawer.bottomWidth, b: drawerSettings.bottom.depth, ...common, box: [bottomU0, bottomU1, v, v + t, n0, n1] });
-            addBoard({ id: 'drawerBack', name: backName, a: innerU1 - innerU0 - drawerSettings.back.inset, b: backHeight, ...common, box: [backU0, backU1, v + t, v + t + backHeight, n0, n0 + t] });
+            boards.push({ id: 'drawerBottom', name: 'Dno szuflady', a: drawer.bottomWidth, b: drawerSettings.bottom.depth, ...common, box: [bottomU0, bottomU1, v, v + t, n0, n1] });
+            boards.push({ id: 'drawerBack', name: backName, a: innerU1 - innerU0 - drawerSettings.back.inset, b: backHeight, ...common, box: [backU0, backU1, v + t, v + t + backHeight, n0, n0 + t] });
           };
           drawerBoards(drawer.bottomV, drawer.backHeight, 'Tył szuflady ' + size, false);
           if (size === 'D') counts.drawersD++;
@@ -810,7 +813,7 @@
     for (const K of carcasses) {
       const own = boards.filter(b => b.carcassId === K.id);
       // horizontal boards of the carcass: a shelf pin must not land in one
-      const bands = own.filter(b => HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[2], b.box[3]]);
+      const bands = horizontalBands(boards, K);
       const faceBoard = u => own.find(b => (b.id === 'side' || b.id === 'hingePost') && (b.box[0] === u || b.box[1] === u));
       // mounting plates: on the side or hinge post at the hinge edge of each door, plate.spacing apart around each hinge
       for (const front of fronts.filter(f => f.carcassId === K.id && f.hinges)) {
@@ -914,16 +917,18 @@
             const bodyV0 = floor + a.feet, frontV0 = bodyV0 + a.front.bottom;
             item.fit = { feet: a.feet, bodyV0, frontV0, frontV1: frontV0 + a.front.height };
           }
-          if (hasTag(item, 'fridge', 'freezer') && A.fridge && item.carcass) {
-            const K = item.carcass, uc = (K.u0 + K.u1) / 2, bodyV0 = spaceAround(boards, K, K.v0, K.v0 + 2 * board).bottom;
-            item.fit = { bodyU0: uc - A.fridge.body.width / 2, bodyU1: uc + A.fridge.body.width / 2, bodyV0, bodyV1: bodyV0 + A.fridge.body.height };
-          }
           if (hasTag(item, 'dishwasher') && A.dishwasher && worktops[G.group]) {
             const a = A.dishwasher, height = a.body.height + a.feet, doorHeight = a.door.height;
             if (height !== worktops[G.group].v0) warn(`${placeOf(item)}: zmywarka na nóżkach ma ${height}, spód blatu jest na ${worktops[G.group].v0}.`, item.index);
             item.fit = { height, doorHeight, doorV0: height - doorHeight };
           }
         }
+      }
+      // one fit for the fridge and the freezer front of a fridge carcass
+      for (const K of carcasses.filter(K => K.fridge && A.fridge)) {
+        const uc = (K.u0 + K.u1) / 2, bodyV0 = K.v0 + board, { width, height } = A.fridge.body;
+        const fit = { bodyU0: uc - width / 2, bodyU1: uc + width / 2, bodyV0, bodyV1: bodyV0 + height };
+        for (const item of K.boxes.filter(b => hasTag(b, 'fridge', 'freezer'))) item.fit = fit;
       }
     }
 
@@ -987,28 +992,34 @@
 
   /* ================= 6. LISTS AND FILES ================= */
 
-  // parts with the same name, size, ABS edges, lacquer and drilling counted together, one row each:
-  //   {name, a, b, qty, where, edges, lacquer, drilling, key}
+  // parts with the same name, size, ABS edges and lacquer counted together, one row each: the holes are drilled by hand on site, so
+  // left and right parts and parts drilled differently share a row (one label) and the row lists where to drill each of them:
+  //   {name, a, b, qty, where, edges, lacquer, drillings, key}
   //   where = their "at" labels, e.g. "K2, K5 ×2"; edges = ABS edges of one part [{side, length, along}]; lacquer = {long, short} lacquered
-  //   edges or null; drilling = drillingOf(part) or null; key = cutKey (the same parts listed elsewhere, e.g. per carcass, find their row by it)
+  //   edges or null; drillings = [{drilling, qty}]: each drilling (drillingOf) with the number of parts that have it, left parts first;
+  //   key = cutKey (the same parts listed elsewhere, e.g. per carcass, find their row by it)
   function cutList(parts) {
     const rows = new Map();
     for (const p of parts) {
       const key = cutKey(p);
-      const row = rows.get(key) || { part: p, qty: 0, at: new Map() };
+      const row = rows.get(key) || { part: p, qty: 0, at: new Map(), drillings: new Map() };
       row.qty++;
       if (p.at) row.at.set(p.at, (row.at.get(p.at) || 0) + 1);
+      const drilling = drillingOf(p), drillingKey = JSON.stringify(drilling);
+      if (drilling) row.drillings.set(drillingKey, { drilling, qty: (row.drillings.has(drillingKey) ? row.drillings.get(drillingKey).qty : 0) + 1 });
       rows.set(key, row);
     }
-    return [...rows].map(([key, { part, qty, at }]) => {
+    const handOrder = d => ({ left: 0, right: 1 }[d.drilling.hand] ?? 2);
+    return [...rows].map(([key, { part, qty, at, drillings }]) => {
       const where = [...at].map(([label, n]) => (n > 1 ? label + ' ×' + n : label)).join(', ');
-      return { name: part.name, a: part.a, b: part.b, qty, where, edges: part.edges || [], lacquer: part.lacquer || null, drilling: drillingOf(part), key };
+      return { name: part.name, a: part.a, b: part.b, qty, where, edges: part.edges || [], lacquer: part.lacquer || null,
+        drillings: [...drillings.values()].sort((x, y) => handOrder(x) - handOrder(y)), key };
     });
   }
-  const cutKey = p => p.name + '|' + p.a + '|' + p.b + '|' + JSON.stringify(p.edges || []) + '|' + JSON.stringify(p.lacquer || null) + '|' + JSON.stringify(drillingOf(p));
+  const cutKey = p => [p.name, p.a, p.b, JSON.stringify(p.edges || []), JSON.stringify(p.lacquer || null)].join('|');
 
-  // what a manufacturer drills or cuts in one part, in part coordinates: {from: {x, y}, hand, holes: [{kind, diameter, depth, x, y}], cutouts: [{kind, width, depth, x, y}]}
-  // or null; hand (left | right) tells a left part from a right one with the same pattern (sides, hinge posts, doors): each gets its own row
+  // where to drill or cut one part, in part coordinates: {from: {x, y}, hand, holes: [{kind, diameter, depth, x, y}], cutouts: [{kind, width, depth, x, y}]}
+  // or null; hand (left | right) tells a left part from a right one with the same pattern (sides, hinge posts, doors)
   function drillingOf(part) {
     if (!part.holes && !part.cutouts) return null;
     const r = x => Math.round(x * 10) / 10;
@@ -1090,7 +1101,7 @@
   }
 
   root.KitchenEngine = {
-    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, hasTag, FRONT_TYPES, HORIZONTAL_BOARDS, SIDES, HINGE_SIDES,
+    TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, hasTag, FRONT_TYPES, SIDES, HINGE_SIDES,
     placeLabel, gapsText, parseTags, spaceAround, valueAt, PINS_PER_SHELF, tagsOf, readType, cutKey, checkSettings, build, cutList, carcassMap, mapJSON,
     load, designJS, fromDesignJS, plural
   };
