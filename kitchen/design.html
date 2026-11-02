@@ -290,7 +290,7 @@
         <div class="sheet-wrap">
           <table class="sheet read-only">
             <thead>
-              <tr><th style="width:64px">Kod</th><th style="width:200px">Nazwa</th><th style="width:96px" title="Grubość; × głębokość, gdy materiał ją podaje (blat, panel boczny)">Wymiar</th><th style="width:56px" title="Kolor płyty; widok 3D pokazuje teksturę, gdy materiał ją podaje">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w design.js)">Użycie</th></tr>
+              <tr><th style="width:64px">Kod</th><th style="width:200px">Nazwa</th><th style="width:96px" title="Grubość; × głębokość, gdy materiał ją podaje (blat, panel końcowy)">Wymiar</th><th style="width:56px" title="Kolor płyty; widok 3D pokazuje teksturę, gdy materiał ją podaje">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w design.js)">Użycie</th></tr>
             </thead>
             <tbody>
               <template x-for="m in materials" :key="m.code">
@@ -355,7 +355,7 @@
               <template x-for="(row, idx) in components" :key="row.id">
                 <tr :class="{'is-invalid': build.componentFlags[idx] === 'invalid', 'is-empty-row': build.componentFlags[idx] === 'empty'}">
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
-                  <td><input type="number" class="cell" min="1" step="1" x-model.number="row.col"></td>
+                  <td><input type="number" class="cell" min="1" step="1" x-model.number="row.column"></td>
                   <td><input type="number" class="cell" min="1" step="1" x-model.number="row.span"></td>
                   <td><button type="button" class="pick-btn" :class="{empty: !row.type}" title="Wybierz typ" @click="openPicker(row, $event, 'type')" x-text="row.type ? KE.typeLabel(row.type) : '—'"></button></td>
                   <td>
@@ -471,8 +471,8 @@
   "fillerStroke": "#1e293b",
   "worktop": "#f3c48b",
   "worktopStroke": "#a86c32",
-  "splash": "#ead7b4",
-  "splashStroke": "#a86c32",
+  "wallPanel": "#ead7b4",
+  "wallPanelStroke": "#a86c32",
   "board": "#e7e5e4",
   "boardStroke": "#78716c",
   "frame": "#bfdbfe",
@@ -552,14 +552,14 @@ let loadedProject = null; // keeps the materials and settings, which this page d
 function componentRow(c) {
   const gaps = c.gaps || {};
   return {
-    group: c.group, col: c.column, span: c.span, type: KE.readType(c.type) || String(c.type ?? '').trim(), tags: parseTags(c.tags).words.join(' '), carcass: c.carcass || '', height: c.height, handle: c.handle ?? '', hinge: c.hinge ?? '',
+    group: c.group, column: c.column, span: c.span, type: KE.readType(c.type) || String(c.type ?? '').trim(), tags: parseTags(c.tags).words.join(' '), carcass: c.carcass || '', height: c.height, handle: c.handle ?? '', hinge: c.hinge ?? '',
     gapLeft: gaps.left ?? '', gapRight: gaps.right ?? '', gapTop: gaps.top ?? '', gapBottom: gaps.bottom ?? '', note: c.note || ''
   };
 }
 
 // component table row -> design.js component (in the order design.js uses); empty fields are left out; gaps on fronts only
 function dataComponent(row) {
-  const c = { group: toNumber(row.group), column: toNumber(row.col), span: toNumber(row.span), type: row.type };
+  const c = { group: toNumber(row.group), column: toNumber(row.column), span: toNumber(row.span), type: row.type };
   const tags = parseTags(row.tags).words;
   if (tags.length) c.tags = tags;
   const carcass = String(row.carcass ?? '').trim();
@@ -591,8 +591,8 @@ function readTables(columnRows, componentRows, noteRows) {
   });
   const components = [], rowOfComponent = []; // component index -> table row
   componentRows.forEach((row, idx) => {
-    if (isRowEmpty(row.group, row.col, row.span, row.height)) { componentFlags[idx] = 'empty'; return; }
-    const places = [row.group, row.col, row.span].map(toNumber), height = toNumber(row.height);
+    if (isRowEmpty(row.group, row.column, row.span, row.height)) { componentFlags[idx] = 'empty'; return; }
+    const places = [row.group, row.column, row.span].map(toNumber), height = toNumber(row.height);
     const gapCells = [row.gapLeft, row.gapRight, row.gapTop, row.gapBottom];
     const gaps = isRowEmpty(...gapCells) ? [] : gapCells.map(toNumber);
     if (!places.every(n => isWhole(n, 1)) || !(height >= 0) || !gaps.every(g => g >= 0)) {
@@ -617,8 +617,8 @@ const RECT_COLORS = {
   filler: { fill: 'filler', stroke: 'fillerStroke' },
   plasterboard: { fill: 'board', stroke: 'boardStroke' },
   worktop: { fill: 'worktop', stroke: 'worktopStroke' },
-  fall: { fill: 'worktop', stroke: 'worktopStroke' },
-  splash: { fill: 'splash', stroke: 'splashStroke' },
+  endPanel: { fill: 'worktop', stroke: 'worktopStroke' },
+  wallPanel: { fill: 'wallPanel', stroke: 'wallPanelStroke' },
   panel: { fill: 'frame', stroke: 'frameStroke' }, // same blue as frames and fronts
   frame: { fill: 'frame', stroke: 'frameStroke' },
   plinth: { fill: 'frame', stroke: 'frameStroke' }
@@ -674,7 +674,7 @@ function drawOven(item, y) {
 }
 
 // built-in microwave: black glass, window on the left, control column on the right with display and touch buttons, no handle
-function drawMicro(item, y) {
+function drawMicrowave(item, y) {
   const k = CONFIG.colors, { x, width: w, height: h } = item;
   const panelW = Math.min(150, w * 0.25);
   const winX = x + 40, winY = y + 45, winW = w - panelW - 80, winH = h - 90;
@@ -695,15 +695,15 @@ const DRAW = {
   filler: drawRect,
   plasterboard: drawRect,
   worktop: drawRect,
-  fall: drawRect,
-  splash: drawRect,
+  endPanel: drawRect,
+  wallPanel: drawRect,
   panel: drawRect,
   frame: drawRect,
   plinth: drawRect,
   cabinet: (item, y) => drawFront(item, y) + drawHandle(item, y),
   drawer: (item, y) => drawFront(item, y) + drawHandle(item, y),
   oven: drawOven,
-  micro: drawMicro
+  microwave: drawMicrowave
 };
 
 // one item as an SVG group; the data-* attributes feed the hover info
@@ -712,7 +712,7 @@ function drawItem(item, x, totalHeight, shakerRail) {
   const shape = { type: item.type, x, width, height, handle: item.handle, shakerRail };
   const y = totalHeight - item.v1;
   const frontWidth = front ? Math.max(0, front.width) : width, frontHeight = front ? Math.max(0, front.height) : height;
-  return `<g class="component-group" data-g="${item.group}" data-c="${item.col}" data-s="${item.span}" data-tags="${escapeAttr([item.type, ...item.tags].join(' '))}" data-k="${escapeAttr(item.carcassName)}" data-w="${width}" data-h="${height}" data-fw="${frontWidth}" data-fh="${frontHeight}" data-gaps="${front ? KE.gapsText(item.gaps) : ''}" data-type="${item.type}" data-note="${escapeAttr(item.note)}">${DRAW[item.type](shape, y)}</g>`;
+  return `<g class="component-group" data-g="${item.group}" data-c="${item.column}" data-s="${item.span}" data-tags="${escapeAttr([item.type, ...item.tags].join(' '))}" data-k="${escapeAttr(item.carcass)}" data-w="${width}" data-h="${height}" data-fw="${frontWidth}" data-fh="${frontHeight}" data-gaps="${front ? KE.gapsText(item.gaps) : ''}" data-type="${item.type}" data-note="${escapeAttr(item.note)}">${DRAW[item.type](shape, y)}</g>`;
 }
 
 // the groups side by side, CONFIG.groupGap apart; '' when there is nothing to draw
@@ -815,7 +815,7 @@ document.addEventListener('alpine:init', () => {
         while (rows.length > 1 && isEmpty(rows[rows.length - 1]) && isEmpty(rows[rows.length - 2])) rows.pop();
       };
       keep(this.columns, r => isRowEmpty(r.group, r.width), () => this.newColumnRow());
-      keep(this.components, r => isRowEmpty(r.group, r.col, r.span, r.height), () => this.newComponentRow());
+      keep(this.components, r => isRowEmpty(r.group, r.column, r.span, r.height), () => this.newComponentRow());
       keep(this.notes, r => isRowEmpty(r.name, r.description, r.details), () => this.newNoteRow());
     },
 
@@ -825,7 +825,7 @@ document.addEventListener('alpine:init', () => {
     },
     newComponentRow(fields = {}) {
       return {
-        id: this.nextId++, group: '', col: '', span: '', type: '', tags: '', carcass: '', height: '', handle: '', hinge: '',
+        id: this.nextId++, group: '', column: '', span: '', type: '', tags: '', carcass: '', height: '', handle: '', hinge: '',
         gapLeft: '', gapRight: '', gapTop: '', gapBottom: '', note: '', ...fields
       };
     },

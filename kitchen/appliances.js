@@ -1,28 +1,28 @@
 /* Kitchen appliances: what the manufacturers give - sizes and documents. Written per project (LLM).
    How an appliance fits in this kitchen is decided by engine.js (fitAppliances), not here.
    Sizes in mm, one value each. Less obvious fields:
-     body      the appliance's overall size: an oven or a microwave without its front (front), a fridge or a dishwasher with its
+     body      the appliance's overall size: an oven or a microwave without its fascia, a fridge or a dishwasher with its
                doors; a sink: its outline on the worktop
-     front     bottom: where the front starts, measured from the body bottom (below it: negative)
+     fascia    the front panel of an oven or a microwave; bottom: where it starts, measured from the body bottom (below it: negative)
      feet      the height of its feet as set in this kitchen
      door      hinge: the edge the door turns on; height: the appliance door at these feet (dishwasher)
-     controls  the part of the front that does not open: height of the control panel above the door, width of the control column beside it
-     doors     fridge doors from the appliance bottom; setback: where the doors start behind the front
+     controls  the part of the fascia that does not open: height of the control panel above the door, width of the control column beside it
+     doors     fridge and freezer doors from the appliance bottom; setback: where the doors start behind the carcass front
      source    where the values come from; "assumed" = still to check */
 window.KITCHEN_APPLIANCES = {
- "oven": {"name": "Bosch HBA534BB3", "body": {"width": 558, "height": 570, "depth": 528.5}, "front": {"width": 594, "height": 595, "thickness": 19.5, "bottom": 0}, "feet": 0, "door": {"hinge": "bottom"}, "controls": {"height": 98},
-  "source": "spec sheet HBA534BB3: 594 × 595 × 548 (the front 594 × 595); installation drawing HBA534BB0A, the same housing: housing 570 high and front 19.5 thick, both stand on the board, the front ends 25 above the housing; body depth 528.5 = 548 − 19.5; body width 558 and control panel 98: assumed",
+ "oven": {"name": "Bosch HBA534BB3", "body": {"width": 558, "height": 570, "depth": 528.5}, "fascia": {"width": 594, "height": 595, "thickness": 19.5, "bottom": 0}, "feet": 0, "door": {"hinge": "bottom"}, "controls": {"height": 98},
+  "source": "spec sheet HBA534BB3: 594 × 595 × 548 (the fascia 594 × 595); installation drawing HBA534BB0A, the same housing: housing 570 high and fascia 19.5 thick, both stand on the board, the fascia ends 25 above the housing; body depth 528.5 = 548 − 19.5; body width 558 and control panel 98: assumed",
   "links": [
    {"name": "Karta produktu (PDF, PL)", "url": "https://media3.bosch-home.com/Documents/specsheet/pl-PL/HBA534BB3.pdf"},
    {"name": "Instrukcja, montaż s. 26–27 (PDF)", "url": "https://media3.bosch-home.com/Documents/9001910274_B.pdf"}
   ]},
- "micro": {"name": "Bosch BFL623MB3", "body": {"width": 442, "height": 338, "depth": 315}, "front": {"width": 595, "height": 382, "thickness": 20, "bottom": -13}, "feet": 4, "door": {"hinge": "left"}, "controls": {"width": 153},
-  "source": "installation drawing BFL623MB3, tall cabinet: front 595 × 382, 20 thick; body 442 × 338 × 315 on adjustable feet, here 4 (the front in the middle of its module); the front starts 13 below the body; door hinged on the left, controls on the right; control column 153: assumed (photo)",
+ "microwave": {"name": "Bosch BFL623MB3", "body": {"width": 442, "height": 338, "depth": 315}, "fascia": {"width": 595, "height": 382, "thickness": 20, "bottom": -13}, "feet": 4, "door": {"hinge": "left"}, "controls": {"width": 153},
+  "source": "installation drawing BFL623MB3, tall cabinet: fascia 595 × 382, 20 thick; body 442 × 338 × 315 on adjustable feet, here 4 (the fascia in the middle of its module); the fascia starts 13 below the body; door hinged on the left, controls on the right; control column 153: assumed (photo)",
   "links": [
    {"name": "Strona produktu z dokumentami (PL)", "url": "https://www.bosch-home.pl/pl/product/gotowanie-i-pieczenie/kuchenki-mikrofalowe/kuchenki-mikrofalowe-do-zabudowy/BFL623MB3"},
    {"name": "Instrukcja montażu, s. 24–25 (PDF, PL)", "url": "https://maxelektro.pl/storage/file/pimcore_import/2024/12/17/94c9b8f85ca9df2e0ed5ed5def050d92/kuchenka-mikrofalowa-bosch-serie-2-bfl623mb3-instrukcja-montazu.pdf"}
   ]},
- "fridge": {"name": "Bosch KIS86AFE0", "body": {"width": 558, "height": 1772, "depth": 545}, "doors": {"freezer": {"bottom": 8, "top": 702}, "fridge": {"bottom": 733, "top": 1745}, "setback": 64},
+ "fridgeFreezer": {"name": "Bosch KIS86AFE0", "body": {"width": 558, "height": 1772, "depth": 545}, "doors": {"freezer": {"bottom": 8, "top": 702}, "fridge": {"bottom": 733, "top": 1745}, "setback": 64},
   "source": "installation drawing KIS86AFE0: 1772 × 558 × 545; doors from the appliance bottom: freezer 694 high, top at 702 (8 above the bottom); fridge 1012 high, bottom at 733",
   "links": [
    {"name": "Strona produktu z instrukcją montażu (PL)", "url": "https://www.bosch-home.pl/pl/product/chlodzenie-i-zamrazanie/chlodziarko-zamrazarki/chlodziarko-zamrazarki-do-zabudowy/KIS86AFE0"}

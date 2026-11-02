@@ -255,10 +255,10 @@ function frontFunction(front) {
 }
 
 // place of a part without a carcass: G1[4], G1[1-3]; a part without a column is just its group
-const place = p => (p.item ? KE.placeLabel(p.group, p.item.col, p.item.span) : p.col ? KE.placeLabel(p.group, p.col) : 'G' + p.group);
-const columnOfPart = p => (p.item ? p.item.col : p.col || 0);
+const place = p => (p.item ? KE.placeLabel(p.group, p.item.column, p.item.span) : p.column ? KE.placeLabel(p.group, p.column) : 'G' + p.group);
+const columnOfPart = p => (p.item ? p.item.column : p.column || 0);
 
-// cutting-list rows of one block: its id = fronts | frames | plinths | panels | splashes | plaster | worktops | falls, or a material use
+// cutting-list rows of one block: its id = fronts | frames | plinths | panels | wallPanels | plaster | worktops | endPanels, or a material use
 // (carcass, drawerBox, back ...): every board of that use's material
 let rowsOf = {}; // block id -> its rows, from the model
 let codeOfRow = {}; // cutKey of a row -> its label
@@ -274,10 +274,10 @@ function blockRows(blockId) {
     frames: () => list(model.frames),
     plinths: () => list(model.plinths.map(p => ({ ...p, name: 'Cokół' }))),
     panels: () => list(model.panels),
-    splashes: () => list(model.splashes),
+    wallPanels: () => list(model.wallPanels),
     plaster: () => list(model.plaster),
     worktops: () => list(model.worktopPieces.filter(p => p.item.type === 'worktop')),
-    falls: () => list(model.worktopPieces.filter(p => p.item.type === 'fall'))
+    endPanels: () => list(model.worktopPieces.filter(p => p.item.type === 'endPanel'))
   };
   return FROM_MODEL[blockId] ? FROM_MODEL[blockId]() : list(model.boards.filter(b => b.material === model.materialFor[blockId]));
 }
@@ -326,7 +326,7 @@ function renderAssembly() {
     const frontLines = fronts.map(f => label(KE.cutKey(frontPart(f))) + frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.hinges ? ', zawiasy: ' + f.hinges.length + ', strona ' + KE.LABELS.side[f.hand] : '') + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : ''));
     const drawerLines = [
       ...fronts.filter(f => f.drawer).map(f => 'szuflada ' + f.drawer.size + (f.drawer.bins ? ' z koszami na odpady' : '') + (f.drawer.inner ? ' + szuflada wewnętrzna M' : '')),
-      ...fronts.filter(f => f.doorDrawers).map(f => f.doorDrawers.count + ' × szuflada za drzwiami ' + f.doorDrawers.boxWidth + ' × ' + f.doorDrawers.runner + ' × ' + f.doorDrawers.boxHeight + ' (płyta dystansowa po stronie zawiasów)')
+      ...fronts.filter(f => f.doorDrawers).map(f => f.doorDrawers.count + ' × szuflada za drzwiami ' + f.doorDrawers.boxWidth + ' × ' + f.doorDrawers.runnerLength + ' × ' + f.doorDrawers.boxHeight + ' (płyta dystansowa po stronie zawiasów)')
     ];
     const doorDrawers = fronts.reduce((n, f) => n + (f.doorDrawers ? f.doorDrawers.count : 0), 0);
     const pullOutShelves = boards.filter(b => b.id === 'pullOutShelf').length;
@@ -335,25 +335,25 @@ function renderAssembly() {
       hinges ? 'zawiasy: ' + hinges : '',
       pins ? 'podpórki półek: ' + pins : '',
       pullOutShelves ? pullOutShelves + ' ' + plural(pullOutShelves, 'para', 'pary', 'par') + ' prowadnic pełnego wysuwu' : '',
-      doorDrawers ? 'prowadnice kulkowe ' + fronts.find(f => f.doorDrawers).doorDrawers.runner + ': ' + doorDrawers + ' kpl.' : ''
+      doorDrawers ? 'prowadnice kulkowe ' + fronts.find(f => f.doorDrawers).doorDrawers.runnerLength + ': ' + doorDrawers + ' kpl.' : ''
     ].filter(Boolean);
-    return '<div class="card"><h3>' + esc(K.name) + '</h3>' + KE.placeLabel(K.group, K.col, K.span) + ' · ' + KE.LABELS.carcassType[K.type] + ' · ' + round1(K.u1 - K.u0) + ' × ' + round1(K.v1 - K.v0) + ' × ' + model.carcassDepth + (K.flags.length ? ' · ' + K.flags.map(f => KE.LABELS.flag[f]).join(', ') : '') +
+    return '<div class="card"><h3>' + esc(K.name) + '</h3>' + KE.placeLabel(K.group, K.column, K.span) + ' · ' + KE.LABELS.carcassType[K.type] + ' · ' + round1(K.u1 - K.u0) + ' × ' + round1(K.v1 - K.v0) + ' × ' + model.carcassDepth + (K.flags.length ? ' · ' + K.flags.map(f => KE.LABELS.flag[f]).join(', ') : '') +
       [...new Set(boards.map(b => b.material))].map(m => section(model.materials[m].label, partList(boards.filter(b => b.material === m)))).join('') +
       section('Fronty', frontLines) + section('Szuflady', drawerLines) + section('Okucia', hardware) + '</div>';
   });
 
   // parts without a carcass, per group, sorted by column (a frame and its back strip sit together)
   const loose = {};
-  const add = (p, text) => (loose[p.group] = loose[p.group] || []).push({ col: columnOfPart(p), text: place(p) + ' – ' + text });
+  const add = (p, text) => (loose[p.group] = loose[p.group] || []).push({ column: columnOfPart(p), text: place(p) + ' – ' + text });
   model.fronts.filter(f => !f.carcassId).forEach(f => add(f, frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : '')));
   model.frames.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
   model.panels.forEach(p => add(p, p.name + ' ' + size(p.a, p.b) + withEdges(p.edges)));
-  model.splashes.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
+  model.wallPanels.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
   model.boards.filter(b => !b.carcassId).forEach(b => add(b, b.name + ' ' + size(b.a, b.b) + ' (' + model.materials[b.material].label + ')'));
   model.plinths.forEach(p => add(p, 'Cokół ' + size(p.a, p.b)));
   model.plaster.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
   const looseCards = Object.keys(loose).sort().map(group => {
-    const sorted = [...loose[group]].sort((x, y) => x.col - y.col).map(x => x.text); // a stable sort: the order met within a column
+    const sorted = [...loose[group]].sort((x, y) => x.column - y.column).map(x => x.text); // a stable sort: the order met within a column
     return '<div class="card"><h3>Grupa ' + group + ' – bez korpusu</h3>' + listLines(sorted).replace(/^<br>/, '') + '</div>';
   });
   document.getElementById('assemblyBody').innerHTML = cards.join('') + looseCards.join('');
@@ -417,21 +417,21 @@ function carcassValue(rest) {
 // module width, height, v0, v1; its front frontWidth, frontHeight, frontV0, frontV1; space = the clear height between the
 // nearest horizontal boards of its carcass below (spaceBottom) and above (spaceTop) its middle; drawers behind its door (tag doorDrawers):
 // count, runner (length), boxWidth, boxHeight; hinge = the hinge side of its door; edges = the ABS edges of a panel ("lewa 717", "brak");
-// fit.* = how its appliance sits in it (engine.js fitAppliances: fit.feet, fit.frontV0, fit.height ...)
+// fit.* = how its appliance sits in it (engine.js fitAppliances: fit.feet, fit.fasciaV0, fit.height ...)
 function itemValue(rest) {
   const dot = rest.indexOf('.'), field = rest.slice(dot + 1), [where, what = ''] = rest.slice(0, dot).split('/'), [kind, n] = what.split('#');
   const item = Object.values(model.groups).flatMap(G => G.items)
-    .filter(i => (i.carcassName === where || KE.placeLabel(i.group, i.col, i.span) === where) && (i.type === kind || i.tags.includes(kind)))
+    .filter(i => (i.carcass === where || KE.placeLabel(i.group, i.column, i.span) === where) && (i.type === kind || i.tags.includes(kind)))
     .sort((a, b) => a.v0 - b.v0)[(Number(n) || 1) - 1];
   if (!item) return NaN;
-  const f = item.front, K = item.carcass;
+  const f = item.front, K = model.carcasses.find(c => c.id === item.carcassId);
   const { bottom: spaceBottom, top: spaceTop } = K ? KE.spaceAround(model.boards, K, item.v0, item.v1) : { bottom: NaN, top: NaN };
   const panel = model.panels.find(p => p.item === item);
   const values = {
     width: item.u1 - item.u0, height: item.v1 - item.v0, v0: item.v0, v1: item.v1,
     frontWidth: f ? f.width : NaN, frontHeight: f ? f.height : NaN, frontV0: f ? f.v0 : NaN, frontV1: f ? f.v1 : NaN,
     spaceBottom, spaceTop, space: spaceTop - spaceBottom,
-    ...(f && f.doorDrawers ? { count: f.doorDrawers.count, runner: f.doorDrawers.runner, boxWidth: f.doorDrawers.boxWidth, boxHeight: f.doorDrawers.boxHeight } : {}),
+    ...(f && f.doorDrawers ? { count: f.doorDrawers.count, runnerLength: f.doorDrawers.runnerLength, boxWidth: f.doorDrawers.boxWidth, boxHeight: f.doorDrawers.boxHeight } : {}),
     ...(f && f.hand ? { hinge: KE.LABELS.side[f.hand] } : {}),
     ...(panel ? { edges: edgeText(panel.edges) || 'brak' } : {}),
     fit: item.fit
