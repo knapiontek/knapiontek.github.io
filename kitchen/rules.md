@@ -23,7 +23,8 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | panel końcowy | pionowa płyta pod końcem blatu, do podłogi; jego grubość = szerokość elementu |
 | panel ścienny | płyta na ścianie |
 | panel przedni | płyta na płasko |
-| listwa | listwa przednia na sztorc w płaszczyźnie frontów; poza korpusem także listwy tylne |
+| listwa przednia | na sztorc w płaszczyźnie frontów pomiędzy korpusami |
+| listwa tylna | ukryta za listwą przednią z tyłu korpusu |
 | szafka | miejsce w korpusie z drzwiami |
 | szuflada | miejsce w korpusie z szufladą |
 | piekarnik, mikrofalówka | urządzenie do zabudowy w korpusie, bez frontu |
@@ -32,7 +33,7 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 |---|---|---|
 | atrapa | szuflada | stały front, bez szuflady |
 | zlew | szafka, szuflada | trawersy na sztorc, bez półek ruchomych, wycięcie w blacie |
-| płyta grzewcza | szafka, szuflada | przedni trawers niski, tylny na sztorc, przegroda pod płytą |
+| płyta grzewcza | szafka, szuflada | przedni trawers niski na sztorc, tylny na sztorc, przegroda pod płytą |
 | kosze | szuflada | kosze na odpady w szufladzie |
 | szuflada wewnętrzna | szuflada | szuflada M nad szufladą, za tym samym frontem |
 | ekspres | szafka | półka wysuwana na dole (po stronie zawiasów płyta dystansowa), nad nią półki ruchome |
@@ -51,8 +52,8 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
   - słupek: stoi na cokole i nie ma blatu;
   - górna: nie stoi na cokole.
 - Korpus stojący na cokole ma nóżki.
-- **Mocowanie:** listwa tylna jest przymocowana do ściany kątownikiem na styku z listwą tylną nad nią (stabilność; listwę skraca się na miejscu pod kątownik); najwyższa listwa w stosie nie ma kątownika. Listwę przednią i listwy tylne przykręca się do pierwszego korpusu zwykłym wkrętem, a drugi korpus do nich wkrętem od środka. Wyspa stoi wolno.
-- **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka lub zamrażarka.
+- **Mocowanie:** listwa tylna ma długość korpusu przyległego i jest przymocowana do ściany kątownikiem; najwyższa listwa w stosie nie ma kątownika. Listwę przednią i listwy tylne przykręca się do pierwszego korpusu zwykłym wkrętem, a drugi korpus do nich wkrętem od środka. Wyspa stoi wolno.
+- **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka i zamrażarka.
 - **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
 - **Półka stała** leży na środku styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki. Przy piekarniku: nad nim płytsza z tyłu (gorące powietrze), pod nim niżej, poza frontem piekarnika. W korpusie lodówki jest tylko jedna, na górze urządzenia: góra lodówki jest do niej przykręcona; półka jest płytsza z tyłu, by wypuścić powietrze.
