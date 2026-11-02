@@ -23,7 +23,7 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | panel końcowy | pionowa płyta pod końcem blatu, do podłogi; jego grubość = szerokość elementu |
 | panel ścienny | płyta na ścianie |
 | panel przedni | płyta na płasko |
-| listwa | listwa na sztorc w płaszczyźnie frontów |
+| listwa | listwa przednia na sztorc w płaszczyźnie frontów; poza korpusem także listwy tylne |
 | szafka | miejsce w korpusie z drzwiami |
 | szuflada | miejsce w korpusie z szufladą |
 | piekarnik, mikrofalówka | urządzenie do zabudowy w korpusie, bez frontu |
@@ -51,7 +51,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
   - słupek: stoi na cokole i nie ma blatu;
   - górna: nie stoi na cokole.
 - Korpus stojący na cokole ma nóżki.
-- **Mocowanie:** listwa tylna jest przymocowana do ściany kątownikiem na styku z listwą tylną nad nią (stabilność; listwę skraca się na miejscu pod kątownik); najwyższa listwa w stosie nie ma kątownika. Listwę i listwę tylną przykręca się do pierwszego korpusu zwykłym wkrętem, a drugi korpus do nich wkrętem od środka. Wyspa stoi wolno.
+- **Mocowanie:** listwa tylna jest przymocowana do ściany kątownikiem na styku z listwą tylną nad nią (stabilność; listwę skraca się na miejscu pod kątownik); najwyższa listwa w stosie nie ma kątownika. Listwę przednią i listwy tylne przykręca się do pierwszego korpusu zwykłym wkrętem, a drugi korpus do nich wkrętem od środka. Wyspa stoi wolno.
 - **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka lub zamrażarka.
 - **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
@@ -71,7 +71,9 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 ## 4. Fronty, listwy, panele przednie, blat
 
 - **Front** = moduł minus 4 szczeliny (lewa, prawa, góra, dół). Front stoi w ustalonej szczelinie przed korpusem. Front shaker ma ramę o stałej szerokości.
-- **Listwa** stoi na sztorc w płaszczyźnie frontów. Gdy nie należy do korpusu, dostaje listwy tylne przy tyle korpusów, tak wysokie jak korpusy obok: jedną na każdy korpus jeden nad drugim.
+- **Listwa** to listwa przednia, a poza korpusem także listwy tylne:
+  - listwa przednia stoi na sztorc w płaszczyźnie frontów, jest z jednego kawałka i ma lakierowaną krawędź przednią;
+  - listwy tylne leżą za listwą przednią, przy tyle korpusów, i są pocięte jak korpusy: przy listwie pionowej jedna na każdy korpus w stosie obok (jedna nad drugą), przy poziomej jedna na każdy korpus pod nią; każda tak długa jak jej korpus. Listwa bez korpusów obok ma jedną listwę tylną na całą długość.
 - **Panel przedni** leży na płasko. W korpusie jest przykręcony do korpusu, bez szczeliny; poza korpusem stoi w płaszczyźnie frontów i jest przykręcony do sąsiedniego panelu.
 - **Blat:**
   - materiał blatu podaje głębokość płyty, którą się kupuje; wyspa ma osobny materiał;
@@ -92,6 +94,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 - **Prowadnik zawiasu:** dwa otwory na wewnętrznej stronie boku albo słupka zawiasowego, w stałej odległości od przodu, symetrycznie wokół wysokości zawiasu.
 - **Podpórki półki ruchomej:** pod każdą półką, w obu bokach, przy przodzie i przy tyle; dodatkowe rzędy w stałym odstępie powyżej i poniżej, ale nie w płycie poziomej (wieniec, trawers, półka stała).
 - **Prowadnice szuflad i półki wysuwanej:** w obu bokach (przy płycie dystansowej: w niej), w stałej odległości pod dnem szuflady (także szuflady wewnętrznej) i pod półką wysuwaną, w pozycjach od przodu podanych w danych.
+- **Prowadnice kulkowe szuflad za drzwiami:** w płycie dystansowej i w boku po drugiej stronie, w stałej odległości nad dnem skrzynki, w pozycjach od przodu prowadnicy podanych w danych.
 - **Zawias nad półką:** zawias, który wypada przy półce, przechodzi nad nią: najniżej, gdzie jest co najmniej ustalony odstęp nad półką i gdzie otwory prowadnika nie trafiają w otwory podpórek.
 - Otwory, które nachodzą na siebie na jednej części albo trafiają w płytę poziomą, są zgłaszane.
 - **Wycięcia w blacie:** na zlew i płytę grzewczą, nad korpusem z tagiem zlew lub płyta grzewcza, na środku korpusu, w stałej odległości od tylnej krawędzi blatu; wycięcie musi zmieścić się w jednym blacie i we wnętrzu korpusu.
@@ -100,7 +103,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
 ## 6. Krawędzie
 
-- **Lakier:** materiał lakierowany ma lakier na obu stronach. Krawędzie są lakierowane tylko we frontach (wszystkie) i w listwach (krawędź przednia).
+- **Lakier:** materiał lakierowany ma lakier na obu stronach. Krawędzie są lakierowane tylko we frontach (wszystkie) i w listwach przednich (krawędź przednia).
 - **ABS na płytach korpusu** jest tylko na krawędziach widocznych:
   - boki, wieńce, półki, trawersy płaskie, słupek zawiasowy i płyta dystansowa mają ABS na krawędzi przedniej;
   - trawers na sztorc ma ABS na krawędzi dolnej;
@@ -118,8 +121,8 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 ## 7. Kontrole
 
 - Błędy w danych są zgłaszane, np. brak typu, tag do złego typu, nakładanie się elementów, brak szczelin albo strony zawiasów, element poza kolumnami, materiał blatu za płytki.
-- Element bez jednego typu, poza kolumnami albo nachodzący na inny jest pomijany.
-- Widok 3D pokazuje kolizje, szczeliny do 3 mm przy listwach i panelach, części wystające oraz fronty, które nieznacznie nie trzymają linii (większa różnica jest zamierzona).
+- Każdy element jest sprawdzany. Gdy nie ma jednego typu, wysokości w całych mm albo kolumn w swojej grupie, wychodzi poza kolumny lub nachodzi na inny element, wyświetla się uwaga, a element nie jest rysowany.
+- Widok 3D pokazuje kolizje, szczeliny do 3 mm przy listwach przednich, listwach tylnych i panelach, części wystające oraz fronty, które nieznacznie nie trzymają linii (większa różnica jest zamierzona).
 
 ## 8. Kosztorys (szacunek, nie zasady)
 

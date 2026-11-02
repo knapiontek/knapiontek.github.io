@@ -607,7 +607,7 @@ function edgeLook(m, edges, code) {
 // layer groups of the Layers panel: each layer id -> its label
 const LAYERS = [
   { label: 'Korpusy', layers: { carcasses: 'Płyty', backs: 'Plecy HDF', shelves: 'Półki', drawers: 'Szuflady', hardware: 'Zawiasy, prowadnice', holes: 'Otwory', legs: 'Nóżki' } },
-  { label: 'Fronty', layers: { fronts: 'Fronty', handles: 'Uchwyty', strips: 'Listwy', frontPanel: 'Panele', plinth: 'Cokół' } },
+  { label: 'Fronty', layers: { fronts: 'Fronty', handles: 'Uchwyty', strips: 'Listwy przednie', frontPanel: 'Panele', plinth: 'Cokół' } },
   { label: 'Blat', layers: { worktops: 'Blaty', endPanels: 'Panele końcowe', wallPanel: 'Panel ścienny' } },
   { label: 'AGD', layers: { sink: 'Zlew, bateria', trap: 'Syfon', hob: 'Płyta grzewcza', hood: 'Okap', oven: 'Piekarnik', microwave: 'Mikrofalówka',
     coffee: 'Ekspres', fridge: 'Lodówka', dishwasher: 'Zmywarka' } },
@@ -960,7 +960,7 @@ function buildGroup(group) {
   }
 }
 GROUP_IDS.forEach(buildGroup);
-// back strips behind the strips
+// back strips behind the front strips
 for (const b of model.boards) {
   if (b.id !== 'backStrip') continue;
   const m = edgeLook(localBox(groupLayer[b.group].carcasses, ...b.box, BOARD[b.material]), b.edges, b.material);
@@ -1866,7 +1866,7 @@ LAYER_IDS.forEach(id => { layerOn[id] = true; });
 const PANEL_COLORS = {
   side: { color: '#f0c27b', label: 'Bok' }, bottomBoard: { color: '#8fcf9f', label: 'Wieniec dolny' }, topBoard: { color: '#4fae6e', label: 'Wieniec górny' }, crossRail: { color: '#f29e8e', label: 'Trawers' },
   fixedShelf: { color: '#5f95da', label: 'Półka stała' }, adjustableShelf: { color: '#a9c9f2', label: 'Półka ruchoma' }, pullOutShelf: { color: '#a9c9f2', label: 'Półka wysuwana' },
-  backPanel: { color: '#c9b9ea', label: 'Plecy, ' + model.materials[model.materialFor.backPanel].label }, backStrip: { color: '#e98fc4', label: 'Listwa tylna za listwą' },
+  backPanel: { color: '#c9b9ea', label: 'Plecy, ' + model.materials[model.materialFor.backPanel].label }, backStrip: { color: '#e98fc4', label: 'Listwa tylna za listwą przednią' },
   hobPanel: { color: '#7fd0c8', label: 'Przegroda pod płytą' }, hingePost: { color: '#e07b39', label: 'Słupek zawiasowy' }, spacer: { color: '#c46a2b', label: 'Płyta dystansowa' }, insetPanel: { color: '#d9a35c', label: 'Panel wpuszczany' },
   drawerBottom: { color: '#f5d76e', label: 'Dno szuflady' }, drawerBack: { color: '#e3ad3c', label: 'Tył szuflady' },
   doorDrawerFront: { color: '#d99a2b', label: 'Czoło szuflady za drzwiami' }, doorDrawerBottom: { color: '#f5d76e', label: 'Dno szuflady za drzwiami' }, doorDrawerSide: { color: '#ecc45a', label: 'Bok szuflady za drzwiami' }, doorDrawerBack: { color: '#e3ad3c', label: 'Tył szuflady za drzwiami' }
@@ -1966,7 +1966,7 @@ document.getElementById('kStats').innerHTML = definitions([
   note.className = 'note ' + (issues.length ? 'bad' : 'okk');
   note.textContent = issues.length
     ? 'Problemy: ' + issues.length + ' w ' + geometry.n + ' częściach (dane: ' + model.warnings.length + ', kolizje: ' + geometry.overlaps.length + ', szczeliny: ' + geometry.gaps.length + ', wystające: ' + geometry.out.length + ', poza linią: ' + lines.length + '):'
-    : 'Wszystkie części (' + geometry.n + ') w porządku: bez kolizji, bez szczelin między listwami / listwami tylnymi a sąsiadami, nic nie wystaje, linie frontów równe.';
+    : 'Wszystkie części (' + geometry.n + ') w porządku: bez kolizji, bez szczelin między listwami przednimi / tylnymi a sąsiadami, nic nie wystaje, linie frontów równe.';
   document.getElementById('geoList').innerHTML = issues.map(x => '<li><b>' + esc(x.k) + (x.v !== '' ? ' ' + esc(x.v) : '') + '</b>' + [x.a, x.b].filter(Boolean).map(t => '<br>– ' + esc(t)).join('') + '</li>').join('');
 }
 

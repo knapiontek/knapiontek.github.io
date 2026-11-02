@@ -63,12 +63,12 @@ window.KITCHEN_COST = {
    {"type": "cabinet", "function": "drzwi"}
   ],
   "sheet": "Arkusz płyty {v:sheet.length}×{v:sheet.width} [m²]",
-  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: ABS razem = długość ABS × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, od ściany {s:carcass.wallGap.1} (grupa 1), {s:carcass.wallGap.2} (grupa 2); front {s:carcass.frontGap} przed korpusem; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:backPanel.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:strip.depth} × wysokość korpusu obok (skrócić na miejscu pod kątownik).\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nABS: tylko krawędzie widoczne; strona każdej krawędzi w zakładce Montaż.\nLakier: płyty lakierowane na obu stronach; krawędzie tylko we frontach (wszystkie) i w listwach (przednia).\nBlaty: krawędź przednia fabryczna, wycięcia bez ABS.",
+  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: ABS razem = długość ABS × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, od ściany {s:carcass.wallGap.1} (grupa 1), {s:carcass.wallGap.2} (grupa 2); front {s:carcass.frontGap} przed korpusem; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:backPanel.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:strip.depth} × długość korpusu obok (listwa pionowa; skrócić na miejscu pod kątownik) lub pod nią (listwa pozioma).\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nABS: tylko krawędzie widoczne; strona każdej krawędzi w zakładce Montaż.\nLakier: płyty lakierowane na obu stronach; krawędzie tylko we frontach (wszystkie) i w listwach (przednia).\nBlaty: krawędź przednia fabryczna, wycięcia bez ABS.",
   "legend": {"runner": "pozycje do potwierdzenia wg Blum i Häfele"}
  },
  "blocks": [
   {"id": "fronts", "code": "FR", "title": "FRONTY – {m:cabinet}, shaker, lakierowane dookoła", "columns": ["Funkcja", "Szerokość", "Wysokość", "Ilość"]},
-  {"id": "strips", "code": "LI", "title": "LISTWY – {m:strip} na sztorc, gł. {s:strip.depth}, lakierowane obustronnie i krawędź przednia"},
+  {"id": "strips", "code": "LI", "title": "LISTWY PRZEDNIE – {m:strip} na sztorc, gł. {s:strip.depth}, lakierowane obustronnie i krawędź przednia"},
   {"id": "plinths", "code": "CO", "title": "COKÓŁ – {m:plinth}, wilgocioodporny, lakierowany obustronnie"},
   {"id": "frontPanels", "code": "PA", "title": "PANELE PRZEDNIE I PANEL TYLNY WYSPY – {m:frontPanel} na płasko, lakierowane obustronnie; ABS na widocznych krawędziach"},
   {"id": "wallPanels", "code": "PS", "title": "PANEL ŚCIENNY – {m:wallPanel}, na ścianie nad blatem"},
@@ -81,7 +81,7 @@ window.KITCHEN_COST = {
  ],
  "categories": [
   {
-   "name": "Fronty, listwy i cokół",
+   "name": "Fronty, listwy przednie i cokół",
    "items": [
     {
      "id": "fronts",
@@ -103,7 +103,7 @@ window.KITCHEN_COST = {
     },
     {
      "id": "strips",
-     "name": "Listwy na sztorc: {m:strip}",
+     "name": "Listwy przednie na sztorc: {m:strip}",
      "spec": "gł. {s:strip.depth}; lakierowane obustronnie i krawędź przednia",
      "qty": "={strips.m2}",
      "unit": "m²",
@@ -404,7 +404,7 @@ window.KITCHEN_COST = {
     {
      "id": "jointScrews",
      "name": "Wkręt do drewna 4 × 30 Standers, łeb wpuszczany, opak. 25 szt.",
-     "spec": "listwa i listwa tylna do pierwszego korpusu, {v:screwsPerMetre} na mb każdej",
+     "spec": "listwa przednia i listwa tylna do pierwszego korpusu, {v:screwsPerMetre} na mb każdej",
      "qty": "=ROUNDUP({n:jointLength.screwed}/1000*{v:screwsPerMetre}*2/25,0)",
      "unit": "op.",
      "price": 3.79,
@@ -415,7 +415,7 @@ window.KITCHEN_COST = {
     {
      "id": "brassScrews",
      "name": "Wkręt mosiądzowany 4 × 30 PZ, łeb stożkowy",
-     "spec": "drugi korpus do listwy i listwy tylnej, od środka korpusu (widoczne), {v:screwsPerMetre} na mb każdej",
+     "spec": "drugi korpus do listwy przedniej i listwy tylnej, od środka korpusu (widoczne), {v:screwsPerMetre} na mb każdej",
      "qty": "=ROUNDUP({n:jointLength.fromInside}/1000*{v:screwsPerMetre}*2,0)",
      "unit": "szt.",
      "price": 0.4,
@@ -846,7 +846,7 @@ window.KITCHEN_COST = {
     {
      "id": "wallFixing",
      "topic": "Mocowanie korpusów do ściany",
-     "description": "Listwy tylne: z {m:carcass}, gł. {s:strip.depth}, tak wysokie jak korpusy obok, jedna na korpus.\nKątowniki ({n:wallBrackets}): na styku listew tylnych w stosie, listwę skrócić na miejscu; górna listwa w stosie bez kątownika.\nWkręty: listwy do pierwszego korpusu zwykłe, drugi korpus mosiądzowane od środka.\nWyspa stoi wolno.",
+     "description": "Listwy tylne: z {m:carcass}, gł. {s:strip.depth}, za listwą przednią, pocięte jak korpusy: przy listwie pionowej jedna na korpus w stosie obok, przy poziomej jedna na korpus pod nią.\nKątowniki ({n:wallBrackets}): na styku listew tylnych w stosie, listwę skrócić na miejscu; górna listwa w stosie bez kątownika.\nWkręty: listwy do pierwszego korpusu zwykłe, drugi korpus mosiądzowane od środka.\nWyspa stoi wolno.",
      "assumed": "Gazobeton, kołki DuoPower 8."
     },
     {
@@ -858,8 +858,8 @@ window.KITCHEN_COST = {
     },
     {
      "id": "stripsPanels",
-     "topic": "Listwy na sztorc, panele przednie na płasko",
-     "description": "Listwy: {m:strip}, na sztorc, gł. {s:strip.depth}; lakierowane obustronnie i krawędź przednia.\nPanele przednie: {m:frontPanel}, na płasko; lakierowane obustronnie.\nABS przy otwieranym froncie: panel przedni {i:K3/frontPanel.width} – {i:K3/frontPanel.edges}; panel przedni {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel przedni {i:G2[3]/frontPanel.width} zakrywa koniec panelu przedniego {i:K3/frontPanel.width}."
+     "topic": "Listwy przednie na sztorc, panele przednie na płasko",
+     "description": "Listwy przednie: {m:strip}, na sztorc, z jednego kawałka, gł. {s:strip.depth}; lakierowane obustronnie i krawędź przednia.\nPanele przednie: {m:frontPanel}, na płasko; lakierowane obustronnie.\nABS przy otwieranym froncie: panel przedni {i:K3/frontPanel.width} – {i:K3/frontPanel.edges}; panel przedni {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel przedni {i:G2[3]/frontPanel.width} zakrywa koniec panelu przedniego {i:K3/frontPanel.width}."
     },
     {
      "id": "fixedShelves",
@@ -919,7 +919,7 @@ window.KITCHEN_COST = {
     {
      "id": "lacquered",
      "topic": "Części lakierowane",
-     "description": "Fronty shaker: {p:fronts} PLN/m², NIESPRAWDZONE (kwota właściciela).\nListwy, panele, cokół: {p:strips} PLN/m² (lakierowane.pl, jedna strona).\nCokół wilgocioodporny; wszystko od jednego producenta, jeden kolor.",
+     "description": "Fronty shaker: {p:fronts} PLN/m², NIESPRAWDZONE (kwota właściciela).\nListwy przednie, panele, cokół: {p:strips} PLN/m² (lakierowane.pl, jedna strona).\nCokół wilgocioodporny; wszystko od jednego producenta, jeden kolor.",
      "decide": "Pisemna oferta na wszystkie części lakierowane, obustronnie."
     },
     {
@@ -964,7 +964,7 @@ window.KITCHEN_COST = {
     {
      "id": "hiddenSides",
      "topic": "Niewidoczne boki korpusów",
-     "description": "Zakryte listwami, panelami końcowymi lub ścianą: bez lakierowanych osłon."
+     "description": "Zakryte listwami przednimi, panelami końcowymi lub ścianą: bez lakierowanych osłon."
     },
     {
      "id": "summary",

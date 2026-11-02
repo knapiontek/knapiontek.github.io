@@ -596,15 +596,18 @@
         if (item.type === 'strip') {
           strips.push({
             group: groupModel.group, item, material: materialFor.strip, box: [u0, u1, v0, v1, frontFace - stripSettings.depth, frontFace],
-            name: (height > width ? 'Listwa ' : 'Listwa pozioma ') + thickness.strip + ' na sztorc (gł. ' + stripSettings.depth + ')',
+            name: (height > width ? 'Listwa przednia ' : 'Listwa przednia pozioma ') + thickness.strip + ' na sztorc (gł. ' + stripSettings.depth + ')',
             a: stripSettings.depth, b: Math.max(width, height),
             lacquer: stripLacquer, lacqueredSides: stripLacquer ? STRIP_LACQUERED_SIDES : []
           });
           if (!item.carcass) {
-            // back strips: one per carcass beside the strip; a wall bracket at each joint of the stack (cut in on site), none on an island
-            const along = height > width;
-            const beside = along ? carcasses.filter(carcass => carcass.group === groupModel.group && (carcass.u0 === u1 || carcass.u1 === u0) && carcass.v0 < v1 && carcass.v1 > v0) : [];
-            let spans = [[v0, v1]];
+            // back strips, cut as the carcasses: an upright strip one per carcass beside it, with a wall bracket at each joint of
+            // the stack (cut in on site; none on an island); a horizontal strip one per carcass under it; no carcass: one piece
+            const along = height > width, own = carcasses.filter(carcass => carcass.group === groupModel.group);
+            const beside = along ? own.filter(carcass => (carcass.u0 === u1 || carcass.u1 === u0) && carcass.v0 < v1 && carcass.v1 > v0) : [];
+            const under = along ? [] : own.filter(carcass => carcass.v1 === v0 && carcass.u0 < u1 && carcass.u1 > u0).sort((a, b) => a.u0 - b.u0);
+            let spans = along ? [[v0, v1]] : [[u0, u1]]; // [s0, s1] along the strip
+            if (under.length) spans = under.map(carcass => [Math.max(u0, carcass.u0), Math.min(u1, carcass.u1)]);
             if (beside.length) {
               const joints = [...new Set(beside.filter(carcass => beside.some(upper => upper.v0 === carcass.v1 && upper.u0 === carcass.u0)).map(carcass => carcass.v1))].sort((a, b) => a - b);
               const ends = [Math.max(v0, Math.min(...beside.map(carcass => carcass.v0))), ...joints, Math.min(v1, Math.max(...beside.map(carcass => carcass.v1)))];
@@ -618,8 +621,8 @@
             }
             for (const [s0, s1] of spans) {
               boards.push({
-                id: 'backStrip', name: 'Listwa tylna ' + stripSettings.depth, a: stripSettings.depth, b: along ? s1 - s0 : width, material: materialFor.carcass, layer: 'carcasses',
-                group: groupModel.group, column: item.column, box: along ? [u0, u1, s0, s1, carcassBack, carcassBack + stripSettings.depth] : [u0, u1, v0, v1, carcassBack, carcassBack + stripSettings.depth],
+                id: 'backStrip', name: 'Listwa tylna ' + stripSettings.depth, a: stripSettings.depth, b: s1 - s0, material: materialFor.carcass, layer: 'carcasses',
+                group: groupModel.group, column: item.column, box: along ? [u0, u1, s0, s1, carcassBack, carcassBack + stripSettings.depth] : [s0, s1, v0, v1, carcassBack, carcassBack + stripSettings.depth],
                 edges: [] // hidden behind its strip
               });
             }
