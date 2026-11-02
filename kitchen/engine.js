@@ -113,7 +113,7 @@
     'drilling.cup.diameter', 'drilling.cup.depth', 'drilling.cup.fromEdge',
     'drilling.plate.diameter', 'drilling.plate.depth', 'drilling.plate.fromFront', 'drilling.plate.spacing',
     'drilling.shelfPin.diameter', 'drilling.shelfPin.depth', 'drilling.shelfPin.fromFront', 'drilling.shelfPin.fromBack',
-    'drilling.shelfPin.belowShelf', 'drilling.shelfPin.extra', 'drilling.shelfPin.pitch',
+    'drilling.shelfPin.belowShelf',
     'drilling.runner.diameter', 'drilling.runner.depth', 'drilling.runner.fromFront', 'drilling.runner.belowDrawer',
     'drilling.ballRunner.fromFront', 'drilling.ballRunner.aboveBottom'
   ];
@@ -687,16 +687,8 @@
 
     // ---- fronts, hinges, hinge posts, drawer boxes ----
     const hingeSettings = settings.hinges, drawerSettings = settings.drawers;
-    // shelf-pin rows (y of the hole centres) under an adjustable shelf: the main row always (a hit is reported), the extra rows
-    // only where they miss the horizontal boards and stay in the carcass
-    function shelfPinRows(shelfBoard, carcass) {
-      const pin = settings.drilling.shelfPin, main = shelfBoard.centre - half - pin.belowShelf;
-      const bands = horizontalBands(boards, carcass);
-      const clear = y => bands.every(([b0, b1]) => y + pin.diameter / 2 < b0 || y - pin.diameter / 2 > b1) && y > carcass.v0 && y < carcass.v1;
-      const extra = [];
-      for (let k = 1; k <= pin.extra; k++) extra.push(main - k * pin.pitch, main + k * pin.pitch);
-      return [main, ...extra.filter(clear)];
-    }
+    // height of the shelf-pin holes (their centres) under an adjustable shelf
+    const shelfPinRow = shelfBoard => shelfBoard.centre - half - settings.drilling.shelfPin.belowShelf;
     // a hinge that meets a shelf (closer than half a board + hinges.aboveShelf to its centre) goes above it: to the lowest height
     // at least hinges.aboveShelf over the shelf where its mounting-plate holes miss every shelf-pin hole (settings.drilling)
     function hingeClearOfShelves(v, carcass, front, item) {
@@ -707,8 +699,8 @@
       const reach = half + hingeSettings.aboveShelf;
       const hit = shelves.find(c => Math.abs(v - c) < reach);
       if (hit === undefined) return v;
-      // shelf-pin holes on the same face (only adjustable shelves have pins), the rows the drilling keeps; centre distance as the overlap check
-      const pins = boards.filter(b => inDoor(b) && b.id === 'adjustableShelf').flatMap(b => shelfPinRows(b, carcass))
+      // shelf-pin holes on the same face (only adjustable shelves have pins); centre distance as the overlap check
+      const pins = boards.filter(b => inDoor(b) && b.id === 'adjustableShelf').map(shelfPinRow)
         .flatMap(y => [pin.fromFront, carcassDepth - pin.fromBack].map(x => ({ x, y })));
       const minDistance = (plate.diameter + pin.diameter) / 2 + 1;
       const clear = h => shelves.every(c => Math.abs(h - c) >= reach) &&
@@ -855,13 +847,12 @@
       }
       const pin = drill.shelfPin, sides = own.filter(b => b.id === 'side');
       for (const shelfBoard of own.filter(b => b.id === 'adjustableShelf')) {
-        for (const y of shelfPinRows(shelfBoard, carcass)) {
-          for (const side of sides) {
-            side.holeFrom = { x: 'front', y: 'bottom' };
-            const inner = side.box[0] === carcass.u0 ? side.box[1] : side.box[0], dir = side.box[0] === carcass.u0 ? -1 : 1;
-            for (const x of [pin.fromFront, carcassDepth - pin.fromBack]) {
-              holeAt(side, { kind: 'shelfPin', diameter: pin.diameter, depth: pin.depth, x, y: y - side.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
-            }
+        const y = shelfPinRow(shelfBoard);
+        for (const side of sides) {
+          side.holeFrom = { x: 'front', y: 'bottom' };
+          const inner = side.box[0] === carcass.u0 ? side.box[1] : side.box[0], dir = side.box[0] === carcass.u0 ? -1 : 1;
+          for (const x of [pin.fromFront, carcassDepth - pin.fromBack]) {
+            holeAt(side, { kind: 'shelfPin', diameter: pin.diameter, depth: pin.depth, x, y: y - side.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
           }
         }
       }

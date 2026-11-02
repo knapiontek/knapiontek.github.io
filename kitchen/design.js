@@ -31,7 +31,7 @@ window.KITCHEN_DESIGN = {
   "drilling": {
    "cup": {"diameter": 35, "depth": 13, "fromEdge": 22},
    "plate": {"diameter": 2.5, "depth": 10, "fromFront": 37, "spacing": 32},
-   "shelfPin": {"diameter": 5, "depth": 10, "fromFront": 69, "fromBack": 65, "belowShelf": 3, "extra": 0, "pitch": 32},
+   "shelfPin": {"diameter": 5, "depth": 10, "fromFront": 69, "fromBack": 65, "belowShelf": 3},
    "runner": {"diameter": 2.5, "depth": 10, "fromFront": [37, 261, 485], "belowDrawer": 10},
    "ballRunner": {"fromFront": [37, 229, 421], "aboveBottom": 23}
   },
