@@ -165,7 +165,6 @@
       .map(w => TAG_BY_LOWER[w.toLowerCase()] || w);
     return { words, tags: words.filter(w => TAG_NAMES.includes(w)), unknown: words.filter(w => !TAG_NAMES.includes(w)) };
   }
-  // the tags a type allows (TAGS), in TAG_NAMES order
   const tagsOf = type => TAG_NAMES.filter(tag => TAGS[tag].includes(type));
   const TYPE_BY_LOWER = Object.fromEntries(TYPES.map(type => [type.toLowerCase(), type])); // typed types match in any letter case
   const readType = value => TYPE_BY_LOWER[String(value ?? '').trim().toLowerCase()] || '';
@@ -186,7 +185,6 @@
 
   /* ================= 3. CHECKS THAT STOP THE BUILD: materials and settings ================= */
 
-  // use (board type or part) -> material code, from materials[code].uses
   function materialUses(materials) {
     const materialFor = {}, problems = [];
     for (const [code, m] of Object.entries(materials || {})) {
@@ -287,7 +285,7 @@
     return { items, skipped, columnX };
   }
 
-  // items with the same carcass name: width over all their columns, height of their boxes
+  // the height of a carcass comes from its boxes, not from every member (a panel or a space in it may be lower)
   function carcassAreas(items) {
     const byName = new Map();
     for (const item of items) {
@@ -322,7 +320,7 @@
     // every thickness comes from the material of the type or part
     const { materialFor } = materialUses(projectData.materials);
     const thickness = Object.fromEntries(Object.entries(materialFor).map(([use, code]) => [use, projectData.materials[code].thickness]));
-    // label of each material: name + thickness, e.g. "Płyta wiórowa Egger U708 ST9 szary jasny 18"
+    // label, e.g. "Płyta wiórowa Egger U708 ST9 szary jasny 18"
     const materials = Object.fromEntries(Object.entries(projectData.materials).map(([code, m]) => [code, { ...m, label: m.name + ' ' + m.thickness }]));
     const board = thickness.carcass, half = board / 2, frontThickness = thickness.cabinet, carcassDepth = settings.carcass.depth;
     // depths from the wall (n)
@@ -672,8 +670,6 @@
 
     // ---- fronts, hinges, hinge posts, drawer boxes ----
     const hingeSettings = settings.hinges, drawerSettings = settings.drawers;
-    // a hinge that meets a shelf (closer than half a board + hinges.aboveShelf to its centre) goes above it: to the lowest height
-    // at least hinges.aboveShelf over the shelf where its mounting-plate holes miss every shelf-pin hole (settings.drilling)
     // shelf-pin rows (y of the hole centres) under an adjustable shelf: the main row always (a hit is reported), the extra rows
     // only where they miss the horizontal boards and stay in the carcass
     function shelfPinRows(shelfBoard, carcass) {
@@ -684,6 +680,8 @@
       for (let k = 1; k <= pin.extra; k++) extra.push(main - k * pin.pitch, main + k * pin.pitch);
       return [main, ...extra.filter(clear)];
     }
+    // a hinge that meets a shelf (closer than half a board + hinges.aboveShelf to its centre) goes above it: to the lowest height
+    // at least hinges.aboveShelf over the shelf where its mounting-plate holes miss every shelf-pin hole (settings.drilling)
     function hingeClearOfShelves(v, carcass, front, item) {
       const plate = settings.drilling.plate, pin = settings.drilling.shelfPin;
       const centreOf = b => (b.box[2] + b.box[3]) / 2;

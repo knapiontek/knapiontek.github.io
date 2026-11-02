@@ -309,13 +309,22 @@ for (const r of GROUP_IDS) {
   groupLength[r] = g.widths.reduce((sum, w) => sum + w, 0);
 }
 // where a group stands: placement x, z is the point of the group named by its anchor (start: u = 0, end: u = length,
-// centre: the middle), so a group keeps that point when its columns change (e.g. a group counted from a corner)
+// centre: the middle), so a group keeps that point when its columns change (e.g. a group counted from a corner).
+// against {group, column}: the front of this group lies on the end of that column of a group placed before it (an L corner);
+// it sets the coordinate across this group, x or z is then not given for it
 const ANCHORS = { start: 0, centre: 0.5, end: 1 };
-const origin = Object.fromEntries(GROUP_IDS.map(r => {
+const origin = {};
+for (const r of GROUP_IDS) {
   const placement = SCENE.placement[r], a = (placement.rotation * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
   const along = (ANCHORS[placement.anchor || 'start'] ?? 0) * groupLength[r];
-  return [r, { x: placement.x - along * cos, z: placement.z + along * sin, cos, sin, rotation: placement.rotation }];
-}));
+  const place = { x: placement.x - along * cos, z: placement.z + along * sin, cos, sin, rotation: placement.rotation };
+  if (placement.against) {
+    const other = origin[placement.against.group], u = model.groups[placement.against.group].columnX[placement.against.column];
+    const cornerX = other.x + u * other.cos, cornerZ = other.z - u * other.sin; // the end of that column, on the other group's wall line
+    if (sin) place.x = cornerX - model.frontFace * sin; else place.z = cornerZ - model.frontFace * cos;
+  }
+  origin[r] = place;
+}
 const hasTag = KE.hasTag;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -349,43 +358,6 @@ function seededRandom(seed) {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-}
-function marbleCanvas() {
-  const canvasWidth = 1024, canvasHeight = 512, c = document.createElement('canvas');
-  c.width = canvasWidth; c.height = canvasHeight;
-  const g = c.getContext('2d'), r = seededRandom(77);
-  g.fillStyle = '#bfc1c3';
-  g.fillRect(0, 0, canvasWidth, canvasHeight);
-  for (let i = 0; i < 18; i++) {
-    const x = r() * canvasWidth, y = r() * canvasHeight, rr = 80 + r() * 260;
-    const gr = g.createRadialGradient(x, y, 0, x, y, rr);
-    const light = r() > 0.45;
-    gr.addColorStop(0, light ? 'rgba(255,255,255,.14)' : 'rgba(70,72,76,.1)');
-    gr.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = gr;
-    g.fillRect(0, 0, canvasWidth, canvasHeight);
-  }
-  for (let i = 0; i < 6000; i++) { g.fillStyle = r() > 0.5 ? 'rgba(255,255,255,' + r() * 0.08 + ')' : 'rgba(40,40,45,' + r() * 0.08 + ')'; g.fillRect(r() * canvasWidth, r() * canvasHeight, 1.2, 1.2); }
-  const vein = (count, alpha, lineWidth) => {
-    for (let i = 0; i < count; i++) {
-      g.strokeStyle = 'rgba(88,92,98,' + alpha * (0.4 + r() * 0.6) + ')';
-      g.lineWidth = lineWidth * (0.3 + r());
-      g.beginPath();
-      let x = -20, y = r() * canvasHeight;
-      g.moveTo(x, y);
-      for (let k = 0; k < 8; k++) {
-        const nx = x + canvasWidth / 6.5, ny = y + (r() - 0.5) * canvasHeight * 0.5;
-        g.quadraticCurveTo(x + canvasWidth / 13, y + (r() - 0.5) * canvasHeight * 0.3, nx, ny);
-        x = nx; y = ny;
-      }
-      g.stroke();
-    }
-  };
-  vein(3, 0.5, 2.6); vein(14, 0.22, 0.9); vein(5, 0.28, 1.5);
-  g.fillStyle = '#9fa2a5'; // tile joint
-  const joint = 1;
-  g.fillRect(0, 0, canvasWidth, joint); g.fillRect(0, 0, joint, canvasHeight); g.fillRect(0, canvasHeight - joint, canvasWidth, joint); g.fillRect(canvasWidth - joint, 0, joint, canvasHeight);
-  return c;
 }
 function graniteCanvas() {
   const canvasSize = 256, c = document.createElement('canvas');
@@ -494,11 +466,11 @@ function decorTexture(decor) {
   return t;
 }
 // floor tiles (textures.js floors): a square of FLOOR_TILES × FLOOR_TILES tiles, each a face of the tile chosen at random and
-// turned 0 or 180 degrees, with room.floorJoint wide joints in the grout colour; without textures.js: the drawn marble (room.floorTile)
+// turned 0 or 180 degrees, with room.floorJoint wide joints in the grout colour; without textures.js: no texture, the floor colour
 const FLOORS = (window.KITCHEN_TEXTURES || {}).floors || {}, FLOOR_KEYS = Object.keys(FLOORS), FLOOR_TILES = 4;
 function floorTexture(key) {
   const floorTile = FLOORS[key];
-  if (!floorTile) return texture(marbleCanvas(), 1000 / room.floorTile.length, 1000 / room.floorTile.width);
+  if (!floorTile) return null;
   const canvasSize = 512, c = document.createElement('canvas');
   c.width = c.height = FLOOR_TILES * canvasSize;
   const t = new THREE.CanvasTexture(c);
@@ -537,7 +509,7 @@ const HOLE_COLORS = { hinge: { hex: '#f26b1d', label: 'zawiasy' }, shelfPin: { h
 const holeUse = kind => (kind === 'cup' || kind === 'plate' ? 'hinge' : kind);
 const MAT = {
   wall: standard({ color: linear(room.wallColor), roughness: 0.95, envMapIntensity: 0.45 }),
-  floor: standard({ map: floorTexture(FLOOR_KEYS[0]), roughness: 0.55, envMapIntensity: 0.6 }), // matt porcelain tiles
+  floor: standard({ ...(FLOOR_KEYS.length ? { map: floorTexture(FLOOR_KEYS[0]) } : { color: linear(0xcfcfcb) }), roughness: 0.55, envMapIntensity: 0.6 }), // matt porcelain tiles
   handle: standard({ color: linear(handleMetal.color), metalness: handleMetal.metalness, roughness: handleMetal.roughness, envMapIntensity: 1.4, side: THREE.DoubleSide }),
   steel: standard({ color: linear(0xd2d5d8), metalness: 1, roughness: 0.3 }),
   glassBlack: physical({ color: linear(0x060708), roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.1 }),
@@ -1529,7 +1501,8 @@ function shadowSetup(light, size, near, far) {
   light.shadow.normalBias = 0.015;
   light.shadow.radius = 4;
 }
-SCENE.lights.pendants.forEach(({ x, z }) => {
+const lightAt = light => pointToRoom[light.group](light.u, light.n); // a lamp in the coordinates of a group
+SCENE.lights.pendants.map(lightAt).forEach(([x, z]) => {
   const y = SCENE.lights.pendantBottom;
   roomCylinder(lampLayer, 2, ceiling - y - 90, MAT.gasket, x, (ceiling + y + 90) / 2, z, null, 6); // cable
   const shade = new THREE.Mesh(new THREE.SphereGeometry(0.15, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), standard({ color: linear(model.materials[model.materialFor.cabinet].color), roughness: 0.5, metalness: 0.2 })); // shade in the cabinet front colour
@@ -1566,10 +1539,10 @@ const ceilingMaterial = standard({ color: linear(room.wallColor), roughness: 0.9
 roomBox(ceilingGroup, leftEnd, rightWall, ceiling, ceiling + 20, 0, room.floorDepth, ceilingMaterial, true);
 const tube = standard({ color: linear(0xf3f3f0), roughness: 0.45 }), tubeInside = standard({ color: linear(0x2a2a2a), roughness: 0.7, side: THREE.BackSide });
 const TUBE_RADIUS = 35, TUBE_HEIGHT = 100;
-const axisPoint = { sink: sinkCut && pointToRoom[sinkGroup](sinkU, sinkN), hob: hobCut && pointToRoom[hobGroup](hobU, (hobCut.n0 + hobCut.n1) / 2) };
-// a downlight at {x, z}, or between the axes of the sink and the hob: {between: [sink, hob], z}
-const downlightAt = p => (p.between ? { x: p.between.reduce((sum, what) => sum + axisPoint[what][0], 0) / p.between.length, z: p.z } : p);
-for (const { x, z } of SCENE.lights.downlights.map(downlightAt)) {
+// a downlight at {group, u, n}, or between the axes of the sink and the hob: {group, between: [sink, hob], n}
+const axisU = { sink: sinkU, hob: hobU }; // along their group (the light names that group)
+const downlightAt = light => lightAt(light.between ? { ...light, u: light.between.reduce((sum, what) => sum + axisU[what], 0) / light.between.length } : light);
+for (const [x, z] of SCENE.lights.downlights.map(downlightAt)) {
   const t = new THREE.Mesh(new THREE.CylinderGeometry(TUBE_RADIUS / 1000, TUBE_RADIUS / 1000, TUBE_HEIGHT / 1000, 40, 1, true), tube);
   t.position.set(x / 1000, (ceiling - TUBE_HEIGHT / 2) / 1000, z / 1000);
   ceilingGroup.add(t);

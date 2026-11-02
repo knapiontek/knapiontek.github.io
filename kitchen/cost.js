@@ -924,7 +924,7 @@ window.KITCHEN_COST = {
     {
      "id": "sinkCabinet",
      "topic": "Szafka zlewowa",
-     "description": "Dół: szuflada D z 3 koszami, boki {s:drawers.D.sideHeight}; potrzebny syfon oszczędzający miejsce.\nGóra: front atrapa, bez szuflady.",
+     "description": "Dół: szuflada D z koszami, boki {s:drawers.D.sideHeight}; potrzebny syfon oszczędzający miejsce.\nGóra: front atrapa, bez szuflady.",
      "assumed": "Kosze {p:bins} PLN, syfon {p:trap} PLN.",
      "decide": "Odpływ w ścianie ≥ 450 nad podłogą."
     },

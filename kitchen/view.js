@@ -1,23 +1,24 @@
 /* Kitchen scene for view.html: only what the 3D view needs beyond design.js and appliances.js. Written per project (LLM).
    Room coordinates in mm: x along the window wall, z out from it, y up.
      placement     where each group stands (by group number) and how it is turned; an island stands free;
-                   x, z = the point of the group its anchor names: start (default), end or centre
+                   x, z = the point of the group its anchor names: start (default), end or centre;
+                   against {group, column}: its front lies on the end of that column (an L corner), instead of x or z
      room          walls, floor and ceiling; rightWallGroup: the group against the right wall
      installation  how the sink, its trap and the hood are fitted here
      window        the window in the window wall
      finishes      extra finishes for the Project tab, drawn with a material of the view
      hardware      sizes for the drawing only (no effect on the cost); open: how far doors and drawers open
      metals        the metal finishes of the handles to choose from; hardware.handle.metal is the default
-     lights        pendants (pendantBottom: the height of their bottom) and downlights, each at {x, z}; a downlight can sit
-                   halfway between the sink and the hob instead of x
+     lights        pendants (pendantBottom: the height of their bottom) and downlights, each at {group, u, n}: in the
+                   coordinates of that group, so it moves with it; between [sink, hob] instead of u: halfway between their axes
      cameras       the views in the dock; the first one opens */
 window.KITCHEN_VIEW = {
  "placement": {
   "1": {"name": "pod oknem", "x": 3110, "z": 0, "rotation": 0, "anchor": "end"},
-  "2": {"name": "zabudowa wysoka", "x": 3372, "z": 0, "rotation": -90},
+  "2": {"name": "zabudowa wysoka", "against": {"group": 1, "column": 11}, "z": 0, "rotation": -90},
   "3": {"name": "wyspa", "x": 865, "z": 2440, "rotation": 180, "anchor": "centre"}
  },
- "room": {"ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallGroup": 2, "rightWallLength": 4000, "floorJoint": 2, "floorTile": {"length": 900, "width": 900}, "wallColor": "#f2f1ee"},
+ "room": {"ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallGroup": 2, "rightWallLength": 4000, "floorJoint": 2, "wallColor": "#f2f1ee"},
  "installation": {
   "sink": {"tapFromBack": 45, "trapTop": 575, "wallOutlet": 470},
   "hood": {"bottom": 1500}
@@ -42,12 +43,12 @@ window.KITCHEN_VIEW = {
  },
  "lights": {
   "pendantBottom": 1750,
-  "pendants": [{"x": 477.48, "z": 2290}, {"x": 1252.52, "z": 2290}],
+  "pendants": [{"group": 3, "u": 480, "n": 150}, {"group": 3, "u": 1256, "n": 150}],
   "downlights": [
-   {"between": ["sink", "hob"], "z": 402},
-   {"x": 2440, "z": 402},
-   {"x": 2440, "z": 1370},
-   {"x": 2440, "z": 2338}
+   {"group": 1, "between": ["sink", "hob"], "n": 402},
+   {"group": 2, "u": 402, "n": 932},
+   {"group": 2, "u": 1370, "n": 932},
+   {"group": 2, "u": 2338, "n": 932}
   ]
  },
  "cameras": {
