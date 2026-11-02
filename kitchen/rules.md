@@ -37,7 +37,7 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | szuflada wewnętrzna | szuflada | szuflada M nad szufladą, za tym samym frontem |
 | ekspres | szafka | półka wysuwana na dole (po stronie zawiasów płyta dystansowa), nad nią półki ruchome |
 | szuflady za drzwiami | szafka | szuflady z płyty na prowadnicach kulkowych za drzwiami, bez półek ruchomych |
-| lodówka, zamrażarka | szafka | front na drzwiach urządzenia, bez zawiasów, półek i pleców |
+| lodówka, zamrażarka | szafka | front na drzwiach urządzenia, bez zawiasów, półek ruchomych i pleców |
 | zmywarka | szafka | front na drzwiach urządzenia, bez korpusu |
 | wyspa | blat | blat z materiału wyspy, panel tylny wyspy, wyspa stoi wolno (bez ściany) |
 
@@ -55,7 +55,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka.
 - **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka lub zamrażarka.
 - **Góra korpusu:** dolna ma dwa trawersy płaskie, a pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
-- **Półka stała** leży na środku styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki. Przy piekarniku: nad nim płytsza z tyłu (gorące powietrze), pod nim niżej, poza frontem piekarnika. W korpusie lodówki jest tylko jedna, nad urządzeniem: zamyka jego wnękę i jest płytsza z tyłu, by wypuścić powietrze. Wnęka na urządzenie wynika z modułów i półek; jej wymiary są w notatce urządzenia.
+- **Półka stała** leży na środku styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki. Przy piekarniku: nad nim płytsza z tyłu (gorące powietrze), pod nim niżej, poza frontem piekarnika. W korpusie lodówki jest tylko jedna, na górze urządzenia: góra lodówki jest do niej przykręcona; półka jest płytsza z tyłu, by wypuścić powietrze.
 - **Półki ruchome** są tylko za drzwiami szafki:
   - liczba zależy od wysokości frontu;
   - półka jest płytsza od korpusu i ma luz z obu stron;

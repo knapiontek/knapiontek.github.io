@@ -837,13 +837,13 @@ window.KITCHEN_COST = {
      "id": "fridge",
      "appliance": "fridge",
      "topic": "Lodówka Bosch KIS86AFE0 – K10",
-     "description": "Wymiary: {a:fridge.body.width} × {a:fridge.body.height} × {a:fridge.body.depth}, na dnie korpusu.\nPółka stała: {s:shelf.fridgeGap} nad urządzeniem, płytsza o {s:shelf.ventGap}.\nZamrażarka: front {i:K10/freezer.frontHeight} na drzwiach {=<a:fridge.doors.freezer.top> - <a:fridge.doors.freezer.bottom>}; wystaje {=<i:K10/freezer.fit.bodyV0> + <a:fridge.doors.freezer.bottom> - <i:K10/freezer.frontV0>} w dół, po {=(<i:K10/freezer.frontWidth> - <a:fridge.body.width>) / 2} na boki; drzwi sięgają {=<i:K10/freezer.fit.bodyV0> + <a:fridge.doors.freezer.top> - <i:K10/freezer.frontV1>} wyżej.\nLodówka: front {i:K10/fridge.frontHeight} na drzwiach {=<a:fridge.doors.fridge.top> - <a:fridge.doors.fridge.bottom>}; wystaje {=<i:K10/fridge.fit.bodyV0> + <a:fridge.doors.fridge.bottom> - <i:K10/fridge.frontV0>} w dół, {f:fridgeFrontAboveDoor} w górę, po {=(<i:K10/fridge.frontWidth> - <a:fridge.body.width>) / 2} na boki.\nSzczelina między frontami: {=<i:K10/fridge.frontV0> - <i:K10/freezer.frontV1>}.",
+     "description": "Wymiary: {a:fridge.body.width} × {a:fridge.body.height} × {a:fridge.body.depth}, na dnie korpusu.\nPółka stała: na górze urządzenia, góra lodówki przykręcona do niej; płytsza o {s:shelf.ventGap}.\nZamrażarka: front {i:K10/freezer.frontHeight} na drzwiach {=<a:fridge.doors.freezer.top> - <a:fridge.doors.freezer.bottom>}; wystaje {=<i:K10/freezer.fit.bodyV0> + <a:fridge.doors.freezer.bottom> - <i:K10/freezer.frontV0>} w dół, po {=(<i:K10/freezer.frontWidth> - <a:fridge.body.width>) / 2} na boki; drzwi sięgają {=<i:K10/freezer.fit.bodyV0> + <a:fridge.doors.freezer.top> - <i:K10/freezer.frontV1>} wyżej.\nLodówka: front {i:K10/fridge.frontHeight} na drzwiach {=<a:fridge.doors.fridge.top> - <a:fridge.doors.fridge.bottom>}; wystaje {=<i:K10/fridge.fit.bodyV0> + <a:fridge.doors.fridge.bottom> - <i:K10/fridge.frontV0>} w dół, {f:fridgeFrontAboveDoor} w górę, po {=(<i:K10/fridge.frontWidth> - <a:fridge.body.width>) / 2} na boki.\nSzczelina między frontami: {=<i:K10/fridge.frontV0> - <i:K10/freezer.frontV1>}.",
      "assumed": "Fronty przykręcone do drzwi urządzenia."
     },
     {
      "id": "fridgeAir",
      "topic": "Lodówka – wentylacja",
-     "description": "Wlot: kratka w cokole.\nWylot: {s:shelf.fridgeGap} nad urządzeniem, szczelina {s:shelf.ventGap} za półką, {s:carcass.wallGap} za korpusem.",
+     "description": "Wlot: kratka w cokole.\nWylot: szczelina {s:shelf.ventGap} za półką stałą nad urządzeniem, {s:carcass.wallGap} za korpusem.",
      "assumed": "Kratka {p:grilles} PLN."
     },
     {
@@ -908,7 +908,7 @@ window.KITCHEN_COST = {
     {
      "id": "fixedShelves",
      "topic": "Półki stałe – pełna głębokość",
-     "description": "Na styku frontów: pełna głębokość {s:carcass.depth}; półki ruchome krótsze o {s:shelf.setback}.\nNad piekarnikiem: płytsza o {s:shelf.ventGap}.\nPod piekarnikiem: pod stykiem; widać ją w całości po otwarciu szafki pod nią.\nW korpusie lodówki: jedna, {s:shelf.fridgeGap} nad urządzeniem, płytsza o {s:shelf.ventGap}.",
+     "description": "Na styku frontów: pełna głębokość {s:carcass.depth}; półki ruchome krótsze o {s:shelf.setback}.\nNad piekarnikiem: płytsza o {s:shelf.ventGap}.\nPod piekarnikiem: pod stykiem; widać ją w całości po otwarciu szafki pod nią.\nW korpusie lodówki: jedna, na górze urządzenia (góra lodówki przykręcona do niej), płytsza o {s:shelf.ventGap}.",
      "assumed": "Na liście cięć."
     },
     {

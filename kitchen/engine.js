@@ -19,7 +19,7 @@
     island: ['worktop'],     // island worktop: of the islandWorktop material, the island back panel, no wall
     coffee: ['cabinet'],     // pull-out shelf at the bottom, shelves above it, no other shelves
     doorDrawers: ['cabinet'],   // drawers of board on ball runners behind the door, a spacer on the hinge side, no shelves
-    fridge: ['cabinet'],     // front on a built-in fridge door: no hinges, no shelves, no back
+    fridge: ['cabinet'],     // front on a built-in fridge door: no hinges, no adjustable shelves, no back
     freezer: ['cabinet'],    // the same, freezer door
     dishwasher: ['cabinet']  // front on a built-in dishwasher door: no carcass, no hinges
   };
@@ -99,7 +99,7 @@
     'carcass.depth', 'carcass.wallGap', 'carcass.legs',
     'back.inset',
     'rails.depth', 'rails.hobFront', 'rails.hobPanelGap',
-    'shelf.setback', 'shelf.clearance', 'shelf.perDoor', 'shelf.ventGap', 'shelf.fridgeGap',
+    'shelf.setback', 'shelf.clearance', 'shelf.perDoor', 'shelf.ventGap',
     'pullOutShelf.depth', 'pullOutShelf.clearance', 'pullOutShelf.lift', 'pullOutShelf.space', 'pullOutShelf.shelvesAbove',
     'doorDrawers.perDoor', 'doorDrawers.side', 'doorDrawers.lift', 'doorDrawers.runner.gap', 'doorDrawers.runner.lengths', 'doorDrawers.runner.fromFront', 'doorDrawers.runner.axis',
     'hinges.fromEnd', 'hinges.postDepth', 'hinges.aboveShelf', 'hinges.perDoor',
@@ -502,12 +502,12 @@
           counts.shelvesFixed++;
         }
       }
-      // a fridge carcass: its joints are inside the appliance; one fixed shelf over the appliance (appliances.fridge.body,
-      // + settings.shelf.fridgeGap), shallower to let the air out; without appliances.js (design.html) no shelf
-      const fridgeSpace = K.fridge && appliances && appliances.fridge ? appliances.fridge.body.height + settings.shelf.fridgeGap : null;
-      if (fridgeSpace) {
-        const top = v0 + board + fridgeSpace + board, gap = settings.shelf.ventGap;
-        if (top > v1 - board) warn(`${K.name}: lodówka z luzem ${fridgeSpace} nie mieści się w korpusie (wnętrze ${height - 2 * board}).`);
+      // a fridge carcass: its joints are inside the appliance; one fixed shelf right on the appliance top, which is screwed to it;
+      // shallower to let the air out
+      const fridgeHeight = K.fridge && appliances && appliances.fridge ? appliances.fridge.body.height : null;
+      if (fridgeHeight) {
+        const top = v0 + board + fridgeHeight + board, gap = settings.shelf.ventGap;
+        if (top > v1 - board) warn(`${K.name}: lodówka ${fridgeHeight} nie mieści się w korpusie (wnętrze ${height - 2 * board}).`);
         else {
           part('fixedShelf', 'Półka stała', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerU0, innerU1, top - board, top, carcassBack + gap, carcassFront], frontEdge(innerWidth, 'a'));
           counts.shelvesFixed++;
