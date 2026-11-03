@@ -48,9 +48,9 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
 - **Korpus** tworzą wszystkie elementy tej samej grupy z tą samą nazwą korpusu. Wszystkie korpusy mają jedną głębokość. Odstęp od ściany ustala się dla każdej grupy przy ścianie; wyspa stoi wolno.
 - **Rodzaje korpusu:**
-  - dolna: stoi na cokole i ma nad sobą blat;
+  - dolny: stoi na cokole i ma nad sobą blat;
   - słupek: stoi na cokole i nie ma blatu;
-  - górna: nie stoi na cokole.
+  - górny: stoi na korpusie dolnym.
 - Korpus stojący na cokole ma nóżki.
 - **Mocowanie:** listwa tylna ma długość korpusu przyległego i jest przymocowana do ściany kątownikiem; najwyższa listwa w stosie nie ma kątownika. Listwę przednią i listwy tylne przykręca się do pierwszego korpusu zwykłym wkrętem, a drugi korpus do nich wkrętem od środka. Wyspa stoi wolno.
 - **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka i zamrażarka.
@@ -72,9 +72,8 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 ## 4. Fronty, listwy, panele przednie, blat
 
 - **Front** = moduł minus 4 szczeliny (lewa, prawa, góra, dół). Front stoi w ustalonej szczelinie przed korpusem. Front shaker ma ramę o stałej szerokości.
-- **Listwa** to listwa przednia, a poza korpusem także listwy tylne:
-  - listwa przednia stoi na sztorc w płaszczyźnie frontów, jest z jednego kawałka i ma lakierowaną krawędź przednią;
-  - listwy tylne leżą za listwą przednią, przy tyle korpusów, i są pocięte jak korpusy: przy listwie pionowej jedna na każdy korpus w stosie obok (jedna nad drugą), przy poziomej jedna na każdy korpus pod nią; każda tak długa jak jej korpus. Listwa bez korpusów obok ma jedną listwę tylną na całą długość.
+- **Listwa przednia** stoi na sztorc w płaszczyźnie frontów, jest z jednego kawałka i ma lakierowaną krawędź przednią.
+- **listwy tylne** leżą za listwą przednią, przy tyle korpusów, i są pocięte jak korpusy: przy listwie pionowej jedna na każdy korpus w stosie obok (jedna nad drugą), przy poziomej jedna na każdy korpus pod nią; każda tak długa jak jej korpus. Listwa bez korpusów obok ma jedną listwę tylną na całą długość.
 - **Panel przedni** leży na płasko. W korpusie jest przykręcony do korpusu, bez szczeliny; poza korpusem stoi w płaszczyźnie frontów i jest przykręcony do sąsiedniego panelu.
 - **Blat:**
   - materiał blatu podaje głębokość płyty, którą się kupuje; wyspa ma osobny materiał;
