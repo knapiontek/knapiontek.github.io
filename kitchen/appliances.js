@@ -31,7 +31,8 @@ window.KITCHEN_APPLIANCES = {
  "dishwasher": {"name": "Bosch SMV4HVX00E", "body": {"width": 598, "height": 815, "depth": 550}, "feet": 55, "door": {"hinge": "bottom", "height": 719}, "baseSetback": 100,
   "source": "installation drawing SMV4HVX00E: 598 × 815 × 550 with the feet screwed in; here feet 55 (up to the worktop), at these feet the appliance door is 719; feet 100 behind the front: the base is open in front for the plinth",
   "links": [
-   {"name": "Strona produktu z danymi (EN)", "url": "https://www.galaxus.ch/en/s2/product/bosch-hausgeraete-serie-4-smv4hvx00e-built-in-dishwashers-37002331"}
+   {"name": "Strona produktu z instrukcjami (PL)", "url": "https://www.bosch-home.pl/pl/product/zmywanie/zmywarki-do-zabudowy/zintegrowane-zmywarki-o-szerokosci-60-cm/SMV4HVX00E"},
+   {"name": "Karta produktu (PDF, PL)", "url": "https://media3.bosch-home.com/Documents/specsheet/pl-PL/SMV4HVX00E.pdf"}
   ]},
  "hob": {"name": "Electrolux CIT61443", "body": {"width": 560, "height": 44, "depth": 490}, "glass": {"width": 590, "depth": 520},
   "source": "electrolux.pl: glass 590 × 520, built-in 560 × 490 × 44",

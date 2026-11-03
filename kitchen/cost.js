@@ -6,7 +6,7 @@
      values      fixed numbers of the estimate: stock sizes (sheet, worktop board, plasterboard), allowances
      labels      fronts: the label of a front in the cutting list, by its type and tags (first match; none = its type);
                  sheet: the label of the sheet input; cuttingNote: the text under the cutting list; legend: a remark per
-                 hole kind in the drilling legend
+                 hole kind in the drilling rules of the Montaż tab
      blocks      cutting-list tables, code = the two letters of their row labels (KO-07), rows built by engine.js: id = fronts | strips | plinths | frontPanels | wallPanels | plaster | worktops | endPanels,
                  or a material use (carcass, drawerBox, backPanel ...: every board of that use's material); cut = priced saw
                  cuts; columns = the header when not Element / Długość / Szerokość / Ilość
@@ -226,7 +226,6 @@ window.KITCHEN_COST = {
      "qty": "={n:hinges}",
      "unit": "szt.",
      "price": 16.73,
-     "refs": ["hinges"],
      "source": "zawias 14,25 + prowadnik 2,48 (meblownia: 11,53 + 2,00)",
      "links": [
       {"name": "Blum: CLIP top BLUMOTION – instrukcje montażu", "url": "https://www.blum.com/pl/pl/products/hingesystems/clip-top-blumotion/downloads-videos/"},
@@ -525,7 +524,7 @@ window.KITCHEN_COST = {
      "unit": "m²",
      "price": 451,
      "refs": ["worktops"],
-     "source": "NIESPRAWDZONE – szukam dębu dwustronnego; szacunek: cena m² blatu w M-HM",
+     "source": "NIESPRAWDZONE – szacunek: cena m² blatu w M-HM",
      "links": [{"name": "Egger: dekor H1180 ST37", "url": "https://www.egger.com/en/furniture-interior-design/decors/H1180_37?country=CA"}]
     },
     {
@@ -906,8 +905,7 @@ window.KITCHEN_COST = {
     {
      "id": "fridgeAir",
      "topic": "Lodówka – wentylacja",
-     "description": "Wlot: kratka w cokole.\nWylot: szczelina {s:shelf.ventGap} za półką stałą nad urządzeniem, {s:carcass.wallGap.2} za korpusem.",
-     "assumed": "Kratka {p:grilles} PLN."
+     "description": "Wlot: kratka w cokole.\nWylot: szczelina {s:shelf.ventGap} za półką stałą nad urządzeniem, {s:carcass.wallGap.2} za korpusem."
     },
     {
      "id": "dishwasher",
@@ -936,7 +934,6 @@ window.KITCHEN_COST = {
      "id": "pullOutShelf",
      "topic": "Szafka z ekspresem – półka wysuwana",
      "description": "Półka: gł. {s:pullOutShelf.depth}, {s:pullOutShelf.clearance} luzu z boków, prowadnice Blum MOVENTO.\nPłyta dystansowa po stronie zawiasów: od płyty pod drzwiami do {s:pullOutShelf.spacerAbove} nad półkę; niesie prowadnicę i odsuwa półkę od otwartych drzwi.",
-     "assumed": "Prowadnice {p:pullOutShelfRunners} PLN za komplet.",
      "decide": "Plan wierceń prowadnic pod półką (Blum)."
     }
    ]
@@ -947,70 +944,49 @@ window.KITCHEN_COST = {
     {
      "id": "wallFixing",
      "topic": "Mocowanie korpusów do ściany",
-     "description": "Listwy tylne: z {m:carcass}, gł. {s:strip.depth}, za listwą przednią, pocięte jak korpusy: przy listwie pionowej jedna na korpus w stosie obok, przy poziomej jedna na korpus pod nią.\nKątowniki ({n:wallBrackets}): na styku listew tylnych w stosie, listwę skrócić na miejscu; górna listwa w stosie bez kątownika.\nWkręty: listwy do pierwszego korpusu zwykłe, drugi korpus mosiądzowane od środka.\nWyspa stoi wolno.",
+     "description": "Listwy tylne: przy listwie pionowej jedna na korpus w stosie obok, przy poziomej jedna na korpus pod nią.\nKątowniki: {n:wallBrackets}, listwę skrócić na miejscu.",
      "assumed": "Gazobeton, kołki DuoPower 8."
     },
     {
      "id": "corner",
      "topic": "Narożnik L – korpus narożny",
-     "description": "Korpus K3: drzwi, panel przedni {i:K3/frontPanel.width} i ukryte wypełnienie.\nSłupek zawiasowy: {m:carcass}, gł. {s:hinges.postDepth}, niesie zawiasy.\nPanel wpuszczany: za panelem {i:K3/frontPanel.width}, od słupka do boku korpusu.\nPółka: jedna płyta przez cały korpus; słupek ją przecina (widok 3D to zgłasza).\nCokoły grupy 1 i 2: lista cięć podaje obie pełne długości, jeden przyciąć na miejscu.",
-     "assumed": "Złącza: jedno opakowanie ({p:connectors} PLN).",
-     "decide": "Listwa ścienna pod blatem w narożniku?"
+     "description": "Korpus K3: drzwi, panel przedni {i:K3/frontPanel.width} i ukryte wypełnienie.\nSłupek zawiasowy: {m:carcass}, gł. {s:hinges.postDepth}, niesie zawiasy.\nPanel wpuszczany: za panelem {i:K3/frontPanel.width}, od słupka do boku korpusu.\nCokoły grupy 1 i 2: lista cięć podaje obie pełne długości, jeden przyciąć na miejscu.",
+     "assumed": "Złącza: jedno opakowanie.",
+     "decide": "Półka w K3: słupek zawiasowy ją przecina (widok 3D zgłasza kolizję).\nListwa ścienna pod blatem w narożniku?"
     },
     {
      "id": "stripsPanels",
      "topic": "Listwy przednie na sztorc, panele przednie na płasko",
-     "description": "Listwy przednie: {m:strip}, na sztorc, z jednego kawałka, gł. {s:strip.depth}; lakierowane obustronnie i krawędź przednia.\nPanele przednie: {m:frontPanel}, na płasko; lakierowane obustronnie, bez ABS.\nLakierowana krawędź przy otwieranym froncie: panel przedni {i:K3/frontPanel.width} – {i:K3/frontPanel.edges}; panel przedni {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel przedni {i:G2[3]/frontPanel.width} zakrywa koniec panelu przedniego {i:K3/frontPanel.width}."
-    },
-    {
-     "id": "fixedShelves",
-     "topic": "Półki stałe – pełna głębokość",
-     "description": "Na styku frontów: pełna głębokość {s:carcass.depth}; półki ruchome krótsze o {s:shelf.setback}.\nNad piekarnikiem: płytsza o {s:shelf.ventGap}.\nPod piekarnikiem: pod stykiem; widać ją w całości po otwarciu szafki pod nią.\nW korpusie lodówki: jedna, na górze urządzenia (góra lodówki przykręcona do niej), płytsza o {s:shelf.ventGap}.",
-     "assumed": "Na liście cięć."
-    },
-    {
-     "id": "backs",
-     "topic": "Plecy i panel tylny wyspy",
-     "description": "Plecy {m:backPanel}: tylko za drzwiami szafek.\nWyspa: panel tylny {m:frontPanel} między panelami końcowymi, od podłogi do góry korpusów."
-    },
-    {
-     "id": "frontSizes",
-     "topic": "Wymiary frontów",
-     "description": "Front = moduł − 4 szczeliny (notatka „Szczeliny frontów” w design.js).\nNarożna szafka górna na blacie: większa szczelina dolna.",
-     "assumed": "Fronty wyceniane za m²."
+     "description": "Lakierowana krawędź przy otwieranym froncie: panel przedni {i:K3/frontPanel.width} – {i:K3/frontPanel.edges}; panel przedni {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel przedni {i:G2[3]/frontPanel.width} zakrywa koniec panelu przedniego {i:K3/frontPanel.width}."
     },
     {
      "id": "sinkCabinet",
      "topic": "Szafka zlewowa",
      "description": "Dół: szuflada D z koszami, boki {s:drawers.D.sideHeight}; potrzebny syfon oszczędzający miejsce.\nGóra: front atrapa, bez szuflady.",
-     "assumed": "Kosze {p:bins} PLN, syfon {p:trap} PLN.",
      "decide": "Odpływ w ścianie ≥ 450 nad podłogą."
     },
     {
      "id": "innerDrawers",
      "topic": "Szuflady wewnętrzne na sztućce (wyspa)",
      "description": "Wyspa, górne szuflady: TANDEMBOX antaro M 500 wewnętrzna, za tym samym frontem.\nFront wewnętrzny Z31L: szerokość wnętrza korpusu − {s:drawers.inner.frontDeduction}.\nDno i tył: {m:drawerBox}, na liście cięć.",
-     "assumed": "{n:innerDrawers} szuflady wewnętrzne + {n:innerDrawers} wkłady na sztućce.",
      "decide": "Wysokość tyłu i wkład: konfigurator Blum."
     },
     {
      "id": "doorDrawers",
      "topic": "Szuflady za drzwiami z płyty (K8 i K12, dół)",
      "description": "K8: drzwi {i:K8/doorDrawers.frontWidth} × {i:K8/doorDrawers.frontHeight}, {i:K8/doorDrawers.count} szuflady {i:K8/doorDrawers.boxWidth} × {i:K8/doorDrawers.runnerLength} × {i:K8/doorDrawers.boxHeight}, zawiasy {i:K8/doorDrawers.hinge}.\nK12: drzwi {i:K12/doorDrawers.frontWidth} × {i:K12/doorDrawers.frontHeight}, {i:K12/doorDrawers.count} szuflady {i:K12/doorDrawers.boxWidth} × {i:K12/doorDrawers.runnerLength} × {i:K12/doorDrawers.boxHeight}, zawiasy {i:K12/doorDrawers.hinge}.\nSkrzynki: {m:drawerBox}, prowadnice kulkowe Häfele L = {i:K12/doorDrawers.runnerLength}, {s:doorDrawers.clearance} luzu z każdej strony.\nPłyta dystansowa po stronie zawiasów: kończy się {s:hinges.postDepth} przed przodem korpusu, tak jak skrzynki; szuflady mijają zawiasy i otwarte drzwi.\nBez półek ruchomych za tymi drzwiami.",
-     "assumed": "{n:doorDrawers} kpl. prowadnic po {p:ballRunners} PLN.",
      "decide": "Uchwyt szuflad: wycięcie w czole albo gałka.\nBlum zamiast płyty (TANDEMBOX M, {p:innerDrawers} za kpl.): {=ROUND(<f:innerDrawerExtra>)} zł więcej za szufladę, {=ROUND(<f:innerDrawerExtra> * <n:doorDrawers>)} zł razem; boki {s:drawers.M.sideHeight} zamiast {s:doorDrawers.sideHeight}; w K12 sprawdzić minimalną szerokość ({=<k:K12.innerWidth> - <t:carcass>}).\nPłyta {m:drawerBox}: {q:drawerBoard} ark., ostatni słabo wykorzystany; skrzynki zmieszczą się w odpadach {m:carcass}."
     },
     {
      "id": "worktops",
      "topic": "Blaty",
-     "description": "Grupa 1: blat z jednej płyty {d:worktop} × {v:worktopBoard.length}, przycięty z tyłu do {w:1.depth} (do ściany).\nWyspa: pełna płyta {d:islandWorktop}, bez cięcia na głębokość.\nPanele końcowe: osobny materiał, dwustronny; blat wystaje {s:worktop.endPanelOverhang} z boku, z przodu i w wyspie z tyłu.\nZłącza blatu z panelami: {q:worktopJoints}.\nWycięcia na zlew i płytę: lista cięć (BLATY), CNC w hurtowni.",
+     "description": "Grupa 1: jedna płyta, przycięta z tyłu do {w:1.depth}.\nWyspa: pełna płyta, bez cięcia na głębokość.\nWycięcia na zlew i płytę: CNC w hurtowni (lista cięć: BLATY).",
      "decide": "Panele końcowe: szukam jeszcze rozwiązania na dąb dwustronny (dekor jak blat, obie strony widoczne)."
     },
     {
      "id": "plaster",
      "topic": "Zabudowa GK",
-     "description": "Zabudowa dłuższa niż płyta {v:plasterboard.length}: łączona na miejscu, {s:plasterboard.layers} warstwy, spoiny przesunięte.\nProfile liczone z całkowitej długości; przy docinkach może brakować jednego.",
-     "assumed": "{q:plasterboard} płyt, {q:profileCD} CD60, {q:profileUD} UD27."
+     "description": "Zabudowa dłuższa niż płyta {v:plasterboard.length}: łączona na miejscu, {s:plasterboard.layers} warstwy, spoiny przesunięte.\nProfile liczone z całkowitej długości; przy docinkach może brakować jednego."
     }
    ]
   },
@@ -1020,7 +996,7 @@ window.KITCHEN_COST = {
     {
      "id": "lacquered",
      "topic": "Części lakierowane",
-     "description": "Fronty shaker: {p:fronts} PLN/m², NIESPRAWDZONE (kwota właściciela).\nListwy przednie, panele, cokół: {p:strips} PLN/m² (lakierowane.pl, jedna strona).\nCokół wilgocioodporny; wszystko od jednego producenta, jeden kolor.",
+     "description": "Fronty, listwy przednie, panele i cokół od jednego producenta, jeden kolor; cokół wilgocioodporny.",
      "decide": "Pisemna oferta na wszystkie części lakierowane, obustronnie."
     },
     {
@@ -1029,14 +1005,9 @@ window.KITCHEN_COST = {
      "description": "{carcass.m2} m² + {waste|%} odpadu na arkuszach {sheet} m² → {q:carcassBoard} ark."
     },
     {
-     "id": "hinges",
-     "topic": "Zawiasy",
-     "description": "Blum CLIP top BLUMOTION z prowadnikiem 173H7100: wysokość regulowana mimośrodem.\n{n:hinges} szt. po {p:hinges} PLN."
-    },
-    {
      "id": "sinkTap",
      "topic": "Zlew i bateria",
-     "description": "Zlew IKEA KILSVIKEN {a:sink.body.width} × {a:sink.body.depth}, kompozyt kwarcowy, {p:sink} PLN; syfon LILLVIKEN w zestawie.\nBateria Deante Silia BQS_Z73M, {p:tap} PLN, otwór Ø35.\nSyfon oszczędzający miejsce Deante ZXY 9917, {p:trap} PLN (patrz {note:sinkCabinet}).",
+     "description": "Syfon LILLVIKEN jest w zestawie zlewu; Deante ZXY 9917 zostawia miejsce na szufladę z koszami (patrz {note:sinkCabinet}).",
      "assumed": "Czarny; syfon IKEA nieużywany.",
      "decide": "Czy syfon IKEA mieści się nad szufladą z koszami? Jeśli tak, bez syfonu Deante."
     },
@@ -1044,7 +1015,7 @@ window.KITCHEN_COST = {
      "id": "hood",
      "appliance": "hood",
      "topic": "Okap Electrolux LFV416K – tryb pracy",
-     "description": "Wyciąg: okap {p:hood} PLN + rura {p:duct} PLN.",
+     "description": "Wyciąg: okap + rura Ø150 do kanału wentylacyjnego.",
      "decide": "Wyciąg czy pochłaniacz (filtr węglowy, poza kosztorysem)?"
     }
    ]
