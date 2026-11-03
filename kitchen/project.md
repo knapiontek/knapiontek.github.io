@@ -2,7 +2,7 @@
 
 > Written and edited by hand. An LLM does not change this file. No code details here: names of functions, variables, data keys and formats live in the code itself.
 
-How the files of this folder work together. rules.md holds the kitchen rules; this file says what each file is for.
+How the files of this folder work together. The kitchen rules are in rules.md.
 
 ## Files
 
@@ -40,24 +40,24 @@ How the files of this folder work together. rules.md holds the kitchen rules; th
 ```
 
 - Every page loads design.js directly, so the pages also work opened from disk.
-- Only design.html changes design.js (import / export); it shows the materials read only and keeps the settings as they are, so both are edited by hand. cost.html and view.html only read it.
+- design.html shows the materials read only and keeps the settings as they are; cost.html and view.html only read design.js.
 - engine.js does not know where the data comes from: a page hands it the project (and appliances.js, to fit the appliances in their places) and gets the model back. The engine has no numbers of this kitchen and draws nothing.
-- cost.html and view.html each keep their own data in cost.js and view.js, for what only that page needs: prices and notes, or the room, lights and cameras. The appliance sizes, which both need, are in appliances.js. A choice of the project that the engine needs belongs in design.js.
+- cost.js and view.js hold only what their page needs; what both pages need (appliance sizes) is in appliances.js, and a project choice the engine needs belongs in design.js.
 - appliances.js says what the manufacturer gives, design.js what the project chose; the same number can be in both. The notes of cost.html put them side by side.
 
 ## What is project specific and what is not
 
 - **Project specific:** design.js (its notes, columns and components are this kitchen), cost.js, view.js, appliances.js and textures.js.
-- **Every project:** rules.md, engine.js, design.html and the code of cost.html and view.html. The code holds no numbers or names of this kitchen.
+- **Every project:** rules.md, engine.js, design.html and the code of cost.html and view.html, which holds no numbers or names of this kitchen.
 - A new kitchen starts from rules.md: make a new design.js in design.html, then let an LLM generate cost.js, view.js, appliances.js and textures.js for it.
 
 ## The files in short
 
-- **design.js**: plain data a person can read and edit: materials (what you buy, and what each is used for), construction settings (setbacks, gaps, hinges, shelves, drawers, drilling, cut-outs), user notes (LLM can infer from it but cannot create a regex code to scrap it), column widths, and the components, one per line.
-- **engine.js**: agnostic! It places the components in their columns, joins them into carcasses, builds the boards, fronts, strips, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.js.
-- **design.html**: knows the format, not the kitchen. Tables for materials (read only: they define what each type is made of), groups and columns, components and user free notes (not for regex scraping); the elevation drawing; problems listed under the tables.
+- **design.js**: plain data a person can read and edit: materials (what you buy and what each is used for), construction settings (setbacks, gaps, hinges, shelves, drawers, drilling, cut-outs), user notes (an LLM may read them, but no code parses them), column widths, and the components, one per line.
+- **engine.js**: knows no kitchen. It places the components in their columns, joins them into carcasses, builds the boards, fronts, strips, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.js.
+- **design.html**: knows the format, not the kitchen. Tables for materials (read only: they define what each type is made of), groups and columns, components and user notes; the elevation drawing; problems listed under the tables.
 - **cost.html**: the estimate, the cutting list with drilling and cut-outs, the notes (the detailed geometry of the appliances, written by the LLM), assembly help and the carcass map; exports the XLSX. Its texts refer to the model, not to copied numbers.
-- **view.html**: the room in 3D with the carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs; it checks the geometry (collisions, gaps, fronts off the line, parts sticking out). It does not halucinate - based on hard data.
+- **view.html**: the room in 3D with the carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs; it checks the geometry (collisions, gaps, fronts off the line, parts sticking out). It shows only hard data, no guessing.
 
 ## Types, tags, materials
 
@@ -73,7 +73,7 @@ A new feature that changes what gets built is a new type; one that adds to an ex
 - Meaningful names that match what the page shows, no abbreviations a reader has to decode.
 - No hidden rules: what gets built follows from the type, the tags and the settings in design.js. No guessing from names, labels or sizes.
 - No numbers of this kitchen in the code and no duplicated values.
-- A list or an array holds homogeneous values - the same type and meaning.
+- A list or an array holds homogeneous values: the same type and meaning.
 - Library versions pinned (deterministic pages).
 - Language: everything the pages show is Polish; code and comments are English.
 - Short comments that say why, not long narration.
