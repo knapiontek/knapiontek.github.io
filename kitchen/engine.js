@@ -628,16 +628,21 @@
             }
           }
         } else if (item.type === 'frontPanel') {
-          // an edge shows when the front next to it opens: ABS on each edge whose neighbour (touching, overlapping) is a front that opens
+          // an edge shows when the front next to it opens (its neighbour, touching and overlapping, is a front that opens):
+          // a lacquered material has that edge lacquered, any other gets ABS there
           const overlaps = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0) > 0;
           const neighbour = {
             top: o => o.v0 === item.v1 && overlaps(o.u0, o.u1, item.u0, item.u1), bottom: o => o.v1 === item.v0 && overlaps(o.u0, o.u1, item.u0, item.u1),
             left: o => o.u1 === item.u0 && overlaps(o.v0, o.v1, item.v0, item.v1), right: o => o.u0 === item.u1 && overlaps(o.v0, o.v1, item.v0, item.v1)
           };
-          const edges = SIDES
+          const seen = SIDES
             .filter(side => groupModel.items.some(other => opens(other) && neighbour[side](other)))
             .map(side => (side === 'top' || side === 'bottom' ? { side, length: width, along: 'a' } : { side, length: height, along: 'b' }));
-          frontPanels.push({ group: groupModel.group, item, material: materialFor.frontPanel, name: 'Panel przedni ' + thickness.frontPanel, a: width, b: height, box: [u0, u1, v0, v1, ...(item.carcass ? [carcassFront, panelFace] : [frontFace - thickness.frontPanel, frontFace])], edges });
+          const lacquered = Boolean(projectData.materials[materialFor.frontPanel].lacquered);
+          const along = size => seen.filter(edge => edge.along === size).length;
+          const lacquer = lacquered ? (width >= height ? { long: along('a'), short: along('b') } : { long: along('b'), short: along('a') }) : null;
+          frontPanels.push({ group: groupModel.group, item, material: materialFor.frontPanel, name: 'Panel przedni ' + thickness.frontPanel, a: width, b: height, box: [u0, u1, v0, v1, ...(item.carcass ? [carcassFront, panelFace] : [frontFace - thickness.frontPanel, frontFace])],
+            edges: lacquered ? [] : seen, lacquer, lacqueredSides: lacquered ? seen.map(edge => edge.side) : [] });
         } else if (item.type === 'wallPanel') {
           wallPanels.push({ group: groupModel.group, item, material: materialFor.wallPanel, name: 'Panel ścienny ' + thickness.wallPanel, a: width, b: height, box: [u0, u1, v0, v1, groupModel.wall, groupModel.wall + thickness.wallPanel], edges: [] });
         } else if (item.type === 'plinth') {

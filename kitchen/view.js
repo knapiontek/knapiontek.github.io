@@ -4,14 +4,15 @@
                    x, z = the point its anchor names (start (default), end, centre or {column}: the end of that column)
                    on the wall line of the group (an island: the line of its carcass backs);
                    against {group}: the anchor lies on the front plane of that group (an L corner), instead of x or z
-     room          walls, floor and ceiling; rightWallGroup: the group against the right wall
+     room          walls, floor and ceiling; leftEnd: where the window wall and the floor start (x); floorJoint: the grout
+                   joint width of the floor tiles; rightWallGroup: the group against the right wall
      installation  how the sink, its trap and the hood are fitted here
      window        the window in the window wall
      finishes      extra finishes for the Project tab, drawn with a material of the view
      hardware      sizes for the drawing only (no effect on the cost); open: how far doors and drawers open
      metals        the metal finishes of the handles to choose from; hardware.handle.metal is the default
      lights        pendantBottom: the height of the pendants' bottom; pendants: centred over the worktop of their group;
-                   downlights at {group, u, n} (n from the wall), between [sink, hob] instead of u: halfway between their axes
+                   downlights at {group, u, n} (u along the group from its start, n out from the wall), between [sink, hob] instead of u: halfway between their axes
      cameras       the views in the dock; the first one opens */
 window.KITCHEN_VIEW = {
  "placement": {

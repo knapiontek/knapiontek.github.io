@@ -24,7 +24,6 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 | panel ścienny | płyta na ścianie |
 | panel przedni | płyta na płasko |
 | listwa przednia | na sztorc w płaszczyźnie frontów pomiędzy korpusami |
-| listwa tylna | ukryta za listwą przednią z tyłu korpusu |
 | szafka | miejsce w korpusie z drzwiami |
 | szuflada | miejsce w korpusie z szufladą |
 | piekarnik, mikrofalówka | urządzenie do zabudowy w korpusie, bez frontu |
@@ -74,7 +73,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
 - **Front** = moduł minus 4 szczeliny (lewa, prawa, góra, dół). Front jest odsunięty od korpusu o ustaloną szczelinę, której wymagają zawiasy. Front shaker ma ramę o stałej szerokości.
 - **Listwa przednia** stoi na sztorc w płaszczyźnie frontów i jest z jednego kawałka.
-- **Listwy tylne** leżą za listwą przednią, przy tyle korpusów, i są pocięte jak przyległe korpusy.
+- **Listwy tylne**: z płyty wiórowej, za listwą przednią, przy tyle korpusów, pocięte jak przyległe korpusy.
 - **Panel przedni** leży na płasko. W korpusie jest przykręcony do korpusu, bez szczeliny; poza korpusem stoi w płaszczyźnie frontów i jest przykręcony do sąsiedniego panelu.
 - **Blat:**
   - materiał blatu podaje głębokość płyty, którą się kupuje; wyspa ma osobny materiał;

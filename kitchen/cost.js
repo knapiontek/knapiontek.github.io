@@ -63,14 +63,14 @@ window.KITCHEN_COST = {
    {"type": "cabinet", "function": "drzwi"}
   ],
   "sheet": "Arkusz płyty {v:sheet.length}×{v:sheet.width} [m²]",
-  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: ABS razem = długość ABS × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, od ściany {s:carcass.wallGap.1} (grupa 1), {s:carcass.wallGap.2} (grupa 2); front {s:carcass.frontGap} przed korpusem; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:backPanel.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:strip.depth} × długość korpusu obok (listwa pionowa; skrócić na miejscu pod kątownik) lub pod nią (listwa pozioma).\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nABS: tylko krawędzie widoczne; strona każdej krawędzi w zakładce Montaż.\nLakier: płyty lakierowane na obu stronach; krawędzie tylko we frontach (wszystkie) i w listwach (przednia).\nBlaty: krawędź przednia fabryczna, wycięcia bez ABS.",
+  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: ABS razem = długość ABS × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, od ściany {s:carcass.wallGap.1} (grupa 1), {s:carcass.wallGap.2} (grupa 2); front {s:carcass.frontGap} przed korpusem; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:backPanel.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:strip.depth} × długość korpusu obok (listwa pionowa; skrócić na miejscu pod kątownik) lub pod nią (listwa pozioma).\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nABS: tylko krawędzie widoczne; strona każdej krawędzi w zakładce Montaż.\nLakier: płyty lakierowane na obu stronach; krawędzie tylko we frontach (wszystkie), w listwach (przednia) i w panelach przednich (przy otwieranym froncie).\nBlaty: krawędź przednia fabryczna, wycięcia bez ABS.",
   "legend": {"runner": "pozycje do potwierdzenia wg Blum i Häfele"}
  },
  "blocks": [
   {"id": "fronts", "code": "FR", "title": "FRONTY – {m:cabinet}, shaker, lakierowane dookoła", "columns": ["Funkcja", "Szerokość", "Wysokość", "Ilość"]},
   {"id": "strips", "code": "LI", "title": "LISTWY PRZEDNIE – {m:strip} na sztorc, gł. {s:strip.depth}, lakierowane obustronnie i krawędź przednia"},
   {"id": "plinths", "code": "CO", "title": "COKÓŁ – {m:plinth}, wilgocioodporny, lakierowany obustronnie"},
-  {"id": "frontPanels", "code": "PA", "title": "PANELE PRZEDNIE I PANEL TYLNY WYSPY – {m:frontPanel} na płasko, lakierowane obustronnie; ABS na widocznych krawędziach"},
+  {"id": "frontPanels", "code": "PA", "title": "PANELE PRZEDNIE I PANEL TYLNY WYSPY – {m:frontPanel} na płasko, lakierowane obustronnie i krawędzie przy otwieranych frontach"},
   {"id": "wallPanels", "code": "PS", "title": "PANEL ŚCIENNY – {m:wallPanel}, na ścianie nad blatem"},
   {"id": "carcass", "code": "KO", "title": "KORPUSY – wszystkie części z {m:carcass}: cięcie + ABS 0,8 na krawędziach widocznych (z listwami tylnymi, półką wysuwaną, słupkami zawiasowymi, panelami wpuszczanymi, płytami dystansowymi)", "cut": true},
   {"id": "drawerBox", "code": "SZ", "title": "SZUFLADY – wszystkie części z {m:drawerBox}: dna i tyły TANDEMBOX (z szufladami wewnętrznymi), szuflady za drzwiami i przegroda pod płytą", "cut": true},
@@ -192,20 +192,6 @@ window.KITCHEN_COST = {
       {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/i/Uslugi/16"},
       {"name": "ciecieoklejanie.pl", "url": "https://ciecieoklejanie.pl/cennik/"},
       {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-U708-ST9-230.8MM-Szary-jasny/1146"}
-     ]
-    },
-    {
-     "id": "panelEdging",
-     "name": "Oklejanie paneli przednich, kolor {m:frontPanel}",
-     "spec": "krawędzie paneli przednich wg sumy ABS z listy cięć + {v:edgeAllowance|%}; obrzeże granatowe dobrane do lakieru",
-     "qty": "={frontPanels.edge}*(1+{v:edgeAllowance})",
-     "unit": "mb",
-     "price": 6,
-     "refs": ["stripsPanels"],
-     "source": "panele robi producent frontów (lakierowane.pl) - zapytać o oklejanie; szacunek wg ciecieoklejanie.pl",
-     "links": [
-      {"name": "lakierowane.pl", "url": "https://lakierowane.pl/informacje,cennik_frontow_lakierowanych,2,1.html"},
-      {"name": "ciecieoklejanie.pl", "url": "https://ciecieoklejanie.pl/cennik/"}
      ]
     }
    ]
@@ -859,7 +845,7 @@ window.KITCHEN_COST = {
     {
      "id": "stripsPanels",
      "topic": "Listwy przednie na sztorc, panele przednie na płasko",
-     "description": "Listwy przednie: {m:strip}, na sztorc, z jednego kawałka, gł. {s:strip.depth}; lakierowane obustronnie i krawędź przednia.\nPanele przednie: {m:frontPanel}, na płasko; lakierowane obustronnie.\nABS przy otwieranym froncie: panel przedni {i:K3/frontPanel.width} – {i:K3/frontPanel.edges}; panel przedni {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel przedni {i:G2[3]/frontPanel.width} zakrywa koniec panelu przedniego {i:K3/frontPanel.width}."
+     "description": "Listwy przednie: {m:strip}, na sztorc, z jednego kawałka, gł. {s:strip.depth}; lakierowane obustronnie i krawędź przednia.\nPanele przednie: {m:frontPanel}, na płasko; lakierowane obustronnie, bez ABS.\nLakierowana krawędź przy otwieranym froncie: panel przedni {i:K3/frontPanel.width} – {i:K3/frontPanel.edges}; panel przedni {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel przedni {i:G2[3]/frontPanel.width} zakrywa koniec panelu przedniego {i:K3/frontPanel.width}."
     },
     {
      "id": "fixedShelves",

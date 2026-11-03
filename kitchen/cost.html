@@ -176,6 +176,8 @@ const plural = KE.plural;
 // ABS edges of one part, e.g. "dół 80 + lewa 720"; their total length in mm
 const edgeText = edges => (edges || []).map(edge => KE.LABELS.edge[edge.side] + ' ' + edge.length).join(' + ');
 const edgeLength = edges => (edges || []).reduce((sum, edge) => sum + edge.length, 0);
+// lacquered edges of a front panel by side, e.g. "dół + lewa"
+const sideText = sides => (sides || []).map(side => KE.LABELS.edge[side]).join(' + ');
 // drilling and cut-outs of a cut-list row in two-letter codes (KE.LABELS.holeCode), explained by drillLegend(); one line per kind of
 // hole: code + the Cartesian product of the x list and the y list (mm from the reference edges), "PR 37 261 485 ⊗ 25 432"; holes that
 // do not form one full product: one line per x. Each set of holes of the parts of a row (row.drillings) is written once, under a line
@@ -232,7 +234,8 @@ function drillLegend() {
   return rows;
 }
 // finished edges of one piece per side, as an order form for the board supplier has them: {length, width} = edges along each, 0, 1 or 2.
-// ABS edges (boards, front panels) come from engine.js as [{side, length, along}] (along: a | b); lacquered edges (fronts, strips, plinth) as {long, short}.
+// ABS edges (boards, front panels of an unlacquered material) come from engine.js as [{side, length, along}] (along: a | b);
+// lacquered edges (fronts, strips, plinth, lacquered front panels) as {long, short}.
 // (a cut-list row, KE.cutList: a = the length, b = the width; fronts are width × height, so the long side can be either)
 const edgeCounts = row => {
   const { lacquer, edges = [] } = row;
@@ -306,6 +309,7 @@ function applyProject(project) {
 function renderAssembly() {
   const listLines = rows => rows.map(t => '<br>– ' + esc(t)).join('');
   const withEdges = edges => (edges && edges.length ? ' (ABS ' + edgeText(edges) + ')' : '');
+  const withLacquer = sides => (sides && sides.length ? ' (lakier ' + sideText(sides) + ')' : '');
   const label = key => (codeOfRow[key] ? codeOfRow[key] + ' ' : '');
   // one line per hand (left, right, then the rest): which side of the carcass a drilled part goes on
   const byHand = row => {
@@ -348,7 +352,7 @@ function renderAssembly() {
   const add = (p, text) => (loose[p.group] = loose[p.group] || []).push({ column: columnOfPart(p), text: place(p) + ' – ' + text });
   model.fronts.filter(f => !f.carcassId).forEach(f => add(f, frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : '')));
   model.strips.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
-  model.frontPanels.forEach(p => add(p, p.name + ' ' + size(p.a, p.b) + withEdges(p.edges)));
+  model.frontPanels.forEach(p => add(p, p.name + ' ' + size(p.a, p.b) + withEdges(p.edges) + withLacquer(p.lacqueredSides)));
   model.wallPanels.forEach(p => add(p, p.name + ' ' + size(p.a, p.b)));
   model.boards.filter(b => !b.carcassId).forEach(b => add(b, b.name + ' ' + size(b.a, b.b) + ' (' + model.materials[b.material].label + ')'));
   model.plinths.forEach(p => add(p, 'Cokół ' + size(p.a, p.b)));
@@ -434,7 +438,7 @@ function itemValue(rest) {
     spaceBottom, spaceTop, space: spaceTop - spaceBottom,
     ...(f && f.doorDrawers ? { count: f.doorDrawers.count, runnerLength: f.doorDrawers.runnerLength, boxWidth: f.doorDrawers.boxWidth, boxHeight: f.doorDrawers.boxHeight } : {}),
     ...(f && f.hand ? { hinge: KE.LABELS.side[f.hand] } : {}),
-    ...(panel ? { edges: edgeText(panel.edges) || 'brak' } : {}),
+    ...(panel ? { edges: edgeText(panel.edges) || sideText(panel.lacqueredSides) || 'brak' } : {}),
     fit: item.fit
   };
   return KE.valueAt(values, field) ?? NaN;

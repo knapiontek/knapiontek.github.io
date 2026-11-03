@@ -941,9 +941,10 @@ function buildGroup(group) {
     } else if (type === 'strip') { // on edge, strip.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
       const strip = model.strips.find(f => f.item === item), lacquered = ((strip && strip.lacqueredSides) || []).map(side => ({ side }));
       edgeLook(localBox(groupLayer[group].strips, u0, u1, v0, v1, frontFace - settings.strip.depth, frontFace, boardFor('strip')), lacquered, model.materialFor.strip);
-    } else if (type === 'frontPanel') { // in group coordinates, so its edges keep their sides
+    } else if (type === 'frontPanel') { // in group coordinates, so its edges keep their sides; finished edges: ABS or lacquered
       const panel = model.frontPanels.find(p => p.item === item);
-      edgeLook(localBox(groupLayer[group].frontPanel, u0, u1, v0, v1, panel.box[4], panel.box[5], boardFor('frontPanel')), panel && panel.edges, model.materialFor.frontPanel);
+      const finished = panel ? [...panel.edges, ...panel.lacqueredSides.map(side => ({ side }))] : [];
+      edgeLook(localBox(groupLayer[group].frontPanel, u0, u1, v0, v1, panel.box[4], panel.box[5], boardFor('frontPanel')), finished, model.materialFor.frontPanel);
     } else if (type === 'plinth') {
       edgeLook(groupBox(roomLayer.plinth, group, u0, u1, v0, v1, plinthFace - plinthThickness, plinthFace, plinthMaterial), [], model.materialFor.plinth);
     } else if (type === 'wallPanel') { // on the wall

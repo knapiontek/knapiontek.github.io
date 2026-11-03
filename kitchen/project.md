@@ -70,7 +70,7 @@ A new feature that changes what gets built is a new type; one that adds to an ex
 ## Code style (every file)
 
 - Human readable: consistent indentation, short functions, one idea per line.
-- Meaningful names that match what the page shows, no abbreviations a reader has to decode.
+- Meaningful names that match what the page shows, no abbreviations a reader has to decode; counters and coordinates may be one letter.
 - No hidden rules: what gets built follows from the type, the tags and the settings in design.js. No guessing from names, labels or sizes.
 - No numbers of this kitchen in the code and no duplicated values.
 - A list or an array holds homogeneous values: the same type and meaning.
