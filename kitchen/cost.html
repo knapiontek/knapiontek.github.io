@@ -99,7 +99,7 @@
     </div>
     <div class="grid-wrap">
       <table class="grid">
-        <thead><tr><th>Lp.</th><th>Pozycja</th><th>Specyfikacja</th><th>Ilość</th><th>J.m.</th><th>Cena jedn. [PLN]</th><th>Wartość [PLN]</th><th>Źródło ceny / uwagi</th></tr></thead>
+        <thead><tr><th>Lp.</th><th>Pozycja</th><th>Specyfikacja</th><th>Gdzie użyte</th><th>Ilość</th><th>J.m.</th><th>Cena jedn. [PLN]</th><th>Wartość [PLN]</th><th>Źródło ceny / uwagi</th></tr></thead>
         <tbody id="estimateBody"></tbody>
       </table>
     </div>
@@ -548,7 +548,7 @@ function renderEstimate() {
   const result = compute(), html = [];
   let no = 0;
   for (const category of COST.categories) {
-    html.push(`<tr class="cat"><td></td><td colspan="5">${esc(category.name)}</td><td class="num">${fmt(result.categorySums[category.name])}</td><td></td></tr>`);
+    html.push(`<tr class="cat"><td></td><td colspan="6">${esc(category.name)}</td><td class="num">${fmt(result.categorySums[category.name])}</td><td></td></tr>`);
     for (const item of category.items) {
       no++;
       const current = values.items[item.id], original = defaults.items[item.id];
@@ -556,16 +556,16 @@ function renderEstimate() {
         ? `<td class="num"><span class="calc" title="${esc(describeFormula(item.qty))}">${fmtQty(result.quantities[item.id])}</span></td>`
         : `<td class="num"><input type="number" step="any" data-item="${item.id}" data-field="qty" value="${current.qty}" class="${current.qty != original.qty ? 'changed' : ''}"></td>`;
       const refs = (item.refs || []).map(id => `<a class="ref" data-ref="${noteNumber[id]}">patrz notatka ${noteNumber[id]}</a>`).join(', ');
-      html.push(`<tr><td class="num">${no}</td><td>${esc(fill(item.name))}</td><td class="muted">${esc(fill(item.spec))}</td>${qtyCell}<td>${esc(item.unit)}</td>
+      html.push(`<tr><td class="num">${no}</td><td>${esc(fill(item.name))}</td><td class="muted">${esc(fill(item.spec))}</td><td class="muted">${esc(fill(item.use))}</td>${qtyCell}<td>${esc(item.unit)}</td>
         <td class="num"><input type="number" step="any" data-item="${item.id}" data-field="price" value="${current.price}" class="${current.price != original.price ? 'changed' : ''}"></td>
         <td class="num" data-v="${item.id}">${fmt(result.itemValues[item.id])}</td>
         <td class="src">${shopLinks(item)}${esc(fill(item.source))}${refs ? ' – ' + refs : ''}</td></tr>`);
     }
   }
-  html.push(`<tr class="sum"><td></td><td colspan="5">Meble (materiały) razem</td><td class="num">${fmt(result.furniture)}</td><td></td></tr>`);
-  html.push(`<tr class="sum"><td></td><td colspan="5">AGD razem</td><td class="num">${fmt(result.appliances)}</td><td></td></tr>`);
-  html.push(`<tr class="sum"><td></td><td colspan="5">Rezerwa na drobne pozycje / ceny szacunkowe (${fmt(Number(values.params.reserve) * 100, 0)}% mebli)</td><td class="num">${fmt(result.reserve)}</td><td></td></tr>`);
-  html.push(`<tr class="grand"><td></td><td colspan="5">RAZEM BRUTTO</td><td class="num">${fmt(result.total)}</td><td></td></tr>`);
+  html.push(`<tr class="sum"><td></td><td colspan="6">Meble (materiały) razem</td><td class="num">${fmt(result.furniture)}</td><td></td></tr>`);
+  html.push(`<tr class="sum"><td></td><td colspan="6">AGD razem</td><td class="num">${fmt(result.appliances)}</td><td></td></tr>`);
+  html.push(`<tr class="sum"><td></td><td colspan="6">Rezerwa na drobne pozycje / ceny szacunkowe (${fmt(Number(values.params.reserve) * 100, 0)}% mebli)</td><td class="num">${fmt(result.reserve)}</td><td></td></tr>`);
+  html.push(`<tr class="grand"><td></td><td colspan="6">RAZEM BRUTTO</td><td class="num">${fmt(result.total)}</td><td></td></tr>`);
   document.getElementById('estimateBody').innerHTML = html.join('');
   document.getElementById('totalGross').textContent = fmt(result.total) + ' PLN';
   return result;
@@ -730,13 +730,13 @@ function buildWorkbook() {
   // sheet "Estimate": waste in C3, sheet size in C4
   const estimate = [[str(COST.page.heading)], [str(fill(COST.page.info))],
     [str('Naddatek na odpad płyt'), str(''), num(Number(values.params.waste))], [str(fill(COST.labels.sheet)), str(''), num(Number(values.params.sheet))], [],
-    ['Lp.', 'Pozycja', 'Specyfikacja', 'Ilość', 'J.m.', 'Cena jedn. [PLN]', 'Wartość [PLN]', 'Źródło ceny / uwagi'].map(str)];
+    ['Lp.', 'Pozycja', 'Specyfikacja', 'Gdzie użyte', 'Ilość', 'J.m.', 'Cena jedn. [PLN]', 'Wartość [PLN]', 'Źródło ceny / uwagi'].map(str)];
   const itemRow = {}, categoryRows = [];
   let no = 0;
   // quantity formula of this page -> Excel formula: item quantities, the parameters and the m², ABS and cut totals of the cutting list
   // as cell references, the rest as values
   const toExcel = expr => expr.replace(/^=/, '')
-    .replace(/\{q:(\w+)\}/g, (_, id) => `D${itemRow[id]}`)
+    .replace(/\{q:(\w+)\}/g, (_, id) => `E${itemRow[id]}`)
     .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, block, total) => `'Lista cięć'!$${{ m2: 'G', edge: 'I', cut: 'J' }[total]}$${blockTotalRow[block]}`)
     .replaceAll('{waste}', '$C$3')
     .replaceAll('{sheet}', '$C$4')
@@ -755,18 +755,18 @@ function buildWorkbook() {
       const source = str(fill(item.source) + links.map(l => ' ' + l.url).join('') + (refs.length ? ' – patrz notatka ' + refs.map(id => noteNumber[id]).join(', ') : ''));
       if (links.length) source.l = { Target: links[0].url, Tooltip: links[0].name }; // the first shop; the others are in the text
       else if (refs.length) source.l = { Target: `#'Notatki'!A${noteRow[refs[0]]}`, Tooltip: 'Przejdź do notatki' };
-      estimate.push([num(no), str(fill(item.name)), str(fill(item.spec)), qty, str(item.unit), num(Number(values.items[item.id].price)), formula(`ROUND(D${r}*F${r},2)`, result.itemValues[item.id]), source]);
+      estimate.push([num(no), str(fill(item.name)), str(fill(item.spec)), str(fill(item.use)), qty, str(item.unit), num(Number(values.items[item.id].price)), formula(`ROUND(E${r}*G${r},2)`, result.itemValues[item.id]), source]);
     }
-    estimate[categoryRow - 1] = [str(''), str(category.name), str(''), str(''), str(''), str(''), formula(`SUM(G${first}:G${estimate.length})`, result.categorySums[category.name])];
+    estimate[categoryRow - 1] = [str(''), str(category.name), str(''), str(''), str(''), str(''), str(''), formula(`SUM(H${first}:H${estimate.length})`, result.categorySums[category.name])];
     categoryRows.push({ row: categoryRow, appliances: !!category.appliances });
   }
   estimate.push([]);
   const furnitureRow = estimate.length + 1;
-  const sumOf = isAppliance => categoryRows.filter(c => c.appliances === isAppliance).map(c => 'G' + c.row).join('+');
-  estimate.push([str(''), str('Meble (materiały) razem'), str(''), str(''), str(''), str(''), formula(sumOf(false), result.furniture)]);
-  estimate.push([str(''), str('AGD razem'), str(''), str(''), str(''), str(''), formula(sumOf(true), result.appliances)]);
-  estimate.push([str(''), str('Rezerwa na drobne pozycje / ceny szacunkowe'), str('% mebli'), str(''), str(''), num(Number(values.params.reserve)), formula(`ROUND(G${furnitureRow}*F${furnitureRow + 2},2)`, result.reserve)]);
-  estimate.push([str(''), str('RAZEM BRUTTO'), str(''), str(''), str(''), str(''), formula(`G${furnitureRow}+G${furnitureRow + 1}+G${furnitureRow + 2}`, result.total)]);
+  const sumOf = isAppliance => categoryRows.filter(c => c.appliances === isAppliance).map(c => 'H' + c.row).join('+');
+  estimate.push([str(''), str('Meble (materiały) razem'), str(''), str(''), str(''), str(''), str(''), formula(sumOf(false), result.furniture)]);
+  estimate.push([str(''), str('AGD razem'), str(''), str(''), str(''), str(''), str(''), formula(sumOf(true), result.appliances)]);
+  estimate.push([str(''), str('Rezerwa na drobne pozycje / ceny szacunkowe'), str('% mebli'), str(''), str(''), str(''), num(Number(values.params.reserve)), formula(`ROUND(H${furnitureRow}*G${furnitureRow + 2},2)`, result.reserve)]);
+  estimate.push([str(''), str('RAZEM BRUTTO'), str(''), str(''), str(''), str(''), str(''), formula(`H${furnitureRow}+H${furnitureRow + 1}+H${furnitureRow + 2}`, result.total)]);
   estimate.push([]);
   estimate.push([str(''), str('Nie obejmuje')]);
   COST.page.excluded.forEach(e => estimate.push([str(''), str('• ' + fill(e))]));
@@ -780,18 +780,18 @@ function buildWorkbook() {
     ws['!cols'] = widths.map(w => ({ wch: w }));
     return ws;
   };
-  const estimateSheet = sheet(estimate, [5, 44, 36, 10, 6, 13, 14, 60]);
+  const estimateSheet = sheet(estimate, [5, 36, 40, 30, 10, 6, 13, 14, 50]);
   // number formats
   for (let r = 7; r <= estimate.length; r++) {
-    for (const col of ['F', 'G']) {
+    for (const col of ['G', 'H']) {
       const c = estimateSheet[col + r];
       if (c && c.t === 'n') c.z = '#,##0.00';
     }
-    const q = estimateSheet['D' + r];
+    const q = estimateSheet['E' + r];
     if (q && q.f && !/ROUNDUP/.test(q.f)) q.z = '#,##0.00';
   }
   estimateSheet['C3'].z = '0%';
-  estimateSheet['F' + (furnitureRow + 2)].z = '0%';
+  estimateSheet['G' + (furnitureRow + 2)].z = '0%';
   const cuttingSheet = sheet(cutting, [9, 40, 12, 6, 12, 6, 10, 8, 15, 12, 34, 14]);
   for (let r = 1; r <= cutting.length; r++) {
     const e = cuttingSheet['G' + r];
