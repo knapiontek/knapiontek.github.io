@@ -73,7 +73,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
 - **Front** = moduł minus 4 szczeliny (lewa, prawa, góra, dół). Front stoi w ustalonej szczelinie przed korpusem. Front shaker ma ramę o stałej szerokości.
 - **Listwa przednia** stoi na sztorc w płaszczyźnie frontów, jest z jednego kawałka i ma lakierowaną krawędź przednią.
-- **listwy tylne** leżą za listwą przednią, przy tyle korpusów, i są pocięte jak korpusy: przy listwie pionowej jedna na każdy korpus w stosie obok (jedna nad drugą), przy poziomej jedna na każdy korpus pod nią; każda tak długa jak jej korpus. Listwa bez korpusów obok ma jedną listwę tylną na całą długość.
+- **listwy tylne** leżą za listwą przednią, przy tyle korpusów, i są pocięte jak przyległe korpusy.
 - **Panel przedni** leży na płasko. W korpusie jest przykręcony do korpusu, bez szczeliny; poza korpusem stoi w płaszczyźnie frontów i jest przykręcony do sąsiedniego panelu.
 - **Blat:**
   - materiał blatu podaje głębokość płyty, którą się kupuje; wyspa ma osobny materiał;
@@ -95,7 +95,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 - **Podpórki półki ruchomej:** pod każdą półką, w obu bokach, przy przodzie i przy tyle.
 - **Prowadnice szuflad i półki wysuwanej:** w obu bokach (przy płycie dystansowej: w niej), w stałej odległości pod dnem szuflady (także szuflady wewnętrznej) i pod półką wysuwaną, w pozycjach od przodu podanych w danych.
 - **Prowadnice kulkowe szuflad za drzwiami:** w płycie dystansowej i w boku po drugiej stronie, w stałej odległości nad dnem skrzynki, w pozycjach od przodu prowadnicy podanych w danych.
-- **Zawias nad półką:** zawias, który wypada przy półce, przechodzi nad nią: najniżej, gdzie jest co najmniej ustalony odstęp nad półką i gdzie otwory prowadnika nie trafiają w otwory podpórek.
+- **Zawias nad półką:** zawias, który wypada przy półce jest przesunięty nad nią, aby uniknąć kolizji.
 - Otwory, które nachodzą na siebie na jednej części albo trafiają w płytę poziomą, są zgłaszane.
 - **Wycięcia w blacie:** na zlew i płytę grzewczą, nad korpusem z tagiem zlew lub płyta grzewcza, na środku korpusu, w stałej odległości od tylnej krawędzi blatu; wycięcie musi zmieścić się w jednym blacie i we wnętrzu korpusu.
 - Lista cięć: każdy rozmiar części ma etykietę (ta sama w opisie montażu); otwory są podane kodami, objaśnionymi w legendzie listy.
@@ -103,10 +103,10 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
 ## 6. Krawędzie
 
-- **Lakier:** materiał lakierowany ma lakier na obu stronach. Krawędzie są lakierowane tylko we frontach (wszystkie) i w listwach przednich (krawędź przednia).
+- **Lakier:** materiał lakierowany ma lakier na obu stronach. Fronty mają lakierowane wszystkie krawędzie, listwy przednie - krawędź przednią, panele przednie tylko krawędź widoczną przy froncie.
 - **ABS na płytach korpusu** jest tylko na krawędziach widocznych:
-  - boki, wieńce, półki, trawersy płaskie, słupek zawiasowy i płyta dystansowa mają ABS na krawędzi przedniej;
-  - trawers na sztorc ma ABS na krawędzi dolnej;
+  - boki, wieńce, półki, trawersy poziome, słupek zawiasowy i płyta dystansowa mają ABS na krawędzi przedniej;
+  - trawers pionowy ma ABS na krawędzi dolnej;
   - płyta dystansowa w szafce z ekspresem kończy się tuż nad półką wysuwaną, więc ma ABS także na górze; przy szufladach za drzwiami sięga do płyty nad nią i góra jest zakryta.
 - **Szuflady za drzwiami:** ABS na krawędziach widocznych po wysunięciu.
 - **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad systemowych.
@@ -114,7 +114,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 - **Blat i panel końcowy** mają ABS na krawędziach widocznych:
   - blat: krawędź boczna nad panelem końcowym, w wyspie także krawędź tylna;
   - panel końcowy: krawędź przednia, w wyspie także krawędź tylna;
-  - krawędź, którą materiał ma wykończoną fabrycznie (np. krawędź przednia blatu), nie dostaje ABS;
+  - krawędź, którą materiał ma wykończoną fabrycznie (np. krawędź przednia blatu) - nie dostaje ABS;
   - wycięcia na zlew i płytę zostają bez ABS.
 - **Lista cięć** podaje przy każdym wymiarze liczbę wykończonych krawędzi wzdłuż niego (0, 1 lub 2), jak formularz hurtowni. Opis montażu mówi, gdzie jest każda krawędź z ABS.
 
@@ -126,4 +126,4 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
 ## 8. Kosztorys (szacunek, nie zasady)
 
-Odpad płyt, naddatek na oklejanie, rezerwa, rozmiary arkuszy i ceny są ustawieniami kosztorysu. Każda cena ma link do sklepu i obowiązuje na dzień podany w nagłówku, do czasu oferty.
+Odpad płyt, naddatek na oklejanie, rezerwa, rozmiary arkuszy i ceny są ustawieniami kosztorysu. Każda cena powinna mieć link do sklepu.
