@@ -54,7 +54,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
   Korpus na cokole ma nóżki.
 - **Mocowanie:** listwa tylna jest przymocowana do ściany kątownikiem, poza najwyższą w stosie. Listwę przednią i listwy tylne przykręca się do pierwszego korpusu zwykłym wkrętem, a drugi korpus do nich wkrętem od środka.
-- **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole, w którym stoi piekarnik albo lodówka i zamrażarka.
+- **Kratka w cokole** (wlot powietrza) jest pod korpusem na cokole z piekarnikiem, lodówką lub zamrażarką, bo producent wymaga wentylacji.
 - **Góra korpusu:** dolny ma dwa trawersy płaskie, pozostałe rodzaje mają wieniec górny.
 - **Plecy** są tylko za drzwiami szafek, z jednego kawałka na ciąg drzwi. Nie ma ich za szufladami ani urządzeniami.
 - **Półka stała** leży na środku styku dwóch elementów i ma pełną głębokość. Nie ma jej w korpusie dolnej szafki.
@@ -72,7 +72,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
 ## 4. Fronty, listwy, panele przednie, blat
 
-- **Front** = moduł minus 4 szczeliny (lewa, prawa, góra, dół). Front stoi w ustalonej odległości przed korpusem. Front shaker ma ramę o stałej szerokości.
+- **Front** = moduł minus 4 szczeliny (lewa, prawa, góra, dół). Front jest odsunięty od korpusu o ustaloną szczelinę, której wymagają zawiasy. Front shaker ma ramę o stałej szerokości.
 - **Listwa przednia** stoi na sztorc w płaszczyźnie frontów i jest z jednego kawałka.
 - **Listwy tylne** leżą za listwą przednią, przy tyle korpusów, i są pocięte jak przyległe korpusy.
 - **Panel przedni** leży na płasko. W korpusie jest przykręcony do korpusu, bez szczeliny; poza korpusem stoi w płaszczyźnie frontów i jest przykręcony do sąsiedniego panelu.
@@ -110,7 +110,6 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
   - płyta dystansowa w szafce z ekspresem kończy się tuż nad półką wysuwaną, więc ma ABS także na górze; przy szufladach za drzwiami sięga do płyty nad nią i góra jest zakryta.
 - **Szuflady za drzwiami:** ABS na krawędziach widocznych po wysunięciu.
 - **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad systemowych.
-- **ABS na panelu przednim** jest na każdej krawędzi przy froncie, który się otwiera.
 - **Blat i panel końcowy** mają ABS na krawędziach widocznych:
   - blat: krawędź boczna nad panelem końcowym, w wyspie także krawędź tylna;
   - panel końcowy: krawędź przednia, w wyspie także krawędź tylna;
@@ -127,7 +126,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
 - Błędy w danych są zgłaszane, np. brak typu, szczelin albo strony zawiasów, tag do złego typu, materiał blatu za płytki.
 - Element bez jednego typu, bez wysokości w całych mm, bez kolumn w swojej grupie, wychodzący poza kolumny albo nachodzący na inny element dostaje uwagę i nie jest rysowany.
-- Widok 3D pokazuje kolizje, szczeliny do 3 mm przy listwach przednich, listwach tylnych i panelach, części wystające oraz fronty, które nieznacznie nie trzymają linii (większa różnica jest zamierzona).
+- Widok 3D pokazuje kolizje, małe szczeliny przy listwach przednich, listwach tylnych i panelach, części wystające oraz fronty, które nieznacznie nie trzymają linii. Duża szczelina albo duża różnica jest zamierzona i nie jest zgłaszana.
 
 ## 9. Kosztorys (szacunek, nie zasady)
 
