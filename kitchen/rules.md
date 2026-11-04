@@ -45,7 +45,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
 ## 3. Korpus
 
-- **Korpus** tworzą wszystkie elementy tej samej grupy z tą samą nazwą korpusu. Wszystkie korpusy mają jedną głębokość. Odstęp od ściany ustala się dla każdej grupy przy ścianie.
+- **Korpus** tworzą wszystkie elementy tej samej grupy z tą samą nazwą korpusu. Wszystkie korpusy mają jedną głębokość. Odstęp tyłu korpusów od ściany ustala się dla każdej grupy (wyspa: do tylnej krawędzi blatu).
 - **Rodzaje korpusu:**
   - dolny: stoi na cokole i ma nad sobą blat;
   - słupek: stoi na cokole i nie ma blatu;
@@ -65,7 +65,8 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
   - to jedna płyta przez cały korpus.
 - **Zawiasy** mają tylko drzwi:
   - liczba zależy od wysokości frontu;
-  - strona zawiasów nie może być stroną uchwytu.
+  - strona zawiasów nie może być stroną uchwytu;
+  - naprzeciw każdego zawiasu jest odbojnik.
 - **Słupek zawiasowy** staje po stronie zawiasów, gdy drzwi nie sięgają boku korpusu.
 - **Szuflada** jest wysoka (D), gdy front przekracza ustaloną wysokość, a inaczej niska (M).
 
@@ -78,8 +79,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 - **Blat:**
   - materiał blatu podaje głębokość płyty, którą się kupuje; wyspa ma osobny materiał;
   - wystaje przed fronty o nawis;
-  - blat przy ścianie sięga do ściany, nadmiar płyty odcina się z tyłu;
-  - blat wyspy ma pełną głębokość swojego materiału, bez cięcia.
+  - sięga do ściany (wyspa: do odstępu grupy), nadmiar płyty odcina się z tyłu.
 - **Panel końcowy** stoi pod końcem blatu, od podłogi do spodu blatu, a blat leży na nim:
   - jest z osobnego materiału, dwustronnego, bo widać obie jego strony; wyspa ma osobny materiał;
   - blat wystaje poza niego o nawis panelu końcowego: z boku (wypełnienie), z przodu, w wyspie także z tyłu.
@@ -91,6 +91,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 Średnice, głębokości i odległości otworów oraz wymiary wycięć są w danych projektu.
 
 - **Puszka zawiasu:** w tylnej stronie drzwi, przy każdym zawiasie, w stałej odległości od krawędzi zawiasów.
+- **Odbojnik:** w przedniej krawędzi boku naprzeciw zawiasu, na jego wysokości.
 - **Prowadnik zawiasu:** dwa otwory na wewnętrznej stronie boku albo słupka zawiasowego, w stałej odległości od przodu, symetrycznie wokół wysokości zawiasu.
 - **Podpórki półki ruchomej:** pod każdą półką, w obu bokach, przy przodzie i przy tyle.
 - **Prowadnice szuflad i półki wysuwanej:** w obu bokach (przy płycie dystansowej: w niej), w stałej odległości pod dnem szuflady (także szuflady wewnętrznej) i pod półką wysuwaną, w pozycjach od przodu podanych w danych.
@@ -98,28 +99,28 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 - **Zawias nad półką:** zawias wypadający przy półce przesuwa się nad nią.
 - Otwory, które nachodzą na siebie na jednej części albo trafiają w płytę poziomą, są zgłaszane.
 - **Wycięcia w blacie:** na zlew i płytę grzewczą, nad korpusem z tagiem zlew lub płyta grzewcza, na środku korpusu, w stałej odległości od tylnej krawędzi blatu; wycięcie musi zmieścić się w jednym blacie i we wnętrzu korpusu.
-- Widok 3D pokazuje otwory kolorami (warstwa Otwory): zawiasy pomarańczowe, półki zielone, prowadnice niebieskie.
+- Widok 3D pokazuje otwory kolorami (warstwa Otwory): zawiasy i odbojniki pomarańczowe, półki zielone, prowadnice niebieskie.
 
 ## 6. Krawędzie
 
-- **Lakier:** materiał lakierowany ma lakier na obu stronach. Fronty mają lakierowane wszystkie krawędzie, listwy przednie – krawędź przednią, panele przednie – tylko krawędź widoczną przy froncie.
-- **ABS na płytach korpusu** jest tylko na krawędziach widocznych:
-  - boki, wieńce, półki, trawersy poziome, słupek zawiasowy i płyta dystansowa mają ABS na krawędzi przedniej;
-  - trawers pionowy ma ABS na krawędzi dolnej;
-  - płyta dystansowa w szafce z ekspresem kończy się tuż nad półką wysuwaną, więc ma ABS także na górze; przy szufladach za drzwiami sięga do płyty nad nią i góra jest zakryta.
-- **Szuflady za drzwiami:** ABS na krawędziach widocznych po wysunięciu.
-- **Bez ABS:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad systemowych.
-- **Blat i panel końcowy** mają ABS na krawędziach widocznych:
+- **Obrzeże** (technologia wg materiału): fronty – wszystkie krawędzie, listwy przednie – przednia, panele przednie – przy froncie. Materiał lakierowany na obu stronach.
+- **Obrzeże na płytach korpusu** jest tylko na krawędziach widocznych:
+  - boki, wieńce, półki, trawersy poziome, słupek zawiasowy i płyta dystansowa mają obrzeże na krawędzi przedniej;
+  - trawers pionowy ma obrzeże na krawędzi dolnej;
+  - płyta dystansowa w szafce z ekspresem kończy się tuż nad półką wysuwaną, więc ma obrzeże także na górze; przy szufladach za drzwiami sięga do płyty nad nią i góra jest zakryta.
+- **Szuflady za drzwiami:** obrzeże na krawędziach widocznych po wysunięciu.
+- **Bez obrzeża:** trawersy tylne, listwy tylne, plecy, panele wpuszczane, przegroda i części szuflad systemowych.
+- **Blat i panel końcowy** mają obrzeże na krawędziach widocznych:
   - blat: krawędź boczna nad panelem końcowym, w wyspie także krawędź tylna;
   - panel końcowy: krawędź przednia, w wyspie także krawędź tylna;
-  - krawędź wykończona fabrycznie (np. krawędź przednia blatu) nie dostaje ABS;
-  - wycięcia na zlew i płytę zostają bez ABS.
+  - krawędź wykończona fabrycznie (np. krawędź przednia blatu) nie dostaje obrzeża;
+  - wycięcia na zlew i płytę zostają bez obrzeża.
 
 ## 7. Lista cięć
 
 - Każdy rozmiar części ma etykietę, tę samą w opisie montażu.
-- Przy każdym wymiarze jest liczba wykończonych krawędzi wzdłuż niego (0, 1 lub 2), jak w formularzu hurtowni; opis montażu mówi, gdzie jest każda krawędź z ABS.
-- Otwory są podane kodami, objaśnionymi w legendzie listy.
+- Przy każdym wymiarze jest liczba wykończonych krawędzi wzdłuż niego (0, 1 lub 2), jak w formularzu hurtowni; opis montażu mówi, gdzie jest każda krawędź z obrzeżem.
+- Wycięcia w blacie mają kody z legendy listy; otwory są w opisie montażu.
 
 ## 8. Kontrole
 

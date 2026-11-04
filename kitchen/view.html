@@ -105,7 +105,9 @@ table.cut tr.sec td{font-weight:600;padding-top:10px;border-bottom:0;color:var(-
 .toggle{display:none;align-items:center;gap:6px;position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px));z-index:3;font-weight:600;font-size:12.5px;
   background:var(--card);border-color:var(--line);padding:5px 10px;opacity:.72;transition:opacity .2s}
 .toggle svg{width:16px;height:16px}
-.spec{padding-top:0!important;overflow-x:hidden;scrollbar-width:thin;scrollbar-gutter:stable}
+.spec{padding-top:0!important;overflow-x:hidden;scrollbar-width:none} /* scrolls with the wheel or a swipe, no scroll bar */
+.spec::-webkit-scrollbar{display:none}
+@media (min-width:1280px){.spec{max-height:calc(100% - 40px)}} /* a big screen: the panel may reach down beside the dock */
 .spec-top{position:sticky;top:0;z-index:3;background:var(--card);margin:0 -16px;padding:14px 16px 0;display:flex;flex-direction:column;gap:12px}
 .spec-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .spec-head h2{margin:0}
@@ -320,8 +322,8 @@ const placeGroup = r => {
   const placement = SCENE.placement[r], a = (placement.rotation * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
   const along = anchorU(r);
   // origin: u = 0, n = 0
-  const wallGap = model.groups[r].wallGap;
-  const place = { x: placement.x - along * cos + wallGap * sin, z: placement.z + along * sin + wallGap * cos, cos, sin, rotation: placement.rotation };
+  const backGap = model.groups[r].island ? 0 : model.groups[r].backGap; // an island is placed by its carcass backs
+  const place = { x: placement.x - along * cos + backGap * sin, z: placement.z + along * sin + backGap * cos, cos, sin, rotation: placement.rotation };
   if (placement.against) {
     const other = origin[placement.against.group], frontX = other.x + model.frontFace * other.sin, frontZ = other.z + model.frontFace * other.cos;
     if (cos) place.x = frontX - along * cos; else place.z = frontZ + along * sin;
@@ -509,9 +511,9 @@ document.getElementById('metal').innerHTML = Object.entries(METALS).map(([key, m
   `<button data-m="${key}" aria-pressed="${key === SCENE.hardware.handle.metal}" class="swatch" aria-label="${esc(m.name)}" title="${esc(m.name)}"><i style="background:${m.color}"></i></button>`).join('');
 const standard = options => new THREE.MeshStandardMaterial(options);
 const physical = options => new THREE.MeshPhysicalMaterial(options);
-// colour of the holes by kind (engine.js hole.kind): hinges (cup, mounting plate), shelf pins, runners
-const HOLE_COLORS = { hinge: { hex: '#f26b1d', label: 'zawiasy' }, shelfPin: { hex: '#22b35e', label: 'półki' }, runner: { hex: '#2f8fe0', label: 'szuflady, prowadnice' } };
-const holeUse = kind => (kind === 'cup' || kind === 'plate' ? 'hinge' : kind);
+// colour of the holes by kind (engine.js hole.kind): hinges (cup, mounting plate) with their bumpers, shelf pins, runners
+const HOLE_COLORS = { hinge: { hex: '#f26b1d', label: 'zawiasy, odbojniki' }, shelfPin: { hex: '#22b35e', label: 'półki' }, runner: { hex: '#2f8fe0', label: 'szuflady, prowadnice' } };
+const holeUse = kind => (['cup', 'plate', 'bumper'].includes(kind) ? 'hinge' : kind);
 const MAT = {
   wall: standard({ color: linear(room.wallColor), roughness: 0.95, envMapIntensity: 0.45 }),
   floor: standard({ ...(FLOOR_KEYS.length ? { map: floorTexture(FLOOR_KEYS[0]) } : { color: linear(0xcfcfcb) }), roughness: 0.55, envMapIntensity: 0.6 }), // matt porcelain tiles
@@ -606,7 +608,7 @@ function edgeLook(m, edges, code) {
 /* ---------- layers ---------- */
 // layer groups of the Layers panel: each layer id -> its label
 const LAYERS = [
-  { label: 'Korpusy', layers: { carcasses: 'Płyty', backs: 'Plecy HDF', shelves: 'Półki', drawers: 'Szuflady', hardware: 'Zawiasy, prowadnice', holes: 'Otwory', legs: 'Nóżki' } },
+  { label: 'Korpusy', layers: { carcasses: 'Płyty', backs: 'Plecy HDF', shelves: 'Półki', drawers: 'Szuflady', hardware: 'Zawiasy, odbojniki, prowadnice', holes: 'Otwory', legs: 'Nóżki' } },
   { label: 'Fronty', layers: { fronts: 'Fronty', handles: 'Uchwyty', strips: 'Listwy przednie', frontPanel: 'Panele', plinth: 'Cokół' } },
   { label: 'Blat', layers: { worktops: 'Blaty', endPanels: 'Panele końcowe', wallPanel: 'Panel ścienny' } },
   { label: 'AGD', layers: { sink: 'Zlew, bateria', trap: 'Syfon', hob: 'Płyta grzewcza', hood: 'Okap', oven: 'Piekarnik', microwave: 'Mikrofalówka',
@@ -896,7 +898,7 @@ const bowlU0 = sinkU - sinkData.bowl.width / 2, bowlU1 = sinkU + sinkData.bowl.w
 const sinkTop = sinkGroup ? worktopTopOf(sinkGroup) : 0;
 const sinkRim = sinkData.rim, sinkWall = sinkData.wall, bowlBottom = sinkTop - sinkData.bowl.height;
 const tapN = sinkGroup ? worktopOf(sinkGroup).n0 + SCENE.installation.sink.tapFromBack : 0; // from the back edge of the worktop
-// a worktop or an end panel (own layer): finished edges (ABS or factory) in the decor, the rest bare; built of boxes around its cut-outs
+// a worktop or an end panel (own layer): finished edges (banding or factory) in the decor, the rest bare; built of boxes around its cut-outs
 function worktopPiece(group, piece) {
   const { u0, u1, v0, v1 } = piece.item, endPanel = piece.item.type === 'endPanel';
   const layer = groupLayer[group][endPanel ? 'endPanels' : 'worktops'], decor = BOARD[piece.material];
@@ -941,7 +943,7 @@ function buildGroup(group) {
     } else if (type === 'strip') { // on edge, strip.depth deep; lacquered on both faces and the edges engine.js names, the other edges bare
       const strip = model.strips.find(f => f.item === item), lacquered = ((strip && strip.lacqueredSides) || []).map(side => ({ side }));
       edgeLook(localBox(groupLayer[group].strips, u0, u1, v0, v1, frontFace - settings.strip.depth, frontFace, boardFor('strip')), lacquered, model.materialFor.strip);
-    } else if (type === 'frontPanel') { // in group coordinates, so its edges keep their sides; finished edges: ABS or lacquered
+    } else if (type === 'frontPanel') { // in group coordinates, so its edges keep their sides; finished edges: banded or lacquered
       const panel = model.frontPanels.find(p => p.item === item);
       const finished = panel ? [...panel.edges, ...panel.lacqueredSides.map(side => ({ side }))] : [];
       edgeLook(localBox(groupLayer[group].frontPanel, u0, u1, v0, v1, panel.box[4], panel.box[5], boardFor('frontPanel')), finished, model.materialFor.frontPanel);
@@ -1104,7 +1106,8 @@ function drawHoles(parent, part) {
   for (const h of part.holes || []) {
     const out = -h.dir * 0.6; // centre 0.6 mm outside the face: the 1 mm disc never shares a plane with the board or the hinge cup
     const at = { u: [h.u + out, h.v, h.n], n: [h.u, h.v, h.n + out] }[h.axis];
-    const marker = Math.max(h.diameter / 2, 6); // small holes drawn as 12 mm markers so they can be found; real sizes are in the cutting list
+    // small holes drawn as 12 mm markers so they can be found; a bumper hole at its size, under the head of its bumper
+    const marker = h.kind === 'bumper' ? h.diameter / 2 : Math.max(h.diameter / 2, 6);
     const m = localCylinder(parent, marker, 1, holeMaterial[holeUse(h.kind)], ...at, h.axis === 'u' ? 'x' : 'z', 32);
     m.castShadow = m.receiveShadow = false; // a received shadow would stripe the disc
   }
@@ -1218,7 +1221,13 @@ function buildFront(group, item) {
       localCylinder(mover.layers.hardware, cup.diameter / 2 - 0.5, hingeHardware.cupDepth, MAT.zinc, cupU, v, frontFace - frontThickness + hingeHardware.cupDepth / 2, 'z', 24); // cup in the front
       localCylinder(mover.layers.hardware, 24, 1.5, MAT.zinc, cupU, v, carcassFront - 1, 'z', 24); // cup flange, 0.2 mm off the carcass
     }
-    mover.label = 'Drzwi ' + size + ' · zawiasy: ' + count + (front.doorDrawers ? ' · za nimi szuflady: ' + front.doorDrawers.count : '');
+    // bumpers opposite the hinges, at their heights: pressed into the front edge of the side, the head fills the front gap
+    // (0.2 mm short of the door); they stay with the carcass
+    const bumper = settings.drilling.bumper, gap = frontFace - frontThickness - carcassFront;
+    for (const b of front.bumpers || []) {
+      localCylinder(groupLayer[group].hardware, bumper.diameter / 2 + 1.5, gap - 0.2, MAT.gasket, b.u, b.v, carcassFront + (gap - 0.2) / 2, 'z', 16); // head
+    }
+    mover.label = 'Drzwi ' + size + ' · zawiasy: ' + count + ' · odbojniki: ' + (front.bumpers || []).length + (front.doorDrawers ? ' · za nimi szuflady: ' + front.doorDrawers.count : '');
     if (front.doorDrawers) doorDrawerDrawers(group, item, mover);
   } else if (opening === 'drawer' && carcass) {
     const { size: drawerSize, sideHeight, innerU0, innerU1, bottomV: b0, bins, inner } = front.drawer;
@@ -1954,6 +1963,7 @@ document.getElementById('kStats').innerHTML = definitions([
   { name: 'Korpusy', value: carcasses.length },
   { name: 'Fronty', value: counts.fronts },
   { name: 'Zawiasy', value: counts.hinges },
+  { name: 'Odbojniki', value: counts.bumpers },
   { name: 'Szuflady', value: counts.drawersD + counts.drawersM + ' (' + counts.drawersD + ' D + ' + counts.drawersM + ' M)' + (counts.innerDrawers ? ' + ' + counts.innerDrawers + ' wewn.' : '') },
   { name: 'Półki', value: counts.shelvesAdjustable + ' ruchome + ' + counts.shelvesFixed + ' stałe' },
   { name: 'Nóżki', value: counts.legs },
@@ -2037,7 +2047,7 @@ document.getElementById('dims').innerHTML = definitions([
   ...groupDims,
   { name: 'Sufit', value: ceiling },
   { name: 'Głębokość korpusu', value: carcassDepth + ', plecy ' + model.materials[model.materialFor.backPanel].label },
-  ...GROUP_IDS.filter(r => !freeStanding[r]).map(r => ({ name: 'G' + r + ' tył korpusu', value: model.groups[r].wallGap + ' od ściany' })),
+  ...GROUP_IDS.filter(r => !freeStanding[r]).map(r => ({ name: 'G' + r + ' tył korpusu', value: model.groups[r].backGap + ' od ściany' })),
   { name: 'Lico frontów', value: (frontFace - carcassFront) + ' przed korpusem (szczelina ' + settings.carcass.frontGap + '); 4 szczeliny na front' },
   { name: 'Rama frontu shaker', value: shakerRail },
   { name: 'Listwy ' + stripThickness, value: 'na sztorc, gł. ' + settings.strip.depth + ', w płaszczyźnie frontów' },

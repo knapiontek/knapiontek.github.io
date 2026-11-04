@@ -27,7 +27,7 @@
                        width, height, v0, v1 (module), frontWidth, frontHeight, frontV0, frontV1 (front),
                        spaceBottom, spaceTop, space (clear height between the horizontal boards of the carcass around it),
                        count, runnerLength, boxWidth, boxHeight (drawers behind its door), hinge (hinge side of its door),
-                       edges (ABS edges of a panel), fit.feet, fit.fasciaV0 ... (its appliance: engine.js fitAppliances)
+                       edges (banded edges of a panel), fit.feet, fit.fasciaV0 ... (its appliance: engine.js fitAppliances)
      {a:oven.fascia.height}  appliances.js       {v:sheet.length} values
      {p:hinges}        unit price          {q:hinges} item quantity          {note:hinges} the number of a note
      {f:ovenMicrowaveGap}  a named formula of "formulas"
@@ -64,7 +64,7 @@ window.KITCHEN_COST = {
    {"type": "cabinet", "function": "drzwi"}
   ],
   "sheet": "Arkusz płyty {v:sheet.length}×{v:sheet.width} [m²]",
-  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: ABS razem = długość ABS × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, od ściany {s:carcass.wallGap.1} (grupa 1), {s:carcass.wallGap.2} (grupa 2); front {s:carcass.frontGap} przed korpusem; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:backPanel.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:strip.depth} × długość korpusu obok (listwa pionowa; skrócić na miejscu pod kątownik) lub pod nią (listwa pozioma).\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nABS: tylko krawędzie widoczne; strona każdej krawędzi w zakładce Montaż.\nLakier: płyty lakierowane na obu stronach; krawędzie tylko we frontach (wszystkie), w listwach (przednia) i w panelach przednich (przy otwieranym froncie).\nBlaty: krawędź przednia fabryczna, wycięcia bez ABS.",
+  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: obrzeże razem = długość obrzeża × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, od ściany {s:carcass.backGap.1} (grupa 1), {s:carcass.backGap.2} (grupa 2); front {s:carcass.frontGap} przed korpusem; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:backPanel.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:strip.depth} × długość korpusu obok (listwa pionowa; skrócić na miejscu pod kątownik) lub pod nią (listwa pozioma).\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nObrzeże: tylko krawędzie widoczne (fronty: wszystkie, listwy przednie: przednia, panele przednie: przy otwieranym froncie); strona każdej krawędzi w zakładce Montaż.\nPłyty lakierowane: lakier na obu stronach.\nBlaty: krawędź przednia fabryczna, wycięcia bez obrzeża.",
   "legend": {"runner": "pozycje do potwierdzenia wg Blum i Häfele"}
  },
  "blocks": [
@@ -73,7 +73,7 @@ window.KITCHEN_COST = {
   {"id": "plinths", "code": "CO", "title": "COKÓŁ – {m:plinth}, wilgocioodporny, lakierowany obustronnie"},
   {"id": "frontPanels", "code": "PA", "title": "PANELE PRZEDNIE I PANEL TYLNY WYSPY – {m:frontPanel} na płasko, lakierowane obustronnie i krawędzie przy otwieranych frontach"},
   {"id": "wallPanels", "code": "PS", "title": "PANEL ŚCIENNY – {m:wallPanel}, na ścianie nad blatem"},
-  {"id": "carcass", "code": "KO", "title": "KORPUSY – wszystkie części z {m:carcass}: cięcie + ABS 0,8 na krawędziach widocznych (z listwami tylnymi, półką wysuwaną, słupkami zawiasowymi, panelami wpuszczanymi, płytami dystansowymi)", "cut": true},
+  {"id": "carcass", "code": "KO", "title": "KORPUSY – wszystkie części z {m:carcass}: cięcie + obrzeże 0,8 na krawędziach widocznych (z listwami tylnymi, półką wysuwaną, słupkami zawiasowymi, panelami wpuszczanymi, płytami dystansowymi)", "cut": true},
   {"id": "drawerBox", "code": "SZ", "title": "SZUFLADY – wszystkie części z {m:drawerBox}: dna i tyły TANDEMBOX (z szufladami wewnętrznymi), szuflady za drzwiami i przegroda pod płytą", "cut": true},
   {"id": "backPanel", "code": "PL", "title": "PLECY – {m:backPanel}, tylko za drzwiami szafek"},
   {"id": "worktops", "code": "BL", "title": "BLATY – {m:worktop} (blat), {m:islandWorktop} (wyspa); wycięcia na zlew (WZ) i płytę (WP) wg legendy"},
@@ -200,8 +200,8 @@ window.KITCHEN_COST = {
     },
     {
      "id": "carcassEdging",
-     "name": "Oklejanie korpusów ABS",
-     "spec": "obrzeże ABS U708 ST9 23 × 0,8 z usługą oklejania",
+     "name": "Oklejanie korpusów",
+     "spec": "obrzeże 0,8 w dekorze U708 ST9, klejone PUR albo laserowo (bez widocznej spoiny), z usługą oklejania",
      "use": "widoczne krawędzie korpusów i szuflad za drzwiami, wg listy cięć + {v:edgeAllowance|%}",
      "qty": "=({carcass.edge}+{drawerBox.edge})*(1+{v:edgeAllowance})",
      "unit": "mb",
@@ -210,7 +210,7 @@ window.KITCHEN_COST = {
      "links": [
       {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/i/Uslugi/16"},
       {"name": "ciecieoklejanie.pl", "url": "https://ciecieoklejanie.pl/cennik/"},
-      {"name": "m-hm.pl: obrzeże", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-U708-ST9-230.8MM-Szary-jasny/1146"}
+      {"name": "m-hm.pl: obrzeże (cena orientacyjna)", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-U708-ST9-230.8MM-Szary-jasny/1146"}
      ]
     }
    ]
@@ -231,6 +231,20 @@ window.KITCHEN_COST = {
       {"name": "Blum: CLIP top BLUMOTION – instrukcje montażu", "url": "https://www.blum.com/pl/pl/products/hingesystems/clip-top-blumotion/downloads-videos/"},
       {"name": "m-hm.pl: zawias", "url": "https://m-hm.pl/pl/p/CLIP-top-BLUMOTION-Zawias-110%2C-Drzwi-nakladane%2C-puszka-na-wkrety-71B3550/2253"},
       {"name": "m-hm.pl: prowadnik", "url": "https://m-hm.pl/pl/p/CLIP-prowadnik%2C-krzyzakowy%2C-00-mm%2C-Stal%2C-Wkrety%2C-RW-mimosrod-173H7100/1376"}
+     ]
+    },
+    {
+     "id": "bumpers",
+     "name": "Odbojnik Blum",
+     "spec": "SERVO-DRIVE 993.0530, wciskany, otwór Ø{s:drilling.bumper.diameter}, gł. {s:drilling.bumper.depth}; trzyma szczelinę {s:carcass.frontGap}",
+     "use": "przednia krawędź boku korpusu, naprzeciw każdego zawiasu, na jego wysokości",
+     "qty": "={n:bumpers}",
+     "unit": "szt.",
+     "price": 2,
+     "source": "szacunek – brak ceny w polskim sklepie; Blum podaje go do frontu, sprawdzić odbojnik do krawędzi korpusu",
+     "links": [
+      {"name": "Blum: katalog, odbojnik dystansowy (EN)", "url": "https://publications.blum.com/2022/catalogue/en/520/"},
+      {"name": "galaxus.at", "url": "https://www.galaxus.at/en/s4/product/blum-9930530-servo-drive-distanzpuffer-drawer-runners-64606856"}
      ]
     },
     {
@@ -494,7 +508,7 @@ window.KITCHEN_COST = {
      "unit": "szt.",
      "price": 1201.01,
      "refs": ["worktops"],
-     "source": "M-HM Bielsko-Biała; cięcie i oklejanie ABS – zapytać (tel. 720 890 335)",
+     "source": "M-HM Bielsko-Biała; cięcie i oklejanie – zapytać (tel. 720 890 335)",
      "links": [
       {"name": "Egger: dekor H1180 ST37", "url": "https://www.egger.com/en/furniture-interior-design/decors/H1180_37?country=CA"},
       {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/BLAT-H1180-ST37-4100x650x38MM-Dab-Halifax-naturalny/1313"}
@@ -504,12 +518,12 @@ window.KITCHEN_COST = {
      "id": "islandWorktop",
      "name": "Blat wyspy",
      "spec": "{m:islandWorktop}, {d:islandWorktop} × {v:worktopBoard.length} × {t:islandWorktop}, krawędź przednia fabryczna",
-     "use": "wyspa, pełna głębokość {w:3.depth}; krawędź tylna z ABS",
+     "use": "wyspa, przycięty z tyłu do {w:3.depth}; krawędź tylna z obrzeżem",
      "qty": 1,
      "unit": "szt.",
      "price": 2056.93,
      "refs": ["worktops"],
-     "source": "M-HM Bielsko-Biała; zapytać, czy krawędź tylna może być fabryczna; cięcie i oklejanie – zapytać (tel. 720 890 335)",
+     "source": "M-HM Bielsko-Biała; cięcie i oklejanie – zapytać (tel. 720 890 335)",
      "links": [
       {"name": "Egger: dekor H1180 ST37", "url": "https://www.egger.com/en/furniture-interior-design/decors/H1180_37?country=CA"},
       {"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/BLAT-H1180-ST37-4100x920x38MM-Dab-Halifax-naturalny/1259"}
@@ -529,15 +543,15 @@ window.KITCHEN_COST = {
     },
     {
      "id": "worktopEdging",
-     "name": "Obrzeże ABS blatu",
-     "spec": "ABS H1180 ST37 43 × 1,5, dąb Halifax naturalny",
+     "name": "Obrzeże blatu",
+     "spec": "1,5 mm w dekorze H1180 ST37 dąb Halifax naturalny, klejone PUR albo laserowo (bez widocznej spoiny)",
      "use": "boki blatu nad panelami końcowymi, tył blatu wyspy, przody paneli końcowych (w wyspie też tyły)",
      "qty": "=({worktops.edge}+{endPanels.edge})*(1+{v:edgeAllowance})",
      "unit": "mb",
      "price": 10.1,
      "refs": ["worktops"],
      "source": "oklejanie maszynowe – zapytać M-HM; obrzeże paneli końcowych dobrać do ich materiału",
-     "links": [{"name": "m-hm.pl", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-H1180-ST37-431.5MM-Dab-Halifax-naturalny/1401"}]
+     "links": [{"name": "m-hm.pl: obrzeże (cena orientacyjna)", "url": "https://m-hm.pl/pl/p/OBRZEZE-ABS-H1180-ST37-431.5MM-Dab-Halifax-naturalny/1401"}]
     },
     {
      "id": "wallPanel",
@@ -905,7 +919,7 @@ window.KITCHEN_COST = {
     {
      "id": "fridgeAir",
      "topic": "Lodówka – wentylacja",
-     "description": "Wlot: kratka w cokole.\nWylot: szczelina {s:shelf.ventGap} za półką stałą nad urządzeniem, {s:carcass.wallGap.2} za korpusem."
+     "description": "Wlot: kratka w cokole.\nWylot: szczelina {s:shelf.ventGap} za półką stałą nad urządzeniem, {s:carcass.backGap.2} za korpusem."
     },
     {
      "id": "dishwasher",
@@ -957,7 +971,7 @@ window.KITCHEN_COST = {
     {
      "id": "stripsPanels",
      "topic": "Listwy przednie na sztorc, panele przednie na płasko",
-     "description": "Lakierowana krawędź przy otwieranym froncie: panel przedni {i:K3/frontPanel.width} – {i:K3/frontPanel.edges}; panel przedni {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel przedni {i:G2[3]/frontPanel.width} zakrywa koniec panelu przedniego {i:K3/frontPanel.width}."
+     "description": "Obrzeże przy otwieranym froncie: panel przedni {i:K3/frontPanel.width} – {i:K3/frontPanel.edges}; panel przedni {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel przedni {i:G2[3]/frontPanel.width} zakrywa koniec panelu przedniego {i:K3/frontPanel.width}."
     },
     {
      "id": "sinkCabinet",
@@ -980,7 +994,7 @@ window.KITCHEN_COST = {
     {
      "id": "worktops",
      "topic": "Blaty",
-     "description": "Grupa 1: jedna płyta, przycięta z tyłu do {w:1.depth}.\nWyspa: pełna płyta, bez cięcia na głębokość.\nWycięcia na zlew i płytę: CNC w hurtowni (lista cięć: BLATY).",
+     "description": "Grupa 1: jedna płyta, przycięta z tyłu do {w:1.depth}.\nWyspa: płyta {d:islandWorktop}, przycięta z tyłu do {w:3.depth}.\nWycięcia na zlew i płytę: CNC w hurtowni (lista cięć: BLATY).",
      "decide": "Panele końcowe: szukam jeszcze rozwiązania na dąb dwustronny (dekor jak blat, obie strony widoczne)."
     },
     {
@@ -1026,7 +1040,7 @@ window.KITCHEN_COST = {
     {
      "id": "islandOverhang",
      "topic": "Nawis blatu wyspy od strony hokerów",
-     "description": "Patrz widok 3D: dobry dla hokerów, ciasny dla krzeseł."
+     "description": "Blat wystaje {s:carcass.backGap.3} za korpusy (z panelem tylnym), blat wyspy {w:3.depth}. Patrz widok 3D: dobry dla hokerów, ciasny dla krzeseł."
     },
     {
      "id": "islandSocket",

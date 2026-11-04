@@ -15,7 +15,7 @@ window.KITCHEN_DESIGN = {
   "endOak38x920": {"name": "Panel końcowy dwustronny, dekor jak blat H1180 ST37", "thickness": 38, "color": "#b69671", "texture": "oak", "core": "#f2efe8", "depth": 920, "twoSided": true, "uses": ["islandEndPanel"]}
  },
  "settings": {
-  "carcass": {"depth": 550, "wallGap": {"1": 28, "2": 14}, "frontGap": 2, "legs": 4},
+  "carcass": {"depth": 550, "backGap": {"1": 28, "2": 14, "3": 310}, "frontGap": 2, "legs": 4},
   "backPanel": {"inset": 1},
   "crossRails": {"depth": 100, "hobFront": 50, "hobPanelGap": 20},
   "shelf": {"setback": 18, "clearance": 1, "perDoor": [{"maxHeight": 720, "count": 1}, {"count": 3}], "ventGap": 150},
@@ -31,6 +31,7 @@ window.KITCHEN_DESIGN = {
   "drilling": {
    "cup": {"diameter": 35, "depth": 13, "fromEdge": 22},
    "plate": {"diameter": 2.5, "depth": 10, "fromFront": 37, "spacing": 32},
+   "bumper": {"diameter": 5, "depth": 11.5},
    "shelfPin": {"diameter": 5, "depth": 10, "fromFront": 69, "fromBack": 65, "belowShelf": 3},
    "runner": {"diameter": 2.5, "depth": 10, "fromFront": [37, 261, 485], "belowDrawer": 10},
    "ballRunner": {"fromFront": [37, 229, 421], "aboveBottom": 23}

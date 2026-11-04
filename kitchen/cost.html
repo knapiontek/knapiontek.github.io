@@ -174,10 +174,10 @@ const fmt = (v, digits = 2) => (Number.isFinite(v) ? v.toLocaleString('pl-PL', {
 const fmtQty = v => (Number.isInteger(v) ? v.toLocaleString('pl-PL', { useGrouping: true }) : fmt(v, 2));
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const plural = KE.plural;
-// ABS edges of one part, e.g. "dół 80 + lewa 720"; their total length in mm
+// banded edges of one part, e.g. "dół 80 + lewa 720"; their total length in mm
 const edgeText = edges => (edges || []).map(edge => KE.LABELS.edge[edge.side] + ' ' + edge.length).join(' + ');
 const edgeLength = edges => (edges || []).reduce((sum, edge) => sum + edge.length, 0);
-// lacquered edges of a front panel by side, e.g. "dół + lewa"
+// finished lacquered edges of a front panel by side, e.g. "dół + lewa"
 const sideText = sides => (sides || []).map(side => KE.LABELS.edge[side]).join(' + ');
 const num1 = x => String(x).replace('.', ',');
 // cut-outs of a cut-list row (worktops, cut by the supplier's CNC): "WZ 680×420 @ 1234x110", codes in cutoutLegend()
@@ -199,12 +199,17 @@ function cutoutLegend() {
 // comes from the template or the fitting itself (assemblyLegend). A hinge plate: the axis of its pair of holes.
 function holeText(drilling) {
   const parts = [];
-  for (const kind of [...new Set(drilling.holes.map(h => h.kind))]) {
+  const ORDER = ['cup', 'bumper', 'plate', 'shelfPin', 'runner'];
+  for (const kind of [...new Set(drilling.holes.map(h => h.kind))].sort((p, q) => ORDER.indexOf(p) - ORDER.indexOf(q))) {
     let ys = [...new Set(drilling.holes.filter(h => h.kind === kind).map(h => h.y))].sort((p, q) => p - q);
+    if (kind === 'bumper') continue; // in a board edge: below
     if (kind === 'plate') ys = ys.filter((_, i) => i % 2 === 0).map((y, i) => round1((y + ys[2 * i + 1]) / 2));
     parts.push(KE.LABELS.hole[kind] + ' ' + ys.map(num1).join(', '));
   }
-  return parts.length ? 'otwory ' + KE.LABELS.holeFrom[drilling.from.y] + ': ' + parts.join('; ') : '';
+  // bumpers in the front edge of a board: how far from which end
+  const bumpers = drilling.holes.filter(h => h.kind === 'bumper'), ends = [...new Set(bumpers.map(h => h.from))];
+  const edge = ends.map(from => 'odbojnik w krawędzi przedniej ' + KE.LABELS.holeFrom[from] + ': ' + bumpers.filter(h => h.from === from).map(h => num1(h.x)).join(', ')).join('; ');
+  return [parts.length ? 'otwory ' + KE.LABELS.holeFrom[drilling.from.y] + ': ' + parts.join('; ') : '', edge].filter(Boolean).join('; ');
 }
 // the drilling rules over the assembly cards, from design.js settings.drilling
 function assemblyLegend() {
@@ -214,6 +219,7 @@ function assemblyLegend() {
     'Otwory: wysokość osi od dołu części (drzwi: od dołu frontu), w mm. Odległość od przodu daje szablon albo okucie:',
     '· puszka zawiasu Ø' + num1(d.cup.diameter) + ', gł. ' + d.cup.depth + ', ' + d.cup.fromEdge + ' od krawędzi zawiasów',
     '· prowadnik zawiasu: podana oś zawiasu, 2 otwory Ø' + num1(d.plate.diameter) + ' co ' + d.plate.spacing + ', ' + d.plate.fromFront + ' od przodu',
+    '· odbojnik Ø' + num1(d.bumper.diameter) + ', gł. ' + num1(d.bumper.depth) + ': naprzeciw każdego zawiasu, na jego wysokości; w przedniej krawędzi boku (słupka), na środku grubości',
     '· podpórka półki Ø' + num1(d.shelfPin.diameter) + ': ' + d.shelfPin.fromFront + ' od przodu i ' + d.shelfPin.fromBack + ' od tyłu, ' + d.shelfPin.belowShelf + ' pod półką',
     '· prowadnica szuflady / półki wysuwanej: wg prowadnicy, otwory ' + list(d.runner.fromFront) + ' od przodu, ' + d.runner.belowDrawer + ' pod dnem' + remark('runner'),
     '· prowadnica kulkowa (szuflady za drzwiami): ' + list(d.ballRunner.fromFront) + ' od przodu, ' + d.ballRunner.aboveBottom + ' nad dnem skrzynki',
@@ -221,7 +227,7 @@ function assemblyLegend() {
   ].join('\n');
 }
 // finished edges of one piece per side, as an order form for the board supplier has them: {length, width} = edges along each, 0, 1 or 2.
-// ABS edges (boards, front panels of an unlacquered material) come from engine.js as [{side, length, along}] (along: a | b);
+// banded edges (boards, front panels of an unlacquered material) come from engine.js as [{side, length, along}] (along: a | b);
 // lacquered edges (fronts, strips, plinth, lacquered front panels) as {long, short}.
 // (a cut-list row, KE.cutList: a = the length, b = the width; fronts are width × height, so the long side can be either)
 const edgeCounts = row => {
@@ -298,8 +304,8 @@ function renderAssembly() {
   const listLines = rows => rows.map(t => (t.startsWith('\t') ? '<br><span class="holes">' + esc(t.slice(1)) + '</span>' : '<br>– ' + esc(t))).join('');
   const holeLines = drillings => drillings.map(({ drilling, qty }) => [qty, holeText(drilling)]).filter(([, text]) => text)
     .map(([qty, text], _, all) => '\t' + (all.length > 1 ? qty + ' × ' : '') + text);
-  const withEdges = edges => (edges && edges.length ? ' (ABS ' + edgeText(edges) + ')' : '');
-  const withLacquer = sides => (sides && sides.length ? ' (lakier ' + sideText(sides) + ')' : '');
+  const withEdges = edges => (edges && edges.length ? ' (obrzeże ' + edgeText(edges) + ')' : '');
+  const withLacquer = sides => (sides && sides.length ? ' (obrzeże ' + sideText(sides) + ')' : '');
   const label = key => (codeOfRow[key] ? codeOfRow[key] + ' ' : '');
   // one line per hand (left, right, then the rest): which side of the carcass a drilled part goes on
   const byHand = row => {
@@ -319,6 +325,7 @@ function renderAssembly() {
     const boards = model.boards.filter(b => b.carcassId === carcass.id), fronts = model.fronts.filter(f => f.carcassId === carcass.id);
     const pins = boards.filter(b => b.id === 'adjustableShelf').length * KE.PINS_PER_SHELF;
     const hinges = fronts.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
+    const bumpers = fronts.reduce((n, f) => n + (f.bumpers ? f.bumpers.length : 0), 0);
     const frontLines = fronts.flatMap(f => [label(KE.cutKey(frontPart(f))) + frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.hinges ? ', zawiasy: ' + f.hinges.length + ', strona ' + KE.LABELS.side[f.hand] : '') + (f.handle ? ', uchwyt ' + KE.LABELS.side[f.handle] : ''),
       ...holeLines(KE.cutList([frontPart(f)])[0].drillings)]);
     const drawerLines = [
@@ -330,6 +337,7 @@ function renderAssembly() {
     const hardware = [
       carcass.legs ? 'nóżki: ' + carcass.legs : '',
       hinges ? 'zawiasy: ' + hinges : '',
+      bumpers ? 'odbojniki: ' + bumpers : '',
       pins ? 'podpórki półek: ' + pins : '',
       pullOutShelves ? pullOutShelves + ' ' + plural(pullOutShelves, 'para', 'pary', 'par') + ' prowadnic pełnego wysuwu' : '',
       doorDrawers ? 'prowadnice kulkowe ' + fronts.find(f => f.doorDrawers).doorDrawers.runnerLength + ': ' + doorDrawers + ' kpl.' : ''
@@ -390,7 +398,7 @@ function blockTotals() {
     (rowsOf[block.id] || []).forEach(row => {
       const { a, b, qty, edges } = row;
       const m2 = (a * b * qty) / 1e6;
-      // ABS edges from engine.js; fronts, strips and the plinth have none
+      // banded edges from engine.js; fronts, strips and the plinth have none
       const edge = edges && edges.length ? (edgeLength(edges) * qty) / 1000 : null;
       const cut = block.cut ? ((a + b) * qty) / 1000 : null;
       t.m2 += m2;
@@ -420,7 +428,7 @@ function carcassValue(rest) {
 // an item by carcass name or place and type or tag ("K1/oven", "G1[5]/dishwasher", "K1/cabinet#2" = the second from the bottom):
 // module width, height, v0, v1; its front frontWidth, frontHeight, frontV0, frontV1; space = the clear height between the
 // nearest horizontal boards of its carcass below (spaceBottom) and above (spaceTop) its middle; drawers behind its door (tag doorDrawers):
-// count, runnerLength, boxWidth, boxHeight; hinge = the hinge side of its door; edges = the ABS edges of a panel ("lewa 717", "brak");
+// count, runnerLength, boxWidth, boxHeight; hinge = the hinge side of its door; edges = the banded edges of a panel ("lewa 717", "brak");
 // fit.* = how its appliance sits in it (engine.js fitAppliances: fit.bodyV0, fit.feet, fit.fasciaV0, fit.doorV0 ...)
 function itemValue(rest) {
   const dot = rest.indexOf('.'), field = rest.slice(dot + 1), [where, what = ''] = rest.slice(0, dot).split('/'), [kind, n] = what.split('#');
@@ -512,7 +520,7 @@ function compute() {
 // a quantity formula in words, for the tooltip of a calculated quantity: every placeholder as its name and value
 function describeFormula(expr) {
   const items = Object.fromEntries(ITEMS.map(item => [item.id, item]));
-  const TOTALS = { m2: 'm²', edge: 'ABS mb', cut: 'cięcia mb', qty: 'szt.' };
+  const TOTALS = { m2: 'm²', edge: 'obrzeże mb', cut: 'cięcia mb', qty: 'szt.' };
   return expr.replace(/^=/, '')
     .replace(/\{q:(\w+)\}/g, (m, id) => (items[id] ? 'ilość „' + fill(items[id].name) + '”' : m))
     .replace(/\{(\w+)\.(m2|edge|cut|qty)\}/g, (m, block, total) => {
@@ -525,7 +533,7 @@ function describeFormula(expr) {
 // the visible name of a placeholder in a tooltip: engine counts and parameters in Polish; setting and var paths as written in the data
 const COUNT_NAMES = {
   carcasses: 'korpusy', wallBrackets: 'kątowniki listew tylnych do ściany', fronts: 'fronty', handles: 'uchwyty',
-  hinges: 'zawiasy', drawersD: 'szuflady D', drawersM: 'szuflady M', innerDrawers: 'szuflady wewnętrzne', shelvesAdjustable: 'półki ruchome',
+  hinges: 'zawiasy', bumpers: 'odbojniki', drawersD: 'szuflady D', drawersM: 'szuflady M', innerDrawers: 'szuflady wewnętrzne', shelvesAdjustable: 'półki ruchome',
   shelvesFixed: 'półki stałe', shelfPins: 'podpórki półek', pullOutShelves: 'półki wysuwane', doorDrawers: 'szuflady za drzwiami', legs: 'nóżki', sinks: 'zlewy', hobs: 'płyty grzewcze',
   fridges: 'lodówki', grilles: 'kratki', plasterUD: 'profil UD [mm]', plasterCD: 'profil CD [mm]', plasterEdge: 'krawędzie GK [mm]'
 };
@@ -574,9 +582,9 @@ function renderCuttingList() {
   const totals = blockTotals(), html = [];
   for (const block of COST.blocks) {
     html.push(`<tr class="blk"><td colspan="12">${esc(fill(block.title))}</td></tr>`);
-    // as an order form: each size followed by the number of finished edges along it (ABS or lacquer)
+    // as an order form: each size followed by the number of finished edges along it (edge banding or lacquer)
     const [label, size1, size2, qtyLabel] = columnsOf(block).map(esc);
-    html.push(`<tr class="bh"><td title="kod części do naklejenia; ten sam w zakładce Montaż">Etykieta</td><td>${label}</td><td>${size1} [mm]</td><td>Krawędź</td><td>${size2} [mm]</td><td>Krawędź</td><td>m²</td><td>${qtyLabel}</td><td>ABS razem [mb]</td><td title="(długość + szerokość) × ilość: długość cięcia w hurtowni – wyceniona w pozycji Cięcie płyt">Cięcia [mb]</td><td title="wycięcia w blacie (CNC w hurtowni), kody w legendzie pod tabelą; wartości z design.js (settings.cutouts)">Wycięcia</td><td title="nazwa korpusu, inaczej G grupa [kolumna]">Gdzie</td></tr>`);
+    html.push(`<tr class="bh"><td title="kod części do naklejenia; ten sam w zakładce Montaż">Etykieta</td><td>${label}</td><td>${size1} [mm]</td><td>Krawędź</td><td>${size2} [mm]</td><td>Krawędź</td><td>m²</td><td>${qtyLabel}</td><td>Obrzeże razem [mb]</td><td title="(długość + szerokość) × ilość: długość cięcia w hurtowni – wyceniona w pozycji Cięcie płyt">Cięcia [mb]</td><td title="wycięcia w blacie (CNC w hurtowni), kody w legendzie pod tabelą; wartości z design.js (settings.cutouts)">Wycięcia</td><td title="nazwa korpusu, inaczej G grupa [kolumna]">Gdzie</td></tr>`);
     (rowsOf[block.id] || []).forEach((row, i) => {
       const t = totals[block.id].rows[i], along = edgeCounts(row);
       const cell = value => `<td class="num" title="Obliczone przez engine.js z design.js – zmiany projektu w design.html">${value}</td>`;
@@ -696,11 +704,11 @@ function buildWorkbook() {
     cutting.push([str(fill(block.title))]);
     // as an order form: each size followed by the number of finished edges along it
     const [labelCell, size1, size2, qtyCell] = columnsOf(block);
-    cutting.push([str('Etykieta'), str(labelCell), str(size1 + ' [mm]'), str('Krawędź'), str(size2 + ' [mm]'), str('Krawędź'), str('m²'), str(qtyCell), str('ABS razem [mb]'), str('Cięcia [mb]'), str('Wycięcia (legenda na dole)'), str('Gdzie')]);
+    cutting.push([str('Etykieta'), str(labelCell), str(size1 + ' [mm]'), str('Krawędź'), str(size2 + ' [mm]'), str('Krawędź'), str('m²'), str(qtyCell), str('Obrzeże razem [mb]'), str('Cięcia [mb]'), str('Wycięcia (legenda na dole)'), str('Gdzie')]);
     const first = cutting.length + 1;
     (rowsOf[block.id] || []).forEach((row, i) => {
       const r = cutting.length + 1, t = result.totals[block.id].rows[i], along = edgeCounts(row);
-      // columns: A label, B name, C length, D edges, E width, F edges, G m², H qty, I ABS, J cuts, K cut-outs, L where
+      // columns: A label, B name, C length, D edges, E width, F edges, G m², H qty, I edge banding, J cuts, K cut-outs, L where
       const line = [str(codeOfRow[row.key] || ''), str(row.name), num(row.a), num(along.length), num(row.b), num(along.width), formula(`C${r}*E${r}*H${r}/1000000`, t.m2), num(row.qty)];
       line.push(t.edge != null ? formula(`${edgeLength(row.edges)}*H${r}/1000`, t.edge) : str(''));
       line.push(block.cut ? formula(`(C${r}+E${r})*H${r}/1000`, t.cut) : str(''));
@@ -732,7 +740,7 @@ function buildWorkbook() {
     ['Lp.', 'Pozycja', 'Specyfikacja', 'Gdzie użyte', 'Ilość', 'J.m.', 'Cena jedn. [PLN]', 'Wartość [PLN]', 'Źródło ceny / uwagi'].map(str)];
   const itemRow = {}, categoryRows = [];
   let no = 0;
-  // quantity formula of this page -> Excel formula: item quantities, the parameters and the m², ABS and cut totals of the cutting list
+  // quantity formula of this page -> Excel formula: item quantities, the parameters and the m², edge banding and cut totals of the cutting list
   // as cell references, the rest as values
   const toExcel = expr => expr.replace(/^=/, '')
     .replace(/\{q:(\w+)\}/g, (_, id) => `E${itemRow[id]}`)
