@@ -95,7 +95,7 @@
 
   // settings the engine and the pages read: a missing one stops the build (checkSettings)
   const REQUIRED_SETTINGS = [
-    'carcass.depth', 'carcass.backGap', 'carcass.frontGap', 'carcass.legs',
+    'carcass.depth', 'carcass.frontGap', 'carcass.legs',
     'backPanel.inset',
     'crossRails.depth', 'crossRails.hobFront', 'crossRails.hobPanelGap',
     'shelf.setback', 'shelf.clearance', 'shelf.perDoor', 'shelf.ventGap',
@@ -207,7 +207,20 @@
 
   // problems in design.js materials and settings that make a build impossible; design.html lists them, build() throws them
   function checkSettings(project) {
-    return [...materialUses(project && project.materials).problems, ...settingProblems((project && project.settings) || {})];
+    return [...materialUses(project && project.materials).problems, ...settingProblems((project && project.settings) || {}), ...groupProblems(project && project.groups)];
+  }
+  // groups: a list [{group, name, backGap, columns}], one entry per group number
+  function groupProblems(groupList) {
+    if (!Array.isArray(groupList)) return ['Brak listy groups [{group, name, backGap, columns}].'];
+    const problems = [], seen = new Set();
+    for (const g of groupList) {
+      if (!(g && Number.isInteger(g.group) && g.group >= 1)) { problems.push('groups: każda grupa potrzebuje numeru "group" (liczba całkowita ≥ 1).'); continue; }
+      if (seen.has(g.group)) problems.push(`groups: grupa ${g.group} jest na liście dwa razy.`);
+      seen.add(g.group);
+      if (!(g.backGap >= 0)) problems.push(`groups: grupa ${g.group} potrzebuje backGap ≥ 0 (odstęp za korpusami).`);
+      if (!Array.isArray(g.columns)) problems.push(`groups: grupa ${g.group} potrzebuje listy columns.`);
+    }
+    return problems;
   }
   function settingProblems(settings) {
     const problems = [];
@@ -221,10 +234,6 @@
     }
     const hingeTable = valueAt(settings, 'hinges.perDoor');
     if (Array.isArray(hingeTable) && hingeTable.some(row => !(row && row.count >= 2))) problems.push('Ustawienie hinges.perDoor: każde drzwi potrzebują co najmniej 2 zawiasów.');
-    const backGap = valueAt(settings, 'carcass.backGap');
-    if (backGap !== undefined && !(backGap && typeof backGap === 'object' && !Array.isArray(backGap) && Object.values(backGap).every(gap => gap >= 0))) {
-      problems.push('Ustawienie carcass.backGap musi być obiektem {grupa: odstęp za korpusami ≥ 0}.');
-    }
     const doorDrawerCount = valueAt(settings, 'doorDrawers.count');
     if (doorDrawerCount !== undefined && !(Number.isInteger(doorDrawerCount) && doorDrawerCount >= 1)) problems.push('Ustawienie doorDrawers.count musi być liczbą całkowitą ≥ 1.');
     return problems;
@@ -350,10 +359,12 @@
     };
 
     // ---- components: checks on one component; what cannot be placed is skipped ----
-    const columns = projectData.columns || {}, pieces = [];
+    // groups by number: each with its column widths, its name and backGap
+    const groupData = Object.fromEntries((projectData.groups || []).map(g => [String(g.group), g]));
+    const columns = Object.fromEntries(Object.entries(groupData).map(([g, data]) => [g, data.columns || []])), pieces = [];
     (projectData.components || []).forEach((c, index) => {
       const piece = readComponent(c, index), at = placeOf(piece);
-      if (!(String(c.group) in columns)) return warn(`${at}: grupa ${c.group} nie ma kolumn - pominięty.`, index, true);
+      if (!(String(c.group) in columns)) return warn(`${at}: grupy ${c.group} nie ma na liście groups - pominięty.`, index, true);
       if (!Number.isInteger(piece.height)) return warn(`${at}: wysokość "${c.height}" musi być całkowitą liczbą mm - pominięty.`, index, true);
       if (!piece.type) {
         return warn(`${at}: ${String(c.type ?? '').trim() ? 'nieznany typ "' + c.type + '"' : 'brak typu'}; typ musi być jednym z: ${TYPES.map(typeLabel).join(', ')} - pominięty.`, index, true);
@@ -386,13 +397,10 @@
       const stacked = stack(widths, pieces.filter(p => String(p.group) === g));
       for (const { piece, why } of stacked.skipped) warn(`${placeOf(piece)}: ${typeLabel(piece.type)} ${why} - pominięty.`, piece.index, true);
       const island = stacked.items.some(item => item.type === 'worktop' && hasTag(item, 'island')); // a free-standing island: its worktop has the tag island
-      let backGap = settings.carcass.backGap[g]; // behind the carcass backs: to the wall, an island to the back of its worktop
-      if (!(backGap >= 0)) {
-        warn(`Grupa ${g}: brak ustawienia carcass.backGap.${g} (odstęp za korpusami) - przyjęto 0.`);
-        backGap = 0;
-      }
+      const backGap = groupData[g].backGap; // behind the carcass backs: to the wall, an island to the back of its worktop
       groups[g] = {
         group: +g,
+        name: groupData[g].name || '',
         widths,
         columnX: stacked.columnX,
         length: stacked.columnX[stacked.columnX.length - 1],
@@ -670,7 +678,7 @@
         continue;
       }
       const use = groupModel.island ? ISLAND_USE : 'worktop', material = materialFor[use], materialDepth = projectData.materials[material].depth;
-      // every worktop: from worktop.overhang in front of the fronts back to the wall line, carcass.backGap behind the carcass backs
+      // every worktop: from worktop.overhang in front of the fronts back to the wall line, the group's backGap behind the carcass backs
       // (an island: no wall, only that line); the rest of the board is cut off at the back
       const n1 = frontFace + settings.worktop.overhang, n0 = groupModel.wall, depth = n1 - n0;
       if (depth > materialDepth) warn(`Grupa ${groupModel.group}: blat ma ${depth}, materiał ${materials[material].label} ma ${materialDepth}.`);
@@ -1121,13 +1129,13 @@
     const entries = (obj, line = v => value(v)) => Object.entries(obj || {}).map(([k, v]) => '  ' + json1(k) + ': ' + line(v)).join(',\n');
     const components = project.components.map((c, i) => (i && c.group !== project.components[i - 1].group ? '\n' : '') + '  ' + json1(c)).join(',\n');
     return '/* Kitchen project design - shared by design.html, cost.html and view.html.\n' +
-      '   Plain JSON after "window.KITCHEN_DESIGN =". Notes, columns and components: design.html (Import data / Export data);\n' +
+      '   Plain JSON after "window.KITCHEN_DESIGN =". Notes, groups and components: design.html (Import data / Export data);\n' +
       '   materials and settings: by hand (design.html keeps them as they are). */\n' +
       'window.KITCHEN_DESIGN = {\n "materials": {\n' + entries(project.materials, json1) +
       '\n },\n "settings": {\n' + entries(project.settings) +
       '\n },\n "notes": [\n' + project.notes.map(n => '  ' + json1(n)).join(',\n') +
-      '\n ],\n "columns": {\n' + entries(project.columns) +
-      '\n },\n "components": [\n' + components + '\n ]\n};\n';
+      '\n ],\n "groups": [\n' + project.groups.map(g => '  ' + json1(g)).join(',\n') +
+      '\n ],\n "components": [\n' + components + '\n ]\n};\n';
   }
   // the project object from the text of design.js (or plain JSON)
   function fromDesignJS(text) {

@@ -303,7 +303,7 @@ document.getElementById('src').textContent = 'Dane: design.js, view.js i applian
 if (model.warnings.length) console.warn('design.js: ' + model.warnings.join(' | '));
 
 const GROUP_IDS = Object.keys(SCENE.placement); // the groups placed in the room, by group number
-const groupName = Object.fromEntries(GROUP_IDS.map(r => [r, SCENE.placement[r].name]));
+const groupName = Object.fromEntries(GROUP_IDS.map(r => [r, model.groups[r] ? model.groups[r].name : 'G' + r])); // design.js groups
 const freeStanding = Object.fromEntries(GROUP_IDS.map(r => [r, !!(model.groups[r] || {}).island])); // no wall behind an island
 const itemsOfGroup = {}, groupLength = {};
 for (const r of GROUP_IDS) {

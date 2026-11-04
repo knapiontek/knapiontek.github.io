@@ -16,9 +16,9 @@
      cameras       the views in the dock; the first one opens */
 window.KITCHEN_VIEW = {
  "placement": {
-  "1": {"name": "pod oknem", "z": 0, "rotation": 0, "anchor": {"column": 11}, "against": {"group": 2}},
-  "2": {"name": "zabudowa wysoka", "x": 3372, "z": 0, "rotation": -90},
-  "3": {"name": "wyspa", "x": 920, "z": 2208, "rotation": 180, "anchor": "centre"}
+  "1": {"z": 0, "rotation": 0, "anchor": {"column": 11}, "against": {"group": 2}},
+  "2": {"x": 3372, "z": 0, "rotation": -90},
+  "3": {"x": 920, "z": 2208, "rotation": 180, "anchor": "centre"}
  },
  "room": {"ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallGroup": 2, "rightWallLength": 4000, "floorJoint": 2, "wallColor": "#f2f1ee"},
  "installation": {

@@ -22,7 +22,7 @@
      {n:hinges}        engine count ({n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
      {s:drawers.D.frontAbove} design.js setting     {t:carcass} thickness, {d:worktop} depth (as bought) and {m:cabinet} material label of a board type or part
                        (a material use of engine.js: a board type, islandWorktop, endPanel, islandEndPanel, carcass, backPanel, drawerBox, hobPanel)
-     {w:1.depth}       worktop of group 1  {k:K8.innerWidth} carcass by name: width, height, innerWidth, v0, v1
+     {w:1.depth}       worktop of group 1  {g:3.backGap} group 3 (backGap, name)  {k:K8.innerWidth} carcass by name: width, height, innerWidth, v0, v1
      {i:K8/oven.space} item by carcass name or place (G1[6]) and type or tag, #2 = the second from the bottom:
                        width, height, v0, v1 (module), frontWidth, frontHeight, frontV0, frontV1 (front),
                        spaceBottom, spaceTop, space (clear height between the horizontal boards of the carcass around it),
@@ -64,7 +64,7 @@ window.KITCHEN_COST = {
    {"type": "cabinet", "function": "drzwi"}
   ],
   "sheet": "Arkusz płyty {v:sheet.length}×{v:sheet.width} [m²]",
-  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: obrzeże razem = długość obrzeża × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, od ściany {s:carcass.backGap.1} (grupa 1), {s:carcass.backGap.2} (grupa 2); front {s:carcass.frontGap} przed korpusem; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:backPanel.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:strip.depth} × długość korpusu obok (listwa pionowa; skrócić na miejscu pod kątownik) lub pod nią (listwa pozioma).\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nObrzeże: tylko krawędzie widoczne (fronty: wszystkie, listwy przednie: przednia, panele przednie: przy otwieranym froncie); strona każdej krawędzi w zakładce Montaż.\nPłyty lakierowane: lakier na obu stronach.\nBlaty: krawędź przednia fabryczna, wycięcia bez obrzeża.",
+  "cuttingNote": "Wymiary: długość × szerokość, dłuższy bok pierwszy; fronty szerokość × wysokość.\nKrawędź: liczba wykończonych krawędzi wzdłuż wymiaru obok (0, 1, 2), jak w formularzu hurtowni.\nSumy: obrzeże razem = długość obrzeża × ilość; cięcia = (długość + szerokość) × ilość.\nKorpus: gł. {s:carcass.depth}, od ściany {g:1.backGap} (grupa 1), {g:2.backGap} (grupa 2); front {s:carcass.frontGap} przed korpusem; wnętrze = szerokość − 2 × {t:carcass}.\nPółki: ruchoma = wnętrze − 2 × {s:shelf.clearance}, gł. − {s:shelf.setback}; stała = pełna głębokość (nad piekarnikiem i lodówką − {s:shelf.ventGap}).\nPlecy = korpus − 2 × {s:backPanel.inset}; front = moduł − 4 szczeliny; listwa tylna = {s:strip.depth} × długość korpusu obok (listwa pionowa; skrócić na miejscu pod kątownik) lub pod nią (listwa pozioma).\nSzuflady: dno = wnętrze − {s:drawers.bottom.inset} × {s:drawers.bottom.depth}; tył = wnętrze − {s:drawers.back.inset}.\nObrzeże: tylko krawędzie widoczne (fronty: wszystkie, listwy przednie: przednia, panele przednie: przy otwieranym froncie); strona każdej krawędzi w zakładce Montaż.\nPłyty lakierowane: lakier na obu stronach.\nBlaty: krawędź przednia fabryczna, wycięcia bez obrzeża.",
   "legend": {"runner": "pozycje do potwierdzenia wg Blum i Häfele"}
  },
  "blocks": [
@@ -919,7 +919,7 @@ window.KITCHEN_COST = {
     {
      "id": "fridgeAir",
      "topic": "Lodówka – wentylacja",
-     "description": "Wlot: kratka w cokole.\nWylot: szczelina {s:shelf.ventGap} za półką stałą nad urządzeniem, {s:carcass.backGap.2} za korpusem."
+     "description": "Wlot: kratka w cokole.\nWylot: szczelina {s:shelf.ventGap} za półką stałą nad urządzeniem, {g:2.backGap} za korpusem."
     },
     {
      "id": "dishwasher",
@@ -1040,7 +1040,7 @@ window.KITCHEN_COST = {
     {
      "id": "islandOverhang",
      "topic": "Nawis blatu wyspy od strony hokerów",
-     "description": "Blat wystaje {s:carcass.backGap.3} za korpusy (z panelem tylnym), blat wyspy {w:3.depth}. Patrz widok 3D: dobry dla hokerów, ciasny dla krzeseł."
+     "description": "Blat wystaje {g:3.backGap} za korpusy (z panelem tylnym), blat wyspy {w:3.depth}. Patrz widok 3D: dobry dla hokerów, ciasny dla krzeseł."
     },
     {
      "id": "islandSocket",

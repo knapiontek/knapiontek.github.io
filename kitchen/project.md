@@ -8,7 +8,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 
 | File | Kind | Owns | Written by |
 |---|---|---|---|
-| design.js | data, this project | materials, settings, notes, columns, components | design.html (export); materials and settings by hand |
+| design.js | data, this project | materials, settings, notes, groups, components | design.html (export); materials and settings by hand |
 | cost.js | data, this project | prices, items, notes and settings of cost.html | LLM, per project |
 | view.js | data, this project | placement of the groups, room, how the appliances are fitted, lights and cameras of view.html | LLM, per project |
 | appliances.js | data, this project | the appliances as the manufacturer gives them: overall sizes as fixed values (no niches, no ranges) and documents, for cost.html and view.html | LLM, per project |
@@ -47,13 +47,13 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 
 ## What is project specific and what is not
 
-- **Project specific:** design.js (its notes, columns and components are this kitchen), cost.js, view.js, appliances.js and textures.js.
+- **Project specific:** design.js (its notes, groups and components are this kitchen), cost.js, view.js, appliances.js and textures.js.
 - **Every project:** rules.md, engine.js, design.html and the code of cost.html and view.html, which holds no numbers or names of this kitchen.
 - A new kitchen starts from rules.md: make a new design.js in design.html, then let an LLM generate cost.js, view.js, appliances.js and textures.js for it.
 
 ## The files in short
 
-- **design.js**: plain data a person can read and edit: materials (what you buy and what each is used for), construction settings (setbacks, gaps, hinges, shelves, drawers, drilling, cut-outs), user notes (an LLM may read them, but no code parses them), column widths, and the components, one per line.
+- **design.js**: plain data a person can read and edit: materials (what you buy and what each is used for), construction settings (setbacks, gaps, hinges, shelves, drawers, drilling, cut-outs), user notes (an LLM may read them, but no code parses them), the groups (number, name, back gap, column widths) and the components, one per line.
 - **engine.js**: knows no kitchen. It places the components in their columns, joins them into carcasses, builds the boards, fronts, strips, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.js.
 - **design.html**: knows the format, not the kitchen. Tables for materials (read only: they define what each type is made of), groups and columns, components and user notes; the elevation drawing; problems listed under the tables.
 - **cost.html**: the estimate, the cutting list with drilling and cut-outs, the notes (the detailed geometry of the appliances, written by the LLM), assembly help and the carcass map; exports the XLSX. Its texts refer to the model, not to copied numbers.

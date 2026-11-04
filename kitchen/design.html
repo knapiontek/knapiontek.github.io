@@ -144,6 +144,7 @@
         .input-grid .sub-section:not(.wide) { display: flex; flex-direction: column; min-height: 0; }
         .input-grid .sub-section:not(.wide) .sheet-wrap { flex: 1 1 auto; max-height: none; }
         .input-grid .sub-section.columns .sheet-wrap { contain: size; min-height: 120px; }
+        .input-grid .sub-section.columns .sheet.groups { margin-bottom: 14px; }
         .sheet td.center { text-align: center; }
         .sheet.read-only td { padding: 7px 10px; color: var(--sheet-text); white-space: normal; }
         .sheet.read-only td.num { text-align: right; }
@@ -308,7 +309,23 @@
         </div>
       </div>
       <div class="sub-section columns">
-        <h4>Grupy i kolumny</h4>
+        <h4>Grupy</h4>
+        <table class="sheet groups">
+          <thead>
+            <tr><th style="width:48px">Grupa</th><th>Nazwa</th><th style="width:56px" title="odstęp tyłu korpusów od ściany; wyspa: do tylnej krawędzi blatu">Z tyłu</th><th class="col-actions"></th></tr>
+          </thead>
+          <tbody>
+            <template x-for="(row, idx) in groupRows" :key="row.id">
+              <tr :class="{'is-invalid': build.groupFlags[idx] === 'invalid', 'is-empty-row': build.groupFlags[idx] === 'empty'}">
+                <td><input type="number" class="cell" min="1" step="1" x-model.number="row.group"></td>
+                <td><input type="text" class="cell" x-model="row.name"></td>
+                <td><input type="number" class="cell" min="0" step="1" x-model.number="row.backGap"></td>
+                <td class="col-actions"><button type="button" class="row-del" title="Usuń wiersz" @click="groupRows.splice(idx, 1)">×</button></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+        <h4>Kolumny</h4>
         <div class="sheet-wrap" @scroll="picker.row = null">
           <table class="sheet">
             <thead>
@@ -574,20 +591,31 @@ function dataComponent(row) {
 }
 
 // the tables as a project; rows that cannot be read are left out and flagged 'empty' or 'invalid'
-function readTables(columnRows, componentRows, noteRows) {
+function readTables(groupRows, columnRows, componentRows, noteRows) {
   const warnings = [];
-  const columnFlags = columnRows.map(() => null), componentFlags = componentRows.map(() => null);
+  const groupFlags = groupRows.map(() => null), columnFlags = columnRows.map(() => null), componentFlags = componentRows.map(() => null);
   const isWhole = (n, min) => Number.isInteger(n) && n >= min;
-  const columns = {};
-  columnRows.forEach((row, idx) => {
-    if (isRowEmpty(row.group, row.width)) { columnFlags[idx] = 'empty'; return; }
-    const group = toNumber(row.group), width = toNumber(row.width);
-    if (!isWhole(group, 1) || !(width >= 0)) {
-      columnFlags[idx] = 'invalid';
-      warnings.push(`Grupy i kolumny, wiersz ${idx + 1}: grupa musi być liczbą całkowitą ≥ 1, szerokość ≥ 0.`);
+  // groups: one row per group (number, name, backGap); the columns table adds the widths
+  const groups = [];
+  groupRows.forEach((row, idx) => {
+    if (isRowEmpty(row.group, row.name, row.backGap)) { groupFlags[idx] = 'empty'; return; }
+    const group = toNumber(row.group), backGap = toNumber(row.backGap);
+    if (!isWhole(group, 1) || !(backGap >= 0) || groups.some(g => g.group === group)) {
+      groupFlags[idx] = 'invalid';
+      warnings.push(`Grupy, wiersz ${idx + 1}: grupa musi być liczbą całkowitą ≥ 1 (bez powtórzeń), odstęp z tyłu ≥ 0.`);
       return;
     }
-    (columns[group] || (columns[group] = [])).push(width);
+    groups.push({ group, name: String(row.name ?? '').trim(), backGap, columns: [] });
+  });
+  columnRows.forEach((row, idx) => {
+    if (isRowEmpty(row.group, row.width)) { columnFlags[idx] = 'empty'; return; }
+    const group = toNumber(row.group), width = toNumber(row.width), target = groups.find(g => g.group === group);
+    if (!isWhole(group, 1) || !(width >= 0) || !target) {
+      columnFlags[idx] = 'invalid';
+      warnings.push(`Kolumny, wiersz ${idx + 1}: grupa musi być w tabeli Grupy, szerokość ≥ 0.`);
+      return;
+    }
+    target.columns.push(width);
   });
   const components = [], rowOfComponent = []; // component index -> table row
   componentRows.forEach((row, idx) => {
@@ -604,8 +632,8 @@ function readTables(columnRows, componentRows, noteRows) {
     rowOfComponent.push(idx);
   });
   const notes = noteRows.filter(n => !isRowEmpty(n.name, n.description, n.details)).map(({ name, description, details }) => ({ name, description, details }));
-  const project = { materials: (loadedProject && loadedProject.materials) || {}, settings: (loadedProject && loadedProject.settings) || {}, notes, columns, components };
-  return { project, warnings, columnFlags, componentFlags, rowOfComponent };
+  const project = { materials: (loadedProject && loadedProject.materials) || {}, settings: (loadedProject && loadedProject.settings) || {}, notes, groups, components };
+  return { project, warnings, groupFlags, columnFlags, componentFlags, rowOfComponent };
 }
 
 /* ---------- 4. SVG: model -> SVG ----------
@@ -739,11 +767,11 @@ function drawSVG(model) {
 }
 
 /* ---------- 5. elevations: tables -> project -> model -> SVG ---------- */
-function buildElevations(columnRows, componentRows, noteRows) {
-  const empty = { svg: '', isEmpty: true, project: null, warnings: [], columnFlags: [], componentFlags: [] };
+function buildElevations(groupRows, columnRows, componentRows, noteRows) {
+  const empty = { svg: '', isEmpty: true, project: null, warnings: [], groupFlags: [], columnFlags: [], componentFlags: [] };
   if (!loadedProject) return empty; // until design.js is loaded
-  const tables = readTables(columnRows, componentRows, noteRows);
-  const result = { ...empty, project: tables.project, warnings: tables.warnings, columnFlags: tables.columnFlags, componentFlags: tables.componentFlags };
+  const tables = readTables(groupRows, columnRows, componentRows, noteRows);
+  const result = { ...empty, project: tables.project, warnings: tables.warnings, groupFlags: tables.groupFlags, columnFlags: tables.columnFlags, componentFlags: tables.componentFlags };
   const stops = KE.checkSettings(tables.project); // problems in the materials or settings: no model can be built
   if (stops.length) return { ...result, warnings: [...tables.warnings, ...stops] };
   const model = KE.build(tables.project);
@@ -758,6 +786,7 @@ function buildElevations(columnRows, componentRows, noteRows) {
 document.addEventListener('alpine:init', () => {
   Alpine.data('kitchenApp', () => ({
     materials: [],
+    groupRows: [],
     columns: [],
     components: [],
     notes: [],
@@ -798,6 +827,7 @@ document.addEventListener('alpine:init', () => {
           if (w !== width) { width = w; requestAnimationFrame(() => this.growNotes()); }
         }).observe(this.$refs.notesTbody.closest('table'));
       });
+      this.$watch('groupRows', () => this.keepEmptyRows());
       this.$watch('columns', () => this.keepEmptyRows());
       this.$watch('components', () => this.keepEmptyRows());
       this.$watch('notes', () => { this.keepEmptyRows(); this.$nextTick(() => this.growNotes()); });
@@ -805,7 +835,7 @@ document.addEventListener('alpine:init', () => {
 
     // re-built by Alpine whenever a table changes
     get build() {
-      return buildElevations(this.columns, this.components, this.notes);
+      return buildElevations(this.groupRows, this.columns, this.components, this.notes);
     },
 
     // every table keeps exactly one empty row at the end
@@ -814,12 +844,16 @@ document.addEventListener('alpine:init', () => {
         if (!rows.length || !isEmpty(rows[rows.length - 1])) rows.push(newRow());
         while (rows.length > 1 && isEmpty(rows[rows.length - 1]) && isEmpty(rows[rows.length - 2])) rows.pop();
       };
+      keep(this.groupRows, r => isRowEmpty(r.group, r.name, r.backGap), () => this.newGroupRow());
       keep(this.columns, r => isRowEmpty(r.group, r.width), () => this.newColumnRow());
       keep(this.components, r => isRowEmpty(r.group, r.column, r.span, r.height), () => this.newComponentRow());
       keep(this.notes, r => isRowEmpty(r.name, r.description, r.details), () => this.newNoteRow());
     },
 
     // ---- rows ----
+    newGroupRow(group = '', name = '', backGap = '') {
+      return { id: this.nextId++, group, name, backGap };
+    },
     newColumnRow(group = '', width = '') {
       return { id: this.nextId++, group, width };
     },
@@ -840,7 +874,8 @@ document.addEventListener('alpine:init', () => {
         .map(([code, m]) => ({ code, ...m }))
         .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: design.js order
       this.notes = (project.notes || []).map(n => this.newNoteRow(n.name ?? '', n.description ?? '', n.details ?? ''));
-      this.columns = Object.entries(project.columns || {}).flatMap(([group, widths]) => widths.map(w => this.newColumnRow(Number(group), w)));
+      this.groupRows = (project.groups || []).map(g => this.newGroupRow(g.group, g.name ?? '', g.backGap ?? ''));
+      this.columns = (project.groups || []).flatMap(g => (g.columns || []).map(w => this.newColumnRow(g.group, w)));
       this.components = (project.components || []).map(c => this.newComponentRow(componentRow(c)));
     },
 
@@ -984,7 +1019,7 @@ document.addEventListener('alpine:init', () => {
     importData(text) {
       let project;
       try { project = KE.fromDesignJS(text); } catch (err) { throw new Error('to nie są poprawne dane projektu (' + err.message + ').'); }
-      if (!project || !project.materials || !project.settings || !project.columns || !Array.isArray(project.components)) throw new Error('to nie są dane projektu: brakuje "materials", "settings", "columns" lub "components".');
+      if (!project || !project.materials || !project.settings || !Array.isArray(project.groups) || !Array.isArray(project.components)) throw new Error('to nie są dane projektu: brakuje "materials", "settings", "groups" lub "components".');
       this.setProject(project);
     }
   }));

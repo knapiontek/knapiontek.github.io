@@ -1,5 +1,5 @@
 /* Kitchen project design - shared by design.html, cost.html and view.html.
-   Plain JSON after "window.KITCHEN_DESIGN =". Notes, columns and components: design.html (Import data / Export data);
+   Plain JSON after "window.KITCHEN_DESIGN =". Notes, groups and components: design.html (Import data / Export data);
    materials and settings: by hand (design.html keeps them as they are). */
 window.KITCHEN_DESIGN = {
  "materials": {
@@ -15,7 +15,7 @@ window.KITCHEN_DESIGN = {
   "endOak38x920": {"name": "Panel końcowy dwustronny, dekor jak blat H1180 ST37", "thickness": 38, "color": "#b69671", "texture": "oak", "core": "#f2efe8", "depth": 920, "twoSided": true, "uses": ["islandEndPanel"]}
  },
  "settings": {
-  "carcass": {"depth": 550, "backGap": {"1": 28, "2": 14, "3": 310}, "frontGap": 2, "legs": 4},
+  "carcass": {"depth": 550, "frontGap": 2, "legs": 4},
   "backPanel": {"inset": 1},
   "crossRails": {"depth": 100, "hobFront": 50, "hobPanelGap": 20},
   "shelf": {"setback": 18, "clearance": 1, "perDoor": [{"maxHeight": 720, "count": 1}, {"count": 3}], "ventGap": 150},
@@ -42,10 +42,7 @@ window.KITCHEN_DESIGN = {
   }
  },
  "notes": [
-  {"name": "Projekt", "description": "Kuchnia – Jaworze", "details": "grupa 1 + grupa 2 tworzą L"},
-  {"name": "Grupa 1", "description": "Blat", "details": "pod oknem"},
-  {"name": "Grupa 2", "description": "Zabudowa wysoka", "details": "zabudowa wysoka przy prawej ścianie"},
-  {"name": "Grupa 3", "description": "Wyspa", "details": "wolnostojąca, hokery od tyłu"},
+  {"name": "Projekt", "description": "Kuchnia – Jaworze", "details": "grupa 1 + grupa 2 tworzą L; grupa 2 przy prawej ścianie; wyspa wolnostojąca, hokery od tyłu"},
   {"name": "Lokalizacja", "description": "Jaworze, powiat bielski", "details": ""},
   {"name": "Zakres", "description": "Tylko materiały, montaż własny", "details": "Ceny: średnie rynkowe, PLN brutto"},
   {"name": "Styl", "description": "Shaker, lakierowany", "details": "Fronty nakładane; listwy między frontami dają wygląd frontów wpuszczanych"},
@@ -67,11 +64,11 @@ window.KITCHEN_DESIGN = {
   {"name": "AGD", "description": "Piekarnik i mikrofalówka w słupku, lodówka z zamrażarką za frontami, zmywarka pod blatem; płyta i zlew w blacie", "details": "Wymiary i dopasowanie do korpusów: kosztorys, Notatki"},
   {"name": "Ekspres do kawy", "description": "Posiadany, na półce wysuwanej narożnej szafki górnej", "details": ""}
  ],
- "columns": {
-  "1": [3, 38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 320],
-  "2": [18, 560, 40, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130],
-  "3": [3, 38, 18, 800, 18, 800, 18, 38, 3]
- },
+ "groups": [
+  {"group": 1, "name": "pod oknem", "backGap": 28, "columns": [3, 38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 320]},
+  {"group": 2, "name": "zabudowa wysoka", "backGap": 14, "columns": [18, 560, 40, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130]},
+  {"group": 3, "name": "wyspa", "backGap": 310, "columns": [3, 38, 18, 800, 18, 800, 18, 38, 3]}
+ ],
  "components": [
   {"group": 1, "column": 1, "span": 1, "type": "space", "height": 870},
   {"group": 1, "column": 1, "span": 12, "type": "worktop", "height": 38},
