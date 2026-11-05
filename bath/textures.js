@@ -1,20 +1,20 @@
-/* Tekstury płytek łazienki — wczytywane przez view.html (<script src="textures.js">).
-   Obrazy jako data URL, więc strona działa także otwarta prosto z dysku.
+/* Bathroom tile textures — loaded by view.html (<script src="textures.js">).
+   Images as data URLs, so the page also works when opened straight from disk.
 
-   window.BATH_TEXTURES.tiles — płytki do wyboru, po kluczu:
-     name     producent i wzór
-     look     wygląd
-     finish   rodzaj i wykończenie
-     size     [szerokość, długość] płytki na zdjęciu, mm (jedno zdjęcie = cała płytka)
-     grout    kolor fugi (epoksydowa, dobrana do płytki)
-     price    cena
-     link     gdzie kupić
-     faces    zdjęcia lic płytki (JPEG data URL); view.html układa je losowo,
-              obraca i przycina do wybranego formatu 
-   window.BATH_TEXTURES.decors — oryginalne dekory płyt Egger (zdjęcia ze sklepu M-HM, obrócone: słój poziomo)
-     code, name  kod i nazwa Egger
-     link        karta produktu w M-HM
-     width_m     ile metrów płyty pokazuje zdjęcie wzdłuż słoja
+   window.BATH_TEXTURES.tiles — selectable tiles, by key:
+     name     manufacturer and pattern
+     look     appearance
+     finish   type and finish
+     size     [width, length] of the tile in the photo, mm (one photo = one whole tile)
+     grout    grout colour (epoxy, matched to the tile)
+     price    price
+     link     where to buy
+     faces    photos of tile faces (JPEG data URL); view.html lays them out randomly,
+              rotates and crops them to the chosen format
+   window.BATH_TEXTURES.decors — original Egger board decors (photos from the M-HM shop, rotated: grain horizontal)
+     code, name  Egger code and name
+     link        product page at M-HM
+     width_m     how many metres of board the photo shows along the grain
      image       JPEG data URL
 */
 window.BATH_TEXTURES = {
