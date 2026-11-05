@@ -63,7 +63,7 @@ window.HOUSE_BUILDING = {
  "finishes": [
   {"face": "front", "floor": "ground", "x": [615.5, 661.4], "material": "woodVertical"},
   {"face": "front", "floor": "ground", "x": [741.0, 866.6], "material": "woodVertical"},
-  {"face": "front", "floor": "attic", "x": [390.0, 522.4], "material": "woodVertical", "upTo": "windowLine"}
+  {"face": "front", "floor": "attic", "x": [392.4, 522.4], "material": "woodVertical", "upTo": "windowLine"}
  ],
  "bands": [
   {"face": "garden", "x": [43, 867], "y": [238, 300], "depth": 1, "material": "woodHorizontal"},
@@ -72,8 +72,8 @@ window.HOUSE_BUILDING = {
  "claddings": [
   {"floor": "ground", "rect": [453.8, 1231, 454.8, 1322.8], "y": [0, 245], "material": "graphite"},
   {"floor": "ground", "rect": [846.2, 1231, 847.2, 1322.8], "y": [0, 245], "material": "graphite"},
-  {"floor": "ground", "rect": [453.8, 1231, 847.2, 1325], "y": [245, 272], "material": "plasterWhite"},
-  {"floor": "ground", "rect": [453.8, 1231, 847.2, 1325], "y": [244, 245], "material": "graphite"}
+  {"floor": "ground", "rect": [453.8, 1231, 847.2, 1323.8], "y": [245, 272], "material": "plasterWhite"},
+  {"floor": "ground", "rect": [453.8, 1231, 847.2, 1323.8], "y": [244, 245], "material": "graphite"}
  ],
  "doors": {
   "entrance": {"floor": "ground", "opening": [453.8, 1187.6, 615.5, 1231.0], "leaf": 100, "hinge": "left", "material": "graphite",

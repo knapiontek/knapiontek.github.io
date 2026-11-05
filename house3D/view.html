@@ -606,7 +606,11 @@ function footprint(floor) {
       const x1 = ux[i], x2 = ux[i + 1], it = owner((x1 + x2) / 2, cz);
       let key = null, cell = null;
       if (it) {
-        const face = facadeFace([x1, z1, x2, z2]), fin = face ? finishOf(face, floor, x1, x2) : null;
+        // a facade face only where the cell is the outermost one (nothing of the footprint in front of it)
+        let face = facadeFace([x1, z1, x2, z2]);
+        if (face === 'garden' && owner((x1 + x2) / 2, z1 - 1)) face = null;
+        if (face === 'front' && owner((x1 + x2) / 2, z2 + 1)) face = null;
+        const fin = face ? finishOf(face, floor, x1, x2) : null;
         cell = { kind: it.kind, opening: it.opening, face, finish: fin };
         key = [it.kind, it.opening ?? '', face || '', fin ? B.finishes.indexOf(fin) : ''].join('|');
       }
@@ -732,10 +736,12 @@ function skin(r0, y0, bottom, top, grp, breaks, floor, face, f) {
   } finally { skinning = false; }
 }
 function skinPieces(r, z, y0, bottom, top, grp, breaks, f) {
-  if (!f) { prism(r[0], z[0], r[2], z[1], y0, bottom, top, M[F.default], grp, breaks); return; }
+  // the default finish (graphite) lies 0.5 mm behind the others: where neighbours overlap, nothing shares a plane
+  const zd = z[0] < r[1] - 0.5 ? [z[0] + 0.05, z[1]] : [z[0], z[1] - 0.05];
+  if (!f) { prism(r[0], zd[0], r[2], zd[1], y0, bottom, top, M[F.default], grp, breaks); return; }
   const tf = num(top), upTo = f.upTo === 'windowLine' ? x => Math.min(tf(x), windowLine(x)) : tf;
   prism(r[0], z[0], r[2], z[1], y0, bottom, upTo, M[f.material], grp, breaks);
-  if (f.upTo) prism(r[0], z[0], r[2], z[1], y0, x => Math.max(num(bottom)(x), upTo(x)), tf, M[F.default], grp, breaks);
+  if (f.upTo) prism(r[0], zd[0], r[2], zd[1], y0, x => Math.max(num(bottom)(x), upTo(x)), tf, M[F.default], grp, breaks);
 }
 // frame profiles of a window: posts every mullionEvery cm, a sill bar, a head bar along the (maybe sloping) top, a transom
 function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX, opt) {
@@ -848,7 +854,7 @@ function buildWalls(floor) {
       frames(o.sill, () => o.head, [l1, l2], [zc - 3.5, zc + 3.5], y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
     }
   }
-  if (full) for (const c of B.claddings) if (c.floor === floor) prism(c.rect[0], c.rect[1], c.rect[2], c.rect[3], 0, c.y[0], c.y[1], M[c.material], grp, []);
+  for (const c of B.claddings) if (c.floor === floor && Math.min(c.y[1], cut) > c.y[0]) prism(c.rect[0], c.rect[1], c.rect[2], c.rect[3], 0, c.y[0], Math.min(c.y[1], cut), M[c.material], grp, []);
   if (full) for (const b of B.bands) {
     const onFloor = b.y[0] < (attic ? 10000 : LEVEL.attic) && b.y[0] >= (attic ? LEVEL.attic : -100);
     if (!onFloor) continue;
