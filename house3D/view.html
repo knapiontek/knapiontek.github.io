@@ -33,6 +33,15 @@ body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow
 .cams button:hover{border-color:var(--accent)}
 .legend{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:12px var(--f-body);color:var(--muted);max-width:min(420px,calc(100% - 24px))}
 .legend b{color:var(--ink);font-weight:600}
+.walkbtn{border:1px solid var(--accent);background:var(--panel);color:var(--accent);font:700 13px var(--f-display);letter-spacing:.04em;padding:6px 14px;border-radius:8px;cursor:pointer}
+.walkbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.walkhud{position:absolute;inset:auto 12px 12px auto;display:flex;align-items:flex-end;gap:12px;pointer-events:none;right:max(12px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));left:12px;justify-content:space-between}
+.walkinfo{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--muted);max-width:430px;pointer-events:auto}
+.walkinfo b{color:var(--ink)}
+.pad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px;pointer-events:auto}
+.pad button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;font-size:16px;cursor:pointer;touch-action:none;user-select:none}
+.pad .u{grid-column:2;grid-row:1}.pad .l{grid-column:1;grid-row:2}.pad .d{grid-column:2;grid-row:2}.pad .r{grid-column:3;grid-row:2}
+.stage.walking .legend{display:none}
 #loading{position:absolute;inset:0;display:grid;place-items:center;font:600 15px var(--f-display);color:var(--muted)}
 aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;min-width:0;padding-block:14px 28px;padding-left:16px;padding-right:max(16px,env(safe-area-inset-right,0px))}
 h1{font:700 21px/1.15 var(--f-display);letter-spacing:.01em;margin:0 0 2px;text-wrap:balance}
@@ -93,9 +102,19 @@ td select{padding:3px 4px;font-size:12px}
         <button id="m-attic" data-mode="attic" aria-pressed="false">Piętro</button>
         <button id="m-all" data-mode="all" aria-pressed="false">Cały dom</button>
       </div>
+      <button class="walkbtn" id="walkbtn" aria-pressed="false">Spacer</button>
       <div class="cams" id="cams"></div>
     </div>
-    <div class="legend" id="legend">Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko. <b>Czerwone</b> płytki = drobne docinki.</div>
+    <div class="walkhud" id="walkhud" hidden>
+      <div class="walkinfo"><b id="walklevel">Parter</b> · strzałki: chodzenie · A/D: krok w bok · Shift: szybciej · PgUp/PgDn lub przeciągnij myszą: patrzenie · Esc: wyjście</div>
+      <div class="pad" aria-label="Sterowanie">
+        <button data-k="ArrowUp" class="u" aria-label="Do przodu">▲</button>
+        <button data-k="ArrowLeft" class="l" aria-label="Obrót w lewo">◀</button>
+        <button data-k="ArrowDown" class="d" aria-label="Do tyłu">▼</button>
+        <button data-k="ArrowRight" class="r" aria-label="Obrót w prawo">▶</button>
+      </div>
+    </div>
+    <div class="legend" id="legend">Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko. <b>Spacer</b>: chodzenie strzałkami, także po schodach. <b>Czerwone</b> płytki = drobne docinki.</div>
   </div>
 
   <aside>
@@ -121,10 +140,11 @@ td select{padding:3px 4px;font-size:12px}
     <h2>Uwagi</h2>
     <p class="note">Tekstury z Twojego repo: Authority z <code>bath/textures.js</code> (zdjęcie jednej płytki 898 mm), dąb to dekory Egger z <code>kitchen</code> i <code>bath</code>, użyte zastępczo za gres drewnopodobny. Rozmiar, fugę i tekstura zmieniasz niezależnie od produktu.<br>
     „Ułóż automatycznie” szuka przesunięcia, przy którym przy ścianach nie ma pasków węższych niż 1/3 płytki (deska: końcówki krótsze niż 20 cm) i docinki w największym pomieszczeniu są symetryczne. Liczba płytek zakłada, że każdy docinek zużywa osobną płytkę.<br>
-    Piętro: ścianka kolankowa 120 cm, dach 42°. Schody są schematyczne.</p>
+    Piętro: ścianka kolankowa 120 cm, dach 42°. Schody zabiegowe w kształcie U (17 stopni po 17,5 cm) odczytane z rzutów: bieg z holu na zachód, spocznik przy ścianie, bieg powrotny nad garażem do holu piętra.</p>
   </aside>
 </div>
 
+<script>window.addEventListener('error', e => { const l = document.getElementById('loading'); if (l) { l.hidden = false; l.textContent = 'Błąd: ' + (e.message || 'nieznany') + ' (' + (e.lineno || '') + ')'; } });</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
@@ -135,8 +155,10 @@ td select{padding:3px 4px;font-size:12px}
 'use strict';
 const loading = document.getElementById('loading');
 if (!window.THREE || !THREE.OrbitControls) { loading.textContent = 'Nie można wczytać silnika 3D. Odśwież stronę.'; return; }
+if (!window.HOUSE_TEXTURES || !window.HOUSE_PLAN) { loading.textContent = 'Nie wczytały się dane domu (textures.js, plan.js).'; return; }
 const TEX = window.HOUSE_TEXTURES, PLAN = window.HOUSE_PLAN;
 let needsRender = true;
+const walk = { on: false, x: 525, z: 1150, y: 0, yaw: 0, pitch: -0.06, keys: {}, prevMode: 'ground' };
 
 /* ================= 1. HOUSE CONSTANTS (cm) ================= */
 const LEVEL = { ground: 0, attic: 297 };          // finished floor levels
@@ -292,7 +314,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 0.95;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
@@ -328,6 +350,7 @@ const M = {
   fire: new THREE.MeshStandardMaterial({ color: lin('#2b2b2c'), roughness: 0.6 }),
   tread: new THREE.MeshStandardMaterial({ color: lin('#a57b4f'), roughness: 0.6 }),
   roof: new THREE.MeshStandardMaterial({ color: lin('#f2f0ea'), roughness: 0.9, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
+  roofSolid: new THREE.MeshStandardMaterial({ color: lin('#f4f3ef'), roughness: 0.92, side: THREE.DoubleSide }),
 };
 M.wall = { ext: M.ext, int: M.int, chimney: M.chimney, knee: M.ext, gable: M.ext, rail: M.rail };
 
@@ -346,7 +369,7 @@ for (const key in TEX) faceTextures[key] = TEX[key].faces.map(src => {
 const tileMaterials = {};
 function tileMaterial(key, face) {
   const id = key + face;
-  if (!tileMaterials[id]) tileMaterials[id] = new THREE.MeshStandardMaterial({ map: faceTextures[key][face], vertexColors: true, roughness: TEX[key].kind === 'wood' ? 0.62 : 0.55, side: THREE.DoubleSide });
+  if (!tileMaterials[id]) tileMaterials[id] = new THREE.MeshStandardMaterial({ map: faceTextures[key][face], vertexColors: true, roughness: TEX[key].kind === 'wood' ? 0.66 : 0.68, envMapIntensity: 0.6, side: THREE.DoubleSide });
   return tileMaterials[id];
 }
 
@@ -368,21 +391,31 @@ box(-1500, -32, -1500, 2400, -30, 2800, M.lawn, site, false).receiveShadow = tru
 box(0, -30, -360, 910, -12, 0, M.terrace, site);
 box(0, -30, 1320, 910, -12, 1560, M.terrace, site);
 box(0, -30, 0, 910, 0, 1320, M.slab, groups.ground);
-// attic slab around the stair hole
-const V = PLAN.attic.void, slabY1 = GROUND_H, slabY2 = LEVEL.attic;
+// attic slab: the outline minus the stair hole, as grid cells
+const slabY1 = GROUND_H, slabY2 = LEVEL.attic, VOIDS = PLAN.attic.voids;
+const inVoid = (x, z) => VOIDS.some(v => x > v[0] && x < v[2] && z > v[1] && z < v[3]);
 const attSlab = new THREE.Group(); groups.attic.add(attSlab);
-box(0, slabY1, 0, 910, slabY2, V[1], M.slab, attSlab);
-box(0, slabY1, V[3], 910, slabY2, 1320, M.slab, attSlab);
-box(0, slabY1, V[1], V[0], slabY2, V[3], M.slab, attSlab);
-box(V[2], slabY1, V[1], 910, slabY2, V[3], M.slab, attSlab);
-// stair: straight flight rising to x1 (west), floating treads
-const S = PLAN.ground.stair, RISERS = 17, rise = LEVEL.attic / RISERS, run = (S[2] - S[0]) / RISERS;
-for (let i = 0; i < RISERS - 1; i++) {
-  const top = (i + 1) * rise, xa = S[2] - (i + 1) * run, xb = S[2] - i * run;
-  box(xa, top - 4, S[1] + 1, xb, top, S[3] - 1, M.tread, groups.ground);
-}
+(function buildSlab() {
+  const xs = [0, 910], zs = [0, 1320];
+  for (const v of VOIDS) { xs.push(v[0], v[2]); zs.push(v[1], v[3]); }
+  const ux = [...new Set(xs)].sort((a, b) => a - b), uz = [...new Set(zs)].sort((a, b) => a - b);
+  for (let i = 0; i < uz.length - 1; i++) for (let k = 0; k < ux.length - 1; k++)
+    if (!inVoid((ux[k] + ux[k + 1]) / 2, (uz[i] + uz[i + 1]) / 2)) box(ux[k], slabY1, uz[i], ux[k + 1], slabY2, uz[i + 1], M.slab, attSlab);
+})();
+// U-shaped stair; STAIR_BOXES [x1, z1, x2, z2, top] are also the walking surfaces
+const ST = PLAN.ground.stair, rise = LEVEL.attic / ST.risers, STAIR_BOXES = [];
+(function buildStair() {
+  const f1 = ST.flight1, f2 = ST.flight2, n1 = f1.risers, n2 = ST.risers - n1;
+  const run1 = (f1.x[1] - f1.x[0]) / (n1 - 1), run2 = (f2.x[1] - f2.x[0]) / (n2 - 1);  // the last riser of each flight is the landing / the attic floor
+  for (let i = 1; i < n1; i++) STAIR_BOXES.push([f1.x[1] - i * run1, f1.z[0], f1.x[1] - (i - 1) * run1, f1.z[1], i * rise]);
+  STAIR_BOXES.push([ST.landing.x[0], ST.landing.z[0], ST.landing.x[1], ST.landing.z[1], n1 * rise]);
+  for (let j = 1; j < n2; j++) STAIR_BOXES.push([f2.x[0] + (j - 1) * run2, f2.z[0], f2.x[0] + j * run2, f2.z[1], (n1 + j) * rise]);
+  for (const b of STAIR_BOXES) box(b[0], b[4] - 5, b[1] + 0.5, b[2], b[4], b[3] - 0.5, M.tread, groups.ground);
+  const c = ST.core; box(c[0], 0, c[1], c[2], GROUND_H, c[3], M.int, groups.ground);
+})();
 const FP = PLAN.ground.fireplace;
 box(FP[0], 0, FP[1], FP[2], 105, FP[3], M.fire, groups.ground);
+const CORE_WALL = ST.core;
 // roof slopes
 const roof = new THREE.Group(); root.add(roof);
 (function buildRoof() {
@@ -391,7 +424,7 @@ const roof = new THREE.Group(); root.add(roof);
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute([xa, y1, 0, xb, y2, 0, xb, y2, 1320, xa, y1, 0, xb, y2, 1320, xa, y1, 1320], 3));
     g.computeVertexNormals();
-    roof.add(new THREE.Mesh(g, M.roof));
+    const m = new THREE.Mesh(g, M.roof); m.receiveShadow = true; roof.add(m);
   }
 })();
 
@@ -415,7 +448,7 @@ function clearGroup(g) {
 }
 function buildWalls(floor) {
   const grp = wallGroups[floor]; clearGroup(grp);
-  const y0 = LEVEL[floor], cut = state.cut;
+  const y0 = LEVEL[floor], cut = walk.on ? 1000 : state.cut;
   const attic = floor === 'attic';
   const c1 = XL + (cut - KNEE) / PITCH, c2 = XR - (cut - KNEE) / PITCH;
   const breaks = attic ? [XL, XM, XR, c1, c2] : [];
@@ -515,11 +548,12 @@ function setMode(mode, keepCamera) {
   state.mode = mode;
   groups.ground.visible = mode !== 'attic';
   groups.attic.visible = mode !== 'ground';
-  roof.visible = state.showRoof && mode !== 'ground';
+  roof.visible = walk.on || (state.showRoof && mode !== 'ground');
   for (const b of document.querySelectorAll('.seg button')) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
   const cams = document.getElementById('cams'); cams.innerHTML = '';
-  for (const c of CAMERAS[mode]) { const b = document.createElement('button'); b.textContent = c[0]; b.onclick = () => setCamera(c); cams.appendChild(b); }
+  for (const c of CAMERAS[mode]) { const b = document.createElement('button'); b.textContent = c[0]; b.onclick = () => { setWalk(false); setCamera(c); }; cams.appendChild(b); }
   if (!keepCamera) setCamera(CAMERAS[mode][mode === 'all' ? 0 : 1]);
+  if (walk.on) return;
   for (const d of document.querySelectorAll('#layouts details')) d.open = mode === 'all' ? d.dataset.key !== 'bathGrey' : d.dataset.floor === mode && d.dataset.key !== 'bathGrey';
   save(); requestRender();
 }
@@ -623,7 +657,121 @@ function wireLayout(key) {
   $('auto').onclick = () => autoLayout(key);
 }
 
-/* ================= 11. START ================= */
+/* ================= 11. WALK (arrow keys, also on the stairs) ================= */
+const EYE = 160, RADIUS = 22, STEP = 36, HEAD = 18;
+const obstacles = { ground: [], attic: [] };
+for (const f of ['ground', 'attic']) {
+  for (const w of PLAN[f].walls) obstacles[f].push(w.r);
+  for (const o of PLAN[f].openings) if (o.kind === 'window') obstacles[f].push(o.r);
+}
+obstacles.ground.push(PLAN.ground.fireplace, CORE_WALL);
+const LOW = (EYE + HEAD - KNEE) / PITCH;          // under the slopes there is no head room
+obstacles.attic.push([-500, -500, XL + LOW, 1820], [XR - LOW, -500, 1410, 1820]);
+function surfaces(x, z) {
+  const s = [], inHouse = x >= 0 && x <= 910 && z >= 0 && z <= 1320;
+  const terrace = x >= 0 && x <= 910 && ((z < 0 && z > -360) || (z > 1320 && z < 1560));
+  s.push(inHouse ? 0 : terrace ? -12 : -30);
+  for (const b of STAIR_BOXES) if (x >= b[0] && x <= b[2] && z >= b[1] && z <= b[3]) s.push(b[4]);
+  if (inHouse && !inVoid(x, z)) s.push(LEVEL.attic);
+  return s;
+}
+// the floor to stand on at (x, z) for feet at y; null when the head would hit something or the step down is too deep
+function standOn(x, z, y) {
+  let best = -Infinity;
+  for (const h of surfaces(x, z)) {
+    if (h <= y + STEP) best = Math.max(best, h);
+    else if (h < y + EYE + HEAD) return null;
+  }
+  return best < y - STEP ? null : best;
+}
+function blocked(level, x, z) {
+  for (const r of obstacles[level]) {
+    const cx = Math.max(r[0], Math.min(x, r[2])), cz = Math.max(r[1], Math.min(z, r[3]));
+    if ((x - cx) * (x - cx) + (z - cz) * (z - cz) < RADIUS * RADIUS) return true;
+  }
+  return false;
+}
+const levelOf = y => y > LEVEL.attic - 60 ? 'attic' : 'ground';
+function tryMove(x, z) {
+  const h = standOn(x, z, walk.y);
+  if (h === null || blocked(levelOf(Math.max(h, walk.y)), x, z)) return false;
+  walk.x = x; walk.z = z; walk.target = h; return true;
+}
+function updateWalk(dt) {
+  const k = walk.keys, run = k.Shift ? 2.2 : 1;
+  const turn = (k.ArrowLeft ? 1 : 0) - (k.ArrowRight ? 1 : 0);
+  const fwd = (k.ArrowUp || k.w ? 1 : 0) - (k.ArrowDown || k.s ? 1 : 0);
+  const side = (k.d ? 1 : 0) - (k.a ? 1 : 0);
+  const look = (k.PageUp ? 1 : 0) - (k.PageDown ? 1 : 0);
+  walk.yaw += turn * 1.7 * dt;
+  walk.pitch = Math.max(-1.2, Math.min(1.0, walk.pitch + look * 1.2 * dt));
+  if (fwd || side) {
+    const v = 140 * run * dt, sy = Math.sin(walk.yaw), cy = Math.cos(walk.yaw);
+    const dx = (-sy * fwd + cy * side) * v, dz = (-cy * fwd - sy * side) * v;
+    if (!tryMove(walk.x + dx, walk.z + dz)) { tryMove(walk.x + dx, walk.z) || tryMove(walk.x, walk.z + dz); }
+  }
+  if (walk.target === undefined) walk.target = standOn(walk.x, walk.z, walk.y) ?? walk.y;
+  walk.y += (walk.target - walk.y) * Math.min(1, dt * 12);
+  camera.position.set(walk.x / 100, (walk.y + EYE) / 100, walk.z / 100);
+  camera.rotation.set(walk.pitch, walk.yaw, 0, 'YXZ');
+  const lvl = levelOf(walk.y + 1);
+  document.getElementById('walklevel').textContent = Math.abs(walk.y - Math.round(walk.y / LEVEL.attic) * LEVEL.attic) > 8 && walk.y > 5 && walk.y < LEVEL.attic - 5 ? 'Schody' : FLOOR_NAMES[lvl];
+  return !!(fwd || side || turn || look || Math.abs(walk.target - walk.y) > 0.2);
+}
+function setWalk(on) {
+  if (on === walk.on) return;
+  walk.on = on;
+  document.getElementById('walkbtn').setAttribute('aria-pressed', String(on));
+  document.getElementById('walkhud').hidden = !on;
+  document.querySelector('.stage').classList.toggle('walking', on);
+  controls.enabled = !on;
+  if (on) {
+    walk.prevMode = state.mode; walk.keys = {}; walk.target = undefined;
+    camera.fov = 70; camera.updateProjectionMatrix();
+    setMode('all', true);
+    roof.visible = true; for (const m of roof.children) m.material = M.roofSolid;
+    buildWalls('ground'); buildWalls('attic');
+    canvas.focus();
+  } else {
+    camera.fov = 50; camera.updateProjectionMatrix();
+    for (const m of roof.children) m.material = M.roof;
+    buildWalls('ground'); buildWalls('attic');
+    const floor = walk.y > 150 ? 'attic' : 'ground';
+    setMode(floor, true);
+    const cx = walk.x / 100, cz = walk.z / 100, cy = (walk.y + 60) / 100;
+    controls.target.set(cx, cy, cz);
+    camera.position.set(cx + 5 * Math.sin(walk.yaw), cy + 7, cz + 5 * Math.cos(walk.yaw)); controls.update();
+  }
+  requestRender();
+}
+const WALK_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Shift', 'w', 'a', 's', 'd']);
+const keyName = e => e.key.length === 1 ? e.key.toLowerCase() : e.key;
+window.addEventListener('keydown', e => {
+  const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
+  if (!walk.on) { if (e.key === 'ArrowUp' && document.activeElement === canvas) setWalk(true); else return; }
+  if (e.key === 'Escape') { setWalk(false); return; }
+  const k = keyName(e); if (WALK_KEYS.has(k)) { walk.keys[k] = true; e.preventDefault(); }
+});
+window.addEventListener('keyup', e => { walk.keys[keyName(e)] = false; });
+window.addEventListener('blur', () => { walk.keys = {}; });
+canvas.tabIndex = 0;
+let drag = null;
+canvas.addEventListener('pointerdown', e => { if (walk.on) { drag = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); canvas.focus(); } });
+canvas.addEventListener('pointermove', e => {
+  if (!walk.on || !drag) return;
+  walk.yaw -= (e.clientX - drag.x) * 0.005; walk.pitch = Math.max(-1.2, Math.min(1.0, walk.pitch - (e.clientY - drag.y) * 0.004));
+  drag = { x: e.clientX, y: e.clientY }; requestRender();
+});
+canvas.addEventListener('pointerup', () => { drag = null; });
+for (const b of document.querySelectorAll('.pad button')) {
+  const k = b.dataset.k;
+  b.addEventListener('pointerdown', e => { e.preventDefault(); walk.keys[k] = true; b.setPointerCapture(e.pointerId); });
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, () => { walk.keys[k] = false; });
+}
+document.getElementById('walkbtn').onclick = () => setWalk(!walk.on);
+window.houseWalk = walk;  // for checking from the console
+
+/* ================= 12. START ================= */
 document.getElementById('layouts').innerHTML = Object.keys(state.layouts).map(layoutPanel).join('');
 for (const k in state.layouts) wireLayout(k);
 roomsTable();
@@ -634,14 +782,14 @@ const showCuts = document.getElementById('showCuts'), showRoof = document.getEle
 showCuts.checked = state.showCuts; showRoof.checked = state.showRoof;
 showCuts.onchange = () => { state.showCuts = showCuts.checked; rebuildFloor('ground'); rebuildFloor('attic'); };
 showRoof.onchange = () => { state.showRoof = showRoof.checked; setMode(state.mode, true); };
-for (const b of document.querySelectorAll('.seg button')) b.onclick = () => setMode(b.dataset.mode);
+for (const b of document.querySelectorAll('.seg button')) b.onclick = () => { setWalk(false); setMode(b.dataset.mode); };
 
 for (const k in state.layouts) if (state.auto[k] && !state.layouts[k].optimised) { autoLayout(k, true); state.layouts[k].optimised = true; }
 buildWalls('ground'); buildWalls('attic');
 rebuildFloor('ground'); rebuildFloor('attic');
 setMode(state.mode);
 themeBackground();
-if (pending === 0) loading.hidden = true;
+loading.hidden = true;
 if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', themeBackground);
 new MutationObserver(themeBackground).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
@@ -653,9 +801,12 @@ function resize() {
   renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); requestRender();
 }
 new ResizeObserver(resize).observe(canvas); resize();
-(function loop() {
+let last = performance.now();
+(function loop(now) {
   requestAnimationFrame(loop);
-  if (controls.update() || needsRender) { renderer.render(scene, camera); needsRender = false; }
+  const dt = Math.min(0.05, ((now || performance.now()) - last) / 1000); last = now || performance.now();
+  const moved = walk.on ? updateWalk(dt) : controls.update();
+  if (moved || needsRender) { renderer.render(scene, camera); needsRender = false; }
 })();
 })();
 </script>
