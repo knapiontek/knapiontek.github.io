@@ -469,6 +469,7 @@ M.ghost = new THREE.MeshStandardMaterial({ color: lin('#f2f0ea'), roughness: 0.9
 M.wall = {};
 for (const k in B.walls) M.wall[k] = M[B.walls[k]];
 M.int = M.wall.int;
+M.groove = new THREE.MeshStandardMaterial({ color: lin(B.gate.groove), roughness: 0.8 });
 M.edge = new THREE.LineBasicMaterial({ color: lin(B.edges.color), transparent: true, opacity: B.edges.opacity, depthWrite: false });
 const EDGED = new Set([...Object.values(M.wall), M[B.faces.default], M[B.roof.body]].filter(m => m !== M[B.windows.glass]));
 for (const f of B.finishes) EDGED.add(M[f.material]);
@@ -645,11 +646,11 @@ function prism(x1, z1, x2, z2, y0, bottom, top, mat, parent, breaks) {
   const m = new THREE.Mesh(g, mat); m.position.set(0, y0, z1);
   m.castShadow = mat !== M[B.windows.glass]; m.receiveShadow = true;
   parent.add(m);
-  if (EDGED.has(mat) && edgeSink) edgeSink.push({ g, ox: 0, oy: y0, oz: z1 });
+  if (EDGED.has(mat) && edgeSink && !skinning) edgeSink.push({ g, ox: 0, oy: y0, oz: z1 });
 }
 // edges only on real corners: faces hidden against a neighbour (opposite normals in one plane) are dropped first,
 // and an edge is drawn where exactly two visible faces meet at more than the crease angle
-let edgeSink = null, joinHeights = [], floorY = 0, seamY = null;
+let skinning = false, edgeSink = null, joinHeights = [], floorY = 0, seamY = null;
 function buildEdges(list, parent) {
   const q = v => Math.round(v * 10) / 10, tris = [];
   list.forEach((p, id) => {
@@ -713,10 +714,16 @@ function finishOf(face, floor, x1, x2) {
   for (const f of B.finishes) if (f.face === face && f.floor === floor && x1 >= f.x[0] - 1 && x2 <= f.x[1] + 1) return f;
   return null;
 }
+const entranceOf = (floor, r) => { const E = B.doors.entrance; return E && E.floor === floor && E.opening.every((v, i) => Math.abs(v - r[i]) < 1) ? E : null; };
 const windowLine = x => roofHeight(x) - B.windows.attic.inset;      // the line of the attic window tops, extended
-function skin(r, y0, bottom, top, grp, breaks, floor, face, f) {
+function skin(r0, y0, bottom, top, grp, breaks, floor, face, f) {
   if (!face) return;
-  const z = face === 'garden' ? [r[1] - 1, r[1]] : [r[3], r[3] + 1];
+  // the cladding pieces overlap their neighbours by 2.5 mm: no hairline cracks between them; no edge lines either
+  const r = [r0[0] - 0.25, r0[1], r0[2] + 0.25, r0[3]], z = face === 'garden' ? [r[1] - 1, r[1]] : [r[3], r[3] + 1];
+  skinning = true;
+  try { skinPieces(r, z, y0, bottom, top, grp, breaks, f); } finally { skinning = false; }
+}
+function skinPieces(r, z, y0, bottom, top, grp, breaks, f) {
   if (!f) { prism(r[0], z[0], r[2], z[1], y0, bottom, top, M[F.default], grp, breaks); return; }
   const tf = num(top), upTo = f.upTo === 'windowLine' ? x => Math.min(tf(x), windowLine(x)) : tf;
   prism(r[0], z[0], r[2], z[1], y0, bottom, upTo, M[f.material], grp, breaks);
@@ -746,13 +753,15 @@ function buildWalls(floor) {
   floorY = y0; seamY = !attic && full ? LEVEL.attic : null;
   const c1 = XL + (cut - KNEE) / PITCH, c2 = XR - (cut - KNEE) / PITCH;
   const breaks = attic ? [XL, XM, XR, c1, c2, WIDTH - XL, XL] : [];
-  const groundTop = kind => kind === 'ext' ? () => Math.min(cut, LEVEL.attic) : () => Math.min(cut, GROUND_H);
+  // the outer walls carry the slab up to the attic floor only in the full house; with the attic hidden every wall ends
+  // at the same height (the cut, at most the ceiling)
+  const groundTop = kind => kind === 'ext' && full ? () => LEVEL.attic : () => Math.min(cut, GROUND_H);
   const wallTop = kind => attic
     ? (kind === 'knee' ? () => Math.min(cut, KNEE) : kind === 'rail' ? () => Math.min(cut, 100) : x => Math.min(cut, Math.max(roofHeight(x), under(x))))   // the portal wings reach the roof slab
     : groundTop(kind);
   const skinTop = top => attic ? top : x => Math.min(top(x), GROUND_H);     // the slab band between the floors stays white
-  const portalTop = B.portals.groundWingsTo === 'attic' ? LEVEL.attic : GROUND_H;
-  const fullTop = attic ? x => Math.max(roofHeight(x), under(x)) : () => LEVEL.attic;
+  const portalTop = full && B.portals.groundWingsTo === 'attic' ? LEVEL.attic : GROUND_H;
+  const fullTop = attic ? x => Math.max(roofHeight(x), under(x)) : () => full ? LEVEL.attic : GROUND_H;
   // an opening is drawn whole (glass, frames and the wall above it) when the cut is at or above its highest point
   const openingWhole = o => {
     const r = o.r, { head } = openingHead(o, fullTop), xs = [r[0], r[2], ...breaks.filter(p => p > r[0] && p < r[2])];
@@ -773,7 +782,8 @@ function buildWalls(floor) {
       const o = PLAN[floor].openings[c.opening], top = wallTop('ext'), { head } = openingHead(o, top);
       const below = x => Math.min(o.sill, top(x));
       prism(r[0], r[1], r[2], r[3], y0, 0, below, M.wall.ext, grp, breaks); skin(r, y0, 0, below, grp, breaks, floor, c.face, c.finish);
-      if (openingWhole(o)) {                         // the wall above the opening only together with the whole window
+      const interiorDoor = o.kind === 'door' && !facadeFace(o.r) && B.doors.interiorLintels === 'fullHeight';
+      if (openingWhole(o) && (!interiorDoor || full || cut >= GROUND_H)) {   // the wall above: only with the whole opening
         prism(r[0], r[1], r[2], r[3], y0, head, top, M.wall.ext, grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
       }
     }
@@ -782,16 +792,46 @@ function buildWalls(floor) {
     if (!openingWhole(o)) continue;                   // the cut runs through the opening: leave it out
     const r = o.r, { followRoof, head } = openingHead(o, fullTop);
     const thinX = (r[2] - r[0]) < (r[3] - r[1]);
-    const gx = thinX ? [(r[0] + r[2]) / 2 - 1, (r[0] + r[2]) / 2 + 1] : [r[0], r[2]];
-    const gz = thinX ? [r[1], r[3]] : [(r[1] + r[3]) / 2 - 1, (r[1] + r[3]) / 2 + 1];
+    // the glass plane: "setback" cm behind the outer face for windows in outer walls, else the middle of the wall
+    const SB = B.windows.setback, face = facadeFace(r);
+    const outer = thinX ? (r[0] < 1 ? r[0] : r[2] > WIDTH - 1 ? r[2] : null) : (face === 'garden' ? r[1] : face === 'front' ? r[3] : null);
+    const mid = outer === null ? (thinX ? (r[0] + r[2]) / 2 : (r[1] + r[3]) / 2) : outer + (outer === (thinX ? r[0] : r[1]) ? SB : -SB);
+    const gx = thinX ? [mid - 1, mid + 1] : [r[0], r[2]];
+    const gz = thinX ? [r[1], r[3]] : [mid - 1, mid + 1];
+    if (face && o.kind !== 'door' || entranceOf(floor, r)) {   // the reveal in front of the glass gets the facade finish
+      const lin = M[F.default], t = 0.8, za = Math.min(outer, mid), zb = Math.max(outer, mid);
+      prism(r[0], za, r[2], zb, y0, head, x => head(x) + t, lin, grp, breaks);
+      prism(r[0], za, r[0] + t, zb, y0, o.sill, head, lin, grp, breaks);
+      prism(r[2] - t, za, r[2], zb, y0, o.sill, head, lin, grp, breaks);
+      if (o.sill > 0) prism(r[0], za, r[2], zb, y0, o.sill - t, o.sill, lin, grp, breaks);
+    }
     if (o.kind === 'window') {
       prism(gx[0], gz[0], gx[1], gz[1], y0, o.sill, head, M[B.windows.glass], grp, breaks);
       const opt = followRoof ? { mullionEvery: B.windows.attic.mullionEvery, transom: o.sill + B.windows.attic.transom } : { mullionEvery: B.windows.frame.mullionEvery, transom: B.windows.frame.transom };
       frames(o.sill, head, gx, gz, y0, grp, breaks, thinX, opt);
     } else if (o.kind === 'gate') {
-      prism(gx[0], gz[0] - 3, gx[1], gz[1] + 3, y0, o.sill, head, M[B.windows.gate], grp, breaks);
+      prism(gx[0], gz[0] - 2, gx[1], gz[1] + 2, y0, o.sill, head, M[B.windows.gate], grp, breaks);
+      const n = B.gate.grooves, H = o.head - o.sill, zf = Math.max(gz[0], gz[1]) + 2;
+      for (let i = 1; i <= n; i++) {                  // horizontal grooves of the sectional door
+        const y = o.sill + i * H / (n + 1);
+        prism(r[0] + 4, zf, r[2] - 4, zf + 0.4, y0, y - 0.6, y + 0.6, M.groove, grp, []);
+      }
+    } else if (o.kind === 'door' && entranceOf(floor, r)) {
+      const E = entranceOf(floor, r), zc = (gz[0] + gz[1]) / 2, left = E.hinge === 'left';
+      const l1 = left ? r[0] : r[2] - E.leaf, l2 = left ? r[0] + E.leaf : r[2];
+      prism(l1, zc - 3, l2, zc + 3, y0, o.sill, o.head, M[E.material], grp, []);          // the leaf
+      for (let i = 1; i <= E.grooves; i++) { const y = o.sill + i * (o.head - o.sill) / (E.grooves + 1); prism(l1 + 3, zc + 3, l2 - 3, zc + 3.4, y0, y - 0.5, y + 0.5, M.groove, grp, []); }
+      const hx = left ? l2 - 12 : l1 + 12, hz = zc + 3, hy = o.sill + (o.head - o.sill) / 2;
+      prism(hx - E.handle.width / 2, hz + 3, hx + E.handle.width / 2, hz + 3 + E.handle.width, y0, hy - E.handle.length / 2, hy + E.handle.length / 2, M[E.handle.material], grp, []);
+      prism(hx - 1, hz, hx + 1, hz + 3, y0, hy - E.handle.length / 2 + 8, hy - E.handle.length / 2 + 10, M[E.handle.material], grp, []);
+      prism(hx - 1, hz, hx + 1, hz + 3, y0, hy + E.handle.length / 2 - 10, hy + E.handle.length / 2 - 8, M[E.handle.material], grp, []);
+      const s1 = left ? l2 : r[0], s2 = left ? r[2] : l1, side = { sill: o.sill, head: o.head };   // the glass sidelight
+      prism(s1, gz[0], s2, gz[1], y0, o.sill, o.head, M[B.windows.glass], grp, []);
+      frames(o.sill, () => o.head, [s1, s2], gz, y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
+      frames(o.sill, () => o.head, [l1, l2], [zc - 3.5, zc + 3.5], y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
     }
   }
+  if (full) for (const c of B.claddings) if (c.floor === floor) prism(c.rect[0], c.rect[1], c.rect[2], c.rect[3], 0, c.y[0], c.y[1], M[c.material], grp, []);
   if (full) for (const b of B.bands) {
     const onFloor = b.y[0] < (attic ? 10000 : LEVEL.attic) && b.y[0] >= (attic ? LEVEL.attic : -100);
     if (!onFloor) continue;
@@ -1149,6 +1189,13 @@ function floorSVG(floor, ox, oy, withTiles) {
     } else if (o.kind === 'gate') {
       if (thinX) line(cx, r[1], cx, r[3], `stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="8 4"`);
       else line(r[0], cz, r[2], cz, `stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="8 4"`);
+    } else if (entranceOf(floor, r)) {               // the entrance: the leaf (as in 3D) and the glass sidelight
+      const E = entranceOf(floor, r), left = E.hinge === 'left', l1 = left ? r[0] : r[2] - E.leaf, l2 = left ? r[0] + E.leaf : r[2];
+      const zc = r[3] - B.windows.setback;
+      rect([l1, zc - 3, l2, zc + 3], `fill="${C.ink}"`);
+      const s1 = left ? l2 : r[0], s2 = left ? r[2] : l1;
+      line(s1, zc - 2, s2, zc - 2, `stroke="${C.glass}" stroke-width=".7"`); line(s1, zc + 2, s2, zc + 2, `stroke="${C.glass}" stroke-width=".7"`);
+      line(r[0], r[1], r[0], r[3], `stroke="${C.ink}" stroke-width=".6"`); line(r[2], r[1], r[2], r[3], `stroke="${C.ink}" stroke-width=".6"`);
     } else {
       if (thinX) { line(r[0], r[1], r[2], r[1], `stroke="${C.ink}" stroke-width=".6"`); line(r[0], r[3], r[2], r[3], `stroke="${C.ink}" stroke-width=".6"`); }
       else { line(r[0], r[1], r[0], r[3], `stroke="${C.ink}" stroke-width=".6"`); line(r[2], r[1], r[2], r[3], `stroke="${C.ink}" stroke-width=".6"`); }
