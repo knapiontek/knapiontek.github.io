@@ -137,8 +137,12 @@ td select{padding:3px 4px;font-size:12px}
         <input id="cut" type="range" min="30" max="500" step="5" style="grid-column:1/-1"></div>
       <div class="checks">
         <label><input type="checkbox" id="showCuts" checked> Pokaż drobne docinki</label>
-        <label><input type="checkbox" id="showRoof"> Skosy dachu</label>
+        <label><input type="checkbox" id="showRoof"> Skosy dachu na piętrze</label>
       </div>
+      <div class="rng"><label for="sunaz">Słońce: kierunek</label><span id="sunazv"></span>
+        <input id="sunaz" type="range" min="0" max="355" step="5" style="grid-column:1/-1"></div>
+      <div class="rng"><label for="sunel">Słońce: wysokość</label><span id="sunelv"></span>
+        <input id="sunel" type="range" min="8" max="75" step="1" style="grid-column:1/-1"></div>
     </div>
 
     <h2>Posadzki</h2>
@@ -213,13 +217,14 @@ function applyProduct(L, key) {
 const STORE = 'house-floors-v1';
 let state;
 function freshState() {
-  const s = { mode: 'ground', cut: 150, showCuts: true, showRoof: false, layouts: {}, rooms: {}, auto: {} };
+  const s = { mode: 'ground', cut: 150, showCuts: true, showRoof: false, sunAzimuth: 35, sunElevation: 38, layouts: {}, rooms: {}, auto: {} };
   for (const k in DEFAULT_LAYOUTS) { s.layouts[k] = Object.assign({}, DEFAULT_LAYOUTS[k]); applyProduct(s.layouts[k], s.layouts[k].product); s.auto[k] = true; }
   for (const f of ['ground', 'attic']) s.rooms[f] = PLAN[f].rooms.map(r => r.material === 'floor' ? f : r.material);
   return s;
 }
 try { state = JSON.parse(localStorage.getItem(STORE)); } catch (e) { state = null; }
 if (!state || !state.layouts || !state.layouts.bathGrey) state = freshState();
+if (state.sunAzimuth === undefined) { state.sunAzimuth = 35; state.sunElevation = 38; }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
 
 /* ================= 4. TILE LAYOUT (pure) ================= */
@@ -324,45 +329,108 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.95;
+renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
-function themeBackground() {
-  const c = getComputedStyle(document.documentElement).getPropertyValue('--stage').trim() || '#dfe3e1';
-  scene.background = new THREE.Color(c).convertSRGBToLinear(); requestRender();
+function canvasTexture(w, h, draw, srgb) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); if (srgb !== false) t.encoding = THREE.sRGBEncoding; return t;
 }
+function noise(g, w, h, base, spread, count, size) {
+  g.fillStyle = base; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < count; i++) {
+    const v = (Math.random() - 0.5) * spread, a = Math.random() * 0.5 + 0.2;
+    g.fillStyle = v > 0 ? `rgba(255,255,255,${a * v})` : `rgba(0,0,0,${-a * v})`;
+    g.fillRect(Math.random() * w, Math.random() * h, size * (0.5 + Math.random()), size * (0.5 + Math.random()));
+  }
+}
+// sky: an equirectangular gradient, also the reflections
+const SKY = canvasTexture(16, 256, (g, w, h) => {
+  const gr = g.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, '#5f8fc4'); gr.addColorStop(0.32, '#9dbfe0'); gr.addColorStop(0.49, '#e4ecef');
+  gr.addColorStop(0.51, '#b7bfae'); gr.addColorStop(1, '#6f7a5e');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+});
+SKY.mapping = THREE.EquirectangularReflectionMapping;
+scene.background = SKY;
+scene.fog = new THREE.Fog(new THREE.Color('#dfe7ea').convertSRGBToLinear(), 45, 140);
+function themeBackground() { requestRender(); }
 const pmrem = new THREE.PMREMGenerator(renderer);
-if (THREE.RoomEnvironment) scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
-const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 200);
+scene.environment = pmrem.fromEquirectangular(SKY).texture;
+const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 300);
 const controls = new THREE.OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = 0.12; controls.maxPolarAngle = Math.PI * 0.495; controls.screenSpacePanning = true;
 
-scene.add(new THREE.HemisphereLight(0xf4f6ff, 0x8b8577, 0.55));
-const sun = new THREE.DirectionalLight(0xfff4e2, 1.5);
-sun.position.set(-9, 16, -7); sun.target.position.set(4.5, 0, 6.6);
-sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 50 });
-sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+scene.add(new THREE.HemisphereLight(0xcfe0ff, 0x6f7a5e, 0.35));
+const sun = new THREE.DirectionalLight(0xffeed6, 2.4);
+sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
+Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 70 });
+sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.015; sun.shadow.radius = 3;
+sun.target.position.set(4.55, 2, 6.6);
 scene.add(sun, sun.target);
+function placeSun() {
+  const az = state.sunAzimuth * Math.PI / 180, el = state.sunElevation * Math.PI / 180, R = 30;
+  sun.position.set(4.55 + R * Math.cos(el) * Math.sin(az), R * Math.sin(el), 6.6 + R * Math.cos(el) * Math.cos(az));
+  requestRender();
+}
 
 const root = new THREE.Group(); root.scale.setScalar(0.01); scene.add(root);   // model in cm, scene in m
 const lin = hex => new THREE.Color(hex).convertSRGBToLinear();
+const plaster = (base, spread) => {
+  const t = canvasTexture(256, 256, (g, w, h) => noise(g, w, h, base, spread, 9000, 2));
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1 / 120, 1 / 120); return t;
+};
+const lawnTex = canvasTexture(512, 512, (g, w, h) => {
+  noise(g, w, h, '#6f8a52', 0.9, 40000, 2);
+  for (let i = 0; i < 6000; i++) { g.strokeStyle = `rgba(${Math.random() < 0.5 ? '160,190,110' : '40,60,30'},0.35)`; const x = Math.random() * w, y = Math.random() * h; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.random() * 2 - 1, y - 3 - Math.random() * 4); g.stroke(); }
+});
+lawnTex.wrapS = lawnTex.wrapT = THREE.RepeatWrapping; lawnTex.repeat.set(26, 28);
+const pavingTex = canvasTexture(256, 256, (g, w, h) => {
+  noise(g, w, h, '#b9b6ae', 0.5, 6000, 2);
+  g.strokeStyle = 'rgba(70,68,62,0.55)'; g.lineWidth = 2;
+  for (let i = 0; i <= 4; i++) { g.beginPath(); g.moveTo(0, i * 64); g.lineTo(w, i * 64); g.stroke(); g.beginPath(); g.moveTo(i * 64, 0); g.lineTo(i * 64, h); g.stroke(); }
+});
+pavingTex.wrapS = pavingTex.wrapT = THREE.RepeatWrapping; pavingTex.repeat.set(9, 4);
 const M = {
-  ext: new THREE.MeshStandardMaterial({ color: lin('#ecebe6'), roughness: 0.92 }),
-  int: new THREE.MeshStandardMaterial({ color: lin('#f4f3ef'), roughness: 0.92 }),
-  chimney: new THREE.MeshStandardMaterial({ color: lin('#d9d6cf'), roughness: 0.9 }),
-  rail: new THREE.MeshPhysicalMaterial({ color: lin('#cfe3ea'), roughness: 0.05, transmission: 0, transparent: true, opacity: 0.35 }),
-  glass: new THREE.MeshPhysicalMaterial({ color: lin('#bcd7e2'), roughness: 0.05, metalness: 0, transparent: true, opacity: 0.28, depthWrite: false }),
-  slab: new THREE.MeshStandardMaterial({ color: lin('#b9b8b2'), roughness: 0.95 }),
-  lawn: new THREE.MeshStandardMaterial({ color: lin('#8fa77a'), roughness: 1 }),
-  terrace: new THREE.MeshStandardMaterial({ color: lin('#a8a49b'), roughness: 0.95 }),
+  ext: new THREE.MeshStandardMaterial({ color: lin('#f6f5f1'), map: plaster('#f3f2ee', 0.18), roughness: 0.93 }),
+  int: new THREE.MeshStandardMaterial({ color: lin('#f3efe7'), map: plaster('#f1ede6', 0.12), roughness: 0.95 }),
+  graphite: new THREE.MeshStandardMaterial({ color: lin('#3e4246'), map: plaster('#44484c', 0.3), roughness: 0.88 }),
+  frame: new THREE.MeshStandardMaterial({ color: lin('#26282b'), roughness: 0.45, metalness: 0.3 }),
+  chimney: new THREE.MeshStandardMaterial({ color: lin('#e6e3dc'), roughness: 0.9 }),
+  rail: new THREE.MeshPhysicalMaterial({ color: lin('#cfe3ea'), roughness: 0.05, transparent: true, opacity: 0.3 }),
+  glass: new THREE.MeshPhysicalMaterial({ color: lin('#9fb5bf'), roughness: 0.02, metalness: 0.1, envMapIntensity: 1.6, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide }),
+  slab: new THREE.MeshStandardMaterial({ color: lin('#f1efe9'), roughness: 0.95 }),
+  plinth: new THREE.MeshStandardMaterial({ color: lin('#6d6e6c'), roughness: 0.9 }),
+  lawn: new THREE.MeshStandardMaterial({ color: lin('#ffffff'), map: lawnTex, roughness: 1 }),
+  terrace: new THREE.MeshStandardMaterial({ color: lin('#ffffff'), map: pavingTex, roughness: 0.9 }),
   fire: new THREE.MeshStandardMaterial({ color: lin('#2b2b2c'), roughness: 0.6 }),
   tread: new THREE.MeshStandardMaterial({ color: lin('#a57b4f'), roughness: 0.6 }),
+  roofTop: new THREE.MeshStandardMaterial({ color: lin('#3a3d40'), roughness: 0.75, metalness: 0.05, side: THREE.DoubleSide }),
+  roofBody: new THREE.MeshStandardMaterial({ color: lin('#f6f5f1'), map: plaster('#f3f2ee', 0.18), roughness: 0.93 }),
   roof: new THREE.MeshStandardMaterial({ color: lin('#f2f0ea'), roughness: 0.9, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
-  roofSolid: new THREE.MeshStandardMaterial({ color: lin('#f4f3ef'), roughness: 0.92, side: THREE.DoubleSide }),
+  woodV: new THREE.MeshStandardMaterial({ color: lin('#ffffff'), roughness: 0.7 }),
+  woodH: new THREE.MeshStandardMaterial({ color: lin('#ffffff'), roughness: 0.7 }),
 };
 M.wall = { ext: M.ext, int: M.int, chimney: M.chimney, knee: M.ext, gable: M.ext, rail: M.rail };
+// facade cladding: the oak decor photo cut into 12 cm boards; vertical (front) and horizontal (garden band)
+(function cladding() {
+  const img = new Image();
+  img.onload = () => {
+    for (const [mat, vertical] of [[M.woodV, true], [M.woodH, false]]) {
+      const t = canvasTexture(1024, 512, (g, w, h) => {
+        g.drawImage(img, 0, 0, w, h);
+        g.fillStyle = 'rgba(40,25,12,0.75)';
+        for (let i = 0; i <= 10; i++) g.fillRect(0, i * h / 10 - 2, w, 4);   // 10 boards per tile
+      });
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      if (vertical) { t.rotation = Math.PI / 2; t.repeat.set(1 / 240, 1 / 120); } else t.repeat.set(1 / 240, 1 / 120);
+      mat.map = t; mat.needsUpdate = true;
+    }
+    requestRender();
+  };
+  img.src = TEX.H1180.faces[0];
+})();
 
 // textures of the tiles
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
@@ -398,9 +466,10 @@ function box(x1, y1, z1, x2, y2, z2, mat, parent, shadow) {
 }
 const site = new THREE.Group(); root.add(site);
 box(-1500, -32, -1500, 2400, -30, 2800, M.lawn, site, false).receiveShadow = true;
-box(0, -30, -360, 910, -12, 0, M.terrace, site);
-box(0, -30, 1320, 910, -12, 1560, M.terrace, site);
-box(0, -30, 0, 910, 0, 1320, M.slab, groups.ground);
+box(-100, -30, -460, 1010, -12, -101, M.terrace, site);
+box(0, -30, -101, 910, -12, 0, M.terrace, site);
+box(0, -30, 1323, 910, -12, 1700, M.terrace, site);
+box(0, -30, 0, 910, 0, 1323, M.plinth, groups.ground);
 // attic slab: the outline minus the stair hole, as grid cells
 const slabY1 = GROUND_H, slabY2 = LEVEL.attic, VOIDS = PLAN.attic.voids;
 const inVoid = (x, z) => VOIDS.some(v => x > v[0] && x < v[2] && z > v[1] && z < v[3]);
@@ -426,17 +495,41 @@ const ST = PLAN.ground.stair, rise = LEVEL.attic / ST.risers, STAIR_BOXES = [];
 const FP = PLAN.ground.fireplace;
 box(FP[0], 0, FP[1], FP[2], 105, FP[3], M.fire, groups.ground);
 const CORE_WALL = ST.core;
-// roof slopes
-const roof = new THREE.Group(); root.add(roof);
+// roof: a 55 cm thick slab over the whole length incl. the portals; white body (the portal band), graphite top
+const ZS = PLAN.ground.walls.reduce((m, w) => [Math.min(m[0], w.r[1]), Math.max(m[1], w.r[3])], [0, 0]);
+const ROOF_T = 55 / Math.cos(42 * Math.PI / 180);
+const under = x => KNEE + PITCH * (Math.min(x, 910 - x) - XL);           // roof underside above the attic floor
+const roofSolid = new THREE.Group(), roofGhost = new THREE.Group(); root.add(roofSolid, roofGhost);
 (function buildRoof() {
-  for (const [xa, xb] of [[XL, XM], [XR, XM]]) {
-    const y1 = LEVEL.attic + KNEE, y2 = LEVEL.attic + RIDGE;
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute([xa, y1, 0, xb, y2, 0, xb, y2, 1320, xa, y1, 0, xb, y2, 1320, xa, y1, 1320], 3));
-    g.computeVertexNormals();
-    const m = new THREE.Mesh(g, M.roof); m.receiveShadow = true; roof.add(m);
+  const y = LEVEL.attic, sh = new THREE.Shape();
+  sh.moveTo(0, y + under(0)); sh.lineTo(XM, y + under(XM)); sh.lineTo(910, y + under(910));
+  sh.lineTo(910, y + under(910) + ROOF_T); sh.lineTo(XM, y + under(XM) + ROOF_T); sh.lineTo(0, y + under(0) + ROOF_T); sh.closePath();
+  const g = new THREE.ExtrudeGeometry(sh, { depth: ZS[1] - ZS[0], bevelEnabled: false });
+  const body = new THREE.Mesh(g, M.roofBody); body.position.z = ZS[0]; body.castShadow = body.receiveShadow = true; roofSolid.add(body);
+  for (const [xa, xb] of [[0, XM], [XM, 910]]) {        // graphite covering, 1 cm above the body
+    const ya = y + under(xa) + ROOF_T + 1, yb = y + under(xb) + ROOF_T + 1, g2 = new THREE.BufferGeometry();
+    g2.setAttribute('position', new THREE.Float32BufferAttribute([xa, ya, ZS[1] + 1, xb, yb, ZS[1] + 1, xb, yb, ZS[0] - 1, xa, ya, ZS[1] + 1, xb, yb, ZS[0] - 1, xa, ya, ZS[0] - 1], 3));
+    g2.computeVertexNormals();
+    const m = new THREE.Mesh(g2, M.roofTop); m.receiveShadow = true; m.castShadow = true; roofSolid.add(m);
+  }
+  // chimney above the flue of the fireplace
+  const C = PLAN.attic.walls.find(w => w.kind === 'chimney').r;
+  box(C[0], y + under(C[2]) + 10, C[1], C[2], y + under(XM) + ROOF_T + 90, C[3], M.graphite, roofSolid);
+  for (const [xa, xb] of [[XL, XM], [XR, XM]]) {        // see-through slopes for the attic plan view
+    const y1 = y + KNEE, y2 = y + RIDGE, g3 = new THREE.BufferGeometry();
+    g3.setAttribute('position', new THREE.Float32BufferAttribute([xa, y1, 0, xb, y2, 0, xb, y2, 1320, xa, y1, 0, xb, y2, 1320, xa, y1, 1320], 3));
+    g3.computeVertexNormals(); roofGhost.add(new THREE.Mesh(g3, M.roof));
   }
 })();
+// facade finishes on the gable faces (x ranges in cm); everything else on a gable face is graphite
+const FACADE = {
+  front: [{ floor: 'ground', x: [612, 668], mat: 'woodV' }, { floor: 'ground', x: [738, 868], mat: 'woodV' }, { floor: 'attic', x: [388, 524], mat: 'woodV' }],
+};
+const isFull = () => walk.on || state.mode === 'all';
+function updateRoof() {
+  roofSolid.visible = isFull();
+  roofGhost.visible = !isFull() && state.showRoof && state.mode === 'attic';
+}
 
 /* ================= 7. WALLS (rebuilt with the cut height) ================= */
 function prism(x1, z1, x2, z2, y0, bottom, topFn, mat, parent, breaks) {
@@ -456,9 +549,38 @@ function prism(x1, z1, x2, z2, y0, bottom, topFn, mat, parent, breaks) {
 function clearGroup(g) {
   for (let i = g.children.length - 1; i >= 0; i--) { const c = g.children[i]; g.remove(c); if (c.geometry) c.geometry.dispose(); }
 }
+function facadeFace(r) {        // which gable face a wall piece lies on: 'garden' (z = 0), 'front' (z = max) or null
+  if (r[0] < 40 || r[2] > 870) return null;
+  if (Math.abs(r[1]) < 1) return 'garden';
+  if (r[3] > 1310 && r[3] < 1330) return 'front';
+  if (r[3] > 1225 && r[3] < 1240 && r[0] >= 440) return 'front';       // the recessed entrance
+  return null;
+}
+function skinMaterial(face, floor, x1, x2) {
+  for (const f of FACADE[face] || []) if (f.floor === floor && x1 >= f.x[0] - 1 && x2 <= f.x[1] + 1) return M[f.mat];
+  return M.graphite;
+}
+function skin(r, y0, bottom, topFn, grp, breaks, floor) {
+  const face = facadeFace(r); if (!face) return;
+  const z = face === 'garden' ? [r[1] - 1, r[1]] : [r[3], r[3] + 1];
+  prism(r[0], z[0], r[2], z[1], y0, bottom, topFn, skinMaterial(face, floor, r[0], r[2]), grp, breaks);
+}
+function frames(o, gx, gz, topFn, y0, grp, breaks, thinX) {
+  const W = 6, D = 3, a1 = thinX ? gz[0] : gx[0], a2 = thinX ? gz[1] : gx[1], len = a2 - a1;
+  const cx = (gx[0] + gx[1]) / 2, cz = (gz[0] + gz[1]) / 2;
+  const member = (b1, b2, bottom, top) => thinX
+    ? prism(cx - D, b1, cx + D, b2, y0, bottom, top, M.frame, grp, breaks)
+    : prism(b1, cz - D, b2, cz + D, y0, bottom, top, M.frame, grp, breaks);
+  const head = x => Math.min(o.head, topFn(x));
+  const n = Math.max(1, Math.round(len / 150));
+  for (let i = 0; i <= n; i++) { const p = a1 + i * len / n; member(Math.max(a1, p - W / 2), Math.min(a2, p + W / 2), o.sill, head); }
+  member(a1, a2, o.sill, () => o.sill + W);
+  if (thinX || (topFn(a1) >= o.head && topFn(a2) >= o.head)) member(a1, a2, o.head - W, () => o.head);
+  if (o.head > 200 && len > 200 && !thinX) member(a1, a2, 205, () => 210);       // transom in tall glazing
+}
 function buildWalls(floor) {
   const grp = wallGroups[floor]; clearGroup(grp);
-  const y0 = LEVEL[floor], cut = walk.on ? 1000 : state.cut;
+  const full = isFull(), y0 = LEVEL[floor], cut = full ? 1000 : state.cut;
   const attic = floor === 'attic';
   const c1 = XL + (cut - KNEE) / PITCH, c2 = XR - (cut - KNEE) / PITCH;
   const breaks = attic ? [XL, XM, XR, c1, c2] : [];
@@ -466,18 +588,28 @@ function buildWalls(floor) {
     ? (kind === 'knee' ? () => Math.min(cut, KNEE) : kind === 'rail' ? () => Math.min(cut, 100) : x => Math.min(cut, roofHeight(x)))
     : () => Math.min(cut, GROUND_H);
   for (const w of PLAN[floor].walls) {
-    const r = w.r; prism(r[0], r[1], r[2], r[3], y0, 0, wallTop(w.kind), M.wall[w.kind], grp, breaks);
+    const r = w.r, portal = !attic && (r[3] < 1 || r[1] > 1321);          // portal wings reach the attic floor
+    const top = portal ? () => Math.min(cut, LEVEL.attic) : wallTop(w.kind);
+    prism(r[0], r[1], r[2], r[3], y0, 0, top, M.wall[w.kind], grp, breaks);
+    skin(r, y0, 0, top, grp, breaks, floor);
   }
   for (const o of PLAN[floor].openings) {
     const r = o.r, top = wallTop('int');
-    prism(r[0], r[1], r[2], r[3], y0, 0, x => Math.min(o.sill, top(x)), M.ext, grp, breaks);
-    prism(r[0], r[1], r[2], r[3], y0, o.head, top, M.ext, grp, breaks);
-    if (o.kind === 'window' || o.kind === 'gate') {
-      const thinX = (r[2] - r[0]) < (r[3] - r[1]);
-      const gx = thinX ? [(r[0] + r[2]) / 2 - 1, (r[0] + r[2]) / 2 + 1] : [r[0], r[2]];
-      const gz = thinX ? [r[1], r[3]] : [(r[1] + r[3]) / 2 - 1, (r[1] + r[3]) / 2 + 1];
-      prism(gx[0], gz[0], gx[1], gz[1], y0, o.sill, x => Math.min(o.head, top(x)), o.kind === 'gate' ? M.chimney : M.glass, grp, breaks);
+    const below = x => Math.min(o.sill, top(x));
+    prism(r[0], r[1], r[2], r[3], y0, 0, below, M.ext, grp, breaks); skin(r, y0, 0, below, grp, breaks, floor);
+    prism(r[0], r[1], r[2], r[3], y0, o.head, top, M.ext, grp, breaks); skin(r, y0, o.head, top, grp, breaks, floor);
+    const thinX = (r[2] - r[0]) < (r[3] - r[1]);
+    const gx = thinX ? [(r[0] + r[2]) / 2 - 1, (r[0] + r[2]) / 2 + 1] : [r[0], r[2]];
+    const gz = thinX ? [r[1], r[3]] : [(r[1] + r[3]) / 2 - 1, (r[1] + r[3]) / 2 + 1];
+    if (o.kind === 'window') {
+      prism(gx[0], gz[0], gx[1], gz[1], y0, o.sill, x => Math.min(o.head, top(x)), M.glass, grp, breaks);
+      frames(o, gx, gz, top, y0, grp, breaks, thinX);
+    } else if (o.kind === 'gate') {
+      prism(gx[0], gz[0] - 3, gx[1], gz[1] + 3, y0, o.sill, x => Math.min(o.head, top(x)), M.graphite, grp, breaks);
     }
+  }
+  if (!attic && full) {                // timber band between the floors on the garden side, as in the visualisation
+    prism(43, -2, 867, 0, 0, 238, () => 300, M.woodH, grp, []);
   }
 }
 
@@ -548,7 +680,7 @@ const CAMERAS = {
     ['Pokoje', [830, LEVEL.attic + 165, 1250], [300, LEVEL.attic, 1000]],
   ],
 };
-CAMERAS.all = [['Perspektywa', [-900, 1500, 2100], [455, 250, 660]], ['Od ogrodu', [455, 600, -1300], [455, 250, 500]]];
+CAMERAS.all = [['Od frontu', [-650, 420, 2650], [455, 330, 660]], ['Od ogrodu', [1250, 380, -1250], [455, 330, 500]], ['Z góry', [-1100, 1700, 2300], [455, 250, 660]]];
 function setCamera(c) {
   camera.position.set(c[1][0] / 100, c[1][1] / 100, c[1][2] / 100);
   controls.target.set(c[2][0] / 100, c[2][1] / 100, c[2][2] / 100);
@@ -558,7 +690,9 @@ function setMode(mode, keepCamera) {
   state.mode = mode;
   groups.ground.visible = mode !== 'attic';
   groups.attic.visible = mode !== 'ground';
-  roof.visible = walk.on || (state.showRoof && mode !== 'ground');
+  const wasFull = groups.ground.userData.full;
+  updateRoof();
+  if (wasFull !== isFull()) { groups.ground.userData.full = isFull(); buildWalls('ground'); buildWalls('attic'); }
   for (const b of document.querySelectorAll('.seg button')) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
   const cams = document.getElementById('cams'); cams.innerHTML = '';
   for (const c of CAMERAS[mode]) { const b = document.createElement('button'); b.textContent = c[0]; b.onclick = () => { setWalk(false); setCamera(c); }; cams.appendChild(b); }
@@ -739,13 +873,9 @@ function setWalk(on) {
     walk.prevMode = state.mode; walk.keys = {}; walk.target = undefined;
     camera.fov = 70; camera.updateProjectionMatrix();
     setMode('all', true);
-    roof.visible = true; for (const m of roof.children) m.material = M.roofSolid;
-    buildWalls('ground'); buildWalls('attic');
     canvas.focus();
   } else {
     camera.fov = 50; camera.updateProjectionMatrix();
-    for (const m of roof.children) m.material = M.roof;
-    buildWalls('ground'); buildWalls('attic');
     const floor = walk.y > 150 ? 'attic' : 'ground';
     setMode(floor, true);
     const cx = walk.x / 100, cz = walk.z / 100, cy = (walk.y + 60) / 100;
@@ -791,7 +921,13 @@ cut.oninput = () => { state.cut = +cut.value; cutv.textContent = state.cut + ' c
 const showCuts = document.getElementById('showCuts'), showRoof = document.getElementById('showRoof');
 showCuts.checked = state.showCuts; showRoof.checked = state.showRoof;
 showCuts.onchange = () => { state.showCuts = showCuts.checked; rebuildFloor('ground'); rebuildFloor('attic'); };
-showRoof.onchange = () => { state.showRoof = showRoof.checked; setMode(state.mode, true); };
+showRoof.onchange = () => { state.showRoof = showRoof.checked; updateRoof(); save(); requestRender(); };
+const sunAz = document.getElementById('sunaz'), sunEl = document.getElementById('sunel');
+sunAz.value = state.sunAzimuth; sunEl.value = state.sunElevation;
+const sunLabel = () => { document.getElementById('sunazv').textContent = state.sunAzimuth + '°'; document.getElementById('sunelv').textContent = state.sunElevation + '°'; };
+sunLabel(); placeSun();
+sunAz.oninput = () => { state.sunAzimuth = +sunAz.value; sunLabel(); placeSun(); save(); };
+sunEl.oninput = () => { state.sunElevation = +sunEl.value; sunLabel(); placeSun(); save(); };
 for (const b of document.querySelectorAll('.seg button')) b.onclick = () => { setWalk(false); setMode(b.dataset.mode); };
 
 for (const k in state.layouts) if (state.auto[k] && !state.layouts[k].optimised) { autoLayout(k, true); state.layouts[k].optimised = true; }
