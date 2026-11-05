@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Posadzki Papawery 5</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +23,10 @@
 :root[data-theme="dark"]{
   --bg:#151918; --stage:#1d2321; --panel:#1a1f1d; --ink:#e7ebe9; --muted:#9aa5a1; --line:#2f3734;
   --accent:#d39a55; --accent-ink:#1a1208; --warn:#ef7b66; --ok:#7cc290; --chip:#252c2a; color-scheme:dark}
+[hidden]{display:none!important}
+*,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
+body{margin:0}
 body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow:hidden}
 .app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 370px}
 .stage{position:relative;background:var(--stage);min-width:0;min-height:0}
@@ -42,7 +50,7 @@ body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow
 .pad button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;font-size:16px;cursor:pointer;touch-action:none;user-select:none}
 .pad .u{grid-column:2;grid-row:1}.pad .l{grid-column:1;grid-row:2}.pad .d{grid-column:2;grid-row:2}.pad .r{grid-column:3;grid-row:2}
 .stage.walking .legend{display:none}
-#loading{position:absolute;inset:0;display:grid;place-items:center;font:600 15px var(--f-display);color:var(--muted)}
+#loading{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center;font:600 15px var(--f-display);color:var(--muted)}
 aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;min-width:0;padding-block:14px 28px;padding-left:16px;padding-right:max(16px,env(safe-area-inset-right,0px))}
 h1{font:700 21px/1.15 var(--f-display);letter-spacing:.01em;margin:0 0 2px;text-wrap:balance}
 .sub{color:var(--muted);font-size:12.5px;margin:0 0 14px}
@@ -92,6 +100,8 @@ td select{padding:3px 4px;font-size:12px}
 @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
 </style>
 
+</head>
+<body>
 <div class="app">
   <div class="stage">
     <canvas id="gl" aria-label="Widok 3D domu z posadzkami"></canvas>
@@ -114,7 +124,7 @@ td select{padding:3px 4px;font-size:12px}
         <button data-k="ArrowRight" class="r" aria-label="Obrót w prawo">▶</button>
       </div>
     </div>
-    <div class="legend" id="legend">Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko. <b>Spacer</b>: chodzenie strzałkami, także po schodach. <b>Czerwone</b> płytki = drobne docinki.</div>
+    <div class="legend" id="legend">Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko. <b>Strzałka ↑ lub przycisk Spacer</b>: chodzenie po domu, także po schodach. <b>Czerwone</b> płytki = drobne docinki.</div>
   </div>
 
   <aside>
@@ -748,7 +758,7 @@ const WALK_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'P
 const keyName = e => e.key.length === 1 ? e.key.toLowerCase() : e.key;
 window.addEventListener('keydown', e => {
   const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
-  if (!walk.on) { if (e.key === 'ArrowUp' && document.activeElement === canvas) setWalk(true); else return; }
+  if (!walk.on) { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { setWalk(true); e.preventDefault(); } else return; }
   if (e.key === 'Escape') { setWalk(false); return; }
   const k = keyName(e); if (WALK_KEYS.has(k)) { walk.keys[k] = true; e.preventDefault(); }
 });
@@ -810,3 +820,6 @@ let last = performance.now();
 })();
 })();
 </script>
+
+</body>
+</html>
