@@ -721,7 +721,15 @@ function skin(r0, y0, bottom, top, grp, breaks, floor, face, f) {
   // the cladding pieces overlap their neighbours by 2.5 mm: no hairline cracks between them; no edge lines either
   const r = [r0[0] - 0.25, r0[1], r0[2] + 0.25, r0[3]], z = face === 'garden' ? [r[1] - 1, r[1]] : [r[3], r[3] + 1];
   skinning = true;
-  try { skinPieces(r, z, y0, bottom, top, grp, breaks, f); } finally { skinning = false; }
+  try {
+    let parts = [[num(bottom), num(top)]];
+    if (isFull()) for (const b of B.bands) {         // the band takes its height out of the cladding under it
+      if (b.face !== face || r0[2] <= b.x[0] || r0[0] >= b.x[1]) continue;
+      const b0 = b.y[0] - y0, b1 = b.y[1] - y0;
+      parts = parts.flatMap(([lo, hi]) => [[lo, x => Math.min(hi(x), b0)], [x => Math.max(lo(x), b1), hi]]);
+    }
+    for (const [lo, hi] of parts) skinPieces(r, z, y0, lo, hi, grp, breaks, f);
+  } finally { skinning = false; }
 }
 function skinPieces(r, z, y0, bottom, top, grp, breaks, f) {
   if (!f) { prism(r[0], z[0], r[2], z[1], y0, bottom, top, M[F.default], grp, breaks); return; }
@@ -764,11 +772,11 @@ function buildWalls(floor) {
   // at the same height (the cut, at most the ceiling)
   const groundTop = kind => kind === 'ext' && full ? () => LEVEL.attic : () => Math.min(cut, GROUND_H);
   const wallTop = kind => attic
-    ? (kind === 'knee' ? () => Math.min(cut, KNEE) : kind === 'rail' ? () => Math.min(cut, 100) : x => Math.min(cut, Math.max(roofHeight(x), under(x))))   // the portal wings reach the roof slab
+    ? (kind === 'rail' ? () => Math.min(cut, 100) : x => Math.min(cut, roofHeight(x)))   // one roof line for every attic wall
     : groundTop(kind);
-  const skinTop = top => attic ? top : x => Math.min(top(x), GROUND_H);     // the slab band between the floors stays white
+  const skinTop = top => top;
   const portalTop = full && B.portals.groundWingsTo === 'attic' ? LEVEL.attic : GROUND_H;
-  const fullTop = attic ? x => Math.max(roofHeight(x), under(x)) : () => full ? LEVEL.attic : GROUND_H;
+  const fullTop = attic ? roofHeight : () => full ? LEVEL.attic : GROUND_H;
   // an opening is drawn whole (glass, frames and the wall above it) when the cut is at or above its highest point
   const openingWhole = o => {
     const r = o.r, { head } = openingHead(o, fullTop), xs = [r[0], r[2], ...breaks.filter(p => p > r[0] && p < r[2])];
@@ -782,7 +790,6 @@ function buildWalls(floor) {
     const r = c.r;
     if (c.opening === undefined) {
       const wing = r[3] < 1 || r[1] > LENGTH - 2;
-      if (wing && !full) continue;                  // the portal wings only in the whole house
       const portal = !attic && wing;
       const top = portal ? () => Math.min(cut, portalTop) : wallTop(c.kind);
       prism(r[0], r[1], r[2], r[3], y0, 0, top, M.wall[c.kind], grp, breaks);
@@ -808,7 +815,8 @@ function buildWalls(floor) {
     const gx = thinX ? [mid - 1, mid + 1] : [r[0], r[2]];
     const gz = thinX ? [r[1], r[3]] : [mid - 1, mid + 1];
     if (face && o.kind !== 'door' || entranceOf(floor, r)) {   // the reveal in front of the glass gets the facade finish
-      const lin = M[F.default], t = 0.8, za = Math.min(outer, mid), zb = Math.max(outer, mid);
+      const lin = M[F.default], t = 0.8, face1 = outer + (outer === (thinX ? r[0] : r[1]) ? -1 : 1);   // up to the facade layer
+      const za = Math.min(face1, mid), zb = Math.max(face1, mid);
       prism(r[0], za, r[2], zb, y0, head, x => head(x) + t, lin, grp, breaks);
       prism(r[0], za, r[0] + t, zb, y0, o.sill, head, lin, grp, breaks);
       prism(r[2] - t, za, r[2], zb, y0, o.sill, head, lin, grp, breaks);
@@ -844,7 +852,7 @@ function buildWalls(floor) {
   if (full) for (const b of B.bands) {
     const onFloor = b.y[0] < (attic ? 10000 : LEVEL.attic) && b.y[0] >= (attic ? LEVEL.attic : -100);
     if (!onFloor) continue;
-    const z = b.face === 'garden' ? [F.garden.z - b.depth, F.garden.z] : [F.front[0].z, F.front[0].z + b.depth];
+    const z = b.face === 'garden' ? [F.garden.z - 1, F.garden.z] : [LENGTH, LENGTH + 1];   // the facade layer, 1 cm
     prism(b.x[0], z[0], b.x[1], z[1], 0, b.y[0], b.y[1], M[b.material], grp, []);
   }
   edgeSink = null;
@@ -1180,16 +1188,15 @@ function floorSVG(floor, ox, oy, withTiles) {
   if (!attic) { const c = ST.core; rect(c, `fill="${C.wall}"`); }
   { const f1 = ST.flight1, zc = (f1.z[0] + f1.z[1]) / 2; line(f1.x[1] - 10, zc, ST.landing.x[1] - 10, zc, `stroke="${C.ink}" stroke-width=".7" marker-end="url(#arrow)"`); }
   if (!attic) rect(PLAN.ground.fireplace, `fill="#cfcfcd" stroke="${C.ink}" stroke-width=".5"`);
-  // walls: the footprint pieces that are solid at the cut height of 1 m (openings with a sill above it stay solid)
-  for (const c of footprint(floor)) {
-    const o = c.opening !== undefined ? P.openings[c.opening] : null;
-    if (o && o.sill < 100) continue;
-    rect(c.r, `fill="${C.wall}"`);
-  }
+  // walls: cut at the same height as the 3D view (the slider): an opening whose sill is above the cut is wall
+  const cutH = planCut();
+  const solid = footprint(floor).filter(c => c.opening === undefined || P.openings[c.opening].sill >= cutH);
+  out.push(`<path fill="${C.wall}" d="${solid.map(c => `M${X(c.r[0])} ${Z(c.r[1])}H${X(c.r[2])}V${Z(c.r[3])}H${X(c.r[0])}Z`).join('')}"/>`);
   // openings: windows (glass line), doors (jamb lines), the garage door (dashed)
   for (const o of P.openings) {
+    if (o.sill >= cutH) continue;                   // under the cut: wall, as in 3D
     const r = o.r, thinX = (r[2] - r[0]) < (r[3] - r[1]);
-    if (o.sill >= 100) { rect(r, `fill="${C.wall}"`); }
+
     const cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2;
     if (o.kind === 'window') {
       rect(r, `fill="#ffffff" stroke="${C.ink}" stroke-width=".5"`);
@@ -1256,6 +1263,7 @@ function floorSVG(floor, ox, oy, withTiles) {
   text(WIDTH / 2, zMax + 100, `${FLOOR_NAMES[floor].toUpperCase()} · rzędna ${LEVEL[floor] / 100 >= 0 ? '+' : ''}${(LEVEL[floor] / 100).toFixed(2).replace('.', ',')}`, 't');
   return out.join('\n');
 }
+const planCut = () => state.cut;
 function planSVG(which) {
   const floors = which === 'both' ? ['ground', 'attic'] : [which];
   const pad = { l: 120, r: 130, t: 200, b: 230 }, gap = 100, W = WIDTH + pad.l + pad.r, H = LENGTH + pad.t + pad.b;
@@ -1267,7 +1275,7 @@ function planSVG(which) {
 <style>.d{fill:${C.red};font-size:13px}.s{fill:${C.ink};font-size:11px}.r{fill:${C.ink};font-size:17px;font-weight:bold}.a{fill:${C.red};font-size:14px;font-style:italic}.t{fill:${C.ink};font-size:22px;font-weight:bold;letter-spacing:2px}</style>
 <rect x="0" y="0" width="${total}" height="${H + 30}" fill="#ffffff"/>
 ${body}
-<text x="20" y="${H + 18}" class="s">Dom w papawerach 5 (G) · rzut 1:50 przy wydruku w skali (1 cm rysunku = 50 cm) · wymiary w cm · ściany przecięte na 1 m · ten sam model co widok 3D (plan.js, building.js, układ płytek) · ${date}</text>
+<text x="20" y="${H + 18}" class="s">Dom w papawerach 5 (G) · rzut 1:50 przy wydruku w skali (1 cm rysunku = 50 cm) · wymiary w cm · ściany przecięte na wysokości ${planCut()} cm, jak w widoku 3D · ten sam model co widok 3D (plan.js, building.js, układ płytek) · ${date}</text>
 </svg>`;
 }
 let planZoom = 1, planWhich = 'ground';
@@ -1305,7 +1313,7 @@ for (const k in state.layouts) wireLayout(k);
 roomsTable();
 const cut = document.getElementById('cut'), cutv = document.getElementById('cutv');
 cut.value = state.cut; cutv.textContent = state.cut + ' cm';
-cut.oninput = () => { state.cut = +cut.value; cutv.textContent = state.cut + ' cm'; buildWalls('ground'); buildWalls('attic'); save(); requestRender(); };
+cut.oninput = () => { state.cut = +cut.value; cutv.textContent = state.cut + ' cm'; buildWalls('ground'); buildWalls('attic'); save(); requestRender(); if (!document.getElementById('plan2d').hidden) showPlan(true); };
 const showCuts = document.getElementById('showCuts'), showRoof = document.getElementById('showRoof');
 showCuts.checked = state.showCuts; showRoof.checked = state.showRoof;
 showCuts.onchange = () => { state.showCuts = showCuts.checked; rebuildFloor('ground'); rebuildFloor('attic'); };

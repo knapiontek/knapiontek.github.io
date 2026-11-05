@@ -17,7 +17,8 @@
                 of plan.js beside them); anything else on a face = default;
                 upTo "windowLine": the finish stops at the line of the attic window tops (the wood between the front
                 windows ends in a peak), above it the default
-   bands        extra facade strips drawn in front of a face (the front one is the white band between the floors of
+   bands        facade strips in the facade layer (1 cm in front of the wall, like every finish); a band takes its
+                height out of the cladding under it (the front one is the white band between the floors of
                 the visualisation; the attic front windows start on it: sill 30 in plan.js)
    claddings    extra thin finishes [x1, z1, x2, z2] from y to y: the graphite sides of the entrance recess, its white
                 beam under the band and the graphite soffit
@@ -65,8 +66,8 @@ window.HOUSE_BUILDING = {
   {"face": "front", "floor": "attic", "x": [390.0, 522.4], "material": "woodVertical", "upTo": "windowLine"}
  ],
  "bands": [
-  {"face": "garden", "x": [43, 867], "y": [238, 300], "depth": 2, "material": "woodHorizontal"},
-  {"face": "front", "x": [43.4, 866.6], "y": [245, 327], "depth": 2, "material": "plasterWhite"}
+  {"face": "garden", "x": [43, 867], "y": [238, 300], "depth": 1, "material": "woodHorizontal"},
+  {"face": "front", "x": [43.4, 866.6], "y": [245, 327], "depth": 1, "material": "plasterWhite"}
  ],
  "claddings": [
   {"floor": "ground", "rect": [453.8, 1231, 454.8, 1322.8], "y": [0, 245], "material": "graphite"},
