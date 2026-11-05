@@ -737,12 +737,19 @@ function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX, opt) {
   const member = (b1, b2, bottom, top) => thinX
     ? prism(cx - D, b1, cx + D, b2, y0, bottom, top, mat, grp, breaks)
     : prism(b1, cz - D, b2, cz + D, y0, bottom, top, mat, grp, breaks);
-  const n = Math.max(1, Math.round(len / opt.mullionEvery));
-  for (let i = 0; i <= n; i++) { const p = a1 + i * len / n; member(Math.max(a1, p - W / 2), Math.min(a2, p + W / 2), sill, headFn); }
+  // Every member is rigid: straight posts and bars at fixed positions, drawn whole or not at all, never clipped to the
+  // window outline. Only the outer frame follows the outline (it is the outline).
+  const n = Math.max(1, Math.round(len / opt.mullionEvery)), posts = [];
+  for (let i = 0; i <= n; i++) posts.push(a1 + i * len / n);
+  for (const p of posts) member(Math.max(a1, p - W / 2), Math.min(a2, p + W / 2), sill, headFn);
   member(a1, a2, sill, sill + W);
   member(a1, a2, x => headFn(x) - W, headFn);
   const T = opt.transom;
-  if (!thinX && len > 200 && Math.max(...[a1, (a1 + a2) / 2, a2].map(headFn)) > T + 30) member(a1, a2, x => Math.min(T - W / 2, headFn(x)), x => Math.min(T + W / 2, headFn(x)));
+  if (thinX) return;
+  for (let i = 0; i < n; i++) {                   // a transom crosses only the panes that are taller than it at both posts
+    const p1 = posts[i], p2 = posts[i + 1], low = Math.min(headFn(p1), headFn(p2), ...breaks.filter(b => b > p1 && b < p2).map(headFn));
+    if (p2 - p1 > 40 && low >= T + W / 2 + 25) member(p1 + W / 2, p2 - W / 2, T - W / 2, T + W / 2);
+  }
 }
 function buildWalls(floor) {
   const grp = wallGroups[floor]; clearGroup(grp);
@@ -774,7 +781,9 @@ function buildWalls(floor) {
   for (const c of footprint(floor)) {                 // the solid parts: walls, and the wall below and above openings
     const r = c.r;
     if (c.opening === undefined) {
-      const portal = !attic && (r[3] < 1 || r[1] > LENGTH - 2);
+      const wing = r[3] < 1 || r[1] > LENGTH - 2;
+      if (wing && !full) continue;                  // the portal wings only in the whole house
+      const portal = !attic && wing;
       const top = portal ? () => Math.min(cut, portalTop) : wallTop(c.kind);
       prism(r[0], r[1], r[2], r[3], y0, 0, top, M.wall[c.kind], grp, breaks);
       skin(r, y0, 0, skinTop(top), grp, breaks, floor, c.face, c.finish);
