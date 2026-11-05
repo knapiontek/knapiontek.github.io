@@ -99,16 +99,29 @@ window.BathEngine = (function () {
     // shower in the bottom-left corner (x 0…depth along the door wall, z 0…width along the bottom wall)
     G.SHX = F.shower.depth; G.SHZ = F.shower.width;
     G.SHOWER_XC = G.SHX / 2; G.SHOWER_ZC = G.SHZ / 2;
-    // roof window in the slope, bath centred under it along the knee wall
+    // roof window in the slope
     const rw = F.roofWindow;
     G.RW = { x: G.XL - rw.axisFromVanityWall, w: rw.w, h: rw.h, v0: rw.fromKnee, v1: rw.fromKnee + rw.h };
     G.RW.y0 = r.knee + G.RW.v0 * Math.sin(G.PITCH); G.RW.y1 = r.knee + G.RW.v1 * Math.sin(G.PITCH);
     G.RW.z0 = G.ZW - G.RW.v0 * Math.cos(G.PITCH); G.RW.z1 = G.ZW - G.RW.v1 * Math.cos(G.PITCH);
-    const b = F.bath;
-    G.BATH = { ...b, x0: G.RW.x - b.len / 2, x1: G.RW.x + b.len / 2, z0: G.ZW - b.w, z1: G.ZW };
     // WC in front of the casing along the bottom wall; riser in the bottom-right corner inside the casing
     G.WC_Z = F.wc.axisFromDoorWall;
     G.CASE = { x1: F.casing.depth, z0: F.casing.from, z1: G.ZW, h: F.casing.height };
+    // freestanding bath centred in the free area: z from the vanity end / WC side to the knee wall,
+    // x from the WC casing to the vanity wall
+    const b = F.bath;
+    G.FREE = { x0: G.CASE.x1, x1: G.XL, z0: Math.max(mm(V.z0 + V.len), G.WC_Z + F.wc.w / 2), z1: G.ZW };
+    const bx = (G.FREE.x0 + G.FREE.x1) / 2, bz = (G.FREE.z0 + G.FREE.z1) / 2;
+    G.BATH = { ...b, cx: bx, cz: bz, x0: bx - b.len / 2, x1: bx + b.len / 2, z0: bz - b.w / 2, z1: bz + b.w / 2 };
+    /** x of the bath outline (outer, or inner with inset) at z — superellipse. */
+    G.bathEdgeX = (z, inset = 0) => {
+      const A = b.len / 2 - inset, B = b.w / 2 - inset, t = Math.min(1, Math.abs(z - bz) / B);
+      return bx + A * Math.pow(1 - Math.pow(t, b.n), 1 / b.n);
+    };
+    const tp = F.bathTap;
+    G.TAP = { ...tp, x: G.BATH.x1 + tp.fromBathEnd, z: G.ZW - tp.fromKnee };
+    G.TAP.tipX = G.TAP.x - tp.reach;
+    G.TAP.overRim = G.bathEdgeX(G.TAP.z, b.rim) - G.TAP.tipX;   // how far the spout reaches inside the inner rim
     G.RISER = { x: .03 + F.casing.riser / 2, z: G.ZW - .03 - F.casing.riser / 2, r: F.casing.riser / 2 };
 
     G.ROOM_OUTLINE = [[0, 0], [G.XL, 0], [G.XL, G.ZW], [0, G.ZW]];
@@ -117,17 +130,19 @@ window.BathEngine = (function () {
     const z22 = G.ZW - (2.2 - r.knee) / tan, z14 = G.ZW - (1.4 - r.knee) / tan;
     G.AREA_USABLE = G.XL * (Math.min(G.ZW, z22) + .5 * Math.max(0, Math.min(G.ZW, z14) - z22));
 
-    const vEnd = mm(V.z0 + V.len), wcH = G.heightAt(G.WC_Z), bathH = G.heightAt(G.BATH.z0);
+    const vEnd = mm(V.z0 + V.len), wcH = G.heightAt(G.WC_Z), bathH = G.heightAt(G.BATH.z0), B_ = G.BATH;
     const lastBasin = mm(V.z0 + V.basins[V.basins.length - 1]);
     G.checks = [
       ['Prysznic → dolna krawędź otworu drzwi', cm(G.OX0 - G.SHX) + ' cm', G.OX0 >= G.SHX],
       ['Oś WC → szyba prysznica', cm(G.WC_Z - G.SHZ) + ' cm', G.WC_Z - G.SHZ >= .40],
-      ['Oś WC → wanna', cm(G.BATH.z0 - G.WC_Z) + ' cm', G.BATH.z0 - G.WC_Z >= .40],
-      ['Wanna → zabudowa WC', cm(G.BATH.x0 - G.CASE.x1) + ' cm', G.BATH.x0 >= G.CASE.x1],
+      ['Oś WC → wanna', cm(B_.z0 - G.WC_Z) + ' cm', B_.z0 - G.WC_Z >= .35],
+      ['Wanna → zabudowa WC = wanna → ściana z umywalkami', `${cm(B_.x0 - G.CASE.x1)} = ${cm(G.XL - B_.x1)} cm`, Math.abs((B_.x0 - G.CASE.x1) - (G.XL - B_.x1)) < .005],
+      ['Wanna → koniec szafki = wanna → ścianka kolankowa', `${cm(B_.z0 - G.FREE.z0)} = ${cm(G.ZW - B_.z1)} cm`, B_.z0 - G.FREE.z0 >= .1],
+      ['Wylewka baterii za wewnętrzną krawędzią wanny', cm(G.TAP.overRim) + ' cm', G.TAP.overRim >= .04],
+      ['Bateria → ściana z umywalkami / ścianka kolankowa', `${cm(G.XL - G.TAP.x)} / ${cm(G.ZW - G.TAP.z)} cm`, G.XL - G.TAP.x >= .15],
       ['Wysokość nad osią WC', cm(wcH) + ' cm', wcH >= 2.0],
-      ['Wysokość przy przedniej krawędzi wanny', cm(bathH) + ' cm', bathH >= 1.8],
+      ['Wysokość przy wejściu do wanny (krawędź od strony pokoju)', cm(bathH) + ' cm', bathH >= 1.8],
       ['Wysokość nad drugą umywalką', cm(G.heightAt(lastBasin)) + ' cm', G.heightAt(lastBasin) >= 2.1],
-      ['Wanna → front szafki', cm(G.XL - mm(V.topDepth) - G.BATH.x1) + ' cm', G.XL - mm(V.topDepth) >= G.BATH.x1],
       ['Grzejnik → górna krawędź otworu drzwi', cm(G.RAD.x - G.RAD.w / 2 - G.OX1) + ' cm', G.RAD.x - G.RAD.w / 2 - G.OX1 >= 0],
     ];
   }
@@ -209,8 +224,10 @@ window.BathEngine = (function () {
     items.push({ group: g, name: 'Syfon umywalkowy oszczędzający miejsce Geberit', price: null, qty: nb, where: 'Leroy Merlin Bielsko-Biała', url: L.siphon });
     items.push({ group: g, name: `Uszczelka EPDM 3 mm ${white ? 'biała' : 'czarna'}, samoprzylepna (taśma)`, price: null, qty: 1, where: 'Leroy Merlin / Castorama Bielsko-Biała' });
     if (G.type === 'attic') {
-      items.push({ group: 'Wanna', name: `Wanna prostokątna akrylowa ${c0(G.BATH.len)} × ${c0(G.BATH.w)}, biała (np. Roca Linea)`, price: null, qty: 1, where: 'okazje.info.pl — porównanie cen', url: L.bath, note: 'zabudowa z płytek; pod oknem dachowym wzdłuż ścianki kolankowej' });
-      items.push({ group: 'Wanna', name: brass ? 'Bateria wannowa natynkowa Hansgrohe Tecturis E, brąz szczotkowany, 73420140' : 'Bateria wannowa natynkowa Hansgrohe Tecturis E (73420000 chrom lub kolor pod armaturę)', price: null, qty: 1, where: 'Media Expert (odbiór w Bielsku-Białej)', url: L.bathTap, note: `na ściance kolankowej (wys. ${c0(G.KNEE)} cm), nad środkiem wanny` });
+      items.push({ group: 'Wanna', name: `Wanna wolnostojąca owalna akrylowa ${c0(G.BATH.len)} × ${c0(G.BATH.w)} × ${c0(G.BATH.h)}, biała`, price: P.bath, qty: 1, where: 'Castorama Bielsko-Biała', url: L.bath, note: `alternatywa: Oltens Begna 170 × 75 (${L.bathAlt}); w modelu na środku wolnej przestrzeni, nie dokładnie pod oknem` });
+      items.push({ group: 'Wanna', name: brass ? 'Bateria wannowa wolnostojąca (podłogowa) Hansgrohe Tecturis E, brąz szczotkowany — 73445140 (chrom 73445000)' : 'Bateria wannowa wolnostojąca (podłogowa) Hansgrohe Tecturis E, chrom 73445000', price: null, qty: 1, where: 'salon łazienek w Bielsku-Białej / zamówienie Hansgrohe', url: L.bathTap, note: `wys. ${c0(G.TAP.h)} cm, wylewka ${c0(G.TAP.reach)} cm; w rogu: ${cm(G.XL - G.TAP.x)} cm od ściany z umywalkami, ${cm(G.ZW - G.TAP.z)} cm od ścianki kolankowej; numer w brązie potwierdź w salonie` });
+      items.push({ group: 'Wanna', name: 'Zestaw podtynkowy do baterii wolnostojącej Hansgrohe (element montażowy w posadzce, 10452180)', price: null, qty: 1, where: 'salon łazienek / hurtownia instalacyjna', note: 'montaż przed wylewką; potwierdź numer w salonie' });
+      items.push({ group: 'Wanna', name: 'Syfon do wanny wolnostojącej z korkiem klik-klak (odpływ w posadzce)', price: null, qty: 1, where: 'Leroy Merlin / Castorama Bielsko-Biała' });
     }
     items.push({ group: 'Grzejnik', name: `Mexen Hades 1200 × 400, ${brass ? 'złoty' : 'złoty (w wariancie nikiel dobierz kolor chrom/inox)'}, 373 W`, price: P.radiator, qty: 1, where: 'Castorama Bielsko-Biała', url: L.radiator, note: `odbiór w sklepie lub dostawa; pas ściany od otworu drzwi do narożnika ${cm(G.XL - G.OX1)} cm, zawieszony od ${c0(G.RAD.y0)} cm` });
     items.push({ group: 'Grzejnik', name: 'Zawory grzejnikowe (para, przyłącze dolne), w kolorze grzejnika', price: null, qty: 1, where: 'Castorama Bielsko-Biała' });
@@ -240,7 +257,8 @@ window.BathEngine = (function () {
       rows.push(['Okno dachowe', `${c0(G.RW.w)} × ${c0(G.RW.h)}, oś ${Math.round((G.XL - G.RW.x) * 1000)} od ściany z umywalką`, `dolna krawędź ok. ${c0(G.RW.y0)} cm nad podłogą`]);
       rows.push(['WC — oś', `${Math.round(G.WC_Z * 1000)} od ściany z drzwiami`, `stelaż Geberit w zabudowie ${c0(G.CASE.x1)} cm przy dolnej ścianie, podejście do pionu w rogu`]);
       rows.push(['Pion Ø160', `prawy dolny róg, w zabudowie WC`, 'w osi pionu z parteru']);
-      rows.push(['Wanna — odpływ i bateria', `oś wanny ${Math.round((G.XL - G.RW.x) * 1000)} od ściany z umywalką`, `bateria natynkowa na ściance kolankowej, wys. ok. 700`]);
+      rows.push(['Wanna — odpływ w posadzce', `środek wanny ${Math.round((G.XL - G.BATH.cx) * 1000)} od ściany z umywalkami, ${Math.round((G.ZW - G.BATH.cz) * 1000)} od ścianki kolankowej`, 'odpływ pod wanną wg karty wanny (zwykle na środku), spadek do pionu']);
+      rows.push(['Wanna — bateria podłogowa (ciepła + zimna)', `${Math.round((G.XL - G.TAP.x) * 1000)} od ściany z umywalkami, ${Math.round((G.ZW - G.TAP.z) * 1000)} od ścianki kolankowej`, 'element podtynkowy w posadzce, przed wylewką']);
       rows.push(['Prysznic — odpływ liniowy', `${Math.round(F.shower.drain * 1000)} przy dolnej ścianie, w narożniku z drzwiami`, 'Vogi Duo, ruszt pod płytkę']);
     }
     rows.push(['Szafka — spód / blat / rant umywalki', `${V.bottomY} / ${V.topY} / ${V.rimY}`, `od drzwi ${V.z0} … ${V.z0 + V.len}`]);
@@ -270,9 +288,10 @@ window.BathEngine = (function () {
       ['Pomieszczenie', `${c0(G.ZW)} × ${c0(G.XL)} cm (wg projektu)`], ['Powierzchnia podłogi', `${G.AREA.toFixed(2).replace('.', ',')} m²`],
       ['Powierzchnia użytkowa (≥ 2,2 m 100 %, 1,4–2,2 m 50 %)', `${G.AREA_USABLE.toFixed(2).replace('.', ',')} m²`],
       ['Ścianka kolankowa', `${c0(G.KNEE)} cm`], ['Dach', `${G.floor.roof.pitch}°, płaski sufit ${c0(G.H)} cm od ${cm(G.ZF)} cm od drzwi`],
-      ['Okno dachowe', `${c0(G.RW.w)} × ${c0(G.RW.h)} (VELUX), nad wanną`],
+      ['Okno dachowe', `${c0(G.RW.w)} × ${c0(G.RW.h)} (VELUX), oś ${cm(G.XL - G.RW.x)} cm od ściany z umywalkami`],
       ['Prysznic', `${c0(F.shower.width)} × ${c0(F.shower.depth)} cm, lewy dolny róg`], ['Drzwi prysznica', `${c0(F.shower.door)} cm + szyba stała ${c0(F.shower.width - F.shower.door)} cm, ścianka boczna szklana`],
-      ['Wanna', `${c0(G.BATH.len)} × ${c0(G.BATH.w)}, zabudowana płytką, wzdłuż ścianki kolankowej`],
+      ['Wanna', `wolnostojąca ${c0(G.BATH.len)} × ${c0(G.BATH.w)}, na środku wolnej przestrzeni: odstępy ${cm(G.BATH.x0 - G.CASE.x1)} / ${cm(G.XL - G.BATH.x1)} cm i ${cm(G.BATH.z0 - G.FREE.z0)} / ${cm(G.ZW - G.BATH.z1)} cm`],
+      ['Bateria wannowa', `podłogowa, ${cm(G.XL - G.TAP.x)} cm od ściany z umywalkami, ${cm(G.ZW - G.TAP.z)} cm od ścianki kolankowej`],
       ['WC', `oś ${cm(G.WC_Z)} cm od ściany z drzwiami, zabudowa ${c0(G.CASE.x1)} cm × wys. ${c0(G.CASE.h)} cm do pionu w rogu`],
       ...common, ['Odpływ liniowy prysznica', `${c0(F.shower.drain)} cm, pod płytkę`], ['Fuga', '3 mm, w kolorze płytki'],
     ];

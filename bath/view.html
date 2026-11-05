@@ -1278,7 +1278,7 @@ const outlineShape = (points, Kind = THREE.Shape) => {
    Called once when the page shows the attic.
    ========================================================================== */
 function buildAttic() {
-  const { KNEE, PITCH, ZF, RW, BATH, CASE, RISER, SHX, SHZ, KNEE_T, WC_Z, SLOPE_LEN } = G;
+  const { KNEE, PITCH, ZF, RW, BATH, TAP, CASE, RISER, SHX, SHZ, KNEE_T, WC_Z, SLOPE_LEN } = G;
   const hAt = G.heightAt, sin = Math.sin(PITCH), cos = Math.cos(PITCH);
   const behind = (middle, normal) => camera.position.clone().sub(middle).dot(normal) >= .05;
 
@@ -1391,30 +1391,25 @@ function buildAttic() {
     tube([[hx, 1.0, .03], [hx + .02, .7, .08], [hx - .02, .55, .1], [hx - .01, .85, .09], [hx, 1.22, .06]], .007, M.metal, s, 40);
   })();
 
-  /* ---------- bath 170 × 75 along the knee wall, tiled apron, wall-mounted mixer on the knee wall ---------- */
+  /* ---------- freestanding oval bath centred in the free area, floor-standing mixer in the corner ---------- */
   (function bath() {
-    const s = layerGroup('sanitary'), { x0, x1, z0, z1, h } = BATH, bx = (x0 + x1) / 2, bz = (z0 + z1) / 2;
-    const apron = layerGroup('sanitary');
-    tiled('wall', new THREE.BoxGeometry(x1 - x0, h - .02, z1 - z0), apron).position.set(bx, (h - .02) / 2, bz);
-    const acrylic = new THREE.MeshPhysicalMaterial({ color: 0xf6f6f3, roughness: .18, clearcoat: .5, clearcoatRoughness: .1 });
-    const acrylicIn = new THREE.MeshPhysicalMaterial({ color: 0xf2f2ef, roughness: .2, clearcoat: .4, side: THREE.DoubleSide });
-    const rimShape = roundedRect(new THREE.Shape(), x0, z0, x1 - x0, z1 - z0, .02);
-    rimShape.holes.push(roundedRect(new THREE.Path(), x0 + .07, z0 + .06, x1 - x0 - .14, z1 - z0 - .12, .1));
-    const rim = new THREE.Mesh(new THREE.ExtrudeGeometry(rimShape, { depth: .02, bevelEnabled: false, curveSegments: 12 }), acrylic);
-    rim.rotation.x = Math.PI / 2; rim.position.y = h; rim.castShadow = rim.receiveShadow = true; s.add(rim);
-    const a = (x1 - x0) / 2 - .07, b = (z1 - z0) / 2 - .06;
+    const s = layerGroup('sanitary'), { cx, cz, len, w, h, rim, n } = BATH, A = len / 2, B = w / 2;
+    const acrylic = new THREE.MeshPhysicalMaterial({ color: 0xf6f6f3, roughness: .18, clearcoat: .5, clearcoatRoughness: .1, side: THREE.DoubleSide });
+    const S = (y, da, db, nn = n) => ({ y, a: A - da, b: B - db, n: nn, cx, cz });
+    // one surface: plinth → outer wall → flat rim → inner wall → floor of the tub
     loftMesh([
-      { y: .14, a: a - .16, b: b - .09, n: 4.5, cx: bx, cz: bz },
-      { y: .2,  a: a - .07, b: b - .04, n: 5,   cx: bx, cz: bz },
-      { y: .35, a: a - .02, b: b - .01, n: 5.5, cx: bx, cz: bz },
-      { y: h - .005, a: a + .003, b: b + .003, n: 6, cx: bx, cz: bz },
-    ], acrylicIn, s, { top: false }).castShadow = false;
-    cyl(.022, .022, .004, M.metal, bx - a + .2, .142, bz, s);                            // waste
-    // wall-mounted mixer Tecturis E on the knee wall, spout into the bath
-    const ty = KNEE - .45;
-    box(.16, .05, .045, M.metal, bx, ty, ZW - .022, s);
-    box(.02, .04, .16, M.metal, bx, ty - .01, ZW - .1, s);
-    box(.012, .045, .012, M.metal, bx + .06, ty + .045, ZW - .03, s);
+      S(0, .12, .09, 3.4), S(.05, .06, .045, 3.7), S(.2, .015, .012), S(h - .02, 0, 0), S(h, 0, 0),
+      S(h, rim, rim), S(h - .04, rim + .006, rim + .006), S(.32, rim + .03, rim + .02), S(.16, rim + .12, rim + .07), S(.1, rim + .24, rim + .13, 3.4),
+    ], acrylic, s);
+    cyl(.022, .022, .004, M.metal, cx, .102, cz, s);                                  // waste in the middle
+    // floor-standing mixer Tecturis E: column, spout towards the bath, hand shower in its holder
+    const { x: tx, z: tz, h: th, reach } = TAP;
+    cyl(.045, .045, .012, M.metal, tx, .006, tz, s);
+    cyl(.022, .022, th - .03, M.metal, tx, (th - .03) / 2, tz, s);
+    box(reach, .022, .034, M.metal, tx - reach / 2 + .01, th - .045, tz, s);           // spout
+    box(.012, .04, .012, M.metal, tx + .01, th + .005, tz, s);                         // lever
+    cyl(.016, .016, .2, M.metal, tx + .045, th - .25, tz, s);                          // hand shower
+    box(.03, .012, .02, M.metal, tx + .028, th - .14, tz, s);
   })();
 
   /* ---------- WC casing along the bottom wall up to the riser corner, wall-hung WC ---------- */
@@ -1452,7 +1447,7 @@ function buildAttic() {
     overview: { position: [-2.2, 4.6, -1.9], target: [XL / 2, .8, ZW / 2] },
     door:     { position: [(DX0 + DX1) / 2, 1.62, .15], target: [XL / 2 - .2, 1.0, ZW] },
     vanity:   { position: [.9, 1.65, ZW - .5],   target: [XL - .2, .95, mm(V.z0 + V.len / 2)] },
-    bath:     { position: [XL - .35, 1.75, .45],  target: [RW.x, .55, ZW - .35] },
+    bath:     { position: [.55, 1.7, .9],  target: [BATH.cx, .45, BATH.cz] },
     shower:   { position: [XL - .35, 1.65, 1.6],  target: [G.SHOWER_XC, 1.1, G.SHOWER_ZC] },
     plan:     { position: [XL / 2 + .01, 7.4, ZW / 2 + .01], target: [XL / 2, 0, ZW / 2] },
   };
@@ -2021,7 +2016,7 @@ function atticPlanSVG() {
   const P = (z, x) => [Math.round(z * 1000) / 10, Math.round((XL - x) * 1000) / 10];
   const f = v => +v.toFixed(1), cm = BathEngine.cm, c0 = v => Math.round(v * 100);
   const RED = '#c8282d', INK = '#2a2d30', WALL = '#111';
-  const { RW, BATH, CASE, RISER, SHX, SHZ, KNEE_T, WC_Z, ZF, KNEE, TAN } = G;
+  const { RW, BATH, TAP, FREE, CASE, RISER, SHX, SHZ, KNEE_T, WC_Z, ZF, KNEE, TAN } = G;
   const out = [];
   const rect = (z0, x0, z1, x1, attrs) => {
     const [a, b] = P(z0, x0), [c, d] = P(z1, x1);
@@ -2041,11 +2036,11 @@ function atticPlanSVG() {
   for (const h of [1.4, 1.9, 2.2]) {
     const z = ZW - (h - KNEE) / TAN;
     line(z, XL, z, 0, `stroke="${INK}" stroke-width=".3" stroke-dasharray="1.5 2" opacity=".6"`);
-    note(z - .015, XL - .62, `h ${c0(h)}`, 'end');
+    note(z - .015, z > mm(V.z0 + V.len) ? XL - .04 : XL - .62, `h ${c0(h)}`, 'end');
   }
   line(ZF, XL, ZF, 0, `stroke="${INK}" stroke-width=".3" stroke-dasharray="6 2" opacity=".6"`);
   note(ZF + .015, XL - .62, `sufit ${c0(G.H)}`, 'start');
-  { const [a, b] = P(ZW - .025, (XL + BATH.x1) / 2); out.push(`<text transform="translate(${a} ${b}) rotate(-90)" class="s" text-anchor="middle">ścianka kolankowa ${c0(KNEE)}</text>`); }
+  { const [a, b] = P(ZW - .025, (BATH.x0 + CASE.x1) / 2 + .05); out.push(`<text transform="translate(${a} ${b}) rotate(-90)" class="s" text-anchor="middle">ścianka kolankowa ${c0(KNEE)}</text>`); }
 
   // concealed door opening into the hallway, swing arc
   const leaf = DX1 - DX0, [ox, oy] = P(-T, DX1), [lx, ly] = P(-T - leaf, DX0);
@@ -2093,10 +2088,19 @@ function atticPlanSVG() {
   out.push(`<ellipse cx="${wx}" cy="${wy}" rx="${f(wc.w * 50)}" ry="${f(wc.d * 50)}" ${fix}/><ellipse cx="${wx}" cy="${f(wy - 2)}" rx="${f(wc.w * 33)}" ry="${f(wc.d * 34)}" ${thin}/>`);
   rect(WC_Z - .123, CASE.x1 + .008, WC_Z + .123, CASE.x1, `fill="${INK}"`);
 
-  // bath along the knee wall, roof window above it (dashed projection)
-  rect(BATH.z0, BATH.x1, BATH.z1, BATH.x0, fix);
-  { const [a, b] = P(BATH.z0 + .06, BATH.x1 - .07); out.push(`<rect x="${a}" y="${b}" width="${f((BATH.w - .12) * 100)}" height="${f((BATH.len - .14) * 100)}" rx="9" ${thin}/>`); }
-  rect(ZW - .02, RW.x + .08, ZW, RW.x - .08, `fill="${INK}"`);                // wall-mounted bath mixer
+  // freestanding bath (superellipse outline), floor-standing mixer, roof window (dashed projection)
+  const oval = inset => {
+    const pts = [];
+    for (let j = 0; j < 72; j++) {
+      const t = j / 72 * Math.PI * 2, c = Math.cos(t), sn = Math.sin(t), e = 2 / BATH.n;
+      const x = BATH.cx + (BATH.len / 2 - inset) * Math.sign(c) * Math.pow(Math.abs(c), e), z = BATH.cz + (BATH.w / 2 - inset) * Math.sign(sn) * Math.pow(Math.abs(sn), e);
+      pts.push(P(z, x).join(' '));
+    }
+    return `M${pts.join('L')}Z`;
+  };
+  out.push(`<path d="${oval(0)}" ${fix}/><path d="${oval(BATH.rim)}" ${thin}/>`);
+  { const [a, b] = P(BATH.cz, BATH.cx); out.push(`<circle cx="${a}" cy="${b}" r="2" ${thin}/>`); }
+  { const [a, b] = P(TAP.z, TAP.x), [, tb] = P(TAP.z, TAP.tipX); out.push(`<circle cx="${a}" cy="${b}" r="2.6" fill="${INK}"/><line x1="${a}" y1="${b}" x2="${a}" y2="${tb}" stroke="${INK}" stroke-width="1"/>`); }
   rect(RW.z1, RW.x + RW.w / 2, RW.z0, RW.x - RW.w / 2, dash);
   { const [a, b] = P((RW.z0 + RW.z1) / 2, RW.x); out.push(`<circle cx="${a}" cy="${b}" r="9" fill="#fff" stroke="${INK}" stroke-width=".4"/><line x1="${a - 7}" y1="${b}" x2="${a + 7}" y2="${b}" stroke="${INK}" stroke-width=".3"/><text x="${a}" y="${b - 1.5}" class="s" text-anchor="middle">${c0(RW.w)}</text><text x="${a}" y="${b + 4.6}" class="s" text-anchor="middle">${c0(RW.h)}</text>`); }
 
@@ -2117,7 +2121,7 @@ function atticPlanSVG() {
   for (let i = 0; i < zb.length - 1; i++) dimZ(zb[i], zb[i + 1], bottom, i === 1 ? `oś WC ${cm(WC_Z)}` : cm(zb[i + 1] - zb[i]), false);
   dimX(XL, G.OX1, zL - .14, cm(XL - G.OX1)); dimX(G.OX1, G.OX0, zL - .14, cm(G.OX1 - G.OX0)); dimX(G.OX0, 0, zL - .14, cm(G.OX0));
   dimX(XL, 0, zL - .3, cm(XL));
-  dimX(XL, BATH.x1, zR, cm(XL - BATH.x1), false); dimX(BATH.x1, BATH.x0, zR, `wanna ${cm(BATH.len)}`, false); dimX(BATH.x0, 0, zR, cm(BATH.x0), false);
+  dimX(XL, BATH.x1, zR, cm(XL - BATH.x1), false); dimX(BATH.x1, BATH.x0, zR, `wanna ${cm(BATH.len)}`, false); dimX(BATH.x0, CASE.x1, zR, cm(BATH.x0 - CASE.x1), false); dimX(CASE.x1, 0, zR, cm(CASE.x1), false);
   dimX(XL, 0, zR + .16, cm(XL), false);
 
   // labels
@@ -2128,7 +2132,9 @@ function atticPlanSVG() {
   note(fixed / 2, SHX + .05, `szyba ${c0(fixed)}`, 'middle'); note(fixed + door / 2, SHX + .3, `drzwi ${c0(door)}`, 'middle');
   note(WC_Z, CASE.x1 + .62, `WC ${c0(wc.w)}×${c0(wc.d)}`, 'middle');
   note((CASE.z0 + CASE.z1) / 2 + .05, .07, `zabudowa ${c0(CASE.x1)} · h ${c0(CASE.h)}`, 'middle');
-  note((BATH.z0 + BATH.z1) / 2, BATH.x1 - .2, `wanna ${c0(BATH.len)}×${c0(BATH.w)}`, 'middle');
+  note(BATH.cz, BATH.cx + .3, `wanna wolnostojąca`, 'middle'); note(BATH.cz, BATH.cx + .24, `${c0(BATH.len)}×${c0(BATH.w)}`, 'middle');
+  note(TAP.z, TAP.x + .06, 'bateria podłogowa', 'middle');
+  dimZ(FREE.z0, BATH.z0, BATH.cx + .55, cm(BATH.z0 - FREE.z0)); dimZ(BATH.z1, ZW, BATH.cx + .55, cm(ZW - BATH.z1));
   note(RW.z1 - .02, RW.x + RW.w / 2 - .05, 'okno dachowe', 'end');
   const [cx, cy] = P(1.55, 1.15);
   out.push(`<text x="${cx}" y="${cy}" class="n" text-anchor="middle">${DATA.number}</text><text x="${cx}" y="${cy + 9}" class="s" text-anchor="middle">Łazienka · ${G.AREA.toFixed(2).replace('.', ',')} m² (użytkowa ${G.AREA_USABLE.toFixed(2).replace('.', ',')} m²)</text>`);

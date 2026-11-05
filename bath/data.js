@@ -81,7 +81,8 @@ window.BATH_DATA = {
        Plan to scale: 273 cm = 113 px → 2.416 cm/px (check: the 822 cm room 2 dimension agrees within 1 %).
        Knee wall 120 cm and roof pitch 42° from the design; flat ceiling at 285 cm (design section).
        Layout changed by the owner: 2 basins top-left, shower 100 × 100 bottom-left, WC bottom-middle
-       next to the riser, bath along the knee wall under the roof window. Door opening moved 20 cm up
+       next to the riser, freestanding bath centred in the free area by the knee wall, floor-standing mixer
+       in the top-right corner. Door opening moved 20 cm up
        so that the shower fits in the corner. */
     attic: {
       type: 'attic', number: 5, name: 'Poddasze', title: 'Łazienka jasna na poddaszu',
@@ -107,8 +108,15 @@ window.BATH_DATA = {
         w: 0.94, h: 1.40,     // label on the drawing: 94/140 (VELUX size)
         axisFromVanityWall: 1.58,   // drawing; the bath is centred under it
         fromKnee: 0.15,       // lower edge measured along the slope from the top of the knee wall
+      },   // the bath is not necessarily centred under the window
+      bath: {                 // freestanding oval bath, centred in the free floor area right of the WC / vanity
+        len: 1.70, w: 0.75, h: 0.58, rim: 0.05, n: 4,    // n: superellipse exponent of the outline (2 = ellipse)
       },
-      bath: { len: 1.70, w: 0.75, h: 0.56 },
+      bathTap: {              // floor-standing bath mixer Hansgrohe Tecturis E, in the top-right corner (vanity wall / knee wall)
+        h: 0.99, reach: 0.26, // height, spout reach from the column axis (catalogue 262 mm)
+        fromBathEnd: 0.08,    // column axis behind the bath end
+        fromKnee: 0.30,       // column axis from the knee wall
+      },
       wc: { w: 0.36, d: 0.53, axisFromDoorWall: 1.55 },
       casing: { depth: 0.25, from: 1.25, height: 1.20, riser: 0.16 },   // along the bottom wall up to the riser corner
       vanity: {
@@ -155,13 +163,15 @@ window.BATH_DATA = {
       basinWhite: 'https://www.tomdom.pl/produkty/umywalka-stawiana-na-blat/catalano/green-lux-60x40-umywalka-nablatowa-z-otworem-na-baterie-160grlxn00',
       plug: 'https://skleparmatura.com/produkt/catalano-zero-umywalka-nablatowa-60x35xh12-nero-satinato-czarny-mat-0122600022/',
       tap: 'https://www.mediaexpert.pl/dom/lazienka/baterie-lazienkowe/bateria-umywalkowa-hansgrohe-tecturis-e-110-ecosmart-73010140-braz-szczotkowany',
-      bathTap: 'https://www.mediaexpert.pl/dom/lazienka/baterie-wannowe/bateria-wannowa-natynkowa-hansgrohe-tecturis-e-73420140-braz-szczotkowany',
-      bath: 'https://www.okazje.info.pl/szukaj/roca-linea-wanna-prostokatna-170x75x43-cm-akrylowa-biala/ceny.html',
+      bathTap: 'https://www.architonic.com/en/p/hansgrohe-tecturis-e-single-lever-bath-mixer-floor-standing-20779750',
+      bathTapSeries: 'https://www.mediaexpert.pl/dom/lazienka/baterie-wannowe/popularne-serie_tecturis-e',
+      bath: 'https://www.castorama.pl/wanna-wolnostojaca-170-x-75-x-58-cm-biala/5063022837868_CAPL.prd',
+      bathAlt: 'https://www.okazje.info.pl/szukaj/oltens-begna-wanna-wolnostojaca-przyscienna-170x75cm-12011000/ceny.html',
       siphon: 'https://www.leroymerlin.pl/produkty/syfon-umywalkowy-bez-spustu-oszczedzajacy-miejsce-bialy-geberit-82199271.html',
       radiator: 'https://www.castorama.pl/departments/grzejnik-azienkowy-mexen-hades-z-oty-1200x400-mm-1-szt-/5905315071828_CAPL.prd',
       door: 'https://esklep-porta.pl/drzwi-wewnetrzne/porta/drzwi-ukryte-porta-hide-wc-bezprzylgowe-otwierane-na-zewnatrz-prawe-80cm-plyta-spa1110p08lbpwayv0o000,p22305,53.html',
     },
-    prices: { legraboxC350: 156.28, basinBlack: 1825, plug: 249, radiator: 949.99, door: 1745 },
+    prices: { legraboxC350: 156.28, basinBlack: 1825, plug: 249, radiator: 949.99, door: 1745, bath: 1498 },
   },
 
   defaults: {
