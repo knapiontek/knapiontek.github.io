@@ -30,7 +30,7 @@ html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px}
 a{color:var(--accent)}
 
-.app{display:grid;grid-template-columns:minmax(0,1fr) 320px;height:100%}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 380px;height:100%}
 .app.nopanel{grid-template-columns:minmax(0,1fr)}
 #stage{position:relative;min-height:0;min-width:0;background:var(--stage)}
 #stage canvas{display:block;width:100%;height:100%;touch-action:none}
@@ -97,6 +97,41 @@ details{border-top:1px solid var(--line);padding-top:12px}
 summary{cursor:pointer;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
 dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:10px 0 0;font-variant-numeric:tabular-nums}
 dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;text-align:right}
+dl.tight{margin:0}
+
+/* --- zakładki panelu --- */
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;background:var(--chip);padding:3px;border-radius:9px;border:1px solid var(--line);position:sticky;top:-18px;z-index:2}
+.tabs button{border:0;background:transparent;border-radius:7px;padding:7px 4px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.tabpanel{display:flex;flex-direction:column;gap:18px}
+.note{margin:0;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.note b{color:var(--fg);font-weight:600}
+
+/* dekory płyty */
+.decors{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.decors button{padding:0;aspect-ratio:1;border-radius:7px;border:2px solid transparent;background-size:cover;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.decors button[aria-pressed="true"]{border-color:var(--accent)}
+
+/* tabele wykonawcze */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.tbl th{text-align:left;font-weight:600;color:var(--muted);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:0 4px 5px;border-bottom:1px solid var(--line)}
+.tbl td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl td.n,.tbl th.n{text-align:right;font-family:var(--f-mono);white-space:nowrap}
+.tbl small{display:block;color:var(--muted);font-size:11px;line-height:1.35}
+.tbl tr.sub td{color:var(--muted);font-size:11px;border-bottom:0;padding-top:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.tbl tfoot td{font-weight:600;border-bottom:0}
+.drawing{width:100%;height:auto;display:block;background:var(--chip);border:1px solid var(--line);border-radius:8px}
+.drawing text{font-family:var(--f-mono);font-size:11px;fill:var(--fg)}
+.drawing .dim{stroke:var(--muted);stroke-width:.8;fill:none}
+.drawing .dimt{fill:var(--muted);font-size:10px}
+.buy{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.buy li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding-bottom:10px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.4}
+.buy li b{font-weight:600}
+.buy li .p{font-family:var(--f-mono);white-space:nowrap;text-align:right}
+.buy li span:not(.p){grid-column:1/-1;color:var(--muted);font-size:11.5px}
+.buy li.total{border-bottom:0;font-weight:600}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap}
+.btnrow button{font-size:12.5px;padding:6px 10px}
 
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
@@ -105,6 +140,7 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;te
   .views{gap:5px}
   .views button,.panelbtn{font-size:12px;padding:5px 9px}
   aside{border-left:0;border-top:1px solid var(--line);max-height:50vh;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));gap:14px}
+  .tabs{top:-12px}
 }
 </style>
 </head>
@@ -117,6 +153,7 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;te
         <button class="glass" data-view="overview" aria-pressed="true">Ogólny</button>
         <button class="glass" data-view="door" aria-pressed="false">Od drzwi</button>
         <button class="glass" data-view="vanity" aria-pressed="false">Umywalka i WC</button>
+        <button class="glass" data-view="cabinet" aria-pressed="false">Szafka i grzejnik</button>
         <button class="glass" data-view="shower" aria-pressed="false">Prysznic</button>
         <button class="glass" data-view="plan" aria-pressed="false">Rzut</button>
       </div>
@@ -131,77 +168,125 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;te
   <aside id="settings">
     <h1>Łazienka L grafit</h1>
 
-    <section class="block" aria-label="Płytki">
-      <h2>Płytki</h2>
-      <div class="surf" id="surfaces" role="group" aria-label="Powierzchnia">
-        <span class="col">Pokój</span><span class="col">Prysznic</span>
-        <button data-surface="wall" aria-pressed="true" aria-label="Ściany pokoju"><i></i>Ściany<small></small></button>
-        <button data-surface="shower" aria-pressed="false" aria-label="Ściany prysznica"><i></i>Ściany<small></small></button>
-        <button data-surface="floor" aria-pressed="false" aria-label="Podłoga pokoju"><i></i>Podłoga<small></small></button>
-        <button data-surface="showerFloor" aria-pressed="false" aria-label="Podłoga prysznica"><i></i>Podłoga<small></small></button>
-      </div>
-      <div class="swatches" id="swatches" role="group" aria-label="Wzór płytki"></div>
-      <p class="cap" id="tileInfo"></p>
-      <div class="row"><span>Format</span><div class="chips" id="formats"></div></div>
-      <div class="row" id="layoutRow"><span>Układ</span><div class="chips" id="layouts">
-        <button data-layout="h" aria-pressed="true">poziomo</button>
-        <button data-layout="v" aria-pressed="false">pionowo</button>
-      </div></div>
-    </section>
+    <div class="tabs" role="tablist" aria-label="Panel">
+      <button role="tab" id="tab-look" aria-controls="pane-look" aria-selected="true">Wygląd</button>
+      <button role="tab" id="tab-vanity" aria-controls="pane-vanity" aria-selected="false">Szafka</button>
+      <button role="tab" id="tab-buy" aria-controls="pane-buy" aria-selected="false">Zakupy</button>
+      <button role="tab" id="tab-dims" aria-controls="pane-dims" aria-selected="false">Wymiary</button>
+    </div>
 
-    <section class="block">
-      <h2>Oświetlenie</h2>
-        <!-- jeden przycisk: dzień (słońce) albo noc (lampy); pokazuje bieżący tryb -->
-        <button class="daynight" id="lightingBtn" aria-pressed="false" title="Przełącz: słońce / lampy">
-          <span class="day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span class="label">Dzień · słońce</span></span>
-          <span class="night"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><span class="label">Noc · lampy</span></span>
-        </button>
-    </section>
+    <!-- ===== WYGLĄD ===== -->
+    <div class="tabpanel" role="tabpanel" id="pane-look" aria-labelledby="tab-look">
+      <section class="block" aria-label="Płytki">
+        <h2>Płytki</h2>
+        <div class="surf" id="surfaces" role="group" aria-label="Powierzchnia">
+          <span class="col">Pokój</span><span class="col">Prysznic</span>
+          <button data-surface="wall" aria-pressed="true" aria-label="Ściany pokoju"><i></i>Ściany<small></small></button>
+          <button data-surface="shower" aria-pressed="false" aria-label="Ściany prysznica"><i></i>Ściany<small></small></button>
+          <button data-surface="floor" aria-pressed="false" aria-label="Podłoga pokoju"><i></i>Podłoga<small></small></button>
+          <button data-surface="showerFloor" aria-pressed="false" aria-label="Podłoga prysznica"><i></i>Podłoga<small></small></button>
+        </div>
+        <div class="swatches" id="swatches" role="group" aria-label="Wzór płytki"></div>
+        <p class="cap" id="tileInfo"></p>
+        <div class="row"><span>Format</span><div class="chips" id="formats"></div></div>
+        <div class="row" id="layoutRow"><span>Układ</span><div class="chips" id="layouts">
+          <button data-layout="h" aria-pressed="true">poziomo</button>
+          <button data-layout="v" aria-pressed="false">pionowo</button>
+        </div></div>
+      </section>
 
-    <section class="block">
-      <h2>Warstwy</h2>
-      <div class="toggles" id="layers" role="group" aria-label="Warstwy">
-        <button data-layer="walls">Ściany</button>
-        <button data-layer="ceiling">Sufit</button>
-        <button data-layer="floor">Podłoga</button>
-        <button data-layer="furniture">Meble</button>
-        <button data-layer="sanitary">Ceramika i armatura</button>
-        <button data-layer="glass">Kabina</button>
-        <button data-layer="installations">Pion i stelaż</button>
-      </div>
-      <div class="toggles"><button id="doorsBtn" aria-pressed="false">Wszystkie drzwi otwarte</button></div>
-    </section>
+      <section class="block">
+        <h2>Styl</h2>
+        <div class="toggles" id="styles" role="group" aria-label="Styl">
+          <button data-style="real" aria-pressed="true">Realistyczny</button>
+          <button data-style="lines" aria-pressed="false">Rysunek — białe, same krawędzie</button>
+        </div>
+      </section>
 
-    <section class="block">
-      <h2>Armatura</h2>
-      <div class="metals" id="metals" role="group" aria-label="Armatura">
-        <button data-metal="brass" aria-pressed="true" aria-label="Mosiądz szczotkowany" title="Mosiądz szczotkowany"></button>
-        <button data-metal="nickel" aria-pressed="false" aria-label="Nikiel szczotkowany" title="Nikiel szczotkowany"></button>
-      </div>
-    </section>
+      <section class="block">
+        <h2>Płyta szafki · Egger</h2>
+        <div class="decors" id="decors" role="group" aria-label="Dekor płyty"></div>
+        <p class="cap" id="decorInfo"></p>
+      </section>
 
-    <details id="dims">
-      <summary>Wymiary</summary>
-      <dl>
-        <dt>Pomieszczenie</dt><dd>240 × 160 cm</dd>
-        <dt>Wnęka prysznica</dt><dd>90 × 100 cm</dd>
-        <dt>Wysokość (strop)</dt><dd>260 cm</dd>
-        <dt>Sufit podwieszany</dt><dd>245 cm, szczelina LED 5 cm</dd>
-        <dt>Oprawy</dt><dd>4 × wpuszczane 3000 K, 1 × IP65 w prysznicu</dd>
-        <dt>Drzwi</dt><dd>80 × 205, 10 cm w prawo od środka</dd>
-        <dt>Okno</dt><dd>80 × 90, parapet 120</dd>
-        <dt>Szpaleta okna</dt><dd>15 cm, w płytce</dd>
-        <dt>Zabudowa WC + pion Ø160</dt><dd>85 × 28 × 260</dd>
-        <dt>Oś WC od ściany z oknem</dt><dd>58 cm</dd>
-        <dt>Szafka nad stelażem</dt><dd>HEJSTA 40 × 80, gł. 15, wys. 120–200</dd>
-        <dt>Miska WC podwieszana</dt><dd>36 × 53 cm</dd>
-        <dt>Szafka z umywalką</dt><dd>80 × 46 cm</dd>
-        <dt>Drzwi prysznica</dt><dd>60 cm, zawias na szybie stałej</dd>
-        <dt>Szyba stała</dt><dd>30 cm, przy oknie</dd>
-        <dt>Odpływ Vogi Duo</dt><dd>przyścienny, 88 cm, pod płytkę</dd>
-        <dt>Fuga</dt><dd>3 mm, w kolorze płytki</dd>
-      </dl>
-    </details>
+      <section class="block">
+        <h2>Oświetlenie</h2>
+          <!-- jeden przycisk: dzień (słońce) albo noc (lampy); pokazuje bieżący tryb -->
+          <button class="daynight" id="lightingBtn" aria-pressed="false" title="Przełącz: słońce / lampy">
+            <span class="day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span class="label">Dzień · słońce</span></span>
+            <span class="night"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><span class="label">Noc · lampy</span></span>
+          </button>
+      </section>
+
+      <section class="block">
+        <h2>Warstwy</h2>
+        <div class="toggles" id="layers" role="group" aria-label="Warstwy">
+          <button data-layer="walls">Ściany</button>
+          <button data-layer="ceiling">Sufit</button>
+          <button data-layer="floor">Podłoga</button>
+          <button data-layer="furniture">Meble</button>
+          <button data-layer="sanitary">Ceramika i armatura</button>
+          <button data-layer="glass">Kabina</button>
+          <button data-layer="installations">Instalacje</button>
+        </div>
+        <div class="toggles"><button id="doorsBtn" aria-pressed="false">Drzwi i szuflady otwarte</button></div>
+      </section>
+
+      <section class="block">
+        <h2>Armatura</h2>
+        <div class="metals" id="metals" role="group" aria-label="Armatura">
+          <button data-metal="brass" aria-pressed="true" aria-label="Mosiądz szczotkowany" title="Mosiądz szczotkowany"></button>
+          <button data-metal="nickel" aria-pressed="false" aria-label="Nikiel szczotkowany" title="Nikiel szczotkowany"></button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== SZAFKA: dane wykonawcze ===== -->
+    <div class="tabpanel" role="tabpanel" id="pane-vanity" aria-labelledby="tab-vanity" hidden>
+      <section class="block">
+        <h2>Szafka podumywalkowa · widok z przodu</h2>
+        <div id="vanityDrawing"></div>
+        <p class="note" id="vanitySummary"></p>
+      </section>
+      <section class="block">
+        <h2>Formatki do cięcia (mm)</h2>
+        <p class="note">Wymiar 1 biegnie wzdłuż słoja. Na blacie, frontach i bokach słój poziomo. Obrzeże ABS 2 mm w dekorze płyty.</p>
+        <table class="tbl" id="cutList"></table>
+        <div class="btnrow"><button id="xlsxBtn">Eksport XLSX — wszystko + e-Rozkrój M-HM</button><button id="csvBtn">Formatki CSV</button><button id="copyBtn">Kopiuj jako tekst</button></div>
+        <p class="note">Arkusz <b>eRozkroj</b> importujesz w <a href="https://mhm-web2.erozkroje.pl" target="_blank" rel="noopener">e-Rozkrój M-HM ↗</a>: Import z pliku XLS → przypisz kolumny (nazwa, długość, szerokość, ilość, usłojenie, okleina przód/tył/lewa/prawa 0/1) → przypisz płytę i okleinę.</p>
+      </section>
+      <section class="block">
+        <h2>Okucia Blum · LEGRABOX pure</h2>
+        <table class="tbl" id="hardwareList"></table>
+      </section>
+      <section class="block">
+        <h2>Obróbka i montaż</h2>
+        <table class="tbl" id="workList"></table>
+      </section>
+    </div>
+
+    <!-- ===== ZAKUPY ===== -->
+    <div class="tabpanel" role="tabpanel" id="pane-buy" aria-labelledby="tab-buy" hidden>
+      <section class="block">
+        <h2>Lista zakupów</h2>
+        <ul class="buy" id="buyList"></ul>
+        <p class="note">Ceny brutto z dnia projektu (5.11.2026), bez dostawy. Pozycje bez ceny: wycena w sklepie.</p>
+        <div class="btnrow"><button class="xlsxBtn2">Eksport XLSX (wymiary, formatki, okucia, zakupy, podejścia)</button></div>
+      </section>
+    </div>
+
+    <!-- ===== WYMIARY i instalacje ===== -->
+    <div class="tabpanel" role="tabpanel" id="pane-dims" aria-labelledby="tab-dims" hidden>
+      <section class="block">
+        <h2>Podejścia dla hydraulika</h2>
+        <p class="note">Wymiary od lica płytki. „Od drzwi” = od ściany z drzwiami, „od lewej” = od ściany z umywalką.</p>
+        <table class="tbl" id="pointsList"></table>
+      </section>
+      <section class="block">
+        <h2>Wymiary</h2>
+        <dl class="tight" id="dimsList"></dl>
+      </section>
+    </div>
   </aside>
 </div>
 
@@ -237,6 +322,7 @@ const state = {
   surface: 'wall',      // powierzchnia edytowana w panelu
   metal: 'brass',
   lighting: 'day',      // day | night
+  style: 'real',        // real | lines (białe bryły, same krawędzie)
   layers: {
     walls: true, ceiling: true, floor: true,
     furniture: true, sanitary: true, glass: true,
@@ -348,16 +434,42 @@ function tileThumbnail(tile) {
 }
 for (const tile of Object.values(TILES)) tile.thumbnail = tileThumbnail(tile);
 
+/** Styl „Rysunek”: biała płytka i same fugi jako linie. */
+function lineTileTexture(w, h) {
+  const key = `lines|${w}x${h}`;
+  if (textureCache.has(key)) return textureCache.get(key);
+  const cols = Math.max(1, Math.min(MAX_TILES_PER_BLOCK_SIDE, Math.floor(TEXTURE_MAX_PX / (w * TEXTURE_PX_PER_M))));
+  const rows = Math.max(1, Math.min(MAX_TILES_PER_BLOCK_SIDE, Math.floor(TEXTURE_MAX_PX / (h * TEXTURE_PX_PER_M))));
+  const blockW = cols * w, blockH = rows * h, canvas = document.createElement('canvas');
+  canvas.width = powerOfTwo(blockW * TEXTURE_PX_PER_M); canvas.height = powerOfTwo(blockH * TEXTURE_PX_PER_M);
+  const ctx = canvas.getContext('2d'), sx = canvas.width / blockW, sy = canvas.height / blockH;
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#8a8d90';
+  for (let c = 0; c <= cols; c++) ctx.fillRect(c * w * sx - 1, 0, 2, canvas.height);
+  for (let r = 0; r <= rows; r++) ctx.fillRect(0, r * h * sy - 1, canvas.width, 2);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  texture.repeat.set(1 / blockW, 1 / blockH);
+  textureCache.set(key, texture);
+  return texture;
+}
+
 // Jeden materiał na powierzchnię: zmiana płytki podmienia tylko jego teksturę.
-const tileMaterials = {};
+const tileMaterials = {}, tileLineMaterials = {};
 for (const surface of SURFACES) {
   tileMaterials[surface] = new THREE.MeshStandardMaterial({ roughness: .78, metalness: 0, envMapIntensity: .35 });
+  tileLineMaterials[surface] = new THREE.MeshBasicMaterial({ polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+  tileMaterials[surface].userData.lineMaterial = tileLineMaterials[surface];
 }
 function applyTiles(surface) {
   const { w, h } = tileSize(surface);
   const material = tileMaterials[surface];
   material.map = tileTexture(TILES[state.tiles[surface].tile], w, h);
   material.needsUpdate = true;
+  tileLineMaterials[surface].map = lineTileTexture(w, h);
+  tileLineMaterials[surface].needsUpdate = true;
+  invalidate();
 }
 
 
@@ -366,11 +478,16 @@ function applyTiles(surface) {
    ========================================================================== */
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = false;   // cienie liczone tylko po zmianie sceny (drzwi, warstwy, światło), nie przy obracaniu kamery
+
+/* Rysowanie na żądanie: klatka powstaje tylko, gdy coś się zmieniło. */
+let dirtyFrames = 2, shadowsDirty = true;
+function invalidate(shadows = true) { dirtyFrames = Math.max(dirtyFrames, 2); if (shadows) shadowsDirty = true; }
 stage.prepend(renderer.domElement);
 
 for (const surface of SURFACES) applyTiles(surface);
@@ -379,12 +496,14 @@ const scene = new THREE.Scene();
 function syncStageColor() {
   const css = getComputedStyle(document.documentElement).getPropertyValue('--stage').trim();
   scene.background = new THREE.Color(css || '#c9ced1');
+  invalidate(false);
 }
 syncStageColor();
 try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncStageColor); } catch (e) {}
 new MutationObserver(syncStageColor).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
 // otoczenie do odbić (metal, ceramika, lustro): szara kula z dwoma jasnymi panelami
+let envMap = null;
 (function buildEnvironmentMap() {
   const pmrem = new THREE.PMREMGenerator(renderer), env = new THREE.Scene();
   env.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), new THREE.MeshBasicMaterial({ color: 0x6f7276, side: THREE.BackSide })));
@@ -392,7 +511,7 @@ new MutationObserver(syncStageColor).observe(document.documentElement, { attribu
   const top = new THREE.Mesh(new THREE.BoxGeometry(3, .1, 3), glow); top.position.set(0, 5, 0); env.add(top);
   const front = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2, .1), glow); front.position.set(0, 2, 6); env.add(front);
   const ground = new THREE.Mesh(new THREE.BoxGeometry(20, .1, 20), new THREE.MeshBasicMaterial({ color: 0x202122 })); ground.position.y = -3; env.add(ground);
-  scene.environment = pmrem.fromScene(env, .04).texture;
+  envMap = scene.environment = pmrem.fromScene(env, .04).texture;
 })();
 
 const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 60);
@@ -474,6 +593,12 @@ function makeDoor(pivot, openAngle) {
   pivot.traverse(o => o.userData.door = door);
   doors.push(door);
 }
+/** Szuflada: obiekt wysuwa się w stronę pokoju (−x) o `distance` m. */
+function makeDrawer(group, distance) {
+  const door = { pivot: group, slide: distance, progress: 0, target: 0 };
+  group.traverse(o => o.userData.door = door);
+  doors.push(door);
+}
 
 /** Grupa należąca do warstwy z panelu (Meble, Ceramika i armatura, …). */
 const layerGroups = {};
@@ -489,12 +614,26 @@ function layerGroup(layer, parent = scene) {
 const GHOST = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
 const cutaways = [];   // { root, isHidden(), hidden }
 function cutaway(root, isHidden) { const c = { root, isHidden, hidden: false }; cutaways.push(c); return c; }
+/* Styl „Rysunek”: wszystko białe (bez świateł), widać tylko krawędzie brył i fugi płytek. */
+const LINE_WHITE = new THREE.MeshBasicMaterial({ color: 0xffffff, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+const LINE_METAL = new THREE.MeshBasicMaterial({ color: 0xc4c8cb, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+const LINE_GLASS = new THREE.MeshBasicMaterial({ color: 0xe8f0f2, transparent: true, opacity: .25, depthWrite: false, side: THREE.DoubleSide });
+const EDGE = new THREE.LineBasicMaterial({ color: 0x2b2e31 });
+const EDGE_LAYER = 1;   // krawędzie na osobnej warstwie: promień do klikania ich nie liczy
+function styledMaterial(base) {
+  if (base === GHOST || state.style !== 'lines') return base;
+  if (base.userData.lineMaterial) return base.userData.lineMaterial;
+  if (base.transparent) return LINE_GLASS;
+  return base.metalness >= .9 ? LINE_METAL : LINE_WHITE;   // armatura i grzejnik jasnoszare, reszta biała
+}
+function applyMaterial(o) {
+  const base = o.userData.base || (o.userData.base = o.material);
+  o.material = o.userData.ghost ? GHOST : styledMaterial(base);
+  if (o.userData.edges) o.userData.edges.visible = state.style === 'lines' && !o.userData.ghost;
+}
 function setGhost(root, ghost) {
-  root.traverse(o => {
-    if (!o.isMesh) return;
-    if (ghost && !o.userData.realMaterial) { o.userData.realMaterial = o.material; o.material = GHOST; }
-    if (!ghost && o.userData.realMaterial) { o.material = o.userData.realMaterial; delete o.userData.realMaterial; }
-  });
+  root.traverse(o => { if (o.isMesh) { o.userData.ghost = ghost; applyMaterial(o); } });
+  invalidate(false);
 }
 const isShown = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
 const isSolidHit = hit => hit.object.isMesh && isShown(hit.object) && hit.object.material !== GHOST && hit.object.material.visible !== false;
@@ -512,7 +651,7 @@ const T = 0.1;            // grubość ścian
 
 const WINDOW_REVEAL = 0.15, WINDOW_WALL_T = 0.25;   // szpaleta okna 15 cm, ściana z oknem 25 cm
 const WX0 = 0.03, WX1 = 0.83;                       // okno tuż przy linii szkła prysznica (x = 0)
-const DX0 = 0.30, DX1 = 1.10;                       // drzwi przesunięte 10 cm w prawo
+const DX0 = 0.30, DX1 = 1.10;                       // drzwi przesunięte 10 cm w prawo (światło skrzydła 80)
 
 /* ---------- ściany ---------- */
 const walls = [];
@@ -571,16 +710,21 @@ floorPlane('showerFloor', -1, 1.5, 0, 2.4);  // prysznic
 box(1.6 + T * 2, .12, 2.4 + T * 2, M.frame, .8, -.061, 1.2, floorGroup);       // wylewka pod pokojem
 box(1 + T, .12, .9 + T * 2, M.frame, -.5 - T / 2, -.061, 1.95, floorGroup);    // wylewka pod prysznicem
 
-/* ---------- drzwi wejściowe ---------- */
+/* ---------- drzwi ukryte Porta HIDE 80 (bezprzylgowe, zlicowane ze ścianą od strony łazienki) ----------
+   Bez opasek: ościeżnica aluminiowa schowana w murze, wokół skrzydła tylko szczelina 3 mm.
+   Skrzydło malowane farbą w tonie płytki, zawiasy ukryte. */
+const DOOR_PAINT = new THREE.MeshStandardMaterial({ color: 0x5b5e60, roughness: .85 });
 (function entranceDoor() {
-  const g = wallDoor.group, cx = (DX0 + DX1) / 2;
-  box(.07, 2.1, .02, M.white, DX0 - .035, 1.05, .01, g);     // ościeżnica
-  box(.07, 2.1, .02, M.white, DX1 + .035, 1.05, .01, g);
-  box(DX1 - DX0 + .14, .05, .02, M.white, cx, 2.075, .01, g);
-  const pivot = new THREE.Group(); pivot.position.set(DX0, 0, -.02); g.add(pivot);
-  box(.8, 2.02, .04, M.doorWood, .4, 1.01, 0, pivot);         // skrzydło
-  box(.13, .016, .016, M.metal, .66, 1.0, .05, pivot);        // klamka
-  cyl(.022, .022, .008, M.metal, .72, 1.0, .024, pivot).rotation.x = Math.PI / 2;
+  const g = wallDoor.group, cx = (DX0 + DX1) / 2, gapW = .003, leafW = DX1 - DX0 - 2 * gapW, leafH = 2.05 - 2 * gapW;
+  // ościeżnica w murze (widać ją tylko w szczelinie)
+  box(.012, 2.05, .04, M.frame, DX0 + .006, 1.025, -.025, g);
+  box(.012, 2.05, .04, M.frame, DX1 - .006, 1.025, -.025, g);
+  box(DX1 - DX0, .012, .04, M.frame, cx, 2.044, -.025, g);
+  const pivot = new THREE.Group(); pivot.position.set(DX0 + gapW, 0, -.02); g.add(pivot);
+  box(leafW, leafH, .04, DOOR_PAINT, leafW / 2, gapW + leafH / 2, -.0005, pivot);   // skrzydło 40 mm, lico 0,5 mm za płytką
+  box(.12, .012, .012, M.metal, leafW - .14, 1.0, .036, pivot);                    // klamka
+  cyl(.02, .02, .008, M.metal, leafW - .08, 1.0, .022, pivot).rotation.x = Math.PI / 2;
+  cyl(.012, .012, .006, M.metal, leafW - .08, 1.07, .021, pivot).rotation.x = Math.PI / 2;   // blokada WC
   makeDoor(pivot, -1.45);
 })();
 
@@ -823,59 +967,177 @@ function roundedRect(path, x, y, w, h, r) {
   box(.002, .13, .003, new THREE.MeshStandardMaterial({ color: 0x000000, roughness: .6 }), ZX0 - .0085, 1.0, WC_Z, flush);
 })();
 
-/* ---------- szafka z umywalką meblową + lustro ---------- */
+/* ---------- SZAFKA PODUMYWALKOWA 120 cm (wymiary wykonawcze w mm) ----------
+   Lewa ściana (x = 1.6), od ściany z drzwiami: 20 cm wolne na grzejnik, szafka 120 cm, koniec 1.40 m
+   (oś WC 1.815 → 41,5 cm do boku szafki). Korpus z płyty Egger 18 mm, blat 2 × 18 mm klejony,
+   fronty wpuszczane w korpus (szczelina 2,5 mm dla TIP-ON BLUMOTION), szuflady LEGRABOX pure. */
+const V = {
+  z0: 200, len: 1200,                 // początek od ściany z drzwiami, długość
+  depth: 470, height: 400, bottomY: 324,
+  top: 36, topDepth: 480,             // blat: nawis 10 mm z przodu
+  t: 18, gap: 2.5, rail: 100,
+  basinW: 600, basinD: 400, basinH: 140, basinZ: 850, basinBack: 50, gasket: 3,   // umywalka od strony WC: skrzydło drzwi jej nie zahacza
+  nlA: 350, nlB: 400,                 // szuflada pod umywalką krótsza: za nią zawory i syfon
+};
+V.inner = V.len - 2 * V.t;                    // 1164 światło między bokami
+V.innerH = V.height - 2 * V.t;                // 364 światło w pionie
+V.LW = (V.inner - V.t) / 2;                   // 573 szerokość wewnętrzna sekcji
+V.bodyD = V.depth - V.t;                      // 452 głębokość przed plecami
+V.frontW = V.LW - 2 * V.gap;                  // 568
+V.frontA = V.innerH - 2 * V.gap;              // 359
+V.frontB = Math.floor((V.innerH - 3 * V.gap) / 2);   // 178 (do cięcia pełne mm)
+V.topY = V.bottomY + V.height + V.top;        // 760 wierzch blatu
+V.rimY = V.topY + V.gasket + V.basinH;        // 903 rant umywalki
+
+/* Dekory Egger z M-HM: oryginalne zdjęcia płyt w textures.js (BATH_TEXTURES.decors), tu ceny i opis. */
+const DECOR_INFO = {
+  H1199: { price: 433.42, thick: '18 mm', note: 'najciemniejszy, czarnobrązowy — szafka spokojnie ciemna na tle grafitu' },
+  H1181: { price: 667.18, thick: '18 mm', note: 'średni tabaczny, wyraźny słój z pęknięciami — ciepły kontrast z grafitem i mosiądzem' },
+  H1399: { price: 530.91, thick: '18 mm', note: 'jasnoszary brąz — najjaśniejszy z czterech' },
+  H1346: { price: 667.18, thick: '18 mm', note: 'szary dąb — ton w ton z płytką, bez ciepła drewna' },
+};
+const DECORS = {};
+for (const [id, d] of Object.entries(BATH_TEXTURES.decors || {})) {
+  const img = await loadImage(d.image).catch(() => null);
+  if (!img) continue;
+  const c = document.createElement('canvas'); c.width = c.height = 1;
+  c.getContext('2d').drawImage(img, 0, 0, 1, 1);
+  const px = c.getContext('2d').getImageData(0, 0, 1, 1).data;
+  DECORS[id] = { ...d, ...DECOR_INFO[id], img, rgb: [px[0], px[1], px[2]], page: d.link };
+}
+if (!Object.keys(DECORS).length) return fail('Brak dekorów płyt (BATH_TEXTURES.decors) w textures.js.');
+state.decor = DECORS.H1199 ? 'H1199' : Object.keys(DECORS)[0];
+
+/** Tekstura dekoru: zdjęcie obejmuje width_m wzdłuż słoja (poziomo), UV szafki są w metrach od jej narożnika. */
+function decorTexture(d) {
+  const texture = new THREE.Texture(d.img);
+  texture.needsUpdate = true;
+  texture.wrapS = texture.wrapT = THREE.MirroredRepeatWrapping;
+  texture.encoding = THREE.sRGBEncoding;
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  texture.repeat.set(1 / d.width_m, 1 / (d.width_m * d.img.height / d.img.width));
+  return texture;
+}
+M.decor = new THREE.MeshStandardMaterial({ roughness: .62, envMapIntensity: .3 });
+M.legrabox = new THREE.MeshStandardMaterial({ color: 0x1e1f21, roughness: .42, metalness: .55 });   // czarny karbon matowy
+M.basin = new THREE.MeshPhysicalMaterial({ color: 0x0f0f10, roughness: .62, clearcoat: .1, clearcoatRoughness: .6, envMapIntensity: .25 });
+M.basinIn = new THREE.MeshPhysicalMaterial({ color: 0x0f0f10, roughness: .58, clearcoat: .12, clearcoatRoughness: .5, envMapIntensity: .25, side: THREE.DoubleSide });
+M.rubber = new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: .9 });
+M.pvc = new THREE.MeshStandardMaterial({ color: 0x8f969c, roughness: .5 });
+const decorTextures = {};
+function setDecor(id) {
+  state.decor = id;
+  M.decor.map = decorTextures[id] = decorTextures[id] || decorTexture(DECORS[id]);
+  M.decor.needsUpdate = true;
+}
+setDecor(state.decor);
+
+const decorMeshes = [];
+const mm = v => v / 1000;
+/** Formatka z płyty: wymiary i środek w mm, w układzie szafki (x od lica ściany w głąb pokoju, y od podłogi, z od ściany z drzwiami). */
+function panel(dx, dy, dz, cx, cy, cz, parent) {
+  const mesh = box(mm(dx), mm(dy), mm(dz), M.decor, 1.6 - mm(cx), mm(cy), mm(cz), parent);
+  decorMeshes.push(mesh);
+  return mesh;
+}
+
 (function vanity() {
-  const z0 = .55, z1 = 1.35, zc = (z0 + z1) / 2, L = z1 - z0, D = .46, X = 1.6 - D;
-
-  // korpus podwieszany, dwie szuflady bezuchwytowe
   const cabinet = layerGroup('furniture');
-  box(D - .02, .4, L, M.oak, 1.6 - (D - .02) / 2, .62, zc, cabinet);
-  box(.018, .205, L - .004, M.oak, X + .009, .715, zc, cabinet);
-  box(.018, .19, L - .004, M.oak, X + .009, .51, zc, cabinet);
-  box(.01, .004, L - .01, M.gap, X + .02, .613, zc, cabinet);
-  box(.006, .012, L - .06, M.metal, X + .002, .81, zc, cabinet);                 // listwa uchwytowa
+  const { z0, len, depth, height, bottomY, t, LW, bodyD, inner, innerH, gap } = V;
+  const z1 = z0 + len, zc = z0 + len / 2, yc = bottomY + height / 2, yIn = bottomY + t;   // yIn: dno wnętrza
 
-  // ceramika: cienki blat z otworem + misa
+  // korpus
+  panel(depth, height, t, depth / 2, yc, z0 + t / 2, cabinet);                       // boki
+  panel(depth, height, t, depth / 2, yc, z1 - t / 2, cabinet);
+  panel(bodyD, t, inner, depth - bodyD / 2, bottomY + t / 2, zc, cabinet);           // wieniec dolny
+  panel(t, height, inner, t / 2, yc, zc, cabinet);                                   // plecy nośne
+  panel(V.rail, t, inner, depth - V.rail / 2, bottomY + height - t / 2, zc, cabinet);// listwa górna przód
+  panel(V.rail, t, inner, t + V.rail / 2, bottomY + height - t / 2, zc, cabinet);    // listwa górna tył
+  panel(bodyD, innerH, t, depth - bodyD / 2, yIn + innerH / 2, z0 + t + LW + t / 2, cabinet);   // przegroda
+  panel(V.topDepth, V.top, len, V.topDepth / 2, bottomY + height + V.top / 2, zc, cabinet);     // blat 2 × 18
+
+  /** Szuflada: front wpuszczany + LEGRABOX (boki czarne, dno i tył z płyty 16 mm). */
+  function drawer(zs0, ys0, frontH, boxH, backH, NL) {
+    const g = new THREE.Group(); cabinet.add(g);
+    const zf = zs0 + LW / 2, xf = depth - t / 2;                                    // front w licu korpusu
+    panel(t, frontH, V.frontW, xf, ys0 + gap + frontH / 2, zf, g);
+    box(.002, mm(frontH + 2 * gap), mm(LW), M.gap, 1.6 - mm(depth - t - 1), mm(ys0 + gap + frontH / 2), mm(zf), g).castShadow = false;   // cień w szczelinie
+    const xb0 = depth - t, base = ys0 + 6;                                          // tył frontu, spód szuflady
+    for (const side of [-1, 1]) {
+      box(mm(NL), mm(boxH), .0128, M.legrabox, 1.6 - mm(xb0 - NL / 2), mm(base + boxH / 2), mm(zf + side * (LW / 2 - 10)), g);
+    }
+    box(mm(NL - 10), .016, mm(LW - 35), M.white, 1.6 - mm(xb0 - (NL - 10) / 2), mm(base + 8), mm(zf), g);   // dno
+    box(.016, mm(backH), mm(LW - 38), M.white, 1.6 - mm(xb0 - NL + 8), mm(base + 16 + backH / 2), mm(zf), g);  // tył
+    makeDrawer(g, mm(NL) * .82);
+  }
+  const zB = z0 + t, zA = z0 + t + LW + t;   // B (2 szuflady) przy drzwiach, A (umywalka) przy WC
+  drawer(zA, yIn, V.frontA, 177, 148, V.nlA);                                       // A: pod umywalką, C 177
+  drawer(zB, yIn, V.frontB, 128.5, 101, V.nlB);                                     // B: dolna, K 128,5
+  drawer(zB, yIn + gap + V.frontB, V.frontB, 128.5, 101, V.nlB);                    // B: górna
+
+  // umywalka nablatowa Catalano Green Lux 60×40 z półką na baterię, na uszczelce EPDM 3 mm
   const sanitary = layerGroup('sanitary');
-  const shape = roundedRect(new THREE.Shape(), X - .005, z0 - .005, D + .005, L + .01, .012);
-  const hx0 = X + .06, hz0 = zc - .29, hw = .33, hl = .58;
-  shape.holes.push(roundedRect(new THREE.Path(), hx0, hz0, hw, hl, .07));
-  const top = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: .016, bevelEnabled: true, bevelThickness: .003, bevelSize: .003, bevelSegments: 3, curveSegments: 14 }), M.ceramic);
-  top.rotation.x = Math.PI / 2; top.position.y = .857; top.castShadow = top.receiveShadow = true;
-  sanitary.add(top);
-  const bx = hx0 + hw / 2;
+  const bz = z0 + V.basinZ, bx1 = 1.6 - mm(V.basinBack), bx0 = bx1 - mm(V.basinD);   // x w metrach
+  const by0 = mm(V.topY + V.gasket), bh = mm(V.basinH), zb = mm(bz);
+  box(mm(V.basinD) - .006, mm(V.gasket), mm(V.basinW) - .006, M.rubber, (bx0 + bx1) / 2, mm(V.topY) + mm(V.gasket) / 2, zb, sanitary);
+  const bowlX0 = bx0 + .02, bowlX1 = bx1 - .1, bowlZ0 = zb - .28, bowlZ1 = zb + .28;  // misa z przodu, półka 8 cm z tyłu
+  const outer = roundedRect(new THREE.Shape(), bx0 + .003, zb - .3 + .003, mm(V.basinD) - .006, mm(V.basinW) - .006, .03);
+  outer.holes.push(roundedRect(new THREE.Path(), bowlX0, bowlZ0, bowlX1 - bowlX0, bowlZ1 - bowlZ0, .055));
+  const shell = new THREE.Mesh(new THREE.ExtrudeGeometry(outer, { depth: bh - .006, bevelEnabled: true, bevelThickness: .003, bevelSize: .003, bevelSegments: 3, curveSegments: 16 }), M.basin);
+  shell.rotation.x = Math.PI / 2; shell.position.y = by0 + bh - .003; shell.castShadow = shell.receiveShadow = true;
+  sanitary.add(shell);
+  const cx = (bowlX0 + bowlX1) / 2, ha = (bowlX1 - bowlX0) / 2, hb = (bowlZ1 - bowlZ0) / 2;
   loftMesh([
-    { y: .735, a: .12,  b: .23,  n: 3.2, cx: bx, cz: zc },
-    { y: .75,  a: .148, b: .27,  n: 3.4, cx: bx, cz: zc },
-    { y: .79,  a: .16,  b: .284, n: 3.6, cx: bx, cz: zc },
-    { y: .84,  a: .165, b: .29,  n: 3.8, cx: bx, cz: zc },
-  ], M.ceramicIn, sanitary, { top: false }).castShadow = false;
-  cyl(.022, .022, .004, M.metal, bx, .738, zc, sanitary);                         // korek
+    { y: by0 + .02,  a: ha - .035, b: hb - .045, n: 4,   cx, cz: zb },
+    { y: by0 + .035, a: ha - .015, b: hb - .02,  n: 4.6, cx, cz: zb },
+    { y: by0 + .08,  a: ha - .004, b: hb - .005, n: 5,   cx, cz: zb },
+    { y: by0 + bh - .002, a: ha + .003, b: hb + .003, n: 5.4, cx, cz: zb },
+  ], M.basinIn, sanitary, { top: false }).castShadow = false;
+  cyl(.021, .021, .004, M.basin, cx, by0 + .022, zb, sanitary);                    // korek ceramiczny Catalano
 
-  // bateria sztorcowa wysoka, jednouchwytowa
-  const fx = 1.6 - .045;
-  cyl(.019, .021, .19, M.metal, fx, .955, zc, sanitary);
-  tube([[fx, 1.04, zc], [fx - .03, 1.09, zc], [fx - .1, 1.095, zc], [fx - .15, 1.06, zc]], .011, M.metal, sanitary);
-  cyl(.011, .011, .01, M.metal, fx - .15, 1.055, zc, sanitary);
-  box(.008, .008, .07, M.metal, fx + .005, 1.02, zc + .035, sanitary);
-  cyl(.009, .009, .03, M.metal, fx, 1.02, zc + .02, sanitary).rotation.x = Math.PI / 2;
+  // bateria jednouchwytowa na półce umywalki (Hansgrohe Tecturis E 110)
+  const tx = bx1 - .045, ty = by0 + bh;
+  cyl(.022, .022, .004, M.metal, tx, ty + .002, zb, sanitary);
+  box(.036, .118, .036, M.metal, tx, ty + .059, zb, sanitary);
+  box(.118, .022, .03, M.metal, tx - .059 + .018, ty + .107, zb, sanitary);          // wylewka nad misą
+  box(.014, .004, .02, M.black, tx - .1, ty + .0955, zb, sanitary);                  // perlator
+  const lever = box(.06, .008, .014, M.metal, tx + .012, ty + .124, zb, sanitary); lever.rotation.z = -.12;
 
-  // lustro z podświetleniem (na lewej ścianie: znika razem z nią)
-  const mirror = layerGroup('furniture', wallLeft.group);
-  box(.02, .8, .72, M.led, 1.6 - .004, 1.6, zc, mirror);
-  box(.02, .76, .68, M.mirror, 1.6 - .02, 1.6, zc, mirror);
-  box(.006, .77, .006, M.metal, 1.6 - .03, 1.6, zc - .343, mirror);
-  box(.006, .77, .006, M.metal, 1.6 - .03, 1.6, zc + .343, mirror);
-  box(.006, .006, .69, M.metal, 1.6 - .03, 1.983, zc, mirror);
-  box(.006, .006, .69, M.metal, 1.6 - .03, 1.217, zc, mirror);
+  // lustro z podświetleniem nad umywalką (na lewej ścianie: znika razem z nią)
+  const mirror = layerGroup('furniture', wallLeft.group), mw = .6, mh = .8, my = 1.62;
+  box(.02, mh, mw, M.led, 1.6 - .004, my, zb, mirror);
+  box(.02, mh - .04, mw - .04, M.mirror, 1.6 - .02, my, zb, mirror);
+  box(.006, mh - .03, .006, M.metal, 1.6 - .03, my, zb - mw / 2 + .027, mirror);
+  box(.006, mh - .03, .006, M.metal, 1.6 - .03, my, zb + mw / 2 - .027, mirror);
+  box(.006, .006, mw - .03, M.metal, 1.6 - .03, my + mh / 2 - .017, zb, mirror);
+  box(.006, .006, mw - .03, M.metal, 1.6 - .03, my - mh / 2 + .017, zb, mirror);
+
+  // instalacje w szafce: syfon oszczędzający miejsce nad szufladą, zawory kątowe za szufladą
+  const inst = layerGroup('installations');
+  cyl(.02, .02, .05, M.pvc, cx, mm(V.topY) - .025, zb, inst);
+  box(.11, .055, .08, M.pvc, cx + .02, mm(bottomY + height - t) - .04, zb, inst);
+  cyl(.02, .02, 1.6 - cx - .07, M.pvc, (cx + .075 + 1.6) / 2, mm(bottomY + height - t) - .045, zb, inst).rotation.z = Math.PI / 2;
+  for (const dz of [-.08, .08]) {
+    cyl(.012, .012, .06, M.metal, 1.6 - .045, .55, zb + dz, inst).rotation.z = Math.PI / 2;
+    tube([[1.6 - .07, .55, zb + dz], [1.6 - .1, .62, zb + dz * .6], [bx1 - .045, mm(V.topY) - .01, zb + dz * .15]], .005, M.metal, inst, 16);
+  }
 })();
 
-/* ---------- grzejnik drabinkowy (prawa ściana przy drzwiach) ---------- */
+/* ---------- grzejnik Mexen Hades 1200 × 400 (ściana z drzwiami, zaraz po lewej od wejścia) ----------
+   Pas ściany między skrzydłem (x = 1.10) a narożnikiem (1.6): 50 cm. Grzejnik 40 cm, oś x = 1.39,
+   dół 82 cm nad podłogą (nad blatem szafki, który go zasłaniał), przyłącza od dołu. */
+const RAD = { x: 1.39, w: .40, h: 1.20, y0: .82, z: .055 };   // dół nad blatem szafki — cały widoczny
 (function towelRadiator() {
-  const g = layerGroup('sanitary', wallRight.group);
-  for (let y = .45; y <= 1.55; y += .08) cyl(.011, .011, .46, M.metal, .065, y, .62, g, 16).rotation.x = Math.PI / 2;
-  cyl(.016, .016, 1.2, M.metal, .065, 1.0, .38, g, 16);
-  cyl(.016, .016, 1.2, M.metal, .065, 1.0, .86, g, 16);
+  const g = layerGroup('sanitary', wallDoor.group), { x, w, h, y0, z } = RAD;
+  for (const side of [-1, 1]) {
+    cyl(.0125, .0125, h, M.metal, x + side * (w / 2 - .0125), y0 + h / 2, z, g, 20);
+    for (const yy of [y0 + .12, y0 + h - .12]) cyl(.006, .006, z, M.metal, x + side * (w / 2 - .0125), yy, z / 2, g, 12).rotation.x = Math.PI / 2;
+    cyl(.009, .009, .05, M.metal, x + side * (w / 2 - .0125), y0 - .03, z, g, 12);                           // zawory
+  }
+  const groups = [[.05, 7], [.47, 6], [.86, 6]];                                                            // drabinki z przerwami na ręcznik
+  for (const [start, count] of groups) for (let i = 0; i < count; i++) {
+    cyl(.009, .009, w - .03, M.metal, x, y0 + start + i * .05, z, g, 14).rotation.z = Math.PI / 2;
+  }
 })();
 
 /* ---------- prysznic ---------- */
@@ -945,8 +1207,8 @@ const ROOM_OUTLINE = [[0, 0], [1.6, 0], [1.6, 2.4], [-1, 2.4], [-1, 1.5], [0, 1.
 // obrys przesunięty do środka o szczelinę (dla tego kształtu wystarczy przesunąć każdy wierzchołek)
 const PANEL_OUTLINE = [[1, 1], [-1, 1], [-1, -1], [1, -1], [1, 1], [1, 1]]
   .map(([sx, sz], i) => [ROOM_OUTLINE[i][0] + sx * CEILING_GAP, ROOM_OUTLINE[i][1] + sz * CEILING_GAP]);
-// oprawy wpuszczane [x, z]: wejście, środek, umywalka, okno/WC, prysznic (IP65)
-const DOWNLIGHTS = [[.45, .5], [.55, 1.35], [1.2, .95], [.85, 2.0], [-.5, 2.2]];
+// oprawy wpuszczane [x, z]: wejście, środek, nad umywalką, okno/WC, prysznic (IP65)
+const DOWNLIGHTS = [[.45, .5], [.55, 1.35], [1.22, 1.05], [.85, 2.0], [-.5, 2.2]];
 
 const ceiling = new THREE.Group(); scene.add(ceiling);
 
@@ -1007,6 +1269,23 @@ const outlineShape = (points, Kind = THREE.Shape) => {
     }
     geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   }
+  // płyta szafki: słój zawsze poziomo (wzdłuż ściany na frontach i blacie, w głąb na bokach)
+  for (const mesh of decorMeshes) {
+    mesh.geometry = mesh.geometry.clone();
+    const geometry = mesh.geometry, P = geometry.attributes.position, N = geometry.attributes.normal;
+    normalMatrix.getNormalMatrix(mesh.matrixWorld);
+    const uv = new Float32Array(P.count * 2);
+    for (let i = 0; i < P.count; i++) {
+      p.fromBufferAttribute(P, i).applyMatrix4(mesh.matrixWorld);
+      n.fromBufferAttribute(N, i).applyMatrix3(normalMatrix);
+      const ax = Math.abs(n.x), ay = Math.abs(n.y), az = Math.abs(n.z);
+      const u0 = mm(V.z0) - .02, x0 = 1.6 - mm(V.topDepth) - .02;   // całe drewno szafki z jednego wycinka zdjęcia, bez powtórzeń
+      if (ax >= ay && ax >= az) { uv[i * 2] = p.z - u0; uv[i * 2 + 1] = p.y; }
+      else if (ay >= az)        { uv[i * 2] = p.z - u0; uv[i * 2 + 1] = p.x - x0; }
+      else                      { uv[i * 2] = p.x - x0; uv[i * 2 + 1] = p.y; }
+    }
+    geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  }
 })();
 
 
@@ -1053,11 +1332,11 @@ DOWNLIGHTS.forEach(([x, z], i) => {
 });
 
 // taśma LED w szczelinie: kilka słabych świateł tuż pod sufitem, przy ścianach
-for (const [x, z] of [[.8, .06], [1.54, .9], [.06, .75], [.75, 2.34], [-.5, 2.34], [-.94, 1.95], [-.5, 1.56]]) {
-  addLight(new THREE.PointLight(WARM, 1, 1.3, 2), 0, .45).position.set(x, CEILING_Y + .01, z);
+for (const [x, z] of [[.8, .5], [.8, 1.9], [-.5, 1.95]]) {   // 3 zamiast 7: każde światło kosztuje w każdym pikselu
+  addLight(new THREE.PointLight(WARM, 1, 2.2, 2), 0, .6).position.set(x, CEILING_Y + .01, z);
 }
 // podświetlenie lustra
-addLight(new THREE.PointLight(WARM, 1, 1.8, 2), 0, .6).position.set(1.45, 1.6, .95);
+addLight(new THREE.PointLight(WARM, 1, 1.8, 2), 0, .6).position.set(1.45, 1.6, mm(V.z0 + V.basinZ));
 
 const LIGHTING = {
   day:   { exposure: 1.15, sky: 0xdfeefa, led: LED_OFF },
@@ -1066,7 +1345,12 @@ const LIGHTING = {
 function setLighting(mode) {
   state.lighting = mode;
   const preset = LIGHTING[mode];
-  for (const [light, day, night] of lightRig) light.intensity = mode === 'day' ? day : night;
+  // światło o natężeniu 0 i tak liczy się w shaderze — wyłączamy je całkiem (w stylu „Rysunek” wszystkie)
+  for (const [light, day, night] of lightRig) {
+    light.intensity = mode === 'day' ? day : night;
+    light.visible = light.intensity > 0 && state.style !== 'lines';
+  }
+  invalidate();
   renderer.toneMappingExposure = preset.exposure;
   M.sky.color.setHex(preset.sky);
   M.led.color.setHex(preset.led);
@@ -1077,11 +1361,34 @@ function setLighting(mode) {
    11. KAMERA: widoki, punkt obrotu, klikanie w drzwi
    ========================================================================== */
 
+function buildEdges() {
+  const meshes = [];
+  scene.traverse(o => { if (o.isMesh && !o.userData.edges && (o.userData.base || o.material) !== GHOST) meshes.push(o); });
+  for (const o of meshes) {
+    const p = o.geometry.parameters || {}, thin = (p.radiusTop || p.radius || 1) < .03;   // cienkie rurki: obrys z podłużnych krawędzi
+    const line = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, thin ? 12 : 28), EDGE);
+    line.layers.set(EDGE_LAYER); line.castShadow = false; line.visible = false;
+    o.add(line); o.userData.edges = line;
+  }
+}
+function setStyle(style) {
+  state.style = style;
+  if (style === 'lines') buildEdges();
+  camera.layers.enable(EDGE_LAYER);
+  scene.traverse(o => { if (o.isMesh) applyMaterial(o); });
+  renderer.shadowMap.enabled = style !== 'lines';
+  renderer.toneMapping = style === 'lines' ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+  scene.environment = style === 'lines' ? null : envMap;
+  setLighting(state.lighting);
+  scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
+}
+
 const VIEWS = {
   overview: { position: [-2.1, 4.3, -1.7], target: [.55, .8, 1.35] },
   door:     { position: [.7, 1.62, .12],   target: [.45, 1.2, 2.4] },
-  vanity:   { position: [.1, 1.6, .35],    target: [1.45, 1.15, 1.7] },
+  vanity:   { position: [.05, 1.68, .12],   target: [1.35, .95, 1.25] },
   shower:   { position: [1.2, 1.65, 2.25], target: [-.5, 1.15, 1.7] },
+  cabinet:  { position: [.08, 1.62, 2.05], target: [1.25, .72, .55] },
   plan:     { position: [.31, 7.4, 1.21],  target: [.3, 0, 1.2] },
 };
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1203,8 +1510,11 @@ $('lightingBtn').addEventListener('click', () => {
   $('lightingBtn').setAttribute('aria-pressed', state.lighting === 'night');
 });
 
+// styl
+onButton($('styles'), b => { setStyle(b.dataset.style); pressed($('styles').children, x => x === b); });
+
 // armatura
-onButton($('metals'), b => { setMetal(b.dataset.metal); pressed($('metals').children, x => x === b); });
+onButton($('metals'), b => { setMetal(b.dataset.metal); pressed($('metals').children, x => x === b); renderBuy(); renderDrawing(); });
 
 // warstwy
 function syncLayers() {
@@ -1222,8 +1532,305 @@ $('doorsBtn').addEventListener('click', () => {
   syncDoorsButton();
 });
 
-// wymiary zwinięte na desktopie
-try { if (!matchMedia('(max-width:760px)').matches) $('dims').open = false; } catch (e) {}
+// zakładki panelu
+const tabs = [...document.querySelectorAll('[role="tab"]')];
+function selectTab(tab) {
+  for (const t of tabs) {
+    const on = t === tab;
+    t.setAttribute('aria-selected', on);
+    t.tabIndex = on ? 0 : -1;
+    $(t.getAttribute('aria-controls')).hidden = !on;
+  }
+  $('settings').scrollTop = 0;
+  try { localStorage.setItem('tab', tab.id); } catch (e) {}
+}
+for (const t of tabs) t.addEventListener('click', () => selectTab(t));
+$('settings').querySelector('.tabs').addEventListener('keydown', e => {
+  const i = tabs.indexOf(document.activeElement); if (i < 0) return;
+  const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!step) return;
+  const next = tabs[(i + step + tabs.length) % tabs.length]; next.focus(); selectTab(next);
+});
+try { const saved = $(localStorage.getItem('tab')); if (saved) selectTab(saved); } catch (e) {}
+
+/* ---------- dane wykonawcze szafki: liczone z V, więc rysunek, formatki i model 3D są zgodne ---------- */
+const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const num = v => (Math.round(v * 10) / 10).toString().replace('.', ',');
+const zl = v => v.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
+
+function cutParts() {
+  const { len, depth, height, t, inner, innerH, LW, bodyD, rail, topDepth, frontW, frontA, frontB, nlA, nlB } = V;
+  const d = DECORS[state.decor], board = `${d.code} 18 mm`, b16 = 'płyta 16 mm (dno/tył szuflad)';
+  return [
+    { name: 'Blat — warstwa górna',       qty: 1, a: len,   b: topDepth, e: [0,0,0,0], mat: board, edge: '—', note: 'sklejany z dolną, obrzeże 42 mm po sklejeniu na 4 bokach' },
+    { name: 'Blat — warstwa dolna',       qty: 1, a: len,   b: topDepth, e: [0,0,0,0], mat: board, edge: '—', note: 'klej D3 / PUR' },
+    { name: 'Bok korpusu',                qty: 2, a: depth, b: height,   e: [1,0,1,0], mat: board, edge: 'przód, dół' },
+    { name: 'Wieniec dolny',              qty: 1, a: inner, b: bodyD,    e: [1,0,0,0], mat: board, edge: 'przód' },
+    { name: 'Listwa górna przednia',      qty: 1, a: inner, b: rail,     e: [1,0,0,0], mat: board, edge: 'przód' },
+    { name: 'Listwa górna tylna',         qty: 1, a: inner, b: rail,     e: [0,0,0,0], mat: board, edge: '—', note: 'otwór na wężyki baterii' },
+    { name: 'Plecy nośne',                qty: 1, a: inner, b: height,   e: [0,0,0,0], mat: board, edge: '—', note: 'zawieszki, otwory na odpływ i zawory' },
+    { name: 'Przegroda',                  qty: 1, a: bodyD, b: innerH,   e: [0,0,1,0], mat: board, edge: 'przód' },
+    { name: 'Front A (pod umywalką)',     qty: 1, a: frontW, b: frontA,  e: [1,1,1,1], mat: board, edge: '4 boki' },
+    { name: 'Front B (2 szuflady)',       qty: 2, a: frontW, b: frontB,  e: [1,1,1,1], mat: board, edge: '4 boki' },
+    { name: 'Dno szuflady A',             qty: 1, a: LW - 35, b: nlA - 10, e: [0,0,0,0], mat: b16, edge: '—', note: 'LW − 35, NL − 10' },
+    { name: 'Dno szuflady B',             qty: 2, a: LW - 35, b: nlB - 10, e: [0,0,0,0], mat: b16, edge: '—' },
+    { name: 'Tył szuflady A (C)',         qty: 1, a: LW - 38, b: 148,    e: [1,0,0,0], mat: b16, edge: 'góra', note: 'LW − 38' },
+    { name: 'Tył szuflady B (K)',         qty: 2, a: LW - 38, b: 101,    e: [1,0,0,0], mat: b16, edge: 'góra' },
+  ];
+}
+/** Okleina na bokach formatki dla e-Rozkrój: [D1 przód, D2 tył — boki wzdłuż wymiaru 1; S1 lewa, S2 prawa — wzdłuż wymiaru 2]. */
+function edgeLengths() {
+  const { len, depth, height, inner, innerH, topDepth, frontW, frontA, frontB } = V;
+  const e22 = 2 * height + 2 * depth          // boki: przód i dół
+            + inner + inner + innerH          // wieniec dolny, listwa przednia, przegroda
+            + 2 * (frontW + frontA) + 4 * (frontW + frontB);
+  const e42 = 2 * len + 2 * topDepth;         // blat dookoła
+  return { e22: e22 / 1000, e42: e42 / 1000 };
+}
+
+function renderDrawing() {
+  const { len, height, t, LW, innerH, gap, frontB, top, bottomY, basinW, basinH, basinZ, gasket } = V;
+  const pad = 46, sc = .26, W = len * sc + pad * 2, yTop = bottomY + height + top + gasket + basinH;
+  const Hpx = (yTop - bottomY + 40) * sc + pad * 2 + 76;
+  const X = z => pad + z * sc, Y = y => Hpx - pad - (y - bottomY) * sc;
+  const r = (x, y, w, h, extra = '') => `<rect x="${X(x)}" y="${Y(y + h)}" width="${w * sc}" height="${h * sc}" ${extra}/>`;
+  const col = `rgb(${DECORS[state.decor].rgb.join(',')})`;
+  let g = '';
+  g += r(0, bottomY, len, height, `fill="${col}" stroke="#111" stroke-width=".8"`);
+  g += r(0, bottomY + height, len, top, `fill="${col}" stroke="#111" stroke-width=".8"`);
+  const zA = t + LW + t, zB = t;
+  const fronts = [[zA + gap, bottomY + t + gap, LW - 2 * gap, V.frontA], [zB + gap, bottomY + t + gap, LW - 2 * gap, frontB], [zB + gap, bottomY + t + 2 * gap + frontB, LW - 2 * gap, frontB]];
+  g += r(t, bottomY + t, LW, innerH, 'fill="#1a1a1a"') + r(t + LW + t, bottomY + t, LW, innerH, 'fill="#1a1a1a"');
+  for (const [z, y, w, h] of fronts) g += r(z, y, w, h, `fill="${col}" stroke="rgba(255,255,255,.25)" stroke-width=".6"`);
+  g += r(basinZ - basinW / 2, bottomY + height + top + gasket, basinW, basinH, 'fill="#1b1b1c" stroke="#000" stroke-width=".8" rx="5"');
+  g += `<rect x="${X(basinZ - 18)}" y="${Y(bottomY + height + top + gasket + basinH + 118)}" width="${36 * sc}" height="${118 * sc}" fill="#${M.metal.color.getHexString()}"/>`;
+  // wymiary
+  const dimH = (z0, z1, y, label) => `<path class="dim" d="M${X(z0)} ${y}H${X(z1)}M${X(z0)} ${y - 4}v8M${X(z1)} ${y - 4}v8"/><text class="dimt" x="${(X(z0) + X(z1)) / 2}" y="${y - 4}" text-anchor="middle">${label}</text>`;
+  const dimV = (y0, y1, x, label) => `<path class="dim" d="M${x} ${Y(y0)}V${Y(y1)}M${x - 4} ${Y(y0)}h8M${x - 4} ${Y(y1)}h8"/><text class="dimt" x="${x - 6}" y="${(Y(y0) + Y(y1)) / 2 + 3}" text-anchor="end">${label}</text>`;
+  const yb = Y(bottomY) + 20;
+  g += dimH(0, len, yb + 20, `${len}`);
+  g += dimH(t, t + LW, yb, `${LW}`) + dimH(t + LW + t, len - t, yb, `${LW}`);
+  g += dimH(basinZ, len, Y(yTop) - 10, `oś umywalki ${len - basinZ}`);
+  g += dimV(bottomY, bottomY + height, pad - 6, `${height}`);
+  g += dimV(bottomY + height, bottomY + height + top, pad - 6, `${top}`);
+  const xr = X(len) + 8;
+  g += `<path class="dim" d="M${xr} ${Y(bottomY)}h10M${xr} ${Y(V.topY)}h10M${xr} ${Y(V.rimY)}h10"/>`;
+  g += `<text class="dimt" x="${xr + 12}" y="${Y(bottomY) + 3}">${bottomY}</text><text class="dimt" x="${xr + 12}" y="${Y(V.topY) + 3}">${V.topY}</text><text class="dimt" x="${xr + 12}" y="${Y(V.rimY) + 3}">${V.rimY}</text>`;
+  g += `<text x="${X(zA + LW / 2)}" y="${Y(bottomY + t + V.frontA / 2) + 4}" text-anchor="middle" style="fill:#fff">A · ${V.frontW}×${V.frontA}</text>`;
+  g += `<text x="${X(zB + LW / 2)}" y="${Y(bottomY + t + frontB / 2) + 4}" text-anchor="middle" style="fill:#fff">B · ${V.frontW}×${num(frontB)}</text>`;
+  g += `<text x="${X(zB + LW / 2)}" y="${Y(bottomY + t + 1.5 * frontB) + 4}" text-anchor="middle" style="fill:#fff">B · ${V.frontW}×${num(frontB)}</text>`;
+  g += `<text class="dimt" x="${X(0)}" y="${Y(bottomY) + 64}">← drzwi, grzejnik</text><text class="dimt" x="${X(len)}" y="${Y(bottomY) + 64}" text-anchor="end">WC →</text>`;
+  $('vanityDrawing').innerHTML = `<svg class="drawing" viewBox="0 0 ${W + 30} ${Hpx}" role="img" aria-label="Widok szafki z przodu z wymiarami w mm">${g}</svg>`;
+  $('vanitySummary').innerHTML = `Korpus <b>${len} × ${V.depth} × ${height} mm</b> (szer. × gł. × wys.), podwieszony ${bottomY} mm nad podłogą. Blat <b>${len} × ${V.topDepth} × ${top}</b>, wierzch na ${V.topY} mm, rant umywalki ${V.rimY} mm. Fronty wpuszczane, szczelina ${num(gap)} mm, otwieranie przez naciśnięcie (TIP-ON BLUMOTION). Umywalka przy WC (sekcja A), przy drzwiach sekcja B z dwiema szufladami i ${V.basinZ - basinW / 2} mm wolnego blatu — skrzydło drzwi nie zahacza o osobę przy umywalce.`;
+}
+
+function renderCutList() {
+  const parts = cutParts();
+  let html = '<thead><tr><th>Element</th><th class="n">szt.</th><th class="n">wym. 1 × 2</th><th>obrzeże</th></tr></thead><tbody>';
+  let lastMat = '';
+  for (const part of parts) {
+    if (part.mat !== lastMat) { html += `<tr class="sub"><td colspan="4">${esc(part.mat)}</td></tr>`; lastMat = part.mat; }
+    html += `<tr><td>${esc(part.name)}${part.note ? `<small>${esc(part.note)}</small>` : ''}</td><td class="n">${part.qty}</td><td class="n">${num(part.a)} × ${num(part.b)}</td><td>${esc(part.edge)}</td></tr>`;
+  }
+  const { e22, e42 } = edgeLengths();
+  html += `</tbody><tfoot><tr><td colspan="4">Obrzeże ABS 2 mm: 22 mm ≈ ${Math.ceil(e22 + 1)} m, 42 mm ≈ ${Math.ceil(e42 + .5)} m (z zapasem). Całość mieści się na 1 arkuszu 2800 × 2070.</td></tr></tfoot>`;
+  $('cutList').innerHTML = html;
+}
+
+const HARDWARE = [
+  ['Boki LEGRABOX pure C, NL 350, czarny mat (carbon)', '770C3502S', 1, 'szuflada A'],
+  ['Boki LEGRABOX pure K, NL 400, czarny mat (carbon)', '770K4002S', 2, 'szuflady B'],
+  ['Prowadnica LEGRABOX 40 kg, NL 350, do TIP-ON', '750.3501T', 1, ''],
+  ['Prowadnica LEGRABOX 40 kg, NL 400, do TIP-ON', '750.4001T', 2, ''],
+  ['TIP-ON BLUMOTION L1 (≤ 20 kg), NL 350–650', 'T60L7340', 3, 'otwieranie przez naciśnięcie, szczelina 2,5 mm'],
+  ['Mocowanie frontu C / K', 'ZF7C7002 / ZF7K7002', '1 / 2', 'para'],
+  ['Mocowanie tyłu C / K', 'ZB7C000S / ZB7K000S', '1 / 2', 'para'],
+  ['Zawieszki ukryte do szafek wiszących', 'np. Camar 807', '1 para', 'na plecach nośnych, regulacja po zawieszeniu'],
+  ['Wkręty 4 × 15 do prowadnic', '609.1500', 1, 'opak.'],
+];
+function renderHardware() {
+  $('hardwareList').innerHTML = '<thead><tr><th>Element</th><th>nr Blum</th><th class="n">szt.</th></tr></thead><tbody>' +
+    HARDWARE.map(([name, code, qty, note]) => `<tr><td>${esc(name)}${note ? `<small>${esc(note)}</small>` : ''}</td><td><code>${esc(code)}</code></td><td class="n">${esc(qty)}</td></tr>`).join('') +
+    `</tbody><tfoot><tr><td colspan="3" style="font-weight:400;color:var(--muted)">Fronty wpuszczane: prowadnice cofnięte o grubość frontu (18 mm) od lica korpusu; min. głębokość wnętrza NL + 3 + 18 = ${V.nlB + 21} mm, jest ${V.bodyD} mm. Numery sprawdź w konfiguratorze Blum E-SERVICES przy zamówieniu w M-HM.</td></tr></tfoot>`;
+}
+function renderWork() {
+  const rows = [
+    ['Cięcie i oklejanie', 'M-HM: formatki z tabeli, obrzeże ABS 2 mm na klej PUR (wilgoć). Blat: dwie warstwy skleić, potem okleić 4 boki obrzeżem 42 mm.'],
+    ['Otwory w blacie', `Odpływ Ø 60 i wężyki baterii Ø 35 w obrysie stopki umywalki — <b>z szablonu po zakupie umywalki</b>. Oś: ${V.len - V.basinZ} mm od końca blatu przy WC. Krawędzie otworów zabezpieczyć klejem PUR lub lakierem.`],
+    ['Umywalka bez silikonu', `Pod stopkę czarna uszczelka EPDM 3 mm (taśma samoprzylepna, przycięta w obrysie, 3 mm cofnięta od krawędzi). Umywalkę dociska nakrętka korka od spodu blatu. Spoina wygląda jak cień 3 mm — bez silikonu.`],
+    ['Bateria z umywalki', 'Bateria stoi na półce umywalki (otwór fabryczny), wężyki przechodzą przez blat i listwę tylną do zaworów za szufladą A.'],
+    ['Syfon', 'Syfon oszczędzający miejsce — płaski, tuż pod blatem nad szufladą A, wyjście w ścianę. Szuflada A ma NL 350, za nią 84 mm na zawory kątowe.'],
+    ['Montaż', `Zawieszki na plecach nośnych, spód korpusu ${V.bottomY} mm nad podłogą. Styk blatu ze ścianą: wąska listwa przyblatowa albo fuga 2 mm akrylem w kolorze fugi.`],
+  ];
+  $('workList').innerHTML = '<tbody>' + rows.map(([k, v]) => `<tr><td style="width:34%;color:var(--muted)">${k}</td><td>${v}</td></tr>`).join('') + '</tbody>';
+}
+
+function buyItems() {
+  const d = DECORS[state.decor];
+  return [
+    { group: 'Szafka', name: `Płyta Egger ${d.code} ${d.name}, ${d.thick}, 2800 × 2070`, price: d.price, qty: 1, where: 'M-HM Bielsko-Biała', url: d.page, note: 'korpus, fronty i blat z jednego arkusza' },
+    { group: 'Szafka', name: 'Cięcie, obrzeże ABS 2 mm (22 i 42 mm), otwory', price: null, where: 'M-HM Bielsko-Biała — usługi', url: 'https://m-hm.pl/pl/i/Uslugi/16', note: 'z listy formatek (CSV w zakładce Szafka); odbiór na miejscu' },
+    { group: 'Szafka', name: 'Płyta 16 mm na dna i tyły szuflad (formatki)', price: null, where: 'M-HM Bielsko-Biała', url: 'https://m-hm.pl/pl/c/Plyty-meblowe/266' },
+    { group: 'Szafka', name: 'Blum LEGRABOX pure C NL 350, czarny mat — boki 770C3502S', price: 156.28, qty: 1, where: 'M-HM Bielsko-Biała', url: 'https://m-hm.pl/pl/c/Legrabox/324' },
+    { group: 'Szafka', name: 'Blum LEGRABOX pure K NL 400, czarny mat — boki 770K4002S', price: null, qty: 2, where: 'M-HM Bielsko-Biała', url: 'https://m-hm.pl/pl/c/Legrabox/324' },
+    { group: 'Szafka', name: 'Prowadnice 750.xx01T, TIP-ON BLUMOTION T60L7340, mocowania', price: null, where: 'M-HM Bielsko-Biała', url: 'https://m-hm.pl/pl/c/TIP-ON-i-Adaptery/369', note: 'pełna lista w zakładce Szafka' },
+    { group: 'Umywalka', name: 'Catalano Green Lux 60 × 40, nablatowa z półką i otworem na baterię, Nero Satinato (czarny mat), 160GRLXNNS', price: 1825, qty: 1, where: 'tanielazienki.pl (wysyłka)', url: 'https://tanielazienki.pl/p/11/39675/catalano-green-lux-60x40-umywalka-czarna-matowa-z-polka-z-otworem-na-baterie-160grlxnns-0625601022-umywalki.html', note: 'bez przelewu, wys. 14 cm; lokalnie można zamówić przez salon łazienek w Bielsku, np. BLU' },
+    { group: 'Umywalka', name: 'Korek ceramiczny Catalano 5POSLNS (czarny mat, bez przelewu)', price: 249, qty: 1, where: 'skleparmatura.com', url: 'https://skleparmatura.com/produkt/catalano-zero-umywalka-nablatowa-60x35xh12-nero-satinato-czarny-mat-0122600022/', note: 'pokrywa w kolorze umywalki — bez metalowego kółka; sprawdź dopasowanie do Green Lux' },
+    { group: 'Umywalka', name: state.metal === 'brass' ? 'Bateria Hansgrohe Tecturis E 110 EcoSmart+, brąz szczotkowany, 73010140' : 'Bateria Hansgrohe Tecturis E 110 EcoSmart+ (wariant chrom 73010000 lub inny kolor pod armaturę prysznica)', price: null, qty: 1, where: 'Media Expert (odbiór w Bielsku-Białej)', url: 'https://www.mediaexpert.pl/dom/lazienka/baterie-lazienkowe/bateria-umywalkowa-hansgrohe-tecturis-e-110-ecosmart-73010140-braz-szczotkowany', note: 'jednootworowa, stoi na półce umywalki; wylewka trafia w środek misy' },
+    { group: 'Umywalka', name: 'Syfon umywalkowy oszczędzający miejsce Geberit', price: null, qty: 1, where: 'Leroy Merlin Bielsko-Biała', url: 'https://www.leroymerlin.pl/produkty/syfon-umywalkowy-bez-spustu-oszczedzajacy-miejsce-bialy-geberit-82199271.html' },
+    { group: 'Umywalka', name: 'Uszczelka EPDM 3 mm czarna, samoprzylepna (taśma)', price: null, qty: 1, where: 'Leroy Merlin / Castorama Bielsko-Biała' },
+    { group: 'Grzejnik', name: `Mexen Hades 1200 × 400, ${state.metal === 'brass' ? 'złoty' : 'złoty (w wariancie nikiel dobierz kolor chrom/inox)'}, 373 W`, price: 949.99, qty: 1, where: 'Castorama Bielsko-Biała', url: 'https://www.castorama.pl/departments/grzejnik-azienkowy-mexen-hades-z-oty-1200x400-mm-1-szt-/5905315071828_CAPL.prd', note: 'odbiór w sklepie lub dostawa; 40 cm mieści się w 50 cm pasie ściany obok drzwi, zawieszony od 82 cm; 373 W to mało na ~4,7 m² — dołóż grzałkę albo ogrzewanie podłogowe' },
+    { group: 'Grzejnik', name: 'Zawory grzejnikowe (para, przyłącze dolne), w kolorze grzejnika', price: null, qty: 1, where: 'Castorama Bielsko-Biała' },
+    { group: 'Drzwi', name: 'Porta HIDE WC 80, bezprzylgowe, zestaw: skrzydło + ościeżnica ukryta, blokada WC', price: 1745, qty: 1, where: 'esklep-porta.pl', url: 'https://esklep-porta.pl/drzwi-wewnetrzne/porta/drzwi-ukryte-porta-hide-wc-bezprzylgowe-otwierane-na-zewnatrz-prawe-80cm-plyta-spa1110p08lbpwayv0o000,p22305,53.html', note: 'skrzydło do malowania (w 3D farba w tonie płytki); otwór 900 × 2070; kierunek i stronę (lewe/prawe) potwierdź przed zamówieniem — lico jest po stronie, w którą skrzydło się otwiera' },
+    { group: 'Drzwi', name: 'Klamka z rozetą WC w kolorze armatury', price: null, qty: 1, where: 'esklep-porta.pl / salon w Bielsku' },
+  ];
+}
+function renderBuy() {
+  const items = buyItems();
+  let html = '', last = '', total = 0;
+  for (const it of items) {
+    if (it.group !== last) { html += `<li style="border:0;padding:0"><h2>${it.group}</h2></li>`; last = it.group; }
+    const sum = it.price != null ? it.price * (it.qty || 1) : null; if (sum) total += sum;
+    html += `<li><b>${esc(it.name)}${it.qty > 1 ? ` × ${it.qty}` : ''}</b><span class="p">${sum ? zl(sum) : '—'}</span>` +
+      `<span>${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.where)} ↗</a>` : esc(it.where)}${it.note ? ` · ${esc(it.note)}` : ''}</span></li>`;
+  }
+  html += `<li class="total"><b>Razem pozycje z ceną</b><span class="p">${zl(total)}</span></li>`;
+  $('buyList').innerHTML = html;
+}
+
+function renderPoints() {
+  const zb = V.z0 + V.basinZ, fromLeft = x => Math.round((1.6 - x) * 1000);
+  const rows = [
+    ['Umywalka — odpływ w ścianie Ø 40', `od drzwi ${zb} · wys. ${V.bottomY + V.height - V.t - 45}`, 'syfon płaski pod blatem'],
+    ['Umywalka — zawory kątowe ciepła / zimna', `od drzwi ${zb - 80} / ${zb + 80} · wys. 550`, 'za szufladą A (NL 350)'],
+    ['Lustro LED — puszka', `od drzwi ${zb} · wys. ${1620 + 400 + 60}`, 'nad lustrem, IP44'],
+    ['Grzejnik — oś', `ściana z drzwiami, ${fromLeft(RAD.x)} od lewej ściany`, `rurki ${Math.round(RAD.z * 1000)} mm od ściany`],
+    ['Grzejnik — przyłącza dolne', `wys. ${Math.round(RAD.y0 * 1000) - 60}`, 'nad blatem szafki; rozstaw wg karty Mexen Hades'],
+    ['Drzwi ukryte — otwór w murze', '900 × 2070 dla skrzydła 80', 'Porta HIDE: ościeżnica przed tynkiem i płytką'],
+    ['Szafka — spód / blat / rant umywalki', `${V.bottomY} / ${V.topY} / ${V.rimY}`, `od drzwi ${V.z0} … ${V.z0 + V.len}`],
+  ];
+  $('pointsList').innerHTML = '<thead><tr><th>Punkt</th><th>Położenie (mm)</th></tr></thead><tbody>' +
+    rows.map(([k, v, n]) => `<tr><td>${esc(k)}${n ? `<small>${esc(n)}</small>` : ''}</td><td class="n" style="text-align:left;white-space:normal">${esc(v)}</td></tr>`).join('') + '</tbody>';
+}
+
+const DIMS = [
+  ['Pomieszczenie', '240 × 160 cm'], ['Wnęka prysznica', '90 × 100 cm'], ['Wysokość (strop)', '260 cm'],
+  ['Sufit podwieszany', '245 cm, szczelina LED 5 cm'], ['Oprawy', '4 × wpuszczane 3000 K, 1 × IP65 w prysznicu'],
+  ['Drzwi', 'ukryte Porta HIDE 80, 10 cm w prawo od środka'], ['Okno', '80 × 90, parapet 120'], ['Szpaleta okna', '15 cm, w płytce'],
+  ['Zabudowa WC + pion Ø160', '85 × 28 × 260'], ['Oś WC od ściany z oknem', '58 cm'],
+  ['Szafka nad stelażem', 'HEJSTA 40 × 80, gł. 15, wys. 120–200'], ['Miska WC podwieszana', '36 × 53 cm'],
+  ['Szafka z umywalką', `${V.len / 10} × ${V.depth / 10} cm, blat ${V.topDepth / 10} cm`], ['Bok szafki → oś WC', `${Math.round((WC_Z * 1000 - V.z0 - V.len) / 10 * 10) / 10} cm`],
+  ['Umywalka', 'Catalano Green Lux 60 × 40, czarny mat'], ['Grzejnik', 'Mexen Hades 40 × 120, przy drzwiach po lewej, od 82 cm'],
+  ['Drzwi prysznica', '60 cm, zawias na szybie stałej'], ['Szyba stała', '30 cm, przy oknie'],
+  ['Odpływ Vogi Duo', 'przyścienny, 88 cm, pod płytkę'], ['Fuga', '3 mm, w kolorze płytki'],
+];
+$('dimsList').innerHTML = DIMS.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+
+// CSV formatek dla M-HM
+function cutText(sep) {
+  const head = ['Element', 'Materiał', 'Ilość', 'Wymiar 1 (słój) mm', 'Wymiar 2 mm', 'Obrzeże', 'Uwagi'];
+  return [head, ...cutParts().map(p => [p.name, p.mat, p.qty, num(p.a), num(p.b), p.edge, p.note || ''])]
+    .map(r => r.map(c => sep === ';' ? `"${String(c).replace(/"/g, '""')}"` : c).join(sep)).join('\n');
+}
+$('csvBtn').addEventListener('click', () => {
+  const blob = new Blob(['﻿' + cutText(';')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `formatki-szafka-${V.len}-${state.decor}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+$('copyBtn').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(cutText('\t')); $('copyBtn').textContent = 'Skopiowano ✓'; }
+  catch (e) { $('copyBtn').textContent = 'Kopiowanie zablokowane'; }
+  setTimeout(() => $('copyBtn').textContent = 'Kopiuj jako tekst', 1800);
+});
+
+/* ---------- eksport XLSX (SheetJS, wczytywany dopiero po kliknięciu) ---------- */
+let xlsxLib = null;
+function loadXlsx() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  return xlsxLib = xlsxLib || new Promise((resolve, reject) => {
+    const el = document.createElement('script');
+    el.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    el.onload = () => resolve(window.XLSX); el.onerror = () => { xlsxLib = null; reject(new Error('xlsx')); };
+    document.head.appendChild(el);
+  });
+}
+function sheet(XLSX, rows, widths) {
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = widths.map(wch => ({ wch }));
+  return ws;
+}
+const plain = html => String(html).replace(/<[^>]+>/g, '');
+async function exportXlsx(button) {
+  const label = button.textContent;
+  button.textContent = 'Przygotowuję…';
+  let XLSX;
+  try { XLSX = await loadXlsx(); } catch (e) { button.textContent = 'Brak sieci — spróbuj ponownie'; setTimeout(() => button.textContent = label, 2500); return; }
+  const wb = XLSX.utils.book_new(), d = DECORS[state.decor], parts = cutParts(), { e22, e42 } = edgeLengths();
+  const edgeCode = `ABS 2 mm ${d.code}`;
+
+  // 1. e-Rozkrój M-HM: jedna płyta na arkusz importu, okleina 0/1 na boku
+  const er = [['Nazwa formatki', 'Długość', 'Szerokość', 'Ilość', 'Usłojenie', 'Okleina przód (D1)', 'Okleina tył (D2)', 'Okleina lewa (S1)', 'Okleina prawa (S2)', 'Płyta', 'Okleina', 'Uwagi']];
+  for (const p of parts) er.push([p.name, p.a, p.b, p.qty, 1, ...p.e, p.mat, p.e.some(Boolean) ? edgeCode : '', p.note || '']);
+  XLSX.utils.book_append_sheet(wb, sheet(XLSX, er, [28, 9, 10, 6, 10, 10, 10, 10, 10, 26, 22, 44]), 'eRozkroj');
+
+  // 2. formatki z opisem
+  const fm = [['Element', 'Materiał', 'Ilość', 'Wymiar 1 — wzdłuż słoja (mm)', 'Wymiar 2 (mm)', 'Obrzeże', 'Uwagi'], ...parts.map(p => [p.name, p.mat, p.qty, p.a, p.b, p.edge, p.note || ''])];
+  fm.push([], ['Obrzeże ABS 2 mm × 22 mm (m)', '', Math.ceil(e22 + 1)], ['Obrzeże ABS 2 mm × 42 mm, blat (m)', '', Math.ceil(e42 + .5)], ['Arkusze 2800 × 2070', '', 1]);
+  XLSX.utils.book_append_sheet(wb, sheet(XLSX, fm, [28, 26, 6, 14, 12, 14, 50]), 'Formatki');
+
+  // 3. szafka — wymiary wykonawcze
+  const sz = [['Parametr', 'Wartość', 'Jednostka'],
+    ['Dekor płyty', `${d.code} ${d.name}`, ''], ['Szerokość korpusu', V.len, 'mm'], ['Głębokość korpusu', V.depth, 'mm'], ['Wysokość korpusu', V.height, 'mm'],
+    ['Spód korpusu nad podłogą', V.bottomY, 'mm'], ['Blat (2 × 18)', `${V.len} × ${V.topDepth} × ${V.top}`, 'mm'], ['Wierzch blatu', V.topY, 'mm'],
+    ['Rant umywalki', V.rimY, 'mm'], ['Początek szafki od ściany z drzwiami', V.z0, 'mm'], ['Koniec szafki od ściany z drzwiami', V.z0 + V.len, 'mm'],
+    ['Oś umywalki od ściany z drzwiami', V.z0 + V.basinZ, 'mm'], ['Szerokość wewn. sekcji (LW)', V.LW, 'mm'], ['Szczelina frontów', V.gap, 'mm'],
+    ['Front A', `${V.frontW} × ${V.frontA}`, 'mm'], ['Front B (×2)', `${V.frontW} × ${V.frontB}`, 'mm'], ['Szuflada A', `LEGRABOX C, NL ${V.nlA}`, ''], ['Szuflady B', `LEGRABOX K, NL ${V.nlB}`, '']];
+  XLSX.utils.book_append_sheet(wb, sheet(XLSX, sz, [38, 30, 10]), 'Szafka');
+
+  // 4. okucia
+  XLSX.utils.book_append_sheet(wb, sheet(XLSX, [['Element', 'Nr katalogowy', 'Ilość', 'Uwagi'], ...HARDWARE.map(([n, c, q, note]) => [n, c, q, note])], [48, 22, 8, 44]), 'Okucia Blum');
+
+  // 5. zakupy z sumą (formuła)
+  const items = buyItems(), zk = [['Grupa', 'Produkt', 'Ilość', 'Cena jedn. brutto (zł)', 'Wartość (zł)', 'Gdzie kupić', 'Link', 'Uwagi']];
+  items.forEach((it, i) => {
+    const r = i + 2;
+    zk.push([it.group, it.name, it.qty || 1, it.price ?? '', it.price != null ? { f: `C${r}*D${r}` } : '', it.where, it.url || '', it.note || '']);
+  });
+  zk.push(['', 'Razem (pozycje z ceną)', '', '', { f: `SUM(E2:E${items.length + 1})` }]);
+  const wsZ = sheet(XLSX, zk, [10, 60, 6, 12, 12, 28, 50, 60]);
+  items.forEach((it, i) => { if (it.url) wsZ[`G${i + 2}`].l = { Target: it.url }; });
+  XLSX.utils.book_append_sheet(wb, wsZ, 'Zakupy');
+
+  // 6. podejścia instalacyjne i wymiary
+  const pts = [...$('pointsList').querySelectorAll('tbody tr')].map(tr => {
+    const [k, v] = tr.children; const small = k.querySelector('small');
+    return [plain(k.firstChild.textContent), v.textContent, small ? small.textContent : ''];
+  });
+  XLSX.utils.book_append_sheet(wb, sheet(XLSX, [['Punkt', 'Położenie (mm)', 'Uwagi'], ...pts], [42, 40, 44]), 'Podejścia');
+  XLSX.utils.book_append_sheet(wb, sheet(XLSX, [['Element', 'Wymiar'], ...DIMS], [32, 50]), 'Wymiary');
+
+  XLSX.writeFile(wb, `lazienka-szafka-${V.len}-${state.decor}.xlsx`);
+  button.textContent = label;
+}
+$('xlsxBtn').addEventListener('click', e => exportXlsx(e.currentTarget));
+document.querySelector('.xlsxBtn2').addEventListener('click', e => exportXlsx(e.currentTarget));
+
+// dekor płyty
+for (const [id, d] of Object.entries(DECORS)) {
+  const b = document.createElement('button');
+  b.dataset.decor = id; b.title = `${d.code} ${d.name}`; b.setAttribute('aria-label', `${d.code} ${d.name}`);
+  const thumb = document.createElement('canvas');
+  thumb.width = thumb.height = 96; thumb.getContext('2d').drawImage(d.img, 0, 0, d.img.height, d.img.height, 0, 0, 96, 96);
+  b.style.backgroundImage = `url(${thumb.toDataURL('image/jpeg', .8)})`;
+  $('decors').appendChild(b);
+}
+function syncDecor() {
+  pressed($('decors').children, b => b.dataset.decor === state.decor);
+  const d = DECORS[state.decor], info = $('decorInfo');
+  info.innerHTML = `<b>${esc(d.code)} · ${esc(d.name)}</b><span>${esc(d.note)}</span><span>${zl(d.price)} / arkusz · <a target="_blank" rel="noopener" href="${esc(d.page)}">m-hm.pl ↗</a></span>`;
+  renderDrawing(); renderCutList(); renderBuy();
+}
+onButton($('decors'), b => { setDecor(b.dataset.decor); syncDecor(); });
+renderHardware(); renderWork(); renderPoints(); syncDecor();
 
 // chowanie panelu (zapamiętane w przeglądarce)
 const app = document.querySelector('.app'), aside = $('settings');
@@ -1244,6 +1851,7 @@ showPanel(panelOn);
    ========================================================================== */
 
 function resize() {
+  invalidate(false);
   const r = stage.getBoundingClientRect();
   renderer.setSize(r.width, r.height, false);
   camera.aspect = r.width / Math.max(1, r.height);
@@ -1254,6 +1862,10 @@ resize();
 
 setLighting(state.lighting);
 goTo('overview', true);
+for (const c of cutaways) { c.hidden = c.isHidden(); setGhost(c.root, c.hidden); }
+// każde kliknięcie lub zmiana w panelu może zmienić scenę: przerysuj (razem z cieniami)
+for (const type of ['click', 'input', 'change']) document.addEventListener(type, () => invalidate(), true);
+addEventListener('load', () => invalidate());
 
 const easeInOut = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
 function frame(now) {
@@ -1263,23 +1875,31 @@ function frame(now) {
     controls.target.lerpVectors(flight.fromTarget, flight.target, e);
     if (k >= 1) flight = null;
   }
-  controls.update();
+  const moved = controls.update() || !!flight;
 
-  for (const c of cutaways) {   // kolejność ma znaczenie: zabudowa zależy od stanu ścian
+  if (moved || dirtyFrames > 0) for (const c of cutaways) {   // kolejność ma znaczenie: zabudowa zależy od stanu ścian
     const hidden = c.isHidden();
     if (hidden !== c.hidden) { setGhost(c.root, hidden); c.hidden = hidden; }
   }
   for (const d of doors) {
+    if (d.progress === d.target) continue;
     d.progress += (d.target - d.progress) * (reduceMotion ? 1 : .08);
-    d.pivot.rotation.y = d.openAngle * d.progress;
+    if (Math.abs(d.target - d.progress) < 1e-3) d.progress = d.target;
+    if (d.slide) d.pivot.position.x = -d.slide * d.progress;
+    else d.pivot.rotation.y = d.openAngle * d.progress;
+    invalidate();
   }
-  renderer.render(scene, camera);
+  if (moved || dirtyFrames > 0) {
+    if (shadowsDirty) { renderer.shadowMap.needsUpdate = true; shadowsDirty = false; }
+    renderer.render(scene, camera);
+    if (!moved) dirtyFrames--;
+  }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
 // do podglądu w konsoli przeglądarki
-window.bath = { state, scene, camera, controls, goTo, setLighting };
+window.bath = { state, scene, camera, controls, renderer, goTo, setLighting, setStyle, invalidate };
 })();
 </script>
 </body>
