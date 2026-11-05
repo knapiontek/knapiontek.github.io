@@ -752,6 +752,12 @@ function buildWalls(floor) {
     : groundTop(kind);
   const skinTop = top => attic ? top : x => Math.min(top(x), GROUND_H);     // the slab band between the floors stays white
   const portalTop = B.portals.groundWingsTo === 'attic' ? LEVEL.attic : GROUND_H;
+  const fullTop = attic ? x => Math.max(roofHeight(x), under(x)) : () => LEVEL.attic;
+  // an opening is drawn whole (glass, frames and the wall above it) when the cut is at or above its highest point
+  const openingWhole = o => {
+    const r = o.r, { head } = openingHead(o, fullTop), xs = [r[0], r[2], ...breaks.filter(p => p > r[0] && p < r[2])];
+    return cut >= Math.max(...xs.map(head));
+  };
   const openingHead = (o, top) => {
     const followRoof = attic && facadeFace(o.r) && B.windows.attic.followRoof && o.kind === 'window';
     return { followRoof, head: followRoof ? x => Math.min(top(x), windowLine(x)) : x => Math.min(o.head, top(x)) };
@@ -767,14 +773,14 @@ function buildWalls(floor) {
       const o = PLAN[floor].openings[c.opening], top = wallTop('ext'), { head } = openingHead(o, top);
       const below = x => Math.min(o.sill, top(x));
       prism(r[0], r[1], r[2], r[3], y0, 0, below, M.wall.ext, grp, breaks); skin(r, y0, 0, below, grp, breaks, floor, c.face, c.finish);
-      prism(r[0], r[1], r[2], r[3], y0, head, top, M.wall.ext, grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
+      if (openingWhole(o)) {                         // the wall above the opening only together with the whole window
+        prism(r[0], r[1], r[2], r[3], y0, head, top, M.wall.ext, grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
+      }
     }
   }
-  const fullTop = attic ? x => Math.max(roofHeight(x), under(x)) : () => LEVEL.attic;
   for (const o of PLAN[floor].openings) {             // glass, frames, the garage door: whole, or not at all
+    if (!openingWhole(o)) continue;                   // the cut runs through the opening: leave it out
     const r = o.r, { followRoof, head } = openingHead(o, fullTop);
-    const xsTop = [r[0], r[2], ...breaks.filter(p => p > r[0] && p < r[2])];
-    if (cut < Math.max(...xsTop.map(head))) continue;  // the cut runs through the window: leave it out
     const thinX = (r[2] - r[0]) < (r[3] - r[1]);
     const gx = thinX ? [(r[0] + r[2]) / 2 - 1, (r[0] + r[2]) / 2 + 1] : [r[0], r[2]];
     const gz = thinX ? [r[1], r[3]] : [(r[1] + r[3]) / 2 - 1, (r[1] + r[3]) / 2 + 1];
