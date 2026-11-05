@@ -50,6 +50,17 @@ body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow
 .pad button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;font-size:16px;cursor:pointer;touch-action:none;user-select:none}
 .pad .u{grid-column:2;grid-row:1}.pad .l{grid-column:1;grid-row:2}.pad .d{grid-column:2;grid-row:2}.pad .r{grid-column:3;grid-row:2}
 .stage.walking .legend{display:none}
+.walkbtn[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink)}
+#plan2d{position:absolute;inset:0;z-index:5;background:#ffffff;display:flex;flex-direction:column}
+#plan2d .bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 14px;border-bottom:1px solid #e2e4e6;background:#f7f8f6;color:#1d2124}
+#plan2d .bar b{font:700 17px var(--f-display);margin-right:auto}
+#plan2d .bar>button{border:1px solid #d4d9dc;background:#eef0f1;color:#1d2124;border-radius:7px;font:600 13px var(--f-body);padding:6px 10px;cursor:pointer}
+#plan2d .seg{background:#ffffff;border-color:#d4d9dc}
+#plan2d .seg button{color:#1d2124}
+#plan2d .seg button[aria-pressed="true"]{background:#9a6a2f;color:#ffffff}
+#plan2d .pchk{display:flex;gap:5px;align-items:center;font:500 13px var(--f-body);text-transform:none;letter-spacing:0;color:#1d2124}
+#plan2d .sheet{flex:1;min-height:0;overflow:auto;padding:12px;background:#ffffff}
+#plan2d svg{display:block;margin:0 auto;height:calc(100% * var(--zoom,1));width:auto;max-width:none}
 #loading{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center;font:600 15px var(--f-display);color:var(--muted)}
 aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;min-width:0;padding-block:14px 28px;padding-left:16px;padding-right:max(16px,env(safe-area-inset-right,0px))}
 h1{font:700 21px/1.15 var(--f-display);letter-spacing:.01em;margin:0 0 2px;text-wrap:balance}
@@ -114,6 +125,19 @@ td select{padding:3px 4px;font-size:12px}
       </div>
       <button class="walkbtn" id="walkbtn" aria-pressed="false">Spacer</button>
       <div class="cams" id="cams"></div>
+      <button class="walkbtn" id="planBtn" aria-expanded="false" aria-controls="plan2d">Rzut 2D</button>
+    </div>
+    <div id="plan2d" hidden role="dialog" aria-label="Rzut 2D domu">
+      <div class="bar"><b id="planTitle">Rzut parteru · 1:50</b>
+        <div class="seg" role="group" aria-label="Kondygnacja rzutu">
+          <button id="p-ground" data-plan="ground" aria-pressed="true">Parter</button>
+          <button id="p-attic" data-plan="attic" aria-pressed="false">Piętro</button>
+          <button id="p-both" data-plan="both" aria-pressed="false">Oba</button>
+        </div>
+        <label class="pchk"><input type="checkbox" id="planTiles" checked> Płytki</label>
+        <button id="planZoomOut" aria-label="Pomniejsz">−</button><button id="planZoomIn" aria-label="Powiększ">+</button>
+        <button id="planDownload">Pobierz SVG</button><button id="planClose">Wróć do 3D</button></div>
+      <div class="sheet" id="planSheet"></div>
     </div>
     <div class="walkhud" id="walkhud" hidden>
       <div class="walkinfo"><b id="walklevel">Parter</b> · strzałki: chodzenie · A/D: krok w bok · Shift: szybciej · PgUp/PgDn lub przeciągnij myszą: patrzenie · Esc: wyjście</div>
@@ -183,7 +207,8 @@ const LEVEL = { ground: B.levels.ground, attic: B.levels.attic }, GROUND_H = B.l
 const KNEE = B.roof.knee, PITCH = Math.tan(B.roof.pitch * Math.PI / 180);
 const knees = PLAN.attic.walls.filter(w => w.kind === 'knee').map(w => w.r).sort((a, b) => a[0] - b[0]);
 const XL = knees[0][2], XR = knees[1][0], XM = (XL + XR) / 2, RIDGE = KNEE + PITCH * (XR - XL) / 2;
-const WIDTH = knees[1][2], LENGTH = Math.max(...PLAN.ground.rooms.flatMap(r => r.rects.map(q => q[3]))) + 50;
+const WIDTH = knees[1][2];
+const LENGTH = Math.max(...PLAN.ground.walls.filter(w => w.r[1] >= 0 && (w.r[0] < 1 || w.r[2] > WIDTH - 1) && w.r[2] - w.r[0] < 50).map(w => w.r[3]));   // the end of the side walls = the front gable face (the portal wings are wider)
 const roofHeight = x => KNEE + PITCH * Math.max(0, Math.min(x - XL, XR - x));
 const FLOOR_NAMES = { ground: 'Parter', attic: 'Piętro' };
 
@@ -745,8 +770,11 @@ function buildWalls(floor) {
       prism(r[0], r[1], r[2], r[3], y0, head, top, M.wall.ext, grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
     }
   }
-  for (const o of PLAN[floor].openings) {             // glass, frames, the garage door
-    const r = o.r, top = wallTop('ext'), { followRoof, head } = openingHead(o, top);
+  const fullTop = attic ? x => Math.max(roofHeight(x), under(x)) : () => LEVEL.attic;
+  for (const o of PLAN[floor].openings) {             // glass, frames, the garage door: whole, or not at all
+    const r = o.r, { followRoof, head } = openingHead(o, fullTop);
+    const xsTop = [r[0], r[2], ...breaks.filter(p => p > r[0] && p < r[2])];
+    if (cut < Math.max(...xsTop.map(head))) continue;  // the cut runs through the window: leave it out
     const thinX = (r[2] - r[0]) < (r[3] - r[1]);
     const gx = thinX ? [(r[0] + r[2]) / 2 - 1, (r[0] + r[2]) / 2 + 1] : [r[0], r[2]];
     const gz = thinX ? [r[1], r[3]] : [(r[1] + r[3]) / 2 - 1, (r[1] + r[3]) / 2 + 1];
@@ -836,7 +864,7 @@ function setMode(mode, keepCamera) {
   const wasFull = groups.ground.userData.full;
   updateRoof();
   if (wasFull !== isFull()) { groups.ground.userData.full = isFull(); buildWalls('ground'); buildWalls('attic'); }
-  for (const b of document.querySelectorAll('.seg button')) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+  for (const b of document.querySelectorAll('.hud [data-mode]')) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
   const cams = document.getElementById('cams'); cams.innerHTML = '';
   for (const c of CAMERAS[mode]) { const b = document.createElement('button'); b.textContent = c[0]; b.onclick = () => { setWalk(false); setCamera(c); }; cams.appendChild(b); }
   if (!keepCamera) setCamera(CAMERAS[mode][mode === 'all' ? 0 : 1]);
@@ -924,6 +952,7 @@ function autoLayout(key, quiet) {
 }
 function rebuildFloor(f) {
   buildFloor(f);
+  if (!document.getElementById('plan2d').hidden) showPlan(true);
   for (const k in state.layouts) if (state.layouts[k].floor === f) refreshLayoutPanel(k);
   save(); requestRender();
 }
@@ -1056,7 +1085,159 @@ window.houseWalk = walk;  // for checking from the console
 window.__cam = (eye, target) => setCamera(["", eye, target]);
 window.__walls = wallGroups;
 
-/* ================= 12. START ================= */
+/* ================= 12. 2D PLAN (SVG) ================= */
+// Drawn from exactly what the 3D view builds: the wall footprint (footprint), the openings of plan.js, the stair
+// treads (STAIR_BOXES), the stair hole (VOIDS), the roof heights (roofHeight) and the tile pieces of the current
+// layouts (layTiles). Drawing unit 1 cm, x to the right, z down (the garden at the top, as on the archon.pl plans).
+const PLAN_STYLE = { wall: '#151617', ink: '#2a2d30', red: '#c8282d', tile: '#9aa0a3', small: '#f2b8b2', glass: '#5d8fa6' };
+function floorSVG(floor, ox, oy, withTiles) {
+  const out = [], f = v => +v.toFixed(1), C = PLAN_STYLE, X = x => f(x + ox), Z = z => f(z + oy);
+  const rect = (r, attrs) => out.push(`<rect x="${X(r[0])}" y="${Z(r[1])}" width="${f(r[2] - r[0])}" height="${f(r[3] - r[1])}" ${attrs}/>`);
+  const line = (x1, z1, x2, z2, attrs) => out.push(`<line x1="${X(x1)}" y1="${Z(z1)}" x2="${X(x2)}" y2="${Z(z2)}" ${attrs}/>`);
+  const text = (x, z, str, cls, anchor = 'middle', rot) => out.push(rot
+    ? `<text transform="translate(${X(x)} ${Z(z)}) rotate(${rot})" class="${cls}" text-anchor="${anchor}">${str}</text>`
+    : `<text x="${X(x)}" y="${Z(z)}" class="${cls}" text-anchor="${anchor}">${str}</text>`);
+  const attic = floor === 'attic', P = PLAN[floor];
+  // floor tiles: the same pieces as in 3D; small cuts filled
+  if (withTiles) for (const key in state.layouts) {
+    const L = state.layouts[key]; if (L.floor !== floor) continue;
+    const pieces = layTiles(L, roomsOf(key), L.oa, L.ob); analyse(L, pieces);
+    for (const p of pieces) {
+      const [xa, za] = toXZ(L, p.a1, p.b1), [xb, zb] = toXZ(L, p.a2, p.b2);
+      rect([Math.min(xa, xb), Math.min(za, zb), Math.max(xa, xb), Math.max(za, zb)],
+        `fill="${state.showCuts && p.small ? C.small : 'none'}" stroke="${C.tile}" stroke-width=".35"`);
+    }
+  }
+  // stair hole of the attic and the roof heights
+  if (attic) {
+    for (const v of VOIDS) rect(v, `fill="#ffffff" stroke="${C.ink}" stroke-width=".6" stroke-dasharray="6 3"`);
+    for (const h of [140, 190, 220]) {
+      const d = (h - KNEE) / PITCH;
+      for (const x of [XL + d, XR - d]) line(x, 0, x, LENGTH, `stroke="${C.ink}" stroke-width=".5" stroke-dasharray="10 4 2 4" opacity=".7"`);
+      text(XL + d + 3, 60, `h ${h}`, 's', 'start', 90);
+    }
+  }
+  // stair treads (drawn on both floors: under the hole upstairs)
+  for (const b of STAIR_BOXES) {
+    if (attic && !VOIDS.some(v => b[0] >= v[0] - 1 && b[2] <= v[2] + 1 && b[1] >= v[1] - 1 && b[3] <= v[3] + 1)) continue;
+    rect(b, `fill="${attic ? 'none' : '#f4efe6'}" stroke="${C.ink}" stroke-width=".5"`);
+  }
+  if (!attic) { const c = ST.core; rect(c, `fill="${C.wall}"`); }
+  { const f1 = ST.flight1, zc = (f1.z[0] + f1.z[1]) / 2; line(f1.x[1] - 10, zc, ST.landing.x[1] - 10, zc, `stroke="${C.ink}" stroke-width=".7" marker-end="url(#arrow)"`); }
+  if (!attic) rect(PLAN.ground.fireplace, `fill="#cfcfcd" stroke="${C.ink}" stroke-width=".5"`);
+  // walls: the footprint pieces that are solid at the cut height of 1 m (openings with a sill above it stay solid)
+  for (const c of footprint(floor)) {
+    const o = c.opening !== undefined ? P.openings[c.opening] : null;
+    if (o && o.sill < 100) continue;
+    rect(c.r, `fill="${C.wall}"`);
+  }
+  // openings: windows (glass line), doors (jamb lines), the garage door (dashed)
+  for (const o of P.openings) {
+    const r = o.r, thinX = (r[2] - r[0]) < (r[3] - r[1]);
+    if (o.sill >= 100) { rect(r, `fill="${C.wall}"`); }
+    const cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2;
+    if (o.kind === 'window') {
+      rect(r, `fill="#ffffff" stroke="${C.ink}" stroke-width=".5"`);
+      if (thinX) { line(cx - 2, r[1], cx - 2, r[3], `stroke="${C.glass}" stroke-width=".7"`); line(cx + 2, r[1], cx + 2, r[3], `stroke="${C.glass}" stroke-width=".7"`); }
+      else { line(r[0], cz - 2, r[2], cz - 2, `stroke="${C.glass}" stroke-width=".7"`); line(r[0], cz + 2, r[2], cz + 2, `stroke="${C.glass}" stroke-width=".7"`); }
+    } else if (o.kind === 'gate') {
+      if (thinX) line(cx, r[1], cx, r[3], `stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="8 4"`);
+      else line(r[0], cz, r[2], cz, `stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="8 4"`);
+    } else {
+      if (thinX) { line(r[0], r[1], r[2], r[1], `stroke="${C.ink}" stroke-width=".6"`); line(r[0], r[3], r[2], r[3], `stroke="${C.ink}" stroke-width=".6"`); }
+      else { line(r[0], r[1], r[0], r[3], `stroke="${C.ink}" stroke-width=".6"`); line(r[2], r[1], r[2], r[3], `stroke="${C.ink}" stroke-width=".6"`); }
+    }
+    // size label on the outer walls: width / head height, as on the archon.pl plans
+    const face = r[1] < 1 ? 'top' : r[3] > LENGTH - 2 || (r[3] > 1200 && r[1] > 1150 && !thinX) ? 'bottom' : r[0] < 1 ? 'left' : r[2] > WIDTH - 1 ? 'right' : null;
+    if (face && o.kind !== 'door') {
+      const w = Math.round(thinX ? r[3] - r[1] : r[2] - r[0]), lbl = `${w}/${Math.round(o.head)}`;
+      if (face === 'top') text(cx, r[1] - 8, lbl, 's'); else if (face === 'bottom') text(cx, r[3] + 18, lbl, 's');
+      else if (face === 'left') text(-12, cz, lbl, 's', 'middle', -90); else text(WIDTH + 12, cz, lbl, 's', 'middle', 90);
+    }
+  }
+  // rooms: name, area of the model (and the plan), floor finish
+  P.rooms.forEach((room, i) => {
+    const big = room.rects.reduce((m, q) => (q[2] - q[0]) * (q[3] - q[1]) > (m[2] - m[0]) * (m[3] - m[1]) ? q : m, room.rects[0]);
+    const area = room.rects.reduce((a, q) => a + (q[2] - q[0]) * (q[3] - q[1]), 0) / 1e4;
+    const key = state.rooms[floor][i], L = state.layouts[key];
+    const cx = (big[0] + big[2]) / 2, cz = (big[1] + big[3]) / 2;
+    out.push(`<g>`);
+    text(cx, cz - 6, room.name.replace(/ \(\d+\)$/, ''), 'r');
+    text(cx, cz + 10, `${area.toFixed(2).replace('.', ',')} m²`, 'a');
+    if (L) text(cx, cz + 24, `${L.len / 10}×${L.wid / 10} · ${(PRODUCTS[L.product] || {}).name ? TEX[L.texture].name.split(' (')[0] : ''}`, 's');
+    out.push(`</g>`);
+  });
+  // dimensions (red): chains along the four outer walls and the overall sizes
+  const dimH = (xs, z, above) => {
+    for (let i = 0; i < xs.length - 1; i++) {
+      const a = xs[i], b = xs[i + 1]; if (b - a < 1) continue;
+      out.push(`<path d="M${X(a)} ${Z(z)}H${X(b)}M${X(a) - 3} ${Z(z) + 3}l6 -6M${X(b) - 3} ${Z(z) + 3}l6 -6M${X(a)} ${Z(z) - 5}v10M${X(b)} ${Z(z) - 5}v10" stroke="${C.red}" stroke-width=".6" fill="none"/>`);
+      text((a + b) / 2, z + (above ? -4 : 12), Math.round(b - a), 'd');
+    }
+  };
+  const dimV = (zs, x, left) => {
+    for (let i = 0; i < zs.length - 1; i++) {
+      const a = zs[i], b = zs[i + 1]; if (b - a < 1) continue;
+      out.push(`<path d="M${X(x)} ${Z(a)}V${Z(b)}M${X(x) - 3} ${Z(a) + 3}l6 -6M${X(x) - 3} ${Z(b) + 3}l6 -6M${X(x) - 5} ${Z(a)}h10M${X(x) - 5} ${Z(b)}h10" stroke="${C.red}" stroke-width=".6" fill="none"/>`);
+      text(x + (left ? -4 : 12), (a + b) / 2, Math.round(b - a), 'd', 'middle', -90);
+    }
+  };
+  const along = (pick, lo, hi) => [...new Set([lo, ...P.openings.flatMap(pick), hi].map(v => Math.round(v * 10) / 10))].sort((a, b) => a - b);
+  const zMin = Math.min(...P.walls.map(w => w.r[1])), zMax = Math.max(...P.walls.map(w => w.r[3]));   // incl. the portal wings
+  dimH(along(o => o.r[1] < 1 ? [o.r[0], o.r[2]] : [], 0, WIDTH), zMin - 30, true);
+  dimH([0, WIDTH], zMin - 62, true);
+  dimH(along(o => o.r[3] > 1200 && (o.r[2] - o.r[0]) > (o.r[3] - o.r[1]) ? [o.r[0], o.r[2]] : [], 0, WIDTH), zMax + 32, false);
+  dimV([zMin, 0, LENGTH, zMax], WIDTH + 80, false);
+  dimV(along(o => o.r[0] < 1 ? [o.r[1], o.r[3]] : [], 0, LENGTH), -45, true);
+  dimV([0, LENGTH], -75, true);
+  dimV(along(o => o.r[2] > WIDTH - 1 ? [o.r[1], o.r[3]] : [], 0, LENGTH), WIDTH + 45, false);
+  text(WIDTH / 2, zMax + 100, `${FLOOR_NAMES[floor].toUpperCase()} · rzędna ${LEVEL[floor] / 100 >= 0 ? '+' : ''}${(LEVEL[floor] / 100).toFixed(2).replace('.', ',')}`, 't');
+  return out.join('\n');
+}
+function planSVG(which) {
+  const floors = which === 'both' ? ['ground', 'attic'] : [which];
+  const pad = { l: 120, r: 130, t: 200, b: 230 }, gap = 100, W = WIDTH + pad.l + pad.r, H = LENGTH + pad.t + pad.b;
+  const total = floors.length * W + (floors.length - 1) * gap, C = PLAN_STYLE;
+  const body = floors.map((fl, i) => floorSVG(fl, pad.l + i * (W + gap), pad.t, state.planTiles !== false)).join('\n');
+  const date = new Date().toLocaleDateString('pl-PL');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${H + 30}" width="${total / 5}mm" height="${(H + 30) / 5}mm" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${C.ink}"/></marker></defs>
+<style>.d{fill:${C.red};font-size:13px}.s{fill:${C.ink};font-size:11px}.r{fill:${C.ink};font-size:17px;font-weight:bold}.a{fill:${C.red};font-size:14px;font-style:italic}.t{fill:${C.ink};font-size:22px;font-weight:bold;letter-spacing:2px}</style>
+<rect x="0" y="0" width="${total}" height="${H + 30}" fill="#ffffff"/>
+${body}
+<text x="20" y="${H + 18}" class="s">Dom w papawerach 5 (G) · rzut 1:50 przy wydruku w skali (1 cm rysunku = 50 cm) · wymiary w cm · ściany przecięte na 1 m · ten sam model co widok 3D (plan.js, building.js, układ płytek) · ${date}</text>
+</svg>`;
+}
+let planZoom = 1, planWhich = 'ground';
+const PLAN_TITLES = { ground: 'Rzut parteru', attic: 'Rzut piętra', both: 'Rzuty parteru i piętra' };
+function showPlan(on) {
+  const el = document.getElementById('plan2d'); el.hidden = !on;
+  document.getElementById('planBtn').setAttribute('aria-expanded', String(on));
+  if (!on) return;
+  document.getElementById('planTitle').textContent = PLAN_TITLES[planWhich] + ' · 1:50';
+  for (const b of el.querySelectorAll('[data-plan]')) b.setAttribute('aria-pressed', String(b.dataset.plan === planWhich));
+  const sheet = document.getElementById('planSheet'); sheet.innerHTML = planSVG(planWhich); sheet.style.setProperty('--zoom', planZoom);
+}
+document.getElementById('planBtn').onclick = () => { setWalk(false); if (state.mode !== 'all') planWhich = state.mode; showPlan(document.getElementById('plan2d').hidden); };
+document.getElementById('planClose').onclick = () => showPlan(false);
+for (const b of document.querySelectorAll('[data-plan]')) b.onclick = () => { planWhich = b.dataset.plan; showPlan(true); };
+const planTiles = document.getElementById('planTiles');
+planTiles.checked = state.planTiles !== false;
+planTiles.onchange = () => { state.planTiles = planTiles.checked; save(); showPlan(true); };
+document.getElementById('planZoomIn').onclick = () => { planZoom = Math.min(5, planZoom * 1.25); document.getElementById('planSheet').style.setProperty('--zoom', planZoom); };
+document.getElementById('planZoomOut').onclick = () => { planZoom = Math.max(0.4, planZoom / 1.25); document.getElementById('planSheet').style.setProperty('--zoom', planZoom); };
+// saving: through the viewer's downloads capability when the page is published on claude.ai, a plain link from disk
+const hostDownloads = window.claude && window.claude.use ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+document.getElementById('planDownload').onclick = async () => {
+  const filename = `house-plan-${planWhich}.svg`, svg = planSVG(planWhich), dl = await hostDownloads;
+  if (dl) { try { await dl.save({ filename, data: svg }); } catch (e) { /* declined or unavailable: nothing to do */ } return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('plan2d').hidden) showPlan(false); });
+window.__planSVG = planSVG;
+
+/* ================= 13. START ================= */
 document.getElementById('layouts').innerHTML = Object.keys(state.layouts).map(layoutPanel).join('');
 for (const k in state.layouts) wireLayout(k);
 roomsTable();
@@ -1076,7 +1257,7 @@ sunEl.oninput = () => { state.sunElevation = +sunEl.value; sunLabel(); placeSun(
 const bright = document.getElementById('bright'), brightv = document.getElementById('brightv');
 bright.value = state.brightness; brightv.textContent = Math.round(state.brightness * 100) + ' %';
 bright.oninput = () => { state.brightness = +bright.value; brightv.textContent = Math.round(state.brightness * 100) + ' %'; placeSun(); save(); };
-for (const b of document.querySelectorAll('.seg button')) b.onclick = () => { setWalk(false); setMode(b.dataset.mode); };
+for (const b of document.querySelectorAll('.hud [data-mode]')) b.onclick = () => { setWalk(false); setMode(b.dataset.mode); };
 
 for (const k in state.layouts) if (state.auto[k] && !state.layouts[k].optimised) { autoLayout(k, true); state.layouts[k].optimised = true; }
 buildWalls('ground'); buildWalls('attic');
