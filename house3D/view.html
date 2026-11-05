@@ -444,6 +444,9 @@ M.ghost = new THREE.MeshStandardMaterial({ color: lin('#f2f0ea'), roughness: 0.9
 M.wall = {};
 for (const k in B.walls) M.wall[k] = M[B.walls[k]];
 M.int = M.wall.int;
+M.edge = new THREE.LineBasicMaterial({ color: lin(B.edges.color), transparent: true, opacity: B.edges.opacity, depthWrite: false });
+const EDGED = new Set([...Object.values(M.wall), M[B.faces.default], M[B.roof.body]].filter(m => m !== M[B.windows.glass]));
+for (const f of B.finishes) EDGED.add(M[f.material]);
 
 // textures of the tiles
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
@@ -500,7 +503,7 @@ const attSlab = new THREE.Group(); groups.attic.add(attSlab);
   for (const v of VOIDS) { xs.push(v[0], v[2]); zs.push(v[1], v[3]); }
   const ux = [...new Set(xs)].sort((a, b) => a - b), uz = [...new Set(zs)].sort((a, b) => a - b);
   for (let i = 0; i < uz.length - 1; i++) for (let k = 0; k < ux.length - 1; k++)
-    if (!inVoid((ux[k] + ux[k + 1]) / 2, (uz[i] + uz[i + 1]) / 2)) box(ux[k], slabY1, uz[i], ux[k + 1], slabY2, uz[i + 1], M.slab, attSlab);
+    if (!inVoid((ux[k] + ux[k + 1]) / 2, (uz[i] + uz[i + 1]) / 2)) box(Math.max(ux[k], XL), slabY1, Math.max(uz[i], 2), Math.min(ux[k + 1], WIDTH - XL), slabY2, Math.min(uz[i + 1], LENGTH - 2), M.slab, attSlab);
 })();
 // U-shaped stair; STAIR_BOXES [x1, z1, x2, z2, top] are also the walking surfaces
 const ST = PLAN.ground.stair, rise = LEVEL.attic / ST.risers, STAIR_BOXES = [];
@@ -550,6 +553,52 @@ function updateRoof() {
 }
 
 /* ================= 7. WALLS (rebuilt with the cut height) ================= */
+// The wall rectangles of plan.js overlap where walls meet (they were read from the plan image). The footprint of a
+// floor is rebuilt as a grid of all their edges: every cell gets one owner (an opening before a wall, stronger wall
+// kinds before weaker), and cells with the same owner, facade face and finish merge into rectangles that never overlap.
+const KIND_RANK = { chimney: 6, ext: 5, gable: 4, knee: 3, int: 2, rail: 1 };
+const footprints = {};
+function footprint(floor) {
+  if (footprints[floor]) return footprints[floor];
+  const q = v => Math.round(v * 10) / 10, P = PLAN[floor];
+  const items = P.walls.map(w => ({ r: w.r.map(q), kind: w.kind, rank: KIND_RANK[w.kind] }))
+    .concat(P.openings.map((o, i) => ({ r: o.r.map(q), kind: 'ext', rank: 10, opening: i })));
+  const xs = [...new Set(items.flatMap(it => [it.r[0], it.r[2]]))].sort((a, b) => a - b);
+  const zs = [...new Set(items.flatMap(it => [it.r[1], it.r[3]]))].sort((a, b) => a - b);
+  for (const f of B.finishes) if (f.floor === floor) xs.push(...f.x);
+  const ux = [...new Set(xs.map(q))].sort((a, b) => a - b);
+  const owner = (cx, cz) => {
+    let best = null;
+    for (const it of items) if (cx > it.r[0] && cx < it.r[2] && cz > it.r[1] && cz < it.r[3] && (!best || it.rank > best.rank)) best = it;
+    return best;
+  };
+  const strips = [];                      // per z band: runs of equal cells along x
+  for (let j = 0; j < zs.length - 1; j++) {
+    const z1 = zs[j], z2 = zs[j + 1], cz = (z1 + z2) / 2;
+    let run = null;
+    for (let i = 0; i < ux.length - 1; i++) {
+      const x1 = ux[i], x2 = ux[i + 1], it = owner((x1 + x2) / 2, cz);
+      let key = null, cell = null;
+      if (it) {
+        const face = facadeFace([x1, z1, x2, z2]), fin = face ? finishOf(face, floor, x1, x2) : null;
+        cell = { kind: it.kind, opening: it.opening, face, finish: fin };
+        key = [it.kind, it.opening ?? '', face || '', fin ? B.finishes.indexOf(fin) : ''].join('|');
+      }
+      if (run && key === run.key && x1 === run.r[2]) { run.r[2] = x2; continue; }
+      if (run) strips.push(run);
+      run = key ? Object.assign({ key, r: [x1, z1, x2, z2] }, cell) : null;
+    }
+    if (run) strips.push(run);
+  }
+  const rects = [], open = new Map();     // merge strips of consecutive bands with the same x range and owner
+  for (const s of strips) {
+    const k = s.key + '|' + s.r[0] + '|' + s.r[2], prev = open.get(k);
+    if (prev && prev.r[3] === s.r[1]) { prev.r[3] = s.r[3]; continue; }
+    rects.push(s); open.set(k, s);
+  }
+  return footprints[floor] = rects;
+}
+
 const num = v => typeof v === 'function' ? v : () => v;
 // a vertical prism between z1 and z2; bottom and top are heights or functions of x (sampled at the ends and the breaks)
 function prism(x1, z1, x2, z2, y0, bottom, top, mat, parent, breaks) {
@@ -558,15 +607,72 @@ function prism(x1, z1, x2, z2, y0, bottom, top, mat, parent, breaks) {
   xs.sort((a, b) => a - b);
   const bot = xs.map(bf), tops = xs.map((x, i) => Math.max(bot[i], tf(x)));
   if (Math.max(...tops.map((t, i) => t - bot[i])) < 0.5) return;
-  const sh = new THREE.Shape();
+  const sh = new THREE.Shape(), n = xs.length - 1;
+  // extra vertices on the vertical ends at the heights of the neighbours (sills, lintels): no T-junction cracks
+  const mids = (lo, hi) => joinHeights.filter(h => h > lo + 0.05 && h < hi - 0.05);
   sh.moveTo(xs[0], bot[0]);
-  for (let i = 1; i < xs.length; i++) sh.lineTo(xs[i], bot[i]);
-  for (let i = xs.length - 1; i >= 0; i--) sh.lineTo(xs[i], tops[i]);
+  for (let i = 1; i <= n; i++) sh.lineTo(xs[i], bot[i]);
+  for (const h of mids(bot[n], tops[n])) sh.lineTo(xs[n], h);
+  for (let i = n; i >= 0; i--) sh.lineTo(xs[i], tops[i]);
+  for (const h of mids(bot[0], tops[0]).reverse()) sh.lineTo(xs[0], h);
   const g = new THREE.ExtrudeGeometry(sh, { depth: z2 - z1, bevelEnabled: false });
   cmUV(g, 0, y0, z1);
   const m = new THREE.Mesh(g, mat); m.position.set(0, y0, z1);
   m.castShadow = mat !== M[B.windows.glass]; m.receiveShadow = true;
   parent.add(m);
+  if (EDGED.has(mat) && edgeSink) edgeSink.push({ g, ox: 0, oy: y0, oz: z1 });
+}
+// edges only on real corners: faces hidden against a neighbour (opposite normals in one plane) are dropped first,
+// and an edge is drawn where exactly two visible faces meet at more than the crease angle
+let edgeSink = null, joinHeights = [], floorY = 0, seamY = null;
+function buildEdges(list, parent) {
+  const q = v => Math.round(v * 10) / 10, tris = [];
+  list.forEach((p, id) => {
+    const a = p.g.attributes.position, idx = p.g.index;
+    const n = idx ? idx.count : a.count, at = k => idx ? idx.getX(k) : k;
+    for (let k = 0; k < n; k += 3) {
+      const v = [0, 1, 2].map(j => { const i = at(k + j); return [a.getX(i) + p.ox, a.getY(i) + p.oy, a.getZ(i) + p.oz]; });
+      const e1 = [v[1][0] - v[0][0], v[1][1] - v[0][1], v[1][2] - v[0][2]], e2 = [v[2][0] - v[0][0], v[2][1] - v[0][1], v[2][2] - v[0][2]];
+      const nx = e1[1] * e2[2] - e1[2] * e2[1], ny = e1[2] * e2[0] - e1[0] * e2[2], nz = e1[0] * e2[1] - e1[1] * e2[0], L = Math.hypot(nx, ny, nz);
+      if (L < 1e-6) continue;
+      tris.push({ id, v, n: [nx / L, ny / L, nz / L] });
+    }
+  });
+  // axis-aligned faces by plane, for the hidden-face test
+  const planes = new Map(), axisOf = t => Math.abs(t.n[0]) > 0.99 ? 0 : Math.abs(t.n[2]) > 0.99 ? 2 : Math.abs(t.n[1]) > 0.99 ? 1 : -1;
+  for (const t of tris) { const ax = axisOf(t); if (ax < 0) continue; t.ax = ax; const key = ax + (t.n[ax] > 0 ? '+' : '-') + q(t.v[0][ax]); (planes.get(key) || planes.set(key, []).get(key)).push(t); }
+  const inTri = (p, t, u, w) => {
+    const [a, b, c] = t.v, s1 = (b[u] - a[u]) * (p[w] - a[w]) - (b[w] - a[w]) * (p[u] - a[u]);
+    const s2 = (c[u] - b[u]) * (p[w] - b[w]) - (c[w] - b[w]) * (p[u] - b[u]), s3 = (a[u] - c[u]) * (p[w] - c[w]) - (a[w] - c[w]) * (p[u] - c[u]);
+    return (s1 >= -1e-3 && s2 >= -1e-3 && s3 >= -1e-3) || (s1 <= 1e-3 && s2 <= 1e-3 && s3 <= 1e-3);
+  };
+  for (const t of tris) {
+    if (t.ax === 1) {                    // bottoms standing on the floor and tops under the floor above are never seen
+      const y = t.v[0][1];
+      if ((t.n[1] < 0 && Math.abs(y - floorY) < 0.2) || (t.n[1] > 0 && seamY !== null && Math.abs(y - seamY) < 0.2)) { t.hidden = true; continue; }
+    }
+    if (t.ax === undefined) continue;
+    const opp = planes.get(t.ax + (t.n[t.ax] > 0 ? '-' : '+') + q(t.v[0][t.ax])); if (!opp) continue;
+    const [u, w] = [0, 1, 2].filter(i => i !== t.ax), c = [0, 1, 2].map(i => (t.v[0][i] + t.v[1][i] + t.v[2][i]) / 3);
+    if (opp.some(o => o.id !== t.id && inTri(c, o, u, w))) t.hidden = true;
+  }
+  const edges = new Map(), cos = Math.cos(B.edges.angle * Math.PI / 180);
+  for (const t of tris) {
+    if (t.hidden) continue;
+    for (let j = 0; j < 3; j++) {
+      const a = t.v[j], b = t.v[(j + 1) % 3], ka = a.map(q).join(','), kb = b.map(q).join(',');
+      const key = ka < kb ? ka + '|' + kb : kb + '|' + ka;
+      const e = edges.get(key) || edges.set(key, { a, b, n: [] }).get(key); e.n.push(t.n);
+    }
+  }
+  const pos = [];
+  for (const e of edges.values()) {
+    if (e.n.length !== 2) continue;
+    const d = e.n[0][0] * e.n[1][0] + e.n[0][1] * e.n[1][1] + e.n[0][2] * e.n[1][2];
+    if (d < cos) pos.push(...e.a, ...e.b);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  parent.add(new THREE.LineSegments(g, M.edge));
 }
 function clearGroup(g) {
   for (let i = g.children.length - 1; i >= 0; i--) { const c = g.children[i]; g.remove(c); if (c.geometry) c.geometry.dispose(); }
@@ -578,59 +684,76 @@ function facadeFace(r) {        // which gable face a wall piece lies on, or nul
   for (const f of F.front) if (Math.abs(r[3] - f.z) < 9 && r[0] >= (f.fromX || 0)) return 'front';
   return null;
 }
-function skinMaterial(face, floor, x1, x2) {
-  for (const f of B.finishes) if (f.face === face && f.floor === floor && x1 >= f.x[0] - 1 && x2 <= f.x[1] + 1) return M[f.material];
-  return M[F.default];
+function finishOf(face, floor, x1, x2) {
+  for (const f of B.finishes) if (f.face === face && f.floor === floor && x1 >= f.x[0] - 1 && x2 <= f.x[1] + 1) return f;
+  return null;
 }
-function skin(r, y0, bottom, top, grp, breaks, floor) {
-  const face = facadeFace(r); if (!face) return;
+const windowLine = x => roofHeight(x) - B.windows.attic.inset;      // the line of the attic window tops, extended
+function skin(r, y0, bottom, top, grp, breaks, floor, face, f) {
+  if (!face) return;
   const z = face === 'garden' ? [r[1] - 1, r[1]] : [r[3], r[3] + 1];
-  prism(r[0], z[0], r[2], z[1], y0, bottom, top, skinMaterial(face, floor, r[0], r[2]), grp, breaks);
+  if (!f) { prism(r[0], z[0], r[2], z[1], y0, bottom, top, M[F.default], grp, breaks); return; }
+  const tf = num(top), upTo = f.upTo === 'windowLine' ? x => Math.min(tf(x), windowLine(x)) : tf;
+  prism(r[0], z[0], r[2], z[1], y0, bottom, upTo, M[f.material], grp, breaks);
+  if (f.upTo) prism(r[0], z[0], r[2], z[1], y0, x => Math.max(num(bottom)(x), upTo(x)), tf, M[F.default], grp, breaks);
 }
 // frame profiles of a window: posts every mullionEvery cm, a sill bar, a head bar along the (maybe sloping) top, a transom
-function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX) {
+function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX, opt) {
   const W = B.windows.frame.width, D = B.windows.frame.depth, mat = M[B.windows.frame.material];
   const a1 = thinX ? gz[0] : gx[0], a2 = thinX ? gz[1] : gx[1], len = a2 - a1;
   const cx = (gx[0] + gx[1]) / 2, cz = (gz[0] + gz[1]) / 2;
   const member = (b1, b2, bottom, top) => thinX
     ? prism(cx - D, b1, cx + D, b2, y0, bottom, top, mat, grp, breaks)
     : prism(b1, cz - D, b2, cz + D, y0, bottom, top, mat, grp, breaks);
-  const n = Math.max(1, Math.round(len / B.windows.frame.mullionEvery));
+  const n = Math.max(1, Math.round(len / opt.mullionEvery));
   for (let i = 0; i <= n; i++) { const p = a1 + i * len / n; member(Math.max(a1, p - W / 2), Math.min(a2, p + W / 2), sill, headFn); }
   member(a1, a2, sill, sill + W);
   member(a1, a2, x => headFn(x) - W, headFn);
-  const T = B.windows.frame.transom;
-  if (!thinX && len > 200) member(a1, a2, x => Math.min(T - W / 2, headFn(x)), x => Math.min(T + W / 2, headFn(x)));
+  const T = opt.transom;
+  if (!thinX && len > 200 && Math.max(...[a1, (a1 + a2) / 2, a2].map(headFn)) > T + 30) member(a1, a2, x => Math.min(T - W / 2, headFn(x)), x => Math.min(T + W / 2, headFn(x)));
 }
 function buildWalls(floor) {
   const grp = wallGroups[floor]; clearGroup(grp);
   const full = isFull(), y0 = LEVEL[floor], cut = full ? 10000 : state.cut;
+  const edgeList = []; edgeSink = edgeList;
   const attic = floor === 'attic';
+  joinHeights = [...new Set(PLAN[floor].openings.flatMap(o => [o.sill, o.head]).concat(attic ? [KNEE] : [GROUND_H, LEVEL.attic]))].sort((a, b) => a - b);
+  floorY = y0; seamY = !attic && full ? LEVEL.attic : null;
   const c1 = XL + (cut - KNEE) / PITCH, c2 = XR - (cut - KNEE) / PITCH;
-  const breaks = attic ? [XL, XM, XR, c1, c2] : [];
+  const breaks = attic ? [XL, XM, XR, c1, c2, WIDTH - XL, XL] : [];
+  const groundTop = kind => kind === 'ext' ? () => Math.min(cut, LEVEL.attic) : () => Math.min(cut, GROUND_H);
   const wallTop = kind => attic
-    ? (kind === 'knee' ? () => Math.min(cut, KNEE) : kind === 'rail' ? () => Math.min(cut, 100) : x => Math.min(cut, roofHeight(x)))
-    : () => Math.min(cut, GROUND_H);
+    ? (kind === 'knee' ? () => Math.min(cut, KNEE) : kind === 'rail' ? () => Math.min(cut, 100) : x => Math.min(cut, Math.max(roofHeight(x), under(x))))   // the portal wings reach the roof slab
+    : groundTop(kind);
+  const skinTop = top => attic ? top : x => Math.min(top(x), GROUND_H);     // the slab band between the floors stays white
   const portalTop = B.portals.groundWingsTo === 'attic' ? LEVEL.attic : GROUND_H;
-  for (const w of PLAN[floor].walls) {
-    const r = w.r, portal = !attic && (r[3] < 1 || r[1] > LENGTH - 2);
-    const top = portal ? () => Math.min(cut, portalTop) : wallTop(w.kind);
-    prism(r[0], r[1], r[2], r[3], y0, 0, top, M.wall[w.kind], grp, breaks);
-    skin(r, y0, 0, top, grp, breaks, floor);
+  const openingHead = (o, top) => {
+    const followRoof = attic && facadeFace(o.r) && B.windows.attic.followRoof && o.kind === 'window';
+    return { followRoof, head: followRoof ? x => Math.min(top(x), windowLine(x)) : x => Math.min(o.head, top(x)) };
+  };
+  for (const c of footprint(floor)) {                 // the solid parts: walls, and the wall below and above openings
+    const r = c.r;
+    if (c.opening === undefined) {
+      const portal = !attic && (r[3] < 1 || r[1] > LENGTH - 2);
+      const top = portal ? () => Math.min(cut, portalTop) : wallTop(c.kind);
+      prism(r[0], r[1], r[2], r[3], y0, 0, top, M.wall[c.kind], grp, breaks);
+      skin(r, y0, 0, skinTop(top), grp, breaks, floor, c.face, c.finish);
+    } else {
+      const o = PLAN[floor].openings[c.opening], top = wallTop('ext'), { head } = openingHead(o, top);
+      const below = x => Math.min(o.sill, top(x));
+      prism(r[0], r[1], r[2], r[3], y0, 0, below, M.wall.ext, grp, breaks); skin(r, y0, 0, below, grp, breaks, floor, c.face, c.finish);
+      prism(r[0], r[1], r[2], r[3], y0, head, top, M.wall.ext, grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
+    }
   }
-  for (const o of PLAN[floor].openings) {
-    const r = o.r, top = wallTop('int'), face = facadeFace(r);
-    const followRoof = attic && face && B.windows.attic.followRoof && o.kind === 'window';
-    const head = followRoof ? x => Math.min(top(x), roofHeight(x) - B.windows.attic.inset) : x => Math.min(o.head, top(x));
-    const below = x => Math.min(o.sill, top(x));
-    prism(r[0], r[1], r[2], r[3], y0, 0, below, M.wall.ext, grp, breaks); skin(r, y0, 0, below, grp, breaks, floor);
-    prism(r[0], r[1], r[2], r[3], y0, head, top, M.wall.ext, grp, breaks); skin(r, y0, head, top, grp, breaks, floor);
+  for (const o of PLAN[floor].openings) {             // glass, frames, the garage door
+    const r = o.r, top = wallTop('ext'), { followRoof, head } = openingHead(o, top);
     const thinX = (r[2] - r[0]) < (r[3] - r[1]);
     const gx = thinX ? [(r[0] + r[2]) / 2 - 1, (r[0] + r[2]) / 2 + 1] : [r[0], r[2]];
     const gz = thinX ? [r[1], r[3]] : [(r[1] + r[3]) / 2 - 1, (r[1] + r[3]) / 2 + 1];
     if (o.kind === 'window') {
       prism(gx[0], gz[0], gx[1], gz[1], y0, o.sill, head, M[B.windows.glass], grp, breaks);
-      frames(o.sill, head, gx, gz, y0, grp, breaks, thinX);
+      const opt = followRoof ? { mullionEvery: B.windows.attic.mullionEvery, transom: o.sill + B.windows.attic.transom } : { mullionEvery: B.windows.frame.mullionEvery, transom: B.windows.frame.transom };
+      frames(o.sill, head, gx, gz, y0, grp, breaks, thinX, opt);
     } else if (o.kind === 'gate') {
       prism(gx[0], gz[0] - 3, gx[1], gz[1] + 3, y0, o.sill, head, M[B.windows.gate], grp, breaks);
     }
@@ -641,6 +764,8 @@ function buildWalls(floor) {
     const z = b.face === 'garden' ? [F.garden.z - b.depth, F.garden.z] : [F.front[0].z, F.front[0].z + b.depth];
     prism(b.x[0], z[0], b.x[1], z[1], 0, b.y[0], b.y[1], M[b.material], grp, []);
   }
+  edgeSink = null;
+  buildEdges(edgeList, grp);
 }
 
 /* ================= 8. FLOORS (rebuilt with the layouts) ================= */
@@ -928,6 +1053,8 @@ for (const b of document.querySelectorAll('.pad button')) {
 }
 document.getElementById('walkbtn').onclick = () => setWalk(!walk.on);
 window.houseWalk = walk;  // for checking from the console
+window.__cam = (eye, target) => setCamera(["", eye, target]);
+window.__walls = wallGroups;
 
 /* ================= 12. START ================= */
 document.getElementById('layouts').innerHTML = Object.keys(state.layouts).map(layoutPanel).join('');
