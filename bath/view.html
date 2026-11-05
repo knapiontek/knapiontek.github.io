@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Łazienka L grafit</title>
+<title>Łazienki — dom w papawerach</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -46,6 +46,9 @@ button[aria-pressed="true"]{background:var(--fg);color:var(--panel);border-color
 .glass{background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(6px)}
 .views{display:flex;flex-wrap:wrap;gap:6px;min-width:0;flex:1}
 .views button{flex:none;padding:6px 11px;border-radius:999px;font-size:13px}
+.floors{display:flex;flex:none;gap:0;border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.floors button{border:0;border-radius:0;padding:6px 12px;font-size:13px;font-weight:600}
+.floors button+button{border-left:1px solid var(--line)}
 .daynight{align-self:flex-start;padding:7px 14px;font-size:13px;font-weight:600}
 .daynight > span{display:flex;align-items:center;gap:6px}
 .daynight[aria-pressed="true"]{background:#1d2a3a;color:#ffe2b0;border-color:#1d2a3a}   /* night */
@@ -158,13 +161,11 @@ dl.tight{margin:0}
 <div class="app">
   <div id="stage">
     <div class="topbar">
+      <div class="floors" id="floors" role="group" aria-label="Piętro">
+        <button class="glass" data-floor="ground" aria-pressed="false">Parter</button>
+        <button class="glass" data-floor="attic" aria-pressed="false">Poddasze</button>
+      </div>
       <div class="views" id="views" role="group" aria-label="Widok">
-        <button class="glass" data-view="overview" aria-pressed="true">Ogólny</button>
-        <button class="glass" data-view="door" aria-pressed="false">Od drzwi</button>
-        <button class="glass" data-view="vanity" aria-pressed="false">Umywalka i WC</button>
-        <button class="glass" data-view="cabinet" aria-pressed="false">Szafka i grzejnik</button>
-        <button class="glass" data-view="shower" aria-pressed="false">Prysznic</button>
-        <button class="glass" data-view="plan" aria-pressed="false">Rzut</button>
       </div>
       <button class="planbtn glass" id="planBtn" aria-expanded="false" aria-controls="plan2d">Rzut 2D</button>
       <button class="panelbtn glass" id="panelBtn" aria-expanded="true" aria-controls="settings">
@@ -173,7 +174,7 @@ dl.tight{margin:0}
       </button>
     </div>
     <div id="plan2d" hidden role="dialog" aria-label="Rzut 2D łazienki">
-      <div class="bar"><b>Rzut łazienki · 1:20</b>
+      <div class="bar"><b id="planTitle">Rzut łazienki · 1:20</b>
         <button id="planZoomOut" aria-label="Pomniejsz">−</button><button id="planZoomIn" aria-label="Powiększ">+</button>
         <button id="planDownload">Pobierz SVG</button><button id="planClose">Wróć do 3D</button></div>
       <div class="sheet" id="planSheet"></div>
@@ -182,7 +183,7 @@ dl.tight{margin:0}
   </div>
 
   <aside id="settings">
-    <h1>Łazienka L grafit</h1>
+    <h1 id="title">Łazienka</h1>
 
     <div class="tabs" role="tablist" aria-label="Panel">
       <button role="tab" id="tab-look" aria-controls="pane-look" aria-selected="true">Wygląd</button>
@@ -322,7 +323,14 @@ if (!window.BATH_TEXTURES) return fail('Brak pliku textures.js obok view.html.')
 if (!window.BATH_DATA || !window.BathEngine) return fail('Brak plików data.js / engine.js obok view.html.');
 
 /* Model: numbers from data.js, calculations from engine.js. Here (view.html) only rendering and the panel. */
-const G = BathEngine.build(BATH_DATA), DATA = BATH_DATA;
+let FLOOR = BATH_DATA.defaults.floor;
+try { FLOOR = new URLSearchParams(location.search).get('floor') || localStorage.getItem('floor') || FLOOR; } catch (e) {}
+if (!BATH_DATA.floors[FLOOR]) FLOOR = BATH_DATA.defaults.floor;
+const G = BathEngine.build(BATH_DATA, FLOOR), DATA = G.data, ATTIC = G.type === 'attic';
+const V = G.V;   // vanity in mm (data.js → engine.js)
+const mm = v => v / 1000;
+let wallDoor = null, wallVanity = null;   // wall records used by fixtures shared by both floors
+let SCENE = {};                           // floor-specific lights and camera views, filled by buildGround / buildAttic
 
 
 /* ==========================================================================
@@ -335,7 +343,7 @@ const SURFACES = ['wall', 'floor', 'shower', 'showerFloor'];
 const FORMATS = DATA.defaults.formats;   // cm
 
 const state = {
-  tiles: JSON.parse(JSON.stringify(DATA.defaults.tiles)),   // format: short×long side in cm; layout: h = long side horizontal, v = vertical
+  tiles: JSON.parse(JSON.stringify(DATA.tiles)),   // format: short×long side in cm; layout: h = long side horizontal, v = vertical
   surface: 'wall',      // surface being edited in the panel
   metal: 'brass',
   lighting: 'day',      // day | night
@@ -696,18 +704,6 @@ function wall(a, b, normal, surface, extend, hole = null, thickness = T) {
   return record;
 }
 
-const wallDoor   = wall([0, 0],   [XL, 0],  [0, -1], 'wall',   [.1, .1], { u0: DX0, u1: DX1, y0: 0, y1: DOOR_H });
-const wallLeft   = wall([XL, 0],  [XL, ZW], [1, 0],  'wall',   [.1, WINDOW_WALL_T]);
-const wallWindow = wall([XL, ZW], [0, ZW],  [0, 1],  'wall',   [.1, 0], { u0: XL - WX1, u1: XL - WX0, y0: WIN_Y0, y1: WIN_Y1 }, WINDOW_WALL_T);
-wall([0, ZW],  [SX, ZW], [0, 1],  'shower', [0, .1], null, WINDOW_WALL_T);        // exterior wall at the shower
-wall([SX, ZW], [SX, SZ], [-1, 0], 'shower', [WINDOW_WALL_T, .1]);
-const wallShowerValves = wall([SX, SZ], [0, SZ], [0, -1], 'shower', [.1, -.1]);   // stops short of the right wall: no overlap, no z-fighting
-const wallRight  = wall([0, SZ],  [0, 0],   [-1, 0], 'wall',   [0, 0]);
-
-// corner end face on the shower side: shower tile just in front of the right wall face + corner trim
-tiled('shower', new THREE.PlaneGeometry(.1, H), wallShowerValves.group).position.set(-.05, H / 2, SZ + .0006);
-box(.006, H, .006, M.metal, .001, H / 2, SZ + .0015, wallShowerValves.group);
-
 /* ---------- floor ---------- */
 const floorGroup = new THREE.Group(); scene.add(floorGroup);
 cutaway(floorGroup, () => !state.layers.floor);
@@ -717,16 +713,13 @@ function floorPlane(surface, x0, z0, x1, z1) {
   mesh.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2);
   mesh.castShadow = false;
 }
-floorPlane('floor', 0, 0, XL, ZW);           // room
-floorPlane('showerFloor', SX, SZ, 0, ZW);    // shower
-box(XL + T * 2, .12, ZW + T * 2, M.frame, XL / 2, -.061, ZW / 2, floorGroup);                  // screed under the room
-box(-SX + T, .12, ZW - SZ + T * 2, M.frame, SX / 2 - T / 2, -.061, SHOWER_ZC, floorGroup);    // screed under the shower
+if (ATTIC) buildAttic(); else buildGround();
 
 /* ---------- concealed door Porta HIDE 80, opening into the hallway (as in the original design) ----------
    No architraves: aluminium frame hidden in the wall, only a 3 mm gap around the leaf.
    The leaf is flush with the wall on the side it opens to (hallway); from the bathroom the leaf
    sits back in a tiled reveal. Leaf painted to match the tiles, concealed hinges. */
-const DOOR_PAINT = new THREE.MeshStandardMaterial({ color: 0x5b5e60, roughness: .85 });
+const DOOR_PAINT = new THREE.MeshStandardMaterial({ color: DATA.look.doorPaint, roughness: .85 });
 (function entranceDoor() {
   const g = wallDoor.group, cx = (DX0 + DX1) / 2, gapW = .003, leafW = DX1 - DX0 - 2 * gapW, leafH = DOOR_H - 2 * gapW;
   const out = DATA.door.opensOut, zc = out ? -T + .02 : -.02;   // middle of the 40 mm leaf thickness
@@ -743,6 +736,277 @@ const DOOR_PAINT = new THREE.MeshStandardMaterial({ color: 0x5b5e60, roughness: 
   cyl(.02, .02, .008, M.metal, leafW - .08, 1.0, -.024, pivot).rotation.x = Math.PI / 2;
   makeDoor(pivot, DATA.door.openAngle);
 })();
+
+/* ==========================================================================
+   7. CERAMICS, FITTINGS, FURNITURE
+   ========================================================================== */
+
+/* Solid lofted from superellipse sections (WC bowl, basin). Section: {y, a, b, n, nb, cx, cz}. */
+function superellipse(t, n) {
+  const c = Math.cos(t), s = Math.sin(t);
+  return [Math.sign(c) * Math.pow(Math.abs(c), 2 / n), Math.sign(s) * Math.pow(Math.abs(s), 2 / n)];
+}
+function loft(sections, { bottom = true, top = true } = {}) {
+  const SEG = 72, positions = [], index = [];
+  const ring = s => {
+    const pts = [];
+    for (let j = 0; j < SEG; j++) {
+      const t = j / SEG * Math.PI * 2;
+      const n = Math.sin(t) < 0 ? (s.nb || s.n || 2.5) : (s.n || 2.5);
+      const [cx, cz] = superellipse(t, n);
+      pts.push([s.a * cx + (s.cx || 0), s.y, s.b * cz + (s.cz || 0)]);
+    }
+    return pts;
+  };
+  const rings = sections.map(ring);
+  rings.forEach(r => r.forEach(p => positions.push(...p)));
+  for (let i = 0; i < rings.length - 1; i++) {
+    for (let j = 0; j < SEG; j++) {
+      const a = i * SEG + j, b = i * SEG + (j + 1) % SEG, c = (i + 1) * SEG + j, d = (i + 1) * SEG + (j + 1) % SEG;
+      index.push(a, c, b, b, c, d);
+    }
+  }
+  const cap = (r, s, up) => {
+    const base = positions.length / 3;
+    r.forEach(p => positions.push(...p));
+    positions.push(s.cx || 0, s.y, s.cz || 0);
+    const centre = base + SEG;
+    for (let j = 0; j < SEG; j++) {
+      const a = base + j, b = base + (j + 1) % SEG;
+      up ? index.push(centre, b, a) : index.push(centre, a, b);
+    }
+  };
+  if (bottom) cap(rings[0], sections[0], false);
+  if (top) cap(rings[rings.length - 1], sections[sections.length - 1], true);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(index);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+function loftMesh(sections, material, parent, options) {
+  const mesh = new THREE.Mesh(loft(sections, options), material);
+  mesh.castShadow = mesh.receiveShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+
+/** Rounded rectangle appended to a Shape/Path. */
+function roundedRect(path, x, y, w, h, r) {
+  path.moveTo(x + r, y);
+  path.lineTo(x + w - r, y); path.quadraticCurveTo(x + w, y, x + w, y + r);
+  path.lineTo(x + w, y + h - r); path.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  path.lineTo(x + r, y + h); path.quadraticCurveTo(x, y + h, x, y + h - r);
+  path.lineTo(x, y + r); path.quadraticCurveTo(x, y, x + r, y);
+  return path;
+}
+
+/* ---------- rimless wall-hung WC + Geberit flush plate ---------- */
+/** WC bowl hung on a casing face at x = faceX, axis z, facing `dir` (−1: towards −x, +1: towards +x). */
+function toiletAt(faceX, z, dir, flushParent) {
+  const g = new THREE.Group();
+  g.position.set(faceX, 0, z); g.rotation.y = dir * Math.PI / 2;   // local z = from the wall into the room
+  layerGroup('sanitary').add(g);
+  loftMesh([
+    { y: .245, a: .105, b: .19,  n: 2.4, nb: 5,   cz: .19 },
+    { y: .27,  a: .135, b: .225, n: 2.4, nb: 5,   cz: .225 },
+    { y: .31,  a: .163, b: .252, n: 2.5, nb: 5.5, cz: .252 },
+    { y: .355, a: .176, b: .264, n: 2.5, nb: 6,   cz: .264 },
+    { y: .392, a: .179, b: .267, n: 2.5, nb: 6,   cz: .267 },
+    { y: .4,   a: .176, b: .264, n: 2.5, nb: 6,   cz: .264 },
+  ], M.ceramic, g);                                                                       // bowl
+  loftMesh([
+    { y: .401, a: .181, b: .27, n: 2.5, nb: 6, cz: .27 },
+    { y: .414, a: .181, b: .27, n: 2.5, nb: 6, cz: .27 },
+    { y: .417, a: .179, b: .268, n: 2.5, nb: 6, cz: .268 },
+  ], M.ceramic, g);                                                                       // seat
+  loftMesh([
+    { y: .418, a: .179, b: .266, n: 2.5, nb: 6, cz: .268 },
+    { y: .43,  a: .177, b: .263, n: 2.5, nb: 6, cz: .268 },
+    { y: .436, a: .168, b: .252, n: 2.5, nb: 6, cz: .268 },
+  ], M.ceramic, g);                                                                       // lid
+  cyl(.012, .012, .03, M.metal, -.12, .425, .03, g).rotation.z = Math.PI / 2;            // hinges
+  cyl(.012, .012, .03, M.metal, .12, .425, .03, g).rotation.z = Math.PI / 2;
+
+  // flush plate (Sigma format 246×164) on the casing face
+  const flush = layerGroup('sanitary', flushParent);
+  box(.008, .164, .246, M.metal, faceX + dir * .004, 1.0, z, flush);
+  box(.002, .13, .003, new THREE.MeshStandardMaterial({ color: 0x000000, roughness: .6 }), faceX + dir * .0085, 1.0, z, flush);
+}
+
+/* ---------- 120 cm VANITY UNIT (construction dimensions in mm) ----------
+   Vanity wall (x = XL), from the door wall: 20 cm left free for the radiator, 120 cm unit.
+   Carcass from 18 mm Egger board, 2 × 18 mm glued top, fronts inset into the carcass
+   (2.5 mm gap for TIP-ON BLUMOTION), LEGRABOX pure drawers. */
+/* Egger decors from M-HM: original board photos in textures.js (BATH_TEXTURES.decors), prices and notes in data.js. */
+const DECOR_INFO = DATA.decors;
+const DECORS = {};
+for (const [id, d] of Object.entries(BATH_TEXTURES.decors || {})) {
+  const img = await loadImage(d.image).catch(() => null);
+  if (!img) continue;
+  const c = document.createElement('canvas'); c.width = c.height = 1;
+  c.getContext('2d').drawImage(img, 0, 0, 1, 1);
+  const px = c.getContext('2d').getImageData(0, 0, 1, 1).data;
+  DECORS[id] = { ...d, ...DECOR_INFO[id], img, rgb: [px[0], px[1], px[2]], page: d.link };
+}
+if (!Object.keys(DECORS).length) return fail('Brak dekorów płyt (BATH_TEXTURES.decors) w textures.js.');
+state.decor = DECORS[DATA.defaultDecor] ? DATA.defaultDecor : Object.keys(DECORS)[0];
+
+/** Decor texture: the photo spans width_m along the grain (horizontal); vanity UVs are in metres from its corner. */
+function decorTexture(d) {
+  const texture = new THREE.Texture(d.img);
+  texture.needsUpdate = true;
+  texture.wrapS = texture.wrapT = THREE.MirroredRepeatWrapping;
+  texture.encoding = THREE.sRGBEncoding;
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  texture.repeat.set(1 / d.width_m, 1 / (d.width_m * d.img.height / d.img.width));
+  return texture;
+}
+M.decor = new THREE.MeshStandardMaterial({ roughness: .62, envMapIntensity: .3 });
+M.legrabox = new THREE.MeshStandardMaterial({ color: 0x1e1f21, roughness: .42, metalness: .55 });   // czarny karbon matowy
+const BASIN_COLOR = DATA.look.basin === 'white' ? 0xf1f0ec : 0x0f0f10;
+M.basin = new THREE.MeshPhysicalMaterial({ color: BASIN_COLOR, roughness: .62, clearcoat: .1, clearcoatRoughness: .6, envMapIntensity: .25 });
+M.basinIn = new THREE.MeshPhysicalMaterial({ color: BASIN_COLOR, roughness: .58, clearcoat: .12, clearcoatRoughness: .5, envMapIntensity: .25, side: THREE.DoubleSide });
+M.rubber = new THREE.MeshStandardMaterial({ color: DATA.look.basin === 'white' ? 0xe6e4df : 0x0b0b0b, roughness: .9 });
+M.pvc = new THREE.MeshStandardMaterial({ color: 0x8f969c, roughness: .5 });
+const decorTextures = {};
+function setDecor(id) {
+  state.decor = id;
+  M.decor.map = decorTextures[id] = decorTextures[id] || decorTexture(DECORS[id]);
+  M.decor.needsUpdate = true;
+}
+setDecor(state.decor);
+
+const decorMeshes = [];
+/** Board part: size and centre in mm, in vanity coordinates (x from the wall face into the room, y from the floor, z from the door wall). */
+function panel(dx, dy, dz, cx, cy, cz, parent) {
+  const mesh = box(mm(dx), mm(dy), mm(dz), M.decor, XL - mm(cx), mm(cy), mm(cz), parent);
+  decorMeshes.push(mesh);
+  return mesh;
+}
+
+(function vanity() {
+  const cabinet = layerGroup('furniture');
+  const { z0, len, depth, height, bottomY, t, LW, bodyD, inner, innerH, gap } = V;
+  const z1 = z0 + len, zc = z0 + len / 2, yc = bottomY + height / 2, yIn = bottomY + t;   // yIn: inside bottom
+
+  // carcass
+  panel(depth, height, t, depth / 2, yc, z0 + t / 2, cabinet);                       // sides
+  panel(depth, height, t, depth / 2, yc, z1 - t / 2, cabinet);
+  panel(bodyD, t, inner, depth - bodyD / 2, bottomY + t / 2, zc, cabinet);           // bottom panel
+  panel(t, height, inner, t / 2, yc, zc, cabinet);                                   // load-bearing back
+  panel(V.rail, t, inner, depth - V.rail / 2, bottomY + height - t / 2, zc, cabinet);// front top rail
+  panel(V.rail, t, inner, t + V.rail / 2, bottomY + height - t / 2, zc, cabinet);    // back top rail
+  for (let i = 1; i < V.sections.length; i++) panel(bodyD, innerH, t, depth - bodyD / 2, yIn + innerH / 2, z0 + V.sectionZ[i] - t / 2, cabinet);   // dividers
+  panel(V.topDepth, V.top, len, V.topDepth / 2, bottomY + height + V.top / 2, zc, cabinet);     // top 2 × 18
+
+  /** Drawer: inset front + LEGRABOX (black sides, bottom and back from 16 mm board). */
+  function drawer(zs0, ys0, frontH, boxH, backH, NL) {
+    const g = new THREE.Group(); cabinet.add(g);
+    const zf = zs0 + LW / 2, xf = depth - t / 2;                                    // front flush with the carcass
+    panel(t, frontH, V.frontW, xf, ys0 + gap + frontH / 2, zf, g);
+    box(.002, mm(frontH + 2 * gap), mm(LW), M.gap, XL - mm(depth - t - 1), mm(ys0 + gap + frontH / 2), mm(zf), g).castShadow = false;   // shadow in the gap
+    const xb0 = depth - t, base = ys0 + 6;                                          // back of the front, drawer underside
+    for (const side of [-1, 1]) {
+      box(mm(NL), mm(boxH), .0128, M.legrabox, XL - mm(xb0 - NL / 2), mm(base + boxH / 2), mm(zf + side * (LW / 2 - 10)), g);
+    }
+    box(mm(NL - 10), .016, mm(LW - 35), M.white, XL - mm(xb0 - (NL - 10) / 2), mm(base + 8), mm(zf), g);   // bottom
+    box(.016, mm(backH), mm(LW - 38), M.white, XL - mm(xb0 - NL + 8), mm(base + 16 + backH / 2), mm(zf), g);  // back
+    makeDrawer(g, mm(NL) * .82);
+  }
+  V.sections.forEach((type, i) => {   // A: one tall drawer under a basin (LEGRABOX C 177), B: two drawers (K 128.5)
+    const zs = z0 + V.sectionZ[i];
+    if (type === 'A') drawer(zs, yIn, V.frontA, 177, 148, V.nlA);
+    else { drawer(zs, yIn, V.frontB, 128.5, 101, V.nlB); drawer(zs, yIn + gap + V.frontB, V.frontB, 128.5, 101, V.nlB); }
+  });
+
+  // Catalano Green Lux 60×40 countertop basin(s) with tap ledge, on a 3 mm EPDM gasket
+  const sanitary = layerGroup('sanitary'), mirror = layerGroup('furniture', wallVanity.group), inst = layerGroup('installations');
+  for (const basinZ of V.basins) {
+  const bz = z0 + basinZ, bx1 = XL - mm(V.basinBack), bx0 = bx1 - mm(V.basinD);   // x in metres
+  const by0 = mm(V.topY + V.gasket), bh = mm(V.basinH), zb = mm(bz);
+  box(mm(V.basinD) - .006, mm(V.gasket), mm(V.basinW) - .006, M.rubber, (bx0 + bx1) / 2, mm(V.topY) + mm(V.gasket) / 2, zb, sanitary);
+  const bowlX0 = bx0 + .02, bowlX1 = bx1 - .1, bowlZ0 = zb - .28, bowlZ1 = zb + .28;  // bowl at the front, 8 cm tap ledge at the back
+  const outer = roundedRect(new THREE.Shape(), bx0 + .003, zb - .3 + .003, mm(V.basinD) - .006, mm(V.basinW) - .006, .03);
+  outer.holes.push(roundedRect(new THREE.Path(), bowlX0, bowlZ0, bowlX1 - bowlX0, bowlZ1 - bowlZ0, .055));
+  const shell = new THREE.Mesh(new THREE.ExtrudeGeometry(outer, { depth: bh - .006, bevelEnabled: true, bevelThickness: .003, bevelSize: .003, bevelSegments: 3, curveSegments: 16 }), M.basin);
+  shell.rotation.x = Math.PI / 2; shell.position.y = by0 + bh - .003; shell.castShadow = shell.receiveShadow = true;
+  sanitary.add(shell);
+  const cx = (bowlX0 + bowlX1) / 2, ha = (bowlX1 - bowlX0) / 2, hb = (bowlZ1 - bowlZ0) / 2;
+  loftMesh([
+    { y: by0 + .02,  a: ha - .035, b: hb - .045, n: 4,   cx, cz: zb },
+    { y: by0 + .035, a: ha - .015, b: hb - .02,  n: 4.6, cx, cz: zb },
+    { y: by0 + .08,  a: ha - .004, b: hb - .005, n: 5,   cx, cz: zb },
+    { y: by0 + bh - .002, a: ha + .003, b: hb + .003, n: 5.4, cx, cz: zb },
+  ], M.basinIn, sanitary, { top: false }).castShadow = false;
+  cyl(.021, .021, .004, M.basin, cx, by0 + .022, zb, sanitary);                    // Catalano ceramic plug
+
+  // single-lever tap on the basin ledge (Hansgrohe Tecturis E 110)
+  const tx = bx1 - .045, ty = by0 + bh;
+  cyl(.022, .022, .004, M.metal, tx, ty + .002, zb, sanitary);
+  box(.036, .118, .036, M.metal, tx, ty + .059, zb, sanitary);
+  box(.118, .022, .03, M.metal, tx - .059 + .018, ty + .107, zb, sanitary);          // spout over the bowl
+  box(.014, .004, .02, M.black, tx - .1, ty + .0955, zb, sanitary);                  // aerator
+  const lever = box(.06, .008, .014, M.metal, tx + .012, ty + .124, zb, sanitary); lever.rotation.z = -.12;
+
+  // backlit mirror above the basin (on the vanity wall: hides together with it)
+  const { w: mw, h: mh, y: my } = V.mirror;
+  box(.02, mh, mw, M.led, XL - .004, my, zb, mirror);
+  box(.02, mh - .04, mw - .04, M.mirror, XL - .02, my, zb, mirror);
+  box(.006, mh - .03, .006, M.metal, XL - .03, my, zb - mw / 2 + .027, mirror);
+  box(.006, mh - .03, .006, M.metal, XL - .03, my, zb + mw / 2 - .027, mirror);
+  box(.006, .006, mw - .03, M.metal, XL - .03, my + mh / 2 - .017, zb, mirror);
+  box(.006, .006, mw - .03, M.metal, XL - .03, my - mh / 2 + .017, zb, mirror);
+
+  // installations in the vanity: space-saving trap above the drawer, angle valves behind the drawer
+  cyl(.02, .02, .05, M.pvc, cx, mm(V.topY) - .025, zb, inst);
+  box(.11, .055, .08, M.pvc, cx + .02, mm(bottomY + height - t) - .04, zb, inst);
+  cyl(.02, .02, XL - cx - .07, M.pvc, (cx + .075 + XL) / 2, mm(bottomY + height - t) - .045, zb, inst).rotation.z = Math.PI / 2;
+  for (const dz of [-.08, .08]) {
+    cyl(.012, .012, .06, M.metal, XL - .045, .55, zb + dz, inst).rotation.z = Math.PI / 2;
+    tube([[XL - .07, .55, zb + dz], [XL - .1, .62, zb + dz * .6], [bx1 - .045, mm(V.topY) - .01, zb + dz * .15]], .005, M.metal, inst, 16);
+  }
+  }
+})();
+
+/* ---------- Mexen Hades 1200 × 400 radiator (door wall, right on the left when entering) ----------
+   Wall strip between the door opening and the corner: approx. 42 cm. 40 cm radiator, bottom 82 cm
+   above the floor (above the vanity top, which used to hide it), bottom connections. */
+const RAD = G.RAD;   // x computed in engine.js: in the corner next to the vanity wall
+(function towelRadiator() {
+  const g = layerGroup('sanitary', wallDoor.group), { x, w, h, y0, z } = RAD;
+  for (const side of [-1, 1]) {
+    cyl(.0125, .0125, h, M.metal, x + side * (w / 2 - .0125), y0 + h / 2, z, g, 20);
+    for (const yy of [y0 + .12, y0 + h - .12]) cyl(.006, .006, z, M.metal, x + side * (w / 2 - .0125), yy, z / 2, g, 12).rotation.x = Math.PI / 2;
+    cyl(.009, .009, .05, M.metal, x + side * (w / 2 - .0125), y0 - .03, z, g, 12);                           // valves
+  }
+  const groups = [[.05, 7], [.47, 6], [.86, 6]];                                                            // ladder groups with gaps for towels
+  for (const [start, count] of groups) for (let i = 0; i < count; i++) {
+    cyl(.009, .009, w - .03, M.metal, x, y0 + start + i * .05, z, g, 14).rotation.z = Math.PI / 2;
+  }
+})();
+
+/* ==========================================================================
+   GROUND FLOOR (room 7): L-shaped room, shower recess, window wall, WC casing in the window corner,
+   suspended ceiling with an LED gap. Called once when the page shows the ground floor.
+   ========================================================================== */
+function buildGround() {
+wallDoor         = wall([0, 0],   [XL, 0],  [0, -1], 'wall',   [.1, .1], { u0: DX0, u1: DX1, y0: 0, y1: DOOR_H });
+const wallLeft   = wallVanity = wall([XL, 0],  [XL, ZW], [1, 0],  'wall',   [.1, WINDOW_WALL_T]);
+const wallWindow = wall([XL, ZW], [0, ZW],  [0, 1],  'wall',   [.1, 0], { u0: XL - WX1, u1: XL - WX0, y0: WIN_Y0, y1: WIN_Y1 }, WINDOW_WALL_T);
+wall([0, ZW],  [SX, ZW], [0, 1],  'shower', [0, .1], null, WINDOW_WALL_T);        // exterior wall at the shower
+wall([SX, ZW], [SX, SZ], [-1, 0], 'shower', [WINDOW_WALL_T, .1]);
+const wallShowerValves = wall([SX, SZ], [0, SZ], [0, -1], 'shower', [.1, -.1]);   // stops short of the right wall: no overlap, no z-fighting
+const wallRight  = wall([0, SZ],  [0, 0],   [-1, 0], 'wall',   [0, 0]);
+
+// corner end face on the shower side: shower tile just in front of the right wall face + corner trim
+tiled('shower', new THREE.PlaneGeometry(.1, H), wallShowerValves.group).position.set(-.05, H / 2, SZ + .0006);
+box(.006, H, .006, M.metal, .001, H / 2, SZ + .0015, wallShowerValves.group);
+
+floorPlane('floor', 0, 0, XL, ZW);           // room
+floorPlane('showerFloor', SX, SZ, 0, ZW);    // shower
+box(XL + T * 2, .12, ZW + T * 2, M.frame, XL / 2, -.061, ZW / 2, floorGroup);                  // screed under the room
+box(-SX + T, .12, ZW - SZ + T * 2, M.frame, SX / 2 - T / 2, -.061, SHOWER_ZC, floorGroup);    // screed under the shower
 
 /* ---------- window 100 × 130 in a 44 cm exterior wall, 25 cm tiled reveal ---------- */
 (function windowWithReveal() {
@@ -883,253 +1147,7 @@ function flutedTexture() {
 })();
 
 
-/* ==========================================================================
-   7. CERAMICS, FITTINGS, FURNITURE
-   ========================================================================== */
-
-/* Solid lofted from superellipse sections (WC bowl, basin). Section: {y, a, b, n, nb, cx, cz}. */
-function superellipse(t, n) {
-  const c = Math.cos(t), s = Math.sin(t);
-  return [Math.sign(c) * Math.pow(Math.abs(c), 2 / n), Math.sign(s) * Math.pow(Math.abs(s), 2 / n)];
-}
-function loft(sections, { bottom = true, top = true } = {}) {
-  const SEG = 72, positions = [], index = [];
-  const ring = s => {
-    const pts = [];
-    for (let j = 0; j < SEG; j++) {
-      const t = j / SEG * Math.PI * 2;
-      const n = Math.sin(t) < 0 ? (s.nb || s.n || 2.5) : (s.n || 2.5);
-      const [cx, cz] = superellipse(t, n);
-      pts.push([s.a * cx + (s.cx || 0), s.y, s.b * cz + (s.cz || 0)]);
-    }
-    return pts;
-  };
-  const rings = sections.map(ring);
-  rings.forEach(r => r.forEach(p => positions.push(...p)));
-  for (let i = 0; i < rings.length - 1; i++) {
-    for (let j = 0; j < SEG; j++) {
-      const a = i * SEG + j, b = i * SEG + (j + 1) % SEG, c = (i + 1) * SEG + j, d = (i + 1) * SEG + (j + 1) % SEG;
-      index.push(a, c, b, b, c, d);
-    }
-  }
-  const cap = (r, s, up) => {
-    const base = positions.length / 3;
-    r.forEach(p => positions.push(...p));
-    positions.push(s.cx || 0, s.y, s.cz || 0);
-    const centre = base + SEG;
-    for (let j = 0; j < SEG; j++) {
-      const a = base + j, b = base + (j + 1) % SEG;
-      up ? index.push(centre, b, a) : index.push(centre, a, b);
-    }
-  };
-  if (bottom) cap(rings[0], sections[0], false);
-  if (top) cap(rings[rings.length - 1], sections[sections.length - 1], true);
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setIndex(index);
-  geometry.computeVertexNormals();
-  return geometry;
-}
-function loftMesh(sections, material, parent, options) {
-  const mesh = new THREE.Mesh(loft(sections, options), material);
-  mesh.castShadow = mesh.receiveShadow = true;
-  parent.add(mesh);
-  return mesh;
-}
-
-/** Rounded rectangle appended to a Shape/Path. */
-function roundedRect(path, x, y, w, h, r) {
-  path.moveTo(x + r, y);
-  path.lineTo(x + w - r, y); path.quadraticCurveTo(x + w, y, x + w, y + r);
-  path.lineTo(x + w, y + h - r); path.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  path.lineTo(x + r, y + h); path.quadraticCurveTo(x, y + h, x, y + h - r);
-  path.lineTo(x, y + r); path.quadraticCurveTo(x, y, x + r, y);
-  return path;
-}
-
-/* ---------- rimless wall-hung WC + Geberit flush plate ---------- */
-(function toilet() {
-  const g = new THREE.Group();
-  g.position.set(ZX0, 0, WC_Z); g.rotation.y = -Math.PI / 2;   // local z = from the wall into the room
-  layerGroup('sanitary').add(g);
-  loftMesh([
-    { y: .245, a: .105, b: .19,  n: 2.4, nb: 5,   cz: .19 },
-    { y: .27,  a: .135, b: .225, n: 2.4, nb: 5,   cz: .225 },
-    { y: .31,  a: .163, b: .252, n: 2.5, nb: 5.5, cz: .252 },
-    { y: .355, a: .176, b: .264, n: 2.5, nb: 6,   cz: .264 },
-    { y: .392, a: .179, b: .267, n: 2.5, nb: 6,   cz: .267 },
-    { y: .4,   a: .176, b: .264, n: 2.5, nb: 6,   cz: .264 },
-  ], M.ceramic, g);                                                                       // bowl
-  loftMesh([
-    { y: .401, a: .181, b: .27, n: 2.5, nb: 6, cz: .27 },
-    { y: .414, a: .181, b: .27, n: 2.5, nb: 6, cz: .27 },
-    { y: .417, a: .179, b: .268, n: 2.5, nb: 6, cz: .268 },
-  ], M.ceramic, g);                                                                       // seat
-  loftMesh([
-    { y: .418, a: .179, b: .266, n: 2.5, nb: 6, cz: .268 },
-    { y: .43,  a: .177, b: .263, n: 2.5, nb: 6, cz: .268 },
-    { y: .436, a: .168, b: .252, n: 2.5, nb: 6, cz: .268 },
-  ], M.ceramic, g);                                                                       // lid
-  cyl(.012, .012, .03, M.metal, -.12, .425, .03, g).rotation.z = Math.PI / 2;            // hinges
-  cyl(.012, .012, .03, M.metal, .12, .425, .03, g).rotation.z = Math.PI / 2;
-
-  // flush plate (Sigma format 246×164) on the casing face
-  const flush = layerGroup('sanitary', casing);
-  box(.008, .164, .246, M.metal, ZX0 - .004, 1.0, WC_Z, flush);
-  box(.002, .13, .003, new THREE.MeshStandardMaterial({ color: 0x000000, roughness: .6 }), ZX0 - .0085, 1.0, WC_Z, flush);
-})();
-
-/* ---------- 120 cm VANITY UNIT (construction dimensions in mm) ----------
-   Vanity wall (x = XL), from the door wall: 20 cm left free for the radiator, 120 cm unit.
-   Carcass from 18 mm Egger board, 2 × 18 mm glued top, fronts inset into the carcass
-   (2.5 mm gap for TIP-ON BLUMOTION), LEGRABOX pure drawers. */
-const V = G.V;   // vanity in mm (data.js → engine.js)
-
-/* Egger decors from M-HM: original board photos in textures.js (BATH_TEXTURES.decors), prices and notes in data.js. */
-const DECOR_INFO = DATA.decors;
-const DECORS = {};
-for (const [id, d] of Object.entries(BATH_TEXTURES.decors || {})) {
-  const img = await loadImage(d.image).catch(() => null);
-  if (!img) continue;
-  const c = document.createElement('canvas'); c.width = c.height = 1;
-  c.getContext('2d').drawImage(img, 0, 0, 1, 1);
-  const px = c.getContext('2d').getImageData(0, 0, 1, 1).data;
-  DECORS[id] = { ...d, ...DECOR_INFO[id], img, rgb: [px[0], px[1], px[2]], page: d.link };
-}
-if (!Object.keys(DECORS).length) return fail('Brak dekorów płyt (BATH_TEXTURES.decors) w textures.js.');
-state.decor = DECORS[DATA.defaultDecor] ? DATA.defaultDecor : Object.keys(DECORS)[0];
-
-/** Decor texture: the photo spans width_m along the grain (horizontal); vanity UVs are in metres from its corner. */
-function decorTexture(d) {
-  const texture = new THREE.Texture(d.img);
-  texture.needsUpdate = true;
-  texture.wrapS = texture.wrapT = THREE.MirroredRepeatWrapping;
-  texture.encoding = THREE.sRGBEncoding;
-  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  texture.repeat.set(1 / d.width_m, 1 / (d.width_m * d.img.height / d.img.width));
-  return texture;
-}
-M.decor = new THREE.MeshStandardMaterial({ roughness: .62, envMapIntensity: .3 });
-M.legrabox = new THREE.MeshStandardMaterial({ color: 0x1e1f21, roughness: .42, metalness: .55 });   // czarny karbon matowy
-M.basin = new THREE.MeshPhysicalMaterial({ color: 0x0f0f10, roughness: .62, clearcoat: .1, clearcoatRoughness: .6, envMapIntensity: .25 });
-M.basinIn = new THREE.MeshPhysicalMaterial({ color: 0x0f0f10, roughness: .58, clearcoat: .12, clearcoatRoughness: .5, envMapIntensity: .25, side: THREE.DoubleSide });
-M.rubber = new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: .9 });
-M.pvc = new THREE.MeshStandardMaterial({ color: 0x8f969c, roughness: .5 });
-const decorTextures = {};
-function setDecor(id) {
-  state.decor = id;
-  M.decor.map = decorTextures[id] = decorTextures[id] || decorTexture(DECORS[id]);
-  M.decor.needsUpdate = true;
-}
-setDecor(state.decor);
-
-const decorMeshes = [];
-const mm = v => v / 1000;
-/** Board part: size and centre in mm, in vanity coordinates (x from the wall face into the room, y from the floor, z from the door wall). */
-function panel(dx, dy, dz, cx, cy, cz, parent) {
-  const mesh = box(mm(dx), mm(dy), mm(dz), M.decor, XL - mm(cx), mm(cy), mm(cz), parent);
-  decorMeshes.push(mesh);
-  return mesh;
-}
-
-(function vanity() {
-  const cabinet = layerGroup('furniture');
-  const { z0, len, depth, height, bottomY, t, LW, bodyD, inner, innerH, gap } = V;
-  const z1 = z0 + len, zc = z0 + len / 2, yc = bottomY + height / 2, yIn = bottomY + t;   // yIn: inside bottom
-
-  // carcass
-  panel(depth, height, t, depth / 2, yc, z0 + t / 2, cabinet);                       // sides
-  panel(depth, height, t, depth / 2, yc, z1 - t / 2, cabinet);
-  panel(bodyD, t, inner, depth - bodyD / 2, bottomY + t / 2, zc, cabinet);           // bottom panel
-  panel(t, height, inner, t / 2, yc, zc, cabinet);                                   // load-bearing back
-  panel(V.rail, t, inner, depth - V.rail / 2, bottomY + height - t / 2, zc, cabinet);// front top rail
-  panel(V.rail, t, inner, t + V.rail / 2, bottomY + height - t / 2, zc, cabinet);    // back top rail
-  panel(bodyD, innerH, t, depth - bodyD / 2, yIn + innerH / 2, z0 + t + LW + t / 2, cabinet);   // divider
-  panel(V.topDepth, V.top, len, V.topDepth / 2, bottomY + height + V.top / 2, zc, cabinet);     // top 2 × 18
-
-  /** Drawer: inset front + LEGRABOX (black sides, bottom and back from 16 mm board). */
-  function drawer(zs0, ys0, frontH, boxH, backH, NL) {
-    const g = new THREE.Group(); cabinet.add(g);
-    const zf = zs0 + LW / 2, xf = depth - t / 2;                                    // front flush with the carcass
-    panel(t, frontH, V.frontW, xf, ys0 + gap + frontH / 2, zf, g);
-    box(.002, mm(frontH + 2 * gap), mm(LW), M.gap, XL - mm(depth - t - 1), mm(ys0 + gap + frontH / 2), mm(zf), g).castShadow = false;   // shadow in the gap
-    const xb0 = depth - t, base = ys0 + 6;                                          // back of the front, drawer underside
-    for (const side of [-1, 1]) {
-      box(mm(NL), mm(boxH), .0128, M.legrabox, XL - mm(xb0 - NL / 2), mm(base + boxH / 2), mm(zf + side * (LW / 2 - 10)), g);
-    }
-    box(mm(NL - 10), .016, mm(LW - 35), M.white, XL - mm(xb0 - (NL - 10) / 2), mm(base + 8), mm(zf), g);   // bottom
-    box(.016, mm(backH), mm(LW - 38), M.white, XL - mm(xb0 - NL + 8), mm(base + 16 + backH / 2), mm(zf), g);  // back
-    makeDrawer(g, mm(NL) * .82);
-  }
-  const zB = z0 + t, zA = z0 + t + LW + t;   // B (2 drawers) at the door, A (basin) at the WC
-  drawer(zA, yIn, V.frontA, 177, 148, V.nlA);                                       // A: under the basin, C 177
-  drawer(zB, yIn, V.frontB, 128.5, 101, V.nlB);                                     // B: lower, K 128.5
-  drawer(zB, yIn + gap + V.frontB, V.frontB, 128.5, 101, V.nlB);                    // B: upper
-
-  // Catalano Green Lux 60×40 countertop basin with tap ledge, on a 3 mm EPDM gasket
-  const sanitary = layerGroup('sanitary');
-  const bz = z0 + V.basinZ, bx1 = XL - mm(V.basinBack), bx0 = bx1 - mm(V.basinD);   // x in metres
-  const by0 = mm(V.topY + V.gasket), bh = mm(V.basinH), zb = mm(bz);
-  box(mm(V.basinD) - .006, mm(V.gasket), mm(V.basinW) - .006, M.rubber, (bx0 + bx1) / 2, mm(V.topY) + mm(V.gasket) / 2, zb, sanitary);
-  const bowlX0 = bx0 + .02, bowlX1 = bx1 - .1, bowlZ0 = zb - .28, bowlZ1 = zb + .28;  // bowl at the front, 8 cm tap ledge at the back
-  const outer = roundedRect(new THREE.Shape(), bx0 + .003, zb - .3 + .003, mm(V.basinD) - .006, mm(V.basinW) - .006, .03);
-  outer.holes.push(roundedRect(new THREE.Path(), bowlX0, bowlZ0, bowlX1 - bowlX0, bowlZ1 - bowlZ0, .055));
-  const shell = new THREE.Mesh(new THREE.ExtrudeGeometry(outer, { depth: bh - .006, bevelEnabled: true, bevelThickness: .003, bevelSize: .003, bevelSegments: 3, curveSegments: 16 }), M.basin);
-  shell.rotation.x = Math.PI / 2; shell.position.y = by0 + bh - .003; shell.castShadow = shell.receiveShadow = true;
-  sanitary.add(shell);
-  const cx = (bowlX0 + bowlX1) / 2, ha = (bowlX1 - bowlX0) / 2, hb = (bowlZ1 - bowlZ0) / 2;
-  loftMesh([
-    { y: by0 + .02,  a: ha - .035, b: hb - .045, n: 4,   cx, cz: zb },
-    { y: by0 + .035, a: ha - .015, b: hb - .02,  n: 4.6, cx, cz: zb },
-    { y: by0 + .08,  a: ha - .004, b: hb - .005, n: 5,   cx, cz: zb },
-    { y: by0 + bh - .002, a: ha + .003, b: hb + .003, n: 5.4, cx, cz: zb },
-  ], M.basinIn, sanitary, { top: false }).castShadow = false;
-  cyl(.021, .021, .004, M.basin, cx, by0 + .022, zb, sanitary);                    // Catalano ceramic plug
-
-  // single-lever tap on the basin ledge (Hansgrohe Tecturis E 110)
-  const tx = bx1 - .045, ty = by0 + bh;
-  cyl(.022, .022, .004, M.metal, tx, ty + .002, zb, sanitary);
-  box(.036, .118, .036, M.metal, tx, ty + .059, zb, sanitary);
-  box(.118, .022, .03, M.metal, tx - .059 + .018, ty + .107, zb, sanitary);          // spout over the bowl
-  box(.014, .004, .02, M.black, tx - .1, ty + .0955, zb, sanitary);                  // aerator
-  const lever = box(.06, .008, .014, M.metal, tx + .012, ty + .124, zb, sanitary); lever.rotation.z = -.12;
-
-  // backlit mirror above the basin (on the vanity wall: hides together with it)
-  const mirror = layerGroup('furniture', wallLeft.group), { w: mw, h: mh, y: my } = V.mirror;
-  box(.02, mh, mw, M.led, XL - .004, my, zb, mirror);
-  box(.02, mh - .04, mw - .04, M.mirror, XL - .02, my, zb, mirror);
-  box(.006, mh - .03, .006, M.metal, XL - .03, my, zb - mw / 2 + .027, mirror);
-  box(.006, mh - .03, .006, M.metal, XL - .03, my, zb + mw / 2 - .027, mirror);
-  box(.006, .006, mw - .03, M.metal, XL - .03, my + mh / 2 - .017, zb, mirror);
-  box(.006, .006, mw - .03, M.metal, XL - .03, my - mh / 2 + .017, zb, mirror);
-
-  // installations in the vanity: space-saving trap above the drawer, angle valves behind the drawer
-  const inst = layerGroup('installations');
-  cyl(.02, .02, .05, M.pvc, cx, mm(V.topY) - .025, zb, inst);
-  box(.11, .055, .08, M.pvc, cx + .02, mm(bottomY + height - t) - .04, zb, inst);
-  cyl(.02, .02, XL - cx - .07, M.pvc, (cx + .075 + XL) / 2, mm(bottomY + height - t) - .045, zb, inst).rotation.z = Math.PI / 2;
-  for (const dz of [-.08, .08]) {
-    cyl(.012, .012, .06, M.metal, XL - .045, .55, zb + dz, inst).rotation.z = Math.PI / 2;
-    tube([[XL - .07, .55, zb + dz], [XL - .1, .62, zb + dz * .6], [bx1 - .045, mm(V.topY) - .01, zb + dz * .15]], .005, M.metal, inst, 16);
-  }
-})();
-
-/* ---------- Mexen Hades 1200 × 400 radiator (door wall, right on the left when entering) ----------
-   Wall strip between the door opening and the corner: approx. 42 cm. 40 cm radiator, bottom 82 cm
-   above the floor (above the vanity top, which used to hide it), bottom connections. */
-const RAD = G.RAD;   // x computed in engine.js: in the corner next to the vanity wall
-(function towelRadiator() {
-  const g = layerGroup('sanitary', wallDoor.group), { x, w, h, y0, z } = RAD;
-  for (const side of [-1, 1]) {
-    cyl(.0125, .0125, h, M.metal, x + side * (w / 2 - .0125), y0 + h / 2, z, g, 20);
-    for (const yy of [y0 + .12, y0 + h - .12]) cyl(.006, .006, z, M.metal, x + side * (w / 2 - .0125), yy, z / 2, g, 12).rotation.x = Math.PI / 2;
-    cyl(.009, .009, .05, M.metal, x + side * (w / 2 - .0125), y0 - .03, z, g, 12);                           // valves
-  }
-  const groups = [[.05, 7], [.47, 6], [.86, 6]];                                                            // ladder groups with gaps for towels
-  for (const [start, count] of groups) for (let i = 0; i < count; i++) {
-    cyl(.009, .009, w - .03, M.metal, x, y0 + start + i * .05, z, g, 14).rotation.z = Math.PI / 2;
-  }
-})();
+  toiletAt(ZX0, WC_Z, -1, casing);
 
 /* ---------- shower ---------- */
 // Vogi Duo wall-side linear drain made to size: grate filled with floor tile, frame in the fittings finish
@@ -1201,6 +1219,7 @@ const PANEL_OUTLINE = [[1, 1], [-1, 1], [-1, -1], [1, -1], [1, 1], [1, 1]]
   .map(([sx, sz], i) => [ROOM_OUTLINE[i][0] + sx * CEILING_GAP, ROOM_OUTLINE[i][1] + sz * CEILING_GAP]);
 // recessed downlights [x, z]: entrance, centre, above the basin, window/WC, shower (IP65)
 const DOWNLIGHTS = [[.45, .5], [.55, 1.35], [XL - .4, mm(V.z0 + V.basinZ)], [.85, ZW - .4], [SHOWER_XC, SHOWER_ZC + .25]];
+SCENE.downlights = DOWNLIGHTS; SCENE.ceilingY = CEILING_Y;
 
 const ceiling = new THREE.Group(); scene.add(ceiling);
 
@@ -1237,6 +1256,207 @@ const outlineShape = (points, Kind = THREE.Shape) => {
   }
 })();
 
+
+
+  SCENE.ledPoints = [[XL / 2, .5], [XL / 2, ZW - .5], [SHOWER_XC, SHOWER_ZC]];
+  SCENE.ledY = CEILING_Y + .01;
+  SCENE.sun = { position: [.3, 4.4, 6.2], target: [XL / 2 - .3, 0, ZW / 2 - .2] };
+  SCENE.skyLight = [(WX0 + WX1) / 2, (WIN_Y0 + WIN_Y1) / 2, ZW - .2];
+  SCENE.views = {
+    overview: { position: [-2.1, 4.3, -1.7], target: [XL / 2 - .25, .8, ZW / 2 + .15] },
+    door:     { position: [(DX0 + DX1) / 2, 1.62, .12], target: [XL / 2 - .35, 1.2, ZW] },
+    vanity:   { position: [.05, 1.68, .12],   target: [XL - .25, .95, ZW / 2 + .05] },
+    shower:   { position: [XL - .4, 1.65, ZW - .15], target: [SHOWER_XC, 1.15, SHOWER_ZC - .2] },
+    cabinet:  { position: [.08, 1.62, ZW - .35], target: [XL - .35, .72, .55] },
+    plan:     { position: [(XL + SX) / 2 + .01, 7.4, ZW / 2 + .01], target: [(XL + SX) / 2, 0, ZW / 2] },
+  };
+}
+
+/* ==========================================================================
+   ATTIC (room 5): rectangle under a roof slope rising from the 120 cm knee wall (42°) to the flat
+   ceiling, roof window above the bath, corner shower, WC in a half-height casing reaching the riser.
+   Called once when the page shows the attic.
+   ========================================================================== */
+function buildAttic() {
+  const { KNEE, PITCH, ZF, RW, BATH, CASE, RISER, SHX, SHZ, KNEE_T, WC_Z, SLOPE_LEN } = G;
+  const hAt = G.heightAt, sin = Math.sin(PITCH), cos = Math.cos(PITCH);
+  const behind = (middle, normal) => camera.position.clone().sub(middle).dot(normal) >= .05;
+
+  /* ---------- walls ---------- */
+  /** Partition under the slope: wall face at x = xFace from z0 to z1, top edge follows the roof; thickness towards dir·x. */
+  function gableWall(xFace, dir, z0, z1, surface) {
+    const shape = new THREE.Shape(), tops = [z1];
+    if (ZF > z0 && ZF < z1) tops.push(ZF);
+    tops.push(z0);
+    shape.moveTo(z0, 0); shape.lineTo(z1, 0);
+    for (const z of tops) shape.lineTo(z, hAt(Math.min(z, ZW)));
+    shape.closePath();
+    const group = new THREE.Group(); scene.add(group);
+    const mesh = tiled(surface, new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false, curveSegments: 1 }), group);
+    mesh.rotation.y = -Math.PI / 2;                       // shape x → world z, extrusion → world −x
+    mesh.position.x = dir > 0 ? xFace + T : xFace;
+    const record = { group, normal: new THREE.Vector3(dir, 0, 0), middle: new THREE.Vector3(xFace, H / 2, (z0 + z1) / 2) };
+    record.cut = cutaway(group, () => !state.layers.walls || behind(record.middle, record.normal));
+    walls.push(record);
+    return record;
+  }
+  wall([0, 0], [SHX, 0], [0, -1], 'shower', [.1, 0]);                                    // door wall inside the shower
+  wallDoor = wall([SHX, 0], [XL, 0], [0, -1], 'wall', [0, .1], { u0: DX0 - SHX, u1: DX1 - SHX, y0: 0, y1: DOOR_H });
+  wallVanity = gableWall(XL, 1, -T, ZW, 'wall');                                         // top wall with the vanity
+  gableWall(0, -1, -T, SHZ, 'shower');                                                   // bottom wall inside the shower
+  gableWall(0, -1, SHZ, ZW, 'wall');                                                     // bottom wall with the WC casing
+  (function kneeWall() {
+    const group = new THREE.Group(); scene.add(group);
+    tiled('wall', new THREE.BoxGeometry(XL + 2 * T, KNEE, KNEE_T), group).position.set(XL / 2, KNEE / 2, ZW + KNEE_T / 2);
+    const record = { group, normal: new THREE.Vector3(0, 0, 1), middle: new THREE.Vector3(XL / 2, KNEE / 2, ZW) };
+    record.cut = cutaway(group, () => !state.layers.walls || behind(record.middle, record.normal));
+    walls.push(record);
+  })();
+
+  /* ---------- floor ---------- */
+  floorPlane('floor', SHX, 0, XL, SHZ);
+  floorPlane('floor', 0, SHZ, XL, ZW);
+  floorPlane('showerFloor', 0, 0, SHX, SHZ);
+  box(XL + T * 2, .12, ZW + T * 2, M.frame, XL / 2, -.061, ZW / 2, floorGroup);          // screed
+
+  /* ---------- roof: slope with the roof window, flat ceiling ---------- */
+  const roof = new THREE.Group(); scene.add(roof);
+  const slopeIn = new THREE.Vector3(0, -cos, -sin);                                     // slope normal pointing into the room
+  const slopeMid = new THREE.Vector3(XL / 2, KNEE + SLOPE_LEN / 2 * sin, ZW - SLOPE_LEN / 2 * cos);
+  cutaway(roof, () => !state.layers.ceiling || camera.position.y > H - .02 || camera.position.clone().sub(slopeMid).dot(slopeIn) <= -.05);
+  /** Slope panel between u0…u1 (along x) and v0…v1 (up the slope from the knee wall), inner face on the roof plane. */
+  function slopePanel(u0, u1, v0, v1, material, thick = .03, offset = 0) {
+    if (u1 - u0 < .001 || v1 - v0 < .001) return null;
+    const vc = (v0 + v1) / 2, mesh = box(u1 - u0, thick, v1 - v0, material, (u0 + u1) / 2, KNEE + vc * sin + (thick / 2 + offset) * cos, ZW - vc * cos + (thick / 2 + offset) * sin, roof);
+    mesh.rotation.x = Math.PI + PITCH;
+    return mesh;
+  }
+  const wu0 = RW.x - RW.w / 2, wu1 = RW.x + RW.w / 2;
+  slopePanel(-T, XL + T, 0, RW.v0, M.ceiling);
+  slopePanel(-T, XL + T, RW.v1, SLOPE_LEN + .02, M.ceiling);
+  slopePanel(-T, wu0, RW.v0, RW.v1, M.ceiling);
+  slopePanel(wu1, XL + T, RW.v0, RW.v1, M.ceiling);
+  box(XL + 2 * T, .03, ZF + T, M.ceiling, XL / 2, H + .015, (ZF - T) / 2, roof);         // flat ceiling
+  // roof window VELUX 94 × 140: white frame, sky behind the glass
+  const frameT = .06;
+  slopePanel(wu0, wu1, RW.v0, RW.v0 + frameT, M.white, .08, .0);
+  slopePanel(wu0, wu1, RW.v1 - frameT, RW.v1, M.white, .08, .0);
+  slopePanel(wu0, wu0 + frameT, RW.v0, RW.v1, M.white, .08, .0);
+  slopePanel(wu1 - frameT, wu1, RW.v0, RW.v1, M.white, .08, .0);
+  const sky = slopePanel(wu0, wu1, RW.v0, RW.v1, M.sky, .01, .12); if (sky) sky.castShadow = false;
+  const handle = slopePanel(RW.x - .1, RW.x + .1, RW.v1 - frameT - .03, RW.v1 - frameT, M.white, .02, .0);
+
+  /* ---------- corner shower 100 × 100: fixed panel + 60 cm door facing the room, glass side panel at the WC ---------- */
+  (function cornerShower() {
+    const g = layerGroup('glass'), door = DATA.shower.door, fixed = SHZ - door;
+    box(.008, 2.0, fixed, M.glass, SHX, 1.0, fixed / 2, g).castShadow = false;            // fixed panel at the door wall
+    box(.025, 2.0, .012, M.metal, SHX, 1.0, .006, g);                                    // wall profile
+    box(.025, .012, fixed, M.metal, SHX, .006, fixed / 2, g);
+    box(SHX, 2.0, .008, M.glass, SHX / 2, 1.0, SHZ, g).castShadow = false;              // side panel towards the WC
+    box(.012, 2.0, .025, M.metal, .006, 1.0, SHZ, g);                                    // wall profile at the bottom wall
+    box(SHX, .012, .025, M.metal, SHX / 2, .006, SHZ, g);
+    box(.02, 2.0, .02, M.metal, SHX, 1.0, SHZ, g);                                       // corner post
+    box(.02, .02, SHZ, M.metal, SHX, 2.0, SHZ / 2, g);                                   // top bar
+    box(SHX, .02, .02, M.metal, SHX / 2, 2.0, SHZ, g);
+    box(.022, .075, .04, M.metal, SHX, 1.75, fixed + .02, g);                            // hinges
+    box(.022, .075, .04, M.metal, SHX, .3, fixed + .02, g);
+    const pivot = new THREE.Group(); pivot.position.set(SHX, 0, fixed); g.add(pivot);
+    box(.008, 2.0, door - .02, M.glass, 0, 1.0, (door - .02) / 2 + .005, pivot).castShadow = false;
+    box(.03, .42, .012, M.metal, .03, 1.05, door - .07, pivot);                         // double-sided handle
+    box(.03, .42, .012, M.metal, -.03, 1.05, door - .07, pivot);
+    makeDoor(pivot, 1.35);
+
+    // linear drain along the bottom wall
+    const fg = floorGroup, len = DATA.shower.drain, wd = .06, xc = wd / 2 + .002, zc = SHZ / 2, rim = .004;
+    tiled('showerFloor', new THREE.BoxGeometry(wd - .008, .003, len - .008), fg).position.set(xc, .0015, zc);
+    box(.002, rim, len, M.metal, xc - wd / 2 + .001, rim / 2, zc, fg);
+    box(.002, rim, len, M.metal, xc + wd / 2 - .001, rim / 2, zc, fg);
+    box(wd, rim, .002, M.metal, xc, rim / 2, zc - len / 2 + .001, fg);
+    box(wd, rim, .002, M.metal, xc, rim / 2, zc + len / 2 - .001, fg);
+
+    // fittings on the door wall inside the shower: rain shower on an arm, concealed thermostat, hand shower
+    const s = layerGroup('sanitary'), cx = SHX / 2;
+    tube([[cx, 2.2, 0], [cx, 2.22, .2], [cx, 2.24, .4]], .011, M.metal, s, 12);
+    cyl(.03, .03, .012, M.metal, cx, 2.2, .006, s).rotation.x = Math.PI / 2;
+    cyl(.15, .15, .012, M.metal, cx, 2.235, .42, s, 48);
+    cyl(.13, .13, .002, new THREE.MeshStandardMaterial({ color: 0x222222, roughness: .8 }), cx, 2.228, .42, s, 48);
+    box(.24, .13, .008, M.metal, cx, 1.1, .004, s);
+    cyl(.028, .028, .04, M.metal, cx - .06, 1.1, .028, s).rotation.x = Math.PI / 2;
+    cyl(.028, .028, .04, M.metal, cx + .06, 1.1, .028, s).rotation.x = Math.PI / 2;
+    const hx = SHX - .22;
+    cyl(.02, .02, .03, M.metal, hx, 1.0, .015, s).rotation.x = Math.PI / 2;
+    box(.03, .06, .03, M.metal, hx, 1.25, .02, s);
+    cyl(.013, .016, .2, M.metal, hx, 1.32, .06, s).rotation.x = -.25;
+    cyl(.04, .04, .02, M.metal, hx, 1.43, .09, s).rotation.x = Math.PI / 2 - .25;
+    tube([[hx, 1.0, .03], [hx + .02, .7, .08], [hx - .02, .55, .1], [hx - .01, .85, .09], [hx, 1.22, .06]], .007, M.metal, s, 40);
+  })();
+
+  /* ---------- bath 170 × 75 along the knee wall, tiled apron, wall-mounted mixer on the knee wall ---------- */
+  (function bath() {
+    const s = layerGroup('sanitary'), { x0, x1, z0, z1, h } = BATH, bx = (x0 + x1) / 2, bz = (z0 + z1) / 2;
+    const apron = layerGroup('sanitary');
+    tiled('wall', new THREE.BoxGeometry(x1 - x0, h - .02, z1 - z0), apron).position.set(bx, (h - .02) / 2, bz);
+    const acrylic = new THREE.MeshPhysicalMaterial({ color: 0xf6f6f3, roughness: .18, clearcoat: .5, clearcoatRoughness: .1 });
+    const acrylicIn = new THREE.MeshPhysicalMaterial({ color: 0xf2f2ef, roughness: .2, clearcoat: .4, side: THREE.DoubleSide });
+    const rimShape = roundedRect(new THREE.Shape(), x0, z0, x1 - x0, z1 - z0, .02);
+    rimShape.holes.push(roundedRect(new THREE.Path(), x0 + .07, z0 + .06, x1 - x0 - .14, z1 - z0 - .12, .1));
+    const rim = new THREE.Mesh(new THREE.ExtrudeGeometry(rimShape, { depth: .02, bevelEnabled: false, curveSegments: 12 }), acrylic);
+    rim.rotation.x = Math.PI / 2; rim.position.y = h; rim.castShadow = rim.receiveShadow = true; s.add(rim);
+    const a = (x1 - x0) / 2 - .07, b = (z1 - z0) / 2 - .06;
+    loftMesh([
+      { y: .14, a: a - .16, b: b - .09, n: 4.5, cx: bx, cz: bz },
+      { y: .2,  a: a - .07, b: b - .04, n: 5,   cx: bx, cz: bz },
+      { y: .35, a: a - .02, b: b - .01, n: 5.5, cx: bx, cz: bz },
+      { y: h - .005, a: a + .003, b: b + .003, n: 6, cx: bx, cz: bz },
+    ], acrylicIn, s, { top: false }).castShadow = false;
+    cyl(.022, .022, .004, M.metal, bx - a + .2, .142, bz, s);                            // waste
+    // wall-mounted mixer Tecturis E on the knee wall, spout into the bath
+    const ty = KNEE - .45;
+    box(.16, .05, .045, M.metal, bx, ty, ZW - .022, s);
+    box(.02, .04, .16, M.metal, bx, ty - .01, ZW - .1, s);
+    box(.012, .045, .012, M.metal, bx + .06, ty + .045, ZW - .03, s);
+  })();
+
+  /* ---------- WC casing along the bottom wall up to the riser corner, wall-hung WC ---------- */
+  const casing = new THREE.Group(); scene.add(casing);
+  cutaway(casing, () => !state.layers.walls || state.layers.installations);
+  (function wcCasing() {
+    const { x1, z0, z1, h } = CASE;
+    tiled('wall', new THREE.BoxGeometry(x1, h, z1 - z0), casing).position.set(x1 / 2, h / 2, (z0 + z1) / 2);
+    box(x1 + .01, .02, z1 - z0, M.white, x1 / 2 + .005, h + .01, (z0 + z1) / 2, casing);  // top shelf
+    box(.006, .2, .2, M.metal, x1 + .003, .35, z1 - .2, casing);                        // riser access hatch
+  })();
+  toiletAt(CASE.x1, WC_Z, 1, casing);
+  (function installations() {
+    const g = layerGroup('installations');
+    const pvc = new THREE.MeshStandardMaterial({ color: 0x8f969c, roughness: .5 });
+    const steel = new THREE.MeshStandardMaterial({ color: 0x7d8a93, roughness: .45, metalness: .5 });
+    const blue = new THREE.MeshStandardMaterial({ color: 0x2f6db5, roughness: .5 });
+    cyl(RISER.r, RISER.r, hAt(RISER.z) + .3, pvc, RISER.x, (hAt(RISER.z) + .3) / 2, RISER.z, g);   // Ø160 riser (continues into the roof vent)
+    const fx = CASE.x1 - .08;
+    box(.04, 1.12, .04, steel, fx, .56, WC_Z - .23, g);
+    box(.04, 1.12, .04, steel, fx, .56, WC_Z + .23, g);
+    box(.04, .04, .5, steel, fx, 1.1, WC_Z, g);
+    box(.08, .42, .38, blue, fx - .02, .86, WC_Z, g);                                    // cistern
+    cyl(.045, .045, RISER.z - WC_Z, pvc, fx - .02, .23, (WC_Z + RISER.z) / 2, g, 24).rotation.x = Math.PI / 2;   // Ø90 to the riser
+  })();
+
+  /* ---------- lights and views ---------- */
+  SCENE.downlights = [[XL - .45, Math.min(ZF - .2, mm(V.z0 + V.basins[0]))], [XL / 2, ZF - .25], [G.SHOWER_XC, G.SHOWER_ZC]];
+  SCENE.ceilingY = H;
+  SCENE.ledPoints = [[RW.x, 1.7]];
+  SCENE.ledY = 2.0;
+  SCENE.sun = { position: [RW.x + .3, 7.5, ZW + 4.5], target: [XL / 2, 0, ZW - .9] };
+  SCENE.skyLight = [RW.x, (RW.y0 + RW.y1) / 2 - .15, (RW.z0 + RW.z1) / 2 - .3];
+  SCENE.views = {
+    overview: { position: [-2.2, 4.6, -1.9], target: [XL / 2, .8, ZW / 2] },
+    door:     { position: [(DX0 + DX1) / 2, 1.62, .15], target: [XL / 2 - .2, 1.0, ZW] },
+    vanity:   { position: [.9, 1.65, ZW - .5],   target: [XL - .2, .95, mm(V.z0 + V.len / 2)] },
+    bath:     { position: [XL - .35, 1.75, .45],  target: [RW.x, .55, ZW - .35] },
+    shower:   { position: [XL - .35, 1.65, 1.6],  target: [G.SHOWER_XC, 1.1, G.SHOWER_ZC] },
+    plan:     { position: [XL / 2 + .01, 7.4, ZW / 2 + .01], target: [XL / 2, 0, ZW / 2] },
+  };
+}
 
 /* ==========================================================================
    9. TILE UVs IN WORLD SPACE
@@ -1297,8 +1517,8 @@ addLight(new THREE.HemisphereLight(0xf2f4f6, 0x3a3836, 1), .5, .05);
 addLight(new THREE.AmbientLight(0xffffff, 1), .1, .04);
 
 const sun = addLight(new THREE.DirectionalLight(0xfff1dc, 1), 2.6, 0);
-sun.position.set(.3, 4.4, 6.2);
-sun.target.position.set(XL / 2 - .3, 0, ZW / 2 - .2);
+sun.position.set(...SCENE.sun.position);
+sun.target.position.set(...SCENE.sun.target);
 scene.add(sun.target);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
@@ -1307,12 +1527,12 @@ sun.shadow.bias = -.0004;
 sun.shadow.normalBias = .02;
 
 // sky light coming through the window (brightens the interior by day)
-addLight(new THREE.PointLight(0xe4eefa, 1, 3.5, 1.5), .9, 0).position.set((WX0 + WX1) / 2, (WIN_Y0 + WIN_Y1) / 2, ZW - .2);
+addLight(new THREE.PointLight(0xe4eefa, 1, 3.5, 1.5), .9, 0).position.set(...SCENE.skyLight);
 
 // recessed downlights: spotlights pointing down, the centre one casts shadows
-DOWNLIGHTS.forEach(([x, z], i) => {
+SCENE.downlights.forEach(([x, z], i) => {
   const spot = addLight(new THREE.SpotLight(WARM, 1, 4.5, .75, .65, 1.6), 0, 2.0);
-  spot.position.set(x, CEILING_Y - .01, z);
+  spot.position.set(x, SCENE.ceilingY - .01, z);
   spot.target.position.set(x, 0, z);
   scene.add(spot.target);
   if (i === 1) {
@@ -1324,11 +1544,11 @@ DOWNLIGHTS.forEach(([x, z], i) => {
 });
 
 // LED strip in the gap: a few weak lights just under the ceiling, along the walls
-for (const [x, z] of [[XL / 2, .5], [XL / 2, ZW - .5], [SHOWER_XC, SHOWER_ZC]]) {   // 3 instead of 7: every light costs in every pixel
-  addLight(new THREE.PointLight(WARM, 1, 2.2, 2), 0, .6).position.set(x, CEILING_Y + .01, z);
+for (const [x, z] of SCENE.ledPoints) {   // 3 instead of 7: every light costs in every pixel
+  addLight(new THREE.PointLight(WARM, 1, 2.2, 2), 0, .6).position.set(x, SCENE.ledY, z);
 }
 // mirror backlight
-addLight(new THREE.PointLight(WARM, 1, 1.8, 2), 0, .6).position.set(XL - .15, V.mirror.y, mm(V.z0 + V.basinZ));
+for (const b of V.basins) addLight(new THREE.PointLight(WARM, 1, 1.8, 2), 0, .6 / V.basins.length).position.set(XL - .15, V.mirror.y, mm(V.z0 + b));
 
 const LIGHTING = {
   day:   { exposure: 1.15, sky: 0xdfeefa, led: LED_OFF },
@@ -1375,14 +1595,7 @@ function setStyle(style) {
   scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
 }
 
-const VIEWS = {
-  overview: { position: [-2.1, 4.3, -1.7], target: [XL / 2 - .25, .8, ZW / 2 + .15] },
-  door:     { position: [(DX0 + DX1) / 2, 1.62, .12], target: [XL / 2 - .35, 1.2, ZW] },
-  vanity:   { position: [.05, 1.68, .12],   target: [XL - .25, .95, ZW / 2 + .05] },
-  shower:   { position: [XL - .4, 1.65, ZW - .15], target: [SHOWER_XC, 1.15, SHOWER_ZC - .2] },
-  cabinet:  { position: [.08, 1.62, ZW - .35], target: [XL - .35, .72, .55] },
-  plan:     { position: [(XL + SX) / 2 + .01, 7.4, ZW / 2 + .01], target: [(XL + SX) / 2, 0, ZW / 2] },
-};
+const VIEWS = SCENE.views;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let flight = null;   // camera transition in progress
 function goTo(name, instant) {
@@ -1494,7 +1707,18 @@ onButton($('formats'),  b => changeActiveTiles({ format: b.dataset.format }));
 onButton($('layouts'),  b => changeActiveTiles({ layout: b.dataset.layout }));
 syncTilePanel();
 
-// views
+// floors and views
+$('title').textContent = `${DATA.name} · ${DATA.title}`;
+$('planTitle').textContent = `Rzut łazienki · ${DATA.name.toLowerCase()} · 1:20`;
+document.title = `${DATA.title} — ${DATA.name}`;
+pressed($('floors').children, b => b.dataset.floor === FLOOR);
+onButton($('floors'), b => {
+  if (b.dataset.floor === FLOOR) return;
+  try { localStorage.setItem('floor', b.dataset.floor); } catch (e) {}
+  const url = new URL(location.href); url.searchParams.set('floor', b.dataset.floor); location.href = url.href;
+});
+const VIEW_LABELS = { overview: 'Ogólny', door: 'Od drzwi', vanity: ATTIC ? 'Umywalki' : 'Umywalka i WC', cabinet: 'Szafka i grzejnik', bath: 'Wanna', shower: 'Prysznic', plan: 'Rzut' };
+$('views').innerHTML = Object.keys(VIEWS).map((k, i) => `<button class="glass" data-view="${k}" aria-pressed="${i === 0}">${VIEW_LABELS[k] || k}</button>`).join('');
 onButton($('views'), b => { pressed($('views').children, x => x === b); goTo(b.dataset.view, reduceMotion); });
 
 // day / night
@@ -1554,39 +1778,45 @@ const cutParts = () => BathEngine.cutParts(G, DECORS[state.decor]);
 const edgeLengths = () => BathEngine.edgeLengths(G);
 
 function renderDrawing() {
-  const { len, height, t, LW, innerH, gap, frontB, top, bottomY, basinW, basinH, basinZ, gasket } = V;
-  const pad = 46, sc = .26, W = len * sc + pad * 2, yTop = bottomY + height + top + gasket + basinH;
+  const { len, height, t, LW, innerH, gap, frontB, top, bottomY, basinW, basinH, gasket, sections, sectionZ, basins } = V;
+  const pad = 46, sc = Math.min(.26, 312 / len), W = len * sc + pad * 2, yTop = bottomY + height + top + gasket + basinH;
   const Hpx = (yTop - bottomY + 40) * sc + pad * 2 + 76;
   const X = z => pad + z * sc, Y = y => Hpx - pad - (y - bottomY) * sc;
   const r = (x, y, w, h, extra = '') => `<rect x="${X(x)}" y="${Y(y + h)}" width="${w * sc}" height="${h * sc}" ${extra}/>`;
-  const col = `rgb(${DECORS[state.decor].rgb.join(',')})`;
+  const col = `rgb(${DECORS[state.decor].rgb.join(',')})`, basinFill = DATA.look.basin === 'white' ? '#f1f0ec' : '#1b1b1c';
+  const label = (z, y, str) => `<text x="${X(z)}" y="${Y(y) + 4}" text-anchor="middle" style="fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.45);stroke-width:2px">${str}</text>`;
   let g = '';
   g += r(0, bottomY, len, height, `fill="${col}" stroke="#111" stroke-width=".8"`);
   g += r(0, bottomY + height, len, top, `fill="${col}" stroke="#111" stroke-width=".8"`);
-  const zA = t + LW + t, zB = t;
-  const fronts = [[zA + gap, bottomY + t + gap, LW - 2 * gap, V.frontA], [zB + gap, bottomY + t + gap, LW - 2 * gap, frontB], [zB + gap, bottomY + t + 2 * gap + frontB, LW - 2 * gap, frontB]];
-  g += r(t, bottomY + t, LW, innerH, 'fill="#1a1a1a"') + r(t + LW + t, bottomY + t, LW, innerH, 'fill="#1a1a1a"');
-  for (const [z, y, w, h] of fronts) g += r(z, y, w, h, `fill="${col}" stroke="rgba(255,255,255,.25)" stroke-width=".6"`);
-  g += r(basinZ - basinW / 2, bottomY + height + top + gasket, basinW, basinH, 'fill="#1b1b1c" stroke="#000" stroke-width=".8" rx="5"');
-  g += `<rect x="${X(basinZ - 18)}" y="${Y(bottomY + height + top + gasket + basinH + 118)}" width="${36 * sc}" height="${118 * sc}" fill="#${M.metal.color.getHexString()}"/>`;
+  sections.forEach((type, i) => {
+    const zs = sectionZ[i], front = (y, h) => r(zs + gap, y, LW - 2 * gap, h, `fill="${col}" stroke="rgba(255,255,255,.35)" stroke-width=".6"`);
+    g += r(zs, bottomY + t, LW, innerH, 'fill="#1a1a1a"');
+    if (type === 'A') { g += front(bottomY + t + gap, V.frontA); g += label(zs + LW / 2, bottomY + t + V.frontA / 2, `A · ${V.frontW}×${V.frontA}`); }
+    else for (const k of [0, 1]) { const y = bottomY + t + gap + k * (frontB + gap); g += front(y, frontB); g += label(zs + LW / 2, y + frontB / 2, `B · ${V.frontW}×${frontB}`); }
+  });
+  for (const bz of basins) {
+    g += r(bz - basinW / 2, bottomY + height + top + gasket, basinW, basinH, `fill="${basinFill}" stroke="#000" stroke-width=".8" rx="5"`);
+    g += `<rect x="${X(bz - 18)}" y="${Y(bottomY + height + top + gasket + basinH + 118)}" width="${36 * sc}" height="${118 * sc}" fill="#${M.metal.color.getHexString()}"/>`;
+  }
   // dimensions
-  const dimH = (z0, z1, y, label) => `<path class="dim" d="M${X(z0)} ${y}H${X(z1)}M${X(z0)} ${y - 4}v8M${X(z1)} ${y - 4}v8"/><text class="dimt" x="${(X(z0) + X(z1)) / 2}" y="${y - 4}" text-anchor="middle">${label}</text>`;
-  const dimV = (y0, y1, x, label) => `<path class="dim" d="M${x} ${Y(y0)}V${Y(y1)}M${x - 4} ${Y(y0)}h8M${x - 4} ${Y(y1)}h8"/><text class="dimt" x="${x - 6}" y="${(Y(y0) + Y(y1)) / 2 + 3}" text-anchor="end">${label}</text>`;
+  const dimH = (z0, z1, y, text) => `<path class="dim" d="M${X(z0)} ${y}H${X(z1)}M${X(z0)} ${y - 4}v8M${X(z1)} ${y - 4}v8"/><text class="dimt" x="${(X(z0) + X(z1)) / 2}" y="${y - 4}" text-anchor="middle">${text}</text>`;
+  const dimV = (y0, y1, x, text) => `<path class="dim" d="M${x} ${Y(y0)}V${Y(y1)}M${x - 4} ${Y(y0)}h8M${x - 4} ${Y(y1)}h8"/><text class="dimt" x="${x - 6}" y="${(Y(y0) + Y(y1)) / 2 + 3}" text-anchor="end">${text}</text>`;
   const yb = Y(bottomY) + 20;
   g += dimH(0, len, yb + 20, `${len}`);
-  g += dimH(t, t + LW, yb, `${LW}`) + dimH(t + LW + t, len - t, yb, `${LW}`);
-  g += dimH(basinZ, len, Y(yTop) - 10, `oś umywalki ${len - basinZ}`);
+  for (const zs of sectionZ) g += dimH(zs, zs + LW, yb, `${LW}`);
+  let prev = 0;
+  basins.forEach((bz, i) => { g += dimH(prev, bz, Y(yTop) - 10 - (i % 2) * 14, i ? `${bz - prev}` : `oś ${bz}`); prev = bz; });
   g += dimV(bottomY, bottomY + height, pad - 6, `${height}`);
   g += dimV(bottomY + height, bottomY + height + top, pad - 6, `${top}`);
   const xr = X(len) + 8;
   g += `<path class="dim" d="M${xr} ${Y(bottomY)}h10M${xr} ${Y(V.topY)}h10M${xr} ${Y(V.rimY)}h10"/>`;
   g += `<text class="dimt" x="${xr + 12}" y="${Y(bottomY) + 3}">${bottomY}</text><text class="dimt" x="${xr + 12}" y="${Y(V.topY) + 3}">${V.topY}</text><text class="dimt" x="${xr + 12}" y="${Y(V.rimY) + 3}">${V.rimY}</text>`;
-  g += `<text x="${X(zA + LW / 2)}" y="${Y(bottomY + t + V.frontA / 2) + 4}" text-anchor="middle" style="fill:#fff">A · ${V.frontW}×${V.frontA}</text>`;
-  g += `<text x="${X(zB + LW / 2)}" y="${Y(bottomY + t + frontB / 2) + 4}" text-anchor="middle" style="fill:#fff">B · ${V.frontW}×${num(frontB)}</text>`;
-  g += `<text x="${X(zB + LW / 2)}" y="${Y(bottomY + t + 1.5 * frontB) + 4}" text-anchor="middle" style="fill:#fff">B · ${V.frontW}×${num(frontB)}</text>`;
-  g += `<text class="dimt" x="${X(0)}" y="${Y(bottomY) + 64}">← drzwi, grzejnik</text><text class="dimt" x="${X(len)}" y="${Y(bottomY) + 64}" text-anchor="end">WC →</text>`;
+  g += `<text class="dimt" x="${X(0)}" y="${Y(bottomY) + 64}">← drzwi, grzejnik</text><text class="dimt" x="${X(len)}" y="${Y(bottomY) + 64}" text-anchor="end">${ATTIC ? 'skos →' : 'WC →'}</text>`;
   $('vanityDrawing').innerHTML = `<svg class="drawing" viewBox="0 0 ${W + 30} ${Hpx}" role="img" aria-label="Widok szafki z przodu z wymiarami w mm">${g}</svg>`;
-  $('vanitySummary').innerHTML = `Korpus <b>${len} × ${V.depth} × ${height} mm</b> (szer. × gł. × wys.), podwieszony ${bottomY} mm nad podłogą. Blat <b>${len} × ${V.topDepth} × ${top}</b>, wierzch na ${V.topY} mm, rant umywalki ${V.rimY} mm. Fronty wpuszczane, szczelina ${num(gap)} mm, otwieranie przez naciśnięcie (TIP-ON BLUMOTION). Umywalka przy WC (sekcja A), przy drzwiach sekcja B z dwiema szufladami i ${V.basinZ - basinW / 2} mm wolnego blatu — skrzydło drzwi nie zahacza o osobę przy umywalce.`;
+  const layout = ATTIC
+    ? `Dwie umywalki, każda nad własną sekcją A z jedną wysoką szufladą; osie ${basins.join(' i ')} mm od końca przy drzwiach.`
+    : `Umywalka przy WC (sekcja A), przy drzwiach sekcja B z dwiema szufladami i ${basins[0] - basinW / 2} mm wolnego blatu — skrzydło drzwi nie zahacza o osobę przy umywalce.`;
+  $('vanitySummary').innerHTML = `Korpus <b>${len} × ${V.depth} × ${height} mm</b> (szer. × gł. × wys.), podwieszony ${bottomY} mm nad podłogą. Blat <b>${len} × ${V.topDepth} × ${top}</b>, wierzch na ${V.topY} mm, rant umywalki ${V.rimY} mm. Fronty wpuszczane, szczelina ${num(gap)} mm, otwieranie przez naciśnięcie (TIP-ON BLUMOTION). ${layout}`;
 }
 
 function renderCutList() {
@@ -1598,11 +1828,11 @@ function renderCutList() {
     html += `<tr><td>${esc(part.name)}${part.note ? `<small>${esc(part.note)}</small>` : ''}</td><td class="n">${part.qty}</td><td class="n">${num(part.a)} × ${num(part.b)}</td><td>${esc(part.edge)}</td></tr>`;
   }
   const { e22, e42 } = edgeLengths();
-  html += `</tbody><tfoot><tr><td colspan="4">Obrzeże ABS 2 mm: 22 mm ≈ ${Math.ceil(e22 + 1)} m, 42 mm ≈ ${Math.ceil(e42 + .5)} m (z zapasem). Całość mieści się na 1 arkuszu 2800 × 2070.</td></tr></tfoot>`;
+  html += `</tbody><tfoot><tr><td colspan="4">Obrzeże ABS 2 mm: 22 mm ≈ ${Math.ceil(e22 + 1)} m, 42 mm ≈ ${Math.ceil(e42 + .5)} m (z zapasem). Całość mieści się na 1 arkuszu 2800 × 2070${ATTIC ? ' (na styk — przy rozkroju w e-Rozkrój sprawdź układ)' : ''}.</td></tr></tfoot>`;
   $('cutList').innerHTML = html;
 }
 
-const HARDWARE = DATA.hardware;
+const HARDWARE = BathEngine.hardware(G);
 function renderHardware() {
   $('hardwareList').innerHTML = '<thead><tr><th>Element</th><th>nr Blum</th><th class="n">szt.</th></tr></thead><tbody>' +
     HARDWARE.map(([name, code, qty, note]) => `<tr><td>${esc(name)}${note ? `<small>${esc(note)}</small>` : ''}</td><td><code>${esc(code)}</code></td><td class="n">${esc(qty)}</td></tr>`).join('') +
@@ -1644,7 +1874,7 @@ function cutText(sep) {
 }
 $('csvBtn').addEventListener('click', () => {
   const blob = new Blob(['﻿' + cutText(';')], { type: 'text/csv;charset=utf-8' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `vanity-cut-list-${V.len}-${state.decor}.csv`;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${FLOOR}-vanity-cut-list-${V.len}-${state.decor}.csv`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 $('copyBtn').addEventListener('click', async () => {
@@ -1656,7 +1886,8 @@ $('copyBtn').addEventListener('click', async () => {
 /* ---------- 2D PLAN (SVG): computed from the same constants as the 3D model ----------
    Layout as in the original design drawing: door on the left, window on the right, vanity wall at the top,
    shower recess in the bottom-right corner. Drawing unit: 1 cm. Model point (z, x) → drawing (z·100, (XL − x)·100). */
-function planSVG() {
+function groundPlanSVG() {
+  const { SX, SZ, WX0, WX1, WIN_Y0, WIN_Y1, WINDOW_WALL_T, WINDOW_REVEAL, ZX0, ZZ0, ZZ1, PZ0, NICHE_DEPTH, ZXB, WC_Z, CAB_W, CAB_H, CAB_Y0, CEILING_Y } = G;
   const P = (z, x) => [Math.round(z * 1000) / 10, Math.round((XL - x) * 1000) / 10];
   const f = v => +v.toFixed(1);
   const RED = '#c8282d', INK = '#2a2d30', WALL = '#111';
@@ -1784,6 +2015,135 @@ ${out.join('\n')}
 <text x="${vb[0] + 6}" y="${vb[1] + vb[3] - 6}" class="s">Rzut łazienki 1:20 · wymiary w cm · budynek wg projektu (pomiar w skali), prysznic 100 × 90 · wyposażenie wg modelu 3D (${new Date().toLocaleDateString('pl-PL')})</text>
 </svg>`;
 }
+/* ---------- 2D PLAN of the attic: same layout as the design drawing (door left, knee wall right) ----------
+   Dashed lines show where the roof slope reaches 1.4 m, 1.9 m, 2.2 m and the flat ceiling. */
+function atticPlanSVG() {
+  const P = (z, x) => [Math.round(z * 1000) / 10, Math.round((XL - x) * 1000) / 10];
+  const f = v => +v.toFixed(1), cm = BathEngine.cm, c0 = v => Math.round(v * 100);
+  const RED = '#c8282d', INK = '#2a2d30', WALL = '#111';
+  const { RW, BATH, CASE, RISER, SHX, SHZ, KNEE_T, WC_Z, ZF, KNEE, TAN } = G;
+  const out = [];
+  const rect = (z0, x0, z1, x1, attrs) => {
+    const [a, b] = P(z0, x0), [c, d] = P(z1, x1);
+    out.push(`<rect x="${f(Math.min(a, c))}" y="${f(Math.min(b, d))}" width="${f(Math.abs(c - a))}" height="${f(Math.abs(d - b))}" ${attrs}/>`);
+  };
+  const line = (z0, x0, z1, x1, attrs) => { const [a, b] = P(z0, x0), [c, d] = P(z1, x1); out.push(`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" ${attrs}/>`); };
+  const note = (z, x, str, anchor = 'start', cls = 's') => { const [a, b] = P(z, x); out.push(`<text x="${a}" y="${b}" class="${cls}" text-anchor="${anchor}">${str}</text>`); };
+  const fix = `fill="#fff" stroke="${INK}" stroke-width=".5"`, thin = `fill="none" stroke="${INK}" stroke-width=".35"`, dash = `fill="none" stroke="${INK}" stroke-width=".35" stroke-dasharray="3 2"`;
+
+  // walls: door wall, top wall, bottom wall, knee wall (exterior)
+  rect(-T, XL + T, 0, -T, `fill="${WALL}"`);
+  rect(-T, XL + T, ZW + KNEE_T, XL, `fill="${WALL}"`);
+  rect(-T, 0, ZW + KNEE_T, -T, `fill="${WALL}"`);
+  rect(ZW, XL + T, ZW + KNEE_T, -T, `fill="${WALL}"`);
+  rect(-T - .5, G.OX1, .001, G.OX0, 'fill="#fff"');                          // door opening
+  // roof slope: height lines
+  for (const h of [1.4, 1.9, 2.2]) {
+    const z = ZW - (h - KNEE) / TAN;
+    line(z, XL, z, 0, `stroke="${INK}" stroke-width=".3" stroke-dasharray="1.5 2" opacity=".6"`);
+    note(z - .015, XL - .62, `h ${c0(h)}`, 'end');
+  }
+  line(ZF, XL, ZF, 0, `stroke="${INK}" stroke-width=".3" stroke-dasharray="6 2" opacity=".6"`);
+  note(ZF + .015, XL - .62, `sufit ${c0(G.H)}`, 'start');
+  { const [a, b] = P(ZW - .025, (XL + BATH.x1) / 2); out.push(`<text transform="translate(${a} ${b}) rotate(-90)" class="s" text-anchor="middle">ścianka kolankowa ${c0(KNEE)}</text>`); }
+
+  // concealed door opening into the hallway, swing arc
+  const leaf = DX1 - DX0, [ox, oy] = P(-T, DX1), [lx, ly] = P(-T - leaf, DX0);
+  rect(-T, DX0, -T - leaf, DX0 + .04, fix);
+  out.push(`<path d="M${ox} ${oy} A${f(leaf * 100)} ${f(leaf * 100)} 0 0 0 ${lx} ${ly}" ${thin}/>`);
+  // radiator on the door wall
+  rect(0, RAD.x + RAD.w / 2, RAD.z + .015, RAD.x - RAD.w / 2, fix);
+  for (const [dz, str] of [[.115, `grzejnik ${c0(RAD.w)}×${c0(RAD.h)}`], [.165, `h ${c0(RAD.y0)}–${c0(RAD.y0 + RAD.h)}`]]) {
+    const [a, b] = P(dz, RAD.x); out.push(`<text transform="translate(${a} ${b}) rotate(-90)" class="s" text-anchor="middle">${str}</text>`);
+  }
+
+  // vanity with two basins, mirrors
+  const z0 = mm(V.z0), z1 = mm(V.z0 + V.len);
+  rect(z0, XL, z1, XL - mm(V.topDepth), fix);
+  for (let i = 1; i < V.sections.length; i++) { const zp = mm(V.z0 + V.sectionZ[i] - V.t / 2); line(zp, XL, zp, XL - mm(V.depth), dash); }
+  line(z0, XL - mm(V.depth), z1, XL - mm(V.depth), dash);
+  const bx1 = XL - mm(V.basinBack), bw = mm(V.basinW), bd = mm(V.basinD);
+  for (const b of V.basins) {
+    const bz = mm(V.z0 + b), [ux, uy] = P(bz - bw / 2, bx1), [ix, iy] = P(bz - bw / 2 + .02, bx1 - .1);
+    out.push(`<rect x="${ux}" y="${uy}" width="${f(bw * 100)}" height="${f(bd * 100)}" rx="3" ${fix}/><rect x="${ix}" y="${iy}" width="${f(bw * 100 - 4)}" height="${f(bd * 100 - 12)}" rx="5" ${thin}/>`);
+    const [tx, ty] = P(bz, bx1 - .045); out.push(`<circle cx="${tx}" cy="${ty}" r="1.8" fill="${INK}"/><line x1="${tx}" y1="${ty}" x2="${tx}" y2="${f(ty + 10)}" stroke="${INK}" stroke-width=".8"/>`);
+    line(bz - V.mirror.w / 2, XL - .012, bz + V.mirror.w / 2, XL - .012, `stroke="${INK}" stroke-width="1.2"`);
+  }
+
+  // corner shower 100 × 100: glass, door arc, drain, rain shower, thermostat
+  const door = DATA.shower.door, fixed = SHZ - door;
+  rect(0, SHX + .004, fixed, SHX - .004, `fill="#cfe3e8" stroke="${INK}" stroke-width=".4"`);
+  rect(SHZ - .004, SHX, SHZ + .004, 0, `fill="#cfe3e8" stroke="${INK}" stroke-width=".4"`);
+  const [g0x, g0y] = P(SHZ, SHX), [g1x, g1y] = P(fixed + .02, SHX + door - .01);
+  line(fixed, SHX, fixed + .02, SHX + door - .01, `stroke="${INK}" stroke-width=".8"`);
+  out.push(`<path d="M${g0x} ${g0y} A${f(door * 100)} ${f(door * 100)} 0 0 0 ${g1x} ${g1y}" ${thin}/>`);
+  line(fixed, SHX, SHZ, SHX, `stroke="${INK}" stroke-width=".35" stroke-dasharray="1.5 1.5"`);
+  const dr = DATA.shower.drain;
+  rect(SHZ / 2 - dr / 2, .062, SHZ / 2 + dr / 2, .002, fix);
+  line(SHZ / 2 - dr / 2 + .02, .032, SHZ / 2 + dr / 2 - .02, .032, `stroke="${INK}" stroke-width=".25" stroke-dasharray="1 1"`);
+  const [rx, ry] = P(.42, SHX / 2); out.push(`<circle cx="${rx}" cy="${ry}" r="15" ${dash}/>`);
+  rect(0, SHX / 2 + .12, .008, SHX / 2 - .12, `fill="${INK}"`);
+  out.push(`<path d="M${P(0, 0)[0]} ${P(0, 0)[1]}L${P(SHZ, SHX)[0]} ${P(SHZ, SHX)[1]}M${P(0, SHX)[0]} ${P(0, SHX)[1]}L${P(SHZ, 0)[0]} ${P(SHZ, 0)[1]}" stroke="${INK}" stroke-width=".2" opacity=".35"/>`);
+
+  // WC casing (grey) with the riser in the corner, WC bowl
+  rect(CASE.z0, CASE.x1, CASE.z1, 0, `fill="#d9dbdd" stroke="${INK}" stroke-width=".5"`);
+  const [pcx, pcy] = P(RISER.z, RISER.x);
+  out.push(`<circle cx="${pcx}" cy="${pcy}" r="${f(RISER.r * 100)}" fill="#fff" stroke="${INK}" stroke-width=".5"/><text x="${pcx}" y="${pcy + 1.2}" class="s" text-anchor="middle">Ø160</text>`);
+  const wc = DATA.wc, [wx, wy] = P(WC_Z, CASE.x1 + wc.d / 2);
+  out.push(`<ellipse cx="${wx}" cy="${wy}" rx="${f(wc.w * 50)}" ry="${f(wc.d * 50)}" ${fix}/><ellipse cx="${wx}" cy="${f(wy - 2)}" rx="${f(wc.w * 33)}" ry="${f(wc.d * 34)}" ${thin}/>`);
+  rect(WC_Z - .123, CASE.x1 + .008, WC_Z + .123, CASE.x1, `fill="${INK}"`);
+
+  // bath along the knee wall, roof window above it (dashed projection)
+  rect(BATH.z0, BATH.x1, BATH.z1, BATH.x0, fix);
+  { const [a, b] = P(BATH.z0 + .06, BATH.x1 - .07); out.push(`<rect x="${a}" y="${b}" width="${f((BATH.w - .12) * 100)}" height="${f((BATH.len - .14) * 100)}" rx="9" ${thin}/>`); }
+  rect(ZW - .02, RW.x + .08, ZW, RW.x - .08, `fill="${INK}"`);                // wall-mounted bath mixer
+  rect(RW.z1, RW.x + RW.w / 2, RW.z0, RW.x - RW.w / 2, dash);
+  { const [a, b] = P((RW.z0 + RW.z1) / 2, RW.x); out.push(`<circle cx="${a}" cy="${b}" r="9" fill="#fff" stroke="${INK}" stroke-width=".4"/><line x1="${a - 7}" y1="${b}" x2="${a + 7}" y2="${b}" stroke="${INK}" stroke-width=".3"/><text x="${a}" y="${b - 1.5}" class="s" text-anchor="middle">${c0(RW.w)}</text><text x="${a}" y="${b + 4.6}" class="s" text-anchor="middle">${c0(RW.h)}</text>`); }
+
+  // dimensions (red)
+  const dimZ = (zA, zB, x, label, above = true) => {
+    const [a, y] = P(zA, x), [b] = P(zB, x), ty = above ? y - 2 : y + 7;
+    out.push(`<path d="M${a} ${y}H${b}M${a - 1.5} ${y + 1.5}l3 -3M${b - 1.5} ${y + 1.5}l3 -3M${a} ${y - 3}v6M${b} ${y - 3}v6" stroke="${RED}" stroke-width=".35" fill="none"/><text x="${f((a + b) / 2)}" y="${ty}" class="d" text-anchor="middle">${label}</text>`);
+  };
+  const dimX = (xA, xB, z, label, left = true) => {
+    const [xx, a] = P(z, xA), [, b] = P(z, xB), tx = left ? xx - 2 : xx + 2;
+    out.push(`<path d="M${xx} ${a}V${b}M${xx - 1.5} ${a + 1.5}l3 -3M${xx - 1.5} ${b + 1.5}l3 -3M${xx - 3} ${a}h6M${xx - 3} ${b}h6" stroke="${RED}" stroke-width=".35" fill="none"/><text transform="translate(${tx} ${f((a + b) / 2)}) rotate(-90)" class="d" text-anchor="middle">${label}</text>`);
+  };
+  const top = XL + T + .14, bottom = -T - .14, zL = -T - leaf - .04, zR = ZW + KNEE_T + .14;
+  const zs = [0, z0, z1, ZW];
+  for (let i = 0; i < zs.length - 1; i++) dimZ(zs[i], zs[i + 1], top, cm(zs[i + 1] - zs[i]));
+  dimZ(0, ZW, top + .16, cm(ZW));
+  const zb = [0, SHZ, WC_Z, ZW];
+  for (let i = 0; i < zb.length - 1; i++) dimZ(zb[i], zb[i + 1], bottom, i === 1 ? `oś WC ${cm(WC_Z)}` : cm(zb[i + 1] - zb[i]), false);
+  dimX(XL, G.OX1, zL - .14, cm(XL - G.OX1)); dimX(G.OX1, G.OX0, zL - .14, cm(G.OX1 - G.OX0)); dimX(G.OX0, 0, zL - .14, cm(G.OX0));
+  dimX(XL, 0, zL - .3, cm(XL));
+  dimX(XL, BATH.x1, zR, cm(XL - BATH.x1), false); dimX(BATH.x1, BATH.x0, zR, `wanna ${cm(BATH.len)}`, false); dimX(BATH.x0, 0, zR, cm(BATH.x0), false);
+  dimX(XL, 0, zR + .16, cm(XL), false);
+
+  // labels
+  note(z0 + .02, XL - .54, `szafka ${V.len / 10}×${V.depth / 10} · blat h ${V.topY / 10} · ${DECORS[state.decor].code}`);
+  note(z1 - .02, XL - .54, `2 × umywalka 60×40 · rant h ${Math.round(V.rimY / 10)}`, 'end');
+  note(.05, DX1 + .1, `drzwi ukryte ${c0(DATA.door.leaf)} · na korytarz`); note(.05, DX1 + .04, `Porta HIDE · otwór ${c0(DATA.door.opening)}`);
+  note(SHZ / 2, SHX / 2 - .22, `prysznic ${c0(SHZ)}×${c0(SHX)}`, 'middle'); note(SHZ / 2, SHX / 2 - .29, `odpływ liniowy ${c0(dr)}`, 'middle');
+  note(fixed / 2, SHX + .05, `szyba ${c0(fixed)}`, 'middle'); note(fixed + door / 2, SHX + .3, `drzwi ${c0(door)}`, 'middle');
+  note(WC_Z, CASE.x1 + .62, `WC ${c0(wc.w)}×${c0(wc.d)}`, 'middle');
+  note((CASE.z0 + CASE.z1) / 2 + .05, .07, `zabudowa ${c0(CASE.x1)} · h ${c0(CASE.h)}`, 'middle');
+  note((BATH.z0 + BATH.z1) / 2, BATH.x1 - .2, `wanna ${c0(BATH.len)}×${c0(BATH.w)}`, 'middle');
+  note(RW.z1 - .02, RW.x + RW.w / 2 - .05, 'okno dachowe', 'end');
+  const [cx, cy] = P(1.55, 1.15);
+  out.push(`<text x="${cx}" y="${cy}" class="n" text-anchor="middle">${DATA.number}</text><text x="${cx}" y="${cy + 9}" class="s" text-anchor="middle">Łazienka · ${G.AREA.toFixed(2).replace('.', ',')} m² (użytkowa ${G.AREA_USABLE.toFixed(2).replace('.', ',')} m²)</text>`);
+
+  const left = 58 + leaf * 100 + 20, W = (ZW + KNEE_T) * 100, Hh = XL * 100;
+  const vb = [-left, -66, W + 74 + left, Hh + 66 + 58 + 24];
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb.join(' ')}" font-family="Arial, Helvetica, sans-serif">
+<style>.d{fill:${RED};font-size:5.2px}.s{fill:${INK};font-size:4px}.n{fill:${RED};font-size:16px;font-style:italic}</style>
+<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="#fff"/>
+${out.join('\n')}
+<text x="${vb[0] + 6}" y="${vb[1] + vb[3] - 6}" class="s">Rzut łazienki na poddaszu 1:20 · wymiary w cm · budynek wg projektu (pomiar w skali), dach ${DATA.roof.pitch}°, ścianka kolankowa ${c0(KNEE)} · wyposażenie wg modelu 3D (${new Date().toLocaleDateString('pl-PL')})</text>
+</svg>`;
+}
+
+const planSVG = () => ATTIC ? atticPlanSVG() : groundPlanSVG();
 let planZoom = 1;
 function showPlan(on) {
   $('plan2d').hidden = !on; $('planBtn').setAttribute('aria-expanded', on);
@@ -1795,7 +2155,7 @@ $('planZoomIn').addEventListener('click', () => { planZoom = Math.min(4, planZoo
 $('planZoomOut').addEventListener('click', () => { planZoom = Math.max(.5, planZoom / 1.25); $('planSheet').style.setProperty('--zoom', planZoom); });
 $('planDownload').addEventListener('click', () => {
   const blob = new Blob([planSVG()], { type: 'image/svg+xml' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bathroom-plan.svg';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `bathroom-plan-${FLOOR}.svg`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('plan2d').hidden) showPlan(false); });
@@ -1827,7 +2187,7 @@ async function exportXlsx(button) {
     for (const [ref, url] of sh.links || []) if (ws[ref]) ws[ref].l = { Target: url };
     XLSX.utils.book_append_sheet(wb, ws, sh.name);
   }
-  XLSX.writeFile(wb, `bathroom-vanity-${V.len}-${state.decor}.xlsx`);
+  XLSX.writeFile(wb, `bathroom-${FLOOR}-vanity-${V.len}-${state.decor}.xlsx`);
   button.textContent = label;
 }
 $('xlsxBtn').addEventListener('click', e => exportXlsx(e.currentTarget));
