@@ -99,6 +99,15 @@ dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:10px 0 0;font
 dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-size:12.5px;text-align:right}
 dl.tight{margin:0}
 
+/* --- rzut 2D (SVG) nad sceną --- */
+.planbtn{flex:none;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+#plan2d{position:absolute;inset:0;z-index:5;background:#fff;display:flex;flex-direction:column}
+#plan2d .bar{display:flex;gap:6px;align-items:center;padding:10px 16px;border-bottom:1px solid #e2e4e6;background:#fafafa;color:#1d2124}
+#plan2d .bar b{font-family:var(--f-display);font-size:20px;margin-right:auto}
+#plan2d .bar button{background:#eef0f1;color:#1d2124;border-color:#d4d9dc;font-size:13px}
+#plan2d .sheet{flex:1;min-height:0;overflow:auto;padding:12px}
+#plan2d svg{display:block;margin:0 auto;height:calc(100% * var(--zoom,1));width:auto;max-width:none}
+
 /* --- zakładki panelu --- */
 .tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;background:var(--chip);padding:3px;border-radius:9px;border:1px solid var(--line);position:sticky;top:-18px;z-index:2}
 .tabs button{border:0;background:transparent;border-radius:7px;padding:7px 4px;font-size:12.5px;font-weight:600;color:var(--muted)}
@@ -157,10 +166,17 @@ dl.tight{margin:0}
         <button class="glass" data-view="shower" aria-pressed="false">Prysznic</button>
         <button class="glass" data-view="plan" aria-pressed="false">Rzut</button>
       </div>
+      <button class="planbtn glass" id="planBtn" aria-expanded="false" aria-controls="plan2d">Rzut 2D</button>
       <button class="panelbtn glass" id="panelBtn" aria-expanded="true" aria-controls="settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
         <span class="label">Ustawienia</span>
       </button>
+    </div>
+    <div id="plan2d" hidden role="dialog" aria-label="Rzut 2D łazienki">
+      <div class="bar"><b>Rzut łazienki · 1:20</b>
+        <button id="planZoomOut" aria-label="Pomniejsz">−</button><button id="planZoomIn" aria-label="Powiększ">+</button>
+        <button id="planDownload">Pobierz SVG</button><button id="planClose">Wróć do 3D</button></div>
+      <div class="sheet" id="planSheet"></div>
     </div>
     <div class="hint">kliknij drzwi: otwórz · przeciągnij: obrót · kółko / szczypanie: zoom · prawy przycisk: przesuń</div>
   </div>
@@ -1741,6 +1757,155 @@ $('copyBtn').addEventListener('click', async () => {
   catch (e) { $('copyBtn').textContent = 'Kopiowanie zablokowane'; }
   setTimeout(() => $('copyBtn').textContent = 'Kopiuj jako tekst', 1800);
 });
+
+/* ---------- RZUT 2D (SVG): liczony z tych samych stałych co model 3D ----------
+   Układ jak na rysunku z projektu: drzwi po lewej, okno po prawej, ściana z umywalką u góry, wnęka prysznica w prawym dolnym rogu.
+   Jednostka rysunku: 1 cm. Punkt modelu (z, x) → rysunek (z·100, (1.6 − x)·100). */
+function planSVG() {
+  const P = (z, x) => [Math.round(z * 1000) / 10, Math.round((1.6 - x) * 1000) / 10];
+  const f = v => +v.toFixed(1);
+  const RED = '#c8282d', INK = '#2a2d30', WALL = '#111';
+  const out = [];
+  const rect = (z0, x0, z1, x1, attrs) => {   // prostokąt w układzie modelu
+    const [a, b] = P(z0, x0), [c, d] = P(z1, x1);
+    out.push(`<rect x="${f(Math.min(a, c))}" y="${f(Math.min(b, d))}" width="${f(Math.abs(c - a))}" height="${f(Math.abs(d - b))}" ${attrs}/>`);
+  };
+  const line = (z0, x0, z1, x1, attrs) => { const [a, b] = P(z0, x0), [c, d] = P(z1, x1); out.push(`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" ${attrs}/>`); };
+  const text = (z, x, str, attrs = '') => { const [a, b] = P(z, x); out.push(`<text x="${a}" y="${b}" ${attrs}>${str}</text>`); };
+  const fix = `fill="#fff" stroke="${INK}" stroke-width=".5"`, thin = `fill="none" stroke="${INK}" stroke-width=".35"`, dash = `fill="none" stroke="${INK}" stroke-width=".35" stroke-dasharray="3 2"`;
+
+  // ściany (czarne) — grubości z modelu
+  const wl = WINDOW_WALL_T;
+  rect(-T, 1.6 + T, 0, -0, `fill="${WALL}"`);                                 // ściana z drzwiami (otwór niżej)
+  rect(-T, 1.6, 2.4 + wl, 1.6 + T, `fill="${WALL}"`);                         // ściana z umywalką
+  rect(2.4, 1.6 + T, 2.4 + wl, 0, `fill="${WALL}"`);                          // ściana z oknem (otwór niżej)
+  rect(2.4, 0, 2.5, -1 - T, `fill="${WALL}"`);                                // ściana prysznica przy oknie
+  rect(1.4, -1, 2.5, -1 - T, `fill="${WALL}"`);                              // ściana dalsza prysznica
+  rect(1.4, 0, 1.5, -1, `fill="${WALL}"`);                                    // ścianka z termostatem
+  rect(-T, 0, 1.5, -T, `fill="${WALL}"`);                                     // ściana pod drzwiami (prawa w 3D)
+  out.push(`<g id="otwory">`);
+  rect(-T - .5, DX1, .001, DX0, 'fill="#fff"');                               // otwór drzwi
+  rect(2.399, WX1, 2.4 + wl + .5, WX0, 'fill="#fff"');                        // otwór okna
+  out.push('</g>');
+  // okno: rama w ścianie + szpaleta
+  rect(2.4 + WINDOW_REVEAL, WX1, 2.4 + WINDOW_REVEAL + .07, WX0, `fill="#fff" stroke="${INK}" stroke-width=".5"`);
+  line(2.4 + WINDOW_REVEAL + .035, WX1, 2.4 + WINDOW_REVEAL + .035, WX0, thin);
+  line(2.4, WX1, 2.4 + wl, WX1, thin); line(2.4, WX0, 2.4 + wl, WX0, thin);
+  // drzwi ukryte: skrzydło 4 cm, łuk otwarcia (zawiasy przy x = DX0, skrzydło do pokoju)
+  const leaf = DX1 - DX0, [hx, hy] = P(0, DX0), [ox, oy] = P(0, DX1), [lx, ly] = P(leaf, DX0);
+  rect(0, DX0, leaf, DX0 + .04, fix);
+  out.push(`<path d="M${ox} ${oy} A${f(leaf * 100)} ${f(leaf * 100)} 0 0 1 ${lx} ${ly}" ${thin}/>`);
+  line(-T, DX0, 0, DX0, thin); line(-T, DX1, 0, DX1, thin);
+
+  // zabudowa WC z pionem (szara), szafka HEJSTA nad stelażem (przerywana)
+  rect(ZZ0, 1.6, ZZ1, ZX0, `fill="#d9dbdd" stroke="${INK}" stroke-width=".5"`);
+  const [pcx, pcy] = P(2.4 - .03 - .08, 1.6 - .03 - .08);
+  out.push(`<circle cx="${pcx}" cy="${pcy}" r="8" fill="#fff" stroke="${INK}" stroke-width=".5"/><text x="${pcx}" y="${pcy + 1.2}" class="s" text-anchor="middle">Ø160</text>`);
+  rect(WC_Z - CAB_W / 2, ZX0 + NICHE_DEPTH, WC_Z + CAB_W / 2, ZX0, dash);
+  // miska WC 36 × 53
+  const [wx, wy] = P(WC_Z, ZX0 - .53 / 2);
+  out.push(`<ellipse cx="${wx}" cy="${wy}" rx="18" ry="26.5" ${fix}/><ellipse cx="${wx}" cy="${f(wy + 2)}" rx="12" ry="18" ${thin}/>`);
+  rect(WC_Z - .123, ZX0 + .008, WC_Z + .123, ZX0, `fill="${INK}"`);           // przycisk spłukujący
+
+  // szafka 120 z blatem 48, przegroda, umywalka z baterią, lustro nad nią
+  const z0 = mm(V.z0), z1 = mm(V.z0 + V.len), zP = mm(V.z0 + V.t + V.LW + V.t / 2), bz = mm(V.z0 + V.basinZ);
+  rect(z0, 1.6, z1, 1.6 - mm(V.topDepth), fix);
+  line(zP, 1.6, zP, 1.6 - mm(V.depth), dash);
+  line(z0, 1.6 - mm(V.depth), z1, 1.6 - mm(V.depth), dash);                   // lico frontów pod nawisem blatu
+  const bx1 = 1.6 - mm(V.basinBack), bx0 = bx1 - mm(V.basinD);
+  const [ux, uy] = P(bz - .3, bx1);
+  out.push(`<rect x="${ux}" y="${uy}" width="60" height="40" rx="3" ${fix}/>`);
+  const [ix, iy] = P(bz - .28, bx1 - .1);
+  out.push(`<rect x="${ix}" y="${iy}" width="56" height="28" rx="5" ${thin}/>`);
+  const [dx, dy] = P(bz, (bx0 + .02 + bx1 - .1) / 2); out.push(`<circle cx="${dx}" cy="${dy}" r="2" ${thin}/>`);
+  const [tx, ty] = P(bz, bx1 - .045); out.push(`<circle cx="${tx}" cy="${ty}" r="1.8" fill="${INK}"/><line x1="${tx}" y1="${ty}" x2="${tx}" y2="${f(ty + 10)}" stroke="${INK}" stroke-width=".8"/>`);
+  line(bz - .3, 1.6 - .012, bz + .3, 1.6 - .012, `stroke="${INK}" stroke-width="1.2"`);   // lustro na ścianie
+
+  // grzejnik 40 na ścianie z drzwiami
+  rect(0, RAD.x + RAD.w / 2, RAD.z + .015, RAD.x - RAD.w / 2, `fill="#fff" stroke="${INK}" stroke-width=".5"`);
+  line(RAD.z, RAD.x + RAD.w / 2, RAD.z, RAD.x - RAD.w / 2, thin);
+
+  // prysznic: szyba stała 30, drzwi 60 z łukiem, odpływ liniowy 88, deszczownica, termostat
+  rect(2.1, .004, 2.4, -.004, `fill="#cfe3e8" stroke="${INK}" stroke-width=".4"`);
+  const [gx, gy] = P(2.1, 0), [g0x, g0y] = P(1.51, 0), [g1x, g1y] = P(2.1 - .02, .59);
+  line(2.1, 0, 2.1 - .02, .59, `stroke="${INK}" stroke-width=".8"`);
+  out.push(`<path d="M${g0x} ${g0y} A59 59 0 0 1 ${g1x} ${g1y}" ${thin}/>`);
+  line(1.51, 0, 2.1, 0, `stroke="${INK}" stroke-width=".35" stroke-dasharray="1.5 1.5"`);
+  rect(1.51, -1 + .062, 2.39, -1 + .002, `fill="#fff" stroke="${INK}" stroke-width=".4"`);
+  line(1.53, -1 + .032, 2.37, -1 + .032, `stroke="${INK}" stroke-width=".25" stroke-dasharray="1 1"`);
+  const [rx, ry] = P(1.5 + .42, -.5); out.push(`<circle cx="${rx}" cy="${ry}" r="15" ${dash}/>`);
+  rect(1.5, -.38, 1.508, -.62, `fill="${INK}"`);                               // termostat podtynkowy
+  out.push(`<path d="M${P(1.5, -1)[0]} ${P(1.5, -1)[1]}L${P(2.4, 0)[0]} ${P(2.4, 0)[1]}M${P(2.4, -1)[0]} ${P(2.4, -1)[1]}L${P(1.5, 0)[0]} ${P(1.5, 0)[1]}" stroke="${INK}" stroke-width=".2" opacity=".35"/>`);   // spadek do odpływu (symbol)
+
+  // wymiary (czerwone)
+  const dimZ = (zA, zB, x, label, above = true) => {   // wymiar wzdłuż z na wysokości x
+    const [a, y] = P(zA, x), [b] = P(zB, x), ty = above ? y - 2 : y + 7;
+    out.push(`<path d="M${a} ${y}H${b}M${a - 1.5} ${y + 1.5}l3 -3M${b - 1.5} ${y + 1.5}l3 -3M${a} ${y - 3}v6M${b} ${y - 3}v6" stroke="${RED}" stroke-width=".35" fill="none"/><text x="${f((a + b) / 2)}" y="${ty}" class="d" text-anchor="middle">${label}</text>`);
+  };
+  const dimX = (xA, xB, z, label, left = true) => {   // wymiar wzdłuż x przy z
+    const [xx, a] = P(z, xA), [, b] = P(z, xB), tx = left ? xx - 2 : xx + 2;
+    out.push(`<path d="M${xx} ${a}V${b}M${xx - 1.5} ${a + 1.5}l3 -3M${xx - 1.5} ${b + 1.5}l3 -3M${xx - 3} ${a}h6M${xx - 3} ${b}h6" stroke="${RED}" stroke-width=".35" fill="none"/><text transform="translate(${tx} ${f((a + b) / 2)}) rotate(-90)" class="d" text-anchor="middle">${label}</text>`);
+  };
+  const cm = v => String(Math.round(v * 200) / 2).replace('.', ',');   // cm, z dokładnością do 0,5
+  // góra: szafka, przerwa, zabudowa
+  let zs = [0, z0, z1, ZZ0, 2.4];
+  for (let i = 0; i < zs.length - 1; i++) dimZ(zs[i], zs[i + 1], 1.6 + T + .14, cm(zs[i + 1] - zs[i]));
+  dimZ(0, 2.4, 1.6 + T + .3, 240);
+  // dół: pokój i wnęka prysznica
+  dimZ(0, 1.5, -1 - T - .14, 150, false); dimZ(1.5, 2.4, -1 - T - .14, 90, false);
+  // lewo: drzwi
+  dimX(1.6, DX1, -T - .14, cm(1.6 - DX1)); dimX(DX1, DX0, -T - .14, cm(DX1 - DX0)); dimX(DX0, 0, -T - .14, cm(DX0));
+  dimX(1.6, 0, -T - .3, 160);
+  // prawo: okno, wnęka
+  dimX(1.6, WX1, 2.4 + wl + .14, cm(1.6 - WX1), false); dimX(WX1, WX0, 2.4 + wl + .14, cm(WX1 - WX0), false); dimX(WX0, 0, 2.4 + wl + .14, cm(WX0), false);
+  dimX(0, -1, 2.5 + .14, 100, false); dimX(1.6, -1, 2.4 + wl + .3, 260, false);
+  // osie WC i umywalki
+  dimZ(WC_Z, 2.4, ZX0 - .62, `oś WC ${cm(2.4 - WC_Z)}`);
+  out.push(`<line x1="${P(WC_Z, 1.6)[0]}" y1="0" x2="${P(WC_Z, 1.6)[0]}" y2="${P(0, ZX0 - .62)[1]}" stroke="${RED}" stroke-width=".25" stroke-dasharray="4 1.5 1 1.5"/>`);
+  dimZ(0, bz, 1.6 - mm(V.topDepth) - .1, `oś umywalki ${cm(bz)}`);
+  out.push(`<line x1="${P(bz, 1.6)[0]}" y1="0" x2="${P(bz, 1.6)[0]}" y2="${P(0, 1.6 - mm(V.topDepth) - .1)[1]}" stroke="${RED}" stroke-width=".25" stroke-dasharray="4 1.5 1 1.5"/>`);
+
+  // opisy
+  const note = (z, x, str, anchor = 'start') => text(z, x, str, `class="s" text-anchor="${anchor}"`);
+  note(z0 + .08, 1.6 - .3, `szafka ${V.len / 10}×${V.depth / 10}`);
+  note(z0 + .08, 1.6 - .36, `blat h ${V.topY / 10} · ${DECORS[state.decor].code}`);
+  note(bz, 1.6 - .52, `umywalka 60×40 · rant h ${Math.round(V.rimY / 10)}`, 'middle');
+  for (const [dz, str] of [[.115, 'grzejnik 40×120'], [.165, `h ${Math.round(RAD.y0 * 100)}–${Math.round((RAD.y0 + RAD.h) * 100)}`]]) {
+    const [a, b] = P(dz, RAD.x); out.push(`<text transform="translate(${a} ${b}) rotate(-90)" class="s" text-anchor="middle">${str}</text>`);
+  }
+  note(.05, (DX0 + DX1) / 2 + .02, 'drzwi ukryte 80'); note(.05, (DX0 + DX1) / 2 - .05, 'Porta HIDE');
+  note(ZZ0 + .03, 1.6 - .07, 'zabudowa 28', 'start');
+  note(WC_Z, 1.6 - .235, 'HEJSTA h 120–200', 'middle');
+  note(WC_Z, ZX0 - .6, 'WC 36×53', 'middle');
+  note(2.38, WX0 + .4, 'okno 80×90', 'end'); note(2.38, WX0 + .33, 'parapet h 120', 'end');
+  note(1.95, -.75, 'prysznic 100×90', 'middle'); note(1.95, -.82, 'odpływ liniowy 88', 'middle');
+  note(2.12, .1, 'szyba 30', 'start'); note(1.82, .3, 'drzwi 60', 'middle');
+  const [cx, cy] = P(.9, .62);
+  out.push(`<text x="${cx}" y="${cy}" class="n" text-anchor="middle">7</text><text x="${cx}" y="${cy + 9}" class="s" text-anchor="middle">Łazienka · 4,74 m²</text>`);
+
+  const vb = [-58, -58, 240 + 25 + 116, 260 + 116 + 22];
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb.join(' ')}" font-family="Arial, Helvetica, sans-serif">
+<style>.d{fill:${RED};font-size:5.2px}.s{fill:${INK};font-size:4px}.n{fill:${RED};font-size:16px;font-style:italic}</style>
+<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="#fff"/>
+${out.join('\n')}
+<text x="${vb[0] + 6}" y="${vb[1] + vb[3] - 6}" class="s">Rzut łazienki 1:20 · wymiary w cm · stan wg modelu 3D (${new Date().toLocaleDateString('pl-PL')})</text>
+</svg>`;
+}
+let planZoom = 1;
+function showPlan(on) {
+  $('plan2d').hidden = !on; $('planBtn').setAttribute('aria-expanded', on);
+  if (on) { $('planSheet').innerHTML = planSVG(); $('planSheet').style.setProperty('--zoom', planZoom); }
+}
+$('planBtn').addEventListener('click', () => showPlan($('plan2d').hidden));
+$('planClose').addEventListener('click', () => showPlan(false));
+$('planZoomIn').addEventListener('click', () => { planZoom = Math.min(4, planZoom * 1.25); $('planSheet').style.setProperty('--zoom', planZoom); });
+$('planZoomOut').addEventListener('click', () => { planZoom = Math.max(.5, planZoom / 1.25); $('planSheet').style.setProperty('--zoom', planZoom); });
+$('planDownload').addEventListener('click', () => {
+  const blob = new Blob([planSVG()], { type: 'image/svg+xml' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'lazienka-rzut.svg';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('plan2d').hidden) showPlan(false); });
 
 /* ---------- eksport XLSX (SheetJS, wczytywany dopiero po kliknięciu) ---------- */
 let xlsxLib = null;
