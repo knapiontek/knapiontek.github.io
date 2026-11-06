@@ -814,10 +814,10 @@ function footprint(floor) {
       let key = null, cell = null;
       if (it) {
         const l = buildUpOf(it.kind) && layers.find(l => cx > l.r[0] && cx < l.r[2] && cz > l.r[1] && cz < l.r[3]);
-        const side = l && l.finish ? airSides(floor, [x1, z1, x2, z2])[0] : null;
+        const sides = l && l.finish ? airSides(floor, [x1, z1, x2, z2]) : [], side = sides[0] || null;   // a corner cell faces two sides
         const fin = side ? finishesOn(floor, [x1, z1, x2, z2], side) : [];
         cell = { kind: it.kind, opening: it.opening, layer: l ? l.material : null, finish: !!side, layers: l ? l.layers : [], side, rules: fin };
-        key = [it.kind, it.opening ?? '', l ? (l.material || 'finish') : '', side || '', fin.map(f => B.finishes.indexOf(f)).join(',')].join('|');
+        key = [it.kind, it.opening ?? '', l ? (l.material || 'finish') : '', sides.join('+'), fin.map(f => B.finishes.indexOf(f)).join(',')].join('|');
       }
       if (run && key === run.key && x1 === run.r[2]) { run.r[2] = x2; continue; }
       if (run) strips.push(run);
@@ -975,7 +975,8 @@ const groundUnder = r => { const cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2,
 // The cut never changes the model: the geometry is built once, whole, and the view clips it with a plane at the cut
 // height. What the plane leaves open is closed by the section: a thin cap just under the plane on every wall piece
 // it runs through, in the colour of the wall or of its layer (EPS). Only the section is rebuilt when the cut moves.
-const CUT_PLANE = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e6), CLIP = [CUT_PLANE];
+// The plane lies a hair above the cut height: a face at that height (a sill, a wall top) is under it, never on it.
+const CUT_GAP = 0.02, CUT_PLANE = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e6), CLIP = [CUT_PLANE];
 const sections = {}, capGroups = {};            // per floor: the wall pieces that can be cut, and their caps
 for (const f of FLOOR_IDS) { capGroups[f] = new THREE.Group(); groups[f].add(capGroups[f]); }
 function clipAll() {               // every material of the model is clipped by the cut plane
@@ -983,19 +984,34 @@ function clipAll() {               // every material of the model is clipped by 
 }
 function setCut() {
   const f = openFloor(), h = VIEW().plan ? Infinity : cutHeight();
-  CUT_PLANE.constant = h < Infinity && f ? (LEVEL[f] + h) * root.scale.y : 1e6;
+  CUT_PLANE.constant = h < Infinity && f ? (LEVEL[f] + h + CUT_GAP) * root.scale.y : 1e6;
   for (const fl of FLOOR_IDS) buildCaps(fl);
   requestRender();
 }
+// the finish of house.js at a height (house y): the last rule that covers it, else the wall's own surface
+const finishAt = (rules, y, base) => { const f = [...rules].reverse().find(f => !f.y || (f.y[0] <= y && y <= f.y[1])); return f ? M[f.material] : base; };
 function buildCaps(floor) {
   const grp = capGroups[floor]; clearGroup(grp);
   const h = VIEW().plan ? Infinity : cutHeight(); if (h === Infinity || openFloor() !== floor) return;
   const breaks = [...sections[floor].breaks, XL + (h - KNEE) / PITCH, XR - (h - KNEE) / PITCH];
+  const P = h + CUT_GAP;
   for (const sct of sections[floor].pieces.concat(slabSections[floor] || [])) {
-    if (sct.from >= h || sct.below && h >= sct.below) continue;          // the plane is not in this piece
-    if (sct.above !== undefined && h < sct.above) continue;
-    const r = sct.r, at = x => Math.min(h, sct.top(x));
-    withLayers(sct.layers, () => prism(r[0], r[1], r[2], r[3], sct.y0, x => at(x) - 0.6, x => at(x) - 0.05, sct.mat, grp, breaks));
+    // a sloping piece (under the roof) is cut only over a part of its width: the cap covers just that part, split
+    // where the bottom or the top of the piece crosses the plane (both are straight between the breaks)
+    const r = sct.r, lo = num(sct.from), hi = num(sct.top);
+    const xs = [r[0], r[2], ...breaks.filter(b => b > r[0] && b < r[2])].sort((a, b) => a - b), cuts = [...xs];
+    for (let i = 0; i < xs.length - 1; i++) for (const f of [lo, hi]) {
+      const a = f(xs[i]) - P, b = f(xs[i + 1]) - P;
+      if (a * b < 0) cuts.push(xs[i] + (xs[i + 1] - xs[i]) * a / (a - b));
+    }
+    cuts.sort((a, b) => a - b);
+    const at = x => Math.min(P, hi(x)) - CUT_GAP / 2;              // the cap: right under the plane (no seam shows), inside the piece
+    const mat = sct.rules ? finishAt(sct.rules, sct.y0 + P, sct.mat) : sct.mat;   // a finish is cut in its own material
+    for (let i = 0; i < cuts.length - 1; i++) {
+      const x1 = cuts[i], x2 = cuts[i + 1], m = (x1 + x2) / 2;
+      if (x2 - x1 < 0.01 || !(lo(m) < P && hi(m) > P)) continue;   // the plane does not run through this part
+      withLayers(sct.layers, () => prism(x1, r[1], x2, r[3], sct.y0, x => Math.max(lo(x), at(x) - 0.6), at, mat, grp, breaks));
+    }
   }
   mergeMeshes(grp); applyLayers();
 }
@@ -1030,24 +1046,27 @@ function buildWalls(floor) {
   const facesSoffit = (r, side) => slabCells.some(s => s.under && (a => a[0] < s.r[2] && a[2] > s.r[0] && a[1] < s.r[3] && a[3] > s.r[1])(facing[side](r)));
   const underSoffit = c => { if (attic || !c.finish) return false; const sides = airSides(floor, c.r); return sides.length > 0 && sides.every(sd => facesSoffit(c.r, sd)); };
   const only = (L, fn) => { const prev = drawLayers; drawLayers = L; try { fn(); } finally { drawLayers = prev; } };
-  const part = (c, lo, hi, cap) => {
+  const part = (c, lo, hi) => {
+    const mat = c.layer ? M[c.layer] : M.wall[c.kind];
     if (underSoffit(c)) {
       const upTo = x => Math.min(num(hi)(x), soffitBottom), from = x => Math.max(num(lo)(x), soffitBottom);
       paintFinish(c.r, y0, lo, upTo, M.wall[c.kind], c.rules, grp, breaks);
       only(EPS.layers || [], () => prism(c.r[0], c.r[1], c.r[2], c.r[3], y0, from, hi, M[EPS.material], grp, breaks));
-    } else if (c.finish) paintFinish(c.r, y0, lo, hi, M.wall[c.kind], c.rules, grp, breaks);
-    else prism(c.r[0], c.r[1], c.r[2], c.r[3], y0, lo, hi, c.layer ? M[c.layer] : M.wall[c.kind], grp, breaks);
-    pieces.push(Object.assign({ r: c.r, y0, from: 0, top: hi, mat: c.layer ? M[c.layer] : M.wall[c.kind], layers: drawLayers }, cap));
+      pieces.push({ r: c.r, y0, from: lo, top: upTo, mat, rules: c.rules, layers: drawLayers }, { r: c.r, y0, from, top: num(hi), mat: M[EPS.material], layers: EPS.layers || [] });
+      return;
+    }
+    if (c.finish) paintFinish(c.r, y0, lo, hi, M.wall[c.kind], c.rules, grp, breaks);
+    else prism(c.r[0], c.r[1], c.r[2], c.r[3], y0, lo, hi, mat, grp, breaks);
+    pieces.push({ r: c.r, y0, from: lo, top: num(hi), mat, rules: c.finish ? c.rules : null, layers: drawLayers });
   };
   for (const c of footprint(floor)) {
     const r = c.r, top = wallTop(c.kind), outer = c.layer || c.finish;
     withLayers(outer ? c.layers : B.wallKinds[c.kind].layers, () => {
-      if (c.opening === undefined) { part(c, 0, top, {}); outline.push({ r, parts: [[0, top]], openTop: !attic && outer, layers: drawLayers }); }
+      if (c.opening === undefined) { part(c, 0, top); outline.push({ r, parts: [[0, top]], openTop: !attic && outer, layers: drawLayers }); }
       else {                                          // the wall below the sill and above the head of an opening
         const o = PLAN[floor].openings[c.opening], { head } = openingHead(o, top), below = x => Math.min(o.sill, top(x));
-        const xs = [r[0], r[2], ...breaks.filter(p => p > r[0] && p < r[2])];
-        part(c, 0, below, { below: o.sill });
-        part(c, head, top, { above: Math.max(...xs.map(head)) });
+        part(c, 0, below);
+        part(c, head, top);
         outline.push({ r, parts: [[0, below], [head, top]], openTop: !attic && outer, layers: drawLayers });
       }
     });
