@@ -28,8 +28,9 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 ```
 
 - view.html loads the data files directly, so the page also works opened from disk.
-- house.js says where things are and what they are, how they can be switched (layers) and looked at (views); materials.js what they are made of. A wall names its kind, the kind names its build-up and material; a room carries its tiles (product and direction) or is tiled with another room; every node names its layers; a view names the layers it hides and the panel sections it shows.
-- One model for every view: switching a view never builds other objects, it hides layers and cuts the walls.
+- house.js says where things are and what they are, how they can be switched (layers) and looked at (views); materials.js what they are made of. A wall names its kind, the kind names its build-up and material; a room carries its tiles (product and direction) or is tiled with another room; every node names its layers; a view names the floors and the material layers its menu offers, its cut and the panel sections it shows.
+- One model for every view: switching a view never builds other objects, it shows layers and cuts the walls.
+- The model follows the order of the build: foundation, ground floor walls up to the slab, the ring beam and slab over all of them, the attic walls on it, the EPS and finish all round.
 - view.html does not know this house: it has no numbers, names, products or colours of it. Everything it draws and every text about the house comes from the data files.
 
 ## What is project specific and what is not
@@ -49,6 +50,7 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 - The page checks every wall and opening against its build-up and lists the ones that do not fit. A wall that fits no build-up stays in house.js as measured and stays on that list until it is resolved by hand.
 - The portal (the side walls and the roof running past both gables) has one section: EPS 20 + block 24 + EPS 20 = 64 cm. The block of a wing is in line with the block of its side wall; the roof slab has the thickness of the wings. One section everywhere, no patches where wing and roof meet.
 - The chimney and the stair rail have no build-up.
+- Every ground floor wall, outer and inner, ends under the slab. The slab (ring beam) covers all of them and the outline of both floors, and has the same build-up as a wall on every side to the air, also under it over the entrance recess. So the EPS runs on from the ground floor over the slab edge to the attic walls.
 - The facade finish (plaster, graphite, wood, bands) is the last layer of the build-up (24 + 19 + 1): the outer centimetre of the wall on every side to the air. Which finish is where comes from the finish rules of house.js (side, part of the plan, height); the outline of the house stays the outline of the walls.
 
 ## Floors and tiles

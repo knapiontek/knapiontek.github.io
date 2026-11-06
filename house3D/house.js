@@ -3,36 +3,40 @@
    Units: cm, angles in degrees. x across the house from the left outer wall face, z from the garden outer wall face to
    the front, y up from the finished ground floor. A floor holds its elements in the house x, z and its own level:
    every height inside a floor (sill, head, the stair, the fireplace) is measured from that floor's level.
+   The house is built in this order and drawn so: foundation, ground floor walls (blocks, all up to the ground floor
+   height), ring beam and slab over the whole of them, attic walls on the slab, last the EPS and the finish all round.
 
    BUILDING (the root)
    name, source, notes   what the page shows about the house (Polish)
-   views        the views of the top menu. A view never builds objects of its own: the model is the same in every
-                view, a view only hides layers (hidden), cuts the walls at the cut height of the panel or shows them
-                whole (cut), names the floor its settings belong to (floor) and the sections of the panel (panels: cut, view = the layers,
-                light, rooms = the rooms of the floor, the selected one opens its floor settings under it, walls,
-                notes, plan = the tools of the 2D plan); offer = the layers the panel offers (default all);
-                selectRooms = a click selects a room;
-                roofGhost = the see-through roof slopes can be switched on; walk = the walk through the house starts
-                here; plan = the 2D plan of all floors side by side instead of the 3D view. The cameras of a view
-                are in "cameras" under its key
-   layers       a tree of what can be switched off: name, on false = off at the start, layers = the layers inside it
-                (a child is shown only with its parent: no EPS without walls). Every element names its layers
-                ("layers" on its node or its kind, a floor on everything standing on it); it is drawn only when all
-                of them are on and the view hides none of them. Layer ids are unique in the whole tree
+   views        the top menu: 3D or 2D (one toggle). A view never builds objects of its own: the model is the same in
+                every view, a view only shows layers and cuts the walls. levels = the switches of the first row
+                (floors and roof, which are layers too); offer = the material layers of the second row; panels = the
+                sections of the panel, the parameters of what is shown (cut and view = the see-through roof slopes and
+                rooms only for the open floor: the highest floor shown with the roof off); cut = the view's own fixed
+                cut (the 2D plan), else the panel's cut of the open floor; selectRooms = a click selects a room of the
+                open floor; walk = the walk is offered; plan = the 2D plan of all floors side by side
+   layers       what can be switched off: name, on false = off at the start, layers = the layers inside it (a child is
+                shown only with its parent). Every element names its layers ("layers" on its node, its kind or its
+                build-up layer, a floor on everything standing on it); it is drawn only when all of them are on.
+                Layer ids are unique in the whole tree. A wall is drawn in its material layers: the block core under
+                its kind's layers, the EPS and the finish under the layers of their build-up layer
    roof         pitch, knee wall height (the knee walls give the eaves line); buildUp = the section of the portal frame:
                 the roof slab has the thickness of the portal wings (the build-up insulated on both sides), measured
                 square to the slope; body = the white band of the portals, covering = the roof surface;
                 planHeights = the clear heights drawn as lines on the attic plan
-   portals      the side walls and the roof run past both gables; the ground floor wings rise to the attic floor
+   portals      the side walls and the roof run past both gables
    chimney      the flue (the attic wall of kind chimney), "above" = how far it rises over the ridge
-   slab         the attic floor slab (the outline minus the stair hole of the attic)
+   slab         the ring beam and slab: poured over the whole of the ground floor walls, between their top (the ground
+                floor height) and the attic level, over the outline of both floors minus the stair hole; buildUp = its
+                outer layers (EPS, finish) on every side to the air and under it where there is no ground floor below
+                (the soffit of the entrance recess); face = its finish where no finish rule says otherwise
    buildUps     what a wall is made of: the first layer is the core (block), the next ones lie on every side of the
                 wall that faces the air, from the inside out (a house wall: one side, 24 + 19 + 1 = 44; a portal wing:
                 both sides and the end, 64); a layer with a material is drawn in it (on the plan and in the cut of the
                 3D view); the finish layer is the outer cm of the wall: plaster, graphite or wood (see finishes)
    wallKinds    per wall kind: name, material of its surfaces (and of its finish where no finish says otherwise),
                 buildUp (the view checks the thickness), rank (where walls overlap the higher rank owns the overlap;
-                openings always win), upToAtticFloor (the wall rises to the attic floor), wing = runs past the gables
+                openings always win), wing = runs past the gables
                 (not part of the house length), height = a fixed top (the stair rail), plinth = stands on the plinth
    plinth, site the base under the outer walls; lawn and terraces [x1, z1, x2, z2] at a top level y
    finishes     what the finish layer of a wall side is: side = where the side looks (left -x, right +x, garden -z,
@@ -48,7 +52,8 @@
    light, cameras, walk   sun and sky; the views of the dock (y of the attic views from the attic floor); walking
    tiles        reserve = extra share of tiles to buy; layers of the tiles and of the marked small cuts
 
-   FLOORS       id (ground | attic), name, level = finished floor level; height = clear height (ground floor);
+   FLOORS       id (ground | attic), name, level = finished floor level; height = the top of the walls (ground floor:
+                every wall stops under the slab);
                 underRoof = the walls rise to the roof (attic)
      walls      r = [x1, z1, x2, z2]; kind = a key of wallKinds. Measured from the plan images on archon.pl (853 px GIF,
                 2.41 cm/px, about +-3 cm); the attic aligned to the ground floor; edges closer than 3 cm share one
@@ -62,8 +67,6 @@
                 (z along the house, x across) - the rest is set on the page when the room is selected; tilesWith =
                 the room is tiled together with that room (walk-in wardrobes with the bedroom); neither = no tiles;
                 link = a sub-project of this room (its own page in the repository)
-     beams      wall pieces of the floor over a passage with no wall under it: the lintel of the entrance recess in
-                the line of the front wall, from y[0] to y[1] above the floor level, of a wall kind
      stair      U-shaped: flight1 rises west from the hall (risers 1..12 up to the landing), flight2 rises east to
                 the attic floor; core = the wall between the flights; treadMaterial, coreMaterial
      fireplace  rect, height and material of the fireplace block
@@ -76,47 +79,32 @@ window.HOUSE = {
   "Ściany z pustaków 24 i 12 cm, ściany zewnętrzne ocieplone od zewnątrz styropianem 20 cm. Lica zewnętrzne zostały w miejscu z rzutu, grubość odjęto od wnętrza. Portal (skrzydła ścian bocznych za szczytami i dach) ma przekrój 20 + 24 + 20 = 64 cm, pustak skrzydła w linii pustaka ściany bocznej."
  ],
  "views": {
-  "all": {
-   "name": "Cały dom",
-   "hidden": [],
-   "cut": false,
-   "walk": true,
-   "panels": ["view", "light", "walls", "notes"],
-   "offer": ["ground", "attic", "walls", "openings", "slabs", "stair", "fittings", "roof", "site"]
-  },
-  "ground": {
-   "name": "Parter",
-   "floor": "ground",
-   "hidden": ["attic", "roof"],
-   "cut": true,
+  "3d": {
+   "name": "3D",
+   "levels": ["ground", "attic", "roof"],
+   "offer": ["foundation", "walls", "slabs", "insulation", "facade", "edges", "openings", "stair", "fittings", "floors", "site"],
    "panels": ["cut", "view", "light", "rooms", "walls", "notes"],
-   "selectRooms": true
-  },
-  "attic": {
-   "name": "Piętro",
-   "floor": "attic",
-   "hidden": ["ground", "roof"],
-   "cut": true,
+   "selectRooms": true,
    "roofGhost": true,
-   "panels": ["cut", "view", "light", "rooms", "walls", "notes"],
-   "selectRooms": true
+   "walk": true
   },
-  "plan": {"name": "Rzut 2D", "plan": true, "hidden": [], "cut": true, "panels": ["plan"], "selectRooms": false}
+  "2d": {"name": "2D", "plan": true, "cut": 150, "panels": ["plan", "walls", "notes"]}
  },
  "layers": {
   "ground": {"name": "Parter"},
   "attic": {"name": "Piętro"},
-  "walls": {
-   "name": "Ściany",
-   "layers": {"insulation": {"name": "Styropian"}, "facade": {"name": "Elewacja"}, "edges": {"name": "Krawędzie"}}
-  },
+  "roof": {"name": "Dach"},
+  "foundation": {"name": "Fundament"},
+  "walls": {"name": "Pustaki"},
+  "slabs": {"name": "Wieniec i strop"},
+  "insulation": {"name": "Styropian"},
+  "facade": {"name": "Elewacja"},
+  "edges": {"name": "Krawędzie"},
   "openings": {"name": "Okna i drzwi"},
-  "slabs": {"name": "Stropy"},
   "stair": {"name": "Schody"},
   "fittings": {"name": "Kominek"},
-  "roof": {"name": "Dach"},
-  "site": {"name": "Teren"},
-  "floors": {"name": "Posadzki", "layers": {"cuts": {"name": "Drobne docinki (czerwone)"}}}
+  "floors": {"name": "Posadzki", "layers": {"cuts": {"name": "Drobne docinki (czerwone)"}}},
+  "site": {"name": "Teren"}
  },
  "roof": {
   "pitch": 42,
@@ -129,7 +117,7 @@ window.HOUSE = {
  },
  "portals": {"groundWingsTo": "attic"},
  "chimney": {"above": 90, "material": "graphite", "layers": ["roof"]},
- "slab": {"material": "slab", "layers": ["slabs"]},
+ "slab": {"material": "slab", "buildUp": "outer", "face": "plasterWhite", "layers": ["slabs"]},
  "buildUps": {
   "outer": {
    "name": "Ściana zewnętrzna",
@@ -148,7 +136,6 @@ window.HOUSE = {
    "material": "plasterWhite",
    "buildUp": "outer",
    "rank": 5,
-   "upToAtticFloor": true,
    "plinth": true,
    "layers": ["walls"]
   },
@@ -157,7 +144,6 @@ window.HOUSE = {
    "material": "plasterWhite",
    "buildUp": "outer",
    "rank": 5,
-   "upToAtticFloor": true,
    "wing": true,
    "plinth": true,
    "layers": ["walls"]
@@ -169,7 +155,7 @@ window.HOUSE = {
   "chimney": {"name": "komin", "material": "plasterInside", "rank": 6, "layers": ["walls"]},
   "rail": {"name": "balustrada", "material": "glass", "rank": 1, "height": 100, "layers": ["stair"]}
  },
- "plinth": {"top": 0, "bottom": -30, "material": "plinth", "layers": ["walls"]},
+ "plinth": {"top": 0, "bottom": -30, "material": "plinth", "layers": ["foundation"]},
  "site": {
   "lawn": {"rect": [-1500, -1500, 2400, 2800], "y": -30, "material": "lawn"},
   "terraces": [
@@ -304,7 +290,6 @@ window.HOUSE = {
     {"r": [615.5, 760.3, 627.5, 869], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
     {"r": [615.5, 1064.5, 627.5, 1156.2], "sill": 0, "head": 205, "kind": "door", "wall": "int12"}
    ],
-   "beams": [{"rect": [453.8, 1278.8, 846, 1322.8], "y": [245, 297], "kind": "ext"}],
    "rooms": [
     {
      "id": "salon",

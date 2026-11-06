@@ -10,13 +10,22 @@ The page is made of three trees, all stored as data in house.js:
 - **Layers**: what can be switched on and off.
 - **Menu (views)**: how the house is looked at.
 
-The **settings** (the panel on the right) always belong to a node of one of these trees and appear only when that node is in force:
+The **menu** decides what is shown and from where: the view (floor), its cameras and the layers. The **settings** (the panel on the right) are only the parameters of the objects the menu has chosen; they never repeat a menu choice (no floor or layer switches in the panel). Each setting belongs to a node of one of the trees and appears only when that node is in force:
 
-- **Menu node**: the view's own settings (cut height, light), and which panel sections it shows.
-- **Geometry node**: the settings of what it holds. A floor is selected with the menu (Parter, Piętro). A room is selected by clicking it in the 3D view, on the 2D plan or in the list. The selected room gets a row of its own in the context menu (its name, its sub-project), and the panel shows its floor: product, pattern, direction, grout, offsets. Tiles are set in the rooms, never per floor.
-- **Layer node**: its switch, and in time settings of its own (for example the colour of the marked cuts).
+- **Menu node**: the parameters of the view in force (cut height, light, zoom and SVG of the 2D plan), and which panel sections it shows.
+- **Geometry node**: the settings of what it holds. A floor is opened with the menu (Parter, Piętro on, the roof off: the highest floor shown is the open floor). A room of the open floor is selected by clicking it in the 3D view or in the list. The selected room gets a row of its own in the context menu (its name, its sub-project), and the panel shows its floor: product, pattern, direction, grout, offsets. Tiles are set in the rooms, never per floor.
+- **Layer node**: its switch is in the context menu (Warstwy), not in the panel; in time a layer may get parameters of its own in the panel (for example the colour of the marked cuts).
 
 ## 2. Geometry tree
+
+The house is built, and drawn, in this order. The 2D plans are the given: every outline comes from them.
+
+1. Foundation under the outer walls.
+2. Ground floor walls of blocks: every wall, outer and inner, up to the ground floor height (the underside of the slab).
+3. The ring beam and slab poured over the whole of these walls, up to the attic level, over the outline of both floors (it carries the attic walls also where the attic reaches past the ground floor, over the entrance recess), without the stair hole.
+4. Attic walls standing on the slab.
+5. Last the EPS and the finish all round: on every side to the air of the walls and of the slab edge, and under the slab where no ground floor is below (the soffit of the recess). One continuous shell from the foundation to the roof.
+
 
 Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a kitchen room)
 
@@ -26,35 +35,39 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 - **Tiles**: not stored; the page lays them from the room and its layout.
 - Every node keeps its geometry relative to its parent. A floor sets the level, and everything on a floor (sills, heads, the stair, the fireplace) is measured from it. A room is in the floor's x, z. Tiles are laid in the room from the layout's offsets.
 - **One model**: the objects are the same in every view. A view never builds objects of its own; it only hides layers and cuts the walls. The cut never changes the geometry: no wall, window, frame or facade board gets another shape or height. The model is built once, whole, and the cut is a plane that clips it; what the plane opens is closed by the section (a cap in the colour of the wall or of its EPS).
-- Nothing overlaps: a wall stands on the plinth down to the ground, on a terrace only down to the paving.
+- Nothing overlaps: a wall stands on the plinth down to the ground, on a terrace only down to the paving; the ground floor walls end under the slab, the slab ends under the attic walls, the EPS lies outside all of them.
 - A facade is a wall side that faces the air: nothing is guessed from positions. The finish (plaster, graphite, wood, the bands) is the outer layer of the wall's build-up and data say which finish covers which part of which side.
 - Edges are read from the plan: along the open tops, sills and heads and up every corner of the wall outline.
-- No masking panels: a finish or a band is the face of a wall, only where a wall is. Every piece belongs to the floor it stands on (the lintel over the entrance recess is a wall piece of the ground floor).
+- No masking panels: a finish or a band is the face of a wall or of the slab edge, only where they are. Every piece belongs to the floor it stands on; the slab belongs to the attic it carries.
 
 ## 3. Layer tree
 
-- The layers form a tree: Parter, Piętro, Ściany (Styropian, Elewacja, Krawędzie), Okna i drzwi, Stropy, Schody, Kominek, Dach, Teren, Posadzki (Drobne docinki).
-- A child is shown only with its parent: no EPS without walls, no marked cuts without tiles.
-- Every element is assigned to one or more layers, on its own node or on its kind; a floor gives its layer to everything standing on it. An element is drawn only when **all** of its layers are on and the view hides none of them.
+- Floors and roof: Parter, Piętro, Dach. They are layers too, but the menu shows them in a row of their own.
+- Material layers, flat, each a layer of the build: Fundament, Pustaki (the block core), Wieniec i strop, Styropian, Elewacja (the finish), Krawędzie, Okna i drzwi, Schody, Kominek, Posadzki (Drobne docinki), Teren.
+- A wall is drawn in its material layers: its core under Pustaki, its EPS under Styropian, its finish under Elewacja. So each layer of the build can be seen alone (for example only the EPS shell).
+- A child is shown only with its parent: no marked cuts without tiles.
+- Every element is assigned to one or more layers, on its own node, on its kind or on its build-up layer; a floor gives its layer to everything standing on it. An element is drawn only when **all** of its layers are on. An edge line belongs to the piece it is on.
 - Switching a layer changes only what is shown, never the model or the tile counts.
 - A sub-project adds its layers as a branch, for example Kuchnia (Korpusy, Fronty, Blaty, Półki, Nóżki).
 
 ## 4. Menu tree
 
-- **Level 1** (top bar): Cały dom, Parter, Piętro, Rzut 2D.
-- **Level 2**, the context menu of the chosen view:
-  - Cały dom: Spacer (the walk is here only) and its cameras.
-  - Parter, Piętro: their cameras.
-  - Rzut 2D: zoom and download. The 2D plan shows both floors side by side, in the page itself, with the same bars as the 3D view.
-- **Deeper levels**: a view may hold views of its own. Each level gets its own row of the menu, and the last row has the tools of the view in force: cameras, layer switches, plan tools. Example: Parter → Kuchnia → switches for worktops and carcasses.
-- A deeper view inherits from its parent: what the parent hides stays hidden, and the deeper view may hide more, set its own cameras and show its own settings.
-- The panel follows the view:
-  - Przekrój (the cut height) only in views that cut the walls: not in Cały dom.
-  - Cały dom offers only the coarse layers (floors, walls, openings, slabs, stair, fireplace, roof, site); the tiles and their cuts are a matter of the floors.
-  - The floor settings of a room open under its own row in the list of rooms (an accordion, read from top to bottom), only in Parter and Piętro. Rooms with no wall between them (walk-in wardrobes) are tiled with their room.
-  - Rzut 2D has only its own tools: cut height, zoom, download; no rooms, no layers, no light, no room selection.
-  - Pomieszczenia only of the shown floor (both floors in Rzut 2D): name, area, the product on its floor; a click selects the room.
-  - Light only in the 3D views.
+- The menu decides what is shown and from where; the panel holds only the parameters of what the menu has chosen.
+- **Top left**: one toggle 3D / 2D.
+- **3D**, at the top:
+  - first row: Parter, Piętro, Dach as check boxes;
+  - second row: the material layers;
+  - a third row when a room is selected: its name and its sub-project.
+- **3D**, at the bottom: the cameras: Spacer (the walk), the cameras of the house, and those of the open floor.
+- **Help**: an icon in the corner opens the instructions as a popup.
+- **2D**: both floors side by side in the page itself, cut at a fixed height from the data (150 cm). Zoom and SVG download are in the panel.
+- **Deeper levels** later: a view may hold views of its own, each with its own row (Parter → Kuchnia → switches for worktops and carcasses). A deeper view inherits from its parent and may hide more, set its own cameras and show its own settings.
+- The panel follows what is shown:
+  - Przekrój (the cut height) and Pomieszczenia only for the open floor: the highest floor shown with the roof off. With the roof on the house is whole and nothing is cut. At the top of its range the cut is off.
+  - The see-through roof slopes only for an open floor under the roof.
+  - The floor settings of a room open under its own row in the list of rooms (an accordion). Rooms with no wall between them (walk-in wardrobes) are tiled with their room.
+  - 2D: zoom and download only; no rooms, no layers, no light, no room selection.
+  - Light only in 3D.
 
 ## 5. Materials and products
 
@@ -75,4 +88,5 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 ## 7. Not yet done
 
 - No sub-views exist yet: the menu tree has one level under each view.
+- The 55.4 × 94 cm attic wall (x 553.7, z 820.7) fits no build-up; it stays as measured until resolved by hand.
 - The page draws exactly two floors (ground floor and attic under the roof). The tree can hold more, but the drawing of the roof and the stair assumes these two.
