@@ -1064,8 +1064,10 @@ function buildWalls(floor) {
       };
       // the reveal is part of the wall: in front of the glass in the facade's layer, behind it in the wall's own
       const bu = buildUpOf(o.wall), fin = bu && bu.layers.find(l => l.finish);
-      withLayers(fin ? fin.layers : B.wallKinds[o.wall].layers, () => reveal(outer, mid, rules.length ? M[rules[rules.length - 1].material] : M.wall[o.wall]));
-      withLayers(B.wallKinds[o.wall].layers, () => reveal(mid, inner, M.wall[o.wall]));
+      // each lining ends at the frame (it lies on both sides of the glass, its depth to each side), never on it
+      const D = B.windows.frame.depth, dir = Math.sign(inner - outer);
+      withLayers(fin ? fin.layers : B.wallKinds[o.wall].layers, () => reveal(outer, mid - dir * D, rules.length ? M[rules[rules.length - 1].material] : M.wall[o.wall]));
+      withLayers(B.wallKinds[o.wall].layers, () => reveal(mid + dir * D, inner, M.wall[o.wall]));
     }
     withLayers(B.windows.layers, () => {
     if (o.kind === 'window') {
