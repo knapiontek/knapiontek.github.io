@@ -5,11 +5,136 @@
    its thickness, walls meeting only at a corner point are extended into a proper joint, a wall continuing another one with a
    step of up to 13 cm is widened to the same face, and on each floor all edges (walls, openings, rooms, the stair
    hole) closer than 3 cm on one axis share one coordinate.
+   Wall thicknesses follow the build-ups of building.js (outer walls: block 24 + EPS 20 = 44, interior: block 24 or 12):
+   the outer faces stayed where they were measured, the inner face moved; an interior wall kept the face shared with
+   most of its neighbours. The portal wings are the side walls running past the gables, insulated on both sides and
+   the end: EPS 20 + block 24 + EPS 20 = 64, the block in line with the block of the side wall.
+   The view checks every wall against its build-up.
    x across the house from the left outer wall face, z from the garden outer wall face towards the entrance.
-   walls     r = [x1, z1, x2, z2]; kind ext | int | chimney | knee (attic side wall, 120 cm) | gable | rail
-   openings  the part of a wall with a window, door or gate: wall below sill and above head, glass in windows
+   walls     r = [x1, z1, x2, z2]; kind = a key of "walls" in building.js: ext | knee (attic side wall) | gable |
+             portal (the side walls run past the gables) | int24 | int12 | chimney | rail
+   openings  the part of a wall with a window, door, entrance or gate: wall below sill and above head, glass in windows;
+             wall = the wall kind it sits in (its build-up and surfaces)
    rooms     floor areas as rectangles; planArea = the area from the plan (attic: total, incl. under 1.9 m);
-             material = which floor layout of the view covers it (floor | bathGrey | none)
+             layout = the floor layout of floors.js that covers it, or none
    stair     U-shaped: flight1 rises west from the hall (risers 1..12 up to the landing), flight2 rises east to the
              attic floor (risers 13..17); core = the wall between the flights; voids = the stair hole in the attic floor */
-window.HOUSE_PLAN = {"ground": {"walls": [{"r": [0.0, 0.0, 43.4, 760.3], "kind": "ext"}, {"r": [0.0, 963.1, 43.4, 1322.8], "kind": "ext"}, {"r": [43.4, 0.0, 154.5, 43.4], "kind": "ext"}, {"r": [755.5, 0.0, 866.6, 43.4], "kind": "ext"}, {"r": [866.6, 0.0, 910.0, 82.1], "kind": "ext"}, {"r": [866.6, 333.1, 910.0, 470.7], "kind": "ext"}, {"r": [866.6, 651.7, 910.0, 801.4], "kind": "ext"}, {"r": [866.6, 902.8, 910.0, 1322.8], "kind": "ext"}, {"r": [43.4, 1279.3, 113.4, 1322.8], "kind": "ext"}, {"r": [391.0, 1279.3, 453.8, 1322.8], "kind": "ext"}, {"r": [410.3, 1187.6, 453.8, 1279.3], "kind": "ext"}, {"r": [615.5, 1187.6, 661.4, 1231.0], "kind": "ext"}, {"r": [741.0, 1187.6, 866.6, 1231.0], "kind": "ext"}, {"r": [0.0, -101.4, 62.8, 0.0], "kind": "ext"}, {"r": [847.2, -101.4, 910.0, 0.0], "kind": "ext"}, {"r": [0.0, 1322.8, 62.8, 1421.7], "kind": "ext"}, {"r": [847.2, 1231.0, 910.0, 1421.7], "kind": "ext"}, {"r": [43.4, 535.9, 391.0, 547.9], "kind": "int"}, {"r": [391.0, 470.7, 434.5, 547.9], "kind": "chimney"}, {"r": [318.6, 642.1, 434.5, 659.0], "kind": "int"}, {"r": [410.3, 659.0, 434.5, 1064.5], "kind": "int"}, {"r": [410.3, 1151.4, 434.5, 1187.6], "kind": "int"}, {"r": [434.5, 907.6, 487.6, 929.3], "kind": "int"}, {"r": [579.3, 907.6, 615.5, 929.3], "kind": "int"}, {"r": [601.0, 724.1, 866.6, 733.8], "kind": "int"}, {"r": [615.5, 733.8, 627.6, 760.3], "kind": "int"}, {"r": [615.5, 869.0, 627.6, 1064.5], "kind": "int"}, {"r": [615.5, 1156.2, 627.6, 1231.0], "kind": "int"}, {"r": [627.6, 902.8, 729.0, 929.3], "kind": "int"}, {"r": [716.9, 929.3, 729.0, 996.9], "kind": "int"}, {"r": [729.0, 987.2, 866.6, 996.9], "kind": "int"}], "openings": [{"r": [0.0, 760.3, 43.4, 963.1], "sill": 110, "head": 210, "kind": "window"}, {"r": [154.5, 0.0, 755.5, 43.4], "sill": 0, "head": 240, "kind": "window"}, {"r": [866.6, 82.1, 910.0, 333.1], "sill": 0, "head": 240, "kind": "window"}, {"r": [866.6, 470.7, 910.0, 651.7], "sill": 110, "head": 240, "kind": "window"}, {"r": [866.6, 801.4, 910.0, 902.8], "sill": 110, "head": 240, "kind": "window"}, {"r": [113.4, 1279.3, 391.0, 1322.8], "sill": 0, "head": 225, "kind": "gate"}, {"r": [453.8, 1187.6, 615.5, 1231.0], "sill": 0, "head": 210, "kind": "door"}, {"r": [661.4, 1187.6, 741.0, 1231.0], "sill": 0, "head": 210, "kind": "window"}, {"r": [410.3, 1064.5, 434.5, 1151.4], "sill": 0, "head": 205, "kind": "door"}, {"r": [487.6, 907.6, 579.3, 929.3], "sill": 0, "head": 205, "kind": "door"}, {"r": [615.5, 760.3, 627.6, 869.0], "sill": 0, "head": 205, "kind": "door"}, {"r": [615.5, 1064.5, 627.6, 1156.2], "sill": 0, "head": 205, "kind": "door"}], "rooms": [{"name": "Salon z kuchnią i holem", "planArea": 50.55, "rects": [[43.4, 43.4, 391.0, 535.9], [391.0, 43.4, 434.5, 470.7], [434.5, 43.4, 866.6, 535.9], [434.5, 535.9, 866.6, 724.1], [434.5, 724.1, 615.5, 907.6]], "material": "floor"}, {"name": "Wiatrołap", "planArea": 4.84, "rects": [[434.5, 929.3, 615.5, 1187.6]], "material": "floor"}, {"name": "Łazienka", "planArea": 4.95, "rects": [[627.6, 733.8, 866.6, 902.8], [729.0, 902.8, 866.6, 987.2]], "material": "floor"}, {"name": "Kotłownia z pralnią", "planArea": 4.97, "rects": [[627.6, 929.3, 716.9, 996.9], [627.6, 996.9, 866.6, 1187.6]], "material": "floor"}, {"name": "Garaż", "planArea": 25.91, "rects": [[43.4, 659.0, 410.3, 1279.3], [43.4, 547.9, 318.6, 642.1]], "material": "none"}], "fireplace": [335.5, 506.9, 391.0, 535.9], "stair": {"risers": 17, "flight1": {"x": [143.0, 434.5], "z": [547.9, 640.5], "risers": 12}, "landing": {"x": [43.4, 143.0], "z": [547.9, 735.0]}, "flight2": {"x": [143.0, 273.0], "z": [647.7, 735.0]}, "core": [143.0, 640.5, 434.5, 647.7]}}, "attic": {"walls": [{"r": [0, 0.0, 43.4, 1322.8], "kind": "knee"}, {"r": [866.6, 0.0, 910, 1322.8], "kind": "knee"}, {"r": [43.4, 0.0, 156.5, 43.4], "kind": "gable"}, {"r": [755.9, 0.0, 866.6, 43.4], "kind": "gable"}, {"r": [43.4, 1279.3, 168.5, 1322.8], "kind": "gable"}, {"r": [392.4, 1279.3, 522.4, 1322.8], "kind": "gable"}, {"r": [741.5, 1279.3, 866.6, 1322.8], "kind": "gable"}, {"r": [0, -101.4, 62.8, 0.0], "kind": "gable"}, {"r": [847.2, -101.4, 910, 0.0], "kind": "gable"}, {"r": [0, 1322.8, 62.8, 1421.7], "kind": "gable"}, {"r": [847.2, 1322.8, 910, 1421.7], "kind": "gable"}, {"r": [43.4, 364.5, 392.4, 374.1], "kind": "int"}, {"r": [553.7, 364.5, 866.6, 374.1], "kind": "int"}, {"r": [380.4, 465.8, 392.4, 473.2], "kind": "int"}, {"r": [380.4, 473.2, 459.8, 547.9], "kind": "chimney"}, {"r": [553.7, 465.8, 565.7, 651.7], "kind": "int"}, {"r": [553.7, 741.1, 565.7, 820.7], "kind": "int"}, {"r": [43.4, 535.8, 380.4, 547.9], "kind": "int"}, {"r": [548.9, 535.8, 866.6, 547.9], "kind": "int"}, {"r": [565.7, 820.7, 866.6, 832.8], "kind": "int"}, {"r": [553.7, 820.7, 609.1, 914.8], "kind": "int"}, {"r": [609.1, 895.5, 650.0, 914.8], "kind": "int"}, {"r": [43.4, 738.7, 341.9, 748.3], "kind": "int"}, {"r": [329.8, 748.3, 346.7, 902.8], "kind": "int"}, {"r": [43.4, 902.8, 178.1, 914.8], "kind": "int"}, {"r": [260.0, 902.8, 346.7, 914.8], "kind": "int"}, {"r": [443.0, 902.8, 452.6, 1279.3], "kind": "int"}, {"r": [143.0, 642.2, 438.1, 651.7], "kind": "rail"}], "openings": [{"r": [156.5, 0.0, 755.9, 43.4], "sill": 0, "head": 346, "kind": "window"}, {"r": [168.5, 1279.3, 392.4, 1322.8], "sill": 30, "head": 285, "kind": "window"}, {"r": [522.4, 1279.3, 741.5, 1322.8], "sill": 30, "head": 285, "kind": "window"}, {"r": [459.8, 535.8, 553.7, 547.9], "sill": 0, "head": 205, "kind": "door"}, {"r": [553.7, 651.7, 565.7, 741.1], "sill": 0, "head": 205, "kind": "door"}, {"r": [178.1, 902.8, 260.0, 914.8], "sill": 0, "head": 205, "kind": "door"}, {"r": [346.7, 902.8, 443.0, 914.8], "sill": 0, "head": 205, "kind": "door"}, {"r": [452.6, 902.8, 553.7, 914.8], "sill": 0, "head": 205, "kind": "door"}], "rooms": [{"name": "Sypialnia (2)", "planArea": 28.16, "rects": [[43.4, 43.4, 866.6, 364.5], [392.4, 374.1, 553.7, 465.8], [452.6, 465.8, 553.7, 535.8]], "material": "floor"}, {"name": "Garderoba (3)", "planArea": 5.13, "rects": [[43.4, 374.1, 380.4, 535.8]], "material": "floor"}, {"name": "Garderoba (4)", "planArea": 4.6, "rects": [[565.7, 374.1, 866.6, 535.8]], "material": "floor"}, {"name": "Hol (1)", "planArea": 7.32, "rects": [[438.1, 547.9, 553.7, 651.7], [273.0, 651.7, 341.9, 738.7], [341.9, 651.7, 553.7, 902.8]], "material": "floor"}, {"name": "Łazienka (5)", "planArea": 7.99, "rects": [[565.7, 547.9, 866.6, 820.7]], "material": "bathGrey"}, {"name": "Garderoba (8)", "planArea": 4.16, "rects": [[43.4, 748.3, 329.8, 902.8]], "material": "floor"}, {"name": "Pokój (7)", "planArea": 14.11, "rects": [[43.4, 914.8, 443.0, 1279.3]], "material": "floor"}, {"name": "Pokój (6)", "planArea": 16.53, "rects": [[452.6, 914.8, 866.6, 1279.3], [650.0, 832.8, 866.6, 914.8]], "material": "floor"}], "voids": [[43.4, 547.9, 438.1, 642.2], [43.4, 642.2, 273.0, 738.7]]}};
+window.HOUSE_PLAN = {
+ "ground": {
+  "walls": [
+   {"r": [0, 0, 44, 760.3], "kind": "ext"},
+   {"r": [0, 963.1, 44, 1322.8], "kind": "ext"},
+   {"r": [44, 0, 154.5, 44], "kind": "ext"},
+   {"r": [755.5, 0, 866, 44], "kind": "ext"},
+   {"r": [866, 0, 910, 82.1], "kind": "ext"},
+   {"r": [866, 333.1, 910, 470.7], "kind": "ext"},
+   {"r": [866, 651.7, 910, 801.4], "kind": "ext"},
+   {"r": [866, 902.8, 910, 1322.8], "kind": "ext"},
+   {"r": [44, 1278.8, 113.4, 1322.8], "kind": "ext"},
+   {"r": [391, 1278.8, 453.8, 1322.8], "kind": "ext"},
+   {"r": [409.8, 1187, 453.8, 1278.8], "kind": "ext"},
+   {"r": [615.5, 1187, 661.4, 1231], "kind": "ext"},
+   {"r": [741, 1187, 866, 1231], "kind": "ext"},
+   {"r": [0, -101.4, 64, 0], "kind": "portal"},
+   {"r": [846, -101.4, 910, 0], "kind": "portal"},
+   {"r": [0, 1322.8, 64, 1421.7], "kind": "portal"},
+   {"r": [846, 1231, 910, 1421.7], "kind": "portal"},
+   {"r": [44, 535.9, 391, 547.9], "kind": "int12"},
+   {"r": [391, 470.7, 433.8, 547.9], "kind": "chimney"},
+   {"r": [318.6, 647, 433.8, 659], "kind": "int12"},
+   {"r": [409.8, 659, 433.8, 1064.5], "kind": "int24"},
+   {"r": [409.8, 1151.4, 433.8, 1187], "kind": "int24"},
+   {"r": [433.8, 905.3, 487.6, 929.3], "kind": "int24"},
+   {"r": [579.3, 905.3, 615.5, 929.3], "kind": "int24"},
+   {"r": [601, 721.8, 866, 733.8], "kind": "int12"},
+   {"r": [615.5, 733.8, 627.5, 760.3], "kind": "int12"},
+   {"r": [615.5, 869, 627.5, 1064.5], "kind": "int12"},
+   {"r": [615.5, 1156.2, 627.5, 1231], "kind": "int12"},
+   {"r": [627.5, 902.8, 729, 926.8], "kind": "int24"},
+   {"r": [717, 926.8, 729, 996.9], "kind": "int12"},
+   {"r": [729, 984.9, 866, 996.9], "kind": "int12"}
+  ],
+  "openings": [
+   {"r": [0, 760.3, 44, 963.1], "sill": 110, "head": 210, "kind": "window", "wall": "ext"},
+   {"r": [154.5, 0, 755.5, 44], "sill": 0, "head": 240, "kind": "window", "wall": "ext"},
+   {"r": [866, 82.1, 910, 333.1], "sill": 0, "head": 240, "kind": "window", "wall": "ext"},
+   {"r": [866, 470.7, 910, 651.7], "sill": 110, "head": 240, "kind": "window", "wall": "ext"},
+   {"r": [866, 801.4, 910, 902.8], "sill": 110, "head": 240, "kind": "window", "wall": "ext"},
+   {"r": [113.4, 1278.8, 391, 1322.8], "sill": 0, "head": 225, "kind": "gate", "wall": "ext"},
+   {"r": [453.8, 1187, 615.5, 1231], "sill": 0, "head": 210, "kind": "entrance", "wall": "ext"},
+   {"r": [661.4, 1187, 741, 1231], "sill": 0, "head": 210, "kind": "window", "wall": "ext"},
+   {"r": [409.8, 1064.5, 433.8, 1151.4], "sill": 0, "head": 205, "kind": "door", "wall": "int24"},
+   {"r": [487.6, 905.3, 579.3, 929.3], "sill": 0, "head": 205, "kind": "door", "wall": "int24"},
+   {"r": [615.5, 760.3, 627.5, 869], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
+   {"r": [615.5, 1064.5, 627.5, 1156.2], "sill": 0, "head": 205, "kind": "door", "wall": "int12"}
+  ],
+  "rooms": [
+   {"name": "Salon z kuchnią i holem", "planArea": 50.55, "layout": "ground", "rects": [[44, 44, 391, 535.9], [391, 44, 433.8, 470.7], [433.8, 44, 866, 535.9], [433.8, 535.9, 866, 721.8], [433.8, 721.8, 615.5, 905.3]]},
+   {"name": "Wiatrołap", "planArea": 4.84, "layout": "ground", "rects": [[433.8, 929.3, 615.5, 1187]]},
+   {"name": "Łazienka", "planArea": 4.95, "layout": "ground", "rects": [[627.5, 733.8, 866, 902.8], [729, 902.8, 866, 984.9]]},
+   {"name": "Kotłownia z pralnią", "planArea": 4.97, "layout": "ground", "rects": [[627.5, 926.8, 717, 996.9], [627.5, 996.9, 866, 1187]]},
+   {"name": "Garaż", "planArea": 25.91, "layout": "none", "rects": [[44, 659, 409.8, 1278.8], [44, 547.9, 318.6, 642.1]]}
+  ],
+  "fireplace": [335.5, 506.9, 391, 535.9],
+  "stair": {
+   "risers": 17,
+   "flight1": {"x": [143, 433.8], "z": [547.9, 640.5], "risers": 12},
+   "landing": {"x": [44, 143], "z": [547.9, 735]},
+   "flight2": {"x": [143, 273], "z": [647.7, 735]},
+   "core": [143, 640.5, 433.8, 647.7]
+  }
+ },
+ "attic": {
+  "walls": [
+   {"r": [0, 0, 44, 1322.8], "kind": "knee"},
+   {"r": [866, 0, 910, 1322.8], "kind": "knee"},
+   {"r": [44, 0, 156.5, 44], "kind": "gable"},
+   {"r": [755.9, 0, 866, 44], "kind": "gable"},
+   {"r": [44, 1278.8, 168.5, 1322.8], "kind": "gable"},
+   {"r": [392.4, 1278.8, 522.4, 1322.8], "kind": "gable"},
+   {"r": [741.5, 1278.8, 866, 1322.8], "kind": "gable"},
+   {"r": [0, -101.4, 64, 0], "kind": "portal"},
+   {"r": [846, -101.4, 910, 0], "kind": "portal"},
+   {"r": [0, 1322.8, 64, 1421.7], "kind": "portal"},
+   {"r": [846, 1322.8, 910, 1421.7], "kind": "portal"},
+   {"r": [44, 362.1, 392.4, 374.1], "kind": "int12"},
+   {"r": [553.7, 362.1, 866, 374.1], "kind": "int12"},
+   {"r": [380.4, 465.8, 392.4, 473.2], "kind": "int12"},
+   {"r": [380.4, 473.2, 459.8, 547.9], "kind": "chimney"},
+   {"r": [553.7, 465.8, 565.7, 651.7], "kind": "int12"},
+   {"r": [553.7, 741.1, 565.7, 820.7], "kind": "int12"},
+   {"r": [44, 535.9, 380.4, 547.9], "kind": "int12"},
+   {"r": [548.9, 535.9, 866, 547.9], "kind": "int12"},
+   {"r": [565.7, 820.7, 866, 832.7], "kind": "int12"},
+   {"r": [553.7, 820.7, 609.1, 914.8], "kind": "int24"},
+   {"r": [609.1, 890.8, 650, 914.8], "kind": "int24"},
+   {"r": [44, 738.7, 341.9, 750.7], "kind": "int12"},
+   {"r": [329.9, 750.7, 341.9, 902.8], "kind": "int12"},
+   {"r": [44, 902.8, 178.1, 914.8], "kind": "int12"},
+   {"r": [260, 902.8, 346.7, 914.8], "kind": "int12"},
+   {"r": [440.6, 902.8, 452.6, 1278.8], "kind": "int12"},
+   {"r": [143, 642.2, 438.1, 651.7], "kind": "rail"}
+  ],
+  "openings": [
+   {"r": [156.5, 0, 755.9, 44], "sill": 0, "head": 346, "kind": "window", "wall": "gable"},
+   {"r": [168.5, 1278.8, 392.4, 1322.8], "sill": 30, "head": 285, "kind": "window", "wall": "gable"},
+   {"r": [522.4, 1278.8, 741.5, 1322.8], "sill": 30, "head": 285, "kind": "window", "wall": "gable"},
+   {"r": [459.8, 535.9, 553.7, 547.9], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
+   {"r": [553.7, 651.7, 565.7, 741.1], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
+   {"r": [178.1, 902.8, 260, 914.8], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
+   {"r": [346.7, 902.8, 440.6, 914.8], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
+   {"r": [452.6, 902.8, 553.7, 914.8], "sill": 0, "head": 205, "kind": "door", "wall": "int12"}
+  ],
+  "rooms": [
+   {"name": "Sypialnia (2)", "planArea": 28.16, "layout": "attic", "rects": [[44, 44, 866, 362.1], [392.4, 374.1, 553.7, 465.8], [452.6, 465.8, 553.7, 535.9]]},
+   {"name": "Garderoba (3)", "planArea": 5.13, "layout": "attic", "rects": [[44, 374.1, 380.4, 535.9]]},
+   {"name": "Garderoba (4)", "planArea": 4.6, "layout": "attic", "rects": [[565.7, 374.1, 866, 535.9]]},
+   {"name": "Hol (1)", "planArea": 7.32, "layout": "attic", "rects": [[438.1, 547.9, 553.7, 651.7], [273, 651.7, 341.9, 738.7], [341.9, 651.7, 553.7, 902.8]]},
+   {"name": "Łazienka (5)", "planArea": 7.99, "layout": "bathGrey", "rects": [[565.7, 547.9, 866, 820.7]]},
+   {"name": "Garderoba (8)", "planArea": 4.16, "layout": "attic", "rects": [[44, 750.7, 329.9, 902.8]]},
+   {"name": "Pokój (7)", "planArea": 14.11, "layout": "attic", "rects": [[44, 914.8, 440.6, 1278.8]]},
+   {"name": "Pokój (6)", "planArea": 16.53, "layout": "attic", "rects": [[452.6, 914.8, 866, 1278.8], [650, 832.7, 866, 914.8]]}
+  ],
+  "voids": [[44, 547.9, 438.1, 642.2], [44, 642.2, 273, 738.7]]
+ }
+};

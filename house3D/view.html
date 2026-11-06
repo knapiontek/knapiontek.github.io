@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Posadzki Papawery 5</title>
+<title>Posadzki domu</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -152,8 +152,8 @@ td select{padding:3px 4px;font-size:12px}
   </div>
 
   <aside>
-    <h1>Posadzki · Dom w papawerach 5 (G)</h1>
-    <p class="sub">Rzuty z archon.pl w skali (ok. ±3 cm). Płytki układane od nowa przy każdej zmianie.</p>
+    <h1 id="title"></h1>
+    <p class="sub" id="subtitle"></p>
 
     <h2>Widok</h2>
     <div class="lay" style="padding:0">
@@ -177,10 +177,11 @@ td select{padding:3px 4px;font-size:12px}
     <h2>Pomieszczenia</h2>
     <table id="rooms"></table>
 
+    <h2>Ściany</h2>
+    <div id="walls"></div>
+
     <h2>Uwagi</h2>
-    <p class="note">Tekstury z Twojego repo: Authority z <code>bath/textures.js</code> (zdjęcie jednej płytki 898 mm), dąb to dekory Egger z <code>kitchen</code> i <code>bath</code>, użyte zastępczo za gres drewnopodobny. Rozmiar, fugę i tekstura zmieniasz niezależnie od produktu.<br>
-    „Ułóż automatycznie” szuka przesunięcia, przy którym przy ścianach nie ma pasków węższych niż 1/3 płytki (deska: końcówki krótsze niż 20 cm) i docinki w największym pomieszczeniu są symetryczne. Liczba płytek zakłada, że każdy docinek zużywa osobną płytkę.<br>
-    Piętro: ścianka kolankowa 120 cm, dach 42°. Schody zabiegowe w kształcie U (17 stopni po 17,5 cm) odczytane z rzutów: bieg z holu na zachód, spocznik przy ścianie, bieg powrotny nad garażem do holu piętra.</p>
+    <p class="note" id="notes"></p>
   </aside>
 </div>
 
@@ -191,13 +192,14 @@ td select{padding:3px 4px;font-size:12px}
 <script src="textures.js"></script>
 <script src="plan.js"></script>
 <script src="building.js"></script>
+<script src="floors.js"></script>
 <script>
 (function(){
 'use strict';
 const loading = document.getElementById('loading');
 if (!window.THREE || !THREE.OrbitControls) { loading.textContent = 'Nie można wczytać silnika 3D. Odśwież stronę.'; return; }
-if (!window.HOUSE_TEXTURES || !window.HOUSE_PLAN || !window.HOUSE_BUILDING) { loading.textContent = 'Nie wczytały się dane domu (textures.js, plan.js, building.js).'; return; }
-const TEX = window.HOUSE_TEXTURES, PLAN = window.HOUSE_PLAN;
+if (!window.HOUSE_TEXTURES || !window.HOUSE_PLAN || !window.HOUSE_BUILDING || !window.HOUSE_FLOORS) { loading.textContent = 'Nie wczytały się dane domu (textures.js, plan.js, building.js, floors.js).'; return; }
+const TEX = window.HOUSE_TEXTURES, PLAN = window.HOUSE_PLAN, FLOORS = window.HOUSE_FLOORS;
 let needsRender = true;
 const walk = { on: false, x: window.HOUSE_BUILDING.walk.start.x, z: window.HOUSE_BUILDING.walk.start.z, y: 0, yaw: window.HOUSE_BUILDING.walk.start.heading * Math.PI / 180, pitch: -0.06, keys: {}, prevMode: 'ground' };
 
@@ -208,55 +210,42 @@ const KNEE = B.roof.knee, PITCH = Math.tan(B.roof.pitch * Math.PI / 180);
 const knees = PLAN.attic.walls.filter(w => w.kind === 'knee').map(w => w.r).sort((a, b) => a[0] - b[0]);
 const XL = knees[0][2], XR = knees[1][0], XM = (XL + XR) / 2, RIDGE = KNEE + PITCH * (XR - XL) / 2;
 const WIDTH = knees[1][2];
-const LENGTH = Math.max(...PLAN.ground.walls.filter(w => w.r[1] >= 0 && (w.r[0] < 1 || w.r[2] > WIDTH - 1) && w.r[2] - w.r[0] < 50).map(w => w.r[3]));   // the end of the side walls = the front gable face (the portal wings are wider)
+const LENGTH = Math.max(...PLAN.ground.walls.filter(w => !B.walls[w.kind].wing).map(w => w.r[3]));   // the front gable face
 const roofHeight = x => KNEE + PITCH * Math.max(0, Math.min(x - XL, XR - x));
 const FLOOR_NAMES = { ground: 'Parter', attic: 'Piętro' };
+const buildUpOf = kind => kind && B.walls[kind].buildUp ? B.buildUps[B.walls[kind].buildUp] : null;
+const coreThickness = bu => bu.layers[0].thickness;
+const outerThickness = bu => bu.layers.slice(1).reduce((s, l) => s + l.thickness, 0);
+const thicknessWith = (bu, outsideSides) => coreThickness(bu) + outerThickness(bu) * outsideSides;
 
 /* ================= 2. PRODUCTS AND PATTERNS ================= */
-const PRODUCTS = {
-  authorityGraphite: { name: 'Paradyż My Way Authority Graphite', note: 'gres szkliwiony rekt., mat, 8 mm', texture: 'authorityGraphite', len: 898, wid: 898, joint: 2, pattern: 'grid', price: 119.92,
-    link: 'https://www.abcplytki.pl/authority-paradyz-my-way/10702-paradyz-my-way-authority-graphite-gres-szkl-rekt-mat-898x898-g1' },
-  authorityGrey: { name: 'Paradyż My Way Authority Grey', note: 'gres szkliwiony rekt., mat, 8 mm', texture: 'authorityGrey', len: 898, wid: 898, joint: 2, pattern: 'grid', price: 135.91,
-    link: 'https://www.abcplytki.pl/authority-paradyz-my-way/10703-paradyz-my-way-authority-grey-gres-szkl-rekt-mat-898x898-g1' },
-  authorityGrey80: { name: 'Authority Grey 79,8×79,8 (format z projektu łazienki)', note: 'format jak w bath/data.js', texture: 'authorityGrey', len: 798, wid: 798, joint: 2, pattern: 'grid', price: null,
-    link: 'https://www.abcplytki.pl/authority-paradyz-my-way/10703-paradyz-my-way-authority-grey-gres-szkl-rekt-mat-898x898-g1' },
-  logOak: { name: 'Atlas Concorde Log Icon Oak Forest 30×120', note: 'gres z efektem dębu; sprawdź wersję wewnętrzną 9 mm', texture: 'H1180', len: 1200, wid: 300, joint: 2, pattern: 'third', price: null,
-    link: 'https://www.atlasconcorde.com/pl/ac-kolekcja/log/icon-oak-forest/outdoor-sensitech-30x120-20-ax4a' },
-  brooks: { name: 'Gres Brooks 30×120 (Castorama)', note: 'brązowe drewno, mat, R9, PEI 4; 79,17 zł za 1,44 m² w promocji', texture: 'H1181', len: 1200, wid: 300, joint: 2, pattern: 'third', price: 54.98,
-    link: 'https://www.castorama.pl/gres-brooks-30-x-120-cm-1-44-m2/5901503230480_CAPL.prd' },
-  egenLux: { name: 'Egen Lux Beige Carving 20×120 (Leroy Merlin)', note: 'rektyfikowany, mat, 9 mm', texture: 'H1180', len: 1200, wid: 200, joint: 2, pattern: 'third', price: 149,
-    link: 'https://www.leroymerlin.pl/produkty/gres-szkliwiony-lux-beige-carving-20x120-egen-86508645.html' },
-  oredessa: { name: 'Arte Oredessa Wood Beige 19×119,8 (Leroy Merlin)', note: 'gres szkliwiony drewnopodobny', texture: 'H1176', len: 1198, wid: 190, joint: 2, pattern: 'third', price: null,
-    link: 'https://www.leroymerlin.pl/produkty/gres-szkliwiony-oredessa-wood-beige-19x119-8-arte-94085002.html' },
-};
+const PRODUCTS = FLOORS.products;
 const PATTERNS = { grid: 'Prosto (siatka)', half: 'Przesunięcie 1/2', third: 'Przesunięcie 1/3', quarter: 'Przesunięcie 1/4', random: 'Losowo' };
 const STAGGER = { grid: 0, half: 1 / 2, third: 1 / 3, quarter: 1 / 4 };
 const DIRS = { z: 'Wzdłuż domu (do ogrodu)', x: 'W poprzek domu' };
 
-const DEFAULT_LAYOUTS = {
-  ground:   { label: 'Parter', floor: 'ground', product: 'authorityGraphite', dir: 'z', oa: 0, ob: 0 },
-  attic:    { label: 'Piętro', floor: 'attic', product: 'logOak', dir: 'z', oa: 0, ob: 0 },
-  bathGrey: { label: 'Łazienka na piętrze', floor: 'attic', product: 'authorityGrey80', dir: 'z', oa: 0, ob: 0 },
-};
 function applyProduct(L, key) {
   const p = PRODUCTS[key];
   Object.assign(L, { product: key, texture: p.texture, len: p.len, wid: p.wid, joint: p.joint, pattern: p.pattern, grout: TEX[p.texture].grout });
 }
 
 /* ================= 3. STATE (remembered per viewer) ================= */
-const STORE = 'house-floors-v1';
-const B0 = window.HOUSE_BUILDING;
+const STORE = 'house-floors-v2';    // a new key when the data format changes: old states are dropped, not converted
 let state;
 function freshState() {
-  const s = { mode: 'ground', cut: 150, showCuts: true, showRoof: false, sunAzimuth: B0.light.sun.azimuth, sunElevation: B0.light.sun.elevation, brightness: 1, layouts: {}, rooms: {}, auto: {} };
-  for (const k in DEFAULT_LAYOUTS) { s.layouts[k] = Object.assign({}, DEFAULT_LAYOUTS[k]); applyProduct(s.layouts[k], s.layouts[k].product); s.auto[k] = true; }
-  for (const f of ['ground', 'attic']) s.rooms[f] = PLAN[f].rooms.map(r => r.material === 'floor' ? f : r.material);
+  const s = { mode: 'ground', cut: 150, showCuts: true, showRoof: false, sunAzimuth: B.light.sun.azimuth, sunElevation: B.light.sun.elevation, brightness: 1, layouts: {}, rooms: {}, auto: {} };
+  for (const k in FLOORS.layouts) {
+    const d = FLOORS.layouts[k];
+    s.layouts[k] = { label: d.label, floor: d.floor, dir: d.dir, oa: 0, ob: 0 };
+    applyProduct(s.layouts[k], d.product); s.auto[k] = true;
+  }
+  for (const f of ['ground', 'attic']) s.rooms[f] = PLAN[f].rooms.map(r => r.layout);
   return s;
 }
 try { state = JSON.parse(localStorage.getItem(STORE)); } catch (e) { state = null; }
-if (!state || !state.layouts || !state.layouts.bathGrey) state = freshState();
-if (state.sunAzimuth === undefined) { state.sunAzimuth = B0.light.sun.azimuth; state.sunElevation = B0.light.sun.elevation; }
-if (state.brightness === undefined || state.lightVersion !== 2) { state.brightness = 1; state.lightVersion = 2; }
+const stateFits = st => st && st.layouts && Object.keys(st.layouts).join() === Object.keys(FLOORS.layouts).join()
+  && Object.values(st.layouts).every(L => PRODUCTS[L.product] && TEX[L.texture]);
+if (!stateFits(state)) state = freshState();
 function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
 
 /* ================= 4. TILE LAYOUT (pure) ================= */
@@ -467,8 +456,7 @@ const M = {};
 for (const k in B.materials) M[k] = makeMaterial(B.materials[k]);
 M.ghost = new THREE.MeshStandardMaterial({ color: lin('#f2f0ea'), roughness: 0.9, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false });
 M.wall = {};
-for (const k in B.walls) M.wall[k] = M[B.walls[k]];
-M.int = M.wall.int;
+for (const k in B.walls) M.wall[k] = M[B.walls[k].material];
 M.groove = new THREE.MeshStandardMaterial({ color: lin(B.gate.groove), roughness: 0.8 });
 M.edge = new THREE.LineBasicMaterial({ color: lin(B.edges.color), transparent: true, opacity: B.edges.opacity, depthWrite: false });
 const EDGED = new Set([...Object.values(M.wall), M[B.faces.default], M[B.roof.body]].filter(m => m !== M[B.windows.glass]));
@@ -539,15 +527,15 @@ const ST = PLAN.ground.stair, rise = LEVEL.attic / ST.risers, STAIR_BOXES = [];
   for (let i = 1; i < n1; i++) STAIR_BOXES.push([f1.x[1] - i * run1, f1.z[0], f1.x[1] - (i - 1) * run1, f1.z[1], i * rise]);
   STAIR_BOXES.push([ST.landing.x[0], ST.landing.z[0], ST.landing.x[1], ST.landing.z[1], n1 * rise]);
   for (let j = 1; j < n2; j++) STAIR_BOXES.push([f2.x[0] + (j - 1) * run2, f2.z[0], f2.x[0] + j * run2, f2.z[1], (n1 + j) * rise]);
-  for (const b of STAIR_BOXES) box(b[0], b[4] - 5, b[1] + 0.5, b[2], b[4], b[3] - 0.5, M.tread, groups.ground);
-  const c = ST.core; box(c[0], 0, c[1], c[2], GROUND_H, c[3], M.int, groups.ground);
+  for (const b of STAIR_BOXES) box(b[0], b[4] - 5, b[1] + 0.5, b[2], b[4], b[3] - 0.5, M[B.stair.tread], groups.ground);
+  const c = ST.core; box(c[0], 0, c[1], c[2], GROUND_H, c[3], M[B.stair.core], groups.ground);
 })();
 const FP = PLAN.ground.fireplace;
-box(FP[0], 0, FP[1], FP[2], 105, FP[3], M.fireplace, groups.ground);
+box(FP[0], 0, FP[1], FP[2], B.fireplace.height, FP[3], M[B.fireplace.material], groups.ground);
 const CORE_WALL = ST.core;
 // roof: a slab over the whole length incl. the portals; body = the portal band, covering = the roof surface
 const ZS = PLAN.ground.walls.reduce((m, w) => [Math.min(m[0], w.r[1]), Math.max(m[1], w.r[3])], [0, 0]);
-const ROOF_T = B.roof.thickness / Math.cos(B.roof.pitch * Math.PI / 180);
+const ROOF_T = thicknessWith(B.buildUps[B.roof.buildUp], 2) / Math.cos(B.roof.pitch * Math.PI / 180);   // the portal frame section, vertical
 const under = x => KNEE + PITCH * (Math.min(x, WIDTH - x) - XL);           // roof underside above the attic floor
 const roofSolid = new THREE.Group(), roofGhost = new THREE.Group(); root.add(roofSolid, roofGhost);
 (function buildRoof() {
@@ -581,18 +569,79 @@ function updateRoof() {
 /* ================= 7. WALLS (rebuilt with the cut height) ================= */
 // The wall rectangles of plan.js overlap where walls meet (they were read from the plan image). The footprint of a
 // floor is rebuilt as a grid of all their edges: every cell gets one owner (an opening before a wall, stronger wall
-// kinds before weaker), and cells with the same owner, facade face and finish merge into rectangles that never overlap.
-const KIND_RANK = { chimney: 6, ext: 5, gable: 4, knee: 3, int: 2, rail: 1 };
+// kinds before weaker), and cells with the same owner, facade face, finish and layer merge into rectangles that never
+// overlap.
+// The outer layers (EPS) are the parts of a wall closer to the air than their depth: a point lies in the outer layer
+// when a square of 2 x 20 cm around it reaches air (anything not covered by the plan: walls, openings, rooms, stair,
+// hole). So a house wall gets 20 on its outer side, a portal wing 20 on both sides and on its end, and at a corner
+// the EPS of the gable runs on into the EPS of the wing while the blocks meet the blocks.
+function planCover(floor) {
+  const P = PLAN[floor], st = P.stair, part = p => [p.x[0], p.z[0], p.x[1], p.z[1]];
+  return P.walls.map(w => w.r).concat(P.openings.map(o => o.r), P.rooms.flatMap(r => r.rects), P.voids || [],
+    P.fireplace ? [P.fireplace] : [], st ? [part(st.flight1), part(st.landing), part(st.flight2), st.core] : []);
+}
+// is the rectangle [x1, z1, x2, z2] fully covered? (a grid of the cover edges with prefix sums of the air cells)
+function coverTest(cover) {
+  const xs = [...new Set(cover.flatMap(r => [r[0], r[2]]))].sort((a, b) => a - b);
+  const zs = [...new Set(cover.flatMap(r => [r[1], r[3]]))].sort((a, b) => a - b);
+  const nx = xs.length - 1, nz = zs.length - 1, sum = new Int32Array((nx + 1) * (nz + 1));
+  for (let i = 0; i < nz; i++) for (let k = 0; k < nx; k++) {
+    const cx = (xs[k] + xs[k + 1]) / 2, cz = (zs[i] + zs[i + 1]) / 2;
+    const air = cover.some(r => cx > r[0] && cx < r[2] && cz > r[1] && cz < r[3]) ? 0 : 1;
+    sum[(i + 1) * (nx + 1) + k + 1] = air + sum[i * (nx + 1) + k + 1] + sum[(i + 1) * (nx + 1) + k] - sum[i * (nx + 1) + k];
+  }
+  const first = (a, v) => { let k = 0; while (k < a.length && a[k] <= v) k++; return k - 1; };   // the cell holding v
+  const last = (a, v) => { let k = a.length - 1; while (k >= 0 && a[k] >= v) k--; return k; };
+  return (x1, z1, x2, z2) => {
+    if (x1 < xs[0] || z1 < zs[0] || x2 > xs[nx] || z2 > zs[nz]) return false;   // reaches past everything: air
+    const k1 = first(xs, x1), k2 = last(xs, x2), i1 = first(zs, z1), i2 = last(zs, z2);
+    const air = sum[(i2 + 1) * (nx + 1) + k2 + 1] - sum[i1 * (nx + 1) + k2 + 1] - sum[(i2 + 1) * (nx + 1) + k1] + sum[i1 * (nx + 1) + k1];
+    return air === 0;
+  };
+}
+const layerStrips = {};
+function layerStripsOf(floor) {
+  if (layerStrips[floor]) return layerStrips[floor];
+  const cover = planCover(floor), covered = coverTest(cover), out = [];
+  const owners = PLAN[floor].walls.map(w => ({ r: w.r, kind: w.kind })).concat(PLAN[floor].openings.map(o => ({ r: o.r, kind: o.wall })));
+  for (const w of owners) {
+    const bu = buildUpOf(w.kind); if (!bu || bu.layers.length < 2) continue;
+    const r = w.r, depths = [0];                              // from the outside in: layer k between depths[k] and depths[k + 1]
+    for (let k = bu.layers.length - 1; k > 0; k--) depths.push(depths[depths.length - 1] + bu.layers[k].thickness);
+    const lines = (lo, hi, edges) => [...new Set([lo, hi, ...edges.flatMap(e => depths.flatMap(d => [e - d, e + d]))].filter(v => v >= lo && v <= hi))].sort((a, b) => a - b);
+    const xs = lines(r[0], r[2], cover.flatMap(c => [c[0], c[2]])), zs = lines(r[1], r[3], cover.flatMap(c => [c[1], c[3]]));
+    for (let i = 0; i < zs.length - 1; i++) for (let k = 0; k < xs.length - 1; k++) {
+      const cx = (xs[k] + xs[k + 1]) / 2, cz = (zs[i] + zs[i + 1]) / 2;
+      const depth = depths.findIndex((d, j) => j > 0 && !covered(cx - d, cz - d, cx + d, cz + d));
+      if (depth < 1) continue;                                 // the core
+      const L = bu.layers[bu.layers.length - depth];
+      if (L.material) out.push({ material: L.material, r: [xs[k], zs[i], xs[k + 1], zs[i + 1]] });
+    }
+  }
+  return layerStrips[floor] = out;
+}
+// how many of the two sides of a wall across an axis face air (a house wall 1, a portal wing 2)
+function outsideSides(floor, r, axis) {
+  const covered = coverTest(planCover(floor)), e = 0.5;
+  const open = axis === 'x' ? [[r[0] - e, r[1], r[0], r[3]], [r[2], r[1], r[2] + e, r[3]]] : [[r[0], r[1] - e, r[2], r[1]], [r[0], r[3], r[2], r[3] + e]];
+  return open.filter(q => !covered(...q)).length;
+}
 const footprints = {};
 function footprint(floor) {
   if (footprints[floor]) return footprints[floor];
-  const q = v => Math.round(v * 10) / 10, P = PLAN[floor];
-  const items = P.walls.map(w => ({ r: w.r.map(q), kind: w.kind, rank: KIND_RANK[w.kind] }))
-    .concat(P.openings.map((o, i) => ({ r: o.r.map(q), kind: 'ext', rank: 10, opening: i })));
-  const xs = [...new Set(items.flatMap(it => [it.r[0], it.r[2]]))].sort((a, b) => a - b);
-  const zs = [...new Set(items.flatMap(it => [it.r[1], it.r[3]]))].sort((a, b) => a - b);
+  const q = v => Math.round(v * 10) / 10, P = PLAN[floor], layers = layerStripsOf(floor);
+  const openingRank = Math.max(...Object.values(B.walls).map(k => k.rank)) + 1;
+  const items = P.walls.map(w => ({ r: w.r.map(q), kind: w.kind, rank: B.walls[w.kind].rank }))
+    .concat(P.openings.map((o, i) => ({ r: o.r.map(q), kind: o.wall, rank: openingRank, opening: i })));
+  const xs = items.flatMap(it => [it.r[0], it.r[2]]).concat(layers.flatMap(l => [l.r[0], l.r[2]]));
+  const zs = [...new Set(items.flatMap(it => [it.r[1], it.r[3]]).concat(layers.flatMap(l => [l.r[1], l.r[3]])).map(q))].sort((a, b) => a - b);
   for (const f of B.finishes) if (f.floor === floor) xs.push(...f.x);
   const ux = [...new Set(xs.map(q))].sort((a, b) => a - b);
+  const layerAt = (cx, cz, kind) => {
+    if (!buildUpOf(kind)) return null;
+    const l = layers.find(l => l.material && cx > l.r[0] && cx < l.r[2] && cz > l.r[1] && cz < l.r[3]);
+    return l ? l.material : null;
+  };
   const owner = (cx, cz) => {
     let best = null;
     for (const it of items) if (cx > it.r[0] && cx < it.r[2] && cz > it.r[1] && cz < it.r[3] && (!best || it.rank > best.rank)) best = it;
@@ -611,8 +660,9 @@ function footprint(floor) {
         if (face === 'garden' && owner((x1 + x2) / 2, z1 - 1)) face = null;
         if (face === 'front' && owner((x1 + x2) / 2, z2 + 1)) face = null;
         const fin = face ? finishOf(face, floor, x1, x2) : null;
-        cell = { kind: it.kind, opening: it.opening, face, finish: fin };
-        key = [it.kind, it.opening ?? '', face || '', fin ? B.finishes.indexOf(fin) : ''].join('|');
+        const layer = layerAt((x1 + x2) / 2, cz, it.kind);
+        cell = { kind: it.kind, opening: it.opening, face, finish: fin, layer };
+        key = [it.kind, it.opening ?? '', face || '', fin ? B.finishes.indexOf(fin) : '', layer || ''].join('|');
       }
       if (run && key === run.key && x1 === run.r[2]) { run.r[2] = x2; continue; }
       if (run) strips.push(run);
@@ -718,7 +768,6 @@ function finishOf(face, floor, x1, x2) {
   for (const f of B.finishes) if (f.face === face && f.floor === floor && x1 >= f.x[0] - 1 && x2 <= f.x[1] + 1) return f;
   return null;
 }
-const entranceOf = (floor, r) => { const E = B.doors.entrance; return E && E.floor === floor && E.opening.every((v, i) => Math.abs(v - r[i]) < 1) ? E : null; };
 const windowLine = x => roofHeight(x) - B.windows.attic.inset;      // the line of the attic window tops, extended
 function skin(r0, y0, bottom, top, grp, breaks, floor, face, f) {
   if (!face) return;
@@ -765,6 +814,8 @@ function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX, opt) {
     if (p2 - p1 > 40 && low >= T + W / 2 + 25) member(p1 + W / 2, p2 - W / 2, T - W / 2, T + W / 2);
   }
 }
+// the layer (EPS) seen in the cut: a thin cap of its colour on the top of the wall
+const cap = (r, y0, top, mat, grp, breaks) => prism(r[0], r[1], r[2], r[3], y0, top, x => num(top)(x) + 0.6, mat, grp, breaks);
 function buildWalls(floor) {
   const grp = wallGroups[floor]; clearGroup(grp);
   const full = isFull(), y0 = LEVEL[floor], cut = full ? 10000 : state.cut;
@@ -776,10 +827,9 @@ function buildWalls(floor) {
   const breaks = attic ? [XL, XM, XR, c1, c2, WIDTH - XL, XL] : [];
   // the outer walls carry the slab up to the attic floor only in the full house; with the attic hidden every wall ends
   // at the same height (the cut, at most the ceiling)
-  const groundTop = kind => kind === 'ext' && full ? () => LEVEL.attic : () => Math.min(cut, GROUND_H);
-  const wallTop = kind => attic
-    ? (kind === 'rail' ? () => Math.min(cut, 100) : x => Math.min(cut, roofHeight(x)))   // one roof line for every attic wall
-    : groundTop(kind);
+  const fixedTop = kind => B.walls[kind].height === undefined ? null : () => Math.min(cut, B.walls[kind].height);
+  const groundTop = kind => B.walls[kind].upToAtticFloor && full ? () => LEVEL.attic : () => Math.min(cut, GROUND_H);
+  const wallTop = kind => fixedTop(kind) || (attic ? x => Math.min(cut, roofHeight(x)) : groundTop(kind));   // one roof line for every attic wall
   const skinTop = top => top;
   const portalTop = full && B.portals.groundWingsTo === 'attic' ? LEVEL.attic : GROUND_H;
   const fullTop = attic ? roofHeight : () => full ? LEVEL.attic : GROUND_H;
@@ -800,13 +850,15 @@ function buildWalls(floor) {
       const top = portal ? () => Math.min(cut, portalTop) : wallTop(c.kind);
       prism(r[0], r[1], r[2], r[3], y0, 0, top, M.wall[c.kind], grp, breaks);
       skin(r, y0, 0, skinTop(top), grp, breaks, floor, c.face, c.finish);
+      if (c.layer && !full) cap(r, y0, top, M[c.layer], grp, breaks);
     } else {
-      const o = PLAN[floor].openings[c.opening], top = wallTop('ext'), { head } = openingHead(o, top);
+      const o = PLAN[floor].openings[c.opening], top = wallTop(c.kind), { head } = openingHead(o, top);
       const below = x => Math.min(o.sill, top(x));
-      prism(r[0], r[1], r[2], r[3], y0, 0, below, M.wall.ext, grp, breaks); skin(r, y0, 0, below, grp, breaks, floor, c.face, c.finish);
+      prism(r[0], r[1], r[2], r[3], y0, 0, below, M.wall[c.kind], grp, breaks); skin(r, y0, 0, below, grp, breaks, floor, c.face, c.finish);
+      if (c.layer && !full && cut < o.sill) cap(r, y0, below, M[c.layer], grp, breaks);
       const interiorDoor = o.kind === 'door' && !facadeFace(o.r) && B.doors.interiorLintels === 'fullHeight';
       if (openingWhole(o) && (!interiorDoor || full || cut >= GROUND_H)) {   // the wall above: only with the whole opening
-        prism(r[0], r[1], r[2], r[3], y0, head, top, M.wall.ext, grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
+        prism(r[0], r[1], r[2], r[3], y0, head, top, M.wall[c.kind], grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
       }
     }
   }
@@ -820,7 +872,7 @@ function buildWalls(floor) {
     const mid = outer === null ? (thinX ? (r[0] + r[2]) / 2 : (r[1] + r[3]) / 2) : outer + (outer === (thinX ? r[0] : r[1]) ? SB : -SB);
     const gx = thinX ? [mid - 1, mid + 1] : [r[0], r[2]];
     const gz = thinX ? [r[1], r[3]] : [mid - 1, mid + 1];
-    if (face && o.kind !== 'door' || entranceOf(floor, r)) {   // the reveal in front of the glass gets the facade finish
+    if (face && o.kind !== 'door') {   // the reveal in front of the glass (or the entrance) gets the facade finish
       const lin = M[F.default], t = 0.8, face1 = outer + (outer === (thinX ? r[0] : r[1]) ? -1 : 1);   // up to the facade layer
       const za = Math.min(face1, mid), zb = Math.max(face1, mid);
       prism(r[0], za, r[2], zb, y0, head, x => head(x) + t, lin, grp, breaks);
@@ -839,8 +891,8 @@ function buildWalls(floor) {
         const y = o.sill + i * H / (n + 1);
         prism(r[0] + 4, zf, r[2] - 4, zf + 0.4, y0, y - 0.6, y + 0.6, M.groove, grp, []);
       }
-    } else if (o.kind === 'door' && entranceOf(floor, r)) {
-      const E = entranceOf(floor, r), zc = (gz[0] + gz[1]) / 2, left = E.hinge === 'left';
+    } else if (o.kind === 'entrance') {
+      const E = B.doors.entrance, zc = (gz[0] + gz[1]) / 2, left = E.hinge === 'left';
       const l1 = left ? r[0] : r[2] - E.leaf, l2 = left ? r[0] + E.leaf : r[2];
       prism(l1, zc - 3, l2, zc + 3, y0, o.sill, o.head, M[E.material], grp, []);          // the leaf
       for (let i = 1; i <= E.grooves; i++) { const y = o.sill + i * (o.head - o.sill) / (E.grooves + 1); prism(l1 + 3, zc + 3, l2 - 3, zc + 3.4, y0, y - 0.5, y + 0.5, M.groove, grp, []); }
@@ -938,7 +990,7 @@ function setMode(mode, keepCamera) {
   for (const c of CAMERAS[mode]) { const b = document.createElement('button'); b.textContent = c[0]; b.onclick = () => { setWalk(false); setCamera(c); }; cams.appendChild(b); }
   if (!keepCamera) setCamera(CAMERAS[mode][mode === 'all' ? 0 : 1]);
   if (walk.on) return;
-  for (const d of document.querySelectorAll('#layouts details')) d.open = mode === 'all' ? d.dataset.key !== 'bathGrey' : d.dataset.floor === mode && d.dataset.key !== 'bathGrey';
+  for (const d of document.querySelectorAll('#layouts details')) d.open = (mode === 'all' || d.dataset.floor === mode) && FLOORS.layouts[d.dataset.key].panelOpen !== false;
   save(); requestRender();
 }
 
@@ -986,14 +1038,14 @@ function refreshLayoutPanel(key) {
   $('texture').value = L.texture; $('pattern').value = L.pattern; $('product').value = L.product; $('grout').value = L.grout || TEX[L.texture].grout;
   const sumEl = document.getElementById('sum-' + key);
   if (!st || !st.rooms.length) { $('stats').innerHTML = '<dt>Brak pomieszczeń z tą posadzką</dt><dd></dd>'; sumEl.textContent = '—'; return; }
-  const tileM2 = L.len * L.wid / 1e6, buy = st.area * 1.1, price = p.price;
+  const tileM2 = L.len * L.wid / 1e6, buy = st.area * (1 + FLOORS.reserve), price = p.price;
   const smallChip = st.small ? `<span class="chip warn">${st.small}</span>` : '<span class="chip ok">0</span>';
   $('stats').innerHTML =
     `<dt>Powierzchnia</dt><dd>${fmt(st.area, 2)} m²</dd>` +
     `<dt>Płytek bez odzysku docinków</dt><dd>${st.tiles} szt. · ${fmt(st.tiles * tileM2, 2)} m²</dd>` +
     `<dt>Całe / cięte kawałki</dt><dd>${st.full} / ${st.cut}</dd>` +
     `<dt>Drobne docinki</dt><dd>${smallChip}</dd>` +
-    `<dt>Zakup z zapasem 10 %</dt><dd>${fmt(buy, 2)} m²</dd>` +
+    `<dt>Zakup z zapasem ${fmt(FLOORS.reserve * 100, 0)} %</dt><dd>${fmt(buy, 2)} m²</dd>` +
     (price ? `<dt>Koszt płytek ≈</dt><dd>${fmt(Math.max(buy, st.tiles * tileM2) * price, 0)} zł</dd>` : '');
   sumEl.textContent = `${L.len / 10}×${L.wid / 10} · ${fmt(st.area, 1)} m²`;
 }
@@ -1117,7 +1169,7 @@ function setWalk(on) {
     canvas.focus();
   } else {
     camera.fov = 50; camera.updateProjectionMatrix();
-    const floor = walk.y > 150 ? 'attic' : 'ground';
+    const floor = levelOf(walk.y);
     setMode(floor, true);
     const cx = walk.x / 100, cz = walk.z / 100, cy = (walk.y + 60) / 100;
     controls.target.set(cx, cy, cz);
@@ -1180,7 +1232,7 @@ function floorSVG(floor, ox, oy, withTiles) {
   // stair hole of the attic and the roof heights
   if (attic) {
     for (const v of VOIDS) rect(v, `fill="#ffffff" stroke="${C.ink}" stroke-width=".6" stroke-dasharray="6 3"`);
-    for (const h of [140, 190, 220]) {
+    for (const h of B.roof.planHeights) {
       const d = (h - KNEE) / PITCH;
       for (const x of [XL + d, XR - d]) line(x, 0, x, LENGTH, `stroke="${C.ink}" stroke-width=".5" stroke-dasharray="10 4 2 4" opacity=".7"`);
       text(XL + d + 3, 60, `h ${h}`, 's', 'start', 90);
@@ -1197,7 +1249,10 @@ function floorSVG(floor, ox, oy, withTiles) {
   // walls: cut at the same height as the 3D view (the slider): an opening whose sill is above the cut is wall
   const cutH = planCut();
   const solid = footprint(floor).filter(c => c.opening === undefined || P.openings[c.opening].sill >= cutH);
-  out.push(`<path fill="${C.wall}" d="${solid.map(c => `M${X(c.r[0])} ${Z(c.r[1])}H${X(c.r[2])}V${Z(c.r[3])}H${X(c.r[0])}Z`).join('')}"/>`);
+  const outline = cells => cells.map(c => `M${X(c.r[0])} ${Z(c.r[1])}H${X(c.r[2])}V${Z(c.r[3])}H${X(c.r[0])}Z`).join('');
+  out.push(`<path fill="${C.wall}" d="${outline(solid.filter(c => !c.layer))}"/>`);
+  for (const m of new Set(solid.filter(c => c.layer).map(c => c.layer)))   // the layers (EPS): their colour, hatched
+    out.push(`<path fill="${B.materials[m].color}" d="${outline(solid.filter(c => c.layer === m))}"/><path fill="url(#layer)" d="${outline(solid.filter(c => c.layer === m))}"/>`);
   // openings: windows (glass line), doors (jamb lines), the garage door (dashed)
   for (const o of P.openings) {
     if (o.sill >= cutH) continue;                   // under the cut: wall, as in 3D
@@ -1211,8 +1266,8 @@ function floorSVG(floor, ox, oy, withTiles) {
     } else if (o.kind === 'gate') {
       if (thinX) line(cx, r[1], cx, r[3], `stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="8 4"`);
       else line(r[0], cz, r[2], cz, `stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="8 4"`);
-    } else if (entranceOf(floor, r)) {               // the entrance: the leaf (as in 3D) and the glass sidelight
-      const E = entranceOf(floor, r), left = E.hinge === 'left', l1 = left ? r[0] : r[2] - E.leaf, l2 = left ? r[0] + E.leaf : r[2];
+    } else if (o.kind === 'entrance') {              // the entrance: the leaf (as in 3D) and the glass sidelight
+      const E = B.doors.entrance, left = E.hinge === 'left', l1 = left ? r[0] : r[2] - E.leaf, l2 = left ? r[0] + E.leaf : r[2];
       const zc = r[3] - B.windows.setback;
       rect([l1, zc - 3, l2, zc + 3], `fill="${C.ink}"`);
       const s1 = left ? l2 : r[0], s2 = left ? r[2] : l1;
@@ -1223,8 +1278,8 @@ function floorSVG(floor, ox, oy, withTiles) {
       else { line(r[0], r[1], r[0], r[3], `stroke="${C.ink}" stroke-width=".6"`); line(r[2], r[1], r[2], r[3], `stroke="${C.ink}" stroke-width=".6"`); }
     }
     // size label on the outer walls: width / head height, as on the archon.pl plans
-    const face = r[1] < 1 ? 'top' : r[3] > LENGTH - 2 || (r[3] > 1200 && r[1] > 1150 && !thinX) ? 'bottom' : r[0] < 1 ? 'left' : r[2] > WIDTH - 1 ? 'right' : null;
-    if (face && o.kind !== 'door') {
+    const face = r[1] < 1 ? 'top' : facadeFace(r) === 'front' ? 'bottom' : r[0] < 1 ? 'left' : r[2] > WIDTH - 1 ? 'right' : null;
+    if (face && (o.kind === 'window' || o.kind === 'gate')) {
       const w = Math.round(thinX ? r[3] - r[1] : r[2] - r[0]), lbl = `${w}/${Math.round(o.head)}`;
       if (face === 'top') text(cx, r[1] - 8, lbl, 's'); else if (face === 'bottom') text(cx, r[3] + 18, lbl, 's');
       else if (face === 'left') text(-12, cz, lbl, 's', 'middle', -90); else text(WIDTH + 12, cz, lbl, 's', 'middle', 90);
@@ -1261,7 +1316,7 @@ function floorSVG(floor, ox, oy, withTiles) {
   const zMin = Math.min(...P.walls.map(w => w.r[1])), zMax = Math.max(...P.walls.map(w => w.r[3]));   // incl. the portal wings
   dimH(along(o => o.r[1] < 1 ? [o.r[0], o.r[2]] : [], 0, WIDTH), zMin - 30, true);
   dimH([0, WIDTH], zMin - 62, true);
-  dimH(along(o => o.r[3] > 1200 && (o.r[2] - o.r[0]) > (o.r[3] - o.r[1]) ? [o.r[0], o.r[2]] : [], 0, WIDTH), zMax + 32, false);
+  dimH(along(o => facadeFace(o.r) === 'front' ? [o.r[0], o.r[2]] : [], 0, WIDTH), zMax + 32, false);
   dimV([zMin, 0, LENGTH, zMax], WIDTH + 80, false);
   dimV(along(o => o.r[0] < 1 ? [o.r[1], o.r[3]] : [], 0, LENGTH), -45, true);
   dimV([0, LENGTH], -75, true);
@@ -1277,11 +1332,11 @@ function planSVG(which) {
   const body = floors.map((fl, i) => floorSVG(fl, pad.l + i * (W + gap), pad.t, state.planTiles !== false)).join('\n');
   const date = new Date().toLocaleDateString('pl-PL');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${H + 30}" width="${total / 5}mm" height="${(H + 30) / 5}mm" font-family="Arial, Helvetica, sans-serif">
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${C.ink}"/></marker></defs>
+<defs><pattern id="layer" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="${C.ink}" stroke-width=".35" opacity=".45"/></pattern><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${C.ink}"/></marker></defs>
 <style>.d{fill:${C.red};font-size:13px}.s{fill:${C.ink};font-size:11px}.r{fill:${C.ink};font-size:17px;font-weight:bold}.a{fill:${C.red};font-size:14px;font-style:italic}.t{fill:${C.ink};font-size:22px;font-weight:bold;letter-spacing:2px}</style>
 <rect x="0" y="0" width="${total}" height="${H + 30}" fill="#ffffff"/>
 ${body}
-<text x="20" y="${H + 18}" class="s">Dom w papawerach 5 (G) · rzut 1:50 przy wydruku w skali (1 cm rysunku = 50 cm) · wymiary w cm · ściany przecięte na wysokości ${planCut()} cm, jak w widoku 3D · ten sam model co widok 3D (plan.js, building.js, układ płytek) · ${date}</text>
+<text x="20" y="${H + 18}" class="s">${B.name} · rzut 1:50 przy wydruku w skali (1 cm rysunku = 50 cm) · wymiary w cm · ściany przecięte na wysokości ${planCut()} cm, jak w widoku 3D · ten sam model co widok 3D (plan.js, building.js, układ płytek) · ${date}</text>
 </svg>`;
 }
 let planZoom = 1, planWhich = 'ground';
@@ -1313,7 +1368,41 @@ document.getElementById('planDownload').onclick = async () => {
 window.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('plan2d').hidden) showPlan(false); });
 window.__planSVG = planSVG;
 
-/* ================= 13. START ================= */
+/* ================= 13. TEXTS, WALL CHECK ================= */
+document.title = 'Posadzki · ' + B.name;
+document.getElementById('title').textContent = 'Posadzki · ' + B.name;
+document.getElementById('subtitle').textContent = B.source + ' Płytki układane od nowa przy każdej zmianie.';
+document.getElementById('notes').innerHTML = FLOORS.notes.concat(
+  '„Ułóż automatycznie” szuka przesunięcia, przy którym przy ścianach nie ma pasków węższych niż 1/3 płytki (deska: końcówki krótsze niż 20 cm) i docinki w największym pomieszczeniu są symetryczne. Liczba płytek zakłada, że każdy docinek zużywa osobną płytkę.',
+  `Piętro: ścianka kolankowa ${KNEE} cm, dach ${B.roof.pitch}°. Schody: ${ST.risers} stopni po ${fmt(rise, 1)} cm.`,
+  B.notes).join('<br>');
+// every wall and opening against its build-up: across, the core plus the outer layers of each side that faces outside
+function wallCheck() {
+  const rows = [], bad = [], cm = v => fmt(v, v % 1 ? 1 : 0);
+  for (const key in B.buildUps) {
+    const bu = B.buildUps[key], kinds = Object.keys(B.walls).filter(k => B.walls[k].buildUp === key);
+    const n = ['ground', 'attic'].reduce((s, f) => s + PLAN[f].walls.filter(w => kinds.includes(w.kind)).length, 0);
+    const outer = bu.layers.slice(1), sizes = outer.length ? [1, 2].map(k => cm(thicknessWith(bu, k))).join(' / ') : cm(coreThickness(bu));
+    rows.push(`<tr><td>${bu.name}<br><span class="info">${cm(coreThickness(bu))} ${bu.layers[0].name.toLowerCase()}${outer.map(l => ` + ${l.name.toLowerCase()} ${cm(l.thickness)} z każdej strony od zewnątrz`).join('')}</span></td><td class="n">${sizes} cm</td><td class="n">${n} szt.</td></tr>`);
+  }
+  for (const f of ['ground', 'attic']) {
+    const parts = PLAN[f].walls.map(w => ({ r: w.r, kind: w.kind, what: 'ściana ' + B.walls[w.kind].name }))
+      .concat(PLAN[f].openings.map(o => ({ r: o.r, kind: o.wall, what: 'otwór w ścianie ' + B.walls[o.wall].name })));
+    parts.forEach(p => {
+      const bu = buildUpOf(p.kind); if (!bu) return;
+      const tx = thicknessWith(bu, outsideSides(f, p.r, 'x')), tz = thicknessWith(bu, outsideSides(f, p.r, 'z'));
+      const a = p.r[2] - p.r[0], b = p.r[3] - p.r[1];
+      if (Math.abs(a - tx) > 0.05 && Math.abs(b - tz) > 0.05) bad.push(`${FLOOR_NAMES[f]}: ${p.what} ${cm(a)} × ${cm(b)} cm, x ${cm(p.r[0])}, z ${cm(p.r[1])} (powinna mieć ${cm(tx)} × ${cm(tz)} cm)`);
+    });
+  }
+  const chip = bad.length ? `<span class="chip warn">${bad.length}</span>` : '<span class="chip ok">0</span>';
+  document.getElementById('walls').innerHTML = `<table>${rows.join('')}</table>
+    <p class="note">Grubości niezgodne z warstwami: ${chip}${bad.length ? '<br>' + bad.join('<br>') : ''}</p>
+    <p class="note">Styropian jest na rzucie 2D i w przekroju 3D na każdej stronie ściany od zewnątrz: ściana domu 24 + 20, skrzydło portalu 20 + 24 + 20 (też na końcu). Dach portalu ma tę samą grubość co skrzydła.</p>`;
+}
+wallCheck();
+
+/* ================= 14. START ================= */
 document.getElementById('layouts').innerHTML = Object.keys(state.layouts).map(layoutPanel).join('');
 for (const k in state.layouts) wireLayout(k);
 roomsTable();

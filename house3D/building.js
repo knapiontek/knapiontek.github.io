@@ -3,9 +3,21 @@
    Units: cm, angles in degrees. x across the house from the left outer wall face, z from the garden face to the front,
    y up from the finished ground floor.
 
+   name, source, notes   what the page shows about the house (Polish)
    levels       finished floor levels; groundHeight = clear height of the ground floor (underside of the attic slab)
-   roof         pitch, knee wall height (from plan.js: the knee walls give the eaves line), thickness of the roof slab
-                measured square to the slope; body = the white band of the portals, covering = the roof surface
+   roof         pitch, knee wall height (from plan.js: the knee walls give the eaves line); buildUp = the section of
+                the portal frame: the roof slab has the thickness of the portal wings (the build-up insulated on both
+                sides), measured square to the slope; body = the white band of the portals, covering = the roof surface;
+                planHeights = the clear heights drawn as lines on the attic plan
+   fireplace    height of the fireplace block of plan.js
+   stair        materials of the treads and of the wall between the flights (the stair of plan.js)
+   buildUps     what a wall is made of: the first layer is the core (block), the next ones lie on every side of the wall
+                that faces outside (a house wall: one side, 24 + 20 = 44; a portal wing: both sides and the end,
+                20 + 24 + 20 = 64); a layer with a material is drawn in it (on the plan and in the cut of the 3D view).
+   walls        per wall kind of plan.js: name, material of its surfaces, buildUp (its thickness must equal the sum of
+                the layers on its outside sides, the view checks it), rank (where walls overlap the higher rank owns the overlap; openings
+                always win), upToAtticFloor (in the whole house the wall carries the slab up to the attic floor),
+                wing = runs past the gables (the portal wings, not part of the house length), height = a fixed top (the stair rail)
    portals      the side walls and the roof run past both gables (the portal frames); the ground floor parts of
                 the portal walls rise to the attic floor
    chimney      the flue of plan.js (attic wall kind chimney), "above" = how far it rises over the ridge
@@ -22,7 +34,7 @@
                 the visualisation; the attic front windows start on it: sill 30 in plan.js)
    claddings    extra thin finishes [x1, z1, x2, z2] from y to y: the graphite sides of the entrance recess, its white
                 beam under the band and the graphite soffit
-   doors        entrance: the door leaf in the entrance opening (from the hinge side), the rest is a glass sidelight;
+   doors        entrance: the door leaf in the opening of kind entrance (from the hinge side), the rest is a glass sidelight;
                 interiorLintels "fullHeight": the wall over an interior door only when the walls are at full height
    gate         the garage door panel: horizontal grooves
    windows      frame: profile width and depth, a mullion every "mullionEvery" cm, a transom at "transom" in glazing taller
@@ -41,10 +53,33 @@
    cameras      the views of the dock: name, eye [x, y, z], target [x, y, z]; y of the attic views from the attic floor
    walk         eye height, body radius, the highest step, head room, speed cm/s, start position and heading */
 window.HOUSE_BUILDING = {
+ "name": "Dom w papawerach 5 (G)",
+ "source": "Rzuty z archon.pl w skali (ok. ±3 cm).",
+ "notes": [
+  "Schody zabiegowe w kształcie U odczytane z rzutów: bieg z holu na zachód, spocznik przy ścianie, bieg powrotny nad garażem do holu piętra.",
+  "Ściany z pustaków 24 i 12 cm, ściany zewnętrzne ocieplone od zewnątrz styropianem 20 cm. Lica zewnętrzne zostały w miejscu z rzutu, grubość odjęto od wnętrza. Portal (skrzydła ścian bocznych za szczytami i dach) ma przekrój 20 + 24 + 20 = 64 cm, pustak skrzydła w linii pustaka ściany bocznej."
+ ],
  "levels": {"ground": 0, "attic": 297, "groundHeight": 272},
- "roof": {"pitch": 42, "knee": 120, "thickness": 55, "body": "plasterWhite", "covering": "roofGraphite"},
+ "roof": {"pitch": 42, "knee": 120, "buildUp": "outer", "body": "plasterWhite", "covering": "roofGraphite", "planHeights": [140, 190, 220]},
  "portals": {"groundWingsTo": "attic"},
  "chimney": {"above": 90, "material": "graphite"},
+ "fireplace": {"height": 105, "material": "fireplace"},
+ "stair": {"tread": "tread", "core": "plasterInside"},
+ "buildUps": {
+  "outer":   {"name": "Ściana zewnętrzna", "layers": [{"name": "Pustak", "thickness": 24}, {"name": "Styropian", "thickness": 20, "material": "insulation"}]},
+  "block24": {"name": "Ściana wewnętrzna 24", "layers": [{"name": "Pustak", "thickness": 24}]},
+  "block12": {"name": "Ścianka działowa 12", "layers": [{"name": "Pustak", "thickness": 12}]}
+ },
+ "walls": {
+  "ext":     {"name": "zewnętrzna", "material": "plasterWhite", "buildUp": "outer", "rank": 5, "upToAtticFloor": true},
+  "portal":  {"name": "portal", "material": "plasterWhite", "buildUp": "outer", "rank": 5, "upToAtticFloor": true, "wing": true},
+  "gable":   {"name": "szczytowa", "material": "plasterWhite", "buildUp": "outer", "rank": 4},
+  "knee":    {"name": "kolankowa", "material": "plasterWhite", "buildUp": "outer", "rank": 3},
+  "int24":   {"name": "wewnętrzna 24", "material": "plasterInside", "buildUp": "block24", "rank": 2},
+  "int12":   {"name": "działowa 12", "material": "plasterInside", "buildUp": "block12", "rank": 2},
+  "chimney": {"name": "komin", "material": "plasterInside", "rank": 6},
+  "rail":    {"name": "balustrada", "material": "glass", "rank": 1, "height": 100}
+ },
  "plinth": {"top": 0, "bottom": -30, "material": "plinth"},
  "site": {
   "lawn": {"rect": [-1500, -1500, 2400, 2800], "y": -30, "material": "lawn"},
@@ -62,21 +97,21 @@ window.HOUSE_BUILDING = {
  },
  "finishes": [
   {"face": "front", "floor": "ground", "x": [615.5, 661.4], "material": "woodVertical"},
-  {"face": "front", "floor": "ground", "x": [741.0, 866.6], "material": "woodVertical"},
+  {"face": "front", "floor": "ground", "x": [741.0, 866.0], "material": "woodVertical"},
   {"face": "front", "floor": "attic", "x": [392.4, 522.4], "material": "woodVertical", "upTo": "windowLine"}
  ],
  "bands": [
-  {"face": "garden", "x": [43, 867], "y": [238, 300], "depth": 1, "material": "woodHorizontal"},
-  {"face": "front", "x": [43.4, 866.6], "y": [245, 327], "depth": 1, "material": "plasterWhite"}
+  {"face": "garden", "x": [44, 866], "y": [238, 300], "depth": 1, "material": "woodHorizontal"},
+  {"face": "front", "x": [44, 866], "y": [245, 327], "depth": 1, "material": "plasterWhite"}
  ],
  "claddings": [
   {"floor": "ground", "rect": [453.8, 1231, 454.8, 1322.8], "y": [0, 245], "material": "graphite"},
-  {"floor": "ground", "rect": [846.2, 1231, 847.2, 1322.8], "y": [0, 245], "material": "graphite"},
-  {"floor": "ground", "rect": [453.8, 1231, 847.2, 1323.8], "y": [245, 272], "material": "plasterWhite"},
-  {"floor": "ground", "rect": [453.8, 1231, 847.2, 1323.8], "y": [244, 245], "material": "graphite"}
+  {"floor": "ground", "rect": [845, 1231, 846, 1322.8], "y": [0, 245], "material": "graphite"},
+  {"floor": "ground", "rect": [453.8, 1231, 846, 1323.8], "y": [245, 272], "material": "plasterWhite"},
+  {"floor": "ground", "rect": [453.8, 1231, 846, 1323.8], "y": [244, 245], "material": "graphite"}
  ],
  "doors": {
-  "entrance": {"floor": "ground", "opening": [453.8, 1187.6, 615.5, 1231.0], "leaf": 100, "hinge": "left", "material": "graphite",
+  "entrance": {"leaf": 100, "hinge": "left", "material": "graphite",
                "grooves": 4, "handle": {"length": 120, "width": 3, "material": "steel"}},
   "interiorLintels": "fullHeight"
  },
@@ -101,12 +136,12 @@ window.HOUSE_BUILDING = {
   "plinth":         {"color": "#6d6e6c", "roughness": 0.9, "texture": {"strength": 0.5, "grain": 3, "tile": 60, "bump": 0}},
   "tread":          {"color": "#a57b4f", "roughness": 0.6},
   "fireplace":      {"color": "#2b2b2c", "roughness": 0.6},
+  "insulation":     {"color": "#dcc35e", "roughness": 0.95},
   "lawn":           {"color": "#6f8a52", "roughness": 1, "grass": {"tile": 120}},
   "paving":         {"color": "#b9b6ae", "roughness": 0.9, "slabs": {"size": 60, "joint": "#6a675f"}},
   "woodVertical":   {"wood": "H1180", "board": 12, "boardsVertical": true, "roughness": 0.7},
   "woodHorizontal": {"wood": "H1180", "board": 12, "boardsVertical": false, "roughness": 0.7}
  },
- "walls": {"ext": "plasterWhite", "knee": "plasterWhite", "gable": "plasterWhite", "int": "plasterInside", "chimney": "plasterInside", "rail": "glass"},
  "light": {
   "exposure": 0.8,
   "sun": {"azimuth": 35, "elevation": 38, "intensity": 1.35, "color": "#fff1dc"},
