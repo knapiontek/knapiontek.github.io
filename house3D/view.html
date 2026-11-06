@@ -61,8 +61,6 @@ body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow
 .walkbtn{border:1px solid var(--accent);background:var(--panel);color:var(--accent);font:700 13px var(--f-display);letter-spacing:.04em;padding:6px 14px;border-radius:8px;cursor:pointer}
 .walkbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .walkhud{position:absolute;inset:auto 12px 12px auto;display:flex;align-items:flex-end;gap:12px;pointer-events:none;right:max(12px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));left:12px;justify-content:space-between}
-.walkinfo{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--muted);max-width:430px;pointer-events:auto}
-.walkinfo b{color:var(--ink)}
 .pad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px;pointer-events:auto}
 .pad button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;font-size:16px;cursor:pointer;touch-action:none;user-select:none}
 .pad .u{grid-column:2;grid-row:1}.pad .l{grid-column:1;grid-row:2}.pad .d{grid-column:2;grid-row:2}.pad .r{grid-column:3;grid-row:2}
@@ -138,7 +136,7 @@ td select{padding:3px 4px;font-size:12px}
     <button class="helpbtn" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
     <div class="help" id="help" role="dialog" aria-label="Pomoc" hidden>
       <p>Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko.</p>
-      <p><b>Strzałka ↑ lub przycisk Spacer</b>: chodzenie po domu, także po schodach. Esc: wyjście.</p>
+      <p><b>Strzałka ↑ lub przycisk Spacer</b>: chodzenie po domu, także po schodach. Strzałki: chodzenie, A/D: krok w bok, Shift: szybciej, PgUp/PgDn lub przeciągnięcie myszą: patrzenie, Esc: wyjście.</p>
       <p>U góry: co widać (Parter, Piętro, Dach i warstwy materiałowe). Na dole: skąd patrzysz.</p>
       <p>Z wyłączonym dachem najwyższa pokazana kondygnacja jest otwarta: jej przekrój i pomieszczenia są w panelu, kliknięcie w podłogę wybiera pomieszczenie.</p>
       <p><b>Czerwone</b> płytki = drobne docinki.</p>
@@ -148,7 +146,6 @@ td select{padding:3px 4px;font-size:12px}
       <div class="sheet" id="planSheet"></div>
     </div>
     <div class="walkhud" id="walkhud" hidden>
-      <div class="walkinfo"><b id="walklevel">Parter</b> · strzałki: chodzenie · A/D: krok w bok · Shift: szybciej · PgUp/PgDn lub przeciągnij myszą: patrzenie · Esc: wyjście</div>
       <div class="pad" aria-label="Sterowanie">
         <button data-k="ArrowUp" class="u" aria-label="Do przodu">▲</button>
         <button data-k="ArrowLeft" class="l" aria-label="Obrót w lewo">◀</button>
@@ -620,6 +617,7 @@ const inVoid = (x, z) => VOIDS.some(v => x > v[0] && x < v[2] && z > v[1] && z <
 const slabGroup = new THREE.Group(), soffitGroup = new THREE.Group(); groups.attic.add(slabGroup); groups.ground.add(soffitGroup);
 const SLAB_BU = B.buildUps[B.slab.buildUp], SLAB_OUTER = outerThickness(SLAB_BU);
 let slabCells = [];
+const slabSections = {};          // the cut of the slab's pieces, by floor (the soffit is cut with the ground floor)
 // rectangles merged into larger ones: runs along x per z band, then bands with the same x range
 function mergeRects(rects) {
   const rows = new Map();
@@ -636,7 +634,9 @@ function mergeRects(rects) {
 }                 // [{ r, layer: the build-up layer or null (the core), side, under: no ground floor below }]
 function readSlab() {
   const q = v => Math.round(v * 10) / 10, cover = planCover('ground').concat(planCover('attic'));
-  const covered = coverTest(cover), ground = coverTest(planCover('ground'));
+  // the outline closed over the hairline gaps between the rectangles of the plans (under 2 cm): those are no air
+  const closed = rects => { const t = coverTest(rects.map(c => [c[0] - 1, c[1] - 1, c[2] + 1, c[3] + 1])); return (x1, z1, x2, z2) => t(x1 - 1, z1 - 1, x2 + 1, z2 + 1); };
+  const covered = closed(cover), ground = closed(planCover('ground'));
   const depths = [0];                                     // from the outside in: layer k between depths[k] and depths[k + 1]
   for (let k = SLAB_BU.layers.length - 1; k > 0; k--) depths.push(depths[depths.length - 1] + SLAB_BU.layers[k].thickness);
   const lines = edges => [...new Set(edges.flatMap(e => depths.flatMap(d => [e - d, e + d])).map(q))].sort((a, b) => a - b);
@@ -664,7 +664,7 @@ function readSlab() {
 }
 function buildSlab() {
   slabCells = readSlab(); joinHeights = [];
-  const fin = SLAB_BU.layers[SLAB_BU.layers.length - 1].thickness, bottom = slabY1 - SLAB_OUTER, outline = [], soffit = [];
+  const fin = SLAB_BU.layers[SLAB_BU.layers.length - 1].thickness, bottom = slabY1 - SLAB_OUTER, outline = [], soffit = [], cut = slabSections.ground = [];
   const inLayer = (L, fn) => withLayers(L ? L.layers || [] : B.slab.layers, fn);
   const finishLayer = SLAB_BU.layers.find(l => l.finish), epsLayer = SLAB_BU.layers.find(l => l.material);
   for (const c of slabCells) {
@@ -683,9 +683,16 @@ function buildSlab() {
     }
     const lay = c.layer ? c.layer.layers || [] : B.slab.layers;
     outline.push({ r, parts: [[slabY1, slabY2]], openTop: true, openBottom: true, layers: lay });
+    if (c.under) cut.push(c.layer && c.layer.finish
+      ? { r, y0: 0, from: bottom, top: () => slabY1, mat: M[B.slab.face], layers: lay }
+      : { r, y0: 0, from: bottom + fin, top: () => slabY1, mat: M[epsLayer.material], layers: epsLayer.layers || [] });
     if (c.under) soffit.push({ r, parts: [[bottom, slabY1]], openTop: true, layers: c.layer && c.layer.finish ? lay : finishLayer.layers });
   }
   withLayers(B.edges.layers, () => { outlineEdges(outline, 0, [], slabGroup); outlineEdges(soffit, 0, [], soffitGroup); });
+  // the soffit's cut in few large pieces, one set per material, so the section is one plane without seams
+  const byMat = new Map();
+  for (const p of cut) { const k = p.mat.uuid + p.from; byMat.set(k, (byMat.get(k) || { p, rects: [] })); byMat.get(k).rects.push(p.r); }
+  slabSections.ground = [...byMat.values()].flatMap(({ p, rects }) => mergeRects(rects).map(r => Object.assign({}, p, { r })));
 }
 // U-shaped stair; STAIR_BOXES [x1, z1, x2, z2, top] are also the walking surfaces
 const ST = PLAN.ground.stair, rise = LEVEL.attic / ST.risers, STAIR_BOXES = [];
@@ -696,11 +703,9 @@ withLayers(ST.layers, function buildStair() {
   STAIR_BOXES.push([ST.landing.x[0], ST.landing.z[0], ST.landing.x[1], ST.landing.z[1], n1 * rise]);
   for (let j = 1; j < n2; j++) STAIR_BOXES.push([f2.x[0] + (j - 1) * run2, f2.z[0], f2.x[0] + j * run2, f2.z[1], (n1 + j) * rise]);
   for (const b of STAIR_BOXES) box(b[0], b[4] - 5, b[1] + 0.5, b[2], b[4], b[3] - 0.5, M[ST.treadMaterial], groups.ground);
-  const c = ST.core; box(c[0], 0, c[1], c[2], GROUND_H, c[3], M[ST.coreMaterial], groups.ground);
 });
 const FP = PLAN.ground.fireplace, FR = FP.rect;
 withLayers(FP.layers, () => box(FR[0], 0, FR[1], FR[2], FP.height, FR[3], M[FP.material], groups.ground));
-const CORE_WALL = ST.core;
 // roof: a slab over the whole length incl. the portals; body = the portal band, covering = the roof surface
 const ZS = PLAN.ground.walls.reduce((m, w) => [Math.min(m[0], w.r[1]), Math.max(m[1], w.r[3])], [0, 0]);
 const ROOF_T = thicknessWith(B.buildUps[B.roof.buildUp], 2) / Math.cos(B.roof.pitch * Math.PI / 180);   // the portal frame section, vertical
@@ -746,7 +751,7 @@ function updateRoof() {          // the solid roof is a layer; the see-through s
 function planCover(floor) {
   const P = PLAN[floor], st = P.stair, part = p => [p.x[0], p.z[0], p.x[1], p.z[1]];
   return P.walls.map(w => w.r).concat(P.openings.map(o => o.r), P.rooms.flatMap(r => r.rects), P.voids || [],
-    P.fireplace ? [P.fireplace.rect] : [], st ? [part(st.flight1), part(st.landing), part(st.flight2), st.core] : []);
+    P.fireplace ? [P.fireplace.rect] : [], st ? [part(st.flight1), part(st.landing), part(st.flight2)] : []);
 }
 // is the rectangle [x1, z1, x2, z2] fully covered? (a grid of the cover edges with prefix sums of the air cells)
 function coverTest(cover) {
@@ -967,7 +972,7 @@ const CUT_PLANE = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e6), CLIP = [CUT
 const sections = {}, capGroups = {};            // per floor: the wall pieces that can be cut, and their caps
 for (const f of FLOOR_IDS) { capGroups[f] = new THREE.Group(); groups[f].add(capGroups[f]); }
 function clipAll() {               // every material of the model is clipped by the cut plane (the see-through roof not)
-  root.traverse(o => { if (o.material && !o.userData.noClip) for (const m of [].concat(o.material)) if (m.clippingPlanes !== CLIP) { m.clippingPlanes = CLIP; m.needsUpdate = true; } });
+  root.traverse(o => { if (o.material && !o.userData.noClip) for (const m of [].concat(o.material)) if (m.clippingPlanes !== CLIP) { m.clippingPlanes = CLIP; m.clipShadows = true; m.needsUpdate = true; } });   // what is cut away casts no shadow
 }
 function setCut() {
   const f = openFloor(), h = VIEW().plan ? Infinity : cutHeight();
@@ -979,7 +984,7 @@ function buildCaps(floor) {
   const grp = capGroups[floor]; clearGroup(grp);
   const h = VIEW().plan ? Infinity : cutHeight(); if (h === Infinity || openFloor() !== floor) return;
   const breaks = [...sections[floor].breaks, XL + (h - KNEE) / PITCH, XR - (h - KNEE) / PITCH];
-  for (const sct of sections[floor].pieces) {
+  for (const sct of sections[floor].pieces.concat(slabSections[floor] || [])) {
     if (sct.from >= h || sct.below && h >= sct.below) continue;          // the plane is not in this piece
     if (sct.above !== undefined && h < sct.above) continue;
     const r = sct.r, at = x => Math.min(h, sct.top(x));
@@ -1030,7 +1035,7 @@ function buildWalls(floor) {
     });
     if (!attic && B.wallKinds[c.kind].plinth) withLayers(B.plinth.layers, () => box(r[0], groundUnder(r), r[1], r[2], B.plinth.top, r[3], M[B.plinth.material], grp));
   }
-  for (const o of PLAN[floor].openings) withLayers(B.windows.layers, () => {   // glass, frames, doors
+  for (const o of PLAN[floor].openings) {   // the reveals with the wall, then the glass, frames and doors
     const r = o.r, { followRoof, head } = openingHead(o, attic ? roofHeight : () => LEVEL.attic), top = o.head;
     const { thinX, side, outer, mid } = glassPlane(floor, o);
     const gx = thinX ? [mid - 1, mid + 1] : [r[0], r[2]];
@@ -1047,9 +1052,12 @@ function buildWalls(floor) {
         slab(s1, s2, x => head(x) - t, head); slab(s1, s1 + t, o.sill, head); slab(s2 - t, s2, o.sill, head);
         if (o.sill > 0) slab(s1, s2, o.sill, o.sill + t);
       };
-      reveal(outer, mid, rules.length ? M[rules[rules.length - 1].material] : M.wall[o.wall]);
-      reveal(mid, inner, M.wall[o.wall]);
+      // the reveal is part of the wall: in front of the glass in the facade's layer, behind it in the wall's own
+      const bu = buildUpOf(o.wall), fin = bu && bu.layers.find(l => l.finish);
+      withLayers(fin ? fin.layers : B.wallKinds[o.wall].layers, () => reveal(outer, mid, rules.length ? M[rules[rules.length - 1].material] : M.wall[o.wall]));
+      withLayers(B.wallKinds[o.wall].layers, () => reveal(mid, inner, M.wall[o.wall]));
     }
+    withLayers(B.windows.layers, () => {
     if (o.kind === 'window') {
       prism(gx[0], gz[0], gx[1], gz[1], y0, o.sill, head, M[B.windows.glass], grp, breaks);
       const opt = followRoof ? { mullionEvery: B.windows.attic.mullionEvery, transom: o.sill + B.windows.attic.transom } : { mullionEvery: B.windows.frame.mullionEvery, transom: B.windows.frame.transom };
@@ -1075,7 +1083,8 @@ function buildWalls(floor) {
       frames(o.sill, () => top, [s1, s2], gz, y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
       frames(o.sill, () => top, [l1, l2], [zc - 3.5, zc + 3.5], y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
     }
-  });
+    });
+  }
   withLayers(B.edges.layers, () => outlineEdges(outline, y0, breaks, grp));
   sections[floor] = { pieces, breaks };
   clipAll(); buildCaps(floor);
@@ -1293,7 +1302,8 @@ function contextPanel() {
   }
   if (f) {                         // the cut of the open floor; at the top of its range: no cut
     const cut = document.getElementById('cut'), top = cutTop(f);
-    cut.max = top; cut.value = Math.min(state.cuts[f], top);
+    const step = +cut.step, min = +cut.min, end = min + Math.ceil((top - min) / step) * step;   // the last step reaches 'no cut'
+    cut.max = end; cut.value = Math.min(state.cuts[f], end);
     document.getElementById('cutv').textContent = state.cuts[f] >= top ? 'bez cięcia' : state.cuts[f] + ' cm';
   }
   // the selected room opens under its own row in the list: its floor settings (an accordion, read top to bottom)
@@ -1372,7 +1382,7 @@ for (const f of FLOOR_IDS) {
   for (const w of PLAN[f].walls) obstacles[f].push(w.r);
   for (const o of PLAN[f].openings) if (o.kind === 'window') obstacles[f].push(o.r);
 }
-obstacles.ground.push(PLAN.ground.fireplace.rect, CORE_WALL);
+obstacles.ground.push(PLAN.ground.fireplace.rect);
 const LOW = (EYE + HEAD - KNEE) / PITCH;          // under the slopes there is no head room
 obstacles.attic.push([-500, -500, XL + LOW, LENGTH + 500], [XR - LOW, -500, WIDTH + 500, LENGTH + 500]);
 function surfaces(x, z) {
@@ -1422,8 +1432,6 @@ function updateWalk(dt) {
   walk.y += (walk.target - walk.y) * Math.min(1, dt * 12);
   camera.position.set(walk.x / 100, (walk.y + EYE) / 100, walk.z / 100);
   camera.rotation.set(walk.pitch, walk.yaw, 0, 'YXZ');
-  const lvl = levelOf(walk.y + 1);
-  document.getElementById('walklevel').textContent = Math.abs(walk.y - Math.round(walk.y / LEVEL.attic) * LEVEL.attic) > 8 && walk.y > 5 && walk.y < LEVEL.attic - 5 ? 'Schody' : FLOOR_NAMES[lvl];
   return !!(fwd || side || turn || look || Math.abs(walk.target - walk.y) > 0.2);
 }
 function setWalk(on) {
@@ -1533,7 +1541,6 @@ function floorSVG(floor, ox, oy, withTiles) {
     if (attic && !VOIDS.some(v => b[0] >= v[0] - 1 && b[2] <= v[2] + 1 && b[1] >= v[1] - 1 && b[3] <= v[3] + 1)) continue;
     rect(b, `fill="${attic ? 'none' : '#f4efe6'}" stroke="${C.ink}" stroke-width=".5"`);
   }
-  if (!attic) { const c = ST.core; rect(c, `fill="${C.wall}"`); }
   { const f1 = ST.flight1, zc = (f1.z[0] + f1.z[1]) / 2; line(f1.x[1] - 10, zc, ST.landing.x[1] - 10, zc, `stroke="${C.ink}" stroke-width=".7" marker-end="url(#arrow)"`); }
   if (!attic) for (const r of mergeRects(slabCells.filter(c => c.under).map(c => c.r))) rect(r, `fill="none" stroke="${C.ink}" stroke-width=".6" stroke-dasharray="8 4"`);   // the slab above the cut, over no ground floor
   if (P.fireplace) rect(P.fireplace.rect, `fill="#cfcfcd" stroke="${C.ink}" stroke-width=".5"`);

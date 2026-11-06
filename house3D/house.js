@@ -71,7 +71,7 @@
                 the room is tiled together with that room (walk-in wardrobes with the bedroom); neither = no tiles;
                 link = a sub-project of this room (its own page in the repository)
      stair      U-shaped: flight1 rises west from the hall (risers 1..12 up to the landing), flight2 rises east to
-                the attic floor; core = the wall between the flights; treadMaterial, coreMaterial
+                the attic floor; the flights meet with no wall between them; treadMaterial
      fireplace  rect, height and material of the fireplace block
      voids      the stair hole in the attic floor */
 window.HOUSE = {
@@ -264,8 +264,8 @@ window.HOUSE = {
     {"r": [846, -101.4, 910, 0], "kind": "portal"},
     {"r": [0, 1322.8, 64, 1421.7], "kind": "portal"},
     {"r": [846, 1231, 910, 1421.7], "kind": "portal"},
-    {"r": [44, 535.9, 391, 547.9], "kind": "int12"},
-    {"r": [391, 470.7, 433.8, 547.9], "kind": "chimney"},
+    {"r": [44, 535.9, 380.4, 547.9], "kind": "int12"},
+    {"r": [380.4, 468.5, 459.8, 547.9], "kind": "chimney"},
     {"r": [318.6, 647, 433.8, 659], "kind": "int12"},
     {"r": [409.8, 659, 433.8, 1064.5], "kind": "int24"},
     {"r": [409.8, 1151.4, 433.8, 1187], "kind": "int24"},
@@ -302,10 +302,10 @@ window.HOUSE = {
      "tiles": {"product": "authorityGraphite", "dir": "z"},
      "link": {"href": "../kitchen/view.html", "name": "Projekt kuchni"},
      "rects": [
-      [44, 44, 391, 535.9],
-      [391, 44, 433.8, 470.7],
-      [433.8, 44, 866, 535.9],
-      [433.8, 535.9, 866, 721.8],
+      [44, 44, 380.4, 535.9],
+      [380.4, 44, 459.8, 468.5],
+      [459.8, 44, 866, 547.9],
+      [433.8, 547.9, 866, 721.8],
       [433.8, 721.8, 615.5, 905.3]
      ]
     },
@@ -344,15 +344,13 @@ window.HOUSE = {
    ],
    "stair": {
     "risers": 17,
-    "flight1": {"x": [143, 433.8], "z": [547.9, 640.5], "risers": 12},
+    "flight1": {"x": [143, 433.8], "z": [547.9, 644.1], "risers": 12},
     "landing": {"x": [44, 143], "z": [547.9, 735]},
-    "flight2": {"x": [143, 273], "z": [647.7, 735]},
-    "core": [143, 640.5, 433.8, 647.7],
+    "flight2": {"x": [143, 273], "z": [644.1, 735]},
     "treadMaterial": "tread",
-    "coreMaterial": "plasterInside",
     "layers": ["stair"]
    },
-   "fireplace": {"rect": [335.5, 506.9, 391, 535.9], "height": 105, "material": "fireplace", "layers": ["fittings"]}
+   "fireplace": {"rect": [335.5, 506.9, 380.4, 535.9], "height": 105, "material": "fireplace", "layers": ["fittings"]}
   },
   {
    "id": "attic",
@@ -374,17 +372,13 @@ window.HOUSE = {
     {"r": [846, 1322.8, 910, 1421.7], "kind": "portal"},
     {"r": [44, 362.1, 392.4, 374.1], "kind": "int12"},
     {"r": [553.7, 362.1, 866, 374.1], "kind": "int12"},
-    {"r": [380.4, 465.8, 392.4, 473.2], "kind": "int12"},
-    {"r": [391, 470.7, 433.8, 547.9], "kind": "chimney"},
+    {"r": [380.4, 468.5, 459.8, 547.9], "kind": "chimney"},
     {"r": [553.7, 465.8, 565.7, 631.7], "kind": "int12"},
     {"r": [553.7, 721.1, 565.7, 820.7], "kind": "int12"},
-    {"r": [44, 535.9, 391, 547.9], "kind": "int12"},
-    {"r": [433.8, 535.9, 459.8, 547.9], "kind": "int12"},
+    {"r": [44, 535.9, 380.4, 547.9], "kind": "int12"},
     {"r": [548.9, 535.9, 866, 547.9], "kind": "int12"},
     {"r": [565.7, 820.7, 866, 832.7], "kind": "int12"},
-    {"r": [553.7, 820.7, 565.7, 902.8], "kind": "int12"},
-    {"r": [553.7, 902.8, 609.1, 914.8], "kind": "int12"},
-    {"r": [609.1, 890.8, 650, 914.8], "kind": "int24"},
+    {"r": [553.7, 820.7, 565.7, 914.8], "kind": "int12"},
     {"r": [44, 738.7, 341.9, 750.7], "kind": "int12"},
     {"r": [329.9, 750.7, 341.9, 902.8], "kind": "int12"},
     {"r": [44, 902.8, 178.1, 914.8], "kind": "int12"},
@@ -412,9 +406,8 @@ window.HOUSE = {
      "rects": [
       [44, 44, 866, 362.1],
       [392.4, 362.1, 553.7, 374.1],
-      [380.4, 374.1, 565.7, 465.8],
-      [392.4, 465.8, 452.6, 470.7], [433.8, 470.7, 452.6, 535.9],
-      [452.6, 465.8, 553.7, 535.9]
+      [380.4, 374.1, 565.7, 468.5],
+      [459.8, 468.5, 553.7, 535.9]
      ]
     },
     {
@@ -423,7 +416,7 @@ window.HOUSE = {
      "name": "Garderoba",
      "planArea": 5.13,
      "tilesWith": "sypialnia",
-     "rects": [[44, 374.1, 380.4, 535.9], [380.4, 473.2, 391, 535.9]]
+     "rects": [[44, 374.1, 380.4, 535.9]]
     },
     {
      "id": "garderoba4",
@@ -472,7 +465,7 @@ window.HOUSE = {
      "name": "Pokój",
      "planArea": 16.53,
      "tiles": {"product": "logOak", "dir": "z"},
-     "rects": [[452.6, 914.8, 866, 1278.8], [650, 832.7, 866, 914.8], [609.1, 832.7, 650, 890.8], [565.7, 832.7, 609.1, 902.8]]
+     "rects": [[452.6, 914.8, 866, 1278.8], [565.7, 832.7, 866, 914.8]]
     }
    ],
    "voids": [[44, 547.9, 438.1, 642.2], [44, 642.2, 273, 738.7]]

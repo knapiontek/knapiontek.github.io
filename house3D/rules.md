@@ -45,7 +45,7 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 
 - Floors and roof: Parter, Piętro, Dach. They are layers too, but the menu shows them in a row of their own.
 - Material layers, flat, each a layer of the build: Fundament, Pustaki (the block core), Wieniec i strop, Styropian, Elewacja (the finish), Krawędzie, Okna i drzwi, Schody, Kominek, Posadzki (Drobne docinki), Teren.
-- A wall is drawn in its material layers: its core under Pustaki, its EPS under Styropian, its finish under Elewacja. So each layer of the build can be seen alone (for example only the EPS shell).
+- A wall is drawn in its material layers: its core under Pustaki, its EPS under Styropian, its finish under Elewacja. The reveals of windows and doors are part of the wall: in front of the glass under Elewacja, behind it under Pustaki; only the glass, frames and leaves are Okna i drzwi. So each layer of the build can be seen alone (for example only the EPS shell).
 - A child is shown only with its parent: no marked cuts without tiles.
 - Every element is assigned to one or more layers, on its own node, on its kind or on its build-up layer; a floor gives its layer to everything standing on it. An element is drawn only when **all** of its layers are on. An edge line belongs to the piece it is on.
 - Switching a layer changes only what is shown, never the model or the tile counts. Nor the camera: switching floors or layers keeps the view, so the states can be compared.
