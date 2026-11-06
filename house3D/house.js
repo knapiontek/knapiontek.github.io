@@ -27,24 +27,21 @@
    chimney      the flue (the attic wall of kind chimney), "above" = how far it rises over the ridge
    slab         the attic floor slab (the outline minus the stair hole of the attic)
    buildUps     what a wall is made of: the first layer is the core (block), the next ones lie on every side of the
-                wall that faces outside (a house wall: one side, 24 + 20 = 44; a portal wing: both sides and the end,
-                20 + 24 + 20 = 64); a layer with a material is drawn in it (on the plan and in the cut of the 3D view)
-   wallKinds    per wall kind: name, material of its surfaces, buildUp (the view checks the thickness), rank (where walls
-                overlap the higher rank owns the overlap; openings always win), upToAtticFloor (in the whole house the
-                wall carries the slab up to the attic floor), wing = runs past the gables (not part of the house
-                length), height = a fixed top (the stair rail), plinth = stands on the plinth (down to the ground)
+                wall that faces the air, from the inside out (a house wall: one side, 24 + 19 + 1 = 44; a portal wing:
+                both sides and the end, 64); a layer with a material is drawn in it (on the plan and in the cut of the
+                3D view); the finish layer is the outer cm of the wall: plaster, graphite or wood (see finishes)
+   wallKinds    per wall kind: name, material of its surfaces (and of its finish where no finish says otherwise),
+                buildUp (the view checks the thickness), rank (where walls overlap the higher rank owns the overlap;
+                openings always win), upToAtticFloor (the wall rises to the attic floor), wing = runs past the gables
+                (not part of the house length), height = a fixed top (the stair rail), plinth = stands on the plinth
    plinth, site the base under the outer walls; lawn and terraces [x1, z1, x2, z2] at a top level y
-   faces        which wall pieces form the gable faces: garden at z = 0, front at z = 1323, the recessed entrance at
-                z = 1232 from x 440; pieces within "margin" of the side walls belong to the portals; depth = the
-                facade layer: the finish (plaster, graphite, wood) is the outer cm of the wall itself, never stuck on
-   finishes     facade finish of the gable faces by face, floor and x range (the edges of the openings beside them);
-                anything else on a face = default; upTo "windowLine": the finish stops at the line of the attic window
-                tops (the wood between the front windows ends in a peak)
-   bands        facade strips: the finish of the wall in that height, only where a wall is (never a panel of its own)
-   claddings    finishes [x1, z1, x2, z2] from y to y: the graphite sides of the entrance recess (the outer cm of its
-                side walls)
+   finishes     what the finish layer of a wall side is: side = where the side looks (left -x, right +x, garden -z,
+                front +z), rect = the part of the plan it covers, floor (default both), y = its height (house y,
+                default all), upTo "windowLine" = it stops at the line of the attic window tops (the wood between
+                the front windows ends in a peak); in their order, a later one over the earlier ones. A wall side is
+                a facade where it faces the air (nothing of the plan in front of it): no faces are guessed by position
    doors        entrance: the door leaf in the opening of kind entrance (from the hinge side), the rest is a glass
-                sidelight; interiorLintels "fullHeight": the wall over an interior door only at full wall height
+                sidelight
    gate, windows   the garage door panel; window frames (profile, mullions, transom), the attic gable windows follow
                 the roof ("inset" cm below its underside); setback = windows sit this far behind the outer face
    edges        delicate lines on the wall edges: colour, opacity, crease angle
@@ -138,7 +135,8 @@ window.HOUSE = {
    "name": "Ściana zewnętrzna",
    "layers": [
     {"name": "Pustak", "thickness": 24},
-    {"name": "Styropian", "thickness": 20, "material": "insulation", "layers": ["insulation"]}
+    {"name": "Styropian", "thickness": 19, "material": "insulation", "layers": ["insulation"]},
+    {"name": "Wykończenie", "thickness": 1, "finish": true, "layers": ["facade"]}
    ]
   },
   "block24": {"name": "Ściana wewnętrzna 24", "layers": [{"name": "Pustak", "thickness": 24}]},
@@ -181,26 +179,22 @@ window.HOUSE = {
   ],
   "layers": ["site"]
  },
- "faces": {
-  "margin": 40,
-  "depth": 1,
-  "garden": {"z": 0},
-  "front": [{"z": 1323},{"z": 1232, "fromX": 440}],
-  "default": "graphite",
-  "layers": ["facade"]
- },
  "finishes": [
-  {"face": "front", "floor": "ground", "x": [615.5, 661.4], "material": "woodVertical"},
-  {"face": "front", "floor": "ground", "x": [741, 846], "material": "woodVertical"},
-  {"face": "front", "floor": "attic", "x": [392.4, 522.4], "material": "woodVertical", "upTo": "windowLine"}
- ],
- "bands": [
-  {"face": "garden", "x": [44, 866], "y": [238, 300], "material": "woodHorizontal"},
-  {"face": "front", "x": [44, 866], "y": [245, 327], "material": "plasterWhite"}
- ],
- "claddings": [
-  {"floor": "ground", "rect": [452.8, 1231, 453.8, 1322.8], "y": [0, 245], "material": "graphite"},
-  {"floor": "ground", "rect": [846, 1231, 847, 1322.8], "y": [0, 245], "material": "graphite"}
+  {"side": "garden", "rect": [44, 0, 866, 44], "material": "graphite"},
+  {"side": "front", "rect": [44, 1187, 866, 1322.8], "material": "graphite"},
+  {"side": "right", "floor": "ground", "rect": [409.8, 1231, 453.8, 1322.8], "y": [0, 245], "material": "graphite"},
+  {"side": "left", "floor": "ground", "rect": [846, 1231, 866, 1322.8], "y": [0, 245], "material": "graphite"},
+  {"side": "front", "floor": "ground", "rect": [615.5, 1187, 661.4, 1231], "material": "woodVertical"},
+  {"side": "front", "floor": "ground", "rect": [741, 1187, 846, 1231], "material": "woodVertical"},
+  {
+   "side": "front",
+   "floor": "attic",
+   "rect": [392.4, 1278.8, 522.4, 1322.8],
+   "material": "woodVertical",
+   "upTo": "windowLine"
+  },
+  {"side": "garden", "rect": [44, 0, 866, 44], "y": [238, 300], "material": "woodHorizontal"},
+  {"side": "front", "rect": [44, 1187, 866, 1322.8], "y": [245, 327], "material": "plasterWhite"}
  ],
  "doors": {
   "entrance": {
@@ -209,8 +203,7 @@ window.HOUSE = {
    "material": "graphite",
    "grooves": 4,
    "handle": {"length": 120, "width": 3, "material": "steel"}
-  },
-  "interiorLintels": "fullHeight"
+  }
  },
  "gate": {"grooves": 4, "groove": "#2e3134"},
  "windows": {

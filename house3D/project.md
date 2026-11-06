@@ -49,7 +49,7 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 - The page checks every wall and opening against its build-up and lists the ones that do not fit. A wall that fits no build-up stays in house.js as measured and stays on that list until it is resolved by hand.
 - The portal (the side walls and the roof running past both gables) has one section: EPS 20 + block 24 + EPS 20 = 64 cm. The block of a wing is in line with the block of its side wall; the roof slab has the thickness of the wings. One section everywhere, no patches where wing and roof meet.
 - The chimney and the stair rail have no build-up.
-- The facade finish (plaster, graphite, wood) is the outer centimetre of the wall itself, never a piece stuck on in front of it: the outline of the house stays the outline of the walls.
+- The facade finish (plaster, graphite, wood, bands) is the last layer of the build-up (24 + 19 + 1): the outer centimetre of the wall on every side to the air. Which finish is where comes from the finish rules of house.js (side, part of the plan, height); the outline of the house stays the outline of the walls.
 
 ## Floors and tiles
 
