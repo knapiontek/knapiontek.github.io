@@ -13,7 +13,7 @@
                 (floors and roof, which are layers too); offer = the material layers (in the panel, section layers); panels = the
                 sections of the panel, the parameters of what is shown (cut and
                 rooms only for the open floor: the highest floor shown with the roof off); cut = the view's own fixed
-                cut (the 2D plan), else the panel's cut of the open floor; selectRooms = a click selects a room of the
+                cut (the 2D plan), else the panel's cut of the open floor; cutRange = [lowest, step] of that cut; selectRooms = a click selects a room of the
                 open floor; walk = the walk is offered; plan = the 2D plan of all floors side by side
    layers       what can be switched off: name, on false = off at the start, layers = the layers inside it (a child is
                 shown only with its parent). Every element names its layers ("layers" on its node, its kind or its
@@ -87,6 +87,7 @@ window.HOUSE = {
    "levels": ["ground", "attic", "roof"],
    "offer": ["foundation", "walls", "slabs", "insulation", "facade", "edges", "openings", "stair", "fittings", "floors", "site"],
    "panels": ["cut", "light", "layers", "rooms", "walls", "notes"],
+   "cutRange": [50, 5],
    "selectRooms": true,
    "walk": true
   },

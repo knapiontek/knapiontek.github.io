@@ -172,7 +172,7 @@ td select{padding:3px 4px;font-size:12px}
     <h2>Przekrój</h2>
     <div class="lay" style="padding:0">
       <div class="rng"><label for="cut">Wysokość cięcia ścian</label><span id="cutv"></span>
-        <input id="cut" type="range" min="30" step="5" style="grid-column:1/-1"></div>
+        <input id="cut" type="range" style="grid-column:1/-1"></div>
     </div>
     </section>
     <section data-panel="light">
@@ -975,8 +975,7 @@ const groundUnder = r => { const cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2,
 // The cut never changes the model: the geometry is built once, whole, and the view clips it with a plane at the cut
 // height. What the plane leaves open is closed by the section: a thin cap just under the plane on every wall piece
 // it runs through, in the colour of the wall or of its layer (EPS). Only the section is rebuilt when the cut moves.
-// The plane lies a hair above the cut height: a face at that height (a sill, a wall top) is under it, never on it.
-const CUT_GAP = 0.02, CUT_PLANE = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e6), CLIP = [CUT_PLANE];
+const CUT_PLANE = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e6), CLIP = [CUT_PLANE];
 const sections = {}, capGroups = {};            // per floor: the wall pieces that can be cut, and their caps
 for (const f of FLOOR_IDS) { capGroups[f] = new THREE.Group(); groups[f].add(capGroups[f]); }
 function clipAll() {               // every material of the model is clipped by the cut plane
@@ -984,34 +983,30 @@ function clipAll() {               // every material of the model is clipped by 
 }
 function setCut() {
   const f = openFloor(), h = VIEW().plan ? Infinity : cutHeight();
-  CUT_PLANE.constant = h < Infinity && f ? (LEVEL[f] + h + CUT_GAP) * root.scale.y : 1e6;
+  CUT_PLANE.constant = h < Infinity && f ? (LEVEL[f] + h) * root.scale.y : 1e6;
   for (const fl of FLOOR_IDS) buildCaps(fl);
   requestRender();
 }
 // the finish of house.js at a height (house y): the last rule that covers it, else the wall's own surface
 const finishAt = (rules, y, base) => { const f = [...rules].reverse().find(f => !f.y || (f.y[0] <= y && y <= f.y[1])); return f ? M[f.material] : base; };
+// where a straight f crosses the height h between x1 and x2, or null
+const crossing = (f, x1, x2, h) => { const a = f(x1) - h, b = f(x2) - h; return a * b < 0 ? x1 + (x2 - x1) * a / (a - b) : null; };
 function buildCaps(floor) {
   const grp = capGroups[floor]; clearGroup(grp);
   const h = VIEW().plan ? Infinity : cutHeight(); if (h === Infinity || openFloor() !== floor) return;
   const breaks = [...sections[floor].breaks, XL + (h - KNEE) / PITCH, XR - (h - KNEE) / PITCH];
-  const P = h + CUT_GAP;
   for (const sct of sections[floor].pieces.concat(slabSections[floor] || [])) {
-    // a sloping piece (under the roof) is cut only over a part of its width: the cap covers just that part, split
-    // where the bottom or the top of the piece crosses the plane (both are straight between the breaks)
-    const r = sct.r, lo = num(sct.from), hi = num(sct.top);
-    const xs = [r[0], r[2], ...breaks.filter(b => b > r[0] && b < r[2])].sort((a, b) => a - b), cuts = [...xs];
-    for (let i = 0; i < xs.length - 1; i++) for (const f of [lo, hi]) {
-      const a = f(xs[i]) - P, b = f(xs[i + 1]) - P;
-      if (a * b < 0) cuts.push(xs[i] + (xs[i + 1] - xs[i]) * a / (a - b));
-    }
-    cuts.sort((a, b) => a - b);
-    const at = x => Math.min(P, hi(x)) - CUT_GAP / 2;              // the cap: right under the plane (no seam shows), inside the piece
-    const mat = sct.rules ? finishAt(sct.rules, sct.y0 + P, sct.mat) : sct.mat;   // a finish is cut in its own material
-    for (let i = 0; i < cuts.length - 1; i++) {
-      const x1 = cuts[i], x2 = cuts[i + 1], m = (x1 + x2) / 2;
-      if (x2 - x1 < 0.01 || !(lo(m) < P && hi(m) > P)) continue;   // the plane does not run through this part
-      withLayers(sct.layers, () => prism(x1, r[1], x2, r[3], sct.y0, x => Math.max(lo(x), at(x) - 0.6), at, mat, grp, breaks));
-    }
+    // a piece under the roof slopes, so the plane may cut only a part of its width: split it where its
+    // bottom or top crosses the plane (both are straight between the breaks) and cap the parts that are cut
+    const r = sct.r, lo = num(sct.from), hi = num(sct.top), xs = [r[0], r[2], ...breaks.filter(b => b > r[0] && b < r[2])].sort((a, b) => a - b);
+    const cuts = xs.flatMap((x, i) => i ? [lo, hi].map(f => crossing(f, xs[i - 1], x, h)).filter(c => c !== null).concat(x) : [x]);
+    const top = x => Math.min(h, hi(x)) - 0.01;                    // right under the plane: no seam between cap and plane
+    const mat = sct.rules ? finishAt(sct.rules, sct.y0 + h, sct.mat) : sct.mat;   // a finish is cut in its own material
+    cuts.forEach((x2, i) => {
+      const x1 = cuts[i - 1], m = (x1 + x2) / 2;
+      if (i && x2 - x1 > 0.01 && lo(m) < h && hi(m) > h)
+        withLayers(sct.layers, () => prism(x1, r[1], x2, r[3], sct.y0, x => Math.max(lo(x), top(x) - 0.6), top, mat, grp, breaks));
+    });
   }
   mergeMeshes(grp); applyLayers();
 }
@@ -1352,8 +1347,10 @@ function contextPanel() {
   }
   if (f) {                         // the cut of the open floor; at the top of its range: no cut
     const cut = document.getElementById('cut'), top = cutTop(f);
-    const step = +cut.step, min = +cut.min, end = min + Math.ceil((top - min) / step) * step;   // the last step reaches 'no cut'
-    cut.max = end; cut.value = Math.min(state.cuts[f], end);
+    const [min, step] = VIEW().cutRange, end = min + Math.ceil((top - min) / step) * step;   // the last step reaches 'no cut'
+    cut.min = min; cut.step = step;
+    state.cuts[f] = Math.min(Math.max(state.cuts[f], min), end);   // a cut kept from before stays in range
+    cut.max = end; cut.value = state.cuts[f];
     document.getElementById('cutv').textContent = state.cuts[f] >= top ? 'bez cięcia' : state.cuts[f] + ' cm';
   }
   // the selected room opens under its own row in the list: its floor settings (an accordion, read top to bottom)
