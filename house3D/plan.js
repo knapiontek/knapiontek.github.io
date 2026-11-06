@@ -15,7 +15,9 @@
              portal (the side walls run past the gables) | int24 | int12 | chimney | rail
    openings  the part of a wall with a window, door, entrance or gate: wall below sill and above head, glass in windows;
              wall = the wall kind it sits in (its build-up and surfaces)
-   rooms     floor areas as rectangles; planArea = the area from the plan (attic: total, incl. under 1.9 m);
+   rooms     floor areas as rectangles, together the whole floor between the walls (passages without a door
+             belong to a room: the bedroom has the wall gaps to its wardrobes, room (6) the niche beside the shaft); planArea = the area from the plan
+             (attic: total, incl. under 1.9 m);
              layout = the floor layout of floors.js that covers it, or none
    stair     U-shaped: flight1 rises west from the hall (risers 1..12 up to the landing), flight2 rises east to the
              attic floor (risers 13..17); core = the wall between the flights; voids = the stair hole in the attic floor */
@@ -73,7 +75,7 @@ window.HOUSE_PLAN = {
    {"name": "Wiatrołap", "planArea": 4.84, "layout": "ground", "rects": [[433.8, 929.3, 615.5, 1187]]},
    {"name": "Łazienka", "planArea": 4.95, "layout": "ground", "rects": [[627.5, 733.8, 866, 902.8], [729, 902.8, 866, 984.9]]},
    {"name": "Kotłownia z pralnią", "planArea": 4.97, "layout": "ground", "rects": [[627.5, 926.8, 717, 996.9], [627.5, 996.9, 866, 1187]]},
-   {"name": "Garaż", "planArea": 25.91, "layout": "none", "rects": [[44, 659, 409.8, 1278.8], [44, 547.9, 318.6, 642.1]]}
+   {"name": "Garaż", "planArea": 25.91, "layout": "none", "rects": [[44, 659, 409.8, 1278.8], [44, 547.9, 318.6, 642.1], [273, 647.7, 318.6, 659]]}
   ],
   "fireplace": [335.5, 506.9, 391, 535.9],
   "stair": {
@@ -126,14 +128,14 @@ window.HOUSE_PLAN = {
    {"r": [452.6, 902.8, 553.7, 914.8], "sill": 0, "head": 205, "kind": "door", "wall": "int12"}
   ],
   "rooms": [
-   {"name": "Sypialnia (2)", "planArea": 28.16, "layout": "attic", "rects": [[44, 44, 866, 362.1], [392.4, 374.1, 553.7, 465.8], [452.6, 465.8, 553.7, 535.9]]},
+   {"name": "Sypialnia (2)", "planArea": 28.16, "layout": "attic", "rects": [[44, 44, 866, 362.1], [392.4, 362.1, 553.7, 374.1], [380.4, 374.1, 565.7, 465.8], [392.4, 465.8, 452.6, 473.2], [452.6, 465.8, 553.7, 535.9]]},
    {"name": "Garderoba (3)", "planArea": 5.13, "layout": "attic", "rects": [[44, 374.1, 380.4, 535.9]]},
    {"name": "Garderoba (4)", "planArea": 4.6, "layout": "attic", "rects": [[565.7, 374.1, 866, 535.9]]},
    {"name": "Hol (1)", "planArea": 7.32, "layout": "attic", "rects": [[438.1, 547.9, 553.7, 651.7], [273, 651.7, 341.9, 738.7], [341.9, 651.7, 553.7, 902.8]]},
    {"name": "Łazienka (5)", "planArea": 7.99, "layout": "bathGrey", "rects": [[565.7, 547.9, 866, 820.7]]},
    {"name": "Garderoba (8)", "planArea": 4.16, "layout": "attic", "rects": [[44, 750.7, 329.9, 902.8]]},
    {"name": "Pokój (7)", "planArea": 14.11, "layout": "attic", "rects": [[44, 914.8, 440.6, 1278.8]]},
-   {"name": "Pokój (6)", "planArea": 16.53, "layout": "attic", "rects": [[452.6, 914.8, 866, 1278.8], [650, 832.7, 866, 914.8]]}
+   {"name": "Pokój (6)", "planArea": 16.53, "layout": "attic", "rects": [[452.6, 914.8, 866, 1278.8], [650, 832.7, 866, 914.8], [609.1, 832.7, 650, 890.8]]}
   ],
   "voids": [[44, 547.9, 438.1, 642.2], [44, 642.2, 273, 738.7]]
  }

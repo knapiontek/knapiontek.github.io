@@ -279,7 +279,7 @@ function layTiles(L, rooms, oa, ob) {
       for (let k = Math.floor((a1 - sh) / Pa); sh + k * Pa < a2; k++) {
         const ta = sh + k * Pa, pa1 = Math.max(a1, ta), pa2 = Math.min(a2, ta + TA);
         if (pa2 - pa1 < 0.05) continue;
-        out.push({ room: room.id, j, k, ta, tb, a1: pa1, a2: pa2, b1: pb1, b2: pb2, door: !!r.door });
+        out.push({ room: room.zone, j, k, ta, tb, a1: pa1, a2: pa2, b1: pb1, b2: pb2, door: !!r.door });
       }
     }
   }
@@ -356,10 +356,20 @@ function thresholds(floor, rects) {
   }
   return out;
 }
+// rooms of one layout that meet with no wall between them (the bedroom and its walk-in wardrobes) are one floor: a tile
+// across their border is one piece, not two cuts
+function zones(rooms) {
+  const zone = rooms.map((r, i) => i), find = i => zone[i] === i ? i : (zone[i] = find(zone[i]));
+  const touch = (a, b) => (Math.abs(a[2] - b[0]) < 0.05 || Math.abs(b[2] - a[0]) < 0.05) && Math.min(a[3], b[3]) - Math.max(a[1], b[1]) > 1
+    || (Math.abs(a[3] - b[1]) < 0.05 || Math.abs(b[3] - a[1]) < 0.05) && Math.min(a[2], b[2]) - Math.max(a[0], b[0]) > 1;
+  rooms.forEach((r, i) => rooms.forEach((s, j) => { if (j > i && r.own.some(a => s.own.some(b => touch(a, b)))) zone[find(j)] = find(i); }));
+  rooms.forEach((r, i) => { r.zone = rooms[find(i)].id; });
+  return rooms;
+}
 function roomsOf(layoutKey) {
   const L = state.layouts[layoutKey], f = L.floor;
-  return PLAN[f].rooms.map((r, i) => ({ id: i, name: r.name, rects: r.rects.concat(thresholds(f, r.rects)), own: r.rects, area: r.rects.reduce((s, q) => s + (q[2] - q[0]) * (q[3] - q[1]), 0) }))
-    .filter((r, i) => state.rooms[f][i] === layoutKey);
+  return zones(PLAN[f].rooms.map((r, i) => ({ id: i, name: r.name, rects: r.rects.concat(thresholds(f, r.rects)), own: r.rects, area: r.rects.reduce((s, q) => s + (q[2] - q[0]) * (q[3] - q[1]), 0) }))
+    .filter((r, i) => state.rooms[f][i] === layoutKey));
 }
 
 /* ================= 5. RENDERER, SCENE ================= */
@@ -1428,9 +1438,25 @@ function wallCheck() {
       if (Math.abs(a - tx) > 0.05 && Math.abs(b - tz) > 0.05) bad.push(`${FLOOR_NAMES[f]}: ${p.what} ${cm(a)} × ${cm(b)} cm, x ${cm(p.r[0])}, z ${cm(p.r[1])} (powinna mieć ${cm(tx)} × ${cm(tz)} cm)`);
     });
   }
+  for (const f of ['ground', 'attic']) {        // floor between the walls that no room covers (it would show the bare slab)
+    const cover = planCover(f), covered = coverTest(cover), P = PLAN[f];
+    const xs = [...new Set(cover.flatMap(r => [r[0], r[2]]))].filter(v => v >= 0 && v <= WIDTH).sort((a, b) => a - b);
+    const zs = [...new Set(cover.flatMap(r => [r[1], r[3]]))].filter(v => v >= 0 && v <= LENGTH).sort((a, b) => a - b);
+    const outer = kind => B.walls[kind].buildUp === 'outer' && !B.walls[kind].wing;
+    const house = P.walls.filter(w => outer(w.kind)).map(w => w.r).concat(P.openings.filter(o => outer(o.wall)).map(o => o.r));
+    for (let i = 0; i < zs.length - 1; i++) for (let k = 0; k < xs.length - 1; k++) {
+      const q = [xs[k], zs[i], xs[k + 1], zs[i + 1]];
+      if (covered(...q)) continue;
+      // inside the house: an outer wall on both sides along x
+      const cx = (q[0] + q[2]) / 2, cz = (q[1] + q[3]) / 2;
+      const walled = house.some(r => r[2] <= q[0] + 0.05 && cz > r[1] && cz < r[3]) && house.some(r => r[0] >= q[2] - 0.05 && cz > r[1] && cz < r[3])
+        && house.some(r => r[3] <= q[1] + 0.05 && cx > r[0] && cx < r[2]) && house.some(r => r[1] >= q[3] - 0.05 && cx > r[0] && cx < r[2]);
+      if (walled) bad.push(`${FLOOR_NAMES[f]}: podłoga bez pomieszczenia ${cm(q[2] - q[0])} × ${cm(q[3] - q[1])} cm, x ${cm(q[0])}, z ${cm(q[1])}`);
+    }
+  }
   const chip = bad.length ? `<span class="chip warn">${bad.length}</span>` : '<span class="chip ok">0</span>';
   document.getElementById('walls').innerHTML = `<table>${rows.join('')}</table>
-    <p class="note">Grubości niezgodne z warstwami: ${chip}${bad.length ? '<br>' + bad.join('<br>') : ''}</p>
+    <p class="note">Niezgodne grubości i podłoga bez pomieszczenia: ${chip}${bad.length ? '<br>' + bad.join('<br>') : ''}</p>
     <p class="note">Styropian jest na rzucie 2D i w przekroju 3D na każdej stronie ściany od zewnątrz: ściana domu 24 + 20, skrzydło portalu 20 + 24 + 20 (też na końcu). Dach portalu ma tę samą grubość co skrzydła.</p>`;
 }
 wallCheck();

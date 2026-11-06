@@ -53,6 +53,8 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 
 ## Floors
 
+- The rooms of plan.js cover the whole floor between the walls; a passage without a door (the wall gaps from the bedroom to its wardrobes) belongs to a room. The page lists any floor that no room covers.
+- Rooms of one layout that meet with no wall between them are one floor for the tiles: a tile across their border is one piece.
 - The tiles of a room run on through its doorways: each half of the door depth belongs to the room on that side, so two floors meet under the door leaf. Cuts are judged in the room; a piece only under a door is no sliver.
 
 ## Checks
