@@ -25,8 +25,9 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 - **Room**: its floor area as rectangles, the tile layout that covers it, and a link to its sub-project.
 - **Tiles**: not stored; the page lays them from the room and its layout.
 - Every node keeps its geometry relative to its parent. A floor sets the level, and everything on a floor (sills, heads, the stair, the fireplace) is measured from it. A room is in the floor's x, z. Tiles are laid in the room from the layout's offsets.
-- **One model**: the objects are the same in every view. A view never builds objects of its own; it only hides layers and cuts the walls. The cut runs through everything at that height, openings too: glass, frames and doors are cut like the walls, never left out.
+- **One model**: the objects are the same in every view. A view never builds objects of its own; it only hides layers and cuts the walls. The cut never changes the geometry: no wall, window, frame or facade board gets another shape or height. The model is built once, whole, and the cut is a plane that clips it; what the plane opens is closed by the section (a cap in the colour of the wall or of its EPS).
 - Nothing overlaps: a wall stands on the plinth down to the ground, on a terrace only down to the paving.
+- No masking panels: a finish or a band is the face of a wall, only where a wall is. Every piece belongs to the floor it stands on (the lintel over the entrance recess is a wall piece of the ground floor).
 
 ## 3. Layer tree
 

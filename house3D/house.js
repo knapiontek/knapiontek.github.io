@@ -40,10 +40,9 @@
    finishes     facade finish of the gable faces by face, floor and x range (the edges of the openings beside them);
                 anything else on a face = default; upTo "windowLine": the finish stops at the line of the attic window
                 tops (the wood between the front windows ends in a peak)
-   bands        facade strips in the facade layer; a band takes its height out of the finish under it
+   bands        facade strips: the finish of the wall in that height, only where a wall is (never a panel of its own)
    claddings    finishes [x1, z1, x2, z2] from y to y: the graphite sides of the entrance recess (the outer cm of its
-                side walls); part "slab" = belongs to the slab over the recess and is drawn with it: the graphite
-                soffit from the bottom of the front band (245) up to the slab, behind the band
+                side walls)
    doors        entrance: the door leaf in the opening of kind entrance (from the hinge side), the rest is a glass
                 sidelight; interiorLintels "fullHeight": the wall over an interior door only at full wall height
    gate, windows   the garage door panel; window frames (profile, mullions, transom), the attic gable windows follow
@@ -66,6 +65,8 @@
                 (z along the house, x across) - the rest is set on the page when the room is selected; tilesWith =
                 the room is tiled together with that room (walk-in wardrobes with the bedroom); neither = no tiles;
                 link = a sub-project of this room (its own page in the repository)
+     beams      wall pieces of the floor over a passage with no wall under it: the lintel of the entrance recess in
+                the line of the front wall, from y[0] to y[1] above the floor level, of a wall kind
      stair      U-shaped: flight1 rises west from the hall (risers 1..12 up to the landing), flight2 rises east to
                 the attic floor; core = the wall between the flights; treadMaterial, coreMaterial
      fireplace  rect, height and material of the fireplace block
@@ -199,8 +200,7 @@ window.HOUSE = {
  ],
  "claddings": [
   {"floor": "ground", "rect": [452.8, 1231, 453.8, 1322.8], "y": [0, 245], "material": "graphite"},
-  {"floor": "ground", "rect": [846, 1231, 847, 1322.8], "y": [0, 245], "material": "graphite"},
-  {"floor": "ground", "rect": [453.8, 1231, 846, 1321.8], "y": [245, 272], "material": "graphite", "part": "slab"}
+  {"floor": "ground", "rect": [846, 1231, 847, 1322.8], "y": [0, 245], "material": "graphite"}
  ],
  "doors": {
   "entrance": {
@@ -311,6 +311,7 @@ window.HOUSE = {
     {"r": [615.5, 760.3, 627.5, 869], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
     {"r": [615.5, 1064.5, 627.5, 1156.2], "sill": 0, "head": 205, "kind": "door", "wall": "int12"}
    ],
+   "beams": [{"rect": [453.8, 1278.8, 846, 1322.8], "y": [245, 297], "kind": "ext"}],
    "rooms": [
     {
      "id": "salon",

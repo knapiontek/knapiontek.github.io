@@ -389,6 +389,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = B.light.exposure;
 renderer.shadowMap.enabled = true;
+renderer.localClippingEnabled = true;          // the cut of the view is a clipping plane (section 7)
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const lin = hex => new THREE.Color(hex).convertSRGBToLinear();
@@ -587,8 +588,6 @@ withLayers(B.slab.layers, function buildSlab() {
   const ux = [...new Set(xs)].sort((a, b) => a - b), uz = [...new Set(zs)].sort((a, b) => a - b);
   for (let i = 0; i < uz.length - 1; i++) for (let k = 0; k < ux.length - 1; k++)
     if (!inVoid((ux[k] + ux[k + 1]) / 2, (uz[i] + uz[i + 1]) / 2)) box(Math.max(ux[k], XL), slabY1, Math.max(uz[i], 2), Math.min(ux[k + 1], WIDTH - XL), slabY2, Math.min(uz[i + 1], LENGTH - 2), M[B.slab.material], attSlab);
-  // the parts of the slab over the entrance recess (its beam and soffit) go with the slab, never with the cut walls
-  for (const c of B.claddings) if (c.part === 'slab') box(c.rect[0], c.y[0], c.rect[1], c.rect[2], c.y[1], c.rect[3], M[c.material], attSlab);
 });
 // U-shaped stair; STAIR_BOXES [x1, z1, x2, z2, top] are also the walking surfaces
 const ST = PLAN.ground.stair, rise = LEVEL.attic / ST.risers, STAIR_BOXES = [];
@@ -629,7 +628,7 @@ withLayers(B.roof.layers, function buildRoof() {
   for (const [xa, xb] of [[XL, XM], [XR, XM]]) {        // see-through slopes for the attic plan view
     const y1 = y + KNEE, y2 = y + RIDGE, g3 = new THREE.BufferGeometry();
     g3.setAttribute('position', new THREE.Float32BufferAttribute([xa, y1, 0, xb, y2, 0, xb, y2, LENGTH, xa, y1, 0, xb, y2, LENGTH, xa, y1, LENGTH], 3));
-    g3.computeVertexNormals(); roofGhost.add(new THREE.Mesh(g3, M.ghost));
+    g3.computeVertexNormals(); { const gm = new THREE.Mesh(g3, M.ghost); gm.userData.noClip = true; roofGhost.add(gm); }
   }
 });
 const isFull = () => !VIEW().cut;
@@ -851,10 +850,11 @@ function skinFace(r0, y0, bottom, top, grp, breaks, floor, face, f) {
   skinning = true;
   try {
     let parts = [[num(bottom), num(top)]];
-    for (const b of B.bands) {                       // the band takes its height out of the cladding under it
+    for (const b of B.bands) {                       // a band is the finish of the wall in its height: only where a wall is
       if (b.face !== face || r0[2] <= b.x[0] || r0[0] >= b.x[1]) continue;
-      const b0 = b.y[0] - y0, b1 = b.y[1] - y0;
+      const b0 = b.y[0] - y0, b1 = b.y[1] - y0, lo0 = num(bottom), hi0 = num(top);
       parts = parts.flatMap(([lo, hi]) => [[lo, x => Math.min(hi(x), b0)], [x => Math.max(lo(x), b1), hi]]);
+      prism(Math.max(r[0], b.x[0]), z[0], Math.min(r[2], b.x[1]), z[1], y0, x => Math.max(lo0(x), b0), x => Math.min(hi0(x), b1), M[b.material], grp, breaks);
     }
     for (const [lo, hi] of parts) skinPieces(r, z, face, y0, lo, hi, grp, breaks, f);
   } finally { skinning = false; }
@@ -892,8 +892,33 @@ function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX, opt) {
 // a wall stands on the plinth down to the ground: on a terrace only down to the paving (they never overlap)
 const groundUnder = r => { const cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2, t = B.site.terraces.find(t => cx > t.rect[0] && cx < t.rect[2] && cz > t.rect[1] && cz < t.rect[3]); return t ? t.y : B.plinth.bottom; };
 // the layer (EPS) seen in the cut: a thin cap of its colour on the top of the wall
-// (only where the view cuts the walls: an uncut top is no section)
-const cap = (r, y0, top, mat, grp, breaks) => withLayers(materialLayers[Object.keys(M).find(k => M[k] === mat)], () => prism(r[0], r[1], r[2], r[3], y0, top, x => num(top)(x) + 0.6, mat, grp, breaks));
+// The cut never changes the model: the geometry is built once, whole, and the view clips it with a plane at the cut
+// height. What the plane leaves open is closed by the section: a thin cap just under the plane on every wall piece
+// it runs through, in the colour of the wall or of its layer (EPS). Only the section is rebuilt when the cut moves.
+const CUT_PLANE = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e6), CLIP = [CUT_PLANE];
+const sections = {}, capGroups = {};            // per floor: the wall pieces that can be cut, and their caps
+for (const f of FLOOR_IDS) { capGroups[f] = new THREE.Group(); groups[f].add(capGroups[f]); }
+function clipAll() {               // every material of the model is clipped by the cut plane (the see-through roof not)
+  root.traverse(o => { if (o.material && !o.userData.noClip) for (const m of [].concat(o.material)) if (m.clippingPlanes !== CLIP) { m.clippingPlanes = CLIP; m.needsUpdate = true; } });
+}
+function setCut() {
+  const v = VIEW(), f = v.floor, h = cutHeight();
+  CUT_PLANE.constant = h < Infinity && f ? (LEVEL[f] + h) * root.scale.y : 1e6;
+  for (const fl of FLOOR_IDS) buildCaps(fl);
+  requestRender();
+}
+function buildCaps(floor) {
+  const grp = capGroups[floor]; clearGroup(grp);
+  const h = cutHeight(); if (h === Infinity) return;
+  const breaks = [...sections[floor].breaks, XL + (h - KNEE) / PITCH, XR - (h - KNEE) / PITCH];
+  for (const sct of sections[floor].pieces) {
+    if (sct.from >= h || sct.below && h >= sct.below) continue;          // the plane is not in this piece
+    if (sct.above !== undefined && h < sct.above) continue;
+    const r = sct.r, at = x => Math.min(h, sct.top(x));
+    withLayers(sct.layers, () => prism(r[0], r[1], r[2], r[3], sct.y0, x => at(x) - 0.6, x => at(x) - 0.05, sct.mat, grp, breaks));
+  }
+  applyLayers();
+}
 // the facade finish is the outer F.depth cm of the wall itself: the wall body ends behind it
 const bodyOf = (r, face) => face === 'garden' ? [r[0], r[1] + F.depth, r[2], r[3]] : face === 'front' ? [r[0], r[1], r[2], r[3] - F.depth] : r;
 // a wall piece with claddings in it: the wall above and below them, the claddings themselves are drawn on their own
@@ -906,26 +931,21 @@ function wallBody(floor, r, y0, bottom, top, mat, grp, breaks) {
 }
 function buildWalls(floor) {
   const grp = wallGroups[floor]; clearGroup(grp);
-  const y0 = LEVEL[floor], cut = cutHeight();
+  const y0 = LEVEL[floor], cut = Infinity;          // the model is whole; the view's cut is a clipping plane
+  const pieces = [];
   const edgeList = []; edgeSink = edgeList;
   const attic = floor === 'attic';
   joinHeights = [...new Set(PLAN[floor].openings.flatMap(o => [o.sill, o.head]).concat(attic ? [KNEE] : [GROUND_H, LEVEL.attic]))].sort((a, b) => a - b);
   floorY = y0; seamY = attic ? null : LEVEL.attic;
   const c1 = XL + (cut - KNEE) / PITCH, c2 = XR - (cut - KNEE) / PITCH;
   const breaks = attic ? [XL, XM, XR, c1, c2, WIDTH - XL, XL] : [];
-  // one model in every view: each wall rises to its own top (the outer walls up to the attic floor), the view only
-  // cuts it at the cut height
+  // one model in every view: each wall rises to its own top (the outer walls up to the attic floor)
   const fixedTop = kind => B.wallKinds[kind].height === undefined ? null : () => Math.min(cut, B.wallKinds[kind].height);
   const groundTop = kind => () => Math.min(cut, B.wallKinds[kind].upToAtticFloor ? LEVEL.attic : GROUND_H);
   const wallTop = kind => fixedTop(kind) || (attic ? x => Math.min(cut, roofHeight(x)) : groundTop(kind));   // one roof line for every attic wall
   const skinTop = top => top;
   const portalTop = LEVEL[B.portals.groundWingsTo];
   const fullTop = attic ? roofHeight : () => LEVEL.attic;
-  // an opening is drawn whole (glass, frames and the wall above it) when the cut is at or above its highest point
-  const openingWhole = o => {
-    const r = o.r, { head } = openingHead(o, fullTop), xs = [r[0], r[2], ...breaks.filter(p => p > r[0] && p < r[2])];
-    return cut >= Math.max(...xs.map(head));
-  };
   const openingHead = (o, top) => {
     const followRoof = attic && facadeFace(o.r) && B.windows.attic.followRoof && o.kind === 'window';
     return { followRoof, head: followRoof ? x => Math.min(top(x), windowLine(x)) : x => Math.min(o.head, top(x)) };
@@ -939,26 +959,31 @@ function buildWalls(floor) {
       const body = bodyOf(r, c.face);
       wallBody(floor, body, y0, 0, top, M.wall[c.kind], grp, breaks);
       skin(r, y0, 0, skinTop(top), grp, breaks, floor, c.face, c.finish);
-      if (c.layer && cut < Infinity) cap(body, y0, top, M[c.layer], grp, breaks);
+      pieces.push({ r: body, y0, from: 0, top, mat: c.layer ? M[c.layer] : M.wall[c.kind], layers: drawLayers.concat(c.layer ? materialLayers[c.layer] : []) });
       if (!attic && B.wallKinds[c.kind].plinth) withLayers(B.plinth.layers, () => box(r[0], groundUnder(r), r[1], r[2], B.plinth.top, r[3], M[B.plinth.material], grp));
     } else {
       const o = PLAN[floor].openings[c.opening], top = wallTop(c.kind), { head } = openingHead(o, top);
       const below = x => Math.min(o.sill, top(x));
       const body = bodyOf(r, c.face);
       prism(body[0], body[1], body[2], body[3], y0, 0, below, M.wall[c.kind], grp, breaks); skin(r, y0, 0, below, grp, breaks, floor, c.face, c.finish);
-      if (c.layer && cut < o.sill) cap(body, y0, below, M[c.layer], grp, breaks);
+      const capOf = { r: body, y0, mat: c.layer ? M[c.layer] : M.wall[c.kind], layers: drawLayers.concat(c.layer ? materialLayers[c.layer] : []) };
+      pieces.push(Object.assign({ from: 0, top: below, below: o.sill }, capOf));
       if (!attic && B.wallKinds[c.kind].plinth) withLayers(B.plinth.layers, () => box(r[0], groundUnder(r), r[1], r[2], B.plinth.top, r[3], M[B.plinth.material], grp));
-      const interiorDoor = o.kind === 'door' && !facadeFace(o.r) && B.doors.interiorLintels === 'fullHeight';
-      if (openingWhole(o) && (!interiorDoor || cut >= GROUND_H)) {   // the wall above: only with the whole opening
+      {                                                 // the wall above the opening
         prism(body[0], body[1], body[2], body[3], y0, head, top, M.wall[c.kind], grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
-        if (c.layer && cut < Infinity) cap(body, y0, top, M[c.layer], grp, breaks);
+        const xs = [r[0], r[2], ...breaks.filter(p => p > r[0] && p < r[2])];
+        pieces.push(Object.assign({ from: 0, top, above: Math.max(...xs.map(head)) }, capOf));
       }
     }
   });
+  for (const bm of PLAN[floor].beams || []) withLayers(B.wallKinds[bm.kind].layers, () => {   // wall over a passage: a part of this floor
+    const face = facadeFace(bm.rect), body = bodyOf(bm.rect, face), top = () => bm.y[1];
+    prism(body[0], body[1], body[2], body[3], y0, bm.y[0], top, M.wall[bm.kind], grp, breaks);
+    skin(bm.rect, y0, bm.y[0], top, grp, breaks, floor, face, face ? finishOf(face, floor, bm.rect[0], bm.rect[2]) : null);
+    pieces.push({ r: body, y0, from: bm.y[0], top, mat: M.wall[bm.kind], layers: drawLayers });
+  });
   for (const o of PLAN[floor].openings) withLayers(B.windows.layers, () => {   // glass, frames, doors: the same objects, cut like the walls
-    if (cut <= o.sill) return;                        // the cut is below the opening
-    const r = o.r, { followRoof, head: whole } = openingHead(o, fullTop), head = x => Math.min(whole(x), cut);
-    const top = Math.min(o.head, cut);
+    const r = o.r, { followRoof, head } = openingHead(o, fullTop), top = o.head;
     const thinX = (r[2] - r[0]) < (r[3] - r[1]);
     // the glass plane: "setback" cm behind the outer face for windows in outer walls, else the middle of the wall
     const SB = B.windows.setback, face = facadeFace(r);
@@ -969,7 +994,7 @@ function buildWalls(floor) {
     if (face && o.kind !== 'door') {   // the reveal in front of the glass (or the entrance) gets the facade finish
       const lin = M[F.default], t = 0.8, face1 = outer;   // up to the outer face (the facade layer is in the wall)
       const za = Math.min(face1, mid), zb = Math.max(face1, mid);
-      if (openingWhole(o)) prism(r[0], za, r[2], zb, y0, head, x => head(x) + t, lin, grp, breaks);
+      prism(r[0], za, r[2], zb, y0, head, x => head(x) + t, lin, grp, breaks);
       prism(r[0], za, r[0] + t, zb, y0, o.sill, head, lin, grp, breaks);
       prism(r[2] - t, za, r[2], zb, y0, o.sill, head, lin, grp, breaks);
       if (o.sill > 0) prism(r[0], za, r[2], zb, y0, o.sill - t, o.sill, lin, grp, breaks);
@@ -1003,17 +1028,12 @@ function buildWalls(floor) {
     }
   });
   withLayers(B.faces.layers, () => {
-  for (const c of B.claddings) if (c.floor === floor && c.part !== 'slab' && Math.min(c.y[1], cut) > c.y[0]) prism(c.rect[0], c.rect[1], c.rect[2], c.rect[3], 0, c.y[0], Math.min(c.y[1], cut), M[c.material], grp, []);
-  for (const b of B.bands) {
-    const onFloor = b.y[0] < (attic ? 10000 : LEVEL.attic) && b.y[0] >= (attic ? LEVEL.attic : -100);
-    if (!onFloor) continue;
-    const z = b.face === 'garden' ? [F.garden.z, F.garden.z + F.depth] : [LENGTH - F.depth, LENGTH];   // the facade layer
-    prism(b.x[0], z[0], b.x[1], z[1], 0, b.y[0], Math.min(b.y[1], y0 + cut), M[b.material], grp, []);   // cut like the walls
-  }
+  for (const c of B.claddings) if (c.floor === floor && Math.min(c.y[1], cut) > c.y[0]) prism(c.rect[0], c.rect[1], c.rect[2], c.rect[3], 0, c.y[0], Math.min(c.y[1], cut), M[c.material], grp, []);
   });
   edgeSink = null;
   withLayers(B.edges.layers, () => buildEdges(edgeList, grp));
-  applyLayers();
+  sections[floor] = { pieces, breaks };
+  clipAll(); buildCaps(floor);
 }
 
 /* ================= 8. FLOORS (rebuilt with the layouts) ================= */
@@ -1139,7 +1159,7 @@ function setMode(mode, keepCamera) {
   if (state.room && (!B.views[mode].selectRooms || B.views[mode].floor !== ROOM[state.room].floor)) state.room = null;   // a room only in a view of its floor
   state.mode = mode;
   updateRoof();
-  if (before !== cutHeight()) for (const f of FLOOR_IDS) buildWalls(f);   // the same objects, cut at another height
+  setCut();                                          // the same objects, clipped at the view's cut
   applyLayers(); layersPanel(); contextPanel(); markRoom();
   for (const b of document.querySelectorAll('.hud [data-mode]')) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
   contextMenu();
@@ -1270,7 +1290,7 @@ function autoLayout(key, quiet) {
   if (!quiet) rebuildFloor(L.floor);
 }
 function rebuildFloor(f) {
-  buildFloor(f); applyLayers();
+  buildFloor(f); clipAll(); applyLayers();
   if (!document.getElementById('plan2d').hidden) showPlan(true);
   for (const k in state.layouts) if (state.layouts[k].floor === f) refreshLayoutPanel(k);
   roomsTable(); markRoom();
@@ -1439,6 +1459,7 @@ function floorSVG(floor, ox, oy, withTiles) {
   }
   if (!attic) { const c = ST.core; rect(c, `fill="${C.wall}"`); }
   { const f1 = ST.flight1, zc = (f1.z[0] + f1.z[1]) / 2; line(f1.x[1] - 10, zc, ST.landing.x[1] - 10, zc, `stroke="${C.ink}" stroke-width=".7" marker-end="url(#arrow)"`); }
+  for (const bm of P.beams || []) rect(bm.rect, `fill="none" stroke="${C.ink}" stroke-width=".6" stroke-dasharray="8 4"`);   // above the cut
   if (P.fireplace) rect(P.fireplace.rect, `fill="#cfcfcd" stroke="${C.ink}" stroke-width=".5"`);
   // walls: cut at the same height as the 3D view (the slider): an opening whose sill is above the cut is wall
   const cutH = planCut();
@@ -1608,12 +1629,12 @@ for (const k in state.layouts) wireLayout(k);
 roomsTable();
 const cut = document.getElementById('cut'), cutv = document.getElementById('cutv');
 cut.value = state.cut; cutv.textContent = state.cut + ' cm';
-cut.oninput = () => { state.cut = +cut.value; cutv.textContent = state.cut + ' cm'; for (const f of FLOOR_IDS) buildWalls(f); save(); requestRender(); if (!document.getElementById('plan2d').hidden) showPlan(true); };
+cut.oninput = () => { state.cut = +cut.value; cutv.textContent = state.cut + ' cm'; setCut(); save(); requestRender(); if (!document.getElementById('plan2d').hidden) showPlan(true); };
 { // the 2D plan tools in the panel (the same as in its menu) and its cut, shared with the 3D views
   const pc = document.getElementById('plancut'), pv = document.getElementById('plancutv');
   const sync = () => { pc.value = cut.value = state.cut; pv.textContent = cutv.textContent = state.cut + ' cm'; };
   sync();
-  pc.oninput = () => { state.cut = +pc.value; sync(); for (const f of FLOOR_IDS) buildWalls(f); save(); showPlan(true); };
+  pc.oninput = () => { state.cut = +pc.value; sync(); setCut(); save(); showPlan(true); };
   cut.addEventListener('input', sync);
   document.getElementById('planOut').onclick = () => zoomPlan(1 / 1.25);
   document.getElementById('planIn').onclick = () => zoomPlan(1.25);
