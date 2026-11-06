@@ -603,7 +603,6 @@ const inVoid = (x, z) => VOIDS.some(v => x > v[0] && x < v[2] && z > v[1] && z <
 const slabGroup = new THREE.Group(), soffitGroup = new THREE.Group(); groups.attic.add(slabGroup); groups.ground.add(soffitGroup);
 const SLAB_BU = B.buildUps[B.slab.buildUp], SLAB_OUTER = outerThickness(SLAB_BU);
 let slabCells = [];
-const slabSections = {};          // the cut of the slab's pieces, by floor (the soffit is cut with the ground floor)
 // rectangles merged into larger ones: runs along x per z band, then bands with the same x range
 function mergeRects(rects) {
   const rows = new Map();
@@ -651,7 +650,7 @@ function readSlab() {
 }
 function buildSlab() {
   slabCells = readSlab(); joinHeights = [];
-  const fin = SLAB_BU.layers[SLAB_BU.layers.length - 1].thickness, bottom = slabY1 - SLAB_OUTER, outline = [], soffit = [], cut = slabSections.ground = [];
+  const fin = SLAB_BU.layers[SLAB_BU.layers.length - 1].thickness, bottom = slabY1 - SLAB_OUTER, outline = [], soffit = [];
   const groundCover = PLAN.ground.walls.map(w => w.r).concat(PLAN.ground.openings.map(o => o.r));
   const inLayer = (L, fn) => withLayers(L ? L.layers || [] : B.slab.layers, fn);
   const finishLayer = SLAB_BU.layers.find(l => l.finish), epsLayer = SLAB_BU.layers.find(l => l.material);
@@ -671,17 +670,10 @@ function buildSlab() {
     }
     const lay = c.layer ? c.layer.layers || [] : B.slab.layers;
     outline.push({ r, parts: [[slabY1, slabY2]], openTop: true, openBottom: true, layers: lay });
-    if (c.under) cut.push(c.layer && c.layer.finish
-      ? { r, y0: 0, from: bottom, top: () => slabY1, mat: M[B.slab.face], layers: lay }
-      : { r, y0: 0, from: bottom + fin, top: () => slabY1, mat: M[epsLayer.material], layers: epsLayer.layers || [] });
     if (c.under) soffit.push({ r, parts: [[bottom, slabY1]], openTop: true, layers: c.layer && c.layer.finish ? lay : finishLayer.layers, alsoTouch: groundCover });   // its face runs on into the walls beside it
   }
   withLayers(B.edges.layers, () => { outlineEdges(outline, 0, [], slabGroup); outlineEdges(soffit, 0, [], soffitGroup); });
   mergeMeshes(slabGroup); mergeMeshes(soffitGroup);
-  // the soffit's cut in few large pieces, one set per material, so the section is one plane without seams
-  const byMat = new Map();
-  for (const p of cut) { const k = p.mat.uuid + p.from; byMat.set(k, (byMat.get(k) || { p, rects: [] })); byMat.get(k).rects.push(p.r); }
-  slabSections.ground = [...byMat.values()].flatMap(({ p, rects }) => mergeRects(rects).map(r => Object.assign({}, p, { r })));
 }
 // U-shaped stair; STAIR_BOXES [x1, z1, x2, z2, top] are also the walking surfaces
 const ST = PLAN.ground.stair, rise = LEVEL.attic / ST.risers, STAIR_BOXES = [];
@@ -958,13 +950,13 @@ function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX, opt) {
     : prism(b1, cz - D, b2, cz + D, y0, bottom, top, mat, grp, breaks);
   // Every member is rigid: straight posts and bars at fixed positions, drawn whole or not at all, never clipped to the
   // window outline. Only the outer frame follows the outline (it is the outline).
-  const n = Math.max(1, Math.round(len / opt.mullionEvery)), posts = [];
+  const n = opt.mullionEvery ? Math.max(1, Math.round(len / opt.mullionEvery)) : 1, posts = [];   // no spacing: the outer frame only
   for (let i = 0; i <= n; i++) posts.push(a1 + i * len / n);
   for (const p of posts) member(Math.max(a1, p - W / 2), Math.min(a2, p + W / 2), sill, headFn);
   member(a1, a2, sill, sill + W);
   member(a1, a2, x => headFn(x) - W, headFn);
   const T = opt.transom;
-  if (thinX) return;
+  if (thinX || T === undefined) return;
   for (let i = 0; i < n; i++) {                   // a transom crosses only the panes that are taller than it at both posts
     const p1 = posts[i], p2 = posts[i + 1], low = Math.min(headFn(p1), headFn(p2), ...breaks.filter(b => b > p1 && b < p2).map(headFn));
     if (p2 - p1 > 40 && low >= T + W / 2 + 25) member(p1 + W / 2, p2 - W / 2, T - W / 2, T + W / 2);
@@ -973,42 +965,45 @@ function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX, opt) {
 // a wall stands on the plinth down to the ground: on a terrace only down to the paving (they never overlap)
 const groundUnder = r => { const cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2, t = B.site.terraces.find(t => cx > t.rect[0] && cx < t.rect[2] && cz > t.rect[1] && cz < t.rect[3]); return t ? t.y : B.plinth.bottom; };
 // The cut never changes the model: the geometry is built once, whole, and the view clips it with a plane at the cut
-// height. What the plane leaves open is closed by the section: a thin cap just under the plane on every wall piece
-// it runs through, in the colour of the wall or of its layer (EPS). Only the section is rebuilt when the cut moves.
+// height. What the plane opens is filled by the graphics card (the stencil): for every material of the open floor its
+// solids are drawn once more unseen, their back faces counting up and their front faces down, so a pixel looking into
+// a cut solid keeps a count; then a plane at the cut height in that material is drawn on those pixels only. The solids
+// are closed, so a solid the plane does not cut counts nothing. Only these extra draws change when the cut moves.
 const CUT_PLANE = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e6), CLIP = [CUT_PLANE];
-const sections = {}, capGroups = {};            // per floor: the wall pieces that can be cut, and their caps
-for (const f of FLOOR_IDS) { capGroups[f] = new THREE.Group(); groups[f].add(capGroups[f]); }
 function clipAll() {               // every material of the model is clipped by the cut plane
   root.traverse(o => { if (o.material && !o.userData.noClip) for (const m of [].concat(o.material)) if (m.clippingPlanes !== CLIP) { m.clippingPlanes = CLIP; m.clipShadows = true; m.needsUpdate = true; } });   // what is cut away casts no shadow
 }
+const counting = side => new THREE.MeshBasicMaterial({ side, colorWrite: false, depthWrite: false, depthTest: false, clippingPlanes: CLIP,
+  stencilWrite: true, stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: side === THREE.BackSide ? THREE.IncrementWrapStencilOp : THREE.DecrementWrapStencilOp });
+const COUNT_BACK = counting(THREE.BackSide), COUNT_FRONT = counting(THREE.FrontSide);
+const sectionParts = [], capMaterials = new Map();
+// the solids that can be cut: the walls, the slab and soffit, and what stands on the floor (stair, fireplace, plinth)
+const cutSolids = f => [wallGroups[f], groups[f], f === 'attic' ? slabGroup : soffitGroup].flatMap(g => g.children)
+  .filter(o => o.isMesh && !o.material.transparent && !o.userData.section);
 function setCut() {
   const f = openFloor(), h = VIEW().plan ? Infinity : cutHeight();
   CUT_PLANE.constant = h < Infinity && f ? (LEVEL[f] + h) * root.scale.y : 1e6;
-  for (const fl of FLOOR_IDS) buildCaps(fl);
-  requestRender();
-}
-// the finish of house.js at a height (house y): the last rule that covers it, else the wall's own surface
-const finishAt = (rules, y, base) => { const f = [...rules].reverse().find(f => !f.y || (f.y[0] <= y && y <= f.y[1])); return f ? M[f.material] : base; };
-// where a straight f crosses the height h between x1 and x2, or null
-const crossing = (f, x1, x2, h) => { const a = f(x1) - h, b = f(x2) - h; return a * b < 0 ? x1 + (x2 - x1) * a / (a - b) : null; };
-function buildCaps(floor) {
-  const grp = capGroups[floor]; clearGroup(grp);
-  const h = VIEW().plan ? Infinity : cutHeight(); if (h === Infinity || openFloor() !== floor) return;
-  const breaks = [...sections[floor].breaks, XL + (h - KNEE) / PITCH, XR - (h - KNEE) / PITCH];
-  for (const sct of sections[floor].pieces.concat(slabSections[floor] || [])) {
-    // a piece under the roof slopes, so the plane may cut only a part of its width: split it where its
-    // bottom or top crosses the plane (both are straight between the breaks) and cap the parts that are cut
-    const r = sct.r, lo = num(sct.from), hi = num(sct.top), xs = [r[0], r[2], ...breaks.filter(b => b > r[0] && b < r[2])].sort((a, b) => a - b);
-    const cuts = xs.flatMap((x, i) => i ? [lo, hi].map(f => crossing(f, xs[i - 1], x, h)).filter(c => c !== null).concat(x) : [x]);
-    const top = x => Math.min(h, hi(x)) - 0.01;                    // right under the plane: no seam between cap and plane
-    const mat = sct.rules ? finishAt(sct.rules, sct.y0 + h, sct.mat) : sct.mat;   // a finish is cut in its own material
-    cuts.forEach((x2, i) => {
-      const x1 = cuts[i - 1], m = (x1 + x2) / 2;
-      if (i && x2 - x1 > 0.01 && lo(m) < h && hi(m) > h)
-        withLayers(sct.layers, () => prism(x1, r[1], x2, r[3], sct.y0, x => Math.max(lo(x), top(x) - 0.6), top, mat, grp, breaks));
-    });
+  for (const o of sectionParts.splice(0)) { o.parent.remove(o); if (o.userData.cap) o.geometry.dispose(); }
+  if (h < Infinity && f) {
+    const byMaterial = new Map(), S = 4 * (WIDTH + LENGTH), sheet = new THREE.PlaneGeometry(S, S).rotateX(-Math.PI / 2).translate(WIDTH / 2, LEVEL[f] + h, LENGTH / 2);
+    cmUV(sheet, 0, 0, 0);                         // textures in their real size, as on the walls
+    for (const m of cutSolids(f)) (byMaterial.get(m.material) || byMaterial.set(m.material, []).get(m.material)).push(m);
+    let order = 1;
+    for (const [mat, solids] of byMaterial) {
+      for (const m of solids) for (const count of [COUNT_BACK, COUNT_FRONT]) {
+        const c = new THREE.Mesh(m.geometry, count); c.renderOrder = order; c.userData.section = true;
+        m.add(c); sectionParts.push(c);          // a child of its solid: it moves and hides with it
+      }
+      const cap = capMaterials.get(mat) || capMaterials.set(mat, Object.assign(mat.clone(), { clippingPlanes: null,
+        stencilWrite: true, stencilRef: 0, stencilFunc: THREE.NotEqualStencilFunc })).get(mat);
+      const plane = new THREE.Mesh(order === 1 ? sheet : sheet.clone(), cap);
+      Object.assign(plane.userData, { section: true, cap: true, noClip: true }); plane.renderOrder = order + 1; plane.receiveShadow = true;
+      plane.onAfterRender = r => r.clearStencil();   // the next material counts from zero
+      root.add(plane); sectionParts.push(plane);
+      order += 2;
+    }
   }
-  mergeMeshes(grp); applyLayers();
+  requestRender();
 }
 // the glass plane of an opening: in an outer wall in the block, "intoCore" cm behind the outer face of the core
 // (behind the EPS and the finish), else in the middle of the wall
@@ -1022,7 +1017,7 @@ function glassPlane(floor, o) {
 }
 function buildWalls(floor) {
   const grp = wallGroups[floor]; clearGroup(grp);
-  const y0 = LEVEL[floor], attic = floor === 'attic', pieces = [], outline = [];
+  const y0 = LEVEL[floor], attic = floor === 'attic', outline = [];
   joinHeights = [...new Set(PLAN[floor].openings.flatMap(o => [o.sill, o.head]).concat(attic ? [KNEE] : [GROUND_H]))].sort((a, b) => a - b);
   const breaks = attic ? [XL, XM, XR, WIDTH - XL] : [];
   // every wall rises to its own top: a fixed one (its kind's height), the roof line in the attic, else the floor's height:
@@ -1042,17 +1037,11 @@ function buildWalls(floor) {
   const underSoffit = c => { if (attic || !c.finish) return false; const sides = airSides(floor, c.r); return sides.length > 0 && sides.every(sd => facesSoffit(c.r, sd)); };
   const only = (L, fn) => { const prev = drawLayers; drawLayers = L; try { fn(); } finally { drawLayers = prev; } };
   const part = (c, lo, hi) => {
-    const mat = c.layer ? M[c.layer] : M.wall[c.kind];
     if (underSoffit(c)) {
-      const upTo = x => Math.min(num(hi)(x), soffitBottom), from = x => Math.max(num(lo)(x), soffitBottom);
-      paintFinish(c.r, y0, lo, upTo, M.wall[c.kind], c.rules, grp, breaks);
-      only(EPS.layers || [], () => prism(c.r[0], c.r[1], c.r[2], c.r[3], y0, from, hi, M[EPS.material], grp, breaks));
-      pieces.push({ r: c.r, y0, from: lo, top: upTo, mat, rules: c.rules, layers: drawLayers }, { r: c.r, y0, from, top: num(hi), mat: M[EPS.material], layers: EPS.layers || [] });
-      return;
-    }
-    if (c.finish) paintFinish(c.r, y0, lo, hi, M.wall[c.kind], c.rules, grp, breaks);
-    else prism(c.r[0], c.r[1], c.r[2], c.r[3], y0, lo, hi, mat, grp, breaks);
-    pieces.push({ r: c.r, y0, from: lo, top: num(hi), mat, rules: c.finish ? c.rules : null, layers: drawLayers });
+      paintFinish(c.r, y0, lo, x => Math.min(num(hi)(x), soffitBottom), M.wall[c.kind], c.rules, grp, breaks);
+      only(EPS.layers || [], () => prism(c.r[0], c.r[1], c.r[2], c.r[3], y0, x => Math.max(num(lo)(x), soffitBottom), hi, M[EPS.material], grp, breaks));
+    } else if (c.finish) paintFinish(c.r, y0, lo, hi, M.wall[c.kind], c.rules, grp, breaks);
+    else prism(c.r[0], c.r[1], c.r[2], c.r[3], y0, lo, hi, c.layer ? M[c.layer] : M.wall[c.kind], grp, breaks);
   };
   for (const c of footprint(floor)) {
     const r = c.r, top = wallTop(c.kind), outer = c.layer || c.finish;
@@ -1114,8 +1103,8 @@ function buildWalls(floor) {
       prism(hx - 1, hz, hx + 1, hz + 3, y0, hy + E.handle.length / 2 - 10, hy + E.handle.length / 2 - 8, M[E.handle.material], grp, []);
       const s1 = left ? l2 : r[0], s2 = left ? r[2] : l1;   // the glass sidelight
       prism(s1, gz[0], s2, gz[1], y0, o.sill, top, M[B.windows.glass], grp, []);
-      frames(o.sill, () => top, [s1, s2], gz, y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
-      frames(o.sill, () => top, [l1, l2], [zc - 3.5, zc + 3.5], y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
+      frames(o.sill, () => top, [s1, s2], gz, y0, grp, [], false, {});
+      frames(o.sill, () => top, [l1, l2], [zc - 3.5, zc + 3.5], y0, grp, [], false, {});
     }
     });
   }
@@ -1130,8 +1119,6 @@ function buildWalls(floor) {
   });
   withLayers(B.edges.layers, () => outlineEdges(edgesOf, y0, breaks, grp));
   mergeMeshes(grp);
-  sections[floor] = { pieces, breaks };
-  clipAll(); buildCaps(floor);
 }
 
 /* ================= 8. FLOORS (rebuilt with the layouts) ================= */
