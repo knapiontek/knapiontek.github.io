@@ -13,7 +13,7 @@ The page is made of three trees, all stored as data in house.js:
 The **settings** (the panel on the right) always belong to a node of one of these trees and appear only when that node is in force:
 
 - **Menu node**: the view's own settings (cut height, light), and which panel sections it shows.
-- **Geometry node**: the settings of what it holds. A floor shows the tile layouts of its rooms; a room will show its sub-project.
+- **Geometry node**: the settings of what it holds. A floor is selected with the menu (Parter, Piętro). A room is selected by clicking it in the 3D view, on the 2D plan or in the list. The selected room gets a row of its own in the context menu (its name, its sub-project), and the panel shows its floor: product, pattern, direction, grout, offsets. Tiles are set in the rooms, never per floor.
 - **Layer node**: its switch, and in time settings of its own (for example the colour of the marked cuts).
 
 ## 2. Geometry tree
@@ -25,7 +25,8 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 - **Room**: its floor area as rectangles, the tile layout that covers it, and a link to its sub-project.
 - **Tiles**: not stored; the page lays them from the room and its layout.
 - Every node keeps its geometry relative to its parent. A floor sets the level, and everything on a floor (sills, heads, the stair, the fireplace) is measured from it. A room is in the floor's x, z. Tiles are laid in the room from the layout's offsets.
-- **One model**: the objects are the same in every view. A view never builds objects of its own; it only hides layers and cuts the walls.
+- **One model**: the objects are the same in every view. A view never builds objects of its own; it only hides layers and cuts the walls. The cut runs through everything at that height, openings too: glass, frames and doors are cut like the walls, never left out.
+- Nothing overlaps: a wall stands on the plinth down to the ground, on a terrace only down to the paving.
 
 ## 3. Layer tree
 
@@ -45,8 +46,11 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 - **Deeper levels**: a view may hold views of its own. Each level gets its own row of the menu, and the last row has the tools of the view in force: cameras, layer switches, plan tools. Example: Parter → Kuchnia → switches for worktops and carcasses.
 - A deeper view inherits from its parent: what the parent hides stays hidden, and the deeper view may hide more, set its own cameras and show its own settings.
 - The panel follows the view:
-  - Posadzki only in Parter and Piętro, and only the layouts of that floor.
-  - Pomieszczenia only of the shown floor (both floors in Rzut 2D).
+  - Przekrój (the cut height) only in views that cut the walls: not in Cały dom.
+  - Cały dom offers only the coarse layers (floors, walls, openings, slabs, stair, fireplace, roof, site); the tiles and their cuts are a matter of the floors.
+  - The floor settings of a room open under its own row in the list of rooms (an accordion, read from top to bottom), only in Parter and Piętro. Rooms with no wall between them (walk-in wardrobes) are tiled with their room.
+  - Rzut 2D has only its own tools: cut height, zoom, download; no rooms, no layers, no light, no room selection.
+  - Pomieszczenia only of the shown floor (both floors in Rzut 2D): name, area, the product on its floor; a click selects the room.
   - Light only in the 3D views.
 
 ## 5. Materials and products

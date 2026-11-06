@@ -8,7 +8,10 @@
    name, source, notes   what the page shows about the house (Polish)
    views        the views of the top menu. A view never builds objects of its own: the model is the same in every
                 view, a view only hides layers (hidden), cuts the walls at the cut height of the panel or shows them
-                whole (cut), names the floor its settings belong to (floor) and the sections of the panel (panels);
+                whole (cut), names the floor its settings belong to (floor) and the sections of the panel (panels: cut, view = the layers,
+                light, rooms = the rooms of the floor, the selected one opens its floor settings under it, walls,
+                notes, plan = the tools of the 2D plan); offer = the layers the panel offers (default all);
+                selectRooms = a click selects a room;
                 roofGhost = the see-through roof slopes can be switched on; walk = the walk through the house starts
                 here; plan = the 2D plan of all floors side by side instead of the 3D view. The cameras of a view
                 are in "cameras" under its key
@@ -47,9 +50,7 @@
                 the roof ("inset" cm below its underside); setback = windows sit this far behind the outer face
    edges        delicate lines on the wall edges: colour, opacity, crease angle
    light, cameras, walk   sun and sky; the views of the dock (y of the attic views from the attic floor); walking
-   tiles        reserve = extra share of tiles to buy; layers of the tiles and of the marked small cuts; notes of the
-                page; layouts: one per floor finish - label, floor, the default product of materials.js, direction of
-                the tile length (z along the house, x across), panelOpen false = its panel starts closed
+   tiles        reserve = extra share of tiles to buy; layers of the tiles and of the marked small cuts
 
    FLOORS       id (ground | attic), name, level = finished floor level; height = clear height (ground floor);
                 underRoof = the walls rise to the roof (attic)
@@ -59,9 +60,12 @@
                 inner face moved. The page checks every wall against its build-up.
      openings   the part of a wall with a window, door, entrance or gate: wall below sill and above head;
                 wall = the wall kind it sits in
-     rooms      floor areas as rectangles, together the whole floor between the walls (passages without a door belong
-                to a room); planArea = the area from the plan (attic: total, incl. under 1.9 m); layout = the tile
-                layout covering it, or none; link = a sub-project of this room (its own page in the repository)
+     rooms      id, name; floor areas as rectangles, together the whole floor between the walls (passages without a
+                door belong to a room); planArea = the area from the plan (attic: total, incl. under 1.9 m);
+                tiles = the floor of the room: the product of materials.js and the direction of the tile length
+                (z along the house, x across) - the rest is set on the page when the room is selected; tilesWith =
+                the room is tiled together with that room (walk-in wardrobes with the bedroom); neither = no tiles;
+                link = a sub-project of this room (its own page in the repository)
      stair      U-shaped: flight1 rises west from the hall (risers 1..12 up to the landing), flight2 rises east to
                 the attic floor; core = the wall between the flights; treadMaterial, coreMaterial
      fireplace  rect, height and material of the fireplace block
@@ -74,15 +78,40 @@ window.HOUSE = {
   "Ściany z pustaków 24 i 12 cm, ściany zewnętrzne ocieplone od zewnątrz styropianem 20 cm. Lica zewnętrzne zostały w miejscu z rzutu, grubość odjęto od wnętrza. Portal (skrzydła ścian bocznych za szczytami i dach) ma przekrój 20 + 24 + 20 = 64 cm, pustak skrzydła w linii pustaka ściany bocznej."
  ],
  "views": {
-  "all": {"name": "Cały dom", "hidden": [], "cut": false, "walk": true, "panels": ["view", "light", "walls", "notes"]},
-  "ground": {"name": "Parter", "floor": "ground", "hidden": ["attic", "roof"], "cut": true, "panels": ["view", "light", "tiles", "rooms", "walls", "notes"]},
-  "attic": {"name": "Piętro", "floor": "attic", "hidden": ["ground", "roof"], "cut": true, "roofGhost": true, "panels": ["view", "light", "tiles", "rooms", "walls", "notes"]},
-  "plan": {"name": "Rzut 2D", "plan": true, "hidden": [], "cut": true, "panels": ["view", "rooms", "walls", "notes"]}
+  "all": {
+   "name": "Cały dom",
+   "hidden": [],
+   "cut": false,
+   "walk": true,
+   "panels": ["view", "light", "walls", "notes"],
+   "offer": ["ground", "attic", "walls", "openings", "slabs", "stair", "fittings", "roof", "site"]
+  },
+  "ground": {
+   "name": "Parter",
+   "floor": "ground",
+   "hidden": ["attic", "roof"],
+   "cut": true,
+   "panels": ["cut", "view", "light", "rooms", "walls", "notes"],
+   "selectRooms": true
+  },
+  "attic": {
+   "name": "Piętro",
+   "floor": "attic",
+   "hidden": ["ground", "roof"],
+   "cut": true,
+   "roofGhost": true,
+   "panels": ["cut", "view", "light", "rooms", "walls", "notes"],
+   "selectRooms": true
+  },
+  "plan": {"name": "Rzut 2D", "plan": true, "hidden": [], "cut": true, "panels": ["plan"], "selectRooms": false}
  },
  "layers": {
   "ground": {"name": "Parter"},
   "attic": {"name": "Piętro"},
-  "walls": {"name": "Ściany", "layers": {"insulation": {"name": "Styropian"}, "facade": {"name": "Elewacja"}, "edges": {"name": "Krawędzie"}}},
+  "walls": {
+   "name": "Ściany",
+   "layers": {"insulation": {"name": "Styropian"}, "facade": {"name": "Elewacja"}, "edges": {"name": "Krawędzie"}}
+  },
   "openings": {"name": "Okna i drzwi"},
   "slabs": {"name": "Stropy"},
   "stair": {"name": "Schody"},
@@ -227,19 +256,7 @@ window.HOUSE = {
   ]
  },
  "walk": {"eye": 160, "radius": 22, "step": 36, "head": 18, "speed": 140, "start": {"x": 525, "z": 1150, "heading": 0}},
- "tiles": {
-  "reserve": 0.1,
-  "layers": ["floors"],
-  "small": ["cuts"],
-  "notes": [
-   "Tekstury z Twojego repo: Authority z <code>bath/textures.js</code> (zdjęcie jednej płytki 898 mm), dąb to dekory Egger z <code>kitchen</code> i <code>bath</code>, użyte zastępczo za gres drewnopodobny. Tekstura, rozmiar i fuga należą do produktu: zmieniasz produkt, nie jego części."
-  ],
-  "layouts": {
-   "ground": {"label": "Parter", "floor": "ground", "product": "authorityGraphite", "dir": "z"},
-   "attic": {"label": "Piętro", "floor": "attic", "product": "logOak", "dir": "z"},
-   "bathGrey": {"label": "Łazienka na piętrze", "floor": "attic", "product": "authorityGrey80", "dir": "z", "panelOpen": false}
-  }
- },
+ "tiles": {"reserve": 0.1, "layers": ["floors"], "small": ["cuts"]},
  "floors": [
   {
    "id": "ground",
@@ -296,9 +313,10 @@ window.HOUSE = {
    ],
    "rooms": [
     {
+     "id": "salon",
      "name": "Salon z kuchnią i holem",
      "planArea": 50.55,
-     "layout": "ground",
+     "tiles": {"product": "authorityGraphite", "dir": "z"},
      "link": {"href": "../kitchen/view.html", "name": "Projekt kuchni"},
      "rects": [
       [44, 44, 391, 535.9],
@@ -308,24 +326,32 @@ window.HOUSE = {
       [433.8, 721.8, 615.5, 905.3]
      ]
     },
-    {"name": "Wiatrołap", "planArea": 4.84, "layout": "ground", "rects": [[433.8, 929.3, 615.5, 1187]]},
     {
+     "id": "wiatrolap",
+     "name": "Wiatrołap",
+     "planArea": 4.84,
+     "tiles": {"product": "authorityGraphite", "dir": "z"},
+     "rects": [[433.8, 929.3, 615.5, 1187]]
+    },
+    {
+     "id": "lazienka",
      "name": "Łazienka",
      "planArea": 4.95,
-     "layout": "ground",
+     "tiles": {"product": "authorityGraphite", "dir": "z"},
      "link": {"href": "../bath/view.html", "name": "Projekt łazienki"},
      "rects": [[627.5, 733.8, 866, 902.8], [729, 902.8, 866, 984.9]]
     },
     {
+     "id": "kotlownia",
      "name": "Kotłownia z pralnią",
      "planArea": 4.97,
-     "layout": "ground",
+     "tiles": {"product": "authorityGraphite", "dir": "z"},
      "rects": [[627.5, 926.8, 717, 996.9], [627.5, 996.9, 866, 1187]]
     },
     {
+     "id": "garaz",
      "name": "Garaż",
      "planArea": 25.91,
-     "layout": "none",
      "rects": [[44, 659, 409.8, 1278.8], [44, 547.9, 318.6, 642.1], [273, 647.7, 318.6, 659]]
     }
    ],
@@ -389,9 +415,10 @@ window.HOUSE = {
    ],
    "rooms": [
     {
+     "id": "sypialnia",
      "name": "Sypialnia (2)",
      "planArea": 28.16,
-     "layout": "attic",
+     "tiles": {"product": "logOak", "dir": "z"},
      "rects": [
       [44, 44, 866, 362.1],
       [392.4, 362.1, 553.7, 374.1],
@@ -400,27 +427,54 @@ window.HOUSE = {
       [452.6, 465.8, 553.7, 535.9]
      ]
     },
-    {"name": "Garderoba (3)", "planArea": 5.13, "layout": "attic", "rects": [[44, 374.1, 380.4, 535.9]]},
-    {"name": "Garderoba (4)", "planArea": 4.6, "layout": "attic", "rects": [[565.7, 374.1, 866, 535.9]]},
     {
+     "id": "garderoba3",
+     "name": "Garderoba (3)",
+     "planArea": 5.13,
+     "tilesWith": "sypialnia",
+     "rects": [[44, 374.1, 380.4, 535.9]]
+    },
+    {
+     "id": "garderoba4",
+     "name": "Garderoba (4)",
+     "planArea": 4.6,
+     "tilesWith": "sypialnia",
+     "rects": [[565.7, 374.1, 866, 535.9]]
+    },
+    {
+     "id": "hol",
      "name": "Hol (1)",
      "planArea": 7.32,
-     "layout": "attic",
+     "tiles": {"product": "logOak", "dir": "z"},
      "rects": [[438.1, 547.9, 553.7, 651.7], [273, 651.7, 341.9, 738.7], [341.9, 651.7, 553.7, 902.8]]
     },
     {
+     "id": "lazienka5",
      "name": "Łazienka (5)",
      "planArea": 7.99,
-     "layout": "bathGrey",
+     "tiles": {"product": "authorityGrey80", "dir": "z"},
      "link": {"href": "../bath/view.html", "name": "Projekt łazienki"},
      "rects": [[565.7, 547.9, 866, 820.7]]
     },
-    {"name": "Garderoba (8)", "planArea": 4.16, "layout": "attic", "rects": [[44, 750.7, 329.9, 902.8]]},
-    {"name": "Pokój (7)", "planArea": 14.11, "layout": "attic", "rects": [[44, 914.8, 440.6, 1278.8]]},
     {
+     "id": "garderoba8",
+     "name": "Garderoba (8)",
+     "planArea": 4.16,
+     "tiles": {"product": "logOak", "dir": "z"},
+     "rects": [[44, 750.7, 329.9, 902.8]]
+    },
+    {
+     "id": "pokoj7",
+     "name": "Pokój (7)",
+     "planArea": 14.11,
+     "tiles": {"product": "logOak", "dir": "z"},
+     "rects": [[44, 914.8, 440.6, 1278.8]]
+    },
+    {
+     "id": "pokoj6",
      "name": "Pokój (6)",
      "planArea": 16.53,
-     "layout": "attic",
+     "tiles": {"product": "logOak", "dir": "z"},
      "rects": [[452.6, 914.8, 866, 1278.8], [650, 832.7, 866, 914.8], [609.1, 832.7, 650, 890.8]]
     }
    ],

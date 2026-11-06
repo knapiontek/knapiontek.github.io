@@ -38,6 +38,10 @@ body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .cams{display:flex;flex-wrap:wrap;gap:4px}
 #context{display:flex;flex-direction:column;gap:4px}
+.btnlink{border:1px solid var(--line);background:var(--panel);color:var(--accent);font:600 12px var(--f-body);padding:5px 9px;border-radius:6px;text-decoration:none}
+#rooms tr[data-room]{cursor:pointer}
+#rooms tr.detail td{padding:0 0 10px}
+#rooms tr[aria-selected="true"] td{background:color-mix(in srgb,var(--accent) 16%,transparent)}
 .cams button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .cams button{border:1px solid var(--line);background:var(--panel);color:var(--ink);font:500 12px var(--f-body);padding:5px 9px;border-radius:6px;cursor:pointer}
 .cams button:hover{border-color:var(--accent)}
@@ -139,11 +143,16 @@ td select{padding:3px 4px;font-size:12px}
     <h1 id="title"></h1>
     <p class="sub" id="subtitle"></p>
 
-    <section data-panel="view">
-    <h2>Widok</h2>
+    <section data-panel="cut">
+    <h2>Przekrój</h2>
     <div class="lay" style="padding:0">
       <div class="rng"><label for="cut">Wysokość cięcia ścian</label><span id="cutv"></span>
         <input id="cut" type="range" min="30" max="500" step="5" style="grid-column:1/-1"></div>
+    </div>
+    </section>
+    <section data-panel="view">
+    <h2>Warstwy</h2>
+    <div class="lay" style="padding:0">
       <div class="checks">
         <div id="layers" class="layers"></div>
         <label id="showRoofLabel"><input type="checkbox" id="showRoof"> Skosy dachu (przezroczyste)</label>
@@ -162,7 +171,15 @@ td select{padding:3px 4px;font-size:12px}
     </div>
     </section>
 
-    <section data-panel="tiles"><h2 id="tilesTitle">Posadzki</h2><div id="layouts"></div></section>
+    <section data-panel="plan">
+    <h2>Rzut 2D</h2>
+    <div class="lay" style="padding:0">
+      <div class="rng"><label for="plancut">Wysokość cięcia ścian</label><span id="plancutv"></span>
+        <input id="plancut" type="range" min="30" max="500" step="5" style="grid-column:1/-1"></div>
+      <div class="btns"><button class="btn" id="planOut">Pomniejsz</button><button class="btn" id="planIn">Powiększ</button><button class="btn" id="planSave">Pobierz SVG</button></div>
+    </div>
+    </section>
+    <div id="layouts" hidden></div>
     <section data-panel="rooms"><h2>Pomieszczenia</h2><table id="rooms"></table></section>
     <section data-panel="walls"><h2>Ściany</h2><div id="walls"></div></section>
     <section data-panel="notes"><h2>Uwagi</h2><p class="note" id="notes"></p></section>
@@ -198,6 +215,7 @@ const WIDTH = knees[1][2];
 const LENGTH = Math.max(...PLAN.ground.walls.filter(w => !B.wallKinds[w.kind].wing).map(w => w.r[3]));   // the front gable face
 const roofHeight = x => KNEE + PITCH * Math.max(0, Math.min(x - XL, XR - x));
 const FLOOR_NAMES = Object.fromEntries(B.floors.map(f => [f.id, f.name]));
+const rootOf = k => LAYER[k].parent ? rootOf(LAYER[k].parent) : k;
 // the layer tree flattened: id -> its node and the id of its parent
 const LAYER = {};
 (function index(layers, parent) { for (const [k, node] of Object.entries(layers || {})) { LAYER[k] = { node, parent }; index(node.layers, k); } })(B.layers, null);
@@ -218,20 +236,22 @@ function applyProduct(L, key) {
 }
 
 /* ================= 3. STATE (remembered per viewer) ================= */
-const STORE = 'house-floors-v4';    // a new key when the data format changes: old states are dropped, not converted
+const STORE = 'house-floors-v5';    // a new key when the data format changes: old states are dropped, not converted
 let state;
+const ROOMS = B.floors.flatMap(f => f.rooms.map((r, i) => Object.assign({ floor: f.id, index: i }, r)));   // every room with its floor
+const ROOM = Object.fromEntries(ROOMS.map(r => [r.id, r]));
+const TILED = ROOMS.filter(r => r.tiles);
+const layoutOf = room => room.tiles ? room.id : room.tilesWith || null;          // the layout that covers a room
 function freshState() {
-  const s = { mode: 'ground', cut: 150, showRoof: false, layers: Object.fromEntries(Object.entries(LAYER).map(([k, l]) => [k, l.node.on !== false])), sunAzimuth: B.light.sun.azimuth, sunElevation: B.light.sun.elevation, brightness: 1, layouts: {}, rooms: {}, auto: {} };
-  for (const k in B.tiles.layouts) {
-    const d = B.tiles.layouts[k];
-    s.layouts[k] = { label: d.label, floor: d.floor, dir: d.dir, oa: 0, ob: 0 };
-    applyProduct(s.layouts[k], d.product); s.auto[k] = true;
+  const s = { mode: 'ground', cut: 150, showRoof: false, layers: Object.fromEntries(Object.entries(LAYER).map(([k, l]) => [k, l.node.on !== false])), sunAzimuth: B.light.sun.azimuth, sunElevation: B.light.sun.elevation, brightness: 1, room: null, layouts: {}, auto: {} };
+  for (const r of TILED) {         // one tile layout per room with tiles (its "tilesWith" rooms are laid with it)
+    s.layouts[r.id] = { label: r.name, floor: r.floor, dir: r.tiles.dir, oa: 0, ob: 0 };
+    applyProduct(s.layouts[r.id], r.tiles.product); s.auto[r.id] = true;
   }
-  for (const f of FLOOR_IDS) s.rooms[f] = PLAN[f].rooms.map(r => r.layout);
   return s;
 }
 try { state = JSON.parse(localStorage.getItem(STORE)); } catch (e) { state = null; }
-const stateFits = st => st && st.layouts && Object.keys(st.layouts).join() === Object.keys(B.tiles.layouts).join()
+const stateFits = st => st && st.layouts && Object.keys(st.layouts).join() === TILED.map(r => r.id).join()
   && st.layers && Object.keys(st.layers).join() === Object.keys(LAYER).join()
   && Object.values(st.layouts).every(L => PRODUCTS[L.product] && TEX[L.texture]);
 if (!stateFits(state)) state = freshState();
@@ -356,9 +376,9 @@ function zones(rooms) {
   return rooms;
 }
 function roomsOf(layoutKey) {
-  const L = state.layouts[layoutKey], f = L.floor;
+  const L = state.layouts[layoutKey], f = L.floor;   // the room of the layout and the rooms tiled with it
   return zones(PLAN[f].rooms.map((r, i) => ({ id: i, name: r.name, rects: r.rects.concat(thresholds(f, r.rects)), own: r.rects, area: r.rects.reduce((s, q) => s + (q[2] - q[0]) * (q[3] - q[1]), 0) }))
-    .filter((r, i) => state.rooms[f][i] === layoutKey));
+    .filter((r, i) => layoutOf(PLAN[f].rooms[i]) === layoutKey));
 }
 
 /* ================= 5. RENDERER, SCENE ================= */
@@ -869,6 +889,8 @@ function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX, opt) {
     if (p2 - p1 > 40 && low >= T + W / 2 + 25) member(p1 + W / 2, p2 - W / 2, T - W / 2, T + W / 2);
   }
 }
+// a wall stands on the plinth down to the ground: on a terrace only down to the paving (they never overlap)
+const groundUnder = r => { const cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2, t = B.site.terraces.find(t => cx > t.rect[0] && cx < t.rect[2] && cz > t.rect[1] && cz < t.rect[3]); return t ? t.y : B.plinth.bottom; };
 // the layer (EPS) seen in the cut: a thin cap of its colour on the top of the wall
 // (only where the view cuts the walls: an uncut top is no section)
 const cap = (r, y0, top, mat, grp, breaks) => withLayers(materialLayers[Object.keys(M).find(k => M[k] === mat)], () => prism(r[0], r[1], r[2], r[3], y0, top, x => num(top)(x) + 0.6, mat, grp, breaks));
@@ -918,14 +940,14 @@ function buildWalls(floor) {
       wallBody(floor, body, y0, 0, top, M.wall[c.kind], grp, breaks);
       skin(r, y0, 0, skinTop(top), grp, breaks, floor, c.face, c.finish);
       if (c.layer && cut < Infinity) cap(body, y0, top, M[c.layer], grp, breaks);
-      if (!attic && B.wallKinds[c.kind].plinth) withLayers(B.plinth.layers, () => box(r[0], B.plinth.bottom, r[1], r[2], B.plinth.top, r[3], M[B.plinth.material], grp));
+      if (!attic && B.wallKinds[c.kind].plinth) withLayers(B.plinth.layers, () => box(r[0], groundUnder(r), r[1], r[2], B.plinth.top, r[3], M[B.plinth.material], grp));
     } else {
       const o = PLAN[floor].openings[c.opening], top = wallTop(c.kind), { head } = openingHead(o, top);
       const below = x => Math.min(o.sill, top(x));
       const body = bodyOf(r, c.face);
       prism(body[0], body[1], body[2], body[3], y0, 0, below, M.wall[c.kind], grp, breaks); skin(r, y0, 0, below, grp, breaks, floor, c.face, c.finish);
       if (c.layer && cut < o.sill) cap(body, y0, below, M[c.layer], grp, breaks);
-      if (!attic && B.wallKinds[c.kind].plinth) withLayers(B.plinth.layers, () => box(r[0], B.plinth.bottom, r[1], r[2], B.plinth.top, r[3], M[B.plinth.material], grp));
+      if (!attic && B.wallKinds[c.kind].plinth) withLayers(B.plinth.layers, () => box(r[0], groundUnder(r), r[1], r[2], B.plinth.top, r[3], M[B.plinth.material], grp));
       const interiorDoor = o.kind === 'door' && !facadeFace(o.r) && B.doors.interiorLintels === 'fullHeight';
       if (openingWhole(o) && (!interiorDoor || cut >= GROUND_H)) {   // the wall above: only with the whole opening
         prism(body[0], body[1], body[2], body[3], y0, head, top, M.wall[c.kind], grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
@@ -933,9 +955,10 @@ function buildWalls(floor) {
       }
     }
   });
-  for (const o of PLAN[floor].openings) withLayers(B.windows.layers, () => {   // glass, frames, the garage door: whole, or not at all
-    if (!openingWhole(o)) return;                     // the cut runs through the opening: leave it out
-    const r = o.r, { followRoof, head } = openingHead(o, fullTop);
+  for (const o of PLAN[floor].openings) withLayers(B.windows.layers, () => {   // glass, frames, doors: the same objects, cut like the walls
+    if (cut <= o.sill) return;                        // the cut is below the opening
+    const r = o.r, { followRoof, head: whole } = openingHead(o, fullTop), head = x => Math.min(whole(x), cut);
+    const top = Math.min(o.head, cut);
     const thinX = (r[2] - r[0]) < (r[3] - r[1]);
     // the glass plane: "setback" cm behind the outer face for windows in outer walls, else the middle of the wall
     const SB = B.windows.setback, face = facadeFace(r);
@@ -946,7 +969,7 @@ function buildWalls(floor) {
     if (face && o.kind !== 'door') {   // the reveal in front of the glass (or the entrance) gets the facade finish
       const lin = M[F.default], t = 0.8, face1 = outer;   // up to the outer face (the facade layer is in the wall)
       const za = Math.min(face1, mid), zb = Math.max(face1, mid);
-      prism(r[0], za, r[2], zb, y0, head, x => head(x) + t, lin, grp, breaks);
+      if (openingWhole(o)) prism(r[0], za, r[2], zb, y0, head, x => head(x) + t, lin, grp, breaks);
       prism(r[0], za, r[0] + t, zb, y0, o.sill, head, lin, grp, breaks);
       prism(r[2] - t, za, r[2], zb, y0, o.sill, head, lin, grp, breaks);
       if (o.sill > 0) prism(r[0], za, r[2], zb, y0, o.sill - t, o.sill, lin, grp, breaks);
@@ -959,22 +982,24 @@ function buildWalls(floor) {
       prism(gx[0], gz[0] - 2, gx[1], gz[1] + 2, y0, o.sill, head, M[B.windows.gate], grp, breaks);
       const n = B.gate.grooves, H = o.head - o.sill, zf = Math.max(gz[0], gz[1]) + 2;
       for (let i = 1; i <= n; i++) {                  // horizontal grooves of the sectional door
-        const y = o.sill + i * H / (n + 1);
+        const y = o.sill + i * H / (n + 1); if (y > top) break;
         prism(r[0] + 4, zf, r[2] - 4, zf + 0.4, y0, y - 0.6, y + 0.6, M.groove, grp, []);
       }
     } else if (o.kind === 'entrance') {
       const E = B.doors.entrance, zc = (gz[0] + gz[1]) / 2, left = E.hinge === 'left';
       const l1 = left ? r[0] : r[2] - E.leaf, l2 = left ? r[0] + E.leaf : r[2];
-      prism(l1, zc - 3, l2, zc + 3, y0, o.sill, o.head, M[E.material], grp, []);          // the leaf
-      for (let i = 1; i <= E.grooves; i++) { const y = o.sill + i * (o.head - o.sill) / (E.grooves + 1); prism(l1 + 3, zc + 3, l2 - 3, zc + 3.4, y0, y - 0.5, y + 0.5, M.groove, grp, []); }
+      prism(l1, zc - 3, l2, zc + 3, y0, o.sill, top, M[E.material], grp, []);          // the leaf
+      for (let i = 1; i <= E.grooves; i++) { const y = o.sill + i * (o.head - o.sill) / (E.grooves + 1); if (y > top) break; prism(l1 + 3, zc + 3, l2 - 3, zc + 3.4, y0, y - 0.5, y + 0.5, M.groove, grp, []); }
       const hx = left ? l2 - 12 : l1 + 12, hz = zc + 3, hy = o.sill + (o.head - o.sill) / 2;
+      if (hy + E.handle.length / 2 <= top) {
       prism(hx - E.handle.width / 2, hz + 3, hx + E.handle.width / 2, hz + 3 + E.handle.width, y0, hy - E.handle.length / 2, hy + E.handle.length / 2, M[E.handle.material], grp, []);
       prism(hx - 1, hz, hx + 1, hz + 3, y0, hy - E.handle.length / 2 + 8, hy - E.handle.length / 2 + 10, M[E.handle.material], grp, []);
       prism(hx - 1, hz, hx + 1, hz + 3, y0, hy + E.handle.length / 2 - 10, hy + E.handle.length / 2 - 8, M[E.handle.material], grp, []);
+      }
       const s1 = left ? l2 : r[0], s2 = left ? r[2] : l1, side = { sill: o.sill, head: o.head };   // the glass sidelight
-      prism(s1, gz[0], s2, gz[1], y0, o.sill, o.head, M[B.windows.glass], grp, []);
-      frames(o.sill, () => o.head, [s1, s2], gz, y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
-      frames(o.sill, () => o.head, [l1, l2], [zc - 3.5, zc + 3.5], y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
+      prism(s1, gz[0], s2, gz[1], y0, o.sill, top, M[B.windows.glass], grp, []);
+      frames(o.sill, () => top, [s1, s2], gz, y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
+      frames(o.sill, () => top, [l1, l2], [zc - 3.5, zc + 3.5], y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
     }
   });
   withLayers(B.faces.layers, () => {
@@ -1051,6 +1076,34 @@ function setCamera(c) {
   controls.target.set(c[2][0] / 100, c[2][1] / 100, c[2][2] / 100);
   controls.update(); requestRender();
 }
+// the selected room in 3D: a light tint over its floor (on its floor, so with the floor's layer)
+const ROOM_MARK = new THREE.MeshBasicMaterial({ color: 0xc8882f, transparent: true, opacity: 0.28, depthWrite: false });
+const roomMarks = new THREE.Group();
+function markRoom() {
+  clearGroup(roomMarks); if (roomMarks.parent) roomMarks.parent.remove(roomMarks);
+  const room = state.room && ROOM[state.room]; if (!room) { requestRender(); return; }
+  for (const r of room.rects) {
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(r[2] - r[0], r[3] - r[1]), ROOM_MARK);
+    pl.rotation.x = -Math.PI / 2; pl.position.set((r[0] + r[2]) / 2, LEVEL[room.floor] + 1.2, (r[1] + r[3]) / 2); roomMarks.add(pl);
+  }
+  groups[room.floor].add(roomMarks); requestRender();
+}
+// a click (not a drag) on the floor of the view selects the room under it
+{
+  let down = null;
+  canvas.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+  canvas.addEventListener('pointerup', e => {
+    if (!down || walk.on || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
+    const floor = VIEW().floor; if (!floor) return;
+    const rc = canvas.getBoundingClientRect(), ray = new THREE.Raycaster();
+    ray.setFromCamera(new THREE.Vector2((e.clientX - rc.left) / rc.width * 2 - 1, -(e.clientY - rc.top) / rc.height * 2 + 1), camera);
+    const p = new THREE.Vector3();
+    if (!ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -LEVEL[floor]), p)) return;
+    const local = root.worldToLocal(p.clone());
+    const hit = PLAN[floor].rooms.find(r => r.rects.some(q => local.x > q[0] && local.x < q[2] && local.z > q[1] && local.z < q[3]));
+    selectRoom(hit ? hit.id : null);
+  });
+}
 // The menus under the views: one row per level of the chosen view. A row holds the sub-views of that level, and the
 // last row the tools of the view in force: the walk, its cameras, its layer switches ("toggles"), the 2D plan tools.
 function contextMenu() {
@@ -1072,14 +1125,22 @@ function contextMenu() {
     }
     if (!row.children.length) row.remove();
   });
+  const room = state.room && ROOM[state.room];   // the selected room: a node of the geometry tree, with its own row
+  if (room && room.floor === v.floor) {
+    const row = document.createElement('div'); row.className = 'cams'; menu.appendChild(row);
+    const b = document.createElement('button'); b.textContent = room.name + ' ✕'; b.setAttribute('aria-pressed', 'true'); b.title = 'Odznacz';
+    b.onclick = () => selectRoom(null); row.appendChild(b);
+    if (room.link) { const a = document.createElement('a'); a.href = room.link.href; a.target = '_blank'; a.rel = 'noopener'; a.className = 'btnlink'; a.textContent = room.link.name + ' ↗'; row.appendChild(a); }
+  }
 }
 function setMode(mode, keepCamera) {
   const before = cutHeight();
   if (mode !== state.mode) state.path = [];
+  if (state.room && (!B.views[mode].selectRooms || B.views[mode].floor !== ROOM[state.room].floor)) state.room = null;   // a room only in a view of its floor
   state.mode = mode;
   updateRoof();
   if (before !== cutHeight()) for (const f of FLOOR_IDS) buildWalls(f);   // the same objects, cut at another height
-  applyLayers(); layersPanel(); contextPanel();
+  applyLayers(); layersPanel(); contextPanel(); markRoom();
   for (const b of document.querySelectorAll('.hud [data-mode]')) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
   contextMenu();
   showPlan(!!VIEW().plan);
@@ -1110,6 +1171,7 @@ function layoutPanel(key) {
     <div class="rng"><label for="${key}-oa">Przesunięcie wzdłuż płytki</label><span id="${key}-oav"></span><input id="${key}-oa" type="range" step="0.5" style="grid-column:1/-1"></div>
     <div class="rng"><label for="${key}-ob">Przesunięcie w poprzek</label><span id="${key}-obv"></span><input id="${key}-ob" type="range" step="0.5" style="grid-column:1/-1"></div>
     <div class="btns"><button class="btn" id="${key}-auto">Ułóż automatycznie</button><span class="chip" id="${key}-mode"></span></div>
+    <p class="note">Ułóż automatycznie: przesunięcie bez pasków węższych niż 1/3 płytki przy ścianach (deska: końcówki krótsze niż 20 cm) i z symetrycznymi docinkami. Liczba płytek zakłada, że każdy docinek zużywa osobną płytkę.</p>
     <dl class="stats" id="${key}-stats"></dl>
    </div></details>`;
 }
@@ -1145,8 +1207,8 @@ function setLayer(k, on) {
 }
 // the layer tree in the panel, children indented under their parent; the layers the view hides are not offered
 function layersPanel() {
-  const hidden = VIEW().hidden;
-  const html = (layers, depth) => Object.entries(layers || {}).filter(([k]) => !hidden.includes(k)).map(([k, l]) =>
+  const v = VIEW(), offered = k => !v.hidden.includes(k) && (!v.offer || v.offer.includes(rootOf(k)));   // a branch is offered whole
+  const html = (layers, depth) => Object.entries(layers || {}).filter(([k]) => offered(k)).map(([k, l]) =>
     `<label class="lyr" style="--depth:${depth}"><input type="checkbox" data-layer="${k}"${state.layers[k] !== false ? ' checked' : ''}> ${l.name}</label>` +
     (l.layers ? `<div class="sub"${state.layers[k] === false ? ' data-off' : ''}>${html(l.layers, depth + 1)}</div>` : '')).join('');
   const el = document.getElementById('layers'); el.innerHTML = html(B.layers, 0);
@@ -1156,31 +1218,51 @@ function layersPanel() {
 function contextPanel() {
   const v = VIEW();
   for (const sec of document.querySelectorAll('aside [data-panel]')) sec.hidden = !v.panels.includes(sec.dataset.panel);
-  for (const d of document.querySelectorAll('#layouts details')) {
-    d.hidden = d.dataset.floor !== v.floor;
-    d.open = !d.hidden && B.tiles.layouts[d.dataset.key].panelOpen !== false;
+  // the selected room opens under its own row in the list: its floor settings (an accordion, read top to bottom)
+  const store = document.getElementById('layouts');
+  for (const d of document.querySelectorAll('#rooms details[data-key]')) store.appendChild(d);
+  for (const old of document.querySelectorAll('#rooms tr.detail')) old.remove();
+  const room = state.room && ROOM[state.room];
+  for (const row of document.querySelectorAll('#rooms tr')) {
+    row.hidden = !!v.floor && row.dataset.floor !== v.floor;
+    row.setAttribute('aria-selected', String(row.dataset.room === state.room));
   }
-  for (const row of document.querySelectorAll('#rooms tr')) row.hidden = !!v.floor && row.dataset.floor !== v.floor;
+  const row = room && document.querySelector(`#rooms tr[data-room="${room.id}"]`);
+  if (row && !row.hidden) {
+    const key = layoutOf(room), tr = document.createElement('tr'), td = document.createElement('td');
+    tr.className = 'detail'; td.colSpan = 2; tr.appendChild(td); row.after(tr);
+    if (room.link) td.insertAdjacentHTML('beforeend', `<p class="note"><a href="${room.link.href}" target="_blank" rel="noopener">${room.link.name} ↗</a></p>`);
+    if (room.tilesWith) td.insertAdjacentHTML('beforeend', `<p class="note">Płytki razem z: ${ROOM[room.tilesWith].name}.</p>`);
+    else if (!key) td.insertAdjacentHTML('beforeend', '<p class="note">To pomieszczenie nie ma płytek.</p>');
+    else { const d = store.querySelector(`details[data-key="${key}"]`); d.open = true; td.appendChild(d); }
+  }
   document.getElementById('showRoofLabel').hidden = !v.roofGhost;
-  if (v.floor) document.getElementById('tilesTitle').textContent = 'Posadzki · ' + FLOOR_NAMES[v.floor];
+}
+// selecting a room (in the view, on the plan, in the list) puts it in force: its menu row and its floor settings
+function selectRoom(id) {
+  if (!VIEW().selectRooms) return;
+  state.room = id && id !== state.room ? id : null;
+  const room = state.room && ROOM[state.room];
+  if (room && VIEW().floor && VIEW().floor !== room.floor) { setMode(room.floor, true); return; }
+  contextPanel(); contextMenu(); markRoom(); save();
+  if (!document.getElementById('plan2d').hidden) showPlan(true);
 }
 function roomsTable() {
   let h = '';
   for (const f of FLOOR_IDS) {
-    h += `<tr data-floor="${f}"><td colspan="3" class="floorname">${FLOOR_NAMES[f]}</td></tr>`;
-    PLAN[f].rooms.forEach((r, i) => {
-      const area = r.rects.reduce((s, q) => s + (q[2] - q[0]) * (q[3] - q[1]), 0) / 1e4;
-      const opts = Object.keys(state.layouts).filter(k => state.layouts[k].floor === f).map(k => option(k, state.layouts[k].label, state.rooms[f][i])).join('') + option('none', 'Bez płytek', state.rooms[f][i]);
-      const name = r.link ? `${r.name}<br><a class="info" href="${r.link.href}" target="_blank" rel="noopener">${r.link.name} ↗</a>` : r.name;   // a room with a sub-project
-      h += `<tr data-floor="${f}"><td>${name}</td><td class="n" title="z rzutu: ${fmt(r.planArea, 2)} m²">${fmt(area, 2)} m²</td><td><select id="room-${f}-${i}" data-f="${f}" data-i="${i}" aria-label="Posadzka: ${r.name}">${opts}</select></td></tr>`;
+    h += `<tr data-floor="${f}"><td colspan="2" class="floorname">${FLOOR_NAMES[f]}</td></tr>`;
+    PLAN[f].rooms.forEach(r => {
+      const area = r.rects.reduce((s, q) => s + (q[2] - q[0]) * (q[3] - q[1]), 0) / 1e4, key = layoutOf(r);
+      const floorName = key ? PRODUCTS[state.layouts[key].product].name : 'bez płytek';
+      h += `<tr data-floor="${f}" data-room="${r.id}" tabindex="0"><td>${r.name}<br><span class="info">${floorName}</span></td><td class="n" title="z rzutu: ${fmt(r.planArea, 2)} m²">${fmt(area, 2)} m²</td></tr>`;
     });
   }
   const t = document.getElementById('rooms'); t.innerHTML = h;
-  for (const s of t.querySelectorAll('select')) s.onchange = () => {
-    const f = s.dataset.f; state.rooms[f][+s.dataset.i] = s.value;
-    for (const k in state.layouts) if (state.layouts[k].floor === f && state.auto[k]) autoLayout(k, true);
-    rebuildFloor(f);
-  };
+  for (const row of t.querySelectorAll('tr[data-room]')) {
+    row.onclick = () => selectRoom(row.dataset.room);
+    row.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRoom(row.dataset.room); } };
+  }
+  contextPanel();
 }
 function autoLayout(key, quiet) {
   const L = state.layouts[key], o = optimise(L, roomsOf(key));
@@ -1191,6 +1273,7 @@ function rebuildFloor(f) {
   buildFloor(f); applyLayers();
   if (!document.getElementById('plan2d').hidden) showPlan(true);
   for (const k in state.layouts) if (state.layouts[k].floor === f) refreshLayoutPanel(k);
+  roomsTable(); markRoom();
   save(); requestRender();
 }
 function wireLayout(key) {
@@ -1400,13 +1483,14 @@ function floorSVG(floor, ox, oy, withTiles) {
   P.rooms.forEach((room, i) => {
     const big = room.rects.reduce((m, q) => (q[2] - q[0]) * (q[3] - q[1]) > (m[2] - m[0]) * (m[3] - m[1]) ? q : m, room.rects[0]);
     const area = room.rects.reduce((a, q) => a + (q[2] - q[0]) * (q[3] - q[1]), 0) / 1e4;
-    const key = state.rooms[floor][i], L = state.layouts[key];
+    const key = layoutOf(room), L = state.layouts[key];
     const cx = (big[0] + big[2]) / 2, cz = (big[1] + big[3]) / 2;
-    out.push(room.link ? `<a href="${room.link.href}" target="_blank"><g>` : `<g>`);
+    if (room.id === state.room) for (const q of room.rects) rect(q, `fill="#c8882f" fill-opacity=".22"`);   // the selected room
+    out.push(`<g data-room="${room.id}" style="cursor:pointer">`);
     text(cx, cz - 6, room.name.replace(/ \(\d+\)$/, '') + (room.link ? ' ↗' : ''), 'r');
     text(cx, cz + 10, `${area.toFixed(2).replace('.', ',')} m²`, 'a');
     if (L) text(cx, cz + 24, `${L.len / 10}×${L.wid / 10} · ${(PRODUCTS[L.product] || {}).name ? TEX[L.texture].name.split(' (')[0] : ''}`, 's');
-    out.push(room.link ? `</g></a>` : `</g>`);
+    out.push(`</g>`);
   });
   // dimensions (red): chains along the four outer walls and the overall sizes
   const dimH = (xs, z, above) => {
@@ -1456,6 +1540,7 @@ function showPlan(on) {       // the 2D plan view: every floor side by side, fro
   if (!on) return;
   const sheet = document.getElementById('planSheet'); sheet.innerHTML = planSVG('both'); sheet.style.setProperty('--zoom', planZoom);
 }
+document.getElementById('planSheet').onclick = e => { const g = e.target.closest('[data-room]'); if (g) selectRoom(g.dataset.room); };
 function zoomPlan(k) { planZoom = Math.min(5, Math.max(0.4, planZoom * k)); document.getElementById('planSheet').style.setProperty('--zoom', planZoom); }
 // saving: through the viewer's downloads capability when the page is published on claude.ai, a plain link from disk
 const hostDownloads = window.claude && window.claude.use ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
@@ -1469,13 +1554,12 @@ async function downloadPlan() {
 window.__planSVG = planSVG;
 
 /* ================= 13. TEXTS, WALL CHECK ================= */
-document.title = 'Posadzki · ' + B.name;
-document.getElementById('title').textContent = 'Posadzki · ' + B.name;
-document.getElementById('subtitle').textContent = B.source + ' Płytki układane od nowa przy każdej zmianie.';
-document.getElementById('notes').innerHTML = B.tiles.notes.concat(
-  '„Ułóż automatycznie” szuka przesunięcia, przy którym przy ścianach nie ma pasków węższych niż 1/3 płytki (deska: końcówki krótsze niż 20 cm) i docinki w największym pomieszczeniu są symetryczne. Liczba płytek zakłada, że każdy docinek zużywa osobną płytkę.',
+document.title = B.name;
+document.getElementById('title').textContent = B.name;
+document.getElementById('subtitle').textContent = B.source;
+document.getElementById('notes').innerHTML = [
   `Piętro: ścianka kolankowa ${KNEE} cm, dach ${B.roof.pitch}°. Schody: ${ST.risers} stopni po ${fmt(rise, 1)} cm.`,
-  B.notes).join('<br>');
+  ...B.notes].join('<br>');
 // every wall and opening against its build-up: across, the core plus the outer layers of each side that faces outside
 function wallCheck() {
   const rows = [], bad = [], cm = v => fmt(v, v % 1 ? 1 : 0);
@@ -1525,6 +1609,16 @@ roomsTable();
 const cut = document.getElementById('cut'), cutv = document.getElementById('cutv');
 cut.value = state.cut; cutv.textContent = state.cut + ' cm';
 cut.oninput = () => { state.cut = +cut.value; cutv.textContent = state.cut + ' cm'; for (const f of FLOOR_IDS) buildWalls(f); save(); requestRender(); if (!document.getElementById('plan2d').hidden) showPlan(true); };
+{ // the 2D plan tools in the panel (the same as in its menu) and its cut, shared with the 3D views
+  const pc = document.getElementById('plancut'), pv = document.getElementById('plancutv');
+  const sync = () => { pc.value = cut.value = state.cut; pv.textContent = cutv.textContent = state.cut + ' cm'; };
+  sync();
+  pc.oninput = () => { state.cut = +pc.value; sync(); for (const f of FLOOR_IDS) buildWalls(f); save(); showPlan(true); };
+  cut.addEventListener('input', sync);
+  document.getElementById('planOut').onclick = () => zoomPlan(1 / 1.25);
+  document.getElementById('planIn').onclick = () => zoomPlan(1.25);
+  document.getElementById('planSave').onclick = downloadPlan;
+}
 const showRoof = document.getElementById('showRoof');
 showRoof.checked = state.showRoof;
 document.getElementById('views').innerHTML = Object.entries(B.views).map(([k, v]) =>

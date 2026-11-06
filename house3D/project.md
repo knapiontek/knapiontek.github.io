@@ -28,7 +28,7 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 ```
 
 - view.html loads the data files directly, so the page also works opened from disk.
-- house.js says where things are and what they are, how they can be switched (layers) and looked at (views); materials.js what they are made of. A wall names its kind, the kind names its build-up and material; a room names its layout, the layout its product; every node names its layers; a view names the layers it hides and the panel sections it shows.
+- house.js says where things are and what they are, how they can be switched (layers) and looked at (views); materials.js what they are made of. A wall names its kind, the kind names its build-up and material; a room carries its tiles (product and direction) or is tiled with another room; every node names its layers; a view names the layers it hides and the panel sections it shows.
 - One model for every view: switching a view never builds other objects, it hides layers and cuts the walls.
 - view.html does not know this house: it has no numbers, names, products or colours of it. Everything it draws and every text about the house comes from the data files.
 
@@ -53,7 +53,7 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 
 ## Floors and tiles
 
-- A tile product brings its texture, size and joint; the layout chooses only the product, pattern, direction, grout colour and offsets.
+- Tiles are set in the rooms: select a room, its floor is in the panel. A tile product brings its texture, size and joint; the room chooses only the product, pattern, direction, grout colour and offsets.
 
 - The rooms cover the whole floor between the walls; a passage without a door (the wall gaps from the bedroom to its wardrobes) belongs to a room. The page lists any floor that no room covers.
 - Rooms of one layout that meet with no wall between them are one floor for the tiles: a tile across their border is one piece.
