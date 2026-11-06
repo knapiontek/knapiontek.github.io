@@ -24,7 +24,7 @@ The house is built, and drawn, in this order. The 2D plans are the given: every 
 2. Ground floor walls of blocks: every wall, outer and inner, up to the ground floor height (the underside of the slab).
 3. The ring beam and slab poured over the whole of these walls, up to the attic level, over the outline of both floors (it carries the attic walls also where the attic reaches past the ground floor, over the entrance recess), without the stair hole.
 4. Attic walls standing on the slab.
-5. Last the EPS and the finish all round: on every side to the air of the walls and of the slab edge, and under the slab where no ground floor is below (the soffit of the recess). One continuous shell from the foundation to the roof.
+5. Last the EPS and the finish all round: on every side to the air of the walls and of the slab edge, and under the slab where no ground floor is below (the soffit of the recess). One continuous shell from the foundation to the roof. Where the soffit meets a wall, the wall's finish ends at the soffit's underside and its EPS runs on into the soffit's: block, EPS, finish, never EPS, finish, EPS.
 
 
 Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a kitchen room)

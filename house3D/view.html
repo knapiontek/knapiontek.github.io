@@ -702,7 +702,7 @@ withLayers(ST.layers, function buildStair() {
   for (let i = 1; i < n1; i++) STAIR_BOXES.push([f1.x[1] - i * run1, f1.z[0], f1.x[1] - (i - 1) * run1, f1.z[1], i * rise]);
   STAIR_BOXES.push([ST.landing.x[0], ST.landing.z[0], ST.landing.x[1], ST.landing.z[1], n1 * rise]);
   for (let j = 1; j < n2; j++) STAIR_BOXES.push([f2.x[0] + (j - 1) * run2, f2.z[0], f2.x[0] + j * run2, f2.z[1], (n1 + j) * rise]);
-  for (const b of STAIR_BOXES) box(b[0], b[4] - 5, b[1] + 0.5, b[2], b[4], b[3] - 0.5, M[ST.treadMaterial], groups.ground);
+  for (const b of STAIR_BOXES) box(b[0], b[4] - 5, b[1] + 0.1, b[2], b[4], b[3] - 0.1, M[ST.treadMaterial], groups.ground);
 });
 const FP = PLAN.ground.fireplace, FR = FP.rect;
 withLayers(FP.layers, () => box(FR[0], 0, FR[1], FR[2], FP.height, FR[3], M[FP.material], groups.ground));
@@ -1007,7 +1007,7 @@ function buildWalls(floor) {
   const y0 = LEVEL[floor], attic = floor === 'attic', pieces = [], outline = [];
   joinHeights = [...new Set(PLAN[floor].openings.flatMap(o => [o.sill, o.head]).concat(attic ? [KNEE] : [GROUND_H]))].sort((a, b) => a - b);
   const breaks = attic ? [XL, XM, XR, WIDTH - XL] : [];
-  // every wall rises to its own top: a fixed one (the rail), the roof line in the attic, else the floor's height:
+  // every wall rises to its own top: a fixed one (its kind's height), the roof line in the attic, else the floor's height:
   // on the ground floor every wall stops under the slab, which is poured over all of them
   const wallTop = kind => B.wallKinds[kind].height !== undefined ? () => B.wallKinds[kind].height
     : attic ? roofHeight : () => PLAN[floor].height;
@@ -1016,8 +1016,18 @@ function buildWalls(floor) {
     return { followRoof, head: followRoof ? x => Math.min(top(x), windowLine(x)) : x => Math.min(o.head, top(x)) };
   };
   // a wall cell from lo to hi in its material layer: the block core, the EPS or the finish to the air; and its section
+  // a finish facing the air under the soffit ends at the soffit's underside: above it the wall's EPS meets the
+  // soffit's EPS (block, EPS, finish, as everywhere)
+  const SB = SLAB_BU.layers, EPS = SB.find(l => l.material), soffitBottom = slabY1 - SLAB_OUTER;
+  const facing = { left: r => [r[0] - 1, r[1], r[0], r[3]], right: r => [r[2], r[1], r[2] + 1, r[3]], garden: r => [r[0], r[1] - 1, r[2], r[1]], front: r => [r[0], r[3], r[2], r[3] + 1] };
+  const underSoffit = c => !attic && c.finish && c.side && slabCells.some(s => s.under && (a => a[0] < s.r[2] && a[2] > s.r[0] && a[1] < s.r[3] && a[3] > s.r[1])(facing[c.side](c.r)));
+  const only = (L, fn) => { const prev = drawLayers; drawLayers = L; try { fn(); } finally { drawLayers = prev; } };
   const part = (c, lo, hi, cap) => {
-    if (c.finish) paintFinish(c.r, y0, lo, hi, M.wall[c.kind], c.rules, grp, breaks);
+    if (underSoffit(c)) {
+      const upTo = x => Math.min(num(hi)(x), soffitBottom), from = x => Math.max(num(lo)(x), soffitBottom);
+      paintFinish(c.r, y0, lo, upTo, M.wall[c.kind], c.rules, grp, breaks);
+      only(EPS.layers || [], () => prism(c.r[0], c.r[1], c.r[2], c.r[3], y0, from, hi, M[EPS.material], grp, breaks));
+    } else if (c.finish) paintFinish(c.r, y0, lo, hi, M.wall[c.kind], c.rules, grp, breaks);
     else prism(c.r[0], c.r[1], c.r[2], c.r[3], y0, lo, hi, c.layer ? M[c.layer] : M.wall[c.kind], grp, breaks);
     pieces.push(Object.assign({ r: c.r, y0, from: 0, top: hi, mat: c.layer ? M[c.layer] : M.wall[c.kind], layers: drawLayers }, cap));
   };
@@ -1742,6 +1752,7 @@ bright.value = state.brightness; brightv.textContent = Math.round(state.brightne
 bright.oninput = () => { state.brightness = +bright.value; brightv.textContent = Math.round(state.brightness * 100) + ' %'; placeSun(); save(); };
 
 for (const k in state.layouts) if (state.auto[k] && !state.layouts[k].optimised) { autoLayout(k, true); state.layouts[k].optimised = true; }
+slabCells = readSlab();          // the walls need to know where the soffit is
 buildWalls('ground'); buildWalls('attic'); buildSlab(); clipAll();
 rebuildFloor('ground'); rebuildFloor('attic');
 setMode(state.mode);

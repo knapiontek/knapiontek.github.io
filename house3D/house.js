@@ -39,7 +39,7 @@
    wallKinds    per wall kind: name, material of its surfaces (and of its finish where no finish says otherwise),
                 buildUp (the view checks the thickness), rank (where walls overlap the higher rank owns the overlap;
                 openings always win), wing = runs past the gables
-                (not part of the house length), height = a fixed top (the stair rail), plinth = stands on the plinth
+                (not part of the house length), height = a fixed top, plinth = stands on the plinth
    plinth, site the base under the outer walls; lawn and terraces [x1, z1, x2, z2] at a top level y
    finishes     what the finish layer of a wall side is: side = where the side looks (left -x, right +x, garden -z,
                 front +z), rect = the part of the plan it covers, floor (default both), y = its height (house y,
@@ -155,8 +155,7 @@ window.HOUSE = {
   "knee": {"name": "kolankowa", "material": "plasterWhite", "buildUp": "outer", "rank": 3, "layers": ["walls"]},
   "int24": {"name": "wewnętrzna 24", "material": "plasterInside", "buildUp": "block24", "rank": 2, "layers": ["walls"]},
   "int12": {"name": "działowa 12", "material": "plasterInside", "buildUp": "block12", "rank": 2, "layers": ["walls"]},
-  "chimney": {"name": "komin", "material": "plasterInside", "rank": 6, "layers": ["walls"]},
-  "rail": {"name": "balustrada", "material": "glass", "rank": 1, "height": 100, "layers": ["stair"]}
+  "chimney": {"name": "komin", "material": "plasterInside", "rank": 6, "layers": ["walls"]}
  },
  "plinth": {"top": 0, "bottom": -30, "material": "plinth", "layers": ["foundation"]},
  "site": {
@@ -266,8 +265,8 @@ window.HOUSE = {
     {"r": [846, 1231, 910, 1421.7], "kind": "portal"},
     {"r": [44, 535.9, 380.4, 547.9], "kind": "int12"},
     {"r": [380.4, 468.5, 459.8, 547.9], "kind": "chimney"},
-    {"r": [318.6, 647, 433.8, 659], "kind": "int12"},
-    {"r": [409.8, 659, 433.8, 1064.5], "kind": "int24"},
+    {"r": [318.6, 644.1, 433.8, 656.1], "kind": "int12"},
+    {"r": [409.8, 656.1, 433.8, 1064.5], "kind": "int24"},
     {"r": [409.8, 1151.4, 433.8, 1187], "kind": "int24"},
     {"r": [433.8, 905.3, 487.6, 929.3], "kind": "int24"},
     {"r": [579.3, 905.3, 615.5, 929.3], "kind": "int24"},
@@ -339,14 +338,14 @@ window.HOUSE = {
      "numbers": [2],
      "name": "Garaż",
      "planArea": 25.91,
-     "rects": [[44, 659, 409.8, 1278.8], [44, 547.9, 318.6, 642.1], [273, 647.7, 318.6, 659]]
+     "rects": [[44, 659, 409.8, 1278.8], [44, 547.9, 318.6, 642.1], [273, 644.1, 318.6, 659], [318.6, 656.1, 409.8, 659]]
     }
    ],
    "stair": {
     "risers": 17,
     "flight1": {"x": [143, 433.8], "z": [547.9, 644.1], "risers": 12},
-    "landing": {"x": [44, 143], "z": [547.9, 735]},
-    "flight2": {"x": [143, 273], "z": [644.1, 735]},
+    "landing": {"x": [44, 143], "z": [547.9, 738.7]},
+    "flight2": {"x": [143, 273], "z": [644.1, 738.7]},
     "treadMaterial": "tread",
     "layers": ["stair"]
    },
@@ -383,8 +382,7 @@ window.HOUSE = {
     {"r": [329.9, 750.7, 341.9, 902.8], "kind": "int12"},
     {"r": [44, 902.8, 178.1, 914.8], "kind": "int12"},
     {"r": [260, 902.8, 346.7, 914.8], "kind": "int12"},
-    {"r": [440.6, 902.8, 452.6, 1278.8], "kind": "int12"},
-    {"r": [143, 642.2, 438.1, 651.7], "kind": "rail"}
+    {"r": [440.6, 902.8, 452.6, 1278.8], "kind": "int12"}
    ],
    "openings": [
     {"r": [156.2, 0, 756.2, 44], "sill": 0, "head": 346, "kind": "window", "wall": "gable"},
@@ -432,7 +430,7 @@ window.HOUSE = {
      "name": "Hol",
      "planArea": 7.32,
      "tiles": {"product": "logOak", "dir": "z"},
-     "rects": [[438.1, 547.9, 553.7, 651.7], [273, 651.7, 341.9, 738.7], [341.9, 651.7, 553.7, 902.8]]
+     "rects": [[273, 642.2, 438.1, 651.7], [438.1, 547.9, 553.7, 651.7], [273, 651.7, 341.9, 738.7], [341.9, 651.7, 553.7, 902.8]]
     },
     {
      "id": "lazienka5",
