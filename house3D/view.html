@@ -72,6 +72,7 @@ summary::-webkit-details-marker{display:none}
 summary .t{font:700 15px var(--f-display)}
 summary .s{font:12px var(--f-mono);color:var(--muted);text-align:right}
 .lay{padding:0 12px 12px;display:grid;gap:9px}
+.layers{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin:4px 0}
 .row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 label{display:grid;gap:3px;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);min-width:0}
@@ -160,7 +161,7 @@ td select{padding:3px 4px;font-size:12px}
       <div class="rng"><label for="cut">Wysokość cięcia ścian</label><span id="cutv"></span>
         <input id="cut" type="range" min="30" max="500" step="5" style="grid-column:1/-1"></div>
       <div class="checks">
-        <label><input type="checkbox" id="showCuts" checked> Pokaż drobne docinki</label>
+        <div id="layers" class="layers"></div>
         <label><input type="checkbox" id="showRoof"> Skosy dachu na piętrze</label>
       </div>
       <div class="rng"><label for="sunaz">Słońce: kierunek</label><span id="sunazv"></span>
@@ -190,36 +191,37 @@ td select{padding:3px 4px;font-size:12px}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
 <script src="textures.js"></script>
-<script src="plan.js"></script>
-<script src="building.js"></script>
-<script src="floors.js"></script>
+
+<script src="house.js"></script>
+<script src="materials.js"></script>
 <script>
 (function(){
 'use strict';
 const loading = document.getElementById('loading');
 if (!window.THREE || !THREE.OrbitControls) { loading.textContent = 'Nie można wczytać silnika 3D. Odśwież stronę.'; return; }
-if (!window.HOUSE_TEXTURES || !window.HOUSE_PLAN || !window.HOUSE_BUILDING || !window.HOUSE_FLOORS) { loading.textContent = 'Nie wczytały się dane domu (textures.js, plan.js, building.js, floors.js).'; return; }
-const TEX = window.HOUSE_TEXTURES, PLAN = window.HOUSE_PLAN, FLOORS = window.HOUSE_FLOORS;
+if (!window.HOUSE_TEXTURES || !window.HOUSE || !window.HOUSE_MATERIALS) { loading.textContent = 'Nie wczytały się dane domu (house.js, materials.js, textures.js).'; return; }
+const TEX = window.HOUSE_TEXTURES, MAT = window.HOUSE_MATERIALS;
+const PLAN = Object.fromEntries(window.HOUSE.floors.map(f => [f.id, f])), FLOOR_IDS = window.HOUSE.floors.map(f => f.id);   // the floors of the tree by id
 let needsRender = true;
-const walk = { on: false, x: window.HOUSE_BUILDING.walk.start.x, z: window.HOUSE_BUILDING.walk.start.z, y: 0, yaw: window.HOUSE_BUILDING.walk.start.heading * Math.PI / 180, pitch: -0.06, keys: {}, prevMode: 'ground' };
+const walk = { on: false, x: window.HOUSE.walk.start.x, z: window.HOUSE.walk.start.z, y: 0, yaw: window.HOUSE.walk.start.heading * Math.PI / 180, pitch: -0.06, keys: {}, prevMode: 'ground' };
 
-/* ================= 1. HOUSE (building.js, plan.js; cm) ================= */
-const B = window.HOUSE_BUILDING;
-const LEVEL = { ground: B.levels.ground, attic: B.levels.attic }, GROUND_H = B.levels.groundHeight;
+/* ================= 1. HOUSE (house.js: the tree; cm) ================= */
+const B = window.HOUSE;
+const LEVEL = Object.fromEntries(B.floors.map(f => [f.id, f.level])), GROUND_H = PLAN.ground.height;
 const KNEE = B.roof.knee, PITCH = Math.tan(B.roof.pitch * Math.PI / 180);
 const knees = PLAN.attic.walls.filter(w => w.kind === 'knee').map(w => w.r).sort((a, b) => a[0] - b[0]);
 const XL = knees[0][2], XR = knees[1][0], XM = (XL + XR) / 2, RIDGE = KNEE + PITCH * (XR - XL) / 2;
 const WIDTH = knees[1][2];
-const LENGTH = Math.max(...PLAN.ground.walls.filter(w => !B.walls[w.kind].wing).map(w => w.r[3]));   // the front gable face
+const LENGTH = Math.max(...PLAN.ground.walls.filter(w => !B.wallKinds[w.kind].wing).map(w => w.r[3]));   // the front gable face
 const roofHeight = x => KNEE + PITCH * Math.max(0, Math.min(x - XL, XR - x));
-const FLOOR_NAMES = { ground: 'Parter', attic: 'Piętro' };
-const buildUpOf = kind => kind && B.walls[kind].buildUp ? B.buildUps[B.walls[kind].buildUp] : null;
+const FLOOR_NAMES = Object.fromEntries(B.floors.map(f => [f.id, f.name]));
+const buildUpOf = kind => kind && B.wallKinds[kind].buildUp ? B.buildUps[B.wallKinds[kind].buildUp] : null;
 const coreThickness = bu => bu.layers[0].thickness;
 const outerThickness = bu => bu.layers.slice(1).reduce((s, l) => s + l.thickness, 0);
 const thicknessWith = (bu, outsideSides) => coreThickness(bu) + outerThickness(bu) * outsideSides;
 
 /* ================= 2. PRODUCTS AND PATTERNS ================= */
-const PRODUCTS = FLOORS.products;
+const PRODUCTS = MAT.products;
 const PATTERNS = { grid: 'Prosto (siatka)', half: 'Przesunięcie 1/2', third: 'Przesunięcie 1/3', quarter: 'Przesunięcie 1/4', random: 'Losowo' };
 const STAGGER = { grid: 0, half: 1 / 2, third: 1 / 3, quarter: 1 / 4 };
 const DIRS = { z: 'Wzdłuż domu (do ogrodu)', x: 'W poprzek domu' };
@@ -230,20 +232,21 @@ function applyProduct(L, key) {
 }
 
 /* ================= 3. STATE (remembered per viewer) ================= */
-const STORE = 'house-floors-v2';    // a new key when the data format changes: old states are dropped, not converted
+const STORE = 'house-floors-v3';    // a new key when the data format changes: old states are dropped, not converted
 let state;
 function freshState() {
-  const s = { mode: 'ground', cut: 150, showCuts: true, showRoof: false, sunAzimuth: B.light.sun.azimuth, sunElevation: B.light.sun.elevation, brightness: 1, layouts: {}, rooms: {}, auto: {} };
-  for (const k in FLOORS.layouts) {
-    const d = FLOORS.layouts[k];
+  const s = { mode: 'ground', cut: 150, showRoof: false, layers: Object.fromEntries(Object.entries(B.layers).map(([k, l]) => [k, l.on])), sunAzimuth: B.light.sun.azimuth, sunElevation: B.light.sun.elevation, brightness: 1, layouts: {}, rooms: {}, auto: {} };
+  for (const k in B.tiles.layouts) {
+    const d = B.tiles.layouts[k];
     s.layouts[k] = { label: d.label, floor: d.floor, dir: d.dir, oa: 0, ob: 0 };
     applyProduct(s.layouts[k], d.product); s.auto[k] = true;
   }
-  for (const f of ['ground', 'attic']) s.rooms[f] = PLAN[f].rooms.map(r => r.layout);
+  for (const f of FLOOR_IDS) s.rooms[f] = PLAN[f].rooms.map(r => r.layout);
   return s;
 }
 try { state = JSON.parse(localStorage.getItem(STORE)); } catch (e) { state = null; }
-const stateFits = st => st && st.layouts && Object.keys(st.layouts).join() === Object.keys(FLOORS.layouts).join()
+const stateFits = st => st && st.layouts && Object.keys(st.layouts).join() === Object.keys(B.tiles.layouts).join()
+  && st.layers && Object.keys(st.layers).join() === Object.keys(B.layers).join()
   && Object.values(st.layouts).every(L => PRODUCTS[L.product] && TEX[L.texture]);
 if (!stateFits(state)) state = freshState();
 function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
@@ -481,10 +484,10 @@ function makeMaterial(def) {
   return m;
 }
 const M = {};
-for (const k in B.materials) M[k] = makeMaterial(B.materials[k]);
+for (const k in MAT.materials) M[k] = makeMaterial(MAT.materials[k]);
 M.ghost = new THREE.MeshStandardMaterial({ color: lin('#f2f0ea'), roughness: 0.9, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false });
 M.wall = {};
-for (const k in B.walls) M.wall[k] = M[B.walls[k].material];
+for (const k in B.wallKinds) M.wall[k] = M[B.wallKinds[k].material];
 M.groove = new THREE.MeshStandardMaterial({ color: lin(B.gate.groove), roughness: 0.8 });
 M.edge = new THREE.LineBasicMaterial({ color: lin(B.edges.color), transparent: true, opacity: B.edges.opacity, depthWrite: false });
 const EDGED = new Set([...Object.values(M.wall), M[B.faces.default], M[B.roof.body]].filter(m => m !== M[B.windows.glass]));
@@ -524,70 +527,89 @@ function cmUV(g, ox, oy, oz) {          // uv = world cm on the face plane, so t
     if (az > 0.5) uv.setXY(i, x, y); else if (ax > 0.5) uv.setXY(i, z, y); else uv.setXY(i, x, z);
   }
 }
+// Layers: everything is drawn under the layers of its node in house.js; an object shows only when all its layers are on
+let drawLayers = [];
+function withLayers(layers, fn) {
+  const prev = drawLayers; drawLayers = [...new Set(prev.concat(layers || []))];
+  try { return fn(); } finally { drawLayers = prev; }
+}
+const tag = obj => { obj.userData.layers = drawLayers; return obj; };
+const layerOn = k => state.layers[k] !== false;
+const shown = layers => layers.every(layerOn);
+function applyLayers() {
+  root.traverse(o => { if (o.userData.layers) o.visible = shown(o.userData.layers); });
+  requestRender();
+}
+const materialLayers = {};      // the layers of a build-up layer material (EPS)
+for (const bu of Object.values(B.buildUps)) for (const l of bu.layers) if (l.material) materialLayers[l.material] = l.layers || [];
 function box(x1, y1, z1, x2, y2, z2, mat, parent, shadow) {
   const g = new THREE.BoxGeometry(x2 - x1, y2 - y1, z2 - z1);
   cmUV(g, (x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2);
   const m = new THREE.Mesh(g, mat);
   m.position.set((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2);
   if (shadow !== false) { m.castShadow = true; m.receiveShadow = true; }
-  parent.add(m); return m;
+  parent.add(tag(m)); return m;
 }
 const site = new THREE.Group(); root.add(site);
-{ const L = B.site.lawn.rect; box(L[0], B.site.lawn.y - 2, L[1], L[2], B.site.lawn.y, L[3], M[B.site.lawn.material], site, false).receiveShadow = true; }
-for (const t of B.site.terraces) box(t.rect[0], B.site.lawn.y, t.rect[1], t.rect[2], t.y, t.rect[3], M[t.material], site);
-box(0, B.plinth.bottom, 0, WIDTH, B.plinth.top, LENGTH, M[B.plinth.material], groups.ground);
+withLayers(B.site.layers, () => {
+  const L = B.site.lawn.rect; box(L[0], B.site.lawn.y - 2, L[1], L[2], B.site.lawn.y, L[3], M[B.site.lawn.material], site, false).receiveShadow = true;
+  for (const t of B.site.terraces) box(t.rect[0], B.site.lawn.y, t.rect[1], t.rect[2], t.y, t.rect[3], M[t.material], site);
+});
+withLayers(B.plinth.layers, () => box(0, B.plinth.bottom, 0, WIDTH, B.plinth.top, LENGTH, M[B.plinth.material], groups.ground));
 // attic slab: the outline minus the stair hole, as grid cells
 const slabY1 = GROUND_H, slabY2 = LEVEL.attic, VOIDS = PLAN.attic.voids;
 const inVoid = (x, z) => VOIDS.some(v => x > v[0] && x < v[2] && z > v[1] && z < v[3]);
 const attSlab = new THREE.Group(); groups.attic.add(attSlab);
-(function buildSlab() {
+withLayers(B.slab.layers, function buildSlab() {
   const xs = [0, WIDTH], zs = [0, LENGTH];
   for (const v of VOIDS) { xs.push(v[0], v[2]); zs.push(v[1], v[3]); }
   const ux = [...new Set(xs)].sort((a, b) => a - b), uz = [...new Set(zs)].sort((a, b) => a - b);
   for (let i = 0; i < uz.length - 1; i++) for (let k = 0; k < ux.length - 1; k++)
-    if (!inVoid((ux[k] + ux[k + 1]) / 2, (uz[i] + uz[i + 1]) / 2)) box(Math.max(ux[k], XL), slabY1, Math.max(uz[i], 2), Math.min(ux[k + 1], WIDTH - XL), slabY2, Math.min(uz[i + 1], LENGTH - 2), M.slab, attSlab);
-})();
+    if (!inVoid((ux[k] + ux[k + 1]) / 2, (uz[i] + uz[i + 1]) / 2)) box(Math.max(ux[k], XL), slabY1, Math.max(uz[i], 2), Math.min(ux[k + 1], WIDTH - XL), slabY2, Math.min(uz[i + 1], LENGTH - 2), M[B.slab.material], attSlab);
+  // the parts of the slab over the entrance recess (its beam and soffit) go with the slab, never with the cut walls
+  for (const c of B.claddings) if (c.part === 'slab') box(c.rect[0], c.y[0], c.rect[1], c.rect[2], c.y[1], c.rect[3], M[c.material], attSlab);
+});
 // U-shaped stair; STAIR_BOXES [x1, z1, x2, z2, top] are also the walking surfaces
 const ST = PLAN.ground.stair, rise = LEVEL.attic / ST.risers, STAIR_BOXES = [];
-(function buildStair() {
+withLayers(ST.layers, function buildStair() {
   const f1 = ST.flight1, f2 = ST.flight2, n1 = f1.risers, n2 = ST.risers - n1;
   const run1 = (f1.x[1] - f1.x[0]) / (n1 - 1), run2 = (f2.x[1] - f2.x[0]) / (n2 - 1);  // the last riser of each flight is the landing / the attic floor
   for (let i = 1; i < n1; i++) STAIR_BOXES.push([f1.x[1] - i * run1, f1.z[0], f1.x[1] - (i - 1) * run1, f1.z[1], i * rise]);
   STAIR_BOXES.push([ST.landing.x[0], ST.landing.z[0], ST.landing.x[1], ST.landing.z[1], n1 * rise]);
   for (let j = 1; j < n2; j++) STAIR_BOXES.push([f2.x[0] + (j - 1) * run2, f2.z[0], f2.x[0] + j * run2, f2.z[1], (n1 + j) * rise]);
-  for (const b of STAIR_BOXES) box(b[0], b[4] - 5, b[1] + 0.5, b[2], b[4], b[3] - 0.5, M[B.stair.tread], groups.ground);
-  const c = ST.core; box(c[0], 0, c[1], c[2], GROUND_H, c[3], M[B.stair.core], groups.ground);
-})();
-const FP = PLAN.ground.fireplace;
-box(FP[0], 0, FP[1], FP[2], B.fireplace.height, FP[3], M[B.fireplace.material], groups.ground);
+  for (const b of STAIR_BOXES) box(b[0], b[4] - 5, b[1] + 0.5, b[2], b[4], b[3] - 0.5, M[ST.treadMaterial], groups.ground);
+  const c = ST.core; box(c[0], 0, c[1], c[2], GROUND_H, c[3], M[ST.coreMaterial], groups.ground);
+});
+const FP = PLAN.ground.fireplace, FR = FP.rect;
+withLayers(FP.layers, () => box(FR[0], 0, FR[1], FR[2], FP.height, FR[3], M[FP.material], groups.ground));
 const CORE_WALL = ST.core;
 // roof: a slab over the whole length incl. the portals; body = the portal band, covering = the roof surface
 const ZS = PLAN.ground.walls.reduce((m, w) => [Math.min(m[0], w.r[1]), Math.max(m[1], w.r[3])], [0, 0]);
 const ROOF_T = thicknessWith(B.buildUps[B.roof.buildUp], 2) / Math.cos(B.roof.pitch * Math.PI / 180);   // the portal frame section, vertical
 const under = x => KNEE + PITCH * (Math.min(x, WIDTH - x) - XL);           // roof underside above the attic floor
 const roofSolid = new THREE.Group(), roofGhost = new THREE.Group(); root.add(roofSolid, roofGhost);
-(function buildRoof() {
+withLayers(B.roof.layers, function buildRoof() {
   const y = LEVEL.attic, sh = new THREE.Shape();
   sh.moveTo(0, y + under(0)); sh.lineTo(XM, y + under(XM)); sh.lineTo(WIDTH, y + under(WIDTH));
   sh.lineTo(WIDTH, y + under(WIDTH) + ROOF_T); sh.lineTo(XM, y + under(XM) + ROOF_T); sh.lineTo(0, y + under(0) + ROOF_T); sh.closePath();
   const g = new THREE.ExtrudeGeometry(sh, { depth: ZS[1] - ZS[0], bevelEnabled: false });
-  const body = new THREE.Mesh(g, M[B.roof.body]); body.position.z = ZS[0]; body.castShadow = body.receiveShadow = true; roofSolid.add(body);
+  const body = new THREE.Mesh(g, M[B.roof.body]); body.position.z = ZS[0]; body.castShadow = body.receiveShadow = true; roofSolid.add(tag(body));
   for (const [xa, xb] of [[0, XM], [XM, WIDTH]]) {        // covering, 1 cm above the body; uv in cm for the grain
     const ya = y + under(xa) + ROOF_T + 1, yb = y + under(xb) + ROOF_T + 1, g2 = new THREE.BufferGeometry();
     const s1 = 0, s2 = Math.hypot(xb - xa, yb - ya);
     g2.setAttribute('position', new THREE.Float32BufferAttribute([xa, ya, ZS[1] + 1, xb, yb, ZS[1] + 1, xb, yb, ZS[0] - 1, xa, ya, ZS[1] + 1, xb, yb, ZS[0] - 1, xa, ya, ZS[0] - 1], 3));
     g2.setAttribute('uv', new THREE.Float32BufferAttribute([s1, ZS[1], s2, ZS[1], s2, ZS[0], s1, ZS[1], s2, ZS[0], s1, ZS[0]], 2));
     g2.computeVertexNormals();
-    const m = new THREE.Mesh(g2, M[B.roof.covering]); m.receiveShadow = true; m.castShadow = true; roofSolid.add(m);
+    const m = new THREE.Mesh(g2, M[B.roof.covering]); m.receiveShadow = true; m.castShadow = true; roofSolid.add(tag(m));
   }
   const C = PLAN.attic.walls.find(w => w.kind === 'chimney').r;
-  box(C[0], y + under(C[2]) + 10, C[1], C[2], y + under(XM) + ROOF_T + B.chimney.above, C[3], M[B.chimney.material], roofSolid);
+  withLayers(B.chimney.layers, () => box(C[0], y + under(C[2]) + 10, C[1], C[2], y + under(XM) + ROOF_T + B.chimney.above, C[3], M[B.chimney.material], roofSolid));
   for (const [xa, xb] of [[XL, XM], [XR, XM]]) {        // see-through slopes for the attic plan view
     const y1 = y + KNEE, y2 = y + RIDGE, g3 = new THREE.BufferGeometry();
     g3.setAttribute('position', new THREE.Float32BufferAttribute([xa, y1, 0, xb, y2, 0, xb, y2, LENGTH, xa, y1, 0, xb, y2, LENGTH, xa, y1, LENGTH], 3));
-    g3.computeVertexNormals(); roofGhost.add(new THREE.Mesh(g3, M.ghost));
+    g3.computeVertexNormals(); roofGhost.add(tag(new THREE.Mesh(g3, M.ghost)));
   }
-})();
+});
 const isFull = () => walk.on || state.mode === 'all';
 function updateRoof() {
   roofSolid.visible = isFull();
@@ -595,7 +617,7 @@ function updateRoof() {
 }
 
 /* ================= 7. WALLS (rebuilt with the cut height) ================= */
-// The wall rectangles of plan.js overlap where walls meet (they were read from the plan image). The footprint of a
+// The wall rectangles of a floor overlap where walls meet (they were read from the plan image). The footprint of a
 // floor is rebuilt as a grid of all their edges: every cell gets one owner (an opening before a wall, stronger wall
 // kinds before weaker), and cells with the same owner, facade face, finish and layer merge into rectangles that never
 // overlap.
@@ -606,7 +628,7 @@ function updateRoof() {
 function planCover(floor) {
   const P = PLAN[floor], st = P.stair, part = p => [p.x[0], p.z[0], p.x[1], p.z[1]];
   return P.walls.map(w => w.r).concat(P.openings.map(o => o.r), P.rooms.flatMap(r => r.rects), P.voids || [],
-    P.fireplace ? [P.fireplace] : [], st ? [part(st.flight1), part(st.landing), part(st.flight2), st.core] : []);
+    P.fireplace ? [P.fireplace.rect] : [], st ? [part(st.flight1), part(st.landing), part(st.flight2), st.core] : []);
 }
 // is the rectangle [x1, z1, x2, z2] fully covered? (a grid of the cover edges with prefix sums of the air cells)
 function coverTest(cover) {
@@ -658,14 +680,14 @@ const footprints = {};
 function footprint(floor) {
   if (footprints[floor]) return footprints[floor];
   const q = v => Math.round(v * 10) / 10, P = PLAN[floor], layers = layerStripsOf(floor);
-  const openingRank = Math.max(...Object.values(B.walls).map(k => k.rank)) + 1;
-  const items = P.walls.map(w => ({ r: w.r.map(q), kind: w.kind, rank: B.walls[w.kind].rank }))
+  const openingRank = Math.max(...Object.values(B.wallKinds).map(k => k.rank)) + 1;
+  const items = P.walls.map(w => ({ r: w.r.map(q), kind: w.kind, rank: B.wallKinds[w.kind].rank }))
     .concat(P.openings.map((o, i) => ({ r: o.r.map(q), kind: o.wall, rank: openingRank, opening: i })));
   const xs = items.flatMap(it => [it.r[0], it.r[2]]).concat(layers.flatMap(l => [l.r[0], l.r[2]]));
-  const zs = [...new Set(items.flatMap(it => [it.r[1], it.r[3]]).concat(layers.flatMap(l => [l.r[1], l.r[3]])).map(q))].sort((a, b) => a - b);
+  const zl = items.flatMap(it => [it.r[1], it.r[3]]).concat(layers.flatMap(l => [l.r[1], l.r[3]]));
   for (const f of B.finishes) if (f.floor === floor) xs.push(...f.x);
-  for (const c of B.claddings) if (c.floor === floor) { xs.push(c.rect[0], c.rect[2]); zs.push(c.rect[1], c.rect[3]); }
-  const ux = [...new Set(xs.map(q))].sort((a, b) => a - b);
+  for (const c of B.claddings) if (c.floor === floor) { xs.push(c.rect[0], c.rect[2]); zl.push(c.rect[1], c.rect[3]); }
+  const ux = [...new Set(xs.map(q))].sort((a, b) => a - b), zs = [...new Set(zl.map(q))].sort((a, b) => a - b);   // sorted after every line is in
   const layerAt = (cx, cz, kind) => {
     if (!buildUpOf(kind)) return null;
     const l = layers.find(l => l.material && cx > l.r[0] && cx < l.r[2] && cz > l.r[1] && cz < l.r[3]);
@@ -729,7 +751,7 @@ function prism(x1, z1, x2, z2, y0, bottom, top, mat, parent, breaks) {
   cmUV(g, 0, y0, z1);
   const m = new THREE.Mesh(g, mat); m.position.set(0, y0, z1);
   m.castShadow = mat !== M[B.windows.glass]; m.receiveShadow = true;
-  parent.add(m);
+  parent.add(tag(m));
   if (EDGED.has(mat) && edgeSink && !skinning) edgeSink.push({ g, ox: 0, oy: y0, oz: z1 });
 }
 // edges only on real corners: faces hidden against a neighbour (opposite normals in one plane) are dropped first,
@@ -782,7 +804,7 @@ function buildEdges(list, parent) {
     if (d < cos) pos.push(...e.a, ...e.b);
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  parent.add(new THREE.LineSegments(g, M.edge));
+  parent.add(tag(new THREE.LineSegments(g, M.edge)));
 }
 function clearGroup(g) {
   for (let i = g.children.length - 1; i >= 0; i--) { const c = g.children[i]; g.remove(c); if (c.geometry) c.geometry.dispose(); }
@@ -800,7 +822,9 @@ function finishOf(face, floor, x1, x2) {
 }
 const windowLine = x => roofHeight(x) - B.windows.attic.inset;      // the line of the attic window tops, extended
 function skin(r0, y0, bottom, top, grp, breaks, floor, face, f) {
-  if (!face) return;
+  if (face) withLayers(B.faces.layers, () => skinFace(r0, y0, bottom, top, grp, breaks, floor, face, f));
+}
+function skinFace(r0, y0, bottom, top, grp, breaks, floor, face, f) {
   // the cladding pieces overlap their neighbours by 2.5 mm: no hairline cracks between them; no edge lines either
   const r = [r0[0] - 0.25, r0[1], r0[2] + 0.25, r0[3]], z = face === 'garden' ? [r[1], r[1] + F.depth] : [r[3] - F.depth, r[3]];
   skinning = true;
@@ -845,7 +869,7 @@ function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX, opt) {
   }
 }
 // the layer (EPS) seen in the cut: a thin cap of its colour on the top of the wall
-const cap = (r, y0, top, mat, grp, breaks) => prism(r[0], r[1], r[2], r[3], y0, top, x => num(top)(x) + 0.6, mat, grp, breaks);
+const cap = (r, y0, top, mat, grp, breaks) => withLayers(materialLayers[Object.keys(M).find(k => M[k] === mat)], () => prism(r[0], r[1], r[2], r[3], y0, top, x => num(top)(x) + 0.6, mat, grp, breaks));
 // the facade finish is the outer F.depth cm of the wall itself: the wall body ends behind it
 const bodyOf = (r, face) => face === 'garden' ? [r[0], r[1] + F.depth, r[2], r[3]] : face === 'front' ? [r[0], r[1], r[2], r[3] - F.depth] : r;
 // a wall piece with claddings in it: the wall above and below them, the claddings themselves are drawn on their own
@@ -867,8 +891,8 @@ function buildWalls(floor) {
   const breaks = attic ? [XL, XM, XR, c1, c2, WIDTH - XL, XL] : [];
   // the outer walls carry the slab up to the attic floor only in the full house; with the attic hidden every wall ends
   // at the same height (the cut, at most the ceiling)
-  const fixedTop = kind => B.walls[kind].height === undefined ? null : () => Math.min(cut, B.walls[kind].height);
-  const groundTop = kind => B.walls[kind].upToAtticFloor && full ? () => LEVEL.attic : () => Math.min(cut, GROUND_H);
+  const fixedTop = kind => B.wallKinds[kind].height === undefined ? null : () => Math.min(cut, B.wallKinds[kind].height);
+  const groundTop = kind => B.wallKinds[kind].upToAtticFloor && full ? () => LEVEL.attic : () => Math.min(cut, GROUND_H);
   const wallTop = kind => fixedTop(kind) || (attic ? x => Math.min(cut, roofHeight(x)) : groundTop(kind));   // one roof line for every attic wall
   const skinTop = top => top;
   const portalTop = full && B.portals.groundWingsTo === 'attic' ? LEVEL.attic : GROUND_H;
@@ -882,7 +906,7 @@ function buildWalls(floor) {
     const followRoof = attic && facadeFace(o.r) && B.windows.attic.followRoof && o.kind === 'window';
     return { followRoof, head: followRoof ? x => Math.min(top(x), windowLine(x)) : x => Math.min(o.head, top(x)) };
   };
-  for (const c of footprint(floor)) {                 // the solid parts: walls, and the wall below and above openings
+  for (const c of footprint(floor)) withLayers(B.wallKinds[c.kind].layers, () => {   // the solid parts: walls, and the wall below and above openings
     const r = c.r;
     if (c.opening === undefined) {
       const wing = r[3] < 1 || r[1] > LENGTH - 2;
@@ -904,9 +928,9 @@ function buildWalls(floor) {
         if (c.layer && !full) cap(body, y0, top, M[c.layer], grp, breaks);
       }
     }
-  }
-  for (const o of PLAN[floor].openings) {             // glass, frames, the garage door: whole, or not at all
-    if (!openingWhole(o)) continue;                   // the cut runs through the opening: leave it out
+  });
+  for (const o of PLAN[floor].openings) withLayers(B.windows.layers, () => {   // glass, frames, the garage door: whole, or not at all
+    if (!openingWhole(o)) return;                     // the cut runs through the opening: leave it out
     const r = o.r, { followRoof, head } = openingHead(o, fullTop);
     const thinX = (r[2] - r[0]) < (r[3] - r[1]);
     // the glass plane: "setback" cm behind the outer face for windows in outer walls, else the middle of the wall
@@ -948,16 +972,19 @@ function buildWalls(floor) {
       frames(o.sill, () => o.head, [s1, s2], gz, y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
       frames(o.sill, () => o.head, [l1, l2], [zc - 3.5, zc + 3.5], y0, grp, [], false, { mullionEvery: 1000, transom: 10000 });
     }
-  }
-  for (const c of B.claddings) if (c.floor === floor && Math.min(c.y[1], cut) > c.y[0]) prism(c.rect[0], c.rect[1], c.rect[2], c.rect[3], 0, c.y[0], Math.min(c.y[1], cut), M[c.material], grp, []);
+  });
+  withLayers(B.faces.layers, () => {
+  for (const c of B.claddings) if (c.floor === floor && c.part !== 'slab' && Math.min(c.y[1], cut) > c.y[0]) prism(c.rect[0], c.rect[1], c.rect[2], c.rect[3], 0, c.y[0], Math.min(c.y[1], cut), M[c.material], grp, []);
   if (full) for (const b of B.bands) {
     const onFloor = b.y[0] < (attic ? 10000 : LEVEL.attic) && b.y[0] >= (attic ? LEVEL.attic : -100);
     if (!onFloor) continue;
     const z = b.face === 'garden' ? [F.garden.z, F.garden.z + F.depth] : [LENGTH - F.depth, LENGTH];   // the facade layer
     prism(b.x[0], z[0], b.x[1], z[1], 0, b.y[0], b.y[1], M[b.material], grp, []);
   }
+  });
   edgeSink = null;
-  buildEdges(edgeList, grp);
+  withLayers(B.edges.layers, () => buildEdges(edgeList, grp));
+  applyLayers();
 }
 
 /* ================= 8. FLOORS (rebuilt with the layouts) ================= */
@@ -981,7 +1008,7 @@ function buildFloor(floor) {
       const effL = Math.min(L.len, Tl), effW = Math.min(L.wid, Tw);
       const offL = r3 * (Tl - effL), offW = r4 * (Tw - effW);
       const b = buckets[face] || (buckets[face] = { pos: [], uv: [], col: [] });
-      const shade = 0.95 + r5 * 0.1, red = state.showCuts && p.small;
+      const shade = 0.95 + r5 * 0.1, red = shown(B.tiles.small) && p.small;
       const col = red ? [1, 0.42, 0.38] : [shade, shade, shade];
       const corner = (a, bb) => {
         let u = (a - p.ta) / TA, v = (bb - p.tb) / TB;
@@ -999,13 +1026,13 @@ function buildFloor(floor) {
       g.setAttribute('color', new THREE.Float32BufferAttribute(b.col, 3));
       const n = new Float32Array(b.pos.length); for (let i = 1; i < n.length; i += 3) n[i] = 1;
       g.setAttribute('normal', new THREE.BufferAttribute(n, 3));
-      const m = new THREE.Mesh(g, tileMaterial(L.texture, +face)); m.receiveShadow = true; grp.add(m);
+      const m = new THREE.Mesh(g, tileMaterial(L.texture, +face)); m.receiveShadow = true; grp.add(withLayers(B.tiles.layers, () => tag(m)));
     }
     // grout bed under the tiles
     const gm = new THREE.MeshStandardMaterial({ color: lin(L.grout || tex.grout), roughness: 0.95 });
     for (const room of rooms) for (const r of room.rects) {
       const pl = new THREE.Mesh(new THREE.PlaneGeometry(r[2] - r[0], r[3] - r[1]), gm);
-      pl.rotation.x = -Math.PI / 2; pl.position.set((r[0] + r[2]) / 2, y + 0.3, (r[1] + r[3]) / 2); pl.receiveShadow = true; grp.add(pl);
+      pl.rotation.x = -Math.PI / 2; pl.position.set((r[0] + r[2]) / 2, y + 0.3, (r[1] + r[3]) / 2); pl.receiveShadow = true; grp.add(withLayers(B.tiles.layers, () => tag(pl)));
     }
   }
 }
@@ -1033,7 +1060,7 @@ function setMode(mode, keepCamera) {
   for (const c of CAMERAS[mode]) { const b = document.createElement('button'); b.textContent = c[0]; b.onclick = () => { setWalk(false); setCamera(c); }; cams.appendChild(b); }
   if (!keepCamera) setCamera(CAMERAS[mode][mode === 'all' ? 0 : 1]);
   if (walk.on) return;
-  for (const d of document.querySelectorAll('#layouts details')) d.open = (mode === 'all' || d.dataset.floor === mode) && FLOORS.layouts[d.dataset.key].panelOpen !== false;
+  for (const d of document.querySelectorAll('#layouts details')) d.open = (mode === 'all' || d.dataset.floor === mode) && B.tiles.layouts[d.dataset.key].panelOpen !== false;
   save(); requestRender();
 }
 
@@ -1042,20 +1069,12 @@ const fmt = (v, d) => v.toLocaleString('pl-PL', { minimumFractionDigits: d, maxi
 function option(v, t, sel) { return `<option value="${v}"${v === sel ? ' selected' : ''}>${t}</option>`; }
 function layoutPanel(key) {
   const L = state.layouts[key];
-  const stone = k => TEX[k].kind === 'stone';
   const prods = Object.keys(PRODUCTS).map(k => option(k, PRODUCTS[k].name, L.product)).join('');
-  const texs = Object.keys(TEX).map(k => option(k, TEX[k].name + (stone(k) ? '' : ' · zastępcza'), L.texture)).join('');
   return `<details data-key="${key}" data-floor="${L.floor}">
    <summary><span class="t">${L.label}</span><span class="s" id="sum-${key}"></span></summary>
    <div class="lay">
     <label for="${key}-product">Produkt<select id="${key}-product">${prods}</select></label>
     <div class="info" id="${key}-info"></div>
-    <label for="${key}-texture">Tekstura<select id="${key}-texture">${texs}</select></label>
-    <div class="row">
-      <label for="${key}-len">Długość mm<input id="${key}-len" type="number" min="100" max="3200" step="1" value="${L.len}"></label>
-      <label for="${key}-wid">Szerokość mm<input id="${key}-wid" type="number" min="50" max="1600" step="1" value="${L.wid}"></label>
-      <label for="${key}-joint">Fuga mm<input id="${key}-joint" type="number" min="0" max="10" step="0.5" value="${L.joint}"></label>
-    </div>
     <div class="row2">
       <label for="${key}-pattern">Układ<select id="${key}-pattern">${Object.keys(PATTERNS).map(k => option(k, PATTERNS[k], L.pattern)).join('')}</select></label>
       <label for="${key}-dir">Długość płytki<select id="${key}-dir">${Object.keys(DIRS).map(k => option(k, DIRS[k], L.dir)).join('')}</select></label>
@@ -1073,33 +1092,34 @@ function layoutPanel(key) {
 function refreshLayoutPanel(key) {
   const L = state.layouts[key], st = results[key], { Pa, Pb } = geometry(L), p = PRODUCTS[L.product];
   const $ = id => document.getElementById(key + '-' + id);
-  $('info').innerHTML = `${p.note}. <a href="${p.link}" target="_blank" rel="noopener">Strona produktu</a>`;
+  const t = TEX[p.texture], stand = t.kind === 'stone' ? '' : ' · tekstura zastępcza';   // the product brings its texture, size and joint
+  $('info').innerHTML = `${p.len}×${p.wid} mm, fuga ${fmt(p.joint, p.joint % 1 ? 1 : 0)} mm · ${t.name}${stand}<br>${p.note}. <a href="${p.link}" target="_blank" rel="noopener">Strona produktu</a>`;
   $('oa').max = Pa.toFixed(1); $('oa').value = L.oa; $('oav').textContent = fmt(L.oa, 1) + ' cm';
   $('ob').max = Pb.toFixed(1); $('ob').value = L.ob; $('obv').textContent = fmt(L.ob, 1) + ' cm';
   $('mode').textContent = state.auto[key] ? 'auto' : 'ręcznie';
-  for (const k of ['len', 'wid', 'joint']) if (document.activeElement !== $(k)) $(k).value = L[k];
-  $('texture').value = L.texture; $('pattern').value = L.pattern; $('product').value = L.product; $('grout').value = L.grout || TEX[L.texture].grout;
+  $('pattern').value = L.pattern; $('product').value = L.product; $('grout').value = L.grout || TEX[L.texture].grout;
   const sumEl = document.getElementById('sum-' + key);
   if (!st || !st.rooms.length) { $('stats').innerHTML = '<dt>Brak pomieszczeń z tą posadzką</dt><dd></dd>'; sumEl.textContent = '—'; return; }
-  const tileM2 = L.len * L.wid / 1e6, buy = st.area * (1 + FLOORS.reserve), price = p.price;
+  const tileM2 = L.len * L.wid / 1e6, buy = st.area * (1 + B.tiles.reserve), price = p.price;
   const smallChip = st.small ? `<span class="chip warn">${st.small}</span>` : '<span class="chip ok">0</span>';
   $('stats').innerHTML =
     `<dt>Powierzchnia</dt><dd>${fmt(st.area, 2)} m²</dd>` +
     `<dt>Płytek bez odzysku docinków</dt><dd>${st.tiles} szt. · ${fmt(st.tiles * tileM2, 2)} m²</dd>` +
     `<dt>Całe / cięte kawałki</dt><dd>${st.full} / ${st.cut}</dd>` +
     `<dt>Drobne docinki</dt><dd>${smallChip}</dd>` +
-    `<dt>Zakup z zapasem ${fmt(FLOORS.reserve * 100, 0)} %</dt><dd>${fmt(buy, 2)} m²</dd>` +
+    `<dt>Zakup z zapasem ${fmt(B.tiles.reserve * 100, 0)} %</dt><dd>${fmt(buy, 2)} m²</dd>` +
     (price ? `<dt>Koszt płytek ≈</dt><dd>${fmt(Math.max(buy, st.tiles * tileM2) * price, 0)} zł</dd>` : '');
   sumEl.textContent = `${L.len / 10}×${L.wid / 10} · ${fmt(st.area, 1)} m²`;
 }
 function roomsTable() {
   let h = '';
-  for (const f of ['ground', 'attic']) {
+  for (const f of FLOOR_IDS) {
     h += `<tr><td colspan="3" class="floorname">${FLOOR_NAMES[f]}</td></tr>`;
     PLAN[f].rooms.forEach((r, i) => {
       const area = r.rects.reduce((s, q) => s + (q[2] - q[0]) * (q[3] - q[1]), 0) / 1e4;
       const opts = Object.keys(state.layouts).filter(k => state.layouts[k].floor === f).map(k => option(k, state.layouts[k].label, state.rooms[f][i])).join('') + option('none', 'Bez płytek', state.rooms[f][i]);
-      h += `<tr><td>${r.name}</td><td class="n" title="z rzutu: ${fmt(r.planArea, 2)} m²">${fmt(area, 2)} m²</td><td><select id="room-${f}-${i}" data-f="${f}" data-i="${i}" aria-label="Posadzka: ${r.name}">${opts}</select></td></tr>`;
+      const name = r.link ? `${r.name}<br><a class="info" href="${r.link.href}" target="_blank" rel="noopener">${r.link.name} ↗</a>` : r.name;   // a room with a sub-project
+      h += `<tr><td>${name}</td><td class="n" title="z rzutu: ${fmt(r.planArea, 2)} m²">${fmt(area, 2)} m²</td><td><select id="room-${f}-${i}" data-f="${f}" data-i="${i}" aria-label="Posadzka: ${r.name}">${opts}</select></td></tr>`;
     });
   }
   const t = document.getElementById('rooms'); t.innerHTML = h;
@@ -1115,7 +1135,7 @@ function autoLayout(key, quiet) {
   if (!quiet) rebuildFloor(L.floor);
 }
 function rebuildFloor(f) {
-  buildFloor(f);
+  buildFloor(f); applyLayers();
   if (!document.getElementById('plan2d').hidden) showPlan(true);
   for (const k in state.layouts) if (state.layouts[k].floor === f) refreshLayoutPanel(k);
   save(); requestRender();
@@ -1124,11 +1144,6 @@ function wireLayout(key) {
   const L = state.layouts[key], $ = id => document.getElementById(key + '-' + id);
   const changed = auto => { if (auto) autoLayout(key, true); rebuildFloor(L.floor); };
   $('product').onchange = e => { applyProduct(L, e.target.value); changed(true); };
-  $('texture').onchange = e => { L.texture = e.target.value; L.grout = TEX[L.texture].grout; changed(false); };
-  for (const k of ['len', 'wid', 'joint']) $(k).onchange = e => {
-    const v = parseFloat(e.target.value); if (!(v >= +e.target.min && v <= +e.target.max)) { e.target.value = L[k]; return; }
-    L[k] = v; changed(state.auto[key]);
-  };
   $('pattern').onchange = e => { L.pattern = e.target.value; changed(state.auto[key]); };
   $('dir').onchange = e => { L.dir = e.target.value; changed(state.auto[key]); };
   $('grout').oninput = e => { L.grout = e.target.value; changed(false); };
@@ -1140,11 +1155,11 @@ function wireLayout(key) {
 /* ================= 11. WALK (arrow keys, also on the stairs) ================= */
 const EYE = B.walk.eye, RADIUS = B.walk.radius, STEP = B.walk.step, HEAD = B.walk.head;
 const obstacles = { ground: [], attic: [] };
-for (const f of ['ground', 'attic']) {
+for (const f of FLOOR_IDS) {
   for (const w of PLAN[f].walls) obstacles[f].push(w.r);
   for (const o of PLAN[f].openings) if (o.kind === 'window') obstacles[f].push(o.r);
 }
-obstacles.ground.push(PLAN.ground.fireplace, CORE_WALL);
+obstacles.ground.push(PLAN.ground.fireplace.rect, CORE_WALL);
 const LOW = (EYE + HEAD - KNEE) / PITCH;          // under the slopes there is no head room
 obstacles.attic.push([-500, -500, XL + LOW, LENGTH + 500], [XR - LOW, -500, WIDTH + 500, LENGTH + 500]);
 function surfaces(x, z) {
@@ -1250,7 +1265,7 @@ window.__cam = (eye, target) => setCamera(["", eye, target]);
 window.__walls = wallGroups;
 
 /* ================= 12. 2D PLAN (SVG) ================= */
-// Drawn from exactly what the 3D view builds: the wall footprint (footprint), the openings of plan.js, the stair
+// Drawn from exactly what the 3D view builds: the wall footprint (footprint), the openings of the floor, the stair
 // treads (STAIR_BOXES), the stair hole (VOIDS), the roof heights (roofHeight) and the tile pieces of the current
 // layouts (layTiles). Drawing unit 1 cm, x to the right, z down (the garden at the top, as on the archon.pl plans).
 const PLAN_STYLE = { wall: '#151617', ink: '#2a2d30', red: '#c8282d', tile: '#9aa0a3', small: '#f2b8b2', glass: '#5d8fa6' };
@@ -1263,13 +1278,13 @@ function floorSVG(floor, ox, oy, withTiles) {
     : `<text x="${X(x)}" y="${Z(z)}" class="${cls}" text-anchor="${anchor}">${str}</text>`);
   const attic = floor === 'attic', P = PLAN[floor];
   // floor tiles: the same pieces as in 3D; small cuts filled
-  if (withTiles) for (const key in state.layouts) {
+  if (withTiles && shown(B.tiles.layers)) for (const key in state.layouts) {
     const L = state.layouts[key]; if (L.floor !== floor) continue;
     const pieces = layTiles(L, roomsOf(key), L.oa, L.ob); analyse(L, pieces);
     for (const p of pieces) {
       const [xa, za] = toXZ(L, p.a1, p.b1), [xb, zb] = toXZ(L, p.a2, p.b2);
       rect([Math.min(xa, xb), Math.min(za, zb), Math.max(xa, xb), Math.max(za, zb)],
-        `fill="${state.showCuts && p.small ? C.small : 'none'}" stroke="${C.tile}" stroke-width=".35"`);
+        `fill="${shown(B.tiles.small) && p.small ? C.small : 'none'}" stroke="${C.tile}" stroke-width=".35"`);
     }
   }
   // stair hole of the attic and the roof heights
@@ -1288,14 +1303,14 @@ function floorSVG(floor, ox, oy, withTiles) {
   }
   if (!attic) { const c = ST.core; rect(c, `fill="${C.wall}"`); }
   { const f1 = ST.flight1, zc = (f1.z[0] + f1.z[1]) / 2; line(f1.x[1] - 10, zc, ST.landing.x[1] - 10, zc, `stroke="${C.ink}" stroke-width=".7" marker-end="url(#arrow)"`); }
-  if (!attic) rect(PLAN.ground.fireplace, `fill="#cfcfcd" stroke="${C.ink}" stroke-width=".5"`);
+  if (P.fireplace) rect(P.fireplace.rect, `fill="#cfcfcd" stroke="${C.ink}" stroke-width=".5"`);
   // walls: cut at the same height as the 3D view (the slider): an opening whose sill is above the cut is wall
   const cutH = planCut();
   const solid = footprint(floor).filter(c => c.opening === undefined || P.openings[c.opening].sill >= cutH);
   const outline = cells => cells.map(c => `M${X(c.r[0])} ${Z(c.r[1])}H${X(c.r[2])}V${Z(c.r[3])}H${X(c.r[0])}Z`).join('');
   out.push(`<path fill="${C.wall}" d="${outline(solid.filter(c => !c.layer))}"/>`);
   for (const m of new Set(solid.filter(c => c.layer).map(c => c.layer)))   // the layers (EPS): their colour, hatched
-    out.push(`<path fill="${B.materials[m].color}" d="${outline(solid.filter(c => c.layer === m))}"/><path fill="url(#layer)" d="${outline(solid.filter(c => c.layer === m))}"/>`);
+    out.push(`<path fill="${MAT.materials[m].color}" d="${outline(solid.filter(c => c.layer === m))}"/><path fill="url(#layer)" d="${outline(solid.filter(c => c.layer === m))}"/>`);
   // openings: windows (glass line), doors (jamb lines), the garage door (dashed)
   for (const o of P.openings) {
     if (o.sill >= cutH) continue;                   // under the cut: wall, as in 3D
@@ -1334,11 +1349,11 @@ function floorSVG(floor, ox, oy, withTiles) {
     const area = room.rects.reduce((a, q) => a + (q[2] - q[0]) * (q[3] - q[1]), 0) / 1e4;
     const key = state.rooms[floor][i], L = state.layouts[key];
     const cx = (big[0] + big[2]) / 2, cz = (big[1] + big[3]) / 2;
-    out.push(`<g>`);
-    text(cx, cz - 6, room.name.replace(/ \(\d+\)$/, ''), 'r');
+    out.push(room.link ? `<a href="${room.link.href}" target="_blank"><g>` : `<g>`);
+    text(cx, cz - 6, room.name.replace(/ \(\d+\)$/, '') + (room.link ? ' ↗' : ''), 'r');
     text(cx, cz + 10, `${area.toFixed(2).replace('.', ',')} m²`, 'a');
     if (L) text(cx, cz + 24, `${L.len / 10}×${L.wid / 10} · ${(PRODUCTS[L.product] || {}).name ? TEX[L.texture].name.split(' (')[0] : ''}`, 's');
-    out.push(`</g>`);
+    out.push(room.link ? `</g></a>` : `</g>`);
   });
   // dimensions (red): chains along the four outer walls and the overall sizes
   const dimH = (xs, z, above) => {
@@ -1369,7 +1384,7 @@ function floorSVG(floor, ox, oy, withTiles) {
 }
 const planCut = () => state.cut;
 function planSVG(which) {
-  const floors = which === 'both' ? ['ground', 'attic'] : [which];
+  const floors = which === 'both' ? FLOOR_IDS : [which];
   const pad = { l: 120, r: 130, t: 200, b: 230 }, gap = 100, W = WIDTH + pad.l + pad.r, H = LENGTH + pad.t + pad.b;
   const total = floors.length * W + (floors.length - 1) * gap, C = PLAN_STYLE;
   const body = floors.map((fl, i) => floorSVG(fl, pad.l + i * (W + gap), pad.t, state.planTiles !== false)).join('\n');
@@ -1379,7 +1394,7 @@ function planSVG(which) {
 <style>.d{fill:${C.red};font-size:13px}.s{fill:${C.ink};font-size:11px}.r{fill:${C.ink};font-size:17px;font-weight:bold}.a{fill:${C.red};font-size:14px;font-style:italic}.t{fill:${C.ink};font-size:22px;font-weight:bold;letter-spacing:2px}</style>
 <rect x="0" y="0" width="${total}" height="${H + 30}" fill="#ffffff"/>
 ${body}
-<text x="20" y="${H + 18}" class="s">${B.name} · rzut 1:50 przy wydruku w skali (1 cm rysunku = 50 cm) · wymiary w cm · ściany przecięte na wysokości ${planCut()} cm, jak w widoku 3D · ten sam model co widok 3D (plan.js, building.js, układ płytek) · ${date}</text>
+<text x="20" y="${H + 18}" class="s">${B.name} · rzut 1:50 przy wydruku w skali (1 cm rysunku = 50 cm) · wymiary w cm · ściany przecięte na wysokości ${planCut()} cm, jak w widoku 3D · ten sam model co widok 3D (house.js, układ płytek) · ${date}</text>
 </svg>`;
 }
 let planZoom = 1, planWhich = 'ground';
@@ -1415,7 +1430,7 @@ window.__planSVG = planSVG;
 document.title = 'Posadzki · ' + B.name;
 document.getElementById('title').textContent = 'Posadzki · ' + B.name;
 document.getElementById('subtitle').textContent = B.source + ' Płytki układane od nowa przy każdej zmianie.';
-document.getElementById('notes').innerHTML = FLOORS.notes.concat(
+document.getElementById('notes').innerHTML = B.tiles.notes.concat(
   '„Ułóż automatycznie” szuka przesunięcia, przy którym przy ścianach nie ma pasków węższych niż 1/3 płytki (deska: końcówki krótsze niż 20 cm) i docinki w największym pomieszczeniu są symetryczne. Liczba płytek zakłada, że każdy docinek zużywa osobną płytkę.',
   `Piętro: ścianka kolankowa ${KNEE} cm, dach ${B.roof.pitch}°. Schody: ${ST.risers} stopni po ${fmt(rise, 1)} cm.`,
   B.notes).join('<br>');
@@ -1423,14 +1438,14 @@ document.getElementById('notes').innerHTML = FLOORS.notes.concat(
 function wallCheck() {
   const rows = [], bad = [], cm = v => fmt(v, v % 1 ? 1 : 0);
   for (const key in B.buildUps) {
-    const bu = B.buildUps[key], kinds = Object.keys(B.walls).filter(k => B.walls[k].buildUp === key);
-    const n = ['ground', 'attic'].reduce((s, f) => s + PLAN[f].walls.filter(w => kinds.includes(w.kind)).length, 0);
+    const bu = B.buildUps[key], kinds = Object.keys(B.wallKinds).filter(k => B.wallKinds[k].buildUp === key);
+    const n = FLOOR_IDS.reduce((s, f) => s + PLAN[f].walls.filter(w => kinds.includes(w.kind)).length, 0);
     const outer = bu.layers.slice(1), sizes = outer.length ? [1, 2].map(k => cm(thicknessWith(bu, k))).join(' / ') : cm(coreThickness(bu));
     rows.push(`<tr><td>${bu.name}<br><span class="info">${cm(coreThickness(bu))} ${bu.layers[0].name.toLowerCase()}${outer.map(l => ` + ${l.name.toLowerCase()} ${cm(l.thickness)} z każdej strony od zewnątrz`).join('')}</span></td><td class="n">${sizes} cm</td><td class="n">${n} szt.</td></tr>`);
   }
-  for (const f of ['ground', 'attic']) {
-    const parts = PLAN[f].walls.map(w => ({ r: w.r, kind: w.kind, what: 'ściana ' + B.walls[w.kind].name }))
-      .concat(PLAN[f].openings.map(o => ({ r: o.r, kind: o.wall, what: 'otwór w ścianie ' + B.walls[o.wall].name })));
+  for (const f of FLOOR_IDS) {
+    const parts = PLAN[f].walls.map(w => ({ r: w.r, kind: w.kind, what: 'ściana ' + B.wallKinds[w.kind].name }))
+      .concat(PLAN[f].openings.map(o => ({ r: o.r, kind: o.wall, what: 'otwór w ścianie ' + B.wallKinds[o.wall].name })));
     parts.forEach(p => {
       const bu = buildUpOf(p.kind); if (!bu) return;
       const tx = thicknessWith(bu, outsideSides(f, p.r, 'x')), tz = thicknessWith(bu, outsideSides(f, p.r, 'z'));
@@ -1438,11 +1453,11 @@ function wallCheck() {
       if (Math.abs(a - tx) > 0.05 && Math.abs(b - tz) > 0.05) bad.push(`${FLOOR_NAMES[f]}: ${p.what} ${cm(a)} × ${cm(b)} cm, x ${cm(p.r[0])}, z ${cm(p.r[1])} (powinna mieć ${cm(tx)} × ${cm(tz)} cm)`);
     });
   }
-  for (const f of ['ground', 'attic']) {        // floor between the walls that no room covers (it would show the bare slab)
+  for (const f of FLOOR_IDS) {        // floor between the walls that no room covers (it would show the bare slab)
     const cover = planCover(f), covered = coverTest(cover), P = PLAN[f];
     const xs = [...new Set(cover.flatMap(r => [r[0], r[2]]))].filter(v => v >= 0 && v <= WIDTH).sort((a, b) => a - b);
     const zs = [...new Set(cover.flatMap(r => [r[1], r[3]]))].filter(v => v >= 0 && v <= LENGTH).sort((a, b) => a - b);
-    const outer = kind => B.walls[kind].buildUp === 'outer' && !B.walls[kind].wing;
+    const outer = kind => { const bu = buildUpOf(kind); return bu && bu.layers.length > 1 && !B.wallKinds[kind].wing; };   // insulated house walls
     const house = P.walls.filter(w => outer(w.kind)).map(w => w.r).concat(P.openings.filter(o => outer(o.wall)).map(o => o.r));
     for (let i = 0; i < zs.length - 1; i++) for (let k = 0; k < xs.length - 1; k++) {
       const q = [xs[k], zs[i], xs[k + 1], zs[i + 1]];
@@ -1468,9 +1483,17 @@ roomsTable();
 const cut = document.getElementById('cut'), cutv = document.getElementById('cutv');
 cut.value = state.cut; cutv.textContent = state.cut + ' cm';
 cut.oninput = () => { state.cut = +cut.value; cutv.textContent = state.cut + ' cm'; buildWalls('ground'); buildWalls('attic'); save(); requestRender(); if (!document.getElementById('plan2d').hidden) showPlan(true); };
-const showCuts = document.getElementById('showCuts'), showRoof = document.getElementById('showRoof');
-showCuts.checked = state.showCuts; showRoof.checked = state.showRoof;
-showCuts.onchange = () => { state.showCuts = showCuts.checked; rebuildFloor('ground'); rebuildFloor('attic'); };
+const showRoof = document.getElementById('showRoof');
+showRoof.checked = state.showRoof;
+// the layers of house.js: switching one changes only what is shown; the marked small cuts recolour the tiles
+document.getElementById('layers').innerHTML = Object.entries(B.layers).map(([k, l]) =>
+  `<label><input type="checkbox" data-layer="${k}"${layerOn(k) ? ' checked' : ''}> ${l.name}</label>`).join('');
+for (const box of document.querySelectorAll('#layers input')) box.onchange = () => {
+  state.layers[box.dataset.layer] = box.checked; save();
+  if (B.tiles.small.includes(box.dataset.layer) || B.tiles.layers.includes(box.dataset.layer)) for (const f of FLOOR_IDS) rebuildFloor(f);
+  applyLayers();
+  if (!document.getElementById('plan2d').hidden) showPlan(true);
+};
 showRoof.onchange = () => { state.showRoof = showRoof.checked; updateRoof(); save(); requestRender(); };
 const sunAz = document.getElementById('sunaz'), sunEl = document.getElementById('sunel');
 sunAz.value = state.sunAzimuth; sunEl.value = state.sunElevation;
