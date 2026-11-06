@@ -24,16 +24,18 @@
    plinth       the base under the outer walls
    site         lawn and terraces, [x1, z1, x2, z2] at a top level y
    faces        which wall pieces of plan.js form the gable faces: garden at z = 0, front at z = 1323, the recessed
-                entrance at z = 1232 from x 440; pieces within "margin" of the side walls belong to the portals
+                entrance at z = 1232 from x 440; pieces within "margin" of the side walls belong to the portals;
+                depth = the facade layer: the finish (plaster, graphite, wood) is the outer cm of the wall itself, part of
+                the EPS, never stuck on in front of it
    finishes     facade finish of the gable faces, by face, floor and x range (exactly the edges of the openings
                 of plan.js beside them); anything else on a face = default;
                 upTo "windowLine": the finish stops at the line of the attic window tops (the wood between the front
                 windows ends in a peak), above it the default
-   bands        facade strips in the facade layer (1 cm in front of the wall, like every finish); a band takes its
+   bands        facade strips in the facade layer (like every finish); a band takes its
                 height out of the cladding under it (the front one is the white band between the floors of
                 the visualisation; the attic front windows start on it: sill 30 in plan.js)
-   claddings    extra thin finishes [x1, z1, x2, z2] from y to y: the graphite sides of the entrance recess, its white
-                beam under the band and the graphite soffit
+   claddings    finishes [x1, z1, x2, z2] from y to y: the graphite sides of the entrance recess (the outer cm of its side
+                walls, inside them), its white beam under the band and the graphite soffit (in the recess)
    doors        entrance: the door leaf in the opening of kind entrance (from the hinge side), the rest is a glass sidelight;
                 interiorLintels "fullHeight": the wall over an interior door only when the walls are at full height
    gate         the garage door panel: horizontal grooves
@@ -91,24 +93,25 @@ window.HOUSE_BUILDING = {
  },
  "faces": {
   "margin": 40,
+  "depth": 1,
   "garden": {"z": 0},
   "front": [{"z": 1323}, {"z": 1232, "fromX": 440}],
   "default": "graphite"
  },
  "finishes": [
   {"face": "front", "floor": "ground", "x": [615.5, 661.4], "material": "woodVertical"},
-  {"face": "front", "floor": "ground", "x": [741.0, 866.0], "material": "woodVertical"},
+  {"face": "front", "floor": "ground", "x": [741.0, 846.0], "material": "woodVertical"},
   {"face": "front", "floor": "attic", "x": [392.4, 522.4], "material": "woodVertical", "upTo": "windowLine"}
  ],
  "bands": [
-  {"face": "garden", "x": [44, 866], "y": [238, 300], "depth": 1, "material": "woodHorizontal"},
-  {"face": "front", "x": [44, 866], "y": [245, 327], "depth": 1, "material": "plasterWhite"}
+  {"face": "garden", "x": [44, 866], "y": [238, 300], "material": "woodHorizontal"},
+  {"face": "front", "x": [44, 866], "y": [245, 327], "material": "plasterWhite"}
  ],
  "claddings": [
-  {"floor": "ground", "rect": [453.8, 1231, 454.8, 1322.8], "y": [0, 245], "material": "graphite"},
-  {"floor": "ground", "rect": [845, 1231, 846, 1322.8], "y": [0, 245], "material": "graphite"},
-  {"floor": "ground", "rect": [453.8, 1231, 846, 1323.8], "y": [245, 272], "material": "plasterWhite"},
-  {"floor": "ground", "rect": [453.8, 1231, 846, 1323.8], "y": [244, 245], "material": "graphite"}
+  {"floor": "ground", "rect": [452.8, 1231, 453.8, 1322.8], "y": [0, 245], "material": "graphite"},
+  {"floor": "ground", "rect": [846, 1231, 847, 1322.8], "y": [0, 245], "material": "graphite"},
+  {"floor": "ground", "rect": [453.8, 1231, 846, 1322.8], "y": [245, 272], "material": "plasterWhite"},
+  {"floor": "ground", "rect": [453.8, 1231, 846, 1322.8], "y": [244, 245], "material": "graphite"}
  ],
  "doors": {
   "entrance": {"leaf": 100, "hinge": "left", "material": "graphite",

@@ -279,7 +279,7 @@ function layTiles(L, rooms, oa, ob) {
       for (let k = Math.floor((a1 - sh) / Pa); sh + k * Pa < a2; k++) {
         const ta = sh + k * Pa, pa1 = Math.max(a1, ta), pa2 = Math.min(a2, ta + TA);
         if (pa2 - pa1 < 0.05) continue;
-        out.push({ room: room.id, j, k, ta, tb, a1: pa1, a2: pa2, b1: pb1, b2: pb2 });
+        out.push({ room: room.id, j, k, ta, tb, a1: pa1, a2: pa2, b1: pb1, b2: pb2, door: !!r.door });
       }
     }
   }
@@ -294,13 +294,14 @@ function analyse(L, pieces) {
   for (const p of pieces) {
     const key = p.room + '|' + p.j + '|' + p.k;
     let g = groups.get(key);
-    if (!g) groups.set(key, g = { a1: p.a1, a2: p.a2, b1: p.b1, b2: p.b2, pieces: [] });
-    g.a1 = Math.min(g.a1, p.a1); g.a2 = Math.max(g.a2, p.a2); g.b1 = Math.min(g.b1, p.b1); g.b2 = Math.max(g.b2, p.b2);
+    if (!g) groups.set(key, g = { a1: Infinity, a2: -Infinity, b1: Infinity, b2: -Infinity, pieces: [] });
+    if (!p.door) { g.a1 = Math.min(g.a1, p.a1); g.a2 = Math.max(g.a2, p.a2); g.b1 = Math.min(g.b1, p.b1); g.b2 = Math.max(g.b2, p.b2); }   // the cut is judged in the room
     g.pieces.push(p); tiles.add(p.j + '|' + p.k);
     area += (p.a2 - p.a1) * (p.b2 - p.b1);
   }
   let full = 0, cut = 0, small = 0, penalty = 0;
   for (const g of groups.values()) {
+    if (g.pieces.every(p => p.door)) { cut++; continue; }    // only under a door leaf: a cut, never a sliver to fix
     const da = g.a2 - g.a1, db = g.b2 - g.b1;
     const isFull = da > TA - 0.1 && db > TB - 0.1;
     if (isFull) { full++; continue; }
@@ -316,7 +317,7 @@ function analyse(L, pieces) {
 function symmetry(L, room, ob) {
   const { TB, Pb } = geometry(L);
   let b1 = Infinity, b2 = -Infinity;
-  for (const r of room.rects) { const q = toAB(L, r); b1 = Math.min(b1, q[1]); b2 = Math.max(b2, q[3]); }
+  for (const r of room.own) { const q = toAB(L, r); b1 = Math.min(b1, q[1]); b2 = Math.max(b2, q[3]); }   // the room without its thresholds
   const t1 = ob + Math.floor((b1 - ob) / Pb) * Pb, t2 = ob + Math.floor((b2 - ob) / Pb) * Pb;
   const left = Math.max(0, Math.min(TB, t1 + TB - b1)), right = Math.max(0, Math.min(TB, b2 - t2));
   return Math.abs(left - right) / TB;
@@ -338,9 +339,26 @@ function optimise(L, rooms) {
   const m = (v, P) => Math.round(((v % P) + P) % P * 10) / 10;
   return { oa: m(best.oa, Pa), ob: m(best.ob, Pb) };
 }
+// the floor runs on through a doorway (an opening standing on the floor): each half of its depth belongs to the room
+// on that side, so the tiles of two rooms meet under the door leaf and no slab shows between them
+function thresholds(floor, rects) {
+  const out = [], near = (a, b) => Math.abs(a - b) < 0.05, overlap = (a1, a2, b1, b2) => Math.min(a2, b2) - Math.max(a1, b1) > 1;
+  const push = r => { r.door = true; out.push(r); };     // marked: a piece only under a door is not a sliver to fix
+  for (const o of PLAN[floor].openings) {
+    if (o.sill > 0 || o.kind === 'window' || o.kind === 'gate') continue;
+    const r = o.r, mx = (r[0] + r[2]) / 2, mz = (r[1] + r[3]) / 2;
+    for (const q of rects) {
+      if (near(q[2], r[0]) && overlap(q[1], q[3], r[1], r[3])) push([r[0], Math.max(r[1], q[1]), mx, Math.min(r[3], q[3])]);
+      if (near(q[0], r[2]) && overlap(q[1], q[3], r[1], r[3])) push([mx, Math.max(r[1], q[1]), r[2], Math.min(r[3], q[3])]);
+      if (near(q[3], r[1]) && overlap(q[0], q[2], r[0], r[2])) push([Math.max(r[0], q[0]), r[1], Math.min(r[2], q[2]), mz]);
+      if (near(q[1], r[3]) && overlap(q[0], q[2], r[0], r[2])) push([Math.max(r[0], q[0]), mz, Math.min(r[2], q[2]), r[3]]);
+    }
+  }
+  return out;
+}
 function roomsOf(layoutKey) {
   const L = state.layouts[layoutKey], f = L.floor;
-  return PLAN[f].rooms.map((r, i) => ({ id: i, name: r.name, rects: r.rects, area: r.rects.reduce((s, q) => s + (q[2] - q[0]) * (q[3] - q[1]), 0) }))
+  return PLAN[f].rooms.map((r, i) => ({ id: i, name: r.name, rects: r.rects.concat(thresholds(f, r.rects)), own: r.rects, area: r.rects.reduce((s, q) => s + (q[2] - q[0]) * (q[3] - q[1]), 0) }))
     .filter((r, i) => state.rooms[f][i] === layoutKey);
 }
 
@@ -636,6 +654,7 @@ function footprint(floor) {
   const xs = items.flatMap(it => [it.r[0], it.r[2]]).concat(layers.flatMap(l => [l.r[0], l.r[2]]));
   const zs = [...new Set(items.flatMap(it => [it.r[1], it.r[3]]).concat(layers.flatMap(l => [l.r[1], l.r[3]])).map(q))].sort((a, b) => a - b);
   for (const f of B.finishes) if (f.floor === floor) xs.push(...f.x);
+  for (const c of B.claddings) if (c.floor === floor) { xs.push(c.rect[0], c.rect[2]); zs.push(c.rect[1], c.rect[3]); }
   const ux = [...new Set(xs.map(q))].sort((a, b) => a - b);
   const layerAt = (cx, cz, kind) => {
     if (!buildUpOf(kind)) return null;
@@ -661,8 +680,9 @@ function footprint(floor) {
         if (face === 'front' && owner((x1 + x2) / 2, z2 + 1)) face = null;
         const fin = face ? finishOf(face, floor, x1, x2) : null;
         const layer = layerAt((x1 + x2) / 2, cz, it.kind);
+        const cx = (x1 + x2) / 2, clad = B.claddings.map((c, i) => c.floor === floor && cx > c.rect[0] && cx < c.rect[2] && cz > c.rect[1] && cz < c.rect[3] ? i : -1).filter(i => i >= 0);
         cell = { kind: it.kind, opening: it.opening, face, finish: fin, layer };
-        key = [it.kind, it.opening ?? '', face || '', fin ? B.finishes.indexOf(fin) : '', layer || ''].join('|');
+        key = [it.kind, it.opening ?? '', face || '', fin ? B.finishes.indexOf(fin) : '', layer || '', clad.join(',')].join('|');   // never merged across a cladding edge
       }
       if (run && key === run.key && x1 === run.r[2]) { run.r[2] = x2; continue; }
       if (run) strips.push(run);
@@ -772,7 +792,7 @@ const windowLine = x => roofHeight(x) - B.windows.attic.inset;      // the line 
 function skin(r0, y0, bottom, top, grp, breaks, floor, face, f) {
   if (!face) return;
   // the cladding pieces overlap their neighbours by 2.5 mm: no hairline cracks between them; no edge lines either
-  const r = [r0[0] - 0.25, r0[1], r0[2] + 0.25, r0[3]], z = face === 'garden' ? [r[1] - 1, r[1]] : [r[3], r[3] + 1];
+  const r = [r0[0] - 0.25, r0[1], r0[2] + 0.25, r0[3]], z = face === 'garden' ? [r[1], r[1] + F.depth] : [r[3] - F.depth, r[3]];
   skinning = true;
   try {
     let parts = [[num(bottom), num(top)]];
@@ -781,12 +801,12 @@ function skin(r0, y0, bottom, top, grp, breaks, floor, face, f) {
       const b0 = b.y[0] - y0, b1 = b.y[1] - y0;
       parts = parts.flatMap(([lo, hi]) => [[lo, x => Math.min(hi(x), b0)], [x => Math.max(lo(x), b1), hi]]);
     }
-    for (const [lo, hi] of parts) skinPieces(r, z, y0, lo, hi, grp, breaks, f);
+    for (const [lo, hi] of parts) skinPieces(r, z, face, y0, lo, hi, grp, breaks, f);
   } finally { skinning = false; }
 }
-function skinPieces(r, z, y0, bottom, top, grp, breaks, f) {
+function skinPieces(r, z, face, y0, bottom, top, grp, breaks, f) {
   // the default finish (graphite) lies 0.5 mm behind the others: where neighbours overlap, nothing shares a plane
-  const zd = z[0] < r[1] - 0.5 ? [z[0] + 0.05, z[1]] : [z[0], z[1] - 0.05];
+  const zd = face === 'garden' ? [z[0] + 0.05, z[1]] : [z[0], z[1] - 0.05];
   if (!f) { prism(r[0], zd[0], r[2], zd[1], y0, bottom, top, M[F.default], grp, breaks); return; }
   const tf = num(top), upTo = f.upTo === 'windowLine' ? x => Math.min(tf(x), windowLine(x)) : tf;
   prism(r[0], z[0], r[2], z[1], y0, bottom, upTo, M[f.material], grp, breaks);
@@ -816,6 +836,16 @@ function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX, opt) {
 }
 // the layer (EPS) seen in the cut: a thin cap of its colour on the top of the wall
 const cap = (r, y0, top, mat, grp, breaks) => prism(r[0], r[1], r[2], r[3], y0, top, x => num(top)(x) + 0.6, mat, grp, breaks);
+// the facade finish is the outer F.depth cm of the wall itself: the wall body ends behind it
+const bodyOf = (r, face) => face === 'garden' ? [r[0], r[1] + F.depth, r[2], r[3]] : face === 'front' ? [r[0], r[1], r[2], r[3] - F.depth] : r;
+// a wall piece with claddings in it: the wall above and below them, the claddings themselves are drawn on their own
+function wallBody(floor, r, y0, bottom, top, mat, grp, breaks) {
+  const cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2;
+  const inside = B.claddings.filter(c => c.floor === floor && cx > c.rect[0] && cx < c.rect[2] && cz > c.rect[1] && cz < c.rect[3]).sort((a, b) => a.y[0] - b.y[0]);
+  let lo = num(bottom);
+  for (const c of inside) { prism(r[0], r[1], r[2], r[3], y0, lo, x => Math.min(c.y[0] - y0, num(top)(x)), mat, grp, breaks); const hi = c.y[1] - y0; lo = x => Math.max(hi, num(bottom)(x)); }
+  prism(r[0], r[1], r[2], r[3], y0, lo, top, mat, grp, breaks);
+}
 function buildWalls(floor) {
   const grp = wallGroups[floor]; clearGroup(grp);
   const full = isFull(), y0 = LEVEL[floor], cut = full ? 10000 : state.cut;
@@ -848,17 +878,20 @@ function buildWalls(floor) {
       const wing = r[3] < 1 || r[1] > LENGTH - 2;
       const portal = !attic && wing;
       const top = portal ? () => Math.min(cut, portalTop) : wallTop(c.kind);
-      prism(r[0], r[1], r[2], r[3], y0, 0, top, M.wall[c.kind], grp, breaks);
+      const body = bodyOf(r, c.face);
+      wallBody(floor, body, y0, 0, top, M.wall[c.kind], grp, breaks);
       skin(r, y0, 0, skinTop(top), grp, breaks, floor, c.face, c.finish);
-      if (c.layer && !full) cap(r, y0, top, M[c.layer], grp, breaks);
+      if (c.layer && !full) cap(body, y0, top, M[c.layer], grp, breaks);
     } else {
       const o = PLAN[floor].openings[c.opening], top = wallTop(c.kind), { head } = openingHead(o, top);
       const below = x => Math.min(o.sill, top(x));
-      prism(r[0], r[1], r[2], r[3], y0, 0, below, M.wall[c.kind], grp, breaks); skin(r, y0, 0, below, grp, breaks, floor, c.face, c.finish);
-      if (c.layer && !full && cut < o.sill) cap(r, y0, below, M[c.layer], grp, breaks);
+      const body = bodyOf(r, c.face);
+      prism(body[0], body[1], body[2], body[3], y0, 0, below, M.wall[c.kind], grp, breaks); skin(r, y0, 0, below, grp, breaks, floor, c.face, c.finish);
+      if (c.layer && !full && cut < o.sill) cap(body, y0, below, M[c.layer], grp, breaks);
       const interiorDoor = o.kind === 'door' && !facadeFace(o.r) && B.doors.interiorLintels === 'fullHeight';
       if (openingWhole(o) && (!interiorDoor || full || cut >= GROUND_H)) {   // the wall above: only with the whole opening
-        prism(r[0], r[1], r[2], r[3], y0, head, top, M.wall[c.kind], grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
+        prism(body[0], body[1], body[2], body[3], y0, head, top, M.wall[c.kind], grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
+        if (c.layer && !full) cap(body, y0, top, M[c.layer], grp, breaks);
       }
     }
   }
@@ -873,7 +906,7 @@ function buildWalls(floor) {
     const gx = thinX ? [mid - 1, mid + 1] : [r[0], r[2]];
     const gz = thinX ? [r[1], r[3]] : [mid - 1, mid + 1];
     if (face && o.kind !== 'door') {   // the reveal in front of the glass (or the entrance) gets the facade finish
-      const lin = M[F.default], t = 0.8, face1 = outer + (outer === (thinX ? r[0] : r[1]) ? -1 : 1);   // up to the facade layer
+      const lin = M[F.default], t = 0.8, face1 = outer;   // up to the outer face (the facade layer is in the wall)
       const za = Math.min(face1, mid), zb = Math.max(face1, mid);
       prism(r[0], za, r[2], zb, y0, head, x => head(x) + t, lin, grp, breaks);
       prism(r[0], za, r[0] + t, zb, y0, o.sill, head, lin, grp, breaks);
@@ -910,7 +943,7 @@ function buildWalls(floor) {
   if (full) for (const b of B.bands) {
     const onFloor = b.y[0] < (attic ? 10000 : LEVEL.attic) && b.y[0] >= (attic ? LEVEL.attic : -100);
     if (!onFloor) continue;
-    const z = b.face === 'garden' ? [F.garden.z - 1, F.garden.z] : [LENGTH, LENGTH + 1];   // the facade layer, 1 cm
+    const z = b.face === 'garden' ? [F.garden.z, F.garden.z + F.depth] : [LENGTH - F.depth, LENGTH];   // the facade layer
     prism(b.x[0], z[0], b.x[1], z[1], 0, b.y[0], b.y[1], M[b.material], grp, []);
   }
   edgeSink = null;

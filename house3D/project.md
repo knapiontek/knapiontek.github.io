@@ -49,6 +49,11 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 - The page checks every wall and opening against its build-up and lists the ones that do not fit. A wall that fits no build-up stays in plan.js as measured and stays on that list until it is resolved by hand.
 - The portal (the side walls and the roof running past both gables) has one section: EPS 20 + block 24 + EPS 20 = 64 cm. The block of a wing is in line with the block of its side wall; the roof slab has the thickness of the wings. One section everywhere, no patches where wing and roof meet.
 - The chimney and the stair rail have no build-up.
+- The facade finish (plaster, graphite, wood) is the outer centimetre of the wall itself, never a piece stuck on in front of it: the outline of the house stays the outline of the walls.
+
+## Floors
+
+- The tiles of a room run on through its doorways: each half of the door depth belongs to the room on that side, so two floors meet under the door leaf. Cuts are judged in the room; a piece only under a door is no sliver.
 
 ## Checks
 
