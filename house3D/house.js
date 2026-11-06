@@ -61,7 +61,7 @@
                 inner face moved. The page checks every wall against its build-up.
      openings   the part of a wall with a window, door, entrance or gate: wall below sill and above head;
                 wall = the wall kind it sits in
-     rooms      id, name; floor areas as rectangles, together the whole floor between the walls (passages without a
+     rooms      id, numbers (on the archon plan; one room of the model may be several there), name; floor areas as rectangles, together the whole floor between the walls (passages without a
                 door belong to a room); planArea = the area from the plan (attic: total, incl. under 1.9 m);
                 tiles = the floor of the room: the product of materials.js and the direction of the tile length
                 (z along the house, x across) - the rest is set on the page when the room is selected; tilesWith =
@@ -225,7 +225,7 @@ window.HOUSE = {
    {"name": "Rzut", "eye": [455, 1500, 700], "target": [455, 0, 660]},
    {"name": "Perspektywa", "eye": [-520, 980, 1650], "target": [455, 60, 620]},
    {"name": "Sypialnia", "eye": [800, 165, 330], "target": [130, 0, 70]},
-   {"name": "Hol", "eye": [560, 165, 880], "target": [150, 0, 650]},
+   {"name": "Hol", "eye": [520, 165, 880], "target": [150, 0, 650]},
    {"name": "Pokoje", "eye": [830, 165, 1250], "target": [300, 0, 1000]}
   ],
   "all": [
@@ -272,9 +272,9 @@ window.HOUSE = {
     {"r": [615.5, 733.8, 627.5, 760.3], "kind": "int12"},
     {"r": [615.5, 869, 627.5, 1064.5], "kind": "int12"},
     {"r": [615.5, 1156.2, 627.5, 1231], "kind": "int12"},
-    {"r": [627.5, 902.8, 729, 926.8], "kind": "int24"},
-    {"r": [717, 926.8, 729, 996.9], "kind": "int12"},
-    {"r": [729, 984.9, 866, 996.9], "kind": "int12"}
+    {"r": [627.5, 902.8, 766, 926.8], "kind": "int24"},
+    {"r": [754, 926.8, 766, 1004.8], "kind": "int12"},
+    {"r": [754, 992.8, 866, 1004.8], "kind": "int12"}
    ],
    "openings": [
     {"r": [0, 760.3, 44, 963.1], "sill": 110, "head": 210, "kind": "window", "wall": "ext"},
@@ -293,6 +293,7 @@ window.HOUSE = {
    "rooms": [
     {
      "id": "salon",
+     "numbers": [3, 4, 5, 6],
      "name": "Salon z kuchnią i holem",
      "planArea": 50.55,
      "tiles": {"product": "authorityGraphite", "dir": "z"},
@@ -307,6 +308,7 @@ window.HOUSE = {
     },
     {
      "id": "wiatrolap",
+     "numbers": [1],
      "name": "Wiatrołap",
      "planArea": 4.84,
      "tiles": {"product": "authorityGraphite", "dir": "z"},
@@ -314,21 +316,24 @@ window.HOUSE = {
     },
     {
      "id": "lazienka",
+     "numbers": [7],
      "name": "Łazienka",
      "planArea": 4.95,
      "tiles": {"product": "authorityGraphite", "dir": "z"},
      "link": {"href": "../bath/view.html", "name": "Projekt łazienki"},
-     "rects": [[627.5, 733.8, 866, 902.8], [729, 902.8, 866, 984.9]]
+     "rects": [[627.5, 733.8, 866, 902.8], [766, 902.8, 866, 992.8]]
     },
     {
      "id": "kotlownia",
+     "numbers": [8],
      "name": "Kotłownia z pralnią",
      "planArea": 4.97,
      "tiles": {"product": "authorityGraphite", "dir": "z"},
-     "rects": [[627.5, 926.8, 717, 996.9], [627.5, 996.9, 866, 1187]]
+     "rects": [[627.5, 926.8, 754, 1004.8], [627.5, 1004.8, 866, 1187]]
     },
     {
      "id": "garaz",
+     "numbers": [2],
      "name": "Garaż",
      "planArea": 25.91,
      "rects": [[44, 659, 409.8, 1278.8], [44, 547.9, 318.6, 642.1], [273, 647.7, 318.6, 659]]
@@ -367,13 +372,15 @@ window.HOUSE = {
     {"r": [44, 362.1, 392.4, 374.1], "kind": "int12"},
     {"r": [553.7, 362.1, 866, 374.1], "kind": "int12"},
     {"r": [380.4, 465.8, 392.4, 473.2], "kind": "int12"},
-    {"r": [380.4, 473.2, 459.8, 547.9], "kind": "chimney"},
-    {"r": [553.7, 465.8, 565.7, 651.7], "kind": "int12"},
-    {"r": [553.7, 741.1, 565.7, 820.7], "kind": "int12"},
-    {"r": [44, 535.9, 380.4, 547.9], "kind": "int12"},
+    {"r": [391, 470.7, 433.8, 547.9], "kind": "chimney"},
+    {"r": [553.7, 465.8, 565.7, 631.7], "kind": "int12"},
+    {"r": [553.7, 721.1, 565.7, 820.7], "kind": "int12"},
+    {"r": [44, 535.9, 391, 547.9], "kind": "int12"},
+    {"r": [433.8, 535.9, 459.8, 547.9], "kind": "int12"},
     {"r": [548.9, 535.9, 866, 547.9], "kind": "int12"},
     {"r": [565.7, 820.7, 866, 832.7], "kind": "int12"},
-    {"r": [553.7, 820.7, 609.1, 914.8], "kind": "int24"},
+    {"r": [553.7, 820.7, 565.7, 902.8], "kind": "int12"},
+    {"r": [553.7, 902.8, 609.1, 914.8], "kind": "int12"},
     {"r": [609.1, 890.8, 650, 914.8], "kind": "int24"},
     {"r": [44, 738.7, 341.9, 750.7], "kind": "int12"},
     {"r": [329.9, 750.7, 341.9, 902.8], "kind": "int12"},
@@ -387,7 +394,7 @@ window.HOUSE = {
     {"r": [168.5, 1278.8, 392.4, 1322.8], "sill": 30, "head": 285, "kind": "window", "wall": "gable"},
     {"r": [522.4, 1278.8, 741.5, 1322.8], "sill": 30, "head": 285, "kind": "window", "wall": "gable"},
     {"r": [459.8, 535.9, 553.7, 547.9], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
-    {"r": [553.7, 651.7, 565.7, 741.1], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
+    {"r": [553.7, 631.7, 565.7, 721.1], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
     {"r": [178.1, 902.8, 260, 914.8], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
     {"r": [346.7, 902.8, 440.6, 914.8], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
     {"r": [452.6, 902.8, 553.7, 914.8], "sill": 0, "head": 205, "kind": "door", "wall": "int12"}
@@ -395,41 +402,46 @@ window.HOUSE = {
    "rooms": [
     {
      "id": "sypialnia",
-     "name": "Sypialnia (2)",
+     "numbers": [2],
+     "name": "Sypialnia",
      "planArea": 28.16,
      "tiles": {"product": "logOak", "dir": "z"},
      "rects": [
       [44, 44, 866, 362.1],
       [392.4, 362.1, 553.7, 374.1],
       [380.4, 374.1, 565.7, 465.8],
-      [392.4, 465.8, 452.6, 473.2],
+      [392.4, 465.8, 452.6, 470.7], [433.8, 470.7, 452.6, 535.9],
       [452.6, 465.8, 553.7, 535.9]
      ]
     },
     {
      "id": "garderoba3",
-     "name": "Garderoba (3)",
+     "numbers": [3],
+     "name": "Garderoba",
      "planArea": 5.13,
      "tilesWith": "sypialnia",
-     "rects": [[44, 374.1, 380.4, 535.9]]
+     "rects": [[44, 374.1, 380.4, 535.9], [380.4, 473.2, 391, 535.9]]
     },
     {
      "id": "garderoba4",
-     "name": "Garderoba (4)",
+     "numbers": [4],
+     "name": "Garderoba",
      "planArea": 4.6,
      "tilesWith": "sypialnia",
      "rects": [[565.7, 374.1, 866, 535.9]]
     },
     {
      "id": "hol",
-     "name": "Hol (1)",
+     "numbers": [1],
+     "name": "Hol",
      "planArea": 7.32,
      "tiles": {"product": "logOak", "dir": "z"},
      "rects": [[438.1, 547.9, 553.7, 651.7], [273, 651.7, 341.9, 738.7], [341.9, 651.7, 553.7, 902.8]]
     },
     {
      "id": "lazienka5",
-     "name": "Łazienka (5)",
+     "numbers": [5],
+     "name": "Łazienka",
      "planArea": 7.99,
      "tiles": {"product": "authorityGrey80", "dir": "z"},
      "link": {"href": "../bath/view.html", "name": "Projekt łazienki"},
@@ -437,24 +449,27 @@ window.HOUSE = {
     },
     {
      "id": "garderoba8",
-     "name": "Garderoba (8)",
+     "numbers": [8],
+     "name": "Garderoba",
      "planArea": 4.16,
      "tiles": {"product": "logOak", "dir": "z"},
      "rects": [[44, 750.7, 329.9, 902.8]]
     },
     {
      "id": "pokoj7",
-     "name": "Pokój (7)",
+     "numbers": [7],
+     "name": "Pokój",
      "planArea": 14.11,
      "tiles": {"product": "logOak", "dir": "z"},
      "rects": [[44, 914.8, 440.6, 1278.8]]
     },
     {
      "id": "pokoj6",
-     "name": "Pokój (6)",
+     "numbers": [6],
+     "name": "Pokój",
      "planArea": 16.53,
      "tiles": {"product": "logOak", "dir": "z"},
-     "rects": [[452.6, 914.8, 866, 1278.8], [650, 832.7, 866, 914.8], [609.1, 832.7, 650, 890.8]]
+     "rects": [[452.6, 914.8, 866, 1278.8], [650, 832.7, 866, 914.8], [609.1, 832.7, 650, 890.8], [565.7, 832.7, 609.1, 902.8]]
     }
    ],
    "voids": [[44, 547.9, 438.1, 642.2], [44, 642.2, 273, 738.7]]

@@ -257,13 +257,15 @@ function applyProduct(L, key) {
 const STORE = 'house-floors-v6';    // a new key when the data format changes: old states are dropped, not converted
 let state;
 const ROOMS = B.floors.flatMap(f => f.rooms.map((r, i) => Object.assign({ floor: f.id, index: i }, r)));   // every room with its floor
+// a room as the lists name it: its name and its number on the plan
+const roomName = r => r.numbers ? `${r.numbers.join(', ')}. ${r.name}` : r.name;
 const ROOM = Object.fromEntries(ROOMS.map(r => [r.id, r]));
 const TILED = ROOMS.filter(r => r.tiles);
 const layoutOf = room => room.tiles ? room.id : room.tilesWith || null;          // the layout that covers a room
 function freshState() {
   const s = { mode: Object.keys(B.views)[0], cuts: Object.fromEntries(FLOOR_IDS.map(f => [f, 150])), showRoof: false, layers: Object.fromEntries(Object.entries(LAYER).map(([k, l]) => [k, l.node.on !== false])), sunAzimuth: B.light.sun.azimuth, sunElevation: B.light.sun.elevation, brightness: 1, room: null, layouts: {}, auto: {} };
   for (const r of TILED) {         // one tile layout per room with tiles (its "tilesWith" rooms are laid with it)
-    s.layouts[r.id] = { label: r.name, floor: r.floor, dir: r.tiles.dir, oa: 0, ob: 0 };
+    s.layouts[r.id] = { label: roomName(r), floor: r.floor, dir: r.tiles.dir, oa: 0, ob: 0 };
     applyProduct(s.layouts[r.id], r.tiles.product); s.auto[r.id] = true;
   }
   return s;
@@ -1183,7 +1185,7 @@ function contextMenu() {
   const room = state.room && ROOM[state.room];   // the selected room: a node of the geometry tree, with its own row
   if (room && room.floor === openFloor()) {
     const r = row();
-    const b = document.createElement('button'); b.textContent = room.name + ' ✕'; b.setAttribute('aria-pressed', 'true'); b.title = 'Odznacz';
+    const b = document.createElement('button'); b.textContent = roomName(room) + ' ✕'; b.setAttribute('aria-pressed', 'true'); b.title = 'Odznacz';
     b.onclick = () => selectRoom(null); r.appendChild(b);
     if (room.link) { const a = document.createElement('a'); a.href = room.link.href; a.target = '_blank'; a.rel = 'noopener'; a.className = 'btnlink'; a.textContent = room.link.name + ' ↗'; r.appendChild(a); }
   }
@@ -1300,7 +1302,7 @@ function contextPanel() {
     const key = layoutOf(room), tr = document.createElement('tr'), td = document.createElement('td');
     tr.className = 'detail'; td.colSpan = 2; tr.appendChild(td); row.after(tr);
     if (room.link) td.insertAdjacentHTML('beforeend', `<p class="note"><a href="${room.link.href}" target="_blank" rel="noopener">${room.link.name} ↗</a></p>`);
-    if (room.tilesWith) td.insertAdjacentHTML('beforeend', `<p class="note">Płytki razem z: ${ROOM[room.tilesWith].name}.</p>`);
+    if (room.tilesWith) td.insertAdjacentHTML('beforeend', `<p class="note">Płytki razem z: ${roomName(ROOM[room.tilesWith])}.</p>`);
     else if (!key) td.insertAdjacentHTML('beforeend', '<p class="note">To pomieszczenie nie ma płytek.</p>');
     else { const d = store.querySelector(`details[data-key="${key}"]`); d.open = true; td.appendChild(d); }
   }
@@ -1321,7 +1323,7 @@ function roomsTable() {
     PLAN[f].rooms.forEach(r => {
       const area = r.rects.reduce((s, q) => s + (q[2] - q[0]) * (q[3] - q[1]), 0) / 1e4, key = layoutOf(r);
       const floorName = key ? PRODUCTS[state.layouts[key].product].name : 'bez płytek';
-      h += `<tr data-floor="${f}" data-room="${r.id}" tabindex="0"><td>${r.name}<br><span class="info">${floorName}</span></td><td class="n" title="z rzutu: ${fmt(r.planArea, 2)} m²">${fmt(area, 2)} m²</td></tr>`;
+      h += `<tr data-floor="${f}" data-room="${r.id}" tabindex="0"><td>${roomName(r)}<br><span class="info">${floorName}</span></td><td class="n" title="z rzutu: ${fmt(r.planArea, 2)} m²">${fmt(area, 2)} m²</td></tr>`;
     });
   }
   const t = document.getElementById('rooms'); t.innerHTML = h;
@@ -1559,7 +1561,12 @@ function floorSVG(floor, ox, oy, withTiles) {
     const cx = (big[0] + big[2]) / 2, cz = (big[1] + big[3]) / 2;
     if (room.id === state.room) for (const q of room.rects) rect(q, `fill="#c8882f" fill-opacity=".22"`);   // the selected room
     out.push(`<g data-room="${room.id}" style="cursor:pointer">`);
-    text(cx, cz - 6, room.name.replace(/ \(\d+\)$/, '') + (room.link ? ' ↗' : ''), 'r');
+    (room.numbers || []).forEach((n, i, all) => {   // the room's numbers on the plan, each in a circle above its name
+      const x = cx + (i - (all.length - 1) / 2) * 19;
+      out.push(`<circle cx="${X(x)}" cy="${Z(cz - 27)}" r="${X(x + 8) - X(x)}" fill="none" stroke="${C.ink}" stroke-width=".8"/>`);
+      text(x, cz - 23.5, String(n), 'r');
+    });
+    text(cx, cz - 6, room.name + (room.link ? ' ↗' : ''), 'r');
     text(cx, cz + 10, `${area.toFixed(2).replace('.', ',')} m²`, 'a');
     if (L) text(cx, cz + 24, `${L.len / 10}×${L.wid / 10} · ${(PRODUCTS[L.product] || {}).name ? TEX[L.texture].name.split(' (')[0] : ''}`, 's');
     out.push(`</g>`);

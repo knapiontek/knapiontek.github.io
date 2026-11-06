@@ -88,5 +88,4 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 ## 7. Not yet done
 
 - No sub-views exist yet: the menu tree has one level under each view.
-- The 55.4 × 94 cm attic wall (x 553.7, z 820.7) fits no build-up; it stays as measured until resolved by hand.
 - The page draws exactly two floors (ground floor and attic under the roof). The tree can hold more, but the drawing of the roof and the stair assumes these two.
