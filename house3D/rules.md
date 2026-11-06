@@ -43,7 +43,7 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 
 ## 3. Layer tree
 
-- Floors and roof: Parter, Piętro, Dach. They are layers too, but the menu shows them in a row of their own.
+- Floors and roof: Parter, Piętro, Dach. They are layers too, but the menu shows them in a row of their own; the material layers are in the panel.
 - Material layers, flat, each a layer of the build: Fundament, Pustaki (the block core), Wieniec i strop, Styropian, Elewacja (the finish), Krawędzie, Okna i drzwi, Schody, Kominek, Posadzki (Drobne docinki), Teren.
 - A wall is drawn in its material layers: its core under Pustaki, its EPS under Styropian, its finish under Elewacja. The reveals of windows and doors are part of the wall: in front of the glass under Elewacja, behind it under Pustaki; only the glass, frames and leaves are Okna i drzwi. So each layer of the build can be seen alone (for example only the EPS shell).
 - A child is shown only with its parent: no marked cuts without tiles.
@@ -56,16 +56,15 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 - The menu decides what is shown and from where; the panel holds only the parameters of what the menu has chosen.
 - **Top left**: one toggle 3D / 2D.
 - **3D**, at the top:
-  - first row: Parter, Piętro, Dach as check boxes;
-  - second row: the material layers;
-  - a third row when a room is selected: its name and its sub-project.
+  - one row: Parter, Piętro, Dach as check boxes;
+  - a second row when a room is selected: its name and its sub-project.
+- **Panel**, under Przekrój and Światło, above Pomieszczenia: Warstwy, the material layers (a child after its parent, while the parent is on).
 - **3D**, at the bottom: the cameras: Spacer (the walk), the cameras of the house, and those of the open floor.
 - **Help**: an icon in the corner opens the instructions as a popup.
 - **2D**: both floors side by side in the page itself, cut at a fixed height from the data (150 cm). Zoom and SVG download are in the panel.
 - **Deeper levels** later: a view may hold views of its own, each with its own row (Parter → Kuchnia → switches for worktops and carcasses). A deeper view inherits from its parent and may hide more, set its own cameras and show its own settings.
 - The panel follows what is shown:
   - Przekrój (the cut height) and Pomieszczenia only for the open floor: the highest floor shown with the roof off. With the roof on the house is whole and nothing is cut. At the top of its range the cut is off.
-  - The see-through roof slopes only for an open floor under the roof.
   - The floor settings of a room open under its own row in the list of rooms (an accordion). Rooms with no wall between them (walk-in wardrobes) are tiled with their room.
   - 2D: zoom and download only; no rooms, no layers, no light, no room selection.
   - Light only in 3D.

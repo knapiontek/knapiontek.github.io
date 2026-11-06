@@ -10,8 +10,8 @@
    name, source, notes   what the page shows about the house (Polish)
    views        the top menu: 3D or 2D (one toggle). A view never builds objects of its own: the model is the same in
                 every view, a view only shows layers and cuts the walls. levels = the switches of the first row
-                (floors and roof, which are layers too); offer = the material layers of the second row; panels = the
-                sections of the panel, the parameters of what is shown (cut and view = the see-through roof slopes and
+                (floors and roof, which are layers too); offer = the material layers (in the panel, section layers); panels = the
+                sections of the panel, the parameters of what is shown (cut and
                 rooms only for the open floor: the highest floor shown with the roof off); cut = the view's own fixed
                 cut (the 2D plan), else the panel's cut of the open floor; selectRooms = a click selects a room of the
                 open floor; walk = the walk is offered; plan = the 2D plan of all floors side by side
@@ -86,9 +86,8 @@ window.HOUSE = {
    "name": "3D",
    "levels": ["ground", "attic", "roof"],
    "offer": ["foundation", "walls", "slabs", "insulation", "facade", "edges", "openings", "stair", "fittings", "floors", "site"],
-   "panels": ["cut", "view", "light", "rooms", "walls", "notes"],
+   "panels": ["cut", "light", "layers", "rooms", "walls", "notes"],
    "selectRooms": true,
-   "roofGhost": true,
    "walk": true
   },
   "2d": {"name": "2D", "plan": true, "cut": 150, "panels": ["plan", "walls", "notes"]}
@@ -265,8 +264,8 @@ window.HOUSE = {
     {"r": [846, 1231, 910, 1421.7], "kind": "portal"},
     {"r": [44, 535.9, 380.4, 547.9], "kind": "int12"},
     {"r": [380.4, 468.5, 459.8, 547.9], "kind": "chimney"},
-    {"r": [318.6, 644.1, 433.8, 656.1], "kind": "int12"},
-    {"r": [409.8, 656.1, 433.8, 1064.5], "kind": "int24"},
+    {"r": [273, 642.2, 433.8, 654.2], "kind": "int12"},
+    {"r": [409.8, 654.2, 433.8, 1064.5], "kind": "int24"},
     {"r": [409.8, 1151.4, 433.8, 1187], "kind": "int24"},
     {"r": [433.8, 905.3, 487.6, 929.3], "kind": "int24"},
     {"r": [579.3, 905.3, 615.5, 929.3], "kind": "int24"},
@@ -338,14 +337,14 @@ window.HOUSE = {
      "numbers": [2],
      "name": "Garaż",
      "planArea": 25.91,
-     "rects": [[44, 659, 409.8, 1278.8], [44, 547.9, 318.6, 642.1], [273, 644.1, 318.6, 659], [318.6, 656.1, 409.8, 659]]
+     "rects": [[44, 659, 409.8, 1278.8], [44, 547.9, 318.6, 642.1], [273, 654.2, 409.8, 659]]
     }
    ],
    "stair": {
     "risers": 17,
-    "flight1": {"x": [143, 433.8], "z": [547.9, 644.1], "risers": 12},
+    "flight1": {"x": [143, 433.8], "z": [547.9, 642.2], "risers": 12},
     "landing": {"x": [44, 143], "z": [547.9, 738.7]},
-    "flight2": {"x": [143, 273], "z": [644.1, 738.7]},
+    "flight2": {"x": [143, 273], "z": [642.2, 738.7]},
     "treadMaterial": "tread",
     "layers": ["stair"]
    },

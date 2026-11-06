@@ -175,13 +175,6 @@ td select{padding:3px 4px;font-size:12px}
         <input id="cut" type="range" min="30" step="5" style="grid-column:1/-1"></div>
     </div>
     </section>
-    <section data-panel="view">
-    <div class="lay" style="padding:0">
-      <div class="checks">
-        <label id="showRoofLabel"><input type="checkbox" id="showRoof"> Skosy dachu (przezroczyste)</label>
-      </div>
-    </div>
-    </section>
     <section data-panel="light">
     <h2>Światło</h2>
     <div class="lay" style="padding:0">
@@ -195,6 +188,7 @@ td select{padding:3px 4px;font-size:12px}
     </section>
 
     <div id="layouts" hidden></div>
+    <section data-panel="layers"><h2>Warstwy</h2><div class="cams" id="layerChips" aria-label="Warstwy"></div></section>
     <section data-panel="rooms"><h2>Pomieszczenia</h2><table id="rooms"></table></section>
     <section data-panel="walls"><h2>Ściany</h2><div id="walls"></div></section>
     <section data-panel="notes"><h2>Uwagi</h2><p class="note" id="notes"></p></section>
@@ -260,7 +254,7 @@ const ROOM = Object.fromEntries(ROOMS.map(r => [r.id, r]));
 const TILED = ROOMS.filter(r => r.tiles);
 const layoutOf = room => room.tiles ? room.id : room.tilesWith || null;          // the layout that covers a room
 function freshState() {
-  const s = { mode: Object.keys(B.views)[0], cuts: Object.fromEntries(FLOOR_IDS.map(f => [f, 150])), showRoof: false, layers: Object.fromEntries(Object.entries(LAYER).map(([k, l]) => [k, l.node.on !== false])), sunAzimuth: B.light.sun.azimuth, sunElevation: B.light.sun.elevation, brightness: 1, room: null, layouts: {}, auto: {} };
+  const s = { mode: Object.keys(B.views)[0], cuts: Object.fromEntries(FLOOR_IDS.map(f => [f, 150])), layers: Object.fromEntries(Object.entries(LAYER).map(([k, l]) => [k, l.node.on !== false])), sunAzimuth: B.light.sun.azimuth, sunElevation: B.light.sun.elevation, brightness: 1, room: null, layouts: {}, auto: {} };
   for (const r of TILED) {         // one tile layout per room with tiles (its "tilesWith" rooms are laid with it)
     s.layouts[r.id] = { label: roomName(r), floor: r.floor, dir: r.tiles.dir, oa: 0, ob: 0 };
     applyProduct(s.layouts[r.id], r.tiles.product); s.auto[r.id] = true;
@@ -509,7 +503,6 @@ function makeMaterial(def) {
 }
 const M = {};
 for (const k in MAT.materials) M[k] = makeMaterial(MAT.materials[k]);
-M.ghost = new THREE.MeshStandardMaterial({ color: lin('#f2f0ea'), roughness: 0.9, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false });
 M.wall = {};
 for (const k in B.wallKinds) M.wall[k] = M[B.wallKinds[k].material];
 M.groove = new THREE.MeshStandardMaterial({ color: lin(B.gate.groove), roughness: 0.8 });
@@ -665,6 +658,7 @@ function readSlab() {
 function buildSlab() {
   slabCells = readSlab(); joinHeights = [];
   const fin = SLAB_BU.layers[SLAB_BU.layers.length - 1].thickness, bottom = slabY1 - SLAB_OUTER, outline = [], soffit = [], cut = slabSections.ground = [];
+  const groundCover = PLAN.ground.walls.map(w => w.r).concat(PLAN.ground.openings.map(o => o.r));
   const inLayer = (L, fn) => withLayers(L ? L.layers || [] : B.slab.layers, fn);
   const finishLayer = SLAB_BU.layers.find(l => l.finish), epsLayer = SLAB_BU.layers.find(l => l.material);
   for (const c of slabCells) {
@@ -686,7 +680,7 @@ function buildSlab() {
     if (c.under) cut.push(c.layer && c.layer.finish
       ? { r, y0: 0, from: bottom, top: () => slabY1, mat: M[B.slab.face], layers: lay }
       : { r, y0: 0, from: bottom + fin, top: () => slabY1, mat: M[epsLayer.material], layers: epsLayer.layers || [] });
-    if (c.under) soffit.push({ r, parts: [[bottom, slabY1]], openTop: true, layers: c.layer && c.layer.finish ? lay : finishLayer.layers });
+    if (c.under) soffit.push({ r, parts: [[bottom, slabY1]], openTop: true, layers: c.layer && c.layer.finish ? lay : finishLayer.layers, alsoTouch: groundCover });   // its face runs on into the walls beside it
   }
   withLayers(B.edges.layers, () => { outlineEdges(outline, 0, [], slabGroup); outlineEdges(soffit, 0, [], soffitGroup); });
   // the soffit's cut in few large pieces, one set per material, so the section is one plane without seams
@@ -710,7 +704,7 @@ withLayers(FP.layers, () => box(FR[0], 0, FR[1], FR[2], FP.height, FR[3], M[FP.m
 const ZS = PLAN.ground.walls.reduce((m, w) => [Math.min(m[0], w.r[1]), Math.max(m[1], w.r[3])], [0, 0]);
 const ROOF_T = thicknessWith(B.buildUps[B.roof.buildUp], 2) / Math.cos(B.roof.pitch * Math.PI / 180);   // the portal frame section, vertical
 const under = roofHeight;           // roof underside above the attic floor
-const roofSolid = new THREE.Group(), roofGhost = new THREE.Group(); root.add(roofSolid, roofGhost);
+const roofSolid = new THREE.Group(); root.add(roofSolid);
 roofSolid.userData.layers = B.roof.layers;
 withLayers(B.roof.layers, function buildRoof() {
   const y = LEVEL.attic, sh = new THREE.Shape();
@@ -728,16 +722,7 @@ withLayers(B.roof.layers, function buildRoof() {
   }
   const C = PLAN.attic.walls.find(w => w.kind === 'chimney').r;
   withLayers(B.chimney.layers, () => box(C[0], y + under(C[2]) + 10, C[1], C[2], y + under(XM) + ROOF_T + B.chimney.above, C[3], M[B.chimney.material], roofSolid));
-  for (const [xa, xb] of [[XL, XM], [XR, XM]]) {        // see-through slopes for the attic plan view
-    const y1 = y + KNEE, y2 = y + RIDGE, g3 = new THREE.BufferGeometry();
-    g3.setAttribute('position', new THREE.Float32BufferAttribute([xa, y1, 0, xb, y2, 0, xb, y2, LENGTH, xa, y1, 0, xb, y2, LENGTH, xa, y1, LENGTH], 3));
-    g3.computeVertexNormals(); { const gm = new THREE.Mesh(g3, M.ghost); gm.userData.noClip = true; roofGhost.add(gm); }
-  }
 });
-function updateRoof() {          // the solid roof is a layer; the see-through slopes are a help over an open floor under the roof
-  const f = openFloor();
-  roofGhost.visible = !!VIEW().roofGhost && !!f && !!PLAN[f].underRoof && state.showRoof;
-}
 
 /* ================= 7. WALLS (rebuilt with the cut height) ================= */
 // The wall rectangles of a floor overlap where walls meet (they were read from the plan image). The footprint of a
@@ -894,7 +879,7 @@ function outlineEdges(pieces, y0, breaks, parent) {
   const free = (p, side) => {
     const r = p.r, alongX = side === 'garden' || side === 'front', at = { left: r[0], right: r[2], garden: r[1], front: r[3] }[side];
     let parts = [[alongX ? r[0] : r[1], alongX ? r[2] : r[3]]];
-    for (const o of pieces) {
+    for (const o of pieces.concat((p.alsoTouch || []).map(r => ({ r })))) {
       if (o === p) continue;
       const q = o.r, touches = side === 'left' ? Math.abs(q[2] - at) < e : side === 'right' ? Math.abs(q[0] - at) < e : side === 'garden' ? Math.abs(q[3] - at) < e : Math.abs(q[1] - at) < e;
       if (!touches) continue;
@@ -971,7 +956,7 @@ const groundUnder = r => { const cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2,
 const CUT_PLANE = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e6), CLIP = [CUT_PLANE];
 const sections = {}, capGroups = {};            // per floor: the wall pieces that can be cut, and their caps
 for (const f of FLOOR_IDS) { capGroups[f] = new THREE.Group(); groups[f].add(capGroups[f]); }
-function clipAll() {               // every material of the model is clipped by the cut plane (the see-through roof not)
+function clipAll() {               // every material of the model is clipped by the cut plane
   root.traverse(o => { if (o.material && !o.userData.noClip) for (const m of [].concat(o.material)) if (m.clippingPlanes !== CLIP) { m.clippingPlanes = CLIP; m.clipShadows = true; m.needsUpdate = true; } });   // what is cut away casts no shadow
 }
 function setCut() {
@@ -1020,7 +1005,8 @@ function buildWalls(floor) {
   // soffit's EPS (block, EPS, finish, as everywhere)
   const SB = SLAB_BU.layers, EPS = SB.find(l => l.material), soffitBottom = slabY1 - SLAB_OUTER;
   const facing = { left: r => [r[0] - 1, r[1], r[0], r[3]], right: r => [r[2], r[1], r[2] + 1, r[3]], garden: r => [r[0], r[1] - 1, r[2], r[1]], front: r => [r[0], r[3], r[2], r[3] + 1] };
-  const underSoffit = c => !attic && c.finish && c.side && slabCells.some(s => s.under && (a => a[0] < s.r[2] && a[2] > s.r[0] && a[1] < s.r[3] && a[3] > s.r[1])(facing[c.side](c.r)));
+  const facesSoffit = (r, side) => slabCells.some(s => s.under && (a => a[0] < s.r[2] && a[2] > s.r[0] && a[1] < s.r[3] && a[3] > s.r[1])(facing[side](r)));
+  const underSoffit = c => { if (attic || !c.finish) return false; const sides = airSides(floor, c.r); return sides.length > 0 && sides.every(sd => facesSoffit(c.r, sd)); };
   const only = (L, fn) => { const prev = drawLayers; drawLayers = L; try { fn(); } finally { drawLayers = prev; } };
   const part = (c, lo, hi, cap) => {
     if (underSoffit(c)) {
@@ -1097,7 +1083,16 @@ function buildWalls(floor) {
     }
     });
   }
-  withLayers(B.edges.layers, () => outlineEdges(outline, y0, breaks, grp));
+  // next to the soffit the wall's face runs on into the soffit's: above its underside that is no edge
+  const soffitRects = attic ? [] : slabCells.filter(c => c.under).map(c => c.r);
+  const near = r => soffitRects.filter(q => q[0] <= r[2] + 0.05 && q[2] >= r[0] - 0.05 && q[1] <= r[3] + 0.05 && q[3] >= r[1] - 0.05);
+  const edgesOf = outline.flatMap(p => {
+    const n = near(p.r), last = p.parts[p.parts.length - 1];
+    if (!n.length || !(num(last[1])(p.r[0]) > soffitBottom)) return [p];
+    const low = p.parts.map(([lo, hi]) => [lo, x => Math.min(num(hi)(x), soffitBottom)]).filter(([lo]) => num(lo)(p.r[0]) < soffitBottom);
+    return [Object.assign({}, p, { parts: low, openTop: true }), Object.assign({}, p, { parts: [[soffitBottom, last[1]]], openBottom: true, alsoTouch: n })];
+  });
+  withLayers(B.edges.layers, () => outlineEdges(edgesOf, y0, breaks, grp));
   sections[floor] = { pieces, breaks };
   clipAll(); buildCaps(floor);
 }
@@ -1205,8 +1200,8 @@ function contextMenu() {
     l.firstChild.onchange = e => setLayer(k, e.target.checked); r.appendChild(l);
   };
   if (v.levels) { const r = row(); for (const k of v.levels) check(r, k, LAYER[k].node.name); }
-  if (offeredLayers(v).length) {
-    const r = row();
+  {                                // the material layers: in the panel, under the cut and the light
+    const r = document.getElementById('layerChips'); r.innerHTML = '';
     const chip = (k, depth) => {
       const b = document.createElement('button'); b.textContent = (depth ? '› ' : '') + LAYER[k].node.name;
       b.setAttribute('aria-pressed', String(state.layers[k] !== false)); b.onclick = () => setLayer(k, state.layers[k] === false); r.appendChild(b);
@@ -1236,7 +1231,7 @@ function cameraDock() {
 // everything that follows what is shown: the roof help, the cut, the layers, the panel, the room, the menus
 function refresh() {
   if (state.room && !VIEW().plan && ROOM[state.room].floor !== openFloor()) state.room = null;   // a room only while its floor is open
-  updateRoof(); setCut(); applyLayers(); contextPanel(); markRoom(); contextMenu();
+  setCut(); applyLayers(); contextPanel(); markRoom(); contextMenu();
   showPlan(!!VIEW().plan);
 }
 function setMode(mode, keepCamera) {
@@ -1305,7 +1300,7 @@ function setLayer(k, on) {
   refresh();                       // the camera stays: the views can be compared
 }
 // the panel follows the view: its sections, and the floor settings only of the view's floor
-const OPEN_ONLY = { cut: f => !!f, rooms: f => !!f, view: f => !!f && !!PLAN[f].underRoof };   // sections of the open floor
+const OPEN_ONLY = { cut: f => !!f, rooms: f => !!f };   // sections of the open floor
 function contextPanel() {
   const v = VIEW(), f = openFloor();
   for (const sec of document.querySelectorAll('aside [data-panel]')) {
@@ -1336,7 +1331,6 @@ function contextPanel() {
     else if (!key) td.insertAdjacentHTML('beforeend', '<p class="note">To pomieszczenie nie ma płytek.</p>');
     else { const d = store.querySelector(`details[data-key="${key}"]`); d.open = true; td.appendChild(d); }
   }
-  document.getElementById('showRoofLabel').hidden = !v.roofGhost;
   document.getElementById('planNote').textContent = `Oba rzuty obok siebie, ściany przecięte na wysokości ${planCut()} cm.`;
 }
 // selecting a room (in the view, on the plan, in the list) puts it in force: its menu row and its floor settings
@@ -1730,8 +1724,6 @@ for (const k in state.layouts) wireLayout(k);
 roomsTable();
 const cut = document.getElementById('cut'), cutv = document.getElementById('cutv');
 cut.oninput = () => { const f = openFloor(); if (!f) return; state.cuts[f] = +cut.value; contextPanel(); setCut(); save(); requestRender(); };
-const showRoof = document.getElementById('showRoof');
-showRoof.checked = state.showRoof;
 document.getElementById('views').onclick = () => {     // one toggle through the views of house.js (3D, 2D)
   const keys = Object.keys(B.views); setWalk(false); setMode(keys[(keys.indexOf(state.mode) + 1) % keys.length]);
 };
@@ -1742,7 +1734,6 @@ document.getElementById('planSvg').onclick = downloadPlan;
   const hb = document.getElementById('helpbtn'), help = document.getElementById('help');
   hb.onclick = () => { help.hidden = !help.hidden; hb.setAttribute('aria-expanded', String(!help.hidden)); };
 }
-showRoof.onchange = () => { state.showRoof = showRoof.checked; updateRoof(); save(); requestRender(); };
 const sunAz = document.getElementById('sunaz'), sunEl = document.getElementById('sunel');
 sunAz.value = state.sunAzimuth; sunEl.value = state.sunElevation;
 const sunLabel = () => { document.getElementById('sunazv').textContent = state.sunAzimuth + '°'; document.getElementById('sunelv').textContent = state.sunElevation + '°'; };
