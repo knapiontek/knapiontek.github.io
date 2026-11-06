@@ -24,7 +24,6 @@
                 the roof slab has the thickness of the portal wings (the build-up insulated on both sides), measured
                 square to the slope; body = the white band of the portals, covering = the roof surface;
                 planHeights = the clear heights drawn as lines on the attic plan
-   portals      the side walls and the roof run past both gables
    chimney      the flue (the attic wall of kind chimney), "above" = how far it rises over the ridge
    slab         the ring beam and slab: poured over the whole of the ground floor walls, between their top (the ground
                 floor height) and the attic level, over the outline of both floors minus the stair hole; buildUp = its
@@ -48,7 +47,8 @@
                 a facade where it faces the air (nothing of the plan in front of it): no faces are guessed by position
    doors        entrance: the door leaf in the opening of kind entrance (from the hinge side), the rest is a glass
                 sidelight
-   gate, windows   the garage door panel; window frames (profile, mullions, transom), the attic gable windows follow
+   gate         the garage door panel: its material and horizontal grooves (also on the entrance leaf)
+   windows      window frames (profile, mullions, transom), the attic gable windows follow
                 the roof ("inset" cm below its underside); intoCore = windows sit in the block: this far behind the
                 outer face of the core (behind the EPS and the finish of the wall's build-up)
    edges        delicate lines on the wall edges: colour, opacity, crease angle
@@ -117,7 +117,6 @@ window.HOUSE = {
   "planHeights": [140, 190, 220],
   "layers": ["roof"]
  },
- "portals": {"groundWingsTo": "attic"},
  "chimney": {"above": 90, "material": "graphite", "layers": ["roof"]},
  "slab": {"material": "slab", "buildUp": "outer", "face": "plasterWhite", "layers": ["slabs"]},
  "buildUps": {
@@ -192,12 +191,11 @@ window.HOUSE = {
    "handle": {"length": 120, "width": 3, "material": "steel"}
   }
  },
- "gate": {"grooves": 4, "groove": "#2e3134"},
+ "gate": {"material": "graphite", "grooves": 4, "groove": "groove"},
  "windows": {
   "frame": {"width": 8, "depth": 4, "mullionEvery": 150, "transom": 205, "material": "frame"},
   "glass": "glass",
   "intoCore": 6,
-  "gate": "graphite",
   "attic": {"followRoof": true, "inset": 140, "mullionEvery": 140, "transom": 85},
   "layers": ["openings"]
  },
@@ -337,7 +335,7 @@ window.HOUSE = {
      "numbers": [2],
      "name": "Garaż",
      "planArea": 25.91,
-     "rects": [[44, 659, 409.8, 1278.8], [44, 547.9, 318.6, 642.1], [273, 654.2, 409.8, 659]]
+     "rects": [[44, 659, 409.8, 1278.8], [44, 547.9, 318.6, 642.2], [273, 654.2, 409.8, 659]]
     }
    ],
    "stair": {

@@ -8,7 +8,7 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 
 | File | Kind | Owns | Written by |
 |---|---|---|---|
-| house.js | data, this project | the three trees: geometry (building with its shell, wall kinds, build-ups, facade, windows, doors, site, light, tile layouts → floors with walls, openings, stair, fireplace, stair hole → rooms with areas, layout, link to a sub-project), layers, views (menu, cameras, panel sections) | LLM, per project |
+| house.js | data, this project | the three trees: geometry (building with its shell, wall kinds, build-ups, facade, windows, doors, site, light, tile settings → floors with walls, openings, stair, fireplace, stair hole → rooms with areas, tiles, link to a sub-project), layers, views (menu, cameras, walk, panel sections) | LLM, per project |
 | materials.js | data, this project | the material library and the tile products (texture, size, joint, price, link) | LLM, per project |
 | textures.js | data, this project | texture images and their names only (the floor tiles, the wood decor of the facade), with what drawing them needs: the size an image covers, the grout colour of a tile | LLM, per project |
 | view.html | page, every project | the views of the menu tree (3D of the whole house and of each floor, the walk, the 2D plan of both floors), the layers, the tile layouts and their counts, the context panel, the checks | LLM |
@@ -42,9 +42,9 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 
 - Every wall has a kind; the wall kinds of house.js say its surfaces, its build-up, which kind owns an overlap and how high it goes.
 - A **build-up** lists the layers of a wall: the core (block) and the layers that lie on every side facing outside (EPS). A wall is as thick as its core plus the outer layers of each side that faces outside.
-- This house: walls of blocks 24 cm and 12 cm; the outer walls (ground floor, gables, knee walls) are block 24 cm with 20 cm of EPS on the outside, 44 cm in all; the portal wings 64 cm; interior walls are block 24 or block 12.
+- This house: walls of blocks 24 cm and 12 cm; the outer walls (ground floor, gables, knee walls) are block 24 cm with 20 cm on the outside (EPS 19 + finish 1), 44 cm in all; the portal wings 64 cm; interior walls are block 24 or block 12.
 - The outer faces of the outer walls are where the plan images put them; a change of thickness moves the inner face.
-- The EPS is the part of a wall within 20 cm of the air. So a house wall has it on its outer side, a portal wing on both sides and on its end, and at a corner EPS meets EPS and block meets block, with no extra pieces.
+- The EPS and the finish are the part of a wall within 20 cm of the air. So a house wall has it on its outer side, a portal wing on both sides and on its end, and at a corner EPS meets EPS and block meets block, with no extra pieces.
 - The 2D plan draws the EPS hatched, the 3D view shows it in the cut of the walls.
 - An opening names the wall kind it sits in and has that wall's thickness. A window sits in the block, behind the EPS and the finish; its reveal in front of the glass has the finish of its face. Sizes follow the labels of the archon plans: width / height of the opening.
 - The page checks every wall and opening against its build-up and lists the ones that do not fit. A wall that fits no build-up stays in house.js as measured and stays on that list until it is resolved by hand.

@@ -26,10 +26,9 @@ The house is built, and drawn, in this order. The 2D plans are the given: every 
 4. Attic walls standing on the slab.
 5. Last the EPS and the finish all round: on every side to the air of the walls and of the slab edge, and under the slab where no ground floor is below (the soffit of the recess). One continuous shell from the foundation to the roof. Where the soffit meets a wall, the wall's finish ends at the soffit's underside and its EPS runs on into the soffit's: block, EPS, finish, never EPS, finish, EPS.
 
-
 Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a kitchen room)
 
-- **Building** (the root): the shell common to all floors: roof, portals, wall kinds and their build-ups, facade, windows, doors, site, light, cameras, tile layouts.
+- **Building** (the root): the shell common to all floors: roof, portals, wall kinds and their build-ups, facade, windows, doors, site, light, cameras, tile settings.
 - **Floor**: its level and height, and what stands on it: walls, openings, stair, fireplace, the stair hole. Walls belong to the floor, not to a room, because one wall bounds two rooms.
 - **Room**: its floor area as rectangles, the tile layout that covers it, and a link to its sub-project.
 - **Tiles**: not stored; the page lays them from the room and its layout.
@@ -39,7 +38,10 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 - A facade is a wall side that faces the air: nothing is guessed from positions. The finish (plaster, graphite, wood, the bands) is the outer layer of the wall's build-up and data say which finish covers which part of which side.
 - Windows and doors sit in the block (the masonry), never in the EPS. Their sizes are the labels of the archon plans (width / height), and the 2D plan shows the same labels.
 - Edges are read from the plan: along the open tops, sills and heads and up every corner of the wall outline.
-- No masking panels: a finish or a band is the face of a wall or of the slab edge, only where they are. Every piece belongs to the floor it stands on; the floors are split by one horizontal plane for the whole house, the top of the ground floor walls: below it the ground floor (with the soffit over the entrance recess), above it the attic (with the ring beam and slab). The front looks as on the archon visualisation: a white band across the whole width from the underside of the beam over the entrance to the attic windows, graphite below and above. Nothing reaches into the roof: every attic wall ends at the roof underside, the knee walls too, sloping down to their outer face.
+- No masking panels: a finish or a band is the face of a wall or of the slab edge, only where they are.
+- Every piece belongs to the floor it stands on. The floors are split by one horizontal plane for the whole house, the top of the ground floor walls: below it the ground floor (with the soffit over the entrance recess), above it the attic (with the ring beam and slab).
+- The front looks as on the archon visualisation: a white band across the whole width from the underside of the beam over the entrance to the attic windows, graphite below and above.
+- Nothing reaches into the roof: every attic wall ends at the roof underside, the knee walls too, sloping down to their outer face.
 
 ## 3. Layer tree
 
@@ -66,7 +68,7 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 - The panel follows what is shown:
   - Przekrój (the cut height) and Pomieszczenia only for the open floor: the highest floor shown with the roof off. With the roof on the house is whole and nothing is cut. At the top of its range the cut is off.
   - The floor settings of a room open under its own row in the list of rooms (an accordion). Rooms with no wall between them (walk-in wardrobes) are tiled with their room.
-  - 2D: zoom and download only; no rooms, no layers, no light, no room selection.
+  - 2D: zoom and download, and the wall check and notes; no rooms, no layers, no light, no room selection.
   - Light only in 3D.
 
 ## 5. Materials and products
