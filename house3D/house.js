@@ -6,8 +6,16 @@
 
    BUILDING (the root)
    name, source, notes   what the page shows about the house (Polish)
-   layers       what can be switched off on the page: name, on = shown at the start. Every element names its layers
-                ("layers" on its node or its kind); it is drawn only when all of them are on
+   views        the views of the top menu. A view never builds objects of its own: the model is the same in every
+                view, a view only hides layers (hidden), cuts the walls at the cut height of the panel or shows them
+                whole (cut), names the floor its settings belong to (floor) and the sections of the panel (panels);
+                roofGhost = the see-through roof slopes can be switched on; walk = the walk through the house starts
+                here; plan = the 2D plan of all floors side by side instead of the 3D view. The cameras of a view
+                are in "cameras" under its key
+   layers       a tree of what can be switched off: name, on false = off at the start, layers = the layers inside it
+                (a child is shown only with its parent: no EPS without walls). Every element names its layers
+                ("layers" on its node or its kind, a floor on everything standing on it); it is drawn only when all
+                of them are on and the view hides none of them. Layer ids are unique in the whole tree
    roof         pitch, knee wall height (the knee walls give the eaves line); buildUp = the section of the portal frame:
                 the roof slab has the thickness of the portal wings (the build-up insulated on both sides), measured
                 square to the slope; body = the white band of the portals, covering = the roof surface;
@@ -21,7 +29,7 @@
    wallKinds    per wall kind: name, material of its surfaces, buildUp (the view checks the thickness), rank (where walls
                 overlap the higher rank owns the overlap; openings always win), upToAtticFloor (in the whole house the
                 wall carries the slab up to the attic floor), wing = runs past the gables (not part of the house
-                length), height = a fixed top (the stair rail)
+                length), height = a fixed top (the stair rail), plinth = stands on the plinth (down to the ground)
    plinth, site the base under the outer walls; lawn and terraces [x1, z1, x2, z2] at a top level y
    faces        which wall pieces form the gable faces: garden at z = 0, front at z = 1323, the recessed entrance at
                 z = 1232 from x 440; pieces within "margin" of the side walls belong to the portals; depth = the
@@ -31,8 +39,8 @@
                 tops (the wood between the front windows ends in a peak)
    bands        facade strips in the facade layer; a band takes its height out of the finish under it
    claddings    finishes [x1, z1, x2, z2] from y to y: the graphite sides of the entrance recess (the outer cm of its
-                side walls); part "slab" = belongs to the slab over the recess (its white beam and graphite soffit)
-                and is drawn with the attic slab
+                side walls); part "slab" = belongs to the slab over the recess and is drawn with it: the graphite
+                soffit from the bottom of the front band (245) up to the slab, behind the band
    doors        entrance: the door leaf in the opening of kind entrance (from the hinge side), the rest is a glass
                 sidelight; interiorLintels "fullHeight": the wall over an interior door only at full wall height
    gate, windows   the garage door panel; window frames (profile, mullions, transom), the attic gable windows follow
@@ -65,19 +73,23 @@ window.HOUSE = {
   "Schody zabiegowe w kształcie U odczytane z rzutów: bieg z holu na zachód, spocznik przy ścianie, bieg powrotny nad garażem do holu piętra.",
   "Ściany z pustaków 24 i 12 cm, ściany zewnętrzne ocieplone od zewnątrz styropianem 20 cm. Lica zewnętrzne zostały w miejscu z rzutu, grubość odjęto od wnętrza. Portal (skrzydła ścian bocznych za szczytami i dach) ma przekrój 20 + 24 + 20 = 64 cm, pustak skrzydła w linii pustaka ściany bocznej."
  ],
+ "views": {
+  "all": {"name": "Cały dom", "hidden": [], "cut": false, "walk": true, "panels": ["view", "light", "walls", "notes"]},
+  "ground": {"name": "Parter", "floor": "ground", "hidden": ["attic", "roof"], "cut": true, "panels": ["view", "light", "tiles", "rooms", "walls", "notes"]},
+  "attic": {"name": "Piętro", "floor": "attic", "hidden": ["ground", "roof"], "cut": true, "roofGhost": true, "panels": ["view", "light", "tiles", "rooms", "walls", "notes"]},
+  "plan": {"name": "Rzut 2D", "plan": true, "hidden": [], "cut": true, "panels": ["view", "rooms", "walls", "notes"]}
+ },
  "layers": {
-  "walls": {"name": "Ściany", "on": true},
-  "insulation": {"name": "Styropian", "on": true},
-  "facade": {"name": "Elewacja", "on": true},
-  "openings": {"name": "Okna i drzwi", "on": true},
-  "slabs": {"name": "Stropy", "on": true},
-  "stair": {"name": "Schody", "on": true},
-  "fittings": {"name": "Kominek", "on": true},
-  "roof": {"name": "Dach", "on": true},
-  "site": {"name": "Teren", "on": true},
-  "floors": {"name": "Posadzki", "on": true},
-  "cuts": {"name": "Drobne docinki (czerwone)", "on": true},
-  "edges": {"name": "Krawędzie", "on": true}
+  "ground": {"name": "Parter"},
+  "attic": {"name": "Piętro"},
+  "walls": {"name": "Ściany", "layers": {"insulation": {"name": "Styropian"}, "facade": {"name": "Elewacja"}, "edges": {"name": "Krawędzie"}}},
+  "openings": {"name": "Okna i drzwi"},
+  "slabs": {"name": "Stropy"},
+  "stair": {"name": "Schody"},
+  "fittings": {"name": "Kominek"},
+  "roof": {"name": "Dach"},
+  "site": {"name": "Teren"},
+  "floors": {"name": "Posadzki", "layers": {"cuts": {"name": "Drobne docinki (czerwone)"}}}
  },
  "roof": {
   "pitch": 42,
@@ -109,6 +121,7 @@ window.HOUSE = {
    "buildUp": "outer",
    "rank": 5,
    "upToAtticFloor": true,
+   "plinth": true,
    "layers": ["walls"]
   },
   "portal": {
@@ -118,6 +131,7 @@ window.HOUSE = {
    "rank": 5,
    "upToAtticFloor": true,
    "wing": true,
+   "plinth": true,
    "layers": ["walls"]
   },
   "gable": {"name": "szczytowa", "material": "plasterWhite", "buildUp": "outer", "rank": 4, "layers": ["walls"]},
@@ -131,9 +145,9 @@ window.HOUSE = {
  "site": {
   "lawn": {"rect": [-1500, -1500, 2400, 2800], "y": -30, "material": "lawn"},
   "terraces": [
-   {"rect": [-100, -460, 1010, -101], "y": -12, "material": "paving"},
-   {"rect": [0, -101, 910, 0], "y": -12, "material": "paving"},
-   {"rect": [0, 1323, 910, 1700], "y": -12, "material": "paving"}
+   {"rect": [-100, -460, 1010, -101.4], "y": -12, "material": "paving"},
+   {"rect": [0, -101.4, 910, 0], "y": -12, "material": "paving"},
+   {"rect": [0, 1322.8, 910, 1700], "y": -12, "material": "paving"}
   ],
   "layers": ["site"]
  },
@@ -157,14 +171,7 @@ window.HOUSE = {
  "claddings": [
   {"floor": "ground", "rect": [452.8, 1231, 453.8, 1322.8], "y": [0, 245], "material": "graphite"},
   {"floor": "ground", "rect": [846, 1231, 847, 1322.8], "y": [0, 245], "material": "graphite"},
-  {
-   "floor": "ground",
-   "rect": [453.8, 1231, 846, 1322.8],
-   "y": [245, 272],
-   "material": "plasterWhite",
-   "part": "slab"
-  },
-  {"floor": "ground", "rect": [453.8, 1231, 846, 1322.8], "y": [244, 245], "material": "graphite", "part": "slab"}
+  {"floor": "ground", "rect": [453.8, 1231, 846, 1321.8], "y": [245, 272], "material": "graphite", "part": "slab"}
  ],
  "doors": {
   "entrance": {
@@ -237,6 +244,7 @@ window.HOUSE = {
   {
    "id": "ground",
    "name": "Parter",
+   "layers": ["ground"],
    "level": 0,
    "height": 272,
    "walls": [
@@ -336,6 +344,7 @@ window.HOUSE = {
   {
    "id": "attic",
    "name": "Piętro",
+   "layers": ["attic"],
    "level": 297,
    "underRoof": true,
    "walls": [

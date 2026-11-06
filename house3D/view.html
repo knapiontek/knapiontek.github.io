@@ -31,12 +31,14 @@ body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow
 .app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 370px}
 .stage{position:relative;background:var(--stage);min-width:0;min-height:0}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
-.hud{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:12px;right:12px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none}
+.hud{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:12px;right:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;pointer-events:none}
 .hud>*{pointer-events:auto}
 .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:2px}
 .seg button{border:0;background:transparent;color:var(--ink);font:600 13px var(--f-display);letter-spacing:.03em;padding:6px 12px;border-radius:6px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .cams{display:flex;flex-wrap:wrap;gap:4px}
+#context{display:flex;flex-direction:column;gap:4px}
+.cams button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .cams button{border:1px solid var(--line);background:var(--panel);color:var(--ink);font:500 12px var(--f-body);padding:5px 9px;border-radius:6px;cursor:pointer}
 .cams button:hover{border-color:var(--accent)}
 .legend{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:12px var(--f-body);color:var(--muted);max-width:min(420px,calc(100% - 24px))}
@@ -51,14 +53,8 @@ body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow
 .pad .u{grid-column:2;grid-row:1}.pad .l{grid-column:1;grid-row:2}.pad .d{grid-column:2;grid-row:2}.pad .r{grid-column:3;grid-row:2}
 .stage.walking .legend{display:none}
 .walkbtn[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink)}
-#plan2d{position:absolute;inset:0;z-index:5;background:#ffffff;display:flex;flex-direction:column}
-#plan2d .bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 14px;border-bottom:1px solid #e2e4e6;background:#f7f8f6;color:#1d2124}
-#plan2d .bar b{font:700 17px var(--f-display);margin-right:auto}
-#plan2d .bar>button{border:1px solid #d4d9dc;background:#eef0f1;color:#1d2124;border-radius:7px;font:600 13px var(--f-body);padding:6px 10px;cursor:pointer}
-#plan2d .seg{background:#ffffff;border-color:#d4d9dc}
-#plan2d .seg button{color:#1d2124}
-#plan2d .seg button[aria-pressed="true"]{background:#9a6a2f;color:#ffffff}
-#plan2d .pchk{display:flex;gap:5px;align-items:center;font:500 13px var(--f-body);text-transform:none;letter-spacing:0;color:#1d2124}
+#plan2d{position:absolute;inset:0;z-index:4;background:#ffffff;display:flex;flex-direction:column;padding-top:56px}
+.hud{z-index:6}
 #plan2d .sheet{flex:1;min-height:0;overflow:auto;padding:12px;background:#ffffff}
 #plan2d svg{display:block;margin:0 auto;height:calc(100% * var(--zoom,1));width:auto;max-width:none}
 #loading{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center;font:600 15px var(--f-display);color:var(--muted)}
@@ -72,7 +68,9 @@ summary::-webkit-details-marker{display:none}
 summary .t{font:700 15px var(--f-display)}
 summary .s{font:12px var(--f-mono);color:var(--muted);text-align:right}
 .lay{padding:0 12px 12px;display:grid;gap:9px}
-.layers{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin:4px 0}
+.layers{display:grid;gap:3px;margin:4px 0}
+.layers .sub{display:grid;gap:3px;padding-left:22px}
+.layers .sub[data-off]{opacity:.45}
 .row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 label{display:grid;gap:3px;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);min-width:0}
@@ -119,25 +117,10 @@ td select{padding:3px 4px;font-size:12px}
     <canvas id="gl" aria-label="Widok 3D domu z posadzkami"></canvas>
     <div id="loading">Wczytywanie modelu…</div>
     <div class="hud">
-      <div class="seg" role="group" aria-label="Kondygnacja">
-        <button id="m-ground" data-mode="ground" aria-pressed="true">Parter</button>
-        <button id="m-attic" data-mode="attic" aria-pressed="false">Piętro</button>
-        <button id="m-all" data-mode="all" aria-pressed="false">Cały dom</button>
-      </div>
-      <button class="walkbtn" id="walkbtn" aria-pressed="false">Spacer</button>
-      <div class="cams" id="cams"></div>
-      <button class="walkbtn" id="planBtn" aria-expanded="false" aria-controls="plan2d">Rzut 2D</button>
+      <div class="seg" role="group" aria-label="Widok" id="views"></div>
+      <div class="cams" id="context" aria-label="Menu widoku"></div>
     </div>
-    <div id="plan2d" hidden role="dialog" aria-label="Rzut 2D domu">
-      <div class="bar"><b id="planTitle">Rzut parteru · 1:50</b>
-        <div class="seg" role="group" aria-label="Kondygnacja rzutu">
-          <button id="p-ground" data-plan="ground" aria-pressed="true">Parter</button>
-          <button id="p-attic" data-plan="attic" aria-pressed="false">Piętro</button>
-          <button id="p-both" data-plan="both" aria-pressed="false">Oba</button>
-        </div>
-        <label class="pchk"><input type="checkbox" id="planTiles" checked> Płytki</label>
-        <button id="planZoomOut" aria-label="Pomniejsz">−</button><button id="planZoomIn" aria-label="Powiększ">+</button>
-        <button id="planDownload">Pobierz SVG</button><button id="planClose">Wróć do 3D</button></div>
+    <div id="plan2d" hidden aria-label="Rzut 2D domu">
       <div class="sheet" id="planSheet"></div>
     </div>
     <div class="walkhud" id="walkhud" hidden>
@@ -156,14 +139,20 @@ td select{padding:3px 4px;font-size:12px}
     <h1 id="title"></h1>
     <p class="sub" id="subtitle"></p>
 
+    <section data-panel="view">
     <h2>Widok</h2>
     <div class="lay" style="padding:0">
       <div class="rng"><label for="cut">Wysokość cięcia ścian</label><span id="cutv"></span>
         <input id="cut" type="range" min="30" max="500" step="5" style="grid-column:1/-1"></div>
       <div class="checks">
         <div id="layers" class="layers"></div>
-        <label><input type="checkbox" id="showRoof"> Skosy dachu na piętrze</label>
+        <label id="showRoofLabel"><input type="checkbox" id="showRoof"> Skosy dachu (przezroczyste)</label>
       </div>
+    </div>
+    </section>
+    <section data-panel="light">
+    <h2>Światło</h2>
+    <div class="lay" style="padding:0">
       <div class="rng"><label for="sunaz">Słońce: kierunek</label><span id="sunazv"></span>
         <input id="sunaz" type="range" min="0" max="355" step="5" style="grid-column:1/-1"></div>
       <div class="rng"><label for="sunel">Słońce: wysokość</label><span id="sunelv"></span>
@@ -171,18 +160,12 @@ td select{padding:3px 4px;font-size:12px}
       <div class="rng"><label for="bright">Jasność światła</label><span id="brightv"></span>
         <input id="bright" type="range" min="0.3" max="1.6" step="0.05" style="grid-column:1/-1"></div>
     </div>
+    </section>
 
-    <h2>Posadzki</h2>
-    <div id="layouts"></div>
-
-    <h2>Pomieszczenia</h2>
-    <table id="rooms"></table>
-
-    <h2>Ściany</h2>
-    <div id="walls"></div>
-
-    <h2>Uwagi</h2>
-    <p class="note" id="notes"></p>
+    <section data-panel="tiles"><h2 id="tilesTitle">Posadzki</h2><div id="layouts"></div></section>
+    <section data-panel="rooms"><h2>Pomieszczenia</h2><table id="rooms"></table></section>
+    <section data-panel="walls"><h2>Ściany</h2><div id="walls"></div></section>
+    <section data-panel="notes"><h2>Uwagi</h2><p class="note" id="notes"></p></section>
   </aside>
 </div>
 
@@ -215,6 +198,9 @@ const WIDTH = knees[1][2];
 const LENGTH = Math.max(...PLAN.ground.walls.filter(w => !B.wallKinds[w.kind].wing).map(w => w.r[3]));   // the front gable face
 const roofHeight = x => KNEE + PITCH * Math.max(0, Math.min(x - XL, XR - x));
 const FLOOR_NAMES = Object.fromEntries(B.floors.map(f => [f.id, f.name]));
+// the layer tree flattened: id -> its node and the id of its parent
+const LAYER = {};
+(function index(layers, parent) { for (const [k, node] of Object.entries(layers || {})) { LAYER[k] = { node, parent }; index(node.layers, k); } })(B.layers, null);
 const buildUpOf = kind => kind && B.wallKinds[kind].buildUp ? B.buildUps[B.wallKinds[kind].buildUp] : null;
 const coreThickness = bu => bu.layers[0].thickness;
 const outerThickness = bu => bu.layers.slice(1).reduce((s, l) => s + l.thickness, 0);
@@ -232,10 +218,10 @@ function applyProduct(L, key) {
 }
 
 /* ================= 3. STATE (remembered per viewer) ================= */
-const STORE = 'house-floors-v3';    // a new key when the data format changes: old states are dropped, not converted
+const STORE = 'house-floors-v4';    // a new key when the data format changes: old states are dropped, not converted
 let state;
 function freshState() {
-  const s = { mode: 'ground', cut: 150, showRoof: false, layers: Object.fromEntries(Object.entries(B.layers).map(([k, l]) => [k, l.on])), sunAzimuth: B.light.sun.azimuth, sunElevation: B.light.sun.elevation, brightness: 1, layouts: {}, rooms: {}, auto: {} };
+  const s = { mode: 'ground', cut: 150, showRoof: false, layers: Object.fromEntries(Object.entries(LAYER).map(([k, l]) => [k, l.node.on !== false])), sunAzimuth: B.light.sun.azimuth, sunElevation: B.light.sun.elevation, brightness: 1, layouts: {}, rooms: {}, auto: {} };
   for (const k in B.tiles.layouts) {
     const d = B.tiles.layouts[k];
     s.layouts[k] = { label: d.label, floor: d.floor, dir: d.dir, oa: 0, ob: 0 };
@@ -246,7 +232,7 @@ function freshState() {
 }
 try { state = JSON.parse(localStorage.getItem(STORE)); } catch (e) { state = null; }
 const stateFits = st => st && st.layouts && Object.keys(st.layouts).join() === Object.keys(B.tiles.layouts).join()
-  && st.layers && Object.keys(st.layers).join() === Object.keys(B.layers).join()
+  && st.layers && Object.keys(st.layers).join() === Object.keys(LAYER).join()
   && Object.values(st.layouts).every(L => PRODUCTS[L.product] && TEX[L.texture]);
 if (!stateFits(state)) state = freshState();
 function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
@@ -519,6 +505,7 @@ const floorGroups = { ground: new THREE.Group(), attic: new THREE.Group() };
 groups.ground.add(wallGroups.ground, floorGroups.ground);
 groups.attic.add(wallGroups.attic, floorGroups.attic);
 root.add(groups.ground, groups.attic);
+for (const f of FLOOR_IDS) groups[f].userData.layers = PLAN[f].layers;   // a floor and everything standing on it
 function cmUV(g, ox, oy, oz) {          // uv = world cm on the face plane, so textures keep their real size
   const pos = g.attributes.position, nor = g.attributes.normal, uv = g.attributes.uv;
   for (let i = 0; i < pos.count; i++) {
@@ -534,8 +521,22 @@ function withLayers(layers, fn) {
   try { return fn(); } finally { drawLayers = prev; }
 }
 const tag = obj => { obj.userData.layers = drawLayers; return obj; };
-const layerOn = k => state.layers[k] !== false;
+// The views are a tree: a view may hold views of its own ("views"), each with its own menu one row lower. The chosen
+// path is state.mode (the top view) and state.path (the sub-views); the view in force is the chain merged from the top:
+// the deeper node overrides, hidden layers add up.
+function viewChain() {
+  const chain = [B.views[state.mode]];
+  for (const k of state.path || []) { const next = (chain[chain.length - 1].views || {})[k]; if (!next) break; chain.push(next); }
+  return chain;
+}
+function VIEW() {
+  const chain = viewChain(), v = Object.assign({}, ...chain);
+  v.hidden = [...new Set(chain.flatMap(n => n.hidden || []))];
+  return v;
+}
+const layerOn = k => state.layers[k] !== false && !VIEW().hidden.includes(k) && (!LAYER[k].parent || layerOn(LAYER[k].parent));   // on, not hidden by the view, and so its parents
 const shown = layers => layers.every(layerOn);
+const cutHeight = () => VIEW().cut ? state.cut : Infinity;                     // the view cuts the walls, or shows them whole
 function applyLayers() {
   root.traverse(o => { if (o.userData.layers) o.visible = shown(o.userData.layers); });
   requestRender();
@@ -588,6 +589,7 @@ const ZS = PLAN.ground.walls.reduce((m, w) => [Math.min(m[0], w.r[1]), Math.max(
 const ROOF_T = thicknessWith(B.buildUps[B.roof.buildUp], 2) / Math.cos(B.roof.pitch * Math.PI / 180);   // the portal frame section, vertical
 const under = x => KNEE + PITCH * (Math.min(x, WIDTH - x) - XL);           // roof underside above the attic floor
 const roofSolid = new THREE.Group(), roofGhost = new THREE.Group(); root.add(roofSolid, roofGhost);
+roofSolid.userData.layers = B.roof.layers;
 withLayers(B.roof.layers, function buildRoof() {
   const y = LEVEL.attic, sh = new THREE.Shape();
   sh.moveTo(0, y + under(0)); sh.lineTo(XM, y + under(XM)); sh.lineTo(WIDTH, y + under(WIDTH));
@@ -607,13 +609,12 @@ withLayers(B.roof.layers, function buildRoof() {
   for (const [xa, xb] of [[XL, XM], [XR, XM]]) {        // see-through slopes for the attic plan view
     const y1 = y + KNEE, y2 = y + RIDGE, g3 = new THREE.BufferGeometry();
     g3.setAttribute('position', new THREE.Float32BufferAttribute([xa, y1, 0, xb, y2, 0, xb, y2, LENGTH, xa, y1, 0, xb, y2, LENGTH, xa, y1, LENGTH], 3));
-    g3.computeVertexNormals(); roofGhost.add(tag(new THREE.Mesh(g3, M.ghost)));
+    g3.computeVertexNormals(); roofGhost.add(new THREE.Mesh(g3, M.ghost));
   }
 });
-const isFull = () => walk.on || state.mode === 'all';
-function updateRoof() {
-  roofSolid.visible = isFull();
-  roofGhost.visible = !isFull() && state.showRoof && state.mode === 'attic';
+const isFull = () => !VIEW().cut;
+function updateRoof() {          // the solid roof is a layer; the see-through slopes are a help of a view
+  roofGhost.visible = !!VIEW().roofGhost && state.showRoof;
 }
 
 /* ================= 7. WALLS (rebuilt with the cut height) ================= */
@@ -830,7 +831,7 @@ function skinFace(r0, y0, bottom, top, grp, breaks, floor, face, f) {
   skinning = true;
   try {
     let parts = [[num(bottom), num(top)]];
-    if (isFull()) for (const b of B.bands) {         // the band takes its height out of the cladding under it
+    for (const b of B.bands) {                       // the band takes its height out of the cladding under it
       if (b.face !== face || r0[2] <= b.x[0] || r0[0] >= b.x[1]) continue;
       const b0 = b.y[0] - y0, b1 = b.y[1] - y0;
       parts = parts.flatMap(([lo, hi]) => [[lo, x => Math.min(hi(x), b0)], [x => Math.max(lo(x), b1), hi]]);
@@ -869,6 +870,7 @@ function frames(sill, headFn, gx, gz, y0, grp, breaks, thinX, opt) {
   }
 }
 // the layer (EPS) seen in the cut: a thin cap of its colour on the top of the wall
+// (only where the view cuts the walls: an uncut top is no section)
 const cap = (r, y0, top, mat, grp, breaks) => withLayers(materialLayers[Object.keys(M).find(k => M[k] === mat)], () => prism(r[0], r[1], r[2], r[3], y0, top, x => num(top)(x) + 0.6, mat, grp, breaks));
 // the facade finish is the outer F.depth cm of the wall itself: the wall body ends behind it
 const bodyOf = (r, face) => face === 'garden' ? [r[0], r[1] + F.depth, r[2], r[3]] : face === 'front' ? [r[0], r[1], r[2], r[3] - F.depth] : r;
@@ -882,21 +884,21 @@ function wallBody(floor, r, y0, bottom, top, mat, grp, breaks) {
 }
 function buildWalls(floor) {
   const grp = wallGroups[floor]; clearGroup(grp);
-  const full = isFull(), y0 = LEVEL[floor], cut = full ? 10000 : state.cut;
+  const y0 = LEVEL[floor], cut = cutHeight();
   const edgeList = []; edgeSink = edgeList;
   const attic = floor === 'attic';
   joinHeights = [...new Set(PLAN[floor].openings.flatMap(o => [o.sill, o.head]).concat(attic ? [KNEE] : [GROUND_H, LEVEL.attic]))].sort((a, b) => a - b);
-  floorY = y0; seamY = !attic && full ? LEVEL.attic : null;
+  floorY = y0; seamY = attic ? null : LEVEL.attic;
   const c1 = XL + (cut - KNEE) / PITCH, c2 = XR - (cut - KNEE) / PITCH;
   const breaks = attic ? [XL, XM, XR, c1, c2, WIDTH - XL, XL] : [];
-  // the outer walls carry the slab up to the attic floor only in the full house; with the attic hidden every wall ends
-  // at the same height (the cut, at most the ceiling)
+  // one model in every view: each wall rises to its own top (the outer walls up to the attic floor), the view only
+  // cuts it at the cut height
   const fixedTop = kind => B.wallKinds[kind].height === undefined ? null : () => Math.min(cut, B.wallKinds[kind].height);
-  const groundTop = kind => B.wallKinds[kind].upToAtticFloor && full ? () => LEVEL.attic : () => Math.min(cut, GROUND_H);
+  const groundTop = kind => () => Math.min(cut, B.wallKinds[kind].upToAtticFloor ? LEVEL.attic : GROUND_H);
   const wallTop = kind => fixedTop(kind) || (attic ? x => Math.min(cut, roofHeight(x)) : groundTop(kind));   // one roof line for every attic wall
   const skinTop = top => top;
-  const portalTop = full && B.portals.groundWingsTo === 'attic' ? LEVEL.attic : GROUND_H;
-  const fullTop = attic ? roofHeight : () => full ? LEVEL.attic : GROUND_H;
+  const portalTop = LEVEL[B.portals.groundWingsTo];
+  const fullTop = attic ? roofHeight : () => LEVEL.attic;
   // an opening is drawn whole (glass, frames and the wall above it) when the cut is at or above its highest point
   const openingWhole = o => {
     const r = o.r, { head } = openingHead(o, fullTop), xs = [r[0], r[2], ...breaks.filter(p => p > r[0] && p < r[2])];
@@ -915,17 +917,19 @@ function buildWalls(floor) {
       const body = bodyOf(r, c.face);
       wallBody(floor, body, y0, 0, top, M.wall[c.kind], grp, breaks);
       skin(r, y0, 0, skinTop(top), grp, breaks, floor, c.face, c.finish);
-      if (c.layer && !full) cap(body, y0, top, M[c.layer], grp, breaks);
+      if (c.layer && cut < Infinity) cap(body, y0, top, M[c.layer], grp, breaks);
+      if (!attic && B.wallKinds[c.kind].plinth) withLayers(B.plinth.layers, () => box(r[0], B.plinth.bottom, r[1], r[2], B.plinth.top, r[3], M[B.plinth.material], grp));
     } else {
       const o = PLAN[floor].openings[c.opening], top = wallTop(c.kind), { head } = openingHead(o, top);
       const below = x => Math.min(o.sill, top(x));
       const body = bodyOf(r, c.face);
       prism(body[0], body[1], body[2], body[3], y0, 0, below, M.wall[c.kind], grp, breaks); skin(r, y0, 0, below, grp, breaks, floor, c.face, c.finish);
-      if (c.layer && !full && cut < o.sill) cap(body, y0, below, M[c.layer], grp, breaks);
+      if (c.layer && cut < o.sill) cap(body, y0, below, M[c.layer], grp, breaks);
+      if (!attic && B.wallKinds[c.kind].plinth) withLayers(B.plinth.layers, () => box(r[0], B.plinth.bottom, r[1], r[2], B.plinth.top, r[3], M[B.plinth.material], grp));
       const interiorDoor = o.kind === 'door' && !facadeFace(o.r) && B.doors.interiorLintels === 'fullHeight';
-      if (openingWhole(o) && (!interiorDoor || full || cut >= GROUND_H)) {   // the wall above: only with the whole opening
+      if (openingWhole(o) && (!interiorDoor || cut >= GROUND_H)) {   // the wall above: only with the whole opening
         prism(body[0], body[1], body[2], body[3], y0, head, top, M.wall[c.kind], grp, breaks); skin(r, y0, head, skinTop(top), grp, breaks, floor, c.face, c.finish);
-        if (c.layer && !full) cap(body, y0, top, M[c.layer], grp, breaks);
+        if (c.layer && cut < Infinity) cap(body, y0, top, M[c.layer], grp, breaks);
       }
     }
   });
@@ -975,11 +979,11 @@ function buildWalls(floor) {
   });
   withLayers(B.faces.layers, () => {
   for (const c of B.claddings) if (c.floor === floor && c.part !== 'slab' && Math.min(c.y[1], cut) > c.y[0]) prism(c.rect[0], c.rect[1], c.rect[2], c.rect[3], 0, c.y[0], Math.min(c.y[1], cut), M[c.material], grp, []);
-  if (full) for (const b of B.bands) {
+  for (const b of B.bands) {
     const onFloor = b.y[0] < (attic ? 10000 : LEVEL.attic) && b.y[0] >= (attic ? LEVEL.attic : -100);
     if (!onFloor) continue;
     const z = b.face === 'garden' ? [F.garden.z, F.garden.z + F.depth] : [LENGTH - F.depth, LENGTH];   // the facade layer
-    prism(b.x[0], z[0], b.x[1], z[1], 0, b.y[0], b.y[1], M[b.material], grp, []);
+    prism(b.x[0], z[0], b.x[1], z[1], 0, b.y[0], Math.min(b.y[1], y0 + cut), M[b.material], grp, []);   // cut like the walls
   }
   });
   edgeSink = null;
@@ -1039,28 +1043,48 @@ function buildFloor(floor) {
 
 /* ================= 9. VIEW MODES AND CAMERAS ================= */
 const CAMERAS = {};
-for (const mode in B.cameras) CAMERAS[mode] = B.cameras[mode].map(c => {
-  const dy = mode === 'attic' ? LEVEL.attic : 0;
-  return [c.name, [c.eye[0], c.eye[1] + dy, c.eye[2]], [c.target[0], c.target[1] + dy, c.target[2]]];
-});
+// a camera of a view: y from the level of the view's floor
+const cameraOf = (c, floor = VIEW().floor) => { const dy = floor ? LEVEL[floor] : 0; return [c.name, [c.eye[0], c.eye[1] + dy, c.eye[2]], [c.target[0], c.target[1] + dy, c.target[2]]]; };
+for (const mode in B.cameras) CAMERAS[mode] = B.cameras[mode].map(c => cameraOf(c, B.views[mode].floor));
 function setCamera(c) {
   camera.position.set(c[1][0] / 100, c[1][1] / 100, c[1][2] / 100);
   controls.target.set(c[2][0] / 100, c[2][1] / 100, c[2][2] / 100);
   controls.update(); requestRender();
 }
+// The menus under the views: one row per level of the chosen view. A row holds the sub-views of that level, and the
+// last row the tools of the view in force: the walk, its cameras, its layer switches ("toggles"), the 2D plan tools.
+function contextMenu() {
+  const chain = viewChain(), v = VIEW(), menu = document.getElementById('context'); menu.innerHTML = '';
+  chain.forEach((node, depth) => {
+    const row = document.createElement('div'); row.className = 'cams'; menu.appendChild(row);
+    const add = (text, fn, attrs = {}) => { const b = document.createElement('button'); b.textContent = text; b.onclick = fn; Object.assign(b, attrs); row.appendChild(b); return b; };
+    for (const [k, sub] of Object.entries(node.views || {}))
+      add(sub.name, () => { state.path = (state.path || []).slice(0, depth).concat(state.path && state.path[depth] === k ? [] : [k]); setMode(state.mode, true); })
+        .setAttribute('aria-pressed', String((state.path || [])[depth] === k));
+    if (depth < chain.length - 1) return;
+    if (v.walk) add('Spacer', () => setWalk(!walk.on), { id: 'walkbtn', className: 'walkbtn' }).setAttribute('aria-pressed', String(walk.on));
+    for (const c of (v.cameras ? v.cameras.map(c => cameraOf(c)) : CAMERAS[state.mode]) || []) add(c[0], () => { setWalk(false); setCamera(c); });
+    for (const k of v.toggles || []) add(LAYER[k].node.name, () => setLayer(k, state.layers[k] === false))
+      .setAttribute('aria-pressed', String(layerOn(k)));
+    if (v.plan) {
+      add('−', () => zoomPlan(1 / 1.25), { ariaLabel: 'Pomniejsz' }); add('+', () => zoomPlan(1.25), { ariaLabel: 'Powiększ' });
+      add('Pobierz SVG', downloadPlan);
+    }
+    if (!row.children.length) row.remove();
+  });
+}
 function setMode(mode, keepCamera) {
+  const before = cutHeight();
+  if (mode !== state.mode) state.path = [];
   state.mode = mode;
-  groups.ground.visible = mode !== 'attic';
-  groups.attic.visible = mode !== 'ground';
-  const wasFull = groups.ground.userData.full;
   updateRoof();
-  if (wasFull !== isFull()) { groups.ground.userData.full = isFull(); buildWalls('ground'); buildWalls('attic'); }
+  if (before !== cutHeight()) for (const f of FLOOR_IDS) buildWalls(f);   // the same objects, cut at another height
+  applyLayers(); layersPanel(); contextPanel();
   for (const b of document.querySelectorAll('.hud [data-mode]')) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
-  const cams = document.getElementById('cams'); cams.innerHTML = '';
-  for (const c of CAMERAS[mode]) { const b = document.createElement('button'); b.textContent = c[0]; b.onclick = () => { setWalk(false); setCamera(c); }; cams.appendChild(b); }
-  if (!keepCamera) setCamera(CAMERAS[mode][mode === 'all' ? 0 : 1]);
+  contextMenu();
+  showPlan(!!VIEW().plan);
+  if (!keepCamera && CAMERAS[mode]) setCamera(CAMERAS[mode][VIEW().floor ? 1 : 0]);
   if (walk.on) return;
-  for (const d of document.querySelectorAll('#layouts details')) d.open = (mode === 'all' || d.dataset.floor === mode) && B.tiles.layouts[d.dataset.key].panelOpen !== false;
   save(); requestRender();
 }
 
@@ -1111,15 +1135,44 @@ function refreshLayoutPanel(key) {
     (price ? `<dt>Koszt płytek ≈</dt><dd>${fmt(Math.max(buy, st.tiles * tileM2) * price, 0)} zł</dd>` : '');
   sumEl.textContent = `${L.len / 10}×${L.wid / 10} · ${fmt(st.area, 1)} m²`;
 }
+// the layers of house.js: switching one changes only what is shown; the view hides some (they are not offered)
+function setLayer(k, on) {
+  state.layers[k] = on; save();
+  const tiles = B.tiles.small.concat(B.tiles.layers);   // the marked small cuts recolour the tiles
+  if (Object.keys(LAYER).some(t => tiles.includes(t) && (t === k || LAYER[t].parent === k))) for (const f of FLOOR_IDS) rebuildFloor(f);
+  applyLayers(); layersPanel(); contextMenu();
+  if (!document.getElementById('plan2d').hidden) showPlan(true);
+}
+// the layer tree in the panel, children indented under their parent; the layers the view hides are not offered
+function layersPanel() {
+  const hidden = VIEW().hidden;
+  const html = (layers, depth) => Object.entries(layers || {}).filter(([k]) => !hidden.includes(k)).map(([k, l]) =>
+    `<label class="lyr" style="--depth:${depth}"><input type="checkbox" data-layer="${k}"${state.layers[k] !== false ? ' checked' : ''}> ${l.name}</label>` +
+    (l.layers ? `<div class="sub"${state.layers[k] === false ? ' data-off' : ''}>${html(l.layers, depth + 1)}</div>` : '')).join('');
+  const el = document.getElementById('layers'); el.innerHTML = html(B.layers, 0);
+  for (const box of el.querySelectorAll('input')) box.onchange = () => setLayer(box.dataset.layer, box.checked);
+}
+// the panel follows the view: its sections, and the floor settings only of the view's floor
+function contextPanel() {
+  const v = VIEW();
+  for (const sec of document.querySelectorAll('aside [data-panel]')) sec.hidden = !v.panels.includes(sec.dataset.panel);
+  for (const d of document.querySelectorAll('#layouts details')) {
+    d.hidden = d.dataset.floor !== v.floor;
+    d.open = !d.hidden && B.tiles.layouts[d.dataset.key].panelOpen !== false;
+  }
+  for (const row of document.querySelectorAll('#rooms tr')) row.hidden = !!v.floor && row.dataset.floor !== v.floor;
+  document.getElementById('showRoofLabel').hidden = !v.roofGhost;
+  if (v.floor) document.getElementById('tilesTitle').textContent = 'Posadzki · ' + FLOOR_NAMES[v.floor];
+}
 function roomsTable() {
   let h = '';
   for (const f of FLOOR_IDS) {
-    h += `<tr><td colspan="3" class="floorname">${FLOOR_NAMES[f]}</td></tr>`;
+    h += `<tr data-floor="${f}"><td colspan="3" class="floorname">${FLOOR_NAMES[f]}</td></tr>`;
     PLAN[f].rooms.forEach((r, i) => {
       const area = r.rects.reduce((s, q) => s + (q[2] - q[0]) * (q[3] - q[1]), 0) / 1e4;
       const opts = Object.keys(state.layouts).filter(k => state.layouts[k].floor === f).map(k => option(k, state.layouts[k].label, state.rooms[f][i])).join('') + option('none', 'Bez płytek', state.rooms[f][i]);
       const name = r.link ? `${r.name}<br><a class="info" href="${r.link.href}" target="_blank" rel="noopener">${r.link.name} ↗</a>` : r.name;   // a room with a sub-project
-      h += `<tr><td>${name}</td><td class="n" title="z rzutu: ${fmt(r.planArea, 2)} m²">${fmt(area, 2)} m²</td><td><select id="room-${f}-${i}" data-f="${f}" data-i="${i}" aria-label="Posadzka: ${r.name}">${opts}</select></td></tr>`;
+      h += `<tr data-floor="${f}"><td>${name}</td><td class="n" title="z rzutu: ${fmt(r.planArea, 2)} m²">${fmt(area, 2)} m²</td><td><select id="room-${f}-${i}" data-f="${f}" data-i="${i}" aria-label="Posadzka: ${r.name}">${opts}</select></td></tr>`;
     });
   }
   const t = document.getElementById('rooms'); t.innerHTML = h;
@@ -1216,7 +1269,7 @@ function updateWalk(dt) {
 function setWalk(on) {
   if (on === walk.on) return;
   walk.on = on;
-  document.getElementById('walkbtn').setAttribute('aria-pressed', String(on));
+  const wb = document.getElementById('walkbtn'); if (wb) wb.setAttribute('aria-pressed', String(on));
   document.getElementById('walkhud').hidden = !on;
   document.querySelector('.stage').classList.toggle('walking', on);
   controls.enabled = !on;
@@ -1259,7 +1312,7 @@ for (const b of document.querySelectorAll('.pad button')) {
   b.addEventListener('pointerdown', e => { e.preventDefault(); walk.keys[k] = true; b.setPointerCapture(e.pointerId); });
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, () => { walk.keys[k] = false; });
 }
-document.getElementById('walkbtn').onclick = () => setWalk(!walk.on);
+
 window.houseWalk = walk;  // for checking from the console
 window.__cam = (eye, target) => setCamera(["", eye, target]);
 window.__walls = wallGroups;
@@ -1387,7 +1440,7 @@ function planSVG(which) {
   const floors = which === 'both' ? FLOOR_IDS : [which];
   const pad = { l: 120, r: 130, t: 200, b: 230 }, gap = 100, W = WIDTH + pad.l + pad.r, H = LENGTH + pad.t + pad.b;
   const total = floors.length * W + (floors.length - 1) * gap, C = PLAN_STYLE;
-  const body = floors.map((fl, i) => floorSVG(fl, pad.l + i * (W + gap), pad.t, state.planTiles !== false)).join('\n');
+  const body = floors.map((fl, i) => floorSVG(fl, pad.l + i * (W + gap), pad.t, true)).join('\n');
   const date = new Date().toLocaleDateString('pl-PL');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${H + 30}" width="${total / 5}mm" height="${(H + 30) / 5}mm" font-family="Arial, Helvetica, sans-serif">
 <defs><pattern id="layer" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="${C.ink}" stroke-width=".35" opacity=".45"/></pattern><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${C.ink}"/></marker></defs>
@@ -1397,33 +1450,22 @@ ${body}
 <text x="20" y="${H + 18}" class="s">${B.name} · rzut 1:50 przy wydruku w skali (1 cm rysunku = 50 cm) · wymiary w cm · ściany przecięte na wysokości ${planCut()} cm, jak w widoku 3D · ten sam model co widok 3D (house.js, układ płytek) · ${date}</text>
 </svg>`;
 }
-let planZoom = 1, planWhich = 'ground';
-const PLAN_TITLES = { ground: 'Rzut parteru', attic: 'Rzut piętra', both: 'Rzuty parteru i piętra' };
-function showPlan(on) {
-  const el = document.getElementById('plan2d'); el.hidden = !on;
-  document.getElementById('planBtn').setAttribute('aria-expanded', String(on));
+let planZoom = 1;
+function showPlan(on) {       // the 2D plan view: every floor side by side, from the same model
+  document.getElementById('plan2d').hidden = !on;
   if (!on) return;
-  document.getElementById('planTitle').textContent = PLAN_TITLES[planWhich] + ' · 1:50';
-  for (const b of el.querySelectorAll('[data-plan]')) b.setAttribute('aria-pressed', String(b.dataset.plan === planWhich));
-  const sheet = document.getElementById('planSheet'); sheet.innerHTML = planSVG(planWhich); sheet.style.setProperty('--zoom', planZoom);
+  const sheet = document.getElementById('planSheet'); sheet.innerHTML = planSVG('both'); sheet.style.setProperty('--zoom', planZoom);
 }
-document.getElementById('planBtn').onclick = () => { setWalk(false); if (state.mode !== 'all') planWhich = state.mode; showPlan(document.getElementById('plan2d').hidden); };
-document.getElementById('planClose').onclick = () => showPlan(false);
-for (const b of document.querySelectorAll('[data-plan]')) b.onclick = () => { planWhich = b.dataset.plan; showPlan(true); };
-const planTiles = document.getElementById('planTiles');
-planTiles.checked = state.planTiles !== false;
-planTiles.onchange = () => { state.planTiles = planTiles.checked; save(); showPlan(true); };
-document.getElementById('planZoomIn').onclick = () => { planZoom = Math.min(5, planZoom * 1.25); document.getElementById('planSheet').style.setProperty('--zoom', planZoom); };
-document.getElementById('planZoomOut').onclick = () => { planZoom = Math.max(0.4, planZoom / 1.25); document.getElementById('planSheet').style.setProperty('--zoom', planZoom); };
+function zoomPlan(k) { planZoom = Math.min(5, Math.max(0.4, planZoom * k)); document.getElementById('planSheet').style.setProperty('--zoom', planZoom); }
 // saving: through the viewer's downloads capability when the page is published on claude.ai, a plain link from disk
 const hostDownloads = window.claude && window.claude.use ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
-document.getElementById('planDownload').onclick = async () => {
-  const filename = `house-plan-${planWhich}.svg`, svg = planSVG(planWhich), dl = await hostDownloads;
+async function downloadPlan() {
+  const filename = 'house-plan.svg', svg = planSVG('both'), dl = await hostDownloads;
   if (dl) { try { await dl.save({ filename, data: svg }); } catch (e) { /* declined or unavailable: nothing to do */ } return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })); a.download = filename;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-};
-window.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('plan2d').hidden) showPlan(false); });
+}
+
 window.__planSVG = planSVG;
 
 /* ================= 13. TEXTS, WALL CHECK ================= */
@@ -1441,7 +1483,7 @@ function wallCheck() {
     const bu = B.buildUps[key], kinds = Object.keys(B.wallKinds).filter(k => B.wallKinds[k].buildUp === key);
     const n = FLOOR_IDS.reduce((s, f) => s + PLAN[f].walls.filter(w => kinds.includes(w.kind)).length, 0);
     const outer = bu.layers.slice(1), sizes = outer.length ? [1, 2].map(k => cm(thicknessWith(bu, k))).join(' / ') : cm(coreThickness(bu));
-    rows.push(`<tr><td>${bu.name}<br><span class="info">${cm(coreThickness(bu))} ${bu.layers[0].name.toLowerCase()}${outer.map(l => ` + ${l.name.toLowerCase()} ${cm(l.thickness)} z każdej strony od zewnątrz`).join('')}</span></td><td class="n">${sizes} cm</td><td class="n">${n} szt.</td></tr>`);
+    rows.push(`<tr><td>${bu.name}<br><span class="info">${cm(coreThickness(bu))} ${bu.layers[0].name.toLowerCase()}${outer.map(l => ` + ${l.name.toLowerCase()} ${cm(l.thickness)} z każdej strony od zewnątrz`).join('')}</span></td><td class="n" style="white-space:nowrap">${sizes} cm</td><td class="n">${n} szt.</td></tr>`);
   }
   for (const f of FLOOR_IDS) {
     const parts = PLAN[f].walls.map(w => ({ r: w.r, kind: w.kind, what: 'ściana ' + B.wallKinds[w.kind].name }))
@@ -1482,18 +1524,11 @@ for (const k in state.layouts) wireLayout(k);
 roomsTable();
 const cut = document.getElementById('cut'), cutv = document.getElementById('cutv');
 cut.value = state.cut; cutv.textContent = state.cut + ' cm';
-cut.oninput = () => { state.cut = +cut.value; cutv.textContent = state.cut + ' cm'; buildWalls('ground'); buildWalls('attic'); save(); requestRender(); if (!document.getElementById('plan2d').hidden) showPlan(true); };
+cut.oninput = () => { state.cut = +cut.value; cutv.textContent = state.cut + ' cm'; for (const f of FLOOR_IDS) buildWalls(f); save(); requestRender(); if (!document.getElementById('plan2d').hidden) showPlan(true); };
 const showRoof = document.getElementById('showRoof');
 showRoof.checked = state.showRoof;
-// the layers of house.js: switching one changes only what is shown; the marked small cuts recolour the tiles
-document.getElementById('layers').innerHTML = Object.entries(B.layers).map(([k, l]) =>
-  `<label><input type="checkbox" data-layer="${k}"${layerOn(k) ? ' checked' : ''}> ${l.name}</label>`).join('');
-for (const box of document.querySelectorAll('#layers input')) box.onchange = () => {
-  state.layers[box.dataset.layer] = box.checked; save();
-  if (B.tiles.small.includes(box.dataset.layer) || B.tiles.layers.includes(box.dataset.layer)) for (const f of FLOOR_IDS) rebuildFloor(f);
-  applyLayers();
-  if (!document.getElementById('plan2d').hidden) showPlan(true);
-};
+document.getElementById('views').innerHTML = Object.entries(B.views).map(([k, v]) =>
+  `<button id="m-${k}" data-mode="${k}" aria-pressed="${k === state.mode}">${v.name}</button>`).join('');
 showRoof.onchange = () => { state.showRoof = showRoof.checked; updateRoof(); save(); requestRender(); };
 const sunAz = document.getElementById('sunaz'), sunEl = document.getElementById('sunel');
 sunAz.value = state.sunAzimuth; sunEl.value = state.sunElevation;
@@ -1504,7 +1539,7 @@ sunEl.oninput = () => { state.sunElevation = +sunEl.value; sunLabel(); placeSun(
 const bright = document.getElementById('bright'), brightv = document.getElementById('brightv');
 bright.value = state.brightness; brightv.textContent = Math.round(state.brightness * 100) + ' %';
 bright.oninput = () => { state.brightness = +bright.value; brightv.textContent = Math.round(state.brightness * 100) + ' %'; placeSun(); save(); };
-for (const b of document.querySelectorAll('.hud [data-mode]')) b.onclick = () => { setWalk(false); setMode(b.dataset.mode); };
+for (const b of document.querySelectorAll('.hud [data-mode]')) b.onclick = () => { setWalk(false); setMode(b.dataset.mode); };   // the view buttons of house.js
 
 for (const k in state.layouts) if (state.auto[k] && !state.layouts[k].optimised) { autoLayout(k, true); state.layouts[k].optimised = true; }
 buildWalls('ground'); buildWalls('attic');

@@ -8,10 +8,10 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 
 | File | Kind | Owns | Written by |
 |---|---|---|---|
-| house.js | data, this project | the tree: building (shell, wall kinds, build-ups, facade, windows, doors, site, light, cameras, layers, tile layouts) → floors (walls, openings, stair, fireplace, stair hole) → rooms (areas, layout, link to a sub-project) | LLM, per project |
+| house.js | data, this project | the three trees: geometry (building with its shell, wall kinds, build-ups, facade, windows, doors, site, light, tile layouts → floors with walls, openings, stair, fireplace, stair hole → rooms with areas, layout, link to a sub-project), layers, views (menu, cameras, panel sections) | LLM, per project |
 | materials.js | data, this project | the material library and the tile products (texture, size, joint, price, link) | LLM, per project |
 | textures.js | data, this project | texture images and their names only (the floor tiles, the wood decor of the facade), with what drawing them needs: the size an image covers, the grout colour of a tile | LLM, per project |
-| view.html | page, every project | the 3D view, the walk through the house, the tile layouts and their counts, the 2D plan, the layers, the checks | LLM |
+| view.html | page, every project | the views of the menu tree (3D of the whole house and of each floor, the walk, the 2D plan of both floors), the layers, the tile layouts and their counts, the context panel, the checks | LLM |
 | rules.md | text | what the page must do and how the model is organised | by hand |
 | project.md | text | this description | by hand |
 | index.html | page | directory listing of the repository folder (not part of the house) | by hand |
@@ -28,7 +28,8 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 ```
 
 - view.html loads the data files directly, so the page also works opened from disk.
-- house.js says where things are and what they are, materials.js what they are made of. A wall names its kind, the kind names its build-up and material; a room names its layout, the layout its product; every node names its layers.
+- house.js says where things are and what they are, how they can be switched (layers) and looked at (views); materials.js what they are made of. A wall names its kind, the kind names its build-up and material; a room names its layout, the layout its product; every node names its layers; a view names the layers it hides and the panel sections it shows.
+- One model for every view: switching a view never builds other objects, it hides layers and cuts the walls.
 - view.html does not know this house: it has no numbers, names, products or colours of it. Everything it draws and every text about the house comes from the data files.
 
 ## What is project specific and what is not

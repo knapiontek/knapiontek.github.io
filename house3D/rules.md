@@ -2,43 +2,70 @@
 
 > Written and edited by hand. What the house page must do and how its model is organised. How the files implement it: project.md.
 
-## 1. Views and the panel
+## 1. Three trees and the settings
 
-- The view menu is at the top of the screen: Parter, Piętro, Cały dom, Spacer (walk), the cameras of the current view, Rzut 2D.
-- The settings panel on the right follows the current view: the floor layouts of the shown floor are open, the others closed; the cut height, the layers and the light apply to the 3D view and the 2D plan alike.
-- The 3D view and the 2D plan are drawn from the same model: what one shows, the other shows.
+The page is made of three trees, all stored as data in house.js:
 
-## 2. The model is one tree
+- **Geometry**: what the house is made of.
+- **Layers**: what can be switched on and off.
+- **Menu (views)**: how the house is looked at.
 
-- The house is one tree, stored as JSON in a JavaScript file (house.js) that is loaded before anything is drawn:
+The **settings** (the panel on the right) always belong to a node of one of these trees and appear only when that node is in force:
 
-  Building → Floors → Rooms → Tiles
+- **Menu node**: the view's own settings (cut height, light), and which panel sections it shows.
+- **Geometry node**: the settings of what it holds. A floor shows the tile layouts of its rooms; a room will show its sub-project.
+- **Layer node**: its switch, and in time settings of its own (for example the colour of the marked cuts).
 
-- **Building** (the root): the shell common to all floors: roof, portals, wall kinds and their build-ups, facade, windows, doors, site, light, cameras, layers, tile layouts.
-- **Floor**: its level and height, and what stands on it: walls, openings, stair, fireplace, the stair hole. Walls belong to the floor, not to a room: one wall bounds two rooms.
-- **Room**: its floor area as rectangles, the tile layout that covers it, and a link to its sub-project (see 5).
-- **Tiles**: not stored; laid by the page from the room and its layout.
-- Every node keeps its geometry relative to its parent: a floor sets the level, and everything on a floor (sills, heads, the stair, the fireplace) is measured from it; a room is in the floor's x, z; tiles are laid in the room from the layout's offsets.
+## 2. Geometry tree
 
-## 3. Layers
+Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a kitchen room)
 
-- Every element of the tree is assigned to one or more layers (on its own node or on its kind).
-- An element is drawn only when **all** of its layers are on. The EPS in a wall cut belongs to Ściany and Styropian: it disappears with either.
-- The layers can be switched in the panel: walls, EPS, facade, windows and doors, slabs, stair, fireplace, roof, site, floor tiles, the marked small cuts, edges. Switching a layer changes only what is shown, never the model or the tile counts.
+- **Building** (the root): the shell common to all floors: roof, portals, wall kinds and their build-ups, facade, windows, doors, site, light, cameras, tile layouts.
+- **Floor**: its level and height, and what stands on it: walls, openings, stair, fireplace, the stair hole. Walls belong to the floor, not to a room, because one wall bounds two rooms.
+- **Room**: its floor area as rectangles, the tile layout that covers it, and a link to its sub-project.
+- **Tiles**: not stored; the page lays them from the room and its layout.
+- Every node keeps its geometry relative to its parent. A floor sets the level, and everything on a floor (sills, heads, the stair, the fireplace) is measured from it. A room is in the floor's x, z. Tiles are laid in the room from the layout's offsets.
+- **One model**: the objects are the same in every view. A view never builds objects of its own; it only hides layers and cuts the walls.
 
-## 4. Materials and products
+## 3. Layer tree
+
+- The layers form a tree: Parter, Piętro, Ściany (Styropian, Elewacja, Krawędzie), Okna i drzwi, Stropy, Schody, Kominek, Dach, Teren, Posadzki (Drobne docinki).
+- A child is shown only with its parent: no EPS without walls, no marked cuts without tiles.
+- Every element is assigned to one or more layers, on its own node or on its kind; a floor gives its layer to everything standing on it. An element is drawn only when **all** of its layers are on and the view hides none of them.
+- Switching a layer changes only what is shown, never the model or the tile counts.
+- A sub-project adds its layers as a branch, for example Kuchnia (Korpusy, Fronty, Blaty, Półki, Nóżki).
+
+## 4. Menu tree
+
+- **Level 1** (top bar): Cały dom, Parter, Piętro, Rzut 2D.
+- **Level 2**, the context menu of the chosen view:
+  - Cały dom: Spacer (the walk is here only) and its cameras.
+  - Parter, Piętro: their cameras.
+  - Rzut 2D: zoom and download. The 2D plan shows both floors side by side, in the page itself, with the same bars as the 3D view.
+- **Deeper levels**: a view may hold views of its own. Each level gets its own row of the menu, and the last row has the tools of the view in force: cameras, layer switches, plan tools. Example: Parter → Kuchnia → switches for worktops and carcasses.
+- A deeper view inherits from its parent: what the parent hides stays hidden, and the deeper view may hide more, set its own cameras and show its own settings.
+- The panel follows the view:
+  - Posadzki only in Parter and Piętro, and only the layouts of that floor.
+  - Pomieszczenia only of the shown floor (both floors in Rzut 2D).
+  - Light only in the 3D views.
+
+## 5. Materials and products
 
 - Materials are a library of their own (materials.js), independent of the geometry: an element names its material.
 - A tile product is one inseparable whole: texture, tile size and joint belong to the product. The page lets you choose the product, never its texture, size or joint apart from it.
 - What belongs to the laying, not to the product: pattern, direction of the tile length, grout colour, offsets.
 
-## 5. Rooms with sub-projects
+## 6. Rooms with sub-projects
 
 - A complex room has a link to its own project in the same repository: the living room with the kitchen (kitchen/view.html), the two bathrooms (bath/view.html). The rooms table and the 2D plan open it.
-- Integration later: kitchen and bath will be mounted into the tree under their rooms (Room → Groups → Carcasses for the kitchen). The house is ready for it now: a room is a node of its own that can hold children; floors, rooms and their links are data, not code; materials and products are shared libraries.
+- Integration later: a sub-project is mounted into the three trees under its room:
+  - its geometry under the room node;
+  - its layers as a branch of the layer tree;
+  - its views as sub-views of the floor view, with its settings in the panel.
+- The house is ready for this now: views and layers are trees, settings follow the node in force, materials and products are shared libraries.
 - Until then the sub-projects keep their own data and coordinates; the house does not copy their numbers.
 
-## 6. Not yet done
+## 7. Not yet done
 
-- Toggling single parts of a sub-project (carcasses, fronts, worktops, shelves, legs) comes with its integration, as layers of its nodes.
-- The page draws exactly two floors (ground floor and attic under the roof); the tree can hold more, the drawing of the roof and the stair assumes these two.
+- No sub-views exist yet: the menu tree has one level under each view.
+- The page draws exactly two floors (ground floor and attic under the roof). The tree can hold more, but the drawing of the roof and the stair assumes these two.
