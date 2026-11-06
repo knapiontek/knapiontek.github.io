@@ -231,7 +231,7 @@ const knees = PLAN.attic.walls.filter(w => w.kind === 'knee').map(w => w.r).sort
 const XL = knees[0][2], XR = knees[1][0], XM = (XL + XR) / 2, RIDGE = KNEE + PITCH * (XR - XL) / 2;
 const WIDTH = knees[1][2];
 const LENGTH = Math.max(...PLAN.ground.walls.filter(w => !B.wallKinds[w.kind].wing).map(w => w.r[3]));   // the front gable face
-const roofHeight = x => KNEE + PITCH * Math.max(0, Math.min(x - XL, XR - x));
+const roofHeight = x => KNEE + PITCH * (Math.min(x, WIDTH - x) - XL);   // the roof underside: also over the knee walls, down to their outer face
 const FLOOR_NAMES = Object.fromEntries(B.floors.map(f => [f.id, f.name]));
 const rootOf = k => LAYER[k].parent ? rootOf(LAYER[k].parent) : k;
 // the layer tree flattened: id -> its node and the id of its parent
@@ -615,7 +615,9 @@ withLayers(B.plinth.layers, () => box(0, B.plinth.bottom, 0, WIDTH, B.plinth.top
 // recess). Its cells are read from the plans as the walls' are: the part within the outer layers' depth of the air.
 const slabY1 = GROUND_H, slabY2 = LEVEL.attic, VOIDS = PLAN.attic.voids;
 const inVoid = (x, z) => VOIDS.some(v => x > v[0] && x < v[2] && z > v[1] && z < v[3]);
-const attSlab = new THREE.Group(); groups.attic.add(attSlab);
+// The house is split into its floors by one plane, the top of the ground floor walls: the slab above it is shown with
+// the attic, the soffit under it (over the entrance recess) with the ground floor.
+const slabGroup = new THREE.Group(), soffitGroup = new THREE.Group(); groups.attic.add(slabGroup); groups.ground.add(soffitGroup);
 const SLAB_BU = B.buildUps[B.slab.buildUp], SLAB_OUTER = outerThickness(SLAB_BU);
 let slabCells = [];
 // rectangles merged into larger ones: runs along x per z band, then bands with the same x range
@@ -662,26 +664,28 @@ function readSlab() {
 }
 function buildSlab() {
   slabCells = readSlab(); joinHeights = [];
-  const fin = SLAB_BU.layers[SLAB_BU.layers.length - 1].thickness, bottom = slabY1 - SLAB_OUTER, outline = [];
+  const fin = SLAB_BU.layers[SLAB_BU.layers.length - 1].thickness, bottom = slabY1 - SLAB_OUTER, outline = [], soffit = [];
   const inLayer = (L, fn) => withLayers(L ? L.layers || [] : B.slab.layers, fn);
   const finishLayer = SLAB_BU.layers.find(l => l.finish), epsLayer = SLAB_BU.layers.find(l => l.material);
   for (const c of slabCells) {
     const r = c.r, face = M[B.slab.face];
     inLayer(c.layer, () => {
-      if (!c.layer) prism(r[0], r[1], r[2], r[3], 0, slabY1, slabY2, M[B.slab.material], attSlab, []);
-      else if (c.layer.finish) paintFinish(r, 0, slabY1, slabY2, face, c.rules, attSlab, []);
-      else prism(r[0], r[1], r[2], r[3], 0, slabY1, slabY2, M[c.layer.material], attSlab, []);
+      if (!c.layer) prism(r[0], r[1], r[2], r[3], 0, slabY1, slabY2, M[B.slab.material], slabGroup, []);
+      else if (c.layer.finish) paintFinish(r, 0, slabY1, slabY2, face, c.rules, slabGroup, []);
+      else prism(r[0], r[1], r[2], r[3], 0, slabY1, slabY2, M[c.layer.material], slabGroup, []);
     });
     if (c.under) {                 // the soffit: EPS under the slab, its finish at the bottom (at the edge the face runs down)
-      if (c.layer && c.layer.finish) inLayer(c.layer, () => paintFinish(r, 0, bottom, slabY1, face, c.rules, attSlab, []));
+      if (c.layer && c.layer.finish) inLayer(c.layer, () => paintFinish(r, 0, bottom, slabY1, face, c.rules, soffitGroup, []));
       else {
-        inLayer(epsLayer, () => prism(r[0], r[1], r[2], r[3], 0, bottom + fin, slabY1, M[epsLayer.material], attSlab, []));
-        inLayer(finishLayer, () => prism(r[0], r[1], r[2], r[3], 0, bottom, bottom + fin, face, attSlab, []));
+        inLayer(epsLayer, () => prism(r[0], r[1], r[2], r[3], 0, bottom + fin, slabY1, M[epsLayer.material], soffitGroup, []));
+        inLayer(finishLayer, () => prism(r[0], r[1], r[2], r[3], 0, bottom, bottom + fin, face, soffitGroup, []));
       }
     }
-    outline.push({ r, parts: [[c.under ? bottom : slabY1, slabY2]], openTop: true, openBottom: !c.under, layers: c.under || (c.layer && c.layer.finish) ? finishLayer.layers : c.layer ? c.layer.layers : B.slab.layers });
+    const lay = c.layer ? c.layer.layers || [] : B.slab.layers;
+    outline.push({ r, parts: [[slabY1, slabY2]], openTop: true, openBottom: true, layers: lay });
+    if (c.under) soffit.push({ r, parts: [[bottom, slabY1]], openTop: true, layers: c.layer && c.layer.finish ? lay : finishLayer.layers });
   }
-  withLayers(B.edges.layers, () => outlineEdges(outline, 0, [], attSlab));
+  withLayers(B.edges.layers, () => { outlineEdges(outline, 0, [], slabGroup); outlineEdges(soffit, 0, [], soffitGroup); });
 }
 // U-shaped stair; STAIR_BOXES [x1, z1, x2, z2, top] are also the walking surfaces
 const ST = PLAN.ground.stair, rise = LEVEL.attic / ST.risers, STAIR_BOXES = [];
@@ -700,7 +704,7 @@ const CORE_WALL = ST.core;
 // roof: a slab over the whole length incl. the portals; body = the portal band, covering = the roof surface
 const ZS = PLAN.ground.walls.reduce((m, w) => [Math.min(m[0], w.r[1]), Math.max(m[1], w.r[3])], [0, 0]);
 const ROOF_T = thicknessWith(B.buildUps[B.roof.buildUp], 2) / Math.cos(B.roof.pitch * Math.PI / 180);   // the portal frame section, vertical
-const under = x => KNEE + PITCH * (Math.min(x, WIDTH - x) - XL);           // roof underside above the attic floor
+const under = roofHeight;           // roof underside above the attic floor
 const roofSolid = new THREE.Group(), roofGhost = new THREE.Group(); root.add(roofSolid, roofGhost);
 roofSolid.userData.layers = B.roof.layers;
 withLayers(B.roof.layers, function buildRoof() {
@@ -983,6 +987,16 @@ function buildCaps(floor) {
   }
   applyLayers();
 }
+// the glass plane of an opening: in an outer wall in the block, "intoCore" cm behind the outer face of the core
+// (behind the EPS and the finish), else in the middle of the wall
+function glassPlane(floor, o) {
+  const r = o.r, thinX = (r[2] - r[0]) < (r[3] - r[1]);
+  const side = airSides(floor, r).find(s => (s === 'left' || s === 'right') === thinX);
+  const outer = side ? { left: r[0], right: r[2], garden: r[1], front: r[3] }[side] : null;
+  const bu = buildUpOf(o.wall), SB = (bu ? outerThickness(bu) : 0) + B.windows.intoCore;
+  const mid = outer === null ? (thinX ? (r[0] + r[2]) / 2 : (r[1] + r[3]) / 2) : outer + (outer === (thinX ? r[0] : r[1]) ? SB : -SB);
+  return { thinX, side, outer, mid };
+}
 function buildWalls(floor) {
   const grp = wallGroups[floor]; clearGroup(grp);
   const y0 = LEVEL[floor], attic = floor === 'attic', pieces = [], outline = [];
@@ -1018,11 +1032,7 @@ function buildWalls(floor) {
   }
   for (const o of PLAN[floor].openings) withLayers(B.windows.layers, () => {   // glass, frames, doors
     const r = o.r, { followRoof, head } = openingHead(o, attic ? roofHeight : () => LEVEL.attic), top = o.head;
-    const thinX = (r[2] - r[0]) < (r[3] - r[1]);
-    // the glass plane: "setback" cm behind the face to the air, else the middle of the wall
-    const SB = B.windows.setback, side = airSides(floor, r).find(s => (s === 'left' || s === 'right') === thinX);
-    const outer = side ? { left: r[0], right: r[2], garden: r[1], front: r[3] }[side] : null;
-    const mid = outer === null ? (thinX ? (r[0] + r[2]) / 2 : (r[1] + r[3]) / 2) : outer + (outer === (thinX ? r[0] : r[1]) ? SB : -SB);
+    const { thinX, side, outer, mid } = glassPlane(floor, o);
     const gx = thinX ? [mid - 1, mid + 1] : [r[0], r[2]];
     const gz = thinX ? [r[1], r[3]] : [mid - 1, mid + 1];
     if (side && o.kind !== 'door') {   // the reveals: in front of the glass the finish of the face it opens in, behind it the wall's surface over the EPS
@@ -1033,8 +1043,9 @@ function buildWalls(floor) {
       const reveal = (b1, b2, lin) => {
         const [a1, a2] = [Math.min(b1, b2), Math.max(b1, b2)];
         const slab = (u1, u2, lo, hi) => thinX ? prism(a1, u1, a2, u2, y0, lo, hi, lin, grp, breaks) : prism(u1, a1, u2, a2, y0, lo, hi, lin, grp, breaks);
-        slab(s1, s2, head, x => head(x) + t); slab(s1, s1 + t, o.sill, head); slab(s2 - t, s2, o.sill, head);
-        if (o.sill > 0) slab(s1, s2, o.sill - t, o.sill);
+        // inside the opening, so no face of the lining lies on a face of the wall
+        slab(s1, s2, x => head(x) - t, head); slab(s1, s1 + t, o.sill, head); slab(s2 - t, s2, o.sill, head);
+        if (o.sill > 0) slab(s1, s2, o.sill, o.sill + t);
       };
       reveal(outer, mid, rules.length ? M[rules[rules.length - 1].material] : M.wall[o.wall]);
       reveal(mid, inner, M.wall[o.wall]);
@@ -1267,13 +1278,10 @@ function refreshLayoutPanel(key) {
 }
 // the layers of house.js (also the floors and the roof): switching one changes only what is shown
 function setLayer(k, on) {
-  const before = openFloor();
   state.layers[k] = on; save();
   const tiles = B.tiles.small.concat(B.tiles.layers);   // the marked small cuts recolour the tiles
   if (Object.keys(LAYER).some(t => tiles.includes(t) && (t === k || LAYER[t].parent === k))) for (const f of FLOOR_IDS) rebuildFloor(f);
-  refresh();
-  const after = openFloor();
-  if (after !== before && after && CAMERAS[after]) setCamera(CAMERAS[after][1]);   // a floor opened: look into it
+  refresh();                       // the camera stays: the views can be compared
 }
 // the panel follows the view: its sections, and the floor settings only of the view's floor
 const OPEN_ONLY = { cut: f => !!f, rooms: f => !!f, view: f => !!f && !!PLAN[f].underRoof };   // sections of the open floor
@@ -1464,6 +1472,21 @@ for (const b of document.querySelectorAll('.pad button')) {
 
 window.houseWalk = walk;  // for checking from the console
 window.__cam = (eye, target) => setCamera(["", eye, target]);
+window.__roofOverlaps = () => {   // for checking: the attic pieces that reach above the roof underside (the flue goes through on purpose)
+  let meshes = 0, top = -1e9; const out = [], v = new THREE.Vector3(), flue = PLAN.attic.walls.find(w => w.kind === 'chimney').r;
+  groups.attic.traverse(o => {
+    if (!o.isMesh) return;
+    const p = o.geometry.attributes.position; let worst = 0; meshes++;
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld).divideScalar(root.scale.x);
+      if (v.x > flue[0] - 0.1 && v.x < flue[2] + 0.1 && v.z > flue[1] - 0.1 && v.z < flue[3] + 0.1) continue;
+      if (v.x < 1) top = Math.max(top, v.y);
+      worst = Math.max(worst, v.y - (LEVEL.attic + roofHeight(Math.min(Math.max(v.x, 0), WIDTH))));
+    }
+    if (worst > 0.05) { o.geometry.computeBoundingBox(); const bb = o.geometry.boundingBox; out.push([+worst.toFixed(1), Math.round(bb.min.x), Math.round(bb.max.x), Math.round(bb.min.z), Math.round(bb.max.z)]); }
+  });
+  return { out, meshes, top };
+};
 window.__set = o => {             // for checking: layers, view, cuts, camera
   if (o.mode && o.mode !== state.mode) setMode(o.mode);
   for (const [k, on] of Object.entries(o.layers || {})) setLayer(k, on);
@@ -1526,17 +1549,18 @@ function floorSVG(floor, ox, oy, withTiles) {
     if (o.sill >= cutH) continue;                   // under the cut: wall, as in 3D
     const r = o.r, thinX = (r[2] - r[0]) < (r[3] - r[1]);
 
-    const cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2;
-    if (o.kind === 'window') {
+    const cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2, { mid } = glassPlane(floor, o);
+    if (o.kind === 'window') {             // the glass where it is in 3D: in the block
       rect(r, `fill="#ffffff" stroke="${C.ink}" stroke-width=".5"`);
-      if (thinX) { line(cx - 2, r[1], cx - 2, r[3], `stroke="${C.glass}" stroke-width=".7"`); line(cx + 2, r[1], cx + 2, r[3], `stroke="${C.glass}" stroke-width=".7"`); }
-      else { line(r[0], cz - 2, r[2], cz - 2, `stroke="${C.glass}" stroke-width=".7"`); line(r[0], cz + 2, r[2], cz + 2, `stroke="${C.glass}" stroke-width=".7"`); }
+      const gx = thinX ? mid : cx, gz = thinX ? cz : mid;
+      if (thinX) { line(gx - 2, r[1], gx - 2, r[3], `stroke="${C.glass}" stroke-width=".7"`); line(gx + 2, r[1], gx + 2, r[3], `stroke="${C.glass}" stroke-width=".7"`); }
+      else { line(r[0], gz - 2, r[2], gz - 2, `stroke="${C.glass}" stroke-width=".7"`); line(r[0], gz + 2, r[2], gz + 2, `stroke="${C.glass}" stroke-width=".7"`); }
     } else if (o.kind === 'gate') {
-      if (thinX) line(cx, r[1], cx, r[3], `stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="8 4"`);
-      else line(r[0], cz, r[2], cz, `stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="8 4"`);
+      if (thinX) line(mid, r[1], mid, r[3], `stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="8 4"`);
+      else line(r[0], mid, r[2], mid, `stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="8 4"`);
     } else if (o.kind === 'entrance') {              // the entrance: the leaf (as in 3D) and the glass sidelight
       const E = B.doors.entrance, left = E.hinge === 'left', l1 = left ? r[0] : r[2] - E.leaf, l2 = left ? r[0] + E.leaf : r[2];
-      const zc = r[3] - B.windows.setback;
+      const zc = mid;
       rect([l1, zc - 3, l2, zc + 3], `fill="${C.ink}"`);
       const s1 = left ? l2 : r[0], s2 = left ? r[2] : l1;
       line(s1, zc - 2, s2, zc - 2, `stroke="${C.glass}" stroke-width=".7"`); line(s1, zc + 2, s2, zc + 2, `stroke="${C.glass}" stroke-width=".7"`);
@@ -1545,10 +1569,10 @@ function floorSVG(floor, ox, oy, withTiles) {
       if (thinX) { line(r[0], r[1], r[2], r[1], `stroke="${C.ink}" stroke-width=".6"`); line(r[0], r[3], r[2], r[3], `stroke="${C.ink}" stroke-width=".6"`); }
       else { line(r[0], r[1], r[0], r[3], `stroke="${C.ink}" stroke-width=".6"`); line(r[2], r[1], r[2], r[3], `stroke="${C.ink}" stroke-width=".6"`); }
     }
-    // size label on the outer walls: width / head height, as on the archon.pl plans
+    // size label on the outer walls: width / height, as on the archon.pl plans
     const air = airSides(floor, r), face = air.includes('garden') ? 'top' : air.includes('front') ? 'bottom' : air.includes('left') ? 'left' : air.includes('right') ? 'right' : null;
     if (face && (o.kind === 'window' || o.kind === 'gate')) {
-      const w = Math.round(thinX ? r[3] - r[1] : r[2] - r[0]), lbl = `${w}/${Math.round(o.head)}`;
+      const w = Math.round(thinX ? r[3] - r[1] : r[2] - r[0]), lbl = `${w}/${Math.round(o.head - o.sill)}`;
       if (face === 'top') text(cx, r[1] - 8, lbl, 's'); else if (face === 'bottom') text(cx, r[3] + 18, lbl, 's');
       else if (face === 'left') text(-12, cz, lbl, 's', 'middle', -90); else text(WIDTH + 12, cz, lbl, 's', 'middle', 90);
     }
@@ -1563,8 +1587,8 @@ function floorSVG(floor, ox, oy, withTiles) {
     out.push(`<g data-room="${room.id}" style="cursor:pointer">`);
     (room.numbers || []).forEach((n, i, all) => {   // the room's numbers on the plan, each in a circle above its name
       const x = cx + (i - (all.length - 1) / 2) * 19;
-      out.push(`<circle cx="${X(x)}" cy="${Z(cz - 27)}" r="${X(x + 8) - X(x)}" fill="none" stroke="${C.ink}" stroke-width=".8"/>`);
-      text(x, cz - 23.5, String(n), 'r');
+      out.push(`<circle cx="${X(x)}" cy="${Z(cz - 32)}" r="${X(x + 8) - X(x)}" fill="none" stroke="${C.ink}" stroke-width=".8"/>`);
+      out.push(`<text x="${X(x)}" y="${Z(cz - 32)}" class="r" text-anchor="middle" dominant-baseline="central">${n}</text>`);
     });
     text(cx, cz - 6, room.name + (room.link ? ' ↗' : ''), 'r');
     text(cx, cz + 10, `${area.toFixed(2).replace('.', ',')} m²`, 'a');

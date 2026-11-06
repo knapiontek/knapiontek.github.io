@@ -29,7 +29,9 @@
    slab         the ring beam and slab: poured over the whole of the ground floor walls, between their top (the ground
                 floor height) and the attic level, over the outline of both floors minus the stair hole; buildUp = its
                 outer layers (EPS, finish) on every side to the air and under it where there is no ground floor below
-                (the soffit of the entrance recess); face = its finish where no finish rule says otherwise
+                (the soffit of the entrance recess); face = its finish where no finish rule says otherwise; the floors are split
+                by one plane, the top of the ground floor walls: the slab is shown with the attic, its soffit with
+                the ground floor
    buildUps     what a wall is made of: the first layer is the core (block), the next ones lie on every side of the
                 wall that faces the air, from the inside out (a house wall: one side, 24 + 19 + 1 = 44; a portal wing:
                 both sides and the end, 64); a layer with a material is drawn in it (on the plan and in the cut of the
@@ -47,7 +49,8 @@
    doors        entrance: the door leaf in the opening of kind entrance (from the hinge side), the rest is a glass
                 sidelight
    gate, windows   the garage door panel; window frames (profile, mullions, transom), the attic gable windows follow
-                the roof ("inset" cm below its underside); setback = windows sit this far behind the outer face
+                the roof ("inset" cm below its underside); intoCore = windows sit in the block: this far behind the
+                outer face of the core (behind the EPS and the finish of the wall's build-up)
    edges        delicate lines on the wall edges: colour, opacity, crease angle
    light, cameras, walk   sun and sky; the views of the dock (y of the attic views from the attic floor); walking
    tiles        reserve = extra share of tiles to buy; layers of the tiles and of the marked small cuts
@@ -168,19 +171,19 @@ window.HOUSE = {
  "finishes": [
   {"side": "garden", "rect": [44, 0, 866, 44], "material": "graphite"},
   {"side": "front", "rect": [44, 1187, 866, 1322.8], "material": "graphite"},
-  {"side": "right", "floor": "ground", "rect": [409.8, 1231, 453.8, 1322.8], "y": [0, 245], "material": "graphite"},
-  {"side": "left", "floor": "ground", "rect": [846, 1231, 866, 1322.8], "y": [0, 245], "material": "graphite"},
+  {"side": "right", "floor": "ground", "rect": [409.8, 1231, 453.8, 1322.8], "y": [0, 252], "material": "graphite"},
+  {"side": "left", "floor": "ground", "rect": [846, 1231, 866, 1322.8], "y": [0, 252], "material": "graphite"},
   {"side": "front", "floor": "ground", "rect": [615.5, 1187, 661.4, 1231], "material": "woodVertical"},
   {"side": "front", "floor": "ground", "rect": [741, 1187, 846, 1231], "material": "woodVertical"},
   {
    "side": "front",
    "floor": "attic",
-   "rect": [392.4, 1278.8, 522.4, 1322.8],
+   "rect": [390.45, 1278.8, 521.95, 1322.8],
    "material": "woodVertical",
    "upTo": "windowLine"
   },
   {"side": "garden", "rect": [44, 0, 866, 44], "y": [238, 300], "material": "woodHorizontal"},
-  {"side": "front", "rect": [44, 1187, 866, 1322.8], "y": [245, 327], "material": "plasterWhite"}
+  {"side": "front", "rect": [44, 1187, 866, 1322.8], "y": [252, 327], "material": "plasterWhite"}
  ],
  "doors": {
   "entrance": {
@@ -195,7 +198,7 @@ window.HOUSE = {
  "windows": {
   "frame": {"width": 8, "depth": 4, "mullionEvery": 150, "transom": 205, "material": "frame"},
   "glass": "glass",
-  "setback": 6,
+  "intoCore": 6,
   "gate": "graphite",
   "attic": {"followRoof": true, "inset": 140, "mullionEvery": 140, "transom": 85},
   "layers": ["openings"]
@@ -244,16 +247,16 @@ window.HOUSE = {
    "level": 0,
    "height": 272,
    "walls": [
-    {"r": [0, 0, 44, 760.3], "kind": "ext"},
-    {"r": [0, 963.1, 44, 1322.8], "kind": "ext"},
-    {"r": [44, 0, 154.5, 44], "kind": "ext"},
-    {"r": [755.5, 0, 866, 44], "kind": "ext"},
-    {"r": [866, 0, 910, 82.1], "kind": "ext"},
-    {"r": [866, 333.1, 910, 470.7], "kind": "ext"},
-    {"r": [866, 651.7, 910, 801.4], "kind": "ext"},
+    {"r": [0, 0, 44, 761.7], "kind": "ext"},
+    {"r": [0, 961.7, 44, 1322.8], "kind": "ext"},
+    {"r": [44, 0, 155, 44], "kind": "ext"},
+    {"r": [755, 0, 866, 44], "kind": "ext"},
+    {"r": [866, 0, 910, 82.6], "kind": "ext"},
+    {"r": [866, 332.6, 910, 466.2], "kind": "ext"},
+    {"r": [866, 656.2, 910, 802.8], "kind": "ext"},
     {"r": [866, 902.8, 910, 1322.8], "kind": "ext"},
-    {"r": [44, 1278.8, 113.4, 1322.8], "kind": "ext"},
-    {"r": [391, 1278.8, 453.8, 1322.8], "kind": "ext"},
+    {"r": [44, 1278.8, 114.7, 1322.8], "kind": "ext"},
+    {"r": [389.7, 1278.8, 453.8, 1322.8], "kind": "ext"},
     {"r": [409.8, 1187, 453.8, 1278.8], "kind": "ext"},
     {"r": [615.5, 1187, 661.4, 1231], "kind": "ext"},
     {"r": [741, 1187, 866, 1231], "kind": "ext"},
@@ -277,12 +280,12 @@ window.HOUSE = {
     {"r": [754, 992.8, 866, 1004.8], "kind": "int12"}
    ],
    "openings": [
-    {"r": [0, 760.3, 44, 963.1], "sill": 110, "head": 210, "kind": "window", "wall": "ext"},
-    {"r": [154.5, 0, 755.5, 44], "sill": 0, "head": 240, "kind": "window", "wall": "ext"},
-    {"r": [866, 82.1, 910, 333.1], "sill": 0, "head": 240, "kind": "window", "wall": "ext"},
-    {"r": [866, 470.7, 910, 651.7], "sill": 110, "head": 240, "kind": "window", "wall": "ext"},
-    {"r": [866, 801.4, 910, 902.8], "sill": 110, "head": 240, "kind": "window", "wall": "ext"},
-    {"r": [113.4, 1278.8, 391, 1322.8], "sill": 0, "head": 225, "kind": "gate", "wall": "ext"},
+    {"r": [0, 761.7, 44, 961.7], "sill": 110, "head": 210, "kind": "window", "wall": "ext"},
+    {"r": [155, 0, 755, 44], "sill": 0, "head": 240, "kind": "window", "wall": "ext"},
+    {"r": [866, 82.6, 910, 332.6], "sill": 0, "head": 240, "kind": "window", "wall": "ext"},
+    {"r": [866, 466.2, 910, 656.2], "sill": 110, "head": 240, "kind": "window", "wall": "ext"},
+    {"r": [866, 802.8, 910, 902.8], "sill": 110, "head": 240, "kind": "window", "wall": "ext"},
+    {"r": [114.7, 1278.8, 389.7, 1322.8], "sill": 0, "head": 225, "kind": "gate", "wall": "ext"},
     {"r": [453.8, 1187, 615.5, 1231], "sill": 0, "head": 210, "kind": "entrance", "wall": "ext"},
     {"r": [661.4, 1187, 741, 1231], "sill": 0, "head": 210, "kind": "window", "wall": "ext"},
     {"r": [409.8, 1064.5, 433.8, 1151.4], "sill": 0, "head": 205, "kind": "door", "wall": "int24"},
@@ -360,11 +363,11 @@ window.HOUSE = {
    "walls": [
     {"r": [0, 0, 44, 1322.8], "kind": "knee"},
     {"r": [866, 0, 910, 1322.8], "kind": "knee"},
-    {"r": [44, 0, 156.5, 44], "kind": "gable"},
-    {"r": [755.9, 0, 866, 44], "kind": "gable"},
-    {"r": [44, 1278.8, 168.5, 1322.8], "kind": "gable"},
-    {"r": [392.4, 1278.8, 522.4, 1322.8], "kind": "gable"},
-    {"r": [741.5, 1278.8, 866, 1322.8], "kind": "gable"},
+    {"r": [44, 0, 156.2, 44], "kind": "gable"},
+    {"r": [756.2, 0, 866, 44], "kind": "gable"},
+    {"r": [44, 1278.8, 170.45, 1322.8], "kind": "gable"},
+    {"r": [390.45, 1278.8, 521.95, 1322.8], "kind": "gable"},
+    {"r": [741.95, 1278.8, 866, 1322.8], "kind": "gable"},
     {"r": [0, -101.4, 64, 0], "kind": "portal"},
     {"r": [846, -101.4, 910, 0], "kind": "portal"},
     {"r": [0, 1322.8, 64, 1421.7], "kind": "portal"},
@@ -390,9 +393,9 @@ window.HOUSE = {
     {"r": [143, 642.2, 438.1, 651.7], "kind": "rail"}
    ],
    "openings": [
-    {"r": [156.5, 0, 755.9, 44], "sill": 0, "head": 346, "kind": "window", "wall": "gable"},
-    {"r": [168.5, 1278.8, 392.4, 1322.8], "sill": 30, "head": 285, "kind": "window", "wall": "gable"},
-    {"r": [522.4, 1278.8, 741.5, 1322.8], "sill": 30, "head": 285, "kind": "window", "wall": "gable"},
+    {"r": [156.2, 0, 756.2, 44], "sill": 0, "head": 346, "kind": "window", "wall": "gable"},
+    {"r": [170.45, 1278.8, 390.45, 1322.8], "sill": 30, "head": 315, "kind": "window", "wall": "gable"},
+    {"r": [521.95, 1278.8, 741.95, 1322.8], "sill": 30, "head": 315, "kind": "window", "wall": "gable"},
     {"r": [459.8, 535.9, 553.7, 547.9], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
     {"r": [553.7, 631.7, 565.7, 721.1], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},
     {"r": [178.1, 902.8, 260, 914.8], "sill": 0, "head": 205, "kind": "door", "wall": "int12"},

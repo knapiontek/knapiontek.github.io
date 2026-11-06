@@ -37,8 +37,9 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 - **One model**: the objects are the same in every view. A view never builds objects of its own; it only hides layers and cuts the walls. The cut never changes the geometry: no wall, window, frame or facade board gets another shape or height. The model is built once, whole, and the cut is a plane that clips it; what the plane opens is closed by the section (a cap in the colour of the wall or of its EPS).
 - Nothing overlaps: a wall stands on the plinth down to the ground, on a terrace only down to the paving; the ground floor walls end under the slab, the slab ends under the attic walls, the EPS lies outside all of them.
 - A facade is a wall side that faces the air: nothing is guessed from positions. The finish (plaster, graphite, wood, the bands) is the outer layer of the wall's build-up and data say which finish covers which part of which side.
+- Windows and doors sit in the block (the masonry), never in the EPS. Their sizes are the labels of the archon plans (width / height), and the 2D plan shows the same labels.
 - Edges are read from the plan: along the open tops, sills and heads and up every corner of the wall outline.
-- No masking panels: a finish or a band is the face of a wall or of the slab edge, only where they are. Every piece belongs to the floor it stands on; the slab belongs to the attic it carries.
+- No masking panels: a finish or a band is the face of a wall or of the slab edge, only where they are. Every piece belongs to the floor it stands on; the floors are split by one horizontal plane for the whole house, the top of the ground floor walls: below it the ground floor (with the soffit over the entrance recess), above it the attic (with the ring beam and slab). The front looks as on the archon visualisation: a white band across the whole width from the underside of the beam over the entrance to the attic windows, graphite below and above. Nothing reaches into the roof: every attic wall ends at the roof underside, the knee walls too, sloping down to their outer face.
 
 ## 3. Layer tree
 
@@ -47,7 +48,7 @@ Building → Floors → Rooms → Tiles (and later Groups → Carcasses under a 
 - A wall is drawn in its material layers: its core under Pustaki, its EPS under Styropian, its finish under Elewacja. So each layer of the build can be seen alone (for example only the EPS shell).
 - A child is shown only with its parent: no marked cuts without tiles.
 - Every element is assigned to one or more layers, on its own node, on its kind or on its build-up layer; a floor gives its layer to everything standing on it. An element is drawn only when **all** of its layers are on. An edge line belongs to the piece it is on.
-- Switching a layer changes only what is shown, never the model or the tile counts.
+- Switching a layer changes only what is shown, never the model or the tile counts. Nor the camera: switching floors or layers keeps the view, so the states can be compared.
 - A sub-project adds its layers as a branch, for example Kuchnia (Korpusy, Fronty, Blaty, Półki, Nóżki).
 
 ## 4. Menu tree

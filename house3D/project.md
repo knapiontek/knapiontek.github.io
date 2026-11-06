@@ -46,7 +46,7 @@ How the files of this folder work together. The house is "Dom w papawerach 5 (G)
 - The outer faces of the outer walls are where the plan images put them; a change of thickness moves the inner face.
 - The EPS is the part of a wall within 20 cm of the air. So a house wall has it on its outer side, a portal wing on both sides and on its end, and at a corner EPS meets EPS and block meets block, with no extra pieces.
 - The 2D plan draws the EPS hatched, the 3D view shows it in the cut of the walls.
-- An opening names the wall kind it sits in and has that wall's thickness.
+- An opening names the wall kind it sits in and has that wall's thickness. A window sits in the block, behind the EPS and the finish; its reveal in front of the glass has the finish of its face. Sizes follow the labels of the archon plans: width / height of the opening.
 - The page checks every wall and opening against its build-up and lists the ones that do not fit. A wall that fits no build-up stays in house.js as measured and stays on that list until it is resolved by hand.
 - The portal (the side walls and the roof running past both gables) has one section: EPS 20 + block 24 + EPS 20 = 64 cm. The block of a wing is in line with the block of its side wall; the roof slab has the thickness of the wings. One section everywhere, no patches where wing and roof meet.
 - The chimney and the stair rail have no build-up.
