@@ -10,9 +10,14 @@
    top       "roof": the box is cut by the two roof planes (its top follows the roof underside)
    cuts      ids of other elements or boxes subtracted from this one (the slab without the stair void, ...)
    outer     the side of an EPS box that faces the air: -x garden, +x front, -y left, +y right, -z down
-   kinds     what an element is: material of its faces, its section colour (cap), thickness (checked), layer
+   kinds     what an element is: material of its faces, its section colour (cap), thickness (checked), layer;
+             opened = openings are cut out of it, frames = windows and doors sit in it (flush with its outer face),
+             walkable = the walk stands on its top
+   views     3d.cut: the cut a floor opens with, cm over its level (a floor not listed opens uncut)
+   frames    window and door frames; depths [from, to] are cm in from the outer face of the block, heights cm
    tiles     grout, top, mark = cm over the floor level of the grout plane, the tile faces and the room mark: they lie
              on the slab, never in its plane
+   roof      windowFrame.frame and glassDepth: [from, to] cm over the roof top, measured vertically
    length    the printed overall length of the house (the 2D plan dimension)
    planCut   the 2D plan cut of a floor, if not the view's (the attic: through the knee walls, under the eaves)
    floors    split by one plane: everything under "split" is the ground floor, everything over it the attic
@@ -36,6 +41,7 @@ window.HOUSE = {
    "levels": ["ground", "attic", "roof"],
    "offer": ["foundation", "walls", "slabs", "insulation", "openings", "stair", "floors", "site", "edges"],
    "panels": ["cut", "light", "layers", "rooms", "checks", "notes"],
+   "cut": {"attic": 150},
    "cutStep": 5,
    "cutFrom": 50,
    "selectRooms": true,
@@ -131,7 +137,7 @@ window.HOUSE = {
    {"name": "Schody", "label": "94/140", "x": [639, 733], "y": [24, 128]},
    {"name": "Łazienka", "label": "94/140", "x": [639, 733], "y": [782, 886]}
   ],
-  "windowFrame": {"width": 7, "material": "frame", "glass": "glass"},
+  "windowFrame": {"width": 7, "frame": [-10, 4], "glassDepth": [0.5, 1.5], "material": "frame", "glass": "glass"},
   "layers": ["roof"],
   "planHeights": [140, 220]
  },
@@ -139,15 +145,15 @@ window.HOUSE = {
  "kinds": {
   "footing": {"name": "ława", "material": "concrete", "cap": "concrete", "thickness": 40, "layers": ["foundation"]},
   "foundation": {"name": "ściana fundamentowa", "material": "concrete", "cap": "concrete", "thickness": 24, "layers": ["foundation"]},
-  "groundSlab": {"name": "płyta na gruncie", "material": "concrete", "cap": "concrete", "thickness": 36, "layers": ["foundation"]},
-  "block24": {"name": "pustak 24", "material": "plasterInside", "cap": "block", "thickness": 24, "layers": ["walls"]},
-  "block12": {"name": "pustak 12", "material": "plasterInside", "cap": "block", "thickness": 12, "layers": ["walls"]},
-  "eps": {"name": "styropian 20", "material": "plasterWhite", "raw": "insulation", "cap": "insulation", "thickness": 20, "finish": "facade", "layers": ["insulation"]},
+  "groundSlab": {"name": "płyta na gruncie", "material": "concrete", "cap": "concrete", "thickness": 36, "layers": ["foundation"], "walkable": true},
+  "block24": {"name": "pustak 24", "material": "plasterInside", "cap": "block", "thickness": 24, "layers": ["walls"], "opened": true, "frames": true},
+  "block12": {"name": "pustak 12", "material": "plasterInside", "cap": "block", "thickness": 12, "layers": ["walls"], "opened": true, "frames": true},
+  "eps": {"name": "styropian 20", "material": "plasterWhite", "raw": "insulation", "cap": "insulation", "thickness": 20, "finish": "facade", "layers": ["insulation"], "opened": true},
   "ringBeam": {"name": "wieniec nad skrzydłem portalu", "material": "plasterInside", "cap": "concrete", "thickness": 24, "layers": ["slabs"]},
-  "epsSoffit": {"name": "styropian podbitki wnęki 47", "material": "plasterWhite", "raw": "insulation", "cap": "insulation", "thickness": 47, "finish": "facade", "layers": ["insulation"]},
-  "slab": {"name": "strop z wieńcem", "material": "plasterInside", "cap": "concrete", "thickness": 34, "layers": ["slabs"]},
+  "epsSoffit": {"name": "styropian podbitki wnęki 47", "material": "plasterWhite", "raw": "insulation", "cap": "insulation", "thickness": 47, "finish": "facade", "layers": ["insulation"], "opened": true},
+  "slab": {"name": "strop z wieńcem", "material": "plasterInside", "cap": "concrete", "thickness": 34, "layers": ["slabs"], "walkable": true},
   "ceiling": {"name": "sufit z ociepleniem", "material": "plasterInside", "cap": "insulation", "thickness": 39, "layers": ["slabs"]},
-  "chimney": {"name": "komin", "material": "plasterInside", "cap": "block", "layers": ["walls"]}
+  "chimney": {"name": "komin", "material": "plasterInside", "cap": "block", "layers": ["walls"], "opened": true, "frames": true}
  },
 
  "elements": [
@@ -265,8 +271,9 @@ window.HOUSE = {
   {"id": "o20", "kind": "door", "label": "90/205", "b": [901, 913, 457, 547, 306, 511]}
  ],
  "frames": {"width": 7, "depth": 8, "bar": 6, "material": "frame", "glass": "glass", "layers": ["openings"],
-  "gate": {"material": "graphite", "grooves": 4, "groove": "groove"},
-  "entrance": {"material": "graphite", "grooves": 4, "handle": {"length": 120, "width": 3, "material": "steel"}}},
+  "gate": {"material": "graphite", "depth": [2, 6], "grooves": 4, "groove": "groove", "grooveDepth": [1.6, 2], "grooveHeight": 1.6},
+  "entrance": {"material": "graphite", "depth": [1, 7], "grooves": 4, "groove": "groove", "grooveDepth": [0.6, 1], "grooveHeight": 1.2,
+   "handle": {"length": 120, "width": 3, "depth": [-4, 1], "inset": 14, "centre": 115, "material": "steel"}}},
 
  "finishes": [
   {"z": [-999, 0], "material": "plinth"},

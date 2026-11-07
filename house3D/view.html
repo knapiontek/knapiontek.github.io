@@ -286,7 +286,7 @@ function baseSolid(e) {
 const openingSolid = o => solid(o.b, (o.below || []).map(line));
 const ruleSolid = r => solid([...(r.x || [-INF, INF]), ...(r.y || [-INF, INF]), ...(r.z || [-INF, INF])], (r.below || []).map(line));
 const cutSolid = c => typeof c === 'string' ? baseSolid(ELEMENT[c]) : solid(c);
-const openedKinds = k => KIND[k].layers.some(l => l === 'walls' || l === 'insulation');
+const VIEW_3D = Object.values(B.views).find(v => v.levels);
 
 const CELLS = [];                         // {S, element, kind, floor, material, cap, layers}
 function addCell(S, e, mat, extra) {
@@ -297,7 +297,7 @@ for (const e of B.elements) {
   const k = KIND[e.kind];
   let cells = [baseSolid(e)];
   for (const c of e.cuts || []) cells = subtract(cells, cutSolid(c));
-  if (openedKinds(e.kind)) for (const o of B.openings) cells = subtract(cells, openingSolid(o));
+  if (k.opened) for (const o of B.openings) cells = subtract(cells, openingSolid(o));
   cells = splitAt(cells, B.split);
   let tagged = cells.map(S => ({ S, mat: k.material }));
   for (const r of B.finishes) {           // the facade: a later rule wins
@@ -309,7 +309,7 @@ for (const e of B.elements) {
   for (const t of tagged) addCell(t.S, e, t.mat);
 }
 
-/* the roof: two slopes from the roof data, without the roof windows, chimney and shaft */
+/* the roof: two slopes from the roof data, without the roof windows and its cuts */
 const ROOF_CELLS = [];
 (function () {
   const R = B.roof, top = ROOF_UNDER.map(l => ({ a: l.a + R.thickness, s: l.s }));
@@ -329,7 +329,7 @@ const OPEN_CELLS = [];
   for (const o of B.openings) {
     if (!o.outer) continue;               // inner doors are openings only
     const O = openingSolid(o), axis = o.outer[1], sign = o.outer[0] === '+' ? 1 : -1;
-    const core = B.elements.filter(e => KIND[e.kind].layers.includes('walls') && boxesMeet(baseSolid(e), O))[0];
+    const core = B.elements.find(e => KIND[e.kind].frames && boxesMeet(baseSolid(e), O));
     const face = sign > 0 ? core.b[axis === 'x' ? 1 : 3] : core.b[axis === 'x' ? 0 : 2];   // the outer face of the block
     const slab = (d1, d2) => { const a = face - sign * d1, b = face - sign * d2; return [Math.min(a, b), Math.max(a, b)]; };
     const inPlane = (S, t) => axis === 'x' ? copy(S, { x1: t[0], x2: t[1] }) : copy(S, { y1: t[0], y2: t[1] });
@@ -345,18 +345,21 @@ const OPEN_CELLS = [];
       for (const z of transoms || []) add(copy(inPlane(inner, frameT), { z1: z - F.bar / 2, z2: z + F.bar / 2 }), F.material, o);
       add(inPlane(inner, midT), F.glass, o);
     };
+    const leafWithGrooves = (R, D) => {               // a solid leaf with evenly spaced horizontal grooves
+      add(inPlane(R, slab(...D.depth)), D.material, o);
+      for (let i = 1; i <= D.grooves; i++) {
+        const z = O.z1 + (O.z2 - O.z1) * i / (D.grooves + 1);
+        add(copy(inPlane(R, slab(...D.grooveDepth)), { z1: z - D.grooveHeight / 2, z2: z + D.grooveHeight / 2 }), D.groove, o);
+      }
+    };
     if (o.kind === 'window' || o.kind === 'glassDoor') glazed(O, o.cols || 1, o.transoms);
-    else if (o.kind === 'gate') {
-      const G = F.gate, panelT = slab(2, 6), grooveT = slab(1.6, 2);
-      add(inPlane(O, panelT), G.material, o);
-      for (let i = 1; i <= G.grooves; i++) { const z = O.z1 + (O.z2 - O.z1) * i / (G.grooves + 1); add(copy(inPlane(O, grooveT), { z1: z - 0.8, z2: z + 0.8 }), G.groove, o); }
-    } else if (o.kind === 'entrance') {
-      const E = F.entrance, leafT = slab(1, 7);
+    else if (o.kind === 'gate') leafWithGrooves(O, F.gate);
+    else if (o.kind === 'entrance') {
+      const E = F.entrance, H = E.handle;
       const leaf = copy(O, { [u2]: O[u1] + o.leaf }), side = copy(O, { [u1]: O[u1] + o.leaf });
-      add(inPlane(leaf, leafT), E.material, o);
-      for (let i = 1; i <= E.grooves; i++) { const z = O.z1 + (O.z2 - O.z1) * i / (E.grooves + 1); add(copy(inPlane(leaf, slab(0.6, 1)), { z1: z - 0.6, z2: z + 0.6 }), B.frames.gate.groove, o); }
-      const hu = leaf[u2] - 14, hz = O.z1 + 95, H = E.handle;
-      add(copy(inPlane(leaf, slab(-4, 1)), { [u1]: hu - H.width / 2, [u2]: hu + H.width / 2, z1: hz - H.length / 2 + 20, z2: hz + H.length / 2 + 20 }), H.material, o);
+      leafWithGrooves(leaf, E);
+      const hu = leaf[u2] - H.inset, hz = O.z1 + H.centre;
+      add(copy(inPlane(leaf, slab(...H.depth)), { [u1]: hu - H.width / 2, [u2]: hu + H.width / 2, z1: hz - H.length / 2, z2: hz + H.length / 2 }), H.material, o);
       glazed(side, 1);
     }
   }
@@ -364,11 +367,12 @@ const OPEN_CELLS = [];
     const right = (w.y[0] + w.y[1]) / 2 > W / 2, under = ROOF_UNDER[right ? 1 : 0];
     const lift = d => ({ a: under.a + d, s: under.s });
     const o = { id: 'roof:' + w.name, kind: 'roofWindow' }, Fw = B.roof.windowFrame;
-    const outer = solid([w.x[0], w.x[1], w.y[0], w.y[1], -INF, INF], [lift(B.roof.thickness + 4)], [lift(B.roof.thickness - 10)]);
+    const top = B.roof.thickness, [f1, f2] = Fw.frame, [g1, g2] = Fw.glassDepth;
+    const outer = solid([w.x[0], w.x[1], w.y[0], w.y[1], -INF, INF], [lift(top + f2)], [lift(top + f1)]);
     const k = Fw.width * Math.cos(B.roof.pitch * DEG);
-    const inner = solid([w.x[0] + Fw.width, w.x[1] - Fw.width, w.y[0] + k, w.y[1] - k, -INF, INF], [lift(B.roof.thickness + 5)], [lift(B.roof.thickness - 11)]);
+    const inner = solid([w.x[0] + Fw.width, w.x[1] - Fw.width, w.y[0] + k, w.y[1] - k, -INF, INF], [lift(top + f2 + 1)], [lift(top + f1 - 1)]);   // 1 cm past the frame: the hole goes clean through
     for (const S of partition(outer, inner).outside) OPEN_CELLS.push({ S, element: o.id, floor: null, roof: true, material: Fw.material, cap: Fw.material, layers: B.roof.layers.concat(B.frames.layers) });
-    const glass = solid([w.x[0] + Fw.width, w.x[1] - Fw.width, w.y[0] + k, w.y[1] - k, -INF, INF], [lift(B.roof.thickness + 1.5)], [lift(B.roof.thickness + 0.5)]);
+    const glass = solid([w.x[0] + Fw.width, w.x[1] - Fw.width, w.y[0] + k, w.y[1] - k, -INF, INF], [lift(top + g2)], [lift(top + g1)]);
     OPEN_CELLS.push({ S: glass, element: o.id, floor: null, roof: true, material: Fw.glass, cap: Fw.glass, layers: B.roof.layers.concat(B.frames.layers) });
   }
 })();
@@ -376,7 +380,7 @@ const OPEN_CELLS = [];
 /* the stair: floating treads and the landing */
 const STAIR_CELLS = [];
 (function () {
-  const ST = B.stair, rise = FLOORS[1].level / ST.risers;
+  const ST = B.stair, rise = FLOORS[FLOORS.length - 1].level / ST.risers;
   const tread = (x1, x2, y1, y2, k) => { const S = solid([x1, x2, Math.min(y1, y2), Math.max(y1, y2), k * rise - ST.tread, k * rise]); STAIR_CELLS.push({ S, element: 'stair', floor: floorOfZ(centreZ(S)), material: ST.material, cap: ST.material, layers: [floorOfZ(centreZ(S))].concat(ST.layers), walkable: true }); };
   for (const f of ST.flights) {
     if (f.landing) { const L = f.landing; tread(L[0], L[1], L[2], L[3], f.riser); continue; }
@@ -493,7 +497,7 @@ function makeMaterial(key) {
   }
   if (def.wood) woodTexture(def, m);
   m.clippingPlanes = CLIP; m.clipShadows = true;
-  m.polygonOffset = true; m.polygonOffsetFactor = 1; m.polygonOffsetUnits = 1;   // faces only ever pushed back (never forward): the edge lines on them stay in front at any angle
+  m.polygonOffset = true; m.polygonOffsetFactor = 0; m.polygonOffsetUnits = 1;   // a constant minimal bias, never slope-dependent: keeps the edge lines in front without pushing faces through walls
   return m;
 }
 const material = key => M[key] || (M[key] = makeMaterial(key));
@@ -639,13 +643,13 @@ function buildMeshes(pieces) {
   const batches = new Map();
   for (const f of pieces) {
     const c = f.cell, k = f.group + '|' + f.material;
-    if (!batches.has(k)) batches.set(k, { layers: c.layers, mat: f.material, raw: c.raw, b: new Batch() });
+    if (!batches.has(k)) batches.set(k, { layers: c.layers, mat: f.material, raw: c.raw, finishLayer: c.kind && KIND[c.kind].finish, b: new Batch() });
     const q = f.poly, centre = [0, 1, 2].map(i => q.reduce((s, v) => s + v[i], 0) / q.length), bt = batches.get(k).b;
     for (let i = 0; i < q.length; i++) bt.tri(centre, q[i], q[(i + 1) % q.length], f.n, f.uv);
   }
   for (const v of batches.values()) {
     const mesh = v.b.mesh(material(v.mat)); root.add(mesh);
-    GROUPS.push({ mesh, layers: v.layers, finish: v.raw ? { on: material(v.mat), off: material(v.raw) } : null });
+    GROUPS.push({ mesh, layers: v.layers, finish: v.raw ? { layer: v.finishLayer, on: material(v.mat), off: material(v.raw) } : null });
   }
 }
 
@@ -720,16 +724,18 @@ const save = () => { try { localStorage.setItem(STORE, JSON.stringify(state)); }
 const VIEW = () => VIEWS[state.mode];
 const layerOn = k => state.layers[k] !== false && (!LAYER[k] || !LAYER[k].parent || layerOn(LAYER[k].parent));
 const shown = layers => layers.every(layerOn);
-const LEVELS = VIEWS['3d'].levels;
+const LEVELS = VIEW_3D.levels;
+const is3d = () => VIEW() === VIEW_3D;
 function openFloor() {                     // the highest floor shown with the roof off
-  if (layerOn('roof')) return null;
+  if (shown(B.roof.layers)) return null;
   const on = FLOORS.filter(f => layerOn(f.id)); return on.length ? on[on.length - 1].id : null;
 }
-const cutRange = f => { const F = FLOOR[f]; return [F.level + VIEWS['3d'].cutFrom, F.top !== undefined ? F.top : Math.ceil(RIDGE_TOP)]; };
+const cutRange = f => { const F = FLOOR[f]; return [F.level + VIEW_3D.cutFrom, F.top !== undefined ? F.top : Math.ceil(RIDGE_TOP)]; };
 function cutHeight() {
   if (walk.on) return null;
   const f = openFloor(); if (!f) return null;
-  const [lo, hi] = cutRange(f), h = state.cut[f] !== undefined ? state.cut[f] : (f === FLOORS[0].id ? hi : FLOOR[f].level + 150);
+  const opening = VIEW_3D.cut[f] !== undefined ? FLOOR[f].level + VIEW_3D.cut[f] : Infinity;   // a floor not listed opens uncut
+  const [lo, hi] = cutRange(f), h = state.cut[f] !== undefined ? state.cut[f] : opening;
   const v = Math.min(hi, Math.max(lo, h));
   return v >= hi ? null : v;
 }
@@ -755,10 +761,10 @@ function applyView() {
   CUT.constant = h === null ? INF : h / 100;
   for (const g of GROUPS) {
     g.mesh.visible = shown(g.layers);
-    if (g.finish) g.mesh.material = layerOn('facade') ? g.finish.on : g.finish.off;
+    if (g.finish) g.mesh.material = layerOn(g.finish.layer) ? g.finish.on : g.finish.off;
   }
   for (const g of EDGE_GROUPS) g.mesh.visible = shown(g.layers) && !(g.unless.length && g.unless.every(shown));
-  for (const t of TILE_MESHES) { t.mesh.visible = shown(t.layers); if (t.small) t.mesh.material = layerOn('cuts') ? t.red : t.normal; }
+  for (const t of TILE_MESHES) { t.mesh.visible = shown(t.layers); if (t.small) t.mesh.material = shown(B.tiles.small) ? t.red : t.normal; }
   buildCaps(h);
   markRoom();
   redraw();
@@ -925,7 +931,7 @@ const markMat = new THREE.MeshBasicMaterial({ color: 0xc8882f, transparent: true
 const markGroup = new THREE.Group(); root.add(markGroup);
 function markRoom() {
   while (markGroup.children.length) markGroup.children.pop().geometry.dispose();
-  const r = state.room && ROOM[state.room]; if (!r || state.mode !== '3d' || r.floor !== openFloor()) return;
+  const r = state.room && ROOM[state.room]; if (!r || !is3d() || r.floor !== openFloor()) return;
   const bt = new Batch(), lv = FLOOR[r.floor].level + B.tiles.mark, up = [0, 0, 1], uv = v => [v[0], v[1]];
   for (const q of r.rects) { bt.tri([q[0], q[2], lv], [q[1], q[2], lv], [q[1], q[3], lv], up, uv); bt.tri([q[0], q[2], lv], [q[1], q[3], lv], [q[0], q[3], lv], up, uv); }
   const m = bt.mesh(markMat); m.castShadow = m.receiveShadow = false; markGroup.add(m);
@@ -960,7 +966,7 @@ function modeToggle() {
 $('mode').onclick = () => setMode(VIEW_IDS[(VIEW_IDS.indexOf(state.mode) + 1) % VIEW_IDS.length]);
 function contextMenu() {
   const ctx = $('context'); ctx.innerHTML = '';
-  if (state.mode !== '3d') return;
+  if (!is3d()) return;
   const row = document.createElement('div'); row.className = 'menurow';
   for (const k of LEVELS) {
     const l = document.createElement('label'); l.className = 'chk';
@@ -980,9 +986,9 @@ function contextMenu() {
 }
 function cameraDock() {
   const dock = $('dock'); dock.innerHTML = '';
-  if (state.mode !== '3d') { dock.hidden = true; return; }
+  if (!is3d()) { dock.hidden = true; return; }
   dock.hidden = false;
-  if (VIEWS['3d'].walk) { const b = document.createElement('button'); b.className = 'walkbtn'; b.textContent = 'Spacer'; b.setAttribute('aria-pressed', walk.on); b.onclick = () => walk.on ? stopWalk() : startWalk(); dock.appendChild(b); }
+  if (VIEW_3D.walk) { const b = document.createElement('button'); b.className = 'walkbtn'; b.textContent = 'Spacer'; b.setAttribute('aria-pressed', walk.on); b.onclick = () => walk.on ? stopWalk() : startWalk(); dock.appendChild(b); }
   const add = (list, level) => { for (const c of list) { const b = document.createElement('button'); b.textContent = c.name; b.onclick = () => { stopWalk(); setCamera(c, level); }; dock.appendChild(b); } };
   const sep = () => { const s = document.createElement('span'); s.className = 'sep'; dock.appendChild(s); };
   sep(); add(B.cameras.all, 0);
@@ -1003,7 +1009,7 @@ function cutPanel() {
   const f = openFloor(), el = $('cut');
   if (!f) return;
   const [lo, hi] = cutRange(f), h = cutHeight();
-  el.min = lo; el.max = hi; el.step = VIEWS['3d'].cutStep; el.value = h === null ? hi : h;
+  el.min = lo; el.max = hi; el.step = VIEW_3D.cutStep; el.value = h === null ? hi : h;
   $('cutv').textContent = h === null ? 'bez cięcia' : `${fmt(h - FLOOR[f].level, 0)} cm nad podłogą`;
 }
 $('cut').oninput = e => { const f = openFloor(); if (!f) return; state.cut[f] = +e.target.value; save(); cutPanel(); applyView(); };
@@ -1101,7 +1107,8 @@ canvas.addEventListener('pointerup', e => {
 /* ================= 10. 2D PLAN ================= */
 const PLAN_CUT = Object.values(VIEWS).find(v => v.plan).cut;
 const planCut = F => F.planCut !== undefined ? F.planCut : PLAN_CUT;   // a floor under the roof is cut lower, through its knee walls
-const PLAN_FILL = { block: '#2d2f31', insulation: 'url(#eps)', concrete: '#7d7b76', timber: '#b89466', tread: '#a57b4f' };
+const PLAN_FILL = { block: '#2d2f31', insulation: 'url(#eps)', concrete: '#7d7b76', glass: '#9fc3d6' };   // drawing conventions; any other cap in its material colour
+const planFill = key => PLAN_FILL[key] || MAT.materials[key].color;
 function planSvg() {
   const gap = 420, ox = f => FLOORS.indexOf(f) * (W + gap);
   const minX = B.roof.x[0] - 120, maxX = B.roof.x[1] + 120;
@@ -1127,25 +1134,25 @@ function planSvg() {
       if (c.floor !== F.id) continue;
       if (h <= c.S.z1 || h > c.S.z2) continue;
       const yi = yAt(c.S, h); if (!yi) continue;
-      const fill = c.opening ? (c.material === B.frames.glass ? '#9fc3d6' : '#3b3e42') : (PLAN_FILL[c.cap] || '#555');
+      const fill = planFill(c.opening ? c.material : c.cap);
       s += rect(c.S.x1, c.S.x2, yi[0], yi[1], `fill="${fill}"`);
     }
     if (F.id === FLOORS[FLOORS.length - 1].id) {   // under the roof: the clear heights and the roof windows
+      const x1 = Math.min(...F.inside.map(q => q[0])), x2 = Math.max(...F.inside.map(q => q[1]));
       for (const hh of B.roof.planHeights) {
         const y = (F.level + hh - EAVE) / TAN;
-        for (const yy of [y, W - y]) s += `<line x1="${X + yy}" y1="44" x2="${X + yy}" y2="1276" stroke="#8a8d88" stroke-dasharray="10 8" stroke-width="1.2"/><text x="${X + yy + (yy < W / 2 ? 6 : -6)}" y="70" font-size="18" fill="#8a8d88" text-anchor="${yy < W / 2 ? 'start' : 'end'}">${hh}</text>`;
+        for (const yy of [y, W - y]) s += `<line x1="${X + yy}" y1="${x1}" x2="${X + yy}" y2="${x2}" stroke="#8a8d88" stroke-dasharray="10 8" stroke-width="1.2"/><text x="${X + yy + (yy < W / 2 ? 6 : -6)}" y="${x1 + 26}" font-size="18" fill="#8a8d88" text-anchor="${yy < W / 2 ? 'start' : 'end'}">${hh}</text>`;
       }
       for (const w of B.roof.windows) s += rect(w.x[0], w.x[1], w.y[0], w.y[1], 'fill="none" stroke="#3a6f8f" stroke-dasharray="6 5" stroke-width="1.5"');
-      for (const c of B.elements) if (c.cuts) for (const v of c.cuts) if (Array.isArray(v) && v[4] < F.level + 1 && v[5] > F.level - 50) s += rect(v[0], v[1], v[2], v[3], 'fill="none" stroke="#a3a7a2" stroke-dasharray="6 6" stroke-width="1"');
+      for (const v of holes) s += rect(v[0], v[1], v[2], v[3], 'fill="none" stroke="#a3a7a2" stroke-dasharray="6 6" stroke-width="1"');
     }
     for (const o of B.openings) {
-      if (o.b[4] > h || o.b[5] < h || Math.abs(o.b[4] - F.level) > F.level + 400 || floorOfZ((o.b[4] + o.b[5]) / 2) !== F.id) continue;
-      const cx = (o.b[0] + o.b[1]) / 2, cy = (o.b[2] + o.b[3]) / 2, along = o.b[1] - o.b[0] > o.b[3] - o.b[2];
+      if (o.b[4] > h || o.b[5] < h || floorOfZ((o.b[4] + o.b[5]) / 2) !== F.id) continue;
+      const cx = (o.b[0] + o.b[1]) / 2, cy = (o.b[2] + o.b[3]) / 2;
       const [a, b] = o.label.split('/');
       const dx = o.outer === '-x' ? -40 : o.outer === '+x' ? 40 : 0, dy = o.outer === '-y' ? -40 : o.outer === '+y' ? 40 : 0;
       const tx = X + cy + dy, ty = cx + dx;
       s += `<g font-size="15" text-anchor="middle" fill="#1f2523"><circle cx="${tx}" cy="${ty}" r="19" fill="#fff" stroke="#1f2523" stroke-width="1"/><line x1="${tx - 15}" y1="${ty}" x2="${tx + 15}" y2="${ty}" stroke="#1f2523" stroke-width="0.8"/><text x="${tx}" y="${ty - 4}">${a}</text><text x="${tx}" y="${ty + 14}">${b}</text></g>`;
-      if (!o.outer && along !== undefined) { /* inner doors: the gap shows the opening */ }
     }
     for (const r of F.rooms) {
       const q = r.rects.reduce((m, q) => (q[1] - q[0]) * (q[3] - q[2]) > (m[1] - m[0]) * (m[3] - m[2]) ? q : m);
@@ -1216,7 +1223,7 @@ window.HOUSE_CHECKS = CHECKS;            // for tests
 /* ================= 12. WALK ================= */
 const walk = { on: false, x: B.walk.start.x, y: B.walk.start.y, z: 0, heading: B.walk.start.heading, pitch: 0, keys: new Set(), last: 0 };
 const OBSTACLES = CELLS.concat(OPEN_CELLS, STAIR_CELLS).map(c => ({ c, zr: zRange(c.S) }));
-const WALKABLE = STAIR_CELLS.concat(SITE_CELLS, CELLS.filter(c => c.kind === 'slab' || c.kind === 'groundSlab'));
+const WALKABLE = STAIR_CELLS.concat(SITE_CELLS, CELLS.filter(c => KIND[c.kind].walkable));
 function groundAt(x, y, z) {
   let best = null;
   for (const c of WALKABLE) {
@@ -1271,7 +1278,7 @@ function stepWalk(dt) {
 const WALK_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Shift', 'a', 'd'];
 window.addEventListener('keydown', e => {
   if (e.target.closest && e.target.closest('input,select')) return;
-  if (state.mode === '3d' && !walk.on && e.key === 'ArrowUp' && VIEWS['3d'].walk) startWalk();
+  if (is3d() && !walk.on && e.key === 'ArrowUp' && VIEW_3D.walk) startWalk();
   if (!walk.on) return;
   if (e.key === 'Escape') { stopWalk(); return; }
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;

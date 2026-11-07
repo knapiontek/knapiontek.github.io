@@ -32,16 +32,15 @@ Left and right are as seen when facing the front of the house (the street side),
 ## 3. Modelling rules
 
 - **Box.** The only solid is an axis-aligned box, `x1–x2, y1–y2, z1–z2`.
-- **One shape, one box.** A wall of one material and thickness is one box from end to end, including through its doors and windows. It is never split into pieces around an opening.
-- **Openings** (doors, windows) are boxes subtracted from the wall box they cross.
+- **One shape, one box.** A wall of one material and thickness is one box from end to end, through its doors and windows; it is never split around an opening.
+- **Openings** (doors, windows) are boxes subtracted from every wall and EPS box they cross.
 - **Crossings.** Where two walls cross, the load-bearing (thicker) one runs through and the other stops at its faces.
-- **Under the roof.** A box that reaches the roof is still one box, with its top cut by the two roof planes (§ 6).
+- **Under the roof.** A box that reaches the roof is still one box, its top cut by the two roof planes (§ 6). Gable windows are cut by lines parallel to the roof (§ 10).
 - **Element by element.** Each material is a separate element (block, EPS, slab, footing).
-- **Points.** One list of 3D points for the model. A computed point within 0.005 cm of a listed one is replaced by it (welded); every drawn point is welded and take the points lying on their edges. Computed floats are never placed side by side.
 
 ## 4. How the numbers were read
 
-- **Printed dimensions come first.** Pixels are used only to place things that have no printed number. Both plans are at 0.4297 px/cm (910 = 391 px), so 1 px ≈ 2.3 cm. The section is at 0.280 px/cm (1 px ≈ 3.6 cm). Measured values are rounded to whole cm and good to ±2.3 on the plans and ±3.6 on the section.
+- **Printed dimensions come first.** Pixels only place things that have no printed number. Plans: 0.4297 px/cm (910 = 391 px), 1 px ≈ 2.3 cm. Section: 0.280 px/cm, 1 px ≈ 3.6 cm. Measured values are rounded to whole cm, good to ±2.3 on the plans and ±3.6 on the section.
 - **The printed chains close:**
   - Ground floor, y (front): 44 + 367 + 12 + 192 + 12 + 239 = 866, the inner face of the right wall.
   - Ground floor, x (right side): 44 + 338 + 340 + 12 + 251 + 12 + 189 = 1186, the inner face of the entrance wall. Vestibule: 1186 − 261 = 925.
@@ -76,7 +75,7 @@ Left and right are as seen when facing the front of the house (the street side),
 - **Build-up.** 64.6 measured vertically (≈ 48 perpendicular): rafters, insulation, battens, ceramic tiles. The roof top is the underside + 64.6.
 - **Length.** x −100 → 1420. The roof runs on over both terraces as the portal frame (§ 8.4).
 - **Flat ceiling** at z 591 wherever the underside is higher, i.e. y 227 – 683. Above it is a loft about 1.6 m high.
-- **Roof windows, 3 × 94/140.** 94 along x and 140 along the slope (104 in plan). The plan draws ≈ 84 of that, measured in from the knee wall's inner face. The site plan and the elevations confirm the x positions.
+- **Roof windows, 3 × 94/140.** 94 along x and 140 along the slope (104 in plan). The plan draws ≈ 84 of that, measured in from the knee wall's inner face (the y column below); the full 104 runs from there out over the knee wall (y 782 – 886 and 24 – 128). The site plan and the elevations confirm the x positions.
 
 | Roof window | x | y (plan) | Slope |
 |---|---|---|---|
@@ -132,9 +131,7 @@ The entrance recess is open to the outside at x 1230 – 1320, y 455 – 846, ro
 | front gable and slab edge | 1300 – 1320 | 44 – 866 | 272 → roof |
 | recess soffit (47 thick, as built) | 1230 – 1320 | 455 – 846 | 225 → 272 |
 
-The recess soffit is 47 thick so that its underside is at 225, the head of the garage door: the white front band is one horizontal bar over the garage and the recess.
-
-The EPS boxes start at −92 (the plinth insulation, finish below ±0 = plinth).
+The wall EPS boxes run down to −92 (the table gives z from 0): below ±0 they are the plinth insulation, finished as plinth. The recess soffit is 47 thick (§ 14).
 
 ### 8.4 Portal (the white frame)
 
@@ -301,6 +298,7 @@ The pier between the 250 and 190 windows is x 333 – 472. The `kitchen` project
 | Attic bathroom door 90/205 (#3) | x 650 – 740 | x 630 – 720 (20 toward the garden, clears the shower) |
 | Heating | gas boiler, gravity ventilation: vent shaft x 873 – 901 / y 589 – 615 (ground floor), x 832 – 901 / y 565 – 626 (attic), second stack on the roof | heat pump: one chimney (living room), no vent shaft, no second stack; the space goes to the hall (ground floor) and room 6 (attic) |
 | Diagonal wall under the stair (garage) | from (547, ≈ 271) to (642, ≈ 323) | none: the stair is floating; the garage outline keeps y 297 as the line to the stair |
+| Recess soffit EPS (§ 8.3) | thickness not given (EPS 20 elsewhere) | 47 thick, z 225 – 272: its underside is at the garage door head, so the white front band is one horizontal bar over the garage and the recess |
 
 The showers are fittings and are not in this geometry; only the walls and the door are.
 

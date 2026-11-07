@@ -1,72 +1,74 @@
 # House 3D rules
 
-> What the house page must do and how its model is organised. How the files implement it: project.md. The geometry: estimate/estimate.md.
+> What the page must do. How the files do it: project.md. The geometry: estimate/estimate.md.
 
-## 1. Three trees and the settings
+## 1. Three trees and the panel
 
-The page is made of three trees, all stored as data in house.js:
+house.js holds three trees:
 
 - **Geometry**: what the house is made of.
 - **Layers**: what can be switched on and off.
 - **Menu (views)**: how the house is looked at.
 
-The **menu** decides what is shown and from where. The **settings** (the panel) are only the parameters of what the menu has chosen; they never repeat a menu choice.
+The menu decides what is shown and from where. The panel holds only the parameters of that choice and never repeats it.
 
 - **Menu node**: the parameters of the view in force (cut height, light; zoom and SVG of the 2D plan) and which panel sections it shows.
-- **Geometry node**: a floor is opened with the menu (the highest floor shown with the roof off). A room of the open floor is selected by a click in 3D or in the list; it gets a row in the context menu (name, sub-project) and the panel shows its floor tiles. Tiles are set in the rooms, never per floor.
-- **Layer node**: its switch is in Warstwy, not in the room panel.
+- **Geometry node**: a floor is opened from the menu: it is the highest floor shown with the roof off. A room of the open floor is selected by a click in 3D or in the list; it gets a row in the context menu (name, sub-project) and the panel shows its floor tiles. Tiles are set per room, never per floor.
+- **Layer node**: switched in Warstwy, not in the room panel.
 
 ## 2. Geometry
 
-- **Source**: estimate/estimate.md, including its build changes (§ 14). The model copies its boxes; it does not re-measure.
-- **Box**: the only solid, axis aligned, `[x1, x2, y1, y2, z1, z2]`. Axes as in the estimate: x along the house from the garden, y across from the garage side, z up from ±0.00.
-- **One shape, one box**: a wall of one material and thickness is one box end to end, through its doors and windows.
-- **Openings** are boxes subtracted from every wall and EPS box they cross.
-- **Crossings**: the load-bearing (thicker) wall runs through; the other stops at its faces.
-- **Under the roof**: a box that reaches the roof is cut by the two roof planes. Gable windows are cut by lines parallel to the roof.
+- **Source**: estimate/estimate.md with its build changes (§ 14). The model copies its boxes and never re-measures.
+- **Boxes** follow the estimate (§ 2 axes, § 3 rules): an axis-aligned box `[x1, x2, y1, y2, z1, z2]` is the only solid; one shape is one box, through its doors and windows; openings are subtracted from every wall and EPS box they cross; at a crossing the load-bearing (thicker) wall runs through; a box reaching the roof is cut by the two roof planes, gable windows by lines parallel to the roof.
 - **Cuts**: an element may subtract other elements or boxes (the slab without the stair void and the chimney).
-- **Floors** are split by one plane, the top of the ground floor walls (272): below it the ground floor, above it the attic with the slab. A box crossing the plane belongs to both, in two parts.
-- **Nothing overlaps**: no two elements share volume (checked on the page).
-- **EPS** is a continuous shell outside the blocks: never between two blocks; every exposed block end (the portal wing heads) gets an EPS cap. A block line runs through its corners and on into the portal wings.
-- **Facade**: the finish (plaster, graphite, wood, plinth) is only on the parts of EPS faces to the air (block → EPS → facade): a part against another solid (block, slab, roof) is bare EPS, decided exactly by the contact pieces; it is chosen by rules: the side of the box that faces the air, a part of it, a height. A later rule wins.
-- **Windows and doors** sit in the block, flush with its outer face; their sizes are the archon labels (width / height), shown on the 2D plan.
-- **Only boxes**: no other solid. The stair is floating (treads and a landing, no stringers, no wall under it).
+- **Floors** are split by one plane, the top of the ground floor walls (272): below is the ground floor, above is the attic with the slab. A box crossing the plane belongs to both, in two parts.
+- **No overlaps**: no two elements share volume (checked on the page).
+- **EPS** is a continuous shell outside the blocks, never between two blocks. Every exposed block end (the portal wing heads) gets an EPS cap. A block line runs through its corners and on into the portal wings.
+- **Facade**: the finish (plaster, graphite, wood, plinth) covers only the parts of EPS faces open to the air (block → EPS → facade). A part against another solid (block, slab, roof) stays bare EPS, decided exactly by the contact pieces. The finish is chosen by rules (the side of the box facing the air, a part of it, a height); a later rule wins.
+- **Windows and doors** sit in the block, flush with its outer face. Their sizes are the archon labels (width / height), shown on the 2D plan.
+- **Stair**: floating, treads and a landing only (no stringers, no wall under it).
 - **Not in the model**: furniture, kitchen, bathroom fittings, the fireplace. Only the building.
 
 ## 3. Layers
 
-- Floors and roof: Parter, Piętro, Dach; in their own menu row.
-- Material layers, in the panel: Fundament, Pustaki, Wieniec i strop, Styropian (→ Elewacja), Okna i drzwi, Schody, Posadzki (→ Drobne docinki), Teren, Krawędzie.
-- Elewacja off: the EPS shows bare; on: its finish.
-- The mesh is drawn as it is: one list of 3D points for the model; every drawn point (solids, caps, tiles, edges) is welded: a computed point within 0.005 cm of a point already there is replaced by it; faces then take the listed points lying on their edges (no T-junctions, no cracks); faces between cells of one element are not drawn; nothing is enlarged or hidden to cover a fault.
-- Krawędzie: every element (blocks, EPS, ring beams, slabs, roof, stair) has its edges wherever it is exposed; a joint of two elements lying in one plane shows only while the neighbour is hidden. Computed exactly from the welded points, no sampling.
+- **Floors and roof** (Parter, Piętro, Dach) are in their own menu row.
+- **Material layers** are in the panel: Fundament, Pustaki, Wieniec i strop, Styropian (→ Elewacja), Okna i drzwi, Schody, Posadzki (→ Drobne docinki), Teren, Krawędzie.
+- **Elewacja** off shows the bare EPS; on shows its finish.
+- **Krawędzie**: every element (blocks, EPS, ring beams, slabs, roof, stair) shows its edges wherever it is exposed. A joint of two elements in one plane shows only while the neighbour is hidden. Edges are computed exactly from the welded points (§ 4), no sampling.
 - A child is shown only with its parent. An element is drawn only when all its layers are on.
 - Switching a layer changes only what is shown, never the model, the tile counts or the camera.
 
-## 4. Menu
+## 4. Mesh
 
-- Top left: one toggle 3D / 2D.
-- 3D, top: Parter, Piętro, Dach as check boxes; a second row when a room is selected.
-- 3D, bottom: Spacer (the walk), the cameras of the house and of the open floor.
-- Help: an icon in the corner.
-- 2D: both floors side by side, garden at the top; cut 150 cm above the ground floor, 80 cm above the attic floor (through the knee walls and their EPS, under the eaves); the stair is drawn under the cut as a full line and over it dashed, and from the attic all of it through the stair hole; zoom and SVG download in the panel.
-- The panel follows what is shown: Przekrój and Pomieszczenia only for the open floor; at the top of its range the cut is off. Light only in 3D.
-- The cut is a plane that clips the model; what it opens is closed by caps in the colour of the material cut, also when the cut lies exactly on the top of a cell (a window or door head).
+- The model has one list of 3D points. Every drawn point (solids, frames, stair, site, roof, section caps, tiles, marks, edges) is welded: a computed point within 0.005 cm of a listed point is replaced by it.
+- Faces take the listed points lying on their edges: no T-junctions, no cracks.
+- Faces between cells of one element are not drawn.
+- Nothing is enlarged or hidden to cover a fault.
 
-## 5. Materials and products
+## 5. Menu
+
+- **Top left**: one toggle 3D / 2D.
+- **3D, top**: Parter, Piętro, Dach as check boxes; a second row when a room is selected.
+- **3D, bottom**: Spacer (the walk), the cameras of the house and of the open floor.
+- **Help**: an icon in the corner.
+- **2D**: both floors side by side, garden at the top. Cut 150 cm above the ground floor and 80 cm above the attic floor (through the knee walls and their EPS, under the eaves). The stair is drawn as a full line under the cut and dashed above it; from the attic all of it shows through the stair hole. Zoom and SVG download are in the panel.
+- **Panel** follows what is shown: Przekrój and Pomieszczenia only for the open floor; at the top of its range the cut is off. Light only in 3D.
+- **Cut**: a plane that clips the model. What it opens is closed by caps in the colour of the material cut, also when the cut lies exactly on the top of a cell (a window or door head).
+
+## 6. Materials and products
 
 - Materials are a library of their own (materials.js); an element names its material.
 - A tile product is one whole: texture, size and joint. The page chooses the product, never its parts.
 - The laying belongs to the room: pattern, direction, grout colour, offsets.
 
-## 6. Rooms with sub-projects
+## 7. Rooms with sub-projects
 
-- The living room with the kitchen (kitchen/view.html) and both bathrooms (bath/view.html) link to their projects.
-- Nothing of a sub-project is placed in house3D until it is accepted. Integration later: its geometry under the room, its layers as a branch, its views as sub-views.
+- The living room with the kitchen links to kitchen/view.html; both bathrooms link to bath/view.html.
+- Nothing of a sub-project goes into house3D until it is accepted. Then: its geometry under the room, its layers as a branch, its views as sub-views (see proposal.md).
 
-## 7. Checks (on the page)
+## 8. Checks (on the page)
 
-- Element thickness against its kind.
+- Element thickness matches its kind.
 - No two elements share volume.
-- Every floor inside the walls is a room, a wall, a void or named.
-- Tile layouts: small cut pieces shown red and counted.
+- Every floor area inside the walls is a room, a wall, a void or named.
+- Tile layouts: small cut pieces are shown red and counted.
