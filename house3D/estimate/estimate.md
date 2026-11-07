@@ -129,6 +129,9 @@ The entrance recess is open to the outside at x 1230 – 1320, y 455 – 846, ro
 | entrance wall | 1210 – 1230 | 435 – 846 | 0 → 272 |
 | recess, right side | 1210 – 1320 | 846 – 866 | 0 → 272 |
 | front gable and slab edge | 1300 – 1320 | 20 – 890 | 272 → roof |
+| recess soffit | 1230 – 1320 | 455 – 846 | 252 → 272 |
+
+The EPS boxes start at −92 (the plinth insulation, finish below ±0 = plinth).
 
 ### 8.4 Portal (the white frame)
 
@@ -149,17 +152,17 @@ The terraces are 100 deep (printed) at both ends, under the portal.
 
 | # | Kind | x | y | Note |
 |---|---|---|---|---|
-| 1 | chimney | 471 – 547 | 379 – 455 | z −132 → ≈ 900, one box through both floors and the roof |
+| 1 | chimney | 471 – 547 | 379 – 455 | z −92 → ≈ 900 (on its footing), one box through both floors and the roof |
 | 2 | block 12 | 535 – 547 | 44 – 379 | living / garage |
 | 3 | block 12 | 642 – 654 | 320 – 435 | stair wall; continues diagonally to (547, ≈ 271), see § 13 |
 | 4 | block 24 | 654 – 925 | 411 – 435 | garage / hall, load-bearing |
 | 5 | block 12 | 722 – 734 | 580 – 866 | kitchen / bathroom |
 | 6a | block 12 | 734 – 901 | 615 – 627 | hall / bathroom |
 | 6b | block 12 | 925 – 1186 | 615 – 627 | vestibule / boiler room |
-| 7 | block 24 | 901 – 925 | 435 – 729 | load-bearing, runs through 6 |
-| 8 | block 12 | 925 – 985 | 717 – 729 | bathroom / boiler room |
+| 7 | block 24 | 901 – 925 | 435 – 766 | load-bearing, runs through 6; built to 766 (§ 14) |
+| 8 | block 12 | 925 – 985 | 754 – 766 | bathroom / boiler room; built at 754 (§ 14) |
 | 9 | block 12 | 925 – 1186 | 411 – 423 | garage / vestibule |
-| 10 | block 12 | 985 – 997 | 717 – 866 | bathroom / boiler room |
+| 10 | block 12 | 985 – 997 | 754 – 866 | bathroom / boiler room; built from 754 (§ 14) |
 | 11 | vent shaft | 873 – 901 | 589 – 615 | z 0 → 306, continues as attic #10 |
 
 ### Openings
@@ -187,8 +190,8 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 |---|---|---|---|
 | Salon, kitchen and hall (5, 6, 3) | [44,44,535,379] [44,379,471,455] [44,455,547,866] [547,435,722,866] [722,435,734,580] [734,435,901,589] [734,589,873,615] | 51.02 | 35.42 + 9.67 + 5.46 = 50.55 |
 | Vestibule (1) | [925,423,1186,615] | 5.01 | 4.84 |
-| Bathroom (7) | [734,627,901,866] [901,729,985,866] | 5.14 | 4.95 |
-| Boiler room with laundry (8) | [925,627,1186,717] [997,717,1186,866] | 5.17 | 4.97 |
+| Bathroom (7) | [734,627,901,866] [901,766,985,866] | 4.83 | 4.95 (design) |
+| Boiler room with laundry (8) | [925,627,1186,754] [997,754,1186,866] | 5.43 | 4.97 (design) |
 | Garage (2) | [547,44,642,297] [642,44,654,320] [654,44,1276,411] | 25.56 | 22.35 (25.91) |
 | Stairs (4) | not modelled as a room | – | 5.41 |
 
@@ -220,7 +223,7 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 | window | 220/285 | front gable | 1276 – 1320 | 168 – 388 | 336 → 621, top sloping: z = 621 − tan 42° · (388 − y) |
 | window | 220/285 | front gable | 1276 – 1320 | 522 – 742 | 336 → 621, top sloping: z = 621 − tan 42° · (y − 522) |
 | door | 89/205 | #6 | 535 – 547 | 459 – 548 | 306 → 511 |
-| door | 90/205 | #3 | 650 – 740 | 553 – 565 | 306 → 511 |
+| door | 90/205 | #3 | 630 – 720 | 553 – 565 | 306 → 511 (built; design 650 – 740, § 14) |
 | door | 82/205 | #12 | 901 – 913 | 178 – 260 | 306 → 511 |
 | door | 94/205 | #12 | 901 – 913 | 347 – 441 | 306 → 511 |
 | door | 90/205 | #12 | 901 – 913 | 457 – 547 | 306 → 511 |
@@ -286,5 +289,15 @@ The pier between the 250 and 190 windows is x 333 – 472. The `kitchen` project
 - **Footing sizes and depths.** These come from the section only (±3.6).
 - **Portal wing ends.** The finish on the wings' end faces (an EPS cap or not) is not drawn.
 - **Vent stack top.** ≈ 870, from the elevations only.
+
+## 14. Build changes (as built, differ from archon)
+
+| Change | Design | As built |
+|---|---|---|
+| Ground floor shower recess (bathroom 7) | 84 × 137, x 901 – 985, y 729 – 866 | 90 × 100: x 895 – 985 (90 from the glass line at 895), y 766 – 866 (100 along the window wall). Walls: #7 to y 766, #8 at y 754 – 766, #10 from y 754. Which walls moved is assumed; the recess size was measured on site. |
+| Attic shower 100 × 100 (bathroom 5) | x 547 – 637, y 565 – 670 (garden end) | x 720 – 820, y 565 – 665 (front end, by the door wall) |
+| Attic bathroom door 90/205 (#3) | x 650 – 740 | x 630 – 720 (20 toward the garden, clears the shower) |
+
+The showers are fittings and are not in this geometry; only the walls and the door are.
 
 Sources: [archon.pl, project data](https://www.archon.pl/projekty-domow/projekt-dom-w-papawerach-5-g-mb68264a6f24b7), [archon.pl, construction cost](https://www.archon.pl/projekty-domow/projekt-dom-w-papawerach-5-g-mb68264a6f24b7-koszt-budowy-7), [archon.pl, ground floor plan](https://www.archon.pl/rzut/mb68264a6f24b7/1).

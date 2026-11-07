@@ -1,6 +1,7 @@
 /* "Dom w papawerach 5 (G)" - the material library of view.html, independent of the geometry: elements of house.js
    name a material; a tile product carries its texture, size and joint (they are never chosen apart from it).
    materials  colour, roughness, metalness, opacity (glass), reflect = strength of the sky reflection; texture = generated plaster grain: strength 0..1, grain = speck size in px of a 256 px
+              (a material is also the colour of a section cap: block, insulation, concrete, timber)
               tile covering "tile" cm, bump = relief depth (0 = off); wood = the oak decor photo of textures.js cut into
               boards; grass, slabs = generated lawn and paving
    products   tile products: name, note (shown under the choice), texture = a key of textures.js, tile length and width
@@ -19,8 +20,10 @@ window.HOUSE_MATERIALS = {
   "slab": {"color": "#f1efe9", "roughness": 0.95},
   "plinth": {"color": "#6d6e6c", "roughness": 0.9, "texture": {"strength": 0.5, "grain": 3, "tile": 60, "bump": 0}},
   "tread": {"color": "#a57b4f", "roughness": 0.6},
-  "fireplace": {"color": "#2b2b2c", "roughness": 0.6},
   "insulation": {"color": "#dcc35e", "roughness": 0.95},
+  "block": {"color": "#d6d2c8", "roughness": 0.95},
+  "concrete": {"color": "#9e9c96", "roughness": 0.95, "texture": {"strength": 0.45, "grain": 3, "tile": 80, "bump": 0}},
+  "timber": {"color": "#b89466", "roughness": 0.8},
   "lawn": {"color": "#6f8a52", "roughness": 1, "grass": {"tile": 120}},
   "paving": {"color": "#b9b6ae", "roughness": 0.9, "slabs": {"size": 60, "joint": "#6a675f"}},
   "woodVertical": {"wood": "H1180", "board": 12, "boardsVertical": true, "roughness": 0.7},
