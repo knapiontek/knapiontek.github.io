@@ -517,19 +517,41 @@ Batch.prototype.mesh = function (mat) {
   const m = new THREE.Mesh(g, mat); m.castShadow = !mat.transparent; m.receiveShadow = true; return m;
 };
 /* the faces of a solid (a prism along x) into batches chosen by face(normal) */
-function solidFaces(S, pick) {
+/* Every face reaches a hair (GAP) past its edges in its own plane: neighbouring cells of one solid then overlap at
+   their seams instead of leaving the pixel cracks of T-junctions. */
+const GAP = 0.05;
+function contains(S, x, y, z) {
+  if (x <= S.x1 || x >= S.x2 || y <= S.y1 || y >= S.y2 || z <= S.z1 || z >= S.z2) return false;
+  const p = profile(S);
+  for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length]; if ((b[0] - a[0]) * (z - a[1]) - (b[1] - a[1]) * (y - a[0]) < 0) return false; }
+  return true;
+}
+/* a face is inside when its centre and corners, just outside it, lie in a neighbouring cell */
+const covered = (pts, n, hidden) => hidden && pts.every(q => hidden(q[0] + n[0] * 0.5, q[1] + n[1] * 0.5, q[2] + n[2] * 0.5));
+const samples = pts => { const c = [0, 1, 2].map(k => pts.reduce((s, q) => s + q[k], 0) / pts.length); return [c].concat(pts.map(q => q.map((v, k) => v + (c[k] - v) * 0.1))); };
+function solidFaces(S, pick, hidden) {
   const p = profile(S); if (p.length < 3) return;
+  const x1 = S.x1 - GAP, x2 = S.x2 + GAP;
+  const out = p.map((a, i) => { const b = p[(i + 1) % p.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [(b[1] - a[1]) / L, -(b[0] - a[0]) / L]; });
+  const grown = p.map((v, i) => {           // the polygon grown by GAP: each vertex moves along the mitre of its two edges
+    const n1 = out[(i + p.length - 1) % p.length], n2 = out[i], k = GAP / Math.max(0.2, 1 + n1[0] * n2[0] + n1[1] * n2[1]);
+    return [v[0] + (n1[0] + n2[0]) * k, v[1] + (n1[1] + n2[1]) * k];
+  });
   for (let i = 0; i < p.length; i++) {
     const a = p[i], b = p[(i + 1) % p.length], dy = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dy, dz); if (L < 1e-6) continue;
-    const n = [0, dz / L, -dy / L];
+    const n = [0, dz / L, -dy / L], t = [dy / L * GAP, dz / L * GAP];
+    const a2 = [a[0] - t[0], a[1] - t[1]], b2 = [b[0] + t[0], b[1] + t[1]];
     let e = [dy / L, dz / L]; if (e[1] < -EPS || (Math.abs(e[1]) < EPS && e[0] < 0)) e = [-e[0], -e[1]];
     const uv = v => [v[0], v[1] * e[0] + v[2] * e[1]];
-    const B1 = pick(n), A = [S.x1, a[0], a[1]], Bq = [S.x2, a[0], a[1]], C = [S.x2, b[0], b[1]], D = [S.x1, b[0], b[1]];
+    if (covered(samples([[S.x1, a[0], a[1]], [S.x2, a[0], a[1]], [S.x2, b[0], b[1]], [S.x1, b[0], b[1]]]), n, hidden)) continue;
+    const B1 = pick(n), A = [x1, a2[0], a2[1]], Bq = [x2, a2[0], a2[1]], C = [x2, b2[0], b2[1]], D = [x1, b2[0], b2[1]];
     B1.tri(A, Bq, C, n, uv); B1.tri(A, C, D, n, uv);
   }
   for (const [x, nx] of [[S.x1, -1], [S.x2, 1]]) {
-    const n = [nx, 0, 0], Bt = pick(n), uv = v => [v[1], v[2]];
-    for (let i = 1; i + 1 < p.length; i++) Bt.tri([x, p[0][0], p[0][1]], [x, p[i][0], p[i][1]], [x, p[i + 1][0], p[i + 1][1]], n, uv);
+    const n = [nx, 0, 0], uv = v => [v[1], v[2]], q = grown;
+    if (covered(samples(p.map(v => [x, v[0], v[1]])), n, hidden)) continue;
+    const Bt = pick(n);
+    for (let i = 1; i + 1 < q.length; i++) Bt.tri([x, q[0][0], q[0][1]], [x, q[i][0], q[i][1]], [x, q[i + 1][0], q[i + 1][1]], n, uv);
   }
 }
 const GROUPS = [];                         // {mesh, layers, finish?: {on, off}}
@@ -537,8 +559,12 @@ const groupKey = (layers, mat) => layers.join('+') + '|' + mat;
 function buildCells(cells, faceMaterial) {
   const batches = new Map();
   const get = (layers, mat, raw) => { const k = groupKey(layers, mat); if (!batches.has(k)) batches.set(k, { layers, mat, raw, b: new Batch() }); return batches.get(k).b; };
+  const family = new Map();                // cells of one element on one floor hide the faces they share
+  for (const c of cells) { const k = c.element + '|' + c.floor; if (!family.has(k)) family.set(k, []); family.get(k).push(c); }
   for (const c of cells) {
-    solidFaces(c.S, n => get(c.layers, faceMaterial ? faceMaterial(c, n) : c.material, c.raw));
+    const kin = family.get(c.element + '|' + c.floor).filter(o => o !== c);
+    const hidden = kin.length ? (x, y, z) => kin.some(o => contains(o.S, x, y, z)) : null;
+    solidFaces(c.S, n => get(c.layers, faceMaterial ? faceMaterial(c, n) : c.material, c.raw), hidden);
   }
   for (const v of batches.values()) {
     const mesh = v.b.mesh(material(v.mat)); root.add(mesh);
@@ -556,12 +582,8 @@ const EDGE_GROUPS = [];
 (function () {
   const E = B.edges, mat = new THREE.LineBasicMaterial({ color: lin(E.color), transparent: true, opacity: E.opacity, clippingPlanes: CLIP });
   const byLayers = new Map();
-  const inside = (x, y, z) => CELLS.some(c => {
-    const S = c.S; if (x <= S.x1 || x >= S.x2 || y <= S.y1 || y >= S.y2 || z <= S.z1 || z >= S.z2) return false;
-    const p = profile(S);
-    for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length]; if ((b[0] - a[0]) * (z - a[1]) - (b[1] - a[1]) * (y - a[0]) < 0) return false; }
-    return true;
-  });
+  const SOLIDS = CELLS.concat(ROOF_CELLS);   // the roof too: a wall meeting its underside is no corner
+  const inside = (x, y, z) => SOLIDS.some(c => contains(c.S, x, y, z));
   const crease = (a, b) => {            // the four quarters around the edge: a flat face fills two neighbours
     const t = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(...t); t.forEach((v, i) => t[i] = v / L);
     const ax = Math.abs(t[0]) < 0.6 ? [1, 0, 0] : [0, 1, 0];
