@@ -129,7 +129,12 @@ The entrance recess is open to the outside at x 1230 – 1320, y 455 – 846, ro
 | entrance wall | 1210 – 1230 | 435 – 846 | 0 → 272 |
 | recess, right side | 1210 – 1320 | 846 – 866 | 0 → 272 |
 | front gable and slab edge | 1300 – 1320 | 44 – 866 | 272 → roof |
-| recess soffit | 1230 – 1320 | 455 – 846 | 252 → 272 |
+| recess soffit | 1230 – 1276 | 455 – 846 | 252 → 272 |
+| lintel over the recess, front | 1300 – 1320 | 455 – 846 | 245 → 272 |
+| lintel over the recess, under | 1276 – 1320 | 455 – 846 | 225 → 245 |
+| lintel over the recess, inner | 1256 – 1276 | 455 – 846 | 225 → 252 |
+
+**Lintel over the entrance recess** (as built, not drawn by archon): reinforced concrete 24 × 27, x 1276 – 1300, y 455 – 846, z 245 – 272, under the slab in the line of the front gable. With its EPS the white front band runs at one height (from 225) over the garage and the recess.
 
 The EPS boxes start at −92 (the plinth insulation, finish below ±0 = plinth).
 

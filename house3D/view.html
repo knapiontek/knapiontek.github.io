@@ -289,9 +289,11 @@ const cutSolid = c => typeof c === 'string' ? baseSolid(ELEMENT[c]) : solid(c);
 const openedKinds = k => KIND[k].layers.some(l => l === 'walls' || l === 'insulation');
 
 const CELLS = [];                         // {S, element, kind, floor, material, cap, layers}
+const SIDE = { '-x': [-1, 0, 0], '+x': [1, 0, 0], '-y': [0, -1, 0], '+y': [0, 1, 0], '-z': [0, 0, -1], '+z': [0, 0, 1] };
 function addCell(S, e, mat, extra) {
   const floor = floorOfZ(centreZ(S));
-  CELLS.push(Object.assign({ S, element: e.id, kind: e.kind, floor, material: mat, cap: KIND[e.kind].cap, layers: [floor].concat(KIND[e.kind].layers), raw: KIND[e.kind].raw }, extra));
+  const inner = e.outer ? SIDE[e.outer].map(v => -v) : null;   // the face against the wall: no facade on it
+  CELLS.push(Object.assign({ S, element: e.id, kind: e.kind, floor, material: mat, cap: KIND[e.kind].cap, layers: [floor].concat(KIND[e.kind].layers), raw: KIND[e.kind].raw, inner }, extra));
 }
 for (const e of B.elements) {
   const k = KIND[e.kind];
@@ -517,9 +519,48 @@ Batch.prototype.mesh = function (mat) {
   const m = new THREE.Mesh(g, mat); m.castShadow = !mat.transparent; m.receiveShadow = true; return m;
 };
 /* the faces of a solid (a prism along x) into batches chosen by face(normal) */
-/* Every face reaches a hair (GAP) past its edges in its own plane: neighbouring cells of one solid then overlap at
-   their seams instead of leaving the pixel cracks of T-junctions. */
-const GAP = 0.05;
+/* The mesh is conforming: a face takes every vertex of the other cells that lies on its edges, so neighbouring faces
+   share their vertices and no T-junction leaves a pixel crack. */
+/* One list of points for the whole model: a computed point is replaced by the point already there within WELD_TOL,
+   so every face that meets at a corner uses the very same coordinates. */
+const WELD_TOL = 0.005, WELD = new Map(), VERTS = [];
+let vertsSorted = false;                   // after the sort the edge lookup list stays as it is
+const weldKey = (x, y, z) => Math.round(x * 100) + ',' + Math.round(y * 100) + ',' + Math.round(z * 100);
+function weld(v) {
+  const i = Math.round(v[0] * 100), j = Math.round(v[1] * 100), k = Math.round(v[2] * 100);
+  for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) {
+    const p = WELD.get((i + a) + ',' + (j + b) + ',' + (k + c));
+    if (p && Math.abs(p[0] - v[0]) <= WELD_TOL && Math.abs(p[1] - v[1]) <= WELD_TOL && Math.abs(p[2] - v[2]) <= WELD_TOL) return p;
+  }
+  const p = [v[0], v[1], v[2]]; WELD.set(weldKey(...p), p); if (!vertsSorted) VERTS.push(p); return p;
+}
+function indexVertices(cells) {
+  for (const c of cells) for (const v of profile(c.S)) for (const x of [c.S.x1, c.S.x2]) weld([x, v[0], v[1]]);
+  VERTS.sort((a, b) => a[0] - b[0]); vertsSorted = true;
+}
+function firstAtX(x) { let lo = 0, hi = VERTS.length; while (lo < hi) { const m = (lo + hi) >> 1; if (VERTS[m][0] < x) lo = m + 1; else hi = m; } return lo; }
+function conform(poly) {                   // the polygon on welded points, with the points lying on its edges inserted in order
+  poly = poly.map(weld);
+  const out = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length], d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L2 = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
+    out.push(a);
+    if (L2 < 1e-6) continue;
+    const on = [];
+    for (let k = firstAtX(Math.min(a[0], b[0]) - 1e-3); k < VERTS.length && VERTS[k][0] <= Math.max(a[0], b[0]) + 1e-3; k++) {
+      const v = VERTS[k], t = ((v[0] - a[0]) * d[0] + (v[1] - a[1]) * d[1] + (v[2] - a[2]) * d[2]) / L2;
+      if (t <= 1e-6 || t >= 1 - 1e-6) continue;
+      const e = [a[0] + t * d[0] - v[0], a[1] + t * d[1] - v[1], a[2] + t * d[2] - v[2]];
+      if (e[0] * e[0] + e[1] * e[1] + e[2] * e[2] < 1e-6) on.push([t, v]);
+    }
+    on.sort((p, q) => p[0] - q[0]).forEach(p => out.push(p[1]));
+  }
+  return out;
+}
+function fan(Bt, poly, n, uv) {            // a convex polygon with extra vertices on its edges: triangles from its centre
+  const q = conform(poly), c = [0, 1, 2].map(k => q.reduce((s, v) => s + v[k], 0) / q.length);
+  for (let i = 0; i < q.length; i++) Bt.tri(c, q[i], q[(i + 1) % q.length], n, uv);
+}
 function contains(S, x, y, z) {
   if (x <= S.x1 || x >= S.x2 || y <= S.y1 || y >= S.y2 || z <= S.z1 || z >= S.z2) return false;
   const p = profile(S);
@@ -531,27 +572,19 @@ const covered = (pts, n, hidden) => hidden && pts.every(q => hidden(q[0] + n[0] 
 const samples = pts => { const c = [0, 1, 2].map(k => pts.reduce((s, q) => s + q[k], 0) / pts.length); return [c].concat(pts.map(q => q.map((v, k) => v + (c[k] - v) * 0.1))); };
 function solidFaces(S, pick, hidden) {
   const p = profile(S); if (p.length < 3) return;
-  const x1 = S.x1 - GAP, x2 = S.x2 + GAP;
-  const out = p.map((a, i) => { const b = p[(i + 1) % p.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [(b[1] - a[1]) / L, -(b[0] - a[0]) / L]; });
-  const grown = p.map((v, i) => {           // the polygon grown by GAP: each vertex moves along the mitre of its two edges
-    const n1 = out[(i + p.length - 1) % p.length], n2 = out[i], k = GAP / Math.max(0.2, 1 + n1[0] * n2[0] + n1[1] * n2[1]);
-    return [v[0] + (n1[0] + n2[0]) * k, v[1] + (n1[1] + n2[1]) * k];
-  });
   for (let i = 0; i < p.length; i++) {
     const a = p[i], b = p[(i + 1) % p.length], dy = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dy, dz); if (L < 1e-6) continue;
-    const n = [0, dz / L, -dy / L], t = [dy / L * GAP, dz / L * GAP];
-    const a2 = [a[0] - t[0], a[1] - t[1]], b2 = [b[0] + t[0], b[1] + t[1]];
+    const n = [0, dz / L, -dy / L];
     let e = [dy / L, dz / L]; if (e[1] < -EPS || (Math.abs(e[1]) < EPS && e[0] < 0)) e = [-e[0], -e[1]];
     const uv = v => [v[0], v[1] * e[0] + v[2] * e[1]];
-    if (covered(samples([[S.x1, a[0], a[1]], [S.x2, a[0], a[1]], [S.x2, b[0], b[1]], [S.x1, b[0], b[1]]]), n, hidden)) continue;
-    const B1 = pick(n), A = [x1, a2[0], a2[1]], Bq = [x2, a2[0], a2[1]], C = [x2, b2[0], b2[1]], D = [x1, b2[0], b2[1]];
-    B1.tri(A, Bq, C, n, uv); B1.tri(A, C, D, n, uv);
+    const quad = [[S.x1, a[0], a[1]], [S.x2, a[0], a[1]], [S.x2, b[0], b[1]], [S.x1, b[0], b[1]]];
+    if (covered(samples(quad), n, hidden)) continue;
+    fan(pick(n), quad, n, uv);
   }
   for (const [x, nx] of [[S.x1, -1], [S.x2, 1]]) {
-    const n = [nx, 0, 0], uv = v => [v[1], v[2]], q = grown;
-    if (covered(samples(p.map(v => [x, v[0], v[1]])), n, hidden)) continue;
-    const Bt = pick(n);
-    for (let i = 1; i + 1 < q.length; i++) Bt.tri([x, q[0][0], q[0][1]], [x, q[i][0], q[i][1]], [x, q[i + 1][0], q[i + 1][1]], n, uv);
+    const n = [nx, 0, 0], uv = v => [v[1], v[2]], cap = p.map(v => [x, v[0], v[1]]);
+    if (covered(samples(cap), n, hidden)) continue;
+    fan(pick(n), cap, n, uv);
   }
 }
 const GROUPS = [];                         // {mesh, layers, finish?: {on, off}}
@@ -571,7 +604,8 @@ function buildCells(cells, faceMaterial) {
     GROUPS.push({ mesh, layers: v.layers, finish: v.raw ? { on: material(v.mat), off: material(v.raw) } : null });
   }
 }
-buildCells(CELLS);
+indexVertices(CELLS.concat(OPEN_CELLS, STAIR_CELLS, SITE_CELLS, ROOF_CELLS));
+buildCells(CELLS, (c, n) => c.inner && n[0] * c.inner[0] + n[1] * c.inner[1] + n[2] * c.inner[2] > 0.9 ? c.raw : c.material);
 buildCells(OPEN_CELLS);
 buildCells(STAIR_CELLS);
 buildCells(SITE_CELLS);
@@ -589,14 +623,14 @@ const EDGE_GROUPS = [];
     const ax = Math.abs(t[0]) < 0.6 ? [1, 0, 0] : [0, 1, 0];
     const cr = (p, q) => [p[1] * q[2] - p[2] * q[1], p[2] * q[0] - p[0] * q[2], p[0] * q[1] - p[1] * q[0]];
     const u = cr(t, ax), Lu = Math.hypot(...u); u.forEach((v, i) => u[i] = v / Lu); const v = cr(t, u);
-    const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], d = 0.5;
+    const m = [0, 1, 2].map(k => a[k] + (b[k] - a[k]) * 0.4987), d = 0.5;   // off the centre: never exactly on a boundary of two cells
     const q = [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([i, j]) => inside(m[0] + d * (i * u[0] + j * v[0]), m[1] + d * (i * u[1] + j * v[1]), m[2] + d * (i * u[2] + j * v[2])));
     const n = q.filter(Boolean).length;
     if (n === 0 || n === 4) return false;
     if (n === 2 && q.some((o, i) => o && q[(i + 1) % 4])) return false;
     return true;
   };
-  const push = (layers, a, b) => { const k = layers.join('+'); if (!byLayers.has(k)) byLayers.set(k, { layers, p: [] }); byLayers.get(k).p.push(...a, ...b); };
+  const push = (layers, a, b) => { a = weld(a); b = weld(b); const k = layers.join('+'); if (!byLayers.has(k)) byLayers.set(k, { layers, p: [] }); byLayers.get(k).p.push(...a, ...b); };
   const seg = (layers, a, b) => {      // tested in short pieces: one element edge can be a corner in one part and a joint in another
     const L = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]), n = Math.max(1, Math.ceil(L / 10));
     let start = null;

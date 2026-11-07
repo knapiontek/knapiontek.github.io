@@ -28,7 +28,7 @@ The **menu** decides what is shown and from where. The **settings** (the panel) 
 - **Floors** are split by one plane, the top of the ground floor walls (272): below it the ground floor, above it the attic with the slab. A box crossing the plane belongs to both, in two parts.
 - **Nothing overlaps**: no two elements share volume (checked on the page).
 - **EPS** is a continuous shell outside the blocks: never between two blocks; every exposed block end (the portal wing heads) gets an EPS cap. A block line runs through its corners and on into the portal wings.
-- **Facade**: the finish (plaster, graphite, wood, plinth) is the face of the EPS boxes, chosen by rules: the side of the box that faces the air, a part of it, a height. A later rule wins.
+- **Facade**: the finish (plaster, graphite, wood, plinth) is on the faces of the EPS boxes to the air only (the outer face, reveals, heads), never on the face against the wall; it is chosen by rules: the side of the box that faces the air, a part of it, a height. A later rule wins.
 - **Windows and doors** sit in the block, flush with its outer face; their sizes are the archon labels (width / height), shown on the 2D plan.
 - **Only boxes**: no other solid. The stair is floating (treads and a landing, no stringers, no wall under it).
 - **Not in the model**: furniture, kitchen, bathroom fittings, the fireplace. Only the building.
@@ -38,6 +38,8 @@ The **menu** decides what is shown and from where. The **settings** (the panel) 
 - Floors and roof: Parter, Piętro, Dach; in their own menu row.
 - Material layers, in the panel: Fundament, Pustaki, Wieniec i strop, Styropian (→ Elewacja), Okna i drzwi, Schody, Posadzki (→ Drobne docinki), Teren, Krawędzie.
 - Elewacja off: the EPS shows bare; on: its finish.
+- The mesh is drawn as it is: neighbouring faces share their vertices (no cracks), faces between cells of one element are not drawn; nothing is enlarged or hidden to cover a fault.
+- Krawędzie: lines only where the solid turns a corner, never on the joint of two elements lying in one plane.
 - A child is shown only with its parent. An element is drawn only when all its layers are on.
 - Switching a layer changes only what is shown, never the model, the tile counts or the camera.
 

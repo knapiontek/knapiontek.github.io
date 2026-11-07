@@ -45,6 +45,7 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 - Ground floor shower recess 100 × 90: walls #7 to y 766, #8 at y 754–766, #10 from y 754.
 - Attic bathroom door 90/205 at x 630–720 (20 cm toward the garden); the 100 × 100 shower at the front end.
 - No diagonal wall under the stair in the garage.
+- Lintel over the entrance recess (24 × 27, x 1276–1300, z 245–272) with EPS: the white front band runs at one height.
 
 ## Code style (every file)
 
