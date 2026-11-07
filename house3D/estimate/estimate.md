@@ -99,8 +99,8 @@ Left and right are as seen when facing the front of the house (the street side),
 
 | Element | x | y |
 |---|---|---|
-| left | 20 – 1300 | 20 – 44 |
-| right (runs on past the entrance wall as the recess's right side) | 20 – 1320 | 866 – 890 |
+| left (runs through both portal wings) | −80 – 1400 | 20 – 44 |
+| right (through both wings; also the recess's right side) | −80 – 1400 | 866 – 890 |
 | garden | 20 – 44 | 44 – 866 |
 | garage front | 1276 – 1300 | 44 – 435 |
 | garage side of the recess | 1186 – 1276 | 411 – 435 |
@@ -112,8 +112,8 @@ The entrance recess is open to the outside at x 1230 – 1320, y 455 – 846, ro
 
 | Element | x | y |
 |---|---|---|
-| knee wall left | 20 – 1300 | 20 – 44 |
-| knee wall right | 20 – 1300 | 866 – 890 |
+| knee wall left (through both wings) | −80 – 1400 | 20 – 44 |
+| knee wall right (through both wings) | −80 – 1400 | 866 – 890 |
 | garden gable | 20 – 44 | 44 – 866 |
 | front gable | 1276 – 1300 | 44 – 866 |
 
@@ -123,28 +123,32 @@ The entrance recess is open to the outside at x 1230 – 1320, y 455 – 846, ro
 |---|---|---|---|
 | left (house and both wings) | −100 – 1420 | 0 – 20 | 0 → roof |
 | right (house and both wings) | −100 – 1420 | 890 – 910 | 0 → roof |
-| garden | 0 – 20 | 20 – 890 | 0 → roof |
-| garage front | 1300 – 1320 | 20 – 455 | 0 → 272 |
+| garden | 0 – 20 | 44 – 866 | 0 → roof |
+| garage front | 1300 – 1320 | 44 – 455 | 0 → 272 |
 | recess, garage side | 1230 – 1300 | 435 – 455 | 0 → 272 |
 | entrance wall | 1210 – 1230 | 435 – 846 | 0 → 272 |
 | recess, right side | 1210 – 1320 | 846 – 866 | 0 → 272 |
-| front gable and slab edge | 1300 – 1320 | 20 – 890 | 272 → roof |
+| front gable and slab edge | 1300 – 1320 | 44 – 866 | 272 → roof |
 | recess soffit | 1230 – 1320 | 455 – 846 | 252 → 272 |
 
 The EPS boxes start at −92 (the plinth insulation, finish below ±0 = plinth).
 
 ### 8.4 Portal (the white frame)
 
-At each end, two wings stand in front of the gable, 64 wide (EPS 20 + block 24 + EPS 20, with the block in line with the long walls' block), z 0 → roof. The roof runs over them. Each wing is a block core plus an inner EPS box. Its outer EPS is part of the long EPS box in § 8.3.
+At each end the long walls run on past the gable as wings, 64 wide (EPS 20 + block 24 + EPS 20), z 0 → roof, with the roof over them.
 
-| Wing | x | block y | inner EPS y |
-|---|---|---|---|
-| garden left | −100 – 0 | 20 – 44 | 44 – 64 |
-| garden right | −100 – 0 | 866 – 890 | 846 – 866 |
-| front left | 1320 – 1420 | 20 – 44 | 44 – 64 |
-| front right | 1320 – 1420 | 866 – 890 | 846 – 866 |
+- **Block**: the long wall's block itself, one box from end to end (§ 8.1, § 8.2, foundation −80 → 1400). No EPS between the house and a wing.
+- **Ring beam** over the wing block, between the two floors: x −80 – 20 and 1300 – 1400, z 272 – 306, at y 20 – 44 and 866 – 890.
+- **EPS**: the outer face is part of the long EPS box (§ 8.3); the inner face and a cap on the head:
 
-The terraces are 100 deep (printed) at both ends, under the portal.
+| Wing | inner EPS x | inner EPS y | head EPS x | head EPS y |
+|---|---|---|---|---|
+| garden left | −80 – 0 | 44 – 64 | −100 – −80 | 20 – 64 |
+| garden right | −80 – 0 | 846 – 866 | −100 – −80 | 846 – 890 |
+| front left | 1320 – 1400 | 44 – 64 | 1400 – 1420 | 20 – 64 |
+| front right | 1320 – 1400 | 846 – 866 | 1400 – 1420 | 846 – 890 |
+
+All z −92 → roof. The terraces are 100 deep (printed) at both ends, under the portal.
 
 ## 9. Ground floor
 
@@ -154,7 +158,7 @@ The terraces are 100 deep (printed) at both ends, under the portal.
 |---|---|---|---|---|
 | 1 | chimney | 471 – 547 | 379 – 455 | z −92 → ≈ 900 (on its footing), one box through both floors and the roof |
 | 2 | block 12 | 535 – 547 | 44 – 379 | living / garage |
-| 3 | block 12 | 642 – 654 | 320 – 435 | stair wall; continues diagonally to (547, ≈ 271), see § 13 |
+| 3 | block 12 | 642 – 654 | 320 – 435 | stair wall |
 | 4 | block 24 | 654 – 925 | 411 – 435 | garage / hall, load-bearing |
 | 5 | block 12 | 722 – 734 | 580 – 866 | kitchen / bathroom |
 | 6a | block 12 | 734 – 901 | 615 – 627 | hall / bathroom |
@@ -284,10 +288,8 @@ The pier between the 250 and 190 windows is x 333 – 472. The `kitchen` project
 ## 13. Open points
 
 - **Garage length.** It is printed as 724, but 1320 − 44 − 491 − 12 − 44 = 729, and the drawing also measures 729. The model uses 729.
-- **Diagonal stair wall.** In the garage, wall #3 runs at an angle from (642, ≈ 323) to (547, ≈ 271), so it cannot be a box. The garage outline approximates it at y 297. This needs a decision: either one exception to the box rule, or a stepped approximation.
 - **Foundation walls.** Their material is not given. If it is the same block as the walls above, the foundation wall and the ground floor wall become one box.
 - **Footing sizes and depths.** These come from the section only (±3.6).
-- **Portal wing ends.** The finish on the wings' end faces (an EPS cap or not) is not drawn.
 - **Vent stack top.** ≈ 870, from the elevations only.
 
 ## 14. Build changes (as built, differ from archon)
@@ -297,6 +299,7 @@ The pier between the 250 and 190 windows is x 333 – 472. The `kitchen` project
 | Ground floor shower recess (bathroom 7) | 84 × 137, x 901 – 985, y 729 – 866 | 90 × 100: x 895 – 985 (90 from the glass line at 895), y 766 – 866 (100 along the window wall). Walls: #7 to y 766, #8 at y 754 – 766, #10 from y 754. Which walls moved is assumed; the recess size was measured on site. |
 | Attic shower 100 × 100 (bathroom 5) | x 547 – 637, y 565 – 670 (garden end) | x 720 – 820, y 565 – 665 (front end, by the door wall) |
 | Attic bathroom door 90/205 (#3) | x 650 – 740 | x 630 – 720 (20 toward the garden, clears the shower) |
+| Diagonal wall under the stair (garage) | from (547, ≈ 271) to (642, ≈ 323) | none: the stair is floating; the garage outline keeps y 297 as the line to the stair |
 
 The showers are fittings and are not in this geometry; only the walls and the door are.
 

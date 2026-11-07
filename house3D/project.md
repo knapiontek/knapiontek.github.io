@@ -32,8 +32,9 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 
 ## Model
 
-- **Elements** are the boxes of the estimate, each with a kind (footing, foundation, ground slab, block 24, block 12, portal wing, EPS, slab, ceiling, chimney, shaft). A kind gives the face material, the section colour, the checked thickness and the layer.
+- **Elements** are the boxes of the estimate, each with a kind (footing, foundation, ground slab, block 24, block 12, EPS, ring beam, slab, ceiling, chimney, shaft). A kind gives the face material, the section colour, the checked thickness and the layer.
 - **Openings** cut every wall and EPS box they cross; frames, glass, the gate and the entrance leaf are drawn in the Okna i drzwi layer.
+- **Portal**: the long walls' block, foundation and knee walls run on into the wings; the ring beam continues over them; EPS on the inner faces and a cap on every head.
 - **Roof**: two slopes from the pitch, eave and thickness, x −100 → 1420 over both portals; roof windows, chimney and shaft are cut out of it.
 - **Facade**: rules on the EPS boxes by their outer side; Elewacja off shows the bare EPS.
 - **Stair**: floating treads and a landing, 17 risers to the attic floor.
@@ -43,6 +44,7 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 
 - Ground floor shower recess 100 × 90: walls #7 to y 766, #8 at y 754–766, #10 from y 754.
 - Attic bathroom door 90/205 at x 630–720 (20 cm toward the garden); the 100 × 100 shower at the front end.
+- No diagonal wall under the stair in the garage.
 
 ## Code style (every file)
 

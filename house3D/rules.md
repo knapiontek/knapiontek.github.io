@@ -27,9 +27,10 @@ The **menu** decides what is shown and from where. The **settings** (the panel) 
 - **Cuts**: an element may subtract other elements or boxes (the slab without the stair void, chimney and shaft).
 - **Floors** are split by one plane, the top of the ground floor walls (272): below it the ground floor, above it the attic with the slab. A box crossing the plane belongs to both, in two parts.
 - **Nothing overlaps**: no two elements share volume (checked on the page).
+- **EPS** is a continuous shell outside the blocks: never between two blocks; every exposed block end (the portal wing heads) gets an EPS cap. A block line runs through its corners and on into the portal wings.
 - **Facade**: the finish (plaster, graphite, wood, plinth) is the face of the EPS boxes, chosen by rules: the side of the box that faces the air, a part of it, a height. A later rule wins.
 - **Windows and doors** sit in the block, flush with its outer face; their sizes are the archon labels (width / height), shown on the 2D plan.
-- **Exceptions**: the diagonal stair wall in the garage (a vertical prism over a plan polygon, its top under the stair); the stair is floating (treads and a landing, no stringers).
+- **Only boxes**: no other solid. The stair is floating (treads and a landing, no stringers, no wall under it).
 - **Not in the model**: furniture, kitchen, bathroom fittings, the fireplace. Only the building.
 
 ## 3. Layers
@@ -46,7 +47,7 @@ The **menu** decides what is shown and from where. The **settings** (the panel) 
 - 3D, top: Parter, Piętro, Dach as check boxes; a second row when a room is selected.
 - 3D, bottom: Spacer (the walk), the cameras of the house and of the open floor.
 - Help: an icon in the corner.
-- 2D: both floors side by side, cut 150 cm above each floor, garden at the top; zoom and SVG download in the panel.
+- 2D: both floors side by side, garden at the top; cut 150 cm above the ground floor, 80 cm above the attic floor (through the knee walls and their EPS, under the eaves); the stair is drawn under the cut as a full line and over it dashed, and from the attic all of it through the stair hole; zoom and SVG download in the panel.
 - The panel follows what is shown: Przekrój and Pomieszczenia only for the open floor; at the top of its range the cut is off. Light only in 3D.
 - The cut is a plane that clips the model; what it opens is closed by caps in the colour of the material cut.
 

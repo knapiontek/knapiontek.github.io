@@ -190,7 +190,7 @@ const floorOfZ = z => z < B.split ? FLOORS[0].id : FLOORS[FLOORS.length - 1].id;
 
 /* A line z = a + s·y in the y-z plane. */
 function line(l) {
-  const s = l.slope !== undefined ? l.slope : l.pitch * TAN;
+  const s = l.pitch * TAN;
   return { a: l.z - s * l.y, s };
 }
 const ROOF_UNDER = [{ a: EAVE, s: TAN }, { a: EAVE + TAN * W, s: -TAN }];
@@ -280,7 +280,6 @@ const LAYER = {};                         // id -> {name, parent}
 (function walk(tree, parent) { for (const [k, v] of Object.entries(tree)) { LAYER[k] = { name: v.name, parent }; if (v.layers) walk(v.layers, k); } })(B.layers, null);
 
 function baseSolid(e) {
-  if (e.poly) return null;
   const below = (e.below || []).map(line).concat(e.top === 'roof' ? ROOF_UNDER : []);
   return solid(e.b, below, (e.above || []).map(line));
 }
@@ -289,14 +288,13 @@ const ruleSolid = r => solid([...(r.x || [-INF, INF]), ...(r.y || [-INF, INF]), 
 const cutSolid = c => typeof c === 'string' ? baseSolid(ELEMENT[c]) : solid(c);
 const openedKinds = k => KIND[k].layers.some(l => l === 'walls' || l === 'insulation');
 
-const CELLS = [];                         // {S | poly, element, kind, floor, material, cap, layers}
+const CELLS = [];                         // {S, element, kind, floor, material, cap, layers}
 function addCell(S, e, mat, extra) {
   const floor = floorOfZ(centreZ(S));
   CELLS.push(Object.assign({ S, element: e.id, kind: e.kind, floor, material: mat, cap: KIND[e.kind].cap, layers: [floor].concat(KIND[e.kind].layers), raw: KIND[e.kind].raw }, extra));
 }
 for (const e of B.elements) {
   const k = KIND[e.kind];
-  if (e.poly) { CELLS.push({ poly: e.poly, z: e.z, below: (e.below || []).map(line), element: e.id, kind: e.kind, floor: floorOfZ(e.z[0] + 1), material: k.material, cap: k.cap, layers: [floorOfZ(e.z[0] + 1)].concat(k.layers) }); continue; }
   let cells = [baseSolid(e)];
   for (const c of e.cuts || []) cells = subtract(cells, cutSolid(c));
   if (openedKinds(e.kind)) for (const o of B.openings) cells = subtract(cells, openingSolid(o));
@@ -331,7 +329,7 @@ const OPEN_CELLS = [];
   for (const o of B.openings) {
     if (!o.outer) continue;               // inner doors are openings only
     const O = openingSolid(o), axis = o.outer[1], sign = o.outer[0] === '+' ? 1 : -1;
-    const core = B.elements.filter(e => e.b && KIND[e.kind].layers.includes('walls') && boxesMeet(baseSolid(e), O))[0];
+    const core = B.elements.filter(e => KIND[e.kind].layers.includes('walls') && boxesMeet(baseSolid(e), O))[0];
     const face = sign > 0 ? core.b[axis === 'x' ? 1 : 3] : core.b[axis === 'x' ? 0 : 2];   // the outer face of the block
     const slab = (d1, d2) => { const a = face - sign * d1, b = face - sign * d2; return [Math.min(a, b), Math.max(a, b)]; };
     const inPlane = (S, t) => axis === 'x' ? copy(S, { x1: t[0], x2: t[1] }) : copy(S, { y1: t[0], y2: t[1] });
@@ -534,34 +532,12 @@ function solidFaces(S, pick) {
     for (let i = 1; i + 1 < p.length; i++) Bt.tri([x, p[0][0], p[0][1]], [x, p[i][0], p[i][1]], [x, p[i + 1][0], p[i + 1][1]], n, uv);
   }
 }
-function polyFaces(c, Bt) {                // the diagonal wall: a vertical prism over a plan polygon, top under its lines
-  const top = (x, y) => Math.min(c.z[1], ...c.below.map(l => l.a + l.s * y));
-  const P = c.poly, z1 = c.z[0];
-  for (let i = 0; i < P.length; i++) {
-    const a = P[i], b = P[(i + 1) % P.length], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy);
-    const n = [dy / L, -dx / L, 0], uv = v => [(v[0] * dx + v[1] * dy) / L, v[2]];
-    const A = [a[0], a[1], z1], Bq = [b[0], b[1], z1], C = [b[0], b[1], top(b[0], b[1])], D = [a[0], a[1], top(a[0], a[1])];
-    Bt.tri(A, Bq, C, n, uv); Bt.tri(A, C, D, n, uv);
-  }
-  const area = polyArea(P.map(q => [q[0], q[1]])), sgn = area > 0 ? 1 : -1;
-  const pA = [P[0][0], P[0][1]], uvz = v => [v[0], v[1]];
-  for (let i = 1; i + 1 < P.length; i++) {
-    Bt.tri([pA[0], pA[1], z1], [P[i][0], P[i][1], z1], [P[i + 1][0], P[i + 1][1], z1], [0, 0, -1], uvz);
-    const t = [P[0], P[i], P[i + 1]].map(q => [q[0], q[1], top(q[0], q[1])]);
-    const u = [t[1][0] - t[0][0], t[1][1] - t[0][1], t[1][2] - t[0][2]], w = [t[2][0] - t[0][0], t[2][1] - t[0][1], t[2][2] - t[0][2]];
-    let n = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]]; if (n[2] < 0) n = n.map(v => -v);
-    const L = Math.hypot(...n); Bt.tri(t[0], t[1], t[2], n.map(v => v / L), uvz);
-  }
-  return sgn;
-}
-
 const GROUPS = [];                         // {mesh, layers, finish?: {on, off}}
 const groupKey = (layers, mat) => layers.join('+') + '|' + mat;
 function buildCells(cells, faceMaterial) {
   const batches = new Map();
   const get = (layers, mat, raw) => { const k = groupKey(layers, mat); if (!batches.has(k)) batches.set(k, { layers, mat, raw, b: new Batch() }); return batches.get(k).b; };
   for (const c of cells) {
-    if (c.poly) { polyFaces(c, get(c.layers, c.material, c.raw)); continue; }
     solidFaces(c.S, n => get(c.layers, faceMaterial ? faceMaterial(c, n) : c.material, c.raw));
   }
   for (const v of batches.values()) {
@@ -575,12 +551,40 @@ buildCells(STAIR_CELLS);
 buildCells(SITE_CELLS);
 buildCells(ROOF_CELLS, (c, n) => { const F = B.roof.faces; return n[2] > 0.3 ? F.top : n[2] < -0.3 ? F.bottom : Math.abs(n[0]) > 0.5 ? F.ends : F.eaves; });
 
-/* edges: the outline of every element and opening, not the joints of its cells */
+/* edges: where the solid really turns a corner - not the joint of two elements lying in one plane */
 const EDGE_GROUPS = [];
 (function () {
   const E = B.edges, mat = new THREE.LineBasicMaterial({ color: lin(E.color), transparent: true, opacity: E.opacity, clippingPlanes: CLIP });
   const byLayers = new Map();
-  const seg = (layers, a, b) => { const k = layers.join('+'); if (!byLayers.has(k)) byLayers.set(k, { layers, p: [] }); byLayers.get(k).p.push(...a, ...b); };
+  const inside = (x, y, z) => CELLS.some(c => {
+    const S = c.S; if (x <= S.x1 || x >= S.x2 || y <= S.y1 || y >= S.y2 || z <= S.z1 || z >= S.z2) return false;
+    const p = profile(S);
+    for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length]; if ((b[0] - a[0]) * (z - a[1]) - (b[1] - a[1]) * (y - a[0]) < 0) return false; }
+    return true;
+  });
+  const crease = (a, b) => {            // the four quarters around the edge: a flat face fills two neighbours
+    const t = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(...t); t.forEach((v, i) => t[i] = v / L);
+    const ax = Math.abs(t[0]) < 0.6 ? [1, 0, 0] : [0, 1, 0];
+    const cr = (p, q) => [p[1] * q[2] - p[2] * q[1], p[2] * q[0] - p[0] * q[2], p[0] * q[1] - p[1] * q[0]];
+    const u = cr(t, ax), Lu = Math.hypot(...u); u.forEach((v, i) => u[i] = v / Lu); const v = cr(t, u);
+    const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], d = 0.5;
+    const q = [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([i, j]) => inside(m[0] + d * (i * u[0] + j * v[0]), m[1] + d * (i * u[1] + j * v[1]), m[2] + d * (i * u[2] + j * v[2])));
+    const n = q.filter(Boolean).length;
+    if (n === 0 || n === 4) return false;
+    if (n === 2 && q.some((o, i) => o && q[(i + 1) % 4])) return false;
+    return true;
+  };
+  const push = (layers, a, b) => { const k = layers.join('+'); if (!byLayers.has(k)) byLayers.set(k, { layers, p: [] }); byLayers.get(k).p.push(...a, ...b); };
+  const seg = (layers, a, b) => {      // tested in short pieces: one element edge can be a corner in one part and a joint in another
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]), n = Math.max(1, Math.ceil(L / 10));
+    let start = null;
+    for (let i = 0; i <= n; i++) {
+      const at = i / n, p = [a[0] + at * (b[0] - a[0]), a[1] + at * (b[1] - a[1]), a[2] + at * (b[2] - a[2])];
+      const keep = i < n && crease(p, [a[0] + (i + 1) / n * (b[0] - a[0]), a[1] + (i + 1) / n * (b[1] - a[1]), a[2] + (i + 1) / n * (b[2] - a[2])]);
+      if (keep && !start) start = p;
+      if (!keep && start) { push(layers, start, p); start = null; }
+    }
+  };
   const prismEdges = (S, layersOf) => {
     const p = profile(S); if (p.length < 3) return;
     const segs = [];
@@ -591,7 +595,6 @@ const EDGE_GROUPS = [];
     }
   };
   for (const e of B.elements) {
-    if (e.poly) continue;
     const k = KIND[e.kind]; prismEdges(baseSolid(e), z => [floorOfZ(z), 'edges'].concat(k.layers));
   }
   for (const o of B.openings) prismEdges(openingSolid(o), z => [floorOfZ(z), 'edges', 'walls']);
@@ -638,14 +641,6 @@ function buildCaps(h) {
   for (const c of ALL_SOLIDS()) {
     if (!shown(c.layers)) continue;
     const bt = batches[c.cap] || (batches[c.cap] = new Batch()), n = [0, 0, 1], uv = v => [v[0], v[1]];
-    if (c.poly) {
-      let p = c.poly.map(q => [q[0], q[1]]);
-      if (h <= c.z[0] || h >= c.z[1]) continue;
-      for (const l of c.below) p = clipPoly(p, q => l.a + l.s * q[1] - h);
-      if (p.length < 3) continue;
-      for (let i = 1; i + 1 < p.length; i++) bt.tri([p[0][0], p[0][1], h], [p[i][0], p[i][1], h], [p[i + 1][0], p[i + 1][1], h], n, uv);
-      continue;
-    }
     if (h <= c.S.z1 || h >= c.S.z2) continue;
     const yi = yAt(c.S, h); if (!yi) continue;
     const a = [c.S.x1, yi[0], h], b = [c.S.x2, yi[0], h], d = [c.S.x2, yi[1], h], e = [c.S.x1, yi[1], h];
@@ -1002,6 +997,7 @@ canvas.addEventListener('pointerup', e => {
 
 /* ================= 10. 2D PLAN ================= */
 const PLAN_CUT = Object.values(VIEWS).find(v => v.plan).cut;
+const planCut = F => F.planCut !== undefined ? F.planCut : PLAN_CUT;   // a floor under the roof is cut lower, through its knee walls
 const PLAN_FILL = { block: '#2d2f31', insulation: 'url(#eps)', concrete: '#7d7b76', timber: '#b89466', tread: '#a57b4f' };
 function planSvg() {
   const gap = 420, ox = f => FLOORS.indexOf(f) * (W + gap);
@@ -1010,25 +1006,22 @@ function planSvg() {
   <defs><pattern id="eps" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#f3e6b0"/><line x1="0" y1="0" x2="0" y2="8" stroke="#b39a3c" stroke-width="1.4"/></pattern></defs>
   <rect x="-160" y="${minX - 60}" width="100%" height="100%" fill="#fff"/>`;
   for (const F of FLOORS) {
-    const h = F.level + PLAN_CUT, X = ox(F), P = (x, y) => `${(X + y).toFixed(1)},${x.toFixed(1)}`;
+    const h = F.level + planCut(F), X = ox(F);
     const rect = (x1, x2, y1, y2, attr) => `<rect x="${(X + y1).toFixed(1)}" y="${x1.toFixed(1)}" width="${(y2 - y1).toFixed(1)}" height="${(x2 - x1).toFixed(1)}" ${attr}/>`;
-    s += `<text x="${X + W / 2}" y="${minX - 20}" text-anchor="middle" font-size="34" font-weight="700" fill="#1f2523">${F.name} · cięcie ${PLAN_CUT} cm</text>`;
+    s += `<text x="${X + W / 2}" y="${minX - 20}" text-anchor="middle" font-size="34" font-weight="700" fill="#1f2523">${F.name} · cięcie ${planCut(F)} cm</text>`;
     for (const r of F.rooms) for (const q of r.rects) s += rect(q[0], q[1], q[2], q[3], 'fill="#f4f1ea"');
-    // below the cut on this floor: outline only (knee walls, the stair)
-    for (const c of ALL_SOLIDS()) {
-      if (c.floor !== F.id || c.poly) continue;
-      const zr = zRange(c.S); if (zr[1] > h || zr[1] < F.level + 1) continue;
-      const yr = [Math.min(...profile(c.S).map(q => q[0])), Math.max(...profile(c.S).map(q => q[0]))];
-      s += rect(c.S.x1, c.S.x2, yr[0], yr[1], `fill="none" stroke="#8a8d88" stroke-width="1.2"`);
+    // the stair: under the cut a full line, over it dashed; from the floor above, all of it seen through the stair hole
+    const holes = B.elements.flatMap(e => (e.cuts || []).filter(c => Array.isArray(c) && c[4] <= F.level && c[5] >= F.level));
+    for (const c of STAIR_CELLS) {
+      const S = c.S, cx = (S.x1 + S.x2) / 2, cy = (S.y1 + S.y2) / 2;
+      const own = S.z2 > F.level && S.z2 <= (F.top !== undefined ? F.top : RIDGE_TOP) + EPS;
+      const seen = holes.some(v => cx >= v[0] - EPS && cx <= v[1] + EPS && cy >= v[2] - EPS && cy <= v[3] + EPS) && S.z2 < h;
+      if (!own && !seen) continue;
+      const style = S.z2 <= h ? 'stroke="#5f6a66" stroke-width="1.4"' : 'stroke="#8a8d88" stroke-width="1.2" stroke-dasharray="7 5"';
+      s += rect(S.x1, S.x2, S.y1, S.y2, `fill="none" ${style}`);
     }
     for (const c of ALL_SOLIDS()) {
       if (c.floor !== F.id) continue;
-      if (c.poly) {
-        const top = Math.max(...c.poly.map(q => Math.min(c.z[1], ...c.below.map(l => l.a + l.s * q[1]))));
-        if (h < c.z[0]) continue;
-        s += `<polygon points="${c.poly.map(q => P(q[0], q[1])).join(' ')}" ${h > top ? 'fill="none" stroke="#8a8d88" stroke-width="1.2"' : `fill="${PLAN_FILL[c.cap] || '#555'}"`}/>`;
-        continue;
-      }
       if (h <= c.S.z1 || h >= c.S.z2) continue;
       const yi = yAt(c.S, h); if (!yi) continue;
       const fill = c.opening ? (c.material === B.frames.glass ? '#9fc3d6' : '#3b3e42') : (PLAN_FILL[c.cap] || '#555');
@@ -1040,10 +1033,10 @@ function planSvg() {
         for (const yy of [y, W - y]) s += `<line x1="${X + yy}" y1="44" x2="${X + yy}" y2="1276" stroke="#8a8d88" stroke-dasharray="10 8" stroke-width="1.2"/><text x="${X + yy + (yy < W / 2 ? 6 : -6)}" y="70" font-size="18" fill="#8a8d88" text-anchor="${yy < W / 2 ? 'start' : 'end'}">${hh}</text>`;
       }
       for (const w of B.roof.windows) s += rect(w.x[0], w.x[1], w.y[0], w.y[1], 'fill="none" stroke="#3a6f8f" stroke-dasharray="6 5" stroke-width="1.5"');
-      for (const c of B.elements) if (c.cuts) for (const v of c.cuts) if (Array.isArray(v) && v[4] < F.level + 1 && v[5] > F.level - 50) s += rect(v[0], v[1], v[2], v[3], 'fill="none" stroke="#1f2523" stroke-dasharray="4 6" stroke-width="1.2"');
+      for (const c of B.elements) if (c.cuts) for (const v of c.cuts) if (Array.isArray(v) && v[4] < F.level + 1 && v[5] > F.level - 50) s += rect(v[0], v[1], v[2], v[3], 'fill="none" stroke="#a3a7a2" stroke-dasharray="6 6" stroke-width="1"');
     }
     for (const o of B.openings) {
-      if (o.b[4] > h || o.b[5] < h - PLAN_CUT || Math.abs(o.b[4] - F.level) > F.level + 400 || floorOfZ((o.b[4] + o.b[5]) / 2) !== F.id) continue;
+      if (o.b[4] > h || o.b[5] < h || Math.abs(o.b[4] - F.level) > F.level + 400 || floorOfZ((o.b[4] + o.b[5]) / 2) !== F.id) continue;
       const cx = (o.b[0] + o.b[1]) / 2, cy = (o.b[2] + o.b[3]) / 2, along = o.b[1] - o.b[0] > o.b[3] - o.b[2];
       const [a, b] = o.label.split('/');
       const dx = o.outer === '-x' ? -40 : o.outer === '+x' ? 40 : 0, dy = o.outer === '-y' ? -40 : o.outer === '+y' ? 40 : 0;
@@ -1056,13 +1049,13 @@ function planSvg() {
       const cx = (q[0] + q[1]) / 2, cy = (q[2] + q[3]) / 2;
       s += `<text x="${X + cy}" y="${cx - 6}" text-anchor="middle" font-size="22" font-weight="700" fill="#9a6a2f">${r.numbers ? r.numbers.join(',') : ''}</text><text x="${X + cy}" y="${cx + 18}" text-anchor="middle" font-size="15" fill="#1f2523">${r.name}</text><text x="${X + cy}" y="${cx + 36}" text-anchor="middle" font-size="14" fill="#5f6a66">${fmt(roomArea(r), 2)} m²</text>`;
     }
-    const L = Math.max(...B.elements.filter(e => e.b && KIND[e.kind].layers.includes('walls') && e.kind !== 'wing').map(e => e.b[1]));
+    const L = B.length;
     s += `<g stroke="#1f2523" stroke-width="1.2" font-size="18" fill="#1f2523"><line x1="${X}" y1="${B.roof.x[1] + 60}" x2="${X + W}" y2="${B.roof.x[1] + 60}"/><text x="${X + W / 2}" y="${B.roof.x[1] + 84}" text-anchor="middle" stroke="none">${W}</text>
       <line x1="${X - 60}" y1="0" x2="${X - 60}" y2="${L}"/><text x="${X - 70}" y="${L / 2}" text-anchor="middle" stroke="none" transform="rotate(-90 ${X - 70} ${L / 2})">${L}</text></g>`;
   }
   return s + '</svg>';
 }
-function drawPlan() { $('sheet').innerHTML = planSvg(); $('sheet').style.setProperty('--zoom', state.zoom); $('planNote').textContent = `Ogród u góry, front u dołu; cięcie ${PLAN_CUT} cm nad podłogą każdej kondygnacji. Kreskowanie: styropian.`; }
+function drawPlan() { $('sheet').innerHTML = planSvg(); $('sheet').style.setProperty('--zoom', state.zoom); $('planNote').textContent = `Ogród u góry, front u dołu; cięcie nad podłogą: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} cm`).join(', ')}. Kreskowanie: styropian.`; }
 $('zoomIn').onclick = () => { state.zoom = Math.min(4, state.zoom * 1.25); save(); drawPlan(); };
 $('zoomOut').onclick = () => { state.zoom = Math.max(0.5, state.zoom / 1.25); save(); drawPlan(); };
 $('planSvg').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([planSvg()], { type: 'image/svg+xml' })); a.download = 'rzut.svg'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
@@ -1072,12 +1065,12 @@ const CHECKS = (function () {
   const out = [];
   const bad = [];                          // thickness against the kind
   for (const e of B.elements) {
-    const t = KIND[e.kind].thickness; if (!t || !e.b) continue;
+    const t = KIND[e.kind].thickness; if (!t) continue;
     const d = Math.min(e.b[1] - e.b[0], e.b[3] - e.b[2], e.b[5] - e.b[4]);
     if (Math.abs(d - t) > 0.05) bad.push(`${e.id}: ${fmt(d, 1)} zamiast ${t} (${KIND[e.kind].name})`);
   }
   out.push({ name: 'Grubości według rodzaju', items: bad });
-  const cells = CELLS.filter(c => !c.poly).concat(STAIR_CELLS, ROOF_CELLS), overl = new Set();   // no two elements share volume
+  const cells = CELLS.concat(STAIR_CELLS, ROOF_CELLS), overl = new Set();   // no two elements share volume
   for (let i = 0; i < cells.length; i++) for (let j = i + 1; j < cells.length; j++) {
     const a = cells[i], b = cells[j]; if (a.element === b.element) continue;
     const S = a.S, T = b.S, dx = Math.min(S.x2, T.x2) - Math.max(S.x1, T.x1); if (dx < 0.05) continue;
@@ -1090,16 +1083,13 @@ const CHECKS = (function () {
   const free = [];                         // every floor inside the walls is a room, a wall, a void or named
   for (const F of FLOORS) {
     const h = F.level + 100, hits = [];
-    const solids = B.elements.filter(e => e.b && e.b[4] <= h && e.b[5] >= h).map(e => e.b);
+    const solids = B.elements.filter(e => e.b[4] <= h && e.b[5] >= h).map(e => e.b);
     const voids = B.elements.flatMap(e => (e.cuts || []).filter(c => Array.isArray(c) && c[4] <= F.level && c[5] >= F.level));
-    const polys = B.elements.filter(e => e.poly && e.z[0] <= F.level + 1).map(e => e.poly);
     const zones = F.rooms.flatMap(r => r.rects).concat((F.other || []).flatMap(o => o.rects));
-    const inPoly = (P, x, y) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > y) !== (P[j][1] > y) && x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) c = !c; return c; };
     const hit = new Set();
     for (const q of F.inside) for (let x = q[0] + 1; x < q[1]; x += 2) for (let y = q[2] + 1; y < q[3]; y += 2) {
       const inR = r => x >= r[0] && x < r[1] && y >= r[2] && y < r[3];
       if (zones.some(inR) || solids.some(inR) || voids.some(inR)) continue;
-      if (polys.some(P => inPoly(P, x, y))) continue;
       hit.add(x + ',' + y); hits.push([x, y]);
     }
     const seen = new Set();                // each patch on its own: where it is and how big
@@ -1122,7 +1112,7 @@ window.HOUSE_CHECKS = CHECKS;            // for tests
 
 /* ================= 12. WALK ================= */
 const walk = { on: false, x: B.walk.start.x, y: B.walk.start.y, z: 0, heading: B.walk.start.heading, pitch: 0, keys: new Set(), last: 0 };
-const OBSTACLES = CELLS.concat(OPEN_CELLS, STAIR_CELLS).filter(c => !c.poly).map(c => ({ c, zr: zRange(c.S) }));
+const OBSTACLES = CELLS.concat(OPEN_CELLS, STAIR_CELLS).map(c => ({ c, zr: zRange(c.S) }));
 const WALKABLE = STAIR_CELLS.concat(SITE_CELLS, CELLS.filter(c => c.kind === 'slab' || c.kind === 'groundSlab'));
 function groundAt(x, y, z) {
   let best = null;
