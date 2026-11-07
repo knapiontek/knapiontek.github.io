@@ -493,7 +493,7 @@ function makeMaterial(key) {
   }
   if (def.wood) woodTexture(def, m);
   m.clippingPlanes = CLIP; m.clipShadows = true;
-  m.polygonOffset = true; m.polygonOffsetFactor = 1; m.polygonOffsetUnits = 1;   // the edge lines stay in front of their faces
+  m.polygonOffset = true; m.polygonOffsetFactor = 0; m.polygonOffsetUnits = 2;   // a constant bias: the edge lines stay in front, nothing grows with the slope
   return m;
 }
 const material = key => M[key] || (M[key] = makeMaterial(key));
@@ -877,8 +877,9 @@ function buildLayout(key) {
   const meshes = tileGroups[key] = [];
   const layers = [r.floor].concat(B.tiles.layers);
   const grout = new Batch(), up = [0, 0, 1], uvxy = v => [v[0], v[1]];
-  for (const room of rooms) for (const q of room.rects) grout.tri([q[0], q[2], level + 0.02], [q[1], q[2], level + 0.02], [q[1], q[3], level + 0.02], up, uvxy), grout.tri([q[0], q[2], level + 0.02], [q[1], q[3], level + 0.02], [q[0], q[3], level + 0.02], up, uvxy);
-  const gm = new THREE.MeshStandardMaterial({ color: lin(L.grout), roughness: 0.95, clippingPlanes: CLIP, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  const gz = level + B.tiles.grout;
+  for (const room of rooms) for (const q of room.rects) grout.tri([q[0], q[2], gz], [q[1], q[2], gz], [q[1], q[3], gz], up, uvxy), grout.tri([q[0], q[2], gz], [q[1], q[3], gz], [q[0], q[3], gz], up, uvxy);
+  const gm = new THREE.MeshStandardMaterial({ color: lin(L.grout), roughness: 0.95, clippingPlanes: CLIP });
   const gmesh = grout.mesh(gm); gmesh.castShadow = false; root.add(gmesh); const G = { mesh: gmesh, layers }; meshes.push(G); TILE_MESHES.push(G);
   const { TA, TB } = tileSize(L), stone = T.kind === 'stone', imgA = T.size[0] / 10, imgB = T.size[1] / 10;
   const sets = {};
@@ -892,14 +893,14 @@ function buildLayout(key) {
       for (let i = 0; i < rot; i++) { const t = u; u = 1 - v; v = t; }
       return [u, v];
     };
-    const corner = (a, b) => { const xy = toXY(L, a, b); return [xy[0], xy[1], level + 0.05]; };
+    const corner = (a, b) => { const xy = toXY(L, a, b); return [xy[0], xy[1], level + B.tiles.top]; };
     const A = corner(p.a1, p.b1), Bc = corner(p.a2, p.b1), C = corner(p.a2, p.b2), D = corner(p.a1, p.b2);
     const uvMap = new Map([[A, uvOf(p.a1, p.b1)], [Bc, uvOf(p.a2, p.b1)], [C, uvOf(p.a2, p.b2)], [D, uvOf(p.a1, p.b2)]]);
     const uv = v => uvMap.get(v);
     set.b.tri(A, Bc, C, up, uv); set.b.tri(A, C, D, up, uv);
   }
   for (const set of Object.values(sets)) {
-    const mk = () => new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: stone ? 0.6 : 0.65, envMapIntensity: 0.35, clippingPlanes: CLIP, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const mk = () => new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: stone ? 0.6 : 0.65, envMapIntensity: 0.35, clippingPlanes: CLIP });
     const normal = mk(), red = mk(); red.color.setRGB(1, 0.32, 0.28);
     faceTexture(P.texture, set.face, t => { normal.map = t; red.map = t; normal.needsUpdate = red.needsUpdate = true; redraw(); });
     const mesh = set.b.mesh(normal); mesh.castShadow = false; root.add(mesh);
@@ -915,17 +916,17 @@ const pickMeshes = [];
 (function () {
   const inv = new THREE.MeshBasicMaterial({ visible: false });
   for (const r of ROOMS) {
-    const bt = new Batch(), lv = FLOOR[r.floor].level + 0.1, up = [0, 0, 1], uv = v => [v[0], v[1]];
+    const bt = new Batch(), lv = FLOOR[r.floor].level + B.tiles.top, up = [0, 0, 1], uv = v => [v[0], v[1]];
     for (const q of r.rects) { bt.tri([q[0], q[2], lv], [q[1], q[2], lv], [q[1], q[3], lv], up, uv); bt.tri([q[0], q[2], lv], [q[1], q[3], lv], [q[0], q[3], lv], up, uv); }
     const m = bt.mesh(inv); m.userData.room = r.id; root.add(m); pickMeshes.push(m);
   }
 })();
-const markMat = new THREE.MeshBasicMaterial({ color: 0xc8882f, transparent: true, opacity: 0.3, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+const markMat = new THREE.MeshBasicMaterial({ color: 0xc8882f, transparent: true, opacity: 0.3, depthWrite: false });
 const markGroup = new THREE.Group(); root.add(markGroup);
 function markRoom() {
   while (markGroup.children.length) markGroup.children.pop().geometry.dispose();
   const r = state.room && ROOM[state.room]; if (!r || state.mode !== '3d' || r.floor !== openFloor()) return;
-  const bt = new Batch(), lv = FLOOR[r.floor].level + 0.3, up = [0, 0, 1], uv = v => [v[0], v[1]];
+  const bt = new Batch(), lv = FLOOR[r.floor].level + B.tiles.mark, up = [0, 0, 1], uv = v => [v[0], v[1]];
   for (const q of r.rects) { bt.tri([q[0], q[2], lv], [q[1], q[2], lv], [q[1], q[3], lv], up, uv); bt.tri([q[0], q[2], lv], [q[1], q[3], lv], [q[0], q[3], lv], up, uv); }
   const m = bt.mesh(markMat); m.castShadow = m.receiveShadow = false; markGroup.add(m);
 }

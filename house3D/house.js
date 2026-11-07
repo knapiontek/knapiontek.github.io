@@ -11,6 +11,8 @@
    cuts      ids of other elements or boxes subtracted from this one (the slab without the stair void, ...)
    outer     the side of an EPS box that faces the air: -x garden, +x front, -y left, +y right, -z down
    kinds     what an element is: material of its faces, its section colour (cap), thickness (checked), layer
+   tiles     grout, top, mark = cm over the floor level of the grout plane, the tile faces and the room mark: they lie
+             on the slab, never in its plane
    length    the printed overall length of the house (the 2D plan dimension)
    planCut   the 2D plan cut of a floor, if not the view's (the attic: through the knee walls, under the eaves)
    floors    split by one plane: everything under "split" is the ground floor, everything over it the attic
@@ -346,5 +348,5 @@ window.HOUSE = {
  },
  "walk": {"eye": 160, "radius": 22, "step": 36, "speed": 140, "start": {"x": 1120, "y": 520, "heading": 180}},
 
- "tiles": {"reserve": 0.1, "layers": ["floors"], "small": ["cuts"]}
+ "tiles": {"reserve": 0.1, "grout": 0.2, "top": 0.3, "mark": 0.5, "layers": ["floors"], "small": ["cuts"]}
 };
