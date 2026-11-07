@@ -37,7 +37,7 @@ Left and right are as seen when facing the front of the house (the street side),
 - **Crossings.** Where two walls cross, the load-bearing (thicker) one runs through and the other stops at its faces.
 - **Under the roof.** A box that reaches the roof is still one box, with its top cut by the two roof planes (§ 6).
 - **Element by element.** Each material is a separate element (block, EPS, slab, footing).
-- **Points.** One list of 3D points for the model. A computed point within 0.005 cm of a listed one is replaced by it (welded); faces and edges use only listed points and take the points lying on their edges. Computed floats are never placed side by side.
+- **Points.** One list of 3D points for the model. A computed point within 0.005 cm of a listed one is replaced by it (welded); every drawn point is welded and take the points lying on their edges. Computed floats are never placed side by side.
 
 ## 4. How the numbers were read
 

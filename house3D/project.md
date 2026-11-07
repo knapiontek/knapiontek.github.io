@@ -45,6 +45,9 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 - Never place computed floats/doubles next to each other: two faces that meet must use the very same point.
 - The model keeps one list of 3D points. A computed point (a corner, a roof intersection) is looked up in the list; a point within 0.005 cm is its neighbour and replaces it. Every drawn point is welded: solids, frames, stair, site, roof, section caps, tiles, marks and edges.
 - A face then takes every listed point lying on its edges, so neighbouring faces share their vertices: no T-junctions, no pixel cracks.
+- No heuristics, no sampling: faces, pieces and edges are computed exactly on the welded points.
+- A face loses, by exact polygon subtraction, what an opposite face of its own visibility group (same layers) covers in its plane; a part covered by another group is a contact piece: drawn, seen only while that group is hidden. A piece narrower than the weld tolerance is no face.
+- Edges come from the topology of the pieces: a segment between two welded points is a seam (no line) when two pieces of a group lie on it in one plane, a corner (line) when they meet at an angle; any other line is hidden exactly while every group that closes it is shown. So blocks, EPS, ring beams and slabs show their edges wherever they are exposed.
 - Faults are fixed at their source, never masked (no enlarged faces, no hiding).
 
 ## Build changes (as built, not archon)

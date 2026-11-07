@@ -289,11 +289,9 @@ const cutSolid = c => typeof c === 'string' ? baseSolid(ELEMENT[c]) : solid(c);
 const openedKinds = k => KIND[k].layers.some(l => l === 'walls' || l === 'insulation');
 
 const CELLS = [];                         // {S, element, kind, floor, material, cap, layers}
-const SIDE = { '-x': [-1, 0, 0], '+x': [1, 0, 0], '-y': [0, -1, 0], '+y': [0, 1, 0], '-z': [0, 0, -1], '+z': [0, 0, 1] };
 function addCell(S, e, mat, extra) {
   const floor = floorOfZ(centreZ(S));
-  const inner = e.outer ? SIDE[e.outer].map(v => -v) : null;   // the face against the wall: no facade on it
-  CELLS.push(Object.assign({ S, element: e.id, kind: e.kind, floor, material: mat, cap: KIND[e.kind].cap, layers: [floor].concat(KIND[e.kind].layers), raw: KIND[e.kind].raw, inner }, extra));
+  CELLS.push(Object.assign({ S, element: e.id, kind: e.kind, floor, material: mat, cap: KIND[e.kind].cap, layers: [floor].concat(KIND[e.kind].layers), raw: KIND[e.kind].raw }, extra));
 }
 for (const e of B.elements) {
   const k = KIND[e.kind];
@@ -598,7 +596,10 @@ function visiblePieces(faces) {
       for (const P of pieces) { const I = inter2(P, O); if (I) { contact.push([I, o.cell.layers]); next.push(...minus2(P, O)); } else next.push(P); }
       pieces = next;
     }
-    const keep = (P, cover) => { const q = distinct(P.map(to3)); if (q.length >= 3) out.push(Object.assign({}, f, { poly: q, cover })); };
+    const keep = (P, cover) => {               // block -> EPS -> facade: a piece against another solid is bare EPS
+      const q = distinct(P.map(to3)); if (q.length < 3) return;
+      out.push(Object.assign({}, f, { poly: q, cover, material: cover && f.cell.raw ? f.cell.raw : f.material }));
+    };
     for (const P of pieces) keep(P, null);
     for (const [P, cover] of contact) keep(P, cover);
   }
@@ -693,10 +694,9 @@ function buildEdges(pieces) {
 }
 
 (function () {
-  const insideFaceRaw = (c, n) => c.inner && dot3(n, c.inner) > 0.9 ? c.raw : c.material;
   const roofFace = (c, n) => { const F = B.roof.faces; return n[2] > 0.3 ? F.top : n[2] < -0.3 ? F.bottom : Math.abs(n[0]) > 0.5 ? F.ends : F.eaves; };
   const faces = [].concat(
-    CELLS.flatMap(c => cellFaces(c, insideFaceRaw, true)),
+    CELLS.flatMap(c => cellFaces(c, null, true)),
     ROOF_CELLS.flatMap(c => cellFaces(c, roofFace, true)),
     STAIR_CELLS.flatMap(c => cellFaces(c, null, true)),
     OPEN_CELLS.flatMap(c => cellFaces(c, null, false)),

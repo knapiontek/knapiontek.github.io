@@ -141,6 +141,7 @@ window.HOUSE = {
   "block12": {"name": "pustak 12", "material": "plasterInside", "cap": "block", "thickness": 12, "layers": ["walls"]},
   "eps": {"name": "styropian 20", "material": "plasterWhite", "raw": "insulation", "cap": "insulation", "thickness": 20, "finish": "facade", "layers": ["insulation"]},
   "ringBeam": {"name": "wieniec nad skrzydłem portalu", "material": "plasterInside", "cap": "concrete", "thickness": 24, "layers": ["slabs"]},
+  "epsSoffit": {"name": "styropian podbitki wnęki 47", "material": "plasterWhite", "raw": "insulation", "cap": "insulation", "thickness": 47, "finish": "facade", "layers": ["insulation"]},
   "slab": {"name": "strop z wieńcem", "material": "plasterInside", "cap": "concrete", "thickness": 34, "layers": ["slabs"]},
   "ceiling": {"name": "sufit z ociepleniem", "material": "plasterInside", "cap": "insulation", "thickness": 39, "layers": ["slabs"]},
   "chimney": {"name": "komin", "material": "plasterInside", "cap": "block", "layers": ["walls"]},
@@ -184,7 +185,7 @@ window.HOUSE = {
   {"id": "epsRecessLeft", "kind": "eps", "b": [1230, 1300, 435, 455, -92, 272], "outer": "+y"},
   {"id": "epsEntrance", "kind": "eps", "b": [1210, 1230, 435, 846, -92, 272], "outer": "+x"},
   {"id": "epsRecessRight", "kind": "eps", "b": [1210, 1320, 846, 866, -92, 272], "outer": "-y"},
-  {"id": "epsSoffit", "kind": "eps", "b": [1230, 1320, 455, 846, 252, 272], "outer": "-z"},
+  {"id": "epsSoffit", "kind": "epsSoffit", "b": [1230, 1320, 455, 846, 225, 272], "outer": "-z", "note": "47 cm: spód wnęki na wysokości nadproża garażu, jeden biały pas na froncie"},
   {"id": "epsFrontGable", "kind": "eps", "b": [1300, 1320, 44, 866, 272, 900], "top": "roof", "outer": "+x"},
 
   {"id": "epsWingGardenLeft", "kind": "eps", "b": [-80, 0, 44, 64, -92, 900], "top": "roof", "outer": "+y"},
