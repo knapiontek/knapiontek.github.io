@@ -509,7 +509,7 @@ Batch.prototype.tri = function (a, b, c, n, uv) {
   const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
   const cr = [ab[1] * ac[2] - ab[2] * ac[1], ab[2] * ac[0] - ab[0] * ac[2], ab[0] * ac[1] - ab[1] * ac[0]];
   if (cr[0] * n[0] + cr[1] * n[1] + cr[2] * n[2] < 0) { const t = b; b = c; c = t; }
-  for (const v of [a, b, c]) { this.p.push(v[0], v[1], v[2]); this.n.push(n[0], n[1], n[2]); const q = uv(v); this.uv.push(q[0], q[1]); }
+  for (const v of [a, b, c]) { const w = weld(v); this.p.push(w[0], w[1], w[2]); this.n.push(n[0], n[1], n[2]); const q = uv(v); this.uv.push(q[0], q[1]); }   // every drawn point is welded
 };
 Batch.prototype.mesh = function (mat) {
   const g = new THREE.BufferGeometry();

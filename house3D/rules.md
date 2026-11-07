@@ -38,7 +38,7 @@ The **menu** decides what is shown and from where. The **settings** (the panel) 
 - Floors and roof: Parter, Piętro, Dach; in their own menu row.
 - Material layers, in the panel: Fundament, Pustaki, Wieniec i strop, Styropian (→ Elewacja), Okna i drzwi, Schody, Posadzki (→ Drobne docinki), Teren, Krawędzie.
 - Elewacja off: the EPS shows bare; on: its finish.
-- The mesh is drawn as it is: neighbouring faces share their vertices (no cracks), faces between cells of one element are not drawn; nothing is enlarged or hidden to cover a fault.
+- The mesh is drawn as it is: one list of 3D points for the model; a computed point within 0.005 cm of a point already there is replaced by it; faces then take the listed points lying on their edges (no T-junctions, no cracks); faces between cells of one element are not drawn; nothing is enlarged or hidden to cover a fault.
 - Krawędzie: lines only where the solid turns a corner, never on the joint of two elements lying in one plane.
 - A child is shown only with its parent. An element is drawn only when all its layers are on.
 - Switching a layer changes only what is shown, never the model, the tile counts or the camera.

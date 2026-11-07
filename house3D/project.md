@@ -40,12 +40,18 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 - **Stair**: floating treads and a landing, 17 risers to the attic floor.
 - **Rooms**: rectangles at the block faces; a room is tiled itself or with another room (walk-in wardrobes with the bedroom); tiles run on through door halves.
 
+## Points: one list, welded (important)
+
+- Never place computed floats/doubles next to each other: two faces that meet must use the very same point.
+- The model keeps one list of 3D points. A computed point (a corner, a roof intersection) is looked up in the list; a point within 0.005 cm is its neighbour and replaces it. Only listed points are used by faces and edges.
+- A face then takes every listed point lying on its edges, so neighbouring faces share their vertices: no T-junctions, no pixel cracks.
+- Faults are fixed at their source, never masked (no enlarged faces, no hiding).
+
 ## Build changes (as built, not archon)
 
 - Ground floor shower recess 100 × 90: walls #7 to y 766, #8 at y 754–766, #10 from y 754.
 - Attic bathroom door 90/205 at x 630–720 (20 cm toward the garden); the 100 × 100 shower at the front end.
 - No diagonal wall under the stair in the garage.
-- Lintel over the entrance recess (24 × 27, x 1276–1300, z 245–272) with EPS: the white front band runs at one height.
 
 ## Code style (every file)
 
