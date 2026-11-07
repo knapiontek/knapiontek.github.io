@@ -66,7 +66,7 @@ Left and right are as seen when facing the front of the house (the street side),
 | Top of ceiling insulation | ≈ 630 | section, measured |
 | Roof underside at the ridge | 796 | 426 + tan 42° · 411 |
 | Ridge top | 860 | printed +8.60 (derived 860.7) |
-| Chimney top / vent stack top | ≈ 900 / ≈ 870 | section / elevations |
+| Chimney top | ≈ 900 | section |
 | Height above terrain | 892 | archon 8.92 m |
 
 ## 6. Roof
@@ -92,7 +92,7 @@ Left and right are as seen when facing the front of the house (the street side),
 4. **Knee walls** (block 24, z 306 → roof, 120 high at the inner face) and **gables** (block 24, z 306 → roof).
 5. **Roof.** Timber truss (6.61 m³), ceramic tiles (swissporTON), VELUX windows, 186.1 m².
 6. **Insulation.** 20 EPS around the blocks, the slab edge and the window reveals, 215.8 m² of facade. Finish: white-grey plaster with timber cladding accents. U-values: walls 0.118, roof 0.12, windows < 0.9 W/(m²·K).
-7. **Services.** Gas boiler, underfloor heating, gravity ventilation (the vent shaft, § 9 and § 10).
+7. **Services.** As built: heat pump (archon: gas boiler), underfloor heating. One chimney (the living room); no vent shaft and no second stack (§ 14).
 
 ## 8. Outer walls
 
@@ -130,7 +130,9 @@ The entrance recess is open to the outside at x 1230 – 1320, y 455 – 846, ro
 | entrance wall | 1210 – 1230 | 435 – 846 | 0 → 272 |
 | recess, right side | 1210 – 1320 | 846 – 866 | 0 → 272 |
 | front gable and slab edge | 1300 – 1320 | 44 – 866 | 272 → roof |
-| recess soffit | 1230 – 1320 | 455 – 846 | 252 → 272 |
+| recess soffit (47 thick, as built) | 1230 – 1320 | 455 – 846 | 225 → 272 |
+
+The recess soffit is 47 thick so that its underside is at 225, the head of the garage door: the white front band is one horizontal bar over the garage and the recess.
 
 The EPS boxes start at −92 (the plinth insulation, finish below ±0 = plinth).
 
@@ -168,7 +170,6 @@ All z −92 → roof. The terraces are 100 deep (printed) at both ends, under th
 | 8 | block 12 | 925 – 985 | 754 – 766 | bathroom / boiler room; built at 754 (§ 14) |
 | 9 | block 12 | 925 – 1186 | 411 – 423 | garage / vestibule |
 | 10 | block 12 | 985 – 997 | 754 – 866 | bathroom / boiler room; built from 754 (§ 14) |
-| 11 | vent shaft | 873 – 901 | 589 – 615 | z 0 → 306, continues as attic #10 |
 
 ### Openings
 
@@ -193,7 +194,7 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 
 | Room | Rectangles [x1, y1, x2, y2] | Here, m² | archon, m² |
 |---|---|---|---|
-| Salon, kitchen and hall (5, 6, 3) | [44,44,535,379] [44,379,471,455] [44,455,547,866] [547,435,722,866] [722,435,734,580] [734,435,901,589] [734,589,873,615] | 51.02 | 35.42 + 9.67 + 5.46 = 50.55 |
+| Salon, kitchen and hall (5, 6, 3) | [44,44,535,379] [44,379,471,455] [44,455,547,866] [547,435,722,866] [722,435,734,580] [734,435,901,615] | 51.09 | 35.42 + 9.67 + 5.46 = 50.55 |
 | Vestibule (1) | [925,423,1186,615] | 5.01 | 4.84 |
 | Bathroom (7) | [734,627,901,866] [901,766,985,866] | 4.83 | 4.95 (design) |
 | Boiler room with laundry (8) | [925,627,1186,754] [997,754,1186,866] | 5.43 | 4.97 (design) |
@@ -215,7 +216,6 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 | 7 | block 12 | 737 – 749 | 44 – 341 |
 | 8 | block 12 | 749 – 901 | 329 – 341 |
 | 9 | block 12 | 820 – 832 | 565 – 866 |
-| 10 | vent shaft | 832 – 901 | 565 – 626, z 306 → ≈ 870 (the second stack on the roof) |
 | 11 | block 12 | 889 – 901 | 626 – 649 |
 | 12 | block 12 | 901 – 913 | 44 – 649 |
 | 13 | block 12 | 913 – 1276 | 441 – 453 |
@@ -248,7 +248,7 @@ archon's first figure is the usable area: under 140 of clear height it counts 0,
 | Bathroom (5) | [547,565,820,866] | 8.22 | 6.25 (7.99) |
 | Wardrobe (8) | [749,44,901,329] | 4.33 | 3.20 (4.16) |
 | Room (7) | [913,44,1276,441] | 14.41 | 11.79 (14.11) |
-| Room (6) | [913,453,1276,866] [832,649,913,866] [832,626,889,649] | 16.88 | 13.69 (16.53) |
+| Room (6) | [913,453,1276,866] [832,649,913,866] [832,626,889,649] [832,565,901,626] | 17.30 | 13.69 (16.53) |
 
 ## 11. Kitchen as drawn by archon
 
@@ -291,7 +291,6 @@ The pier between the 250 and 190 windows is x 333 – 472. The `kitchen` project
 - **Garage length.** It is printed as 724, but 1320 − 44 − 491 − 12 − 44 = 729, and the drawing also measures 729. The model uses 729.
 - **Foundation walls.** Their material is not given. If it is the same block as the walls above, the foundation wall and the ground floor wall become one box.
 - **Footing sizes and depths.** These come from the section only (±3.6).
-- **Vent stack top.** ≈ 870, from the elevations only.
 
 ## 14. Build changes (as built, differ from archon)
 
@@ -300,6 +299,7 @@ The pier between the 250 and 190 windows is x 333 – 472. The `kitchen` project
 | Ground floor shower recess (bathroom 7) | 84 × 137, x 901 – 985, y 729 – 866 | 90 × 100: x 895 – 985 (90 from the glass line at 895), y 766 – 866 (100 along the window wall). Walls: #7 to y 766, #8 at y 754 – 766, #10 from y 754. Which walls moved is assumed; the recess size was measured on site. |
 | Attic shower 100 × 100 (bathroom 5) | x 547 – 637, y 565 – 670 (garden end) | x 720 – 820, y 565 – 665 (front end, by the door wall) |
 | Attic bathroom door 90/205 (#3) | x 650 – 740 | x 630 – 720 (20 toward the garden, clears the shower) |
+| Heating | gas boiler, gravity ventilation: vent shaft x 873 – 901 / y 589 – 615 (ground floor), x 832 – 901 / y 565 – 626 (attic), second stack on the roof | heat pump: one chimney (living room), no vent shaft, no second stack; the space goes to the hall (ground floor) and room 6 (attic) |
 | Diagonal wall under the stair (garage) | from (547, ≈ 271) to (642, ≈ 323) | none: the stair is floating; the garage outline keeps y 297 as the line to the stair |
 
 The showers are fittings and are not in this geometry; only the walls and the door are.

@@ -24,6 +24,7 @@ window.HOUSE = {
  "source": "Geometria z estimate/estimate.md (rzuty archon.pl, ±2,3 cm), ze zmianami wykonawczymi.",
  "notes": [
   "Bryła według estimate.md: każdy element to prostopadłościan, otwory wycięte z ścian, które przecinają.",
+  "Pompa ciepła zamiast kotła gazowego: jeden komin (salon), bez szachtu wentylacyjnego i drugiego komina.",
   "Zmiany wykonawcze: wnęka prysznica w łazience parteru 100 × 90 (ściany #7, #8, #10 przesunięte), drzwi łazienki na piętrze przesunięte o 20 cm w stronę ogrodu.",
   "Wszystkie elementy to prostopadłościany; schody są wspornikowe (bez policzków), bez ścianki pod biegiem.",
   "Elewacja (grafit, biel, drewno) odczytana z wizualizacji archon - to obraz, nie wymiar."
@@ -66,7 +67,7 @@ window.HOUSE = {
     {"id": "salon", "numbers": [3, 5, 6], "name": "Salon z kuchnią i holem", "planArea": 50.55,
      "tiles": {"product": "authorityGraphite", "dir": "x"},
      "link": {"href": "../kitchen/view.html", "name": "Projekt kuchni"},
-     "rects": [[44, 535, 44, 379], [44, 471, 379, 455], [44, 547, 455, 866], [547, 722, 435, 866], [722, 734, 435, 580], [734, 901, 435, 589], [734, 873, 589, 615]]},
+     "rects": [[44, 535, 44, 379], [44, 471, 379, 455], [44, 547, 455, 866], [547, 722, 435, 866], [722, 734, 435, 580], [734, 901, 435, 615]]},
     {"id": "wiatrolap", "numbers": [1], "name": "Wiatrołap", "planArea": 4.84,
      "tiles": {"product": "authorityGraphite", "dir": "x"},
      "rects": [[925, 1186, 423, 615]]},
@@ -108,7 +109,7 @@ window.HOUSE = {
      "rects": [[913, 1276, 44, 441]]},
     {"id": "pokoj6", "numbers": [6], "name": "Pokój", "planArea": 16.53,
      "tiles": {"product": "logOak", "dir": "x"},
-     "rects": [[913, 1276, 453, 866], [832, 913, 649, 866], [832, 889, 626, 649]]}
+     "rects": [[913, 1276, 453, 866], [832, 913, 649, 866], [832, 889, 626, 649], [832, 901, 565, 626]]}
    ],
    "other": []
   }
@@ -124,7 +125,7 @@ window.HOUSE = {
   "x": [-100, 1420],
   "faces": {"top": "roofGraphite", "bottom": "plasterWhite", "ends": "plasterWhite", "eaves": "graphite"},
   "cap": "timber",
-  "cuts": ["chimney", "ventAttic"],
+  "cuts": ["chimney"],
   "windows": [
    {"name": "Sypialnia", "label": "94/140", "x": [155, 249], "y": [782, 886]},
    {"name": "Schody", "label": "94/140", "x": [639, 733], "y": [24, 128]},
@@ -146,8 +147,7 @@ window.HOUSE = {
   "epsSoffit": {"name": "styropian podbitki wnęki 47", "material": "plasterWhite", "raw": "insulation", "cap": "insulation", "thickness": 47, "finish": "facade", "layers": ["insulation"]},
   "slab": {"name": "strop z wieńcem", "material": "plasterInside", "cap": "concrete", "thickness": 34, "layers": ["slabs"]},
   "ceiling": {"name": "sufit z ociepleniem", "material": "plasterInside", "cap": "insulation", "thickness": 39, "layers": ["slabs"]},
-  "chimney": {"name": "komin", "material": "plasterInside", "cap": "block", "layers": ["walls"]},
-  "shaft": {"name": "szacht wentylacyjny", "material": "plasterInside", "cap": "block", "layers": ["walls"]}
+  "chimney": {"name": "komin", "material": "plasterInside", "cap": "block", "layers": ["walls"]}
  },
 
  "elements": [
@@ -210,10 +210,9 @@ window.HOUSE = {
   {"id": "wall8", "kind": "block12", "b": [925, 985, 754, 766, 0, 272], "note": "przesunięta: wnęka prysznica 100 × 90"},
   {"id": "wall9", "kind": "block12", "b": [925, 1186, 411, 423, 0, 272]},
   {"id": "wall10", "kind": "block12", "b": [985, 997, 754, 866, 0, 272], "note": "skrócona: od y 754"},
-  {"id": "ventGround", "kind": "shaft", "b": [873, 901, 589, 615, 0, 306]},
 
   {"id": "slab", "kind": "slab", "b": [20, 1300, 20, 890, 272, 306],
-   "cuts": [[547, 642, 44, 438, 272, 306], [642, 737, 44, 273, 272, 306], "chimney", "ventGround"]},
+   "cuts": [[547, 642, 44, 438, 272, 306], [642, 737, 44, 273, 272, 306], "chimney"]},
 
   {"id": "beamWingGardenLeft", "kind": "ringBeam", "b": [-80, 20, 20, 44, 272, 306]},
   {"id": "beamWingGardenRight", "kind": "ringBeam", "b": [-80, 20, 866, 890, 272, 306]},
@@ -224,7 +223,7 @@ window.HOUSE = {
   {"id": "kneeRight", "kind": "block24", "b": [-80, 1400, 866, 890, 306, 900], "top": "roof", "note": "z oboma skrzydłami portalu"},
   {"id": "gableGarden", "kind": "block24", "b": [20, 44, 44, 866, 306, 900], "top": "roof"},
   {"id": "gableFront", "kind": "block24", "b": [1276, 1300, 44, 866, 306, 900], "top": "roof"},
-  {"id": "ceiling", "kind": "ceiling", "b": [44, 1276, 44, 866, 591, 630], "top": "roof", "cuts": ["chimney", "ventAttic"]},
+  {"id": "ceiling", "kind": "ceiling", "b": [44, 1276, 44, 866, 591, 630], "top": "roof", "cuts": ["chimney"]},
 
   {"id": "attic1", "kind": "block12", "b": [364, 376, 44, 391, 306, 591], "top": "roof"},
   {"id": "attic2", "kind": "block12", "b": [364, 376, 553, 866, 306, 591], "top": "roof"},
@@ -235,7 +234,6 @@ window.HOUSE = {
   {"id": "attic7", "kind": "block12", "b": [737, 749, 44, 341, 306, 591], "top": "roof"},
   {"id": "attic8", "kind": "block12", "b": [749, 901, 329, 341, 306, 591], "top": "roof"},
   {"id": "attic9", "kind": "block12", "b": [820, 832, 565, 866, 306, 591], "top": "roof"},
-  {"id": "ventAttic", "kind": "shaft", "b": [832, 901, 565, 626, 306, 870], "note": "drugi komin na dachu"},
   {"id": "attic11", "kind": "block12", "b": [889, 901, 626, 649, 306, 591], "top": "roof"},
   {"id": "attic12", "kind": "block12", "b": [901, 913, 44, 649, 306, 591], "top": "roof"},
   {"id": "attic13", "kind": "block12", "b": [913, 1276, 441, 453, 306, 591], "top": "roof"}
@@ -285,7 +283,7 @@ window.HOUSE = {
   {"side": "-z", "x": [1210, 1300], "material": "graphite"},
   {"side": "+y", "x": [333, 903], "z": [0, 240], "material": "graphite"},
   {"side": "-y", "x": [127, 964], "z": [0, 240], "material": "graphite"},
-  {"elements": ["chimney", "ventAttic"], "z": [700, 999], "material": "graphite"}
+  {"elements": ["chimney"], "z": [700, 999], "material": "graphite"}
  ],
 
  "stair": {

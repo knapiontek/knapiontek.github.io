@@ -32,10 +32,10 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 
 ## Model
 
-- **Elements** are the boxes of the estimate, each with a kind (footing, foundation, ground slab, block 24, block 12, EPS, ring beam, slab, ceiling, chimney, shaft). A kind gives the face material, the section colour, the checked thickness and the layer.
+- **Elements** are the boxes of the estimate, each with a kind (footing, foundation, ground slab, block 24, block 12, EPS, ring beam, slab, ceiling, chimney). A kind gives the face material, the section colour, the checked thickness and the layer.
 - **Openings** cut every wall and EPS box they cross; frames, glass, the gate and the entrance leaf are drawn in the Okna i drzwi layer.
 - **Portal**: the long walls' block, foundation and knee walls run on into the wings; the ring beam continues over them; EPS on the inner faces and a cap on every head.
-- **Roof**: two slopes from the pitch, eave and thickness, x −100 → 1420 over both portals; roof windows, chimney and shaft are cut out of it.
+- **Roof**: two slopes from the pitch, eave and thickness, x −100 → 1420 over both portals; roof windows and the chimney are cut out of it.
 - **Facade**: rules on the EPS boxes by their outer side; Elewacja off shows the bare EPS.
 - **Stair**: floating treads and a landing, 17 risers to the attic floor.
 - **Rooms**: rectangles at the block faces; a room is tiled itself or with another room (walk-in wardrobes with the bedroom); tiles run on through door halves.
@@ -48,6 +48,7 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 - No heuristics, no sampling: faces, pieces and edges are computed exactly on the welded points.
 - A face loses, by exact polygon subtraction, what an opposite face of its own visibility group (same layers) covers in its plane; a part covered by another group is a contact piece: drawn, seen only while that group is hidden. A piece narrower than the weld tolerance is no face.
 - Edges come from the topology of the pieces: a segment between two welded points is a seam (no line) when two pieces of a group lie on it in one plane, a corner (line) when they meet at an angle; any other line is hidden exactly while every group that closes it is shown. So blocks, EPS, ring beams and slabs show their edges wherever they are exposed.
+- No two surfaces share a plane: the floor tiles and grout lie on the slab (data: tiles.grout, tiles.top), never in its plane. No slope-dependent depth offset (polygonOffset factor) anywhere: at grazing angles it pushes surfaces through walls; only a constant minimal bias keeps edge lines in front.
 - Faults are fixed at their source, never masked (no enlarged faces, no hiding).
 
 ## Build changes (as built, not archon)
@@ -55,6 +56,7 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 - Ground floor shower recess 100 × 90: walls #7 to y 766, #8 at y 754–766, #10 from y 754.
 - Attic bathroom door 90/205 at x 630–720 (20 cm toward the garden); the 100 × 100 shower at the front end.
 - No diagonal wall under the stair in the garage.
+- Heat pump instead of a gas boiler: one chimney (living room), no vent shaft, no second stack.
 - Recess soffit EPS 47 thick (z 225–272): one white horizontal band on the front.
 
 ## Code style (every file)

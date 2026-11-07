@@ -493,7 +493,7 @@ function makeMaterial(key) {
   }
   if (def.wood) woodTexture(def, m);
   m.clippingPlanes = CLIP; m.clipShadows = true;
-  m.polygonOffset = true; m.polygonOffsetFactor = 0; m.polygonOffsetUnits = 2;   // a constant bias: the edge lines stay in front, nothing grows with the slope
+  m.polygonOffset = true; m.polygonOffsetFactor = 1; m.polygonOffsetUnits = 1;   // faces only ever pushed back (never forward): the edge lines on them stay in front at any angle
   return m;
 }
 const material = key => M[key] || (M[key] = makeMaterial(key));
