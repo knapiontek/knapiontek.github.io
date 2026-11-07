@@ -743,7 +743,7 @@ function buildCaps(h) {
   for (const c of ALL_SOLIDS()) {
     if (!shown(c.layers)) continue;
     const bt = batches[c.cap] || (batches[c.cap] = new Batch()), n = [0, 0, 1], uv = v => [v[0], v[1]];
-    if (h <= c.S.z1 || h >= c.S.z2) continue;
+    if (h <= c.S.z1 || h > c.S.z2) continue;   // a cut exactly on the top of a cell is its section: the cell above starts there
     const yi = yAt(c.S, h); if (!yi) continue;
     const a = [c.S.x1, yi[0], h], b = [c.S.x2, yi[0], h], d = [c.S.x2, yi[1], h], e = [c.S.x1, yi[1], h];
     bt.tri(a, b, d, n, uv); bt.tri(a, d, e, n, uv);
@@ -1125,7 +1125,7 @@ function planSvg() {
     }
     for (const c of ALL_SOLIDS()) {
       if (c.floor !== F.id) continue;
-      if (h <= c.S.z1 || h >= c.S.z2) continue;
+      if (h <= c.S.z1 || h > c.S.z2) continue;
       const yi = yAt(c.S, h); if (!yi) continue;
       const fill = c.opening ? (c.material === B.frames.glass ? '#9fc3d6' : '#3b3e42') : (PLAN_FILL[c.cap] || '#555');
       s += rect(c.S.x1, c.S.x2, yi[0], yi[1], `fill="${fill}"`);
