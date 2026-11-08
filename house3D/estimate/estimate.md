@@ -74,7 +74,7 @@ Left and right are as seen when facing the front of the house (the street side),
 - **Underside.** z = 386.4 + tan 42° · d, where d is the distance from the nearer long outer face (d = y or 910 − y, up to 455).
 - **Build-up.** archon: 64.6 measured vertically (≈ 48 perpendicular): rafters, insulation, battens, ceramic tiles; the roof top is the underside + 64.6. Modelled 64 perpendicular (§ 14).
 - **Length.** x −100 → 1420. The roof runs on over both terraces as the portal frame (§ 8.4).
-- **Flat ceiling** at z 591 wherever the underside is higher, i.e. y 227 – 683. Above it is a loft about 1.6 m high.
+- **Flat ceiling** at z 591 wherever the underside is higher, i.e. y 227 – 683. Above it is a loft about 1.6 m high. As built, the garden bedroom (x 44 – 364) has a cathedral ceiling instead (§ 14).
 - **Roof windows, 3 × 94/140.** 94 along x and 140 along the slope (104 in plan). The plan draws ≈ 84 of that, measured in from the knee wall's inner face (the y column below); the full 104 runs from there out over the knee wall (y 782 – 886 and 24 – 128). The site plan and the elevations confirm the x positions.
 
 | Roof window | x | y (plan) | Slope |
@@ -90,7 +90,7 @@ Left and right are as seen when facing the front of the house (the street side),
 3. **Slab with ring beam.** Reinforced concrete. One box x 20 – 1300, y 20 – 890, z 272 – 306 (including the attic floor build-up), minus the stair void. It also covers the entrance recess.
 4. **Knee walls** (block 24, z 306 → roof, 120 high at the inner face) and **gables** (block 24, z 306 → roof).
 5. **Roof.** Timber truss (6.61 m³), ceramic tiles (swissporTON), VELUX windows, 186.1 m².
-6. **Insulation.** 20 EPS around the blocks, the slab edge and the window reveals, 215.8 m² of facade. Finish: white-grey plaster with timber cladding accents. U-values: walls 0.118, roof 0.12, windows < 0.9 W/(m²·K).
+6. **Insulation**, once the roof is on: 20 EPS over the whole building, around the blocks, the slab edge and the window reveals, 215.8 m² of facade. Finish: white-grey plaster with timber cladding accents. U-values: walls 0.118, roof 0.12, windows < 0.9 W/(m²·K).
 7. **Services.** As built: heat pump (archon: gas boiler), underfloor heating. One chimney (the living room); no vent shaft and no second stack (§ 14).
 
 ## 8. Outer walls
@@ -131,11 +131,13 @@ The entrance recess is open to the outside at x 1230 – 1320, y 455 – 846, ro
 | front gable and slab edge | 1300 – 1320 | 44 – 866 | 272 → roof |
 | recess soffit (47 thick, as built) | 1230 – 1320 | 455 – 846 | 225 → 272 |
 
-The wall EPS boxes run down to −92 (the table gives z from 0): below ±0 they are the plinth insulation, finished as plinth. The recess soffit is 47 thick (§ 14).
+The EPS covers every block completely, front, back and sides, including the slab edge and the gables up to the roof, so there are no thermal bridges.
+
+The wall EPS boxes run down to −92 (the table gives z from 0): below ±0 they are the plinth insulation, finished as plinth. The recess soffit is 47 thick (§ 14), thicker than 20 so that the white band over the garage door and the entrance is one level rectangle.
 
 ### 8.4 Portal (the white frame)
 
-At each end the long walls run on past the gable as wings, 64 wide (EPS 20 + block 24 + EPS 20), z 0 → roof, with the roof over them.
+At each end the long walls run on past the gable as wings, 64 wide (EPS 20 + block 24 + EPS 20), z 0 → roof, with the roof over them. The whole frame, front and back, is one width, 64: the wings measured across, the roof measured across the slope (§ 14).
 
 - **Block**: the long wall's block itself, one box from end to end (§ 8.1, § 8.2, foundation −80 → 1400). No EPS between the house and a wing.
 - **Ring beam** over the wing block, between the two floors: x −80 – 20 and 1300 – 1400, z 272 – 306, at y 20 – 44 and 866 – 890.
@@ -222,8 +224,10 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 | Opening | W/H | In | x | y | z |
 |---|---|---|---|---|---|
 | window | 600/346 | garden gable | 0 – 44 | 155 – 755 | 306 → 652, top cut parallel to the roof: z = 652 − tan 42° · \|y − 455\| |
-| window | 220/285 | front gable | 1276 – 1320 | 168 – 388 | 336 → 621, top sloping: z = 621 − tan 42° · (388 − y) |
-| window | 220/285 | front gable | 1276 – 1320 | 522 – 742 | 336 → 621, top sloping: z = 621 − tan 42° · (y − 522) |
+| window | 220/285 | front gable | 1276 – 1320 | 168 – 388 | 306 → 591, top sloping: z = 591 − tan 42° · (388 − y) |
+| window | 220/285 | front gable | 1276 – 1320 | 522 – 742 | 306 → 591, top sloping: z = 591 − tan 42° · (y − 522) |
+
+The front gable windows run floor to ceiling: 285 is the attic clear height (306 → 591, printed in the section), and the front elevation measures them ≈ 314 → ≈ 580 (±3.6), transom at 390. The white band under them ends at the attic floor (306).
 | door | 89/205 | #6 | 535 – 547 | 459 – 548 | 306 → 511 |
 | door | 90/205 | #3 | 630 – 720 | 553 – 565 | 306 → 511 (built; design 650 – 740, § 14) |
 | door | 82/205 | #12 | 901 – 913 | 178 – 260 | 306 → 511 |
@@ -299,6 +303,7 @@ The pier between the 250 and 190 windows is x 333 – 472. The `kitchen` project
 | Heating | gas boiler, gravity ventilation: vent shaft x 873 – 901 / y 589 – 615 (ground floor), x 832 – 901 / y 565 – 626 (attic), second stack on the roof | heat pump: one chimney (living room), no vent shaft, no second stack; the space goes to the hall (ground floor) and room 6 (attic) |
 | Diagonal wall under the stair (garage) | from (547, ≈ 271) to (642, ≈ 323) | none: the stair is floating; the garage outline keeps y 297 as the line to the stair |
 | Roof build-up (§ 6) | 64.6 vertical (≈ 48 across the slope): top at the outer wall face 451, ridge 860 | 64 across the slope (86.1 vertical), as wide as a portal wing (EPS 20 + block 24 + EPS 20), so the white frame keeps one width; same underside, so the top rises: 472.5 at the outer wall face, ridge ≈ 882, chimney ≈ 18 above it |
+| Garden bedroom ceiling (§ 6) | flat at 591 over the whole attic | cathedral: open to the roof over x 44 – 364; the flat ceiling starts at x 376; a block 12 wall x 364 – 376, z 591 → roof, closes the loft over the rest of the attic |
 | Recess soffit EPS (§ 8.3) | thickness not given (EPS 20 elsewhere) | 47 thick, z 225 – 272: its underside is at the garage door head, so the white front band is one horizontal bar over the garage and the recess |
 
 The showers are fittings and are not in this geometry; only the walls and the door are.

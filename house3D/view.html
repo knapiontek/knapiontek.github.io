@@ -120,7 +120,7 @@ td.n{font-family:var(--f-mono);color:var(--muted);text-align:right;padding-right
     </div>
     <button class="helpbtn" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
     <div class="help" id="help" role="dialog" aria-label="Pomoc" hidden>
-      <p>Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko.</p>
+      <p>Obracaj: lewy przycisk (z zewnątrz wokół środka domu, w środku wokół tego, co na środku widoku) · przesuwaj: prawy · przybliżaj: kółko (do miejsca pod kursorem).</p>
       <p><b>Spacer</b>: strzałki chodzą i obracają, A/D krok w bok, Shift szybciej, PgUp/PgDn lub przeciąganie myszą patrzy, Esc kończy.</p>
       <p>U góry: kondygnacje i dach. W panelu: warstwy materiałowe. Na dole: skąd patrzysz.</p>
       <p>Bez dachu najwyższa pokazana kondygnacja jest otwarta: jej przekrój i pomieszczenia są w panelu, kliknięcie w podłogę wybiera pomieszczenie.</p>
@@ -1111,6 +1111,42 @@ canvas.addEventListener('pointerup', e => {
   const hit = ray.intersectObjects(pickMeshes.filter(m => ROOM[m.userData.room].floor === f))[0];
   const h = cutHeight();
   if (hit && (h === null || hit.point.y * 100 <= h)) selectRoom(hit.object.userData.room);
+});
+
+/* zoom toward the cursor; the rotation pivot stays in front of the camera: at the depth of the house centre from outside,
+   on the surface the viewer looks at inside */
+const ZOOM_IN = 0.2, ZOOM_OUT = 0.25, NEAREST = 0.05;   // fraction of the way to the surface per wheel step; closest approach, m
+const shownChain = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+function surfaceAt(ndc) {                  // the first drawn, uncut surface along the ray through a screen point
+  ray.setFromCamera(ndc, camera);
+  const meshes = []; root.traverse(o => { if (o.isMesh && shownChain(o)) meshes.push(o); });
+  const hit = ray.intersectObjects(meshes, false).find(h => CUT.distanceToPoint(h.point) >= 0);
+  return hit ? hit.point : null;
+}
+function seatTarget(point) {               // the target moves along the view axis to the depth of a point: the view does not jump
+  const dir = new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
+  const depth = Math.max(new THREE.Vector3().subVectors(point, camera.position).dot(dir), NEAREST);
+  controls.target.copy(camera.position).addScaledVector(dir, depth);
+}
+const HOUSE_LO = toWorld(B.roof.x[0], W, FLOORS[0].level), HOUSE_HI = toWorld(B.roof.x[1], 0, RIDGE_TOP);   // the body of the house
+const HOUSE_BOX = new THREE.Box3(HOUSE_LO.clone().min(HOUSE_HI), HOUSE_LO.clone().max(HOUSE_HI));
+const HOUSE_CENTRE = HOUSE_BOX.getCenter(new THREE.Vector3());
+const pivotOutside = () => !HOUSE_BOX.containsPoint(camera.position);   // from outside the house turns about its centre
+const ndcOf = e => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * 2 - 1, y: -(e.clientY - r.top) / r.height * 2 + 1 }; };
+canvas.parentElement.addEventListener('wheel', e => {   // captured before OrbitControls: zoom toward the surface under the cursor
+  if (e.target !== canvas || walk.on) return;
+  e.preventDefault(); e.stopPropagation();
+  let p = surfaceAt(ndcOf(e));
+  if (!p) p = ray.ray.at(camera.position.distanceTo(controls.target), new THREE.Vector3());
+  const k = e.deltaY < 0 ? ZOOM_IN : -ZOOM_OUT, d = camera.position.distanceTo(p);
+  if (k > 0 && d * (1 - k) < NEAREST) return;
+  camera.position.lerp(p, k);
+  seatTarget(pivotOutside() ? HOUSE_CENTRE : p); controls.update(); redraw();
+}, { capture: true, passive: false });
+canvas.addEventListener('pointerdown', () => {          // rotation turns about the house centre from outside, about the surface in the middle of the view inside
+  if (walk.on) return;
+  const p = pivotOutside() ? HOUSE_CENTRE : surfaceAt({ x: 0, y: 0 });
+  if (p) { seatTarget(p); controls.update(); }
 });
 
 /* ================= 10. 2D PLAN ================= */

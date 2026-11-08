@@ -23,7 +23,7 @@ The menu decides what is shown and from where. The panel holds only the paramete
 - **Cuts**: an element may subtract other elements or boxes (the slab without the stair void and the chimney).
 - **Floors** are split by one plane, the top of the ground floor walls (272): below is the ground floor, above is the attic with the slab. A box crossing the plane belongs to both, in two parts.
 - **No overlaps**: no two elements share volume (checked on the page).
-- **EPS** is a continuous shell outside the blocks, never between two blocks. Every exposed block end (the portal wing heads) gets an EPS cap. A block line runs through its corners and on into the portal wings.
+- **EPS** is a continuous shell outside the blocks, never between two blocks: every block is covered, front, back and sides, with no thermal bridges. Every exposed block end (the portal wing heads) gets an EPS cap. A block line runs through its corners and on into the portal wings. The portal frame, front and back, is one width, 64 (EPS 20 + block 24 + EPS 20; the roof across the slope).
 - **Facade**: the finish (plaster, graphite, wood, plinth) covers only the parts of EPS faces open to the air (block → EPS → facade). A part against another solid (block, slab, roof) stays bare EPS, decided exactly by the contact pieces. The finish is chosen by rules (the side of the box facing the air, a part of it, a height); a later rule wins.
 - **Windows and doors** sit in the block, flush with its outer face. Their sizes are the archon labels (width / height), shown on the 2D plan.
 - **Stair**: floating, treads and a landing only (no stringers, no wall under it).
@@ -50,6 +50,7 @@ The menu decides what is shown and from where. The panel holds only the paramete
 - **Top left**: one toggle 3D / 2D.
 - **3D, top**: Parter, Piętro, Dach as check boxes; a second row when a room is selected.
 - **3D, bottom**: Spacer (the walk), the cameras of the house and of the open floor.
+- **Navigation**: the wheel zooms toward the surface under the cursor; rotation turns about the house centre while the camera is outside the house, and about the surface in the middle of the view inside it, so the pivot is never left behind the camera.
 - **Help**: an icon in the corner.
 - **2D**: both floors side by side, garden at the top. Cut 150 cm above the ground floor and 80 cm above the attic floor (through the knee walls and their EPS, under the eaves). The stair is drawn as a full line under the cut and dashed above it; from the attic all of it shows through the stair hole. Zoom and SVG download are in the panel.
 - **Panel** follows what is shown: Przekrój and Pomieszczenia only for the open floor; at the top of its range the cut is off. Light only in 3D.
