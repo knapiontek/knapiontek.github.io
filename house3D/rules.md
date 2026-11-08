@@ -1,6 +1,6 @@
 # House 3D rules
 
-> What the page must do. How the files do it: project.md. The geometry: estimate/estimate.md.
+> What the page must do. How the files do it: project.md. The geometry: archon/analysis.md.
 
 ## 1. Three trees and the panel
 
@@ -18,8 +18,8 @@ The menu decides what is shown and from where. The panel holds only the paramete
 
 ## 2. Geometry
 
-- **Source**: estimate/estimate.md with its build changes (§ 14). The model copies its boxes and never re-measures.
-- **Boxes** follow the estimate (§ 2 axes, § 3 rules): an axis-aligned box `[x1, x2, y1, y2, z1, z2]` is the only solid; one shape is one box, through its doors and windows; openings are subtracted from every wall and EPS box they cross; at a crossing the load-bearing (thicker) wall runs through; a box reaching the roof is cut by the two roof planes, gable windows by lines parallel to the roof.
+- **Source**: archon/analysis.md with its build changes (§ 14). The model copies its boxes and never re-measures.
+- **Boxes** follow the analysis (§ 2 axes, § 3 rules): an axis-aligned box `[x1, x2, y1, y2, z1, z2]` is the only solid; one shape is one box, through its doors and windows; openings are subtracted from every wall and EPS box they cross; at a crossing the load-bearing (thicker) wall runs through; a box reaching the roof is cut by the two roof planes, gable windows by lines parallel to the roof.
 - **Cuts**: an element may subtract other elements or boxes (the slab without the stair void and the chimney).
 - **Floors** are split by one plane, the top of the ground floor walls (272): below is the ground floor, above is the attic with the slab. A box crossing the plane belongs to both, in two parts.
 - **No overlaps**: no two elements share volume (checked on the page).

@@ -1,7 +1,7 @@
-/* "Dom w papawerach 5 (G)" - the building as data: the boxes of estimate/estimate.md, with the as-built changes (§ 14).
+/* "Dom w papawerach 5 (G)" - the building as data: the boxes of archon/analysis.md, with the as-built changes (§ 14).
    view.html holds no numbers, names or colours of this house; it draws this file with materials.js and textures.js.
 
-   Units cm. Axes as in the estimate: x along the house (0 = garden outer face, 1320 = front outer face), y across
+   Units cm. Axes as in the analysis: x along the house (0 = garden outer face, 1320 = front outer face), y across
    (0 = left outer face, garage side; 910 = right), z up (0 = finished ground floor).
 
    b         a box [x1, x2, y1, y2, z1, z2]
@@ -27,9 +27,9 @@
              a later rule wins; anything not covered is the default finish of the kind */
 window.HOUSE = {
  "name": "Dom w papawerach 5 (G)",
- "source": "Geometria z estimate/estimate.md (rzuty archon.pl, ±2,3 cm), ze zmianami wykonawczymi.",
+ "source": "Geometria z archon/analysis.md (rzuty archon.pl, ±2,3 cm), ze zmianami wykonawczymi.",
  "notes": [
-  "Bryła według estimate.md: każdy element to prostopadłościan, otwory wycięte z ścian, które przecinają.",
+  "Bryła według analysis.md: każdy element to prostopadłościan, otwory wycięte z ścian, które przecinają.",
   "Pompa ciepła zamiast kotła gazowego: jeden komin (salon), bez szachtu wentylacyjnego i drugiego komina.",
   "Zmiany wykonawcze: wnęka prysznica w łazience parteru 100 × 90 (ściany #7, #8, #10 przesunięte), drzwi łazienki na piętrze przesunięte o 20 cm w stronę ogrodu.",
   "Wszystkie elementy to prostopadłościany; schody są wspornikowe (bez policzków), bez ścianki pod biegiem.",

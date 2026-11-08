@@ -8,8 +8,8 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 
 | File | Kind | Owns |
 |---|---|---|
-| estimate/estimate.md | text | the geometry as boxes, read from the archon drawings, and the build changes |
-| estimate/*.png | images | the archon drawings the estimate is read from |
+| archon/analysis.md | text | the geometry as boxes, read from the archon drawings, and the build changes |
+| archon/*.png | images | the archon drawings the analysis is read from |
 | house.js | data | the three trees: elements (boxes, kinds, cuts), openings, facade rules, roof, stair, site, floors with rooms; layers; views, cameras, light, walk |
 | materials.js | data | the material library and the tile products |
 | textures.js | data | texture images (floor tiles, wood decor) |
@@ -22,7 +22,7 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 ## Data flow
 
 ```
-  estimate.md  ──(by hand)──►  house.js ──┐
+  analysis.md  ──(by hand)──►  house.js ──┐
                                materials.js ──┼──► view.html   builds the model once and draws it;
                                textures.js  ──┘                3D and 2D come from the same model
 ```
@@ -33,14 +33,14 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 
 ## Model
 
-- **Elements** are the boxes of the estimate, each of a kind (footing, foundation, ground slab, block 24, block 12, EPS, ring beam, slab, ceiling, chimney). The kind gives the face material, the section colour, the checked thickness and the layer.
+- **Elements** are the boxes of the analysis, each of a kind (footing, foundation, ground slab, block 24, block 12, EPS, ring beam, slab, ceiling, chimney). The kind gives the face material, the section colour, the checked thickness and the layer.
 - **Openings** cut every wall and EPS box they cross. Frames, glass, the gate and the entrance leaf are drawn in the Okna i drzwi layer.
 - **Portal**: the block, foundation and knee walls of the long walls run on into the wings; the ring beam continues over them; EPS on the inner faces and a cap on every head.
 - **Roof**: two slopes from the pitch, eave and thickness, x −100 → 1420 over both portals; the roof windows and the chimney are cut out of it.
 - **Facade**: rules on the EPS boxes, by their outer side. Elewacja off shows the bare EPS.
 - **Stair**: floating treads and a landing, 17 risers to the attic floor.
 - **Rooms**: rectangles at the block faces. A room is tiled on its own or with another room (the walk-in wardrobes with the bedroom); tiles run on through door halves.
-- **Build changes** (as built, not archon): estimate.md § 14.
+- **Build changes** (as built, not archon): analysis.md § 14.
 
 ## Mesh (how rules.md § 4 is met)
 

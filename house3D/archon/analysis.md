@@ -1,21 +1,21 @@
-# Dom w papawerach 5 (G): geometry estimate
+# Dom w papawerach 5 (G): geometry analysis
 
 The house as the archon drawings give it, written as boxes. It stands on its own and refers to no model. All values in cm; levels may be quoted in metres (±0.00).
 
 ## 1. Sources
 
-Drawings (this folder, `house3D\estimate`):
+Drawings (this folder, `house3D\archon`):
 
 | File | What |
 |---|---|
-| `archon-rzut-parter.png` | ground floor plan |
-| `archon-rzut-poddasze.png` | attic plan |
-| `archon-przekroj.png` | section across the house |
-| `archon-sytuacja.png` | site plan: house 910 × 1320 on a 1710 × 2120 plot, 400 free on each side; roof from above |
-| `archon-elewacja-front.png` | front elevation (x = 1320) |
-| `archon-elewacja-ogrod.png` | garden elevation (x = 0) |
-| `archon-elewacja-prawa.png` | right elevation (y = 910): windows 100/130, 190/130, 250/240, 2 roof windows |
-| `archon-elewacja-lewa.png` | left elevation (y = 0): garage window 200/100, 1 roof window |
+| `rzut-parter.png` | ground floor plan |
+| `rzut-poddasze.png` | attic plan |
+| `przekroj.png` | section across the house |
+| `sytuacja.png` | site plan: house 910 × 1320 on a 1710 × 2120 plot, 400 free on each side; roof from above |
+| `elewacja-front.png` | front elevation (x = 1320) |
+| `elewacja-ogrod.png` | garden elevation (x = 0) |
+| `elewacja-prawa.png` | right elevation (y = 910): windows 100/130, 190/130, 250/240, 2 roof windows |
+| `elewacja-lewa.png` | left elevation (y = 0): garage window 200/100, 1 roof window |
 
 Related projects in `C:\dev\projects\knapiontek.github.io`: `kitchen` (kitchen design) and `bath` (both bathrooms).
 

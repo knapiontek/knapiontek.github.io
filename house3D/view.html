@@ -1115,7 +1115,7 @@ canvas.addEventListener('pointerup', e => {
 
 /* zoom toward the cursor; the rotation pivot stays in front of the camera: at the depth of the house centre from outside,
    on the surface the viewer looks at inside */
-const ZOOM_IN = 0.2, ZOOM_OUT = 0.25, NEAREST = 0.05;   // fraction of the way to the surface per wheel step; closest approach, m
+const ZOOM_IN = 0.2, ZOOM_OUT = 0.25, NEAREST = 0.05;   // fraction of the way to the surface per wheel notch; closest approach, m
 const shownChain = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
 function surfaceAt(ndc) {                  // the first drawn, uncut surface along the ray through a screen point
   ray.setFromCamera(ndc, camera);
@@ -1123,8 +1123,8 @@ function surfaceAt(ndc) {                  // the first drawn, uncut surface alo
   const hit = ray.intersectObjects(meshes, false).find(h => CUT.distanceToPoint(h.point) >= 0);
   return hit ? hit.point : null;
 }
-function seatTarget(point) {               // the target moves along the view axis to the depth of a point: the view does not jump
-  const dir = new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
+const viewAxis = () => new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
+function seatTarget(point, dir = viewAxis()) {   // the target moves along the view axis to the depth of a point: the view does not jump
   const depth = Math.max(new THREE.Vector3().subVectors(point, camera.position).dot(dir), NEAREST);
   controls.target.copy(camera.position).addScaledVector(dir, depth);
 }
@@ -1138,10 +1138,12 @@ canvas.parentElement.addEventListener('wheel', e => {   // captured before Orbit
   e.preventDefault(); e.stopPropagation();
   let p = surfaceAt(ndcOf(e));
   if (!p) p = ray.ray.at(camera.position.distanceTo(controls.target), new THREE.Vector3());
-  const k = e.deltaY < 0 ? ZOOM_IN : -ZOOM_OUT, d = camera.position.distanceTo(p);
+  const notches = Math.min(Math.abs(e.deltaY) * (e.deltaMode === 1 ? 33 : 1) / 100, 3);   // a mouse notch is 1; a touchpad sends many small ones
+  const k = e.deltaY < 0 ? 1 - Math.pow(1 - ZOOM_IN, notches) : 1 - Math.pow(1 + ZOOM_OUT, notches), d = camera.position.distanceTo(p);
   if (k > 0 && d * (1 - k) < NEAREST) return;
+  const dir = viewAxis();                 // taken before the move: the camera slides, it does not turn
   camera.position.lerp(p, k);
-  seatTarget(pivotOutside() ? HOUSE_CENTRE : p); controls.update(); redraw();
+  seatTarget(pivotOutside() ? HOUSE_CENTRE : p, dir); controls.update(); redraw();
 }, { capture: true, passive: false });
 canvas.addEventListener('pointerdown', () => {          // rotation turns about the house centre from outside, about the surface in the middle of the view inside
   if (walk.on) return;
