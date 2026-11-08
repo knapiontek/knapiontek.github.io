@@ -17,7 +17,8 @@
    frames    window and door frames; depths [from, to] are cm in from the outer face of the block, heights cm
    tiles     grout, top, mark = cm over the floor level of the grout plane, the tile faces and the room mark: they lie
              on the slab, never in its plane
-   roof      windowFrame.frame and glassDepth: [from, to] cm over the roof top, measured vertically
+   roof      thickness across the slope, as wide as a portal wing (EPS 20 + block 24 + EPS 20) so the white frame keeps
+             one width; windowFrame.frame and glassDepth: [from, to] cm over the roof top, measured vertically
    length    the printed overall length of the house (the 2D plan dimension)
    planCut   the 2D plan cut of a floor, if not the view's (the attic: through the knee walls, under the eaves)
    floors    split by one plane: everything under "split" is the ground floor, everything over it the attic
@@ -127,7 +128,7 @@ window.HOUSE = {
   "pitch": 42,
   "eave": 386.4,
   "width": 910,
-  "thickness": 64.6,
+  "thickness": 64,
   "x": [-100, 1420],
   "faces": {"top": "roofGraphite", "bottom": "plasterWhite", "ends": "plasterWhite", "eaves": "graphite"},
   "cap": "timber",

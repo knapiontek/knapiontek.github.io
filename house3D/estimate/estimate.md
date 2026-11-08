@@ -25,7 +25,7 @@ Related projects in `C:\dev\projects\knapiontek.github.io`: `kitchen` (kitchen d
 |---|---|
 | **x**, along the house | 0 = garden outer face → 1320 = front outer face |
 | **y**, across | 0 = left outer face (garage side) → 910 = right outer face (kitchen and bathroom windows) |
-| **z**, height | 0 = ±0.00 finished ground floor; 306 attic floor; 860 ridge; terrain −32 |
+| **z**, height | 0 = ±0.00 finished ground floor; 306 attic floor; 860 ridge (882 as modelled, § 14); terrain −32 |
 
 Left and right are as seen when facing the front of the house (the street side), which is also how archon names the elevations.
 
@@ -72,7 +72,7 @@ Left and right are as seen when facing the front of the house (the street side),
 
 - **Shape.** Dual pitch at 42°, with no eaves on the long sides. The ridge runs along x at y = 455.
 - **Underside.** z = 386.4 + tan 42° · d, where d is the distance from the nearer long outer face (d = y or 910 − y, up to 455).
-- **Build-up.** 64.6 measured vertically (≈ 48 perpendicular): rafters, insulation, battens, ceramic tiles. The roof top is the underside + 64.6.
+- **Build-up.** archon: 64.6 measured vertically (≈ 48 perpendicular): rafters, insulation, battens, ceramic tiles; the roof top is the underside + 64.6. Modelled 64 perpendicular (§ 14).
 - **Length.** x −100 → 1420. The roof runs on over both terraces as the portal frame (§ 8.4).
 - **Flat ceiling** at z 591 wherever the underside is higher, i.e. y 227 – 683. Above it is a loft about 1.6 m high.
 - **Roof windows, 3 × 94/140.** 94 along x and 140 along the slope (104 in plan). The plan draws ≈ 84 of that, measured in from the knee wall's inner face (the y column below); the full 104 runs from there out over the knee wall (y 782 – 886 and 24 – 128). The site plan and the elevations confirm the x positions.
@@ -298,6 +298,7 @@ The pier between the 250 and 190 windows is x 333 – 472. The `kitchen` project
 | Attic bathroom door 90/205 (#3) | x 650 – 740 | x 630 – 720 (20 toward the garden, clears the shower) |
 | Heating | gas boiler, gravity ventilation: vent shaft x 873 – 901 / y 589 – 615 (ground floor), x 832 – 901 / y 565 – 626 (attic), second stack on the roof | heat pump: one chimney (living room), no vent shaft, no second stack; the space goes to the hall (ground floor) and room 6 (attic) |
 | Diagonal wall under the stair (garage) | from (547, ≈ 271) to (642, ≈ 323) | none: the stair is floating; the garage outline keeps y 297 as the line to the stair |
+| Roof build-up (§ 6) | 64.6 vertical (≈ 48 across the slope): top at the outer wall face 451, ridge 860 | 64 across the slope (86.1 vertical), as wide as a portal wing (EPS 20 + block 24 + EPS 20), so the white frame keeps one width; same underside, so the top rises: 472.5 at the outer wall face, ridge ≈ 882, chimney ≈ 18 above it |
 | Recess soffit EPS (§ 8.3) | thickness not given (EPS 20 elsewhere) | 47 thick, z 225 – 272: its underside is at the garage door head, so the white front band is one horizontal bar over the garage and the recess |
 
 The showers are fittings and are not in this geometry; only the walls and the door are.

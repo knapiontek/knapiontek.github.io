@@ -49,7 +49,7 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 - A face loses, by exact polygon subtraction, what an opposite face of its own visibility group (same layers) covers in its plane. A part covered by another group is a contact piece: drawn, but seen only while that group is hidden. A piece narrower than the weld tolerance is no face.
 - Edges come from the topology of the pieces. A segment between two welded points is a seam (no line) when two pieces of one group lie on it in one plane, and a corner (a line) when they meet at an angle. Any other line is hidden exactly while every group that closes it is shown.
 - No two surfaces share a plane: the floor tiles and grout lie on the slab, never in its plane.
-- No slope-dependent depth offset (polygonOffset factor) anywhere: at grazing angles it pushes surfaces through walls. Only a constant minimal bias keeps edge lines in front.
+- No slope-dependent depth offset (polygonOffset factor) anywhere: at grazing angles it pushes surfaces through walls. Faces get only a constant minimal bias. Edge lines are pulled toward the eye along their view ray by a constant fraction of their distance: nothing lies between the eye and a visible edge on that ray, so inner corners stay drawn at any angle.
 - Faults are fixed at their source, never masked.
 
 ## Code style (every file)

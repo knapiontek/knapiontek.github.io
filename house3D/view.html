@@ -183,7 +183,8 @@ const TAN = Math.tan(B.roof.pitch * DEG);
 const FLOORS = B.floors, FLOOR = Object.fromEntries(FLOORS.map(f => [f.id, f]));
 const KIND = B.kinds;
 const ELEMENT = Object.fromEntries(B.elements.map(e => [e.id, e]));
-const W = B.roof.width, EAVE = B.roof.eave, RIDGE_TOP = EAVE + TAN * W / 2 + B.roof.thickness;
+const ROOF_T = B.roof.thickness / Math.cos(B.roof.pitch * DEG);   // the data gives it across the slope; the solids need it vertically
+const W = B.roof.width, EAVE = B.roof.eave, RIDGE_TOP = EAVE + TAN * W / 2 + ROOF_T;
 const INF = 1e6, EPS = 1e-6;
 const fmt = (v, d) => v.toLocaleString('pl-PL', { minimumFractionDigits: d, maximumFractionDigits: d });
 const floorOfZ = z => z < B.split ? FLOORS[0].id : FLOORS[FLOORS.length - 1].id;
@@ -312,7 +313,7 @@ for (const e of B.elements) {
 /* the roof: two slopes from the roof data, without the roof windows and its cuts */
 const ROOF_CELLS = [];
 (function () {
-  const R = B.roof, top = ROOF_UNDER.map(l => ({ a: l.a + R.thickness, s: l.s }));
+  const R = B.roof, top = ROOF_UNDER.map(l => ({ a: l.a + ROOF_T, s: l.s }));
   const halves = [solid([R.x[0], R.x[1], 0, W / 2, EAVE - 1, RIDGE_TOP + 1], [top[0]], [ROOF_UNDER[0]]),
                   solid([R.x[0], R.x[1], W / 2, W, EAVE - 1, RIDGE_TOP + 1], [top[1]], [ROOF_UNDER[1]])];
   let cells = halves;
@@ -367,7 +368,7 @@ const OPEN_CELLS = [];
     const right = (w.y[0] + w.y[1]) / 2 > W / 2, under = ROOF_UNDER[right ? 1 : 0];
     const lift = d => ({ a: under.a + d, s: under.s });
     const o = { id: 'roof:' + w.name, kind: 'roofWindow' }, Fw = B.roof.windowFrame;
-    const top = B.roof.thickness, [f1, f2] = Fw.frame, [g1, g2] = Fw.glassDepth;
+    const top = ROOF_T, [f1, f2] = Fw.frame, [g1, g2] = Fw.glassDepth;
     const outer = solid([w.x[0], w.x[1], w.y[0], w.y[1], -INF, INF], [lift(top + f2)], [lift(top + f1)]);
     const k = Fw.width * Math.cos(B.roof.pitch * DEG);
     const inner = solid([w.x[0] + Fw.width, w.x[1] - Fw.width, w.y[0] + k, w.y[1] - k, -INF, INF], [lift(top + f2 + 1)], [lift(top + f1 - 1)]);   // 1 cm past the frame: the hole goes clean through
@@ -659,6 +660,7 @@ function buildMeshes(pieces) {
    every group that closes it is shown: the cover of each contact piece and the group that continues an outside piece
    in its plane. An outside piece that nothing continues is a corner against another group: always a line. */
 const EDGE_GROUPS = [];
+const EDGE_PULL = 0.002;                  // 2 cm at 10 m: in front of the faces of its corner, behind any wall
 function buildEdges(pieces) {
   const segs = new Map();
   for (const f of pieces) {
@@ -670,6 +672,13 @@ function buildEdges(pieces) {
     }
   }
   const E = B.edges, mat = new THREE.LineBasicMaterial({ color: lin(E.color), transparent: true, opacity: E.opacity, clippingPlanes: CLIP });
+  // a line is pulled toward the eye along its view ray by a constant fraction of its distance: nothing lies between
+  // the eye and a visible edge on that ray, so inner corners stay drawn at any angle and no face is offset
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.edgePull = { value: EDGE_PULL };
+    sh.vertexShader = 'uniform float edgePull;\n' + sh.vertexShader.replace('#include <project_vertex>',
+      '#include <project_vertex>\n  mvPosition.xyz *= 1.0 - edgePull;\n  gl_Position = projectionMatrix * mvPosition;');
+  };
   const lines = new Map(), put = (layers, unless, a, b) => {
     const k = layers.join('+') + '!' + unless.map(u => u.join('+')).sort().join('/');
     if (!lines.has(k)) lines.set(k, { layers, unless, p: [] });
