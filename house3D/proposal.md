@@ -68,4 +68,4 @@ house.js says where each sub-project layer hangs (kitchen carcasses → under Ku
 1. Kuchnia and Łazienki in the same Warstwy list (as above), or only in their own panel section?
 2. Solo and presets, or plain check boxes only?
 3. Floors of the kitchen and the bathrooms: laid by the house (as now) or taken from the sub-project?
-4. Kitchen against the bathroom wall: the house plan gives 255.6 cm from the window start, the kitchen 250.2 cm. With the house walls winning and the furniture fixed, where do the 5.4 cm go: a filler panel at the wall, or the kitchen moves along the wall?
+4. Kitchen against the bathroom wall: the house gives 250.0 cm from the window start to wall #5 (analysis § 11: x 472 → 722), the kitchen 250.2 cm. With the house walls winning and the furniture fixed, where does the difference go: a filler panel at the wall, or the kitchen moves along the wall? (Check which reference point the kitchen measures from before deciding.)
