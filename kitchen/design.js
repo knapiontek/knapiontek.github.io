@@ -65,7 +65,7 @@ window.KITCHEN_DESIGN = {
   {"name": "Ekspres do kawy", "description": "Posiadany, na półce wysuwanej narożnej szafki górnej", "details": ""}
  ],
  "groups": [
-  {"group": 1, "name": "pod oknem", "backGap": 28, "columns": [3, 38, 18, 800, 18, 600, 18, 800, 18, 400, 80, 320]},
+  {"group": 1, "name": "pod oknem", "backGap": 28, "columns": [3, 38, 18, 800, 18, 600, 18, 800, 18, 600, 80, 120]},
   {"group": 2, "name": "zabudowa wysoka", "backGap": 14, "columns": [18, 560, 40, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130]},
   {"group": 3, "name": "wyspa", "backGap": 310, "columns": [3, 38, 18, 800, 18, 800, 18, 38, 3]}
  ],
