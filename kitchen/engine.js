@@ -548,10 +548,6 @@
       const topThickness = carcass.base && carcass.sink ? crossRails.depth : carcass.base && carcass.hob ? crossRails.hobFront : board;
       for (const f of carcass.members.filter(i => i.type === 'space')) {
         const atRight = f.u1 === carcass.u1, atLeft = f.u0 === carcass.u0;
-        if (atRight === atLeft) {
-          warn(`${placeOf(f)}: wypełnienie w korpusie musi być na jego końcu.`, f.index);
-          continue;
-        }
         const s0 = atRight ? Math.max(...carcass.boxes.map(b => b.u1)) : innerU0, s1 = atRight ? innerU1 : Math.min(...carcass.boxes.map(b => b.u0));
         part('insetPanel', 'Panel wpuszczany', s1 - s0, height - board - topThickness, carcassMaterial, 'carcasses',
           [s0, s1, v0 + board, v1 - topThickness, carcassFront - board, carcassFront]);

@@ -65,17 +65,17 @@ window.KITCHEN_DESIGN = {
   {"name": "Ekspres do kawy", "description": "Posiadany, na półce wysuwanej narożnej szafki górnej", "details": ""}
  ],
  "groups": [
-  {"group": 1, "name": "pod oknem", "backGap": 28, "columns": [3, 38, 18, 800, 18, 600, 18, 800, 18, 600, 80, 120]},
+  {"group": 1, "name": "pod oknem", "backGap": 28, "columns": [3, 38, 18, 800, 18, 600, 18, 800, 18, 600, 80, 120, 400]},
   {"group": 2, "name": "zabudowa wysoka", "backGap": 14, "columns": [18, 560, 40, 18, 600, 18, 600, 18, 600, 18, 250, 18, 130]},
   {"group": 3, "name": "wyspa", "backGap": 310, "columns": [3, 38, 18, 800, 18, 800, 18, 38, 3]}
  ],
  "components": [
   {"group": 1, "column": 1, "span": 1, "type": "space", "height": 870},
-  {"group": 1, "column": 1, "span": 12, "type": "worktop", "height": 38},
+  {"group": 1, "column": 1, "span": 13, "type": "worktop", "height": 38},
   {"group": 1, "column": 1, "span": 11, "type": "wallPanel", "height": 172},
   {"group": 1, "column": 2, "span": 1, "type": "endPanel", "height": 870},
   {"group": 1, "column": 3, "span": 1, "type": "strip", "height": 870},
-  {"group": 1, "column": 4, "span": 9, "type": "plinth", "height": 150},
+  {"group": 1, "column": 4, "span": 10, "type": "plinth", "height": 150},
   {"group": 1, "column": 4, "span": 1, "type": "drawer", "carcass": "K1", "height": 420, "handle": "top", "gaps": {"left": 3, "right": 3, "top": 3, "bottom": 0}},
   {"group": 1, "column": 4, "span": 1, "type": "drawer", "tags": ["hob"], "carcass": "K1", "height": 300, "handle": "top", "gaps": {"left": 3, "right": 3, "top": 3, "bottom": 0}, "note": "Electrolux CIT61443"},
   {"group": 1, "column": 5, "span": 1, "type": "strip", "height": 720},
@@ -87,6 +87,7 @@ window.KITCHEN_DESIGN = {
   {"group": 1, "column": 10, "span": 1, "type": "cabinet", "carcass": "K3", "height": 720, "handle": "top", "hinge": "right", "gaps": {"left": 3, "right": 3, "top": 3, "bottom": 0}},
   {"group": 1, "column": 11, "span": 1, "type": "frontPanel", "carcass": "K3", "height": 720},
   {"group": 1, "column": 12, "span": 1, "type": "space", "carcass": "K3", "height": 720, "note": "narożnik L, ukryty: korpus biegnie za nim, front zamyka panel wpuszczany"},
+  {"group": 1, "column": 13, "span": 1, "type": "space", "carcass": "K3L", "height": 720},
 
   {"group": 2, "column": 1, "span": 11, "type": "plinth", "height": 150, "note": "kratki pod lodówką i piekarnikiem"},
   {"group": 2, "column": 1, "span": 2, "type": "space", "height": 720, "note": "narożnik L, pod blatem"},
