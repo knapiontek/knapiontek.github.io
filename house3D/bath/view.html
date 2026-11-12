@@ -733,14 +733,17 @@ const walls = [], sides = {};
 (function houseShell() {
   const box = HOUSE_ROOM.box, onBox = f => f.n.some((c, k) => Math.abs(c) > .99 && f.poly.every(p => Math.abs(p[k] - box[2 * k]) < .5 || Math.abs(p[k] - box[2 * k + 1]) < .5));
   const objectOf = new Map(HOUSE_ROOM.objects.flatMap(o => o.cells.map(c => [c, o]))), parts = new Map();
-  for (const f of CORE.mesh.piecesOf(HOUSE_ROOM.cells)) {
-    const o = objectOf.get(f.cell), side = f.cell.side;
-    if (!parts.has(o)) parts.set(o, { points: [], batches: new Map(), skins: { wall: new CORE.mesh.Batch(), shower: new CORE.mesh.Batch() } });
-    const part = parts.get(o);
-    const mat = houseMaterial(f.material);
+  const partOf = o => parts.get(o) || parts.set(o, { points: [], batches: new Map(), skins: { wall: new CORE.mesh.Batch(), shower: new CORE.mesh.Batch() } }).get(o);
+  // each object is a closed solid of its own (faces worked out per object), so hiding one never opens another
+  for (const o of HOUSE_ROOM.objects) for (const f of CORE.mesh.piecesOf(o.cells)) {
+    const part = partOf(o), mat = houseMaterial(f.material);
     if (!part.batches.has(mat)) part.batches.set(mat, new CORE.mesh.Batch());
     part.batches.get(mat).polygon(f.poly, f.n, () => [0, 0]);
     part.points.push(...f.poly);
+  }
+  // tiles go only on faces open to the room: worked out over the whole room, so faces where two walls meet get none
+  for (const f of CORE.mesh.piecesOf(HOUSE_ROOM.cells)) {
+    const o = objectOf.get(f.cell), side = f.cell.side, part = partOf(o);
     // tiles: a wall face looking into the room or into an opening of it, not a contact face, not where the copy was trimmed
     const outward = DIRECTION[side].reduce((sum, c, k) => sum + c * f.n[k], 0) > .5;
     if (!f.cell.layers.includes('walls') || f.cover || outward || onBox(f)) continue;
@@ -749,10 +752,16 @@ const walls = [], sides = {};
     for (const P of inside) part.skins.shower.polygon(P, f.n, () => [0, 0]);
     for (const P of outside) part.skins.wall.polygon(P, f.n, () => [0, 0]);
   }
-  for (const [o, part] of parts) {
+  const houseOf = new Map();                 // object id -> its house group (a window goes into its wall's or roof's: shown and hidden with it)
+  for (const [o, part] of [...parts].sort(([a], [b]) => (a.role === 'window') - (b.role === 'window'))) {
+    if (o.role === 'window' && houseOf.has(o.host)) {
+      for (const [mat, batch] of part.batches) houseOf.get(o.host).add(batch.mesh(mat));
+      continue;
+    }
     const normal = NORMAL[o.side], layer = ROLE_LAYER[o.role];
     const group = new THREE.Group(); scene.add(group);
     const house = new THREE.Group(); house.matrixAutoUpdate = false; house.matrix.copy(HOUSE_TO_ROOM); group.add(house);
+    houseOf.set(o.id, house);
     for (const [mat, batch] of part.batches) house.add(batch.mesh(mat));
     for (const [surface, batch] of Object.entries(part.skins)) if (batch.p.length) {
       const mesh = tiled(surface, batch.mesh(tileMaterials[surface]).geometry, house);

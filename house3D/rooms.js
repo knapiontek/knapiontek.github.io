@@ -81,6 +81,13 @@ function roomsFor(HOUSE, MODEL, href) {
       const o = objects.get(id); o.cells.push(c); o.sides[c.side] = (o.sides[c.side] || 0) + 1;
     }
     for (const o of objects.values()) o.side = Object.entries(o.sides).sort((p, q) => q[1] - p[1])[0][0];
+    /* a window belongs to the wall (or roof) it sits in: it is shown and hidden with it, never on its own */
+    const boxOf = o => { const b = o.cells.map(c => plan(c.S)); return [Math.min(...b.map(r => r[0])), Math.max(...b.map(r => r[1])), Math.min(...b.map(r => r[2])), Math.max(...b.map(r => r[3]))]; };
+    for (const w of objects.values()) if (w.role === 'window') {
+      const wb = boxOf(w), host = [...objects.values()].find(o => (o.role === 'wall' || o.role === 'ceiling') && o.side === w.side &&
+        wb[0] >= boxOf(o)[0] - TOL && wb[1] <= boxOf(o)[1] + TOL && wb[2] >= boxOf(o)[2] - TOL && wb[3] <= boxOf(o)[3] + TOL);
+      w.host = host ? host.id : null;
+    }
     out.push({
       floor: floor.id, floorName: floor.name, room: room.id, number: room.numbers ? room.numbers[0] : null, name: room.name,
       level: floor.level, top: floor.top ?? null, inside: L.inside, box: L.box, cells, objects: [...objects.values()],

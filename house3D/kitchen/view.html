@@ -1475,20 +1475,28 @@ const roomCentre = (() => {   // the middle of the floor area, in the scene
   return toScene((Math.min(...x) + Math.max(...x)) / 2, (Math.min(...y) + Math.max(...y)) / 2, HOUSE_ROOM.level);
 })();
 (function houseRoom() {
-  const objectOf = new Map(HOUSE_ROOM.objects.flatMap(o => o.cells.map(c => [c, o])));
+  // each object is a closed solid of its own (faces worked out per object), so hiding one never opens another
   const parts = new Map();                 // object -> { faces, batches by material }
-  for (const f of CORE.mesh.piecesOf(HOUSE_ROOM.cells)) {
-    const o = objectOf.get(f.cell), layer = ROLE_LAYER[o.role];
+  for (const o of HOUSE_ROOM.objects) for (const f of CORE.mesh.piecesOf(o.cells)) {
+    const layer = ROLE_LAYER[o.role];
     if (!parts.has(o)) parts.set(o, { layer, side: o.side, points: [], batches: new Map() });
     const part = parts.get(o), mat = faceMaterial(f, layer);
     if (!part.batches.has(mat)) part.batches.set(mat, new CORE.mesh.Batch());
     part.batches.get(mat).polygon(f.poly, f.n, v => f.uv(v).map(c => c / 1000));   // uv in metres, like every texture here
     part.points.push(...f.poly);
   }
-  for (const { layer, side, points, batches } of parts.values()) {
-    const mid = toScene(...[0, 1, 2].map(i => points.reduce((sum, p) => sum + p[i], 0) / points.length));
-    const g = wallGroup(SIDE_NORMAL[side], mid, roomLayer[layer]);
-    g.rotation.x = -Math.PI / 2; g.scale.setScalar(0.001);   // house mm, z up -> scene metres, y up
+  const groupOf = new Map();                // object id -> its group (a window goes into its wall's: shown and hidden with it)
+  const ordered = [...parts.entries()].sort(([a], [b]) => (a.role === 'window') - (b.role === 'window'));
+  for (const [o, { layer, side, points, batches }] of ordered) {
+    let g;
+    if (o.role === 'window' && groupOf.has(o.host)) {
+      g = new THREE.Group(); g.name = 'window'; groupOf.get(o.host).add(g); (groupsOfLayer.window || (groupsOfLayer.window = [])).push(g);   // still switched by the Okno layer
+    } else {
+      const mid = toScene(...[0, 1, 2].map(i => points.reduce((sum, p) => sum + p[i], 0) / points.length));
+      g = wallGroup(SIDE_NORMAL[side], mid, roomLayer[layer]);
+      g.rotation.x = -Math.PI / 2; g.scale.setScalar(0.001);   // house mm, z up -> scene metres, y up
+      groupOf.set(o.id, g);
+    }
     for (const [mat, batch] of batches) {
       const m = batch.mesh(mat);
       if (layer === 'floor') m.castShadow = false;
