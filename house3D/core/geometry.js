@@ -101,6 +101,27 @@ function overlaps(cells, minVolume = 1) {
   return out;
 }
 
+/* ================= RECTANGLES [x1, x2, y1, y2] ================= */
+const rectArea = q => (q[1] - q[0]) * (q[3] - q[2]);
+const rectMinus = (a, b) => {              // rect a minus rect b, as up to four rects [x1, x2, y1, y2]
+  const x1 = Math.max(a[0], b[0]), x2 = Math.min(a[1], b[1]), y1 = Math.max(a[2], b[2]), y2 = Math.min(a[3], b[3]);
+  if (x2 - x1 < EPS || y2 - y1 < EPS) return [a];
+  return [[a[0], x1, a[2], a[3]], [x2, a[1], a[2], a[3]], [x1, x2, a[2], y1], [x1, x2, y2, a[3]]].filter(q => q[1] - q[0] > EPS && q[3] - q[2] > EPS);
+};
+function mergeRects(rects) {               // rects sharing a whole side become one: a patch is reported once
+  const near = (a, b) => Math.abs(a - b) < EPS;
+  for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
+    const a = rects[i], b = rects[j];
+    const m = [0, 1].map(k => { const o = 1 - k;   // joined along axis k: same span across, touching along
+      return near(a[2 * o], b[2 * o]) && near(a[2 * o + 1], b[2 * o + 1]) && (near(a[2 * k + 1], b[2 * k]) || near(b[2 * k + 1], a[2 * k])) ? k : null; }).find(k => k !== null);
+    if (m === undefined) continue;
+    a[2 * m] = Math.min(a[2 * m], b[2 * m]); a[2 * m + 1] = Math.max(a[2 * m + 1], b[2 * m + 1]);
+    rects.splice(j, 1); return mergeRects(rects);
+  }
+  return rects;
+}
+
 CORE.geometry = { DEG, INF, EPS, SOLID_TOL, area2, ccw, rect2, clipHalf, leftOf, rightOf, edgesOf, solidPoly, perimeter, intersect2, minus2,
-  under, prism, emptyPrism, zRange, centreZ, prismIntersect, prismMinus, splitZ, sectionAt, cutBy, volume, subtractAll, overlaps };
+  under, prism, emptyPrism, zRange, centreZ, prismIntersect, prismMinus, splitZ, sectionAt, cutBy, volume, subtractAll, overlaps,
+  rectArea, rectMinus, mergeRects };
 })(window.CORE = window.CORE || {});

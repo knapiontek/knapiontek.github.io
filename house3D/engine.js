@@ -1,5 +1,5 @@
 /* engine.js: house.js turned into solids (code, no data: it runs on house.js every time). No THREE, no DOM:
-   view.html draws these solids, test.html checks them.
+   view.html draws these solids, test.js checks them.
    Units are cm in house axes (x along, y across, z up). Needs core/geometry.js. */
 (function (root) {
 'use strict';
@@ -155,9 +155,10 @@ const SIDE = { '-x': { axis: 0, sign: -1 }, '+x': { axis: 0, sign: 1 }, '-y': { 
 })();
 
 const SOLIDS = CELLS.concat(FIXTURES, STAIR_CELLS);    // what a cut caps and what the walk bumps into
+const voidsAt = level => GEO.voids.flatMap(v => v.boxes).filter(b => b[4] <= level && b[5] >= level);   // the void boxes open at a level
 
 return { ROOF, TAN, WIDTH, ROOF_DEPTH, RIDGE_TOP, ROOF_UNDER, line, floorOfZ, SIDE,
-  CELLS, FIXTURES, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS };
+  CELLS, FIXTURES, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS, voidsAt };
 }
 
 root.HouseEngine = { build: buildHouse };

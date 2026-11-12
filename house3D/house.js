@@ -1,7 +1,7 @@
 /* "Dom w papawerach 5 (G)": the house as data, in three trees (rules.md § 1).
    geometry  what the house is made of: the boxes of archon/analysis.md with its build changes (§ 14)
    layers    what can be switched on and off
-   views     how the house is looked at: 3D (cameras, light, walk) and the 2D plan
+   views     how the house is looked at: 3D (cameras, light, walk), the 2D plan and Problemy (the checks)
    view.html holds no number, name or colour of this house; it draws this file with materials.js and textures.js.
 
    Units cm. Axes of the analysis (§ 2): x along the house (0 garden outer face, 1320 front outer face), y across
@@ -326,7 +326,7 @@ window.HOUSE = {
    "name": "3D",
    "menu": ["ground", "attic", "roof"],
    "layers": ["foundation", "walls", "slabs", "insulation", "openings", "stair", "floors", "site", "edges"],
-   "panels": ["cut", "light", "layers", "rooms", "checks", "notes"],
+   "panels": ["cut", "light", "layers", "rooms", "notes"],
    "cut": {"attic": 150},
    "cutFrom": 50,
    "cutStep": 5,
@@ -368,7 +368,12 @@ window.HOUSE = {
    "name": "2D",
    "plan": true,
    "cut": {"ground": 150, "attic": 80},
-   "panels": ["plan", "checks", "notes"]
+   "panels": ["plan", "notes"]
+  },
+  "issues": {
+   "name": "Problemy",
+   "issues": true,
+   "panels": ["notes"]
   }
  }
 };

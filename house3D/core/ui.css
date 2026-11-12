@@ -50,6 +50,8 @@ button{font:inherit;color:inherit}
 .pad [data-k=ArrowUp]{grid-column:2;grid-row:1}.pad [data-k=ArrowLeft]{grid-column:1;grid-row:2}.pad [data-k=ArrowDown]{grid-column:2;grid-row:2}.pad [data-k=ArrowRight]{grid-column:3;grid-row:2}
 #plan2d{position:absolute;inset:0;z-index:4;background:#fff;display:flex;flex-direction:column;padding-top:56px}
 #sheet{flex:1;min-height:0;overflow:auto;padding:12px}
+#issues{position:absolute;inset:0;z-index:4;background:var(--panel);overflow:auto;padding:64px 20px 20px}
+#issues .check ul{font-family:var(--f-mono);font-size:11.5px}
 #sheet svg{display:block;margin:0 auto;height:calc(100% * var(--zoom,1));width:auto;max-width:none}
 
 /* panel */

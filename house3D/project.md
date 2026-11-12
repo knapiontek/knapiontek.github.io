@@ -14,8 +14,8 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 | materials.js | data | the material library (with the 2D plan fills) and the tile products |
 | textures.js | data | texture images (floor tiles, wood decor) |
 | engine.js | code | house.js turned into solids: cuts, openings, floor split, facade, roof, frames, stair, site |
-| view.html | page | the views, layers, cut, tile layouts and counts, 2D plan, walk, checks |
-| test.html, test.js | page | the tests of the solids (overlaps) |
+| view.html | page | the views (3D, 2D, Problemy), layers, cut, tile layouts and counts, 2D plan, walk |
+| test.js | code | the checks of the solids, shown in Problemy |
 | core/ | code | shared 3D code, its own project |
 | rules.md | text | what the page must do |
 | project.md | text | this description |
@@ -26,7 +26,7 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 
 ```
   analysis.md ──(by hand)──► house.js ──► engine.js ──► solids ──┬──► view.html   draws them (with materials.js, textures.js)
-                                                                 └──► test.html   checks them
+                                                                 └──► test.js     checks them; view.html shows the result in Problemy
 ```
 
 - One model for every view: a view only shows layers and cuts it.

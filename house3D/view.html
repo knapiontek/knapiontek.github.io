@@ -28,6 +28,7 @@
     </div>
     <div class="dock" id="dock" aria-label="Widoki kamery"></div>
     <div id="plan2d" hidden aria-label="Rzut 2D"><div id="sheet"></div></div>
+    <div id="issues" hidden aria-label="Problemy"><div id="checks"></div></div>
     <div class="pad" id="pad" aria-label="Sterowanie spacerem" hidden>
       <button data-k="ArrowUp" aria-label="Do przodu">▲</button>
       <button data-k="ArrowLeft" aria-label="Obrót w lewo">◀</button>
@@ -58,7 +59,6 @@
     </section>
     <section data-panel="layers"><h2>Warstwy</h2><div class="layers" id="layers"></div></section>
     <section data-panel="rooms"><h2>Pomieszczenia</h2><table id="rooms"></table></section>
-    <section data-panel="checks"><h2>Sprawdzenie</h2><div id="checks"></div></section>
     <section data-panel="notes"><h2>Uwagi</h2><div class="note" id="notes"></div></section>
   </aside>
 </div>
@@ -74,6 +74,7 @@
 <script src="core/scene.js"></script>
 <script src="core/ui.js"></script>
 <script src="engine.js"></script>
+<script src="test.js"></script>
 <script>
 (function () {
 'use strict';
@@ -82,20 +83,21 @@
    Units are cm in house axes (x along, y across, z up) until the scene, which is in metres with y up.
    What is not about this house (geometry, mesh, scene, panel) is in core/. */
 
-const { DEG, INF, EPS, zRange, sectionAt, cutBy, overlaps } = CORE.geometry;
+const { DEG, INF, EPS, zRange, sectionAt, cutBy, rectArea } = CORE.geometry;
 const { Batch, piecesOf } = CORE.mesh;
 const { $, fmt, byId, el, option } = CORE.ui;
 
 const HOUSE = window.HOUSE, GEO = HOUSE.geometry, MAT = window.HOUSE_MATERIALS, TEX = window.HOUSE_TEXTURES;
 const VIEWS = HOUSE.views, VIEW_IDS = Object.keys(VIEWS);
 const VIEW_3D = Object.values(VIEWS).find(v => v.menu), VIEW_2D = Object.values(VIEWS).find(v => v.plan);
-const KIND = GEO.kinds, OPENING_KIND = GEO.openingKinds, PRODUCTS = MAT.products;
+const OPENING_KIND = GEO.openingKinds, PRODUCTS = MAT.products;
 const FLOORS = GEO.floors, FLOOR = Object.fromEntries(FLOORS.map(f => [f.id, f]));
 const TOP_FLOOR = FLOORS[FLOORS.length - 1];
 
 /* ================= 1-2. SOLIDS (engine.js) ================= */
 const LAYER = CORE.ui.layerTree(HOUSE.layers);   // id -> {name, parent}
-const { ROOF, TAN, WIDTH, RIDGE_TOP, floorOfZ, SIDE, CELLS, FIXTURES, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS } = HouseEngine.build(HOUSE);
+const MODEL = HouseEngine.build(HOUSE);
+const { ROOF, TAN, WIDTH, RIDGE_TOP, floorOfZ, SIDE, CELLS, FIXTURES, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS, voidsAt } = MODEL;
 
 /* ================= 3. SCENE ================= */
 const canvas = $('gl'), stage = $('stage');
@@ -145,7 +147,6 @@ V.addCaps();
 const TILES = GEO.tiles;
 const ROOMS = FLOORS.flatMap(f => f.rooms.map(r => Object.assign({ floor: f.id }, r))), ROOM = byId(ROOMS);
 const layoutOf = r => r.tiles ? r.id : r.tilesWith || null;
-const rectArea = q => (q[1] - q[0]) * (q[3] - q[2]);
 const roomArea = r => r.rects.reduce((s, q) => s + rectArea(q), 0) / 1e4;
 const roomName = r => (r.numbers ? r.numbers.join(', ') + '. ' : '') + r.name;
 const PATTERNS = { grid: ['Prosto (siatka)', 0], half: ['Przesunięcie 1/2', 1 / 2], third: ['Przesunięcie 1/3', 1 / 3], quarter: ['Przesunięcie 1/4', 1 / 4], random: ['Losowo', null] };
@@ -429,9 +430,10 @@ function panels() {
 function refresh() { modeToggle(); contextMenu(); cameraDock(); layersPanel(); cutPanel(); lightPanel(); panels(); roomsPanel(); applyView(); }
 function setMode(m) {
   state.mode = m; save();
-  const plan = !!view().plan;
-  $('plan2d').hidden = !plan; canvas.hidden = plan;
-  if (plan) { V.stopWalk(); drawPlan(); }
+  const plan = !!view().plan, issues = !!view().issues;
+  $('plan2d').hidden = !plan; $('issues').hidden = !issues; canvas.hidden = plan || issues;
+  if (plan || issues) V.stopWalk();
+  if (plan) drawPlan();
   refresh();
 }
 
@@ -451,7 +453,6 @@ V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, ground: ALL_CELLS.filter(c 
    Both floors side by side, garden at the top: plan x = house y, plan y = house x. */
 const planCut = F => VIEW_2D.cut[F.id];
 const planFill = key => { const d = MAT.materials[key]; return d.plan?.hatch ? `url(#hatch-${key})` : d.plan || d.color; };
-const voidsAt = level => GEO.voids.flatMap(v => v.boxes).filter(b => b[4] <= level && b[5] >= level);
 function planSvg() {
   const gap = 420, ox = F => FLOORS.indexOf(F) * (WIDTH + gap), top = ROOF.x[0] - 120, bottom = ROOF.x[1] + 120;
   const hatches = Object.entries(MAT.materials).filter(([, d]) => d.plan?.hatch).map(([k, d]) =>
@@ -509,45 +510,8 @@ $('zoomIn').onclick = () => { state.zoom = Math.min(4, state.zoom * 1.25); save(
 $('zoomOut').onclick = () => { state.zoom = Math.max(0.5, state.zoom / 1.25); save(); drawPlan(); };
 $('planSvg').onclick = () => { const a = el('a', { href: URL.createObjectURL(new Blob([planSvg()], { type: 'image/svg+xml' })), download: 'rzut.svg' }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
 
-/* ================= 11. CHECKS ================= */
-const rectMinus = (a, b) => {              // rect a minus rect b, as up to four rects [x1, x2, y1, y2]
-  const x1 = Math.max(a[0], b[0]), x2 = Math.min(a[1], b[1]), y1 = Math.max(a[2], b[2]), y2 = Math.min(a[3], b[3]);
-  if (x2 - x1 < EPS || y2 - y1 < EPS) return [a];
-  return [[a[0], x1, a[2], a[3]], [x2, a[1], a[2], a[3]], [x1, x2, a[2], y1], [x1, x2, y2, a[3]]].filter(q => q[1] - q[0] > EPS && q[3] - q[2] > EPS);
-};
-function mergeRects(rects) {               // rects sharing a whole side become one: a patch is reported once
-  const near = (a, b) => Math.abs(a - b) < EPS;
-  for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
-    const a = rects[i], b = rects[j];
-    const m = [0, 1].map(k => { const o = 1 - k;   // joined along axis k: same span across, touching along
-      return near(a[2 * o], b[2 * o]) && near(a[2 * o + 1], b[2 * o + 1]) && (near(a[2 * k + 1], b[2 * k]) || near(b[2 * k + 1], a[2 * k])) ? k : null; }).find(k => k !== null);
-    if (m === undefined) continue;
-    a[2 * m] = Math.min(a[2 * m], b[2 * m]); a[2 * m + 1] = Math.max(a[2 * m + 1], b[2 * m + 1]);
-    rects.splice(j, 1); return mergeRects(rects);
-  }
-  return rects;
-}
-const CHECKS = (function () {
-  const thickness = GEO.elements.filter(e => KIND[e.kind].thickness).flatMap(e => {
-    const d = Math.min(e.b[1] - e.b[0], e.b[3] - e.b[2], e.b[5] - e.b[4]), t = KIND[e.kind].thickness;
-    return Math.abs(d - t) > 0.05 ? [`${e.id}: ${fmt(d, 1)} zamiast ${t} (${KIND[e.kind].name})`] : [];
-  });
-  const solids = CELLS.concat(STAIR_CELLS, ROOF_CELLS);
-  const overlapping = [...new Set(overlaps(solids).map(o => [o.a.element, o.b.element].sort().join(' × ')))];
-  const free = FLOORS.flatMap(F => {        // what is left of the floor once rooms, walls and voids are taken away
-    const h = F.level + 100;
-    const taken = F.rooms.concat(F.other).flatMap(r => r.rects)
-      .concat(GEO.elements.filter(e => e.b[4] <= h && e.b[5] >= h).map(e => e.b))
-      .concat(voidsAt(F.level));
-    const left = taken.reduce((rest, b) => rest.flatMap(a => rectMinus(a, b)), F.inside.map(q => q.slice(0, 4)));
-    return mergeRects(left).filter(q => rectArea(q) > 1).map(q => `${F.name}: ${fmt(rectArea(q) / 1e4, 2)} m², x ${fmt(q[0], 0)}–${fmt(q[1], 0)}, y ${fmt(q[2], 0)}–${fmt(q[3], 0)}`);
-  });
-  return [
-    { name: 'Grubości według rodzaju', items: thickness },
-    { name: 'Elementy nie nachodzą na siebie', items: overlapping },
-    { name: 'Posadzka bez pomieszczenia', items: free }
-  ];
-})();
+/* ================= 11. CHECKS (test.js) ================= */
+const CHECKS = HouseTests.check(HOUSE, MODEL);
 $('checks').innerHTML = CORE.ui.checksHtml(CHECKS);
 
 /* ================= 12. START ================= */
