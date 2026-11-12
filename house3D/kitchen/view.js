@@ -5,8 +5,7 @@
                    stands free; x, y = the point its anchor names (start (default), end, centre or {column}: the end of
                    that column) on the wall line of the group (an island: the line of its carcass backs);
                    against {group}: the anchor lies on the front plane of that group (an L corner), instead of x or y
-     room          floorJoint: the grout joint width of the floor tiles; wallColor: the plasterboard and the ceiling finish;
-                   layers: which page layer each house layer of the copied room goes to
+     room          floorJoint: the grout joint width of the floor tiles; wallColor: the plasterboard and the ceiling finish
      installation  how the sink, its trap and the hood are fitted here
      finishes      extra finishes for the Project tab, drawn with a material of the view
      hardware      sizes for the drawing only (no effect on the cost); open: how far doors and drawers open
@@ -20,7 +19,7 @@ window.KITCHEN_VIEW = {
   "2": {"x": 7220, "y": 8660, "faces": "-x"},
   "3": {"x": 4768, "y": 6452, "faces": "+y", "anchor": "centre"}
  },
- "room": {"floorJoint": 2, "wallColor": "#f2f1ee", "layers": {"walls": "walls", "slabs": "ceiling", "foundation": "floor", "openings": "window"}},
+ "room": {"floorJoint": 2, "wallColor": "#f2f1ee"},
  "installation": {
   "sink": {"tapFromBack": 45, "trapTop": 575, "wallOutlet": 470},
   "hood": {"bottom": 1500}

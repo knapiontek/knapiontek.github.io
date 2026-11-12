@@ -625,7 +625,8 @@ const LAYERS = [
   { label: 'Blat', layers: { worktops: 'Blaty', endPanels: 'Panele końcowe', wallPanel: 'Panel ścienny' } },
   { label: 'AGD', layers: { sink: 'Zlew, bateria', trap: 'Syfon', hob: 'Płyta grzewcza', hood: 'Okap', oven: 'Piekarnik', microwave: 'Mikrofalówka',
     coffee: 'Ekspres', fridge: 'Lodówka', dishwasher: 'Zmywarka' } },
-  { label: 'Pomieszczenie', layers: { walls: 'Ściany', window: 'Okno', floor: 'Podłoga', ceiling: 'Sufit', lamps: 'Lampy wiszące' } }
+  { label: 'Zabudowa', layers: { plasterboard: 'Zabudowa GK' } },
+  { label: 'Pomieszczenie (z domu)', layers: { walls: 'Ściany', window: 'Okno', floor: 'Podłoga', ceiling: 'Sufit', lamps: 'Lampy wiszące' } }
 ];
 const LAYER_IDS = LAYERS.flatMap(group => Object.keys(group.layers));
 const groupsOfLayer = {};
@@ -965,7 +966,7 @@ function buildGroup(group) {
       const wall = model.groups[group].wall, m = groupBox(roomLayer.wallPanel, group, u0, u1, v0, v1, wall, wall + wallPanelThickness, wallPanelMaterial);
       if (m) m.userData.grain = 'x';
     } else if (type === 'plasterboard') { // plasterboard box; a space is not drawn
-      groupBox(roomLayer.walls, group, u0, u1, v0, v1, model.groups[group].wall, model.groups[group].wall + settings.plasterboard.depth, MAT.wall);
+      groupBox(roomLayer.plasterboard, group, u0, u1, v0, v1, model.groups[group].wall, model.groups[group].wall + settings.plasterboard.depth, MAT.wall);
     } else if (type === 'oven' || type === 'microwave') {
       builtInAppliance(group, item, type);
     }
@@ -1454,7 +1455,8 @@ function wallGroup(normal, mid, layer) {
 }
 /* ---------- the room: the house's own walls, slab, floor and window (../rooms.js), drawn as they are ----------
    Its solids are in mm and house axes; a group turns them into the scene (x, z up -> y, y -> -z) and metres. Each side of the
-   room is a wall group that hides while the camera is behind it. The top of the floor slab takes the kitchen floor finish,
+   room (each wall, the floor, the ceiling, each window: rooms.js objects) is one object that hides while the camera is
+   behind it. The top of the floor slab takes the kitchen floor finish,
    the underside of the slab the ceiling finish; every other face keeps its house material (../materials.js). */
 const ceilingMaterial = standard({ color: linear(room.wallColor), roughness: 0.95, emissive: linear(0x4a4844) });
 const HOUSE_MAT = window.HOUSE_MATERIALS.materials, houseMaterials = {};
@@ -1466,19 +1468,19 @@ function houseMaterial(key) {
 }
 const SIDE_NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 0, -1], '-y': [0, 0, 1], '+z': [0, 1, 0], '-z': [0, -1, 0] };   // in the scene
 const toScene = (x, y, z) => [x / 1000, z / 1000, -y / 1000];
-const pageLayerOf = cell => room.layers[cell.layers.find(l => room.layers[l])];
+const ROLE_LAYER = { wall: 'walls', floor: 'floor', ceiling: 'ceiling', window: 'window' };   // object of the room -> page layer
 const faceMaterial = (f, layer) => layer === 'floor' && f.n[2] > 0.5 ? MAT.floor : layer === 'ceiling' && f.n[2] < -0.5 ? ceilingMaterial : houseMaterial(f.material);
 const roomCentre = (() => {   // the middle of the floor area, in the scene
   const r = HOUSE_ROOM.inside, x = r.flatMap(q => [q[0], q[1]]), y = r.flatMap(q => [q[2], q[3]]);
   return toScene((Math.min(...x) + Math.max(...x)) / 2, (Math.min(...y) + Math.max(...y)) / 2, HOUSE_ROOM.level);
 })();
 (function houseRoom() {
-  const parts = new Map();                 // page layer | side -> { faces, batches by material }
+  const objectOf = new Map(HOUSE_ROOM.objects.flatMap(o => o.cells.map(c => [c, o])));
+  const parts = new Map();                 // object -> { faces, batches by material }
   for (const f of CORE.mesh.piecesOf(HOUSE_ROOM.cells)) {
-    const layer = pageLayerOf(f.cell); if (!layer) continue;
-    const k = layer + '|' + f.cell.side;
-    if (!parts.has(k)) parts.set(k, { layer, side: f.cell.side, points: [], batches: new Map() });
-    const part = parts.get(k), mat = faceMaterial(f, layer);
+    const o = objectOf.get(f.cell), layer = ROLE_LAYER[o.role];
+    if (!parts.has(o)) parts.set(o, { layer, side: o.side, points: [], batches: new Map() });
+    const part = parts.get(o), mat = faceMaterial(f, layer);
     if (!part.batches.has(mat)) part.batches.set(mat, new CORE.mesh.Batch());
     part.batches.get(mat).polygon(f.poly, f.n, v => f.uv(v).map(c => c / 1000));   // uv in metres, like every texture here
     part.points.push(...f.poly);
@@ -1492,16 +1494,6 @@ const roomCentre = (() => {   // the middle of the floor area, in the scene
       if (layer === 'floor') m.castShadow = false;
       g.add(m);
     }
-  }
-  // the view outside every glazed opening, beyond its outer face
-  const KINDS = window.HOUSE.geometry.openingKinds;
-  for (const o of HOUSE_ROOM.openings.filter(o => KINDS[o.kind].glazed && o.outer)) {
-    const b = o.b.slice(), axis = { x: 0, y: 1 }[o.outer[1]], out = o.outer[0] === '+' ? 1 : -1;
-    const face = b[2 * axis + (out > 0 ? 1 : 0)] + out * 2400;
-    b[2 * axis] = face; b[2 * axis + 1] = face + 10;
-    for (const k of [0, 1, 2]) if (k !== axis) { b[2 * k] -= 100; b[2 * k + 1] += 100; }   // a little wider than the opening
-    const g = wallGroup(SIDE_NORMAL[o.outer], toScene((o.b[0] + o.b[1]) / 2, (o.b[2] + o.b[3]) / 2, (o.b[4] + o.b[5]) / 2), roomLayer.window);
-    roomBox(g, b[0], b[1], b[4], b[5], -b[3], -b[2], MAT.sky, true);
   }
 })();
 

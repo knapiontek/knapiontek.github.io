@@ -310,7 +310,7 @@ window.HOUSE = {
    }
   ],
 
-  "copy": {"kinds": ["groundSlab", "block240", "block120", "chimney", "slab", "ringBeam", "ceiling"], "fixtures": true, "roof": true},
+  "copy": {"kinds": ["groundSlab", "foundation", "chimneyFoundation", "block240", "block120", "chimney", "slab", "ringBeam", "ceiling"], "fixtures": true, "roof": true},
 
   "tiles": {"reserve": 0.1, "grout": 2, "top": 3, "mark": 5, "layers": ["floors"], "small": ["cuts"]}
  },
