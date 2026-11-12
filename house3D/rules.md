@@ -40,10 +40,8 @@ The menu decides what is shown and from where. The panel holds only the paramete
 
 ## 4. Mesh
 
-- The model has one list of 3D points. Every drawn point (solids, frames, stair, site, roof, section caps, tiles, marks, edges) is welded: a computed point within 0.005 cm of a listed point is replaced by it.
-- Faces take the listed points lying on their edges: no T-junctions, no cracks.
+- Follows core: welded points, no T-junctions, nothing hidden to cover a fault.
 - Faces between cells of one element are not drawn.
-- Nothing is enlarged or hidden to cover a fault.
 
 ## 5. Menu
 
@@ -70,6 +68,6 @@ The menu decides what is shown and from where. The panel holds only the paramete
 ## 8. Checks (on the page)
 
 - Element thickness matches its kind.
-- No two elements share volume.
+- No two solids share volume: elements, frames, glass, leaves, roof, stair, site (test.html).
 - Every floor area inside the walls is a room, a wall, a void or named; what is left is reported as exact rectangles.
 - Tile layouts: cut pieces smaller than the product's smallest cut are shown red and counted.

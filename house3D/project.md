@@ -13,7 +13,10 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 | house.js | data | the three trees: geometry (elements, kinds, voids, openings and their kinds, facade rules, roof, stair, site, floors with rooms, tile heights), layers, views (menu, cuts, cameras, light, walk, edges) |
 | materials.js | data | the material library (with the 2D plan fills) and the tile products |
 | textures.js | data | texture images (floor tiles, wood decor) |
+| engine.js | code | house.js turned into solids: cuts, openings, floor split, facade, roof, frames, stair, site |
 | view.html | page | the views, layers, cut, tile layouts and counts, 2D plan, walk, checks |
+| test.html, test.js | page | the tests of the solids (overlaps) |
+| core/ | code | shared 3D code, its own project |
 | rules.md | text | what the page must do |
 | project.md | text | this description |
 | proposal.md | text | a proposal for the kitchen, bath and layers tree (not implemented) |
@@ -22,14 +25,13 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 ## Data flow
 
 ```
-  analysis.md  ──(by hand)──►  house.js ──┐
-                               materials.js ──┼──► view.html   builds the model once and draws it;
-                               textures.js  ──┘                3D and 2D come from the same model
+  analysis.md ──(by hand)──► house.js ──► engine.js ──► solids ──┬──► view.html   draws them (with materials.js, textures.js)
+                                                                 └──► test.html   checks them
 ```
 
 - One model for every view: a view only shows layers and cuts it.
 - view.html writes nothing back. The viewer's choices (tiles, offsets, layers, sun, cut) stay in the browser.
-- view.html does not know this house: no numbers, names, ids, products or colours of it. What differs between kinds, openings, layers or views is a flag in the data, never a test in the code.
+- engine.js and view.html do not know this house: no numbers, names, ids, products or colours of it. What differs between kinds, openings, layers or views is a flag in the data, never a test in the code.
 
 ## Model
 
@@ -44,15 +46,10 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 - **Rooms**: rectangles at the block faces. A room is tiled on its own or with another room (the walk-in wardrobes with the bedroom); tiles run on through the halves of every passage.
 - **Build changes** (as built, not archon): analysis.md § 14.
 
-## Mesh (how rules.md § 4 is met)
+## Mesh
 
-- Computed floats are never placed side by side: two faces that meet use the very same welded point.
-- No heuristics, no sampling: faces, pieces and edges are computed exactly on the welded points.
-- A face loses, by exact polygon subtraction, what an opposite face of its own visibility group (same layers) covers in its plane. A part covered by another group is a contact piece: drawn, but seen only while that group is hidden. A piece narrower than the weld tolerance is no face.
-- Edges come from the topology of the pieces. A segment between two welded points is a seam (no line) when two pieces of one group lie on it in one plane, and a corner (a line) when they meet at an angle. Any other line is hidden exactly while every group that closes it is shown.
-- No two surfaces share a plane: the floor tiles and grout lie on the slab, never in its plane; a section cap lies a constant 0.05 cm under the cut.
-- No slope-dependent depth offset (polygonOffset factor) anywhere: at grazing angles it pushes surfaces through walls. Faces get only a constant minimal bias. Edge lines are pulled toward the eye along their view ray by a constant fraction of their distance: nothing lies between the eye and a visible edge on that ray, so inner corners stay drawn at any angle.
-- Faults are fixed at their source, never masked.
+- Drawn by core.
+- The floor tiles and grout lie on the slab, never in its plane.
 
 ## Code style (every file)
 

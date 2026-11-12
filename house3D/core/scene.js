@@ -1,5 +1,5 @@
 /* core/scene.js: renderer, materials, meshes and edges of pieces, section caps, light, camera, navigation, walk, loop.
-   Knows no house and no kitchen: the page hands it a material library, textures, the light, the edges and the body box.
+   Knows no project: the page hands it a material library, textures, the light, the edges and the body box.
    The model is built in cm (x along, y across, z up) and turned into the scene's metres with y up.
    Needs core/geometry.js, core/mesh.js, THREE and OrbitControls. */
 (function (CORE) {

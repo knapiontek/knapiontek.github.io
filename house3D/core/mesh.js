@@ -1,4 +1,4 @@
-/* core/mesh.js: welded points, faces of cells, visible pieces, conforming polygons. Knows no house and no kitchen.
+/* core/mesh.js: welded points, faces of cells, visible pieces, conforming polygons. Knows no project.
    A cell is {S, element, material, layers, edges, ...}; faceMaterial(n), if a cell has it, gives the material of a face by
    its normal. Needs core/geometry.js and THREE. */
 (function (CORE) {

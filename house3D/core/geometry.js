@@ -1,6 +1,6 @@
-/* core/geometry.js: exact operations on convex polygons and prisms. Knows no house and no kitchen.
+/* core/geometry.js: exact operations on convex polygons and prisms. Knows no project.
    Every solid is a prism along x over a convex polygon in the y-z plane: a box, cut at most by lines z = a + s·y.
-   Units are whatever the page uses (cm in house axes: x along, y across, z up). */
+   Units cm; x along, y across, z up. */
 (function (CORE) {
 'use strict';
 

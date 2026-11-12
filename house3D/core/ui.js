@@ -1,5 +1,5 @@
 /* core/ui.js: the page shell shared by every view: helpers, the stored state, the layers tree, the help, the checks.
-   Knows no house and no kitchen. */
+   Knows no project. */
 (function (CORE) {
 'use strict';
 
