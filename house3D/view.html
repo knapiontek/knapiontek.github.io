@@ -15,7 +15,7 @@
     <canvas id="gl" aria-label="Widok 3D domu"></canvas>
     <div id="loading">Wczytywanie modelu…</div>
     <div class="hud">
-      <button class="toggle" id="mode" aria-label="Przełącz widok 3D / 2D"></button>
+      <div class="toggle" id="mode" role="group" aria-label="Widok"></div>
       <div id="context" aria-label="Menu widoku"></div>
     </div>
     <button class="helpbtn" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
@@ -325,8 +325,9 @@ $('subtitle').textContent = HOUSE.source;
 $('notes').innerHTML = HOUSE.notes.map(n => `<p>${n}</p>`).join('');
 CORE.ui.helpToggle($('helpbtn'), $('help'));
 
-function modeToggle() { $('mode').innerHTML = VIEW_IDS.map(k => `<span${state.mode === k ? ' data-on' : ''}>${VIEWS[k].name}</span>`).join(''); }
-$('mode').onclick = () => setMode(VIEW_IDS[(VIEW_IDS.indexOf(state.mode) + 1) % VIEW_IDS.length]);
+/* one button per view: a click opens that view */
+function modeToggle() { $('mode').innerHTML = VIEW_IDS.map(k => `<button data-mode="${k}" aria-pressed="${state.mode === k}"${state.mode === k ? ' data-on' : ''}>${VIEWS[k].name}</button>`).join(''); }
+$('mode').onclick = e => { const b = e.target.closest('[data-mode]'); if (b && b.dataset.mode !== state.mode) setMode(b.dataset.mode); };
 
 function contextMenu() {
   const ctx = $('context'); ctx.innerHTML = '';

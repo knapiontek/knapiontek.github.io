@@ -25,9 +25,10 @@ button{font:inherit;color:inherit}
 /* menu over the stage */
 .hud{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:12px;right:56px;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;pointer-events:none;z-index:6}
 .hud>*{pointer-events:auto}
-.toggle{display:inline-flex;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:2px;cursor:pointer;font:700 13px var(--f-display);letter-spacing:.04em}
-.toggle span{padding:6px 12px;border-radius:6px;color:var(--muted)}
-.toggle span[data-on]{background:var(--accent);color:var(--accent-ink)}
+.toggle{display:inline-flex;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:2px;font:700 13px var(--f-display);letter-spacing:.04em}
+.toggle button{border:0;background:transparent;font:inherit;letter-spacing:inherit;padding:6px 12px;border-radius:6px;color:var(--muted);cursor:pointer}
+.toggle button:hover{color:var(--ink)}
+.toggle button[data-on]{background:var(--accent);color:var(--accent-ink)}
 #context{display:flex;flex-direction:column;gap:4px}
 .menurow{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .chk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);font:600 13px var(--f-display);letter-spacing:.03em;padding:5px 10px;border-radius:8px;cursor:pointer;user-select:none}
