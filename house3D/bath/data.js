@@ -1,5 +1,6 @@
 /* House "Dom w papawerach 5 (G)" — DATA for both bathrooms (numbers and descriptions only, no calculations).
-   Loaded by view.html before engine.js. Dimensions in metres unless marked mm.
+   Loaded by view.html before engine.js. Every length is in mm (whole numbers); angles in degrees
+   (openAngle in radians); bath.n is an exponent. engine.js turns the lengths into metres for the 3D scene.
 
    Model coordinate system of each bathroom (plan view, as in the design drawings: door on the left,
    exterior wall on the right):
@@ -7,54 +8,54 @@
      x — from the bottom wall / shower line (x = 0) to the top wall with the vanity (x = room.depth)
      y — up from the floor
 
-   Building dimensions: design plans (archon.pl) measured to scale; reading accuracy ±1.5 cm.
+   Building dimensions: design plans (archon.pl) measured to scale; reading accuracy ±15 mm.
    The two bathrooms are stacked so that the Ø160 riser is vertical: on the ground floor it is in the
    top-right corner, in the attic in the bottom-right corner, always right next to the WC. */
 window.BATH_DATA = {
   floors: {
     /* ---------- GROUND FLOOR, room 7 — graphite ----------
-       Plan to scale: 251 cm = 195 px → 1.287 cm/px (check: the 286 cm kitchen dimension agrees within 1 %).
-       Walls as designed; only the shower recess changed: 100 × 90 (measured on site).
-       Depth from the vanity wall to the far shower wall = 251 cm, so the room up to the shower line is 161 cm. */
+       Plan to scale: 2510 mm = 195 px → 12.87 mm/px (check: the 2860 kitchen dimension agrees within 1 %).
+       Walls as designed; only the shower recess changed: 1000 × 900 (measured on site).
+       Depth from the vanity wall to the far shower wall = 2510, so the room up to the shower line is 1610. */
     ground: {
       type: 'ground', number: 7, name: 'Parter', title: 'Łazienka L grafit',
       room: {
-        width: 2.39,          // from the door to the window (drawing: 186 px)
-        depth: 1.61,          // from the vanity wall to the shower line: 251 (design) − 90 (shower)
-        height: 2.72,         // clear height from the design section
-        ceiling: 2.45,        // suspended plasterboard ceiling
-        ceilingGap: 0.05,     // LED gap along the walls
+        width: 2390,          // from the door to the window (drawing: 186 px)
+        depth: 1610,          // from the vanity wall to the shower line: 2510 (design) − 900 (shower)
+        height: 2720,         // clear height from the design section
+        ceiling: 2450,        // suspended plasterboard ceiling
+        ceilingGap: 50,     // LED gap along the walls
       },
       walls: {
-        t: 0.10,              // partition walls
-        exterior: 0.44,       // exterior wall with the window (drawing: 34 px)
-        reveal: 0.25,         // window reveal from the wall face to the frame
+        t: 100,              // partition walls
+        exterior: 440,       // exterior wall with the window (drawing: 34 px)
+        reveal: 250,         // window reveal from the wall face to the frame
       },
       shower: {
-        width: 1.00,          // along the window wall
-        depth: 0.90,          // depth from the glass line
-        door: 0.60,           // glass door on glass-to-glass hinges
-        drain: 0.88,          // Vogi Duo linear drain at the far wall
+        width: 1000,          // along the window wall
+        depth: 900,          // depth from the glass line
+        door: 600,           // glass door on glass-to-glass hinges
+        drain: 880,          // Vogi Duo linear drain at the far wall
       },
       door: {                 // concealed door Porta HIDE WC 80
-        opening: 0.90,        // opening in the wall (drawing: 70 px ≈ 90 cm)
-        leaf: 0.80,
-        height: 2.05,
-        axisFromVanityWall: 0.87,   // opening axis from the vanity wall (drawing)
+        opening: 900,        // opening in the wall (drawing: 70 px ≈ 900 mm)
+        leaf: 800,
+        height: 2050,
+        axisFromVanityWall: 870,   // opening axis from the vanity wall (drawing)
         opensOut: true,       // into the hallway, as designed; hinges on the shower side
         openAngle: 1.45,
       },
       window: {
-        width: 1.00, height: 1.30,  // label on the drawing: 100/130
-        sill: 0.90,                 // sill height — not given in the design, 90 cm assumed
-        fromShowerLine: 0.005,      // the window starts at the shower line (drawing)
+        width: 1000, height: 1300,  // archon label 1000/1300
+        sill: 900,                 // sill height — not given in the design, 900 assumed
+        fromShowerLine: 5,      // the window starts at the shower line (drawing)
       },
       casing: {               // WC casing with Ø160 riser along the vanity wall, in the window corner
-        depth: 0.28, length: 0.85, riserZone: 0.32, niche: 0.15,
-        riser: 0.16,
+        depth: 280, length: 850, riserZone: 320, niche: 150,
+        riser: 160,
       },
-      wcCabinet: { w: 0.40, h: 0.80, y0: 1.20 },   // IKEA HEJSTA above the WC frame
-      wc: { w: 0.36, d: 0.53 },
+      wcCabinet: { w: 400, h: 800, y0: 1200 },   // IKEA HEJSTA above the WC frame
+      wc: { w: 360, d: 530 },
       vanity: {               // vanity unit, dimensions in mm
         z0: 200, len: 1200,   // start from the door wall (space for the radiator), length
         depth: 470, height: 400, bottomY: 324,
@@ -64,61 +65,61 @@ window.BATH_DATA = {
         basins: [850],        // basin axes from the vanity start
         basinW: 600, basinD: 400, basinH: 140, basinBack: 50, gasket: 3,
         nlA: 350, nlB: 400,
-        mirror: { w: 0.60, h: 0.80, y: 1.62 },
+        mirror: { w: 600, h: 800, y: 1620 },
       },
-      radiator: { w: 0.40, h: 1.20, y0: 0.82, z: 0.055, gapToCorner: 0.01 },   // Mexen Hades 1200 × 400 on the door wall
+      radiator: { w: 400, h: 1200, y0: 820, z: 55, gapToCorner: 10 },   // Mexen Hades 1200 × 400 on the door wall
       look: { basin: 'black', doorPaint: 0x5b5e60 },
       defaultDecor: 'H1199',
       tiles: {
-        wall:        { tile: 'authorityGraphite', format: '60x120', layout: 'h' },
-        floor:       { tile: 'authorityGrey',     format: '80x80',  layout: 'h' },
-        shower:      { tile: 'authorityGraphite', format: '60x120', layout: 'h' },
-        showerFloor: { tile: 'authorityGrey',     format: '80x80',  layout: 'h' },
+        wall:        { tile: 'authorityGraphite', format: '598x1198', layout: 'h' },
+        floor:       { tile: 'authorityGrey',     format: '898x898',  layout: 'h' },
+        shower:      { tile: 'authorityGraphite', format: '598x1198', layout: 'h' },
+        showerFloor: { tile: 'authorityGrey',     format: '898x898', layout: 'h' },
       },
     },
 
     /* ---------- ATTIC, room 5 — light ----------
-       Plan to scale: 273 cm = 113 px → 2.416 cm/px (check: the 822 cm room 2 dimension agrees within 1 %).
-       Knee wall 120 cm and roof pitch 42° from the design; flat ceiling at 285 cm (design section).
-       Layout changed by the owner: 2 basins top-left, shower 100 × 100 bottom-left, WC bottom-middle
+       Plan to scale: 2730 mm = 113 px → 24.16 mm/px (check: the 8220 room 2 dimension agrees within 1 %).
+       Knee wall 1200 and roof pitch 42° from the design; flat ceiling at 2850 (design section).
+       Layout changed by the owner: 2 basins top-left, shower 1000 × 1000 bottom-left, WC bottom-middle
        next to the riser, freestanding bath centred in the free area by the knee wall, floor-standing mixer
-       in the top-right corner. Door opening moved 20 cm up
+       in the top-right corner. Door opening moved 200 up
        so that the shower fits in the corner. */
     attic: {
       type: 'attic', number: 5, name: 'Poddasze', title: 'Łazienka jasna na poddaszu',
       room: {
-        width: 2.80,          // from the door wall to the knee wall (drawing: 116 px)
-        depth: 2.73,          // from the bottom wall to the top wall (dimension in the design)
-        height: 2.85,         // flat ceiling (design section)
+        width: 2800,          // from the door wall to the knee wall (drawing: 116 px)
+        depth: 2730,          // from the bottom wall to the top wall (dimension in the design)
+        height: 2850,         // flat ceiling (design section)
       },
-      roof: { knee: 1.20, pitch: 42 },
-      walls: { t: 0.10, knee: 0.25 },
+      roof: { knee: 1200, pitch: 42 },
+      walls: { t: 100, knee: 250 },
       shower: {
-        width: 1.00,          // along the bottom wall
-        depth: 1.00,          // along the door wall
-        door: 0.60,
-        drain: 0.90,          // linear drain along the bottom wall
+        width: 1000,          // along the bottom wall
+        depth: 1000,          // along the door wall
+        door: 600,
+        drain: 900,          // linear drain along the bottom wall
       },
       door: {
-        opening: 0.90, leaf: 0.80, height: 2.05,
-        axisFromVanityWall: 1.28,   // drawing: 1.485, moved ~20 cm up so the 100 × 100 shower clears the opening
+        opening: 900, leaf: 800, height: 2050,
+        axisFromVanityWall: 1280,   // drawing: 1485, moved ~200 up so the 1000 × 1000 shower clears the opening
         opensOut: true, openAngle: 1.45,
       },
       roofWindow: {
-        w: 0.94, h: 1.40,     // label on the drawing: 94/140 (VELUX size)
-        axisFromVanityWall: 1.58,   // drawing; the bath is centred under it
-        fromKnee: 0.15,       // lower edge measured along the slope from the top of the knee wall
+        w: 940, h: 1400,     // archon label 940/1400 (VELUX size)
+        axisFromVanityWall: 1580,   // drawing; the bath is centred under it
+        fromKnee: 150,       // lower edge measured along the slope from the top of the knee wall
       },   // the bath is not necessarily centred under the window
       bath: {                 // freestanding oval bath, centred in the free floor area right of the WC / vanity
-        len: 1.70, w: 0.75, h: 0.58, rim: 0.05, n: 4,    // n: superellipse exponent of the outline (2 = ellipse)
+        len: 1700, w: 750, h: 580, rim: 50, n: 4,    // n: superellipse exponent of the outline (2 = ellipse)
       },
       bathTap: {              // floor-standing bath mixer Hansgrohe Tecturis E, in the top-right corner (vanity wall / knee wall)
-        h: 0.99, reach: 0.26, // height, spout reach from the column axis (catalogue 262 mm)
-        fromBathEnd: 0.08,    // column axis behind the bath end
-        fromKnee: 0.30,       // column axis from the knee wall
+        h: 990, reach: 262, // height, spout reach from the column axis (catalogue)
+        fromBathEnd: 80,    // column axis behind the bath end
+        fromKnee: 300,       // column axis from the knee wall
       },
-      wc: { w: 0.36, d: 0.53, axisFromDoorWall: 1.55 },
-      casing: { depth: 0.25, from: 1.25, height: 1.20, riser: 0.16 },   // along the bottom wall up to the riser corner
+      wc: { w: 360, d: 530, axisFromDoorWall: 1550 },
+      casing: { depth: 250, from: 1250, height: 1200, riser: 160 },   // along the bottom wall up to the riser corner
       vanity: {
         z0: 200, len: 1600,
         depth: 470, height: 400, bottomY: 324,
@@ -128,16 +129,16 @@ window.BATH_DATA = {
         basins: [400, 1200],
         basinW: 600, basinD: 400, basinH: 140, basinBack: 50, gasket: 3,
         nlA: 350, nlB: 400,
-        mirror: { w: 0.60, h: 0.80, y: 1.62 },
+        mirror: { w: 600, h: 800, y: 1620 },
       },
-      radiator: { w: 0.40, h: 1.20, y0: 0.82, z: 0.055, gapToCorner: 0.01 },
+      radiator: { w: 400, h: 1200, y0: 820, z: 55, gapToCorner: 10 },
       look: { basin: 'white', doorPaint: 0xdedcd7 },
       defaultDecor: 'H1180',
       tiles: {
-        wall:        { tile: 'authorityGrey', format: '60x120', layout: 'h' },
-        floor:       { tile: 'authorityGrey', format: '80x80',  layout: 'h' },
-        shower:      { tile: 'authorityGrey', format: '60x120', layout: 'v' },
-        showerFloor: { tile: 'authorityGrey', format: '60x60',  layout: 'h' },
+        wall:        { tile: 'authorityGrey', format: '598x1198', layout: 'h' },
+        floor:       { tile: 'authorityGrey', format: '898x898', layout: 'h' },
+        shower:      { tile: 'authorityGrey', format: '598x1198', layout: 'v' },
+        showerFloor: { tile: 'authorityGrey', format: '598x598', layout: 'h' },
       },
     },
   },
@@ -176,6 +177,6 @@ window.BATH_DATA = {
 
   defaults: {
     floor: 'ground',
-    formats: ['60x60', '60x120', '80x80', '90x90', '100x100', '120x120'],
+    formats: ['598x598', '598x898', '598x1198', '898x898', '1198x1198'],   // Paradyż Authority formats, mm
   },
 };

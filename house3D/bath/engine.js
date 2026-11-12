@@ -1,18 +1,28 @@
 /* House "Dom w papawerach 5 (G)" — CALCULATION ENGINE for both bathrooms.
-   From BATH_DATA it computes the geometry of one floor (coordinates in metres for the 3D model and the plan)
+   From BATH_DATA (all lengths in mm) it computes the geometry of one floor (coordinates in metres for the 3D model and
+   the plan; everything shown to the user is in mm)
    and the construction data (cut list, edge banding, hardware, shopping, installation points, dimensions,
    checks, XLSX sheets). It draws nothing. view.html: const G = BathEngine.build(BATH_DATA, 'ground' | 'attic'). */
 window.BathEngine = (function () {
   'use strict';
 
-  const mm = v => v / 1000;
-  const cm = v => String(Math.round(v * 200) / 2).replace('.', ',');   // m → cm rounded to 0.5
-  const c0 = v => Math.round(v * 100);                                   // m → whole cm
+  const mm = v => v / 1000;                                              // mm → m
+  const mmText = v => String(Math.round(v * 1000));                      // m → whole mm, for the page
+
+  /* the data is in mm; the scene in metres: every number of these sections is a length, except NOT_LENGTH */
+  const LENGTH_SECTIONS = ['room', 'walls', 'shower', 'door', 'window', 'casing', 'wcCabinet', 'wc', 'radiator', 'roof', 'roofWindow', 'bath', 'bathTap'];
+  const NOT_LENGTH = ['openAngle', 'pitch', 'n'];
+  const inMetres = section => Object.fromEntries(Object.entries(section).map(([k, v]) => [k, typeof v === 'number' && !NOT_LENGTH.includes(k) ? mm(v) : v]));
+  function floorInMetres(F) {
+    const out = { ...F };
+    for (const k of LENGTH_SECTIONS) if (F[k]) out[k] = inMetres(F[k]);
+    return out;
+  }
   const count = (list, item) => list.filter(s => s === item).length;
 
-  /* ---------- shared: vanity (mm) with derived values ---------- */
+  /* ---------- shared: vanity (mm) with derived values; its mirror in metres, for the scene ---------- */
   function vanity(F) {
-    const V = { ...F.vanity, basins: [...F.vanity.basins], sections: [...F.vanity.sections] };
+    const V = { ...F.vanity, basins: [...F.vanity.basins], sections: [...F.vanity.sections], mirror: inMetres(F.vanity.mirror) };
     const n = V.sections.length;
     V.inner = V.len - 2 * V.t;
     V.innerH = V.height - 2 * V.t;
@@ -30,7 +40,7 @@ window.BathEngine = (function () {
   }
 
   function build(D, floorKey = D.defaults.floor) {
-    const F = D.floors[floorKey];
+    const F = floorInMetres(D.floors[floorKey]);
     const G = { key: floorKey, type: F.type, floor: F, data: { ...D, ...F } };
     G.V = vanity(F);
     G.T = F.walls.t;
@@ -79,10 +89,10 @@ window.BathEngine = (function () {
     G.AREA = G.XL * G.ZW + (-G.SX) * (G.ZW - G.SZ);
     const end = mm(V.z0 + V.len);
     G.checks = [
-      ['Oś WC → bok szafki', cm(G.WC_Z - end) + ' cm', G.WC_Z - end >= .40],
-      ['Grzejnik → krawędź otworu drzwi', cm(G.RAD.x - G.RAD.w / 2 - G.OX1) + ' cm', G.RAD.x - G.RAD.w / 2 - G.OX1 >= 0],
-      ['Szafka → zabudowa WC', cm(G.ZZ0 - end) + ' cm', G.ZZ0 > end],
-      ['Okno → zabudowa WC', cm(G.ZX0 - G.WX1) + ' cm', G.ZX0 > G.WX1],
+      ['Oś WC → bok szafki', mmText(G.WC_Z - end) + ' mm', G.WC_Z - end >= .40],
+      ['Grzejnik → krawędź otworu drzwi', mmText(G.RAD.x - G.RAD.w / 2 - G.OX1) + ' mm', G.RAD.x - G.RAD.w / 2 - G.OX1 >= 0],
+      ['Szafka → zabudowa WC', mmText(G.ZZ0 - end) + ' mm', G.ZZ0 > end],
+      ['Okno → zabudowa WC', mmText(G.ZX0 - G.WX1) + ' mm', G.ZX0 > G.WX1],
     ];
   }
 
@@ -133,17 +143,17 @@ window.BathEngine = (function () {
     const vEnd = mm(V.z0 + V.len), wcH = G.heightAt(G.WC_Z), bathH = G.heightAt(G.BATH.z0), B_ = G.BATH;
     const lastBasin = mm(V.z0 + V.basins[V.basins.length - 1]);
     G.checks = [
-      ['Prysznic → dolna krawędź otworu drzwi', cm(G.OX0 - G.SHX) + ' cm', G.OX0 >= G.SHX],
-      ['Oś WC → szyba prysznica', cm(G.WC_Z - G.SHZ) + ' cm', G.WC_Z - G.SHZ >= .40],
-      ['Oś WC → wanna', cm(B_.z0 - G.WC_Z) + ' cm', B_.z0 - G.WC_Z >= .35],
-      ['Wanna → zabudowa WC = wanna → ściana z umywalkami', `${cm(B_.x0 - G.CASE.x1)} = ${cm(G.XL - B_.x1)} cm`, Math.abs((B_.x0 - G.CASE.x1) - (G.XL - B_.x1)) < .005],
-      ['Wanna → koniec szafki = wanna → ścianka kolankowa', `${cm(B_.z0 - G.FREE.z0)} = ${cm(G.ZW - B_.z1)} cm`, B_.z0 - G.FREE.z0 >= .1],
-      ['Wylewka baterii za wewnętrzną krawędzią wanny', cm(G.TAP.overRim) + ' cm', G.TAP.overRim >= .04],
-      ['Bateria → ściana z umywalkami / ścianka kolankowa', `${cm(G.XL - G.TAP.x)} / ${cm(G.ZW - G.TAP.z)} cm`, G.XL - G.TAP.x >= .15],
-      ['Wysokość nad osią WC', cm(wcH) + ' cm', wcH >= 2.0],
-      ['Wysokość przy wejściu do wanny (krawędź od strony pokoju)', cm(bathH) + ' cm', bathH >= 1.8],
-      ['Wysokość nad drugą umywalką', cm(G.heightAt(lastBasin)) + ' cm', G.heightAt(lastBasin) >= 2.1],
-      ['Grzejnik → górna krawędź otworu drzwi', cm(G.RAD.x - G.RAD.w / 2 - G.OX1) + ' cm', G.RAD.x - G.RAD.w / 2 - G.OX1 >= 0],
+      ['Prysznic → dolna krawędź otworu drzwi', mmText(G.OX0 - G.SHX) + ' mm', G.OX0 >= G.SHX],
+      ['Oś WC → szyba prysznica', mmText(G.WC_Z - G.SHZ) + ' mm', G.WC_Z - G.SHZ >= .40],
+      ['Oś WC → wanna', mmText(B_.z0 - G.WC_Z) + ' mm', B_.z0 - G.WC_Z >= .35],
+      ['Wanna → zabudowa WC = wanna → ściana z umywalkami', `${mmText(B_.x0 - G.CASE.x1)} = ${mmText(G.XL - B_.x1)} mm`, Math.abs((B_.x0 - G.CASE.x1) - (G.XL - B_.x1)) < .005],
+      ['Wanna → koniec szafki = wanna → ścianka kolankowa', `${mmText(B_.z0 - G.FREE.z0)} = ${mmText(G.ZW - B_.z1)} mm`, B_.z0 - G.FREE.z0 >= .1],
+      ['Wylewka baterii za wewnętrzną krawędzią wanny', mmText(G.TAP.overRim) + ' mm', G.TAP.overRim >= .04],
+      ['Bateria → ściana z umywalkami / ścianka kolankowa', `${mmText(G.XL - G.TAP.x)} / ${mmText(G.ZW - G.TAP.z)} mm`, G.XL - G.TAP.x >= .15],
+      ['Wysokość nad osią WC', mmText(wcH) + ' mm', wcH >= 2.0],
+      ['Wysokość przy wejściu do wanny (krawędź od strony pokoju)', mmText(bathH) + ' mm', bathH >= 1.8],
+      ['Wysokość nad drugą umywalką', mmText(G.heightAt(lastBasin)) + ' mm', G.heightAt(lastBasin) >= 2.1],
+      ['Grzejnik → górna krawędź otworu drzwi', mmText(G.RAD.x - G.RAD.w / 2 - G.OX1) + ' mm', G.RAD.x - G.RAD.w / 2 - G.OX1 >= 0],
     ];
   }
 
@@ -217,19 +227,19 @@ window.BathEngine = (function () {
     items.push({ group: 'Szafka', name: 'Prowadnice 750.xx01T, TIP-ON BLUMOTION T60L7340, mocowania', price: null, where: S.mhm, url: L.tipon, note: 'pełna lista w zakładce Szafka' });
     items.push(white
       ? { group: 'Umywalki', name: 'Catalano Green Lux 60 × 40, nablatowa z półką i otworem na baterię, biała, 160GRLXN00', price: null, qty: nb, where: 'tomdom.pl (wysyłka)', url: L.basinWhite, note: 'ten sam model co na parterze, w bieli; lokalnie przez salon łazienek w Bielsku, np. BLU' }
-      : { group: 'Umywalka', name: 'Catalano Green Lux 60 × 40, nablatowa z półką i otworem na baterię, Nero Satinato (czarny mat), 160GRLXNNS', price: P.basinBlack, qty: nb, where: 'tanielazienki.pl (wysyłka)', url: L.basinBlack, note: 'bez przelewu, wys. 14 cm; lokalnie można zamówić przez salon łazienek w Bielsku, np. BLU' });
+      : { group: 'Umywalka', name: 'Catalano Green Lux 60 × 40, nablatowa z półką i otworem na baterię, Nero Satinato (czarny mat), 160GRLXNNS', price: P.basinBlack, qty: nb, where: 'tanielazienki.pl (wysyłka)', url: L.basinBlack, note: 'bez przelewu, wys. 140 mm; lokalnie można zamówić przez salon łazienek w Bielsku, np. BLU' });
     const g = white ? 'Umywalki' : 'Umywalka';
     items.push({ group: g, name: white ? 'Korek ceramiczny Catalano bez przelewu, biały (pokrywa w kolorze umywalki)' : 'Korek ceramiczny Catalano 5POSLNS (czarny mat, bez przelewu)', price: white ? null : P.plug, qty: nb, where: 'skleparmatura.com', url: L.plug, note: 'pokrywa w kolorze umywalki — bez metalowego kółka; sprawdź dopasowanie do Green Lux' });
     items.push({ group: g, name: brass ? 'Bateria Hansgrohe Tecturis E 110 EcoSmart+, brąz szczotkowany, 73010140' : 'Bateria Hansgrohe Tecturis E 110 EcoSmart+ (wariant chrom 73010000 lub inny kolor pod armaturę prysznica)', price: null, qty: nb, where: 'Media Expert (odbiór w Bielsku-Białej)', url: L.tap, note: 'jednootworowa, stoi na półce umywalki' });
     items.push({ group: g, name: 'Syfon umywalkowy oszczędzający miejsce Geberit', price: null, qty: nb, where: 'Leroy Merlin Bielsko-Biała', url: L.siphon });
     items.push({ group: g, name: `Uszczelka EPDM 3 mm ${white ? 'biała' : 'czarna'}, samoprzylepna (taśma)`, price: null, qty: 1, where: 'Leroy Merlin / Castorama Bielsko-Biała' });
     if (G.type === 'attic') {
-      items.push({ group: 'Wanna', name: `Wanna wolnostojąca owalna akrylowa ${c0(G.BATH.len)} × ${c0(G.BATH.w)} × ${c0(G.BATH.h)}, biała`, price: P.bath, qty: 1, where: 'Castorama Bielsko-Biała', url: L.bath, note: `alternatywa: Oltens Begna 170 × 75 (${L.bathAlt}); w modelu na środku wolnej przestrzeni, nie dokładnie pod oknem` });
-      items.push({ group: 'Wanna', name: brass ? 'Bateria wannowa wolnostojąca (podłogowa) Hansgrohe Tecturis E, brąz szczotkowany — 73445140 (chrom 73445000)' : 'Bateria wannowa wolnostojąca (podłogowa) Hansgrohe Tecturis E, chrom 73445000', price: null, qty: 1, where: 'salon łazienek w Bielsku-Białej / zamówienie Hansgrohe', url: L.bathTap, note: `wys. ${c0(G.TAP.h)} cm, wylewka ${c0(G.TAP.reach)} cm; w rogu: ${cm(G.XL - G.TAP.x)} cm od ściany z umywalkami, ${cm(G.ZW - G.TAP.z)} cm od ścianki kolankowej; numer w brązie potwierdź w salonie` });
+      items.push({ group: 'Wanna', name: `Wanna wolnostojąca owalna akrylowa ${mmText(G.BATH.len)} × ${mmText(G.BATH.w)} × ${mmText(G.BATH.h)}, biała`, price: P.bath, qty: 1, where: 'Castorama Bielsko-Biała', url: L.bath, note: `alternatywa: Oltens Begna 170 × 75 (${L.bathAlt}); w modelu na środku wolnej przestrzeni, nie dokładnie pod oknem` });
+      items.push({ group: 'Wanna', name: brass ? 'Bateria wannowa wolnostojąca (podłogowa) Hansgrohe Tecturis E, brąz szczotkowany — 73445140 (chrom 73445000)' : 'Bateria wannowa wolnostojąca (podłogowa) Hansgrohe Tecturis E, chrom 73445000', price: null, qty: 1, where: 'salon łazienek w Bielsku-Białej / zamówienie Hansgrohe', url: L.bathTap, note: `wys. ${mmText(G.TAP.h)} mm, wylewka ${mmText(G.TAP.reach)} mm; w rogu: ${mmText(G.XL - G.TAP.x)} mm od ściany z umywalkami, ${mmText(G.ZW - G.TAP.z)} mm od ścianki kolankowej; numer w brązie potwierdź w salonie` });
       items.push({ group: 'Wanna', name: 'Zestaw podtynkowy do baterii wolnostojącej Hansgrohe (element montażowy w posadzce, 10452180)', price: null, qty: 1, where: 'salon łazienek / hurtownia instalacyjna', note: 'montaż przed wylewką; potwierdź numer w salonie' });
       items.push({ group: 'Wanna', name: 'Syfon do wanny wolnostojącej z korkiem klik-klak (odpływ w posadzce)', price: null, qty: 1, where: 'Leroy Merlin / Castorama Bielsko-Biała' });
     }
-    items.push({ group: 'Grzejnik', name: `Mexen Hades 1200 × 400, ${brass ? 'złoty' : 'złoty (w wariancie nikiel dobierz kolor chrom/inox)'}, 373 W`, price: P.radiator, qty: 1, where: 'Castorama Bielsko-Biała', url: L.radiator, note: `odbiór w sklepie lub dostawa; pas ściany od otworu drzwi do narożnika ${cm(G.XL - G.OX1)} cm, zawieszony od ${c0(G.RAD.y0)} cm` });
+    items.push({ group: 'Grzejnik', name: `Mexen Hades 1200 × 400, ${brass ? 'złoty' : 'złoty (w wariancie nikiel dobierz kolor chrom/inox)'}, 373 W`, price: P.radiator, qty: 1, where: 'Castorama Bielsko-Biała', url: L.radiator, note: `odbiór w sklepie lub dostawa; pas ściany od otworu drzwi do narożnika ${mmText(G.XL - G.OX1)} mm, zawieszony od ${mmText(G.RAD.y0)} mm` });
     items.push({ group: 'Grzejnik', name: 'Zawory grzejnikowe (para, przyłącze dolne), w kolorze grzejnika', price: null, qty: 1, where: 'Castorama Bielsko-Biała' });
     items.push({ group: 'Drzwi', name: 'Porta HIDE WC 80, bezprzylgowe, zestaw: skrzydło + ościeżnica ukryta, blokada WC', price: P.door, qty: 1, where: 'esklep-porta.pl', url: L.door, note: `wersja otwierana na zewnątrz (na korytarz, jak w projekcie) — stronę lewe/prawe potwierdź w sklepie; lico skrzydła równe ze ścianą od korytarza; otwór ${Math.round(G.floor.door.opening * 1000)} × 2070` });
     items.push({ group: 'Drzwi', name: 'Klamka z rozetą WC w kolorze armatury', price: null, qty: 1, where: 'esklep-porta.pl / salon w Bielsku' });
@@ -251,11 +261,11 @@ window.BathEngine = (function () {
     rows.push(['Drzwi ukryte — otwór w murze', `${Math.round(F.door.opening * 1000)} × 2070, oś ${Math.round(F.door.axisFromVanityWall * 1000)} od ściany z umywalką`, `Porta HIDE ${F.door.opensOut ? 'na zewnątrz' : 'do wewnątrz'}: ościeżnica przed tynkiem i płytką`]);
     if (G.type === 'ground') {
       rows.push(['Okno — otwór', `${Math.round(F.window.width * 1000)} × ${Math.round(F.window.height * 1000)}, parapet ${Math.round(G.WIN_Y0 * 1000)}`, `od linii prysznica ${Math.round(G.WX0 * 1000)}`]);
-      rows.push(['WC — oś', `${Math.round((G.ZW - G.WC_Z) * 1000)} od ściany z oknem`, 'stelaż Geberit Duofix w zabudowie 28 cm']);
+      rows.push(['WC — oś', `${Math.round((G.ZW - G.WC_Z) * 1000)} od ściany z oknem`, `stelaż Geberit Duofix w zabudowie ${mmText(F.casing.depth)} mm`]);
       rows.push(['Prysznic — odpływ liniowy', `${Math.round(F.shower.drain * 1000)} przy ścianie dalszej, oś od ściany z oknem ${Math.round((G.ZW - G.SHOWER_ZC) * 1000)}`, 'Vogi Duo, ruszt pod płytkę']);
     } else {
-      rows.push(['Okno dachowe', `${c0(G.RW.w)} × ${c0(G.RW.h)}, oś ${Math.round((G.XL - G.RW.x) * 1000)} od ściany z umywalką`, `dolna krawędź ok. ${c0(G.RW.y0)} cm nad podłogą`]);
-      rows.push(['WC — oś', `${Math.round(G.WC_Z * 1000)} od ściany z drzwiami`, `stelaż Geberit w zabudowie ${c0(G.CASE.x1)} cm przy dolnej ścianie, podejście do pionu w rogu`]);
+      rows.push(['Okno dachowe', `${mmText(G.RW.w)} × ${mmText(G.RW.h)}, oś ${Math.round((G.XL - G.RW.x) * 1000)} od ściany z umywalką`, `dolna krawędź ok. ${mmText(G.RW.y0)} mm nad podłogą`]);
+      rows.push(['WC — oś', `${Math.round(G.WC_Z * 1000)} od ściany z drzwiami`, `stelaż Geberit w zabudowie ${mmText(G.CASE.x1)} mm przy dolnej ścianie, podejście do pionu w rogu`]);
       rows.push(['Pion Ø160', `prawy dolny róg, w zabudowie WC`, 'w osi pionu z parteru']);
       rows.push(['Wanna — odpływ w posadzce', `środek wanny ${Math.round((G.XL - G.BATH.cx) * 1000)} od ściany z umywalkami, ${Math.round((G.ZW - G.BATH.cz) * 1000)} od ścianki kolankowej`, 'odpływ pod wanną wg karty wanny (zwykle na środku), spadek do pionu']);
       rows.push(['Wanna — bateria podłogowa (ciepła + zimna)', `${Math.round((G.XL - G.TAP.x) * 1000)} od ściany z umywalkami, ${Math.round((G.ZW - G.TAP.z) * 1000)} od ścianki kolankowej`, 'element podtynkowy w posadzce, przed wylewką']);
@@ -268,32 +278,32 @@ window.BathEngine = (function () {
   function dims(G) {
     const F = G.floor, V = G.V;
     const common = [
-      ['Szafka z umywalk' + (V.basins.length > 1 ? 'ami' : 'ą'), `${V.len / 10} × ${V.depth / 10} cm, blat ${V.topDepth / 10} cm, ${V.basins.length} × umywalka`],
+      ['Szafka z umywalk' + (V.basins.length > 1 ? 'ami' : 'ą'), `${V.len} × ${V.depth} mm, blat ${V.topDepth} mm, ${V.basins.length} × umywalka`],
       ['Umywalk' + (V.basins.length > 1 ? 'i' : 'a'), `Catalano Green Lux 60 × 40, ${F.look.basin === 'white' ? 'biała' : 'czarny mat'}`],
-      ['Grzejnik', `Mexen Hades ${c0(G.RAD.w)} × ${c0(G.RAD.h)}, przy drzwiach, od ${c0(G.RAD.y0)} cm`],
-      ['Drzwi', `ukryte Porta HIDE ${c0(F.door.leaf)}, otwór ${c0(F.door.opening)}, oś ${cm(F.door.axisFromVanityWall)} od ściany z umywalką, ${F.door.opensOut ? 'otwierane na korytarz' : 'otwierane do łazienki'}`],
+      ['Grzejnik', `Mexen Hades ${mmText(G.RAD.w)} × ${mmText(G.RAD.h)}, przy drzwiach, od ${mmText(G.RAD.y0)} mm`],
+      ['Drzwi', `ukryte Porta HIDE ${mmText(F.door.leaf)}, otwór ${mmText(F.door.opening)}, oś ${mmText(F.door.axisFromVanityWall)} od ściany z umywalką, ${F.door.opensOut ? 'otwierane na korytarz' : 'otwierane do łazienki'}`],
     ];
     if (G.type === 'ground') return [
-      ['Pomieszczenie', `${c0(G.ZW)} × ${c0(G.XL)} cm (wg projektu: ${c0(G.XL - G.SX)} z prysznicem)`], ['Prysznic', `${c0(F.shower.width)} × ${c0(F.shower.depth)} cm (wnęka przerobiona, ściany bez zmian)`],
-      ['Powierzchnia', `${G.AREA.toFixed(2).replace('.', ',')} m²`], ['Wysokość (strop)', `${c0(G.H)} cm`],
-      ['Sufit podwieszany', `${c0(G.CEILING_Y)} cm, szczelina LED ${c0(G.CEILING_GAP)} cm`], ['Oprawy', '4 × wpuszczane 3000 K, 1 × IP65 w prysznicu'],
-      ['Okno', `${c0(F.window.width)} × ${c0(F.window.height)}, parapet ${c0(F.window.sill)}`], ['Ściana z oknem', `${c0(F.walls.exterior)} cm, szpaleta ${c0(F.walls.reveal)} cm w płytce`],
-      ['Zabudowa WC + pion Ø160', `${c0(F.casing.length)} × ${c0(F.casing.depth)} × ${c0(G.H)}`], ['Oś WC od ściany z oknem', `${cm(G.ZW - G.WC_Z)} cm`],
-      ['Szafka nad stelażem', `HEJSTA ${c0(G.CAB_W)} × ${c0(G.CAB_H)}, gł. ${c0(G.NICHE_DEPTH)}, wys. ${c0(G.CAB_Y0)}–${c0(G.CAB_Y0 + G.CAB_H)}`], ['Miska WC podwieszana', `${c0(F.wc.w)} × ${c0(F.wc.d)} cm`],
-      ...common, ['Bok szafki → oś WC', `${cm(G.WC_Z - mm(V.z0 + V.len))} cm`],
-      ['Drzwi prysznica', `${c0(F.shower.door)} cm, zawias na szybie stałej`], ['Szyba stała', `${c0(F.shower.width - F.shower.door)} cm, przy oknie`],
-      ['Odpływ Vogi Duo', `przyścienny, ${c0(F.shower.drain)} cm, pod płytkę`], ['Fuga', '3 mm, w kolorze płytki'],
+      ['Pomieszczenie', `${mmText(G.ZW)} × ${mmText(G.XL)} mm (wg projektu: ${mmText(G.XL - G.SX)} z prysznicem)`], ['Prysznic', `${mmText(F.shower.width)} × ${mmText(F.shower.depth)} mm (wnęka przerobiona, ściany bez zmian)`],
+      ['Powierzchnia', `${G.AREA.toFixed(2).replace('.', ',')} m²`], ['Wysokość (strop)', `${mmText(G.H)} mm`],
+      ['Sufit podwieszany', `${mmText(G.CEILING_Y)} mm, szczelina LED ${mmText(G.CEILING_GAP)} mm`], ['Oprawy', '4 × wpuszczane 3000 K, 1 × IP65 w prysznicu'],
+      ['Okno', `${mmText(F.window.width)} × ${mmText(F.window.height)}, parapet ${mmText(F.window.sill)}`], ['Ściana z oknem', `${mmText(F.walls.exterior)} mm, szpaleta ${mmText(F.walls.reveal)} mm w płytce`],
+      ['Zabudowa WC + pion Ø160', `${mmText(F.casing.length)} × ${mmText(F.casing.depth)} × ${mmText(G.H)}`], ['Oś WC od ściany z oknem', `${mmText(G.ZW - G.WC_Z)} mm`],
+      ['Szafka nad stelażem', `HEJSTA ${mmText(G.CAB_W)} × ${mmText(G.CAB_H)}, gł. ${mmText(G.NICHE_DEPTH)}, wys. ${mmText(G.CAB_Y0)}–${mmText(G.CAB_Y0 + G.CAB_H)}`], ['Miska WC podwieszana', `${mmText(F.wc.w)} × ${mmText(F.wc.d)} mm`],
+      ...common, ['Bok szafki → oś WC', `${mmText(G.WC_Z - mm(V.z0 + V.len))} mm`],
+      ['Drzwi prysznica', `${mmText(F.shower.door)} mm, zawias na szybie stałej`], ['Szyba stała', `${mmText(F.shower.width - F.shower.door)} mm, przy oknie`],
+      ['Odpływ Vogi Duo', `przyścienny, ${mmText(F.shower.drain)} mm, pod płytkę`], ['Fuga', '3 mm, w kolorze płytki'],
     ];
     return [
-      ['Pomieszczenie', `${c0(G.ZW)} × ${c0(G.XL)} cm (wg projektu)`], ['Powierzchnia podłogi', `${G.AREA.toFixed(2).replace('.', ',')} m²`],
+      ['Pomieszczenie', `${mmText(G.ZW)} × ${mmText(G.XL)} mm (wg projektu)`], ['Powierzchnia podłogi', `${G.AREA.toFixed(2).replace('.', ',')} m²`],
       ['Powierzchnia użytkowa (≥ 2,2 m 100 %, 1,4–2,2 m 50 %)', `${G.AREA_USABLE.toFixed(2).replace('.', ',')} m²`],
-      ['Ścianka kolankowa', `${c0(G.KNEE)} cm`], ['Dach', `${G.floor.roof.pitch}°, płaski sufit ${c0(G.H)} cm od ${cm(G.ZF)} cm od drzwi`],
-      ['Okno dachowe', `${c0(G.RW.w)} × ${c0(G.RW.h)} (VELUX), oś ${cm(G.XL - G.RW.x)} cm od ściany z umywalkami`],
-      ['Prysznic', `${c0(F.shower.width)} × ${c0(F.shower.depth)} cm, lewy dolny róg`], ['Drzwi prysznica', `${c0(F.shower.door)} cm + szyba stała ${c0(F.shower.width - F.shower.door)} cm, ścianka boczna szklana`],
-      ['Wanna', `wolnostojąca ${c0(G.BATH.len)} × ${c0(G.BATH.w)}, na środku wolnej przestrzeni: odstępy ${cm(G.BATH.x0 - G.CASE.x1)} / ${cm(G.XL - G.BATH.x1)} cm i ${cm(G.BATH.z0 - G.FREE.z0)} / ${cm(G.ZW - G.BATH.z1)} cm`],
-      ['Bateria wannowa', `podłogowa, ${cm(G.XL - G.TAP.x)} cm od ściany z umywalkami, ${cm(G.ZW - G.TAP.z)} cm od ścianki kolankowej`],
-      ['WC', `oś ${cm(G.WC_Z)} cm od ściany z drzwiami, zabudowa ${c0(G.CASE.x1)} cm × wys. ${c0(G.CASE.h)} cm do pionu w rogu`],
-      ...common, ['Odpływ liniowy prysznica', `${c0(F.shower.drain)} cm, pod płytkę`], ['Fuga', '3 mm, w kolorze płytki'],
+      ['Ścianka kolankowa', `${mmText(G.KNEE)} mm`], ['Dach', `${G.floor.roof.pitch}°, płaski sufit ${mmText(G.H)} mm od ${mmText(G.ZF)} mm od drzwi`],
+      ['Okno dachowe', `${mmText(G.RW.w)} × ${mmText(G.RW.h)} (VELUX), oś ${mmText(G.XL - G.RW.x)} mm od ściany z umywalkami`],
+      ['Prysznic', `${mmText(F.shower.width)} × ${mmText(F.shower.depth)} mm, lewy dolny róg`], ['Drzwi prysznica', `${mmText(F.shower.door)} mm + szyba stała ${mmText(F.shower.width - F.shower.door)} mm, ścianka boczna szklana`],
+      ['Wanna', `wolnostojąca ${mmText(G.BATH.len)} × ${mmText(G.BATH.w)}, na środku wolnej przestrzeni: odstępy ${mmText(G.BATH.x0 - G.CASE.x1)} / ${mmText(G.XL - G.BATH.x1)} mm i ${mmText(G.BATH.z0 - G.FREE.z0)} / ${mmText(G.ZW - G.BATH.z1)} mm`],
+      ['Bateria wannowa', `podłogowa, ${mmText(G.XL - G.TAP.x)} mm od ściany z umywalkami, ${mmText(G.ZW - G.TAP.z)} mm od ścianki kolankowej`],
+      ['WC', `oś ${mmText(G.WC_Z)} mm od ściany z drzwiami, zabudowa ${mmText(G.CASE.x1)} mm × wys. ${mmText(G.CASE.h)} mm do pionu w rogu`],
+      ...common, ['Odpływ liniowy prysznica', `${mmText(F.shower.drain)} mm, pod płytkę`], ['Fuga', '3 mm, w kolorze płytki'],
     ];
   }
 
@@ -333,5 +343,5 @@ window.BathEngine = (function () {
     return sheets;
   }
 
-  return { build, cutParts, edgeLengths, hardware, work, buyItems, points, dims, workbook, mm, cm };
+  return { build, cutParts, edgeLengths, hardware, work, buyItems, points, dims, workbook, mm, mmText };
 })();

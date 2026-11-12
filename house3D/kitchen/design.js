@@ -94,7 +94,7 @@ window.KITCHEN_DESIGN = {
   {"group": 2, "column": 1, "span": 3, "type": "space", "height": 38, "note": "czoło blatu grupy 1"},
   {"group": 2, "column": 1, "span": 1, "type": "strip", "height": 1642},
   {"group": 2, "column": 1, "span": 12, "type": "strip", "height": 18},
-  {"group": 2, "column": 1, "span": 12, "type": "plasterboard", "height": 172, "note": "zabudowa do sufitu"},
+  {"group": 2, "column": 1, "span": 12, "type": "plasterboard", "height": 152, "note": "zabudowa do sufitu"},
   {"group": 2, "column": 2, "span": 2, "type": "cabinet", "tags": ["coffee"], "carcass": "K21", "height": 1162, "handle": "right", "hinge": "left", "gaps": {"left": 3, "right": 3, "top": 3, "bottom": 5}, "note": "stoi na blacie"},
   {"group": 2, "column": 2, "span": 2, "type": "cabinet", "carcass": "K22", "height": 480, "handle": "bottom", "hinge": "left", "gaps": {"left": 3, "right": 3, "top": 3, "bottom": 0}},
   {"group": 2, "column": 3, "span": 1, "type": "frontPanel", "height": 720, "note": "zakrywa koniec panelu grupy 1"},
@@ -117,7 +117,7 @@ window.KITCHEN_DESIGN = {
   {"group": 2, "column": 11, "span": 1, "type": "cabinet", "carcass": "K29", "height": 1200, "handle": "left", "hinge": "right", "gaps": {"left": 3, "right": 3, "top": 3, "bottom": 0}},
   {"group": 2, "column": 11, "span": 1, "type": "cabinet", "carcass": "K2X", "height": 480, "handle": "bottom", "hinge": "right", "gaps": {"left": 3, "right": 3, "top": 3, "bottom": 0}},
   {"group": 2, "column": 12, "span": 1, "type": "strip", "height": 2550},
-  {"group": 2, "column": 13, "span": 1, "type": "plasterboard", "height": 2740},
+  {"group": 2, "column": 13, "span": 1, "type": "plasterboard", "height": 2720},
 
   {"group": 3, "column": 1, "span": 1, "type": "space", "height": 870},
   {"group": 3, "column": 1, "span": 9, "type": "worktop", "tags": ["island"], "height": 38},

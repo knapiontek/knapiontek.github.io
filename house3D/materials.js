@@ -50,15 +50,6 @@ window.HOUSE_MATERIALS = {
    "price": 135.91,
    "link": "https://www.abcplytki.pl/authority-paradyz-my-way/10703-paradyz-my-way-authority-grey-gres-szkl-rekt-mat-898x898-g1"
   },
-  "authorityGrey80": {
-   "name": "Authority Grey 798×798 mm (format z projektu łazienki)",
-   "note": "format jak w bath/data.js",
-   "texture": "authorityGrey",
-   "len": 798, "wid": 798, "joint": 2, "minCut": [266, 266],
-   "pattern": "grid",
-   "price": null,
-   "link": "https://www.abcplytki.pl/authority-paradyz-my-way/10703-paradyz-my-way-authority-grey-gres-szkl-rekt-mat-898x898-g1"
-  },
   "logOak": {
    "name": "Atlas Concorde Log Icon Oak Forest 300×1200 mm",
    "note": "gres z efektem dębu; sprawdź wersję wewnętrzną 9 mm",

@@ -50,7 +50,7 @@
   // visible names (Polish) of the identifiers above; the code keeps the English identifiers
   const LABELS = {
     type: { space: 'wypełnienie', plasterboard: 'zabudowa GK', plinth: 'cokół', worktop: 'blat', endPanel: 'panel końcowy', wallPanel: 'panel ścienny', frontPanel: 'panel przedni',
-      strip: 'listwa', cabinet: 'szafka', drawer: 'szuflada', oven: 'piekarnik', microwave: 'mikrofalówka' },
+      strip: 'listwa przednia', cabinet: 'szafka', drawer: 'szuflada', oven: 'piekarnik', microwave: 'mikrofalówka' },
     tag: { dummy: 'atrapa', hob: 'płyta grzewcza', sink: 'zlew', bins: 'kosze', innerDrawer: 'szuflada wewnętrzna', island: 'wyspa',
       coffee: 'ekspres', doorDrawers: 'szuflady za drzwiami', fridge: 'lodówka', freezer: 'zamrażarka', dishwasher: 'zmywarka' },
     carcassKind: { base: 'dolna', tall: 'słupek', wall: 'górna' },

@@ -91,7 +91,6 @@ CORE.createView = function (opts) {
     const m = new THREE.MeshStandardMaterial({ color: lin(def.color || '#ffffff'), roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, clippingPlanes: CLIP, clipShadows: true });
     if (def.opacity !== undefined) Object.assign(m, { transparent: true, opacity: def.opacity, depthWrite: false, envMapIntensity: def.reflect || 1 });
     for (const [k, make] of Object.entries(SURFACES)) if (def[k]) make(def[k], m, def);
-    m.polygonOffset = true; m.polygonOffsetFactor = 0; m.polygonOffsetUnits = 1;   // a constant minimal bias, never slope-dependent
     return (MATERIALS[key] = m);
   }
   const CAP_MATERIALS = {};

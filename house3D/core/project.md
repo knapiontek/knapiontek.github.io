@@ -35,7 +35,7 @@ solids ─► mesh.js ─► pieces ─► scene.js ─► view
 - A finished face against another solid shows its bare material.
 - Edges come from the pieces: a seam (one plane) has no line, a corner (an angle) always has one; any other line hides while every group that closes it is shown.
 - Section caps lie 0.5 mm under the cut.
-- Depth offsets are constant, never slope-dependent; edge lines are pulled toward the eye by a constant fraction.
+- Faces have no depth offset (no two surfaces share a plane, so none is needed). Edge lines are pulled toward the eye by a constant fraction.
 
 ## Code style
 

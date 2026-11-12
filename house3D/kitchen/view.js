@@ -20,7 +20,7 @@ window.KITCHEN_VIEW = {
   "2": {"x": 3372, "z": 0, "rotation": -90},
   "3": {"x": 920, "z": 2208, "rotation": 180, "anchor": "centre"}
  },
- "room": {"ceiling": 2740, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallGroup": 2, "rightWallLength": 4000, "floorJoint": 2, "wallColor": "#f2f1ee"},
+ "room": {"ceiling": 2720, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallGroup": 2, "rightWallLength": 4000, "floorJoint": 2, "wallColor": "#f2f1ee"},
  "installation": {
   "sink": {"tapFromBack": 45, "trapTop": 575, "wallOutlet": 470},
   "hood": {"bottom": 1500}
