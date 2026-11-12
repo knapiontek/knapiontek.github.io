@@ -61,7 +61,9 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 ## 6. Podprojekty
 
 - Salon prowadzi do kitchen/view.html; obie łazienki do bath/view.html.
-- Kuchnia i łazienki dostosowują się do domu: ściany, strop i wysokości są domu.
+- Dom wygrywa: kuchnia i łazienki biorą pomieszczenie z domu takie, jakie jest (ściany, strop, posadzkę, okna, dach), przycięte do obszaru, który dom podaje dla pomieszczenia. Nie rysują ani nie mierzą własnego pomieszczenia.
+- Te same osie wszędzie: x wzdłuż domu, y w poprzek, z w górę, mm i położenia domu.
+- Płytki łazienek leżą na ścianach domu; posadzka podprojektu leży na płycie domu, nigdy w jej płaszczyźnie.
 - Nic z podprojektu nie trafia do house3D, dopóki nie zostanie przyjęte (proposal.md).
 
 ## 7. Kontrole (Analiza)

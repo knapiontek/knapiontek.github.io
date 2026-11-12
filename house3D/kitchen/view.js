@@ -1,13 +1,13 @@
 /* Kitchen scene for view.html: only what the 3D view needs beyond design.js and appliances.js. Written per project (LLM).
-   Room coordinates in mm: x along the window wall, z out from it, y up.
-     placement     where each group stands (by group number) and how it is turned; an island stands free;
-                   x, z = the point its anchor names (start (default), end, centre or {column}: the end of that column)
-                   on the wall line of the group (an island: the line of its carcass backs);
-                   against {group}: the anchor lies on the front plane of that group (an L corner), instead of x or z
-     room          walls, floor and ceiling; leftEnd: where the window wall and the floor start (x); floorJoint: the grout
-                   joint width of the floor tiles; rightWallGroup: the group against the right wall
+   House axes and positions in mm: x along the house, y across, z up (house3D/house.js). The room itself (walls, slab,
+   floor, window) is the house's own, copied as it is by ../rooms.js; nothing of it is repeated here.
+     placement     where each group stands (by group number) and which way its fronts face (-y, +y, -x, +x); an island
+                   stands free; x, y = the point its anchor names (start (default), end, centre or {column}: the end of
+                   that column) on the wall line of the group (an island: the line of its carcass backs);
+                   against {group}: the anchor lies on the front plane of that group (an L corner), instead of x or y
+     room          floorJoint: the grout joint width of the floor tiles; wallColor: the plasterboard and the ceiling finish;
+                   layers: which page layer each house layer of the copied room goes to
      installation  how the sink, its trap and the hood are fitted here
-     window        the window in the window wall
      finishes      extra finishes for the Project tab, drawn with a material of the view
      hardware      sizes for the drawing only (no effect on the cost); open: how far doors and drawers open
      metals        the metal finishes of the handles to choose from; hardware.handle.metal is the default
@@ -16,16 +16,15 @@
      cameras       the views in the dock; the first one opens */
 window.KITCHEN_VIEW = {
  "placement": {
-  "1": {"z": 0, "rotation": 0, "anchor": {"column": 11}, "against": {"group": 2}},
-  "2": {"x": 3372, "z": 0, "rotation": -90},
-  "3": {"x": 920, "z": 2208, "rotation": 180, "anchor": "centre"}
+  "1": {"y": 8660, "faces": "-y", "anchor": {"column": 11}, "against": {"group": 2}},
+  "2": {"x": 7220, "y": 8660, "faces": "-x"},
+  "3": {"x": 4768, "y": 6452, "faces": "+y", "anchor": "centre"}
  },
- "room": {"ceiling": 2720, "leftEnd": -1000, "floorDepth": 4000, "wallThickness": 300, "rightWallGroup": 2, "rightWallLength": 4000, "floorJoint": 2, "wallColor": "#f2f1ee"},
+ "room": {"floorJoint": 2, "wallColor": "#f2f1ee", "layers": {"walls": "walls", "slabs": "ceiling", "foundation": "floor", "openings": "window"}},
  "installation": {
   "sink": {"tapFromBack": 45, "trapTop": 575, "wallOutlet": 470},
   "hood": {"bottom": 1500}
  },
- "window": {"x": 870, "width": 1900, "sill": 1080, "height": 1300, "reveal": 150, "finish": "antracyt"},
  "finishes": [
   {"use": "Zlew", "name": "Kompozyt kwarcowy", "material": "granite"}
  ],
@@ -54,12 +53,12 @@ window.KITCHEN_VIEW = {
   ]
  },
  "cameras": {
-  "all": {"name": "Całość", "position": {"x": -1600, "y": 2900, "z": 5400}, "target": {"x": 1600, "y": 900, "z": 1400}},
-  "window": {"name": "Pod oknem", "position": {"x": 1600, "y": 1600, "z": 3200}, "target": {"x": 1600, "y": 1150, "z": 100}},
-  "tall": {"name": "Zabudowa wysoka", "position": {"x": 400, "y": 1550, "z": 1700}, "target": {"x": 3200, "y": 1350, "z": 1500}},
-  "island": {"name": "Wyspa", "position": {"x": 1700, "y": 1450, "z": 850}, "target": {"x": 920, "y": 600, "z": 2078}},
-  "sink": {"name": "Zlew", "position": {"x": 1900, "y": 1950, "z": 1750}, "target": {"x": 1900, "y": 850, "z": 300}},
-  "corner": {"name": "Narożnik", "position": {"x": 2100, "y": 1050, "z": 2300}, "target": {"x": 2950, "y": 350, "z": 500}},
-  "top": {"name": "Rzut", "position": {"x": 1330, "y": 8200, "z": 1910}, "target": {"x": 1320, "y": 0, "z": 1900}}
+  "all": {"name": "Całość", "position": {"x": 2248, "y": 3260, "z": 2900}, "target": {"x": 5448, "y": 7260, "z": 900}},
+  "window": {"name": "Pod oknem", "position": {"x": 5448, "y": 5460, "z": 1600}, "target": {"x": 5448, "y": 8560, "z": 1150}},
+  "tall": {"name": "Zabudowa wysoka", "position": {"x": 4248, "y": 6960, "z": 1550}, "target": {"x": 7048, "y": 7160, "z": 1350}},
+  "island": {"name": "Wyspa", "position": {"x": 5548, "y": 7810, "z": 1450}, "target": {"x": 4768, "y": 6582, "z": 600}},
+  "sink": {"name": "Zlew", "position": {"x": 5748, "y": 6910, "z": 1950}, "target": {"x": 5748, "y": 8360, "z": 850}},
+  "corner": {"name": "Narożnik", "position": {"x": 5948, "y": 6360, "z": 1050}, "target": {"x": 6798, "y": 8160, "z": 350}},
+  "top": {"name": "Rzut", "position": {"x": 5178, "y": 6750, "z": 8200}, "target": {"x": 5168, "y": 6760, "z": 0}}
  }
 };

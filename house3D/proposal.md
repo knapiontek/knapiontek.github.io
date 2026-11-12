@@ -1,13 +1,13 @@
 # Proposal: kitchen and bath in house3D
 
-> Not built. Once agreed, what stays moves to project.md and rules.md.
+> Partly built: the kitchen and the bathrooms already take their room from the house (rooms.js), in house axes. Still open: bringing their furniture into the house view. Once agreed, what stays moves to project.md and rules.md.
 
 ## 1. What comes across
 
 The kitchen and bath projects are for building; house3D is for looking. The house takes their geometry, not their code or pages.
 
-- **Kitchen**: furniture copied exactly (both in mm). Kitchen axes map to house axes by a swap, no rotation: kitchen x (along the window wall) → house x, kitchen z (out from the wall) → house −y, kitchen y (up) → house z.
-- **The kitchen follows the house.** Its own room (walls, window, floor, ceiling) is not taken; its ceiling is already the house's 2720. Only the plasterboard (Zabudowa GK) is rebuilt against the house walls.
+- **Kitchen**: furniture copied exactly. Both projects already use house axes and positions (view.js), so nothing is converted.
+- **The kitchen follows the house.** Its own room (walls, window, floor, ceiling) is not taken; it already draws the house's. Only the plasterboard (Zabudowa GK) is rebuilt against the house walls.
 - **Bath**: its ideas (vanity, shower, WC casing, suspended ceiling, wall tiles, fittings) are rebuilt on the house walls. Where bath numbers disagree with the house walls, the house wins.
 - **Converter**: a script writes the converted data into house3D data files, so view.html still knows nothing of kitchen or bath. Re-run it when kitchen/design.js changes.
 
@@ -55,4 +55,5 @@ The bathrooms get the same kind of section.
 1. Kuchnia and Łazienki in the Warstwy list, or only in their own section?
 2. Solo and presets, or plain check boxes?
 3. Floors of the kitchen and bathrooms: laid by the house (as now) or taken from the sub-project? Both now use Authority Grey 898×898 in the bathrooms.
-4. Kitchen against the bathroom wall: the house gives 2500 mm from the window start to wall #5 (analysis § 11: x 4720 → 7220); the kitchen needs 2502. With the house walls fixed and the furniture fixed, where do the 2 mm go: a filler at the wall, or the kitchen shifts? (Check which point the kitchen measures from first.)
+4. Kitchen against wall #5: the furniture now stands against the real wall #5 (x 7220), so the kitchen's 2 mm sit at the window (the house window starts at kitchen x 872, the kitchen planned 870). Accept, or add a filler?
+5. Kitchen tall units (group 2) run 2888 out from the window wall, wall #5 is 2860: the last 28 mm stand past the wall's end, in the passage.

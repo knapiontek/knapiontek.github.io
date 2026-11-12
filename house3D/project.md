@@ -12,11 +12,12 @@ What the page must do: [rules.md](rules.md) (in Polish, like the page). The geom
 | materials.js | the material library and the tile products |
 | textures.js | texture images (tiles, wood) |
 | engine.js | turns house.js into solids |
+| rooms.js | hands a sub-project its room: the house's own solids, trimmed to the box its link gives |
 | analysis.js | the checks shown in Analiza |
 | view.html | the page: 3D, 2D plan, Analiza, layers, cut, tiles, walk |
 | core/ | shared 3D code, its own small project |
 | archon/ | the archon drawings and analysis.md, read from them |
-| kitchen/, bath/ | sub-projects with their own pages, also in mm; bath has no docs yet |
+| kitchen/, bath/ | sub-projects with their own pages, in mm and house axes; their room comes from the house through rooms.js; bath has no docs yet |
 | proposal.md | how the kitchen and bath could come in (not built) |
 | index.html | directory listing, not part of the house |
 
@@ -24,11 +25,13 @@ What the page must do: [rules.md](rules.md) (in Polish, like the page). The geom
 
 ```
 analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─► view.html  draws them (materials.js, textures.js)
-                                                          └─► analysis.js checks them, shown in Analiza
+                                                          ├─► analysis.js checks them, shown in Analiza
+                                                          └─► rooms.js ─► kitchen/view.html, bath/view.html  their room, as it is
 ```
 
 - One model for every view. A view only picks layers and cuts it.
 - The page writes nothing back to the files. The viewer's choices (tiles, offsets, layers, sun, cut) stay in the browser and are dropped when their format changes.
+- The sub-projects take their room from the house, never the other way round: walls, slabs, floor, windows and roof are copied as they are, trimmed to the box the room's link gives in house.js (the house wins).
 - engine.js and view.html know nothing about this house: no numbers, names, products or colours of it. What differs is a flag or a value in the data, never a test in the code.
 
 ## The model in short

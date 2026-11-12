@@ -20,9 +20,45 @@ window.BathEngine = (function () {
   }
   const count = (list, item) => list.filter(s => s === item).length;
 
+  /* ---------- the room frame: the house room (../rooms.js) and the bath data, in mm ----------
+     The room is the house's: its walls, door, window, heights and roof come from house3D, nothing is re-measured here.
+     The frame the bath is computed in: x from the shower line (data, house x) or else from the room's +x wall, growing
+     toward the vanity wall (the room's -x face); z from the door wall (-y face) toward the window or knee wall (+y face);
+     y up from the floor. house x = X0 - x, house y = Y0 + z, house z = LEVEL + y. */
+  function roomFrame(Fd, R) {
+    const xs = R.inside.flatMap(r => [r[0], r[1]]), ys = R.inside.flatMap(r => [r[2], r[3]]);
+    const X1 = Math.min(...xs), X2 = Math.max(...xs), Y1 = Math.min(...ys), Y2 = Math.max(...ys);
+    const X0 = Fd.showerLine ?? X2, near = (a, b) => Math.abs(a - b) <= 1;
+    const door = R.openings.find(o => near(o.b[3], Y1));                         // the opening in the door wall
+    const window = R.openings.find(o => o.outer === '+y' && near(o.b[2], Y2));   // the window in the +y wall
+    const ysOf = cells => cells.flatMap(c => c.S.poly.map(p => p[0]));
+    const blockY = ysOf(R.cells.filter(c => c.side === '+y' && c.layers.includes('walls')));
+    const frameY = ysOf(R.cells.filter(c => c.side === '+y' && c.element === 'opening'));
+    const F = { ...Fd, X0, Y0: Y1, LEVEL: R.level, inside: R.inside.map(r => [X0 - r[1], X0 - r[0], r[2] - Y1, r[3] - Y1]) };
+    F.room = { width: Y2 - Y1, depth: X0 - X1, height: R.ceiling - R.level };
+    if (Fd.ceiling) Object.assign(F.room, { ceiling: Fd.ceiling.height, ceilingGap: Fd.ceiling.ledGap });
+    F.walls = { t: door.b[3] - door.b[2], exterior: Math.max(...blockY) - Y2, reveal: frameY.length ? Math.min(...frameY) - Y2 : 0, knee: Math.max(...blockY) - Y2 };
+    F.door = { ...Fd.door, opening: door.b[1] - door.b[0], height: door.b[5] - door.b[4], axisFromVanityWall: (door.b[0] + door.b[1]) / 2 - X1 };
+    if (Fd.showerLine !== undefined) {                     // the recess beyond the shower line is the house's
+      const recess = R.inside.reduce((a, r) => r[1] > a[1] ? r : a);   // the rectangle reaching furthest beyond the line
+      F.shower = { ...Fd.shower, width: recess[3] - recess[2], depth: recess[1] - X0 };
+    }
+    if (window) F.window = { width: window.b[1] - window.b[0], height: window.b[5] - window.b[4], sill: window.b[4] - R.level, fromShowerLine: X0 - window.b[1] };
+    if (Fd.type === 'attic') {
+      const cos = Math.cos(R.pitch * Math.PI / 180), w = R.roofWindows[0], [ww, wh] = w.label.split('/').map(Number);
+      F.roof = { knee: Math.round(R.roofUnder(Y2) - R.level), pitch: R.pitch };
+      F.roofWindow = { w: ww, h: wh, axisFromVanityWall: (w.x[0] + w.x[1]) / 2 - X1, fromKnee: (Y2 - w.y[1]) / cos };   // along the slope from the knee wall's top
+    }
+    F.wcCabinet = Fd.wcCabinet && { w: Fd.wcCabinet.w, h: Fd.wcCabinet.h, y0: Fd.wcCabinet.bottom };
+    F.radiator = { w: Fd.radiator.w, h: Fd.radiator.h, y0: Fd.radiator.bottom, z: Fd.radiator.fromWall, gapToCorner: Fd.radiator.gapToCorner };
+    return F;
+  }
+
   /* ---------- shared: vanity (mm) with derived values; its mirror in metres, for the scene ---------- */
   function vanity(F) {
-    const V = { ...F.vanity, basins: [...F.vanity.basins], sections: [...F.vanity.sections], mirror: inMetres(F.vanity.mirror) };
+    const { fromDoorWall, bottom, mirror, ...rest } = F.vanity;
+    const V = { ...rest, z0: fromDoorWall, bottomY: bottom, basins: [...F.vanity.basins], sections: [...F.vanity.sections],
+      mirror: inMetres({ w: mirror.w, h: mirror.h, y: mirror.z }) };
     const n = V.sections.length;
     V.inner = V.len - 2 * V.t;
     V.innerH = V.height - 2 * V.t;
@@ -39,9 +75,11 @@ window.BathEngine = (function () {
     return V;
   }
 
-  function build(D, floorKey = D.defaults.floor) {
-    const F = floorInMetres(D.floors[floorKey]);
-    const G = { key: floorKey, type: F.type, floor: F, data: { ...D, ...F } };
+  /* ROOM: the house room of this floor, HouseRooms.roomsFor(...) of ../rooms.js */
+  function build(D, floorKey, ROOM) {
+    const F = floorInMetres(roomFrame(D.floors[floorKey], ROOM));
+    const G = { key: floorKey, type: F.type, floor: F, data: { ...D, ...F }, X0: F.X0, Y0: F.Y0, LEVEL: F.LEVEL, ROOM };
+    G.INSIDE = F.inside.map(r => r.map(mm));               // the floor area in the room frame, metres: [x1, x2, z1, z2]
     G.V = vanity(F);
     G.T = F.walls.t;
     G.XL = F.room.depth;                                  // top wall face (vanity wall)

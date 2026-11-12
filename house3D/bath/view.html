@@ -310,6 +310,12 @@ dl.tight{margin:0}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="textures.js"></script>
+<script src="../house.js"></script>
+<script src="../materials.js"></script>
+<script src="../core/geometry.js"></script>
+<script src="../core/mesh.js"></script>
+<script src="../engine.js"></script>
+<script src="../rooms.js"></script>
 <script src="data.js"></script>
 <script src="engine.js"></script>
 <script>
@@ -321,12 +327,15 @@ const fail = message => stage.insertAdjacentHTML('beforeend', `<div id="err">${m
 if (!window.THREE || !THREE.OrbitControls) return fail('Nie udało się wczytać silnika 3D. Odśwież stronę.');
 if (!window.BATH_TEXTURES) return fail('Brak pliku textures.js obok view.html.');
 if (!window.BATH_DATA || !window.BathEngine) return fail('Brak plików data.js / engine.js obok view.html.');
+if (!window.HOUSE || !window.HouseRooms) return fail('Brak plików domu (../house.js, ../rooms.js).');
 
-/* Model: numbers from data.js, calculations from engine.js. Here (view.html) only rendering and the panel. */
+/* Model: the room from the house (../rooms.js), the bathroom's design from data.js, calculations from engine.js.
+   Here (view.html) only rendering and the panel. */
 let FLOOR = BATH_DATA.defaults.floor;
 try { FLOOR = new URLSearchParams(location.search).get('floor') || localStorage.getItem('floor') || FLOOR; } catch (e) {}
 if (!BATH_DATA.floors[FLOOR]) FLOOR = BATH_DATA.defaults.floor;
-const G = BathEngine.build(BATH_DATA, FLOOR), DATA = G.data, ATTIC = G.type === 'attic';
+const HOUSE_ROOM = HouseRooms.roomsFor(HOUSE, HouseEngine.build(HOUSE), 'bath/view.html').find(r => r.floor === FLOOR);
+const G = BathEngine.build(BATH_DATA, FLOOR, HOUSE_ROOM), DATA = G.data, ATTIC = G.type === 'attic';
 const mmText = BathEngine.mmText;           // metres of the scene → whole mm on the page
 const V = G.V;   // vanity in mm (data.js → engine.js)
 const mm = v => v / 1000;
@@ -674,46 +683,115 @@ const isSolidHit = hit => hit.object.isMesh && isShown(hit.object) && hit.object
 const { H, CEILING_Y, T, WINDOW_REVEAL, WINDOW_WALL_T, XL, ZW, SX, SZ, SHOWER_ZC, SHOWER_XC,
         WX0, WX1, WIN_Y0, WIN_Y1, DX0, DX1, DOOR_H } = G;
 
-/* ---------- walls ---------- */
-const walls = [];
-/**
- * Wall from point a to b ([x, z]), face on the room side, thickness grows towards `normal`.
- * extend: [extension at start, at end] (corners), hole: opening {u0, u1, y0, y1} along the wall.
- */
-function wall(a, b, normal, surface, extend, hole = null, thickness = T) {
-  const group = new THREE.Group(); scene.add(group);
-  const dx = b[0] - a[0], dz = b[1] - a[1], length = Math.hypot(dx, dz), ux = dx / length, uz = dz / length;
-  const pieces = hole
-    ? [[0, hole.u0, 0, H], [hole.u1, length, 0, H], [hole.u0, hole.u1, 0, hole.y0], [hole.u0, hole.u1, hole.y1, H]]
-    : [[0, length, 0, H]];
-  for (const [u0, u1, y0, y1] of pieces) {
-    if (u1 - u0 < .001 || y1 - y0 < .001) continue;
-    const e0 = u0 === 0 ? extend[0] : 0, e1 = Math.abs(u1 - length) < 1e-6 ? extend[1] : 0;
-    const w = u1 - u0 + e0 + e1, h = y1 - y0, uc = (u0 - e0 + u1 + e1) / 2;
-    const mesh = tiled(surface, new THREE.BoxGeometry(w, h, thickness), group);
-    mesh.position.set(a[0] + ux * uc + normal[0] * thickness / 2, y0 + h / 2, a[1] + uz * uc + normal[1] * thickness / 2);
-    mesh.rotation.y = -Math.atan2(uz, ux);
-  }
-  const record = {
-    group,
-    normal: new THREE.Vector3(normal[0], 0, normal[1]),
-    middle: new THREE.Vector3((a[0] + b[0]) / 2, H / 2, (a[1] + b[1]) / 2),
-  };
-  // the wall hides when the camera is behind it (looking at its outer side)
-  record.cut = cutaway(group, () => !state.layers.walls || camera.position.clone().sub(record.middle).dot(record.normal) >= .05);
-  walls.push(record);
-  return record;
+/* ---------- the room: the house's own walls, slabs, floor, window and roof (../rooms.js), as they are ----------
+   The house solids are in mm and house axes; one matrix puts them in the room frame of engine.js (metres):
+   x = X0 − house x, y = house z − LEVEL, z = house y − Y0. Every side of the room is a wall record that hides while the
+   camera is behind it. The bathroom's tiles are a skin 1 mm in front of every house wall face that looks into the room
+   (shower tiles inside the shower, wall tiles elsewhere); the bare house material stays behind them. */
+const HOUSE_TO_ROOM = new THREE.Matrix4().set(-.001, 0, 0, G.X0 / 1000,  0, 0, .001, -G.LEVEL / 1000,  0, .001, 0, -G.Y0 / 1000,  0, 0, 0, 1);
+const toRoom = p => new THREE.Vector3(p[0], p[1], p[2]).applyMatrix4(HOUSE_TO_ROOM);
+const SIDE = {                             // side of the room (rooms.js) -> its outward normal in the room frame, and its layer
+  '+x': { normal: [-1, 0, 0], layer: 'walls' }, '-x': { normal: [1, 0, 0], layer: 'walls' },
+  '+y': { normal: [0, 0, 1], layer: 'walls' }, '-y': { normal: [0, 0, -1], layer: 'walls' },
+  '+z': { normal: [0, 1, 0], layer: 'ceiling' }, '-z': { normal: [0, -1, 0], layer: 'floor' },
+};
+const DIRECTION = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+z': [0, 0, 1], '-z': [0, 0, -1] };   // house axes
+const houseMaterials = {};
+function houseMaterial(key) {
+  const d = HOUSE_MATERIALS.materials[key];
+  return houseMaterials[key] || (houseMaterials[key] = d.opacity !== undefined
+    ? new THREE.MeshStandardMaterial({ color: d.color, roughness: d.roughness, metalness: d.metalness || 0, transparent: true, opacity: d.opacity, depthWrite: false, side: THREE.DoubleSide })
+    : new THREE.MeshStandardMaterial({ color: d.color, roughness: d.roughness ?? .9, metalness: d.metalness || 0 }));
 }
+// the shower in house mm [x1, x2, y1, y2]: where the shower tiles go
+const showerZone = (() => {
+  const toHouseX = x => G.X0 - x * 1000, toHouseY = z => G.Y0 + z * 1000;
+  const [x1, x2, z1, z2] = ATTIC ? [0, G.SHX, 0, G.SHZ] : [G.SX, 0, G.SZ, G.ZW];
+  return [Math.min(toHouseX(x1), toHouseX(x2)), Math.max(toHouseX(x1), toHouseX(x2)), toHouseY(z1), toHouseY(z2)];
+})();
+/* the part of convex polygon P (house mm) on one side of the plane p[axis] = v */
+function clipPlane(P, axis, v, keep) {
+  const out = [];
+  for (let i = 0; i < P.length; i++) {
+    const a = P[i], b = P[(i + 1) % P.length], fa = keep * (a[axis] - v), fb = keep * (b[axis] - v);
+    if (fa >= -1e-6) out.push(a);
+    if ((fa > 1e-6 && fb < -1e-6) || (fa < -1e-6 && fb > 1e-6)) { const t = fa / (fa - fb); out.push(a.map((c, k) => c + t * (b[k] - c))); }
+  }
+  return out;
+}
+/* P split into the part inside the shower zone and the parts outside it */
+function splitByShower(P) {
+  const Z = showerZone, inside = [], outside = [];
+  let rest = P;
+  for (const [axis, v, keep] of [[0, Z[0], 1], [0, Z[1], -1], [1, Z[2], 1], [1, Z[3], -1]]) {
+    const out = clipPlane(rest, axis, v, -keep);
+    if (out.length >= 3) outside.push(out);
+    rest = clipPlane(rest, axis, v, keep);
+    if (rest.length < 3) return { inside, outside: outside.concat(rest.length >= 3 ? [rest] : []) };
+  }
+  inside.push(rest);
+  return { inside, outside };
+}
+const walls = [], sides = {};
+(function houseShell() {
+  const box = HOUSE_ROOM.box, onBox = f => f.n.some((c, k) => Math.abs(c) > .99 && f.poly.every(p => Math.abs(p[k] - box[2 * k]) < .5 || Math.abs(p[k] - box[2 * k + 1]) < .5));
+  const parts = {};
+  for (const f of CORE.mesh.piecesOf(HOUSE_ROOM.cells)) {
+    const side = f.cell.side, part = parts[side] || (parts[side] = { points: [], batches: new Map(), skins: { wall: new CORE.mesh.Batch(), shower: new CORE.mesh.Batch() } });
+    const mat = houseMaterial(f.material);
+    if (!part.batches.has(mat)) part.batches.set(mat, new CORE.mesh.Batch());
+    part.batches.get(mat).polygon(f.poly, f.n, () => [0, 0]);
+    part.points.push(...f.poly);
+    // tiles: a wall face looking into the room or into an opening of it, not a contact face, not where the copy was trimmed
+    const outward = DIRECTION[side].reduce((sum, c, k) => sum + c * f.n[k], 0) > .5;
+    if (!f.cell.layers.includes('walls') || f.cover || outward || onBox(f)) continue;
+    const skin = f.poly.map(p => p.map((c, k) => c + f.n[k]));   // 1 mm in front of the face
+    const { inside, outside } = splitByShower(skin);
+    for (const P of inside) part.skins.shower.polygon(P, f.n, () => [0, 0]);
+    for (const P of outside) part.skins.wall.polygon(P, f.n, () => [0, 0]);
+  }
+  for (const [side, part] of Object.entries(parts)) {
+    const { normal, layer } = SIDE[side];
+    const group = new THREE.Group(); scene.add(group);
+    const house = new THREE.Group(); house.matrixAutoUpdate = false; house.matrix.copy(HOUSE_TO_ROOM); group.add(house);
+    for (const [mat, batch] of part.batches) house.add(batch.mesh(mat));
+    for (const [surface, batch] of Object.entries(part.skins)) if (batch.p.length) {
+      const mesh = tiled(surface, batch.mesh(tileMaterials[surface]).geometry, house);
+      mesh.receiveShadow = true;
+    }
+    const middle = toRoom([0, 1, 2].map(k => part.points.reduce((sum, p) => sum + p[k], 0) / part.points.length));
+    const record = { group, normal: new THREE.Vector3(...normal), middle };
+    record.cut = cutaway(group, () => !state.layers[layer] || camera.position.clone().sub(record.middle).dot(record.normal) >= .05);
+    if (layer === 'walls') walls.push(record);
+    sides[side] = record;
+  }
+})();
+wallDoor = sides['-y']; wallVanity = sides['-x'];
 
-/* ---------- floor ---------- */
+/* ---------- floor: tiles 3 mm over the house's floor, shower tiles inside the shower ---------- */
 const floorGroup = new THREE.Group(); scene.add(floorGroup);
 cutaway(floorGroup, () => !state.layers.floor);
+const FLOOR_TILES = .003;                  // the tiles lie on the slab, never in its plane
 function floorPlane(surface, x0, z0, x1, z1) {
+  if (x1 - x0 < .001 || z1 - z0 < .001) return;
   const mesh = tiled(surface, new THREE.PlaneGeometry(x1 - x0, z1 - z0), floorGroup);
   mesh.rotation.x = -Math.PI / 2;
-  mesh.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2);
+  mesh.position.set((x0 + x1) / 2, FLOOR_TILES, (z0 + z1) / 2);
   mesh.castShadow = false;
 }
+(function floors() {
+  const zone = ATTIC ? [0, G.SHX, 0, G.SHZ] : [G.SX, 0, G.SZ, G.ZW];   // the shower, room frame [x1, x2, z1, z2]
+  const cut = (r, z) => {                  // r without z: up to four rectangles around it
+    const [x1, x2, z1, z2] = [Math.max(r[0], z[0]), Math.min(r[1], z[1]), Math.max(r[2], z[2]), Math.min(r[3], z[3])];
+    if (x2 <= x1 || z2 <= z1) return [r];
+    return [[r[0], x1, r[2], r[3]], [x2, r[1], r[2], r[3]], [x1, x2, r[2], z1], [x1, x2, z2, r[3]]];
+  };
+  for (const r of G.INSIDE) {
+    for (const q of cut(r, zone)) floorPlane('floor', q[0], q[2], q[1], q[3]);
+    const [x1, x2, z1, z2] = [Math.max(r[0], zone[0]), Math.min(r[1], zone[1]), Math.max(r[2], zone[2]), Math.min(r[3], zone[3])];
+    floorPlane('showerFloor', x1, z1, x2, z2);
+  }
+})();
 if (ATTIC) buildAttic(); else buildGround();
 
 /* ---------- concealed door Porta HIDE 80, opening into the hallway (as in the original design) ----------
@@ -992,41 +1070,12 @@ const RAD = G.RAD;   // x computed in engine.js: in the corner next to the vanit
    suspended ceiling with an LED gap. Called once when the page shows the ground floor.
    ========================================================================== */
 function buildGround() {
-wallDoor         = wall([0, 0],   [XL, 0],  [0, -1], 'wall',   [.1, .1], { u0: DX0, u1: DX1, y0: 0, y1: DOOR_H });
-const wallLeft   = wallVanity = wall([XL, 0],  [XL, ZW], [1, 0],  'wall',   [.1, WINDOW_WALL_T]);
-const wallWindow = wall([XL, ZW], [0, ZW],  [0, 1],  'wall',   [.1, 0], { u0: XL - WX1, u1: XL - WX0, y0: WIN_Y0, y1: WIN_Y1 }, WINDOW_WALL_T);
-wall([0, ZW],  [SX, ZW], [0, 1],  'shower', [0, .1], null, WINDOW_WALL_T);        // exterior wall at the shower
-wall([SX, ZW], [SX, SZ], [-1, 0], 'shower', [WINDOW_WALL_T, .1]);
-const wallShowerValves = wall([SX, SZ], [0, SZ], [0, -1], 'shower', [.1, -.1]);   // stops short of the right wall: no overlap, no z-fighting
-const wallRight  = wall([0, SZ],  [0, 0],   [-1, 0], 'wall',   [0, 0]);
+const wallLeft = sides['-x'], wallWindow = sides['+y'];   // the house's walls (see the room above)
 
-// corner end face on the shower side: shower tile just in front of the right wall face + corner trim
-tiled('shower', new THREE.PlaneGeometry(.1, H), wallShowerValves.group).position.set(-.05, H / 2, SZ + .0006);
-box(.006, H, .006, M.metal, .001, H / 2, SZ + .0015, wallShowerValves.group);
-
-floorPlane('floor', 0, 0, XL, ZW);           // room
-floorPlane('showerFloor', SX, SZ, 0, ZW);    // shower
-box(XL + T * 2, .12, ZW + T * 2, M.frame, XL / 2, -.061, ZW / 2, floorGroup);                  // screed under the room
-box(-SX + T, .12, ZW - SZ + T * 2, M.frame, SX / 2 - T / 2, -.061, SHOWER_ZC, floorGroup);    // screed under the shower
-
-/* ---------- window in the exterior wall, with a tiled reveal ---------- */
-(function windowWithReveal() {
-  const g = wallWindow.group, zReveal = ZW + WINDOW_REVEAL / 2, zFrame = ZW + WINDOW_REVEAL + .035;
-  const cx = (WX0 + WX1) / 2, width = WX1 - WX0, wh = WIN_Y1 - WIN_Y0, wy = (WIN_Y0 + WIN_Y1) / 2;
-  box(width, wh, .01, M.sky, cx, wy, ZW + WINDOW_WALL_T - .005, g).castShadow = false;   // sky behind the window
-  // reveals and sill in wall tile (sill without overhang — the shower door clears it)
-  tiled('wall', new THREE.BoxGeometry(.012, wh, WINDOW_REVEAL), g).position.set(WX0 + .006, wy, zReveal);
-  tiled('wall', new THREE.BoxGeometry(.012, wh, WINDOW_REVEAL), g).position.set(WX1 - .006, wy, zReveal);
-  tiled('wall', new THREE.BoxGeometry(width, .012, WINDOW_REVEAL), g).position.set(cx, WIN_Y1 - .006, zReveal);
-  tiled('wall', new THREE.BoxGeometry(width, .02, WINDOW_REVEAL), g).position.set(cx, WIN_Y0 + .01, zReveal);
-  // frame, mullion, handles (two-sash window)
-  box(.06, wh, .07, M.frame, WX0 + .03, wy, zFrame, g);
-  box(.06, wh, .07, M.frame, WX1 - .03, wy, zFrame, g);
-  box(width, .06, .07, M.frame, cx, WIN_Y0 + .05, zFrame, g);
-  box(width, .06, .07, M.frame, cx, WIN_Y1 - .03, zFrame, g);
-  box(.04, wh - .06, .06, M.frame, cx, wy, zFrame, g);
-  box(.012, .13, .02, M.white, cx + .05, wy, zFrame - .045, g);
-  box(.012, .13, .02, M.white, cx - .05, wy, zFrame - .045, g);
+/* ---------- window: the house's, in the exterior wall ---------- */
+(function skyBehindWindow() {               // the window itself (frame, glass) and its tiled reveal are the house's
+  const g = wallWindow.group, cx = (WX0 + WX1) / 2, width = WX1 - WX0, wh = WIN_Y1 - WIN_Y0, wy = (WIN_Y0 + WIN_Y1) / 2;
+  box(width, wh, .01, M.sky, cx, wy, ZW + WINDOW_WALL_T + .3, g).castShadow = false;
 })();
 
 
@@ -1283,69 +1332,20 @@ function buildAttic() {
   const hAt = G.heightAt, sin = Math.sin(PITCH), cos = Math.cos(PITCH);
   const behind = (middle, normal) => camera.position.clone().sub(middle).dot(normal) >= .05;
 
-  /* ---------- walls ---------- */
-  /** Partition under the slope: wall face at x = xFace from z0 to z1, top edge follows the roof; thickness towards dir·x. */
-  function gableWall(xFace, dir, z0, z1, surface) {
-    const shape = new THREE.Shape(), tops = [z1];
-    if (ZF > z0 && ZF < z1) tops.push(ZF);
-    tops.push(z0);
-    shape.moveTo(z0, 0); shape.lineTo(z1, 0);
-    for (const z of tops) shape.lineTo(z, hAt(Math.min(z, ZW)));
-    shape.closePath();
-    const group = new THREE.Group(); scene.add(group);
-    const mesh = tiled(surface, new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false, curveSegments: 1 }), group);
-    mesh.rotation.y = -Math.PI / 2;                       // shape x → world z, extrusion → world −x
-    mesh.position.x = dir > 0 ? xFace + T : xFace;
-    const record = { group, normal: new THREE.Vector3(dir, 0, 0), middle: new THREE.Vector3(xFace, H / 2, (z0 + z1) / 2) };
-    record.cut = cutaway(group, () => !state.layers.walls || behind(record.middle, record.normal));
-    walls.push(record);
-    return record;
-  }
-  wall([0, 0], [SHX, 0], [0, -1], 'shower', [.1, 0]);                                    // door wall inside the shower
-  wallDoor = wall([SHX, 0], [XL, 0], [0, -1], 'wall', [0, .1], { u0: DX0 - SHX, u1: DX1 - SHX, y0: 0, y1: DOOR_H });
-  wallVanity = gableWall(XL, 1, -T, ZW, 'wall');                                         // top wall with the vanity
-  gableWall(0, -1, -T, SHZ, 'shower');                                                   // bottom wall inside the shower
-  gableWall(0, -1, SHZ, ZW, 'wall');                                                     // bottom wall with the WC casing
-  (function kneeWall() {
-    const group = new THREE.Group(); scene.add(group);
-    tiled('wall', new THREE.BoxGeometry(XL + 2 * T, KNEE, KNEE_T), group).position.set(XL / 2, KNEE / 2, ZW + KNEE_T / 2);
-    const record = { group, normal: new THREE.Vector3(0, 0, 1), middle: new THREE.Vector3(XL / 2, KNEE / 2, ZW) };
-    record.cut = cutaway(group, () => !state.layers.walls || behind(record.middle, record.normal));
-    walls.push(record);
-  })();
-
-  /* ---------- floor ---------- */
-  floorPlane('floor', SHX, 0, XL, SHZ);
-  floorPlane('floor', 0, SHZ, XL, ZW);
-  floorPlane('showerFloor', 0, 0, SHX, SHZ);
-  box(XL + T * 2, .12, ZW + T * 2, M.frame, XL / 2, -.061, ZW / 2, floorGroup);          // screed
-
-  /* ---------- roof: slope with the roof window, flat ceiling ---------- */
+  /* ---------- walls, floor, flat ceiling, roof and roof window: the house's (see the room above) ---------- */
+  /* the view outside the roof window, beyond the roof */
   const roof = new THREE.Group(); scene.add(roof);
   const slopeIn = new THREE.Vector3(0, -cos, -sin);                                     // slope normal pointing into the room
   const slopeMid = new THREE.Vector3(XL / 2, KNEE + SLOPE_LEN / 2 * sin, ZW - SLOPE_LEN / 2 * cos);
   cutaway(roof, () => !state.layers.ceiling || camera.position.y > H - .02 || camera.position.clone().sub(slopeMid).dot(slopeIn) <= -.05);
-  /** Slope panel between u0…u1 (along x) and v0…v1 (up the slope from the knee wall), inner face on the roof plane. */
-  function slopePanel(u0, u1, v0, v1, material, thick = .03, offset = 0) {
-    if (u1 - u0 < .001 || v1 - v0 < .001) return null;
+  /** Panel between u0…u1 (along x) and v0…v1 (up the slope from the knee wall), offset from the roof's underside. */
+  function slopePanel(u0, u1, v0, v1, material, thick, offset) {
     const vc = (v0 + v1) / 2, mesh = box(u1 - u0, thick, v1 - v0, material, (u0 + u1) / 2, KNEE + vc * sin + (thick / 2 + offset) * cos, ZW - vc * cos + (thick / 2 + offset) * sin, roof);
     mesh.rotation.x = Math.PI + PITCH;
     return mesh;
   }
-  const wu0 = RW.x - RW.w / 2, wu1 = RW.x + RW.w / 2;
-  slopePanel(-T, XL + T, 0, RW.v0, M.ceiling);
-  slopePanel(-T, XL + T, RW.v1, SLOPE_LEN + .02, M.ceiling);
-  slopePanel(-T, wu0, RW.v0, RW.v1, M.ceiling);
-  slopePanel(wu1, XL + T, RW.v0, RW.v1, M.ceiling);
-  box(XL + 2 * T, .03, ZF + T, M.ceiling, XL / 2, H + .015, (ZF - T) / 2, roof);         // flat ceiling
-  // roof window VELUX 94 × 140: white frame, sky behind the glass
-  const frameT = .06;
-  slopePanel(wu0, wu1, RW.v0, RW.v0 + frameT, M.white, .08, .0);
-  slopePanel(wu0, wu1, RW.v1 - frameT, RW.v1, M.white, .08, .0);
-  slopePanel(wu0, wu0 + frameT, RW.v0, RW.v1, M.white, .08, .0);
-  slopePanel(wu1 - frameT, wu1, RW.v0, RW.v1, M.white, .08, .0);
-  const sky = slopePanel(wu0, wu1, RW.v0, RW.v1, M.sky, .01, .12); if (sky) sky.castShadow = false;
-  const handle = slopePanel(RW.x - .1, RW.x + .1, RW.v1 - frameT - .03, RW.v1 - frameT, M.white, .02, .0);
+  const ROOF_ACROSS = HOUSE.geometry.roof.thickness / 1000;
+  slopePanel(RW.x - RW.w / 2, RW.x + RW.w / 2, RW.v0, RW.v1, M.sky, .01, ROOF_ACROSS + .3).castShadow = false;
 
   /* ---------- corner shower: fixed panel + door facing the room, glass side panel at the WC ---------- */
   (function cornerShower() {

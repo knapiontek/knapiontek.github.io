@@ -264,7 +264,8 @@ body.shut .toggle{display:flex}
      DATA FLOW:
        design.js   project (settings, notes, columns, components) - SOURCE, edited in design.html
        engine.js   carcasses, boards, fronts, strips, plinths, frontPanels - shared by the three pages
-       view.js     scene of this kitchen (placement of the groups, room, window, hardware, lights, cameras) - edit there
+       view.js     scene of this kitchen (placement of the groups in the house, hardware, lights, cameras) - edit there
+       ../house.js, ../rooms.js  the room: the house's own walls, slab, floor and window, copied as they are
        appliances.js  the appliances at the manufacturer's sizes - shared with cost.html
        textures.js    decor images (a material's texture, floor tiles); without it a material shows its colour
        this page   places the engine's parts in the room, draws them and checks them (overlaps, gaps, fronts)
@@ -278,10 +279,17 @@ body.shut .toggle{display:flex}
 <script src="textures.js"></script>
 <script src="design.js"></script>
 <script src="engine.js"></script>
+<script src="../house.js"></script>
+<script src="../materials.js"></script>
+<script src="../core/geometry.js"></script>
+<script src="../core/mesh.js"></script>
+<script src="../engine.js"></script>
+<script src="../rooms.js"></script>
 <script>
 /* view.html - the kitchen in 3D (three.js r128): the engine's parts placed in the room (view.js), checked and lit.
    Each design.js group is placed in the room (SCENE.placement, by group number); inside a group: u along, v up, n out from the wall (mm).
-   Room: x along the window wall, y up, z out from it; three.js units are metres. */
+   Data in house axes and mm (x along the house, y across, z up). The scene works in the three.js order of the same axes:
+   x = house x, y = house z (up), z = −house y; drawn in metres. */
 (async function () {
 'use strict';
 const stage = document.getElementById('stage');
@@ -298,6 +306,9 @@ try {
   project = await KE.load();
   model = KE.build(project, APPLIANCES);
 } catch (err) { loading.textContent = err.message; return; }
+// the room: the house's own solids around this kitchen (../rooms.js), mm, house axes
+if (!window.HOUSE || !window.HouseRooms) { loading.textContent = 'Nie znaleziono plików domu (../house.js, ../rooms.js)'; return; }
+const HOUSE_ROOM = HouseRooms.roomsFor(window.HOUSE, HouseEngine.build(window.HOUSE), 'kitchen/view.html')[0];
 const settings = project.settings;
 document.getElementById('src').textContent = 'Dane: design.js, view.js i appliances.js, części z engine.js.';
 if (model.warnings.length) console.warn('design.js: ' + model.warnings.join(' | '));
@@ -313,17 +324,19 @@ for (const r of GROUP_IDS) {
 }
 // where a group stands: view.js placement; a group with against is placed after the group it stands against
 const ANCHORS = { start: 0, centre: 0.5, end: 1 };
+const FACING = { '-y': 0, '+x': 90, '+y': 180, '-x': -90 };   // the side the fronts face -> turn of the group about the vertical
 const anchorU = r => {
   const anchor = SCENE.placement[r].anchor || 'start';
   return typeof anchor === 'object' ? model.groups[r].columnX[anchor.column] : (ANCHORS[anchor] ?? 0) * groupLength[r];
 };
 const origin = {};
 const placeGroup = r => {
-  const placement = SCENE.placement[r], a = (placement.rotation * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
+  const placement = SCENE.placement[r], a = (FACING[placement.faces] * Math.PI) / 180, cos = Math.round(Math.cos(a)), sin = Math.round(Math.sin(a));
+  const px = placement.x, pz = placement.y === undefined ? undefined : -placement.y;   // house x, y -> scene x, z
   const along = anchorU(r);
   // origin: u = 0, n = 0
   const backGap = model.groups[r].island ? 0 : model.groups[r].backGap; // an island is placed by its carcass backs
-  const place = { x: placement.x - along * cos + backGap * sin, z: placement.z + along * sin + backGap * cos, cos, sin, rotation: placement.rotation };
+  const place = { x: px - along * cos + backGap * sin, z: pz + along * sin + backGap * cos, cos, sin, rotation: FACING[placement.faces] };
   if (placement.against) {
     const other = origin[placement.against.group], frontX = other.x + model.frontFace * other.sin, frontZ = other.z + model.frontFace * other.cos;
     if (cos) place.x = frontX - along * cos; else place.z = frontZ + along * sin;
@@ -338,8 +351,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const { frontFace, panelFace, carcassDepth, carcassBack, carcassFront, plinthFace } = model; // n: from the carcass backs
 const { carcass: board, plinth: plinthThickness, wallPanel: wallPanelThickness, strip: stripThickness, frontPanel: frontPanelThickness } = model.thickness, frontThickness = model.frontThickness;
 const shakerRail = settings.front.shakerRail; // width of the shaker frame of a front
-const room = SCENE.room, ceiling = room.ceiling;
-const rightWall = origin[room.rightWallGroup].x + model.groups[room.rightWallGroup].wall * origin[room.rightWallGroup].sin;
+const room = SCENE.room, ceiling = HOUSE_ROOM.top - HOUSE_ROOM.level;   // the underside of the house slab over the floor
 const worktopOf = group => model.worktops[group] || { n0: 0, n1: 0, depth: 0 }; // n0 back edge, n1 front edge
 const sinkCarcass = model.carcasses.find(carcass => carcass.sink); // the group with the sink
 const sinkGroup = sinkCarcass ? sinkCarcass.group : null;
@@ -1440,42 +1452,58 @@ function wallGroup(normal, mid, layer) {
   walls.push({ group: g, normal: new THREE.Vector3(...normal), mid: new THREE.Vector3(...mid), visible: true });
   return g;
 }
-const win = SCENE.window, winX0 = win.x, winX1 = winX0 + win.width, winY0 = win.sill, winY1 = winY0 + win.height;
-const wallThickness = room.wallThickness, reveal = win.reveal, leftEnd = room.leftEnd;
-const backWall = wallGroup([0, 0, -1], [1.3, 1.37, 0]), backWallWindow = wallGroup([0, 0, -1], [1.3, 1.37, 0], roomLayer.window);
-[[leftEnd, winX0, 0, ceiling], [winX1, rightWall + wallThickness, 0, ceiling], [winX0, winX1, 0, winY0], [winX0, winX1, winY1, ceiling]]
-  .forEach(([x0, x1, y0, y1]) => roomBox(backWall, x0, x1, y0, y1, -wallThickness, 0, MAT.wall)); // window wall around the opening
-roomBox(backWall, leftEnd, rightWall + wallThickness, ceiling, ceiling + 20, -wallThickness, 0, MAT.wall);
-(function windowFrame() { // two-pane window: frame F, mullion, sashes S, gaskets, glass, handles
-  const g = backWallWindow, zFront = -reveal, frameDepth = 70, z0 = zFront - frameDepth, frameWidth = 45, sashWidth = 52, MULLION = 28, xm = (winX0 + winX1) / 2;
-  roomBox(g, winX0 - 200, winX1 + 200, winY0 - 300, winY1 + 300, -2400, -2390, MAT.sky, true); // view outside
-  roomBox(g, winX0, winX1, winY0, winY0 + frameWidth, z0, zFront, MAT.pvc);
-  roomBox(g, winX0, winX1, winY1 - frameWidth, winY1, z0, zFront, MAT.pvc);
-  roomBox(g, winX0, winX0 + frameWidth, winY0 + frameWidth, winY1 - frameWidth, z0, zFront, MAT.pvc);
-  roomBox(g, winX1 - frameWidth, winX1, winY0 + frameWidth, winY1 - frameWidth, z0, zFront, MAT.pvc);
-  roomBox(g, xm - MULLION, xm + MULLION, winY0 + frameWidth, winY1 - frameWidth, z0, zFront, MAT.pvc);
-  for (const [a, b] of [[winX0 + frameWidth, xm - MULLION], [xm + MULLION, winX1 - frameWidth]]) {
-    const zs0 = zFront - 55, zs1 = zFront + 8;
-    roomBox(g, a, b, winY0 + frameWidth, winY0 + frameWidth + sashWidth, zs0, zs1, MAT.pvc);
-    roomBox(g, a, b, winY1 - frameWidth - sashWidth, winY1 - frameWidth, zs0, zs1, MAT.pvc);
-    roomBox(g, a, a + sashWidth, winY0 + frameWidth + sashWidth, winY1 - frameWidth - sashWidth, zs0, zs1, MAT.pvc);
-    roomBox(g, b - sashWidth, b, winY0 + frameWidth + sashWidth, winY1 - frameWidth - sashWidth, zs0, zs1, MAT.pvc);
-    const ga = a + sashWidth, gb = b - sashWidth, gy0 = winY0 + frameWidth + sashWidth, gy1 = winY1 - frameWidth - sashWidth;
-    roomBox(g, ga, gb, gy0, gy0 + 6, zs0 + 10, zs1 - 4, MAT.gasket);
-    roomBox(g, ga, gb, gy1 - 6, gy1, zs0 + 10, zs1 - 4, MAT.gasket);
-    roomBox(g, ga, ga + 6, gy0, gy1, zs0 + 10, zs1 - 4, MAT.gasket);
-    roomBox(g, gb - 6, gb, gy0, gy1, zs0 + 10, zs1 - 4, MAT.gasket);
-    roomBox(g, ga + 6, gb - 6, gy0 + 6, gy1 - 6, zs0 + 20, zs0 + 44, MAT.glass, true);
-    const hx = a < xm ? b - sashWidth / 2 : a + sashWidth / 2; // handle on the mullion side
-    roomBox(g, hx - 14, hx + 14, (winY0 + winY1) / 2 - 40, (winY0 + winY1) / 2 + 40, zs1, zs1 + 16, MAT.pvc);
-    roomBox(g, hx - 10, hx + 10, (winY0 + winY1) / 2 - 110, (winY0 + winY1) / 2 + 10, zs1 + 16, zs1 + 30, MAT.pvc);
-  }
-  roomBox(g, winX0, winX1, winY0 - 20, winY0, -reveal, 0, MAT.wall); // sill
+/* ---------- the room: the house's own walls, slab, floor and window (../rooms.js), drawn as they are ----------
+   Its solids are in mm and house axes; a group turns them into the scene (x, z up -> y, y -> -z) and metres. Each side of the
+   room is a wall group that hides while the camera is behind it. The top of the floor slab takes the kitchen floor finish,
+   the underside of the slab the ceiling finish; every other face keeps its house material (../materials.js). */
+const ceilingMaterial = standard({ color: linear(room.wallColor), roughness: 0.95, emissive: linear(0x4a4844) });
+const HOUSE_MAT = window.HOUSE_MATERIALS.materials, houseMaterials = {};
+function houseMaterial(key) {
+  if (houseMaterials[key]) return houseMaterials[key];
+  const d = HOUSE_MAT[key], o = { color: linear(d.color), roughness: d.roughness ?? 0.9, metalness: d.metalness || 0, envMapIntensity: 0.45 };
+  if (d.opacity !== undefined) Object.assign(o, { transparent: true, opacity: d.opacity, depthWrite: false, side: THREE.DoubleSide });
+  return (houseMaterials[key] = standard(o));
+}
+const SIDE_NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 0, -1], '-y': [0, 0, 1], '+z': [0, 1, 0], '-z': [0, -1, 0] };   // in the scene
+const toScene = (x, y, z) => [x / 1000, z / 1000, -y / 1000];
+const pageLayerOf = cell => room.layers[cell.layers.find(l => room.layers[l])];
+const faceMaterial = (f, layer) => layer === 'floor' && f.n[2] > 0.5 ? MAT.floor : layer === 'ceiling' && f.n[2] < -0.5 ? ceilingMaterial : houseMaterial(f.material);
+const roomCentre = (() => {   // the middle of the floor area, in the scene
+  const r = HOUSE_ROOM.inside, x = r.flatMap(q => [q[0], q[1]]), y = r.flatMap(q => [q[2], q[3]]);
+  return toScene((Math.min(...x) + Math.max(...x)) / 2, (Math.min(...y) + Math.max(...y)) / 2, HOUSE_ROOM.level);
 })();
-const rightWallGroup = wallGroup([1, 0, 0], [rightWall / 1000, 1.37, 1.6]);
-roomBox(rightWallGroup, rightWall, rightWall + wallThickness, 0, ceiling + 20, -wallThickness, room.rightWallLength, MAT.wall);
-const floor = roomBox(roomLayer.floor, leftEnd, rightWall, -20, 0, 0, room.floorDepth, MAT.floor);
-floor.castShadow = false;
+(function houseRoom() {
+  const parts = new Map();                 // page layer | side -> { faces, batches by material }
+  for (const f of CORE.mesh.piecesOf(HOUSE_ROOM.cells)) {
+    const layer = pageLayerOf(f.cell); if (!layer) continue;
+    const k = layer + '|' + f.cell.side;
+    if (!parts.has(k)) parts.set(k, { layer, side: f.cell.side, points: [], batches: new Map() });
+    const part = parts.get(k), mat = faceMaterial(f, layer);
+    if (!part.batches.has(mat)) part.batches.set(mat, new CORE.mesh.Batch());
+    part.batches.get(mat).polygon(f.poly, f.n, v => f.uv(v).map(c => c / 1000));   // uv in metres, like every texture here
+    part.points.push(...f.poly);
+  }
+  for (const { layer, side, points, batches } of parts.values()) {
+    const mid = toScene(...[0, 1, 2].map(i => points.reduce((sum, p) => sum + p[i], 0) / points.length));
+    const g = wallGroup(SIDE_NORMAL[side], mid, roomLayer[layer]);
+    g.rotation.x = -Math.PI / 2; g.scale.setScalar(0.001);   // house mm, z up -> scene metres, y up
+    for (const [mat, batch] of batches) {
+      const m = batch.mesh(mat);
+      if (layer === 'floor') m.castShadow = false;
+      g.add(m);
+    }
+  }
+  // the view outside every glazed opening, beyond its outer face
+  const KINDS = window.HOUSE.geometry.openingKinds;
+  for (const o of HOUSE_ROOM.openings.filter(o => KINDS[o.kind].glazed && o.outer)) {
+    const b = o.b.slice(), axis = { x: 0, y: 1 }[o.outer[1]], out = o.outer[0] === '+' ? 1 : -1;
+    const face = b[2 * axis + (out > 0 ? 1 : 0)] + out * 2400;
+    b[2 * axis] = face; b[2 * axis + 1] = face + 10;
+    for (const k of [0, 1, 2]) if (k !== axis) { b[2 * k] -= 100; b[2 * k + 1] += 100; }   // a little wider than the opening
+    const g = wallGroup(SIDE_NORMAL[o.outer], toScene((o.b[0] + o.b[1]) / 2, (o.b[2] + o.b[3]) / 2, (o.b[4] + o.b[5]) / 2), roomLayer.window);
+    roomBox(g, b[0], b[1], b[4], b[5], -b[3], -b[2], MAT.sky, true);
+  }
+})();
 
 /* ---------- texture coordinates in metres: the pattern keeps its size on every box ---------- */
 (function worldUV() {
@@ -1555,9 +1583,7 @@ Array.from({ length: pendants.count }, (_, i) => pointToRoom[pendants.group](pen
 });
 
 /* ---------- ceiling with downlights ---------- */
-const ceilingGroup = wallGroup([0, 1, 0], [1.2, ceiling / 1000 + 0.02, 2], roomLayer.ceiling);
-const ceilingMaterial = standard({ color: linear(room.wallColor), roughness: 0.95, emissive: linear(0x4a4844) });
-roomBox(ceilingGroup, leftEnd, rightWall, ceiling, ceiling + 20, 0, room.floorDepth, ceilingMaterial, true);
+const ceilingGroup = wallGroup([0, 1, 0], [roomCentre[0], ceiling / 1000, roomCentre[2]], roomLayer.ceiling);   // the downlights, hidden with the ceiling
 const tube = standard({ color: linear(0xf3f3f0), roughness: 0.45 }), tubeInside = standard({ color: linear(0x2a2a2a), roughness: 0.7, side: THREE.BackSide });
 const TUBE_RADIUS = 35, TUBE_HEIGHT = 100;
 // a downlight at {group, u, n}, or between the axes of the sink and the hob: {group, between: [sink, hob], n}
@@ -1591,18 +1617,19 @@ for (const [x, z] of SCENE.lights.downlights.map(downlightAt)) {
 const hemisphere = new THREE.HemisphereLight(0xf4f6f9, 0x8a8178, 1.5);
 scene.add(hemisphere);
 const sun = new THREE.DirectionalLight(0xfff0d8, 2.4);
-sun.position.set(1.4, 7.5, -4.2);
-sun.target.position.set(1.9, 0.4, 1.6);
+const nearRoom = (dx, dy, dz) => [roomCentre[0] + dx, roomCentre[1] + dy, roomCentre[2] + dz];   // lights placed around the room, metres
+sun.position.set(...nearRoom(0.2, 7.5, -6.2));
+sun.target.position.set(...nearRoom(0.7, 0.4, -0.4));
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 0.5, far: 16 });
 sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.02; sun.shadow.radius = 10;
 scene.add(sun, sun.target);
 const fillLight = new THREE.DirectionalLight(0xe6eef8, 1.4);
-fillLight.position.set(-3, 3, 6);
+fillLight.position.set(...nearRoom(-4.2, 3, 4));
 scene.add(fillLight);
 const fillLight2 = new THREE.DirectionalLight(0xf5efe6, 0.9);
-fillLight2.position.set(-2, 4, -1);
+fillLight2.position.set(...nearRoom(-3.2, 4, -3));
 scene.add(fillLight2);
 scene.updateMatrixWorld(true);
 loading.remove();
@@ -1630,7 +1657,7 @@ function repivot(e) {
   controls.target.copy(camera.position).addScaledVector(forward, d);
 }
 function flyTo(view, instant) {
-  const metres = point => new THREE.Vector3(point.x / 1000, point.y / 1000, point.z / 1000);
+  const metres = point => new THREE.Vector3(point.x / 1000, point.z / 1000, -point.y / 1000);   // house axes -> scene
   const cameraView = VIEWS[view], p = metres(cameraView.position), t = metres(cameraView.target);
   if (instant) { camera.position.copy(p); controls.target.copy(t); controls.update(); return; }
   flight = { p0: camera.position.clone(), t0: controls.target.clone(), p, t, s: performance.now() };
@@ -2053,7 +2080,7 @@ document.getElementById('dims').innerHTML = definitions([
   { name: 'Listwy ' + stripThickness, value: 'na sztorc, gł. ' + settings.strip.depth + ', w płaszczyźnie frontów' },
   { name: 'Panele przednie ' + frontPanelThickness, value: 'na płasko; w korpusie przykręcone do niego (' + (frontFace - panelFace) + ' za licem frontów), poza korpusem w płaszczyźnie frontów' },
   { name: 'Cokół', value: 'lico ' + settings.plinth.setback + ' za frontami' },
-  { name: 'Okno', value: win.width + ' × ' + win.height + ', ' + win.finish }
+  { name: 'Okno', value: HOUSE_ROOM.openings.filter(o => window.HOUSE.geometry.openingKinds[o.kind].glazed).map(o => o.label).join(', ') + ' (z domu)' }
 ]);
 document.getElementById('pnotes').innerHTML = (project.notes || []).map(({ name, description, details }) => {
   return '<dt>' + esc(name) + '</dt><dd>' + esc(description) + (details ? '<small>' + esc(details) + '</small>' : '') + '</dd>';
