@@ -281,7 +281,7 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 
 The front gable windows run floor to ceiling: 285 is the attic clear height (306 → 591, printed in the section), and the front elevation measures them ≈ 314 → ≈ 580 (±3.6). The white band under them ends at the attic floor (306).
 
-Stair void in the slab: [547, 44, 642, 438] + [642, 44, 737, 273], z 272 – 306.
+Stair void in the slab: [547, 44, 642, 435] + [642, 44, 737, 273], z 272 – 306.
 
 ### Rooms (floor outline at the block faces)
 
@@ -292,7 +292,7 @@ archon's first figure is the usable area: under 140 of clear height it counts 0,
 | Bedroom (2) | [44,44,364,866] [364,391,376,553] [376,379,471,553] [376,553,466,565] [471,435,535,553] | 29.01 | 24.07 (28.16) |
 | Wardrobe (3) | [376,44,471,379] [471,44,535,359] | 5.20 | 4.13 (5.13) |
 | Wardrobe (4) | [376,565,535,866] | 4.79 | 3.60 (4.60) |
-| Hall (1) | [642,273,737,341] [642,341,901,553] [547,438,642,553] | 7.23 | 7.32 |
+| Hall (1) | [642,273,737,341] [642,341,901,553] [547,435,642,553] | 7.26 | 7.32 |
 | Bathroom (5) | [547,565,820,866] | 8.22 | 6.25 (7.99) |
 | Wardrobe (8) | [749,44,901,329] | 4.33 | 3.20 (4.16) |
 | Room (7) | [913,44,1276,441] | 14.41 | 11.79 (14.11) |

@@ -159,7 +159,7 @@ window.HOUSE = {
   ],
 
   "voids": [
-   {"id": "stairVoid", "name": "otwór schodów", "boxes": [[547, 642, 44, 438, 272, 306], [642, 737, 44, 273, 272, 306]]}
+   {"id": "stairVoid", "name": "otwór schodów", "boxes": [[547, 642, 44, 435, 272, 306], [642, 737, 44, 273, 272, 306]]}
   ],
 
   "openingKinds": {
@@ -284,7 +284,7 @@ window.HOUSE = {
       "rects": [[376, 535, 565, 866]]},
      {"id": "hol", "numbers": [1], "name": "Hol", "planArea": 7.32,
       "tiles": {"product": "logOak", "dir": "x"},
-      "rects": [[642, 737, 273, 341], [642, 901, 341, 553], [547, 642, 438, 553]]},
+      "rects": [[642, 737, 273, 341], [642, 901, 341, 553], [547, 642, 435, 553]]},
      {"id": "lazienka5", "numbers": [5], "name": "Łazienka", "planArea": 7.99,
       "tiles": {"product": "authorityGrey80", "dir": "x"},
       "link": {"href": "../bath/view.html", "name": "Projekt łazienki"},
