@@ -106,6 +106,8 @@ CORE.createView = function (opts) {
     for (const [k, make] of Object.entries(SURFACES)) if (def[k]) make(def[k], m, def);
     return (MATERIALS[key] = m);
   }
+  /* a ready three.js material under a key, for a page whose look is its own (cells name it like any other) */
+  const useMaterial = (key, m) => (MATERIALS[key] = m);
   const CAP_MATERIALS = {};
   const capMaterial = key => CAP_MATERIALS[key] || (CAP_MATERIALS[key] = new THREE.MeshLambertMaterial({ color: lin(MATERIAL_LIB[key].color), side: THREE.DoubleSide }));
 
@@ -400,7 +402,7 @@ CORE.createView = function (opts) {
   function start() { new ResizeObserver(resize).observe(stage); resize(); }
   const run = () => requestAnimationFrame(frame);
 
-  return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, CUT, CLIP, hash01, canvasTexture, loadImage, material, capMaterial,
+  return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, CUT, CLIP, hash01, canvasTexture, loadImage, material, useMaterial, capMaterial,
     buildMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, addLight, placeSun, setCamera, addCaps, buildCaps, setCut,
     onClick, enableNavigation, walk, enableWalk, startWalk, stopWalk, onFrame, start, run, get hemi() { return hemi; }, get sun() { return sun; } };
 };

@@ -1,6 +1,6 @@
 # Core
 
-Shared 3D code for every view: the house (../view.html) and its sub-projects (../kitchen/view.html; ../bath/view.html uses geometry and mesh only). It knows no project. What it must do: [rules.md](rules.md).
+Shared 3D code for every view: the house (../view.html) and its sub-projects (../kitchen/view.html, ../bath/view.html). It knows no project. What it must do: [rules.md](rules.md).
 
 ## Files
 
@@ -27,7 +27,7 @@ cells ─► mesh.js ─► pieces ─► scene.js ─► view
 A cell is a solid with what it is:
 
 - **S**: a prism along x over a convex polygon in y-z (a box, cut at most by lines z = a + s·y). Units mm; x along, y across, z up. The scene is in metres with y up.
-- **material**, or **faceMaterial(n)**: a material per face by its normal (a board's banded and bare edges, a roof's sides).
+- **material**, or **faceMaterial(n, points)**: a material per face by its normal and corners (a board's banded and bare edges, tiles on a wall face open to the room).
 - **layers**: shown only while all are on. **edges**: whether it draws edge lines.
 - Optional: **raw** (the bare material under a finish) and **finish** (its layer); **walkable**; **part** (one board or piece: a joint between two parts in one plane gets a line, one part has none); **batch** (kept in a mesh of its own, so a page can recolour it, e.g. a selected cabinet).
 
@@ -40,7 +40,7 @@ A cell is a solid with what it is:
 
 ## Scene
 
-- **Materials**: colour, roughness, metalness, reflect, opacity; clear coat (a lacquer); emissive and glow; one generated surface at most: plaster specks, grass, paving, wood boards, or an image (a decor photo of the textures, its size in mm, turned a quarter when its grain must run the other way).
+- **Materials**: a page's library, or a ready three.js material handed in under a key (a page whose look is its own). From the library: colour, roughness, metalness, reflect, opacity; clear coat (a lacquer); emissive and glow; one generated surface at most: plaster specks, grass, paving, wood boards, or an image (a decor photo of the textures, its size in mm, turned a quarter when its grain must run the other way).
 - **Meshes and edges** go under the model root, or under a group of it that moves (a door on its hinge).
 - **Edges** come from the pieces: a seam (one plane, one part) has no line, a corner (an angle) always has one; any other line hides while every group that closes it is shown. Lines are pulled toward the eye by a constant fraction; faces have no depth offset.
 - **Section caps** lie 0.5 mm under the cut.

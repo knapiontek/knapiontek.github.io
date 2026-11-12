@@ -216,7 +216,7 @@ dl.tight{margin:0}
         <h2>Styl</h2>
         <div class="toggles" id="styles" role="group" aria-label="Styl">
           <button data-style="real" aria-pressed="true">Realistyczny</button>
-          <button data-style="lines" aria-pressed="false">Rysunek — białe, same krawędzie</button>
+          <button data-style="lines" aria-pressed="false">Rysunek — białe</button>
         </div>
       </section>
 
@@ -245,6 +245,7 @@ dl.tight{margin:0}
           <button data-layer="sanitary">Ceramika i armatura</button>
           <button data-layer="glass">Kabina</button>
           <button data-layer="installations">Instalacje</button>
+          <button data-layer="edges">Krawędzie</button>
         </div>
         <div class="toggles"><button id="doorsBtn" aria-pressed="false">Drzwi i szuflady otwarte</button></div>
       </section>
@@ -314,6 +315,7 @@ dl.tight{margin:0}
 <script src="../materials.js"></script>
 <script src="../core/geometry.js"></script>
 <script src="../core/mesh.js"></script>
+<script src="../core/scene.js"></script>
 <script src="../engine.js"></script>
 <script src="../rooms.js"></script>
 <script src="data.js"></script>
@@ -357,11 +359,11 @@ const state = {
   surface: 'wall',      // surface being edited in the panel
   metal: 'brass',
   lighting: 'day',      // day | night
-  style: 'real',        // real | lines (white solids, edges only)
+  style: 'real',        // real | lines (white solids; the edges are a layer of their own)
   layers: {
     walls: true, ceiling: true, floor: true,
     furniture: true, sanitary: true, glass: true,
-    installations: false,
+    installations: false, edges: true,
   },
 };
 
@@ -409,7 +411,7 @@ const powerOfTwo = px => Math.min(TEXTURE_MAX_PX, 2 ** Math.round(Math.log2(px))
 
 const textureCache = new Map();
 
-/** Surface texture made of `tile` tiles of size w × h (m). Surface UVs are in metres. */
+/** Surface texture made of `tile` tiles of size w × h (m). Surface UVs are in mm (core: house axes, on the face plane). */
 function tileTexture(tile, w, h) {
   const key = `${tile.id}|${w}x${h}`;
   if (textureCache.has(key)) return textureCache.get(key);
@@ -455,7 +457,7 @@ function tileTexture(tile, w, h) {
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   texture.encoding = THREE.sRGBEncoding;
   texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  texture.repeat.set(1 / blockW, 1 / blockH);
+  texture.repeat.set(1 / (blockW * 1000), 1 / (blockH * 1000));
   textureCache.set(key, texture);
   return texture;
 }
@@ -485,53 +487,53 @@ function lineTileTexture(w, h) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  texture.repeat.set(1 / blockW, 1 / blockH);
+  texture.repeat.set(1 / (blockW * 1000), 1 / (blockH * 1000));
   textureCache.set(key, texture);
   return texture;
 }
 
-// One material per surface: changing the tile only swaps its texture.
-const tileMaterials = {}, tileLineMaterials = {};
-for (const surface of SURFACES) {
-  tileMaterials[surface] = new THREE.MeshStandardMaterial({ roughness: .78, metalness: 0, envMapIntensity: .35 });
-  tileLineMaterials[surface] = new THREE.MeshBasicMaterial({ polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
-  tileMaterials[surface].userData.lineMaterial = tileLineMaterials[surface];
-}
+// One material per surface: changing the tile only swaps its texture; the "Drawing" style shows the grout lines only.
+const tileMaterials = {};
+for (const surface of SURFACES) tileMaterials[surface] = new THREE.MeshStandardMaterial({ roughness: .78, metalness: 0, envMapIntensity: .35 });
 function applyTiles(surface) {
-  const { w, h } = tileSize(surface);
-  const material = tileMaterials[surface];
-  material.map = tileTexture(TILES[state.tiles[surface].tile], w, h);
+  const { w, h } = tileSize(surface), material = tileMaterials[surface];
+  material.userData.photo = tileTexture(TILES[state.tiles[surface].tile], w, h);
+  material.userData.lines = lineTileTexture(w, h);
+  material.map = state.style === 'lines' ? material.userData.lines : material.userData.photo;
   material.needsUpdate = true;
-  tileLineMaterials[surface].map = lineTileTexture(w, h);
-  tileLineMaterials[surface].needsUpdate = true;
   invalidate();
 }
 
 
 /* ==========================================================================
-   3. RENDERER, SCENE, CAMERA
+   3. VIEW (core), THE BATH FRAME, CAMERA
+   The page draws like the house: core turns solids in house mm into the scene. engine.js computes the bathroom in its room
+   frame (metres; x from the shower line toward the vanity wall, y up from the floor, z from the door wall); FRAME puts that
+   frame into the house, turned, never mirrored: house x = X0 − 1000·x, house y = Y0 + 1000·z, house z = LEVEL + 1000·y.
    ========================================================================== */
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const canvasEl = document.createElement('canvas'); stage.prepend(canvasEl);
+const MATERIAL_LIB = {};                   // core keys of the page's own three.js materials (useMaterial)
+const BOX = HOUSE_ROOM.box;
+const VIEW = CORE.createView({ canvas: canvasEl, stage, materials: MATERIAL_LIB, textures: {}, light: null,
+  edges: { color: '#2b2e31', opacity: .5, layers: ['edges'] }, body: [[BOX[0], BOX[2], BOX[4]], [BOX[1], BOX[3], BOX[5]]], sunCentre: [0, 0, 0] });
+const renderer = VIEW.renderer, scene = VIEW.scene, camera = VIEW.camera, controls = VIEW.controls;
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.shadowMap.autoUpdate = false;   // shadows are recomputed only when the scene changes (doors, layers, lighting), not when orbiting
-
-/* Render on demand: a frame is drawn only when something changed. */
-let dirtyFrames = 2, shadowsDirty = true;
-function invalidate(shadows = true) { dirtyFrames = Math.max(dirtyFrames, 2); if (shadows) shadowsDirty = true; }
-stage.prepend(renderer.domElement);
+const invalidate = () => VIEW.redraw();
+const LOOK = new Map();                    // material -> its own look, while the "Drawing" style whitens it
+const FRAME = new THREE.Group(); FRAME.matrixAutoUpdate = false;
+FRAME.matrix.set(-1000, 0, 0, G.X0,  0, 0, 1000, G.Y0,  0, 1000, 0, G.LEVEL,  0, 0, 0, 1);
+VIEW.root.add(FRAME); scene.updateMatrixWorld(true);
+const toWorld = p => FRAME.localToWorld(new THREE.Vector3(...p));          // a point of the bath frame, in the scene
+const camPos = () => FRAME.worldToLocal(camera.position.clone());          // the camera, in the bath frame
+const houseToFrame = p => new THREE.Vector3((G.X0 - p[0]) / 1000, (p[2] - G.LEVEL) / 1000, (p[1] - G.Y0) / 1000);
 
 for (const surface of SURFACES) applyTiles(surface);
 
-const scene = new THREE.Scene();
 function syncStageColor() {
   const css = getComputedStyle(document.documentElement).getPropertyValue('--stage').trim();
   scene.background = new THREE.Color(css || '#c9ced1');
-  invalidate(false);
+  invalidate();
 }
 syncStageColor();
 try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncStageColor); } catch (e) {}
@@ -549,9 +551,6 @@ let envMap = null;
   envMap = scene.environment = pmrem.fromScene(env, .04).texture;
 })();
 
-const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 60);
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
 controls.minDistance = 0.3;
 controls.maxDistance = 10;
 
@@ -587,7 +586,7 @@ function setMetal(name) {
 }
 
 /** Box centred at (x, y, z). */
-function box(w, h, d, material, x, y, z, parent = scene) {
+function box(w, h, d, material, x, y, z, parent = FRAME) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
   mesh.position.set(x, y, z);
   mesh.castShadow = mesh.receiveShadow = true;
@@ -595,7 +594,7 @@ function box(w, h, d, material, x, y, z, parent = scene) {
   return mesh;
 }
 /** Vertical cylinder centred at (x, y, z). */
-function cyl(rTop, rBottom, h, material, x, y, z, parent = scene, segments = 32) {
+function cyl(rTop, rBottom, h, material, x, y, z, parent = FRAME, segments = 32) {
   const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBottom, h, segments), material);
   mesh.position.set(x, y, z);
   mesh.castShadow = true;
@@ -603,7 +602,7 @@ function cyl(rTop, rBottom, h, material, x, y, z, parent = scene, segments = 32)
   return mesh;
 }
 /** Tube along a curve through points [x, y, z]. */
-function tube(points, radius, material, parent = scene, segments = 24) {
+function tube(points, radius, material, parent = FRAME, segments = 24) {
   const curve = new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p)));
   const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, segments, radius, 12, false), material);
   mesh.castShadow = true;
@@ -611,13 +610,11 @@ function tube(points, radius, material, parent = scene, segments = 24) {
   return mesh;
 }
 
-/** Mesh clad with the given surface's tiles. Gets world-space UVs later (see assignTileUVs). */
-const tiledMeshes = [];
-function tiled(surface, geometry, parent = scene) {
+/** Mesh clad with the given surface's tiles (a box: it becomes a solid of core, its uv in mm like the room's). */
+function tiled(surface, geometry, parent = FRAME) {
   const mesh = new THREE.Mesh(geometry, tileMaterials[surface]);
   mesh.castShadow = mesh.receiveShadow = true;
   parent.add(mesh);
-  tiledMeshes.push(mesh);
   return mesh;
 }
 
@@ -637,38 +634,33 @@ function makeDrawer(group, distance) {
 
 /** Group belonging to a panel layer (Furniture, Ceramics and fittings, …). */
 const layerGroups = {};
-function layerGroup(layer, parent = scene) {
+function layerGroup(layer, parent = FRAME) {
   const group = new THREE.Group();
   parent.add(group);
+  group.userData.layerKey = 'L:' + layer;  // the solids built in it get this layer
   (layerGroups[layer] = layerGroups[layer] || []).push(group);
   return group;
 }
 
 /* Cutaway: walls, ceiling and casing hide when they block the view or when their layer is off.
-   Hidden meshes are not drawn but still cast shadows — daylight only enters through the window. */
+   Hidden meshes are not drawn but still cast shadows — daylight only enters through the window. A cutaway's key (C:n) goes
+   to the solids built in it. */
 const GHOST = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
-const cutaways = [];   // { root, isHidden(), hidden }
-function cutaway(root, isHidden) { const c = { root, isHidden, hidden: false }; cutaways.push(c); return c; }
-/* "Drawing" style: everything white (no lights), only solid edges and tile grout are visible. */
-const LINE_WHITE = new THREE.MeshBasicMaterial({ color: 0xffffff, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
-const LINE_METAL = new THREE.MeshBasicMaterial({ color: 0xc4c8cb, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
-const LINE_GLASS = new THREE.MeshBasicMaterial({ color: 0xe8f0f2, transparent: true, opacity: .25, depthWrite: false, side: THREE.DoubleSide });
-const EDGE = new THREE.LineBasicMaterial({ color: 0x2b2e31 });
-const EDGE_LAYER = 1;   // edges on a separate layer: the click ray ignores them
-function styledMaterial(base) {
-  if (base === GHOST || state.style !== 'lines') return base;
-  if (base.userData.lineMaterial) return base.userData.lineMaterial;
-  if (base.transparent) return LINE_GLASS;
-  return base.metalness >= .9 ? LINE_METAL : LINE_WHITE;   // fittings and radiator light grey, everything else white
+const cutaways = [], CUT_OF = {};   // { root, isHidden(), hidden, key }
+function cutaway(root, isHidden) {
+  const c = { root, isHidden, hidden: false, key: 'C:' + cutaways.length };
+  root.userData.cutKey = c.key; cutaways.push(c); CUT_OF[c.key] = c;
+  return c;
 }
+const EDGE = new THREE.LineBasicMaterial({ color: 0x2b2e31 });   // outlines of the round details (core draws the solids' edges)
 function applyMaterial(o) {
   const base = o.userData.base || (o.userData.base = o.material);
-  o.material = o.userData.ghost ? GHOST : styledMaterial(base);
-  if (o.userData.edges) o.userData.edges.visible = state.style === 'lines' && !o.userData.ghost;
+  o.material = o.userData.ghost ? GHOST : base;
+  if (o.userData.edges) o.userData.edges.visible = state.layers.edges && !o.userData.ghost;
 }
 function setGhost(root, ghost) {
-  root.traverse(o => { if (o.isMesh) { o.userData.ghost = ghost; applyMaterial(o); } });
-  invalidate(false);
+  root.traverse(o => { if (o.isMesh && !o.userData.owners) { o.userData.ghost = ghost; applyMaterial(o); } });   // core's meshes: applySolids
+  invalidate();
 }
 const isShown = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
 const isSolidHit = hit => hit.object.isMesh && isShown(hit.object) && hit.object.material !== GHOST && hit.object.material.visible !== false;
@@ -684,125 +676,62 @@ const { H, CEILING_Y, T, WINDOW_REVEAL, WINDOW_WALL_T, XL, ZW, SX, SZ, SHOWER_ZC
         WX0, WX1, WIN_Y0, WIN_Y1, DX0, DX1, DOOR_H } = G;
 
 /* ---------- the room: the house's own walls, slabs, floor, window and roof (../rooms.js), as they are ----------
-   The house solids are in mm and house axes; one matrix puts them in the room frame of engine.js (metres):
-   x = X0 − house x, y = house z − LEVEL, z = house y − Y0. Every object of the room (each wall, the floor, the ceiling,
-   each window: rooms.js objects) is one record that hides while the camera is behind it. The bathroom's tiles are a skin 1 mm in front of every house wall face that looks into the room
-   (shower tiles inside the shower, wall tiles elsewhere); the bare house material stays behind them. */
-const HOUSE_TO_ROOM = new THREE.Matrix4().set(-.001, 0, 0, G.X0 / 1000,  0, 0, .001, -G.LEVEL / 1000,  0, .001, 0, -G.Y0 / 1000,  0, 0, 0, 1);
-const toRoom = p => new THREE.Vector3(p[0], p[1], p[2]).applyMatrix4(HOUSE_TO_ROOM);
-const NORMAL = { '+x': [-1, 0, 0], '-x': [1, 0, 0], '+y': [0, 0, 1], '-y': [0, 0, -1], '+z': [0, 1, 0], '-z': [0, -1, 0] };   // side -> outward, room frame
+   Drawn by core in house mm. Every object of the room (each wall, the floor, the ceiling; a window goes with its wall) is
+   one record that hides while the camera is behind it and still casts its shadow. The tiles are the finish of the house's
+   own faces: a wall face open to the room takes the wall tiles (inside the shower the shower tiles), the top of the floor
+   slab the floor tiles. Cells are split at the shower's edges, so that every face has one finish; nothing is moved. */
+const NORMAL = { '+x': [-1, 0, 0], '-x': [1, 0, 0], '+y': [0, 0, 1], '-y': [0, 0, -1], '+z': [0, 1, 0], '-z': [0, -1, 0] };   // side -> outward, bath frame
 const ROLE_LAYER = { wall: 'walls', window: 'walls', floor: 'floor', ceiling: 'ceiling' };
 const DIRECTION = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+z': [0, 0, 1], '-z': [0, 0, -1] };   // house axes
-const houseMaterials = {};
-function houseMaterial(key) {
-  const d = HOUSE_MATERIALS.materials[key];
-  return houseMaterials[key] || (houseMaterials[key] = d.opacity !== undefined
-    ? new THREE.MeshStandardMaterial({ color: d.color, roughness: d.roughness, metalness: d.metalness || 0, transparent: true, opacity: d.opacity, depthWrite: false, side: THREE.DoubleSide })
-    : new THREE.MeshStandardMaterial({ color: d.color, roughness: d.roughness ?? .9, metalness: d.metalness || 0 }));
-}
+const tileKey = surface => 'tile:' + surface;
+for (const surface of SURFACES) { MATERIAL_LIB[tileKey(surface)] = { color: '#ffffff' }; VIEW.useMaterial(tileKey(surface), tileMaterials[surface]); }
+for (const [key, d] of Object.entries(HOUSE_MATERIALS.materials)) MATERIAL_LIB[key] = d;
 // the shower in house mm [x1, x2, y1, y2]: where the shower tiles go
 const showerZone = (() => {
   const toHouseX = x => G.X0 - x * 1000, toHouseY = z => G.Y0 + z * 1000;
   const [x1, x2, z1, z2] = ATTIC ? [0, G.SHX, 0, G.SHZ] : [G.SX, 0, G.SZ, G.ZW];
   return [Math.min(toHouseX(x1), toHouseX(x2)), Math.max(toHouseX(x1), toHouseX(x2)), toHouseY(z1), toHouseY(z2)];
 })();
-/* the part of convex polygon P (house mm) on one side of the plane p[axis] = v */
-function clipPlane(P, axis, v, keep) {
-  const out = [];
-  for (let i = 0; i < P.length; i++) {
-    const a = P[i], b = P[(i + 1) % P.length], fa = keep * (a[axis] - v), fb = keep * (b[axis] - v);
-    if (fa >= -1e-6) out.push(a);
-    if ((fa > 1e-6 && fb < -1e-6) || (fa < -1e-6 && fb > 1e-6)) { const t = fa / (fa - fb); out.push(a.map((c, k) => c + t * (b[k] - c))); }
-  }
-  return out;
-}
-/* P split into the part inside the shower zone and the parts outside it */
-function splitByShower(P) {
-  const Z = showerZone, inside = [], outside = [];
-  let rest = P;
-  for (const [axis, v, keep] of [[0, Z[0], 1], [0, Z[1], -1], [1, Z[2], 1], [1, Z[3], -1]]) {
-    const out = clipPlane(rest, axis, v, -keep);
-    if (out.length >= 3) outside.push(out);
-    rest = clipPlane(rest, axis, v, keep);
-    if (rest.length < 3) return { inside, outside: outside.concat(rest.length >= 3 ? [rest] : []) };
-  }
-  inside.push(rest);
-  return { inside, outside };
-}
-const walls = [], sides = {};
+const ROOM_CELLS = [], walls = [], sides = {};
 (function houseShell() {
-  const box = HOUSE_ROOM.box, onBox = f => f.n.some((c, k) => Math.abs(c) > .99 && f.poly.every(p => Math.abs(p[k] - box[2 * k]) < .5 || Math.abs(p[k] - box[2 * k + 1]) < .5));
-  const objectOf = new Map(HOUSE_ROOM.objects.flatMap(o => o.cells.map(c => [c, o]))), parts = new Map();
-  const partOf = o => parts.get(o) || parts.set(o, { points: [], batches: new Map(), skins: { wall: new CORE.mesh.Batch(), shower: new CORE.mesh.Batch() } }).get(o);
-  // each object is a closed solid of its own (faces worked out per object), so hiding one never opens another
-  for (const o of HOUSE_ROOM.objects) for (const f of CORE.mesh.piecesOf(o.cells)) {
-    const part = partOf(o), mat = houseMaterial(f.material);
-    if (!part.batches.has(mat)) part.batches.set(mat, new CORE.mesh.Batch());
-    part.batches.get(mat).polygon(f.poly, f.n, () => [0, 0]);
-    part.points.push(...f.poly);
-  }
-  // tiles go only on faces open to the room: worked out over the whole room, so faces where two walls meet get none
-  for (const f of CORE.mesh.piecesOf(HOUSE_ROOM.cells)) {
-    const o = objectOf.get(f.cell), side = f.cell.side, part = partOf(o);
-    // tiles: a wall face looking into the room or into an opening of it, not a contact face, not where the copy was trimmed
-    const outward = DIRECTION[side].reduce((sum, c, k) => sum + c * f.n[k], 0) > .5;
-    if (!f.cell.layers.includes('walls') || f.cover || outward || onBox(f)) continue;
-    const skin = f.poly.map(p => p.map((c, k) => c + f.n[k]));   // 1 mm in front of the face
-    const { inside, outside } = splitByShower(skin);
-    for (const P of inside) part.skins.shower.polygon(P, f.n, () => [0, 0]);
-    for (const P of outside) part.skins.wall.polygon(P, f.n, () => [0, 0]);
-  }
-  const houseOf = new Map();                 // object id -> its house group (a window goes into its wall's or roof's: shown and hidden with it)
-  for (const [o, part] of [...parts].sort(([a], [b]) => (a.role === 'window') - (b.role === 'window'))) {
-    if (o.role === 'window' && houseOf.has(o.host)) {
-      for (const [mat, batch] of part.batches) houseOf.get(o.host).add(batch.mesh(mat));
-      continue;
+  const GE = CORE.geometry, B = HOUSE_ROOM.box, ZONE = GE.prism([showerZone[0], showerZone[1], showerZone[2], showerZone[3], -GE.INF, GE.INF]);
+  // a face where rooms.js trimmed the copy (in a side of the room's box): no tiles
+  const onBox = (n, P) => n.some((c, k) => Math.abs(c) > .99 && P.every(p => Math.abs(p[k] - B[2 * k]) < .5 || Math.abs(p[k] - B[2 * k + 1]) < .5));
+  const records = new Map();
+  for (const o of HOUSE_ROOM.objects.slice().sort((a, b) => (a.role === 'window') - (b.role === 'window'))) {
+    let record = o.role === 'window' ? records.get(o.host) : null;
+    if (!record) {
+      const layer = ROLE_LAYER[o.role], group = new THREE.Group(); FRAME.add(group);
+      const points = o.cells.flatMap(c => c.S.poly.flatMap(p => [[c.S.x1, p[0], p[1]], [c.S.x2, p[0], p[1]]]));
+      const span = k => Math.max(...points.map(p => p[k])) - Math.min(...points.map(p => p[k]));
+      record = { group, normal: new THREE.Vector3(...NORMAL[o.side]), middle: houseToFrame([0, 1, 2].map(k => points.reduce((sum, p) => sum + p[k], 0) / points.length)), length: span(0) + span(1) };
+      record.cut = cutaway(group, () => !state.layers[layer] || camPos().sub(record.middle).dot(record.normal) >= .05);
+      records.set(o.id, record);
+      if (o.role === 'wall') {                 // the longest wall of each side names that side (door wall, vanity wall, window wall)
+        walls.push(record);
+        if (!sides[o.side] || sides[o.side].length < record.length) sides[o.side] = record;
+      }
     }
-    const normal = NORMAL[o.side], layer = ROLE_LAYER[o.role];
-    const group = new THREE.Group(); scene.add(group);
-    const house = new THREE.Group(); house.matrixAutoUpdate = false; house.matrix.copy(HOUSE_TO_ROOM); group.add(house);
-    houseOf.set(o.id, house);
-    for (const [mat, batch] of part.batches) house.add(batch.mesh(mat));
-    for (const [surface, batch] of Object.entries(part.skins)) if (batch.p.length) {
-      const mesh = tiled(surface, batch.mesh(tileMaterials[surface]).geometry, house);
-      mesh.receiveShadow = true;
-    }
-    const middle = toRoom([0, 1, 2].map(k => part.points.reduce((sum, p) => sum + p[k], 0) / part.points.length));
-    const record = { group, normal: new THREE.Vector3(...normal), middle };
-    record.cut = cutaway(group, () => !state.layers[layer] || camera.position.clone().sub(record.middle).dot(record.normal) >= .05);
-    record.length = Math.max(...part.points.map(p => p[0])) - Math.min(...part.points.map(p => p[0])) + Math.max(...part.points.map(p => p[1])) - Math.min(...part.points.map(p => p[1]));
-    if (o.role === 'wall') {                 // the longest wall of each side names that side (door wall, vanity wall, window wall)
-      walls.push(record);
-      if (!sides[o.side] || sides[o.side].length < record.length) sides[o.side] = record;
+    const out = DIRECTION[o.side];
+    for (const c of o.cells) {
+      const tiles = c.layers.includes('walls'), floor = o.role === 'floor';
+      const parts = tiles || floor ? [[GE.prismIntersect(c.S, ZONE), true], ...GE.prismMinus(c.S, ZONE).map(S => [S, false])] : [[c.S, false]];
+      for (const [S, shower] of parts) {
+        if (!S || GE.emptyPrism(S)) continue;
+        const cell = Object.assign({}, c, { S, layers: [record.cut.key], raw: c.material });   // raw: a face against another solid stays bare
+        delete cell.finish;
+        if (tiles) cell.faceMaterial = (n, P) => (out.reduce((sum, v, k) => sum + v * n[k], 0) > .5 || onBox(n, P) ? c.material : tileKey(shower ? 'shower' : 'wall'));
+        if (floor) cell.faceMaterial = n => (n[2] > .5 ? tileKey(shower ? 'showerFloor' : 'floor') : c.material);
+        ROOM_CELLS.push(cell);
+      }
     }
   }
 })();
 wallDoor = sides['-y']; wallVanity = sides['-x'];
 
-/* ---------- floor: tiles 3 mm over the house's floor, shower tiles inside the shower ---------- */
-const floorGroup = new THREE.Group(); scene.add(floorGroup);
+/* ---------- floor: the tiles are the top of the house's slab (above); the drains lie on it ---------- */
+const floorGroup = new THREE.Group(); FRAME.add(floorGroup);
 cutaway(floorGroup, () => !state.layers.floor);
-const FLOOR_TILES = .003;                  // the tiles lie on the slab, never in its plane
-function floorPlane(surface, x0, z0, x1, z1) {
-  if (x1 - x0 < .001 || z1 - z0 < .001) return;
-  const mesh = tiled(surface, new THREE.PlaneGeometry(x1 - x0, z1 - z0), floorGroup);
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.position.set((x0 + x1) / 2, FLOOR_TILES, (z0 + z1) / 2);
-  mesh.castShadow = false;
-}
-(function floors() {
-  const zone = ATTIC ? [0, G.SHX, 0, G.SHZ] : [G.SX, 0, G.SZ, G.ZW];   // the shower, room frame [x1, x2, z1, z2]
-  const cut = (r, z) => {                  // r without z: up to four rectangles around it
-    const [x1, x2, z1, z2] = [Math.max(r[0], z[0]), Math.min(r[1], z[1]), Math.max(r[2], z[2]), Math.min(r[3], z[3])];
-    if (x2 <= x1 || z2 <= z1) return [r];
-    return [[r[0], x1, r[2], r[3]], [x2, r[1], r[2], r[3]], [x1, x2, r[2], z1], [x1, x2, z2, r[3]]];
-  };
-  for (const r of G.INSIDE) {
-    for (const q of cut(r, zone)) floorPlane('floor', q[0], q[2], q[1], q[3]);
-    const [x1, x2, z1, z2] = [Math.max(r[0], zone[0]), Math.min(r[1], zone[1]), Math.max(r[2], zone[2]), Math.min(r[3], zone[3])];
-    floorPlane('showerFloor', x1, z1, x2, z2);
-  }
-})();
 if (ATTIC) buildAttic(); else buildGround();
 
 /* ---------- concealed door Porta HIDE 80, opening into the hallway (as in the original design) ----------
@@ -942,17 +871,18 @@ for (const [id, d] of Object.entries(BATH_TEXTURES.decors || {})) {
 if (!Object.keys(DECORS).length) return fail('Brak dekorów płyt (BATH_TEXTURES.decors) w textures.js.');
 state.decor = DECORS[DATA.defaultDecor] ? DATA.defaultDecor : Object.keys(DECORS)[0];
 
-/** Decor texture: the photo spans width_m along the grain (horizontal); vanity UVs are in metres from its corner. */
-function decorTexture(d) {
-  const texture = new THREE.Texture(d.img);
+/** Decor texture: the photo spans width_m along the grain; uv in mm on the face (core). turn: the grain along the face's v. */
+function decorTexture(d, turn) {
+  const texture = new THREE.Texture(d.img), along = d.width_m * 1000, across = along * d.img.height / d.img.width;
   texture.needsUpdate = true;
   texture.wrapS = texture.wrapT = THREE.MirroredRepeatWrapping;
   texture.encoding = THREE.sRGBEncoding;
   texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  texture.repeat.set(1 / d.width_m, 1 / (d.width_m * d.img.height / d.img.width));
+  if (turn) { texture.repeat.set(1 / across, 1 / along); texture.rotation = Math.PI / 2; } else texture.repeat.set(1 / along, 1 / across);
   return texture;
 }
 M.decor = new THREE.MeshStandardMaterial({ roughness: .62, envMapIntensity: .3 });
+M.decorTurned = new THREE.MeshStandardMaterial({ roughness: .62, envMapIntensity: .3 });   // the top: grain along the wall
 M.legrabox = new THREE.MeshStandardMaterial({ color: 0x1e1f21, roughness: .42, metalness: .55 });   // czarny karbon matowy
 const BASIN_COLOR = DATA.look.basin === 'white' ? 0xf1f0ec : 0x0f0f10;
 M.basin = new THREE.MeshPhysicalMaterial({ color: BASIN_COLOR, roughness: .62, clearcoat: .1, clearcoatRoughness: .6, envMapIntensity: .25 });
@@ -962,17 +892,16 @@ M.pvc = new THREE.MeshStandardMaterial({ color: 0x8f969c, roughness: .5 });
 const decorTextures = {};
 function setDecor(id) {
   state.decor = id;
-  M.decor.map = decorTextures[id] = decorTextures[id] || decorTexture(DECORS[id]);
-  M.decor.needsUpdate = true;
+  decorTextures[id] = decorTextures[id] || [decorTexture(DECORS[id]), decorTexture(DECORS[id], true)];
+  [M.decor.map, M.decorTurned.map] = decorTextures[id];
+  for (const m of [M.decor, M.decorTurned]) { LOOK.get(m) && (LOOK.get(m).map = m.map); if (state.style === 'lines') m.map = null; m.needsUpdate = true; }
+  invalidate();
 }
 setDecor(state.decor);
 
-const decorMeshes = [];
 /** Board part: size and centre in mm, in vanity coordinates (x from the wall face into the room, y from the floor, z from the door wall). */
 function panel(dx, dy, dz, cx, cy, cz, parent) {
-  const mesh = box(mm(dx), mm(dy), mm(dz), M.decor, XL - mm(cx), mm(cy), mm(cz), parent);
-  decorMeshes.push(mesh);
-  return mesh;
+  return box(mm(dx), mm(dy), mm(dz), M.decor, XL - mm(cx), mm(cy), mm(cz), parent);
 }
 
 (function vanity() {
@@ -1099,7 +1028,7 @@ const { ZX0, ZZ0, ZZ1, PZ0, NICHE_DEPTH, ZXB, WC_Z } = G;   // casing face, exte
    Duofix frame (1120 mm) and flush plate (top ~1080 mm). Hinges on the riser side. */
 const { CAB_W, CAB_H, CAB_Y0 } = G;
 
-const casing = new THREE.Group(); scene.add(casing);
+const casing = new THREE.Group(); FRAME.add(casing);
 // the casing stands against the vanity wall and window wall: hides with them or in installation preview
 cutaway(casing, () => !state.layers.walls || state.layers.installations || wallLeft.cut.hidden || wallWindow.cut.hidden);
 
@@ -1279,10 +1208,10 @@ const PANEL_OUTLINE = [[1, 1], [-1, 1], [-1, -1], [1, -1], [1, 1], [1, 1]]
 const DOWNLIGHTS = [[.45, .5], [.55, 1.35], [XL - .4, mm(V.z0 + V.basinZ)], [.85, ZW - .4], [SHOWER_XC, SHOWER_ZC + .25]];
 SCENE.downlights = DOWNLIGHTS; SCENE.ceilingY = CEILING_Y;
 
-const ceiling = new THREE.Group(); scene.add(ceiling);
+const ceiling = new THREE.Group(); FRAME.add(ceiling);
 
 // the slab above the ceiling is the house's (see the room above): it casts the shadow over the LED gap
-cutaway(ceiling, () => !state.layers.ceiling || camera.position.y > CEILING_Y - .02);
+cutaway(ceiling, () => !state.layers.ceiling || camPos().y > CEILING_Y - .02);
 
 const outlineShape = (points, Kind = THREE.Shape) => {
   const s = new Kind(); s.moveTo(...points[0]); points.slice(1).forEach(p => s.lineTo(...p)); s.closePath(); return s;
@@ -1334,7 +1263,7 @@ const outlineShape = (points, Kind = THREE.Shape) => {
 function buildAttic() {
   const { KNEE, PITCH, ZF, RW, BATH, TAP, CASE, RISER, SHX, SHZ, KNEE_T, WC_Z, SLOPE_LEN } = G;
   const hAt = G.heightAt, sin = Math.sin(PITCH), cos = Math.cos(PITCH);
-  const behind = (middle, normal) => camera.position.clone().sub(middle).dot(normal) >= .05;
+  const behind = (middle, normal) => camPos().sub(middle).dot(normal) >= .05;
 
   /* ---------- walls, floor, flat ceiling, roof and roof window: the house's (see the room above) ---------- */
 
@@ -1405,7 +1334,7 @@ function buildAttic() {
   })();
 
   /* ---------- WC casing along the bottom wall up to the riser corner, wall-hung WC ---------- */
-  const casing = new THREE.Group(); scene.add(casing);
+  const casing = new THREE.Group(); FRAME.add(casing);
   cutaway(casing, () => !state.layers.walls || state.layers.installations);
   (function wcCasing() {
     const { x1, z0, z1, h } = CASE;
@@ -1446,46 +1375,65 @@ function buildAttic() {
 }
 
 /* ==========================================================================
-   9. TILE UVs IN WORLD SPACE
-   Every wall, casing side and floor gets tiles at true scale (1 UV = 1 m),
-   and the grout grid starts at the same place on all surfaces.
+   9. SOLIDS OF CORE
+   Every box the fixtures are built of that lies along the house axes becomes a cell of core in house mm: welded to its
+   neighbours, its hidden faces cut away, its edges drawn. Its layers are the keys of the groups it was built in: panel
+   layers (L:) and cutaways (C:). A box under a door or a drawer is drawn under that moving part. What is round, lofted
+   or turned stays a mesh.
    ========================================================================== */
 
-(function assignTileUVs() {
+const matKey = m => { const k = 'm:' + m.uuid; if (!MATERIAL_LIB[k]) { MATERIAL_LIB[k] = { color: '#' + (m.color ? m.color.getHexString() : 'ffffff') }; VIEW.useMaterial(k, m); } return k; };
+const STATIC = ROOM_CELLS.slice(), MOVING = new Map();   // pivot of a door or drawer -> its cells
+(function boxesToSolids() {
   scene.updateMatrixWorld(true);
-  const p = new THREE.Vector3(), n = new THREE.Vector3(), normalMatrix = new THREE.Matrix3();
-  for (const mesh of tiledMeshes) {
-    const geometry = mesh.geometry, P = geometry.attributes.position, N = geometry.attributes.normal;
-    normalMatrix.getNormalMatrix(mesh.matrixWorld);
-    const uv = new Float32Array(P.count * 2);
-    for (let i = 0; i < P.count; i++) {
-      p.fromBufferAttribute(P, i).applyMatrix4(mesh.matrixWorld);
-      n.fromBufferAttribute(N, i).applyMatrix3(normalMatrix);
-      const ax = Math.abs(n.x), ay = Math.abs(n.y), az = Math.abs(n.z);
-      if (ax >= ay && ax >= az) { uv[i * 2] = p.z; uv[i * 2 + 1] = p.y; }        // wall perpendicular to X
-      else if (ay >= az)        { uv[i * 2] = p.x; uv[i * 2 + 1] = p.z; }        // floor, sill
-      else                      { uv[i * 2] = p.x; uv[i * 2 + 1] = p.y; }        // wall perpendicular to Z
+  const toHouse = new THREE.Matrix4().copy(VIEW.root.matrixWorld).invert(), found = [];
+  FRAME.traverse(o => { if (o.isMesh && o.geometry.type === 'BoxGeometry') found.push(o); });
+  let part = 0;
+  for (const o of found) {
+    const { width: w, height: h, depth: d } = o.geometry.parameters, m = new THREE.Matrix4().multiplyMatrices(toHouse, o.matrixWorld);
+    const corners = [];
+    for (const x of [-w / 2, w / 2]) for (const y of [-h / 2, h / 2]) for (const z of [-d / 2, d / 2]) corners.push(new THREE.Vector3(x, y, z).applyMatrix4(m));
+    const b = [0, 1, 2].flatMap(k => { const v = corners.map(c => c.getComponent(k)); return [Math.min(...v), Math.max(...v)]; });
+    const volume = (b[1] - b[0]) * (b[3] - b[2]) * (b[5] - b[4]), own = w * h * d * 1e9;
+    if (Math.abs(volume - own) > own * 1e-3 + 1e-3) continue;          // turned: stays a mesh
+    const keys = new Set();
+    let pivot = null;
+    for (let p = o.parent; p && p !== FRAME; p = p.parent) {
+      if (p.userData.layerKey) keys.add(p.userData.layerKey);
+      if (p.userData.cutKey) keys.add(p.userData.cutKey);
+      if (!pivot && p.userData.door && p.userData.door.pivot === p) pivot = p;
     }
-    geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    const key = matKey(o.material);
+    const cell = { S: CORE.geometry.prism(b), element: 'fixture', material: key, cap: key, layers: keys.size ? [...keys].sort() : ['fixture'],
+      edges: !o.material.transparent && !o.material.isMeshBasicMaterial, part: ++part };
+    if (o.material === M.decor) cell.faceMaterial = n => (Math.abs(n[2]) > .5 ? matKey(M.decorTurned) : key);   // grain along the wall on the top
+    if (pivot) { if (!MOVING.has(pivot)) MOVING.set(pivot, []); MOVING.get(pivot).push(cell); } else STATIC.push(cell);
+    o.parent.remove(o); o.geometry.dispose();
   }
-  // vanity board: grain always horizontal (along the wall on fronts and top, in depth on the sides)
-  for (const mesh of decorMeshes) {
-    mesh.geometry = mesh.geometry.clone();
-    const geometry = mesh.geometry, P = geometry.attributes.position, N = geometry.attributes.normal;
-    normalMatrix.getNormalMatrix(mesh.matrixWorld);
-    const uv = new Float32Array(P.count * 2);
-    for (let i = 0; i < P.count; i++) {
-      p.fromBufferAttribute(P, i).applyMatrix4(mesh.matrixWorld);
-      n.fromBufferAttribute(N, i).applyMatrix3(normalMatrix);
-      const ax = Math.abs(n.x), ay = Math.abs(n.y), az = Math.abs(n.z);
-      const u0 = mm(V.z0) - .02, x0 = XL - mm(V.topDepth) - .02;   // all vanity wood from one crop of the photo, no repeats
-      if (ax >= ay && ax >= az) { uv[i * 2] = p.z - u0; uv[i * 2 + 1] = p.y; }
-      else if (ay >= az)        { uv[i * 2] = p.z - u0; uv[i * 2 + 1] = p.x - x0; }
-      else                      { uv[i * 2] = p.x - x0; uv[i * 2 + 1] = p.y; }
-    }
-    geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  const pieces = CORE.mesh.piecesOf(STATIC);
+  VIEW.buildMeshes(pieces); VIEW.buildEdges(pieces);
+  for (const [pivot, cells] of MOVING) {   // drawn at rest in house mm, under the pivot: they turn or slide with it
+    const pin = new THREE.Group(); pin.matrixAutoUpdate = false;
+    pin.matrix.copy(pivot.matrixWorld).invert().multiply(VIEW.root.matrixWorld);
+    pivot.add(pin);
+    const p = CORE.mesh.piecesOf(cells); VIEW.buildMeshes(p, pin); VIEW.buildEdges(p, pin);
   }
+  for (const g of VIEW.GROUPS) g.base = g.mesh.material;
 })();
+
+/* what the panel and the camera show: a solid when all its layers are on; drawn as a ghost (no colour, still a shadow)
+   while a cutaway it is in is hidden */
+const layersOn = layers => layers.every(k => k.startsWith('L:') ? state.layers[k.slice(2)] : k === 'edges' ? state.layers.edges : true);
+const cutHidden = layers => layers.some(k => k.startsWith('C:') && CUT_OF[k].hidden);
+function applySolids() {
+  VIEW.showPieces(l => layersOn(l) && !cutHidden(l), () => true);
+  for (const g of VIEW.GROUPS) {
+    const ghost = layersOn(g.layers) && cutHidden(g.layers);
+    if (ghost) g.mesh.visible = true;
+    g.mesh.material = ghost ? GHOST : g.base;
+  }
+  invalidate();
+}
 
 
 /* ==========================================================================
@@ -1504,8 +1452,8 @@ addLight(new THREE.HemisphereLight(0xf2f4f6, 0x3a3836, 1), .5, .05);
 addLight(new THREE.AmbientLight(0xffffff, 1), .1, .04);
 
 const sun = addLight(new THREE.DirectionalLight(0xfff1dc, 1), 2.6, 0);
-sun.position.set(...SCENE.sun.position);
-sun.target.position.set(...SCENE.sun.target);
+sun.position.copy(toWorld(SCENE.sun.position));
+sun.target.position.copy(toWorld(SCENE.sun.target));
 scene.add(sun.target);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
@@ -1514,13 +1462,13 @@ sun.shadow.bias = -.0004;
 sun.shadow.normalBias = .02;
 
 // sky light coming through the window (brightens the interior by day)
-addLight(new THREE.PointLight(0xe4eefa, 1, 3.5, 1.5), .9, 0).position.set(...SCENE.skyLight);
+addLight(new THREE.PointLight(0xe4eefa, 1, 3.5, 1.5), .9, 0).position.copy(toWorld(SCENE.skyLight));
 
 // recessed downlights: spotlights pointing down, the centre one casts shadows
 SCENE.downlights.forEach(([x, z], i) => {
   const spot = addLight(new THREE.SpotLight(WARM, 1, 4.5, .75, .65, 1.6), 0, 2.0);
-  spot.position.set(x, SCENE.ceilingY - .01, z);
-  spot.target.position.set(x, 0, z);
+  spot.position.copy(toWorld([x, SCENE.ceilingY - .01, z]));
+  spot.target.position.copy(toWorld([x, 0, z]));
   scene.add(spot.target);
   if (i === 1) {
     spot.castShadow = true;
@@ -1532,10 +1480,10 @@ SCENE.downlights.forEach(([x, z], i) => {
 
 // LED strip in the gap: a few weak lights just under the ceiling, along the walls
 for (const [x, z] of SCENE.ledPoints) {   // 3 instead of 7: every light costs in every pixel
-  addLight(new THREE.PointLight(WARM, 1, 2.2, 2), 0, .6).position.set(x, SCENE.ledY, z);
+  addLight(new THREE.PointLight(WARM, 1, 2.2, 2), 0, .6).position.copy(toWorld([x, SCENE.ledY, z]));
 }
 // mirror backlight
-for (const b of V.basins) addLight(new THREE.PointLight(WARM, 1, 1.8, 2), 0, .6 / V.basins.length).position.set(XL - .15, V.mirror.y, mm(V.z0 + b));
+for (const b of V.basins) addLight(new THREE.PointLight(WARM, 1, 1.8, 2), 0, .6 / V.basins.length).position.copy(toWorld([XL - .15, V.mirror.y, mm(V.z0 + b)]));
 
 const LIGHTING = {
   day:   { exposure: 1.15, sky: 0xdfeefa, led: LED_OFF },
@@ -1547,7 +1495,7 @@ function setLighting(mode) {
   // a light with intensity 0 is still evaluated in the shader — switch it off completely (all of them in "Drawing" style)
   for (const [light, day, night] of lightRig) {
     light.intensity = mode === 'day' ? day : night;
-    light.visible = light.intensity > 0 && state.style !== 'lines';
+    light.visible = light.intensity > 0;
   }
   invalidate();
   renderer.toneMappingExposure = preset.exposure;
@@ -1560,77 +1508,89 @@ function setLighting(mode) {
    11. CAMERA: views, orbit pivot, clicking doors
    ========================================================================== */
 
-function buildEdges() {
+/* outlines of the round and lofted details, built when the edges layer is first on */
+function buildDetailEdges() {
   const meshes = [];
-  scene.traverse(o => { if (o.isMesh && !o.userData.edges && (o.userData.base || o.material) !== GHOST) meshes.push(o); });
+  FRAME.traverse(o => { if (o.isMesh && !o.userData.owners && !o.userData.edges && (o.userData.base || o.material) !== GHOST) meshes.push(o); });
   for (const o of meshes) {
     const p = o.geometry.parameters || {}, thin = (p.radiusTop || p.radius || 1) < .03;   // thin tubes: outline from the lengthwise edges
     const line = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, thin ? 12 : 28), EDGE);
-    line.layers.set(EDGE_LAYER); line.castShadow = false; line.visible = false;
+    line.castShadow = false; line.visible = false;
     o.add(line); o.userData.edges = line;
   }
 }
+function syncDetailEdges() {
+  if (state.layers.edges) buildDetailEdges();
+  FRAME.traverse(o => { if (o.userData.edges) o.userData.edges.visible = state.layers.edges && !o.userData.ghost; });
+}
+
+/* "Drawing" style: every opaque material white (the tiles show their grout lines); "Realistic": their own look (LOOK) */
 function setStyle(style) {
   state.style = style;
-  if (style === 'lines') buildEdges();
-  camera.layers.enable(EDGE_LAYER);
-  scene.traverse(o => { if (o.isMesh) applyMaterial(o); });
-  renderer.shadowMap.enabled = style !== 'lines';
-  renderer.toneMapping = style === 'lines' ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
-  scene.environment = style === 'lines' ? null : envMap;
+  const lines = style === 'lines';
+  if (!LOOK.size) {
+    const all = new Set();
+    VIEW.root.traverse(o => { if (o.isMesh) all.add(o.userData.base || o.material); });
+    for (const g of VIEW.GROUPS) all.add(g.base);
+    for (const m of all) if (m && m !== GHOST && !m.transparent && !m.isMeshBasicMaterial && !Object.values(tileMaterials).includes(m)) {
+      LOOK.set(m, { color: m.color.clone(), map: m.map, metalness: m.metalness, roughness: m.roughness });
+    }
+  }
+  for (const [m, look] of LOOK) {
+    m.color.copy(lines ? new THREE.Color(m.metalness >= .9 ? 0xc4c8cb : 0xf4f4f2) : look.color);
+    m.map = lines ? null : look.map; m.metalness = lines ? 0 : look.metalness; m.roughness = lines ? .9 : look.roughness;
+    m.needsUpdate = true;
+  }
+  for (const m of Object.values(tileMaterials)) { m.map = lines ? m.userData.lines : m.userData.photo; m.needsUpdate = true; }
   setLighting(state.lighting);
-  scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
+}
+function setMetalLook(name) {   // the fittings' finish, kept while the drawing style shows them grey
+  setMetal(name);
+  const look = LOOK.get(M.metal);
+  if (look) { look.color.setHex(METALS[name].color); look.roughness = METALS[name].roughness; }
+  if (state.style === 'lines') { M.metal.color.setHex(0xc4c8cb); M.metal.roughness = .9; }
+  invalidate();
 }
 
 const VIEWS = SCENE.views;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let flight = null;   // camera transition in progress
+function updateCuts() {
+  let changed = false;
+  for (const c of cutaways) { const h = c.isHidden(); if (h !== c.hidden) { c.hidden = h; setGhost(c.root, h); changed = true; } }   // the casing reads the walls: in order
+  if (changed) applySolids();
+  return changed;
+}
 function goTo(name, instant) {
-  const view = VIEWS[name], position = new THREE.Vector3(...view.position), target = new THREE.Vector3(...view.target);
-  invalidate(false);
-  if (instant) { camera.position.copy(position); controls.target.copy(target); controls.update(); for (const c of cutaways) { const h = c.isHidden(); if (h !== c.hidden) { setGhost(c.root, h); c.hidden = h; } } return; }
+  const view = VIEWS[name], position = toWorld(view.position), target = toWorld(view.target);
+  if (instant) { camera.position.copy(position); controls.target.copy(target); controls.update(); updateCuts(); invalidate(); return; }
   flight = { fromPosition: camera.position.clone(), fromTarget: controls.target.clone(), position, target, start: performance.now() };
 }
 
 const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
+const doorOf = o => { for (; o; o = o.parent) if (o.userData.door) return o.userData.door; return null; };
+function hitAlong(ray) { return ray.intersectObjects(VIEW.root.children, true).find(isSolidHit); }
 function hitAt(clientX, clientY) {
-  const r = renderer.domElement.getBoundingClientRect();
+  const r = canvasEl.getBoundingClientRect();
   pointer.set((clientX - r.left) / r.width * 2 - 1, -(clientY - r.top) / r.height * 2 + 1);
   raycaster.setFromCamera(pointer, camera);
-  return raycaster.intersectObjects(scene.children, true).find(isSolidHit);
+  return hitAlong(raycaster);
 }
-
-/* When zoomed in, the orbit pivot could end up in front of the walls being viewed — the view then rotated backwards.
-   On drag start we move the pivot along the view axis onto the surface at the screen centre:
-   the view does not jump, and everything visible lies in front of the pivot and follows the hand. */
-const canvas = renderer.domElement, viewDir = new THREE.Vector3();
-canvas.addEventListener('pointerdown', e => {
-  if (flight || (e.pointerType === 'mouse' && e.button !== 0)) return;
-  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-  const hit = raycaster.intersectObjects(scene.children, true).find(h => isSolidHit(h) && !(h.object.material.opacity < .5));
-  if (!hit) return;
-  const distance = THREE.MathUtils.clamp(hit.distance, controls.minDistance, controls.maxDistance);
-  camera.getWorldDirection(viewDir);
-  controls.target.copy(camera.position).addScaledVector(viewDir, distance);
-});
-
-// a click (without dragging) on a door opens/closes only that door
-let downX = 0, downY = 0;
-canvas.addEventListener('pointerdown', e => { downX = e.clientX; downY = e.clientY; });
-canvas.addEventListener('pointerup', e => {
-  if (Math.hypot(e.clientX - downX, e.clientY - downY) > 5 || (e.pointerType === 'mouse' && e.button !== 0)) return;
-  const door = hitAt(e.clientX, e.clientY)?.object.userData.door;
+// a click (without dragging) on a door or a drawer opens or closes only that one
+VIEW.onClick(ray => {
+  const door = doorOf(hitAlong(ray)?.object);
   if (!door) return;
   door.target = door.target ? 0 : 1;
   syncDoorsButton();
+  invalidate();
 });
 let hoverPending = false;
-canvas.addEventListener('pointermove', e => {
+canvasEl.addEventListener('pointermove', e => {
   if (hoverPending || e.buttons || e.pointerType !== 'mouse') return;
   hoverPending = true;
   requestAnimationFrame(() => {
     hoverPending = false;
-    canvas.style.cursor = hitAt(e.clientX, e.clientY)?.object.userData.door ? 'pointer' : '';
+    canvasEl.style.cursor = doorOf(hitAt(e.clientX, e.clientY)?.object) ? 'pointer' : '';
   });
 });
 
@@ -1718,12 +1678,13 @@ $('lightingBtn').addEventListener('click', () => {
 onButton($('styles'), b => { setStyle(b.dataset.style); pressed($('styles').children, x => x === b); });
 
 // fittings finish
-onButton($('metals'), b => { setMetal(b.dataset.metal); pressed($('metals').children, x => x === b); renderBuy(); renderDrawing(); });
+onButton($('metals'), b => { setMetalLook(b.dataset.metal); pressed($('metals').children, x => x === b); renderBuy(); renderDrawing(); });
 
 // layers
 function syncLayers() {
   for (const [layer, groups] of Object.entries(layerGroups)) for (const g of groups) g.visible = state.layers[layer];
   pressed($('layers').children, b => state.layers[b.dataset.layer]);
+  updateCuts(); applySolids(); syncDetailEdges();
 }
 onButton($('layers'), b => { state.layers[b.dataset.layer] = !state.layers[b.dataset.layer]; syncLayers(); });
 syncLayers();
@@ -1783,7 +1744,7 @@ function renderDrawing() {
   });
   for (const bz of basins) {
     g += r(bz - basinW / 2, bottomY + height + top + gasket, basinW, basinH, `fill="${basinFill}" stroke="#000" stroke-width=".8" rx="5"`);
-    g += `<rect x="${X(bz - 18)}" y="${Y(bottomY + height + top + gasket + basinH + 118)}" width="${36 * sc}" height="${118 * sc}" fill="#${M.metal.color.getHexString()}"/>`;
+    g += `<rect x="${X(bz - 18)}" y="${Y(bottomY + height + top + gasket + basinH + 118)}" width="${36 * sc}" height="${118 * sc}" fill="#${METALS[state.metal].color.toString(16).padStart(6, '0')}"/>`;
   }
   // dimensions
   const dimH = (z0, z1, y, text) => `<path class="dim" d="M${X(z0)} ${y}H${X(z1)}M${X(z0)} ${y - 4}v8M${X(z1)} ${y - 4}v8"/><text class="dimt" x="${(X(z0) + X(z1)) / 2}" y="${y - 4}" text-anchor="middle">${text}</text>`;
@@ -2224,56 +2185,42 @@ showPanel(panelOn);
    13. LOOP
    ========================================================================== */
 
-function resize() {
-  invalidate(false);
-  const r = stage.getBoundingClientRect();
-  renderer.setSize(r.width, r.height, false);
-  camera.aspect = r.width / Math.max(1, r.height);
-  camera.updateProjectionMatrix();
-}
-new ResizeObserver(resize).observe(stage);
-resize();
-
 setLighting(state.lighting);
+VIEW.enableNavigation();
+VIEW.start();
 goTo('overview', true);
 for (const c of cutaways) { c.hidden = c.isHidden(); setGhost(c.root, c.hidden); }
-// any click or change in the panel may change the scene: redraw (including shadows)
+applySolids();
+syncDetailEdges();
+// any click or change in the panel may change the scene: redraw
 for (const type of ['click', 'input', 'change']) document.addEventListener(type, () => invalidate(), true);
 addEventListener('load', () => invalidate());
 
 const easeInOut = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-function frame(now) {
+VIEW.onFrame(() => {
+  let changed = false;
   if (flight) {
-    const k = Math.min(1, (now - flight.start) / 900), e = easeInOut(k);
+    const k = Math.min(1, (performance.now() - flight.start) / 900), e = easeInOut(k);
     camera.position.lerpVectors(flight.fromPosition, flight.position, e);
     controls.target.lerpVectors(flight.fromTarget, flight.target, e);
     if (k >= 1) flight = null;
+    changed = true;
   }
-  const moved = controls.update() || !!flight;
-
-  if (moved || dirtyFrames > 0) for (const c of cutaways) {   // order matters: the casing depends on the walls' state
-    const hidden = c.isHidden();
-    if (hidden !== c.hidden) { setGhost(c.root, hidden); c.hidden = hidden; }
-  }
+  if (updateCuts()) changed = true;
   for (const d of doors) {
     if (d.progress === d.target) continue;
     d.progress += (d.target - d.progress) * (reduceMotion ? 1 : .08);
     if (Math.abs(d.target - d.progress) < 1e-3) d.progress = d.target;
     if (d.slide) d.pivot.position.x = -d.slide * d.progress;
     else d.pivot.rotation.y = d.openAngle * d.progress;
-    invalidate();
+    changed = true;
   }
-  if (moved || dirtyFrames > 0) {
-    if (shadowsDirty) { renderer.shadowMap.needsUpdate = true; shadowsDirty = false; }
-    renderer.render(scene, camera);
-    if (!moved) dirtyFrames--;
-  }
-  requestAnimationFrame(frame);
-}
-requestAnimationFrame(frame);
+  return changed;
+});
+VIEW.run();
 
 // for inspection in the browser console
-window.bath = { state, scene, camera, controls, renderer, goTo, setLighting, setStyle, invalidate };
+window.bath = { state, VIEW, FRAME, scene, camera, controls, renderer, goTo, setLighting, setStyle, invalidate, doors, cutaways, STATIC, MOVING };
 })();
 </script>
 </body>

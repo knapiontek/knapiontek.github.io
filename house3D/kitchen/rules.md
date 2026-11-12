@@ -16,7 +16,7 @@ Każdy element ma dokładnie jeden **typ**, który decyduje, co powstaje. **Tagi
 
 | Typ | Co powstaje |
 |---|---|
-| wypełnienie | nic, to pusta przestrzeń; na końcu korpusu (np. ukryty narożnik L): panel wpuszczany |
+| wypełnienie | nic, to pusta przestrzeń; na końcu korpusu (np. ukryty narożnik L): panel wpuszczany; korpus z samych wypełnień (np. podporowy pod korpusem na blacie): panel wpuszczany na całą szerokość |
 | zabudowa GK | zabudowa z płyt gipsowych |
 | cokół | cokół |
 | blat | blat; jego grubość = wysokość elementu |

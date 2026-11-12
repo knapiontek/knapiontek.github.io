@@ -62,7 +62,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 
 - Salon prowadzi do kitchen/view.html; obie łazienki do bath/view.html.
 - Dom wygrywa: kuchnia i łazienki biorą pomieszczenie z domu takie, jakie jest (ściany, strop, posadzkę, okna, dach), przycięte do obszaru, który dom podaje dla pomieszczenia. Nie rysują ani nie mierzą własnego pomieszczenia i niczego w nim nie przesuwają.
-- Te same osie wszędzie: x wzdłuż domu, y w poprzek, z w górę, mm i położenia domu. Podprojekt nie ma własnego układu współrzędnych.
+- Te same osie wszędzie: x wzdłuż domu, y w poprzek, z w górę, mm i położenia domu. Podprojekt może liczyć w ramie swojej grupy albo pomieszczenia, ale ta rama jest tylko obrócona i przesunięta w osiach domu (nigdy odbita), a strona rysuje w osiach domu.
 - Podprojekt rysuje core, tak jak dom (§ 2, Rysowanie).
 - Płytki łazienek leżą na ścianach domu; posadzka podprojektu leży na płycie domu, nigdy w jej płaszczyźnie.
 - Nic z podprojektu nie trafia do house3D, dopóki nie zostanie przyjęte (proposal.md).

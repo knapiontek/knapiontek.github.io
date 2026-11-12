@@ -544,11 +544,13 @@
       }
 
       // a space at one end of a carcass (e.g. the hidden end of an L corner): the carcass runs on behind it, an inset panel
-      // closes its front; hidden: no edge banding
+      // closes its front; a carcass of spaces only (e.g. a support under a carcass on the worktop): one inset panel over its
+      // whole inner width; hidden: no edge banding
       const topThickness = carcass.base && carcass.sink ? crossRails.depth : carcass.base && carcass.hob ? crossRails.hobFront : board;
-      for (const f of carcass.members.filter(i => i.type === 'space')) {
-        const atRight = f.u1 === carcass.u1, atLeft = f.u0 === carcass.u0;
-        const s0 = atRight ? Math.max(...carcass.boxes.map(b => b.u1)) : innerU0, s1 = atRight ? innerU1 : Math.min(...carcass.boxes.map(b => b.u0));
+      const spaces = carcass.members.filter(i => i.type === 'space');
+      for (const f of carcass.boxes.length ? spaces : spaces.slice(0, 1)) {
+        const atRight = f.u1 === carcass.u1, none = !carcass.boxes.length;
+        const s0 = none || !atRight ? innerU0 : Math.max(...carcass.boxes.map(b => b.u1)), s1 = none || atRight ? innerU1 : Math.min(...carcass.boxes.map(b => b.u0));
         part('insetPanel', 'Panel wpuszczany', s1 - s0, height - board - topThickness, carcassMaterial, 'carcasses',
           [s0, s1, v0 + board, v1 - topThickness, carcassFront - board, carcassFront]);
       }

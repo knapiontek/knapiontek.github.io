@@ -1,6 +1,6 @@
 # Proposal: kitchen and bath in house3D
 
-> Status: the kitchen and the bathrooms take their room from the house (rooms.js); the kitchen is drawn by core in house axes. Still open: bringing their furniture into the house view (below), and the bathrooms moving to house axes and core. Once agreed, what stays moves to project.md and rules.md.
+> Status: the kitchen and the bathrooms take their room from the house (rooms.js) and are drawn by core in house axes. Still open: bringing their furniture into the house view (below). Once agreed, what stays moves to project.md and rules.md.
 
 ## 1. What comes across
 

@@ -87,7 +87,7 @@ window.KITCHEN_DESIGN = {
   {"group": 1, "column": 10, "span": 1, "type": "cabinet", "carcass": "K13", "height": 720, "handle": "top", "hinge": "right", "gaps": {"left": 3, "right": 3, "top": 3, "bottom": 0}},
   {"group": 1, "column": 11, "span": 1, "type": "frontPanel", "carcass": "K13", "height": 720},
   {"group": 1, "column": 12, "span": 1, "type": "space", "carcass": "K13", "height": 720, "note": "narożnik L, ukryty: korpus biegnie za nim, front zamyka panel wpuszczany"},
-  {"group": 1, "column": 13, "span": 1, "type": "space", "carcass": "K1X", "height": 720},
+  {"group": 1, "column": 13, "span": 1, "type": "space", "carcass": "K1X", "height": 720, "note": "korpus podporowy pod K21 (stoi na blacie): bez frontu, panel wpuszczany na całą szerokość"},
 
   {"group": 2, "column": 1, "span": 11, "type": "plinth", "height": 150, "note": "kratki pod lodówką i piekarnikiem"},
   {"group": 2, "column": 1, "span": 2, "type": "space", "height": 720, "note": "narożnik L, pod blatem"},

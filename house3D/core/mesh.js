@@ -1,6 +1,6 @@
 /* core/mesh.js: welded points, faces of cells, visible pieces, conforming polygons. Knows no project.
-   A cell is {S, element, material, layers, edges, ...}; faceMaterial(n), if a cell has it, gives the material of a face by
-   its normal. Needs core/geometry.js and THREE. */
+   A cell is {S, element, material, layers, edges, ...}; faceMaterial(n, points), if a cell has it, gives the material of a
+   face by its normal (and its corners, mm). Needs core/geometry.js and THREE. */
 (function (CORE) {
 'use strict';
 const { EPS, ccw, edgesOf, intersect2, minus2 } = CORE.geometry;
@@ -51,7 +51,7 @@ class Batch {
 function cellFaces(c) {
   const S = c.S, P = S.poly, out = [];
   const face = (pts, n, uv) => out.push({ poly: noRepeats(pts.map(weld)), n, uv, cell: c, group: c.layers.join('+'),
-    material: c.faceMaterial ? c.faceMaterial(n) : c.material });
+    material: c.faceMaterial ? c.faceMaterial(n, pts) : c.material });
   for (const [a, b] of edgesOf(P)) {
     const dy = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dy, dz); if (L < EPS) continue;
     let e = [dy / L, dz / L]; if (e[1] < -EPS || (Math.abs(e[1]) < EPS && e[0] < 0)) e = [-e[0], -e[1]];   // texture up the slope
