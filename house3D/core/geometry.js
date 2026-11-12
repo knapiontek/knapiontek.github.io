@@ -90,13 +90,12 @@ const cutBy = (S, h) => { const [lo, hi] = zRange(S); return h > lo && h <= hi; 
 const volume = S => (S.x2 - S.x1) * area2(S.poly);
 const subtractAll = (cells, prisms) => prisms.reduce((cs, H) => cs.flatMap(S => prismMinus(S, H)), cells);
 
-/* every pair of cells of different elements that share more than minVolume: [{a, b, volume}] */
-function overlaps(cells, minVolume = 1) {
+/* every pair of cells that share more than minVolume, two pieces of one element included: [{a, b, common, volume}] */
+function overlaps(cells, minVolume = SOLID_TOL) {
   const out = [];
   for (let i = 0; i < cells.length; i++) for (let j = i + 1; j < cells.length; j++) {
-    const a = cells[i], b = cells[j]; if (a.element === b.element) continue;
-    const I = prismIntersect(a.S, b.S);
-    if (I && volume(I) > minVolume) out.push({ a, b, volume: volume(I) });
+    const a = cells[i], b = cells[j], common = prismIntersect(a.S, b.S);
+    if (common && volume(common) > minVolume) out.push({ a, b, common, volume: volume(common) });
   }
   return out;
 }

@@ -4,12 +4,27 @@
 (function (root) {
 'use strict';
 
+const G = root.CORE.geometry;
+const { DEG, INF, EPS, SOLID_TOL, ccw, rect2, clipHalf, leftOf, edgesOf, minus2, prism, emptyPrism, centreZ,
+  prismIntersect, prismMinus, splitZ, subtractAll } = G;
+
+const byId = list => Object.fromEntries(list.map(e => [e.id, e]));
+const range = r => r || [-INF, INF];
+
+/* convex polygons A minus every polygon of B, in turn: convex pieces */
+const polysMinus = (A, B) => B.reduce((pieces, b) => pieces.flatMap(p => G.intersect2(p, b, SOLID_TOL) ? minus2(p, b, SOLID_TOL) : [p]), A);
+/* the part of polygon P between u = a and u = b (u its first coordinate) */
+const stripOf = (P, a, b) => clipHalf(clipHalf(P, p => p[0] - a), p => b - p[0]);
+/* the part of polygon P between v = c - w/2 and v = c + w/2 along coordinate k: a bar through c */
+const bandOf = (P, k, c, w) => clipHalf(clipHalf(P, p => p[k] - c + w / 2), p => c + w / 2 - p[k]);
+
+/* the outward side of an opening: which axis its wall faces along, and which way */
+const SIDE = { '-x': { axis: 0, sign: -1 }, '+x': { axis: 0, sign: 1 }, '-y': { axis: 1, sign: -1 }, '+y': { axis: 1, sign: 1 }, '-z': { axis: 2, sign: -1 } };
+
 function buildHouse(HOUSE) {
-const { DEG, INF, EPS, ccw, rect2, clipHalf, leftOf, edgesOf, minus2, prism, emptyPrism, centreZ,
-  prismIntersect, prismMinus, splitZ, subtractAll, SOLID_TOL } = root.CORE.geometry;
 const GEO = HOUSE.geometry, KIND = GEO.kinds, OPENING_KIND = GEO.openingKinds;
 const FLOORS = GEO.floors, TOP_FLOOR = FLOORS[FLOORS.length - 1];
-const byId = list => Object.fromEntries(list.map(e => [e.id, e]));
+const ELEMENT = byId(GEO.elements), VOID = byId(GEO.voids);
 
 /* ================= 1. ROOF LINES =================
    A line across the house is z = a + s·y; the roof gives the slope. */
@@ -18,141 +33,181 @@ const ROOF_DEPTH = ROOF.thickness / Math.cos(ROOF.pitch * DEG);   // the data gi
 const RIDGE_TOP = ROOF.eave + TAN * WIDTH / 2 + ROOF_DEPTH;
 const line = l => ({ a: l.z - l.pitch * TAN * l.y, s: l.pitch * TAN });
 const ROOF_UNDER = [{ a: ROOF.eave, s: TAN }, { a: ROOF.eave + TAN * WIDTH, s: -TAN }];
-
-/* ================= 2. MODEL: CELLS =================
-   A cell is a prism with what it is: {S, element, floor, material, cap, layers, raw?, finish?, walkable?, edges}. */
-
 const floorOfZ = z => z < GEO.split ? FLOORS[0].id : TOP_FLOOR.id;
+/* a slab of the roof between y1 and y2 along line l, from d[0] to d[1] over its top */
+const slopeSlab = (x1, x2, y1, y2, l, d) => ({ x1, x2, poly: ccw([
+  [y1, l.a + l.s * y1 + d[0]], [y2, l.a + l.s * y2 + d[0]], [y2, l.a + l.s * y2 + d[1]], [y1, l.a + l.s * y1 + d[1]]]) });
 
-const ELEMENT = byId(GEO.elements), VOID = byId(GEO.voids);
+/* ================= 2. PRISMS OF THE DATA ================= */
 const elementPrism = e => prism(e.b, (e.below || []).map(line).concat(e.top === 'roof' ? ROOF_UNDER : []));
 const openingPrism = o => prism(o.b, (o.below || []).map(line));
 const cutPrisms = id => ELEMENT[id] ? [elementPrism(ELEMENT[id])] : VOID[id].boxes.map(b => prism(b));
-const range = r => r || [-INF, INF];
 const regionPrism = r => prism([...range(r.x), ...range(r.y), ...range(r.z)], (r.below || []).map(line));
-
-const CELLS = [];                          // the solids of the building
-const FIXTURES = [];                       // frames, glass, leaves: drawn, never cut by anything
-const ROOF_CELLS = [], STAIR_CELLS = [], SITE_CELLS = [];
-
-/* elements: cuts, openings, the floor split, the facade */
 const OPENING_PRISMS = GEO.openings.map(openingPrism);
-for (const e of GEO.elements) {
+
+/* ================= 3. ELEMENTS =================
+   A cell is a prism with what it is: {S, element, floor, material, cap, layers, raw?, finish?, walkable?, edges}. */
+const CELLS = [];
+/* the facade rules that apply to element e: its own, or by the side of its kind's finish facing the air */
+const finishesOf = e => GEO.finishes.filter(r => r.elements ? r.elements.includes(e.id) : !!KIND[e.kind].finish && (!r.side || r.side === e.outer));
+/* a facade rule splits each part into what it covers (its material) and the rest; a later rule wins */
+function applyFinish(parts, r) {
+  const R = regionPrism(r);
+  return parts.flatMap(t => {
+    const inside = prismIntersect(t.S, R);
+    if (!inside) return [t];
+    return [{ S: inside, material: r.material }].concat(prismMinus(t.S, R).map(S => ({ S, material: t.material })));
+  });
+}
+function elementCells(e) {
   const k = KIND[e.kind];
   let parts = subtractAll([elementPrism(e)], (e.cuts || []).flatMap(cutPrisms));
   if (k.opened) parts = subtractAll(parts, OPENING_PRISMS);
-  parts = parts.flatMap(S => splitZ(S, GEO.split));
-  let tagged = parts.map(S => ({ S, material: k.material }));
-  for (const r of GEO.finishes) {          // a later rule wins
-    const applies = r.elements ? r.elements.includes(e.id) : !!k.finish && (!r.side || r.side === e.outer);
-    if (!applies) continue;
-    const R = regionPrism(r);
-    tagged = tagged.flatMap(t => {
-      const inside = prismIntersect(t.S, R);
-      return inside ? [{ S: inside, material: r.material }].concat(prismMinus(t.S, R).map(S => ({ S, material: t.material }))) : [t];
-    });
-  }
-  for (const t of tagged) {
+  parts = parts.flatMap(S => splitZ(S, GEO.split)).map(S => ({ S, material: k.material }));
+  parts = finishesOf(e).reduce(applyFinish, parts);
+  return parts.map(t => {
     const floor = floorOfZ(centreZ(t.S));
-    CELLS.push({ S: t.S, element: e.id, floor, material: t.material, cap: k.cap, raw: k.raw, finish: k.finish,
-      walkable: !!k.walkable, layers: [floor].concat(k.layers), edges: true });
+    return { S: t.S, element: e.id, floor, material: t.material, cap: k.cap, raw: k.raw, finish: k.finish,
+      walkable: !!k.walkable, layers: [floor].concat(k.layers), edges: true };
+  });
+}
+for (const e of GEO.elements) CELLS.push(...elementCells(e));
+
+/* ================= 4. ROOF =================
+   Two slopes, without its cuts and the roof windows; its faces take the material of their side. */
+const roofFace = n => n[2] > 0.3 ? 'top' : n[2] < -0.3 ? 'bottom' : Math.abs(n[0]) > 0.5 ? 'ends' : 'eaves';
+const roofFaceMaterial = n => ROOF.faces[roofFace(n)];
+const roofWindowPrism = w => prism([w.x[0], w.x[1], w.y[0], w.y[1], -INF, INF]);
+function roofCells() {
+  const slopes = [slopeSlab(...ROOF.x, 0, WIDTH / 2, ROOF_UNDER[0], [0, ROOF_DEPTH]), slopeSlab(...ROOF.x, WIDTH / 2, WIDTH, ROOF_UNDER[1], [0, ROOF_DEPTH])];
+  const cells = subtractAll(slopes, ROOF.cuts.flatMap(cutPrisms).concat(ROOF.windows.map(roofWindowPrism)));
+  return cells.map(S => ({ S, element: 'roof', floor: null, faceMaterial: roofFaceMaterial, cap: ROOF.cap, layers: ROOF.layers.slice(), edges: true }));
+}
+const ROOF_CELLS = roofCells();
+
+/* ================= 5. WINDOWS AND DOORS =================
+   They sit in the block that hosts them, flush with its outer face. A part of an opening is a polygon in its own
+   plane: (y, z) in an x-facing wall, (x, z) in a y-facing one. */
+const FIXTURES = [];                       // frames, glass, leaves: drawn, never cut by anything
+const F = GEO.frames;
+function addFixture(S, material, layers, element = 'opening') {
+  if (emptyPrism(S)) return;
+  const floor = floorOfZ(centreZ(S));
+  FIXTURES.push({ S, element, floor, material, cap: material, layers: [floor].concat(layers), edges: false });
+}
+/* the plane of an opening: its outline, its span along the wall and how a polygon of it becomes a prism */
+function openingPlane(o) {
+  const side = SIDE[o.outer];
+  const host = GEO.elements.find(e => KIND[e.kind].host && prismIntersect(elementPrism(e), openingPrism(o)));
+  const face = host.b[2 * side.axis + (side.sign > 0 ? 1 : 0)];
+  const depth = (d1, d2) => [face - side.sign * d1, face - side.sign * d2].sort((a, b) => a - b);
+  const alongX = side.axis === 0;
+  /* a y-facing piece is a rectangle in x, so it is a prism along x as well */
+  const toPrism = (P, d) => {
+    const [a, b] = depth(...d);
+    if (alongX) return { x1: a, x2: b, poly: P };
+    const us = P.map(p => p[0]), zs = P.map(p => p[1]);
+    return prism([Math.min(...us), Math.max(...us), a, b, Math.min(...zs), Math.max(...zs)]);
+  };
+  const outline = alongX ? openingPrism(o).poly : rect2(o.b[0], o.b[1], o.b[4], o.b[5]);
+  const span = alongX ? [o.b[2], o.b[3]] : [o.b[0], o.b[1]];
+  return { toPrism, outline, span };
+}
+/* a solid leaf with evenly spaced grooves, and a handle if it has one; the grooves stop at the handle */
+function leafFixtures(o, plane, P) {
+  const D = F.leaves[OPENING_KIND[o.kind].leaf], [z1, z2] = [o.b[4], o.b[5]];
+  addFixture(plane.toPrism(P, D.depth), D.material, F.layers);
+  const handle = D.handle && handlePolygon(D.handle, Math.max(...P.map(p => p[0])), z1);
+  if (handle) addFixture(plane.toPrism(handle, D.handle.depth), D.handle.material, F.layers);
+  for (let i = 1; i <= D.grooves; i++) {
+    const groove = bandOf(P, 1, z1 + (z2 - z1) * i / (D.grooves + 1), D.grooveHeight);
+    for (const piece of polysMinus([groove], handle ? [handle] : [])) addFixture(plane.toPrism(piece, D.grooveDepth), D.groove, F.layers);
   }
 }
-
-/* the roof: two slopes, without its cuts and the roof windows; its faces take the material of their side */
-(function () {
-  const ROOF_FACE = n => n[2] > 0.3 ? 'top' : n[2] < -0.3 ? 'bottom' : Math.abs(n[0]) > 0.5 ? 'ends' : 'eaves';
-  const faceMaterial = n => ROOF.faces[ROOF_FACE(n)];
-  const half = (y1, y2, l) => ({ x1: ROOF.x[0], x2: ROOF.x[1], poly: ccw([[y1, l.a + l.s * y1], [y2, l.a + l.s * y2], [y2, l.a + l.s * y2 + ROOF_DEPTH], [y1, l.a + l.s * y1 + ROOF_DEPTH]]) });
-  let cells = [half(0, WIDTH / 2, ROOF_UNDER[0]), half(WIDTH / 2, WIDTH, ROOF_UNDER[1])];
-  cells = subtractAll(cells, ROOF.cuts.flatMap(cutPrisms));
-  cells = subtractAll(cells, ROOF.windows.map(w => prism([w.x[0], w.x[1], w.y[0], w.y[1], -INF, INF])));
-  for (const S of cells) ROOF_CELLS.push({ S, element: 'roof', floor: null, faceMaterial, cap: ROOF.cap, layers: ROOF.layers.slice(), edges: true });
-})();
-
-/* windows and doors sit in the block that hosts them, flush with its outer face */
-const SIDE = { '-x': { axis: 0, sign: -1 }, '+x': { axis: 0, sign: 1 }, '-y': { axis: 1, sign: -1 }, '+y': { axis: 1, sign: 1 }, '-z': { axis: 2, sign: -1 } };
-(function () {
-  const F = GEO.frames;
-  const add = (S, material, layers) => { if (!emptyPrism(S)) FIXTURES.push({ S, element: 'opening', floor: floorOfZ(centreZ(S)), material, cap: material, layers: [floorOfZ(centreZ(S))].concat(layers), edges: false }); };
-  for (const o of GEO.openings) {
-    const K = OPENING_KIND[o.kind];
-    if (!K.glazed && !K.leaf) continue;   // an inner door is an opening only
-    const side = SIDE[o.outer], host = GEO.elements.find(e => KIND[e.kind].host && prismIntersect(elementPrism(e), openingPrism(o)));
-    const face = host.b[2 * side.axis + (side.sign > 0 ? 1 : 0)];
-    const depth = (d1, d2) => [face - side.sign * d1, face - side.sign * d2].sort((a, b) => a - b);
-    /* a part of the opening is a polygon in its own plane: (y, z) in an x-facing wall, (x, z) in a y-facing one;
-       a y-facing piece is a rectangle in x, so it is a prism along x as well */
-    const toPrism = (P, d) => {
-      if (side.axis === 0) return { x1: d[0], x2: d[1], poly: P };
-      const us = P.map(p => p[0]), zs = P.map(p => p[1]);
-      return prism([Math.min(...us), Math.max(...us), d[0], d[1], Math.min(...zs), Math.max(...zs)]);
-    };
-    const O = openingPrism(o);
-    const outline = side.axis === 0 ? O.poly : rect2(o.b[0], o.b[1], o.b[4], o.b[5]);
-    const [u1, u2] = side.axis === 0 ? [o.b[2], o.b[3]] : [o.b[0], o.b[1]];
-    const strip = (a, b) => clipHalf(clipHalf(outline, p => p[0] - a), p => b - p[0]);
-    const leafEnd = K.leaf ? u1 + (o.leaf || u2 - u1) : u1;
-    if (K.leaf) {                            // a solid leaf with evenly spaced grooves, and a handle if it has one
-      const D = F.leaves[K.leaf], P = strip(u1, leafEnd);
-      add(toPrism(P, depth(...D.depth)), D.material, F.layers);
-      for (let i = 1; i <= D.grooves; i++) {
-        const z = o.b[4] + (o.b[5] - o.b[4]) * i / (D.grooves + 1);
-        add(toPrism(clipHalf(clipHalf(P, p => p[1] - z + D.grooveHeight / 2), p => z + D.grooveHeight / 2 - p[1]), depth(...D.grooveDepth)), D.groove, F.layers);
-      }
-      if (D.handle) {
-        const H = D.handle, u = leafEnd - H.inset, z = o.b[4] + H.centre;
-        add(toPrism(rect2(u - H.width / 2, u + H.width / 2, z - H.length / 2, z + H.length / 2), depth(...H.depth)), H.material, F.layers);
-      }
-    }
-    if (K.glazed && leafEnd < u2) {          // frame, bars and glass; the frame inset follows every edge, the sill only if it has one
-      const P = strip(leafEnd, u2), bottom = Math.min(...P.map(p => p[1]));
-      let inner = P;
-      for (const [a, b] of edgesOf(P)) {
-        const sill = Math.abs(a[1] - bottom) < EPS && Math.abs(b[1] - bottom) < EPS;
-        if (sill && !K.glazed.sill) continue;
-        const L = Math.hypot(b[0] - a[0], b[1] - a[1]), shift = F.width * L;
-        inner = clipHalf(inner, p => leftOf(a, b)(p) - shift);
-      }
-      for (const piece of minus2(P, inner, SOLID_TOL)) add(toPrism(piece, depth(0, F.depth)), F.material, F.layers);
-      const band = (k, c) => clipHalf(clipHalf(inner, p => p[k] - c + F.bar / 2), p => c + F.bar / 2 - p[k]);   // a bar of the frame through c
-      const [i1, i2] = [Math.min(...inner.map(p => p[0])), Math.max(...inner.map(p => p[0]))], cols = o.cols || 1;
-      for (let i = 1; i < cols; i++) add(toPrism(band(0, i1 + (i2 - i1) * i / cols), depth(0, F.depth)), F.material, F.layers);
-      for (const z of o.transoms || []) add(toPrism(band(1, z), depth(0, F.depth)), F.material, F.layers);
-      add(toPrism(inner, depth((F.depth - F.glassDepth) / 2, (F.depth + F.glassDepth) / 2)), F.glass, F.layers);
-    }
+const handlePolygon = (H, leafEnd, bottom) => {
+  const u = leafEnd - H.inset, z = bottom + H.centre;
+  return rect2(u - H.width / 2, u + H.width / 2, z - H.length / 2, z + H.length / 2);
+};
+/* the inner outline of a glazed frame: the frame inset follows every edge, the sill only if it has one */
+function frameInner(P, sill) {
+  const bottom = Math.min(...P.map(p => p[1]));
+  let inner = P;
+  for (const [a, b] of edgesOf(P)) {
+    const isSill = Math.abs(a[1] - bottom) < EPS && Math.abs(b[1] - bottom) < EPS;
+    if (isSill && !sill) continue;
+    inner = clipHalf(inner, p => leftOf(a, b)(p) - F.width * Math.hypot(b[0] - a[0], b[1] - a[1]));
   }
-  /* roof windows lie in the slope: four bars and the glass between lines parallel to it */
+  return inner;
+}
+/* the bars of a frame: mullions run through, transoms stop at them */
+function frameBars(o, inner) {
+  const us = inner.map(p => p[0]), [i1, i2] = [Math.min(...us), Math.max(...us)], cols = o.cols || 1;
+  const mullions = [];
+  for (let i = 1; i < cols; i++) mullions.push(bandOf(inner, 0, i1 + (i2 - i1) * i / cols, F.bar));
+  const transoms = (o.transoms || []).flatMap(z => polysMinus([bandOf(inner, 1, z, F.bar)], mullions));
+  return mullions.concat(transoms);
+}
+/* frame, bars and glass; the panes are the glass between the bars */
+function glazedFixtures(o, plane, P) {
+  const inner = frameInner(P, OPENING_KIND[o.kind].glazed.sill), bars = frameBars(o, inner);
+  const frameDepth = [0, F.depth], glassDepth = [(F.depth - F.glassDepth) / 2, (F.depth + F.glassDepth) / 2];
+  for (const piece of minus2(P, inner, SOLID_TOL).concat(bars)) addFixture(plane.toPrism(piece, frameDepth), F.material, F.layers);
+  for (const pane of polysMinus([inner], bars)) addFixture(plane.toPrism(pane, glassDepth), F.glass, F.layers);
+}
+function openingFixtures(o) {
+  const K = OPENING_KIND[o.kind];
+  if (!K.glazed && !K.leaf) return;        // an inner door is an opening only
+  const plane = openingPlane(o), [u1, u2] = plane.span;
+  const leafEnd = K.leaf ? u1 + (o.leaf || u2 - u1) : u1;
+  if (K.leaf) leafFixtures(o, plane, stripOf(plane.outline, u1, leafEnd));
+  if (K.glazed && leafEnd < u2) glazedFixtures(o, plane, stripOf(plane.outline, leafEnd, u2));
+}
+/* roof windows lie in the slope: four bars and the glass between lines parallel to it */
+function roofWindowFixtures(w) {
   const W = ROOF.windowFrame, layers = ROOF.layers.concat(F.layers), across = W.width * Math.cos(ROOF.pitch * DEG);
-  for (const w of ROOF.windows) {
-    const l = ROOF_UNDER[(w.y[0] + w.y[1]) / 2 > WIDTH / 2 ? 1 : 0];
-    const slab = (x1, x2, y1, y2, d) => ({ x1, x2, poly: ccw([[y1, l.a + l.s * y1 + ROOF_DEPTH + d[0]], [y2, l.a + l.s * y2 + ROOF_DEPTH + d[0]], [y2, l.a + l.s * y2 + ROOF_DEPTH + d[1]], [y1, l.a + l.s * y1 + ROOF_DEPTH + d[1]]]) });
-    const [x1, x2] = w.x, [y1, y2] = w.y, xi1 = x1 + W.width, xi2 = x2 - W.width;
-    const bars = [[x1, xi1, y1, y2], [xi2, x2, y1, y2], [xi1, xi2, y1, y1 + across], [xi1, xi2, y2 - across, y2]];
-    for (const b of bars) FIXTURES.push({ S: slab(...b, W.frame), element: 'roofWindow', floor: null, material: W.material, cap: W.material, layers, edges: false });
-    FIXTURES.push({ S: slab(xi1, xi2, y1 + across, y2 - across, W.glass), element: 'roofWindow', floor: null, material: W.glazing, cap: W.glazing, layers, edges: false });
-  }
-})();
+  const l = ROOF_UNDER[(w.y[0] + w.y[1]) / 2 > WIDTH / 2 ? 1 : 0];
+  const over = d => [ROOF_DEPTH + d[0], ROOF_DEPTH + d[1]];
+  const [x1, x2] = w.x, [y1, y2] = w.y, xi1 = x1 + W.width, xi2 = x2 - W.width;
+  const bars = [[x1, xi1, y1, y2], [xi2, x2, y1, y2], [xi1, xi2, y1, y1 + across], [xi1, xi2, y2 - across, y2]];
+  const add = (S, material) => FIXTURES.push({ S, element: 'roofWindow', floor: null, material, cap: material, layers, edges: false });
+  for (const b of bars) add(slopeSlab(...b, l, over(W.frame)), W.material);
+  add(slopeSlab(xi1, xi2, y1 + across, y2 - across, l, over(W.glass)), W.glazing);
+}
+GEO.openings.forEach(openingFixtures);
+ROOF.windows.forEach(roofWindowFixtures);
 
-/* the stair: floating treads, the landing is a flight of one */
-(function () {
-  const ST = GEO.stair, rise = TOP_FLOOR.level / ST.risers;
+/* ================= 6. STAIR =================
+   Floating treads, the landing is a flight of one. */
+function stairCells() {
+  const ST = GEO.stair, rise = TOP_FLOOR.level / ST.risers, out = [];
   for (const f of ST.flights) {
     const step = (f.y[1] - f.y[0]) / f.count;
     for (let i = 0; i < f.count; i++) {
       const ya = f.y[0] + i * step, yb = ya + step, z = (f.first + i) * rise;
       const S = prism([f.x[0], f.x[1], Math.min(ya, yb), Math.max(ya, yb), z - ST.tread, z]), floor = floorOfZ(centreZ(S));
-      STAIR_CELLS.push({ S, element: 'stair', floor, material: ST.material, cap: ST.material, walkable: ST.walkable, layers: [floor].concat(ST.layers), edges: true });
+      out.push({ S, element: 'stair', floor, material: ST.material, cap: ST.material, walkable: ST.walkable, layers: [floor].concat(ST.layers), edges: true });
     }
   }
-})();
+  return out;
+}
+const STAIR_CELLS = stairCells();
 
-/* the site: the lawn and the surfaces on it */
-(function () {
-  const L = GEO.site.lawn, add = (r, z1, z2, material) => SITE_CELLS.push({ S: prism([r[0], r[1], r[2], r[3], z1, z2]), element: 'site', material, walkable: GEO.site.walkable, layers: GEO.site.layers.slice(), edges: false });
-  add(L.rect, L.z - L.depth, L.z, L.material);
-  for (const s of GEO.site.surfaces) add(s.rect, L.z, s.z, s.material);
-})();
+/* ================= 7. SITE =================
+   The lawn and the surfaces on it; the lawn gives way to the building's footprint, the box around its elements. */
+function footprintPrism() {
+  const b = k => GEO.elements.map(e => e.b[k]);
+  return prism([Math.min(...b(0)), Math.max(...b(1)), Math.min(...b(2)), Math.max(...b(3)), -INF, INF]);
+}
+function siteCells() {
+  const S = GEO.site, L = S.lawn, out = [];
+  const cell = (P, material) => ({ S: P, element: 'site', material, walkable: S.walkable, layers: S.layers.slice(), edges: false });
+  let lawn = [prism([...L.rect, L.z - L.depth, L.z])];
+  if (L.aroundBuilding) lawn = subtractAll(lawn, [footprintPrism()]);
+  for (const P of lawn) out.push(cell(P, L.material));
+  for (const s of S.surfaces) out.push(cell(prism([...s.rect, L.z, s.z]), s.material));
+  return out;
+}
+const SITE_CELLS = siteCells();
 
 const SOLIDS = CELLS.concat(FIXTURES, STAIR_CELLS);    // what a cut caps and what the walk bumps into
 const voidsAt = level => GEO.voids.flatMap(v => v.boxes).filter(b => b[4] <= level && b[5] >= level);   // the void boxes open at a level

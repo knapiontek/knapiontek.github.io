@@ -20,6 +20,7 @@
               whether the floor runs through (passage)
    finishes   the facade: which material covers which part of an EPS box, by its outer side, a region and lines;
               a later rule wins; anything not covered keeps the material of its kind
+   site       the lawn (aroundBuilding: it gives way to the box around the elements) and the surfaces on it
    floors     split by one plane (split): under it the ground floor, over it the attic; a floor's id is its layer;
               rooms are rectangles [x1, x2, y1, y2] at the block faces, tiled on their own or with another room */
 window.HOUSE = {
@@ -234,7 +235,7 @@ window.HOUSE = {
   },
 
   "site": {
-   "lawn": {"rect": [-1500, 2900, -1500, 2400], "z": -32, "depth": 20, "material": "lawn"},
+   "lawn": {"rect": [-1500, 2900, -1500, 2400], "z": -32, "depth": 20, "material": "lawn", "aroundBuilding": true},
    "surfaces": [
     {"name": "taras ogrodowy", "rect": [-250, -100, 30, 880], "z": -2, "material": "woodHorizontal"},
     {"name": "taras pod portalem", "rect": [-100, 0, 64, 846], "z": -2, "material": "woodHorizontal"},

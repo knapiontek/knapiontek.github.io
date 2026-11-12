@@ -43,6 +43,8 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 - **Roof**: two slopes from the pitch, eave and thickness, x −100 → 1420 over both portals; the roof windows (frame bars and glass between lines parallel to the slope) and the chimney are cut out of it.
 - **Facade**: rules on the EPS boxes, by their outer side. Elewacja off shows the bare EPS.
 - **Stair**: floating treads in flights, the landing a flight of one tread; 17 risers to the attic floor.
+- **Frames**: the mullions run through, the transoms stop at them, the glass is the panes between the bars; a door's grooves stop at its handle.
+- **Site**: the lawn gives way to the box around the building's elements, so it never runs through a foundation, slab or EPS.
 - **Rooms**: rectangles at the block faces. A room is tiled on its own or with another room (the walk-in wardrobes with the bedroom); tiles run on through the halves of every passage.
 - **Build changes** (as built, not archon): analysis.md § 14.
 
