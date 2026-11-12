@@ -37,7 +37,7 @@ The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows t
 
 - **Units**: mm, whole numbers in the data; the scene is in metres.
 - **Solids**: every solid is a prism along x over a convex polygon across the house (a box, cut at most by lines parallel to the roof). Subtraction, intersection, the floor split, the facade regions and sections are exact operations on convex polygons; nothing is sampled.
-- **Elements** are the boxes of the analysis, each of a kind (footing, foundation, ground slab, block 240, block 120, EPS, ring beam, slab, ceiling, chimney). The kind gives the face material, the section colour, the checked thickness and the layer, and says whether openings cut it and whether windows sit in it.
+- **Elements** are the boxes of the analysis, each of a kind (footing, foundation, chimney foundation, ground slab, block 240, block 120, EPS, ring beam, slab, ceiling, chimney). The kind gives the face material, the section colour, the checked thickness and the layer, and says whether openings cut it and whether windows sit in it.
 - **Voids** (the stair hole) are named boxes: they cut the slab and are drawn on the 2D plan.
 - **Openings** cut every wall and EPS box they cross. The opening kind says what is drawn in it: a glazed frame (bars, transoms, glass; with or without a sill), a solid leaf with grooves and a handle, or both side by side; frames follow sloping heads. They are in the Okna i drzwi layer.
 - **Portal**: the block, foundation and knee walls of the long walls run on into the wings; the ring beam continues over them; EPS on the inner faces and a cap on every head.

@@ -60,6 +60,7 @@ window.HOUSE = {
   "kinds": {
    "footing": {"name": "ława", "material": "concrete", "cap": "concrete", "thickness": 400, "layers": ["foundation"]},
    "foundation": {"name": "ściana fundamentowa", "material": "concrete", "cap": "concrete", "thickness": 240, "layers": ["foundation"]},
+   "chimneyFoundation": {"name": "fundament komina", "material": "concrete", "cap": "concrete", "layers": ["foundation"]},
    "groundSlab": {"name": "płyta na gruncie", "material": "concrete", "cap": "concrete", "thickness": 360, "layers": ["foundation"], "walkable": true},
    "block240": {"name": "pustak 240 mm", "material": "plasterInside", "cap": "block", "thickness": 240, "layers": ["walls"], "opened": true, "host": true},
    "block120": {"name": "pustak 120 mm", "material": "plasterInside", "cap": "block", "thickness": 120, "layers": ["walls"], "opened": true, "host": true},
@@ -80,8 +81,8 @@ window.HOUSE = {
    {"id": "footingEntrance", "kind": "footing", "b": [11680, 12280, 4530, 8480, -1320, -920]},
    {"id": "footingWall4", "kind": "footing", "b": [6240, 9430, 3930, 4530, -1320, -920]},
    {"id": "footingWall7", "kind": "footing", "b": [8830, 9430, 4530, 7960, -1320, -920]},
-   {"id": "footingWall2", "kind": "footing", "b": [5050, 5650, 620, 3490, -1320, -920]},
-   {"id": "footingChimney", "kind": "footing", "b": [4610, 5570, 3490, 4450, -1320, -920]},
+   {"id": "footingWall2", "kind": "footing", "b": [5050, 5650, 620, 3410, -1320, -920]},
+   {"id": "footingChimney", "kind": "footing", "b": [4530, 5650, 3410, 4530, -1320, -920]},
 
    {"id": "foundationLeft", "kind": "foundation", "b": [-800, 14000, 200, 440, -920, 0]},
    {"id": "foundationRight", "kind": "foundation", "b": [-800, 14000, 8660, 8900, -920, 0]},
@@ -92,9 +93,10 @@ window.HOUSE = {
    {"id": "foundationWall4", "kind": "foundation", "b": [6540, 9250, 4110, 4350, -920, 0]},
    {"id": "foundationWall7", "kind": "foundation", "b": [9010, 9250, 4350, 7660, -920, 0]},
    {"id": "foundationWall2", "kind": "foundation", "b": [5230, 5470, 440, 3590, -920, 0]},
+   {"id": "foundationChimney", "kind": "chimneyFoundation", "b": [4710, 5470, 3590, 4350, -920, 0]},
 
-   {"id": "groundSlabGarage", "kind": "groundSlab", "b": [440, 12760, 440, 4110, -360, 0], "cuts": ["foundationWall2", "foundationWall4", "chimney"]},
-   {"id": "groundSlabHouse", "kind": "groundSlab", "b": [440, 11860, 4110, 8660, -360, 0], "cuts": ["foundationWall4", "foundationWall7", "chimney"]},
+   {"id": "groundSlabGarage", "kind": "groundSlab", "b": [440, 12760, 440, 4110, -360, 0], "cuts": ["foundationWall2", "foundationWall4", "foundationChimney"]},
+   {"id": "groundSlabHouse", "kind": "groundSlab", "b": [440, 11860, 4110, 8660, -360, 0], "cuts": ["foundationWall4", "foundationWall7", "foundationChimney"]},
 
    {"id": "blockLeft", "kind": "block240", "b": [-800, 14000, 200, 440, 0, 2720]},
    {"id": "blockRight", "kind": "block240", "b": [-800, 14000, 8660, 8900, 0, 2720]},
@@ -122,7 +124,7 @@ window.HOUSE = {
    {"id": "epsHeadFrontLeft", "kind": "eps", "b": [14000, 14200, 200, 640, -920, 9000], "top": "roof", "outer": "+x"},
    {"id": "epsHeadFrontRight", "kind": "eps", "b": [14000, 14200, 8460, 8900, -920, 9000], "top": "roof", "outer": "+x"},
 
-   {"id": "chimney", "kind": "chimney", "b": [4710, 5470, 3590, 4350, -920, 9000]},
+   {"id": "chimney", "kind": "chimney", "b": [4710, 5470, 3590, 4350, 0, 9000]},
    {"id": "wall2", "kind": "block240", "b": [5230, 5470, 440, 3590, 0, 2720]},
    {"id": "wall3", "kind": "block120", "b": [6420, 6540, 3200, 4350, 0, 2720]},
    {"id": "wall4", "kind": "block240", "b": [6540, 9250, 4110, 4350, 0, 2720]},

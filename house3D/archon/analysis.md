@@ -96,7 +96,7 @@ Left and right are as seen when facing the front of the house (the street side),
 
 ### 7.1 Foundation boxes
 
-Footings z −1320 → −920; foundation walls z −920 → 0; ground slab z −360 → 0. Every block-240 wall of the ground floor stands on a foundation wall and a footing.
+Footings z −1320 → −920; foundation walls z −920 → 0; ground slab z −360 → 0. Every block-240 wall of the ground floor stands on a foundation wall and a footing. The chimney stands on the ground slab (from z 0) over a chimney foundation of its own size; its footing reaches 180 past each face like a wall footing, so its edges run on in line with the footings of #2 (x 5650) and #4 (y 4530).
 
 | Element | Footing x / y | Foundation wall x / y |
 |---|---|---|
@@ -106,12 +106,12 @@ Footings z −1320 → −920; foundation walls z −920 → 0; ground slab z �
 | garage front | 12580 – 13180 / 620 – 4530 | 12760 – 13000 / 440 – 4350 |
 | recess, garage side | 11680 – 12580 / 3930 – 4530 | 11860 – 12760 / 4110 – 4350 |
 | entrance wall | 11680 – 12280 / 4530 – 8480 | 11860 – 12100 / 4350 – 8660 |
-| #2 (as built, § 14) | 5050 – 5650 / 620 – 3490 | 5230 – 5470 / 440 – 3590 |
+| #2 (as built, § 14) | 5050 – 5650 / 620 – 3410 | 5230 – 5470 / 440 – 3590 |
 | #4 | 6240 – 9430 / 3930 – 4530 | 6540 – 9250 / 4110 – 4350 |
 | #7 | 8830 – 9430 / 4530 – 7960 | 9010 – 9250 / 4350 – 7660 |
-| chimney | 4610 – 5570 / 3490 – 4450 | – (the chimney itself, from −920) |
+| chimney | 4530 – 5650 / 3410 – 4530 | 4710 – 5470 / 3590 – 4350 (chimney foundation) |
 
-Ground slab: x 440 – 12760, y 440 – 4110 (garage) and x 440 – 11860, y 4110 – 8660 (house), minus the foundation walls and the chimney.
+Ground slab: x 440 – 12760, y 440 – 4110 (garage) and x 440 – 11860, y 4110 – 8660 (house), minus the foundation walls and the chimney foundation.
 
 ## 8. Outer walls
 
@@ -197,7 +197,7 @@ Roof: graphite tiles on top, white underside, ends and eaves.
 
 | # | Kind | x | y | Note |
 |---|---|---|---|---|
-| 1 | chimney | 4710 – 5470 | 3590 – 4350 | z −920 → ≈ 9000 (on its footing), one box through both floors and the roof; face flush with #4 (§ 14) |
+| 1 | chimney | 4710 – 5470 | 3590 – 4350 | z 0 → ≈ 9000, on the ground slab over its foundation (§ 7.1), one box through both floors and the roof; face flush with #4 (§ 14) |
 | 2 | block 240 | 5230 – 5470 | 440 – 3590 | living / garage; block 240 as built, on a foundation wall (§ 7.1, § 14) |
 | 3 | block 120 | 6420 – 6540 | 3200 – 4350 | stair wall |
 | 4 | block 240 | 6540 – 9250 | 4110 – 4350 | garage / hall, load-bearing |

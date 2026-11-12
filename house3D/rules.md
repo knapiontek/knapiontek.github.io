@@ -27,7 +27,7 @@ The menu decides what is shown and from where. The panel holds only the paramete
 - **EPS** is a continuous shell outside the blocks, never between two blocks: every block is covered, front, back and sides, with no thermal bridges. Every exposed block end (the portal wing heads) gets an EPS cap. A block line runs through its corners and on into the portal wings. The portal frame, front and back, is one width, 640 (EPS 200 + block 240 + EPS 200; the roof across the slope).
 - **Facade**: the finish (plaster, graphite, wood, plinth) covers only the parts of EPS faces open to the air (block → EPS → facade). A part against another solid (block, slab, roof) stays bare EPS, decided exactly by the contact pieces. The finish is chosen by rules (the side of the box facing the air, a part of it, a height); a later rule wins.
 - **Windows and doors** sit in the block, flush with its outer face. Their sizes are the archon labels (width / height), shown on the 2D plan. The kind of an opening says what is drawn in it (a glazed frame with or without a sill, a solid leaf, both) and whether the floor runs through it.
-- **Foundations**: every block-240 wall of the ground floor stands on a foundation wall and a footing.
+- **Foundations**: every block-240 wall of the ground floor stands on a foundation wall and a footing. The chimney stands on the ground slab over a foundation of its own; under the slab there are only foundations. Footings in line with each other keep one edge (the chimney footing reaches as far past its faces as a wall footing).
 - **Stair**: floating, treads and a landing only (no stringers, no wall under it).
 - **Not in the model**: furniture, kitchen, bathroom fittings, the fireplace. Only the building.
 
