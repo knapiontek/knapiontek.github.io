@@ -4,8 +4,8 @@
    views     how the house is looked at: 3D (cameras, light, walk), the 2D plan and Analiza (the checks)
    view.html holds no number, name or colour of this house; it draws this file with materials.js and textures.js.
 
-   Units cm. Axes of the analysis (§ 2): x along the house (0 garden outer face, 1320 front outer face), y across
-   (0 left outer face, garage side; 910 right), z up (0 finished ground floor).
+   Units mm, whole numbers. Axes of the analysis (§ 2): x along the house (0 garden outer face, 13200 front outer face),
+   y across (0 left outer face, garage side; 9100 right), z up (0 finished ground floor).
 
    b          a box [x1, x2, y1, y2, z1, z2]
    line       {z, y, pitch}: the line z = z + pitch · tan(roof pitch) · (y' − y) across the house (pitch +1 or −1)
@@ -15,8 +15,8 @@
    kinds      of elements: material of the faces, section colour (cap), checked thickness, layers;
               opened = openings are cut out of it, host = windows and doors sit in it, flush with its outer face,
               walkable = the walk stands on it, finish = the facade layer that switches its finish, raw = its bare material
-   openings   boxes cut out of every opened element they cross; label = archon width/height; their kind says what
-              is drawn in them (glazed: frame, bars, glass; leaf: a solid leaf of "leaf" cm, the rest glazed) and
+   openings   boxes cut out of every opened element they cross; label = archon width/height in mm; their kind says what
+              is drawn in them (glazed: frame, bars, glass; leaf: a solid leaf of "leaf" mm, the rest glazed) and
               whether the floor runs through (passage)
    finishes   the facade: which material covers which part of an EPS box, by its outer side, a region and lines;
               a later rule wins; anything not covered keeps the material of its kind
@@ -25,141 +25,143 @@
               rooms are rectangles [x1, x2, y1, y2] at the block faces, tiled on their own or with another room */
 window.HOUSE = {
  "name": "Dom w papawerach 5 (G)",
- "source": "Geometria z archon/analysis.md (rzuty archon.pl, ±2,3 cm), ze zmianami wykonawczymi.",
+ "source": "Geometria z archon/analysis.md (rzuty archon.pl, ±23 mm), ze zmianami wykonawczymi.",
  "notes": [
   "Bryła według analysis.md: każdy element to prostopadłościan, otwory wycięte ze ścian, które przecinają.",
   "Pompa ciepła zamiast kotła gazowego: jeden komin (salon), bez szachtu wentylacyjnego i drugiego komina.",
-  "Zmiany wykonawcze: wnęka prysznica w łazience parteru 100 × 90 (ściany #7, #8, #10 przesunięte), drzwi łazienki na piętrze przesunięte o 20 cm w stronę ogrodu, sufit katedralny nad sypialnią.",
+  "Zmiany wykonawcze: wnęka prysznica w łazience parteru 1000 × 900 mm (ściany #7, #8, #10 przesunięte), drzwi łazienki na piętrze przesunięte o 200 mm w stronę ogrodu, sufit katedralny nad sypialnią.",
   "Schody wspornikowe (bez policzków), bez ścianki pod biegiem.",
   "Elewacja (grafit, biel, drewno) odczytana z wizualizacji archon: to obraz, nie wymiar."
  ],
 
  "geometry": {
-  "split": 272,
-  "length": 1320,
+  "split": 2720,
+  "length": 13200,
 
   "roof": {
    "pitch": 42,
-   "eave": 386.4,
-   "width": 910,
-   "thickness": 64,
-   "x": [-100, 1420],
+   "eave": 3864,
+   "width": 9100,
+   "thickness": 640,
+   "x": [-1000, 14200],
    "faces": {"top": "roofGraphite", "bottom": "plasterWhite", "ends": "plasterWhite", "eaves": "graphite"},
    "cap": "timber",
    "cuts": ["chimney"],
    "layers": ["roof"],
    "windows": [
-    {"name": "Sypialnia", "label": "94/140", "x": [155, 249], "y": [782, 886]},
-    {"name": "Schody", "label": "94/140", "x": [639, 733], "y": [24, 128]},
-    {"name": "Łazienka", "label": "94/140", "x": [639, 733], "y": [782, 886]}
+    {"name": "Sypialnia", "label": "940/1400", "x": [1550, 2490], "y": [7820, 8860]},
+    {"name": "Schody", "label": "940/1400", "x": [6390, 7330], "y": [240, 1280]},
+    {"name": "Łazienka", "label": "940/1400", "x": [6390, 7330], "y": [7820, 8860]}
    ],
-   "windowFrame": {"width": 7, "frame": [-10, 4], "glass": [0.5, 1.5], "material": "frame", "glazing": "glass"},
-   "clearHeights": [140, 220]
+   "windowFrame": {"width": 70, "frame": [-100, 40], "glass": [5, 15], "material": "frame", "glazing": "glass"},
+   "clearHeights": [1400, 2200]
   },
 
   "kinds": {
-   "footing": {"name": "ława", "material": "concrete", "cap": "concrete", "thickness": 40, "layers": ["foundation"]},
-   "foundation": {"name": "ściana fundamentowa", "material": "concrete", "cap": "concrete", "thickness": 24, "layers": ["foundation"]},
-   "groundSlab": {"name": "płyta na gruncie", "material": "concrete", "cap": "concrete", "thickness": 36, "layers": ["foundation"], "walkable": true},
-   "block24": {"name": "pustak 24", "material": "plasterInside", "cap": "block", "thickness": 24, "layers": ["walls"], "opened": true, "host": true},
-   "block12": {"name": "pustak 12", "material": "plasterInside", "cap": "block", "thickness": 12, "layers": ["walls"], "opened": true, "host": true},
+   "footing": {"name": "ława", "material": "concrete", "cap": "concrete", "thickness": 400, "layers": ["foundation"]},
+   "foundation": {"name": "ściana fundamentowa", "material": "concrete", "cap": "concrete", "thickness": 240, "layers": ["foundation"]},
+   "groundSlab": {"name": "płyta na gruncie", "material": "concrete", "cap": "concrete", "thickness": 360, "layers": ["foundation"], "walkable": true},
+   "block240": {"name": "pustak 240 mm", "material": "plasterInside", "cap": "block", "thickness": 240, "layers": ["walls"], "opened": true, "host": true},
+   "block120": {"name": "pustak 120 mm", "material": "plasterInside", "cap": "block", "thickness": 120, "layers": ["walls"], "opened": true, "host": true},
    "chimney": {"name": "komin", "material": "plasterInside", "cap": "block", "layers": ["walls"]},
-   "eps": {"name": "styropian 20", "material": "plasterWhite", "raw": "insulation", "finish": "facade", "cap": "insulation", "thickness": 20, "layers": ["insulation"], "opened": true},
-   "epsSoffit": {"name": "styropian podbitki wnęki 47", "material": "plasterWhite", "raw": "insulation", "finish": "facade", "cap": "insulation", "thickness": 47, "layers": ["insulation"], "opened": true},
-   "ringBeam": {"name": "wieniec nad skrzydłem portalu", "material": "plasterInside", "cap": "concrete", "thickness": 24, "layers": ["slabs"]},
-   "slab": {"name": "strop z wieńcem", "material": "plasterInside", "cap": "concrete", "thickness": 34, "layers": ["slabs"], "walkable": true},
-   "ceiling": {"name": "sufit z ociepleniem", "material": "plasterInside", "cap": "insulation", "thickness": 39, "layers": ["slabs"]}
+   "eps": {"name": "styropian 200 mm", "material": "plasterWhite", "raw": "insulation", "finish": "facade", "cap": "insulation", "thickness": 200, "layers": ["insulation"], "opened": true},
+   "epsSoffit": {"name": "styropian podbitki wnęki 470 mm", "material": "plasterWhite", "raw": "insulation", "finish": "facade", "cap": "insulation", "thickness": 470, "layers": ["insulation"], "opened": true},
+   "ringBeam": {"name": "wieniec nad skrzydłem portalu", "material": "plasterInside", "cap": "concrete", "thickness": 240, "layers": ["slabs"]},
+   "slab": {"name": "strop z wieńcem", "material": "plasterInside", "cap": "concrete", "thickness": 340, "layers": ["slabs"], "walkable": true},
+   "ceiling": {"name": "sufit z ociepleniem", "material": "plasterInside", "cap": "insulation", "thickness": 390, "layers": ["slabs"]}
   },
 
   "elements": [
-   {"id": "footingLeft", "kind": "footing", "b": [-100, 1420, 2, 62, -132, -92]},
-   {"id": "footingRight", "kind": "footing", "b": [-100, 1420, 848, 908, -132, -92]},
-   {"id": "footingGarden", "kind": "footing", "b": [2, 62, 62, 848, -132, -92]},
-   {"id": "footingFront", "kind": "footing", "b": [1258, 1318, 62, 453, -132, -92]},
-   {"id": "footingRecess", "kind": "footing", "b": [1168, 1258, 393, 453, -132, -92]},
-   {"id": "footingEntrance", "kind": "footing", "b": [1168, 1228, 453, 848, -132, -92]},
-   {"id": "footingWall4", "kind": "footing", "b": [624, 943, 393, 453, -132, -92]},
-   {"id": "footingWall7", "kind": "footing", "b": [883, 943, 453, 796, -132, -92]},
-   {"id": "footingChimney", "kind": "footing", "b": [461, 557, 349, 445, -132, -92]},
+   {"id": "footingLeft", "kind": "footing", "b": [-1000, 14200, 20, 620, -1320, -920]},
+   {"id": "footingRight", "kind": "footing", "b": [-1000, 14200, 8480, 9080, -1320, -920]},
+   {"id": "footingGarden", "kind": "footing", "b": [20, 620, 620, 8480, -1320, -920]},
+   {"id": "footingFront", "kind": "footing", "b": [12580, 13180, 620, 4530, -1320, -920]},
+   {"id": "footingRecess", "kind": "footing", "b": [11680, 12580, 3930, 4530, -1320, -920]},
+   {"id": "footingEntrance", "kind": "footing", "b": [11680, 12280, 4530, 8480, -1320, -920]},
+   {"id": "footingWall4", "kind": "footing", "b": [6240, 9430, 3930, 4530, -1320, -920]},
+   {"id": "footingWall7", "kind": "footing", "b": [8830, 9430, 4530, 7960, -1320, -920]},
+   {"id": "footingWall2", "kind": "footing", "b": [5050, 5650, 620, 3490, -1320, -920]},
+   {"id": "footingChimney", "kind": "footing", "b": [4610, 5570, 3490, 4450, -1320, -920]},
 
-   {"id": "foundationLeft", "kind": "foundation", "b": [-80, 1400, 20, 44, -92, 0]},
-   {"id": "foundationRight", "kind": "foundation", "b": [-80, 1400, 866, 890, -92, 0]},
-   {"id": "foundationGarden", "kind": "foundation", "b": [20, 44, 44, 866, -92, 0]},
-   {"id": "foundationFront", "kind": "foundation", "b": [1276, 1300, 44, 435, -92, 0]},
-   {"id": "foundationRecess", "kind": "foundation", "b": [1186, 1276, 411, 435, -92, 0]},
-   {"id": "foundationEntrance", "kind": "foundation", "b": [1186, 1210, 435, 866, -92, 0]},
-   {"id": "foundationWall4", "kind": "foundation", "b": [654, 925, 411, 435, -92, 0]},
-   {"id": "foundationWall7", "kind": "foundation", "b": [901, 925, 435, 766, -92, 0]},
+   {"id": "foundationLeft", "kind": "foundation", "b": [-800, 14000, 200, 440, -920, 0]},
+   {"id": "foundationRight", "kind": "foundation", "b": [-800, 14000, 8660, 8900, -920, 0]},
+   {"id": "foundationGarden", "kind": "foundation", "b": [200, 440, 440, 8660, -920, 0]},
+   {"id": "foundationFront", "kind": "foundation", "b": [12760, 13000, 440, 4350, -920, 0]},
+   {"id": "foundationRecess", "kind": "foundation", "b": [11860, 12760, 4110, 4350, -920, 0]},
+   {"id": "foundationEntrance", "kind": "foundation", "b": [11860, 12100, 4350, 8660, -920, 0]},
+   {"id": "foundationWall4", "kind": "foundation", "b": [6540, 9250, 4110, 4350, -920, 0]},
+   {"id": "foundationWall7", "kind": "foundation", "b": [9010, 9250, 4350, 7660, -920, 0]},
+   {"id": "foundationWall2", "kind": "foundation", "b": [5230, 5470, 440, 3590, -920, 0]},
 
-   {"id": "groundSlabGarage", "kind": "groundSlab", "b": [44, 1276, 44, 411, -36, 0], "cuts": ["foundationWall4", "chimney"]},
-   {"id": "groundSlabHouse", "kind": "groundSlab", "b": [44, 1186, 411, 866, -36, 0], "cuts": ["foundationWall4", "foundationWall7", "chimney"]},
+   {"id": "groundSlabGarage", "kind": "groundSlab", "b": [440, 12760, 440, 4110, -360, 0], "cuts": ["foundationWall2", "foundationWall4", "chimney"]},
+   {"id": "groundSlabHouse", "kind": "groundSlab", "b": [440, 11860, 4110, 8660, -360, 0], "cuts": ["foundationWall4", "foundationWall7", "chimney"]},
 
-   {"id": "blockLeft", "kind": "block24", "b": [-80, 1400, 20, 44, 0, 272]},
-   {"id": "blockRight", "kind": "block24", "b": [-80, 1400, 866, 890, 0, 272]},
-   {"id": "blockGarden", "kind": "block24", "b": [20, 44, 44, 866, 0, 272]},
-   {"id": "blockGarageFront", "kind": "block24", "b": [1276, 1300, 44, 435, 0, 272]},
-   {"id": "blockRecess", "kind": "block24", "b": [1186, 1276, 411, 435, 0, 272]},
-   {"id": "blockEntrance", "kind": "block24", "b": [1186, 1210, 435, 866, 0, 272]},
+   {"id": "blockLeft", "kind": "block240", "b": [-800, 14000, 200, 440, 0, 2720]},
+   {"id": "blockRight", "kind": "block240", "b": [-800, 14000, 8660, 8900, 0, 2720]},
+   {"id": "blockGarden", "kind": "block240", "b": [200, 440, 440, 8660, 0, 2720]},
+   {"id": "blockGarageFront", "kind": "block240", "b": [12760, 13000, 440, 4350, 0, 2720]},
+   {"id": "blockRecess", "kind": "block240", "b": [11860, 12760, 4110, 4350, 0, 2720]},
+   {"id": "blockEntrance", "kind": "block240", "b": [11860, 12100, 4350, 8660, 0, 2720]},
 
-   {"id": "epsLeft", "kind": "eps", "b": [-100, 1420, 0, 20, -92, 900], "top": "roof", "outer": "-y"},
-   {"id": "epsRight", "kind": "eps", "b": [-100, 1420, 890, 910, -92, 900], "top": "roof", "outer": "+y"},
-   {"id": "epsGarden", "kind": "eps", "b": [0, 20, 44, 866, -92, 900], "top": "roof", "outer": "-x"},
-   {"id": "epsGarageFront", "kind": "eps", "b": [1300, 1320, 44, 455, -92, 272], "outer": "+x"},
-   {"id": "epsRecessLeft", "kind": "eps", "b": [1230, 1300, 435, 455, -92, 272], "outer": "+y"},
-   {"id": "epsEntrance", "kind": "eps", "b": [1210, 1230, 435, 846, -92, 272], "outer": "+x"},
-   {"id": "epsRecessRight", "kind": "eps", "b": [1210, 1320, 846, 866, -92, 272], "outer": "-y"},
-   {"id": "epsSoffit", "kind": "epsSoffit", "b": [1230, 1320, 455, 846, 225, 272], "outer": "-z"},
-   {"id": "epsFrontGable", "kind": "eps", "b": [1300, 1320, 44, 866, 272, 900], "top": "roof", "outer": "+x"},
+   {"id": "epsLeft", "kind": "eps", "b": [-1000, 14200, 0, 200, -920, 9000], "top": "roof", "outer": "-y"},
+   {"id": "epsRight", "kind": "eps", "b": [-1000, 14200, 8900, 9100, -920, 9000], "top": "roof", "outer": "+y"},
+   {"id": "epsGarden", "kind": "eps", "b": [0, 200, 440, 8660, -920, 9000], "top": "roof", "outer": "-x"},
+   {"id": "epsGarageFront", "kind": "eps", "b": [13000, 13200, 440, 4550, -920, 2720], "outer": "+x"},
+   {"id": "epsRecessLeft", "kind": "eps", "b": [12300, 13000, 4350, 4550, -920, 2720], "outer": "+y"},
+   {"id": "epsEntrance", "kind": "eps", "b": [12100, 12300, 4350, 8460, -920, 2720], "outer": "+x"},
+   {"id": "epsRecessRight", "kind": "eps", "b": [12100, 13200, 8460, 8660, -920, 2720], "outer": "-y"},
+   {"id": "epsSoffit", "kind": "epsSoffit", "b": [12300, 13200, 4550, 8460, 2250, 2720], "outer": "-z"},
+   {"id": "epsFrontGable", "kind": "eps", "b": [13000, 13200, 440, 8660, 2720, 9000], "top": "roof", "outer": "+x"},
 
-   {"id": "epsWingGardenLeft", "kind": "eps", "b": [-80, 0, 44, 64, -92, 900], "top": "roof", "outer": "+y"},
-   {"id": "epsWingGardenRight", "kind": "eps", "b": [-80, 0, 846, 866, -92, 900], "top": "roof", "outer": "-y"},
-   {"id": "epsWingFrontLeft", "kind": "eps", "b": [1320, 1400, 44, 64, -92, 900], "top": "roof", "outer": "+y"},
-   {"id": "epsWingFrontRight", "kind": "eps", "b": [1320, 1400, 846, 866, -92, 900], "top": "roof", "outer": "-y"},
-   {"id": "epsHeadGardenLeft", "kind": "eps", "b": [-100, -80, 20, 64, -92, 900], "top": "roof", "outer": "-x"},
-   {"id": "epsHeadGardenRight", "kind": "eps", "b": [-100, -80, 846, 890, -92, 900], "top": "roof", "outer": "-x"},
-   {"id": "epsHeadFrontLeft", "kind": "eps", "b": [1400, 1420, 20, 64, -92, 900], "top": "roof", "outer": "+x"},
-   {"id": "epsHeadFrontRight", "kind": "eps", "b": [1400, 1420, 846, 890, -92, 900], "top": "roof", "outer": "+x"},
+   {"id": "epsWingGardenLeft", "kind": "eps", "b": [-800, 0, 440, 640, -920, 9000], "top": "roof", "outer": "+y"},
+   {"id": "epsWingGardenRight", "kind": "eps", "b": [-800, 0, 8460, 8660, -920, 9000], "top": "roof", "outer": "-y"},
+   {"id": "epsWingFrontLeft", "kind": "eps", "b": [13200, 14000, 440, 640, -920, 9000], "top": "roof", "outer": "+y"},
+   {"id": "epsWingFrontRight", "kind": "eps", "b": [13200, 14000, 8460, 8660, -920, 9000], "top": "roof", "outer": "-y"},
+   {"id": "epsHeadGardenLeft", "kind": "eps", "b": [-1000, -800, 200, 640, -920, 9000], "top": "roof", "outer": "-x"},
+   {"id": "epsHeadGardenRight", "kind": "eps", "b": [-1000, -800, 8460, 8900, -920, 9000], "top": "roof", "outer": "-x"},
+   {"id": "epsHeadFrontLeft", "kind": "eps", "b": [14000, 14200, 200, 640, -920, 9000], "top": "roof", "outer": "+x"},
+   {"id": "epsHeadFrontRight", "kind": "eps", "b": [14000, 14200, 8460, 8900, -920, 9000], "top": "roof", "outer": "+x"},
 
-   {"id": "chimney", "kind": "chimney", "b": [471, 547, 359, 435, -92, 900]},
-   {"id": "wall2", "kind": "block24", "b": [523, 547, 44, 359, 0, 272]},
-   {"id": "wall3", "kind": "block12", "b": [642, 654, 320, 435, 0, 272]},
-   {"id": "wall4", "kind": "block24", "b": [654, 925, 411, 435, 0, 272]},
-   {"id": "wall5", "kind": "block12", "b": [722, 734, 580, 866, 0, 272]},
-   {"id": "wall6a", "kind": "block12", "b": [734, 901, 615, 627, 0, 272]},
-   {"id": "wall6b", "kind": "block12", "b": [925, 1186, 615, 627, 0, 272]},
-   {"id": "wall7", "kind": "block24", "b": [901, 925, 435, 766, 0, 272]},
-   {"id": "wall8", "kind": "block12", "b": [925, 985, 754, 766, 0, 272]},
-   {"id": "wall9", "kind": "block12", "b": [925, 1186, 411, 423, 0, 272]},
-   {"id": "wall10", "kind": "block12", "b": [985, 997, 754, 866, 0, 272]},
+   {"id": "chimney", "kind": "chimney", "b": [4710, 5470, 3590, 4350, -920, 9000]},
+   {"id": "wall2", "kind": "block240", "b": [5230, 5470, 440, 3590, 0, 2720]},
+   {"id": "wall3", "kind": "block120", "b": [6420, 6540, 3200, 4350, 0, 2720]},
+   {"id": "wall4", "kind": "block240", "b": [6540, 9250, 4110, 4350, 0, 2720]},
+   {"id": "wall5", "kind": "block120", "b": [7220, 7340, 5800, 8660, 0, 2720]},
+   {"id": "wall6a", "kind": "block120", "b": [7340, 9010, 6150, 6270, 0, 2720]},
+   {"id": "wall6b", "kind": "block120", "b": [9250, 11860, 6150, 6270, 0, 2720]},
+   {"id": "wall7", "kind": "block240", "b": [9010, 9250, 4350, 7660, 0, 2720]},
+   {"id": "wall8", "kind": "block120", "b": [9250, 9850, 7540, 7660, 0, 2720]},
+   {"id": "wall9", "kind": "block120", "b": [9250, 11860, 4110, 4230, 0, 2720]},
+   {"id": "wall10", "kind": "block120", "b": [9850, 9970, 7540, 8660, 0, 2720]},
 
-   {"id": "slab", "kind": "slab", "b": [20, 1300, 20, 890, 272, 306], "cuts": ["stairVoid", "chimney"]},
-   {"id": "beamWingGardenLeft", "kind": "ringBeam", "b": [-80, 20, 20, 44, 272, 306]},
-   {"id": "beamWingGardenRight", "kind": "ringBeam", "b": [-80, 20, 866, 890, 272, 306]},
-   {"id": "beamWingFrontLeft", "kind": "ringBeam", "b": [1300, 1400, 20, 44, 272, 306]},
-   {"id": "beamWingFrontRight", "kind": "ringBeam", "b": [1300, 1400, 866, 890, 272, 306]},
+   {"id": "slab", "kind": "slab", "b": [200, 13000, 200, 8900, 2720, 3060], "cuts": ["stairVoid", "chimney"]},
+   {"id": "beamWingGardenLeft", "kind": "ringBeam", "b": [-800, 200, 200, 440, 2720, 3060]},
+   {"id": "beamWingGardenRight", "kind": "ringBeam", "b": [-800, 200, 8660, 8900, 2720, 3060]},
+   {"id": "beamWingFrontLeft", "kind": "ringBeam", "b": [13000, 14000, 200, 440, 2720, 3060]},
+   {"id": "beamWingFrontRight", "kind": "ringBeam", "b": [13000, 14000, 8660, 8900, 2720, 3060]},
 
-   {"id": "kneeLeft", "kind": "block24", "b": [-80, 1400, 20, 44, 306, 900], "top": "roof"},
-   {"id": "kneeRight", "kind": "block24", "b": [-80, 1400, 866, 890, 306, 900], "top": "roof"},
-   {"id": "gableGarden", "kind": "block24", "b": [20, 44, 44, 866, 306, 900], "top": "roof"},
-   {"id": "gableFront", "kind": "block24", "b": [1276, 1300, 44, 866, 306, 900], "top": "roof"},
-   {"id": "ceiling", "kind": "ceiling", "b": [376, 1276, 44, 866, 591, 630], "top": "roof", "cuts": ["chimney"]},
-   {"id": "loftWall", "kind": "block12", "b": [364, 376, 44, 866, 591, 900], "top": "roof"},
+   {"id": "kneeLeft", "kind": "block240", "b": [-800, 14000, 200, 440, 3060, 9000], "top": "roof"},
+   {"id": "kneeRight", "kind": "block240", "b": [-800, 14000, 8660, 8900, 3060, 9000], "top": "roof"},
+   {"id": "gableGarden", "kind": "block240", "b": [200, 440, 440, 8660, 3060, 9000], "top": "roof"},
+   {"id": "gableFront", "kind": "block240", "b": [12760, 13000, 440, 8660, 3060, 9000], "top": "roof"},
+   {"id": "ceiling", "kind": "ceiling", "b": [3760, 12760, 440, 8660, 5910, 6300], "top": "roof", "cuts": ["chimney"]},
+   {"id": "loftWall", "kind": "block120", "b": [3640, 3760, 440, 8660, 5910, 9000], "top": "roof"},
 
-   {"id": "attic1", "kind": "block12", "b": [364, 376, 44, 391, 306, 591], "top": "roof"},
-   {"id": "attic2", "kind": "block12", "b": [364, 376, 553, 866, 306, 591], "top": "roof"},
-   {"id": "attic3a", "kind": "block12", "b": [466, 535, 553, 565, 306, 591], "top": "roof"},
-   {"id": "attic3b", "kind": "block12", "b": [547, 901, 553, 565, 306, 591], "top": "roof"},
-   {"id": "attic5", "kind": "block12", "b": [535, 547, 44, 359, 306, 591], "top": "roof"},
-   {"id": "attic6", "kind": "block12", "b": [535, 547, 435, 866, 306, 591], "top": "roof"},
-   {"id": "attic7", "kind": "block12", "b": [737, 749, 44, 341, 306, 591], "top": "roof"},
-   {"id": "attic8", "kind": "block12", "b": [749, 901, 329, 341, 306, 591], "top": "roof"},
-   {"id": "attic9", "kind": "block12", "b": [820, 832, 565, 866, 306, 591], "top": "roof"},
-   {"id": "attic12", "kind": "block12", "b": [901, 913, 44, 649, 306, 591], "top": "roof"},
-   {"id": "attic13", "kind": "block12", "b": [913, 1276, 441, 453, 306, 591], "top": "roof"}
+   {"id": "attic1", "kind": "block120", "b": [3640, 3760, 440, 3910, 3060, 5910], "top": "roof"},
+   {"id": "attic2", "kind": "block120", "b": [3640, 3760, 5530, 8660, 3060, 5910], "top": "roof"},
+   {"id": "attic3a", "kind": "block120", "b": [4660, 5350, 5530, 5650, 3060, 5910], "top": "roof"},
+   {"id": "attic3b", "kind": "block120", "b": [5470, 9010, 5530, 5650, 3060, 5910], "top": "roof"},
+   {"id": "attic5", "kind": "block120", "b": [5350, 5470, 440, 3590, 3060, 5910], "top": "roof"},
+   {"id": "attic6", "kind": "block120", "b": [5350, 5470, 4350, 8660, 3060, 5910], "top": "roof"},
+   {"id": "attic7", "kind": "block120", "b": [7370, 7490, 440, 3410, 3060, 5910], "top": "roof"},
+   {"id": "attic8", "kind": "block120", "b": [7490, 9010, 3290, 3410, 3060, 5910], "top": "roof"},
+   {"id": "attic9", "kind": "block120", "b": [8200, 8320, 5650, 8660, 3060, 5910], "top": "roof"},
+   {"id": "attic12", "kind": "block120", "b": [9010, 9130, 440, 6490, 3060, 5910], "top": "roof"},
+   {"id": "attic13", "kind": "block120", "b": [9130, 12760, 4410, 4530, 3060, 5910], "top": "roof"}
   ],
 
   "voids": [
-   {"id": "stairVoid", "name": "otwór schodów", "boxes": [[547, 642, 44, 435, 272, 306], [642, 737, 44, 273, 272, 306]]}
+   {"id": "stairVoid", "name": "otwór schodów", "boxes": [[5470, 6420, 440, 4350, 2720, 3060], [6420, 7370, 440, 2730, 2720, 3060]]}
   ],
 
   "openingKinds": {
@@ -170,78 +172,78 @@ window.HOUSE = {
    "door": {"passage": true}
   },
   "openings": [
-   {"kind": "window", "label": "600/240", "b": [0, 44, 155, 755, 0, 240], "outer": "-x", "cols": 4},
-   {"kind": "window", "label": "200/100", "b": [762, 962, 0, 44, 110, 210], "outer": "-y"},
-   {"kind": "window", "label": "250/240", "b": [83, 333, 866, 910, 0, 240], "outer": "+y"},
-   {"kind": "window", "label": "190/130", "b": [472, 662, 866, 910, 110, 240], "outer": "+y", "cols": 2},
-   {"kind": "window", "label": "100/130", "b": [803, 903, 866, 910, 110, 240], "outer": "+y"},
-   {"kind": "gate", "label": "275/225", "b": [1276, 1320, 115, 390, 0, 225], "outer": "+x"},
-   {"kind": "entrance", "label": "160/210", "b": [1186, 1230, 455, 615, 0, 210], "outer": "+x", "leaf": 100},
-   {"kind": "glassDoor", "label": "80/210", "b": [1186, 1230, 661, 741, 0, 210], "outer": "+x"},
-   {"kind": "door", "label": "87/205", "b": [1064, 1151, 411, 423, 0, 205]},
-   {"kind": "door", "label": "92/205", "b": [901, 925, 488, 580, 0, 205]},
-   {"kind": "door", "label": "90/205", "b": [776, 866, 615, 627, 0, 205]},
-   {"kind": "door", "label": "92/205", "b": [1064, 1156, 615, 627, 0, 205]},
-   {"kind": "window", "label": "600/346", "b": [0, 44, 155, 755, 306, 652], "outer": "-x", "cols": 4,
-    "below": [{"z": 652, "y": 455, "pitch": 1}, {"z": 652, "y": 455, "pitch": -1}]},
-   {"kind": "window", "label": "220/285", "b": [1276, 1320, 168, 388, 306, 591], "outer": "+x", "cols": 2, "transoms": [390],
-    "below": [{"z": 591, "y": 388, "pitch": 1}]},
-   {"kind": "window", "label": "220/285", "b": [1276, 1320, 522, 742, 306, 591], "outer": "+x", "cols": 2, "transoms": [390],
-    "below": [{"z": 591, "y": 522, "pitch": -1}]},
-   {"kind": "door", "label": "89/205", "b": [535, 547, 459, 548, 306, 511]},
-   {"kind": "door", "label": "90/205", "b": [630, 720, 553, 565, 306, 511]},
-   {"kind": "door", "label": "82/205", "b": [901, 913, 178, 260, 306, 511]},
-   {"kind": "door", "label": "94/205", "b": [901, 913, 347, 441, 306, 511]},
-   {"kind": "door", "label": "90/205", "b": [901, 913, 457, 547, 306, 511]}
+   {"kind": "window", "label": "6000/2400", "b": [0, 440, 1550, 7550, 0, 2400], "outer": "-x", "cols": 4},
+   {"kind": "window", "label": "2000/1000", "b": [7620, 9620, 0, 440, 1100, 2100], "outer": "-y"},
+   {"kind": "window", "label": "2500/2400", "b": [830, 3330, 8660, 9100, 0, 2400], "outer": "+y"},
+   {"kind": "window", "label": "1900/1300", "b": [4720, 6620, 8660, 9100, 1100, 2400], "outer": "+y", "cols": 2},
+   {"kind": "window", "label": "1000/1300", "b": [8030, 9030, 8660, 9100, 1100, 2400], "outer": "+y"},
+   {"kind": "gate", "label": "2750/2250", "b": [12760, 13200, 1150, 3900, 0, 2250], "outer": "+x"},
+   {"kind": "entrance", "label": "1600/2100", "b": [11860, 12300, 4550, 6150, 0, 2100], "outer": "+x", "leaf": 1000},
+   {"kind": "glassDoor", "label": "800/2100", "b": [11860, 12300, 6610, 7410, 0, 2100], "outer": "+x"},
+   {"kind": "door", "label": "870/2050", "b": [10640, 11510, 4110, 4230, 0, 2050]},
+   {"kind": "door", "label": "920/2050", "b": [9010, 9250, 4880, 5800, 0, 2050]},
+   {"kind": "door", "label": "900/2050", "b": [7760, 8660, 6150, 6270, 0, 2050]},
+   {"kind": "door", "label": "920/2050", "b": [10640, 11560, 6150, 6270, 0, 2050]},
+   {"kind": "window", "label": "6000/3460", "b": [0, 440, 1550, 7550, 3060, 6520], "outer": "-x", "cols": 4,
+    "below": [{"z": 6520, "y": 4550, "pitch": 1}, {"z": 6520, "y": 4550, "pitch": -1}]},
+   {"kind": "window", "label": "2200/2850", "b": [12760, 13200, 1680, 3880, 3060, 5910], "outer": "+x", "cols": 2, "transoms": [3900],
+    "below": [{"z": 5910, "y": 3880, "pitch": 1}]},
+   {"kind": "window", "label": "2200/2850", "b": [12760, 13200, 5220, 7420, 3060, 5910], "outer": "+x", "cols": 2, "transoms": [3900],
+    "below": [{"z": 5910, "y": 5220, "pitch": -1}]},
+   {"kind": "door", "label": "890/2050", "b": [5350, 5470, 4590, 5480, 3060, 5110]},
+   {"kind": "door", "label": "900/2050", "b": [6300, 7200, 5530, 5650, 3060, 5110]},
+   {"kind": "door", "label": "820/2050", "b": [9010, 9130, 1780, 2600, 3060, 5110]},
+   {"kind": "door", "label": "940/2050", "b": [9010, 9130, 3470, 4410, 3060, 5110]},
+   {"kind": "door", "label": "900/2050", "b": [9010, 9130, 4570, 5470, 3060, 5110]}
   ],
   "frames": {
-   "width": 7, "depth": 8, "bar": 6, "glassDepth": 1, "material": "frame", "glass": "glass", "layers": ["openings"],
+   "width": 70, "depth": 80, "bar": 60, "glassDepth": 10, "material": "frame", "glass": "glass", "layers": ["openings"],
    "leaves": {
-    "gate": {"material": "graphite", "depth": [2, 6], "grooves": 4, "groove": "groove", "grooveDepth": [1.6, 2], "grooveHeight": 1.6},
-    "entrance": {"material": "graphite", "depth": [1, 7], "grooves": 4, "groove": "groove", "grooveDepth": [0.6, 1], "grooveHeight": 1.2,
-     "handle": {"length": 120, "width": 3, "depth": [-4, 1], "inset": 14, "centre": 115, "material": "steel"}}
+    "gate": {"material": "graphite", "depth": [20, 60], "grooves": 4, "groove": "groove", "grooveDepth": [16, 20], "grooveHeight": 16},
+    "entrance": {"material": "graphite", "depth": [10, 70], "grooves": 4, "groove": "groove", "grooveDepth": [6, 10], "grooveHeight": 12,
+     "handle": {"length": 1200, "width": 30, "depth": [-40, 10], "inset": 140, "centre": 1150, "material": "steel"}}
    }
   },
 
   "finishes": [
-   {"z": [-999, 0], "material": "plinth"},
-   {"side": "-x", "y": [64, 846], "z": [0, 999], "material": "graphite"},
-   {"side": "-x", "y": [155, 755], "z": [240, 306], "material": "woodHorizontal"},
-   {"side": "+x", "y": [64, 846], "z": [0, 999], "material": "graphite"},
-   {"side": "+x", "x": [1300, 1320], "y": [64, 846], "z": [225, 306], "material": "plasterWhite"},
-   {"side": "+x", "x": [1300, 1320], "y": [388, 522], "z": [306, 999], "material": "woodVertical",
-    "below": [{"z": 591, "y": 388, "pitch": 1}, {"z": 591, "y": 522, "pitch": -1}]},
-   {"side": "+x", "x": [1210, 1230], "y": [615, 661], "z": [0, 272], "material": "woodVertical"},
-   {"side": "+x", "x": [1210, 1230], "y": [741, 846], "z": [0, 272], "material": "woodVertical"},
-   {"side": "+y", "x": [1230, 1300], "y": [435, 455], "z": [0, 272], "material": "graphite"},
-   {"side": "-y", "x": [1210, 1320], "y": [846, 866], "z": [0, 272], "material": "graphite"},
-   {"side": "-z", "x": [1210, 1300], "material": "graphite"},
-   {"side": "+y", "x": [333, 903], "z": [0, 240], "material": "graphite"},
-   {"side": "-y", "x": [127, 964], "z": [0, 240], "material": "graphite"},
-   {"elements": ["chimney"], "z": [700, 999], "material": "graphite"}
+   {"z": [-9990, 0], "material": "plinth"},
+   {"side": "-x", "y": [640, 8460], "z": [0, 9990], "material": "graphite"},
+   {"side": "-x", "y": [1550, 7550], "z": [2400, 3060], "material": "woodHorizontal"},
+   {"side": "+x", "y": [640, 8460], "z": [0, 9990], "material": "graphite"},
+   {"side": "+x", "x": [13000, 13200], "y": [640, 8460], "z": [2250, 3060], "material": "plasterWhite"},
+   {"side": "+x", "x": [13000, 13200], "y": [3880, 5220], "z": [3060, 9990], "material": "woodVertical",
+    "below": [{"z": 5910, "y": 3880, "pitch": 1}, {"z": 5910, "y": 5220, "pitch": -1}]},
+   {"side": "+x", "x": [12100, 12300], "y": [6150, 6610], "z": [0, 2720], "material": "woodVertical"},
+   {"side": "+x", "x": [12100, 12300], "y": [7410, 8460], "z": [0, 2720], "material": "woodVertical"},
+   {"side": "+y", "x": [12300, 13000], "y": [4350, 4550], "z": [0, 2720], "material": "graphite"},
+   {"side": "-y", "x": [12100, 13200], "y": [8460, 8660], "z": [0, 2720], "material": "graphite"},
+   {"side": "-z", "x": [12100, 13000], "material": "graphite"},
+   {"side": "+y", "x": [3330, 9030], "z": [0, 2400], "material": "graphite"},
+   {"side": "-y", "x": [1270, 9640], "z": [0, 2400], "material": "graphite"},
+   {"elements": ["chimney"], "z": [7000, 9990], "material": "graphite"}
   ],
 
   "stair": {
    "risers": 17,
-   "tread": 5,
+   "tread": 50,
    "material": "tread",
    "layers": ["stair"],
    "walkable": true,
    "flights": [
-    {"x": [547, 642], "y": [435, 143.5], "first": 1, "count": 11},
-    {"x": [547, 737], "y": [44, 143.5], "first": 12, "count": 1},
-    {"x": [642, 737], "y": [143.5, 273], "first": 13, "count": 4}
+    {"x": [5470, 6420], "y": [4350, 1435], "first": 1, "count": 11},
+    {"x": [5470, 7370], "y": [440, 1435], "first": 12, "count": 1},
+    {"x": [6420, 7370], "y": [1435, 2730], "first": 13, "count": 4}
    ]
   },
 
   "site": {
-   "lawn": {"rect": [-1500, 2900, -1500, 2400], "z": -32, "depth": 20, "material": "lawn", "aroundBuilding": true},
+   "lawn": {"rect": [-15000, 29000, -15000, 24000], "z": -320, "depth": 200, "material": "lawn", "aroundBuilding": true},
    "surfaces": [
-    {"name": "taras ogrodowy", "rect": [-250, -100, 30, 880], "z": -2, "material": "woodHorizontal"},
-    {"name": "taras pod portalem", "rect": [-100, 0, 64, 846], "z": -2, "material": "woodHorizontal"},
-    {"name": "wejście", "rect": [1230, 1420, 455, 846], "z": -2, "material": "paving"},
-    {"name": "podjazd", "rect": [1320, 1720, 64, 450], "z": -12, "material": "paving"},
-    {"name": "dojście", "rect": [1420, 1720, 478, 598], "z": -12, "material": "paving"}
+    {"name": "taras ogrodowy", "rect": [-2500, -1000, 300, 8800], "z": -20, "material": "woodHorizontal"},
+    {"name": "taras pod portalem", "rect": [-1000, 0, 640, 8460], "z": -20, "material": "woodHorizontal"},
+    {"name": "wejście", "rect": [12300, 14200, 4550, 8460], "z": -20, "material": "paving"},
+    {"name": "podjazd", "rect": [13200, 17200, 640, 4500], "z": -120, "material": "paving"},
+    {"name": "dojście", "rect": [14200, 17200, 4780, 5980], "z": -120, "material": "paving"}
    ],
    "layers": ["site"],
    "walkable": true
@@ -249,61 +251,61 @@ window.HOUSE = {
 
   "floors": [
    {
-    "id": "ground", "name": "Parter", "level": 0, "top": 272,
-    "inside": [[44, 1276, 44, 411], [44, 1186, 411, 866]],
+    "id": "ground", "name": "Parter", "level": 0, "top": 2720,
+    "inside": [[440, 12760, 440, 4110], [440, 11860, 4110, 8660]],
     "rooms": [
      {"id": "salon", "numbers": [3, 5, 6], "name": "Salon z kuchnią i holem", "planArea": 50.55,
       "tiles": {"product": "authorityGraphite", "dir": "x"},
       "link": {"href": "../kitchen/view.html", "name": "Projekt kuchni"},
-      "rects": [[44, 523, 44, 359], [44, 471, 359, 435], [44, 547, 435, 866], [547, 722, 435, 866], [722, 734, 435, 580], [734, 901, 435, 615]]},
+      "rects": [[440, 5230, 440, 3590], [440, 4710, 3590, 4350], [440, 5470, 4350, 8660], [5470, 7220, 4350, 8660], [7220, 7340, 4350, 5800], [7340, 9010, 4350, 6150]]},
      {"id": "wiatrolap", "numbers": [1], "name": "Wiatrołap", "planArea": 4.84,
       "tiles": {"product": "authorityGraphite", "dir": "x"},
-      "rects": [[925, 1186, 423, 615]]},
+      "rects": [[9250, 11860, 4230, 6150]]},
      {"id": "lazienka", "numbers": [7], "name": "Łazienka", "planArea": 4.95,
       "tiles": {"product": "authorityGraphite", "dir": "x"},
       "link": {"href": "../bath/view.html", "name": "Projekt łazienki"},
-      "rects": [[734, 901, 627, 866], [901, 985, 766, 866]]},
+      "rects": [[7340, 9010, 6270, 8660], [9010, 9850, 7660, 8660]]},
      {"id": "kotlownia", "numbers": [8], "name": "Kotłownia z pralnią", "planArea": 4.97,
       "tiles": {"product": "authorityGraphite", "dir": "x"},
-      "rects": [[925, 1186, 627, 754], [997, 1186, 754, 866]]},
+      "rects": [[9250, 11860, 6270, 7540], [9970, 11860, 7540, 8660]]},
      {"id": "garaz", "numbers": [2], "name": "Garaż", "planArea": 25.91,
-      "rects": [[547, 642, 44, 297], [642, 654, 44, 320], [654, 1276, 44, 411]]}
+      "rects": [[5470, 6420, 440, 2970], [6420, 6540, 440, 3200], [6540, 12760, 440, 4110]]}
     ],
-    "other": [{"name": "Schody", "rects": [[547, 642, 297, 435]]}]
+    "other": [{"name": "Schody", "rects": [[5470, 6420, 2970, 4350]]}]
    },
    {
-    "id": "attic", "name": "Piętro", "level": 306,
-    "inside": [[44, 1276, 44, 866]],
+    "id": "attic", "name": "Piętro", "level": 3060,
+    "inside": [[440, 12760, 440, 8660]],
     "rooms": [
      {"id": "sypialnia", "numbers": [2], "name": "Sypialnia", "planArea": 28.16,
       "tiles": {"product": "logOak", "dir": "x"},
-      "rects": [[44, 364, 44, 866], [364, 376, 391, 553], [376, 471, 379, 553], [376, 466, 553, 565], [471, 535, 435, 553]]},
+      "rects": [[440, 3640, 440, 8660], [3640, 3760, 3910, 5530], [3760, 4710, 3790, 5530], [3760, 4660, 5530, 5650], [4710, 5350, 4350, 5530]]},
      {"id": "garderoba3", "numbers": [3], "name": "Garderoba", "planArea": 5.13, "tilesWith": "sypialnia",
-      "rects": [[376, 471, 44, 379], [471, 535, 44, 359]]},
+      "rects": [[3760, 4710, 440, 3790], [4710, 5350, 440, 3590]]},
      {"id": "garderoba4", "numbers": [4], "name": "Garderoba", "planArea": 4.60, "tilesWith": "sypialnia",
-      "rects": [[376, 535, 565, 866]]},
+      "rects": [[3760, 5350, 5650, 8660]]},
      {"id": "hol", "numbers": [1], "name": "Hol", "planArea": 7.32,
       "tiles": {"product": "logOak", "dir": "x"},
-      "rects": [[642, 737, 273, 341], [642, 901, 341, 553], [547, 642, 435, 553]]},
+      "rects": [[6420, 7370, 2730, 3410], [6420, 9010, 3410, 5530], [5470, 6420, 4350, 5530]]},
      {"id": "lazienka5", "numbers": [5], "name": "Łazienka", "planArea": 7.99,
       "tiles": {"product": "authorityGrey80", "dir": "x"},
       "link": {"href": "../bath/view.html", "name": "Projekt łazienki"},
-      "rects": [[547, 820, 565, 866]]},
+      "rects": [[5470, 8200, 5650, 8660]]},
      {"id": "garderoba8", "numbers": [8], "name": "Garderoba", "planArea": 4.16,
       "tiles": {"product": "logOak", "dir": "x"},
-      "rects": [[749, 901, 44, 329]]},
+      "rects": [[7490, 9010, 440, 3290]]},
      {"id": "pokoj7", "numbers": [7], "name": "Pokój", "planArea": 14.11,
       "tiles": {"product": "logOak", "dir": "x"},
-      "rects": [[913, 1276, 44, 441]]},
+      "rects": [[9130, 12760, 440, 4410]]},
      {"id": "pokoj6", "numbers": [6], "name": "Pokój", "planArea": 16.53,
       "tiles": {"product": "logOak", "dir": "x"},
-      "rects": [[913, 1276, 453, 866], [832, 913, 649, 866], [832, 901, 565, 649]]}
+      "rects": [[9130, 12760, 4530, 8660], [8320, 9130, 6490, 8660], [8320, 9010, 5650, 6490]]}
     ],
     "other": []
    }
   ],
 
-  "tiles": {"reserve": 0.1, "grout": 0.2, "top": 0.3, "mark": 0.5, "layers": ["floors"], "small": ["cuts"]}
+  "tiles": {"reserve": 0.1, "grout": 2, "top": 3, "mark": 5, "layers": ["floors"], "small": ["cuts"]}
  },
 
  "layers": {
@@ -327,9 +329,9 @@ window.HOUSE = {
    "menu": ["ground", "attic", "roof"],
    "layers": ["foundation", "walls", "slabs", "insulation", "openings", "stair", "floors", "site", "edges"],
    "panels": ["cut", "light", "layers", "rooms", "notes"],
-   "cut": {"attic": 150},
-   "cutFrom": 50,
-   "cutStep": 5,
+   "cut": {"attic": 1500},
+   "cutFrom": 500,
+   "cutStep": 50,
    "edges": {"color": "#7d807b", "opacity": 0.45, "layers": ["edges"]},
    "light": {
     "exposure": 0.85,
@@ -340,34 +342,34 @@ window.HOUSE = {
      "groundColor": "#a9a596",
      "gradient": [[0, "#5f8fc4"], [0.32, "#9dbfe0"], [0.49, "#e4ecef"], [0.51, "#b7bfae"], [1, "#6f7a5e"]]
     },
-    "fog": {"color": "#dfe7ea", "near": 6000, "far": 16000}
+    "fog": {"color": "#dfe7ea", "near": 60000, "far": 160000}
    },
    "cameras": {
     "all": [
-     {"name": "Od frontu", "eye": [2750, -650, 420], "target": [660, 455, 330]},
-     {"name": "Od ogrodu", "eye": [-1350, 1350, 380], "target": [500, 455, 330]},
-     {"name": "Z góry", "eye": [2300, -1150, 1750], "target": [660, 455, 250]}
+     {"name": "Od frontu", "eye": [27500, -6500, 4200], "target": [6600, 4550, 3300]},
+     {"name": "Od ogrodu", "eye": [-13500, 13500, 3800], "target": [5000, 4550, 3300]},
+     {"name": "Z góry", "eye": [23000, -11500, 17500], "target": [6600, 4550, 2500]}
     ],
     "ground": [
-     {"name": "Rzut", "eye": [666, 455, 2300], "target": [660, 455, 0]},
-     {"name": "Perspektywa", "eye": [1900, -650, 1050], "target": [620, 455, 60]},
-     {"name": "Salon", "eye": [90, 830, 160], "target": [520, 300, 90]},
-     {"name": "Wejście", "eye": [1150, 540, 160], "target": [650, 520, 100]}
+     {"name": "Rzut", "eye": [6660, 4550, 23000], "target": [6600, 4550, 0]},
+     {"name": "Perspektywa", "eye": [19000, -6500, 10500], "target": [6200, 4550, 600]},
+     {"name": "Salon", "eye": [900, 8300, 1600], "target": [5200, 3000, 900]},
+     {"name": "Wejście", "eye": [11500, 5400, 1600], "target": [6500, 5200, 1000]}
     ],
     "attic": [
-     {"name": "Rzut", "eye": [666, 455, 2300], "target": [660, 455, 0]},
-     {"name": "Perspektywa", "eye": [1900, -650, 1050], "target": [620, 455, 60]},
-     {"name": "Sypialnia", "eye": [330, 820, 160], "target": [80, 200, 60]},
-     {"name": "Hol", "eye": [880, 520, 160], "target": [560, 470, 60]},
-     {"name": "Pokoje", "eye": [1240, 450, 160], "target": [930, 700, 60]}
+     {"name": "Rzut", "eye": [6660, 4550, 23000], "target": [6600, 4550, 0]},
+     {"name": "Perspektywa", "eye": [19000, -6500, 10500], "target": [6200, 4550, 600]},
+     {"name": "Sypialnia", "eye": [3300, 8200, 1600], "target": [800, 2000, 600]},
+     {"name": "Hol", "eye": [8800, 5200, 1600], "target": [5600, 4700, 600]},
+     {"name": "Pokoje", "eye": [12400, 4500, 1600], "target": [9300, 7000, 600]}
     ]
    },
-   "walk": {"eye": 160, "radius": 22, "step": 36, "headroom": 10, "speed": 140, "turn": 90, "look": 50, "run": 2.2, "start": {"x": 1120, "y": 520, "heading": 180}}
+   "walk": {"eye": 1600, "radius": 220, "step": 360, "headroom": 100, "speed": 1400, "turn": 90, "look": 50, "run": 2.2, "start": {"x": 11200, "y": 5200, "heading": 180}}
   },
   "2d": {
    "name": "2D",
    "plan": true,
-   "cut": {"ground": 150, "attic": 80},
+   "cut": {"ground": 1500, "attic": 800},
    "panels": ["plan", "notes"]
   },
   "analysis": {

@@ -1,6 +1,6 @@
 /* core/scene.js: renderer, materials, meshes and edges of pieces, section caps, light, camera, navigation, walk, loop.
    Knows no project: the page hands it a material library, textures, the light, the edges and the body box.
-   The model is built in cm (x along, y across, z up) and turned into the scene's metres with y up.
+   The model is built in mm (x along, y across, z up) and turned into the scene's metres with y up.
    Needs core/geometry.js, core/mesh.js, THREE and OrbitControls. */
 (function (CORE) {
 'use strict';
@@ -8,6 +8,8 @@ const { DEG, INF, zRange, cutBy, sectionAt, edgesOf } = CORE.geometry;
 const { dot3, Batch } = CORE.mesh;
 
 /* opts: {canvas, stage, materials (library: key -> {color, roughness, ...}), textures, light, edges, body: [[x, y, z], [x, y, z]], sunCentre: [x, y, z]} */
+const MM = 0.001;                          // the scene is in metres, the model in mm
+
 CORE.createView = function (opts) {
   const { canvas, stage } = opts, MATERIAL_LIB = opts.materials, TEX = opts.textures;
 
@@ -24,8 +26,8 @@ CORE.createView = function (opts) {
   let needsRender = true;
   const redraw = () => { needsRender = true; };
 
-  const root = new THREE.Group(); root.rotation.x = -Math.PI / 2; root.scale.setScalar(0.01); scene.add(root);
-  const toWorld = (x, y, z) => new THREE.Vector3(x / 100, z / 100, -y / 100);
+  const root = new THREE.Group(); root.rotation.x = -Math.PI / 2; root.scale.setScalar(MM); scene.add(root);
+  const toWorld = (x, y, z) => new THREE.Vector3(x * MM, z * MM, -y * MM);
   const CUT = new THREE.Plane(new THREE.Vector3(0, -1, 0), INF), CLIP = [CUT];
 
   let seed = 7;
@@ -48,7 +50,7 @@ CORE.createView = function (opts) {
       g.fillRect(rnd() * w, rnd() * h, size, size);
     }
   }
-  /* generated surfaces: each sets the map of a material, uv in cm */
+  /* generated surfaces: each sets the map of a material, uv in mm */
   const SURFACES = {
     texture(d, m) {
       m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = '#f2f2f2'; g.fillRect(0, 0, w, h); specks(g, w, h, d.strength, d.grain); }, false);
@@ -63,9 +65,9 @@ CORE.createView = function (opts) {
       m.map.repeat.set(1 / d.size, 1 / d.size); m.color.set(0xffffff);
     },
     wood(d, m) {                           // boards cut at random from the decor photo, with a dark joint
-      const T = TEX[d.decor], boards = 8, len = T.size[0] / 10, px = 4;
+      const T = TEX[d.decor], boards = 8, len = T.size[0], px = 0.4;   // px per mm of the board texture
       loadImage(T.faces[0], im => {
-        const across = boards * d.board * px, along = len * px, sh = im.height * d.board / (T.size[1] / 10);
+        const across = boards * d.board * px, along = len * px, sh = im.height * d.board / T.size[1];
         const t = canvasTexture(d.vertical ? across : along, d.vertical ? along : across, g => {
           for (let i = 0; i < boards; i++) {
             const sy = rnd() * (im.height - sh);
@@ -115,7 +117,7 @@ CORE.createView = function (opts) {
      of the group in one plane are a seam (no line); two outside pieces at an angle are a corner (always a line);
      otherwise the line hides exactly while every group that closes it is shown. */
   const EDGE_GROUPS = [];
-  const EDGE_PULL = 0.002;                 // 2 cm at 10 m: in front of the faces of its corner, behind any wall
+  const EDGE_PULL = 0.002;                 // 20 mm at 10 m: in front of the faces of its corner, behind any wall
   function buildEdges(pieces) {
     const E = opts.edges, segs = new Map();
     for (const f of pieces) {
@@ -177,7 +179,7 @@ CORE.createView = function (opts) {
     skyTexture.mapping = THREE.EquirectangularReflectionMapping;
     scene.background = skyTexture;
     scene.environment = new THREE.PMREMGenerator(renderer).fromEquirectangular(skyTexture).texture;
-    scene.fog = new THREE.Fog(lin(LIGHT.fog.color), LIGHT.fog.near / 100, LIGHT.fog.far / 100);
+    scene.fog = new THREE.Fog(lin(LIGHT.fog.color), LIGHT.fog.near * MM, LIGHT.fog.far * MM);
     hemi = new THREE.HemisphereLight(lin(SKY.color), lin(SKY.groundColor), SKY.intensity); scene.add(hemi);
     sun = new THREE.DirectionalLight(lin(LIGHT.sun.color), LIGHT.sun.intensity);
     sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
@@ -187,7 +189,7 @@ CORE.createView = function (opts) {
   /* s: {az, el, k}: azimuth from +x towards +y, elevation, brightness */
   function placeSun(s) {
     const LIGHT = opts.light, az = s.az * DEG, el = s.el * DEG;
-    const centre = toWorld(...opts.sunCentre), dir = toWorld(Math.cos(az) * Math.cos(el), Math.sin(az) * Math.cos(el), Math.sin(el)).multiplyScalar(100);
+    const centre = toWorld(...opts.sunCentre), dir = toWorld(Math.cos(az) * Math.cos(el), Math.sin(az) * Math.cos(el), Math.sin(el)).divideScalar(MM);   // a unit direction, in metres
     sun.position.copy(centre).addScaledVector(dir, 40);
     sun.target.position.copy(centre);
     sun.intensity = LIGHT.sun.intensity * s.k; hemi.intensity = LIGHT.sky.intensity * (0.6 + 0.4 * s.k);
@@ -210,7 +212,7 @@ CORE.createView = function (opts) {
   }
 
   /* ================= SECTION CAPS ================= */
-  const CAP_BIAS = 0.05;                   // cm under the cut: a cap never lies in the plane of a face it closes
+  const CAP_BIAS = 0.5;                    // mm under the cut: a cap never lies in the plane of a face it closes
   let capGroup = null;
   function addCaps() { capGroup = new THREE.Group(); root.add(capGroup); }
   function buildCaps(h, solids, shown) {
@@ -224,7 +226,7 @@ CORE.createView = function (opts) {
     }
     for (const [k, b] of Object.entries(batches)) { const m = b.mesh(capMaterial(k)); m.castShadow = false; m.position.z = -CAP_BIAS; capGroup.add(m); }
   }
-  const setCut = h => { CUT.constant = h === null ? INF : h / 100; };
+  const setCut = h => { CUT.constant = h === null ? INF : h * MM; };
 
   /* ================= NAVIGATION =================
      The wheel zooms toward the surface under the cursor; the pivot stays in front of the camera: the body centre from
@@ -287,8 +289,9 @@ CORE.createView = function (opts) {
     }
     return best;
   }
+  const STEP_CLEAR = 10;                   // mm over a step: what is lower is walked onto, not bumped into
   function blocked(x, y, z) {
-    const C = W.config, lo = z + C.step + 1, hi = z + C.eye + C.headroom;
+    const C = W.config, lo = z + C.step + STEP_CLEAR, hi = z + C.eye + C.headroom;
     return OBSTACLES.some(o => {
       if (o.z[1] < lo || o.z[0] > hi) return false;
       const ys = o.S.poly.map(p => p[0]), cx = Math.max(o.S.x1, Math.min(x, o.S.x2)), cy = Math.max(Math.min(...ys), Math.min(y, Math.max(...ys)));
@@ -298,7 +301,8 @@ CORE.createView = function (opts) {
   function placeWalkCamera() {
     const h = walk.heading * DEG, p = walk.pitch * DEG, eye = walk.z + W.config.eye;
     camera.position.copy(toWorld(walk.x, walk.y, eye));
-    camera.lookAt(toWorld(walk.x + Math.cos(h) * Math.cos(p) * 100, walk.y + Math.sin(h) * Math.cos(p) * 100, eye + Math.sin(p) * 100));
+    const ahead = 1000;                    // mm: a point in front of the eye to look at
+    camera.lookAt(toWorld(walk.x + Math.cos(h) * Math.cos(p) * ahead, walk.y + Math.sin(h) * Math.cos(p) * ahead, eye + Math.sin(p) * ahead));
     redraw();
   }
   function startWalk() {

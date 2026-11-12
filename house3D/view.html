@@ -80,7 +80,7 @@
 'use strict';
 
 /* The page knows no house: everything it builds and shows comes from house.js, materials.js and textures.js.
-   Units are cm in house axes (x along, y across, z up) until the scene, which is in metres with y up.
+   Units are mm in house axes (x along, y across, z up) until the scene, which is in metres with y up.
    What is not about this house (geometry, mesh, scene, panel) is in core/. */
 
 const { DEG, INF, EPS, zRange, sectionAt, cutBy, rectArea } = CORE.geometry;
@@ -103,7 +103,7 @@ const { ROOF, TAN, WIDTH, RIDGE_TOP, floorOfZ, SIDE, CELLS, FIXTURES, ROOF_CELLS
 const canvas = $('gl'), stage = $('stage');
 const LIGHT = VIEW_3D.light;
 const V = CORE.createView({ canvas, stage, materials: MAT.materials, textures: TEX, light: LIGHT, edges: VIEW_3D.edges,
-  body: [[ROOF.x[0], 0, FLOORS[0].level], [ROOF.x[1], WIDTH, RIDGE_TOP]], sunCentre: [GEO.length / 2, WIDTH / 2, 300] });
+  body: [[ROOF.x[0], 0, FLOORS[0].level], [ROOF.x[1], WIDTH, RIDGE_TOP]], sunCentre: [GEO.length / 2, WIDTH / 2, GEO.split] });
 const { root, lin, redraw, CLIP, hash01, loadImage, renderer } = V;
 
 const ALL_CELLS = CELLS.concat(ROOF_CELLS, STAIR_CELLS, FIXTURES, SITE_CELLS);
@@ -114,7 +114,7 @@ V.addLight();
 
 /* ================= 4. STATE AND LAYERS =================
    The viewer's choices stay in the browser; a stored state of another format is dropped. */
-const STORE = CORE.ui.store('house3d-state-v2',
+const STORE = CORE.ui.store('house3d-state-v3',          // v3: lengths in mm
   () => ({ mode: VIEW_IDS[0], layers: Object.fromEntries(Object.keys(LAYER).map(k => [k, true])), cut: {},
     sun: { az: LIGHT.sun.azimuth, el: LIGHT.sun.elevation, k: 1 }, layouts: {}, room: null, zoom: 1 }),
   s => s.layers && Object.keys(s.layers).join() === Object.keys(LAYER).join() && VIEWS[s.mode]);
@@ -147,7 +147,8 @@ V.addCaps();
 const TILES = GEO.tiles;
 const ROOMS = FLOORS.flatMap(f => f.rooms.map(r => Object.assign({ floor: f.id }, r))), ROOM = byId(ROOMS);
 const layoutOf = r => r.tiles ? r.id : r.tilesWith || null;
-const roomArea = r => r.rects.reduce((s, q) => s + rectArea(q), 0) / 1e4;
+const M2 = 1e6;                            // mm² in a m²
+const roomArea = r => r.rects.reduce((s, q) => s + rectArea(q), 0) / M2;
 const roomName = r => (r.numbers ? r.numbers.join(', ') + '. ' : '') + r.name;
 const PATTERNS = { grid: ['Prosto (siatka)', 0], half: ['Przesunięcie 1/2', 1 / 2], third: ['Przesunięcie 1/3', 1 / 3], quarter: ['Przesunięcie 1/4', 1 / 4], random: ['Losowo', null] };
 const DIRS = { x: 'Wzdłuż domu', y: 'W poprzek domu' };
@@ -155,6 +156,7 @@ const DIRS = { x: 'Wzdłuż domu', y: 'W poprzek domu' };
 function defaultLayout(r) { const P = PRODUCTS[r.tiles.product]; return { product: r.tiles.product, dir: r.tiles.dir, pattern: P.pattern, grout: TEX[P.texture].grout, oa: null, ob: null }; }
 for (const r of ROOMS) if (r.tiles && !PRODUCTS[state.layouts[r.id]?.product]) state.layouts[r.id] = defaultLayout(r);
 
+const MIN_SPAN = 10;                       // mm: two rectangles sharing less of a side do not meet
 /* the floor runs on through a passage: each half of its depth belongs to the room on that side */
 const PASSAGES = GEO.openings.filter(o => OPENING_KIND[o.kind].passage);
 function thresholds(floor, rects) {
@@ -164,7 +166,7 @@ function thresholds(floor, rects) {
     for (const q of rects) for (const axis of [0, 1]) {
       const [a1, a2] = [o.b[2 * axis], o.b[2 * axis + 1]], mid = (a1 + a2) / 2, other = 1 - axis;
       const lo = Math.max(o.b[2 * other], q[2 * other]), hi = Math.min(o.b[2 * other + 1], q[2 * other + 1]);
-      if (hi - lo < 1) continue;
+      if (hi - lo < MIN_SPAN) continue;
       const half = Math.abs(q[2 * axis + 1] - a1) < EPS ? [a1, mid] : Math.abs(q[2 * axis] - a2) < EPS ? [mid, a2] : null;
       if (!half) continue;
       const t = []; t[2 * axis] = half[0]; t[2 * axis + 1] = half[1]; t[2 * other] = lo; t[2 * other + 1] = hi;
@@ -178,7 +180,7 @@ function layoutRooms(key) {
   const list = ROOMS.filter(r => layoutOf(r) === key).map(r => ({ id: r.id, own: r.rects, rects: r.rects.concat(thresholds(r.floor, r.rects)), zone: r.id }));
   const meet = (a, b) => [0, 1].some(axis => {
     const o = 1 - axis, touch = Math.abs(a[2 * axis + 1] - b[2 * axis]) < EPS || Math.abs(b[2 * axis + 1] - a[2 * axis]) < EPS;
-    return touch && Math.min(a[2 * o + 1], b[2 * o + 1]) - Math.max(a[2 * o], b[2 * o]) > 1;
+    return touch && Math.min(a[2 * o + 1], b[2 * o + 1]) - Math.max(a[2 * o], b[2 * o]) > MIN_SPAN;
   });
   for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) if (list[i].own.some(a => list[j].own.some(b => meet(a, b)))) list[j].zone = list[i].zone;
   return list;
@@ -188,11 +190,12 @@ function layoutRooms(key) {
 const toAB = (L, q) => L.dir === 'x' ? [q[0], q[2], q[1], q[3]] : [q[2], q[0], q[3], q[1]];
 const toXY = (L, a, b) => L.dir === 'x' ? [a, b] : [b, a];
 function tileSize(L) {
-  const P = PRODUCTS[L.product], J = P.joint / 10;
-  return { TA: P.len / 10, TB: P.wid / 10, Pa: P.len / 10 + J, Pb: P.wid / 10 + J, minA: P.minCut[0] / 10, minB: P.minCut[1] / 10 };
+  const P = PRODUCTS[L.product];
+  return { TA: P.len, TB: P.wid, Pa: P.len + P.joint, Pb: P.wid + P.joint, minA: P.minCut[0], minB: P.minCut[1] };
 }
 const rowShift = (L, j, Pa) => PATTERNS[L.pattern][1] === null ? hash01(j, 911) * Pa : (((j * PATTERNS[L.pattern][1]) % 1 + 1) % 1) * Pa;
-const MIN_PIECE = 0.05;                    // cm: a thinner strip of a tile is no piece
+const MIN_PIECE = 0.5;                     // mm: a thinner strip of a tile is no piece
+const FULL_TOL = 1;                        // mm: a tile this much short of its size is still whole
 function layTiles(L, rooms, oa, ob) {
   const { TA, TB, Pa, Pb } = tileSize(L), out = [];
   for (const room of rooms) for (const q of room.rects) {
@@ -223,25 +226,25 @@ function countTiles(L, pieces) {
   for (const t of tiles.values()) {
     if (t.a1 === INF) { cut++; continue; }  // only threshold halves: a strip of its own size, never judged small
     const da = t.a2 - t.a1, db = t.b2 - t.b1;
-    if (da > TA - 0.1 && db > TB - 0.1) { full++; continue; }
+    if (da > TA - FULL_TOL && db > TB - FULL_TOL) { full++; continue; }
     cut++;
     const short = [[da, minA], [db, minB]].filter(([d, m]) => d < m);
     if (!short.length) continue;
     small++; penalty += short.reduce((s, [d, m]) => s + 1 + (m - d) / m, 0);
     for (const p of t.pieces) p.small = true;
   }
-  return { area: area / 1e4, tiles: tiles.size, full, cut, small, penalty };
+  return { area: area / M2, tiles: tiles.size, full, cut, small, penalty };
 }
 /* the offsets with the fewest and largest cuts: a coarse grid over one period, then a finer one around the best */
 function bestOffsets(L, rooms) {
   const { Pa, Pb } = tileSize(L), score = (oa, ob) => { const s = countTiles(L, layTiles(L, rooms, oa, ob)); return s.penalty * 4 + s.cut * 0.03; };
-  const sa = Math.max(2, Pa / 20), sb = Math.max(1, Pb / 30);
+  const sa = Math.max(20, Math.round(Pa / 20)), sb = Math.max(10, Math.round(Pb / 30));   // whole mm
   let best = { oa: 0, ob: 0, s: INF };
   const search = (a0, a1, da, b0, b1, db) => { for (let ob = b0; ob < b1; ob += db) for (let oa = a0; oa < a1; oa += da) { const s = score(oa, ob); if (s < best.s) best = { oa, ob, s }; } };
   search(0, Pa, sa, 0, Pb, sb);
   const c = { ...best };
-  search(c.oa - sa, c.oa + sa + EPS, sa / 4, c.ob - sb, c.ob + sb + EPS, sb / 4);
-  const wrap = (v, P) => Math.round(((v % P) + P) % P * 10) / 10;
+  search(c.oa - sa, c.oa + sa + EPS, Math.max(1, Math.round(sa / 4)), c.ob - sb, c.ob + sb + EPS, Math.max(1, Math.round(sb / 4)));
+  const wrap = (v, P) => Math.round(((v % P) + P) % P);   // whole mm
   return { oa: wrap(best.oa, Pa), ob: wrap(best.ob, Pb) };
 }
 
@@ -263,7 +266,7 @@ function buildLayout(key) {
   const grout = flatRects(rooms.flatMap(m => m.rects), level + TILES.grout).mesh(new THREE.MeshStandardMaterial({ color: lin(L.grout), roughness: 0.95, clippingPlanes: CLIP }));
   grout.castShadow = false; root.add(grout); groups.push({ mesh: grout, layers });
   /* stone: one face is one whole tile, random face and turn; wood: each plank a random crop of the photo */
-  const { TA, TB } = tileSize(L), stone = T.kind === 'stone', imgA = T.size[0] / 10, imgB = T.size[1] / 10, up = [0, 0, 1];
+  const { TA, TB } = tileSize(L), stone = T.kind === 'stone', imgA = T.size[0], imgB = T.size[1], up = [0, 0, 1];
   const sets = {};
   for (const p of pieces) {
     const face = stone ? Math.floor(hash01(p.j, p.k, 3) * T.faces.length) : 0;
@@ -361,7 +364,7 @@ function cutPanel() {
   const F = openFloor(); if (!F) return;
   const [lo, hi] = cutRange(F), h = cutHeight(), input = $('cut');
   Object.assign(input, { min: lo, max: hi, step: VIEW_3D.cutStep, value: h ?? hi });
-  $('cutv').textContent = h === null ? 'bez cięcia' : `${fmt(h - F.level, 0)} cm nad podłogą`;
+  $('cutv').textContent = h === null ? 'bez cięcia' : `${fmt(h - F.level, 0)} mm nad podłogą`;
 }
 $('cut').oninput = e => { const F = openFloor(); if (!F) return; state.cut[F.id] = +e.target.value; save(); cutPanel(); applyView(); };
 
@@ -381,8 +384,8 @@ function layoutPanel(key) {
     <p class="note">${P.note}${P.link ? ` · <a href="${P.link}" target="_blank" rel="noopener">sklep</a>` : ''}${together.length ? `<br>Razem z: ${together.join(', ')}` : ''}</p>
     <div class="row"><label>Układ<select data-f="pattern">${Object.entries(PATTERNS).map(([k, [t]]) => option(k, t, L.pattern)).join('')}</select></label>
     <label>Kierunek<select data-f="dir">${Object.entries(DIRS).map(([k, t]) => option(k, t, L.dir)).join('')}</select></label></div>
-    <div class="row"><label>Przesunięcie wzdłuż<input type="number" step="0.5" data-f="oa" value="${L.oa}"></label>
-    <label>Przesunięcie w poprzek<input type="number" step="0.5" data-f="ob" value="${L.ob}"></label></div>
+    <div class="row"><label>Przesunięcie wzdłuż (mm)<input type="number" step="1" data-f="oa" value="${L.oa}"></label>
+    <label>Przesunięcie w poprzek (mm)<input type="number" step="1" data-f="ob" value="${L.ob}"></label></div>
     <div class="row"><label>Fuga<input type="color" data-f="grout" value="${L.grout}"></label>
     <label>&nbsp;<button class="btn ghost" data-f="fit">Dopasuj przesunięcie</button></label></div>
     <dl class="stats"><dt>Powierzchnia</dt><dd>${fmt(R.area, 2)} m²</dd><dt>Płytek (+${TILES.reserve * 100}%)</dt><dd>${Math.ceil(R.tiles * (1 + TILES.reserve))}</dd>
@@ -439,73 +442,119 @@ function setMode(m) {
 }
 
 /* ================= 9. NAVIGATION AND WALK ================= */
+const MM_TO_M = 0.001;                     // the scene is in metres
 /* a click on a floor selects a room of the open floor */
 V.onClick(ray => {
   const F = openFloor();
   if (!is3d() || !F) return;
   const hit = ray.intersectObjects(PICK.filter(m => ROOM[m.userData.room].floor === F.id))[0], h = cutHeight();
-  if (hit && (h === null || hit.point.y * 100 <= h)) selectRoom(hit.object.userData.room);
+  if (hit && (h === null || hit.point.y / MM_TO_M <= h)) selectRoom(hit.object.userData.room);
 });
 V.enableNavigation();
 V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, ground: ALL_CELLS.filter(c => c.walkable), startLevel: FLOORS[0].level, pad: $('pad'),
   canStart: is3d, onToggle: () => { cameraDock(); applyView(); }, home: () => VIEW_3D.cameras.all[0] });
 
 /* ================= 10. 2D PLAN =================
-   Both floors side by side, garden at the top: plan x = house y, plan y = house x. */
+   Both floors side by side, garden at the top: plan x = house y, plan y = house x. The sheet is in mm of the house,
+   so every size of the drawing (gaps, text, lines) is in mm too. */
 const planCut = F => VIEW_2D.cut[F.id];
 const planFill = key => { const d = MAT.materials[key]; return d.plan?.hatch ? `url(#hatch-${key})` : d.plan || d.color; };
+const PLAN = {
+  gap: 4200, margin: 1200, side: 1600, head: 600, foot: 1400,        // between the floors, around the sheet
+  hatch: 80, title: 340, titleAt: 200,
+  line: { cut: 14, over: 12, dash: '70 50', clear: '100 80', window: '60 50', hole: '60 60', thin: 10, label: 8 },
+  clear: { font: 180, inset: 60, down: 260 },
+  label: { push: 450, r: 240, font: 130, bar: 200, up: 40, down: 130 },   // fits mm labels of five digits (6000/3460)
+  room: { number: 220, name: 150, area: 140, up: 60, nameDown: 180, areaDown: 360 },
+  dim: { off: 600, text: 840, font: 180, side: 600, sideText: 700 }
+};
+const planRect = (X, x1, x2, y1, y2, attr) => `<rect x="${Math.round(X + y1)}" y="${Math.round(x1)}" width="${Math.round(y2 - y1)}" height="${Math.round(x2 - x1)}" ${attr}/>`;
+function planHatches() {
+  const H = PLAN.hatch;
+  return Object.entries(MAT.materials).filter(([, d]) => d.plan?.hatch).map(([k, d]) =>
+    `<pattern id="hatch-${k}" width="${H}" height="${H}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="${H}" height="${H}" fill="${d.plan.hatch[0]}"/><line x1="0" y1="0" x2="0" y2="${H}" stroke="${d.plan.hatch[1]}" stroke-width="${PLAN.line.cut}"/></pattern>`).join('');
+}
+/* the stair: a full line under the cut, dashed over it; from the floor above, all of it shows through the hole */
+function planStair(F, X, h, holes) {
+  const inside = (b, x, y) => x >= b[0] - EPS && x <= b[1] + EPS && y >= b[2] - EPS && y <= b[3] + EPS;
+  let s = '';
+  for (const c of STAIR_CELLS) {
+    const z2 = zRange(c.S)[1], ys = c.S.poly.map(p => p[0]), y1 = Math.min(...ys), y2 = Math.max(...ys);
+    const own = z2 > F.level && z2 <= floorTop(F) + EPS;
+    const seen = z2 < h && holes.some(b => inside(b, (c.S.x1 + c.S.x2) / 2, (y1 + y2) / 2));
+    if (!own && !seen) continue;
+    const stroke = z2 <= h ? `stroke="#5f6a66" stroke-width="${PLAN.line.cut}"` : `stroke="#8a8d88" stroke-width="${PLAN.line.over}" stroke-dasharray="${PLAN.line.dash}"`;
+    s += planRect(X, c.S.x1, c.S.x2, y1, y2, `fill="none" ${stroke}`);
+  }
+  return s;
+}
+/* under the roof: the clear heights, the roof windows, the stair hole */
+function planUnderRoof(F, X, holes) {
+  const x1 = Math.min(...F.inside.map(q => q[0])), x2 = Math.max(...F.inside.map(q => q[1])), C = PLAN.clear;
+  let s = '';
+  for (const ch of ROOF.clearHeights) {
+    const d = (F.level + ch - ROOF.eave) / TAN;
+    for (const y of [d, WIDTH - d]) {
+      const left = y < WIDTH / 2;
+      s += `<line x1="${X + y}" y1="${x1}" x2="${X + y}" y2="${x2}" stroke="#8a8d88" stroke-dasharray="${PLAN.line.clear}" stroke-width="${PLAN.line.over}"/>`
+        + `<text x="${X + y + (left ? C.inset : -C.inset)}" y="${x1 + C.down}" font-size="${C.font}" fill="#8a8d88" text-anchor="${left ? 'start' : 'end'}">${ch}</text>`;
+    }
+  }
+  for (const w of ROOF.windows) s += planRect(X, w.x[0], w.x[1], w.y[0], w.y[1], `fill="none" stroke="#3a6f8f" stroke-dasharray="${PLAN.line.window}" stroke-width="${PLAN.line.cut}"`);
+  for (const b of holes) s += planRect(X, b[0], b[1], b[2], b[3], `fill="none" stroke="#a3a7a2" stroke-dasharray="${PLAN.line.hole}" stroke-width="${PLAN.line.thin}"`);
+  return s;
+}
+/* archon labels (width / height), outside the wall for outer openings */
+function planLabels(F, X, h) {
+  const B = PLAN.label;
+  let s = '';
+  for (const o of GEO.openings) {
+    if (o.b[4] > h || o.b[5] < h || floorOfZ((o.b[4] + o.b[5]) / 2) !== F.id) continue;
+    const side = SIDE[o.outer], push = [0, 0]; if (side) push[side.axis] = B.push * side.sign;
+    const tx = X + (o.b[2] + o.b[3]) / 2 + push[1], ty = (o.b[0] + o.b[1]) / 2 + push[0], [a, b] = o.label.split('/');
+    s += `<g font-size="${B.font}" text-anchor="middle" fill="#1f2523"><circle cx="${tx}" cy="${ty}" r="${B.r}" fill="#fff" stroke="#1f2523" stroke-width="${PLAN.line.thin}"/>`
+      + `<line x1="${tx - B.bar}" y1="${ty}" x2="${tx + B.bar}" y2="${ty}" stroke="#1f2523" stroke-width="${PLAN.line.label}"/><text x="${tx}" y="${ty - B.up}">${a}</text><text x="${tx}" y="${ty + B.down}">${b}</text></g>`;
+  }
+  return s;
+}
+/* the room label in its largest rectangle: number, name, area */
+function planRooms(F, X) {
+  const R = PLAN.room;
+  return F.rooms.map(r => {
+    const q = r.rects.reduce((m, q) => rectArea(q) > rectArea(m) ? q : m), cx = (q[0] + q[1]) / 2, cy = X + (q[2] + q[3]) / 2;
+    return `<text x="${cy}" y="${cx - R.up}" text-anchor="middle" font-size="${R.number}" font-weight="700" fill="#9a6a2f">${r.numbers ? r.numbers.join(',') : ''}</text>`
+      + `<text x="${cy}" y="${cx + R.nameDown}" text-anchor="middle" font-size="${R.name}" fill="#1f2523">${r.name}</text>`
+      + `<text x="${cy}" y="${cx + R.areaDown}" text-anchor="middle" font-size="${R.area}" fill="#5f6a66">${fmt(roomArea(r), 2)} m²</text>`;
+  }).join('');
+}
+/* the overall dimensions, in mm */
+function planDimensions(X) {
+  const D = PLAN.dim, L = GEO.length, yb = ROOF.x[1] + D.off;
+  return `<g stroke="#1f2523" stroke-width="${PLAN.line.over}" font-size="${D.font}" fill="#1f2523"><line x1="${X}" y1="${yb}" x2="${X + WIDTH}" y2="${yb}"/><text x="${X + WIDTH / 2}" y="${ROOF.x[1] + D.text}" text-anchor="middle" stroke="none">${WIDTH}</text>
+      <line x1="${X - D.side}" y1="0" x2="${X - D.side}" y2="${L}"/><text x="${X - D.sideText}" y="${L / 2}" text-anchor="middle" stroke="none" transform="rotate(-90 ${X - D.sideText} ${L / 2})">${L}</text></g>`;
+}
 function planSvg() {
-  const gap = 420, ox = F => FLOORS.indexOf(F) * (WIDTH + gap), top = ROOF.x[0] - 120, bottom = ROOF.x[1] + 120;
-  const hatches = Object.entries(MAT.materials).filter(([, d]) => d.plan?.hatch).map(([k, d]) =>
-    `<pattern id="hatch-${k}" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="${d.plan.hatch[0]}"/><line x1="0" y1="0" x2="0" y2="8" stroke="${d.plan.hatch[1]}" stroke-width="1.4"/></pattern>`).join('');
-  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-160 ${top - 60} ${FLOORS.length * (WIDTH + gap) - gap + 320} ${bottom - top + 140}" font-family="Barlow, Arial, sans-serif"><defs>${hatches}</defs>
-  <rect x="-160" y="${top - 60}" width="100%" height="100%" fill="#fff"/>`;
+  const ox = F => FLOORS.indexOf(F) * (WIDTH + PLAN.gap), top = ROOF.x[0] - PLAN.margin, bottom = ROOF.x[1] + PLAN.margin;
+  const width = FLOORS.length * (WIDTH + PLAN.gap) - PLAN.gap + 2 * PLAN.side;
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-PLAN.side} ${top - PLAN.head} ${width} ${bottom - top + PLAN.foot}" font-family="Barlow, Arial, sans-serif"><defs>${planHatches()}</defs>
+  <rect x="${-PLAN.side}" y="${top - PLAN.head}" width="100%" height="100%" fill="#fff"/>`;
   for (const F of FLOORS) {
     const h = F.level + planCut(F), X = ox(F), holes = voidsAt(F.level);
-    const rect = (x1, x2, y1, y2, attr) => `<rect x="${(X + y1).toFixed(1)}" y="${x1.toFixed(1)}" width="${(y2 - y1).toFixed(1)}" height="${(x2 - x1).toFixed(1)}" ${attr}/>`;
-    const inside = (b, x, y) => x >= b[0] - EPS && x <= b[1] + EPS && y >= b[2] - EPS && y <= b[3] + EPS;
-    s += `<text x="${X + WIDTH / 2}" y="${top - 20}" text-anchor="middle" font-size="34" font-weight="700" fill="#1f2523">${F.name} · cięcie ${planCut(F)} cm</text>`;
-    for (const r of F.rooms) for (const q of r.rects) s += rect(...q, 'fill="#f4f1ea"');
-    /* the stair: a full line under the cut, dashed over it; from the floor above, all of it shows through the hole */
-    for (const c of STAIR_CELLS) {
-      const [z1, z2] = zRange(c.S), ys = c.S.poly.map(p => p[0]), y1 = Math.min(...ys), y2 = Math.max(...ys);
-      const own = z2 > F.level && z2 <= floorTop(F) + EPS;
-      const seen = z2 < h && holes.some(b => inside(b, (c.S.x1 + c.S.x2) / 2, (y1 + y2) / 2));
-      if (!own && !seen) continue;
-      s += rect(c.S.x1, c.S.x2, y1, y2, `fill="none" ${z2 <= h ? 'stroke="#5f6a66" stroke-width="1.4"' : 'stroke="#8a8d88" stroke-width="1.2" stroke-dasharray="7 5"'}`);
-    }
+    s += `<text x="${X + WIDTH / 2}" y="${top - PLAN.titleAt}" text-anchor="middle" font-size="${PLAN.title}" font-weight="700" fill="#1f2523">${F.name} · cięcie ${planCut(F)} mm</text>`;
+    for (const r of F.rooms) for (const q of r.rects) s += planRect(X, ...q, 'fill="#f4f1ea"');
+    s += planStair(F, X, h, holes);
     for (const c of SOLIDS) {
       if (c.floor !== F.id || !cutBy(c.S, h)) continue;
-      const y = sectionAt(c.S, h); if (y) s += rect(c.S.x1, c.S.x2, y[0], y[1], `fill="${planFill(c.cap)}"`);
+      const y = sectionAt(c.S, h); if (y) s += planRect(X, c.S.x1, c.S.x2, y[0], y[1], `fill="${planFill(c.cap)}"`);
     }
-    if (F === TOP_FLOOR) {                 // under the roof: the clear heights, the roof windows, the stair hole
-      const x1 = Math.min(...F.inside.map(q => q[0])), x2 = Math.max(...F.inside.map(q => q[1]));
-      for (const ch of ROOF.clearHeights) {
-        const d = (F.level + ch - ROOF.eave) / TAN;
-        for (const y of [d, WIDTH - d]) s += `<line x1="${X + y}" y1="${x1}" x2="${X + y}" y2="${x2}" stroke="#8a8d88" stroke-dasharray="10 8" stroke-width="1.2"/><text x="${X + y + (y < WIDTH / 2 ? 6 : -6)}" y="${x1 + 26}" font-size="18" fill="#8a8d88" text-anchor="${y < WIDTH / 2 ? 'start' : 'end'}">${ch}</text>`;
-      }
-      for (const w of ROOF.windows) s += rect(w.x[0], w.x[1], w.y[0], w.y[1], 'fill="none" stroke="#3a6f8f" stroke-dasharray="6 5" stroke-width="1.5"');
-      for (const b of holes) s += rect(b[0], b[1], b[2], b[3], 'fill="none" stroke="#a3a7a2" stroke-dasharray="6 6" stroke-width="1"');
-    }
-    for (const o of GEO.openings) {        // archon labels, outside the wall for outer openings
-      if (o.b[4] > h || o.b[5] < h || floorOfZ((o.b[4] + o.b[5]) / 2) !== F.id) continue;
-      const side = SIDE[o.outer], push = [0, 0]; if (side) push[side.axis] = 40 * side.sign;
-      const tx = X + (o.b[2] + o.b[3]) / 2 + push[1], ty = (o.b[0] + o.b[1]) / 2 + push[0], [a, b] = o.label.split('/');
-      s += `<g font-size="15" text-anchor="middle" fill="#1f2523"><circle cx="${tx}" cy="${ty}" r="19" fill="#fff" stroke="#1f2523" stroke-width="1"/><line x1="${tx - 15}" y1="${ty}" x2="${tx + 15}" y2="${ty}" stroke="#1f2523" stroke-width="0.8"/><text x="${tx}" y="${ty - 4}">${a}</text><text x="${tx}" y="${ty + 14}">${b}</text></g>`;
-    }
-    for (const r of F.rooms) {             // the label in the largest rectangle of the room
-      const q = r.rects.reduce((m, q) => rectArea(q) > rectArea(m) ? q : m), cx = (q[0] + q[1]) / 2, cy = X + (q[2] + q[3]) / 2;
-      s += `<text x="${cy}" y="${cx - 6}" text-anchor="middle" font-size="22" font-weight="700" fill="#9a6a2f">${r.numbers ? r.numbers.join(',') : ''}</text><text x="${cy}" y="${cx + 18}" text-anchor="middle" font-size="15" fill="#1f2523">${r.name}</text><text x="${cy}" y="${cx + 36}" text-anchor="middle" font-size="14" fill="#5f6a66">${fmt(roomArea(r), 2)} m²</text>`;
-    }
-    const L = GEO.length;
-    s += `<g stroke="#1f2523" stroke-width="1.2" font-size="18" fill="#1f2523"><line x1="${X}" y1="${ROOF.x[1] + 60}" x2="${X + WIDTH}" y2="${ROOF.x[1] + 60}"/><text x="${X + WIDTH / 2}" y="${ROOF.x[1] + 84}" text-anchor="middle" stroke="none">${WIDTH}</text>
-      <line x1="${X - 60}" y1="0" x2="${X - 60}" y2="${L}"/><text x="${X - 70}" y="${L / 2}" text-anchor="middle" stroke="none" transform="rotate(-90 ${X - 70} ${L / 2})">${L}</text></g>`;
+    if (F === TOP_FLOOR) s += planUnderRoof(F, X, holes);
+    s += planLabels(F, X, h) + planRooms(F, X) + planDimensions(X);
   }
   return s + '</svg>';
 }
 function drawPlan() {
   $('sheet').innerHTML = planSvg(); $('sheet').style.setProperty('--zoom', state.zoom);
-  $('planNote').textContent = `Ogród u góry, front u dołu; cięcie nad podłogą: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} cm`).join(', ')}. Kreskowanie: styropian.`;
+  $('planNote').textContent = `Ogród u góry, front u dołu; cięcie nad podłogą: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} mm`).join(', ')}. Kreskowanie: styropian.`;
 }
 $('zoomIn').onclick = () => { state.zoom = Math.min(4, state.zoom * 1.25); save(); drawPlan(); };
 $('zoomOut').onclick = () => { state.zoom = Math.max(0.5, state.zoom / 1.25); save(); drawPlan(); };

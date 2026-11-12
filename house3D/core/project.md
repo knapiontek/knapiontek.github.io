@@ -27,7 +27,7 @@ solids ──► mesh.js ──► pieces ──► scene.js ──► view
 ## Solids
 
 - Prism along x over a convex polygon in y-z: a box, cut at most by lines z = a + s·y.
-- Units cm; x along, y across, z up. The scene: metres, y up.
+- Units mm; x along, y across, z up. The scene: metres, y up.
 - A solid carries: element, material, section colour, layers, edges on/off; optional bare material under a finish, finish layer, material per face direction, walkable.
 
 ## Mesh
@@ -36,7 +36,7 @@ solids ──► mesh.js ──► pieces ──► scene.js ──► view
 - A face loses what an opposite face of its own group covers. A part covered by another group is a contact piece, seen only while that group is hidden.
 - A finished face against another solid shows its bare material.
 - Edges from the topology of the pieces: seam (one plane, no line), corner (angle, line); any other line hides while every group that closes it is shown.
-- Section cap 0.05 cm under the cut.
+- Section cap 0.5 mm under the cut.
 - No slope-dependent depth offset. Edge lines pulled toward the eye by a constant fraction.
 
 ## Code style

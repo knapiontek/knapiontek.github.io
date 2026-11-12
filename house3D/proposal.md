@@ -6,7 +6,7 @@
 
 kitchen and bath are execution projects; house3D is a visualisation. The house takes their geometry, not their code or their pages.
 
-- **Kitchen**: the furniture geometry is copied exactly (every mm) and converted to the house: mm → cm; kitchen x (along the window wall) → house z; kitchen z (out from the wall) → house −x; y stays. The 90° turn is a swap of axes, no rotation matrix.
+- **Kitchen**: the furniture geometry is copied exactly (every mm) and converted to the house (both in mm); kitchen x (along the window wall) → house z; kitchen z (out from the wall) → house −x; y stays. The 90° turn is a swap of axes, no rotation matrix.
 - **House walls win.** The kitchen's own room (walls, window, floor) is not taken. Only the plasterboard (Zabudowa GK) is refitted: rebuilt to the house walls, not copied.
 - **Bath** is half visual, half execution. Its ideas (vanity, shower, WC casing, suspended ceiling, wall tiles, fittings) are rebuilt in the house's own terms on the house walls; bath numbers that disagree with the house walls give way.
 - **Converter**: a converter run writes the converted data into house3D data files, so view.html still knows no kitchen and no bath. It is re-run when kitchen/design.js changes.
@@ -68,4 +68,4 @@ house.js says where each sub-project layer hangs (kitchen carcasses → under Ku
 1. Kuchnia and Łazienki in the same Warstwy list (as above), or only in their own panel section?
 2. Solo and presets, or plain check boxes only?
 3. Floors of the kitchen and the bathrooms: laid by the house (as now) or taken from the sub-project?
-4. Kitchen against the bathroom wall: the house gives 250.0 cm from the window start to wall #5 (analysis § 11: x 472 → 722), the kitchen 250.2 cm. With the house walls winning and the furniture fixed, where does the difference go: a filler panel at the wall, or the kitchen moves along the wall? (Check which reference point the kitchen measures from before deciding.)
+4. Kitchen against the bathroom wall: the house gives 2500 mm from the window start to wall #5 (analysis § 11: x 4720 → 7220), the kitchen 2502 mm. With the house walls winning and the furniture fixed, where does the difference go: a filler panel at the wall, or the kitchen moves along the wall? (Check which reference point the kitchen measures from before deciding.)

@@ -12,10 +12,10 @@ const unit3 = a => { const L = Math.hypot(...a); return a.map(v => v / L); };
 
 /* One list of points: a computed point within WELD_TOL of a listed one is replaced by it. Every face, piece, triangle
    and edge uses these points only, so two faces that meet share their points exactly. */
-const WELD_TOL = 0.005, WELD = new Map();
+const WELD_TOL = 0.05, WELD = new Map();  // mm
 let pointCount = 0;
 function weld(v) {
-  const k = v.map(c => Math.round(c * 100));
+  const k = v.map(c => Math.round(c * 10));   // a 0.1 mm grid, wider than the tolerance: the neighbours are searched
   for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) {
     const p = WELD.get((k[0] + a) + ',' + (k[1] + b) + ',' + (k[2] + c));
     if (p && Math.abs(p[0] - v[0]) <= WELD_TOL && Math.abs(p[1] - v[1]) <= WELD_TOL && Math.abs(p[2] - v[2]) <= WELD_TOL) return p;
@@ -24,7 +24,7 @@ function weld(v) {
 }
 const noRepeats = P => P.filter((p, i) => p !== P[(i + 1) % P.length]);
 
-/* triangles of convex polygons, batched per (layers, material); uv in cm on the face plane */
+/* triangles of convex polygons, batched per (layers, material); uv in mm on the face plane */
 class Batch {
   constructor() { this.p = []; this.n = []; this.uv = []; }
   polygon(points, n, uv) {                 // a fan around the centre: no thin triangles from collinear points

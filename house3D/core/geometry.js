@@ -1,11 +1,11 @@
 /* core/geometry.js: exact operations on convex polygons and prisms. Knows no project.
    Every solid is a prism along x over a convex polygon in the y-z plane: a box, cut at most by lines z = a + s·y.
-   Units cm; x along, y across, z up. */
+   Units mm; x along, y across, z up. */
 (function (CORE) {
 'use strict';
 
-const DEG = Math.PI / 180, INF = 1e6, EPS = 1e-6;
-const SOLID_TOL = 1e-3;
+const DEG = Math.PI / 180, INF = 1e7, EPS = 1e-6;
+const SOLID_TOL = 1e-2;                    // mm: a thinner solid is no solid
 
 /* ================= CONVEX POLYGONS (2D) ================= */
 const area2 = P => { let s = 0; for (let i = 0; i < P.length; i++) { const q = P[(i + 1) % P.length]; s += P[i][0] * q[1] - q[0] * P[i][1]; } return s / 2; };
