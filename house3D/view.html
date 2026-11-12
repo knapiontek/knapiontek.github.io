@@ -28,7 +28,7 @@
     </div>
     <div class="dock" id="dock" aria-label="Widoki kamery"></div>
     <div id="plan2d" hidden aria-label="Rzut 2D"><div id="sheet"></div></div>
-    <div id="issues" hidden aria-label="Problemy"><div id="checks"></div></div>
+    <div id="analysis" hidden aria-label="Analiza"><div id="checks"></div></div>
     <div class="pad" id="pad" aria-label="Sterowanie spacerem" hidden>
       <button data-k="ArrowUp" aria-label="Do przodu">▲</button>
       <button data-k="ArrowLeft" aria-label="Obrót w lewo">◀</button>
@@ -74,7 +74,7 @@
 <script src="core/scene.js"></script>
 <script src="core/ui.js"></script>
 <script src="engine.js"></script>
-<script src="test.js"></script>
+<script src="analysis.js"></script>
 <script>
 (function () {
 'use strict';
@@ -430,9 +430,9 @@ function panels() {
 function refresh() { modeToggle(); contextMenu(); cameraDock(); layersPanel(); cutPanel(); lightPanel(); panels(); roomsPanel(); applyView(); }
 function setMode(m) {
   state.mode = m; save();
-  const plan = !!view().plan, issues = !!view().issues;
-  $('plan2d').hidden = !plan; $('issues').hidden = !issues; canvas.hidden = plan || issues;
-  if (plan || issues) V.stopWalk();
+  const plan = !!view().plan, analysis = !!view().analysis;
+  $('plan2d').hidden = !plan; $('analysis').hidden = !analysis; canvas.hidden = plan || analysis;
+  if (plan || analysis) V.stopWalk();
   if (plan) drawPlan();
   refresh();
 }
@@ -510,8 +510,8 @@ $('zoomIn').onclick = () => { state.zoom = Math.min(4, state.zoom * 1.25); save(
 $('zoomOut').onclick = () => { state.zoom = Math.max(0.5, state.zoom / 1.25); save(); drawPlan(); };
 $('planSvg').onclick = () => { const a = el('a', { href: URL.createObjectURL(new Blob([planSvg()], { type: 'image/svg+xml' })), download: 'rzut.svg' }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
 
-/* ================= 11. CHECKS (test.js) ================= */
-const CHECKS = HouseTests.check(HOUSE, MODEL);
+/* ================= 11. CHECKS (analysis.js) ================= */
+const CHECKS = HouseAnalysis.check(HOUSE, MODEL);
 $('checks').innerHTML = CORE.ui.checksHtml(CHECKS);
 
 /* ================= 12. START ================= */

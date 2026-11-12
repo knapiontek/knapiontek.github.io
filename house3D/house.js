@@ -1,7 +1,7 @@
 /* "Dom w papawerach 5 (G)": the house as data, in three trees (rules.md § 1).
    geometry  what the house is made of: the boxes of archon/analysis.md with its build changes (§ 14)
    layers    what can be switched on and off
-   views     how the house is looked at: 3D (cameras, light, walk), the 2D plan and Problemy (the checks)
+   views     how the house is looked at: 3D (cameras, light, walk), the 2D plan and Analiza (the checks)
    view.html holds no number, name or colour of this house; it draws this file with materials.js and textures.js.
 
    Units cm. Axes of the analysis (§ 2): x along the house (0 garden outer face, 1320 front outer face), y across
@@ -79,7 +79,7 @@ window.HOUSE = {
    {"id": "footingEntrance", "kind": "footing", "b": [1168, 1228, 453, 848, -132, -92]},
    {"id": "footingWall4", "kind": "footing", "b": [624, 943, 393, 453, -132, -92]},
    {"id": "footingWall7", "kind": "footing", "b": [883, 943, 453, 796, -132, -92]},
-   {"id": "footingChimney", "kind": "footing", "b": [461, 557, 369, 465, -132, -92]},
+   {"id": "footingChimney", "kind": "footing", "b": [461, 557, 349, 445, -132, -92]},
 
    {"id": "foundationLeft", "kind": "foundation", "b": [-80, 1400, 20, 44, -92, 0]},
    {"id": "foundationRight", "kind": "foundation", "b": [-80, 1400, 866, 890, -92, 0]},
@@ -119,8 +119,8 @@ window.HOUSE = {
    {"id": "epsHeadFrontLeft", "kind": "eps", "b": [1400, 1420, 20, 64, -92, 900], "top": "roof", "outer": "+x"},
    {"id": "epsHeadFrontRight", "kind": "eps", "b": [1400, 1420, 846, 890, -92, 900], "top": "roof", "outer": "+x"},
 
-   {"id": "chimney", "kind": "chimney", "b": [471, 547, 379, 455, -92, 900]},
-   {"id": "wall2", "kind": "block12", "b": [535, 547, 44, 379, 0, 272]},
+   {"id": "chimney", "kind": "chimney", "b": [471, 547, 359, 435, -92, 900]},
+   {"id": "wall2", "kind": "block24", "b": [523, 547, 44, 359, 0, 272]},
    {"id": "wall3", "kind": "block12", "b": [642, 654, 320, 435, 0, 272]},
    {"id": "wall4", "kind": "block24", "b": [654, 925, 411, 435, 0, 272]},
    {"id": "wall5", "kind": "block12", "b": [722, 734, 580, 866, 0, 272]},
@@ -148,12 +148,11 @@ window.HOUSE = {
    {"id": "attic2", "kind": "block12", "b": [364, 376, 553, 866, 306, 591], "top": "roof"},
    {"id": "attic3a", "kind": "block12", "b": [466, 535, 553, 565, 306, 591], "top": "roof"},
    {"id": "attic3b", "kind": "block12", "b": [547, 901, 553, 565, 306, 591], "top": "roof"},
-   {"id": "attic5", "kind": "block12", "b": [535, 547, 44, 379, 306, 591], "top": "roof"},
-   {"id": "attic6", "kind": "block12", "b": [535, 547, 455, 866, 306, 591], "top": "roof"},
+   {"id": "attic5", "kind": "block12", "b": [535, 547, 44, 359, 306, 591], "top": "roof"},
+   {"id": "attic6", "kind": "block12", "b": [535, 547, 435, 866, 306, 591], "top": "roof"},
    {"id": "attic7", "kind": "block12", "b": [737, 749, 44, 341, 306, 591], "top": "roof"},
    {"id": "attic8", "kind": "block12", "b": [749, 901, 329, 341, 306, 591], "top": "roof"},
    {"id": "attic9", "kind": "block12", "b": [820, 832, 565, 866, 306, 591], "top": "roof"},
-   {"id": "attic11", "kind": "block12", "b": [889, 901, 626, 649, 306, 591], "top": "roof"},
    {"id": "attic12", "kind": "block12", "b": [901, 913, 44, 649, 306, 591], "top": "roof"},
    {"id": "attic13", "kind": "block12", "b": [913, 1276, 441, 453, 306, 591], "top": "roof"}
   ],
@@ -255,7 +254,7 @@ window.HOUSE = {
      {"id": "salon", "numbers": [3, 5, 6], "name": "Salon z kuchnią i holem", "planArea": 50.55,
       "tiles": {"product": "authorityGraphite", "dir": "x"},
       "link": {"href": "../kitchen/view.html", "name": "Projekt kuchni"},
-      "rects": [[44, 535, 44, 379], [44, 471, 379, 455], [44, 547, 455, 866], [547, 722, 435, 866], [722, 734, 435, 580], [734, 901, 435, 615]]},
+      "rects": [[44, 523, 44, 359], [44, 471, 359, 435], [44, 547, 435, 866], [547, 722, 435, 866], [722, 734, 435, 580], [734, 901, 435, 615]]},
      {"id": "wiatrolap", "numbers": [1], "name": "Wiatrołap", "planArea": 4.84,
       "tiles": {"product": "authorityGraphite", "dir": "x"},
       "rects": [[925, 1186, 423, 615]]},
@@ -277,9 +276,9 @@ window.HOUSE = {
     "rooms": [
      {"id": "sypialnia", "numbers": [2], "name": "Sypialnia", "planArea": 28.16,
       "tiles": {"product": "logOak", "dir": "x"},
-      "rects": [[44, 364, 44, 866], [364, 376, 391, 553], [376, 471, 379, 553], [376, 466, 553, 565], [471, 535, 455, 553]]},
+      "rects": [[44, 364, 44, 866], [364, 376, 391, 553], [376, 471, 379, 553], [376, 466, 553, 565], [471, 535, 435, 553]]},
      {"id": "garderoba3", "numbers": [3], "name": "Garderoba", "planArea": 5.13, "tilesWith": "sypialnia",
-      "rects": [[376, 535, 44, 379]]},
+      "rects": [[376, 471, 44, 379], [471, 535, 44, 359]]},
      {"id": "garderoba4", "numbers": [4], "name": "Garderoba", "planArea": 4.60, "tilesWith": "sypialnia",
       "rects": [[376, 535, 565, 866]]},
      {"id": "hol", "numbers": [1], "name": "Hol", "planArea": 7.32,
@@ -297,7 +296,7 @@ window.HOUSE = {
       "rects": [[913, 1276, 44, 441]]},
      {"id": "pokoj6", "numbers": [6], "name": "Pokój", "planArea": 16.53,
       "tiles": {"product": "logOak", "dir": "x"},
-      "rects": [[913, 1276, 453, 866], [832, 913, 649, 866], [832, 889, 626, 649], [832, 901, 565, 626]]}
+      "rects": [[913, 1276, 453, 866], [832, 913, 649, 866], [832, 901, 565, 649]]}
     ],
     "other": []
    }
@@ -370,9 +369,9 @@ window.HOUSE = {
    "cut": {"ground": 150, "attic": 80},
    "panels": ["plan", "notes"]
   },
-  "issues": {
-   "name": "Problemy",
-   "issues": true,
+  "analysis": {
+   "name": "Analiza",
+   "analysis": true,
    "panels": ["notes"]
   }
  }

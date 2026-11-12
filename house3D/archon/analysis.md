@@ -108,7 +108,7 @@ Footings z −132 → −92; foundation walls z −92 → 0; ground slab z −36
 | entrance wall | 1168 – 1228 / 453 – 848 | 1186 – 1210 / 435 – 866 |
 | #4 | 624 – 943 / 393 – 453 | 654 – 925 / 411 – 435 |
 | #7 | 883 – 943 / 453 – 796 | 901 – 925 / 435 – 766 |
-| chimney | 461 – 557 / 369 – 465 | – (the chimney itself, from −92) |
+| chimney | 461 – 557 / 349 – 445 | – (the chimney itself, from −92) |
 
 Ground slab: x 44 – 1276, y 44 – 411 (garage) and x 44 – 1186, y 411 – 866 (house), minus the foundation walls and the chimney.
 
@@ -196,8 +196,8 @@ Roof: graphite tiles on top, white underside, ends and eaves.
 
 | # | Kind | x | y | Note |
 |---|---|---|---|---|
-| 1 | chimney | 471 – 547 | 379 – 455 | z −92 → ≈ 900 (on its footing), one box through both floors and the roof |
-| 2 | block 12 | 535 – 547 | 44 – 379 | living / garage |
+| 1 | chimney | 471 – 547 | 359 – 435 | z −92 → ≈ 900 (on its footing), one box through both floors and the roof; face flush with #4 (§ 14) |
+| 2 | block 24 | 523 – 547 | 44 – 359 | living / garage; block 24 as built (§ 14) |
 | 3 | block 12 | 642 – 654 | 320 – 435 | stair wall |
 | 4 | block 24 | 654 – 925 | 411 – 435 | garage / hall, load-bearing |
 | 5 | block 12 | 722 – 734 | 580 – 866 | kitchen / bathroom |
@@ -241,7 +241,7 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 
 | Room | Rectangles [x1, y1, x2, y2] | Here, m² | archon, m² |
 |---|---|---|---|
-| Salon, kitchen and hall (5, 6, 3) | [44,44,535,379] [44,379,471,455] [44,455,547,866] [547,435,722,866] [722,435,734,580] [734,435,901,615] | 51.09 | 35.42 + 9.67 + 5.46 = 50.55 |
+| Salon, kitchen and hall (5, 6, 3) | [44,44,523,359] [44,359,471,435] [44,435,547,866] [547,435,722,866] [722,435,734,580] [734,435,901,615] | 50.74 | 35.42 + 9.67 + 5.46 = 50.55 |
 | Vestibule (1) | [925,423,1186,615] | 5.01 | 4.84 |
 | Bathroom (7) | [734,627,901,866] [901,766,985,866] | 4.83 | 4.95 (design) |
 | Boiler room with laundry (8) | [925,627,1186,754] [997,754,1186,866] | 5.43 | 4.97 (design) |
@@ -258,12 +258,11 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 | 2 | block 12 | 364 – 376 | 553 – 866 |
 | 3 | block 12 | 466 – 901 | 553 – 565 (stops at #6: 466 – 535 and 547 – 901) |
 | 4 | chimney | ground floor #1 | |
-| 5 | block 12 | 535 – 547 | 44 – 379 |
-| 6 | block 12 | 535 – 547 | 455 – 866 |
+| 5 | block 12 | 535 – 547 | 44 – 359 |
+| 6 | block 12 | 535 – 547 | 435 – 866 |
 | 7 | block 12 | 737 – 749 | 44 – 341 |
 | 8 | block 12 | 749 – 901 | 329 – 341 |
 | 9 | block 12 | 820 – 832 | 565 – 866 |
-| 11 | block 12 | 889 – 901 | 626 – 649 |
 | 12 | block 12 | 901 – 913 | 44 – 649 |
 | 13 | block 12 | 913 – 1276 | 441 – 453 |
 
@@ -290,14 +289,14 @@ archon's first figure is the usable area: under 140 of clear height it counts 0,
 
 | Room | Rectangles [x1, y1, x2, y2] | Here, m² | archon, m² |
 |---|---|---|---|
-| Bedroom (2) | [44,44,364,866] [364,391,376,553] [376,379,471,553] [376,553,466,565] [471,455,535,553] | 28.89 | 24.07 (28.16) |
-| Wardrobe (3) | [376,44,535,379] | 5.33 | 4.13 (5.13) |
+| Bedroom (2) | [44,44,364,866] [364,391,376,553] [376,379,471,553] [376,553,466,565] [471,435,535,553] | 29.01 | 24.07 (28.16) |
+| Wardrobe (3) | [376,44,471,379] [471,44,535,359] | 5.20 | 4.13 (5.13) |
 | Wardrobe (4) | [376,565,535,866] | 4.79 | 3.60 (4.60) |
 | Hall (1) | [642,273,737,341] [642,341,901,553] [547,438,642,553] | 7.23 | 7.32 |
 | Bathroom (5) | [547,565,820,866] | 8.22 | 6.25 (7.99) |
 | Wardrobe (8) | [749,44,901,329] | 4.33 | 3.20 (4.16) |
 | Room (7) | [913,44,1276,441] | 14.41 | 11.79 (14.11) |
-| Room (6) | [913,453,1276,866] [832,649,913,866] [832,626,889,649] [832,565,901,626] | 17.30 | 13.69 (16.53) |
+| Room (6) | [913,453,1276,866] [832,649,913,866] [832,565,901,649] | 17.33 | 13.69 (16.53) |
 
 The wardrobes 3 and 4 open from the bedroom (no door in the plan) and are tiled with it.
 
@@ -340,7 +339,7 @@ From the 190 window's start (x 472) to wall #5 (x 722) is 250.0. The pier betwee
 ## 13. Open points
 
 - **Garage length.** It is printed as 724, but 1320 − 44 − 491 − 12 − 44 = 729, and the drawing also measures 729. The model uses 729.
-- **Chimney width (y).** The attic plan draws it y 379 – ≈ 452 (used: 379 – 455, up to the house axis); the ground floor plan draws only y ≈ 389 – 433 in black, with the fireplace insert (y ≈ 335 – 384) beside it. x 471 – 547 agrees on both.
+- **Chimney width (y).** The attic plan draws it y 379 – ≈ 452 (used: 379 – 455, up to the house axis); the ground floor plan draws only y ≈ 389 – 433 in black, with the fireplace insert (y ≈ 335 – 384) beside it. x 471 – 547 agrees on both. As built: y 359 – 435 (§ 14).
 - **Foundation walls.** Their material is not given. If it is the same block as the walls above, the foundation wall and the ground floor wall become one box.
 - **Footing sizes and depths.** These come from the section only (±3.6).
 - **Stair treads.** Only the void and the riser count follow from the drawings; the tread split of § 9 is the model's.
@@ -352,7 +351,8 @@ From the 190 window's start (x 472) to wall #5 (x 722) is 250.0. The pier betwee
 | Ground floor shower recess (bathroom 7) | 84 × 137, x 901 – 985, y 729 – 866 | 90 × 100: x 895 – 985 (90 from the glass line at 895), y 766 – 866 (100 along the window wall). Walls: #7 to y 766, #8 at y 754 – 766, #10 from y 754. Which walls moved is assumed; the recess size was measured on site. |
 | Attic shower 100 × 100 (bathroom 5) | x 547 – 637, y 565 – 670 (garden end) | x 720 – 820, y 565 – 665 (front end, by the door wall) |
 | Attic bathroom door 90/205 (#3) | x 650 – 740 | x 630 – 720 (20 toward the garden, clears the shower) |
-| Heating | gas boiler, gravity ventilation: vent shaft x 873 – 901 / y 589 – 615 (ground floor), x 832 – 901 / y 565 – 626 (attic), second stack on the roof | heat pump: one chimney (living room), no vent shaft, no second stack; the space goes to the hall (ground floor) and room 6 (attic) |
+| Chimney and wall #2 | chimney y 379 – 455; #2 block 12, x 535 – 547 | chimney y 359 – 435 (76 × 76, its face flush with #4 at y 435); #2 block 24, x 523 – 547, y 44 – 359 (thickened toward the living room: 491 → 479); attic #5 and #6 run to the chimney (y 359, 435) |
+| Heating | gas boiler, gravity ventilation: vent shaft x 873 – 901 / y 589 – 615 (ground floor), x 832 – 901 / y 565 – 626 (attic), second stack on the roof | heat pump: one chimney (living room), no vent shaft, no second stack; the space goes to the hall (ground floor) and room 6 (attic); the attic wall stub #11 (x 889 – 901, y 626 – 649) is not built |
 | Diagonal wall under the stair (garage) | from (547, ≈ 271) to (642, ≈ 323) | none: the stair is floating; the garage outline keeps y 297 as the line to the stair |
 | Roof build-up (§ 6) | 64.6 vertical (≈ 48 across the slope): top at the outer wall face 451, ridge 860 | 64 across the slope (86.1 vertical), as wide as a portal wing (EPS 20 + block 24 + EPS 20), so the white frame keeps one width; same underside, so the top rises: 472.5 at the outer wall face, ridge ≈ 882, chimney ≈ 18 above it |
 | Garden bedroom ceiling (§ 6) | flat at 591 over the whole attic | cathedral: open to the roof over x 44 – 364; the flat ceiling starts at x 376; a block 12 wall x 364 – 376, z 591 → roof, closes the loft over the rest of the attic |

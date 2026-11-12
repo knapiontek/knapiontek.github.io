@@ -45,7 +45,7 @@ The menu decides what is shown and from where. The panel holds only the paramete
 
 ## 5. Menu
 
-- **Top left**: one toggle 3D / 2D / Problemy. Problemy lists the checks (§ 8).
+- **Top left**: one toggle 3D / 2D / Analiza. Analiza lists the checks (§ 8).
 - **3D, top**: Parter, Piętro, Dach as check boxes; a second row when a room is selected.
 - **3D, bottom**: Spacer (the walk), the cameras of the house and of the open floor.
 - **Navigation**: the wheel zooms toward the surface under the cursor; rotation turns about the house centre while the camera is outside the house, and about the surface in the middle of the view inside it, so the pivot is never left behind the camera.
@@ -65,7 +65,7 @@ The menu decides what is shown and from where. The panel holds only the paramete
 - The living room with the kitchen links to kitchen/view.html; both bathrooms link to bath/view.html.
 - Nothing of a sub-project goes into house3D until it is accepted. Then: its geometry under the room, its layers as a branch, its views as sub-views (see proposal.md).
 
-## 8. Checks (on the page, Problemy)
+## 8. Checks (on the page, Analiza)
 
 - Element thickness matches its kind.
 - No two solids share volume: elements, frames, glass, leaves, roof, stair, site.
