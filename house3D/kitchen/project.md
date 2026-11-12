@@ -17,8 +17,9 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 | engine.js | code, every project | the model: carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
 | cost.html | page, LLM generated | prices, cutting lists, notes, assembly help, carcass map | LLM, per project |
-| view.html | page, LLM generated | the 3D view of the kitchen in its room and its geometry check | LLM, per project |
+| view.html | page, every project | the 3D view of the kitchen in its room and its geometry check, drawn by ../core | LLM, every project |
 | ../house.js, ../rooms.js | data and code of house3D | the room: the house's own walls, slab, floor and window, copied as they are and trimmed to the kitchen | house3D |
+| ../core/ | code of house3D | drawing: solids, welded meshes, edges, light, camera, the panel's look | house3D |
 | project.md | text | this description | by hand |
 | index.html | page | directory listing of the repository folder (not part of the kitchen) | by hand |
 
@@ -39,6 +40,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
   appliances.js ──► cost.html, view.html         passed on to engine.js; design.html does not read it
   textures.js   ──► view.html                    without it a material shows its colour
   ../house.js ─► ../rooms.js ─► view.html        the room, from the house
+  ../core       ──► view.html                    draws it all, like the house
 ```
 
 - Every page loads design.js directly, so the pages also work opened from disk.
@@ -52,7 +54,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 ## What is project specific and what is not
 
 - **Project specific:** design.js (its notes, groups and components are this kitchen), cost.js, view.js, appliances.js and textures.js.
-- **Every project:** rules.md, engine.js, design.html and the code of cost.html and view.html, which holds no numbers or names of this kitchen.
+- **Every project:** rules.md, engine.js, design.html, view.html and the code of cost.html, which hold no numbers or names of this kitchen.
 - A new kitchen starts from rules.md: make a new design.js in design.html, then let an LLM generate cost.js, view.js, appliances.js and textures.js for it.
 
 ## The files in short
@@ -61,7 +63,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 - **engine.js**: knows no kitchen. It places the components in their columns, joins them into carcasses, builds the boards, fronts, strips, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.js.
 - **design.html**: knows the format, not the kitchen. Tables for materials (read only: they define what each type is made of), groups and columns, components and user notes; the elevation drawing; problems listed under the tables.
 - **cost.html**: the estimate, the cutting list with drilling and cut-outs, the notes (the detailed geometry of the appliances, written by the LLM), assembly help and the carcass map; exports the XLSX. Its texts refer to the model, not to copied numbers.
-- **view.html**: the kitchen in 3D in the house's room, with the carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs; it checks the geometry (collisions, gaps, fronts off the line, parts sticking out). It shows only hard data, no guessing.
+- **view.html**: the kitchen in 3D in the house's room, drawn by ../core like the house: every part is a solid of core in house axes, doors and drawers are solids that turn or slide. Carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs; it checks the geometry (collisions, gaps, fronts off the line, parts sticking out) and lists parts the engine gave no size. Round details (handles, knobs, legs, lamps) are plain meshes beside the solids.
 
 ## Types, tags, materials
 

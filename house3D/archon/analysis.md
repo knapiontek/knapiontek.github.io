@@ -17,7 +17,7 @@ Drawings (this folder, `house3D\archon`):
 | `elewacja-prawa.png` | right elevation (y = 9100): windows 1000/1300, 1900/1300, 2500/2400, 2 roof windows |
 | `elewacja-lewa.png` | left elevation (y = 0): garage window 2000/1000, 1 roof window |
 
-Related projects in `C:\dev\projects\knapiontek.github.io`: `kitchen` (kitchen design) and `bath` (both bathrooms).
+Related projects in `house3D`: `kitchen` (kitchen design) and `bath` (both bathrooms).
 
 ## 2. Axes
 

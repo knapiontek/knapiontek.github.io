@@ -24,23 +24,26 @@ function weld(v) {
 }
 const noRepeats = P => P.filter((p, i) => p !== P[(i + 1) % P.length]);
 
-/* triangles of convex polygons, batched per (layers, material); uv in mm on the face plane */
+/* triangles of convex polygons, batched per (layers, material); uv in mm on the face plane.
+   owner: what a triangle belongs to (a cell), so a pick can name it: mesh.userData.owners[faceIndex] */
 class Batch {
-  constructor() { this.p = []; this.n = []; this.uv = []; }
-  polygon(points, n, uv) {                 // a fan around the centre: no thin triangles from collinear points
+  constructor() { this.p = []; this.n = []; this.uv = []; this.owners = []; }
+  polygon(points, n, uv, owner) {          // a fan around the centre: no thin triangles from collinear points
     const c = [0, 1, 2].map(i => points.reduce((s, v) => s + v[i], 0) / points.length);
-    for (let i = 0; i < points.length; i++) this.tri(c, points[i], points[(i + 1) % points.length], n, uv);
+    for (let i = 0; i < points.length; i++) this.tri(c, points[i], points[(i + 1) % points.length], n, uv, owner);
   }
-  tri(a, b, c, n, uv) {
+  tri(a, b, c, n, uv, owner) {
     if (dot3(cross3(sub3(b, a), sub3(c, a)), n) < 0) [b, c] = [c, b];
     for (const v of [a, b, c]) { const w = weld(v); this.p.push(...w); this.n.push(...n); this.uv.push(...uv(v)); }
+    this.owners.push(owner);
   }
   mesh(mat) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
     g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
     g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
-    const m = new THREE.Mesh(g, mat); m.castShadow = !mat.transparent; m.receiveShadow = true; return m;
+    const m = new THREE.Mesh(g, mat); m.castShadow = !mat.transparent; m.receiveShadow = true;
+    m.userData.owners = this.owners; return m;
   }
 }
 

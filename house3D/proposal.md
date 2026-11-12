@@ -1,6 +1,6 @@
 # Proposal: kitchen and bath in house3D
 
-> Partly built: the kitchen and the bathrooms already take their room from the house (rooms.js), in house axes. Still open: bringing their furniture into the house view. Once agreed, what stays moves to project.md and rules.md.
+> Status: the kitchen and the bathrooms take their room from the house (rooms.js); the kitchen is drawn by core in house axes. Still open: bringing their furniture into the house view (below), and the bathrooms moving to house axes and core. Once agreed, what stays moves to project.md and rules.md.
 
 ## 1. What comes across
 
@@ -54,6 +54,6 @@ The bathrooms get the same kind of section.
 
 1. Kuchnia and Łazienki in the Warstwy list, or only in their own section?
 2. Solo and presets, or plain check boxes?
-3. Floors of the kitchen and bathrooms: laid by the house (as now) or taken from the sub-project? Both now use Authority Grey 898×898 in the bathrooms.
+3. Floors of the kitchen and bathrooms: laid by the house or taken from the sub-project? Today the house lays tiles in every room, the kitchen paints its own tile choice (kitchen/textures.js) on the top of the house's slab, and the bathrooms lay their own tiles 3 mm over it.
 4. Kitchen against wall #5: the furniture now stands against the real wall #5 (x 7220), so the kitchen's 2 mm sit at the window (the house window starts at kitchen x 872, the kitchen planned 870). Accept, or add a filler?
 5. Kitchen tall units (group 2) run 2888 out from the window wall, wall #5 is 2860: the last 28 mm stand past the wall's end, in the passage.

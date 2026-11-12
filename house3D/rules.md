@@ -29,8 +29,8 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 - **Okna i drzwi** stoją w murze, licem do jego zewnętrznej powierzchni. Ich wymiary to etykiety archon (szerokość/wysokość), pokazane na rzucie 2D. Rodzaj otworu mówi, co w nim jest (rama przeszklona z parapetem albo bez, pełne skrzydło, albo jedno i drugie) i czy posadzka przechodzi przez otwór.
 - **Fundamenty**: każda ściana parteru z pustaka 240 stoi na ścianie fundamentowej i ławie. Komin stoi na płycie na gruncie, na własnym fundamencie. Ławy w jednej linii mają wspólną krawędź.
 - **Schody**: wspornikowe, same stopnie i spocznik; bez policzków i bez ścianki pod biegiem.
-- **Poza modelem**: meble, kuchnia, wyposażenie łazienek, kominek.
-- **Rysowanie** według core: wspólne wierzchołki, bez T-połączeń, nic nie jest ukryte, żeby zasłonić błąd. Ściany między częściami jednego elementu nie są rysowane. Płytki i fuga leżą tuż nad stropem, nigdy w jego płaszczyźnie.
+- **Poza modelem**: meble, kuchnia, wyposażenie łazienek, kominek (to podprojekty, § 6).
+- **Rysowanie** według core: wspólne wierzchołki, bez T-połączeń, nic nie jest ukryte ani przesunięte, żeby zasłonić błąd. Ściany między częściami jednego elementu nie są rysowane. Płytki i fuga leżą tuż nad stropem, nigdy w jego płaszczyźnie.
 
 ## 3. Warstwy
 
@@ -61,8 +61,9 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 ## 6. Podprojekty
 
 - Salon prowadzi do kitchen/view.html; obie łazienki do bath/view.html.
-- Dom wygrywa: kuchnia i łazienki biorą pomieszczenie z domu takie, jakie jest (ściany, strop, posadzkę, okna, dach), przycięte do obszaru, który dom podaje dla pomieszczenia. Nie rysują ani nie mierzą własnego pomieszczenia.
-- Te same osie wszędzie: x wzdłuż domu, y w poprzek, z w górę, mm i położenia domu.
+- Dom wygrywa: kuchnia i łazienki biorą pomieszczenie z domu takie, jakie jest (ściany, strop, posadzkę, okna, dach), przycięte do obszaru, który dom podaje dla pomieszczenia. Nie rysują ani nie mierzą własnego pomieszczenia i niczego w nim nie przesuwają.
+- Te same osie wszędzie: x wzdłuż domu, y w poprzek, z w górę, mm i położenia domu. Podprojekt nie ma własnego układu współrzędnych.
+- Podprojekt rysuje core, tak jak dom (§ 2, Rysowanie).
 - Płytki łazienek leżą na ścianach domu; posadzka podprojektu leży na płycie domu, nigdy w jej płaszczyźnie.
 - Nic z podprojektu nie trafia do house3D, dopóki nie zostanie przyjęte (proposal.md).
 

@@ -1,42 +1,52 @@
 # Core
 
-Shared 3D code for every view. It knows no project. What it must do: [rules.md](rules.md).
+Shared 3D code for every view: the house (../view.html) and its sub-projects (../kitchen/view.html; ../bath/view.html uses geometry and mesh only). It knows no project. What it must do: [rules.md](rules.md).
 
 ## Files
 
-| File | What it holds |
+| File | Holds |
 |---|---|
 | geometry.js | convex polygons and prisms: clip, subtract, intersect, split, section, volume, overlaps |
-| mesh.js | welded points, faces, visible pieces |
-| scene.js | renderer, materials, meshes, edges, caps, light, camera, navigation, walk |
+| mesh.js | welded points, faces, visible pieces, batches of triangles |
+| scene.js | renderer, materials, meshes, edges, caps, light, camera, navigation, walk, loop |
 | ui.js | stored state, layers tree, help, checks list |
 | ui.css | the look of every view, light and dark |
 
 ## How it fits together
 
 ```
-solids ─► mesh.js ─► pieces ─► scene.js ─► view
-   └────► geometry.js ─► checks
+cells ─► mesh.js ─► pieces ─► scene.js ─► view
+   └───► geometry.js ─► checks
 ```
 
 - geometry.js and mesh.js run without a browser or three.js.
-- A project hands in: solids, materials, textures, light, edge style, body box, walk settings.
+- A page hands in: cells, a material library, textures, light, edge style, the body box, walk settings.
 
-## Solids
+## Cells
 
-- A prism along x over a convex polygon in y-z: a box, cut at most by lines z = a + s·y.
-- Units mm; x along, y across, z up. The scene is in metres with y up.
-- A solid carries its element, material, section colour, layers and whether it shows edges; optionally a bare material under a finish, the finish layer, a material per face direction, and whether the walk can stand on it.
+A cell is a solid with what it is:
+
+- **S**: a prism along x over a convex polygon in y-z (a box, cut at most by lines z = a + s·y). Units mm; x along, y across, z up. The scene is in metres with y up.
+- **material**, or **faceMaterial(n)**: a material per face by its normal (a board's banded and bare edges, a roof's sides).
+- **layers**: shown only while all are on. **edges**: whether it draws edge lines.
+- Optional: **raw** (the bare material under a finish) and **finish** (its layer); **walkable**; **part** (one board or piece: a joint between two parts in one plane gets a line, one part has none); **batch** (kept in a mesh of its own, so a page can recolour it, e.g. a selected cabinet).
 
 ## Mesh
 
-- Faces that meet share the same welded point.
-- A face loses what an opposite face of its own group covers. A part covered by another group is kept but shown only while that group is hidden.
+- Faces that meet share the same welded point (0.05 mm).
+- A face loses what an opposite face of its own group (its layers) covers. A part covered by another group is kept but shown only while that group is hidden.
 - A finished face against another solid shows its bare material.
-- Edges come from the pieces: a seam (one plane) has no line, a corner (an angle) always has one; any other line hides while every group that closes it is shown.
-- Section caps lie 0.5 mm under the cut.
-- Faces have no depth offset (no two surfaces share a plane, so none is needed). Edge lines are pulled toward the eye by a constant fraction.
+- Every triangle remembers its cell, so a pick can name what is under the cursor.
+
+## Scene
+
+- **Materials**: colour, roughness, metalness, reflect, opacity; clear coat (a lacquer); emissive and glow; one generated surface at most: plaster specks, grass, paving, wood boards, or an image (a decor photo of the textures, its size in mm, turned a quarter when its grain must run the other way).
+- **Meshes and edges** go under the model root, or under a group of it that moves (a door on its hinge).
+- **Edges** come from the pieces: a seam (one plane, one part) has no line, a corner (an angle) always has one; any other line hides while every group that closes it is shown. Lines are pulled toward the eye by a constant fraction; faces have no depth offset.
+- **Section caps** lie 0.5 mm under the cut.
+- **Light**: a sky, a sun around the body centre (its shadow covers the reach the page gives), fog.
+- **Loop**: draws only after a change. A page that animates adds a step that runs every frame and says whether something moved.
 
 ## Code style
 
-As house3D/project.md. three.js is pinned at r128.
+As ../project.md. three.js is pinned at r128.

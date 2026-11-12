@@ -7,7 +7,8 @@
 const { DEG, INF, zRange, cutBy, sectionAt, edgesOf } = CORE.geometry;
 const { dot3, Batch } = CORE.mesh;
 
-/* opts: {canvas, stage, materials (library: key -> {color, roughness, ...}), textures, light, edges, body: [[x, y, z], [x, y, z]], sunCentre: [x, y, z]} */
+/* opts: {canvas, stage, materials (library: key -> {color, roughness, ...}), textures (key -> {faces: [image], size: [u, v] mm}),
+   light, edges, body: [[x, y, z], [x, y, z]], sunCentre: [x, y, z]} */
 const MM = 0.001;                          // the scene is in metres, the model in mm
 
 CORE.createView = function (opts) {
@@ -82,14 +83,26 @@ CORE.createView = function (opts) {
         t.repeat.set(d.vertical ? 1 / (boards * d.board) : 1 / len, d.vertical ? 1 / len : 1 / (boards * d.board));
         m.map = t; m.color.set(0xffffff); m.needsUpdate = true; redraw();
       });
+    },
+    image(d, m) {                          // a photo of textures (a board decor), its size in mm; turn: its u runs along the face's v
+      const T = TEX[d.key];
+      loadImage(T.faces[0], im => {
+        const t = new THREE.Texture(im); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        if (d.turn) { t.repeat.set(1 / T.size[1], 1 / T.size[0]); t.rotation = Math.PI / 2; } else t.repeat.set(1 / T.size[0], 1 / T.size[1]);
+        t.needsUpdate = true; m.map = t; m.needsUpdate = true; redraw();
+      });
     }
   };
   const MATERIALS = {};
   function material(key) {
     if (MATERIALS[key]) return MATERIALS[key];
     const def = MATERIAL_LIB[key];
-    const m = new THREE.MeshStandardMaterial({ color: lin(def.color || '#ffffff'), roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, clippingPlanes: CLIP, clipShadows: true });
-    if (def.opacity !== undefined) Object.assign(m, { transparent: true, opacity: def.opacity, depthWrite: false, envMapIntensity: def.reflect || 1 });
+    const o = { color: lin(def.color || '#ffffff'), roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1, clippingPlanes: CLIP, clipShadows: true };
+    if (def.emissive) Object.assign(o, { emissive: lin(def.emissive), emissiveIntensity: def.glow ?? 1 });
+    const m = def.clearcoat === undefined ? new THREE.MeshStandardMaterial(o)   // a lacquer: a clear coat over the colour
+      : new THREE.MeshPhysicalMaterial(Object.assign(o, { clearcoat: def.clearcoat, clearcoatRoughness: def.clearcoatRoughness ?? 0.5 }));
+    if (def.opacity !== undefined) Object.assign(m, { transparent: true, opacity: def.opacity, depthWrite: false });
     for (const [k, make] of Object.entries(SURFACES)) if (def[k]) make(def[k], m, def);
     return (MATERIALS[key] = m);
   }
@@ -97,27 +110,30 @@ CORE.createView = function (opts) {
   const capMaterial = key => CAP_MATERIALS[key] || (CAP_MATERIALS[key] = new THREE.MeshLambertMaterial({ color: lin(MATERIAL_LIB[key].color), side: THREE.DoubleSide }));
 
   /* ================= MESHES AND EDGES OF PIECES ================= */
-  const GROUPS = [];                       // {mesh, layers, finish: {layer, on, off} | null}
-  function buildMeshes(pieces) {
+  /* One mesh per (layers, material, finish, cell.batch): cell.batch keeps apart what a page recolours on its own (a selected
+     cabinet). parent: the root (model mm), or a group under it that moves (a door). */
+  const GROUPS = [];                       // {mesh, cell, layers, finish: {layer, on, off} | null}
+  function buildMeshes(pieces, parent = root) {
     const batches = new Map();
     for (const f of pieces) {
-      const k = f.group + '|' + f.material + '|' + (f.cell.finish || '') + '|' + (f.cell.raw || '');
+      const k = f.group + '|' + f.material + '|' + (f.cell.finish || '') + '|' + (f.cell.raw || '') + '|' + (f.cell.batch || '');
       if (!batches.has(k)) batches.set(k, { cell: f.cell, material: f.material, batch: new Batch() });
-      batches.get(k).batch.polygon(f.poly, f.n, f.uv);
+      batches.get(k).batch.polygon(f.poly, f.n, f.uv, f.cell);
     }
     for (const { cell, material: key, batch } of batches.values()) {
-      const mesh = batch.mesh(material(key)); root.add(mesh);
+      const mesh = batch.mesh(material(key)); parent.add(mesh);
       const switchable = cell.finish && key !== cell.raw;   // a finished face shows its bare material while its finish layer is off
-      GROUPS.push({ mesh, layers: cell.layers, finish: switchable ? { layer: cell.finish, on: material(key), off: material(cell.raw) } : null });
+      GROUPS.push({ mesh, cell, layers: cell.layers, finish: switchable ? { layer: cell.finish, on: material(key), off: material(cell.raw) } : null });
     }
   }
 
   /* Edges from the topology of the pieces. For each segment between two welded points and each group on it: two pieces
-     of the group in one plane are a seam (no line); two outside pieces at an angle are a corner (always a line);
-     otherwise the line hides exactly while every group that closes it is shown. */
+     of the group in one plane are a seam (no line) unless they are of two parts (cell.part: two boards of a cabinet meet
+     in a joint); two outside pieces at an angle are a corner (always a line); otherwise the line hides exactly while every
+     group that closes it is shown. */
   const EDGE_GROUPS = [];
   const EDGE_PULL = 0.002;                 // 20 mm at 10 m: in front of the faces of its corner, behind any wall
-  function buildEdges(pieces) {
+  function buildEdges(pieces, parent = root) {
     const E = opts.edges, segs = new Map();
     for (const f of pieces) {
       if (!f.cell.edges) continue;
@@ -139,7 +155,7 @@ CORE.createView = function (opts) {
       const groups = new Map();
       for (const f of s.on) { if (!groups.has(f.group)) groups.set(f.group, []); groups.get(f.group).push(f); }
       for (const [g, fs] of groups) {
-        if (fs.length === 2 && same(fs[0].n, fs[1].n)) continue;           // a seam
+        if (fs.length === 2 && same(fs[0].n, fs[1].n) && fs[0].cell.part === fs[1].cell.part) continue;   // a seam
         const outside = fs.filter(f => !f.cover), unless = fs.filter(f => f.cover).map(f => f.cover);
         let always = outside.length >= 2;                                   // a corner of the group
         if (outside.length === 1) {
@@ -155,7 +171,7 @@ CORE.createView = function (opts) {
     }
     for (const v of lines.values()) {
       const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(v.p, 3));
-      const mesh = new THREE.LineSegments(geo, mat); root.add(mesh);
+      const mesh = new THREE.LineSegments(geo, mat); parent.add(mesh);
       EDGE_GROUPS.push({ mesh, layers: v.layers, hideWhen: v.hideWhen });
     }
   }
@@ -181,8 +197,9 @@ CORE.createView = function (opts) {
     scene.fog = new THREE.Fog(lin(LIGHT.fog.color), LIGHT.fog.near * MM, LIGHT.fog.far * MM);
     hemi = new THREE.HemisphereLight(lin(SKY.color), lin(SKY.groundColor), SKY.intensity); scene.add(hemi);
     sun = new THREE.DirectionalLight(lin(LIGHT.sun.color), LIGHT.sun.intensity);
+    const reach = LIGHT.sun.reach ?? 16;   // m around the sun's centre that its shadow covers
     sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
-    Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 80 });
+    Object.assign(sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 1, far: 80 });
     scene.add(sun, sun.target);
   }
   /* s: {az, el, k}: azimuth from +x towards +y, elevation, brightness */
@@ -363,7 +380,11 @@ CORE.createView = function (opts) {
     window.addEventListener('pointerup', () => { walk.drag = null; });
   }
 
-  /* ================= LOOP ================= */
+  /* ================= LOOP =================
+     It draws only after a change. A page that animates (doors, a camera flight) adds a step: fn(dt) runs every frame and
+     returns true while something moved. */
+  const STEPS = [];
+  const onFrame = fn => STEPS.push(fn);
   function resize() {
     const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); redraw();
@@ -372,14 +393,15 @@ CORE.createView = function (opts) {
     requestAnimationFrame(frame);
     const dt = Math.min(0.1, (t - (walk.last || t)) / 1000); walk.last = t;
     if (walk.on && walk.keys.size) stepWalk(dt);
+    for (const step of STEPS) if (step(dt)) needsRender = true;
     if (!walk.on) controls.update();
     if (needsRender) { needsRender = false; renderer.render(scene, camera); }
   }
   function start() { new ResizeObserver(resize).observe(stage); resize(); }
   const run = () => requestAnimationFrame(frame);
 
-  return { renderer, scene, root, camera, controls, lin, redraw, toWorld, CUT, CLIP, hash01, canvasTexture, loadImage, material, capMaterial,
+  return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, CUT, CLIP, hash01, canvasTexture, loadImage, material, capMaterial,
     buildMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, addLight, placeSun, setCamera, addCaps, buildCaps, setCut,
-    onClick, enableNavigation, walk, enableWalk, startWalk, stopWalk, start, run };
+    onClick, enableNavigation, walk, enableWalk, startWalk, stopWalk, onFrame, start, run, get hemi() { return hemi; }, get sun() { return sun; } };
 };
 })(window.CORE = window.CORE || {});
