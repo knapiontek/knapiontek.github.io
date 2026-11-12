@@ -1,66 +1,52 @@
-# House 3D project
+# House 3D
 
-> How the files of this folder work together. What the page must do: rules.md. No code details here: names of functions, variables and data keys live in the code.
+The house "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, with floor tiles laid in every room. Open **view.html**.
 
-The house is "Dom w papawerach 5 (G)" from archon.pl, as built. The page shows the building in 3D and 2D, with floor tiles laid in every room.
+What the page must do: [rules.md](rules.md). The geometry: [archon/analysis.md](archon/analysis.md). This file says how the files work together; names of functions and data keys live in the code.
 
 ## Files
 
-| File | Kind | Owns |
-|---|---|---|
-| archon/analysis.md | text | the geometry as boxes, read from the archon drawings: walls, openings, stair, facade, site, and the build changes |
-| archon/*.png | images | the archon drawings the analysis is read from |
-| house.js | data | the three trees: geometry (elements, kinds, voids, openings and their kinds, facade rules, roof, stair, site, floors with rooms, tile heights), layers, views (menu, cuts, cameras, light, walk, edges) |
-| materials.js | data | the material library (with the 2D plan fills) and the tile products |
-| textures.js | data | texture images (floor tiles, wood decor) |
-| engine.js | code | house.js turned into solids: cuts, openings, floor split, facade, roof, frames, stair, site |
-| view.html | page | the views (3D, 2D, Analiza), layers, cut, tile layouts and counts, 2D plan, walk |
-| analysis.js | code | the checks of the solids, shown in Analiza |
-| core/ | code | shared 3D code, its own project |
-| rules.md | text | what the page must do |
-| project.md | text | this description |
-| proposal.md | text | a proposal for the kitchen, bath and layers tree (not implemented) |
-| index.html | page | directory listing (not part of the house) |
+| File | What it holds |
+|---|---|
+| house.js | the house as data: geometry, layers, views (rules.md § 1) |
+| materials.js | the material library and the tile products |
+| textures.js | texture images (tiles, wood) |
+| engine.js | turns house.js into solids |
+| analysis.js | the checks shown in Analiza |
+| view.html | the page: 3D, 2D plan, Analiza, layers, cut, tiles, walk |
+| core/ | shared 3D code, its own small project |
+| archon/ | the archon drawings and analysis.md, read from them |
+| kitchen/, bath/ | sub-projects with their own pages |
+| proposal.md | how the kitchen and bath could come in (not built) |
+| index.html | directory listing, not part of the house |
 
-## Data flow
+## How it fits together
 
 ```
-  analysis.md ──(by hand)──► house.js ──► engine.js ──► solids ──┬──► view.html   draws them (with materials.js, textures.js)
-                                                                 └──► analysis.js checks them; view.html shows the result in Analiza
+analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─► view.html  draws them (materials.js, textures.js)
+                                                          └─► analysis.js checks them, shown in Analiza
 ```
 
-- One model for every view: a view only shows layers and cuts it.
-- view.html writes nothing back. The viewer's choices (tiles, offsets, layers, sun, cut) stay in the browser.
-- engine.js and view.html do not know this house: no numbers, names, ids, products or colours of it. What differs between kinds, openings, layers or views is a flag in the data, never a test in the code.
+- One model for every view. A view only picks layers and cuts it.
+- The page writes nothing back to the files. The viewer's choices (tiles, offsets, layers, sun, cut) stay in the browser and are dropped when their format changes.
+- engine.js and view.html know nothing about this house: no numbers, names, products or colours of it. What differs is a flag or a value in the data, never a test in the code.
 
-## Model
+## The model in short
 
-- **Units**: mm, whole numbers in the data; the scene is in metres.
-- **Solids**: every solid is a prism along x over a convex polygon across the house (a box, cut at most by lines parallel to the roof). Subtraction, intersection, the floor split, the facade regions and sections are exact operations on convex polygons; nothing is sampled.
-- **Elements** are the boxes of the analysis, each of a kind (footing, foundation, chimney foundation, ground slab, block 240, block 120, EPS, ring beam, slab, ceiling, chimney). The kind gives the face material, the section colour, the checked thickness and the layer, and says whether openings cut it and whether windows sit in it.
-- **Voids** (the stair hole) are named boxes: they cut the slab and are drawn on the 2D plan.
-- **Openings** cut every wall and EPS box they cross. The opening kind says what is drawn in it: a glazed frame (bars, transoms, glass; with or without a sill), a solid leaf with grooves and a handle, or both side by side; frames follow sloping heads. They are in the Okna i drzwi layer.
-- **Portal**: the block, foundation and knee walls of the long walls run on into the wings; the ring beam continues over them; EPS on the inner faces and a cap on every head.
-- **Roof**: two slopes from the pitch, eave and thickness, x −1000 → 14200 over both portals; the roof windows (frame bars and glass between lines parallel to the slope) and the chimney are cut out of it.
-- **Facade**: rules on the EPS boxes, by their outer side. Elewacja off shows the bare EPS.
-- **Stair**: floating treads in flights, the landing a flight of one tread; 17 risers to the attic floor.
-- **Frames**: the mullions run through, the transoms stop at them, the glass is the panes between the bars; a door's grooves stop at its handle.
-- **Site**: the lawn gives way to the box around the building's elements, so it never runs through a foundation, slab or EPS.
-- **Rooms**: rectangles at the block faces. A room is tiled on its own or with another room (the walk-in wardrobes with the bedroom); tiles run on through the halves of every passage.
-- **Build changes** (as built, not archon): analysis.md § 14.
+- **Solids**: every solid is a prism along x over a convex polygon (a box, at most cut parallel to the roof). Cutting, splitting floors, facades and sections are exact; nothing is sampled. Data in mm; the 3D scene in metres.
+- **Elements**: the boxes of the analysis, each of a kind (footing, foundation, slab, block 240/120, EPS, ring beam, ceiling, chimney…). The kind sets the material, the section colour, the checked thickness and the layer, and whether openings cut it and windows sit in it.
+- **Openings** cut every wall and EPS box they cross. Their kind says what is drawn: a glazed frame, a solid leaf with grooves and a handle, or both. Frames follow sloping heads.
+- **Portal**: the long walls run on into the wings at both ends, with the ring beam over them, EPS inside and a cap on each end.
+- **Roof**: two slopes from pitch, eave and thickness, running over both portals; the roof windows and the chimney are cut out of it.
+- **Facade**: finish rules on the EPS by its outer side.
+- **Stair**: floating treads in flights; the landing is a flight of one tread. 17 risers to the attic.
+- **Site**: the lawn stops at the box around the building, so it never runs through a foundation or slab.
+- **Rooms**: rectangles at the block faces. A room is tiled on its own or together with another (the walk-in wardrobes with the bedroom). Tiles run on through half of every doorway.
 
-## Mesh
+## Code style
 
-- Drawn by core.
-- The floor tiles and grout lie on the slab, never in its plane.
-
-## Code style (every file)
-
-- Human readable: consistent indentation, short functions, one idea per line.
-- Meaningful names that match what the page shows.
-- No hidden rules: what gets built follows from the data files.
-- No numbers of this house in the code and no duplicated values.
+- Readable: consistent indentation, short functions, one idea per line, names that match the page.
+- No hidden rules: what is built follows from the data. No numbers of this house in the code, no duplicated values.
 - Library versions pinned.
-- Everything the page shows is Polish; code and comments are English.
-- Short comments that say why.
-- No backward compatibility code: when the format changes, the stored browser state is dropped.
+- The page is in Polish; code and comments in English. Short comments that say why.
+- No backward-compatibility code.

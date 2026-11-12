@@ -1,6 +1,6 @@
 # Dom w papawerach 5 (G): geometry analysis
 
-The house as the archon drawings give it, written as boxes. It stands on its own and refers to no model. All values in mm, whole numbers; levels may be quoted in metres (±0.00).
+The house as the archon drawings give it, written as boxes, plus what changed on site (§ 14). house.js is copied from these tables by hand. All values in mm, whole numbers; levels may be quoted in metres (±0.00).
 
 ## 1. Sources
 
@@ -25,7 +25,7 @@ Related projects in `C:\dev\projects\knapiontek.github.io`: `kitchen` (kitchen d
 |---|---|
 | **x**, along the house | 0 = garden outer face → 13200 = front outer face |
 | **y**, across | 0 = left outer face (garage side) → 9100 = right outer face (kitchen and bathroom windows) |
-| **z**, height | 0 = ±0.00 finished ground floor; 3060 attic floor; 8600 ridge (8820 as modelled, § 14); terrain −320 |
+| **z**, height | 0 = ±0.00 finished ground floor; 3060 attic floor; 8600 ridge (8820 as built, § 14); terrain −320 |
 
 Left and right are as seen when facing the front of the house (the street side), which is also how archon names the elevations. The plans put the garden at the top and the garage on the left.
 
@@ -339,8 +339,7 @@ From the 1900 window's start (x 4720) to wall #5 (x 7220) is 2500. The pier betw
 
 ## 13. Open points
 
-- **Garage length.** It is printed as 7240, but 13200 − 440 − 4910 − 120 − 440 = 7290, and the drawing also measures 7290. The model uses 7290.
-- **Chimney width (y).** The attic plan draws it y 3790 – ≈ 4520 (used: 3790 – 4550, up to the house axis); the ground floor plan draws only y ≈ 3890 – 4330 in black, with the fireplace insert (y ≈ 3350 – 3840) beside it. x 4710 – 5470 agrees on both. As built: y 3590 – 4350 (§ 14).
+- **Garage length.** Printed 7240, but 13200 − 440 − 4910 − 120 − 440 = 7290 and the drawing measures 7290. 7290 is used.
 - **Foundation walls.** Their material is not given. If it is the same block as the walls above, the foundation wall and the ground floor wall become one box.
 - **Footing sizes and depths.** These come from the section only (±36).
 - **Stair treads.** Only the void and the riser count follow from the drawings; the tread split of § 9 is the model's.

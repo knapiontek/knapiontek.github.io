@@ -331,6 +331,7 @@ window.HOUSE = {
    "menu": ["ground", "attic", "roof"],
    "layers": ["foundation", "walls", "slabs", "insulation", "openings", "stair", "floors", "site", "edges"],
    "panels": ["cut", "light", "layers", "rooms", "notes"],
+   "roomsNote": "Powierzchnia z modelu (lica pustaków) · archon.",
    "cut": {"attic": 1500},
    "cutFrom": 500,
    "cutStep": 50,
@@ -372,6 +373,7 @@ window.HOUSE = {
    "name": "2D",
    "plan": true,
    "cut": {"ground": 1500, "attic": 800},
+   "note": "Ogród u góry, front u dołu. Kreskowanie: styropian.",
    "panels": ["plan", "notes"]
   },
   "analysis": {

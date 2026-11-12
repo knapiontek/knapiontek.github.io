@@ -420,7 +420,7 @@ function roomsPanel() {
     t.insertAdjacentHTML('beforeend', `<tr class="detail"><td colspan="3">${key ? layoutPanel(key) : '<p class="note">Bez posadzki z płytek.</p>'}${r.link ? `<p><a class="btnlink" href="${r.link.href}">${r.link.name}</a></p>` : ''}</td></tr>`);
     if (key) bindLayout(t.querySelector('tr.detail'), key);
   }
-  t.insertAdjacentHTML('beforeend', '<tr><td colspan="3" class="note">Powierzchnia z modelu (lica pustaków) · archon.</td></tr>');
+  if (VIEW_3D.roomsNote) t.insertAdjacentHTML('beforeend', `<tr><td colspan="3" class="note">${VIEW_3D.roomsNote}</td></tr>`);
   for (const tr of t.querySelectorAll('tr[data-room]')) tr.onclick = () => selectRoom(state.room === tr.dataset.room ? null : tr.dataset.room);
 }
 function selectRoom(id) { state.room = id; save(); contextMenu(); roomsPanel(); markRoom(); redraw(); }
@@ -554,7 +554,7 @@ function planSvg() {
 }
 function drawPlan() {
   $('sheet').innerHTML = planSvg(); $('sheet').style.setProperty('--zoom', state.zoom);
-  $('planNote').textContent = `Ogród u góry, front u dołu; cięcie nad podłogą: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} mm`).join(', ')}. Kreskowanie: styropian.`;
+  $('planNote').textContent = `Cięcie nad podłogą: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW_2D.note || ''}`.trim();
 }
 $('zoomIn').onclick = () => { state.zoom = Math.min(4, state.zoom * 1.25); save(); drawPlan(); };
 $('zoomOut').onclick = () => { state.zoom = Math.max(0.5, state.zoom / 1.25); save(); drawPlan(); };
