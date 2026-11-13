@@ -61,17 +61,17 @@
 <script>window.addEventListener('error', e => { const l = document.getElementById('loading'); if (l) { l.hidden = false; l.textContent = 'Błąd: ' + (e.message || 'nieznany') + ' (' + (e.lineno || '') + ')'; } });</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="../library/materials.js"></script>
-<script src="../library/products.js"></script>
-<script src="house.js"></script>
 <script src="../core/geometry.js"></script>
 <script src="../core/mesh.js"></script>
 <script src="../core/scene.js"></script>
 <script src="../core/ui.js"></script>
-<script src="../apps.js"></script>
 <script src="../core/plan.js"></script>
 <script src="../core/sheet.js"></script>
 <script src="../core/library.js"></script>
+<script src="../apps.js"></script>
+<script src="../library/materials.js"></script>
+<script src="../library/products.js"></script>
+<script src="house.js"></script>
 <script src="engine.js"></script>
 <script src="analysis.js"></script>
 <script>
@@ -334,8 +334,6 @@ CORE.ui.themeButton($('themebtn'));
 CORE.ui.panelToggle($('stage'));
 CORE.ui.sunPanel($('sun'), MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); });
 
-const modeToggle = () => CORE.ui.modeToggle($('mode'), VIEWS, state.mode, setMode);
-
 function contextMenu() {
   const ctx = $('context'); ctx.innerHTML = '';
   if (!is3d()) return;
@@ -460,13 +458,10 @@ const INFO_ITEMS = [[{ name: 'Zapisz XLSX', go: e => { const b = e.currentTarget
 
 /* the panel: the tabs of the mode; the cut also needs an open floor */
 const panel = () => { state.tab = CORE.ui.panelTabs($('tabs'), $('panel'), view(), state.tab, t => { state.tab = t; save(); panel(); }, p => p === 'cut' && !openFloor()) ?? state.tab; };
-function refresh() { modeToggle(); contextMenu(); bottomMenu(); layersPanel(); cutPanel(); panel(); roomsPanel(); applyView(); }
+function refresh() { contextMenu(); bottomMenu(); layersPanel(); cutPanel(); panel(); roomsPanel(); applyView(); }
 function setMode(m) {
   state.mode = m; save();
-  const v = view();
-  $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; canvas.hidden = !is3d();
-  $('sunbtn').hidden = !is3d(); if (!is3d()) $('sun').hidden = true;   // ☀ is the sun: 3D only
-  CORE.ui.helpMode($('help'), m);
+  const v = CORE.ui.showMode(VIEWS, m, canvas, setMode);
   if (!is3d()) V.stopWalk();
   if (v.plan) drawPlan();
   if (v.info) infoView();

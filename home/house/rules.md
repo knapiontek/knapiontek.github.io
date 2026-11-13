@@ -8,9 +8,9 @@ house.js zawiera trzy drzewa:
 
 - **Geometria**: z czego dom jest zbudowany.
 - **Warstwy**: co można włączyć i wyłączyć.
-- **Widoki**: jak się na dom patrzy (3D, 2D, Analiza).
+- **Widoki**: jak się na dom patrzy (3D, 2D, Info, Test).
 
-Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; nigdy nie powtarza menu.
+Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; nigdy nie powtarza menu. Układ ekranu: [../project.md](../project.md), Flow.
 
 - **Otwarta kondygnacja**: najwyższa pokazana kondygnacja, gdy dach jest wyłączony. Jej przekrój i pomieszczenia są w panelu.
 - **Pomieszczenia**: kliknięcie pomieszczenia (w 3D albo na liście) wybiera je. Dostaje wiersz w górnym menu (nazwa, link do podprojektu), a panel pokazuje jego posadzkę. Płytki ustawia się dla pomieszczenia, nigdy dla całej kondygnacji.
@@ -23,7 +23,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 - **Bryły**: jedyną bryłą jest prostopadłościan równoległy do osi. Jedna ściana to jedna bryła, w całości, przez drzwi i okna. Otwory wycina się z każdej ściany i każdego styropianu, przez które przechodzą. Na skrzyżowaniu ścian przechodzi grubsza (nośna). Bryłę sięgającą dachu przycinają obie połacie; okna w szczytach przycinają linie równoległe do dachu.
 - **Wycięcia**: element może odejmować inne elementy albo otwory (strop bez otworu schodów i komina).
 - **Kondygnacje**: jedna płaszczyzna dzieli dom na wysokości górnej krawędzi ścian parteru (2720). Pod nią jest parter, nad nią poddasze ze stropem. Bryła przecięta tą płaszczyzną dzieli się na dwie części.
-- **Bez nakładania**: żadne dwie bryły nie mają wspólnej objętości (sprawdza Analiza).
+- **Bez nakładania**: żadne dwie bryły nie mają wspólnej objętości (sprawdza Test).
 - **Styropian** otula pustaki od zewnątrz, nigdy nie leży między dwoma pustakami: każdy pustak jest ocieplony ze wszystkich stron, bez mostków termicznych. Każdy odsłonięty koniec muru dostaje czapę ze styropianu. Rama portalu ma wszędzie jedną szerokość: 640 (styropian 200 + pustak 240 + styropian 200; dach mierzony prostopadle do połaci).
 - **Elewacja**: wykończenie (tynk, grafit, drewno, cokół) pokrywa tylko te części styropianu, które stykają się z powietrzem. Gdzie styropian dotyka innej bryły, zostaje goły. Wykończenie wybierają reguły (strona, obszar, wysokość); późniejsza reguła wygrywa.
 - **Okna i drzwi** stoją w murze, licem do jego zewnętrznej powierzchni. Ich wymiary to etykiety archon (szerokość/wysokość), pokazane na rzucie 2D. Rodzaj otworu mówi, co w nim jest (rama przeszklona z parapetem albo bez, pełne skrzydło, albo jedno i drugie) i czy posadzka przechodzi przez otwór.
@@ -43,14 +43,14 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 
 ## 4. Menu i poruszanie się
 
-- **Lewy górny róg**: jeden przełącznik 3D / 2D / Analiza.
+- **Prawe górne menu**: tryby 3D, 2D, Info, Test.
 - **3D, góra**: Parter, Piętro, Dach; drugi wiersz, gdy wybrano pomieszczenie.
 - **3D, dół**: Spacer i kamery domu oraz otwartej kondygnacji.
 - **Poruszanie**: kółko przybliża do miejsca pod kursorem. Z zewnątrz obrót jest wokół środka domu; w środku wokół tego, co jest na środku widoku. Punkt obrotu nigdy nie zostaje za kamerą.
-- **Pomoc**: ikona ? w rogu.
-- **Panel**: Przekrój i Pomieszczenia tylko przy otwartej kondygnacji; Światło tylko w 3D.
+- **Panel**: Warstwy (przekrój tylko przy otwartej kondygnacji, warstwy), Wykończenie (posadzki pomieszczeń). ☀ i ? w prawym dolnym rogu; ☀ tylko w 3D.
 - **Przekrój**: płaszczyzna, która tnie model. Suwak przesuwa się o pełne kroki od 500 mm nad podłogą; ostatni krok to góra kondygnacji, gdzie cięcia nie ma. Przecięte bryły są zamknięte w kolorze przeciętego materiału, także gdy cięcie wypada dokładnie na górze bryły (nadproże okna albo drzwi).
-- **2D**: obie kondygnacje obok siebie, ogród u góry. Cięcie 1500 mm nad podłogą parteru i 800 mm nad podłogą poddasza. Schody pod cięciem rysuje się linią ciągłą, nad cięciem przerywaną; z poddasza widać je całe przez otwór w stropie. Powiększenie i pobieranie SVG są w panelu.
+- **2D**: obie kondygnacje obok siebie, ogród u góry. Cięcie 1500 mm nad podłogą parteru i 800 mm nad podłogą poddasza. Schody pod cięciem rysuje się linią ciągłą, nad cięciem przerywaną; z poddasza widać je całe przez otwór w stropie. Powiększenie i zapis SVG są w dolnym menu.
+- **Info**: posadzki (płytki, ilości, ceny), zapis XLSX w dolnym menu.
 
 ## 5. Materiały i płytki
 
@@ -67,7 +67,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 - Płytki łazienek leżą na ścianach domu; posadzka podprojektu leży na płycie domu, nigdy w jej płaszczyźnie.
 - Nic z podprojektu nie trafia do widoku domu (view.html): dom tylko prowadzi do podprojektu.
 
-## 7. Kontrole (Analiza)
+## 7. Kontrole (Test)
 
 - Grubość elementu zgadza się z jego rodzajem.
 - Żadne dwie bryły nie mają wspólnej objętości: elementy, ramy, szkło, skrzydła, dach, schody, teren.

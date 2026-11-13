@@ -21,7 +21,7 @@ window.BathEngine = (function () {
   const count = (list, item) => list.filter(s => s === item).length;
 
   /* ---------- the room frame: the house room (../house/house-clip.js) and the bath data, in mm ----------
-     The room is the house's: its walls, door, window, heights and roof come from house3D, nothing is re-measured here.
+     The room is the house's: its walls, door, window, heights and roof come from the house (house-clip.js), nothing is re-measured here.
      The frame the bath is computed in: x from the shower line (data, house x) or else from the room's +x wall, growing
      toward the vanity wall (the room's -x face); z from the door wall (-y face) toward the window or knee wall (+y face);
      y up from the floor. house x = X0 - x, house y = Y0 + z, house z = LEVEL + y. */
@@ -179,7 +179,7 @@ window.BathEngine = (function () {
     const z22 = G.ZW - (2.2 - r.knee) / tan, z14 = G.ZW - (1.4 - r.knee) / tan;
     G.AREA_USABLE = G.XL * (Math.min(G.ZW, z22) + .5 * Math.max(0, Math.min(G.ZW, z14) - z22));
 
-    const vEnd = mm(V.z0 + V.len), wcH = G.heightAt(G.WC_Z), bathH = G.heightAt(G.BATH.z0), B_ = G.BATH;
+    const wcH = G.heightAt(G.WC_Z), bathH = G.heightAt(G.BATH.z0), B_ = G.BATH;
     const lastBasin = mm(V.z0 + V.basins[V.basins.length - 1]);
     G.checks = [
       ['Prysznic → dolna krawędź otworu drzwi', mmText(G.OX0 - G.SHX) + ' mm', G.OX0 >= G.SHX],

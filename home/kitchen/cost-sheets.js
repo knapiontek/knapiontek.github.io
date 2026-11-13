@@ -19,8 +19,7 @@ const noteDocuments = n => [...(n.appliance ? APPLIANCES[n.appliance].links : []
 
 const round1 = x => Math.round(x * 10) / 10;
 const fmt = (v, digits = 2) => (Number.isFinite(v) ? v.toLocaleString('pl-PL', { minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: true }) : '–');
-const fmtQty = v => (Number.isInteger(v) ? v.toLocaleString('pl-PL', { useGrouping: true }) : fmt(v, 2));
-const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const esc = root.CORE.ui.esc;
 const plural = KE.plural;
 // banded edges of one part, e.g. "dół 80 + lewa 720"; their total length in mm
 const edgeText = edges => (edges || []).map(edge => KE.LABELS.edge[edge.side] + ' ' + edge.length).join(' + ');
@@ -204,7 +203,6 @@ function renderAssembly() {
 
 // note texts: \n starts a new line; under the description the documents the note comes from (noteDocuments)
 const lines = text => esc(text).replace(/\n/g, '<br>');
-const noteLinks = n => (noteDocuments(n).length ? '<div class="note-src">' + noteDocuments(n).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a>`).join(' · ') + '</div>' : '');
 /* ---------- 2. state: the values of the inputs (parameters, item quantities and prices); edits last until reload ---------- */
 function defaultValues() {
   return {

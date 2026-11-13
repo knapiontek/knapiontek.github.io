@@ -121,7 +121,7 @@ table.sheet a{color:var(--accent);overflow-wrap:anywhere}
 #sheet svg{display:block;margin:0 auto;height:calc(100% * var(--zoom,1));width:calc(100% * var(--zoom,1));max-width:none}   /* the viewBox keeps the drawing whole: at zoom 1 it fits the sheet both ways */
 
 /* panel */
-aside>#tabs{margin:2px 0 4px}
+aside>#tabs{margin:2px 0 4px;position:sticky;top:-14px;z-index:2}   /* the tabs stay in sight while the panel scrolls */
 aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;min-width:0;padding-block:14px 28px;padding-left:16px;padding-right:max(16px,env(safe-area-inset-right,0px))}
 h1{font:700 21px/1.15 var(--f-display);letter-spacing:.01em;margin:0 0 2px;text-wrap:balance}
 .sub{color:var(--muted);font-size:12.5px;margin:0 0 14px}

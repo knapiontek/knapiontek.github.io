@@ -10,7 +10,6 @@
 <link rel="stylesheet" href="../core/ui.css">
 <style>
 /* only what the kitchen panel adds to core/ui.css */
-#tabs{margin:2px 0 4px}
 #analysis>.note{margin:0 0 10px}
 #info>section{max-width:880px}
 #info>section.wide{max-width:none}
@@ -161,13 +160,13 @@ dl.notes dd{margin:0;color:var(--muted)}
 <script src="../core/mesh.js"></script>
 <script src="../core/scene.js"></script>
 <script src="../core/ui.js"></script>
-<script src="../apps.js"></script>
 <script src="../core/plan.js"></script>
 <script src="../core/sheet.js"></script>
 <script src="../core/library.js"></script>
-<script src="../house/house.js"></script>
+<script src="../apps.js"></script>
 <script src="../library/materials.js"></script>
 <script src="../library/products.js"></script>
+<script src="../house/house.js"></script>
 <script src="../house/engine.js"></script>
 <script src="../house/house-clip.js"></script>
 <script src="design.js"></script>
@@ -184,7 +183,7 @@ CORE.library.load('../library/', Object.keys(KITCHEN_DESIGN.materials).map(key =
 /* Units are mm in house axes (x along the house, y across, z up) everywhere on this page; only core's scene is in metres.
    Inside a group the engine keeps u along the group, v up from the floor, n out from the carcass backs. */
 
-const { $, el, option } = CORE.ui;
+const { $, el, esc, option } = CORE.ui;
 const G = CORE.geometry, { piecesOf } = CORE.mesh;
 const loading = $('loading'), fail = text => { loading.textContent = text; };
 if (!window.THREE || !THREE.OrbitControls) return fail('Nie można wczytać silnika 3D. Odśwież stronę.');
@@ -198,7 +197,6 @@ if (model.warnings.length) console.warn('design.js: ' + model.warnings.join(' | 
 const HOUSE_MODEL = HouseEngine.build(HOUSE), ROOM = HouseClip.roomsFor(HOUSE, HOUSE_MODEL, 'kitchen/view.html')[0];
 if (!ROOM) return fail('W house.js żadne pomieszczenie nie prowadzi do kitchen/view.html.');
 const LEVEL = ROOM.level, CEILING = ROOM.ceiling - ROOM.level;   // v of the underside of the slab over the room
-const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const DEG = Math.PI / 180;
 
 const { frontFace, panelFace, carcassDepth, carcassBack, carcassFront, plinthFace, frontThickness } = model;   // n from the carcass backs
@@ -1034,7 +1032,7 @@ V.onFrame(() => {
   return changed;
 });
 /* doors and drawers move toward their goal */
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reducedMotion = V.reducedMotion;
 V.onFrame(dt => {
   let moved = false;
   for (const m of MOVERS) {
@@ -1285,18 +1283,7 @@ $('notes').innerHTML = (project.notes || []).map(n => `<dt>${esc(n.name)}</dt><d
 /* ================= 12. CAMERA, PICKING ================= */
 const CAMERAS = SCENE.cameras;
 const camOf = c => ({ eye: [c.position.x, c.position.y, c.position.z], target: [c.target.x, c.target.y, c.target.z] });
-let flight = null;
-function flyTo(c, instant) {
-  if (instant || reducedMotion) { flight = null; V.setCamera(c); return; }
-  flight = { p0: V.camera.position.clone(), t0: V.controls.target.clone(), p: V.toWorld(...c.eye), t: V.toWorld(...c.target), s: performance.now() };
-}
-V.onFrame(() => {
-  if (!flight) return false;
-  const k = Math.min(1, (performance.now() - flight.s) / 900), e = ease(k);
-  V.camera.position.lerpVectors(flight.p0, flight.p, e); V.controls.target.lerpVectors(flight.t0, flight.t, e);
-  if (k >= 1) flight = null;
-  return true;
-});
+const flyTo = V.flyTo;
 const CAMERA_ITEMS = Object.values(CAMERAS).map(c => ({ name: c.name, go: () => flyTo(camOf(c)) }));
 
 /* what is under a screen point: the cell of a triangle (core's owners) or a detail's owner */
@@ -1340,12 +1327,11 @@ canvas.addEventListener('pointermove', e => {
 });
 for (const ev of ['pointerleave', 'pointerdown', 'wheel']) canvas.addEventListener(ev, () => { clearTimeout(rest); tip.hidden = true; }, { passive: true });
 
-/* ================= 13. VIEWS: 3D, 2D, Analiza, as the house (core/ui.js, core/plan.js) =================
+/* ================= 13. VIEWS: 3D, 2D, Info, Test, as the house (core/ui.js, core/plan.js) =================
    The 2D plan is drawn by core from the solids of this page (the room's are the house's own) at the house's cut height
    for the floor; the room's label and the openings' labels are the house's. */
 const VIEWS = SCENE.views, view = () => VIEWS[state.mode], is3d = () => !!view().menu;
-const HOUSE_2D = Object.values(HOUSE.views).find(v => v.plan), CUT = HOUSE_2D.cut[ROOM.floor];
-const HOUSE_ROOM = HOUSE.geometry.floors.find(f => f.id === ROOM.floor).rooms.find(r => r.id === ROOM.room);
+const CUT = ROOM.planCut;
 /* over the view in 3D: the groups, and the selected carcass */
 function contextMenu() {
   const ctx = $('context'); ctx.innerHTML = '';
@@ -1367,7 +1353,7 @@ function planSvg() {
   const extent = ROOM.box.slice(0, 4), inside = [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...rects.map(q => q[k])));
   return PLAN.sheets([{ extent, title: `${ROOM.floorName} · cięcie ${CUT} mm`,
     draw: X => PLAN.floorArea(X, rects) + PLAN.seen(X, shapes, h) + PLAN.cut(X, cells, h, c => !c.layers.includes('holes'))
-      + PLAN.labels(X, ROOM.openings, h, HOUSE_MODEL.SIDE) + PLAN.rooms(X, [{ rects, numbers: HOUSE_ROOM.numbers, name: HOUSE_ROOM.name, area: HOUSE_ROOM.rects.reduce((a, q) => a + G.rectArea(q), 0) / 1e6 }]) + PLAN.dims(X, inside, extent[1]) }]);
+      + PLAN.labels(X, ROOM.openings, h, HOUSE_MODEL.SIDE) + PLAN.rooms(X, [{ rects, numbers: ROOM.numbers, name: ROOM.name, area: ROOM.area }]) + PLAN.dims(X, inside, extent[1]) }]);
 }
 const PLAN_BUTTONS = { zoomOut: el('button', { textContent: '−', ariaLabel: 'Pomniejsz' }), zoomIn: el('button', { textContent: '+', ariaLabel: 'Powiększ' }),
   download: el('button', { textContent: 'Pobierz SVG' }) };
@@ -1376,11 +1362,8 @@ const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state,
 const showPanel = () => { state.tab = CORE.ui.panelTabs($('tabs'), $('panel'), view(), state.tab, t => { state.tab = t; save(); showPanel(); }) ?? state.tab; };
 function setMode(m) {
   state.mode = VIEWS[m] ? m : Object.keys(VIEWS)[0]; save();
-  const v = view();
-  $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; $('gl').hidden = !is3d(); tip.hidden = true;
-  $('sunbtn').hidden = !is3d(); if (!is3d()) $('sun').hidden = true;   // ☀ is the sun: 3D only
-  CORE.ui.helpMode($('help'), state.mode);
-  CORE.ui.modeToggle($('mode'), VIEWS, state.mode, setMode);
+  const v = CORE.ui.showMode(VIEWS, state.mode, $('gl'), setMode);
+  tip.hidden = true;
   CORE.ui.bottomMenu($('dock'), is3d() ? [CAMERA_ITEMS] : v.plan ? [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]] : v.info ? INFO_ITEMS : []);
   contextMenu(); showPanel();
   if (v.plan) { drawSheet(); $('planNote').textContent = `Cięcie ${CUT} mm nad podłogą (jak w rzucie domu). ${v.note || ''}`.trim(); }

@@ -10,11 +10,10 @@
 <link rel="stylesheet" href="../core/ui.css">
 <style>
 /* only what the bathroom panel adds to core/ui.css */
-#tabs{margin:2px 0 4px;position:sticky;top:-14px;z-index:2}
 .block{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
 .block h2{margin:14px 0 0}
-.pick button,.chips button,.toggles button,.btnrow button{font:500 12.5px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
-.pick button:hover,.chips button:hover,.toggles button:hover,.btnrow button:hover{border-color:var(--accent)}
+.chips button,.toggles button{font:500 12.5px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+.chips button:hover,.toggles button:hover{border-color:var(--accent)}
 .chips button[aria-pressed="true"],.toggles button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 
 /* surface: walls / floor / shower */
@@ -72,7 +71,6 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 .buy li .p{font-family:var(--f-mono);white-space:nowrap;text-align:right}
 .buy li span:not(.p){grid-column:1/-1;color:var(--muted);font-size:11.5px}
 .buy li.total{border-bottom:0;font-weight:600}
-.btnrow{display:flex;gap:6px;flex-wrap:wrap}
 #info .block{max-width:880px}
 #info .drawing{max-width:640px}
 #info>h2.part{font-size:14px;color:var(--ink);margin:28px 0 0}
@@ -209,17 +207,17 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="../house/house.js"></script>
-<script src="../library/materials.js"></script>
-<script src="../library/products.js"></script>
 <script src="../core/geometry.js"></script>
 <script src="../core/mesh.js"></script>
 <script src="../core/scene.js"></script>
 <script src="../core/ui.js"></script>
-<script src="../apps.js"></script>
 <script src="../core/plan.js"></script>
 <script src="../core/sheet.js"></script>
 <script src="../core/library.js"></script>
+<script src="../apps.js"></script>
+<script src="../library/materials.js"></script>
+<script src="../library/products.js"></script>
+<script src="../house/house.js"></script>
 <script src="../house/engine.js"></script>
 <script src="../house/house-clip.js"></script>
 <script src="data.js"></script>
@@ -275,6 +273,23 @@ const state = {
 const LAYER_TREE = Object.values(BATH_DATA.views).find(v => v.layers).layers, LAYER = CORE.ui.layerTree(LAYER_TREE);
 (function defaults(t) { for (const [k, v] of Object.entries(t)) { state.layers[k] = !v.off; if (v.layers) defaults(v.layers); } })(LAYER_TREE);
 const { layerOn } = CORE.ui.layerSwitch(LAYER, () => state.layers);
+
+/* the viewer's choices stay in the browser, per floor (core/ui.js store); what no longer fits data.js is dropped.
+   Tiles and layers are taken here; style, metal and decor by their buttons once the panel is built (keepChoices). */
+const CHOICES = CORE.ui.store(`bathroom-${FLOOR}-choices`, () => ({}), s => !!s && typeof s === 'object');
+for (const s of SURFACES) {
+  const t = (CHOICES.state.tiles || {})[s];
+  if (t && DATA.defaults.tiles.includes(t.tile) && FORMATS.includes(t.format) && ['h', 'v'].includes(t.layout)) Object.assign(state.tiles[s], t);
+}
+for (const [k, on] of Object.entries(CHOICES.state.layers || {})) if (LAYER[k]) state.layers[k] = !!on;
+function keepChoices() {
+  for (const [box, attr, value] of [['styles', 'style', CHOICES.state.style], ['metals', 'metal', CHOICES.state.metal], ['decors', 'decor', CHOICES.state.decor]]) {
+    const b = value && $(box).querySelector(`[data-${attr}="${value}"]`);
+    if (b && b.getAttribute('aria-pressed') !== 'true') b.click();
+  }
+  const save = () => { Object.assign(CHOICES.state, { tiles: state.tiles, layers: state.layers, style: state.style, metal: state.metal, decor: state.decor }); CHOICES.save(); };
+  for (const type of ['click', 'input', 'change']) document.addEventListener(type, () => setTimeout(save));
+}
 
 /** Size of one tile on a surface, in metres: { w: horizontal, h: vertical / in depth }. */
 function tileSize(surface) {
@@ -1479,18 +1494,18 @@ function setMetalLook(name) {   // the fittings' finish, kept while the drawing 
 }
 
 const VIEWS = SCENE.views;
-const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let flight = null;   // camera transition in progress
+const reduceMotion = VIEW.reducedMotion;
 function updateCuts() {
   let changed = false;
   for (const c of cutaways) { const h = c.isHidden(); if (h !== c.hidden) { c.hidden = h; setGhost(c.root, h); changed = true; } }   // the casing reads the walls: in order
   if (changed) applySolids();
   return changed;
 }
+/* a camera of data.js (bath frame, metres) flown to in house mm (core/scene.js flyTo) */
+const inHouse = p => new THREE.Vector3(...p).applyMatrix4(FRAME.matrix).toArray();
 function goTo(name, instant) {
-  const view = VIEWS[name], position = toWorld(view.position), target = toWorld(view.target);
-  if (instant) { camera.position.copy(position); controls.target.copy(target); controls.update(); updateCuts(); invalidate(); return; }
-  flight = { fromPosition: camera.position.clone(), fromTarget: controls.target.clone(), position, target, start: performance.now() };
+  const view = VIEWS[name];
+  VIEW.flyTo({ eye: inHouse(view.position), target: inHouse(view.target) }, instant);
 }
 
 const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
@@ -1524,7 +1539,7 @@ canvasEl.addEventListener('pointermove', e => {
    12. PANEL
    ========================================================================== */
 
-const $ = id => document.getElementById(id);
+const { $, el } = CORE.ui;
 const pressed = (buttons, isOn) => { for (const b of buttons) b.setAttribute('aria-pressed', isOn(b)); };
 /** Click on a button inside a container. */
 const onButton = (container, handler) => container.addEventListener('click', e => { const b = e.target.closest('button'); if (b) handler(b); });
@@ -1604,7 +1619,7 @@ $('closeAll').onclick = () => { for (const d of doors) d.target = 0; invalidate(
 
 
 /* ---------- vanity construction data: computed in engine.js, so drawing, cut list and 3D model match ---------- */
-const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const esc = CORE.ui.esc;
 const num = v => (Math.round(v * 10) / 10).toString().replace('.', ',');
 const pln = v => v.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
 
@@ -1721,26 +1736,23 @@ INFO_BUTTONS[2].addEventListener('click', async () => {
   setTimeout(() => b.textContent = 'Kopiuj jako tekst', 1800);
 });
 
-/* ---------- the views: 3D, 2D, Analiza, as the house (core/ui.js, core/plan.js) ----------
+/* ---------- the views: 3D, 2D, Info, Test, as the house (core/ui.js, core/plan.js) ----------
    The menu of 3D: the bathrooms, one per floor. The 2D plan is drawn by core from the solids of this page (the room's are
    the house's own, the fittings' boxes the same solids as in 3D, round fittings by their outline) at the house's cut height
-   for the floor; the room's label and the openings' labels are the house's. Analiza: the checks of engine.js. */
-const { el } = CORE.ui;
+   for the floor; the room's label and the openings' labels are the house's. Test: the checks of engine.js. */
 const MODES = BATH_DATA.views, MODE_IDS = Object.keys(MODES);
-const VIEW_STATE = { mode: MODE_IDS[0], zoom: 1 };
-try { Object.assign(VIEW_STATE, JSON.parse(localStorage.getItem('bath-view')) || {}); } catch (e) {}
-const saveView = () => { try { localStorage.setItem('bath-view', JSON.stringify(VIEW_STATE)); } catch (e) {} };
+const VIEW_STORE = CORE.ui.store('bathroom-view', () => ({ mode: MODE_IDS[0], zoom: 1 }), s => !!MODES[s.mode] && Number.isFinite(s.zoom));
+const VIEW_STATE = VIEW_STORE.state, saveView = VIEW_STORE.save;
 function goFloor(key) {
   try { localStorage.setItem('floor', key); } catch (e) {}
   const url = new URL(location.href); url.searchParams.set('floor', key); location.href = url.href;
 }
-const CAMERA_ITEMS = Object.keys(VIEWS).map(k => ({ name: DATA.cameras[k] || k, go: () => goTo(k, reduceMotion) }));
+const CAMERA_ITEMS = Object.keys(VIEWS).map(k => ({ name: DATA.cameras[k] || k, go: () => goTo(k) }));
 const PLAN_BUTTONS = { zoomOut: el('button', { textContent: '−', ariaLabel: 'Pomniejsz' }), zoomIn: el('button', { textContent: '+', ariaLabel: 'Powiększ' }),
   download: el('button', { textContent: 'Pobierz SVG' }) };
 $('checks').innerHTML = CORE.ui.checksHtml(G.checks.map(([k, v, ok]) => ({ name: `${k}: ${v}`, items: ok ? [] : ['poza wymaganiem'] })));
 
-const PLAN = CORE.plan.create(MATERIAL_LIB), CUT = Object.values(HOUSE.views).find(v => v.plan).cut[HOUSE_ROOM.floor];
-const ROOM_OF_HOUSE = HOUSE.geometry.floors.find(f => f.id === HOUSE_ROOM.floor).rooms.find(r => r.id === HOUSE_ROOM.room);
+const PLAN = CORE.plan.create(MATERIAL_LIB), CUT = HOUSE_ROOM.planCut;
 const inLayer = (o, layer) => { for (; o && o !== FRAME; o = o.parent) if (o.userData.layerKey === 'L:' + layer) return true; return false; };
 const ofRoom = o => { for (; o && o !== FRAME; o = o.parent) if (o.userData.room) return true; return false; };
 const ROOM_KEYS = new Set(); FRAME.traverse(o => { if (o.userData.room && o.userData.cutKey) ROOM_KEYS.add(o.userData.cutKey); });
@@ -1754,7 +1766,7 @@ function planSvg() {
   const rects = HOUSE_ROOM.inside, extent = HOUSE_ROOM.box.slice(0, 4), inside = [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...rects.map(q => q[k])));
   return PLAN.sheets([{ extent, title: `${HOUSE_ROOM.floorName} · cięcie ${CUT} mm`,
     draw: X => PLAN.floorArea(X, rects) + PLAN.seen(X, shapes, h) + PLAN.cut(X, cells, h, c => !c.layers.includes('L:installations')) + PLAN.labels(X, HOUSE_ROOM.openings, h, HOUSE_MODEL.SIDE)
-      + PLAN.rooms(X, [{ rects, numbers: ROOM_OF_HOUSE.numbers, name: ROOM_OF_HOUSE.name, area: ROOM_OF_HOUSE.rects.reduce((a, q) => a + CORE.geometry.rectArea(q), 0) / 1e6 }])
+      + PLAN.rooms(X, [{ rects, numbers: HOUSE_ROOM.numbers, name: HOUSE_ROOM.name, area: HOUSE_ROOM.area }])
       + PLAN.dims(X, inside, extent[1]) }]);
 }
 const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state: VIEW_STATE, save: saveView, svg: planSvg, file: `lazienka-${FLOOR}-rzut.svg` });
@@ -1767,11 +1779,7 @@ const showPanel = () => { VIEW_STATE.tab = CORE.ui.panelTabs($('tabs'), $('setti
   p => p === 'style' && !MODES[VIEW_STATE.mode].menu) ?? VIEW_STATE.tab; };
 function setMode(m) {
   VIEW_STATE.mode = MODES[m] ? m : MODE_IDS[0]; saveView();
-  const v = MODES[VIEW_STATE.mode], is3d = !!v.menu;
-  $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; canvasEl.hidden = !is3d;
-  $('sunbtn').hidden = !is3d; if (!is3d) $('sun').hidden = true;   // ☀ is the sun: 3D only
-  CORE.ui.helpMode($('help'), VIEW_STATE.mode);
-  CORE.ui.modeToggle($('mode'), MODES, VIEW_STATE.mode, setMode);
+  const v = CORE.ui.showMode(MODES, VIEW_STATE.mode, canvasEl, setMode), is3d = !!v.menu;
   const ctx = $('context'); ctx.innerHTML = '';
   if (is3d) CORE.ui.menuRow(ctx, Object.entries(BATH_DATA.floors).map(([k, f]) => ({ name: f.name, radio: true, on: k === FLOOR, set: () => goFloor(k) })));
   CORE.ui.bottomMenu($('dock'), is3d ? [CAMERA_ITEMS] : v.plan ? [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]] : v.info ? [INFO_BUTTONS] : []);
@@ -1830,18 +1838,11 @@ applySolids();
 syncDetailEdges();
 // any click or change in the panel may change the scene: redraw
 for (const type of ['click', 'input', 'change']) document.addEventListener(type, () => invalidate(), true);
+keepChoices();
 addEventListener('load', () => invalidate());
 
-const easeInOut = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
 VIEW.onFrame(() => {
   let changed = false;
-  if (flight) {
-    const k = Math.min(1, (performance.now() - flight.start) / 900), e = easeInOut(k);
-    camera.position.lerpVectors(flight.fromPosition, flight.position, e);
-    controls.target.lerpVectors(flight.fromTarget, flight.target, e);
-    if (k >= 1) flight = null;
-    changed = true;
-  }
   if (updateCuts()) changed = true;
   for (const d of doors) {
     if (d.progress === d.target) continue;

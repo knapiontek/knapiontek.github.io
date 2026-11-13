@@ -16,9 +16,9 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
 | cost-sheets.js | code, every project | cost.js and the model as the workbook of ../core/sheet.js (estimate, cutting list, notes) and the assembly cards, shown in Info of view.html | by hand |
 | view.html | page, every project | the kitchen in its room: 3D, the 2D plan, Test (its geometry check) and Info (the estimate, assembly, carcasses), drawn by ../core like the house | LLM, every project |
-| ../house/house.js, ../house/house-clip.js | data and code of house3D | the room: the house's own walls, slab, floor and window, copied as they are and trimmed to the kitchen | house3D |
-| ../library/ | data of house3D | what is bought: the appliances as the maker gives them (sizes, documents), tiles, boards, materials, texture images | house3D |
-| ../core/ | code of house3D | drawing: solids, welded meshes, edges, light, camera, the 2D plan, the panel and its menu | house3D |
+| ../house/house.js, ../house/house-clip.js | the house | the room: the house's own walls, slab, floor and window, trimmed to the kitchen | ../house |
+| ../library/ | data, every project | what is bought: the appliances as the maker gives them (sizes, documents), tiles, boards, materials, texture images | ../library |
+| ../core/ | code, every project | drawing: solids, welded meshes, edges, light, camera, the 2D plan, the screen, the spreadsheet | ../core |
 | project.md | text | this description | by hand |
 | index.html | page | directory listing of the repository folder (not part of the kitchen) | by hand |
 
@@ -47,7 +47,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 - engine.js does not know where the data comes from: a page hands it the project (and its appliances from the library, KE.appliances, to fit them in their places) and gets the model back. The engine has no numbers of this kitchen and draws nothing.
 - cost.js and view.js hold only what they need; what both pages need (appliance sizes) is in the library, and a project choice the engine needs belongs in design.js.
 - the library says what the manufacturer gives, design.js what the project chose (the product, its feet); the same number can be in both. The notes of the estimate (Info) put them side by side.
-- The room is the house's: view.html takes the walls, slab, floor and window from house3D (house.js, through house-clip.js) as they are. The house wins: the kitchen never draws or measures a room of its own.
+- The room is the house's: view.html takes the walls, slab, floor and window from the house (house.js, through house-clip.js) as they are. The house wins: the kitchen never draws or measures a room of its own.
 - Axes are the house's: x along the house, y across, z up, in mm and house positions. Inside a group the engine keeps u along, v up, n out from the wall; view.js places the groups in the house.
 
 ## What is project specific and what is not
@@ -74,13 +74,10 @@ A new feature that changes what gets built is a new type; one that adds to an ex
 
 ## Code style (every file)
 
-- Human readable: consistent indentation, short functions, one idea per line.
-- Meaningful names that match what the page shows, no abbreviations a reader has to decode; counters and coordinates may be one letter.
-- No hidden rules: what gets built follows from the type, the tags and the settings in design.js. No guessing from names, labels or sizes.
-- No numbers of this kitchen in the code and no duplicated values.
+As [../project.md](../project.md), and:
+
+- No abbreviations a reader has to decode; counters and coordinates may be one letter.
+- No guessing from names, labels or sizes: what gets built follows from the type, the tags and the settings in design.js.
 - A list or an array holds homogeneous values: the same type and meaning.
-- Library versions pinned (deterministic pages).
-- Language: everything the pages show is Polish; code and comments are English.
-- Short comments that say why, not long narration.
-- No backward compatibility code: when the format changes, design.js is migrated.
+- When the format changes, design.js is migrated (no backward-compatibility code).
 - rules.md and this file are kept up to date by hand.

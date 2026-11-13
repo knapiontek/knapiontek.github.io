@@ -175,5 +175,5 @@ async function xlsx(book, file) {
   XL.writeFile(wb, file);
 }
 
-CORE.sheet = { create, xlsx, letter, evaluate: book => evaluator(book) };
+CORE.sheet = { create, xlsx, letter };
 })(window.CORE = window.CORE || {});

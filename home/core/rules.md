@@ -10,4 +10,4 @@ What core must do. How: [project.md](project.md).
 6. **Cut**: clips the model; caps in the section colour, also on a solid's top.
 7. **Layers**: a child only with its parent; a solid only when all its layers are on; switching changes only what is shown.
 8. **Panel**: one look for every project, light and dark. The viewer's choices stay in the browser.
-9. **Views**: every project has the same menu (3D, 2D, Analiza) from its data. The 2D plan is drawn by core from the model's own solids and the house's data; no drawing by hand.
+9. **Views**: every project has the same modes (3D, 2D, Info, Test) from its data. The 2D plan is drawn by core from the model's own solids and the house's data; no drawing by hand.

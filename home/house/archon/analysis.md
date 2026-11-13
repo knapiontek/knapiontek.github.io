@@ -4,7 +4,7 @@ The house as the archon drawings give it, written as boxes, plus what changed on
 
 ## 1. Sources
 
-Drawings (this folder, `house3D\archon`):
+Drawings (this folder, `house/archon`):
 
 | File | What |
 |---|---|
@@ -17,7 +17,7 @@ Drawings (this folder, `house3D\archon`):
 | `elewacja-prawa.png` | right elevation (y = 9100): windows 1000/1300, 1900/1300, 2500/2400, 2 roof windows |
 | `elewacja-lewa.png` | left elevation (y = 0): garage window 2000/1000, 1 roof window |
 
-Related projects in `house3D`: `kitchen` (kitchen design) and `bathroom` (both bathrooms).
+Related projects: `../../kitchen` and `../../bathroom` (both bathrooms).
 
 ## 2. Axes
 

@@ -419,6 +419,23 @@ CORE.createView = function (opts) {
      returns true while something moved. */
   const STEPS = [];
   const onFrame = fn => STEPS.push(fn);
+  /* a camera flight to c (as setCamera), eased; at once when instant or when the viewer asks for reduced motion */
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const FLIGHT_MS = 900, ease = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+  let flight = null;
+  function flyTo(c, instant = false, level = 0) {
+    if (instant || reducedMotion) { flight = null; setCamera(c, level); return; }
+    flight = { p0: camera.position.clone(), t0: controls.target.clone(), s: performance.now(),
+      p: toWorld(c.eye[0], c.eye[1], c.eye[2] + level), t: toWorld(c.target[0], c.target[1], c.target[2] + level) };
+    redraw();
+  }
+  onFrame(() => {
+    if (!flight) return false;
+    const k = Math.min(1, (performance.now() - flight.s) / FLIGHT_MS), e = ease(k);
+    camera.position.lerpVectors(flight.p0, flight.p, e); controls.target.lerpVectors(flight.t0, flight.t, e);
+    if (k >= 1) flight = null;
+    return true;
+  });
   function resize() {
     const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); redraw();
@@ -435,7 +452,7 @@ CORE.createView = function (opts) {
   const run = () => requestAnimationFrame(frame);
 
   return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, CUT, CLIP, hash01, canvasTexture, loadImage, material, useMaterial, capMaterial,
-    buildMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, addLight, setSky, placeSun, setCamera, addCaps, buildCaps, setCut,
+    buildMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion, addCaps, buildCaps, setCut,
     onClick, enableNavigation, walk, enableWalk, startWalk, stopWalk, onFrame, start, run, get hemi() { return hemi; }, get sun() { return sun; } };
 };
 })(window.CORE = window.CORE || {});

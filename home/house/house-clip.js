@@ -34,6 +34,7 @@ function roomsFor(HOUSE, MODEL, href) {
     .concat(COPY.fixtures ? MODEL.FIXTURES.map(c => Object.assign({}, c, { fixture: true })) : [])
     .concat(COPY.roof ? MODEL.ROOF_CELLS : []);
   const roofUnder = y => Math.min(...MODEL.ROOF_UNDER.map(l => l.a + l.s * y));   // the underside of the roof over y
+  const PLAN_CUT = Object.values(HOUSE.views).find(v => v.plan).cut;               // the house's 2D cut height, per floor
   const out = [];
   for (const floor of GEO.floors) for (const room of floor.rooms) {
     if (!room.link || !room.link.href.endsWith(href)) continue;
@@ -89,8 +90,9 @@ function roomsFor(HOUSE, MODEL, href) {
       w.host = host ? host.id : null;
     }
     out.push({
-      floor: floor.id, floorName: floor.name, room: room.id, number: room.numbers ? room.numbers[0] : null, name: room.name,
-      level: floor.level, top: floor.top ?? null, inside: L.inside, box: L.box, cells, objects: [...objects.values()],
+      floor: floor.id, floorName: floor.name, room: room.id, number: room.numbers ? room.numbers[0] : null, numbers: room.numbers, name: room.name,
+      area: (room.rects || []).reduce((a, q) => a + G.rectArea(q), 0) / 1e6,   // m², as the house's plan gives it
+      planCut: PLAN_CUT[floor.id], level: floor.level, top: floor.top ?? null, inside: L.inside, box: L.box, cells, objects: [...objects.values()],
       ceiling: flat.length ? Math.min(...flat) : floor.top,   // the underside of the slab or flat ceiling over the room
       openings: GEO.openings.filter(o => crosses(o.b)),
       roofWindows: GEO.roof.windows.filter(w => crosses([w.x[0], w.x[1], w.y[0], w.y[1], roofUnder(w.y[1]), roofUnder(w.y[0])].map(Math.round))),

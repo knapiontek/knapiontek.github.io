@@ -8,6 +8,7 @@ const $ = id => document.getElementById(id);
 const fmt = (v, d) => v.toLocaleString('pl-PL', { minimumFractionDigits: d, maximumFractionDigits: d });
 const byId = list => Object.fromEntries(list.map(e => [e.id, e]));
 const el = (tag, attrs, html) => { const e = document.createElement(tag); Object.assign(e, attrs); if (html !== undefined) e.innerHTML = html; return e; };
+const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);   // text into HTML
 const option = (v, t, sel) => `<option value="${v}"${v === sel ? ' selected' : ''}>${t}</option>`;
 
 /* the viewer's choices stay in the browser; a stored state that fails valid() is dropped for fresh() */
@@ -43,17 +44,12 @@ function layersPanel(box, LAYER, top, state, layerOn, setLayer) {
   for (const k of top) { add(k, false); for (const c of Object.keys(LAYER).filter(c => LAYER[c].parent === k)) add(c, true); }
 }
 
-function helpToggle(button, box) {
-  button.onclick = () => { box.hidden = !box.hidden; button.setAttribute('aria-expanded', !box.hidden); };
-}
-
 /* checks: [{name, items}]: OK when nothing is listed */
 const checksHtml = checks => checks.map(c => `<div class="check"><span class="chip ${c.items.length ? 'warn' : 'ok'}">${c.items.length || 'OK'}</span>${c.name}${c.items.length ? `<ul>${c.items.map(i => `<li>${i}</li>`).join('')}</ul>` : ''}</div>`).join('');
 
-/* ================= THE VIEW SHELL =================
-   One menu on every page. Over the stage: the views of the project (3D, 2D, Analiza) as a toggle; under it, in a view
-   with a menu, the project's top parts (floors and roof, groups of a kitchen, the bathrooms) as switches; the cameras of
-   the view in the dock. In the panel: the sections the view lists, and tabs where a project has much to show. */
+/* ================= THE MENUS =================
+   The top-left menu (the applications), the top-right menu (the modes of the project's views data), and under it, in
+   3D, the project's top parts (floors and roof, the groups of a kitchen, the bathrooms) as switches. */
 
 /* the top-left menu: the applications [{id, name, page}] (page null: planned), current = this page's id. A link carries
    the current mode (mode()), so another application opens in the same one when it has it (askedMode). */
@@ -80,6 +76,16 @@ function modeToggle(box, views, mode, pick) {
   box.innerHTML = Object.entries(views).map(([k, v]) => `<button data-mode="${k}" aria-pressed="${mode === k}"${mode === k ? ' data-on' : ''}>${v.name}</button>`).join('');
   box.onclick = e => { const b = e.target.closest('[data-mode]'); if (b && b.dataset.mode !== mode) pick(b.dataset.mode); };
 }
+/* the screen of mode in views (../project.md, Flow): its main view (#plan2d for a plan, #analysis for test, #info for
+   info, canvas for a view with a menu), ☀ only in 3D, its help and the top-right menu; pick(id) on a click of another mode */
+function showMode(views, mode, canvas, pick) {
+  const v = views[mode], is3d = !!v.menu;
+  $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; canvas.hidden = !is3d;
+  $('sunbtn').hidden = !is3d; if (!is3d) $('sun').hidden = true;
+  helpMode($('help'), mode);
+  modeToggle($('mode'), views, mode, pick);
+  return v;
+}
 /* one row of switches: items [{name, on, set(on), radio}] (radio: one of them), then elements (a room tag, a link) */
 function menuRow(box, items, extra = []) {
   const row = el('div', { className: 'menurow' });
@@ -91,25 +97,6 @@ function menuRow(box, items, extra = []) {
   row.append(...extra);
   box.append(row);
   return row;
-}
-/* the dock: the walk button {name, on, toggle} if any, then groups of cameras [{name, go}] with a line before each */
-function cameraDock(box, groups, walk) {
-  box.innerHTML = '';
-  if (walk) { const b = el('button', { className: 'walk', textContent: walk.name, onclick: walk.toggle }); b.setAttribute('aria-pressed', walk.on); box.append(b); }
-  groups.forEach((list, i) => {
-    if (walk || i) box.append(el('span', { className: 'sep' }));
-    for (const c of list) box.append(el('button', { textContent: c.name, onclick: c.go }));
-  });
-}
-/* the panel sections ([data-panel]) the view lists; hide(name): one that also needs something the view lacks */
-function panels(view, hide = () => false) {
-  for (const s of document.querySelectorAll('[data-panel]')) s.hidden = !view.panels.includes(s.dataset.panel) || hide(s.dataset.panel);
-}
-/* tabs: {id: name} as a toggle; the sections [data-tab] of the current one show */
-function tabs(box, list, current, pick) {
-  box.innerHTML = Object.entries(list).map(([k, t]) => `<button role="tab" data-tab-id="${k}" aria-selected="${k === current}"${k === current ? ' data-on' : ''}>${t}</button>`).join('');
-  box.onclick = e => { const b = e.target.closest('[data-tab-id]'); if (b && b.dataset.tabId !== current) pick(b.dataset.tabId); };
-  for (const s of document.querySelectorAll('[data-tab]')) s.hidden = s.dataset.tab !== current;
 }
 /* ================= THE SCREEN (../project.md, Flow) =================
    top-left menu (appMenu), top-right menu (modeToggle), the main view, the bottom menu, the right panel in tabs, the
@@ -233,5 +220,6 @@ function planSheet({ sheet, zoomIn, zoomOut, download, state, save, svg, file })
   return draw;
 }
 
-CORE.ui = { $, fmt, byId, el, option, store, layerTree, layerSwitch, layersPanel, helpToggle, checksHtml, appMenu, askedMode, panelTabs, panelToggle, bottomMenu, corner, themeButton, helpMode, sunStore, sunPanel, modeToggle, menuRow, cameraDock, panels, tabs, planSheet };
+CORE.ui = { $, fmt, byId, el, esc, option, store, layerTree, layerSwitch, layersPanel, checksHtml, appMenu, askedMode, showMode, menuRow,
+  panelTabs, panelToggle, bottomMenu, corner, themeButton, sunStore, sunPanel, planSheet };
 })(window.CORE = window.CORE || {});

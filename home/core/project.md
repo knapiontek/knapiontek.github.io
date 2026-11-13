@@ -9,9 +9,10 @@ Shared 3D code for every view: the house (../house/view.html) and its sub-projec
 | geometry.js | convex polygons and prisms: clip, subtract, intersect, split, section, volume, overlaps |
 | mesh.js | welded points, faces, visible pieces, batches of triangles |
 | scene.js | renderer, materials, meshes, edges, caps, light, camera, navigation, walk, loop |
-| ui.js | stored state, layers tree, help, checks list; the view shell: views toggle, menu row, camera dock, panel sections, tabs, the 2D sheet |
+| ui.js | the screen of every page (../project.md, Flow): stored state, the layer tree, the menus, the panel's tabs, ☀ and ?, the mode switch, the 2D sheet, the checks list |
 | library.js | loads the library's textures when a page needs them (one file per image) |
 | plan.js | the 2D plan from the solids: cut, seen from above, labels, rooms, dimensions, sheets |
+| sheet.js | the spreadsheet of Info: editable cells, formulas, XLSX export |
 | ui.css | the look of every view, light and dark |
 
 ## How it fits together
@@ -51,9 +52,9 @@ A cell is a solid with what it is:
 
 ## Views
 
-Every page has the same shell (ui.js), its data like the house's views: **3D** (a menu of the project's top parts: floors and roof, kitchen groups, the bathrooms; cameras in the dock), **2D** and **Analiza** (the checks). A project with much to show puts its panel in tabs.
+The screen and its modes (3D, 2D, Info, Test) are in ../project.md, Flow; ui.js builds them from a project's views data.
 
-The 2D plan (plan.js) is drawn from the same solids as the 3D view, at the house's cut height for the floor: what the cut meets is filled in its section colour, what lies under it is seen from above, what is over it is dashed. Room and opening labels come from house.js. A sub-project draws its room the same way, so its plan matches the house's.
+The 2D plan (plan.js) is cut from the same solids as the 3D view at the house's cut height for the floor: what the cut meets is filled in its section colour, what lies under it is seen from above, what is over it is dashed. Room and opening labels come from house.js, so a sub-project's plan matches the house's.
 
 ## Code style
 

@@ -12,7 +12,7 @@ The building "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, wi
 |---|---|
 | house.js | the house as data: geometry, layers, views (rules.md § 1) |
 | engine.js | house.js turned into solids |
-| house-clip.js | a sub-project's room: the house's own solids, trimmed (../project.md, Sub-projects and their room) |
+| house-clip.js | a sub-project's room: the house's own solids, trimmed (../project.md, A sub-project's room) |
 | analysis.js | the checks shown in Test |
 | view.html | the page in the shared screen (../project.md, Flow): 3D, 2D, Test, Info; panel tabs Warstwy (layers, cut), Wykończenie (tiles); ☀ and ? in the corner |
 | archon/ | the archon drawings and analysis.md |
@@ -22,7 +22,7 @@ The building "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, wi
 
 ```
 analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─► view.html          drawn by ../core
-                                                          ├─► analysis.js        checked, shown in Analiza
+                                                          ├─► analysis.js        checked, shown in Test
                                                           └─► house-clip.js ─► ../kitchen, ../bathroom
 ```
 

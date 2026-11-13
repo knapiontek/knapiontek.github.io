@@ -214,7 +214,7 @@ const voidsAt = level => GEO.voids.flatMap(v => v.boxes).filter(b => b[4] <= lev
 /* the plan as the ☀ compass of every application draws it: the house's length and width, the rooms of the ground floor */
 const FOOTPRINT = [[0, GEO.length, 0, WIDTH]].concat(GEO.floors[0].rooms.flatMap(r => r.rects));
 
-return { ROOF, TAN, WIDTH, ROOF_DEPTH, RIDGE_TOP, ROOF_UNDER, line, floorOfZ, SIDE,
+return { ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOfZ, SIDE,
   CELLS, FIXTURES, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS, voidsAt, FOOTPRINT };
 }
 

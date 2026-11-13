@@ -126,7 +126,7 @@ Element może mieć najwyżej jeden z tagów lodówka, zamrażarka, zmywarka. Wy
 
 - Błędy w danych są zgłaszane, np. brak typu, szczelin albo strony zawiasów, tag do złego typu, materiał blatu za płytki.
 - Element bez jednego typu, bez wysokości w całych mm, bez kolumn w swojej grupie, wychodzący poza kolumny albo nachodzący na inny element dostaje uwagę i nie jest rysowany.
-- Widok 3D pokazuje kolizje, małe szczeliny przy listwach przednich, listwach tylnych i panelach, części wystające oraz fronty, które nieznacznie nie trzymają linii. Duża szczelina albo duża różnica jest zamierzona i nie jest zgłaszana.
+- Test pokazuje kolizje, małe szczeliny przy listwach przednich, listwach tylnych i panelach, części wystające oraz fronty, które nieznacznie nie trzymają linii. Duża szczelina albo duża różnica jest zamierzona i nie jest zgłaszana.
 
 ## 9. Kosztorys (szacunek, nie zasady)
 

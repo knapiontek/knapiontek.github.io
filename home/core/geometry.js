@@ -120,7 +120,7 @@ function mergeRects(rects) {               // rects sharing a whole side become 
   return rects;
 }
 
-CORE.geometry = { DEG, INF, EPS, SOLID_TOL, area2, ccw, rect2, clipHalf, leftOf, rightOf, edgesOf, solidPoly, perimeter, intersect2, minus2,
-  under, prism, emptyPrism, zRange, centreZ, prismIntersect, prismMinus, splitZ, sectionAt, cutBy, volume, subtractAll, overlaps,
+CORE.geometry = { DEG, INF, EPS, SOLID_TOL, ccw, rect2, clipHalf, leftOf, edgesOf, intersect2, minus2,
+  prism, emptyPrism, zRange, centreZ, prismIntersect, prismMinus, splitZ, sectionAt, cutBy, volume, subtractAll, overlaps,
   rectArea, rectMinus, mergeRects };
 })(window.CORE = window.CORE || {});

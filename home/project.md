@@ -1,151 +1,103 @@
 # Home
 
-"Dom w papawerach 5 (G)" from archon.pl, as built, with everything that goes into it: the building, the kitchen, the two bathrooms, the walk-in wardrobes. One application in 3D, 2D, Test and Info; every part is an application of its own on the same layout.
+"Dom w papawerach 5 (G)" from archon.pl, as built, with everything that goes into it: the building, the kitchen, the two bathrooms, the walk-in wardrobes. One screen for all of them; every part is an application of its own.
 
-- This file: the whole, how the folders depend on each other, the screen (Flow), the library. Each folder has its own project.md.
-- Names of functions and data keys live in the code.
+This file: the folders and their dependencies, the screen (Flow), the library, the code style. Each folder has its own project.md; names of functions and data keys live in the code.
 
 ## Folders
 
-| Folder | Holds | project.md |
+| Folder | Holds | Docs |
 |---|---|---|
-| apps.js | the applications: name, page; the top-left menu reads it | — |
-| core/ | the shared code: solids, meshes, the 2D plan, the screen, the spreadsheet; knows no project | [core](core/project.md) |
-| library/ | everything bought: products, materials, textures; knows no project | — |
-| house/ | the building: walls, slabs, roof, stair, windows, floor tiles; from the archon drawings | [house](house/project.md) |
+| apps.js | the applications (name, page) for the top-left menu | — |
+| core/ | shared code: solids, meshes, the 3D scene, the 2D plan, the screen, the spreadsheet; knows no project | [core](core/project.md) |
+| library/ | everything bought: products, materials, textures; data only | § Library |
+| house/ | the building, from the archon drawings | [house](house/project.md) |
 | kitchen/ | the kitchen in the living room (ground floor) | [kitchen](kitchen/project.md) |
-| bathroom/ | both bathrooms (ground floor, upstairs) | [bathroom](bathroom/project.md) |
-| wardrobe/ | the three walk-in wardrobes upstairs (planned) | — |
-| index.html | directory listing, not part of the application | — |
+| bathroom/ | both bathrooms (ground floor, attic) | [bathroom](bathroom/project.md) |
+| wardrobe/ | the three walk-in wardrobes (planned) | — |
+| index.html | directory listing of the repository, not part of the application | — |
 
 ## Dependencies
 
-One way only. Nobody depends on a sub-project.
+One way only; nobody depends on a sub-project.
 
 ```
-kitchen/, bathroom/, wardrobe/ ──► house/ ──► library/
-        │          │                 │
-        │          └────────────► core/ ◄── apps.js (read by the top-left menu)
-        └────────────────────────► library/
+kitchen/, bathroom/ ──► house/ ──► core/, library/
+        └────────────────────────► core/, library/
+apps.js ──► the top-left menu of every page
 ```
 
-- **core** knows no project and no product.
-- **library** is data only: products, materials, textures.
+- **core** knows no project and no product; **library** knows no project.
 - **house** knows core and the library.
-- **A sub-project** (kitchen, bathroom, wardrobe) knows core, the library and the house: the house's data and engine, and house-clip.js for its room. The house wins: a sub-project never measures or moves its room.
-- **apps.js** joins them: the top-left menu, and which files give a sub-project's solids.
+- **A sub-project** knows core, the library and the house (house.js, engine.js, house-clip.js). The house wins: a sub-project never measures or moves its room.
+- The house view does not show a sub-project; a room's tag links to its application. (Planned: a sub-project hands its solids to the house view through a contract in core.)
 
-## A sub-project in the house
+## A sub-project's room
 
-The house view can show a sub-project's furniture (the kitchen in the living room) without knowing it. core defines the contract, the sub-project keeps it, apps.js joins them:
+house/house-clip.js gives a sub-project its room, and nothing else:
 
-- **The contract** (core): a sub-project may give `solids(houseModel)`: its solids in house axes and mm, with layers, and its layer tree.
-- **The sub-project keeps it** in one file used by both pages (kitchen/solids.js: engine.js + design.js + view.js → solids). Its own page draws the same solids: no copy, no fake.
-- **apps.js** says which files give a sub-project's solids; the house page loads them and calls the contract. The word "kitchen" is nowhere in the house's code.
-- **To look at, not to change**: in the house, the sub-project is one more group in Warstwy; its application opens from there (and from the room's tag), not by a click in the view.
-- **Doors still open**: its doors, cabinet doors and drawers (the kitchen's fronts, the bathroom's vanity) open and close on a click in the house as in its own application: the contract hands over what moves (hinge or slide) with the solids, not only the solids.
+1. **Trims** the house's solids (the kinds house.js `copy` lists, window frames and glass, the roof) to the box of the room's link.
+2. **Keeps** what belongs to the room: walls on the edge of its floor area and their windows; the slab under it and the slab or roof over it.
+3. **Groups** them as a person sees them: each wall, the floor, the ceiling, each window with its wall.
 
-## Sub-projects and their room
-
-The kitchen and the bathrooms take their room from the house, never the other way round. house/house-clip.js does three things and nothing else:
-
-1. **Trims** the house's solids (the element kinds house.js `copy` lists, the window frames and glass, the roof) to the box the room's link gives.
-2. **Keeps** only what belongs to the room: walls standing on the edge of its floor area and the windows in them; the slab under it and the slab or roof over it, cut to that floor area and those walls.
-3. **Groups** the solids as a person sees them: each wall, the floor, the ceiling, each window (with its wall).
-
-Nothing is moved, scaled or re-measured: every solid handed over is part of a house solid, in house axes and mm. A sub-project draws its room with core, like the house, and copies its idea: the same screen (Flow), the house's names of rooms and openings.
+It also hands over the room's name, numbers, area and the house's 2D cut height for its floor. Nothing is moved, scaled or re-measured: house axes (x along, y across, z up), mm. The sub-project draws the room with core, like the house.
 
 ## Flow
 
-One application over all the projects: the house, the kitchen, the bathroom on the ground floor, the bathroom upstairs, the three walk-in wardrobes upstairs (a new project). Every project keeps its own page and data; they share one layout from core.
-
 ```
 ┌───────────┬───────────────────────────────────────────┬──────────────────┐
-│ top-left  │                    top-right menu: [3D 2D │ right panel      │
-│ menu      │                              Info Test]   │  [tabs]          │
-│           │                main view                  │  Warstwy         │
-│ Dom       │                                           │  Wykończenie     │
-│ Kuchnia   │                                           │  …               │
+│ top-left  │            top-right menu: 3D 2D Info Test │ right panel      │
+│ menu      │                                           │  [tabs]          │
+│ Dom       │                main view                  │  Warstwy         │
+│ Kuchnia   │                                           │  Wykończenie     │
 │ Łazienki  │                                           │                  │
 │ Garderoby │ bottom menu: cameras | SVG | XLSX     ☀ ? │                  │
 └───────────┴───────────────────────────────────────────┴──────────────────┘
 ```
 
-### Names and roles
-
-Every part of the screen has one role. These names are used everywhere (docs, code, talk).
-
-| Name | Polish | Role | Answers |
-|---|---|---|---|
-| **top-left menu** | lewe górne menu | the application: Dom, Kuchnia, Łazienki, Garderoby | where am I? |
-| **top-right menu** | prawe górne menu | the mode: 3D, 2D, Info, Test | how do I look? |
-| **main view** | główny widok | what the mode shows; direct work in it (orbit, a click opens a door, selects a carcass) | what do I see? |
-| **bottom menu** | dolne menu | one-off actions of the mode: cameras in 3D, save SVG in 2D, save XLSX in Info; nothing stays set | what to do now? |
-| **right panel** | prawy panel | the project's settings, in tabs; settings only, never information; always there, » « on the view's edge hides it (one choice for every application) | how should it be? |
-| **bottom-right panel** | prawy dolny panel | ☀ light, shared by all the applications; ? help | |
+| Part | Polish | Role |
+|---|---|---|
+| top-left menu | lewe górne menu | the application: Dom, Kuchnia, Łazienki, Garderoby |
+| top-right menu | prawe górne menu | the mode: 3D, 2D, Info, Test |
+| main view | główny widok | what the mode shows; direct work in it (orbit, open a door, select a carcass) |
+| bottom menu | dolne menu | one-off actions of the mode; nothing stays set |
+| right panel | prawy panel | settings only, in tabs; » « on the view's edge hides it (one choice for all applications) |
+| bottom-right corner | prawy dolny róg | ☀ the sun (3D only, shared by all applications); ? help of the application and mode |
 
 ### Modes
 
-- **3D**: the model; the cameras in the bottom menu (the house's go to every room, from above, the side, the front).
-- **2D**: static, like a CAD drawing for the engineer: everything in one sheet, full lines what is seen under the cut, dashed what is over it, at the house's fixed cut height. Settings do not change it. Saved as SVG to print.
-- **Info**: all the project's information, in parts: dimensions, project notes and materials, drawings (the bathroom vanity), carcasses, shopping, the estimate. Saved as XLSX. The spreadsheet (editable cells, formulas, XLSX export) is core/sheet.js and knows no project.
-- **Test**: the checks (today's Analiza).
-
-### Right panel
-
-Tabs at its top, one group at a time, no long scrolling; the same tab names in every application, each showing only what it has:
-
-1. **Warstwy**, the first and most important: the layer tree and its presets, the cut, open/close all doors and drawers. What is seen and in what state.
-2. **Wykończenie**: the style (realistic / drawing), then the project's choices: tiles, materials (the worktop …), handles, fittings.
-
-### What each mode shows
-
-What never means anything in a mode is not shown there. Dimmed (with the reason in a hint) only an exception: a setting that works in the mode but cannot right now (open all, while the fronts' layer is off).
-
-| Mode | Right panel | ☀ | Bottom menu |
+| Mode | Main view | Right panel tabs | Bottom menu |
 |---|---|---|---|
-| 3D | Warstwy, Wykończenie | yes | cameras |
-| 2D | Warstwy, Wykończenie (» hides it: the plan takes the whole width, like CAD) | no | save SVG, zoom |
-| Info | Wykończenie first (the tiles change the prices), Warstwy | no | save XLSX |
-| Test | Warstwy, Wykończenie | no | — |
+| 3D | the model | Warstwy, Wykończenie | cameras (and the walk in the house) |
+| 2D | a static CAD sheet at the house's cut height: full lines under the cut, dashed over it | Warstwy, Wykończenie | zoom, save SVG |
+| Info | the project's information as sheets of core/sheet.js (editable, formulas) | Wykończenie, Warstwy | save XLSX |
+| Test | the checks | Warstwy, Wykończenie | — |
 
-? help is always there; it tells about the current application and mode.
-
-### Bottom-right panel
-
-- **☀**: a small floating panel: a compass (the plan of the house in the middle, the sun dragged round it: the direction; an arc beside it: the sun's height) and a small brightness slider. One house, one sun: shared by all the applications, so the kitchen has the same afternoon and the same shadows as the house. Next to the view, because the sun is dragged while watching the shadows. 3D only.
-- **?**: the help of the current application and mode.
-
-### Switching
-
-- **Another application** (top-left menu): the mode stays (the 2D of the house opens the 2D of the kitchen; 3D when it has no such mode); the sun stays; each application keeps its own layers, tab and camera.
-- **Another mode** (top-right menu): the main view, the bottom menu and what the right panel shows change (the table above).
-- **A setting** (right panel, ☀): every mode shows it at once.
-- **An action** (bottom menu): does one thing (a camera flight, a file) and sets nothing.
-- The choices stay in the browser, as today.
+- **Warstwy**: the layer tree, the cut, open/close all doors. **Wykończenie**: style, tiles, materials, handles, fittings.
+- A setting that means nothing in a mode is not shown there; one that cannot work right now is dimmed with the reason in a hint.
+- **Switching application** keeps the mode (3D if the other has no such mode) and the sun; each application keeps its own layers, tab and camera. **Switching mode** changes the main view, the bottom menu and the tabs.
+- The viewer's choices stay in the browser.
 
 ## Library
 
-Everything bought is in **library/**, once, for every application: materials, textures, products (tiles, boards, worktops, fittings, sinks, taps, appliances, hardware). It is taken as it is, never changed by a project.
+Everything bought, once, for every application; taken as it is, never changed by a project.
 
 ```
 library/
-  products.js    a product by key: tiles, boards (and worktops, panels, fronts), fittings, appliances
-                 (name, maker, sizes, price, shop, link, texture key)
-  materials.js   how a material looks: in 3D (colour, roughness, gloss) and in 2D (section fill)
-  textures/      one image, one file (<key>.js, a data URL, so the pages work opened from disk)
+  products.js    a product by key: tiles, boards, worktops, fittings, appliances (name, maker, sizes, price, link, texture key)
+  materials.js   how a material looks in 3D and its 2D section fill
+  textures/      one image per file (<key>.js, a data URL, so pages work opened from disk)
 ```
 
-- A project names a product by its key and says only where it goes and how (a bathroom wall: paradyz-authority-grey, 598×1198, vertical; an appliance: how it is built in). Nothing of the product is repeated.
-- A page loads only the textures it uses: core/library.js loads library/textures/<key>.js when a product needs it.
-- One product, one image: a board has one photo, used by the house, the kitchen and the bathrooms alike.
-- Left in the projects: what is not a product of its own: services (cutting, banding), generic small items (valves, tape, a handle to match), the kitchen's prices in cost.js.
-- Info takes price and link from the library: a price changed once is changed everywhere.
-- library/ is data, not code: core knows no product, the library knows no project.
+- A project names a product by its key and says only where it goes and how; nothing of the product is repeated.
+- core/library.js loads only the textures a page uses.
+- Not in the library: services (cutting, banding), generic small items, the kitchen's estimate (kitchen/cost.js).
+- Info takes price and link from the library: a price changed once changes everywhere.
 
 ## Code style (every folder)
 
 - Readable: consistent indentation, short functions, one idea per line, names that match the page.
-- No hidden rules: what is built follows from the data. No numbers of a project in the code, no duplicated values.
+- No hidden rules: what is built follows from the data. No numbers of a project in the code, no duplicated values or code: what two pages share lives in core (or in the house, for a room).
 - Pages in Polish; code and comments in English; short comments that say why.
-- Library versions pinned. No backward-compatibility code.
+- Scripts in a page in one order: three.js, core, apps.js, library, house, then the project's own files.
+- Library versions pinned (three.js r128). No backward-compatibility code.
