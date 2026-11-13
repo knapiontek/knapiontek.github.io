@@ -519,6 +519,7 @@
  }
 }
 </script>
+<script src="../library/products.js"></script>
 <script src="design.js"></script>
 <script src="engine.js"></script>
 <script>
@@ -772,9 +773,10 @@ function buildElevations(groupRows, columnRows, componentRows, noteRows) {
   if (!loadedProject) return empty; // until design.js is loaded
   const tables = readTables(groupRows, columnRows, componentRows, noteRows);
   const result = { ...empty, project: tables.project, warnings: tables.warnings, groupFlags: tables.groupFlags, columnFlags: tables.columnFlags, componentFlags: tables.componentFlags };
-  const stops = KE.checkSettings(tables.project); // problems in the materials or settings: no model can be built
+  const project = KE.withLibrary(tables.project, LIBRARY_PRODUCTS.boards);   // the materials as the library gives them
+  const stops = KE.checkSettings(project); // problems in the materials or settings: no model can be built
   if (stops.length) return { ...result, warnings: [...tables.warnings, ...stops] };
-  const model = KE.build(tables.project);
+  const model = KE.build(project);
   for (const issue of model.issues) {
     if (issue.skipped && issue.index != null) tables.componentFlags[tables.rowOfComponent[issue.index]] = 'invalid';
   }
@@ -870,7 +872,7 @@ document.addEventListener('alpine:init', () => {
     setProject(project) {
       loadedProject = project;
       // shown, not edited; uses as design.js lists them
-      this.materials = Object.entries(project.materials || {})
+      this.materials = Object.entries(KE.withLibrary(project, LIBRARY_PRODUCTS.boards).materials)
         .map(([code, m]) => ({ code, ...m }))
         .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: design.js order
       this.notes = (project.notes || []).map(n => this.newNoteRow(n.name ?? '', n.description ?? '', n.details ?? ''));

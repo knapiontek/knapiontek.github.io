@@ -1,19 +1,20 @@
 /* Kitchen project design - shared by design.html, cost.html and view.html.
    Plain JSON after "window.KITCHEN_DESIGN =". Notes, groups and components: design.html (Import data / Export data);
-   materials, appliances (product keys of ../library/products.js, how each is built in) and settings: by hand
+   materials and appliances (product keys of ../library/products.js and how each is used or built in here)
+   and settings: by hand
    (design.html keeps them as they are). */
 window.KITCHEN_DESIGN = {
  "materials": {
-  "chipGrey18": {"name": "Płyta wiórowa Egger U708 ST9 szary jasny", "thickness": 18, "color": "#9a9d9c", "core": "#f2efe8", "uses": ["carcass"]},
-  "chipGrey16": {"name": "Płyta wiórowa Egger U708 ST9 szary jasny", "thickness": 16, "color": "#9a9d9c", "core": "#f2efe8", "uses": ["drawerBox", "hobPanel"]},
-  "hdfGrey3": {"name": "HDF szary lakierowany", "thickness": 3, "color": "#a2a4a6", "uses": ["backPanel"]},
-  "shakerNavy18": {"name": "Front shaker English Navy satyna", "thickness": 18, "color": "#3a4868", "lacquered": true, "core": "#f2efe8", "uses": ["cabinet", "drawer"]},
-  "mdfNavy18": {"name": "Panel gładki English Navy satyna", "thickness": 18, "color": "#3a4868", "lacquered": true, "core": "#f2efe8", "uses": ["frontPanel", "strip", "plinth"]},
-  "chipOak18": {"name": "Płyta laminowana Egger H1180 ST37 dąb Halifax", "thickness": 18.6, "color": "#b69671", "texture": "egger-h1180-board", "core": "#f2efe8", "uses": ["wallPanel"]},
-  "topOak38x650": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "color": "#b69671", "texture": "egger-h1180-board", "core": "#f2efe8", "depth": 650, "factoryEdges": ["front"], "uses": ["worktop"]},
-  "topOak38x920": {"name": "Blat Egger H1180 ST37 dąb Halifax", "thickness": 38, "color": "#b69671", "texture": "egger-h1180-board", "core": "#f2efe8", "depth": 920, "factoryEdges": ["front"], "uses": ["islandWorktop"]},
-  "endOak38x650": {"name": "Panel końcowy dwustronny, dekor jak blat H1180 ST37", "thickness": 38, "color": "#b69671", "texture": "egger-h1180-board", "core": "#f2efe8", "depth": 650, "twoSided": true, "uses": ["endPanel"]},
-  "endOak38x920": {"name": "Panel końcowy dwustronny, dekor jak blat H1180 ST37", "thickness": 38, "color": "#b69671", "texture": "egger-h1180-board", "core": "#f2efe8", "depth": 920, "twoSided": true, "uses": ["islandEndPanel"]}
+  "chipGrey18": {"product": "egger-u708-st9-18", "uses": ["carcass"]},
+  "chipGrey16": {"product": "egger-u708-st9-16", "uses": ["drawerBox", "hobPanel"]},
+  "hdfGrey3": {"product": "hdf-grey-3", "uses": ["backPanel"]},
+  "shakerNavy18": {"product": "shaker-english-navy-18", "uses": ["cabinet", "drawer"]},
+  "mdfNavy18": {"product": "mdf-english-navy-18", "uses": ["frontPanel", "strip", "plinth"]},
+  "chipOak18": {"product": "egger-h1180-st37", "uses": ["wallPanel"]},
+  "topOak38x650": {"product": "egger-worktop-h1180-st37-38x650", "uses": ["worktop"]},
+  "topOak38x920": {"product": "egger-worktop-h1180-st37-38x920", "uses": ["islandWorktop"]},
+  "endOak38x650": {"product": "egger-end-panel-h1180-st37-38x650", "uses": ["endPanel"]},
+  "endOak38x920": {"product": "egger-end-panel-h1180-st37-38x920", "uses": ["islandEndPanel"]}
  },
  "appliances": {
   "oven": {"product": "bosch-hba534bb3", "feet": 0},

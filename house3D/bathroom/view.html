@@ -254,7 +254,7 @@ let FLOOR = BATH_DATA.defaults.floor;
 try { FLOOR = new URLSearchParams(location.search).get('floor') || localStorage.getItem('floor') || FLOOR; } catch (e) {}
 if (!BATH_DATA.floors[FLOOR]) FLOOR = BATH_DATA.defaults.floor;
 const HOUSE_MODEL = HouseEngine.build(HOUSE), HOUSE_ROOM = HouseClip.roomsFor(HOUSE, HOUSE_MODEL, 'bathroom/view.html').find(r => r.floor === FLOOR);
-const G = BathEngine.build(BATH_DATA, FLOOR, HOUSE_ROOM), DATA = G.data, ATTIC = G.type === 'attic';
+const G = BathEngine.build(BATH_DATA, FLOOR, HOUSE_ROOM, LIBRARY_PRODUCTS), DATA = G.data, ATTIC = G.type === 'attic';
 const mmText = BathEngine.mmText;           // metres of the scene → whole mm on the page
 const V = G.V;   // vanity in mm (data.js → engine.js)
 const mm = v => v / 1000;
@@ -782,7 +782,7 @@ const DECOR_INFO = DATA.decors;
 const DECORS = {};
 for (const id of Object.keys(DECOR_INFO)) {
   const B = PRODUCTS.boards[id], T = TEXTURES[B.texture];
-  const d = { code: B.code, name: B.name, thick: B.thick, price: B.price, link: B.link, width_m: T.size[0] / 1000, image: T.faces[0] };
+  const d = { code: B.code, name: B.decor, thick: String(B.thickness).replace('.', ',') + ' mm', price: B.price, link: B.link, width_m: T.size[0] / 1000, image: T.faces[0] };
   const img = await loadImage(d.image).catch(() => null);
   if (!img) continue;
   const c = document.createElement('canvas'); c.width = c.height = 1;

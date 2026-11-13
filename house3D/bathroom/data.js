@@ -15,6 +15,7 @@ window.BATH_DATA = {
        The shower recess is the house's (as built: 900 × 1000 beyond the glass line). */
     ground: {
       type: 'ground', number: 7, name: 'Parter', title: 'Łazienka L grafit',
+      fittings: { basin: 'catalano-green-lux-60x40-nero', plug: 'catalano-plug-5poslns-nero' },
       cameras: { overview: 'Ogólny', door: 'Od drzwi', vanity: 'Umywalka i WC', shower: 'Prysznic', cabinet: 'Szafka i grzejnik', plan: 'Rzut' },   // the dock
       showerLine: 8950,       // house x of the shower glass line; the recess beyond it is the house's
       ceiling: { height: 2450, ledGap: 50 },   // suspended plasterboard ceiling over the floor, LED gap along the walls
@@ -61,6 +62,7 @@ window.BATH_DATA = {
        in the top-right corner. */
     attic: {
       type: 'attic', number: 5, name: 'Poddasze', title: 'Łazienka jasna na poddaszu',
+      fittings: { basin: 'catalano-green-lux-60x40-white', plug: 'catalano-plug-white', bath: 'castorama-bath-freestanding-170x75' },
       cameras: { overview: 'Ogólny', door: 'Od drzwi', vanity: 'Umywalki', bath: 'Wanna', shower: 'Prysznic', plan: 'Rzut' },
       shower: {
         width: 1000,          // along the bottom wall
@@ -111,27 +113,22 @@ window.BATH_DATA = {
     'egger-h1176-st37': { note: 'bielony dąb, prawie biały — najjaśniejsza szafka' },
   },
 
-  shop: {
+  shop: {                 // shops and services that are not products (the products are in ../library/products.js)
     mhm: 'M-HM Bielsko-Biała',
     links: {
       mhmServices: 'https://m-hm.pl/pl/i/Uslugi/16',
       mhmBoards: 'https://m-hm.pl/pl/c/Plyty-meblowe/266',
-      legrabox: 'https://m-hm.pl/pl/c/Legrabox/324',
-      tipon: 'https://m-hm.pl/pl/c/TIP-ON-i-Adaptery/369',
-      erozkroj: 'https://mhm-web2.erozkroje.pl',
-      basinBlack: 'https://tanielazienki.pl/p/11/39675/catalano-green-lux-60x40-umywalka-czarna-matowa-z-polka-z-otworem-na-baterie-160grlxnns-0625601022-umywalki.html',
-      basinWhite: 'https://www.tomdom.pl/produkty/umywalka-stawiana-na-blat/catalano/green-lux-60x40-umywalka-nablatowa-z-otworem-na-baterie-160grlxn00',
-      plug: 'https://skleparmatura.com/produkt/catalano-zero-umywalka-nablatowa-60x35xh12-nero-satinato-czarny-mat-0122600022/',
-      tap: 'https://www.mediaexpert.pl/dom/lazienka/baterie-lazienkowe/bateria-umywalkowa-hansgrohe-tecturis-e-110-ecosmart-73010140-braz-szczotkowany',
-      bathTap: 'https://www.architonic.com/en/p/hansgrohe-tecturis-e-single-lever-bath-mixer-floor-standing-20779750',
-      bathTapSeries: 'https://www.mediaexpert.pl/dom/lazienka/baterie-wannowe/popularne-serie_tecturis-e',
-      bath: 'https://www.castorama.pl/wanna-wolnostojaca-170-x-75-x-58-cm-biala/5063022837868_CAPL.prd',
-      bathAlt: 'https://www.okazje.info.pl/szukaj/oltens-begna-wanna-wolnostojaca-przyscienna-170x75cm-12011000/ceny.html',
-      siphon: 'https://www.leroymerlin.pl/produkty/syfon-umywalkowy-bez-spustu-oszczedzajacy-miejsce-bialy-geberit-82199271.html',
-      radiator: 'https://www.castorama.pl/departments/grzejnik-azienkowy-mexen-hades-z-oty-1200x400-mm-1-szt-/5905315071828_CAPL.prd',
-      door: 'https://esklep-porta.pl/drzwi-wewnetrzne/porta/drzwi-ukryte-porta-hide-wc-bezprzylgowe-otwierane-na-zewnatrz-prawe-80cm-plyta-spa1110p08lbpwayv0o000,p22305,53.html',
     },
-    prices: { legraboxC350: 156.28, basinBlack: 1825, plug: 249, radiator: 949.99, door: 1745, bath: 1498 },
+  },
+
+  /* the fittings bought (keys of ../library/products.js fittings), by what they are for; by the metal of the fittings
+     where it differs; a floor adds its own (its basin and plug, the bath) */
+  fittings: {
+    legraboxC: 'blum-legrabox-pure-c-350-black', legraboxK: 'blum-legrabox-pure-k-400-black', runners: 'blum-runners-tip-on-blumotion',
+    tap: { brass: 'hansgrohe-tecturis-e-110-73010140', nickel: 'hansgrohe-tecturis-e-110-73010000' },
+    siphon: 'geberit-siphon-space-saving',
+    bathTap: { brass: 'hansgrohe-tecturis-e-73445140', nickel: 'hansgrohe-tecturis-e-73445000' }, bathSet: 'hansgrohe-10452180',
+    radiator: 'mexen-hades-1200x400-gold', door: 'porta-hide-wc-80',
   },
 
   /* as house.js: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own height for the

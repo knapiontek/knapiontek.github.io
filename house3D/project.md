@@ -129,14 +129,16 @@ Everything bought is in **library/**, once, for every application: materials, te
 
 ```
 library/
-  products.js    a product by key: tiles, boards, appliances (name, maker, sizes, price, link, texture key)
+  products.js    a product by key: tiles, boards (and worktops, panels, fronts), fittings, appliances
+                 (name, maker, sizes, price, shop, link, texture key)
   materials.js   how a material looks: in 3D (colour, roughness, gloss) and in 2D (section fill)
   textures/      one image, one file (<key>.js, a data URL, so the pages work opened from disk)
 ```
 
 - A project names a product by its key and says only where it goes and how (a bathroom wall: paradyz-authority-grey, 598×1198, vertical; an appliance: how it is built in). Nothing of the product is repeated.
 - A page loads only the textures it uses: core/library.js loads library/textures/<key>.js when a product needs it.
-- Still in the projects, to move: the kitchen's boards and worktops (design.js materials), the bathroom's fittings, prices and shop links (data.js).
+- One product, one image: a board has one photo, used by the house, the kitchen and the bathrooms alike.
+- Left in the projects: what is not a product of its own: services (cutting, banding), generic small items (valves, tape, a handle to match), the kitchen's prices in cost.js.
 - Info takes price and link from the library: a price changed once is changed everywhere.
 - library/ is data, not code: core knows no product, the library knows no project.
 

@@ -8,7 +8,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 
 | File | Kind | Owns | Written by |
 |---|---|---|---|
-| design.js | data, this project | materials, appliances (product keys of the library, how each is built in: feet), settings, notes, groups, components | design.html (export); materials, appliances and settings by hand |
+| design.js | data, this project | materials and appliances (product keys of the library; how each is used: uses, or built in: feet), settings, notes, groups, components | design.html (export); materials, appliances and settings by hand |
 | cost.js | data, this project | prices, items, notes and settings of cost.html | LLM, per project |
 | view.js | data, this project | placement of the groups in the house, how the appliances are fitted, the floor tiles to choose from (library keys), the views (3D with G1/G2/Wyspa in the menu, 2D, Analiza), lights and cameras of view.html, in house axes | LLM, per project |
 | rules.md | text, every project | the kitchen rules in Polish, as the app names things | by hand |

@@ -76,9 +76,10 @@ window.BathEngine = (function () {
   }
 
   /* ROOM: the house room of this floor, HouseClip.roomsFor(...) of ../house/house-clip.js */
-  function build(D, floorKey, ROOM) {
+  function build(D, floorKey, ROOM, LIBRARY) {
     const F = floorInMetres(roomFrame(D.floors[floorKey], ROOM));
-    const G = { key: floorKey, type: F.type, floor: F, data: { ...D, ...F }, X0: F.X0, Y0: F.Y0, LEVEL: F.LEVEL, ROOM };
+    const G = { key: floorKey, type: F.type, floor: F, data: { ...D, ...F }, X0: F.X0, Y0: F.Y0, LEVEL: F.LEVEL, ROOM,
+      fittings: { ...D.fittings, ...F.fittings }, library: LIBRARY };   // what is bought: the library's products by role
     G.INSIDE = F.inside.map(r => r.map(mm));               // the floor area in the room frame, metres: [x1, x2, z1, z2]
     G.V = vanity(F);
     G.T = F.walls.t;
@@ -253,33 +254,35 @@ window.BathEngine = (function () {
   }
 
   function buyItems(G, decor, metal) {
-    const S = G.data.shop, L = S.links, P = S.prices, brass = metal === 'brass', V = G.V, nb = V.basins.length;
+    const S = G.data.shop, L = S.links, brass = metal === 'brass', V = G.V, nb = V.basins.length;
     const white = G.floor.look.basin === 'white';
+    /* a fitting of the library (data.js fittings, by metal where it differs) as a line of the list; note: what this
+       bathroom adds to the product's own note */
+    const product = role => { const k = G.fittings[role]; return G.library.fittings[typeof k === 'string' ? k : k[metal]]; };
+    const item = (group, role, qty, note) => {
+      const p = product(role), notes = [p.note, note].filter(Boolean).join('; ');
+      return Object.assign({ group, name: p.name, price: p.price, qty, where: p.shop }, p.link ? { url: p.link } : {}, notes ? { note: notes } : {});
+    };
     const items = [
       { group: 'Szafka', name: `Płyta Egger ${decor.code} ${decor.name}, ${decor.thick}, 2800 × 2070`, price: decor.price, qty: 1, where: S.mhm, url: decor.link, note: 'korpus, fronty i blat z jednego arkusza' },
       { group: 'Szafka', name: 'Cięcie, obrzeże ABS 2 mm (22 i 42 mm), otwory', price: null, where: S.mhm + ' — usługi / e-Rozkrój', url: L.mhmServices, note: 'arkusz eRozkroj z eksportu XLSX; odbiór na miejscu' },
       { group: 'Szafka', name: 'Płyta 16 mm na dna i tyły szuflad (formatki)', price: null, where: S.mhm, url: L.mhmBoards },
     ];
-    if (V.nA) items.push({ group: 'Szafka', name: 'Blum LEGRABOX pure C NL 350, czarny mat — boki 770C3502S', price: P.legraboxC350, qty: V.nA, where: S.mhm, url: L.legrabox });
-    if (V.nB) items.push({ group: 'Szafka', name: 'Blum LEGRABOX pure K NL 400, czarny mat — boki 770K4002S', price: null, qty: 2 * V.nB, where: S.mhm, url: L.legrabox });
-    items.push({ group: 'Szafka', name: 'Prowadnice 750.xx01T, TIP-ON BLUMOTION T60L7340, mocowania', price: null, where: S.mhm, url: L.tipon, note: 'pełna lista w zakładce Szafka' });
-    items.push(white
-      ? { group: 'Umywalki', name: 'Catalano Green Lux 60 × 40, nablatowa z półką i otworem na baterię, biała, 160GRLXN00', price: null, qty: nb, where: 'tomdom.pl (wysyłka)', url: L.basinWhite, note: 'ten sam model co na parterze, w bieli; lokalnie przez salon łazienek w Bielsku, np. BLU' }
-      : { group: 'Umywalka', name: 'Catalano Green Lux 60 × 40, nablatowa z półką i otworem na baterię, Nero Satinato (czarny mat), 160GRLXNNS', price: P.basinBlack, qty: nb, where: 'tanielazienki.pl (wysyłka)', url: L.basinBlack, note: 'bez przelewu, wys. 140 mm; lokalnie można zamówić przez salon łazienek w Bielsku, np. BLU' });
+    if (V.nA) items.push(item('Szafka', 'legraboxC', V.nA));
+    if (V.nB) items.push(item('Szafka', 'legraboxK', 2 * V.nB));
+    items.push(Object.assign(item('Szafka', 'runners'), { note: 'pełna lista w zakładce Szafka' }));
     const g = white ? 'Umywalki' : 'Umywalka';
-    items.push({ group: g, name: white ? 'Korek ceramiczny Catalano bez przelewu, biały (pokrywa w kolorze umywalki)' : 'Korek ceramiczny Catalano 5POSLNS (czarny mat, bez przelewu)', price: white ? null : P.plug, qty: nb, where: 'skleparmatura.com', url: L.plug, note: 'pokrywa w kolorze umywalki — bez metalowego kółka; sprawdź dopasowanie do Green Lux' });
-    items.push({ group: g, name: brass ? 'Bateria Hansgrohe Tecturis E 110 EcoSmart+, brąz szczotkowany, 73010140' : 'Bateria Hansgrohe Tecturis E 110 EcoSmart+ (wariant chrom 73010000 lub inny kolor pod armaturę prysznica)', price: null, qty: nb, where: 'Media Expert (odbiór w Bielsku-Białej)', url: L.tap, note: 'jednootworowa, stoi na półce umywalki' });
-    items.push({ group: g, name: 'Syfon umywalkowy oszczędzający miejsce Geberit', price: null, qty: nb, where: 'Leroy Merlin Bielsko-Biała', url: L.siphon });
+    items.push(item(g, 'basin', nb), item(g, 'plug', nb), item(g, 'tap', nb), item(g, 'siphon', nb));
     items.push({ group: g, name: `Uszczelka EPDM 3 mm ${white ? 'biała' : 'czarna'}, samoprzylepna (taśma)`, price: null, qty: 1, where: 'Leroy Merlin / Castorama Bielsko-Biała' });
     if (G.type === 'attic') {
-      items.push({ group: 'Wanna', name: `Wanna wolnostojąca owalna akrylowa ${mmText(G.BATH.len)} × ${mmText(G.BATH.w)} × ${mmText(G.BATH.h)}, biała`, price: P.bath, qty: 1, where: 'Castorama Bielsko-Biała', url: L.bath, note: `alternatywa: Oltens Begna 170 × 75 (${L.bathAlt}); w modelu na środku wolnej przestrzeni, nie dokładnie pod oknem` });
-      items.push({ group: 'Wanna', name: brass ? 'Bateria wannowa wolnostojąca (podłogowa) Hansgrohe Tecturis E, brąz szczotkowany — 73445140 (chrom 73445000)' : 'Bateria wannowa wolnostojąca (podłogowa) Hansgrohe Tecturis E, chrom 73445000', price: null, qty: 1, where: 'salon łazienek w Bielsku-Białej / zamówienie Hansgrohe', url: L.bathTap, note: `wys. ${mmText(G.TAP.h)} mm, wylewka ${mmText(G.TAP.reach)} mm; w rogu: ${mmText(G.XL - G.TAP.x)} mm od ściany z umywalkami, ${mmText(G.ZW - G.TAP.z)} mm od ścianki kolankowej; numer w brązie potwierdź w salonie` });
-      items.push({ group: 'Wanna', name: 'Zestaw podtynkowy do baterii wolnostojącej Hansgrohe (element montażowy w posadzce, 10452180)', price: null, qty: 1, where: 'salon łazienek / hurtownia instalacyjna', note: 'montaż przed wylewką; potwierdź numer w salonie' });
+      items.push(item('Wanna', 'bath', 1, 'w modelu na środku wolnej przestrzeni, nie dokładnie pod oknem'));
+      items.push(item('Wanna', 'bathTap', 1, `wys. ${mmText(G.TAP.h)} mm, wylewka ${mmText(G.TAP.reach)} mm; w rogu: ${mmText(G.XL - G.TAP.x)} mm od ściany z umywalkami, ${mmText(G.ZW - G.TAP.z)} mm od ścianki kolankowej; numer w brązie potwierdź w salonie`));
+      items.push(item('Wanna', 'bathSet', 1));
       items.push({ group: 'Wanna', name: 'Syfon do wanny wolnostojącej z korkiem klik-klak (odpływ w posadzce)', price: null, qty: 1, where: 'Leroy Merlin / Castorama Bielsko-Biała' });
     }
-    items.push({ group: 'Grzejnik', name: `Mexen Hades 1200 × 400, ${brass ? 'złoty' : 'złoty (w wariancie nikiel dobierz kolor chrom/inox)'}, 373 W`, price: P.radiator, qty: 1, where: 'Castorama Bielsko-Biała', url: L.radiator, note: `odbiór w sklepie lub dostawa; pas ściany od otworu drzwi do narożnika ${mmText(G.XL - G.OX1)} mm, zawieszony od ${mmText(G.RAD.y0)} mm` });
+    items.push(item('Grzejnik', 'radiator', 1, (brass ? '' : 'do armatury w niklu dobierz kolor chrom/inox; ') + `pas ściany od otworu drzwi do narożnika ${mmText(G.XL - G.OX1)} mm, zawieszony od ${mmText(G.RAD.y0)} mm`));
     items.push({ group: 'Grzejnik', name: 'Zawory grzejnikowe (para, przyłącze dolne), w kolorze grzejnika', price: null, qty: 1, where: 'Castorama Bielsko-Biała' });
-    items.push({ group: 'Drzwi', name: 'Porta HIDE WC 80, bezprzylgowe, zestaw: skrzydło + ościeżnica ukryta, blokada WC', price: P.door, qty: 1, where: 'esklep-porta.pl', url: L.door, note: `wersja otwierana na zewnątrz (na korytarz, jak w projekcie) — stronę lewe/prawe potwierdź w sklepie; lico skrzydła równe ze ścianą od korytarza; otwór ${Math.round(G.floor.door.opening * 1000)} × 2070` });
+    items.push(item('Drzwi', 'door', 1, `wersja otwierana na zewnątrz (na korytarz, jak w projekcie) — stronę lewe/prawe potwierdź w sklepie; lico skrzydła równe ze ścianą od korytarza; otwór ${Math.round(G.floor.door.opening * 1000)} × 2070`));
     items.push({ group: 'Drzwi', name: 'Klamka z rozetą WC w kolorze armatury', price: null, qty: 1, where: 'esklep-porta.pl / salon w Bielsku' });
     return items;
   }

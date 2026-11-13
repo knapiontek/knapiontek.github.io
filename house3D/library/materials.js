@@ -22,6 +22,6 @@ window.LIBRARY_MATERIALS = {
  "timber": {"color": "#b89466", "roughness": 0.8},
  "lawn": {"color": "#6f8a52", "roughness": 1, "grass": {"tile": 1200}},
  "paving": {"color": "#b9b6ae", "roughness": 0.9, "slabs": {"size": 600, "joint": "#6a675f"}},
- "woodVertical": {"wood": {"decor": "egger-h1180-board", "board": 120, "vertical": true}, "roughness": 0.7},
- "woodHorizontal": {"wood": {"decor": "egger-h1180-board", "board": 120, "vertical": false}, "roughness": 0.7}
+ "woodVertical": {"wood": {"decor": "egger-h1180", "board": 120, "vertical": true}, "roughness": 0.7},
+ "woodHorizontal": {"wood": {"decor": "egger-h1180", "board": 120, "vertical": false}, "roughness": 0.7}
 };

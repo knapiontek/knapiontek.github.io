@@ -138,7 +138,7 @@ dl.notes dd{margin:0;color:var(--muted)}
 <script src="engine.js"></script>
 <script>
 /* the library's textures first (core/library.js): the board decors design.js names and the floor tiles to choose from */
-CORE.library.load('../library/', Object.values(KITCHEN_DESIGN.materials).map(m => m.texture)
+CORE.library.load('../library/', Object.values(KITCHEN_DESIGN.materials).map(m => LIBRARY_PRODUCTS.boards[m.product].texture)
   .concat(KITCHEN_VIEW.floors.map(k => LIBRARY_PRODUCTS.tiles[k].texture))).then(function () {
 'use strict';
 
@@ -154,7 +154,7 @@ if (!window.KITCHEN_VIEW || !window.LIBRARY_PRODUCTS) return fail('Nie znalezion
 if (!window.HOUSE || !window.HouseClip) return fail('Nie znaleziono plików domu (../house/house.js, ../house/house-clip.js).');
 
 const KE = window.KitchenEngine, SCENE = window.KITCHEN_VIEW, TEXTURES = window.LIBRARY_TEXTURES;
-const project = window.KITCHEN_DESIGN, APPLIANCES = KE.appliances(project, LIBRARY_PRODUCTS.appliances), model = KE.build(project, APPLIANCES), settings = project.settings;
+const project = KE.withLibrary(window.KITCHEN_DESIGN, LIBRARY_PRODUCTS.boards), APPLIANCES = KE.appliances(project, LIBRARY_PRODUCTS.appliances), model = KE.build(project, APPLIANCES), settings = project.settings;
 if (model.warnings.length) console.warn('design.js: ' + model.warnings.join(' | '));
 const HOUSE_MODEL = HouseEngine.build(HOUSE), ROOM = HouseClip.roomsFor(HOUSE, HOUSE_MODEL, 'kitchen/view.html')[0];
 if (!ROOM) return fail('W house.js żadne pomieszczenie nie prowadzi do kitchen/view.html.');

@@ -831,7 +831,7 @@ document.getElementById('exportXlsx').addEventListener('click', async e => {
 renderAll();
 KE.load()
   .then(project => {
-    applyProject(project);
+    applyProject(KE.withLibrary(project, LIBRARY_PRODUCTS.boards));
     renderAll();
   })
   .catch(err => {
