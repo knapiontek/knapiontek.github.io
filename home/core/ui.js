@@ -113,20 +113,32 @@ function tabs(box, list, current, pick) {
 }
 /* ================= THE SCREEN (../project.md, Flow) =================
    top-left menu (appMenu), top-right menu (modeToggle), the main view, the bottom menu, the right panel in tabs, the
-   bottom-right corner (☀, ?). A view of the project's data says which tabs it shows: view.tabs; none: no panel. */
+   bottom-right corner (☀, ?). A view of the project's data says which tabs it shows: view.tabs. The panel is always there;
+   only the viewer hides it (panelToggle). */
 
 /* the right panel's tabs: the same names in every application, each showing only what it has */
 const TAB_NAMES = { layers: 'Warstwy', finish: 'Wykończenie' };
 /* shows the panel's tabs of view, the sections [data-tab] of the current one (fallback: the first); hide(part): a section
-   [data-part] that also needs something the view lacks now. Returns the tab shown, null with no panel. */
+   [data-part] that also needs something the view lacks now. Returns the tab shown. */
 function panelTabs(box, aside, view, current, pick, hide = () => false) {
   const list = view.tabs || [], tab = list.includes(current) ? current : list[0] || null;
-  aside.hidden = !tab; aside.closest('.app').toggleAttribute('data-wide', !tab);
   box.hidden = list.length < 2;
   box.innerHTML = list.map(k => `<button role="tab" data-tab-id="${k}" aria-selected="${k === tab}"${k === tab ? ' data-on' : ''}>${TAB_NAMES[k]}</button>`).join('');
   box.onclick = e => { const b = e.target.closest('[data-tab-id]'); if (b && b.dataset.tabId !== tab) pick(b.dataset.tabId); };
   for (const s of aside.querySelectorAll('[data-tab]')) s.hidden = s.dataset.tab !== tab || hide(s.dataset.part);
   return tab;
+}
+/* » and « on the edge of the main view: the viewer hides or shows the panel; one choice for every application */
+function panelToggle(stage, aside) {
+  const kept = store('home-panel', () => ({ open: true }), s => typeof s.open === 'boolean');
+  const button = el('button', { className: 'panelbtn' });
+  const show = () => {
+    aside.hidden = !kept.state.open; aside.closest('.app').toggleAttribute('data-wide', !kept.state.open);
+    button.textContent = kept.state.open ? '»' : '«';
+    button.setAttribute('aria-label', kept.state.open ? 'Ukryj panel' : 'Pokaż panel'); button.title = button.getAttribute('aria-label');
+  };
+  button.onclick = () => { kept.state.open = !kept.state.open; kept.save(); show(); };
+  stage.append(button); show();
 }
 /* the bottom menu: groups of one-off actions, a line between groups; an item is {name, go, label} or an element */
 function bottomMenu(box, groups) {
@@ -150,11 +162,15 @@ function helpMode(box, mode) { for (const s of box.querySelectorAll('[data-help]
    dragged round it (the direction, from +x toward +y as core/scene.js); an arc beside it (the height); brightness.
    sun {az, el, k} is changed in place; change() after every move. */
 const SUN_RANGE = { azStep: 5, el: [8, 75], k: [0.3, 1.6, 0.05] };   // degrees, degrees, a factor
-function sunPanel(box, rects, sun, change) {
+/* one sun for every application, stored once: the kitchen has the house's afternoon. fresh: {azimuth, elevation} */
+const sunStore = fresh => store('home-sun', () => ({ az: fresh.azimuth, el: fresh.elevation, k: 1 }), s => [s.az, s.el, s.k].every(Number.isFinite));
+/* mark: the rects of this application's room, picked out on the plan */
+function sunPanel(box, rects, sun, change, mark = []) {
   const C = 80, R = 64, A = 120, top = 20;   // svg units: compass centre and radius; the arc's radius and top margin
   const x1 = Math.min(...rects.map(q => q[0])), x2 = Math.max(...rects.map(q => q[1])), y1 = Math.min(...rects.map(q => q[2])), y2 = Math.max(...rects.map(q => q[3]));
   const s = 0.62 * R * 2 / Math.hypot(x2 - x1, y2 - y1), cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-  const plan = rects.map(q => `<rect x="${C + (q[2] - cy) * s}" y="${C + (q[0] - cx) * s}" width="${(q[3] - q[2]) * s}" height="${(q[1] - q[0]) * s}"/>`).join('');
+  const rect = q => `<rect x="${C + (q[2] - cy) * s}" y="${C + (q[0] - cx) * s}" width="${(q[3] - q[2]) * s}" height="${(q[1] - q[0]) * s}"/>`;
+  const plan = rects.map(rect).join('') + `<g class="mark">${mark.map(rect).join('')}</g>`;
   box.innerHTML = `<div class="sunrow">
     <svg class="compass" viewBox="0 0 ${2 * C} ${2 * C}" aria-label="Kierunek słońca"><circle cx="${C}" cy="${C}" r="${R}" class="ring"/><g class="plan">${plan}</g>
       <line class="ray" x1="${C}" y1="${C}"/><circle class="sundot" r="9"/></svg>
@@ -197,5 +213,5 @@ function planSheet({ sheet, zoomIn, zoomOut, download, state, save, svg, file })
   return draw;
 }
 
-CORE.ui = { $, fmt, byId, el, option, store, layerTree, layerSwitch, layersPanel, helpToggle, checksHtml, appMenu, askedMode, panelTabs, bottomMenu, corner, helpMode, sunPanel, modeToggle, menuRow, cameraDock, panels, tabs, planSheet };
+CORE.ui = { $, fmt, byId, el, option, store, layerTree, layerSwitch, layersPanel, helpToggle, checksHtml, appMenu, askedMode, panelTabs, panelToggle, bottomMenu, corner, helpMode, sunStore, sunPanel, modeToggle, menuRow, cameraDock, panels, tabs, planSheet };
 })(window.CORE = window.CORE || {});

@@ -140,9 +140,9 @@ window.BATH_DATA = {
         furniture: { name: 'Meble' }, sanitary: { name: 'Ceramika i armatura' }, glass: { name: 'Kabina' },
         installations: { name: 'Instalacje', off: true }, edges: { name: 'Krawędzie' },
       } },
-    '2d': { name: '2D', plan: true, note: 'Ogród u góry. Linią ciągłą to, co pod cięciem (widziane z góry), przerywaną to, co nad nim.' },
-    test: { name: 'Test', test: true },
-    info: { name: 'Info', info: true, tabs: ['finish'] },
+    '2d': { name: '2D', plan: true, note: 'Ogród u góry. Linią ciągłą to, co pod cięciem (widziane z góry), przerywaną to, co nad nim.', tabs: ['layers', 'finish'] },
+    test: { name: 'Test', test: true, tabs: ['layers', 'finish'] },
+    info: { name: 'Info', info: true, tabs: ['finish', 'layers'] },
   },
 
   defaults: {

@@ -128,7 +128,8 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
       </section>
     </div>
     <div class="dock" id="dock" aria-label="Dolne menu"></div>
-    <div class="float sunfloat" id="sun" role="dialog" aria-label="Światło" hidden>
+    <div class="float sunfloat" id="sun" role="dialog" aria-label="Słońce i światło" hidden>
+      <div id="compass"></div>
       <h2>Oświetlenie</h2>
       <div class="toggle" id="light" role="group" aria-label="Światło"></div>
     </div>
@@ -137,7 +138,7 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
         <p>Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko lub szczypanie.</p>
         <p>Kliknięcie drzwi, drzwiczek albo szuflady otwiera je lub zamyka.</p>
         <p>Pomieszczenie jest z domu, takie jak jest. Ściana albo sufit, za którymi stoi kamera, chowają się.</p>
-        <p>U góry: parter albo poddasze. Na dole: skąd patrzysz. ☀: dzień albo noc.</p>
+        <p>U góry: parter albo poddasze. Na dole: skąd patrzysz. ☀: słońce domu (to samo we wszystkich aplikacjach) oraz dzień albo noc.</p>
       </div>
       <div data-help="2d"><p>Rzut łazienki jak rysunek CAD, cięty na wysokości z rzutu domu: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG.</p></div>
       <div data-help="test"><p>Sprawdzenia szafki i armatury z engine.js. <b>OK</b> = w normie.</p></div>
@@ -1371,10 +1372,20 @@ function addLight(light, day, night) { scene.add(light); lightRig.push([light, d
 addLight(new THREE.HemisphereLight(0xf2f4f6, 0x3a3836, 1), .5, .05);
 addLight(new THREE.AmbientLight(0xffffff, 1), .1, .04);
 
-const sun = addLight(new THREE.DirectionalLight(0xfff1dc, 1), 2.6, 0);
-sun.position.copy(toWorld(SCENE.sun.position));
+const SUN_DAY = 2.6;                       // the sun's intensity by day at brightness 1
+const sun = addLight(new THREE.DirectionalLight(0xfff1dc, 1), SUN_DAY, 0);
 sun.target.position.copy(toWorld(SCENE.sun.target));
 scene.add(sun.target);
+/* the house's sun (one for every application, ☀): its direction in house axes, aimed at the room from the floor's distance;
+   the brightness scales its day intensity (setLighting applies it) */
+const SUN = CORE.ui.sunStore(Object.values(HOUSE.views).find(v => v.menu).light.sun);
+const SUN_DISTANCE = toWorld(SCENE.sun.position).distanceTo(toWorld(SCENE.sun.target));
+function placeSun() {
+  const a = SUN.state.az * Math.PI / 180, e = SUN.state.el * Math.PI / 180;
+  const dir = VIEW.toWorld(Math.cos(a) * Math.cos(e), Math.sin(a) * Math.cos(e), Math.sin(e)).normalize();
+  sun.position.copy(sun.target.position).addScaledVector(dir, SUN_DISTANCE);
+  lightRig.find(r => r[0] === sun)[1] = SUN_DAY * SUN.state.k;
+}
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: .5, far: 14 });
@@ -1761,6 +1772,8 @@ function planSvg() {
 const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state: VIEW_STATE, save: saveView, svg: planSvg, file: `lazienka-${FLOOR}-rzut.svg` });
 /* the screen (core/ui.js; ../project.md, Flow): the mode sets the main view, the bottom menu, the panel's tabs, ☀ */
 CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
+CORE.ui.panelToggle(stage, $('settings'));
+CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); setLighting(state.lighting); }, HOUSE_ROOM.inside);
 const showPanel = () => { VIEW_STATE.tab = CORE.ui.panelTabs($('tabs'), $('settings'), MODES[VIEW_STATE.mode], VIEW_STATE.tab, t => { VIEW_STATE.tab = t; saveView(); showPanel(); },
   p => p === 'style' && !MODES[VIEW_STATE.mode].menu) ?? VIEW_STATE.tab; };
 function setMode(m) {
@@ -1833,6 +1846,7 @@ renderHardware(); renderWork(); renderPoints(); syncDecor();
    13. LOOP
    ========================================================================== */
 
+placeSun();
 setLighting(state.lighting);
 VIEW.enableNavigation();
 VIEW.start();

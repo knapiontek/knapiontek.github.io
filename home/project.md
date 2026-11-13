@@ -80,7 +80,7 @@ Every part of the screen has one role. These names are used everywhere (docs, co
 | **top-right menu** | prawe górne menu | the mode: 3D, 2D, Test, Info | how do I look? |
 | **main view** | główny widok | what the mode shows; direct work in it (orbit, a click opens a door, selects a carcass) | what do I see? |
 | **bottom menu** | dolne menu | one-off actions of the mode: cameras in 3D, save SVG in 2D, save XLSX in Info; nothing stays set | what to do now? |
-| **right panel** | prawy panel | the project's settings, in tabs; settings only, never information | how should it be? |
+| **right panel** | prawy panel | the project's settings, in tabs; settings only, never information; always there, » « on the view's edge hides it (one choice for every application) | how should it be? |
 | **bottom-right panel** | prawy dolny panel | ☀ light, shared by all the applications; ? help | |
 
 ### Modes
@@ -104,9 +104,9 @@ What never means anything in a mode is not shown there. Dimmed (with the reason 
 | Mode | Right panel | ☀ | Bottom menu |
 |---|---|---|---|
 | 3D | Warstwy, Wykończenie | yes | cameras |
-| 2D | none: the plan takes the whole width, like CAD | no | save SVG, zoom |
-| Test | none | no | — |
-| Info | Wykończenie (the tiles change the prices) | no | save XLSX |
+| 2D | Warstwy, Wykończenie (» hides it: the plan takes the whole width, like CAD) | no | save SVG, zoom |
+| Test | Warstwy, Wykończenie | no | — |
+| Info | Wykończenie first (the tiles change the prices), Warstwy | no | save XLSX |
 
 ? help is always there; it tells about the current application and mode.
 

@@ -19,6 +19,9 @@ body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body)
 button{font:inherit;color:inherit}
 .app{position:relative;height:100%;display:grid;grid-template-columns:minmax(0,1fr) 370px}
 .app[data-wide]{grid-template-columns:minmax(0,1fr)}
+/* » « on the right edge of the main view */
+.panelbtn{position:absolute;z-index:7;right:0;top:50%;transform:translateY(-50%);width:22px;height:56px;border:1px solid var(--line);border-right:0;border-radius:8px 0 0 8px;background:var(--panel);color:var(--muted);font:700 15px var(--f-display);cursor:pointer;padding:0}
+.panelbtn:hover{color:var(--accent)}
 
 /* the top-left menu: the applications, over the view */
 .apps{position:absolute;z-index:8;left:max(12px,env(safe-area-inset-left,0px));top:12px;display:inline-flex;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:2px;font:700 13px var(--f-display);letter-spacing:.04em}
@@ -41,6 +44,8 @@ button{font:inherit;color:inherit}
 .arc{width:100px;height:107px;touch-action:none;cursor:grab}
 .compass .ring,.arc .ring{fill:none;stroke:var(--line);stroke-width:2}
 .compass .plan rect{fill:var(--bg);stroke:var(--muted);stroke-width:1}
+.compass .plan .mark rect{fill:var(--accent);stroke:var(--accent)}
+.sunfloat h2{margin:10px 0 6px}
 .arc .ground{stroke:var(--muted);stroke-width:2}
 .compass .ray,.arc .ray{stroke:#e0a43a;stroke-width:1.5;stroke-dasharray:3 3}
 .sundot{fill:#f2b33d;stroke:#b5781a;stroke-width:2}

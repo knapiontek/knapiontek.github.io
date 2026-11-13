@@ -378,16 +378,18 @@ window.HOUSE = {
    "name": "2D",
    "plan": true,
    "cut": {"ground": 1500, "attic": 800},
-   "note": "Ogród u góry, front u dołu. Kreskowanie: styropian."
+   "note": "Ogród u góry, front u dołu. Kreskowanie: styropian.",
+   "tabs": ["layers", "finish"]
   },
   "test": {
    "name": "Test",
-   "test": true
+   "test": true,
+   "tabs": ["layers", "finish"]
   },
   "info": {
    "name": "Info",
    "info": true,
-   "tabs": ["finish"]
+   "tabs": ["finish", "layers"]
   }
  }
 };

@@ -77,7 +77,8 @@ dl.notes dd{margin:0;color:var(--muted)}
     </div>
     <div class="dock" id="dock" aria-label="Dolne menu"></div>
     <div id="tip" hidden></div>
-    <div class="float sunfloat" id="sun" role="dialog" aria-label="Światło" hidden>
+    <div class="float sunfloat" id="sun" role="dialog" aria-label="Słońce i światło" hidden>
+      <div id="compass"></div>
       <h2>Oświetlenie</h2>
       <div class="toggle" id="light" role="group" aria-label="Światło"></div>
     </div>
@@ -86,7 +87,7 @@ dl.notes dd{margin:0;color:var(--muted)}
         <p>Obracaj: lewy przycisk (z zewnątrz wokół środka pomieszczenia, w środku wokół tego, co na środku widoku) · przesuwaj: prawy · przybliżaj: kółko (do miejsca pod kursorem).</p>
         <p>Kliknięcie frontu otwiera go albo zamyka; kliknięcie płyty korpusu wybiera korpus. Kursor zatrzymany na części pokazuje jej nazwę.</p>
         <p>Pomieszczenie jest z domu, takie jak jest. Ściana, sufit albo podłoga, za którymi stoi kamera, chowają się.</p>
-        <p>U góry: grupy szafek. Na dole: skąd patrzysz. ☀: dzień albo noc.</p>
+        <p>U góry: grupy szafek. Na dole: skąd patrzysz. ☀: słońce domu (to samo we wszystkich aplikacjach) oraz dzień albo noc.</p>
       </div>
       <div data-help="2d"><p>Rzut kuchni jak rysunek CAD, cięty na wysokości z rzutu domu: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG.</p></div>
       <div data-help="test"><p>Sprawdzenie geometrii: kolizje, szczeliny, fronty poza linią, części wystające, części bez wymiaru. <b>OK</b> = nic do poprawienia.</p></div>
@@ -321,13 +322,12 @@ const layerOn = k => state.layers[k] !== false && (!LAYER[k].parent || layerOn(L
 const shown = layers => layers.every(k => LAYER[k] ? layerOn(k) : k === 'cup' || k === 'bar' ? state.handle === k : !behind.has(k));
 
 /* ================= 4. SCENE (core) =================
-   The house's sky and fog; the sun comes in through the room's window; indoors a neutral fill. Lamps follow the physical
+   The house's sky and fog; the house's sun (one for every application, ☀); indoors a neutral fill. Lamps follow the physical
    units of three.js (intensities with falloff over distance). */
 const VIEW_3D = Object.values(HOUSE.views).find(v => v.menu), HL = VIEW_3D.light;
-const glazed = ROOM.openings.find(o => HOUSE.geometry.openingKinds[o.kind].glazed);
-const SUN_FROM = { '+x': 0, '+y': 90, '-x': 180, '-y': 270 };
+const SUN = CORE.ui.sunStore(HL.sun);
 const LIGHT = { exposure: 1.05, fog: HL.fog,
-  sun: Object.assign({}, HL.sun, { intensity: 2.6, azimuth: glazed ? SUN_FROM[glazed.outer] : HL.sun.azimuth, elevation: 34, reach: 6 }),
+  sun: Object.assign({}, HL.sun, { intensity: 2.6, reach: 6 }),
   sky: Object.assign({}, HL.sky, { color: '#f4f6f9', groundColor: '#8a8178', intensity: 1.5 }) };
 const B = ROOM.box, centre = [(B[0] + B[1]) / 2, (B[2] + B[3]) / 2, LEVEL + 1000];
 const V = CORE.createView({ canvas: $('gl'), stage: $('stage'), materials: LIB, textures: TEX, light: LIGHT, edges: VIEW_3D.edges,
@@ -957,7 +957,7 @@ const PIECES = piecesOf(STATIC);
 V.buildMeshes(PIECES); V.buildEdges(PIECES);
 for (const m of MOVERS) { const p = piecesOf(m.cells); V.buildMeshes(p, m.inner); V.buildEdges(p, m.inner); }
 V.addLight();
-V.placeSun({ az: LIGHT.sun.azimuth, el: LIGHT.sun.elevation, k: 1 });
+V.placeSun(SUN.state);
 for (const g of V.GROUPS) if (g.cell.info && g.cell.info.board) g.base = g.mesh.material;
 /* maps drawn here: the granite of the sink, the floor tiles (uv in mm) */
 (function granite() {
@@ -1122,6 +1122,8 @@ $('title').textContent = $('infoTitle').textContent = 'Kuchnia · ' + frontName;
 document.title = 'Kuchnia ' + frontName;
 $('subtitle').textContent = $('infoSubtitle').textContent = ROOM.floorName + ', pomieszczenie z domu: ' + ROOM.name + ' · ' + GROUP_IDS.length + ' grupy, ' + carcasses.length + ' korpusów';
 CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
+CORE.ui.panelToggle($('stage'), $('panel'));
+CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); V.placeSun(SUN.state); if (state.light === 'night') setLight('night'); }, ROOM.inside);   // night keeps its sky light
 
 /* layers */
 function setLayer(k, on) { state.layers[k] = on; save(); layersPanel(); contextMenu(); apply(); }

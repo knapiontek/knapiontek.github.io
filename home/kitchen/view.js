@@ -57,9 +57,9 @@ window.KITCHEN_VIEW = {
  },
  "views": {
   "3d": {"name": "3D", "menu": [{"layer": "g1", "name": "G1"}, {"layer": "g2", "name": "G2"}, {"layer": "g3", "name": "Wyspa"}], "tabs": ["layers", "finish"]},
-  "2d": {"name": "2D", "plan": true, "note": "Ogród u góry. Linią ciągłą to, co pod cięciem (widziane z góry), przerywaną to, co nad nim."},
-  "test": {"name": "Test", "test": true},
-  "info": {"name": "Info", "info": true, "tabs": ["finish"]}
+  "2d": {"name": "2D", "plan": true, "note": "Ogród u góry. Linią ciągłą to, co pod cięciem (widziane z góry), przerywaną to, co nad nim.", "tabs": ["layers", "finish"]},
+  "test": {"name": "Test", "test": true, "tabs": ["layers", "finish"]},
+  "info": {"name": "Info", "info": true, "tabs": ["finish", "layers"]}
  },
  "cameras": {
   "all": {"name": "Całość", "position": {"x": 2248, "y": 3260, "z": 2900}, "target": {"x": 5448, "y": 7260, "z": 900}},

@@ -115,9 +115,10 @@ V.addLight();
    The viewer's choices stay in the browser; a stored state of another format is dropped. */
 const STORE = CORE.ui.store('house-state-v4',            // v4: the modes 3D, 2D, Test, Info and the panel's tabs
   () => ({ mode: VIEW_IDS[0], tab: null, layers: Object.fromEntries(Object.keys(LAYER).map(k => [k, true])), cut: {},
-    sun: { az: LIGHT.sun.azimuth, el: LIGHT.sun.elevation, k: 1 }, layouts: {}, room: null, zoom: 1 }),
+    layouts: {}, room: null, zoom: 1 }),
   s => s.layers && Object.keys(s.layers).join() === Object.keys(LAYER).join() && VIEWS[s.mode]);
 const state = STORE.state, save = STORE.save;
+const SUN = CORE.ui.sunStore(LIGHT.sun);   // shared by every application
 
 const view = () => VIEWS[state.mode];
 const is3d = () => view() === VIEW_3D;
@@ -319,7 +320,7 @@ function applyView() {
   redraw();
 }
 const setCamera = V.setCamera;
-const placeSun = () => V.placeSun(state.sun);
+const placeSun = () => V.placeSun(SUN.state);
 
 /* ================= 8. THE SCREEN (core/ui.js; ../project.md, Flow) =================
    top-left menu: the applications · top-right: the modes · the bottom menu: the mode's one-off actions · the right panel:
@@ -327,8 +328,8 @@ const placeSun = () => V.placeSun(state.sun);
 $('title').textContent = HOUSE.name;
 $('subtitle').textContent = HOUSE.source;
 CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
-const GROUND = FLOORS[0];
-CORE.ui.sunPanel($('sun'), [[0, GEO.length, 0, WIDTH]].concat(GROUND.rooms.flatMap(r => r.rects)), state.sun, () => { save(); placeSun(); });
+CORE.ui.panelToggle($('stage'), $('panel'));
+CORE.ui.sunPanel($('sun'), MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); });
 
 const modeToggle = () => CORE.ui.modeToggle($('mode'), VIEWS, state.mode, setMode);
 
