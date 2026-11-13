@@ -126,14 +126,18 @@ function panelTabs(box, aside, view, current, pick, hide = () => false) {
   box.innerHTML = list.map(k => `<button role="tab" data-tab-id="${k}" aria-selected="${k === tab}"${k === tab ? ' data-on' : ''}>${TAB_NAMES[k]}</button>`).join('');
   box.onclick = e => { const b = e.target.closest('[data-tab-id]'); if (b && b.dataset.tabId !== tab) pick(b.dataset.tabId); };
   for (const s of aside.querySelectorAll('[data-tab]')) s.hidden = s.dataset.tab !== tab || hide(s.dataset.part);
+  aside.closest('.app').dataset.ready = '';   // the sections show from now on
   return tab;
 }
-/* » and « on the edge of the main view: the viewer hides or shows the panel; one choice for every application */
-function panelToggle(stage, aside) {
-  const kept = store('home-panel', () => ({ open: true }), s => typeof s.open === 'boolean');
-  const button = el('button', { className: 'panelbtn' });
+/* » and « on the edge of the main view: the viewer hides or shows the panel; one choice for every application, set on
+   the page the moment this file loads, so the panel does not show and vanish while the model is built */
+const PANEL = store('home-panel', () => ({ open: true }), s => typeof s.open === 'boolean');
+const showPanel = () => document.documentElement.toggleAttribute('data-panel-closed', !PANEL.state.open);
+showPanel();
+function panelToggle(stage) {
+  const kept = PANEL, button = el('button', { className: 'panelbtn' });
   const show = () => {
-    aside.hidden = !kept.state.open; aside.closest('.app').toggleAttribute('data-wide', !kept.state.open);
+    showPanel();
     button.textContent = kept.state.open ? '»' : '«';
     button.setAttribute('aria-label', kept.state.open ? 'Ukryj panel' : 'Pokaż panel'); button.title = button.getAttribute('aria-label');
   };
@@ -150,11 +154,26 @@ function bottomMenu(box, groups) {
   box.hidden = !box.children.length;
 }
 /* the bottom-right corner: buttons that each open their floating box [[button, box]], one box at a time */
+/* [button, box, when, otherwise]: while when() is false (☀ outside 3D) the button does otherwise() instead */
 function corner(pairs) {
   const close = () => { for (const [b, x] of pairs) { x.hidden = true; b.setAttribute('aria-expanded', false); } };
-  for (const [b, x] of pairs) b.onclick = () => { const open = x.hidden; close(); x.hidden = !open; b.setAttribute('aria-expanded', open); };
+  for (const [b, x, when, otherwise] of pairs) b.onclick = () => {
+    if (when && !when()) return otherwise();
+    const open = x.hidden; close(); x.hidden = !open; b.setAttribute('aria-expanded', open);
+  };
   return close;
 }
+/* light or dark: the system's, until the viewer picks one with ☀ outside 3D; one choice for every application, set the
+   moment this file loads */
+const THEME = store('home-theme', () => ({ mode: null }), s => [null, 'light', 'dark'].includes(s.mode));
+const showTheme = () => { if (THEME.state.mode) document.documentElement.dataset.theme = THEME.state.mode; else delete document.documentElement.dataset.theme; };
+showTheme();
+function toggleTheme() {
+  const dark = THEME.state.mode ? THEME.state.mode === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  THEME.state.mode = dark ? 'light' : 'dark'; THEME.save(); showTheme();
+}
+/* what ☀ does now: in 3D the sun, elsewhere light or dark */
+function sunTitle(button, is3d) { button.title = button.ariaLabel = is3d ? 'Słońce' : 'Jasny / ciemny'; }
 /* the help of the current mode: the [data-help] sections of box */
 function helpMode(box, mode) { for (const s of box.querySelectorAll('[data-help]')) s.hidden = s.dataset.help !== mode; }
 
@@ -213,5 +232,5 @@ function planSheet({ sheet, zoomIn, zoomOut, download, state, save, svg, file })
   return draw;
 }
 
-CORE.ui = { $, fmt, byId, el, option, store, layerTree, layerSwitch, layersPanel, helpToggle, checksHtml, appMenu, askedMode, panelTabs, panelToggle, bottomMenu, corner, helpMode, sunStore, sunPanel, modeToggle, menuRow, cameraDock, panels, tabs, planSheet };
+CORE.ui = { $, fmt, byId, el, option, store, layerTree, layerSwitch, layersPanel, helpToggle, checksHtml, appMenu, askedMode, panelTabs, panelToggle, bottomMenu, corner, toggleTheme, sunTitle, helpMode, sunStore, sunPanel, modeToggle, menuRow, cameraDock, panels, tabs, planSheet };
 })(window.CORE = window.CORE || {});

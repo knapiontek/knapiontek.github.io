@@ -328,8 +328,8 @@ const placeSun = () => V.placeSun(SUN.state);
    the tabs the mode lists (Warstwy, Wykończenie) · the corner: ☀ (3D) and ? */
 $('title').textContent = HOUSE.name;
 $('subtitle').textContent = HOUSE.source;
-CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
-CORE.ui.panelToggle($('stage'), $('panel'));
+CORE.ui.corner([[$('sunbtn'), $('sun'), is3d, CORE.ui.toggleTheme], [$('helpbtn'), $('help')]]);   // ☀: the sun in 3D, light or dark elsewhere
+CORE.ui.panelToggle($('stage'));
 CORE.ui.sunPanel($('sun'), MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); });
 
 const modeToggle = () => CORE.ui.modeToggle($('mode'), VIEWS, state.mode, setMode);
@@ -463,7 +463,7 @@ function setMode(m) {
   state.mode = m; save();
   const v = view();
   $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; canvas.hidden = !is3d();
-  $('sunbtn').hidden = !is3d(); if (!is3d()) $('sun').hidden = true;
+  CORE.ui.sunTitle($('sunbtn'), is3d()); if (!is3d()) $('sun').hidden = true;
   CORE.ui.helpMode($('help'), m);
   if (!is3d()) V.stopWalk();
   if (v.plan) drawPlan();

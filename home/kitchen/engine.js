@@ -336,9 +336,6 @@
 
   /* the appliances of the project: design.js names each by the type or tag it fits (fridgeFreezer for the tags fridge and
      freezer) with its product key in the library (library/products.js appliances) and how it is built in here (feet) */
-  /* a material's key as people read it: egger-u708-st9-18 -> EGGER U708 ST9 18 */
-  const materialCode = key => key.toUpperCase().replace(/-/g, ' ');
-
   function appliances(project, library) {
     return Object.fromEntries(Object.entries((project && project.appliances) || {}).map(([role, a]) => {
       if (!library[a.product]) throw new Error(`design.js appliances.${role}: brak produktu ${a.product} w library/products.js`);
@@ -1170,6 +1167,6 @@
   root.KitchenEngine = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, hasTag, FRONT_TYPES, SIDES, HINGE_SIDES,
     placeLabel, gapsText, parseTags, spaceAround, valueAt, PINS_PER_SHELF, tagsOf, readType, cutKey, checkSettings, build, cutList, carcassMap, mapJSON,
-    load, designJS, fromDesignJS, plural, appliances, withLibrary, materialCode
+    load, designJS, fromDesignJS, plural, appliances, withLibrary
   };
 })(typeof window !== 'undefined' ? window : globalThis);

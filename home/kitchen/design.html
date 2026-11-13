@@ -291,13 +291,12 @@
         <div class="sheet-wrap">
           <table class="sheet read-only">
             <thead>
-              <tr><th style="width:64px">Kod</th><th style="width:200px">Nazwa</th><th style="width:96px" title="Grubość; × głębokość, gdy materiał ją podaje (blat, panel końcowy)">Wymiar</th><th style="width:56px" title="Kolor płyty; widok 3D pokazuje teksturę, gdy materiał ją podaje">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w design.js)">Użycie</th></tr>
+              <tr><th style="width:320px">Nazwa</th><th style="width:96px" title="Grubość; × głębokość, gdy materiał ją podaje (blat, panel końcowy)">Wymiar</th><th style="width:56px" title="Kolor płyty; widok 3D pokazuje teksturę, gdy materiał ją podaje">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w design.js)">Użycie</th></tr>
             </thead>
             <tbody>
               <template x-for="m in materials" :key="m.code">
                 <tr>
-                  <td x-text="m.code"></td>
-                  <td x-text="m.name"></td>
+                  <td x-text="m.name" :title="m.code"></td>
                   <td class="num" x-text="m.thickness + (m.depth ? ' × ' + m.depth : '')"></td>
                   <td><i class="swatch" :style="`background:${m.color}`" :title="m.color + (m.texture ? ', tekstura ' + m.texture : '')"></i></td>
                   <td class="center" x-text="m.lacquered ? '✓' : ''"></td>
@@ -873,7 +872,7 @@ document.addEventListener('alpine:init', () => {
       loadedProject = project;
       // shown, not edited; uses as design.js lists them
       this.materials = Object.entries(KE.withLibrary(project, LIBRARY_PRODUCTS.boards).materials)
-        .map(([code, m]) => ({ ...m, code }))   // the key in design.js; the library's own product code must not replace it
+        .map(([code, m]) => ({ ...m, code }))   // the key in design.js (the library's product key), shown on the name
         .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: design.js order
       this.notes = (project.notes || []).map(n => this.newNoteRow(n.name ?? '', n.description ?? '', n.details ?? ''));
       this.groupRows = (project.groups || []).map(g => this.newGroupRow(g.group, g.name ?? '', g.backGap ?? ''));

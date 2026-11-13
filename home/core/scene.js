@@ -189,12 +189,22 @@ CORE.createView = function (opts) {
 
   /* ================= LIGHT AND CAMERA ================= */
   let hemi = null, sun = null;
+  /* the sky behind the model: the house's gradient by day, one dark colour by night (gradient null); the same in every
+     application */
+  const NIGHT_SKY = '#1b2236';
+  let skyTexture = null, skyOf = null;
+  function setSky(gradient) {
+    if (!gradient) { scene.background = new THREE.Color(NIGHT_SKY).convertSRGBToLinear(); return redraw(); }
+    if (skyOf !== gradient) {
+      skyTexture = canvasTexture(16, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); for (const [t, c] of gradient) gr.addColorStop(t, c); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+      skyTexture.mapping = THREE.EquirectangularReflectionMapping; skyOf = gradient;
+    }
+    scene.background = skyTexture; redraw();
+  }
   function addLight() {
     const LIGHT = opts.light, SKY = LIGHT.sky;
     renderer.toneMappingExposure = LIGHT.exposure;
-    const skyTexture = canvasTexture(16, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); for (const [t, c] of SKY.gradient) gr.addColorStop(t, c); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
-    skyTexture.mapping = THREE.EquirectangularReflectionMapping;
-    scene.background = skyTexture;
+    setSky(SKY.gradient);
     scene.environment = new THREE.PMREMGenerator(renderer).fromEquirectangular(skyTexture).texture;
     scene.fog = new THREE.Fog(lin(LIGHT.fog.color), LIGHT.fog.near * MM, LIGHT.fog.far * MM);
     hemi = new THREE.HemisphereLight(lin(SKY.color), lin(SKY.groundColor), SKY.intensity); scene.add(hemi);
@@ -403,7 +413,7 @@ CORE.createView = function (opts) {
   const run = () => requestAnimationFrame(frame);
 
   return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, CUT, CLIP, hash01, canvasTexture, loadImage, material, useMaterial, capMaterial,
-    buildMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, addLight, placeSun, setCamera, addCaps, buildCaps, setCut,
+    buildMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, addLight, setSky, placeSun, setCamera, addCaps, buildCaps, setCut,
     onClick, enableNavigation, walk, enableWalk, startWalk, stopWalk, onFrame, start, run, get hemi() { return hemi; }, get sun() { return sun; } };
 };
 })(window.CORE = window.CORE || {});

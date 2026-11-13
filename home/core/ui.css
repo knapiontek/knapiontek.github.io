@@ -2,7 +2,7 @@
 :root{
   --bg:#eceeec; --stage:#dfe3e1; --panel:#f7f8f6; --ink:#1f2523; --muted:#5f6a66; --line:#cfd5d2;
   --accent:#9a6a2f; --accent-ink:#fff; --warn:#b3402e; --ok:#3f7a52;
-  --edge:#3b4441; --lift:rgba(0,0,0,.18);   /* the menus' outline and shadow: in contrast to the mode, so they stand out over any view */
+  --edge:#2b3330; --lift:rgba(0,0,0,.22); --menu:#d9e1dd; --sheet:#fff;   /* the menus: outline, shadow, a ground of their own, in contrast to the mode and to every page under them; the 2D sheet */
   --f-display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
   --f-body:"Barlow","Segoe UI",Roboto,Arial,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
@@ -10,19 +10,26 @@
 /* dark as the system is (Windows: Settings > Personalisation > Colours), or on request (data-theme) */
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#121615; --stage:#1b201f; --panel:#1c2220; --ink:#f1f4f2; --muted:#b3bdb9; --line:#3a4440;
-  --accent:#e0a25c; --accent-ink:#1a1208; --warn:#ff8a73; --ok:#86d29b; --edge:#e9eeec; --lift:rgba(0,0,0,.55); color-scheme:dark}}
+  --accent:#e0a25c; --accent-ink:#1a1208; --warn:#ff8a73; --ok:#86d29b; --edge:#e9eeec; --lift:rgba(0,0,0,.55); --menu:#323c38; --sheet:#1c2220; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121615; --stage:#1b201f; --panel:#1c2220; --ink:#f1f4f2; --muted:#b3bdb9; --line:#3a4440;
-  --accent:#e0a25c; --accent-ink:#1a1208; --warn:#ff8a73; --ok:#86d29b; --edge:#e9eeec; --lift:rgba(0,0,0,.55); color-scheme:dark}
+  --accent:#e0a25c; --accent-ink:#1a1208; --warn:#ff8a73; --ok:#86d29b; --edge:#e9eeec; --lift:rgba(0,0,0,.55); --menu:#323c38; --sheet:#1c2220; color-scheme:dark}
 /* the menus over the view: always visible, whatever the mode and whatever is drawn under them */
-.apps,.hud .toggle,.modes,.chk,.roomtag,.dock,.round,.panelbtn,.float{border:1.5px solid var(--edge)!important;box-shadow:0 2px 10px var(--lift)}
+.apps,.hud .toggle,.modes,.chk,.roomtag,.dock,.round,.panelbtn,.float{border:2.5px solid var(--edge)!important;box-shadow:0 2px 10px var(--lift)}
+.apps,.hud .toggle,.modes,.chk,.roomtag,.dock,.round,.panelbtn{background:var(--menu)!important}
+/* the panel as the viewer left it, from the first moment; its sections once the page has picked its tab */
+:root[data-panel-closed] .app>aside{display:none}
+:root[data-panel-closed] .app{grid-template-columns:minmax(0,1fr)}
+.app:not([data-ready]) aside [data-tab]{display:none}
+/* 2D like a drawing on the page's ground: in the dark, light lines on dark (the saved SVG stays as drawn) */
+:root[data-theme="dark"] #sheet svg{filter:invert(1) hue-rotate(180deg)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #sheet svg{filter:invert(1) hue-rotate(180deg)}}
 [hidden]{display:none!important}
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow:hidden}
 button{font:inherit;color:inherit}
 .app{position:relative;height:100%;display:grid;grid-template-columns:minmax(0,1fr) 370px}
-.app[data-wide]{grid-template-columns:minmax(0,1fr)}
 /* » « on the right edge of the main view */
 .panelbtn{position:absolute;z-index:7;right:0;top:50%;transform:translateY(-50%);width:22px;height:56px;border:1px solid var(--line);border-right:0;border-radius:8px 0 0 8px;background:var(--panel);color:var(--muted);font:700 15px var(--f-display);cursor:pointer;padding:0}
 .panelbtn:hover{color:var(--accent)}
@@ -85,7 +92,7 @@ button{font:inherit;color:inherit}
 .pad{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:64px;z-index:6;display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px}
 .pad button{border:1px solid var(--line);background:var(--panel);border-radius:8px;font-size:16px;cursor:pointer;touch-action:none;user-select:none}
 .pad [data-k=ArrowUp]{grid-column:2;grid-row:1}.pad [data-k=ArrowLeft]{grid-column:1;grid-row:2}.pad [data-k=ArrowDown]{grid-column:2;grid-row:2}.pad [data-k=ArrowRight]{grid-column:3;grid-row:2}
-#plan2d{position:absolute;inset:0;z-index:4;background:#fff;display:flex;flex-direction:column;padding-top:56px;padding-bottom:56px}
+#plan2d{position:absolute;inset:0;z-index:4;background:var(--sheet);display:flex;flex-direction:column;padding-top:56px;padding-bottom:56px}
 #sheet{flex:1;min-height:0;overflow:auto;padding:12px}
 #analysis,#info{position:absolute;inset:0;z-index:4;background:var(--panel);overflow:auto;padding:64px 20px 20px}
 #info{padding-bottom:64px}

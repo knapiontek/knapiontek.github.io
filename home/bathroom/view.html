@@ -445,14 +445,8 @@ const houseToFrame = p => new THREE.Vector3((G.X0 - p[0]) / 1000, (p[2] - G.LEVE
 
 for (const surface of SURFACES) applyTiles(surface);
 
-function syncStageColor() {
-  const css = getComputedStyle(document.documentElement).getPropertyValue('--stage').trim();
-  scene.background = new THREE.Color(css || '#c9ced1');
-  invalidate();
-}
-syncStageColor();
-try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncStageColor); } catch (e) {}
-new MutationObserver(syncStageColor).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+/* the sky behind the room: the house's, as in every application (setLighting: by night core's dark one) */
+const HOUSE_SKY = Object.values(HOUSE.views).find(v => v.menu).light.sky.gradient;
 
 // reflection environment (metal, ceramics, mirror): grey sphere with two bright panels
 let envMap = null;
@@ -1431,6 +1425,7 @@ function setLighting(mode) {
   }
   invalidate();
   renderer.toneMappingExposure = preset.exposure;
+  VIEW.setSky(mode === 'night' ? null : HOUSE_SKY);
   M.sky.color.setHex(preset.sky);
   M.led.color.setHex(preset.led);
 }
@@ -1772,8 +1767,8 @@ function planSvg() {
 }
 const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state: VIEW_STATE, save: saveView, svg: planSvg, file: `lazienka-${FLOOR}-rzut.svg` });
 /* the screen (core/ui.js; ../project.md, Flow): the mode sets the main view, the bottom menu, the panel's tabs, ☀ */
-CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
-CORE.ui.panelToggle(stage, $('settings'));
+CORE.ui.corner([[$('sunbtn'), $('sun'), () => !!MODES[VIEW_STATE.mode].menu, CORE.ui.toggleTheme], [$('helpbtn'), $('help')]]);   // ☀: the sun in 3D, light or dark elsewhere
+CORE.ui.panelToggle(stage);
 CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); setLighting(state.lighting); }, HOUSE_ROOM.inside);
 const showPanel = () => { VIEW_STATE.tab = CORE.ui.panelTabs($('tabs'), $('settings'), MODES[VIEW_STATE.mode], VIEW_STATE.tab, t => { VIEW_STATE.tab = t; saveView(); showPanel(); },
   p => p === 'style' && !MODES[VIEW_STATE.mode].menu) ?? VIEW_STATE.tab; };
@@ -1781,7 +1776,7 @@ function setMode(m) {
   VIEW_STATE.mode = MODES[m] ? m : MODE_IDS[0]; saveView();
   const v = MODES[VIEW_STATE.mode], is3d = !!v.menu;
   $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; canvasEl.hidden = !is3d;
-  $('sunbtn').hidden = !is3d; if (!is3d) $('sun').hidden = true;
+  CORE.ui.sunTitle($('sunbtn'), is3d); if (!is3d) $('sun').hidden = true;
   CORE.ui.helpMode($('help'), VIEW_STATE.mode);
   CORE.ui.modeToggle($('mode'), MODES, VIEW_STATE.mode, setMode);
   const ctx = $('context'); ctx.innerHTML = '';

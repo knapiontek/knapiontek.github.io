@@ -1055,14 +1055,13 @@ function toggle(m, on) {
 }
 
 /* ---------- day and night ---------- */
-const SKY = V.scene.background;
 function setLight(mode) {
   state.light = mode; save();
   const night = mode === 'night';
   V.sun.visible = !night;
   V.hemi.intensity = LIGHT.sky.intensity * (night ? 0.06 : 1);
   V.renderer.toneMappingExposure = night ? 1.3 : LIGHT.exposure;
-  V.scene.background = night ? new THREE.Color(0x1b2236).convertSRGBToLinear() : SKY;
+  V.setSky(night ? null : LIGHT.sky.gradient);   // the house's sky by day, core's night
   for (const { light, shadow } of LAMPS) { light.visible = night; light.castShadow = night && shadow; }
   for (const m of LAMP_MATERIALS) { m.emissive.set(night ? 0xfff0dc : 0x000000); m.emissiveIntensity = night ? 2 : 1; }
   $('light').innerHTML = [['day', 'Dzień'], ['night', 'Noc']].map(([k, t]) => `<button data-light="${k}"${k === mode ? ' data-on' : ''} aria-pressed="${k === mode}">${t}</button>`).join('');
@@ -1144,8 +1143,8 @@ const frontName = model.materials[model.materialFor.cabinet].name;
 $('title').textContent = $('infoTitle').textContent = 'Kuchnia · ' + frontName;
 document.title = 'Kuchnia ' + frontName;
 $('subtitle').textContent = $('infoSubtitle').textContent = ROOM.floorName + ', pomieszczenie z domu: ' + ROOM.name + ' · ' + GROUP_IDS.length + ' grupy, ' + carcasses.length + ' korpusów';
-CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
-CORE.ui.panelToggle($('stage'), $('panel'));
+CORE.ui.corner([[$('sunbtn'), $('sun'), () => is3d(), CORE.ui.toggleTheme], [$('helpbtn'), $('help')]]);   // ☀: the sun in 3D, light or dark elsewhere
+CORE.ui.panelToggle($('stage'));
 CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); V.placeSun(SUN.state); if (state.light === 'night') setLight('night'); }, ROOM.inside);   // night keeps its sky light
 
 /* layers */
@@ -1384,7 +1383,7 @@ function setMode(m) {
   state.mode = VIEWS[m] ? m : Object.keys(VIEWS)[0]; save();
   const v = view();
   $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; $('gl').hidden = !is3d(); tip.hidden = true;
-  $('sunbtn').hidden = !is3d(); if (!is3d()) $('sun').hidden = true;
+  CORE.ui.sunTitle($('sunbtn'), is3d()); if (!is3d()) $('sun').hidden = true;
   CORE.ui.helpMode($('help'), state.mode);
   CORE.ui.modeToggle($('mode'), VIEWS, state.mode, setMode);
   CORE.ui.bottomMenu($('dock'), is3d() ? [CAMERA_ITEMS] : v.plan ? [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]] : v.info ? INFO_ITEMS : []);
