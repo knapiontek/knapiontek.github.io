@@ -99,22 +99,21 @@ dl.notes dd{margin:0;color:var(--muted)}
     <div id="tip" hidden></div>
     <div class="float sunfloat" id="sun" role="dialog" aria-label="Słońce i światło" hidden>
       <div id="compass"></div>
-      <h2>Oświetlenie</h2>
-      <div class="toggle" id="light" role="group" aria-label="Światło"></div>
     </div>
     <div class="float" id="help" role="dialog" aria-label="Pomoc" hidden>
       <div data-help="3d">
         <p>Obracaj: lewy przycisk (z zewnątrz wokół środka pomieszczenia, w środku wokół tego, co na środku widoku) · przesuwaj: prawy · przybliżaj: kółko (do miejsca pod kursorem).</p>
         <p>Kliknięcie frontu otwiera go albo zamyka; kliknięcie płyty korpusu wybiera korpus. Kursor zatrzymany na części pokazuje jej nazwę.</p>
         <p>Pomieszczenie jest z domu, takie jak jest. Ściana, sufit albo podłoga, za którymi stoi kamera, chowają się.</p>
-        <p>U góry: grupy szafek. Na dole: skąd patrzysz. ☀: słońce domu (to samo we wszystkich aplikacjach) oraz dzień albo noc.</p>
+        <p>U góry: grupy szafek. Na dole: skąd patrzysz. ☀: słońce domu oraz dzień albo noc (wspólne dla wszystkich aplikacji). ◐: jasny albo ciemny wygląd.</p>
       </div>
       <div data-help="2d"><p>Rzut kuchni jak rysunek CAD, cięty na wysokości z rzutu domu: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG.</p></div>
       <div data-help="test"><p>Sprawdzenie geometrii: kolizje, szczeliny, fronty poza linią, części wystające, części bez wymiaru. <b>OK</b> = nic do poprawienia.</p></div>
       <div data-help="info"><p>Wszystko o kuchni: kosztorys, lista cięć i notatki w arkuszu (niebieskie pola można zmieniać do odświeżenia strony; „patrz notatka” prowadzi do notatki), montaż korpus po korpusie, podsumowanie z modelu, korpusy (kliknij, aby zobaczyć płyty), materiały, wymiary. Na dole: zapis XLSX z formułami, przywrócenie danych, edycja projektu, mapa korpusów.</p></div>
     </div>
     <div class="corner">
-      <button class="round" id="sunbtn" aria-label="Światło" aria-expanded="false" aria-controls="sun">☀</button>
+      <button class="round" id="themebtn" aria-label="Jasny / ciemny" title="Jasny / ciemny"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
+      <button class="round" id="sunbtn" aria-label="Słońce" title="Słońce" aria-expanded="false" aria-controls="sun">☀</button>
       <button class="round" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
     </div>
   </div>
@@ -335,7 +334,7 @@ const PRESETS = {
   carcasses: ['Tylko korpusy', k => (k[0] === 'g' && !LAYER[k].parent) || CARCASS_ONLY.includes(k)]
 };
 const STORE = CORE.ui.store('kitchen-view-v2',          // v2: views
-  () => ({ layers: Object.fromEntries(Object.keys(LAYER).map(k => [k, true])), mode: Object.keys(SCENE.views)[0], zoom: 1, tab: null, light: 'day', palette: 'colour', handle: 'cup',
+  () => ({ layers: Object.fromEntries(Object.keys(LAYER).map(k => [k, true])), mode: Object.keys(SCENE.views)[0], zoom: 1, tab: null, palette: 'colour', handle: 'cup',
     metal: HW.handle.metal, floor: FLOOR_KEYS[0] || null, colourBy: false }),
   s => s.layers && Object.keys(s.layers).join() === Object.keys(LAYER).join() && SCENE.views[s.mode] && METALS[s.metal] && (!FLOOR_KEYS.length || FLOORS[s.floor]));
 const state = STORE.state, save = STORE.save;
@@ -1055,24 +1054,19 @@ function toggle(m, on) {
 }
 
 /* ---------- day and night ---------- */
-function setLight(mode) {
-  state.light = mode; save();
-  const night = mode === 'night';
-  V.sun.visible = !night;
-  V.hemi.intensity = LIGHT.sky.intensity * (night ? 0.06 : 1);
+/* day or night (☀, one for every application): core puts out the sun and shows the night sky; here the lamps go on */
+function applyNight() {
+  const night = !!SUN.state.night;
   V.renderer.toneMappingExposure = night ? 1.3 : LIGHT.exposure;
-  V.setSky(night ? null : LIGHT.sky.gradient);   // the house's sky by day, core's night
   for (const { light, shadow } of LAMPS) { light.visible = night; light.castShadow = night && shadow; }
   for (const m of LAMP_MATERIALS) { m.emissive.set(night ? 0xfff0dc : 0x000000); m.emissiveIntensity = night ? 2 : 1; }
-  $('light').innerHTML = [['day', 'Dzień'], ['night', 'Noc']].map(([k, t]) => `<button data-light="${k}"${k === mode ? ' data-on' : ''} aria-pressed="${k === mode}">${t}</button>`).join('');
   applyPalette();
 }
-$('light').onclick = e => { const b = e.target.closest('[data-light]'); if (b) setLight(b.dataset.light); };
 
 /* ---------- colours: Colour = the project's materials; White = a matte white model (the edges are a layer of their own) ---------- */
 const LOOKS = new Map();                       // material -> its own look
 function applyPalette() {
-  const white = state.palette === 'white', night = state.light === 'night';
+  const white = state.palette === 'white', night = !!SUN.state.night;
   if (!LOOKS.size) for (const o of [...V.GROUPS.map(g => g.mesh), ...DETAILS.map(d => d.mesh)]) for (const m of [].concat(o.material)) {
     if (m.isMeshStandardMaterial && !m.transparent && !LAMP_MATERIALS.includes(m)) LOOKS.set(m, { color: m.color.clone(), map: m.map, metalness: m.metalness, roughness: m.roughness, env: m.envMapIntensity });
   }
@@ -1143,9 +1137,10 @@ const frontName = model.materials[model.materialFor.cabinet].name;
 $('title').textContent = $('infoTitle').textContent = 'Kuchnia · ' + frontName;
 document.title = 'Kuchnia ' + frontName;
 $('subtitle').textContent = $('infoSubtitle').textContent = ROOM.floorName + ', pomieszczenie z domu: ' + ROOM.name + ' · ' + GROUP_IDS.length + ' grupy, ' + carcasses.length + ' korpusów';
-CORE.ui.corner([[$('sunbtn'), $('sun'), () => is3d(), CORE.ui.toggleTheme], [$('helpbtn'), $('help')]]);   // ☀: the sun in 3D, light or dark elsewhere
+CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
+CORE.ui.themeButton($('themebtn'));
 CORE.ui.panelToggle($('stage'));
-CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); V.placeSun(SUN.state); if (state.light === 'night') setLight('night'); }, ROOM.inside);   // night keeps its sky light
+CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); V.placeSun(SUN.state); applyNight(); }, ROOM.inside);
 
 /* layers */
 function setLayer(k, on) { state.layers[k] = on; save(); layersPanel(); contextMenu(); apply(); }
@@ -1383,7 +1378,7 @@ function setMode(m) {
   state.mode = VIEWS[m] ? m : Object.keys(VIEWS)[0]; save();
   const v = view();
   $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; $('gl').hidden = !is3d(); tip.hidden = true;
-  CORE.ui.sunTitle($('sunbtn'), is3d()); if (!is3d()) $('sun').hidden = true;
+  $('sunbtn').hidden = !is3d(); if (!is3d()) $('sun').hidden = true;   // ☀ is the sun: 3D only
   CORE.ui.helpMode($('help'), state.mode);
   CORE.ui.modeToggle($('mode'), VIEWS, state.mode, setMode);
   CORE.ui.bottomMenu($('dock'), is3d() ? [CAMERA_ITEMS] : v.plan ? [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]] : v.info ? INFO_ITEMS : []);
@@ -1400,7 +1395,7 @@ CORE.ui.appMenu($('apps'), APPS, 'kitchen', '../', () => state.mode);
 setMode(location.hash === '#carcasses' ? 'info' : CORE.ui.askedMode(VIEWS) || state.mode);   // #carcasses: the carcasses, in Info
 layersPanel();
 applyPalette();
-setLight(state.light);
+applyNight();
 setMetal(state.metal);
 if (FLOOR_KEYS.length) setFloor(state.floor); else materialsPanel();
 paintCarcasses();

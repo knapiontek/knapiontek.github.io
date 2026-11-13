@@ -42,7 +42,8 @@ The house view can show a sub-project's furniture (the kitchen in the living roo
 - **The contract** (core): a sub-project may give `solids(houseModel)`: its solids in house axes and mm, with layers, and its layer tree.
 - **The sub-project keeps it** in one file used by both pages (kitchen/solids.js: engine.js + design.js + view.js → solids). Its own page draws the same solids: no copy, no fake.
 - **apps.js** says which files give a sub-project's solids; the house page loads them and calls the contract. The word "kitchen" is nowhere in the house's code.
-- **To look at, not to change**: in the house, the sub-project is one more group in Warstwy; a click opens its application.
+- **To look at, not to change**: in the house, the sub-project is one more group in Warstwy; its application opens from there (and from the room's tag), not by a click in the view.
+- **Doors still open**: its doors, cabinet doors and drawers (the kitchen's fronts, the bathroom's vanity) open and close on a click in the house as in its own application: the contract hands over what moves (hinge or slide) with the solids, not only the solids.
 
 ## Sub-projects and their room
 

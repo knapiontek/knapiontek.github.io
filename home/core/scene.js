@@ -189,12 +189,28 @@ CORE.createView = function (opts) {
 
   /* ================= LIGHT AND CAMERA ================= */
   let hemi = null, sun = null;
-  /* the sky behind the model: the house's gradient by day, one dark colour by night (gradient null); the same in every
-     application */
-  const NIGHT_SKY = '#1b2236';
-  let skyTexture = null, skyOf = null;
+  /* the sky behind the model: the house's gradient by day; by night (gradient null) a dark sky with stars and a glow
+     over the horizon (the middle of the picture); the same in every application */
+  const NIGHT = { fog: '#141a26', gradient: [[0, '#070b16'], [0.36, '#121a2e'], [0.47, '#24304a'], [0.5, '#3a3f52'], [0.52, '#151a22'], [1, '#0b0e13']], stars: 420 };
+  let skyTexture = null, skyOf = null, nightTexture = null, dayEnvironment = null;
+  function nightSky() {
+    if (nightTexture) return nightTexture;
+    let seed = 7;
+    const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // the same stars on every load
+    nightTexture = canvasTexture(4096, 2048, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, 0, h); for (const [t, c] of NIGHT.gradient) gr.addColorStop(t, c); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < NIGHT.stars; i++) {
+        const y = (0.12 + 0.34 * random()) * h;   // from well under the zenith (no stretching) down to the glow over the horizon
+        g.fillStyle = `rgba(255,255,255,${0.45 + 0.55 * random()})`;
+        g.fillRect(random() * w, y, 2, 2);
+      }
+    });
+    nightTexture.mapping = THREE.EquirectangularReflectionMapping;
+    nightTexture.generateMipmaps = false; nightTexture.minFilter = THREE.LinearFilter;   // sharp points, not smudges
+    return nightTexture;
+  }
   function setSky(gradient) {
-    if (!gradient) { scene.background = new THREE.Color(NIGHT_SKY).convertSRGBToLinear(); return redraw(); }
+    if (!gradient) { scene.background = nightSky(); return redraw(); }
     if (skyOf !== gradient) {
       skyTexture = canvasTexture(16, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); for (const [t, c] of gradient) gr.addColorStop(t, c); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
       skyTexture.mapping = THREE.EquirectangularReflectionMapping; skyOf = gradient;
@@ -215,12 +231,18 @@ CORE.createView = function (opts) {
     scene.add(sun, sun.target);
   }
   /* s: {az, el, k}: azimuth from +x towards +y, elevation, brightness */
+  /* the sun {az, el, k, night}: by night no sun, a faint sky light, the night sky and fog */
   function placeSun(s) {
     const LIGHT = opts.light, az = s.az * DEG, el = s.el * DEG;
     const centre = toWorld(...opts.sunCentre), dir = toWorld(Math.cos(az) * Math.cos(el), Math.sin(az) * Math.cos(el), Math.sin(el)).divideScalar(MM);   // a unit direction, in metres
     sun.position.copy(centre).addScaledVector(dir, 40);
     sun.target.position.copy(centre);
-    sun.intensity = LIGHT.sun.intensity * s.k; hemi.intensity = LIGHT.sky.intensity * (0.6 + 0.4 * s.k);
+    sun.visible = !s.night;
+    dayEnvironment ||= scene.environment;
+    scene.environment = s.night ? null : dayEnvironment;   // by night nothing reflects the day's sky
+    sun.intensity = LIGHT.sun.intensity * s.k; hemi.intensity = LIGHT.sky.intensity * (s.night ? 0.14 : 0.6 + 0.4 * s.k);   // by night just enough to see the house's outline
+    setSky(s.night ? null : LIGHT.sky.gradient);
+    if (scene.fog) scene.fog.color.copy(lin(s.night ? NIGHT.fog : LIGHT.fog.color));
     redraw();
   }
 

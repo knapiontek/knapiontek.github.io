@@ -32,7 +32,7 @@
       <div data-help="3d">
         <p>Obracaj: lewy przycisk (z zewnątrz wokół środka domu, w środku wokół tego, co na środku widoku) · przesuwaj: prawy · przybliżaj: kółko (do miejsca pod kursorem).</p>
         <p><b>Spacer</b>: strzałki chodzą i obracają, A/D krok w bok, Shift szybciej, PgUp/PgDn lub przeciąganie myszą patrzy, Esc kończy.</p>
-        <p>U góry: kondygnacje i dach. Na dole: skąd patrzysz. ☀: przeciągnij słońce wokół domu i po łuku wysokości.</p>
+        <p>U góry: kondygnacje i dach. Na dole: skąd patrzysz. ☀: przeciągnij słońce wokół domu i po łuku wysokości; dzień albo noc (wspólne dla wszystkich aplikacji). ◐: jasny albo ciemny wygląd.</p>
         <p>Bez dachu najwyższa pokazana kondygnacja jest otwarta: jej przekrój jest w Warstwach, kliknięcie w podłogę wybiera pomieszczenie (płytki w Wykończeniu).</p>
         <p><b>Czerwone</b> płytki = drobne docinki.</p>
       </div>
@@ -41,7 +41,8 @@
       <div data-help="info"><p>Wszystko o domu w arkuszu: posadzki (ilość płytek, cena, wartość) i pomieszczenia, potem uwagi. Niebieskie pola można zmieniać do odświeżenia strony; płytki zmieniasz w Wykończeniu. Na dole: zapis XLSX z formułami, przywrócenie danych.</p></div>
     </div>
     <div class="corner">
-      <button class="round" id="sunbtn" aria-label="Słońce" aria-expanded="false" aria-controls="sun">☀</button>
+      <button class="round" id="themebtn" aria-label="Jasny / ciemny" title="Jasny / ciemny"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
+      <button class="round" id="sunbtn" aria-label="Słońce" title="Słońce" aria-expanded="false" aria-controls="sun">☀</button>
       <button class="round" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
     </div>
   </div>
@@ -328,7 +329,8 @@ const placeSun = () => V.placeSun(SUN.state);
    the tabs the mode lists (Warstwy, Wykończenie) · the corner: ☀ (3D) and ? */
 $('title').textContent = HOUSE.name;
 $('subtitle').textContent = HOUSE.source;
-CORE.ui.corner([[$('sunbtn'), $('sun'), is3d, CORE.ui.toggleTheme], [$('helpbtn'), $('help')]]);   // ☀: the sun in 3D, light or dark elsewhere
+CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
+CORE.ui.themeButton($('themebtn'));
 CORE.ui.panelToggle($('stage'));
 CORE.ui.sunPanel($('sun'), MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); });
 
@@ -463,7 +465,7 @@ function setMode(m) {
   state.mode = m; save();
   const v = view();
   $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; canvas.hidden = !is3d();
-  CORE.ui.sunTitle($('sunbtn'), is3d()); if (!is3d()) $('sun').hidden = true;
+  $('sunbtn').hidden = !is3d(); if (!is3d()) $('sun').hidden = true;   // ☀ is the sun: 3D only
   CORE.ui.helpMode($('help'), m);
   if (!is3d()) V.stopWalk();
   if (v.plan) drawPlan();

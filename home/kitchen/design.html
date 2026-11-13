@@ -147,7 +147,10 @@
         .input-grid .sub-section.columns .sheet.groups { margin-bottom: 14px; }
         .sheet td.center { text-align: center; }
         .sheet.read-only td { padding: 7px 10px; color: var(--sheet-text); white-space: normal; }
-        .sheet.read-only td.num { text-align: right; }
+        .sheet.read-only td.num { text-align: right; white-space: nowrap; }
+        /* materials: the name takes the room it needs, the short columns only their content, the uses the rest */
+        .sheet.read-only th.name { width: 50%; }
+        .sheet.read-only th.fit { width: 1%; }
         .sheet .swatch { display: block; width: 32px; height: 16px; border-radius: 3px; border: 1px solid var(--sheet-border); }
         .sub-section h4 {
           margin: 0 0 8px 0;
@@ -291,7 +294,7 @@
         <div class="sheet-wrap">
           <table class="sheet read-only">
             <thead>
-              <tr><th style="width:320px">Nazwa</th><th style="width:96px" title="Grubość; × głębokość, gdy materiał ją podaje (blat, panel końcowy)">Wymiar</th><th style="width:56px" title="Kolor płyty; widok 3D pokazuje teksturę, gdy materiał ją podaje">Kolor</th><th style="width:56px" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w design.js)">Użycie</th></tr>
+              <tr><th class="name">Nazwa</th><th class="fit" title="Grubość; × głębokość, gdy materiał ją podaje (blat, panel końcowy)">Wymiar</th><th class="fit" title="Kolor płyty; widok 3D pokazuje teksturę, gdy materiał ją podaje">Kolor</th><th class="fit" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w design.js)">Użycie</th></tr>
             </thead>
             <tbody>
               <template x-for="m in materials" :key="m.code">

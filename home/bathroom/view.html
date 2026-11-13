@@ -130,22 +130,21 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
     <div class="dock" id="dock" aria-label="Dolne menu"></div>
     <div class="float sunfloat" id="sun" role="dialog" aria-label="Słońce i światło" hidden>
       <div id="compass"></div>
-      <h2>Oświetlenie</h2>
-      <div class="toggle" id="light" role="group" aria-label="Światło"></div>
     </div>
     <div class="float" id="help" role="dialog" aria-label="Pomoc" hidden>
       <div data-help="3d">
         <p>Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko lub szczypanie.</p>
         <p>Kliknięcie drzwi, drzwiczek albo szuflady otwiera je lub zamyka.</p>
         <p>Pomieszczenie jest z domu, takie jak jest. Ściana albo sufit, za którymi stoi kamera, chowają się.</p>
-        <p>U góry: parter albo poddasze. Na dole: skąd patrzysz. ☀: słońce domu (to samo we wszystkich aplikacjach) oraz dzień albo noc.</p>
+        <p>U góry: parter albo poddasze. Na dole: skąd patrzysz. ☀: słońce domu oraz dzień albo noc (wspólne dla wszystkich aplikacji). ◐: jasny albo ciemny wygląd.</p>
       </div>
       <div data-help="2d"><p>Rzut łazienki jak rysunek CAD, cięty na wysokości z rzutu domu: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG.</p></div>
       <div data-help="test"><p>Sprawdzenia szafki i armatury z engine.js. <b>OK</b> = w normie.</p></div>
       <div data-help="info"><p>Szafka (rysunek, formatki, okucia, montaż), zakupy, wymiary i podejścia dla hydraulika. Płytki, płytę i armaturę zmieniasz w Wykończeniu. Na dole: XLSX (wszystko + e-Rozkrój M-HM), formatki CSV, kopiowanie.</p></div>
     </div>
     <div class="corner">
-      <button class="round" id="sunbtn" aria-label="Światło" aria-expanded="false" aria-controls="sun">☀</button>
+      <button class="round" id="themebtn" aria-label="Jasny / ciemny" title="Jasny / ciemny"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
+      <button class="round" id="sunbtn" aria-label="Słońce" title="Słońce" aria-expanded="false" aria-controls="sun">☀</button>
       <button class="round" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
     </div>
   </div>
@@ -270,7 +269,6 @@ const state = {
   tiles: JSON.parse(JSON.stringify(DATA.tiles)),   // format: short×long side in mm; layout: h = long side horizontal, v = vertical
   surface: 'wall',      // surface being edited in the panel
   metal: 'brass',
-  lighting: 'day',      // day | night
   style: 'real',        // real | lines (white solids; the edges are a layer of their own)
   layers: {},           // layer -> on, from the tree of BATH_DATA.views (core/ui.js, as the house and the kitchen)
 };
@@ -1415,8 +1413,9 @@ const LIGHTING = {
   day:   { exposure: 1.15, sky: 0xdfeefa, led: LED_OFF },
   night: { exposure: 1.0,  sky: 0x18202c, led: LED_ON },
 };
+/* day or night: the house's (☀, one for every application) */
+const dayOrNight = () => (SUN.state.night ? 'night' : 'day');
 function setLighting(mode) {
-  state.lighting = mode;
   const preset = LIGHTING[mode];
   // a light with intensity 0 is still evaluated in the shader — switch it off completely (all of them in "Drawing" style)
   for (const [light, day, night] of lightRig) {
@@ -1469,7 +1468,7 @@ function setStyle(style) {
     m.needsUpdate = true;
   }
   for (const m of Object.values(tileMaterials)) { m.map = lines ? m.userData.lines : m.userData.photo; m.needsUpdate = true; }
-  setLighting(state.lighting);
+  setLighting(dayOrNight());
 }
 function setMetalLook(name) {   // the fittings' finish, kept while the drawing style shows them grey
   setMetal(name);
@@ -1584,13 +1583,6 @@ syncTilePanel();
 $('title').textContent = $('infoTitle').textContent = `${DATA.name} · ${DATA.title}`;
 $('subtitle').textContent = `${HOUSE_ROOM.floorName}, pomieszczenie z domu: ${HOUSE_ROOM.name}`;
 document.title = `${DATA.title} — ${DATA.name}`;
-// day / night
-function lightToggle() {
-  const box = $('light');
-  box.innerHTML = [['day', 'Dzień'], ['night', 'Noc']].map(([k, t]) => `<button data-light="${k}"${k === state.lighting ? ' data-on' : ''} aria-pressed="${k === state.lighting}">${t}</button>`).join('');
-  box.onclick = e => { const b = e.target.closest('[data-light]'); if (b) { setLighting(b.dataset.light); lightToggle(); } };
-}
-lightToggle();
 
 // style
 onButton($('styles'), b => { setStyle(b.dataset.style); pressed($('styles').children, x => x === b); });
@@ -1767,16 +1759,17 @@ function planSvg() {
 }
 const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state: VIEW_STATE, save: saveView, svg: planSvg, file: `lazienka-${FLOOR}-rzut.svg` });
 /* the screen (core/ui.js; ../project.md, Flow): the mode sets the main view, the bottom menu, the panel's tabs, ☀ */
-CORE.ui.corner([[$('sunbtn'), $('sun'), () => !!MODES[VIEW_STATE.mode].menu, CORE.ui.toggleTheme], [$('helpbtn'), $('help')]]);   // ☀: the sun in 3D, light or dark elsewhere
+CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
+CORE.ui.themeButton($('themebtn'));
 CORE.ui.panelToggle(stage);
-CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); setLighting(state.lighting); }, HOUSE_ROOM.inside);
+CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); setLighting(dayOrNight()); }, HOUSE_ROOM.inside);
 const showPanel = () => { VIEW_STATE.tab = CORE.ui.panelTabs($('tabs'), $('settings'), MODES[VIEW_STATE.mode], VIEW_STATE.tab, t => { VIEW_STATE.tab = t; saveView(); showPanel(); },
   p => p === 'style' && !MODES[VIEW_STATE.mode].menu) ?? VIEW_STATE.tab; };
 function setMode(m) {
   VIEW_STATE.mode = MODES[m] ? m : MODE_IDS[0]; saveView();
   const v = MODES[VIEW_STATE.mode], is3d = !!v.menu;
   $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; canvasEl.hidden = !is3d;
-  CORE.ui.sunTitle($('sunbtn'), is3d); if (!is3d) $('sun').hidden = true;
+  $('sunbtn').hidden = !is3d; if (!is3d) $('sun').hidden = true;   // ☀ is the sun: 3D only
   CORE.ui.helpMode($('help'), VIEW_STATE.mode);
   CORE.ui.modeToggle($('mode'), MODES, VIEW_STATE.mode, setMode);
   const ctx = $('context'); ctx.innerHTML = '';
@@ -1828,7 +1821,7 @@ renderHardware(); renderWork(); renderPoints(); syncDecor();
    ========================================================================== */
 
 placeSun();
-setLighting(state.lighting);
+setLighting(dayOrNight());
 VIEW.enableNavigation();
 VIEW.start();
 goTo('overview', true);

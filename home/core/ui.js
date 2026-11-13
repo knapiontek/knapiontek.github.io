@@ -154,17 +154,13 @@ function bottomMenu(box, groups) {
   box.hidden = !box.children.length;
 }
 /* the bottom-right corner: buttons that each open their floating box [[button, box]], one box at a time */
-/* [button, box, when, otherwise]: while when() is false (☀ outside 3D) the button does otherwise() instead */
 function corner(pairs) {
   const close = () => { for (const [b, x] of pairs) { x.hidden = true; b.setAttribute('aria-expanded', false); } };
-  for (const [b, x, when, otherwise] of pairs) b.onclick = () => {
-    if (when && !when()) return otherwise();
-    const open = x.hidden; close(); x.hidden = !open; b.setAttribute('aria-expanded', open);
-  };
+  for (const [b, x] of pairs) b.onclick = () => { const open = x.hidden; close(); x.hidden = !open; b.setAttribute('aria-expanded', open); };
   return close;
 }
-/* light or dark: the system's, until the viewer picks one with ☀ outside 3D; one choice for every application, set the
-   moment this file loads */
+/* light or dark: the system's, until the viewer picks one with ◐ (in every mode); one choice for every application, set
+   the moment this file loads */
 const THEME = store('home-theme', () => ({ mode: null }), s => [null, 'light', 'dark'].includes(s.mode));
 const showTheme = () => { if (THEME.state.mode) document.documentElement.dataset.theme = THEME.state.mode; else delete document.documentElement.dataset.theme; };
 showTheme();
@@ -172,8 +168,8 @@ function toggleTheme() {
   const dark = THEME.state.mode ? THEME.state.mode === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
   THEME.state.mode = dark ? 'light' : 'dark'; THEME.save(); showTheme();
 }
-/* what ☀ does now: in 3D the sun, elsewhere light or dark */
-function sunTitle(button, is3d) { button.title = button.ariaLabel = is3d ? 'Słońce' : 'Jasny / ciemny'; }
+/* ◐ in the corner: light or dark */
+function themeButton(button) { button.onclick = toggleTheme; }
 /* the help of the current mode: the [data-help] sections of box */
 function helpMode(box, mode) { for (const s of box.querySelectorAll('[data-help]')) s.hidden = s.dataset.help !== mode; }
 
@@ -181,8 +177,9 @@ function helpMode(box, mode) { for (const s of box.querySelectorAll('[data-help]
    dragged round it (the direction, from +x toward +y as core/scene.js); an arc beside it (the height); brightness.
    sun {az, el, k} is changed in place; change() after every move. */
 const SUN_RANGE = { azStep: 5, el: [8, 75], k: [0.3, 1.6, 0.05] };   // degrees, degrees, a factor
-/* one sun for every application, stored once: the kitchen has the house's afternoon. fresh: {azimuth, elevation} */
-const sunStore = fresh => store('home-sun', () => ({ az: fresh.azimuth, el: fresh.elevation, k: 1 }), s => [s.az, s.el, s.k].every(Number.isFinite));
+/* one sun for every application, stored once: the kitchen has the house's afternoon, the house the kitchen's night.
+   fresh: {azimuth, elevation}; night: false by day */
+const sunStore = fresh => store('home-sun', () => ({ az: fresh.azimuth, el: fresh.elevation, k: 1, night: false }), s => [s.az, s.el, s.k].every(Number.isFinite));
 /* mark: the rects of this application's room, picked out on the plan */
 function sunPanel(box, rects, sun, change, mark = []) {
   const C = 80, R = 64, A = 120, top = 20;   // svg units: compass centre and radius; the arc's radius and top margin
@@ -196,7 +193,8 @@ function sunPanel(box, rects, sun, change, mark = []) {
     <svg class="arc" viewBox="0 0 ${A + 20} ${A + top + 10}" aria-label="Wysokość słońca"><path class="ring" d="M10 ${A + top} A${A} ${A} 0 0 0 ${A + 10} ${top}" fill="none"/>
       <line class="ground" x1="10" y1="${A + top}" x2="${A + 14}" y2="${A + top}"/><line class="ray" x1="10" y1="${A + top}"/><circle class="sundot" r="9"/></svg></div>
     <p class="sunread"></p>
-    <div class="rng"><label for="sunk">Jasność</label><span></span><input id="sunk" type="range" min="${SUN_RANGE.k[0]}" max="${SUN_RANGE.k[1]}" step="${SUN_RANGE.k[2]}"></div>`;
+    <div class="rng"><label for="sunk">Jasność</label><span></span><input id="sunk" type="range" min="${SUN_RANGE.k[0]}" max="${SUN_RANGE.k[1]}" step="${SUN_RANGE.k[2]}"></div>
+    <div class="toggle daynight" role="group" aria-label="Pora dnia"><button data-night="">Dzień</button><button data-night="1">Noc</button></div>`;
   const [compass, arc] = box.querySelectorAll('svg'), k = box.querySelector('input');
   /* the sun of an svg at (x, y): its dot and the ray to it */
   const place = (svg, x, y) => {
@@ -209,6 +207,7 @@ function sunPanel(box, rects, sun, change, mark = []) {
     place(arc, 10 + A * Math.cos(e), A + top - A * Math.sin(e));
     box.querySelector('.sunread').textContent = `Kierunek ${sun.az}° · wysokość ${sun.el}°`;
     k.value = sun.k; box.querySelector('.rng span').textContent = fmt(sun.k, 2);
+    for (const b of box.querySelectorAll('[data-night]')) { const on = !!b.dataset.night === !!sun.night; b.toggleAttribute('data-on', on); b.setAttribute('aria-pressed', on); }
   };
   /* a drag on an svg: the pointer in its own units */
   const drag = (svg, set) => {
@@ -220,6 +219,8 @@ function sunPanel(box, rects, sun, change, mark = []) {
   drag(compass, p => { const d = Math.atan2(p.x - C, p.y - C) * 180 / Math.PI; sun.az = (Math.round(d / SUN_RANGE.azStep) * SUN_RANGE.azStep + 360) % 360; });
   drag(arc, p => { const d = Math.atan2(A + top - p.y, p.x - 10) * 180 / Math.PI; sun.el = Math.min(SUN_RANGE.el[1], Math.max(SUN_RANGE.el[0], Math.round(d))); });
   k.oninput = () => { sun.k = +k.value; draw(); change(); };
+  const dayNight = box.querySelector('.daynight');
+  dayNight.onclick = e => { const b = e.target.closest('[data-night]'); if (b) { sun.night = !!b.dataset.night; draw(); change(); } };
   draw();
 }
 
@@ -232,5 +233,5 @@ function planSheet({ sheet, zoomIn, zoomOut, download, state, save, svg, file })
   return draw;
 }
 
-CORE.ui = { $, fmt, byId, el, option, store, layerTree, layerSwitch, layersPanel, helpToggle, checksHtml, appMenu, askedMode, panelTabs, panelToggle, bottomMenu, corner, toggleTheme, sunTitle, helpMode, sunStore, sunPanel, modeToggle, menuRow, cameraDock, panels, tabs, planSheet };
+CORE.ui = { $, fmt, byId, el, option, store, layerTree, layerSwitch, layersPanel, helpToggle, checksHtml, appMenu, askedMode, panelTabs, panelToggle, bottomMenu, corner, themeButton, helpMode, sunStore, sunPanel, modeToggle, menuRow, cameraDock, panels, tabs, planSheet };
 })(window.CORE = window.CORE || {});

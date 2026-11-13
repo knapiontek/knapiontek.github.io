@@ -2,7 +2,7 @@
 :root{
   --bg:#eceeec; --stage:#dfe3e1; --panel:#f7f8f6; --ink:#1f2523; --muted:#5f6a66; --line:#cfd5d2;
   --accent:#9a6a2f; --accent-ink:#fff; --warn:#b3402e; --ok:#3f7a52;
-  --edge:#2b3330; --lift:rgba(0,0,0,.22); --menu:#d9e1dd; --sheet:#fff;   /* the menus: outline, shadow, a ground of their own, in contrast to the mode and to every page under them; the 2D sheet */
+  --edge:#1a201e; --lift:rgba(0,0,0,.26); --menu:#cfd8d4; --sheet:#fff;   /* the menus: outline, shadow, a ground of their own, in contrast to the mode and to every page under them; the 2D sheet */
   --f-display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
   --f-body:"Barlow","Segoe UI",Roboto,Arial,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
@@ -10,10 +10,10 @@
 /* dark as the system is (Windows: Settings > Personalisation > Colours), or on request (data-theme) */
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#121615; --stage:#1b201f; --panel:#1c2220; --ink:#f1f4f2; --muted:#b3bdb9; --line:#3a4440;
-  --accent:#e0a25c; --accent-ink:#1a1208; --warn:#ff8a73; --ok:#86d29b; --edge:#e9eeec; --lift:rgba(0,0,0,.55); --menu:#323c38; --sheet:#1c2220; color-scheme:dark}}
+  --accent:#e0a25c; --accent-ink:#1a1208; --warn:#ff8a73; --ok:#86d29b; --edge:#f3f6f5; --lift:rgba(0,0,0,.6); --menu:#38433f; --sheet:#1c2220; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121615; --stage:#1b201f; --panel:#1c2220; --ink:#f1f4f2; --muted:#b3bdb9; --line:#3a4440;
-  --accent:#e0a25c; --accent-ink:#1a1208; --warn:#ff8a73; --ok:#86d29b; --edge:#e9eeec; --lift:rgba(0,0,0,.55); --menu:#323c38; --sheet:#1c2220; color-scheme:dark}
+  --accent:#e0a25c; --accent-ink:#1a1208; --warn:#ff8a73; --ok:#86d29b; --edge:#f3f6f5; --lift:rgba(0,0,0,.6); --menu:#38433f; --sheet:#1c2220; color-scheme:dark}
 /* the menus over the view: always visible, whatever the mode and whatever is drawn under them */
 .apps,.hud .toggle,.modes,.chk,.roomtag,.dock,.round,.panelbtn,.float{border:2.5px solid var(--edge)!important;box-shadow:0 2px 10px var(--lift)}
 .apps,.hud .toggle,.modes,.chk,.roomtag,.dock,.round,.panelbtn{background:var(--menu)!important}
@@ -45,7 +45,7 @@ button{font:inherit;color:inherit}
 .modes{position:absolute;z-index:6;top:12px;right:max(12px,env(safe-area-inset-right,0px))}
 /* the bottom-right corner: ☀ and ?, their boxes float over it */
 .corner{position:absolute;z-index:7;right:max(12px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));display:flex;gap:6px}
-.round{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font:700 16px var(--f-display);cursor:pointer;padding:0}
+.round{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font:700 16px var(--f-display);cursor:pointer;padding:0}
 .round[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .float{position:absolute;z-index:7;right:max(12px,env(safe-area-inset-right,0px));bottom:58px;width:min(340px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 14px;font-size:13px;color:var(--muted);box-shadow:0 6px 24px rgba(0,0,0,.12)}
 .float b{color:var(--ink)}
@@ -61,6 +61,7 @@ button{font:inherit;color:inherit}
 .compass .ray,.arc .ray{stroke:#e0a43a;stroke-width:1.5;stroke-dasharray:3 3}
 .sundot{fill:#f2b33d;stroke:#b5781a;stroke-width:2}
 .sunread{margin:6px 0;font:12px var(--f-mono);color:var(--ink)}
+.sunfloat .daynight{margin-top:10px}
 .stage{position:relative;background:var(--stage);min-width:0;min-height:0}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #loading{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center;font:600 15px var(--f-display);color:var(--muted)}
@@ -80,9 +81,9 @@ button{font:inherit;color:inherit}
 .roomtag button{border:0;background:transparent;color:var(--muted);font-size:15px;cursor:pointer;padding:0 4px}
 .btnlink{border:1px solid var(--line);background:var(--panel);color:var(--accent);font:600 12px var(--f-body);padding:4px 9px;border-radius:6px;text-decoration:none}
 .dock{position:absolute;left:12px;right:12px;margin-inline:auto;width:fit-content;max-width:calc(100% - 24px);bottom:max(12px,env(safe-area-inset-bottom,0px));z-index:6;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;background:color-mix(in srgb,var(--panel) 80%,transparent);border:1px solid var(--line);border-radius:10px;padding:4px}
-.dock button{border:1px solid var(--line);background:var(--panel);font:500 12px var(--f-body);padding:5px 9px;border-radius:6px;cursor:pointer}
+.dock button{border:1px solid transparent;background:transparent;font:600 12px var(--f-body);padding:5px 9px;border-radius:6px;cursor:pointer}   /* on the menu's own ground, as the other menus */
 .dock button:hover{border-color:var(--accent)}
-.dock .sep{width:1px;background:var(--line);margin:2px}
+.dock .sep{width:1.5px;background:var(--edge);opacity:.5;margin:2px}
 .dock .walk{font-weight:700;color:var(--accent);border-color:var(--accent)}
 .dock .walk[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .helpbtn{position:absolute;top:12px;right:max(12px,env(safe-area-inset-right,0px));z-index:7;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font:700 15px var(--f-display);cursor:pointer}
