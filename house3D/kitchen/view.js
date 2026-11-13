@@ -12,6 +12,8 @@
      metals        the metal finishes of the handles to choose from; hardware.handle.metal is the default
      lights        pendantBottom: the height of the pendants' bottom; pendants: centred over the worktop of their group;
                    downlights at {group, u, n} (u along the group from its start, n out from the wall), between [sink, hob] instead of u: halfway between their axes
+     views         as in house.js: 3D (menu: the groups, by layer, with their names in the menu), the 2D plan (cut at the
+                   house's own height for the floor), Analiza (the checks)
      cameras       the views in the dock; the first one opens */
 window.KITCHEN_VIEW = {
  "placement": {
@@ -50,6 +52,11 @@ window.KITCHEN_VIEW = {
    {"group": 2, "u": 1370, "n": 932},
    {"group": 2, "u": 2338, "n": 932}
   ]
+ },
+ "views": {
+  "3d": {"name": "3D", "menu": [{"layer": "g1", "name": "G1"}, {"layer": "g2", "name": "G2"}, {"layer": "g3", "name": "Wyspa"}], "panels": ["tabs"]},
+  "2d": {"name": "2D", "plan": true, "note": "Ogród u góry. Linią ciągłą to, co pod cięciem (widziane z góry), przerywaną to, co nad nim.", "panels": ["plan", "tabs"]},
+  "analysis": {"name": "Analiza", "analysis": true, "panels": ["tabs"]}
  },
  "cameras": {
   "all": {"name": "Całość", "position": {"x": 2248, "y": 3260, "z": 2900}, "target": {"x": 5448, "y": 7260, "z": 900}},

@@ -15,6 +15,7 @@ window.BATH_DATA = {
        The shower recess is the house's (as built: 900 × 1000 beyond the glass line). */
     ground: {
       type: 'ground', number: 7, name: 'Parter', title: 'Łazienka L grafit',
+      cameras: { overview: 'Ogólny', door: 'Od drzwi', vanity: 'Umywalka i WC', shower: 'Prysznic', cabinet: 'Szafka i grzejnik', plan: 'Rzut' },   // the dock
       showerLine: 8950,       // house x of the shower glass line; the recess beyond it is the house's
       ceiling: { height: 2450, ledGap: 50 },   // suspended plasterboard ceiling over the floor, LED gap along the walls
       shower: {
@@ -60,6 +61,7 @@ window.BATH_DATA = {
        in the top-right corner. */
     attic: {
       type: 'attic', number: 5, name: 'Poddasze', title: 'Łazienka jasna na poddaszu',
+      cameras: { overview: 'Ogólny', door: 'Od drzwi', vanity: 'Umywalki', bath: 'Wanna', shower: 'Prysznic', plan: 'Rzut' },
       shower: {
         width: 1000,          // along the bottom wall
         depth: 1000,          // along the door wall
@@ -130,6 +132,14 @@ window.BATH_DATA = {
       door: 'https://esklep-porta.pl/drzwi-wewnetrzne/porta/drzwi-ukryte-porta-hide-wc-bezprzylgowe-otwierane-na-zewnatrz-prawe-80cm-plyta-spa1110p08lbpwayv0o000,p22305,53.html',
     },
     prices: { legraboxC350: 156.28, basinBlack: 1825, plug: 249, radiator: 949.99, door: 1745, bath: 1498 },
+  },
+
+  /* as house.js: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own height for the
+     floor), Analiza (the checks of engine.js) */
+  views: {
+    '3d': { name: '3D', menu: 'floors', panels: ['tabs'] },
+    '2d': { name: '2D', plan: true, note: 'Ogród u góry. Linią ciągłą to, co pod cięciem (widziane z góry), przerywaną to, co nad nim.', panels: ['plan', 'tabs'] },
+    analysis: { name: 'Analiza', analysis: true, panels: ['tabs'] },
   },
 
   defaults: {

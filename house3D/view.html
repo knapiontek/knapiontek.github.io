@@ -73,6 +73,7 @@
 <script src="core/mesh.js"></script>
 <script src="core/scene.js"></script>
 <script src="core/ui.js"></script>
+<script src="core/plan.js"></script>
 <script src="engine.js"></script>
 <script src="analysis.js"></script>
 <script>
@@ -83,7 +84,7 @@
    Units are mm in house axes (x along, y across, z up) until the scene, which is in metres with y up.
    What is not about this house (geometry, mesh, scene, panel) is in core/. */
 
-const { DEG, INF, EPS, zRange, sectionAt, cutBy, rectArea } = CORE.geometry;
+const { DEG, INF, EPS, zRange, rectArea } = CORE.geometry;
 const { Batch, piecesOf } = CORE.mesh;
 const { $, fmt, byId, el, option } = CORE.ui;
 
@@ -328,34 +329,24 @@ $('subtitle').textContent = HOUSE.source;
 $('notes').innerHTML = HOUSE.notes.map(n => `<p>${n}</p>`).join('');
 CORE.ui.helpToggle($('helpbtn'), $('help'));
 
-/* one button per view: a click opens that view */
-function modeToggle() { $('mode').innerHTML = VIEW_IDS.map(k => `<button data-mode="${k}" aria-pressed="${state.mode === k}"${state.mode === k ? ' data-on' : ''}>${VIEWS[k].name}</button>`).join(''); }
-$('mode').onclick = e => { const b = e.target.closest('[data-mode]'); if (b && b.dataset.mode !== state.mode) setMode(b.dataset.mode); };
+const modeToggle = () => CORE.ui.modeToggle($('mode'), VIEWS, state.mode, setMode);
 
 function contextMenu() {
   const ctx = $('context'); ctx.innerHTML = '';
   if (!is3d()) return;
-  const row = el('div', { className: 'menurow' });
-  for (const k of VIEW_3D.menu) {
-    const l = el('label', { className: 'chk' }, `<input type="checkbox"${layerOn(k) ? ' checked' : ''}> ${LAYER[k].name}`);
-    l.querySelector('input').onchange = e => setLayer(k, e.target.checked);
-    row.append(l);
-  }
-  ctx.append(row);
+  CORE.ui.menuRow(ctx, VIEW_3D.menu.map(k => ({ name: LAYER[k].name, on: layerOn(k), set: on => setLayer(k, on) })));
   const r = ROOM[state.room], F = openFloor();
   if (!r || !F || r.floor !== F.id) return;
   const tag = el('span', { className: 'roomtag' }, `${roomName(r)}${r.link ? ` <a class="btnlink" href="${r.link.href}">${r.link.name}</a>` : ''}<button aria-label="Odznacz">×</button>`);
   tag.querySelector('button').onclick = () => selectRoom(null);
-  const row2 = el('div', { className: 'menurow' }); row2.append(tag); ctx.append(row2);
+  CORE.ui.menuRow(ctx, [], [tag]);
 }
 function cameraDock() {
-  const dock = $('dock'); dock.innerHTML = ''; dock.hidden = !is3d();
+  const dock = $('dock'); dock.hidden = !is3d();
   if (!is3d()) return;
-  const walkButton = el('button', { className: 'walk', textContent: 'Spacer', onclick: () => V.walk.on ? V.stopWalk() : V.startWalk() });
-  walkButton.setAttribute('aria-pressed', V.walk.on); dock.append(walkButton);
-  const add = (list, level) => { dock.append(el('span', { className: 'sep' })); for (const c of list) dock.append(el('button', { textContent: c.name, onclick: () => { V.stopWalk(); setCamera(c, level); } })); };
-  add(VIEW_3D.cameras.all, 0);
-  const F = openFloor(); if (F && VIEW_3D.cameras[F.id]) add(VIEW_3D.cameras[F.id], F.level);
+  const F = openFloor(), go = level => c => ({ name: c.name, go: () => { V.stopWalk(); setCamera(c, level); } });
+  CORE.ui.cameraDock(dock, [VIEW_3D.cameras.all.map(go(0))].concat(F && VIEW_3D.cameras[F.id] ? [VIEW_3D.cameras[F.id].map(go(F.level))] : []),
+    { name: 'Spacer', on: V.walk.on, toggle: () => V.walk.on ? V.stopWalk() : V.startWalk() });
 }
 const layersPanel = () => CORE.ui.layersPanel($('layers'), LAYER, view().layers || [], state.layers, layerOn, setLayer);
 function setLayer(k, on) { state.layers[k] = on; save(); refresh(); }
@@ -427,10 +418,7 @@ function selectRoom(id) { state.room = id; save(); contextMenu(); roomsPanel(); 
 
 /* a panel section shows when the view lists it; the cut and the rooms also need an open floor */
 const NEEDS_OPEN_FLOOR = ['cut', 'rooms'];
-function panels() {
-  const F = openFloor();
-  for (const s of document.querySelectorAll('[data-panel]')) s.hidden = !view().panels.includes(s.dataset.panel) || (NEEDS_OPEN_FLOOR.includes(s.dataset.panel) && !F);
-}
+const panels = () => { const F = openFloor(); CORE.ui.panels(view(), p => NEEDS_OPEN_FLOOR.includes(p) && !F); };
 function refresh() { modeToggle(); contextMenu(); cameraDock(); layersPanel(); cutPanel(); lightPanel(); panels(); roomsPanel(); applyView(); }
 function setMode(m) {
   state.mode = m; save();
@@ -454,26 +442,11 @@ V.enableNavigation();
 V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, ground: ALL_CELLS.filter(c => c.walkable), startLevel: FLOORS[0].level, pad: $('pad'),
   canStart: is3d, onToggle: () => { cameraDock(); applyView(); }, home: () => VIEW_3D.cameras.all[0] });
 
-/* ================= 10. 2D PLAN =================
-   Both floors side by side, garden at the top: plan x = house y, plan y = house x. The sheet is in mm of the house,
-   so every size of the drawing (gaps, text, lines) is in mm too. */
+/* ================= 10. 2D PLAN (core/plan.js) =================
+   Both floors side by side, garden at the top. What the cut meets comes from the solids; the stair and what is under
+   the roof are this house's own. */
 const planCut = F => VIEW_2D.cut[F.id];
-const planFill = key => { const d = MAT.materials[key]; return d.plan?.hatch ? `url(#hatch-${key})` : d.plan || d.color; };
-const PLAN = {
-  gap: 4200, margin: 1200, side: 1600, head: 600, foot: 1400,        // between the floors, around the sheet
-  hatch: 80, title: 340, titleAt: 200,
-  line: { cut: 14, over: 12, dash: '70 50', clear: '100 80', window: '60 50', hole: '60 60', thin: 10, label: 8 },
-  clear: { font: 180, inset: 60, down: 260 },
-  label: { push: 450, r: 240, font: 130, bar: 200, up: 40, down: 130 },   // fits mm labels of five digits (6000/3460)
-  room: { number: 220, name: 150, area: 140, up: 60, nameDown: 180, areaDown: 360 },
-  dim: { off: 600, text: 840, font: 180, side: 600, sideText: 700 }
-};
-const planRect = (X, x1, x2, y1, y2, attr) => `<rect x="${Math.round(X + y1)}" y="${Math.round(x1)}" width="${Math.round(y2 - y1)}" height="${Math.round(x2 - x1)}" ${attr}/>`;
-function planHatches() {
-  const H = PLAN.hatch;
-  return Object.entries(MAT.materials).filter(([, d]) => d.plan?.hatch).map(([k, d]) =>
-    `<pattern id="hatch-${k}" width="${H}" height="${H}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="${H}" height="${H}" fill="${d.plan.hatch[0]}"/><line x1="0" y1="0" x2="0" y2="${H}" stroke="${d.plan.hatch[1]}" stroke-width="${PLAN.line.cut}"/></pattern>`).join('');
-}
+const PLAN = CORE.plan.create(MAT.materials), PS = PLAN.SIZE;
 /* the stair: a full line under the cut, dashed over it; from the floor above, all of it shows through the hole */
 function planStair(F, X, h, holes) {
   const inside = (b, x, y) => x >= b[0] - EPS && x <= b[1] + EPS && y >= b[2] - EPS && y <= b[3] + EPS;
@@ -483,82 +456,41 @@ function planStair(F, X, h, holes) {
     const own = z2 > F.level && z2 <= floorTop(F) + EPS;
     const seen = z2 < h && holes.some(b => inside(b, (c.S.x1 + c.S.x2) / 2, (y1 + y2) / 2));
     if (!own && !seen) continue;
-    const stroke = z2 <= h ? `stroke="#5f6a66" stroke-width="${PLAN.line.cut}"` : `stroke="#8a8d88" stroke-width="${PLAN.line.over}" stroke-dasharray="${PLAN.line.dash}"`;
-    s += planRect(X, c.S.x1, c.S.x2, y1, y2, `fill="none" ${stroke}`);
+    const stroke = z2 <= h ? `stroke="#5f6a66" stroke-width="${PS.line.cut}"` : `stroke="#8a8d88" stroke-width="${PS.line.over}" stroke-dasharray="${PS.line.dash}"`;
+    s += PLAN.rect(X, c.S.x1, c.S.x2, y1, y2, `fill="none" ${stroke}`);
   }
   return s;
 }
 /* under the roof: the clear heights, the roof windows, the stair hole */
 function planUnderRoof(F, X, holes) {
-  const x1 = Math.min(...F.inside.map(q => q[0])), x2 = Math.max(...F.inside.map(q => q[1])), C = PLAN.clear;
+  const x1 = Math.min(...F.inside.map(q => q[0])), x2 = Math.max(...F.inside.map(q => q[1])), C = PS.clear;
   let s = '';
   for (const ch of ROOF.clearHeights) {
     const d = (F.level + ch - ROOF.eave) / TAN;
     for (const y of [d, WIDTH - d]) {
       const left = y < WIDTH / 2;
-      s += `<line x1="${X + y}" y1="${x1}" x2="${X + y}" y2="${x2}" stroke="#8a8d88" stroke-dasharray="${PLAN.line.clear}" stroke-width="${PLAN.line.over}"/>`
+      s += `<line x1="${X + y}" y1="${x1}" x2="${X + y}" y2="${x2}" stroke="#8a8d88" stroke-dasharray="${PS.line.clear}" stroke-width="${PS.line.over}"/>`
         + `<text x="${X + y + (left ? C.inset : -C.inset)}" y="${x1 + C.down}" font-size="${C.font}" fill="#8a8d88" text-anchor="${left ? 'start' : 'end'}">${ch}</text>`;
     }
   }
-  for (const w of ROOF.windows) s += planRect(X, w.x[0], w.x[1], w.y[0], w.y[1], `fill="none" stroke="#3a6f8f" stroke-dasharray="${PLAN.line.window}" stroke-width="${PLAN.line.cut}"`);
-  for (const b of holes) s += planRect(X, b[0], b[1], b[2], b[3], `fill="none" stroke="#a3a7a2" stroke-dasharray="${PLAN.line.hole}" stroke-width="${PLAN.line.thin}"`);
+  for (const w of ROOF.windows) s += PLAN.rect(X, w.x[0], w.x[1], w.y[0], w.y[1], `fill="none" stroke="#3a6f8f" stroke-dasharray="${PS.line.window}" stroke-width="${PS.line.cut}"`);
+  for (const b of holes) s += PLAN.rect(X, b[0], b[1], b[2], b[3], `fill="none" stroke="#a3a7a2" stroke-dasharray="${PS.line.hole}" stroke-width="${PS.line.thin}"`);
   return s;
 }
-/* archon labels (width / height), outside the wall for outer openings */
-function planLabels(F, X, h) {
-  const B = PLAN.label;
-  let s = '';
-  for (const o of GEO.openings) {
-    if (o.b[4] > h || o.b[5] < h || floorOfZ((o.b[4] + o.b[5]) / 2) !== F.id) continue;
-    const side = SIDE[o.outer], push = [0, 0]; if (side) push[side.axis] = B.push * side.sign;
-    const tx = X + (o.b[2] + o.b[3]) / 2 + push[1], ty = (o.b[0] + o.b[1]) / 2 + push[0], [a, b] = o.label.split('/');
-    s += `<g font-size="${B.font}" text-anchor="middle" fill="#1f2523"><circle cx="${tx}" cy="${ty}" r="${B.r}" fill="#fff" stroke="#1f2523" stroke-width="${PLAN.line.thin}"/>`
-      + `<line x1="${tx - B.bar}" y1="${ty}" x2="${tx + B.bar}" y2="${ty}" stroke="#1f2523" stroke-width="${PLAN.line.label}"/><text x="${tx}" y="${ty - B.up}">${a}</text><text x="${tx}" y="${ty + B.down}">${b}</text></g>`;
+const planSvg = () => PLAN.sheets(FLOORS.map(F => ({
+  extent: [ROOF.x[0], ROOF.x[1], 0, WIDTH], title: `${F.name} · cięcie ${planCut(F)} mm`,
+  draw: X => {
+    const h = F.level + planCut(F), holes = voidsAt(F.level);
+    return PLAN.floorArea(X, F.rooms.flatMap(r => r.rects)) + planStair(F, X, h, holes) + PLAN.cut(X, SOLIDS, h, c => c.floor === F.id)
+      + (F === TOP_FLOOR ? planUnderRoof(F, X, holes) : '') + PLAN.labels(X, GEO.openings, h, SIDE, o => floorOfZ((o.b[4] + o.b[5]) / 2) === F.id)
+      + PLAN.rooms(X, F.rooms) + PLAN.dims(X, [0, GEO.length, 0, WIDTH], ROOF.x[1]);
   }
-  return s;
-}
-/* the room label in its largest rectangle: number, name, area */
-function planRooms(F, X) {
-  const R = PLAN.room;
-  return F.rooms.map(r => {
-    const q = r.rects.reduce((m, q) => rectArea(q) > rectArea(m) ? q : m), cx = (q[0] + q[1]) / 2, cy = X + (q[2] + q[3]) / 2;
-    return `<text x="${cy}" y="${cx - R.up}" text-anchor="middle" font-size="${R.number}" font-weight="700" fill="#9a6a2f">${r.numbers ? r.numbers.join(',') : ''}</text>`
-      + `<text x="${cy}" y="${cx + R.nameDown}" text-anchor="middle" font-size="${R.name}" fill="#1f2523">${r.name}</text>`
-      + `<text x="${cy}" y="${cx + R.areaDown}" text-anchor="middle" font-size="${R.area}" fill="#5f6a66">${fmt(roomArea(r), 2)} m²</text>`;
-  }).join('');
-}
-/* the overall dimensions, in mm */
-function planDimensions(X) {
-  const D = PLAN.dim, L = GEO.length, yb = ROOF.x[1] + D.off;
-  return `<g stroke="#1f2523" stroke-width="${PLAN.line.over}" font-size="${D.font}" fill="#1f2523"><line x1="${X}" y1="${yb}" x2="${X + WIDTH}" y2="${yb}"/><text x="${X + WIDTH / 2}" y="${ROOF.x[1] + D.text}" text-anchor="middle" stroke="none">${WIDTH}</text>
-      <line x1="${X - D.side}" y1="0" x2="${X - D.side}" y2="${L}"/><text x="${X - D.sideText}" y="${L / 2}" text-anchor="middle" stroke="none" transform="rotate(-90 ${X - D.sideText} ${L / 2})">${L}</text></g>`;
-}
-function planSvg() {
-  const ox = F => FLOORS.indexOf(F) * (WIDTH + PLAN.gap), top = ROOF.x[0] - PLAN.margin, bottom = ROOF.x[1] + PLAN.margin;
-  const width = FLOORS.length * (WIDTH + PLAN.gap) - PLAN.gap + 2 * PLAN.side;
-  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-PLAN.side} ${top - PLAN.head} ${width} ${bottom - top + PLAN.foot}" font-family="Barlow, Arial, sans-serif"><defs>${planHatches()}</defs>
-  <rect x="${-PLAN.side}" y="${top - PLAN.head}" width="100%" height="100%" fill="#fff"/>`;
-  for (const F of FLOORS) {
-    const h = F.level + planCut(F), X = ox(F), holes = voidsAt(F.level);
-    s += `<text x="${X + WIDTH / 2}" y="${top - PLAN.titleAt}" text-anchor="middle" font-size="${PLAN.title}" font-weight="700" fill="#1f2523">${F.name} · cięcie ${planCut(F)} mm</text>`;
-    for (const r of F.rooms) for (const q of r.rects) s += planRect(X, ...q, 'fill="#f4f1ea"');
-    s += planStair(F, X, h, holes);
-    for (const c of SOLIDS) {
-      if (c.floor !== F.id || !cutBy(c.S, h)) continue;
-      const y = sectionAt(c.S, h); if (y) s += planRect(X, c.S.x1, c.S.x2, y[0], y[1], `fill="${planFill(c.cap)}"`);
-    }
-    if (F === TOP_FLOOR) s += planUnderRoof(F, X, holes);
-    s += planLabels(F, X, h) + planRooms(F, X) + planDimensions(X);
-  }
-  return s + '</svg>';
-}
+})));
+const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), zoomIn: $('zoomIn'), zoomOut: $('zoomOut'), download: $('planSvg'), state, save, svg: planSvg, file: 'rzut.svg' });
 function drawPlan() {
-  $('sheet').innerHTML = planSvg(); $('sheet').style.setProperty('--zoom', state.zoom);
+  drawSheet();
   $('planNote').textContent = `Cięcie nad podłogą: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW_2D.note || ''}`.trim();
 }
-$('zoomIn').onclick = () => { state.zoom = Math.min(4, state.zoom * 1.25); save(); drawPlan(); };
-$('zoomOut').onclick = () => { state.zoom = Math.max(0.5, state.zoom / 1.25); save(); drawPlan(); };
-$('planSvg').onclick = () => { const a = el('a', { href: URL.createObjectURL(new Blob([planSvg()], { type: 'image/svg+xml' })), download: 'rzut.svg' }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
 
 /* ================= 11. CHECKS (analysis.js) ================= */
 const CHECKS = HouseAnalysis.check(HOUSE, MODEL);

@@ -43,7 +43,7 @@ The kitchen and the bathrooms take their room from the house, never the other wa
 2. **Keeps** only what belongs to the room: walls standing on the edge of its floor area and the windows in them; the slab under it and the slab or roof over it, cut to that floor area and those walls.
 3. **Groups** the solids as a person sees them: each wall, the floor, the ceiling, each window (with its wall).
 
-Nothing is moved, scaled or re-measured: every solid handed over is part of a house solid, in house axes and mm. A sub-project draws its room with core, like the house.
+Nothing is moved, scaled or re-measured: every solid handed over is part of a house solid, in house axes and mm. A sub-project draws its room with core, like the house, and copies its idea: the same views (3D with its parts in the menu, 2D cut at the house's height, Analiza), the same panel, the house's names of rooms and openings.
 
 ## The model in short
 
