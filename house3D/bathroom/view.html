@@ -150,17 +150,10 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 
       <section class="block">
         <h2>Warstwy</h2>
-        <div class="toggles" id="layers" role="group" aria-label="Warstwy">
-          <button data-layer="walls">Ściany</button>
-          <button data-layer="ceiling">Sufit</button>
-          <button data-layer="floor">Podłoga</button>
-          <button data-layer="furniture">Meble</button>
-          <button data-layer="sanitary">Ceramika i armatura</button>
-          <button data-layer="glass">Kabina</button>
-          <button data-layer="installations">Instalacje</button>
-          <button data-layer="edges">Krawędzie</button>
-        </div>
-        <div class="toggles"><button id="doorsBtn" aria-pressed="false">Drzwi i szuflady otwarte</button></div>
+        <div class="layers" id="layers"></div>
+        <h2>Drzwi i szuflady</h2>
+        <div class="btns"><button class="btn ghost" id="openAll">Otwórz wszystkie</button><button class="btn ghost" id="closeAll">Zamknij wszystkie</button></div>
+        <p class="note">Kliknij drzwi, drzwiczki albo szufladę, aby je otworzyć.</p>
       </section>
 
       <section class="block">
@@ -276,12 +269,11 @@ const state = {
   metal: 'brass',
   lighting: 'day',      // day | night
   style: 'real',        // real | lines (white solids; the edges are a layer of their own)
-  layers: {
-    walls: true, ceiling: true, floor: true,
-    furniture: true, sanitary: true, glass: true,
-    installations: false, edges: true,
-  },
+  layers: {},           // layer -> on, from the tree of BATH_DATA.views (core/ui.js, as the house and the kitchen)
 };
+const LAYER_TREE = Object.values(BATH_DATA.views).find(v => v.layers).layers, LAYER = CORE.ui.layerTree(LAYER_TREE);
+(function defaults(t) { for (const [k, v] of Object.entries(t)) { state.layers[k] = !v.off; if (v.layers) defaults(v.layers); } })(LAYER_TREE);
+const { layerOn } = CORE.ui.layerSwitch(LAYER, () => state.layers);
 
 /** Size of one tile on a surface, in metres: { w: horizontal, h: vertical / in depth }. */
 function tileSize(surface) {
@@ -572,7 +564,7 @@ const EDGE = new THREE.LineBasicMaterial({ color: 0x2b2e31 });   // outlines of 
 function applyMaterial(o) {
   const base = o.userData.base || (o.userData.base = o.material);
   o.material = o.userData.ghost ? GHOST : base;
-  if (o.userData.edges) o.userData.edges.visible = state.layers.edges && !o.userData.ghost;
+  if (o.userData.edges) o.userData.edges.visible = layerOn('edges') && !o.userData.ghost;
 }
 function setGhost(root, ghost) {
   root.traverse(o => { if (o.isMesh && !o.userData.owners) { o.userData.ghost = ghost; applyMaterial(o); } });   // core's meshes: applySolids
@@ -621,7 +613,7 @@ const ROOM_CELLS = [], walls = [], sides = {};
       const points = o.cells.flatMap(c => c.S.poly.flatMap(p => [[c.S.x1, p[0], p[1]], [c.S.x2, p[0], p[1]]]));
       const span = k => Math.max(...points.map(p => p[k])) - Math.min(...points.map(p => p[k]));
       record = { group, normal: new THREE.Vector3(...NORMAL[o.side]), middle: houseToFrame([0, 1, 2].map(k => points.reduce((sum, p) => sum + p[k], 0) / points.length)), length: span(0) + span(1) };
-      record.cut = cutaway(group, () => !state.layers[layer] || camPos().sub(record.middle).dot(record.normal) >= .05);
+      record.cut = cutaway(group, () => !layerOn(layer) || camPos().sub(record.middle).dot(record.normal) >= .05);
       records.set(o.id, record);
       if (o.role === 'wall') {                 // the longest wall of each side names that side (door wall, vanity wall, window wall)
         walls.push(record);
@@ -647,7 +639,7 @@ wallDoor = sides['-y']; wallVanity = sides['-x'];
 
 /* ---------- floor: the tiles are the top of the house's slab (above); the drains lie on it ---------- */
 const floorGroup = new THREE.Group(); FRAME.add(floorGroup);
-cutaway(floorGroup, () => !state.layers.floor);
+cutaway(floorGroup, () => !layerOn('floor'));
 if (ATTIC) buildAttic(); else buildGround();
 
 /* ---------- concealed door Porta HIDE 80, opening into the hallway (as in the original design) ----------
@@ -946,7 +938,7 @@ const { CAB_W, CAB_H, CAB_Y0 } = G;
 
 const casing = new THREE.Group(); FRAME.add(casing);
 // the casing stands against the vanity wall and window wall: hides with them or in installation preview
-cutaway(casing, () => !state.layers.walls || state.layers.installations || wallLeft.cut.hidden || wallWindow.cut.hidden);
+cutaway(casing, () => !layerOn('walls') || layerOn('installations') || wallLeft.cut.hidden || wallWindow.cut.hidden);
 
 /** Tiled casing face from z0 to z1, from y0 to y1. */
 function casingFront(z0, z1, y0, y1, parent) {
@@ -1128,7 +1120,7 @@ const ceiling = new THREE.Group(); FRAME.add(ceiling);
 ceiling.userData.room = true;           // part of the room: not seen in the 2D plan (as the house's ceilings)
 
 // the slab above the ceiling is the house's (see the room above): it casts the shadow over the LED gap
-cutaway(ceiling, () => !state.layers.ceiling || camPos().y > CEILING_Y - .02);
+cutaway(ceiling, () => !layerOn('ceiling') || camPos().y > CEILING_Y - .02);
 
 const outlineShape = (points, Kind = THREE.Shape) => {
   const s = new Kind(); s.moveTo(...points[0]); points.slice(1).forEach(p => s.lineTo(...p)); s.closePath(); return s;
@@ -1252,7 +1244,7 @@ function buildAttic() {
 
   /* ---------- WC casing along the bottom wall up to the riser corner, wall-hung WC ---------- */
   const casing = new THREE.Group(); FRAME.add(casing);
-  cutaway(casing, () => !state.layers.walls || state.layers.installations);
+  cutaway(casing, () => !layerOn('walls') || layerOn('installations'));
   (function wcCasing() {
     const { x1, z0, z1, h } = CASE;
     tiled('wall', new THREE.BoxGeometry(x1, h, z1 - z0), casing).position.set(x1 / 2, h / 2, (z0 + z1) / 2);
@@ -1344,7 +1336,7 @@ const STATIC = ROOM_CELLS.slice(), MOVING = new Map();   // pivot of a door or d
 
 /* what the panel and the camera show: a solid when all its layers are on; drawn as a ghost (no colour, still a shadow)
    while a cutaway it is in is hidden */
-const layersOn = layers => layers.every(k => k.startsWith('L:') ? state.layers[k.slice(2)] : k === 'edges' ? state.layers.edges : true);
+const layersOn = layers => layers.every(k => k.startsWith('L:') ? layerOn(k.slice(2)) : k === 'edges' ? layerOn('edges') : true);
 const cutHidden = layers => layers.some(k => k.startsWith('C:') && CUT_OF[k].hidden);
 function applySolids() {
   VIEW.showPieces(l => layersOn(l) && !cutHidden(l), () => true);
@@ -1441,8 +1433,8 @@ function buildDetailEdges() {
   }
 }
 function syncDetailEdges() {
-  if (state.layers.edges) buildDetailEdges();
-  FRAME.traverse(o => { if (o.userData.edges) o.userData.edges.visible = state.layers.edges && !o.userData.ghost; });
+  if (layerOn('edges')) buildDetailEdges();
+  FRAME.traverse(o => { if (o.userData.edges) o.userData.edges.visible = layerOn('edges') && !o.userData.ghost; });
 }
 
 /* "Drawing" style: every opaque material white (the tiles show their grout lines); "Realistic": their own look (LOOK) */
@@ -1502,7 +1494,6 @@ VIEW.onClick(ray => {
   const door = doorOf(hitAlong(ray)?.object);
   if (!door) return;
   door.target = door.target ? 0 : 1;
-  syncDoorsButton();
   invalidate();
 });
 let hoverPending = false;
@@ -1595,20 +1586,15 @@ onButton($('metals'), b => { setMetalLook(b.dataset.metal); pressed($('metals').
 
 // layers
 function syncLayers() {
-  for (const [layer, groups] of Object.entries(layerGroups)) for (const g of groups) g.visible = state.layers[layer];
-  pressed($('layers').children, b => state.layers[b.dataset.layer]);
+  for (const [layer, groups] of Object.entries(layerGroups)) for (const g of groups) g.visible = layerOn(layer);
+  CORE.ui.layersPanel($('layers'), LAYER, Object.keys(LAYER_TREE), state.layers, layerOn, (k, on) => { state.layers[k] = on; syncLayers(); });
   updateCuts(); applySolids(); syncDetailEdges();
 }
-onButton($('layers'), b => { state.layers[b.dataset.layer] = !state.layers[b.dataset.layer]; syncLayers(); });
 syncLayers();
 
 // all doors
-const syncDoorsButton = () => $('doorsBtn').setAttribute('aria-pressed', doors.every(d => d.target === 1));
-$('doorsBtn').addEventListener('click', () => {
-  const allOpen = doors.every(d => d.target === 1);
-  for (const d of doors) d.target = allOpen ? 0 : 1;
-  syncDoorsButton();
-});
+$('openAll').onclick = () => { for (const d of doors) d.target = 1; invalidate(); };
+$('closeAll').onclick = () => { for (const d of doors) d.target = 0; invalidate(); };
 
 // panel tabs
 const TABS = { look: 'Wygląd', vanity: 'Szafka', buy: 'Zakupy', dims: 'Wymiary' };

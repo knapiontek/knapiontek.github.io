@@ -137,7 +137,12 @@ window.BATH_DATA = {
   /* as house.js: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own height for the
      floor), Analiza (the checks of engine.js) */
   views: {
-    '3d': { name: '3D', menu: 'floors', panels: ['tabs'] },
+    '3d': { name: '3D', menu: 'floors', panels: ['tabs'],
+      layers: {                 // the Warstwy panel, as the house and the kitchen; off: hidden at the start
+        room: { name: 'Pomieszczenie', layers: { walls: { name: 'Ściany' }, ceiling: { name: 'Sufit' }, floor: { name: 'Podłoga' } } },
+        furniture: { name: 'Meble' }, sanitary: { name: 'Ceramika i armatura' }, glass: { name: 'Kabina' },
+        installations: { name: 'Instalacje', off: true }, edges: { name: 'Krawędzie' },
+      } },
     '2d': { name: '2D', plan: true, note: 'Ogród u góry. Linią ciągłą to, co pod cięciem (widziane z góry), przerywaną to, co nad nim.', panels: ['plan', 'tabs'] },
     analysis: { name: 'Analiza', analysis: true, panels: ['tabs'] },
   },
