@@ -11,6 +11,7 @@
 </head>
 <body>
 <div class="app">
+  <nav class="apps" id="apps" aria-label="Aplikacja"></nav>
   <div class="stage" id="stage">
     <canvas id="gl" aria-label="Widok 3D domu"></canvas>
     <div id="loading">Wczytywanie modelu…</div>
@@ -73,6 +74,7 @@
 <script src="../core/mesh.js"></script>
 <script src="../core/scene.js"></script>
 <script src="../core/ui.js"></script>
+<script src="../apps.js"></script>
 <script src="../core/plan.js"></script>
 <script src="../core/library.js"></script>
 <script src="engine.js"></script>
@@ -501,7 +503,8 @@ $('checks').innerHTML = CORE.ui.checksHtml(CHECKS);
 
 /* ================= 12. START ================= */
 V.start(); placeSun(); setCamera(VIEW_3D.cameras.all[0]);
-setMode(state.mode);
+CORE.ui.appMenu($('apps'), APPS, 'house', '../', () => state.mode);
+setMode(CORE.ui.askedMode(VIEWS) || state.mode);
 $('loading').hidden = true;
 V.run();
 window.HOUSE_VIEW = { CELLS, CHECKS, setCamera, setLayer, setMode, selectRoom, state, RESULTS, pieces: PIECES.length, edges: V.EDGE_GROUPS.length,   // for tests

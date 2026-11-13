@@ -9,7 +9,7 @@
 
 | Folder | Holds | project.md |
 |---|---|---|
-| apps.js | the applications: name, page; the top-left menu reads it (planned) | — |
+| apps.js | the applications: name, page; the top-left menu reads it | — |
 | core/ | the shared code: solids, meshes, the 2D plan, the screen, the spreadsheet; knows no project | [core](core/project.md) |
 | library/ | everything bought: products, materials, textures; knows no project | — |
 | house/ | the building: walls, slabs, roof, stair, windows, floor tiles; from the archon drawings | [house](house/project.md) |

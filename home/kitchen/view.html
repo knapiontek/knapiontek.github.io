@@ -35,6 +35,7 @@ dl.notes dd{margin:0;color:var(--muted)}
 </head>
 <body>
 <div class="app">
+  <nav class="apps" id="apps" aria-label="Aplikacja"></nav>
   <div class="stage" id="stage">
     <canvas id="gl" aria-label="Widok 3D kuchni"></canvas>
     <div id="loading">Wczytywanie projektu…</div>
@@ -126,6 +127,7 @@ dl.notes dd{margin:0;color:var(--muted)}
 <script src="../core/mesh.js"></script>
 <script src="../core/scene.js"></script>
 <script src="../core/ui.js"></script>
+<script src="../apps.js"></script>
 <script src="../core/plan.js"></script>
 <script src="../core/library.js"></script>
 <script src="../house/house.js"></script>
@@ -1306,8 +1308,7 @@ const HOUSE_2D = Object.values(HOUSE.views).find(v => v.plan), CUT = HOUSE_2D.cu
 const HOUSE_ROOM = HOUSE.geometry.floors.find(f => f.id === ROOM.floor).rooms.find(r => r.id === ROOM.room);
 function contextMenu() {
   const ctx = $('context'); ctx.innerHTML = '';
-  CORE.ui.menuRow(ctx, is3d() ? view().menu.map(m => ({ name: m.name, on: layerOn(m.layer), set: on => setLayer(m.layer, on) })) : [],
-    [el('a', { className: 'btnlink', href: '../house/view.html', textContent: 'Dom' })]);
+  CORE.ui.menuRow(ctx, is3d() ? view().menu.map(m => ({ name: m.name, on: layerOn(m.layer), set: on => setLayer(m.layer, on) })) : []);
 }
 const PLAN = CORE.plan.create(LIB);
 const NOT_SEEN = ['holes', 'hardware', 'legs', 'backs', 'lamps'], SEEN_DETAILS = ['sink', 'hob', 'hood', 'coffee'];
@@ -1338,7 +1339,8 @@ V.enableNavigation();
 V.start();
 flyTo(camOf(Object.values(CAMERAS)[0]), true);
 showTab(location.hash === '#carcasses' ? 'carcasses' : state.tab);
-setMode(state.mode);
+CORE.ui.appMenu($('apps'), APPS, 'kitchen', '../', () => state.mode);
+setMode(CORE.ui.askedMode(VIEWS) || state.mode);
 layersPanel();
 applyPalette();
 setLight(state.light);

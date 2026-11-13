@@ -77,6 +77,7 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 </head>
 <body>
 <div class="app">
+  <nav class="apps" id="apps" aria-label="Aplikacja"></nav>
   <div class="stage" id="stage">
     <canvas id="gl" aria-label="Widok 3D łazienki"></canvas>
     <div id="loading">Wczytywanie łazienki…</div>
@@ -224,6 +225,7 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 <script src="../core/mesh.js"></script>
 <script src="../core/scene.js"></script>
 <script src="../core/ui.js"></script>
+<script src="../apps.js"></script>
 <script src="../core/plan.js"></script>
 <script src="../core/library.js"></script>
 <script src="../house/engine.js"></script>
@@ -1775,8 +1777,7 @@ function setMode(m) {
   $('plan2d').hidden = !plan; $('analysis').hidden = !analysis; canvasEl.hidden = plan || analysis; $('dock').hidden = !v.menu;
   CORE.ui.modeToggle($('mode'), MODES, VIEW_STATE.mode, setMode);
   const ctx = $('context'); ctx.innerHTML = '';
-  CORE.ui.menuRow(ctx, v.menu ? Object.entries(BATH_DATA.floors).map(([k, f]) => ({ name: f.name, radio: true, on: k === FLOOR, set: () => goFloor(k) })) : [],
-    [el('a', { className: 'btnlink', href: '../house/view.html', textContent: 'Dom' })]);
+  CORE.ui.menuRow(ctx, v.menu ? Object.entries(BATH_DATA.floors).map(([k, f]) => ({ name: f.name, radio: true, on: k === FLOOR, set: () => goFloor(k) })) : []);
   CORE.ui.panels(v);
   if (plan) { drawSheet(); $('planNote').textContent = `Cięcie ${CUT} mm nad podłogą (jak w rzucie domu). ${v.note || ''}`.trim(); }
   invalidate();
@@ -1873,7 +1874,8 @@ VIEW.onFrame(() => {
 });
 VIEW.run();
 
-setMode(VIEW_STATE.mode);
+CORE.ui.appMenu($('apps'), APPS, 'bathroom', '../', () => VIEW_STATE.mode);
+setMode(CORE.ui.askedMode(MODES) || VIEW_STATE.mode);
 loading.hidden = true;
 // for inspection in the browser console
 window.bath = { state, VIEW, FRAME, scene, camera, controls, renderer, goTo, setLighting, setStyle, setMode, planSvg, invalidate, doors, cutaways, STATIC, MOVING, G };

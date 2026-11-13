@@ -55,6 +55,26 @@ const checksHtml = checks => checks.map(c => `<div class="check"><span class="ch
    with a menu, the project's top parts (floors and roof, groups of a kitchen, the bathrooms) as switches; the cameras of
    the view in the dock. In the panel: the sections the view lists, and tabs where a project has much to show. */
 
+/* the top-left menu: the applications [{id, name, page}] (page null: planned), current = this page's id. A link carries
+   the current mode (mode()), so another application opens in the same one when it has it (askedMode). */
+function appMenu(box, apps, current, base, mode) {
+  box.innerHTML = '';
+  for (const a of apps) {
+    const item = a.page ? el('a', { href: base + a.page, textContent: a.name }) : el('span', { textContent: a.name, title: 'W przygotowaniu' });
+    if (a.id === current) { item.setAttribute('aria-current', 'page'); item.dataset.on = ''; }
+    if (a.page) item.onclick = () => { const url = new URL(item.href); url.searchParams.set('mode', mode()); item.href = url.href; };
+    box.append(item);
+  }
+}
+/* the mode a link from another application asked for, if this page has it; taken off the address so a reload keeps the stored one */
+function askedMode(views) {
+  const url = new URL(location.href), m = url.searchParams.get('mode');
+  if (m === null) return null;
+  url.searchParams.delete('mode');
+  try { history.replaceState(null, '', url.href); } catch (e) { /* opened from disk in a browser that refuses: the address keeps it */ }
+  return views[m] ? m : null;
+}
+
 /* views: {id: {name}}; pick(id) on a click of another view */
 function modeToggle(box, views, mode, pick) {
   box.innerHTML = Object.entries(views).map(([k, v]) => `<button data-mode="${k}" aria-pressed="${mode === k}"${mode === k ? ' data-on' : ''}>${v.name}</button>`).join('');
@@ -100,5 +120,5 @@ function planSheet({ sheet, zoomIn, zoomOut, download, state, save, svg, file })
   return draw;
 }
 
-CORE.ui = { $, fmt, byId, el, option, store, layerTree, layerSwitch, layersPanel, helpToggle, checksHtml, modeToggle, menuRow, cameraDock, panels, tabs, planSheet };
+CORE.ui = { $, fmt, byId, el, option, store, layerTree, layerSwitch, layersPanel, helpToggle, checksHtml, appMenu, askedMode, modeToggle, menuRow, cameraDock, panels, tabs, planSheet };
 })(window.CORE = window.CORE || {});
