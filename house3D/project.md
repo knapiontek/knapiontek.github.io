@@ -34,6 +34,35 @@ analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─
 - The page writes nothing back. The viewer's choices (tiles, offsets, layers, sun, cut) stay in the browser and are dropped when their format changes.
 - engine.js and view.html know nothing about this house: no numbers, names, products or colours of it. What differs is a value in the data, never a test in the code.
 
+## Flow
+
+One application over all the projects: the house, the kitchen, the bathroom on the ground floor, the bathroom upstairs, the three walk-in wardrobes upstairs (a new project). Every project keeps its own page and data; they share one layout from core.
+
+```
+┌───────────┬───────────────────────────────────────────┬──────────────────┐
+│ main      │                          [3D 2D Test Info]│ panel            │
+│ menu      │                                           │  [tabs]          │
+│           │               main view                   │  1 Warstwy       │
+│ Dom       │                                           │  2… project's    │
+│ Kuchnia   │                                           │     own tabs     │
+│ Łazienki  │                                           │                  │
+│ Garderoby │  [cameras: 3D] [SVG: 2D] [XLSX: Info]  ☀ ?│                  │
+└───────────┴───────────────────────────────────────────┴──────────────────┘
+```
+
+- **Main menu** (left, as today): a button for every application; a click moves to it freely, from any of them.
+- **Mode selector** (top right of the main view): what the main view shows:
+  - **3D**: the cameras at the bottom of the screen; the house's go to every room, from above, the side, the front, as today.
+  - **2D**: the plan; saved as SVG.
+  - **Test**: today's Analiza, the checks.
+  - **Info**: the project's information, like cost.html; saved as XLSX. The spreadsheet of cost.html (editable cells, formulas, XLSX export) moves to core and knows no project.
+- **Right panel**: the same in every application. At the top its menu, the **tabs**: one group at a time, no long scrolling.
+  1. **Warstwy**, the first and most important tab, the same look everywhere.
+  2. Then the project's own tabs (floor tiles, materials such as the worktop …). To be agreed.
+- **Światło and help**: two icons at the bottom right of the main view, the same everywhere.
+  - **Sun**: opens a small floating panel: a compass (the plan of the house in the middle, the sun dragged round it: the direction; an arc beside it: the sun's height) and a small brightness slider under it. Instead of today's three sliders.
+  - **?**: the help of the application (today's **?**, top right).
+
 ## Sub-projects and their room
 
 The kitchen and the bathrooms take their room from the house, never the other way round. house-clip.js does three things and nothing else:
