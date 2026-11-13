@@ -252,7 +252,7 @@ if (!window.HOUSE || !window.HouseRooms) return fail('Brak plików domu (../hous
 let FLOOR = BATH_DATA.defaults.floor;
 try { FLOOR = new URLSearchParams(location.search).get('floor') || localStorage.getItem('floor') || FLOOR; } catch (e) {}
 if (!BATH_DATA.floors[FLOOR]) FLOOR = BATH_DATA.defaults.floor;
-const HOUSE_MODEL = HouseEngine.build(HOUSE), HOUSE_ROOM = HouseRooms.roomsFor(HOUSE, HOUSE_MODEL, 'bath/view.html').find(r => r.floor === FLOOR);
+const HOUSE_MODEL = HouseEngine.build(HOUSE), HOUSE_ROOM = HouseRooms.roomsFor(HOUSE, HOUSE_MODEL, 'bathroom/view.html').find(r => r.floor === FLOOR);
 const G = BathEngine.build(BATH_DATA, FLOOR, HOUSE_ROOM), DATA = G.data, ATTIC = G.type === 'attic';
 const mmText = BathEngine.mmText;           // metres of the scene → whole mm on the page
 const V = G.V;   // vanity in mm (data.js → engine.js)

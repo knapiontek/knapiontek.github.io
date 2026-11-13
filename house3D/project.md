@@ -19,8 +19,8 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, with 
 | view.html | the page: 3D, 2D plan, Analiza, layers, cut, tiles, walk |
 | core/ | shared 3D code for every view; its own small project |
 | archon/ | the archon drawings and analysis.md |
-| kitchen/, bath/ | sub-projects with their own pages; bath has no docs yet |
-| proposal.md | how the kitchen and bath could come into the house view (not built) |
+| kitchen/, bathroom/ | sub-projects with their own pages and docs |
+| proposal.md | how the kitchen and bathroom could come into the house view (not built) |
 | index.html | directory listing, not part of the house |
 
 ## How it fits together
@@ -28,7 +28,7 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, with 
 ```
 analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─► view.html          drawn by core
                                                           ├─► analysis.js        checked, shown in Analiza
-                                                          └─► rooms.js ─► kitchen/view.html, bath/view.html
+                                                          └─► rooms.js ─► kitchen/view.html, bathroom/view.html
 ```
 
 - One model for every view. A view only picks layers and cuts it.

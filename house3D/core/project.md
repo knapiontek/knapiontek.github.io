@@ -1,6 +1,6 @@
 # Core
 
-Shared 3D code for every view: the house (../view.html) and its sub-projects (../kitchen/view.html, ../bath/view.html). It knows no project. What it must do: [rules.md](rules.md).
+Shared 3D code for every view: the house (../view.html) and its sub-projects (../kitchen/view.html, ../bathroom/view.html). It knows no project. What it must do: [rules.md](rules.md).
 
 ## Files
 

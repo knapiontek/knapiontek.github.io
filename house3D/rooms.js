@@ -1,4 +1,4 @@
-/* rooms.js: the room of a sub-project (kitchen, bath), copied from the house as it is. The house's own solids (walls,
+/* rooms.js: the room of a sub-project (kitchen, bathroom), copied from the house as it is. The house's own solids (walls,
    slabs, floor, windows, roof) are trimmed to the box its link in house.js gives and handed over unchanged: mm, house axes
    (x along the house, y across, z up). Nothing is re-measured. No THREE, no DOM. Needs core/geometry.js and engine.js. */
 (function (root) {
@@ -25,7 +25,7 @@ function sideOf(c, S, inside, level, zRange) {
   return best ? best.side : '+z';
 }
 
-/* the room of HOUSE whose link points to href (one per floor: the bath has two), with MODEL = HouseEngine.build(HOUSE) */
+/* the room of HOUSE whose link points to href (one per floor: the bathroom project has two), with MODEL = HouseEngine.build(HOUSE) */
 function roomsFor(HOUSE, MODEL, href) {
   const GEO = HOUSE.geometry, COPY = GEO.copy, G = root.CORE.geometry;
   const kindOf = Object.fromEntries(GEO.elements.map(e => [e.id, e.kind]));

@@ -415,7 +415,7 @@ function ROUNDUP(x, digits) {
   const f = Math.pow(10, digits || 0);
   return Math.ceil(x * f - 1e-9) / f;
 }
-// Placeholders in quantities and texts ({n:hinges}, {i:K8/oven.space}, {=...} ...): the full list is at the top of cost.js.
+// Placeholders in quantities and texts ({n:hinges}, {i:K25/oven.space}, {=...} ...): the full list is at the top of cost.js.
 // Every value comes from design.js (through engine.js), appliances.js or cost.js.
 
 // a carcass by name: width, height, innerWidth, v0, v1
@@ -425,7 +425,7 @@ function carcassValue(rest) {
   const width = carcass.u1 - carcass.u0;
   return { width, height: carcass.v1 - carcass.v0, innerWidth: width - 2 * model.thickness.carcass, v0: carcass.v0, v1: carcass.v1 }[field] ?? NaN;
 }
-// an item by carcass name or place and type or tag ("K1/oven", "G1[5]/dishwasher", "K1/cabinet#2" = the second from the bottom):
+// an item by carcass name or place and type or tag ("K11/oven", "G1[5]/dishwasher", "K11/cabinet#2" = the second from the bottom):
 // module width, height, v0, v1; its front frontWidth, frontHeight, frontV0, frontV1; space = the clear height between the
 // nearest horizontal boards of its carcass below (spaceBottom) and above (spaceTop) its middle; drawers behind its door (tag doorDrawers):
 // count, runnerLength, boxWidth, boxHeight; hinge = the hinge side of its door; edges = the banded edges of a panel ("lewa 717", "brak");

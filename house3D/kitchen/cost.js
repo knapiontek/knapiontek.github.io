@@ -22,8 +22,8 @@
      {n:hinges}        engine count ({n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
      {s:drawers.D.frontAbove} design.js setting     {t:carcass} thickness, {d:worktop} depth (as bought) and {m:cabinet} material label of a board type or part
                        (a material use of engine.js: a board type, islandWorktop, endPanel, islandEndPanel, carcass, backPanel, drawerBox, hobPanel)
-     {w:1.depth}       worktop of group 1  {g:3.backGap} group 3 (backGap, name)  {k:K8.innerWidth} carcass by name: width, height, innerWidth, v0, v1
-     {i:K8/oven.space} item by carcass name or place (G1[6]) and type or tag, #2 = the second from the bottom:
+     {w:1.depth}       worktop of group 1  {g:3.backGap} group 3 (backGap, name)  {k:K25.innerWidth} carcass by name: width, height, innerWidth, v0, v1
+     {i:K25/oven.space} item by carcass name or place (G1[6]) and type or tag, #2 = the second from the bottom:
                        width, height, v0, v1 (module), frontWidth, frontHeight, frontV0, frontV1 (front),
                        spaceBottom, spaceTop, space (clear height between the horizontal boards of the carcass around it),
                        count, runnerLength, boxWidth, boxHeight (drawers behind its door), hinge (hinge side of its door),
@@ -32,7 +32,7 @@
      {p:hinges}        unit price          {q:hinges} item quantity          {note:hinges} the number of a note
      {f:ovenMicrowaveGap}  a named formula of "formulas"
      {carcass.m2}      cutting-list total of a block (m2, edge, cut, qty)    {waste} {sheet} {reserve} params
-     {=expression}     a calculation with placeholders in angle brackets, e.g. {=(<a:oven.fascia.width> - <k:K8.innerWidth>) / 2},
+     {=expression}     a calculation with placeholders in angle brackets, e.g. {=(<a:oven.fascia.width> - <k:K25.innerWidth>) / 2},
                        with ROUND, ROUNDUP, MIN, MAX;  |% shows a fraction as a percentage
    A quantity formula ("=..." in qty) uses the placeholders in braces and ROUNDUP only: it is exported as an Excel formula. */
 window.KITCHEN_COST = {
@@ -311,7 +311,7 @@ window.KITCHEN_COST = {
     {
      "id": "ballRunners",
      "name": "Prowadnice kulkowe Häfele",
-     "spec": "494.02.184, H45, pełny wysuw, cichy domyk, 30 kg, L = {i:K12/doorDrawers.runnerLength}, komplet L + P",
+     "spec": "494.02.184, H45, pełny wysuw, cichy domyk, 30 kg, L = {i:K29/doorDrawers.runnerLength}, komplet L + P",
      "use": "szuflady za drzwiami, luz {s:doorDrawers.clearance} na stronę",
      "qty": "={n:doorDrawers}",
      "unit": "kpl.",
@@ -324,7 +324,7 @@ window.KITCHEN_COST = {
      "id": "cutleryTrays",
      "name": "Wkład na sztućce Hettich",
      "spec": "OrgaTray 440 9195001, antracyt, gł. 441–520, szer. 701–800, wys. 55",
-     "use": "szuflady wewnętrzne wyspy (korpus {k:K14.width}, prowadnice 500)",
+     "use": "szuflady wewnętrzne wyspy (korpus {k:K31.width}, prowadnice 500)",
      "qty": "={n:innerDrawers}",
      "unit": "szt.",
      "price": 128.56,
@@ -877,12 +877,12 @@ window.KITCHEN_COST = {
   }
  ],
  "formulas": {
-  "ovenMicrowaveGap": "<i:K8/microwave.fit.fasciaV0> - <i:K8/oven.fit.fasciaV1>",
-  "ovenOnShelfAbove": "<a:oven.fascia.height> - <i:K8/oven.space>",
-  "microwaveOnShelfBelow": "<i:K8/microwave.spaceBottom> - <i:K8/microwave.v0>",
-  "microwaveOnShelfAbove": "<i:K8/microwave.v1> - <i:K8/microwave.spaceTop>",
-  "microwaveCabinetGap": "<i:K8/cabinet#2.frontV0> - <i:K8/microwave.v1>",
-  "fridgeFrontAboveDoor": "<i:K10/fridge.frontV1> - <i:K10/fridge.fit.bodyV0> - <a:fridgeFreezer.doors.fridge.top>",
+  "ovenMicrowaveGap": "<i:K25/microwave.fit.fasciaV0> - <i:K25/oven.fit.fasciaV1>",
+  "ovenOnShelfAbove": "<a:oven.fascia.height> - <i:K25/oven.space>",
+  "microwaveOnShelfBelow": "<i:K25/microwave.spaceBottom> - <i:K25/microwave.v0>",
+  "microwaveOnShelfAbove": "<i:K25/microwave.v1> - <i:K25/microwave.spaceTop>",
+  "microwaveCabinetGap": "<i:K25/cabinet#2.frontV0> - <i:K25/microwave.v1>",
+  "fridgeFrontAboveDoor": "<i:K27/fridge.frontV1> - <i:K27/fridge.fit.bodyV0> - <a:fridgeFreezer.doors.fridge.top>",
   "innerDrawerExtra": "<p:innerDrawers> - <p:ballRunners>"
  },
  "notes": [
@@ -892,28 +892,28 @@ window.KITCHEN_COST = {
     {
      "id": "oven",
      "appliance": "oven",
-     "topic": "Piekarnik Bosch HBA534BB3 – K8, dół",
-     "description": "Wymiary: obudowa {a:oven.body.width} × {a:oven.body.height} × {a:oven.body.depth}, front {a:oven.fascia.width} × {a:oven.fascia.height} × {a:oven.fascia.thickness}; oba stoją na półce.\nFront: {f:ovenOnShelfAbove} na półkę nad, po {=(<a:oven.fascia.width> - <k:K8.innerWidth>) / 2} na boki korpusu; półki pod nim nie zakrywa.\nLuz nad obudową: {=<i:K8/oven.space> - <a:oven.body.height>}.\nSzczeliny: do frontu szafki pod {=<i:K8/oven.spaceBottom> - <i:K8/cabinet#1.frontV1>}, do mikrofalówki {f:ovenMicrowaveGap}.",
+     "topic": "Piekarnik Bosch HBA534BB3 – K25, dół",
+     "description": "Wymiary: obudowa {a:oven.body.width} × {a:oven.body.height} × {a:oven.body.depth}, front {a:oven.fascia.width} × {a:oven.fascia.height} × {a:oven.fascia.thickness}; oba stoją na półce.\nFront: {f:ovenOnShelfAbove} na półkę nad, po {=(<a:oven.fascia.width> - <k:K25.innerWidth>) / 2} na boki korpusu; półki pod nim nie zakrywa.\nLuz nad obudową: {=<i:K25/oven.space> - <a:oven.body.height>}.\nSzczeliny: do frontu szafki pod {=<i:K25/oven.spaceBottom> - <i:K25/cabinet#1.frontV1>}, do mikrofalówki {f:ovenMicrowaveGap}.",
      "assumed": "Kratka w cokole; półka nad piekarnikiem płytsza o {s:shelf.ventGap}."
     },
     {
      "id": "microwave",
      "appliance": "microwave",
-     "topic": "Mikrofalówka Bosch BFL623MB3 – K8, nad piekarnikiem",
-     "description": "Wymiary: urządzenie {a:microwave.body.width} × {a:microwave.body.height} × {a:microwave.body.depth} na nóżkach {i:K8/microwave.fit.feet}; front {a:microwave.fascia.width} × {a:microwave.fascia.height} × {a:microwave.fascia.thickness}, {=-<a:microwave.fascia.bottom>} poniżej spodu urządzenia.\nFront: {f:microwaveOnShelfBelow} na półkę pod, {f:microwaveOnShelfAbove} na półkę nad, po {=(<a:microwave.fascia.width> - <k:K8.innerWidth>) / 2} na boki korpusu.\nLuz nad urządzeniem: {=<i:K8/microwave.space> - <i:K8/microwave.fit.feet> - <a:microwave.body.height>}; tył otwarty.\nSzczeliny: do piekarnika {f:ovenMicrowaveGap}, do szafki nad {f:microwaveCabinetGap}.",
+     "topic": "Mikrofalówka Bosch BFL623MB3 – K25, nad piekarnikiem",
+     "description": "Wymiary: urządzenie {a:microwave.body.width} × {a:microwave.body.height} × {a:microwave.body.depth} na nóżkach {i:K25/microwave.fit.feet}; front {a:microwave.fascia.width} × {a:microwave.fascia.height} × {a:microwave.fascia.thickness}, {=-<a:microwave.fascia.bottom>} poniżej spodu urządzenia.\nFront: {f:microwaveOnShelfBelow} na półkę pod, {f:microwaveOnShelfAbove} na półkę nad, po {=(<a:microwave.fascia.width> - <k:K25.innerWidth>) / 2} na boki korpusu.\nLuz nad urządzeniem: {=<i:K25/microwave.space> - <i:K25/microwave.fit.feet> - <a:microwave.body.height>}; tył otwarty.\nSzczeliny: do piekarnika {f:ovenMicrowaveGap}, do szafki nad {f:microwaveCabinetGap}.",
      "assumed": "Stoi na półce płytszej o {s:shelf.ventGap}."
     },
     {
      "id": "ovenColumn",
-     "topic": "Słupek K8: piekarnik + mikrofalówka",
-     "description": "Od półki pod piekarnikiem w górę: piekarnik {a:oven.fascia.height}, szczelina {f:ovenMicrowaveGap}, mikrofalówka {i:K8/microwave.height}, szczelina {f:microwaveCabinetGap}, szafka górna.\nPółka środkowa: {=<i:K8/oven.spaceTop> - <i:K8/oven.spaceBottom>}–{=<i:K8/microwave.spaceBottom> - <i:K8/oven.spaceBottom>}, płytsza o {s:shelf.ventGap}.\nPółka górna: {=<i:K8/microwave.spaceTop> - <i:K8/oven.spaceBottom>}–{=<i:K8/microwave.spaceTop> + <t:carcass> - <i:K8/oven.spaceBottom>}.\nSzafka pod piekarnikiem: {i:K8/cabinet#1.height}.",
+     "topic": "Słupek K25: piekarnik + mikrofalówka",
+     "description": "Od półki pod piekarnikiem w górę: piekarnik {a:oven.fascia.height}, szczelina {f:ovenMicrowaveGap}, mikrofalówka {i:K25/microwave.height}, szczelina {f:microwaveCabinetGap}, szafka górna.\nPółka środkowa: {=<i:K25/oven.spaceTop> - <i:K25/oven.spaceBottom>}–{=<i:K25/microwave.spaceBottom> - <i:K25/oven.spaceBottom>}, płytsza o {s:shelf.ventGap}.\nPółka górna: {=<i:K25/microwave.spaceTop> - <i:K25/oven.spaceBottom>}–{=<i:K25/microwave.spaceTop> + <t:carcass> - <i:K25/oven.spaceBottom>}.\nSzafka pod piekarnikiem: {i:K25/cabinet#1.height}.",
      "assumed": "Półki przymierzyć przed zamocowaniem."
     },
     {
      "id": "fridge",
      "appliance": "fridgeFreezer",
-     "topic": "Lodówka Bosch KIS86AFE0 – K10",
-     "description": "Wymiary: {a:fridgeFreezer.body.width} × {a:fridgeFreezer.body.height} × {a:fridgeFreezer.body.depth}, na dnie korpusu.\nPółka stała: na górze urządzenia, góra lodówki przykręcona do niej; płytsza o {s:shelf.ventGap}.\nZamrażarka: front {i:K10/freezer.frontHeight} na drzwiach {=<a:fridgeFreezer.doors.freezer.top> - <a:fridgeFreezer.doors.freezer.bottom>}; wystaje {=<i:K10/freezer.fit.bodyV0> + <a:fridgeFreezer.doors.freezer.bottom> - <i:K10/freezer.frontV0>} w dół, po {=(<i:K10/freezer.frontWidth> - <a:fridgeFreezer.body.width>) / 2} na boki; drzwi sięgają {=<i:K10/freezer.fit.bodyV0> + <a:fridgeFreezer.doors.freezer.top> - <i:K10/freezer.frontV1>} wyżej.\nLodówka: front {i:K10/fridge.frontHeight} na drzwiach {=<a:fridgeFreezer.doors.fridge.top> - <a:fridgeFreezer.doors.fridge.bottom>}; wystaje {=<i:K10/fridge.fit.bodyV0> + <a:fridgeFreezer.doors.fridge.bottom> - <i:K10/fridge.frontV0>} w dół, {f:fridgeFrontAboveDoor} w górę, po {=(<i:K10/fridge.frontWidth> - <a:fridgeFreezer.body.width>) / 2} na boki.\nSzczelina między frontami: {=<i:K10/fridge.frontV0> - <i:K10/freezer.frontV1>}.",
+     "topic": "Lodówka Bosch KIS86AFE0 – K27",
+     "description": "Wymiary: {a:fridgeFreezer.body.width} × {a:fridgeFreezer.body.height} × {a:fridgeFreezer.body.depth}, na dnie korpusu.\nPółka stała: na górze urządzenia, góra lodówki przykręcona do niej; płytsza o {s:shelf.ventGap}.\nZamrażarka: front {i:K27/freezer.frontHeight} na drzwiach {=<a:fridgeFreezer.doors.freezer.top> - <a:fridgeFreezer.doors.freezer.bottom>}; wystaje {=<i:K27/freezer.fit.bodyV0> + <a:fridgeFreezer.doors.freezer.bottom> - <i:K27/freezer.frontV0>} w dół, po {=(<i:K27/freezer.frontWidth> - <a:fridgeFreezer.body.width>) / 2} na boki; drzwi sięgają {=<i:K27/freezer.fit.bodyV0> + <a:fridgeFreezer.doors.freezer.top> - <i:K27/freezer.frontV1>} wyżej.\nLodówka: front {i:K27/fridge.frontHeight} na drzwiach {=<a:fridgeFreezer.doors.fridge.top> - <a:fridgeFreezer.doors.fridge.bottom>}; wystaje {=<i:K27/fridge.fit.bodyV0> + <a:fridgeFreezer.doors.fridge.bottom> - <i:K27/fridge.frontV0>} w dół, {f:fridgeFrontAboveDoor} w górę, po {=(<i:K27/fridge.frontWidth> - <a:fridgeFreezer.body.width>) / 2} na boki.\nSzczelina między frontami: {=<i:K27/fridge.frontV0> - <i:K27/freezer.frontV1>}.",
      "assumed": "Fronty przykręcone do drzwi urządzenia."
     },
     {
@@ -931,7 +931,7 @@ window.KITCHEN_COST = {
     {
      "id": "hob",
      "appliance": "hob",
-     "topic": "Płyta grzewcza Electrolux CIT61443 – K1",
+     "topic": "Płyta grzewcza Electrolux CIT61443 – K11",
      "description": "Wymiary: szkło {a:hob.glass.width} × {a:hob.glass.depth}, korpus {a:hob.body.width} × {a:hob.body.depth} × {a:hob.body.height}.\nWycięcie: {s:cutouts.hob.width} × {s:cutouts.hob.depth}, {s:cutouts.hob.fromBack} od tylnej krawędzi blatu.\nSzkło na blacie: po {=(<a:hob.glass.width> - <s:cutouts.hob.width>) / 2} z boków; {=<s:cutouts.hob.fromBack> - (<a:hob.glass.depth> - <s:cutouts.hob.depth>) / 2} od tylnej, {=<w:1.depth> - <s:cutouts.hob.fromBack> - (<a:hob.glass.depth> + <s:cutouts.hob.depth>) / 2} od przedniej krawędzi blatu.\nPod płytą: trawers przedni {s:crossRails.hobFront}, tylny {s:crossRails.depth}; przegroda {m:hobPanel} za przednim trawersem, {s:crossRails.hobPanelGap} szczeliny z tyłu.",
      "assumed": "Na liście cięć.",
      "decide": "Odstęp korpusu płyty od przegrody: instrukcja, s. 22."
@@ -939,7 +939,7 @@ window.KITCHEN_COST = {
     {
      "id": "sink",
      "appliance": "sink",
-     "topic": "Zlew IKEA KILSVIKEN – K2",
+     "topic": "Zlew IKEA KILSVIKEN – K12",
      "description": "Wymiary: zlew {a:sink.body.width} × {a:sink.body.depth}, komora {a:sink.bowl.width} × {a:sink.bowl.depth} × {a:sink.bowl.height}.\nWycięcie: {s:cutouts.sink.width} × {s:cutouts.sink.depth}, {s:cutouts.sink.fromBack} od tylnej krawędzi blatu.\nZlew na blacie: rant po {=(<a:sink.body.width> - <s:cutouts.sink.width>) / 2} z boków; {=<s:cutouts.sink.fromBack> - (<a:sink.body.depth> - <s:cutouts.sink.depth>) / 2} od tylnej, {=<w:1.depth> - <s:cutouts.sink.fromBack> - (<a:sink.body.depth> + <s:cutouts.sink.depth>) / 2} od przedniej krawędzi blatu.",
      "assumed": "Wycięcie na liście cięć (BLATY).",
      "decide": "Wycięcie sprawdzić z szablonem IKEA przed CNC."
@@ -964,14 +964,14 @@ window.KITCHEN_COST = {
     {
      "id": "corner",
      "topic": "Narożnik L – korpus narożny",
-     "description": "Korpus K3: drzwi, panel przedni {i:K3/frontPanel.width} i ukryte wypełnienie.\nSłupek zawiasowy: {m:carcass}, gł. {s:hinges.postDepth}, niesie zawiasy.\nPanel wpuszczany: za panelem {i:K3/frontPanel.width}, od słupka do boku korpusu.\nCokoły grupy 1 i 2: lista cięć podaje obie pełne długości, jeden przyciąć na miejscu.",
+     "description": "Korpus K13: drzwi, panel przedni {i:K13/frontPanel.width} i ukryte wypełnienie.\nSłupek zawiasowy: {m:carcass}, gł. {s:hinges.postDepth}, niesie zawiasy.\nPanel wpuszczany: za panelem {i:K13/frontPanel.width}, od słupka do boku korpusu.\nCokoły grupy 1 i 2: lista cięć podaje obie pełne długości, jeden przyciąć na miejscu.",
      "assumed": "Złącza: jedno opakowanie.",
-     "decide": "Półka w K3: słupek zawiasowy ją przecina (widok 3D zgłasza kolizję).\nListwa ścienna pod blatem w narożniku?"
+     "decide": "Półka w K13: słupek zawiasowy ją przecina (widok 3D zgłasza kolizję).\nListwa ścienna pod blatem w narożniku?"
     },
     {
      "id": "stripsPanels",
      "topic": "Listwy przednie na sztorc, panele przednie na płasko",
-     "description": "Obrzeże przy otwieranym froncie: panel przedni {i:K3/frontPanel.width} – {i:K3/frontPanel.edges}; panel przedni {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel przedni {i:G2[3]/frontPanel.width} zakrywa koniec panelu przedniego {i:K3/frontPanel.width}."
+     "description": "Obrzeże przy otwieranym froncie: panel przedni {i:K13/frontPanel.width} – {i:K13/frontPanel.edges}; panel przedni {i:G2[3]/frontPanel.width} – {i:G2[3]/frontPanel.edges}; panel tylny wyspy – brak.\nPanel przedni {i:G2[3]/frontPanel.width} zakrywa koniec panelu przedniego {i:K13/frontPanel.width}."
     },
     {
      "id": "sinkCabinet",
@@ -987,9 +987,9 @@ window.KITCHEN_COST = {
     },
     {
      "id": "doorDrawers",
-     "topic": "Szuflady za drzwiami z płyty (K8 i K12, dół)",
-     "description": "K8: drzwi {i:K8/doorDrawers.frontWidth} × {i:K8/doorDrawers.frontHeight}, {i:K8/doorDrawers.count} szuflady {i:K8/doorDrawers.boxWidth} × {i:K8/doorDrawers.runnerLength} × {i:K8/doorDrawers.boxHeight}, zawiasy {i:K8/doorDrawers.hinge}.\nK12: drzwi {i:K12/doorDrawers.frontWidth} × {i:K12/doorDrawers.frontHeight}, {i:K12/doorDrawers.count} szuflady {i:K12/doorDrawers.boxWidth} × {i:K12/doorDrawers.runnerLength} × {i:K12/doorDrawers.boxHeight}, zawiasy {i:K12/doorDrawers.hinge}.\nSkrzynki: {m:drawerBox}, prowadnice kulkowe Häfele L = {i:K12/doorDrawers.runnerLength}, {s:doorDrawers.clearance} luzu z każdej strony.\nPłyta dystansowa po stronie zawiasów: kończy się {s:hinges.postDepth} przed przodem korpusu, tak jak skrzynki; szuflady mijają zawiasy i otwarte drzwi.\nBez półek ruchomych za tymi drzwiami.",
-     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka.\nBlum zamiast płyty (TANDEMBOX M, {p:innerDrawers} za kpl.): {=ROUND(<f:innerDrawerExtra>)} zł więcej za szufladę, {=ROUND(<f:innerDrawerExtra> * <n:doorDrawers>)} zł razem; boki {s:drawers.M.sideHeight} zamiast {s:doorDrawers.sideHeight}; w K12 sprawdzić minimalną szerokość ({=<k:K12.innerWidth> - <t:carcass>}).\nPłyta {m:drawerBox}: {q:drawerBoard} ark., ostatni słabo wykorzystany; skrzynki zmieszczą się w odpadach {m:carcass}."
+     "topic": "Szuflady za drzwiami z płyty (K25 i K29, dół)",
+     "description": "K25: drzwi {i:K25/doorDrawers.frontWidth} × {i:K25/doorDrawers.frontHeight}, {i:K25/doorDrawers.count} szuflady {i:K25/doorDrawers.boxWidth} × {i:K25/doorDrawers.runnerLength} × {i:K25/doorDrawers.boxHeight}, zawiasy {i:K25/doorDrawers.hinge}.\nK12: drzwi {i:K29/doorDrawers.frontWidth} × {i:K29/doorDrawers.frontHeight}, {i:K29/doorDrawers.count} szuflady {i:K29/doorDrawers.boxWidth} × {i:K29/doorDrawers.runnerLength} × {i:K29/doorDrawers.boxHeight}, zawiasy {i:K29/doorDrawers.hinge}.\nSkrzynki: {m:drawerBox}, prowadnice kulkowe Häfele L = {i:K29/doorDrawers.runnerLength}, {s:doorDrawers.clearance} luzu z każdej strony.\nPłyta dystansowa po stronie zawiasów: kończy się {s:hinges.postDepth} przed przodem korpusu, tak jak skrzynki; szuflady mijają zawiasy i otwarte drzwi.\nBez półek ruchomych za tymi drzwiami.",
+     "decide": "Uchwyt szuflad: wycięcie w czole albo gałka.\nBlum zamiast płyty (TANDEMBOX M, {p:innerDrawers} za kpl.): {=ROUND(<f:innerDrawerExtra>)} zł więcej za szufladę, {=ROUND(<f:innerDrawerExtra> * <n:doorDrawers>)} zł razem; boki {s:drawers.M.sideHeight} zamiast {s:doorDrawers.sideHeight}; w K29 sprawdzić minimalną szerokość ({=<k:K29.innerWidth> - <t:carcass>}).\nPłyta {m:drawerBox}: {q:drawerBoard} ark., ostatni słabo wykorzystany; skrzynki zmieszczą się w odpadach {m:carcass}."
     },
     {
      "id": "worktops",

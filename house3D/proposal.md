@@ -1,15 +1,15 @@
-# Proposal: kitchen and bath in house3D
+# Proposal: kitchen and bathroom in house3D
 
 > Status: the kitchen and the bathrooms take their room from the house (rooms.js) and are drawn by core in house axes. Still open: bringing their furniture into the house view (below). Once agreed, what stays moves to project.md and rules.md.
 
 ## 1. What comes across
 
-The kitchen and bath projects are for building; house3D is for looking. The house takes their geometry, not their code or pages.
+The kitchen and bathroom projects are for building; house3D is for looking. The house takes their geometry, not their code or pages.
 
 - **Kitchen**: furniture copied exactly. Both projects already use house axes and positions (view.js), so nothing is converted.
 - **The kitchen follows the house.** Its own room (walls, window, floor, ceiling) is not taken; it already draws the house's. Only the plasterboard (Zabudowa GK) is rebuilt against the house walls.
-- **Bath**: its ideas (vanity, shower, WC casing, suspended ceiling, wall tiles, fittings) are rebuilt on the house walls. Where bath numbers disagree with the house walls, the house wins.
-- **Converter**: a script writes the converted data into house3D data files, so view.html still knows nothing of kitchen or bath. Re-run it when kitchen/design.js changes.
+- **Bathroom**: its ideas (vanity, shower, WC casing, suspended ceiling, wall tiles, fittings) are rebuilt on the house walls. Where bathroom numbers disagree with the house walls, the house wins.
+- **Converter**: a script writes the converted data into house3D data files, so view.html still knows nothing of kitchen or bathroom. Re-run it when kitchen/design.js changes.
 
 ## 2. Layers
 
