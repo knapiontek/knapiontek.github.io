@@ -1,4 +1,4 @@
-/* Kitchen project cost data - read by cost.html. Written for each project (LLM). Plain JSON after "window.KITCHEN_COST =".
+/* Kitchen project cost data - read by cost-sheets.js (Info of view.html). Written for each project (LLM). Plain JSON after "window.KITCHEN_COST =".
    Everything measured comes from design.js through engine.js, the appliance sizes from ../library/products.js: nothing here repeats
    a calculated number.
      page        tab title, heading, info line, XLSX file name, excluded (what the estimate does not cover)

@@ -1,4 +1,4 @@
-/* Kitchen project design - shared by design.html, cost.html and view.html.
+/* Kitchen project design - shared by design.html and view.html (with cost-sheets.js).
    Plain JSON after "window.KITCHEN_DESIGN =". Notes, groups and components: design.html (Import data / Export data);
    materials and appliances (product keys of ../library/products.js and how each is used or built in here)
    and settings: by hand

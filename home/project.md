@@ -88,7 +88,7 @@ Every part of the screen has one role. These names are used everywhere (docs, co
 - **3D**: the model; the cameras in the bottom menu (the house's go to every room, from above, the side, the front).
 - **2D**: static, like a CAD drawing for the engineer: everything in one sheet, full lines what is seen under the cut, dashed what is over it, at the house's fixed cut height. Settings do not change it. Saved as SVG to print.
 - **Test**: the checks (today's Analiza).
-- **Info**: all the project's information, in parts, like cost.html: dimensions, project notes and materials, drawings (the bathroom vanity), carcasses, shopping, the estimate. Saved as XLSX. The spreadsheet of cost.html (editable cells, formulas, XLSX export) moves to core and knows no project.
+- **Info**: all the project's information, in parts: dimensions, project notes and materials, drawings (the bathroom vanity), carcasses, shopping, the estimate. Saved as XLSX. The spreadsheet (editable cells, formulas, XLSX export) is core/sheet.js and knows no project.
 
 ### Right panel
 

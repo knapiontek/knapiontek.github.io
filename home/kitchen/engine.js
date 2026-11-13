@@ -1,4 +1,4 @@
-/* engine.js - builds the kitchen model from design.js for design.html, cost.html and view.html.
+/* engine.js - builds the kitchen model from design.js for design.html and view.html (with cost-sheets.js).
    The same project always gives the same model. No drawing and no numbers of this kitchen: they all come from design.js.
    Coordinates in mm per group: u along the group, v up from the floor, n out from the carcass backs (groups[g].wall: n of
    the wall); a box is [u0, u1, v0, v1, n0, n1]. */
@@ -369,7 +369,7 @@
     const warn = (text, index = null, skipped = false) => { issues.push({ index, text, skipped }); };
     const groups = {}, carcasses = [], fronts = [], boards = [];
     const strips = [], plinths = [], frontPanels = [], wallPanels = [], plaster = [], worktops = {};
-    // engine counts, used by cost.html as {n:name}; wallBrackets: brackets of the back strips at a wall; jointLength: mm of carcass side
+    // engine counts, used by cost-sheets.js as {n:name}; wallBrackets: brackets of the back strips at a wall; jointLength: mm of carcass side
     // screwed to a strip and its back strip, from the first carcass (screwed) or from inside the second one (fromInside)
     const counts = {
       carcasses: 0, wallBrackets: 0, jointLength: { screwed: 0, fromInside: 0 }, fronts: 0, handles: 0, hinges: 0, bumpers: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
@@ -963,7 +963,7 @@
       }
     }
 
-    // ---- appliances in their places: item.fit, shown by cost.html (notes) and drawn by view.html ----
+    // ---- appliances in their places: item.fit, shown by cost-sheets.js (notes) and drawn by view.html ----
     // every fit has the body, centred on its module or carcass: {bodyU0, bodyU1, bodyV0, bodyV1}; an oven or a microwave stands on its feet
     // (design.js appliances) on the board under its module: + {feet, fasciaV0, fasciaV1}; a fridge stands on the carcass bottom, one fit on both
     // its fronts; a dishwasher stands on the floor on its feet, up to the worktop: + {feet, doorV0, doorV1}
@@ -1145,7 +1145,7 @@
       : json1(v));
     const entries = (obj, line = v => value(v)) => Object.entries(obj || {}).map(([k, v]) => '  ' + json1(k) + ': ' + line(v)).join(',\n');
     const components = project.components.map((c, i) => (i && c.group !== project.components[i - 1].group ? '\n' : '') + '  ' + json1(c)).join(',\n');
-    return '/* Kitchen project design - shared by design.html, cost.html and view.html.\n' +
+    return '/* Kitchen project design - shared by design.html and view.html (with cost-sheets.js).\n' +
       '   Plain JSON after "window.KITCHEN_DESIGN =". Notes, groups and components: design.html (Import data / Export data);\n' +
       '   materials and appliances (product keys of ../library/products.js and how each is used or built in here)\n' +
       '   and settings: by hand\n' +

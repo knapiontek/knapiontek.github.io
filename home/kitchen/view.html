@@ -13,6 +13,14 @@
 #tabs{margin:2px 0 4px}
 #analysis>.note{margin:0 0 10px}
 #info>section{max-width:880px}
+#info>section.wide{max-width:none}
+.issues{margin:8px 0 12px;padding:8px 12px;border:1px solid var(--warn);border-radius:6px;font-size:13px;color:var(--warn)}
+.issues ul{margin:4px 0 0;padding-left:18px}
+.asm{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding:10px 0}
+.asm .card{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;color:var(--muted)}
+.asm h3{margin:0 0 4px;font:700 14px var(--f-display);color:var(--ink)}
+.asm b{color:var(--ink)}
+.asm .holes{display:inline-block;padding-left:14px;font-size:12px}
 #info pre.json{max-height:480px}
 .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 #tip{position:absolute;z-index:8;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12.5px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.12)}
@@ -48,6 +56,18 @@ dl.notes dd{margin:0;color:var(--muted)}
     <div id="info" hidden aria-label="Informacje">
       <h1 id="infoTitle"></h1>
       <p class="sub" id="infoSubtitle"></p>
+      <div class="issues" id="issues" hidden></div>
+      <section class="wide">
+        <h2>Kosztorys · lista cięć · notatki</h2>
+        <div id="costSheet"></div>
+        <p class="note" id="costExcluded"></p>
+      </section>
+      <section class="wide">
+        <h2>Montaż</h2>
+        <p class="note">Wszystko dla jednego korpusu w jednym miejscu, do kompletowania części na miejscu. Części bez korpusu są wg grupy i kolumny (G1[4] = grupa 1, kolumna 4; G1[1-3] = kolumny 1 do 3). Wymiary w mm.</p>
+        <p class="note" id="assemblyLegend"></p>
+        <div class="asm" id="assemblyBody"></div>
+      </section>
       <section>
         <h2>Podsumowanie z modelu</h2>
         <dl class="stats" id="stats"></dl>
@@ -91,7 +111,7 @@ dl.notes dd{margin:0;color:var(--muted)}
       </div>
       <div data-help="2d"><p>Rzut kuchni jak rysunek CAD, cięty na wysokości z rzutu domu: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG.</p></div>
       <div data-help="test"><p>Sprawdzenie geometrii: kolizje, szczeliny, fronty poza linią, części wystające, części bez wymiaru. <b>OK</b> = nic do poprawienia.</p></div>
-      <div data-help="info"><p>Wszystko o kuchni z modelu: podsumowanie, płyty, korpusy (kliknij, aby zobaczyć płyty), materiały, wymiary, notatki. Na dole: kosztorys i edycja projektu, mapa korpusów.</p></div>
+      <div data-help="info"><p>Wszystko o kuchni: kosztorys, lista cięć i notatki w arkuszu (niebieskie pola można zmieniać do odświeżenia strony; „patrz notatka” prowadzi do notatki), montaż korpus po korpusie, podsumowanie z modelu, korpusy (kliknij, aby zobaczyć płyty), materiały, wymiary. Na dole: zapis XLSX z formułami, przywrócenie danych, edycja projektu, mapa korpusów.</p></div>
     </div>
     <div class="corner">
       <button class="round" id="sunbtn" aria-label="Światło" aria-expanded="false" aria-controls="sun">☀</button>
@@ -144,6 +164,7 @@ dl.notes dd{margin:0;color:var(--muted)}
 <script src="../core/ui.js"></script>
 <script src="../apps.js"></script>
 <script src="../core/plan.js"></script>
+<script src="../core/sheet.js"></script>
 <script src="../core/library.js"></script>
 <script src="../house/house.js"></script>
 <script src="../library/materials.js"></script>
@@ -153,6 +174,8 @@ dl.notes dd{margin:0;color:var(--muted)}
 <script src="design.js"></script>
 <script src="view.js"></script>
 <script src="engine.js"></script>
+<script src="cost.js"></script>
+<script src="cost-sheets.js"></script>
 <script>
 /* the library's textures first (core/library.js): the board decors design.js names and the floor tiles to choose from */
 CORE.library.load('../library/', Object.values(KITCHEN_DESIGN.materials).map(m => LIBRARY_PRODUCTS.boards[m.product].texture)
@@ -1220,8 +1243,15 @@ const mapText = KE.mapJSON(KE.carcassMap(model, c => {
   return { x: [b[0], b[1]], y: [b[2], b[3]], z: [b[4], b[5]] };
 }));
 $('mapJson').textContent = mapText;
-/* the bottom menu of Info: the kitchen's other pages, the carcass map */
-const INFO_ITEMS = [[{ name: 'Kosztorys', go: () => { location.href = 'cost.html'; } }, { name: 'Edycja projektu', go: () => { location.href = 'design.html'; } }],
+/* Info: the estimate, cutting list and notes (cost-sheets.js from cost.js) in the spreadsheet of core, the assembly cards */
+const COST = KitchenCost.create(model, APPLIANCES), COST_SHEET = CORE.sheet.create($('costSheet'), COST.book());
+$('costExcluded').innerHTML = '<b>Nie obejmuje</b><br>' + COST.page.excluded.map(e => esc(COST.fill(e))).join('<br>');
+{ const a = COST.assembly(); $('assemblyLegend').innerHTML = a.legend; $('assemblyBody').innerHTML = a.cards; }
+$('issues').hidden = !COST.warnings.length;
+$('issues').innerHTML = COST.warnings.length ? `<b>${COST.warnings.length} ${KE.plural(COST.warnings.length, 'problem', 'problemy', 'problemów')} w design.js</b><ul>${COST.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : '';
+/* the bottom menu of Info: the files, the editor of the project, the carcass map */
+const INFO_ITEMS = [[{ name: 'Zapisz XLSX', go: e => { const b = e.currentTarget; COST_SHEET.xlsx(COST.page.xlsxFile).catch(err => { b.textContent = err.message; }); } },
+   { name: 'Przywróć dane', go: () => COST_SHEET.restore() }], [{ name: 'Edycja projektu', go: () => { location.href = 'design.html'; } }],
   [{ name: 'Mapa JSON: kopiuj', go: e => { const b = e.currentTarget; navigator.clipboard?.writeText(mapText).then(() => { b.textContent = 'Skopiowano'; setTimeout(() => { b.textContent = 'Mapa JSON: kopiuj'; }, 1500); }, () => {}); } },
    { name: 'Mapa JSON: pobierz', go: () => { const a = el('a', { href: URL.createObjectURL(new Blob([mapText], { type: 'application/json' })), download: 'mapa_korpusow_widok.json' }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); } }]];
 {
