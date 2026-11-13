@@ -1,20 +1,20 @@
 /* Kitchen project design - shared by design.html and view.html (with cost-sheets.js).
    Plain JSON after "window.KITCHEN_DESIGN =". Notes, groups and components: design.html (Import data / Export data);
-   materials and appliances (product keys of ../library/products.js and how each is used or built in here)
+   materials by their product key in ../library/products.js (how each is used), appliances by role (their product key and how it is built in)
    and settings: by hand
    (design.html keeps them as they are). */
 window.KITCHEN_DESIGN = {
  "materials": {
-  "chipGrey18": {"product": "egger-u708-st9-18", "uses": ["carcass"]},
-  "chipGrey16": {"product": "egger-u708-st9-16", "uses": ["drawerBox", "hobPanel"]},
-  "hdfGrey3": {"product": "hdf-grey-3", "uses": ["backPanel"]},
-  "shakerNavy18": {"product": "shaker-english-navy-18", "uses": ["cabinet", "drawer"]},
-  "mdfNavy18": {"product": "mdf-english-navy-18", "uses": ["frontPanel", "strip", "plinth"]},
-  "chipOak18": {"product": "egger-h1180-st37", "uses": ["wallPanel"]},
-  "topOak38x650": {"product": "egger-worktop-h1180-st37-38x650", "uses": ["worktop"]},
-  "topOak38x920": {"product": "egger-worktop-h1180-st37-38x920", "uses": ["islandWorktop"]},
-  "endOak38x650": {"product": "egger-end-panel-h1180-st37-38x650", "uses": ["endPanel"]},
-  "endOak38x920": {"product": "egger-end-panel-h1180-st37-38x920", "uses": ["islandEndPanel"]}
+  "egger-u708-st9-18": {"uses": ["carcass"]},
+  "egger-u708-st9-16": {"uses": ["drawerBox", "hobPanel"]},
+  "hdf-grey-3": {"uses": ["backPanel"]},
+  "shaker-english-navy-18": {"uses": ["cabinet", "drawer"]},
+  "mdf-english-navy-18": {"uses": ["frontPanel", "strip", "plinth"]},
+  "egger-h1180-st37": {"uses": ["wallPanel"]},
+  "egger-worktop-h1180-st37-38x650": {"uses": ["worktop"]},
+  "egger-worktop-h1180-st37-38x920": {"uses": ["islandWorktop"]},
+  "egger-end-panel-h1180-st37-38x650": {"uses": ["endPanel"]},
+  "egger-end-panel-h1180-st37-38x920": {"uses": ["islandEndPanel"]}
  },
  "appliances": {
   "oven": {"product": "bosch-hba534bb3", "feet": 0},

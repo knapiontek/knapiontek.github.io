@@ -61,7 +61,7 @@ One application over all the projects: the house, the kitchen, the bathroom on t
 ```
 ┌───────────┬───────────────────────────────────────────┬──────────────────┐
 │ top-left  │                    top-right menu: [3D 2D │ right panel      │
-│ menu      │                              Test Info]   │  [tabs]          │
+│ menu      │                              Info Test]   │  [tabs]          │
 │           │                main view                  │  Warstwy         │
 │ Dom       │                                           │  Wykończenie     │
 │ Kuchnia   │                                           │  …               │
@@ -77,7 +77,7 @@ Every part of the screen has one role. These names are used everywhere (docs, co
 | Name | Polish | Role | Answers |
 |---|---|---|---|
 | **top-left menu** | lewe górne menu | the application: Dom, Kuchnia, Łazienki, Garderoby | where am I? |
-| **top-right menu** | prawe górne menu | the mode: 3D, 2D, Test, Info | how do I look? |
+| **top-right menu** | prawe górne menu | the mode: 3D, 2D, Info, Test | how do I look? |
 | **main view** | główny widok | what the mode shows; direct work in it (orbit, a click opens a door, selects a carcass) | what do I see? |
 | **bottom menu** | dolne menu | one-off actions of the mode: cameras in 3D, save SVG in 2D, save XLSX in Info; nothing stays set | what to do now? |
 | **right panel** | prawy panel | the project's settings, in tabs; settings only, never information; always there, » « on the view's edge hides it (one choice for every application) | how should it be? |
@@ -87,8 +87,8 @@ Every part of the screen has one role. These names are used everywhere (docs, co
 
 - **3D**: the model; the cameras in the bottom menu (the house's go to every room, from above, the side, the front).
 - **2D**: static, like a CAD drawing for the engineer: everything in one sheet, full lines what is seen under the cut, dashed what is over it, at the house's fixed cut height. Settings do not change it. Saved as SVG to print.
-- **Test**: the checks (today's Analiza).
 - **Info**: all the project's information, in parts: dimensions, project notes and materials, drawings (the bathroom vanity), carcasses, shopping, the estimate. Saved as XLSX. The spreadsheet (editable cells, formulas, XLSX export) is core/sheet.js and knows no project.
+- **Test**: the checks (today's Analiza).
 
 ### Right panel
 
@@ -105,8 +105,8 @@ What never means anything in a mode is not shown there. Dimmed (with the reason 
 |---|---|---|---|
 | 3D | Warstwy, Wykończenie | yes | cameras |
 | 2D | Warstwy, Wykończenie (» hides it: the plan takes the whole width, like CAD) | no | save SVG, zoom |
-| Test | Warstwy, Wykończenie | no | — |
 | Info | Wykończenie first (the tiles change the prices), Warstwy | no | save XLSX |
+| Test | Warstwy, Wykończenie | no | — |
 
 ? help is always there; it tells about the current application and mode.
 

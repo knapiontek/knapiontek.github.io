@@ -219,6 +219,7 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 <script src="../core/ui.js"></script>
 <script src="../apps.js"></script>
 <script src="../core/plan.js"></script>
+<script src="../core/sheet.js"></script>
 <script src="../core/library.js"></script>
 <script src="../house/engine.js"></script>
 <script src="../house/house-clip.js"></script>
@@ -1791,35 +1792,20 @@ function setMode(m) {
   invalidate();
 }
 
-/* ---------- XLSX export (SheetJS, loaded only on click) ---------- */
-let xlsxLib = null;
-function loadXlsx() {
-  if (window.XLSX) return Promise.resolve(window.XLSX);
-  return xlsxLib = xlsxLib || new Promise((resolve, reject) => {
-    const el = document.createElement('script');
-    el.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    el.onload = () => resolve(window.XLSX); el.onerror = () => { xlsxLib = null; reject(new Error('xlsx')); };
-    document.head.appendChild(el);
-  });
-}
-function sheet(XLSX, rows, widths) {
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = widths.map(wch => ({ wch }));
-  return ws;
+/* ---------- XLSX: the sheets of engine.js through the spreadsheet of core (core/sheet.js) ---------- */
+/* engine.js sheet {name, widths, rows, links [[A1 ref, url]]} -> a sheet of core/sheet.js; the first row is its header */
+function coreSheet(sh) {
+  const links = new Map(sh.links || []), at = (ri, ci) => CORE.sheet.letter(ci) + (ri + 1);
+  return { name: sh.name, cols: sh.widths.map(width => ({ width })),
+    rows: sh.rows.map((row, ri) => ({ kind: ri === 0 ? 'head' : undefined,
+      cells: row.map((cell, ci) => (links.has(at(ri, ci)) ? { text: String(cell), href: links.get(at(ri, ci)) } : cell === '' ? null : cell)) })) };
 }
 async function exportXlsx(button) {
   const label = button.textContent;
   button.textContent = 'Przygotowuję…';
-  let XLSX;
-  try { XLSX = await loadXlsx(); } catch (e) { button.textContent = 'Brak sieci — spróbuj ponownie'; setTimeout(() => button.textContent = label, 2500); return; }
-  const wb = XLSX.utils.book_new();
-  for (const sh of BathEngine.workbook(G, DECORS[state.decor], state.metal)) {
-    const ws = sheet(XLSX, sh.rows, sh.widths);
-    for (const [ref, url] of sh.links || []) if (ws[ref]) ws[ref].l = { Target: url };
-    XLSX.utils.book_append_sheet(wb, ws, sh.name);
-  }
-  XLSX.writeFile(wb, `bathroom-${FLOOR}-vanity-${V.len}-${state.decor}.xlsx`);
-  button.textContent = label;
+  const book = { sheets: BathEngine.workbook(G, DECORS[state.decor], state.metal).map(coreSheet) };
+  try { await CORE.sheet.xlsx(book, `bathroom-${FLOOR}-vanity-${V.len}-${state.decor}.xlsx`); button.textContent = label; }
+  catch (e) { button.textContent = 'Brak sieci — spróbuj ponownie'; setTimeout(() => button.textContent = label, 2500); }
 }
 
 // board decor

@@ -178,7 +178,7 @@ dl.notes dd{margin:0;color:var(--muted)}
 <script src="cost-sheets.js"></script>
 <script>
 /* the library's textures first (core/library.js): the board decors design.js names and the floor tiles to choose from */
-CORE.library.load('../library/', Object.values(KITCHEN_DESIGN.materials).map(m => LIBRARY_PRODUCTS.boards[m.product].texture)
+CORE.library.load('../library/', Object.keys(KITCHEN_DESIGN.materials).map(key => LIBRARY_PRODUCTS.boards[key].texture)
   .concat(KITCHEN_VIEW.floors.map(k => LIBRARY_PRODUCTS.tiles[k].texture))).then(function () {
 'use strict';
 

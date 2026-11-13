@@ -2,16 +2,20 @@
 :root{
   --bg:#eceeec; --stage:#dfe3e1; --panel:#f7f8f6; --ink:#1f2523; --muted:#5f6a66; --line:#cfd5d2;
   --accent:#9a6a2f; --accent-ink:#fff; --warn:#b3402e; --ok:#3f7a52;
+  --edge:#3b4441; --lift:rgba(0,0,0,.18);   /* the menus' outline and shadow: in contrast to the mode, so they stand out over any view */
   --f-display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
   --f-body:"Barlow","Segoe UI",Roboto,Arial,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
 }
+/* dark as the system is (Windows: Settings > Personalisation > Colours), or on request (data-theme) */
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#151918; --stage:#1d2321; --panel:#1a1f1d; --ink:#e7ebe9; --muted:#9aa5a1; --line:#2f3734;
-  --accent:#d39a55; --accent-ink:#1a1208; --warn:#ef7b66; --ok:#7cc290; color-scheme:dark}}
+  --bg:#121615; --stage:#1b201f; --panel:#1c2220; --ink:#f1f4f2; --muted:#b3bdb9; --line:#3a4440;
+  --accent:#e0a25c; --accent-ink:#1a1208; --warn:#ff8a73; --ok:#86d29b; --edge:#e9eeec; --lift:rgba(0,0,0,.55); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#151918; --stage:#1d2321; --panel:#1a1f1d; --ink:#e7ebe9; --muted:#9aa5a1; --line:#2f3734;
-  --accent:#d39a55; --accent-ink:#1a1208; --warn:#ef7b66; --ok:#7cc290; color-scheme:dark}
+  --bg:#121615; --stage:#1b201f; --panel:#1c2220; --ink:#f1f4f2; --muted:#b3bdb9; --line:#3a4440;
+  --accent:#e0a25c; --accent-ink:#1a1208; --warn:#ff8a73; --ok:#86d29b; --edge:#e9eeec; --lift:rgba(0,0,0,.55); color-scheme:dark}
+/* the menus over the view: always visible, whatever the mode and whatever is drawn under them */
+.apps,.hud .toggle,.modes,.chk,.roomtag,.dock,.round,.panelbtn,.float{border:1.5px solid var(--edge)!important;box-shadow:0 2px 10px var(--lift)}
 [hidden]{display:none!important}
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
@@ -93,7 +97,9 @@ button{font:inherit;color:inherit}
 .sheettabs{margin:0 0 8px}
 .sheetwrap{overflow:auto;max-width:100%;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
 table.sheet{border-collapse:collapse;font-size:12.5px;min-width:100%}
-table.sheet td{border:1px solid var(--line);padding:4px 7px;vertical-align:top}
+table.sheet td{border:1px solid var(--line);padding:4px 7px;vertical-align:top;white-space:pre-line}
+table.sheet tr.flash td{animation:sheetflash 1.6s ease-out}
+@keyframes sheetflash{from{background:#fde68a}}
 table.sheet td.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
 table.sheet tr.title td{font:700 14px var(--f-display);border:0;padding:8px 7px}
 table.sheet tr.head td{font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg)}
@@ -101,7 +107,7 @@ table.sheet tr.cat td,table.sheet tr.sum td{font-weight:600;background:var(--bg)
 table.sheet tr.grand td{font-weight:700;background:color-mix(in srgb,var(--accent) 18%,transparent)}
 table.sheet input{width:100%;min-width:64px;border:0;background:color-mix(in srgb,#2f6fdb 10%,transparent);color:#2f6fdb;font:inherit;text-align:right;padding:2px 4px;border-radius:3px}
 table.sheet input.changed{background:#fde68a;color:#7a4b00}
-table.sheet a{color:var(--accent)}
+table.sheet a{color:var(--accent);overflow-wrap:anywhere}
 .sheetnote{margin:0 16px;font-size:12px;color:var(--muted);text-align:center}
 #analysis .check ul{font-family:var(--f-mono);font-size:11.5px}
 #sheet svg{display:block;margin:0 auto;height:calc(100% * var(--zoom,1));width:calc(100% * var(--zoom,1));max-width:none}   /* the viewBox keeps the drawing whole: at zoom 1 it fits the sheet both ways */

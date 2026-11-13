@@ -873,7 +873,7 @@ document.addEventListener('alpine:init', () => {
       loadedProject = project;
       // shown, not edited; uses as design.js lists them
       this.materials = Object.entries(KE.withLibrary(project, LIBRARY_PRODUCTS.boards).materials)
-        .map(([code, m]) => ({ code, ...m }))
+        .map(([code, m]) => ({ ...m, code }))   // the key in design.js; the library's own product code must not replace it
         .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: design.js order
       this.notes = (project.notes || []).map(n => this.newNoteRow(n.name ?? '', n.description ?? '', n.details ?? ''));
       this.groupRows = (project.groups || []).map(g => this.newGroupRow(g.group, g.name ?? '', g.backGap ?? ''));

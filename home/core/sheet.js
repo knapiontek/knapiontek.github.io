@@ -8,8 +8,12 @@
             {v, input: true}       a number the viewer may change
             {f: 'C5*(1+$C$2)'}     a formula as in Excel: A1 and 'Other sheet'!A1 references, ranges, + - * / ( ),
                                    SUM, ROUND, ROUNDUP, MIN, MAX
-            {text, href}           a link
-          digits (cell or column): decimals shown; none: as the number is */
+            {text, href}           a link; href '#Sheet!A12' (Excel's own form, quotes allowed) opens that sheet at that row;
+                                   a text that is the address itself shows as its site only (nobody reads or retypes an address)
+            {text, links: [...]}   a text with links after it, each {text, href} as above; in the XLSX their names follow
+                                   the text and the cell opens the first one
+          any number cell may add: digits (decimals shown; or the column's), pct (shown as a percentage), z (the XLSX
+          number format; or the column's z). A text may hold line breaks (\n). */
 (function (CORE) {
 'use strict';
 
@@ -59,7 +63,14 @@ function evaluator(book) {
 }
 
 /* ---------- the page ---------- */
-const show = (v, d) => (Number.isFinite(v) ? v.toLocaleString('pl-PL', d === undefined ? { maximumFractionDigits: 3 } : { minimumFractionDigits: d, maximumFractionDigits: d }) : '–');
+const show = (v, d, pct) => (!Number.isFinite(v) ? '–' : pct ? Math.round(v * 1000) / 10 + '%'
+  : v.toLocaleString('pl-PL', d === undefined ? { maximumFractionDigits: 3 } : { minimumFractionDigits: d, maximumFractionDigits: d }));
+/* what a link shows: its name, or for a bare address its site (www.ogony.pl/... -> ogony.pl) */
+const linkText = l => (l.text && l.text !== l.href ? l.text : (l.href.match(/^\w+:\/\/(?:www\.)?([^/?#]+)/) || [, l.href])[1]);
+/* the text of a cell with links, as the XLSX has it */
+const withLinks = c => [c.text, c.links.map(linkText).join(' · ')].filter(Boolean).join('\n');
+/* '#'Notatki'!A12' -> [sheet name, row] */
+const target = href => { const m = href.match(/^#'?([^'!]+)'?!\$?[A-Z]+\$?(\d+)$/); return m && [m[1], +m[2]]; };
 
 /* draws book into box: tabs (one per sheet) over the table of the current one; returns {xlsx(file), restore()} */
 function create(box, book) {
@@ -80,14 +91,19 @@ function create(box, book) {
       (row.cells || []).forEach((cell, ci) => {
         const d = cell?.digits ?? sheet.cols[ci]?.digits, td = el('td');
         if (typeof cell === 'number') { td.className = 'n'; td.textContent = show(cell, d); }
+        else if (cell && typeof cell === 'object' && 'v' in cell && !cell.input) { td.className = 'n'; td.textContent = show(cell.v, d, cell.pct); }
         else if (cell && cell.input) {
           td.className = 'n';
           const input = el('input', { type: 'number', step: 'any', value: cell.v });
           input.classList.toggle('changed', cell.v !== original.get(cell));
           input.onchange = () => { cell.v = input.value === '' ? 0 : +input.value; input.classList.toggle('changed', cell.v !== original.get(cell)); refresh(); };
           td.append(input);
-        } else if (cell && cell.f) { td.className = 'n'; td.title = '=' + cell.f; formulas.push([td, ci, ri + 1, d]); }
-        else if (cell && cell.href) td.innerHTML = `<a href="${cell.href}" target="_blank" rel="noopener">${cell.text}</a>`;
+        } else if (cell && cell.f) { td.className = 'n'; td.title = '=' + cell.f; formulas.push([td, ci, ri + 1, d, cell.pct]); }
+        else if (cell && cell.href) td.append(anchor(cell));
+        else if (cell && cell.links) {
+          if (cell.text) td.append(cell.text + '\n');
+          cell.links.forEach((l, i) => td.append(...(i ? [' · '] : []), anchor(l)));
+        }
         else if (cell !== null && cell !== undefined) td.textContent = cell;
         tr.append(td);
       });
@@ -96,8 +112,23 @@ function create(box, book) {
     });
     wrap.innerHTML = ''; wrap.append(table);
     /* the formula cells of this sheet, again after every change of an input */
-    function refresh() { const v = evaluator(book); for (const [td, c, r, d] of formulas) td.textContent = show(v(sheet, c, r), d); }
+    function refresh() { const v = evaluator(book); for (const [td, c, r, d, pct] of formulas) td.textContent = show(v(sheet, c, r), d, pct); }
     refresh();
+  }
+  /* a link: inside the book it opens that sheet, outside a new tab */
+  function anchor(l) {
+    const a = el('a', { href: l.href, textContent: linkText(l), title: l.href }), to = target(l.href);
+    if (to) a.onclick = e => { e.preventDefault(); go(...to); };
+    else Object.assign(a, { target: '_blank', rel: 'noopener' });
+    return a;
+  }
+  /* a link inside the book: that sheet, its row in view and flashed */
+  function go(name, row) {
+    const i = book.sheets.findIndex(s => s.name === name);
+    if (i < 0) return;
+    current = i; draw();
+    const tr = wrap.querySelectorAll('table.sheet > tr')[row - 1];
+    if (tr) { tr.scrollIntoView({ block: 'center' }); tr.classList.remove('flash'); void tr.offsetWidth; tr.classList.add('flash'); }
   }
   tabs.onclick = e => { const b = e.target.closest('[data-i]'); if (b) { current = +b.dataset.i; draw(); } };
   draw();
@@ -126,11 +157,15 @@ async function xlsx(book, file) {
       if (cell === null || cell === undefined || cell === '') return;
       const ref = letter(ci) + (ri + 1);
       maxC = Math.max(maxC, ci);
-      if (typeof cell === 'number') ws[ref] = { t: 'n', v: cell };
-      else if (cell.input) ws[ref] = { t: 'n', v: Number(cell.v) || 0 };
+      const z = cell.z ?? sheet.cols[ci]?.z;
+      if (typeof cell === 'string') ws[ref] = { t: 's', v: cell };
+      else if (typeof cell === 'number') ws[ref] = { t: 'n', v: cell };
+      else if ('v' in cell) ws[ref] = { t: 'n', v: Number(cell.v) || 0 };
       else if (cell.f) ws[ref] = { t: 'n', f: cell.f, v: value(sheet, ci, ri + 1) };
-      else if (cell.href) { ws[ref] = { t: 's', v: cell.text }; links.push([ref, cell.href]); }
+      else if (cell.href) { ws[ref] = { t: 's', v: linkText(cell) }; links.push([ref, cell.href]); }
+      else if (cell.links) { ws[ref] = { t: 's', v: withLinks(cell) }; if (cell.links.length) links.push([ref, cell.links[0].href]); }
       else ws[ref] = { t: 's', v: String(cell) };
+      if (z && ws[ref].t === 'n') ws[ref].z = z;
     }));
     for (const [ref, url] of links) ws[ref].l = { Target: url };
     ws['!ref'] = 'A1:' + letter(Math.max(maxC, sheet.cols.length - 1)) + Math.max(1, sheet.rows.length);

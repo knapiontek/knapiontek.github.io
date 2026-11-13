@@ -132,7 +132,7 @@ window.BATH_DATA = {
   },
 
   /* as house.js, one per mode: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own
-     height for the floor), Test (the checks of engine.js), Info; tabs: of the right panel */
+     height for the floor), Info, Test (the checks of engine.js); tabs: of the right panel */
   views: {
     '3d': { name: '3D', menu: 'floors', tabs: ['layers', 'finish'],
       layers: {                 // the Warstwy panel, as the house and the kitchen; off: hidden at the start
@@ -141,8 +141,8 @@ window.BATH_DATA = {
         installations: { name: 'Instalacje', off: true }, edges: { name: 'Krawędzie' },
       } },
     '2d': { name: '2D', plan: true, note: 'Ogród u góry. Linią ciągłą to, co pod cięciem (widziane z góry), przerywaną to, co nad nim.', tabs: ['layers', 'finish'] },
-    test: { name: 'Test', test: true, tabs: ['layers', 'finish'] },
     info: { name: 'Info', info: true, tabs: ['finish', 'layers'] },
+    test: { name: 'Test', test: true, tabs: ['layers', 'finish'] },
   },
 
   defaults: {

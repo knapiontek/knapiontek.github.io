@@ -1,7 +1,7 @@
 /* "Dom w papawerach 5 (G)": the house as data, in three trees (rules.md § 1).
    geometry  what the house is made of: the boxes of archon/analysis.md with its build changes (§ 14)
    layers    what can be switched on and off
-   views     how the house is looked at, one per mode: 3D (cameras, light, walk), the 2D plan, Test (the checks), Info; tabs: of the right panel
+   views     how the house is looked at, one per mode: 3D (cameras, light, walk), the 2D plan, Info, Test (the checks); tabs: of the right panel
    view.html holds no number, name or colour of this house; it draws this file with ../library (materials, tile products, textures).
 
    Units mm, whole numbers. Axes of the analysis (§ 2): x along the house (0 garden outer face, 13200 front outer face),
@@ -381,15 +381,15 @@ window.HOUSE = {
    "note": "Ogród u góry, front u dołu. Kreskowanie: styropian.",
    "tabs": ["layers", "finish"]
   },
-  "test": {
-   "name": "Test",
-   "test": true,
-   "tabs": ["layers", "finish"]
-  },
   "info": {
    "name": "Info",
    "info": true,
    "tabs": ["finish", "layers"]
+  },
+  "test": {
+   "name": "Test",
+   "test": true,
+   "tabs": ["layers", "finish"]
   }
  }
 };

@@ -381,7 +381,7 @@ function buildBook() {
     notes.push([str(sectionTitle(section, i))]);
     for (const n of section.notes) {
       noteRow[n.id] = notes.length + 1;
-      notes.push([str(noteNumber[n.id]), str(fill(n.topic)), str(fill(n.description) + noteDocuments(n).map(l => '\n' + l.name + ': ' + l.url).join('')), str(fill(n.assumed)), str(fill(n.decide))]);
+      notes.push([str(noteNumber[n.id]), str(fill(n.topic)), { text: fill(n.description), links: noteDocuments(n).map(l => ({ text: l.name, href: l.url })) }, str(fill(n.assumed)), str(fill(n.decide))]);
     }
   });
 
@@ -410,9 +410,9 @@ function buildBook() {
       const qty = typeof item.qty === 'string' ? { ...formula(toExcel(item.qty)), z: /ROUNDUP/.test(item.qty) ? undefined : '#,##0.00' } : input(Number(values.items[item.id].qty));
       const links = item.links || [];
       const refs = item.refs || [];
-      const text = fill(item.source) + links.map(l => ' ' + l.url).join('') + (refs.length ? ' – patrz notatka ' + refs.map(id => noteNumber[id]).join(', ') : '');
-      // the first shop; the others are in the text; with no shop, the first note
-      const source = links.length ? link(text, links[0].url) : refs.length ? link(text, `#'Notatki'!A${noteRow[refs[0]]}`) : str(text);
+      // the remark, then the shops by name and the notes it refers to (a link each; the XLSX cell opens the first)
+      const source = { text: fill(item.source), links: [...links.map(l => ({ text: l.name, href: l.url })),
+        ...refs.map(id => ({ text: 'patrz notatka ' + noteNumber[id], href: `#'Notatki'!A${noteRow[id]}` }))] };
       estimate.push([num(no), str(fill(item.name)), str(fill(item.spec)), str(fill(item.use)), qty, str(item.unit), input(Number(values.items[item.id].price)), formula(`ROUND(E${r}*G${r},2)`), source]);
     }
     estimate[categoryRow - 1] = { kind: 'cat', cells: [str(''), str(category.name), str(''), str(''), str(''), str(''), str(''), formula(`SUM(H${first}:H${estimate.length})`)] };

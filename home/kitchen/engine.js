@@ -324,18 +324,21 @@
 
   /* ================= 5. BUILD ================= */
 
-  /* the project with its materials resolved: design.js names each material by its product in the library
-     (library/products.js boards: name, thickness, colour, depth ...) and says only how it is used here (uses) */
+  /* the project with its materials resolved: design.js keys each material by its product in the library (one key
+     everywhere; library/products.js boards: name, thickness, colour, depth ...) and says only how it is used here (uses) */
   function withLibrary(project, boards) {
-    const materials = Object.fromEntries(Object.entries((project && project.materials) || {}).map(([code, m]) => {
-      if (m.product && !boards[m.product]) throw new Error(`design.js materials.${code}: brak produktu ${m.product} w library/products.js`);
-      return [code, Object.assign({}, boards[m.product], m)];
+    const materials = Object.fromEntries(Object.entries((project && project.materials) || {}).map(([key, m]) => {
+      if (!boards[key]) throw new Error(`design.js materials: brak produktu ${key} w library/products.js`);
+      return [key, Object.assign({}, boards[key], m)];
     }));
     return Object.assign({}, project, { materials });
   }
 
   /* the appliances of the project: design.js names each by the type or tag it fits (fridgeFreezer for the tags fridge and
      freezer) with its product key in the library (library/products.js appliances) and how it is built in here (feet) */
+  /* a material's key as people read it: egger-u708-st9-18 -> EGGER U708 ST9 18 */
+  const materialCode = key => key.toUpperCase().replace(/-/g, ' ');
+
   function appliances(project, library) {
     return Object.fromEntries(Object.entries((project && project.appliances) || {}).map(([role, a]) => {
       if (!library[a.product]) throw new Error(`design.js appliances.${role}: brak produktu ${a.product} w library/products.js`);
@@ -1147,7 +1150,7 @@
     const components = project.components.map((c, i) => (i && c.group !== project.components[i - 1].group ? '\n' : '') + '  ' + json1(c)).join(',\n');
     return '/* Kitchen project design - shared by design.html and view.html (with cost-sheets.js).\n' +
       '   Plain JSON after "window.KITCHEN_DESIGN =". Notes, groups and components: design.html (Import data / Export data);\n' +
-      '   materials and appliances (product keys of ../library/products.js and how each is used or built in here)\n' +
+      '   materials by their product key in ../library/products.js (how each is used), appliances by role (their product key and how it is built in)\n' +
       '   and settings: by hand\n' +
       '   (design.html keeps them as they are). */\n' +
       'window.KITCHEN_DESIGN = {\n "materials": {\n' + entries(project.materials, json1) +
@@ -1167,6 +1170,6 @@
   root.KitchenEngine = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, hasTag, FRONT_TYPES, SIDES, HINGE_SIDES,
     placeLabel, gapsText, parseTags, spaceAround, valueAt, PINS_PER_SHELF, tagsOf, readType, cutKey, checkSettings, build, cutList, carcassMap, mapJSON,
-    load, designJS, fromDesignJS, plural, appliances, withLibrary
+    load, designJS, fromDesignJS, plural, appliances, withLibrary, materialCode
   };
 })(typeof window !== 'undefined' ? window : globalThis);
