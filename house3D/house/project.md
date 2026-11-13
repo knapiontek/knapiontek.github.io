@@ -11,8 +11,6 @@ The building "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, wi
 | File | Holds |
 |---|---|
 | house.js | the house as data: geometry, layers, views (rules.md § 1) |
-| materials.js | the material library and the tile products (moves to ../library) |
-| textures.js | texture images: tiles, wood (moves to ../library) |
 | engine.js | house.js turned into solids |
 | house-clip.js | a sub-project's room: the house's own solids, trimmed (../project.md, Sub-projects and their room) |
 | analysis.js | the checks shown in Test (Analiza) |
@@ -42,7 +40,7 @@ analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─
 - **Facade**: finish rules on the EPS by its outer side.
 - **Stair**: floating treads in flights; the landing is a flight of one tread. 17 risers to the attic.
 - **Site**: the lawn stops at the box around the building.
-- **Tiles**: real products (materials.js) with the link to that exact product. A room is tiled on its own or with another (the walk-in wardrobes with the bedroom); tiles run through half of every doorway.
+- **Tiles**: real products (../library/products.js) with the link to that exact product. A room is tiled on its own or with another (the walk-in wardrobes with the bedroom); tiles run through half of every doorway.
 
 ## Code style
 

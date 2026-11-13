@@ -1,5 +1,5 @@
 /* Kitchen project cost data - read by cost.html. Written for each project (LLM). Plain JSON after "window.KITCHEN_COST =".
-   Everything measured comes from design.js through engine.js, the appliance sizes from appliances.js: nothing here repeats
+   Everything measured comes from design.js through engine.js, the appliance sizes from ../library/products.js: nothing here repeats
    a calculated number.
      page        tab title, heading, info line, XLSX file name, excluded (what the estimate does not cover)
      params      the inputs above the estimate (waste, sheet size in m², reserve); a value or a formula
@@ -14,7 +14,7 @@
                  furniture. An item: id, name (short), spec (the product), use (where it goes), qty (a number or a formula), unit,
                  price, refs (ids of the notes it links to), source (price remarks only), links [{name, url}]: the maker's
                  page or manual first, then the shop of the price
-     notes       Notes tab, by section {name, notes}; a note: id, appliance (its documents come from appliances.js), topic,
+     notes       Notes tab, by section {name, notes}; a note: id, appliance (its documents come from the library), topic,
                  description, assumed (in the estimate), decide (open question), links [{name, url}]; \n starts a new line.
                  Notes and sections are numbered in this order.
      formulas    named calculations used in several texts ({f:name}), written like {=...} without the braces
@@ -28,7 +28,7 @@
                        spaceBottom, spaceTop, space (clear height between the horizontal boards of the carcass around it),
                        count, runnerLength, boxWidth, boxHeight (drawers behind its door), hinge (hinge side of its door),
                        edges (banded edges of a panel), fit.feet, fit.fasciaV0 ... (its appliance: engine.js fitAppliances)
-     {a:oven.fascia.height}  appliances.js       {v:sheet.length} values
+     {a:oven.fascia.height}  the appliance (library) {v:sheet.length} values
      {p:hinges}        unit price          {q:hinges} item quantity          {note:hinges} the number of a note
      {f:ovenMicrowaveGap}  a named formula of "formulas"
      {carcass.m2}      cutting-list total of a block (m2, edge, cut, qty)    {waste} {sheet} {reserve} params

@@ -1,10 +1,11 @@
-/* Kitchen scene for view.html: only what the 3D view needs beyond design.js and appliances.js. Written per project (LLM).
+/* Kitchen scene for view.html: only what the 3D view needs beyond design.js and ../library. Written per project (LLM).
    House axes and positions in mm: x along the house, y across, z up (../house/house.js). The room itself (walls, slab,
    floor, window) is the house's own, copied as it is by ../house/house-clip.js; nothing of it is repeated here.
      placement     where each group stands (by group number) and which way its fronts face (-y, +y, -x, +x); an island
                    stands free; x, y = the point its anchor names (start (default), end, centre or {column}: the end of
                    that column) on the wall line of the group (an island: the line of its carcass backs);
                    against {group}: the anchor lies on the front plane of that group (an L corner), instead of x or y
+     floors        the floor tiles to choose from (product keys of ../library/products.js tiles); the first is the default
      room          floorJoint: the grout joint width of the floor tiles; wallColor: the plasterboard and the ceiling finish
      installation  how the sink, its trap and the hood are fitted here
      finishes      extra finishes for the Project tab, drawn with a material of the view
@@ -21,6 +22,7 @@ window.KITCHEN_VIEW = {
   "2": {"x": 7220, "y": 8660, "faces": "-x"},
   "3": {"x": 4768, "y": 6452, "faces": "+y", "anchor": "centre"}
  },
+ "floors": ["paradyz-authority-graphite", "paradyz-authority-grey"],
  "room": {"floorJoint": 2, "wallColor": "#f2f1ee"},
  "installation": {
   "sink": {"tapFromBack": 45, "trapTop": 575, "wallOutlet": 470},

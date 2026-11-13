@@ -54,7 +54,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 
 ## 5. Materiały i płytki
 
-- Materiały to osobna biblioteka (materials.js); element podaje nazwę swojego materiału. Materiał określa też wypełnienie na rzucie 2D.
+- Materiały to osobna biblioteka (../library/materials.js); element podaje nazwę swojego materiału. Materiał określa też wypełnienie na rzucie 2D.
 - Płytka to prawdziwy produkt ze sklepu: tekstura, wymiar, fuga i najmniejszy dopuszczalny docinek tworzą całość, a link prowadzi do tego właśnie produktu. Strona wybiera produkt, nigdy jego części.
 - Układ należy do pomieszczenia: wzór, kierunek, kolor fugi, przesunięcia.
 

@@ -632,7 +632,7 @@ function readTables(groupRows, columnRows, componentRows, noteRows) {
     rowOfComponent.push(idx);
   });
   const notes = noteRows.filter(n => !isRowEmpty(n.name, n.description, n.details)).map(({ name, description, details }) => ({ name, description, details }));
-  const project = { materials: (loadedProject && loadedProject.materials) || {}, settings: (loadedProject && loadedProject.settings) || {}, notes, groups, components };
+  const project = { materials: (loadedProject && loadedProject.materials) || {}, appliances: (loadedProject && loadedProject.appliances) || {}, settings: (loadedProject && loadedProject.settings) || {}, notes, groups, components };
   return { project, warnings, groupFlags, columnFlags, componentFlags, rowOfComponent };
 }
 

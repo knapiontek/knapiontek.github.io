@@ -217,14 +217,15 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="textures.js"></script>
 <script src="../house/house.js"></script>
-<script src="../house/materials.js"></script>
+<script src="../library/materials.js"></script>
+<script src="../library/products.js"></script>
 <script src="../core/geometry.js"></script>
 <script src="../core/mesh.js"></script>
 <script src="../core/scene.js"></script>
 <script src="../core/ui.js"></script>
 <script src="../core/plan.js"></script>
+<script src="../core/library.js"></script>
 <script src="../house/engine.js"></script>
 <script src="../house/house-clip.js"></script>
 <script src="data.js"></script>
@@ -236,8 +237,15 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 const stage = document.getElementById('stage'), loading = document.getElementById('loading');
 const fail = message => { loading.hidden = false; loading.textContent = message; };
 if (!window.THREE || !THREE.OrbitControls) return fail('Nie udało się wczytać silnika 3D. Odśwież stronę.');
-if (!window.BATH_TEXTURES) return fail('Brak pliku textures.js obok view.html.');
 if (!window.BATH_DATA || !window.BathEngine) return fail('Brak plików data.js / engine.js obok view.html.');
+if (!window.LIBRARY_PRODUCTS) return fail('Brak pliku ../library/products.js.');
+/* the library's textures first (core/library.js): the tiles and the board decors to choose from */
+const PRODUCTS = LIBRARY_PRODUCTS;
+try {
+  await CORE.library.load('../library/', BATH_DATA.defaults.tiles.map(k => PRODUCTS.tiles[k].texture)
+    .concat(Object.keys(BATH_DATA.decors).map(k => PRODUCTS.boards[k].texture)));
+} catch (e) { return fail('Błąd: ' + e.message); }
+const TEXTURES = window.LIBRARY_TEXTURES;
 if (!window.HOUSE || !window.HouseClip) return fail('Brak plików domu (../house/house.js, ../house/house-clip.js).');
 
 /* Model: the room from the house (../house/house-clip.js), the bathroom's design from data.js, calculations from engine.js.
@@ -286,19 +294,23 @@ const sizeLabel = ({ w, h }) => `${mmText(w)}×${mmText(h)}`;
 
 
 /* ==========================================================================
-   2. TILES from textures.js
+   2. TILES from the library (../library: products and their textures)
    Each photo is one whole tile. A block of tiles is assembled from several photos
    (random photo, rotation and crop, grout) and repeated across the surface.
    ========================================================================== */
 
 const TILES = {};
-for (const [id, data] of Object.entries(BATH_TEXTURES.tiles)) TILES[id] = { id, ...data, images: [] };
+for (const id of DATA.defaults.tiles) {
+  const P = PRODUCTS.tiles[id], T = TEXTURES[P.texture];
+  TILES[id] = { id, name: P.name, look: P.look, finish: P.finish, size: T.size, grout: T.grout, faces: T.faces,
+    price: P.price.toFixed(2).replace('.', ',') + ' zł/m²', link: P.link, images: [] };
+}
 
 const loadImage = src => { const img = new Image(); img.src = src; return img.decode().then(() => img); };
 try {
   await Promise.all(Object.values(TILES).map(async tile => { tile.images = await Promise.all(tile.faces.map(loadImage)); }));
 } catch (e) {
-  return fail('Nie udało się wczytać zdjęć płytek z textures.js.');
+  return fail('Nie udało się wczytać zdjęć płytek z ../library.');
 }
 
 const GROUT_WIDTH = 0.003;          // m
@@ -593,7 +605,7 @@ const ROLE_LAYER = { wall: 'walls', window: 'walls', floor: 'floor', ceiling: 'c
 const DIRECTION = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+z': [0, 0, 1], '-z': [0, 0, -1] };   // house axes
 const tileKey = surface => 'tile:' + surface;
 for (const surface of SURFACES) { MATERIAL_LIB[tileKey(surface)] = { color: '#ffffff' }; VIEW.useMaterial(tileKey(surface), tileMaterials[surface]); }
-for (const [key, d] of Object.entries(HOUSE_MATERIALS.materials)) MATERIAL_LIB[key] = d;
+for (const [key, d] of Object.entries(LIBRARY_MATERIALS)) MATERIAL_LIB[key] = d;
 // the shower in house mm [x1, x2, y1, y2]: where the shower tiles go
 const showerZone = (() => {
   const toHouseX = x => G.X0 - x * 1000, toHouseY = z => G.Y0 + z * 1000;
@@ -765,10 +777,12 @@ function toiletAt(faceX, z, dir, flushParent) {
    Vanity wall (x = XL), from the door wall: room left free for the radiator, then the unit.
    Carcass from 18 mm Egger board, 2 × 18 mm glued top, fronts inset into the carcass
    (2.5 mm gap for TIP-ON BLUMOTION), LEGRABOX pure drawers. */
-/* Egger decors from M-HM: original board photos in textures.js (BATH_TEXTURES.decors), prices and notes in data.js. */
+/* Egger decors: the boards of the library (photo, code, price, link), why each would suit here in data.js. */
 const DECOR_INFO = DATA.decors;
 const DECORS = {};
-for (const [id, d] of Object.entries(BATH_TEXTURES.decors || {})) {
+for (const id of Object.keys(DECOR_INFO)) {
+  const B = PRODUCTS.boards[id], T = TEXTURES[B.texture];
+  const d = { code: B.code, name: B.name, thick: B.thick, price: B.price, link: B.link, width_m: T.size[0] / 1000, image: T.faces[0] };
   const img = await loadImage(d.image).catch(() => null);
   if (!img) continue;
   const c = document.createElement('canvas'); c.width = c.height = 1;
@@ -776,7 +790,7 @@ for (const [id, d] of Object.entries(BATH_TEXTURES.decors || {})) {
   const px = c.getContext('2d').getImageData(0, 0, 1, 1).data;
   DECORS[id] = { ...d, ...DECOR_INFO[id], img, rgb: [px[0], px[1], px[2]], page: d.link };
 }
-if (!Object.keys(DECORS).length) return fail('Brak dekorów płyt (BATH_TEXTURES.decors) w textures.js.');
+if (!Object.keys(DECORS).length) return fail('Brak dekorów płyt (data.js decors, ../library).');
 state.decor = DECORS[DATA.defaultDecor] ? DATA.defaultDecor : Object.keys(DECORS)[0];
 
 /** Decor texture: the photo spans width_m along the grain; uv in mm on the face (core). turn: the grain along the face's v. */

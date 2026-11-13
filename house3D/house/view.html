@@ -66,21 +66,24 @@
 <script>window.addEventListener('error', e => { const l = document.getElementById('loading'); if (l) { l.hidden = false; l.textContent = 'Błąd: ' + (e.message || 'nieznany') + ' (' + (e.lineno || '') + ')'; } });</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="textures.js"></script>
-<script src="materials.js"></script>
+<script src="../library/materials.js"></script>
+<script src="../library/products.js"></script>
 <script src="house.js"></script>
 <script src="../core/geometry.js"></script>
 <script src="../core/mesh.js"></script>
 <script src="../core/scene.js"></script>
 <script src="../core/ui.js"></script>
 <script src="../core/plan.js"></script>
+<script src="../core/library.js"></script>
 <script src="engine.js"></script>
 <script src="analysis.js"></script>
 <script>
-(function () {
+/* the library's textures first (core/library.js): the tile products and the wood materials name them */
+CORE.library.load('../library/', Object.values(LIBRARY_PRODUCTS.tiles).map(p => p.texture)
+  .concat(Object.values(LIBRARY_MATERIALS).filter(m => m.wood).map(m => m.wood.decor))).then(function () {
 'use strict';
 
-/* The page knows no house: everything it builds and shows comes from house.js, materials.js and textures.js.
+/* The page knows no house: everything it builds and shows comes from house.js and ../library.
    Units are mm in house axes (x along, y across, z up) until the scene, which is in metres with y up.
    What is not about this house (geometry, mesh, scene, panel) is in core/. */
 
@@ -88,10 +91,10 @@ const { DEG, INF, EPS, zRange, rectArea } = CORE.geometry;
 const { Batch, piecesOf } = CORE.mesh;
 const { $, fmt, byId, el, option } = CORE.ui;
 
-const HOUSE = window.HOUSE, GEO = HOUSE.geometry, MAT = window.HOUSE_MATERIALS, TEX = window.HOUSE_TEXTURES;
+const HOUSE = window.HOUSE, GEO = HOUSE.geometry, MATERIALS = window.LIBRARY_MATERIALS, TEX = window.LIBRARY_TEXTURES;
 const VIEWS = HOUSE.views, VIEW_IDS = Object.keys(VIEWS);
 const VIEW_3D = Object.values(VIEWS).find(v => v.menu), VIEW_2D = Object.values(VIEWS).find(v => v.plan);
-const OPENING_KIND = GEO.openingKinds, PRODUCTS = MAT.products;
+const OPENING_KIND = GEO.openingKinds, PRODUCTS = LIBRARY_PRODUCTS.tiles;
 const FLOORS = GEO.floors, FLOOR = Object.fromEntries(FLOORS.map(f => [f.id, f]));
 const TOP_FLOOR = FLOORS[FLOORS.length - 1];
 
@@ -103,7 +106,7 @@ const { ROOF, TAN, WIDTH, RIDGE_TOP, floorOfZ, SIDE, CELLS, FIXTURES, ROOF_CELLS
 /* ================= 3. SCENE ================= */
 const canvas = $('gl'), stage = $('stage');
 const LIGHT = VIEW_3D.light;
-const V = CORE.createView({ canvas, stage, materials: MAT.materials, textures: TEX, light: LIGHT, edges: VIEW_3D.edges,
+const V = CORE.createView({ canvas, stage, materials: MATERIALS, textures: TEX, light: LIGHT, edges: VIEW_3D.edges,
   body: [[ROOF.x[0], 0, FLOORS[0].level], [ROOF.x[1], WIDTH, RIDGE_TOP]], sunCentre: [GEO.length / 2, WIDTH / 2, GEO.split] });
 const { root, lin, redraw, CLIP, hash01, loadImage, renderer } = V;
 
@@ -446,7 +449,7 @@ V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, ground: ALL_CELLS.filter(c 
    Both floors side by side, garden at the top. What the cut meets comes from the solids; the stair and what is under
    the roof are this house's own. */
 const planCut = F => VIEW_2D.cut[F.id];
-const PLAN = CORE.plan.create(MAT.materials), PS = PLAN.SIZE;
+const PLAN = CORE.plan.create(MATERIALS), PS = PLAN.SIZE;
 /* the stair: a full line under the cut, dashed over it; from the floor above, all of it shows through the hole */
 function planStair(F, X, h, holes) {
   const inside = (b, x, y) => x >= b[0] - EPS && x <= b[1] + EPS && y >= b[2] - EPS && y <= b[3] + EPS;
@@ -503,7 +506,7 @@ $('loading').hidden = true;
 V.run();
 window.HOUSE_VIEW = { CELLS, CHECKS, setCamera, setLayer, setMode, selectRoom, state, RESULTS, pieces: PIECES.length, edges: V.EDGE_GROUPS.length,   // for tests
   cells: { CELLS, FIXTURES, ROOF_CELLS, STAIR_CELLS, SITE_CELLS } };
-})();
+}).catch(e => { const l = document.getElementById('loading'); l.hidden = false; l.textContent = 'Błąd: ' + e.message; });
 </script>
 </body>
 </html>

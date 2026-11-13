@@ -11,7 +11,7 @@
 |---|---|---|
 | apps.js | the applications: name, page; the top-left menu reads it (planned) | — |
 | core/ | the shared code: solids, meshes, the 2D plan, the screen, the spreadsheet; knows no project | [core](core/project.md) |
-| library/ | everything bought: products, materials, textures; knows no project (planned) | — |
+| library/ | everything bought: products, materials, textures; knows no project | — |
 | house/ | the building: walls, slabs, roof, stair, windows, floor tiles; from the archon drawings | [house](house/project.md) |
 | kitchen/ | the kitchen in the living room (ground floor) | [kitchen](kitchen/project.md) |
 | bathroom/ | both bathrooms (ground floor, upstairs) | [bathroom](bathroom/project.md) |
@@ -23,11 +23,10 @@
 One way only. Nobody depends on a sub-project.
 
 ```
-            core/ ◄──────────────┬──────────────┬─────────────┐
-              ▲                  │              │             │
- library/ ◄───┼──────────── house/ ◄──── kitchen/, bathroom/, wardrobe/
-              │                  ▲
-         apps.js                 └── the room: house/house-clip.js
+kitchen/, bathroom/, wardrobe/ ──► house/ ──► library/
+        │          │                 │
+        │          └────────────► core/ ◄── apps.js (read by the top-left menu)
+        └────────────────────────► library/
 ```
 
 - **core** knows no project and no product.
@@ -130,14 +129,14 @@ Everything bought is in **library/**, once, for every application: materials, te
 
 ```
 library/
-  products.js    a product by key: name, maker, sizes and formats, price, link to the shop, texture key;
-                 appliances with the maker's sizes (today kitchen/appliances.js)
+  products.js    a product by key: tiles, boards, appliances (name, maker, sizes, price, link, texture key)
   materials.js   how a material looks: in 3D (colour, roughness, gloss) and in 2D (section fill)
   textures/      one image, one file (<key>.js, a data URL, so the pages work opened from disk)
 ```
 
 - A project names a product by its key and says only where it goes and how (a bathroom wall: paradyz-authority-grey, 598×1198, vertical; an appliance: how it is built in). Nothing of the product is repeated.
-- A page loads only the textures it uses: core loads library/textures/<key>.js when a product needs it.
+- A page loads only the textures it uses: core/library.js loads library/textures/<key>.js when a product needs it.
+- Still in the projects, to move: the kitchen's boards and worktops (design.js materials), the bathroom's fittings, prices and shop links (data.js).
 - Info takes price and link from the library: a price changed once is changed everywhere.
 - library/ is data, not code: core knows no product, the library knows no project.
 

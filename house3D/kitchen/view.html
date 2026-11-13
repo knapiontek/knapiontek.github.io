@@ -108,7 +108,7 @@ dl.notes dd{margin:0;color:var(--muted)}
       <dl class="stats" id="dims"></dl>
       <h2>Notatki projektu</h2>
       <dl class="notes" id="notes"></dl>
-      <p class="note">Dane: design.js, view.js i appliances.js; części z engine.js; pomieszczenie z domu (../house/house.js przez ../house/house-clip.js); rysowanie: ../core.</p>
+      <p class="note">Dane: design.js i view.js; produkty, materiały i tekstury z ../library; części z engine.js; pomieszczenie z domu (../house/house.js przez ../house/house-clip.js); rysowanie: ../core.</p>
     </div>
     </section>
   </aside>
@@ -116,8 +116,8 @@ dl.notes dd{margin:0;color:var(--muted)}
 
 <!-- The kitchen in 3D, drawn by core like the house: every part is a solid of core (a box in house axes and mm), so faces
      share welded points, hidden faces are cut away exactly and edges come from the topology. Doors, drawers and appliance
-     doors are solids of their own that turn or slide. Data: design.js (the project), engine.js (the parts), appliances.js
-     (the appliances), view.js (where the groups stand, lights, cameras), textures.js (decors and floor tiles); the room is
+     doors are solids of their own that turn or slide. Data: design.js (the project, its appliances), engine.js (the parts), ../library
+     (products, materials, textures), view.js (where the groups stand, lights, cameras, floor tiles); the room is
      the house's own (../house/house-clip.js), as it is. -->
 <script>window.addEventListener('error', e => { const l = document.getElementById('loading'); if (l) { l.hidden = false; l.textContent = 'Błąd: ' + (e.message || 'nieznany') + ' (' + (e.lineno || '') + ')'; } });</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -127,17 +127,19 @@ dl.notes dd{margin:0;color:var(--muted)}
 <script src="../core/scene.js"></script>
 <script src="../core/ui.js"></script>
 <script src="../core/plan.js"></script>
+<script src="../core/library.js"></script>
 <script src="../house/house.js"></script>
-<script src="../house/materials.js"></script>
+<script src="../library/materials.js"></script>
+<script src="../library/products.js"></script>
 <script src="../house/engine.js"></script>
 <script src="../house/house-clip.js"></script>
 <script src="design.js"></script>
-<script src="appliances.js"></script>
-<script src="textures.js"></script>
 <script src="view.js"></script>
 <script src="engine.js"></script>
 <script>
-(function () {
+/* the library's textures first (core/library.js): the board decors design.js names and the floor tiles to choose from */
+CORE.library.load('../library/', Object.values(KITCHEN_DESIGN.materials).map(m => m.texture)
+  .concat(KITCHEN_VIEW.floors.map(k => LIBRARY_PRODUCTS.tiles[k].texture))).then(function () {
 'use strict';
 
 /* Units are mm in house axes (x along the house, y across, z up) everywhere on this page; only core's scene is in metres.
@@ -148,11 +150,11 @@ const G = CORE.geometry, { piecesOf } = CORE.mesh;
 const loading = $('loading'), fail = text => { loading.textContent = text; };
 if (!window.THREE || !THREE.OrbitControls) return fail('Nie można wczytać silnika 3D. Odśwież stronę.');
 if (!window.KITCHEN_DESIGN) return fail('Nie znaleziono pliku design.js obok tej strony.');
-if (!window.KITCHEN_VIEW || !window.KITCHEN_APPLIANCES) return fail('Nie znaleziono plików view.js i appliances.js obok tej strony.');
+if (!window.KITCHEN_VIEW || !window.LIBRARY_PRODUCTS) return fail('Nie znaleziono plików view.js i ../library/products.js.');
 if (!window.HOUSE || !window.HouseClip) return fail('Nie znaleziono plików domu (../house/house.js, ../house/house-clip.js).');
 
-const KE = window.KitchenEngine, SCENE = window.KITCHEN_VIEW, APPLIANCES = window.KITCHEN_APPLIANCES, TEXTURES = window.KITCHEN_TEXTURES || {};
-const project = window.KITCHEN_DESIGN, model = KE.build(project, APPLIANCES), settings = project.settings;
+const KE = window.KitchenEngine, SCENE = window.KITCHEN_VIEW, TEXTURES = window.LIBRARY_TEXTURES;
+const project = window.KITCHEN_DESIGN, APPLIANCES = KE.appliances(project, LIBRARY_PRODUCTS.appliances), model = KE.build(project, APPLIANCES), settings = project.settings;
 if (model.warnings.length) console.warn('design.js: ' + model.warnings.join(' | '));
 const HOUSE_MODEL = HouseEngine.build(HOUSE), ROOM = HouseClip.roomsFor(HOUSE, HOUSE_MODEL, 'kitchen/view.html')[0];
 if (!ROOM) return fail('W house.js żadne pomieszczenie nie prowadzi do kitchen/view.html.');
@@ -202,12 +204,21 @@ function houseBox(r, b) {
 
 /* ================= 2. MATERIALS =================
    One library for core: the house's materials (the room keeps them) and the kitchen's, prefixed k. A board of design.js
-   is its decor photo (textures.js) or its colour, a lacquer a clear coat; its bare edge is the speckled core of the board. */
+   is its decor photo (../library/textures) or its colour, a lacquer a clear coat; its bare edge is the speckled core of the board. */
 const K = key => 'k.' + key;
-const LIB = Object.assign({}, HOUSE_MATERIALS.materials);
+const LIB = Object.assign({}, LIBRARY_MATERIALS);
 const TEX = {};                            // core textures: key -> {faces, size [along, across] mm}
-const DECORS = TEXTURES.decors || {}, FLOORS = TEXTURES.floors || {}, FLOOR_KEYS = Object.keys(FLOORS);
-for (const [key, d] of Object.entries(DECORS)) TEX[key] = { faces: [d.image], size: [d.size.length, d.size.width] };
+const DECORS = {}, FLOORS = {};           // the library's: decors by texture key, floor tiles by product key
+for (const m of Object.values(project.materials)) if (m.texture) {
+  const T = TEXTURES[m.texture];
+  DECORS[m.texture] = { name: T.name, size: { length: T.size[0], width: T.size[1] }, image: T.faces[0] };
+  TEX[m.texture] = { faces: T.faces, size: T.size };
+}
+for (const key of SCENE.floors) {
+  const P = LIBRARY_PRODUCTS.tiles[key], T = TEXTURES[P.texture];
+  FLOORS[key] = { name: P.name, size: { length: T.size[0], width: T.size[1] }, grout: T.grout, faces: T.faces };
+}
+const FLOOR_KEYS = Object.keys(FLOORS);
 const METALS = SCENE.metals;
 const HOLE_COLORS = { hinge: { hex: '#f26b1d', label: 'zawiasy, odbojniki' }, shelfPin: { hex: '#22b35e', label: 'półki' }, runner: { hex: '#2f8fe0', label: 'szuflady, prowadnice' } };
 const holeUse = kind => (['cup', 'plate', 'bumper'].includes(kind) ? 'hinge' : kind);
@@ -222,7 +233,7 @@ const PANEL_COLORS = {                     // "Koloruj wg płyty": a colour per 
 const metal = key => ({ color: METALS[key].color, roughness: METALS[key].roughness, metalness: METALS[key].metalness, reflect: 1.4 });
 Object.assign(LIB, Object.fromEntries(Object.entries({
   wall: { color: SCENE.room.wallColor, roughness: 0.95, reflect: 0.45 },   // plasterboard
-  floor: { color: '#cfcfcb', roughness: 0.55, reflect: 0.6 },              // its map: the floor tiles of textures.js
+  floor: { color: '#cfcfcb', roughness: 0.55, reflect: 0.6 },              // its map: the floor tiles of view.js (../library)
   handle: metal(HW.handle.metal),
   steel: { color: '#d2d5d8', metalness: 1, roughness: 0.3 },
   glassBlack: { color: '#060708', roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, reflect: 1.1 },
@@ -496,7 +507,7 @@ function buildGroup(r) {
   }
 }
 
-/* ---------- built-in oven and microwave (appliances.js, where engine.js fits them: item.fit) ----------
+/* ---------- built-in oven and microwave (the library's appliances, where engine.js fits them: item.fit) ----------
    The body on its feet behind the carcass front, the fascia in front of it; the appliance door turns on its hinge edge.
    d = how far a detail stands out of the appliance face: n = 2·face − d. */
 function builtInAppliance(r, item, type) {
@@ -556,7 +567,7 @@ function builtInAppliance(r, item, type) {
   }
 }
 
-/* ---------- sink (appliances.js sink) over the cut-out engine.js makes, with tap and a space-saving trap ---------- */
+/* ---------- sink (the library's sink) over the cut-out engine.js makes, with tap and a space-saving trap ---------- */
 const sinkCarcass = model.carcasses.find(c => c.sink), sinkGroup = sinkCarcass ? String(sinkCarcass.group) : null;
 const sinkCut = sinkGroup && (worktopOf(sinkGroup).cutouts || []).find(c => c.kind === 'sink');
 const sinkItem = sinkCut && itemsOf(sinkGroup).find(i => KE.hasTag(i, 'sink'));
@@ -1339,7 +1350,7 @@ loading.hidden = true;
 V.run();
 window.KITCHEN_VIEW_PAGE = { V, model, ROOM, PLACE, STATIC, MOVERS, geometry, lines, toggle, setLayer, setMode, planSvg, selectCarcass, flyTo, state,   // for tests and the console
   pieces: PIECES.length, edges: V.EDGE_GROUPS.length, cells: STATIC.length + MOVERS.reduce((s, m) => s + m.cells.length, 0) };
-})();
+}).catch(e => { const l = document.getElementById('loading'); l.hidden = false; l.textContent = 'Błąd: ' + e.message; });
 </script>
 </body>
 </html>

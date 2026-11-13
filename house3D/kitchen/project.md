@@ -8,17 +8,16 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 
 | File | Kind | Owns | Written by |
 |---|---|---|---|
-| design.js | data, this project | materials, settings, notes, groups, components | design.html (export); materials and settings by hand |
+| design.js | data, this project | materials, appliances (product keys of the library, how each is built in: feet), settings, notes, groups, components | design.html (export); materials, appliances and settings by hand |
 | cost.js | data, this project | prices, items, notes and settings of cost.html | LLM, per project |
-| view.js | data, this project | placement of the groups in the house, how the appliances are fitted, the views (3D with G1/G2/Wyspa in the menu, 2D, Analiza), lights and cameras of view.html, in house axes | LLM, per project |
-| appliances.js | data, this project | the appliances as the manufacturer gives them: overall sizes as fixed values (no niches, no ranges) and documents, for cost.html and view.html | LLM, per project |
-| textures.js | data, this project | texture images and their names only (the textures the materials name, the floor tiles to choose from), with what drawing them needs: the size an image covers, the grout colour of a tile; for view.html | LLM, per project |
+| view.js | data, this project | placement of the groups in the house, how the appliances are fitted, the floor tiles to choose from (library keys), the views (3D with G1/G2/Wyspa in the menu, 2D, Analiza), lights and cameras of view.html, in house axes | LLM, per project |
 | rules.md | text, every project | the kitchen rules in Polish, as the app names things | by hand |
 | engine.js | code, every project | the model: carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
 | cost.html | page, LLM generated | prices, cutting lists, notes, assembly help, carcass map | LLM, per project |
 | view.html | page, every project | the kitchen in its room: 3D, the 2D plan and Analiza (its geometry check), drawn by ../core like the house | LLM, every project |
 | ../house/house.js, ../house/house-clip.js | data and code of house3D | the room: the house's own walls, slab, floor and window, copied as they are and trimmed to the kitchen | house3D |
+| ../library/ | data of house3D | what is bought: the appliances as the maker gives them (sizes, documents), tiles, boards, materials, texture images | house3D |
 | ../core/ | code of house3D | drawing: solids, welded meshes, edges, light, camera, the 2D plan, the panel and its menu | house3D |
 | project.md | text | this description | by hand |
 | index.html | page | directory listing of the repository folder (not part of the kitchen) | by hand |
@@ -37,25 +36,24 @@ How the files of this folder work together. The kitchen rules are in rules.md.
       ▼
   export → design.js                             only design.html writes design.js
 
-  appliances.js ──► cost.html, view.html         passed on to engine.js; design.html does not read it
-  textures.js   ──► view.html                    without it a material shows its colour
+  ../library    ──► cost.html, view.html         the appliances design.js names (passed on to engine.js), textures, materials
   ../house/house.js ─► ../house/house-clip.js ─► view.html        the room, from the house
   ../core       ──► view.html                    draws it all, like the house
 ```
 
 - Every page loads design.js directly, so the pages also work opened from disk.
 - design.html shows the materials read only and keeps the settings as they are; cost.html and view.html only read design.js.
-- engine.js does not know where the data comes from: a page hands it the project (and appliances.js, to fit the appliances in their places) and gets the model back. The engine has no numbers of this kitchen and draws nothing.
-- cost.js and view.js hold only what their page needs; what both pages need (appliance sizes) is in appliances.js, and a project choice the engine needs belongs in design.js.
-- appliances.js says what the manufacturer gives, design.js what the project chose; the same number can be in both. The notes of cost.html put them side by side.
+- engine.js does not know where the data comes from: a page hands it the project (and its appliances from the library, KE.appliances, to fit them in their places) and gets the model back. The engine has no numbers of this kitchen and draws nothing.
+- cost.js and view.js hold only what their page needs; what both pages need (appliance sizes) is in the library, and a project choice the engine needs belongs in design.js.
+- the library says what the manufacturer gives, design.js what the project chose (the product, its feet); the same number can be in both. The notes of cost.html put them side by side.
 - The room is the house's: view.html takes the walls, slab, floor and window from house3D (house.js, through house-clip.js) as they are. The house wins: the kitchen never draws or measures a room of its own.
 - Axes are the house's: x along the house, y across, z up, in mm and house positions. Inside a group the engine keeps u along, v up, n out from the wall; view.js places the groups in the house.
 
 ## What is project specific and what is not
 
-- **Project specific:** design.js (its notes, groups and components are this kitchen), cost.js, view.js, appliances.js and textures.js.
+- **Project specific:** design.js (its notes, groups and components are this kitchen), cost.js and view.js; the products it uses are in ../library.
 - **Every project:** rules.md, engine.js, design.html, view.html and the code of cost.html, which hold no numbers or names of this kitchen.
-- A new kitchen starts from rules.md: make a new design.js in design.html, then let an LLM generate cost.js, view.js, appliances.js and textures.js for it.
+- A new kitchen starts from rules.md: make a new design.js in design.html, then let an LLM generate cost.js and view.js for it, adding to ../library what it buys that is not there yet.
 
 ## The files in short
 

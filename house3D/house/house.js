@@ -2,7 +2,7 @@
    geometry  what the house is made of: the boxes of archon/analysis.md with its build changes (§ 14)
    layers    what can be switched on and off
    views     how the house is looked at: 3D (cameras, light, walk), the 2D plan and Analiza (the checks)
-   view.html holds no number, name or colour of this house; it draws this file with materials.js and textures.js.
+   view.html holds no number, name or colour of this house; it draws this file with ../library (materials, tile products, textures).
 
    Units mm, whole numbers. Axes of the analysis (§ 2): x along the house (0 garden outer face, 13200 front outer face),
    y across (0 left outer face, garage side; 9100 right), z up (0 finished ground floor).
@@ -260,18 +260,18 @@ window.HOUSE = {
     "inside": [[440, 12760, 440, 4110], [440, 11860, 4110, 8660]],
     "rooms": [
      {"id": "salon", "numbers": [3, 5, 6], "name": "Salon z kuchnią i holem", "planArea": 50.55,
-      "tiles": {"product": "authorityGraphite", "dir": "x"},
+      "tiles": {"product": "paradyz-authority-graphite", "dir": "x"},
       "link": {"href": "../kitchen/view.html", "name": "Projekt kuchni", "inside": [[3330, 7220, 4660, 8660]], "box": [3330, 7340, 4660, 8900, -360, 3060]},
       "rects": [[440, 5230, 440, 3590], [440, 4710, 3590, 4350], [440, 5470, 4350, 8660], [5470, 7220, 4350, 8660], [7220, 7340, 4350, 5800], [7340, 9010, 4350, 6150]]},
      {"id": "wiatrolap", "numbers": [1], "name": "Wiatrołap", "planArea": 4.84,
-      "tiles": {"product": "authorityGraphite", "dir": "x"},
+      "tiles": {"product": "paradyz-authority-graphite", "dir": "x"},
       "rects": [[9250, 11860, 4230, 6150]]},
      {"id": "lazienka", "numbers": [7], "name": "Łazienka", "planArea": 4.95,
-      "tiles": {"product": "authorityGrey", "dir": "x"},
+      "tiles": {"product": "paradyz-authority-grey", "dir": "x"},
       "link": {"href": "../bathroom/view.html", "name": "Projekt łazienki", "inside": [[7340, 9010, 6270, 8660], [9010, 9850, 7660, 8660]], "box": [7220, 9970, 6150, 8900, -360, 3060]},
       "rects": [[7340, 9010, 6270, 8660], [9010, 9850, 7660, 8660]]},
      {"id": "kotlownia", "numbers": [8], "name": "Kotłownia z pralnią", "planArea": 4.97,
-      "tiles": {"product": "authorityGraphite", "dir": "x"},
+      "tiles": {"product": "paradyz-authority-graphite", "dir": "x"},
       "rects": [[9250, 11860, 6270, 7540], [9970, 11860, 7540, 8660]]},
      {"id": "garaz", "numbers": [2], "name": "Garaż", "planArea": 25.91,
       "rects": [[5470, 6420, 440, 2970], [6420, 6540, 440, 3200], [6540, 12760, 440, 4110]]}
@@ -283,27 +283,27 @@ window.HOUSE = {
     "inside": [[440, 12760, 440, 8660]],
     "rooms": [
      {"id": "sypialnia", "numbers": [2], "name": "Sypialnia", "planArea": 28.16,
-      "tiles": {"product": "logOak", "dir": "x"},
+      "tiles": {"product": "atlas-log-icon-oak-forest", "dir": "x"},
       "rects": [[440, 3640, 440, 8660], [3640, 3760, 3910, 5530], [3760, 4710, 3790, 5530], [3760, 4660, 5530, 5650], [4710, 5350, 4350, 5530]]},
      {"id": "garderoba3", "numbers": [3], "name": "Garderoba", "planArea": 5.13, "tilesWith": "sypialnia",
       "rects": [[3760, 4710, 440, 3790], [4710, 5350, 440, 3590]]},
      {"id": "garderoba4", "numbers": [4], "name": "Garderoba", "planArea": 4.60, "tilesWith": "sypialnia",
       "rects": [[3760, 5350, 5650, 8660]]},
      {"id": "hol", "numbers": [1], "name": "Hol", "planArea": 7.32,
-      "tiles": {"product": "logOak", "dir": "x"},
+      "tiles": {"product": "atlas-log-icon-oak-forest", "dir": "x"},
       "rects": [[6420, 7370, 2730, 3410], [6420, 9010, 3410, 5530], [5470, 6420, 4350, 5530]]},
      {"id": "lazienka5", "numbers": [5], "name": "Łazienka", "planArea": 7.99,
-      "tiles": {"product": "authorityGrey", "dir": "x"},
+      "tiles": {"product": "paradyz-authority-grey", "dir": "x"},
       "link": {"href": "../bathroom/view.html", "name": "Projekt łazienki", "inside": [[5470, 8200, 5650, 8660]], "box": [5350, 8320, 5530, 8900, 2720, 6300]},
       "rects": [[5470, 8200, 5650, 8660]]},
      {"id": "garderoba8", "numbers": [8], "name": "Garderoba", "planArea": 4.16,
-      "tiles": {"product": "logOak", "dir": "x"},
+      "tiles": {"product": "atlas-log-icon-oak-forest", "dir": "x"},
       "rects": [[7490, 9010, 440, 3290]]},
      {"id": "pokoj7", "numbers": [7], "name": "Pokój", "planArea": 14.11,
-      "tiles": {"product": "logOak", "dir": "x"},
+      "tiles": {"product": "atlas-log-icon-oak-forest", "dir": "x"},
       "rects": [[9130, 12760, 440, 4410]]},
      {"id": "pokoj6", "numbers": [6], "name": "Pokój", "planArea": 16.53,
-      "tiles": {"product": "logOak", "dir": "x"},
+      "tiles": {"product": "atlas-log-icon-oak-forest", "dir": "x"},
       "rects": [[9130, 12760, 4530, 8660], [8320, 9130, 6490, 8660], [8320, 9010, 5650, 6490]]}
     ],
     "other": []

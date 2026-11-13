@@ -10,6 +10,7 @@ Shared 3D code for every view: the house (../house/view.html) and its sub-projec
 | mesh.js | welded points, faces, visible pieces, batches of triangles |
 | scene.js | renderer, materials, meshes, edges, caps, light, camera, navigation, walk, loop |
 | ui.js | stored state, layers tree, help, checks list; the view shell: views toggle, menu row, camera dock, panel sections, tabs, the 2D sheet |
+| library.js | loads the library's textures when a page needs them (one file per image) |
 | plan.js | the 2D plan from the solids: cut, seen from above, labels, rooms, dimensions, sheets |
 | ui.css | the look of every view, light and dark |
 

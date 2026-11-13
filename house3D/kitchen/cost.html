@@ -141,24 +141,24 @@
 
 <!-- ===================================================================
      DATA FLOW: design.js (edited in design.html) -> engine.js -> this page, design.html, view.html;
-     cost.js (prices, items, notes; its format is described at its top) and appliances.js (shared with view.html) -> this page
+     cost.js (prices, items, notes; its format is described at its top) and the appliances of design.js (products of ../library/products.js) -> this page
      ====================================================================== -->
 <script src="cost.js"></script>
-<script src="appliances.js"></script>
+<script src="../library/products.js"></script>
 <script src="design.js"></script>
 <script src="engine.js"></script>
 <script>
 'use strict';
 /* cost.html - estimate, cutting list, notes, assembly and carcass map: engine.js parts priced with cost.js. */
 
-const COST = window.KITCHEN_COST, APPLIANCES = window.KITCHEN_APPLIANCES;
-for (const [data, file] of [[COST, 'cost.js'], [APPLIANCES, 'appliances.js']]) {
+const COST = window.KITCHEN_COST;
+for (const [data, file] of [[COST, 'cost.js'], [window.LIBRARY_PRODUCTS, '../library/products.js']]) {
   if (!data) {
     document.body.textContent = 'Nie znaleziono pliku ' + file + ' obok tej strony.';
     throw new Error(file + ' missing'); // nothing below can run without it
   }
 }
-const KE = window.KitchenEngine;
+const KE = window.KitchenEngine, APPLIANCES = KE.appliances(window.KITCHEN_DESIGN, LIBRARY_PRODUCTS.appliances);
 const DEFAULT_COLUMNS = ['Element', 'Długość', 'Szerokość', 'Ilość']; // header of a cutting-list block without its own columns
 const columnsOf = block => block.columns || DEFAULT_COLUMNS;
 const ITEMS = COST.categories.flatMap(c => c.items);
@@ -166,7 +166,7 @@ const ITEMS = COST.categories.flatMap(c => c.items);
 const NOTES = COST.notes.flatMap(section => section.notes);
 const noteNumber = Object.fromEntries(NOTES.map((n, i) => [n.id, String(i + 1)]));
 const sectionTitle = (section, i) => String.fromCharCode(65 + i) + '. ' + section.name;
-// the documents of a note: its appliance's (appliances.js), then its own
+// the documents of a note: its appliance's (the library), then its own
 const noteDocuments = n => [...(n.appliance ? APPLIANCES[n.appliance].links : []), ...(n.links || [])];
 
 const round1 = x => Math.round(x * 10) / 10;
@@ -416,7 +416,7 @@ function ROUNDUP(x, digits) {
   return Math.ceil(x * f - 1e-9) / f;
 }
 // Placeholders in quantities and texts ({n:hinges}, {i:K25/oven.space}, {=...} ...): the full list is at the top of cost.js.
-// Every value comes from design.js (through engine.js), appliances.js or cost.js.
+// Every value comes from design.js (through engine.js), the library's appliances or cost.js.
 
 // a carcass by name: width, height, innerWidth, v0, v1
 function carcassValue(rest) {

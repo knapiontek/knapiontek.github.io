@@ -324,7 +324,16 @@
 
   /* ================= 5. BUILD ================= */
 
-  // appliances (appliances.js, optional): the manufacturer's sizes, under the name of the type or tag they fit, fridgeFreezer for the tags fridge and freezer (fitAppliances)
+  /* the appliances of the project: design.js names each by the type or tag it fits (fridgeFreezer for the tags fridge and
+     freezer) with its product key in the library (library/products.js appliances) and how it is built in here (feet) */
+  function appliances(project, library) {
+    return Object.fromEntries(Object.entries((project && project.appliances) || {}).map(([role, a]) => {
+      if (!library[a.product]) throw new Error(`design.js appliances.${role}: brak produktu ${a.product} w library/products.js`);
+      return [role, Object.assign({}, library[a.product], a)];
+    }));
+  }
+
+  // appliances (appliances(), optional): the manufacturer's sizes, under the name of the type or tag they fit, fridgeFreezer for the tags fridge and freezer (fitAppliances)
   function build(project, appliances) {
     const projectData = project || {}, settings = projectData.settings || {};
     const stops = checkSettings(projectData);
@@ -946,7 +955,7 @@
 
     // ---- appliances in their places: item.fit, shown by cost.html (notes) and drawn by view.html ----
     // every fit has the body, centred on its module or carcass: {bodyU0, bodyU1, bodyV0, bodyV1}; an oven or a microwave stands on its feet
-    // (appliances.js) on the board under its module: + {feet, fasciaV0, fasciaV1}; a fridge stands on the carcass bottom, one fit on both
+    // (design.js appliances) on the board under its module: + {feet, fasciaV0, fasciaV1}; a fridge stands on the carcass bottom, one fit on both
     // its fronts; a dishwasher stands on the floor on its feet, up to the worktop: + {feet, doorV0, doorV1}
     const bodyAcross = (place, appliance) => { const centre = (place.u0 + place.u1) / 2; return { bodyU0: centre - appliance.body.width / 2, bodyU1: centre + appliance.body.width / 2 }; };
     function fitAppliances(applianceData) {
@@ -1128,8 +1137,10 @@
     const components = project.components.map((c, i) => (i && c.group !== project.components[i - 1].group ? '\n' : '') + '  ' + json1(c)).join(',\n');
     return '/* Kitchen project design - shared by design.html, cost.html and view.html.\n' +
       '   Plain JSON after "window.KITCHEN_DESIGN =". Notes, groups and components: design.html (Import data / Export data);\n' +
-      '   materials and settings: by hand (design.html keeps them as they are). */\n' +
+      '   materials, appliances (product keys of ../library/products.js, how each is built in) and settings: by hand\n' +
+      '   (design.html keeps them as they are). */\n' +
       'window.KITCHEN_DESIGN = {\n "materials": {\n' + entries(project.materials, json1) +
+      '\n },\n "appliances": {\n' + entries(project.appliances, json1) +
       '\n },\n "settings": {\n' + entries(project.settings) +
       '\n },\n "notes": [\n' + project.notes.map(n => '  ' + json1(n)).join(',\n') +
       '\n ],\n "groups": [\n' + project.groups.map(g => '  ' + json1(g)).join(',\n') +
@@ -1145,6 +1156,6 @@
   root.KitchenEngine = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, hasTag, FRONT_TYPES, SIDES, HINGE_SIDES,
     placeLabel, gapsText, parseTags, spaceAround, valueAt, PINS_PER_SHELF, tagsOf, readType, cutKey, checkSettings, build, cutList, carcassMap, mapJSON,
-    load, designJS, fromDesignJS, plural
+    load, designJS, fromDesignJS, plural, appliances
   };
 })(typeof window !== 'undefined' ? window : globalThis);

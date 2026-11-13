@@ -46,12 +46,12 @@ window.BATH_DATA = {
       },
       radiator: { w: 400, h: 1200, bottom: 820, fromWall: 55, gapToCorner: 10 },   // Mexen Hades 1200 × 400 on the door wall
       look: { basin: 'black', doorPaint: 0x5b5e60 },
-      defaultDecor: 'H1199',
+      defaultDecor: 'egger-h1199-st12',
       tiles: {
-        wall:        { tile: 'authorityGraphite', format: '598x1198', layout: 'h' },
-        floor:       { tile: 'authorityGrey',     format: '898x898',  layout: 'h' },
-        shower:      { tile: 'authorityGraphite', format: '598x1198', layout: 'h' },
-        showerFloor: { tile: 'authorityGrey',     format: '898x898',  layout: 'h' },
+        wall:        { tile: 'paradyz-authority-graphite', format: '598x1198', layout: 'h' },
+        floor:       { tile: 'paradyz-authority-grey', format: '898x898',  layout: 'h' },
+        shower:      { tile: 'paradyz-authority-graphite', format: '598x1198', layout: 'h' },
+        showerFloor: { tile: 'paradyz-authority-grey', format: '898x898',  layout: 'h' },
       },
     },
 
@@ -92,23 +92,23 @@ window.BATH_DATA = {
       },
       radiator: { w: 400, h: 1200, bottom: 820, fromWall: 55, gapToCorner: 10 },
       look: { basin: 'white', doorPaint: 0xdedcd7 },
-      defaultDecor: 'H1180',
+      defaultDecor: 'egger-h1180-st37',
       tiles: {
-        wall:        { tile: 'authorityGrey', format: '598x1198', layout: 'h' },
-        floor:       { tile: 'authorityGrey', format: '898x898',  layout: 'h' },
-        shower:      { tile: 'authorityGrey', format: '598x1198', layout: 'v' },
-        showerFloor: { tile: 'authorityGrey', format: '598x598',  layout: 'h' },
+        wall:        { tile: 'paradyz-authority-grey', format: '598x1198', layout: 'h' },
+        floor:       { tile: 'paradyz-authority-grey', format: '898x898',  layout: 'h' },
+        shower:      { tile: 'paradyz-authority-grey', format: '598x1198', layout: 'v' },
+        showerFloor: { tile: 'paradyz-authority-grey', format: '598x598',  layout: 'h' },
       },
     },
   },
 
-  decors: {               // Egger boards at M-HM (photos in textures.js)
-    H1199: { price: 433.42, thick: '18 mm', note: 'najciemniejszy, czarnobrązowy — szafka spokojnie ciemna na tle grafitu' },
-    H1181: { price: 667.18, thick: '18 mm', note: 'średni tabaczny, wyraźny słój z pęknięciami — ciepły kontrast z grafitem i mosiądzem' },
-    H1399: { price: 530.91, thick: '18 mm', note: 'jasnoszary brąz' },
-    H1346: { price: 667.18, thick: '18 mm', note: 'szary dąb — ton w ton z płytką, bez ciepła drewna' },
-    H1180: { price: 667.18, thick: '18,6 mm', note: 'jasny, naturalny dąb z wyraźnym słojem — ciepły i jasny, pasuje do Authority Grey' },
-    H1176: { price: 667.18, thick: '18,6 mm', note: 'bielony dąb, prawie biały — najjaśniejsza szafka' },
+  decors: {               // the Egger boards to choose from (../library/products.js boards): why each would suit
+    'egger-h1199-st12': { note: 'najciemniejszy, czarnobrązowy — szafka spokojnie ciemna na tle grafitu' },
+    'egger-h1181-st37': { note: 'średni tabaczny, wyraźny słój z pęknięciami — ciepły kontrast z grafitem i mosiądzem' },
+    'egger-h1399-st10': { note: 'jasnoszary brąz' },
+    'egger-h1346-st32': { note: 'szary dąb — ton w ton z płytką, bez ciepła drewna' },
+    'egger-h1180-st37': { note: 'jasny, naturalny dąb z wyraźnym słojem — ciepły i jasny, pasuje do Authority Grey' },
+    'egger-h1176-st37': { note: 'bielony dąb, prawie biały — najjaśniejsza szafka' },
   },
 
   shop: {
@@ -149,6 +149,7 @@ window.BATH_DATA = {
 
   defaults: {
     floor: 'ground',
+    tiles: ['paradyz-authority-graphite', 'paradyz-authority-grey'],          // to choose from (../library/products.js tiles)
     formats: ['598x598', '598x898', '598x1198', '898x898', '1198x1198'],   // Paradyż Authority formats, mm
   },
 };
