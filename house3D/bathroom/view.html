@@ -218,15 +218,15 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="textures.js"></script>
-<script src="../house.js"></script>
-<script src="../materials.js"></script>
+<script src="../house/house.js"></script>
+<script src="../house/materials.js"></script>
 <script src="../core/geometry.js"></script>
 <script src="../core/mesh.js"></script>
 <script src="../core/scene.js"></script>
 <script src="../core/ui.js"></script>
 <script src="../core/plan.js"></script>
-<script src="../engine.js"></script>
-<script src="../house-clip.js"></script>
+<script src="../house/engine.js"></script>
+<script src="../house/house-clip.js"></script>
 <script src="data.js"></script>
 <script src="engine.js"></script>
 <script>
@@ -238,9 +238,9 @@ const fail = message => { loading.hidden = false; loading.textContent = message;
 if (!window.THREE || !THREE.OrbitControls) return fail('Nie udało się wczytać silnika 3D. Odśwież stronę.');
 if (!window.BATH_TEXTURES) return fail('Brak pliku textures.js obok view.html.');
 if (!window.BATH_DATA || !window.BathEngine) return fail('Brak plików data.js / engine.js obok view.html.');
-if (!window.HOUSE || !window.HouseClip) return fail('Brak plików domu (../house.js, ../house-clip.js).');
+if (!window.HOUSE || !window.HouseClip) return fail('Brak plików domu (../house/house.js, ../house/house-clip.js).');
 
-/* Model: the room from the house (../house-clip.js), the bathroom's design from data.js, calculations from engine.js.
+/* Model: the room from the house (../house/house-clip.js), the bathroom's design from data.js, calculations from engine.js.
    Here (view.html) only rendering and the panel. */
 let FLOOR = BATH_DATA.defaults.floor;
 try { FLOOR = new URLSearchParams(location.search).get('floor') || localStorage.getItem('floor') || FLOOR; } catch (e) {}
@@ -583,7 +583,7 @@ const isSolidHit = hit => hit.object.isMesh && isShown(hit.object) && hit.object
 const { H, CEILING_Y, T, WINDOW_REVEAL, WINDOW_WALL_T, XL, ZW, SX, SZ, SHOWER_ZC, SHOWER_XC,
         WX0, WX1, WIN_Y0, WIN_Y1, DX0, DX1, DOOR_H } = G;
 
-/* ---------- the room: the house's own walls, slabs, floor, window and roof (../house-clip.js), as they are ----------
+/* ---------- the room: the house's own walls, slabs, floor, window and roof (../house/house-clip.js), as they are ----------
    Drawn by core in house mm. Every object of the room (each wall, the floor, the ceiling; a window goes with its wall) is
    one record that hides while the camera is behind it and still casts its shadow. The tiles are the finish of the house's
    own faces: a wall face open to the room takes the wall tiles (inside the shower the shower tiles), the top of the floor
@@ -1762,7 +1762,7 @@ function setMode(m) {
   CORE.ui.modeToggle($('mode'), MODES, VIEW_STATE.mode, setMode);
   const ctx = $('context'); ctx.innerHTML = '';
   CORE.ui.menuRow(ctx, v.menu ? Object.entries(BATH_DATA.floors).map(([k, f]) => ({ name: f.name, radio: true, on: k === FLOOR, set: () => goFloor(k) })) : [],
-    [el('a', { className: 'btnlink', href: '../view.html', textContent: 'Dom' })]);
+    [el('a', { className: 'btnlink', href: '../house/view.html', textContent: 'Dom' })]);
   CORE.ui.panels(v);
   if (plan) { drawSheet(); $('planNote').textContent = `Cięcie ${CUT} mm nad podłogą (jak w rzucie domu). ${v.note || ''}`.trim(); }
   invalidate();

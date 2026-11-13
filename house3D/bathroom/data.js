@@ -2,7 +2,7 @@
    Loaded by view.html before engine.js. Every length is in mm (whole numbers); angles in degrees (openAngle in radians);
    bath.n is an exponent.
 
-   The room is the house's (house3D/house.js, through ../house-clip.js): walls, door opening, window, floor, ceiling heights and
+   The room is the house's (../house/house.js, through ../house/house-clip.js): walls, door opening, window, floor, ceiling heights and
    the roof are taken from there as they are and are not repeated here. Positions are house axes: x along the house, y across,
    z up. What is left here is the bathroom's own design: fittings, finishes, products; their places are distances from the
    room's walls (vanity wall = the room's −x face, door wall = its −y face, window or knee wall = its +y face).

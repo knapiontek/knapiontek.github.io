@@ -20,7 +20,7 @@ window.BathEngine = (function () {
   }
   const count = (list, item) => list.filter(s => s === item).length;
 
-  /* ---------- the room frame: the house room (../house-clip.js) and the bath data, in mm ----------
+  /* ---------- the room frame: the house room (../house/house-clip.js) and the bath data, in mm ----------
      The room is the house's: its walls, door, window, heights and roof come from house3D, nothing is re-measured here.
      The frame the bath is computed in: x from the shower line (data, house x) or else from the room's +x wall, growing
      toward the vanity wall (the room's -x face); z from the door wall (-y face) toward the window or knee wall (+y face);
@@ -75,7 +75,7 @@ window.BathEngine = (function () {
     return V;
   }
 
-  /* ROOM: the house room of this floor, HouseClip.roomsFor(...) of ../house-clip.js */
+  /* ROOM: the house room of this floor, HouseClip.roomsFor(...) of ../house/house-clip.js */
   function build(D, floorKey, ROOM) {
     const F = floorInMetres(roomFrame(D.floors[floorKey], ROOM));
     const G = { key: floorKey, type: F.type, floor: F, data: { ...D, ...F }, X0: F.X0, Y0: F.Y0, LEVEL: F.LEVEL, ROOM };

@@ -18,7 +18,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
 | cost.html | page, LLM generated | prices, cutting lists, notes, assembly help, carcass map | LLM, per project |
 | view.html | page, every project | the kitchen in its room: 3D, the 2D plan and Analiza (its geometry check), drawn by ../core like the house | LLM, every project |
-| ../house.js, ../house-clip.js | data and code of house3D | the room: the house's own walls, slab, floor and window, copied as they are and trimmed to the kitchen | house3D |
+| ../house/house.js, ../house/house-clip.js | data and code of house3D | the room: the house's own walls, slab, floor and window, copied as they are and trimmed to the kitchen | house3D |
 | ../core/ | code of house3D | drawing: solids, welded meshes, edges, light, camera, the 2D plan, the panel and its menu | house3D |
 | project.md | text | this description | by hand |
 | index.html | page | directory listing of the repository folder (not part of the kitchen) | by hand |
@@ -39,7 +39,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 
   appliances.js ──► cost.html, view.html         passed on to engine.js; design.html does not read it
   textures.js   ──► view.html                    without it a material shows its colour
-  ../house.js ─► ../house-clip.js ─► view.html        the room, from the house
+  ../house/house.js ─► ../house/house-clip.js ─► view.html        the room, from the house
   ../core       ──► view.html                    draws it all, like the house
 ```
 

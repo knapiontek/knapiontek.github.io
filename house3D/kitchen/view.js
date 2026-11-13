@@ -1,6 +1,6 @@
 /* Kitchen scene for view.html: only what the 3D view needs beyond design.js and appliances.js. Written per project (LLM).
-   House axes and positions in mm: x along the house, y across, z up (house3D/house.js). The room itself (walls, slab,
-   floor, window) is the house's own, copied as it is by ../house-clip.js; nothing of it is repeated here.
+   House axes and positions in mm: x along the house, y across, z up (../house/house.js). The room itself (walls, slab,
+   floor, window) is the house's own, copied as it is by ../house/house-clip.js; nothing of it is repeated here.
      placement     where each group stands (by group number) and which way its fronts face (-y, +y, -x, +x); an island
                    stands free; x, y = the point its anchor names (start (default), end, centre or {column}: the end of
                    that column) on the wall line of the group (an island: the line of its carcass backs);
