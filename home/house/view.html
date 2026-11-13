@@ -38,7 +38,7 @@
       </div>
       <div data-help="2d"><p>Rzut obu kondygnacji jak rysunek CAD: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG do druku.</p></div>
       <div data-help="test"><p>Sprawdzenia modelu: grubości, kolizje, otwory. <b>OK</b> = nic do poprawienia.</p></div>
-      <div data-help="info"><p>Wszystko o domu: pomieszczenia, posadzki z ilością płytek i kosztem, uwagi. Płytki zmieniasz w Wykończeniu, ceny liczą się od razu.</p></div>
+      <div data-help="info"><p>Wszystko o domu w arkuszu: posadzki (ilość płytek, cena, wartość) i pomieszczenia, potem uwagi. Niebieskie pola można zmieniać do odświeżenia strony; płytki zmieniasz w Wykończeniu. Na dole: zapis XLSX z formułami, przywrócenie danych.</p></div>
     </div>
     <div class="corner">
       <button class="round" id="sunbtn" aria-label="Słońce" aria-expanded="false" aria-controls="sun">☀</button>
@@ -69,6 +69,7 @@
 <script src="../core/ui.js"></script>
 <script src="../apps.js"></script>
 <script src="../core/plan.js"></script>
+<script src="../core/sheet.js"></script>
 <script src="../core/library.js"></script>
 <script src="engine.js"></script>
 <script src="analysis.js"></script>
@@ -349,6 +350,7 @@ const PLAN_BUTTONS = { zoomOut: el('button', { textContent: '−', ariaLabel: 'P
 function bottomMenu() {
   const dock = $('dock');
   if (view().plan) return CORE.ui.bottomMenu(dock, [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]]);
+  if (view().info) return CORE.ui.bottomMenu(dock, INFO_ITEMS);
   if (!is3d()) return CORE.ui.bottomMenu(dock, []);
   const F = openFloor(), go = level => c => ({ name: c.name, go: () => { V.stopWalk(); setCamera(c, level); } });
   const walk = el('button', { className: 'walk', textContent: 'Spacer', onclick: () => V.walk.on ? V.stopWalk() : V.startWalk() });
@@ -417,25 +419,42 @@ function roomsPanel() {
 }
 function selectRoom(id) { state.room = id; save(); contextMenu(); roomsPanel(); markRoom(); redraw(); }
 
-/* Info: everything about the house, read only; the tiles' prices follow Wykończenie */
-function infoView() {
-  const layouts = ROOMS.filter(r => r.tiles).map(r => r.id);
-  const total = layouts.reduce((s, k) => s + (tileCost(k, PRODUCTS[state.layouts[k].product]) || 0), 0);
-  const rooms = FLOORS.map(F => `<tr><td colspan="3" class="floorname">${F.name}</td></tr>` + ROOMS.filter(r => r.floor === F.id).map(r =>
-    `<tr><td>${roomName(r)}</td><td class="n">${fmt(roomArea(r), 2)} m²</td><td class="n">${r.planArea !== undefined ? fmt(r.planArea, 2) + ' m²' : ''}</td></tr>`).join('')).join('');
-  const tiles = layouts.map(k => {
-    const L = state.layouts[k], P = PRODUCTS[L.product], R = RESULTS[k], c = tileCost(k, P);
-    const names = ROOMS.filter(r => layoutOf(r) === k).map(r => r.name).join(', ');
-    return `<tr><td>${names}</td><td>${P.link ? `<a href="${P.link}" target="_blank" rel="noopener">${P.name}</a>` : P.name}</td><td class="n">${fmt(R.area, 2)} m²</td>
-      <td class="n">${Math.ceil(R.tiles * (1 + TILES.reserve))}</td><td class="n">${R.full} / ${R.cut}</td><td class="n">${c === null ? '—' : fmt(c, 0) + ' zł'}</td></tr>`;
-  }).join('');
-  $('info').innerHTML = `<h1>${HOUSE.name}</h1><p class="sub">${HOUSE.source}</p>
-    <section><h2>Pomieszczenia</h2><table><tr><th>Pomieszczenie</th><th class="n">Model</th><th class="n">Archon</th></tr>${rooms}</table>
-      ${VIEW_3D.roomsNote ? `<p class="note">${VIEW_3D.roomsNote}</p>` : ''}</section>
-    <section><h2>Posadzki</h2><table><tr><th>Pomieszczenia</th><th>Płytka</th><th class="n">Powierzchnia</th><th class="n">Płytek (+${TILES.reserve * 100}%)</th><th class="n">Całe / docięte</th><th class="n">Koszt</th></tr>${tiles}
-      <tr><td colspan="5"><b>Razem</b></td><td class="n"><b>${fmt(total, 0)} zł</b></td></tr></table></section>
-    <section><h2>Uwagi</h2><div class="note">${HOUSE.notes.map(n => `<p>${n}</p>`).join('')}</div></section>`;
+/* Info: everything about the house, in the spreadsheet of core (core/sheet.js): the rooms, the floor tiles with their
+   prices (blue cells change until a reload), the notes; the tiles follow Wykończenie; saved as XLSX from the bottom menu */
+let SHEET = null;
+function infoBook() {
+  const rooms = { name: 'Pomieszczenia', cols: [{ title: 'Pomieszczenie', width: 34 }, { width: 14, digits: 2 }, { width: 14, digits: 2 }],
+    rows: [{ kind: 'title', cells: [HOUSE.name] }, { kind: 'head', cells: ['Pomieszczenie', 'Model [m²]', 'Archon [m²]'] }] };
+  for (const F of FLOORS) {
+    rooms.rows.push({ kind: 'cat', cells: [F.name] });
+    const first = rooms.rows.length + 1;
+    for (const r of ROOMS.filter(r => r.floor === F.id)) rooms.rows.push({ cells: [roomName(r), roomArea(r), r.planArea ?? null] });
+    const last = rooms.rows.length;
+    rooms.rows.push({ kind: 'sum', cells: ['Razem ' + F.name.toLowerCase(), { f: `SUM(B${first}:B${last})` }, { f: `SUM(C${first}:C${last})` }] });
+  }
+  if (VIEW_3D.roomsNote) rooms.rows.push({ cells: [VIEW_3D.roomsNote] });
+
+  /* the reserve in C2: the tiles to buy and the value follow it */
+  const tiles = { name: 'Posadzki', cols: [{ width: 30 }, { width: 36 }, { width: 14, digits: 2 }, { width: 10, digits: 0 }, { width: 14 }, { width: 13, digits: 2 }, { width: 14, digits: 2 }],
+    rows: [{ kind: 'title', cells: ['Posadzki z płytek'] }, { cells: ['Zapas na docinki', null, { v: TILES.reserve, input: true, digits: 2 }] }, { cells: [] },
+      { kind: 'head', cells: ['Pomieszczenia', 'Płytka', 'Powierzchnia [m²]', 'Płytek', 'Całe / docięte', 'Cena [zł/m²]', 'Wartość [zł]'] }] };
+  const first = tiles.rows.length + 1;
+  for (const k of ROOMS.filter(r => r.tiles).map(r => r.id)) {
+    const P = PRODUCTS[state.layouts[k].product], R = RESULTS[k], n = tiles.rows.length + 1;
+    tiles.rows.push({ cells: [ROOMS.filter(r => layoutOf(r) === k).map(r => r.name).join(', '), P.link ? { text: P.name, href: P.link } : P.name, R.area,
+      { f: `ROUNDUP(${R.tiles}*(1+$C$2),0)` }, `${R.full} / ${R.cut}`, { v: P.price || 0, input: true }, { f: `C${n}*(1+$C$2)*F${n}` }] });
+  }
+  const last = tiles.rows.length;
+  tiles.rows.push({ kind: 'grand', cells: ['Razem', null, { f: `SUM(C${first}:C${last})` }, { f: `SUM(D${first}:D${last})` }, null, null, { f: `SUM(G${first}:G${last})` }] });
+  return { sheets: [tiles, rooms] };
 }
+function infoView() {
+  $('info').innerHTML = `<h1>${HOUSE.name}</h1><p class="sub">${HOUSE.source}</p><section id="infoSheet"></section>
+    <section><h2>Uwagi</h2><div class="note">${HOUSE.notes.map(n => `<p>${n}</p>`).join('')}</div></section>`;
+  SHEET = CORE.sheet.create($('infoSheet'), infoBook());
+}
+const INFO_ITEMS = [[{ name: 'Zapisz XLSX', go: e => { const b = e.currentTarget; SHEET.xlsx('dom-posadzki.xlsx').catch(err => { b.textContent = err.message; }); } },
+  { name: 'Przywróć dane', go: () => SHEET.restore() }]];
 
 /* the panel: the tabs of the mode; the cut also needs an open floor */
 const panel = () => { state.tab = CORE.ui.panelTabs($('tabs'), $('panel'), view(), state.tab, t => { state.tab = t; save(); panel(); }, p => p === 'cut' && !openFloor()) ?? state.tab; };

@@ -89,6 +89,19 @@ button{font:inherit;color:inherit}
 #info table{max-width:880px}
 #info th{text-align:left;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:4px 8px 4px 0;border-bottom:1px solid var(--line)}
 #info td{padding-right:8px}
+/* the spreadsheet (core/sheet.js) */
+.sheettabs{margin:0 0 8px}
+.sheetwrap{overflow:auto;max-width:100%;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+table.sheet{border-collapse:collapse;font-size:12.5px;min-width:100%}
+table.sheet td{border:1px solid var(--line);padding:4px 7px;vertical-align:top}
+table.sheet td.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.sheet tr.title td{font:700 14px var(--f-display);border:0;padding:8px 7px}
+table.sheet tr.head td{font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg)}
+table.sheet tr.cat td,table.sheet tr.sum td{font-weight:600;background:var(--bg)}
+table.sheet tr.grand td{font-weight:700;background:color-mix(in srgb,var(--accent) 18%,transparent)}
+table.sheet input{width:100%;min-width:64px;border:0;background:color-mix(in srgb,#2f6fdb 10%,transparent);color:#2f6fdb;font:inherit;text-align:right;padding:2px 4px;border-radius:3px}
+table.sheet input.changed{background:#fde68a;color:#7a4b00}
+table.sheet a{color:var(--accent)}
 .sheetnote{margin:0 16px;font-size:12px;color:var(--muted);text-align:center}
 #analysis .check ul{font-family:var(--f-mono);font-size:11.5px}
 #sheet svg{display:block;margin:0 auto;height:calc(100% * var(--zoom,1));width:calc(100% * var(--zoom,1));max-width:none}   /* the viewBox keeps the drawing whole: at zoom 1 it fits the sheet both ways */
