@@ -12,6 +12,8 @@
 /* only what the kitchen panel adds to core/ui.css */
 #tabs{margin:2px 0 4px}
 #analysis>.note{margin:0 0 10px}
+#info>section{max-width:880px}
+#info pre.json{max-height:480px}
 .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 #tip{position:absolute;z-index:8;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12.5px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.12)}
 .legend,.mats{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;font-size:12px}
@@ -39,78 +41,90 @@ dl.notes dd{margin:0;color:var(--muted)}
   <div class="stage" id="stage">
     <canvas id="gl" aria-label="Widok 3D kuchni"></canvas>
     <div id="loading">Wczytywanie projektu…</div>
-    <div class="hud">
-      <div class="toggle" id="mode" role="group" aria-label="Widok"></div>
-      <div id="context" aria-label="Menu widoku"></div>
+    <div class="hud"><div id="context" aria-label="Menu widoku"></div></div>
+    <div class="toggle modes" id="mode" role="group" aria-label="Tryb"></div>
+    <div id="plan2d" hidden aria-label="Rzut 2D"><p class="sheetnote" id="planNote"></p><div id="sheet"></div></div>
+    <div id="analysis" hidden aria-label="Test"><p class="note" id="checksNote"></p><div id="checks"></div></div>
+    <div id="info" hidden aria-label="Informacje">
+      <h1 id="infoTitle"></h1>
+      <p class="sub" id="infoSubtitle"></p>
+      <section>
+        <h2>Podsumowanie z modelu</h2>
+        <dl class="stats" id="stats"></dl>
+        <h2>Płyty</h2>
+        <ul class="legend" id="legend"></ul>
+      </section>
+      <section>
+        <h2>Korpusy</h2>
+        <table id="carcassList"></table>
+        <p class="note">Kliknij korpus, aby go wybrać: jego płyty są niżej, w 3D jego fronty są otwarte.</p>
+        <div class="detail" id="detail" hidden></div>
+      </section>
+      <section>
+        <h2>Materiały</h2>
+        <ul class="mats" id="mats"></ul>
+        <h2>Wymiary w modelu</h2>
+        <dl class="stats" id="dims"></dl>
+        <h2>Notatki projektu</h2>
+        <dl class="notes" id="notes"></dl>
+      </section>
+      <section>
+        <h2>Mapa korpusów (JSON)</h2>
+        <details><summary>Pokaż</summary><pre class="json" id="mapJson"></pre></details>
+        <p class="note">Dla każdego korpusu: x wzdłuż grupy, y w górę, z od ściany (mm); room = położenie w osiach domu (x wzdłuż, y w poprzek, z w górę, mm).</p>
+        <p class="note">Dane: design.js i view.js; produkty, materiały i tekstury z ../library; części z engine.js; pomieszczenie z domu (../house/house.js przez ../house/house-clip.js); rysowanie: ../core.</p>
+      </section>
     </div>
-    <button class="helpbtn" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
-    <div class="help" id="help" role="dialog" aria-label="Pomoc" hidden>
-      <p>Obracaj: lewy przycisk (z zewnątrz wokół środka pomieszczenia, w środku wokół tego, co na środku widoku) · przesuwaj: prawy · przybliżaj: kółko (do miejsca pod kursorem).</p>
-      <p>Kliknięcie frontu otwiera go albo zamyka; kliknięcie płyty korpusu wybiera korpus. Kursor zatrzymany na części pokazuje jej nazwę.</p>
-      <p>Pomieszczenie jest z domu, takie jak jest. Ściana, sufit albo podłoga, za którymi stoi kamera, chowają się.</p>
-    </div>
-    <div class="dock" id="dock" aria-label="Widoki kamery"></div>
-    <div id="plan2d" hidden aria-label="Rzut 2D"><div id="sheet"></div></div>
-    <div id="analysis" hidden aria-label="Analiza"><p class="note" id="checksNote"></p><div id="checks"></div></div>
+    <div class="dock" id="dock" aria-label="Dolne menu"></div>
     <div id="tip" hidden></div>
+    <div class="float sunfloat" id="sun" role="dialog" aria-label="Światło" hidden>
+      <h2>Oświetlenie</h2>
+      <div class="toggle" id="light" role="group" aria-label="Światło"></div>
+    </div>
+    <div class="float" id="help" role="dialog" aria-label="Pomoc" hidden>
+      <div data-help="3d">
+        <p>Obracaj: lewy przycisk (z zewnątrz wokół środka pomieszczenia, w środku wokół tego, co na środku widoku) · przesuwaj: prawy · przybliżaj: kółko (do miejsca pod kursorem).</p>
+        <p>Kliknięcie frontu otwiera go albo zamyka; kliknięcie płyty korpusu wybiera korpus. Kursor zatrzymany na części pokazuje jej nazwę.</p>
+        <p>Pomieszczenie jest z domu, takie jak jest. Ściana, sufit albo podłoga, za którymi stoi kamera, chowają się.</p>
+        <p>U góry: grupy szafek. Na dole: skąd patrzysz. ☀: dzień albo noc.</p>
+      </div>
+      <div data-help="2d"><p>Rzut kuchni jak rysunek CAD, cięty na wysokości z rzutu domu: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG.</p></div>
+      <div data-help="test"><p>Sprawdzenie geometrii: kolizje, szczeliny, fronty poza linią, części wystające, części bez wymiaru. <b>OK</b> = nic do poprawienia.</p></div>
+      <div data-help="info"><p>Wszystko o kuchni z modelu: podsumowanie, płyty, korpusy (kliknij, aby zobaczyć płyty), materiały, wymiary, notatki. Na dole: kosztorys i edycja projektu, mapa korpusów.</p></div>
+    </div>
+    <div class="corner">
+      <button class="round" id="sunbtn" aria-label="Światło" aria-expanded="false" aria-controls="sun">☀</button>
+      <button class="round" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
+    </div>
   </div>
-  <aside>
+  <aside id="panel">
     <h1 id="title">Kuchnia</h1>
     <p class="sub" id="subtitle"></p>
-    <section data-panel="plan"><h2>Rzut 2D</h2>
-      <div class="btns">
-        <button class="btn ghost" id="zoomOut" aria-label="Pomniejsz">−</button>
-        <button class="btn ghost" id="zoomIn" aria-label="Powiększ">+</button>
-        <button class="btn" id="planSvg">Pobierz SVG</button>
-      </div>
-      <p class="note" id="planNote"></p>
-    </section>
-    <section data-panel="tabs">
     <div class="toggle" id="tabs" role="tablist" aria-label="Panel"></div>
 
-    <div data-tab="view">
-      <h2>Światło</h2>
-      <div class="toggle" id="light" role="group" aria-label="Światło"></div>
+    <section data-tab="layers">
       <h2>Warstwy</h2>
       <div class="btns" id="presets"></div>
       <div class="layers" id="layers" style="margin-top:10px"></div>
       <p class="note" id="holesLegend"></p>
+    </section>
+    <section data-tab="layers">
       <h2>Fronty</h2>
       <div class="btns"><button class="btn ghost" id="openAll">Otwórz wszystkie</button><button class="btn ghost" id="closeAll">Zamknij wszystkie</button></div>
       <p class="note">Kliknij front, aby go otworzyć.</p>
+    </section>
+    <section data-tab="layers">
+      <h2>Płyty</h2>
+      <div class="btns"><button class="btn ghost" id="colourBy" aria-pressed="false">Koloruj wg płyty</button></div>
+    </section>
+
+    <section data-tab="finish">
       <h2>Wykończenie</h2>
       <div class="lay">
         <div class="row"><label>Uchwyty<select id="handle"></select></label><label>Metal<select id="metal"></select></label></div>
         <div class="row"><label>Podłoga<select id="floor"></select></label><label>Kolory<select id="palette"></select></label></div>
         <p class="note" id="floorInfo"></p>
       </div>
-    </div>
-
-    <div data-tab="carcasses" hidden>
-      <h2>Podsumowanie z modelu</h2>
-      <dl class="stats" id="stats"></dl>
-      <h2>Płyty</h2>
-      <div class="btns"><button class="btn ghost" id="colourBy" aria-pressed="false">Koloruj wg płyty</button></div>
-      <ul class="legend" id="legend"></ul>
-      <div class="detail" id="detail" hidden></div>
-      <h2>Korpusy</h2>
-      <table id="carcassList"></table>
-      <p class="note">Kliknij korpus, aby go wybrać i otworzyć jego fronty.</p>
-      <h2>Mapa korpusów (JSON)</h2>
-      <div class="btns"><button class="btn ghost" id="mapCopy">Kopiuj</button><button class="btn ghost" id="mapSave">Pobierz</button></div>
-      <details><summary>Pokaż</summary><pre class="json" id="mapJson"></pre></details>
-      <p class="note">Dla każdego korpusu: x wzdłuż grupy, y w górę, z od ściany (mm); room = położenie w osiach domu (x wzdłuż, y w poprzek, z w górę, mm).</p>
-    </div>
-
-    <div data-tab="project" hidden>
-      <h2>Materiały</h2>
-      <ul class="mats" id="mats"></ul>
-      <h2>Wymiary w modelu</h2>
-      <dl class="stats" id="dims"></dl>
-      <h2>Notatki projektu</h2>
-      <dl class="notes" id="notes"></dl>
-      <p class="note">Dane: design.js i view.js; produkty, materiały i tekstury z ../library; części z engine.js; pomieszczenie z domu (../house/house.js przez ../house/house-clip.js); rysowanie: ../core.</p>
-    </div>
     </section>
   </aside>
 </div>
@@ -297,7 +311,7 @@ const PRESETS = {
   carcasses: ['Tylko korpusy', k => (k[0] === 'g' && !LAYER[k].parent) || CARCASS_ONLY.includes(k)]
 };
 const STORE = CORE.ui.store('kitchen-view-v2',          // v2: views
-  () => ({ layers: Object.fromEntries(Object.keys(LAYER).map(k => [k, true])), mode: Object.keys(SCENE.views)[0], zoom: 1, tab: 'view', light: 'day', palette: 'colour', handle: 'cup',
+  () => ({ layers: Object.fromEntries(Object.keys(LAYER).map(k => [k, true])), mode: Object.keys(SCENE.views)[0], zoom: 1, tab: null, light: 'day', palette: 'colour', handle: 'cup',
     metal: HW.handle.metal, floor: FLOOR_KEYS[0] || null, colourBy: false }),
   s => s.layers && Object.keys(s.layers).join() === Object.keys(LAYER).join() && SCENE.views[s.mode] && METALS[s.metal] && (!FLOOR_KEYS.length || FLOORS[s.floor]));
 const state = STORE.state, save = STORE.save;
@@ -1104,13 +1118,10 @@ const geometry = geometryCheck(), lines = lineCheck();
 
 /* ================= 11. PANEL ================= */
 const frontName = model.materials[model.materialFor.cabinet].name;
-$('title').textContent = 'Kuchnia · ' + frontName;
+$('title').textContent = $('infoTitle').textContent = 'Kuchnia · ' + frontName;
 document.title = 'Kuchnia ' + frontName;
-$('subtitle').textContent = ROOM.floorName + ', pomieszczenie z domu: ' + ROOM.name + ' · ' + GROUP_IDS.length + ' grupy, ' + carcasses.length + ' korpusów';
-CORE.ui.helpToggle($('helpbtn'), $('help'));
-
-const TABS = { view: 'Widok', carcasses: 'Korpusy', project: 'Projekt' };
-function showTab(id) { state.tab = TABS[id] ? id : 'view'; save(); CORE.ui.tabs($('tabs'), TABS, state.tab, showTab); }
+$('subtitle').textContent = $('infoSubtitle').textContent = ROOM.floorName + ', pomieszczenie z domu: ' + ROOM.name + ' · ' + GROUP_IDS.length + ' grupy, ' + carcasses.length + ' korpusów';
+CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
 
 /* layers */
 function setLayer(k, on) { state.layers[k] = on; save(); layersPanel(); contextMenu(); apply(); }
@@ -1188,6 +1199,7 @@ function selectCarcass(c, fly) {
   paintCarcasses();
   for (const tr of $('carcassList').querySelectorAll('tr')) tr.setAttribute('aria-selected', !!selected && +tr.dataset.k === selected.id);
   $('detail').hidden = !selected;
+  contextMenu();
   if (!selected) return;
   const hinges = model.fronts.filter(f => f.carcassId === c.id).reduce((s, f) => s + (f.hinges ? f.hinges.length : 0), 0);
   const drawers = c.movers.filter(m => m.kind === 'drawer').length;
@@ -1206,8 +1218,10 @@ const mapText = KE.mapJSON(KE.carcassMap(model, c => {
   return { x: [b[0], b[1]], y: [b[2], b[3]], z: [b[4], b[5]] };
 }));
 $('mapJson').textContent = mapText;
-$('mapCopy').onclick = e => { const b = e.currentTarget; navigator.clipboard?.writeText(mapText).then(() => { b.textContent = 'Skopiowano'; setTimeout(() => { b.textContent = 'Kopiuj'; }, 1500); }, () => {}); };
-$('mapSave').onclick = () => { const a = el('a', { href: URL.createObjectURL(new Blob([mapText], { type: 'application/json' })), download: 'mapa_korpusow_widok.json' }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
+/* the bottom menu of Info: the kitchen's other pages, the carcass map */
+const INFO_ITEMS = [[{ name: 'Kosztorys', go: () => { location.href = 'cost.html'; } }, { name: 'Edycja projektu', go: () => { location.href = 'design.html'; } }],
+  [{ name: 'Mapa JSON: kopiuj', go: e => { const b = e.currentTarget; navigator.clipboard?.writeText(mapText).then(() => { b.textContent = 'Skopiowano'; setTimeout(() => { b.textContent = 'Mapa JSON: kopiuj'; }, 1500); }, () => {}); } },
+   { name: 'Mapa JSON: pobierz', go: () => { const a = el('a', { href: URL.createObjectURL(new Blob([mapText], { type: 'application/json' })), download: 'mapa_korpusow_widok.json' }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); } }]];
 {
   const item = x => `<b>${esc(x.v)}</b> ${esc(x.a)}${x.b ? ' — ' + esc(x.b) : ''}`;
   const groups = [['Dane', model.warnings.concat(UNDRAWN.map(u => 'część bez wymiaru, nie rysowana: ' + u)).map(w => esc(w))], ['Kolizje', geometry.overlaps.map(item)], ['Szczeliny przy listwach i panelach', geometry.gaps.map(item)],
@@ -1257,7 +1271,7 @@ V.onFrame(() => {
   if (k >= 1) flight = null;
   return true;
 });
-CORE.ui.cameraDock($('dock'), [Object.values(CAMERAS).map(c => ({ name: c.name, go: () => flyTo(camOf(c)) }))]);
+const CAMERA_ITEMS = Object.values(CAMERAS).map(c => ({ name: c.name, go: () => flyTo(camOf(c)) }));
 
 /* what is under a screen point: the cell of a triangle (core's owners) or a detail's owner */
 const visibleChain = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
@@ -1306,9 +1320,15 @@ for (const ev of ['pointerleave', 'pointerdown', 'wheel']) canvas.addEventListen
 const VIEWS = SCENE.views, view = () => VIEWS[state.mode], is3d = () => !!view().menu;
 const HOUSE_2D = Object.values(HOUSE.views).find(v => v.plan), CUT = HOUSE_2D.cut[ROOM.floor];
 const HOUSE_ROOM = HOUSE.geometry.floors.find(f => f.id === ROOM.floor).rooms.find(r => r.id === ROOM.room);
+/* over the view in 3D: the groups, and the selected carcass */
 function contextMenu() {
   const ctx = $('context'); ctx.innerHTML = '';
-  CORE.ui.menuRow(ctx, is3d() ? view().menu.map(m => ({ name: m.name, on: layerOn(m.layer), set: on => setLayer(m.layer, on) })) : []);
+  if (!is3d()) return;
+  CORE.ui.menuRow(ctx, view().menu.map(m => ({ name: m.name, on: layerOn(m.layer), set: on => setLayer(m.layer, on) })));
+  if (!selected) return;
+  const tag = el('span', { className: 'roomtag' }, `${esc(selected.name)} · ${esc(describe(selected))}<button aria-label="Odznacz">×</button>`);
+  tag.querySelector('button').onclick = () => selectCarcass(selected);
+  CORE.ui.menuRow(ctx, [], [tag]);
 }
 const PLAN = CORE.plan.create(LIB);
 const NOT_SEEN = ['holes', 'hardware', 'legs', 'backs', 'lamps'], SEEN_DETAILS = ['sink', 'hob', 'hood', 'coffee'];
@@ -1323,14 +1343,21 @@ function planSvg() {
     draw: X => PLAN.floorArea(X, rects) + PLAN.seen(X, shapes, h) + PLAN.cut(X, cells, h, c => !c.layers.includes('holes'))
       + PLAN.labels(X, ROOM.openings, h, HOUSE_MODEL.SIDE) + PLAN.rooms(X, [{ rects, numbers: HOUSE_ROOM.numbers, name: HOUSE_ROOM.name, area: HOUSE_ROOM.rects.reduce((a, q) => a + G.rectArea(q), 0) / 1e6 }]) + PLAN.dims(X, inside, extent[1]) }]);
 }
-const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), zoomIn: $('zoomIn'), zoomOut: $('zoomOut'), download: $('planSvg'), state, save, svg: planSvg, file: 'kuchnia-rzut.svg' });
+const PLAN_BUTTONS = { zoomOut: el('button', { textContent: '−', ariaLabel: 'Pomniejsz' }), zoomIn: el('button', { textContent: '+', ariaLabel: 'Powiększ' }),
+  download: el('button', { textContent: 'Pobierz SVG' }) };
+const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state, save, svg: planSvg, file: 'kuchnia-rzut.svg' });
+/* the screen (core/ui.js; ../project.md, Flow): the mode sets the main view, the bottom menu, the panel's tabs, ☀ */
+const showPanel = () => { state.tab = CORE.ui.panelTabs($('tabs'), $('panel'), view(), state.tab, t => { state.tab = t; save(); showPanel(); }) ?? state.tab; };
 function setMode(m) {
   state.mode = VIEWS[m] ? m : Object.keys(VIEWS)[0]; save();
-  const plan = !!view().plan, analysis = !!view().analysis;
-  $('plan2d').hidden = !plan; $('analysis').hidden = !analysis; $('gl').hidden = plan || analysis; $('dock').hidden = !is3d(); tip.hidden = true;
+  const v = view();
+  $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; $('gl').hidden = !is3d(); tip.hidden = true;
+  $('sunbtn').hidden = !is3d(); if (!is3d()) $('sun').hidden = true;
+  CORE.ui.helpMode($('help'), state.mode);
   CORE.ui.modeToggle($('mode'), VIEWS, state.mode, setMode);
-  contextMenu(); CORE.ui.panels(view());
-  if (plan) { drawSheet(); $('planNote').textContent = `Cięcie ${CUT} mm nad podłogą (jak w rzucie domu). ${view().note || ''}`.trim(); }
+  CORE.ui.bottomMenu($('dock'), is3d() ? [CAMERA_ITEMS] : v.plan ? [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]] : v.info ? INFO_ITEMS : []);
+  contextMenu(); showPanel();
+  if (v.plan) { drawSheet(); $('planNote').textContent = `Cięcie ${CUT} mm nad podłogą (jak w rzucie domu). ${v.note || ''}`.trim(); }
   V.redraw();
 }
 
@@ -1338,9 +1365,8 @@ function setMode(m) {
 V.enableNavigation();
 V.start();
 flyTo(camOf(Object.values(CAMERAS)[0]), true);
-showTab(location.hash === '#carcasses' ? 'carcasses' : state.tab);
 CORE.ui.appMenu($('apps'), APPS, 'kitchen', '../', () => state.mode);
-setMode(CORE.ui.askedMode(VIEWS) || state.mode);
+setMode(location.hash === '#carcasses' ? 'info' : CORE.ui.askedMode(VIEWS) || state.mode);   // #carcasses: the carcasses, in Info
 layersPanel();
 applyPalette();
 setLight(state.light);

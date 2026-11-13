@@ -13,9 +13,9 @@
      metals        the metal finishes of the handles to choose from; hardware.handle.metal is the default
      lights        pendantBottom: the height of the pendants' bottom; pendants: centred over the worktop of their group;
                    downlights at {group, u, n} (u along the group from its start, n out from the wall), between [sink, hob] instead of u: halfway between their axes
-     views         as in house.js: 3D (menu: the groups, by layer, with their names in the menu), the 2D plan (cut at the
-                   house's own height for the floor), Analiza (the checks)
-     cameras       the views in the dock; the first one opens */
+     views         as in house.js, one per mode: 3D (menu: the groups, by layer, with their names in the menu), the 2D plan
+                   (cut at the house's own height for the floor), Test (the checks), Info; tabs: of the right panel
+     cameras       the views in the bottom menu; the first one opens */
 window.KITCHEN_VIEW = {
  "placement": {
   "1": {"y": 8660, "faces": "-y", "anchor": {"column": 11}, "against": {"group": 2}},
@@ -56,9 +56,10 @@ window.KITCHEN_VIEW = {
   ]
  },
  "views": {
-  "3d": {"name": "3D", "menu": [{"layer": "g1", "name": "G1"}, {"layer": "g2", "name": "G2"}, {"layer": "g3", "name": "Wyspa"}], "panels": ["tabs"]},
-  "2d": {"name": "2D", "plan": true, "note": "Ogród u góry. Linią ciągłą to, co pod cięciem (widziane z góry), przerywaną to, co nad nim.", "panels": ["plan", "tabs"]},
-  "analysis": {"name": "Analiza", "analysis": true, "panels": ["tabs"]}
+  "3d": {"name": "3D", "menu": [{"layer": "g1", "name": "G1"}, {"layer": "g2", "name": "G2"}, {"layer": "g3", "name": "Wyspa"}], "tabs": ["layers", "finish"]},
+  "2d": {"name": "2D", "plan": true, "note": "Ogród u góry. Linią ciągłą to, co pod cięciem (widziane z góry), przerywaną to, co nad nim."},
+  "test": {"name": "Test", "test": true},
+  "info": {"name": "Info", "info": true, "tabs": ["finish"]}
  },
  "cameras": {
   "all": {"name": "Całość", "position": {"x": 2248, "y": 3260, "z": 2900}, "target": {"x": 5448, "y": 7260, "z": 900}},
