@@ -23,7 +23,7 @@
    site       the lawn (aroundBuilding: it gives way to the box around the elements) and the surfaces on it
    floors     split by one plane (split): under it the ground floor, over it the attic; a floor's id is its layer;
               rooms are rectangles [x1, x2, y1, y2] at the block faces, tiled on their own or with another room;
-              a room's link opens its sub-project, which takes the house's own solids (rooms.js) inside box
+              a room's link opens its sub-project, which takes the house's own solids (house-clip.js) inside box
               [x1, x2, y1, y2, z1, z2], trimmed; inside = its floor area, rectangles [x1, x2, y1, y2] at the wall faces
    copy       what a sub-project takes from the house: the element kinds, the window frames and glass, the roof */
 window.HOUSE = {

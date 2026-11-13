@@ -14,13 +14,12 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, with 
 | materials.js | the material library and the tile products |
 | textures.js | texture images (tiles, wood) |
 | engine.js | house.js turned into solids |
-| rooms.js | a sub-project's room: the house's own solids, trimmed |
+| house-clip.js | a sub-project's room: the house's own solids, trimmed |
 | analysis.js | the checks shown in Analiza |
 | view.html | the page: 3D, 2D plan, Analiza, layers, cut, tiles, walk |
 | core/ | shared 3D code for every view; its own small project |
 | archon/ | the archon drawings and analysis.md |
 | kitchen/, bathroom/ | sub-projects with their own pages and docs |
-| proposal.md | how the kitchen and bathroom could come into the house view (not built) |
 | index.html | directory listing, not part of the house |
 
 ## How it fits together
@@ -28,7 +27,7 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, with 
 ```
 analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─► view.html          drawn by core
                                                           ├─► analysis.js        checked, shown in Analiza
-                                                          └─► rooms.js ─► kitchen/view.html, bathroom/view.html
+                                                          └─► house-clip.js ─► kitchen/view.html, bathroom/view.html
 ```
 
 - One model for every view. A view only picks layers and cuts it.
@@ -37,7 +36,7 @@ analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─
 
 ## Sub-projects and their room
 
-The kitchen and the bathrooms take their room from the house, never the other way round. rooms.js does three things and nothing else:
+The kitchen and the bathrooms take their room from the house, never the other way round. house-clip.js does three things and nothing else:
 
 1. **Trims** the house's solids (the element kinds house.js `copy` lists, the window frames and glass, the roof) to the box the room's link gives.
 2. **Keeps** only what belongs to the room: walls standing on the edge of its floor area and the windows in them; the slab under it and the slab or roof over it, cut to that floor area and those walls.

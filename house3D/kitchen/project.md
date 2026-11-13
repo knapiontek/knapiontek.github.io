@@ -18,7 +18,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
 | cost.html | page, LLM generated | prices, cutting lists, notes, assembly help, carcass map | LLM, per project |
 | view.html | page, every project | the kitchen in its room: 3D, the 2D plan and Analiza (its geometry check), drawn by ../core like the house | LLM, every project |
-| ../house.js, ../rooms.js | data and code of house3D | the room: the house's own walls, slab, floor and window, copied as they are and trimmed to the kitchen | house3D |
+| ../house.js, ../house-clip.js | data and code of house3D | the room: the house's own walls, slab, floor and window, copied as they are and trimmed to the kitchen | house3D |
 | ../core/ | code of house3D | drawing: solids, welded meshes, edges, light, camera, the 2D plan, the panel and its menu | house3D |
 | project.md | text | this description | by hand |
 | index.html | page | directory listing of the repository folder (not part of the kitchen) | by hand |
@@ -39,7 +39,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 
   appliances.js ──► cost.html, view.html         passed on to engine.js; design.html does not read it
   textures.js   ──► view.html                    without it a material shows its colour
-  ../house.js ─► ../rooms.js ─► view.html        the room, from the house
+  ../house.js ─► ../house-clip.js ─► view.html        the room, from the house
   ../core       ──► view.html                    draws it all, like the house
 ```
 
@@ -48,7 +48,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 - engine.js does not know where the data comes from: a page hands it the project (and appliances.js, to fit the appliances in their places) and gets the model back. The engine has no numbers of this kitchen and draws nothing.
 - cost.js and view.js hold only what their page needs; what both pages need (appliance sizes) is in appliances.js, and a project choice the engine needs belongs in design.js.
 - appliances.js says what the manufacturer gives, design.js what the project chose; the same number can be in both. The notes of cost.html put them side by side.
-- The room is the house's: view.html takes the walls, slab, floor and window from house3D (house.js, through rooms.js) as they are. The house wins: the kitchen never draws or measures a room of its own.
+- The room is the house's: view.html takes the walls, slab, floor and window from house3D (house.js, through house-clip.js) as they are. The house wins: the kitchen never draws or measures a room of its own.
 - Axes are the house's: x along the house, y across, z up, in mm and house positions. Inside a group the engine keeps u along, v up, n out from the wall; view.js places the groups in the house.
 
 ## What is project specific and what is not

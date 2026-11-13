@@ -10,14 +10,14 @@ Both bathrooms of the house: the ground floor (room 7) and the attic (room 5). O
 | engine.js | data.js turned into geometry, cut list, edge banding, hardware, shopping list, installation points, checks, XLSX sheets. Draws nothing |
 | textures.js | tile and board decor images |
 | view.html | the page: 3D, 2D plan, Analiza; panel tabs Wygląd, Szafka, Zakupy, Wymiary |
-| ../house.js, ../rooms.js | the room: the house's own walls, slab, floor, window and roof, as they are |
+| ../house.js, ../house-clip.js | the room: the house's own walls, slab, floor, window and roof, as they are |
 | ../core/ | drawing, the 2D plan, the panel and its menu, like the house |
 | index.html | directory listing, not part of the project |
 
 ## How it fits together
 
 ```
-../house.js ─► ../rooms.js ─► the room ─┐
+../house.js ─► ../house-clip.js ─► the room ─┐
 data.js ─► engine.js ──────────────────┴─► view.html ─► ../core
 ```
 

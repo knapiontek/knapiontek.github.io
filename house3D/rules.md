@@ -65,7 +65,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 - Te same osie wszędzie: x wzdłuż domu, y w poprzek, z w górę, mm i położenia domu. Podprojekt może liczyć w ramie swojej grupy albo pomieszczenia, ale ta rama jest tylko obrócona i przesunięta w osiach domu (nigdy odbita), a strona rysuje w osiach domu.
 - Podprojekt rysuje core, tak jak dom (§ 2, Rysowanie).
 - Płytki łazienek leżą na ścianach domu; posadzka podprojektu leży na płycie domu, nigdy w jej płaszczyźnie.
-- Nic z podprojektu nie trafia do house3D, dopóki nie zostanie przyjęte (proposal.md).
+- Nic z podprojektu nie trafia do widoku domu (view.html): dom tylko prowadzi do podprojektu.
 
 ## 7. Kontrole (Analiza)
 

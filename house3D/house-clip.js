@@ -1,4 +1,4 @@
-/* rooms.js: the room of a sub-project (kitchen, bathroom), copied from the house as it is. The house's own solids (walls,
+/* house-clip.js: the room of a sub-project (kitchen, bathroom), copied from the house as it is. The house's own solids (walls,
    slabs, floor, windows, roof) are trimmed to the box its link in house.js gives and handed over unchanged: mm, house axes
    (x along the house, y across, z up). Nothing is re-measured. No THREE, no DOM. Needs core/geometry.js and engine.js. */
 (function (root) {
@@ -101,5 +101,5 @@ function roomsFor(HOUSE, MODEL, href) {
   return out;
 }
 
-root.HouseRooms = { roomsFor };
+root.HouseClip = { roomsFor };
 })(typeof window !== 'undefined' ? window : globalThis);
