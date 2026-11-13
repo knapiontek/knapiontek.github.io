@@ -1,7 +1,7 @@
 /* "Dom w papawerach 5 (G)": the house as data, in three trees (rules.md § 1).
    geometry  what the house is made of: the boxes of archon/analysis.md with its build changes (§ 14)
    layers    what can be switched on and off
-   views     how the house is looked at: 3D (cameras, light, walk), the 2D plan and Analiza (the checks)
+   views     how the house is looked at, one per mode: 3D (cameras, light, walk), the 2D plan, Test (the checks), Info; tabs: of the right panel
    view.html holds no number, name or colour of this house; it draws this file with ../library (materials, tile products, textures).
 
    Units mm, whole numbers. Axes of the analysis (§ 2): x along the house (0 garden outer face, 13200 front outer face),
@@ -335,7 +335,7 @@ window.HOUSE = {
    "name": "3D",
    "menu": ["ground", "attic", "roof"],
    "layers": ["foundation", "walls", "slabs", "insulation", "openings", "stair", "floors", "site", "edges"],
-   "panels": ["cut", "light", "layers", "rooms", "notes"],
+   "tabs": ["layers", "finish"],
    "roomsNote": "Powierzchnia z modelu (lica pustaków) · archon.",
    "cut": {"attic": 1500},
    "cutFrom": 500,
@@ -378,13 +378,16 @@ window.HOUSE = {
    "name": "2D",
    "plan": true,
    "cut": {"ground": 1500, "attic": 800},
-   "note": "Ogród u góry, front u dołu. Kreskowanie: styropian.",
-   "panels": ["plan", "notes"]
+   "note": "Ogród u góry, front u dołu. Kreskowanie: styropian."
   },
-  "analysis": {
-   "name": "Analiza",
-   "analysis": true,
-   "panels": ["notes"]
+  "test": {
+   "name": "Test",
+   "test": true
+  },
+  "info": {
+   "name": "Info",
+   "info": true,
+   "tabs": ["finish"]
   }
  }
 };

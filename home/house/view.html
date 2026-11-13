@@ -15,52 +15,45 @@
   <div class="stage" id="stage">
     <canvas id="gl" aria-label="Widok 3D domu"></canvas>
     <div id="loading">Wczytywanie modelu…</div>
-    <div class="hud">
-      <div class="toggle" id="mode" role="group" aria-label="Widok"></div>
-      <div id="context" aria-label="Menu widoku"></div>
-    </div>
-    <button class="helpbtn" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
-    <div class="help" id="help" role="dialog" aria-label="Pomoc" hidden>
-      <p>Obracaj: lewy przycisk (z zewnątrz wokół środka domu, w środku wokół tego, co na środku widoku) · przesuwaj: prawy · przybliżaj: kółko (do miejsca pod kursorem).</p>
-      <p><b>Spacer</b>: strzałki chodzą i obracają, A/D krok w bok, Shift szybciej, PgUp/PgDn lub przeciąganie myszą patrzy, Esc kończy.</p>
-      <p>U góry: kondygnacje i dach. W panelu: warstwy materiałowe. Na dole: skąd patrzysz.</p>
-      <p>Bez dachu najwyższa pokazana kondygnacja jest otwarta: jej przekrój i pomieszczenia są w panelu, kliknięcie w podłogę wybiera pomieszczenie.</p>
-      <p><b>Czerwone</b> płytki = drobne docinki.</p>
-    </div>
-    <div class="dock" id="dock" aria-label="Widoki kamery"></div>
-    <div id="plan2d" hidden aria-label="Rzut 2D"><div id="sheet"></div></div>
-    <div id="analysis" hidden aria-label="Analiza"><div id="checks"></div></div>
+    <div class="hud"><div id="context" aria-label="Menu widoku"></div></div>
+    <div class="toggle modes" id="mode" role="group" aria-label="Tryb"></div>
+    <div id="plan2d" hidden aria-label="Rzut 2D"><p class="sheetnote" id="planNote"></p><div id="sheet"></div></div>
+    <div id="analysis" hidden aria-label="Test"><div id="checks"></div></div>
+    <div id="info" hidden aria-label="Informacje"></div>
+    <div class="dock" id="dock" aria-label="Dolne menu"></div>
     <div class="pad" id="pad" aria-label="Sterowanie spacerem" hidden>
       <button data-k="ArrowUp" aria-label="Do przodu">▲</button>
       <button data-k="ArrowLeft" aria-label="Obrót w lewo">◀</button>
       <button data-k="ArrowDown" aria-label="Do tyłu">▼</button>
       <button data-k="ArrowRight" aria-label="Obrót w prawo">▶</button>
     </div>
+    <div class="float sunfloat" id="sun" role="dialog" aria-label="Słońce" hidden></div>
+    <div class="float" id="help" role="dialog" aria-label="Pomoc" hidden>
+      <div data-help="3d">
+        <p>Obracaj: lewy przycisk (z zewnątrz wokół środka domu, w środku wokół tego, co na środku widoku) · przesuwaj: prawy · przybliżaj: kółko (do miejsca pod kursorem).</p>
+        <p><b>Spacer</b>: strzałki chodzą i obracają, A/D krok w bok, Shift szybciej, PgUp/PgDn lub przeciąganie myszą patrzy, Esc kończy.</p>
+        <p>U góry: kondygnacje i dach. Na dole: skąd patrzysz. ☀: przeciągnij słońce wokół domu i po łuku wysokości.</p>
+        <p>Bez dachu najwyższa pokazana kondygnacja jest otwarta: jej przekrój jest w Warstwach, kliknięcie w podłogę wybiera pomieszczenie (płytki w Wykończeniu).</p>
+        <p><b>Czerwone</b> płytki = drobne docinki.</p>
+      </div>
+      <div data-help="2d"><p>Rzut obu kondygnacji jak rysunek CAD: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG do druku.</p></div>
+      <div data-help="test"><p>Sprawdzenia modelu: grubości, kolizje, otwory. <b>OK</b> = nic do poprawienia.</p></div>
+      <div data-help="info"><p>Wszystko o domu: pomieszczenia, posadzki z ilością płytek i kosztem, uwagi. Płytki zmieniasz w Wykończeniu, ceny liczą się od razu.</p></div>
+    </div>
+    <div class="corner">
+      <button class="round" id="sunbtn" aria-label="Słońce" aria-expanded="false" aria-controls="sun">☀</button>
+      <button class="round" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
+    </div>
   </div>
-  <aside>
+  <aside id="panel">
     <h1 id="title"></h1>
     <p class="sub" id="subtitle"></p>
-    <section data-panel="plan"><h2>Rzut 2D</h2>
-      <div class="btns">
-        <button class="btn ghost" id="zoomOut" aria-label="Pomniejsz">−</button>
-        <button class="btn ghost" id="zoomIn" aria-label="Powiększ">+</button>
-        <button class="btn" id="planSvg">Pobierz SVG</button>
-      </div>
-      <p class="note" id="planNote"></p>
-    </section>
-    <section data-panel="cut"><h2>Przekrój</h2>
+    <div class="toggle" id="tabs" role="tablist" aria-label="Panel"></div>
+    <section data-tab="layers" data-part="cut"><h2>Przekrój</h2>
       <div class="rng"><label for="cut">Wysokość cięcia</label><span id="cutv"></span><input id="cut" type="range"></div>
     </section>
-    <section data-panel="light"><h2>Światło</h2>
-      <div class="lay">
-        <div class="rng"><label for="sunaz">Słońce: kierunek</label><span id="sunazv"></span><input id="sunaz" type="range" min="0" max="355" step="5"></div>
-        <div class="rng"><label for="sunel">Słońce: wysokość</label><span id="sunelv"></span><input id="sunel" type="range" min="8" max="75" step="1"></div>
-        <div class="rng"><label for="bright">Jasność</label><span id="brightv"></span><input id="bright" type="range" min="0.3" max="1.6" step="0.05"></div>
-      </div>
-    </section>
-    <section data-panel="layers"><h2>Warstwy</h2><div class="layers" id="layers"></div></section>
-    <section data-panel="rooms"><h2>Pomieszczenia</h2><table id="rooms"></table></section>
-    <section data-panel="notes"><h2>Uwagi</h2><div class="note" id="notes"></div></section>
+    <section data-tab="layers"><h2>Warstwy</h2><div class="layers" id="layers"></div></section>
+    <section data-tab="finish"><h2>Posadzki</h2><table id="rooms"></table></section>
   </aside>
 </div>
 
@@ -120,8 +113,8 @@ V.addLight();
 
 /* ================= 4. STATE AND LAYERS =================
    The viewer's choices stay in the browser; a stored state of another format is dropped. */
-const STORE = CORE.ui.store('house3d-state-v3',          // v3: lengths in mm
-  () => ({ mode: VIEW_IDS[0], layers: Object.fromEntries(Object.keys(LAYER).map(k => [k, true])), cut: {},
+const STORE = CORE.ui.store('house-state-v4',            // v4: the modes 3D, 2D, Test, Info and the panel's tabs
+  () => ({ mode: VIEW_IDS[0], tab: null, layers: Object.fromEntries(Object.keys(LAYER).map(k => [k, true])), cut: {},
     sun: { az: LIGHT.sun.azimuth, el: LIGHT.sun.elevation, k: 1 }, layouts: {}, room: null, zoom: 1 }),
   s => s.layers && Object.keys(s.layers).join() === Object.keys(LAYER).join() && VIEWS[s.mode]);
 const state = STORE.state, save = STORE.save;
@@ -328,11 +321,14 @@ function applyView() {
 const setCamera = V.setCamera;
 const placeSun = () => V.placeSun(state.sun);
 
-/* ================= 8. MENU AND PANEL ================= */
+/* ================= 8. THE SCREEN (core/ui.js; ../project.md, Flow) =================
+   top-left menu: the applications · top-right: the modes · the bottom menu: the mode's one-off actions · the right panel:
+   the tabs the mode lists (Warstwy, Wykończenie) · the corner: ☀ (3D) and ? */
 $('title').textContent = HOUSE.name;
 $('subtitle').textContent = HOUSE.source;
-$('notes').innerHTML = HOUSE.notes.map(n => `<p>${n}</p>`).join('');
-CORE.ui.helpToggle($('helpbtn'), $('help'));
+CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
+const GROUND = FLOORS[0];
+CORE.ui.sunPanel($('sun'), [[0, GEO.length, 0, WIDTH]].concat(GROUND.rooms.flatMap(r => r.rects)), state.sun, () => { save(); placeSun(); });
 
 const modeToggle = () => CORE.ui.modeToggle($('mode'), VIEWS, state.mode, setMode);
 
@@ -346,14 +342,19 @@ function contextMenu() {
   tag.querySelector('button').onclick = () => selectRoom(null);
   CORE.ui.menuRow(ctx, [], [tag]);
 }
-function cameraDock() {
-  const dock = $('dock'); dock.hidden = !is3d();
-  if (!is3d()) return;
+/* the bottom menu: in 3D the walk and the cameras (of the house, then of the open floor), in 2D the zoom and the SVG */
+const PLAN_BUTTONS = { zoomOut: el('button', { textContent: '−', ariaLabel: 'Pomniejsz' }), zoomIn: el('button', { textContent: '+', ariaLabel: 'Powiększ' }),
+  download: el('button', { textContent: 'Pobierz SVG' }) };
+function bottomMenu() {
+  const dock = $('dock');
+  if (view().plan) return CORE.ui.bottomMenu(dock, [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]]);
+  if (!is3d()) return CORE.ui.bottomMenu(dock, []);
   const F = openFloor(), go = level => c => ({ name: c.name, go: () => { V.stopWalk(); setCamera(c, level); } });
-  CORE.ui.cameraDock(dock, [VIEW_3D.cameras.all.map(go(0))].concat(F && VIEW_3D.cameras[F.id] ? [VIEW_3D.cameras[F.id].map(go(F.level))] : []),
-    { name: 'Spacer', on: V.walk.on, toggle: () => V.walk.on ? V.stopWalk() : V.startWalk() });
+  const walk = el('button', { className: 'walk', textContent: 'Spacer', onclick: () => V.walk.on ? V.stopWalk() : V.startWalk() });
+  walk.setAttribute('aria-pressed', V.walk.on);
+  CORE.ui.bottomMenu(dock, [[walk], VIEW_3D.cameras.all.map(go(0)), F && VIEW_3D.cameras[F.id] ? VIEW_3D.cameras[F.id].map(go(F.level)) : []]);
 }
-const layersPanel = () => CORE.ui.layersPanel($('layers'), LAYER, view().layers || [], state.layers, layerOn, setLayer);
+const layersPanel = () => CORE.ui.layersPanel($('layers'), LAYER, VIEW_3D.layers, state.layers, layerOn, setLayer);
 function setLayer(k, on) { state.layers[k] = on; save(); refresh(); }
 
 function cutPanel() {
@@ -364,17 +365,11 @@ function cutPanel() {
 }
 $('cut').oninput = e => { const F = openFloor(); if (!F) return; state.cut[F.id] = +e.target.value; save(); cutPanel(); applyView(); };
 
-function lightPanel() {
-  $('sunaz').value = state.sun.az; $('sunazv').textContent = state.sun.az + '°';
-  $('sunel').value = state.sun.el; $('sunelv').textContent = state.sun.el + '°';
-  $('bright').value = state.sun.k; $('brightv').textContent = fmt(state.sun.k, 2);
-}
-for (const [id, k] of [['sunaz', 'az'], ['sunel', 'el'], ['bright', 'k']]) $(id).oninput = e => { state.sun[k] = +e.target.value; save(); lightPanel(); placeSun(); };
-
+const tileCost = (key, P) => P.price ? RESULTS[key].area * (1 + TILES.reserve) * P.price : null;
 function layoutPanel(key) {
   const L = state.layouts[key], R = RESULTS[key], P = PRODUCTS[L.product];
   const together = ROOMS.filter(r => r.tilesWith === key).map(r => r.name);
-  const cost = P.price ? `${fmt(R.area * (1 + TILES.reserve) * P.price, 0)} zł` : '—';
+  const cost = tileCost(key, P);
   return `<div class="lay">
     <label>Płytka<select data-f="product">${Object.entries(PRODUCTS).map(([k, p]) => option(k, p.name, L.product)).join('')}</select></label>
     <p class="note">${P.note}${P.link ? ` · <a href="${P.link}" target="_blank" rel="noopener">sklep</a>` : ''}${together.length ? `<br>Razem z: ${together.join(', ')}` : ''}</p>
@@ -385,7 +380,7 @@ function layoutPanel(key) {
     <div class="row"><label>Fuga<input type="color" data-f="grout" value="${L.grout}"></label>
     <label>&nbsp;<button class="btn ghost" data-f="fit">Dopasuj przesunięcie</button></label></div>
     <dl class="stats"><dt>Powierzchnia</dt><dd>${fmt(R.area, 2)} m²</dd><dt>Płytek (+${TILES.reserve * 100}%)</dt><dd>${Math.ceil(R.tiles * (1 + TILES.reserve))}</dd>
-    <dt>Całe / docięte</dt><dd>${R.full} / ${R.cut}</dd><dt>Drobne docinki</dt><dd>${R.small}</dd><dt>Koszt</dt><dd>${cost}</dd></dl></div>`;
+    <dt>Całe / docięte</dt><dd>${R.full} / ${R.cut}</dd><dt>Drobne docinki</dt><dd>${R.small}</dd><dt>Koszt</dt><dd>${cost === null ? '—' : fmt(cost, 0) + ' zł'}</dd></dl></div>`;
 }
 /* what a change of each field does to the layout: a new product brings its own pattern and grout; any change of the
    laying but the grout fits the offsets again */
@@ -402,35 +397,57 @@ function bindLayout(box, key) {
   box.querySelector('[data-f=fit]').onclick = () => { L.oa = L.ob = null; rebuildLayout(key); };
   for (const [f, set] of Object.entries(LAYOUT_FIELDS)) box.querySelector(`[data-f=${f}]`).onchange = e => { set(L, e.target.value); rebuildLayout(key); };
 }
-function rebuildLayout(key) { buildLayout(key); save(); applyView(); roomsPanel(); }
+function rebuildLayout(key) { buildLayout(key); save(); applyView(); roomsPanel(); infoView(); }
 
+/* Wykończenie: the rooms of every floor; the selected one opens its floor tiles */
 function roomsPanel() {
-  const t = $('rooms'), F = openFloor(); t.innerHTML = '';
-  if (!F) return;
-  t.insertAdjacentHTML('beforeend', `<tr><td colspan="3" class="floorname">${F.name}</td></tr>`);
-  for (const r of ROOMS.filter(r => r.floor === F.id)) {
-    const selected = state.room === r.id;
-    t.insertAdjacentHTML('beforeend', `<tr data-room="${r.id}" aria-selected="${selected}"><td>${roomName(r)}</td><td class="n">${fmt(roomArea(r), 2)} m²</td><td class="n">${r.planArea !== undefined ? fmt(r.planArea, 2) : ''}</td></tr>`);
-    if (!selected) continue;
-    const key = layoutOf(r);
-    t.insertAdjacentHTML('beforeend', `<tr class="detail"><td colspan="3">${key ? layoutPanel(key) : '<p class="note">Bez posadzki z płytek.</p>'}${r.link ? `<p><a class="btnlink" href="${r.link.href}">${r.link.name}</a></p>` : ''}</td></tr>`);
-    if (key) bindLayout(t.querySelector('tr.detail'), key);
+  const t = $('rooms'); t.innerHTML = '';
+  for (const F of FLOORS) {
+    t.insertAdjacentHTML('beforeend', `<tr><td colspan="2" class="floorname">${F.name}</td></tr>`);
+    for (const r of ROOMS.filter(r => r.floor === F.id)) {
+      const selected = state.room === r.id, key = layoutOf(r);
+      t.insertAdjacentHTML('beforeend', `<tr data-room="${r.id}" aria-selected="${selected}"><td>${roomName(r)}</td><td class="note">${key ? PRODUCTS[state.layouts[key].product].name : 'bez płytek'}</td></tr>`);
+      if (!selected) continue;
+      t.insertAdjacentHTML('beforeend', `<tr class="detail"><td colspan="2">${key ? layoutPanel(key) : '<p class="note">Bez posadzki z płytek.</p>'}${r.link ? `<p><a class="btnlink" href="${r.link.href}">${r.link.name}</a></p>` : ''}</td></tr>`);
+      if (key) bindLayout(t.querySelector('tr.detail'), key);
+    }
   }
-  if (VIEW_3D.roomsNote) t.insertAdjacentHTML('beforeend', `<tr><td colspan="3" class="note">${VIEW_3D.roomsNote}</td></tr>`);
   for (const tr of t.querySelectorAll('tr[data-room]')) tr.onclick = () => selectRoom(state.room === tr.dataset.room ? null : tr.dataset.room);
 }
 function selectRoom(id) { state.room = id; save(); contextMenu(); roomsPanel(); markRoom(); redraw(); }
 
-/* a panel section shows when the view lists it; the cut and the rooms also need an open floor */
-const NEEDS_OPEN_FLOOR = ['cut', 'rooms'];
-const panels = () => { const F = openFloor(); CORE.ui.panels(view(), p => NEEDS_OPEN_FLOOR.includes(p) && !F); };
-function refresh() { modeToggle(); contextMenu(); cameraDock(); layersPanel(); cutPanel(); lightPanel(); panels(); roomsPanel(); applyView(); }
+/* Info: everything about the house, read only; the tiles' prices follow Wykończenie */
+function infoView() {
+  const layouts = ROOMS.filter(r => r.tiles).map(r => r.id);
+  const total = layouts.reduce((s, k) => s + (tileCost(k, PRODUCTS[state.layouts[k].product]) || 0), 0);
+  const rooms = FLOORS.map(F => `<tr><td colspan="3" class="floorname">${F.name}</td></tr>` + ROOMS.filter(r => r.floor === F.id).map(r =>
+    `<tr><td>${roomName(r)}</td><td class="n">${fmt(roomArea(r), 2)} m²</td><td class="n">${r.planArea !== undefined ? fmt(r.planArea, 2) + ' m²' : ''}</td></tr>`).join('')).join('');
+  const tiles = layouts.map(k => {
+    const L = state.layouts[k], P = PRODUCTS[L.product], R = RESULTS[k], c = tileCost(k, P);
+    const names = ROOMS.filter(r => layoutOf(r) === k).map(r => r.name).join(', ');
+    return `<tr><td>${names}</td><td>${P.link ? `<a href="${P.link}" target="_blank" rel="noopener">${P.name}</a>` : P.name}</td><td class="n">${fmt(R.area, 2)} m²</td>
+      <td class="n">${Math.ceil(R.tiles * (1 + TILES.reserve))}</td><td class="n">${R.full} / ${R.cut}</td><td class="n">${c === null ? '—' : fmt(c, 0) + ' zł'}</td></tr>`;
+  }).join('');
+  $('info').innerHTML = `<h1>${HOUSE.name}</h1><p class="sub">${HOUSE.source}</p>
+    <section><h2>Pomieszczenia</h2><table><tr><th>Pomieszczenie</th><th class="n">Model</th><th class="n">Archon</th></tr>${rooms}</table>
+      ${VIEW_3D.roomsNote ? `<p class="note">${VIEW_3D.roomsNote}</p>` : ''}</section>
+    <section><h2>Posadzki</h2><table><tr><th>Pomieszczenia</th><th>Płytka</th><th class="n">Powierzchnia</th><th class="n">Płytek (+${TILES.reserve * 100}%)</th><th class="n">Całe / docięte</th><th class="n">Koszt</th></tr>${tiles}
+      <tr><td colspan="5"><b>Razem</b></td><td class="n"><b>${fmt(total, 0)} zł</b></td></tr></table></section>
+    <section><h2>Uwagi</h2><div class="note">${HOUSE.notes.map(n => `<p>${n}</p>`).join('')}</div></section>`;
+}
+
+/* the panel: the tabs of the mode; the cut also needs an open floor */
+const panel = () => { state.tab = CORE.ui.panelTabs($('tabs'), $('panel'), view(), state.tab, t => { state.tab = t; save(); panel(); }, p => p === 'cut' && !openFloor()) ?? state.tab; };
+function refresh() { modeToggle(); contextMenu(); bottomMenu(); layersPanel(); cutPanel(); panel(); roomsPanel(); applyView(); }
 function setMode(m) {
   state.mode = m; save();
-  const plan = !!view().plan, analysis = !!view().analysis;
-  $('plan2d').hidden = !plan; $('analysis').hidden = !analysis; canvas.hidden = plan || analysis;
-  if (plan || analysis) V.stopWalk();
-  if (plan) drawPlan();
+  const v = view();
+  $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; canvas.hidden = !is3d();
+  $('sunbtn').hidden = !is3d(); if (!is3d()) $('sun').hidden = true;
+  CORE.ui.helpMode($('help'), m);
+  if (!is3d()) V.stopWalk();
+  if (v.plan) drawPlan();
+  if (v.info) infoView();
   refresh();
 }
 
@@ -445,7 +462,7 @@ V.onClick(ray => {
 });
 V.enableNavigation();
 V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, ground: ALL_CELLS.filter(c => c.walkable), startLevel: FLOORS[0].level, pad: $('pad'),
-  canStart: is3d, onToggle: () => { cameraDock(); applyView(); }, home: () => VIEW_3D.cameras.all[0] });
+  canStart: is3d, onToggle: () => { bottomMenu(); applyView(); }, home: () => VIEW_3D.cameras.all[0] });
 
 /* ================= 10. 2D PLAN (core/plan.js) =================
    Both floors side by side, garden at the top. What the cut meets comes from the solids; the stair and what is under
@@ -491,13 +508,13 @@ const planSvg = () => PLAN.sheets(FLOORS.map(F => ({
       + PLAN.rooms(X, F.rooms) + PLAN.dims(X, [0, GEO.length, 0, WIDTH], ROOF.x[1]);
   }
 })));
-const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), zoomIn: $('zoomIn'), zoomOut: $('zoomOut'), download: $('planSvg'), state, save, svg: planSvg, file: 'rzut.svg' });
+const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state, save, svg: planSvg, file: 'rzut.svg' });
 function drawPlan() {
   drawSheet();
   $('planNote').textContent = `Cięcie nad podłogą: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW_2D.note || ''}`.trim();
 }
 
-/* ================= 11. CHECKS (analysis.js) ================= */
+/* ================= 11. TEST: THE CHECKS (analysis.js) ================= */
 const CHECKS = HouseAnalysis.check(HOUSE, MODEL);
 $('checks').innerHTML = CORE.ui.checksHtml(CHECKS);
 

@@ -13,8 +13,8 @@ The building "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, wi
 | house.js | the house as data: geometry, layers, views (rules.md § 1) |
 | engine.js | house.js turned into solids |
 | house-clip.js | a sub-project's room: the house's own solids, trimmed (../project.md, Sub-projects and their room) |
-| analysis.js | the checks shown in Test (Analiza) |
-| view.html | the page: 3D, 2D plan, Analiza, layers, cut, tiles, walk |
+| analysis.js | the checks shown in Test |
+| view.html | the page in the shared screen (../project.md, Flow): 3D, 2D, Test, Info; panel tabs Warstwy (layers, cut), Wykończenie (tiles); ☀ and ? in the corner |
 | archon/ | the archon drawings and analysis.md |
 | index.html | directory listing, not part of the house |
 

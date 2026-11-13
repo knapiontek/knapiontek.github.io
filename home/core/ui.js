@@ -111,6 +111,83 @@ function tabs(box, list, current, pick) {
   box.onclick = e => { const b = e.target.closest('[data-tab-id]'); if (b && b.dataset.tabId !== current) pick(b.dataset.tabId); };
   for (const s of document.querySelectorAll('[data-tab]')) s.hidden = s.dataset.tab !== current;
 }
+/* ================= THE SCREEN (../project.md, Flow) =================
+   top-left menu (appMenu), top-right menu (modeToggle), the main view, the bottom menu, the right panel in tabs, the
+   bottom-right corner (☀, ?). A view of the project's data says which tabs it shows: view.tabs; none: no panel. */
+
+/* the right panel's tabs: the same names in every application, each showing only what it has */
+const TAB_NAMES = { layers: 'Warstwy', finish: 'Wykończenie' };
+/* shows the panel's tabs of view, the sections [data-tab] of the current one (fallback: the first); hide(part): a section
+   [data-part] that also needs something the view lacks now. Returns the tab shown, null with no panel. */
+function panelTabs(box, aside, view, current, pick, hide = () => false) {
+  const list = view.tabs || [], tab = list.includes(current) ? current : list[0] || null;
+  aside.hidden = !tab; aside.closest('.app').toggleAttribute('data-wide', !tab);
+  box.hidden = list.length < 2;
+  box.innerHTML = list.map(k => `<button role="tab" data-tab-id="${k}" aria-selected="${k === tab}"${k === tab ? ' data-on' : ''}>${TAB_NAMES[k]}</button>`).join('');
+  box.onclick = e => { const b = e.target.closest('[data-tab-id]'); if (b && b.dataset.tabId !== tab) pick(b.dataset.tabId); };
+  for (const s of aside.querySelectorAll('[data-tab]')) s.hidden = s.dataset.tab !== tab || hide(s.dataset.part);
+  return tab;
+}
+/* the bottom menu: groups of one-off actions, a line between groups; an item is {name, go, label} or an element */
+function bottomMenu(box, groups) {
+  box.innerHTML = '';
+  groups.filter(g => g.length).forEach((list, i) => {
+    if (i) box.append(el('span', { className: 'sep' }));
+    for (const it of list) box.append(it instanceof Element ? it : el('button', { textContent: it.name, onclick: it.go, ...(it.label ? { ariaLabel: it.label } : {}) }));
+  });
+  box.hidden = !box.children.length;
+}
+/* the bottom-right corner: buttons that each open their floating box [[button, box]], one box at a time */
+function corner(pairs) {
+  const close = () => { for (const [b, x] of pairs) { x.hidden = true; b.setAttribute('aria-expanded', false); } };
+  for (const [b, x] of pairs) b.onclick = () => { const open = x.hidden; close(); x.hidden = !open; b.setAttribute('aria-expanded', open); };
+  return close;
+}
+/* the help of the current mode: the [data-help] sections of box */
+function helpMode(box, mode) { for (const s of box.querySelectorAll('[data-help]')) s.hidden = s.dataset.help !== mode; }
+
+/* ☀: a compass with the plan in the middle (rects [x1, x2, y1, y2] mm, x down and y right as on the 2D plan) and the sun
+   dragged round it (the direction, from +x toward +y as core/scene.js); an arc beside it (the height); brightness.
+   sun {az, el, k} is changed in place; change() after every move. */
+const SUN_RANGE = { azStep: 5, el: [8, 75], k: [0.3, 1.6, 0.05] };   // degrees, degrees, a factor
+function sunPanel(box, rects, sun, change) {
+  const C = 80, R = 64, A = 120, top = 20;   // svg units: compass centre and radius; the arc's radius and top margin
+  const x1 = Math.min(...rects.map(q => q[0])), x2 = Math.max(...rects.map(q => q[1])), y1 = Math.min(...rects.map(q => q[2])), y2 = Math.max(...rects.map(q => q[3]));
+  const s = 0.62 * R * 2 / Math.hypot(x2 - x1, y2 - y1), cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+  const plan = rects.map(q => `<rect x="${C + (q[2] - cy) * s}" y="${C + (q[0] - cx) * s}" width="${(q[3] - q[2]) * s}" height="${(q[1] - q[0]) * s}"/>`).join('');
+  box.innerHTML = `<div class="sunrow">
+    <svg class="compass" viewBox="0 0 ${2 * C} ${2 * C}" aria-label="Kierunek słońca"><circle cx="${C}" cy="${C}" r="${R}" class="ring"/><g class="plan">${plan}</g>
+      <line class="ray" x1="${C}" y1="${C}"/><circle class="sundot" r="9"/></svg>
+    <svg class="arc" viewBox="0 0 ${A + 20} ${A + top + 10}" aria-label="Wysokość słońca"><path class="ring" d="M10 ${A + top} A${A} ${A} 0 0 0 ${A + 10} ${top}" fill="none"/>
+      <line class="ground" x1="10" y1="${A + top}" x2="${A + 14}" y2="${A + top}"/><line class="ray" x1="10" y1="${A + top}"/><circle class="sundot" r="9"/></svg></div>
+    <p class="sunread"></p>
+    <div class="rng"><label for="sunk">Jasność</label><span></span><input id="sunk" type="range" min="${SUN_RANGE.k[0]}" max="${SUN_RANGE.k[1]}" step="${SUN_RANGE.k[2]}"></div>`;
+  const [compass, arc] = box.querySelectorAll('svg'), k = box.querySelector('input');
+  /* the sun of an svg at (x, y): its dot and the ray to it */
+  const place = (svg, x, y) => {
+    for (const [a, v] of [['cx', x], ['cy', y]]) svg.querySelector('.sundot').setAttribute(a, v);
+    for (const [a, v] of [['x2', x], ['y2', y]]) svg.querySelector('.ray').setAttribute(a, v);
+  };
+  const draw = () => {
+    const a = sun.az * Math.PI / 180, e = sun.el * Math.PI / 180;
+    place(compass, C + R * Math.sin(a), C + R * Math.cos(a));
+    place(arc, 10 + A * Math.cos(e), A + top - A * Math.sin(e));
+    box.querySelector('.sunread').textContent = `Kierunek ${sun.az}° · wysokość ${sun.el}°`;
+    k.value = sun.k; box.querySelector('.rng span').textContent = fmt(sun.k, 2);
+  };
+  /* a drag on an svg: the pointer in its own units */
+  const drag = (svg, set) => {
+    const at = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+    const move = e => { set(at(e)); draw(); change(); };
+    svg.onpointerdown = e => { svg.setPointerCapture(e.pointerId); move(e); svg.onpointermove = move; };
+    svg.onpointerup = svg.onpointercancel = () => { svg.onpointermove = null; };
+  };
+  drag(compass, p => { const d = Math.atan2(p.x - C, p.y - C) * 180 / Math.PI; sun.az = (Math.round(d / SUN_RANGE.azStep) * SUN_RANGE.azStep + 360) % 360; });
+  drag(arc, p => { const d = Math.atan2(A + top - p.y, p.x - 10) * 180 / Math.PI; sun.el = Math.min(SUN_RANGE.el[1], Math.max(SUN_RANGE.el[0], Math.round(d))); });
+  k.oninput = () => { sun.k = +k.value; draw(); change(); };
+  draw();
+}
+
 /* the 2D sheet: svg() drawn at state.zoom, zoom buttons and the download; returns draw() */
 function planSheet({ sheet, zoomIn, zoomOut, download, state, save, svg, file }) {
   const draw = () => { sheet.innerHTML = svg(); sheet.style.setProperty('--zoom', state.zoom); };
@@ -120,5 +197,5 @@ function planSheet({ sheet, zoomIn, zoomOut, download, state, save, svg, file })
   return draw;
 }
 
-CORE.ui = { $, fmt, byId, el, option, store, layerTree, layerSwitch, layersPanel, helpToggle, checksHtml, appMenu, askedMode, modeToggle, menuRow, cameraDock, panels, tabs, planSheet };
+CORE.ui = { $, fmt, byId, el, option, store, layerTree, layerSwitch, layersPanel, helpToggle, checksHtml, appMenu, askedMode, panelTabs, bottomMenu, corner, helpMode, sunPanel, modeToggle, menuRow, cameraDock, panels, tabs, planSheet };
 })(window.CORE = window.CORE || {});
