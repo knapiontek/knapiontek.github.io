@@ -45,8 +45,6 @@
 .metals button[data-metal="brass"]{background:radial-gradient(circle at 35% 30%,#ead2a2,#b8935a 55%,#7e6233)}
 .metals button[data-metal="nickel"]{background:radial-gradient(circle at 35% 30%,#f2f1ed,#bab8b1 55%,#7f7d77)}
 
-dl.tight{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:0;font-variant-numeric:tabular-nums;font-size:12.5px}
-dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);text-align:right}
 
 /* board decors */
 .decors{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
@@ -54,26 +52,11 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 .decors button[aria-pressed="true"]{border-color:var(--accent)}
 
 /* construction tables */
-.tbl{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
-.tbl th{text-align:left;font-weight:600;color:var(--muted);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:0 4px 5px;border-bottom:1px solid var(--line)}
-.tbl td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:top}
-.tbl td.n,.tbl th.n{text-align:right;font-family:var(--f-mono);white-space:nowrap}
-.tbl small{display:block;color:var(--muted);font-size:11px;line-height:1.35}
-.tbl tr.sub td{color:var(--muted);font-size:11px;border-bottom:0;padding-top:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
-.tbl tfoot td{font-weight:600;border-bottom:0}
 .drawing{width:100%;height:auto;display:block;background:var(--bg);border:1px solid var(--line);border-radius:8px}
 .drawing text{font-family:var(--f-mono);font-size:11px;fill:var(--ink)}
 .drawing .dim{stroke:var(--muted);stroke-width:.8;fill:none}
 .drawing .dimt{fill:var(--muted);font-size:10px}
-.buy{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
-.buy li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding-bottom:10px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.4}
-.buy li b{font-weight:600}
-.buy li .p{font-family:var(--f-mono);white-space:nowrap;text-align:right}
-.buy li span:not(.p){grid-column:1/-1;color:var(--muted);font-size:11.5px}
-.buy li.total{border-bottom:0;font-weight:600}
-#info .block{max-width:880px}
 #info .drawing{max-width:640px}
-#info>h2.part{font-size:14px;color:var(--ink);margin:28px 0 0}
 </style>
 </head>
 <body>
@@ -86,43 +69,12 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
     <div class="toggle modes" id="mode" role="group" aria-label="Tryb"></div>
     <div id="plan2d" hidden aria-label="Rzut 2D"><p class="sheetnote" id="planNote"></p><div id="sheet"></div></div>
     <div id="analysis" hidden aria-label="Test"><div id="checks"></div></div>
-    <div id="info" hidden aria-label="Informacje">
-      <h1 id="infoTitle"></h1>
-      <h2 class="part">Szafka</h2>
-      <section class="block">
+    <div id="info" hidden aria-label="Informacje"></div>
+    <div id="infoPages" hidden>   <!-- the pages of Info's tabs (core/info.js moves them there) -->
+      <section id="pageVanity">
         <h2>Szafka podumywalkowa · widok z przodu</h2>
         <div id="vanityDrawing"></div>
         <p class="note" id="vanitySummary"></p>
-      </section>
-      <section class="block">
-        <h2>Formatki do cięcia (mm)</h2>
-        <p class="note">Wymiar 1 biegnie wzdłuż słoja. Na blacie, frontach i bokach słój poziomo. Obrzeże ABS 2 mm w dekorze płyty.</p>
-        <table class="tbl" id="cutList"></table>
-        <p class="note">Arkusz <b>eRozkroj</b> importujesz w <a href="https://mhm-web2.erozkroje.pl" target="_blank" rel="noopener">e-Rozkrój M-HM ↗</a>: Import z pliku XLS → przypisz kolumny (nazwa, długość, szerokość, ilość, usłojenie, okleina przód/tył/lewa/prawa 0/1) → przypisz płytę i okleinę.</p>
-      </section>
-      <section class="block">
-        <h2>Okucia Blum · LEGRABOX pure</h2>
-        <table class="tbl" id="hardwareList"></table>
-      </section>
-      <section class="block">
-        <h2>Obróbka i montaż</h2>
-        <table class="tbl" id="workList"></table>
-      </section>
-      <h2 class="part">Zakupy</h2>
-      <section class="block">
-        <h2>Lista zakupów</h2>
-        <ul class="buy" id="buyList"></ul>
-        <p class="note">Ceny brutto z dnia projektu (5.11.2026), bez dostawy. Pozycje bez ceny: wycena w sklepie.</p>
-      </section>
-      <h2 class="part">Wymiary i podejścia</h2>
-      <section class="block">
-        <h2>Podejścia dla hydraulika</h2>
-        <p class="note">Wymiary od lica płytki. „Od drzwi” = od ściany z drzwiami, „od lewej” = od ściany z umywalką.</p>
-        <table class="tbl" id="pointsList"></table>
-      </section>
-      <section class="block">
-        <h2>Wymiary</h2>
-        <dl class="tight" id="dimsList"></dl>
       </section>
     </div>
     <div class="dock" id="dock" aria-label="Dolne menu"></div>
@@ -213,6 +165,7 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 <script src="../core/ui.js"></script>
 <script src="../core/plan.js"></script>
 <script src="../core/sheet.js"></script>
+<script src="../core/info.js"></script>
 <script src="../core/library.js"></script>
 <script src="../apps.js"></script>
 <script src="../library/materials.js"></script>
@@ -1595,7 +1548,7 @@ onButton($('layouts'),  b => changeActiveTiles({ layout: b.dataset.layout }));
 syncTilePanel();
 
 // floors and views
-$('title').textContent = $('infoTitle').textContent = `${DATA.name} · ${DATA.title}`;
+$('title').textContent = `${DATA.name} · ${DATA.title}`;
 $('subtitle').textContent = `${HOUSE_ROOM.floorName}, pomieszczenie z domu: ${HOUSE_ROOM.name}`;
 document.title = `${DATA.title} — ${DATA.name}`;
 
@@ -1603,7 +1556,7 @@ document.title = `${DATA.title} — ${DATA.name}`;
 onButton($('styles'), b => { setStyle(b.dataset.style); pressed($('styles').children, x => x === b); });
 
 // fittings finish
-onButton($('metals'), b => { setMetalLook(b.dataset.metal); pressed($('metals').children, x => x === b); renderBuy(); renderDrawing(); });
+onButton($('metals'), b => { setMetalLook(b.dataset.metal); pressed($('metals').children, x => x === b); renderInfo(); renderDrawing(); });
 
 // layers
 function syncLayers() {
@@ -1624,7 +1577,6 @@ const num = v => (Math.round(v * 10) / 10).toString().replace('.', ',');
 const pln = v => v.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
 
 const cutParts = () => BathEngine.cutParts(G, DECORS[state.decor]);
-const edgeLengths = () => BathEngine.edgeLengths(G);
 
 function renderDrawing() {
   const { len, height, t, LW, innerH, gap, frontB, top, bottomY, basinW, basinH, gasket, sections, sectionZ, basins } = V;
@@ -1668,52 +1620,18 @@ function renderDrawing() {
   $('vanitySummary').innerHTML = `Korpus <b>${len} × ${V.depth} × ${height} mm</b> (szer. × gł. × wys.), podwieszony ${bottomY} mm nad podłogą. Blat <b>${len} × ${V.topDepth} × ${top}</b>, wierzch na ${V.topY} mm, rant umywalki ${V.rimY} mm. Fronty wpuszczane, szczelina ${num(gap)} mm, otwieranie przez naciśnięcie (TIP-ON BLUMOTION). ${layout}`;
 }
 
-function renderCutList() {
-  const parts = cutParts();
-  let html = '<thead><tr><th>Element</th><th class="n">szt.</th><th class="n">wym. 1 × 2</th><th>obrzeże</th></tr></thead><tbody>';
-  let lastMat = '';
-  for (const part of parts) {
-    if (part.mat !== lastMat) { html += `<tr class="sub"><td colspan="4">${esc(part.mat)}</td></tr>`; lastMat = part.mat; }
-    html += `<tr><td>${esc(part.name)}${part.note ? `<small>${esc(part.note)}</small>` : ''}</td><td class="n">${part.qty}</td><td class="n">${num(part.a)} × ${num(part.b)}</td><td>${esc(part.edge)}</td></tr>`;
-  }
-  const { e22, e42 } = edgeLengths();
-  html += `</tbody><tfoot><tr><td colspan="4">Obrzeże ABS 2 mm: 22 mm ≈ ${Math.ceil(e22 + 1)} m, 42 mm ≈ ${Math.ceil(e42 + .5)} m (z zapasem). Całość mieści się na 1 arkuszu 2800 × 2070${ATTIC ? ' (na styk — przy rozkroju w e-Rozkrój sprawdź układ)' : ''}.</td></tr></tfoot>`;
-  $('cutList').innerHTML = html;
+/* Info (core/info.js), as every application: Kosztorys, Lista cięć, eRozkrój, Szafka (the drawing above its sheet),
+   Montaż, Podejścia, Wymiary from engine.js; again when the decor or the metal changes */
+let INFO_SHEET = null;
+function infoBook() {
+  const I = BathEngine.info(G, DECORS[state.decor], state.metal);
+  return { sheets: [CORE.info.estimate(I.estimate).sheet, CORE.info.cutList(I.cutList).sheet,
+    ...I.tables.map(t => CORE.info.table(t.name, t.widths, t.head, t.rows, t.title)).map(t => (t.name === 'Szafka' ? { ...t, node: $('pageVanity') } : t))] };
 }
-
-const HARDWARE = BathEngine.hardware(G);
-function renderHardware() {
-  $('hardwareList').innerHTML = '<thead><tr><th>Element</th><th>nr Blum</th><th class="n">szt.</th></tr></thead><tbody>' +
-    HARDWARE.map(([name, code, qty, note]) => `<tr><td>${esc(name)}${note ? `<small>${esc(note)}</small>` : ''}</td><td><code>${esc(code)}</code></td><td class="n">${esc(qty)}</td></tr>`).join('') +
-    `</tbody><tfoot><tr><td colspan="3" style="font-weight:400;color:var(--muted)">Fronty wpuszczane: prowadnice cofnięte o grubość frontu (18 mm) od lica korpusu; min. głębokość wnętrza NL + 3 + 18 = ${V.nlB + 21} mm, jest ${V.bodyD} mm. Numery sprawdź w konfiguratorze Blum E-SERVICES przy zamówieniu w M-HM.</td></tr></tfoot>`;
+function renderInfo() {
+  if (INFO_SHEET) return INFO_SHEET.set(CORE.info.sorted(infoBook()));
+  INFO_SHEET = CORE.info.show($('info'), { title: $('title').textContent, subtitle: `${HOUSE_ROOM.floorName}, pomieszczenie z domu: ${HOUSE_ROOM.name}`, book: infoBook() });
 }
-function renderWork() {
-  const rows = BathEngine.work(G);
-  $('workList').innerHTML = '<tbody>' + rows.map(([k, v]) => `<tr><td style="width:34%;color:var(--muted)">${k}</td><td>${v}</td></tr>`).join('') + '</tbody>';
-}
-
-const buyItems = () => BathEngine.buyItems(G, DECORS[state.decor], state.metal);
-function renderBuy() {
-  const items = buyItems();
-  let html = '', last = '', total = 0;
-  for (const it of items) {
-    if (it.group !== last) { html += `<li style="border:0;padding:0"><h2>${it.group}</h2></li>`; last = it.group; }
-    const sum = it.price != null ? it.price * (it.qty || 1) : null; if (sum) total += sum;
-    html += `<li><b>${esc(it.name)}${it.qty > 1 ? ` × ${it.qty}` : ''}</b><span class="p">${sum ? pln(sum) : '—'}</span>` +
-      `<span>${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.where)} ↗</a>` : esc(it.where)}${it.note ? ` · ${esc(it.note)}` : ''}</span></li>`;
-  }
-  html += `<li class="total"><b>Razem pozycje z ceną</b><span class="p">${pln(total)}</span></li>`;
-  $('buyList').innerHTML = html;
-}
-
-function renderPoints() {
-  const rows = BathEngine.points(G);
-  $('pointsList').innerHTML = '<thead><tr><th>Punkt</th><th>Położenie (mm)</th></tr></thead><tbody>' +
-    rows.map(([k, v, n]) => `<tr><td>${esc(k)}${n ? `<small>${esc(n)}</small>` : ''}</td><td class="n" style="text-align:left;white-space:normal">${esc(v)}</td></tr>`).join('') + '</tbody>';
-}
-
-const DIMS = BathEngine.dims(G);
-$('dimsList').innerHTML = DIMS.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
 
 // cut-list CSV for M-HM
 function cutText(sep) {
@@ -1721,20 +1639,17 @@ function cutText(sep) {
   return [head, ...cutParts().map(p => [p.name, p.mat, p.qty, num(p.a), num(p.b), p.edge, p.note || ''])]
     .map(r => r.map(c => sep === ';' ? `"${String(c).replace(/"/g, '""')}"` : c).join(sep)).join('\n');
 }
-/* the bottom menu of Info: the files */
-const INFO_BUTTONS = [CORE.ui.el('button', { textContent: 'Eksport XLSX — wszystko + e-Rozkrój M-HM', onclick: e => exportXlsx(e.currentTarget) }),
-  CORE.ui.el('button', { id: 'csvBtn', textContent: 'Formatki CSV' }), CORE.ui.el('button', { id: 'copyBtn', textContent: 'Kopiuj jako tekst' })];
-INFO_BUTTONS[1].addEventListener('click', () => {
-  const blob = new Blob(['﻿' + cutText(';')], { type: 'text/csv;charset=utf-8' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${FLOOR}-vanity-cut-list-${V.len}-${state.decor}.csv`;
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-});
-INFO_BUTTONS[2].addEventListener('click', async () => {
-  const b = INFO_BUTTONS[2];
-  try { await navigator.clipboard.writeText(cutText('\t')); b.textContent = 'Skopiowano ✓'; }
-  catch (e) { b.textContent = 'Kopiowanie zablokowane'; }
-  setTimeout(() => b.textContent = 'Kopiuj jako tekst', 1800);
-});
+/* the bottom menu of Info: the XLSX of the book, as every application; the cut list as CSV or text for M-HM */
+const INFO_ITEMS = CORE.info.menu(() => INFO_SHEET, () => `lazienka-${FLOOR}-${V.len}-${state.decor}.xlsx`, [[
+  { name: 'Formatki CSV', go: () => {
+    const a = el('a', { href: URL.createObjectURL(new Blob(['\ufeff' + cutText(';')], { type: 'text/csv;charset=utf-8' })), download: `${FLOOR}-vanity-cut-list-${V.len}-${state.decor}.csv` });
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } },
+  { name: 'Kopiuj jako tekst', go: async e => {
+    const b = e.currentTarget;
+    try { await navigator.clipboard.writeText(cutText('\t')); b.textContent = 'Skopiowano ✓'; } catch (err) { b.textContent = 'Kopiowanie zablokowane'; }
+    setTimeout(() => { b.textContent = 'Kopiuj jako tekst'; }, 1800);
+  } }]]);
 
 /* ---------- the views: 3D, 2D, Info, Test, as the house (core/ui.js, core/plan.js) ----------
    The menu of 3D: the bathrooms, one per floor. The 2D plan is drawn by core from the solids of this page (the room's are
@@ -1782,26 +1697,10 @@ function setMode(m) {
   const v = CORE.ui.showMode(MODES, VIEW_STATE.mode, canvasEl, setMode), is3d = !!v.menu;
   const ctx = $('context'); ctx.innerHTML = '';
   if (is3d) CORE.ui.menuRow(ctx, Object.entries(BATH_DATA.floors).map(([k, f]) => ({ name: f.name, radio: true, on: k === FLOOR, set: () => goFloor(k) })));
-  CORE.ui.bottomMenu($('dock'), is3d ? [CAMERA_ITEMS] : v.plan ? [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]] : v.info ? [INFO_BUTTONS] : []);
+  CORE.ui.bottomMenu($('dock'), is3d ? [CAMERA_ITEMS] : v.plan ? [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]] : v.info ? INFO_ITEMS : []);
   showPanel();
   if (v.plan) { drawSheet(); $('planNote').textContent = `Cięcie ${CUT} mm nad podłogą (jak w rzucie domu). ${v.note || ''}`.trim(); }
   invalidate();
-}
-
-/* ---------- XLSX: the sheets of engine.js through the spreadsheet of core (core/sheet.js) ---------- */
-/* engine.js sheet {name, widths, rows, links [[A1 ref, url]]} -> a sheet of core/sheet.js; the first row is its header */
-function coreSheet(sh) {
-  const links = new Map(sh.links || []), at = (ri, ci) => CORE.sheet.letter(ci) + (ri + 1);
-  return { name: sh.name, cols: sh.widths.map(width => ({ width })),
-    rows: sh.rows.map((row, ri) => ({ kind: ri === 0 ? 'head' : undefined,
-      cells: row.map((cell, ci) => (links.has(at(ri, ci)) ? { text: String(cell), href: links.get(at(ri, ci)) } : cell === '' ? null : cell)) })) };
-}
-async function exportXlsx(button) {
-  const label = button.textContent;
-  button.textContent = 'Przygotowuję…';
-  const book = { sheets: BathEngine.workbook(G, DECORS[state.decor], state.metal).map(coreSheet) };
-  try { await CORE.sheet.xlsx(book, `bathroom-${FLOOR}-vanity-${V.len}-${state.decor}.xlsx`); button.textContent = label; }
-  catch (e) { button.textContent = 'Brak sieci — spróbuj ponownie'; setTimeout(() => button.textContent = label, 2500); }
 }
 
 // board decor
@@ -1817,10 +1716,10 @@ function syncDecor() {
   pressed($('decors').children, b => b.dataset.decor === state.decor);
   const d = DECORS[state.decor], info = $('decorInfo');
   info.innerHTML = `<b>${esc(d.code)} · ${esc(d.name)}</b><span>${esc(d.note)}</span><span>${pln(d.price)} / arkusz · <a target="_blank" rel="noopener" href="${esc(d.page)}">m-hm.pl ↗</a></span>`;
-  renderDrawing(); renderCutList(); renderBuy();
+  renderDrawing(); renderInfo();
 }
 onButton($('decors'), b => { setDecor(b.dataset.decor); syncDecor(); });
-renderHardware(); renderWork(); renderPoints(); syncDecor();
+syncDecor();
 
 
 

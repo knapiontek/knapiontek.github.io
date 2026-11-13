@@ -1,8 +1,10 @@
 /* core/sheet.js: the spreadsheet of every application's Info (../project.md, Flow: Info): sheets in tabs, input cells
    the viewer may change (until a reload), formulas that follow them, and the XLSX with the same formulas live.
-   Knows no project: a page hands in the workbook.
+   Knows no project: a page hands in the workbook (core/info.js builds the shared sheets and the Info screen).
 
-   book   {sheets: [{name, cols: [{title, width, digits}], rows: [{kind, cells}]}]}
+   book   {sheets: [{name, cols: [{title, width, digits}], rows: [{kind, cells}], node}]}
+          node: an element of the page shown in the tab (above its rows, if it has any); only hidden on another tab, so
+          the page keeps filling it. A tab without rows is not in the XLSX.
           row kind: title | head | cat | sum | grand | (none: an item); a row's place in rows is its Excel row (first = 1)
    cell   a string, a number, null (empty), or an object:
             {v, input: true}       a number the viewer may change
@@ -75,15 +77,24 @@ const target = href => { const m = href.match(/^#'?([^'!]+)'?!\$?[A-Z]+\$?(\d+)$
 /* draws book into box: tabs (one per sheet) over the table of the current one; returns {xlsx(file), restore()} */
 function create(box, book) {
   const original = new Map();   // input cell -> its value as handed in
-  for (const s of book.sheets) for (const r of s.rows) for (const c of r.cells || []) if (c && c.input) original.set(c, c.v);
   let current = 0;
-  const tabs = el('div', { className: 'toggle sheettabs', role: 'tablist' }), wrap = el('div', { className: 'sheetwrap' });
-  box.innerHTML = ''; box.append(tabs, wrap);
+  const tabs = el('div', { className: 'toggle sheettabs', role: 'tablist' }), body = el('div', { className: 'sheetbody' }), wrap = el('div', { className: 'sheetwrap' });
+  box.innerHTML = ''; box.append(tabs, body);   // the tabs stay, the body scrolls
+  function take(b) {
+    book = b; original.clear();
+    for (const s of book.sheets) for (const r of s.rows || []) for (const c of r.cells || []) if (c && c.input) original.set(c, c.v);
+    for (const s of book.sheets) if (s.node) body.append(s.node);
+    body.append(wrap);
+  }
+  take(book);
 
   function draw() {
     tabs.hidden = book.sheets.length < 2;
     tabs.innerHTML = book.sheets.map((s, i) => `<button role="tab" data-i="${i}" aria-selected="${i === current}"${i === current ? ' data-on' : ''}>${s.name}</button>`).join('');
     const sheet = book.sheets[current], value = evaluator(book), formulas = [];
+    book.sheets.forEach((s, i) => { if (s.node) s.node.hidden = i !== current; });
+    wrap.hidden = !sheet.rows; wrap.innerHTML = ''; body.scrollTop = 0;
+    if (!sheet.rows) return;
     const table = el('table', { className: 'sheet' });
     if (sheet.cols.some(c => c.width)) table.append(el('colgroup', {}, sheet.cols.map(c => `<col${c.width ? ` style="width:${c.width}ch"` : ''}>`).join('')));
     sheet.rows.forEach((row, ri) => {
@@ -135,7 +146,9 @@ function create(box, book) {
 
   return {
     restore() { for (const [c, v] of original) c.v = v; draw(); },
-    xlsx: file => xlsx(book, file),
+    /* a new book (the project changed): the same tab stays open */
+    set(b) { const name = book.sheets[current]?.name; take(b); current = Math.max(0, book.sheets.findIndex(s => s.name === name)); draw(); },
+    xlsx: file => xlsx({ sheets: book.sheets.filter(s => s.rows) }, file),
   };
 }
 
@@ -175,5 +188,5 @@ async function xlsx(book, file) {
   XL.writeFile(wb, file);
 }
 
-CORE.sheet = { create, xlsx, letter };
+CORE.sheet = { create, xlsx };
 })(window.CORE = window.CORE || {});

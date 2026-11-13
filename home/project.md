@@ -9,7 +9,7 @@ This file: the folders and their dependencies, the screen (Flow), the library, t
 | Folder | Holds | Docs |
 |---|---|---|
 | apps.js | the applications (name, page) for the top-left menu | — |
-| core/ | shared code: solids, meshes, the 3D scene, the 2D plan, the screen, the spreadsheet; knows no project | [core](core/project.md) |
+| core/ | shared code: solids, meshes, the 3D scene, the 2D plan, the screen, the spreadsheet and Info; knows no project | [core](core/project.md) |
 | library/ | everything bought: products, materials, textures; data only | § Library |
 | house/ | the building, from the archon drawings | [house](house/project.md) |
 | kitchen/ | the kitchen in the living room (ground floor) | [kitchen](kitchen/project.md) |
@@ -70,13 +70,29 @@ It also hands over the room's name, numbers, area and the house's 2D cut height 
 |---|---|---|---|
 | 3D | the model | Warstwy, Wykończenie | cameras (and the walk in the house) |
 | 2D | a static CAD sheet at the house's cut height: full lines under the cut, dashed over it | Warstwy, Wykończenie | zoom, save SVG |
-| Info | the project's information as sheets of core/sheet.js (editable, formulas) | Wykończenie, Warstwy | save XLSX |
+| Info | the project's information in tabs (§ Info) | Wykończenie, Warstwy | save XLSX, restore the inputs |
 | Test | the checks | Warstwy, Wykończenie | — |
 
 - **Warstwy**: the layer tree, the cut, open/close all doors. **Wykończenie**: style, tiles, materials, handles, fittings.
 - A setting that means nothing in a mode is not shown there; one that cannot work right now is dimmed with the reason in a hint.
 - **Switching application** keeps the mode (3D if the other has no such mode) and the sun; each application keeps its own layers, tab and camera. **Switching mode** changes the main view, the bottom menu and the tabs.
 - The viewer's choices stay in the browser.
+
+### Info
+
+The same in every application (core/info.js): the title, one row of tabs that stays, the open tab scrolls under it. A tab is a sheet (editable inputs, live formulas, in the XLSX) or a page (a drawing, cards), or a page above a sheet. The tabs, in this order; an application shows those it has:
+
+| Tab | What | House | Kitchen | Bathroom |
+|---|---|---|---|---|
+| Kosztorys | positions by category: specification, where used, quantity × unit price, sums, RAZEM BRUTTO, what it does not cover | floor tiles | furniture, appliances | vanity (boards, Blum hardware), fittings |
+| Lista cięć | boards to order, by board: sizes with their edges, m², banding, cuts | — | ✓ | ✓ |
+| eRozkrój | the cut list as M-HM's import | — | — | ✓ |
+| Szafka, Korpusy | the furniture itself | — | carcasses | vanity drawing and parameters |
+| Montaż | how it is put together | — | assembly cards | steps |
+| Pomieszczenia, Podejścia, Wymiary | sizes on site | rooms | — | installation points, dimensions |
+| Notatki, Model | notes, what the model says | notes | notes, model | — |
+
+Kosztorys and Lista cięć are built by one code for every application: furniture is furniture, in the kitchen or in a bathroom.
 
 ## Library
 

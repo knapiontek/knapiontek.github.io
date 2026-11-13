@@ -50,7 +50,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 - **Panel**: Warstwy (przekrój tylko przy otwartej kondygnacji, warstwy), Wykończenie (posadzki pomieszczeń). ☀ i ? w prawym dolnym rogu; ☀ tylko w 3D.
 - **Przekrój**: płaszczyzna, która tnie model. Suwak przesuwa się o pełne kroki od 500 mm nad podłogą; ostatni krok to góra kondygnacji, gdzie cięcia nie ma. Przecięte bryły są zamknięte w kolorze przeciętego materiału, także gdy cięcie wypada dokładnie na górze bryły (nadproże okna albo drzwi).
 - **2D**: obie kondygnacje obok siebie, ogród u góry. Cięcie 1500 mm nad podłogą parteru i 800 mm nad podłogą poddasza. Schody pod cięciem rysuje się linią ciągłą, nad cięciem przerywaną; z poddasza widać je całe przez otwór w stropie. Powiększenie i zapis SVG są w dolnym menu.
-- **Info**: posadzki (płytki, ilości, ceny), zapis XLSX w dolnym menu.
+- **Info**: zakładki jak w każdej aplikacji ([../project.md](../project.md), Info): Kosztorys (posadzki), Pomieszczenia, Notatki; zapis XLSX w dolnym menu.
 
 ## 5. Materiały i płytki
 

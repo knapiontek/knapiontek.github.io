@@ -14,7 +14,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 | rules.md | text, every project | the kitchen rules in Polish, as the app names things | by hand |
 | engine.js | code, every project | the model: carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
-| cost-sheets.js | code, every project | cost.js and the model as the workbook of ../core/sheet.js (estimate, cutting list, notes) and the assembly cards, shown in Info of view.html | by hand |
+| cost-sheets.js | code, every project | cost.js and the model as the shared sheets of ../core/info.js (Kosztorys, Lista cięć) and Notatki, and the assembly cards, shown in Info of view.html | by hand |
 | view.html | page, every project | the kitchen in its room: 3D, the 2D plan, Test (its geometry check) and Info (the estimate, assembly, carcasses), drawn by ../core like the house | LLM, every project |
 | ../house/house.js, ../house/house-clip.js | the house | the room: the house's own walls, slab, floor and window, trimmed to the kitchen | ../house |
 | ../library/ | data, every project | what is bought: the appliances as the maker gives them (sizes, documents), tiles, boards, materials, texture images | ../library |
@@ -37,7 +37,7 @@ How the files of this folder work together. The kitchen rules are in rules.md.
   export → design.js                             only design.html writes design.js
 
   ../library    ──► view.html                    the appliances design.js names (passed on to engine.js), textures, materials
-  cost.js ─► cost-sheets.js ─► view.html (Info)  the estimate, cutting list, notes, assembly; ../core/sheet.js shows it and saves the XLSX
+  cost.js ─► cost-sheets.js ─► view.html (Info)  the estimate, cutting list, notes, assembly; ../core/info.js shows them and saves the XLSX
   ../house/house.js ─► ../house/house-clip.js ─► view.html        the room, from the house
   ../core       ──► view.html                    draws it all, like the house
 ```

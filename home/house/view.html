@@ -67,6 +67,7 @@
 <script src="../core/ui.js"></script>
 <script src="../core/plan.js"></script>
 <script src="../core/sheet.js"></script>
+<script src="../core/info.js"></script>
 <script src="../core/library.js"></script>
 <script src="../apps.js"></script>
 <script src="../library/materials.js"></script>
@@ -419,8 +420,8 @@ function roomsPanel() {
 }
 function selectRoom(id) { state.room = id; save(); contextMenu(); roomsPanel(); markRoom(); redraw(); }
 
-/* Info: everything about the house, in the spreadsheet of core (core/sheet.js): the rooms, the floor tiles with their
-   prices (blue cells change until a reload), the notes; the tiles follow Wykończenie; saved as XLSX from the bottom menu */
+/* Info (core/info.js), as every application: Kosztorys (the floor tiles of Wykończenie, the reserve and prices may change
+   until a reload), Pomieszczenia, Notatki; saved as XLSX from the bottom menu */
 let SHEET = null;
 function infoBook() {
   const rooms = { name: 'Pomieszczenia', cols: [{ title: 'Pomieszczenie', width: 34 }, { width: 14, digits: 2 }, { width: 14, digits: 2 }],
@@ -434,27 +435,23 @@ function infoBook() {
   }
   if (VIEW_3D.roomsNote) rooms.rows.push({ cells: [VIEW_3D.roomsNote] });
 
-  /* the reserve in C2: the tiles to buy and the value follow it */
-  const tiles = { name: 'Posadzki', cols: [{ width: 30 }, { width: 36 }, { width: 14, digits: 2 }, { width: 10, digits: 0 }, { width: 14 }, { width: 13, digits: 2 }, { width: 14, digits: 2 }],
-    rows: [{ kind: 'title', cells: ['Posadzki z płytek'] }, { cells: ['Zapas na docinki', null, { v: TILES.reserve, input: true, digits: 2 }] }, { cells: [] },
-      { kind: 'head', cells: ['Pomieszczenia', 'Płytka', 'Powierzchnia [m²]', 'Płytek', 'Całe / docięte', 'Cena [zł/m²]', 'Wartość [zł]'] }] };
-  const first = tiles.rows.length + 1;
-  for (const k of ROOMS.filter(r => r.tiles).map(r => r.id)) {
-    const P = PRODUCTS[state.layouts[k].product], R = RESULTS[k], n = tiles.rows.length + 1;
-    tiles.rows.push({ cells: [ROOMS.filter(r => layoutOf(r) === k).map(r => r.name).join(', '), P.link ? { text: P.name, href: P.link } : P.name, R.area,
-      { f: `ROUNDUP(${R.tiles}*(1+$C$2),0)` }, `${R.full} / ${R.cut}`, { v: P.price || 0, input: true }, { f: `C${n}*(1+$C$2)*F${n}` }] });
-  }
-  const last = tiles.rows.length;
-  tiles.rows.push({ kind: 'grand', cells: ['Razem', null, { f: `SUM(C${first}:C${last})` }, { f: `SUM(D${first}:D${last})` }, null, null, { f: `SUM(G${first}:G${last})` }] });
-  return { sheets: [tiles, rooms] };
+  /* a layout of tiles is a position: its area and the reserve give the m² to buy */
+  const items = ROOMS.filter(r => r.tiles).map(r => r.id).map(k => {
+    const P = PRODUCTS[state.layouts[k].product], R = RESULTS[k];
+    return { id: k, name: P.name, spec: `${R.tiles} płytek netto: ${R.full} całych, ${R.cut} docinanych`, use: ROOMS.filter(r => layoutOf(r) === k).map(r => r.name).join(', '),
+      unit: 'm²', qty: ref => ({ f: `ROUND(${R.area}*(1+${ref.param('reserve')}),2)`, z: '#,##0.00' }), price: P.price ?? null,
+      source: { text: P.shop || '', links: P.link ? [{ text: P.link, href: P.link }] : [] } };
+  });
+  const estimate = CORE.info.estimate({ title: 'Kosztorys – ' + HOUSE.name, info: 'Posadzki z płytek według Wykończenia; ilość = powierzchnia × (1 + zapas).',
+    params: [{ key: 'reserve', label: 'Zapas na docinki', v: TILES.reserve, z: '0%' }],
+    categories: [{ name: 'Posadzki z płytek', items }], excluded: ['Klej, fuga, listwy i robocizna.'] });
+  return { sheets: [estimate.sheet, rooms, CORE.info.table('Notatki', [120], ['Uwagi'], HOUSE.notes.map(n => [n]), HOUSE.source)] };
 }
 function infoView() {
-  $('info').innerHTML = `<h1>${HOUSE.name}</h1><p class="sub">${HOUSE.source}</p><section id="infoSheet"></section>
-    <section><h2>Uwagi</h2><div class="note">${HOUSE.notes.map(n => `<p>${n}</p>`).join('')}</div></section>`;
-  SHEET = CORE.sheet.create($('infoSheet'), infoBook());
+  if (SHEET) return SHEET.set(CORE.info.sorted(infoBook()));
+  SHEET = CORE.info.show($('info'), { title: HOUSE.name, subtitle: HOUSE.source, book: infoBook() });
 }
-const INFO_ITEMS = [[{ name: 'Zapisz XLSX', go: e => { const b = e.currentTarget; SHEET.xlsx('dom-posadzki.xlsx').catch(err => { b.textContent = err.message; }); } },
-  { name: 'Przywróć dane', go: () => SHEET.restore() }]];
+const INFO_ITEMS = CORE.info.menu(() => SHEET, 'dom.xlsx');
 
 /* the panel: the tabs of the mode; the cut also needs an open floor */
 const panel = () => { state.tab = CORE.ui.panelTabs($('tabs'), $('panel'), view(), state.tab, t => { state.tab = t; save(); panel(); }, p => p === 'cut' && !openFloor()) ?? state.tab; };

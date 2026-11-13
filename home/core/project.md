@@ -12,7 +12,8 @@ Shared 3D code for every view: the house (../house/view.html) and its sub-projec
 | ui.js | the screen of every page (../project.md, Flow): stored state, the layer tree, the menus, the panel's tabs, ☀ and ?, the mode switch, the 2D sheet, the checks list |
 | library.js | loads the library's textures when a page needs them (one file per image) |
 | plan.js | the 2D plan from the solids: cut, seen from above, labels, rooms, dimensions, sheets |
-| sheet.js | the spreadsheet of Info: editable cells, formulas, XLSX export |
+| sheet.js | the spreadsheet: tabs, editable cells, formulas, pages in tabs, XLSX export |
+| info.js | Info of every application (../project.md, Info): the screen, the order of the tabs, the shared sheets (Kosztorys, Lista cięć, a plain table), the bottom menu |
 | ui.css | the look of every view, light and dark |
 
 ## How it fits together

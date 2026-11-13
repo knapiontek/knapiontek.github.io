@@ -226,17 +226,22 @@ window.BathEngine = (function () {
     const e42 = 2 * len + 2 * topDepth;
     return { e22: e22 / 1000, e42: e42 / 1000 };
   }
+  /* the vanity's hardware as positions of the estimate: the drawers' sides by their product of the library (data.js
+     fittings), the rest by Blum's catalogue number (product: the library's entry that gives the shop) */
   function hardware(G) {
-    const { nA, nB } = G.V, rows = [];
-    if (nA) rows.push(['Boki LEGRABOX pure C, NL 350, czarny mat (carbon)', '770C3502S', nA, 'szuflada A pod umywalką']);
-    if (nB) rows.push(['Boki LEGRABOX pure K, NL 400, czarny mat (carbon)', '770K4002S', 2 * nB, 'szuflady B']);
-    if (nA) rows.push(['Prowadnica LEGRABOX 40 kg, NL 350, do TIP-ON', '750.3501T', nA, '']);
-    if (nB) rows.push(['Prowadnica LEGRABOX 40 kg, NL 400, do TIP-ON', '750.4001T', 2 * nB, '']);
-    rows.push(['TIP-ON BLUMOTION L1 (≤ 20 kg), NL 350–650', 'T60L7340', nA + 2 * nB, 'otwieranie przez naciśnięcie, szczelina 2,5 mm']);
-    rows.push(['Mocowanie frontu C / K', 'ZF7C7002 / ZF7K7002', `${nA} / ${2 * nB}`, 'para']);
-    rows.push(['Mocowanie tyłu C / K', 'ZB7C000S / ZB7K000S', `${nA} / ${2 * nB}`, 'para']);
-    rows.push(['Zawieszki ukryte do szafek wiszących', 'np. Camar 807', G.V.len > 1400 ? '2 pary' : '1 para', 'na plecach nośnych, regulacja po zawieszeniu']);
-    rows.push(['Wkręty 4 × 15 do prowadnic', '609.1500', 1, 'opak.']);
+    const { nA, nB, len } = G.V, rows = [];
+    const add = (name, spec, qty, unit, use, product) => { if (qty) rows.push({ name, spec, qty, unit, use, product }); };
+    add('Boki LEGRABOX pure C, NL 350, czarny mat (carbon)', '770C3502S', nA, 'kpl.', 'szuflada A pod umywalką', 'legraboxC');
+    add('Boki LEGRABOX pure K, NL 400, czarny mat (carbon)', '770K4002S', 2 * nB, 'kpl.', 'szuflady B', 'legraboxK');
+    add('Prowadnica LEGRABOX 40 kg, NL 350, do TIP-ON', '750.3501T', nA, 'kpl.', 'szuflada A', 'runners');
+    add('Prowadnica LEGRABOX 40 kg, NL 400, do TIP-ON', '750.4001T', 2 * nB, 'kpl.', 'szuflady B', 'runners');
+    add('TIP-ON BLUMOTION L1 (≤ 20 kg), NL 350–650', 'T60L7340', nA + 2 * nB, 'szt.', 'otwieranie przez naciśnięcie, szczelina 2,5 mm', 'runners');
+    add('Mocowanie frontu C', 'ZF7C7002', nA, 'para', 'szuflada A', 'runners');
+    add('Mocowanie frontu K', 'ZF7K7002', 2 * nB, 'para', 'szuflady B', 'runners');
+    add('Mocowanie tyłu C', 'ZB7C000S', nA, 'para', 'szuflada A', 'runners');
+    add('Mocowanie tyłu K', 'ZB7K000S', 2 * nB, 'para', 'szuflady B', 'runners');
+    add('Zawieszki ukryte do szafek wiszących', 'np. Camar 807', len > 1400 ? 2 : 1, 'para', 'na plecach nośnych, regulacja po zawieszeniu');
+    add('Wkręty 4 × 15 do prowadnic', '609.1500', 1, 'opak.', 'prowadnice');
     return rows;
   }
 
@@ -268,9 +273,6 @@ window.BathEngine = (function () {
       { group: 'Szafka', name: 'Cięcie, obrzeże ABS 2 mm (22 i 42 mm), otwory', price: null, where: S.mhm + ' — usługi / e-Rozkrój', url: L.mhmServices, note: 'arkusz eRozkroj z eksportu XLSX; odbiór na miejscu' },
       { group: 'Szafka', name: 'Płyta 16 mm na dna i tyły szuflad (formatki)', price: null, where: S.mhm, url: L.mhmBoards },
     ];
-    if (V.nA) items.push(item('Szafka', 'legraboxC', V.nA));
-    if (V.nB) items.push(item('Szafka', 'legraboxK', 2 * V.nB));
-    items.push(Object.assign(item('Szafka', 'runners'), { note: 'pełna lista w zakładce Szafka' }));
     const g = white ? 'Umywalki' : 'Umywalka';
     items.push(item(g, 'basin', nb), item(g, 'plug', nb), item(g, 'tap', nb), item(g, 'siphon', nb));
     items.push({ group: g, name: `Uszczelka EPDM 3 mm ${white ? 'biała' : 'czarna'}, samoprzylepna (taśma)`, price: null, qty: 1, where: 'Leroy Merlin / Castorama Bielsko-Biała' });
@@ -348,41 +350,64 @@ window.BathEngine = (function () {
     ];
   }
 
-  /* ---------- XLSX sheets (data only; view.html writes the file) ---------- */
-  function workbook(G, decor, metal) {
+  /* ---------- Info: the shared sheets of every application (core/info.js) as data; view.html shows them ---------- */
+  function info(G, decor, metal) {
     const V = G.V, parts = cutParts(G, decor), { e22, e42 } = edgeLengths(G), edgeCode = `ABS 2 mm ${decor.code}`;
-    const sheets = [];
-    sheets.push({ name: 'eRozkroj', widths: [28, 9, 10, 6, 10, 10, 10, 10, 10, 26, 22, 44], rows: [
-      ['Nazwa formatki', 'Długość', 'Szerokość', 'Ilość', 'Usłojenie', 'Okleina przód (D1)', 'Okleina tył (D2)', 'Okleina lewa (S1)', 'Okleina prawa (S2)', 'Płyta', 'Okleina', 'Uwagi'],
-      ...parts.map(p => [p.name, p.a, p.b, p.qty, 1, ...p.e, p.mat, p.e.some(Boolean) ? edgeCode : '', p.note || '']),
-    ] });
-    sheets.push({ name: 'Formatki', widths: [28, 26, 6, 14, 12, 14, 50], rows: [
-      ['Element', 'Materiał', 'Ilość', 'Wymiar 1 — wzdłuż słoja (mm)', 'Wymiar 2 (mm)', 'Obrzeże', 'Uwagi'],
-      ...parts.map(p => [p.name, p.mat, p.qty, p.a, p.b, p.edge, p.note || '']),
-      [], ['Obrzeże ABS 2 mm × 22 mm (m)', '', Math.ceil(e22 + 1)], ['Obrzeże ABS 2 mm × 42 mm, blat (m)', '', Math.ceil(e42 + .5)], ['Arkusze 2800 × 2070', '', 1],
-    ] });
-    sheets.push({ name: 'Szafka', widths: [38, 30, 10], rows: [['Parametr', 'Wartość', 'Jednostka'],
-      ['Łazienka', `${G.floor.name} — ${G.floor.title}`, ''], ['Dekor płyty', `${decor.code} ${decor.name}`, ''],
-      ['Szerokość korpusu', V.len, 'mm'], ['Głębokość korpusu', V.depth, 'mm'], ['Wysokość korpusu', V.height, 'mm'],
-      ['Spód korpusu nad podłogą', V.bottomY, 'mm'], ['Blat (2 × 18)', `${V.len} × ${V.topDepth} × ${V.top}`, 'mm'], ['Wierzch blatu', V.topY, 'mm'],
-      ['Rant umywalki', V.rimY, 'mm'], ['Początek szafki od ściany z drzwiami', V.z0, 'mm'], ['Koniec szafki od ściany z drzwiami', V.z0 + V.len, 'mm'],
-      ['Osie umywalek od ściany z drzwiami', V.basins.map(b => V.z0 + b).join(', '), 'mm'], ['Sekcje', V.sections.join(' + '), ''],
-      ['Szerokość wewn. sekcji (LW)', V.LW, 'mm'], ['Szczelina frontów', V.gap, 'mm'],
-      ...(V.nA ? [['Front A', `${V.frontW} × ${V.frontA}`, 'mm'], ['Szuflada A', `LEGRABOX C, NL ${V.nlA}`, '']] : []),
-      ...(V.nB ? [['Front B (×2)', `${V.frontW} × ${V.frontB}`, 'mm'], ['Szuflady B', `LEGRABOX K, NL ${V.nlB}`, '']] : []),
-    ] });
-    sheets.push({ name: 'Okucia Blum', widths: [48, 22, 8, 44], rows: [['Element', 'Nr katalogowy', 'Ilość', 'Uwagi'], ...hardware(G)] });
-    const items = buyItems(G, decor, metal);
-    sheets.push({ name: 'Zakupy', widths: [10, 60, 6, 12, 12, 28, 50, 60], links: items.map((it, i) => it.url ? [`G${i + 2}`, it.url] : null).filter(Boolean), rows: [
-      ['Grupa', 'Produkt', 'Ilość', 'Cena jedn. brutto (zł)', 'Wartość (zł)', 'Gdzie kupić', 'Link', 'Uwagi'],
-      ...items.map((it, i) => [it.group, it.name, it.qty || 1, it.price ?? '', it.price != null ? { f: `C${i + 2}*D${i + 2}` } : '', it.where, it.url || '', it.note || '']),
-      ['', 'Razem (pozycje z ceną)', '', '', { f: `SUM(E2:E${items.length + 1})` }],
-    ] });
-    sheets.push({ name: 'Podejścia', widths: [42, 52, 44], rows: [['Punkt', 'Położenie (mm)', 'Uwagi'], ...points(G)] });
-    sheets.push({ name: 'Wymiary', widths: [44, 60], rows: [['Element', 'Wymiar'], ...dims(G)] });
-    sheets.push({ name: 'Kontrole', widths: [40, 18, 10], rows: [['Sprawdzenie', 'Wartość', 'OK'], ...G.checks.map(([k, v, ok]) => [k, v, ok ? 'tak' : 'NIE'])] });
-    return sheets;
+    const fitting = role => { const k = G.fittings[role]; return G.library.fittings[typeof k === 'string' ? k : k[metal]]; };
+    const source = (where, url, note) => (url ? { text: note || '', links: [{ text: where, href: url }] } : [where, note].filter(Boolean).join('; '));
+    const toItem = it => ({ name: it.name, unit: it.unit || 'szt.', qty: it.qty || 1, price: it.price ?? null, use: it.use || '', spec: it.spec || '', source: source(it.where, it.url, it.note) });
+    const buy = buyItems(G, decor, metal), groups = [...new Set(buy.map(it => it.group))];
+    const furniture = buy.filter(it => it.group === 'Szafka');
+    furniture.push({ name: 'Obrzeże ABS 2 mm × 22 mm, ' + decor.code, qty: Math.ceil(e22 + 1), unit: 'mb', price: null, where: G.data.shop.mhm, use: 'korpus, fronty' },
+      { name: 'Obrzeże ABS 2 mm × 42 mm, ' + decor.code, qty: Math.ceil(e42 + 0.5), unit: 'mb', price: null, where: G.data.shop.mhm, use: 'blat, 4 boki po sklejeniu' });
+    const hardwareItems = hardware(G).map(h => {
+      const p = h.product ? fitting(h.product) : null, priced = p && (h.product === 'legraboxC' || h.product === 'legraboxK');
+      return { name: h.name, spec: h.spec, qty: h.qty, unit: h.unit, use: h.use, price: priced ? p.price : null, where: p ? p.shop : G.data.shop.mhm, url: p ? p.link : null };
+    });
+    const estimate = {
+      title: `Kosztorys – łazienka ${G.floor.name.toLowerCase()} (${G.floor.title})`,
+      info: 'Ceny brutto z dnia projektu (5.11.2026), bez dostawy. Pozycje bez ceny: wycena w sklepie.',
+      categories: [
+        { name: 'Szafka – płyty i obróbka', group: 'Meble', items: furniture.map(toItem) },
+        { name: 'Szafka – okucia Blum', group: 'Meble', items: hardwareItems.map(toItem) },
+        ...groups.filter(g => g !== 'Szafka').map(g => ({ name: g, group: 'Wyposażenie', items: buy.filter(it => it.group === g).map(toItem) })),
+      ],
+      totals: [{ label: 'Meble (materiały) razem', group: 'Meble' }, { label: 'Wyposażenie razem', group: 'Wyposażenie' }],
+      excluded: ['Płytki ścienne (posadzki są w kosztorysie domu), kleje i fugi, robocizna, hydraulika i elektryka.'],
+    };
+    const along = (e, i, j) => e[i] + e[j];
+    const block = (id, title, mat) => ({ id, title, cut: true, rows: parts.filter(p => p.mat === mat).map(p => ({
+      name: p.name, a: p.a, edgesA: along(p.e, 0, 1), b: p.b, edgesB: along(p.e, 2, 3), qty: p.qty,
+      edge: p.e.some(Boolean) ? p.a * along(p.e, 0, 1) + p.b * along(p.e, 2, 3) : null, where: p.note })) });
+    const mats = [...new Set(parts.map(p => p.mat))];
+    const cutList = { title: 'Lista cięć – szafka podumywalkowa (wymiary w mm)',
+      note: 'Wymiar 1 biegnie wzdłuż słoja. Na blacie, frontach i bokach słój poziomo. Obrzeże ABS 2 mm w dekorze płyty; blat: dwie warstwy sklejone, potem obrzeże 42 mm na 4 bokach.',
+      blocks: mats.map((m, i) => block('b' + i, m, m)),
+      legend: [{ code: 'Arkusz', text: `całość z 1 arkusza 2800 × 2070${G.type === 'attic' ? ' (na styk — przy rozkroju sprawdź układ)' : ''}` },
+        { code: 'eRozkrój', text: 'zakładka eRozkrój: import w e-Rozkrój M-HM (mhm-web2.erozkroje.pl): Import z pliku XLS → przypisz kolumny → przypisz płytę i okleinę' }] };
+    const tables = [
+      { name: 'eRozkrój', widths: [28, 9, 10, 6, 10, 10, 10, 10, 10, 26, 22, 44],
+        head: ['Nazwa formatki', 'Długość', 'Szerokość', 'Ilość', 'Usłojenie', 'Okleina przód (D1)', 'Okleina tył (D2)', 'Okleina lewa (S1)', 'Okleina prawa (S2)', 'Płyta', 'Okleina', 'Uwagi'],
+        rows: parts.map(p => [p.name, p.a, p.b, p.qty, 1, ...p.e, p.mat, p.e.some(Boolean) ? edgeCode : '', p.note || '']) },
+      { name: 'Szafka', widths: [38, 30, 10], head: ['Parametr', 'Wartość', 'Jednostka'], rows: [
+        ['Łazienka', `${G.floor.name} — ${G.floor.title}`, ''], ['Dekor płyty', `${decor.code} ${decor.name}`, ''],
+        ['Szerokość korpusu', V.len, 'mm'], ['Głębokość korpusu', V.depth, 'mm'], ['Wysokość korpusu', V.height, 'mm'],
+        ['Spód korpusu nad podłogą', V.bottomY, 'mm'], ['Blat (2 × 18)', `${V.len} × ${V.topDepth} × ${V.top}`, 'mm'], ['Wierzch blatu', V.topY, 'mm'],
+        ['Rant umywalki', V.rimY, 'mm'], ['Początek szafki od ściany z drzwiami', V.z0, 'mm'], ['Koniec szafki od ściany z drzwiami', V.z0 + V.len, 'mm'],
+        ['Osie umywalek od ściany z drzwiami', V.basins.map(b => V.z0 + b).join(', '), 'mm'], ['Sekcje', V.sections.join(' + '), ''],
+        ['Szerokość wewn. sekcji (LW)', V.LW, 'mm'], ['Szczelina frontów', V.gap, 'mm'],
+        ...(V.nA ? [['Front A', `${V.frontW} × ${V.frontA}`, 'mm'], ['Szuflada A', `LEGRABOX C, NL ${V.nlA}`, '']] : []),
+        ...(V.nB ? [['Front B (×2)', `${V.frontW} × ${V.frontB}`, 'mm'], ['Szuflady B', `LEGRABOX K, NL ${V.nlB}`, '']] : []),
+        ['Głębokość wnętrza', `${V.bodyD} (min. NL + 3 + 18 = ${V.nlB + 21})`, 'mm'],
+      ] },
+      { name: 'Montaż', widths: [30, 110], head: ['Krok', 'Opis'], rows: [...work(G).map(([k, v]) => [k, v.replace(/<[^>]+>/g, '')]),
+        ['Okucia', 'Fronty wpuszczane: prowadnice cofnięte o grubość frontu (18 mm) od lica korpusu. Numery sprawdź w konfiguratorze Blum E-SERVICES przy zamówieniu w M-HM.']] },
+      { name: 'Podejścia', widths: [42, 52, 44], head: ['Punkt', 'Położenie (mm)', 'Uwagi'], rows: points(G),
+        title: 'Wymiary od lica płytki. „Od drzwi” = od ściany z drzwiami, „od lewej” = od ściany z umywalką.' },
+      { name: 'Wymiary', widths: [44, 60], head: ['Element', 'Wymiar'], rows: dims(G) },
+    ];
+    return { estimate, cutList, tables };
   }
 
-  return { build, cutParts, edgeLengths, hardware, work, buyItems, points, dims, workbook, mm, mmText };
+  return { build, cutParts, info, mm, mmText };
 })();

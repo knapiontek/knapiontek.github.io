@@ -96,7 +96,14 @@ button{font:inherit;color:inherit}
 #plan2d{position:absolute;inset:0;z-index:4;background:var(--sheet);display:flex;flex-direction:column;padding-top:56px;padding-bottom:56px}
 #sheet{flex:1;min-height:0;overflow:auto;padding:12px}
 #analysis,#info{position:absolute;inset:0;z-index:4;background:var(--panel);overflow:auto;padding:64px 20px 20px}
-#info{padding-bottom:64px}
+#info{padding-bottom:64px;display:flex;flex-direction:column;overflow:hidden}   /* Info (core/info.js): the title and the tabs stay, the tab scrolls */
+#info>h1,#info>.sub,#info>.issues{flex:none}
+.infosheets{flex:1;min-height:0;display:flex;flex-direction:column}
+.infosheets>.sheettabs{flex:none;flex-wrap:wrap;align-self:flex-start;max-width:100%}
+.sheetbody{flex:1;min-height:0;overflow:auto}
+.sheetbody>:not(.sheetwrap){margin-bottom:12px}
+.issues{margin:8px 0 12px;padding:8px 12px;border:1px solid var(--warn);border-radius:6px;font-size:13px;color:var(--warn)}
+.issues ul{margin:4px 0 0;padding-left:18px}
 #info section{max-width:880px}
 #info table{max-width:880px}
 #info th{text-align:left;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:4px 8px 4px 0;border-bottom:1px solid var(--line)}

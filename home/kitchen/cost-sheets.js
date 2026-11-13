@@ -1,14 +1,12 @@
-/* kitchen/cost-sheets.js: the kitchen's estimate, cutting list, notes and assembly from engine.js and cost.js, as the
-   workbook of core/sheet.js (the same cells on the screen and in the XLSX) and the assembly cards. Shown in Info of
-   view.html. Knows the format of cost.js (its placeholders are listed at its top), not this kitchen. */
+/* kitchen/cost-sheets.js: the kitchen's estimate, cutting list and notes from engine.js and cost.js, built with the
+   shared sheets of core/info.js (Kosztorys, Lista cięć) as every application's, and the assembly cards. Shown in Info
+   of view.html. Knows the format of cost.js (its placeholders are listed at its top), not this kitchen. */
 (function (root) {
 'use strict';
 
 /* model: KE.build of the project; APPLIANCES: KE.appliances of it. Returns {book(), assembly(), warnings, page} */
 function create(model, APPLIANCES) {
 const KE = root.KitchenEngine, COST = root.KITCHEN_COST;
-const DEFAULT_COLUMNS = ['Element', 'Długość', 'Szerokość', 'Ilość']; // header of a cutting-list block without its own columns
-const columnsOf = block => block.columns || DEFAULT_COLUMNS;
 const ITEMS = COST.categories.flatMap(c => c.items);
 // notes are numbered in their order, sections lettered: note id -> number ("patrz notatka 20")
 const NOTES = COST.notes.flatMap(section => section.notes);
@@ -18,7 +16,6 @@ const sectionTitle = (section, i) => String.fromCharCode(65 + i) + '. ' + sectio
 const noteDocuments = n => [...(n.appliance ? APPLIANCES[n.appliance].links : []), ...(n.links || [])];
 
 const round1 = x => Math.round(x * 10) / 10;
-const fmt = (v, digits = 2) => (Number.isFinite(v) ? v.toLocaleString('pl-PL', { minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: true }) : '–');
 const esc = root.CORE.ui.esc;
 const plural = KE.plural;
 // banded edges of one part, e.g. "dół 80 + lewa 720"; their total length in mm
@@ -342,103 +339,52 @@ function compute() {
 }
 
 function buildBook() {
-  const result = compute();
-  const num = v => v, str = v => String(v ?? ''), formula = f => ({ f }), input = v => ({ v, input: true });
-  const link = (text, href) => ({ text, href });
+  const result = compute(), INFO = root.CORE.info;
 
-  // sheet "Cutting list"
-  const cutting = [[str('Lista cięć – płyty obliczone przez engine.js z design.js (wymiary w mm)')], [str(fill(COST.labels.cuttingNote))], []];
-  const blockTotalRow = {};
-  for (const block of COST.blocks) {
-    cutting.push([str(fill(block.title))]);
-    // as an order form: each size followed by the number of finished edges along it
-    const [labelCell, size1, size2, qtyCell] = columnsOf(block);
-    cutting.push([str('Etykieta'), str(labelCell), str(size1 + ' [mm]'), str('Krawędź'), str(size2 + ' [mm]'), str('Krawędź'), str('m²'), str(qtyCell), str('Obrzeże razem [mb]'), str('Cięcia [mb]'), str('Wycięcia (legenda na dole)'), str('Gdzie')]);
-    const first = cutting.length + 1;
-    (rowsOf[block.id] || []).forEach((row, i) => {
-      const r = cutting.length + 1, t = result.totals[block.id].rows[i], along = edgeCounts(row);
-      // columns: A label, B name, C length, D edges, E width, F edges, G m², H qty, I edge banding, J cuts, K cut-outs, L where
-      const line = [str(codeOfRow[row.key] || ''), str(row.name), num(row.a), num(along.length), num(row.b), num(along.width), formula(`C${r}*E${r}*H${r}/1000000`), num(row.qty)];
-      line.push(t.edge != null ? formula(`${edgeLength(row.edges)}*H${r}/1000`) : str(''));
-      line.push(block.cut ? formula(`(C${r}+E${r})*H${r}/1000`) : str(''));
-      line.push(str(cutoutLines(row).join('\n')));
-      line.push(str(row.where || ''));
-      cutting.push(line);
-    });
-    const last = cutting.length, totalRow = last + 1, totals = result.totals[block.id];
-    cutting.push([str(''), str('Razem'), str(''), str(''), str(''), str(''), formula(`SUM(G${first}:G${last})`), formula(`SUM(H${first}:H${last})`), formula(`SUM(I${first}:I${last})`), formula(`SUM(J${first}:J${last})`)]);
-    blockTotalRow[block.id] = totalRow;
-    cutting.push([]);
-  }
-  cutting.push([str('ETYKIETY I WYCIĘCIA – legenda')], ...cutoutLegend().map(({ code, text }) => [str(code), str(text)]));
+  // sheet "Lista cięć" (core/info.js): as an order form, each size followed by the number of finished edges along it
+  const cutting = INFO.cutList({ title: 'Lista cięć – płyty obliczone przez engine.js z design.js (wymiary w mm)', note: fill(COST.labels.cuttingNote),
+    blocks: COST.blocks.map(block => ({ id: block.id, title: fill(block.title), columns: block.columns, cut: block.cut,
+      rows: (rowsOf[block.id] || []).map((row, i) => {
+        const along = edgeCounts(row);
+        return { label: codeOfRow[row.key], name: row.name, a: row.a, edgesA: along.length, b: row.b, edgesB: along.width, qty: row.qty,
+          edge: result.totals[block.id].rows[i].edge != null ? edgeLength(row.edges) : null, cutouts: cutoutLines(row), where: row.where };
+      }) })),
+    legend: cutoutLegend() });
 
-  // sheet "Notes"
-  const notes = [[str('Notatki – pytania otwarte / założenia')], [str('Pozycje kosztorysu odsyłają tu przez „patrz notatka N”.')], [], ['Lp.', 'Temat', 'Opis', 'Przyjęte w kosztorysie', 'Do decyzji'].map(str)];
+  // sheet "Notatki"
+  const notes = [{ kind: 'title', cells: ['Notatki – pytania otwarte / założenia'] }, { cells: ['Pozycje kosztorysu odsyłają tu przez „patrz notatka N”.'] }, { cells: [] },
+    { kind: 'head', cells: ['Lp.', 'Temat', 'Opis', 'Przyjęte w kosztorysie', 'Do decyzji'] }];
   const noteRow = {};
   COST.notes.forEach((section, i) => {
-    notes.push([str(sectionTitle(section, i))]);
+    notes.push({ kind: 'cat', cells: [sectionTitle(section, i)] });
     for (const n of section.notes) {
       noteRow[n.id] = notes.length + 1;
-      notes.push([str(noteNumber[n.id]), str(fill(n.topic)), { text: fill(n.description), links: noteDocuments(n).map(l => ({ text: l.name, href: l.url })) }, str(fill(n.assumed)), str(fill(n.decide))]);
+      notes.push({ cells: [noteNumber[n.id], fill(n.topic), { text: fill(n.description), links: noteDocuments(n).map(l => ({ text: l.name, href: l.url })) }, fill(n.assumed), fill(n.decide)] });
     }
   });
 
-  // sheet "Estimate": waste in C3, sheet size in C4
-  const estimate = [[str(COST.page.heading)], [str(fill(COST.page.info))],
-    [str('Naddatek na odpad płyt'), str(''), { ...input(Number(values.params.waste)), z: '0%' }], [str(fill(COST.labels.sheet)), str(''), input(Number(values.params.sheet))], [],
-    ['Lp.', 'Pozycja', 'Specyfikacja', 'Gdzie użyte', 'Ilość', 'J.m.', 'Cena jedn. [PLN]', 'Wartość [PLN]', 'Źródło ceny / uwagi'].map(str)];
-  const itemRow = {}, categoryRows = [];
-  let no = 0;
-  // quantity formula of this page -> Excel formula: item quantities, the parameters and the m², edge banding and cut totals of the cutting list
-  // as cell references, the rest as values
-  const toExcel = expr => expr.replace(/^=/, '')
-    .replace(/\{q:(\w+)\}/g, (_, id) => `E${itemRow[id]}`)
-    .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, block, total) => `'Lista cięć'!$${{ m2: 'G', edge: 'I', cut: 'J' }[total]}$${blockTotalRow[block]}`)
-    .replaceAll('{waste}', '$C$3')
-    .replaceAll('{sheet}', '$C$4')
+  // sheet "Kosztorys" (core/info.js): a quantity of cost.js -> an Excel formula: other positions' quantities, the parameters
+  // and the m², edge banding and cut totals of the cutting list as cell references, the rest as values
+  const toExcel = (expr, ref) => expr.replace(/^=/, '')
+    .replace(/\{q:(\w+)\}/g, (_, id) => ref.item(id))
+    .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, block, total) => `'Lista cięć'!$${{ m2: 'G', edge: 'I', cut: 'J' }[total]}$${cutting.total[block]}`)
+    .replaceAll('{waste}', ref.param('waste'))
+    .replaceAll('{sheet}', ref.param('sheet'))
     .replace(/\{([^}|]+)\}/g, (_, key) => String(Number(placeholder(key, result.totals, result.quantities))));
-  for (const category of COST.categories) {
-    const categoryRow = estimate.length + 1;
-    estimate.push(null); // filled with the category sum below
-    const first = categoryRow + 1;
-    for (const item of category.items) {
-      no++;
-      const r = estimate.length + 1;
-      itemRow[item.id] = r;
-      const qty = typeof item.qty === 'string' ? { ...formula(toExcel(item.qty)), z: /ROUNDUP/.test(item.qty) ? undefined : '#,##0.00' } : input(Number(values.items[item.id].qty));
-      const links = item.links || [];
-      const refs = item.refs || [];
+  const estimate = INFO.estimate({ title: COST.page.heading, info: fill(COST.page.info),
+    params: [{ key: 'waste', label: 'Naddatek na odpad płyt', v: Number(values.params.waste), z: '0%' }, { key: 'sheet', label: fill(COST.labels.sheet), v: Number(values.params.sheet) }],
+    categories: COST.categories.map(category => ({ name: category.name, group: category.appliances ? 'AGD' : 'Meble', items: category.items.map(item => ({
+      id: item.id, name: fill(item.name), spec: fill(item.spec), use: fill(item.use), unit: item.unit, price: Number(values.items[item.id].price),
+      qty: typeof item.qty === 'string' ? ref => ({ f: toExcel(item.qty, ref), z: /ROUNDUP/.test(item.qty) ? undefined : '#,##0.00' }) : Number(values.items[item.id].qty),
       // the remark, then the shops by name and the notes it refers to (a link each; the XLSX cell opens the first)
-      const source = { text: fill(item.source), links: [...links.map(l => ({ text: l.name, href: l.url })),
-        ...refs.map(id => ({ text: 'patrz notatka ' + noteNumber[id], href: `#'Notatki'!A${noteRow[id]}` }))] };
-      estimate.push([num(no), str(fill(item.name)), str(fill(item.spec)), str(fill(item.use)), qty, str(item.unit), input(Number(values.items[item.id].price)), formula(`ROUND(E${r}*G${r},2)`), source]);
-    }
-    estimate[categoryRow - 1] = { kind: 'cat', cells: [str(''), str(category.name), str(''), str(''), str(''), str(''), str(''), formula(`SUM(H${first}:H${estimate.length})`)] };
-    categoryRows.push({ row: categoryRow, appliances: !!category.appliances });
-  }
-  estimate.push([]);
-  const furnitureRow = estimate.length + 1;
-  const sumOf = isAppliance => categoryRows.filter(c => c.appliances === isAppliance).map(c => 'H' + c.row).join('+');
-  estimate.push({ kind: 'sum', cells: [str(''), str('Meble (materiały) razem'), str(''), str(''), str(''), str(''), str(''), formula(sumOf(false))] });
-  estimate.push({ kind: 'sum', cells: [str(''), str('AGD razem'), str(''), str(''), str(''), str(''), str(''), formula(sumOf(true))] });
-  estimate.push({ kind: 'sum', cells: [str(''), str('Rezerwa na drobne pozycje / ceny szacunkowe'), str('% mebli'), str(''), str(''), str(''), { ...input(Number(values.params.reserve)), z: '0%' }, formula(`ROUND(H${furnitureRow}*G${furnitureRow + 2},2)`)] });
-  estimate.push({ kind: 'grand', cells: [str(''), str('RAZEM BRUTTO'), str(''), str(''), str(''), str(''), str(''), formula(`H${furnitureRow}+H${furnitureRow + 1}+H${furnitureRow + 2}`)] });
-  estimate.push([]);
-  estimate.push([str(''), str('Nie obejmuje')]);
-  COST.page.excluded.forEach(e => estimate.push([str(''), str('• ' + fill(e))]));
-  estimate.push([str(''), link('• Pytania i założenia: patrz arkusz Notatki.', "#'Notatki'!A1")]);
+      source: { text: fill(item.source), links: [...(item.links || []).map(l => ({ text: l.name, href: l.url })),
+        ...(item.refs || []).map(id => ({ text: 'patrz notatka ' + noteNumber[id], href: `#'Notatki'!A${noteRow[id]}` }))] } })) })),
+    totals: [{ label: 'Meble (materiały) razem', group: 'Meble' }, { label: 'AGD razem', group: 'AGD' }],
+    reserve: { label: 'Rezerwa na drobne pozycje / ceny szacunkowe', note: '% mebli', v: Number(values.params.reserve), of: 0 },
+    excluded: COST.page.excluded.map(fill),
+    after: [['', { text: '• Pytania i założenia: patrz arkusz Notatki.', href: "#'Notatki'!A1" }]] });
 
-  /* rows -> core/sheet.js: an array is an item row, an object keeps its kind; the first rows of a block or section are
-     titles and headers by their place */
-  const asRows = (rows, kinds) => rows.map((r, i) => (r && !Array.isArray(r) ? r : { kind: kinds(r || [], i), cells: r || [] }));
-  const cols = (widths, more = {}) => widths.map((width, i) => ({ width, ...(more[i] || {}) }));
-  const headers = new Set(['Lp.', 'Etykieta']);
-  const kindOf = (r, i) => (i === 0 ? 'title' : headers.has(r[0]) ? 'head' : r.length === 1 && i > 2 ? 'cat' : r[1] === 'Razem' ? 'sum' : undefined);
-  return { sheets: [
-    { name: 'Kosztorys', cols: cols([5, 36, 40, 30, 10, 6, 13, 14, 50], { 6: { digits: 2, z: '#,##0.00' }, 7: { digits: 2, z: '#,##0.00' } }), rows: asRows(estimate, kindOf) },
-    { name: 'Lista cięć', cols: cols([9, 40, 12, 6, 12, 6, 10, 8, 15, 12, 34, 14], { 6: { digits: 3, z: '0.000' }, 8: { digits: 2, z: '0.00' }, 9: { digits: 2, z: '0.00' } }), rows: asRows(cutting, kindOf) },
-    { name: 'Notatki', cols: cols([6, 34, 70, 42, 40]), rows: asRows(notes, kindOf) },
-  ] };
+  return { sheets: [estimate.sheet, cutting.sheet, { name: 'Notatki', cols: [6, 34, 70, 42, 40].map(width => ({ width })), rows: notes }] };
 }
 
 return { book: buildBook, assembly: renderAssembly, warnings: model.warnings, page: COST.page, fill };
