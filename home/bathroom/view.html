@@ -73,6 +73,9 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
 .buy li span:not(.p){grid-column:1/-1;color:var(--muted);font-size:11.5px}
 .buy li.total{border-bottom:0;font-weight:600}
 .btnrow{display:flex;gap:6px;flex-wrap:wrap}
+#info .block{max-width:880px}
+#info .drawing{max-width:640px}
+#info>h2.part{font-size:14px;color:var(--ink);margin:28px 0 0}
 </style>
 </head>
 <body>
@@ -81,38 +84,96 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
   <div class="stage" id="stage">
     <canvas id="gl" aria-label="Widok 3D łazienki"></canvas>
     <div id="loading">Wczytywanie łazienki…</div>
-    <div class="hud">
-      <div class="toggle" id="mode" role="group" aria-label="Widok"></div>
-      <div id="context" aria-label="Menu widoku"></div>
+    <div class="hud"><div id="context" aria-label="Menu widoku"></div></div>
+    <div class="toggle modes" id="mode" role="group" aria-label="Tryb"></div>
+    <div id="plan2d" hidden aria-label="Rzut 2D"><p class="sheetnote" id="planNote"></p><div id="sheet"></div></div>
+    <div id="analysis" hidden aria-label="Test"><div id="checks"></div></div>
+    <div id="info" hidden aria-label="Informacje">
+      <h1 id="infoTitle"></h1>
+      <h2 class="part">Szafka</h2>
+      <section class="block">
+        <h2>Szafka podumywalkowa · widok z przodu</h2>
+        <div id="vanityDrawing"></div>
+        <p class="note" id="vanitySummary"></p>
+      </section>
+      <section class="block">
+        <h2>Formatki do cięcia (mm)</h2>
+        <p class="note">Wymiar 1 biegnie wzdłuż słoja. Na blacie, frontach i bokach słój poziomo. Obrzeże ABS 2 mm w dekorze płyty.</p>
+        <table class="tbl" id="cutList"></table>
+        <p class="note">Arkusz <b>eRozkroj</b> importujesz w <a href="https://mhm-web2.erozkroje.pl" target="_blank" rel="noopener">e-Rozkrój M-HM ↗</a>: Import z pliku XLS → przypisz kolumny (nazwa, długość, szerokość, ilość, usłojenie, okleina przód/tył/lewa/prawa 0/1) → przypisz płytę i okleinę.</p>
+      </section>
+      <section class="block">
+        <h2>Okucia Blum · LEGRABOX pure</h2>
+        <table class="tbl" id="hardwareList"></table>
+      </section>
+      <section class="block">
+        <h2>Obróbka i montaż</h2>
+        <table class="tbl" id="workList"></table>
+      </section>
+      <h2 class="part">Zakupy</h2>
+      <section class="block">
+        <h2>Lista zakupów</h2>
+        <ul class="buy" id="buyList"></ul>
+        <p class="note">Ceny brutto z dnia projektu (5.11.2026), bez dostawy. Pozycje bez ceny: wycena w sklepie.</p>
+      </section>
+      <h2 class="part">Wymiary i podejścia</h2>
+      <section class="block">
+        <h2>Podejścia dla hydraulika</h2>
+        <p class="note">Wymiary od lica płytki. „Od drzwi” = od ściany z drzwiami, „od lewej” = od ściany z umywalką.</p>
+        <table class="tbl" id="pointsList"></table>
+      </section>
+      <section class="block">
+        <h2>Wymiary</h2>
+        <dl class="tight" id="dimsList"></dl>
+      </section>
     </div>
-    <button class="helpbtn" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
-    <div class="help" id="help" role="dialog" aria-label="Pomoc" hidden>
-      <p>Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko lub szczypanie.</p>
-      <p>Kliknięcie drzwi, drzwiczek albo szuflady otwiera je lub zamyka.</p>
-      <p>Pomieszczenie jest z domu, takie jak jest. Ściana albo sufit, za którymi stoi kamera, chowają się.</p>
+    <div class="dock" id="dock" aria-label="Dolne menu"></div>
+    <div class="float sunfloat" id="sun" role="dialog" aria-label="Światło" hidden>
+      <h2>Oświetlenie</h2>
+      <div class="toggle" id="light" role="group" aria-label="Światło"></div>
     </div>
-    <div class="dock" id="dock" aria-label="Widoki kamery"></div>
-    <div id="plan2d" hidden aria-label="Rzut 2D"><div id="sheet"></div></div>
-    <div id="analysis" hidden aria-label="Analiza"><div id="checks"></div></div>
+    <div class="float" id="help" role="dialog" aria-label="Pomoc" hidden>
+      <div data-help="3d">
+        <p>Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko lub szczypanie.</p>
+        <p>Kliknięcie drzwi, drzwiczek albo szuflady otwiera je lub zamyka.</p>
+        <p>Pomieszczenie jest z domu, takie jak jest. Ściana albo sufit, za którymi stoi kamera, chowają się.</p>
+        <p>U góry: parter albo poddasze. Na dole: skąd patrzysz. ☀: dzień albo noc.</p>
+      </div>
+      <div data-help="2d"><p>Rzut łazienki jak rysunek CAD, cięty na wysokości z rzutu domu: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG.</p></div>
+      <div data-help="test"><p>Sprawdzenia szafki i armatury z engine.js. <b>OK</b> = w normie.</p></div>
+      <div data-help="info"><p>Szafka (rysunek, formatki, okucia, montaż), zakupy, wymiary i podejścia dla hydraulika. Płytki, płytę i armaturę zmieniasz w Wykończeniu. Na dole: XLSX (wszystko + e-Rozkrój M-HM), formatki CSV, kopiowanie.</p></div>
+    </div>
+    <div class="corner">
+      <button class="round" id="sunbtn" aria-label="Światło" aria-expanded="false" aria-controls="sun">☀</button>
+      <button class="round" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
+    </div>
   </div>
 
   <aside id="settings">
     <h1 id="title">Łazienka</h1>
     <p class="sub" id="subtitle"></p>
-    <section data-panel="plan"><h2>Rzut 2D</h2>
-      <div class="btns">
-        <button class="btn ghost" id="zoomOut" aria-label="Pomniejsz">−</button>
-        <button class="btn ghost" id="zoomIn" aria-label="Powiększ">+</button>
-        <button class="btn" id="planSvg">Pobierz SVG</button>
-      </div>
-      <p class="note" id="planNote"></p>
-    </section>
-    <section data-panel="tabs">
     <div class="toggle" id="tabs" role="tablist" aria-label="Panel"></div>
 
-    <!-- ===== LOOK ===== -->
-    <div data-tab="look">
-      <section class="block" aria-label="Płytki">
+    <!-- ===== WARSTWY ===== -->
+    <section class="block" data-tab="layers">
+      <h2>Warstwy</h2>
+      <div class="layers" id="layers"></div>
+    </section>
+    <section class="block" data-tab="layers" data-part="doors">
+      <h2>Drzwi i szuflady</h2>
+      <div class="btns"><button class="btn ghost" id="openAll">Otwórz wszystkie</button><button class="btn ghost" id="closeAll">Zamknij wszystkie</button></div>
+      <p class="note">Kliknij drzwi, drzwiczki albo szufladę, aby je otworzyć.</p>
+    </section>
+
+    <!-- ===== WYKOŃCZENIE ===== -->
+    <section class="block" data-tab="finish" data-part="style">
+      <h2>Styl</h2>
+      <div class="toggles" id="styles" role="group" aria-label="Styl">
+        <button data-style="real" aria-pressed="true">Realistyczny</button>
+        <button data-style="lines" aria-pressed="false">Rysunek — białe</button>
+      </div>
+    </section>
+      <section class="block" data-tab="finish" aria-label="Płytki">
         <h2>Płytki</h2>
         <div class="surf" id="surfaces" role="group" aria-label="Powierzchnia">
           <span class="col">Pokój</span><span class="col">Prysznic</span>
@@ -130,89 +191,19 @@ dl.tight dt{color:var(--muted)} dl.tight dd{margin:0;font-family:var(--f-mono);t
         </div></div>
       </section>
 
-      <section class="block">
-        <h2>Styl</h2>
-        <div class="toggles" id="styles" role="group" aria-label="Styl">
-          <button data-style="real" aria-pressed="true">Realistyczny</button>
-          <button data-style="lines" aria-pressed="false">Rysunek — białe</button>
-        </div>
-      </section>
-
-      <section class="block">
+      <section class="block" data-tab="finish">
         <h2>Płyta szafki · Egger</h2>
         <div class="decors" id="decors" role="group" aria-label="Dekor płyty"></div>
         <p class="cap" id="decorInfo"></p>
       </section>
 
-      <section class="block">
-        <h2>Oświetlenie</h2>
-          <div class="toggle" id="light" role="group" aria-label="Światło"></div>
-      </section>
-
-      <section class="block">
-        <h2>Warstwy</h2>
-        <div class="layers" id="layers"></div>
-        <h2>Drzwi i szuflady</h2>
-        <div class="btns"><button class="btn ghost" id="openAll">Otwórz wszystkie</button><button class="btn ghost" id="closeAll">Zamknij wszystkie</button></div>
-        <p class="note">Kliknij drzwi, drzwiczki albo szufladę, aby je otworzyć.</p>
-      </section>
-
-      <section class="block">
+      <section class="block" data-tab="finish">
         <h2>Armatura</h2>
         <div class="metals" id="metals" role="group" aria-label="Armatura">
           <button data-metal="brass" aria-pressed="true" aria-label="Mosiądz szczotkowany" title="Mosiądz szczotkowany"></button>
           <button data-metal="nickel" aria-pressed="false" aria-label="Nikiel szczotkowany" title="Nikiel szczotkowany"></button>
         </div>
       </section>
-    </div>
-
-    <!-- ===== VANITY: construction data ===== -->
-    <div data-tab="vanity" hidden>
-      <section class="block">
-        <h2>Szafka podumywalkowa · widok z przodu</h2>
-        <div id="vanityDrawing"></div>
-        <p class="note" id="vanitySummary"></p>
-      </section>
-      <section class="block">
-        <h2>Formatki do cięcia (mm)</h2>
-        <p class="note">Wymiar 1 biegnie wzdłuż słoja. Na blacie, frontach i bokach słój poziomo. Obrzeże ABS 2 mm w dekorze płyty.</p>
-        <table class="tbl" id="cutList"></table>
-        <div class="btnrow"><button id="xlsxBtn">Eksport XLSX — wszystko + e-Rozkrój M-HM</button><button id="csvBtn">Formatki CSV</button><button id="copyBtn">Kopiuj jako tekst</button></div>
-        <p class="note">Arkusz <b>eRozkroj</b> importujesz w <a href="https://mhm-web2.erozkroje.pl" target="_blank" rel="noopener">e-Rozkrój M-HM ↗</a>: Import z pliku XLS → przypisz kolumny (nazwa, długość, szerokość, ilość, usłojenie, okleina przód/tył/lewa/prawa 0/1) → przypisz płytę i okleinę.</p>
-      </section>
-      <section class="block">
-        <h2>Okucia Blum · LEGRABOX pure</h2>
-        <table class="tbl" id="hardwareList"></table>
-      </section>
-      <section class="block">
-        <h2>Obróbka i montaż</h2>
-        <table class="tbl" id="workList"></table>
-      </section>
-    </div>
-
-    <!-- ===== SHOPPING ===== -->
-    <div data-tab="buy" hidden>
-      <section class="block">
-        <h2>Lista zakupów</h2>
-        <ul class="buy" id="buyList"></ul>
-        <p class="note">Ceny brutto z dnia projektu (5.11.2026), bez dostawy. Pozycje bez ceny: wycena w sklepie.</p>
-        <div class="btnrow"><button class="xlsxBtn2">Eksport XLSX (wymiary, formatki, okucia, zakupy, podejścia)</button></div>
-      </section>
-    </div>
-
-    <!-- ===== DIMENSIONS and installations ===== -->
-    <div data-tab="dims" hidden>
-      <section class="block">
-        <h2>Podejścia dla hydraulika</h2>
-        <p class="note">Wymiary od lica płytki. „Od drzwi” = od ściany z drzwiami, „od lewej” = od ściany z umywalką.</p>
-        <table class="tbl" id="pointsList"></table>
-      </section>
-      <section class="block">
-        <h2>Wymiary</h2>
-        <dl class="tight" id="dimsList"></dl>
-      </section>
-    </div>
-    </section>
   </aside>
 </div>
 
@@ -1583,7 +1574,7 @@ onButton($('layouts'),  b => changeActiveTiles({ layout: b.dataset.layout }));
 syncTilePanel();
 
 // floors and views
-$('title').textContent = `${DATA.name} · ${DATA.title}`;
+$('title').textContent = $('infoTitle').textContent = `${DATA.name} · ${DATA.title}`;
 $('subtitle').textContent = `${HOUSE_ROOM.floorName}, pomieszczenie z domu: ${HOUSE_ROOM.name}`;
 document.title = `${DATA.title} — ${DATA.name}`;
 // day / night
@@ -1612,15 +1603,6 @@ syncLayers();
 $('openAll').onclick = () => { for (const d of doors) d.target = 1; invalidate(); };
 $('closeAll').onclick = () => { for (const d of doors) d.target = 0; invalidate(); };
 
-// panel tabs
-const TABS = { look: 'Wygląd', vanity: 'Szafka', buy: 'Zakupy', dims: 'Wymiary' };
-function showTab(id) {
-  const tab = TABS[id] ? id : 'look';
-  try { localStorage.setItem('bath-tab', tab); } catch (e) {}
-  CORE.ui.tabs($('tabs'), TABS, tab, showTab);
-}
-let savedTab = null; try { savedTab = localStorage.getItem('bath-tab'); } catch (e) {}
-showTab(savedTab);
 
 /* ---------- vanity construction data: computed in engine.js, so drawing, cut list and 3D model match ---------- */
 const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -1725,15 +1707,19 @@ function cutText(sep) {
   return [head, ...cutParts().map(p => [p.name, p.mat, p.qty, num(p.a), num(p.b), p.edge, p.note || ''])]
     .map(r => r.map(c => sep === ';' ? `"${String(c).replace(/"/g, '""')}"` : c).join(sep)).join('\n');
 }
-$('csvBtn').addEventListener('click', () => {
+/* the bottom menu of Info: the files */
+const INFO_BUTTONS = [CORE.ui.el('button', { textContent: 'Eksport XLSX — wszystko + e-Rozkrój M-HM', onclick: e => exportXlsx(e.currentTarget) }),
+  CORE.ui.el('button', { id: 'csvBtn', textContent: 'Formatki CSV' }), CORE.ui.el('button', { id: 'copyBtn', textContent: 'Kopiuj jako tekst' })];
+INFO_BUTTONS[1].addEventListener('click', () => {
   const blob = new Blob(['﻿' + cutText(';')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${FLOOR}-vanity-cut-list-${V.len}-${state.decor}.csv`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
-$('copyBtn').addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText(cutText('\t')); $('copyBtn').textContent = 'Skopiowano ✓'; }
-  catch (e) { $('copyBtn').textContent = 'Kopiowanie zablokowane'; }
-  setTimeout(() => $('copyBtn').textContent = 'Kopiuj jako tekst', 1800);
+INFO_BUTTONS[2].addEventListener('click', async () => {
+  const b = INFO_BUTTONS[2];
+  try { await navigator.clipboard.writeText(cutText('\t')); b.textContent = 'Skopiowano ✓'; }
+  catch (e) { b.textContent = 'Kopiowanie zablokowane'; }
+  setTimeout(() => b.textContent = 'Kopiuj jako tekst', 1800);
 });
 
 /* ---------- the views: 3D, 2D, Analiza, as the house (core/ui.js, core/plan.js) ----------
@@ -1749,7 +1735,9 @@ function goFloor(key) {
   try { localStorage.setItem('floor', key); } catch (e) {}
   const url = new URL(location.href); url.searchParams.set('floor', key); location.href = url.href;
 }
-CORE.ui.cameraDock($('dock'), [Object.keys(VIEWS).map(k => ({ name: DATA.cameras[k] || k, go: () => goTo(k, reduceMotion) }))]);
+const CAMERA_ITEMS = Object.keys(VIEWS).map(k => ({ name: DATA.cameras[k] || k, go: () => goTo(k, reduceMotion) }));
+const PLAN_BUTTONS = { zoomOut: el('button', { textContent: '−', ariaLabel: 'Pomniejsz' }), zoomIn: el('button', { textContent: '+', ariaLabel: 'Powiększ' }),
+  download: el('button', { textContent: 'Pobierz SVG' }) };
 $('checks').innerHTML = CORE.ui.checksHtml(G.checks.map(([k, v, ok]) => ({ name: `${k}: ${v}`, items: ok ? [] : ['poza wymaganiem'] })));
 
 const PLAN = CORE.plan.create(MATERIAL_LIB), CUT = Object.values(HOUSE.views).find(v => v.plan).cut[HOUSE_ROOM.floor];
@@ -1770,16 +1758,23 @@ function planSvg() {
       + PLAN.rooms(X, [{ rects, numbers: ROOM_OF_HOUSE.numbers, name: ROOM_OF_HOUSE.name, area: ROOM_OF_HOUSE.rects.reduce((a, q) => a + CORE.geometry.rectArea(q), 0) / 1e6 }])
       + PLAN.dims(X, inside, extent[1]) }]);
 }
-const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), zoomIn: $('zoomIn'), zoomOut: $('zoomOut'), download: $('planSvg'), state: VIEW_STATE, save: saveView, svg: planSvg, file: `lazienka-${FLOOR}-rzut.svg` });
+const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state: VIEW_STATE, save: saveView, svg: planSvg, file: `lazienka-${FLOOR}-rzut.svg` });
+/* the screen (core/ui.js; ../project.md, Flow): the mode sets the main view, the bottom menu, the panel's tabs, ☀ */
+CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
+const showPanel = () => { VIEW_STATE.tab = CORE.ui.panelTabs($('tabs'), $('settings'), MODES[VIEW_STATE.mode], VIEW_STATE.tab, t => { VIEW_STATE.tab = t; saveView(); showPanel(); },
+  p => p === 'style' && !MODES[VIEW_STATE.mode].menu) ?? VIEW_STATE.tab; };
 function setMode(m) {
   VIEW_STATE.mode = MODES[m] ? m : MODE_IDS[0]; saveView();
-  const v = MODES[VIEW_STATE.mode], plan = !!v.plan, analysis = !!v.analysis;
-  $('plan2d').hidden = !plan; $('analysis').hidden = !analysis; canvasEl.hidden = plan || analysis; $('dock').hidden = !v.menu;
+  const v = MODES[VIEW_STATE.mode], is3d = !!v.menu;
+  $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; canvasEl.hidden = !is3d;
+  $('sunbtn').hidden = !is3d; if (!is3d) $('sun').hidden = true;
+  CORE.ui.helpMode($('help'), VIEW_STATE.mode);
   CORE.ui.modeToggle($('mode'), MODES, VIEW_STATE.mode, setMode);
   const ctx = $('context'); ctx.innerHTML = '';
-  CORE.ui.menuRow(ctx, v.menu ? Object.entries(BATH_DATA.floors).map(([k, f]) => ({ name: f.name, radio: true, on: k === FLOOR, set: () => goFloor(k) })) : []);
-  CORE.ui.panels(v);
-  if (plan) { drawSheet(); $('planNote').textContent = `Cięcie ${CUT} mm nad podłogą (jak w rzucie domu). ${v.note || ''}`.trim(); }
+  if (is3d) CORE.ui.menuRow(ctx, Object.entries(BATH_DATA.floors).map(([k, f]) => ({ name: f.name, radio: true, on: k === FLOOR, set: () => goFloor(k) })));
+  CORE.ui.bottomMenu($('dock'), is3d ? [CAMERA_ITEMS] : v.plan ? [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]] : v.info ? [INFO_BUTTONS] : []);
+  showPanel();
+  if (v.plan) { drawSheet(); $('planNote').textContent = `Cięcie ${CUT} mm nad podłogą (jak w rzucie domu). ${v.note || ''}`.trim(); }
   invalidate();
 }
 
@@ -1813,8 +1808,6 @@ async function exportXlsx(button) {
   XLSX.writeFile(wb, `bathroom-${FLOOR}-vanity-${V.len}-${state.decor}.xlsx`);
   button.textContent = label;
 }
-$('xlsxBtn').addEventListener('click', e => exportXlsx(e.currentTarget));
-document.querySelector('.xlsxBtn2').addEventListener('click', e => exportXlsx(e.currentTarget));
 
 // board decor
 for (const [id, d] of Object.entries(DECORS)) {
