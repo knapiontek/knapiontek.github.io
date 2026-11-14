@@ -25,23 +25,28 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 
 ## Data flow
 
-```
-                 design.js  (one per project)
-                    │
-      ┌─────────────┼──────────────┐
-      ▼             ▼              ▼
-  design.html          view.html                each page reads design.js
-      │             │              │             and passes it to the engine
-      └──────► engine.js ◄─────────┘
-      │        project → model
-      ▼
-  export → design.js                             only design.html writes design.js
+Nothing is stored as geometry: every time a page opens, the kitchen is computed again from the data.
 
-  ../library    ──► view.html                    the appliances design.js names (passed on to engine.js), textures, materials
-  cost.js ─► cost-sheets.js ─► view.html (Info)  the estimate, cutting list, notes, assembly; ../core/info.js shows them and saves the XLSX
-  ../house/house.js ─► ../house/house-clip.js ─► view.html        the room, from the house
-  ../core       ──► view.html                    draws it all, like the house
 ```
+design.js, view.js        the data: what stands where (written in design.html; view.js by the LLM)
+      │
+      ▼
+engine.js                 computes the model: carcasses, boards, fronts, sizes, hardware, holes; draws nothing
+      │
+      ▼
+parts.js                  turns the model into solids (../core/geometry) and 3D meshes (../core/mesh, ../core/scene):
+      │                   places the groups in the room, makes the moving fronts, handles a click
+      ├──► view.html            + its room (from the house), the panel, the 2D plan, Info, Test
+      └──► ../house/view.html   only the furniture, without the room (the house draws its own);
+                                loaded through ../apps.js and ../core/parts.js, the house names no kitchen file
+
+design.html ──► engine.js ──► export ──► design.js          only design.html writes design.js
+../library ──► engine.js, parts.js                           appliances, boards, textures, materials
+cost.js ──► cost-sheets.js ──► view.html (Info)              estimate, cutting list, notes, assembly; ../core/info.js shows them
+../house/house.js ──► ../house/house-clip.js ──► parts.js    the room, from the house
+```
+
+engine.js says what is built; parts.js draws it in 3D. The drawing used to be inside view.html, so the house could not use it without copying; now both pages call the same code, and a change in design.js shows in the kitchen and in the house.
 
 - Every page loads design.js directly, so the pages also work opened from disk.
 - design.html shows the materials read only and keeps the settings as they are; view.html (with cost-sheets.js) only reads design.js.

@@ -396,8 +396,11 @@ function applyTiles(surface) {
 const canvasEl = document.getElementById('gl');
 const MATERIAL_LIB = {};                   // core keys of the page's own three.js materials (useMaterial)
 const BOX = HOUSE_ROOM.box;
-const VIEW = CORE.createView({ canvas: canvasEl, stage, materials: MATERIAL_LIB, textures: {}, light: null,
-  edges: { color: '#2b2e31', opacity: .5, layers: ['edges'] }, body: [[BOX[0], BOX[2], BOX[4]], [BOX[1], BOX[3], BOX[5]]], sunCentre: [0, 0, 0] });
+const LIGHT = HouseClip.insideLight(HOUSE);   // the house's light seen from inside, as every room's
+const VIEW = CORE.createView({ canvas: canvasEl, stage, materials: MATERIAL_LIB, textures: {}, light: LIGHT,
+  edges: { color: '#2b2e31', opacity: .5, layers: ['edges'] }, body: [[BOX[0], BOX[2], BOX[4]], [BOX[1], BOX[3], BOX[5]]],
+  sunCentre: [(BOX[0] + BOX[1]) / 2, (BOX[2] + BOX[3]) / 2, BOX[4] + 1000] });
+VIEW.renderer.physicallyCorrectLights = true;
 const renderer = VIEW.renderer, scene = VIEW.scene, camera = VIEW.camera, controls = VIEW.controls;
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 const invalidate = () => VIEW.redraw();
@@ -411,21 +414,6 @@ const houseToFrame = p => new THREE.Vector3((G.X0 - p[0]) / 1000, (p[2] - G.LEVE
 
 for (const surface of SURFACES) applyTiles(surface);
 
-/* the sky behind the room: the house's, as in every application (setLighting: by night core's dark one) */
-const HOUSE_SKY = Object.values(HOUSE.views).find(v => v.menu).light.sky.gradient;
-
-// reflection environment (metal, ceramics, mirror): grey sphere with two bright panels
-let envMap = null;
-(function buildEnvironmentMap() {
-  const pmrem = new THREE.PMREMGenerator(renderer), env = new THREE.Scene();
-  env.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), new THREE.MeshBasicMaterial({ color: 0x6f7276, side: THREE.BackSide })));
-  const glow = new THREE.MeshBasicMaterial({ color: 0xffffff }); glow.color.setScalar(5);
-  const top = new THREE.Mesh(new THREE.BoxGeometry(3, .1, 3), glow); top.position.set(0, 5, 0); env.add(top);
-  const front = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2, .1), glow); front.position.set(0, 2, 6); env.add(front);
-  const ground = new THREE.Mesh(new THREE.BoxGeometry(20, .1, 20), new THREE.MeshBasicMaterial({ color: 0x202122 })); ground.position.y = -3; env.add(ground);
-  envMap = scene.environment = pmrem.fromScene(env, .04).texture;
-})();
-
 controls.minDistance = 0.3;
 controls.maxDistance = 10;
 
@@ -434,29 +422,46 @@ controls.maxDistance = 10;
    4. MATERIALS AND PRIMITIVES
    ========================================================================== */
 
-const METALS = { brass: { color: 0xb8935a, roughness: .32 }, nickel: { color: 0xbab8b1, roughness: .28 } };
-const LED_ON = 0xffe2b0, LED_OFF = 0xd8d6d0;
-
-const M = {
-  ceramic:   new THREE.MeshPhysicalMaterial({ color: 0xf4f4f2, roughness: .1, clearcoat: .6, clearcoatRoughness: .08 }),
-  ceramicIn: new THREE.MeshPhysicalMaterial({ color: 0xeeeeec, roughness: .12, clearcoat: .5, side: THREE.DoubleSide }),
-  metal:     new THREE.MeshStandardMaterial({ color: METALS.brass.color, metalness: 1, roughness: METALS.brass.roughness }),
-  oak:       new THREE.MeshStandardMaterial({ color: 0x9a7650, roughness: .6 }),
-  doorWood:  new THREE.MeshStandardMaterial({ color: 0x8a6d50, roughness: .55 }),
-  glass:     new THREE.MeshPhysicalMaterial({ color: 0xdaeaec, roughness: .03, transparent: true, opacity: .18, depthWrite: false, side: THREE.DoubleSide }),
-  mirror:    new THREE.MeshStandardMaterial({ color: 0xd4dade, roughness: .03, metalness: 1 }),
-  sky:       new THREE.MeshBasicMaterial({ color: 0xdfeefa }),
-  led:       new THREE.MeshBasicMaterial({ color: LED_ON }),     // glowing strips and downlights
-  frame:     new THREE.MeshStandardMaterial({ color: 0x2a2c2e, roughness: .5, metalness: .3 }),
-  white:     new THREE.MeshStandardMaterial({ color: 0xf1f1ef, roughness: .4 }),
-  ceiling:   new THREE.MeshStandardMaterial({ color: 0xf3f2ef, roughness: .9 }),
-  gap:       new THREE.MeshStandardMaterial({ color: 0x2a211a, roughness: .8 }),
-  black:     new THREE.MeshBasicMaterial({ color: 0x050505 }),
-};
+const METALS = { brass: { color: '#b8935a', roughness: .32 }, nickel: { color: '#bab8b1', roughness: .28 } };
+const LED_ON = '#ffe2b0';
+/* the bathroom's materials: definitions of core (core/scene.js material), in the page's library under b.* */
+const BASIN_COLOR = DATA.look.basin === 'white' ? '#f1f0ec' : '#0f0f10';
+Object.assign(MATERIAL_LIB, {
+  'b.ceramic': { color: '#f4f4f2', roughness: .1, clearcoat: .6, clearcoatRoughness: .08 },
+  'b.metal':   { color: METALS.brass.color, metalness: 1, roughness: METALS.brass.roughness },
+  'b.glass':   { color: '#daeaec', roughness: .03, opacity: .18 },
+  'b.mirror':  { color: '#d4dade', roughness: .03, metalness: 1 },
+  'b.led':     { color: '#d8d6d0', roughness: .9, emissive: LED_ON, glow: 0 },   // glowing strips and downlights, lit by night
+  'b.frame':   { color: '#2a2c2e', roughness: .5, metalness: .3 },
+  'b.white':   { color: '#f1f1ef', roughness: .4 },
+  'b.ceiling': { color: '#f3f2ef', roughness: .9 },
+  'b.gap':     { color: '#2a211a', roughness: .8 },
+  'b.black':   { color: '#050505', roughness: 1 },
+  'b.decor':   { color: '#ffffff', roughness: .62, reflect: .3 },
+  'b.decorTurned': { color: '#ffffff', roughness: .62, reflect: .3 },   // the top: grain along the wall
+  'b.legrabox': { color: '#1e1f21', roughness: .42, metalness: .55 },   // czarny karbon matowy
+  'b.basin':   { color: BASIN_COLOR, roughness: .62, clearcoat: .1, clearcoatRoughness: .6, reflect: .25 },
+  'b.basinIn': { color: BASIN_COLOR, roughness: .58, clearcoat: .12, clearcoatRoughness: .5, reflect: .25 },
+  'b.rubber':  { color: DATA.look.basin === 'white' ? '#e6e4df' : '#0b0b0b', roughness: .9 },
+  'b.pvc':     { color: '#8f969c', roughness: .5 },
+  'b.doorPaint': { color: '#' + DATA.look.doorPaint.toString(16).padStart(6, '0'), roughness: .85 },
+  'b.slot':    { color: '#000000', roughness: .6 },             // the flush plate's slot
+  'b.amber':   { color: '#7a4a1c', roughness: .15, clearcoat: 0, opacity: .85 },
+  'b.stone':   { color: '#d9d4cb', roughness: .5 },
+  'b.towel':   { color: '#cfc8bc', roughness: .95 },
+  'b.aluminium': { color: '#1c1d1f', roughness: .55, reflect: .4 },   // anthracite aluminium frame
+  'b.steel':   { color: '#7d8a93', roughness: .45, metalness: .5 },
+  'b.blue':    { color: '#2f6db5', roughness: .5 },
+  'b.showerHead': { color: '#222222', roughness: .8 },
+  'b.acrylic': { color: '#f6f6f3', roughness: .18, clearcoat: .5, clearcoatRoughness: .1 },
+});
+const M = Object.fromEntries(Object.keys(MATERIAL_LIB).filter(k => k.startsWith('b.')).map(k => [k.slice(2), VIEW.material(k)]));
+const KEY_OF = new Map(Object.entries(M).map(([k, m]) => [m, 'b.' + k]));   // a material of core -> its key
+for (const m of [M.glass, M.basinIn, M.acrylic]) m.side = THREE.DoubleSide;
 
 function setMetal(name) {
   state.metal = name;
-  M.metal.color.setHex(METALS[name].color);
+  M.metal.color.set(METALS[name].color).convertSRGBToLinear();
   M.metal.roughness = METALS[name].roughness;
 }
 
@@ -613,7 +618,7 @@ if (ATTIC) buildAttic(); else buildGround();
    No architraves: aluminium frame hidden in the wall, only a 3 mm gap around the leaf.
    The leaf is flush with the wall on the side it opens to (hallway); from the bathroom the leaf
    sits back in a tiled reveal. Leaf painted to match the tiles, concealed hinges. */
-const DOOR_PAINT = new THREE.MeshStandardMaterial({ color: DATA.look.doorPaint, roughness: .85 });
+const DOOR_PAINT = M.doorPaint;
 (function entranceDoor() {
   const g = wallDoor.group, cx = (DX0 + DX1) / 2, gapW = .003, leafW = DX1 - DX0 - 2 * gapW, leafH = DOOR_H - 2 * gapW;
   const out = DATA.door.opensOut, zc = out ? -T + .02 : -.02;   // middle of the 40 mm leaf thickness
@@ -725,7 +730,7 @@ function toiletAt(faceX, z, dir, flushParent) {
   // flush plate (Sigma format 246×164) on the casing face
   const flush = layerGroup('sanitary', flushParent);
   box(.008, .164, .246, M.metal, faceX + dir * .004, 1.0, z, flush);
-  box(.002, .13, .003, new THREE.MeshStandardMaterial({ color: 0x000000, roughness: .6 }), faceX + dir * .0085, 1.0, z, flush);
+  box(.002, .13, .003, M.slot, faceX + dir * .0085, 1.0, z, flush);
 }
 
 /* ---------- VANITY UNIT (construction dimensions in mm) ----------
@@ -758,14 +763,6 @@ function decorTexture(d, turn) {
   if (turn) { texture.repeat.set(1 / across, 1 / along); texture.rotation = Math.PI / 2; } else texture.repeat.set(1 / along, 1 / across);
   return texture;
 }
-M.decor = new THREE.MeshStandardMaterial({ roughness: .62, envMapIntensity: .3 });
-M.decorTurned = new THREE.MeshStandardMaterial({ roughness: .62, envMapIntensity: .3 });   // the top: grain along the wall
-M.legrabox = new THREE.MeshStandardMaterial({ color: 0x1e1f21, roughness: .42, metalness: .55 });   // czarny karbon matowy
-const BASIN_COLOR = DATA.look.basin === 'white' ? 0xf1f0ec : 0x0f0f10;
-M.basin = new THREE.MeshPhysicalMaterial({ color: BASIN_COLOR, roughness: .62, clearcoat: .1, clearcoatRoughness: .6, envMapIntensity: .25 });
-M.basinIn = new THREE.MeshPhysicalMaterial({ color: BASIN_COLOR, roughness: .58, clearcoat: .12, clearcoatRoughness: .5, envMapIntensity: .25, side: THREE.DoubleSide });
-M.rubber = new THREE.MeshStandardMaterial({ color: DATA.look.basin === 'white' ? 0xe6e4df : 0x0b0b0b, roughness: .9 });
-M.pvc = new THREE.MeshStandardMaterial({ color: 0x8f969c, roughness: .5 });
 const decorTextures = {};
 function setDecor(id) {
   state.decor = id;
@@ -957,9 +954,7 @@ function flutedTexture() {
   box(.008, .006, CAB_W - .06, M.led, x0 + .012, y1 - board - .006, zc, g);       // LED strip under the top
 
   // small items inside (blurred through the fluted glass)
-  const amber = new THREE.MeshPhysicalMaterial({ color: 0x7a4a1c, roughness: .15, transparent: true, opacity: .85 });
-  const stone = new THREE.MeshStandardMaterial({ color: 0xd9d4cb, roughness: .5 });
-  const towel = new THREE.MeshStandardMaterial({ color: 0xcfc8bc, roughness: .95 });
+  const amber = M.amber, stone = M.stone, towel = M.towel;
   const bottom = y0 + board, shelf = yc + board / 2;
   cyl(.03, .03, .17, amber, xc, bottom + .085, z0 + .09, g);
   cyl(.012, .012, .03, M.metal, xc, bottom + .185, z0 + .09, g);
@@ -976,7 +971,7 @@ function flutedTexture() {
   ribs.encoding = THREE.sRGBEncoding;
   const fluted = new THREE.MeshPhysicalMaterial({ color: 0x8a9295, map: ribs, bumpMap: bump, bumpScale: .004, roughness: .3, transparent: true, opacity: .55, depthWrite: false });
   box(.005, doorH - 2 * rail + .008, doorW - 2 * rail + .008, fluted, fx + .003, yc, dz, pivot).castShadow = false;
-  const frame = new THREE.MeshStandardMaterial({ color: 0x1c1d1f, roughness: .55, envMapIntensity: .4 });  // anthracite aluminium frame
+  const frame = M.aluminium;   // anthracite aluminium frame
   box(FRONT_T, rail, doorW, frame, fx, yc - doorH / 2 + rail / 2, dz, pivot);
   box(FRONT_T, rail, doorW, frame, fx, yc + doorH / 2 - rail / 2, dz, pivot);
   box(FRONT_T, doorH - 2 * rail, rail, frame, fx, yc, dz - doorW / 2 + rail / 2, pivot);
@@ -992,9 +987,7 @@ function flutedTexture() {
 /* ---------- installations in the casing ("Installations" layer) ---------- */
 (function installations() {
   const g = layerGroup('installations');
-  const pvc = new THREE.MeshStandardMaterial({ color: 0x8f969c, roughness: .5 });
-  const steel = new THREE.MeshStandardMaterial({ color: 0x7d8a93, roughness: .45, metalness: .5 });
-  const blue = new THREE.MeshStandardMaterial({ color: 0x2f6db5, roughness: .5 });
+  const { pvc, steel, blue } = M;
   const px = G.RISER.x, pz = G.RISER.z;
   cyl(.08, .08, H, pvc, px, H / 2, pz, g);                          // Ø160 riser
   cyl(.095, .095, .12, pvc, px, .35, pz, g);                         // tee / access
@@ -1033,7 +1026,7 @@ function flutedTexture() {
   tube([[cx, 2.2, zw], [cx, 2.22, zw + .2], [cx, 2.24, zw + .4]], .011, M.metal, g, 12);
   cyl(.03, .03, .012, M.metal, cx, 2.2, zw + .006, g).rotation.x = Math.PI / 2;
   cyl(.15, .15, .012, M.metal, cx, 2.235, zw + .42, g, 48);
-  cyl(.13, .13, .002, new THREE.MeshStandardMaterial({ color: 0x222222, roughness: .8 }), cx, 2.228, zw + .42, g, 48);
+  cyl(.13, .13, .002, M.showerHead, cx, 2.228, zw + .42, g, 48);
   // concealed thermostat with two knobs
   box(.24, .13, .008, M.metal, cx, 1.1, zw + .004, g);
   cyl(.028, .028, .04, M.metal, cx - .06, 1.1, zw + .028, g).rotation.x = Math.PI / 2;
@@ -1178,7 +1171,7 @@ function buildAttic() {
     tube([[cx, 2.2, 0], [cx, 2.22, .2], [cx, 2.24, .4]], .011, M.metal, s, 12);
     cyl(.03, .03, .012, M.metal, cx, 2.2, .006, s).rotation.x = Math.PI / 2;
     cyl(.15, .15, .012, M.metal, cx, 2.235, .42, s, 48);
-    cyl(.13, .13, .002, new THREE.MeshStandardMaterial({ color: 0x222222, roughness: .8 }), cx, 2.228, .42, s, 48);
+    cyl(.13, .13, .002, M.showerHead, cx, 2.228, .42, s, 48);
     box(.24, .13, .008, M.metal, cx, 1.1, .004, s);
     cyl(.028, .028, .04, M.metal, cx - .06, 1.1, .028, s).rotation.x = Math.PI / 2;
     cyl(.028, .028, .04, M.metal, cx + .06, 1.1, .028, s).rotation.x = Math.PI / 2;
@@ -1193,7 +1186,7 @@ function buildAttic() {
   /* ---------- freestanding oval bath centred in the free area, floor-standing mixer in the corner ---------- */
   (function bath() {
     const s = layerGroup('sanitary'), { cx, cz, len, w, h, rim, n } = BATH, A = len / 2, B = w / 2;
-    const acrylic = new THREE.MeshPhysicalMaterial({ color: 0xf6f6f3, roughness: .18, clearcoat: .5, clearcoatRoughness: .1, side: THREE.DoubleSide });
+    const acrylic = M.acrylic;
     const S = (y, da, db, nn = n) => ({ y, a: A - da, b: B - db, n: nn, cx, cz });
     // one surface: plinth → outer wall → flat rim → inner wall → floor of the tub
     loftMesh([
@@ -1223,9 +1216,7 @@ function buildAttic() {
   toiletAt(CASE.x1, WC_Z, 1, casing);
   (function installations() {
     const g = layerGroup('installations');
-    const pvc = new THREE.MeshStandardMaterial({ color: 0x8f969c, roughness: .5 });
-    const steel = new THREE.MeshStandardMaterial({ color: 0x7d8a93, roughness: .45, metalness: .5 });
-    const blue = new THREE.MeshStandardMaterial({ color: 0x2f6db5, roughness: .5 });
+    const { pvc, steel, blue } = M;
     cyl(RISER.r, RISER.r, hAt(RISER.z) + .3, pvc, RISER.x, (hAt(RISER.z) + .3) / 2, RISER.z, g);   // Ø160 riser (continues into the roof vent)
     const fx = CASE.x1 - .08;
     box(.04, 1.12, .04, steel, fx, .56, WC_Z - .23, g);
@@ -1260,7 +1251,7 @@ function buildAttic() {
    or turned stays a mesh.
    ========================================================================== */
 
-const matKey = m => { const k = 'm:' + m.uuid; if (!MATERIAL_LIB[k]) { MATERIAL_LIB[k] = { color: '#' + (m.color ? m.color.getHexString() : 'ffffff') }; VIEW.useMaterial(k, m); } return k; };
+const matKey = m => { if (KEY_OF.has(m)) return KEY_OF.get(m); const k = 'm:' + m.uuid; if (!MATERIAL_LIB[k]) { MATERIAL_LIB[k] = { color: '#' + (m.color ? m.color.getHexString() : 'ffffff') }; VIEW.useMaterial(k, m); } return k; };   // the tiles: the page's own
 const STATIC = ROOM_CELLS.slice(), MOVING = new Map();   // pivot of a door or drawer -> its cells
 (function boxesToSolids() {
   scene.updateMatrixWorld(true);
@@ -1325,76 +1316,30 @@ function applySolids() {
    ========================================================================== */
 
 const WARM = 0xffdcb4;   // 3000 K
-
-// [light, day intensity, night intensity]
-const lightRig = [];
-function addLight(light, day, night) { scene.add(light); lightRig.push([light, day, night]); return light; }
-
-addLight(new THREE.HemisphereLight(0xf2f4f6, 0x3a3836, 1), .5, .05);
-addLight(new THREE.AmbientLight(0xffffff, 1), .1, .04);
-
-const SUN_DAY = 2.6;                       // the sun's intensity by day at brightness 1
-const sun = addLight(new THREE.DirectionalLight(0xfff1dc, 1), SUN_DAY, 0);
-sun.target.position.copy(toWorld(SCENE.sun.target));
-scene.add(sun.target);
-/* the house's sun (one for every application, ☀): its direction in house axes, aimed at the room from the floor's distance;
-   the brightness scales its day intensity (setLighting applies it) */
+VIEW.addLight();   // the house's sun and sky (core), as every application
 const SUN = CORE.ui.sunStore(Object.values(HOUSE.views).find(v => v.menu).light.sun);
-const SUN_DISTANCE = toWorld(SCENE.sun.position).distanceTo(toWorld(SCENE.sun.target));
-function placeSun() {
-  const a = SUN.state.az * Math.PI / 180, e = SUN.state.el * Math.PI / 180;
-  const dir = VIEW.toWorld(Math.cos(a) * Math.cos(e), Math.sin(a) * Math.cos(e), Math.sin(e)).normalize();
-  sun.position.copy(sun.target.position).addScaledVector(dir, SUN_DISTANCE);
-  lightRig.find(r => r[0] === sun)[1] = SUN_DAY * SUN.state.k;
-}
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: .5, far: 14 });
-sun.shadow.bias = -.0004;
-sun.shadow.normalBias = .02;
+const placeSun = () => VIEW.placeSun(SUN.state);
 
-// sky light coming through the window (brightens the interior by day)
-addLight(new THREE.PointLight(0xe4eefa, 1, 3.5, 1.5), .9, 0).position.copy(toWorld(SCENE.skyLight));
-
-// recessed downlights: spotlights pointing down, the centre one casts shadows
-SCENE.downlights.forEach(([x, z], i) => {
-  const spot = addLight(new THREE.SpotLight(WARM, 1, 4.5, .75, .65, 1.6), 0, 2.0);
-  spot.position.copy(toWorld([x, SCENE.ceilingY - .01, z]));
-  spot.target.position.copy(toWorld([x, 0, z]));
-  scene.add(spot.target);
-  if (i === 1) {
-    spot.castShadow = true;
-    spot.shadow.mapSize.set(1024, 1024);
-    spot.shadow.bias = -.0005;
-    spot.shadow.normalBias = .02;
-  }
-});
-
-// LED strip in the gap: a few weak lights just under the ceiling, along the walls
-for (const [x, z] of SCENE.ledPoints) {   // 3 instead of 7: every light costs in every pixel
-  addLight(new THREE.PointLight(WARM, 1, 2.2, 2), 0, .6).position.copy(toWorld([x, SCENE.ledY, z]));
-}
-// mirror backlight
-for (const b of V.basins) addLight(new THREE.PointLight(WARM, 1, 1.8, 2), 0, .6 / V.basins.length).position.copy(toWorld([XL - .15, V.mirror.y, mm(V.z0 + b)]));
-
-const LIGHTING = {
-  day:   { exposure: 1.15, sky: 0xdfeefa, led: LED_OFF },
-  night: { exposure: 1.0,  sky: 0x18202c, led: LED_ON },
+/* the bathroom's lamps, on by night, as the kitchen's: recessed downlights (spots, the second casts shadows), the LED
+   strip in the ceiling gap, the mirror backlight */
+const LAMPS = [];
+const lamp = (light, at, aim, shadow) => {
+  light.visible = false; light.position.copy(toWorld(at)); scene.add(light);
+  if (aim) { light.target.position.copy(toWorld(aim)); scene.add(light.target); }
+  if (shadow) { light.shadow.mapSize.set(1024, 1024); light.shadow.bias = -.0005; light.shadow.normalBias = .02; }
+  LAMPS.push({ light, shadow });
 };
-/* day or night: the house's (☀, one for every application) */
-const dayOrNight = () => (SUN.state.night ? 'night' : 'day');
-function setLighting(mode) {
-  const preset = LIGHTING[mode];
-  // a light with intensity 0 is still evaluated in the shader — switch it off completely (all of them in "Drawing" style)
-  for (const [light, day, night] of lightRig) {
-    light.intensity = mode === 'day' ? day : night;
-    light.visible = light.intensity > 0;
-  }
+SCENE.downlights.forEach(([x, z], i) => lamp(new THREE.SpotLight(WARM, 7, 5, .75, .65, 2), [x, SCENE.ceilingY - .01, z], [x, 0, z], i === 1));
+for (const [x, z] of SCENE.ledPoints) lamp(new THREE.PointLight(WARM, 1.2, 2.2, 2), [x, SCENE.ledY, z]);
+for (const b of V.basins) lamp(new THREE.PointLight(WARM, 1.2 / V.basins.length, 1.8, 2), [XL - .15, V.mirror.y, mm(V.z0 + b)]);
+
+/* day or night: the house's (☀, one for every application); by night the lamps and the LED glow, as in the kitchen */
+function applyNight() {
+  const night = !!SUN.state.night, drawing = state.style === 'lines';
+  VIEW.renderer.toneMappingExposure = night ? 1.3 : LIGHT.exposure;
+  for (const { light, shadow } of LAMPS) { light.visible = night && !drawing; light.castShadow = light.visible && !!shadow; }
+  M.led.emissiveIntensity = night ? 2 : 0;
   invalidate();
-  renderer.toneMappingExposure = preset.exposure;
-  VIEW.setSky(mode === 'night' ? null : HOUSE_SKY);
-  M.sky.color.setHex(preset.sky);
-  M.led.color.setHex(preset.led);
 }
 
 
@@ -1436,12 +1381,12 @@ function setStyle(style) {
     m.needsUpdate = true;
   }
   for (const m of Object.values(tileMaterials)) { m.map = lines ? m.userData.lines : m.userData.photo; m.needsUpdate = true; }
-  setLighting(dayOrNight());
+  applyNight();
 }
 function setMetalLook(name) {   // the fittings' finish, kept while the drawing style shows them grey
   setMetal(name);
   const look = LOOK.get(M.metal);
-  if (look) { look.color.setHex(METALS[name].color); look.roughness = METALS[name].roughness; }
+  if (look) { look.color.set(METALS[name].color).convertSRGBToLinear(); look.roughness = METALS[name].roughness; }
   if (state.style === 'lines') { M.metal.color.setHex(0xc4c8cb); M.metal.roughness = .9; }
   invalidate();
 }
@@ -1675,7 +1620,7 @@ function planSvg() {
   const h = HOUSE_ROOM.level + CUT, cells = STATIC.concat(...MOVING.values()), glass = matKey(M.glass);
   scene.updateMatrixWorld(true);
   const toHouse = new THREE.Matrix4().copy(VIEW.root.matrixWorld).invert(), meshes = [];
-  FRAME.traverse(o => { if (o.isMesh && !o.userData.owners && (o.userData.base || o.material) !== M.sky && !inLayer(o, 'installations') && !ofRoom(o)) meshes.push(o); });
+  FRAME.traverse(o => { if (o.isMesh && !o.userData.owners && !inLayer(o, 'installations') && !ofRoom(o)) meshes.push(o); });
   const shapes = cells.filter(c => c.element === 'fixture' && !c.layers.some(k => k === 'L:installations' || ROOM_KEYS.has(k))).map(c => CORE.plan.solidShape(c, c.material === glass))
     .concat(meshes.map(o => CORE.plan.meshShape(o, toHouse, (o.userData.base || o.material).transparent)));
   const rects = HOUSE_ROOM.inside, extent = HOUSE_ROOM.box.slice(0, 4), inside = [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...rects.map(q => q[k])));
@@ -1689,7 +1634,7 @@ const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state:
 CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
 CORE.ui.themeButton($('themebtn'));
 CORE.ui.panelToggle(stage);
-CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); setLighting(dayOrNight()); }, HOUSE_ROOM.inside);
+CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); applyNight(); }, HOUSE_ROOM.inside);
 const showPanel = () => { VIEW_STATE.tab = CORE.ui.panelTabs($('tabs'), $('settings'), MODES[VIEW_STATE.mode], VIEW_STATE.tab, t => { VIEW_STATE.tab = t; saveView(); showPanel(); },
   p => p === 'style' && !MODES[VIEW_STATE.mode].menu) ?? VIEW_STATE.tab; };
 function setMode(m) {
@@ -1728,7 +1673,7 @@ syncDecor();
    ========================================================================== */
 
 placeSun();
-setLighting(dayOrNight());
+applyNight();
 VIEW.enableNavigation();
 VIEW.start();
 goTo('overview', true);
@@ -1759,7 +1704,7 @@ CORE.ui.appMenu($('apps'), APPS, 'bathroom', '../', () => VIEW_STATE.mode);
 setMode(CORE.ui.askedMode(MODES) || VIEW_STATE.mode);
 loading.hidden = true;
 // for inspection in the browser console
-window.bath = { state, VIEW, FRAME, scene, camera, controls, renderer, goTo, setLighting, setStyle, setMode, planSvg, invalidate, doors, cutaways, STATIC, MOVING, G };
+window.bath = { state, VIEW, FRAME, scene, camera, controls, renderer, goTo, applyNight, setStyle, setMode, planSvg, invalidate, doors, cutaways, STATIC, MOVING, G };
 })();
 </script>
 </body>

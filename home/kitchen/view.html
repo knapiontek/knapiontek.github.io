@@ -220,9 +220,7 @@ const shown = layers => layers.every(k => LAYER[k] ? layerOn(k) : k === 'cup' ||
    units of three.js (intensities with falloff over distance). */
 const VIEW_3D = Object.values(HOUSE.views).find(v => v.menu), HL = VIEW_3D.light;
 const SUN = CORE.ui.sunStore(HL.sun);
-const LIGHT = { exposure: 1.05, fog: HL.fog,
-  sun: Object.assign({}, HL.sun, { intensity: 2.6, reach: 6 }),
-  sky: Object.assign({}, HL.sky, { color: '#f4f6f9', groundColor: '#8a8178', intensity: 1.5 }) };
+const LIGHT = HouseClip.insideLight(HOUSE);   // the house's light seen from inside, as every room's
 const B = ROOM.box, centre = [(B[0] + B[1]) / 2, (B[2] + B[3]) / 2, LEVEL + 1000];
 const V = CORE.createView({ canvas: $('gl'), stage: $('stage'), materials: LIB, textures: TEX, light: LIGHT, edges: VIEW_3D.edges,
   body: [[B[0], B[2], LEVEL], [B[1], B[3], LEVEL + CEILING]], sunCentre: centre });

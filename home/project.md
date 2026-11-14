@@ -132,6 +132,9 @@ bathroom  ──► core, library, house
 2. ✓ **Wiring in apps.js**: an application lists `parts`, the files that build its part. The house view loads them for every application that has them; they register through the contract.
 3. ✓ **Kitchen**: its solids, moving fronts and click out of view.html into kitchen/parts.js, used by its own page and by the house. Its page stays as it is (checked against the current one).
 4. **Bathroom rewritten**: mm in house axes (not metres in its own frame), solids and materials of core and the library, core's light, the products in the library. No design engine (§ 2): its parts and their sizes are written in data.js, the code draws and lists them. Its page and plans stay as they are (checked).
+   - ✓ stage 1: core's light (the house's light seen from inside, house.js light.inside, the same as the kitchen's through house-clip.js insideLight), the lamps by night as the kitchen's, the materials as definitions of core (b.*). Left: the generated textures of the tiles and the fluted glass.
+   - stage 2: every size in mm in house axes (no frame in metres), the round details too.
+   - stage 3: the parts and their sizes written in data.js; the code only draws and lists them.
 5. **Both bathrooms in the house** through the same contract; then house/rules.md §6 changes.
 6. **A check of the dependencies** in Test: no folder refers to a sub-project except apps.js; no sub-project refers to another.
 7. **Speed**: see Difficulties, the amount of data.
@@ -192,6 +195,10 @@ Open:
 - hinges were mentioned, but with no fronts nothing needs them: to confirm.
 
 No engine: the kitchen needed one (thousands of parts, appliances, drilling); the wardrobes and the bathrooms are plain shelving and wall cabinets. Their design is written as data, part by part with its sizes (a standard carcass: sides, top and bottom, back, shelves), by the LLM and corrected by the owner. The code only draws the parts with core, in house axes and mm, and lists them in Info (Kosztorys, Lista cięć of core/info.js).
+
+### 3. Names of the files (to decide)
+
+The names no longer say what a file does: parts.js (core/ and kitchen/) sounds like a store of parts, but it draws; and the others will follow (view.js, engine.js, design.js ...). All the files of the sub-projects get names that say what they hold or do (data, compute, draw, page), the same in every folder. Not decided yet; done after the bathroom, in one step, with every reference (apps.js, the pages, the MD files).
 
 ## Code style (every folder)
 

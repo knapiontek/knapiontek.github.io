@@ -350,7 +350,8 @@ window.HOUSE = {
      "groundColor": "#a9a596",
      "gradient": [[0, "#5f8fc4"], [0.32, "#9dbfe0"], [0.49, "#e4ecef"], [0.51, "#b7bfae"], [1, "#6f7a5e"]]
     },
-    "fog": {"color": "#dfe7ea", "near": 60000, "far": 160000}
+    "fog": {"color": "#dfe7ea", "near": 60000, "far": 160000},
+    "inside": {"exposure": 1.05, "sun": {"intensity": 2.6, "reach": 6}, "sky": {"color": "#f4f6f9", "groundColor": "#8a8178", "intensity": 1.5}}
    },
    "cameras": {
     "all": [

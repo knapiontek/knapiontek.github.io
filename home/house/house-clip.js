@@ -103,5 +103,12 @@ function roomsFor(HOUSE, MODEL, href) {
   return out;
 }
 
-root.HouseClip = { roomsFor };
+/* the light of a room seen from inside (a sub-project's page): the house's sky, fog and sun, with the house's own
+   settings for an interior (house.js light.inside) */
+function insideLight(HOUSE) {
+  const L = Object.values(HOUSE.views).find(v => v.menu).light, I = L.inside;
+  return { exposure: I.exposure, fog: L.fog, sun: Object.assign({}, L.sun, I.sun), sky: Object.assign({}, L.sky, I.sky) };
+}
+
+root.HouseClip = { roomsFor, insideLight };
 })(typeof window !== 'undefined' ? window : globalThis);
