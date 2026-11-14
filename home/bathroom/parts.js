@@ -222,16 +222,28 @@ function make(env) {
     }
     for (const k of ['b.glass', 'b.acrylic', 'b.basinIn:' + f]) V.material(k).side = THREE.DoubleSide;
 
-    /* ---------- the room (its own page): the house's walls, slabs, floor and window, as they are. A wall face open to the
-       room takes the wall tiles (in the shower the shower tiles), the top of the floor slab the floor tiles; cells are split
-       at the shower's edges so that every face has one finish. Each wall is a record that hides while the camera is behind
-       it (view.html); the longest one of a side is its record (wall-x, wall+y ...), its fixtures hide with it. ---------- */
+    /* ---------- the tiles: finishes of the room's faces (core/mesh.js finishPieces): the walls and the floor of every
+       rectangle of its floor area, the reveals of its doors and windows and the floor under a door (the opening inside the
+       room's box); in the shower zone the shower's (a later rule wins). The same on this page and in the house, which lays
+       them on its own faces. */
+    const Z = M.showerZone, B = ROOM.box, SIDES = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]];
+    const cross = (q, r) => { const o = [Math.max(q[0], r[0]), Math.min(q[1], r[1]), Math.max(q[2], r[2]), Math.min(q[3], r[3])]; return o[0] < o[1] && o[2] < o[3] ? o : null; };
+    const tiled = (q, z, normals, surface, shower) => {
+      const inZone = cross(q, Z), rule = (box, s) => normals.map(n => ({ box: box.concat(z), n, material: tileKey(s) }));
+      return rule(q, surface).concat(inZone ? rule(inZone, shower) : []);
+    };
+    const FINISHES = ROOM.inside.flatMap(r => tiled(r, [ROOM.level, ROOM.level + 9990], SIDES, 'wall', 'shower'))
+      .concat(ROOM.openings.flatMap(o => { const q = cross(o.b, B); return q ? tiled(q, [o.b[4], o.b[5]], SIDES.concat(o.b[4] > ROOM.level + 1 ? [[0, 0, 1]] : [], [[0, 0, -1]]), 'wall', 'shower') : []; }))
+      .concat(ROOM.inside.flatMap(r => tiled(r, [ROOM.level, ROOM.level + 9990], [[0, 0, 1]], 'floor', 'showerFloor')))
+      .concat(ROOM.openings.filter(o => o.b[4] <= ROOM.level + 1).flatMap(o => { const q = cross(o.b, B); return q ? tiled(q, [o.b[4], o.b[5]], [[0, 0, 1]], 'floor', 'showerFloor') : []; }));   // the floor runs on under a door
+
+    /* ---------- the room (its own page): the house's walls, slabs, floor and window, as they are, tiled by FINISHES. Each
+       wall is a record that hides while the camera is behind it (view.html); the longest one of a side is its record
+       (wall-x, wall+y ...), its fixtures hide with it. ---------- */
     const ROOM_CELLS = [], RECORDS = [];
     if (opts.room) {
       const ROLE_LAYER = { wall: 'walls', window: 'walls', floor: 'floor', ceiling: 'ceiling' };
       const OUT = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+z': [0, 0, 1], '-z': [0, 0, -1] };
-      const B = ROOM.box, Z = M.showerZone, ZONE = GE.prism([Z[0], Z[1], Z[2], Z[3], -GE.INF, GE.INF]);
-      const onBox = (n, P) => n.some((c, k) => Math.abs(c) > .99 && P.every(p => Math.abs(p[k] - B[2 * k]) < .5 || Math.abs(p[k] - B[2 * k + 1]) < .5));
       const byId = new Map(), longest = {};
       for (const o of ROOM.objects.slice().sort((a, b) => (a.role === 'window') - (b.role === 'window'))) {
         let rec = o.role === 'window' ? byId.get(o.host) : null;
@@ -242,18 +254,10 @@ function make(env) {
           byId.set(o.id, rec); RECORDS.push(rec);
           if (o.role === 'wall' && (!longest[o.side] || longest[o.side].length < rec.length)) longest[o.side] = rec;
         }
-        const out = OUT[o.side];
         for (const c of o.cells) {
-          const tiles = c.layers.includes('walls'), floor = o.role === 'floor';
-          const parts = tiles || floor ? [[GE.prismIntersect(c.S, ZONE), true], ...GE.prismMinus(c.S, ZONE).map(S => [S, false])] : [[c.S, false]];
-          for (const [S, shower] of parts) {
-            if (!S || GE.emptyPrism(S)) continue;
-            const cell = Object.assign({}, c, { S, raw: c.material });   // raw: a face against another solid stays bare
-            delete cell.finish;
-            if (tiles) cell.faceMaterial = (n, P) => (out.reduce((s, v, k) => s + v * n[k], 0) > .5 || onBox(n, P) ? c.material : tileKey(shower ? 'shower' : 'wall'));
-            if (floor) cell.faceMaterial = n => (n[2] > .5 ? tileKey(shower ? 'showerFloor' : 'floor') : c.material);
-            rec.cells.push(cell); ROOM_CELLS.push(cell);
-          }
+          const cell = Object.assign({}, c, { raw: c.material });   // raw: a face against another solid stays bare
+          delete cell.finish;
+          rec.cells.push(cell); ROOM_CELLS.push(cell);
         }
       }
       RECORDS.forEach((r, i) => { r.key = 'C:' + (Object.entries(longest).find(([, x]) => x === r) ? 'wall' + r.side : 'room' + i); for (const c of r.cells) c.layers = [r.key]; });
@@ -274,8 +278,9 @@ function make(env) {
       return cell;
     }
     const STATIC = ROOM_CELLS.concat(M.solids.filter(s => !s.mover).map(cellOf));
-    const pieces = CORE.mesh.piecesOf(STATIC);
-    V.buildMeshes(pieces); V.buildEdges(pieces);
+    const ROOM_SET = new Set(ROOM_CELLS), raw = CORE.mesh.piecesOf(STATIC);
+    const pieces = ROOM_CELLS.length ? CORE.mesh.finishPieces(raw, FINISHES, p => ROOM_SET.has(p.cell)) : raw;
+    V.buildMeshes(pieces); V.buildEdges(raw);
 
     const reduced = V.reducedMotion, MOVERS = [];
     for (const m of M.movers) {
@@ -338,7 +343,7 @@ function make(env) {
     }
     function click(ray) { const m = moverAlong(ray); if (!m) return false; toggle(m); return true; }
 
-    return { solids: STATIC.filter(c => !ROOM_CELLS.includes(c)), shown, showDetails, click, night,
+    return { solids: STATIC.filter(c => !ROOM_CELLS.includes(c)), finishes: FINISHES, shown, showDetails, click, night,
       ROOM, ROOM_CELLS, RECORDS, STATIC, MOVERS, DETAILS, LAMPS, toggle, moverAlong, setTiles, tileLines, tileMaterials, tileSize,
       material: name => V.material(keyOf(name, f)), METALS, cameras: M.cameras, cuts: M.cuts };
   }

@@ -11,6 +11,7 @@
             solid and detail (the house: the part's layer and the room's floor).
    What build returns, every part:
      solids                 the static solids (for the caps of a cut)
+     finishes               finishes of its room on the host's faces, as data (core/mesh.js finishPieces): the bathrooms' tiles
      shown(layers)          the part's own layers as a host without its layer panel shows them (all on)
      showDetails(shown)     the details (plain meshes) by the host's shown
      click(ray)             a click: true if it hit a moving part of this part (it opens or closes)

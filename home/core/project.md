@@ -32,7 +32,7 @@ cells ─► mesh.js ─► pieces ─► scene.js ─► view
 A cell is a solid with what it is:
 
 - **S**: a prism along x over a convex polygon in y-z (a box, cut at most by lines z = a + s·y). Units mm; x along, y across, z up. The scene is in metres with y up.
-- **material**, or **faceMaterial(n, points)**: a material per face by its normal and corners (a board's banded and bare edges, tiles on a wall face open to the room).
+- **material**, or **faceMaterial(n, points)**: a material per face by its normal and corners (a board's banded and bare edges, a board's top along the grain).
 - **layers**: shown only while all are on. **edges**: whether it draws edge lines.
 - Optional: **raw** (the bare material under a finish) and **finish** (its layer); **walkable**; **part** (one board or piece: a joint between two parts in one plane gets a line, one part has none); **batch** (kept in a mesh of its own, so a page can recolour it, e.g. a selected cabinet).
 
@@ -41,6 +41,7 @@ A cell is a solid with what it is:
 - Faces that meet share the same welded point (0.05 mm).
 - A face loses what an opposite face of its own group (its layers) covers. A part covered by another group is kept but shown only while that group is hidden.
 - A finished face against another solid shows its bare material.
+- **Finishes** of a room on its host's faces, as data: {box, n, material, finish?}: the faces on the side of box that n looks from, inside it, take material; finish, a layer that switches it (finishPieces). The bathrooms' tiles on the house's walls.
 - Every triangle remembers its cell, so a pick can name what is under the cursor.
 
 ## Scene

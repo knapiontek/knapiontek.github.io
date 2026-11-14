@@ -46,6 +46,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 - **Prawe górne menu**: tryby 3D, 2D, Info, Test.
 - **3D, góra**: Parter, Piętro, Dach; drugi wiersz, gdy wybrano pomieszczenie.
 - **3D, dół**: Spacer i kamery domu oraz otwartej kondygnacji.
+- **Spacer**: ciało to koło (walk.radius); ściany i stałe elementy domu je odpychają najkrótszą drogą, więc idzie się wzdłuż ściany, a przy ościeżu skręca w przejście. Przez drzwi (przejście) prowadzi posadzka. Krok jest dzielony, żeby nie przejść przez ścianę. Meble nie zatrzymują (jeszcze).
 - **Poruszanie**: kółko przybliża do miejsca pod kursorem. Z zewnątrz obrót jest wokół środka domu; w środku wokół tego, co jest na środku widoku. Punkt obrotu nigdy nie zostaje za kamerą.
 - **Panel**: Warstwy (przekrój tylko przy otwartej kondygnacji, warstwy), Wykończenie (posadzki pomieszczeń). ☀ i ? w prawym dolnym rogu; ☀ tylko w 3D.
 - **Przekrój**: płaszczyzna, która tnie model. Suwak przesuwa się o pełne kroki od 500 mm nad podłogą; ostatni krok to góra kondygnacji, gdzie cięcia nie ma. Przecięte bryły są zamknięte w kolorze przeciętego materiału, także gdy cięcie wypada dokładnie na górze bryły (nadproże okna albo drzwi).
@@ -65,7 +66,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 - Dom wygrywa: kuchnia i łazienki biorą pomieszczenie z domu takie, jakie jest (ściany, strop, posadzkę, okna, dach), przycięte do obszaru, który dom podaje dla pomieszczenia. Nie rysują ani nie mierzą własnego pomieszczenia i niczego w nim nie przesuwają.
 - Te same osie wszędzie: x wzdłuż domu, y w poprzek, z w górę, mm i położenia domu. Podprojekt może liczyć w ramie swojej grupy albo pomieszczenia, ale ta rama jest tylko obrócona i przesunięta w osiach domu (nigdy odbita), a strona rysuje w osiach domu.
 - Podprojekt rysuje core, tak jak dom (§ 2, Rysowanie).
-- Płytki łazienek leżą na ścianach domu; posadzka podprojektu leży na płycie domu, nigdy w jej płaszczyźnie.
+- Płytki łazienek leżą na ścianach domu: część podaje je jako wykończenia ścian swojego pomieszczenia (dane: pole, kierunek, materiał), dom kładzie je na swoich ścianach i ościeżach i pokazuje z warstwą części. Posadzkę domu rysuje dom (Wykończenie). Posadzka podprojektu leży na płycie domu, nigdy w jej płaszczyźnie.
 - Do widoku domu trafiają z podprojektu tylko jego meble jako część (wyżej); pomieszczenie rysuje zawsze dom.
 
 ## 7. Kontrole (Test)

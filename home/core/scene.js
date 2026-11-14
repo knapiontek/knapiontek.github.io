@@ -116,7 +116,7 @@ CORE.createView = function (opts) {
      cabinet). parent: the root (model mm), or a group under it that moves (a door). */
   const GROUPS = [];                       // {mesh, cell, layers, finish: {layer, on, off} | null}
   function buildMeshes(pieces, parent = root) {
-    const batches = new Map();
+    const batches = new Map(), made = [];
     for (const f of pieces) {
       const k = f.group + '|' + f.material + '|' + (f.cell.finish || '') + '|' + (f.cell.raw || '') + '|' + (f.cell.batch || '');
       if (!batches.has(k)) batches.set(k, { cell: f.cell, material: f.material, batch: new Batch() });
@@ -125,8 +125,15 @@ CORE.createView = function (opts) {
     for (const { cell, material: key, batch } of batches.values()) {
       const mesh = batch.mesh(material(key)); parent.add(mesh);
       const switchable = cell.finish && key !== cell.raw;   // a finished face shows its bare material while its finish layer is off
-      GROUPS.push({ mesh, cell, layers: cell.layers, finish: switchable ? { layer: cell.finish, on: material(key), off: material(cell.raw) } : null });
+      const g = { mesh, cell, layers: cell.layers, finish: switchable ? { layer: cell.finish, on: material(key), off: material(cell.raw) } : null };
+      GROUPS.push(g); made.push(g);
     }
+    return made;
+  }
+  /* meshes of buildMeshes taken back (a host drawn again with the finishes of a part) */
+  function removeMeshes(made) {
+    for (const g of made) { g.mesh.parent.remove(g.mesh); g.mesh.geometry.dispose(); GROUPS.splice(GROUPS.indexOf(g), 1); }
+    redraw();
   }
 
   /* Edges from the topology of the pieces. For each segment between two welded points and each group on it: two pieces
@@ -340,13 +347,32 @@ CORE.createView = function (opts) {
     return best;
   }
   const STEP_CLEAR = 10;                   // mm over a step: what is lower is walked onto, not bumped into
+  const clamp = (v, a, b) => Math.max(a, Math.min(v, b));
+  const inReach = (o, z) => { const C = W.config; return o.z[1] >= z + C.step + STEP_CLEAR && o.z[0] <= z + C.eye + C.headroom; };
   function blocked(x, y, z) {
-    const C = W.config, lo = z + C.step + STEP_CLEAR, hi = z + C.eye + C.headroom;
-    return OBSTACLES.some(o => {
-      if (o.z[1] < lo || o.z[0] > hi) return false;
-      const ys = o.S.poly.map(p => p[0]), cx = Math.max(o.S.x1, Math.min(x, o.S.x2)), cy = Math.max(Math.min(...ys), Math.min(y, Math.max(...ys)));
-      return (cx - x) ** 2 + (cy - y) ** 2 < C.radius ** 2;
-    });
+    const r = W.config.radius - 1;         // what pushOut leaves touching is free
+    return OBSTACLES.some(o => inReach(o, z) && (clamp(x, o.x1, o.x2) - x) ** 2 + (clamp(y, o.y1, o.y2) - y) ** 2 < r * r);
+  }
+  /* the body (a circle of the radius) pushed out of every solid it overlaps, by the shortest way: along a wall it slides,
+     at the corner of a jamb it turns into the doorway */
+  function pushOut(x, y, z) {
+    const r = W.config.radius;
+    for (let round = 0; round < 4; round++) {
+      let moved = false;
+      for (const o of OBSTACLES) {
+        if (x < o.x1 - r || x > o.x2 + r || y < o.y1 - r || y > o.y2 + r || !inReach(o, z)) continue;
+        const cx = clamp(x, o.x1, o.x2), cy = clamp(y, o.y1, o.y2), dx = x - cx, dy = y - cy, d = Math.hypot(dx, dy);
+        if (d >= r) continue;
+        if (d > 1e-6) { x = cx + dx / d * r; y = cy + dy / d * r; }
+        else {                             // the centre inside: out by the nearest side
+          const [, ox, oy] = [[x - o.x1, -1, 0], [o.x2 - x, 1, 0], [y - o.y1, 0, -1], [o.y2 - y, 0, 1]].sort((a, b) => a[0] - b[0])[0];
+          x = ox ? (ox < 0 ? o.x1 : o.x2) + ox * r : x; y = oy ? (oy < 0 ? o.y1 : o.y2) + oy * r : y;
+        }
+        moved = true;
+      }
+      if (!moved) break;
+    }
+    return [x, y];
   }
   function placeWalkCamera() {
     const h = walk.heading * DEG, p = walk.pitch * DEG, eye = walk.z + W.config.eye;
@@ -378,10 +404,13 @@ CORE.createView = function (opts) {
     for (const k of walk.keys) { const m = WALK_KEYS[k](dt, fast); if (m) { fwd += m[0]; side += m[1]; } }
     if (fwd || side) {
       const h = walk.heading * DEG, dx = fwd * Math.cos(h) - side * Math.sin(h), dy = fwd * Math.sin(h) + side * Math.cos(h);
-      const v = C.speed * fast * dt / Math.hypot(dx, dy), nx = walk.x + dx * v, ny = walk.y + dy * v;
-      for (const [tx, ty] of [[nx, ny], [nx, walk.y], [walk.x, ny]]) {   // slide along a wall
-        const g = groundAt(tx, ty, walk.z);
-        if (g !== null && !blocked(tx, ty, g)) { Object.assign(walk, { x: tx, y: ty, z: g }); break; }
+      const v = C.speed * fast * dt / Math.hypot(dx, dy), steps = Math.ceil(Math.hypot(dx, dy) * v / (C.radius / 3));   // never through a wall
+      for (let i = 0; i < steps; i++) {
+        const g0 = groundAt(walk.x + dx * v / steps, walk.y + dy * v / steps, walk.z);
+        if (g0 === null) break;
+        const [tx, ty] = pushOut(walk.x + dx * v / steps, walk.y + dy * v / steps, g0), g = groundAt(tx, ty, walk.z);
+        if (g === null || blocked(tx, ty, g)) break;
+        Object.assign(walk, { x: tx, y: ty, z: g });
       }
     }
     placeWalkCamera();
@@ -389,7 +418,7 @@ CORE.createView = function (opts) {
   function enableWalk(w) {
     W = w;
     Object.assign(walk, { x: w.config.start.x, y: w.config.start.y, z: 0, heading: w.config.start.heading, pitch: 0 });
-    OBSTACLES = w.solids.map(c => ({ S: c.S, z: zRange(c.S) }));
+    OBSTACLES = w.solids.map(c => { const ys = c.S.poly.map(p => p[0]); return { x1: c.S.x1, x2: c.S.x2, y1: Math.min(...ys), y2: Math.max(...ys), z: zRange(c.S) }; });
     GROUND = w.ground;
     const keyName = e => e.key.length === 1 ? e.key.toLowerCase() : e.key;
     window.addEventListener('keydown', e => {
@@ -452,7 +481,7 @@ CORE.createView = function (opts) {
   const run = () => requestAnimationFrame(frame);
 
   return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, CUT, CLIP, hash01, canvasTexture, loadImage, material, useMaterial, capMaterial,
-    buildMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion, addCaps, buildCaps, setCut,
+    buildMeshes, removeMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion, addCaps, buildCaps, setCut,
     onClick, enableNavigation, walk, enableWalk, startWalk, stopWalk, onFrame, start, run, get hemi() { return hemi; }, get sun() { return sun; } };
 };
 })(window.CORE = window.CORE || {});

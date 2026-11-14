@@ -125,6 +125,27 @@ function conform(pieces) {
 /* the drawn pieces of a set of cells */
 const piecesOf = cells => conform(visiblePieces(cells.flatMap(cellFaces)));
 
-CORE.mesh = { sub3, dot3, cross3, unit3, WELD_TOL, weld, noRepeats, Batch, cellFaces, visiblePieces, conform, piecesOf,
+/* Finishes of a room on the faces of its host (tiles on the walls and the floor), as data: [{box, n, material, finish?}].
+   A rule covers the faces lying on the side of box that n faces from (n = +x: the plane x = box x1, the face looks into
+   the box), inside box; the part of such a piece inside takes material. finish: a layer that switches it (off: the face's
+   own material). A later rule wins. pick(piece): the pieces a rule may cover (the host's own). Seen pieces only. */
+function finishPieces(pieces, finishes, pick = () => true) {
+  let out = pieces;
+  for (const F of finishes) {
+    const k = F.n.findIndex(v => Math.abs(v) > 0.5), s = Math.sign(F.n[k]), plane = F.box[2 * k + (s > 0 ? 0 : 1)];
+    const [a, b] = [0, 1, 2].filter(i => i !== k), R = [[F.box[2 * a], F.box[2 * b]], [F.box[2 * a + 1], F.box[2 * b]], [F.box[2 * a + 1], F.box[2 * b + 1]], [F.box[2 * a], F.box[2 * b + 1]]];
+    const to3 = q => { const v = []; v[k] = plane; v[a] = q[0]; v[b] = q[1]; return weld(v); };
+    out = out.flatMap(f => {
+      if (f.cover || Math.abs(f.n[k] - s) > 1e-6 || f.poly.some(p => Math.abs(p[k] - plane) > WELD_TOL) || !pick(f)) return [f];
+      const P = ccw(f.poly.map(p => [p[a], p[b]])), I = intersect2(P, R, WELD_TOL);
+      if (!I) return [f];
+      const piece = (Q, more) => Object.assign({}, f, { poly: noRepeats(Q.map(to3)) }, more);
+      return [piece(I, { material: F.material, cell: F.finish ? Object.assign({}, f.cell, { finish: F.finish, raw: f.material }) : f.cell })].concat(minus2(P, R, WELD_TOL).map(Q => piece(Q, {})));
+    });
+  }
+  return conform(out.filter(f => f.poly.length >= 3));
+}
+
+CORE.mesh = { sub3, dot3, cross3, unit3, WELD_TOL, weld, noRepeats, Batch, cellFaces, visiblePieces, conform, piecesOf, finishPieces,
   get pointCount() { return pointCount; } };
 })(window.CORE = window.CORE || {});

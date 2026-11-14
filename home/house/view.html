@@ -114,7 +114,7 @@ const { root, lin, redraw, CLIP, hash01, loadImage, renderer } = V;
 
 const ALL_CELLS = CELLS.concat(ROOF_CELLS, STAIR_CELLS, FIXTURES, SITE_CELLS);
 const PIECES = piecesOf(ALL_CELLS);
-V.buildMeshes(PIECES);
+let HOUSE_MESHES = V.buildMeshes(PIECES);   // drawn again with the finishes of the parts (refinish)
 V.buildEdges(PIECES);
 V.addLight();
 
@@ -317,7 +317,7 @@ function markRoom() {
 function applyView() {
   const h = cutHeight();
   V.setCut(h);
-  V.showPieces(shownAll, k => !LAYER[k] || layerOn(k));
+  V.showPieces(shownAll, k => (PART_LAYER[k] ? partOn(k) : !LAYER[k] || layerOn(k)));
   for (const b of builtParts()) b.showDetails(shownAll);
   for (const groups of TILE_MESHES.values()) for (const g of groups) {
     g.mesh.visible = shown(g.layers);
@@ -345,6 +345,12 @@ function partsPanel() {
   $('partsNote').textContent = PARTS.filter(p => p.status).map(p => `${p.name}: ${p.status}`).join(' · ');
   $('partsNote').hidden = !$('partsNote').textContent;
 }
+/* the finishes of the loaded parts (the bathrooms' wall tiles) on the house's own faces, shown with the part's layer */
+function refinish() {
+  const finishes = PARTS.filter(p => p.built).flatMap(p => p.built.flatMap(b => b.finishes.map(F => Object.assign({ finish: p.layer }, F))));
+  V.removeMeshes(HOUSE_MESHES);
+  HOUSE_MESHES = V.buildMeshes(CORE.mesh.finishPieces(PIECES, finishes));
+}
 function loadParts() {
   for (const p of PARTS) {
     if (p.built || p.loading || !partOn(p.layer)) continue;
@@ -353,6 +359,7 @@ function loadParts() {
       const made = part.make({ materials: MATERIALS_3D, textures: TEX, houseModel: MODEL });
       p.built = made.rooms().map(r => made.build(V, Object.assign({}, r.opts, { layers: [p.layer, r.floor] })));
       for (const b of p.built) b.night(!!SUN.state.night);
+      if (p.built.some(b => b.finishes.length)) refinish();
       p.status = ''; done();
     }, 30))).catch(e => { p.status = 'błąd: ' + e.message; }).then(() => { partsPanel(); applyView(); });
   }
@@ -510,7 +517,9 @@ V.onClick(ray => {
   if (hit && (h === null || hit.point.y / MM_TO_M <= h)) selectRoom(hit.object.userData.room);
 });
 V.enableNavigation();
-V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, ground: ALL_CELLS.filter(c => c.walkable), startLevel: FLOORS[0].level, pad: $('pad'),
+/* the walk stands on the walkable solids and, through a passage (a door), on its floor: the floor runs on through it */
+const PASSAGE_FLOORS = PASSAGES.map(o => ({ S: CORE.geometry.prism([o.b[0], o.b[1], o.b[2], o.b[3], o.b[4] - 1, o.b[4]]) }));
+V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, ground: ALL_CELLS.filter(c => c.walkable).concat(PASSAGE_FLOORS), startLevel: FLOORS[0].level, pad: $('pad'),
   canStart: is3d, onToggle: () => { bottomMenu(); applyView(); }, home: () => VIEW_3D.cameras.all[0] });
 
 /* ================= 10. 2D PLAN (core/plan.js) =================

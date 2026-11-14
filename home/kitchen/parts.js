@@ -845,7 +845,7 @@ function make(env) {
       toggle(m);
       return true;
     }
-    return { solids: STATIC.filter(c => !c.layers.some(k => k.startsWith('o:'))), shown, showDetails, click, night,
+    return { finishes: [], solids: STATIC.filter(c => !c.layers.some(k => k.startsWith('o:'))), shown, showDetails, click, night,
       STATIC, MOVERS, DETAILS, ENVELOPES, LAMPS, LAMP_MATERIALS, UNDRAWN, SIDES, PIECES, carcasses, floorTexture, ownerAlong, toggle };
   }
 
