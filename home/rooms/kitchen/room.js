@@ -1,19 +1,19 @@
-/* kitchen/furniture.js: the kitchen's furniture, an implementation of the interface ../furniture.js: the same solids, moving
-   fronts and details in its own page (view.html, with its room) and in the house (without: the house draws its own). Everything
-   comes from design.dat.js, view.dat.js and engine.js and the library; nothing is made up here to fit.
+/* rooms/kitchen/room.js: the kitchen's furniture, an implementation of the interface ../../room.js: the same solids, moving
+   fronts and details in its own page (index.html, with its room) and in the house (without: the house draws its own). Everything
+   comes from design.dat.js, scene.dat.js and model.js and the library; nothing is made up here to fit.
    Units are mm in house axes (x along the house, y across, z up); inside a group the engine keeps u along the group, v up
    from the floor, n out from the carcass backs. */
 (function (root) {
 'use strict';
 
-/* env: {materials, textures, houseModel} (../furniture.js) */
+/* env: {materials, textures, houseModel} (../../room.js) */
 function make(env) {
   const CORE = root.CORE, G = CORE.geometry, { piecesOf } = CORE.mesh;
   const KE = root.KitchenEngine, SCENE = root.KITCHEN_VIEW, TEXTURES = root.LIBRARY_TEXTURES, LIBRARY_PRODUCTS = root.LIBRARY_PRODUCTS, HOUSE = root.HOUSE;
   const project = KE.withLibrary(root.KITCHEN_DESIGN, LIBRARY_PRODUCTS.boards), APPLIANCES = KE.appliances(project, LIBRARY_PRODUCTS.appliances);
   const model = KE.build(project, APPLIANCES), settings = project.settings;
-  const ROOM = root.HouseClip.roomsFor(HOUSE, env.houseModel, 'kitchen/view.html')[0];
-  if (!ROOM) throw new Error('W house.dat.js żadne pomieszczenie nie prowadzi do kitchen/view.html.');
+  const ROOM = root.HouseShell.roomsFor(HOUSE, env.houseModel, 'rooms/kitchen/index.html')[0];
+  if (!ROOM) throw new Error('W building.dat.js żadne pomieszczenie nie prowadzi do rooms/kitchen/index.html.');
   const LEVEL = ROOM.level, CEILING = ROOM.ceiling - ROOM.level;   // v of the underside of the slab over the room
   const DEG = Math.PI / 180;
 
@@ -21,7 +21,7 @@ function make(env) {
   const T = model.thickness, shakerRail = settings.front.shakerRail, HW = SCENE.hardware;
 
   /* ================= 1. WHERE THE GROUPS STAND =================
-     A group stands at its placement (view.dat.js): fronts facing one of ±x, ±y; u runs along it, n out of its wall. A point
+     A group stands at its placement (scene.dat.js): fronts facing one of ±x, ±y; u runs along it, n out of its wall. A point
      (u, v, n) of group r is O + u·U + n·N at height LEVEL + v. U is N turned a quarter to the left, so (U, z, N) is a
      right-handed frame: a group is turned, never mirrored. */
   const GROUP_IDS = Object.keys(SCENE.placement);
@@ -59,7 +59,7 @@ function make(env) {
 
   /* ================= 2. MATERIALS =================
      One library for core: the house's materials (the room keeps them) and the kitchen's, prefixed k. A board of design.dat.js
-     is its decor photo (../library/textures) or its colour, a lacquer a clear coat; its bare edge is the speckled core of the board. */
+     is its decor photo (../../library/textures) or its colour, a lacquer a clear coat; its bare edge is the speckled core of the board. */
   const K = key => 'k.' + key;
   const LIB = env.materials;                // the page's library for core: the kitchen's keys are added
   const TEX = env.textures;                 // core textures: key -> {faces, size [along, across] mm}
@@ -77,7 +77,7 @@ function make(env) {
   const METALS = SCENE.metals;
   const HOLE_COLORS = { hinge: { hex: '#f26b1d', label: 'zawiasy, odbojniki' }, shelfPin: { hex: '#22b35e', label: 'półki' }, runner: { hex: '#2f8fe0', label: 'szuflady, prowadnice' } };
   const holeUse = kind => (['cup', 'plate', 'bumper'].includes(kind) ? 'hinge' : kind);
-  const PANEL_COLORS = {                     // "Koloruj wg płyty": a colour per board id of engine.js
+  const PANEL_COLORS = {                     // "Koloruj wg płyty": a colour per board id of model.js
     side: ['#f0c27b', 'Bok'], bottomBoard: ['#8fcf9f', 'Wieniec dolny'], topBoard: ['#4fae6e', 'Wieniec górny'], crossRail: ['#f29e8e', 'Trawers'],
     fixedShelf: ['#5f95da', 'Półka stała'], adjustableShelf: ['#a9c9f2', 'Półka ruchoma'], pullOutShelf: ['#a9c9f2', 'Półka wysuwana'],
     backPanel: ['#c9b9ea', 'Plecy, ' + model.materials[model.materialFor.backPanel].label], backStrip: ['#e98fc4', 'Listwa tylna za listwą przednią'],
@@ -88,7 +88,7 @@ function make(env) {
   const metal = key => ({ color: METALS[key].color, roughness: METALS[key].roughness, metalness: METALS[key].metalness, reflect: 1.4 });
   Object.assign(LIB, Object.fromEntries(Object.entries({
     wall: { color: SCENE.room.wallColor, roughness: 0.95, reflect: 0.45 },   // plasterboard
-    floor: { color: '#cfcfcb', roughness: 0.55, reflect: 0.6 },              // its map: the floor tiles of view.dat.js (../library)
+    floor: { color: '#cfcfcb', roughness: 0.55, reflect: 0.6 },              // its map: the floor tiles of scene.dat.js (../../library)
     handle: metal(HW.handle.metal),
     steel: { color: '#d2d5d8', metalness: 1, roughness: 0.3 },
     glassBlack: { color: '#060708', roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, reflect: 1.1 },
@@ -191,7 +191,7 @@ function make(env) {
     const ALL_SIDES = Object.keys(SIDE_AXIS);
     const BOARD_CHECK = { drawerBottom: 'drawer', drawerBack: 'drawer', doorDrawerFront: 'drawer', doorDrawerBottom: 'drawer', doorDrawerSide: 'drawer',
       doorDrawerBack: 'drawer', backStrip: 'backStrip', adjustableShelf: 'shelf' };
-    /* a board of engine.js, with its banded edges; a carcass board is listed in its carcass */
+    /* a board of model.js, with its banded edges; a carcass board is listed in its carcass */
     function board(list, b, carcass, layer, mover) {
       const c = box(list, b.group, b.box, K(b.material), layer || b.layer || 'carcasses', { board: b, carcass, mover, check: BOARD_CHECK[b.id] || 'carcass',
         name: (carcass ? carcass.name + ' ' : '') + b.name + ' ' + b.a + ' × ' + b.b, batch: (carcass ? 'c' + carcass.id : 'b') + ':' + b.id });
@@ -315,7 +315,7 @@ function make(env) {
         if (type === 'worktop' || type === 'endPanel') {
           const piece = model.worktopPieces.find(p => p.item === item);
           if (piece) worktopPiece(r, piece, info);
-        } else if (type === 'strip') {                 // on edge in the plane of the fronts; lacquered faces and the edges engine.js names
+        } else if (type === 'strip') {                 // on edge in the plane of the fronts; lacquered faces and the edges model.js names
           const strip = model.strips.find(s => s.item === item), code = model.materialFor.strip;
           look(box(STATIC, r, [u0, u1, v0, v1, frontFace - settings.strip.depth, frontFace], K(code), 'strips', info), code, { banded: (strip && strip.lacqueredSides) || [] });
         } else if (type === 'frontPanel') {
@@ -333,7 +333,7 @@ function make(env) {
       }
     }
 
-    /* ---------- built-in oven and microwave (the library's appliances, where engine.js fits them: item.fit) ----------
+    /* ---------- built-in oven and microwave (the library's appliances, where model.js fits them: item.fit) ----------
        The body on its feet behind the carcass front, the fascia in front of it; the appliance door turns on its hinge edge.
        d = how far a detail stands out of the appliance face: n = 2·face − d. */
     function builtInAppliance(r, item, type) {
@@ -393,7 +393,7 @@ function make(env) {
       }
     }
 
-    /* ---------- sink (the library's sink) over the cut-out engine.js makes, with tap and a space-saving trap ---------- */
+    /* ---------- sink (the library's sink) over the cut-out model.js makes, with tap and a space-saving trap ---------- */
     const sinkCarcass = model.carcasses.find(c => c.sink), sinkGroup = sinkCarcass ? String(sinkCarcass.group) : null;
     const sinkCut = sinkGroup && (worktopOf(sinkGroup).cutouts || []).find(c => c.kind === 'sink');
     const sinkItem = sinkCut && itemsOf(sinkGroup).find(i => KE.hasTag(i, 'sink'));
@@ -498,7 +498,7 @@ function make(env) {
       if (carcass.fridge && carcass.boxes.some(b => b.fit)) fridgeBody(carcass);
       if (carcass.grille) plinthGrille(carcass);
     }
-    /* aluminium grille in the plinth under a carcass that needs air (engine.js carcass.grille) */
+    /* aluminium grille in the plinth under a carcass that needs air (model.js carcass.grille) */
     function plinthGrille(carcass) {
       const g = HW.plinthGrille, r = String(carcass.group), uc = (carcass.u0 + carcass.u1) / 2, w = Math.min(g.width, carcass.u1 - carcass.u0 - 80);
       const g0 = uc - w / 2, g1 = uc + w / 2, h0 = g.bottom, h1 = g.top, I = { name: 'Kratka wentylacyjna w cokole', part: onePart() };
@@ -507,7 +507,7 @@ function make(env) {
       z([g0, g0 + 5, h0 + 5, h1 - 5, plinthFace, plinthFace + 3]); z([g1 - 5, g1, h0 + 5, h1 - 5, plinthFace, plinthFace + 3]);
       for (let x = g0 + 17; x < g1 - 8; x += 12) z([x - 2, x + 2, h0 + 5, h1 - 5, plinthFace, plinthFace + 2]);   // louvres
     }
-    /* the built-in fridge-freezer where engine.js fits it, its doors at the carcass front */
+    /* the built-in fridge-freezer where model.js fits it, its doors at the carcass front */
     const fridgeDoorPlane = carcassFront - APPLIANCES.fridgeFreezer.doorDepth;
     function fridgeBody(carcass) {
       const A = APPLIANCES.fridgeFreezer, r = String(carcass.group), fit = carcass.boxes.find(b => b.fit).fit, I = { name: A.name };
@@ -743,7 +743,7 @@ function make(env) {
     model.boards.filter(b => b.id === 'pullOutShelf').forEach(pullOutShelf);
     buildLamps();
 
-    /* ---------- the room: the house's own solids (../house/house-clip.js), as they are. Each side of the room (a wall, the floor, the
+    /* ---------- the room: the house's own solids (../../house/shell.js), as they are. Each side of the room (a wall, the floor, the
        ceiling) is one object, hidden while the camera stands behind it; a window goes with its wall. The top of the floor
        slab shows the floor tiles chosen here. ---------- */
     const ROLE_LAYER = { wall: 'walls', floor: 'floor', ceiling: 'ceiling', window: 'window' };
@@ -861,7 +861,7 @@ const textures = () => Object.keys(root.KITCHEN_DESIGN.materials).map(key => roo
   .concat(root.KITCHEN_VIEW.floors.map(k => root.LIBRARY_PRODUCTS.tiles[k].texture));
 
 /* the implementation: its own page uses all of it, the house only what the interface names */
-const KitchenFurniture = { needs: ['../house/house-clip.js', 'design.dat.js', 'view.dat.js', 'engine.js'], textures, make };
-root.KitchenFurniture = KitchenFurniture;
-root.FURNITURE.register('kitchen', KitchenFurniture);
+const KitchenRoom = { needs: ['../../house/shell.js', 'design.dat.js', 'scene.dat.js', 'model.js'], textures, make };
+root.KitchenRoom = KitchenRoom;
+root.ROOM_INTERFACE.register('kitchen', KitchenRoom);
 })(window);

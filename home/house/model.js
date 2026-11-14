@@ -1,5 +1,5 @@
-/* engine.js: house.dat.js turned into solids (code, no data: it runs on house.dat.js every time). No THREE, no DOM:
-   view.html draws these solids, analysis.js checks them.
+/* model.js: building.dat.js turned into solids (code, no data: it runs on building.dat.js every time). No THREE, no DOM:
+   index.html draws these solids, verify.js checks them.
    Units are mm in house axes (x along, y across, z up). Needs core/geometry.js. */
 (function (root) {
 'use strict';

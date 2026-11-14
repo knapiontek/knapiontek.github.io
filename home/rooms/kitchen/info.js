@@ -1,6 +1,6 @@
-/* kitchen/cost-sheets.js: the kitchen's estimate, cutting list and notes from engine.js and cost.dat.js, built with the
+/* rooms/kitchen/info.js: the kitchen's estimate, cutting list and notes from model.js and estimate.dat.js, built with the
    shared sheets of core/info.js (Kosztorys, Lista cięć) as every application's, and the assembly cards. Shown in Info
-   of view.html. Knows the format of cost.dat.js (its placeholders are listed at its top), not this kitchen. */
+   of index.html. Knows the format of estimate.dat.js (its placeholders are listed at its top), not this kitchen. */
 (function (root) {
 'use strict';
 
@@ -80,7 +80,7 @@ function assemblyLegend() {
   ].join('\n');
 }
 // finished edges of one piece per side, as an order form for the board supplier has them: {length, width} = edges along each, 0, 1 or 2.
-// banded edges (boards, front panels of an unlacquered material) come from engine.js as [{side, length, along}] (along: a | b);
+// banded edges (boards, front panels of an unlacquered material) come from model.js as [{side, length, along}] (along: a | b);
 // lacquered edges (fronts, strips, plinth, lacquered front panels) as {long, short}.
 // (a cut-list row, KE.cutList: a = the length, b = the width; fronts are width × height, so the long side can be either)
 const edgeCounts = row => {
@@ -228,7 +228,7 @@ function blockTotals() {
     (rowsOf[block.id] || []).forEach(row => {
       const { a, b, qty, edges } = row;
       const m2 = (a * b * qty) / 1e6;
-      // banded edges from engine.js; fronts, strips and the plinth have none
+      // banded edges from model.js; fronts, strips and the plinth have none
       const edge = edges && edges.length ? (edgeLength(edges) * qty) / 1000 : null;
       const cut = block.cut ? ((a + b) * qty) / 1000 : null;
       t.m2 += m2;
@@ -245,8 +245,8 @@ function ROUNDUP(x, digits) {
   const f = Math.pow(10, digits || 0);
   return Math.ceil(x * f - 1e-9) / f;
 }
-// Placeholders in quantities and texts ({n:hinges}, {i:K25/oven.space}, {=...} ...): the full list is at the top of cost.dat.js.
-// Every value comes from design.dat.js (through engine.js), the library's appliances or cost.dat.js.
+// Placeholders in quantities and texts ({n:hinges}, {i:K25/oven.space}, {=...} ...): the full list is at the top of estimate.dat.js.
+// Every value comes from design.dat.js (through model.js), the library's appliances or estimate.dat.js.
 
 // a carcass by name: width, height, innerWidth, v0, v1
 function carcassValue(rest) {
@@ -259,7 +259,7 @@ function carcassValue(rest) {
 // module width, height, v0, v1; its front frontWidth, frontHeight, frontV0, frontV1; space = the clear height between the
 // nearest horizontal boards of its carcass below (spaceBottom) and above (spaceTop) its middle; drawers behind its door (tag doorDrawers):
 // count, runnerLength, boxWidth, boxHeight; hinge = the hinge side of its door; edges = the banded edges of a panel ("lewa 717", "brak");
-// fit.* = how its appliance sits in it (engine.js fitAppliances: fit.bodyV0, fit.feet, fit.fasciaV0, fit.doorV0 ...)
+// fit.* = how its appliance sits in it (model.js fitAppliances: fit.bodyV0, fit.feet, fit.fasciaV0, fit.doorV0 ...)
 function itemValue(rest) {
   const dot = rest.indexOf('.'), field = rest.slice(dot + 1), [where, what = ''] = rest.slice(0, dot).split('/'), [kind, n] = what.split('#');
   const item = Object.values(model.groups).flatMap(groupModel => groupModel.items)
@@ -351,7 +351,7 @@ function buildBook() {
   const result = compute(), INFO = root.CORE.info;
 
   // sheet "Lista cięć" (core/info.js): as an order form, each size followed by the number of finished edges along it
-  const cutting = INFO.cutList({ title: 'Lista cięć – płyty obliczone przez engine.js z design.dat.js (wymiary w mm)', note: fill(COST.labels.cuttingNote),
+  const cutting = INFO.cutList({ title: 'Lista cięć – płyty obliczone przez model.js z design.dat.js (wymiary w mm)', note: fill(COST.labels.cuttingNote),
     blocks: COST.blocks.map(block => ({ id: block.id, title: fill(block.title), columns: block.columns, cut: block.cut,
       rows: (rowsOf[block.id] || []).map((row, i) => {
         const along = edgeCounts(row);
@@ -372,7 +372,7 @@ function buildBook() {
     }
   });
 
-  // sheet "Kosztorys" (core/info.js): a quantity of cost.dat.js -> an Excel formula: other positions' quantities, the parameters
+  // sheet "Kosztorys" (core/info.js): a quantity of estimate.dat.js -> an Excel formula: other positions' quantities, the parameters
   // and the m², edge banding and cut totals of the cutting list as cell references, the rest as values
   const toExcel = (expr, ref) => expr.replace(/^=/, '')
     .replace(/\{q:(\w+)\}/g, (_, id) => ref.item(id))

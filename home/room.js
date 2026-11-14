@@ -1,4 +1,5 @@
-/* furniture.js: the interface of a sub-project's furniture in the house. Knows no sub-project: apps.dat.js names the file
+/* room.js: the interface of a room sub-project in the house: what it gives the house of its room (its furniture, its
+   finishes, its lamps). Knows no sub-project: apps.dat.js names the file
    that implements it for each application; that file registers its implementation here. The house uses only what this
    interface names, through a view that has nothing else in it; a sub-project's own page uses its implementation directly. */
 (function (root) {
@@ -32,7 +33,7 @@ function only(level, id, object) {
   const view = {};
   for (const [name, [kind]] of Object.entries(INTERFACE[level])) {
     const v = object && object[name];
-    if (kindOf(v) !== kind) throw new Error(`${id}: brak ${level}.${name} (${kind}) wymaganego przez interfejs furniture.js`);
+    if (kindOf(v) !== kind) throw new Error(`${id}: brak ${level}.${name} (${kind}) wymaganego przez interfejs room.js`);
     view[name] = kind === 'function' ? v.bind(object) : v;
   }
   return view;
@@ -52,7 +53,7 @@ function viewOf(id, impl) {
 const REGISTERED = {};
 const register = (id, impl) => { REGISTERED[id] = impl; };
 /* the applications that have furniture, in the order of apps.dat.js */
-const listed = () => (root.APPS || []).filter(a => a.furniture).map(a => a.id);
+const listed = () => (root.APPS || []).filter(a => a.room).map(a => a.id);
 
 const onPage = src => [...document.scripts].some(s => s.src === new URL(src, location.href).href);
 const script = src => new Promise((ok, fail) => {
@@ -66,11 +67,11 @@ const inOrder = files => files.filter(src => !onPage(src)).reduce((p, src) => p.
    own inner files and its textures. base: the home folder seen from the page ('../'). */
 function load(id, base) {
   const app = (root.APPS || []).find(a => a.id === id);
-  if (!app || !app.furniture) return Promise.reject(new Error(`Aplikacja ${id} nie ma mebli (apps.dat.js: furniture).`));
-  const file = base + app.furniture, folder = file.slice(0, file.lastIndexOf('/') + 1);
+  if (!app || !app.room) return Promise.reject(new Error(`Aplikacja ${id} nie ma mebli (apps.dat.js: room).`));
+  const file = base + app.room, folder = file.slice(0, file.lastIndexOf('/') + 1);
   return inOrder([file]).then(() => {
     const impl = REGISTERED[id];
-    if (!impl) throw new Error(`${app.furniture} nie zarejestrował mebli ${id}.`);
+    if (!impl) throw new Error(`${app.room} nie zarejestrował mebli ${id}.`);
     const view = viewOf(id, impl);
     return inOrder(view.needs.map(f => folder + f))
       .then(() => root.CORE.library.load(base + 'library/', view.textures()))
@@ -89,16 +90,16 @@ function shownWith(LAYER, hostShown, furniture) {
   };
 }
 
-/* Test: the dependencies on this page. A file of a sub-project (an application with furniture) is on its own page, or
+/* Test: the dependencies on this page. A file of a sub-project (an application with a room) is on its own page, or
    loaded through this interface; nowhere else. base: the home folder seen from the page ('../'). */
 function dependencies(base) {
-  const home = new URL(base, location.href).href, own = location.href.slice(home.length).split('/')[0];
-  const folders = new Set((root.APPS || []).filter(a => a.furniture).map(a => a.furniture.split('/')[0]));
+  const home = new URL(base, location.href).href, dir = path => path.slice(0, path.lastIndexOf('/') + 1);
+  const own = dir(location.href.slice(home.length)), folders = [...new Set((root.APPS || []).filter(a => a.room).map(a => dir(a.room)))];
   const items = [...document.scripts].filter(s => s.src.startsWith(home)).map(s => s.src)
-    .filter(src => { const f = src.slice(home.length).split('/')[0]; return folders.has(f) && f !== own && !THROUGH.has(src); })
-    .map(src => src.slice(home.length) + ': plik podprojektu poza jego stroną i poza interfejsem furniture.js');
-  return { name: 'Zależności: pliki podprojektów tylko na ich stronach albo przez interfejs furniture.js', items };
+    .filter(src => { const rel = src.slice(home.length), f = folders.find(d => rel.startsWith(d)); return f && f !== own && !THROUGH.has(src); })
+    .map(src => src.slice(home.length) + ': plik podprojektu poza jego stroną i poza interfejsem room.js');
+  return { name: 'Zależności: pliki podprojektów tylko na ich stronach albo przez interfejs room.js', items };
 }
 
-root.FURNITURE = { INTERFACE, register, listed, load, shownWith, dependencies };
+root.ROOM_INTERFACE = { INTERFACE, register, listed, load, shownWith, dependencies };
 })(window);

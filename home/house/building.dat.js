@@ -2,7 +2,7 @@
    geometry  what the house is made of: the boxes of archon/analysis.md with its build changes (§ 14)
    layers    what can be switched on and off
    views     how the house is looked at, one per mode: 3D (cameras, light, walk), the 2D plan, Info, Test (the checks); tabs: of the right panel
-   view.html holds no number, name or colour of this house; it draws this file with ../library (materials, tile products, textures).
+   index.html holds no number, name or colour of this house; it draws this file with ../library (materials, tile products, textures).
 
    Units mm, whole numbers. Axes of the analysis (§ 2): x along the house (0 garden outer face, 13200 front outer face),
    y across (0 left outer face, garage side; 9100 right), z up (0 finished ground floor).
@@ -23,7 +23,7 @@
    site       the lawn (aroundBuilding: it gives way to the box around the elements) and the surfaces on it
    floors     split by one plane (split): under it the ground floor, over it the attic; a floor's id is its layer;
               rooms are rectangles [x1, x2, y1, y2] at the block faces, tiled on their own or with another room;
-              a room's link opens its sub-project, which takes the house's own solids (house-clip.js) inside box
+              a room's link opens its sub-project, which takes the house's own solids (shell.js) inside box
               [x1, x2, y1, y2, z1, z2], trimmed; inside = its floor area, rectangles [x1, x2, y1, y2] at the wall faces
    copy       what a sub-project takes from the house: the element kinds, the window frames and glass, the roof */
 window.HOUSE = {
@@ -261,14 +261,14 @@ window.HOUSE = {
     "rooms": [
      {"id": "salon", "numbers": [3, 5, 6], "name": "Salon z kuchnią i holem", "planArea": 50.55,
       "tiles": {"product": "paradyz-authority-graphite", "dir": "x"},
-      "link": {"href": "../kitchen/view.html", "name": "Projekt kuchni", "inside": [[3330, 7220, 4660, 8660]], "box": [3330, 7340, 4660, 8900, -360, 3060]},
+      "link": {"href": "../rooms/kitchen/index.html", "name": "Projekt kuchni", "inside": [[3330, 7220, 4660, 8660]], "box": [3330, 7340, 4660, 8900, -360, 3060]},
       "rects": [[440, 5230, 440, 3590], [440, 4710, 3590, 4350], [440, 5470, 4350, 8660], [5470, 7220, 4350, 8660], [7220, 7340, 4350, 5800], [7340, 9010, 4350, 6150]]},
      {"id": "wiatrolap", "numbers": [1], "name": "Wiatrołap", "planArea": 4.84,
       "tiles": {"product": "paradyz-authority-graphite", "dir": "x"},
       "rects": [[9250, 11860, 4230, 6150]]},
      {"id": "lazienka", "numbers": [7], "name": "Łazienka", "planArea": 4.95,
       "tiles": {"product": "paradyz-authority-grey", "dir": "x"},
-      "link": {"href": "../bathroom/view.html", "name": "Projekt łazienki", "inside": [[7340, 9010, 6270, 8660], [9010, 9850, 7660, 8660]], "box": [7220, 9970, 6150, 8900, -360, 3060]},
+      "link": {"href": "../rooms/bathroom/index.html", "name": "Projekt łazienki", "inside": [[7340, 9010, 6270, 8660], [9010, 9850, 7660, 8660]], "box": [7220, 9970, 6150, 8900, -360, 3060]},
       "rects": [[7340, 9010, 6270, 8660], [9010, 9850, 7660, 8660]]},
      {"id": "kotlownia", "numbers": [8], "name": "Kotłownia z pralnią", "planArea": 4.97,
       "tiles": {"product": "paradyz-authority-graphite", "dir": "x"},
@@ -294,7 +294,7 @@ window.HOUSE = {
       "rects": [[6420, 7370, 2730, 3410], [6420, 9010, 3410, 5530], [5470, 6420, 4350, 5530]]},
      {"id": "lazienka5", "numbers": [5], "name": "Łazienka", "planArea": 7.99,
       "tiles": {"product": "paradyz-authority-grey", "dir": "x"},
-      "link": {"href": "../bathroom/view.html", "name": "Projekt łazienki", "inside": [[5470, 8200, 5650, 8660]], "box": [5350, 8320, 5530, 8900, 2720, 6300]},
+      "link": {"href": "../rooms/bathroom/index.html", "name": "Projekt łazienki", "inside": [[5470, 8200, 5650, 8660]], "box": [5350, 8320, 5530, 8900, 2720, 6300]},
       "rects": [[5470, 8200, 5650, 8660]]},
      {"id": "garderoba8", "numbers": [8], "name": "Garderoba", "planArea": 4.16,
       "tiles": {"product": "atlas-log-icon-oak-forest", "dir": "x"},

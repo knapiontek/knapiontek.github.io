@@ -16,7 +16,7 @@ This file: the folders, the rules every folder keeps, what is left to do, the co
 | core/ | shared code: solids, meshes, the 3D scene, the 2D plan, the screen, the spreadsheet and Info; knows no project |
 | library/ | everything bought: products, materials, textures; data only |
 | house/ | the building, from archon/; the rooms without a sub-project |
-| rooms/ | the room sub-projects, one folder each: kitchen/ (the living room's kitchen), bathroom/ (both bathrooms), wardrobe/ (the three walk-in wardrobes, to do) |
+| rooms/ | the room sub-projects, one folder each: rooms/kitchen/ (the living room's kitchen), rooms/bathroom/ (both bathrooms), wardrobe/ (the three walk-in wardrobes, to do) |
 | test.md | what to check after every change; an LLM rebuilds the checks from it (nothing is installed) |
 | index.html | opens the house (a short page that goes to house/) |
 
@@ -27,17 +27,17 @@ This file: the folders, the rules every folder keeps, what is left to do, the co
 One way only; nobody depends on a sub-project, and no sub-project on another.
 
 ```
-kitchen/, bathroom/ ──► house/ ──► core/, library/
+rooms/kitchen/, rooms/bathroom/ ──► house/ ──► core/, library/
         └────────────────────────► core/, library/
-apps.dat.js, furniture.js ──► every page (the menu; the house: each application's furniture through the interface)
+apps.dat.js, room.js ──► every page (the menu; the house: each application's furniture through the interface)
 ```
 
 - **core** knows no project and no product; **library** knows no project; **house** knows core and the library.
-- **A sub-project** knows core, the library and the house (house.dat.js, engine.js, house-clip.js). The house wins: a sub-project never measures or moves its room.
+- **A sub-project** knows core, the library and the house (building.dat.js, model.js, shell.js). The house wins: a sub-project never measures or moves its room.
 
 ### A sub-project's room
 
-house/house-clip.js gives a sub-project its room, and nothing else: the house's solids trimmed to the box of the room's link, grouped as a person sees them (each wall, the floor, the ceiling, each window with its wall), with the room's name, numbers, area and the 2D cut height of its floor. Nothing is moved, scaled or re-measured: house axes (x along, y across, z up), mm.
+house/shell.js gives a sub-project its room, and nothing else: the house's solids trimmed to the box of the room's link, grouped as a person sees them (each wall, the floor, the ceiling, each window with its wall), with the room's name, numbers, area and the 2D cut height of its floor. Nothing is moved, scaled or re-measured: house axes (x along, y across, z up), mm.
 
 ### A room with a sub-project
 
@@ -73,7 +73,7 @@ Everything bought, once, for every application and independent of them: products
 
 ### Cleanup (first, in one go)
 
-1. **The new names and folders** (the rule above, rooms/, archon/ in the root): all at once, with every reference; furniture.js → room.js; view.html → index.html in every application; the directory listings go; index.html of the root opens the house.
+1. **The shell as an interface**, as the room: shell.js in the root (what a sub-project gets of its room: the house's walls, slabs, windows and roof trimmed to it, its name, area and cut height), house/shell.js its one implementation; a sub-project then knows the interfaces only, no file of the house. To agree first.
 2. **The bath tap's spout over the rim** (attic): a check the old engine made from the bath's curved outline and its rim (it failed: the spout ended 117 mm short of the inner rim). Not measured yet: the model has the bath's outline only as a shape; to decide how the check reads it (or the tap moves).
 3. **The attic bath between the WC casing and the vanity wall**: the model has 380 and 390 mm (the old engine said 390 = 390); to correct in the data or accept.
 4. **The floor tiles by the rule of a room with a sub-project**: the house lays tiles only in the rooms without a sub-project (and its estimate has only those); a bathroom's floor is its own (bathroom data), drawn in the house through the interface.
@@ -91,7 +91,7 @@ Everything bought, once, for every application and independent of them: products
 
 ### The wardrobes
 
-The three walk-in wardrobes of the attic (house.dat.js): room 3 (L-shaped, 3760–5350 × 440–3790), room 4 (3760–5350 × 5650–8660), room 8 (7490–9010 × 440–3290). Under the roof (42°): the ceiling falls toward the eaves.
+The three walk-in wardrobes of the attic (building.dat.js): room 3 (L-shaped, 3760–5350 × 440–3790), room 4 (3760–5350 × 5650–8660), room 8 (7490–9010 × 440–3290). Under the roof (42°): the ceiling falls toward the eaves.
 
 Decided:
 - a run of carcasses along each long side: 400 mm deep away from the door, 300 mm (or 200 mm if the room needs it) by the door; what matters is a passage between the runs;

@@ -6,7 +6,7 @@ Co strona ma robić.
 
 ## 1. Trzy drzewa
 
-house.dat.js zawiera trzy drzewa:
+building.dat.js zawiera trzy drzewa:
 
 - **Geometria**: z czego dom jest zbudowany.
 - **Warstwy**: co można włączyć i wyłączyć.
@@ -58,8 +58,8 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 
 ## 6. Podprojekty
 
-- Salon prowadzi do kitchen/view.html; obie łazienki do bathroom/view.html.
-- Meble podprojektów są w domu jako części: dom zna je tylko przez interfejs furniture.js (w katalogu głównym); apps.dat.js podaje plik implementacji każdej aplikacji, a dom nie zna żadnego podprojektu z nazwy. Test pokazuje, czy meble każdej aplikacji są zgodne z interfejsem; bez podprojektu dom działa, tylko bez jego mebli. Są warstwą Meble (Warstwy) na swojej kondygnacji; kliknięcie drzwiczek albo szuflady otwiera je. Dziś: kuchnia i obie łazienki (każda na swojej kondygnacji; podwieszany sufit łazienki nie jest pokazywany w domu).
+- Salon prowadzi do rooms/kitchen/index.html; obie łazienki do rooms/bathroom/index.html.
+- Meble podprojektów są w domu jako części: dom zna je tylko przez interfejs room.js (w katalogu głównym); apps.dat.js podaje plik implementacji każdej aplikacji, a dom nie zna żadnego podprojektu z nazwy. Test pokazuje, czy meble każdej aplikacji są zgodne z interfejsem; bez podprojektu dom działa, tylko bez jego mebli. Są warstwą Meble (Warstwy) na swojej kondygnacji; kliknięcie drzwiczek albo szuflady otwiera je. Dziś: kuchnia i obie łazienki (każda na swojej kondygnacji; podwieszany sufit łazienki nie jest pokazywany w domu).
 - Dom wygrywa: kuchnia i łazienki biorą pomieszczenie z domu takie, jakie jest (ściany, strop, posadzkę, okna, dach), przycięte do obszaru, który dom podaje dla pomieszczenia. Nie rysują ani nie mierzą własnego pomieszczenia i niczego w nim nie przesuwają.
 - Te same osie wszędzie: x wzdłuż domu, y w poprzek, z w górę, mm i położenia domu. Podprojekt może liczyć w ramie swojej grupy albo pomieszczenia, ale ta rama jest tylko obrócona i przesunięta w osiach domu (nigdy odbita), a strona rysuje w osiach domu.
 - Podprojekt rysuje core, tak jak dom.

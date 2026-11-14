@@ -1,7 +1,7 @@
-/* bathroom/furniture.js: both bathrooms' furniture, an implementation of the interface ../furniture.js: the drawing of data.dat.js (each
+/* rooms/bathroom/room.js: both bathrooms' furniture, an implementation of the interface ../../room.js: the drawing of design.dat.js (each
    floor's model: solids, doors and drawers, round details, lamps, in mm in house axes), drawn by core the same in
-   view.html (with its room, from the house) and in the house (without: the house draws its own). Nothing is computed
-   here to fit: what is drawn is what data.dat.js says. Tiles and board decors come from the library. */
+   index.html (with its room, from the house) and in the house (without: the house draws its own). Nothing is computed
+   here to fit: what is drawn is what design.dat.js says. Tiles and board decors come from the library. */
 (function (root) {
 'use strict';
 
@@ -10,13 +10,13 @@ const WARM = 0xffdcb4;                     // the lamps: 3000 K
 const PER_FLOOR = new Set(['metal', 'decor', 'decorTurned', 'basin', 'basinIn', 'rubber', 'doorPaint']);   // each bathroom its own
 const DEG = Math.PI / 180;
 
-/* env: {materials, textures, houseModel} (../furniture.js) */
+/* env: {materials, textures, houseModel} (../../room.js) */
 function make(env) {
   const CORE = root.CORE, THREE = root.THREE, D = root.BATH_DATA, PRODUCTS = root.LIBRARY_PRODUCTS, TEXTURES = root.LIBRARY_TEXTURES;
   const LIB = env.materials, TEX = env.textures, FLOORS = Object.keys(D.floors);
-  const found = root.HouseClip.roomsFor(root.HOUSE, env.houseModel, 'bathroom/view.html');
+  const found = root.HouseShell.roomsFor(root.HOUSE, env.houseModel, 'rooms/bathroom/index.html');
   const ROOMS = Object.fromEntries(FLOORS.map(f => [f, found.find(r => r.floor === f)]));
-  for (const f of FLOORS) if (!ROOMS[f]) throw new Error('W house.dat.js żadne pomieszczenie na kondygnacji ' + f + ' nie prowadzi do bathroom/view.html.');
+  for (const f of FLOORS) if (!ROOMS[f]) throw new Error('W building.dat.js żadne pomieszczenie na kondygnacji ' + f + ' nie prowadzi do rooms/bathroom/index.html.');
 
   /* ---------- materials: definitions of core (core/scene.js material), under b.*; those of one bathroom end in :floor ---------- */
   const METALS = { brass: { color: '#b8935a', roughness: .32 }, nickel: { color: '#bab8b1', roughness: .28 } };
@@ -238,7 +238,7 @@ function make(env) {
       .concat(ROOM.openings.filter(o => o.b[4] <= ROOM.level + 1).flatMap(o => { const q = cross(o.b, B); return q ? tiled(q, [o.b[4], o.b[5]], [[0, 0, 1]], 'floor', 'showerFloor') : []; }));   // the floor runs on under a door
 
     /* ---------- the room (its own page): the house's walls, slabs, floor and window, as they are, tiled by FINISHES. Each
-       wall is a record that hides while the camera is behind it (view.html); the longest one of a side is its record
+       wall is a record that hides while the camera is behind it (index.html); the longest one of a side is its record
        (wall-x, wall+y ...), its fixtures hide with it. ---------- */
     const ROOM_CELLS = [], RECORDS = [];
     if (opts.room) {
@@ -357,7 +357,7 @@ const textures = () => root.BATH_DATA.defaults.tiles.map(k => root.LIBRARY_PRODU
   .concat(Object.keys(root.BATH_DATA.decors).map(k => root.LIBRARY_PRODUCTS.boards[k].texture));
 
 /* the implementation: its own page uses all of it, the house only what the interface names */
-const BathroomFurniture = { needs: ['../house/house-clip.js', 'data.dat.js'], textures, make };
-root.BathroomFurniture = BathroomFurniture;
-root.FURNITURE.register('bathroom', BathroomFurniture);
+const BathroomRoom = { needs: ['../../house/shell.js', 'design.dat.js'], textures, make };
+root.BathroomRoom = BathroomRoom;
+root.ROOM_INTERFACE.register('bathroom', BathroomRoom);
 })(window);

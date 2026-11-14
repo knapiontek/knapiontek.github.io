@@ -2,7 +2,7 @@
 
 > **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
 
-Shared 3D code for every view: the house (house/view.html) and its sub-projects (kitchen/view.html, bathroom/view.html). It knows no project.
+Shared 3D code for every view: the house (house/index.html) and its sub-projects (rooms/kitchen/index.html, rooms/bathroom/index.html). It knows no project.
 
 ## Files
 
@@ -58,4 +58,4 @@ A cell is a solid with what it is:
 
 ui.js builds the screen and its modes (3D, 2D, Info, Test) from a project's views data.
 
-The 2D plan (plan.js) is cut from the same solids as the 3D view at the house's cut height for the floor: what the cut meets is filled in its section colour, what lies under it is seen from above, what is over it is dashed. Room and opening labels come from house.dat.js, so a sub-project's plan matches the house's.
+The 2D plan (plan.js) is cut from the same solids as the 3D view at the house's cut height for the floor: what the cut meets is filled in its section colour, what lies under it is seen from above, what is over it is dashed. Room and opening labels come from building.dat.js, so a sub-project's plan matches the house's.

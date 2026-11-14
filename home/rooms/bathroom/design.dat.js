@@ -2,7 +2,7 @@
    written part by part, drawn and listed as it is. Every length is in mm; angles of the movers in radians, of the
    details in degrees.
 
-   The room is the house's (../house/house.dat.js, through ../house/house-clip.js): walls, door opening, window, floor, ceiling heights and
+   The room is the house's (../../house/building.dat.js, through ../../house/shell.js): walls, door opening, window, floor, ceiling heights and
    the roof are taken from there as they are and are not repeated here. Positions are house axes: x along the house, y across,
    z up. What is left here is the bathroom's own design: fittings, finishes, products; their places are distances from the
    room's walls (vanity wall = the room's −x face, door wall = its −y face, window or knee wall = its +y face).
@@ -133,9 +133,9 @@ window.BATH_DATA = {
         showerFloor: { tile: 'paradyz-authority-grey', format: '898x898',  layout: 'h' },
       },
       /* the drawing: every part in mm in house axes (x along the house, y across, z up), written as data and drawn by
-         furniture.js with core. solids: boxes [x0, x1, y0, y1, z0, z1]; movers: doors (turn about axis by angle, rad) and drawers
+         room.js with core. solids: boxes [x0, x1, y0, y1, z0, z1]; movers: doors (turn about axis by angle, rad) and drawers
          (slide +x); details: what is round (cylinders along axis, tubes through points, lofts and extrusions at a place turned
-         by rot, degrees); layer: of the panel; cut: what hides it while the camera is behind it (view.html) */
+         by rot, degrees); layer: of the panel; cut: what hides it while the camera is behind it (index.html) */
       model: {
         showerZone: [8950, 9850, 7660, 8660],   // where the shower tiles go [x0, x1, y0, y1]
         cuts: { floor: { layer: 'floor' }, casing: { layer: 'walls', unless: 'installations', with: ['wall-x', 'wall+y'] }, ceiling: { layer: 'ceiling', room: true, above: 2430 } },
@@ -472,9 +472,9 @@ window.BATH_DATA = {
         showerFloor: { tile: 'paradyz-authority-grey', format: '598x598',  layout: 'h' },
       },
       /* the drawing: every part in mm in house axes (x along the house, y across, z up), written as data and drawn by
-         furniture.js with core. solids: boxes [x0, x1, y0, y1, z0, z1]; movers: doors (turn about axis by angle, rad) and drawers
+         room.js with core. solids: boxes [x0, x1, y0, y1, z0, z1]; movers: doors (turn about axis by angle, rad) and drawers
          (slide +x); details: what is round (cylinders along axis, tubes through points, lofts and extrusions at a place turned
-         by rot, degrees); layer: of the panel; cut: what hides it while the camera is behind it (view.html) */
+         by rot, degrees); layer: of the panel; cut: what hides it while the camera is behind it (index.html) */
       model: {
         showerZone: [7200, 8200, 5650, 6650],   // where the shower tiles go [x0, x1, y0, y1]
         cuts: { floor: { layer: 'floor' }, casing: { layer: 'walls', unless: 'installations' } },
@@ -663,7 +663,7 @@ window.BATH_DATA = {
     },
   },
 
-  decors: {               // the Egger boards to choose from (../library/products boards): why each would suit
+  decors: {               // the Egger boards to choose from (../../library/products boards): why each would suit
     'egger-h1199-st12': { note: 'najciemniejszy, czarnobrązowy — szafka spokojnie ciemna na tle grafitu' },
     'egger-h1181-st37': { note: 'średni tabaczny, wyraźny słój z pęknięciami — ciepły kontrast z grafitem i mosiądzem' },
     'egger-h1399-st10': { note: 'jasnoszary brąz' },
@@ -681,7 +681,7 @@ window.BATH_DATA = {
     radiator: 'mexen-hades-1200x400-gold', door: 'porta-hide-wc-80',
   },
 
-  /* as house.dat.js, one per mode: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own
+  /* as building.dat.js, one per mode: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own
      height for the floor), Info, Test (the checks, measured on the model); tabs: of the right panel */
   views: {
     '3d': { name: '3D', menu: 'floors', tabs: ['layers', 'finish'],
@@ -697,6 +697,6 @@ window.BATH_DATA = {
 
   defaults: {
     floor: 'ground',
-    tiles: ['paradyz-authority-graphite', 'paradyz-authority-grey'],          // to choose from (../library/products tiles)
+    tiles: ['paradyz-authority-graphite', 'paradyz-authority-grey'],          // to choose from (../../library/products tiles)
   },
 };

@@ -13,7 +13,7 @@ What to check after every change, so that nothing drifts apart. Nothing is insta
 
 ## 1. Every page in every mode
 
-Pages: the house; the kitchen; the bathroom on the ground floor and in the attic (?floor=ground, ?floor=attic); the kitchen editor (kitchen/design.html, one state). Modes: 3D, 2D, Test, Info.
+Pages: the house; the kitchen; the bathroom on the ground floor and in the attic (?floor=ground, ?floor=attic); the kitchen editor (rooms/kitchen/design.html, one state). Modes: 3D, 2D, Test, Info.
 
 Record per page and mode:
 - the errors;
@@ -31,7 +31,7 @@ Compare with the run before the change: everything the same, or each difference 
 - The bathrooms' wall tiles lie on the house's walls (ground floor: graphite in the shower, on the walls around the vanity; attic: grey), and go with the layer.
 - A real mouse click on a drawer front of the ground-floor bathroom (camera in front of it) opens the drawer by its full travel (328 mm); a second click closes it.
 - The same in the kitchen: a click on a front opens it.
-- Test of the house: the furniture of every application matches the interface (furniture.js), naming those checked.
+- Test of the house: the furniture of every application matches the interface (room.js), naming those checked.
 - Without a sub-project (a copy of the repository without its folder) the house opens without page errors; the only console error is the failed load of its furniture file; the panel and Test name what is missing; the other furniture loads.
 - The interface itself: an implementation missing a member (e.g. night in what build returns) is an error that names it; the house's view of a furniture has only the members of the interface.
 
@@ -43,10 +43,10 @@ Compare with the run before the change: everything the same, or each difference 
 
 ## 4. The dependencies
 
-- Test of every page lists the dependencies: a file of a sub-project is on its own page, or loaded through the interface (furniture.js). Expected: OK on the house, the kitchen and both bathrooms (on the house after the furniture is loaded).
+- Test of every page lists the dependencies: a file of a sub-project is on its own page, or loaded through the interface (room.js). Expected: OK on the house, the kitchen and both bathrooms (on the house after the furniture is loaded).
 - In the text of the files: no file outside a sub-project's folder names a file of it, except apps.dat.js; no sub-project names another's (search the folders for the other folders' names and file names).
 
 ## 5. The bathroom's own page against the house
 
 - Its tiles, its doors and drawers (open positions to the mm), its plans and its Info are the same as before the change: every tab of Info (not only the first), the estimate to the grosz.
-- Its Test: the checks of data.dat.js, measured on the model, with their values (the ground floor: 405, 10, 140, 410 mm; the attic: see the page).
+- Its Test: the checks of design.dat.js, measured on the model, with their values (the ground floor: 405, 10, 140, 410 mm; the attic: see the page).

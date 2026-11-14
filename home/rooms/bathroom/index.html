@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../core/ui.css">
+<link rel="stylesheet" href="../../core/ui.css">
 <style>
 /* only what the bathroom panel adds to core/ui.css */
 .block{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
@@ -159,31 +159,31 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="../core/geometry.js"></script>
-<script src="../core/mesh.js"></script>
-<script src="../core/scene.js"></script>
-<script src="../core/ui.js"></script>
-<script src="../core/plan.js"></script>
-<script src="../core/sheet.js"></script>
-<script src="../core/info.js"></script>
-<script src="../core/library.js"></script>
-<script src="../apps.dat.js"></script>
-<script src="../furniture.js"></script>
-<script src="../library/materials.dat.js"></script>
-<script src="../library/products/tiles.dat.js"></script>
-<script src="../library/products/boards.dat.js"></script>
-<script src="../library/products/appliances.dat.js"></script>
-<script src="../library/products/hardware.dat.js"></script>
-<script src="../library/products/fasteners.dat.js"></script>
-<script src="../library/products/sanitary.dat.js"></script>
-<script src="../library/products/building.dat.js"></script>
-<script src="../library/products/services.dat.js"></script>
-<script src="../library/products/shops.dat.js"></script>
-<script src="../house/house.dat.js"></script>
-<script src="../house/engine.js"></script>
-<script src="../house/house-clip.js"></script>
-<script src="data.dat.js"></script>
-<script src="furniture.js"></script>
+<script src="../../core/geometry.js"></script>
+<script src="../../core/mesh.js"></script>
+<script src="../../core/scene.js"></script>
+<script src="../../core/ui.js"></script>
+<script src="../../core/plan.js"></script>
+<script src="../../core/sheet.js"></script>
+<script src="../../core/info.js"></script>
+<script src="../../core/library.js"></script>
+<script src="../../apps.dat.js"></script>
+<script src="../../room.js"></script>
+<script src="../../library/materials.dat.js"></script>
+<script src="../../library/products/tiles.dat.js"></script>
+<script src="../../library/products/boards.dat.js"></script>
+<script src="../../library/products/appliances.dat.js"></script>
+<script src="../../library/products/hardware.dat.js"></script>
+<script src="../../library/products/fasteners.dat.js"></script>
+<script src="../../library/products/sanitary.dat.js"></script>
+<script src="../../library/products/building.dat.js"></script>
+<script src="../../library/products/services.dat.js"></script>
+<script src="../../library/products/shops.dat.js"></script>
+<script src="../../house/building.dat.js"></script>
+<script src="../../house/model.js"></script>
+<script src="../../house/shell.js"></script>
+<script src="design.dat.js"></script>
+<script src="room.js"></script>
 <script>
 'use strict';
 (async function main() {
@@ -191,18 +191,18 @@
 const stage = document.getElementById('stage'), loading = document.getElementById('loading');
 const fail = message => { loading.hidden = false; loading.textContent = message; };
 if (!window.THREE || !THREE.OrbitControls) return fail('Nie udało się wczytać silnika 3D. Odśwież stronę.');
-if (!window.BATH_DATA) return fail('Brak pliku data.dat.js obok view.html.');
-if (!window.LIBRARY_PRODUCTS) return fail('Brak pliku ../library/products.');
-/* the bathrooms' furniture (furniture.js): the same in the house. Its textures first (the library) */
+if (!window.BATH_DATA) return fail('Brak pliku design.dat.js obok index.html.');
+if (!window.LIBRARY_PRODUCTS) return fail('Brak pliku ../../library/products.');
+/* the bathrooms' furniture (room.js): the same in the house. Its textures first (the library) */
 const PRODUCTS = LIBRARY_PRODUCTS;
 let PART;
-PART = window.BathroomFurniture;
-try { await CORE.library.load('../library/', PART.textures()); } catch (e) { return fail('Błąd: ' + e.message); }
+PART = window.BathroomRoom;
+try { await CORE.library.load('../../library/', PART.textures()); } catch (e) { return fail('Błąd: ' + e.message); }
 const TEXTURES = window.LIBRARY_TEXTURES;
-if (!window.HOUSE || !window.HouseClip) return fail('Brak plików domu (../house/house.dat.js, ../house/house-clip.js).');
+if (!window.HOUSE || !window.HouseShell) return fail('Brak plików domu (../../house/building.dat.js, ../../house/shell.js).');
 
-/* The room from the house (../house/house-clip.js), the bathroom's drawing from data.dat.js (furniture.js); Info and Test
-   from data.dat.js too. Here (view.html) the panel, the views and what hides while the camera is behind it. */
+/* The room from the house (../../house/shell.js), the bathroom's drawing from design.dat.js (room.js); Info and Test
+   from design.dat.js too. Here (index.html) the panel, the views and what hides while the camera is behind it. */
 let FLOOR = BATH_DATA.defaults.floor;
 try { FLOOR = new URLSearchParams(location.search).get('floor') || localStorage.getItem('floor') || FLOOR; } catch (e) {}
 if (!BATH_DATA.floors[FLOOR]) FLOOR = BATH_DATA.defaults.floor;
@@ -211,7 +211,7 @@ let BP;
 try { BP = PART.make({ materials: MATERIAL_LIB, textures: TEX, houseModel: HOUSE_MODEL }); } catch (e) { return fail(e.message); }
 const HOUSE_ROOM = BP.ROOMS[FLOOR];
 const DATA = Object.assign({}, BATH_DATA, BATH_DATA.floors[FLOOR]), ATTIC = DATA.type === 'attic';   // the floor's own over the shared
-const V = DATA.info.vanity;   // the vanity in mm (data.dat.js), for Info
+const V = DATA.info.vanity;   // the vanity in mm (design.dat.js), for Info
 
 /* ==========================================================================
    1. STATE
@@ -233,7 +233,7 @@ const LAYER_TREE = Object.values(BATH_DATA.views).find(v => v.layers).layers, LA
 (function defaults(t) { for (const [k, v] of Object.entries(t)) { state.layers[k] = !v.off; if (v.layers) defaults(v.layers); } })(LAYER_TREE);
 const { layerOn } = CORE.ui.layerSwitch(LAYER, () => state.layers);
 
-/* the viewer's choices stay in the browser, per floor (core/ui.js store); what no longer fits data.dat.js is dropped.
+/* the viewer's choices stay in the browser, per floor (core/ui.js store); what no longer fits design.dat.js is dropped.
    Tiles and layers are taken here; style, metal and decor by their buttons once the panel is built (keepChoices). */
 const CHOICES = CORE.ui.store(`bathroom-${FLOOR}-choices`, () => ({}), s => !!s && typeof s === 'object');
 for (const s of SURFACES) {
@@ -255,7 +255,7 @@ const sizeLabel = ({ w, h }) => `${w}×${h}`;
 
 
 /* ==========================================================================
-   2. TILES to choose from (../library): the panel's list; their textures are made by furniture.js
+   2. TILES to choose from (../../library): the panel's list; their textures are made by room.js
    ========================================================================== */
 const loadImage = src => { const img = new Image(); img.src = src; return img.decode().then(() => img); };
 const TILES = {};
@@ -269,7 +269,7 @@ try {
     c.getContext('2d').drawImage(img, 0, img.height / 4, img.width, img.height / 2, 0, 0, 192, 96);
     tile.thumbnail = c.toDataURL('image/jpeg', .85);
   }));
-} catch (e) { return fail('Nie udało się wczytać zdjęć płytek z ../library.'); }
+} catch (e) { return fail('Nie udało się wczytać zdjęć płytek z ../../library.'); }
 
 
 /* ==========================================================================
@@ -277,7 +277,7 @@ try {
    ========================================================================== */
 const canvasEl = document.getElementById('gl');
 const BOX = HOUSE_ROOM.box;
-const LIGHT = HouseClip.insideLight(HOUSE);   // the house's light seen from inside, as every room's
+const LIGHT = HouseShell.insideLight(HOUSE);   // the house's light seen from inside, as every room's
 const VIEW = CORE.createView({ canvas: canvasEl, stage, materials: MATERIAL_LIB, textures: TEX, light: LIGHT,
   edges: { color: '#2b2e31', opacity: .5, layers: ['edges'] }, body: [[BOX[0], BOX[2], BOX[4]], [BOX[1], BOX[3], BOX[5]]],
   sunCentre: [(BOX[0] + BOX[1]) / 2, (BOX[2] + BOX[3]) / 2, BOX[4] + 1000] });
@@ -291,7 +291,7 @@ controls.maxDistance = 10;
 
 
 /* ==========================================================================
-   4. THE BATHROOM (furniture.js): its solids, doors, drawers, round details and lamps from data.dat.js, with the house's room
+   4. THE BATHROOM (room.js): its solids, doors, drawers, round details and lamps from design.dat.js, with the house's room
    ========================================================================== */
 const built = BP.build(VIEW, { floor: FLOOR, room: true });
 const { STATIC, MOVERS, DETAILS, RECORDS } = built;
@@ -305,7 +305,7 @@ function setMetal(name) {
 }
 for (const s of SURFACES) built.setTiles(s, state.tiles[s]);
 
-/* Egger decors: the boards of the library (photo, code, price, link), why each would suit here in data.dat.js. */
+/* Egger decors: the boards of the library (photo, code, price, link), why each would suit here in design.dat.js. */
 const DECOR_INFO = DATA.decors;
 const DECORS = {};
 for (const id of Object.keys(DECOR_INFO)) {
@@ -318,7 +318,7 @@ for (const id of Object.keys(DECOR_INFO)) {
   const px = c.getContext('2d').getImageData(0, 0, 1, 1).data;
   DECORS[id] = { ...d, ...DECOR_INFO[id], img, rgb: [px[0], px[1], px[2]], page: d.link };
 }
-if (!Object.keys(DECORS).length) return fail('Brak dekorów płyt (data.dat.js decors, ../library).');
+if (!Object.keys(DECORS).length) return fail('Brak dekorów płyt (design.dat.js decors, ../../library).');
 state.decor = DECORS[DATA.defaultDecor] ? DATA.defaultDecor : Object.keys(DECORS)[0];
 
 /** Decor texture: the photo spans width_m along the grain; uv in mm on the face (core). turn: the grain along the face's v. */
@@ -342,7 +342,7 @@ function setDecor(id) {
 setDecor(state.decor);
 
 /* what hides while the camera is behind it (or its layer is off): a wall of the room, the floor, the casing, the ceiling
-   (data.dat.js cuts). Hidden: not drawn, still casting its shadow (a ghost): daylight only enters through the window. */
+   (design.dat.js cuts). Hidden: not drawn, still casting its shadow (a ghost): daylight only enters through the window. */
 const GHOST = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
 const EDGE = new THREE.LineBasicMaterial({ color: 0x2b2e31 });   // outlines of the round details (core draws the solids' edges)
 const camHouse = () => VIEW.root.worldToLocal(camera.position.clone());   // the camera in house mm
@@ -378,7 +378,7 @@ function updateCuts() {
 }
 
 /* ==========================================================================
-   5. LIGHTING: the house's sun and sky (core); the bathroom's lamps by night (furniture.js)
+   5. LIGHTING: the house's sun and sky (core); the bathroom's lamps by night (room.js)
    ========================================================================== */
 VIEW.addLight();
 const SUN = CORE.ui.sunStore(Object.values(HOUSE.views).find(v => v.menu).light.sun);
@@ -437,10 +437,10 @@ function setMetalLook(name) {   // the fittings' finish, kept while the drawing 
   invalidate();
 }
 
-const VIEWS = built.cameras;   // data.dat.js, house mm
+const VIEWS = built.cameras;   // design.dat.js, house mm
 const goTo = (name, instant) => VIEW.flyTo(VIEWS[name], instant);
 
-// a click (without dragging) on a door or a drawer opens or closes only that one (furniture.js)
+// a click (without dragging) on a door or a drawer opens or closes only that one (room.js)
 VIEW.onClick(ray => built.click(ray));
 const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
 let hoverPending = false;
@@ -539,7 +539,7 @@ $('openAll').onclick = () => { for (const m of MOVERS) m.target = 1; invalidate(
 $('closeAll').onclick = () => { for (const m of MOVERS) m.target = 0; invalidate(); };
 
 
-/* ---------- the vanity: its sizes in data.dat.js (info.vanity), for the drawing and the cut list ---------- */
+/* ---------- the vanity: its sizes in design.dat.js (info.vanity), for the drawing and the cut list ---------- */
 const esc = CORE.ui.esc;
 const num = v => (Math.round(v * 10) / 10).toString().replace('.', ',');
 const pln = v => v.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
@@ -550,7 +550,7 @@ const CUT_LEGEND = [{ code: 'eRozkrój', text: 'zakładka eRozkrój: import w e-
 const ER_WIDTHS = [28, 9, 10, 6, 10, 10, 10, 10, 10, 26, 22, 44], ER_HEAD = ['Nazwa formatki', 'Długość', 'Szerokość', 'Ilość', 'Usłojenie', 'Okleina przód (D1)', 'Okleina tył (D2)', 'Okleina lewa (S1)', 'Okleina prawa (S2)', 'Płyta', 'Okleina', 'Uwagi'];
 const MOUNT_NOTE = ['Okucia', 'Fronty wpuszczane: prowadnice cofnięte o grubość frontu (18 mm) od lica korpusu. Numery sprawdź w konfiguratorze Blum E-SERVICES przy zamówieniu w M-HM.'];
 const POINTS_TITLE = 'Wymiary od lica płytki. „Od drzwi” = od ściany z drzwiami, „od lewej” = od ściany z umywalką.';
-/* ---------- Info from data.dat.js (this floor's info) and the library: the decor and the metal chosen ---------- */
+/* ---------- Info from design.dat.js (this floor's info) and the library: the decor and the metal chosen ---------- */
 const FITTINGS = Object.assign({}, BATH_DATA.fittings, BATH_DATA.floors[FLOOR].fittings);   // what is bought, by role (by metal where it differs)
 const SHOPS = PRODUCTS.shops;
 const shopName = key => (SHOPS[key] ? SHOPS[key].name : '');
@@ -652,7 +652,7 @@ function renderDrawing() {
 }
 
 /* Info (core/info.js), as every application: Kosztorys, Lista cięć, eRozkrój, Szafka (the drawing above its sheet),
-   Montaż, Podejścia, Wymiary from data.dat.js; again when the decor or the metal changes */
+   Montaż, Podejścia, Wymiary from design.dat.js; again when the decor or the metal changes */
 let INFO_SHEET = null;
 function infoBook() {
   const I = bathInfo(DECORS[state.decor], state.metal);
@@ -685,7 +685,7 @@ const INFO_ITEMS = CORE.info.menu(() => INFO_SHEET, () => `lazienka-${FLOOR}-${V
 /* ---------- the views: 3D, 2D, Info, Test, as the house (core/ui.js, core/plan.js) ----------
    The menu of 3D: the bathrooms, one per floor. The 2D plan is drawn by core from the solids of this page (the room's are
    the house's own, the fittings' boxes the same solids as in 3D, round fittings by their outline) at the house's cut height
-   for the floor; the room's label and the openings' labels are the house's. Test: the checks of data.dat.js, measured on the model. */
+   for the floor; the room's label and the openings' labels are the house's. Test: the checks of design.dat.js, measured on the model. */
 const MODES = BATH_DATA.views, MODE_IDS = Object.keys(MODES);
 const VIEW_STORE = CORE.ui.store('bathroom-view', () => ({ mode: MODE_IDS[0], zoom: 1 }), s => !!MODES[s.mode] && Number.isFinite(s.zoom));
 const VIEW_STATE = VIEW_STORE.state, saveView = VIEW_STORE.save;
@@ -696,7 +696,7 @@ function goFloor(key) {
 const CAMERA_ITEMS = Object.keys(VIEWS).map(k => ({ name: DATA.cameras[k] || k, go: () => goTo(k) }));
 const PLAN_BUTTONS = { zoomOut: el('button', { textContent: '−', ariaLabel: 'Pomniejsz' }), zoomIn: el('button', { textContent: '+', ariaLabel: 'Powiększ' }),
   download: el('button', { textContent: 'Pobierz SVG' }) };
-/* the checks of data.dat.js, measured on the model in mm (the solids and details by name, the room, the house's openings) */
+/* the checks of design.dat.js, measured on the model in mm (the solids and details by name, the room, the house's openings) */
 function measureChecks() {
   const box = {}, put = (n, b) => { const o = box[n] || (box[n] = [Infinity, -Infinity, Infinity, -Infinity, Infinity, -Infinity]); for (let k = 0; k < 6; k++) o[k] = (k % 2 ? Math.max : Math.min)(o[k], b[k]); };
   for (const c of built.STATIC.concat(built.MOVERS.flatMap(m => m.cells))) if (c.name) {
@@ -726,7 +726,7 @@ function measureChecks() {
   });
 }
 const CHECKS = measureChecks();
-$('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(FURNITURE.dependencies('../')));
+$('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(ROOM_INTERFACE.dependencies('../../')));
 
 const PLAN = CORE.plan.create(MATERIAL_LIB), CUT = HOUSE_ROOM.planCut;
 const ROOM_KEYS = new Set(Object.entries(CUT_OF).filter(([, c]) => c.room).map(([k]) => k));   // the suspended ceiling: as the house's
@@ -801,7 +801,7 @@ addEventListener('load', () => invalidate());
 VIEW.onFrame(updateCuts);
 VIEW.run();
 
-CORE.ui.appMenu($('apps'), APPS, 'bathroom', '../', () => VIEW_STATE.mode);
+CORE.ui.appMenu($('apps'), APPS, 'bathroom', '../../', () => VIEW_STATE.mode);
 setMode(CORE.ui.askedMode(MODES) || VIEW_STATE.mode);
 loading.hidden = true;
 // for inspection in the browser console

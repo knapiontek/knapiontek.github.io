@@ -1,5 +1,5 @@
-/* Kitchen project cost data - read by cost-sheets.js (Info of view.html). Written for each project (LLM). Plain JSON after "window.KITCHEN_COST =".
-   Everything measured comes from design.dat.js through engine.js, the appliance sizes from ../library/products: nothing here repeats
+/* Kitchen project cost data - read by info.js (Info of index.html). Written for each project (LLM). Plain JSON after "window.KITCHEN_COST =".
+   Everything measured comes from design.dat.js through model.js, the appliance sizes from ../../library/products: nothing here repeats
    a calculated number.
      page        tab title, heading, info line, XLSX file name, excluded (what the estimate does not cover)
      params      the inputs above the estimate (waste, sheet size in m², reserve); a value or a formula
@@ -7,11 +7,11 @@
      labels      fronts: the label of a front in the cutting list, by its type and tags (first match; none = its type);
                  sheet: the label of the sheet input; cuttingNote: the text under the cutting list; legend: a remark per
                  hole kind in the drilling rules of the Montaż tab
-     blocks      cutting-list tables, code = the two letters of their row labels (KO-07), rows built by engine.js: id = fronts | strips | plinths | frontPanels | wallPanels | plaster | worktops | endPanels,
+     blocks      cutting-list tables, code = the two letters of their row labels (KO-07), rows built by model.js: id = fronts | strips | plinths | frontPanels | wallPanels | plaster | worktops | endPanels,
                  or a material use (carcass, drawerBox, backPanel ...: every board of that use's material); cut = priced saw
                  cuts; columns = the header when not Element / Długość / Szerokość / Ilość
      categories  estimate items, by category {name, appliances, items}; appliances = the category counts as AGD, not
-                 furniture. An item: id; product (its key in ../library/products) or material (a use of design.dat.js: its
+                 furniture. An item: id; product (its key in ../../library/products) or material (a use of design.dat.js: its
                  board), with name (the use, a material's only); spec (only what this project adds to the product's own);
                  use (where it goes); qty (a number or a formula); refs (ids of the notes it links to). The name, spec, unit,
                  price, its source and the links of a product are the library's.
@@ -22,13 +22,13 @@
    Texts and formulas may hold placeholders:
      {n:hinges}        engine count ({n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
      {s:drawers.D.frontAbove} design.dat.js setting     {t:carcass} thickness, {d:worktop} depth (as bought) and {m:cabinet} material label of a board type or part
-                       (a material use of engine.js: a board type, islandWorktop, endPanel, islandEndPanel, carcass, backPanel, drawerBox, hobPanel)
+                       (a material use of model.js: a board type, islandWorktop, endPanel, islandEndPanel, carcass, backPanel, drawerBox, hobPanel)
      {w:1.depth}       worktop of group 1  {g:3.backGap} group 3 (backGap, name)  {k:K25.innerWidth} carcass by name: width, height, innerWidth, v0, v1
      {i:K25/oven.space} item by carcass name or place (G1[6]) and type or tag, #2 = the second from the bottom:
                        width, height, v0, v1 (module), frontWidth, frontHeight, frontV0, frontV1 (front),
                        spaceBottom, spaceTop, space (clear height between the horizontal boards of the carcass around it),
                        count, runnerLength, boxWidth, boxHeight (drawers behind its door), hinge (hinge side of its door),
-                       edges (banded edges of a panel), fit.feet, fit.fasciaV0 ... (its appliance: engine.js fitAppliances)
+                       edges (banded edges of a panel), fit.feet, fit.fasciaV0 ... (its appliance: model.js fitAppliances)
      {a:oven.fascia.height}  the appliance (library) {v:sheet.length} values
      {p:hinges}        unit price          {q:hinges} item quantity          {note:hinges} the number of a note
      {f:ovenMicrowaveGap}  a named formula of "formulas"

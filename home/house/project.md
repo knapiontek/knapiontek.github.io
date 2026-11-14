@@ -2,7 +2,7 @@
 
 > **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
 
-The building "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, with floor tiles in every room. Open **view.html**.
+The building "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, with floor tiles in every room. Open **index.html**.
 
 What the page must do is in rules.md (Polish, like the page); where the numbers come from, in archon/analysis.md.
 
@@ -10,25 +10,25 @@ What the page must do is in rules.md (Polish, like the page); where the numbers 
 
 | File | Holds |
 |---|---|
-| house.dat.js | the house as data: geometry, layers, views |
-| engine.js | house.dat.js turned into solids |
-| house-clip.js | a sub-project's room: the house's own solids, trimmed |
-| analysis.js | the checks shown in Test |
-| view.html | the page in the shared screen: 3D, 2D, Test, Info; panel tabs Warstwy (layers, cut), Wykończenie (tiles); ☀ and ? in the corner |
+| building.dat.js | the house as data: geometry, layers, views |
+| model.js | building.dat.js turned into solids |
+| shell.js | a sub-project's room: the house's own solids, trimmed |
+| verify.js | the checks shown in Test |
+| index.html | the page in the shared screen: 3D, 2D, Test, Info; panel tabs Warstwy (layers, cut), Wykończenie (tiles); ☀ and ? in the corner |
 | archon/ | the archon drawings and analysis.md |
 | index.html | directory listing, not part of the house |
 
 ## How it fits together
 
 ```
-analysis.md ─(by hand)─► house.dat.js ─► engine.js ─► solids ─┬─► view.html          drawn by core
-                                                          ├─► analysis.js        checked, shown in Test
-                                                          └─► house-clip.js ─► kitchen, bathroom
+analysis.md ─(by hand)─► building.dat.js ─► model.js ─► solids ─┬─► index.html          drawn by core
+                                                          ├─► verify.js        checked, shown in Test
+                                                          └─► shell.js ─► kitchen, bathroom
 ```
 
 - One model for every view. A view only picks layers and cuts it.
 - The page writes nothing back. The viewer's choices (tiles, offsets, layers, sun, cut) stay in the browser and are dropped when their format changes.
-- engine.js and view.html know nothing about this house: no numbers, names, products or colours of it. What differs is a value in the data, never a test in the code.
+- model.js and index.html know nothing about this house: no numbers, names, products or colours of it. What differs is a value in the data, never a test in the code.
 
 ## The model in short
 
