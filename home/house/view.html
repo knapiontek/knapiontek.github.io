@@ -318,17 +318,17 @@ function applyView() {
   const h = cutHeight();
   V.setCut(h);
   V.showPieces(shownAll, k => !LAYER[k] || layerOn(k));
-  for (const p of PARTS) if (p.built) p.built.showDetails(shownAll);
+  for (const b of builtParts()) b.showDetails(shownAll);
   for (const groups of TILE_MESHES.values()) for (const g of groups) {
     g.mesh.visible = shown(g.layers);
     if (g.small) g.mesh.material = shown(TILES.small) ? g.red : g.normal;
   }
-  V.buildCaps(h, SOLIDS.concat(...PARTS.filter(p => p.built).map(p => p.built.solids)), shownAll);
+  V.buildCaps(h, SOLIDS.concat(...builtParts().map(b => b.solids)), shownAll);
   markRoom();
   redraw();
 }
 const setCamera = V.setCamera;
-const placeSun = () => { V.placeSun(SUN.state); for (const p of PARTS) if (p.built) p.built.night(!!SUN.state.night); };
+const placeSun = () => { V.placeSun(SUN.state); for (const b of builtParts()) b.night(!!SUN.state.night); };
 
 /* ================= 7b. THE PARTS OF THE APPLICATIONS (../core/parts.js; ../project.md, Plan 1) =================
    apps.js names the files of each application's part; this page names none of them. A part loads after the house is
@@ -338,7 +338,8 @@ const PARTS = CORE.parts.listed().map(id => ({ id, layer: 'part:' + id, name: AP
 state.parts = Object.assign(Object.fromEntries(PARTS.map(p => [p.layer, true])), state.parts || {});
 const PART_LAYER = CORE.ui.layerTree(Object.fromEntries(PARTS.map(p => [p.layer, { name: p.name }])));
 const partOn = k => state.parts[k] !== false;
-const shownAll = CORE.parts.shownWith(LAYER, shown, PARTS.map(p => ({ layer: p.layer, on: () => partOn(p.layer), shown: layers => p.built.shown(layers) })));
+const shownAll = CORE.parts.shownWith(LAYER, shown, PARTS.map(p => ({ layer: p.layer, on: () => partOn(p.layer), shown: layers => p.built[0].shown(layers) })));
+const builtParts = () => PARTS.flatMap(p => p.built || []);   // every room of every loaded part
 function partsPanel() {
   CORE.ui.layersPanel($('partsLayers'), PART_LAYER, Object.keys(PART_LAYER), state.parts, partOn, (k, on) => { state.parts[k] = on; save(); loadParts(); partsPanel(); applyView(); });
   $('partsNote').textContent = PARTS.filter(p => p.status).map(p => `${p.name}: ${p.status}`).join(' · ');
@@ -350,8 +351,8 @@ function loadParts() {
     p.status = 'wczytywanie…'; partsPanel();
     p.loading = CORE.parts.load(p.id, '../').then(part => new Promise(done => setTimeout(() => {   // the note shows before the build
       const made = part.make({ materials: MATERIALS_3D, textures: TEX, houseModel: MODEL });
-      p.built = made.build(V, { layers: [p.layer, made.ROOM.floor] });
-      p.built.night(!!SUN.state.night);
+      p.built = made.rooms().map(r => made.build(V, Object.assign({}, r.opts, { layers: [p.layer, r.floor] })));
+      for (const b of p.built) b.night(!!SUN.state.night);
       p.status = ''; done();
     }, 30))).catch(e => { p.status = 'błąd: ' + e.message; }).then(() => { partsPanel(); applyView(); });
   }
@@ -502,7 +503,7 @@ const MM_TO_M = 0.001;                     // the scene is in metres
 /* a click on a floor selects a room of the open floor */
 V.onClick(ray => {
   if (!is3d()) return;
-  if (PARTS.some(p => p.built && partOn(p.layer) && p.built.click(ray))) return;   // a door or a drawer of a part
+  if (PARTS.some(p => p.built && partOn(p.layer) && p.built.some(b => b.click(ray)))) return;   // a door or a drawer of a part
   const F = openFloor();
   if (!F) return;
   const hit = ray.intersectObjects(PICK.filter(m => ROOM[m.userData.room].floor === F.id))[0], h = cutHeight();

@@ -116,7 +116,7 @@ library/
 
 The kitchen and both bathrooms in the house's 3D, where they stand, with fronts and drawers that open on a click.
 
-Condition: one code draws a part in its own application and in the house, in the house's axes (x along, y across, z up) and in mm. The kitchen meets it; the bathroom does not yet (step 3).
+Condition: one code draws a part in its own application and in the house, in the house's axes (x along, y across, z up) and in mm. The kitchen and the bathrooms meet it.
 
 Dependencies stay one way; the house never names a sub-project:
 
@@ -133,13 +133,13 @@ bathroom  ──► core, library, house
 3. ✓ **Kitchen**: its solids, moving fronts and click out of view.html into kitchen/parts.js, used by its own page and by the house. Its page stays as it is (checked against the current one).
 4. **Bathroom rewritten**: mm in house axes (not metres in its own frame), solids and materials of core and the library, core's light, the products in the library. No design engine (§ 2): its parts and their sizes are written in data.js, the code draws and lists them. Its page and plans stay as they are (checked).
    - ✓ stage 1: core's light (the house's light seen from inside, house.js light.inside, the same as the kitchen's through house-clip.js insideLight), the lamps by night as the kitchen's, the materials as definitions of core (b.*). Left: the generated textures of the tiles and the fluted glass.
-   - stage 2: every size in mm in house axes (no frame in metres), the round details too.
+   - ✓ stage 2: every size in mm in house axes (no frame in metres), the round details too.
    - stage 3: the parts and their sizes written in data.js; the code only draws and lists them.
-5. **Both bathrooms in the house** through the same contract; then house/rules.md §6 changes.
+5. ✓ **Both bathrooms in the house** through the same contract: a part gives `rooms()` (the kitchen one, the bathrooms one per floor), the house builds each on its floor.
 6. **A check of the dependencies** in Test: no folder refers to a sub-project except apps.js; no sub-project refers to another.
 7. **Speed**: see Difficulties, the amount of data.
 
-Done (steps 1–3): the kitchen's page is drawn by kitchen/parts.js and is the same as before, pixel for pixel; the house loads the kitchen 0.3 s after it is shown (Warstwy → Meble → Kuchnia), on the ground floor, its doors and drawers open on a click. Measured headless (software rendering): the house shown after 6.4 s, the kitchen built 1.6 s later. Not yet: the kitchen in the house's 2D plan, the walk does not bump into the furniture.
+Done (steps 1–3, 5; 4 up to stage 2): the kitchen's page is drawn by kitchen/parts.js and is the same as before, pixel for pixel; the house loads the kitchen 0.3 s after it is shown (Warstwy → Meble → Kuchnia), on the ground floor, its doors and drawers open on a click. Measured headless (software rendering): the house shown after 6.4 s, the kitchen built 1.6 s later. The bathrooms: both in the house 4 s after it is shown (Warstwy → Meble → Łazienki), their drawers and doors open on a click; their own pages are the same as before, pixel for pixel; the doors and drawers move by time as the kitchen's. Not yet: the kitchen in the house's 2D plan, the walk does not bump into the furniture.
 
 ### Difficulties
 

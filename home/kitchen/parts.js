@@ -849,7 +849,8 @@ function make(env) {
       STATIC, MOVERS, DETAILS, ENVELOPES, LAMPS, LAMP_MATERIALS, UNDRAWN, SIDES, PIECES, carcasses, floorTexture, ownerAlong, toggle };
   }
 
-  return { project, APPLIANCES, model, settings, ROOM, LAYERS, build,
+  const rooms = () => [{ floor: ROOM.floor, opts: {} }];   // one kitchen
+  return { project, APPLIANCES, model, settings, ROOM, LAYERS, rooms, build,
     LEVEL, CEILING, DEG, frontFace, panelFace, carcassDepth, carcassBack, carcassFront, plinthFace, frontThickness, T, shakerRail, HW,
     GROUP_IDS, GROUP, groupLength, itemsOf, PLACE, point, houseBox,
     K, LIB, TEX, DECORS, FLOORS, FLOOR_KEYS, METALS, HOLE_COLORS, PANEL_COLORS, metal };

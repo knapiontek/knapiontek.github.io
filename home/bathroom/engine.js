@@ -80,17 +80,13 @@ window.BathEngine = (function () {
     const F = floorInMetres(roomFrame(D.floors[floorKey], ROOM));
     const G = { key: floorKey, type: F.type, floor: F, data: { ...D, ...F }, X0: F.X0, Y0: F.Y0, LEVEL: F.LEVEL, ROOM,
       fittings: { ...D.fittings, ...F.fittings }, library: LIBRARY };   // what is bought: the library's products by role
-    G.INSIDE = F.inside.map(r => r.map(mm));               // the floor area in the room frame, metres: [x1, x2, z1, z2]
     G.V = vanity(F);
-    G.T = F.walls.t;
     G.XL = F.room.depth;                                  // top wall face (vanity wall)
     G.ZW = F.room.width;                                  // exterior wall face
     G.H = F.room.height;
 
     // door: opening axis from the vanity wall; leaf centred in the opening
     const doorAxis = G.XL - F.door.axisFromVanityWall;
-    G.DOOR_H = F.door.height;
-    G.DX0 = doorAxis - F.door.leaf / 2;  G.DX1 = doorAxis + F.door.leaf / 2;
     G.OX0 = doorAxis - F.door.opening / 2; G.OX1 = doorAxis + F.door.opening / 2;
 
     // radiator on the door wall, in the corner next to the vanity wall
@@ -106,25 +102,19 @@ window.BathEngine = (function () {
     const V = G.V;
     G.CEILING_Y = F.room.ceiling;
     G.CEILING_GAP = F.room.ceilingGap;
-    G.WINDOW_WALL_T = F.walls.exterior;
-    G.WINDOW_REVEAL = F.walls.reveal;
     G.SX = -F.shower.depth;                               // far shower wall face
     G.SZ = G.ZW - F.shower.width;                         // thermostat partition face (start of the recess)
     G.SHOWER_ZC = (G.SZ + G.ZW) / 2;
-    G.SHOWER_XC = G.SX / 2;
     G.WX0 = F.window.fromShowerLine; G.WX1 = G.WX0 + F.window.width;
-    G.WIN_Y0 = F.window.sill; G.WIN_Y1 = F.window.sill + F.window.height;
+    G.WIN_Y0 = F.window.sill;
     // WC casing with riser in the window corner
     G.ZX0 = G.XL - F.casing.depth;
-    G.ZZ1 = G.ZW; G.ZZ0 = G.ZW - F.casing.length;
+    G.ZZ0 = G.ZW - F.casing.length;
     G.PZ0 = G.ZW - F.casing.riserZone;
     G.NICHE_DEPTH = F.casing.niche;
-    G.ZXB = G.ZX0 + G.NICHE_DEPTH;
     G.WC_Z = (G.ZZ0 + G.PZ0) / 2;
-    G.RISER = { x: G.XL - .03 - F.casing.riser / 2, z: G.ZW - .03 - F.casing.riser / 2, r: F.casing.riser / 2 };
     G.CAB_W = F.wcCabinet.w; G.CAB_H = F.wcCabinet.h; G.CAB_Y0 = F.wcCabinet.y0;
 
-    G.ROOM_OUTLINE = [[0, 0], [G.XL, 0], [G.XL, G.ZW], [G.SX, G.ZW], [G.SX, G.SZ], [0, G.SZ]];
     G.AREA = G.XL * G.ZW + (-G.SX) * (G.ZW - G.SZ);
     const end = mm(V.z0 + V.len);
     G.checks = [
@@ -138,16 +128,14 @@ window.BathEngine = (function () {
   /* ---------- attic: rectangle under a roof slope rising from the knee wall ---------- */
   function buildAttic(G, F) {
     const V = G.V, r = F.roof, tan = Math.tan(r.pitch * Math.PI / 180);
-    G.KNEE = r.knee; G.PITCH = r.pitch * Math.PI / 180; G.TAN = tan;
-    G.KNEE_T = F.walls.knee;
+    G.KNEE = r.knee; G.PITCH = r.pitch * Math.PI / 180;
     G.ZF = G.ZW - (G.H - r.knee) / tan;                  // where the slope meets the flat ceiling
     G.CEILING_Y = G.H;
     G.heightAt = z => Math.min(G.H, r.knee + Math.max(0, G.ZW - z) * tan);   // ceiling height above z
-    G.SLOPE_LEN = (G.ZW - G.ZF) / Math.cos(G.PITCH);
 
     // shower in the bottom-left corner (x 0…depth along the door wall, z 0…width along the bottom wall)
     G.SHX = F.shower.depth; G.SHZ = F.shower.width;
-    G.SHOWER_XC = G.SHX / 2; G.SHOWER_ZC = G.SHZ / 2;
+    G.SHOWER_ZC = G.SHZ / 2;
     // roof window in the slope
     const rw = F.roofWindow;
     G.RW = { x: G.XL - rw.axisFromVanityWall, w: rw.w, h: rw.h, v0: rw.fromKnee, v1: rw.fromKnee + rw.h };
@@ -171,9 +159,7 @@ window.BathEngine = (function () {
     G.TAP = { ...tp, x: G.BATH.x1 + tp.fromBathEnd, z: G.ZW - tp.fromKnee };
     G.TAP.tipX = G.TAP.x - tp.reach;
     G.TAP.overRim = G.bathEdgeX(G.TAP.z, b.rim) - G.TAP.tipX;   // how far the spout reaches inside the inner rim
-    G.RISER = { x: .03 + F.casing.riser / 2, z: G.ZW - .03 - F.casing.riser / 2, r: F.casing.riser / 2 };
 
-    G.ROOM_OUTLINE = [[0, 0], [G.XL, 0], [G.XL, G.ZW], [0, G.ZW]];
     G.AREA = G.XL * G.ZW;
     // floor area with height ≥ 2.2 m counted fully, 1.4–2.2 m half (PN-ISO 9836)
     const z22 = G.ZW - (2.2 - r.knee) / tan, z14 = G.ZW - (1.4 - r.knee) / tan;

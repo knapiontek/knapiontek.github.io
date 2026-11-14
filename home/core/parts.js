@@ -4,9 +4,11 @@
 
    A part registers {textures(): [library texture keys], make(env)}.
      env    {materials, textures (the page's libraries for core: the part adds its own keys), houseModel (HouseEngine.build)}
-     make   -> the part's data, and build(V, {room, layers}): its solids, moving parts and details in the view V (core/scene.js),
-            in house axes and mm. room: its room too (its own page only: the house draws its own). layers: added to every
-            solid and detail (the house: the part's layer and its floor).
+     make   -> the part's data, rooms() and build(V, opts): its solids, moving parts and details in the view V (core/scene.js),
+            in house axes and mm.
+     rooms  [{floor (the house's floor id), opts}]: what a host builds, one build each (the kitchen one, the bathrooms two)
+     opts   a room's opts, and room: its room too (its own page only: the house draws its own); layers: added to every
+            solid and detail (the house: the part's layer and the room's floor).
    What build returns, every part:
      solids                 the static solids (for the caps of a cut)
      shown(layers)          the part's own layers as a host without its layer panel shows them (all on)

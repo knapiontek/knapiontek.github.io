@@ -7,6 +7,7 @@ window.APPS = [
   { id: 'house', name: 'Dom', page: 'house/view.html' },
   { id: 'kitchen', name: 'Kuchnia', page: 'kitchen/view.html',
     parts: ['house/house-clip.js', 'kitchen/design.js', 'kitchen/view.js', 'kitchen/engine.js', 'kitchen/parts.js'] },
-  { id: 'bathroom', name: 'Łazienki', page: 'bathroom/view.html' },
+  { id: 'bathroom', name: 'Łazienki', page: 'bathroom/view.html',
+    parts: ['house/house-clip.js', 'bathroom/data.js', 'bathroom/parts.js'] },
   { id: 'wardrobe', name: 'Garderoby', page: null },
 ];
