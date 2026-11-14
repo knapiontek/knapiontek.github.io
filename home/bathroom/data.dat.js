@@ -55,7 +55,7 @@ window.BATH_DATA = {
         showerFloor: { tile: 'paradyz-authority-grey', format: '898x898',  layout: 'h' },
       },
       /* the drawing: every part in mm in house axes (x along the house, y across, z up), written as data and drawn by
-         parts.js with core. solids: boxes [x0, x1, y0, y1, z0, z1]; movers: doors (turn about axis by angle, rad) and drawers
+         furniture.js with core. solids: boxes [x0, x1, y0, y1, z0, z1]; movers: doors (turn about axis by angle, rad) and drawers
          (slide +x); details: what is round (cylinders along axis, tubes through points, lofts and extrusions at a place turned
          by rot, degrees); layer: of the panel; cut: what hides it while the camera is behind it (view.html) */
       model: {
@@ -312,7 +312,7 @@ window.BATH_DATA = {
         showerFloor: { tile: 'paradyz-authority-grey', format: '598x598',  layout: 'h' },
       },
       /* the drawing: every part in mm in house axes (x along the house, y across, z up), written as data and drawn by
-         parts.js with core. solids: boxes [x0, x1, y0, y1, z0, z1]; movers: doors (turn about axis by angle, rad) and drawers
+         furniture.js with core. solids: boxes [x0, x1, y0, y1, z0, z1]; movers: doors (turn about axis by angle, rad) and drawers
          (slide +x); details: what is round (cylinders along axis, tubes through points, lofts and extrusions at a place turned
          by rot, degrees); layer: of the panel; cut: what hides it while the camera is behind it (view.html) */
       model: {

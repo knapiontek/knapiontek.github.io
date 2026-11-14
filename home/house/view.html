@@ -70,9 +70,9 @@
 <script src="../core/plan.js"></script>
 <script src="../core/sheet.js"></script>
 <script src="../core/info.js"></script>
-<script src="../core/parts.js"></script>
 <script src="../core/library.js"></script>
 <script src="../apps.dat.js"></script>
+<script src="../furniture.js"></script>
 <script src="../library/materials.dat.js"></script>
 <script src="../library/products.dat.js"></script>
 <script src="house.dat.js"></script>
@@ -330,15 +330,15 @@ function applyView() {
 const setCamera = V.setCamera;
 const placeSun = () => { V.placeSun(SUN.state); for (const b of builtParts()) b.night(!!SUN.state.night); };
 
-/* ================= 7b. THE PARTS OF THE APPLICATIONS (../core/parts.js; ../project.md, Rules) =================
+/* ================= 7b. THE FURNITURE OF THE APPLICATIONS: only through the interface ../furniture.js =================
    apps.dat.js names the files of each application's part; this page names none of them. A part loads after the house is
    shown (or when its layer is switched on), is drawn by core like the house, in its axes and mm, on its floor, and is a
    layer of Meble; a click on its door or drawer opens it. */
-const PARTS = CORE.parts.listed().map(id => ({ id, layer: 'part:' + id, name: APPS.find(a => a.id === id).name, built: null, loading: null, status: '' }));
+const PARTS = FURNITURE.listed().map(id => ({ id, layer: 'part:' + id, name: APPS.find(a => a.id === id).name, built: null, loading: null, status: '' }));
 state.parts = Object.assign(Object.fromEntries(PARTS.map(p => [p.layer, true])), state.parts || {});
 const PART_LAYER = CORE.ui.layerTree(Object.fromEntries(PARTS.map(p => [p.layer, { name: p.name }])));
 const partOn = k => state.parts[k] !== false;
-const shownAll = CORE.parts.shownWith(LAYER, shown, PARTS.map(p => ({ layer: p.layer, on: () => partOn(p.layer), shown: layers => p.built[0].shown(layers) })));
+const shownAll = FURNITURE.shownWith(LAYER, shown, PARTS.map(p => ({ layer: p.layer, on: () => partOn(p.layer), shown: layers => p.built[0].shown(layers) })));
 const builtParts = () => PARTS.flatMap(p => p.built || []);   // every room of every loaded part
 function partsPanel() {
   CORE.ui.layersPanel($('partsLayers'), PART_LAYER, Object.keys(PART_LAYER), state.parts, partOn, (k, on) => { state.parts[k] = on; save(); loadParts(); partsPanel(); applyView(); });
@@ -355,13 +355,15 @@ function loadParts() {
   for (const p of PARTS) {
     if (p.built || p.loading || !partOn(p.layer)) continue;
     p.status = 'wczytywanie…'; partsPanel();
-    p.loading = CORE.parts.load(p.id, '../').then(part => new Promise(done => setTimeout(() => {   // the note shows before the build
-      const made = part.make({ materials: MATERIALS_3D, textures: TEX, houseModel: MODEL });
-      p.built = made.rooms().map(r => made.build(V, Object.assign({}, r.opts, { layers: [p.layer, r.floor] })));
-      for (const b of p.built) b.night(!!SUN.state.night);
-      if (p.built.some(b => b.finishes.length)) refinish();
-      p.status = ''; done();
-    }, 30))).catch(e => { p.status = 'błąd: ' + e.message; }).then(() => { partsPanel(); applyView(); });
+    p.loading = FURNITURE.load(p.id, '../').then(part => new Promise((done, fail) => setTimeout(() => {   // the note shows before the build
+      try {
+        const made = part.make({ materials: MATERIALS_3D, textures: TEX, houseModel: MODEL });
+        p.built = made.rooms().map(r => made.build(V, Object.assign({}, r.opts, { layers: [p.layer, r.floor] })));
+        for (const b of p.built) b.night(!!SUN.state.night);
+        if (p.built.some(b => b.finishes.length)) refinish();
+        p.status = ''; done();
+      } catch (e) { p.built = null; fail(e); }
+    }, 30))).catch(e => { p.status = 'błąd: ' + e.message; }).then(() => { partsPanel(); applyView(); showChecks(); });
   }
 }
 
@@ -574,7 +576,17 @@ function drawPlan() {
 
 /* ================= 11. TEST: THE CHECKS (analysis.js) ================= */
 const CHECKS = HouseAnalysis.check(HOUSE, MODEL);
-$('checks').innerHTML = CORE.ui.checksHtml(CHECKS);
+/* the furniture of the applications against the interface (furniture.js): what is missing, from those loaded so far;
+   the house works without any of it */
+const FURNITURE_CHECK = { name: 'Meble aplikacji zgodne z interfejsem furniture.js', items: [] };
+CHECKS.push(FURNITURE_CHECK);
+function showChecks() {
+  const tried = PARTS.filter(p => p.built || p.status.startsWith('błąd'));
+  FURNITURE_CHECK.name = 'Meble aplikacji zgodne z interfejsem furniture.js' + (tried.length ? ' (sprawdzone: ' + tried.map(p => p.name).join(', ') + ')' : ' (jeszcze nie wczytane)');
+  FURNITURE_CHECK.items = PARTS.filter(p => p.status.startsWith('błąd')).map(p => `${p.name}: ${p.status.slice(6)}`);
+  $('checks').innerHTML = CORE.ui.checksHtml(CHECKS);
+}
+showChecks();
 
 /* ================= 12. START ================= */
 V.start(); placeSun(); setCamera(VIEW_3D.cameras.all[0]);

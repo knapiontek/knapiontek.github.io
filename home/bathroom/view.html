@@ -166,9 +166,9 @@
 <script src="../core/plan.js"></script>
 <script src="../core/sheet.js"></script>
 <script src="../core/info.js"></script>
-<script src="../core/parts.js"></script>
 <script src="../core/library.js"></script>
 <script src="../apps.dat.js"></script>
+<script src="../furniture.js"></script>
 <script src="../library/materials.dat.js"></script>
 <script src="../library/products.dat.js"></script>
 <script src="../house/house.dat.js"></script>
@@ -176,7 +176,7 @@
 <script src="../house/house-clip.js"></script>
 <script src="data.dat.js"></script>
 <script src="engine.js"></script>
-<script src="parts.js"></script>
+<script src="furniture.js"></script>
 <script>
 'use strict';
 (async function main() {
@@ -186,14 +186,15 @@ const fail = message => { loading.hidden = false; loading.textContent = message;
 if (!window.THREE || !THREE.OrbitControls) return fail('Nie udało się wczytać silnika 3D. Odśwież stronę.');
 if (!window.BATH_DATA || !window.BathEngine) return fail('Brak plików data.dat.js / engine.js obok view.html.');
 if (!window.LIBRARY_PRODUCTS) return fail('Brak pliku ../library/products.dat.js.');
-/* the bathroom is a part (parts.js; ../core/parts.js): the same in the house. Its textures first (the library) */
+/* the bathrooms' furniture (furniture.js): the same in the house. Its textures first (the library) */
 const PRODUCTS = LIBRARY_PRODUCTS;
 let PART;
-try { PART = await CORE.parts.load('bathroom', '../'); } catch (e) { return fail('Błąd: ' + e.message); }
+PART = window.BathroomFurniture;
+try { await CORE.library.load('../library/', PART.textures()); } catch (e) { return fail('Błąd: ' + e.message); }
 const TEXTURES = window.LIBRARY_TEXTURES;
 if (!window.HOUSE || !window.HouseClip) return fail('Brak plików domu (../house/house.dat.js, ../house/house-clip.js).');
 
-/* The room from the house (../house/house-clip.js), the bathroom's drawing from data.dat.js (parts.js); Info and Test from
+/* The room from the house (../house/house-clip.js), the bathroom's drawing from data.dat.js (furniture.js); Info and Test from
    engine.js. Here (view.html) the panel, the views and what hides while the camera is behind it. */
 let FLOOR = BATH_DATA.defaults.floor;
 try { FLOOR = new URLSearchParams(location.search).get('floor') || localStorage.getItem('floor') || FLOOR; } catch (e) {}
@@ -247,7 +248,7 @@ const sizeLabel = ({ w, h }) => `${w}×${h}`;
 
 
 /* ==========================================================================
-   2. TILES to choose from (../library): the panel's list; their textures are made by parts.js
+   2. TILES to choose from (../library): the panel's list; their textures are made by furniture.js
    ========================================================================== */
 const loadImage = src => { const img = new Image(); img.src = src; return img.decode().then(() => img); };
 const TILES = {};
@@ -283,7 +284,7 @@ controls.maxDistance = 10;
 
 
 /* ==========================================================================
-   4. THE BATHROOM (parts.js): its solids, doors, drawers, round details and lamps from data.dat.js, with the house's room
+   4. THE BATHROOM (furniture.js): its solids, doors, drawers, round details and lamps from data.dat.js, with the house's room
    ========================================================================== */
 const built = BP.build(VIEW, { floor: FLOOR, room: true });
 const { STATIC, MOVERS, DETAILS, RECORDS } = built;
@@ -370,7 +371,7 @@ function updateCuts() {
 }
 
 /* ==========================================================================
-   5. LIGHTING: the house's sun and sky (core); the bathroom's lamps by night (parts.js)
+   5. LIGHTING: the house's sun and sky (core); the bathroom's lamps by night (furniture.js)
    ========================================================================== */
 VIEW.addLight();
 const SUN = CORE.ui.sunStore(Object.values(HOUSE.views).find(v => v.menu).light.sun);
@@ -432,7 +433,7 @@ function setMetalLook(name) {   // the fittings' finish, kept while the drawing 
 const VIEWS = built.cameras;   // data.dat.js, house mm
 const goTo = (name, instant) => VIEW.flyTo(VIEWS[name], instant);
 
-// a click (without dragging) on a door or a drawer opens or closes only that one (parts.js)
+// a click (without dragging) on a door or a drawer opens or closes only that one (furniture.js)
 VIEW.onClick(ray => built.click(ray));
 const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
 let hoverPending = false;

@@ -18,6 +18,7 @@ This file: the folders, the rules every folder keeps, what is left to do, the co
 | kitchen/ | the kitchen in the living room (ground floor) |
 | bathroom/ | both bathrooms (ground floor, attic) |
 | wardrobe/ | the three walk-in wardrobes (to do) |
+| test.md | what to check after every change; an LLM rebuilds the checks from it (nothing is installed) |
 | index.html | directory listing of the repository, not part of the application |
 
 ## Rules
@@ -64,23 +65,20 @@ Everything bought, once, for every application and independent of them: products
 ### Your decision first
 
 1. **The bathrooms' floor tiles are in the data twice**: house.dat.js (the rooms) and bathroom/data.dat.js. One should go.
-2. **Names of the files**: left for later, but it must be solved: there are many more files and the naming has drifted apart. Data only is *.dat.js (done). The code files do not say what they do (engine.js, view.html ...; parts.js goes with 4); bathroom/data.dat.js is the design, as kitchen/design.dat.js. One rule for every folder, then all renamed at once with every reference.
+2. **Names of the files**: left for later, but it must be solved: there are many more files and the naming has drifted apart. Data only is *.dat.js (done). The code files do not say what they do (engine.js, view.html ...); bathroom/data.dat.js is the design, as kitchen/design.dat.js. One rule for every folder, then all renamed at once with every reference.
 3. **The wardrobes' open questions**.
 
 ### Work
 
-4. **The furniture interface**: furniture.js in the root, kitchen/furniture.js and bathroom/furniture.js instead of the parts.js files and core/parts.js; apps.dat.js lists one implementation per application; the check in Test that the house opens without a sub-project. The pages and the house look and work as before (checked page by page).
-5. **Products into the library**: kitchen/cost.dat.js, bathroom/engine.js and bathroom/data.dat.js still hold names, prices, shops and links; they move to the library, the estimates read them from there and come out the same.
-6. **The bathrooms' Info and Test from data.dat.js**: today bathroom/engine.js computes them again in metres in its own frame; then engine.js goes (and 14).
-7. **The furniture in the house's 2D plan** (kitchen and bathrooms).
-8. **The walk**: furniture does not stop it yet; the attic is not tested.
-9. **A check of the dependencies** in Test: no folder refers to a sub-project except apps.dat.js; no sub-project refers to another.
-10. **Speed**: the house with all its furniture, measured: the time to the first frame and the frame rate while orbiting.
-11. **The wardrobes (wardrobe/)**: a sub-project as the bathrooms, its own application (Garderoby) and its furniture in the house.
-12. **References to project.md in code comments** (apps.dat.js, core/parts.js, kitchen/parts.js, bathroom/parts.js, house/view.html): remove; a comment says what the code does.
-13. **project.svg** (the dependency graph) is made by hand and goes stale: remove it, or refresh it after bigger changes.
-14. **Dead code in bathroom/view.html** after 6: what only the old computation in metres needed.
-15. **The checks into the repository** (test/): today they are scripts outside it, written for this machine. Every page in every mode loaded in a headless Chrome: errors, the counts of the model, the 2D plan, the Info text and a screenshot, saved and compared with the run before a change; the house: the furniture loads and a drawer opens on a real click, the walk goes through every door aimed at (both ways, off the middle, askew) and stops at walls. To do: one script, its paths not fixed to one machine, three.js and the fonts from a local copy or the network; needs Python 3 and Playwright with Chrome. Screenshots compare only on one machine (the GPU draws differently). Decide: worth installing Python and Playwright here?
+4. **Products into the library**: kitchen/cost.dat.js, bathroom/engine.js and bathroom/data.dat.js still hold names, prices, shops and links; they move to the library, the estimates read them from there and come out the same.
+5. **The bathrooms' Info and Test from data.dat.js**: today bathroom/engine.js computes them again in metres in its own frame; then engine.js goes (and the dead code below).
+6. **The furniture in the house's 2D plan** (kitchen and bathrooms).
+7. **The walk**: furniture does not stop it yet; the attic is not tested.
+8. **A check of the dependencies** in Test: no folder refers to a sub-project except apps.dat.js; no sub-project refers to another.
+9. **Speed**: the house with all its furniture, measured: the time to the first frame and the frame rate while orbiting.
+10. **The wardrobes (wardrobe/)**: a sub-project as the bathrooms, its own application (Garderoby) and its furniture in the house.
+11. **project.svg** (the dependency graph) is made by hand and goes stale: remove it, or refresh it after bigger changes.
+12. **Dead code in bathroom/view.html** after 5: what only the old computation in metres needed.
 
 ### The wardrobes
 

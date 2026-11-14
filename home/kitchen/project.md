@@ -17,8 +17,8 @@ How the files of this folder work together.
 | engine.js | code, every project | the model: carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
 | cost-sheets.js | code, every project | cost.dat.js and the model as the shared sheets of core/info.js (Kosztorys, Lista cięć) and Notatki, and the assembly cards, shown in Info of view.html | by hand |
-| parts.js | code, every project | the kitchen as a part: its solids, moving fronts and details from design.dat.js, view.dat.js and engine.js, in house axes and mm; drawn the same by view.html (with its room) and by the house | by hand / LLM |
-| view.html | page, every project | the kitchen in its room (its solids from parts.js): 3D, the 2D plan, Test (its geometry check) and Info (the estimate, assembly, carcasses), drawn by core like the house | LLM, every project |
+| furniture.js | code, every project | the kitchen's furniture, an implementation of the interface furniture.js of the root: its solids, moving fronts and details from design.dat.js, view.dat.js and engine.js, in house axes and mm; drawn the same by view.html (with its room) and by the house | by hand / LLM |
+| view.html | page, every project | the kitchen in its room (its solids from furniture.js): 3D, the 2D plan, Test (its geometry check) and Info (the estimate, assembly, carcasses), drawn by core like the house | LLM, every project |
 | house/house.dat.js, house/house-clip.js | the house | the room: the house's own walls, slab, floor and window, trimmed to the kitchen | house |
 | library/ | data, every project | what is bought: the appliances as the maker gives them (sizes, documents), tiles, boards, materials, texture images | library |
 | core/ | code, every project | drawing: solids, welded meshes, edges, light, camera, the 2D plan, the screen, the spreadsheet | core |
@@ -36,19 +36,19 @@ design.dat.js, view.dat.js        the data: what stands where (written in design
 engine.js                 computes the model: carcasses, boards, fronts, sizes, hardware, holes; draws nothing
       │
       ▼
-parts.js                  turns the model into solids and 3D meshes of core:
+furniture.js              turns the model into solids and 3D meshes of core:
       │                   places the groups in the room, makes the moving fronts, handles a click
       ├──► view.html         + its room (from the house), the panel, the 2D plan, Info, Test
       └──► house/view.html   only the furniture, without the room (the house draws its own);
-                             loaded through apps.dat.js and core/parts.js, the house names no kitchen file
+                             only through the interface furniture.js; apps.dat.js names this file
 
 design.html ──► engine.js ──► export ──► design.dat.js     only design.html writes design.dat.js
-library ──► engine.js, parts.js                         appliances, boards, textures, materials
+library ──► engine.js, furniture.js                     appliances, boards, textures, materials
 cost.dat.js ──► cost-sheets.js ──► view.html (Info)         estimate, cutting list, notes, assembly; core/info.js shows them
-house/house.dat.js ──► house/house-clip.js ──► parts.js     the room, from the house
+house/house.dat.js ──► house/house-clip.js ──► furniture.js the room, from the house
 ```
 
-engine.js says what is built; parts.js draws it in 3D. The drawing used to be inside view.html, so the house could not use it without copying; now both pages call the same code, and a change in design.dat.js shows in the kitchen and in the house.
+engine.js says what is built; furniture.js draws it in 3D. The drawing used to be inside view.html, so the house could not use it without copying; now both pages call the same code, and a change in design.dat.js shows in the kitchen and in the house.
 
 - Every page loads design.dat.js directly, so the pages also work opened from disk.
 - design.html shows the materials read only and keeps the settings as they are; view.html (with cost-sheets.js) only reads design.dat.js.
