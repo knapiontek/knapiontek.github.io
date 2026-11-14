@@ -34,6 +34,7 @@
         <p><b>Spacer</b>: strzałki chodzą i obracają, A/D krok w bok, Shift szybciej, PgUp/PgDn lub przeciąganie myszą patrzy, Esc kończy.</p>
         <p>U góry: kondygnacje i dach. Na dole: skąd patrzysz. ☀: przeciągnij słońce wokół domu i po łuku wysokości; dzień albo noc (wspólne dla wszystkich aplikacji). ◐: jasny albo ciemny wygląd.</p>
         <p>Bez dachu najwyższa pokazana kondygnacja jest otwarta: jej przekrój jest w Warstwach, kliknięcie w podłogę wybiera pomieszczenie (płytki w Wykończeniu).</p>
+        <p>Meble aplikacji (Warstwy → Meble) wczytują się chwilę po domu; kliknięcie drzwiczek albo szuflady otwiera je lub zamyka.</p>
         <p><b>Czerwone</b> płytki = drobne docinki.</p>
       </div>
       <div data-help="2d"><p>Rzut obu kondygnacji jak rysunek CAD: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG do druku.</p></div>
@@ -54,6 +55,7 @@
       <div class="rng"><label for="cut">Wysokość cięcia</label><span id="cutv"></span><input id="cut" type="range"></div>
     </section>
     <section data-tab="layers"><h2>Warstwy</h2><div class="layers" id="layers"></div></section>
+    <section data-tab="layers"><h2>Meble</h2><div class="layers" id="partsLayers"></div><p class="note" id="partsNote" hidden></p></section>
     <section data-tab="finish"><h2>Posadzki</h2><table id="rooms"></table></section>
   </aside>
 </div>
@@ -68,6 +70,7 @@
 <script src="../core/plan.js"></script>
 <script src="../core/sheet.js"></script>
 <script src="../core/info.js"></script>
+<script src="../core/parts.js"></script>
 <script src="../core/library.js"></script>
 <script src="../apps.js"></script>
 <script src="../library/materials.js"></script>
@@ -104,7 +107,8 @@ const { ROOF, TAN, WIDTH, RIDGE_TOP, floorOfZ, SIDE, CELLS, FIXTURES, ROOF_CELLS
 /* ================= 3. SCENE ================= */
 const canvas = $('gl'), stage = $('stage');
 const LIGHT = VIEW_3D.light;
-const V = CORE.createView({ canvas, stage, materials: MATERIALS, textures: TEX, light: LIGHT, edges: VIEW_3D.edges,
+const MATERIALS_3D = Object.assign({}, MATERIALS);   // the parts of the applications add their own materials to it
+const V = CORE.createView({ canvas, stage, materials: MATERIALS_3D, textures: TEX, light: LIGHT, edges: VIEW_3D.edges,
   body: [[ROOF.x[0], 0, FLOORS[0].level], [ROOF.x[1], WIDTH, RIDGE_TOP]], sunCentre: [GEO.length / 2, WIDTH / 2, GEO.split] });
 const { root, lin, redraw, CLIP, hash01, loadImage, renderer } = V;
 
@@ -313,17 +317,45 @@ function markRoom() {
 function applyView() {
   const h = cutHeight();
   V.setCut(h);
-  V.showPieces(shown, layerOn);
+  V.showPieces(shownAll, k => !LAYER[k] || layerOn(k));
+  for (const p of PARTS) if (p.built) p.built.showDetails(shownAll);
   for (const groups of TILE_MESHES.values()) for (const g of groups) {
     g.mesh.visible = shown(g.layers);
     if (g.small) g.mesh.material = shown(TILES.small) ? g.red : g.normal;
   }
-  V.buildCaps(h, SOLIDS, shown);
+  V.buildCaps(h, SOLIDS.concat(...PARTS.filter(p => p.built).map(p => p.built.solids)), shownAll);
   markRoom();
   redraw();
 }
 const setCamera = V.setCamera;
-const placeSun = () => V.placeSun(SUN.state);
+const placeSun = () => { V.placeSun(SUN.state); for (const p of PARTS) if (p.built) p.built.night(!!SUN.state.night); };
+
+/* ================= 7b. THE PARTS OF THE APPLICATIONS (../core/parts.js; ../project.md, Plan 1) =================
+   apps.js names the files of each application's part; this page names none of them. A part loads after the house is
+   shown (or when its layer is switched on), is drawn by core like the house, in its axes and mm, on its floor, and is a
+   layer of Meble; a click on its door or drawer opens it. */
+const PARTS = CORE.parts.listed().map(id => ({ id, layer: 'part:' + id, name: APPS.find(a => a.id === id).name, built: null, loading: null, status: '' }));
+state.parts = Object.assign(Object.fromEntries(PARTS.map(p => [p.layer, true])), state.parts || {});
+const PART_LAYER = CORE.ui.layerTree(Object.fromEntries(PARTS.map(p => [p.layer, { name: p.name }])));
+const partOn = k => state.parts[k] !== false;
+const shownAll = CORE.parts.shownWith(LAYER, shown, PARTS.map(p => ({ layer: p.layer, on: () => partOn(p.layer), shown: layers => p.built.shown(layers) })));
+function partsPanel() {
+  CORE.ui.layersPanel($('partsLayers'), PART_LAYER, Object.keys(PART_LAYER), state.parts, partOn, (k, on) => { state.parts[k] = on; save(); loadParts(); partsPanel(); applyView(); });
+  $('partsNote').textContent = PARTS.filter(p => p.status).map(p => `${p.name}: ${p.status}`).join(' · ');
+  $('partsNote').hidden = !$('partsNote').textContent;
+}
+function loadParts() {
+  for (const p of PARTS) {
+    if (p.built || p.loading || !partOn(p.layer)) continue;
+    p.status = 'wczytywanie…'; partsPanel();
+    p.loading = CORE.parts.load(p.id, '../').then(part => new Promise(done => setTimeout(() => {   // the note shows before the build
+      const made = part.make({ materials: MATERIALS_3D, textures: TEX, houseModel: MODEL });
+      p.built = made.build(V, { layers: [p.layer, made.ROOM.floor] });
+      p.built.night(!!SUN.state.night);
+      p.status = ''; done();
+    }, 30))).catch(e => { p.status = 'błąd: ' + e.message; }).then(() => { partsPanel(); applyView(); });
+  }
+}
 
 /* ================= 8. THE SCREEN (core/ui.js; ../project.md, Flow) =================
    top-left menu: the applications · top-right: the modes · the bottom menu: the mode's one-off actions · the right panel:
@@ -455,7 +487,7 @@ const INFO_ITEMS = CORE.info.menu(() => SHEET, 'dom.xlsx');
 
 /* the panel: the tabs of the mode; the cut also needs an open floor */
 const panel = () => { state.tab = CORE.ui.panelTabs($('tabs'), $('panel'), view(), state.tab, t => { state.tab = t; save(); panel(); }, p => p === 'cut' && !openFloor()) ?? state.tab; };
-function refresh() { contextMenu(); bottomMenu(); layersPanel(); cutPanel(); panel(); roomsPanel(); applyView(); }
+function refresh() { contextMenu(); bottomMenu(); layersPanel(); partsPanel(); cutPanel(); panel(); roomsPanel(); applyView(); }
 function setMode(m) {
   state.mode = m; save();
   const v = CORE.ui.showMode(VIEWS, m, canvas, setMode);
@@ -469,8 +501,10 @@ function setMode(m) {
 const MM_TO_M = 0.001;                     // the scene is in metres
 /* a click on a floor selects a room of the open floor */
 V.onClick(ray => {
+  if (!is3d()) return;
+  if (PARTS.some(p => p.built && partOn(p.layer) && p.built.click(ray))) return;   // a door or a drawer of a part
   const F = openFloor();
-  if (!is3d() || !F) return;
+  if (!F) return;
   const hit = ray.intersectObjects(PICK.filter(m => ROOM[m.userData.room].floor === F.id))[0], h = cutHeight();
   if (hit && (h === null || hit.point.y / MM_TO_M <= h)) selectRoom(hit.object.userData.room);
 });
@@ -538,7 +572,8 @@ CORE.ui.appMenu($('apps'), APPS, 'house', '../', () => state.mode);
 setMode(CORE.ui.askedMode(VIEWS) || state.mode);
 $('loading').hidden = true;
 V.run();
-window.HOUSE_VIEW = { CELLS, CHECKS, setCamera, setLayer, setMode, selectRoom, state, RESULTS, pieces: PIECES.length, edges: V.EDGE_GROUPS.length,   // for tests
+setTimeout(loadParts, 300);   // after the house's first frames
+window.HOUSE_VIEW = { CELLS, CHECKS, setCamera, setLayer, setMode, selectRoom, state, RESULTS, PARTS, V, pieces: PIECES.length, edges: V.EDGE_GROUPS.length,   // for tests
   cells: { CELLS, FIXTURES, ROOF_CELLS, STAIR_CELLS, SITE_CELLS } };
 }).catch(e => { const l = document.getElementById('loading'); l.hidden = false; l.textContent = 'Błąd: ' + e.message; });
 </script>

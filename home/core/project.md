@@ -13,6 +13,7 @@ Shared 3D code for every view: the house (../house/view.html) and its sub-projec
 | library.js | loads the library's textures when a page needs them (one file per image) |
 | plan.js | the 2D plan from the solids: cut, seen from above, labels, rooms, dimensions, sheets |
 | sheet.js | the spreadsheet: tabs, editable cells, formulas, pages in tabs, XLSX export |
+| parts.js | the contract of a part (../project.md, Plan 1): a sub-project registers its part, a page loads it by apps.js and draws it in its view; the host's layers with the part's |
 | info.js | Info of every application (../project.md, Info): the screen, the order of the tabs, the shared sheets (Kosztorys, Lista cięć, a plain table), the bottom menu |
 | ui.css | the look of every view, light and dark |
 

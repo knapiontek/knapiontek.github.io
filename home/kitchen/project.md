@@ -15,7 +15,8 @@ How the files of this folder work together. The kitchen rules are in rules.md.
 | engine.js | code, every project | the model: carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
 | cost-sheets.js | code, every project | cost.js and the model as the shared sheets of ../core/info.js (Kosztorys, Lista cięć) and Notatki, and the assembly cards, shown in Info of view.html | by hand |
-| view.html | page, every project | the kitchen in its room: 3D, the 2D plan, Test (its geometry check) and Info (the estimate, assembly, carcasses), drawn by ../core like the house | LLM, every project |
+| parts.js | code, every project | the kitchen as a part (../core/parts.js): its solids, moving fronts and details from design.js, view.js and engine.js, in house axes and mm; drawn the same by view.html (with its room) and by the house | by hand / LLM |
+| view.html | page, every project | the kitchen in its room (its solids from parts.js): 3D, the 2D plan, Test (its geometry check) and Info (the estimate, assembly, carcasses), drawn by ../core like the house | LLM, every project |
 | ../house/house.js, ../house/house-clip.js | the house | the room: the house's own walls, slab, floor and window, trimmed to the kitchen | ../house |
 | ../library/ | data, every project | what is bought: the appliances as the maker gives them (sizes, documents), tiles, boards, materials, texture images | ../library |
 | ../core/ | code, every project | drawing: solids, welded meshes, edges, light, camera, the 2D plan, the screen, the spreadsheet | ../core |

@@ -61,11 +61,12 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 ## 6. Podprojekty
 
 - Salon prowadzi do kitchen/view.html; obie łazienki do bathroom/view.html.
+- Meble podprojektów są w domu jako części ([../project.md](../project.md), Plan 1): apps.js podaje ich pliki, dom ładuje je przez core/parts.js i nie zna żadnego podprojektu z nazwy. Są warstwą Meble (Warstwy) na swojej kondygnacji; kliknięcie drzwiczek albo szuflady otwiera je. Dziś: kuchnia.
 - Dom wygrywa: kuchnia i łazienki biorą pomieszczenie z domu takie, jakie jest (ściany, strop, posadzkę, okna, dach), przycięte do obszaru, który dom podaje dla pomieszczenia. Nie rysują ani nie mierzą własnego pomieszczenia i niczego w nim nie przesuwają.
 - Te same osie wszędzie: x wzdłuż domu, y w poprzek, z w górę, mm i położenia domu. Podprojekt może liczyć w ramie swojej grupy albo pomieszczenia, ale ta rama jest tylko obrócona i przesunięta w osiach domu (nigdy odbita), a strona rysuje w osiach domu.
 - Podprojekt rysuje core, tak jak dom (§ 2, Rysowanie).
 - Płytki łazienek leżą na ścianach domu; posadzka podprojektu leży na płycie domu, nigdy w jej płaszczyźnie.
-- Nic z podprojektu nie trafia do widoku domu (view.html): dom tylko prowadzi do podprojektu.
+- Do widoku domu trafiają z podprojektu tylko jego meble jako część (wyżej); pomieszczenie rysuje zawsze dom.
 
 ## 7. Kontrole (Test)
 

@@ -8,8 +8,8 @@ This file: the folders and their dependencies, the screen (Flow), the library, t
 
 | Folder | Holds | Docs |
 |---|---|---|
-| apps.js | the applications (name, page) for the top-left menu | — |
-| core/ | shared code: solids, meshes, the 3D scene, the 2D plan, the screen, the spreadsheet and Info; knows no project | [core](core/project.md) |
+| apps.js | the applications (name, page) for the top-left menu, and the files of each application's part (Plan 1) | — |
+| core/ | shared code: solids, meshes, the 3D scene, the 2D plan, the screen, the spreadsheet and Info, the contract of a part; knows no project | [core](core/project.md) |
 | library/ | everything bought: products, materials, textures; data only | § Library |
 | house/ | the building, from the archon drawings | [house](house/project.md) |
 | kitchen/ | the kitchen in the living room (ground floor) | [kitchen](kitchen/project.md) |
@@ -30,7 +30,7 @@ apps.js ──► the top-left menu of every page
 - **core** knows no project and no product; **library** knows no project.
 - **house** knows core and the library.
 - **A sub-project** knows core, the library and the house (house.js, engine.js, house-clip.js). The house wins: a sub-project never measures or moves its room.
-- The house view does not show a sub-project yet; a room's tag links to its application (§ Plan: the furniture in the house).
+- The house view shows the furniture of an application as a part (§ Plan 1): apps.js names its files, core/parts.js loads it, the house's code names no sub-project. A room's tag links to its application.
 
 ## A sub-project's room
 
@@ -128,13 +128,15 @@ kitchen   ──► core, library, house
 bathroom  ──► core, library, house
 ```
 
-1. **Contract in core** (core/parts.js): a part gives its solids (house axes, mm), its moving parts (fronts, drawers, doors), its layers and what a click does. One function puts a part into a view, for the application's page and the house's alike.
-2. **Wiring in apps.js**: an application lists `parts`, the files that build its part. The house view loads them for every application that has them; they register through the contract.
-3. **Kitchen**: its solids, moving fronts and click out of view.html into kitchen/parts.js, used by its own page and by the house. Its page stays as it is (checked against the current one).
+1. ✓ **Contract in core** (core/parts.js): a part gives its solids (house axes, mm), its moving parts (fronts, drawers, doors), its layers and what a click does. One function puts a part into a view, for the application's page and the house's alike.
+2. ✓ **Wiring in apps.js**: an application lists `parts`, the files that build its part. The house view loads them for every application that has them; they register through the contract.
+3. ✓ **Kitchen**: its solids, moving fronts and click out of view.html into kitchen/parts.js, used by its own page and by the house. Its page stays as it is (checked against the current one).
 4. **Bathroom rewritten**: mm in house axes (not metres in its own frame), solids and materials of core and the library, core's light, the products in the library. No design engine (§ 2): its parts and their sizes are written in data.js, the code draws and lists them. Its page and plans stay as they are (checked).
 5. **Both bathrooms in the house** through the same contract; then house/rules.md §6 changes.
 6. **A check of the dependencies** in Test: no folder refers to a sub-project except apps.js; no sub-project refers to another.
 7. **Speed**: see Difficulties, the amount of data.
+
+Done (steps 1–3): the kitchen's page is drawn by kitchen/parts.js and is the same as before, pixel for pixel; the house loads the kitchen 0.3 s after it is shown (Warstwy → Meble → Kuchnia), on the ground floor, its doors and drawers open on a click. Measured headless (software rendering): the house shown after 6.4 s, the kitchen built 1.6 s later. Not yet: the kitchen in the house's 2D plan, the walk does not bump into the furniture.
 
 ### Difficulties
 

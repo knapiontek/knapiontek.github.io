@@ -1,8 +1,12 @@
-/* apps.js: the applications of the home, in the order of the top-left menu (../project.md, Flow).
-   page: from this folder; null while the application is planned (shown, but not a link). */
+/* apps.js: the applications of the home, in the order of the top-left menu (project.md, Flow), and the wiring of their
+   parts (project.md, Plan 1): the only place that names a sub-project for another page.
+   page: from this folder; null while the application is planned (shown, but not a link).
+   parts: the files that build the application's furniture as a part (core/parts.js), in their order, from this folder;
+   a page (the house) loads those it does not have yet. */
 window.APPS = [
   { id: 'house', name: 'Dom', page: 'house/view.html' },
-  { id: 'kitchen', name: 'Kuchnia', page: 'kitchen/view.html' },
+  { id: 'kitchen', name: 'Kuchnia', page: 'kitchen/view.html',
+    parts: ['house/house-clip.js', 'kitchen/design.js', 'kitchen/view.js', 'kitchen/engine.js', 'kitchen/parts.js'] },
   { id: 'bathroom', name: 'Łazienki', page: 'bathroom/view.html' },
   { id: 'wardrobe', name: 'Garderoby', page: null },
 ];
