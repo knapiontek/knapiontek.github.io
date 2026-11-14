@@ -72,10 +72,10 @@
 <script src="../core/info.js"></script>
 <script src="../core/parts.js"></script>
 <script src="../core/library.js"></script>
-<script src="../apps.js"></script>
-<script src="../library/materials.js"></script>
-<script src="../library/products.js"></script>
-<script src="house.js"></script>
+<script src="../apps.dat.js"></script>
+<script src="../library/materials.dat.js"></script>
+<script src="../library/products.dat.js"></script>
+<script src="house.dat.js"></script>
 <script src="engine.js"></script>
 <script src="analysis.js"></script>
 <script>
@@ -84,7 +84,7 @@ CORE.library.load('../library/', Object.values(LIBRARY_PRODUCTS.tiles).map(p => 
   .concat(Object.values(LIBRARY_MATERIALS).filter(m => m.wood).map(m => m.wood.decor))).then(function () {
 'use strict';
 
-/* The page knows no house: everything it builds and shows comes from house.js and ../library.
+/* The page knows no house: everything it builds and shows comes from house.dat.js and ../library.
    Units are mm in house axes (x along, y across, z up) until the scene, which is in metres with y up.
    What is not about this house (geometry, mesh, scene, panel) is in core/. */
 
@@ -331,7 +331,7 @@ const setCamera = V.setCamera;
 const placeSun = () => { V.placeSun(SUN.state); for (const b of builtParts()) b.night(!!SUN.state.night); };
 
 /* ================= 7b. THE PARTS OF THE APPLICATIONS (../core/parts.js; ../project.md, Rules) =================
-   apps.js names the files of each application's part; this page names none of them. A part loads after the house is
+   apps.dat.js names the files of each application's part; this page names none of them. A part loads after the house is
    shown (or when its layer is switched on), is drawn by core like the house, in its axes and mm, on its floor, and is a
    layer of Meble; a click on its door or drawer opens it. */
 const PARTS = CORE.parts.listed().map(id => ({ id, layer: 'part:' + id, name: APPS.find(a => a.id === id).name, built: null, loading: null, status: '' }));

@@ -1,6 +1,6 @@
-/* kitchen/cost-sheets.js: the kitchen's estimate, cutting list and notes from engine.js and cost.js, built with the
+/* kitchen/cost-sheets.js: the kitchen's estimate, cutting list and notes from engine.js and cost.dat.js, built with the
    shared sheets of core/info.js (Kosztorys, Lista cięć) as every application's, and the assembly cards. Shown in Info
-   of view.html. Knows the format of cost.js (its placeholders are listed at its top), not this kitchen. */
+   of view.html. Knows the format of cost.dat.js (its placeholders are listed at its top), not this kitchen. */
 (function (root) {
 'use strict';
 
@@ -30,7 +30,7 @@ function cutoutLines(row) {
   const lines = row.drillings.flatMap(({ drilling }) => drilling.cutouts.map(c => code[c.kind] + ' ' + c.width + '×' + c.depth + ' @ ' + num1(c.x) + 'x' + num1(c.y)));
   return [...new Set(lines)];
 }
-// the legend under the cutting list: labels and cut-out codes, from design.js settings.cutouts
+// the legend under the cutting list: labels and cut-out codes, from design.dat.js settings.cutouts
 function cutoutLegend() {
   const labels = KE.LABELS, c = model.settings.cutouts || {}, from = 'x ' + labels.holeFrom.left + ', y ' + labels.holeFrom.back;
   return [
@@ -55,7 +55,7 @@ function holeText(drilling) {
   const edge = ends.map(from => 'odbojnik w krawędzi przedniej ' + KE.LABELS.holeFrom[from] + ': ' + bumpers.filter(h => h.from === from).map(h => num1(h.x)).join(', ')).join('; ');
   return [parts.length ? 'otwory ' + KE.LABELS.holeFrom[drilling.from.y] + ': ' + parts.join('; ') : '', edge].filter(Boolean).join('; ');
 }
-// the drilling rules over the assembly cards, from design.js settings.drilling
+// the drilling rules over the assembly cards, from design.dat.js settings.drilling
 function assemblyLegend() {
   const d = model.settings.drilling, list = xs => xs.map(num1).join(', ');
   const remark = kind => ((COST.labels.legend || {})[kind] ? ' (' + COST.labels.legend[kind] + ')' : '');
@@ -236,8 +236,8 @@ function ROUNDUP(x, digits) {
   const f = Math.pow(10, digits || 0);
   return Math.ceil(x * f - 1e-9) / f;
 }
-// Placeholders in quantities and texts ({n:hinges}, {i:K25/oven.space}, {=...} ...): the full list is at the top of cost.js.
-// Every value comes from design.js (through engine.js), the library's appliances or cost.js.
+// Placeholders in quantities and texts ({n:hinges}, {i:K25/oven.space}, {=...} ...): the full list is at the top of cost.dat.js.
+// Every value comes from design.dat.js (through engine.js), the library's appliances or cost.dat.js.
 
 // a carcass by name: width, height, innerWidth, v0, v1
 function carcassValue(rest) {
@@ -342,7 +342,7 @@ function buildBook() {
   const result = compute(), INFO = root.CORE.info;
 
   // sheet "Lista cięć" (core/info.js): as an order form, each size followed by the number of finished edges along it
-  const cutting = INFO.cutList({ title: 'Lista cięć – płyty obliczone przez engine.js z design.js (wymiary w mm)', note: fill(COST.labels.cuttingNote),
+  const cutting = INFO.cutList({ title: 'Lista cięć – płyty obliczone przez engine.js z design.dat.js (wymiary w mm)', note: fill(COST.labels.cuttingNote),
     blocks: COST.blocks.map(block => ({ id: block.id, title: fill(block.title), columns: block.columns, cut: block.cut,
       rows: (rowsOf[block.id] || []).map((row, i) => {
         const along = edgeCounts(row);
@@ -363,7 +363,7 @@ function buildBook() {
     }
   });
 
-  // sheet "Kosztorys" (core/info.js): a quantity of cost.js -> an Excel formula: other positions' quantities, the parameters
+  // sheet "Kosztorys" (core/info.js): a quantity of cost.dat.js -> an Excel formula: other positions' quantities, the parameters
   // and the m², edge banding and cut totals of the cutting list as cell references, the rest as values
   const toExcel = (expr, ref) => expr.replace(/^=/, '')
     .replace(/\{q:(\w+)\}/g, (_, id) => ref.item(id))

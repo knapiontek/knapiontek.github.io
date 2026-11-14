@@ -1,5 +1,5 @@
 /* Kitchen project cost data - read by cost-sheets.js (Info of view.html). Written for each project (LLM). Plain JSON after "window.KITCHEN_COST =".
-   Everything measured comes from design.js through engine.js, the appliance sizes from ../library/products.js: nothing here repeats
+   Everything measured comes from design.dat.js through engine.js, the appliance sizes from ../library/products.dat.js: nothing here repeats
    a calculated number.
      page        tab title, heading, info line, XLSX file name, excluded (what the estimate does not cover)
      params      the inputs above the estimate (waste, sheet size in m², reserve); a value or a formula
@@ -20,7 +20,7 @@
      formulas    named calculations used in several texts ({f:name}), written like {=...} without the braces
    Texts and formulas may hold placeholders:
      {n:hinges}        engine count ({n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
-     {s:drawers.D.frontAbove} design.js setting     {t:carcass} thickness, {d:worktop} depth (as bought) and {m:cabinet} material label of a board type or part
+     {s:drawers.D.frontAbove} design.dat.js setting     {t:carcass} thickness, {d:worktop} depth (as bought) and {m:cabinet} material label of a board type or part
                        (a material use of engine.js: a board type, islandWorktop, endPanel, islandEndPanel, carcass, backPanel, drawerBox, hobPanel)
      {w:1.depth}       worktop of group 1  {g:3.backGap} group 3 (backGap, name)  {k:K25.innerWidth} carcass by name: width, height, innerWidth, v0, v1
      {i:K25/oven.space} item by carcass name or place (G1[6]) and type or tag, #2 = the second from the bottom:
@@ -39,7 +39,7 @@ window.KITCHEN_COST = {
  "page": {
   "title": "Kosztorys kuchni Jaworze",
   "heading": "Kosztorys materiałów – Kuchnia Jaworze (grupa 1+2 w L, wyspa grupa 3)",
-  "info": "PLN brutto, ceny sklepów internetowych z października 2026 (każda pozycja ma link do sklepu), tylko materiały (montaż własny). Niebieskie pola można zmieniać, by sprawdzić inne ceny do odświeżenia strony; stałe ceny wpisuje się w dane kosztorysu na tej stronie. Ilości z formułą pochodzą z design.js.",
+  "info": "PLN brutto, ceny sklepów internetowych z października 2026 (każda pozycja ma link do sklepu), tylko materiały (montaż własny). Niebieskie pola można zmieniać, by sprawdzić inne ceny do odświeżenia strony; stałe ceny wpisuje się w dane kosztorysu na tej stronie. Ilości z formułą pochodzą z design.dat.js.",
   "xlsxFile": "kosztorys_kuchnia_jaworze.xlsx",
   "excluded": ["Robocizna, transport, elektryka (płyta 400 V, obwody piekarnika, zmywarki, lodówki), hydraulika, prace GK (materiały GK są w kosztorysie)."]
  },

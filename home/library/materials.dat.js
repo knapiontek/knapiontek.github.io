@@ -1,4 +1,4 @@
-/* library/materials.js: how a material looks, for every application (core draws it); knows no project.
+/* library/materials.dat.js: how a material looks, for every application (core draws it); knows no project.
    colour, roughness, metalness, opacity (glass), reflect = strength of the sky reflection;
    one generated surface at most: texture = plaster grain (strength 0..1, grain = speck size in px of a 256 px tile
    covering "tile" mm), grass, slabs (paving of "size" mm with a joint colour), wood = a decor photo of

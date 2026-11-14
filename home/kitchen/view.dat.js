@@ -1,11 +1,11 @@
-/* Kitchen scene for view.html: only what the 3D view needs beyond design.js and ../library. Written per project (LLM).
-   House axes and positions in mm: x along the house, y across, z up (../house/house.js). The room itself (walls, slab,
+/* Kitchen scene for view.html: only what the 3D view needs beyond design.dat.js and ../library. Written per project (LLM).
+   House axes and positions in mm: x along the house, y across, z up (../house/house.dat.js). The room itself (walls, slab,
    floor, window) is the house's own, copied as it is by ../house/house-clip.js; nothing of it is repeated here.
      placement     where each group stands (by group number) and which way its fronts face (-y, +y, -x, +x); an island
                    stands free; x, y = the point its anchor names (start (default), end, centre or {column}: the end of
                    that column) on the wall line of the group (an island: the line of its carcass backs);
                    against {group}: the anchor lies on the front plane of that group (an L corner), instead of x or y
-     floors        the floor tiles to choose from (product keys of ../library/products.js tiles); the first is the default
+     floors        the floor tiles to choose from (product keys of ../library/products.dat.js tiles); the first is the default
      room          floorJoint: the grout joint width of the floor tiles; wallColor: the plasterboard and the ceiling finish
      installation  how the sink, its trap and the hood are fitted here
      finishes      extra finishes for the Project tab, drawn with a material of the view
@@ -13,7 +13,7 @@
      metals        the metal finishes of the handles to choose from; hardware.handle.metal is the default
      lights        pendantBottom: the height of the pendants' bottom; pendants: centred over the worktop of their group;
                    downlights at {group, u, n} (u along the group from its start, n out from the wall), between [sink, hob] instead of u: halfway between their axes
-     views         as in house.js, one per mode: 3D (menu: the groups, by layer, with their names in the menu), the 2D plan
+     views         as in house.dat.js, one per mode: 3D (menu: the groups, by layer, with their names in the menu), the 2D plan
                    (cut at the house's own height for the floor), Info, Test (the checks); tabs: of the right panel
      cameras       the views in the bottom menu; the first one opens */
 window.KITCHEN_VIEW = {

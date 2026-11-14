@@ -212,7 +212,7 @@ window.BathEngine = (function () {
     const e42 = 2 * len + 2 * topDepth;
     return { e22: e22 / 1000, e42: e42 / 1000 };
   }
-  /* the vanity's hardware as positions of the estimate: the drawers' sides by their product of the library (data.js
+  /* the vanity's hardware as positions of the estimate: the drawers' sides by their product of the library (data.dat.js
      fittings), the rest by Blum's catalogue number (product: the library's entry that gives the shop) */
   function hardware(G) {
     const { nA, nB, len } = G.V, rows = [];
@@ -247,7 +247,7 @@ window.BathEngine = (function () {
   function buyItems(G, decor, metal) {
     const S = G.data.shop, L = S.links, brass = metal === 'brass', V = G.V, nb = V.basins.length;
     const white = G.floor.look.basin === 'white';
-    /* a fitting of the library (data.js fittings, by metal where it differs) as a line of the list; note: what this
+    /* a fitting of the library (data.dat.js fittings, by metal where it differs) as a line of the list; note: what this
        bathroom adds to the product's own note */
     const product = role => { const k = G.fittings[role]; return G.library.fittings[typeof k === 'string' ? k : k[metal]]; };
     const item = (group, role, qty, note) => {

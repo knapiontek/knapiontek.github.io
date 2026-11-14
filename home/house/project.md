@@ -10,8 +10,8 @@ What the page must do is in rules.md (Polish, like the page); where the numbers 
 
 | File | Holds |
 |---|---|
-| house.js | the house as data: geometry, layers, views |
-| engine.js | house.js turned into solids |
+| house.dat.js | the house as data: geometry, layers, views |
+| engine.js | house.dat.js turned into solids |
 | house-clip.js | a sub-project's room: the house's own solids, trimmed |
 | analysis.js | the checks shown in Test |
 | view.html | the page in the shared screen: 3D, 2D, Test, Info; panel tabs Warstwy (layers, cut), Wykończenie (tiles); ☀ and ? in the corner |
@@ -21,7 +21,7 @@ What the page must do is in rules.md (Polish, like the page); where the numbers 
 ## How it fits together
 
 ```
-analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─► view.html          drawn by core
+analysis.md ─(by hand)─► house.dat.js ─► engine.js ─► solids ─┬─► view.html          drawn by core
                                                           ├─► analysis.js        checked, shown in Test
                                                           └─► house-clip.js ─► kitchen, bathroom
 ```

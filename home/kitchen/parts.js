@@ -1,6 +1,6 @@
 /* kitchen/parts.js: the kitchen as a part (../core/parts.js; ../project.md, Rules): the same solids, moving fronts and
    details in its own page (view.html, with its room) and in the house (without: the house draws its own). Everything
-   comes from design.js, view.js and engine.js and the library; nothing is made up here to fit.
+   comes from design.dat.js, view.dat.js and engine.js and the library; nothing is made up here to fit.
    Units are mm in house axes (x along the house, y across, z up); inside a group the engine keeps u along the group, v up
    from the floor, n out from the carcass backs. */
 (function (root) {
@@ -13,7 +13,7 @@ function make(env) {
   const project = KE.withLibrary(root.KITCHEN_DESIGN, LIBRARY_PRODUCTS.boards), APPLIANCES = KE.appliances(project, LIBRARY_PRODUCTS.appliances);
   const model = KE.build(project, APPLIANCES), settings = project.settings;
   const ROOM = root.HouseClip.roomsFor(HOUSE, env.houseModel, 'kitchen/view.html')[0];
-  if (!ROOM) throw new Error('W house.js żadne pomieszczenie nie prowadzi do kitchen/view.html.');
+  if (!ROOM) throw new Error('W house.dat.js żadne pomieszczenie nie prowadzi do kitchen/view.html.');
   const LEVEL = ROOM.level, CEILING = ROOM.ceiling - ROOM.level;   // v of the underside of the slab over the room
   const DEG = Math.PI / 180;
 
@@ -21,7 +21,7 @@ function make(env) {
   const T = model.thickness, shakerRail = settings.front.shakerRail, HW = SCENE.hardware;
 
   /* ================= 1. WHERE THE GROUPS STAND =================
-     A group stands at its placement (view.js): fronts facing one of ±x, ±y; u runs along it, n out of its wall. A point
+     A group stands at its placement (view.dat.js): fronts facing one of ±x, ±y; u runs along it, n out of its wall. A point
      (u, v, n) of group r is O + u·U + n·N at height LEVEL + v. U is N turned a quarter to the left, so (U, z, N) is a
      right-handed frame: a group is turned, never mirrored. */
   const GROUP_IDS = Object.keys(SCENE.placement);
@@ -58,7 +58,7 @@ function make(env) {
   }
 
   /* ================= 2. MATERIALS =================
-     One library for core: the house's materials (the room keeps them) and the kitchen's, prefixed k. A board of design.js
+     One library for core: the house's materials (the room keeps them) and the kitchen's, prefixed k. A board of design.dat.js
      is its decor photo (../library/textures) or its colour, a lacquer a clear coat; its bare edge is the speckled core of the board. */
   const K = key => 'k.' + key;
   const LIB = env.materials;                // the page's library for core: the kitchen's keys are added
@@ -88,7 +88,7 @@ function make(env) {
   const metal = key => ({ color: METALS[key].color, roughness: METALS[key].roughness, metalness: METALS[key].metalness, reflect: 1.4 });
   Object.assign(LIB, Object.fromEntries(Object.entries({
     wall: { color: SCENE.room.wallColor, roughness: 0.95, reflect: 0.45 },   // plasterboard
-    floor: { color: '#cfcfcb', roughness: 0.55, reflect: 0.6 },              // its map: the floor tiles of view.js (../library)
+    floor: { color: '#cfcfcb', roughness: 0.55, reflect: 0.6 },              // its map: the floor tiles of view.dat.js (../library)
     handle: metal(HW.handle.metal),
     steel: { color: '#d2d5d8', metalness: 1, roughness: 0.3 },
     glassBlack: { color: '#060708', roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, reflect: 1.1 },
@@ -118,7 +118,7 @@ function make(env) {
     ...Object.fromEntries(Object.entries(HOLE_COLORS).map(([k, h]) => ['hole.' + k, { color: h.hex, emissive: h.hex, glow: 0.35, roughness: 0.8 }])),
     ...Object.fromEntries(Object.entries(PANEL_COLORS).map(([k, [color]]) => ['panel.' + k, { color, roughness: 0.7 }]))
   }).map(([k, d]) => [K(k), d])));
-  /* the boards of design.js; '~': the decor turned a quarter, so the grain runs along the face's other side */
+  /* the boards of design.dat.js; '~': the decor turned a quarter, so the grain runs along the face's other side */
   for (const [code, m] of Object.entries(model.materials)) {
     const decor = m.texture && DECORS[m.texture];
     const def = decor ? { color: '#ffffff', image: { key: m.texture }, roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, reflect: 0.5 }

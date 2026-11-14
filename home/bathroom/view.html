@@ -168,13 +168,13 @@
 <script src="../core/info.js"></script>
 <script src="../core/parts.js"></script>
 <script src="../core/library.js"></script>
-<script src="../apps.js"></script>
-<script src="../library/materials.js"></script>
-<script src="../library/products.js"></script>
-<script src="../house/house.js"></script>
+<script src="../apps.dat.js"></script>
+<script src="../library/materials.dat.js"></script>
+<script src="../library/products.dat.js"></script>
+<script src="../house/house.dat.js"></script>
 <script src="../house/engine.js"></script>
 <script src="../house/house-clip.js"></script>
-<script src="data.js"></script>
+<script src="data.dat.js"></script>
 <script src="engine.js"></script>
 <script src="parts.js"></script>
 <script>
@@ -184,16 +184,16 @@
 const stage = document.getElementById('stage'), loading = document.getElementById('loading');
 const fail = message => { loading.hidden = false; loading.textContent = message; };
 if (!window.THREE || !THREE.OrbitControls) return fail('Nie udało się wczytać silnika 3D. Odśwież stronę.');
-if (!window.BATH_DATA || !window.BathEngine) return fail('Brak plików data.js / engine.js obok view.html.');
-if (!window.LIBRARY_PRODUCTS) return fail('Brak pliku ../library/products.js.');
+if (!window.BATH_DATA || !window.BathEngine) return fail('Brak plików data.dat.js / engine.js obok view.html.');
+if (!window.LIBRARY_PRODUCTS) return fail('Brak pliku ../library/products.dat.js.');
 /* the bathroom is a part (parts.js; ../core/parts.js): the same in the house. Its textures first (the library) */
 const PRODUCTS = LIBRARY_PRODUCTS;
 let PART;
 try { PART = await CORE.parts.load('bathroom', '../'); } catch (e) { return fail('Błąd: ' + e.message); }
 const TEXTURES = window.LIBRARY_TEXTURES;
-if (!window.HOUSE || !window.HouseClip) return fail('Brak plików domu (../house/house.js, ../house/house-clip.js).');
+if (!window.HOUSE || !window.HouseClip) return fail('Brak plików domu (../house/house.dat.js, ../house/house-clip.js).');
 
-/* The room from the house (../house/house-clip.js), the bathroom's drawing from data.js (parts.js); Info and Test from
+/* The room from the house (../house/house-clip.js), the bathroom's drawing from data.dat.js (parts.js); Info and Test from
    engine.js. Here (view.html) the panel, the views and what hides while the camera is behind it. */
 let FLOOR = BATH_DATA.defaults.floor;
 try { FLOOR = new URLSearchParams(location.search).get('floor') || localStorage.getItem('floor') || FLOOR; } catch (e) {}
@@ -203,7 +203,7 @@ let BP;
 try { BP = PART.make({ materials: MATERIAL_LIB, textures: TEX, houseModel: HOUSE_MODEL }); } catch (e) { return fail(e.message); }
 const HOUSE_ROOM = BP.ROOMS[FLOOR];
 const G = BathEngine.build(BATH_DATA, FLOOR, HOUSE_ROOM, LIBRARY_PRODUCTS), DATA = G.data, ATTIC = G.type === 'attic';
-const V = G.V;   // the vanity in mm (data.js → engine.js), for Info
+const V = G.V;   // the vanity in mm (data.dat.js → engine.js), for Info
 
 /* ==========================================================================
    1. STATE
@@ -225,7 +225,7 @@ const LAYER_TREE = Object.values(BATH_DATA.views).find(v => v.layers).layers, LA
 (function defaults(t) { for (const [k, v] of Object.entries(t)) { state.layers[k] = !v.off; if (v.layers) defaults(v.layers); } })(LAYER_TREE);
 const { layerOn } = CORE.ui.layerSwitch(LAYER, () => state.layers);
 
-/* the viewer's choices stay in the browser, per floor (core/ui.js store); what no longer fits data.js is dropped.
+/* the viewer's choices stay in the browser, per floor (core/ui.js store); what no longer fits data.dat.js is dropped.
    Tiles and layers are taken here; style, metal and decor by their buttons once the panel is built (keepChoices). */
 const CHOICES = CORE.ui.store(`bathroom-${FLOOR}-choices`, () => ({}), s => !!s && typeof s === 'object');
 for (const s of SURFACES) {
@@ -283,7 +283,7 @@ controls.maxDistance = 10;
 
 
 /* ==========================================================================
-   4. THE BATHROOM (parts.js): its solids, doors, drawers, round details and lamps from data.js, with the house's room
+   4. THE BATHROOM (parts.js): its solids, doors, drawers, round details and lamps from data.dat.js, with the house's room
    ========================================================================== */
 const built = BP.build(VIEW, { floor: FLOOR, room: true });
 const { STATIC, MOVERS, DETAILS, RECORDS } = built;
@@ -297,7 +297,7 @@ function setMetal(name) {
 }
 for (const s of SURFACES) built.setTiles(s, state.tiles[s]);
 
-/* Egger decors: the boards of the library (photo, code, price, link), why each would suit here in data.js. */
+/* Egger decors: the boards of the library (photo, code, price, link), why each would suit here in data.dat.js. */
 const DECOR_INFO = DATA.decors;
 const DECORS = {};
 for (const id of Object.keys(DECOR_INFO)) {
@@ -310,7 +310,7 @@ for (const id of Object.keys(DECOR_INFO)) {
   const px = c.getContext('2d').getImageData(0, 0, 1, 1).data;
   DECORS[id] = { ...d, ...DECOR_INFO[id], img, rgb: [px[0], px[1], px[2]], page: d.link };
 }
-if (!Object.keys(DECORS).length) return fail('Brak dekorów płyt (data.js decors, ../library).');
+if (!Object.keys(DECORS).length) return fail('Brak dekorów płyt (data.dat.js decors, ../library).');
 state.decor = DECORS[DATA.defaultDecor] ? DATA.defaultDecor : Object.keys(DECORS)[0];
 
 /** Decor texture: the photo spans width_m along the grain; uv in mm on the face (core). turn: the grain along the face's v. */
@@ -334,7 +334,7 @@ function setDecor(id) {
 setDecor(state.decor);
 
 /* what hides while the camera is behind it (or its layer is off): a wall of the room, the floor, the casing, the ceiling
-   (data.js cuts). Hidden: not drawn, still casting its shadow (a ghost): daylight only enters through the window. */
+   (data.dat.js cuts). Hidden: not drawn, still casting its shadow (a ghost): daylight only enters through the window. */
 const GHOST = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
 const EDGE = new THREE.LineBasicMaterial({ color: 0x2b2e31 });   // outlines of the round details (core draws the solids' edges)
 const camHouse = () => VIEW.root.worldToLocal(camera.position.clone());   // the camera in house mm
@@ -429,7 +429,7 @@ function setMetalLook(name) {   // the fittings' finish, kept while the drawing 
   invalidate();
 }
 
-const VIEWS = built.cameras;   // data.js, house mm
+const VIEWS = built.cameras;   // data.dat.js, house mm
 const goTo = (name, instant) => VIEW.flyTo(VIEWS[name], instant);
 
 // a click (without dragging) on a door or a drawer opens or closes only that one (parts.js)

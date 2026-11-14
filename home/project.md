@@ -10,7 +10,7 @@ This file: the folders, the rules every folder keeps, what is left to do, the co
 
 | Folder | Holds |
 |---|---|
-| apps.js | the applications (name, page) for the top-left menu, and the files of each application's furniture for the house |
+| apps.dat.js | the applications (name, page) for the top-left menu, and the files of each application's furniture for the house |
 | core/ | shared code: solids, meshes, the 3D scene, the 2D plan, the screen, the spreadsheet and Info, the contract of a part; knows no project |
 | library/ | everything bought: products, materials, textures; data only |
 | house/ | the building, from the archon drawings |
@@ -28,11 +28,11 @@ One way only; nobody depends on a sub-project, and no sub-project on another.
 ```
 kitchen/, bathroom/ ──► house/ ──► core/, library/
         └────────────────────────► core/, library/
-apps.js ──► every page (the menu; the house: which files make each application's furniture)
+apps.dat.js ──► every page (the menu; the house: which files make each application's furniture)
 ```
 
 - **core** knows no project and no product; **library** knows no project; **house** knows core and the library.
-- **A sub-project** knows core, the library and the house (house.js, engine.js, house-clip.js). The house wins: a sub-project never measures or moves its room.
+- **A sub-project** knows core, the library and the house (house.dat.js, engine.js, house-clip.js). The house wins: a sub-project never measures or moves its room.
 
 ### A sub-project's room
 
@@ -41,7 +41,7 @@ house/house-clip.js gives a sub-project its room, and nothing else: the house's 
 ### Furniture in the house
 
 - One code draws a sub-project's furniture on its own page and in the house (core/parts.js): its solids, moving fronts, doors and drawers, details, lamps, and the finishes of its room (the bathrooms' wall tiles), in house axes and mm.
-- apps.js lists the files of each application's part; the house loads them when the part's layer (Warstwy → Meble) is on and names no sub-project.
+- apps.dat.js lists the files of each application's part; the house loads them when the part's layer (Warstwy → Meble) is on and names no sub-project.
 - Only what is in the data is drawn: nothing is made up in the code to fit.
 
 ### Library
@@ -56,26 +56,26 @@ Everything bought, once, for every application and independent of them: products
 
 ### Your decision first
 
-1. **The bathrooms' floor tiles are in the data twice**: house.js (the rooms) and bathroom/data.js. One should go.
-2. **Names of the files**: they do not say what a file does (parts.js draws; view.js, engine.js, design.js ...). Rename all at once, with every reference, by a rule to be decided.
+1. **The bathrooms' floor tiles are in the data twice**: house.dat.js (the rooms) and bathroom/data.dat.js. One should go.
+2. **Names of the files**: they do not say what a file does (parts.js draws; view.dat.js, engine.js, design.dat.js ...). Rename all at once, with every reference, by a rule to be decided.
 3. **The wardrobes' open questions**.
 
 ### Work
 
-4. **Products into the library**: kitchen/cost.js, bathroom/engine.js and bathroom/data.js still hold names, prices, shops and links; they move to the library, the estimates read them from there and come out the same.
-5. **The bathrooms' Info and Test from data.js**: today bathroom/engine.js computes them again in metres in its own frame; then engine.js goes (and see 13).
+4. **Products into the library**: kitchen/cost.dat.js, bathroom/engine.js and bathroom/data.dat.js still hold names, prices, shops and links; they move to the library, the estimates read them from there and come out the same.
+5. **The bathrooms' Info and Test from data.dat.js**: today bathroom/engine.js computes them again in metres in its own frame; then engine.js goes (and see 13).
 6. **The furniture in the house's 2D plan** (kitchen and bathrooms).
 7. **The walk**: furniture does not stop it yet; the attic is not tested.
-8. **A check of the dependencies** in Test: no folder refers to a sub-project except apps.js; no sub-project refers to another.
+8. **A check of the dependencies** in Test: no folder refers to a sub-project except apps.dat.js; no sub-project refers to another.
 9. **Speed**: the house with all its furniture, measured: the time to the first frame and the frame rate while orbiting.
 10. **The wardrobes (wardrobe/)**: a sub-project as the bathrooms, its own application (Garderoby) and its furniture in the house.
-11. **References to project.md in code comments** (apps.js, core/parts.js, kitchen/parts.js, bathroom/parts.js, house/view.html): remove; a comment says what the code does.
+11. **References to project.md in code comments** (apps.dat.js, core/parts.js, kitchen/parts.js, bathroom/parts.js, house/view.html): remove; a comment says what the code does.
 12. **project.svg** (the dependency graph) is made by hand and goes stale: remove it, or refresh it after bigger changes.
 13. **Dead code in bathroom/view.html** after 5: what only the old computation in metres needed.
 
 ### The wardrobes
 
-The three walk-in wardrobes of the attic (house.js): room 3 (L-shaped, 3760–5350 × 440–3790), room 4 (3760–5350 × 5650–8660), room 8 (7490–9010 × 440–3290). Under the roof (42°): the ceiling falls toward the eaves.
+The three walk-in wardrobes of the attic (house.dat.js): room 3 (L-shaped, 3760–5350 × 440–3790), room 4 (3760–5350 × 5650–8660), room 8 (7490–9010 × 440–3290). Under the roof (42°): the ceiling falls toward the eaves.
 
 Decided:
 - a run of carcasses along each long side: 400 mm deep away from the door, 300 mm (or 200 mm if the room needs it) by the door; what matters is a passage between the runs;
@@ -101,7 +101,7 @@ No engine: the design is written as data, part by part with its sizes, by the LL
 - Readable: consistent indentation, short functions, one idea per line, names that match the page.
 - No hidden rules: what is built follows from the data. No numbers of a project in the code, no duplicated values or code: what two pages share lives in core (or in the house, for a room).
 - Pages in Polish; code and comments in English; short comments that say why.
-- Scripts in a page in one order: three.js, core, apps.js, library, house, then the project's own files.
+- Scripts in a page in one order: three.js, core, apps.dat.js, library, house, then the project's own files.
 - Library versions pinned (three.js r128). No backward-compatibility code: when a data format changes, the data is migrated.
 - No abbreviations a reader has to decode; counters and coordinates may be one letter.
 - No guessing from names, labels or sizes: what is built follows from the data (types, tags, settings).

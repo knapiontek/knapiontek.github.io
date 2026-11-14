@@ -1,5 +1,5 @@
 /* core/parts.js: the contract of a part (../project.md, Rules). A sub-project draws its furniture as a part: the same
-   code in its own page and in the house. Knows no project: apps.js names the files of each application's part, the part
+   code in its own page and in the house. Knows no project: apps.dat.js names the files of each application's part, the part
    registers itself here, a page (its own, or the house) asks for it.
 
    A part registers {textures(): [library texture keys], make(env)}.
@@ -22,7 +22,7 @@
 const PARTS = {};
 const register = (id, part) => { PARTS[id] = part; };
 
-/* the files of an application's part (apps.js `parts`, from the home folder) not on the page yet, in their order; then
+/* the files of an application's part (apps.dat.js `parts`, from the home folder) not on the page yet, in their order; then
    the part's textures (core/library.js). base: the home folder seen from the page ('../'). */
 const onPage = src => [...document.scripts].some(s => s.src === new URL(src, location.href).href);
 const script = src => new Promise((ok, fail) => {
@@ -35,12 +35,12 @@ function load(id, base) {
   const files = ((app && app.parts) || []).map(f => base + f).filter(src => !onPage(src));
   return files.reduce((p, src) => p.then(() => script(src)), Promise.resolve()).then(() => {
     const part = PARTS[id];
-    if (!part) throw new Error('Aplikacja ' + id + ' nie ma części (apps.js: parts).');
+    if (!part) throw new Error('Aplikacja ' + id + ' nie ma części (apps.dat.js: parts).');
     return CORE.library.load(base + 'library/', part.textures()).then(() => part);
   });
 }
 const make = (id, env) => PARTS[id].make(env);
-/* the applications that have a part, in the order of apps.js */
+/* the applications that have a part, in the order of apps.dat.js */
 const listed = () => (window.APPS || []).filter(a => a.parts).map(a => a.id);
 
 /* a host's shown with parts in it. parts: [{layer, on(), shown(layers)}]; a solid of a part carries the part's layer:

@@ -277,8 +277,8 @@
 
   <div id="action-bar">
     <div class="action-group">
-      <button class="btn secondary" @click="chooseImportFile()" title="Wczytaj plik design.js (lub .json) do tabel">Importuj dane</button>
-      <button class="btn" @click="exportData()" title="Zapisz tabele jako design.js">Eksportuj dane</button>
+      <button class="btn secondary" @click="chooseImportFile()" title="Wczytaj plik design.dat.js (lub .json) do tabel">Importuj dane</button>
+      <button class="btn" @click="exportData()" title="Zapisz tabele jako design.dat.js">Eksportuj dane</button>
       <input type="file" class="hidden-file-input" accept=".js,.json,text/javascript,application/json" x-ref="importFile" @change="importFile($event)">
     </div>
   </div>
@@ -294,7 +294,7 @@
         <div class="sheet-wrap">
           <table class="sheet read-only">
             <thead>
-              <tr><th class="name">Nazwa</th><th class="fit" title="Grubość; × głębokość, gdy materiał ją podaje (blat, panel końcowy)">Wymiar</th><th class="fit" title="Kolor płyty; widok 3D pokazuje teksturę, gdy materiał ją podaje">Kolor</th><th class="fit" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w design.js)">Użycie</th></tr>
+              <tr><th class="name">Nazwa</th><th class="fit" title="Grubość; × głębokość, gdy materiał ją podaje (blat, panel końcowy)">Wymiar</th><th class="fit" title="Kolor płyty; widok 3D pokazuje teksturę, gdy materiał ją podaje">Kolor</th><th class="fit" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w design.dat.js)">Użycie</th></tr>
             </thead>
             <tbody>
               <template x-for="m in materials" :key="m.code">
@@ -521,14 +521,14 @@
  }
 }
 </script>
-<script src="../library/products.js"></script>
-<script src="design.js"></script>
+<script src="../library/products.dat.js"></script>
+<script src="design.dat.js"></script>
 <script src="engine.js"></script>
 <script>
 'use strict';
 
-/* design.html - edits design.js in three tables and draws the elevations.
-   Tables -> project (design.js format) -> KE.build -> model -> SVG. Field names follow engine.js.
+/* design.html - edits design.dat.js in three tables and draws the elevations.
+   Tables -> project (design.dat.js format) -> KE.build -> model -> SVG. Field names follow engine.js.
    Data checks are in engine.js; this page only checks that the table cells are numbers. */
 
 /* ---------- 1. settings ---------- */
@@ -565,10 +565,10 @@ function downloadBlob(content, mimeType, filename) {
   URL.revokeObjectURL(url);
 }
 
-/* ---------- 3. tables <-> project (design.js format) ---------- */
+/* ---------- 3. tables <-> project (design.dat.js format) ---------- */
 let loadedProject = null; // keeps the materials and settings, which this page does not edit
 
-// design.js component -> component table row; an unknown type or tag is kept, so the engine reports it and the export keeps it
+// design.dat.js component -> component table row; an unknown type or tag is kept, so the engine reports it and the export keeps it
 function componentRow(c) {
   const gaps = c.gaps || {};
   return {
@@ -577,7 +577,7 @@ function componentRow(c) {
   };
 }
 
-// component table row -> design.js component (in the order design.js uses); empty fields are left out; gaps on fronts only
+// component table row -> design.dat.js component (in the order design.dat.js uses); empty fields are left out; gaps on fronts only
 function dataComponent(row) {
   const c = { group: toNumber(row.group), column: toNumber(row.column), span: toNumber(row.span), type: row.type };
   const tags = parseTags(row.tags).words;
@@ -641,7 +641,7 @@ function readTables(groupRows, columnRows, componentRows, noteRows) {
 
 /* ---------- 4. SVG: model -> SVG ----------
    A draw function gets a shape { type, x, width, height, handle, shakerRail } and y, its top edge (SVG y grows down).
-   The elevation shows the modules (the columns and heights of design.js); front sizes are in the hover info. */
+   The elevation shows the modules (the columns and heights of design.dat.js); front sizes are in the hover info. */
 
 // fill and stroke colour names in CONFIG.colors, per type drawn as a plain rectangle
 const RECT_COLORS = {
@@ -772,7 +772,7 @@ function drawSVG(model) {
 /* ---------- 5. elevations: tables -> project -> model -> SVG ---------- */
 function buildElevations(groupRows, columnRows, componentRows, noteRows) {
   const empty = { svg: '', isEmpty: true, project: null, warnings: [], groupFlags: [], columnFlags: [], componentFlags: [] };
-  if (!loadedProject) return empty; // until design.js is loaded
+  if (!loadedProject) return empty; // until design.dat.js is loaded
   const tables = readTables(groupRows, columnRows, componentRows, noteRows);
   const result = { ...empty, project: tables.project, warnings: tables.warnings, groupFlags: tables.groupFlags, columnFlags: tables.columnFlags, componentFlags: tables.componentFlags };
   const project = KE.withLibrary(tables.project, LIBRARY_PRODUCTS.boards);   // the materials as the library gives them
@@ -870,13 +870,13 @@ document.addEventListener('alpine:init', () => {
     newNoteRow(name = '', description = '', details = '') {
       return { id: this.nextId++, name, description, details };
     },
-    // the project (design.js) into the tables
+    // the project (design.dat.js) into the tables
     setProject(project) {
       loadedProject = project;
-      // shown, not edited; uses as design.js lists them
+      // shown, not edited; uses as design.dat.js lists them
       this.materials = Object.entries(KE.withLibrary(project, LIBRARY_PRODUCTS.boards).materials)
-        .map(([code, m]) => ({ ...m, code }))   // the key in design.js (the library's product key), shown on the name
-        .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: design.js order
+        .map(([code, m]) => ({ ...m, code }))   // the key in design.dat.js (the library's product key), shown on the name
+        .sort((x, y) => y.thickness - x.thickness); // thickest first; same thickness: design.dat.js order
       this.notes = (project.notes || []).map(n => this.newNoteRow(n.name ?? '', n.description ?? '', n.details ?? ''));
       this.groupRows = (project.groups || []).map(g => this.newGroupRow(g.group, g.name ?? '', g.backGap ?? ''));
       this.columns = (project.groups || []).flatMap(g => (g.columns || []).map(w => this.newColumnRow(g.group, w)));
@@ -993,9 +993,9 @@ document.addEventListener('alpine:init', () => {
     // ---- import / export ----
     exportData() {
       const { project, warnings } = this.build, issues = warnings.length;
-      if (!project) { this.showStatus('Nie ma czego eksportować: design.js nie jest wczytany.', true); return; }
-      downloadBlob(KE.designJS(project), 'text/javascript;charset=utf-8', 'design.js');
-      this.showStatus('Wyeksportowano design.js' + (issues ? ' z ' + issues + ' ' + plural(issues, 'problemem', 'problemami', 'problemami') + ' w danych - lista pod tabelami' : '') + '. Zastąp plik w folderze projektu i odśwież strony.', issues > 0);
+      if (!project) { this.showStatus('Nie ma czego eksportować: design.dat.js nie jest wczytany.', true); return; }
+      downloadBlob(KE.designJS(project), 'text/javascript;charset=utf-8', 'design.dat.js');
+      this.showStatus('Wyeksportowano design.dat.js' + (issues ? ' z ' + issues + ' ' + plural(issues, 'problemem', 'problemami', 'problemami') + ' w danych - lista pod tabelami' : '') + '. Zastąp plik w folderze projektu i odśwież strony.', issues > 0);
     },
     chooseImportFile() {
       this.$refs.importFile.value = '';
@@ -1019,7 +1019,7 @@ document.addEventListener('alpine:init', () => {
       reader.onerror = () => { this.showStatus('Nie można odczytać pliku.', true); e.target.value = ''; };
       reader.readAsText(file);
     },
-    // a design.js (or plain JSON) file replaces the tables
+    // a design.dat.js (or plain JSON) file replaces the tables
     importData(text) {
       let project;
       try { project = KE.fromDesignJS(text); } catch (err) { throw new Error('to nie są poprawne dane projektu (' + err.message + ').'); }

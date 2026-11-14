@@ -1,7 +1,7 @@
-/* bathroom/parts.js: both bathrooms as a part (../core/parts.js; ../project.md, Rules): the drawing of data.js (each
+/* bathroom/parts.js: both bathrooms as a part (../core/parts.js; ../project.md, Rules): the drawing of data.dat.js (each
    floor's model: solids, doors and drawers, round details, lamps, in mm in house axes), drawn by core the same in
    view.html (with its room, from the house) and in the house (without: the house draws its own). Nothing is computed
-   here to fit: what is drawn is what data.js says. Tiles and board decors come from the library. */
+   here to fit: what is drawn is what data.dat.js says. Tiles and board decors come from the library. */
 (function (root) {
 'use strict';
 
@@ -16,7 +16,7 @@ function make(env) {
   const LIB = env.materials, TEX = env.textures, FLOORS = Object.keys(D.floors);
   const found = root.HouseClip.roomsFor(root.HOUSE, env.houseModel, 'bathroom/view.html');
   const ROOMS = Object.fromEntries(FLOORS.map(f => [f, found.find(r => r.floor === f)]));
-  for (const f of FLOORS) if (!ROOMS[f]) throw new Error('W house.js żadne pomieszczenie na kondygnacji ' + f + ' nie prowadzi do bathroom/view.html.');
+  for (const f of FLOORS) if (!ROOMS[f]) throw new Error('W house.dat.js żadne pomieszczenie na kondygnacji ' + f + ' nie prowadzi do bathroom/view.html.');
 
   /* ---------- materials: definitions of core (core/scene.js material), under b.*; those of one bathroom end in :floor ---------- */
   const METALS = { brass: { color: '#b8935a', roughness: .32 }, nickel: { color: '#bab8b1', roughness: .28 } };

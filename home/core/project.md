@@ -15,7 +15,7 @@ Shared 3D code for every view: the house (house/view.html) and its sub-projects 
 | library.js | loads the library's textures when a page needs them (one file per image) |
 | plan.js | the 2D plan from the solids: cut, seen from above, labels, rooms, dimensions, sheets |
 | sheet.js | the spreadsheet: tabs, editable cells, formulas, pages in tabs, XLSX export |
-| parts.js | the contract of a part: a sub-project registers its part, a page loads it by apps.js and draws it in its view; the host's layers with the part's |
+| parts.js | the contract of a part: a sub-project registers its part, a page loads it by apps.dat.js and draws it in its view; the host's layers with the part's |
 | info.js | Info of every application: the screen, the order of the tabs, the shared sheets (Kosztorys, Lista cięć, a plain table), the bottom menu |
 | ui.css | the look of every view, light and dark |
 
@@ -59,4 +59,4 @@ A cell is a solid with what it is:
 
 ui.js builds the screen and its modes (3D, 2D, Info, Test) from a project's views data.
 
-The 2D plan (plan.js) is cut from the same solids as the 3D view at the house's cut height for the floor: what the cut meets is filled in its section colour, what lies under it is seen from above, what is over it is dashed. Room and opening labels come from house.js, so a sub-project's plan matches the house's.
+The 2D plan (plan.js) is cut from the same solids as the 3D view at the house's cut height for the floor: what the cut meets is filled in its section colour, what lies under it is seen from above, what is over it is dashed. Room and opening labels come from house.dat.js, so a sub-project's plan matches the house's.

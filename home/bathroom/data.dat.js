@@ -2,7 +2,7 @@
    Loaded by view.html before engine.js. Every length is in mm (whole numbers); angles in degrees (openAngle in radians);
    bath.n is an exponent.
 
-   The room is the house's (../house/house.js, through ../house/house-clip.js): walls, door opening, window, floor, ceiling heights and
+   The room is the house's (../house/house.dat.js, through ../house/house-clip.js): walls, door opening, window, floor, ceiling heights and
    the roof are taken from there as they are and are not repeated here. Positions are house axes: x along the house, y across,
    z up. What is left here is the bathroom's own design: fittings, finishes, products; their places are distances from the
    room's walls (vanity wall = the room's −x face, door wall = its −y face, window or knee wall = its +y face).
@@ -503,7 +503,7 @@ window.BATH_DATA = {
     },
   },
 
-  decors: {               // the Egger boards to choose from (../library/products.js boards): why each would suit
+  decors: {               // the Egger boards to choose from (../library/products.dat.js boards): why each would suit
     'egger-h1199-st12': { note: 'najciemniejszy, czarnobrązowy — szafka spokojnie ciemna na tle grafitu' },
     'egger-h1181-st37': { note: 'średni tabaczny, wyraźny słój z pęknięciami — ciepły kontrast z grafitem i mosiądzem' },
     'egger-h1399-st10': { note: 'jasnoszary brąz' },
@@ -512,7 +512,7 @@ window.BATH_DATA = {
     'egger-h1176-st37': { note: 'bielony dąb, prawie biały — najjaśniejsza szafka' },
   },
 
-  shop: {                 // shops and services that are not products (the products are in ../library/products.js)
+  shop: {                 // shops and services that are not products (the products are in ../library/products.dat.js)
     mhm: 'M-HM Bielsko-Biała',
     links: {
       mhmServices: 'https://m-hm.pl/pl/i/Uslugi/16',
@@ -520,7 +520,7 @@ window.BATH_DATA = {
     },
   },
 
-  /* the fittings bought (keys of ../library/products.js fittings), by what they are for; by the metal of the fittings
+  /* the fittings bought (keys of ../library/products.dat.js fittings), by what they are for; by the metal of the fittings
      where it differs; a floor adds its own (its basin and plug, the bath) */
   fittings: {
     legraboxC: 'blum-legrabox-pure-c-350-black', legraboxK: 'blum-legrabox-pure-k-400-black', runners: 'blum-runners-tip-on-blumotion',
@@ -530,7 +530,7 @@ window.BATH_DATA = {
     radiator: 'mexen-hades-1200x400-gold', door: 'porta-hide-wc-80',
   },
 
-  /* as house.js, one per mode: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own
+  /* as house.dat.js, one per mode: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own
      height for the floor), Info, Test (the checks of engine.js); tabs: of the right panel */
   views: {
     '3d': { name: '3D', menu: 'floors', tabs: ['layers', 'finish'],
@@ -546,7 +546,7 @@ window.BATH_DATA = {
 
   defaults: {
     floor: 'ground',
-    tiles: ['paradyz-authority-graphite', 'paradyz-authority-grey'],          // to choose from (../library/products.js tiles)
+    tiles: ['paradyz-authority-graphite', 'paradyz-authority-grey'],          // to choose from (../library/products.dat.js tiles)
     formats: ['598x598', '598x898', '598x1198', '898x898', '1198x1198'],   // Paradyż Authority formats, mm
   },
 };

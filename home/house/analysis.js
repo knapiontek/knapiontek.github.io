@@ -1,4 +1,4 @@
-/* analysis.js: the checks of the house, on the solids engine.js builds from house.js as it is now. Nothing is stored.
+/* analysis.js: the checks of the house, on the solids engine.js builds from house.dat.js as it is now. Nothing is stored.
    A check is {name, items}: the faults it found; none is OK. view.html shows them in Test. */
 (function (root) {
 'use strict';

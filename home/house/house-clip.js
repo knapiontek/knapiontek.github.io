@@ -1,5 +1,5 @@
 /* house-clip.js: the room of a sub-project (kitchen, bathroom), copied from the house as it is. The house's own solids (walls,
-   slabs, floor, windows, roof) are trimmed to the box its link in house.js gives and handed over unchanged: mm, house axes
+   slabs, floor, windows, roof) are trimmed to the box its link in house.dat.js gives and handed over unchanged: mm, house axes
    (x along the house, y across, z up). Nothing is re-measured. No THREE, no DOM. Needs core/geometry.js and engine.js. */
 (function (root) {
 'use strict';
@@ -56,7 +56,7 @@ function roomsFor(HOUSE, MODEL, href) {
     const kept = trimmed.filter(c => c.side[1] === 'z' || (isFixture(c)
       ? trimmed.some(w => !isFixture(w) && w.side === c.side && touches(plan(w.S)) && within(plan(c.S), plan(w.S)))
       : touches(plan(c.S))));
-    /* what lies under the floor or over the room covers exactly the room's own floor areas (house.js rects, within the box)
+    /* what lies under the floor or over the room covers exactly the room's own floor areas (house.dat.js rects, within the box)
        and the walls kept around it: nothing of the next room, no wall that is not there */
     const walls = kept.filter(c => c.side[1] !== 'z').map(c => plan(c.S));
     const clip = r => [Math.max(r[0], L.box[0]), Math.min(r[1], L.box[1]), Math.max(r[2], L.box[2]), Math.min(r[3], L.box[3])];
@@ -104,7 +104,7 @@ function roomsFor(HOUSE, MODEL, href) {
 }
 
 /* the light of a room seen from inside (a sub-project's page): the house's sky, fog and sun, with the house's own
-   settings for an interior (house.js light.inside) */
+   settings for an interior (house.dat.js light.inside) */
 function insideLight(HOUSE) {
   const L = Object.values(HOUSE.views).find(v => v.menu).light, I = L.inside;
   return { exposure: I.exposure, fog: L.fog, sun: Object.assign({}, L.sun, I.sun), sky: Object.assign({}, L.sky, I.sky) };

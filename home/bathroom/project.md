@@ -8,19 +8,19 @@ Both bathrooms of the house: the ground floor (room 7) and the attic (room 5). O
 
 | File | Holds |
 |---|---|
-| data.js | the design of both bathrooms: what goes where, the tiles, boards and fittings chosen (keys of library/products.js); per floor `model`: solids, details, doors and drawers, lamps, cuts and cameras in house axes and mm. No room (the house's), no product (the library's) |
-| parts.js | the part: data.js's model drawn in house axes and mm (solids, round details, doors and drawers, lamps, tiles, the room's cuts); the same code for this page and the house |
-| engine.js | (for now) data.js turned into checks and Info (estimate, cut list, tables). Draws nothing |
+| data.dat.js | the design of both bathrooms: what goes where, the tiles, boards and fittings chosen (keys of library/products.dat.js); per floor `model`: solids, details, doors and drawers, lamps, cuts and cameras in house axes and mm. No room (the house's), no product (the library's) |
+| parts.js | the part: data.dat.js's model drawn in house axes and mm (solids, round details, doors and drawers, lamps, tiles, the room's cuts); the same code for this page and the house |
+| engine.js | (for now) data.dat.js turned into checks and Info (estimate, cut list, tables). Draws nothing |
 | view.html | the page in the shared screen: 3D (Parter / Poddasze), 2D, Info (Kosztorys, Lista cięć, eRozkrój, Szafka, Montaż, Podejścia, Wymiary; XLSX, CSV), Test; tabs Warstwy, Wykończenie |
 | index.html | directory listing, not part of the project |
 
-Uses house (house.js, engine.js, house-clip.js) for the room, library for products and textures, core for drawing and the screen.
+Uses house (house.dat.js, engine.js, house-clip.js) for the room, library for products and textures, core for drawing and the screen.
 
 ## How it fits together
 
 ```
-house/house.js ─► house/house-clip.js ─► the room ─┐
-data.js ─► parts.js ───────────────────────────────┴─► view.html, the house ─► core
+house/house.dat.js ─► house/house-clip.js ─► the room ─┐
+data.dat.js ─► parts.js ───────────────────────────────┴─► view.html, the house ─► core
         └► engine.js (Info, Test) ──────────────────► view.html
 ```
 

@@ -1,5 +1,5 @@
 /* core/library.js: loads the textures of the library (../library) when a page needs them: one file per image,
-   library/textures/<key>.js, an image as a data URL, so the pages work opened from disk. Knows no product. */
+   library/textures/<key>.dat.js, an image as a data URL, so the pages work opened from disk. Knows no product. */
 (function (CORE) {
 'use strict';
 
@@ -9,7 +9,7 @@ function load(base, keys) {
   const T = window.LIBRARY_TEXTURES = window.LIBRARY_TEXTURES || {};
   const one = key => new Promise((done, failed) => {
     const s = document.createElement('script');
-    s.src = base + 'textures/' + key + '.js';
+    s.src = base + 'textures/' + key + '.dat.js';
     s.onload = () => (T[key] ? done() : failed(new Error('brak tekstury ' + key)));
     s.onerror = () => failed(new Error('nie można wczytać ' + s.src));
     document.head.append(s);

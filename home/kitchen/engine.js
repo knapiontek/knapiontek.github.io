@@ -1,5 +1,5 @@
-/* engine.js - builds the kitchen model from design.js for design.html and view.html (with cost-sheets.js).
-   The same project always gives the same model. No drawing and no numbers of this kitchen: they all come from design.js.
+/* engine.js - builds the kitchen model from design.dat.js for design.html and view.html (with cost-sheets.js).
+   The same project always gives the same model. No drawing and no numbers of this kitchen: they all come from design.dat.js.
    Coordinates in mm per group: u along the group, v up from the floor, n out from the carcass backs (groups[g].wall: n of
    the wall); a box is [u0, u1, v0, v1, n0, n1]. */
 (function (root) {
@@ -158,7 +158,7 @@
     return { bottom: below.length ? Math.max(...below) : NaN, top: above.length ? Math.min(...above) : NaN };
   }
 
-  // tags come as a list (design.js) or as typed text (design.html)
+  // tags come as a list (design.dat.js) or as typed text (design.html)
   const TAG_BY_LOWER = Object.fromEntries(TAG_NAMES.map(tag => [tag.toLowerCase(), tag])); // typed tags match in any letter case
   function parseTags(tags) {
     const words = (Array.isArray(tags) ? tags : String(tags ?? '').split(/[\s,]+/)).map(w => String(w).trim()).filter(Boolean)
@@ -205,7 +205,7 @@
     return { materialFor, problems };
   }
 
-  // problems in design.js materials and settings that make a build impossible; design.html lists them, build() throws them
+  // problems in design.dat.js materials and settings that make a build impossible; design.html lists them, build() throws them
   function checkSettings(project) {
     return [...materialUses(project && project.materials).problems, ...settingProblems((project && project.settings) || {}), ...groupProblems(project && project.groups)];
   }
@@ -324,21 +324,21 @@
 
   /* ================= 5. BUILD ================= */
 
-  /* the project with its materials resolved: design.js keys each material by its product in the library (one key
-     everywhere; library/products.js boards: name, thickness, colour, depth ...) and says only how it is used here (uses) */
+  /* the project with its materials resolved: design.dat.js keys each material by its product in the library (one key
+     everywhere; library/products.dat.js boards: name, thickness, colour, depth ...) and says only how it is used here (uses) */
   function withLibrary(project, boards) {
     const materials = Object.fromEntries(Object.entries((project && project.materials) || {}).map(([key, m]) => {
-      if (!boards[key]) throw new Error(`design.js materials: brak produktu ${key} w library/products.js`);
+      if (!boards[key]) throw new Error(`design.dat.js materials: brak produktu ${key} w library/products.dat.js`);
       return [key, Object.assign({}, boards[key], m)];
     }));
     return Object.assign({}, project, { materials });
   }
 
-  /* the appliances of the project: design.js names each by the type or tag it fits (fridgeFreezer for the tags fridge and
-     freezer) with its product key in the library (library/products.js appliances) and how it is built in here (feet) */
+  /* the appliances of the project: design.dat.js names each by the type or tag it fits (fridgeFreezer for the tags fridge and
+     freezer) with its product key in the library (library/products.dat.js appliances) and how it is built in here (feet) */
   function appliances(project, library) {
     return Object.fromEntries(Object.entries((project && project.appliances) || {}).map(([role, a]) => {
-      if (!library[a.product]) throw new Error(`design.js appliances.${role}: brak produktu ${a.product} w library/products.js`);
+      if (!library[a.product]) throw new Error(`design.dat.js appliances.${role}: brak produktu ${a.product} w library/products.dat.js`);
       return [role, Object.assign({}, library[a.product], a)];
     }));
   }
@@ -347,7 +347,7 @@
   function build(project, appliances) {
     const projectData = project || {}, settings = projectData.settings || {};
     const stops = checkSettings(projectData);
-    if (stops.length) throw new Error('Ustawienia w design.js: ' + stops.join(' '));
+    if (stops.length) throw new Error('Ustawienia w design.dat.js: ' + stops.join(' '));
 
     // every thickness comes from the material of the type or part
     const { materialFor } = materialUses(projectData.materials);
@@ -965,7 +965,7 @@
 
     // ---- appliances in their places: item.fit, shown by cost-sheets.js (notes) and drawn by view.html ----
     // every fit has the body, centred on its module or carcass: {bodyU0, bodyU1, bodyV0, bodyV1}; an oven or a microwave stands on its feet
-    // (design.js appliances) on the board under its module: + {feet, fasciaV0, fasciaV1}; a fridge stands on the carcass bottom, one fit on both
+    // (design.dat.js appliances) on the board under its module: + {feet, fasciaV0, fasciaV1}; a fridge stands on the carcass bottom, one fit on both
     // its fronts; a dishwasher stands on the floor on its feet, up to the worktop: + {feet, doorV0, doorV1}
     const bodyAcross = (place, appliance) => { const centre = (place.u0 + place.u1) / 2; return { bodyU0: centre - appliance.body.width / 2, bodyU1: centre + appliance.body.width / 2 }; };
     function fitAppliances(applianceData) {
@@ -1130,13 +1130,13 @@
     return '[\n' + map.map(entry => '  {\n' + Object.entries(entry).map(field).join(',\n') + '\n  }').join(',\n') + '\n]\n';
   }
 
-  // design.js sets window.KITCHEN_DESIGN (a script tag, so the pages also work from file://)
+  // design.dat.js sets window.KITCHEN_DESIGN (a script tag, so the pages also work from file://)
   function load() {
     const data = root.KITCHEN_DESIGN;
-    return data ? Promise.resolve(data) : Promise.reject(new Error('Nie znaleziono pliku design.js obok tej strony'));
+    return data ? Promise.resolve(data) : Promise.reject(new Error('Nie znaleziono pliku design.dat.js obok tej strony'));
   }
 
-  // the text of design.js: one material / setting / note / component per line, a blank line between groups
+  // the text of design.dat.js: one material / setting / note / component per line, a blank line between groups
   function designJS(project) {
     const isObject = v => v && typeof v === 'object' && !Array.isArray(v);
     // a table (an object of objects, e.g. settings.drilling) gets one line per entry
@@ -1147,7 +1147,7 @@
     const components = project.components.map((c, i) => (i && c.group !== project.components[i - 1].group ? '\n' : '') + '  ' + json1(c)).join(',\n');
     return '/* Kitchen project design - shared by design.html and view.html (with cost-sheets.js).\n' +
       '   Plain JSON after "window.KITCHEN_DESIGN =". Notes, groups and components: design.html (Import data / Export data);\n' +
-      '   materials by their product key in ../library/products.js (how each is used), appliances by role (their product key and how it is built in)\n' +
+      '   materials by their product key in ../library/products.dat.js (how each is used), appliances by role (their product key and how it is built in)\n' +
       '   and settings: by hand\n' +
       '   (design.html keeps them as they are). */\n' +
       'window.KITCHEN_DESIGN = {\n "materials": {\n' + entries(project.materials, json1) +
@@ -1157,7 +1157,7 @@
       '\n ],\n "groups": [\n' + project.groups.map(g => '  ' + json1(g)).join(',\n') +
       '\n ],\n "components": [\n' + components + '\n ]\n};\n';
   }
-  // the project object from the text of design.js (or plain JSON)
+  // the project object from the text of design.dat.js (or plain JSON)
   function fromDesignJS(text) {
     const i = text.indexOf('{'), j = text.lastIndexOf('}');
     if (i < 0 || j < i) throw new Error('brak obiektu JSON');

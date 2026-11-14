@@ -1,6 +1,6 @@
-/* library/products.js: everything bought, by key; the same for every application, never changed by a project.
+/* library/products.dat.js: everything bought, by key; the same for every application, never changed by a project.
    A project names a product by its key and says only where it goes and how. Prices in zł (gross), null = unknown.
-     tiles       name, note, look, finish; texture (library/textures/<key>.js); len × wid mm of one tile, joint mm,
+     tiles       name, note, look, finish; texture (library/textures/<key>.dat.js); len × wid mm of one tile, joint mm,
                  minCut = the smallest acceptable cut piece [along the length, across] mm, default pattern
                  (grid | half | third | quarter | random); price per m²; link to the shop
      boards      boards, worktops, panels, fronts: code and decor (Egger), name, thickness mm, colour, core (the colour of a
