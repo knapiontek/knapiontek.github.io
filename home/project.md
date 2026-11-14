@@ -10,14 +10,13 @@ This file: the folders, the rules every folder keeps, what is left to do, the co
 
 | Folder | Holds |
 |---|---|
-| apps.dat.js | the applications: name, page, and the file that implements its furniture (the composition: the only place that knows them all) |
-| furniture.js | the interface of a sub-project's furniture in the house: its functions and what each does |
+| apps.dat.js | the applications: name, page, and the file that implements its room (the composition: the only place that knows them all) |
+| room.js | the interface of a room sub-project in the house: its functions and what each does |
+| archon/ | the archon.pl drawings and their analysis: the source everything is drawn from, independent of the code |
 | core/ | shared code: solids, meshes, the 3D scene, the 2D plan, the screen, the spreadsheet and Info; knows no project |
 | library/ | everything bought: products, materials, textures; data only |
-| house/ | the building, from the archon drawings |
-| kitchen/ | the kitchen in the living room (ground floor) |
-| bathroom/ | both bathrooms (ground floor, attic) |
-| wardrobe/ | the three walk-in wardrobes (to do) |
+| house/ | the building, from archon/; the rooms without a sub-project |
+| rooms/ | the room sub-projects, one folder each: kitchen/ (the living room's kitchen), bathroom/ (both bathrooms), wardrobe/ (the three walk-in wardrobes, to do) |
 | test.md | what to check after every change; an LLM rebuilds the checks from it (nothing is installed) |
 | index.html | directory listing of the repository, not part of the application |
 
@@ -40,17 +39,27 @@ apps.dat.js, furniture.js ──► every page (the menu; the house: each applic
 
 house/house-clip.js gives a sub-project its room, and nothing else: the house's solids trimmed to the box of the room's link, grouped as a person sees them (each wall, the floor, the ceiling, each window with its wall), with the room's name, numbers, area and the 2D cut height of its floor. Nothing is moved, scaled or re-measured: house axes (x along, y across, z up), mm.
 
-### Furniture in the house
+### A room with a sub-project
 
-A sub-project's furniture is drawn in the house through an interface, as in Java:
+The house is above the rooms. A room with a sub-project (rooms/) defines everything in it: its furniture, its finishes (the tiles of the walls and of the floor), its lamps; the house draws only its shell (walls, slabs, windows, roof) and, in the rooms without a sub-project, what the house's data gives them (the floor tiles).
 
-- **The interface** (furniture.js, in the root): the functions, exactly what each does and returns. Nothing else is part of it. On loading, an implementation is checked against it: a missing function is an error that names it.
-- **The implementations**: one file of the same name in each sub-project (kitchen/furniture.js, bathroom/furniture.js) does exactly what the interface says. It loads its own inner files itself; nobody else knows them.
+The house shows a room sub-project through an interface, as in Java:
+
+- **The interface** (room.js, in the root): the functions, exactly what each does and returns. Nothing else is part of it. On loading, an implementation is checked against it: a missing function is an error that names it.
+- **The implementations**: one file of the same name in each sub-project (rooms/kitchen/room.js, rooms/bathroom/room.js) does exactly what the interface says. It loads its own inner files itself; nobody else knows them.
 - **The list** (apps.dat.js, in the root, not in core): every application with its implementation file. It is where everything starts: a page reads it for the menu, the house loads the implementations from it. Core stays without any project.
 - **The house** calls only the functions of the interface, and names no sub-project. A sub-project's own page may use more of its own code, but not through the interface.
-- **Proof**: the house opens without errors when a sub-project's folder is missing, only without its furniture (a check in Test).
-- One code draws the furniture on its own page and in the house: solids, moving fronts, doors and drawers, details, lamps, the finishes of its room (the bathrooms' wall tiles), in house axes and mm. It loads when its layer (Warstwy → Meble) is on.
+- **Proof**: the house opens without errors when a sub-project's folder is missing, only without its room (a check in Test).
+- One code draws the room on its own page and in the house: solids, moving fronts, doors and drawers, details, lamps, its finishes, in house axes and mm. It loads when its layer (Warstwy → Meble) is on.
 - Only what is in the data is drawn: nothing is made up in the code to fit.
+
+### Names of the files
+
+A name says what a file is; the same role has the same name in every folder.
+
+- A page of an application: view.html. Data only: *.dat.js: a room's design design.dat.js, its place in the house and its views scene.dat.js, its estimate estimate.dat.js, the building building.dat.js.
+- Code is named by what it does: model.js computes the model from the data, verify.js checks it (Test), info.js builds the sheets of Info, room.js gives the house a room (the interface in the root, an implementation in each sub-project), shell.js gives a sub-project the shell of its room from the house.
+- core/, library/, apps.dat.js and the MD files keep their names; index.html in a folder is a listing, not part of the application.
 
 ### Library
 
@@ -64,10 +73,10 @@ Everything bought, once, for every application and independent of them: products
 
 ### Cleanup (first, in one go)
 
-1. **The bathrooms' floor tiles are chosen twice**: in house.dat.js (the rooms) and in bathroom/data.dat.js (to decide). An idea: a room with a sub-project takes all its tiles (walls and floor) from the sub-project, which has many more of them; the house lays tiles only where no sub-project is, on its own or through a small "pseudo sub-project"; the house's estimate then has only those.
+1. **The new names and folders** (the rule above, rooms/, archon/ in the root): all at once, with every reference; furniture.js → room.js. Open: the name of the kitchen's design page (design.html, where the fronts are designed and everything is computed from; proposed: keep design.html, as its data design.dat.js; or fronts.html, elevations.html).
 2. **The bath tap's spout over the rim** (attic): a check the old engine made from the bath's curved outline and its rim (it failed: the spout ended 117 mm short of the inner rim). Not measured yet: the model has the bath's outline only as a shape; to decide how the check reads it (or the tap moves).
 3. **The attic bath between the WC casing and the vanity wall**: the model has 380 and 390 mm (the old engine said 390 = 390); to correct in the data or accept.
-4. **Names of the files**: there are many more files and the naming has drifted apart. Data only is *.dat.js (done). A proposal of one rule for every folder: to decide; then all renamed at once with every reference.
+4. **The floor tiles by the rule of a room with a sub-project**: the house lays tiles only in the rooms without a sub-project (and its estimate has only those); a bathroom's floor is its own (bathroom data), drawn in the house through the interface.
 
 ### Implementation
 
