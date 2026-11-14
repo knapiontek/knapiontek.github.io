@@ -64,7 +64,7 @@ Everything bought, once, for every application and independent of them: products
 ### Your decision first
 
 1. **The bathrooms' floor tiles are in the data twice**: house.dat.js (the rooms) and bathroom/data.dat.js. One should go.
-2. **Names of the files**: data only is *.dat.js (done). The code files still do not say what they do (engine.js, view.html ...; parts.js goes with 4); bathroom/data.dat.js is the design, as kitchen/design.dat.js. Rename all at once, with every reference, by a rule to be decided.
+2. **Names of the files**: left for later, but it must be solved: there are many more files and the naming has drifted apart. Data only is *.dat.js (done). The code files do not say what they do (engine.js, view.html ...; parts.js goes with 4); bathroom/data.dat.js is the design, as kitchen/design.dat.js. One rule for every folder, then all renamed at once with every reference.
 3. **The wardrobes' open questions**.
 
 ### Work
@@ -80,8 +80,7 @@ Everything bought, once, for every application and independent of them: products
 12. **References to project.md in code comments** (apps.dat.js, core/parts.js, kitchen/parts.js, bathroom/parts.js, house/view.html): remove; a comment says what the code does.
 13. **project.svg** (the dependency graph) is made by hand and goes stale: remove it, or refresh it after bigger changes.
 14. **Dead code in bathroom/view.html** after 6: what only the old computation in metres needed.
-15. **The old data files in git**: after the rename to *.dat.js, the old names are to be removed (git rm -f): apps.js, house/house.js, kitchen/design.js, kitchen/view.js, kitchen/cost.js, bathroom/data.js, library/materials.js, library/products.js, library/textures/<key>.js (8 files).
-16. **The checks used so far are outside the repository**: every page in every mode, its screenshots and Info compared before and after a change (a script with a headless browser). To keep: add it to the repository, or describe it here.
+15. **The checks into the repository** (test/): today they are scripts outside it, written for this machine. Every page in every mode loaded in a headless Chrome: errors, the counts of the model, the 2D plan, the Info text and a screenshot, saved and compared with the run before a change; the house: the furniture loads and a drawer opens on a real click, the walk goes through every door aimed at (both ways, off the middle, askew) and stops at walls. To do: one script, its paths not fixed to one machine, three.js and the fonts from a local copy or the network; needs Python 3 and Playwright with Chrome. Screenshots compare only on one machine (the GPU draws differently). Decide: worth installing Python and Playwright here?
 
 ### The wardrobes
 
@@ -104,6 +103,13 @@ Open:
 - hinges: with no fronts nothing needs them, to confirm.
 
 No engine: the design is written as data, part by part with its sizes, by the LLM and corrected by the owner; the code only draws the parts with core and lists them in Info (Kosztorys, Lista cięć).
+
+## How we work
+
+- First we agree what to do; it is written in the MD; the owner approves and commits; only then the work starts.
+- The LLM works on its own copy and writes the changed files into the owner's folder. It cannot delete files: for a removed or renamed file it gives the git rm command. Before it starts, it compares its copy with the owner's folder (the owner may have changed or committed something).
+- After every change: every page in every mode without errors, and what should not change compared with before (Info, the 2D plan, the look). A difference is explained, never left.
+- What is left at the end of a session is in To do, so a new session starts from here.
 
 ## Code style (every folder)
 
