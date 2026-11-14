@@ -12,6 +12,7 @@ This file: the folders, the rules every folder keeps, what is left to do, the co
 |---|---|
 | apps.dat.js | the applications: name, page, and the file that implements its room (the composition: the only place that knows them all) |
 | room.js | the interface of a room sub-project in the house: its functions and what each does |
+| shell.js | the interface of a room's shell from the house: its functions and what each does |
 | archon/ | the archon.pl drawings and their analysis: the source everything is drawn from, independent of the code |
 | core/ | shared code: solids, meshes, the 3D scene, the 2D plan, the screen, the spreadsheet and Info; knows no project |
 | library/ | everything bought: products, materials, textures; data only |
@@ -27,17 +28,25 @@ This file: the folders, the rules every folder keeps, what is left to do, the co
 One way only; nobody depends on a sub-project, and no sub-project on another.
 
 ```
-rooms/kitchen/, rooms/bathroom/ ──► house/ ──► core/, library/
-        └────────────────────────► core/, library/
-apps.dat.js, room.js ──► every page (the menu; the house: each application's furniture through the interface)
+rooms/kitchen/, rooms/bathroom/ ──► core/, library/
+house/                          ──► core/, library/
+room.js, shell.js               ──► (the interfaces: they know no implementation)
+apps.dat.js ──► every page (the menu; the house: each room's implementation; a room: the shell's implementation)
 ```
 
 - **core** knows no project and no product; **library** knows no project; **house** knows core and the library.
-- **A sub-project** knows core, the library and the house (building.dat.js, model.js, shell.js). The house wins: a sub-project never measures or moves its room.
+- **A sub-project** knows core, the library and the two interfaces; no file of the house. The house wins: a sub-project never measures or moves its room.
+- **The house** knows no sub-project; it shows each one through the room interface, and gives each its room through the shell interface.
 
-### A sub-project's room
+### A sub-project's room (the shell)
 
-house/shell.js gives a sub-project its room, and nothing else: the house's solids trimmed to the box of the room's link, grouped as a person sees them (each wall, the floor, the ceiling, each window with its wall), with the room's name, numbers, area and the 2D cut height of its floor. Nothing is moved, scaled or re-measured: house axes (x along, y across, z up), mm.
+The house gives a sub-project its room through an interface, the same way a sub-project gives the house its furniture:
+
+- **The interface** (shell.js, in the root): the functions, exactly what each does and returns. Nothing else is part of it. On loading, the implementation is checked against it: a missing function is an error that names it.
+- **The implementation**: one, in the house (house/shell.js). It loads the house's own files itself (the building's data and its model); nobody else knows them.
+- **The list** (apps.dat.js) names the implementation; a sub-project's page loads it from there, never by a path into the house.
+- **What a sub-project gets**, and nothing else: the house's solids trimmed to the box of its room, grouped as a person sees them (each wall, the floor, the ceiling, each window with its wall, the roof over it), with the room's name, numbers, level, area, the 2D cut height of its floor, the underside of the roof and the light inside. Nothing is moved, scaled or re-measured: house axes (x along, y across, z up), mm.
+- **Proof**: a sub-project's page and its room in the house look the same as before; no script of a sub-project names a file of the house (a check in Test).
 
 ### A room with a sub-project
 
@@ -58,7 +67,7 @@ The house shows a room sub-project through an interface, as in Java:
 A name says what a file is; the same role has the same name in every folder.
 
 - The page of an application: index.html (its folder opens it); the kitchen's design page: design.html. Data only: *.dat.js: a room's design design.dat.js, its place in the house and its views scene.dat.js, its estimate estimate.dat.js, the building building.dat.js.
-- Code is named by what it does: model.js computes the model from the data, verify.js checks it (Test), info.js builds the sheets of Info, room.js gives the house a room (the interface in the root, an implementation in each sub-project), shell.js gives a sub-project the shell of its room from the house.
+- Code is named by what it does: model.js computes the model from the data, verify.js checks it (Test), info.js builds the sheets of Info, room.js gives the house a room (the interface in the root, an implementation in each sub-project), shell.js gives a sub-project the shell of its room (the interface in the root, the implementation in the house).
 - core/, library/, apps.dat.js and the MD files keep their names. No directory listings: the repository shows the files.
 
 ### Library
@@ -73,7 +82,7 @@ Everything bought, once, for every application and independent of them: products
 
 ### Cleanup (first, in one go)
 
-1. **The shell as an interface**, as the room: shell.js in the root (what a sub-project gets of its room: the house's walls, slabs, windows and roof trimmed to it, its name, area and cut height), house/shell.js its one implementation; a sub-project then knows the interfaces only, no file of the house. To agree first.
+1. **The shell as an interface**, by the rule above: shell.js in the root, house/shell.js its implementation, the sub-projects without any file of the house; the check in Test.
 2. **The bath tap's spout over the rim** (attic): a check the old engine made from the bath's curved outline and its rim (it failed: the spout ended 117 mm short of the inner rim). Not measured yet: the model has the bath's outline only as a shape; to decide how the check reads it (or the tap moves).
 3. **The attic bath between the WC casing and the vanity wall**: the model has 380 and 390 mm (the old engine said 390 = 390); to correct in the data or accept.
 4. **The floor tiles by the rule of a room with a sub-project**: the house lays tiles only in the rooms without a sub-project (and its estimate has only those); a bathroom's floor is its own (bathroom data), drawn in the house through the interface.
