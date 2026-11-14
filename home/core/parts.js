@@ -1,4 +1,4 @@
-/* core/parts.js: the contract of a part (../project.md, Plan 1). A sub-project draws its furniture as a part: the same
+/* core/parts.js: the contract of a part (../project.md, Rules). A sub-project draws its furniture as a part: the same
    code in its own page and in the house. Knows no project: apps.js names the files of each application's part, the part
    registers itself here, a page (its own, or the house) asks for it.
 

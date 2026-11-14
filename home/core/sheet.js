@@ -1,4 +1,4 @@
-/* core/sheet.js: the spreadsheet of every application's Info (../project.md, Flow: Info): sheets in tabs, input cells
+/* core/sheet.js: the spreadsheet of every application's Info: sheets in tabs, input cells
    the viewer may change (until a reload), formulas that follow them, and the XLSX with the same formulas live.
    Knows no project: a page hands in the workbook (core/info.js builds the shared sheets and the Info screen).
 

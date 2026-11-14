@@ -1,6 +1,8 @@
 # Core: rules
 
-What core must do. How: [project.md](project.md).
+> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
+
+What core must do.
 
 1. **Scope**: core knows no project. A change to core changes no project's model or picture unless that is the point.
 2. **Solids**: exact operations, nothing sampled. No two solids share volume (core gives the check, projects run it).

@@ -76,7 +76,7 @@ function modeToggle(box, views, mode, pick) {
   box.innerHTML = Object.entries(views).map(([k, v]) => `<button data-mode="${k}" aria-pressed="${mode === k}"${mode === k ? ' data-on' : ''}>${v.name}</button>`).join('');
   box.onclick = e => { const b = e.target.closest('[data-mode]'); if (b && b.dataset.mode !== mode) pick(b.dataset.mode); };
 }
-/* the screen of mode in views (../project.md, Flow): its main view (#plan2d for a plan, #analysis for test, #info for
+/* the screen of mode in views: its main view (#plan2d for a plan, #analysis for test, #info for
    info, canvas for a view with a menu), ☀ only in 3D, its help and the top-right menu; pick(id) on a click of another mode */
 function showMode(views, mode, canvas, pick) {
   const v = views[mode], is3d = !!v.menu;
@@ -98,7 +98,7 @@ function menuRow(box, items, extra = []) {
   box.append(row);
   return row;
 }
-/* ================= THE SCREEN (../project.md, Flow) =================
+/* ================= THE SCREEN =================
    top-left menu (appMenu), top-right menu (modeToggle), the main view, the bottom menu, the right panel in tabs, the
    bottom-right corner (☀, ?). A view of the project's data says which tabs it shows: view.tabs. The panel is always there;
    only the viewer hides it (panelToggle). */

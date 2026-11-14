@@ -1,6 +1,8 @@
 # Zasady projektowania kuchni
 
-> Plik pisany i zmieniany ręcznie przez człowieka. LLM go nie zmienia. Bez szczegółów kodu.
+> **Zmiany w tym pliku: LLM zawsze najpierw pyta.** Ustalamy, co robimy; LLM zapisuje to tutaj; właściciel to zatwierdza; dopiero wtedy robota jest robiona. Bez tej zgody LLM tego pliku nie zmienia.
+
+> Bez szczegółów kodu.
 
 Ogólne zasady dla każdej kuchni. Wartości liczbowe (głębokości, odstępy, luzy, tabele półek i zawiasów) są w danych projektu, a decyzje konkretnego projektu (np. szczeliny frontów, produkty) w jego notatkach.
 

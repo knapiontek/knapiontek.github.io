@@ -1,6 +1,8 @@
 # Core
 
-Shared 3D code for every view: the house (../house/view.html) and its sub-projects (../kitchen/view.html, ../bathroom/view.html). It knows no project. What it must do: [rules.md](rules.md).
+> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
+
+Shared 3D code for every view: the house (house/view.html) and its sub-projects (kitchen/view.html, bathroom/view.html). It knows no project.
 
 ## Files
 
@@ -9,12 +11,12 @@ Shared 3D code for every view: the house (../house/view.html) and its sub-projec
 | geometry.js | convex polygons and prisms: clip, subtract, intersect, split, section, volume, overlaps |
 | mesh.js | welded points, faces, visible pieces, batches of triangles |
 | scene.js | renderer, materials, meshes, edges, caps, light, camera, navigation, walk, loop |
-| ui.js | the screen of every page (../project.md, Flow): stored state, the layer tree, the menus, the panel's tabs, ☀ and ?, the mode switch, the 2D sheet, the checks list |
+| ui.js | the screen of every page: stored state, the layer tree, the menus, the panel's tabs, ☀ and ?, the mode switch, the 2D sheet, the checks list |
 | library.js | loads the library's textures when a page needs them (one file per image) |
 | plan.js | the 2D plan from the solids: cut, seen from above, labels, rooms, dimensions, sheets |
 | sheet.js | the spreadsheet: tabs, editable cells, formulas, pages in tabs, XLSX export |
-| parts.js | the contract of a part (../project.md, Plan 1): a sub-project registers its part, a page loads it by apps.js and draws it in its view; the host's layers with the part's |
-| info.js | Info of every application (../project.md, Info): the screen, the order of the tabs, the shared sheets (Kosztorys, Lista cięć, a plain table), the bottom menu |
+| parts.js | the contract of a part: a sub-project registers its part, a page loads it by apps.js and draws it in its view; the host's layers with the part's |
+| info.js | Info of every application: the screen, the order of the tabs, the shared sheets (Kosztorys, Lista cięć, a plain table), the bottom menu |
 | ui.css | the look of every view, light and dark |
 
 ## How it fits together
@@ -55,10 +57,6 @@ A cell is a solid with what it is:
 
 ## Views
 
-The screen and its modes (3D, 2D, Info, Test) are in ../project.md, Flow; ui.js builds them from a project's views data.
+ui.js builds the screen and its modes (3D, 2D, Info, Test) from a project's views data.
 
 The 2D plan (plan.js) is cut from the same solids as the 3D view at the house's cut height for the floor: what the cut meets is filled in its section colour, what lies under it is seen from above, what is over it is dashed. Room and opening labels come from house.js, so a sub-project's plan matches the house's.
-
-## Code style
-
-As ../project.md. three.js is pinned at r128.

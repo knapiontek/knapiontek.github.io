@@ -642,7 +642,7 @@ function planSvg() {
       + PLAN.dims(X, inside, extent[1]) }]);
 }
 const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state: VIEW_STATE, save: saveView, svg: planSvg, file: `lazienka-${FLOOR}-rzut.svg` });
-/* the screen (core/ui.js; ../project.md, Flow): the mode sets the main view, the bottom menu, the panel's tabs, ☀ */
+/* the screen (core/ui.js): the mode sets the main view, the bottom menu, the panel's tabs, ☀ */
 CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
 CORE.ui.themeButton($('themebtn'));
 CORE.ui.panelToggle(stage);

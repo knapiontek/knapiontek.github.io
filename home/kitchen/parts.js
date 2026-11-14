@@ -1,4 +1,4 @@
-/* kitchen/parts.js: the kitchen as a part (../core/parts.js; ../project.md, Plan 1): the same solids, moving fronts and
+/* kitchen/parts.js: the kitchen as a part (../core/parts.js; ../project.md, Rules): the same solids, moving fronts and
    details in its own page (view.html, with its room) and in the house (without: the house draws its own). Everything
    comes from design.js, view.js and engine.js and the library; nothing is made up here to fit.
    Units are mm in house axes (x along the house, y across, z up); inside a group the engine keeps u along the group, v up

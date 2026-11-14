@@ -1,5 +1,5 @@
-/* apps.js: the applications of the home, in the order of the top-left menu (project.md, Flow), and the wiring of their
-   parts (project.md, Plan 1): the only place that names a sub-project for another page.
+/* apps.js: the applications of the home, in the order of the top-left menu, and the wiring of their
+   parts (project.md, Rules: Furniture in the house): the only place that names a sub-project for another page.
    page: from this folder; null while the application is planned (shown, but not a link).
    parts: the files that build the application's furniture as a part (core/parts.js), in their order, from this folder;
    a page (the house) loads those it does not have yet. */

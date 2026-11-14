@@ -1,5 +1,7 @@
 # Dom w papawerach 5 (G): geometry analysis
 
+> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
+
 The house as the archon drawings give it, written as boxes, plus what changed on site (§ 14). house.js is copied from these tables by hand. All values in mm, whole numbers; levels may be quoted in metres (±0.00).
 
 ## 1. Sources

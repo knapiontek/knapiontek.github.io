@@ -1,4 +1,4 @@
-/* core/info.js: Info of every application (../project.md, Flow: Info). One title, one row of tabs in one order
+/* core/info.js: Info of every application. One title, one row of tabs in one order
    (TABS), each tab a sheet of core/sheet.js (on the screen and in the XLSX) and/or a page (a drawing, cards).
    The sheets every application shares are built here, so they look and work the same everywhere:
      estimate   Kosztorys: positions by category, quantity × unit price, sums, total

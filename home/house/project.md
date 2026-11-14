@@ -1,29 +1,29 @@
 # House
 
+> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
+
 The building "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, with floor tiles in every room. Open **view.html**.
 
-- What the page must do: [rules.md](rules.md) (Polish, like the page).
-- Where the numbers come from: [archon/analysis.md](archon/analysis.md).
-- The whole application, the screen and the library: [../project.md](../project.md).
+What the page must do is in rules.md (Polish, like the page); where the numbers come from, in archon/analysis.md.
 
 ## Files
 
 | File | Holds |
 |---|---|
-| house.js | the house as data: geometry, layers, views (rules.md § 1) |
+| house.js | the house as data: geometry, layers, views |
 | engine.js | house.js turned into solids |
-| house-clip.js | a sub-project's room: the house's own solids, trimmed (../project.md, A sub-project's room) |
+| house-clip.js | a sub-project's room: the house's own solids, trimmed |
 | analysis.js | the checks shown in Test |
-| view.html | the page in the shared screen (../project.md, Flow): 3D, 2D, Test, Info; panel tabs Warstwy (layers, cut), Wykończenie (tiles); ☀ and ? in the corner |
+| view.html | the page in the shared screen: 3D, 2D, Test, Info; panel tabs Warstwy (layers, cut), Wykończenie (tiles); ☀ and ? in the corner |
 | archon/ | the archon drawings and analysis.md |
 | index.html | directory listing, not part of the house |
 
 ## How it fits together
 
 ```
-analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─► view.html          drawn by ../core
+analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─► view.html          drawn by core
                                                           ├─► analysis.js        checked, shown in Test
-                                                          └─► house-clip.js ─► ../kitchen, ../bathroom
+                                                          └─► house-clip.js ─► kitchen, bathroom
 ```
 
 - One model for every view. A view only picks layers and cuts it.
@@ -40,8 +40,4 @@ analysis.md ─(by hand)─► house.js ─► engine.js ─► solids ─┬─
 - **Facade**: finish rules on the EPS by its outer side.
 - **Stair**: floating treads in flights; the landing is a flight of one tread. 17 risers to the attic.
 - **Site**: the lawn stops at the box around the building.
-- **Tiles**: real products (../library/products.js) with the link to that exact product. A room is tiled on its own or with another (the walk-in wardrobes with the bedroom); tiles run through half of every doorway.
-
-## Code style
-
-As [../project.md](../project.md).
+- **Tiles**: real products of the library, with the link to that exact product. A room is tiled on its own or with another (the walk-in wardrobes with the bedroom); tiles run through half of every doorway.

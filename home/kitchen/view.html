@@ -547,7 +547,7 @@ function planSvg() {
 const PLAN_BUTTONS = { zoomOut: el('button', { textContent: '−', ariaLabel: 'Pomniejsz' }), zoomIn: el('button', { textContent: '+', ariaLabel: 'Powiększ' }),
   download: el('button', { textContent: 'Pobierz SVG' }) };
 const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state, save, svg: planSvg, file: 'kuchnia-rzut.svg' });
-/* the screen (core/ui.js; ../project.md, Flow): the mode sets the main view, the bottom menu, the panel's tabs, ☀ */
+/* the screen (core/ui.js): the mode sets the main view, the bottom menu, the panel's tabs, ☀ */
 const showPanel = () => { state.tab = CORE.ui.panelTabs($('tabs'), $('panel'), view(), state.tab, t => { state.tab = t; save(); showPanel(); }) ?? state.tab; };
 function setMode(m) {
   state.mode = VIEWS[m] ? m : Object.keys(VIEWS)[0]; save();

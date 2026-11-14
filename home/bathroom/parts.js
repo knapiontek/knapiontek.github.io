@@ -1,4 +1,4 @@
-/* bathroom/parts.js: both bathrooms as a part (../core/parts.js; ../project.md, Plan 1): the drawing of data.js (each
+/* bathroom/parts.js: both bathrooms as a part (../core/parts.js; ../project.md, Rules): the drawing of data.js (each
    floor's model: solids, doors and drawers, round details, lamps, in mm in house axes), drawn by core the same in
    view.html (with its room, from the house) and in the house (without: the house draws its own). Nothing is computed
    here to fit: what is drawn is what data.js says. Tiles and board decors come from the library. */
