@@ -1,0 +1,219 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1130" width="1600" height="1130" font-family="Helvetica, Arial, sans-serif" xmlns:c2pa="http://c2pa.org/manifest">
+<style>.n{fill:#fff;stroke:#777;stroke-width:1}.p{fill:#fffdf6;stroke:#555;stroke-width:1.4}.x{fill:#eee;stroke:#aaa}.t{font-size:12px;fill:#222;text-anchor:middle}.s{font-size:9.5px;fill:#777;text-anchor:middle}.b{font-size:13px;font-weight:bold}.l{font-size:9.5px;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}path{fill:none}.e:hover{stroke-width:3.5}</style>
+<defs>
+<marker id="m1f7a7a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#1f7a7a" stroke="none"/></marker>
+<marker id="md08a00" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#d08a00" stroke="none"/></marker>
+<marker id="m8a6d3b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#8a6d3b" stroke="none"/></marker>
+<marker id="m3d7a3d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#3d7a3d" stroke="none"/></marker>
+<marker id="ma0522d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#a0522d" stroke="none"/></marker>
+<marker id="m3d8a3d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#3d8a3d" stroke="none"/></marker>
+<marker id="m888888" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#888888" stroke="none"/></marker>
+<marker id="m7b3f99" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#7b3f99" stroke="none"/></marker>
+<marker id="m2f5f8f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#2f5f8f" stroke="none"/></marker>
+<marker id="m2a6fd6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#2a6fd6" stroke="none"/></marker>
+<marker id="maaaaaa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#aaaaaa" stroke="none"/></marker>
+</defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="30" y="34" font-size="20" font-weight="bold">home — dependencies of every file</text>
+<text x="30" y="56" font-size="12" fill="#555">An arrow A → B: A needs B. Layers as project.md: kitchen, bathroom → house → core, library; nobody depends on a sub-project; apps.js wires the parts.</text>
+<rect x="30" y="75" width="620" height="265" rx="12" fill="#f3eaf6" stroke="#7b3f99" stroke-opacity=".5"/>
+<text x="42" y="93" class="b" fill="#7b3f99">kitchen/ — the kitchen</text>
+<rect x="720" y="165" width="160" height="95" rx="12" fill="#f6efe2" stroke="#8a6d3b" stroke-opacity=".5"/>
+<text x="732" y="183" class="b" fill="#8a6d3b">root</text>
+<rect x="1040" y="75" width="460" height="265" rx="12" fill="#e5f3f3" stroke="#1f7a7a" stroke-opacity=".5"/>
+<text x="1052" y="93" class="b" fill="#1f7a7a">bathroom/ — both bathrooms</text>
+<rect x="240" y="375" width="770" height="225" rx="12" fill="#f6ebe2" stroke="#a0522d" stroke-opacity=".5"/>
+<text x="252" y="393" class="b" fill="#a0522d">house/ — the building</text>
+<rect x="220" y="635" width="1230" height="255" rx="12" fill="#e6eef7" stroke="#2f5f8f" stroke-opacity=".5"/>
+<text x="232" y="653" class="b" fill="#2f5f8f">core/ — shared code, knows no project</text>
+<rect x="220" y="965" width="500" height="90" rx="12" fill="#e9f3e5" stroke="#3d7a3d" stroke-opacity=".5"/>
+<text x="232" y="983" class="b" fill="#3d7a3d">library/ — everything bought (data)</text>
+<rect x="780" y="965" width="730" height="90" rx="12" fill="#f2f2f2" stroke="#888888" stroke-opacity=".5" stroke-dasharray="5 4"/>
+<text x="792" y="983" class="b" fill="#888888">external (CDN)</text>
+<path class="e" d="M800,234 C800,264 1260,251 1260,281" stroke="#d08a00" stroke-width="1.6" stroke-opacity=".9" marker-end="url(#md08a00)"><title>apps.js → bathroom/data.js (lists)</title></path>
+<path class="e" d="M864,215 C941,215 979,215 1056,215" stroke="#d08a00" stroke-width="1.6" stroke-opacity=".9" marker-end="url(#md08a00)"><title>apps.js → bathroom/parts.js (lists)</title></path>
+<path class="e" d="M800,196 C800,166 1260,179 1260,149" stroke="#3d8a3d" stroke-width="1.2" stroke-opacity=".9" stroke-dasharray="2 4" marker-end="url(#m3d8a3d)"><title>apps.js → bathroom/view.html (links)</title></path>
+<path class="e" d="M800,234 C800,347 930,373 930,486" stroke="#d08a00" stroke-width="1.6" stroke-opacity=".9" marker-end="url(#md08a00)"><title>apps.js → house/house-clip.js (lists)</title></path>
+<path class="e" d="M800,234 C800,309 420,326 420,401" stroke="#3d8a3d" stroke-width="1.2" stroke-opacity=".9" stroke-dasharray="2 4" marker-end="url(#m3d8a3d)"><title>apps.js → house/view.html (links)</title></path>
+<path class="e" d="M800,234 C800,264 570,251 570,281" stroke="#d08a00" stroke-width="1.6" stroke-opacity=".9" marker-end="url(#md08a00)"><title>apps.js → kitchen/design.js (lists)</title></path>
+<path class="e" d="M800,234 C800,264 270,251 270,281" stroke="#d08a00" stroke-width="1.6" stroke-opacity=".9" marker-end="url(#md08a00)"><title>apps.js → kitchen/engine.js (lists)</title></path>
+<path class="e" d="M736,215 C599,215 531,215 394,215" stroke="#d08a00" stroke-width="1.6" stroke-opacity=".9" marker-end="url(#md08a00)"><title>apps.js → kitchen/parts.js (lists)</title></path>
+<path class="e" d="M800,196 C800,166 150,179 150,149" stroke="#3d8a3d" stroke-width="1.2" stroke-opacity=".9" stroke-dasharray="2 4" marker-end="url(#m3d8a3d)"><title>apps.js → kitchen/view.html (links)</title></path>
+<path class="e" d="M800,234 C800,264 420,251 420,281" stroke="#d08a00" stroke-width="1.6" stroke-opacity=".9" marker-end="url(#md08a00)"><title>apps.js → kitchen/view.js (lists)</title></path>
+<path class="e" d="M1120,234 C1120,264 1260,251 1260,281" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/parts.js → bathroom/data.js (uses)</title></path>
+<path class="e" d="M1120,234 C1120,503 700,562 700,831" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/parts.js → core/geometry.js (uses)</title></path>
+<path class="e" d="M1120,234 C1120,426 1150,469 1150,661" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/parts.js → core/library.js (uses)</title></path>
+<path class="e" d="M1120,234 C1120,464 700,516 700,746" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/parts.js → core/mesh.js (uses)</title></path>
+<path class="e" d="M1120,234 C1120,426 930,469 930,661" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/parts.js → core/parts.js (uses)</title></path>
+<path class="e" d="M1120,234 C1120,347 930,373 930,486" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/parts.js → house/house-clip.js (uses)</title></path>
+<path class="e" d="M1120,234 C1120,372 730,403 730,541" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/parts.js → house/house.js (uses)</title></path>
+<path class="e" d="M1120,234 C1120,575 300,650 300,991" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/parts.js → library/products.js (uses)</title></path>
+<path class="e" d="M1260,149 C1260,179 800,166 800,196" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/view.html → apps.js (uses)</title></path>
+<path class="e" d="M1260,149 C1260,208 1260,222 1260,281" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/view.html → bathroom/data.js (uses)</title></path>
+<path class="e" d="M1260,149 C1260,179 1420,166 1420,196" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/view.html → bathroom/engine.js (uses)</title></path>
+<path class="e" d="M1260,149 C1260,179 1120,166 1120,196" stroke="#aaaaaa" stroke-width="1.2" stroke-opacity=".9" stroke-dasharray="5 4" marker-end="url(#maaaaaa)"><title>bathroom/view.html → bathroom/parts.js (loads)</title></path>
+<path class="e" d="M1260,149 C1260,301 530,334 530,486" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/view.html → house/engine.js (uses)</title></path>
+<path class="e" d="M1260,149 C1260,301 930,334 930,486" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/view.html → house/house-clip.js (uses)</title></path>
+<path class="e" d="M1260,149 C1260,325 730,365 730,541" stroke="#1f7a7a" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m1f7a7a)"><title>bathroom/view.html → house/house.js (uses)</title></path>
+<path class="e" d="M300,699 C300,729 300,716 300,746" stroke="#2f5f8f" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m2f5f8f)"><title>core/info.js → core/sheet.js (uses)</title></path>
+<path class="e" d="M300,699 C300,758 420,772 420,831" stroke="#2f5f8f" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m2f5f8f)"><title>core/info.js → core/ui.js (uses)</title></path>
+<path class="e" d="M1150,699 C1150,830 640,860 640,991" stroke="#2a6fd6" stroke-width="1.2" stroke-opacity=".9" stroke-dasharray="7 4" marker-end="url(#m2a6fd6)"><title>core/library.js → library/textures/*.js (demand)</title></path>
+<path class="e" d="M700,784 C700,814 700,801 700,831" stroke="#2f5f8f" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m2f5f8f)"><title>core/mesh.js → core/geometry.js (uses)</title></path>
+<path class="e" d="M930,661 C930,469 800,426 800,234" stroke="#2f5f8f" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m2f5f8f)"><title>core/parts.js → apps.js (uses)</title></path>
+<path class="e" d="M994,680 C1031,680 1049,680 1086,680" stroke="#2f5f8f" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m2f5f8f)"><title>core/parts.js → core/library.js (uses)</title></path>
+<path class="e" d="M480,699 C480,758 700,772 700,831" stroke="#2f5f8f" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m2f5f8f)"><title>core/plan.js → core/geometry.js (uses)</title></path>
+<path class="e" d="M480,699 C480,758 420,772 420,831" stroke="#2f5f8f" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m2f5f8f)"><title>core/plan.js → core/ui.js (uses)</title></path>
+<path class="e" d="M700,699 C700,758 700,772 700,831" stroke="#2f5f8f" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m2f5f8f)"><title>core/scene.js → core/geometry.js (uses)</title></path>
+<path class="e" d="M700,699 C700,729 700,716 700,746" stroke="#2f5f8f" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m2f5f8f)"><title>core/scene.js → core/mesh.js (uses)</title></path>
+<path class="e" d="M300,784 C300,814 420,801 420,831" stroke="#2f5f8f" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m2f5f8f)"><title>core/sheet.js → core/ui.js (uses)</title></path>
+<path class="e" d="M300,784 C300,877 1430,898 1430,991" stroke="#2f5f8f" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m2f5f8f)"><title>core/sheet.js → ext:SheetJS (xlsx) (uses)</title></path>
+<path class="e" d="M330,524 C330,662 700,693 700,831" stroke="#a0522d" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#ma0522d)"><title>house/analysis.js → core/geometry.js (uses)</title></path>
+<path class="e" d="M330,524 C330,662 420,693 420,831" stroke="#a0522d" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#ma0522d)"><title>house/analysis.js → core/ui.js (uses)</title></path>
+<path class="e" d="M330,524 C330,554 730,511 730,541" stroke="#a0522d" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#ma0522d)"><title>house/analysis.js → house/house.js (uses)</title></path>
+<path class="e" d="M530,524 C530,662 700,693 700,831" stroke="#a0522d" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#ma0522d)"><title>house/engine.js → core/geometry.js (uses)</title></path>
+<path class="e" d="M530,524 C530,554 730,511 730,541" stroke="#a0522d" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#ma0522d)"><title>house/engine.js → house/house.js (uses)</title></path>
+<path class="e" d="M930,524 C930,662 700,693 700,831" stroke="#a0522d" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#ma0522d)"><title>house/house-clip.js → core/geometry.js (uses)</title></path>
+<path class="e" d="M930,524 C930,554 730,511 730,541" stroke="#a0522d" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#ma0522d)"><title>house/house-clip.js → house/house.js (uses)</title></path>
+<path class="e" d="M420,401 C420,326 800,309 800,234" stroke="#a0522d" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#ma0522d)"><title>house/view.html → apps.js (uses)</title></path>
+<path class="e" d="M420,439 C420,469 330,456 330,486" stroke="#a0522d" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#ma0522d)"><title>house/view.html → house/analysis.js (uses)</title></path>
+<path class="e" d="M420,439 C420,469 530,456 530,486" stroke="#a0522d" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#ma0522d)"><title>house/view.html → house/engine.js (uses)</title></path>
+<path class="e" d="M420,439 C420,485 730,495 730,541" stroke="#a0522d" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#ma0522d)"><title>house/view.html → house/house.js (uses)</title></path>
+<path class="e" d="M110,234 C110,426 300,469 300,661" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/cost-sheets.js → core/info.js (uses)</title></path>
+<path class="e" d="M110,234 C110,503 420,562 420,831" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/cost-sheets.js → core/ui.js (uses)</title></path>
+<path class="e" d="M110,234 C110,264 110,251 110,281" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/cost-sheets.js → kitchen/cost.js (uses)</title></path>
+<path class="e" d="M110,234 C110,264 270,251 270,281" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/cost-sheets.js → kitchen/engine.js (uses)</title></path>
+<path class="e" d="M470,149 C470,208 570,222 570,281" stroke="#aaaaaa" stroke-width="1.2" stroke-opacity=".9" stroke-dasharray="5 4" marker-end="url(#maaaaaa)"><title>kitchen/design.html → kitchen/design.js (loads)</title></path>
+<path class="e" d="M470,149 C470,208 270,222 270,281" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/design.html → kitchen/engine.js (uses)</title></path>
+<path class="e" d="M334,300 C403,300 437,300 506,300" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/engine.js → kitchen/design.js (uses)</title></path>
+<path class="e" d="M330,234 C330,503 700,562 700,831" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/parts.js → core/geometry.js (uses)</title></path>
+<path class="e" d="M330,234 C330,426 1150,469 1150,661" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/parts.js → core/library.js (uses)</title></path>
+<path class="e" d="M330,234 C330,464 700,516 700,746" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/parts.js → core/mesh.js (uses)</title></path>
+<path class="e" d="M330,234 C330,426 930,469 930,661" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/parts.js → core/parts.js (uses)</title></path>
+<path class="e" d="M330,234 C330,347 930,373 930,486" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/parts.js → house/house-clip.js (uses)</title></path>
+<path class="e" d="M330,234 C330,372 730,403 730,541" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/parts.js → house/house.js (uses)</title></path>
+<path class="e" d="M330,234 C330,264 570,251 570,281" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/parts.js → kitchen/design.js (uses)</title></path>
+<path class="e" d="M330,234 C330,264 270,251 270,281" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/parts.js → kitchen/engine.js (uses)</title></path>
+<path class="e" d="M330,234 C330,264 420,251 420,281" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/parts.js → kitchen/view.js (uses)</title></path>
+<path class="e" d="M330,234 C330,575 300,650 300,991" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/parts.js → library/products.js (uses)</title></path>
+<path class="e" d="M150,149 C150,179 800,166 800,196" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/view.html → apps.js (uses)</title></path>
+<path class="e" d="M150,149 C150,301 530,334 530,486" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/view.html → house/engine.js (uses)</title></path>
+<path class="e" d="M150,149 C150,301 930,334 930,486" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/view.html → house/house-clip.js (uses)</title></path>
+<path class="e" d="M150,149 C150,325 730,365 730,541" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/view.html → house/house.js (uses)</title></path>
+<path class="e" d="M150,149 C150,179 110,166 110,196" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/view.html → kitchen/cost-sheets.js (uses)</title></path>
+<path class="e" d="M150,149 C150,208 110,222 110,281" stroke="#aaaaaa" stroke-width="1.2" stroke-opacity=".9" stroke-dasharray="5 4" marker-end="url(#maaaaaa)"><title>kitchen/view.html → kitchen/cost.js (loads)</title></path>
+<path class="e" d="M150,149 C150,208 570,222 570,281" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/view.html → kitchen/design.js (uses)</title></path>
+<path class="e" d="M150,149 C150,208 270,222 270,281" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/view.html → kitchen/engine.js (uses)</title></path>
+<path class="e" d="M150,149 C150,179 330,166 330,196" stroke="#aaaaaa" stroke-width="1.2" stroke-opacity=".9" stroke-dasharray="5 4" marker-end="url(#maaaaaa)"><title>kitchen/view.html → kitchen/parts.js (loads)</title></path>
+<path class="e" d="M150,149 C150,208 420,222 420,281" stroke="#7b3f99" stroke-width="1.2" stroke-opacity=".55" marker-end="url(#m7b3f99)"><title>kitchen/view.html → kitchen/view.js (uses)</title></path>
+<path d="M1260,149 C1260,368 1300,416 1300,635" stroke="#1f7a7a" stroke-width="3" stroke-opacity=".75" marker-end="url(#m1f7a7a)"><title>bathroom/view.html → core: geometry.js*, info.js, library.js, mesh.js*, parts.js, plan.js, scene.js, sheet.js*, ui.css*, ui.js</title></path>
+<path d="M1260,149 C1260,516 1280,598 1280,965" stroke="#1f7a7a" stroke-width="3" stroke-opacity=".75" marker-end="url(#m1f7a7a)"><title>bathroom/view.html → ext: Google Fonts*, OrbitControls, three.js r128</title></path>
+<path d="M1260,149 C1260,516 600,598 600,965" stroke="#1f7a7a" stroke-width="3" stroke-opacity=".75" marker-end="url(#m1f7a7a)"><title>bathroom/view.html → library: materials.js, products.js</title></path>
+<path d="M420,439 C420,527 560,547 560,635" stroke="#a0522d" stroke-width="3" stroke-opacity=".75" marker-end="url(#ma0522d)"><title>house/view.html → core: geometry.js, info.js, library.js, mesh.js, parts.js, plan.js, scene.js, sheet.js*, ui.css*, ui.js</title></path>
+<path d="M420,439 C420,676 960,728 960,965" stroke="#a0522d" stroke-width="3" stroke-opacity=".75" marker-end="url(#ma0522d)"><title>house/view.html → ext: Google Fonts*, OrbitControls, three.js r128</title></path>
+<path d="M420,439 C420,676 480,728 480,965" stroke="#a0522d" stroke-width="3" stroke-opacity=".75" marker-end="url(#ma0522d)"><title>house/view.html → library: materials.js, products.js</title></path>
+<path d="M470,149 C470,516 1120,598 1120,965" stroke="#7b3f99" stroke-width="3" stroke-opacity=".75" marker-end="url(#m7b3f99)"><title>kitchen/design.html → ext: Alpine.js</title></path>
+<path d="M470,149 C470,516 360,598 360,965" stroke="#7b3f99" stroke-width="3" stroke-opacity=".75" marker-end="url(#m7b3f99)"><title>kitchen/design.html → library: products.js</title></path>
+<path d="M150,149 C150,368 240,416 240,635" stroke="#7b3f99" stroke-width="3" stroke-opacity=".75" marker-end="url(#m7b3f99)"><title>kitchen/view.html → core: geometry.js, info.js, library.js, mesh.js, parts.js, plan.js, scene.js, sheet.js*, ui.css*, ui.js</title></path>
+<path d="M150,149 C150,516 800,598 800,965" stroke="#7b3f99" stroke-width="3" stroke-opacity=".75" marker-end="url(#m7b3f99)"><title>kitchen/view.html → ext: Google Fonts*, OrbitControls, three.js r128</title></path>
+<path d="M150,149 C150,516 240,598 240,965" stroke="#7b3f99" stroke-width="3" stroke-opacity=".75" marker-end="url(#m7b3f99)"><title>kitchen/view.html → library: materials.js, products.js</title></path>
+<g><title>kitchen/view.html</title><rect class="p" x="86.0" y="111.0" width="128" height="38" rx="3"/>
+<text class="t" x="150" y="128">view.html</text><text class="s" x="150" y="141">39 kB</text></g>
+<g><title>kitchen/design.html</title><rect class="p" x="406.0" y="111.0" width="128" height="38" rx="3"/>
+<text class="t" x="470" y="128">design.html</text><text class="s" x="470" y="141">52 kB</text></g>
+<g><title>kitchen/cost-sheets.js</title><rect class="n" x="46.0" y="196.0" width="128" height="38" rx="8"/>
+<text class="t" x="110" y="213">cost-sheets.js</text><text class="s" x="110" y="226">28 kB</text></g>
+<g><title>kitchen/parts.js</title><rect class="n" x="266.0" y="196.0" width="128" height="38" rx="8"/>
+<text class="t" x="330" y="213">parts.js</text><text class="s" x="330" y="226">69 kB</text></g>
+<g><title>kitchen/cost.js</title><rect class="n" x="46.0" y="281.0" width="128" height="38" rx="8"/>
+<text class="t" x="110" y="298">cost.js</text><text class="s" x="110" y="311">56 kB</text></g>
+<g><title>kitchen/engine.js</title><rect class="n" x="206.0" y="281.0" width="128" height="38" rx="8"/>
+<text class="t" x="270" y="298">engine.js</text><text class="s" x="270" y="311">84 kB</text></g>
+<g><title>kitchen/view.js</title><rect class="n" x="356.0" y="281.0" width="128" height="38" rx="8"/>
+<text class="t" x="420" y="298">view.js</text><text class="s" x="420" y="311">5 kB</text></g>
+<g><title>kitchen/design.js</title><rect class="n" x="506.0" y="281.0" width="128" height="38" rx="8"/>
+<text class="t" x="570" y="298">design.js</text><text class="s" x="570" y="311">14 kB</text></g>
+<g><title>apps.js</title><rect class="n" x="736.0" y="196.0" width="128" height="38" rx="8"/>
+<text class="t" x="800" y="213">apps.js</text><text class="s" x="800" y="226">935 B</text></g>
+<g><title>bathroom/view.html</title><rect class="p" x="1196.0" y="111.0" width="128" height="38" rx="3"/>
+<text class="t" x="1260" y="128">view.html</text><text class="s" x="1260" y="141">42 kB</text></g>
+<g><title>bathroom/parts.js</title><rect class="n" x="1056.0" y="196.0" width="128" height="38" rx="8"/>
+<text class="t" x="1120" y="213">parts.js</text><text class="s" x="1120" y="226">23 kB</text></g>
+<g><title>bathroom/engine.js</title><rect class="n" x="1356.0" y="196.0" width="128" height="38" rx="8"/>
+<text class="t" x="1420" y="213">engine.js</text><text class="s" x="1420" y="226">33 kB</text></g>
+<g><title>bathroom/data.js</title><rect class="n" x="1196.0" y="281.0" width="128" height="38" rx="8"/>
+<text class="t" x="1260" y="298">data.js</text><text class="s" x="1260" y="311">70 kB</text></g>
+<g><title>house/view.html</title><rect class="p" x="356.0" y="401.0" width="128" height="38" rx="3"/>
+<text class="t" x="420" y="418">view.html</text><text class="s" x="420" y="431">37 kB</text></g>
+<g><title>house/analysis.js</title><rect class="n" x="266.0" y="486.0" width="128" height="38" rx="8"/>
+<text class="t" x="330" y="503">analysis.js</text><text class="s" x="330" y="516">3 kB</text></g>
+<g><title>house/engine.js</title><rect class="n" x="466.0" y="486.0" width="128" height="38" rx="8"/>
+<text class="t" x="530" y="503">engine.js</text><text class="s" x="530" y="516">13 kB</text></g>
+<g><title>house/house-clip.js</title><rect class="n" x="866.0" y="486.0" width="128" height="38" rx="8"/>
+<text class="t" x="930" y="503">house-clip.js</text><text class="s" x="930" y="516">8 kB</text></g>
+<g><title>house/house.js</title><rect class="n" x="666.0" y="541.0" width="128" height="38" rx="8"/>
+<text class="t" x="730" y="558">house.js</text><text class="s" x="730" y="571">26 kB</text></g>
+<g><title>core/info.js</title><rect class="n" x="236.0" y="661.0" width="128" height="38" rx="8"/>
+<text class="t" x="300" y="678">info.js</text><text class="s" x="300" y="691">9 kB</text></g>
+<g><title>core/plan.js</title><rect class="n" x="416.0" y="661.0" width="128" height="38" rx="8"/>
+<text class="t" x="480" y="678">plan.js</text><text class="s" x="480" y="691">9 kB</text></g>
+<g><title>core/scene.js</title><rect class="n" x="636.0" y="661.0" width="128" height="38" rx="8"/>
+<text class="t" x="700" y="678">scene.js</text><text class="s" x="700" y="691">27 kB</text></g>
+<g><title>core/parts.js</title><rect class="n" x="866.0" y="661.0" width="128" height="38" rx="8"/>
+<text class="t" x="930" y="678">parts.js</text><text class="s" x="930" y="691">3 kB</text></g>
+<g><title>core/library.js</title><rect class="n" x="1086.0" y="661.0" width="128" height="38" rx="8"/>
+<text class="t" x="1150" y="678">library.js</text><text class="s" x="1150" y="691">1 kB</text></g>
+<g><title>core/sheet.js</title><rect class="n" x="236.0" y="746.0" width="128" height="38" rx="8"/>
+<text class="t" x="300" y="763">sheet.js</text><text class="s" x="300" y="776">11 kB</text></g>
+<g><title>core/mesh.js</title><rect class="n" x="636.0" y="746.0" width="128" height="38" rx="8"/>
+<text class="t" x="700" y="763">mesh.js</text><text class="s" x="700" y="776">7 kB</text></g>
+<g><title>core/ui.css</title><rect class="n" x="1306.0" y="661.0" width="128" height="38" rx="8"/>
+<text class="t" x="1370" y="678">ui.css</text><text class="s" x="1370" y="691">15 kB</text></g>
+<g><title>core/ui.js</title><rect class="n" x="356.0" y="831.0" width="128" height="38" rx="8"/>
+<text class="t" x="420" y="848">ui.js</text><text class="s" x="420" y="861">15 kB</text></g>
+<g><title>core/geometry.js</title><rect class="n" x="636.0" y="831.0" width="128" height="38" rx="8"/>
+<text class="t" x="700" y="848">geometry.js</text><text class="s" x="700" y="861">7 kB</text></g>
+<g><title>library/products.js</title><rect class="n" x="236.0" y="991.0" width="128" height="38" rx="8"/>
+<text class="t" x="300" y="1008">products.js</text><text class="s" x="300" y="1021">18 kB</text></g>
+<g><title>library/materials.js</title><rect class="n" x="396.0" y="991.0" width="128" height="38" rx="8"/>
+<text class="t" x="460" y="1008">materials.js</text><text class="s" x="460" y="1021">2 kB</text></g>
+<g><title>library/textures/*.js</title><rect class="n" x="576.0" y="991.0" width="128" height="38" rx="8"/>
+<text class="t" x="640" y="1008">textures/*.js</text><text class="s" x="640" y="1021">8 files, 1693 kB</text></g>
+<g><title>ext:three.js r128</title><rect class="x" x="806.0" y="991.0" width="128" height="38" rx="8"/>
+<text class="t" x="870" y="1014">three.js r128</text></g>
+<g><title>ext:OrbitControls</title><rect class="x" x="946.0" y="991.0" width="128" height="38" rx="8"/>
+<text class="t" x="1010" y="1014">OrbitControls</text></g>
+<g><title>ext:Alpine.js</title><rect class="x" x="1086.0" y="991.0" width="128" height="38" rx="8"/>
+<text class="t" x="1150" y="1014">Alpine.js</text></g>
+<g><title>ext:Google Fonts</title><rect class="x" x="1226.0" y="991.0" width="128" height="38" rx="8"/>
+<text class="t" x="1290" y="1014">Google Fonts</text></g>
+<g><title>ext:SheetJS (xlsx)</title><rect class="x" x="1366.0" y="991.0" width="128" height="38" rx="8"/>
+<text class="t" x="1430" y="1014">SheetJS (xlsx)</text></g>
+<text class="l" x="1306" y="605" fill="#1f7a7a">geometry.js*, info.js, library.js, mesh.js*</text>
+<text class="l" x="1306" y="616" fill="#1f7a7a">parts.js, plan.js, scene.js, sheet.js*</text>
+<text class="l" x="1306" y="627" fill="#1f7a7a">ui.css*, ui.js</text>
+<text class="l" x="1286" y="935" fill="#1f7a7a">Google Fonts*</text>
+<text class="l" x="1286" y="946" fill="#1f7a7a">OrbitControls</text>
+<text class="l" x="1286" y="957" fill="#1f7a7a">three.js r128</text>
+<text class="l" x="606" y="957" fill="#1f7a7a">materials.js, products.js</text>
+<text class="l" x="566" y="605" fill="#a0522d">geometry.js, info.js, library.js, mesh.js</text>
+<text class="l" x="566" y="616" fill="#a0522d">parts.js, plan.js, scene.js, sheet.js*</text>
+<text class="l" x="566" y="627" fill="#a0522d">ui.css*, ui.js</text>
+<text class="l" x="966" y="935" fill="#a0522d">Google Fonts*</text>
+<text class="l" x="966" y="946" fill="#a0522d">OrbitControls</text>
+<text class="l" x="966" y="957" fill="#a0522d">three.js r128</text>
+<text class="l" x="486" y="957" fill="#a0522d">materials.js, products.js</text>
+<text class="l" x="1126" y="957" fill="#7b3f99">Alpine.js</text>
+<text class="l" x="366" y="957" fill="#7b3f99">products.js</text>
+<text class="l" x="246" y="605" fill="#7b3f99">geometry.js, info.js, library.js, mesh.js</text>
+<text class="l" x="246" y="616" fill="#7b3f99">parts.js, plan.js, scene.js, sheet.js*</text>
+<text class="l" x="246" y="627" fill="#7b3f99">ui.css*, ui.js</text>
+<text class="l" x="806" y="935" fill="#7b3f99">Google Fonts*</text>
+<text class="l" x="806" y="946" fill="#7b3f99">OrbitControls</text>
+<text class="l" x="806" y="957" fill="#7b3f99">three.js r128</text>
+<text class="l" x="246" y="957" fill="#7b3f99">materials.js, products.js</text>
+<path d="M30,1085 h34" stroke="#555" stroke-width="2" stroke-dasharray=""/><text x="70" y="1089" font-size="11" fill="#333">uses (calls what the file defines); colour = the folder of the user</text>
+<path d="M475.2,1085 h34" stroke="#aaaaaa" stroke-width="2" stroke-dasharray="5 4"/><text x="515.2" y="1089" font-size="11" fill="#333">a &lt;script&gt;/&lt;link&gt; tag only</text>
+<path d="M690.8,1085 h34" stroke="#2a6fd6" stroke-width="2" stroke-dasharray="7 4"/><text x="730.8" y="1089" font-size="11" fill="#333">loaded on demand</text>
+<path d="M850.4,1085 h34" stroke="#d08a00" stroke-width="2" stroke-dasharray=""/><text x="890.4" y="1089" font-size="11" fill="#333">apps.js lists a part's files (core/parts.js loads them)</text>
+<path d="M1228.4,1085 h34" stroke="#3d8a3d" stroke-width="2" stroke-dasharray="2 4"/><text x="1268.4" y="1089" font-size="11" fill="#333">menu link to a page</text>
+<text x="30" y="1111" font-size="11" fill="#555">Thick arrow from a page into core/, library/ or the CDN: its arrows to the files named on it (* a tag only). Pages have a dark frame; under each name its size on disk. Hover an arrow for its two files. Not drawn: *.md (docs), index.html (directory listings), house/archon/ (the drawings house.js comes from).</text>
+<metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTo3ZTIyNTUxNi0yYWJkLTRhM2QtYjhhYS1jNzhlZjhkZjc1NGYAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaIvY52/xL3vGuG3Lm5WxRjgAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDo1YzkyZjQ0Ni1lZjhmLTRhODYtYjU5OC04NTAxYjhkZjExYTVscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNo6aMC5IdZ10RkoDyvwtmyBQAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFgg8arvpi9ybyLG3HlRV26TnEf3dwMD8Xyoi+fqG7rhmc2kZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaM2/yU+MPqZJTpOvMlrWufAAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRMAAAAAAAAAAAAAAAAZGhhc2hYILelFZoO0h0qrrXAs9apa4Lq+7iQpO7znc9Pyq3a4oCYZG5hbWVuanVtYmYgbWFuaWZlc3RqZXhjbHVzaW9uc4GiZXN0YXJ0GX5xZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOjdlMjI1NTE2LTJhYmQtNGEzZC1iOGFhLWM3OGVmOGRmNzU0Zi9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOjU2YzhmMDI0LWZkZDctNDFhMS05OGJmLWQyYTE5MDNiODJmOHJjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCDxqu+mL3JvIsbceVFXbpOcR/d3AwPxfKiL5+obuuGZzaJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggAXcZxGoqFSy4feyTSKE/UuGEhdvwrjCMNxBP0C1JFQ+iY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggnuAnMrmIi+oLzdym2f+c6SkWGBXIUAesRW0fLNq20SJ0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQGzjJ5KSOJjBnkx2DEAaOAesH/y5HKTovl6aRvV+hNS5wtzFvnsW/rTl2G+2fIqVrgeSTCUVNCi8SKaPCPtZ9ys=</c2pa:manifest></metadata></svg>
