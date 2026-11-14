@@ -220,6 +220,30 @@ function planSheet({ sheet, zoomIn, zoomOut, download, state, save, svg, file })
   return draw;
 }
 
+/* scripts loaded in order, those already on the page skipped; resolves with the addresses it loaded (files: from the page) */
+const onPage = src => [...document.scripts].some(s => s.src === new URL(src, location.href).href);
+function scripts(files) {
+  const loaded = [];
+  const one = src => new Promise((done, failed) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = done; s.onerror = () => { s.remove(); failed(new Error('Nie można wczytać ' + src)); };   // not loaded: not on the page
+    document.head.append(s);
+  });
+  return files.filter(src => !onPage(src))
+    .reduce((p, src) => p.then(() => { loaded.push(new URL(src, location.href).href); return one(src); }), Promise.resolve())
+    .then(() => loaded);
+}
+
+/* Test: the scripts on this page that belong to one of folders (from the home folder, base seen from the page), when the
+   page is not in that folder and they were not loaded through (a set of addresses): [path from the home folder] */
+function scriptsOutside(base, folders, through) {
+  const home = new URL(base, location.href).href, dir = path => path.slice(0, path.lastIndexOf('/') + 1);
+  const own = dir(location.href.slice(home.length));
+  return [...document.scripts].filter(s => s.src.startsWith(home)).map(s => s.src)
+    .filter(src => { const rel = src.slice(home.length), f = folders.find(d => rel.startsWith(d)); return f && f !== own && !through.has(src); })
+    .map(src => src.slice(home.length));
+}
+
 CORE.ui = { $, fmt, byId, el, esc, option, store, layerTree, layerSwitch, layersPanel, checksHtml, appMenu, askedMode, showMode, menuRow,
-  panelTabs, panelToggle, bottomMenu, corner, themeButton, sunStore, sunPanel, planSheet };
+  panelTabs, panelToggle, bottomMenu, corner, themeButton, sunStore, sunPanel, planSheet, scripts, scriptsOutside };
 })(window.CORE = window.CORE || {});

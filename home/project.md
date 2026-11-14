@@ -50,7 +50,7 @@ The house gives a sub-project its room through an interface, the same way a sub-
 
 ### A room with a sub-project
 
-The house is above the rooms. A room with a sub-project (rooms/) defines everything in it: its furniture, its finishes (the tiles of the walls and of the floor), its lamps; the house draws only its shell (walls, slabs, windows, roof) and, in the rooms without a sub-project, what the house's data gives them (the floor tiles).
+The house is above the rooms. A room with a sub-project (rooms/) defines everything in it: its furniture, its finishes (the tiles of the walls and of the floor), its lamps; the house draws only its shell (walls, slabs, windows, roof) and, in the rooms without a sub-project, what the house's data gives them (the floor tiles). Where a sub-project takes only a part of an open room (the kitchen in the living room with the hall), the floor of that room stays the house's: one floor across the whole room.
 
 The house shows a room sub-project through an interface, as in Java:
 
@@ -80,23 +80,17 @@ Everything bought, once, for every application and independent of them: products
 
 ## To do
 
-### Cleanup (first, in one go)
-
-1. **The shell as an interface**, by the rule above: shell.js in the root, house/shell.js its implementation, the sub-projects without any file of the house; the check in Test.
-2. **The bath tap's spout over the rim** (attic): a check the old engine made from the bath's curved outline and its rim (it failed: the spout ended 117 mm short of the inner rim). Not measured yet: the model has the bath's outline only as a shape; to decide how the check reads it (or the tap moves).
-3. **The attic bath between the WC casing and the vanity wall**: the model has 380 and 390 mm (the old engine said 390 = 390); to correct in the data or accept.
-4. **The floor tiles by the rule of a room with a sub-project**: the house lays tiles only in the rooms without a sub-project (and its estimate has only those); a bathroom's floor is its own (bathroom data), drawn in the house through the interface.
-
 ### Implementation
 
-5. **The furniture in the house's 2D plan** (kitchen and bathrooms).
-6. **The walk**: furniture does not stop it yet; the attic is not tested.
-7. **Speed**: the house with all its furniture, measured: the time to the first frame and the frame rate while orbiting.
-8. **The wardrobes' open questions** (below), then **the wardrobes (wardrobe/)**: a sub-project as the bathrooms, its own application (Garderoby) and its furniture in the house.
+1. **The furniture in the house's 2D plan** (kitchen and bathrooms).
+2. **The walk**: furniture does not stop it yet; the attic is not tested.
+3. **Speed**: the house with all its furniture, measured: the time to the first frame and the frame rate while orbiting.
+4. **The bathrooms' tiles in their estimate**: the bathrooms' Info prices no tiles (walls and floor); the house no longer counts their floors.
+5. **The wardrobes' open questions** (below), then **the wardrobes (wardrobe/)**: a sub-project as the bathrooms, its own application (Garderoby) and its furniture in the house.
 
 ### Last
 
-9. **project.svg** (the dependency graph): refreshed at the end, when the files stop changing.
+6. **project.svg** (the dependency graph): refreshed at the end, when the files stop changing.
 
 ### The wardrobes
 

@@ -169,6 +169,7 @@
 <script src="../../core/library.js"></script>
 <script src="../../apps.dat.js"></script>
 <script src="../../room.js"></script>
+<script src="../../shell.js"></script>
 <script src="../../library/materials.dat.js"></script>
 <script src="../../library/products/tiles.dat.js"></script>
 <script src="../../library/products/boards.dat.js"></script>
@@ -179,9 +180,6 @@
 <script src="../../library/products/building.dat.js"></script>
 <script src="../../library/products/services.dat.js"></script>
 <script src="../../library/products/shops.dat.js"></script>
-<script src="../../house/building.dat.js"></script>
-<script src="../../house/model.js"></script>
-<script src="../../house/shell.js"></script>
 <script src="design.dat.js"></script>
 <script src="room.js"></script>
 <script>
@@ -197,18 +195,18 @@ if (!window.LIBRARY_PRODUCTS) return fail('Brak pliku ../../library/products.');
 const PRODUCTS = LIBRARY_PRODUCTS;
 let PART;
 PART = window.BathroomRoom;
-try { await CORE.library.load('../../library/', PART.textures()); } catch (e) { return fail('Błąd: ' + e.message); }
+let SHELL;   // the room's shell from the house (the interface shell.js)
+try { [SHELL] = await Promise.all([SHELL_INTERFACE.load('../../'), CORE.library.load('../../library/', PART.textures())]); } catch (e) { return fail('Błąd: ' + e.message); }
 const TEXTURES = window.LIBRARY_TEXTURES;
-if (!window.HOUSE || !window.HouseShell) return fail('Brak plików domu (../../house/building.dat.js, ../../house/shell.js).');
 
-/* The room from the house (../../house/shell.js), the bathroom's drawing from design.dat.js (room.js); Info and Test
+/* The room from the house (the interface ../../shell.js), the bathroom's drawing from design.dat.js (room.js); Info and Test
    from design.dat.js too. Here (index.html) the panel, the views and what hides while the camera is behind it. */
 let FLOOR = BATH_DATA.defaults.floor;
 try { FLOOR = new URLSearchParams(location.search).get('floor') || localStorage.getItem('floor') || FLOOR; } catch (e) {}
 if (!BATH_DATA.floors[FLOOR]) FLOOR = BATH_DATA.defaults.floor;
-const HOUSE_MODEL = HouseEngine.build(HOUSE), MATERIAL_LIB = Object.assign({}, LIBRARY_MATERIALS), TEX = {};
+const MATERIAL_LIB = Object.assign({}, LIBRARY_MATERIALS), TEX = {};
 let BP;
-try { BP = PART.make({ materials: MATERIAL_LIB, textures: TEX, houseModel: HOUSE_MODEL }); } catch (e) { return fail(e.message); }
+try { BP = PART.make({ materials: MATERIAL_LIB, textures: TEX, shell: SHELL }); } catch (e) { return fail(e.message); }
 const HOUSE_ROOM = BP.ROOMS[FLOOR];
 const DATA = Object.assign({}, BATH_DATA, BATH_DATA.floors[FLOOR]), ATTIC = DATA.type === 'attic';   // the floor's own over the shared
 const V = DATA.info.vanity;   // the vanity in mm (design.dat.js), for Info
@@ -277,7 +275,7 @@ try {
    ========================================================================== */
 const canvasEl = document.getElementById('gl');
 const BOX = HOUSE_ROOM.box;
-const LIGHT = HouseShell.insideLight(HOUSE);   // the house's light seen from inside, as every room's
+const LIGHT = SHELL.light();   // the house's light seen from inside, as every room's
 const VIEW = CORE.createView({ canvas: canvasEl, stage, materials: MATERIAL_LIB, textures: TEX, light: LIGHT,
   edges: { color: '#2b2e31', opacity: .5, layers: ['edges'] }, body: [[BOX[0], BOX[2], BOX[4]], [BOX[1], BOX[3], BOX[5]]],
   sunCentre: [(BOX[0] + BOX[1]) / 2, (BOX[2] + BOX[3]) / 2, BOX[4] + 1000] });
@@ -381,7 +379,7 @@ function updateCuts() {
    5. LIGHTING: the house's sun and sky (core); the bathroom's lamps by night (room.js)
    ========================================================================== */
 VIEW.addLight();
-const SUN = CORE.ui.sunStore(Object.values(HOUSE.views).find(v => v.menu).light.sun);
+const SUN = CORE.ui.sunStore(SHELL.sun());
 const placeSun = () => VIEW.placeSun(SUN.state);
 /* day or night: the house's (☀, one for every application); by night the lamps and the LED glow, as in the kitchen */
 function applyNight() {
@@ -720,13 +718,28 @@ function measureChecks() {
   const mm = v => Math.round(v);
   return DATA.checks.map(c => {
     if (c.equal) { const [d1, d2] = c.equal.map(([p, q]) => at(q) - at(p)); return { name: `${c.name}: ${mm(d1)} = ${mm(d2)} mm`, items: Math.abs(d1 - d2) <= c.tol ? [] : ['poza wymaganiem'] }; }
+    if (c.inside) {   // how far a point lies inside an outline (a section of a lofted detail), in plan: negative outside
+      const [x, y] = c.inside.map(at), [ref, k] = c.outline, d = built.DETAILS[+ref.split('@')[1]];
+      if (!d || !d.section || 'd:' + d.name !== ref.split('@')[0]) throw new Error('kontrola: brak przekroju ' + ref);
+      const ring = d.section(k), seg = (p, q) => {   // distance from (x, y) to the edge p–q
+        const dx = q.x - p.x, dy = q.y - p.y, t = Math.max(0, Math.min(1, ((x - p.x) * dx + (y - p.y) * dy) / (dx * dx + dy * dy || 1)));
+        return Math.hypot(x - p.x - t * dx, y - p.y - t * dy);
+      };
+      let near = Infinity, inside = false;
+      ring.forEach((p, i) => {
+        const q = ring[(i + 1) % ring.length]; near = Math.min(near, seg(p, q));
+        if ((p.y > y) !== (q.y > y) && x < p.x + (y - p.y) * (q.x - p.x) / (q.y - p.y)) inside = !inside;
+      });
+      const h = inside ? near : -near;
+      return { name: `${c.name}: ${mm(h)} mm`, items: h >= c.min ? [] : ['poza wymaganiem'] };
+    }
     if (c.height) { const y = c.height[0] === 'basin' ? at(c.height) : at([c.height[0], c.height[1]]), h = R.roofUnder(y) - R.level; return { name: `${c.name}: ${mm(h)} mm`, items: h >= c.min ? [] : ['poza wymaganiem'] }; }
     const d = at(c.to) - at(c.from), also = c.also ? ' / ' + mm(at(c.also[1]) - at(c.also[0])) : '';
     return { name: `${c.name}: ${mm(d)}${also} mm`, items: d >= c.min ? [] : ['poza wymaganiem'] };
   });
 }
 const CHECKS = measureChecks();
-$('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(ROOM_INTERFACE.dependencies('../../')));
+$('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(ROOM_INTERFACE.dependencies('../../'), SHELL_INTERFACE.dependencies('../../')));
 
 const PLAN = CORE.plan.create(MATERIAL_LIB), CUT = HOUSE_ROOM.planCut;
 const ROOM_KEYS = new Set(Object.entries(CUT_OF).filter(([, c]) => c.room).map(([k]) => k));   // the suspended ceiling: as the house's
@@ -738,7 +751,7 @@ function planSvg() {
     .concat(DETAILS.filter(d => !d.layers.includes('L:installations') && !d.layers.some(k => ROOM_KEYS.has(k))).map(d => CORE.plan.meshShape(d.mesh, toHouse, (d.base || d.mesh.material).transparent)));
   const rects = HOUSE_ROOM.inside, extent = HOUSE_ROOM.box.slice(0, 4), inside = [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...rects.map(q => q[k])));
   return PLAN.sheets([{ extent, title: `${HOUSE_ROOM.floorName} · cięcie ${CUT} mm`,
-    draw: X => PLAN.floorArea(X, rects) + PLAN.seen(X, shapes, h) + PLAN.cut(X, cells, h, c => !c.layers.includes('L:installations')) + PLAN.labels(X, HOUSE_ROOM.openings, h, HOUSE_MODEL.SIDE)
+    draw: X => PLAN.floorArea(X, rects) + PLAN.seen(X, shapes, h) + PLAN.cut(X, cells, h, c => !c.layers.includes('L:installations')) + PLAN.labels(X, HOUSE_ROOM.openings, h, HOUSE_ROOM.sides)
       + PLAN.rooms(X, [{ rects, numbers: HOUSE_ROOM.numbers, name: HOUSE_ROOM.name, area: HOUSE_ROOM.area }])
       + PLAN.dims(X, inside, extent[1]) }]);
 }
@@ -747,7 +760,7 @@ const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state:
 CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
 CORE.ui.themeButton($('themebtn'));
 CORE.ui.panelToggle(stage);
-CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); applyNight(); }, HOUSE_ROOM.inside);
+CORE.ui.sunPanel($('compass'), SHELL.footprint(), SUN.state, () => { SUN.save(); placeSun(); applyNight(); }, HOUSE_ROOM.inside);
 const showPanel = () => { VIEW_STATE.tab = CORE.ui.panelTabs($('tabs'), $('settings'), MODES[VIEW_STATE.mode], VIEW_STATE.tab, t => { VIEW_STATE.tab = t; saveView(); showPanel(); },
   p => p === 'style' && !MODES[VIEW_STATE.mode].menu) ?? VIEW_STATE.tab; };
 function setMode(m) {

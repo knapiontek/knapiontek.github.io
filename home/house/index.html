@@ -73,6 +73,7 @@
 <script src="../core/library.js"></script>
 <script src="../apps.dat.js"></script>
 <script src="../room.js"></script>
+<script src="../shell.js"></script>
 <script src="../library/materials.dat.js"></script>
 <script src="../library/products/tiles.dat.js"></script>
 <script src="../library/products/boards.dat.js"></script>
@@ -363,9 +364,9 @@ function loadParts() {
   for (const p of PARTS) {
     if (p.built || p.loading || !partOn(p.layer)) continue;
     p.status = 'wczytywanie…'; partsPanel();
-    p.loading = ROOM_INTERFACE.load(p.id, '../').then(part => new Promise((done, fail) => setTimeout(() => {   // the note shows before the build
+    p.loading = Promise.all([ROOM_INTERFACE.load(p.id, '../'), SHELL_INTERFACE.load('../')]).then(([part, shell]) => new Promise((done, fail) => setTimeout(() => {   // the note shows before the build
       try {
-        const made = part.make({ materials: MATERIALS_3D, textures: TEX, houseModel: MODEL });
+        const made = part.make({ materials: MATERIALS_3D, textures: TEX, shell });
         p.built = made.rooms().map(r => made.build(V, Object.assign({}, r.opts, { layers: [p.layer, r.floor] })));
         for (const b of p.built) b.night(!!SUN.state.night);
         if (p.built.some(b => b.finishes.length)) refinish();
@@ -460,9 +461,9 @@ function roomsPanel() {
     t.insertAdjacentHTML('beforeend', `<tr><td colspan="2" class="floorname">${F.name}</td></tr>`);
     for (const r of ROOMS.filter(r => r.floor === F.id)) {
       const selected = state.room === r.id, key = layoutOf(r);
-      t.insertAdjacentHTML('beforeend', `<tr data-room="${r.id}" aria-selected="${selected}"><td>${roomName(r)}</td><td class="note">${key ? PRODUCTS[state.layouts[key].product].name : 'bez płytek'}</td></tr>`);
+      t.insertAdjacentHTML('beforeend', `<tr data-room="${r.id}" aria-selected="${selected}"><td>${roomName(r)}</td><td class="note">${key ? PRODUCTS[state.layouts[key].product].name : r.link ? 'z projektu' : 'bez płytek'}</td></tr>`);
       if (!selected) continue;
-      t.insertAdjacentHTML('beforeend', `<tr class="detail"><td colspan="2">${key ? layoutPanel(key) : '<p class="note">Bez posadzki z płytek.</p>'}${r.link ? `<p><a class="btnlink" href="${r.link.href}">${r.link.name}</a></p>` : ''}</td></tr>`);
+      t.insertAdjacentHTML('beforeend', `<tr class="detail"><td colspan="2">${key ? layoutPanel(key) : `<p class="note">${r.link ? 'Posadzka z projektu pomieszczenia (widoczna z jego warstwą).' : 'Bez posadzki z płytek.'}</p>`}${r.link ? `<p><a class="btnlink" href="${r.link.href}">${r.link.name}</a></p>` : ''}</td></tr>`);
       if (key) bindLayout(t.querySelector('tr.detail'), key);
     }
   }
@@ -592,7 +593,7 @@ function showChecks() {
   const tried = PARTS.filter(p => p.built || p.status.startsWith('błąd'));
   ROOM_CHECK.name = 'Pokoje aplikacji zgodne z interfejsem room.js' + (tried.length ? ' (sprawdzone: ' + tried.map(p => p.name).join(', ') + ')' : ' (jeszcze nie wczytane)');
   ROOM_CHECK.items = PARTS.filter(p => p.status.startsWith('błąd')).map(p => `${p.name}: ${p.status.slice(6)}`);
-  $('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(ROOM_INTERFACE.dependencies('../')));
+  $('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(ROOM_INTERFACE.dependencies('../'), SHELL_INTERFACE.dependencies('../')));
 }
 showChecks();
 

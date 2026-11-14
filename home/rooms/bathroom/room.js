@@ -10,11 +10,11 @@ const WARM = 0xffdcb4;                     // the lamps: 3000 K
 const PER_FLOOR = new Set(['metal', 'decor', 'decorTurned', 'basin', 'basinIn', 'rubber', 'doorPaint']);   // each bathroom its own
 const DEG = Math.PI / 180;
 
-/* env: {materials, textures, houseModel} (../../room.js) */
+/* env: {materials, textures, shell} (../../room.js) */
 function make(env) {
   const CORE = root.CORE, THREE = root.THREE, D = root.BATH_DATA, PRODUCTS = root.LIBRARY_PRODUCTS, TEXTURES = root.LIBRARY_TEXTURES;
   const LIB = env.materials, TEX = env.textures, FLOORS = Object.keys(D.floors);
-  const found = root.HouseShell.roomsFor(root.HOUSE, env.houseModel, 'rooms/bathroom/index.html');
+  const found = env.shell.rooms('rooms/bathroom/index.html');
   const ROOMS = Object.fromEntries(FLOORS.map(f => [f, found.find(r => r.floor === f)]));
   for (const f of FLOORS) if (!ROOMS[f]) throw new Error('W building.dat.js żadne pomieszczenie na kondygnacji ' + f + ' nie prowadzi do rooms/bathroom/index.html.');
 
@@ -137,13 +137,14 @@ function make(env) {
 
   /* ---------- a round detail: a mesh in house mm ---------- */
   function superellipse(t, n) { const c = Math.cos(t), s = Math.sin(t); return [Math.sign(c) * Math.pow(Math.abs(c), 2 / n), Math.sign(s) * Math.pow(Math.abs(s), 2 / n)]; }
-  function loft(sections, bottom, top) {    // a solid lofted from superellipse sections {y, a, b, n, nb, cx, cz} (WC bowl, basin, bath)
-    const SEG = 72, positions = [], index = [];
-    const ring = s => Array.from({ length: SEG }, (_, j) => {
-      const t = j / SEG * Math.PI * 2, n = Math.sin(t) < 0 ? (s.nb || s.n || 2.5) : (s.n || 2.5), [cx, cz] = superellipse(t, n);
-      return [s.a * cx + (s.cx || 0), s.y, s.b * cz + (s.cz || 0)];
-    });
-    const rings = sections.map(ring);
+  const SEG = 72;                           // points of a loft's section
+  const ringOf = s => Array.from({ length: SEG }, (_, j) => {   // a section {y, a, b, n, nb, cx, cz}, in the detail's own axes
+    const t = j / SEG * Math.PI * 2, n = Math.sin(t) < 0 ? (s.nb || s.n || 2.5) : (s.n || 2.5), [cx, cz] = superellipse(t, n);
+    return [s.a * cx + (s.cx || 0), s.y, s.b * cz + (s.cz || 0)];
+  });
+  function loft(sections, bottom, top) {    // a solid lofted from superellipse sections (WC bowl, basin, bath)
+    const positions = [], index = [];
+    const rings = sections.map(ringOf);
     rings.forEach(r => r.forEach(p => positions.push(...p)));
     for (let i = 0; i < rings.length - 1; i++) for (let j = 0; j < SEG; j++) {
       const a = i * SEG + j, b = i * SEG + (j + 1) % SEG, c = (i + 1) * SEG + j, d = (i + 1) * SEG + (j + 1) % SEG;
@@ -313,7 +314,9 @@ function make(env) {
       place(mesh, d);
       (d.mover ? MOVERS.find(m => m.id === d.mover).pin : V.root).add(mesh);
       mesh.userData.detail = true;
-      return { mesh, layers: layersOf(d), name: d.name, room: d.cut && (M.cuts[d.cut] || {}).room };
+      /* a section of a loft (its index in the data) as drawn, in house axes and mm (the checks read an outline from it) */
+      const section = k => { mesh.updateWorldMatrix(true, false); return ringOf(d.sections[k]).map(p => V.root.worldToLocal(mesh.localToWorld(new THREE.Vector3(...p)))); };
+      return { mesh, layers: layersOf(d), name: d.name, room: d.cut && (M.cuts[d.cut] || {}).room, section: d.kind === 'loft' ? section : null };
     });
 
     /* ---------- the lamps, on by night ---------- */
@@ -357,7 +360,7 @@ const textures = () => root.BATH_DATA.defaults.tiles.map(k => root.LIBRARY_PRODU
   .concat(Object.keys(root.BATH_DATA.decors).map(k => root.LIBRARY_PRODUCTS.boards[k].texture));
 
 /* the implementation: its own page uses all of it, the house only what the interface names */
-const BathroomRoom = { needs: ['../../house/shell.js', 'design.dat.js'], textures, make };
+const BathroomRoom = { needs: ['design.dat.js'], textures, make };
 root.BathroomRoom = BathroomRoom;
 root.ROOM_INTERFACE.register('bathroom', BathroomRoom);
 })(window);

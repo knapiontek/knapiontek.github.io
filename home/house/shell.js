@@ -1,6 +1,7 @@
-/* shell.js: the room of a sub-project (kitchen, bathroom), copied from the house as it is. The house's own solids (walls,
-   slabs, floor, windows, roof) are trimmed to the box its link in building.dat.js gives and handed over unchanged: mm, house axes
-   (x along the house, y across, z up). Nothing is re-measured. No THREE, no DOM. Needs core/geometry.js and model.js. */
+/* shell.js: the house's implementation of the interface shell.js (in the root): the room of a sub-project (kitchen,
+   bathroom), copied from the house as it is. The house's own solids (walls, slabs, floor, windows, roof) are trimmed to the
+   box its link in building.dat.js gives and handed over unchanged: mm, house axes (x along the house, y across, z up).
+   Nothing is re-measured. No THREE, no DOM. Needs core/geometry.js; loads building.dat.js and model.js itself (needs). */
 (function (root) {
 'use strict';
 
@@ -93,8 +94,9 @@ function roomsFor(HOUSE, MODEL, href) {
       floor: floor.id, floorName: floor.name, room: room.id, number: room.numbers ? room.numbers[0] : null, numbers: room.numbers, name: room.name,
       area: (room.rects || []).reduce((a, q) => a + G.rectArea(q), 0) / 1e6,   // m², as the house's plan gives it
       planCut: PLAN_CUT[floor.id], level: floor.level, top: floor.top ?? null, inside: L.inside, box: L.box, cells, objects: [...objects.values()],
-      ceiling: flat.length ? Math.min(...flat) : floor.top,   // the underside of the slab or flat ceiling over the room
-      openings: GEO.openings.filter(o => crosses(o.b)),
+      ceiling: flat.length ? Math.min(...flat) : (floor.top ?? null),   // the underside of the slab or flat ceiling over the room
+      openings: GEO.openings.filter(o => crosses(o.b)).map(o => Object.assign({}, o, { glazed: !!GEO.openingKinds[o.kind].glazed })),
+      sides: MODEL.SIDE,
       roofWindows: GEO.roof.windows.filter(w => crosses([w.x[0], w.x[1], w.y[0], w.y[1], roofUnder(w.y[1]), roofUnder(w.y[0])].map(Math.round))),
       roofUnder,
       pitch: GEO.roof.pitch
@@ -110,5 +112,18 @@ function insideLight(HOUSE) {
   return { exposure: I.exposure, fog: L.fog, sun: Object.assign({}, L.sun, I.sun), sky: Object.assign({}, L.sky, I.sky) };
 }
 
-root.HouseShell = { roomsFor, insideLight };
+/* the implementation of the interface shell.js: the house's data and model, built once */
+let built = null;
+const house = () => built || (built = { HOUSE: root.HOUSE, MODEL: root.HouseEngine.build(root.HOUSE) });
+const menuView = () => Object.values(root.HOUSE.views).find(v => v.menu);
+const HouseShell = {
+  needs: ['building.dat.js', 'model.js'],
+  rooms: page => roomsFor(house().HOUSE, house().MODEL, page),
+  light: () => insideLight(root.HOUSE),
+  sun: () => menuView().light.sun,
+  edges: () => menuView().edges,
+  footprint: () => house().MODEL.FOOTPRINT,
+};
+root.HouseShell = HouseShell;
+if (root.SHELL_INTERFACE) root.SHELL_INTERFACE.register(HouseShell);
 })(typeof window !== 'undefined' ? window : globalThis);

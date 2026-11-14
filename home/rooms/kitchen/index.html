@@ -78,7 +78,7 @@ dl.notes dd{margin:0;color:var(--muted)}
         <h2>Mapa korpusów (JSON)</h2>
         <details><summary>Pokaż</summary><pre class="json" id="mapJson"></pre></details>
         <p class="note">Dla każdego korpusu: x wzdłuż grupy, y w górę, z od ściany (mm); room = położenie w osiach domu (x wzdłuż, y w poprzek, z w górę, mm).</p>
-        <p class="note">Dane: design.dat.js i scene.dat.js; produkty, materiały i tekstury z ../../library; części z model.js; pomieszczenie z domu (../../house/building.dat.js przez ../../house/shell.js); rysowanie: ../../core.</p>
+        <p class="note">Dane: design.dat.js i scene.dat.js; produkty, materiały i tekstury z ../../library; części z model.js; pomieszczenie z domu (przez interfejs ../../shell.js); rysowanie: ../../core.</p>
       </section>
     </div>
     <div class="dock" id="dock" aria-label="Dolne menu"></div>
@@ -139,7 +139,7 @@ dl.notes dd{margin:0;color:var(--muted)}
      share welded points, hidden faces are cut away exactly and edges come from the topology. Doors, drawers and appliance
      doors are solids of their own that turn or slide. Data: design.dat.js (the project, its appliances), model.js (the parts), ../../library
      (products, materials, textures), scene.dat.js (where the groups stand, lights, cameras, floor tiles); the room is
-     the house's own (../../house/shell.js), as it is. -->
+     the house's own (through the interface ../../shell.js), as it is. -->
 <script>window.addEventListener('error', e => { const l = document.getElementById('loading'); if (l) { l.hidden = false; l.textContent = 'Błąd: ' + (e.message || 'nieznany') + ' (' + (e.lineno || '') + ')'; } });</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -153,6 +153,7 @@ dl.notes dd{margin:0;color:var(--muted)}
 <script src="../../core/library.js"></script>
 <script src="../../apps.dat.js"></script>
 <script src="../../room.js"></script>
+<script src="../../shell.js"></script>
 <script src="../../library/materials.dat.js"></script>
 <script src="../../library/products/tiles.dat.js"></script>
 <script src="../../library/products/boards.dat.js"></script>
@@ -163,9 +164,6 @@ dl.notes dd{margin:0;color:var(--muted)}
 <script src="../../library/products/building.dat.js"></script>
 <script src="../../library/products/services.dat.js"></script>
 <script src="../../library/products/shops.dat.js"></script>
-<script src="../../house/building.dat.js"></script>
-<script src="../../house/model.js"></script>
-<script src="../../house/shell.js"></script>
 <script src="design.dat.js"></script>
 <script src="scene.dat.js"></script>
 <script src="model.js"></script>
@@ -173,10 +171,12 @@ dl.notes dd{margin:0;color:var(--muted)}
 <script src="info.js"></script>
 <script src="room.js"></script>
 <script>
-/* the library's textures first (core/library.js): the board decors design.dat.js names and the floor tiles to choose from */
-CORE.library.load('../../library/', Object.keys(KITCHEN_DESIGN.materials).map(key => LIBRARY_PRODUCTS.boards[key].texture)
-  .concat(KITCHEN_VIEW.floors.map(k => LIBRARY_PRODUCTS.tiles[k].texture))).then(function () {
+/* first the room's shell from the house (the interface shell.js) and the library's textures (core/library.js): the board
+   decors design.dat.js names and the floor tiles to choose from */
+Promise.all([SHELL_INTERFACE.load('../../'), CORE.library.load('../../library/', Object.keys(KITCHEN_DESIGN.materials).map(key => LIBRARY_PRODUCTS.boards[key].texture)
+  .concat(KITCHEN_VIEW.floors.map(k => LIBRARY_PRODUCTS.tiles[k].texture)))]).then(function (loaded) {
 'use strict';
+const SHELL = loaded[0];
 
 /* Units are mm in house axes (x along the house, y across, z up) everywhere on this page; only core's scene is in metres.
    Inside a group the engine keeps u along the group, v up from the floor, n out from the carcass backs. */
@@ -187,14 +187,12 @@ const loading = $('loading'), fail = text => { loading.textContent = text; };
 if (!window.THREE || !THREE.OrbitControls) return fail('Nie można wczytać silnika 3D. Odśwież stronę.');
 if (!window.KITCHEN_DESIGN) return fail('Nie znaleziono pliku design.dat.js obok tej strony.');
 if (!window.KITCHEN_VIEW || !window.LIBRARY_PRODUCTS) return fail('Nie znaleziono plików scene.dat.js i ../../library/products.');
-if (!window.HOUSE || !window.HouseShell) return fail('Nie znaleziono plików domu (../../house/building.dat.js, ../../house/shell.js).');
 
 const KE = window.KitchenEngine, SCENE = window.KITCHEN_VIEW, TEXTURES = window.LIBRARY_TEXTURES;
-const HOUSE_MODEL = HouseEngine.build(HOUSE);
 /* the kitchen's furniture (room.js): the same in the house; this page adds its room and panel */
 const LIB = Object.assign({}, LIBRARY_MATERIALS), TEX = {};
 let KP;
-try { KP = KitchenRoom.make({ materials: LIB, textures: TEX, houseModel: HOUSE_MODEL }); } catch (e) { return fail(e.message); }
+try { KP = KitchenRoom.make({ materials: LIB, textures: TEX, shell: SHELL }); } catch (e) { return fail(e.message); }
 const { project, APPLIANCES, model, settings, ROOM, LEVEL, CEILING, DEG, frontFace, panelFace, carcassDepth, carcassBack, carcassFront, plinthFace,
   frontThickness, T, shakerRail, HW, GROUP_IDS, GROUP, groupLength, itemsOf, PLACE, point, houseBox, K, DECORS, FLOORS, FLOOR_KEYS, METALS,
   HOLE_COLORS, PANEL_COLORS, metal } = KP;
@@ -226,11 +224,10 @@ const shown = layers => layers.every(k => LAYER[k] ? layerOn(k) : k === 'cup' ||
 /* ================= 4. SCENE (core) =================
    The house's sky and fog; the house's sun (one for every application, ☀); indoors a neutral fill. Lamps follow the physical
    units of three.js (intensities with falloff over distance). */
-const VIEW_3D = Object.values(HOUSE.views).find(v => v.menu), HL = VIEW_3D.light;
-const SUN = CORE.ui.sunStore(HL.sun);
-const LIGHT = HouseShell.insideLight(HOUSE);   // the house's light seen from inside, as every room's
+const SUN = CORE.ui.sunStore(SHELL.sun());
+const LIGHT = SHELL.light();   // the house's light seen from inside, as every room's
 const B = ROOM.box, centre = [(B[0] + B[1]) / 2, (B[2] + B[3]) / 2, LEVEL + 1000];
-const V = CORE.createView({ canvas: $('gl'), stage: $('stage'), materials: LIB, textures: TEX, light: LIGHT, edges: VIEW_3D.edges,
+const V = CORE.createView({ canvas: $('gl'), stage: $('stage'), materials: LIB, textures: TEX, light: LIGHT, edges: SHELL.edges(),
   body: [[B[0], B[2], LEVEL], [B[1], B[3], LEVEL + CEILING]], sunCentre: centre });
 V.renderer.physicallyCorrectLights = true;
 
@@ -344,7 +341,7 @@ $('subtitle').textContent = ROOM.floorName + ', pomieszczenie z domu: ' + ROOM.n
 CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
 CORE.ui.themeButton($('themebtn'));
 CORE.ui.panelToggle($('stage'));
-CORE.ui.sunPanel($('compass'), HOUSE_MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); V.placeSun(SUN.state); applyNight(); }, ROOM.inside);
+CORE.ui.sunPanel($('compass'), SHELL.footprint(), SUN.state, () => { SUN.save(); V.placeSun(SUN.state); applyNight(); }, ROOM.inside);
 
 /* layers */
 function setLayer(k, on) { state.layers[k] = on; save(); layersPanel(); contextMenu(); apply(); }
@@ -457,7 +454,7 @@ const INFO_ITEMS = CORE.info.menu(() => COST_SHEET, COST.page.xlsxFile, [[{ name
     ['Części wystające', geometry.out.map(item)], ['Fronty poza linią', lines.map(item)]];
   const total = groups.reduce((s, [, items]) => s + items.length, 0);
   $('checksNote').textContent = total ? `${total} problemów w ${geometry.n} częściach.` : `Wszystkie części (${geometry.n}) w porządku.`;
-  $('checks').innerHTML = CORE.ui.checksHtml(groups.map(([name, items]) => ({ name, items })).concat(ROOM_INTERFACE.dependencies('../../')));
+  $('checks').innerHTML = CORE.ui.checksHtml(groups.map(([name, items]) => ({ name, items })).concat(ROOM_INTERFACE.dependencies('../../'), SHELL_INTERFACE.dependencies('../../')));
 }
 
 /* project */
@@ -481,7 +478,7 @@ $('dims').innerHTML = definitions([
   ['Lico frontów', (frontFace - carcassFront) + ' przed korpusem (szczelina ' + settings.carcass.frontGap + ')'],
   ['Rama frontu shaker', shakerRail], ['Listwy ' + T.strip, 'na sztorc, gł. ' + settings.strip.depth],
   ['Panele przednie ' + T.frontPanel, (frontFace - panelFace) + ' za licem frontów w korpusie'], ['Cokół', 'lico ' + settings.plinth.setback + ' za frontami'],
-  ['Okno', ROOM.openings.filter(o => HOUSE.geometry.openingKinds[o.kind].glazed).map(o => o.label).join(', ') + ' (z domu)']
+  ['Okno', ROOM.openings.filter(o => o.glazed).map(o => o.label).join(', ') + ' (z domu)']
 ]);
 $('notes').innerHTML = (project.notes || []).map(n => `<dt>${esc(n.name)}</dt><dd>${esc(n.description)}${n.details ? '<br>' + esc(n.details) : ''}</dd>`).join('');
 
@@ -550,7 +547,7 @@ function planSvg() {
   const extent = ROOM.box.slice(0, 4), inside = [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...rects.map(q => q[k])));
   return PLAN.sheets([{ extent, title: `${ROOM.floorName} · cięcie ${CUT} mm`,
     draw: X => PLAN.floorArea(X, rects) + PLAN.seen(X, shapes, h) + PLAN.cut(X, cells, h, c => !c.layers.includes('holes'))
-      + PLAN.labels(X, ROOM.openings, h, HOUSE_MODEL.SIDE) + PLAN.rooms(X, [{ rects, numbers: ROOM.numbers, name: ROOM.name, area: ROOM.area }]) + PLAN.dims(X, inside, extent[1]) }]);
+      + PLAN.labels(X, ROOM.openings, h, ROOM.sides) + PLAN.rooms(X, [{ rects, numbers: ROOM.numbers, name: ROOM.name, area: ROOM.area }]) + PLAN.dims(X, inside, extent[1]) }]);
 }
 const PLAN_BUTTONS = { zoomOut: el('button', { textContent: '−', ariaLabel: 'Pomniejsz' }), zoomIn: el('button', { textContent: '+', ariaLabel: 'Powiększ' }),
   download: el('button', { textContent: 'Pobierz SVG' }) };

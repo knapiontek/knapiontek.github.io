@@ -6,13 +6,13 @@
 (function (root) {
 'use strict';
 
-/* env: {materials, textures, houseModel} (../../room.js) */
+/* env: {materials, textures, shell} (../../room.js) */
 function make(env) {
   const CORE = root.CORE, G = CORE.geometry, { piecesOf } = CORE.mesh;
-  const KE = root.KitchenEngine, SCENE = root.KITCHEN_VIEW, TEXTURES = root.LIBRARY_TEXTURES, LIBRARY_PRODUCTS = root.LIBRARY_PRODUCTS, HOUSE = root.HOUSE;
+  const KE = root.KitchenEngine, SCENE = root.KITCHEN_VIEW, TEXTURES = root.LIBRARY_TEXTURES, LIBRARY_PRODUCTS = root.LIBRARY_PRODUCTS;
   const project = KE.withLibrary(root.KITCHEN_DESIGN, LIBRARY_PRODUCTS.boards), APPLIANCES = KE.appliances(project, LIBRARY_PRODUCTS.appliances);
   const model = KE.build(project, APPLIANCES), settings = project.settings;
-  const ROOM = root.HouseShell.roomsFor(HOUSE, env.houseModel, 'rooms/kitchen/index.html')[0];
+  const ROOM = env.shell.rooms('rooms/kitchen/index.html')[0];
   if (!ROOM) throw new Error('W building.dat.js żadne pomieszczenie nie prowadzi do rooms/kitchen/index.html.');
   const LEVEL = ROOM.level, CEILING = ROOM.ceiling - ROOM.level;   // v of the underside of the slab over the room
   const DEG = Math.PI / 180;
@@ -743,7 +743,7 @@ function make(env) {
     model.boards.filter(b => b.id === 'pullOutShelf').forEach(pullOutShelf);
     buildLamps();
 
-    /* ---------- the room: the house's own solids (../../house/shell.js), as they are. Each side of the room (a wall, the floor, the
+    /* ---------- the room: the house's own solids (the interface ../../shell.js), as they are. Each side of the room (a wall, the floor, the
        ceiling) is one object, hidden while the camera stands behind it; a window goes with its wall. The top of the floor
        slab shows the floor tiles chosen here. ---------- */
     const ROLE_LAYER = { wall: 'walls', floor: 'floor', ceiling: 'ceiling', window: 'window' };
@@ -861,7 +861,7 @@ const textures = () => Object.keys(root.KITCHEN_DESIGN.materials).map(key => roo
   .concat(root.KITCHEN_VIEW.floors.map(k => root.LIBRARY_PRODUCTS.tiles[k].texture));
 
 /* the implementation: its own page uses all of it, the house only what the interface names */
-const KitchenRoom = { needs: ['../../house/shell.js', 'design.dat.js', 'scene.dat.js', 'model.js'], textures, make };
+const KitchenRoom = { needs: ['design.dat.js', 'scene.dat.js', 'model.js'], textures, make };
 root.KitchenRoom = KitchenRoom;
 root.ROOM_INTERFACE.register('kitchen', KitchenRoom);
 })(window);

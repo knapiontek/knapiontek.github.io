@@ -9,9 +9,9 @@
    page); a missing one is an error that names it. */
 const INTERFACE = {
   furniture: {                             // what an implementation file registers
-    needs: ['list', "its own inner files, in their order, from its folder: loaded before make (its own page has them already)"],
+    needs: ['list', "its own inner files, in their order, from its folder and never outside it: loaded before make (its own page has them already)"],
     textures: ['function', '() → the keys of the library textures its furniture uses: loaded before make'],
-    make: ['function', "(env {materials, textures, houseModel}) → its design (below); materials and textures: the page's libraries for core, the furniture adds its own keys; houseModel: the house's solids (HouseEngine.build)"],
+    make: ['function', "(env {materials, textures, shell}) → its design (below); materials and textures: the page's libraries for core, the furniture adds its own keys; shell: the shell of its rooms from the house (the interface shell.js)"],
   },
   design: {                                // what make returns
     rooms: ['function', '() → [{floor, opts}]: the rooms it furnishes, one build each (the kitchen one, the bathrooms one per floor); floor: the house\'s floor id'],
@@ -55,14 +55,8 @@ const register = (id, impl) => { REGISTERED[id] = impl; };
 /* the applications that have furniture, in the order of apps.dat.js */
 const listed = () => (root.APPS || []).filter(a => a.room).map(a => a.id);
 
-const onPage = src => [...document.scripts].some(s => s.src === new URL(src, location.href).href);
-const script = src => new Promise((ok, fail) => {
-  const s = document.createElement('script');
-  s.src = src; s.onload = ok; s.onerror = () => fail(new Error('Nie można wczytać ' + src));
-  document.head.append(s);
-});
 const THROUGH = new Set();                // the files loaded through this interface (for the check below)
-const inOrder = files => files.filter(src => !onPage(src)).reduce((p, src) => p.then(() => { THROUGH.add(new URL(src, location.href).href); return script(src); }), Promise.resolve());
+const inOrder = files => root.CORE.ui.scripts(files).then(loaded => loaded.forEach(src => THROUGH.add(src)));
 /* an application's furniture for a host: its implementation file (apps.dat.js), checked against the interface, then its
    own inner files and its textures. base: the home folder seen from the page ('../'). */
 function load(id, base) {
@@ -72,7 +66,8 @@ function load(id, base) {
   return inOrder([file]).then(() => {
     const impl = REGISTERED[id];
     if (!impl) throw new Error(`${app.room} nie zarejestrował mebli ${id}.`);
-    const view = viewOf(id, impl);
+    const view = viewOf(id, impl), out = view.needs.filter(f => f.includes('..') || f.includes(':') || f.startsWith('/'));
+    if (out.length) throw new Error(`${app.room}: needs poza folderem podprojektu (${out.join(', ')}), wbrew interfejsowi room.js`);
     return inOrder(view.needs.map(f => folder + f))
       .then(() => root.CORE.library.load(base + 'library/', view.textures()))
       .then(() => view);
@@ -93,11 +88,8 @@ function shownWith(LAYER, hostShown, furniture) {
 /* Test: the dependencies on this page. A file of a sub-project (an application with a room) is on its own page, or
    loaded through this interface; nowhere else. base: the home folder seen from the page ('../'). */
 function dependencies(base) {
-  const home = new URL(base, location.href).href, dir = path => path.slice(0, path.lastIndexOf('/') + 1);
-  const own = dir(location.href.slice(home.length)), folders = [...new Set((root.APPS || []).filter(a => a.room).map(a => dir(a.room)))];
-  const items = [...document.scripts].filter(s => s.src.startsWith(home)).map(s => s.src)
-    .filter(src => { const rel = src.slice(home.length), f = folders.find(d => rel.startsWith(d)); return f && f !== own && !THROUGH.has(src); })
-    .map(src => src.slice(home.length) + ': plik podprojektu poza jego stroną i poza interfejsem room.js');
+  const folders = [...new Set((root.APPS || []).filter(a => a.room).map(a => a.room.slice(0, a.room.lastIndexOf('/') + 1)))];
+  const items = root.CORE.ui.scriptsOutside(base, folders, THROUGH).map(path => path + ': plik podprojektu poza jego stroną i poza interfejsem room.js');
   return { name: 'Zależności: pliki podprojektów tylko na ich stronach albo przez interfejs room.js', items };
 }
 

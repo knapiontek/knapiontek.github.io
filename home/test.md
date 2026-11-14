@@ -29,6 +29,7 @@ Compare with the run before the change: everything the same, or each difference 
 
 - With Warstwy → Meble on, the house loads the furniture of every application that has it: the kitchen (one room) and the bathrooms (one per floor), with no error and no error status in the panel. Note the time: the house shown, then the furniture built.
 - The bathrooms' wall tiles lie on the house's walls (ground floor: graphite in the shower, on the walls around the vanity; attic: grey), and go with the layer.
+- The floor of a room with a sub-project is the sub-project's: the house lays no tiles of its own there (Wykończenie says so) and its estimate has only the rooms without one; the bathrooms' floor tiles show with their layer.
 - A real mouse click on a drawer front of the ground-floor bathroom (camera in front of it) opens the drawer by its full travel (328 mm); a second click closes it.
 - The same in the kitchen: a click on a front opens it.
 - Test of the house: the furniture of every application matches the interface (room.js), naming those checked.
@@ -43,10 +44,12 @@ Compare with the run before the change: everything the same, or each difference 
 
 ## 4. The dependencies
 
-- Test of every page lists the dependencies: a file of a sub-project is on its own page, or loaded through the interface (room.js). Expected: OK on the house, the kitchen and both bathrooms (on the house after the furniture is loaded).
-- In the text of the files: no file outside a sub-project's folder names a file of it, except apps.dat.js; no sub-project names another's (search the folders for the other folders' names and file names).
+- Test of every page lists the dependencies: a file of a sub-project is on its own page, or loaded through the interface (room.js); a file of the house is on its own page, or loaded through the interface (shell.js). Expected: OK on the house, the kitchen and both bathrooms (on the house after the furniture is loaded).
+- A sub-project's page with a file of the house added by hand: its Test names that file. A copy without the house's folder: the sub-project's pages show an error that names the missing shell, with no page error.
+- A sub-project's inner files (needs) stay in its folder; one outside is an error that names it.
+- In the text of the files: no file outside a sub-project's folder names a file of it, except apps.dat.js; no sub-project names another's, nor a file of the house (search the folders for the other folders' names and file names).
 
 ## 5. The bathroom's own page against the house
 
 - Its tiles, its doors and drawers (open positions to the mm), its plans and its Info are the same as before the change: every tab of Info (not only the first), the estimate to the grosz.
-- Its Test: the checks of design.dat.js, measured on the model, with their values (the ground floor: 405, 10, 140, 410 mm; the attic: see the page).
+- Its Test: the checks of design.dat.js, measured on the model, with their values (the ground floor: 405, 10, 140, 410 mm; the attic: 0, 550, 480, 390 = 390, 230 / 230, 42 (the spout inside the bath's inner rim), 310 / 380, 2515, 2083, 2650, 420 mm), all OK.

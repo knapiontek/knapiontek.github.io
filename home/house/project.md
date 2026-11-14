@@ -2,7 +2,7 @@
 
 > **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
 
-The building "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, with floor tiles in every room. Open **index.html**.
+The building "Dom w papawerach 5 (G)" from archon.pl, as built, in 3D and 2D, with floor tiles in every room without a sub-project of its own (the bathrooms' floors are theirs). Open **index.html**.
 
 What the page must do is in rules.md (Polish, like the page); where the numbers come from, in archon/analysis.md.
 
@@ -12,18 +12,17 @@ What the page must do is in rules.md (Polish, like the page); where the numbers 
 |---|---|
 | building.dat.js | the house as data: geometry, layers, views |
 | model.js | building.dat.js turned into solids |
-| shell.js | a sub-project's room: the house's own solids, trimmed |
+| shell.js | a sub-project's room: the house's own solids, trimmed; the implementation of the interface shell.js of the root |
 | verify.js | the checks shown in Test |
 | index.html | the page in the shared screen: 3D, 2D, Test, Info; panel tabs Warstwy (layers, cut), Wykończenie (tiles); ☀ and ? in the corner |
 | archon/ | the archon drawings and analysis.md |
-| index.html | directory listing, not part of the house |
 
 ## How it fits together
 
 ```
 analysis.md ─(by hand)─► building.dat.js ─► model.js ─► solids ─┬─► index.html          drawn by core
                                                           ├─► verify.js        checked, shown in Test
-                                                          └─► shell.js ─► kitchen, bathroom
+                                                          └─► shell.js ─► kitchen, bathroom (through the interface)
 ```
 
 - One model for every view. A view only picks layers and cuts it.
