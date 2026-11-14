@@ -74,7 +74,15 @@
 <script src="../apps.dat.js"></script>
 <script src="../furniture.js"></script>
 <script src="../library/materials.dat.js"></script>
-<script src="../library/products.dat.js"></script>
+<script src="../library/products/tiles.dat.js"></script>
+<script src="../library/products/boards.dat.js"></script>
+<script src="../library/products/appliances.dat.js"></script>
+<script src="../library/products/hardware.dat.js"></script>
+<script src="../library/products/fasteners.dat.js"></script>
+<script src="../library/products/sanitary.dat.js"></script>
+<script src="../library/products/building.dat.js"></script>
+<script src="../library/products/services.dat.js"></script>
+<script src="../library/products/shops.dat.js"></script>
 <script src="house.dat.js"></script>
 <script src="engine.js"></script>
 <script src="analysis.js"></script>
@@ -584,7 +592,7 @@ function showChecks() {
   const tried = PARTS.filter(p => p.built || p.status.startsWith('błąd'));
   FURNITURE_CHECK.name = 'Meble aplikacji zgodne z interfejsem furniture.js' + (tried.length ? ' (sprawdzone: ' + tried.map(p => p.name).join(', ') + ')' : ' (jeszcze nie wczytane)');
   FURNITURE_CHECK.items = PARTS.filter(p => p.status.startsWith('błąd')).map(p => `${p.name}: ${p.status.slice(6)}`);
-  $('checks').innerHTML = CORE.ui.checksHtml(CHECKS);
+  $('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(FURNITURE.dependencies('../')));
 }
 showChecks();
 

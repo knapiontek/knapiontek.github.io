@@ -1,5 +1,6 @@
-/* core/library.js: loads the textures of the library (../library) when a page needs them: one file per image,
-   library/textures/<key>.dat.js, an image as a data URL, so the pages work opened from disk. Knows no product. */
+/* core/library.js: the library (../library) for a page: a product by its key, whatever its group; the textures, loaded when
+   the page needs them (one file per image, library/textures/<key>.dat.js, an image as a data URL, so the pages work opened
+   from disk). Knows no project. */
 (function (CORE) {
 'use strict';
 
@@ -17,5 +18,11 @@ function load(base, keys) {
   return Promise.all([...new Set(keys)].filter(k => k && !T[k]).map(one)).then(() => T);
 }
 
-CORE.library = { load };
+/* a product by its key, in whichever group of library/products it is */
+function product(key) {
+  for (const group of Object.values(window.LIBRARY_PRODUCTS || {})) if (group[key]) return group[key];
+  throw new Error('brak produktu ' + key + ' w bibliotece (library/products)');
+}
+
+CORE.library = { load, product };
 })(window.CORE = window.CORE || {});

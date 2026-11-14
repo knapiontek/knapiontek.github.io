@@ -60,7 +60,8 @@ const script = src => new Promise((ok, fail) => {
   s.src = src; s.onload = ok; s.onerror = () => fail(new Error('Nie można wczytać ' + src));
   document.head.append(s);
 });
-const inOrder = files => files.filter(src => !onPage(src)).reduce((p, src) => p.then(() => script(src)), Promise.resolve());
+const THROUGH = new Set();                // the files loaded through this interface (for the check below)
+const inOrder = files => files.filter(src => !onPage(src)).reduce((p, src) => p.then(() => { THROUGH.add(new URL(src, location.href).href); return script(src); }), Promise.resolve());
 /* an application's furniture for a host: its implementation file (apps.dat.js), checked against the interface, then its
    own inner files and its textures. base: the home folder seen from the page ('../'). */
 function load(id, base) {
@@ -88,5 +89,16 @@ function shownWith(LAYER, hostShown, furniture) {
   };
 }
 
-root.FURNITURE = { INTERFACE, register, listed, load, shownWith };
+/* Test: the dependencies on this page. A file of a sub-project (an application with furniture) is on its own page, or
+   loaded through this interface; nowhere else. base: the home folder seen from the page ('../'). */
+function dependencies(base) {
+  const home = new URL(base, location.href).href, own = location.href.slice(home.length).split('/')[0];
+  const folders = new Set((root.APPS || []).filter(a => a.furniture).map(a => a.furniture.split('/')[0]));
+  const items = [...document.scripts].filter(s => s.src.startsWith(home)).map(s => s.src)
+    .filter(src => { const f = src.slice(home.length).split('/')[0]; return folders.has(f) && f !== own && !THROUGH.has(src); })
+    .map(src => src.slice(home.length) + ': plik podprojektu poza jego stroną i poza interfejsem furniture.js');
+  return { name: 'Zależności: pliki podprojektów tylko na ich stronach albo przez interfejs furniture.js', items };
+}
+
+root.FURNITURE = { INTERFACE, register, listed, load, shownWith, dependencies };
 })(window);

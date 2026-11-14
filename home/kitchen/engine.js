@@ -325,20 +325,20 @@
   /* ================= 5. BUILD ================= */
 
   /* the project with its materials resolved: design.dat.js keys each material by its product in the library (one key
-     everywhere; library/products.dat.js boards: name, thickness, colour, depth ...) and says only how it is used here (uses) */
+     everywhere; library/products boards: name, thickness, colour, depth ...) and says only how it is used here (uses) */
   function withLibrary(project, boards) {
     const materials = Object.fromEntries(Object.entries((project && project.materials) || {}).map(([key, m]) => {
-      if (!boards[key]) throw new Error(`design.dat.js materials: brak produktu ${key} w library/products.dat.js`);
+      if (!boards[key]) throw new Error(`design.dat.js materials: brak produktu ${key} w library/products`);
       return [key, Object.assign({}, boards[key], m)];
     }));
     return Object.assign({}, project, { materials });
   }
 
   /* the appliances of the project: design.dat.js names each by the type or tag it fits (fridgeFreezer for the tags fridge and
-     freezer) with its product key in the library (library/products.dat.js appliances) and how it is built in here (feet) */
+     freezer) with its product key in the library (library/products appliances) and how it is built in here (feet) */
   function appliances(project, library) {
     return Object.fromEntries(Object.entries((project && project.appliances) || {}).map(([role, a]) => {
-      if (!library[a.product]) throw new Error(`design.dat.js appliances.${role}: brak produktu ${a.product} w library/products.dat.js`);
+      if (!library[a.product]) throw new Error(`design.dat.js appliances.${role}: brak produktu ${a.product} w library/products`);
       return [role, Object.assign({}, library[a.product], a)];
     }));
   }
@@ -1147,7 +1147,7 @@
     const components = project.components.map((c, i) => (i && c.group !== project.components[i - 1].group ? '\n' : '') + '  ' + json1(c)).join(',\n');
     return '/* Kitchen project design - shared by design.html and view.html (with cost-sheets.js).\n' +
       '   Plain JSON after "window.KITCHEN_DESIGN =". Notes, groups and components: design.html (Import data / Export data);\n' +
-      '   materials by their product key in ../library/products.dat.js (how each is used), appliances by role (their product key and how it is built in)\n' +
+      '   materials by their product key in ../library/products (how each is used), appliances by role (their product key and how it is built in)\n' +
       '   and settings: by hand\n' +
       '   (design.html keeps them as they are). */\n' +
       'window.KITCHEN_DESIGN = {\n "materials": {\n' + entries(project.materials, json1) +

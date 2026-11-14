@@ -11,7 +11,7 @@ How the files of this folder work together.
 | File | Kind | Owns | Written by |
 |---|---|---|---|
 | design.dat.js | data, this project | materials and appliances (product keys of the library; how each is used: uses, or built in: feet), settings, notes, groups, components | design.html (export); materials, appliances and settings by hand |
-| cost.dat.js | data, this project | prices, items, notes and settings of the estimate (Info of view.html) | LLM, per project |
+| cost.dat.js | data, this project | the estimate's items (a product of the library or a material's board, where it goes, how many), notes and settings (Info of view.html); no prices, shops or links: those are the library's | LLM, per project |
 | view.dat.js | data, this project | placement of the groups in the house, how the appliances are fitted, the floor tiles to choose from (library keys), the views (3D with G1/G2/Wyspa in the menu, 2D, Test, Info; the panel's tabs), lights and cameras of view.html, in house axes | LLM, per project |
 | rules.md | text, every project | the kitchen rules in Polish, as the app names things | by hand |
 | engine.js | code, every project | the model: carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |

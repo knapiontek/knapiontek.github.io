@@ -89,7 +89,7 @@
         <p>U góry: parter albo poddasze. Na dole: skąd patrzysz. ☀: słońce domu oraz dzień albo noc (wspólne dla wszystkich aplikacji). ◐: jasny albo ciemny wygląd.</p>
       </div>
       <div data-help="2d"><p>Rzut łazienki jak rysunek CAD, cięty na wysokości z rzutu domu: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG.</p></div>
-      <div data-help="test"><p>Sprawdzenia szafki i armatury z engine.js. <b>OK</b> = w normie.</p></div>
+      <div data-help="test"><p>Sprawdzenia szafki i armatury, mierzone na modelu. <b>OK</b> = w normie.</p></div>
       <div data-help="info"><p>Szafka (rysunek, formatki, okucia, montaż), zakupy, wymiary i podejścia dla hydraulika. Płytki, płytę i armaturę zmieniasz w Wykończeniu. Na dole: XLSX (wszystko + e-Rozkrój M-HM), formatki CSV, kopiowanie.</p></div>
     </div>
     <div class="corner">
@@ -170,12 +170,19 @@
 <script src="../apps.dat.js"></script>
 <script src="../furniture.js"></script>
 <script src="../library/materials.dat.js"></script>
-<script src="../library/products.dat.js"></script>
+<script src="../library/products/tiles.dat.js"></script>
+<script src="../library/products/boards.dat.js"></script>
+<script src="../library/products/appliances.dat.js"></script>
+<script src="../library/products/hardware.dat.js"></script>
+<script src="../library/products/fasteners.dat.js"></script>
+<script src="../library/products/sanitary.dat.js"></script>
+<script src="../library/products/building.dat.js"></script>
+<script src="../library/products/services.dat.js"></script>
+<script src="../library/products/shops.dat.js"></script>
 <script src="../house/house.dat.js"></script>
 <script src="../house/engine.js"></script>
 <script src="../house/house-clip.js"></script>
 <script src="data.dat.js"></script>
-<script src="engine.js"></script>
 <script src="furniture.js"></script>
 <script>
 'use strict';
@@ -184,8 +191,8 @@
 const stage = document.getElementById('stage'), loading = document.getElementById('loading');
 const fail = message => { loading.hidden = false; loading.textContent = message; };
 if (!window.THREE || !THREE.OrbitControls) return fail('Nie udało się wczytać silnika 3D. Odśwież stronę.');
-if (!window.BATH_DATA || !window.BathEngine) return fail('Brak plików data.dat.js / engine.js obok view.html.');
-if (!window.LIBRARY_PRODUCTS) return fail('Brak pliku ../library/products.dat.js.');
+if (!window.BATH_DATA) return fail('Brak pliku data.dat.js obok view.html.');
+if (!window.LIBRARY_PRODUCTS) return fail('Brak pliku ../library/products.');
 /* the bathrooms' furniture (furniture.js): the same in the house. Its textures first (the library) */
 const PRODUCTS = LIBRARY_PRODUCTS;
 let PART;
@@ -194,8 +201,8 @@ try { await CORE.library.load('../library/', PART.textures()); } catch (e) { ret
 const TEXTURES = window.LIBRARY_TEXTURES;
 if (!window.HOUSE || !window.HouseClip) return fail('Brak plików domu (../house/house.dat.js, ../house/house-clip.js).');
 
-/* The room from the house (../house/house-clip.js), the bathroom's drawing from data.dat.js (furniture.js); Info and Test from
-   engine.js. Here (view.html) the panel, the views and what hides while the camera is behind it. */
+/* The room from the house (../house/house-clip.js), the bathroom's drawing from data.dat.js (furniture.js); Info and Test
+   from data.dat.js too. Here (view.html) the panel, the views and what hides while the camera is behind it. */
 let FLOOR = BATH_DATA.defaults.floor;
 try { FLOOR = new URLSearchParams(location.search).get('floor') || localStorage.getItem('floor') || FLOOR; } catch (e) {}
 if (!BATH_DATA.floors[FLOOR]) FLOOR = BATH_DATA.defaults.floor;
@@ -203,8 +210,8 @@ const HOUSE_MODEL = HouseEngine.build(HOUSE), MATERIAL_LIB = Object.assign({}, L
 let BP;
 try { BP = PART.make({ materials: MATERIAL_LIB, textures: TEX, houseModel: HOUSE_MODEL }); } catch (e) { return fail(e.message); }
 const HOUSE_ROOM = BP.ROOMS[FLOOR];
-const G = BathEngine.build(BATH_DATA, FLOOR, HOUSE_ROOM, LIBRARY_PRODUCTS), DATA = G.data, ATTIC = G.type === 'attic';
-const V = G.V;   // the vanity in mm (data.dat.js → engine.js), for Info
+const DATA = Object.assign({}, BATH_DATA, BATH_DATA.floors[FLOOR]), ATTIC = DATA.type === 'attic';   // the floor's own over the shared
+const V = DATA.info.vanity;   // the vanity in mm (data.dat.js), for Info
 
 /* ==========================================================================
    1. STATE
@@ -213,7 +220,7 @@ const V = G.V;   // the vanity in mm (data.dat.js → engine.js), for Info
 
 // wall / floor: main room; shower / showerFloor: shower recess
 const SURFACES = ['wall', 'floor', 'shower', 'showerFloor'];
-const FORMATS = DATA.defaults.formats;   // mm
+const FORMATS = [...new Set(DATA.defaults.tiles.flatMap(k => PRODUCTS.tiles[k].formats))];   // mm, as the library gives them
 
 const state = {
   tiles: JSON.parse(JSON.stringify(DATA.tiles)),   // format: short×long side in mm; layout: h = long side horizontal, v = vertical
@@ -532,12 +539,75 @@ $('openAll').onclick = () => { for (const m of MOVERS) m.target = 1; invalidate(
 $('closeAll').onclick = () => { for (const m of MOVERS) m.target = 0; invalidate(); };
 
 
-/* ---------- vanity construction data: computed in engine.js, so drawing, cut list and 3D model match ---------- */
+/* ---------- the vanity: its sizes in data.dat.js (info.vanity), for the drawing and the cut list ---------- */
 const esc = CORE.ui.esc;
 const num = v => (Math.round(v * 10) / 10).toString().replace('.', ',');
 const pln = v => v.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
 
-const cutParts = () => BathEngine.cutParts(G, DECORS[state.decor]);
+/* the fixed texts of the bathroom's Info */
+const CUT_NOTE = 'Wymiar 1 biegnie wzdłuż słoja. Na blacie, frontach i bokach słój poziomo. Obrzeże ABS 2 mm w dekorze płyty; blat: dwie warstwy sklejone, potem obrzeże 42 mm na 4 bokach.';
+const CUT_LEGEND = [{ code: 'eRozkrój', text: 'zakładka eRozkrój: import w e-Rozkrój M-HM (mhm-web2.erozkroje.pl): Import z pliku XLS → przypisz kolumny → przypisz płytę i okleinę' }];
+const ER_WIDTHS = [28, 9, 10, 6, 10, 10, 10, 10, 10, 26, 22, 44], ER_HEAD = ['Nazwa formatki', 'Długość', 'Szerokość', 'Ilość', 'Usłojenie', 'Okleina przód (D1)', 'Okleina tył (D2)', 'Okleina lewa (S1)', 'Okleina prawa (S2)', 'Płyta', 'Okleina', 'Uwagi'];
+const MOUNT_NOTE = ['Okucia', 'Fronty wpuszczane: prowadnice cofnięte o grubość frontu (18 mm) od lica korpusu. Numery sprawdź w konfiguratorze Blum E-SERVICES przy zamówieniu w M-HM.'];
+const POINTS_TITLE = 'Wymiary od lica płytki. „Od drzwi” = od ściany z drzwiami, „od lewej” = od ściany z umywalką.';
+/* ---------- Info from data.dat.js (this floor's info) and the library: the decor and the metal chosen ---------- */
+const FITTINGS = Object.assign({}, BATH_DATA.fittings, BATH_DATA.floors[FLOOR].fittings);   // what is bought, by role (by metal where it differs)
+const SHOPS = PRODUCTS.shops;
+const shopName = key => (SHOPS[key] ? SHOPS[key].name : '');
+const byRole = (role, metal) => { const k = FITTINGS[role]; return CORE.library.product(typeof k === 'string' ? k : k[metal]); };
+const boardLabel = (key, decor) => (key === 'decor' ? `${decor.code} ${String(PRODUCTS.boards[state.decor].thickness).replace('.', ',')} mm` : CORE.library.product(key).name);
+const cutParts = () => DATA.info.parts.map(p => Object.assign({}, p, { mat: boardLabel(p.board, DECORS[state.decor]) }));
+function bathInfo(decor, metal) {
+  const I = DATA.info, parts = cutParts(), edgeCode = `ABS 2 mm ${decor.code}`;
+  const source = (where, url, note) => (url ? { text: note || '', links: [{ text: where, href: url }] } : [where, note].filter(Boolean).join('; '));
+  const noteOf = e => (e.note && typeof e.note === 'object' ? e.note[metal] : e.note) || '';
+  /* a line of the estimate: the decor's board, or a product of the library (by its key or its role) with what this bathroom adds */
+  const line = e => {
+    if (e.board === 'decor') return { name: `Płyta Egger ${decor.code} ${decor.name}, ${decor.thick}, 2800 × 2070`, unit: 'szt.', qty: e.qty || 1, price: decor.price ?? null, use: '', spec: '',
+      source: source(shopName(PRODUCTS.boards[state.decor].shop), decor.link, noteOf(e)) };
+    const P = e.role ? byRole(e.role, metal) : CORE.library.product(e.product), edge = /^abs-edge/.test(e.product);
+    return { name: P.name + (edge ? ', ' + decor.code : ''), unit: P.unit || 'szt.', qty: e.qty || 1, price: P.price ?? null, use: e.use || '', spec: P.spec || '',
+      source: source(shopName(P.shop), P.link, [e.role ? P.note : '', noteOf(e)].filter(Boolean).join('; ')) };
+  };
+  const groups = [...new Set(I.buy.map(e => e.group))];
+  const estimate = {
+    title: `Kosztorys – łazienka ${DATA.name.toLowerCase()} (${DATA.title})`,
+    info: 'Ceny brutto z dnia projektu (5.11.2026), bez dostawy. Pozycje bez ceny: wycena w sklepie.',
+    categories: [
+      { name: 'Szafka – płyty i obróbka', group: 'Meble', items: I.buy.filter(e => e.group === 'Szafka').map(line) },
+      { name: 'Szafka – okucia Blum', group: 'Meble', items: I.hardware.map(line) },
+      ...groups.filter(g => g !== 'Szafka').map(g => ({ name: g, group: 'Wyposażenie', items: I.buy.filter(e => e.group === g).map(line) })),
+    ],
+    totals: [{ label: 'Meble (materiały) razem', group: 'Meble' }, { label: 'Wyposażenie razem', group: 'Wyposażenie' }],
+    excluded: ['Płytki ścienne (posadzki są w kosztorysie domu), kleje i fugi, robocizna, hydraulika i elektryka.'],
+  };
+  const along = (e, i, j) => e[i] + e[j];
+  const block = (id, title, mat) => ({ id, title, cut: true, rows: parts.filter(p => p.mat === mat).map(p => ({
+    name: p.name, a: p.a, edgesA: along(p.e, 0, 1), b: p.b, edgesB: along(p.e, 2, 3), qty: p.qty,
+    edge: p.e.some(Boolean) ? p.a * along(p.e, 0, 1) + p.b * along(p.e, 2, 3) : null, where: p.note })) });
+  const mats = [...new Set(parts.map(p => p.mat))];
+  const cutList = { title: 'Lista cięć – szafka podumywalkowa (wymiary w mm)',
+    note: CUT_NOTE, blocks: mats.map((m, i) => block('b' + i, m, m)),
+    legend: [{ code: 'Arkusz', text: `całość z 1 arkusza 2800 × 2070${ATTIC ? ' (na styk — przy rozkroju sprawdź układ)' : ''}` }, ...CUT_LEGEND] };
+  const tables = [
+    { name: 'eRozkrój', widths: ER_WIDTHS, head: ER_HEAD, rows: parts.map(p => [p.name, p.a, p.b, p.qty, 1, ...p.e, p.mat, p.e.some(Boolean) ? edgeCode : '', p.note || '']) },
+    { name: 'Szafka', widths: [38, 30, 10], head: ['Parametr', 'Wartość', 'Jednostka'], rows: [
+      ['Łazienka', `${DATA.name} — ${DATA.title}`, ''], ['Dekor płyty', `${decor.code} ${decor.name}`, ''],
+      ['Szerokość korpusu', V.len, 'mm'], ['Głębokość korpusu', V.depth, 'mm'], ['Wysokość korpusu', V.height, 'mm'],
+      ['Spód korpusu nad podłogą', V.bottomY, 'mm'], ['Blat (2 × 18)', `${V.len} × ${V.topDepth} × ${V.top}`, 'mm'], ['Wierzch blatu', V.topY, 'mm'],
+      ['Rant umywalki', V.rimY, 'mm'], ['Początek szafki od ściany z drzwiami', V.z0, 'mm'], ['Koniec szafki od ściany z drzwiami', V.z0 + V.len, 'mm'],
+      ['Osie umywalek od ściany z drzwiami', V.basins.map(b => V.z0 + b).join(', '), 'mm'], ['Sekcje', V.sections.join(' + '), ''],
+      ['Szerokość wewn. sekcji (LW)', V.LW, 'mm'], ['Szczelina frontów', V.gap, 'mm'],
+      ...(V.nA ? [['Front A', `${V.frontW} × ${V.frontA}`, 'mm'], ['Szuflada A', `LEGRABOX C, NL ${V.nlA}`, '']] : []),
+      ...(V.nB ? [['Front B (×2)', `${V.frontW} × ${V.frontB}`, 'mm'], ['Szuflady B', `LEGRABOX K, NL ${V.nlB}`, '']] : []),
+      ['Głębokość wnętrza', `${V.bodyD} (min. NL + 3 + 18 = ${V.nlB + 21})`, 'mm'],
+    ] },
+    { name: 'Montaż', widths: [30, 110], head: ['Krok', 'Opis'], rows: [...I.work.map(([k, v]) => [k, v.replace(/<[^>]+>/g, '')]), MOUNT_NOTE] },
+    { name: 'Podejścia', widths: [42, 52, 44], head: ['Punkt', 'Położenie (mm)', 'Uwagi'], rows: I.points, title: POINTS_TITLE },
+    { name: 'Wymiary', widths: [44, 60], head: ['Element', 'Wymiar'], rows: I.dims },
+  ];
+  return { estimate, cutList, tables };
+}
 
 function renderDrawing() {
   const { len, height, t, LW, innerH, gap, frontB, top, bottomY, basinW, basinH, gasket, sections, sectionZ, basins } = V;
@@ -582,10 +652,10 @@ function renderDrawing() {
 }
 
 /* Info (core/info.js), as every application: Kosztorys, Lista cięć, eRozkrój, Szafka (the drawing above its sheet),
-   Montaż, Podejścia, Wymiary from engine.js; again when the decor or the metal changes */
+   Montaż, Podejścia, Wymiary from data.dat.js; again when the decor or the metal changes */
 let INFO_SHEET = null;
 function infoBook() {
-  const I = BathEngine.info(G, DECORS[state.decor], state.metal);
+  const I = bathInfo(DECORS[state.decor], state.metal);
   return { sheets: [CORE.info.estimate(I.estimate).sheet, CORE.info.cutList(I.cutList).sheet,
     ...I.tables.map(t => CORE.info.table(t.name, t.widths, t.head, t.rows, t.title)).map(t => (t.name === 'Szafka' ? { ...t, node: $('pageVanity') } : t))] };
 }
@@ -615,7 +685,7 @@ const INFO_ITEMS = CORE.info.menu(() => INFO_SHEET, () => `lazienka-${FLOOR}-${V
 /* ---------- the views: 3D, 2D, Info, Test, as the house (core/ui.js, core/plan.js) ----------
    The menu of 3D: the bathrooms, one per floor. The 2D plan is drawn by core from the solids of this page (the room's are
    the house's own, the fittings' boxes the same solids as in 3D, round fittings by their outline) at the house's cut height
-   for the floor; the room's label and the openings' labels are the house's. Test: the checks of engine.js. */
+   for the floor; the room's label and the openings' labels are the house's. Test: the checks of data.dat.js, measured on the model. */
 const MODES = BATH_DATA.views, MODE_IDS = Object.keys(MODES);
 const VIEW_STORE = CORE.ui.store('bathroom-view', () => ({ mode: MODE_IDS[0], zoom: 1 }), s => !!MODES[s.mode] && Number.isFinite(s.zoom));
 const VIEW_STATE = VIEW_STORE.state, saveView = VIEW_STORE.save;
@@ -626,7 +696,37 @@ function goFloor(key) {
 const CAMERA_ITEMS = Object.keys(VIEWS).map(k => ({ name: DATA.cameras[k] || k, go: () => goTo(k) }));
 const PLAN_BUTTONS = { zoomOut: el('button', { textContent: '−', ariaLabel: 'Pomniejsz' }), zoomIn: el('button', { textContent: '+', ariaLabel: 'Powiększ' }),
   download: el('button', { textContent: 'Pobierz SVG' }) };
-$('checks').innerHTML = CORE.ui.checksHtml(G.checks.map(([k, v, ok]) => ({ name: `${k}: ${v}`, items: ok ? [] : ['poza wymaganiem'] })));
+/* the checks of data.dat.js, measured on the model in mm (the solids and details by name, the room, the house's openings) */
+function measureChecks() {
+  const box = {}, put = (n, b) => { const o = box[n] || (box[n] = [Infinity, -Infinity, Infinity, -Infinity, Infinity, -Infinity]); for (let k = 0; k < 6; k++) o[k] = (k % 2 ? Math.max : Math.min)(o[k], b[k]); };
+  for (const c of built.STATIC.concat(built.MOVERS.flatMap(m => m.cells))) if (c.name) {
+    const ys = c.S.poly.map(p => p[0]), zs = c.S.poly.map(p => p[1]); put(c.name, [c.S.x1, c.S.x2, Math.min(...ys), Math.max(...ys), Math.min(...zs), Math.max(...zs)]);
+  }
+  built.DETAILS.forEach((d, i) => {
+    const bb = new THREE.Box3().setFromObject(d.mesh), [a, b] = [bb.min, bb.max].map(p => VIEW.root.worldToLocal(p.clone()));
+    const q = [Math.min(a.x, b.x), Math.max(a.x, b.x), Math.min(a.y, b.y), Math.max(a.y, b.y), Math.min(a.z, b.z), Math.max(a.z, b.z)];
+    put('d:' + d.name, q); put('d:' + d.name + '@' + i, q);
+  });
+  const R = built.ROOM, Z = DATA.model.showerZone;
+  for (const q of R.inside) put('room', [q[0], q[1], q[2], q[3], R.level, R.level]);
+  for (const o of R.openings) put('opening:' + (o.kind === 'door' ? 'door' : 'window'), o.b);
+  put('showerZone', [Z[0], Z[1], Z[2], Z[3], R.level, R.level]);
+  const at = ([what, where]) => {
+    if (what === 'basin') return box.room[2] + V.z0 + V.basins[where];   // an axis along y, from the door wall
+    const b = box[what]; if (!b) throw new Error('kontrola: brak ' + what);
+    const k = { x: 0, y: 2, z: 4 }[where[0]];
+    return where[1] === 'c' ? (b[k] + b[k + 1]) / 2 : b[k + (where[1] === '1' ? 1 : 0)];
+  };
+  const mm = v => Math.round(v);
+  return DATA.checks.map(c => {
+    if (c.equal) { const [d1, d2] = c.equal.map(([p, q]) => at(q) - at(p)); return { name: `${c.name}: ${mm(d1)} = ${mm(d2)} mm`, items: Math.abs(d1 - d2) <= c.tol ? [] : ['poza wymaganiem'] }; }
+    if (c.height) { const y = c.height[0] === 'basin' ? at(c.height) : at([c.height[0], c.height[1]]), h = R.roofUnder(y) - R.level; return { name: `${c.name}: ${mm(h)} mm`, items: h >= c.min ? [] : ['poza wymaganiem'] }; }
+    const d = at(c.to) - at(c.from), also = c.also ? ' / ' + mm(at(c.also[1]) - at(c.also[0])) : '';
+    return { name: `${c.name}: ${mm(d)}${also} mm`, items: d >= c.min ? [] : ['poza wymaganiem'] };
+  });
+}
+const CHECKS = measureChecks();
+$('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(FURNITURE.dependencies('../')));
 
 const PLAN = CORE.plan.create(MATERIAL_LIB), CUT = HOUSE_ROOM.planCut;
 const ROOM_KEYS = new Set(Object.entries(CUT_OF).filter(([, c]) => c.room).map(([k]) => k));   // the suspended ceiling: as the house's
@@ -705,7 +805,7 @@ CORE.ui.appMenu($('apps'), APPS, 'bathroom', '../', () => VIEW_STATE.mode);
 setMode(CORE.ui.askedMode(MODES) || VIEW_STATE.mode);
 loading.hidden = true;
 // for inspection in the browser console
-window.bath = { state, VIEW, scene, camera, controls, renderer, goTo, applyNight, setStyle, setMode, planSvg, invalidate, built, MOVERS, CUT_OF, STATIC, G };
+window.bath = { state, VIEW, scene, camera, controls, renderer, goTo, applyNight, setStyle, setMode, planSvg, invalidate, built, MOVERS, CUT_OF, STATIC, CHECKS };
 })();
 </script>
 </body>

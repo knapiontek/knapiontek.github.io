@@ -154,7 +154,15 @@ dl.notes dd{margin:0;color:var(--muted)}
 <script src="../apps.dat.js"></script>
 <script src="../furniture.js"></script>
 <script src="../library/materials.dat.js"></script>
-<script src="../library/products.dat.js"></script>
+<script src="../library/products/tiles.dat.js"></script>
+<script src="../library/products/boards.dat.js"></script>
+<script src="../library/products/appliances.dat.js"></script>
+<script src="../library/products/hardware.dat.js"></script>
+<script src="../library/products/fasteners.dat.js"></script>
+<script src="../library/products/sanitary.dat.js"></script>
+<script src="../library/products/building.dat.js"></script>
+<script src="../library/products/services.dat.js"></script>
+<script src="../library/products/shops.dat.js"></script>
 <script src="../house/house.dat.js"></script>
 <script src="../house/engine.js"></script>
 <script src="../house/house-clip.js"></script>
@@ -178,7 +186,7 @@ const G = CORE.geometry, { piecesOf } = CORE.mesh;
 const loading = $('loading'), fail = text => { loading.textContent = text; };
 if (!window.THREE || !THREE.OrbitControls) return fail('Nie można wczytać silnika 3D. Odśwież stronę.');
 if (!window.KITCHEN_DESIGN) return fail('Nie znaleziono pliku design.dat.js obok tej strony.');
-if (!window.KITCHEN_VIEW || !window.LIBRARY_PRODUCTS) return fail('Nie znaleziono plików view.dat.js i ../library/products.dat.js.');
+if (!window.KITCHEN_VIEW || !window.LIBRARY_PRODUCTS) return fail('Nie znaleziono plików view.dat.js i ../library/products.');
 if (!window.HOUSE || !window.HouseClip) return fail('Nie znaleziono plików domu (../house/house.dat.js, ../house/house-clip.js).');
 
 const KE = window.KitchenEngine, SCENE = window.KITCHEN_VIEW, TEXTURES = window.LIBRARY_TEXTURES;
@@ -449,7 +457,7 @@ const INFO_ITEMS = CORE.info.menu(() => COST_SHEET, COST.page.xlsxFile, [[{ name
     ['Części wystające', geometry.out.map(item)], ['Fronty poza linią', lines.map(item)]];
   const total = groups.reduce((s, [, items]) => s + items.length, 0);
   $('checksNote').textContent = total ? `${total} problemów w ${geometry.n} częściach.` : `Wszystkie części (${geometry.n}) w porządku.`;
-  $('checks').innerHTML = CORE.ui.checksHtml(groups.map(([name, items]) => ({ name, items })));
+  $('checks').innerHTML = CORE.ui.checksHtml(groups.map(([name, items]) => ({ name, items })).concat(FURNITURE.dependencies('../')));
 }
 
 /* project */

@@ -1,0 +1,10 @@
+/* library/products/services.dat.js: services the owner cannot do himself: cutting, edge banding, CNC, lacquering; unit and price per unit.
+   Every product: name; spec (what it is, as bought); unit and price in zł gross per unit (null = unknown); priceNote (where
+   the price comes from, how sure); links (the maker's documents first, then the shops); shop (a key of shops.dat.js).
+   By key; the same for every application, never changed by a project. */
+(window.LIBRARY_PRODUCTS = window.LIBRARY_PRODUCTS || {}).services = {
+ "m-hm-board-cutting": {"name":"Cięcie płyt","spec":"usługa hurtowni, mb cięć","unit":"mb","price":5,"priceNote":"M-HM: cena do potwierdzenia; szacunek wg ciecieoklejanie.pl (płyty 3–20 mm)","links":[{"name":"m-hm.pl","url":"https://m-hm.pl/pl/i/Uslugi/16"},{"name":"ciecieoklejanie.pl","url":"https://ciecieoklejanie.pl/cennik/"}]},
+ "edge-banding-u708-pur": {"name":"Oklejanie korpusów","spec":"obrzeże 0,8 w dekorze U708 ST9, klejone PUR albo laserowo (bez widocznej spoiny), z usługą oklejania","unit":"mb","price":6,"priceNote":"M-HM: cena do potwierdzenia; szacunek wg ciecieoklejanie.pl 6/mb z obrzeżem (samo obrzeże w M-HM 1,77/mb)","links":[{"name":"m-hm.pl","url":"https://m-hm.pl/pl/i/Uslugi/16"},{"name":"ciecieoklejanie.pl","url":"https://ciecieoklejanie.pl/cennik/"},{"name":"m-hm.pl: obrzeże (cena orientacyjna)","url":"https://m-hm.pl/pl/p/OBRZEZE-ABS-U708-ST9-230.8MM-Szary-jasny/1146"}]},
+ "edge-banding-h1180-pur": {"name":"Obrzeże blatu","spec":"1,5 mm w dekorze H1180 ST37 dąb Halifax naturalny, klejone PUR albo laserowo (bez widocznej spoiny)","unit":"mb","price":10.1,"priceNote":"oklejanie maszynowe – zapytać M-HM; obrzeże paneli końcowych dobrać do ich materiału","links":[{"name":"m-hm.pl: obrzeże (cena orientacyjna)","url":"https://m-hm.pl/pl/p/OBRZEZE-ABS-H1180-ST37-431.5MM-Dab-Halifax-naturalny/1401"}]},
+ "m-hm-cutting-edging-erozkroj": {"name":"Cięcie, obrzeże ABS 2 mm (22 i 42 mm), otwory","price":null,"shop":"m-hm","link":"https://m-hm.pl/pl/i/Uslugi/16"}
+};

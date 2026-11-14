@@ -5,7 +5,7 @@
                    stands free; x, y = the point its anchor names (start (default), end, centre or {column}: the end of
                    that column) on the wall line of the group (an island: the line of its carcass backs);
                    against {group}: the anchor lies on the front plane of that group (an L corner), instead of x or y
-     floors        the floor tiles to choose from (product keys of ../library/products.dat.js tiles); the first is the default
+     floors        the floor tiles to choose from (product keys of ../library/products tiles); the first is the default
      room          floorJoint: the grout joint width of the floor tiles; wallColor: the plasterboard and the ceiling finish
      installation  how the sink, its trap and the hood are fitted here
      finishes      extra finishes for the Project tab, drawn with a material of the view

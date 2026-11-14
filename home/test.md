@@ -41,6 +41,12 @@ Compare with the run before the change: everything the same, or each difference 
 - Straight at a wall away from any door, running: it stops on its side, never through.
 - The attic: the same, still to be done.
 
-## 4. The bathroom's own page against the house
+## 4. The dependencies
 
-- Its tiles, its doors and drawers (open positions to the mm), its plans and its Info are the same as before the change.
+- Test of every page lists the dependencies: a file of a sub-project is on its own page, or loaded through the interface (furniture.js). Expected: OK on the house, the kitchen and both bathrooms (on the house after the furniture is loaded).
+- In the text of the files: no file outside a sub-project's folder names a file of it, except apps.dat.js; no sub-project names another's (search the folders for the other folders' names and file names).
+
+## 5. The bathroom's own page against the house
+
+- Its tiles, its doors and drawers (open positions to the mm), its plans and its Info are the same as before the change: every tab of Info (not only the first), the estimate to the grosz.
+- Its Test: the checks of data.dat.js, measured on the model, with their values (the ground floor: 405, 10, 140, 410 mm; the attic: see the page).

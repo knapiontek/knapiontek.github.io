@@ -1,0 +1,18 @@
+/* library/products/fasteners.dat.js: fasteners: confirmats, connectors, screws, anchors, brackets, worktop joints.
+   Every product: name; spec (what it is, as bought); unit and price in zł gross per unit (null = unknown); priceNote (where
+   the price comes from, how sure); links (the maker's documents first, then the shops); shop (a key of shops.dat.js).
+   By key; the same for every application, never changed by a project. */
+(window.LIBRARY_PRODUCTS = window.LIBRARY_PRODUCTS || {}).fasteners = {
+ "confirmat-6-4x50": {"name":"Konfirmaty","spec":"6,4 × 50, ocynk biały, opak. 1000 szt.; wiertło do konfirmatów 6,4","unit":"op.","price":119.39,"priceNote":"M-HM tylko po 1000 szt.; meblownia 7 × 50: 12,57 za 100","links":[{"name":"m-hm.pl","url":"https://m-hm.pl/pl/p/Konfirmat-M-6.4-x-50-OC.BIALY-opak1000-szt./4511"}]},
+ "connector-5-m4-nickel": {"name":"Złącza skręcane","spec":"Ø5 M4, nikiel, opak. 100 szt.","unit":"op.","price":29.52,"links":[{"name":"g-s.com.pl","url":"https://g-s.com.pl/zlacze-skrecane-meblowe-fi-5-m4-nikiel.html"}]},
+ "domax-bracket-40x40x17": {"name":"Kątownik meblowy Domax","spec":"wąski, 40 × 40 × 17","unit":"szt.","price":3.79,"links":[{"name":"leroymerlin.pl","url":"https://www.leroymerlin.pl/produkty/katownik-meblowy-waski-40-x-40-x-17-mm-domax-42855092.html"}]},
+ "fischer-duopower-8x65": {"name":"Kołki fischer DuoPower","spec":"8 × 65 z wkrętem, opak. 20 + 5 szt.","unit":"op.","price":30.99,"links":[{"name":"leroymerlin.pl","url":"https://www.leroymerlin.pl/produkty/kolki-montazowe-8x65-mm-z-wkretem-duopower-20-sztuk-5-gratis-94769354.html"}]},
+ "standers-screw-4x16": {"name":"Wkręty 4 × 16","spec":"Standers, łeb wpuszczany, opak. 35 szt.","unit":"op.","price":4.19,"links":[{"name":"leroymerlin.pl","url":"https://www.leroymerlin.pl/produkty/wkret-4-x-16-mm-35-szt-standers-82231803.html"}]},
+ "standers-screw-4x30": {"name":"Wkręty 4 × 30","spec":"Standers, łeb wpuszczany, opak. 25 szt.","unit":"op.","price":3.79,"links":[{"name":"leroymerlin.pl","url":"https://www.leroymerlin.pl/produkty/wkret-4-x-30-mm-25-szt-standers-82231806.html"}]},
+ "brass-screw-4x30": {"name":"Wkręty mosiądzowane 4 × 30","spec":"PZ, łeb stożkowy","unit":"szt.","price":0.4,"priceNote":"szacunek wg agas.pl (4 × 50: 40 zł / 100 szt.); 4 × 30 do znalezienia","links":[{"name":"agas.pl","url":"https://agas.pl/wkrety-i-gwozdzie/10724-wkrety-mosiadzowane-4x50-pz-leb-stozkowy-panelvit-100szt-8014174019531.html"}]},
+ "bracket-20x20x16": {"name":"Kątowniki 20 × 20 × 16","spec":"stal 1,5 mm, opak. 10 szt.","unit":"op.","price":6,"priceNote":"sprzedawca Lun Fix","links":[{"name":"leroymerlin.pl","url":"https://www.leroymerlin.pl/produkty/katownik-meblowy-20x20x16x1-5-10szt-74065876.html"}]},
+ "worktop-joint-zlm-26": {"name":"Złącza blatu","spec":"ZŁM-26, L 100","unit":"szt.","price":3.3,"links":[{"name":"m-hm.pl","url":"https://m-hm.pl/pl/p/ZLACZE-DO-BLATOW-ZLM-26-L-100MM/500"}]},
+ "4pro-drywall-screw-3-5x35": {"name":"Wkręty do GK","spec":"4PRO 3,5 × 35, do metalu, 1000 szt.","unit":"op.","price":69.98,"links":[{"name":"castorama.pl","url":"https://www.castorama.pl/wkrety-na-tasmie-do-metalu-plyt-g-k-4pro-3-5-x-35-mm-1000-szt-/5904433424875_CAPL.prd"}]},
+ "standers-profile-screw-3-5x9-5": {"name":"Wkręty do profili","spec":"3,5 × 9,5, 250 szt.","unit":"op.","price":22.49,"links":[{"name":"leroymerlin.pl","url":"https://www.leroymerlin.pl/produkty/wkret-do-plyt-g-k-3-5-x-9-5-mm-250-szt-standers-45530233.html"}]},
+ "standers-quick-anchor-6x40": {"name":"Kołki szybkiego montażu","spec":"6 × 40","unit":"op.","price":14.29,"priceNote":"sprzedawca Robimet","links":[{"name":"leroymerlin.pl","url":"https://www.leroymerlin.pl/produkty/kolki-szybkie-montazu-6x40-mm-standers-45746715.html"}]}
+};

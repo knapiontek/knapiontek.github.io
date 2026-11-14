@@ -6,8 +6,17 @@
 
 /* model: KE.build of the project; APPLIANCES: KE.appliances of it. Returns {book(), assembly(), warnings, page} */
 function create(model, APPLIANCES) {
-const KE = root.KitchenEngine, COST = root.KITCHEN_COST;
-const ITEMS = COST.categories.flatMap(c => c.items);
+const KE = root.KitchenEngine, COST = root.KITCHEN_COST, LIBRARY = root.CORE.library;
+/* an item of the estimate: its product from the library (a material: the board design.dat.js gives that use), the rest
+   the project's: what it is called for a material, the spec's own part, the use, the quantity, the notes */
+const BOARD_OF = Object.fromEntries(Object.entries(root.KITCHEN_DESIGN.materials).flatMap(([key, m]) => m.uses.map(u => [u, key])));
+const productOf = item => LIBRARY.product(item.material ? BOARD_OF[item.material] : item.product);
+const ITEMS = COST.categories.flatMap(c => c.items).map(item => {
+  const P = productOf(item);
+  return Object.assign({}, item, { name: item.material ? item.name : P.name, spec: item.material ? item.spec : [P.spec, item.spec].filter(Boolean).join(', '),
+    unit: P.unit, price: P.price, source: P.priceNote || '', links: [...(P.links || []), ...(P.buy || [])] });
+});
+const ITEM = Object.fromEntries(ITEMS.map(item => [item.id, item]));
 // notes are numbered in their order, sections lettered: note id -> number ("patrz notatka 20")
 const NOTES = COST.notes.flatMap(section => section.notes);
 const noteNumber = Object.fromEntries(NOTES.map((n, i) => [n.id, String(i + 1)]));
@@ -373,7 +382,7 @@ function buildBook() {
     .replace(/\{([^}|]+)\}/g, (_, key) => String(Number(placeholder(key, result.totals, result.quantities))));
   const estimate = INFO.estimate({ title: COST.page.heading, info: fill(COST.page.info),
     params: [{ key: 'waste', label: 'Naddatek na odpad płyt', v: Number(values.params.waste), z: '0%' }, { key: 'sheet', label: fill(COST.labels.sheet), v: Number(values.params.sheet) }],
-    categories: COST.categories.map(category => ({ name: category.name, group: category.appliances ? 'AGD' : 'Meble', items: category.items.map(item => ({
+    categories: COST.categories.map(category => ({ name: category.name, group: category.appliances ? 'AGD' : 'Meble', items: category.items.map(({ id }) => ITEM[id]).map(item => ({
       id: item.id, name: fill(item.name), spec: fill(item.spec), use: fill(item.use), unit: item.unit, price: Number(values.items[item.id].price),
       qty: typeof item.qty === 'string' ? ref => ({ f: toExcel(item.qty, ref), z: /ROUNDUP/.test(item.qty) ? undefined : '#,##0.00' }) : Number(values.items[item.id].qty),
       // the remark, then the shops by name and the notes it refers to (a link each; the XLSX cell opens the first)

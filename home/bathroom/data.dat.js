@@ -1,11 +1,12 @@
-/* House "Dom w papawerach 5 (G)" — DATA for both bathrooms (numbers and descriptions only, no calculations).
-   Loaded by view.html before engine.js. Every length is in mm (whole numbers); angles in degrees (openAngle in radians);
-   bath.n is an exponent.
+/* House "Dom w papawerach 5 (G)" — DATA for both bathrooms (numbers and descriptions only, no calculations): the design
+   written part by part, drawn and listed as it is. Every length is in mm; angles of the movers in radians, of the
+   details in degrees.
 
    The room is the house's (../house/house.dat.js, through ../house/house-clip.js): walls, door opening, window, floor, ceiling heights and
    the roof are taken from there as they are and are not repeated here. Positions are house axes: x along the house, y across,
    z up. What is left here is the bathroom's own design: fittings, finishes, products; their places are distances from the
    room's walls (vanity wall = the room's −x face, door wall = its −y face, window or knee wall = its +y face).
+   A tile's formats are the library's.
 
    The two bathrooms are stacked so that the Ø160 riser is vertical: on the ground floor it is in the
    top-right corner, in the attic in the bottom-right corner, always right next to the WC. */
@@ -14,40 +15,117 @@ window.BATH_DATA = {
     /* ---------- GROUND FLOOR, room 7 — graphite ----------
        The shower recess is the house's (as built: 900 × 1000 beyond the glass line). */
     ground: {
-      type: 'ground', number: 7, name: 'Parter', title: 'Łazienka L grafit',
+      type: 'ground', name: 'Parter', title: 'Łazienka L grafit',
       fittings: { basin: 'catalano-green-lux-60x40-nero', plug: 'catalano-plug-5poslns-nero' },
       cameras: { overview: 'Ogólny', door: 'Od drzwi', vanity: 'Umywalka i WC', shower: 'Prysznic', cabinet: 'Szafka i grzejnik', plan: 'Rzut' },   // the dock
-      showerLine: 8950,       // house x of the shower glass line; the recess beyond it is the house's
-      ceiling: { height: 2450, ledGap: 50 },   // suspended plasterboard ceiling over the floor, LED gap along the walls
-      shower: {
-        door: 600,            // glass door on glass-to-glass hinges
-        drain: 880,           // Vogi Duo linear drain at the far wall
-      },
-      door: {                 // concealed door Porta HIDE WC 80 in the house's opening
-        leaf: 800,
-        opensOut: true,       // into the hallway, as designed; hinges on the shower side
-        openAngle: 1.45,
-      },
-      casing: {               // WC casing with Ø160 riser along the vanity wall, in the window corner
-        depth: 280, length: 850, riserZone: 320, niche: 150,
-        riser: 160,
-      },
-      wcCabinet: { w: 400, h: 800, bottom: 1200 },   // IKEA HEJSTA above the WC frame; bottom: z over the floor
-      wc: { w: 360, d: 530 },
-      vanity: {               // vanity unit
-        fromDoorWall: 200, len: 1200,   // start from the door wall (space for the radiator), length
-        depth: 470, height: 400, bottom: 324,   // bottom: z of the carcass over the floor
-        top: 36, topDepth: 480,
-        t: 18, gap: 2.5, rail: 100,
-        sections: ['B', 'A'], // B: two drawers, A: one tall drawer under a basin
-        basins: [850],        // basin axes from the vanity start
-        basinW: 600, basinD: 400, basinH: 140, basinBack: 50, gasket: 3,
-        nlA: 350, nlB: 400,
-        mirror: { w: 600, h: 800, z: 1620 },   // z: its centre over the floor
-      },
-      radiator: { w: 400, h: 1200, bottom: 820, fromWall: 55, gapToCorner: 10 },   // Mexen Hades 1200 × 400 on the door wall
       look: { basin: 'black', doorPaint: 0x5b5e60 },
       defaultDecor: 'egger-h1199-st12',
+      /* Test: each check measured on this floor's model in mm. A place: [what, where]: what = a solid's name, d:a detail's
+         name (@i: the detail at index i of model.details), room (its floor area), opening:door / opening:window (the
+         house's), showerZone, basin (i: the axis of basin i, data of the vanity); where = x0, x1, xc, y0, y1, yc. from → to:
+         the distance (to − from) at least min; also: a second distance shown beside it; equal: two distances within tol;
+         height: from the floor to the roof over the place, at least min. */
+      checks: [
+        {"name": "Oś WC → bok szafki", "from": ["vanity", "y1"], "to": ["toiletAt", "yc"], "min": 400},
+        {"name": "Grzejnik → krawędź otworu drzwi", "from": ["d:towelRadiator", "x1"], "to": ["opening:door", "x0"], "min": 0},
+        {"name": "Szafka → zabudowa WC", "from": ["vanity", "y1"], "to": ["casingBody", "y0"], "min": 1},
+        {"name": "Okno → zabudowa WC", "from": ["casingFront", "x1"], "to": ["opening:window", "x0"], "min": 1},
+      ],
+      /* Info (Kosztorys, Lista cięć, eRozkrój, Szafka, Montaż, Podejścia, Wymiary), as data: the vanity's sizes (mm), its
+         parts (a, b mm; e: banded edges [D1, D2, S1, S2]; board: 'decor' = the decor chosen, or a product), its hardware
+         and what is bought (a product of the library, a role of fittings, or the decor's board), the steps, the points and
+         the dimensions. note: what this bathroom adds to the product's own; by metal where it differs. */
+      info: {
+        vanity: {"len":1200,"depth":470,"height":400,"top":36,"topDepth":480,"t":18,"gap":2.5,"rail":100,"sections":["B","A"],"basins":[850],"basinW":600,"basinD":400,"basinH":140,"basinBack":50,"gasket":3,"nlA":350,"nlB":400,"z0":200,"bottomY":324,"inner":1164,"innerH":364,"LW":573,"sectionZ":[18,609],"bodyD":452,"frontW":568,"frontA":359,"frontB":178,"topY":760,"rimY":903,"basinZ":850,"nA":1,"nB":1},
+        parts: [
+          {"name":"Blat — warstwa górna","qty":1,"a":1200,"b":480,"e":[0,0,0,0],"board":"decor","edge":"—","note":"sklejany z dolną, obrzeże 42 mm po sklejeniu na 4 bokach"},
+          {"name":"Blat — warstwa dolna","qty":1,"a":1200,"b":480,"e":[0,0,0,0],"board":"decor","edge":"—","note":"klej D3 / PUR"},
+          {"name":"Bok korpusu","qty":2,"a":470,"b":400,"e":[1,0,1,0],"board":"decor","edge":"przód, dół"},
+          {"name":"Wieniec dolny","qty":1,"a":1164,"b":452,"e":[1,0,0,0],"board":"decor","edge":"przód"},
+          {"name":"Listwa górna przednia","qty":1,"a":1164,"b":100,"e":[1,0,0,0],"board":"decor","edge":"przód"},
+          {"name":"Listwa górna tylna","qty":1,"a":1164,"b":100,"e":[0,0,0,0],"board":"decor","edge":"—","note":"otwory na wężyki baterii"},
+          {"name":"Plecy nośne","qty":1,"a":1164,"b":400,"e":[0,0,0,0],"board":"decor","edge":"—","note":"zawieszki, otwory na odpływy i zawory"},
+          {"name":"Przegroda","qty":1,"a":452,"b":364,"e":[0,0,1,0],"board":"decor","edge":"przód"},
+          {"name":"Front A (pod umywalką)","qty":1,"a":568,"b":359,"e":[1,1,1,1],"board":"decor","edge":"4 boki"},
+          {"name":"Front B (2 szuflady)","qty":2,"a":568,"b":178,"e":[1,1,1,1],"board":"decor","edge":"4 boki"},
+          {"name":"Dno szuflady A","qty":1,"a":538,"b":340,"e":[0,0,0,0],"board":"board-16-drawer-parts","edge":"—","note":"LW − 35, NL − 10"},
+          {"name":"Dno szuflady B","qty":2,"a":538,"b":390,"e":[0,0,0,0],"board":"board-16-drawer-parts","edge":"—"},
+          {"name":"Tył szuflady A (C)","qty":1,"a":535,"b":148,"e":[1,0,0,0],"board":"board-16-drawer-parts","edge":"góra","note":"LW − 38"},
+          {"name":"Tył szuflady B (K)","qty":2,"a":535,"b":101,"e":[1,0,0,0],"board":"board-16-drawer-parts","edge":"góra"},
+        ],
+        hardware: [
+          {"product":"blum-legrabox-pure-c-350-black","qty":1,"use":"szuflada A pod umywalką"},
+          {"product":"blum-legrabox-pure-k-400-black","qty":2,"use":"szuflady B"},
+          {"product":"blum-legrabox-runner-350-tip-on","qty":1,"use":"szuflada A"},
+          {"product":"blum-legrabox-runner-400-tip-on","qty":2,"use":"szuflady B"},
+          {"product":"blum-tip-on-blumotion-l1","qty":3,"use":"otwieranie przez naciśnięcie, szczelina 2,5 mm"},
+          {"product":"blum-legrabox-front-fixing-c","qty":1,"use":"szuflada A"},
+          {"product":"blum-legrabox-front-fixing-k","qty":2,"use":"szuflady B"},
+          {"product":"blum-legrabox-back-fixing-c","qty":1,"use":"szuflada A"},
+          {"product":"blum-legrabox-back-fixing-k","qty":2,"use":"szuflady B"},
+          {"product":"camar-807-hangers","qty":1,"use":"na plecach nośnych, regulacja po zawieszeniu"},
+          {"product":"blum-screws-4x15-609-1500","qty":1,"use":"prowadnice"},
+        ],
+        buy: [
+          {"group":"Szafka","board":"decor","qty":1,"note":"korpus, fronty i blat z jednego arkusza"},
+          {"group":"Szafka","product":"m-hm-cutting-edging-erozkroj","note":"arkusz eRozkroj z eksportu XLSX; odbiór na miejscu"},
+          {"group":"Szafka","product":"board-16-drawer-parts"},
+          {"group":"Szafka","product":"abs-edge-2x22","qty":11,"use":"korpus, fronty"},
+          {"group":"Szafka","product":"abs-edge-2x42","qty":4,"use":"blat, 4 boki po sklejeniu"},
+          {"group":"Umywalka","role":"basin","qty":1},
+          {"group":"Umywalka","role":"plug","qty":1},
+          {"group":"Umywalka","role":"tap","qty":1},
+          {"group":"Umywalka","role":"siphon","qty":1},
+          {"group":"Umywalka","product":"epdm-gasket-3-black","qty":1},
+          {"group":"Grzejnik","role":"radiator","qty":1,"note":{"brass":"pas ściany od otworu drzwi do narożnika 420 mm, zawieszony od 820 mm","nickel":"do armatury w niklu dobierz kolor chrom/inox; pas ściany od otworu drzwi do narożnika 420 mm, zawieszony od 820 mm"}},
+          {"group":"Grzejnik","product":"radiator-valves-pair-bottom","qty":1},
+          {"group":"Drzwi","role":"door","qty":1,"note":"wersja otwierana na zewnątrz (na korytarz, jak w projekcie) — stronę lewe/prawe potwierdź w sklepie; lico skrzydła równe ze ścianą od korytarza; otwór 900 × 2070"},
+          {"group":"Drzwi","product":"porta-wc-handle-rosette","qty":1},
+        ],
+        work: [
+          ["Cięcie i oklejanie","M-HM: formatki z tabeli, obrzeże ABS 2 mm na klej PUR (wilgoć). Blat: dwie warstwy skleić, potem okleić 4 boki obrzeżem 42 mm."],
+          ["Otwory w blacie","Odpływ Ø 60 i wężyki baterii Ø 35 w obrysie stopki umywalki — <b>z szablonu po zakupie umywalki</b>. Oś: 850 mm od końca blatu przy drzwiach. Krawędzie otworów zabezpieczyć klejem PUR lub lakierem."],
+          ["Umywalka bez silikonu","Pod stopkę uszczelka EPDM 3 mm w kolorze umywalki (taśma samoprzylepna, przycięta w obrysie, 3 mm cofnięta od krawędzi). Umywalkę dociska nakrętka korka od spodu blatu. Spoina wygląda jak cień 3 mm — bez silikonu."],
+          ["Bateria z umywalki","Bateria stoi na półce umywalki (otwór fabryczny), wężyki przechodzą przez blat i listwę tylną do zaworów za szufladą A."],
+          ["Syfon","Syfon oszczędzający miejsce — płaski, tuż pod blatem nad szufladą A, wyjście w ścianę. Szuflada A ma NL 350, za nią 84 mm na zawory kątowe."],
+          ["Montaż","Zawieszki na plecach nośnych, spód korpusu 324 mm nad podłogą. Styk blatu ze ścianą: wąska listwa przyblatowa albo fuga 2 mm akrylem w kolorze fugi."],
+        ],
+        points: [
+          ["Umywalka — odpływ w ścianie Ø 40","od drzwi 1050 · wys. 661","syfon płaski pod blatem"],
+          ["Umywalka — zawory kątowe ciepła / zimna","od drzwi 970 / 1130 · wys. 550","za szufladą A (NL 350)"],
+          ["Lustro LED — puszka","od drzwi 1050 · wys. 2080","nad lustrem, IP44"],
+          ["Grzejnik — oś","ściana z drzwiami, 210 od ściany z umywalką","rurki 55 mm od ściany"],
+          ["Grzejnik — przyłącza dolne","wys. 760","nad blatem szafki; rozstaw wg karty Mexen Hades"],
+          ["Drzwi ukryte — otwór w murze","900 × 2070, oś 870 od ściany z umywalką","Porta HIDE na zewnątrz: ościeżnica przed tynkiem i płytką"],
+          ["Okno — otwór","1000 × 1300, parapet 1100","od linii prysznica -80"],
+          ["WC — oś","585 od ściany z oknem","stelaż Geberit Duofix w zabudowie 280 mm"],
+          ["Prysznic — odpływ liniowy","880 przy ścianie dalszej, oś od ściany z oknem 500","Vogi Duo, ruszt pod płytkę"],
+          ["Szafka — spód / blat / rant umywalki","324 / 760 / 903","od drzwi 200 … 1400"],
+        ],
+        dims: [
+          ["Pomieszczenie","2390 × 1610 mm (wg projektu: 2510 z prysznicem)"],
+          ["Prysznic","1000 × 900 mm (wnęka przerobiona, ściany bez zmian)"],
+          ["Powierzchnia","4,75 m²"],
+          ["Wysokość (strop)","2720 mm"],
+          ["Sufit podwieszany","2450 mm, szczelina LED 50 mm"],
+          ["Oprawy","4 × wpuszczane 3000 K, 1 × IP65 w prysznicu"],
+          ["Okno","1000 × 1300, parapet 1100"],
+          ["Ściana z oknem","240 mm, szpaleta 160 mm w płytce"],
+          ["Zabudowa WC + pion Ø160","850 × 280 × 2720"],
+          ["Oś WC od ściany z oknem","585 mm"],
+          ["Szafka nad stelażem","HEJSTA 400 × 800, gł. 150, wys. 1200–2000"],
+          ["Miska WC podwieszana","360 × 530 mm"],
+          ["Szafka z umywalką","1200 × 470 mm, blat 480 mm, 1 × umywalka"],
+          ["Umywalka","Catalano Green Lux 60 × 40, czarny mat"],
+          ["Grzejnik","Mexen Hades 400 × 1200, przy drzwiach, od 820 mm"],
+          ["Drzwi","ukryte Porta HIDE 800, otwór 900, oś 870 od ściany z umywalką, otwierane na korytarz"],
+          ["Bok szafki → oś WC","405 mm"],
+          ["Drzwi prysznica","600 mm, zawias na szybie stałej"],
+          ["Szyba stała","400 mm, przy oknie"],
+          ["Odpływ Vogi Duo","przyścienny, 880 mm, pod płytkę"],
+          ["Fuga","3 mm, w kolorze płytki"],
+        ],
+      },
       tiles: {
         wall:        { tile: 'paradyz-authority-graphite', format: '598x1198', layout: 'h' },
         floor:       { tile: 'paradyz-authority-grey', format: '898x898',  layout: 'h' },
@@ -271,40 +349,122 @@ window.BATH_DATA = {
        next to the riser, freestanding bath centred in the free area by the knee wall, floor-standing mixer
        in the top-right corner. */
     attic: {
-      type: 'attic', number: 5, name: 'Poddasze', title: 'Łazienka jasna na poddaszu',
+      type: 'attic', name: 'Poddasze', title: 'Łazienka jasna na poddaszu',
       fittings: { basin: 'catalano-green-lux-60x40-white', plug: 'catalano-plug-white', bath: 'castorama-bath-freestanding-170x75' },
       cameras: { overview: 'Ogólny', door: 'Od drzwi', vanity: 'Umywalki', bath: 'Wanna', shower: 'Prysznic', plan: 'Rzut' },
-      shower: {
-        width: 1000,          // along the bottom wall
-        depth: 1000,          // along the door wall
-        door: 600,
-        drain: 900,           // linear drain along the bottom wall
-      },
-      door: { leaf: 800, opensOut: true, openAngle: 1.45 },
-      bath: {                 // freestanding oval bath, centred in the free floor area right of the WC / vanity
-        len: 1700, w: 750, h: 580, rim: 50, n: 4,    // n: superellipse exponent of the outline (2 = ellipse)
-      },
-      bathTap: {              // floor-standing bath mixer Hansgrohe Tecturis E, in the top-right corner (vanity wall / knee wall)
-        h: 990, reach: 262,   // height, spout reach from the column axis (catalogue)
-        fromBathEnd: 80,      // column axis behind the bath end
-        fromKnee: 300,        // column axis from the knee wall
-      },
-      wc: { w: 360, d: 530, axisFromDoorWall: 1550 },
-      casing: { depth: 250, from: 1250, height: 1200, riser: 160 },   // along the bottom wall up to the riser corner
-      vanity: {
-        fromDoorWall: 200, len: 1600,
-        depth: 470, height: 400, bottom: 324,
-        top: 36, topDepth: 480,
-        t: 18, gap: 2.5, rail: 100,
-        sections: ['A', 'A'],
-        basins: [400, 1200],
-        basinW: 600, basinD: 400, basinH: 140, basinBack: 50, gasket: 3,
-        nlA: 350, nlB: 400,
-        mirror: { w: 600, h: 800, z: 1620 },
-      },
-      radiator: { w: 400, h: 1200, bottom: 820, fromWall: 55, gapToCorner: 10 },
       look: { basin: 'white', doorPaint: 0xdedcd7 },
       defaultDecor: 'egger-h1180-st37',
+      /* Test: each check measured on this floor's model in mm. A place: [what, where]: what = a solid's name, d:a detail's
+         name (@i: the detail at index i of model.details), room (its floor area), opening:door / opening:window (the
+         house's), showerZone, basin (i: the axis of basin i, data of the vanity); where = x0, x1, xc, y0, y1, yc. from → to:
+         the distance (to − from) at least min; also: a second distance shown beside it; equal: two distances within tol;
+         height: from the floor to the roof over the place, at least min. */
+      checks: [
+        {"name": "Prysznic → dolna krawędź otworu drzwi", "from": ["opening:door", "x1"], "to": ["showerZone", "x0"], "min": 0},
+        {"name": "Oś WC → szyba prysznica", "from": ["showerZone", "y1"], "to": ["toiletAt", "yc"], "min": 400},
+        {"name": "Oś WC → wanna", "from": ["toiletAt", "yc"], "to": ["d:bath@40", "y0"], "min": 350},
+        {"name": "Wanna → zabudowa WC = wanna → ściana z umywalkami", "equal": [[["d:bath@40", "x1"], ["wcCasing", "x0"]], [["room", "x0"], ["d:bath@40", "x0"]]], "tol": 5},
+        {"name": "Wanna → koniec szafki = wanna → ścianka kolankowa", "from": ["vanity", "y1"], "to": ["d:bath@40", "y0"], "min": 100, "also": [["d:bath@40", "y1"], ["room", "y1"]]},
+        {"name": "Bateria → ściana z umywalkami / ścianka kolankowa", "from": ["room", "x0"], "to": ["d:bath@43", "xc"], "min": 150, "also": [["d:bath@43", "yc"], ["room", "y1"]]},
+        {"name": "Wysokość nad osią WC", "height": ["toiletAt", "yc"], "min": 2000},
+        {"name": "Wysokość przy wejściu do wanny (krawędź od strony pokoju)", "height": ["d:bath@40", "y0"], "min": 1800},
+        {"name": "Wysokość nad drugą umywalką", "height": ["basin", 1], "min": 2100},
+        {"name": "Grzejnik → górna krawędź otworu drzwi", "from": ["d:towelRadiator", "x1"], "to": ["opening:door", "x0"], "min": 0},
+      ],
+      /* Info (Kosztorys, Lista cięć, eRozkrój, Szafka, Montaż, Podejścia, Wymiary), as data: the vanity's sizes (mm), its
+         parts (a, b mm; e: banded edges [D1, D2, S1, S2]; board: 'decor' = the decor chosen, or a product), its hardware
+         and what is bought (a product of the library, a role of fittings, or the decor's board), the steps, the points and
+         the dimensions. note: what this bathroom adds to the product's own; by metal where it differs. */
+      info: {
+        vanity: {"len":1600,"depth":470,"height":400,"top":36,"topDepth":480,"t":18,"gap":2.5,"rail":100,"sections":["A","A"],"basins":[400,1200],"basinW":600,"basinD":400,"basinH":140,"basinBack":50,"gasket":3,"nlA":350,"nlB":400,"z0":200,"bottomY":324,"inner":1564,"innerH":364,"LW":773,"sectionZ":[18,809],"bodyD":452,"frontW":768,"frontA":359,"frontB":178,"topY":760,"rimY":903,"basinZ":400,"nA":2,"nB":0},
+        parts: [
+          {"name":"Blat — warstwa górna","qty":1,"a":1600,"b":480,"e":[0,0,0,0],"board":"decor","edge":"—","note":"sklejany z dolną, obrzeże 42 mm po sklejeniu na 4 bokach"},
+          {"name":"Blat — warstwa dolna","qty":1,"a":1600,"b":480,"e":[0,0,0,0],"board":"decor","edge":"—","note":"klej D3 / PUR"},
+          {"name":"Bok korpusu","qty":2,"a":470,"b":400,"e":[1,0,1,0],"board":"decor","edge":"przód, dół"},
+          {"name":"Wieniec dolny","qty":1,"a":1564,"b":452,"e":[1,0,0,0],"board":"decor","edge":"przód"},
+          {"name":"Listwa górna przednia","qty":1,"a":1564,"b":100,"e":[1,0,0,0],"board":"decor","edge":"przód"},
+          {"name":"Listwa górna tylna","qty":1,"a":1564,"b":100,"e":[0,0,0,0],"board":"decor","edge":"—","note":"otwory na wężyki baterii"},
+          {"name":"Plecy nośne","qty":1,"a":1564,"b":400,"e":[0,0,0,0],"board":"decor","edge":"—","note":"zawieszki, otwory na odpływy i zawory"},
+          {"name":"Przegroda","qty":1,"a":452,"b":364,"e":[0,0,1,0],"board":"decor","edge":"przód"},
+          {"name":"Front A (pod umywalką)","qty":2,"a":768,"b":359,"e":[1,1,1,1],"board":"decor","edge":"4 boki"},
+          {"name":"Dno szuflady A","qty":2,"a":738,"b":340,"e":[0,0,0,0],"board":"board-16-drawer-parts","edge":"—","note":"LW − 35, NL − 10"},
+          {"name":"Tył szuflady A (C)","qty":2,"a":735,"b":148,"e":[1,0,0,0],"board":"board-16-drawer-parts","edge":"góra","note":"LW − 38"},
+        ],
+        hardware: [
+          {"product":"blum-legrabox-pure-c-350-black","qty":2,"use":"szuflada A pod umywalką"},
+          {"product":"blum-legrabox-runner-350-tip-on","qty":2,"use":"szuflada A"},
+          {"product":"blum-tip-on-blumotion-l1","qty":2,"use":"otwieranie przez naciśnięcie, szczelina 2,5 mm"},
+          {"product":"blum-legrabox-front-fixing-c","qty":2,"use":"szuflada A"},
+          {"product":"blum-legrabox-back-fixing-c","qty":2,"use":"szuflada A"},
+          {"product":"camar-807-hangers","qty":2,"use":"na plecach nośnych, regulacja po zawieszeniu"},
+          {"product":"blum-screws-4x15-609-1500","qty":1,"use":"prowadnice"},
+        ],
+        buy: [
+          {"group":"Szafka","board":"decor","qty":1,"note":"korpus, fronty i blat z jednego arkusza"},
+          {"group":"Szafka","product":"m-hm-cutting-edging-erozkroj","note":"arkusz eRozkroj z eksportu XLSX; odbiór na miejscu"},
+          {"group":"Szafka","product":"board-16-drawer-parts"},
+          {"group":"Szafka","product":"abs-edge-2x22","qty":11,"use":"korpus, fronty"},
+          {"group":"Szafka","product":"abs-edge-2x42","qty":5,"use":"blat, 4 boki po sklejeniu"},
+          {"group":"Umywalki","role":"basin","qty":2},
+          {"group":"Umywalki","role":"plug","qty":2},
+          {"group":"Umywalki","role":"tap","qty":2},
+          {"group":"Umywalki","role":"siphon","qty":2},
+          {"group":"Umywalki","product":"epdm-gasket-3-white","qty":1},
+          {"group":"Wanna","role":"bath","qty":1,"note":"w modelu na środku wolnej przestrzeni, nie dokładnie pod oknem"},
+          {"group":"Wanna","role":"bathTap","qty":1,"note":"wys. 990 mm, wylewka 262 mm; w rogu: 310 mm od ściany z umywalkami, 300 mm od ścianki kolankowej; numer w brązie potwierdź w salonie"},
+          {"group":"Wanna","role":"bathSet","qty":1},
+          {"group":"Wanna","product":"bath-siphon-freestanding-click","qty":1},
+          {"group":"Grzejnik","role":"radiator","qty":1,"note":{"brass":"pas ściany od otworu drzwi do narożnika 830 mm, zawieszony od 820 mm","nickel":"do armatury w niklu dobierz kolor chrom/inox; pas ściany od otworu drzwi do narożnika 830 mm, zawieszony od 820 mm"}},
+          {"group":"Grzejnik","product":"radiator-valves-pair-bottom","qty":1},
+          {"group":"Drzwi","role":"door","qty":1,"note":"wersja otwierana na zewnątrz (na korytarz, jak w projekcie) — stronę lewe/prawe potwierdź w sklepie; lico skrzydła równe ze ścianą od korytarza; otwór 900 × 2070"},
+          {"group":"Drzwi","product":"porta-wc-handle-rosette","qty":1},
+        ],
+        work: [
+          ["Cięcie i oklejanie","M-HM: formatki z tabeli, obrzeże ABS 2 mm na klej PUR (wilgoć). Blat: dwie warstwy skleić, potem okleić 4 boki obrzeżem 42 mm."],
+          ["Otwory w blacie","Odpływ Ø 60 i wężyki baterii Ø 35 w obrysie stopki każdej umywalki — <b>z szablonu po zakupie umywalki</b>. Osie: 400 mm, 1200 mm od końca blatu przy drzwiach. Krawędzie otworów zabezpieczyć klejem PUR lub lakierem."],
+          ["Umywalka bez silikonu","Pod stopkę uszczelka EPDM 3 mm w kolorze umywalki (taśma samoprzylepna, przycięta w obrysie, 3 mm cofnięta od krawędzi). Umywalkę dociska nakrętka korka od spodu blatu. Spoina wygląda jak cień 3 mm — bez silikonu."],
+          ["Bateria z umywalki","Bateria stoi na półce umywalki (otwór fabryczny), wężyki przechodzą przez blat i listwę tylną do zaworów za szufladą A (osobno dla każdej umywalki)."],
+          ["Syfon","Syfon oszczędzający miejsce — płaski, tuż pod blatem nad szufladą A, wyjście w ścianę. Szuflada A ma NL 350, za nią 84 mm na zawory kątowe."],
+          ["Montaż","Zawieszki na plecach nośnych, spód korpusu 324 mm nad podłogą. Styk blatu ze ścianą: wąska listwa przyblatowa albo fuga 2 mm akrylem w kolorze fugi."],
+        ],
+        points: [
+          ["Umywalka 1 — odpływ w ścianie Ø 40","od drzwi 600 · wys. 661","syfon płaski pod blatem"],
+          ["Umywalka 1 — zawory kątowe ciepła / zimna","od drzwi 520 / 680 · wys. 550","za szufladą A (NL 350)"],
+          ["Lustro LED 1 — puszka","od drzwi 600 · wys. 2080","nad lustrem, IP44"],
+          ["Umywalka 2 — odpływ w ścianie Ø 40","od drzwi 1400 · wys. 661","syfon płaski pod blatem"],
+          ["Umywalka 2 — zawory kątowe ciepła / zimna","od drzwi 1320 / 1480 · wys. 550","za szufladą A (NL 350)"],
+          ["Lustro LED 2 — puszka","od drzwi 1400 · wys. 2080","nad lustrem, IP44"],
+          ["Grzejnik — oś","ściana z drzwiami, 210 od ściany z umywalką","rurki 55 mm od ściany"],
+          ["Grzejnik — przyłącza dolne","wys. 760","nad blatem szafki; rozstaw wg karty Mexen Hades"],
+          ["Drzwi ukryte — otwór w murze","900 × 2070, oś 1280 od ściany z umywalką","Porta HIDE na zewnątrz: ościeżnica przed tynkiem i płytką"],
+          ["Okno dachowe","940 × 1400, oś 1390 od ściany z umywalką","dolna krawędź ok. 1020 mm nad podłogą"],
+          ["WC — oś","1550 od ściany z drzwiami","stelaż Geberit w zabudowie 250 mm przy dolnej ścianie, podejście do pionu w rogu"],
+          ["Pion Ø160","prawy dolny róg, w zabudowie WC","w osi pionu z parteru"],
+          ["Wanna — odpływ w posadzce","środek wanny 1240 od ściany z umywalkami, 605 od ścianki kolankowej","odpływ pod wanną wg karty wanny (zwykle na środku), spadek do pionu"],
+          ["Wanna — bateria podłogowa (ciepła + zimna)","310 od ściany z umywalkami, 300 od ścianki kolankowej","element podtynkowy w posadzce, przed wylewką"],
+          ["Prysznic — odpływ liniowy","900 przy dolnej ścianie, w narożniku z drzwiami","Vogi Duo, ruszt pod płytkę"],
+          ["Szafka — spód / blat / rant umywalki","324 / 760 / 903","od drzwi 200 … 1800"],
+        ],
+        dims: [
+          ["Pomieszczenie","3010 × 2730 mm (wg projektu)"],
+          ["Powierzchnia podłogi","8,22 m²"],
+          ["Powierzchnia użytkowa (≥ 2,2 m 100 %, 1,4–2,2 m 50 %)","6,40 m²"],
+          ["Ścianka kolankowa","1200 mm"],
+          ["Dach","42°, płaski sufit 2850 mm od 1177 mm od drzwi"],
+          ["Okno dachowe","940 × 1400 (VELUX), oś 1390 mm od ściany z umywalkami"],
+          ["Prysznic","1000 × 1000 mm, lewy dolny róg"],
+          ["Drzwi prysznica","600 mm + szyba stała 400 mm, ścianka boczna szklana"],
+          ["Wanna","wolnostojąca 1700 × 750, na środku wolnej przestrzeni: odstępy 390 / 390 mm i 230 / 230 mm"],
+          ["Bateria wannowa","podłogowa, 310 mm od ściany z umywalkami, 300 mm od ścianki kolankowej"],
+          ["WC","oś 1550 mm od ściany z drzwiami, zabudowa 250 mm × wys. 1200 mm do pionu w rogu"],
+          ["Szafka z umywalkami","1600 × 470 mm, blat 480 mm, 2 × umywalka"],
+          ["Umywalki","Catalano Green Lux 60 × 40, biała"],
+          ["Grzejnik","Mexen Hades 400 × 1200, przy drzwiach, od 820 mm"],
+          ["Drzwi","ukryte Porta HIDE 800, otwór 900, oś 1280 od ściany z umywalką, otwierane na korytarz"],
+          ["Odpływ liniowy prysznica","900 mm, pod płytkę"],
+          ["Fuga","3 mm, w kolorze płytki"],
+        ],
+      },
       tiles: {
         wall:        { tile: 'paradyz-authority-grey', format: '598x1198', layout: 'h' },
         floor:       { tile: 'paradyz-authority-grey', format: '898x898',  layout: 'h' },
@@ -503,7 +663,7 @@ window.BATH_DATA = {
     },
   },
 
-  decors: {               // the Egger boards to choose from (../library/products.dat.js boards): why each would suit
+  decors: {               // the Egger boards to choose from (../library/products boards): why each would suit
     'egger-h1199-st12': { note: 'najciemniejszy, czarnobrązowy — szafka spokojnie ciemna na tle grafitu' },
     'egger-h1181-st37': { note: 'średni tabaczny, wyraźny słój z pęknięciami — ciepły kontrast z grafitem i mosiądzem' },
     'egger-h1399-st10': { note: 'jasnoszary brąz' },
@@ -512,18 +672,9 @@ window.BATH_DATA = {
     'egger-h1176-st37': { note: 'bielony dąb, prawie biały — najjaśniejsza szafka' },
   },
 
-  shop: {                 // shops and services that are not products (the products are in ../library/products.dat.js)
-    mhm: 'M-HM Bielsko-Biała',
-    links: {
-      mhmServices: 'https://m-hm.pl/pl/i/Uslugi/16',
-      mhmBoards: 'https://m-hm.pl/pl/c/Plyty-meblowe/266',
-    },
-  },
-
-  /* the fittings bought (keys of ../library/products.dat.js fittings), by what they are for; by the metal of the fittings
+  /* the fittings bought (keys of the library), by what they are for; by the metal of the fittings
      where it differs; a floor adds its own (its basin and plug, the bath) */
   fittings: {
-    legraboxC: 'blum-legrabox-pure-c-350-black', legraboxK: 'blum-legrabox-pure-k-400-black', runners: 'blum-runners-tip-on-blumotion',
     tap: { brass: 'hansgrohe-tecturis-e-110-73010140', nickel: 'hansgrohe-tecturis-e-110-73010000' },
     siphon: 'geberit-siphon-space-saving',
     bathTap: { brass: 'hansgrohe-tecturis-e-73445140', nickel: 'hansgrohe-tecturis-e-73445000' }, bathSet: 'hansgrohe-10452180',
@@ -531,7 +682,7 @@ window.BATH_DATA = {
   },
 
   /* as house.dat.js, one per mode: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own
-     height for the floor), Info, Test (the checks of engine.js); tabs: of the right panel */
+     height for the floor), Info, Test (the checks, measured on the model); tabs: of the right panel */
   views: {
     '3d': { name: '3D', menu: 'floors', tabs: ['layers', 'finish'],
       layers: {                 // the Warstwy panel, as the house and the kitchen; off: hidden at the start
@@ -546,7 +697,6 @@ window.BATH_DATA = {
 
   defaults: {
     floor: 'ground',
-    tiles: ['paradyz-authority-graphite', 'paradyz-authority-grey'],          // to choose from (../library/products.dat.js tiles)
-    formats: ['598x598', '598x898', '598x1198', '898x898', '1198x1198'],   // Paradyż Authority formats, mm
+    tiles: ['paradyz-authority-graphite', 'paradyz-authority-grey'],          // to choose from (../library/products tiles)
   },
 };
