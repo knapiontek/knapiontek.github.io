@@ -18,7 +18,7 @@ This file: the folders, the rules every folder keeps, what is left to do, the co
 | house/ | the building, from archon/; the rooms without a sub-project |
 | rooms/ | the room sub-projects, one folder each: kitchen/ (the living room's kitchen), bathroom/ (both bathrooms), wardrobe/ (the three walk-in wardrobes, to do) |
 | test.md | what to check after every change; an LLM rebuilds the checks from it (nothing is installed) |
-| index.html | directory listing of the repository, not part of the application |
+| index.html | opens the house (a short page that goes to house/) |
 
 ## Rules
 
@@ -57,9 +57,9 @@ The house shows a room sub-project through an interface, as in Java:
 
 A name says what a file is; the same role has the same name in every folder.
 
-- A page of an application: view.html. Data only: *.dat.js: a room's design design.dat.js, its place in the house and its views scene.dat.js, its estimate estimate.dat.js, the building building.dat.js.
+- The page of an application: index.html (its folder opens it); the kitchen's design page: design.html. Data only: *.dat.js: a room's design design.dat.js, its place in the house and its views scene.dat.js, its estimate estimate.dat.js, the building building.dat.js.
 - Code is named by what it does: model.js computes the model from the data, verify.js checks it (Test), info.js builds the sheets of Info, room.js gives the house a room (the interface in the root, an implementation in each sub-project), shell.js gives a sub-project the shell of its room from the house.
-- core/, library/, apps.dat.js and the MD files keep their names; index.html in a folder is a listing, not part of the application.
+- core/, library/, apps.dat.js and the MD files keep their names. No directory listings: the repository shows the files.
 
 ### Library
 
@@ -73,7 +73,7 @@ Everything bought, once, for every application and independent of them: products
 
 ### Cleanup (first, in one go)
 
-1. **The new names and folders** (the rule above, rooms/, archon/ in the root): all at once, with every reference; furniture.js → room.js. Open: the name of the kitchen's design page (design.html, where the fronts are designed and everything is computed from; proposed: keep design.html, as its data design.dat.js; or fronts.html, elevations.html).
+1. **The new names and folders** (the rule above, rooms/, archon/ in the root): all at once, with every reference; furniture.js → room.js; view.html → index.html in every application; the directory listings go; index.html of the root opens the house.
 2. **The bath tap's spout over the rim** (attic): a check the old engine made from the bath's curved outline and its rim (it failed: the spout ended 117 mm short of the inner rim). Not measured yet: the model has the bath's outline only as a shape; to decide how the check reads it (or the tap moves).
 3. **The attic bath between the WC casing and the vanity wall**: the model has 380 and 390 mm (the old engine said 390 = 390); to correct in the data or accept.
 4. **The floor tiles by the rule of a room with a sub-project**: the house lays tiles only in the rooms without a sub-project (and its estimate has only those); a bathroom's floor is its own (bathroom data), drawn in the house through the interface.
