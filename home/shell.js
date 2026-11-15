@@ -54,14 +54,12 @@ function viewOf(impl) {
 /* ================= THE REGISTER AND THE LOADING ================= */
 let REGISTERED = null;
 const register = impl => { REGISTERED = impl; };
-const file = () => ((root.APPS || []).find(a => a.shell) || {}).shell;
 
 const THROUGH = new Set();                // the files loaded through this interface (for the check below)
 const inOrder = files => root.CORE.ui.scripts(files).then(loaded => loaded.forEach(src => THROUGH.add(src)));
-/* the shell for a page: its implementation file (apps.dat.js), checked against the interface, then its own inner files.
-   base: the home folder seen from the page ('../../'). */
-function load(base) {
-  const path = file();
+/* the shell for a page: its implementation file (path, from the home folder, as the host's list of applications names it),
+   checked against the interface, then its own inner files. base: the home folder seen from the page ('../../'). */
+function load(path, base) {
   if (!path) return Promise.reject(new Error('Brak skorupy domu (apps.dat.js: shell).'));
   const folder = base + path.slice(0, path.lastIndexOf('/') + 1);
   return inOrder([base + path]).then(() => {
@@ -73,9 +71,9 @@ function load(base) {
 }
 
 /* Test: the dependencies on this page. A file of the shell's folder (the house) is on its own pages, or loaded through
-   this interface; nowhere else. base: the home folder seen from the page ('../../'). */
-function dependencies(base) {
-  const path = file(), folders = path ? [path.slice(0, path.lastIndexOf('/') + 1)] : [];
+   this interface; nowhere else. base: the home folder seen from the page ('../../'); path: the shell's implementation file. */
+function dependencies(base, path) {
+  const folders = path ? [path.slice(0, path.lastIndexOf('/') + 1)] : [];
   const items = root.CORE.ui.scriptsOutside(base, folders, THROUGH).map(p => p + ': plik domu poza jego stroną i poza interfejsem shell.js');
   return { name: 'Zależności: pliki domu tylko na jego stronie albo przez interfejs shell.js', items };
 }

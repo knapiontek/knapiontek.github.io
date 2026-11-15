@@ -4,12 +4,13 @@
 (function (root) {
 'use strict';
 
-/* model: KE.build of the project; APPLIANCES: KE.appliances of it. Returns {book(), assembly(), warnings, page} */
-function create(model, APPLIANCES) {
-const KE = root.KitchenEngine, COST = root.KITCHEN_COST, LIBRARY = root.CORE.library;
+/* everything from the host: engine (model.js), design (design.dat.js), estimate (estimate.dat.js), model (engine.build of
+   the project), appliances (engine.appliances of it). Returns {book(), assembly(), warnings, page} */
+function create({ engine, design, estimate, model, appliances }) {
+const KE = engine, COST = estimate, LIBRARY = root.CORE.library, APPLIANCES = appliances;
 /* an item of the estimate: its product from the library (a material: the board design.dat.js gives that use), the rest
    the project's: what it is called for a material, the spec's own part, the use, the quantity, the notes */
-const BOARD_OF = Object.fromEntries(Object.entries(root.KITCHEN_DESIGN.materials).flatMap(([key, m]) => m.uses.map(u => [u, key])));
+const BOARD_OF = Object.fromEntries(Object.entries(design.materials).flatMap(([key, m]) => m.uses.map(u => [u, key])));
 const productOf = item => LIBRARY.product(item.material ? BOARD_OF[item.material] : item.product);
 const ITEMS = COST.categories.flatMap(c => c.items).map(item => {
   const P = productOf(item);

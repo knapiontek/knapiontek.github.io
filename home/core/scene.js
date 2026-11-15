@@ -303,7 +303,7 @@ CORE.createView = function (opts) {
     let downAt = null;
     canvas.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
     canvas.addEventListener('pointerup', e => {
-      if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5 || walk.on) return;
+      if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;   // a click, not a drag (also on a walk)
       ray.setFromCamera(ndcOf(e), camera);
       fn(ray);
     });

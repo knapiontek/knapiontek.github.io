@@ -10,9 +10,9 @@ const WARM = 0xffdcb4;                     // the lamps: 3000 K
 const PER_FLOOR = new Set(['metal', 'decor', 'decorTurned', 'basin', 'basinIn', 'rubber', 'doorPaint']);   // each bathroom its own
 const DEG = Math.PI / 180;
 
-/* env: {materials, textures, shell} (../../room.js) */
+/* env: {materials, textures, library, shell} (../../room.js); its own file (needs) is wired here, nowhere else */
 function make(env) {
-  const CORE = root.CORE, THREE = root.THREE, D = root.BATH_DATA, PRODUCTS = root.LIBRARY_PRODUCTS, TEXTURES = root.LIBRARY_TEXTURES;
+  const CORE = root.CORE, THREE = root.THREE, D = root.BATH_DATA, PRODUCTS = env.library.products, TEXTURES = env.library.textures;
   const LIB = env.materials, TEX = env.textures, FLOORS = Object.keys(D.floors);
   const found = env.shell.rooms('rooms/bathroom/index.html');
   const ROOMS = Object.fromEntries(FLOORS.map(f => [f, found.find(r => r.floor === f)]));
@@ -369,8 +369,8 @@ function make(env) {
 }
 
 /* the textures the bathrooms name: the tiles and the board decors to choose from */
-const textures = () => root.BATH_DATA.defaults.tiles.map(k => root.LIBRARY_PRODUCTS.tiles[k].texture)
-  .concat(Object.keys(root.BATH_DATA.decors).map(k => root.LIBRARY_PRODUCTS.boards[k].texture));
+const textures = library => root.BATH_DATA.defaults.tiles.map(k => library.products.tiles[k].texture)
+  .concat(Object.keys(root.BATH_DATA.decors).map(k => library.products.boards[k].texture));
 
 /* the implementation: its own page uses all of it, the house only what the interface names */
 const BathroomRoom = { needs: ['design.dat.js'], textures, make };

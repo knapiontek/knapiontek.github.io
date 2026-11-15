@@ -6,11 +6,11 @@
 (function (root) {
 'use strict';
 
-/* env: {materials, textures, shell} (../../room.js) */
+/* env: {materials, textures, library, shell} (../../room.js); its own files (needs) are wired here, nowhere else */
 function make(env) {
   const CORE = root.CORE, G = CORE.geometry, { piecesOf } = CORE.mesh;
-  const KE = root.KitchenEngine, SCENE = root.KITCHEN_VIEW, TEXTURES = root.LIBRARY_TEXTURES, LIBRARY_PRODUCTS = root.LIBRARY_PRODUCTS;
-  const project = KE.withLibrary(root.KITCHEN_DESIGN, LIBRARY_PRODUCTS.boards), APPLIANCES = KE.appliances(project, LIBRARY_PRODUCTS.appliances);
+  const KE = root.KitchenEngine, SCENE = root.KITCHEN_VIEW, TEXTURES = env.library.textures, PRODUCTS = env.library.products;
+  const project = KE.withLibrary(root.KITCHEN_DESIGN, PRODUCTS.boards), APPLIANCES = KE.appliances(project, PRODUCTS.appliances);
   const model = KE.build(project, APPLIANCES), settings = project.settings;
   const ROOM = env.shell.rooms('rooms/kitchen/index.html')[0];
   if (!ROOM) throw new Error('W building.dat.js żadne pomieszczenie nie prowadzi do rooms/kitchen/index.html.');
@@ -70,7 +70,7 @@ function make(env) {
     TEX[m.texture] = TEX[m.texture] || { faces: T.faces, size: T.size };
   }
   for (const key of SCENE.floors) {
-    const P = LIBRARY_PRODUCTS.tiles[key], T = TEXTURES[P.texture];
+    const P = PRODUCTS.tiles[key], T = TEXTURES[P.texture];
     FLOORS[key] = { name: P.name, size: { length: T.size[0], width: T.size[1] }, grout: T.grout, faces: T.faces };
   }
   const FLOOR_KEYS = Object.keys(FLOORS);
@@ -859,8 +859,8 @@ function make(env) {
 }
 
 /* the textures the kitchen names: its board decors and the floor tiles to choose from */
-const textures = () => Object.keys(root.KITCHEN_DESIGN.materials).map(key => root.LIBRARY_PRODUCTS.boards[key].texture)
-  .concat(root.KITCHEN_VIEW.floors.map(k => root.LIBRARY_PRODUCTS.tiles[k].texture));
+const textures = library => Object.keys(root.KITCHEN_DESIGN.materials).map(key => library.products.boards[key].texture)
+  .concat(root.KITCHEN_VIEW.floors.map(k => library.products.tiles[k].texture));
 
 /* the implementation: its own page uses all of it, the house only what the interface names */
 const KitchenRoom = { needs: ['design.dat.js', 'scene.dat.js', 'model.js'], textures, make };

@@ -10,8 +10,8 @@
 const INTERFACE = {
   furniture: {                             // what an implementation file registers
     needs: ['list', "its own inner files, in their order, from its folder and never outside it: loaded before make (its own page has them already)"],
-    textures: ['function', '() → the keys of the library textures its furniture uses: loaded before make'],
-    make: ['function', "(env {materials, textures, shell}) → its design (below); materials and textures: the page's libraries for core, the furniture adds its own keys; shell: the shell of its rooms from the house (the interface shell.js)"],
+    textures: ['function', '(library {products}) → the keys of the library textures its furniture uses: the host loads them before make'],
+    make: ['function', "(env {materials, textures, library, shell}) → its design (below); materials and textures: the page's libraries for core, the furniture adds its own keys; library: {products, textures} of library/; shell: the shell of its rooms from the house (the interface shell.js)"],
   },
   design: {                                // what make returns
     rooms: ['function', '() → [{floor, opts}]: the rooms it furnishes, one build each (the kitchen one, the bathrooms one per floor); floor: the house\'s floor id'],
@@ -53,25 +53,20 @@ function viewOf(id, impl) {
 /* ================= THE REGISTER AND THE LOADING ================= */
 const REGISTERED = {};
 const register = (id, impl) => { REGISTERED[id] = impl; };
-/* the applications that have furniture, in the order of apps.dat.js */
-const listed = () => (root.APPS || []).filter(a => a.room).map(a => a.id);
 
 const THROUGH = new Set();                // the files loaded through this interface (for the check below)
 const inOrder = files => root.CORE.ui.scripts(files).then(loaded => loaded.forEach(src => THROUGH.add(src)));
-/* an application's furniture for a host: its implementation file (apps.dat.js), checked against the interface, then its
-   own inner files and its textures. base: the home folder seen from the page ('../'). */
-function load(id, base) {
-  const app = (root.APPS || []).find(a => a.id === id);
-  if (!app || !app.room) return Promise.reject(new Error(`Aplikacja ${id} nie ma mebli (apps.dat.js: room).`));
-  const file = base + app.room, folder = file.slice(0, file.lastIndexOf('/') + 1);
+/* an application's furniture for a host: its implementation file (path, from the home folder, as the host's list of
+   applications names it), checked against the interface, then its own inner files. base: the home folder seen from the
+   page ('../'). The host loads its textures. */
+function load(id, path, base) {
+  const file = base + path, folder = file.slice(0, file.lastIndexOf('/') + 1);
   return inOrder([file]).then(() => {
     const impl = REGISTERED[id];
-    if (!impl) throw new Error(`${app.room} nie zarejestrował mebli ${id}.`);
+    if (!impl) throw new Error(`${path} nie zarejestrował mebli ${id}.`);
     const view = viewOf(id, impl), out = view.needs.filter(f => f.includes('..') || f.includes(':') || f.startsWith('/'));
-    if (out.length) throw new Error(`${app.room}: needs poza folderem podprojektu (${out.join(', ')}), wbrew interfejsowi room.js`);
-    return inOrder(view.needs.map(f => folder + f))
-      .then(() => root.CORE.library.load(base + 'library/', view.textures()))
-      .then(() => view);
+    if (out.length) throw new Error(`${path}: needs poza folderem podprojektu (${out.join(', ')}), wbrew interfejsowi room.js`);
+    return inOrder(view.needs.map(f => folder + f)).then(() => view);
   });
 }
 
@@ -86,13 +81,13 @@ function shownWith(LAYER, hostShown, furniture) {
   };
 }
 
-/* Test: the dependencies on this page. A file of a sub-project (an application with a room) is on its own page, or
-   loaded through this interface; nowhere else. base: the home folder seen from the page ('../'). */
-function dependencies(base) {
-  const folders = [...new Set((root.APPS || []).filter(a => a.room).map(a => a.room.slice(0, a.room.lastIndexOf('/') + 1)))];
+/* Test: the dependencies on this page. A file of a sub-project is on its own page, or loaded through this interface;
+   nowhere else. base: the home folder seen from the page ('../'); paths: the sub-projects' implementation files. */
+function dependencies(base, paths) {
+  const folders = [...new Set(paths.map(p => p.slice(0, p.lastIndexOf('/') + 1)))];
   const items = root.CORE.ui.scriptsOutside(base, folders, THROUGH).map(path => path + ': plik podprojektu poza jego stroną i poza interfejsem room.js');
   return { name: 'Zależności: pliki podprojektów tylko na ich stronach albo przez interfejs room.js', items };
 }
 
-root.ROOM_INTERFACE = { INTERFACE, register, listed, load, shownWith, dependencies };
+root.ROOM_INTERFACE = { INTERFACE, register, load, shownWith, dependencies };
 })(window);

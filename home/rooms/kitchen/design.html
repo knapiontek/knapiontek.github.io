@@ -826,7 +826,8 @@ document.addEventListener('alpine:init', () => {
       document.addEventListener('paste', e => {
         if (isNumberCell(e.target) && !/^\d+$/.test(e.clipboardData.getData('text').trim())) e.preventDefault();
       });
-      KE.load()
+      /* this page is the host: design.dat.js sets window.KITCHEN_DESIGN (a script tag, so the page also works from file://) */
+      (window.KITCHEN_DESIGN ? Promise.resolve(window.KITCHEN_DESIGN) : Promise.reject(new Error('Nie znaleziono pliku design.dat.js obok tej strony')))
         .then(project => {
           this.setProject(project);
           this.keepEmptyRows();

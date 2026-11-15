@@ -1130,12 +1130,6 @@
     return '[\n' + map.map(entry => '  {\n' + Object.entries(entry).map(field).join(',\n') + '\n  }').join(',\n') + '\n]\n';
   }
 
-  // design.dat.js sets window.KITCHEN_DESIGN (a script tag, so the pages also work from file://)
-  function load() {
-    const data = root.KITCHEN_DESIGN;
-    return data ? Promise.resolve(data) : Promise.reject(new Error('Nie znaleziono pliku design.dat.js obok tej strony'));
-  }
-
   // the text of design.dat.js: one material / setting / note / component per line, a blank line between groups
   function designJS(project) {
     const isObject = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -1167,6 +1161,6 @@
   root.KitchenEngine = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, hasTag, FRONT_TYPES, SIDES, HINGE_SIDES,
     placeLabel, gapsText, parseTags, spaceAround, valueAt, PINS_PER_SHELF, tagsOf, readType, cutKey, checkSettings, build, cutList, carcassMap, mapJSON,
-    load, designJS, fromDesignJS, plural, appliances, withLibrary
+    designJS, fromDesignJS, plural, appliances, withLibrary
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -101,7 +101,7 @@ const { DEG, INF, EPS, zRange, rectArea } = CORE.geometry;
 const { Batch, piecesOf } = CORE.mesh;
 const { $, fmt, byId, el, option } = CORE.ui;
 
-const HOUSE = window.HOUSE, GEO = HOUSE.geometry, MATERIALS = window.LIBRARY_MATERIALS, TEX = window.LIBRARY_TEXTURES;
+const HOUSE = window.HOUSE, GEO = HOUSE.geometry, MATERIALS = window.LIBRARY_MATERIALS, TEX = CORE.library.textures;
 const VIEWS = HOUSE.views, VIEW_IDS = Object.keys(VIEWS);
 const VIEW_3D = Object.values(VIEWS).find(v => v.menu), VIEW_2D = Object.values(VIEWS).find(v => v.plan);
 const OPENING_KIND = GEO.openingKinds, PRODUCTS = LIBRARY_PRODUCTS.tiles;
@@ -343,7 +343,10 @@ const placeSun = () => { V.placeSun(SUN.state); for (const b of builtParts()) b.
    apps.dat.js names the files of each application's part; this page names none of them. A part loads after the house is
    shown (or when its layer is switched on), is drawn by core like the house, in its axes and mm, on its floor, and is a
    layer of Meble; a click on its door or drawer opens it. */
-const PARTS = ROOM_INTERFACE.listed().map(id => ({ id, layer: 'part:' + id, name: APPS.find(a => a.id === id).name, built: null, loading: null, status: '' }));
+/* the host wires the parts: the list of applications (apps.dat.js) names each implementation and the shell's, the library
+   is handed to them; the interfaces and the implementations know no list and no library of their own */
+const PARTS = APPS.filter(a => a.room).map(a => ({ id: a.id, path: a.room, layer: 'part:' + a.id, name: a.name, built: null, loading: null, status: '' }));
+const SHELL_PATH = (APPS.find(a => a.shell) || {}).shell, LIBRARY = { products: window.LIBRARY_PRODUCTS, textures: CORE.library.textures };
 state.parts = Object.assign(Object.fromEntries(PARTS.map(p => [p.layer, true])), state.parts || {});
 const PART_LAYER = CORE.ui.layerTree(Object.fromEntries(PARTS.map(p => [p.layer, { name: p.name }])));
 const partOn = k => state.parts[k] !== false;
@@ -364,9 +367,10 @@ function loadParts() {
   for (const p of PARTS) {
     if (p.built || p.loading || !partOn(p.layer)) continue;
     p.status = 'wczytywanie…'; partsPanel();
-    p.loading = Promise.all([ROOM_INTERFACE.load(p.id, '../'), SHELL_INTERFACE.load('../')]).then(([part, shell]) => new Promise((done, fail) => setTimeout(() => {   // the note shows before the build
+    p.loading = Promise.all([ROOM_INTERFACE.load(p.id, p.path, '../').then(part => CORE.library.load('../library/', part.textures(LIBRARY)).then(() => part)),
+      SHELL_INTERFACE.load(SHELL_PATH, '../')]).then(([part, shell]) => new Promise((done, fail) => setTimeout(() => {   // the note shows before the build
       try {
-        const made = part.make({ materials: MATERIALS_3D, textures: TEX, shell });
+        const made = part.make({ materials: MATERIALS_3D, textures: TEX, library: LIBRARY, shell });
         p.built = made.rooms().map(r => made.build(V, Object.assign({}, r.opts, { layers: [p.layer, r.floor] })));
         for (const b of p.built) b.night(!!SUN.state.night);
         if (p.built.some(b => b.finishes.length)) refinish();
@@ -522,6 +526,7 @@ const MM_TO_M = 0.001;                     // the scene is in metres
 V.onClick(ray => {
   if (!is3d()) return;
   if (PARTS.some(p => p.built && partOn(p.layer) && p.built.some(b => b.click(ray)))) return;   // a door or a drawer of a part
+  if (V.walk.on) return;                  // on a walk a click only opens and closes
   const F = openFloor();
   if (!F) return;
   const hit = ray.intersectObjects(PICK.filter(m => ROOM[m.userData.room].floor === F.id))[0], h = cutHeight();
@@ -599,7 +604,7 @@ function showChecks() {
   const tried = PARTS.filter(p => p.built || p.status.startsWith('błąd'));
   ROOM_CHECK.name = 'Pokoje aplikacji zgodne z interfejsem room.js' + (tried.length ? ' (sprawdzone: ' + tried.map(p => p.name).join(', ') + ')' : ' (jeszcze nie wczytane)');
   ROOM_CHECK.items = PARTS.filter(p => p.status.startsWith('błąd')).map(p => `${p.name}: ${p.status.slice(6)}`);
-  $('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(ROOM_INTERFACE.dependencies('../'), SHELL_INTERFACE.dependencies('../')));
+  $('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(ROOM_INTERFACE.dependencies('../', PARTS.map(p => p.path)), SHELL_INTERFACE.dependencies('../', SHELL_PATH)));
 }
 showChecks();
 

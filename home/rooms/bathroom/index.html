@@ -196,7 +196,9 @@ const PRODUCTS = LIBRARY_PRODUCTS;
 let PART;
 PART = window.BathroomRoom;
 let SHELL;   // the room's shell from the house (the interface shell.js)
-try { [SHELL] = await Promise.all([SHELL_INTERFACE.load('../../'), CORE.library.load('../../library/', PART.textures())]); } catch (e) { return fail('Błąd: ' + e.message); }
+/* this page is the host: it wires its own files, the library and the shell (the list of applications names its file) */
+const LIBRARY = { products: window.LIBRARY_PRODUCTS, textures: CORE.library.textures }, SHELL_PATH = (APPS.find(a => a.shell) || {}).shell;
+try { [SHELL] = await Promise.all([SHELL_INTERFACE.load(SHELL_PATH, '../../'), CORE.library.load('../../library/', PART.textures(LIBRARY))]); } catch (e) { return fail('Błąd: ' + e.message); }
 const TEXTURES = window.LIBRARY_TEXTURES;
 
 /* The room from the house (the interface ../../shell.js), the bathroom's drawing from design.dat.js (room.js); Info and Test
@@ -206,7 +208,7 @@ try { FLOOR = new URLSearchParams(location.search).get('floor') || localStorage.
 if (!BATH_DATA.floors[FLOOR]) FLOOR = BATH_DATA.defaults.floor;
 const MATERIAL_LIB = Object.assign({}, LIBRARY_MATERIALS), TEX = {};
 let BP;
-try { BP = PART.make({ materials: MATERIAL_LIB, textures: TEX, shell: SHELL }); } catch (e) { return fail(e.message); }
+try { BP = PART.make({ materials: MATERIAL_LIB, textures: TEX, library: LIBRARY, shell: SHELL }); } catch (e) { return fail(e.message); }
 const HOUSE_ROOM = BP.ROOMS[FLOOR];
 const DATA = Object.assign({}, BATH_DATA, BATH_DATA.floors[FLOOR]), ATTIC = DATA.type === 'attic';   // the floor's own over the shared
 const V = DATA.info.vanity;   // the vanity in mm (design.dat.js), for Info
@@ -750,7 +752,7 @@ function measureChecks() {
   });
 }
 const CHECKS = measureChecks();
-$('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(ROOM_INTERFACE.dependencies('../../'), SHELL_INTERFACE.dependencies('../../')));
+$('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(ROOM_INTERFACE.dependencies('../../', APPS.filter(a => a.room).map(a => a.room)), SHELL_INTERFACE.dependencies('../../', SHELL_PATH)));
 
 const PLAN = CORE.plan.create(MATERIAL_LIB), CUT = HOUSE_ROOM.planCut;
 const ROOM_KEYS = new Set(Object.entries(CUT_OF).filter(([, c]) => c.room).map(([k]) => k));   // the suspended ceiling: as the house's

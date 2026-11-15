@@ -4,10 +4,10 @@
 (function (CORE) {
 'use strict';
 
-/* base: the library folder ('../library/'); keys: the textures the page uses. Resolves with all loaded textures
-   (key -> {name, kind, size [along, across] mm, grout, faces: [image]}). */
+/* the loaded textures: key -> {name, kind, size [along, across] mm, grout, faces: [image]}; one map for the page */
+const T = window.LIBRARY_TEXTURES = window.LIBRARY_TEXTURES || {};
+/* base: the library folder ('../library/'); keys: the textures the page uses. Resolves with all loaded textures. */
 function load(base, keys) {
-  const T = window.LIBRARY_TEXTURES = window.LIBRARY_TEXTURES || {};
   const one = key => new Promise((done, failed) => {
     const s = document.createElement('script');
     s.src = base + 'textures/' + key + '.dat.js';
@@ -24,5 +24,5 @@ function product(key) {
   throw new Error('brak produktu ' + key + ' w bibliotece (library/products)');
 }
 
-CORE.library = { load, product };
+CORE.library = { load, product, textures: T };
 })(window.CORE = window.CORE || {});
