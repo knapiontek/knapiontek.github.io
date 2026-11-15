@@ -45,7 +45,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 
 ## 4. Poruszanie się, przekrój, 2D
 
-- **Spacer**: ciało to koło (walk.radius); ściany i stałe elementy domu je odpychają najkrótszą drogą, więc idzie się wzdłuż ściany, a przy ościeżu skręca w przejście. Przez drzwi (przejście) prowadzi posadzka. Krok jest dzielony, żeby nie przejść przez ścianę. Meble nie zatrzymują (jeszcze).
+- **Spacer**: ciało to koło (walk.radius); ściany i stałe elementy domu je odpychają najkrótszą drogą, więc idzie się wzdłuż ściany, a przy ościeżu skręca w przejście. Przez drzwi (przejście) prowadzi posadzka. Krok jest dzielony, żeby nie przejść przez ścianę. Meble też zatrzymują: każdy podprojekt podaje przez interfejs room.js, na co się wpada (jego bryły, drzwiczki i szuflady zamknięte, detale), tylko to, co jest pokazane; drzwi pomieszczenia w przejściu nie zatrzymują, przechodzi się jak przez otwarte.
 - **Poruszanie**: kółko przybliża do miejsca pod kursorem. Z zewnątrz obrót jest wokół środka domu; w środku wokół tego, co jest na środku widoku. Punkt obrotu nigdy nie zostaje za kamerą.
 - **Przekrój**: płaszczyzna, która tnie model. Suwak przesuwa się o pełne kroki od 500 mm nad podłogą; ostatni krok to góra kondygnacji, gdzie cięcia nie ma. Przecięte bryły są zamknięte w kolorze przeciętego materiału, także gdy cięcie wypada dokładnie na górze bryły (nadproże okna albo drzwi).
 - **2D**: obie kondygnacje obok siebie, ogród u góry. Cięcie 1500 mm nad podłogą parteru i 800 mm nad podłogą poddasza. Schody pod cięciem rysuje się linią ciągłą, nad cięciem przerywaną; z poddasza widać je całe przez otwór w stropie.

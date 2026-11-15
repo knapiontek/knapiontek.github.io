@@ -80,17 +80,8 @@ Everything bought, once, for every application and independent of them: products
 
 ## To do
 
-### Implementation
-
-1. **The furniture in the house's 2D plan** (kitchen and bathrooms).
-2. **The walk**: furniture does not stop it yet; the attic is not tested.
-3. **Speed**: the house with all its furniture, measured: the time to the first frame and the frame rate while orbiting.
-4. **The bathrooms' tiles in their estimate**: the bathrooms' Info prices no tiles (walls and floor); the house no longer counts their floors.
-5. **The wardrobes' open questions** (below), then **the wardrobes (wardrobe/)**: a sub-project as the bathrooms, its own application (Garderoby) and its furniture in the house.
-
-### Last
-
-6. **project.svg** (the dependency graph): refreshed at the end, when the files stop changing.
+1. **The wardrobes' open questions** (below), then **the wardrobes (wardrobe/)**: a sub-project as the bathrooms, its own application (Garderoby) and its furniture in the house; later.
+2. **project.svg** (the dependency graph): refreshed after every change of files.
 
 ### The wardrobes
 

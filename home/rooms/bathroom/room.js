@@ -282,6 +282,17 @@ function make(env) {
     const ROOM_SET = new Set(ROOM_CELLS), raw = CORE.mesh.piecesOf(STATIC);
     const pieces = ROOM_CELLS.length ? CORE.mesh.finishPieces(raw, FINISHES, p => ROOM_SET.has(p.cell)) : raw;
     V.buildMeshes(pieces); V.buildEdges(raw);
+    /* the tiled area of each surface (wall, floor, shower, showerFloor), m²: the faces the finishes lie on, as drawn */
+    const tiledArea = () => {
+      const out = {};
+      for (const p of pieces) {
+        const s = SURFACES.find(k => p.material === tileKey(k)); if (!s) continue;
+        const P = p.poly, c = [0, 0, 0];
+        P.forEach((a, i) => { const b = P[(i + 1) % P.length]; c[0] += a[1] * b[2] - a[2] * b[1]; c[1] += a[2] * b[0] - a[0] * b[2]; c[2] += a[0] * b[1] - a[1] * b[0]; });
+        out[s] = (out[s] || 0) + Math.hypot(...c) / 2 / 1e6;
+      }
+      return out;
+    };
 
     const reduced = V.reducedMotion, MOVERS = [];
     for (const m of M.movers) {
@@ -346,8 +357,10 @@ function make(env) {
     }
     function click(ray) { const m = moverAlong(ray); if (!m) return false; toggle(m); return true; }
 
-    return { solids: STATIC.filter(c => !ROOM_CELLS.includes(c)), finishes: FINISHES, shown, showDetails, click, night,
-      ROOM, ROOM_CELLS, RECORDS, STATIC, MOVERS, DETAILS, LAMPS, toggle, moverAlong, setTiles, tileLines, tileMaterials, tileSize,
+    const SOLIDS = STATIC.filter(c => !ROOM_CELLS.includes(c));
+    const obstacles = shownBy => V.boxes(SOLIDS.concat(...MOVERS.map(m => m.cells)).filter(c => shownBy(c.layers)), DETAILS.filter(d => shownBy(d.layers)).map(d => d.mesh));
+    return { solids: SOLIDS, finishes: FINISHES, shown, showDetails, click, night, obstacles,
+      ROOM, ROOM_CELLS, RECORDS, STATIC, MOVERS, DETAILS, LAMPS, toggle, moverAlong, setTiles, tileLines, tileMaterials, tileSize, tiledArea,
       material: name => V.material(keyOf(name, f)), METALS, cameras: M.cameras, cuts: M.cuts };
   }
 

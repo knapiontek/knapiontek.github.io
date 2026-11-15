@@ -530,7 +530,13 @@ V.onClick(ray => {
 V.enableNavigation();
 /* the walk stands on the walkable solids and, through a passage (a door), on its floor: the floor runs on through it */
 const PASSAGE_FLOORS = PASSAGES.map(o => ({ S: CORE.geometry.prism([o.b[0], o.b[1], o.b[2], o.b[3], o.b[4] - 1, o.b[4]]) }));
-V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, ground: ALL_CELLS.filter(c => c.walkable).concat(PASSAGE_FLOORS), startLevel: FLOORS[0].level, pad: $('pad'),
+/* the furniture shown stops the walk too, whatever floor is open: what each gives through the interface (obstacles) */
+const walkShown = ROOM_INTERFACE.shownWith(LAYER, () => true, PARTS.map(p => ({ layer: p.layer, on: () => partOn(p.layer), shown: layers => p.built[0].shown(layers) })));
+/* …but not a door of a room in a passage (its leaf, frame and handles): the walk goes through it as if it were open */
+const IN_DOOR = 100;                      // mm around a passage that a door's handles and frame reach
+const inPassage = o => PASSAGES.some(({ b }) => o[0] >= b[0] - IN_DOOR && o[1] <= b[1] + IN_DOOR && o[2] >= b[2] - IN_DOOR && o[3] <= b[3] + IN_DOOR && o[4] >= b[4] - 1 && o[5] <= b[5] + 1);
+const furnitureObstacles = () => [].concat(...builtParts().map(b => b.obstacles(walkShown))).filter(o => !inPassage(o));
+V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, more: furnitureObstacles, ground: ALL_CELLS.filter(c => c.walkable).concat(PASSAGE_FLOORS), startLevel: FLOORS[0].level, pad: $('pad'),
   canStart: is3d, onToggle: () => { bottomMenu(); applyView(); }, home: () => VIEW_3D.cameras.all[0] });
 
 /* ================= 10. 2D PLAN (core/plan.js) =================
@@ -604,7 +610,7 @@ setMode(CORE.ui.askedMode(VIEWS) || state.mode);
 $('loading').hidden = true;
 V.run();
 setTimeout(loadParts, 300);   // after the house's first frames
-window.HOUSE_VIEW = { CELLS, CHECKS, setCamera, setLayer, setMode, selectRoom, state, RESULTS, PARTS, V, pieces: PIECES.length, edges: V.EDGE_GROUPS.length,   // for tests
+window.HOUSE_VIEW = { CELLS, CHECKS, setCamera, setLayer, setMode, selectRoom, state, RESULTS, PARTS, V, furnitureObstacles, pieces: PIECES.length, edges: V.EDGE_GROUPS.length,   // for tests
   cells: { CELLS, FIXTURES, ROOF_CELLS, STAIR_CELLS, SITE_CELLS } };
 }).catch(e => { const l = document.getElementById('loading'); l.hidden = false; l.textContent = 'Błąd: ' + e.message; });
 </script>

@@ -38,9 +38,11 @@ Compare with the run before the change: everything the same, or each difference 
 
 ## 3. The walk in the house
 
-- Through every interior door of the ground floor, both ways: aimed at the middle and at 200 mm off it, straight and 30° askew, from 900 mm before the wall. Walking forward until it stops; it must end 400 mm past the wall. Expected: all pass.
+With the furniture loaded (all of it on).
+- Through every interior door of the ground floor, both ways: aimed at the middle and at 200 mm off it, straight and 30° askew, from 900 mm before the wall. Walking forward until it stops; it must end 400 mm past the wall. Expected: all pass (40), the bathroom's door included: a room's door in a passage does not stop it.
+- Through every interior door of the attic, both ways: aimed at the middle and at 150 mm off it, straight, from 600 mm before the wall (the hall is narrow: a start further or askew lies in the next room). Standing on the attic floor. Expected: all pass (30).
 - Straight at a wall away from any door, running: it stops on its side, never through.
-- The attic: the same, still to be done.
+- The furniture stops it, the body (its radius) short of it: toward the kitchen island from the living room (stops 220 mm before the worktop), into the attic bathroom toward the bath (220 mm before its rim); a page that hides a furniture's layer walks through where it stood.
 
 ## 4. The dependencies
 
@@ -51,5 +53,5 @@ Compare with the run before the change: everything the same, or each difference 
 
 ## 5. The bathroom's own page against the house
 
-- Its tiles, its doors and drawers (open positions to the mm), its plans and its Info are the same as before the change: every tab of Info (not only the first), the estimate to the grosz.
+- Its tiles, its doors and drawers (open positions to the mm), its plans and its Info are the same as before the change: every tab of Info (not only the first), the estimate to the grosz. The tiles in the estimate: m² of each tile from the tiled faces of the model, with the reserve; the ground floor 4,74 m² floor and 28,10 m² walls, the attic 33,78 m² (with the default tiles).
 - Its Test: the checks of design.dat.js, measured on the model, with their values (the ground floor: 405, 10, 140, 410 mm; the attic: 0, 550, 480, 390 = 390, 230 / 230, 42 (the spout inside the bath's inner rim), 310 / 380, 2515, 2083, 2650, 420 mm), all OK.

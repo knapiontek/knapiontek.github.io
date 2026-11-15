@@ -335,8 +335,23 @@ CORE.createView = function (opts) {
   }
 
   /* ================= WALK =================
-     w: {config, solids (what it bumps into), ground (walkable cells), startLevel, pad (element), canStart(), onToggle(), home (camera)} */
+     w: {config, solids (what it bumps into), more() (more it bumps into, when the walk starts: boxes, as boxes gives them),
+         ground (walkable cells), startLevel, pad (element), canStart(), onToggle(), home (camera)} */
   let W = null, OBSTACLES = [], GROUND = [];
+  /* boxes [x1, x2, y1, y2, z1, z2] in house axes (mm) of cells (their solids) and of the meshes of objects that show */
+  function boxes(cells, objects = []) {
+    const out = cells.map(c => { const ys = c.S.poly.map(p => p[0]), z = zRange(c.S); return [c.S.x1, c.S.x2, Math.min(...ys), Math.max(...ys), z[0], z[1]]; });
+    const shows = o => { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; };
+    for (const o of objects) o.traverse(m => {
+      if (!m.isMesh || !shows(m)) return;
+      const b = new THREE.Box3().setFromObject(m); if (b.isEmpty()) return;
+      const a = root.worldToLocal(b.min.clone()), c = root.worldToLocal(b.max.clone());
+      out.push([Math.min(a.x, c.x), Math.max(a.x, c.x), Math.min(a.y, c.y), Math.max(a.y, c.y), Math.min(a.z, c.z), Math.max(a.z, c.z)]);
+    });
+    return out;
+  }
+  const obstacle = ([x1, x2, y1, y2, z1, z2]) => ({ x1, x2, y1, y2, z: [z1, z2] });
+  let BASE = [];
   function groundAt(x, y, z) {             // the highest walkable top under (x, y) within a step of z
     let best = null;
     for (const c of GROUND) {
@@ -382,6 +397,7 @@ CORE.createView = function (opts) {
     redraw();
   }
   function startWalk() {
+    OBSTACLES = BASE.concat((W.more ? W.more() : []).map(obstacle));
     walk.on = true; controls.enabled = false; walk.z = groundAt(walk.x, walk.y, W.startLevel) ?? W.startLevel;
     W.pad.hidden = false; W.onToggle(); placeWalkCamera();
   }
@@ -418,7 +434,7 @@ CORE.createView = function (opts) {
   function enableWalk(w) {
     W = w;
     Object.assign(walk, { x: w.config.start.x, y: w.config.start.y, z: 0, heading: w.config.start.heading, pitch: 0 });
-    OBSTACLES = w.solids.map(c => { const ys = c.S.poly.map(p => p[0]); return { x1: c.S.x1, x2: c.S.x2, y1: Math.min(...ys), y2: Math.max(...ys), z: zRange(c.S) }; });
+    OBSTACLES = BASE = boxes(w.solids).map(obstacle);
     GROUND = w.ground;
     const keyName = e => e.key.length === 1 ? e.key.toLowerCase() : e.key;
     window.addEventListener('keydown', e => {
@@ -482,6 +498,6 @@ CORE.createView = function (opts) {
 
   return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, CUT, CLIP, hash01, canvasTexture, loadImage, material, useMaterial, capMaterial,
     buildMeshes, removeMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion, addCaps, buildCaps, setCut,
-    onClick, enableNavigation, walk, enableWalk, startWalk, stopWalk, onFrame, start, run, get hemi() { return hemi; }, get sun() { return sun; } };
+    onClick, enableNavigation, walk, boxes, enableWalk, startWalk, stopWalk, onFrame, start, run, get hemi() { return hemi; }, get sun() { return sun; } };
 };
 })(window.CORE = window.CORE || {});

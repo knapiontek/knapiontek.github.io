@@ -568,6 +568,16 @@ function bathInfo(decor, metal) {
       source: source(shopName(P.shop), P.link, [e.role ? P.note : '', noteOf(e)].filter(Boolean).join('; ')) };
   };
   const groups = [...new Set(I.buy.map(e => e.group))];
+  /* the tiles: the area each surface has in the model, by the tile chosen for it, with the reserve for the cuts */
+  const area = built.tiledArea(), reserve = DATA.defaults.tileReserve, byTile = new Map();
+  const SURFACE_NAME = { wall: 'ściany', floor: 'posadzka', shower: 'ściany prysznica', showerFloor: 'posadzka prysznica' };
+  for (const [s, a] of Object.entries(area)) {
+    const k = state.tiles[s].tile, t = byTile.get(k) || byTile.set(k, { area: 0, use: [] }).get(k);
+    t.area += a; t.use.push(`${SURFACE_NAME[s]} ${a.toFixed(2).replace('.', ',')} m² (${sizeLabel(tileSize(s))})`);
+  }
+  const tileLines = [...byTile].map(([k, t]) => { const P = PRODUCTS.tiles[k];
+    return { name: P.name, unit: 'm²', qty: Math.round(t.area * (1 + reserve) * 100) / 100, price: P.price ?? null, use: t.use.join('; '), spec: P.finish || P.note || '',
+      source: source(new URL(P.link).hostname.replace(/^www\./, ''), P.link, `powierzchnia z modelu ${t.area.toFixed(2).replace('.', ',')} m² + ${Math.round(reserve * 100)}% zapasu na docinki`) }; });
   const estimate = {
     title: `Kosztorys – łazienka ${DATA.name.toLowerCase()} (${DATA.title})`,
     info: 'Ceny brutto z dnia projektu (5.11.2026), bez dostawy. Pozycje bez ceny: wycena w sklepie.',
@@ -575,9 +585,10 @@ function bathInfo(decor, metal) {
       { name: 'Szafka – płyty i obróbka', group: 'Meble', items: I.buy.filter(e => e.group === 'Szafka').map(line) },
       { name: 'Szafka – okucia Blum', group: 'Meble', items: I.hardware.map(line) },
       ...groups.filter(g => g !== 'Szafka').map(g => ({ name: g, group: 'Wyposażenie', items: I.buy.filter(e => e.group === g).map(line) })),
+      { name: 'Płytki – ściany i posadzka', group: 'Wykończenie', items: tileLines },
     ],
-    totals: [{ label: 'Meble (materiały) razem', group: 'Meble' }, { label: 'Wyposażenie razem', group: 'Wyposażenie' }],
-    excluded: ['Płytki ścienne (posadzki są w kosztorysie domu), kleje i fugi, robocizna, hydraulika i elektryka.'],
+    totals: [{ label: 'Meble (materiały) razem', group: 'Meble' }, { label: 'Wyposażenie razem', group: 'Wyposażenie' }, { label: 'Wykończenie razem', group: 'Wykończenie' }],
+    excluded: ['Kleje i fugi, robocizna, hydraulika i elektryka.'],
   };
   const along = (e, i, j) => e[i] + e[j];
   const block = (id, title, mat) => ({ id, title, cut: true, rows: parts.filter(p => p.mat === mat).map(p => ({

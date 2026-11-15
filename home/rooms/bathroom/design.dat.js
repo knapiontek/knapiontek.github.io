@@ -699,5 +699,6 @@ window.BATH_DATA = {
   defaults: {
     floor: 'ground',
     tiles: ['paradyz-authority-graphite', 'paradyz-authority-grey'],          // to choose from (../../library/products tiles)
+    tileReserve: 0.1,                      // the estimate: tiles to buy = the tiled area × (1 + this), for the cuts
   },
 };

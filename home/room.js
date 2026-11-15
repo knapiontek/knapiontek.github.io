@@ -23,6 +23,7 @@ const INTERFACE = {
     shown: ['function', '(layers) → whether a solid of these layers shows in a host, which has none of its layer switches (all on)'],
     showDetails: ['function', "(shown) its details (plain meshes) shown by the host's shown"],
     click: ['function', '(ray) → true if the ray hit a door or a drawer of it (it opens or closes)'],
+    obstacles: ['function', "(shown) → [[x1, x2, y1, y2, z1, z2]]: what a person walking bumps into, of what the host's shown shows: its solids, its doors and drawers closed, its details; house axes, mm (core's boxes)"],
     night: ['function', '(on) its lamps at night'],
   },
 };
