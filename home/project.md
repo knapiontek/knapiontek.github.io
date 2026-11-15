@@ -81,7 +81,8 @@ Everything bought, once, for every application and independent of them: products
 ## To do
 
 1. **The wardrobes' open questions** (below), then **the wardrobes (wardrobe/)**: a sub-project as the bathrooms, its own application (Garderoby) and its furniture in the house; later.
-2. **project.svg** (the dependency graph): refreshed after every change of files.
+2. **A wider view on a walk**: in a small room (a bathroom) one cannot step back to see it. Stepping the camera back and cutting off what is nearer than the eye was tried and looked bad (the walls behind cut oddly); next: a wide lens, a fisheye or the like.
+3. **project.svg** (the dependency graph): refreshed after every change of files.
 
 ### The wardrobes
 

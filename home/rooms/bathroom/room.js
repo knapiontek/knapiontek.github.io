@@ -327,7 +327,7 @@ function make(env) {
       mesh.userData.detail = true;
       /* a section of a loft (its index in the data) as drawn, in house axes and mm (the checks read an outline from it) */
       const section = k => { mesh.updateWorldMatrix(true, false); return ringOf(d.sections[k]).map(p => V.root.worldToLocal(mesh.localToWorld(new THREE.Vector3(...p)))); };
-      return { mesh, layers: layersOf(d), name: d.name, room: d.cut && (M.cuts[d.cut] || {}).room, section: d.kind === 'loft' ? section : null };
+      return { mesh, layers: layersOf(d), name: d.name, room: d.cut && (M.cuts[d.cut] || {}).room, section: d.kind === 'loft' ? section : null, moves: !!d.mover };
     });
 
     /* ---------- the lamps, on by night ---------- */
@@ -358,7 +358,8 @@ function make(env) {
     function click(ray) { const m = moverAlong(ray); if (!m) return false; toggle(m); return true; }
 
     const SOLIDS = STATIC.filter(c => !ROOM_CELLS.includes(c));
-    const obstacles = shownBy => V.boxes(SOLIDS.concat(...MOVERS.map(m => m.cells)).filter(c => shownBy(c.layers)), DETAILS.filter(d => shownBy(d.layers)).map(d => d.mesh));
+    /* what a walker bumps into: the solids and the details that stand still (doors and drawers open, so they do not) */
+    const obstacles = shownBy => V.boxes(SOLIDS.filter(c => shownBy(c.layers)), DETAILS.filter(d => !d.moves && shownBy(d.layers)).map(d => d.mesh));
     return { solids: SOLIDS, finishes: FINISHES, shown, showDetails, click, night, obstacles,
       ROOM, ROOM_CELLS, RECORDS, STATIC, MOVERS, DETAILS, LAMPS, toggle, moverAlong, setTiles, tileLines, tileMaterials, tileSize, tiledArea,
       material: name => V.material(keyOf(name, f)), METALS, cameras: M.cameras, cuts: M.cuts };

@@ -228,7 +228,7 @@ function make(env) {
     function detail(a, geometry, key, x, y, z, shadow = true) {
       const material = typeof key === 'string' ? V.material(key) : key, m = new THREE.Mesh(geometry, material);
       m.position.set(x, y, z); m.castShadow = shadow && !material.transparent; m.receiveShadow = shadow;
-      m.userData.owner = a.owner; a.frame.add(m); DETAILS.push({ mesh: m, layers: a.layers });
+      m.userData.owner = a.owner; a.frame.add(m); DETAILS.push({ mesh: m, layers: a.layers, moves: !!a.owner.info.mover });
       return m;
     }
     /* a cylinder along v, or along u ('x') or n ('z'), centred on (u, v, n) */
@@ -846,7 +846,8 @@ function make(env) {
       return true;
     }
     const SOLIDS = STATIC.filter(c => !c.layers.some(k => k.startsWith('o:')));
-    const obstacles = shownBy => V.boxes(SOLIDS.concat(...MOVERS.map(m => m.cells)).filter(c => shownBy(c.layers)), DETAILS.filter(d => shownBy(d.layers)).map(d => d.mesh));
+    /* what a walker bumps into: the solids and the details that stand still (doors and drawers open, so they do not) */
+    const obstacles = shownBy => V.boxes(SOLIDS.filter(c => shownBy(c.layers)), DETAILS.filter(d => !d.moves && shownBy(d.layers)).map(d => d.mesh));
     return { finishes: [], solids: SOLIDS, shown, showDetails, click, night, obstacles,
       STATIC, MOVERS, DETAILS, ENVELOPES, LAMPS, LAMP_MATERIALS, UNDRAWN, SIDES, PIECES, carcasses, floorTexture, ownerAlong, toggle };
   }

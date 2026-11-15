@@ -71,6 +71,7 @@ window.HOUSE = {
    "eps": {"name": "styropian 200 mm", "material": "plasterWhite", "raw": "insulation", "finish": "facade", "cap": "insulation", "thickness": 200, "layers": ["insulation"], "opened": true},
    "epsSoffit": {"name": "styropian podbitki wnęki 470 mm", "material": "plasterWhite", "raw": "insulation", "finish": "facade", "cap": "insulation", "thickness": 470, "layers": ["insulation"], "opened": true},
    "ringBeam": {"name": "wieniec nad skrzydłem portalu", "material": "plasterInside", "cap": "concrete", "thickness": 240, "layers": ["slabs"]},
+   "balustrade": {"name": "balustrada klatki schodowej (prosta, przyjęta: nie ma jej na rysunkach)", "material": "tread", "cap": "tread", "thickness": 40, "layers": ["stair"]},
    "slab": {"name": "strop z wieńcem", "material": "plasterInside", "cap": "concrete", "thickness": 340, "layers": ["slabs"], "walkable": true},
    "ceiling": {"name": "sufit z ociepleniem", "material": "plasterInside", "cap": "insulation", "thickness": 390, "layers": ["slabs"]}
   },
@@ -160,6 +161,8 @@ window.HOUSE = {
    {"id": "attic6", "kind": "block120", "b": [5350, 5470, 4350, 8660, 3060, 5910], "top": "roof"},
    {"id": "attic7", "kind": "block120", "b": [7370, 7490, 440, 3410, 3060, 5910], "top": "roof"},
    {"id": "attic8", "kind": "block120", "b": [7490, 9010, 3290, 3410, 3060, 5910], "top": "roof"},
+   {"id": "balustradeN", "kind": "balustrade", "b": [5470, 6460, 4350, 4390, 3060, 4060]},
+   {"id": "balustradeE", "kind": "balustrade", "b": [6420, 6460, 2730, 4350, 3060, 4060]},
    {"id": "attic9", "kind": "block120", "b": [8200, 8320, 5650, 8660, 3060, 5910], "top": "roof"},
    {"id": "attic12", "kind": "block120", "b": [9010, 9130, 440, 6490, 3060, 5910], "top": "roof"},
    {"id": "attic13", "kind": "block120", "b": [9130, 12760, 4410, 4530, 3060, 5910], "top": "roof"}
@@ -371,7 +374,7 @@ window.HOUSE = {
      {"name": "Pokoje", "eye": [12400, 4500, 1600], "target": [9300, 7000, 600]}
     ]
    },
-   "walk": {"eye": 1600, "radius": 220, "step": 360, "back": 2500, "headroom": 100, "speed": 1400, "turn": 90, "look": 50, "run": 2.2, "start": {"x": 11200, "y": 5200, "heading": 180}}
+   "walk": {"eye": 1600, "radius": 220, "step": 360, "headroom": 100, "speed": 1400, "turn": 90, "look": 50, "run": 2.2, "start": {"x": 11200, "y": 5200, "heading": 180}}
   },
   "2d": {
    "name": "2D",
