@@ -22,6 +22,7 @@
     <div id="info" hidden aria-label="Informacje"></div>
     <div class="dock" id="dock" aria-label="Dolne menu"></div>
     <div class="pad" id="pad" aria-label="Sterowanie spacerem" hidden>
+      <button data-back aria-label="Oddal widok" title="Oddal: widok jak z kilku metrów za tobą (Z)">⤢</button>
       <button data-k="ArrowUp" aria-label="Do przodu">▲</button>
       <button data-k="ArrowLeft" aria-label="Obrót w lewo">◀</button>
       <button data-k="ArrowDown" aria-label="Do tyłu">▼</button>
@@ -31,7 +32,7 @@
     <div class="float" id="help" role="dialog" aria-label="Pomoc" hidden>
       <div data-help="3d">
         <p>Obracaj: lewy przycisk (z zewnątrz wokół środka domu, w środku wokół tego, co na środku widoku) · przesuwaj: prawy · przybliżaj: kółko (do miejsca pod kursorem).</p>
-        <p><b>Spacer</b>: strzałki chodzą i obracają, A/D krok w bok, Shift szybciej, PgUp/PgDn lub przeciąganie myszą patrzy, Esc kończy.</p>
+        <p><b>Spacer</b>: strzałki chodzą i obracają, A/D krok w bok, Shift szybciej, PgUp/PgDn lub przeciąganie myszą patrzy, ⤢ albo Z oddala widok (jak z kilku metrów za tobą, ściany za tobą znikają), Esc kończy.</p>
         <p>U góry: kondygnacje i dach. Na dole: skąd patrzysz. ☀: przeciągnij słońce wokół domu i po łuku wysokości; dzień albo noc (wspólne dla wszystkich aplikacji). ◐: jasny albo ciemny wygląd.</p>
         <p>Bez dachu najwyższa pokazana kondygnacja jest otwarta: jej przekrój jest w Warstwach, kliknięcie w podłogę wybiera pomieszczenie (płytki w Wykończeniu).</p>
         <p>Meble aplikacji (Warstwy → Meble) wczytują się chwilę po domu; kliknięcie drzwiczek albo szuflady otwiera je lub zamyka.</p>
@@ -367,8 +368,8 @@ function loadParts() {
   for (const p of PARTS) {
     if (p.built || p.loading || !partOn(p.layer)) continue;
     p.status = 'wczytywanie…'; partsPanel();
-    p.loading = Promise.all([ROOM_INTERFACE.load(p.id, p.path, '../').then(part => CORE.library.load('../library/', part.textures(LIBRARY)).then(() => part)),
-      SHELL_INTERFACE.load(SHELL_PATH, '../')]).then(([part, shell]) => new Promise((done, fail) => setTimeout(() => {   // the note shows before the build
+    p.loading = Promise.all([CORE.ui.implementation('../', p.path, () => ROOM_INTERFACE.implementation(p.id)).then(part => CORE.library.load('../library/', part.textures(LIBRARY)).then(() => part)),
+      CORE.ui.implementation('../', SHELL_PATH, () => SHELL_INTERFACE.implementation())]).then(([part, shell]) => new Promise((done, fail) => setTimeout(() => {   // the note shows before the build
       try {
         const made = part.make({ materials: MATERIALS_3D, textures: TEX, library: LIBRARY, shell });
         p.built = made.rooms().map(r => made.build(V, Object.assign({}, r.opts, { layers: [p.layer, r.floor] })));
@@ -542,7 +543,7 @@ const IN_DOOR = 100;                      // mm around a passage that a door's h
 const inPassage = o => PASSAGES.some(({ b }) => o[0] >= b[0] - IN_DOOR && o[1] <= b[1] + IN_DOOR && o[2] >= b[2] - IN_DOOR && o[3] <= b[3] + IN_DOOR && o[4] >= b[4] - 1 && o[5] <= b[5] + 1);
 const furnitureObstacles = () => [].concat(...builtParts().map(b => b.obstacles(walkShown))).filter(o => !inPassage(o));
 V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, more: furnitureObstacles, ground: ALL_CELLS.filter(c => c.walkable).concat(PASSAGE_FLOORS), startLevel: FLOORS[0].level, pad: $('pad'),
-  canStart: is3d, onToggle: () => { bottomMenu(); applyView(); }, home: () => VIEW_3D.cameras.all[0] });
+  canStart: is3d, onToggle: () => { bottomMenu(); applyView(); }, onBack: on => $('pad').querySelector('[data-back]').classList.toggle('on', on), home: () => VIEW_3D.cameras.all[0] });
 
 /* ================= 10. 2D PLAN (core/plan.js) =================
    Both floors side by side, garden at the top. What the cut meets comes from the solids; the stair and what is under

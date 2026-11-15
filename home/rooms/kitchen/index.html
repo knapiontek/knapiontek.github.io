@@ -175,7 +175,7 @@ dl.notes dd{margin:0;color:var(--muted)}
    decors design.dat.js names and the floor tiles to choose from */
 /* this page is the host: it wires its own files, the library and the shell (the list of applications names its file) */
 const LIBRARY = { products: window.LIBRARY_PRODUCTS, textures: CORE.library.textures }, SHELL_PATH = (APPS.find(a => a.shell) || {}).shell;
-Promise.all([SHELL_INTERFACE.load(SHELL_PATH, '../../'), CORE.library.load('../../library/', KitchenRoom.textures(LIBRARY))]).then(function (loaded) {
+Promise.all([CORE.ui.implementation('../../', SHELL_PATH, () => SHELL_INTERFACE.implementation()), CORE.library.load('../../library/', KitchenRoom.textures(LIBRARY))]).then(function (loaded) {
 'use strict';
 const SHELL = loaded[0];
 

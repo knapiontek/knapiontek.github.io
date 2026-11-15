@@ -55,28 +55,20 @@ function viewOf(impl) {
 let REGISTERED = null;
 const register = impl => { REGISTERED = impl; };
 
-const THROUGH = new Set();                // the files loaded through this interface (for the check below)
-const inOrder = files => root.CORE.ui.scripts(files).then(loaded => loaded.forEach(src => THROUGH.add(src)));
-/* the shell for a page: its implementation file (path, from the home folder, as the host's list of applications names it),
-   checked against the interface, then its own inner files. base: the home folder seen from the page ('../../'). */
-function load(path, base) {
-  if (!path) return Promise.reject(new Error('Brak skorupy domu (apps.dat.js: shell).'));
-  const folder = base + path.slice(0, path.lastIndexOf('/') + 1);
-  return inOrder([base + path]).then(() => {
-    if (!REGISTERED) throw new Error(`${path} nie zarejestrował skorupy.`);
-    const view = viewOf(REGISTERED), out = view.needs.filter(f => f.includes('..') || f.includes(':') || f.startsWith('/'));
-    if (out.length) throw new Error(`${path}: needs poza folderem skorupy (${out.join(', ')}), wbrew interfejsowi shell.js`);
-    return inOrder(view.needs.map(f => folder + f)).then(() => view);
-  });
+/* the registered implementation of the shell, checked against the interface: the view a sub-project uses. The host loads
+   its file (the interface loads nothing and knows no file). */
+function implementation() {
+  if (!REGISTERED) throw new Error('brak zarejestrowanej skorupy domu (interfejs shell.js)');
+  return viewOf(REGISTERED);
 }
 
 /* Test: the dependencies on this page. A file of the shell's folder (the house) is on its own pages, or loaded through
-   this interface; nowhere else. base: the home folder seen from the page ('../../'); path: the shell's implementation file. */
+   this interface (the host loads them with core's implementation); nowhere else. base: the home folder seen from the page ('../../'); path: the shell's implementation file. */
 function dependencies(base, path) {
   const folders = path ? [path.slice(0, path.lastIndexOf('/') + 1)] : [];
-  const items = root.CORE.ui.scriptsOutside(base, folders, THROUGH).map(p => p + ': plik domu poza jego stroną i poza interfejsem shell.js');
+  const items = root.CORE.ui.scriptsOutside(base, folders).map(p => p + ': plik domu poza jego stroną i poza interfejsem shell.js');
   return { name: 'Zależności: pliki domu tylko na jego stronie albo przez interfejs shell.js', items };
 }
 
-root.SHELL_INTERFACE = { INTERFACE, register, load, dependencies };
+root.SHELL_INTERFACE = { INTERFACE, register, implementation, dependencies };
 })(window);

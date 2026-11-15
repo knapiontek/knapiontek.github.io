@@ -198,7 +198,7 @@ PART = window.BathroomRoom;
 let SHELL;   // the room's shell from the house (the interface shell.js)
 /* this page is the host: it wires its own files, the library and the shell (the list of applications names its file) */
 const LIBRARY = { products: window.LIBRARY_PRODUCTS, textures: CORE.library.textures }, SHELL_PATH = (APPS.find(a => a.shell) || {}).shell;
-try { [SHELL] = await Promise.all([SHELL_INTERFACE.load(SHELL_PATH, '../../'), CORE.library.load('../../library/', PART.textures(LIBRARY))]); } catch (e) { return fail('Błąd: ' + e.message); }
+try { [SHELL] = await Promise.all([CORE.ui.implementation('../../', SHELL_PATH, () => SHELL_INTERFACE.implementation()), CORE.library.load('../../library/', PART.textures(LIBRARY))]); } catch (e) { return fail('Błąd: ' + e.message); }
 const TEXTURES = window.LIBRARY_TEXTURES;
 
 /* The room from the house (the interface ../../shell.js), the bathroom's drawing from design.dat.js (room.js); Info and Test

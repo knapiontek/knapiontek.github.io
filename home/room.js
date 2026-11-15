@@ -54,20 +54,11 @@ function viewOf(id, impl) {
 const REGISTERED = {};
 const register = (id, impl) => { REGISTERED[id] = impl; };
 
-const THROUGH = new Set();                // the files loaded through this interface (for the check below)
-const inOrder = files => root.CORE.ui.scripts(files).then(loaded => loaded.forEach(src => THROUGH.add(src)));
-/* an application's furniture for a host: its implementation file (path, from the home folder, as the host's list of
-   applications names it), checked against the interface, then its own inner files. base: the home folder seen from the
-   page ('../'). The host loads its textures. */
-function load(id, path, base) {
-  const file = base + path, folder = file.slice(0, file.lastIndexOf('/') + 1);
-  return inOrder([file]).then(() => {
-    const impl = REGISTERED[id];
-    if (!impl) throw new Error(`${path} nie zarejestrował mebli ${id}.`);
-    const view = viewOf(id, impl), out = view.needs.filter(f => f.includes('..') || f.includes(':') || f.startsWith('/'));
-    if (out.length) throw new Error(`${path}: needs poza folderem podprojektu (${out.join(', ')}), wbrew interfejsowi room.js`);
-    return inOrder(view.needs.map(f => folder + f)).then(() => view);
-  });
+/* the registered implementation of an application's furniture, checked against the interface: the view a host uses. The
+   host loads its file (the interface loads nothing and knows no file). */
+function implementation(id) {
+  if (!REGISTERED[id]) throw new Error(`brak zarejestrowanych mebli ${id} (interfejs room.js)`);
+  return viewOf(id, REGISTERED[id]);
 }
 
 /* a host's shown with furniture in it. furniture: [{layer, on(), shown(layers)}]; a solid of a furniture carries its
@@ -82,12 +73,13 @@ function shownWith(LAYER, hostShown, furniture) {
 }
 
 /* Test: the dependencies on this page. A file of a sub-project is on its own page, or loaded through this interface;
-   nowhere else. base: the home folder seen from the page ('../'); paths: the sub-projects' implementation files. */
+   nowhere else (the host loads them with core's implementation). base: the home folder seen from the page ('../');
+   paths: the sub-projects' implementation files. */
 function dependencies(base, paths) {
   const folders = [...new Set(paths.map(p => p.slice(0, p.lastIndexOf('/') + 1)))];
-  const items = root.CORE.ui.scriptsOutside(base, folders, THROUGH).map(path => path + ': plik podprojektu poza jego stroną i poza interfejsem room.js');
+  const items = root.CORE.ui.scriptsOutside(base, folders).map(path => path + ': plik podprojektu poza jego stroną i poza interfejsem room.js');
   return { name: 'Zależności: pliki podprojektów tylko na ich stronach albo przez interfejs room.js', items };
 }
 
-root.ROOM_INTERFACE = { INTERFACE, register, load, shownWith, dependencies };
+root.ROOM_INTERFACE = { INTERFACE, register, implementation, shownWith, dependencies };
 })(window);

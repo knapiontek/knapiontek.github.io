@@ -253,7 +253,7 @@ CORE.createView = function (opts) {
     redraw();
   }
 
-  const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 400);
+  const NEAR = 0.05, camera = new THREE.PerspectiveCamera(50, 1, NEAR, 400);
   const controls = new THREE.OrbitControls(camera, canvas);
   controls.enableDamping = true; controls.dampingFactor = 0.12;
   controls.addEventListener('change', redraw);
@@ -352,14 +352,16 @@ CORE.createView = function (opts) {
   }
   const obstacle = ([x1, x2, y1, y2, z1, z2]) => ({ x1, x2, y1, y2, z: [z1, z2] });
   let BASE = [];
-  function groundAt(x, y, z) {             // the highest walkable top under (x, y) within a step of z
+  /* the highest walkable top under (x, y) within a step up of z; a walker (down) also at most a step down: the edge of a
+     drop (a stairwell, a gallery) stops it as a wall would */
+  function groundAt(x, y, z, walker = false) {
     let best = null;
     for (const c of GROUND) {
       const S = c.S; if (x < S.x1 || x > S.x2) continue;
       const y12 = [Math.min(...S.poly.map(p => p[0])), Math.max(...S.poly.map(p => p[0]))]; if (y < y12[0] || y > y12[1]) continue;
       const top = zRange(S)[1]; if (top <= z + W.config.step && (best === null || top > best)) best = top;
     }
-    return best;
+    return walker && best !== null && best < z - W.config.step ? null : best;
   }
   const STEP_CLEAR = 10;                   // mm over a step: what is lower is walked onto, not bumped into
   const clamp = (v, a, b) => Math.max(a, Math.min(v, b));
@@ -389,13 +391,19 @@ CORE.createView = function (opts) {
     }
     return [x, y];
   }
+  /* the camera at the eye; stepped back (walk.back, mm) it stands that far behind the eye and sees nothing nearer than the
+     eye (its near plane), so the walls behind do not hide the room: a small room seen as from a few metres away */
   function placeWalkCamera() {
-    const h = walk.heading * DEG, p = walk.pitch * DEG, eye = walk.z + W.config.eye;
-    camera.position.copy(toWorld(walk.x, walk.y, eye));
+    const h = walk.heading * DEG, p = walk.pitch * DEG, eye = walk.z + W.config.eye, b = walk.back || 0;
+    const dir = [Math.cos(h) * Math.cos(p), Math.sin(h) * Math.cos(p), Math.sin(p)];
+    camera.position.copy(toWorld(walk.x - dir[0] * b, walk.y - dir[1] * b, eye - dir[2] * b));
     const ahead = 1000;                    // mm: a point in front of the eye to look at
-    camera.lookAt(toWorld(walk.x + Math.cos(h) * Math.cos(p) * ahead, walk.y + Math.sin(h) * Math.cos(p) * ahead, eye + Math.sin(p) * ahead));
+    camera.lookAt(toWorld(walk.x + dir[0] * ahead, walk.y + dir[1] * ahead, eye + dir[2] * ahead));
+    const near = b ? b * MM : NEAR;
+    if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
     redraw();
   }
+  function stepBack() { walk.back = walk.back ? 0 : W.config.back; if (W.onBack) W.onBack(!!walk.back); placeWalkCamera(); }
   function startWalk() {
     OBSTACLES = BASE.concat((W.more ? W.more() : []).map(obstacle));
     walk.on = true; controls.enabled = false; walk.z = groundAt(walk.x, walk.y, W.startLevel) ?? W.startLevel;
@@ -404,6 +412,8 @@ CORE.createView = function (opts) {
   function stopWalk() {
     if (!walk.on) return;
     walk.on = false; controls.enabled = true; W.pad.hidden = true; W.onToggle();
+    walk.back = 0; if (W.onBack) W.onBack(false);
+    if (camera.near !== NEAR) { camera.near = NEAR; camera.updateProjectionMatrix(); }
     setCamera(W.home());
   }
   /* each key: what it changes per second */
@@ -422,9 +432,9 @@ CORE.createView = function (opts) {
       const h = walk.heading * DEG, dx = fwd * Math.cos(h) - side * Math.sin(h), dy = fwd * Math.sin(h) + side * Math.cos(h);
       const v = C.speed * fast * dt / Math.hypot(dx, dy), steps = Math.ceil(Math.hypot(dx, dy) * v / (C.radius / 3));   // never through a wall
       for (let i = 0; i < steps; i++) {
-        const g0 = groundAt(walk.x + dx * v / steps, walk.y + dy * v / steps, walk.z);
+        const g0 = groundAt(walk.x + dx * v / steps, walk.y + dy * v / steps, walk.z, true);
         if (g0 === null) break;
-        const [tx, ty] = pushOut(walk.x + dx * v / steps, walk.y + dy * v / steps, g0), g = groundAt(tx, ty, walk.z);
+        const [tx, ty] = pushOut(walk.x + dx * v / steps, walk.y + dy * v / steps, g0), g = groundAt(tx, ty, walk.z, true);
         if (g === null || blocked(tx, ty, g)) break;
         Object.assign(walk, { x: tx, y: ty, z: g });
       }
@@ -442,10 +452,12 @@ CORE.createView = function (opts) {
       if (w.canStart() && !walk.on && e.key === 'ArrowUp') startWalk();
       if (!walk.on) return;
       if (e.key === 'Escape') return stopWalk();
+      if (keyName(e) === 'z') return stepBack();
       if (WALK_KEYS[keyName(e)]) { walk.keys.add(keyName(e)); e.preventDefault(); }
     });
     window.addEventListener('keyup', e => walk.keys.delete(keyName(e)));
     for (const b of w.pad.querySelectorAll('button')) {
+      if (b.dataset.back !== undefined) { b.addEventListener('click', stepBack); continue; }
       b.addEventListener('pointerdown', e => { e.preventDefault(); walk.keys.add(b.dataset.k); });
       for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, () => walk.keys.delete(b.dataset.k));
     }

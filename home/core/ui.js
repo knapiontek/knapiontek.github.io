@@ -234,16 +234,29 @@ function scripts(files) {
     .then(() => loaded);
 }
 
+/* an implementation for a host (generic): its file (path, from the home folder; base: the home folder seen from the page),
+   then take() gives its view (checked by whatever interface it implements) with needs, its own inner files, loaded from
+   its folder and never outside it. Resolves with the view. */
+const THROUGH = new Set();                // the files loaded through implementation (for the check below)
+function implementation(base, path, take) {
+  if (!path) return Promise.reject(new Error('Brak pliku implementacji.'));
+  const folder = base + path.slice(0, path.lastIndexOf('/') + 1), keep = loaded => loaded.forEach(src => THROUGH.add(src));
+  return scripts([base + path]).then(keep).then(() => {
+    const view = take(), out = view.needs.filter(f => f.includes('..') || f.includes(':') || f.startsWith('/'));
+    if (out.length) throw new Error(`${path}: needs poza swoim folderem (${out.join(', ')})`);
+    return scripts(view.needs.map(f => folder + f)).then(keep).then(() => view);
+  });
+}
 /* Test: the scripts on this page that belong to one of folders (from the home folder, base seen from the page), when the
-   page is not in that folder and they were not loaded through (a set of addresses): [path from the home folder] */
-function scriptsOutside(base, folders, through) {
+   page is not in that folder and they were not loaded through implementation: [path from the home folder] */
+function scriptsOutside(base, folders) {
   const home = new URL(base, location.href).href, dir = path => path.slice(0, path.lastIndexOf('/') + 1);
   const own = dir(location.href.slice(home.length));
   return [...document.scripts].filter(s => s.src.startsWith(home)).map(s => s.src)
-    .filter(src => { const rel = src.slice(home.length), f = folders.find(d => rel.startsWith(d)); return f && f !== own && !through.has(src); })
+    .filter(src => { const rel = src.slice(home.length), f = folders.find(d => rel.startsWith(d)); return f && f !== own && !THROUGH.has(src); })
     .map(src => src.slice(home.length));
 }
 
 CORE.ui = { $, fmt, byId, el, esc, option, store, layerTree, layerSwitch, layersPanel, checksHtml, appMenu, askedMode, showMode, menuRow,
-  panelTabs, panelToggle, bottomMenu, corner, themeButton, sunStore, sunPanel, planSheet, scripts, scriptsOutside };
+  panelTabs, panelToggle, bottomMenu, corner, themeButton, sunStore, sunPanel, planSheet, scripts, implementation, scriptsOutside };
 })(window.CORE = window.CORE || {});

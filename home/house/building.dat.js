@@ -371,7 +371,7 @@ window.HOUSE = {
      {"name": "Pokoje", "eye": [12400, 4500, 1600], "target": [9300, 7000, 600]}
     ]
    },
-   "walk": {"eye": 1600, "radius": 220, "step": 360, "headroom": 100, "speed": 1400, "turn": 90, "look": 50, "run": 2.2, "start": {"x": 11200, "y": 5200, "heading": 180}}
+   "walk": {"eye": 1600, "radius": 220, "step": 360, "back": 2500, "headroom": 100, "speed": 1400, "turn": 90, "look": 50, "run": 2.2, "start": {"x": 11200, "y": 5200, "heading": 180}}
   },
   "2d": {
    "name": "2D",
