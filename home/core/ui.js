@@ -260,7 +260,7 @@ function scriptsOutside(base, folders) {
 /* ---------- column widths of a table, set with its data ----------
    cols: one per column, {fix: n} for numbers, codes and units (n characters, as wide as their longest value), or
    {share: k, min?, max?} for text (the room left, in proportion to k, from min to max characters; min 8). A fixed column
-   is never narrower than the longest word of its header. If the text columns reach their max, the table is narrower
+   is never narrower than the longest word of its header, and no column narrower than the fields and buttons in it. If the text columns reach their max, the table is narrower
    than its box; if they cannot get their min, it is wider and scrolls. */
 let measure = null;
 function textWidth(text, font) {
@@ -286,15 +286,33 @@ function setColumns(table, cols, room) {
       at += c.colSpan;
     }
   }
+  /* the controls in each column (fields, buttons): a column is never narrower than they need, so nothing sticks out */
+  const ctrl = new Array(cols.length).fill(0);
+  for (const r of table.rows) {
+    let at = 0;
+    for (const c of r.cells) {
+      if (c.colSpan === 1) {
+        const parts = [...c.querySelectorAll('input:not([type=hidden]), select, button')];
+        if (parts.length) {
+          /* side by side (a cell that does not wrap, e.g. small buttons): the sum of their widths; else what each needs at least */
+          const cc = getComputedStyle(c), inLine = cc.whiteSpace === 'nowrap';
+          const need = parts.reduce((a, e) => { const es = getComputedStyle(e), m = (parseFloat(es.marginLeft) || 0) + (parseFloat(es.marginRight) || 0);
+            return inLine ? a + e.offsetWidth + m : Math.max(a, (parseFloat(es.minWidth) || 0) + m); }, 0);
+          ctrl[at] = Math.max(ctrl[at], need + parseFloat(cc.paddingLeft) + parseFloat(cc.paddingRight) + 1);
+        }
+      }
+      at += c.colSpan;
+    }
+  }
   const spec = cols.map(c => (c && (c.fix || c.share) ? c : { share: 1 }));
-  const w = spec.map((c, i) => (c.fix ? Math.max(c.fix * ch + pad, headWord[i]) : 0));
+  const w = spec.map((c, i) => (c.fix ? Math.max(c.fix * ch + pad, headWord[i], ctrl[i]) : 0));
   const text = spec.map((c, i) => !c.fix ? i : -1).filter(i => i >= 0);
   let left = room - w.reduce((a, b) => a + b, 0), open = text.slice();
   /* the text columns share what is left; one that reaches its min or max is held there and the rest share again */
   for (let pass = 0; pass < 4 && open.length; pass++) {
     const k = open.reduce((a, i) => a + spec[i].share, 0), next = [];
     for (const i of open) {
-      const c = spec[i], lo = (c.min || 8) * ch + pad, hi = c.max ? c.max * ch + pad : Infinity;
+      const c = spec[i], lo = Math.max((c.min || 8) * ch + pad, ctrl[i]), hi = c.max ? c.max * ch + pad : Infinity;
       w[i] = Math.min(hi, Math.max(lo, left * c.share / k));
       if (w[i] > lo && w[i] < hi) next.push(i);
     }

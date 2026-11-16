@@ -7,6 +7,9 @@
   --f-body:"Barlow","Segoe UI",Roboto,Arial,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
 }
+/* scrollbars: thin, on the ground of what scrolls (no band of another colour, no arrows), the same everywhere */
+:root{scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent}
+*{scrollbar-width:thin}
 /* dark as the system is (Windows: Settings > Personalisation > Colours), or on request (data-theme) */
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#121615; --stage:#1b201f; --panel:#1c2220; --ink:#f1f4f2; --muted:#b3bdb9; --line:#3a4440;
@@ -111,6 +114,11 @@ button{font:inherit;color:inherit}
 /* the spreadsheet (core/sheet.js) */
 .sheettabs{margin:0 0 8px}
 .sheetwrap{overflow:auto;max-width:100%;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+/* the frame is the table's outline: its outer cells draw no line of their own, so the corners stay round and clean */
+.sheetwrap table.sheet tr>:first-child{border-left:0}
+.sheetwrap table.sheet tr>:last-child{border-right:0}
+.sheetwrap table.sheet tr:first-child>*{border-top:0}
+.sheetwrap table.sheet>tr:last-child>*,.sheetwrap table.sheet>tbody>tr:last-child>*{border-bottom:0}
 table.sheet{border-collapse:collapse;font-size:12.5px;min-width:100%}
 table.sheet td{border:1px solid var(--line);padding:4px 7px;vertical-align:top;white-space:pre-line}
 table.sheet tr.flash td{animation:sheetflash 1.6s ease-out}
