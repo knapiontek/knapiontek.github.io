@@ -37,7 +37,7 @@ const num1 = x => String(x).replace('.', ',');
 // cut-outs of a cut-list row (worktops, cut by the supplier's CNC): "WZ 680×420 @ 1234x110", codes in cutoutLegend()
 function cutoutLines(row) {
   const code = KE.LABELS.holeCode;
-  const lines = row.drillings.flatMap(({ drilling }) => drilling.cutouts.map(c => code[c.kind] + ' ' + c.width + '×' + c.depth + ' @ ' + num1(c.x) + 'x' + num1(c.y)));
+  const lines = row.drillings.flatMap(({ drilling }) => drilling.cutouts.map(c => (code[c.kind] + ' ' + c.width + '×' + c.depth + ' @ ' + num1(c.x) + 'x' + num1(c.y)).replace(/ /g, '\u00a0')));   // one cut-out, one line: it never breaks
   return [...new Set(lines)];
 }
 // the legend under the cutting list: labels and cut-out codes, from kitchen.dat.js settings.cutouts
@@ -353,6 +353,8 @@ function buildBook() {
 
   // sheet "Lista cięć" (core/info.js): as an order form, each size followed by the number of finished edges along it
   const cutting = INFO.cutList({ title: 'Lista cięć – płyty obliczone przez model.js z kitchen.dat.js (wymiary w mm)', note: fill(COST.labels.cuttingNote),
+    /* the cut-outs, one per line ("WZ 680×420 @ 1234x110"), a whole line each; where: a few cabinet names */
+    screen: [6, 's2n9m36', 6, 3, 6, 3, 6, 5, 7, 6, 21, 's1n8m24'],
     blocks: COST.blocks.map(block => ({ id: block.id, title: fill(block.title), columns: block.columns, cut: block.cut,
       rows: (rowsOf[block.id] || []).map((row, i) => {
         const along = edgeCounts(row);
@@ -382,6 +384,7 @@ function buildBook() {
     .replaceAll('{sheet}', ref.param('sheet'))
     .replace(/\{([^}|]+)\}/g, (_, key) => String(Number(placeholder(key, result.totals, result.quantities))));
   const estimate = INFO.estimate({ title: COST.page.heading, info: fill(COST.page.info),
+    screen: [4, 's2n16', 's3', 's3', 8, 5, 10, 10, 's5'],   // the kitchen's specifications and sources are its longest texts
     params: [{ key: 'waste', label: 'Naddatek na odpad płyt', v: Number(values.params.waste), z: '0%' }, { key: 'sheet', label: fill(COST.labels.sheet), v: Number(values.params.sheet) }],
     categories: COST.categories.map(category => ({ name: category.name, group: category.appliances ? 'AGD' : 'Meble', items: category.items.map(({ id }) => ITEM[id]).map(item => ({
       id: item.id, name: fill(item.name), spec: fill(item.spec), use: fill(item.use), unit: item.unit, price: Number(values.items[item.id].price),
@@ -394,7 +397,7 @@ function buildBook() {
     excluded: COST.page.excluded.map(fill),
     after: [['', { text: '• Pytania i założenia: patrz arkusz Notatki.', href: "#'Notatki'!A1" }]] });
 
-  return { sheets: [estimate.sheet, cutting.sheet, { name: 'Notatki', cols: [6, 34, 70, 42, 40].map(width => ({ width })), rows: notes }] };
+  return { sheets: [estimate.sheet, cutting.sheet, { name: 'Notatki', cols: [6, 34, 70, 42, 40].map((width, i) => ({ width, ...[{ fix: 3 }, { share: 2, max: 40 }, { share: 5 }, { share: 2 }, { share: 4 }][i] })), rows: notes }] };
 }
 
 return { book: buildBook, assembly: renderAssembly, warnings: model.warnings, page: COST.page, fill };

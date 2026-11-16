@@ -13,7 +13,10 @@ const TABS = ['Kosztorys', 'Lista cięć', 'eRozkrój', 'Szafka', 'Korpusy', 'Mo
 const order = name => (TABS.includes(name) ? TABS.indexOf(name) : TABS.length);
 
 const formula = f => ({ f }), input = v => ({ v, input: true });
-const cols = (widths, more = {}) => widths.map((width, i) => ({ width, ...(more[i] || {}) }));
+/* widths: characters in the XLSX; screen: one per column, how it is shown (CORE.ui.setColumns): a number n is fixed at n
+   characters (numbers, codes, units); a text 's3' has a share of 3, 's2n16m40' at least 16 and at most 40 characters */
+const screenOf = t => (typeof t === 'number' ? { fix: t } : (m => (m ? { share: +m[1], min: m[2] ? +m[2] : undefined, max: m[3] ? +m[3] : undefined } : { share: 1 }))(/^s([\d.]+)(?:n(\d+))?(?:m(\d+))?$/.exec(t || '')));
+const cols = (widths, more = {}, screen = []) => widths.map((width, i) => ({ width, ...(screen[i] !== undefined ? screenOf(screen[i]) : {}), ...(more[i] || {}) }));
 const money = { digits: 2, z: '#,##0.00' };
 
 /* ---------- Kosztorys ----------
@@ -63,23 +66,28 @@ function estimate(spec) {
   rows.push({ kind: 'grand', cells: ['', 'RAZEM BRUTTO', '', '', '', '', '', formula(parts ? Array.from({ length: parts }, (_, i) => 'H' + (first + i)).join('+') : sum(categoryRows))] });
   if ((spec.excluded || []).length) { rows.push([]); rows.push(['', 'Nie obejmuje']); for (const e of spec.excluded) rows.push(['', '• ' + e]); }
   for (const a of spec.after || []) rows.push(a);
-  const sheet = { name: 'Kosztorys', cols: cols([5, 36, 40, 30, 10, 6, 13, 14, 50], { 6: money, 7: money }), rows: kinds(rows) };
+  const sheet = { name: 'Kosztorys', cols: cols([5, 36, 40, 30, 10, 6, 13, 14, 50], { 6: money, 7: money },
+    /* Lp., a position, its specification, where it goes, quantity, unit, unit price, value, source and notes (the longest) */
+    spec.screen || [4, 's3', 's3', 's3', 8, 5, 10, 10, 's4']), rows: kinds(rows) };
   return { sheet, row };
 }
 
 /* ---------- Lista cięć ----------
-   spec   {title, note, blocks: [block], legend: [{code, text}]}
+   spec   {title, note, blocks: [block], legend: [{code, text}] (under the note, before the blocks), screen (as cols)}
    block  {id, title, columns: [label, size 1, size 2, qty] (or the default), cut (cuts count), rows: [part]}
    part   {label, name, a, b, edgesA, edgesB (finished edges along a and b), qty, edge (banding of one piece, mm, or null),
            cutouts: [text], where}
    Returns {sheet, total: block id -> its row of sums (G m², H pieces, I banding, J cuts)}. */
 const DEFAULT_COLUMNS = ['Element', 'Długość', 'Szerokość', 'Ilość'];
 function cutList(spec) {
-  const rows = [[spec.title], [spec.note || ''], []], total = {};
+  const rows = [[spec.title], [spec.note || '']], total = {};
+  /* what the labels and the cut-out codes mean: with the description, above the tables */
+  if ((spec.legend || []).length) { rows.push({ kind: 'cat', cells: ['Etykiety i wycięcia'] }); for (const l of spec.legend) rows.push([l.code, l.text]); }
+  rows.push([]);
   for (const block of spec.blocks) {
     const [labelCell, size1, size2, qtyCell] = block.columns || DEFAULT_COLUMNS;
     rows.push({ kind: 'cat', cells: [block.title] });
-    rows.push({ kind: 'head', cells: ['Etykieta', labelCell, size1 + ' [mm]', 'Krawędź', size2 + ' [mm]', 'Krawędź', 'm²', qtyCell, 'Obrzeże razem [mb]', 'Cięcia [mb]', 'Wycięcia (legenda na dole)', 'Gdzie'] });
+    rows.push({ kind: 'head', cells: ['Etykieta', labelCell, size1 + ' [mm]', 'Krawędź', size2 + ' [mm]', 'Krawędź', 'm²', qtyCell, 'Obrzeże razem [mb]', 'Cięcia [mb]', 'Wycięcia', 'Gdzie'] });
     const first = rows.length + 1;
     for (const p of block.rows) {
       const r = rows.length + 1;
@@ -91,15 +99,16 @@ function cutList(spec) {
     rows.push({ kind: 'sum', cells: ['', 'Razem', '', '', '', '', formula(`SUM(G${first}:G${last})`), formula(`SUM(H${first}:H${last})`), formula(`SUM(I${first}:I${last})`), formula(`SUM(J${first}:J${last})`)] });
     rows.push([]);
   }
-  if ((spec.legend || []).length) { rows.push({ kind: 'cat', cells: ['ETYKIETY I WYCIĘCIA – legenda'] }); for (const l of spec.legend) rows.push([l.code, l.text]); }
-  const sheet = { name: 'Lista cięć', cols: cols([9, 40, 12, 6, 12, 6, 10, 8, 15, 12, 34, 14], { 6: { digits: 3, z: '0.000' }, 8: { digits: 2, z: '0.00' }, 9: { digits: 2, z: '0.00' } }), rows: kinds(rows) };
+  const sheet = { name: 'Lista cięć', cols: cols([9, 40, 12, 6, 12, 6, 10, 8, 15, 12, 34, 14], { 6: { digits: 3, z: '0.000' }, 8: { digits: 2, z: '0.00' }, 9: { digits: 2, z: '0.00' } },
+    /* label, element, length and edges, width and edges, m², quantity, edge banding, cutting, cut-outs, where */
+    spec.screen || [8, 's2n12m36', 6, 3, 6, 3, 7, 5, 7, 7, 's1n9m24', 's1n10m30']), rows: kinds(rows) };
   return { sheet, total };
 }
 
-/* ---------- a plain table: a title (optional), a header, its rows; widths in characters ---------- */
-function table(name, widths, head, body, title) {
+/* ---------- a plain table: a title (optional), a header, its rows; widths in characters (XLSX), screen as cols ---------- */
+function table(name, widths, head, body, title, screen) {
   const rows = [...(title ? [{ kind: 'title', cells: [title] }] : []), { kind: 'head', cells: head }, ...body.map(cells => ({ cells }))];
-  return { name, cols: cols(widths), rows };
+  return { name, cols: cols(widths, {}, screen), rows };
 }
 
 /* an array is a row of items, an object keeps its kind; the first row is the title */

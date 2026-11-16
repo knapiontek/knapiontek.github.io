@@ -2,7 +2,9 @@
    the viewer may change (until a reload), formulas that follow them, and the XLSX with the same formulas live.
    Knows no project: a page hands in the workbook (core/info.js builds the shared sheets and the Info screen).
 
-   book   {sheets: [{name, cols: [{title, width, digits}], rows: [{kind, cells}], node}]}
+   book   {sheets: [{name, cols: [{title, width, digits, fix | share, min, max}], rows: [{kind, cells}], node}]}
+          width: characters in the XLSX; on screen fix (characters: numbers, codes, units) or share (text: its part of
+          the room left, from min to max characters), CORE.ui.setColumns; with neither, a share as its width
           node: an element of the page shown in the tab (above its rows, if it has any); only hidden on another tab, so
           the page keeps filling it. A tab without rows is not in the XLSX.
           row kind: title | head | cat | sum | grand | (none: an item); a row's place in rows is its Excel row (first = 1)
@@ -96,7 +98,6 @@ function create(box, book) {
     wrap.hidden = !sheet.rows; wrap.innerHTML = ''; body.scrollTop = 0;
     if (!sheet.rows) return;
     const table = el('table', { className: 'sheet' });
-    if (sheet.cols.some(c => c.width)) table.append(el('colgroup', {}, sheet.cols.map(c => `<col${c.width ? ` style="width:${c.width}ch"` : ''}>`).join('')));
     sheet.rows.forEach((row, ri) => {
       const tr = el('tr', { className: row.kind || '' });
       (row.cells || []).forEach((cell, ci) => {
@@ -119,14 +120,31 @@ function create(box, book) {
         tr.append(td);
       });
       if (row.cells?.length === 1 && tr.firstChild) tr.firstChild.colSpan = sheet.cols.length;   // a title or a category runs across
+      else spanText(row.cells || [], tr, sheet.cols.length);
       table.append(tr);
     });
     wrap.innerHTML = ''; wrap.append(table);
     /* the formula cells of this sheet, again after every change of an input */
     function refresh() { const v = evaluator(book); for (const [td, c, r, d, pct] of formulas) td.textContent = show(v(sheet, c, r), d, pct); }
     refresh();
+    /* on screen: the widths set in cols, over the room there is */
+    CORE.ui.autoFit(table, wrap, sheet.cols.map(c => (c.fix || c.share ? c : { share: c.width || 1 })));
   }
-  /* a link: inside the book it opens that sheet, outside a new tab */
+  /* as in Excel, a text runs on over the empty cells after it: to the end of the row (a note in a short row), or, from the
+   first column, to an input (a label before its value); otherwise an empty cell keeps its column */
+function spanText(cells, tr, n) {
+  const tds = [...tr.children];
+  for (let i = cells.length - 1; i >= 0; i--) {
+    if (typeof cells[i] !== 'string' || !cells[i]) continue;
+    let j = i + 1;
+    while (j < cells.length && (cells[j] === null || cells[j] === undefined || cells[j] === '')) j++;
+    const end = j >= cells.length ? n : j;
+    if (end - i < 2 || (j < cells.length && !(i === 0 && cells[j] && cells[j].input))) continue;
+    for (let k = i + 1; k < Math.min(j, cells.length); k++) tds[k].remove();
+    tds[i].colSpan = end - i;
+  }
+}
+/* a link: inside the book it opens that sheet, outside a new tab */
   function anchor(l) {
     const a = el('a', { href: l.href, textContent: linkText(l), title: l.href }), to = target(l.href);
     if (to) a.onclick = e => { e.preventDefault(); go(...to); };

@@ -14,6 +14,7 @@
 #editor{position:absolute;inset:0;overflow:auto;padding:64px 20px 72px;background:var(--panel)}
 #editor section{margin:0 0 22px}
 #editor h2{margin:0 0 8px}
+.cols>*{min-width:0}
 .cols>.wide{grid-column:1/-1}
 .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,300px);gap:18px;align-items:start}
 @media (max-width:1100px){.cols{grid-template-columns:minmax(0,1fr)}}
@@ -73,7 +74,7 @@ td.col-actions button.row-del:hover{color:var(--warn)}
       <div>
         <h2>Materiały</h2>
         <div class="sheetwrap tall">
-          <table class="sheet read">
+          <table data-cols="s5 f9 f5 f5 s3" class="sheet read">
             <thead>
               <tr><th class="name">Nazwa</th><th class="fit" title="Grubość; × głębokość, gdy materiał ją podaje (blat, panel końcowy)">Wymiar</th><th class="fit" title="Kolor płyty; widok 3D pokazuje teksturę, gdy materiał ją podaje">Kolor</th><th class="fit" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w kitchen.dat.js)">Użycie</th></tr>
             </thead>
@@ -93,7 +94,7 @@ td.col-actions button.row-del:hover{color:var(--warn)}
       </div>
       <div>
         <h2>Grupy</h2>
-        <table class="sheet groups">
+        <table data-cols="f5 s1 f8 f3" class="sheet groups">
           <thead>
             <tr><th style="width:48px">Grupa</th><th>Nazwa</th><th style="width:56px" title="odstęp tyłu korpusów od ściany; wyspa: do tylnej krawędzi blatu">Z tyłu</th><th class="col-actions"></th></tr>
           </thead>
@@ -110,7 +111,7 @@ td.col-actions button.row-del:hover{color:var(--warn)}
         </table>
         <h2>Kolumny</h2>
         <div class="sheetwrap tall" @scroll="picker.row = null">
-          <table class="sheet">
+          <table data-cols="f5 f9 f5" class="sheet">
             <thead>
               <tr><th style="width:60px">Grupa</th><th>Szerokość</th><th class="col-actions"></th></tr>
             </thead>
@@ -131,7 +132,7 @@ td.col-actions button.row-del:hover{color:var(--warn)}
       <div class="wide">
         <h2>Elementy</h2>
         <div class="sheetwrap tall" @scroll="picker.row = null">
-          <table class="sheet">
+          <table data-cols="f5 f4 f5 f19 s2n17 f6 f8 f9 f9 f4 f4 f4 f4 s3n16 f6" class="sheet">
             <thead>
               <tr>
                 <th style="width:56px">Grupa</th>
@@ -229,7 +230,7 @@ td.col-actions button.row-del:hover{color:var(--warn)}
   <section>
     <h2>Notatki</h2>
     <div class="sheetwrap">
-      <table class="sheet">
+      <table data-cols="s1m24 s4 s4 f4" class="sheet">
         <thead>
           <tr>
             <th style="width:200px">Nazwa</th>
@@ -654,6 +655,8 @@ document.addEventListener('alpine:init', () => {
         .then(project => {
           this.setProject(project);
           this.keepEmptyRows();
+          /* the columns of every table: as its data-cols sets them, over the room there is (core) */
+          this.$nextTick(() => document.querySelectorAll('#editor table.sheet').forEach(t => CORE.ui.autoFit(t, t.closest('.sheetwrap') || t.parentElement, CORE.ui.colsOf(t))));
         })
         .catch(err => this.showStatus(err.message, true));
       this.$nextTick(() => {

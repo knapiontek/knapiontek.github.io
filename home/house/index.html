@@ -523,7 +523,7 @@ function selectRoom(id) { state.room = id; save(); contextMenu(); roomsPanel(); 
    until a reload), Pomieszczenia, Notatki; saved as XLSX from the bottom menu */
 let SHEET = null;
 function infoBook() {
-  const rooms = { name: 'Pomieszczenia', cols: [{ title: 'Pomieszczenie', width: 34 }, { width: 14, digits: 2 }, { width: 14, digits: 2 }],
+  const rooms = { name: 'Pomieszczenia', cols: [{ title: 'Pomieszczenie', width: 34, share: 1, max: 40 }, { width: 14, digits: 2, fix: 9 }, { width: 14, digits: 2, fix: 9 }],
     rows: [{ kind: 'title', cells: [HOUSE.name] }, { kind: 'head', cells: ['Pomieszczenie', 'Model [m²]', 'Archon [m²]'] }] };
   for (const F of FLOORS) {
     rooms.rows.push({ kind: 'cat', cells: [F.name] });
@@ -551,10 +551,10 @@ function infoBook() {
     return { id: 'door:' + k, name: P.name, spec: '', use: where(k), unit: 'szt.', qty: n, price: P.price ?? null,
       source: { text: SHOPS[P.shop] ? SHOPS[P.shop].name : '', links: P.link ? [{ text: P.link, href: P.link }] : [] } };
   });
-  const estimate = CORE.info.estimate({ title: 'Kosztorys – ' + HOUSE.name, info: 'Posadzki z płytek według Wykończenia; ilość = powierzchnia × (1 + zapas). Drzwi wewnętrzne według otworów.',
+  const estimate = CORE.info.estimate({ screen: [4, 's3', 's3', 's3', 8, 5, 10, 10, 's2n18'], title: 'Kosztorys – ' + HOUSE.name, info: 'Posadzki z płytek według Wykończenia; ilość = powierzchnia × (1 + zapas). Drzwi wewnętrzne według otworów.',
     params: [{ key: 'reserve', label: 'Zapas na docinki', v: TILES.reserve, z: '0%' }],
     categories: [{ name: 'Posadzki z płytek', items }, { name: 'Drzwi wewnętrzne', items: doorItems }], excluded: ['Klej, fuga, listwy i robocizna.'] });
-  return { sheets: [estimate.sheet, rooms, CORE.info.table('Notatki', [120], ['Uwagi'], HOUSE.notes.map(n => [n]), HOUSE.source)] };
+  return { sheets: [estimate.sheet, rooms, CORE.info.table('Notatki', [120], ['Uwagi'], HOUSE.notes.map(n => [n]), HOUSE.source, ['s1m140'])] };
 }
 function infoView() {
   if (SHEET) return SHEET.set(CORE.info.sorted(infoBook()));

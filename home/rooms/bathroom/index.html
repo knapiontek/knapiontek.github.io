@@ -578,6 +578,7 @@ function bathInfo(decor, metal) {
     return { name: P.name, unit: 'm²', qty: Math.round(t.area * (1 + reserve) * 100) / 100, price: P.price ?? null, use: t.use.join('; '), spec: P.finish || P.note || '',
       source: source(new URL(P.link).hostname.replace(/^www\./, ''), P.link, `powierzchnia z modelu ${t.area.toFixed(2).replace('.', ',')} m² + ${Math.round(reserve * 100)}% zapasu na docinki`) }; });
   const estimate = {
+    screen: [4, 's4', 's2', 's2', 8, 5, 10, 10, 's3'],   // the bathrooms' positions are their longest texts
     title: `Kosztorys – łazienka ${DATA.name.toLowerCase()} (${DATA.title})`,
     info: 'Ceny brutto z dnia projektu (5.11.2026), bez dostawy. Pozycje bez ceny: wycena w sklepie.',
     categories: [
@@ -594,12 +595,13 @@ function bathInfo(decor, metal) {
     name: p.name, a: p.a, edgesA: along(p.e, 0, 1), b: p.b, edgesB: along(p.e, 2, 3), qty: p.qty,
     edge: p.e.some(Boolean) ? p.a * along(p.e, 0, 1) + p.b * along(p.e, 2, 3) : null, where: p.note })) });
   const mats = [...new Set(parts.map(p => p.mat))];
-  const cutList = { title: 'Lista cięć – szafka podumywalkowa (wymiary w mm)',
+  const cutList = { screen: [8, 's2n12m30', 6, 3, 6, 3, 7, 5, 7, 7, 8, 's2n12m40'],   // no cut-outs; where: a sentence
+    title: 'Lista cięć – szafka podumywalkowa (wymiary w mm)',
     note: CUT_NOTE, blocks: mats.map((m, i) => block('b' + i, m, m)),
     legend: [I.sheet, ...CUT_LEGEND] };
   const tables = [
-    { name: 'eRozkrój', widths: ER_WIDTHS, head: ER_HEAD, rows: parts.map(p => [p.name, p.a, p.b, p.qty, 1, ...p.e, p.mat, p.e.some(Boolean) ? edgeCode : '', p.note || '']) },
-    { name: 'Szafka', widths: [38, 30, 10], head: ['Parametr', 'Wartość', 'Jednostka'], rows: [
+    { name: 'eRozkrój', widths: ER_WIDTHS, screen: ['s2n12m26', 7, 8, 5, 4, 3, 3, 3, 3, 16, 's1n8m20', 's3n14'], head: ER_HEAD, rows: parts.map(p => [p.name, p.a, p.b, p.qty, 1, ...p.e, p.mat, p.e.some(Boolean) ? edgeCode : '', p.note || '']) },
+    { name: 'Szafka', widths: [38, 30, 10], screen: ['s1m40', 's1m40', 9], head: ['Parametr', 'Wartość', 'Jednostka'], rows: [
       ['Łazienka', `${DATA.name} — ${DATA.title}`, ''], ['Dekor płyty', `${decor.code} ${decor.name}`, ''],
       ['Szerokość korpusu', V.len, 'mm'], ['Głębokość korpusu', V.depth, 'mm'], ['Wysokość korpusu', V.height, 'mm'],
       ['Spód korpusu nad podłogą', V.bottomY, 'mm'], [`Blat (2 × ${V.t})`, `${V.len} × ${V.topDepth} × ${V.top}`, 'mm'], ['Wierzch blatu', V.topY, 'mm'],
@@ -610,9 +612,9 @@ function bathInfo(decor, metal) {
       ...(V.nB ? [['Front B (×2)', `${V.frontW} × ${V.frontB}`, 'mm'], ['Szuflady B', `LEGRABOX K, NL ${V.nlB}`, '']] : []),
       ['Głębokość wnętrza', `${V.bodyD} (min. NL + 3 + ${V.t} = ${V.nlB + 3 + V.t})`, 'mm'],
     ] },
-    { name: 'Montaż', widths: [30, 110], head: ['Krok', 'Opis'], rows: [...I.work.map(([k, v]) => [k, v.replace(/<[^>]+>/g, '')]), MOUNT_NOTE] },
-    { name: 'Podejścia', widths: [42, 52, 44], head: ['Punkt', 'Położenie (mm)', 'Uwagi'], rows: I.points, title: POINTS_TITLE },
-    { name: 'Wymiary', widths: [44, 60], head: ['Element', 'Wymiar'], rows: I.dims },
+    { name: 'Montaż', widths: [30, 110], screen: ['s1m24', 's5'], head: ['Krok', 'Opis'], rows: [...I.work.map(([k, v]) => [k, v.replace(/<[^>]+>/g, '')]), MOUNT_NOTE] },
+    { name: 'Podejścia', widths: [42, 52, 44], screen: ['s1', 's1', 's1'], head: ['Punkt', 'Położenie (mm)', 'Uwagi'], rows: I.points, title: POINTS_TITLE },
+    { name: 'Wymiary', widths: [44, 60], screen: ['s1m34', 's3'], head: ['Element', 'Wymiar'], rows: I.dims },
   ];
   return { estimate, cutList, tables };
 }
@@ -665,7 +667,7 @@ let INFO_SHEET = null;
 function infoBook() {
   const I = bathInfo(DECORS[state.decor], state.metal);
   return { sheets: [CORE.info.estimate(I.estimate).sheet, CORE.info.cutList(I.cutList).sheet,
-    ...I.tables.map(t => CORE.info.table(t.name, t.widths, t.head, t.rows, t.title)).map(t => (t.name === 'Szafka' ? { ...t, node: $('pageVanity') } : t))] };
+    ...I.tables.map(t => CORE.info.table(t.name, t.widths, t.head, t.rows, t.title, t.screen)).map(t => (t.name === 'Szafka' ? { ...t, node: $('pageVanity') } : t))] };
 }
 function renderInfo() {
   if (INFO_SHEET) return INFO_SHEET.set(CORE.info.sorted(infoBook()));

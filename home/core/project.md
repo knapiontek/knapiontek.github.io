@@ -11,7 +11,7 @@ Shared code for every page: the house and every sub-project. It knows no project
 | geometry.js | convex polygons and prisms: clip, subtract, intersect, split, section, volume, overlaps |
 | mesh.js | welded points, faces, visible pieces, batches of triangles |
 | scene.js | renderer, materials, meshes, edges, caps, light, camera, navigation, walk, loop |
-| ui.js | the screen of every page: stored state, the layer tree, the menus, the panel's tabs, ☀ and ?, the mode switch, the 2D sheet, the checks list |
+| ui.js | the screen of every page: stored state, the layer tree, the menus, the panel's tabs, ☀ and ?, the mode switch, the 2D sheet, the checks list, the column widths of a table (set with its data: fixed for numbers and codes, shares of the room for text) |
 | library.js | loads the library's textures when a page needs them (one file per image) |
 | plan.js | the 2D plan from the solids: cut, seen from above, labels, rooms, dimensions, sheets |
 | sheet.js | the spreadsheet: tabs, editable cells, formulas, pages in tabs, XLSX export |
