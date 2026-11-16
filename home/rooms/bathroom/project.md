@@ -20,5 +20,6 @@ bathroom.dat.js, library ─► room.js ─────────┴─► ind
 ```
 
 - Nothing is computed to fit: what is drawn and listed is what bathroom.dat.js says.
+- The door is the house's: it comes with the walls (shell.js) and opens on a click; the estimate has no door.
 - The 2D plan is cut from the same solids at the house's height; Test measures the checks of bathroom.dat.js on the model.
 - The viewer's choices (tiles, decor, fittings, style, layers, mode) are kept per floor.

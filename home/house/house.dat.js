@@ -16,8 +16,9 @@
               opened = openings are cut out of it, host = windows and doors sit in it, flush with its outer face,
               walkable = the walk stands on it, finish = the facade layer that switches its finish, raw = its bare material
    openings   boxes cut out of every opened element they cross; label = archon width/height in mm; their kind says what
-              is drawn in them (glazed: frame, bars, glass; leaf: a solid leaf of "leaf" mm, the rest glazed) and
-              whether the floor runs through (passage)
+              is drawn in them (glazed: frame, bars, glass; leaf: a solid leaf of "leaf" mm, the rest glazed; door: an inner
+              door of frames.doors) and whether the floor runs through (passage); an inner door: the jamb of its hinge
+              (x1, x2, y1, y2: the end of its span), the side it opens toward, what is bought for it (product, extras)
    finishes   the facade: which material covers which part of an EPS box, by its outer side, a region and lines;
               a later rule wins; anything not covered keeps the material of its kind
    site       the lawn (aroundBuilding: it gives way to the box around the elements) and the surfaces on it
@@ -177,7 +178,7 @@ window.HOUSE = {
    "glassDoor": {"glazed": {"sill": false}, "passage": true},
    "gate": {"leaf": "gate"},
    "entrance": {"leaf": "entrance", "glazed": {"sill": false}, "passage": true},
-   "door": {"passage": true}
+   "door": {"passage": true, "door": "inner"}
   },
   "openings": [
    {"kind": "window", "label": "6000/2400", "b": [0, 440, 1550, 7550, 0, 2400], "outer": "-x", "cols": 4},
@@ -188,24 +189,28 @@ window.HOUSE = {
    {"kind": "gate", "label": "2750/2250", "b": [12760, 13200, 1150, 3900, 0, 2250], "outer": "+x"},
    {"kind": "entrance", "label": "1600/2100", "b": [11860, 12300, 4550, 6150, 0, 2100], "outer": "+x", "leaf": 1000},
    {"kind": "glassDoor", "label": "800/2100", "b": [11860, 12300, 6610, 7410, 0, 2100], "outer": "+x"},
-   {"kind": "door", "label": "870/2050", "b": [10640, 11510, 4110, 4230, 0, 2050]},
-   {"kind": "door", "label": "920/2050", "b": [9010, 9250, 4880, 5800, 0, 2050]},
-   {"kind": "door", "label": "900/2050", "b": [7760, 8660, 6150, 6270, 0, 2050]},
-   {"kind": "door", "label": "920/2050", "b": [10640, 11560, 6150, 6270, 0, 2050]},
+   {"kind": "door", "label": "870/2050", "b": [10640, 11510, 4110, 4230, 0, 2050], "hinge": "x2", "opens": "+y"},
+   {"kind": "door", "label": "920/2050", "b": [9010, 9250, 4880, 5800, 0, 2050], "hinge": "y1", "opens": "+x"},
+   {"kind": "door", "label": "900/2050", "b": [7760, 8660, 6150, 6270, 0, 2050], "hinge": "x2", "opens": "-y", "product": "porta-hide-wc-80", "extras": ["porta-wc-handle-rosette"]},
+   {"kind": "door", "label": "920/2050", "b": [10640, 11560, 6150, 6270, 0, 2050], "hinge": "x2", "opens": "-y"},
    {"kind": "window", "label": "6000/3460", "b": [0, 440, 1550, 7550, 3060, 6520], "outer": "-x", "cols": 4,
     "below": [{"z": 6520, "y": 4550, "pitch": 1}, {"z": 6520, "y": 4550, "pitch": -1}]},
    {"kind": "window", "label": "2200/2850", "b": [12760, 13200, 1680, 3880, 3060, 5910], "outer": "+x", "cols": 2, "transoms": [3900],
     "below": [{"z": 5910, "y": 3880, "pitch": 1}]},
    {"kind": "window", "label": "2200/2850", "b": [12760, 13200, 5220, 7420, 3060, 5910], "outer": "+x", "cols": 2, "transoms": [3900],
     "below": [{"z": 5910, "y": 5220, "pitch": -1}]},
-   {"kind": "door", "label": "890/2050", "b": [5350, 5470, 4590, 5480, 3060, 5110]},
-   {"kind": "door", "label": "900/2050", "b": [6300, 7200, 5530, 5650, 3060, 5110]},
-   {"kind": "door", "label": "820/2050", "b": [9010, 9130, 1780, 2600, 3060, 5110]},
-   {"kind": "door", "label": "940/2050", "b": [9010, 9130, 3470, 4410, 3060, 5110]},
-   {"kind": "door", "label": "900/2050", "b": [9010, 9130, 4570, 5470, 3060, 5110]}
+   {"kind": "door", "label": "890/2050", "b": [5350, 5470, 4590, 5480, 3060, 5110], "hinge": "y1", "opens": "-x"},
+   {"kind": "door", "label": "900/2050", "b": [6300, 7200, 5530, 5650, 3060, 5110], "hinge": "x2", "opens": "-y", "product": "porta-hide-wc-80", "extras": ["porta-wc-handle-rosette"]},
+   {"kind": "door", "label": "820/2050", "b": [9010, 9130, 1780, 2600, 3060, 5110], "hinge": "y1", "opens": "+x"},
+   {"kind": "door", "label": "940/2050", "b": [9010, 9130, 3470, 4410, 3060, 5110], "hinge": "y2", "opens": "+x"},
+   {"kind": "door", "label": "900/2050", "b": [9010, 9130, 4570, 5470, 3060, 5110], "hinge": "y1", "opens": "+x"}
   ],
   "frames": {
    "width": 70, "depth": 80, "bar": 60, "glassDepth": 10, "material": "frame", "glass": "glass", "layers": ["openings"],
+   "doors": {
+    "inner": {"frame": 50, "head": 30, "gap": 3, "bottom": 10, "depth": 40, "angle": 90, "material": "doorWhite", "frameMaterial": "doorFrame",
+     "handle": {"height": 1000, "inset": 60, "rosette": 50, "rosetteDepth": 8, "offset": 8, "lever": 130, "width": 18, "material": "steel"}}
+   },
    "leaves": {
     "gate": {"material": "graphite", "depth": [20, 60], "grooves": 4, "groove": "groove", "grooveDepth": [16, 20], "grooveHeight": 16},
     "entrance": {"material": "graphite", "depth": [10, 70], "grooves": 4, "groove": "groove", "grooveDepth": [6, 10], "grooveHeight": 12,

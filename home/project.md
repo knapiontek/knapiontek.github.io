@@ -92,7 +92,7 @@ Everything bought, once, for every application and independent of them: products
 2. **A wider view on a walk**: in a small room (a bathroom) one cannot step back to see it. Stepping the camera back and cutting off what is nearer than the eye was tried and looked bad (the walls behind cut oddly); next: a wide lens, a fisheye or the like.
 3. **The design editor for more than the kitchen**: design.html moves from the kitchen to the root, to edit other designs too, not only the kitchen. Its materials get simpler: each kind of part names its material, instead of each material listing the parts made of it (as now: a board key with its uses). To agree first.
 4. **Nothing made up in the code**: rooms/kitchen/room.js draws the appliances' and the hardware's details (the hob's cooking zones, the sink, the oven, handles, LED, the dishwasher's baskets) and their materials from numbers written in the code; they move to the data (the library for what the maker gives, kitchen.dat.js for the project's choices). The same for the fixed layout of the bathroom's Info (the eRozkrój columns, the drawer names). After the tests exist, so that the drawing is compared before and after.
-5. **Doors in the house**: the house draws its interior doors; a sub-project gets them with its walls (the shell). The bathrooms then drop their own door.
+5. **The doors' products**: the inner doors without a product (all but the bathrooms') get one, and the attic door 820/2050 its swing, which the drawings do not show (now: away from the wardrobe).
 6. **project.svg** (the dependency graph): refreshed after every change of files.
 
 ## How we work

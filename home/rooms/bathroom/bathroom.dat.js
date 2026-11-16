@@ -18,7 +18,7 @@ window.BATH_DATA = {
       type: 'ground', name: 'Parter', title: 'Łazienka L grafit',
       fittings: { basin: 'catalano-green-lux-60x40-nero', plug: 'catalano-plug-5poslns-nero' },
       cameras: { overview: 'Ogólny', door: 'Od drzwi', vanity: 'Umywalka i WC', shower: 'Prysznic', cabinet: 'Szafka i grzejnik', plan: 'Rzut' },   // the dock
-      look: { basin: 'black', doorPaint: 0x5b5e60 },
+      look: { basin: 'black' },
       defaultDecor: 'egger-h1199-st12',
       /* Test: each check measured on this floor's model in mm. A place: [what, where]: what = a solid's name, d:a detail's
          name (@i: the detail at index i of model.details), room (its floor area), opening:door / opening:window (the
@@ -80,8 +80,6 @@ window.BATH_DATA = {
           {"group":"Umywalka","product":"epdm-gasket-3-black","qty":1},
           {"group":"Grzejnik","role":"radiator","qty":1,"note":{"brass":"pas ściany od otworu drzwi do narożnika 420 mm, zawieszony od 820 mm","nickel":"do armatury w niklu dobierz kolor chrom/inox; pas ściany od otworu drzwi do narożnika 420 mm, zawieszony od 820 mm"}},
           {"group":"Grzejnik","product":"radiator-valves-pair-bottom","qty":1},
-          {"group":"Drzwi","role":"door","qty":1,"note":"wersja otwierana na zewnątrz (na korytarz, jak w projekcie) — stronę lewe/prawe potwierdź w sklepie; lico skrzydła równe ze ścianą od korytarza; otwór 900 × 2070"},
-          {"group":"Drzwi","product":"porta-wc-handle-rosette","qty":1},
         ],
         work: [
           ["Cięcie i oklejanie","M-HM: formatki z tabeli, obrzeże ABS 2 mm na klej PUR (wilgoć). Blat: dwie warstwy skleić, potem okleić 4 boki obrzeżem 42 mm."],
@@ -162,7 +160,6 @@ window.BATH_DATA = {
         movers: [
           { id: 'door1', kind: 'door', name: 'wallCabinet', axis: [7620, 8273.5], angle: 1.92 },
           { id: 'door2', kind: 'door', name: 'showerScreen', axis: [8950, 8260], angle: -1.4 },
-          { id: 'door3', kind: 'door', name: 'entranceDoor', axis: [8607, 6170], angle: 1.45 },
           { id: 'drawer1', kind: 'drawer', name: 'drawer', axis: [8950, 6270], slide: 328 },
           { id: 'drawer2', kind: 'drawer', name: 'drawer', axis: [8950, 6270], slide: 328 },
           { id: 'drawer3', kind: 'drawer', name: 'drawer', axis: [8950, 6270], slide: 287 },
@@ -174,9 +171,6 @@ window.BATH_DATA = {
           { name: 'vanity', box: [7367, 7373, 7590, 7596, 1235, 2005], material: 'b.metal', layer: 'furniture', cut: 'wall-x' },
           { name: 'vanity', box: [7367, 7373, 7035, 7605, 2000, 2006], material: 'b.metal', layer: 'furniture', cut: 'wall-x' },
           { name: 'vanity', box: [7367, 7373, 7035, 7605, 1234, 1240], material: 'b.metal', layer: 'furniture', cut: 'wall-x' },
-          { name: 'entranceDoor', box: [8598, 8610, 6150, 6190, 0, 2050], material: 'b.frame', cut: 'wall-y' },
-          { name: 'entranceDoor', box: [7810, 7822, 6150, 6190, 0, 2050], material: 'b.frame', cut: 'wall-y' },
-          { name: 'entranceDoor', box: [7810, 8610, 6150, 6190, 2038, 2050], material: 'b.frame', cut: 'wall-y' },
           { name: 'showerDrain', box: [9792, 9844, 7724, 8596, 0, 3], material: 'tile:showerFloor', cut: 'floor' },
           { name: 'showerDrain', box: [9846, 9848, 7720, 8600, 0, 4], material: 'b.metal', cut: 'floor' },
           { name: 'showerDrain', box: [9788, 9790, 7720, 8600, 0, 4], material: 'b.metal', cut: 'floor' },
@@ -244,9 +238,6 @@ window.BATH_DATA = {
           { name: 'showerScreen', box: [8965, 8995, 7714, 7726, 840, 1260], material: 'b.metal', layer: 'glass', mover: 'door2' },
           { name: 'showerScreen', box: [8920, 8980, 7715, 7725, 1235, 1245], material: 'b.metal', layer: 'glass', mover: 'door2' },
           { name: 'showerScreen', box: [8920, 8980, 7715, 7725, 855, 865], material: 'b.metal', layer: 'glass', mover: 'door2' },
-          { name: 'entranceDoor', box: [7813, 8607, 6150, 6190, 3, 2047], material: 'b.doorPaint', cut: 'wall-y', mover: 'door3' },
-          { name: 'entranceDoor', box: [7893, 8013, 6220, 6232, 994, 1006], material: 'b.metal', cut: 'wall-y', mover: 'door3' },
-          { name: 'entranceDoor', box: [7893, 8013, 6108, 6120, 994, 1006], material: 'b.metal', cut: 'wall-y', mover: 'door3' },
           { name: 'drawer', box: [7792, 7810, 6490.5, 7058.5, 344.5, 522.5], material: 'b.decor', layer: 'furniture', mover: 'drawer1' },
           { name: 'drawer', box: [7790, 7792, 6488, 7061, 342, 525], material: 'b.gap', layer: 'furniture', mover: 'drawer1' },
           { name: 'drawer', box: [7392, 7792, 6491.6, 6504.4, 348, 476.5], material: 'b.legrabox', layer: 'furniture', mover: 'drawer1' },
@@ -267,9 +258,6 @@ window.BATH_DATA = {
           { name: 'drawer', box: [7442, 7458, 7098, 7633, 364, 512], material: 'b.white', layer: 'furniture', mover: 'drawer3' },
         ],
         details: [
-          { name: 'entranceDoor', kind: 'cylinder', at: [7893, 6194, 1000], axis: [0, 1, 0], r: [20, 20], h: 8, seg: 32, material: 'b.metal', cut: 'wall-y', mover: 'door3' },
-          { name: 'entranceDoor', kind: 'cylinder', at: [7893, 6193, 1070], axis: [0, 1, 0], r: [12, 12], h: 6, seg: 32, material: 'b.metal', cut: 'wall-y', mover: 'door3' },
-          { name: 'entranceDoor', kind: 'cylinder', at: [7893, 6146, 1000], axis: [0, 1, 0], r: [20, 20], h: 8, seg: 32, material: 'b.metal', cut: 'wall-y', mover: 'door3' },
           { name: 'towelRadiator', kind: 'cylinder', at: [7737.5, 6325, 1420], axis: [0, 0, 1], r: [12.5, 12.5], h: 1200, seg: 20, material: 'b.metal', layer: 'sanitary', cut: 'wall-y' },
           { name: 'towelRadiator', kind: 'cylinder', at: [7737.5, 6297.5, 940], axis: [0, 1, 0], r: [6, 6], h: 55, seg: 12, material: 'b.metal', layer: 'sanitary', cut: 'wall-y' },
           { name: 'towelRadiator', kind: 'cylinder', at: [7737.5, 6297.5, 1900], axis: [0, 1, 0], r: [6, 6], h: 55, seg: 12, material: 'b.metal', layer: 'sanitary', cut: 'wall-y' },
@@ -353,7 +341,7 @@ window.BATH_DATA = {
       type: 'attic', name: 'Poddasze', title: 'Łazienka jasna na poddaszu',
       fittings: { basin: 'catalano-green-lux-60x40-white', plug: 'catalano-plug-white', bath: 'castorama-bath-freestanding-170x75' },
       cameras: { overview: 'Ogólny', door: 'Od drzwi', vanity: 'Umywalki', bath: 'Wanna', shower: 'Prysznic', plan: 'Rzut' },
-      look: { basin: 'white', doorPaint: 0xdedcd7 },
+      look: { basin: 'white' },
       defaultDecor: 'egger-h1180-st37',
       /* Test: each check measured on this floor's model in mm. A place: [what, where]: what = a solid's name, d:a detail's
          name (@i: the detail at index i of model.details), room (its floor area), opening:door / opening:window (the
@@ -363,13 +351,13 @@ window.BATH_DATA = {
       checks: [
         {"name": "Prysznic → dolna krawędź otworu drzwi", "from": ["opening:door", "x1"], "to": ["showerZone", "x0"], "min": 0},
         {"name": "Oś WC → szyba prysznica", "from": ["showerZone", "y1"], "to": ["toiletAt", "yc"], "min": 400},
-        {"name": "Oś WC → wanna", "from": ["toiletAt", "yc"], "to": ["d:bath@40", "y0"], "min": 350},
-        {"name": "Wanna → zabudowa WC = wanna → ściana z umywalkami", "equal": [[["d:bath@40", "x1"], ["wcCasing", "x0"]], [["room", "x0"], ["d:bath@40", "x0"]]], "tol": 5},
-        {"name": "Wanna → koniec szafki = wanna → ścianka kolankowa", "from": ["vanity", "y1"], "to": ["d:bath@40", "y0"], "min": 100, "also": [["d:bath@40", "y1"], ["room", "y1"]]},
-        {"name": "Wylewka baterii za wewnętrzną krawędzią wanny", "inside": [["bath", "x1"], ["bath", "yc"]], "outline": ["d:bath@40", 5], "min": 40},
-        {"name": "Bateria → ściana z umywalkami / ścianka kolankowa", "from": ["room", "x0"], "to": ["d:bath@43", "xc"], "min": 150, "also": [["d:bath@43", "yc"], ["room", "y1"]]},
+        {"name": "Oś WC → wanna", "from": ["toiletAt", "yc"], "to": ["d:bath@37", "y0"], "min": 350},
+        {"name": "Wanna → zabudowa WC = wanna → ściana z umywalkami", "equal": [[["d:bath@37", "x1"], ["wcCasing", "x0"]], [["room", "x0"], ["d:bath@37", "x0"]]], "tol": 5},
+        {"name": "Wanna → koniec szafki = wanna → ścianka kolankowa", "from": ["vanity", "y1"], "to": ["d:bath@37", "y0"], "min": 100, "also": [["d:bath@37", "y1"], ["room", "y1"]]},
+        {"name": "Wylewka baterii za wewnętrzną krawędzią wanny", "inside": [["bath", "x1"], ["bath", "yc"]], "outline": ["d:bath@37", 5], "min": 40},
+        {"name": "Bateria → ściana z umywalkami / ścianka kolankowa", "from": ["room", "x0"], "to": ["d:bath@40", "xc"], "min": 150, "also": [["d:bath@40", "yc"], ["room", "y1"]]},
         {"name": "Wysokość nad osią WC", "height": ["toiletAt", "yc"], "min": 2000},
-        {"name": "Wysokość przy wejściu do wanny (krawędź od strony pokoju)", "height": ["d:bath@40", "y0"], "min": 1800},
+        {"name": "Wysokość przy wejściu do wanny (krawędź od strony pokoju)", "height": ["d:bath@37", "y0"], "min": 1800},
         {"name": "Wysokość nad drugą umywalką", "height": ["basin", 1], "min": 2100},
         {"name": "Grzejnik → górna krawędź otworu drzwi", "from": ["d:towelRadiator", "x1"], "to": ["opening:door", "x0"], "min": 0},
       ],
@@ -419,8 +407,6 @@ window.BATH_DATA = {
           {"group":"Wanna","product":"bath-siphon-freestanding-click","qty":1},
           {"group":"Grzejnik","role":"radiator","qty":1,"note":{"brass":"pas ściany od otworu drzwi do narożnika 830 mm, zawieszony od 820 mm","nickel":"do armatury w niklu dobierz kolor chrom/inox; pas ściany od otworu drzwi do narożnika 830 mm, zawieszony od 820 mm"}},
           {"group":"Grzejnik","product":"radiator-valves-pair-bottom","qty":1},
-          {"group":"Drzwi","role":"door","qty":1,"note":"wersja otwierana na zewnątrz (na korytarz, jak w projekcie) — stronę lewe/prawe potwierdź w sklepie; lico skrzydła równe ze ścianą od korytarza; otwór 900 × 2070"},
-          {"group":"Drzwi","product":"porta-wc-handle-rosette","qty":1},
         ],
         work: [
           ["Cięcie i oklejanie","M-HM: formatki z tabeli, obrzeże ABS 2 mm na klej PUR (wilgoć). Blat: dwie warstwy skleić, potem okleić 4 boki obrzeżem 42 mm."],
@@ -499,14 +485,10 @@ window.BATH_DATA = {
         ],
         movers: [
           { id: 'door1', kind: 'door', name: 'cornerShower', axis: [7200, 6050], angle: 1.35 },
-          { id: 'door2', kind: 'door', name: 'entranceDoor', axis: [7147, 5550], angle: 1.45 },
           { id: 'drawer1', kind: 'drawer', name: 'drawer', axis: [8200, 5650], slide: 287 },
           { id: 'drawer2', kind: 'drawer', name: 'drawer', axis: [8200, 5650], slide: 287 },
         ],
         solids: [
-          { name: 'entranceDoor', box: [7138, 7150, 5530, 5570, 3060, 5110], material: 'b.frame', cut: 'wall-y' },
-          { name: 'entranceDoor', box: [6350, 6362, 5530, 5570, 3060, 5110], material: 'b.frame', cut: 'wall-y' },
-          { name: 'entranceDoor', box: [6350, 7150, 5530, 5570, 5098, 5110], material: 'b.frame', cut: 'wall-y' },
           { name: 'vanity', box: [5464, 5484, 5950, 6550, 4280, 5080], material: 'b.led', layer: 'furniture', cut: 'wall-x' },
           { name: 'vanity', box: [5480, 5500, 5970, 6530, 4300, 5060], material: 'b.mirror', layer: 'furniture', cut: 'wall-x' },
           { name: 'vanity', box: [5497, 5503, 5974, 5980, 4295, 5065], material: 'b.metal', layer: 'furniture', cut: 'wall-x' },
@@ -570,9 +552,6 @@ window.BATH_DATA = {
           { name: 'cornerShower', box: [7196, 7204, 6055, 6635, 3060, 5060], material: 'b.glass', layer: 'glass', mover: 'door1' },
           { name: 'cornerShower', box: [7155, 7185, 6574, 6586, 3900, 4320], material: 'b.metal', layer: 'glass', mover: 'door1' },
           { name: 'cornerShower', box: [7215, 7245, 6574, 6586, 3900, 4320], material: 'b.metal', layer: 'glass', mover: 'door1' },
-          { name: 'entranceDoor', box: [6353, 7147, 5530, 5570, 3063, 5107], material: 'b.doorPaint', cut: 'wall-y', mover: 'door2' },
-          { name: 'entranceDoor', box: [6433, 6553, 5600, 5612, 4054, 4066], material: 'b.metal', cut: 'wall-y', mover: 'door2' },
-          { name: 'entranceDoor', box: [6433, 6553, 5488, 5500, 4054, 4066], material: 'b.metal', cut: 'wall-y', mover: 'door2' },
           { name: 'drawer', box: [5922, 5940, 5870.5, 6638.5, 3404.5, 3763.5], material: 'b.decor', layer: 'furniture', mover: 'drawer1' },
           { name: 'drawer', box: [5920, 5922, 5868, 6641, 3402, 3766], material: 'b.gap', layer: 'furniture', mover: 'drawer1' },
           { name: 'drawer', box: [5572, 5922, 5871.6, 5884.4, 3408, 3585], material: 'b.legrabox', layer: 'furniture', mover: 'drawer1' },
@@ -587,9 +566,6 @@ window.BATH_DATA = {
           { name: 'drawer', box: [5572, 5588, 6678, 7413, 3424, 3572], material: 'b.white', layer: 'furniture', mover: 'drawer2' },
         ],
         details: [
-          { name: 'entranceDoor', kind: 'cylinder', at: [6433, 5574, 4060], axis: [0, 1, 0], r: [20, 20], h: 8, seg: 32, material: 'b.metal', cut: 'wall-y', mover: 'door2' },
-          { name: 'entranceDoor', kind: 'cylinder', at: [6433, 5573, 4130], axis: [0, 1, 0], r: [12, 12], h: 6, seg: 32, material: 'b.metal', cut: 'wall-y', mover: 'door2' },
-          { name: 'entranceDoor', kind: 'cylinder', at: [6433, 5526, 4060], axis: [0, 1, 0], r: [20, 20], h: 8, seg: 32, material: 'b.metal', cut: 'wall-y', mover: 'door2' },
           { name: 'towelRadiator', kind: 'cylinder', at: [5867.5, 5705, 4480], axis: [0, 0, 1], r: [12.5, 12.5], h: 1200, seg: 20, material: 'b.metal', layer: 'sanitary', cut: 'wall-y' },
           { name: 'towelRadiator', kind: 'cylinder', at: [5867.5, 5677.5, 4000], axis: [0, 1, 0], r: [6, 6], h: 55, seg: 12, material: 'b.metal', layer: 'sanitary', cut: 'wall-y' },
           { name: 'towelRadiator', kind: 'cylinder', at: [5867.5, 5677.5, 4960], axis: [0, 1, 0], r: [6, 6], h: 55, seg: 12, material: 'b.metal', layer: 'sanitary', cut: 'wall-y' },
@@ -688,7 +664,7 @@ window.BATH_DATA = {
     tap: { brass: 'hansgrohe-tecturis-e-110-73010140', nickel: 'hansgrohe-tecturis-e-110-73010000' },
     siphon: 'geberit-siphon-space-saving',
     bathTap: { brass: 'hansgrohe-tecturis-e-73445140', nickel: 'hansgrohe-tecturis-e-73445000' }, bathSet: 'hansgrohe-10452180',
-    radiator: 'mexen-hades-1200x400-gold', door: 'porta-hide-wc-80',
+    radiator: 'mexen-hades-1200x400-gold',
   },
 
   /* as the house's views, one per mode: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own

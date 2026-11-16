@@ -32,6 +32,7 @@ analysis.md ─(by hand)─► house.dat.js ─► model.js ─► solids ─┬
 
 - **Elements**: the boxes of the analysis, each of a kind (footing, foundation, slab, block, EPS, ring beam, ceiling, chimney…). The kind sets the material, the section colour, the checked thickness, the layer, and whether openings cut it and windows sit in it.
 - **Openings**: a glazed frame, a solid leaf with grooves and a handle, or both.
+- **Inner doors**: a frame lining the reveal and a leaf that turns on its hinge (a click, Space on a walk); a closed leaf stops the walk; a sub-project gets the door with its wall.
 - **Portal**: the long walls run on into the wings at both ends, with the ring beam over them, EPS inside and a cap on each end.
 - **Roof**: two slopes from pitch, eave and thickness, over both portals; roof windows and the chimney cut out of it.
 - **Stair**: floating treads in flights; the landing is a flight of one tread.

@@ -70,25 +70,31 @@ function roomsFor(HOUSE, MODEL, ids) {
     const flat = cells.filter(c => c.side === '+z' && c.layers.includes('slabs')).map(c => G.zRange(c.S)[0]);
     const crosses = b => b[0] < L.box[1] && b[1] > L.box[0] && b[2] < L.box[3] && b[3] > L.box[2] && b[4] < L.box[5] && b[5] > L.box[4];
     /* objects as a person sees the room: each wall one object (its element), the floor one (the slab and the foundation tops
-       under the walls, flush underneath), the ceiling one (slab, flat ceiling, roof), each window one (its frames and glass) */
-    const holes = GEO.openings.map((o, i) => ({ id: 'window ' + (o.label || i), b: o.b }))
+       under the walls, flush underneath), the ceiling one (slab, flat ceiling, roof), each window one (its frames and glass),
+       each door one (its frame, and its leaf that turns) */
+    const holes = GEO.openings.map((o, i) => ({ id: (GEO.openingKinds[o.kind].door ? 'door ' : 'window ') + (o.label || i), b: o.b }))
       .concat(GEO.roof.windows.map(w => ({ id: 'roof window ' + w.name, b: [w.x[0], w.x[1], w.y[0], w.y[1]] })));
     const holding = b => holes.find(o => b[0] >= o.b[0] - TOL && b[1] <= o.b[1] + TOL && b[2] >= o.b[2] - TOL && b[3] <= o.b[3] + TOL);
     const objects = new Map();
     for (const c of cells) {
-      const role = c.side === '-z' ? 'floor' : c.fixture ? 'window' : c.side === '+z' ? 'ceiling' : 'wall';
-      const hole = role === 'window' && holding(plan(c.S));
-      const id = role === 'wall' ? c.element : role === 'window' ? (hole ? hole.id + ' @' + hole.b.slice(0, 4).join(',') : c.element) : role;
+      const role = c.side === '-z' ? 'floor' : c.fixture ? (c.element === 'door' ? 'door' : 'window') : c.side === '+z' ? 'ceiling' : 'wall';
+      const hosted = role === 'window' || role === 'door', hole = hosted && holding(plan(c.S));
+      const id = role === 'wall' ? c.element : hosted ? (hole ? hole.id + ' @' + hole.b.slice(0, 4).join(',') : c.element) : role;
       if (!objects.has(id)) objects.set(id, { id, role, sides: {}, cells: [] });
       const o = objects.get(id); o.cells.push(c); o.sides[c.side] = (o.sides[c.side] || 0) + 1;
     }
     for (const o of objects.values()) o.side = Object.entries(o.sides).sort((p, q) => q[1] - p[1])[0][0];
     /* a window belongs to the wall (or roof) it sits in: it is shown and hidden with it, never on its own */
     const boxOf = o => { const b = o.cells.map(c => plan(c.S)); return [Math.min(...b.map(r => r[0])), Math.max(...b.map(r => r[1])), Math.min(...b.map(r => r[2])), Math.max(...b.map(r => r[3]))]; };
-    for (const w of objects.values()) if (w.role === 'window') {
+    for (const w of objects.values()) if (w.role === 'window' || w.role === 'door') {
       const wb = boxOf(w), host = [...objects.values()].find(o => (o.role === 'wall' || o.role === 'ceiling') && o.side === w.side &&
         wb[0] >= boxOf(o)[0] - TOL && wb[1] <= boxOf(o)[1] + TOL && wb[2] >= boxOf(o)[2] - TOL && wb[3] <= boxOf(o)[3] + TOL);
       w.host = host ? host.id : null;
+    }
+    /* a door's leaf, closed, with the axis it turns about and the angle it opens by (the house's own door) */
+    for (const d of MODEL.DOORS) {
+      const lb = plan(d.cells[0].S), o = [...objects.values()].find(o => o.role === 'door' && within(lb, boxOf(o)));
+      if (o) o.leaf = { cells: d.cells.map(c => Object.assign({}, c, { side: o.side })), axis: d.axis, angle: d.angle };
     }
     out.push({
       floor: floor.id, floorName: floor.name, room: room.id, number: room.numbers ? room.numbers[0] : null, numbers: room.numbers, name: room.name,

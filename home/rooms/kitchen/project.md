@@ -15,7 +15,7 @@ The kitchen in the living room: designed in design.html, shown in index.html and
 | room.js | the kitchen's furniture, the implementation of the interface room.js: the model as solids, moving fronts and details, the same on its page and in the house | by hand / LLM |
 | info.js | Info of index.html: the estimate, the cutting list, the notes and the assembly cards as sheets with editable inputs and live formulas; its texts refer to the model, never to copied numbers | by hand |
 | index.html | the kitchen in its room from the house: 3D, 2D, Test (the geometry: collisions, gaps, fronts off the line, parts sticking out, parts with no size), Info | LLM |
-| design.html | the editor: tables of materials (read only), groups, columns, components and notes; the elevation; the problems under the tables. Knows the format, not the kitchen | by hand |
+| design.html | the editor, in the shared screen of core: tables of materials (read only), groups, columns, components and notes; the elevation; the problems in the panel. Opens the kitchen by default; knows the format, not the kitchen | by hand |
 | rules.md | the kitchen as it is built, in Polish, as the app names things | by hand |
 
 ## Data flow

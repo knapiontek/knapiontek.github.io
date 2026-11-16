@@ -90,10 +90,10 @@ const ROOF_CELLS = roofCells();
    plane: (y, z) in an x-facing wall, (x, z) in a y-facing one. */
 const FIXTURES = [];                       // frames, glass, leaves: drawn, never cut by anything
 const F = GEO.frames;
-function addFixture(S, material, layers, element = 'opening') {
+function addFixture(S, material, layers, element = 'opening', edges = false) {
   if (emptyPrism(S)) return;
   const floor = floorOfZ(centreZ(S));
-  FIXTURES.push({ S, element, floor, material, cap: material, layers: [floor].concat(layers), edges: false });
+  FIXTURES.push({ S, element, floor, material, cap: material, layers: [floor].concat(layers), edges });
 }
 /* the plane of an opening: its outline, its span along the wall and how a polygon of it becomes a prism */
 function openingPlane(o) {
@@ -156,7 +156,7 @@ function glazedFixtures(o, plane, P) {
 }
 function openingFixtures(o) {
   const K = OPENING_KIND[o.kind];
-  if (!K.glazed && !K.leaf) return;        // an inner door is an opening only
+  if (!K.glazed && !K.leaf) return;        // an inner door: its frame and leaf are below (doorOf)
   const plane = openingPlane(o), [u1, u2] = plane.span;
   const leafEnd = K.leaf ? u1 + (o.leaf || u2 - u1) : u1;
   if (K.leaf) leafFixtures(o, plane, stripOf(plane.outline, u1, leafEnd));
@@ -175,6 +175,42 @@ function roofWindowFixtures(w) {
 }
 GEO.openings.forEach(openingFixtures);
 ROOF.windows.forEach(roofWindowFixtures);
+
+/* ================= 5b. INNER DOORS =================
+   In an opening that spans its wall: a frame lining the reveal (the jambs and the head, the wall's whole depth) and a
+   leaf in it, flush with the face it opens toward, turning on the hinge jamb. The frame is a fixture; the leaf and its
+   handles are a door: cells that turn together about the hinge (axis), by angle when open. */
+const DOORS = [];
+function doorOf(o, i) {
+  const K = OPENING_KIND[o.kind], D = K.door && F.doors[K.door];
+  if (!D) return;
+  const [x1, x2, y1, y2, z1, z2] = o.b, alongX = x2 - x1 > y2 - y1;       // the wall runs along the opening's longer side
+  const [u1, u2] = alongX ? [x1, x2] : [y1, y2], [n1, n2] = alongX ? [y1, y2] : [x1, x2];
+  const sign = o.opens[0] === '+' ? 1 : -1, face = sign > 0 ? n2 : n1;
+  /* a box from (u, n) ranges into house axes */
+  const box = (ua, ub, na, nb, za, zb) => prism(alongX ? [ua, ub, Math.min(na, nb), Math.max(na, nb), za, zb] : [Math.min(na, nb), Math.max(na, nb), ua, ub, za, zb]);
+  const layers = F.layers, J = D.frame, top = z2 - D.head;
+  addFixture(box(u1, u1 + J, n1, n2, z1, top), D.frameMaterial, layers, 'door', true);
+  addFixture(box(u2 - J, u2, n1, n2, z1, top), D.frameMaterial, layers, 'door', true);
+  addFixture(box(u1, u2, n1, n2, top, z2), D.frameMaterial, layers, 'door', true);
+  /* the leaf: the frame's inside less the gap, from the floor gap up */
+  const a = u1 + J + D.gap, b = u2 - J - D.gap, back = face - sign * D.depth, floor = floorOfZ((z1 + z2) / 2);
+  const cell = (S, material) => ({ S, element: 'door', floor, material, cap: material, layers: [floor].concat(layers), edges: true, part: 'door' + i });
+  const cells = [cell(box(a, b, back, face, z1 + D.bottom, top - D.gap), D.material)];
+  /* a handle on each face, by the free edge */
+  const hinge = o.hinge === (alongX ? 'x2' : 'y2') ? b : a, free = hinge === a ? b : a, inward = free > hinge ? -1 : 1;
+  const H = D.handle, hu = free + inward * H.inset, hz = z1 + H.height;
+  for (const [f, out] of [[face, sign], [back, -sign]]) {
+    cells.push(cell(box(hu - H.rosette / 2, hu + H.rosette / 2, f, f + out * H.rosetteDepth, hz - H.rosette / 2, hz + H.rosette / 2), H.material));
+    cells.push(cell(box(Math.min(hu, hu + inward * H.lever), Math.max(hu, hu + inward * H.lever), f + out * H.offset, f + out * (H.offset + H.width), hz - H.width / 2, hz + H.width / 2), H.material));
+  }
+  /* the hinge axis on the opening face, and the turn that brings the free edge out toward that face */
+  const axis = alongX ? [hinge, face] : [face, hinge], d = free - hinge;
+  const angle = D.angle * DEG * (alongX ? Math.sign(d) * sign : -Math.sign(d) * sign);
+  DOORS.push({ id: 'door' + i, label: o.label, floor, axis, angle, cells, free: alongX ? [free, face] : [face, free], centre: alongX ? [(a + b) / 2, face] : [face, (a + b) / 2],
+    product: o.product || D.product || null, extras: o.extras || D.extras || [] });
+}
+GEO.openings.forEach(doorOf);
 
 /* ================= 6. STAIR =================
    Floating treads, the landing is a flight of one. */
@@ -215,7 +251,7 @@ const voidsAt = level => GEO.voids.flatMap(v => v.boxes).filter(b => b[4] <= lev
 const FOOTPRINT = [[0, GEO.length, 0, WIDTH]].concat(GEO.floors[0].rooms.flatMap(r => r.rects));
 
 return { ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOfZ, SIDE,
-  CELLS, FIXTURES, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS, voidsAt, FOOTPRINT };
+  CELLS, FIXTURES, DOORS, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS, voidsAt, FOOTPRINT };
 }
 
 root.HouseEngine = { build: buildHouse };

@@ -746,18 +746,18 @@ function make(env) {
     /* ---------- the room: the house's own solids (the interface ../../shell.js), as they are. Each side of the room (a wall, the floor, the
        ceiling) is one object, hidden while the camera stands behind it; a window goes with its wall. The top of the floor
        slab shows the floor tiles chosen here. ---------- */
-    const ROLE_LAYER = { wall: 'walls', floor: 'floor', ceiling: 'ceiling', window: 'window' };
+    const ROLE_LAYER = { wall: 'walls', floor: 'floor', ceiling: 'ceiling', window: 'window', door: 'window' };
     const SIDE_NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+z': [0, 0, 1], '-z': [0, 0, -1] };
     const SIDES = [];
     if (opts.room) for (const o of ROOM.objects) {
-      const key = 'o:' + (o.role === 'window' && o.host ? o.host : o.id);
-      for (const c of o.cells) {
+      const hosted = o.role === 'window' || o.role === 'door', key = 'o:' + (hosted && o.host ? o.host : o.id);
+      for (const c of (o.leaf ? o.cells.concat(o.leaf.cells) : o.cells)) {   // a door's leaf stands closed here
         const cell = Object.assign({}, c, { layers: [ROLE_LAYER[o.role], key], info: {} });
         delete cell.finish;                        // the house's facade layers are not on this page
         if (o.role === 'floor') cell.faceMaterial = n => (n[2] > 0.5 ? K('floor') : c.material);
         STATIC.push(cell);
       }
-      if (o.role === 'window') continue;
+      if (hosted) continue;
       const mids = o.cells.map(c => { const ys = c.S.poly.map(p => p[0]), [z1, z2] = G.zRange(c.S); return [(c.S.x1 + c.S.x2) / 2, (Math.min(...ys) + Math.max(...ys)) / 2, (z1 + z2) / 2]; });
       SIDES.push({ key, normal: SIDE_NORMAL[o.side], mid: [0, 1, 2].map(k => mids.reduce((s, p) => s + p[k], 0) / mids.length) });
     }

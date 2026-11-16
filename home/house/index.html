@@ -127,6 +127,47 @@ let HOUSE_MESHES = V.buildMeshes(PIECES);   // drawn again with the finishes of 
 V.buildEdges(PIECES);
 V.addLight();
 
+/* the inner doors (model.js): each turns about its hinge, drawn under a pivot there; a click, or Space on a walk, opens or closes it */
+const DOOR_SPEED = 1.8;                    // of a full turn per second
+const DOORS = MODEL.DOORS.map(d => {
+  const pivot = new THREE.Group(), pin = new THREE.Group();
+  pivot.position.set(d.axis[0], d.axis[1], 0); pin.position.set(-d.axis[0], -d.axis[1], 0);
+  pivot.add(pin); root.add(pivot);
+  const pieces = piecesOf(d.cells);
+  V.buildMeshes(pieces, pin); V.buildEdges(pieces, pin);
+  const door = Object.assign({}, d, { pivot, progress: 0, target: 0 });
+  pivot.userData.door = door;
+  return door;
+});
+const easeDoor = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+V.onFrame(dt => {
+  let moved = false;
+  for (const d of DOORS) {
+    if (d.progress === d.target) continue;
+    d.progress = V.reducedMotion ? d.target : d.target > d.progress ? Math.min(d.target, d.progress + dt * DOOR_SPEED) : Math.max(d.target, d.progress - dt * DOOR_SPEED);
+    d.pivot.rotation.z = d.angle * easeDoor(d.progress); moved = true;
+  }
+  if (moved && V.walk.on) V.refreshObstacles();
+  return moved;
+});
+const toggleDoor = d => { d.target = d.target ? 0 : 1; V.redraw(); };
+/* the door a ray meets first, before anything else that is drawn (over a cut nothing is) */
+function doorAlong(ray) {
+  const meshes = [], shows = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+  root.traverse(o => { if (o.isMesh && shows(o) && o.material.visible !== false && o.material.colorWrite !== false) meshes.push(o); });
+  const hit = ray.intersectObjects(meshes, false).find(h => V.CUT.distanceToPoint(h.point) >= 0);
+  for (let o = hit && hit.object; o; o = o.parent) if (o.userData.door) return o.userData.door;
+  return null;
+}
+/* on a walk, Space: the nearest door within reach, on the walker's floor */
+const DOOR_REACH = 1500;                   // mm from the walker to the middle of a leaf
+window.addEventListener('keydown', e => {
+  if (e.key !== ' ' || !V.walk.on) return;
+  const w = V.walk, near = DOORS.filter(d => floorOfZ(w.z + 1) === d.floor).map(d => [d, Math.hypot(d.centre[0] - w.x, d.centre[1] - w.y)])
+    .filter(([, r]) => r <= DOOR_REACH).sort((a, b) => a[1] - b[1])[0];
+  if (near) { toggleDoor(near[0]); e.preventDefault(); }
+});
+
 /* ================= 4. STATE AND LAYERS =================
    The viewer's choices stay in the browser; a stored state of another format is dropped. */
 const STORE = CORE.ui.store('house-state-v4',            // v4: the modes 3D, 2D, Test, Info and the panel's tabs
@@ -348,7 +389,7 @@ const placeSun = () => { V.placeSun(SUN.state); for (const b of builtParts()) b.
 const PARTS = APPS.filter(a => a.room).map(a => ({ id: a.id, path: a.room, layer: 'part:' + a.id, name: a.name, built: null, loading: null, status: '' }));
 /* the application that furnishes a room (apps.dat.js), and the link to its page */
 const APP_OF = Object.fromEntries(APPS.flatMap(a => (a.rooms || []).map(id => [id, a])));
-const appLink = r => { const A = APP_OF[r.id]; return A && A.page ? `<a class="btnlink" href="../${A.page}">${A.name}</a>` : ''; };
+const appLink = r => { const A = APP_OF[r.id]; return A && A.page ? `<a class="btnlink" href="../${A.page}">${A.link || A.name}</a>` : ''; };
 const SHELL_PATH = (APPS.find(a => a.shell) || {}).shell, LIBRARY = { products: window.LIBRARY_PRODUCTS, textures: CORE.library.textures };
 state.parts = Object.assign(Object.fromEntries(PARTS.map(p => [p.layer, true])), state.parts || {});
 const PART_LAYER = CORE.ui.layerTree(Object.fromEntries(PARTS.map(p => [p.layer, { name: p.name }])));
@@ -500,9 +541,19 @@ function infoBook() {
       unit: 'm²', qty: ref => ({ f: `ROUND(${R.area}*(1+${ref.param('reserve')}),2)`, z: '#,##0.00' }), price: P.price ?? null,
       source: { text: P.shop || '', links: P.link ? [{ text: P.link, href: P.link }] : [] } };
   });
-  const estimate = CORE.info.estimate({ title: 'Kosztorys – ' + HOUSE.name, info: 'Posadzki z płytek według Wykończenia; ilość = powierzchnia × (1 + zapas).',
+  /* the inner doors: what is bought for them, by product; doors with none yet are one position without a price */
+  const SHOPS = LIBRARY_PRODUCTS.shops, count = {};
+  for (const d of DOORS) for (const k of [d.product, ...d.extras]) count[k] = (count[k] || 0) + 1;
+  const where = k => DOORS.filter(d => d.product === k || d.extras.includes(k)).map(d => `${FLOOR[d.floor].name} ${d.label}`).join(', ');
+  const doorItems = Object.entries(count).map(([k, n]) => {
+    if (k === 'null') return { id: 'door:none', name: 'Drzwi wewnętrzne (do wyboru)', spec: '', use: where(null), unit: 'szt.', qty: n, price: null, source: '' };
+    const P = CORE.library.product(k);
+    return { id: 'door:' + k, name: P.name, spec: '', use: where(k), unit: 'szt.', qty: n, price: P.price ?? null,
+      source: { text: SHOPS[P.shop] ? SHOPS[P.shop].name : '', links: P.link ? [{ text: P.link, href: P.link }] : [] } };
+  });
+  const estimate = CORE.info.estimate({ title: 'Kosztorys – ' + HOUSE.name, info: 'Posadzki z płytek według Wykończenia; ilość = powierzchnia × (1 + zapas). Drzwi wewnętrzne według otworów.',
     params: [{ key: 'reserve', label: 'Zapas na docinki', v: TILES.reserve, z: '0%' }],
-    categories: [{ name: 'Posadzki z płytek', items }], excluded: ['Klej, fuga, listwy i robocizna.'] });
+    categories: [{ name: 'Posadzki z płytek', items }, { name: 'Drzwi wewnętrzne', items: doorItems }], excluded: ['Klej, fuga, listwy i robocizna.'] });
   return { sheets: [estimate.sheet, rooms, CORE.info.table('Notatki', [120], ['Uwagi'], HOUSE.notes.map(n => [n]), HOUSE.source)] };
 }
 function infoView() {
@@ -528,6 +579,8 @@ const MM_TO_M = 0.001;                     // the scene is in metres
 /* a click on a floor selects a room of the open floor */
 V.onClick(ray => {
   if (!is3d()) return;
+  const door = doorAlong(ray);
+  if (door) return toggleDoor(door);
   if (PARTS.some(p => p.built && partOn(p.layer) && p.built.some(b => b.click(ray)))) return;   // a door or a drawer of a part
   if (V.walk.on) return;                  // on a walk a click only opens and closes
   const F = openFloor();
@@ -541,7 +594,8 @@ const PASSAGE_FLOORS = PASSAGES.map(o => ({ S: CORE.geometry.prism([o.b[0], o.b[
 /* the furniture shown stops the walk too, whatever floor is open: what each gives through the interface (obstacles) */
 const walkShown = ROOM_INTERFACE.shownWith(LAYER, () => true, PARTS.map(p => ({ layer: p.layer, on: () => partOn(p.layer), shown: layers => p.built[0].shown(layers) })));
 const furnitureObstacles = () => [].concat(...builtParts().map(b => b.obstacles(walkShown)));
-V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, more: furnitureObstacles, ground: ALL_CELLS.filter(c => c.walkable).concat(PASSAGE_FLOORS), startLevel: FLOORS[0].level, pad: $('pad'),
+const doorObstacles = () => V.boxes(DOORS.filter(d => d.progress < 1).flatMap(d => d.cells.slice(0, 1)));   // a leaf not fully open, closed
+V.enableWalk({ config: VIEW_3D.walk, solids: SOLIDS, more: () => furnitureObstacles().concat(doorObstacles()), ground: ALL_CELLS.filter(c => c.walkable).concat(PASSAGE_FLOORS), startLevel: FLOORS[0].level, pad: $('pad'),
   canStart: is3d, onToggle: () => { bottomMenu(); applyView(); }, home: () => VIEW_3D.cameras.all[0] });
 
 /* ================= 10. 2D PLAN (core/plan.js) =================
@@ -579,12 +633,26 @@ function planUnderRoof(F, X, holes) {
   for (const b of holes) s += PLAN.rect(X, b[0], b[1], b[2], b[3], `fill="none" stroke="#a3a7a2" stroke-dasharray="${PS.line.hole}" stroke-width="${PS.line.thin}"`);
   return s;
 }
+/* the inner doors: the leaf open and its swing, as the drawings show them */
+function planDoors(F, X) {
+  const turn = (p, d) => { const c = Math.cos(d.angle), s = Math.sin(d.angle), dx = p[0] - d.axis[0], dy = p[1] - d.axis[1]; return [d.axis[0] + dx * c - dy * s, d.axis[1] + dx * s + dy * c]; };
+  const at = p => `${X + p[1]},${p[0]}`;
+  let s = '';
+  for (const d of DOORS.filter(d => d.floor === F.id)) {
+    const L = d.cells[0].S, ys = L.poly.map(p => p[0]), y1 = Math.min(...ys), y2 = Math.max(...ys);
+    const leaf = [[L.x1, y1], [L.x2, y1], [L.x2, y2], [L.x1, y2]].map(p => turn(p, d)), open = turn(d.free, d);
+    const r = Math.hypot(d.free[0] - d.axis[0], d.free[1] - d.axis[1]);
+    s += `<polygon points="${leaf.map(at).join(' ')}" fill="#fff" stroke="#5f6a66" stroke-width="${PS.line.thin}"/>`
+      + `<path d="M ${at(d.free)} A ${r} ${r} 0 0 ${d.angle > 0 ? 0 : 1} ${at(open)}" fill="none" stroke="#8a8d88" stroke-width="${PS.line.thin}" stroke-dasharray="${PS.line.dash}"/>`;
+  }
+  return s;
+}
 const planSvg = () => PLAN.sheets(FLOORS.map(F => ({
   extent: [ROOF.x[0], ROOF.x[1], 0, WIDTH], title: `${F.name} · cięcie ${planCut(F)} mm`,
   draw: X => {
     const h = F.level + planCut(F), holes = voidsAt(F.level);
     return PLAN.floorArea(X, F.rooms.flatMap(r => r.rects)) + planStair(F, X, h, holes) + PLAN.cut(X, SOLIDS, h, c => c.floor === F.id)
-      + (F === TOP_FLOOR ? planUnderRoof(F, X, holes) : '') + PLAN.labels(X, GEO.openings, h, SIDE, o => floorOfZ((o.b[4] + o.b[5]) / 2) === F.id)
+      + (F === TOP_FLOOR ? planUnderRoof(F, X, holes) : '') + planDoors(F, X) + PLAN.labels(X, GEO.openings, h, SIDE, o => floorOfZ((o.b[4] + o.b[5]) / 2) === F.id)
       + PLAN.rooms(X, F.rooms) + PLAN.dims(X, [0, GEO.length, 0, WIDTH], ROOF.x[1]);
   }
 })));
@@ -615,7 +683,7 @@ setMode(CORE.ui.askedMode(VIEWS) || state.mode);
 $('loading').hidden = true;
 V.run();
 setTimeout(loadParts, 300);   // after the house's first frames
-window.HOUSE_VIEW = { CELLS, CHECKS, setCamera, setLayer, setMode, selectRoom, state, RESULTS, PARTS, V, furnitureObstacles, pieces: PIECES.length, edges: V.EDGE_GROUPS.length,   // for tests
+window.HOUSE_VIEW = { CELLS, CHECKS, DOORS, toggleDoor, setCamera, setLayer, setMode, selectRoom, state, RESULTS, PARTS, V, furnitureObstacles, pieces: PIECES.length, edges: V.EDGE_GROUPS.length,   // for tests
   cells: { CELLS, FIXTURES, ROOF_CELLS, STAIR_CELLS, SITE_CELLS } };
 }).catch(e => { const l = document.getElementById('loading'); l.hidden = false; l.textContent = 'Błąd: ' + e.message; });
 </script>

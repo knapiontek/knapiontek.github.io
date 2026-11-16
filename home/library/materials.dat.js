@@ -11,6 +11,8 @@ window.LIBRARY_MATERIALS = {
  "graphite": {"color": "#45494d", "roughness": 0.9, "texture": {"strength": 0.5, "grain": 2, "tile": 1100}},
  "roofGraphite": {"color": "#3a3d40", "roughness": 0.78, "texture": {"strength": 0.35, "grain": 2, "tile": 600}},
  "frame": {"color": "#3b3e42", "roughness": 0.5, "metalness": 0.25},
+ "doorWhite": {"color": "#f3f1ec", "roughness": 0.42, "texture": {"strength": 0.06, "grain": 1, "tile": 600}},
+ "doorFrame": {"color": "#efede7", "roughness": 0.5},
  "groove": {"color": "#2e3134", "roughness": 0.8},
  "steel": {"color": "#c9cccf", "roughness": 0.3, "metalness": 0.8},
  "glass": {"color": "#9fb5bf", "roughness": 0.02, "metalness": 0.1, "opacity": 0.3, "reflect": 1.6, "plan": "#9fc3d6"},

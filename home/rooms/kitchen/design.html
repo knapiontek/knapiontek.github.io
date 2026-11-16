@@ -1,298 +1,79 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Projekt zabudowy</title>
-  <style>
-    /* =============================================================
-       STYLES
-       ============================================================= */
-        :root {
-          --bg: #0f172a;
-          --panel: #1e293b;
-          --accent: #38bdf8;
-          --accent-hover: #7dd3fc;
-          --danger: #f87171;
-          --danger-hover: #fca5a5;
-          --text: #f8fafc;
-          --text-muted: #cbd5e1;
-          --text-dim: #e2e8f0;
-          --border: #334155;
-          --border-soft: #475569;
-    
-          --sheet-bg: #ffffff;
-          --sheet-header-bg: #f1f5f9;
-          --sheet-border: #d8dee8;
-          --sheet-text: #1e293b;
-          --sheet-text-muted: #64748b;
-          --sheet-row-alt: #f8fafc;
-          --sheet-row-hover: #eaf4fe;
-          --sheet-focus: #38bdf8;
-          --sheet-ghost: #94a3b8;
-        }
-    
-        * { box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
-    
-        h1 { max-width: 1400px; margin: 0 auto 18px auto; font-size: 22px; }
-    
-        #action-bar {
-          max-width: 1400px;
-          margin: 0 auto 15px auto;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          justify-content: flex-end;
-          align-items: center;
-        }
-        .action-group { display: flex; gap: 8px; padding-left: 10px; border-left: 1px solid var(--border-soft); }
-        .action-group:first-child { border-left: none; padding-left: 0; }
-    
-        .btn {
-          background: var(--accent);
-          color: var(--bg);
-          border: none;
-          padding: 9px 16px;
-          font-size: 13px;
-          font-weight: 600;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: background 0.15s ease, transform 0.1s ease;
-          white-space: nowrap;
-        }
-        .btn:hover { background: var(--accent-hover); }
-        .btn:active { transform: scale(0.98); }
-        .btn.secondary { background: var(--border-soft); color: var(--text); }
-        .btn.secondary:hover { background: #5b6b83; }
-    
-        #status-banner {
-          max-width: 1400px;
-          margin: 0 auto 15px auto;
-          display: none;
-          padding: 10px 14px;
-          border-radius: 6px;
-          font-size: 13px;
-          font-weight: 500;
-        }
-        #status-banner.show { display: block; }
-        #data-issues { max-width: 1400px; margin: -10px auto 20px auto; padding: 10px 14px; border-radius: 6px; font-size: 13px;
-          background: rgba(248,113,113,0.12); color: var(--danger-hover); border: 1px solid var(--danger); }
-        #data-issues ul { margin: 6px 0 0; padding-left: 18px; }
-        #data-issues li { margin: 2px 0; }
-        [x-cloak] { display: none !important; }
-        #status-banner.error { background: rgba(248,113,113,0.12); color: var(--danger-hover); border: 1px solid var(--danger); }
-        #status-banner.ok { background: rgba(56,189,248,0.12); color: var(--accent-hover); border: 1px solid var(--accent); }
-    
-        #svg-container { width: 100%; max-width: 1400px; margin: 20px auto 0 auto; background: var(--panel); padding: 20px; box-sizing: border-box; border-radius: 8px; position: relative; }
-        #svg-canvas { width: 100%; text-align: center; }
-        svg {
-          display: inline-block;
-          width: auto;
-          height: auto;
-          max-width: 100%;
-          max-height: min(70vh, 700px);
-          overflow: visible;
-        }
-        .component-group { cursor: pointer; }
-        .component-group:hover rect { filter: brightness(1.2); stroke: var(--accent) !important; stroke-width: 3px; }
-        
-        #tooltip {
-          position: absolute;
-          display: none;
-          background: var(--bg);
-          color: var(--accent);
-          border: 2px solid var(--accent);
-          padding: 6px 12px;
-          font-size: 14px;
-          font-weight: bold;
-          border-radius: 4px;
-          pointer-events: none;
-          white-space: nowrap;
-          z-index: 10;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        }
-
-        #svg-footnote {
-          margin-top: 16px;
-          padding-top: 12px;
-          border-top: 1px solid var(--border);
-          font-size: 13px;
-          color: var(--text-muted);
-          min-height: 18px;
-          text-align: left;
-        }
-    
-        .panel {
-          max-width: 1400px;
-          margin: 20px auto 0 auto;
-          background: var(--panel);
-          padding: 20px;
-          border-radius: 8px;
-          box-sizing: border-box;
-        }
-        .panel h3 { margin-top: 0; color: var(--accent); font-size: 16px; }
-    
-        .input-grid {
-          display: grid;
-          grid-template-columns: 1fr minmax(220px, 300px);
-          gap: 20px;
-          align-items: stretch;
-        }
-        .input-grid .wide { grid-column: 1 / -1; }
-        /* first row: Materials as high as its rows; Groups & Columns takes that height and scrolls */
-        .input-grid .sub-section:not(.wide) { display: flex; flex-direction: column; min-height: 0; }
-        .input-grid .sub-section:not(.wide) .sheet-wrap { flex: 1 1 auto; max-height: none; }
-        .input-grid .sub-section.columns .sheet-wrap { contain: size; min-height: 120px; }
-        .input-grid .sub-section.columns .sheet.groups { margin-bottom: 14px; }
-        .sheet td.center { text-align: center; }
-        .sheet.read-only td { padding: 7px 10px; color: var(--sheet-text); white-space: normal; }
-        .sheet.read-only td.num { text-align: right; white-space: nowrap; }
-        /* materials: the name takes the room it needs, the short columns only their content, the uses the rest */
-        .sheet.read-only th.name { width: 50%; }
-        .sheet.read-only th.fit { width: 1%; }
-        .sheet .swatch { display: block; width: 32px; height: 16px; border-radius: 3px; border: 1px solid var(--sheet-border); }
-        .sub-section h4 {
-          margin: 0 0 8px 0;
-          color: var(--text-dim);
-          border-bottom: 1px solid var(--border-soft);
-          padding-bottom: 6px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 14px;
-        }
-    
-        .sheet-wrap {
-          background: var(--sheet-bg);
-          border: 1px solid var(--sheet-border);
-          border-radius: 6px;
-          overflow: auto;
-          max-height: 360px;
-          /* slim scrollbars matching the light sheet: thin grey thumb, no arrows */
-          scrollbar-width: thin;
-          scrollbar-color: var(--sheet-ghost) transparent;
-        }
-        .sheet-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
-        .sheet-wrap::-webkit-scrollbar-track { background: transparent; }
-        .sheet-wrap::-webkit-scrollbar-thumb { background: var(--sheet-border); border-radius: 8px; border: 2px solid var(--sheet-bg); }
-        .sheet-wrap::-webkit-scrollbar-thumb:hover { background: var(--sheet-ghost); }
-        .sheet-wrap::-webkit-scrollbar-button { display: none; }
-        .sheet-wrap::-webkit-scrollbar-corner { background: transparent; }
-    
-        table.sheet {
-          width: 100%;
-          border-collapse: collapse;
-          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-          font-size: 12.5px;
-          background: var(--sheet-bg);
-        }
-        table.sheet thead th {
-          position: sticky;
-          top: 0;
-          background: var(--sheet-header-bg);
-          color: var(--sheet-text);
-          font-weight: 700;
-          text-align: left;
-          padding: 7px 10px;
-          border-bottom: 2px solid var(--sheet-border);
-          border-right: 1px solid var(--sheet-border);
-          white-space: nowrap;
-          z-index: 1;
-        }
-        table.sheet thead th:last-child { border-right: none; }
-        table.sheet tbody td {
-          padding: 0;
-          border-bottom: 1px solid var(--sheet-border);
-          border-right: 1px solid var(--sheet-border);
-          color: var(--sheet-text);
-        }
-        table.sheet tbody td:last-child { border-right: none; }
-        table.sheet tbody tr:nth-child(even) td { background: var(--sheet-row-alt); }
-        table.sheet tbody tr:hover td { background: var(--sheet-row-hover); }
-        table.sheet tbody tr.is-empty-row td { color: var(--sheet-ghost); }
-        table.sheet tbody tr.is-invalid td { background: rgba(248,113,113,0.14) !important; }
-    
-        table.sheet input, table.sheet select, table.sheet textarea {
-          width: 100%;
-          border: none;
-          background: transparent;
-          padding: 7px 10px;
-          font: inherit;
-          color: var(--sheet-text);
-          outline: none;
-        }
-        table.sheet input:focus, table.sheet select:focus, table.sheet textarea:focus {
-          background: #fff8e1;
-          box-shadow: inset 0 0 0 2px var(--sheet-focus);
-        }
-        table.sheet input[type="number"] { text-align: right; }
-        table.sheet select { cursor: pointer; }
-        .pick-btn.handle-btn { min-width: 76px; min-height: 30px; }
-        .pick-btn.handle-btn:hover { background: var(--sheet-row-hover); }
-        .picker .picker-list { display: grid; grid-template-columns: repeat(2, auto); gap: 2px 14px; }
-        .picker.one-col .picker-list { grid-template-columns: auto; }
-        .pick-btn { min-width: 150px; width: 100%; border: none; background: transparent; padding: 7px 10px; font: inherit; color: var(--sheet-text);
-          text-align: left; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .pick-btn.empty { color: var(--sheet-ghost); }
-        .pick-btn:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--sheet-focus); background: #fff8e1; }
-        .picker { position: fixed; z-index: 50; background: var(--sheet-bg); color: var(--sheet-text); border: 1px solid var(--sheet-border);
-          border-radius: 6px; box-shadow: 0 8px 24px rgba(15,23,42,.35); padding: 6px;
-          font: 13px ui-monospace, Menlo, Consolas, monospace; }
-        .picker label { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
-        .picker label:hover { background: var(--sheet-row-hover); }
-        .picker input[type="radio"], .picker input[type="checkbox"] { margin: 0; width: 14px; height: 14px; flex: none; }
-        .picker .picker-title { grid-column: 1 / -1; font: 600 11px system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--sheet-text-muted); padding: 6px 6px 2px; }
-    
-        td.col-actions { width: 56px; text-align: center; padding: 0 !important; white-space: nowrap; }
-        td.col-actions button {
-          width: 26px; height: 100%; border: none; background: transparent;
-          color: var(--sheet-ghost); cursor: pointer; font-size: 15px; line-height: 1; padding: 7px 0;
-        }
-        td.col-actions button.row-insert:hover { color: var(--accent-hover); background: rgba(56,189,248,0.12); }
-        td.col-actions button.row-del:hover { color: var(--danger); background: rgba(248,113,113,0.1); }
-    
-        .hidden-file-input { display: none; }
-
-        /* Notes */
-        table.sheet td.col-note input { font-family: system-ui, -apple-system, sans-serif; min-width: 180px; }
-        table.sheet td.col-note input::placeholder { color: var(--sheet-ghost); }
-        table.sheet td.col-note textarea {
-          font-family: system-ui, -apple-system, sans-serif; width: 100%; min-width: 120px;
-          resize: none; overflow: hidden; line-height: 1.35; display: block;
-          field-sizing: content;   /* row height follows the text (browsers that support it) */
-        }
-        .notes-wrap { max-height: none; }
-    
-        @media (max-width: 900px) {
-          .input-grid { grid-template-columns: 1fr; }
-        }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kuchnia · edycja projektu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../core/ui.css">
+<style>
+/* only what the editor adds to core/ui.css: the tables to edit, the picker, the elevation */
+[x-cloak]{display:none!important}
+#editor{position:absolute;inset:0;overflow:auto;padding:64px 20px 72px;background:var(--panel)}
+#editor section{margin:0 0 22px}
+#editor h2{margin:0 0 8px}
+.cols>.wide{grid-column:1/-1}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,300px);gap:18px;align-items:start}
+@media (max-width:1100px){.cols{grid-template-columns:minmax(0,1fr)}}
+.sheetwrap.tall{max-height:360px}
+table.sheet thead th{position:sticky;top:0;z-index:1;text-align:left;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg);border:1px solid var(--line);padding:5px 7px;white-space:nowrap}
+table.sheet tbody td{padding:0;white-space:normal;vertical-align:middle}
+table.sheet input[type=text]{text-align:left}
+table.sheet.read td{padding:4px 7px}
+table.sheet td.n{padding:4px 7px}
+table.sheet tbody tr.is-empty-row td{color:var(--muted)}
+table.sheet tbody tr.is-invalid td{background:color-mix(in srgb,var(--warn) 14%,transparent)}
+table.sheet input,table.sheet textarea{width:100%;min-width:40px;border:0;border-radius:0;padding:5px 7px;font:12.5px var(--f-mono);background:color-mix(in srgb,#2f6fdb 8%,transparent);color:#2f6fdb;outline:none}
+table.sheet input[type=number]{text-align:right}
+table.sheet input:focus,table.sheet textarea:focus{box-shadow:inset 0 0 0 2px var(--accent)}
+table.sheet td.col-note input,table.sheet td.col-note textarea{font-family:var(--f-body);text-align:left;min-width:120px}
+table.sheet td.col-note textarea{resize:none;overflow:hidden;line-height:1.35;display:block;field-sizing:content}
+table.sheet .swatch{display:block;width:32px;height:16px;border-radius:3px;border:1px solid var(--line)}
+table.sheet td.center{text-align:center}
+.pick-btn{width:100%;min-width:110px;border:0;background:color-mix(in srgb,#2f6fdb 8%,transparent);color:#2f6fdb;padding:5px 7px;font:12.5px var(--f-mono);text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pick-btn.empty{color:var(--muted)}
+.pick-btn.handle-btn{min-width:70px}
+.picker{position:fixed;z-index:50;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px var(--lift);padding:6px;font:13px var(--f-body)}
+.picker .picker-list{display:grid;grid-template-columns:repeat(2,auto);gap:2px 14px}
+.picker.one-col .picker-list{grid-template-columns:auto}
+.picker label{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:4px;cursor:pointer;font:500 13px var(--f-body);text-transform:none;letter-spacing:0;color:var(--ink)}
+.picker label:hover{background:var(--bg)}
+.picker input{margin:0;accent-color:var(--accent)}
+.picker .picker-title{grid-column:1/-1;font:600 11px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 6px 2px}
+table.sheet td.col-actions{width:52px;text-align:center;white-space:nowrap}
+td.col-actions button{width:24px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:5px 0}
+td.col-actions button.row-insert:hover{color:var(--accent)}
+td.col-actions button.row-del:hover{color:var(--warn)}
+.hidden-file-input{display:none}
+/* the elevation: a drawing on paper in either theme */
+#svg-container{position:relative;background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px}
+#svg-canvas{text-align:center}
+#svg-canvas svg{display:inline-block;max-width:100%;max-height:min(70vh,700px);overflow:visible}
+.component-group{cursor:pointer}
+.component-group:hover rect{filter:brightness(1.1);stroke:var(--accent)!important;stroke-width:3px}
+#tooltip{position:absolute;z-index:8;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12.5px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.12);color:var(--ink)}
+.status{margin:0 0 12px;padding:8px 12px;border-radius:6px;font-size:13px;border:1px solid var(--ok);color:var(--ok)}
+.status.error{border-color:var(--warn);color:var(--warn)}
+</style>
 </head>
 <body>
+<div class="app" x-data="kitchenApp()">
+  <nav class="apps" id="apps" aria-label="Aplikacja"></nav>
+  <div class="stage" id="stage">
+    <div class="toggle modes" id="projects" role="group" aria-label="Projekt"></div>
+    <div id="editor">
 
-<div x-data="kitchenApp()">
 
-  <h1>Projekt zabudowy</h1>
-
-  <div id="action-bar">
-    <div class="action-group">
-      <button class="btn secondary" @click="chooseImportFile()" title="Wczytaj plik kitchen.dat.js (lub .json) do tabel">Importuj dane</button>
-      <button class="btn" @click="exportData()" title="Zapisz tabele jako kitchen.dat.js">Eksportuj dane</button>
-      <input type="file" class="hidden-file-input" accept=".js,.json,text/javascript,application/json" x-ref="importFile" @change="importFile($event)">
-    </div>
-  </div>
-
-  <div id="status-banner" :class="{show: status.type !== '', error: status.type === 'error', ok: status.type === 'ok'}" x-text="status.message"></div>
 
   <!-- 1. INPUT -->
-  <div class="panel">
-    <h3>Dane wejściowe</h3>
-    <div class="input-grid">
-      <div class="sub-section">
-        <h4>Materiały</h4>
-        <div class="sheet-wrap">
-          <table class="sheet read-only">
+  <section>
+    <div class="cols">
+      <div>
+        <h2>Materiały</h2>
+        <div class="sheetwrap tall">
+          <table class="sheet read">
             <thead>
               <tr><th class="name">Nazwa</th><th class="fit" title="Grubość; × głębokość, gdy materiał ją podaje (blat, panel końcowy)">Wymiar</th><th class="fit" title="Kolor płyty; widok 3D pokazuje teksturę, gdy materiał ją podaje">Kolor</th><th class="fit" title="Lakierowany (satyna)">Lakier</th><th title="Gdzie materiał jest użyty: typy elementów i części korpusu (uses w kitchen.dat.js)">Użycie</th></tr>
             </thead>
@@ -300,7 +81,7 @@
               <template x-for="m in materials" :key="m.code">
                 <tr>
                   <td x-text="m.name" :title="m.code"></td>
-                  <td class="num" x-text="m.thickness + (m.depth ? ' × ' + m.depth : '')"></td>
+                  <td class="n" x-text="m.thickness + (m.depth ? ' × ' + m.depth : '')"></td>
                   <td><i class="swatch" :style="`background:${m.color}`" :title="m.color + (m.texture ? ', tekstura ' + m.texture : '')"></i></td>
                   <td class="center" x-text="m.lacquered ? '✓' : ''"></td>
                   <td x-text="(m.uses || []).map(KE.useLabel).join(', ')"></td>
@@ -310,8 +91,8 @@
           </table>
         </div>
       </div>
-      <div class="sub-section columns">
-        <h4>Grupy</h4>
+      <div>
+        <h2>Grupy</h2>
         <table class="sheet groups">
           <thead>
             <tr><th style="width:48px">Grupa</th><th>Nazwa</th><th style="width:56px" title="odstęp tyłu korpusów od ściany; wyspa: do tylnej krawędzi blatu">Z tyłu</th><th class="col-actions"></th></tr>
@@ -327,8 +108,8 @@
             </template>
           </tbody>
         </table>
-        <h4>Kolumny</h4>
-        <div class="sheet-wrap" @scroll="picker.row = null">
+        <h2>Kolumny</h2>
+        <div class="sheetwrap tall" @scroll="picker.row = null">
           <table class="sheet">
             <thead>
               <tr><th style="width:60px">Grupa</th><th>Szerokość</th><th class="col-actions"></th></tr>
@@ -347,9 +128,9 @@
           </table>
         </div>
       </div>
-      <div class="sub-section wide">
-        <h4>Elementy</h4>
-        <div class="sheet-wrap" @scroll="picker.row = null">
+      <div class="wide">
+        <h2>Elementy</h2>
+        <div class="sheetwrap tall" @scroll="picker.row = null">
           <table class="sheet">
             <thead>
               <tr>
@@ -403,7 +184,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- ONE picker popup for a component row: the type, the tags, the handle or the hinge (fixed position, so the table scroll cannot clip it) -->
   <div class="picker" :class="{'one-col': picker.mode !== 'type'}" x-show="picker.row" x-cloak :style="`left:${picker.x}px; top:${picker.y}px`"
@@ -434,23 +215,20 @@
     </template>
   </div>
 
-  <div id="data-issues" x-show="build.warnings.length" x-cloak>
-    <b x-text="build.warnings.length + ' ' + plural(build.warnings.length, 'problem', 'problemy', 'problemów') + ' w danych'"></b>
-    <ul><template x-for="(w, i) in build.warnings" :key="i"><li x-text="w"></li></template></ul>
-  </div>
+
 
   <!-- 2. SVG DIAGRAM -->
+  <h2>Rysunek</h2>
   <div id="svg-container" x-ref="svgContainer" @mouseover="onSvgHover($event)" @mousemove="onSvgMove($event)" @mouseleave="onSvgLeave()">
     <div id="svg-canvas" x-ref="svgCanvas" x-show="!build.isEmpty" x-html="build.svg"></div>
-    <div x-show="build.isEmpty" style="padding:60px 20px;text-align:center;color:#94a3b8;">Brak układu — dodaj grupy, kolumny i elementy w tabelach powyżej.</div>
+    <div x-show="build.isEmpty" class="note" style="padding:60px 20px;text-align:center">Brak układu — dodaj grupy, kolumny i elementy w tabelach powyżej.</div>
     <div id="tooltip" x-show="tooltip.show" :style="`left:${tooltip.x}px; top:${tooltip.y}px`" x-text="tooltip.text"></div>
-    <div id="svg-footnote" x-show="!build.isEmpty" x-text="hoverInfo"></div>
   </div>
 
   <!-- 3. GENERAL NOTES -->
-  <div class="panel">
-    <h3>Notatki</h3>
-    <div class="sheet-wrap notes-wrap">
+  <section>
+    <h2>Notatki</h2>
+    <div class="sheetwrap">
       <table class="sheet">
         <thead>
           <tr>
@@ -474,8 +252,38 @@
         </tbody>
       </table>
     </div>
-  </div>
+  </section>
 
+    </div>
+    <div class="dock" id="dock" aria-label="Dolne menu">
+      <button @click="chooseImportFile()" title="Wczytaj plik danych projektu (.dat.js lub .json) do tabel">Importuj dane</button>
+      <button @click="exportData()" :title="'Zapisz tabele jako ' + project.file">Eksportuj dane</button>
+      <span class="sep"></span>
+      <button @click="location.href = project.page" x-text="'Widok: ' + project.name"></button>
+      <input type="file" class="hidden-file-input" accept=".js,.json,text/javascript,application/json" x-ref="importFile" @change="importFile($event)">
+    </div>
+    <div class="float" id="help" role="dialog" aria-label="Pomoc" hidden>
+      <p>Edycja danych projektu w tabelach: grupy, kolumny, elementy i notatki. Materiały są tylko do odczytu (definiują, z czego jest każdy typ). Rysunek pod tabelami liczy się na nowo przy każdej zmianie; kursor na elemencie rysunku pokazuje jego wymiary.</p>
+      <p><b>Eksportuj dane</b> zapisuje plik danych projektu, który zastępuje ten obok strony; <b>Importuj dane</b> wczytuje taki plik do tabel. U góry: projekt do edycji (dziś tylko kuchnia). ◐: jasny albo ciemny wygląd.</p>
+    </div>
+    <div class="corner">
+      <button class="round" id="themebtn" aria-label="Jasny / ciemny" title="Jasny / ciemny"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
+      <button class="round" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
+    </div>
+  </div>
+  <aside id="panel">
+    <h1>Edycja projektu</h1>
+    <p class="sub" x-text="project.name + ' · ' + project.file"></p>
+    <p class="status" :class="{error: status.type === 'error'}" x-show="status.type" x-cloak x-text="status.message"></p>
+    <h2>Rysunek</h2>
+    <p class="note" x-text="hoverInfo"></p>
+    <h2>Problemy w danych</h2>
+    <p class="note" x-show="!build.warnings.length">Brak.</p>
+  <div class="issues" x-show="build.warnings.length">
+    <b x-text="build.warnings.length + ' ' + plural(build.warnings.length, 'problem', 'problemy', 'problemów') + ' w danych'"></b>
+    <ul><template x-for="(w, i) in build.warnings" :key="i"><li x-text="w"></li></template></ul>
+  </div>
+  </aside>
 </div>
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
@@ -530,6 +338,8 @@
 <script src="../../library/products/building.dat.js"></script>
 <script src="../../library/products/services.dat.js"></script>
 <script src="../../library/products/shops.dat.js"></script>
+<script src="../../core/ui.js"></script>
+<script src="../../apps.dat.js"></script>
 <script src="kitchen.dat.js"></script>
 <script src="model.js"></script>
 <script>
@@ -794,7 +604,12 @@ function buildElevations(groupRows, columnRows, componentRows, noteRows) {
   return { ...result, svg, isEmpty: !svg, warnings: [...tables.warnings, ...model.warnings] };
 }
 
-/* ---------- 6. page (Alpine.js) ---------- */
+/* ---------- 6. the projects this editor works on: the first is opened by default ---------- */
+const PROJECTS = [
+  { id: 'kitchen', name: 'Kuchnia', file: 'kitchen.dat.js', page: 'index.html', data: () => window.KITCHEN_DESIGN },
+];
+
+/* ---------- 7. page (Alpine.js) ---------- */
 document.addEventListener('alpine:init', () => {
   Alpine.data('kitchenApp', () => ({
     materials: [],
@@ -802,7 +617,8 @@ document.addEventListener('alpine:init', () => {
     columns: [],
     components: [],
     notes: [],
-    status: { message: '', type: '' }, // message under the buttons
+    project: PROJECTS[0],
+    status: { message: '', type: '' }, // a message in the panel
     tooltip: { show: false, x: 0, y: 0, text: '' },
     hoverInfo: 'Najedź na element rysunku, aby zobaczyć jego wymiary.',
     picker: { row: null, mode: 'type', x: 0, y: 0 }, // popup for the type, the tags, the handle or the hinge of a component row
@@ -826,8 +642,15 @@ document.addEventListener('alpine:init', () => {
       document.addEventListener('paste', e => {
         if (isNumberCell(e.target) && !/^\d+$/.test(e.clipboardData.getData('text').trim())) e.preventDefault();
       });
-      /* this page is the host: kitchen.dat.js sets window.KITCHEN_DESIGN (a script tag, so the page also works from file://) */
-      (window.KITCHEN_DESIGN ? Promise.resolve(window.KITCHEN_DESIGN) : Promise.reject(new Error('Nie znaleziono pliku kitchen.dat.js obok tej strony')))
+      /* the shared screen (core/ui.js): the applications, the projects, the corner, the panel */
+      CORE.ui.appMenu(document.getElementById('apps'), APPS, this.project.id, '../../', () => 'info');
+      CORE.ui.modeToggle(document.getElementById('projects'), Object.fromEntries(PROJECTS.map(p => [p.id, p])), this.project.id, () => {});
+      CORE.ui.themeButton(document.getElementById('themebtn'));
+      CORE.ui.corner([[document.getElementById('helpbtn'), document.getElementById('help')]]);
+      CORE.ui.panelToggle(document.getElementById('stage'));
+      /* this page is the host: the project's data file sets its global (a script tag, so the page also works from file://) */
+      const data = this.project.data();
+      (data ? Promise.resolve(data) : Promise.reject(new Error('Nie znaleziono pliku ' + this.project.file + ' obok tej strony')))
         .then(project => {
           this.setProject(project);
           this.keepEmptyRows();
@@ -1002,9 +825,9 @@ document.addEventListener('alpine:init', () => {
     // ---- import / export ----
     exportData() {
       const { project, warnings } = this.build, issues = warnings.length;
-      if (!project) { this.showStatus('Nie ma czego eksportować: kitchen.dat.js nie jest wczytany.', true); return; }
-      downloadBlob(KE.designJS(project), 'text/javascript;charset=utf-8', 'kitchen.dat.js');
-      this.showStatus('Wyeksportowano kitchen.dat.js' + (issues ? ' z ' + issues + ' ' + plural(issues, 'problemem', 'problemami', 'problemami') + ' w danych - lista pod tabelami' : '') + '. Zastąp plik w folderze projektu i odśwież strony.', issues > 0);
+      if (!project) { this.showStatus('Nie ma czego eksportować: ' + this.project.file + ' nie jest wczytany.', true); return; }
+      downloadBlob(KE.designJS(project), 'text/javascript;charset=utf-8', this.project.file);
+      this.showStatus('Wyeksportowano ' + this.project.file + (issues ? ' z ' + issues + ' ' + plural(issues, 'problemem', 'problemami', 'problemami') + ' w danych - lista w panelu' : '') + '. Zastąp plik w folderze projektu i odśwież strony.', issues > 0);
     },
     chooseImportFile() {
       this.$refs.importFile.value = '';

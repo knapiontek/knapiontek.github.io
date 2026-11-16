@@ -257,6 +257,6 @@ function scriptsOutside(base, folders) {
     .map(src => src.slice(home.length));
 }
 
-CORE.ui = { $, fmt, byId, el, esc, option, store, layerTree, layerSwitch, layersPanel, checksHtml, appMenu, askedMode, showMode, menuRow,
+CORE.ui = { $, fmt, byId, el, esc, option, store, layerTree, layerSwitch, layersPanel, checksHtml, appMenu, askedMode, modeToggle, showMode, menuRow,
   panelTabs, panelToggle, bottomMenu, corner, themeButton, sunStore, sunPanel, planSheet, scripts, implementation, scriptsOutside };
 })(window.CORE = window.CORE || {});

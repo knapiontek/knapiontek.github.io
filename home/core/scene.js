@@ -396,8 +396,10 @@ CORE.createView = function (opts) {
     camera.lookAt(toWorld(walk.x + Math.cos(h) * Math.cos(p) * ahead, walk.y + Math.sin(h) * Math.cos(p) * ahead, eye + Math.sin(p) * ahead));
     redraw();
   }
+  /* what it bumps into: the solids and what more() gives now (a page calls it again when that changes: a door turns) */
+  const refreshObstacles = () => { OBSTACLES = BASE.concat((W.more ? W.more() : []).map(obstacle)); };
   function startWalk() {
-    OBSTACLES = BASE.concat((W.more ? W.more() : []).map(obstacle));
+    refreshObstacles();
     walk.on = true; controls.enabled = false; walk.z = groundAt(walk.x, walk.y, W.startLevel) ?? W.startLevel;
     W.pad.hidden = false; W.onToggle(); placeWalkCamera();
   }
@@ -498,6 +500,6 @@ CORE.createView = function (opts) {
 
   return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, CUT, CLIP, hash01, canvasTexture, loadImage, material, useMaterial, capMaterial,
     buildMeshes, removeMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion, addCaps, buildCaps, setCut,
-    onClick, enableNavigation, walk, boxes, enableWalk, startWalk, stopWalk, onFrame, start, run, get hemi() { return hemi; }, get sun() { return sun; } };
+    onClick, enableNavigation, walk, boxes, enableWalk, startWalk, stopWalk, refreshObstacles, stepWalk, onFrame, start, run, get hemi() { return hemi; }, get sun() { return sun; } };
 };
 })(window.CORE = window.CORE || {});

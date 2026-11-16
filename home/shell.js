@@ -28,7 +28,7 @@ const INTERFACE = {
     planCut: ['number', 'the 2D cut height over its floor'],
     inside: ['list', '[[x1, x2, y1, y2]]: its floor area'],
     box: ['list', '[x1, x2, y1, y2, z1, z2]: the box it is trimmed to'],
-    objects: ['list', "[{id, role (wall | floor | ceiling | window), side, host, cells}]: the house's solids trimmed to the box, as a person sees them; a window shown with its host"],
+    objects: ['list', "[{id, role (wall | floor | ceiling | window | door), side, host, cells, leaf?}]: the house's solids trimmed to the box, as a person sees them; a window or a door shown with its host; a door's leaf {cells, axis [x, y], angle}: closed, it turns about the vertical axis by angle (rad) when open"],
     openings: ['list', "[{b, kind, label, glazed, …}]: the house's openings in its box, as the house has them"],
     sides: ['object', "the house's sides of an opening (core's plan labels)"],
   },

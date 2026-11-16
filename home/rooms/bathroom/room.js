@@ -7,7 +7,7 @@
 
 const SURFACES = ['wall', 'floor', 'shower', 'showerFloor'];
 const WARM = 0xffdcb4;                     // the lamps: 3000 K
-const PER_FLOOR = new Set(['metal', 'decor', 'decorTurned', 'basin', 'basinIn', 'rubber', 'doorPaint']);   // each bathroom its own
+const PER_FLOOR = new Set(['metal', 'decor', 'decorTurned', 'basin', 'basinIn', 'rubber']);   // each bathroom its own
 const DEG = Math.PI / 180;
 
 /* env: {materials, textures, library, shell} (../../room.js); its own file (needs) is wired here, nowhere else */
@@ -59,7 +59,6 @@ function make(env) {
       ['b.basin:' + f]: { color: basin, roughness: .62, clearcoat: .1, clearcoatRoughness: .6, reflect: .25 },
       ['b.basinIn:' + f]: { color: basin, roughness: .58, clearcoat: .12, clearcoatRoughness: .5, reflect: .25 },
       ['b.rubber:' + f]: { color: F.look.basin === 'white' ? '#e6e4df' : '#0b0b0b', roughness: .9 },
-      ['b.doorPaint:' + f]: { color: '#' + F.look.doorPaint.toString(16).padStart(6, '0'), roughness: .85 },
     });
   }
   /* a material of the data, for a floor */
@@ -241,13 +240,14 @@ function make(env) {
     /* ---------- the room (its own page): the house's walls, slabs, floor and window, as they are, tiled by FINISHES. Each
        wall is a record that hides while the camera is behind it (index.html); the longest one of a side is its record
        (wall-x, wall+y ...), its fixtures hide with it. ---------- */
-    const ROOM_CELLS = [], RECORDS = [];
+    const ROOM_CELLS = [], RECORDS = [], LEAVES = [];   // LEAVES: the doors of the room (the house's), each turning about its hinge
     if (opts.room) {
-      const ROLE_LAYER = { wall: 'walls', window: 'walls', floor: 'floor', ceiling: 'ceiling' };
+      const ROLE_LAYER = { wall: 'walls', window: 'walls', door: 'walls', floor: 'floor', ceiling: 'ceiling' };
+      const hosted = o => o.role === 'window' || o.role === 'door';
       const OUT = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+z': [0, 0, 1], '-z': [0, 0, -1] };
       const byId = new Map(), longest = {};
-      for (const o of ROOM.objects.slice().sort((a, b) => (a.role === 'window') - (b.role === 'window'))) {
-        let rec = o.role === 'window' ? byId.get(o.host) : null;
+      for (const o of ROOM.objects.slice().sort((a, b) => hosted(a) - hosted(b))) {
+        let rec = hosted(o) ? byId.get(o.host) : null;
         if (!rec) {
           const points = o.cells.flatMap(c => c.S.poly.flatMap(p => [[c.S.x1, p[0], p[1]], [c.S.x2, p[0], p[1]]]));
           const span = k => Math.max(...points.map(p => p[k])) - Math.min(...points.map(p => p[k]));
@@ -260,6 +260,7 @@ function make(env) {
           delete cell.finish;
           rec.cells.push(cell); ROOM_CELLS.push(cell);
         }
+        if (o.leaf) LEAVES.push({ leaf: o.leaf, rec });
       }
       RECORDS.forEach((r, i) => { r.key = 'C:' + (Object.entries(longest).find(([, x]) => x === r) ? 'wall' + r.side : 'room' + i); for (const c of r.cells) c.layers = [r.key]; });
     }
@@ -302,6 +303,17 @@ function make(env) {
       const cells = M.solids.filter(s => s.mover === m.id).map(cellOf), p = CORE.mesh.piecesOf(cells);
       V.buildMeshes(p, pin); V.buildEdges(p, pin);
       const mover = Object.assign({}, m, { pivot, pin, cells, progress: 0, target: 0 });
+      pivot.userData.mover = mover;
+      MOVERS.push(mover);
+    }
+    /* the room's doors: the house's leaves, hidden with their wall */
+    for (const [i, { leaf, rec }] of LEAVES.entries()) {
+      const pivot = new THREE.Group(), pin = new THREE.Group();
+      pivot.position.set(leaf.axis[0], leaf.axis[1], 0); pin.position.set(-leaf.axis[0], -leaf.axis[1], 0);
+      pivot.add(pin); V.root.add(pivot);
+      const cells = leaf.cells.map(c => Object.assign({}, c, { layers: [rec.key] })), p = CORE.mesh.piecesOf(cells);
+      V.buildMeshes(p, pin); V.buildEdges(p, pin);
+      const mover = { id: 'room-door' + i, kind: 'door', axis: leaf.axis, angle: leaf.angle, pivot, pin, cells, progress: 0, target: 0 };
       pivot.userData.mover = mover;
       MOVERS.push(mover);
     }
