@@ -1,4 +1,4 @@
-/* wardrobe.dat.js: DATA for the three walk-in wardrobes of the attic (numbers and descriptions only, no calculations): the design
+/* wardrobe.dat.js: DATA for the three walk-in wardrobes of the attic and the niche of room 6 (numbers and descriptions only, no calculations): the design
    written part by part, drawn and listed as it is. Every length is in mm, house axes (x along the house, y across, z up).
 
    The rooms are the house's (through the interface ../../shell.js): walls, floor, ceiling, the roof and the door are taken from
@@ -43,7 +43,7 @@ window.WARDROBE_DATA = {
   wardrobes: {
     3: {
       name: "Garderoba 3",
-      cameras: { overview: 'Ogólny', door: 'Od wejścia', plan: 'Rzut' },
+      cameras: { overview: 'Ogólny', door: "Od wejścia", plan: 'Rzut' },
       model: {
         cameras: {
           overview: {"eye": [5055, 5690, 6460], "target": [4555, 1615, 3760]},
@@ -192,7 +192,7 @@ window.WARDROBE_DATA = {
     },
     4: {
       name: "Garderoba 4",
-      cameras: { overview: 'Ogólny', door: 'Od wejścia', plan: 'Rzut' },
+      cameras: { overview: 'Ogólny', door: "Od wejścia", plan: 'Rzut' },
       model: {
         cameras: {
           overview: {"eye": [5055, 3750, 6460], "target": [4555, 7555, 3760]},
@@ -321,9 +321,61 @@ window.WARDROBE_DATA = {
         ],
       },
     },
+    6: {
+      name: "Pokój 6 – wnęka",
+      cameras: { overview: 'Ogólny', door: "Na wprost", plan: 'Rzut' },
+      model: {
+        cameras: {
+          overview: {"eye": [11400, 7300, 5360], "target": [8900, 6070, 4260]},
+          door: {"eye": [10300, 6070, 4660], "target": [8700, 6070, 4360]},
+          plan: {"eye": [8320, 6080, 10460], "target": [8320, 6070, 3060]},
+        },
+        carcasses: [
+          {"id": "6.W1", "run": "wnęka", "y": [5650, 6070], "width": 420, "depth": 810, "height": 2700, "top": 5810, "fixed": 3, "movable": 4, "drawers": 0},
+          {"id": "6.W2", "run": "wnęka", "y": [6070, 6490], "width": 420, "depth": 810, "height": 2700, "top": 5810, "fixed": 3, "movable": 4, "drawers": 0},
+        ],
+        movers: [
+        ],
+        solids: [
+          {"name": "6.W1", "label": "Plecy", "layer": "carcasses", "material": "back", "box": [8320, 8323, 5650, 6070, 3110, 5810], "board": "back", "cut": [2700, 420, 0, 0]},
+          {"name": "6.W1", "label": "Bok", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 5650, 5668, 3110, 5810], "board": "carcass", "cut": [2700, 807, 1, 0]},
+          {"name": "6.W1", "label": "Bok", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 6052, 6070, 3110, 5810], "board": "carcass", "cut": [2700, 807, 1, 0]},
+          {"name": "6.W1", "label": "Wieniec dolny", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 5668, 6052, 3110, 3128], "board": "carcass", "cut": [384, 807, 1, 0]},
+          {"name": "6.W1", "label": "Wieniec górny", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 5668, 6052, 5792, 5810], "board": "carcass", "cut": [384, 807, 1, 0]},
+          {"name": "6.W1", "label": "Półka stała", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 5668, 6052, 3780, 3798], "board": "carcass", "cut": [384, 807, 1, 0]},
+          {"name": "6.W1", "label": "Półka stała", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 5668, 6052, 4451, 4469], "board": "carcass", "cut": [384, 807, 1, 0]},
+          {"name": "6.W1", "label": "Półka stała", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 5668, 6052, 5122, 5140], "board": "carcass", "cut": [384, 807, 1, 0]},
+          {"name": "6.W1", "label": "Półka ruchoma", "layer": "shelves", "material": "carcass", "box": [8323, 9110, 5669, 6051, 3445, 3463], "board": "carcass", "cut": [382, 787, 1, 0]},
+          {"name": "6.W1", "label": "Półka ruchoma", "layer": "shelves", "material": "carcass", "box": [8323, 9110, 5669, 6051, 4116, 4134], "board": "carcass", "cut": [382, 787, 1, 0]},
+          {"name": "6.W1", "label": "Półka ruchoma", "layer": "shelves", "material": "carcass", "box": [8323, 9110, 5669, 6051, 4786, 4804], "board": "carcass", "cut": [382, 787, 1, 0]},
+          {"name": "6.W1", "label": "Półka ruchoma", "layer": "shelves", "material": "carcass", "box": [8323, 9110, 5669, 6051, 5457, 5475], "board": "carcass", "cut": [382, 787, 1, 0]},
+          {"name": "6.W1", "label": "Nóżka", "layer": "plinth", "material": "foot", "box": [8370, 8400, 5685, 5715, 3060, 3110]},
+          {"name": "6.W1", "label": "Nóżka", "layer": "plinth", "material": "foot", "box": [8370, 8400, 6005, 6035, 3060, 3110]},
+          {"name": "6.W1", "label": "Nóżka", "layer": "plinth", "material": "foot", "box": [9020, 9050, 5685, 5715, 3060, 3110]},
+          {"name": "6.W1", "label": "Nóżka", "layer": "plinth", "material": "foot", "box": [9020, 9050, 6005, 6035, 3060, 3110]},
+          {"name": "6.W2", "label": "Plecy", "layer": "carcasses", "material": "back", "box": [8320, 8323, 6070, 6490, 3110, 5810], "board": "back", "cut": [2700, 420, 0, 0]},
+          {"name": "6.W2", "label": "Bok", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 6070, 6088, 3110, 5810], "board": "carcass", "cut": [2700, 807, 1, 0]},
+          {"name": "6.W2", "label": "Bok", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 6472, 6490, 3110, 5810], "board": "carcass", "cut": [2700, 807, 1, 0]},
+          {"name": "6.W2", "label": "Wieniec dolny", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 6088, 6472, 3110, 3128], "board": "carcass", "cut": [384, 807, 1, 0]},
+          {"name": "6.W2", "label": "Wieniec górny", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 6088, 6472, 5792, 5810], "board": "carcass", "cut": [384, 807, 1, 0]},
+          {"name": "6.W2", "label": "Półka stała", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 6088, 6472, 3780, 3798], "board": "carcass", "cut": [384, 807, 1, 0]},
+          {"name": "6.W2", "label": "Półka stała", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 6088, 6472, 4451, 4469], "board": "carcass", "cut": [384, 807, 1, 0]},
+          {"name": "6.W2", "label": "Półka stała", "layer": "carcasses", "material": "carcass", "box": [8323, 9130, 6088, 6472, 5122, 5140], "board": "carcass", "cut": [384, 807, 1, 0]},
+          {"name": "6.W2", "label": "Półka ruchoma", "layer": "shelves", "material": "carcass", "box": [8323, 9110, 6089, 6471, 3445, 3463], "board": "carcass", "cut": [382, 787, 1, 0]},
+          {"name": "6.W2", "label": "Półka ruchoma", "layer": "shelves", "material": "carcass", "box": [8323, 9110, 6089, 6471, 4116, 4134], "board": "carcass", "cut": [382, 787, 1, 0]},
+          {"name": "6.W2", "label": "Półka ruchoma", "layer": "shelves", "material": "carcass", "box": [8323, 9110, 6089, 6471, 4786, 4804], "board": "carcass", "cut": [382, 787, 1, 0]},
+          {"name": "6.W2", "label": "Półka ruchoma", "layer": "shelves", "material": "carcass", "box": [8323, 9110, 6089, 6471, 5457, 5475], "board": "carcass", "cut": [382, 787, 1, 0]},
+          {"name": "6.W2", "label": "Nóżka", "layer": "plinth", "material": "foot", "box": [8370, 8400, 6105, 6135, 3060, 3110]},
+          {"name": "6.W2", "label": "Nóżka", "layer": "plinth", "material": "foot", "box": [8370, 8400, 6425, 6455, 3060, 3110]},
+          {"name": "6.W2", "label": "Nóżka", "layer": "plinth", "material": "foot", "box": [9020, 9050, 6105, 6135, 3060, 3110]},
+          {"name": "6.W2", "label": "Nóżka", "layer": "plinth", "material": "foot", "box": [9020, 9050, 6425, 6455, 3060, 3110]},
+          {"name": "6.W", "label": "Cokół", "layer": "plinth", "material": "plinth", "box": [9084, 9100, 5650, 6490, 3060, 3110]},
+        ],
+      },
+    },
     8: {
       name: "Garderoba 8",
-      cameras: { overview: 'Ogólny', door: 'Od wejścia', plan: 'Rzut' },
+      cameras: { overview: 'Ogólny', door: "Od wejścia", plan: 'Rzut' },
       model: {
         cameras: {
           overview: {"eye": [8750, 5190, 6460], "target": [8250, 1465, 3760]},

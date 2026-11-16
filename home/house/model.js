@@ -74,9 +74,10 @@ function elementCells(e) {
 for (const e of GEO.elements) CELLS.push(...elementCells(e));
 
 /* ================= 4. ROOF =================
-   Two slopes, without its cuts and the roof windows; its faces take the material of their side. */
-const roofFace = n => n[2] > 0.3 ? 'top' : n[2] < -0.3 ? 'bottom' : Math.abs(n[0]) > 0.5 ? 'ends' : 'eaves';
-const roofFaceMaterial = n => ROOF.faces[roofFace(n)];
+   Two slopes, without its cuts and the roof windows; its faces take the material of their side (a cut's walls: the reveals). */
+const atEave = pts => pts.every(p => p[1] <= EPS || p[1] >= WIDTH - EPS);   // a face on the roof's outer edge
+const roofFace = (n, pts) => n[2] > 0.3 ? 'top' : n[2] < -0.3 ? 'bottom' : Math.abs(n[0]) > 0.5 ? 'ends' : atEave(pts) ? 'eaves' : 'reveals';
+const roofFaceMaterial = (n, pts) => ROOF.faces[roofFace(n, pts)];
 const roofWindowPrism = w => prism([w.x[0], w.x[1], w.y[0], w.y[1], -INF, INF]);
 function roofCells() {
   const slopes = [slopeSlab(...ROOF.x, 0, WIDTH / 2, ROOF_UNDER[0], [0, ROOF_DEPTH]), slopeSlab(...ROOF.x, WIDTH / 2, WIDTH, ROOF_UNDER[1], [0, ROOF_DEPTH])];

@@ -8,5 +8,5 @@ window.APPS = [
   { id: 'house', name: 'Dom', page: 'house/index.html', shell: 'house/shell.js' },
   { id: 'kitchen', name: 'Kuchnia', page: 'rooms/kitchen/index.html', room: 'rooms/kitchen/room.js', rooms: ['salon'], link: 'Projekt kuchni' },
   { id: 'bathroom', name: 'Łazienki', page: 'rooms/bathroom/index.html', room: 'rooms/bathroom/room.js', rooms: ['lazienka', 'lazienka5'], link: 'Projekt łazienki' },
-  { id: 'wardrobe', name: 'Garderoby', page: 'rooms/wardrobe/index.html', room: 'rooms/wardrobe/room.js', rooms: ['garderoba3', 'garderoba4', 'garderoba8'], link: 'Projekt garderoby' },
+  { id: 'wardrobe', name: 'Garderoby', page: 'rooms/wardrobe/index.html', room: 'rooms/wardrobe/room.js', rooms: ['garderoba3', 'garderoba4', 'garderoba8', 'pokoj6'], link: 'Projekt garderoby' },
 ];

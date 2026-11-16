@@ -223,7 +223,7 @@ function make(env) {
     for (const k of ['b.glass', 'b.acrylic', 'b.basinIn:' + f]) V.material(k).side = THREE.DoubleSide;
 
     /* ---------- the tiles: finishes of the room's faces (core/mesh.js finishPieces): the walls and the floor of every
-       rectangle of its floor area, the reveals of its doors and windows and the floor under a door (the opening inside the
+       rectangle of its floor area, up to the top of its box (never the floor above), the reveals of its doors and windows and the floor under a door (the opening inside the
        room's box); in the shower zone the shower's (a later rule wins). The same on this page and in the house, which lays
        them on its own faces. */
     const Z = M.showerZone, B = ROOM.box, SIDES = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]];
@@ -232,9 +232,9 @@ function make(env) {
       const inZone = cross(q, Z), rule = (box, s) => normals.map(n => ({ box: box.concat(z), n, material: tileKey(s) }));
       return rule(q, surface).concat(inZone ? rule(inZone, shower) : []);
     };
-    const FINISHES = ROOM.inside.flatMap(r => tiled(r, [ROOM.level, ROOM.level + 9990], SIDES, 'wall', 'shower'))
+    const FINISHES = ROOM.inside.flatMap(r => tiled(r, [ROOM.level, B[5]], SIDES, 'wall', 'shower'))
       .concat(ROOM.openings.flatMap(o => { const q = cross(o.b, B); return q ? tiled(q, [o.b[4], o.b[5]], SIDES.concat(o.b[4] > ROOM.level + 1 ? [[0, 0, 1]] : [], [[0, 0, -1]]), 'wall', 'shower') : []; }))
-      .concat(ROOM.inside.flatMap(r => tiled(r, [ROOM.level, ROOM.level + 9990], [[0, 0, 1]], 'floor', 'showerFloor')))
+      .concat(ROOM.inside.flatMap(r => tiled(r, [ROOM.level, B[5]], [[0, 0, 1]], 'floor', 'showerFloor')))
       .concat(ROOM.openings.filter(o => o.b[4] <= ROOM.level + 1).flatMap(o => { const q = cross(o.b, B); return q ? tiled(q, [o.b[4], o.b[5]], [[0, 0, 1]], 'floor', 'showerFloor') : []; }));   // the floor runs on under a door
 
     /* ---------- the room (its own page): the house's walls, slabs, floor and window, as they are, tiled by FINISHES. Each

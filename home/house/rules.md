@@ -56,7 +56,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 ## 6. Podprojekty
 
 - Salon (kuchnia), obie łazienki i trzy garderoby mają swoje podprojekty: przy nazwie pomieszczenia jest link do strony podprojektu, z menu aplikacji.
-- Meble podprojektów są w domu warstwą Meble (Warstwy) na swojej kondygnacji; kliknięcie drzwiczek albo szuflady otwiera je. Dziś: kuchnia, obie łazienki (każda na swojej kondygnacji; podwieszany sufit łazienki nie jest pokazywany w domu) i trzy garderoby na poddaszu (posadzka garderób zostaje domu, razem z sypialnią).
+- Meble podprojektów są w domu warstwą Meble (Warstwy) na swojej kondygnacji; kliknięcie drzwiczek albo szuflady otwiera je. Dziś: kuchnia, obie łazienki (każda na swojej kondygnacji; podwieszany sufit łazienki nie jest pokazywany w domu) trzy garderoby na poddaszu i wnęka pokoju 6 (posadzka zostaje domu).
 - Płytki łazienek leżą na ścianach domu: część podaje je jako wykończenia ścian swojego pomieszczenia (dane: pole, kierunek, materiał), dom kładzie je na swoich ścianach i ościeżach i pokazuje z warstwą części. Płytki posadzki łazienek tak samo: z danych łazienki, z warstwą części; dom nie kładzie tam swoich (Wykończenie: „z projektu”). Posadzkę pozostałych pomieszczeń rysuje dom (Wykończenie). Posadzka podprojektu leży na płycie domu, nigdy w jej płaszczyźnie.
 
 ## 7. Kontrole (Test)

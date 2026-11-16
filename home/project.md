@@ -17,7 +17,7 @@ This file: the folders, the rules every folder keeps, what is left to do, the co
 | core/ | shared code: solids, meshes, the 3D scene, the 2D plan, the screen, the spreadsheet and Info; knows no project |
 | library/ | everything bought: products, materials, textures; data only |
 | house/ | the building, from archon/; the rooms without a sub-project |
-| rooms/ | the room sub-projects, one folder each: rooms/kitchen/ (the living room's kitchen), rooms/bathroom/ (both bathrooms), rooms/wardrobe/ (the three walk-in wardrobes) |
+| rooms/ | the room sub-projects, one folder each: rooms/kitchen/ (the living room's kitchen), rooms/bathroom/ (both bathrooms), rooms/wardrobe/ (the three walk-in wardrobes and the niche of room 6) |
 | test.md | the LLM's own file: what it needs to rebuild its automated tests in a new session (nothing is installed) |
 | index.html | opens the house (a short page that goes to house/) |
 

@@ -34,6 +34,8 @@ window.HOUSE = {
   "Pompa ciepła zamiast kotła gazowego: jeden komin (salon), bez szachtu wentylacyjnego i drugiego komina.",
   "Zmiany wykonawcze: wnęka prysznica w łazience parteru 1000 × 900 mm (ściany #7, #8, #10 przesunięte), drzwi łazienki na piętrze przesunięte o 200 mm w stronę ogrodu, sufit katedralny nad sypialnią.",
   "Schody wspornikowe (bez policzków), bez ścianki pod biegiem.",
+  "Garderoby 3 i 4 na piętrze z wąskimi drzwiami 700/2050 od sypialni (archon: wejście bez drzwi i bez ścianki).",
+  "Pokój 6 na piętrze: ścianka po szybie wentylacyjnym usunięta (rekuperator zamiast szybu); we wnęce regały.",
   "Elewacja (grafit, biel, drewno) odczytana z wizualizacji archon: to obraz, nie wymiar."
  ],
 
@@ -47,7 +49,7 @@ window.HOUSE = {
    "width": 9100,
    "thickness": 640,
    "x": [-1000, 14200],
-   "faces": {"top": "roofGraphite", "bottom": "plasterWhite", "ends": "plasterWhite", "eaves": "graphite"},
+   "faces": {"top": "roofGraphite", "bottom": "plasterWhite", "ends": "plasterWhite", "eaves": "graphite", "reveals": "plasterWhite"},
    "cap": "timber",
    "cuts": ["chimney"],
    "layers": ["roof"],
@@ -156,6 +158,8 @@ window.HOUSE = {
    {"id": "attic1", "kind": "block120", "b": [3640, 3760, 440, 3910, 3060, 5910], "top": "roof"},
    {"id": "attic2", "kind": "block120", "b": [3640, 3760, 5530, 8660, 3060, 5910], "top": "roof"},
    {"id": "attic3a", "kind": "block120", "b": [4660, 5350, 5530, 5650, 3060, 5910], "top": "roof"},
+   {"id": "attic3c", "kind": "block120", "b": [3760, 4660, 5530, 5650, 3060, 5910], "top": "roof"},
+   {"id": "attic4", "kind": "block120", "b": [3760, 4710, 3790, 3910, 3060, 5910], "top": "roof"},
    {"id": "attic3b", "kind": "block120", "b": [5470, 9010, 5530, 5650, 3060, 5910], "top": "roof"},
    {"id": "attic5", "kind": "block120", "b": [5350, 5470, 440, 3590, 3060, 5910], "top": "roof"},
    {"id": "attic6", "kind": "block120", "b": [5350, 5470, 4350, 8660, 3060, 5910], "top": "roof"},
@@ -164,7 +168,7 @@ window.HOUSE = {
    {"id": "balustradeN", "kind": "balustrade", "b": [5470, 6460, 4350, 4390, 3060, 4060]},
    {"id": "balustradeE", "kind": "balustrade", "b": [6420, 6460, 2730, 4350, 3060, 4060]},
    {"id": "attic9", "kind": "block120", "b": [8200, 8320, 5650, 8660, 3060, 5910], "top": "roof"},
-   {"id": "attic12", "kind": "block120", "b": [9010, 9130, 440, 6490, 3060, 5910], "top": "roof"},
+   {"id": "attic12", "kind": "block120", "b": [9010, 9130, 440, 5650, 3060, 5910], "top": "roof"},
    {"id": "attic13", "kind": "block120", "b": [9130, 12760, 4410, 4530, 3060, 5910], "top": "roof"}
   ],
 
@@ -200,6 +204,8 @@ window.HOUSE = {
     "below": [{"z": 5910, "y": 5220, "pitch": -1}]},
    {"kind": "door", "label": "890/2050", "b": [5350, 5470, 4590, 5480, 3060, 5110], "hinge": "y1", "opens": "-x"},
    {"kind": "door", "label": "900/2050", "b": [6300, 7200, 5530, 5650, 3060, 5110], "hinge": "x2", "opens": "-y", "product": "porta-hide-wc-80", "extras": ["porta-wc-handle-rosette"]},
+   {"kind": "door", "label": "700/2050", "b": [3885, 4585, 3790, 3910, 3060, 5110], "hinge": "x1", "opens": "-y"},
+   {"kind": "door", "label": "700/2050", "b": [3860, 4560, 5530, 5650, 3060, 5110], "hinge": "x1", "opens": "+y"},
    {"kind": "door", "label": "820/2050", "b": [9010, 9130, 1780, 2600, 3060, 5110], "hinge": "y1", "opens": "+x"},
    {"kind": "door", "label": "940/2050", "b": [9010, 9130, 3470, 4410, 3060, 5110], "hinge": "y2", "opens": "+x"},
    {"kind": "door", "label": "900/2050", "b": [9010, 9130, 4570, 5470, 3060, 5110], "hinge": "y1", "opens": "+x"}
@@ -290,9 +296,9 @@ window.HOUSE = {
     "rooms": [
      {"id": "sypialnia", "numbers": [2], "name": "Sypialnia", "planArea": 28.16,
       "tiles": {"product": "atlas-log-icon-oak-forest", "dir": "x"},
-      "rects": [[440, 3640, 440, 8660], [3640, 3760, 3910, 5530], [3760, 4710, 3790, 5530], [3760, 4660, 5530, 5650], [4710, 5350, 4350, 5530]]},
+      "rects": [[440, 3640, 440, 8660], [3640, 3760, 3910, 5530], [3760, 4710, 3910, 5530], [4710, 5350, 4350, 5530]]},
      {"id": "garderoba3", "numbers": [3], "name": "Garderoba", "planArea": 5.13, "tilesWith": "sypialnia",
-      "shell": {"inside": [[3760, 4710, 440, 3790], [4710, 5350, 440, 3590]], "box": [3640, 5470, 200, 3790, 2720, 6300]},
+      "shell": {"inside": [[3760, 4710, 440, 3790], [4710, 5350, 440, 3590]], "box": [3640, 5470, 200, 3910, 2720, 6300]},
       "rects": [[3760, 4710, 440, 3790], [4710, 5350, 440, 3590]]},
      {"id": "garderoba4", "numbers": [4], "name": "Garderoba", "planArea": 4.60, "tilesWith": "sypialnia",
       "shell": {"inside": [[3760, 5350, 5650, 8660]], "box": [3640, 5470, 5530, 8900, 2720, 6300]},
@@ -312,7 +318,8 @@ window.HOUSE = {
       "rects": [[9130, 12760, 440, 4410]]},
      {"id": "pokoj6", "numbers": [6], "name": "Pokój", "planArea": 16.53,
       "tiles": {"product": "atlas-log-icon-oak-forest", "dir": "x"},
-      "rects": [[9130, 12760, 4530, 8660], [8320, 9130, 6490, 8660], [8320, 9010, 5650, 6490]]}
+      "shell": {"inside": [[9130, 12760, 4530, 8660], [8320, 9130, 5650, 8660]], "box": [8200, 13000, 4410, 8900, 2720, 6300]},
+      "rects": [[9130, 12760, 4530, 8660], [8320, 9130, 5650, 8660]]}
     ],
     "other": []
    }

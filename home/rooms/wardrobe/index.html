@@ -29,11 +29,11 @@
         <p>Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko lub szczypanie.</p>
         <p>Kliknięcie szuflady albo drzwi otwiera je lub zamyka.</p>
         <p>Pomieszczenie jest z domu, takie jak jest. Ściana albo sufit, za którymi stoi kamera, chowają się.</p>
-        <p>U góry: która garderoba. Na dole: skąd patrzysz. ☀: słońce domu oraz dzień albo noc (wspólne dla wszystkich aplikacji). ◐: jasny albo ciemny wygląd.</p>
+        <p>U góry: która garderoba (albo wnęka pokoju 6). Na dole: skąd patrzysz. ☀: słońce domu oraz dzień albo noc (wspólne dla wszystkich aplikacji). ◐: jasny albo ciemny wygląd.</p>
       </div>
       <div data-help="2d"><p>Rzut garderoby jak rysunek CAD, cięty na wysokości z rzutu domu: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG.</p></div>
       <div data-help="test"><p>Sprawdzenia mierzone na modelu: bryły bez wspólnej objętości, góra korpusów pod sufitem, przejście między ciągami. <b>OK</b> = w normie.</p></div>
-      <div data-help="info"><p>Wszystkie trzy garderoby razem, jedno zamówienie: kosztorys, lista cięć, korpusy. Na dole: XLSX.</p></div>
+      <div data-help="info"><p>Wszystkie garderoby i wnęka pokoju 6 razem, jedno zamówienie: kosztorys, lista cięć, korpusy. Na dole: XLSX.</p></div>
     </div>
     <div class="corner">
       <button class="round" id="themebtn" aria-label="Jasny / ciemny" title="Jasny / ciemny"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
@@ -196,9 +196,10 @@ $('openAll').onclick = () => { for (const m of MOVERS) m.target = 1; invalidate(
 $('closeAll').onclick = () => { for (const m of MOVERS) m.target = 0; invalidate(); };
 
 /* ==========================================================================
-   INFO: all three wardrobes, one order (core/info.js): Kosztorys, Lista cięć, Korpusy, from wardrobe.dat.js and the library
+   INFO: every room of the application, one order (core/info.js): Kosztorys, Lista cięć, Korpusy, from wardrobe.dat.js and the library
    ========================================================================== */
 const ALL = Object.entries(D.wardrobes).map(([n, w]) => ({ number: +n, name: w.name, model: w.model }));
+const ALL_NAMES = ALL.map(w => w.name).join(', ');
 const SOLIDS = ALL.flatMap(w => w.model.solids), CARCASSES = ALL.flatMap(w => w.model.carcasses);
 const fmt = (v, d = 2) => v.toLocaleString('pl-PL', { minimumFractionDigits: d, maximumFractionDigits: d });
 const lengthOf = s => Math.max(s.box[1] - s.box[0], s.box[3] - s.box[2]);   // a run's plinth: along its wall
@@ -211,7 +212,7 @@ function cutRows(boardKind) {
     r.qty++; r.where.add(s.name.split('.')[0]);
   }
   return [...rows.values()].sort((p, q) => p.name.localeCompare(q.name, 'pl') || q.a - p.a || q.b - p.b)
-    .map((r, i) => Object.assign(r, { label: boardKind[0].toUpperCase() + (i + 1), where: 'garderoby ' + [...r.where].join(', ') }));
+    .map((r, i) => Object.assign(r, { label: boardKind[0].toUpperCase() + (i + 1), where: 'nr ' + [...r.where].join(', ') }));
 }
 const BOARD_KINDS = Object.keys(D.boards);
 const CUTS = Object.fromEntries(BOARD_KINDS.map(k => [k, cutRows(k)]));
@@ -244,13 +245,13 @@ function estimate() {
       qty: b.measure ? Math.round(n * 100) / 100 : b.pack ? Math.ceil(n / b.pack) : n };
   };
   const items = E.buy.map(line);
-  return CORE.info.estimate({ title: 'Kosztorys – garderoby 3, 4 i 8', info: 'Ceny brutto; pozycje bez ceny: do sprawdzenia w sklepie.',
+  return CORE.info.estimate({ title: `Kosztorys – ${ALL_NAMES}`, info: 'Ceny brutto; pozycje bez ceny: do sprawdzenia w sklepie.',
     params: [{ key: 'waste', label: 'Odpad płyt', v: E.waste, z: '0%' }],
     categories: groups.map(g => ({ name: g, group: g, items: items.filter((_, i) => E.buy[i].group === g) })),
     excluded: ['Robocizna, transport, drążki (na razie bez drążków).'] }).sheet;
 }
 function cutList() {
-  return CORE.info.cutList({ title: 'Lista cięć – garderoby 3, 4 i 8 (wymiary w mm)', note: 'Płyta biała bez słoja: wymiar 1 to dłuższy bok. Krawędź: liczba oklejanych krawędzi wzdłuż wymiaru.',
+  return CORE.info.cutList({ title: `Lista cięć – ${ALL_NAMES} (wymiary w mm)`, note: 'Płyta biała bez słoja: wymiar 1 to dłuższy bok. Krawędź: liczba oklejanych krawędzi wzdłuż wymiaru.',
     blocks: BOARD_KINDS.map(k => ({ id: k, title: CORE.library.product(D.boards[k]).name, cut: true, rows: CUTS[k] })) }).sheet;
 }
 function carcassTable() {
@@ -262,7 +263,7 @@ let INFO_SHEET = null;
 const infoBook = () => ({ sheets: [estimate(), cutList(), carcassTable()] });
 function renderInfo() {
   if (INFO_SHEET) return INFO_SHEET.set(CORE.info.sorted(infoBook()));
-  INFO_SHEET = CORE.info.show($('info'), { title: D.name, subtitle: 'Garderoby 3, 4 i 8 na poddaszu: jedno zamówienie', book: infoBook() });
+  INFO_SHEET = CORE.info.show($('info'), { title: D.name, subtitle: `${ALL_NAMES}: jedno zamówienie`, book: infoBook() });
 }
 const INFO_ITEMS = CORE.info.menu(() => INFO_SHEET, 'garderoby.xlsx');
 

@@ -2,13 +2,13 @@
 
 > **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
 
-The three walk-in wardrobes of the attic in one application (Garderoby); the page shows one wardrobe at a time, Info all three as one order. How a carcass is built is in rules.md (Polish, for the carpenter).
+The three walk-in wardrobes of the attic and the niche of room 6 (left by the old ventilation shaft's wall) in one application (Garderoby); the page shows one room at a time, Info all of them as one order. How a carcass is built is in rules.md (Polish, for the carpenter).
 
 ## Files
 
 | File | Holds |
 |---|---|
-| wardrobe.dat.js | the design of the three wardrobes, board by board: each carcass with its boards, shelves, drawers, feet and plinth, what each is cut from and its cut size; the drawers that slide; the cameras; what Info buys and what Test checks. No room (the house's), no product or look (the library's) |
+| wardrobe.dat.js | the design of every room, board by board: each carcass with its boards, shelves, drawers, feet and plinth, what each is cut from and its cut size; the drawers that slide; the cameras; what Info buys and what Test checks. No room (the house's), no product or look (the library's) |
 | room.js | the wardrobes' furniture, the implementation of the interface room.js: the design drawn as it is, the same on its page and in the house |
 | index.html | a wardrobe in its room from the house: 3D, 2D, Info (Kosztorys, Lista cięć, Korpusy), Test |
 

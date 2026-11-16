@@ -4,7 +4,7 @@
 
 > Bez szczegółów kodu. Wymiary każdej części są w danych projektu (lista cięć i tabela korpusów w Info).
 
-Jak zbudować korpusy trzech garderób na poddaszu.
+Jak zbudować korpusy trzech garderób na poddaszu i regału we wnęce pokoju 6.
 
 ## 1. Układ
 
@@ -13,6 +13,7 @@ Jak zbudować korpusy trzech garderób na poddaszu.
 - Korpus ma stałą szerokość; ciąg, który się nie mieści, kończy jeden krótszy korpus albo dwa krótsze, przy niskiej ścianie.
 - Ciąg zostawia wolne wejście: przed przejściem z sypialni i przy drzwiach nie stoi żaden korpus.
 - Garderoba 8: między drzwiami a ścianą holu biegną rury rekuperatora; tam nie ma korpusu.
+- Pokój 6: wnękę po ściance szybu wentylacyjnego wypełniają korpusy na całą jej głębokość, frontem w linii ściany pokoju.
 
 ## 2. Korpus
 

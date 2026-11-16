@@ -109,7 +109,7 @@ function make(env) {
       ROOM, RECORDS, STATIC, MOVERS, toggle, moverAlong, cameras: M.cameras };
   }
 
-  const rooms = () => NUMBERS.map(n => ({ floor: ROOMS[n].floor, opts: { number: n } }));   // the three wardrobes, one build each
+  const rooms = () => NUMBERS.map(n => ({ floor: ROOMS[n].floor, opts: { number: n } }));   // every room it furnishes, one build each
   return { ROOMS, NUMBERS, rooms, build };
 }
 
