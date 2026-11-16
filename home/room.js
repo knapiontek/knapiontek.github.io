@@ -14,7 +14,7 @@ const INTERFACE = {
     make: ['function', "(env {materials, textures, library, shell}) → its design (below); materials and textures: the page's libraries for core, the furniture adds its own keys; library: {products, textures} of library/; shell: the shell of its rooms from the house (the interface shell.js)"],
   },
   design: {                                // what make returns
-    rooms: ['function', '() → [{floor, opts}]: the rooms it furnishes, one build each (one per floor at most); floor: the house\'s floor id'],
+    rooms: ['function', '() → [{floor, opts}]: the rooms it furnishes, one build each (one or more on a floor); floor: the house\'s floor id'],
     build: ['function', "(view, opts) → its furniture built in the view (core's scene), in house axes and mm; opts: a room's opts, and layers: added to every solid and detail (the house: the furniture's layer and the room's floor)"],
   },
   built: {                                 // what build returns

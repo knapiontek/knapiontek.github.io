@@ -12,13 +12,13 @@ Nothing is installed in the repository: the LLM rebuilds the scripts from this f
 - The furniture in the house: turn every part's layer on (HOUSE_VIEW.PARTS, setLayer) and wait until each is built or has a status other than "wczytywanie…".
 - A room's link to its application: select the room (HOUSE_VIEW.selectRoom) and read the links in the Wykończenie panel.
 - WebGL in a headless Chrome: software rendering (SwiftShader). It is slow: a frame can take a second; wait for a state, never for a fixed time.
-- A page is ready when its loading note is hidden. Each page exposes its view on window (the house HOUSE_VIEW, the kitchen KITCHEN_VIEW_PAGE, the bathroom bath): its mode switch, layers, camera and model.
+- A page is ready when its loading note is hidden. Each page exposes its view on window (the house HOUSE_VIEW, the kitchen KITCHEN_VIEW_PAGE, the bathroom bath, the wardrobes wardrobe): its mode switch, layers, camera and model.
 - Errors: every page error and every console error or warning counts, except a CDN request the test blocked on purpose.
 - **Without a browser** (node, a vm context as window): core/geometry.js, apps.dat.js, house/house.dat.js, house/model.js and house/shell.js run without THREE and DOM. HouseShell.rooms(app) for every application with rooms gives the shell a sub-project gets; keep it as JSON and compare.
 
 ## 1. Every page in every mode
 
-Pages: the house; the kitchen; the bathroom on the ground floor and in the attic (?floor=ground, ?floor=attic); the kitchen editor (rooms/kitchen/design.html, one state). Modes: 3D, 2D, Test, Info.
+Pages: the house; the kitchen; the bathroom on the ground floor and in the attic (?floor=ground, ?floor=attic); the wardrobes (rooms/wardrobe/index.html ?room=3, 4, 8); the kitchen editor (rooms/kitchen/design.html, one state). Modes: 3D, 2D, Test, Info.
 
 Record per page and mode:
 - the errors;
@@ -30,7 +30,7 @@ Record per page and mode:
 
 ## 2. Interfaces and dependencies
 
-- Test of every page lists the dependencies: a file of a sub-project is on its own page, or loaded through room.js; a file of the house is on its own page, or loaded through shell.js. Expected: OK on the house, the kitchen and both bathrooms (on the house after the furniture is loaded).
+- Test of every page lists the dependencies: a file of a sub-project is on its own page, or loaded through room.js; a file of the house is on its own page, or loaded through shell.js. Expected: OK on the house, the kitchen, both bathrooms and the wardrobes (on the house after the furniture is loaded).
 - A sub-project's page with a file of the house added by hand: its Test names that file. A copy without the house's folder: the sub-project's pages show an error that names the missing shell, with no page error.
 - A sub-project's inner files (needs) stay in its folder; one outside is an error that names it.
 - An implementation missing a member (e.g. night in what build returns) is an error that names it; the house's view of a furniture has only the members of room.js.
@@ -39,7 +39,7 @@ Record per page and mode:
 
 ## 3. The furniture in the house
 
-- With Warstwy → Meble on, the house loads the furniture of every application that has it: the kitchen (one room) and the bathrooms (one per floor), with no error and no error status in the panel. Note the time: the house shown, then the furniture built.
+- With Warstwy → Meble on, the house loads the furniture of every application that has it: the kitchen (one room), the bathrooms (one per floor) and the wardrobes (three rooms of the attic), with no error and no error status in the panel. Note the time: the house shown, then the furniture built.
 - A room furnished by an application has its name as a link to the application's page (room tag and Wykończenie).
 - The bathrooms' wall tiles lie on the house's walls (ground floor: graphite in the shower, on the walls around the vanity; attic: grey), and go with the layer.
 - The floor of a room with a sub-project is the sub-project's: the house lays no tiles of its own there (Wykończenie says so) and its estimate has only the rooms without one; the bathrooms' floor tiles show with their layer.
@@ -61,6 +61,8 @@ With all the furniture loaded and on, every inner door fully open (then once mor
 ## 5. Values to keep
 
 - **The bathrooms**: tiles, doors and drawers (open positions to the mm), plans and Info as before, the estimate to the grosz. Tiles in the estimate: m² from the tiled faces of the model, with the reserve; the ground floor 4,73 m² floor and 27,76 m² walls, the attic 33,41 m² (default tiles; before the doors 4,74, 28,10 and 33,78: the door frame now covers the reveal). Test: the checks of bathroom.dat.js with their values (ground floor: 405, 10, 140, 410 mm; attic: 0, 550, 480, 390 = 390, 230 / 230, 42 (the spout inside the bath's inner rim), 310 / 380, 2515, 2083, 2650, 420 mm), all OK.
-- **The house**: 9 inner doors; Info's estimate has them (the bathrooms' Porta HIDE WC 80 with its handle, 7 still to choose). Test: 408 solids without overlap.
+- **The house**: 9 inner doors; Info's estimate has them (the bathrooms' Porta HIDE WC 80 with its handle, 7 still to choose). Test: 408 solids without overlap; the applications checked against room.js: Kuchnia, Łazienki, Garderoby.
+- **The wardrobes**: 21 carcasses (3: 8, 4: 7, 8: 6), solids 122 / 105 / 85 per wardrobe, 6 drawers; the entry's side 300 deep, the opposite 400; no carcass before an entry, none in wardrobe 8 between the door and the hall (ducts). Test all OK: no overlap, the least gap under the ceiling 100 mm, the narrowest passage 890 (3, 4) and 820 mm (8). A drawer opens by 300 mm; the door of wardrobe 8 is the house's and opens.
 - **The kitchen's Test**: 4 collisions, the same in every run until they are fixed (see To do).
-- **The shells** (without a browser): the kitchen one room (Salon z kuchnią i holem, 5 objects, 1 opening); the bathrooms the ground floor (10 objects, 2 openings) and the attic (8 objects, 1 opening); each bathroom has one door object with its leaf.
+- **The shells** (without a browser): the kitchen one room (Salon z kuchnią i holem, 5 objects, 1 opening); the bathrooms the ground floor (10 objects, 2 openings) and the attic (8 objects, 1 opening); each bathroom has one door object with its leaf. The wardrobes: 3 (7 objects, no opening), 4 (7 objects, no opening), 8 (7 objects, 1 opening: its door with its leaf).
+- **The wardrobes' data** is written by the LLM's generator (not in the repository): the runs of each wardrobe (wall, direction, the carcasses from the entry with width and depth), the house's roof (eave, pitch) and flat ceiling; every board is then data. Rebuild it from wardrobe.dat.js itself when it is changed by hand.

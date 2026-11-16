@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Garderoby — dom w papawerach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../core/ui.css">
+</head>
+<body>
+<div class="app">
+  <nav class="apps" id="apps" aria-label="Aplikacja"></nav>
+  <div class="stage" id="stage">
+    <canvas id="gl" aria-label="Widok 3D garderoby"></canvas>
+    <div id="loading">Wczytywanie garderoby…</div>
+    <div class="hud"><div id="context" aria-label="Menu widoku"></div></div>
+    <div class="toggle modes" id="mode" role="group" aria-label="Tryb"></div>
+    <div id="plan2d" hidden aria-label="Rzut 2D"><p class="sheetnote" id="planNote"></p><div id="sheet"></div></div>
+    <div id="analysis" hidden aria-label="Test"><div id="checks"></div></div>
+    <div id="info" hidden aria-label="Informacje"></div>
+    <div class="dock" id="dock" aria-label="Dolne menu"></div>
+    <div class="float sunfloat" id="sun" role="dialog" aria-label="Słońce i światło" hidden>
+      <div id="compass"></div>
+    </div>
+    <div class="float" id="help" role="dialog" aria-label="Pomoc" hidden>
+      <div data-help="3d">
+        <p>Obracaj: lewy przycisk · przesuwaj: prawy · przybliżaj: kółko lub szczypanie.</p>
+        <p>Kliknięcie szuflady albo drzwi otwiera je lub zamyka.</p>
+        <p>Pomieszczenie jest z domu, takie jak jest. Ściana albo sufit, za którymi stoi kamera, chowają się.</p>
+        <p>U góry: która garderoba. Na dole: skąd patrzysz. ☀: słońce domu oraz dzień albo noc (wspólne dla wszystkich aplikacji). ◐: jasny albo ciemny wygląd.</p>
+      </div>
+      <div data-help="2d"><p>Rzut garderoby jak rysunek CAD, cięty na wysokości z rzutu domu: linią ciągłą to, co pod cięciem, przerywaną to, co nad nim. Na dole: powiększenie i zapis SVG.</p></div>
+      <div data-help="test"><p>Sprawdzenia mierzone na modelu: bryły bez wspólnej objętości, góra korpusów pod sufitem, przejście między ciągami. <b>OK</b> = w normie.</p></div>
+      <div data-help="info"><p>Wszystkie trzy garderoby razem, jedno zamówienie: kosztorys, lista cięć, korpusy. Na dole: XLSX.</p></div>
+    </div>
+    <div class="corner">
+      <button class="round" id="themebtn" aria-label="Jasny / ciemny" title="Jasny / ciemny"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
+      <button class="round" id="sunbtn" aria-label="Słońce" title="Słońce" aria-expanded="false" aria-controls="sun">☀</button>
+      <button class="round" id="helpbtn" aria-label="Pomoc" aria-expanded="false" aria-controls="help">?</button>
+    </div>
+  </div>
+
+  <aside id="settings">
+    <h1 id="title">Garderoby</h1>
+    <p class="sub" id="subtitle"></p>
+    <div class="toggle" id="tabs" role="tablist" aria-label="Panel"></div>
+
+    <!-- ===== WARSTWY ===== -->
+    <section class="block" data-tab="layers">
+      <h2>Warstwy</h2>
+      <div class="layers" id="layers"></div>
+    </section>
+    <section class="block" data-tab="layers">
+      <h2>Szuflady i drzwi</h2>
+      <div class="btns"><button class="btn ghost" id="openAll">Otwórz wszystkie</button><button class="btn ghost" id="closeAll">Zamknij wszystkie</button></div>
+      <p class="note">Kliknij szufladę albo drzwi, aby je otworzyć.</p>
+    </section>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="../../core/geometry.js"></script>
+<script src="../../core/mesh.js"></script>
+<script src="../../core/scene.js"></script>
+<script src="../../core/ui.js"></script>
+<script src="../../core/plan.js"></script>
+<script src="../../core/sheet.js"></script>
+<script src="../../core/info.js"></script>
+<script src="../../core/library.js"></script>
+<script src="../../apps.dat.js"></script>
+<script src="../../room.js"></script>
+<script src="../../shell.js"></script>
+<script src="../../library/materials.dat.js"></script>
+<script src="../../library/products/boards.dat.js"></script>
+<script src="../../library/products/hardware.dat.js"></script>
+<script src="../../library/products/fasteners.dat.js"></script>
+<script src="../../library/products/services.dat.js"></script>
+<script src="../../library/products/shops.dat.js"></script>
+<script src="wardrobe.dat.js"></script>
+<script src="room.js"></script>
+<script>
+'use strict';
+(async function main() {
+
+const stage = document.getElementById('stage'), loading = document.getElementById('loading');
+const fail = message => { loading.hidden = false; loading.textContent = message; };
+if (!window.THREE || !THREE.OrbitControls) return fail('Nie udało się wczytać silnika 3D. Odśwież stronę.');
+if (!window.WARDROBE_DATA) return fail('Brak pliku wardrobe.dat.js obok index.html.');
+if (!window.LIBRARY_PRODUCTS) return fail('Brak pliku ../../library/products.');
+/* the wardrobes' furniture (room.js): the same in the house */
+const PART = window.WardrobeRoom, D = WARDROBE_DATA, PRODUCTS = LIBRARY_PRODUCTS;
+let SHELL;   // the rooms' shells from the house (the interface shell.js)
+/* this page is the host: it wires its own files, the library and the shell (the list of applications names its file) */
+const LIBRARY = { products: PRODUCTS, textures: CORE.library.textures }, SHELL_PATH = (APPS.find(a => a.shell) || {}).shell;
+try { [SHELL] = await Promise.all([CORE.ui.implementation('../../', SHELL_PATH, () => SHELL_INTERFACE.implementation()), CORE.library.load('../../library/', PART.textures(LIBRARY))]); } catch (e) { return fail('Błąd: ' + e.message); }
+
+/* The room from the house (the interface ../../shell.js), the wardrobe's drawing from wardrobe.dat.js (room.js). Here
+   (index.html) the panel, the views and what hides while the camera is behind it. */
+let NUMBER = D.defaults.wardrobe;
+try { NUMBER = +(new URLSearchParams(location.search).get('room') || localStorage.getItem('wardrobe') || NUMBER); } catch (e) {}
+if (!D.wardrobes[NUMBER]) NUMBER = D.defaults.wardrobe;
+const MATERIAL_LIB = Object.assign({}, LIBRARY_MATERIALS), TEX = {};
+let WP;
+try { WP = PART.make({ materials: MATERIAL_LIB, textures: TEX, library: LIBRARY, shell: SHELL }); } catch (e) { return fail(e.message); }
+const HOUSE_ROOM = WP.ROOMS[NUMBER], DATA = D.wardrobes[NUMBER];
+const { $, el } = CORE.ui;
+
+/* ---------- state: the layers (core/ui.js), kept in the browser ---------- */
+const state = { layers: {} };
+const LAYER_TREE = Object.values(D.views).find(v => v.layers).layers, LAYER = CORE.ui.layerTree(LAYER_TREE);
+(function defaults(t) { for (const [k, v] of Object.entries(t)) { state.layers[k] = !v.off; if (v.layers) defaults(v.layers); } })(LAYER_TREE);
+const { layerOn } = CORE.ui.layerSwitch(LAYER, () => state.layers);
+const CHOICES = CORE.ui.store('wardrobe-choices', () => ({}), s => !!s && typeof s === 'object');
+for (const [k, on] of Object.entries(CHOICES.state.layers || {})) if (LAYER[k]) state.layers[k] = !!on;
+const keepLayers = () => { CHOICES.state.layers = state.layers; CHOICES.save(); };
+
+/* ---------- the view (core), in house mm ---------- */
+const canvasEl = $('gl'), BOX = HOUSE_ROOM.box, LIGHT = SHELL.light();
+const VIEW = CORE.createView({ canvas: canvasEl, stage, materials: MATERIAL_LIB, textures: TEX, light: LIGHT,
+  edges: Object.assign({}, SHELL.edges(), { layers: ['edges'] }), body: [[BOX[0], BOX[2], BOX[4]], [BOX[1], BOX[3], BOX[5]]],
+  sunCentre: [(BOX[0] + BOX[1]) / 2, (BOX[2] + BOX[3]) / 2, BOX[4] + 1000] });
+VIEW.renderer.physicallyCorrectLights = true;
+VIEW.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+VIEW.controls.minDistance = 0.3; VIEW.controls.maxDistance = 12;
+const invalidate = () => VIEW.redraw();
+
+/* ---------- the wardrobe (room.js) with the house's room ---------- */
+const built = WP.build(VIEW, { number: NUMBER, room: true });
+const { STATIC, MOVERS, RECORDS } = built;
+for (const g of VIEW.GROUPS) g.base = g.mesh.material;
+
+/* what hides while the camera is behind it (or its layer is off): a wall of the room, the floor, the ceiling. Hidden: not
+   drawn, still casting its shadow (a ghost). */
+const GHOST = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
+const camHouse = () => VIEW.root.worldToLocal(VIEW.camera.position.clone());   // the camera in house mm
+const CUT_OF = {};
+for (const r of RECORDS) {
+  const middle = new THREE.Vector3(...r.middle), normal = new THREE.Vector3(...r.normal);
+  CUT_OF[r.key] = { hidden: false, isHidden: () => !layerOn(r.layer) || camHouse().sub(middle).dot(normal) >= 50 };
+}
+const layersOn = layers => layers.every(k => k.startsWith('L:') ? layerOn(k.slice(2)) : k === 'edges' ? layerOn('edges') : true);
+const cutHidden = layers => layers.some(k => k.startsWith('C:') && CUT_OF[k] && CUT_OF[k].hidden);
+function applySolids() {
+  VIEW.showPieces(l => layersOn(l) && !cutHidden(l), () => true);
+  for (const g of VIEW.GROUPS) {
+    const ghost = layersOn(g.layers) && cutHidden(g.layers);
+    if (ghost) g.mesh.visible = true;
+    g.mesh.material = ghost ? GHOST : g.base;
+  }
+  invalidate();
+}
+function updateCuts() {
+  let changed = false;
+  for (const c of Object.values(CUT_OF)) { const h = !!c.isHidden(); if (h !== c.hidden) { c.hidden = h; changed = true; } }
+  if (changed) applySolids();
+  return changed;
+}
+
+/* ---------- light: the house's sun and sky; day or night (☀, one for every application) ---------- */
+VIEW.addLight();
+const SUN = CORE.ui.sunStore(SHELL.sun());
+const placeSun = () => VIEW.placeSun(SUN.state);
+const applyNight = () => { VIEW.renderer.toneMappingExposure = SUN.state.night ? 1.3 : LIGHT.exposure; built.night(!!SUN.state.night); };
+
+/* ---------- camera and clicks ---------- */
+const VIEWS = built.cameras;   // wardrobe.dat.js, house mm
+const goTo = (name, instant) => VIEW.flyTo(VIEWS[name], instant);
+VIEW.onClick(ray => built.click(ray));
+const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
+let hoverPending = false;
+canvasEl.addEventListener('pointermove', e => {
+  if (hoverPending || e.buttons || e.pointerType !== 'mouse') return;
+  hoverPending = true;
+  requestAnimationFrame(() => {
+    hoverPending = false;
+    const r = canvasEl.getBoundingClientRect();
+    pointer.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    raycaster.setFromCamera(pointer, VIEW.camera);
+    canvasEl.style.cursor = built.moverAlong(raycaster) ? 'pointer' : '';
+  });
+});
+
+/* ---------- the panel ---------- */
+$('title').textContent = `${D.name} · ${DATA.name}`;
+$('subtitle').textContent = `${HOUSE_ROOM.floorName}, pomieszczenie z domu: ${HOUSE_ROOM.numbers.join(', ')}. ${HOUSE_ROOM.name}`;
+document.title = `${DATA.name} — ${D.name}`;
+function syncLayers() {
+  CORE.ui.layersPanel($('layers'), LAYER, Object.keys(LAYER_TREE), state.layers, layerOn, (k, on) => { state.layers[k] = on; keepLayers(); syncLayers(); });
+  updateCuts(); applySolids();
+}
+syncLayers();
+$('openAll').onclick = () => { for (const m of MOVERS) m.target = 1; invalidate(); };
+$('closeAll').onclick = () => { for (const m of MOVERS) m.target = 0; invalidate(); };
+
+/* ==========================================================================
+   INFO: all three wardrobes, one order (core/info.js): Kosztorys, Lista cięć, Korpusy, from wardrobe.dat.js and the library
+   ========================================================================== */
+const ALL = Object.entries(D.wardrobes).map(([n, w]) => ({ number: +n, name: w.name, model: w.model }));
+const SOLIDS = ALL.flatMap(w => w.model.solids), CARCASSES = ALL.flatMap(w => w.model.carcasses);
+const fmt = (v, d = 2) => v.toLocaleString('pl-PL', { minimumFractionDigits: d, maximumFractionDigits: d });
+const lengthOf = s => Math.max(s.box[1] - s.box[0], s.box[3] - s.box[2]);   // a run's plinth: along its wall
+/* the cut parts, by board: the same label and sizes are one row */
+function cutRows(boardKind) {
+  const rows = new Map();
+  for (const s of SOLIDS.filter(s => s.board === boardKind)) {
+    const [a, b, ea, eb] = s.cut, key = [s.label, a, b, ea, eb].join('|');
+    const r = rows.get(key) || rows.set(key, { name: s.label, a, b, edgesA: ea, edgesB: eb, qty: 0, edge: ea * a + eb * b || null, where: new Set() }).get(key);
+    r.qty++; r.where.add(s.name.split('.')[0]);
+  }
+  return [...rows.values()].sort((p, q) => p.name.localeCompare(q.name, 'pl') || q.a - p.a || q.b - p.b)
+    .map((r, i) => Object.assign(r, { label: boardKind[0].toUpperCase() + (i + 1), where: 'garderoby ' + [...r.where].join(', ') }));
+}
+const BOARD_KINDS = Object.keys(D.boards);
+const CUTS = Object.fromEntries(BOARD_KINDS.map(k => [k, cutRows(k)]));
+const area = k => CUTS[k].reduce((s, r) => s + r.a * r.b * r.qty, 0) / 1e6;   // m²
+/* what is counted in the solids: a label's pieces, the drawers, the carcasses, the movable shelves; or measured */
+const COUNT = {
+  mover: ALL.reduce((s, w) => s + w.model.movers.length, 0),
+  carcass: CARCASSES.length,
+  movable: CARCASSES.reduce((s, c) => s + c.movable, 0),
+};
+const count = per => COUNT[per] ?? SOLIDS.filter(s => s.label === per).length;
+const MEASURE = {
+  edges: BOARD_KINDS.reduce((s, k) => s + CUTS[k].reduce((t, r) => t + (r.edge || 0) * r.qty, 0), 0) / 1000,
+  cuts: BOARD_KINDS.reduce((s, k) => s + CUTS[k].reduce((t, r) => t + (r.a + r.b) * r.qty, 0), 0) / 1000,
+};
+const measure = what => MEASURE[what] ?? SOLIDS.filter(s => s.label === what).reduce((t, s) => t + lengthOf(s), 0) / 1000;
+const source = P => { const shop = PRODUCTS.shops[P.shop], link = P.link || (P.links || [])[0]?.url;
+  return link ? { text: [shop && shop.name, P.priceNote].filter(Boolean).join('; '), links: [{ text: new URL(link).hostname.replace(/^www\./, ''), href: link }] }
+    : [shop && shop.name, P.priceNote].filter(Boolean).join('; '); };
+function estimate() {
+  const E = D.estimate, sheetM2 = E.sheet[0] * E.sheet[1] / 1e6, groups = [...new Set(E.buy.map(b => b.group))];
+  const line = (b, i) => {
+    if (b.board) {
+      const P = CORE.library.product(D.boards[b.board]), m2 = area(b.board);
+      return { id: 'b' + i, name: P.name, spec: P.spec || '', unit: P.unit, price: P.price ?? null, source: source(P),
+        use: `formatki ${fmt(m2)} m² + ${Math.round(E.waste * 100)}% odpadu`, qty: ref => ({ f: `ROUNDUP(${m2.toFixed(3)}*(1+${ref.param('waste')})/${sheetM2.toFixed(3)},0)`, z: '0' }) };
+    }
+    const P = CORE.library.product(b.product), n = b.measure ? measure(b.measure) : count(b.per) * b.each;
+    return { id: 'b' + i, name: P.name, spec: P.spec || '', unit: P.unit, price: P.price ?? null, source: source(P), use: b.use || '',
+      qty: b.measure ? Math.round(n * 100) / 100 : b.pack ? Math.ceil(n / b.pack) : n };
+  };
+  const items = E.buy.map(line);
+  return CORE.info.estimate({ title: 'Kosztorys – garderoby 3, 4 i 8', info: 'Ceny brutto; pozycje bez ceny: do sprawdzenia w sklepie.',
+    params: [{ key: 'waste', label: 'Odpad płyt', v: E.waste, z: '0%' }],
+    categories: groups.map(g => ({ name: g, group: g, items: items.filter((_, i) => E.buy[i].group === g) })),
+    excluded: ['Robocizna, transport, drążki (na razie bez drążków).'] }).sheet;
+}
+function cutList() {
+  return CORE.info.cutList({ title: 'Lista cięć – garderoby 3, 4 i 8 (wymiary w mm)', note: 'Płyta biała bez słoja: wymiar 1 to dłuższy bok. Krawędź: liczba oklejanych krawędzi wzdłuż wymiaru.',
+    blocks: BOARD_KINDS.map(k => ({ id: k, title: CORE.library.product(D.boards[k]).name, cut: true, rows: CUTS[k] })) }).sheet;
+}
+function carcassTable() {
+  const rows = ALL.flatMap(w => w.model.carcasses.map(c => [c.id, w.name, c.run, `${c.y[0]}–${c.y[1]}`, c.width, c.depth, c.height, c.fixed, c.movable, c.drawers]));
+  return CORE.info.table('Korpusy', [8, 14, 30, 13, 8, 8, 8, 8, 8, 8], ['Korpus', 'Garderoba', 'Ciąg', 'y od–do', 'Szer.', 'Głęb.', 'Wys.', 'Półki stałe', 'Półki ruchome', 'Szuflady'], rows,
+    'Wymiary korpusów z cokołem 50 mm pod spodem; wysokość bez cokołu.', [7, 's1', 's2', 11, 6, 6, 6, 6, 6, 6]);
+}
+let INFO_SHEET = null;
+const infoBook = () => ({ sheets: [estimate(), cutList(), carcassTable()] });
+function renderInfo() {
+  if (INFO_SHEET) return INFO_SHEET.set(CORE.info.sorted(infoBook()));
+  INFO_SHEET = CORE.info.show($('info'), { title: D.name, subtitle: 'Garderoby 3, 4 i 8 na poddaszu: jedno zamówienie', book: infoBook() });
+}
+const INFO_ITEMS = CORE.info.menu(() => INFO_SHEET, 'garderoby.xlsx');
+
+/* ==========================================================================
+   TEST: measured on the model (core's overlaps, the room's ceiling over each carcass, the passage), the dependencies
+   ========================================================================== */
+function measureChecks() {
+  const cells = STATIC.filter(c => c.element === 'fixture' && c.name).concat(MOVERS.filter(m => m.kind === 'drawer').flatMap(m => m.cells));
+  const over = CORE.geometry.overlaps(cells);
+  const out = [{ name: `Bryły garderoby bez wspólnej objętości (${cells.length})`, items: over.map(o => `${o.a.name} ${o.a.label} × ${o.b.name} ${o.b.label}`) }];
+  const R = built.ROOM, own = DATA.model.carcasses;
+  const ceilingOver = c => Math.min(R.ceiling ?? Infinity, R.roofUnder(c.y[0]), R.roofUnder(c.y[1]));
+  const tops = own.map(c => ({ c, gap: ceilingOver(c) - c.top }));
+  out.push({ name: `Góra korpusu co najmniej ${D.checks.topGap} mm pod sufitem (najmniej ${Math.round(Math.min(...tops.map(t => t.gap)))} mm)`,
+    items: tops.filter(t => t.gap < D.checks.topGap - 0.5).map(t => `${t.c.id}: ${Math.round(t.gap)} mm`) });
+  /* the passage: between the fronts of carcasses facing each other (overlapping along y) */
+  const fronts = cells.filter(c => c.label === 'Bok').map(c => ({ name: c.name, x: [c.S.x1, c.S.x2], y: (ys => [Math.min(...ys), Math.max(...ys)])(c.S.poly.map(p => p[0])) }));
+  const byCarcass = new Map(); for (const f of fronts) { const b = byCarcass.get(f.name) || { name: f.name, x: f.x.slice(), y: f.y.slice() }; b.x = [Math.min(b.x[0], f.x[0]), Math.max(b.x[1], f.x[1])]; b.y = [Math.min(b.y[0], f.y[0]), Math.max(b.y[1], f.y[1])]; byCarcass.set(f.name, b); }
+  const boxes = [...byCarcass.values()]; let least = Infinity; const narrow = [];
+  for (const a of boxes) for (const b of boxes) if (a.x[1] < b.x[0] && Math.min(a.y[1], b.y[1]) > Math.max(a.y[0], b.y[0])) {
+    const gap = b.x[0] - a.x[1]; least = Math.min(least, gap); if (gap < D.checks.passage) narrow.push(`${a.name} – ${b.name}: ${Math.round(gap)} mm`);
+  }
+  out.push({ name: `Przejście między ciągami co najmniej ${D.checks.passage} mm` + (least < Infinity ? ` (najwęższe ${Math.round(least)} mm)` : ''), items: narrow });
+  return out;
+}
+const CHECKS = measureChecks();
+$('checks').innerHTML = CORE.ui.checksHtml(CHECKS.concat(ROOM_INTERFACE.dependencies('../../', APPS.filter(a => a.room).map(a => a.room)), SHELL_INTERFACE.dependencies('../../', SHELL_PATH)));
+
+/* ==========================================================================
+   VIEWS: 3D, 2D, Info, Test, as every application (core/ui.js, core/plan.js)
+   ========================================================================== */
+const PLAN = CORE.plan.create(MATERIAL_LIB), CUT = HOUSE_ROOM.planCut;
+function planSvg() {
+  const h = HOUSE_ROOM.level + CUT, cells = STATIC.concat(...MOVERS.map(m => m.cells));
+  const shapes = cells.filter(c => c.element === 'fixture' && c.name).map(c => CORE.plan.solidShape(c));
+  const rects = HOUSE_ROOM.inside, extent = HOUSE_ROOM.box.slice(0, 4), inside = [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...rects.map(q => q[k])));
+  return PLAN.sheets([{ extent, title: `${HOUSE_ROOM.floorName} · cięcie ${CUT} mm`,
+    draw: X => PLAN.floorArea(X, rects) + PLAN.seen(X, shapes, h) + PLAN.cut(X, cells, h, () => true) + PLAN.labels(X, HOUSE_ROOM.openings, h, HOUSE_ROOM.sides)
+      + PLAN.rooms(X, [{ rects, numbers: HOUSE_ROOM.numbers, name: HOUSE_ROOM.name, area: HOUSE_ROOM.area }])
+      + PLAN.dims(X, inside, extent[1]) }]);
+}
+const MODES = D.views, MODE_IDS = Object.keys(MODES);
+const VIEW_STORE = CORE.ui.store('wardrobe-view', () => ({ mode: MODE_IDS[0], zoom: 1 }), s => !!MODES[s.mode] && Number.isFinite(s.zoom));
+const VIEW_STATE = VIEW_STORE.state, saveView = VIEW_STORE.save;
+const PLAN_BUTTONS = { zoomOut: el('button', { textContent: '−', ariaLabel: 'Pomniejsz' }), zoomIn: el('button', { textContent: '+', ariaLabel: 'Powiększ' }),
+  download: el('button', { textContent: 'Pobierz SVG' }) };
+const drawSheet = CORE.ui.planSheet({ sheet: $('sheet'), ...PLAN_BUTTONS, state: VIEW_STATE, save: saveView, svg: planSvg, file: `garderoba-${NUMBER}-rzut.svg` });
+function goWardrobe(n) {
+  try { localStorage.setItem('wardrobe', n); } catch (e) {}
+  const url = new URL(location.href); url.searchParams.set('room', n); location.href = url.href;
+}
+const CAMERA_ITEMS = Object.keys(VIEWS).map(k => ({ name: DATA.cameras[k] || k, go: () => goTo(k) }));
+CORE.ui.corner([[$('sunbtn'), $('sun')], [$('helpbtn'), $('help')]]);
+CORE.ui.themeButton($('themebtn'));
+CORE.ui.panelToggle(stage);
+CORE.ui.sunPanel($('compass'), SHELL.footprint(), SUN.state, () => { SUN.save(); placeSun(); applyNight(); }, HOUSE_ROOM.inside);
+const showPanel = () => { VIEW_STATE.tab = CORE.ui.panelTabs($('tabs'), $('settings'), MODES[VIEW_STATE.mode], VIEW_STATE.tab, t => { VIEW_STATE.tab = t; saveView(); showPanel(); }) ?? VIEW_STATE.tab; };
+function setMode(m) {
+  VIEW_STATE.mode = MODES[m] ? m : MODE_IDS[0]; saveView();
+  const v = CORE.ui.showMode(MODES, VIEW_STATE.mode, canvasEl, setMode), is3d = !!v.menu;
+  const ctx = $('context'); ctx.innerHTML = '';
+  if (is3d) CORE.ui.menuRow(ctx, ALL.map(w => ({ name: w.name, radio: true, on: w.number === NUMBER, set: () => goWardrobe(w.number) })));
+  CORE.ui.bottomMenu($('dock'), is3d ? [CAMERA_ITEMS] : v.plan ? [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]] : v.info ? INFO_ITEMS : []);
+  showPanel();
+  if (v.plan) { drawSheet(); $('planNote').textContent = `Cięcie ${CUT} mm nad podłogą (jak w rzucie domu). ${v.note || ''}`.trim(); }
+  if (v.info) renderInfo();
+  invalidate();
+}
+
+/* ---------- the loop ---------- */
+placeSun();
+applyNight();
+VIEW.enableNavigation();
+VIEW.start();
+goTo('overview', true);
+for (const c of Object.values(CUT_OF)) c.hidden = !!c.isHidden();
+applySolids();
+for (const type of ['click', 'input', 'change']) document.addEventListener(type, () => invalidate(), true);
+addEventListener('load', () => invalidate());
+VIEW.onFrame(updateCuts);
+VIEW.run();
+
+CORE.ui.appMenu($('apps'), APPS, 'wardrobe', '../../', () => VIEW_STATE.mode);
+setMode(CORE.ui.askedMode(MODES) || VIEW_STATE.mode);
+loading.hidden = true;
+// for inspection in the browser console and the tests
+window.wardrobe = { state, VIEW, goTo, setMode, planSvg, invalidate, built, MOVERS, CUT_OF, STATIC, CHECKS, NUMBER };
+})();
+</script>
+</body>
+</html>

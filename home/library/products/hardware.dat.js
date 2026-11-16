@@ -27,5 +27,8 @@
  "blum-legrabox-back-fixing-c": {"name":"Mocowanie tyłu C","spec":"ZB7C000S","unit":"para","maker":"Blum","price":null,"shop":"m-hm","link":"https://m-hm.pl/pl/c/TIP-ON-i-Adaptery/369"},
  "blum-legrabox-back-fixing-k": {"name":"Mocowanie tyłu K","spec":"ZB7K000S","unit":"para","maker":"Blum","price":null,"shop":"m-hm","link":"https://m-hm.pl/pl/c/TIP-ON-i-Adaptery/369"},
  "camar-807-hangers": {"name":"Zawieszki ukryte do szafek wiszących","spec":"np. Camar 807","unit":"para","maker":"Camar","price":null,"shop":"m-hm"},
- "blum-screws-4x15-609-1500": {"name":"Wkręty 4 × 15 do prowadnic","spec":"609.1500","unit":"opak.","maker":"Blum","price":null,"shop":"m-hm"}
+ "blum-screws-4x15-609-1500": {"name":"Wkręty 4 × 15 do prowadnic","spec":"609.1500","unit":"opak.","maker":"Blum","price":null,"shop":"m-hm"},
+ "ball-runners-push-open-350": {"name":"Prowadnice kulkowe z otwieraniem przez naciśnięcie","spec":"pełny wysuw, push-to-open, długość 350, H45, komplet L + P","unit":"kpl.","price":null,"priceNote":"do sprawdzenia","shop":"m-hm"},
+ "leveling-feet-50": {"name":"Nóżki regulowane niskie","spec":"wysokość ok. 50 (regulacja ±10), przykręcane do spodu korpusu","unit":"szt.","price":null,"priceNote":"do sprawdzenia","shop":"m-hm"},
+ "plinth-pvc-50-white": {"name":"Cokół PVC wodoodporny 50 mm","spec":"biały, wysokość 50, z uszczelką do podłogi","unit":"mb","price":null,"priceNote":"do sprawdzenia","shop":"m-hm"}
 };

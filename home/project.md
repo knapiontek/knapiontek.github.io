@@ -17,7 +17,7 @@ This file: the folders, the rules every folder keeps, what is left to do, the co
 | core/ | shared code: solids, meshes, the 3D scene, the 2D plan, the screen, the spreadsheet and Info; knows no project |
 | library/ | everything bought: products, materials, textures; data only |
 | house/ | the building, from archon/; the rooms without a sub-project |
-| rooms/ | the room sub-projects, one folder each: rooms/kitchen/ (the living room's kitchen), rooms/bathroom/ (both bathrooms), rooms/wardrobe/ (the three walk-in wardrobes, to do) |
+| rooms/ | the room sub-projects, one folder each: rooms/kitchen/ (the living room's kitchen), rooms/bathroom/ (both bathrooms), rooms/wardrobe/ (the three walk-in wardrobes) |
 | test.md | the LLM's own file: what it needs to rebuild its automated tests in a new session (nothing is installed) |
 | index.html | opens the house (a short page that goes to house/) |
 
@@ -28,7 +28,8 @@ This file: the folders, the rules every folder keeps, what is left to do, the co
 One way only; nobody depends on a sub-project, and no sub-project on another.
 
 ```
-rooms/kitchen/, rooms/bathroom/ ──► core/, library/
+rooms/kitchen/, rooms/bathroom/,
+rooms/wardrobe/                 ──► core/, library/
 house/                          ──► core/, library/
 room.js, shell.js               ──► core/ (the interfaces: they know no implementation)
 core/                           ──► library/ (only its layout: core loads the textures a page asks for)
@@ -58,12 +59,12 @@ The house gives a sub-project its room through an interface, the same way a sub-
 
 ### A room with a sub-project
 
-The house is above the rooms. A room with a sub-project (rooms/) defines everything in it: its furniture, its finishes (the tiles of the walls and of the floor), its lamps; the house draws only its shell (walls, slabs, windows, roof) and, in the rooms without a sub-project, what the house's data gives them (the floor tiles). Where a sub-project takes only a part of an open room (the kitchen in the living room with the hall), the floor of that room stays the house's: one floor across the whole room.
+The house is above the rooms. A room with a sub-project (rooms/) defines everything in it: its furniture, its finishes (the tiles of the walls and of the floor), its lamps; the house draws only its shell (walls, slabs, windows, roof) and, in the rooms without a sub-project, what the house's data gives them (the floor tiles). Where a sub-project takes only a part of an open room (the kitchen in the living room with the hall), or its room is tiled with another (the walk-in wardrobes with the bedroom), the floor stays the house's: one floor across the rooms.
 
 The house shows a room sub-project through an interface, as in Java:
 
 - **The interface** (room.js, in the root): the functions, exactly what each does and returns. Nothing else is part of it. On loading, an implementation is checked against it: a missing function is an error that names it.
-- **The implementations**: one file of the same name in each sub-project (rooms/kitchen/room.js, rooms/bathroom/room.js) does exactly what the interface says. It loads its own inner files itself; nobody else knows them.
+- **The implementations**: one file of the same name in each sub-project (rooms/kitchen/room.js, rooms/bathroom/room.js, rooms/wardrobe/room.js) does exactly what the interface says. It loads its own inner files itself; nobody else knows them.
 - **The list** (apps.dat.js, in the root, not in core): every application with its implementation file. It is where everything starts: a page reads it for the menu, the house loads the implementations from it. Core stays without any project.
 - **The house** calls only the functions of the interface, and names no sub-project. A sub-project's own page may use more of its own code, but not through the interface.
 - **Proof**: the house opens without errors when a sub-project's folder is missing, only without its room (a check in Test).
@@ -74,7 +75,7 @@ The house shows a room sub-project through an interface, as in Java:
 
 A name says what a file is; the same role has the same name in every folder. The one exception: a project's own data is named after the project.
 
-- The page of an application: index.html (its folder opens it); the kitchen's design page: design.html. Data only: *.dat.js: a project's own data house.dat.js, kitchen.dat.js, bathroom.dat.js; a room's place in the house and its views scene.dat.js, its estimate estimate.dat.js.
+- The page of an application: index.html (its folder opens it); the kitchen's design page: design.html. Data only: *.dat.js: a project's own data house.dat.js, kitchen.dat.js, bathroom.dat.js, wardrobe.dat.js; a room's place in the house and its views scene.dat.js, its estimate estimate.dat.js.
 - Code is named by what it does: model.js computes the model from the data, verify.js checks it (Test), info.js builds the sheets of Info, room.js gives the house a room (the interface in the root, an implementation in each sub-project), shell.js gives a sub-project the shell of its room (the interface in the root, the implementation in the house).
 - core/, library/, apps.dat.js and the MD files keep their names. No directory listings: the repository shows the files.
 
@@ -88,12 +89,13 @@ Everything bought, once, for every application and independent of them: products
 
 ## To do
 
-1. **The wardrobes' open questions**, then **the wardrobes (rooms/wardrobe/)**: a sub-project as the bathrooms, its own application (Garderoby) and its furniture in the house; later.
-2. **A wider view on a walk**: in a small room (a bathroom) one cannot step back to see it. Stepping the camera back and cutting off what is nearer than the eye was tried and looked bad (the walls behind cut oddly); next: a wide lens, a fisheye or the like.
-3. **The design editor for more than the kitchen**: design.html moves from the kitchen to the root, to edit other designs too, not only the kitchen. Its materials get simpler: each kind of part names its material, instead of each material listing the parts made of it (as now: a board key with its uses). To agree first.
-4. **Nothing made up in the code**: rooms/kitchen/room.js draws the appliances' and the hardware's details (the hob's cooking zones, the sink, the oven, handles, LED, the dishwasher's baskets) and their materials from numbers written in the code; they move to the data (the library for what the maker gives, kitchen.dat.js for the project's choices). The same for the fixed layout of the bathroom's Info (the eRozkrój columns, the drawer names). After the tests exist, so that the drawing is compared before and after.
-5. **The doors' products**: the inner doors without a product (all but the bathrooms') get one, and the attic door 820/2050 its swing, which the drawings do not show (now: away from the wardrobe).
-6. **project.svg** (the dependency graph): refreshed after every change of files.
+1. **The wardrobes**: the first draft is built; the owner looks at it and decides the open questions in rooms/wardrobe/project.md (the steps under the slope, drawers, rails, the board), then the design is corrected.
+2. **The kitchen's collisions**: Test of the kitchen shows 4 collisions; to fix.
+3. **A wider view on a walk**: in a small room (a bathroom) one cannot step back to see it. Stepping the camera back and cutting off what is nearer than the eye was tried and looked bad (the walls behind cut oddly); next: a wide lens, a fisheye or the like.
+4. **The design editor for more than the kitchen**: design.html moves from the kitchen to the root, to edit other designs too, not only the kitchen. Its materials get simpler: each kind of part names its material, instead of each material listing the parts made of it (as now: a board key with its uses). To agree first.
+5. **Nothing made up in the code**: rooms/kitchen/room.js draws the appliances' and the hardware's details (the hob's cooking zones, the sink, the oven, handles, LED, the dishwasher's baskets) and their materials from numbers written in the code; they move to the data (the library for what the maker gives, kitchen.dat.js for the project's choices). The same for the fixed layout of the bathroom's Info (the eRozkrój columns, the drawer names). After the tests exist, so that the drawing is compared before and after.
+6. **The doors' products**: the inner doors without a product (all but the bathrooms') get one, and the attic door 820/2050 its swing, which the drawings do not show (now: away from the wardrobe).
+7. **project.svg** (the dependency graph): refreshed after every change of files (not yet after the wardrobes).
 
 ## How we work
 
@@ -108,7 +110,7 @@ Everything bought, once, for every application and independent of them: products
 - **Comments**: short and clear, only where the code does not say it; never repeating the code.
 - Readable: consistent indentation, short functions, one idea per line, names that match the page.
 - No hidden rules: what is built follows from the data. No numbers of a project in the code, no duplicated values or code: what two pages share lives in core (or in the house, for a room).
-- English: code, comments, project.md. Polish: the pages and rules.md (the real thing the owner builds, outside the code).
+- English: code, comments, project.md. Polish: the pages and rules.md (the real thing the owner builds, outside the code; for a carpenter, never about the application).
 - Scripts in a page in one order: three.js, core, apps.dat.js and the interfaces (room.js, shell.js), library, then the page's own files.
 - Library versions pinned (three.js r128). No backward-compatibility code: when a data format changes, the data is migrated.
 - No abbreviations a reader has to decode; counters and coordinates may be one letter.

@@ -30,7 +30,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 - **Drzwi wewnętrzne** są w każdym przejściu domu: ościeżnica wyściela ościeże na całą grubość muru, skrzydło stoi w niej licem do strony, na którą się otwiera, w kolorze ścian, ale gładkie i satynowe, z klamką po obu stronach. Strona zawiasów i kierunek otwierania są z rzutów archon. Kliknięcie skrzydła otwiera je albo zamyka; na spacerze to samo robi spacja przy drzwiach. Zamknięte skrzydło zatrzymuje spacer. Drzwi należą do domu: podprojekt dostaje je razem ze ścianami.
 - **Fundamenty**: każda ściana parteru z pustaka 240 stoi na ścianie fundamentowej i ławie. Komin stoi na płycie na gruncie, na własnym fundamencie. Ławy w jednej linii mają wspólną krawędź.
 - **Schody**: wspornikowe, same stopnie i spocznik; bez policzków i bez ścianki pod biegiem.
-- **Poza modelem**: meble, kuchnia i wyposażenie łazienek (to podprojekty). Kominek należy do domu, tak jak płytki (jeszcze nie narysowany).
+- **Poza modelem**: meble, kuchnia, wyposażenie łazienek i garderoby (to podprojekty). Kominek należy do domu, tak jak płytki (jeszcze nie narysowany).
 - **Rysowanie** według core. Ściany między częściami jednego elementu nie są rysowane. Płytki i fuga leżą tuż nad stropem, nigdy w jego płaszczyźnie.
 
 ## 3. Warstwy
@@ -55,8 +55,8 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 
 ## 6. Podprojekty
 
-- Salon (kuchnia) i obie łazienki mają swoje podprojekty: przy nazwie pomieszczenia jest link do strony podprojektu, z menu aplikacji.
-- Meble podprojektów są w domu warstwą Meble (Warstwy) na swojej kondygnacji; kliknięcie drzwiczek albo szuflady otwiera je. Dziś: kuchnia i obie łazienki (każda na swojej kondygnacji; podwieszany sufit łazienki nie jest pokazywany w domu).
+- Salon (kuchnia), obie łazienki i trzy garderoby mają swoje podprojekty: przy nazwie pomieszczenia jest link do strony podprojektu, z menu aplikacji.
+- Meble podprojektów są w domu warstwą Meble (Warstwy) na swojej kondygnacji; kliknięcie drzwiczek albo szuflady otwiera je. Dziś: kuchnia, obie łazienki (każda na swojej kondygnacji; podwieszany sufit łazienki nie jest pokazywany w domu) i trzy garderoby na poddaszu (posadzka garderób zostaje domu, razem z sypialnią).
 - Płytki łazienek leżą na ścianach domu: część podaje je jako wykończenia ścian swojego pomieszczenia (dane: pole, kierunek, materiał), dom kładzie je na swoich ścianach i ościeżach i pokazuje z warstwą części. Płytki posadzki łazienek tak samo: z danych łazienki, z warstwą części; dom nie kładzie tam swoich (Wykończenie: „z projektu”). Posadzkę pozostałych pomieszczeń rysuje dom (Wykończenie). Posadzka podprojektu leży na płycie domu, nigdy w jej płaszczyźnie.
 
 ## 7. Kontrole (Test)

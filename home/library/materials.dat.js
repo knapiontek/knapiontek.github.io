@@ -25,5 +25,9 @@ window.LIBRARY_MATERIALS = {
  "lawn": {"color": "#6f8a52", "roughness": 1, "grass": {"tile": 1200}},
  "paving": {"color": "#b9b6ae", "roughness": 0.9, "slabs": {"size": 600, "joint": "#6a675f"}},
  "woodVertical": {"wood": {"decor": "egger-h1180", "board": 120, "vertical": true}, "roughness": 0.7},
- "woodHorizontal": {"wood": {"decor": "egger-h1180", "board": 120, "vertical": false}, "roughness": 0.7}
+ "woodHorizontal": {"wood": {"decor": "egger-h1180", "board": 120, "vertical": false}, "roughness": 0.7},
+ "melamineWhite": {"color": "#f3f3f0", "roughness": 0.55},
+ "hdfWhite": {"color": "#ecebe7", "roughness": 0.7},
+ "plinthPvc": {"color": "#dcdcd8", "roughness": 0.6},
+ "foot": {"color": "#2e2f31", "roughness": 0.6}
 };

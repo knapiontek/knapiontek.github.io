@@ -22,5 +22,8 @@
  "egger-end-panel-h1180-st37-38x920": {"code":"H1180 ST37","decor":"Dąb Halifax naturalny","name":"Panel końcowy Egger H1180 ST37 dąb Halifax, dwustronny","maker":"Egger","thickness":38,"color":"#b69671","core":"#f2efe8","depth":920,"twoSided":true,"texture":"egger-h1180"},
  "board-16-drawer-parts": {"name":"Płyta 16 mm na dna i tyły szuflad (formatki)","price":null,"thickness":16,"shop":"m-hm","link":"https://m-hm.pl/pl/c/Plyty-meblowe/266"},
  "abs-edge-2x22": {"name":"Obrzeże ABS 2 mm × 22 mm","unit":"mb","price":null,"shop":"m-hm"},
- "abs-edge-2x42": {"name":"Obrzeże ABS 2 mm × 42 mm","unit":"mb","price":null,"shop":"m-hm"}
+ "abs-edge-2x42": {"name":"Obrzeże ABS 2 mm × 42 mm","unit":"mb","price":null,"shop":"m-hm"},
+ "white-melamine-18": {"name":"Płyta wiórowa laminowana biała 18 mm","spec":"najtańsza gładka biała, np. Egger W1000 ST9 albo W980 ST2, 2800 × 2070","thickness":18,"color":"#f3f3f0","core":"#f2efe8","unit":"ark.","price":null,"priceNote":"do sprawdzenia","shop":"m-hm"},
+ "white-melamine-16": {"name":"Płyta wiórowa laminowana biała 16 mm","spec":"najtańsza gładka biała, 2800 × 2070","thickness":16,"color":"#f3f3f0","core":"#f2efe8","unit":"ark.","price":null,"priceNote":"do sprawdzenia","shop":"m-hm"},
+ "hdf-white-3": {"name":"HDF biały lakierowany","spec":"2800 × 2070 × 3","thickness":3,"color":"#efefec","unit":"ark.","price":null,"priceNote":"do sprawdzenia","shop":"m-hm"}
 };

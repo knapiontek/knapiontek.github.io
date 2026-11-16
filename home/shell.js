@@ -10,7 +10,7 @@
 const INTERFACE = {
   shell: {                                 // what the implementation file registers
     needs: ['list', "its own inner files, in their order, from its folder and never outside it: loaded before rooms (its own page has them already)"],
-    rooms: ['function', "(app) → [room] (below): the rooms of the house that apps.dat.js gives application app (its id), one per floor"],
+    rooms: ['function', "(app) → [room] (below): the rooms of the house that apps.dat.js gives application app (its id), one or more on a floor"],
     light: ['function', '() → {exposure, fog, sun, sky}: the light of a room seen from inside (core\'s scene)'],
     sun: ['function', '() → the house\'s sun, one for every application (core\'s sunStore)'],
     edges: ['function', '() → the house\'s edges of a 3D view (core\'s scene)'],
