@@ -2,7 +2,7 @@
 
 > **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
 
-The three walk-in wardrobes of the attic and the niche of room 6 (left by the old ventilation shaft's wall) in one application (Garderoby); the page shows one room at a time, Info all of them as one order. How a carcass is built is in rules.md (Polish, for the carpenter).
+The three walk-in wardrobes of the attic and the niche of room 6 (between the bathroom and the room, from the hall's wall to the knee wall) in one application (Garderoby); the page shows one room at a time, Info all of them as one order. How a carcass is built is in rules.md (Polish, for the carpenter).
 
 ## Files
 
