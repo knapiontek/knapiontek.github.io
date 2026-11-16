@@ -682,7 +682,7 @@ window.BATH_DATA = {
     radiator: 'mexen-hades-1200x400-gold', door: 'porta-hide-wc-80',
   },
 
-  /* as building.dat.js, one per mode: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own
+  /* as the house's views, one per mode: 3D (the menu: the bathrooms by floor, one at a time), the 2D plan (cut at the house's own
      height for the floor), Info, Test (the checks, measured on the model); tabs: of the right panel */
   views: {
     '3d': { name: '3D', menu: 'floors', tabs: ['layers', 'finish'],

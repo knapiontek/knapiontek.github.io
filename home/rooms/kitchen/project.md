@@ -17,12 +17,8 @@ How the files of this folder work together.
 | model.js | code, every project | the model: carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
 | design.html | page, every project | editing the tables, the elevation drawing | by hand |
 | info.js | code, every project | estimate.dat.js and the model as the shared sheets of core/info.js (Kosztorys, Lista cięć) and Notatki, and the assembly cards, shown in Info of index.html | by hand |
-| room.js | code, every project | the kitchen's furniture, an implementation of the interface room.js of the root: its solids, moving fronts and details from design.dat.js, scene.dat.js and model.js, in house axes and mm; drawn the same by index.html (with its room) and by the house | by hand / LLM |
+| room.js | code, every project | the kitchen's furniture, an implementation of the interface room.js of the root: its solids, moving fronts and details from design.dat.js, scene.dat.js and model.js; drawn the same by index.html (with its room) and by the house | by hand / LLM |
 | index.html | page, every project | the kitchen in its room (its solids from room.js): 3D, the 2D plan, Test (its geometry check) and Info (the estimate, assembly, carcasses), drawn by core like the house | LLM, every project |
-| shell.js of the root | the interface | the room: the house's own walls, slab, floor and window, trimmed to the kitchen | house |
-| library/ | data, every project | what is bought: the appliances as the maker gives them (sizes, documents), tiles, boards, materials, texture images | library |
-| core/ | code, every project | drawing: solids, welded meshes, edges, light, camera, the 2D plan, the screen, the spreadsheet | core |
-| project.md | text | this description | by hand |
 
 ## Data flow
 
@@ -47,15 +43,14 @@ estimate.dat.js ──► info.js ──► index.html (Info)         estimate, 
 the interface shell.js ──► room.js, index.html   the room, from the house
 ```
 
-model.js says what is built; room.js draws it in 3D. The drawing used to be inside index.html, so the house could not use it without copying; now both pages call the same code, and a change in design.dat.js shows in the kitchen and in the house.
+model.js says what is built; room.js draws it in 3D, the same for both pages.
 
 - Every page loads design.dat.js directly, so the pages also work opened from disk.
 - design.html shows the materials read only and keeps the settings as they are; index.html (with info.js) only reads design.dat.js.
-- model.js does not know where the data comes from: a page hands it the project (and its appliances from the library, KE.appliances, to fit them in their places) and gets the model back. The engine has no numbers of this kitchen and draws nothing.
+- model.js does not know where the data comes from: a page hands it the project (and its appliances from the library, to fit them in their places) and gets the model back. The engine has no numbers of this kitchen and draws nothing.
 - estimate.dat.js and scene.dat.js hold only what they need; what both pages need (appliance sizes) is in the library, and a project choice the engine needs belongs in design.dat.js.
 - the library says what the manufacturer gives, design.dat.js what the project chose (the product, its feet); the same number can be in both. The notes of the estimate (Info) put them side by side.
-- The room is the house's: index.html takes the walls, slab, floor and window from the house (through the interface shell.js) as they are. The house wins: the kitchen never draws or measures a room of its own.
-- Axes are the house's: x along the house, y across, z up, in mm and house positions. Inside a group the engine keeps u along, v up, n out from the wall; scene.dat.js places the groups in the house.
+- Inside a group the engine keeps u along, v up, n out from the wall; scene.dat.js places the groups in the house.
 
 ## What is project specific and what is not
 
@@ -69,7 +64,7 @@ model.js says what is built; room.js draws it in 3D. The drawing used to be insi
 - **model.js**: knows no kitchen. It places the components in their columns, joins them into carcasses, builds the boards, fronts, strips, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.dat.js.
 - **design.html**: knows the format, not the kitchen. Tables for materials (read only: they define what each type is made of), groups and columns, components and user notes; the elevation drawing; problems listed under the tables.
 - **info.js** (shown in Info of index.html): the estimate, the cutting list with drilling and cut-outs, the notes (the detailed geometry of the appliances, written by the LLM) as sheets of core/sheet.js, with editable inputs and live formulas, the same in the XLSX; and the assembly cards. Its texts refer to the model, not to copied numbers.
-- **index.html**: the kitchen in the house's room, drawn by core like the house, in the shared screen: 3D (the groups G1, G2, Wyspa), 2D, Test, Info. Every part is a solid of core in house axes, doors and drawers are solids that turn or slide. Carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs. The 2D plan is cut from the same solids at the house's height. Test checks the geometry (collisions, gaps, fronts off the line, parts sticking out) and lists parts the engine gave no size. Round details (handles, knobs, legs, lamps) are plain meshes beside the solids. The panel's tabs are Warstwy and Wykończenie; Info holds the estimate (info.js), the assembly, the summary, carcasses, materials, dimensions and notes.
+- **index.html**: the kitchen in the house's room, drawn by core like the house, in the shared screen: 3D (the groups G1, G2, Wyspa), 2D, Test, Info. Every part is a solid of core, doors and drawers are solids that turn or slide. Carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs. The 2D plan is cut from the same solids at the house's height. Test checks the geometry (collisions, gaps, fronts off the line, parts sticking out) and lists parts the engine gave no size. Round details (handles, knobs, legs, lamps) are plain meshes beside the solids. The panel's tabs are Warstwy and Wykończenie; Info holds the estimate (info.js), the assembly, the summary, carcasses, materials, dimensions and notes.
 
 ## Types, tags, materials
 

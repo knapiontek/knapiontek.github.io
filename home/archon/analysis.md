@@ -19,8 +19,6 @@ Drawings (this folder, `archon`):
 | `elewacja-prawa.png` | right elevation (y = 9100): windows 1000/1300, 1900/1300, 2500/2400, 2 roof windows |
 | `elewacja-lewa.png` | left elevation (y = 0): garage window 2000/1000, 1 roof window |
 
-Related projects: `../../kitchen` and `../../bathroom` (both bathrooms).
-
 ## 2. Axes
 
 | Axis | Range |

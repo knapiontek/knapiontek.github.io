@@ -16,7 +16,7 @@ function make(env) {
   const LIB = env.materials, TEX = env.textures, FLOORS = Object.keys(D.floors);
   const found = env.shell.rooms('rooms/bathroom/index.html');
   const ROOMS = Object.fromEntries(FLOORS.map(f => [f, found.find(r => r.floor === f)]));
-  for (const f of FLOORS) if (!ROOMS[f]) throw new Error('W building.dat.js żadne pomieszczenie na kondygnacji ' + f + ' nie prowadzi do rooms/bathroom/index.html.');
+  for (const f of FLOORS) if (!ROOMS[f]) throw new Error('W domu żadne pomieszczenie na kondygnacji ' + f + ' nie prowadzi do rooms/bathroom/index.html.');
 
   /* ---------- materials: definitions of core (core/scene.js material), under b.*; those of one bathroom end in :floor ---------- */
   const METALS = { brass: { color: '#b8935a', roughness: .32 }, nickel: { color: '#bab8b1', roughness: .28 } };

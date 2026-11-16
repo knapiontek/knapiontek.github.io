@@ -2,7 +2,7 @@
 
 > **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
 
-Shared 3D code for every view: the house (house/index.html) and its sub-projects (rooms/kitchen/index.html, rooms/bathroom/index.html). It knows no project.
+Shared code for every page: the house and every sub-project. It knows no project.
 
 ## Files
 
@@ -25,7 +25,7 @@ cells ─► mesh.js ─► pieces ─► scene.js ─► view
    └───► geometry.js ─► checks
 ```
 
-- geometry.js and mesh.js run without a browser or three.js.
+- geometry.js runs without a browser or three.js; mesh.js too, except its batches (three.js meshes).
 - A page hands in: cells, a material library, textures, light, edge style, the body box, walk settings.
 
 ## Cells
@@ -42,7 +42,7 @@ A cell is a solid with what it is:
 - Faces that meet share the same welded point (0.05 mm).
 - A face loses what an opposite face of its own group (its layers) covers. A part covered by another group is kept but shown only while that group is hidden.
 - A finished face against another solid shows its bare material.
-- **Finishes** of a room on its host's faces, as data: {box, n, material, finish?}: the faces on the side of box that n looks from, inside it, take material; finish, a layer that switches it (finishPieces). The bathrooms' tiles on the house's walls.
+- **Finishes** of a room on its host's faces, as data: {box, n, material, finish?}: the faces on the side of box that n looks from, inside it, take material; finish, a layer that switches it (e.g. a room's tiles on the house's walls).
 - Every triangle remembers its cell, so a pick can name what is under the cursor.
 
 ## Scene
@@ -58,4 +58,4 @@ A cell is a solid with what it is:
 
 ui.js builds the screen and its modes (3D, 2D, Info, Test) from a project's views data.
 
-The 2D plan (plan.js) is cut from the same solids as the 3D view at the house's cut height for the floor: what the cut meets is filled in its section colour, what lies under it is seen from above, what is over it is dashed. Room and opening labels come from building.dat.js, so a sub-project's plan matches the house's.
+The 2D plan (plan.js) is cut from the same solids as the 3D view at the house's cut height for the floor: what the cut meets is filled in its section colour, what lies under it is seen from above, what is over it is dashed. Room and opening labels come from the house's data (a sub-project gets them with its shell), so a sub-project's plan matches the house's.

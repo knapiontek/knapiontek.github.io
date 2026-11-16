@@ -13,7 +13,7 @@ function make(env) {
   const project = KE.withLibrary(root.KITCHEN_DESIGN, PRODUCTS.boards), APPLIANCES = KE.appliances(project, PRODUCTS.appliances);
   const model = KE.build(project, APPLIANCES), settings = project.settings;
   const ROOM = env.shell.rooms('rooms/kitchen/index.html')[0];
-  if (!ROOM) throw new Error('W building.dat.js żadne pomieszczenie nie prowadzi do rooms/kitchen/index.html.');
+  if (!ROOM) throw new Error('W domu żadne pomieszczenie nie prowadzi do rooms/kitchen/index.html.');
   const LEVEL = ROOM.level, CEILING = ROOM.ceiling - ROOM.level;   // v of the underside of the slab over the room
   const DEG = Math.PI / 180;
 

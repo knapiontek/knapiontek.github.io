@@ -13,7 +13,7 @@
      metals        the metal finishes of the handles to choose from; hardware.handle.metal is the default
      lights        pendantBottom: the height of the pendants' bottom; pendants: centred over the worktop of their group;
                    downlights at {group, u, n} (u along the group from its start, n out from the wall), between [sink, hob] instead of u: halfway between their axes
-     views         as in building.dat.js, one per mode: 3D (menu: the groups, by layer, with their names in the menu), the 2D plan
+     views         as the house's views, one per mode: 3D (menu: the groups, by layer, with their names in the menu), the 2D plan
                    (cut at the house's own height for the floor), Info, Test (the checks); tabs: of the right panel
      cameras       the views in the bottom menu; the first one opens */
 window.KITCHEN_VIEW = {

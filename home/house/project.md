@@ -15,7 +15,6 @@ What the page must do is in rules.md (Polish, like the page); where the numbers 
 | shell.js | a sub-project's room: the house's own solids, trimmed; the implementation of the interface shell.js of the root |
 | verify.js | the checks shown in Test |
 | index.html | the page in the shared screen: 3D, 2D, Test, Info; panel tabs Warstwy (layers, cut), Wykończenie (tiles); ☀ and ? in the corner |
-| archon/ | the archon drawings and analysis.md |
 
 ## How it fits together
 
@@ -26,17 +25,15 @@ analysis.md ─(by hand)─► building.dat.js ─► model.js ─► solids ─
 ```
 
 - One model for every view. A view only picks layers and cuts it.
-- The page writes nothing back. The viewer's choices (tiles, offsets, layers, sun, cut) stay in the browser and are dropped when their format changes.
+- The page writes nothing back; the viewer's choices are its tiles, offsets, layers, sun and cut.
 - model.js and index.html know nothing about this house: no numbers, names, products or colours of it. What differs is a value in the data, never a test in the code.
 
 ## The model in short
 
-- **Solids**: a prism along x over a convex polygon (a box, at most cut parallel to the roof). Cutting, splitting floors, facades and sections are exact; nothing is sampled. Data, code and page in mm; only the 3D scene is in metres.
 - **Elements**: the boxes of the analysis, each of a kind (footing, foundation, slab, block 240/120, EPS, ring beam, ceiling, chimney…). The kind sets the material, the section colour, the checked thickness, the layer, and whether openings cut it and windows sit in it.
-- **Openings** cut every wall and EPS box they cross. Their kind says what is drawn: a glazed frame, a solid leaf with grooves and a handle, or both. Frames follow sloping heads.
+- **Openings**: a glazed frame, a solid leaf with grooves and a handle, or both.
 - **Portal**: the long walls run on into the wings at both ends, with the ring beam over them, EPS inside and a cap on each end.
 - **Roof**: two slopes from pitch, eave and thickness, over both portals; roof windows and the chimney cut out of it.
-- **Facade**: finish rules on the EPS by its outer side.
 - **Stair**: floating treads in flights; the landing is a flight of one tread. 17 risers to the attic.
 - **Site**: the lawn stops at the box around the building.
-- **Tiles**: real products of the library, with the link to that exact product. A room is tiled on its own or with another (the walk-in wardrobes with the bedroom); tiles run through half of every doorway.
+- **Tiles**: a room is tiled on its own or with another (the walk-in wardrobes with the bedroom); tiles run through half of every doorway.
