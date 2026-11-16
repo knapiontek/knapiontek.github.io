@@ -2,69 +2,42 @@
 
 > **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
 
-> No code details here: names of functions, variables, data keys and formats live in the code itself.
-
-How the files of this folder work together.
+The kitchen in the living room: designed in design.html, shown in index.html and, as furniture, in the house.
 
 ## Files
 
-| File | Kind | Owns | Written by |
-|---|---|---|---|
-| design.dat.js | data, this project | materials and appliances (product keys of the library; how each is used: uses, or built in: feet), settings, notes, groups, components | design.html (export); materials, appliances and settings by hand |
-| estimate.dat.js | data, this project | the estimate's items (a product of the library or a material's board, where it goes, how many), notes and settings (Info of index.html); no prices, shops or links: those are the library's | LLM, per project |
-| scene.dat.js | data, this project | placement of the groups in the house, how the appliances are fitted, the floor tiles to choose from (library keys), the views (3D with G1/G2/Wyspa in the menu, 2D, Test, Info; the panel's tabs), lights and cameras of index.html, in house axes | LLM, per project |
-| rules.md | text, every project | the kitchen rules in Polish, as the app names things | by hand |
-| model.js | code, every project | the model: carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, checks | by hand |
-| design.html | page, every project | editing the tables, the elevation drawing | by hand |
-| info.js | code, every project | estimate.dat.js and the model as the shared sheets of core/info.js (Kosztorys, Lista cięć) and Notatki, and the assembly cards, shown in Info of index.html | by hand |
-| room.js | code, every project | the kitchen's furniture, an implementation of the interface room.js of the root: its solids, moving fronts and details from design.dat.js, scene.dat.js and model.js; drawn the same by index.html (with its room) and by the house | by hand / LLM |
-| index.html | page, every project | the kitchen in its room (its solids from room.js): 3D, the 2D plan, Test (its geometry check) and Info (the estimate, assembly, carcasses), drawn by core like the house | LLM, every project |
+| File | Holds | Written by |
+|---|---|---|
+| kitchen.dat.js | the design: materials and appliances (products of the library and how each is used), settings, notes, groups, components | design.html (export); materials, appliances and settings by hand |
+| scene.dat.js | where the groups stand in the house, how the appliances are fitted, the floor tiles to choose from, the views, lights and cameras | LLM |
+| estimate.dat.js | the estimate's items (a product or a material's board, where it goes, how many) and its notes; no prices, shops or links | LLM |
+| model.js | the model computed from the design: carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, problems; knows no kitchen, draws nothing | by hand |
+| room.js | the kitchen's furniture, the implementation of the interface room.js: the model as solids, moving fronts and details, the same on its page and in the house | by hand / LLM |
+| info.js | Info of index.html: the estimate, the cutting list, the notes and the assembly cards as sheets with editable inputs and live formulas; its texts refer to the model, never to copied numbers | by hand |
+| index.html | the kitchen in its room from the house: 3D, 2D, Test (the geometry: collisions, gaps, fronts off the line, parts sticking out, parts with no size), Info | LLM |
+| design.html | the editor: tables of materials (read only), groups, columns, components and notes; the elevation; the problems under the tables. Knows the format, not the kitchen | by hand |
+| rules.md | the kitchen as it is built, in Polish, as the app names things | by hand |
 
 ## Data flow
 
 Nothing is stored as geometry: every time a page opens, the kitchen is computed again from the data.
 
 ```
-design.dat.js, scene.dat.js        the data: what stands where (written in design.html; scene.dat.js by the LLM)
-      │
-      ▼
-model.js                 computes the model: carcasses, boards, fronts, sizes, hardware, holes; draws nothing
-      │
-      ▼
-room.js              turns the model into solids and 3D meshes of core:
-      │                   places the groups in the room, makes the moving fronts, handles a click
-      ├──► index.html         + its room (from the house), the panel, the 2D plan, Info, Test
-      └──► house/index.html   only the furniture, without the room (the house draws its own);
-                             only through the interface room.js; apps.dat.js names this file
-
-design.html ──► model.js ──► export ──► design.dat.js     only design.html writes design.dat.js
-library ──► model.js, room.js                     appliances, boards, textures, materials
-estimate.dat.js ──► info.js ──► index.html (Info)         estimate, cutting list, notes, assembly; core/info.js shows them
-the interface shell.js ──► room.js, index.html   the room, from the house
+design.html ──► model.js ──► export ──► kitchen.dat.js      only design.html writes it
+kitchen.dat.js, scene.dat.js, library ──► model.js ──► room.js ──┬─► index.html   with its room (shell.js)
+                                                                  └─► the house   only the furniture (room.js)
+estimate.dat.js, model.js ──► info.js ──► index.html (Info)
 ```
 
-model.js says what is built; room.js draws it in 3D, the same for both pages.
-
-- Every page loads design.dat.js directly, so the pages also work opened from disk.
-- design.html shows the materials read only and keeps the settings as they are; index.html (with info.js) only reads design.dat.js.
-- model.js does not know where the data comes from: a page hands it the project (and its appliances from the library, to fit them in their places) and gets the model back. The engine has no numbers of this kitchen and draws nothing.
-- estimate.dat.js and scene.dat.js hold only what they need; what both pages need (appliance sizes) is in the library, and a project choice the engine needs belongs in design.dat.js.
-- the library says what the manufacturer gives, design.dat.js what the project chose (the product, its feet); the same number can be in both. The notes of the estimate (Info) put them side by side.
-- Inside a group the engine keeps u along, v up, n out from the wall; scene.dat.js places the groups in the house.
+- Every page loads kitchen.dat.js directly, so the pages also work opened from disk; only design.html writes it.
+- model.js does not know where the data comes from: a page hands it the project and its appliances from the library and gets the model back.
+- The library says what the manufacturer gives; kitchen.dat.js what the project chose (the product, how it is built in). A project choice the engine needs belongs in kitchen.dat.js, never in the code.
 
 ## What is project specific and what is not
 
-- **Project specific:** design.dat.js (its notes, groups and components are this kitchen), estimate.dat.js and scene.dat.js; the products it uses are in library.
-- **Every project:** rules.md, model.js, design.html, index.html and info.js, which hold no numbers or names of this kitchen.
-- A new kitchen starts from rules.md: make a new design.dat.js in design.html, then let an LLM generate estimate.dat.js and scene.dat.js for it, adding to library what it buys that is not there yet.
-
-## The files in short
-
-- **design.dat.js**: plain data a person can read and edit: materials (what you buy and what each is used for), construction settings (setbacks, gaps, hinges, shelves, drawers, drilling, cut-outs), user notes (an LLM may read them, but no code parses them), the groups (number, name, back gap, column widths) and the components, one per line.
-- **model.js**: knows no kitchen. It places the components in their columns, joins them into carcasses, builds the boards, fronts, strips, panels, plinths, worktops and holes, and reports problems. Every decision comes from the type, the tags and the settings in design.dat.js.
-- **design.html**: knows the format, not the kitchen. Tables for materials (read only: they define what each type is made of), groups and columns, components and user notes; the elevation drawing; problems listed under the tables.
-- **info.js** (shown in Info of index.html): the estimate, the cutting list with drilling and cut-outs, the notes (the detailed geometry of the appliances, written by the LLM) as sheets of core/sheet.js, with editable inputs and live formulas, the same in the XLSX; and the assembly cards. Its texts refer to the model, not to copied numbers.
-- **index.html**: the kitchen in the house's room, drawn by core like the house, in the shared screen: 3D (the groups G1, G2, Wyspa), 2D, Test, Info. Every part is a solid of core, doors and drawers are solids that turn or slide. Carcasses, fronts, appliances at the manufacturer's sizes, holes and cut-outs. The 2D plan is cut from the same solids at the house's height. Test checks the geometry (collisions, gaps, fronts off the line, parts sticking out) and lists parts the engine gave no size. Round details (handles, knobs, legs, lamps) are plain meshes beside the solids. The panel's tabs are Warstwy and Wykończenie; Info holds the estimate (info.js), the assembly, the summary, carcasses, materials, dimensions and notes.
+- **This kitchen**: kitchen.dat.js, scene.dat.js and estimate.dat.js; the products it uses are in the library.
+- **Every kitchen**: rules.md, model.js, room.js, info.js, design.html and index.html, which hold no numbers or names of this kitchen.
+- A new kitchen starts from rules.md: a new kitchen.dat.js made in design.html, then an LLM writes scene.dat.js and estimate.dat.js for it, adding to the library what it buys that is not there yet.
 
 ## Types, tags, materials
 

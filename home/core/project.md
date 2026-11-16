@@ -32,17 +32,17 @@ cells ─► mesh.js ─► pieces ─► scene.js ─► view
 
 A cell is a solid with what it is:
 
-- **S**: a prism along x over a convex polygon in y-z (a box, cut at most by lines z = a + s·y). Units mm; x along, y across, z up. The scene is in metres with y up.
-- **material**, or **faceMaterial(n, points)**: a material per face by its normal and corners (a board's banded and bare edges, a board's top along the grain).
-- **layers**: shown only while all are on. **edges**: whether it draws edge lines.
-- Optional: **raw** (the bare material under a finish) and **finish** (its layer); **walkable**; **part** (one board or piece: a joint between two parts in one plane gets a line, one part has none); **batch** (kept in a mesh of its own, so a page can recolour it, e.g. a selected cabinet).
+- **Its solid**: a prism along x over a convex polygon (a box, at most cut by sloping lines). The scene is in metres.
+- **Its material**, or a material per face by its direction and corners (a board's banded and bare edges, a board's top along the grain).
+- **Its layers**: shown only while all are on; whether it draws edge lines.
+- Optional: the bare material under a finish and the finish's layer; whether one can walk on it; the part it belongs to (one board or piece: a joint between two parts in one plane gets a line, one part has none); a mesh of its own, so a page can recolour it (a selected cabinet).
 
 ## Mesh
 
-- Faces that meet share the same welded point (0.05 mm).
+- Faces that meet share the same welded point.
 - A face loses what an opposite face of its own group (its layers) covers. A part covered by another group is kept but shown only while that group is hidden.
 - A finished face against another solid shows its bare material.
-- **Finishes** of a room on its host's faces, as data: {box, n, material, finish?}: the faces on the side of box that n looks from, inside it, take material; finish, a layer that switches it (e.g. a room's tiles on the house's walls).
+- **Finishes** of a room on its host's faces, as data: the faces inside a box, seen from one side, take a material, switched by a layer (a room's tiles on the house's walls).
 - Every triangle remembers its cell, so a pick can name what is under the cursor.
 
 ## Scene
@@ -50,7 +50,7 @@ A cell is a solid with what it is:
 - **Materials**: a page's library, or a ready three.js material handed in under a key (a page whose look is its own). From the library: colour, roughness, metalness, reflect, opacity; clear coat (a lacquer); emissive and glow; one generated surface at most: plaster specks, grass, paving, wood boards, or an image (a decor photo of the textures, its size in mm, turned a quarter when its grain must run the other way).
 - **Meshes and edges** go under the model root, or under a group of it that moves (a door on its hinge).
 - **Edges** come from the pieces: a seam (one plane, one part) has no line, a corner (an angle) always has one; any other line hides while every group that closes it is shown. Lines are pulled toward the eye by a constant fraction; faces have no depth offset.
-- **Section caps** lie 0.5 mm under the cut.
+- **Section caps** lie just under the cut.
 - **Light**: a sky, a sun around the body centre (its shadow covers the reach the page gives), fog.
 - **Loop**: draws only after a change. A page that animates adds a step that runs every frame and says whether something moved.
 

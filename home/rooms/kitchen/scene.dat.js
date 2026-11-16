@@ -1,4 +1,4 @@
-/* Kitchen scene for index.html: only what the 3D view needs beyond design.dat.js and ../../library. Written per project (LLM).
+/* Kitchen scene for index.html: only what the 3D view needs beyond kitchen.dat.js and ../../library. Written per project (LLM).
    House axes and positions in mm: x along the house, y across, z up (the house's). The room itself (walls, slab,
    floor, window) is the house's own, copied as it is through the interface ../../shell.js; nothing of it is repeated here.
      placement     where each group stands (by group number) and which way its fronts face (-y, +y, -x, +x); an island

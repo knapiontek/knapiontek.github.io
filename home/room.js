@@ -14,12 +14,12 @@ const INTERFACE = {
     make: ['function', "(env {materials, textures, library, shell}) → its design (below); materials and textures: the page's libraries for core, the furniture adds its own keys; library: {products, textures} of library/; shell: the shell of its rooms from the house (the interface shell.js)"],
   },
   design: {                                // what make returns
-    rooms: ['function', '() → [{floor, opts}]: the rooms it furnishes, one build each (the kitchen one, the bathrooms one per floor); floor: the house\'s floor id'],
+    rooms: ['function', '() → [{floor, opts}]: the rooms it furnishes, one build each (one per floor at most); floor: the house\'s floor id'],
     build: ['function', "(view, opts) → its furniture built in the view (core's scene), in house axes and mm; opts: a room's opts, and layers: added to every solid and detail (the house: the furniture's layer and the room's floor)"],
   },
   built: {                                 // what build returns
     solids: ['list', 'its static solids (for the caps of a cut)'],
-    finishes: ['list', "the finishes of its room on the host's faces, as data (core's finishPieces): the bathrooms' wall tiles"],
+    finishes: ['list', "the finishes of its room on the host's faces, as data (core's finishPieces): e.g. a room's wall tiles"],
     shown: ['function', '(layers) → whether a solid of these layers shows in a host, which has none of its layer switches (all on)'],
     showDetails: ['function', "(shown) its details (plain meshes) shown by the host's shown"],
     click: ['function', '(ray) → true if the ray hit a door or a drawer of it (it opens or closes)'],

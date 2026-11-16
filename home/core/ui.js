@@ -49,7 +49,7 @@ const checksHtml = checks => checks.map(c => `<div class="check"><span class="ch
 
 /* ================= THE MENUS =================
    The top-left menu (the applications), the top-right menu (the modes of the project's views data), and under it, in
-   3D, the project's top parts (floors and roof, the groups of a kitchen, the bathrooms) as switches. */
+   3D, the project's top parts (floors and roof, groups, rooms) as switches. */
 
 /* the top-left menu: the applications [{id, name, page}] (page null: planned), current = this page's id. A link carries
    the current mode (mode()), so another application opens in the same one when it has it (askedMode). */
@@ -164,7 +164,7 @@ function helpMode(box, mode) { for (const s of box.querySelectorAll('[data-help]
    dragged round it (the direction, from +x toward +y as core/scene.js); an arc beside it (the height); brightness.
    sun {az, el, k} is changed in place; change() after every move. */
 const SUN_RANGE = { azStep: 5, el: [8, 75], k: [0.3, 1.6, 0.05] };   // degrees, degrees, a factor
-/* one sun for every application, stored once: the kitchen has the house's afternoon, the house the kitchen's night.
+/* one sun for every application, stored once: every page shows the same time of day.
    fresh: {azimuth, elevation}; night: false by day */
 const sunStore = fresh => store('home-sun', () => ({ az: fresh.azimuth, el: fresh.elevation, k: 1, night: false }), s => [s.az, s.el, s.k].every(Number.isFinite));
 /* mark: the rects of this application's room, picked out on the plan */

@@ -1,7 +1,7 @@
-/* rooms/bathroom/room.js: both bathrooms' furniture, an implementation of the interface ../../room.js: the drawing of design.dat.js (each
+/* rooms/bathroom/room.js: both bathrooms' furniture, an implementation of the interface ../../room.js: the drawing of bathroom.dat.js (each
    floor's model: solids, doors and drawers, round details, lamps, in mm in house axes), drawn by core the same in
    index.html (with its room, from the house) and in the house (without: the house draws its own). Nothing is computed
-   here to fit: what is drawn is what design.dat.js says. Tiles and board decors come from the library. */
+   here to fit: what is drawn is what bathroom.dat.js says. Tiles and board decors come from the library. */
 (function (root) {
 'use strict';
 
@@ -14,9 +14,9 @@ const DEG = Math.PI / 180;
 function make(env) {
   const CORE = root.CORE, THREE = root.THREE, D = root.BATH_DATA, PRODUCTS = env.library.products, TEXTURES = env.library.textures;
   const LIB = env.materials, TEX = env.textures, FLOORS = Object.keys(D.floors);
-  const found = env.shell.rooms('rooms/bathroom/index.html');
+  const found = env.shell.rooms('bathroom');
   const ROOMS = Object.fromEntries(FLOORS.map(f => [f, found.find(r => r.floor === f)]));
-  for (const f of FLOORS) if (!ROOMS[f]) throw new Error('W domu żadne pomieszczenie na kondygnacji ' + f + ' nie prowadzi do rooms/bathroom/index.html.');
+  for (const f of FLOORS) if (!ROOMS[f]) throw new Error('apps.dat.js nie daje łazienkom pomieszczenia domu na kondygnacji ' + f + '.');
 
   /* ---------- materials: definitions of core (core/scene.js material), under b.*; those of one bathroom end in :floor ---------- */
   const METALS = { brass: { color: '#b8935a', roughness: .32 }, nickel: { color: '#bab8b1', roughness: .28 } };
@@ -305,7 +305,7 @@ function make(env) {
       pivot.userData.mover = mover;
       MOVERS.push(mover);
     }
-    /* as the kitchen: by time (dt s), eased */
+    /* by time (dt s), eased */
     const ease = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
     const pose = m => { const e = ease(m.progress); if (m.kind === 'drawer') m.pivot.position.x = m.axis[0] + m.slide * e; else m.pivot.rotation.z = m.angle * e; };
     V.onFrame(dt => {
@@ -374,7 +374,7 @@ const textures = library => root.BATH_DATA.defaults.tiles.map(k => library.produ
   .concat(Object.keys(root.BATH_DATA.decors).map(k => library.products.boards[k].texture));
 
 /* the implementation: its own page uses all of it, the house only what the interface names */
-const BathroomRoom = { needs: ['design.dat.js'], textures, make };
+const BathroomRoom = { needs: ['bathroom.dat.js'], textures, make };
 root.BathroomRoom = BathroomRoom;
 root.ROOM_INTERFACE.register('bathroom', BathroomRoom);
 })(window);

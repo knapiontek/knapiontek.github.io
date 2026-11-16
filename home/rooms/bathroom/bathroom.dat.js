@@ -1,4 +1,4 @@
-/* House "Dom w papawerach 5 (G)" — DATA for both bathrooms (numbers and descriptions only, no calculations): the design
+/* bathroom.dat.js: DATA for both bathrooms (numbers and descriptions only, no calculations): the design
    written part by part, drawn and listed as it is. Every length is in mm; angles of the movers in radians, of the
    details in degrees.
 
@@ -36,6 +36,7 @@ window.BATH_DATA = {
          and what is bought (a product of the library, a role of fittings, or the decor's board), the steps, the points and
          the dimensions. note: what this bathroom adds to the product's own; by metal where it differs. */
       info: {
+        sheet: { code: 'Arkusz', text: 'całość z 1 arkusza 2800 × 2070' },   // the cut list's note on the board
         vanity: {"len":1200,"depth":470,"height":400,"top":36,"topDepth":480,"t":18,"gap":2.5,"rail":100,"sections":["B","A"],"basins":[850],"basinW":600,"basinD":400,"basinH":140,"basinBack":50,"gasket":3,"nlA":350,"nlB":400,"z0":200,"bottomY":324,"inner":1164,"innerH":364,"LW":573,"sectionZ":[18,609],"bodyD":452,"frontW":568,"frontA":359,"frontB":178,"topY":760,"rimY":903,"basinZ":850,"nA":1,"nB":1},
         parts: [
           {"name":"Blat — warstwa górna","qty":1,"a":1200,"b":480,"e":[0,0,0,0],"board":"decor","edge":"—","note":"sklejany z dolną, obrzeże 42 mm po sklejeniu na 4 bokach"},
@@ -377,6 +378,7 @@ window.BATH_DATA = {
          and what is bought (a product of the library, a role of fittings, or the decor's board), the steps, the points and
          the dimensions. note: what this bathroom adds to the product's own; by metal where it differs. */
       info: {
+        sheet: { code: 'Arkusz', text: 'całość z 1 arkusza 2800 × 2070 (na styk — przy rozkroju sprawdź układ)' },
         vanity: {"len":1600,"depth":470,"height":400,"top":36,"topDepth":480,"t":18,"gap":2.5,"rail":100,"sections":["A","A"],"basins":[400,1200],"basinW":600,"basinD":400,"basinH":140,"basinBack":50,"gasket":3,"nlA":350,"nlB":400,"z0":200,"bottomY":324,"inner":1564,"innerH":364,"LW":773,"sectionZ":[18,809],"bodyD":452,"frontW":768,"frontA":359,"frontB":178,"topY":760,"rimY":903,"basinZ":400,"nA":2,"nB":0},
         parts: [
           {"name":"Blat — warstwa górna","qty":1,"a":1600,"b":480,"e":[0,0,0,0],"board":"decor","edge":"—","note":"sklejany z dolną, obrzeże 42 mm po sklejeniu na 4 bokach"},
@@ -664,6 +666,13 @@ window.BATH_DATA = {
     },
   },
 
+  texts: {               // the fixed texts of Info (both bathrooms)
+    cutNote: 'Wymiar 1 biegnie wzdłuż słoja. Na blacie, frontach i bokach słój poziomo. Obrzeże ABS 2 mm w dekorze płyty; blat: dwie warstwy sklejone, potem obrzeże 42 mm na 4 bokach.',
+    cutLegend: [{ code: 'eRozkrój', text: 'zakładka eRozkrój: import w e-Rozkrój M-HM (mhm-web2.erozkroje.pl): Import z pliku XLS → przypisz kolumny → przypisz płytę i okleinę' }],
+    mountNote: ['Okucia', 'Fronty wpuszczane: prowadnice cofnięte o grubość frontu (18 mm) od lica korpusu. Numery sprawdź w konfiguratorze Blum E-SERVICES przy zamówieniu w M-HM.'],
+    pointsTitle: 'Wymiary od lica płytki. „Od drzwi” = od ściany z drzwiami, „od lewej” = od ściany z umywalką.',
+  },
+
   decors: {               // the Egger boards to choose from (../../library/products boards): why each would suit
     'egger-h1199-st12': { note: 'najciemniejszy, czarnobrązowy — szafka spokojnie ciemna na tle grafitu' },
     'egger-h1181-st37': { note: 'średni tabaczny, wyraźny słój z pęknięciami — ciepły kontrast z grafitem i mosiądzem' },
@@ -686,7 +695,7 @@ window.BATH_DATA = {
      height for the floor), Info, Test (the checks, measured on the model); tabs: of the right panel */
   views: {
     '3d': { name: '3D', menu: 'floors', tabs: ['layers', 'finish'],
-      layers: {                 // the Warstwy panel, as the house and the kitchen; off: hidden at the start
+      layers: {                 // the Warstwy panel; off: hidden at the start
         room: { name: 'Pomieszczenie', layers: { walls: { name: 'Ściany' }, ceiling: { name: 'Sufit' }, floor: { name: 'Podłoga' } } },
         furniture: { name: 'Meble' }, sanitary: { name: 'Ceramika i armatura' }, glass: { name: 'Kabina' },
         installations: { name: 'Instalacje', off: true }, edges: { name: 'Krawędzie' },

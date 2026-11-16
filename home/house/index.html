@@ -84,7 +84,7 @@
 <script src="../library/products/building.dat.js"></script>
 <script src="../library/products/services.dat.js"></script>
 <script src="../library/products/shops.dat.js"></script>
-<script src="building.dat.js"></script>
+<script src="house.dat.js"></script>
 <script src="model.js"></script>
 <script src="verify.js"></script>
 <script>
@@ -93,7 +93,7 @@ CORE.library.load('../library/', Object.values(LIBRARY_PRODUCTS.tiles).map(p => 
   .concat(Object.values(LIBRARY_MATERIALS).filter(m => m.wood).map(m => m.wood.decor))).then(function () {
 'use strict';
 
-/* The page knows no house: everything it builds and shows comes from building.dat.js and ../library.
+/* The page knows no house: everything it builds and shows comes from house.dat.js and ../library.
    Units are mm in house axes (x along, y across, z up) until the scene, which is in metres with y up.
    What is not about this house (geometry, mesh, scene, panel) is in core/. */
 
@@ -346,6 +346,9 @@ const placeSun = () => { V.placeSun(SUN.state); for (const b of builtParts()) b.
 /* the host wires the parts: the list of applications (apps.dat.js) names each implementation and the shell's, the library
    is handed to them; the interfaces and the implementations know no list and no library of their own */
 const PARTS = APPS.filter(a => a.room).map(a => ({ id: a.id, path: a.room, layer: 'part:' + a.id, name: a.name, built: null, loading: null, status: '' }));
+/* the application that furnishes a room (apps.dat.js), and the link to its page */
+const APP_OF = Object.fromEntries(APPS.flatMap(a => (a.rooms || []).map(id => [id, a])));
+const appLink = r => { const A = APP_OF[r.id]; return A && A.page ? `<a class="btnlink" href="../${A.page}">${A.name}</a>` : ''; };
 const SHELL_PATH = (APPS.find(a => a.shell) || {}).shell, LIBRARY = { products: window.LIBRARY_PRODUCTS, textures: CORE.library.textures };
 state.parts = Object.assign(Object.fromEntries(PARTS.map(p => [p.layer, true])), state.parts || {});
 const PART_LAYER = CORE.ui.layerTree(Object.fromEntries(PARTS.map(p => [p.layer, { name: p.name }])));
@@ -357,7 +360,7 @@ function partsPanel() {
   $('partsNote').textContent = PARTS.filter(p => p.status).map(p => `${p.name}: ${p.status}`).join(' · ');
   $('partsNote').hidden = !$('partsNote').textContent;
 }
-/* the finishes of the loaded parts (the bathrooms' wall tiles) on the house's own faces, shown with the part's layer */
+/* the finishes of the loaded parts (a room's wall tiles) on the house's own faces, shown with the part's layer */
 function refinish() {
   const finishes = PARTS.filter(p => p.built).flatMap(p => p.built.flatMap(b => b.finishes.map(F => Object.assign({ finish: p.layer }, F))));
   V.removeMeshes(HOUSE_MESHES);
@@ -396,7 +399,7 @@ function contextMenu() {
   CORE.ui.menuRow(ctx, VIEW_3D.menu.map(k => ({ name: LAYER[k].name, on: layerOn(k), set: on => setLayer(k, on) })));
   const r = ROOM[state.room], F = openFloor();
   if (!r || !F || r.floor !== F.id) return;
-  const tag = el('span', { className: 'roomtag' }, `${roomName(r)}${r.link ? ` <a class="btnlink" href="${r.link.href}">${r.link.name}</a>` : ''}<button aria-label="Odznacz">×</button>`);
+  const tag = el('span', { className: 'roomtag' }, `${roomName(r)}${appLink(r) ? ' ' + appLink(r) : ''}<button aria-label="Odznacz">×</button>`);
   tag.querySelector('button').onclick = () => selectRoom(null);
   CORE.ui.menuRow(ctx, [], [tag]);
 }
@@ -465,9 +468,9 @@ function roomsPanel() {
     t.insertAdjacentHTML('beforeend', `<tr><td colspan="2" class="floorname">${F.name}</td></tr>`);
     for (const r of ROOMS.filter(r => r.floor === F.id)) {
       const selected = state.room === r.id, key = layoutOf(r);
-      t.insertAdjacentHTML('beforeend', `<tr data-room="${r.id}" aria-selected="${selected}"><td>${roomName(r)}</td><td class="note">${key ? PRODUCTS[state.layouts[key].product].name : r.link ? 'z projektu' : 'bez płytek'}</td></tr>`);
+      t.insertAdjacentHTML('beforeend', `<tr data-room="${r.id}" aria-selected="${selected}"><td>${roomName(r)}</td><td class="note">${key ? PRODUCTS[state.layouts[key].product].name : APP_OF[r.id] ? 'z projektu' : 'bez płytek'}</td></tr>`);
       if (!selected) continue;
-      t.insertAdjacentHTML('beforeend', `<tr class="detail"><td colspan="2">${key ? layoutPanel(key) : `<p class="note">${r.link ? 'Posadzka z projektu pomieszczenia (widoczna z jego warstwą).' : 'Bez posadzki z płytek.'}</p>`}${r.link ? `<p><a class="btnlink" href="${r.link.href}">${r.link.name}</a></p>` : ''}</td></tr>`);
+      t.insertAdjacentHTML('beforeend', `<tr class="detail"><td colspan="2">${key ? layoutPanel(key) : `<p class="note">${APP_OF[r.id] ? 'Posadzka z projektu pomieszczenia (widoczna z jego warstwą).' : 'Bez posadzki z płytek.'}</p>`}${appLink(r) ? `<p>${appLink(r)}</p>` : ''}</td></tr>`);
       if (key) bindLayout(t.querySelector('tr.detail'), key);
     }
   }

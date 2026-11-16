@@ -1,5 +1,5 @@
 /* Kitchen project cost data - read by info.js (Info of index.html). Written for each project (LLM). Plain JSON after "window.KITCHEN_COST =".
-   Everything measured comes from design.dat.js through model.js, the appliance sizes from ../../library/products: nothing here repeats
+   Everything measured comes from kitchen.dat.js through model.js, the appliance sizes from ../../library/products: nothing here repeats
    a calculated number.
      page        tab title, heading, info line, XLSX file name, excluded (what the estimate does not cover)
      params      the inputs above the estimate (waste, sheet size in m², reserve); a value or a formula
@@ -11,7 +11,7 @@
                  or a material use (carcass, drawerBox, backPanel ...: every board of that use's material); cut = priced saw
                  cuts; columns = the header when not Element / Długość / Szerokość / Ilość
      categories  estimate items, by category {name, appliances, items}; appliances = the category counts as AGD, not
-                 furniture. An item: id; product (its key in ../../library/products) or material (a use of design.dat.js: its
+                 furniture. An item: id; product (its key in ../../library/products) or material (a use of kitchen.dat.js: its
                  board), with name (the use, a material's only); spec (only what this project adds to the product's own);
                  use (where it goes); qty (a number or a formula); refs (ids of the notes it links to). The name, spec, unit,
                  price, its source and the links of a product are the library's.
@@ -21,7 +21,7 @@
      formulas    named calculations used in several texts ({f:name}), written like {=...} without the braces
    Texts and formulas may hold placeholders:
      {n:hinges}        engine count ({n:type.oven}, {n:tag.bins} = items with that type / tag, 0 when none)
-     {s:drawers.D.frontAbove} design.dat.js setting     {t:carcass} thickness, {d:worktop} depth (as bought) and {m:cabinet} material label of a board type or part
+     {s:drawers.D.frontAbove} kitchen.dat.js setting     {t:carcass} thickness, {d:worktop} depth (as bought) and {m:cabinet} material label of a board type or part
                        (a material use of model.js: a board type, islandWorktop, endPanel, islandEndPanel, carcass, backPanel, drawerBox, hobPanel)
      {w:1.depth}       worktop of group 1  {g:3.backGap} group 3 (backGap, name)  {k:K25.innerWidth} carcass by name: width, height, innerWidth, v0, v1
      {i:K25/oven.space} item by carcass name or place (G1[6]) and type or tag, #2 = the second from the bottom:
@@ -40,7 +40,7 @@ window.KITCHEN_COST = {
  "page": {
   "title": "Kosztorys kuchni Jaworze",
   "heading": "Kosztorys materiałów – Kuchnia Jaworze (grupa 1+2 w L, wyspa grupa 3)",
-  "info": "PLN brutto, ceny sklepów internetowych z października 2026 (każda pozycja ma link do sklepu), tylko materiały (montaż własny). Niebieskie pola można zmieniać, by sprawdzić inne ceny do odświeżenia strony; stałe ceny wpisuje się w dane kosztorysu na tej stronie. Ilości z formułą pochodzą z design.dat.js.",
+  "info": "PLN brutto, ceny sklepów internetowych z października 2026 (każda pozycja ma link do sklepu), tylko materiały (montaż własny). Niebieskie pola można zmieniać, by sprawdzić inne ceny do odświeżenia strony; stałe ceny wpisuje się w dane kosztorysu na tej stronie. Ilości z formułą pochodzą z kitchen.dat.js.",
   "xlsxFile": "kosztorys_kuchnia_jaworze.xlsx",
   "excluded": [
    "Robocizna, transport, elektryka (płyta 400 V, obwody piekarnika, zmywarki, lodówki), hydraulika, prace GK (materiały GK są w kosztorysie)."

@@ -10,7 +10,7 @@
 const INTERFACE = {
   shell: {                                 // what the implementation file registers
     needs: ['list', "its own inner files, in their order, from its folder and never outside it: loaded before rooms (its own page has them already)"],
-    rooms: ['function', "(page) → [room] (below): the rooms of the house whose sub-project is on page (from the home folder, e.g. 'rooms/kitchen/index.html'), one per floor"],
+    rooms: ['function', "(app) → [room] (below): the rooms of the house that apps.dat.js gives application app (its id), one per floor"],
     light: ['function', '() → {exposure, fog, sun, sky}: the light of a room seen from inside (core\'s scene)'],
     sun: ['function', '() → the house\'s sun, one for every application (core\'s sunStore)'],
     edges: ['function', '() → the house\'s edges of a 3D view (core\'s scene)'],
@@ -48,7 +48,7 @@ function only(level, object) {
 /* a sub-project's view of the implementation: rooms gives checked room views */
 function viewOf(impl) {
   const s = only('shell', impl), rooms = s.rooms;
-  return Object.assign(s, { rooms: page => rooms(page).map(r => only('room', r)) });
+  return Object.assign(s, { rooms: app => rooms(app).map(r => only('room', r)) });
 }
 
 /* ================= THE REGISTER AND THE LOADING ================= */

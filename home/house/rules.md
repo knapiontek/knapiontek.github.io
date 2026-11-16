@@ -6,7 +6,7 @@ Co strona ma robić.
 
 ## 1. Trzy drzewa
 
-building.dat.js zawiera trzy drzewa:
+house.dat.js zawiera trzy drzewa:
 
 - **Geometria**: z czego dom jest zbudowany.
 - **Warstwy**: co można włączyć i wyłączyć.
@@ -29,7 +29,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 - **Okna i drzwi** stoją w murze, licem do jego zewnętrznej powierzchni. Ich wymiary to etykiety archon (szerokość/wysokość), pokazane na rzucie 2D. Rodzaj otworu mówi, co w nim jest (rama przeszklona z parapetem albo bez, pełne skrzydło, albo jedno i drugie) i czy posadzka przechodzi przez otwór.
 - **Fundamenty**: każda ściana parteru z pustaka 240 stoi na ścianie fundamentowej i ławie. Komin stoi na płycie na gruncie, na własnym fundamencie. Ławy w jednej linii mają wspólną krawędź.
 - **Schody**: wspornikowe, same stopnie i spocznik; bez policzków i bez ścianki pod biegiem.
-- **Poza modelem**: meble, kuchnia, wyposażenie łazienek, kominek (to podprojekty).
+- **Poza modelem**: meble, kuchnia i wyposażenie łazienek (to podprojekty). Kominek należy do domu, tak jak płytki (jeszcze nie narysowany).
 - **Rysowanie** według core. Ściany między częściami jednego elementu nie są rysowane. Płytki i fuga leżą tuż nad stropem, nigdy w jego płaszczyźnie.
 
 ## 3. Warstwy
@@ -54,7 +54,7 @@ Menu decyduje, co widać i skąd. Panel zawiera tylko ustawienia tego wyboru; ni
 
 ## 6. Podprojekty
 
-- Salon prowadzi do rooms/kitchen/index.html; obie łazienki do rooms/bathroom/index.html.
+- Salon (kuchnia) i obie łazienki mają swoje podprojekty: przy nazwie pomieszczenia jest link do strony podprojektu, z menu aplikacji.
 - Meble podprojektów są w domu warstwą Meble (Warstwy) na swojej kondygnacji; kliknięcie drzwiczek albo szuflady otwiera je. Dziś: kuchnia i obie łazienki (każda na swojej kondygnacji; podwieszany sufit łazienki nie jest pokazywany w domu).
 - Płytki łazienek leżą na ścianach domu: część podaje je jako wykończenia ścian swojego pomieszczenia (dane: pole, kierunek, materiał), dom kładzie je na swoich ścianach i ościeżach i pokazuje z warstwą części. Płytki posadzki łazienek tak samo: z danych łazienki, z warstwą części; dom nie kładzie tam swoich (Wykończenie: „z projektu”). Posadzkę pozostałych pomieszczeń rysuje dom (Wykończenie). Posadzka podprojektu leży na płycie domu, nigdy w jej płaszczyźnie.
 

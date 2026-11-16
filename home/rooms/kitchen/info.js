@@ -4,11 +4,11 @@
 (function (root) {
 'use strict';
 
-/* everything from the host: engine (model.js), design (design.dat.js), estimate (estimate.dat.js), model (engine.build of
+/* everything from the host: engine (model.js), design (kitchen.dat.js), estimate (estimate.dat.js), model (engine.build of
    the project), appliances (engine.appliances of it). Returns {book(), assembly(), warnings, page} */
 function create({ engine, design, estimate, model, appliances }) {
 const KE = engine, COST = estimate, LIBRARY = root.CORE.library, APPLIANCES = appliances;
-/* an item of the estimate: its product from the library (a material: the board design.dat.js gives that use), the rest
+/* an item of the estimate: its product from the library (a material: the board kitchen.dat.js gives that use), the rest
    the project's: what it is called for a material, the spec's own part, the use, the quantity, the notes */
 const BOARD_OF = Object.fromEntries(Object.entries(design.materials).flatMap(([key, m]) => m.uses.map(u => [u, key])));
 const productOf = item => LIBRARY.product(item.material ? BOARD_OF[item.material] : item.product);
@@ -40,7 +40,7 @@ function cutoutLines(row) {
   const lines = row.drillings.flatMap(({ drilling }) => drilling.cutouts.map(c => code[c.kind] + ' ' + c.width + '×' + c.depth + ' @ ' + num1(c.x) + 'x' + num1(c.y)));
   return [...new Set(lines)];
 }
-// the legend under the cutting list: labels and cut-out codes, from design.dat.js settings.cutouts
+// the legend under the cutting list: labels and cut-out codes, from kitchen.dat.js settings.cutouts
 function cutoutLegend() {
   const labels = KE.LABELS, c = model.settings.cutouts || {}, from = 'x ' + labels.holeFrom.left + ', y ' + labels.holeFrom.back;
   return [
@@ -65,7 +65,7 @@ function holeText(drilling) {
   const edge = ends.map(from => 'odbojnik w krawędzi przedniej ' + KE.LABELS.holeFrom[from] + ': ' + bumpers.filter(h => h.from === from).map(h => num1(h.x)).join(', ')).join('; ');
   return [parts.length ? 'otwory ' + KE.LABELS.holeFrom[drilling.from.y] + ': ' + parts.join('; ') : '', edge].filter(Boolean).join('; ');
 }
-// the drilling rules over the assembly cards, from design.dat.js settings.drilling
+// the drilling rules over the assembly cards, from kitchen.dat.js settings.drilling
 function assemblyLegend() {
   const d = model.settings.drilling, list = xs => xs.map(num1).join(', ');
   const remark = kind => ((COST.labels.legend || {})[kind] ? ' (' + COST.labels.legend[kind] + ')' : '');
@@ -247,7 +247,7 @@ function ROUNDUP(x, digits) {
   return Math.ceil(x * f - 1e-9) / f;
 }
 // Placeholders in quantities and texts ({n:hinges}, {i:K25/oven.space}, {=...} ...): the full list is at the top of estimate.dat.js.
-// Every value comes from design.dat.js (through model.js), the library's appliances or estimate.dat.js.
+// Every value comes from kitchen.dat.js (through model.js), the library's appliances or estimate.dat.js.
 
 // a carcass by name: width, height, innerWidth, v0, v1
 function carcassValue(rest) {
@@ -352,7 +352,7 @@ function buildBook() {
   const result = compute(), INFO = root.CORE.info;
 
   // sheet "Lista cięć" (core/info.js): as an order form, each size followed by the number of finished edges along it
-  const cutting = INFO.cutList({ title: 'Lista cięć – płyty obliczone przez model.js z design.dat.js (wymiary w mm)', note: fill(COST.labels.cuttingNote),
+  const cutting = INFO.cutList({ title: 'Lista cięć – płyty obliczone przez model.js z kitchen.dat.js (wymiary w mm)', note: fill(COST.labels.cuttingNote),
     blocks: COST.blocks.map(block => ({ id: block.id, title: fill(block.title), columns: block.columns, cut: block.cut,
       rows: (rowsOf[block.id] || []).map((row, i) => {
         const along = edgeCounts(row);

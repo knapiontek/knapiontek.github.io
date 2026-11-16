@@ -1,6 +1,6 @@
 /* rooms/kitchen/room.js: the kitchen's furniture, an implementation of the interface ../../room.js: the same solids, moving
    fronts and details in its own page (index.html, with its room) and in the house (without: the house draws its own). Everything
-   comes from design.dat.js, scene.dat.js and model.js and the library; nothing is made up here to fit.
+   comes from kitchen.dat.js, scene.dat.js and model.js and the library; nothing is made up here to fit.
    Units are mm in house axes (x along the house, y across, z up); inside a group the engine keeps u along the group, v up
    from the floor, n out from the carcass backs. */
 (function (root) {
@@ -12,8 +12,8 @@ function make(env) {
   const KE = root.KitchenEngine, SCENE = root.KITCHEN_VIEW, TEXTURES = env.library.textures, PRODUCTS = env.library.products;
   const project = KE.withLibrary(root.KITCHEN_DESIGN, PRODUCTS.boards), APPLIANCES = KE.appliances(project, PRODUCTS.appliances);
   const model = KE.build(project, APPLIANCES), settings = project.settings;
-  const ROOM = env.shell.rooms('rooms/kitchen/index.html')[0];
-  if (!ROOM) throw new Error('W domu żadne pomieszczenie nie prowadzi do rooms/kitchen/index.html.');
+  const ROOM = env.shell.rooms('kitchen')[0];
+  if (!ROOM) throw new Error('apps.dat.js nie daje kuchni żadnego pomieszczenia domu.');
   const LEVEL = ROOM.level, CEILING = ROOM.ceiling - ROOM.level;   // v of the underside of the slab over the room
   const DEG = Math.PI / 180;
 
@@ -58,7 +58,7 @@ function make(env) {
   }
 
   /* ================= 2. MATERIALS =================
-     One library for core: the house's materials (the room keeps them) and the kitchen's, prefixed k. A board of design.dat.js
+     One library for core: the house's materials (the room keeps them) and the kitchen's, prefixed k. A board of kitchen.dat.js
      is its decor photo (../../library/textures) or its colour, a lacquer a clear coat; its bare edge is the speckled core of the board. */
   const K = key => 'k.' + key;
   const LIB = env.materials;                // the page's library for core: the kitchen's keys are added
@@ -118,7 +118,7 @@ function make(env) {
     ...Object.fromEntries(Object.entries(HOLE_COLORS).map(([k, h]) => ['hole.' + k, { color: h.hex, emissive: h.hex, glow: 0.35, roughness: 0.8 }])),
     ...Object.fromEntries(Object.entries(PANEL_COLORS).map(([k, [color]]) => ['panel.' + k, { color, roughness: 0.7 }]))
   }).map(([k, d]) => [K(k), d])));
-  /* the boards of design.dat.js; '~': the decor turned a quarter, so the grain runs along the face's other side */
+  /* the boards of kitchen.dat.js; '~': the decor turned a quarter, so the grain runs along the face's other side */
   for (const [code, m] of Object.entries(model.materials)) {
     const decor = m.texture && DECORS[m.texture];
     const def = decor ? { color: '#ffffff', image: { key: m.texture }, roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, reflect: 0.5 }
@@ -864,7 +864,7 @@ const textures = library => Object.keys(root.KITCHEN_DESIGN.materials).map(key =
   .concat(root.KITCHEN_VIEW.floors.map(k => library.products.tiles[k].texture));
 
 /* the implementation: its own page uses all of it, the house only what the interface names */
-const KitchenRoom = { needs: ['design.dat.js', 'scene.dat.js', 'model.js'], textures, make };
+const KitchenRoom = { needs: ['kitchen.dat.js', 'scene.dat.js', 'model.js'], textures, make };
 root.KitchenRoom = KitchenRoom;
 root.ROOM_INTERFACE.register('kitchen', KitchenRoom);
 })(window);

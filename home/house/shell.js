@@ -1,7 +1,7 @@
-/* shell.js: the house's implementation of the interface shell.js (in the root): the room of a sub-project (kitchen,
-   bathroom), copied from the house as it is. The house's own solids (walls, slabs, floor, windows, roof) are trimmed to the
-   box its link in building.dat.js gives and handed over unchanged: mm, house axes (x along the house, y across, z up).
-   Nothing is re-measured. No THREE, no DOM. Needs core/geometry.js; loads building.dat.js and model.js itself (needs). */
+/* shell.js: the house's implementation of the interface shell.js (in the root): the room of a sub-project, copied from
+   the house as it is. The house's own solids (walls, slabs, floor, windows, roof) are trimmed to the box of the room's
+   shell in house.dat.js and handed over unchanged: mm, house axes (x along the house, y across, z up).
+   Nothing is re-measured. No THREE, no DOM. Needs core/geometry.js; loads house.dat.js and model.js itself (needs). */
 (function (root) {
 'use strict';
 
@@ -26,8 +26,8 @@ function sideOf(c, S, inside, level, zRange) {
   return best ? best.side : '+z';
 }
 
-/* the room of HOUSE whose link points to href (one per floor: the bathroom project has two), with MODEL = HouseEngine.build(HOUSE) */
-function roomsFor(HOUSE, MODEL, href) {
+/* the rooms of HOUSE with the given ids (apps.dat.js: one application's rooms), with MODEL = HouseEngine.build(HOUSE) */
+function roomsFor(HOUSE, MODEL, ids) {
   const GEO = HOUSE.geometry, COPY = GEO.copy, G = root.CORE.geometry;
   const kindOf = Object.fromEntries(GEO.elements.map(e => [e.id, e.kind]));
   const take = []
@@ -38,8 +38,8 @@ function roomsFor(HOUSE, MODEL, href) {
   const PLAN_CUT = Object.values(HOUSE.views).find(v => v.plan).cut;               // the house's 2D cut height, per floor
   const out = [];
   for (const floor of GEO.floors) for (const room of floor.rooms) {
-    if (!room.link || !room.link.href.endsWith(href)) continue;
-    const L = room.link, R = G.prism(L.box);
+    if (!room.shell || !ids.includes(room.id)) continue;
+    const L = room.shell, R = G.prism(L.box);
     const trimmed = [];
     for (const c of take) {
       const S = G.prismIntersect(c.S, R);
@@ -57,7 +57,7 @@ function roomsFor(HOUSE, MODEL, href) {
     const kept = trimmed.filter(c => c.side[1] === 'z' || (isFixture(c)
       ? trimmed.some(w => !isFixture(w) && w.side === c.side && touches(plan(w.S)) && within(plan(c.S), plan(w.S)))
       : touches(plan(c.S))));
-    /* what lies under the floor or over the room covers exactly the room's own floor areas (building.dat.js rects, within the box)
+    /* what lies under the floor or over the room covers exactly the room's own floor areas (house.dat.js rects, within the box)
        and the walls kept around it: nothing of the next room, no wall that is not there */
     const walls = kept.filter(c => c.side[1] !== 'z').map(c => plan(c.S));
     const clip = r => [Math.max(r[0], L.box[0]), Math.min(r[1], L.box[1]), Math.max(r[2], L.box[2]), Math.min(r[3], L.box[3])];
@@ -106,7 +106,7 @@ function roomsFor(HOUSE, MODEL, href) {
 }
 
 /* the light of a room seen from inside (a sub-project's page): the house's sky, fog and sun, with the house's own
-   settings for an interior (building.dat.js light.inside) */
+   settings for an interior (house.dat.js light.inside) */
 function insideLight(HOUSE) {
   const L = Object.values(HOUSE.views).find(v => v.menu).light, I = L.inside;
   return { exposure: I.exposure, fog: L.fog, sun: Object.assign({}, L.sun, I.sun), sky: Object.assign({}, L.sky, I.sky) };
@@ -117,8 +117,11 @@ let built = null;
 const house = () => built || (built = { HOUSE: root.HOUSE, MODEL: root.HouseEngine.build(root.HOUSE) });
 const menuView = () => Object.values(root.HOUSE.views).find(v => v.menu);
 const HouseShell = {
-  needs: ['building.dat.js', 'model.js'],
-  rooms: page => roomsFor(house().HOUSE, house().MODEL, page),
+  needs: ['house.dat.js', 'model.js'],
+  rooms: app => {
+    const A = (root.APPS || []).find(a => a.id === app);
+    return roomsFor(house().HOUSE, house().MODEL, A && A.rooms ? A.rooms : []);
+  },
   light: () => insideLight(root.HOUSE),
   sun: () => menuView().light.sun,
   edges: () => menuView().edges,
