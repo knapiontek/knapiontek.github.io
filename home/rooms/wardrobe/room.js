@@ -13,6 +13,8 @@ function make(env) {
   const ROOMS = Object.fromEntries(NUMBERS.map(n => [n, found.find(r => r.numbers.includes(n))]));
   for (const n of NUMBERS) if (!ROOMS[n]) throw new Error('apps.dat.js nie daje garderobom pomieszczenia domu nr ' + n + '.');
   for (const k of Object.values(D.looks)) if (!LIB[k]) throw new Error('brak materiału ' + k + ' w bibliotece (library/materials.dat.js)');
+  /* the decor photos of its boards (a wooden front), for core's materials */
+  for (const key of textures(env.library)) { const T = env.library.textures[key]; if (T) env.textures[key] = env.textures[key] || { faces: T.faces, size: T.size }; }
 
   /* ---------- one wardrobe in a view V (core/scene.js) ----------
      opts: {number, room (its own page: the house's room too), layers (the host's, on every solid)} */
@@ -56,11 +58,13 @@ function make(env) {
     V.buildMeshes(pieces); V.buildEdges(pieces);
 
     const reduced = V.reducedMotion, MOVERS = [];
-    for (const m of M.movers) {
-      const pivot = new THREE.Group(); V.root.add(pivot);
+    for (const m of M.movers) {   // a drawer slides; a door turns about its hinges' axis
+      const pivot = new THREE.Group(), pin = new THREE.Group(), axis = m.axis || [0, 0];
+      pivot.position.set(axis[0], axis[1], 0); pin.position.set(-axis[0], -axis[1], 0);
+      pivot.add(pin); V.root.add(pivot);
       const cells = M.solids.filter(s => s.mover === m.id).map(cellOf), p = CORE.mesh.piecesOf(cells);
-      V.buildMeshes(p, pivot); V.buildEdges(p, pivot);
-      const mover = { id: m.id, kind: 'drawer', slide: m.slide, pivot, cells, progress: 0, target: 0 };
+      V.buildMeshes(p, pin); V.buildEdges(p, pin);
+      const mover = { id: m.id, kind: m.kind, slide: m.slide, angle: m.angle, pivot, cells, progress: 0, target: 0 };
       pivot.userData.mover = mover;
       MOVERS.push(mover);
     }
@@ -113,8 +117,8 @@ function make(env) {
   return { ROOMS, NUMBERS, rooms, build };
 }
 
-/* the textures the wardrobes name: none (plain white boards) */
-const textures = () => [];
+/* the textures the wardrobes name: the decors of their boards (a wooden front); the white boards have none */
+const textures = library => Object.values(root.WARDROBE_DATA.boards).map(k => library.products.boards[k].texture).filter(Boolean);
 
 /* the implementation: its own page uses all of it, the house only what the interface names */
 const WardrobeRoom = { needs: ['wardrobe.dat.js'], textures, make };

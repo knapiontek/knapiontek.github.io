@@ -28,7 +28,7 @@ wardrobe.dat.js, library ─► room.js ─────────┴─► ind
 ## Open
 
 - the steps under the slope (narrower carcasses, or a sloping top);
-- which carcasses get drawers, rails or shelves, and the shelf pitch;
+- rails for hanging clothes (none yet); the shelf grid and the drawers' height as drawn;
 - 16 or 18 mm for the carcasses (the draft: 18);
 - the end of a run at a short wall: a gap, an end panel or a filler (the draft: a gap);
 - the white board, the HDF, the runners, the feet and the plinth: products and prices to check.

@@ -218,14 +218,19 @@ const BOARD_KINDS = Object.keys(D.boards);
 const CUTS = Object.fromEntries(BOARD_KINDS.map(k => [k, cutRows(k)]));
 const area = k => CUTS[k].reduce((s, r) => s + r.a * r.b * r.qty, 0) / 1e6;   // m²
 /* what is counted in the solids: a label's pieces, the drawers, the carcasses, the movable shelves; or measured */
+const MOVERS_ALL = ALL.flatMap(w => w.model.movers);
 const COUNT = {
-  mover: ALL.reduce((s, w) => s + w.model.movers.length, 0),
+  mover: MOVERS_ALL.length,
+  drawer: MOVERS_ALL.filter(m => m.kind === 'drawer').length,
+  hinges: MOVERS_ALL.reduce((s, m) => s + (m.hinges || 0), 0),
   carcass: CARCASSES.length,
   movable: CARCASSES.reduce((s, c) => s + c.movable, 0),
 };
-const count = per => COUNT[per] ?? SOLIDS.filter(s => s.label === per).length;
+const count = b => b.per === 'runner' ? MOVERS_ALL.filter(m => m.runner === b.runner).length : COUNT[b.per] ?? SOLIDS.filter(s => s.label === b.per).length;
+const banded = kinds => kinds.reduce((s, k) => s + CUTS[k].reduce((t, r) => t + (r.edge || 0) * r.qty, 0), 0) / 1000;
 const MEASURE = {
-  edges: BOARD_KINDS.reduce((s, k) => s + CUTS[k].reduce((t, r) => t + (r.edge || 0) * r.qty, 0), 0) / 1000,
+  edges: banded(BOARD_KINDS.filter(k => k !== 'front')),
+  frontEdges: banded(BOARD_KINDS.filter(k => k === 'front')),
   cuts: BOARD_KINDS.reduce((s, k) => s + CUTS[k].reduce((t, r) => t + (r.a + r.b) * r.qty, 0), 0) / 1000,
 };
 const measure = what => MEASURE[what] ?? SOLIDS.filter(s => s.label === what).reduce((t, s) => t + lengthOf(s), 0) / 1000;
@@ -240,7 +245,7 @@ function estimate() {
       return { id: 'b' + i, name: P.name, spec: P.spec || '', unit: P.unit, price: P.price ?? null, source: source(P),
         use: `formatki ${fmt(m2)} m² + ${Math.round(E.waste * 100)}% odpadu`, qty: ref => ({ f: `ROUNDUP(${m2.toFixed(3)}*(1+${ref.param('waste')})/${sheetM2.toFixed(3)},0)`, z: '0' }) };
     }
-    const P = CORE.library.product(b.product), n = b.measure ? measure(b.measure) : count(b.per) * b.each;
+    const P = CORE.library.product(b.product), n = b.measure ? measure(b.measure) : count(b) * b.each;
     return { id: 'b' + i, name: P.name, spec: P.spec || '', unit: P.unit, price: P.price ?? null, source: source(P), use: b.use || '',
       qty: b.measure ? Math.round(n * 100) / 100 : b.pack ? Math.ceil(n / b.pack) : n };
   };
@@ -255,9 +260,9 @@ function cutList() {
     blocks: BOARD_KINDS.map(k => ({ id: k, title: CORE.library.product(D.boards[k]).name, cut: true, rows: CUTS[k] })) }).sheet;
 }
 function carcassTable() {
-  const rows = ALL.flatMap(w => w.model.carcasses.map(c => [c.id, w.name, c.run, `${c.y[0]}–${c.y[1]}`, c.width, c.depth, c.height, c.fixed, c.movable, c.drawers]));
-  return CORE.info.table('Korpusy', [8, 14, 30, 13, 8, 8, 8, 8, 8, 8], ['Korpus', 'Garderoba', 'Ciąg', 'y od–do', 'Szer.', 'Głęb.', 'Wys.', 'Półki stałe', 'Półki ruchome', 'Szuflady'], rows,
-    'Wymiary korpusów z cokołem 50 mm pod spodem; wysokość bez cokołu.', [7, 's1', 's2', 11, 6, 6, 6, 6, 6, 6]);
+  const rows = ALL.flatMap(w => w.model.carcasses.map(c => [c.id, w.name, c.run, `${c.y[0]}–${c.y[1]}`, c.width, c.depth, c.height, c.fixed, c.movable, c.drawers, c.doors]));
+  return CORE.info.table('Korpusy', [8, 14, 30, 13, 8, 8, 8, 8, 8, 8, 8], ['Korpus', 'Pomieszczenie', 'Ciąg', 'y od–do', 'Szer.', 'Głęb.', 'Wys.', 'Półki stałe', 'Półki ruchome', 'Szuflady', 'Drzwi'], rows,
+    'Wymiary korpusów z cokołem 50 mm pod spodem; wysokość bez cokołu.', [7, 's1', 's2', 11, 6, 6, 6, 6, 6, 6, 6]);
 }
 let INFO_SHEET = null;
 const infoBook = () => ({ sheets: [estimate(), cutList(), carcassTable()] });
@@ -271,7 +276,7 @@ const INFO_ITEMS = CORE.info.menu(() => INFO_SHEET, 'garderoby.xlsx');
    TEST: measured on the model (core's overlaps, the room's ceiling over each carcass, the passage), the dependencies
    ========================================================================== */
 function measureChecks() {
-  const cells = STATIC.filter(c => c.element === 'fixture' && c.name).concat(MOVERS.filter(m => m.kind === 'drawer').flatMap(m => m.cells));
+  const cells = STATIC.filter(c => c.element === 'fixture' && c.name).concat(MOVERS.filter(m => !m.id.startsWith('room-door')).flatMap(m => m.cells));   // its drawers and doors, not the house's door
   const over = CORE.geometry.overlaps(cells);
   const out = [{ name: `Bryły garderoby bez wspólnej objętości (${cells.length})`, items: over.map(o => `${o.a.name} ${o.a.label} × ${o.b.name} ${o.b.label}`) }];
   const R = built.ROOM, own = DATA.model.carcasses;

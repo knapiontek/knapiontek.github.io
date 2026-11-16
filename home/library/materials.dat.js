@@ -29,5 +29,6 @@ window.LIBRARY_MATERIALS = {
  "melamineWhite": {"color": "#f3f3f0", "roughness": 0.55},
  "hdfWhite": {"color": "#ecebe7", "roughness": 0.7},
  "plinthPvc": {"color": "#dcdcd8", "roughness": 0.6},
- "foot": {"color": "#2e2f31", "roughness": 0.6}
+ "foot": {"color": "#2e2f31", "roughness": 0.6},
+ "oakFront": {"color": "#ffffff", "roughness": 0.58, "reflect": 0.5, "image": {"key": "egger-h1180", "turn": true}}
 };

@@ -25,14 +25,15 @@ Jak zbudować korpusy trzech garderób na poddaszu i regału we wnęce pokoju 6.
 
 ## 3. Wnętrze
 
-- Półki stałe usztywniają korpus: jedna w środku niskiego korpusu, dwie albo trzy w wysokim; z płyty korpusu, na całą głębokość, skręcane z bokami jak wieńce.
-- Półki ruchome leżą na podpórkach między półkami stałymi: płytsze od korpusu i z luzem z obu stron.
-- Frontów nie ma: półki są otwarte, zawiasów nie ma.
-- Szuflady w wybranych korpusach, na dole: skrzynki z płyty 16 mm na prowadnicach kulkowych pełnego wysuwu, otwierane przez naciśnięcie.
+- Na dole każdego korpusu dwie szuflady, jedna nad drugą, w dwóch rzędach równej wysokości: skrzynki z płyty 16 mm na prowadnicach kulkowych pełnego wysuwu (tak długich, jak pozwala głębokość korpusu), otwierane przez naciśnięcie.
+- Nad szufladami półka stała, a nad nią półki na jednej siatce wysokości, tej samej we wszystkich korpusach pomieszczenia: półki sąsiednich korpusów są w jednej linii, a góra korpusu wypada na linii siatki.
+- Półki stałe usztywniają korpus (nad szufladami i w wysokim korpusie jeszcze jedna lub dwie); reszta to półki ruchome na podpórkach, płytsze od korpusu i z luzem z obu stron.
+- W garderobach frontów nie ma: półki są otwarte.
+- Pokój 6: fronty z płyty w dekorze dębu, nakładane na korpus: czoła szuflad i drzwi nad nimi (dwoje drzwi w szerokim korpusie), na zawiasach, otwierane przez naciśnięcie.
 
 ## 4. Krawędzie
 
-- Obrzeże tylko na krawędziach widocznych: przednie krawędzie boków, wieńców i półek, górne krawędzie ścianek szuflad.
+- Obrzeże tylko na krawędziach widocznych: przednie krawędzie boków, wieńców i półek, górne krawędzie ścianek szuflad; fronty dookoła, w ich dekorze.
 - Bez obrzeża: plecy, dna szuflad.
 
 ## 5. Lista cięć i zakupy
