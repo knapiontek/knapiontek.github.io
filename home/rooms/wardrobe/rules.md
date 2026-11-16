@@ -13,7 +13,7 @@ Jak zbudować korpusy trzech garderób na poddaszu i regału we wnęce pokoju 6.
 - Korpus ma stałą szerokość; ciąg, który się nie mieści, kończy jeden krótszy korpus albo dwa krótsze, przy niskiej ścianie.
 - Ciąg zostawia wolne wejście: przed przejściem z sypialni i przy drzwiach nie stoi żaden korpus.
 - Garderoba 8: między drzwiami a ścianą holu biegną rury rekuperatora; tam nie ma korpusu.
-- Pokój 6: wnękę między łazienką a pokojem, od ściany holu do ścianki kolankowej, wypełniają korpusy na całą jej głębokość, frontem w linii ściany pokoju; pod skosem schodkują jak w garderobach.
+- Pokój 6: wnękę między łazienką a pokojem, od ściany holu do ścianki kolankowej, wypełniają korpusy na całą jej głębokość, frontem w linii ściany pokoju; nie sięgają sufitu (najwyżej mniej więcej na wysokość drzwi), a pod skosem schodkują. Wszystkie półki i góry korpusów leżą na jednej siatce wysokości, więc półki sąsiednich korpusów są w jednej linii.
 
 ## 2. Korpus
 

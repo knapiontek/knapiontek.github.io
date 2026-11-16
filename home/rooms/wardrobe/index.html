@@ -325,7 +325,7 @@ function setMode(m) {
   VIEW_STATE.mode = MODES[m] ? m : MODE_IDS[0]; saveView();
   const v = CORE.ui.showMode(MODES, VIEW_STATE.mode, canvasEl, setMode), is3d = !!v.menu;
   const ctx = $('context'); ctx.innerHTML = '';
-  if (is3d) CORE.ui.menuRow(ctx, ALL.map(w => ({ name: w.name, radio: true, on: w.number === NUMBER, set: () => goWardrobe(w.number) })));
+  if (!v.info) CORE.ui.menuRow(ctx, ALL.map(w => ({ name: w.name, radio: true, on: w.number === NUMBER, set: () => goWardrobe(w.number) })));   // Info has them all
   CORE.ui.bottomMenu($('dock'), is3d ? [CAMERA_ITEMS] : v.plan ? [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]] : v.info ? INFO_ITEMS : []);
   showPanel();
   if (v.plan) { drawSheet(); $('planNote').textContent = `Cięcie ${CUT} mm nad podłogą (jak w rzucie domu). ${v.note || ''}`.trim(); }

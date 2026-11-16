@@ -693,7 +693,7 @@ const INFO_ITEMS = CORE.info.menu(() => INFO_SHEET, () => `lazienka-${FLOOR}-${V
   } }]]);
 
 /* ---------- the views: 3D, 2D, Info, Test, as the house (core/ui.js, core/plan.js) ----------
-   The menu of 3D: the bathrooms, one per floor. The 2D plan is drawn by core from the solids of this page (the room's are
+   The menu of every mode: the bathrooms, one per floor. The 2D plan is drawn by core from the solids of this page (the room's are
    the house's own, the fittings' boxes the same solids as in 3D, round fittings by their outline) at the house's cut height
    for the floor; the room's label and the openings' labels are the house's. Test: the checks of bathroom.dat.js, measured on the model. */
 const MODES = BATH_DATA.views, MODE_IDS = Object.keys(MODES);
@@ -779,7 +779,7 @@ function setMode(m) {
   VIEW_STATE.mode = MODES[m] ? m : MODE_IDS[0]; saveView();
   const v = CORE.ui.showMode(MODES, VIEW_STATE.mode, canvasEl, setMode), is3d = !!v.menu;
   const ctx = $('context'); ctx.innerHTML = '';
-  if (is3d) CORE.ui.menuRow(ctx, Object.entries(BATH_DATA.floors).map(([k, f]) => ({ name: f.name, radio: true, on: k === FLOOR, set: () => goFloor(k) })));
+  CORE.ui.menuRow(ctx, Object.entries(BATH_DATA.floors).map(([k, f]) => ({ name: f.name, radio: true, on: k === FLOOR, set: () => goFloor(k) })));   // every mode shows one floor
   CORE.ui.bottomMenu($('dock'), is3d ? [CAMERA_ITEMS] : v.plan ? [[PLAN_BUTTONS.zoomOut, PLAN_BUTTONS.zoomIn], [PLAN_BUTTONS.download]] : v.info ? INFO_ITEMS : []);
   showPanel();
   if (v.plan) { drawSheet(); $('planNote').textContent = `Cięcie ${CUT} mm nad podłogą (jak w rzucie domu). ${v.note || ''}`.trim(); }
