@@ -17,7 +17,6 @@
 .asm h3{margin:0 0 4px;font:700 14px var(--f-display);color:var(--ink)}
 .asm b{color:var(--ink)}
 .asm .holes{display:inline-block;padding-left:14px;font-size:12px}
-#info pre.json{max-height:480px}
 .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 #tip{position:absolute;z-index:8;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12.5px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.12)}
 .legend,.mats{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;font-size:12px}
@@ -32,7 +31,6 @@
 #carcassList b{font:500 12px var(--f-mono)}
 .detail{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:10px}
 .detail h3{font:700 16px var(--f-display);margin:0 0 4px}
-pre.json{font:11px/1.45 var(--f-mono);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;max-height:320px;overflow:auto;margin:8px 0 0}
 summary{cursor:pointer;font:600 12px var(--f-display);letter-spacing:.06em;color:var(--muted)}
 dl.notes{display:grid;gap:2px 0;margin:8px 0 0;font-size:12.5px}
 dl.notes dt{font-weight:600;margin-top:6px}
@@ -75,10 +73,6 @@ dl.notes dd{margin:0;color:var(--muted)}
         <ul class="mats" id="mats"></ul>
         <h2>Wymiary w modelu</h2>
         <dl class="stats" id="dims"></dl>
-        <h2>Mapa korpusów (JSON)</h2>
-        <details><summary>Pokaż</summary><pre class="json" id="mapJson"></pre></details>
-        <p class="note">Dla każdego korpusu: x wzdłuż grupy, y w górę, z od ściany (mm); room = położenie w osiach domu (x wzdłuż, y w poprzek, z w górę, mm).</p>
-        <p class="note">Dane: kitchen.dat.js i scene.dat.js; produkty, materiały i tekstury z ../../library; części z model.js; pomieszczenie z domu (przez interfejs ../../shell.js); rysowanie: ../../core.</p>
       </section>
     </div>
     <div class="dock" id="dock" aria-label="Dolne menu"></div>
@@ -434,21 +428,14 @@ function selectCarcass(c, fly) {
     flyTo({ eye: [mid[0] + N[0] * d + U[0] * 350, mid[1] + N[1] * d + U[1] * 350, mid[2] + 450], target: mid });
   }
 }
-const mapText = KE.mapJSON(KE.carcassMap(model, c => {
-  const b = houseBox(String(c.group), [c.u0, c.u1, c.v0, c.v1, carcassBack, carcassFront]).map(Math.round);
-  return { x: [b[0], b[1]], y: [b[2], b[3]], z: [b[4], b[5]] };
-}));
-$('mapJson').textContent = mapText;
 /* Info (core/info.js): Kosztorys, Lista cięć and Notatki of info.js, and the pages of this view in its tabs */
 const COST = KitchenCost.create({ engine: KE, design: KITCHEN_DESIGN, estimate: window.KITCHEN_COST, model, appliances: APPLIANCES });
 { const a = COST.assembly(); $('assemblyLegend').innerHTML = a.legend; $('assemblyBody').innerHTML = a.cards; }
 const COST_SHEET = CORE.info.show($('info'), { title: $('title').textContent, subtitle: $('subtitle').textContent, warnings: COST.warnings,
   book: { sheets: [...COST.book().sheets.map(s => (s.name === 'Notatki' ? { ...s, node: $('pageNotes') } : s)),
     { name: 'Montaż', node: $('pageAssembly') }, { name: 'Korpusy', node: $('pageCarcasses') }, { name: 'Model', node: $('pageModel') }] } });
-/* the bottom menu of Info: the files, the editor of the project, the carcass map */
-const INFO_ITEMS = CORE.info.menu(() => COST_SHEET, COST.page.xlsxFile, [[{ name: 'Edycja projektu', go: () => { location.href = 'design.html'; } }],
-  [{ name: 'Mapa JSON: kopiuj', go: e => { const b = e.currentTarget; navigator.clipboard?.writeText(mapText).then(() => { b.textContent = 'Skopiowano'; setTimeout(() => { b.textContent = 'Mapa JSON: kopiuj'; }, 1500); }, () => {}); } },
-   { name: 'Mapa JSON: pobierz', go: () => { const a = el('a', { href: URL.createObjectURL(new Blob([mapText], { type: 'application/json' })), download: 'mapa_korpusow_widok.json' }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); } }]]);
+/* the bottom menu of Info: the files and the editor of the project */
+const INFO_ITEMS = CORE.info.menu(() => COST_SHEET, COST.page.xlsxFile, [[{ name: 'Edycja projektu', go: () => { location.href = 'design.html'; } }]]);
 {
   const item = x => `<b>${esc(x.v)}</b> ${esc(x.a)}${x.b ? ' — ' + esc(x.b) : ''}`;
   const groups = [['Dane', model.warnings.concat(UNDRAWN.map(u => 'część bez wymiaru, nie rysowana: ' + u)).map(w => esc(w))], ['Kolizje', geometry.overlaps.map(item)], ['Szczeliny przy listwach i panelach', geometry.gaps.map(item)],

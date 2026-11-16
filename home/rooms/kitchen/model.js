@@ -1093,41 +1093,11 @@
     };
   }
 
-  // where each carcass is and what it is made of; roomPosition(carcass) adds its place in the room (index.html)
-  function carcassMap(model, roomPosition) {
-    return model.carcasses.map(carcass => {
-      const entry = {
-        carcass: carcass.name,
-        group: carcass.group,
-        columns: carcass.span > 1 ? [carcass.column, carcass.column + carcass.span - 1] : [carcass.column],
-        x: [carcass.u0, carcass.u1],
-        y: [carcass.v0, carcass.v1],
-        z: [model.carcassBack, model.carcassFront].map(n => n - model.groups[carcass.group].wall), // from the wall
-        size: [carcass.u1 - carcass.u0, carcass.v1 - carcass.v0, model.carcassDepth],
-        kind: LABELS.carcassKind[carcass.kind],
-        flags: carcass.flags.map(flag => LABELS.flag[flag]),
-        members: carcass.members.map(i => ({ column: i.span > 1 ? [i.column, i.column + i.span - 1] : i.column, tags: tagsLabel([i.type, ...i.tags]), x: [i.u0, i.u1], y: [i.v0, i.v1] })),
-        boards: cutList(model.boards.filter(b => b.carcassId === carcass.id)).map(row => (row.qty > 1 ? row.qty + ' × ' : '') + row.name + ' ' + row.a + ' × ' + row.b),
-        legs: carcass.legs
-      };
-      if (roomPosition) entry.room = roomPosition(carcass);
-      return entry;
-    });
-  }
-
   // JSON with short arrays and objects on one line
   function json1(value) {
     if (Array.isArray(value)) return '[' + value.map(json1).join(', ') + ']';
     if (value && typeof value === 'object') return '{' + Object.entries(value).map(([k, x]) => JSON.stringify(k) + ': ' + json1(x)).join(', ') + '}';
     return JSON.stringify(value);
-  }
-
-  // the carcass map as text: one carcass per block, members and boards one per line
-  function mapJSON(map) {
-    const field = ([key, value]) =>
-      '    ' + JSON.stringify(key) + ': ' +
-      ((key === 'members' || key === 'boards') && value.length ? '[\n' + value.map(x => '      ' + json1(x)).join(',\n') + '\n    ]' : json1(value));
-    return '[\n' + map.map(entry => '  {\n' + Object.entries(entry).map(field).join(',\n') + '\n  }').join(',\n') + '\n]\n';
   }
 
   // the text of kitchen.dat.js: one material / setting / note / component per line, a blank line between groups
@@ -1160,7 +1130,7 @@
 
   root.KitchenEngine = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, hasTag, FRONT_TYPES, SIDES, HINGE_SIDES,
-    placeLabel, gapsText, parseTags, spaceAround, valueAt, PINS_PER_SHELF, tagsOf, readType, cutKey, checkSettings, build, cutList, carcassMap, mapJSON,
+    placeLabel, gapsText, parseTags, spaceAround, valueAt, PINS_PER_SHELF, tagsOf, readType, cutKey, checkSettings, build, cutList, 
     designJS, fromDesignJS, plural, appliances, withLibrary
   };
 })(typeof window !== 'undefined' ? window : globalThis);

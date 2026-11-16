@@ -352,7 +352,7 @@ function buildBook() {
   const result = compute(), INFO = root.CORE.info;
 
   // sheet "Lista cięć" (core/info.js): as an order form, each size followed by the number of finished edges along it
-  const cutting = INFO.cutList({ title: 'Lista cięć – płyty obliczone przez model.js z kitchen.dat.js (wymiary w mm)', note: fill(COST.labels.cuttingNote),
+  const cutting = INFO.cutList({ title: 'Lista cięć – płyty kuchni (wymiary w mm)', note: fill(COST.labels.cuttingNote),
     /* the cut-outs, one per line ("WZ 680×420 @ 1234x110"), a whole line each; where: a few cabinet names */
     screen: [6, 's2n9m36', 6, 3, 6, 3, 6, 5, 7, 6, 21, 's1n8m24'],
     blocks: COST.blocks.map(block => ({ id: block.id, title: fill(block.title), columns: block.columns, cut: block.cut,

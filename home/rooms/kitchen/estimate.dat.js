@@ -40,7 +40,7 @@ window.KITCHEN_COST = {
  "page": {
   "title": "Kosztorys kuchni Jaworze",
   "heading": "Kosztorys materiałów – Kuchnia Jaworze (grupa 1+2 w L, wyspa grupa 3)",
-  "info": "PLN brutto, ceny sklepów internetowych z października 2026 (każda pozycja ma link do sklepu), tylko materiały (montaż własny). Niebieskie pola można zmieniać, by sprawdzić inne ceny do odświeżenia strony; stałe ceny wpisuje się w dane kosztorysu na tej stronie. Ilości z formułą pochodzą z kitchen.dat.js.",
+  "info": "PLN brutto, ceny sklepów internetowych z października 2026 (każda pozycja ma link do sklepu), tylko materiały (montaż własny). Niebieskie pola można zmieniać, by sprawdzić inne ceny (do odświeżenia strony). Ilości liczone z projektu kuchni.",
   "xlsxFile": "kosztorys_kuchnia_jaworze.xlsx",
   "excluded": [
    "Robocizna, transport, elektryka (płyta 400 V, obwody piekarnika, zmywarki, lodówki), hydraulika, prace GK (materiały GK są w kosztorysie)."

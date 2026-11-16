@@ -113,10 +113,10 @@ function create(box, book) {
         } else if (cell && cell.f) { td.className = 'n'; td.title = '=' + cell.f; formulas.push([td, ci, ri + 1, d, cell.pct]); }
         else if (cell && cell.href) td.append(anchor(cell));
         else if (cell && cell.links) {
-          if (cell.text) td.append(cell.text + '\n');
+          if (cell.text) linked(td, cell.text + '\n');
           cell.links.forEach((l, i) => td.append(...(i ? [' · '] : []), anchor(l)));
         }
-        else if (cell !== null && cell !== undefined) td.textContent = cell;
+        else if (cell !== null && cell !== undefined) linked(td, String(cell));
         tr.append(td);
       });
       if (row.cells?.length === 1 && tr.firstChild) tr.firstChild.colSpan = sheet.cols.length;   // a title or a category runs across
@@ -151,6 +151,8 @@ function spanText(cells, tr, n) {
     else Object.assign(a, { target: '_blank', rel: 'noopener' });
     return a;
   }
+  /* a text into a cell, an address in it shown as a link with its site's name */
+  function linked(td, text) { text.split(/(https?:\/\/[^\s)]+)/).forEach((t, k) => td.append(k % 2 ? anchor({ href: t }) : t)); }
   /* a link inside the book: that sheet, its row in view and flashed */
   function go(name, row) {
     const i = book.sheets.findIndex(s => s.name === name);

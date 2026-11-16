@@ -29,9 +29,8 @@
    copy       what a sub-project takes from the house: the element kinds, the window frames and glass, the roof */
 window.HOUSE = {
  "name": "Dom w papawerach 5 (G)",
- "source": "Geometria z archon/analysis.md (rzuty archon.pl, ±23 mm), ze zmianami wykonawczymi.",
+ "source": "Geometria z rzutów archon.pl (±23 mm), ze zmianami wykonawczymi.",
  "notes": [
-  "Bryła według analysis.md: każdy element to prostopadłościan, otwory wycięte ze ścian, które przecinają.",
   "Pompa ciepła zamiast kotła gazowego: jeden komin (salon), bez szachtu wentylacyjnego i drugiego komina.",
   "Zmiany wykonawcze: wnęka prysznica w łazience parteru 1000 × 900 mm (ściany #7, #8, #10 przesunięte), drzwi łazienki na piętrze przesunięte o 200 mm w stronę ogrodu, sufit katedralny nad sypialnią.",
   "Schody wspornikowe (bez policzków), bez ścianki pod biegiem.",
