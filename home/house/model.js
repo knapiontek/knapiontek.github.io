@@ -48,7 +48,8 @@ const regionPrism = r => prism([...range(r.x), ...range(r.y), ...range(r.h)], (r
 const OPENING_PRISMS = GEO.openings.map(openingPrism);
 
 /* ================= 3. ELEMENTS =================
-   A cell is a prism with what it is: {S, element, floor, material, cap, layers, raw?, finish?, walkable?, edges}. */
+   A cell is a prism with what it is: {S, element, floor, material, cap, layers, raw?, finish?, walkable?, edges}. Its floor
+   is the one its height gives, unless the element or its kind names another (the attic's ceiling is the roof's). */
 const CELLS = [];
 /* the facade rules that apply to element e: its own, or by the side of its kind's finish facing the air */
 const finishesOf = e => GEO.finishes.filter(r => r.elements ? r.elements.includes(e.id) : !!KIND[e.kind].finish && (!r.side || r.side === e.outer));
@@ -68,7 +69,7 @@ function elementCells(e) {
   parts = parts.flatMap(S => splitH(S, GEO.split)).map(S => ({ S, material: k.material }));
   parts = finishesOf(e).reduce(applyFinish, parts);
   return parts.map(t => {
-    const floor = floorOf(centreH(t.S));
+    const floor = e.floor || k.floor || floorOf(centreH(t.S));
     return { S: t.S, element: e.id, floor, material: t.material, cap: k.cap, raw: k.raw, finish: k.finish,
       walkable: !!k.walkable, layers: [floor].concat(k.layers), edges: true };
   });
@@ -321,7 +322,7 @@ function sideOf(c, S, rects, L) {
     if (d < -TOL || along <= TOL) continue;
     if (!best || along > best.along + TOL || (Math.abs(along - best.along) <= TOL && d < best.d)) best = { side, d, along };
   }
-  return best ? best.side : '+h';
+  return best ? best.side : null;            // a piece touching the room at a point only: a corner, or nothing of the room's
 }
 const HOLES = GEO.openings.map((o, i) => ({ id: (OPENING_KIND[o.kind].door ? 'door ' : 'window ') + (o.label || i), b: o.b }))
   .concat(ROOF.windows.map(w => ({ id: 'roof window ' + w.name, b: [w.x[0], w.x[1], w.y[0], w.y[1]] })));
@@ -335,9 +336,18 @@ function part(id) {
   }
   /* a wall is the room's when it stands on the edge of its floor area; a window or a door frame when it sits in such a wall */
   const isFixture = c => !!c.fixture;
-  const kept = trimmed.filter(c => c.side[1] === 'h' || (isFixture(c)
+  const kept = trimmed.filter(c => c.side && (c.side[1] === 'h' || (isFixture(c)
     ? trimmed.some(w => !isFixture(w) && w.side === c.side && touches(planOf(w.S), R.rects) && within(planOf(c.S), planOf(w.S)))
-    : touches(planOf(c.S), R.rects)));
+    : touches(planOf(c.S), R.rects))));
+  /* a corner piece of a wall, cut off by a door beside it, touches the room at a point only: it is the room's when a kept
+     wall touches it along x and another along y; it faces as the first */
+  const walls0 = kept.filter(c => c.side[1] !== 'h' && !isFixture(c));
+  const meets = (b, w, k) => { const o = 2 * (1 - k); return overlap(b[o], b[o + 1], w[o], w[o + 1]) > TOL && (Math.abs(b[2 * k] - w[2 * k + 1]) <= TOL || Math.abs(b[2 * k + 1] - w[2 * k]) <= TOL); };
+  for (const c of trimmed) {
+    if (c.side || isFixture(c)) continue;
+    const b = planOf(c.S), byX = walls0.find(w => meets(b, planOf(w.S), 0)), byY = walls0.find(w => meets(b, planOf(w.S), 1));
+    if (byX && byY) kept.push(Object.assign(c, { side: byX.side }));
+  }
   /* under the floor and over the room: exactly the room's floor area and the walls kept around it */
   const walls = kept.filter(c => c.side[1] !== 'h').map(c => planOf(c.S));
   /* the room's own rects copied: mergeRects joins them in place */

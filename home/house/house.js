@@ -141,7 +141,7 @@ HOME.data({
     "layers": ["stair"]
    },
    "slab": {"name": "slab with ring beam", "material": "plasterInside", "cap": "concrete", "thickness": 340, "layers": ["slabs"], "walkable": true},
-   "ceiling": {"name": "ceiling with insulation", "material": "plasterInside", "cap": "insulation", "thickness": 390, "layers": ["slabs"]}
+   "ceiling": {"name": "ceiling with insulation", "material": "plasterInside", "cap": "insulation", "thickness": 390, "layers": ["slabs"], "floor": "roof"}
   },
   "elements": [
    {"id": "footingLeft", "kind": "footing", "b": [-1000, 14200, 20, 620, -1320, -920]},
@@ -220,7 +220,7 @@ HOME.data({
    {"id": "gableGarden", "kind": "block240", "b": [200, 440, 440, 8660, 3060, 9000], "top": "roof"},
    {"id": "gableFront", "kind": "block240", "b": [12760, 13000, 440, 8660, 3060, 9000], "top": "roof"},
    {"id": "ceiling", "kind": "ceiling", "b": [3760, 12760, 440, 8660, 5910, 6300], "top": "roof", "cuts": ["chimney"]},
-   {"id": "loftWall", "kind": "block120", "b": [3640, 3760, 440, 8660, 5910, 9000], "top": "roof"},
+   {"id": "loftWall", "kind": "block120", "b": [3640, 3760, 440, 8660, 5910, 9000], "top": "roof", "floor": "roof"},
    {"id": "attic1", "kind": "block120", "b": [3640, 3760, 440, 3910, 3060, 5910], "top": "roof"},
    {"id": "attic2", "kind": "block120", "b": [3640, 3760, 5530, 8660, 3060, 5910], "top": "roof"},
    {"id": "attic3a", "kind": "block120", "b": [4660, 5350, 5530, 5650, 3060, 5910], "top": "roof"},
