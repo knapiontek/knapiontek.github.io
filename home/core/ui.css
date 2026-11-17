@@ -39,11 +39,21 @@ button{font:inherit;color:inherit}
 
 /* the top-left menu: the house, its floors and rooms, over the view */
 .nav{position:absolute;z-index:8;left:max(12px,env(safe-area-inset-left,0px));top:12px;display:inline-flex;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:2px;font:700 13px var(--f-display);letter-spacing:.04em}
-.nav>*{padding:6px 12px;border-radius:6px;color:var(--ink);text-decoration:none}
+.nav>a,.nav>span{padding:6px 12px;border-radius:6px;color:var(--ink);text-decoration:none}
 .nav a:hover{color:var(--accent)}
-.nav [data-on]{background:var(--accent);color:var(--accent-ink)}
+.nav>a[data-on],.nav>span[data-on]{background:var(--accent);color:var(--accent-ink)}
 .nav a[data-on]:hover{color:var(--accent-ink)}
-.nav span:not([data-on]){color:var(--muted);opacity:.55;cursor:default}
+.nav details{position:relative}
+.nav summary{padding:6px 12px;border-radius:6px;cursor:pointer;list-style:none}
+.nav summary::-webkit-details-marker{display:none}
+.nav summary::after{content:" ▾";color:var(--muted)}
+.nav details[data-on]>summary{background:var(--accent);color:var(--accent-ink)}
+.nav details>summary:hover{color:var(--accent)}
+.nav details[data-on]>summary:hover{color:var(--accent-ink)}
+.navlist{position:absolute;left:0;top:calc(100% + 6px);display:grid;min-width:190px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px;box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.navlist a{padding:5px 10px;border-radius:6px;color:var(--ink);text-decoration:none;font-weight:600}
+.navlist a:hover{color:var(--accent)}
+.navlist a[data-on]{background:var(--accent);color:var(--accent-ink)}
 /* the top-right menu: the modes */
 .modes{position:absolute;z-index:6;top:12px;right:max(12px,env(safe-area-inset-right,0px))}
 /* the bottom-right corner: ◐, ☀ and ?, their boxes float over it */
@@ -169,6 +179,7 @@ td.n{font-family:var(--f-mono);color:var(--muted);text-align:right;padding-right
 .chip{display:inline-block;font:600 11px var(--f-display);letter-spacing:.06em;padding:1px 7px;border-radius:99px;margin-right:6px;color:var(--panel)}
 .chip.ok{background:var(--ok)}
 .chip.warn{background:var(--warn)}
+.chip.info{background:var(--muted)}
 .check ul{margin:4px 0 0;padding-left:18px;color:var(--muted);font-size:12px}
 @media (max-width:820px){
   body{overflow:auto}

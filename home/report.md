@@ -16,7 +16,7 @@ What was done in each step: what moved where from the prototype, what changed an
 | plan2d.js | core/plan.js | the name (plan.js was easy to confuse with plan.md); the axis name and the namespace |
 | sheet.js | core/sheet.js + the screen of core/info.js | the formulas' evaluator exported (computed without a browser); the Documents screen (title, warnings, the book, Save XLSX / Restore data) moved here; numbers formatted in one place |
 | ui.js | core/ui.js | loading it touches nothing (the prototype set the panel and the theme on load); **the skeleton of the screen is built here once** (each prototype page had its own copy of the HTML); the modes are fixed: 3D, 2D, Documents, Test; the panel's tabs are given per mode; everything about applications and interfaces is gone (the applications menu, loading implementations, checking dependencies); all texts in English; the 2D zoom and Save SVG go to the bottom menu |
-| ui.css | core/ui.css | the ids of the new skeleton; unused rules removed (the old help button, the house's rooms table: it comes back with the house) |
+| ui.css | core/ui.css | the ids of the new skeleton; unused rules removed (the old help button, the house's rooms table: it comes back with the floor tiles) |
 | load.js | new | the one loader: `HOME.load(path, format, version)`; `HOME.load.file` gives the path of every kind of data file; a data file calls `HOME.data(…)` |
 | tree.js | new | the tree of nodes: paths, places, the settings cascade, the checks |
 | library.js | core/library.js | loads the whole library through load.js; the textures by key |
@@ -48,3 +48,28 @@ One global: everything is `HOME.<module>` (the prototype had `CORE` plus a globa
 1. **library/materials.js** stays in library/: a material is the outside world, not our decision, like a product.
 2. **English everywhere**, numbers too, as the plan says; a translation is made when needed. The cutting list is our own, not a shop's format.
 3. **References between nodes**: a node's field `refs`, a list of paths; tree.js checks that each path is a node. What a ref is for, the node's type says.
+
+## Step 2: the house (house/)
+
+**Result.** house/index.html is the main page; the root index.html forwards to it. The whole house is drawn as in the prototype: the same 420 solids, 3129 pieces and 78 edge sets, the same 11 doors, the same checks (all OK). `?room=` shows a part of the house: one room (`?room=kitchen_6`) or several (`?room=bathroom_7,bathroom_5`); the walls, the floor and the ceiling the camera is beyond hide, so the room is seen from inside. The top-left menu: the house, each floor with its rooms, the bathrooms and the wardrobes. Checked in Node (the model against the prototype's, solid by solid) and in a headless Chrome (every mode, the whole house and parts, with no errors).
+
+| File | From the prototype | What changed |
+|---|---|---|
+| house/house.js | house/house.dat.js | the house is the root node: its settings first (the view: layers, cameras, light, walk, cut, the groups of the menu), then its geometry, then the floors and their rooms as nodes; the axis `h`; every name and note in English; the floor tiles are left for room/tiles.js |
+| house/model.js | house/model.js + house/shell.js + house/verify.js | one module, no interface: the solids unchanged; the rooms from the tree; the part of a room (the prototype's shell) with its box computed from the room's walls and slabs instead of written by hand; the checks |
+| house/index.html | house/index.html | the screen from core; the main page for the whole house and for a part; the furniture's loading through interfaces is gone (the room engine comes next) |
+| index.html | index.html | forwards to house/index.html |
+
+**The rooms.** The rooms are nodes with English ids of the plan: on the ground floor vestibule_1, garage_2, hall_3, living_5, kitchen_6, bathroom_7, boiler_8; in the attic hall_1, bedroom_2, wardrobe_3, wardrobe_4, bathroom_5, bedroom_6, bedroom_7, wardrobe_8. The prototype's salon is three rooms with borders where there is no wall, drawn dash-dot in 2D:
+
+- **kitchen_6** (20.51 m²): x 830 – 7220, y 5450 – 8660: the strip by the right wall from the fixed window 2500/2400 to the wall of the bathroom, with the island and the table;
+- **hall_3** (5.11 m²): from the stair to the vestibule's door and the bathroom's door, y 4350 – 5450 (to 6150 by the bathroom);
+- **living_5** (25.12 m²): the garden side and the left half.
+
+Archon gives 9.67, 5.46 and 35.42 m²; as the plan says, the borders follow the rooms' use and archon's areas are only a reference (Test shows them as information). **To check by the owner** (project.md, To do).
+
+**The part of a room against the prototype's shell**: the same solids for bathroom_7, bathroom_5, wardrobe_4, wardrobe_8 and bedroom_6. wardrobe_3 takes the whole chimney beside it (the prototype's hand-written box cut it in half). The kitchen's part is new: the prototype's covered only the kitchen's strip of the salon.
+
+**Fixed on the way**: the part's floor merged the room's own rectangles in place, so the room's area changed after a part was cut (the prototype copied them by chance).
+
+**Not done in this step, on purpose**: the floor tiles (the Finish tab), with room/tiles.js in the next step, by one mechanism for the house and the rooms.

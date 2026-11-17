@@ -10,7 +10,7 @@ const { hRange, sectionAt, cutBy, rectArea } = HOME.geometry;
 const SIZE = {
   gap: 4200, margin: 1200, side: 1600, head: 600, foot: 1400,          // between the sheets, around them
   hatch: 80, title: 340, titleAt: 200,
-  line: { cut: 14, over: 12, dash: '70 50', clear: '100 80', window: '60 50', hole: '60 60', thin: 10, label: 8, seen: 6 },
+  line: { cut: 14, over: 12, dash: '70 50', clear: '100 80', window: '60 50', hole: '60 60', border: '160 50 20 50', thin: 10, label: 8, seen: 6 },
   clear: { font: 180, inset: 60, down: 260 },
   label: { push: 450, r: 240, font: 130, bar: 200, up: 40, down: 130 },   // fits mm labels of five digits (6000/3460)
   room: { number: 220, name: 150, area: 140, up: 60, nameDown: 180, areaDown: 360 },
@@ -70,6 +70,9 @@ function create(materials) {
         + `<text x="${cy}" y="${cx + R.areaDown}" text-anchor="middle" font-size="${R.area}" fill="#5f6a66">${fmt(area, 2)} m²</text>`;
     }).join('');
   }
+  /* where two rooms meet with no wall between them: a thin dash-dot line, neither a wall (solid) nor what is over the
+     cut (dashed); lines [[x, y], [x, y]] */
+  const borders = (X, lines) => lines.map(([a, b]) => `<line x1="${X + a[1]}" y1="${a[0]}" x2="${X + b[1]}" y2="${b[0]}" stroke="#8a8d88" stroke-width="${S.line.thin}" stroke-dasharray="${S.line.border}"/>`).join('');
   /* the overall sizes of [x1, x2, y1, y2], in mm: the width under x = at, the length on the left */
   function dims(X, [x1, x2, y1, y2], at) {
     const D = S.dim, yb = at + D.off, w = Math.round(y2 - y1), l = Math.round(x2 - x1), xm = (x1 + x2) / 2, xs = X + y1 - D.side, xt = X + y1 - D.sideText;
@@ -93,7 +96,7 @@ function create(materials) {
     });
     return s + '</svg>';
   }
-  return { SIZE, fill, rect, hatches, floorArea, cut, seen, labels, rooms, dims, sheets };
+  return { SIZE, fill, rect, hatches, floorArea, cut, seen, labels, rooms, borders, dims, sheets };
 }
 
 /* the footprint of a solid: its box seen from above */

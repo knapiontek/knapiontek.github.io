@@ -16,7 +16,7 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, with everything tha
 | test.md | the LLM's own file: how to rebuild its automated tests |
 | report.md | what was done in each step, for the owner |
 
-house/ and room/ are written in the next steps (To do); their project.md comes with their code.
+room/ is written in the next steps (To do); its project.md comes with its code. The root index.html only forwards to house/index.html.
 
 ## Dependencies
 
@@ -66,8 +66,8 @@ The library describes only the outside world: what is bought and the materials, 
 
 ## To do
 
-1. **The house** (house/): the house's data with its rooms as nodes (the hall, the living room and the kitchen as three rooms with borders where there is no wall), its settings, its model; the main page with 3D, 2D, Documents and Test; `?room=` draws the chosen part; the root index.html forwards to it.
-2. **The room engine** (room/): the room from the house; tiles and products from the library placed by the room's scene file; the bathroom stands in the house without its cabinet.
+1. **The borders of the open rooms**: the owner checks where the hall, the living room and the kitchen end (house.js, drawn in 2D).
+2. **The room engine** (room/): the room from the house; tiles (the house's floors too) and products from the library placed by the room's scene file; the bathroom stands in the house without its cabinet.
 3. **Cabinets and the rooms as data**, room by room, each compared with the prototype: the kitchen first, then the bathrooms' vanity, then the wardrobes and the bedroom's niche (their data rebuilt as carcasses).
 4. **Documents and the editor**: docs.js with the estimate, our own cutting list and the assembly cards; each room's .docs.js; Test of the Documents against the model; the cabinet editor.
 
@@ -85,7 +85,7 @@ The library describes only the outside world: what is bought and the materials, 
 - Readable: consistent indentation, short functions, one idea per line, names that match the page.
 - **Computing apart from the browser**: a module computes without the browser (no DOM, no WebGL, nothing touched when its file loads); the browser only where nothing else can do it (drawing, the screen, loading the scripts). Tests run in Node first; the browser only for what only it can show.
 - No hidden rules: what is built follows from the data (types, settings), never from names, labels or sizes. No duplicated values or code: what two pages share lives in core.
-- One global, `HOME`: each module of core is `HOME.<file name>`; a data file calls `HOME.data(…)`.
+- One global, `HOME`: each module is `HOME.<file name>` (house/model.js: `HOME.model`), so a module's file name is unique in the project; a data file calls `HOME.data(…)`.
 - Scripts in a page in one order: core/load.js first, then three.js, core, the page's own files.
 - Library versions pinned (three.js r128, SheetJS 0.18.5).
 - No abbreviations a reader has to decode; counters and coordinates may be one letter.

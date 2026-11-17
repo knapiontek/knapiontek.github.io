@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../core/ui.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../core/load.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="../core/geometry.js"></script>
+<script src="../core/surface.js"></script>
+<script src="../core/scene.js"></script>
+<script src="../core/ui.js"></script>
+<script src="../core/plan2d.js"></script>
+<script src="../core/sheet.js"></script>
+<script src="../core/tree.js"></script>
+<script src="../core/library.js"></script>
+<script src="model.js"></script>
+<script>
+/* The main page: the whole house, or a part of it (?room=kitchen_6 or ?room=bathroom_7,bathroom_5) cut out of it, in 3D,
+   2D, Documents and Test. Everything it shows comes from house.js and the library; nothing of this house is written here. */
+(async function () {
+'use strict';
+const { $, el, esc, fmt } = HOME.ui;
+const { prism, hRange, EPS } = HOME.geometry;
+const { piecesOf } = HOME.surface;
+const DEG = 180 / Math.PI;
+
+HOME.ui.screen($('app'), {
+  label: '3D view of the house',
+  help: {
+    '3d': `<p>Turn: left button (from outside about the house's middle, inside about what is in the middle of the view) · move: right · zoom: the wheel (toward the cursor).</p>
+      <p><b>Walk</b>: the arrows walk and turn, A/D a step aside, Shift faster, PgUp/PgDn or a drag look, Space opens the nearest door, Esc ends.</p>
+      <p>A click on a door opens or closes it. Without the roof the highest floor shown is open: its cut is in Layers; a click on its floor picks a room.</p>
+      <p>In a room, the walls and the ceiling between the camera and the room hide.</p>`,
+    '2d': '<p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. Below: zoom and the SVG to print.</p>',
+    documents: '<p>The rooms with their areas, the doors with what is bought for them, the notes. Blue fields may be changed until a reload. Below: the XLSX with its formulas.</p>',
+    test: '<p>The checks of the data and of the model. <b>OK</b>: nothing to correct; <b>i</b>: to know.</p>' },
+  panel: `<section data-tab="layers" data-part="cut"><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv"></span><input id="cut" type="range"></div></section>
+    <section data-tab="layers"><h2>Layers</h2><div class="layers" id="layers"></div></section>`
+});
+
+const [DATA, LIB] = await Promise.all([HOME.load(HOME.load.file.house(), 'house', 1), HOME.library.load()]);
+const MODEL = HOME.model.build(DATA), T = MODEL.T, VIEW = T.setting(DATA, 'view').value;
+const { ROOF, WIDTH, RIDGE_TOP, FLOORS, ROOMS, ROOM, DOORS } = MODEL;
+const level = F => F.offset[2], floorTop = F => level(F) + F.size[2];
+const roomName = r => `${r.node.number}. ${r.node.name}`;
+const MATERIALS = LIB.materials;
+await LIB.loadTextures(Object.values(MATERIALS).flatMap(m => [m.image && m.image.key, m.wood && m.wood.decor]));
+
+/* ================= THE PART SHOWN =================
+   ?room= the ids of the rooms, by commas; none: the whole house */
+const ASKED = (new URLSearchParams(location.search).get('room') || '').split(',').filter(Boolean);
+const PART = ASKED.filter(id => ROOM[id]), WHOLE = !PART.length;
+const PARTS = PART.map(MODEL.part);
+const UNION = WHOLE ? null : [0, 1, 2, 3, 4, 5].map(k => (k % 2 ? Math.max : Math.min)(...PARTS.map(p => p.box[k])));
+$('title').textContent = WHOLE ? DATA.name : PART.map(id => roomName(ROOM[id])).join(', ');
+$('subtitle').textContent = WHOLE ? DATA.source : `${DATA.name} · ${[...new Set(PARTS.map(p => p.floor.name))].join(', ')}`;
+document.title = WHOLE ? 'Home' : PART.map(id => ROOM[id].node.name).join(', ');
+
+/* ================= SOLIDS =================
+   The whole house: every solid, each door turning on its hinge. A part: the solids of its rooms, each wall, floor and
+   ceiling an object of its own (a layer), a window or a door with the wall it sits in. */
+const LAYER = HOME.ui.layerTree(VIEW.layers);
+const OBJECTS = [];                        // the part's objects that hide while the camera is beyond them: {layer, middle, normal}
+const NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+h': [0, 0, 1], '-h': [0, 0, -1] };
+let STILL, LEAVES;                         // the cells that stand still; the doors drawn, each with the layers its leaf gets
+if (WHOLE) {
+  STILL = MODEL.CELLS.concat(MODEL.ROOF_CELLS, MODEL.STAIR_CELLS, MODEL.FIXTURES, MODEL.SITE_CELLS);
+  LEAVES = DOORS.map(d => ({ door: d, layers: [] }));
+} else {
+  STILL = []; LEAVES = [];
+  const seen = new Set(), signature = c => c.element + '|' + c.S.x1 + '|' + c.S.x2 + '|' + c.S.poly.join(' ');   // a wall two rooms share is drawn once
+  for (const p of PARTS) for (const o of p.objects) {
+    const layer = 'object:' + p.room.id + '/' + (o.host || o.id);
+    if (!o.host) {
+      const b = o.cells.map(c => { const ys = c.S.poly.map(q => q[0]), h = hRange(c.S); return [c.S.x1, c.S.x2, Math.min(...ys), Math.max(...ys), ...h]; });
+      const middle = [0, 1, 2].map(k => (Math.min(...b.map(q => q[2 * k])) + Math.max(...b.map(q => q[2 * k + 1]))) / 2);
+      OBJECTS.push({ layer, middle, normal: NORMAL[o.side] });
+    }
+    for (const c of o.cells) if (!seen.has(signature(c))) { seen.add(signature(c)); STILL.push(Object.assign({}, c, { room: p.room.id, layers: c.layers.concat(layer) })); }
+    if (o.leaf && !LEAVES.some(l => l.door === o.leaf)) LEAVES.push({ door: o.leaf, layers: [layer] });
+  }
+}
+const SOLIDS = WHOLE ? MODEL.SOLIDS : STILL;   // what a cut caps and what the walk bumps into
+
+/* ================= SCENE ================= */
+const LIGHT = WHOLE ? VIEW.light : Object.assign({}, VIEW.light, VIEW.light.inside, {
+  sun: Object.assign({}, VIEW.light.sun, VIEW.light.inside.sun), sky: Object.assign({}, VIEW.light.sky, VIEW.light.inside.sky) });
+const BODY = WHOLE ? [[ROOF.x[0], 0, level(FLOORS[0])], [ROOF.x[1], WIDTH, RIDGE_TOP]] : [[UNION[0], UNION[2], UNION[4]], [UNION[1], UNION[3], UNION[5]]];
+const V = HOME.scene.create({ canvas: $('gl'), stage: $('stage'), materials: MATERIALS, textures: LIB.textures, light: LIGHT, edges: VIEW.edges,
+  body: BODY, sunCentre: [0, 1, 2].map(k => (BODY[0][k] + BODY[1][k]) / 2) });
+const PIECES = piecesOf(STILL);
+V.buildMeshes(PIECES); V.buildEdges(PIECES);
+for (const l of LEAVES) {
+  const cells = l.door.cells.map(c => Object.assign({}, c, { layers: c.layers.concat(l.layers) }));
+  l.mover = V.mover({ pieces: piecesOf(cells), at: [l.door.axis[0], l.door.axis[1], 0], axis: [0, 0, 1], angle: l.door.angle * DEG });
+}
+V.addLight(); V.addCaps();
+
+/* ================= STATE, LAYERS, CUT ================= */
+const MODES = ['3d', '2d', 'documents', 'test'], TABS = { '3d': ['layers'], '2d': ['layers'] };
+const STORE = HOME.ui.store('home-house', () => ({ mode: '3d', tab: null, layers: {}, cut: {}, zoom: 1, room: null }), s => MODES.includes(s.mode) && s.layers && s.cut);
+const state = STORE.state, save = STORE.save;
+const { layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers);
+const shown = layers => layers.every(k => !LAYER[k] || layerOn(k));
+let HIDDEN = new Set();                    // the objects of a part the camera is beyond
+const ghost = layers => layers.some(k => HIDDEN.has(k));
+/* the open floor of the whole house: the highest floor shown with the roof off */
+function openFloor() {
+  if (!WHOLE || shown(ROOF.layers)) return null;
+  const on = FLOORS.filter(F => layerOn(F.id));
+  return on.length ? on[on.length - 1] : null;
+}
+const cutRange = F => { const lo = level(F) + VIEW.cutFrom; return [lo, lo + Math.ceil((floorTop(F) - lo) / VIEW.cutStep) * VIEW.cutStep]; };
+function cutHeight() {                     // null: no cut; at the top of its range the cut is off
+  const F = openFloor(); if (!F || V.walk.on) return null;
+  const [lo, hi] = cutRange(F), preset = T.setting(F, 'view.cut');
+  const h = Math.min(hi, Math.max(lo, state.cut[F.id] ?? (preset && preset.from === F ? level(F) + preset.value : hi)));
+  return h >= hi ? null : h;
+}
+function cutPanel() {
+  const F = openFloor(); if (!F) return;
+  const [lo, hi] = cutRange(F), h = cutHeight();
+  Object.assign($('cut'), { min: lo, max: hi, step: VIEW.cutStep, value: h ?? hi });
+  $('cutv').textContent = h === null ? 'off' : `${fmt(h - level(F), 0)} mm over the floor`;
+}
+$('cut').oninput = e => { const F = openFloor(); if (!F) return; state.cut[F.id] = +e.target.value; save(); cutPanel(); apply(); };
+const layersPanel = () => HOME.ui.layersPanel($('layers'), LAYER, VIEW.panel, state.layers, layerOn, setLayer);
+function setLayer(k, on) { state.layers[k] = on; save(); refresh(); }
+function apply() {
+  const h = cutHeight();
+  V.setCut(h); V.showPieces(shown, layerOn, ghost); V.buildCaps(h, SOLIDS, layers => shown(layers) && !ghost(layers)); V.redraw();
+}
+/* a part: the walls, the floor and the ceiling the camera is beyond hide, as it moves */
+const MARGIN = 50;                         // mm beyond an object's middle before it hides
+V.onFrame(() => {
+  if (WHOLE) return false;
+  const c = V.cameraAt(), now = new Set(OBJECTS.filter(o => o.normal.reduce((s, n, k) => s + n * (c[k] - o.middle[k]), 0) >= MARGIN).map(o => o.layer));
+  if (now.size === HIDDEN.size && [...now].every(k => HIDDEN.has(k))) return false;
+  HIDDEN = now; apply(); return true;
+});
+
+/* ================= 3D: cameras, sun, clicks, walk ================= */
+const SUN = HOME.ui.sunStore(VIEW.light.sun);
+const placeSun = () => V.placeSun(SUN.state);
+HOME.ui.sunPanel($('sun'), MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); }, PART.flatMap(id => ROOM[id].rects));
+/* the cameras: the house's and the open floor's; of a part, over it and from two corners, framed by its box */
+function cameras() {
+  if (WHOLE) {
+    const F = openFloor(), own = F && T.setting(F, 'view.cameras');
+    return VIEW.cameras.concat(own && own.from === F ? own.value.map(c => ({ name: c.name, eye: [c.eye[0], c.eye[1], c.eye[2] + level(F)], target: [c.target[0], c.target[1], c.target[2] + level(F)] })) : []);
+  }
+  const EYE = 1600, LOOK = 900;            // mm over the floor: a person's eyes; what they look at
+  const floors = FLOORS.filter(F => PARTS.some(p => p.floor === F));
+  return floors.flatMap(F => {
+    const own = PARTS.filter(p => p.floor === F), [x1, x2, y1, y2] = [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...own.map(p => p.box[k])));
+    const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2, size = Math.max(x2 - x1, y2 - y1), L = level(F);
+    const above = { name: 'Above', eye: [cx, cy + 1, L + 2.4 * size], target: [cx, cy, L] };
+    const corner = { name: 'Corner', eye: [x1 - 0.5 * size, y1 - 0.5 * size, L + EYE + 0.4 * size], target: [cx, cy, L + LOOK] };
+    const opposite = { name: 'Opposite', eye: [x2 + 0.5 * size, y2 + 0.5 * size, L + EYE + 0.4 * size], target: [cx, cy, L + LOOK] };
+    /* rooms on several floors: two views of each floor, named by it */
+    return floors.length === 1 ? [above, corner, opposite] : [Object.assign(corner, { name: F.name }), Object.assign(above, { name: F.name + ' above' })];
+  });
+}
+/* a click: a door opens or closes; on the open floor, its room is picked */
+V.onClick(ray => {
+  if (state.mode !== '3d') return;
+  const m = V.moverAt(ray);
+  if (m) return V.toggle(m);
+  const F = openFloor();
+  if (!F || V.walk.on) return;
+  const h = level(F), t = (h * V.MM - ray.ray.origin.y) / ray.ray.direction.y, cut = cutHeight();
+  if (!(t > 0) || (cut !== null && cut < h)) return;
+  const p = V.root.worldToLocal(ray.ray.at(t, new THREE.Vector3()));
+  const r = ROOMS.find(r => r.floor === F && r.rects.some(q => p.x >= q[0] && p.x <= q[1] && p.y >= q[2] && p.y <= q[3]));
+  state.room = r ? r.id : null; save(); context();
+});
+V.enableNavigation();
+/* the walk stands on the walkable solids and, through a passage (a door), on its floor: the floor runs on through it */
+const PASSAGES = DATA.geometry.openings.filter(o => DATA.geometry.openingKinds[o.kind].passage);
+const PASSAGE_FLOORS = PASSAGES.map(o => ({ S: prism([o.b[0], o.b[1], o.b[2], o.b[3], o.b[4] - 1, o.b[4]]) }));
+const startOf = () => {
+  if (WHOLE) return VIEW.walk.start;
+  const q = ROOM[PART[0]].rects[0];
+  return { x: (q[0] + q[1]) / 2, y: (q[2] + q[3]) / 2, heading: VIEW.walk.start.heading };
+};
+V.enableWalk({ config: Object.assign({}, VIEW.walk, { start: startOf() }), solids: SOLIDS, ground: STILL.filter(c => c.walkable).concat(PASSAGE_FLOORS),
+  startLevel: WHOLE ? level(FLOORS[0]) : level(PARTS[0].floor), pad: $('pad'), canStart: () => state.mode === '3d', onToggle: () => { bottomMenu(); apply(); }, home: () => cameras()[0] });
+/* on a walk, Space: the nearest door within reach, on the walker's floor */
+const DOOR_REACH = 1500;                   // mm from the walker to the middle of a leaf
+window.addEventListener('keydown', e => {
+  if (e.key !== ' ' || !V.walk.on) return;
+  const w = V.walk, near = LEAVES.filter(l => MODEL.floorOf(w.h + 1) === l.door.floor).map(l => [l, Math.hypot(l.door.centre[0] - w.x, l.door.centre[1] - w.y)])
+    .filter(([, r]) => r <= DOOR_REACH).sort((a, b) => a[1] - b[1])[0];
+  if (near) { V.toggle(near[0].mover); e.preventDefault(); }
+});
+
+/* ================= 2D: one sheet per floor (of the part: its floors), the garden at the top ================= */
+const PLAN = HOME.plan2d.create(MATERIALS), PS = PLAN.SIZE;
+const planCut = F => T.setting(F, 'view.plan').value;
+const inside = (b, x, y) => x >= b[0] - EPS && x <= b[1] + EPS && y >= b[2] - EPS && y <= b[3] + EPS;
+/* the stair: a full line under the cut, dashed over it; from the floor above, all of it shows through the hole */
+function planStair(F, X, h, holes) {
+  let s = '';
+  for (const c of MODEL.STAIR_CELLS) {
+    const top = hRange(c.S)[1], ys = c.S.poly.map(p => p[0]), y1 = Math.min(...ys), y2 = Math.max(...ys);
+    const own = top > level(F) && top <= floorTop(F) + EPS, seen = top < h && holes.some(b => inside(b, (c.S.x1 + c.S.x2) / 2, (y1 + y2) / 2));
+    if (!own && !seen) continue;
+    const stroke = top <= h ? `stroke="#5f6a66" stroke-width="${PS.line.cut}"` : `stroke="#8a8d88" stroke-width="${PS.line.over}" stroke-dasharray="${PS.line.dash}"`;
+    s += PLAN.rect(X, c.S.x1, c.S.x2, y1, y2, `fill="none" ${stroke}`);
+  }
+  return s;
+}
+/* under the roof: the clear heights, the roof windows, the stair hole */
+function planUnderRoof(F, X, holes) {
+  const x1 = Math.min(...F.inside.map(q => q[0])), x2 = Math.max(...F.inside.map(q => q[1])), C = PS.clear;
+  let s = '';
+  for (const ch of ROOF.clearHeights) {
+    const d = (level(F) + ch - ROOF.eave) / MODEL.TAN;
+    for (const y of [d, WIDTH - d]) {
+      const left = y < WIDTH / 2;
+      s += `<line x1="${X + y}" y1="${x1}" x2="${X + y}" y2="${x2}" stroke="#8a8d88" stroke-dasharray="${PS.line.clear}" stroke-width="${PS.line.over}"/>`
+        + `<text x="${X + y + (left ? C.inset : -C.inset)}" y="${x1 + C.down}" font-size="${C.font}" fill="#8a8d88" text-anchor="${left ? 'start' : 'end'}">${ch}</text>`;
+    }
+  }
+  for (const w of ROOF.windows) s += PLAN.rect(X, w.x[0], w.x[1], w.y[0], w.y[1], `fill="none" stroke="#3a6f8f" stroke-dasharray="${PS.line.window}" stroke-width="${PS.line.cut}"`);
+  for (const b of holes) s += PLAN.rect(X, b[0], b[1], b[2], b[3], `fill="none" stroke="#a3a7a2" stroke-dasharray="${PS.line.hole}" stroke-width="${PS.line.thin}"`);
+  return s;
+}
+/* the inner doors: the leaf open and its swing, as the drawings show them */
+function planDoors(F, X) {
+  const turn = (p, d) => { const c = Math.cos(d.angle), s = Math.sin(d.angle), dx = p[0] - d.axis[0], dy = p[1] - d.axis[1]; return [d.axis[0] + dx * c - dy * s, d.axis[1] + dx * s + dy * c]; };
+  const at = p => `${X + p[1]},${p[0]}`;
+  let s = '';
+  for (const d of LEAVES.map(l => l.door).filter(d => d.floor === F.id)) {
+    const L = d.cells[0].S, ys = L.poly.map(p => p[0]), y1 = Math.min(...ys), y2 = Math.max(...ys);
+    const leaf = [[L.x1, y1], [L.x2, y1], [L.x2, y2], [L.x1, y2]].map(p => turn(p, d)), open = turn(d.free, d);
+    const r = Math.hypot(d.free[0] - d.axis[0], d.free[1] - d.axis[1]);
+    s += `<polygon points="${leaf.map(at).join(' ')}" fill="#fff" stroke="#5f6a66" stroke-width="${PS.line.thin}"/>`
+      + `<path d="M ${at(d.free)} A ${r} ${r} 0 0 ${d.angle > 0 ? 0 : 1} ${at(open)}" fill="none" stroke="#8a8d88" stroke-width="${PS.line.thin}" stroke-dasharray="${PS.line.dash}"/>`;
+  }
+  return s;
+}
+const roomLabel = r => ({ rects: r.rects, numbers: [r.node.number], name: r.node.name });
+function planSvg() {
+  const floors = WHOLE ? FLOORS : FLOORS.filter(F => PARTS.some(p => p.floor === F));
+  return PLAN.sheets(floors.map(F => {
+    const own = WHOLE ? null : PARTS.filter(p => p.floor === F), rooms = WHOLE ? ROOMS.filter(r => r.floor === F) : own.map(p => p.room);
+    const box = WHOLE ? [0, DATA.geometry.length, 0, WIDTH] : [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...own.map(p => p.box[k])));
+    const solids = WHOLE ? MODEL.SOLIDS.filter(c => c.floor === F.id) : STILL.filter(c => rooms.some(r => r.id === c.room));
+    const borders = MODEL.BORDERS.filter(b => b.floor === F && (WHOLE || b.rooms.some(id => PART.includes(id)))).map(b => b.line);
+    return { extent: WHOLE ? [ROOF.x[0], ROOF.x[1], 0, WIDTH] : box, title: `${F.name} · cut ${planCut(F)} mm`,
+      draw: X => {
+        const h = level(F) + planCut(F), holes = MODEL.voidsAt(level(F));
+        return PLAN.floorArea(X, rooms.flatMap(r => r.rects)) + (WHOLE ? planStair(F, X, h, holes) : '') + PLAN.cut(X, solids, h)
+          + (WHOLE && F === FLOORS[FLOORS.length - 1] ? planUnderRoof(F, X, holes) : '') + planDoors(F, X)
+          + PLAN.labels(X, DATA.geometry.openings, h, MODEL.SIDE, o => MODEL.floorOf((o.b[4] + o.b[5]) / 2) === F.id && (WHOLE || inside(box, (o.b[0] + o.b[1]) / 2, (o.b[2] + o.b[3]) / 2)))
+          + PLAN.borders(X, borders) + PLAN.rooms(X, rooms.map(roomLabel)) + PLAN.dims(X, box, box[1]);
+      } };
+  }));
+}
+const SHEET_2D = HOME.ui.planSheet({ state, save, svg: planSvg, file: WHOLE ? 'house.svg' : PART.join('-') + '.svg' });
+function drawPlan() {
+  SHEET_2D.draw();
+  $('planNote').textContent = `The cut over the floor: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW.planNote}`;
+}
+
+/* ================= DOCUMENTS: the rooms, the doors, the notes ================= */
+let SHEET = null;
+function book() {
+  const shownRooms = WHOLE ? ROOMS : PART.map(id => ROOM[id]);
+  const rooms = { name: 'Rooms', cols: [{ width: 34, share: 2, max: 40 }, { width: 14, digits: 2, fix: 9 }, { width: 14, digits: 2, fix: 9 }, { width: 60, share: 4 }],
+    rows: [{ kind: 'title', cells: [DATA.name] }, { kind: 'head', cells: ['Room', 'Model [m²]', 'Archon [m²]', 'Note'] }] };
+  for (const F of FLOORS) {
+    const list = shownRooms.filter(r => r.floor === F);
+    if (!list.length) continue;
+    rooms.rows.push({ kind: 'cat', cells: [F.name] });
+    const first = rooms.rows.length + 1;
+    for (const r of list) rooms.rows.push({ cells: [roomName(r), MODEL.areaOf(r.rects), r.node.archonArea ?? null, r.node.note || ''] });
+    const last = rooms.rows.length;
+    rooms.rows.push({ kind: 'sum', cells: ['Total', { f: `SUM(B${first}:B${last})` }, { f: `SUM(C${first}:C${last})` }] });
+  }
+  rooms.rows.push({ cells: ['The model at the block faces; archon after plaster.'] });
+  const doors = { name: 'Doors', cols: [{ width: 12, fix: 9 }, { width: 14, share: 1 }, { width: 50, share: 4 }, { width: 10, fix: 7 }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }],
+    rows: [{ kind: 'title', cells: ['Inner doors'] }, { kind: 'head', cells: ['Door', 'Floor', 'Bought', 'Quantity', 'Price [zł]', 'Value [zł]'] }] };
+  const first = doors.rows.length + 1;
+  for (const d of LEAVES.map(l => l.door)) for (const key of [d.product, ...d.extras]) {
+    const r = doors.rows.length + 1, P = key && LIB.product(key);
+    doors.rows.push({ cells: [d.label, FLOORS.find(F => F.id === d.floor).name, P ? P.name : 'to choose', { v: 1, input: true }, P && P.price !== null ? { v: P.price, input: true } : '', { f: `D${r}*E${r}` }] });
+  }
+  doors.rows.push({ kind: 'sum', cells: ['Total', '', '', '', '', { f: `SUM(F${first}:F${doors.rows.length})` }] });
+  const notes = { name: 'Notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [DATA.source] }, { kind: 'head', cells: ['Notes'] }, ...DATA.notes.map(n => ({ cells: [n] }))] };
+  return { sheets: [rooms, doors, notes] };
+}
+function documents() {
+  if (SHEET) return SHEET.set(book());
+  SHEET = HOME.sheet.screen($('documents'), { title: $('title').textContent, subtitle: $('subtitle').textContent, book: book() });
+}
+
+/* ================= TEST ================= */
+const CHECKS = [{ name: 'Every room asked for (?room=) is a room of the house', items: ASKED.filter(id => !ROOM[id]) }]
+  .concat(T.checks(), MODEL.checks(), LIB.checks());
+$('checks').innerHTML = HOME.ui.checksHtml(CHECKS);
+
+/* ================= THE SCREEN =================
+   top-left: the house, its floors and their rooms, the groups of rooms · top-right: the modes · over the view: the floors
+   and the roof, the picked room · below: the mode's actions · the panel: the mode's tabs */
+const linkTo = ids => '?room=' + ids.join(',');
+const same = ids => ids.length === PART.length && ids.every(id => PART.includes(id));
+HOME.ui.nav([{ name: 'House', href: 'index.html', on: WHOLE }]
+  .concat(FLOORS.map(F => ({ name: F.name, on: !WHOLE && PARTS.every(p => p.floor === F),
+    items: ROOMS.filter(r => r.floor === F).map(r => ({ name: roomName(r), href: linkTo([r.id]), on: same([r.id]) })) })))
+  .concat(VIEW.groups.map(g => { const ids = ROOMS.filter(r => r.node.type === g.type).map(r => r.id); return { name: g.name, href: linkTo(ids), on: same(ids) }; })));
+function context() {
+  const box = $('context'); box.innerHTML = '';
+  if (state.mode !== '3d' || !WHOLE) return;
+  HOME.ui.menuRow(box, VIEW.menu.map(k => ({ name: LAYER[k].name, on: layerOn(k), set: on => setLayer(k, on) })));
+  const r = ROOM[state.room], F = openFloor();
+  if (!r || !F || r.floor !== F) return;
+  const tag = el('span', { className: 'roomtag' }, `${esc(roomName(r))} <a class="btnlink" href="${linkTo([r.id])}">Open</a><button aria-label="Unpick">×</button>`);
+  tag.querySelector('button').onclick = () => { state.room = null; save(); context(); };
+  HOME.ui.menuRow(box, [], [tag]);
+}
+function bottomMenu() {
+  const walk = el('button', { className: 'walk', textContent: 'Walk', onclick: () => (V.walk.on ? V.stopWalk() : V.startWalk()) });
+  walk.setAttribute('aria-pressed', V.walk.on);
+  const go = c => ({ name: c.name, go: () => { V.stopWalk(); V.flyTo(c); } });
+  const menus = { '3d': [[walk], cameras().map(go)], '2d': [SHEET_2D.menu], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx')], test: [] };
+  HOME.ui.bottomMenu(menus[state.mode]);
+}
+const panel = () => { state.tab = HOME.ui.panelTabs(TABS[state.mode] || [], state.tab, t => { state.tab = t; save(); panel(); }, p => p === 'cut' && !openFloor()); };
+function refresh() { context(); bottomMenu(); layersPanel(); cutPanel(); panel(); apply(); }
+function setMode(m) {
+  state.mode = m; save();
+  HOME.ui.showMode(MODES, m, setMode);
+  if (m !== '3d') V.stopWalk();
+  if (m === '2d') drawPlan();
+  if (m === 'documents') documents();
+  refresh();
+}
+
+V.start(); placeSun(); V.setCamera(cameras()[0]);
+setMode(state.mode);
+$('loading').hidden = true;
+V.run();
+window.HOUSE_VIEW = { MODEL, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, V, setMode, setLayer, state, planSvg, book,   // for the automated tests
+  get hidden() { return [...HIDDEN]; }, pieces: PIECES.length, edges: V.EDGE_GROUPS.length };
+})().catch(HOME.ui.failed);
+</script>
+</body>
+</html>

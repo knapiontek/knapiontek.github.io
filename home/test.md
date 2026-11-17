@@ -39,3 +39,11 @@ A small tree with a duplicate id, a negative offset, a zero size, an id with a s
 ## Writing into the owner's folder
 
 After every write, compare the owner's files with this copy (sizes from the folder listing, the contents staged back). A staged path used for an earlier write may carry its older content: write each batch from a fresh folder.
+
+## house/ (Node, against the prototype)
+
+The prototype's model in Node (core/geometry.js, core/ui.js with a stub localStorage and document, house.dat.js, model.js, verify.js, apps.dat.js, shell.js) gives the golden: every solid as `element|material|cap|layers|x1|x2|polygon|walkable` (rounded to 0.01 mm), the doors, the checks, the shells. The new model (geometry, tree, house/model.js, house/house.js) must give the same CELLS (244), FIXTURES (137), ROOF_CELLS (14), STAIR_CELLS (16), SITE_CELLS (9) and 11 doors; checks all OK, the areas as information. The parts against the shells (the side `h` written `z`): bathroom_7 = lazienka, bathroom_5 = lazienka5 (but the roof window's name), wardrobe_4, wardrobe_8, bedroom_6 = pokoj6 the same; wardrobe_3 23 cells (the chimney whole). Borders: hall_3|living_5, hall_3|kitchen_6 (two), living_5|kitchen_6 (two).
+
+## house/index.html
+
+Ready when `window.HOUSE_VIEW` exists. The whole house: no errors; 3129 pieces, 78 edge sets, 57 mesh groups, 11 moving parts, the same as the prototype's page; 15 checks, all OK but the areas (i); a door opens (quaternion z −0.707); each mode its view and menu; with the roof off the cut shows 1,500 mm over the attic floor; the walk moves. `?room=kitchen_6`: the kitchen's walls and windows, the ceiling hidden from Above; `?room=bathroom_7,bathroom_5`: two sheets in 2D with 4.83 and 8.22 m², cameras per floor; `?room=…,nothing_9`: Test names nothing_9. Screenshots of 3D and 2D of the house and of the parts look as before.

@@ -107,10 +107,27 @@ function layersPanel(box, LAYER, top, state, layerOn, setLayer) {
   for (const k of top) { add(k, false); for (const c of Object.keys(LAYER).filter(c => LAYER[c].parent === k)) add(c, true); }
 }
 
-/* checks: [{name, items}]: OK when nothing is listed */
-const checksHtml = checks => checks.map(c => `<div class="check"><span class="chip ${c.items.length ? 'warn' : 'ok'}">${c.items.length || 'OK'}</span>${esc(c.name)}${c.items.length ? `<ul>${c.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}</div>`).join('');
+/* checks: [{name, items, info}]: OK when nothing is listed; info: what it lists is to know, not to correct */
+const checksHtml = checks => checks.map(c => `<div class="check"><span class="chip ${c.info ? 'info' : c.items.length ? 'warn' : 'ok'}">${c.info ? 'i' : c.items.length || 'OK'}</span>${esc(c.name)}${c.items.length ? `<ul>${c.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}</div>`).join('');
 
 /* ================= MENUS AND PANEL ================= */
+/* the top-left menu: items [{name, href, on, items}]; an item with items opens a list of them */
+function nav(items) {
+  const box = $('nav'), link = it => it.href ? el('a', { href: it.href, textContent: it.name }) : el('span', { textContent: it.name });
+  box.innerHTML = '';
+  for (const it of items) {
+    let item = link(it);
+    if (it.items) {
+      item = el('details', {}, `<summary>${esc(it.name)}</summary>`);
+      const list = el('div', { className: 'navlist' });
+      for (const sub of it.items) { const a = link(sub); if (sub.on) a.dataset.on = ''; list.append(a); }
+      item.append(list);
+    }
+    if (it.on) item.dataset.on = '';
+    box.append(item);
+  }
+  box.hidden = !items.length;
+}
 /* one row of switches over the view: items [{name, on, set(on), radio}], then elements (a tag, a link) */
 function menuRow(box, items, extra = []) {
   const row = el('div', { className: 'menurow' });
@@ -320,5 +337,5 @@ function autoFit(table, box, cols) {
 }
 
 HOME.ui = { LOCALE, MODES, $, fmt, byId, el, esc, option, store, screen, failed, modeToggle, showMode, layerTree, layerSwitch, layersPanel,
-  checksHtml, menuRow, panelTabs, bottomMenu, sunStore, sunPanel, planSheet, setColumns, autoFit };
+  checksHtml, nav, menuRow, panelTabs, bottomMenu, sunStore, sunPanel, planSheet, setColumns, autoFit };
 })(window.HOME = window.HOME || {});

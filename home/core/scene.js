@@ -150,7 +150,7 @@ function create(opts) {
     for (const { cell, material: key, batch } of batches.values()) {
       const mesh = batch.mesh(material(key)); parent.add(mesh);
       const switchable = cell.finish && key !== cell.raw;   // a finished face shows its bare material while its finish layer is off
-      const g = { mesh, cell, layers: cell.layers, finish: switchable ? { layer: cell.finish, on: material(key), off: material(cell.raw) } : null };
+      const g = { mesh, cell, layers: cell.layers, base: mesh.material, finish: switchable ? { layer: cell.finish, on: material(key), off: material(cell.raw) } : null };
       GROUPS.push(g); made.push(g);
     }
     return made;
@@ -192,7 +192,7 @@ function create(opts) {
   /* the moving part a ray meets first, before anything else drawn and uncut; null when none */
   function moverAt(ray) {
     const meshes = [];
-    root.traverse(o => { if (o.isMesh && visibleChain(o) && !(o.material.transparent && o.material.opacity < 0.5)) meshes.push(o); });
+    root.traverse(o => { if (o.isMesh && visibleChain(o) && o.material !== GHOST && !(o.material.transparent && o.material.opacity < 0.5)) meshes.push(o); });
     const hit = ray.intersectObjects(meshes, false).find(h => CUT.distanceToPoint(h.point) >= 0);
     for (let o = hit && hit.object; o; o = o.parent) if (o.userData.mover) return o.userData.mover;
     return null;
@@ -247,14 +247,18 @@ function create(opts) {
     }
   }
 
-  /* what a layer state shows: faces, finishes, edges */
-  function showPieces(shown, layerOn) {
+  /* what a layer state shows: faces, finishes, edges, ghosts */
+  /* ghost(layers): shown, but drawn as a ghost: not seen, still casting its shadow (a wall in front of the camera) */
+  const GHOST = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
+  function showPieces(shown, layerOn, ghost = () => false) {
     for (const g of GROUPS) {
       g.mesh.visible = shown(g.layers);
-      if (g.finish) g.mesh.material = layerOn(g.finish.layer) ? g.finish.on : g.finish.off;
+      g.mesh.material = g.mesh.visible && ghost(g.layers) ? GHOST : g.finish ? (layerOn(g.finish.layer) ? g.finish.on : g.finish.off) : g.base;
     }
-    for (const g of EDGE_GROUPS) g.mesh.visible = shown(g.layers) && !(g.hideWhen.length && g.hideWhen.every(shown));
+    for (const g of EDGE_GROUPS) g.mesh.visible = shown(g.layers) && !ghost(g.layers) && !(g.hideWhen.length && g.hideWhen.every(shown));
   }
+  /* the camera's place in the house's axes, mm */
+  const cameraAt = () => { const p = root.worldToLocal(camera.position.clone()); return [p.x, p.y, p.z]; };
 
   /* ================= LIGHT AND CAMERA ================= */
   let hemi = null, sun = null;
@@ -356,7 +360,7 @@ function create(opts) {
   const visibleChain = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
   function surfaceAt(ndc) {                // the first drawn, uncut surface along the ray through a screen point
     ray.setFromCamera(ndc, camera);
-    const meshes = []; root.traverse(o => { if (o.isMesh && visibleChain(o)) meshes.push(o); });
+    const meshes = []; root.traverse(o => { if (o.isMesh && visibleChain(o) && o.material !== GHOST) meshes.push(o); });
     const hit = ray.intersectObjects(meshes, false).find(h => CUT.distanceToPoint(h.point) >= 0);
     return hit ? hit.point : null;
   }
@@ -574,7 +578,7 @@ function create(opts) {
   const run = () => requestAnimationFrame(frame);
 
   return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, CUT, CLIP, hash01, canvasTexture, loadImage, material, useMaterial, capMaterial,
-    buildMeshes, removeMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, mover, toggle, moverAt, MOVERS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion,
+    buildMeshes, removeMeshes, buildEdges, showPieces, cameraAt, GROUPS, EDGE_GROUPS, mover, toggle, moverAt, MOVERS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion,
     addCaps, buildCaps, setCut, onClick, enableNavigation, walk, boxes, enableWalk, startWalk, stopWalk, refreshObstacles, stepWalk, onFrame, start, run,
     get hemi() { return hemi; }, get sun() { return sun; } };
 }

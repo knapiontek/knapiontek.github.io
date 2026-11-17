@@ -12,11 +12,11 @@ Shared code for every page. It knows no project: a page hands it the data, and c
 | tree.js | the tree of nodes: a node by its path and the path of a node; a node's place (the sum of the offsets) and box; a setting from the cascade with the node it comes from; the nodes a node refers to; a walk over all nodes; the checks of the tree |
 | geometry.js | exact solids: convex polygons and prisms; clip, subtract, intersect, split, section, volume, overlaps; rectangles |
 | surface.js | the surfaces of solids, ready to draw: welded points, the faces of the solids, the visible pieces (a face covered by another loses that part), finishes on the faces of a host (a room's tiles on the house's walls) |
-| scene.js | the 3D view: renderer, materials, the pieces as triangles batched per material, edges, moving parts (doors and drawers), section caps, light and the sun, camera and flights, navigation, the walk, the loop that draws only after a change |
-| plan2d.js | the 2D plan from the same solids: what the cut meets is filled, what lies under it is seen from above, what is over it dashed; labels of openings and rooms, dimensions, sheets side by side |
+| scene.js | the 3D view: renderer, materials, the pieces as triangles batched per material, edges, ghosts (hidden, still casting their shadow), moving parts (doors and drawers), section caps, light and the sun, camera and flights, navigation, the walk, the loop that draws only after a change |
+| plan2d.js | the 2D plan from the same solids: what the cut meets is filled, what lies under it is seen from above, what is over it dashed; labels of openings and rooms, borders of rooms with no wall between them (dash-dot), dimensions, sheets side by side |
 | sheet.js | the spreadsheet: sheets in tabs, inputs the viewer may change, live formulas, the XLSX with the same formulas; the Documents screen |
 | library.js | the library for a page: the products of every group, the shops, the materials; the textures loaded by key; the checks of the library |
-| ui.js | the screen of every page: its skeleton, the modes (3D, 2D, Documents, Test), the stored state, the layers, the checks, the menus, the panel and its tabs, the corner (◐ light or dark, ☀ the sun, ? help), the 2D sheet, the widths of a table's columns |
+| ui.js | the screen of every page: its skeleton, the modes (3D, 2D, Documents, Test), the stored state, the layers, the checks (OK, faults, or to know), the menus (top left: links and lists of links), the panel and its tabs, the corner (◐ light or dark, ☀ the sun, ? help), the 2D sheet, the widths of a table's columns |
 | ui.css | the look of every page, light and dark |
 | test.html | every module of core on a small tree of boxes: the check of core on its own |
 | test.tree.js | the tree test.html draws |
