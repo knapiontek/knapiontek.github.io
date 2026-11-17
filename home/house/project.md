@@ -49,14 +49,14 @@ The file is the house's root node (core/project.md: the node) with the format, t
 |---|---|
 | split | the height between the ground floor and the attic |
 | length | the house's length |
-| roof | pitch, eave, width, thickness (across the slope), x (its length), faces (the material of each side), cap, cuts, layers, windows (name, label, x, y), windowFrame, clearHeights (the lines drawn under the roof in 2D) |
+| roof | pitch, eave, width, thickness (across the slope), x (its length), faces (the material of each side), cap, cuts, layers, windows (id, name, label, x, y), windowFrame, clearHeights (the lines drawn under the roof in 2D) |
 | kinds | of elements: name, material, cap (the section's colour), thickness (checked), layers; `opened`: openings are cut out of it; `host`: windows and doors sit in it; `walkable`: the walk stands on it; `finish`: the facade layer that switches its finish; `raw`: its bare material; `floor`: the floor layer it belongs to when not the one its height gives (the attic's ceiling: the roof) |
 | elements | the boxes of the analysis: id, kind, `b` [x1, x2, y1, y2, h1, h2]; `top: "roof"`: under both roof planes; `below`: lines it stays under; `cuts`: ids of elements or voids taken out of it; `floor`: as a kind's; `outer`: the side facing the air (−x garden, +x front, −y left, +y right, −h down) |
 | voids | boxes taken out of the elements that name them (the stair void) |
 | openingKinds | what is drawn in an opening: `glazed` (frame, bars, glass; `sill`), `leaf` (a solid leaf), `door` (an inner door of frames.doors), `passage` (the floor runs through) |
-| openings | boxes cut out of every opened element they cross: kind, label (archon's width/height), `b`, outer, cols, transoms, below, leaf; an inner door: `hinge` (the jamb it turns on), `opens` (toward which side), `product` and `extras` (what is bought for it) |
+| openings | boxes cut out of every opened element they cross: id (the kind and the rooms it opens into: `door_hall_3_bathroom_7`, `window_kitchen_6_fixed`), kind, label (archon's width/height), `b`, outer, cols, transoms, below, leaf; an inner door: `hinge` (the jamb it turns on), `opens` (toward which side), `product` and `extras` (what is bought for it) |
 | frames | the frames, bars and glass of windows; `doors` (an inner door's frame, leaf and handle); `leaves` (a gate's and the entrance's leaf, grooves, handle) |
-| finishes | the facade: which material covers which part of an EPS box, by its outer side, a region (x, y, h) and lines; a later rule wins |
+| finishes | the facade: which material covers which part of an EPS box, by its outer side, a region (x, y, h; a missing range or a null end: no limit) and lines; a later rule wins |
 | stair | risers, the tread's thickness, material, layers, walkable, flights (x, y, the first riser, the count) |
 | site | the lawn (rect, h, depth; `aroundBuilding`: it gives way to the house) and the surfaces on it (name, rect, h, material) |
 | part | what a part of the house takes: the element kinds, the fixtures (frames, glass, doors), the roof |
@@ -64,4 +64,4 @@ The file is the house's root node (core/project.md: the node) with the format, t
 
 ## Checks
 
-The tree; every element's thickness by its kind; no two solids share volume (the site, frames and glass included); no floor area without a room; no two rooms overlap; the rooms' areas against archon's (to know, not a fault).
+The tree; every element, opening, roof window and void has its own id; every element's thickness by its kind; no two solids share volume (the site, frames and glass included); no floor area without a room; no two rooms overlap; the rooms' areas against archon's (to know, not a fault).

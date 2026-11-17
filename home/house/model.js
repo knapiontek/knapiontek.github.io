@@ -9,7 +9,7 @@ const { DEG, INF, EPS, SOLID_TOL, ccw, rect2, clipHalf, leftOf, edgesOf, minus2,
   prismIntersect, prismMinus, splitH, subtractAll, overlaps, volume, rectArea, rectMinus, mergeRects } = G;
 
 const byId = list => Object.fromEntries(list.map(e => [e.id, e]));
-const range = r => r || [-INF, INF];
+const range = r => [r && r[0] !== null ? r[0] : -INF, r && r[1] !== null ? r[1] : INF];   // a missing range or end: no limit
 
 /* convex polygons A minus every polygon of B, in turn: convex pieces */
 const polysMinus = (A, B) => B.reduce((pieces, b) => pieces.flatMap(p => G.intersect2(p, b, SOLID_TOL) ? minus2(p, b, SOLID_TOL) : [p]), A);
@@ -324,8 +324,7 @@ function sideOf(c, S, rects, L) {
   }
   return best ? best.side : null;            // a piece touching the room at a point only: a corner, or nothing of the room's
 }
-const HOLES = GEO.openings.map((o, i) => ({ id: (OPENING_KIND[o.kind].door ? 'door ' : 'window ') + (o.label || i), b: o.b }))
-  .concat(ROOF.windows.map(w => ({ id: 'roof window ' + w.name, b: [w.x[0], w.x[1], w.y[0], w.y[1]] })));
+const HOLES = GEO.openings.map(o => ({ id: o.id, b: o.b })).concat(ROOF.windows.map(w => ({ id: w.id, b: [w.x[0], w.x[1], w.y[0], w.y[1]] })));
 /* one room cut out: {room, floor, box, cells, objects: [{id, role, side, host, cells, leaf?}], ceiling} */
 function part(id) {
   const R = ROOM[id], L = level(R.floor), box = partBox(R), B = prism(box);
@@ -362,7 +361,7 @@ function part(id) {
   for (const c of cells) {
     const role = c.side === '-h' ? 'floor' : c.fixture ? (c.element === 'door' ? 'door' : 'window') : c.side === '+h' ? 'ceiling' : 'wall';
     const hosted = role === 'window' || role === 'door', hole = hosted && holding(planOf(c.S));
-    const key = role === 'wall' ? c.element : hosted ? (hole ? hole.id + ' @' + hole.b.slice(0, 4).join(',') : c.element) : role;
+    const key = role === 'wall' ? c.element : hosted ? (hole ? hole.id : c.element) : role;
     if (!objects.has(key)) objects.set(key, { id: key, role, sides: {}, cells: [] });
     const o = objects.get(key); o.cells.push(c); o.sides[c.side] = (o.sides[c.side] || 0) + 1;
   }
@@ -410,7 +409,9 @@ function checks() {
     const common = a.rects.flatMap(p => b.rects.map(q => Math.max(0, overlap(p[0], p[1], q[0], q[1])) * Math.max(0, overlap(p[2], p[3], q[2], q[3])))).reduce((s, v) => s + v, 0);
     if (common > MIN_PATCH) twice.push(`${a.id} × ${b.id}: ${(common / 1e6).toFixed(2)} m²`);
   }
+  const ids = GEO.elements.concat(GEO.openings, ROOF.windows, GEO.voids).map(o => o.id);
   return [
+    { name: 'Every element, opening, roof window and void has its own id', items: ids.filter((id, i) => !id || ids.indexOf(id) !== i).map(id => id || '(no id)') },
     { name: 'Thickness by kind', items: thickness },
     { name: `Solids do not overlap (${all.length} solids)`, items: overlaps(all, MIN_OVERLAP).map(overlapText) },
     { name: 'Floor without a room', items: FLOORS.flatMap(floorLeft) },

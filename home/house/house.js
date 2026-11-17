@@ -81,9 +81,9 @@ HOME.data({
    "cuts": ["chimney"],
    "layers": ["roof"],
    "windows": [
-    {"name": "Bedroom", "label": "940/1400", "x": [1550, 2490], "y": [7820, 8860]},
-    {"name": "Stairs", "label": "940/1400", "x": [6390, 7330], "y": [240, 1280]},
-    {"name": "Bathroom", "label": "940/1400", "x": [6390, 7330], "y": [7820, 8860]}
+    {"id": "roofWindow_bedroom_2", "name": "Bedroom", "label": "940/1400", "x": [1550, 2490], "y": [7820, 8860]},
+    {"id": "roofWindow_hall_1", "name": "Stairs", "label": "940/1400", "x": [6390, 7330], "y": [240, 1280]},
+    {"id": "roofWindow_bathroom_5", "name": "Bathroom", "label": "940/1400", "x": [6390, 7330], "y": [7820, 8860]}
    ],
    "windowFrame": {"width": 70, "frame": [-100, 40], "glass": [5, 15], "material": "frame", "glazing": "glass"},
    "clearHeights": [1400, 2200]
@@ -240,8 +240,8 @@ HOME.data({
    {"id": "attic9", "kind": "block120", "b": [8200, 8320, 5650, 8660, 3060, 5910], "top": "roof"},
    {"id": "attic12", "kind": "block120", "b": [9010, 9130, 440, 5650, 3060, 5910], "top": "roof"},
    {"id": "attic13", "kind": "block120", "b": [9130, 12760, 4410, 4530, 3060, 5910], "top": "roof"},
-   {"id": "balustradeN", "kind": "balustrade", "b": [5470, 6460, 4350, 4390, 3060, 4060]},
-   {"id": "balustradeE", "kind": "balustrade", "b": [6420, 6460, 2730, 4350, 3060, 4060]}
+   {"id": "balustradeHall", "kind": "balustrade", "b": [5470, 6460, 4350, 4390, 3060, 4060]},
+   {"id": "balustradeStair", "kind": "balustrade", "b": [6420, 6460, 2730, 4350, 3060, 4060]}
   ],
   "voids": [{"id": "stairVoid", "name": "stair void", "boxes": [[5470, 6420, 440, 4350, 2720, 3060], [6420, 7370, 440, 2730, 2720, 3060]]}],
   "openingKinds": {
@@ -252,17 +252,39 @@ HOME.data({
    "door": {"passage": true, "door": "inner"}
   },
   "openings": [
-   {"kind": "window", "label": "6000/2400", "b": [0, 440, 1550, 7550, 0, 2400], "outer": "-x", "cols": 4},
-   {"kind": "window", "label": "2000/1000", "b": [7620, 9620, 0, 440, 1100, 2100], "outer": "-y"},
-   {"kind": "window", "label": "2500/2400", "b": [830, 3330, 8660, 9100, 0, 2400], "outer": "+y"},
-   {"kind": "window", "label": "1900/1300", "b": [4720, 6620, 8660, 9100, 1100, 2400], "outer": "+y", "cols": 2},
-   {"kind": "window", "label": "1000/1300", "b": [8030, 9030, 8660, 9100, 1100, 2400], "outer": "+y"},
-   {"kind": "gate", "label": "2750/2250", "b": [12760, 13200, 1150, 3900, 0, 2250], "outer": "+x"},
-   {"kind": "entrance", "label": "1600/2100", "b": [11860, 12300, 4550, 6150, 0, 2100], "outer": "+x", "leaf": 1000},
-   {"kind": "glassDoor", "label": "800/2100", "b": [11860, 12300, 6610, 7410, 0, 2100], "outer": "+x"},
-   {"kind": "door", "label": "870/2050", "b": [10640, 11510, 4110, 4230, 0, 2050], "hinge": "x2", "opens": "+y"},
-   {"kind": "door", "label": "920/2050", "b": [9010, 9250, 4880, 5800, 0, 2050], "hinge": "y1", "opens": "+x"},
+   {"id": "window_living_5", "kind": "window", "label": "6000/2400", "b": [0, 440, 1550, 7550, 0, 2400], "outer": "-x", "cols": 4},
+   {"id": "window_garage_2", "kind": "window", "label": "2000/1000", "b": [7620, 9620, 0, 440, 1100, 2100], "outer": "-y"},
+   {"id": "window_kitchen_6_fixed", "kind": "window", "label": "2500/2400", "b": [830, 3330, 8660, 9100, 0, 2400], "outer": "+y"},
+   {"id": "window_kitchen_6", "kind": "window", "label": "1900/1300", "b": [4720, 6620, 8660, 9100, 1100, 2400], "outer": "+y", "cols": 2},
+   {"id": "window_bathroom_7", "kind": "window", "label": "1000/1300", "b": [8030, 9030, 8660, 9100, 1100, 2400], "outer": "+y"},
+   {"id": "gate_garage_2", "kind": "gate", "label": "2750/2250", "b": [12760, 13200, 1150, 3900, 0, 2250], "outer": "+x"},
    {
+    "id": "entrance_vestibule_1",
+    "kind": "entrance",
+    "label": "1600/2100",
+    "b": [11860, 12300, 4550, 6150, 0, 2100],
+    "outer": "+x",
+    "leaf": 1000
+   },
+   {"id": "glassdoor_boiler_8", "kind": "glassDoor", "label": "800/2100", "b": [11860, 12300, 6610, 7410, 0, 2100], "outer": "+x"},
+   {
+    "id": "door_vestibule_1_garage_2",
+    "kind": "door",
+    "label": "870/2050",
+    "b": [10640, 11510, 4110, 4230, 0, 2050],
+    "hinge": "x2",
+    "opens": "+y"
+   },
+   {
+    "id": "door_vestibule_1_hall_3",
+    "kind": "door",
+    "label": "920/2050",
+    "b": [9010, 9250, 4880, 5800, 0, 2050],
+    "hinge": "y1",
+    "opens": "+x"
+   },
+   {
+    "id": "door_hall_3_bathroom_7",
     "kind": "door",
     "label": "900/2050",
     "b": [7760, 8660, 6150, 6270, 0, 2050],
@@ -271,8 +293,16 @@ HOME.data({
     "product": "porta-hide-wc-80",
     "extras": ["porta-wc-handle-rosette"]
    },
-   {"kind": "door", "label": "920/2050", "b": [10640, 11560, 6150, 6270, 0, 2050], "hinge": "x2", "opens": "-y"},
    {
+    "id": "door_vestibule_1_boiler_8",
+    "kind": "door",
+    "label": "920/2050",
+    "b": [10640, 11560, 6150, 6270, 0, 2050],
+    "hinge": "x2",
+    "opens": "-y"
+   },
+   {
+    "id": "window_bedroom_2",
     "kind": "window",
     "label": "6000/3460",
     "b": [0, 440, 1550, 7550, 3060, 6520],
@@ -281,6 +311,7 @@ HOME.data({
     "below": [{"h": 6520, "y": 4550, "pitch": 1}, {"h": 6520, "y": 4550, "pitch": -1}]
    },
    {
+    "id": "window_bedroom_7",
     "kind": "window",
     "label": "2200/2850",
     "b": [12760, 13200, 1680, 3880, 3060, 5910],
@@ -290,6 +321,7 @@ HOME.data({
     "below": [{"h": 5910, "y": 3880, "pitch": 1}]
    },
    {
+    "id": "window_bedroom_6",
     "kind": "window",
     "label": "2200/2850",
     "b": [12760, 13200, 5220, 7420, 3060, 5910],
@@ -298,8 +330,16 @@ HOME.data({
     "transoms": [3900],
     "below": [{"h": 5910, "y": 5220, "pitch": -1}]
    },
-   {"kind": "door", "label": "890/2050", "b": [5350, 5470, 4590, 5480, 3060, 5110], "hinge": "y1", "opens": "-x"},
    {
+    "id": "door_hall_1_bedroom_2",
+    "kind": "door",
+    "label": "890/2050",
+    "b": [5350, 5470, 4590, 5480, 3060, 5110],
+    "hinge": "y1",
+    "opens": "-x"
+   },
+   {
+    "id": "door_hall_1_bathroom_5",
     "kind": "door",
     "label": "900/2050",
     "b": [6300, 7200, 5530, 5650, 3060, 5110],
@@ -308,11 +348,46 @@ HOME.data({
     "product": "porta-hide-wc-80",
     "extras": ["porta-wc-handle-rosette"]
    },
-   {"kind": "door", "label": "700/2050", "b": [3885, 4585, 3790, 3910, 3060, 5110], "hinge": "x1", "opens": "-y"},
-   {"kind": "door", "label": "700/2050", "b": [3860, 4560, 5530, 5650, 3060, 5110], "hinge": "x1", "opens": "+y"},
-   {"kind": "door", "label": "820/2050", "b": [9010, 9130, 1780, 2600, 3060, 5110], "hinge": "y1", "opens": "+x"},
-   {"kind": "door", "label": "940/2050", "b": [9010, 9130, 3470, 4410, 3060, 5110], "hinge": "y2", "opens": "+x"},
-   {"kind": "door", "label": "900/2050", "b": [9010, 9130, 4570, 5470, 3060, 5110], "hinge": "y1", "opens": "+x"}
+   {
+    "id": "door_bedroom_2_wardrobe_3",
+    "kind": "door",
+    "label": "700/2050",
+    "b": [3885, 4585, 3790, 3910, 3060, 5110],
+    "hinge": "x1",
+    "opens": "-y"
+   },
+   {
+    "id": "door_bedroom_2_wardrobe_4",
+    "kind": "door",
+    "label": "700/2050",
+    "b": [3860, 4560, 5530, 5650, 3060, 5110],
+    "hinge": "x1",
+    "opens": "+y"
+   },
+   {
+    "id": "door_bedroom_7_wardrobe_8",
+    "kind": "door",
+    "label": "820/2050",
+    "b": [9010, 9130, 1780, 2600, 3060, 5110],
+    "hinge": "y1",
+    "opens": "+x"
+   },
+   {
+    "id": "door_hall_1_bedroom_7",
+    "kind": "door",
+    "label": "940/2050",
+    "b": [9010, 9130, 3470, 4410, 3060, 5110],
+    "hinge": "y2",
+    "opens": "+x"
+   },
+   {
+    "id": "door_hall_1_bedroom_6",
+    "kind": "door",
+    "label": "900/2050",
+    "b": [9010, 9130, 4570, 5470, 3060, 5110],
+    "hinge": "y1",
+    "opens": "+x"
+   }
   ],
   "frames": {
    "width": 70,
@@ -349,16 +424,16 @@ HOME.data({
    }
   },
   "finishes": [
-   {"h": [-9990, 0], "material": "plinth"},
-   {"side": "-x", "y": [640, 8460], "h": [0, 9990], "material": "graphite"},
+   {"h": [null, 0], "material": "plinth"},
+   {"side": "-x", "y": [640, 8460], "h": [0, null], "material": "graphite"},
    {"side": "-x", "y": [1550, 7550], "h": [2400, 3060], "material": "woodHorizontal"},
-   {"side": "+x", "y": [640, 8460], "h": [0, 9990], "material": "graphite"},
+   {"side": "+x", "y": [640, 8460], "h": [0, null], "material": "graphite"},
    {"side": "+x", "x": [13000, 13200], "y": [640, 8460], "h": [2250, 3060], "material": "plasterWhite"},
    {
     "side": "+x",
     "x": [13000, 13200],
     "y": [3880, 5220],
-    "h": [3060, 9990],
+    "h": [3060, null],
     "material": "woodVertical",
     "below": [{"h": 5910, "y": 3880, "pitch": 1}, {"h": 5910, "y": 5220, "pitch": -1}]
    },
@@ -369,7 +444,7 @@ HOME.data({
    {"side": "-h", "x": [12100, 13000], "material": "graphite"},
    {"side": "+y", "x": [3330, 9030], "h": [0, 2400], "material": "graphite"},
    {"side": "-y", "x": [1270, 9640], "h": [0, 2400], "material": "graphite"},
-   {"elements": ["chimney"], "h": [7000, 9990], "material": "graphite"}
+   {"elements": ["chimney"], "h": [7000, null], "material": "graphite"}
   ],
   "stair": {
    "risers": 17,
