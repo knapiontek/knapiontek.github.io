@@ -25,7 +25,9 @@ room/         the room engine: makes a room from what it is given (the room from
   ├─ room.js            puts the cabinets, products and tiles together into one room
   ├─ docs.js            turns a room's .docs.js into the Documents (see below)
   ├─ index.html         the cabinet editor: tables, wall elevations with the cabinets
-  ├─ rules.md           how it is built for real, for the builder
+  ├─ cabinets.md        how cabinets are built for real, for the builder   (with cabinets.js)
+  ├─ products.md        how products are fitted: mirror, basin, sink, appliances, lamps, taps   (with products.js)
+  ├─ tiles.md           how tiles are laid   (with tiles.js)
   │
   ├─ kitchen_6.cabinets.js   the rooms' data: JSON wrapped in .js, one room = three files
   ├─ kitchen_6.scene.js      (their roles in the table below)
@@ -74,7 +76,7 @@ The furniture file does not know in which room or at which wall the furniture st
 
 ### Language
 
-- **Whatever can be in English is in English:** the pages, the Documents, all MD files (rules.md too), the names in the code and in the data, the elements' names (`name`).
+- **Whatever can be in English is in English:** the pages, the Documents, all MD files (the builder's rules too), the names in the code and in the data, the elements' names (`name`).
 - **Proper names stay as they are,** because they are not a matter of language: a product's name as the shop gives it (e.g. "Płyta wiórowa laminowana biała 18 mm"; it is what one orders by), and a format a shop imposes (e.g. the shop's cutting-list format, eRozkrój, with its Polish columns).
 - **Translation is done by the LLM when it is needed** (going to the shop, handing the cutting list to the builder); translations are not kept in the project.
 
@@ -92,7 +94,7 @@ The furniture file does not know in which room or at which wall the furniture st
   | the maker's data | the maker | an oven's size, how many hinges a door of a height needs, the hinge's drilling, the sink's cut-out | the library, with the product |
 
   The library speaks only of the outside world (what exists and what the maker states), never of our decisions. Our settings are one cascade along the tree (above); the maker's data is not part of it. Home passes the house's settings down with the room.
-- **Settings are values already decided; rules are how the engine turns the design into concrete values** (pieces, sizes, holes). The rules are in the code of the modules (cabinets.js, tiles.js, products.js) and in words in room/rules.md; the numbers they use are in the settings or in the library.
+- **Settings are values already decided; rules are how the engine turns the design into concrete values** (pieces, sizes, holes). The rules are in the code of the modules and, in words for the builder, in an MD file named after its module: cabinets.md with cabinets.js, products.md with products.js, tiles.md with tiles.js. There is no common rules.md: building a cabinet and hanging a mirror are different crafts. A file that grows too big is split further the same way (e.g. mirrors.md). The numbers the rules use are in the settings or in the library.
 - **A room's settings and choices** (which hinge, which runners, which board) are the designer's decisions: the LLM does not change them without asking. Changes to the house's settings and to the library are agreed too, because they act on every room.
 - **The designer's notes** in the furniture file are written by a person only. The LLM does not change them, does not add to them and takes nothing from them that the code computes; the Documents show them as they are. When something in them is unclear or bears on the design, the LLM asks. Constraints the engine must know (e.g. no carcass by the recuperator's ducts in wardrobe 8) are in the data as geometry, not in the notes.
 - **The Documents are written by the LLM, not by the code alone.** A room's `.docs.js` is written every time for the case at hand, because buying needs judgement (packs, substitutes, shops, leftover boards). Against drifting from the design:
@@ -123,10 +125,10 @@ The furniture file does not know in which room or at which wall the furniture st
   | house/project.md | the house's code, the format of its data and of its settings |
   | room/project.md | the room engine's code and the format of a room's three files: what each field means |
   | core/project.md | the shared code |
-  | room/rules.md | how it is built for real: cabinets, tiles, fitting the products; the same for every room; for the builder |
+  | room/cabinets.md, products.md, tiles.md | how it is built for real, one craft per file, named after its module; the same for every room; for the builder |
   | test.md | how to check the project |
 
-  From the prototype: the carpenter's rules of kitchen/rules.md and wardrobe/rules.md go to room/rules.md (translated), the formats in the sub-projects' project.md to room/project.md; house/rules.md and core/rules.md are not carried over. A particular room's decisions from the prototype (e.g. the recuperator's ducts) are put into the data by the owner, or by the LLM once agreed, as geometry, not into the notes.
+  From the prototype: the carpenter's rules of kitchen/rules.md and wardrobe/rules.md go to room/cabinets.md (translated), the bathroom's fitting rules to products.md and tiles.md, the formats in the sub-projects' project.md to room/project.md; house/rules.md and core/rules.md are not carried over. A particular room's decisions from the prototype (e.g. the recuperator's ducts) are put into the data by the owner, or by the LLM once agreed, as geometry, not into the notes.
 
 ## 2. Order of building
 
@@ -160,15 +162,15 @@ Done when: the house looks and counts as in the prototype, and `?room=` shows an
 ### Step 3: the room engine
 
 - [ ] room/room.js: takes the room and the settings from home, and the room's files; puts the room together.
-- [ ] tiles.js: the room's tiles (and the house's, by one mechanism).
-- [ ] products.js: products and lamps from the library, placed by the room's scene file.
+- [ ] tiles.js and tiles.md: the room's tiles (and the house's, by one mechanism).
+- [ ] products.js and products.md: products and lamps from the library, placed by the room's scene file.
 
 Done when: the prototype's bathroom (tiles, WC, basin, shower, mirror, lamps) stands in home, only still without its cabinet.
 
 ### Step 4: cabinets
 
 - [ ] cabinets.js: the kitchen and the wardrobes from the start (all of the assumptions above).
-- [ ] room/rules.md: how cabinets, tiles and the fitting of products are made (from the prototype, in words, no numbers).
+- [ ] room/cabinets.md: how cabinets are made (from the prototype, in words, no numbers); products.md and tiles.md with step 3.
 - [ ] The bathroom's vanity as an ordinary cabinet from the data.
 
 Done when: the kitchen's cabinets have the same boards and sizes as in the prototype, and the wardrobes look as in the prototype.
@@ -196,24 +198,3 @@ Done when: the whole house with all its rooms in home, Test without errors.
 - [ ] room/index.html: the cabinet editor; opens a room's furniture file from the address (`?room=kitchen_6`, `?room=wardrobe_3`).
 
 Done when: the kitchen's Documents agree with the prototype's Info, and the editor saves data that home draws unchanged.
-
-## 3. Decided
-
-- New project: folder `home/`; old project: `home.proto/`, untouched, the reference for comparisons.
-- Language: whatever can be in English is in English, `name` too; proper names (a product's name, a shop's format) stay as they are; the LLM translates when needed, nothing translated is kept.
-- The page's modes: 3D, 2D, Documents, Test.
-- Engines: house/ (the whole house) and room/ (one room); the rooms' files in room/, the house's data and settings in house/.
-- A room = three files: `<kind>_<number>.cabinets.js`, `.scene.js`, `.docs.js`; a role is named after the module that reads the file.
-- Three kinds of values: the room's settings (the room's files), the house's settings (house/settings.js), the maker's data (the library).
-- The Documents: written by the LLM for the room at hand; docs.js reads them and makes the sheets; Test checks them against the model.
-- The designer's notes: a person only; the LLM asks, never changes them.
-- Coordinates: the house's axes x (along the long side), y (across), h (height); translations only, no rotations, no signs; offsets ≥ 0 from the parent's smallest corner, sizes > 0; a room's origin at the smallest x, y of its floor, h = 0 on its floor; a front is a side of the box (x0, x1, y0, y1).
-- One tree of nodes (id, name, offset, size, settings, children); settings cascade down the tree from the house's settings; the maker's data stays in the library.
-- id: meaningful where the LLM can give one, else random hex; never changed or reused; references by id only; the global identifier is the path; the builder's labels (G1[4]) are computed.
-- Built-in products belong to their cabinet, free-standing ones to the room; tiled surfaces are nodes of the room.
-- core/tree.js: the shared handling of the tree.
-- Step 0 first: the folders and every project.md approved before any code.
-- Every module has its own checks; the Test mode collects them.
-- Every data file has its type and version; the code reads only known versions, Test shows the others; the LLM rewrites files when a format changes, no converters.
-- Performance: the model is built once when the page opens, then only the view changes; still solids of one material joined into one drawn object; doors and drawers apart, moved only on the screen.
-- The editor saves by download (static site); the owner exports and commits; moving the prototype's rooms is done once by the LLM in step 5.
