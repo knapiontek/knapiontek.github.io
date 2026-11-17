@@ -11,9 +11,9 @@ Shared code for every page. It knows no project: a page hands it the data, and c
 | load.js | the one loader of data: a data file by its path from the home folder, checked for its format and version; the path of every kind of data file by its key. The first script of every page |
 | tree.js | the tree of nodes: a node by its path and the path of a node; a node's place (the sum of the offsets) and box; a setting from the cascade with the node it comes from; the nodes a node refers to; a walk over all nodes; the checks of the tree |
 | geometry.js | exact solids: convex polygons and prisms; clip, subtract, intersect, split, section, volume, overlaps; rectangles |
-| mesh.js | solids into what is drawn: welded points, the faces of the solids, the visible pieces (a face covered by another loses that part), finishes on the faces of a host (a room's tiles on the house's walls), triangles batched per material |
-| scene.js | the 3D view: renderer, materials, meshes and edges, moving parts (doors and drawers), section caps, light and the sun, camera and flights, navigation, the walk, the loop that draws only after a change |
-| plan.js | the 2D plan from the same solids: what the cut meets is filled, what lies under it is seen from above, what is over it dashed; labels of openings and rooms, dimensions, sheets side by side |
+| surface.js | the surfaces of solids, ready to draw: welded points, the faces of the solids, the visible pieces (a face covered by another loses that part), finishes on the faces of a host (a room's tiles on the house's walls) |
+| scene.js | the 3D view: renderer, materials, the pieces as triangles batched per material, edges, moving parts (doors and drawers), section caps, light and the sun, camera and flights, navigation, the walk, the loop that draws only after a change |
+| plan2d.js | the 2D plan from the same solids: what the cut meets is filled, what lies under it is seen from above, what is over it dashed; labels of openings and rooms, dimensions, sheets side by side |
 | sheet.js | the spreadsheet: sheets in tabs, inputs the viewer may change, live formulas, the XLSX with the same formulas; the Documents screen |
 | library.js | the library for a page: the products of every group, the shops, the materials; the textures loaded by key; the checks of the library |
 | ui.js | the screen of every page: its skeleton, the modes (3D, 2D, Documents, Test), the stored state, the layers, the checks, the menus, the panel and its tabs, the corner (◐ light or dark, ☀ the sun, ? help), the 2D sheet, the widths of a table's columns |
@@ -25,11 +25,12 @@ Shared code for every page. It knows no project: a page hands it the data, and c
 
 ```
 data file ─► load.js ─► page ─► tree.js ─► the module of each type ─► solids
-solids ─► mesh.js ─► pieces ─► scene.js ─► 3D
-solids ─► plan.js ─► 2D        rows ─► sheet.js ─► Documents, XLSX        checks ─► ui.js ─► Test
+solids ─► surface.js ─► pieces ─► scene.js ─► 3D
+solids ─► plan2d.js ─► 2D        rows ─► sheet.js ─► Documents, XLSX        checks ─► ui.js ─► Test
 ```
 
-- geometry.js and tree.js run without a browser; mesh.js too, except its batches (three.js meshes).
+- **Computed without a browser**: geometry.js, tree.js, surface.js, plan2d.js (the SVG as text), the formulas of sheet.js. They are tested in Node first.
+- **The browser only where nothing else can do it**: load.js (script tags), scene.js (WebGL), the screen of ui.js and of sheet.js, the XLSX download. No file touches the browser when it loads, so every file but load.js loads in Node.
 - Every module is `HOME.<file name>`. The one name outside that rule is `HOME.data`, which every data file calls: it is defined by load.js.
 
 ## Rules

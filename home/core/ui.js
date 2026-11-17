@@ -1,6 +1,6 @@
 /* core/ui.js: the screen of every page: helpers, the stored state, the skeleton of the screen, the modes, the layers,
    the checks, the menus, the panel and its tabs, the corner (◐, ☀, ?), the 2D sheet, the widths of a table's columns.
-   Knows no project. */
+   Knows no project. Touches the browser only when called: loading it changes nothing. */
 (function (HOME) {
 'use strict';
 
@@ -27,6 +27,7 @@ function store(key, fresh, valid) {
    <section data-tab="…">)}. The elements are found by their ids. */
 const MODES = { '3d': '3D', '2d': '2D', documents: 'Documents', test: 'Test' };
 function screen(box, spec) {
+  showPanel(); showTheme();                // before anything is built: the panel and the theme do not flash
   box.className = 'app';
   box.innerHTML = `
   <nav class="nav" id="nav" aria-label="House" hidden></nav>
@@ -135,11 +136,12 @@ function panelTabs(tabs, current, pick, hide = () => false) {
   aside.closest('.app').dataset.ready = '';   // the sections show from now on
   return tab;
 }
-/* » and « on the edge of the stage: the viewer hides or shows the panel; one choice for every page, set the moment this
-   file loads, so the panel does not show and vanish while the model is built */
-const PANEL = store('home-panel', () => ({ open: true }), s => typeof s.open === 'boolean');
-const showPanel = () => document.documentElement.toggleAttribute('data-panel-closed', !PANEL.state.open);
-showPanel();
+/* » and « on the edge of the stage: the viewer hides or shows the panel; one choice for every page */
+let PANEL = null;
+const showPanel = () => {
+  PANEL ||= store('home-panel', () => ({ open: true }), s => typeof s.open === 'boolean');
+  document.documentElement.toggleAttribute('data-panel-closed', !PANEL.state.open);
+};
 function panelToggle(stage) {
   const button = el('button', { className: 'panelbtn' });
   const show = () => {
@@ -166,10 +168,12 @@ function corner(pairs) {
   for (const [b, x] of pairs) b.onclick = () => { const open = x.hidden; close(); x.hidden = !open; b.setAttribute('aria-expanded', open); };
   return close;
 }
-/* light or dark: the system's, until the viewer picks one with ◐; one choice for every page, set the moment this file loads */
-const THEME = store('home-theme', () => ({ mode: null }), s => [null, 'light', 'dark'].includes(s.mode));
-const showTheme = () => { if (THEME.state.mode) document.documentElement.dataset.theme = THEME.state.mode; else delete document.documentElement.dataset.theme; };
-showTheme();
+/* light or dark: the system's, until the viewer picks one with ◐; one choice for every page */
+let THEME = null;
+const showTheme = () => {
+  THEME ||= store('home-theme', () => ({ mode: null }), s => [null, 'light', 'dark'].includes(s.mode));
+  if (THEME.state.mode) document.documentElement.dataset.theme = THEME.state.mode; else delete document.documentElement.dataset.theme;
+};
 function themeButton(button) {
   button.onclick = () => {
     const dark = THEME.state.mode ? THEME.state.mode === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;

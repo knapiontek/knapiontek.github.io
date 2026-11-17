@@ -1,7 +1,7 @@
-/* core/mesh.js: solids into what is drawn: welded points, faces of cells, visible pieces, finishes, batches of
-   triangles per material. Knows no project.
+/* core/surface.js: the surfaces of solids, ready to draw: welded points, the faces of cells, the visible pieces,
+   finishes on a host's faces. Knows no project and no browser.
    A cell is {S, material, layers, edges, ...}; faceMaterial(n, points), if a cell has it, gives the material of a face by
-   its normal (and its corners, mm). Needs core/geometry.js and THREE. */
+   its normal (and its corners, mm). Needs core/geometry.js. */
 (function (HOME) {
 'use strict';
 const { EPS, ccw, edgesOf, intersect2, minus2 } = HOME.geometry;
@@ -24,29 +24,6 @@ function weld(v) {
   const p = [v[0], v[1], v[2]]; p.id = pointCount++; WELD.set(k.join(','), p); return p;
 }
 const noRepeats = P => P.filter((p, i) => p !== P[(i + 1) % P.length]);
-
-/* triangles of convex polygons, batched per (layers, material); uv in mm on the face plane.
-   owner: what a triangle belongs to (a cell), so a pick can name it: mesh.userData.owners[faceIndex] */
-class Batch {
-  constructor() { this.p = []; this.n = []; this.uv = []; this.owners = []; }
-  polygon(points, n, uv, owner) {          // a fan around the centre: no thin triangles from collinear points
-    const c = [0, 1, 2].map(i => points.reduce((s, v) => s + v[i], 0) / points.length);
-    for (let i = 0; i < points.length; i++) this.tri(c, points[i], points[(i + 1) % points.length], n, uv, owner);
-  }
-  tri(a, b, c, n, uv, owner) {
-    if (dot3(cross3(sub3(b, a), sub3(c, a)), n) < 0) [b, c] = [c, b];
-    for (const v of [a, b, c]) { const w = weld(v); this.p.push(...w); this.n.push(...n); this.uv.push(...uv(v)); }
-    this.owners.push(owner);
-  }
-  mesh(mat) {
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
-    g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
-    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
-    const m = new THREE.Mesh(g, mat); m.castShadow = !mat.transparent; m.receiveShadow = true;
-    m.userData.owners = this.owners; return m;
-  }
-}
 
 /* the faces of a cell: the side of every polygon edge and the two ends */
 function cellFaces(c) {
@@ -147,6 +124,6 @@ function finishPieces(pieces, finishes, pick = () => true) {
   return conform(out.filter(f => f.poly.length >= 3));
 }
 
-HOME.mesh = { sub3, dot3, cross3, unit3, WELD_TOL, weld, noRepeats, Batch, cellFaces, visiblePieces, conform, piecesOf, finishPieces,
+HOME.surface = { sub3, dot3, cross3, unit3, WELD_TOL, weld, noRepeats, cellFaces, visiblePieces, conform, piecesOf, finishPieces,
   get pointCount() { return pointCount; } };
 })(window.HOME = window.HOME || {});

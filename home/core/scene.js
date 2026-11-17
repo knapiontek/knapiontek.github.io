@@ -1,15 +1,39 @@
 /* core/scene.js: renderer, materials, meshes and edges of pieces, moving parts, section caps, light, camera, navigation,
    walk, loop. Knows no project: the page hands it a material library, textures, the light, the edges and the body box.
    The model is built in mm (x along, y across, h up) and turned into the scene's metres with y up.
-   Needs core/geometry.js, core/mesh.js, THREE and OrbitControls. */
+   Needs core/geometry.js, core/surface.js, THREE and OrbitControls. */
 (function (HOME) {
 'use strict';
 const { DEG, INF, hRange, cutBy, sectionAt, edgesOf } = HOME.geometry;
-const { dot3, Batch } = HOME.mesh;
+const { sub3, dot3, cross3, weld } = HOME.surface;
 
 /* opts: {canvas, stage, materials (key -> {color, roughness, ...}), textures (key -> {faces: [image], size: [u, v] mm}),
    light, edges, body: [[x, y, h], [x, y, h]], sunCentre: [x, y, h]} */
 const MM = 0.001;                          // the scene is in metres, the model in mm
+
+/* triangles of the pieces' convex polygons, batched per (layers, material) into one three.js mesh; uv in mm on the face
+   plane. owner: what a triangle belongs to (a cell), so a pick can name it: mesh.userData.owners[faceIndex] */
+class Batch {
+  constructor() { this.p = []; this.n = []; this.uv = []; this.owners = []; }
+  polygon(points, n, uv, owner) {          // a fan around the centre: no thin triangles from collinear points
+    const c = [0, 1, 2].map(i => points.reduce((s, v) => s + v[i], 0) / points.length);
+    for (let i = 0; i < points.length; i++) this.tri(c, points[i], points[(i + 1) % points.length], n, uv, owner);
+  }
+  tri(a, b, c, n, uv, owner) {
+    if (dot3(cross3(sub3(b, a), sub3(c, a)), n) < 0) [b, c] = [c, b];
+    for (const v of [a, b, c]) { const w = weld(v); this.p.push(...w); this.n.push(...n); this.uv.push(...uv(v)); }
+    this.owners.push(owner);
+  }
+  mesh(mat) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
+    const m = new THREE.Mesh(g, mat); m.castShadow = !mat.transparent; m.receiveShadow = true;
+    m.userData.owners = this.owners; return m;
+  }
+}
+
 const ease = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 
 function create(opts) {

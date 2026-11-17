@@ -25,13 +25,13 @@ Drawings (this folder, `archon`):
 |---|---|
 | **x**, along the house | 0 = garden outer face → 13200 = front outer face |
 | **y**, across | 0 = left outer face (garage side) → 9100 = right outer face (kitchen and bathroom windows) |
-| **z**, height | 0 = ±0.00 finished ground floor; 3060 attic floor; 8600 ridge (8820 as built, § 14); terrain −320 |
+| **h**, height | 0 = ±0.00 finished ground floor; 3060 attic floor; 8600 ridge (8820 as built, § 14); terrain −320 |
 
 Left and right are as seen when facing the front of the house (the street side), which is also how archon names the elevations. The plans put the garden at the top and the garage on the left.
 
 ## 3. Modelling rules
 
-- **Box.** The only solid is an axis-aligned box, `x1–x2, y1–y2, z1–z2`.
+- **Box.** The only solid is an axis-aligned box, `x1–x2, y1–y2, h1–h2`.
 - **One shape, one box.** A wall of one material and thickness is one box from end to end, through its doors and windows; it is never split around an opening.
 - **Openings** (doors, windows) are boxes subtracted from every wall and EPS box they cross.
 - **Crossings.** Where two walls cross, the load-bearing (thicker) one runs through and the other stops at its faces.
@@ -49,9 +49,9 @@ Left and right are as seen when facing the front of the house (the street side),
 - **Roof check.** The attic plan's dashed 1400 and 2200 clear-height lines lie at y ≈ 650 and 1560. The roof of § 6 puts them at 660 and 1550.
 - **Checked against the plans (pixels):** every outer opening, the walls of § 9 and § 10, the portal wings (1000 at each end) and the vent shaft of § 14 lie where the tables put them, within ±23.
 
-## 5. Levels (z)
+## 5. Levels (h)
 
-| Level | z | Source |
+| Level | h | Source |
 |---|---|---|
 | Footing bottom / top | ≈ −1320 / ≈ −920 | section, measured |
 | Terrain | −320 | printed |
@@ -72,10 +72,10 @@ Left and right are as seen when facing the front of the house (the street side),
 ## 6. Roof
 
 - **Shape.** Dual pitch at 42°, with no eaves on the long sides. The ridge runs along x at y = 4550.
-- **Underside.** z = 3864 + tan 42° · d, where d is the distance from the nearer long outer face (d = y or 9100 − y, up to 4550).
+- **Underside.** h = 3864 + tan 42° · d, where d is the distance from the nearer long outer face (d = y or 9100 − y, up to 4550).
 - **Build-up.** archon: 646 measured vertically (≈ 480 perpendicular): rafters, insulation, battens, ceramic tiles; the roof top is the underside + 646. Modelled 640 perpendicular (§ 14).
 - **Length.** x −1000 → 14200. The roof runs on over both terraces as the portal frame (§ 8.4).
-- **Flat ceiling** at z 5910 wherever the underside is higher, i.e. y 2270 – 6830. Above it is a loft about 1.6 m high. Box: x 3760 – 12760, y 440 – 8660, z 5910 → 6300 (ceiling with insulation), top cut by the roof, minus the chimney. As built, the garden bedroom (x 440 – 3640) has a cathedral ceiling instead (§ 14).
+- **Flat ceiling** at h 5910 wherever the underside is higher, i.e. y 2270 – 6830. Above it is a loft about 1.6 m high. Box: x 3760 – 12760, y 440 – 8660, h 5910 → 6300 (ceiling with insulation), top cut by the roof, minus the chimney. As built, the garden bedroom (x 440 – 3640) has a cathedral ceiling instead (§ 14).
 - **Roof windows, 3 × 940/1400.** 940 along x and 1400 along the slope (1040 in plan). The plan draws ≈ 840 of that, measured in from the knee wall's inner face (the y column below); the full 1040 runs from there out over the knee wall (y 7820 – 8860 and 240 – 1280). The site plan and the elevations confirm the x positions.
 
 | Roof window | x | y (plan) | Slope |
@@ -86,17 +86,17 @@ Left and right are as seen when facing the front of the house (the street side),
 
 ## 7. Construction (in order)
 
-1. **Foundations.** Footings ≈ 600 × 400 (z −1320 → −920), centred under every load-bearing wall: the outer walls (block axis 320 in from the outer face), the entrance wall, the inner block-240 walls (the section shows one 610 wide) and the chimney. The foundation walls (z −920 → 0) are as thick as the walls above. archon gives 41.9 m², which fits ≈ 0.9–1.0 m height along the ≈ 42 m axis of the outer walls. Ground slab ≈ 360 thick (z −360 → 0). Plinth 320 (−320 → 0). Boxes: § 7.1.
-2. **Ground floor walls.** H+H aerated concrete: **240** for the outer and load-bearing walls, **120** for partitions, z 0 → 2720. The outer walls are 440 in total: 240 block plus 200 EPS outside. The block's outer faces are at y 200 / 8900 and x 200 / 13000. Windows and doors sit in the block.
-3. **Slab with ring beam.** Reinforced concrete. One box x 200 – 13000, y 200 – 8900, z 2720 – 3060 (including the attic floor build-up), minus the stair void (§ 10) and the chimney. It also covers the entrance recess.
-4. **Knee walls** (block 240, z 3060 → roof, 1200 high at the inner face) and **gables** (block 240, z 3060 → roof).
+1. **Foundations.** Footings ≈ 600 × 400 (h −1320 → −920), centred under every load-bearing wall: the outer walls (block axis 320 in from the outer face), the entrance wall, the inner block-240 walls (the section shows one 610 wide) and the chimney. The foundation walls (h −920 → 0) are as thick as the walls above. archon gives 41.9 m², which fits ≈ 0.9–1.0 m height along the ≈ 42 m axis of the outer walls. Ground slab ≈ 360 thick (h −360 → 0). Plinth 320 (−320 → 0). Boxes: § 7.1.
+2. **Ground floor walls.** H+H aerated concrete: **240** for the outer and load-bearing walls, **120** for partitions, h 0 → 2720. The outer walls are 440 in total: 240 block plus 200 EPS outside. The block's outer faces are at y 200 / 8900 and x 200 / 13000. Windows and doors sit in the block.
+3. **Slab with ring beam.** Reinforced concrete. One box x 200 – 13000, y 200 – 8900, h 2720 – 3060 (including the attic floor build-up), minus the stair void (§ 10) and the chimney. It also covers the entrance recess.
+4. **Knee walls** (block 240, h 3060 → roof, 1200 high at the inner face) and **gables** (block 240, h 3060 → roof).
 5. **Roof.** Timber truss (6.61 m³), ceramic tiles (swissporTON), VELUX windows, 186.1 m².
 6. **Insulation**, once the roof is on: 200 EPS over the whole building, around the blocks, the slab edge and the window reveals, 215.8 m² of facade. Finish: § 8.5. U-values: walls 0.118, roof 0.12, windows < 0.9 W/(m²·K).
 7. **Services.** As built: heat pump (archon: gas boiler), underfloor heating. One chimney (the living room); no vent shaft and no second stack (§ 14).
 
 ### 7.1 Foundation boxes
 
-Footings z −1320 → −920; foundation walls z −920 → 0; ground slab z −360 → 0. Every block-240 wall of the ground floor stands on a foundation wall and a footing. The chimney stands on the ground slab (from z 0) over a chimney foundation of its own size; its footing reaches 180 past each face like a wall footing, so its edges run on in line with the footings of #2 (x 5650) and #4 (y 4530).
+Footings h −1320 → −920; foundation walls h −920 → 0; ground slab h −360 → 0. Every block-240 wall of the ground floor stands on a foundation wall and a footing. The chimney stands on the ground slab (from h 0) over a chimney foundation of its own size; its footing reaches 180 past each face like a wall footing, so its edges run on in line with the footings of #2 (x 5650) and #4 (y 4530).
 
 | Element | Footing x / y | Foundation wall x / y |
 |---|---|---|
@@ -115,7 +115,7 @@ Ground slab: x 440 – 12760, y 440 – 4110 (garage) and x 440 – 11860, y 411
 
 ## 8. Outer walls
 
-### 8.1 Ground floor blocks (z 0 → 2720)
+### 8.1 Ground floor blocks (h 0 → 2720)
 
 | Element | x | y |
 |---|---|---|
@@ -128,7 +128,7 @@ Ground slab: x 440 – 12760, y 440 – 4110 (garage) and x 440 – 11860, y 411
 
 The entrance recess is open to the outside at x 12300 – 13200, y 4550 – 8460, roofed by the slab.
 
-### 8.2 Attic blocks (z 3060 → roof)
+### 8.2 Attic blocks (h 3060 → roof)
 
 | Element | x | y |
 |---|---|---|
@@ -139,7 +139,7 @@ The entrance recess is open to the outside at x 12300 – 13200, y 4550 – 8460
 
 ### 8.3 EPS 200
 
-| Element | x | y | z |
+| Element | x | y | h |
 |---|---|---|---|
 | left (house and both wings) | −1000 – 14200 | 0 – 200 | −920 → roof |
 | right (house and both wings) | −1000 – 14200 | 8900 – 9100 | −920 → roof |
@@ -155,11 +155,11 @@ The EPS covers every block completely, front, back and sides, including the slab
 
 ### 8.4 Portal (the white frame)
 
-At each end the long walls run on past the gable as wings, 640 wide (EPS 200 + block 240 + EPS 200), z 0 → roof, with the roof over them. The whole frame, front and back, is one width, 640: the wings measured across, the roof measured across the slope (§ 14).
+At each end the long walls run on past the gable as wings, 640 wide (EPS 200 + block 240 + EPS 200), h 0 → roof, with the roof over them. The whole frame, front and back, is one width, 640: the wings measured across, the roof measured across the slope (§ 14).
 
 - **Block**: the long wall's block itself, one box from end to end (§ 8.1, § 8.2, foundation −800 → 14000). No EPS between the house and a wing.
-- **Ring beam** over the wing block, between the two floors: x −800 – 200 and 13000 – 14000, z 2720 – 3060, at y 200 – 440 and 8660 – 8900.
-- **EPS**: the outer face is part of the long EPS box (§ 8.3); the inner face and a cap on the head, all z −920 → roof:
+- **Ring beam** over the wing block, between the two floors: x −800 – 200 and 13000 – 14000, h 2720 – 3060, at y 200 – 440 and 8660 – 8900.
+- **EPS**: the outer face is part of the long EPS box (§ 8.3); the inner face and a cap on the head, all h −920 → roof:
 
 | Wing | inner EPS x | inner EPS y | head EPS x | head EPS y |
 |---|---|---|---|---|
@@ -176,28 +176,28 @@ Read from the elevations (an image, not a dimension). The finish covers the EPS 
 
 | Where (side of the EPS facing the air) | Region | Finish |
 |---|---|---|
-| everywhere | z < 0 | plinth |
+| everywhere | h < 0 | plinth |
 | garden (−x) | y 640 – 8460 | graphite |
-| garden | y 1550 – 7550, z 2400 – 3060 (between the two big windows) | timber, horizontal boards |
+| garden | y 1550 – 7550, h 2400 – 3060 (between the two big windows) | timber, horizontal boards |
 | front (+x) | y 640 – 8460 | graphite |
-| front, face x 13000 – 13200 | y 640 – 8460, z 2250 – 3060 (band over the garage and the recess) | white |
-| front gable | y 3880 – 5220, z ≥ 3060, under the windows' roof lines | timber, vertical boards |
-| entrance wall | y 6150 – 6610 and 7410 – 8460, z 0 – 2720 | timber, vertical boards |
-| recess sides | z 0 – 2720 | graphite |
+| front, face x 13000 – 13200 | y 640 – 8460, h 2250 – 3060 (band over the garage and the recess) | white |
+| front gable | y 3880 – 5220, h ≥ 3060, under the windows' roof lines | timber, vertical boards |
+| entrance wall | y 6150 – 6610 and 7410 – 8460, h 0 – 2720 | timber, vertical boards |
+| recess sides | h 0 – 2720 | graphite |
 | recess soffit, underside | x 12100 – 13000 | graphite |
-| right (+y) | x 3330 – 9030, z 0 – 2400 (around the 1900 and 1000 windows) | graphite |
-| left (−y) | x 1270 – 9640, z 0 – 2400 (garage, up to the 2000 window) | graphite |
-| chimney | z ≥ 7000 | graphite |
+| right (+y) | x 3330 – 9030, h 0 – 2400 (around the 1900 and 1000 windows) | graphite |
+| left (−y) | x 1270 – 9640, h 0 – 2400 (garage, up to the 2000 window) | graphite |
+| chimney | h ≥ 7000 | graphite |
 
 Roof: graphite tiles on top, white underside, ends and eaves.
 
 ## 9. Ground floor
 
-### Inner walls (z 0 → 2720 unless stated)
+### Inner walls (h 0 → 2720 unless stated)
 
 | # | Kind | x | y | Note |
 |---|---|---|---|---|
-| 1 | chimney | 4710 – 5470 | 3590 – 4350 | z 0 → ≈ 9000, on the ground slab over its foundation (§ 7.1), one box through both floors and the roof; face flush with #4 (§ 14) |
+| 1 | chimney | 4710 – 5470 | 3590 – 4350 | h 0 → ≈ 9000, on the ground slab over its foundation (§ 7.1), one box through both floors and the roof; face flush with #4 (§ 14) |
 | 2 | block 240 | 5230 – 5470 | 440 – 3590 | living / garage; block 240 as built, on a foundation wall (§ 7.1, § 14) |
 | 3 | block 120 | 6420 – 6540 | 3200 – 4350 | stair wall |
 | 4 | block 240 | 6540 – 9250 | 4110 – 4350 | garage / hall, load-bearing |
@@ -211,7 +211,7 @@ Roof: graphite tiles on top, white underside, ends and eaves.
 
 ### Openings
 
-| Opening | W/H | In | x | y | z |
+| Opening | W/H | In | x | y | h |
 |---|---|---|---|---|---|
 | window | 6000/2400 | garden | 0 – 440 | 1550 – 7550 | 0 → 2400 |
 | window | 2000/1000 | left | 7620 – 9620 | 0 – 440 | 1100 → 2100 |
@@ -251,7 +251,7 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 
 ## 10. Attic
 
-### Inner walls (block 120: z 3060 → 5910, cut by the roof where it is lower)
+### Inner walls (block 120: h 3060 → 5910, cut by the roof where it is lower)
 
 | # | Kind | x | y |
 |---|---|---|---|
@@ -269,11 +269,11 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 
 ### Openings
 
-| Opening | W/H | In | x | y | z |
+| Opening | W/H | In | x | y | h |
 |---|---|---|---|---|---|
-| window | 6000/3460 | garden gable | 0 – 440 | 1550 – 7550 | 3060 → 6520, top cut parallel to the roof: z = 6520 − tan 42° · \|y − 4550\| |
-| window | 2200/2850 | front gable | 12760 – 13200 | 1680 – 3880 | 3060 → 5910, top sloping: z = 5910 − tan 42° · (3880 − y); transom at 3900 |
-| window | 2200/2850 | front gable | 12760 – 13200 | 5220 – 7420 | 3060 → 5910, top sloping: z = 5910 − tan 42° · (y − 5220); transom at 3900 |
+| window | 6000/3460 | garden gable | 0 – 440 | 1550 – 7550 | 3060 → 6520, top cut parallel to the roof: h = 6520 − tan 42° · \|y − 4550\| |
+| window | 2200/2850 | front gable | 12760 – 13200 | 1680 – 3880 | 3060 → 5910, top sloping: h = 5910 − tan 42° · (3880 − y); transom at 3900 |
+| window | 2200/2850 | front gable | 12760 – 13200 | 5220 – 7420 | 3060 → 5910, top sloping: h = 5910 − tan 42° · (y − 5220); transom at 3900 |
 | door | 890/2050 | #6 | 5350 – 5470 | 4590 – 5480 | 3060 → 5110 |
 | door | 900/2050 | #3 | 6300 – 7200 | 5530 – 5650 | 3060 → 5110 (built; design 6500 – 7400, § 14) |
 | door | 820/2050 | #12 | 9010 – 9130 | 1780 – 2600 | 3060 → 5110 |
@@ -282,7 +282,7 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 
 The front gable windows run floor to ceiling: 2850 is the attic clear height (3060 → 5910, printed in the section), and the front elevation measures them ≈ 3140 → ≈ 5800 (±36). The white band under them ends at the attic floor (3060).
 
-Stair void in the slab: [5470, 440, 6420, 4350] + [6420, 440, 7370, 2730], z 2720 – 3060.
+Stair void in the slab: [5470, 440, 6420, 4350] + [6420, 440, 7370, 2730], h 2720 – 3060.
 
 ### Rooms (floor outline at the block faces)
 
@@ -355,16 +355,16 @@ From the 1900 window's start (x 4720) to wall #5 (x 7220) is 2500. The pier betw
 | Heating | gas boiler, gravity ventilation: vent shaft x 8730 – 9010 / y 5890 – 6150 (ground floor), x 8320 – 9010 / y 5650 – 6260 (attic), second stack on the roof | heat pump: one chimney (living room), no vent shaft, no second stack; the space goes to the hall (ground floor) and room 6 (attic); the attic wall stub #11 (x 8890 – 9010, y 6260 – 6490) is not built |
 | Diagonal wall under the stair (garage) | from (5470, ≈ 2710) to (6420, ≈ 3230) | none: the stair is floating; the garage outline keeps y 2970 as the line to the stair |
 | Roof build-up (§ 6) | 646 vertical (≈ 480 across the slope): top at the outer wall face 4510, ridge 8600 | 640 across the slope (861 vertical), as wide as a portal wing (EPS 200 + block 240 + EPS 200), so the white frame keeps one width; same underside, so the top rises: 4725 at the outer wall face, ridge ≈ 8820, chimney ≈ 180 above it |
-| Garden bedroom ceiling (§ 6) | flat at 5910 over the whole attic | cathedral: open to the roof over x 440 – 3640; the flat ceiling starts at x 3760; a block 120 wall x 3640 – 3760, z 5910 → roof, closes the loft over the rest of the attic |
-| Recess soffit EPS (§ 8.3) | thickness not given (EPS 200 elsewhere) | 470 thick, z 2250 – 2720: its underside is at the garage door head, so the white front band is one horizontal bar over the garage and the recess |
+| Garden bedroom ceiling (§ 6) | flat at 5910 over the whole attic | cathedral: open to the roof over x 440 – 3640; the flat ceiling starts at x 3760; a block 120 wall x 3640 – 3760, h 5910 → roof, closes the loft over the rest of the attic |
+| Recess soffit EPS (§ 8.3) | thickness not given (EPS 200 elsewhere) | 470 thick, h 2250 – 2720: its underside is at the garage door head, so the white front band is one horizontal bar over the garage and the recess |
 
 The showers are fittings and are not in this geometry; only the walls and the door are.
 
 ## 15. Site
 
-Lawn at the terrain level (z −320). The plot runs 4000 beyond the house on each side (site plan). Paved and decked surfaces, measured on the ground floor plan and the site plan:
+Lawn at the terrain level (h −320). The plot runs 4000 beyond the house on each side (site plan). Paved and decked surfaces, measured on the ground floor plan and the site plan:
 
-| Surface | x | y | Top z | Source |
+| Surface | x | y | Top h | Source |
 |---|---|---|---|---|
 | garden terrace, decking beyond the portal | −2500 – −1000 | 300 – 8800 | −20 | plan ≈ −2520, site plan ≈ −2460 |
 | garden terrace under the portal | −1000 – 0 | 640 – 8460 | −20 | printed 1000 |

@@ -1,4 +1,4 @@
-/* core/plan.js: the 2D plan of every view, drawn from the model's own solids. What the cut meets is filled with its
+/* core/plan2d.js: the 2D plan of every view, drawn from the model's own solids. What the cut meets is filled with its
    material's plan colour or hatch; what lies under the cut is seen from above (the higher over the lower), what lies over
    it is dashed; rooms, opening labels and dimensions come from the project's data. Sheets stand side by side. The sheet
    is in mm of the house (plan x = house y, plan y = house x: the garden at the top), so every size of the drawing is in
@@ -115,5 +115,5 @@ function meshShape(mesh, toHouse, glass = false) {
   return { poly: half(pts).concat(half(pts.slice().reverse())), bottom, top, glass };
 }
 
-HOME.plan = { SIZE, create, solidShape, meshShape };
+HOME.plan2d = { SIZE, create, solidShape, meshShape };
 })(window.HOME = window.HOME || {});

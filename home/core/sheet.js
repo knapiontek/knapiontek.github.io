@@ -1,6 +1,6 @@
 /* core/sheet.js: the spreadsheet of Documents: sheets in tabs, input cells the viewer may change (until a reload),
    formulas that follow them, the XLSX with the same formulas live; and the Documents screen (a title, warnings, the book,
-   the bottom menu). Knows no project: a page hands in the book.
+   the bottom menu). Knows no project: a page hands in the book. The formulas are computed without a browser.
 
    book   {sheets: [{name, cols: [{title, width, digits, fix | share, min, max}], rows: [{kind, cells}], node}]}
           width: characters in the XLSX; on screen fix (characters: numbers, codes, units) or share (text: its part of
@@ -224,5 +224,5 @@ const menu = (sheet, file) => [
   { name: 'Save XLSX', go: e => { const b = e.currentTarget, label = b.textContent; sheet().xlsx(file).catch(() => { b.textContent = 'No network: try again'; setTimeout(() => { b.textContent = label; }, 2500); }); } },
   { name: 'Restore data', go: () => sheet().restore() }];
 
-HOME.sheet = { create, xlsx, screen, menu };
+HOME.sheet = { evaluator, create, xlsx, screen, menu };
 })(window.HOME = window.HOME || {});

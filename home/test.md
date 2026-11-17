@@ -10,7 +10,7 @@ Nothing is installed in the repository: the LLM rebuilds the scripts from this f
 - The CDN libraries from npm, served by intercepting the requests: three@0.128.0 (build/three.min.js, examples/js/controls/OrbitControls.js), xlsx@0.18.5 (dist/xlsx.full.min.js). The fonts' CSS answered empty (an aborted request is a console error).
 - WebGL is software (SwiftShader): slow; wait for a state, never for a fixed time. Ignore "GL Driver Message … GPU stall".
 - Errors: every page error and every console error or warning counts.
-- **Without a browser** (Node, a vm context as window): core/geometry.js and core/tree.js run without THREE and DOM.
+- **Without a browser first** (Node, a vm context as window, `HOME.data` replaced by a function that keeps the data): every file of core but load.js loads; the browser only for what it alone can show (WebGL, the screen, downloads).
 
 ## core/test.html
 
@@ -27,6 +27,10 @@ Ready when `window.TEST_VIEW` exists and #loading is hidden. Expect:
 ## The loader (in a page that has core/load.js)
 
 `HOME.load` rejects with the file's name: another format (`core/test.tree.js: tree 1, the code knows cabinets 1`), another version, a missing file (`cannot be loaded`), a file without data (`no data in the file`).
+
+## core in Node
+
+Load geometry, surface, tree, ui, plan2d, sheet, library, scene; read core/test.tree.js and library/materials.js. Expect: the tree's checks with only `outside: x 4200 > 4000`; 48 pieces of the still cells (without the door and the drawers); the 2D plan of test.html (cut at 800: floor, seen, cut, dims) 1689 characters, the same as `TEST_VIEW.planSvg()` in the browser; the evaluator: `ROUNDUP(2*3/4,0)` = 2, `SUM(A1:B1)+'B'!A1` with A1 = 5 an input = 15.
 
 ## core/tree.js (Node)
 

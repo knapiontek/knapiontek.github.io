@@ -15,10 +15,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="geometry.js"></script>
-<script src="mesh.js"></script>
+<script src="surface.js"></script>
 <script src="scene.js"></script>
 <script src="ui.js"></script>
-<script src="plan.js"></script>
+<script src="plan2d.js"></script>
 <script src="sheet.js"></script>
 <script src="tree.js"></script>
 <script src="library.js"></script>
@@ -29,7 +29,7 @@
 'use strict';
 const { $, el } = HOME.ui;
 const { prism, hRange } = HOME.geometry;
-const { piecesOf } = HOME.mesh;
+const { piecesOf } = HOME.surface;
 
 HOME.ui.screen($('app'), {
   label: '3D view of the test tree',
@@ -103,9 +103,9 @@ V.enableWalk({ config: VIEW.walk, solids: STILL, ground: CELLS.filter(c => c.wal
   canStart: () => state.mode === '3d', onToggle: () => { bottomMenu(); apply(); }, home: () => VIEW.cameras[0] });
 
 /* ================= 2D ================= */
-const PLAN = HOME.plan.create(LIB.materials);
+const PLAN = HOME.plan2d.create(LIB.materials);
 function planSvg() {
-  const h = VIEW.plan, below = CELLS.filter(c => hRange(c.S)[1] <= h).map(c => HOME.plan.solidShape(c));
+  const h = VIEW.plan, below = CELLS.filter(c => hRange(c.S)[1] <= h).map(c => HOME.plan2d.solidShape(c));
   return PLAN.sheets([{ extent: [0, SIZE[0], 0, SIZE[1]], title: `Cut at ${h} mm`,
     draw: X => PLAN.floorArea(X, [[0, SIZE[0], 0, SIZE[1]]]) + PLAN.seen(X, below, h) + PLAN.cut(X, CELLS, h) + PLAN.dims(X, [0, SIZE[0], 0, SIZE[1]], SIZE[0]) }]);
 }
@@ -154,7 +154,7 @@ V.start(); placeSun(); V.setCamera(VIEW.cameras[0]);
 setMode(state.mode);
 $('loading').hidden = true;
 V.run();
-window.TEST_VIEW = { T, CELLS, CHECKS, V, setMode, book };   // for the automated tests
+window.TEST_VIEW = { T, CELLS, CHECKS, V, setMode, book, planSvg };   // for the automated tests
 })().catch(HOME.ui.failed);
 </script>
 </body>

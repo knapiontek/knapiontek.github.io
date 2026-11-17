@@ -29,6 +29,7 @@ house/  ──►  room/  ──►  core/, library/
 - Nothing below calls the house back. The house passes a room and its settings down; the room engine passes each node to the module of its type.
 - **Modules** never load anything: they are given their data as arguments. **Pages** load the data and hand it to the modules.
 - core knows no project and no product; library knows no project.
+- One chain for everything drawn: a node ─► the module of its type (house, cabinets, products, tiles) ─► solids ─► core: surface.js ─► scene.js (3D), plan2d.js (2D); the counts ─► sheet.js (Documents).
 
 ## Data
 
@@ -82,6 +83,7 @@ The library describes only the outside world: what is bought and the materials, 
 - **MD files**: for a person, short and general: what each file is for and what it must keep. A project.md describes the files of its own folder and the formats of its data, field by field; no names of functions.
 - **Comments**: short and exact, only where the code does not say it; never repeating the code.
 - Readable: consistent indentation, short functions, one idea per line, names that match the page.
+- **Computing apart from the browser**: a module computes without the browser (no DOM, no WebGL, nothing touched when its file loads); the browser only where nothing else can do it (drawing, the screen, loading the scripts). Tests run in Node first; the browser only for what only it can show.
 - No hidden rules: what is built follows from the data (types, settings), never from names, labels or sizes. No duplicated values or code: what two pages share lives in core.
 - One global, `HOME`: each module of core is `HOME.<file name>`; a data file calls `HOME.data(…)`.
 - Scripts in a page in one order: core/load.js first, then three.js, core, the page's own files.

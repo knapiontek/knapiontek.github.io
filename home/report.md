@@ -11,11 +11,11 @@ What was done in each step: what moved where from the prototype, what changed an
 | File | From the prototype | What changed |
 |---|---|---|
 | geometry.js | core/geometry.js | the height axis is `h` (hRange, centreH, splitH); nothing else |
-| mesh.js | core/mesh.js | only the axis name and the namespace |
+| surface.js | core/mesh.js | the name ("mesh" suggests a computation grid); the three.js batching of triangles moved to scene.js, so it computes without a browser |
 | scene.js | core/scene.js | the axis `h`; **one mechanism for moving parts** (a door turns about its hinge, a drawer slides; a part behind another opens it first, closing closes what is behind), taken from the three copies in the house, the kitchen and the bathroom; parts not fully open stop the walk by themselves |
-| plan.js | core/plan.js | only the axis name and the namespace |
-| sheet.js | core/sheet.js + the screen of core/info.js | the Documents screen (title, warnings, the book, Save XLSX / Restore data) moved here; numbers formatted in one place |
-| ui.js | core/ui.js | **the skeleton of the screen is built here once** (each prototype page had its own copy of the HTML); the modes are fixed: 3D, 2D, Documents, Test; the panel's tabs are given per mode; everything about applications and interfaces is gone (the applications menu, loading implementations, checking dependencies); all texts in English; the 2D zoom and Save SVG go to the bottom menu |
+| plan2d.js | core/plan.js | the name (plan.js was easy to confuse with plan.md); the axis name and the namespace |
+| sheet.js | core/sheet.js + the screen of core/info.js | the formulas' evaluator exported (computed without a browser); the Documents screen (title, warnings, the book, Save XLSX / Restore data) moved here; numbers formatted in one place |
+| ui.js | core/ui.js | loading it touches nothing (the prototype set the panel and the theme on load); **the skeleton of the screen is built here once** (each prototype page had its own copy of the HTML); the modes are fixed: 3D, 2D, Documents, Test; the panel's tabs are given per mode; everything about applications and interfaces is gone (the applications menu, loading implementations, checking dependencies); all texts in English; the 2D zoom and Save SVG go to the bottom menu |
 | ui.css | core/ui.css | the ids of the new skeleton; unused rules removed (the old help button, the house's rooms table: it comes back with the house) |
 | load.js | new | the one loader: `HOME.load(path, format, version)`; `HOME.load.file` gives the path of every kind of data file; a data file calls `HOME.data(…)` |
 | tree.js | new | the tree of nodes: paths, places, the settings cascade, the checks |
@@ -25,6 +25,8 @@ What was done in each step: what moved where from the prototype, what changed an
 Not carried over: core/info.js as a whole. Its shared sheets (the estimate, the cutting list) and the order of the Documents' tabs belong to room/docs.js and move there in the Documents step. core/rules.md is not carried over, as the plan says.
 
 One global: everything is `HOME.<module>` (the prototype had `CORE` plus a global per data file).
+
+**The browser only where nothing else can do it.** Every file of core but load.js loads in Node, and the solids, the surfaces, the tree, the 2D plan and the formulas are computed there: Node computes the same 2D plan of the test tree as the browser, character for character. The rule is in project.md (Code style).
 
 ### library/
 
