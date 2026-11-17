@@ -19,10 +19,11 @@ HOME.data({
     "openings": {"name": "Windows and doors"},
     "stair": {"name": "Stair"},
     "site": {"name": "Site"},
+    "furniture": {"name": "Furniture"},
     "edges": {"name": "Edges"}
    },
    "floors": ["ground", "attic", "roof"],
-   "elements": ["foundation", "walls", "slabs", "insulation", "openings", "stair", "site", "edges"],
+   "elements": ["foundation", "walls", "slabs", "insulation", "openings", "stair", "site", "furniture", "edges"],
    "edges": {"color": "#7d807b", "opacity": 0.45, "layers": ["edges"]},
    "light": {
     "exposure": 0.85,
@@ -548,6 +549,7 @@ HOME.data({
      "size": [6390, 2860, 2720],
      "area": [[0, 6390, 0, 2860]],
      "archonArea": 9.67,
+     "files": ["cabinets", "scene"],
      "note": "The kitchen with the dining area: the island, the table by it and the fixed window by the hob; open to the living room and the hall."
     },
     {

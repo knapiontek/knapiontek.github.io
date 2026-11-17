@@ -171,7 +171,7 @@ function create(opts) {
     const at = part.at || [0, 0, 0], pivot = new THREE.Group(), inner = new THREE.Group();
     pivot.position.set(...at); inner.position.set(-at[0], -at[1], -at[2]); pivot.add(inner); root.add(pivot);
     buildMeshes(part.pieces, inner); buildEdges(part.pieces, inner);
-    const m = Object.assign({}, part, { at, pivot, progress: 0, goal: 0, children: [] });
+    const m = Object.assign({}, part, { at, pivot, inner, progress: 0, goal: 0, children: [] });
     if (m.behind) m.behind.children.push(m);
     pivot.userData.mover = m; MOVERS.push(m);
     return m;

@@ -65,7 +65,7 @@ function screen(box, spec) {
   panelToggle($('stage'));
 }
 /* an error while a page loads shows where the model would be */
-function failed(e) { const l = $('loading'); if (l) { l.hidden = false; l.textContent = 'Error: ' + (e.message || e); } }
+function failed(e) { console.error(e && e.stack || e); const l = $('loading'); if (l) { l.hidden = false; l.textContent = 'Error: ' + (e.message || e); } }
 
 /* ================= MODES ================= */
 /* modes: the ids of MODES the page has; pick(id) on a click of another one */

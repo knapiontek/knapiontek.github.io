@@ -23,6 +23,9 @@
 <script src="../core/tree.js"></script>
 <script src="../core/library.js"></script>
 <script src="model.js"></script>
+<script src="../library/draw.js"></script>
+<script src="../room/cabinets.js"></script>
+<script src="../room/room.js"></script>
 <script>
 /* The main page: the whole house, or a part of it (?room=kitchen_6 or ?room=bathroom_7,bathroom_5) cut out of it, in 3D,
    2D, Documents and Test. Everything it shows comes from house.js and the library; nothing of this house is written here. */
@@ -45,7 +48,8 @@ HOME.ui.screen($('app'), {
     test: '<p>The checks of the data and of the model. <b>OK</b>: nothing to correct; <b>i</b>: to know.</p>' },
   panel: `<section data-tab="layers" data-part="floors"><h2>Floors</h2><div class="layers" id="floors"></div></section>
     <section data-tab="layers" data-part="cut"><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv"></span><input id="cut" type="range"></div></section>
-    <section data-tab="layers"><h2>Elements</h2><div class="layers" id="layers"></div></section>`
+    <section data-tab="layers"><h2>Elements</h2><div class="layers" id="layers"></div></section>
+    <section data-tab="layers" data-part="furniture"><h2>Furniture</h2><div class="layers" id="furniture"></div></section>`
 });
 
 const [DATA, LIB] = await Promise.all([HOME.load(HOME.load.file.house(), 'house', 1), HOME.library.load()]);
@@ -66,10 +70,23 @@ $('title').textContent = WHOLE ? DATA.name : PART.map(id => roomName(ROOM[id])).
 $('subtitle').textContent = WHOLE ? DATA.source : `${DATA.name} · ${[...new Set(PARTS.map(p => p.floor.name))].join(', ')}`;
 document.title = WHOLE ? 'Home' : PART.map(id => ROOM[id].node.name).join(', ');
 
+/* ================= THE ROOMS' FURNITURE =================
+   the rooms shown that have files in room/ (house.js: files): placed by room/room.js; their looks join the library's */
+const FURNISHED = (WHOLE ? ROOMS : PART.map(id => ROOM[id])).filter(r => (r.node.files || []).includes('cabinets'));
+const FURNITURE = await Promise.all(FURNISHED.map(async r => {
+  const [cabinets, scene] = await Promise.all(['cabinets', 'scene'].map(role => HOME.load(HOME.load.file.room(r.id, role), role, 1)));
+  const node = { offset: T.place(r.node), size: r.node.size };
+  return { room: r, prepared: HOME.room.prepare(node, { cabinets, scene }, { products: LIB.groups }) };
+}));
+for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks, { handle: MATERIALS[f.prepared.scene.hardware.handles.default] });
+await LIB.loadTextures(FURNITURE.flatMap(f => f.prepared.textures));
+/* one room with furniture: the furniture's own layers too (its groups and its kinds of parts) */
+const ROOM_LAYERS = !WHOLE && FURNITURE.length === 1 ? HOME.room.layers(FURNITURE[0].prepared) : {};
+
 /* ================= SOLIDS =================
    The whole house: every solid, each door turning on its hinge. A part: the solids of its rooms, each wall, floor and
    ceiling an object of its own (a layer), a window or a door with the wall it sits in. */
-const LAYER = HOME.ui.layerTree(VIEW.layers);
+const LAYER = HOME.ui.layerTree(Object.assign({}, VIEW.layers, ROOM_LAYERS));
 const OBJECTS = [];                        // the part's objects that hide while the camera is beyond them: {layer, middle, normal}
 const NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+h': [0, 0, 1], '-h': [0, 0, -1] };
 let STILL, LEAVES;                         // the cells that stand still; the doors drawn, each with the layers its leaf gets
@@ -90,7 +107,7 @@ if (WHOLE) {
     if (o.leaf && !LEAVES.some(l => l.door === o.leaf)) LEAVES.push({ door: o.leaf, layers: [layer] });
   }
 }
-const SOLIDS = WHOLE ? MODEL.SOLIDS : STILL;   // what a cut caps and what the walk bumps into
+
 
 /* ================= SCENE ================= */
 const LIGHT = WHOLE ? VIEW.light : Object.assign({}, VIEW.light, VIEW.light.inside, {
@@ -98,6 +115,13 @@ const LIGHT = WHOLE ? VIEW.light : Object.assign({}, VIEW.light, VIEW.light.insi
 const BODY = WHOLE ? [[ROOF.x[0], 0, level(FLOORS[0])], [ROOF.x[1], WIDTH, RIDGE_TOP]] : [[UNION[0], UNION[2], UNION[4]], [UNION[1], UNION[3], UNION[5]]];
 const V = HOME.scene.create({ canvas: $('gl'), stage: $('stage'), materials: MATERIALS, textures: LIB.textures, light: LIGHT, edges: VIEW.edges,
   body: BODY, sunCentre: [0, 1, 2].map(k => (BODY[0][k] + BODY[1][k]) / 2) });
+if (!WHOLE) V.renderer.physicallyCorrectLights = true;   // a room: the inside light and the lamps in physical units
+for (const f of FURNITURE) {
+  const own = PARTS.find(p => p.room === f.room), ceilings = own ? own.objects.filter(o => o.role === 'ceiling').map(o => 'object:' + f.room.id + '/' + o.id) : [];
+  f.made = HOME.room.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings });
+  STILL.push(...f.made.STATIC);
+}
+const SOLIDS = WHOLE ? MODEL.SOLIDS.concat(...FURNITURE.map(f => f.made.STATIC)) : STILL;   // what a cut caps and what the walk bumps into
 const PIECES = piecesOf(STILL);
 V.buildMeshes(PIECES); V.buildEdges(PIECES);
 for (const l of LEAVES) {
@@ -112,7 +136,8 @@ const STORE = HOME.ui.store('home-house', () => ({ mode: '3d', tab: null, layers
 const state = STORE.state, save = STORE.save;
 const { layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers);
 const ROOM_VIEW = new Set(WHOLE ? [] : VIEW.floors);   // a room shows whatever the floors are switched to
-const shown = layers => layers.every(k => !LAYER[k] || ROOM_VIEW.has(k) || layerOn(k));
+const HANDLE = 'cup';                      // the handles drawn: cup or bar (each front has both)
+const shown = layers => layers.every(k => k === 'cup' || k === 'bar' ? k === HANDLE : !LAYER[k] || ROOM_VIEW.has(k) || layerOn(k));
 let HIDDEN = new Set();                    // the objects of a part the camera is beyond
 const ghost = layers => layers.some(k => HIDDEN.has(k));
 /* the open floor of the whole house: the highest floor shown with the roof off */
@@ -139,11 +164,14 @@ $('cut').oninput = e => { const F = openFloor(); if (!F) return; state.cut[F.id]
 function layersPanel() {
   HOME.ui.layersPanel($('floors'), LAYER, VIEW.floors, state.layers, layerOn, setLayer);
   HOME.ui.layersPanel($('layers'), LAYER, VIEW.elements, state.layers, layerOn, setLayer);
+  HOME.ui.layersPanel($('furniture'), LAYER, Object.keys(ROOM_LAYERS), state.layers, layerOn, setLayer);
 }
 function setLayer(k, on) { state.layers[k] = on; save(); refresh(); }
 function apply() {
   const h = cutHeight();
-  V.setCut(h); V.showPieces(shown, layerOn, ghost); V.buildCaps(h, SOLIDS, layers => shown(layers) && !ghost(layers)); V.redraw();
+  V.setCut(h); V.showPieces(shown, layerOn, ghost); V.buildCaps(h, SOLIDS, layers => shown(layers) && !ghost(layers));
+  for (const f of FURNITURE) f.made.showDetails(layers => shown(layers) && !ghost(layers));
+  V.redraw();
 }
 /* a part: the walls, the floor and the ceiling the camera is beyond hide, as it moves */
 const MARGIN = 50;                         // mm beyond an object's middle before it hides
@@ -156,7 +184,7 @@ V.onFrame(() => {
 
 /* ================= 3D: cameras, sun, clicks, walk ================= */
 const SUN = HOME.ui.sunStore(VIEW.light);
-const placeSun = () => V.placeSun(SUN.state);
+const placeSun = () => { V.placeSun(SUN.state); for (const f of FURNITURE) f.made.night(!!SUN.state.night); };
 HOME.ui.sunPanel($('sun'), MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); }, PART.flatMap(id => ROOM[id].rects));
 /* the cameras: the house's and the open floor's; of a part, over it and from two corners, framed by its box */
 function cameras() {
@@ -164,6 +192,8 @@ function cameras() {
     const F = openFloor(), own = F && T.setting(F, 'view.cameras');
     return VIEW.cameras.concat(own && own.from === F ? own.value.map(c => ({ name: c.name, eye: [c.eye[0], c.eye[1], c.eye[2] + level(F)], target: [c.target[0], c.target[1], c.target[2] + level(F)] })) : []);
   }
+  const own = PART.length === 1 && FURNITURE.find(f => f.room.id === PART[0]);   // a room's own cameras (its scene)
+  if (own && own.prepared.scene.cameras) return own.prepared.scene.cameras;
   const EYE = 1600, LOOK = 900;            // mm over the floor: a person's eyes; what they look at
   const floors = FLOORS.filter(F => PARTS.some(p => p.floor === F));
   return floors.flatMap(F => {
@@ -263,10 +293,12 @@ function planSvg() {
     const box = WHOLE ? [0, DATA.geometry.length, 0, WIDTH] : [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...own.map(p => p.box[k])));
     const solids = WHOLE ? MODEL.SOLIDS.filter(c => c.floor === F.id) : STILL.filter(c => rooms.some(r => r.id === c.room));
     const borders = MODEL.BORDERS.filter(b => b.floor === F && (WHOLE || b.rooms.some(id => PART.includes(id)))).map(b => b.line);
+    const furniture = FURNITURE.filter(f => f.room.floor === F).map(f => f.made.plan());
     return { extent: WHOLE ? [ROOF.x[0], ROOF.x[1], 0, WIDTH] : box, title: `${F.name} · cut ${planCut(F)} mm`,
       draw: X => {
         const h = level(F) + planCut(F), holes = MODEL.voidsAt(level(F));
         return PLAN.floorArea(X, rooms.flatMap(r => r.rects)) + (WHOLE ? planStair(F, X, h, holes) : '') + PLAN.cut(X, solids, h)
+          + furniture.map(p => PLAN.seen(X, p.shapes, h) + PLAN.cut(X, p.cells, h, c => !c.layers.includes('holes'))).join('')
           + (WHOLE && F === FLOORS[FLOORS.length - 1] ? planUnderRoof(F, X, holes) : '') + planDoors(F, X)
           + PLAN.labels(X, DATA.geometry.openings, h, MODEL.SIDE, o => MODEL.floorOf((o.b[4] + o.b[5]) / 2) === F.id && (WHOLE || inside(box, (o.b[0] + o.b[1]) / 2, (o.b[2] + o.b[3]) / 2)))
           + PLAN.borders(X, borders) + PLAN.rooms(X, rooms.map(roomLabel)) + PLAN.dims(X, box, box[1]);
@@ -313,7 +345,7 @@ function documents() {
 
 /* ================= TEST ================= */
 const CHECKS = [{ name: 'Every room asked for (?room=) is a room of the house', items: ASKED.filter(id => !ROOM[id]) }]
-  .concat(T.checks(), MODEL.checks(), LIB.checks());
+  .concat(T.checks(), MODEL.checks(), LIB.checks(), ...FURNITURE.map(f => f.made.checks().map(c => Object.assign(c, { name: f.room.id + ' · ' + c.name }))));
 $('checks').innerHTML = HOME.ui.checksHtml(CHECKS);
 
 /* ================= THE SCREEN =================
@@ -340,7 +372,7 @@ function bottomMenu() {
   const menus = { '3d': [[walk], cameras().map(go)], '2d': [SHEET_2D.menu], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx')], test: [] };
   HOME.ui.bottomMenu(menus[state.mode]);
 }
-const panel = () => { state.tab = HOME.ui.panelTabs(TABS[state.mode] || [], state.tab, t => { state.tab = t; save(); panel(); }, p => (p === 'cut' && !openFloor()) || (p === 'floors' && !WHOLE)); };
+const panel = () => { state.tab = HOME.ui.panelTabs(TABS[state.mode] || [], state.tab, t => { state.tab = t; save(); panel(); }, p => (p === 'cut' && !openFloor()) || (p === 'floors' && !WHOLE) || (p === 'furniture' && !Object.keys(ROOM_LAYERS).length)); };
 function refresh() { context(); bottomMenu(); layersPanel(); cutPanel(); panel(); apply(); }
 function setMode(m) {
   state.mode = m; save();
@@ -355,7 +387,7 @@ V.start(); placeSun(); V.setCamera(cameras()[0]);
 setMode(state.mode);
 $('loading').hidden = true;
 V.run();
-window.HOUSE_VIEW = { MODEL, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, V, setMode, setLayer, state, planSvg, book,   // for the automated tests
+window.HOUSE_VIEW = { MODEL, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, FURNITURE, V, setMode, setLayer, state, planSvg, book,   // for the automated tests
   get hidden() { return [...HIDDEN]; }, pieces: PIECES.length, edges: V.EDGE_GROUPS.length };
 })().catch(HOME.ui.failed);
 </script>
