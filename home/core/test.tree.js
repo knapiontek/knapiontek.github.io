@@ -35,7 +35,7 @@ HOME.data({"format": "tree", "version": 1,
     {"id": "top", "name": "Top", "type": "box", "offset": [18, 18, 882], "size": [1164, 600, 18]},
     {"id": "door", "name": "Door", "type": "door", "offset": [0, 0, 0], "size": [597, 18, 900], "settings": {"material": "oakFront", "hinge": "x0"}},
     {"id": "drawer", "name": "Drawer front", "type": "drawer", "offset": [603, 0, 600], "size": [597, 18, 300], "settings": {"material": "oakFront"}},
-    {"id": "a3f9c2", "name": "Drawer front", "type": "drawer", "offset": [603, 0, 0], "size": [597, 18, 597], "settings": {"material": "oakFront"}}
+    {"id": "a3f9c2", "name": "Drawer front", "type": "drawer", "offset": [603, 0, 0], "size": [597, 18, 597], "settings": {"material": "oakFront"}, "refs": ["cabinet/bottom"]}
    ]},
   {"id": "outside", "name": "Out of its parent", "type": "box", "offset": [3800, 100, 100], "size": [400, 400, 400]}
  ]

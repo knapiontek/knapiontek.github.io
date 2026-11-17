@@ -35,3 +35,7 @@ Load geometry, surface, tree, ui, plan2d, sheet, library, scene; read core/test.
 ## core/tree.js (Node)
 
 A small tree with a duplicate id, a negative offset, a zero size, an id with a space, a node outside its parent, a node without type and size, a ref to no node and refs that are not a list: each check names exactly its node; `place` sums the offsets; `setting` finds the nearest node with the key (a nested key too) and returns it as `from`; a missing key gives undefined.
+
+## Writing into the owner's folder
+
+After every write, compare the owner's files with this copy (sizes from the folder listing, the contents staged back). A staged path used for an earlier write may carry its older content: write each batch from a fresh folder.

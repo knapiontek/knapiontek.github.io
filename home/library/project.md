@@ -2,7 +2,7 @@
 
 > **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done.
 
-What is bought, once for the whole house: products, boards, tiles, appliances, hardware, fasteners, sanitary ware, building materials and services, with the shops. A product is described as the shop and the maker give it: what it is, its sizes, its price and where it comes from. Nothing of how we use it (that is a node's settings) and nothing of how it is drawn (that is the code that draws it). Data only.
+The outside world, once for the whole house: what is bought (products, boards, tiles, appliances, hardware, fasteners, sanitary ware, building materials and services, with the shops) and the materials (plaster, glass, lawn, a decor), none of it our decision. A product is described as the shop and the maker give it: what it is, its sizes, its price and where it comes from. Nothing of how we use it (that is a node's settings) and nothing of how it is drawn (that is the code that draws it). Data only.
 
 - A set that works only together (a hinge with its mounting plate) is one product, with one price.
 - A room names a product by its key; nothing of the product is repeated in a room.
