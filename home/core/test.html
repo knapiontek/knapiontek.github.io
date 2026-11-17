@@ -94,7 +94,7 @@ function apply() {
 }
 
 /* ================= 3D: cameras, sun, clicks, walk ================= */
-const SUN = HOME.ui.sunStore(VIEW.light.sun);
+const SUN = HOME.ui.sunStore(VIEW.light);
 const placeSun = () => V.placeSun(SUN.state);
 HOME.ui.sunPanel($('sun'), [[0, SIZE[0], 0, SIZE[1]]], SUN.state, () => { SUN.save(); placeSun(); });
 V.onClick(ray => { if (state.mode !== '3d') return; const m = V.moverAt(ray); if (m) V.toggle(m); });

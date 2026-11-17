@@ -73,3 +73,7 @@ Archon gives 9.67, 5.46 and 35.42 m²; as the plan says, the borders follow the 
 **Fixed on the way**: the part's floor merged the room's own rectangles in place, so the room's area changed after a part was cut (the prototype copied them by chance).
 
 **Not done in this step, on purpose**: the floor tiles (the Finish tab), with room/tiles.js in the next step, by one mechanism for the house and the rooms.
+
+**After the owner's review** (17 Nov):
+- **The light is soft by default**: the ☀ panel has Clouds; they weaken the sun, strengthen the sky and blur the shadows (house.js, `light.clouds`: 70% by default). The shadows' kind changed so that they can be blurred.
+- **No groups in the menu** (Bathrooms, Wardrobes): one room at a time. How a room is chosen and shown is to be decided (the menu, the cut of a part).

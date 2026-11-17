@@ -149,7 +149,7 @@ V.onFrame(() => {
 });
 
 /* ================= 3D: cameras, sun, clicks, walk ================= */
-const SUN = HOME.ui.sunStore(VIEW.light.sun);
+const SUN = HOME.ui.sunStore(VIEW.light);
 const placeSun = () => V.placeSun(SUN.state);
 HOME.ui.sunPanel($('sun'), MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); }, PART.flatMap(id => ROOM[id].rects));
 /* the cameras: the house's and the open floor's; of a part, over it and from two corners, framed by its box */
@@ -311,14 +311,13 @@ const CHECKS = [{ name: 'Every room asked for (?room=) is a room of the house', 
 $('checks').innerHTML = HOME.ui.checksHtml(CHECKS);
 
 /* ================= THE SCREEN =================
-   top-left: the house, its floors and their rooms, the groups of rooms · top-right: the modes · over the view: the floors
+   top-left: the house, its floors and their rooms · top-right: the modes · over the view: the floors
    and the roof, the picked room · below: the mode's actions · the panel: the mode's tabs */
 const linkTo = ids => '?room=' + ids.join(',');
 const same = ids => ids.length === PART.length && ids.every(id => PART.includes(id));
 HOME.ui.nav([{ name: 'House', href: 'index.html', on: WHOLE }]
   .concat(FLOORS.map(F => ({ name: F.name, on: !WHOLE && PARTS.every(p => p.floor === F),
-    items: ROOMS.filter(r => r.floor === F).map(r => ({ name: roomName(r), href: linkTo([r.id]), on: same([r.id]) })) })))
-  .concat(VIEW.groups.map(g => { const ids = ROOMS.filter(r => r.node.type === g.type).map(r => r.id); return { name: g.name, href: linkTo(ids), on: same(ids) }; })));
+    items: ROOMS.filter(r => r.floor === F).map(r => ({ name: roomName(r), href: linkTo([r.id]), on: same([r.id]) })) }))));
 function context() {
   const box = $('context'); box.innerHTML = '';
   if (state.mode !== '3d' || !WHOLE) return;

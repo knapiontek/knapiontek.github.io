@@ -200,11 +200,12 @@ function themeButton(button) {
 
 /* ================= THE SUN =================
    ☀: a compass with the plan in the middle (rects [x1, x2, y1, y2] mm, x down and y right as on the 2D plan) and the sun
-   dragged round it (the direction, from +x toward +y as core/scene.js); an arc beside it (the height); brightness; day or
-   night. sun {az, el, k, night} is changed in place; change() after every move. */
-const SUN_RANGE = { azStep: 5, el: [8, 75], k: [0.3, 1.6, 0.05] };   // degrees, degrees, a factor
-/* one sun for every page, stored once: every page shows the same time of day. fresh: {azimuth, elevation} */
-const sunStore = fresh => store('home-sun', () => ({ az: fresh.azimuth, el: fresh.elevation, k: 1, night: false }), s => [s.az, s.el, s.k].every(Number.isFinite));
+   dragged round it (the direction, from +x toward +y as core/scene.js); an arc beside it (the height); brightness; clouds;
+   day or night. sun {az, el, k, clouds, night} is changed in place; change() after every move. */
+const SUN_RANGE = { azStep: 5, el: [8, 75], k: [0.3, 1.6, 0.05], clouds: [0, 1, 0.05] };   // degrees, degrees, a factor, a share
+/* one sun for every page, stored once: every page shows the same time of day. light: the light of the page's data */
+const sunStore = light => store('home-sun', () => ({ az: light.sun.azimuth, el: light.sun.elevation, k: 1, clouds: light.clouds.value, night: false }),
+  s => [s.az, s.el, s.k, s.clouds].every(Number.isFinite));
 /* mark: rects picked out on the plan (the part of the house shown) */
 function sunPanel(box, rects, sun, change, mark = []) {
   const C = 80, R = 64, A = 120, top = 20;   // svg units: compass centre and radius; the arc's radius and top margin
@@ -219,8 +220,9 @@ function sunPanel(box, rects, sun, change, mark = []) {
       <line class="ground" x1="10" y1="${A + top}" x2="${A + 14}" y2="${A + top}"/><line class="ray" x1="10" y1="${A + top}"/><circle class="sundot" r="9"/></svg></div>
     <p class="sunread"></p>
     <div class="rng"><label for="sunk">Brightness</label><span></span><input id="sunk" type="range" min="${SUN_RANGE.k[0]}" max="${SUN_RANGE.k[1]}" step="${SUN_RANGE.k[2]}"></div>
+    <div class="rng"><label for="sunc">Clouds</label><span></span><input id="sunc" type="range" min="${SUN_RANGE.clouds[0]}" max="${SUN_RANGE.clouds[1]}" step="${SUN_RANGE.clouds[2]}"></div>
     <div class="toggle daynight" role="group" aria-label="Time of day"><button data-night="">Day</button><button data-night="1">Night</button></div>`;
-  const [compass, arc] = box.querySelectorAll('svg'), k = box.querySelector('input');
+  const [compass, arc] = box.querySelectorAll('svg'), [k, clouds] = box.querySelectorAll('input');
   /* the sun of an svg at (x, y): its dot and the ray to it */
   const place = (svg, x, y) => {
     for (const [a, v] of [['cx', x], ['cy', y]]) svg.querySelector('.sundot').setAttribute(a, v);
@@ -231,7 +233,9 @@ function sunPanel(box, rects, sun, change, mark = []) {
     place(compass, C + R * Math.sin(a), C + R * Math.cos(a));
     place(arc, 10 + A * Math.cos(e), A + top - A * Math.sin(e));
     box.querySelector('.sunread').textContent = `Direction ${sun.az}° · height ${sun.el}°`;
-    k.value = sun.k; box.querySelector('.rng span').textContent = fmt(sun.k, 2);
+    const [kv, cv] = box.querySelectorAll('.rng span');
+    k.value = sun.k; kv.textContent = fmt(sun.k, 2);
+    clouds.value = sun.clouds; cv.textContent = Math.round(sun.clouds * 100) + '%';
     for (const b of box.querySelectorAll('[data-night]')) { const on = !!b.dataset.night === !!sun.night; b.toggleAttribute('data-on', on); b.setAttribute('aria-pressed', on); }
   };
   /* a drag on an svg: the pointer in its own units */
@@ -244,6 +248,7 @@ function sunPanel(box, rects, sun, change, mark = []) {
   drag(compass, p => { const d = Math.atan2(p.x - C, p.y - C) * 180 / Math.PI; sun.az = (Math.round(d / SUN_RANGE.azStep) * SUN_RANGE.azStep + 360) % 360; });
   drag(arc, p => { const d = Math.atan2(A + top - p.y, p.x - 10) * 180 / Math.PI; sun.el = Math.min(SUN_RANGE.el[1], Math.max(SUN_RANGE.el[0], Math.round(d))); });
   k.oninput = () => { sun.k = +k.value; draw(); change(); };
+  clouds.oninput = () => { sun.clouds = +clouds.value; draw(); change(); };
   box.querySelector('.daynight').onclick = e => { const b = e.target.closest('[data-night]'); if (b) { sun.night = !!b.dataset.night; draw(); change(); } };
   draw();
 }

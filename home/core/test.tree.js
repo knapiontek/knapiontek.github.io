@@ -12,7 +12,8 @@ HOME.data({"format": "tree", "version": 1,
     "sun": {"azimuth": 330, "elevation": 38, "intensity": 1.35, "color": "#fff1dc", "reach": 8},
     "sky": {"intensity": 0.6, "color": "#cfe0ff", "groundColor": "#a9a596",
      "gradient": [[0, "#5f8fc4"], [0.32, "#9dbfe0"], [0.49, "#e4ecef"], [0.51, "#b7bfae"], [1, "#6f7a5e"]]},
-    "fog": {"color": "#dfe7ea", "near": 60000, "far": 160000}
+    "fog": {"color": "#dfe7ea", "near": 60000, "far": 160000},
+    "clouds": {"value": 0.7, "sun": 0.2, "sky": 2.2, "blur": 8}
    },
    "cameras": [
     {"name": "Front", "eye": [6500, -4500, 3200], "target": [2000, 1500, 800]},

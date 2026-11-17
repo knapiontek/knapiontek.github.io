@@ -46,7 +46,7 @@ function create(opts) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.localClippingEnabled = true;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;   // its shadows take a radius: the clouds soften them
   const scene = new THREE.Scene();
   const lin = hex => new THREE.Color(hex).convertSRGBToLinear();
   let needsRender = true;
@@ -303,8 +303,9 @@ function create(opts) {
     Object.assign(sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 1, far: 80 });
     scene.add(sun, sun.target);
   }
-  /* s: {az, el, k}: azimuth from +x towards +y, elevation, brightness */
-  /* the sun {az, el, k, night}: by night no sun, a faint sky light, the night sky and fog */
+  /* the sun {az, el, k, clouds, night}: azimuth from +x towards +y, elevation, brightness, clouds from 0 (clear) to 1
+     (overcast: the light's clouds give the sun's and the sky's factors and the shadow's blur then; between, in proportion);
+     by night no sun, a faint sky light, the night sky and fog */
   function placeSun(s) {
     const LIGHT = opts.light, az = s.az * DEG, el = s.el * DEG;
     const centre = toWorld(...opts.sunCentre), dir = toWorld(Math.cos(az) * Math.cos(el), Math.sin(az) * Math.cos(el), Math.sin(el)).divideScalar(MM);   // a unit direction, in metres
@@ -313,7 +314,10 @@ function create(opts) {
     sun.visible = !s.night;
     dayEnvironment ||= scene.environment;
     scene.environment = s.night ? null : dayEnvironment;   // by night nothing reflects the day's sky
-    sun.intensity = LIGHT.sun.intensity * s.k; hemi.intensity = LIGHT.sky.intensity * (s.night ? 0.14 : 0.6 + 0.4 * s.k);   // by night just enough to see the house's outline
+    const C = LIGHT.clouds, c = s.clouds, toward = full => 1 + (full - 1) * c;
+    sun.intensity = LIGHT.sun.intensity * s.k * toward(C.sun);
+    hemi.intensity = LIGHT.sky.intensity * (s.night ? 0.14 : (0.6 + 0.4 * s.k) * toward(C.sky));   // by night just enough to see the house's outline
+    sun.shadow.radius = toward(C.blur);
     setSky(s.night ? null : LIGHT.sky.gradient);
     if (scene.fog) scene.fog.color.copy(lin(s.night ? NIGHT.fog : LIGHT.fog.color));
     redraw();

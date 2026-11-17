@@ -34,6 +34,7 @@ HOME.data({
      "gradient": [[0, "#5f8fc4"], [0.32, "#9dbfe0"], [0.49, "#e4ecef"], [0.51, "#b7bfae"], [1, "#6f7a5e"]]
     },
     "fog": {"color": "#dfe7ea", "near": 60000, "far": 160000},
+    "clouds": {"value": 0.7, "sun": 0.2, "sky": 2.2, "blur": 8},
     "inside": {"exposure": 1.05, "sun": {"intensity": 2.6, "reach": 6}, "sky": {"color": "#f4f6f9", "groundColor": "#8a8178", "intensity": 1.5}}
    },
    "cameras": [
@@ -54,8 +55,7 @@ HOME.data({
    },
    "cutFrom": 500,
    "cutStep": 50,
-   "planNote": "Garden at the top, the front at the bottom. Hatched: EPS.",
-   "groups": [{"name": "Bathrooms", "type": "bathroom"}, {"name": "Wardrobes", "type": "wardrobe"}]
+   "planNote": "Garden at the top, the front at the bottom. Hatched: EPS."
   }
  },
  "source": "Geometry from the archon.pl plans (±23 mm), with the build changes.",
