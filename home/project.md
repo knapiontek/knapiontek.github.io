@@ -11,7 +11,7 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, with everything tha
 | house/ | the house: its data (the rooms, the walls, the settings shared by every room), its model and the main page; it chooses a part of the house and passes it down |
 | room/ | the room engine: it makes a room from what the house gives it and from the room's own data files; cabinets, products, tiles, Documents; the cabinet editor; the rooms' data, flat, `<kind>_<number>.<role>.js` |
 | core/ | shared code: the data loader, the tree, geometry, meshes, the 3D view, the 2D plan, the sheets, the screen; knows no project |
-| library/ | what is bought, as the shop and the maker give it: products, shops; the materials and the textures; data only |
+| library/ | the outside world, as the shop and the maker give it: products, shops, materials, textures; data only |
 | archon/ | the archon.pl drawings and their analysis: the source the house is drawn from |
 | test.md | the LLM's own file: how to rebuild its automated tests |
 | report.md | what was done in each step, for the owner |
@@ -41,9 +41,9 @@ house/  ──►  room/  ──►  core/, library/
 ## The tree and the coordinates
 
 - The house's axes are the only coordinates: x along the house, y across, h up. Lengths in mm.
-- One kind of node: `id`, `name`, `type`, `offset`, `size`, `settings`, `children`. A node is placed by a translation only: its offset from its parent's smallest corner (never below 0) and its size (always above 0). No rotations, no signs.
+- One kind of node: `id`, `name`, `type`, `offset`, `size`, `settings`, `refs`, `children`. A node is placed by a translation only: its offset from its parent's smallest corner (never below 0) and its size (always above 0). No rotations, no signs.
 - A front is a side of its box: `x0`, `x1`, `y0`, `y1` (the side at the smaller or the bigger x or y).
-- The id is given once and never changed or reused; the path of ids from the root is a node's global identifier. References use ids only.
+- The id is given once and never changed or reused; the path of ids from the root is a node's global identifier. A node refers to others only by their paths, in its `refs`, and Test checks that each exists.
 - Settings are a cascade along the tree: a value set on a node is the default for its branch; a node below overrides it for itself and its branch. The root of the cascade is the house.
 
 ## Three kinds of values
@@ -54,12 +54,13 @@ house/  ──►  room/  ──►  core/, library/
 | settings lower in the tree | the designer, for one room, group, cabinet, product or surface | the node they belong to |
 | the maker's data | the maker | the library, with the product |
 
-The library describes only what is bought, as the shop and the maker give it. How a product is drawn (the shape of a tap, a handle, a hob's zones) is the business of the code that draws it, not data.
+The library describes only the outside world: what is bought and the materials, as the shop and the maker give them; nothing of it is our decision. How a product is drawn (the shape of a tap, a handle, a hob's zones) is the business of the code that draws it, not data.
 
 ## Language
 
 - English wherever it can be: the pages, the Documents, every MD file, the code and the data.
-- Proper names stay as they are: a product's name as the shop gives it, a format a shop imposes.
+- Proper names stay as they are: a product's name as the shop gives it.
+- The Documents are our own (the cutting list too), not a shop's format.
 - Translations are made by the LLM when needed and are not kept in the project.
 
 ## To do
@@ -67,8 +68,7 @@ The library describes only what is bought, as the shop and the maker give it. Ho
 1. **The house** (house/): the house's data with its rooms as nodes (the hall, the living room and the kitchen as three rooms with borders where there is no wall), its settings, its model; the main page with 3D, 2D, Documents and Test; `?room=` draws the chosen part; the root index.html forwards to it.
 2. **The room engine** (room/): the room from the house; tiles and products from the library placed by the room's scene file; the bathroom stands in the house without its cabinet.
 3. **Cabinets and the rooms as data**, room by room, each compared with the prototype: the kitchen first, then the bathrooms' vanity, then the wardrobes and the bedroom's niche (their data rebuilt as carcasses).
-4. **Documents and the editor**: docs.js with the estimate, the cutting list and the assembly cards; each room's .docs.js; Test of the Documents against the model; the cabinet editor.
-5. **The materials**: they are looks, not purchases; to decide whether they stay in library/ (report.md).
+4. **Documents and the editor**: docs.js with the estimate, our own cutting list and the assembly cards; each room's .docs.js; Test of the Documents against the model; the cabinet editor.
 
 ## How we work
 
@@ -83,8 +83,8 @@ The library describes only what is bought, as the shop and the maker give it. Ho
 - **Comments**: short and exact, only where the code does not say it; never repeating the code.
 - Readable: consistent indentation, short functions, one idea per line, names that match the page.
 - No hidden rules: what is built follows from the data (types, settings), never from names, labels or sizes. No duplicated values or code: what two pages share lives in core.
-- One global, `HOME`: each module of core is `HOME.<file name>`.
-- Scripts in a page in one order: core/data.js first, then three.js, core, the page's own files.
+- One global, `HOME`: each module of core is `HOME.<file name>`; a data file calls `HOME.data(…)`.
+- Scripts in a page in one order: core/load.js first, then three.js, core, the page's own files.
 - Library versions pinned (three.js r128, SheetJS 0.18.5).
 - No abbreviations a reader has to decode; counters and coordinates may be one letter.
 - A list or an array holds homogeneous values: the same type and meaning.

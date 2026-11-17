@@ -8,8 +8,8 @@ Shared code for every page. It knows no project: a page hands it the data, and c
 
 | File | Does |
 |---|---|
-| data.js | the one loader of data: a data file by its path from the home folder, checked for its format and version; the path of every kind of data file by its key. The first script of every page |
-| tree.js | the tree of nodes: a node by its path and the path of a node; a node's place (the sum of the offsets) and box; a setting from the cascade with the node it comes from; a walk over all nodes; the checks of the tree |
+| load.js | the one loader of data: a data file by its path from the home folder, checked for its format and version; the path of every kind of data file by its key. The first script of every page |
+| tree.js | the tree of nodes: a node by its path and the path of a node; a node's place (the sum of the offsets) and box; a setting from the cascade with the node it comes from; the nodes a node refers to; a walk over all nodes; the checks of the tree |
 | geometry.js | exact solids: convex polygons and prisms; clip, subtract, intersect, split, section, volume, overlaps; rectangles |
 | mesh.js | solids into what is drawn: welded points, the faces of the solids, the visible pieces (a face covered by another loses that part), finishes on the faces of a host (a room's tiles on the house's walls), triangles batched per material |
 | scene.js | the 3D view: renderer, materials, meshes and edges, moving parts (doors and drawers), section caps, light and the sun, camera and flights, navigation, the walk, the loop that draws only after a change |
@@ -24,13 +24,13 @@ Shared code for every page. It knows no project: a page hands it the data, and c
 ## How it fits together
 
 ```
-data file ─► data.js ─► page ─► tree.js ─► the module of each type ─► solids
+data file ─► load.js ─► page ─► tree.js ─► the module of each type ─► solids
 solids ─► mesh.js ─► pieces ─► scene.js ─► 3D
 solids ─► plan.js ─► 2D        rows ─► sheet.js ─► Documents, XLSX        checks ─► ui.js ─► Test
 ```
 
 - geometry.js and tree.js run without a browser; mesh.js too, except its batches (three.js meshes).
-- Every module is `HOME.<file name>`; the loader is `HOME.load`, the paths `HOME.file`, and a data file calls `HOME.data`.
+- Every module is `HOME.<file name>`. The one name outside that rule is `HOME.data`, which every data file calls: it is defined by load.js.
 
 ## Rules
 
@@ -50,10 +50,11 @@ solids ─► plan.js ─► 2D        rows ─► sheet.js ─► Documents, XL
 | offset | [x, y, h] mm from the parent's smallest corner, each not below 0 |
 | size | [x, y, h] mm, each above 0 |
 | settings | values for this node and its branch; a key may hold an object, read by a path of keys (`open.door`) |
+| refs | the paths of the nodes it refers to, from the root of the tree; what each is for, its type says (a sink: the cabinet it sits in) |
 | children | the nodes inside it |
 
-A data file whose root is a node puts its `format` and `version` beside the node's own fields. The checks of the tree: a type, an offset and a size on every node; ids without spaces or slashes; ids unique among siblings; offsets not below 0; sizes above 0; every node inside its parent. References between nodes are checked by the module that holds them.
+A data file whose root is a node puts its `format` and `version` beside the node's own fields. The checks of the tree: a type, an offset and a size on every node; ids without spaces or slashes; ids unique among siblings; offsets not below 0; sizes above 0; every node inside its parent; every ref is the path of a node.
 
 ## test.tree.js
 
-A room with a floor, a wall, a cabinet of boxes with a door and two drawers, and one box outside its parent, which Test reports on purpose. The root's settings give the material, the front side, how far doors and drawers open, and `view`: the layers, the edges, the light, the cameras, the walk, the cut and the height of the 2D plan.
+A room with a floor, a wall, a cabinet of boxes with a door and two drawers (one refers to the cabinet's bottom), and one box outside its parent, which Test reports on purpose. The root's settings give the material, the front side, how far doors and drawers open, and `view`: the layers, the edges, the light, the cameras, the walk, the cut and the height of the 2D plan.

@@ -17,9 +17,9 @@ What was done in each step: what moved where from the prototype, what changed an
 | sheet.js | core/sheet.js + the screen of core/info.js | the Documents screen (title, warnings, the book, Save XLSX / Restore data) moved here; numbers formatted in one place |
 | ui.js | core/ui.js | **the skeleton of the screen is built here once** (each prototype page had its own copy of the HTML); the modes are fixed: 3D, 2D, Documents, Test; the panel's tabs are given per mode; everything about applications and interfaces is gone (the applications menu, loading implementations, checking dependencies); all texts in English; the 2D zoom and Save SVG go to the bottom menu |
 | ui.css | core/ui.css | the ids of the new skeleton; unused rules removed (the old help button, the house's rooms table: it comes back with the house) |
-| data.js | new | the one loader: `HOME.load(path, format, version)`; `HOME.file` gives the path of every kind of data file; a data file calls `HOME.data(…)` |
+| load.js | new | the one loader: `HOME.load(path, format, version)`; `HOME.load.file` gives the path of every kind of data file; a data file calls `HOME.data(…)` |
 | tree.js | new | the tree of nodes: paths, places, the settings cascade, the checks |
-| library.js | core/library.js | loads the whole library through data.js; the textures by key |
+| library.js | core/library.js | loads the whole library through load.js; the textures by key |
 | test.html, test.tree.js | new | the check of core on its own |
 
 Not carried over: core/info.js as a whole. Its shared sheets (the estimate, the cutting list) and the order of the Documents' tabs belong to room/docs.js and move there in the Documents step. core/rules.md is not carried over, as the plan says.
@@ -41,8 +41,8 @@ One global: everything is `HOME.<module>` (the prototype had `CORE` plus a globa
 - The root index.html comes with the house: now it would forward to a page that does not exist yet.
 - house/project.md and room/project.md come with their code.
 
-## To decide
+## Decided
 
-1. **library/materials.js**: these are looks (plaster, glass, lawn, the oak of a front), not purchases. Keep them in library/ as now, or move them to core (the drawing's own business)?
-2. **Numbers on the pages**: English format now (1,234.56). Is that right for the estimates and the cutting lists, or should they keep the Polish format (1 234,56)?
-3. **References between nodes** (a sink under its cabinet) are checked by the module that holds them, not by tree.js, which does not know which fields are references. Is that fine?
+1. **library/materials.js** stays in library/: a material is the outside world, not our decision, like a product.
+2. **English everywhere**, numbers too, as the plan says; a translation is made when needed. The cutting list is our own, not a shop's format.
+3. **References between nodes**: a node's field `refs`, a list of paths; tree.js checks that each path is a node. What a ref is for, the node's type says.
