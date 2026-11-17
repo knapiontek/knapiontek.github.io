@@ -1,0 +1,59 @@
+# Core
+
+> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done.
+
+Shared code for every page. It knows no project: a page hands it the data, and core gives back what is drawn, counted or checked.
+
+## Files
+
+| File | Does |
+|---|---|
+| data.js | the one loader of data: a data file by its path from the home folder, checked for its format and version; the path of every kind of data file by its key. The first script of every page |
+| tree.js | the tree of nodes: a node by its path and the path of a node; a node's place (the sum of the offsets) and box; a setting from the cascade with the node it comes from; a walk over all nodes; the checks of the tree |
+| geometry.js | exact solids: convex polygons and prisms; clip, subtract, intersect, split, section, volume, overlaps; rectangles |
+| mesh.js | solids into what is drawn: welded points, the faces of the solids, the visible pieces (a face covered by another loses that part), finishes on the faces of a host (a room's tiles on the house's walls), triangles batched per material |
+| scene.js | the 3D view: renderer, materials, meshes and edges, moving parts (doors and drawers), section caps, light and the sun, camera and flights, navigation, the walk, the loop that draws only after a change |
+| plan.js | the 2D plan from the same solids: what the cut meets is filled, what lies under it is seen from above, what is over it dashed; labels of openings and rooms, dimensions, sheets side by side |
+| sheet.js | the spreadsheet: sheets in tabs, inputs the viewer may change, live formulas, the XLSX with the same formulas; the Documents screen |
+| library.js | the library for a page: the products of every group, the shops, the materials; the textures loaded by key; the checks of the library |
+| ui.js | the screen of every page: its skeleton, the modes (3D, 2D, Documents, Test), the stored state, the layers, the checks, the menus, the panel and its tabs, the corner (◐ light or dark, ☀ the sun, ? help), the 2D sheet, the widths of a table's columns |
+| ui.css | the look of every page, light and dark |
+| test.html | every module of core on a small tree of boxes: the check of core on its own |
+| test.tree.js | the tree test.html draws |
+
+## How it fits together
+
+```
+data file ─► data.js ─► page ─► tree.js ─► the module of each type ─► solids
+solids ─► mesh.js ─► pieces ─► scene.js ─► 3D
+solids ─► plan.js ─► 2D        rows ─► sheet.js ─► Documents, XLSX        checks ─► ui.js ─► Test
+```
+
+- geometry.js and tree.js run without a browser; mesh.js too, except its batches (three.js meshes).
+- Every module is `HOME.<file name>`; the loader is `HOME.load`, the paths `HOME.file`, and a data file calls `HOME.data`.
+
+## Rules
+
+- **Exact solids.** A solid is a prism along x over a convex polygon across it: a box, at most cut by sloping lines. Nothing is patched afterwards: what is wrong is corrected in the data or in the module that makes the solid.
+- **Built once, then only looked at.** Meshes are built when the page opens; a layer shows or hides what is built; a moving part is built once, closed, and the animation only moves it.
+- **Edges are a layer**: a seam (one plane, one part) has no line, a corner always has one.
+- The scene is in metres with y up; everything handed in and given back is in mm in the house's axes.
+- A view's choices (the mode, the tab, the layers, the cut, the zoom) are kept in the browser; the sun, light or dark and the panel are one choice for every page.
+
+## The node (format `tree`)
+
+| Field | Means |
+|---|---|
+| id | the identity: letters, digits, `_` and `-`; unique among its siblings; never changed or reused |
+| name | for people |
+| type | what the node is; the module of that type reads it |
+| offset | [x, y, h] mm from the parent's smallest corner, each not below 0 |
+| size | [x, y, h] mm, each above 0 |
+| settings | values for this node and its branch; a key may hold an object, read by a path of keys (`open.door`) |
+| children | the nodes inside it |
+
+A data file whose root is a node puts its `format` and `version` beside the node's own fields. The checks of the tree: a type, an offset and a size on every node; ids without spaces or slashes; ids unique among siblings; offsets not below 0; sizes above 0; every node inside its parent. References between nodes are checked by the module that holds them.
+
+## test.tree.js
+
+A room with a floor, a wall, a cabinet of boxes with a door and two drawers, and one box outside its parent, which Test reports on purpose. The root's settings give the material, the front side, how far doors and drawers open, and `view`: the layers, the edges, the light, the cameras, the walk, the cut and the height of the 2D plan.

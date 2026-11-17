@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Core test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="ui.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="geometry.js"></script>
+<script src="mesh.js"></script>
+<script src="scene.js"></script>
+<script src="ui.js"></script>
+<script src="plan.js"></script>
+<script src="sheet.js"></script>
+<script src="tree.js"></script>
+<script src="library.js"></script>
+<script>
+/* Every module of core on a small tree of boxes (test.tree.js): offsets summed, settings from the cascade, doors and
+   drawers moving, the cut, the 2D plan, a sheet with formulas and its XLSX, the checks. Knows nothing of the house. */
+(async function () {
+'use strict';
+const { $, el } = HOME.ui;
+const { prism, hRange } = HOME.geometry;
+const { piecesOf } = HOME.mesh;
+
+HOME.ui.screen($('app'), {
+  label: '3D view of the test tree',
+  help: {
+    '3d': '<p>Turn: left button · move: right · zoom: the wheel. A click on a door or a drawer opens or closes it. <b>Walk</b>: the arrows, Esc ends.</p>',
+    '2d': '<p>The plan cut at the height of the data: what the cut meets is filled, what lies under it is seen from above.</p>',
+    documents: '<p>Every node with its place, its size and its material, and where the material is set. Blue fields may be changed until a reload.</p>',
+    test: '<p>The checks of the tree and of the library. One node lies outside its parent on purpose.</p>' },
+  panel: `<section data-tab="layers" data-part="cut"><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv"></span><input id="cut" type="range"></div></section>
+    <section data-tab="layers"><h2>Layers</h2><div class="layers" id="layers"></div></section>`
+});
+
+const [DATA, LIB] = await Promise.all([HOME.load('core/test.tree.js', 'tree', 1), HOME.library.load()]);
+const T = HOME.tree.create(DATA), VIEW = T.setting(DATA, 'view').value, SIZE = DATA.size;
+$('title').textContent = DATA.name;
+$('subtitle').textContent = 'Every module of core on a tree of boxes';
+
+/* ================= SOLIDS: every node without children is a box at its place ================= */
+const LEAVES = [];
+T.walk(n => { if (!(n.children || []).length) LEAVES.push(n); });
+const materialOf = n => T.setting(n, 'material').value;
+const CELLS = LEAVES.map(n => ({ S: prism(T.box(n)), material: materialOf(n), cap: materialOf(n), layers: [n.type], edges: true, part: T.path(n), walkable: n.type === 'floor', node: n }));
+const MOVING = { door: true, drawer: true }, STILL = CELLS.filter(c => !MOVING[c.node.type]);
+await LIB.loadTextures(CELLS.map(c => LIB.materials[c.material]).flatMap(m => [m.image && m.image.key, m.wood && m.wood.decor]));
+
+const V = HOME.scene.create({ canvas: $('gl'), stage: $('stage'), materials: LIB.materials, textures: LIB.textures, light: VIEW.light, edges: VIEW.edges,
+  body: [[0, 0, 0], SIZE], sunCentre: SIZE.map(v => v / 2) });
+const PIECES = piecesOf(STILL);
+V.buildMeshes(PIECES); V.buildEdges(PIECES);
+
+/* a front is a side of its box; a drawer slides out of it, a door turns out of it about its hinge side */
+const OUT = { x0: [-1, 0], x1: [1, 0], y0: [0, -1], y1: [0, 1] };
+const SIDE = { x0: [0, 0], x1: [0, 1], y0: [1, 0], y1: [1, 1] };   // the axis of a side, and its end (0: the smaller)
+function motion(n) {
+  const b = T.box(n), front = T.setting(n, 'front').value, out = OUT[front], open = T.setting(n, 'open').value;
+  if (n.type === 'drawer') return { slide: [out[0] * open.drawer, out[1] * open.drawer, 0] };
+  const hinge = T.setting(n, 'hinge').value, along = OUT[hinge].map(v => -v);
+  const corner = [0, 1].map(k => { const s = [hinge, front].find(q => SIDE[q][0] === k); return b[2 * k + SIDE[s][1]]; });
+  return { at: [corner[0], corner[1], 0], axis: [0, 0, 1], angle: Math.sign(along[0] * out[1] - along[1] * out[0]) * open.door };
+}
+for (const c of CELLS.filter(c => MOVING[c.node.type])) V.mover(Object.assign({ pieces: piecesOf([c]) }, motion(c.node)));
+V.addLight(); V.addCaps();
+
+/* ================= STATE, LAYERS, CUT ================= */
+const LAYER = HOME.ui.layerTree(VIEW.layers);
+const MODES = ['3d', '2d', 'documents', 'test'], TABS = { '3d': ['layers'] };
+const STORE = HOME.ui.store('home-core-test', () => ({ mode: '3d', tab: null, layers: {}, cut: null, zoom: 1 }), s => MODES.includes(s.mode) && s.layers);
+const state = STORE.state, save = STORE.save;
+const { layerOn, shown } = HOME.ui.layerSwitch(LAYER, () => state.layers);
+const CUT = VIEW.cut, cutTop = SIZE[2];
+const cutHeight = () => (state.cut === null || state.cut >= cutTop || V.walk.on ? null : state.cut);
+function cutPanel() {
+  const r = $('cut');
+  Object.assign(r, { min: CUT.from, max: cutTop, step: CUT.step, value: state.cut ?? cutTop });
+  $('cutv').textContent = cutHeight() === null ? 'off' : state.cut + ' mm';
+  r.oninput = () => { state.cut = +r.value; save(); cutPanel(); apply(); };
+}
+const layersPanel = () => HOME.ui.layersPanel($('layers'), LAYER, Object.keys(LAYER), state.layers, layerOn, (k, on) => { state.layers[k] = on; save(); layersPanel(); apply(); });
+function apply() {
+  const h = cutHeight();
+  V.setCut(h); V.showPieces(shown, layerOn); V.buildCaps(h, STILL, shown); V.redraw();
+}
+
+/* ================= 3D: cameras, sun, clicks, walk ================= */
+const SUN = HOME.ui.sunStore(VIEW.light.sun);
+const placeSun = () => V.placeSun(SUN.state);
+HOME.ui.sunPanel($('sun'), [[0, SIZE[0], 0, SIZE[1]]], SUN.state, () => { SUN.save(); placeSun(); });
+V.onClick(ray => { if (state.mode !== '3d') return; const m = V.moverAt(ray); if (m) V.toggle(m); });
+V.enableNavigation();
+V.enableWalk({ config: VIEW.walk, solids: STILL, ground: CELLS.filter(c => c.walkable), startLevel: 0, pad: $('pad'),
+  canStart: () => state.mode === '3d', onToggle: () => { bottomMenu(); apply(); }, home: () => VIEW.cameras[0] });
+
+/* ================= 2D ================= */
+const PLAN = HOME.plan.create(LIB.materials);
+function planSvg() {
+  const h = VIEW.plan, below = CELLS.filter(c => hRange(c.S)[1] <= h).map(c => HOME.plan.solidShape(c));
+  return PLAN.sheets([{ extent: [0, SIZE[0], 0, SIZE[1]], title: `Cut at ${h} mm`,
+    draw: X => PLAN.floorArea(X, [[0, SIZE[0], 0, SIZE[1]]]) + PLAN.seen(X, below, h) + PLAN.cut(X, CELLS, h) + PLAN.dims(X, [0, SIZE[0], 0, SIZE[1]], SIZE[0]) }]);
+}
+const SHEET_2D = HOME.ui.planSheet({ state, save, svg: planSvg, file: 'test.svg' });
+
+/* ================= DOCUMENTS: every node, a formula per row and a sum ================= */
+let SHEET = null;
+function book() {
+  const rows = [{ kind: 'title', cells: [DATA.name] }, { kind: 'head', cells: ['Path', 'Type', 'X', 'Y', 'H', 'Length', 'Depth', 'Height', 'Material', 'Set on', 'Volume [m³]'] }];
+  const first = rows.length + 1;
+  for (const n of LEAVES) {
+    const r = rows.length + 1, m = T.setting(n, 'material');
+    rows.push({ cells: [T.path(n), n.type, ...T.place(n), ...n.size, m.value, T.path(m.from) || DATA.id, { f: `ROUND(F${r}*G${r}*H${r}/1000000000,4)` }] });
+  }
+  rows.push({ kind: 'sum', cells: ['Total', '', '', '', '', '', '', '', '', '', { f: `SUM(K${first}:K${rows.length})` }] });
+  const n = (width, fix) => ({ width, fix });
+  return { sheets: [{ name: 'Nodes', rows, cols: [{ width: 28, share: 3 }, n(8, 6), n(8, 6), n(8, 6), n(8, 6), n(8, 6), n(8, 6), n(8, 6), { width: 16, share: 2 }, { width: 16, share: 2 }, { width: 12, fix: 8, digits: 4, z: '0.0000' }] }] };
+}
+function documents() {
+  if (SHEET) return SHEET.set(book());
+  SHEET = HOME.sheet.screen($('documents'), { title: DATA.name, subtitle: 'The nodes of the test tree', book: book() });
+}
+
+/* ================= TEST ================= */
+const CHECKS = T.checks().concat(LIB.checks(), [{ name: 'Every material is in the library', items: CELLS.filter(c => !LIB.materials[c.material]).map(c => `${c.part}: ${c.material}`) }]);
+$('checks').innerHTML = HOME.ui.checksHtml(CHECKS);
+
+/* ================= THE SCREEN ================= */
+function bottomMenu() {
+  const walk = el('button', { className: 'walk', textContent: 'Walk', onclick: () => (V.walk.on ? V.stopWalk() : V.startWalk()) });
+  walk.setAttribute('aria-pressed', V.walk.on);
+  const menus = { '3d': [VIEW.cameras.map(c => ({ name: c.name, go: () => V.flyTo(c) })), [walk]], '2d': [SHEET_2D.menu], documents: [HOME.sheet.menu(() => SHEET, 'test.xlsx')], test: [] };
+  HOME.ui.bottomMenu(menus[state.mode]);
+}
+const panel = () => { state.tab = HOME.ui.panelTabs(TABS[state.mode] || [], state.tab, t => { state.tab = t; save(); panel(); }); };
+function setMode(m) {
+  state.mode = m; save();
+  HOME.ui.showMode(MODES, m, setMode);
+  if (m !== '3d') V.stopWalk();
+  if (m === '2d') SHEET_2D.draw();
+  if (m === 'documents') documents();
+  bottomMenu(); panel(); layersPanel(); cutPanel(); apply();
+}
+
+V.start(); placeSun(); V.setCamera(VIEW.cameras[0]);
+setMode(state.mode);
+$('loading').hidden = true;
+V.run();
+window.TEST_VIEW = { T, CELLS, CHECKS, V, setMode, book };   // for the automated tests
+})().catch(HOME.ui.failed);
+</script>
+</body>
+</html>
