@@ -255,7 +255,8 @@ function create(opts) {
       g.mesh.visible = shown(g.layers);
       g.mesh.material = g.mesh.visible && ghost(g.layers) ? GHOST : g.finish ? (layerOn(g.finish.layer) ? g.finish.on : g.finish.off) : g.base;
     }
-    for (const g of EDGE_GROUPS) g.mesh.visible = shown(g.layers) && !ghost(g.layers) && !(g.hideWhen.length && g.hideWhen.every(shown));
+    const closes = layers => shown(layers) && !ghost(layers);   // a ghost closes no line: what it would cover shows its edge
+    for (const g of EDGE_GROUPS) g.mesh.visible = closes(g.layers) && !(g.hideWhen.length && g.hideWhen.every(closes));
   }
   /* the camera's place in the house's axes, mm */
   const cameraAt = () => { const p = root.worldToLocal(camera.position.clone()); return [p.x, p.y, p.z]; };

@@ -443,7 +443,7 @@ HOME.data({
      "number": 3,
      "offset": [5470, 4350, 0],
      "size": [3540, 1800, 2720],
-     "area": [[0, 3540, 0, 1100], [1750, 1870, 1100, 1450], [1870, 3540, 1100, 1800]],
+     "area": [[0, 1870, 0, 1450], [1870, 3540, 0, 1800]],
      "archonArea": 5.46,
      "note": "Open to the living room and the kitchen: the hall is the way from the vestibule to the stair and the bathroom, ending where the kitchen and the living room begin."
     },
@@ -454,7 +454,7 @@ HOME.data({
      "number": 5,
      "offset": [440, 440, 0],
      "size": [5030, 8220, 2720],
-     "area": [[0, 4790, 0, 3150], [0, 4270, 3150, 3910], [0, 5030, 3910, 5010], [0, 390, 5010, 8220]],
+     "area": [[0, 4790, 0, 3150], [0, 4270, 3150, 3910], [0, 5030, 3910, 5360], [0, 390, 5360, 8220]],
      "archonArea": 35.42,
      "note": "The garden side with the exit to the garden; open to the kitchen and the hall."
     },
@@ -463,9 +463,9 @@ HOME.data({
      "name": "Kitchen",
      "type": "kitchen",
      "number": 6,
-     "offset": [830, 5450, 0],
-     "size": [6390, 3210, 2720],
-     "area": [[0, 6390, 0, 3210]],
+     "offset": [830, 5800, 0],
+     "size": [6390, 2860, 2720],
+     "area": [[0, 6390, 0, 2860]],
      "archonArea": 9.67,
      "note": "The kitchen with the dining area: the island, the table by it and the fixed window by the hob; open to the living room and the hall."
     },

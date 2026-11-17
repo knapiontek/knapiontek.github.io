@@ -62,11 +62,11 @@ One global: everything is `HOME.<module>` (the prototype had `CORE` plus a globa
 
 **The rooms.** The rooms are nodes with English ids of the plan: on the ground floor vestibule_1, garage_2, hall_3, living_5, kitchen_6, bathroom_7, boiler_8; in the attic hall_1, bedroom_2, wardrobe_3, wardrobe_4, bathroom_5, bedroom_6, bedroom_7, wardrobe_8. The prototype's salon is three rooms with borders where there is no wall, drawn dash-dot in 2D:
 
-- **kitchen_6** (20.51 m²): x 830 – 7220, y 5450 – 8660: the strip by the right wall from the fixed window 2500/2400 to the wall of the bathroom, with the island and the table;
-- **hall_3** (5.11 m²): from the stair to the vestibule's door and the bathroom's door, y 4350 – 5450 (to 6150 by the bathroom);
-- **living_5** (25.12 m²): the garden side and the left half.
+- **kitchen_6** (18.28 m²): x 830 – 7220, y 5800 – 8660: a rectangle by the right wall from the fixed window 2500/2400 to the wall of the bathroom, as deep as that wall is long (2860), with the island and the table;
+- **hall_3** (5.72 m²): from the stair to the vestibule's door and the bathroom's door, y 4350 – 5800 (to 6150 by the bathroom);
+- **living_5** (26.74 m²): the garden side and the left half, to y 5800.
 
-Archon gives 9.67, 5.46 and 35.42 m²; as the plan says, the borders follow the rooms' use and archon's areas are only a reference (Test shows them as information). **To check by the owner** (project.md, To do).
+Archon gives 9.67, 5.46 and 35.42 m²; as the plan says, the borders follow the rooms' use and archon's areas are only a reference (Test shows them as information). The owner set the kitchen's depth to the wall's length (2860); the strip it gave up went to the hall and the living room along their border at x 5470.
 
 **The part of a room against the prototype's shell**: the same solids for bathroom_7, bathroom_5, wardrobe_4, wardrobe_8 and bedroom_6. wardrobe_3 takes the whole chimney beside it (the prototype's hand-written box cut it in half). The kitchen's part is new: the prototype's covered only the kitchen's strip of the salon.
 
@@ -77,3 +77,4 @@ Archon gives 9.67, 5.46 and 35.42 m²; as the plan says, the borders follow the 
 **After the owner's review** (17 Nov):
 - **The light is soft by default**: the ☀ panel has Clouds; they weaken the sun, strengthen the sky and blur the shadows (house.js, `light.clouds`: 70% by default). The shadows' kind changed so that they can be blurred.
 - **No groups in the menu** (Bathrooms, Wardrobes): one room at a time. How a room is chosen and shown is to be decided (the menu, the cut of a part).
+- **The edges of a room**: a line where the room meets a wall or a ceiling hidden in front of the camera was hidden too, as if that wall still covered it (it is only a ghost, kept for its shadow). Now a ghost closes no line (core/scene.js).

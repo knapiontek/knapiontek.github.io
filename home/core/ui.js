@@ -111,7 +111,8 @@ function layersPanel(box, LAYER, top, state, layerOn, setLayer) {
 const checksHtml = checks => checks.map(c => `<div class="check"><span class="chip ${c.info ? 'info' : c.items.length ? 'warn' : 'ok'}">${c.info ? 'i' : c.items.length || 'OK'}</span>${esc(c.name)}${c.items.length ? `<ul>${c.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}</div>`).join('');
 
 /* ================= MENUS AND PANEL ================= */
-/* the top-left menu: items [{name, href, on, items}]; an item with items opens a list of them */
+/* the top-left menu: items [{name, href, on, items}]; an item with items opens a list of them, one list at a time; a
+   click anywhere else closes it */
 function nav(items) {
   const box = $('nav'), link = it => it.href ? el('a', { href: it.href, textContent: it.name }) : el('span', { textContent: it.name });
   box.innerHTML = '';
@@ -126,6 +127,9 @@ function nav(items) {
     if (it.on) item.dataset.on = '';
     box.append(item);
   }
+  const lists = [...box.querySelectorAll('details')];
+  for (const d of lists) d.ontoggle = () => { if (d.open) for (const other of lists) if (other !== d) other.open = false; };
+  document.addEventListener('click', e => { if (!box.contains(e.target)) for (const d of lists) d.open = false; });
   box.hidden = !items.length;
 }
 /* one row of switches over the view: items [{name, on, set(on), radio}], then elements (a tag, a link) */
