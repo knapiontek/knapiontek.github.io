@@ -20,8 +20,8 @@ house.js ─► model.js ─► solids ─► index.html: 3D, 2D (core)
                      ─► checks ─► Test
 ```
 
-- **The whole house**: every solid, the doors turning on their hinges, the floors and the roof as switches over the view; with the roof off the highest floor shown is open: its cut is in Layers and a click on its floor picks a room (Open shows it alone).
-- **A part**: the solids of its rooms, trimmed to each room's box: the floor area out to the far faces of its walls, from the slab under it to what closes it from above. Each wall, the floor and the ceiling is an object; a window or a door hides with the wall it sits in. An object the camera is beyond hides (it still casts its shadow), so the room is always seen from inside. The light is the house's light for an interior.
+- **The whole house**: every solid, the doors turning on their hinges. The panel's Layers in two blocks: Floors (where: the floors and the roof) and Elements (what); a solid shows when its floor and its kind are both on. With the roof off the highest floor shown is open: its cut is under the floors, and a click on its floor picks a room (Open shows it alone).
+- **A part**: the solids of its rooms, trimmed to each room's box: the floor area out to the far faces of its walls, from the slab under it to what closes it from above. Each wall, the floor and the ceiling is an object; a window or a door hides with the wall it sits in. An object the camera is beyond hides (it still casts its shadow), so the room is always seen from inside. The floors (and the roof) do not apply to a part: it is always drawn, only the elements switch. The light is the house's light for an interior.
 - **The menu** (top left): the house, each floor with its rooms.
 - **2D**: one sheet per floor (of a part: per floor of its rooms): what the cut meets filled, what lies under it seen from above, the doors' swings, the openings' labels, the rooms with their areas, a dash-dot line where two rooms meet with no wall.
 - **Documents**: the rooms (the model's area and archon's), the inner doors with what is bought for them, the notes.
@@ -34,7 +34,7 @@ The file is the house's root node (core/project.md: the node) with the format, t
 
 | Field | Means |
 |---|---|
-| settings.view | the view of the house: `layers` (the layers' tree, names), `menu` (the layers over the view: the floors and the roof), `panel` (the layers in the panel), `edges`, `light` (with `clouds`: how many by default, and at full clouds the sun's and the sky's factors and the shadows' blur; `inside`: the light of a part), `cameras`, `walk`, `cutFrom` and `cutStep` (the cut's slider over a floor), `planNote` (under the 2D sheets) |
+| settings.view | the view of the house: `layers` (the layers' tree, names), `floors` (where: the floors and the roof) and `elements` (what: the kinds of elements), the two blocks of Layers in the panel, `edges`, `light` (with `clouds`: how many by default, and at full clouds the sun's and the sky's factors and the shadows' blur; `inside`: the light of a part), `cameras`, `walk`, `cutFrom` and `cutStep` (the cut's slider over a floor), `planNote` (under the 2D sheets) |
 | source, notes | where the geometry comes from; remarks for Documents |
 | geometry | what the house is made of (below) |
 | children | the floors |

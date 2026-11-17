@@ -38,13 +38,14 @@ HOME.ui.screen($('app'), {
   help: {
     '3d': `<p>Turn: left button (from outside about the house's middle, inside about what is in the middle of the view) · move: right · zoom: the wheel (toward the cursor).</p>
       <p><b>Walk</b>: the arrows walk and turn, A/D a step aside, Shift faster, PgUp/PgDn or a drag look, Space opens the nearest door, Esc ends.</p>
-      <p>A click on a door opens or closes it. Without the roof the highest floor shown is open: its cut is in Layers; a click on its floor picks a room.</p>
-      <p>In a room, the walls and the ceiling between the camera and the room hide.</p>`,
+      <p><b>Layers</b>: an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: its cut is under the floors; a click on its floor picks a room. A click on a door opens or closes it.</p>
+      <p>In a room, the walls and the ceiling between the camera and the room hide; the floors do not apply there, only the elements.</p>`,
     '2d': '<p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. Below: zoom and the SVG to print.</p>',
     documents: '<p>The rooms with their areas, the doors with what is bought for them, the notes. Blue fields may be changed until a reload. Below: the XLSX with its formulas.</p>',
     test: '<p>The checks of the data and of the model. <b>OK</b>: nothing to correct; <b>i</b>: to know.</p>' },
-  panel: `<section data-tab="layers" data-part="cut"><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv"></span><input id="cut" type="range"></div></section>
-    <section data-tab="layers"><h2>Layers</h2><div class="layers" id="layers"></div></section>`
+  panel: `<section data-tab="layers" data-part="floors"><h2>Floors</h2><div class="layers" id="floors"></div></section>
+    <section data-tab="layers" data-part="cut"><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv"></span><input id="cut" type="range"></div></section>
+    <section data-tab="layers"><h2>Elements</h2><div class="layers" id="layers"></div></section>`
 });
 
 const [DATA, LIB] = await Promise.all([HOME.load(HOME.load.file.house(), 'house', 1), HOME.library.load()]);
@@ -110,7 +111,8 @@ const MODES = ['3d', '2d', 'documents', 'test'], TABS = { '3d': ['layers'], '2d'
 const STORE = HOME.ui.store('home-house', () => ({ mode: '3d', tab: null, layers: {}, cut: {}, zoom: 1, room: null }), s => MODES.includes(s.mode) && s.layers && s.cut);
 const state = STORE.state, save = STORE.save;
 const { layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers);
-const shown = layers => layers.every(k => !LAYER[k] || layerOn(k));
+const ROOM_VIEW = new Set(WHOLE ? [] : VIEW.floors);   // a room shows whatever the floors are switched to
+const shown = layers => layers.every(k => !LAYER[k] || ROOM_VIEW.has(k) || layerOn(k));
 let HIDDEN = new Set();                    // the objects of a part the camera is beyond
 const ghost = layers => layers.some(k => HIDDEN.has(k));
 /* the open floor of the whole house: the highest floor shown with the roof off */
@@ -133,7 +135,11 @@ function cutPanel() {
   $('cutv').textContent = h === null ? 'off' : `${fmt(h - level(F), 0)} mm over the floor`;
 }
 $('cut').oninput = e => { const F = openFloor(); if (!F) return; state.cut[F.id] = +e.target.value; save(); cutPanel(); apply(); };
-const layersPanel = () => HOME.ui.layersPanel($('layers'), LAYER, VIEW.panel, state.layers, layerOn, setLayer);
+/* the layers in two blocks: where (the floors and the roof) and what (the elements); a solid shows when both are on */
+function layersPanel() {
+  HOME.ui.layersPanel($('floors'), LAYER, VIEW.floors, state.layers, layerOn, setLayer);
+  HOME.ui.layersPanel($('layers'), LAYER, VIEW.elements, state.layers, layerOn, setLayer);
+}
 function setLayer(k, on) { state.layers[k] = on; save(); refresh(); }
 function apply() {
   const h = cutHeight();
@@ -311,8 +317,8 @@ const CHECKS = [{ name: 'Every room asked for (?room=) is a room of the house', 
 $('checks').innerHTML = HOME.ui.checksHtml(CHECKS);
 
 /* ================= THE SCREEN =================
-   top-left: the house, its floors and their rooms · top-right: the modes · over the view: the floors
-   and the roof, the picked room · below: the mode's actions · the panel: the mode's tabs */
+   top-left: the house, its floors and their rooms · top-right: the modes · over the view: the picked room · below: the
+   mode's actions · the panel: the mode's tabs (Layers: the floors, the cut, the elements) */
 const linkTo = ids => '?room=' + ids.join(',');
 const same = ids => ids.length === PART.length && ids.every(id => PART.includes(id));
 HOME.ui.nav([{ name: 'House', href: 'index.html', on: WHOLE }]
@@ -321,7 +327,6 @@ HOME.ui.nav([{ name: 'House', href: 'index.html', on: WHOLE }]
 function context() {
   const box = $('context'); box.innerHTML = '';
   if (state.mode !== '3d' || !WHOLE) return;
-  HOME.ui.menuRow(box, VIEW.menu.map(k => ({ name: LAYER[k].name, on: layerOn(k), set: on => setLayer(k, on) })));
   const r = ROOM[state.room], F = openFloor();
   if (!r || !F || r.floor !== F) return;
   const tag = el('span', { className: 'roomtag' }, `${esc(roomName(r))} <a class="btnlink" href="${linkTo([r.id])}">Open</a><button aria-label="Unpick">×</button>`);
@@ -335,7 +340,7 @@ function bottomMenu() {
   const menus = { '3d': [[walk], cameras().map(go)], '2d': [SHEET_2D.menu], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx')], test: [] };
   HOME.ui.bottomMenu(menus[state.mode]);
 }
-const panel = () => { state.tab = HOME.ui.panelTabs(TABS[state.mode] || [], state.tab, t => { state.tab = t; save(); panel(); }, p => p === 'cut' && !openFloor()); };
+const panel = () => { state.tab = HOME.ui.panelTabs(TABS[state.mode] || [], state.tab, t => { state.tab = t; save(); panel(); }, p => (p === 'cut' && !openFloor()) || (p === 'floors' && !WHOLE)); };
 function refresh() { context(); bottomMenu(); layersPanel(); cutPanel(); panel(); apply(); }
 function setMode(m) {
   state.mode = m; save();

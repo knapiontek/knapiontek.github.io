@@ -21,8 +21,8 @@ HOME.data({
     "site": {"name": "Site"},
     "edges": {"name": "Edges"}
    },
-   "menu": ["ground", "attic", "roof"],
-   "panel": ["foundation", "walls", "slabs", "insulation", "openings", "stair", "site", "edges"],
+   "floors": ["ground", "attic", "roof"],
+   "elements": ["foundation", "walls", "slabs", "insulation", "openings", "stair", "site", "edges"],
    "edges": {"color": "#7d807b", "opacity": 0.45, "layers": ["edges"]},
    "light": {
     "exposure": 0.85,
