@@ -141,7 +141,14 @@ HOME.data({
     "layers": ["stair"]
    },
    "slab": {"name": "slab with ring beam", "material": "plasterInside", "cap": "concrete", "thickness": 340, "layers": ["slabs"], "walkable": true},
-   "ceiling": {"name": "ceiling with insulation", "material": "plasterInside", "cap": "insulation", "thickness": 390, "layers": ["slabs"], "floor": "roof"}
+   "ceiling": {
+    "name": "ceiling with insulation",
+    "material": "plasterInside",
+    "cap": "insulation",
+    "thickness": 390,
+    "layers": ["slabs"],
+    "floor": "roof"
+   }
   },
   "elements": [
    {"id": "footingLeft", "kind": "footing", "b": [-1000, 14200, 20, 620, -1320, -920]},
@@ -223,19 +230,18 @@ HOME.data({
    {"id": "loftWall", "kind": "block120", "b": [3640, 3760, 440, 8660, 5910, 9000], "top": "roof", "floor": "roof"},
    {"id": "attic1", "kind": "block120", "b": [3640, 3760, 440, 3910, 3060, 5910], "top": "roof"},
    {"id": "attic2", "kind": "block120", "b": [3640, 3760, 5530, 8660, 3060, 5910], "top": "roof"},
-   {"id": "attic3a", "kind": "block120", "b": [4660, 5350, 5530, 5650, 3060, 5910], "top": "roof"},
-   {"id": "attic3c", "kind": "block120", "b": [3760, 4660, 5530, 5650, 3060, 5910], "top": "roof"},
-   {"id": "attic4", "kind": "block120", "b": [3760, 4710, 3790, 3910, 3060, 5910], "top": "roof"},
+   {"id": "attic3a", "kind": "block120", "b": [3760, 5350, 5530, 5650, 3060, 5910], "top": "roof"},
    {"id": "attic3b", "kind": "block120", "b": [5470, 9010, 5530, 5650, 3060, 5910], "top": "roof"},
+   {"id": "attic4", "kind": "block120", "b": [3760, 4710, 3790, 3910, 3060, 5910], "top": "roof"},
    {"id": "attic5", "kind": "block120", "b": [5350, 5470, 440, 3590, 3060, 5910], "top": "roof"},
    {"id": "attic6", "kind": "block120", "b": [5350, 5470, 4350, 8660, 3060, 5910], "top": "roof"},
    {"id": "attic7", "kind": "block120", "b": [7370, 7490, 440, 3410, 3060, 5910], "top": "roof"},
    {"id": "attic8", "kind": "block120", "b": [7490, 9010, 3290, 3410, 3060, 5910], "top": "roof"},
-   {"id": "balustradeN", "kind": "balustrade", "b": [5470, 6460, 4350, 4390, 3060, 4060]},
-   {"id": "balustradeE", "kind": "balustrade", "b": [6420, 6460, 2730, 4350, 3060, 4060]},
    {"id": "attic9", "kind": "block120", "b": [8200, 8320, 5650, 8660, 3060, 5910], "top": "roof"},
    {"id": "attic12", "kind": "block120", "b": [9010, 9130, 440, 5650, 3060, 5910], "top": "roof"},
-   {"id": "attic13", "kind": "block120", "b": [9130, 12760, 4410, 4530, 3060, 5910], "top": "roof"}
+   {"id": "attic13", "kind": "block120", "b": [9130, 12760, 4410, 4530, 3060, 5910], "top": "roof"},
+   {"id": "balustradeN", "kind": "balustrade", "b": [5470, 6460, 4350, 4390, 3060, 4060]},
+   {"id": "balustradeE", "kind": "balustrade", "b": [6420, 6460, 2730, 4350, 3060, 4060]}
   ],
   "voids": [{"id": "stairVoid", "name": "stair void", "boxes": [[5470, 6420, 440, 4350, 2720, 3060], [6420, 7370, 440, 2730, 2720, 3060]]}],
   "openingKinds": {
