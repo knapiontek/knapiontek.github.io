@@ -55,7 +55,7 @@ In the house's axes and order: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`, all
 | hardware | our layout of the hardware as drawn: handle (axis, barLength, sideHeight), handles (the metals to choose and the default), open (the angles and the drawers' travel; doorStop: a carcass's door that opens less), leg (fromSide, fromBack, fromFront), bins (count, height), plinthGrille (bottom) |
 | floors, floorJoint | the tiles to choose for the floor (not drawn yet) |
 | lights | pendantBottom; pendants {group, count, spacing}; downlights: {group, x, y} or {group, between: [axes], y}, y from the wall |
-| cameras | name, eye, target: in the house's axes |
+| cameras | name, eye, target: in the room's axes, from its zero |
 
 ## Checks (Test)
 

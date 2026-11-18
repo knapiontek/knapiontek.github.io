@@ -54,7 +54,7 @@ An assembly stands at the house's zero with the house's size; a floor at its lev
 
 **A room** is a node whose type is its kind (`kitchen`, `bathroom`, `wardrobe`, `bedroom`, `hall`, `living`, `vestibule`, `garage`, `boiler`) and whose id is the kind and archon's number (`kitchen_6`). Its offset is the smallest corner of its floor area, its size the box around it and the floor's height. Its own fields: `number` (archon's), `area` (its floor area at the block faces, rectangles in the room's axes), `archonArea` (m², archon's, after plaster: a reference only), `note` (where its border runs with no wall, and why).
 
-**geometry**, what the elements are made of and how they are drawn. The numbers in the house's own fields (geometry, the views' cameras, the roof, the stair's flights, a floor's areas, lines, transoms) are in the house's axes, mm: x along the house, y across, h up, from the house's zero:
+**geometry**, what the elements are made of and how they are drawn. Every number of a node's own fields is in that node's axes, from its zero (mm: x along the house, y across, h up): the house's geometry and views in the house's; a floor's areas and cameras in the floor's; the roof's planes and the stair's flights in theirs; an element's or an opening's lines (`below`) and transoms in its own:
 
 | Field | Means |
 |---|---|

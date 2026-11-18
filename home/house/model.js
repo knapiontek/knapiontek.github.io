@@ -29,12 +29,19 @@ const T = HOME.tree.create(HOUSE), GEO = HOUSE.geometry, KIND = GEO.kinds, OPENI
 const FLOORS = HOUSE.children.filter(n => n.type === 'floor'), TOP_FLOOR = FLOORS[FLOORS.length - 1];
 const level = F => F.offset[2];
 const fieldsOf = (n, keys) => Object.fromEntries(keys.filter(k => n[k] !== undefined).map(k => [k, n[k]]));
+/* a node's lines and transoms are in its own axes: here in the house's */
+const inHouse = (n, fields) => {
+  const p = T.place(n);
+  if (fields.below) fields.below = fields.below.map(l => Object.assign({}, l, { h: l.h + p[2], y: l.y + p[1] }));
+  if (fields.transoms) fields.transoms = fields.transoms.map(h => h + p[2]);
+  return fields;
+};
 /* the elements of the tree as the model reads them, each with its box in the house: an element (its type a kind), an
    opening in its wall, a roof window, a void and its boxes; the site, the roof and the stair are nodes of the house */
 const ELEMENTS = [], OPENINGS = [], ROOF_WINDOWS = [], VOIDS = [];
 T.walk(n => {
-  if (KIND[n.type]) ELEMENTS.push(Object.assign(fieldsOf(n, ['top', 'outer', 'cuts', 'floor', 'below']), { id: n.id, kind: n.type, b: T.box(n) }));
-  else if (OPENING_KIND[n.type]) OPENINGS.push(Object.assign(fieldsOf(n, ['label', 'outer', 'cols', 'leaf', 'hinge', 'opens', 'product', 'extras', 'below', 'transoms']), { id: n.id, kind: n.type, b: T.box(n) }));
+  if (KIND[n.type]) ELEMENTS.push(Object.assign(inHouse(n, fieldsOf(n, ['top', 'outer', 'cuts', 'floor', 'below'])), { id: n.id, kind: n.type, b: T.box(n) }));
+  else if (OPENING_KIND[n.type]) OPENINGS.push(Object.assign(inHouse(n, fieldsOf(n, ['label', 'outer', 'cols', 'leaf', 'hinge', 'opens', 'product', 'extras', 'below', 'transoms'])), { id: n.id, kind: n.type, b: T.box(n) }));
   else if (n.type === 'roofWindow') { const b = T.box(n); ROOF_WINDOWS.push({ id: n.id, name: n.place, label: n.label, x: [b[0], b[1]], y: [b[2], b[3]] }); }
   else if (n.type === 'void') VOIDS.push({ id: n.id, name: n.name, boxes: n.children.map(T.box) });
 });

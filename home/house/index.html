@@ -177,7 +177,10 @@ function cameras() {
     return VIEW.cameras.concat(own && own.from === F ? own.value.map(c => ({ name: c.name, eye: [c.eye[0], c.eye[1], c.eye[2] + level(F)], target: [c.target[0], c.target[1], c.target[2] + level(F)] })) : []);
   }
   const own = PART.length === 1 && FURNITURE.find(f => f.room.id === PART[0]);   // a room's own cameras (its scene)
-  if (own && own.prepared.scene.cameras) return own.prepared.scene.cameras;
+  if (own && own.prepared.scene.cameras) {                  // in the room's axes
+    const p = T.place(own.room.node), at = v => [v[0] + p[0], v[1] + p[1], v[2] + p[2]];
+    return own.prepared.scene.cameras.map(c => ({ name: c.name, eye: at(c.eye), target: at(c.target) }));
+  }
   const EYE = 1600, LOOK = 900;            // mm over the floor: a person's eyes; what they look at
   const floors = FLOORS.filter(F => PARTS.some(p => p.floor === F));
   return floors.flatMap(F => {

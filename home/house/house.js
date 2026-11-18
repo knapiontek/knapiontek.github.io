@@ -352,10 +352,10 @@ HOME.data({
      "settings": {
       "view": {
        "cameras": [
-        {"name": "Plan", "eye": [7660, 4550, 24320], "target": [7600, 4550, 1320]},
-        {"name": "Perspective", "eye": [20000, -6500, 11820], "target": [7200, 4550, 1920]},
-        {"name": "Living room", "eye": [1900, 8300, 2920], "target": [6200, 3000, 2220]},
-        {"name": "Entrance", "eye": [12500, 5400, 2920], "target": [7500, 5200, 2320]}
+        {"name": "Plan", "eye": [7660, 4550, 23000], "target": [7600, 4550, 0]},
+        {"name": "Perspective", "eye": [20000, -6500, 10500], "target": [7200, 4550, 600]},
+        {"name": "Living room", "eye": [1900, 8300, 1600], "target": [6200, 3000, 900]},
+        {"name": "Entrance", "eye": [12500, 5400, 1600], "target": [7500, 5200, 1000]}
        ],
        "plan": 1500
       }
@@ -702,11 +702,11 @@ HOME.data({
      "settings": {
       "view": {
        "cameras": [
-        {"name": "Plan", "eye": [7660, 4550, 24320], "target": [7600, 4550, 1320]},
-        {"name": "Perspective", "eye": [20000, -6500, 11820], "target": [7200, 4550, 1920]},
-        {"name": "Bedroom", "eye": [4300, 8200, 2920], "target": [1800, 2000, 1920]},
-        {"name": "Hall", "eye": [9800, 5200, 2920], "target": [6600, 4700, 1920]},
-        {"name": "Rooms", "eye": [13400, 4500, 2920], "target": [10300, 7000, 1920]}
+        {"name": "Plan", "eye": [7660, 4550, 23000], "target": [7600, 4550, 0]},
+        {"name": "Perspective", "eye": [20000, -6500, 10500], "target": [7200, 4550, 600]},
+        {"name": "Bedroom", "eye": [4300, 8200, 1600], "target": [1800, 2000, 600]},
+        {"name": "Hall", "eye": [9800, 5200, 1600], "target": [6600, 4700, 600]},
+        {"name": "Rooms", "eye": [13400, 4500, 1600], "target": [10300, 7000, 600]}
        ],
        "plan": 800
       }
@@ -749,7 +749,7 @@ HOME.data({
          "label": "6000/3460",
          "outer": "x0",
          "cols": 4,
-         "below": [{"h": 7840, "y": 4550, "pitch": 1}, {"h": 7840, "y": 4550, "pitch": -1}]
+         "below": [{"h": 3460, "y": 3000, "pitch": 1}, {"h": 3460, "y": 3000, "pitch": -1}]
         }
        ]
       },
@@ -770,8 +770,8 @@ HOME.data({
          "label": "2200/2850",
          "outer": "x1",
          "cols": 2,
-         "transoms": [5220],
-         "below": [{"h": 7230, "y": 3880, "pitch": 1}]
+         "transoms": [840],
+         "below": [{"h": 2850, "y": 2200, "pitch": 1}]
         },
         {
          "id": "window_bedroom_6",
@@ -782,8 +782,8 @@ HOME.data({
          "label": "2200/2850",
          "outer": "x1",
          "cols": 2,
-         "transoms": [5220],
-         "below": [{"h": 7230, "y": 5220, "pitch": -1}]
+         "transoms": [840],
+         "below": [{"h": 2850, "y": 0, "pitch": -1}]
         }
        ]
       },
