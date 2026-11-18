@@ -42,7 +42,9 @@ house/  ──►  room/  ──►  core/, library/
 ## The tree and the coordinates
 
 - The house's axes are the only coordinates: x along the house, y across, h up. Lengths in mm.
-- One kind of node: `id`, `name`, `type`, `offset`, `size`, `settings`, `refs`, `children`. A node is placed by a translation only: its offset from its parent's smallest corner (never below 0) and its size (always above 0). No rotations, no signs.
+- One kind of node: `id`, `name`, `type`, `offset`, `size`, `settings`, `refs`, `children`. A node is placed by a translation only: its offset from its parent's origin and its size (above 0). No rotations, no signs for directions.
+- **One zero**: the corner of the house archon starts from. The house lies in positive numbers from it; only what is outside it (the foundations, the insulation before the walls, the site) has negative ones.
+- **The tree says what belongs to what, not what lies inside what**: a room is in the house, a window in its wall, a sink and its tap in their carcass though they stand over it. A child may stand outside its parent.
 - A front is a side of its box: `x0`, `x1`, `y0`, `y1` (the side at the smaller or the bigger x or y).
 - The id is given once and never changed or reused; the path of ids from the root is a node's global identifier. A node refers to others only by their paths, in its `refs`, and Test checks that each exists.
 - Settings are a cascade along the tree: a value set on a node is the default for its branch; a node below overrides it for itself and its branch. The root of the cascade is the house.

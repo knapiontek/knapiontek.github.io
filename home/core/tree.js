@@ -1,11 +1,10 @@
 /* core/tree.js: the tree of nodes. A node is {id, name, type, offset: [x, y, h], size: [x, y, h], settings, refs, children};
    its type is only a name here; refs are the paths of the nodes it refers to (what for, its type says). A node's place is
-   its parent's place plus its offset; its settings are the defaults of its branch. Knows no project and nothing of what a
-   node is. Needs core/geometry.js (only for EPS). */
+   its parent's place plus its offset; its settings are the defaults of its branch. The tree says what belongs to what, not
+   what lies inside what: a child may stand outside its parent (a sink over its carcass). Knows no project and nothing of
+   what a node is. */
 (function (HOME) {
 'use strict';
-const { EPS } = HOME.geometry;
-
 const AXES = ['x', 'y', 'h'];
 const ID = /^[A-Za-z0-9_-]+$/;             // no spaces, no '/': an id is a step of a path
 
@@ -47,7 +46,7 @@ function create(root) {
 
   /* the checks of the tree, as Test shows them: [{name, items}] */
   function checks() {
-    const shape = [], ids = [], twice = [], negative = [], empty = [], outside = [], broken = [];
+    const shape = [], ids = [], twice = [], below = [], empty = [], broken = [];
     const vector = v => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
     walk(n => {
       const at = path(n) || '(' + (n.name || n.type || 'a node') + ')';
@@ -55,9 +54,9 @@ function create(root) {
       else for (const r of n.refs || []) if (!node(r)) broken.push(`${at}: ${r}`);
       if (typeof n.id !== 'string' || !ID.test(n.id)) ids.push(`${at}: id ${JSON.stringify(n.id)}`);
       if (!n.type || !vector(n.offset) || !vector(n.size)) { shape.push(`${at}: ${['type', 'offset', 'size'].filter(k => k === 'type' ? !n.type : !vector(n[k])).join(', ')}`); return; }
-      AXES.forEach((a, i) => { if (n.offset[i] < 0) negative.push(`${at}: offset ${a} ${n.offset[i]}`); if (n.size[i] <= 0) empty.push(`${at}: size ${a} ${n.size[i]}`); });
-      const p = PARENT.get(n);
-      if (p.size && vector(p.size)) AXES.forEach((a, i) => { if (n.offset[i] + n.size[i] > p.size[i] + EPS) outside.push(`${at}: ${a} ${n.offset[i] + n.size[i]} > ${p.size[i]}`); });
+      AXES.forEach((a, i) => { if (n.size[i] <= 0) empty.push(`${at}: size ${a} ${n.size[i]}`); });
+      const p = place(n), low = AXES.filter((a, i) => p[i] < 0);
+      if (low.length) below.push(`${at}: ${low.map(a => a + ' ' + p[AXES.indexOf(a)]).join(', ')}`);
     });
     (function siblings(n) {
       const seen = new Set();
@@ -67,9 +66,8 @@ function create(root) {
       { name: 'Tree: every node has a type, an offset and a size', items: shape },
       { name: 'Tree: ids without spaces or slashes', items: ids },
       { name: 'Tree: ids unique among siblings', items: twice },
-      { name: 'Tree: offsets not below 0', items: negative },
       { name: 'Tree: sizes above 0', items: empty },
-      { name: 'Tree: every node inside its parent', items: outside },
+      { name: 'Tree: what lies below the root\'s zero (to know: only what is outside, as the foundations)', items: below, info: true },
       { name: 'Tree: every ref is the path of a node', items: broken }];
   }
 

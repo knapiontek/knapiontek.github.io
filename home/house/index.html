@@ -51,7 +51,7 @@ HOME.ui.screen($('app'), {
     <section data-tab="view" data-part="furniture"><h2>Furniture</h2><div class="layers" id="furniture"></div></section>`
 });
 
-const [DATA, LIB] = await Promise.all([HOME.load(HOME.load.file.house(), 'house', 1), HOME.library.load()]);
+const [DATA, LIB] = await Promise.all([HOME.load(HOME.load.file.house(), 'house', 2), HOME.library.load()]);
 const MODEL = HOME.model.build(DATA), T = MODEL.T, VIEW = T.setting(DATA, 'view').value;
 const { ROOF, WIDTH, RIDGE_TOP, FLOORS, ROOMS, ROOM, DOORS } = MODEL;
 const level = F => F.offset[2], floorTop = F => level(F) + F.size[2];
@@ -221,7 +221,7 @@ V.onClick(ray => {
 });
 V.enableNavigation();
 /* the walk stands on the walkable solids and, through a passage (a door), on its floor: the floor runs on through it */
-const PASSAGES = DATA.geometry.openings.filter(o => DATA.geometry.openingKinds[o.kind].passage);
+const PASSAGES = MODEL.OPENINGS.filter(o => DATA.geometry.openingKinds[o.kind].passage);
 const PASSAGE_FLOORS = PASSAGES.map(o => ({ S: prism([o.b[0], o.b[1], o.b[2], o.b[3], o.b[4] - 1, o.b[4]]) }));
 const startOf = () => {
   if (WHOLE) return VIEW.walk.start;
@@ -300,7 +300,7 @@ function planSvg() {
         return PLAN.floorArea(X, rooms.flatMap(r => r.rects)) + (WHOLE ? planStair(F, X, h, holes) : '') + PLAN.cut(X, solids, h)
           + furniture.map(p => PLAN.seen(X, p.shapes, h) + PLAN.cut(X, p.cells, h, c => !c.layers.includes('holes'))).join('')
           + (WHOLE && F === FLOORS[FLOORS.length - 1] ? planUnderRoof(F, X, holes) : '') + planDoors(F, X)
-          + PLAN.labels(X, DATA.geometry.openings, h, MODEL.SIDE, o => MODEL.floorOf((o.b[4] + o.b[5]) / 2) === F.id && (WHOLE || inside(box, (o.b[0] + o.b[1]) / 2, (o.b[2] + o.b[3]) / 2)))
+          + PLAN.labels(X, MODEL.OPENINGS, h, MODEL.SIDE, o => MODEL.floorOf((o.b[4] + o.b[5]) / 2) === F.id && (WHOLE || inside(box, (o.b[0] + o.b[1]) / 2, (o.b[2] + o.b[3]) / 2)))
           + PLAN.borders(X, borders) + PLAN.rooms(X, rooms.map(roomLabel)) + PLAN.dims(X, box, box[1]);
       } };
   }));

@@ -48,13 +48,13 @@ solids ─► plan2d.js ─► 2D        rows ─► sheet.js ─► Documents, 
 | id | the identity: letters, digits, `_` and `-`; unique among its siblings; never changed or reused |
 | name | for people |
 | type | what the node is; the module of that type reads it |
-| offset | [x, y, h] mm from the parent's smallest corner, each not below 0 |
+| offset | [x, y, h] mm from the parent's origin |
 | size | [x, y, h] mm, each above 0 |
 | settings | values for this node and its branch; a key may hold an object, read by a path of keys (`open.door`) |
 | refs | the paths of the nodes it refers to, from the root of the tree; what each is for, its type says (a sink: the cabinet it sits in) |
 | children | the nodes inside it |
 
-A data file whose root is a node puts its `format` and `version` beside the node's own fields. The checks of the tree: a type, an offset and a size on every node; ids without spaces or slashes; ids unique among siblings; offsets not below 0; sizes above 0; every node inside its parent; every ref is the path of a node.
+A data file whose root is a node puts its `format` and `version` beside the node's own fields. The checks of the tree: a type, an offset and a size on every node; ids without spaces or slashes; ids unique among siblings; sizes above 0; every ref is the path of a node; to know: what lies below the root's zero.
 
 ## test.tree.js
 

@@ -1222,15 +1222,17 @@
      group -> what runs along it (worktop, panels, strips, plinths, plasterboard, the hood), then its units in a row: its
      carcasses and a dishwasher's bay; carcass -> its boards, fronts, products and hardware; front -> its panel, its hardware,
      the boards of its drawer, its inner drawer, its drawers behind the door. A node: {id, name, type, offset, size, children}
-     in x, y, h: offset from its parent's origin (its smallest corner), size its box (its own parts and its children's);
+     in x, y, h: offset from its parent's origin (its smallest corner), size its own part's box (what holds others: theirs);
+     a child may stand outside its parent (a sink over its carcass);
      the group's origin: its left end, its wall, the floor. node.part: the part of the model it draws. The model computes
      with y from the carcass backs; the tree has no such frame. */
   function tree(model, appliances, fitting) {
     const { carcassBack, carcassFront, frontFace, frontThickness, settings } = model, PRODUCTS = productsOf(model, appliances, fitting), HARDWARE = fitting && fitting.HW ? hardwareOf(model, fitting.HW) : [];
     const union = boxes => [0, 1, 2].flatMap(k => [Math.min(...boxes.map(b => b[2 * k])), Math.max(...boxes.map(b => b[2 * k + 1]))]);
-    /* a node with its box in the model's frame (gb) and its children; made local once its parent is known */
+    /* a node with its box in the model's frame (gb): its own part's, or, for what only holds others (a group, a bay, a
+       drawer), what it holds; made local once its parent is known */
     const make = (id, name, type, own, children = [], part = null) => {
-      const gb = union([own, ...children.map(c => c.gb)].filter(Boolean));
+      const gb = own ? own.slice() : union(children.map(c => c.gb));
       const n = { id, name, type, gb, children };
       Object.defineProperty(n, 'part', { value: part, enumerable: false });
       return n;
@@ -1277,7 +1279,7 @@
         [x.item.x0, x.item.x1, g.wall, g.wall + settings.plasterboard.depth, x.item.h0, x.item.h1], [], x));
       const children = [...worktops, ...piece(model.wallPanels, 'wallPanel'), ...plaster, ...piece(model.strips, 'strip'), ...piece(model.plinths, 'plinth'),
         ...piece(model.frontPanels, 'frontPanel'), ...along, ...units];   // what runs along the group, then its units in a row
-      const n = make('g' + r, 'G' + r + ' · ' + g.name, 'group', [0, g.length, g.wall, g.wall, 0, 0], children);
+      const n = make('g' + r, 'G' + r + ' · ' + g.name, 'group', null, children);
       n.gb[0] = 0; n.gb[2] = g.wall; n.gb[4] = 0;                  // the origin: the left end, the wall, the floor
       return n;
     });

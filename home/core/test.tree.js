@@ -38,6 +38,6 @@ HOME.data({"format": "tree", "version": 1,
     {"id": "drawer", "name": "Drawer front", "type": "drawer", "offset": [603, 0, 600], "size": [597, 18, 300], "settings": {"material": "oakFront"}},
     {"id": "a3f9c2", "name": "Drawer front", "type": "drawer", "offset": [603, 0, 0], "size": [597, 18, 597], "settings": {"material": "oakFront"}, "refs": ["cabinet/bottom"]}
    ]},
-  {"id": "outside", "name": "Out of its parent", "type": "box", "offset": [3800, 100, 100], "size": [400, 400, 400]}
+  {"id": "below", "name": "Below the zero", "type": "box", "offset": [-200, 100, 100], "size": [400, 400, 400]}
  ]
 });

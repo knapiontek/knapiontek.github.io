@@ -19,18 +19,30 @@ const stripOf = (P, a, b) => clipHalf(clipHalf(P, p => p[0] - a), p => b - p[0])
 const bandOf = (P, k, c, w) => clipHalf(clipHalf(P, p => p[k] - c + w / 2), p => c + w / 2 - p[k]);
 
 /* the outward side of an opening: which axis its wall faces along, and which way */
-const SIDE = { '-x': { axis: 0, sign: -1 }, '+x': { axis: 0, sign: 1 }, '-y': { axis: 1, sign: -1 }, '+y': { axis: 1, sign: 1 }, '-h': { axis: 2, sign: -1 } };
+const SIDE = { x0: { axis: 0, sign: -1 }, x1: { axis: 0, sign: 1 }, y0: { axis: 1, sign: -1 }, y1: { axis: 1, sign: 1 }, h0: { axis: 2, sign: -1 } };
 
 /* the model of a house: HOUSE its data (the root node of house.js) */
 function build(HOUSE) {
 const T = HOME.tree.create(HOUSE), GEO = HOUSE.geometry, KIND = GEO.kinds, OPENING_KIND = GEO.openingKinds;
-const FLOORS = HOUSE.children, TOP_FLOOR = FLOORS[FLOORS.length - 1];
+const FLOORS = HOUSE.children.filter(n => n.type === 'floor'), TOP_FLOOR = FLOORS[FLOORS.length - 1];
 const level = F => F.offset[2];
-const ELEMENT = byId(GEO.elements), VOID = byId(GEO.voids);
+const fieldsOf = (n, keys) => Object.fromEntries(keys.filter(k => n[k] !== undefined).map(k => [k, n[k]]));
+/* the elements of the tree as the model reads them, each with its box in the house: an element (its type a kind), an
+   opening in its wall, a roof window, a void and its boxes; the site, the roof and the stair are nodes of the house */
+const ELEMENTS = [], OPENINGS = [], ROOF_WINDOWS = [], VOIDS = [];
+T.walk(n => {
+  if (KIND[n.type]) ELEMENTS.push(Object.assign(fieldsOf(n, ['top', 'outer', 'cuts', 'floor', 'below']), { id: n.id, kind: n.type, b: T.box(n) }));
+  else if (OPENING_KIND[n.type]) OPENINGS.push(Object.assign(fieldsOf(n, ['label', 'outer', 'cols', 'leaf', 'hinge', 'opens', 'product', 'extras', 'below', 'transoms']), { id: n.id, kind: n.type, b: T.box(n) }));
+  else if (n.type === 'roofWindow') { const b = T.box(n); ROOF_WINDOWS.push({ id: n.id, name: n.place, label: n.label, x: [b[0], b[1]], y: [b[2], b[3]] }); }
+  else if (n.type === 'void') VOIDS.push({ id: n.id, name: n.name, boxes: n.children.map(T.box) });
+});
+const HOUSE_NODE = id => HOUSE.children.find(n => n.id === id);
+const SITE = HOUSE_NODE('site'), STAIR = HOUSE_NODE('stair');
+const ELEMENT = byId(ELEMENTS), VOID = byId(VOIDS);
 
 /* ================= 1. ROOF LINES =================
    A line across the house is h = a + s·y; the roof gives the slope. */
-const ROOF = GEO.roof, TAN = Math.tan(ROOF.pitch * DEG), WIDTH = ROOF.width;
+const ROOF = Object.assign({}, HOUSE_NODE('roof'), { windows: ROOF_WINDOWS }), TAN = Math.tan(ROOF.pitch * DEG), WIDTH = ROOF.width;
 const ROOF_DEPTH = ROOF.thickness / Math.cos(ROOF.pitch * DEG);   // the data gives it across the slope, the prisms vertically
 const RIDGE_TOP = ROOF.eave + TAN * WIDTH / 2 + ROOF_DEPTH;
 const line = l => ({ a: l.h - l.pitch * TAN * l.y, s: l.pitch * TAN });
@@ -45,7 +57,7 @@ const elementPrism = e => prism(e.b, (e.below || []).map(line).concat(e.top === 
 const openingPrism = o => prism(o.b, (o.below || []).map(line));
 const cutPrisms = id => ELEMENT[id] ? [elementPrism(ELEMENT[id])] : VOID[id].boxes.map(b => prism(b));
 const regionPrism = r => prism([...range(r.x), ...range(r.y), ...range(r.h)], (r.below || []).map(line));
-const OPENING_PRISMS = GEO.openings.map(openingPrism);
+const OPENING_PRISMS = OPENINGS.map(openingPrism);
 
 /* ================= 3. ELEMENTS =================
    A cell is a prism with what it is: {S, element, floor, material, cap, layers, raw?, finish?, walkable?, edges}. Its floor
@@ -74,7 +86,7 @@ function elementCells(e) {
       walkable: !!k.walkable, layers: [floor].concat(k.layers), edges: true };
   });
 }
-for (const e of GEO.elements) CELLS.push(...elementCells(e));
+for (const e of ELEMENTS) CELLS.push(...elementCells(e));
 
 /* ================= 4. ROOF =================
    Two slopes, without its cuts and the roof windows; its faces take the material of their side (a cut's walls: the reveals). */
@@ -102,7 +114,7 @@ function addFixture(S, material, layers, element = 'opening', edges = false) {
 /* the plane of an opening: its outline, its span along the wall and how a polygon of it becomes a prism */
 function openingPlane(o) {
   const side = SIDE[o.outer];
-  const host = GEO.elements.find(e => KIND[e.kind].host && prismIntersect(elementPrism(e), openingPrism(o)));
+  const host = ELEMENTS.find(e => KIND[e.kind].host && prismIntersect(elementPrism(e), openingPrism(o)));
   const face = host.b[2 * side.axis + (side.sign > 0 ? 1 : 0)];
   const depth = (d1, d2) => [face - side.sign * d1, face - side.sign * d2].sort((a, b) => a - b);
   const alongX = side.axis === 0;
@@ -177,7 +189,7 @@ function roofWindowFixtures(w) {
   for (const b of bars) add(slopeSlab(...b, l, over(W.frame)), W.material);
   add(slopeSlab(xi1, xi2, y1 + across, y2 - across, l, over(W.glass)), W.glazing);
 }
-GEO.openings.forEach(openingFixtures);
+OPENINGS.forEach(openingFixtures);
 ROOF.windows.forEach(roofWindowFixtures);
 
 /* ================= 5b. INNER DOORS =================
@@ -190,7 +202,7 @@ function doorOf(o, i) {
   if (!D) return;
   const [x1, x2, y1, y2, h1, h2] = o.b, alongX = x2 - x1 > y2 - y1;       // the wall runs along the opening's longer side
   const [u1, u2] = alongX ? [x1, x2] : [y1, y2], [n1, n2] = alongX ? [y1, y2] : [x1, x2];
-  const sign = o.opens[0] === '+' ? 1 : -1, face = sign > 0 ? n2 : n1;
+  const sign = o.opens[1] === '1' ? 1 : -1, face = sign > 0 ? n2 : n1;
   /* a box from (u, n) ranges into house axes */
   const box = (ua, ub, na, nb, ha, hb) => prism(alongX ? [ua, ub, Math.min(na, nb), Math.max(na, nb), ha, hb] : [Math.min(na, nb), Math.max(na, nb), ua, ub, ha, hb]);
   const layers = F.layers, J = D.frame, top = h2 - D.head;
@@ -202,7 +214,7 @@ function doorOf(o, i) {
   const cell = (S, material) => ({ S, element: 'door', floor, material, cap: material, layers: [floor].concat(layers), edges: true, part: 'door' + i });
   const cells = [cell(box(a, b, back, face, h1 + D.bottom, top - D.gap), D.material)];
   /* a handle on each face, by the free edge */
-  const hinge = o.hinge === (alongX ? 'x2' : 'y2') ? b : a, free = hinge === a ? b : a, inward = free > hinge ? -1 : 1;
+  const hinge = o.hinge === (alongX ? 'x1' : 'y1') ? b : a, free = hinge === a ? b : a, inward = free > hinge ? -1 : 1;
   const H = D.handle, hu = free + inward * H.inset, hh = h1 + H.height;
   for (const [f, out] of [[face, sign], [back, -sign]]) {
     cells.push(cell(box(hu - H.rosette / 2, hu + H.rosette / 2, f, f + out * H.rosetteDepth, hh - H.rosette / 2, hh + H.rosette / 2), H.material));
@@ -214,12 +226,12 @@ function doorOf(o, i) {
   DOORS.push({ id: 'door' + i, label: o.label, floor, axis, angle, cells, free: alongX ? [free, face] : [face, free], centre: alongX ? [(a + b) / 2, face] : [face, (a + b) / 2],
     product: o.product || D.product || null, extras: o.extras || D.extras || [] });
 }
-GEO.openings.forEach(doorOf);
+OPENINGS.forEach(doorOf);
 
 /* ================= 6. STAIR =================
    Floating treads, the landing is a flight of one. */
 function stairCells() {
-  const ST = GEO.stair, rise = level(TOP_FLOOR) / ST.risers, out = [];
+  const ST = STAIR, rise = level(TOP_FLOOR) / ST.risers, out = [];
   for (const f of ST.flights) {
     const step = (f.y[1] - f.y[0]) / f.count;
     for (let i = 0; i < f.count; i++) {
@@ -235,11 +247,11 @@ const STAIR_CELLS = stairCells();
 /* ================= 7. SITE =================
    The lawn and the surfaces on it; the lawn gives way to the building's footprint, the box around its elements. */
 function footprintPrism() {
-  const b = k => GEO.elements.map(e => e.b[k]);
+  const b = k => ELEMENTS.map(e => e.b[k]);
   return prism([Math.min(...b(0)), Math.max(...b(1)), Math.min(...b(2)), Math.max(...b(3)), -INF, INF]);
 }
 function siteCells() {
-  const S = GEO.site, L = S.lawn, out = [];
+  const S = SITE, L = S.lawn, out = [];
   const cell = (P, material) => ({ S: P, element: 'site', material, walkable: S.walkable, layers: S.layers.slice(), edges: false });
   let lawn = [prism([...L.rect, L.h - L.depth, L.h])];
   if (L.aroundBuilding) lawn = subtractAll(lawn, [footprintPrism()]);
@@ -250,11 +262,11 @@ function siteCells() {
 const SITE_CELLS = siteCells();
 
 const SOLIDS = CELLS.concat(FIXTURES, STAIR_CELLS);    // what a cut caps and what the walk bumps into
-const voidsAt = h => GEO.voids.flatMap(v => v.boxes).filter(b => b[4] <= h && b[5] >= h);   // the void boxes open at a height
+const voidsAt = h => VOIDS.flatMap(v => v.boxes).filter(b => b[4] <= h && b[5] >= h);   // the void boxes open at a height
 
 /* ================= 8. ROOMS =================
    Each room of each floor with its floor area in the house's axes. */
-const ROOMS = FLOORS.flatMap(F => F.children.map(node => {
+const ROOMS = FLOORS.flatMap(F => F.children.filter(n => n.area).map(node => {
   const [x, y] = T.place(node);
   return { id: node.id, node, floor: F, rects: node.area.map(q => [q[0] + x, q[1] + x, q[2] + y, q[3] + y]) };
 }));
@@ -293,7 +305,7 @@ const within = (b, w) => b[0] >= w[0] - TOL && b[1] <= w[1] + TOL && b[2] >= w[2
    bottom of the slab it stands on to the top of what closes it from above (the floor's top where nothing does) */
 function partBox(R) {
   const L = level(R.floor), top = L + R.floor.size[2], b = [...[0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...R.rects.map(q => q[k])))];
-  const standing = GEO.elements.filter(e => PART.kinds.includes(e.kind) && !KIND[e.kind].walkable && e.b[4] < top && e.b[5] > L + TOL);
+  const standing = ELEMENTS.filter(e => PART.kinds.includes(e.kind) && !KIND[e.kind].walkable && e.b[4] < top && e.b[5] > L + TOL);
   for (const e of standing) for (const r of R.rects) {
     const t = KIND[e.kind].thickness || INF;   // a wall reaches back by its thickness at most (not along its length)
     const alongY = overlap(e.b[2], e.b[3], r[2], r[3]) > TOL, alongX = overlap(e.b[0], e.b[1], r[0], r[1]) > TOL;
@@ -303,8 +315,8 @@ function partBox(R) {
     if (alongX && Math.abs(e.b[3] - r[2]) <= TOL) b[2] = Math.min(b[2], Math.max(e.b[2], r[2] - t));
   }
   const meets = e => R.rects.some(r => overlap(e.b[0], e.b[1], r[0], r[1]) > TOL && overlap(e.b[2], e.b[3], r[2], r[3]) > TOL);
-  const under = GEO.elements.filter(e => KIND[e.kind].walkable && Math.abs(e.b[5] - L) <= TOL && meets(e)).map(e => e.b[4]);
-  const over = GEO.elements.filter(e => KIND[e.kind].layers.includes('slabs') && e.b[4] >= L + TOL && e.b[4] <= top + TOL && meets(e));
+  const under = ELEMENTS.filter(e => KIND[e.kind].walkable && Math.abs(e.b[5] - L) <= TOL && meets(e)).map(e => e.b[4]);
+  const over = ELEMENTS.filter(e => KIND[e.kind].layers.includes('slabs') && e.b[4] >= L + TOL && e.b[4] <= top + TOL && meets(e));
   const open = over.reduce((rest, e) => rest.flatMap(q => rectMinus(q, e.b)), R.rects);
   const closed = !open.some(q => rectArea(q) > TOL * TOL);
   return [...b, under.length ? Math.min(...under) : L, closed ? Math.max(...over.map(e => e.b[5])) : top];
@@ -324,7 +336,7 @@ function sideOf(c, S, rects, L) {
   }
   return best ? best.side : null;            // a piece touching the room at a point only: a corner, or nothing of the room's
 }
-const HOLES = GEO.openings.map(o => ({ id: o.id, b: o.b })).concat(ROOF.windows.map(w => ({ id: w.id, b: [w.x[0], w.x[1], w.y[0], w.y[1]] })));
+const HOLES = OPENINGS.map(o => ({ id: o.id, b: o.b })).concat(ROOF.windows.map(w => ({ id: w.id, b: [w.x[0], w.x[1], w.y[0], w.y[1]] })));
 /* one room cut out: {room, floor, box, cells, objects: [{id, role, side, host, cells, leaf?}], ceiling} */
 function part(id) {
   const R = ROOM[id], L = level(R.floor), box = partBox(R), B = prism(box);
@@ -386,7 +398,7 @@ function part(id) {
 function checks() {
   const THICKNESS_TOL = 0.5, MIN_PATCH = 100, MIN_OVERLAP = 1;   // mm; mm²: a smaller patch is a rounding; mm³: the rounding of exact cuts
   const n = v => Math.round(v);
-  const thickness = GEO.elements.filter(e => KIND[e.kind].thickness).flatMap(e => {
+  const thickness = ELEMENTS.filter(e => KIND[e.kind].thickness).flatMap(e => {
     const d = Math.min(e.b[1] - e.b[0], e.b[3] - e.b[2], e.b[5] - e.b[4]), t = KIND[e.kind].thickness;
     return Math.abs(d - t) > THICKNESS_TOL ? [`${e.id}: ${n(d)} mm, not ${t} mm (${KIND[e.kind].name})`] : [];
   });
@@ -397,7 +409,7 @@ function checks() {
   };
   /* what is left of a floor once its rooms, the rest (the stair), the walls standing on it and the voids open at it are taken */
   const floorLeft = F => {
-    const L = level(F), standing = GEO.elements.filter(e => e.b[4] <= L && e.b[5] > L).map(e => e.b);
+    const L = level(F), standing = ELEMENTS.filter(e => e.b[4] <= L && e.b[5] > L).map(e => e.b);
     const taken = ROOMS.filter(r => r.floor === F).flatMap(r => r.rects).concat(F.other.flatMap(o => o.area), standing, voidsAt(L));
     const left = taken.reduce((rest, b) => rest.flatMap(a => rectMinus(a, b)), F.inside.map(q => q.slice(0, 4)));
     return mergeRects(left).filter(q => rectArea(q) > MIN_PATCH).map(q => `${F.name}: ${(rectArea(q) / 1e6).toFixed(2)} m², x ${n(q[0])}–${n(q[1])}, y ${n(q[2])}–${n(q[3])}`);
@@ -409,7 +421,7 @@ function checks() {
     const common = a.rects.flatMap(p => b.rects.map(q => Math.max(0, overlap(p[0], p[1], q[0], q[1])) * Math.max(0, overlap(p[2], p[3], q[2], q[3])))).reduce((s, v) => s + v, 0);
     if (common > MIN_PATCH) twice.push(`${a.id} × ${b.id}: ${(common / 1e6).toFixed(2)} m²`);
   }
-  const ids = GEO.elements.concat(GEO.openings, ROOF.windows, GEO.voids).map(o => o.id);
+  const ids = ELEMENTS.concat(OPENINGS, ROOF.windows, VOIDS).map(o => o.id);
   return [
     { name: 'Every element, opening, roof window and void has its own id', items: ids.filter((id, i) => !id || ids.indexOf(id) !== i).map(id => id || '(no id)') },
     { name: 'Thickness by kind', items: thickness },
@@ -420,7 +432,7 @@ function checks() {
       items: ROOMS.filter(r => r.node.archonArea).map(r => `${r.id}: ${areaOf(r.rects).toFixed(2)} · archon ${r.node.archonArea.toFixed(2)}`) }];
 }
 
-return { T, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOf, SIDE, FLOORS, ROOMS, ROOM, BORDERS, areaOf,
+return { T, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOf, SIDE, OPENINGS, ELEMENTS, STAIR, FLOORS, ROOMS, ROOM, BORDERS, areaOf,
   CELLS, FIXTURES, DOORS, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS, voidsAt, FOOTPRINT, part, checks };
 }
 

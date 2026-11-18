@@ -29,7 +29,7 @@ house.js ─► model.js ─► solids ─► index.html: 3D, 2D (core)
 - **Elements** (a sheet of Documents): the tree of what is shown: the whole house down to its floors and rooms; a room's view, its rooms down to their furniture; each node with its offset in its parent and its size; closed at first, a + opens a node. Test is a tree too, open at first.
 - The rooms' floor tiles come with room/tiles.js.
 
-## The format `house`, version 1
+## The format `house`, version 2
 
 The file is the house's root node (core/project.md: the node) with the format, the version and these fields:
 
@@ -38,31 +38,36 @@ The file is the house's root node (core/project.md: the node) with the format, t
 | settings.view | the view of the house: `layers` (the layers' tree, names), `floors` (where: the floors and the roof) and `elements` (what: the kinds of elements), the two blocks of Layers in the panel, `edges`, `light` (with `clouds`: how many by default, and at full clouds the sun's and the sky's factors and the shadows' blur; `inside`: the light of a part), `cameras`, `walk`, `cutFrom` and `cutStep` (the cut's slider over a floor), `planNote` (under the 2D sheets) |
 | source, notes | where the geometry comes from; remarks for Documents |
 | geometry | what the house is made of (below) |
-| children | the floors |
+| children | the house's parts, by what belongs to what: `site`, `foundation`, the floors (`ground`, `attic`), `facade` (the insulation), `roof`, `stair` |
 
-**A floor** is a node of type `floor`: its offset's h is its level, its size's h its height (the top of its rooms). Its own fields: `inside` (the floor area inside the outer walls, rectangles `[x1, x2, y1, y2]`, in the floor's axes), `other` (areas that are no room: the stair), `settings.view` (`cameras`, relative to its level; `cut`: where its 3D cut starts; `plan`: the height of its 2D cut). Its children are its rooms.
+**The tree of the house.** Every element is a node, placed from the house's zero (archon's corner): the house lies in positive numbers, only what is outside it (foundations, insulation, the site) in negative ones. What belongs to what:
+
+- `site` (an `assembly`): the lawn and the surfaces on it (its fields `lawn`, `surfaces`, `layers`, `walkable`);
+- `foundation` (an assembly): footings, foundation walls, the chimney's foundation, the ground slabs;
+- a floor: its walls (blocks, the chimney, balustrades), its ring beams and the slab over it, then its rooms; an opening (window, door, gate) is a node of the wall it is in, placed from the wall's origin;
+- `facade` (an assembly): the EPS of the walls and the soffit;
+- `roof` (an assembly): its planes (its fields: pitch, eave, width, thickness, x, faces, cap, cuts, layers, windowFrame, clearHeights), the attic's ceiling and the loft walls, its roof windows (`roofWindow`: place, label);
+- `stair` (an assembly): its flights (fields: risers, tread, material, layers, walkable, flights) and its void (`void`, of boxes `voidBox`).
+
+An assembly stands at the house's zero with the house's size. An element's type is its kind; its own fields: `top: "roof"` (under both roof planes), `below` (lines it stays under), `cuts` (ids of elements or voids taken out of it), `floor` (as a kind's), `outer` (the side facing the air: x0 garden, x1 front, y0 left, y1 right, h0 down). An opening's: label (archon's width/height), outer, cols, transoms, below, leaf; an inner door: `hinge` (the jamb it turns on: x0, x1, y0, y1), `opens` (the side it opens toward), `product`, `extras`.
+
+**A floor** is a node of type `floor`: its offset's h is its level, its size's h its height (the top of its rooms). Its own fields: `inside` (the floor area inside the outer walls, rectangles `[x1, x2, y1, y2]`, in the floor's axes), `other` (areas that are no room: the stair), `settings.view` (`cameras`, relative to its level; `cut`: where its 3D cut starts; `plan`: the height of its 2D cut). Its children are its walls and slabs (above) and its rooms.
 
 **A room** is a node whose type is its kind (`kitchen`, `bathroom`, `wardrobe`, `bedroom`, `hall`, `living`, `vestibule`, `garage`, `boiler`) and whose id is the kind and archon's number (`kitchen_6`). Its offset is the smallest corner of its floor area, its size the box around it and the floor's height. Its own fields: `number` (archon's), `area` (its floor area at the block faces, rectangles in the room's axes), `archonArea` (m², archon's, after plaster: a reference only), `note` (where its border runs with no wall, and why).
 
-**geometry** (mm, the house's axes: x along the house, 0 the garden's outer face; y across, 0 the left outer face; h up, 0 the finished ground floor):
+**geometry**, what the elements are made of and how they are drawn (mm, the house's axes: x along the house, 0 the garden's outer face; y across, 0 the left outer face; h up, 0 the finished ground floor):
 
 | Field | Means |
 |---|---|
 | split | the height between the ground floor and the attic |
 | length | the house's length |
-| roof | pitch, eave, width, thickness (across the slope), x (its length), faces (the material of each side), cap, cuts, layers, windows (id, name, label, x, y), windowFrame, clearHeights (the lines drawn under the roof in 2D) |
 | kinds | of elements: name, material, cap (the section's colour), thickness (checked), layers; `opened`: openings are cut out of it; `host`: windows and doors sit in it; `walkable`: the walk stands on it; `finish`: the facade layer that switches its finish; `raw`: its bare material; `floor`: the floor layer it belongs to when not the one its height gives (the attic's ceiling: the roof) |
-| elements | the boxes of the analysis: id, kind, `b` [x1, x2, y1, y2, h1, h2]; `top: "roof"`: under both roof planes; `below`: lines it stays under; `cuts`: ids of elements or voids taken out of it; `floor`: as a kind's; `outer`: the side facing the air (−x garden, +x front, −y left, +y right, −h down) |
-| voids | boxes taken out of the elements that name them (the stair void) |
 | openingKinds | what is drawn in an opening: `glazed` (frame, bars, glass; `sill`), `leaf` (a solid leaf), `door` (an inner door of frames.doors), `passage` (the floor runs through) |
-| openings | boxes cut out of every opened element they cross: id (the kind and the rooms it opens into: `door_hall_3_bathroom_7`, `window_kitchen_6_fixed`), kind, label (archon's width/height), `b`, outer, cols, transoms, below, leaf; an inner door: `hinge` (the jamb it turns on), `opens` (toward which side), `product` and `extras` (what is bought for it) |
 | frames | the frames, bars and glass of windows; `doors` (an inner door's frame, leaf and handle); `leaves` (a gate's and the entrance's leaf, grooves, handle) |
-| finishes | the facade: which material covers which part of an EPS box, by its outer side, a region (x, y, h; a missing range or a null end: no limit) and lines; a later rule wins |
-| stair | risers, the tread's thickness, material, layers, walkable, flights (x, y, the first riser, the count) |
-| site | the lawn (rect, h, depth; `aroundBuilding`: it gives way to the house) and the surfaces on it (name, rect, h, material) |
+| finishes | the facade: which material covers which part of an EPS box, by its outer side (x0, x1, y0, y1), a region (x, y, h; a missing range or a null end: no limit) and lines; a later rule wins |
 | part | what a part of the house takes: the element kinds, the fixtures (frames, glass, doors), the roof |
 | line | `{h, y, pitch}`: the line h + pitch · tan(roof pitch) · (y′ − y) across the house |
 
 ## Checks
 
-The tree; every element, opening, roof window and void has its own id; every element's thickness by its kind; no two solids share volume (the site, frames and glass included); no floor area without a room; no two rooms overlap; the rooms' areas against archon's (to know, not a fault).
+The tree (to know: what lies below the house's zero); every element, opening, roof window and void has its own id; every element's thickness by its kind; no two solids share volume (the site, frames and glass included); no floor area without a room; no two rooms overlap; the rooms' areas against archon's (to know, not a fault).

@@ -27,7 +27,7 @@ house.js (files of a room) ─► index.html ─► room.js prepare: cabinets.js
 In the house's axes and order: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`, all in mm.
 
 - **A group** has its own x, y, h: x from its left end as seen from its fronts, y from its wall out into the room, h up from the floor. Its origin is its left end, its wall, the floor; for an island the wall is its back edge. The room sets a group by its box in the room and the side its fronts face: a quarter turn (with a mirror, as a group's x, y, h are left-handed); the furniture comes out as built.
-- **The tree**: group → first what runs along it (worktop, end panels, wall panel, plasterboard, front and back strips, plinth, front panels, the hood), then its units in a row as they stand: its carcasses and a dishwasher's bay (its front and the appliance) → a carcass's boards, fronts, products and hardware (legs, a plinth's grille, shelf pins, bumpers, a pull-out shelf's runners) (oven, microwave, fridge-freezer, sink with its tap and trap, hob, coffee machine) → a front's panel, its hardware (hinges, handle, runners) and its drawer's boards, its inner drawer, its drawers behind the door. Each node: id (unique among its siblings), name, type, offset from its parent's origin (the parent's left, back, bottom corner), size (its own part and its children together). All numbers positive. A carcass stands at y = its group's backGap; changing the gap moves the carcass and all in it.
+- **The tree**: group → first what runs along it (worktop, end panels, wall panel, plasterboard, front and back strips, plinth, front panels, the hood), then its units in a row as they stand: its carcasses and a dishwasher's bay (its front and the appliance) → a carcass's boards, fronts, products and hardware (legs, a plinth's grille, shelf pins, bumpers, a pull-out shelf's runners) (oven, microwave, fridge-freezer, sink with its tap and trap, hob, coffee machine) → a front's panel, its hardware (hinges, handle, runners) and its drawer's boards, its inner drawer, its drawers behind the door. Each node: id (unique among its siblings), name, type, offset from its parent's origin (the parent's left, back, bottom corner), size (its own part; a carcass's or a container's: with what it holds). A carcass stands at y = its group's backGap; changing the gap moves the carcass and all in it.
 - A product is drawn in its own coordinates, from the origin of its node; the room moves the drawing there (a translation).
 - The model still computes with y from the carcass backs; the tree is what comes out of it. The hardware is in the tree but still drawn from the model's numbers (each piece inside its node: Test). The trap's outlet runs to the wall, not into it.
 
@@ -60,5 +60,5 @@ In the house's axes and order: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`, all
 ## Checks (Test)
 
 - The model's problems (cabinets.js).
-- The tree (core/tree.js): ids, offsets ≥ 0, every node inside its parent; each group inside the box its scene gives it.
+- The tree (core/tree.js): ids, sizes; each group inside the box its scene gives it.
 - Every solid inside its group's box; no part with no size.

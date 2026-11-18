@@ -115,6 +115,9 @@ Not yet: the floor tiles (room/tiles.js), the Documents of the kitchen (estimate
 
 - **The hardware and the fronts' panels are nodes too**: under a carcass its legs, its plinth's grille, its shelf pins, the bumpers, a pull-out shelf's runners; under a front its panel, its hinges (plate, arm, cup), its handle, its drawer's runners. 216 pieces of hardware; every drawn piece lies inside its node. The hardware is still drawn from the model's numbers, not from its node.
 
+- **The house's elements are nodes** (house v2; the plan asked for it, the first house file kept them as a list): the house holds the site, the foundation, its floors (each with its walls, ring beams and slab, an opening a node of its wall, then its rooms), the facade's insulation, the roof (its planes' data, the attic's ceiling and loft walls, the roof windows) and the stair (its flights, its void). One zero, archon's corner: the house in positive numbers, only what is outside it negative. The directions in the data have no signs (x0, x1, y0, y1; a door's hinge and the side it opens toward the same). The model reads the tree: every solid, door, room's part and check the same as with v1.
+- **The tree says what belongs to what, not what lies inside what** (the owner): no check of a node inside its parent, none of offsets below 0; to know instead, what lies below the zero. A node's size is its own part's; what only holds others (a group, a drawer's boxes) has theirs. The sheet Elements shows the whole house down to its rooms, a room's view from the room down.
+
 ## Noted for later: the 2D view (the owner, 18 Nov)
 
 - **Zoom with the mouse wheel**, about the cursor, instead of the + and − buttons.
