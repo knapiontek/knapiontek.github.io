@@ -117,13 +117,14 @@ function tap(D, { r, x: sinkX, y: tapY, top: t }) {
   cylinder(a, 7, 70, 'handle', sinkX + 55, tapY, t + 140, 'x', 16);
 }
 /* a space-saving trap: a short drop, a flat body against the back, the outlet into the wall. place: {r, x, from (the bottom
-   of the bowl), drain (y of the drain), top (of the body), outlet (h of the wall outlet), back (y of the carcass back)} */
-function trap(D, { r, x: sinkX, from: fromH, drain: bc, top: topH, outlet: outletH, back: carcassBack }) {
+   of the bowl), drain (y of the drain), top (of the body), outlet (h of the wall outlet), back (y of the carcass back), wall (y of
+   the wall: the outlet ends there)} */
+function trap(D, { r, x: sinkX, from: fromH, drain: bc, top: topH, outlet: outletH, back: carcassBack, wall }) {
   const { box, cylinder, at, STATIC } = D, p = at(r, 'trap'), yb = carcassBack + 31, P = { name: 'Trap', part: D.part() };
   cylinder(p, 20, fromH - topH, 'pipe', sinkX, bc, (fromH + topH) / 2, null, 20);
   cylinder(p, 20, bc - yb, 'pipe', sinkX, (bc + yb) / 2, topH, 'y', 20);
   box(STATIC, r, [sinkX - 70, sinkX + 70, carcassBack + 6, carcassBack + 56, outletH - 25, topH + 25], 'pipe', 'trap', P);
-  cylinder(p, 20, 70, 'pipe', sinkX + 105, yb - 25, outletH, 'y', 20);
+  cylinder(p, 20, yb + 10 - wall, 'pipe', sinkX + 105, (wall + yb + 10) / 2, outletH, 'y', 20);   // the outlet, to the wall
   box(STATIC, r, [sinkX + 70, sinkX + 125, carcassBack + 6, carcassBack + 36, outletH - 20, outletH + 20], 'pipe', 'trap', P);
 }
 

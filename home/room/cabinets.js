@@ -1125,8 +1125,9 @@
         if (!install) continue;
         const tapY = model.worktops[r].y0 + install.sink.tapFromBack, rim = top + S.rim, from = top - S.bowl.height - S.wall, back = model.carcassBack;
         add('tap', r, c.id, [x - 28, x + 268, tapY - 28, tapY + 227, rim, rim + 189], { name: 'Tap', x, y: tapY, top: rim });
-        add('trap', r, c.id, [x - 70, x + 125, Math.max(back - 29, model.groups[r].wall), Math.max(y + 20, back + 56), install.sink.wallOutlet - 25, from],   // its outlet ends in the wall
-          { name: 'Trap', x, from, drain: y, top: install.sink.trapTop, outlet: install.sink.wallOutlet, back });
+        const wall = model.groups[r].wall;
+        add('trap', r, c.id, [x - 70, x + 125, wall, Math.max(y + 20, back + 56), install.sink.wallOutlet - 25, from],   // its outlet runs to the wall
+          { name: 'Trap', x, from, drain: y, top: install.sink.trapTop, outlet: install.sink.wallOutlet, back, wall });
       }
     }
     for (const g of Object.values(model.groups)) {
@@ -1150,8 +1151,8 @@
   }
 
   /* ================= 7. THE TREE: every part in the coordinates of what it belongs to =================
-     group -> its worktop, panels, strips, plinths, plasterboard, carcasses and loose products; carcass -> its boards, fronts and
-     products; front ->
+     group -> what runs along it (worktop, panels, strips, plinths, plasterboard, the hood), then its units in a row: its
+     carcasses and a dishwasher's bay; carcass -> its boards, fronts and products; front ->
      the boards of its drawer, its inner drawer, its drawers behind the door. A node: {id, name, type, offset, size, children}
      in x, y, h: offset from its parent's origin (its smallest corner), size its box (its own parts and its children's);
      the group's origin: its left end, its wall, the floor. node.part: the part of the model it draws. The model computes
@@ -1192,14 +1193,20 @@
       const carcasses = model.carcasses.filter(mine).map(c => make(c.name, 'Carcass ' + c.name, 'carcass', [c.x0, c.x1, carcassBack, carcassFront, c.h0, c.h1],
         model.boards.filter(b => b.carcassId === c.id && !b.frontId).map(boardNode).concat(model.fronts.filter(f => f.carcassId === c.id).map(frontNode),
           products.filter(x => x.carcassId === c.id).map(productNode)), c));
-      const loose = model.fronts.filter(f => mine(f) && !f.carcassId).map(frontNode)
-        .concat(model.boards.filter(b => mine(b) && !b.carcassId).map(boardNode), products.filter(x => !x.carcassId).map(productNode));
+      /* a front with no carcass (a dishwasher's) stands in a bay of its own: a unit in the row of carcasses, with its appliance */
+      const bays = model.fronts.filter(f => mine(f) && !f.carcassId).map(f => {
+        const inside = products.filter(x => !x.carcassId && x.item === f.item);
+        return make(f.opening, cap(f.opening) + ' bay', 'bay', null, [frontNode(f), ...inside.map(productNode)], f);
+      });
+      const units = [...carcasses, ...bays].sort((p, q) => p.gb[0] - q.gb[0]);   // along the group, as they stand
+      const along = model.boards.filter(b => mine(b) && !b.carcassId).map(boardNode)
+        .concat(products.filter(x => !x.carcassId && !bays.some(n => n.children.some(c => c.part === x))).map(productNode));
       const piece = (list, type) => list.filter(mine).map(x => make(type, (x.name || cap(typeLabel(type))) + ' ' + x.a + ' × ' + x.b, type, x.box, [], x));
       const worktops = model.worktopPieces.filter(mine).map(w => make(w.item.type, w.name + ' ' + w.a + ' × ' + w.b, w.item.type, [w.item.x0, w.item.x1, w.y0, w.y1, w.item.h0, w.item.h1], [], w));
       const plaster = model.plaster.filter(mine).map(x => make('plasterboard', x.name + ' ' + x.a + ' × ' + x.b, 'plasterboard',
         [x.item.x0, x.item.x1, g.wall, g.wall + settings.plasterboard.depth, x.item.h0, x.item.h1], [], x));
       const children = [...worktops, ...piece(model.wallPanels, 'wallPanel'), ...plaster, ...piece(model.strips, 'strip'), ...piece(model.plinths, 'plinth'),
-        ...piece(model.frontPanels, 'frontPanel'), ...carcasses, ...loose];
+        ...piece(model.frontPanels, 'frontPanel'), ...along, ...units];   // what runs along the group, then its units in a row
       const n = make('g' + r, 'G' + r + ' · ' + g.name, 'group', [0, g.length, g.wall, g.wall, 0, 0], children);
       n.gb[0] = 0; n.gb[2] = g.wall; n.gb[4] = 0;                  // the origin: the left end, the wall, the floor
       return n;
@@ -1365,7 +1372,7 @@
       const bowl = { bottom: local.bottom + o[2], rimTop: local.rimTop + o[2], drain: local.drain + o[1] };
       const tap = P('tap')[0], t = originOf(tap), trap = P('trap')[0], q = originOf(trap);
       HOME.draw.tap(moved(t), { r, x: tap.x - t[0], y: tap.y - t[1], top: tap.top - t[2] });
-      HOME.draw.trap(moved(q), { r, x: trap.x - q[0], from: trap.from - q[2], drain: trap.drain - q[1], top: trap.top - q[2], outlet: trap.outlet - q[2], back: trap.back - q[1] });
+      HOME.draw.trap(moved(q), { r, x: trap.x - q[0], from: trap.from - q[2], drain: trap.drain - q[1], top: trap.top - q[2], outlet: trap.outlet - q[2], back: trap.back - q[1], wall: trap.wall - q[1] });
     }
     const hobGroup = GROUP_IDS.find(r => itemsOf(r).some(i => hasTag(i, 'hob')));
     const hobItem = hobGroup && itemsOf(hobGroup).find(i => hasTag(i, 'hob'));
