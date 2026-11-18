@@ -1156,7 +1156,7 @@
   function hardwareOf(model, HW) {
     const { carcassBack, carcassFront, frontFace, frontThickness, plinthFace, settings, thickness: T } = model, out = [];
     const union = boxes => [0, 1, 2].flatMap(k => [Math.min(...boxes.map(b => b[2 * k])), Math.max(...boxes.map(b => b[2 * k + 1]))]);
-    const add = (kind, name, to, box) => out.push(Object.assign({ kind, name, box }, to));
+    const add = (kind, name, to, box, more) => out.push(Object.assign({ kind, name, box }, to, more));
     for (const c of model.carcasses) {
       const to = { carcassId: c.id, group: String(c.group) };
       if (c.floor) {
@@ -1177,43 +1177,43 @@
       if (f.opening === 'door' && f.carcassId) {
         const cup = settings.drilling.cup, dir = f.hand === 'left' ? 1 : -1, side = f.hingeX, cupX = f.hand === 'left' ? f.x0 + cup.fromEdge : f.x1 - cup.fromEdge, R = cup.diameter / 2 - 0.5;
         const span = (a, b) => [Math.min(a, b), Math.max(a, b)];
-        for (const h of f.hinges) add('hinge', 'Hinge', to, union([[...span(side, side + dir * 10), carcassFront - 75, carcassFront - 30, h - 22, h + 22],
+        for (const h of f.hinges) add('hinge', 'Hinge', Object.assign({ h }, to), union([[...span(side, side + dir * 10), carcassFront - 75, carcassFront - 30, h - 22, h + 22],
           [...span(side + dir * 3, side + dir * 20), carcassFront - 70, carcassFront - 2, h - 9, h + 9],
           [cupX - 24, cupX + 24, carcassFront - 1.75, frontFace - frontThickness + HW.hinge.cupDepth, h - 24, h + 24], [cupX - R, cupX + R, frontFace - frontThickness, frontFace - frontThickness + HW.hinge.cupDepth, h - R, h + R]]));
         const bumper = settings.drilling.bumper, gap = frontFace - frontThickness - carcassFront, br = bumper.diameter / 2 + 1.5;
-        for (const b of f.bumpers || []) add('bumper', 'Bumper', { carcassId: f.carcassId, group: String(f.group) }, [b.x - br, b.x + br, carcassFront, carcassFront + gap - 0.2, b.h - br, b.h + br]);
+        for (const b of f.bumpers || []) add('bumper', 'Bumper', { carcassId: f.carcassId, group: String(f.group), door: f.id }, [b.x - br, b.x + br, carcassFront, carcassFront + gap - 0.2, b.h - br, b.h + br]);
       }
       const position = f.item.handle;
       if (position === 'top' || position === 'bottom') {
         const h = position === 'top' ? f.h1 - H.axis : f.h0 + H.axis, xc = (f.x0 + f.x1) / 2;
-        add('handle', 'Handle', to, [xc - L, xc + L, frontFace, out, h - 14.2, h + 14.2]);
+        add('handle', 'Handle', to, [xc - L, xc + L, frontFace, out, h - 14.2, h + 14.2], { turn: null });
       } else if (position) {
         const x = position === 'left' ? f.x0 + H.axis : f.x1 - H.axis, hc = Math.min(f.h0 + H.sideHeight, (f.h0 + f.h1) / 2);
-        add('handle', 'Handle', to, [x - 14.2, x + 14.2, frontFace, out, hc - L, hc + L]);
+        add('handle', 'Handle', to, [x - 14.2, x + 14.2, frontFace, out, hc - L, hc + L], { turn: position });
       }
       if (f.opening === 'drawer' && f.drawer) {
         const { innerX0, innerX1, bottomH } = f.drawer, Dw = HW.drawer, s0 = Dw.sideFromCarcass, y0 = carcassBack + Dw.fromBack, y1 = carcassFront - Dw.fromFront;
-        const runners = (h, name) => {
-          add('runner', name, to, [innerX0, innerX0 + s0, y0, y1 + 2, h - 24, h - 6]);
-          add('runner', name, to, [innerX1 - s0, innerX1, y0, y1 + 2, h - 24, h - 6]);
+        const runners = (h, name, inner) => {
+          add('runner', name, to, [innerX0, innerX0 + s0, y0, y1 + 2, h - 24, h - 6], { runner: 'drawer', side: 'left', inner });
+          add('runner', name, to, [innerX1 - s0, innerX1, y0, y1 + 2, h - 24, h - 6], { runner: 'drawer', side: 'right', inner });
         };
-        runners(bottomH, 'Drawer runner');
-        if (f.drawer.inner) runners(f.drawer.innerH, 'Inner drawer runner');
+        runners(bottomH, 'Drawer runner', false);
+        if (f.drawer.inner) runners(f.drawer.innerH, 'Inner drawer runner', true);
       }
       if (f.doorDrawers) {
         const clearance = settings.doorDrawers.clearance;
-        for (const b of f.doorDrawers.boxes) {
+        f.doorDrawers.boxes.forEach((b, j) => {
           const h0 = b.h0 + T.drawerBox + 20, h1 = h0 + 35;
-          add('runner', 'Ball runner', to, [b.x0 - clearance, b.x0, b.y0, b.y1, h0, h1]);
-          add('runner', 'Ball runner', to, [b.x1, b.x1 + clearance, b.y0, b.y1, h0, h1]);
-        }
+          add('runner', 'Ball runner', to, [b.x0 - clearance, b.x0, b.y0, b.y1, h0, h1], { runner: 'ball', side: 'left', doorDrawer: j });
+          add('runner', 'Ball runner', to, [b.x1, b.x1 + clearance, b.y0, b.y1, h0, h1], { runner: 'ball', side: 'right', doorDrawer: j });
+        });
       }
     }
     for (const shelf of model.boards) if (shelf.id === 'pullOutShelf') {
       const c = model.carcasses.find(k => k.id === shelf.carcassId), [x0, x1, y0, y1, h0] = shelf.box;
       const spacer = model.boards.find(b => b.carcassId === c.id && b.id === 'spacer' && b.box[4] < h0 && b.box[5] > h0 && (b.box[1] <= x0 || b.box[0] >= x1));
       const left = spacer && spacer.box[1] <= x0 ? spacer.box[1] : c.x0 + T.carcass, right = spacer && spacer.box[0] >= x1 ? spacer.box[0] : c.x1 - T.carcass;
-      for (const [a, b] of [[left, x0], [x1, right]]) add('runner', 'Pull-out shelf runner', { carcassId: c.id, group: String(c.group) }, [a, b, y0, y1, h0 - 14, h0 + 12]);
+      for (const [a, b] of [[left, x0], [x1, right]]) add('runner', 'Pull-out shelf runner', { carcassId: c.id, group: String(c.group) }, [a, b, y0, y1, h0 - 14, h0 + 12], { runner: 'pullOut', side: a === left ? 'left' : 'right', shelf });
     }
     return out;
   }
@@ -1293,6 +1293,7 @@
       return n;
     };
     Object.defineProperty(model, 'products', { value: PRODUCTS, configurable: true });
+    Object.defineProperty(model, 'hardware', { value: HARDWARE, configurable: true });
     return named(groups).map(n => {
       local(n, [n.gb[0], n.gb[2], n.gb[4]]);
       parentsOf(n, null);
@@ -1334,11 +1335,15 @@
         openFront: (list, r, b, ...rest) => D.openFront(list, r, gb(b), ...rest),
         openTop: (list, r, b, ...rest) => D.openTop(list, r, gb(b), ...rest),
         envelope: (r, b, ...rest) => D.envelope(r, gb(b), ...rest),
-        cylinder: (...a) => D.cylinder(...at3(a, 4)), detail: (...a) => D.detail(...at3(a, 3)), display: (...a) => D.display(...at3(a, 4)),
+        cylinder: (...a) => D.cylinder(...(a[0].pivot ? a : at3(a, 4))), detail: (...a) => D.detail(...(a[0].pivot ? a : at3(a, 3))),   // a pivot is placed already
+        display: (...a) => D.display(...at3(a, 4)), pivot: (...a) => D.pivot(...at3(a, 1)),
         mover: (...a) => D.mover(...at3(a, 2)), point: (...a) => D.point(...at3(a, 1)),
         profile: (list, r, x0, x1, prof, ...rest) => D.profile(list, r, x0 + o[0], x1 + o[0], prof.map(([y, h]) => [y + o[1], h + o[2]]), ...rest)
       });
     }
+    /* a piece of hardware drawn by the library from the zero of its node */
+    const pieces = test => (model.hardware || []).filter(test);
+    const fitted = (x, draw, place, ...settings) => { const o = originOf(x); HOME.draw[draw](moved(o), ...settings, Object.assign({ r: x.group, size: x.node.size }, place(o))); };
     const fitOf = (fit, o) => minus(fit, o, [['bodyX0', 0], ['bodyX1', 0], ['bodyH0', 2], ['bodyH1', 2]]);
     const minus = (fit, o, keys) => Object.assign({}, fit, Object.fromEntries(keys.map(([k, i]) => [k, fit[k] - o[i]])));
 
@@ -1463,38 +1468,18 @@
       }
     }
     function drawCarcass(carcass) {
-      const r = String(carcass.group), { x0, x1, h0 } = carcass, drilled = at(r, 'holes');
+      const r = String(carcass.group), drilled = at(r, 'holes');
       for (const b of model.boards) {
         if (b.carcassId !== carcass.id || b.frontId || b.id === 'pullOutShelf') continue;   // drawer boards and the pull-out shelf move
         board(STATIC, b, carcass);
         holes(drilled, b);
-        if (b.id === 'adjustableShelf') {          // 4 pins under the shelf, in the holes settings.drilling.shelfPin places
-          const pin = settings.drilling.shelfPin, pinH = b.box[4] - pin.belowShelf, d = pin.diameter / 2;
-          for (const [p0, p1] of [[b.box[0] - 1, b.box[0] + 7], [b.box[1] - 7, b.box[1] + 1]]) for (const y of [carcassBack + pin.fromBack, carcassFront - pin.fromFront]) {
-            box(STATIC, r, [p0, p1, y - d, y + d, pinH - d, pinH + d], 'zinc', 'shelves', { name: carcass.name + ' shelf pin' });
-          }
-        }
       }
-      if (carcass.floor) {                         // adjustable legs, as tall as the plinth
-        const L = HW.leg, a = at(r, 'legs');
-        for (const x of [x0 + L.fromSide, x1 - L.fromSide]) for (const y of [carcassBack + L.fromBack, carcassFront - L.fromFront]) {
-          cylinder(a, L.radius, h0 - L.footHeight, 'foot', x, y, (h0 - L.footHeight) / 2, null, 16);
-          cylinder(a, L.footRadius, L.footHeight, 'foot', x, y, h0 - L.footHeight / 2, null, 20);
-          envelope(r, [x - L.footRadius, x + L.footRadius, y - L.footRadius, y + L.footRadius, h0 - L.footHeight, h0], carcass.name + ' leg', 'leg');
-        }
-      }
+      const mine = kind => pieces(x => x.carcassId === carcass.id && x.kind === kind);
+      for (const x of mine('shelfPin')) fitted(x, 'shelfPin', () => ({ name: carcass.name + ' shelf pin' }));
+      for (const x of mine('leg')) fitted(x, 'leg', () => ({ name: carcass.name + ' leg' }), HW.leg);
       const fridge = P('fridgeFreezer').find(x => x.carcassId === carcass.id);
       if (fridge) { const o = originOf(fridge); product(appliances.fridgeFreezer, { r, fit: fitOf(fridge.fit, o), front: carcassFront - o[1], back: carcassBack - o[1] }, moved(o)); }
-      if (carcass.grille) plinthGrille(carcass);
-    }
-    /* an aluminium grille in the plinth under a carcass that needs air (carcass.grille) */
-    function plinthGrille(carcass) {
-      const g = HW.plinthGrille, r = String(carcass.group), xc = (carcass.x0 + carcass.x1) / 2, w = Math.min(g.width, carcass.x1 - carcass.x0 - 80);
-      const g0 = xc - w / 2, g1 = xc + w / 2, h0 = g.bottom, h1 = g.top, I = { name: 'Ventilation grille in the plinth', part: D.part() };
-      const z = gb => box(STATIC, r, gb, 'zinc', 'plinth', I);
-      z([g0, g1, plinthFace, plinthFace + 3, h0, h0 + 5]); z([g0, g1, plinthFace, plinthFace + 3, h1 - 5, h1]);
-      z([g0, g0 + 5, plinthFace, plinthFace + 3, h0 + 5, h1 - 5]); z([g1 - 5, g1, plinthFace, plinthFace + 3, h0 + 5, h1 - 5]);
-      for (let x = g0 + 17; x < g1 - 8; x += 12) z([x - 2, x + 2, plinthFace, plinthFace + 2, h0 + 5, h1 - 5]);   // louvres
+      for (const x of mine('grille')) fitted(x, 'grille', () => ({}));
     }
 
     /* ---------- fronts and what moves with them ---------- */
@@ -1503,31 +1488,6 @@
       if (x1 - x0 <= 2 * w + 20 || h1 - h0 <= 2 * w + 20) return f([x0, x1, y0, y1, h0, h1]);
       f([x0, x1, y0, y1, h1 - w, h1]); f([x0, x1, y0, y1, h0, h0 + w]); f([x0, x0 + w, y0, y1, h0 + w, h1 - w]); f([x1 - w, x1, y0, y1, h0 + w, h1 - w]);
       f([x0 + w, x1 - w, y0, frontFace - frontThickness / 2, h0 + w, h1 - w]);
-    }
-    /* every front gets a cup and a bar handle; the handle setting shows one (layers cup / bar) */
-    const CUP = (function () {                     // an open quarter shell with its end caps, a lip and two pads, mm
-      const L = HW.handle.cupLength, R = 24, drop = -12, parts = [];
-      const shell = new THREE.CylinderGeometry(R, R, L - 6, 28, 1, true, 0, Math.PI / 2); shell.rotateZ(Math.PI / 2); shell.translate(0, drop, 0); parts.push(shell);
-      for (const sx of [-1, 1]) { const c = new THREE.CircleGeometry(R, 20, 0, Math.PI / 2); c.rotateY(-Math.PI / 2); c.translate(sx * (L / 2 - 3), drop, 0); parts.push(c); }
-      const lip = new THREE.CylinderGeometry(2.2, 2.2, L - 6, 10); lip.rotateZ(Math.PI / 2); lip.translate(0, drop, R); parts.push(lip);
-      for (const sx of [-1, 1]) { const pad = new THREE.BoxGeometry(12, 26, 4); pad.translate(sx * 32, drop + 13, 2); parts.push(pad); }
-      return parts;
-    })();
-    function handles(m, x0, x1, h0, h1, position, info) {
-      if (!position) return;
-      const H = HW.handle, L = H.barLength, y = frontFace + 4, cup = at(m.r, 'handles', m, ['cup']);
-      const I = Object.assign({ also: ['bar'], part: D.part() }, info), bar = gb => box(m.cells, m.r, gb, 'handle', 'handles', I);
-      const addCup = (x, h, turn) => { const o = new THREE.Group(); o.position.set(x, h, frontFace); o.rotation.z = turn; cup.frame.add(o);
-        for (const g of CUP) detail(Object.assign({}, cup, { frame: o }), g, 'handle', 0, 0, 0); };
-      if (position === 'top' || position === 'bottom') {
-        const h = position === 'top' ? h1 - H.axis : h0 + H.axis, xc = (x0 + x1) / 2;
-        addCup(xc, h, 0);
-        bar([xc - L / 2, xc + L / 2, y + 20, y + 30, h - 6, h + 6]); bar([xc - L / 2 + 8, xc - L / 2 + 18, y, y + 20, h - 5, h + 5]); bar([xc + L / 2 - 18, xc + L / 2 - 8, y, y + 20, h - 5, h + 5]);
-      } else {
-        const x = position === 'left' ? x0 + H.axis : x1 - H.axis, hc = Math.min(h0 + H.sideHeight, (h0 + h1) / 2);
-        addCup(x, hc, position === 'left' ? Math.PI / 2 : -Math.PI / 2);
-        bar([x - 6, x + 6, y + 20, y + 30, hc - L / 2, hc + L / 2]); bar([x - 5, x + 5, y, y + 20, hc - L / 2 + 8, hc - L / 2 + 18]); bar([x - 5, x + 5, y, y + 20, hc + L / 2 - 18, hc + L / 2 - 8]);
-      }
     }
     function drawFront(r, item) {
       const front = item.front, carcass = carcasses.find(c => c.id === item.carcassId), opening = front.opening, hand = front.hand;
@@ -1541,20 +1501,13 @@
       if (carcass) carcass.movers.push(m);
       const I = { mover: m };
       shakerFront(m, fx0, fx1, fh0, fh1, K(front.material), I);
-      handles(m, fx0, fx1, fh0, fh1, item.handle, I);
+      for (const x of pieces(x => x.frontId === front.id && x.kind === 'handle')) fitted(x, 'handle', () => ({ m, turn: x.turn, info: I }), HW.handle);
       if (opening === 'door' && carcass) {
         const cup = settings.drilling.cup, dir = hand === 'left' ? 1 : -1, side = front.hingeX, cupX = hand === 'left' ? fx0 + cup.fromEdge : fx1 - cup.fromEdge;
-        const hw = at(r, 'hardware'), mhw = at(r, 'hardware', m);
         holes(at(r, 'fronts', m, ['holes']), front);
-        for (const h of front.hinges) {
-          const H = { name: 'Hinge', part: D.part() };
-          box(STATIC, r, [Math.min(side, side + dir * 10), Math.max(side, side + dir * 10), carcassFront - 75, carcassFront - 30, h - 22, h + 22], 'zinc', 'hardware', H);   // mounting plate
-          box(STATIC, r, [Math.min(side + dir * 3, side + dir * 20), Math.max(side + dir * 3, side + dir * 20), carcassFront - 70, carcassFront - 2, h - 9, h + 9], 'zinc', 'hardware', H);   // arm
-          cylinder(mhw, cup.diameter / 2 - 0.5, HW.hinge.cupDepth, 'zinc', cupX, frontFace - frontThickness + HW.hinge.cupDepth / 2, h, 'y', 24);   // the cup in the door
-          cylinder(mhw, 24, 1.5, 'zinc', cupX, carcassFront - 1, h, 'y', 24);
-        }
-        const bumper = settings.drilling.bumper, gap = frontFace - frontThickness - carcassFront;   // the head fills the front gap, 0.2 short of the door
-        for (const b of front.bumpers || []) cylinder(hw, bumper.diameter / 2 + 1.5, gap - 0.2, 'gasket', b.x, carcassFront + (gap - 0.2) / 2, b.h, 'y', 16);
+        for (const x of pieces(x => x.frontId === front.id && x.kind === 'hinge')) fitted(x, 'hinge', o => ({ m, dir, side: side - o[0], cupX: cupX - o[0], h: x.h - o[2],
+          carcassFront: carcassFront - o[1], doorBack: frontFace - frontThickness - o[1], cupRadius: cup.diameter / 2 - 0.5 }), HW.hinge);
+        for (const x of pieces(x => x.door === front.id && x.kind === 'bumper')) fitted(x, 'bumper', () => ({}));   // the head fills the front gap, 0.2 short of the door
         m.label = 'Door ' + size + ' · hinges: ' + front.hinges.length + ' · bumpers: ' + (front.bumpers || []).length + (front.doorDrawers ? ' · drawers behind it: ' + front.doorDrawers.count : '');
         if (front.doorDrawers) doorDrawers(r, item, m, carcass);
       } else if (opening === 'drawer' && carcass) {
@@ -1577,16 +1530,13 @@
       const front = item.front, { size: kind, sideHeight, innerX0, innerX1, bottomH: b0, bins, inner } = front.drawer, Dw = HW.drawer, I = { mover: m, carcass };
       const s0 = Dw.sideFromCarcass, s1 = s0 + Dw.sideThickness, y0 = carcassBack + Dw.fromBack, y1 = carcassFront - Dw.fromFront;
       const sides = (mv, h0, h1) => { for (const [a, b] of [[innerX0 + s0, innerX0 + s1], [innerX1 - s1, innerX1 - s0]]) box(mv.cells, r, [a, b, y0, y1, h0, h1], 'drawerSide', 'drawers', { mover: mv, carcass }); };
-      const runners = (mv, h) => {
-        for (const [a, b, c, e] of [[innerX0, innerX0 + Dw.runnerWidth, innerX0 + Dw.runnerWidth, innerX0 + s0], [innerX1 - Dw.runnerWidth, innerX1, innerX1 - s0, innerX1 - Dw.runnerWidth]]) {
-          box(STATIC, r, [a, b, y0, y1 + 2, h - 24, h - 8], 'zinc', 'hardware', { name: 'Drawer runner' });
-          box(mv.cells, r, [Math.min(c, e), Math.max(c, e), y0 + 8, y1 - 2, h - 20, h - 6], 'zinc', 'hardware', { mover: mv });
-        }
+      const runners = (mv, inner) => {
+        for (const x of pieces(x => x.frontId === front.id && x.runner === 'drawer' && x.inner === inner)) fitted(x, 'runner', () => ({ m: mv, kind: 'drawer', side: x.side, width: Dw.runnerWidth }));
       };
       for (const b of model.boards) if (b.frontId === front.id && !b.inner) board(m.cells, b, carcass, 'drawers', m);
       sides(m, b0 - 4, b0 + sideHeight - 4);
       if (kind === 'D') for (const [a, b] of [[innerX0 + 28, innerX0 + 32], [innerX1 - 32, innerX1 - 28]]) box(m.cells, r, [a, b, carcassBack + 46, carcassFront - 24, b0 + sideHeight - 4, b0 + sideHeight + 60], 'drawerSide', 'drawers', I);   // gallery rails
-      runners(m, b0);
+      runners(m, false);
       if (bins) {
         const count = HW.bins.count, x0 = innerX0 + 45, x1 = innerX1 - 45, bw = (x1 - x0 - 10 * (count - 1)) / count, floor = b0 + T.drawerBox, top = floor + HW.bins.height;
         for (let j = 0; j < count; j++) {
@@ -1605,24 +1555,19 @@
         box(im.cells, r, [innerX0 + s1, innerX1 - s1, y1 - 16, y1 - 2, ih - 4, top], 'drawerSide', 'drawers', J);   // its metal front
         for (let j = 1; j < 5; j++) { const x = innerX0 + s1 + (innerX1 - innerX0 - 2 * s1) * j / 5; box(im.cells, r, [x - 3, x + 3, carcassBack + 76, carcassFront - 44, ih + 16, ih + 66], 'insertGrey', 'drawers', J); }
         box(im.cells, r, [innerX0 + 40, innerX1 - 40, carcassBack + 76, carcassFront - 44, ih + 16, ih + 20], 'insertGrey', 'drawers', J);
-        runners(im, ih);
+        runners(im, true);
         im.label = 'Inner drawer M (' + M + ') for cutlery · inner front ' + (innerX1 - innerX0 - settings.drawers.inner.frontDeduction);
       }
     }
     /* drawers behind a door: each box slides out on ball runners once the door is open */
     function doorDrawers(r, item, door, carcass) {
-      const front = item.front, DD = front.doorDrawers, clearance = settings.doorDrawers.clearance;
+      const front = item.front, DD = front.doorDrawers;
       DD.boxes.forEach((b, j) => {
         const m = mover(r, 'drawer', 0, 0, 0);
         Object.assign(m, { item, travel: DD.runnerLength, label: 'Drawer behind the door ' + (j + 1) + '/' + DD.count + ' · ' + DD.boxWidth + ' × ' + DD.runnerLength + ' × ' + DD.boxHeight + ', ball runners ' + DD.runnerLength });
         carcass.movers.push(m); linkTo(door, m);
         for (const bd of model.boards) if (bd.frontId === front.id && bd.doorDrawer === j) board(m.cells, bd, carcass, 'drawers', m);
-        const h0 = b.h0 + T.drawerBox + 20, h1 = h0 + 35;
-        for (const [a, c] of [[b.x0 - clearance, b.x0], [b.x1, b.x1 + clearance]]) {
-          const left = a < b.x0;
-          box(STATIC, r, [...(left ? [a, a + clearance / 2] : [c - clearance / 2, c]), b.y0, b.y1, h0, h1], 'zinc', 'hardware', { name: 'Ball runner' });
-          box(m.cells, r, [...(left ? [a + clearance / 2, b.x0] : [b.x1, c - clearance / 2]), b.y0 + 4, b.y1 - 2, h0 + 4, h1 - 4], 'zinc', 'hardware', { mover: m });
-        }
+        for (const x of pieces(x => x.frontId === front.id && x.runner === 'ball' && x.doorDrawer === j)) fitted(x, 'runner', () => ({ m, kind: 'ball', side: x.side }));
       });
     }
     /* the pull-out shelf with the coffee machine: slides out once its door is open */
@@ -1632,12 +1577,7 @@
       Object.assign(m, { item: shelf.item }); carcass.movers.push(m);
       if (door) linkTo(door, m);
       board(m.cells, shelf, carcass, 'drawers', m);
-      const spacer = model.boards.find(b => b.carcassId === carcass.id && b.id === 'spacer' && b.box[4] < h0 && b.box[5] > h0 && (b.box[1] <= x0 || b.box[0] >= x1));
-      const left = spacer && spacer.box[1] <= x0 ? spacer.box[1] : carcass.x0 + T.carcass, right = spacer && spacer.box[0] >= x1 ? spacer.box[0] : carcass.x1 - T.carcass;
-      for (const [a, b] of [[left, x0], [x1, right]]) {
-        box(STATIC, r, [a, b, y0, y1, h0 - 14, h0], 'zinc', 'hardware', { name: 'Pull-out shelf runner' });
-        box(m.cells, r, [a, b, y0 + 8, y1 - 4, h0, h0 + 12], 'zinc', 'hardware', { mover: m });
-      }
+      for (const x of pieces(x => x.runner === 'pullOut' && x.shelf === shelf)) fitted(x, 'runner', () => ({ m, kind: 'pullOut', side: x.side }));
       const coffee = P('coffee').find(x => x.shelf === shelf), o = originOf(coffee);
       product(appliances.coffee, { r, m, x: (x0 + x1) / 2 - o[0], h: h1 - o[2], y: y1 - 20 - o[1] }, moved(o));
       m.label = 'Pull-out shelf ' + shelf.a + ' × ' + shelf.b + ' with ' + appliances.coffee.name;

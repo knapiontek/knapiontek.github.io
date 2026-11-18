@@ -55,3 +55,10 @@ The golden: the prototype's KitchenEngine.build on kitchen.dat.js in Node (every
 ## house v2 (the elements as nodes)
 
 `tests/t_house_same.js` compares the house model with a snapshot of itself taken before a change (golden/house_now.json; `SNAP=1` takes it): every cell, fixture, roof, stair and site solid, the doors, every room's part (box, cells, objects), the borders, the footprint and the checks. house v1 → v2 (work/house_v2.js converts): all the same.
+
+## house v3 (the site at the root, the house's zero at its extreme corner)
+
+- Converter: work/house_v3.js reads the v2 copy (golden/house_v2.js, golden/kitchen_6.scene_v1.js) and writes house.js and the kitchen's scene (cameras moved).
+- The house moved by S = (1000, 0, 1320) in its own axes. `OPENINGS=1 SHIFT=1000,0,1320 node t_house_same.js`: every solid, door, part, border, footprint and check the same as v2 (OPENINGS reads the layers windows and doors as v2's openings).
+- `SHIFT=1000,0,1320 python3 cmp_kitchen_cells.py` after run_kitchen.sh: 472 static, 346 moving, the same (the hood's profile prints as a pair: moved, the same).
+- The pictures: the garden camera the same as v2.

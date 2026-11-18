@@ -21,8 +21,10 @@ const bandOf = (P, k, c, w) => clipHalf(clipHalf(P, p => p[k] - c + w / 2), p =>
 /* the outward side of an opening: which axis its wall faces along, and which way */
 const SIDE = { x0: { axis: 0, sign: -1 }, x1: { axis: 0, sign: 1 }, y0: { axis: 1, sign: -1 }, y1: { axis: 1, sign: 1 }, h0: { axis: 2, sign: -1 } };
 
-/* the model of a house: HOUSE its data (the root node of house.js) */
-function build(HOUSE) {
+/* the model of a house: ROOT the root node of house.js, the site, with the house in it. The model works in the house's
+   axes (its zero at its own extreme corner); the site is moved into them */
+function build(ROOT) {
+const HOUSE = ROOT.children.find(n => n.type === 'house'), SITE = ROOT;
 const T = HOME.tree.create(HOUSE), GEO = HOUSE.geometry, KIND = GEO.kinds, OPENING_KIND = GEO.openingKinds;
 const FLOORS = HOUSE.children.filter(n => n.type === 'floor'), TOP_FLOOR = FLOORS[FLOORS.length - 1];
 const level = F => F.offset[2];
@@ -37,7 +39,7 @@ T.walk(n => {
   else if (n.type === 'void') VOIDS.push({ id: n.id, name: n.name, boxes: n.children.map(T.box) });
 });
 const HOUSE_NODE = id => HOUSE.children.find(n => n.id === id);
-const SITE = HOUSE_NODE('site'), STAIR = HOUSE_NODE('stair');
+const STAIR = HOUSE_NODE('stair');
 const ELEMENT = byId(ELEMENTS), VOID = byId(VOIDS);
 
 /* ================= 1. ROOF LINES =================
@@ -129,15 +131,17 @@ function openingPlane(o) {
   const span = alongX ? [o.b[2], o.b[3]] : [o.b[0], o.b[1]];
   return { toPrism, outline, span };
 }
+/* an opening's layer by its kind: windows or doors */
+const layersOf = o => [OPENING_KIND[o.kind].layer];
 /* a solid leaf with evenly spaced grooves, and a handle if it has one; the grooves stop at the handle */
 function leafFixtures(o, plane, P) {
-  const D = F.leaves[OPENING_KIND[o.kind].leaf], [h1, h2] = [o.b[4], o.b[5]];
-  addFixture(plane.toPrism(P, D.depth), D.material, F.layers);
+  const D = F.leaves[OPENING_KIND[o.kind].leaf], [h1, h2] = [o.b[4], o.b[5]], layers = layersOf(o);
+  addFixture(plane.toPrism(P, D.depth), D.material, layers);
   const handle = D.handle && handlePolygon(D.handle, Math.max(...P.map(p => p[0])), h1);
-  if (handle) addFixture(plane.toPrism(handle, D.handle.depth), D.handle.material, F.layers);
+  if (handle) addFixture(plane.toPrism(handle, D.handle.depth), D.handle.material, layers);
   for (let i = 1; i <= D.grooves; i++) {
     const groove = bandOf(P, 1, h1 + (h2 - h1) * i / (D.grooves + 1), D.grooveHeight);
-    for (const piece of polysMinus([groove], handle ? [handle] : [])) addFixture(plane.toPrism(piece, D.grooveDepth), D.groove, F.layers);
+    for (const piece of polysMinus([groove], handle ? [handle] : [])) addFixture(plane.toPrism(piece, D.grooveDepth), D.groove, layers);
   }
 }
 const handlePolygon = (H, leafEnd, bottom) => {
@@ -167,8 +171,8 @@ function frameBars(o, inner) {
 function glazedFixtures(o, plane, P) {
   const inner = frameInner(P, OPENING_KIND[o.kind].glazed.sill), bars = frameBars(o, inner);
   const frameDepth = [0, F.depth], glassDepth = [(F.depth - F.glassDepth) / 2, (F.depth + F.glassDepth) / 2];
-  for (const piece of minus2(P, inner, SOLID_TOL).concat(bars)) addFixture(plane.toPrism(piece, frameDepth), F.material, F.layers);
-  for (const pane of polysMinus([inner], bars)) addFixture(plane.toPrism(pane, glassDepth), F.glass, F.layers);
+  for (const piece of minus2(P, inner, SOLID_TOL).concat(bars)) addFixture(plane.toPrism(piece, frameDepth), F.material, layersOf(o));
+  for (const pane of polysMinus([inner], bars)) addFixture(plane.toPrism(pane, glassDepth), F.glass, layersOf(o));
 }
 function openingFixtures(o) {
   const K = OPENING_KIND[o.kind];
@@ -180,7 +184,7 @@ function openingFixtures(o) {
 }
 /* roof windows lie in the slope: four bars and the glass between lines parallel to it */
 function roofWindowFixtures(w) {
-  const W = ROOF.windowFrame, layers = ROOF.layers.concat(F.layers), across = W.width * Math.cos(ROOF.pitch * DEG);
+  const W = ROOF.windowFrame, layers = ROOF.layers.concat(W.layer), across = W.width * Math.cos(ROOF.pitch * DEG);
   const l = ROOF_UNDER[(w.y[0] + w.y[1]) / 2 > WIDTH / 2 ? 1 : 0];
   const over = d => [ROOF_DEPTH + d[0], ROOF_DEPTH + d[1]];
   const [x1, x2] = w.x, [y1, y2] = w.y, xi1 = x1 + W.width, xi2 = x2 - W.width;
@@ -205,7 +209,7 @@ function doorOf(o, i) {
   const sign = o.opens[1] === '1' ? 1 : -1, face = sign > 0 ? n2 : n1;
   /* a box from (u, n) ranges into house axes */
   const box = (ua, ub, na, nb, ha, hb) => prism(alongX ? [ua, ub, Math.min(na, nb), Math.max(na, nb), ha, hb] : [Math.min(na, nb), Math.max(na, nb), ua, ub, ha, hb]);
-  const layers = F.layers, J = D.frame, top = h2 - D.head;
+  const layers = layersOf(o), J = D.frame, top = h2 - D.head;
   addFixture(box(u1, u1 + J, n1, n2, h1, top), D.frameMaterial, layers, 'door', true);
   addFixture(box(u2 - J, u2, n1, n2, h1, top), D.frameMaterial, layers, 'door', true);
   addFixture(box(u1, u2, n1, n2, top, h2), D.frameMaterial, layers, 'door', true);
@@ -231,11 +235,11 @@ OPENINGS.forEach(doorOf);
 /* ================= 6. STAIR =================
    Floating treads, the landing is a flight of one. */
 function stairCells() {
-  const ST = STAIR, rise = level(TOP_FLOOR) / ST.risers, out = [];
+  const ST = STAIR, base = level(FLOORS[0]), rise = (level(TOP_FLOOR) - base) / ST.risers, out = [];
   for (const f of ST.flights) {
     const step = (f.y[1] - f.y[0]) / f.count;
     for (let i = 0; i < f.count; i++) {
-      const ya = f.y[0] + i * step, yb = ya + step, h = (f.first + i) * rise;
+      const ya = f.y[0] + i * step, yb = ya + step, h = base + (f.first + i) * rise;
       const S = prism([f.x[0], f.x[1], Math.min(ya, yb), Math.max(ya, yb), h - ST.tread, h]), floor = floorOf(centreH(S));
       out.push({ S, element: 'stair', floor, material: ST.material, cap: ST.material, walkable: ST.walkable, layers: [floor].concat(ST.layers), edges: true });
     }
@@ -251,12 +255,13 @@ function footprintPrism() {
   return prism([Math.min(...b(0)), Math.max(...b(1)), Math.min(...b(2)), Math.max(...b(3)), -INF, INF]);
 }
 function siteCells() {
-  const S = SITE, L = S.lawn, out = [];
+  const S = SITE, L = S.lawn, out = [], [ox, oy, oh] = HOUSE.offset;   // the site's numbers in the house's axes
+  const at = (r, h0, h1) => prism([r[0] - ox, r[1] - ox, r[2] - oy, r[3] - oy, h0 - oh, h1 - oh]);
   const cell = (P, material) => ({ S: P, element: 'site', material, walkable: S.walkable, layers: S.layers.slice(), edges: false });
-  let lawn = [prism([...L.rect, L.h - L.depth, L.h])];
+  let lawn = [at(L.rect, L.h - L.depth, L.h)];
   if (L.aroundBuilding) lawn = subtractAll(lawn, [footprintPrism()]);
   for (const P of lawn) out.push(cell(P, L.material));
-  for (const s of S.surfaces) out.push(cell(prism([...s.rect, L.h, s.h]), s.material));
+  for (const s of S.surfaces) out.push(cell(at(s.rect, L.h, s.h), s.material));
   return out;
 }
 const SITE_CELLS = siteCells();
@@ -286,7 +291,7 @@ for (const [i, a] of ROOMS.entries()) for (const b of ROOMS.slice(i + 1)) {
   }
 }
 /* the plan as the ☀ compass draws it: the house's length and width, the rooms of the ground floor */
-const FOOTPRINT = [[0, GEO.length, 0, WIDTH]].concat(ROOMS.filter(r => r.floor === FLOORS[0]).flatMap(r => r.rects));
+const FOOTPRINT = [[...GEO.body, 0, WIDTH]].concat(ROOMS.filter(r => r.floor === FLOORS[0]).flatMap(r => r.rects));
 
 /* ================= 9. A PART OF THE HOUSE =================
    A room cut out of the house: the house's own solids (of the kinds the part takes, the fixtures, the roof) trimmed to
@@ -432,7 +437,7 @@ function checks() {
       items: ROOMS.filter(r => r.node.archonArea).map(r => `${r.id}: ${areaOf(r.rects).toFixed(2)} · archon ${r.node.archonArea.toFixed(2)}`) }];
 }
 
-return { T, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOf, SIDE, OPENINGS, ELEMENTS, STAIR, FLOORS, ROOMS, ROOM, BORDERS, areaOf,
+return { T, HOUSE, SITE, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOf, SIDE, OPENINGS, ELEMENTS, STAIR, FLOORS, ROOMS, ROOM, BORDERS, areaOf,
   CELLS, FIXTURES, DOORS, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS, voidsAt, FOOTPRINT, part, checks };
 }
 

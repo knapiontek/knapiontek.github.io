@@ -6,7 +6,7 @@
    segments, shadow), detail(a, geometry, key, x, y, h, shadow), display(a, text, w, high, x, y, h), at(r, layer, mover, also),
    mover(r, kind, x, y, h), envelope(r, gb, name, kind), openFront / openTop(list, r, gb, t, key, layer, info), profile(list,
    r, x0, x1, prof [[y, h]], info, faceMaterial), part(), lamp(light, from, to, shadow), point(r, x, y, h), frame(r): {X, Y},
-   material(key), STATIC, CEILING. A mesh of a detail keeps three.js's own axes: x along, y up, z out of the wall.
+   material(key), pivot(a, x, y, h, angle) (a frame at (x, y, h) turned about h: its details from its own zero), STATIC, CEILING. A mesh of a detail keeps three.js's own axes: x along, y up, z out of the wall.
    Needs THREE when it draws, nothing when it loads. */
 (function () {
 'use strict';
@@ -252,10 +252,83 @@ function downlight(D, { a, r, x, y, ceiling: CEILING }) {
   lamp(new THREE.SpotLight(0xfff0dc, 11, 0, 1.0, 1, 2), point(r, x, y, CEILING - 90), point(r, x, y, 0), true);
 }
 
+/* ================= hardware: each piece in its own coordinates, from the zero of its node (its left, back, bottom
+   corner); size: its node's [x, y, h]; r its group, m the mover it goes with ================= */
+
+/* an adjustable leg: the post and its foot, centred in its node, as tall as the node. leg: {radius, footRadius, footHeight} */
+function leg(D, L, { r, size, name }) {
+  const { cylinder, at, envelope } = D, a = at(r, 'legs'), x = size[0] / 2, y = size[1] / 2, h = size[2], f = L.footRadius;
+  cylinder(a, L.radius, h - L.footHeight, 'foot', x, y, (h - L.footHeight) / 2, null, 16);
+  cylinder(a, f, L.footHeight, 'foot', x, y, h - L.footHeight / 2, null, 20);
+  envelope(r, [x - f, x + f, y - f, y + f, h - L.footHeight, h], name, 'leg');
+}
+/* an aluminium grille in the plinth: a frame 5 wide round louvres every 12 */
+function grille(D, { r, size: [w, d, h] }) {
+  const I = { name: 'Ventilation grille in the plinth', part: D.part() }, z = gb => D.box(D.STATIC, r, gb, 'zinc', 'plinth', I);
+  z([0, w, 0, d, 0, 5]); z([0, w, 0, d, h - 5, h]); z([0, 5, 0, d, 5, h - 5]); z([w - 5, w, 0, d, 5, h - 5]);
+  for (let x = 17; x < w - 8; x += 12) z([x - 2, x + 2, 0, d - 1, 5, h - 5]);
+}
+/* a shelf pin: its node */
+function shelfPin(D, { r, size, name }) { D.box(D.STATIC, r, [0, size[0], 0, size[1], 0, size[2]], 'zinc', 'shelves', { name }); }
+/* a door's bumper: a soft head filling the gap between the carcass and the door */
+function bumper(D, { r, size }) { D.cylinder(D.at(r, 'hardware'), size[0] / 2, size[1], 'gasket', size[0] / 2, size[1] / 2, size[2] / 2, 'y', 16); }
+/* a hinge: its mounting plate and arm on the carcass, its cup in the door (moving with it). place: {r, m, dir (1: the
+   door hinged on its left), side (x of the hinge edge), cupX, h (the hinge's axis), carcassFront, doorBack (y), cupRadius} */
+function hinge(D, HG, { r, m, dir, side, cupX, h, carcassFront, doorBack, cupRadius }) {
+  const { box, cylinder, at, STATIC } = D, I = { name: 'Hinge', part: D.part() }, span = (a, b) => [Math.min(a, b), Math.max(a, b)];
+  box(STATIC, r, [...span(side, side + dir * 10), carcassFront - 75, carcassFront - 30, h - 22, h + 22], 'zinc', 'hardware', I);   // mounting plate
+  box(STATIC, r, [...span(side + dir * 3, side + dir * 20), carcassFront - 70, carcassFront - 2, h - 9, h + 9], 'zinc', 'hardware', I);   // arm
+  const a = at(r, 'hardware', m);
+  cylinder(a, cupRadius, HG.cupDepth, 'zinc', cupX, doorBack + HG.cupDepth / 2, h, 'y', 24);   // the cup in the door
+  cylinder(a, 24, 1.5, 'zinc', cupX, carcassFront - 1, h, 'y', 24);
+}
+/* a handle, both kinds: a cup (an open quarter shell with its end caps, a lip and two pads) and a bar on two posts; the
+   handle setting shows one (layers cup / bar). Lying along x, or upright on a door's side (turn left or right). y 0: the
+   front's face. handle: {cupLength, barLength} */
+const CUPS = {};
+function cupShape(length) {
+  if (CUPS[length]) return CUPS[length];
+  const L = length, R = 24, drop = -12, parts = [];
+  const shell = new THREE.CylinderGeometry(R, R, L - 6, 28, 1, true, 0, Math.PI / 2); shell.rotateZ(Math.PI / 2); shell.translate(0, drop, 0); parts.push(shell);
+  for (const sx of [-1, 1]) { const c = new THREE.CircleGeometry(R, 20, 0, Math.PI / 2); c.rotateY(-Math.PI / 2); c.translate(sx * (L / 2 - 3), drop, 0); parts.push(c); }
+  const lip = new THREE.CylinderGeometry(2.2, 2.2, L - 6, 10); lip.rotateZ(Math.PI / 2); lip.translate(0, drop, R); parts.push(lip);
+  for (const sx of [-1, 1]) { const pad = new THREE.BoxGeometry(12, 26, 4); pad.translate(sx * 32, drop + 13, 2); parts.push(pad); }
+  return (CUPS[length] = parts);
+}
+function handle(D, H, { r, m, size, turn, info }) {
+  const { box, detail, at } = D, L = H.barLength, x = size[0] / 2, h = size[2] / 2, y = 4;
+  const cup = D.pivot(at(r, 'handles', m, ['cup']), x, 0, h, turn === 'left' ? Math.PI / 2 : turn === 'right' ? -Math.PI / 2 : 0);
+  for (const g of cupShape(H.cupLength)) detail(cup, g, 'handle', 0, 0, 0);
+  const I = Object.assign({ also: ['bar'], part: D.part() }, info), bar = gb => box(m.cells, r, gb, 'handle', 'handles', I);
+  if (!turn) {
+    bar([x - L / 2, x + L / 2, y + 20, y + 30, h - 6, h + 6]); bar([x - L / 2 + 8, x - L / 2 + 18, y, y + 20, h - 5, h + 5]); bar([x + L / 2 - 18, x + L / 2 - 8, y, y + 20, h - 5, h + 5]);
+  } else {
+    bar([x - 6, x + 6, y + 20, y + 30, h - L / 2, h + L / 2]); bar([x - 5, x + 5, y, y + 20, h - L / 2 + 8, h - L / 2 + 18]); bar([x - 5, x + 5, y, y + 20, h + L / 2 - 18, h + L / 2 - 8]);
+  }
+}
+/* a runner: its fixed part on the carcass, its moving part with m. kind: 'drawer' (a drawer's, the fixed rail width wide on
+   the carcass side), 'ball' (a ball runner by a drawer behind a door), 'pullOut' (under a pull-out shelf); side: the
+   carcass's side it stands by, 'left' or 'right' */
+function runner(D, { r, m, size: [w, d, h], kind, side, width }) {
+  const { box, STATIC } = D, left = side === 'left', fixed = gb => box(STATIC, r, gb, 'zinc', 'hardware', { name: NAMES[kind] }), moving = gb => box(m.cells, r, gb, 'zinc', 'hardware', { mover: m });
+  if (kind === 'drawer') {
+    fixed([...(left ? [0, width] : [w - width, w]), 0, d, 0, h - 2]);
+    moving([...(left ? [width, w] : [0, w - width]), 8, d - 4, 4, h]);
+  } else if (kind === 'ball') {
+    fixed([...(left ? [0, w / 2] : [w / 2, w]), 0, d, 0, h]);
+    moving([...(left ? [w / 2, w] : [0, w / 2]), 4, d - 2, 4, h - 4]);
+  } else {
+    fixed([0, w, 0, d, 0, 14]);
+    moving([0, w, 8, d - 4, 14, h]);
+  }
+}
+const NAMES = { drawer: 'Drawer runner', ball: 'Ball runner', pullOut: 'Pull-out shelf runner' };
+
 /* by a product's field draw */
 HOME.draw = {
   oven: (D, A, place) => builtIn(D, 'oven', A, place),
   microwave: (D, A, place) => builtIn(D, 'microwave', A, place),
-  sink, tap, trap, hob, hood, fridgeFreezer, fridgeDoor, dishwasher, coffeeMachine, pendant, downlight
+  sink, tap, trap, hob, hood, fridgeFreezer, fridgeDoor, dishwasher, coffeeMachine, pendant, downlight,
+  leg, grille, shelfPin, bumper, hinge, handle, runner
 };
 })();

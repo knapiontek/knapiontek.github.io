@@ -54,7 +54,7 @@ solids ─► plan2d.js ─► 2D        rows ─► sheet.js ─► Documents, 
 | refs | the paths of the nodes it refers to, from the root of the tree; what each is for, its type says (a sink: the cabinet it sits in) |
 | children | the nodes inside it |
 
-A data file whose root is a node puts its `format` and `version` beside the node's own fields. The checks of the tree: a type, an offset and a size on every node; ids without spaces or slashes; ids unique among siblings; sizes above 0; every ref is the path of a node; to know: what lies below the root's zero.
+A data file whose root is a node puts its `format` and `version` beside the node's own fields. The checks of the tree: a type, an offset and a size on every node; ids without spaces or slashes; ids unique among siblings; sizes above 0; every ref is the path of a node; to know: what lies below the root's zero. A node's place is measured in the root's own axes: the root's own offset (its place in what holds it) is not part of them.
 
 ## test.tree.js
 

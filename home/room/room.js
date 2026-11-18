@@ -177,7 +177,12 @@ function build(V, prepared, opts = {}) {
     LAMPS.push({ light, shadow });
     if (shadow) { light.shadow.mapSize.set(1024, 1024); light.shadow.camera.near = 0.1; light.shadow.camera.far = (from[2] - LEVEL) / 1000 + 0.3; light.shadow.bias = -0.0002; light.shadow.normalBias = 0.015; }
   }
-  const D = { V, box, at, detail, cylinder, display, mover, linkTo, envelope, openFront, openTop, profile, part, lamp, point, STATIC, CEILING,
+  /* a frame at (x, y, h) of a's, turned by angle about h: what is drawn in it starts from its own zero */
+  function pivot(a, x, y, h, angle) {
+    const g = new THREE.Group(); g.position.set(x, h, y); g.rotation.z = angle; a.frame.add(g);
+    return Object.assign({}, a, { frame: g, pivot: true });
+  }
+  const D = { V, box, at, detail, cylinder, display, mover, linkTo, envelope, openFront, openTop, profile, part, lamp, point, pivot, STATIC, CEILING,
     frame: r => PLACE[r], material: key => V.material(key), has: key => key in MATERIALS };
 
   /* the cabinets, with their products */

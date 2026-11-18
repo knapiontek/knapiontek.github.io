@@ -41,18 +41,17 @@ HOME.ui.screen($('app'), {
   help: {
     '3d': `<p>Turn: left button (from outside about the house's middle, inside about what is in the middle of the view) · move: right · zoom: the wheel (toward the cursor).</p>
       <p><b>Walk</b>: the arrows walk and turn, A/D a step aside, Shift faster, PgUp/PgDn or a drag look, Space opens the nearest door, Esc ends.</p>
-      <p><b>View</b> (the panel): first the cut, then the layers; an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: its cut is under the floors; a click on its floor picks a room. A click on a door opens or closes it.</p>
+      <p><b>View</b> (the panel): the floors and the layers; an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: a click on its floor picks a room. A click on a door opens or closes it.</p>
       <p>In a room, the walls and the ceiling between the camera and the room hide; the floors do not apply there, only the elements.</p>`,
     '2d': '<p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. Below: zoom and the SVG to print.</p>',
     documents: '<p>The rooms with their areas, the doors with what is bought for them, the notes, the furniture as a tree, the Test (the checks of the data and of the model: OK, nothing to correct; a number, what to correct; i, to know). Blue fields may be changed until a reload. Below: the XLSX with its formulas.</p>' },
-  panel: `<section data-tab="view" data-part="cut"><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv"></span><input id="cut" type="range"></div></section>
-    <section data-tab="view" data-part="floors"><h2>Floors</h2><div class="layers" id="floors"></div></section>
+  panel: `<section data-tab="view" data-part="floors"><h2>Floors</h2><div class="layers" id="floors"></div></section>
     <section data-tab="view"><h2>Layers</h2><div class="layers" id="layers"></div></section>
     <section data-tab="view" data-part="furniture"><h2>Furniture</h2><div class="layers" id="furniture"></div></section>`
 });
 
-const [DATA, LIB] = await Promise.all([HOME.load(HOME.load.file.house(), 'house', 2), HOME.library.load()]);
-const MODEL = HOME.model.build(DATA), T = MODEL.T, VIEW = T.setting(DATA, 'view').value;
+const [DATA, LIB] = await Promise.all([HOME.load(HOME.load.file.house(), 'house', 3), HOME.library.load()]);
+const MODEL = HOME.model.build(DATA), T = MODEL.T, HOUSE = MODEL.HOUSE, VIEW = T.setting(HOUSE, 'view').value;   // DATA: the site, the house in it
 const { ROOF, WIDTH, RIDGE_TOP, FLOORS, ROOMS, ROOM, DOORS } = MODEL;
 const level = F => F.offset[2], floorTop = F => level(F) + F.size[2];
 const roomName = r => `${r.node.number}. ${r.node.name}`;
@@ -65,8 +64,8 @@ const ASKED = (new URLSearchParams(location.search).get('room') || '').split(','
 const PART = ASKED.filter(id => ROOM[id]), WHOLE = !PART.length;
 const PARTS = PART.map(MODEL.part);
 const UNION = WHOLE ? null : [0, 1, 2, 3, 4, 5].map(k => (k % 2 ? Math.max : Math.min)(...PARTS.map(p => p.box[k])));
-$('title').textContent = WHOLE ? DATA.name : PART.map(id => roomName(ROOM[id])).join(', ');
-$('subtitle').textContent = WHOLE ? DATA.source : `${DATA.name} · ${[...new Set(PARTS.map(p => p.floor.name))].join(', ')}`;
+$('title').textContent = WHOLE ? HOUSE.name : PART.map(id => roomName(ROOM[id])).join(', ');
+$('subtitle').textContent = WHOLE ? HOUSE.source : `${HOUSE.name} · ${[...new Set(PARTS.map(p => p.floor.name))].join(', ')}`;
 document.title = WHOLE ? 'Home' : PART.map(id => ROOM[id].node.name).join(', ');
 
 /* ================= THE ROOMS' FURNITURE =================
@@ -121,7 +120,7 @@ for (const f of FURNITURE) {
   f.made = HOME.room.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings });
   STILL.push(...f.made.STATIC);
 }
-const SOLIDS = WHOLE ? MODEL.SOLIDS.concat(...FURNITURE.map(f => f.made.STATIC)) : STILL;   // what a cut caps and what the walk bumps into
+const SOLIDS = WHOLE ? MODEL.SOLIDS.concat(...FURNITURE.map(f => f.made.STATIC)) : STILL;   // what the walk bumps into
 const PIECES = piecesOf(STILL);
 V.buildMeshes(PIECES); V.buildEdges(PIECES);
 for (const l of LEAVES) {
@@ -130,9 +129,9 @@ for (const l of LEAVES) {
 }
 V.addLight(); V.addCaps();
 
-/* ================= STATE, LAYERS, CUT ================= */
+/* ================= STATE, LAYERS ================= */
 const MODES = ['3d', '2d', 'documents'], TABS = { '3d': ['view'], '2d': ['view'] };
-const STORE = HOME.ui.store('home-house', () => ({ mode: '3d', tab: null, layers: {}, cut: {}, zoom: 1, room: null }), s => MODES.includes(s.mode) && s.layers && s.cut);
+const STORE = HOME.ui.store('home-house', () => ({ mode: '3d', tab: null, layers: {}, zoom: 1, room: null }), s => MODES.includes(s.mode) && s.layers);
 const state = STORE.state, save = STORE.save;
 const { layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers);
 const ROOM_VIEW = new Set(WHOLE ? [] : VIEW.floors);   // a room shows whatever the floors are switched to
@@ -146,20 +145,6 @@ function openFloor() {
   const on = FLOORS.filter(F => layerOn(F.id));
   return on.length ? on[on.length - 1] : null;
 }
-const cutRange = F => { const lo = level(F) + VIEW.cutFrom; return [lo, lo + Math.ceil((floorTop(F) - lo) / VIEW.cutStep) * VIEW.cutStep]; };
-function cutHeight() {                     // null: no cut; at the top of its range the cut is off
-  const F = openFloor(); if (!F || V.walk.on) return null;
-  const [lo, hi] = cutRange(F), preset = T.setting(F, 'view.cut');
-  const h = Math.min(hi, Math.max(lo, state.cut[F.id] ?? (preset && preset.from === F ? level(F) + preset.value : hi)));
-  return h >= hi ? null : h;
-}
-function cutPanel() {
-  const F = openFloor(); if (!F) return;
-  const [lo, hi] = cutRange(F), h = cutHeight();
-  Object.assign($('cut'), { min: lo, max: hi, step: VIEW.cutStep, value: h ?? hi });
-  $('cutv').textContent = h === null ? 'off' : `${fmt(h - level(F), 0)} mm over the floor`;
-}
-$('cut').oninput = e => { const F = openFloor(); if (!F) return; state.cut[F.id] = +e.target.value; save(); cutPanel(); apply(); };
 /* the layers in two blocks: where (the floors and the roof) and what (the elements); a solid shows when both are on */
 function layersPanel() {
   HOME.ui.layersPanel($('floors'), LAYER, VIEW.floors, state.layers, layerOn, setLayer);
@@ -168,8 +153,7 @@ function layersPanel() {
 }
 function setLayer(k, on) { state.layers[k] = on; save(); refresh(); }
 function apply() {
-  const h = cutHeight();
-  V.setCut(h); V.showPieces(shown, layerOn, ghost); V.buildCaps(h, SOLIDS, layers => shown(layers) && !ghost(layers));
+  V.showPieces(shown, layerOn, ghost);
   for (const f of FURNITURE) f.made.showDetails(layers => shown(layers) && !ghost(layers));
   V.redraw();
 }
@@ -213,15 +197,15 @@ V.onClick(ray => {
   if (m) return V.toggle(m);
   const F = openFloor();
   if (!F || V.walk.on) return;
-  const h = level(F), t = (h * V.MM - ray.ray.origin.y) / ray.ray.direction.y, cut = cutHeight();
-  if (!(t > 0) || (cut !== null && cut < h)) return;
+  const h = level(F), t = (h * V.MM - ray.ray.origin.y) / ray.ray.direction.y;
+  if (!(t > 0)) return;
   const p = V.root.worldToLocal(ray.ray.at(t, new THREE.Vector3()));
   const r = ROOMS.find(r => r.floor === F && r.rects.some(q => p.x >= q[0] && p.x <= q[1] && p.y >= q[2] && p.y <= q[3]));
   state.room = r ? r.id : null; save(); context();
 });
 V.enableNavigation();
 /* the walk stands on the walkable solids and, through a passage (a door), on its floor: the floor runs on through it */
-const PASSAGES = MODEL.OPENINGS.filter(o => DATA.geometry.openingKinds[o.kind].passage);
+const PASSAGES = MODEL.OPENINGS.filter(o => HOUSE.geometry.openingKinds[o.kind].passage);
 const PASSAGE_FLOORS = PASSAGES.map(o => ({ S: prism([o.b[0], o.b[1], o.b[2], o.b[3], o.b[4] - 1, o.b[4]]) }));
 const startOf = () => {
   if (WHOLE) return VIEW.walk.start;
@@ -290,7 +274,7 @@ function planSvg() {
   const floors = WHOLE ? FLOORS : FLOORS.filter(F => PARTS.some(p => p.floor === F));
   return PLAN.sheets(floors.map(F => {
     const own = WHOLE ? null : PARTS.filter(p => p.floor === F), rooms = WHOLE ? ROOMS.filter(r => r.floor === F) : own.map(p => p.room);
-    const box = WHOLE ? [0, DATA.geometry.length, 0, WIDTH] : [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...own.map(p => p.box[k])));
+    const box = WHOLE ? [...HOUSE.geometry.body, 0, WIDTH] : [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...own.map(p => p.box[k])));
     const solids = WHOLE ? MODEL.SOLIDS.filter(c => c.floor === F.id) : STILL.filter(c => rooms.some(r => r.id === c.room));
     const borders = MODEL.BORDERS.filter(b => b.floor === F && (WHOLE || b.rooms.some(id => PART.includes(id)))).map(b => b.line);
     const furniture = FURNITURE.filter(f => f.room.floor === F).map(f => f.made.plan());
@@ -316,7 +300,7 @@ let SHEET = null;
 function book() {
   const shownRooms = WHOLE ? ROOMS : PART.map(id => ROOM[id]);
   const rooms = { name: 'Rooms', cols: [{ width: 34, share: 2, max: 40 }, { width: 14, digits: 2, fix: 9 }, { width: 14, digits: 2, fix: 9 }, { width: 60, share: 4 }],
-    rows: [{ kind: 'title', cells: [DATA.name] }, { kind: 'head', cells: ['Room', 'Model [m²]', 'Archon [m²]', 'Note'] }] };
+    rows: [{ kind: 'title', cells: [HOUSE.name] }, { kind: 'head', cells: ['Room', 'Model [m²]', 'Archon [m²]', 'Note'] }] };
   for (const F of FLOORS) {
     const list = shownRooms.filter(r => r.floor === F);
     if (!list.length) continue;
@@ -335,12 +319,12 @@ function book() {
     doors.rows.push({ cells: [d.label, FLOORS.find(F => F.id === d.floor).name, P ? P.name : 'to choose', { v: 1, input: true }, P && P.price !== null ? { v: P.price, input: true } : '', { f: `D${r}*E${r}` }] });
   }
   doors.rows.push({ kind: 'sum', cells: ['Total', '', '', '', '', { f: `SUM(F${first}:F${doors.rows.length})` }] });
-  const notes = { name: 'Notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [DATA.source] }, { kind: 'head', cells: ['Notes'] }, ...DATA.notes.map(n => ({ cells: [n] }))] };
+  const notes = { name: 'Notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [HOUSE.source] }, { kind: 'head', cells: ['Notes'] }, ...HOUSE.notes.map(n => ({ cells: [n] }))] };
   /* the tree of what is shown: the whole house down to its rooms; a room's view, its rooms down to their furniture.
      Each node where it is in its parent (mm); a group of furniture where its scene sets it in its room, the side its fronts
      face, and in it every part in the group's own x, y, h */
   const tree = { name: 'Elements', tree: 'closed', cols: [{ width: 44, share: 3 }, { width: 34, share: 2 }, ...Array(6).fill({ width: 9, fix: 7 })],
-    rows: [{ kind: 'title', cells: [WHOLE ? DATA.name : PART.map(id => roomName(ROOM[id])).join(', ')] },
+    rows: [{ kind: 'title', cells: [WHOLE ? HOUSE.name : PART.map(id => roomName(ROOM[id])).join(', ')] },
       { kind: 'head', cells: ['Node', 'Path', 'x', 'y', 'h', 'Width (x)', 'Depth (y)', 'Height (h)'] }] };
   const mm = v => Math.round(v * 10) / 10;
   const furnitureOf = id => FURNITURE.find(f => f.room.id === id);
@@ -353,7 +337,10 @@ function book() {
     }
     for (const c of n.children || []) walk(c, (path ? path + '/' : '') + c.id, level + 1);
   }
-  if (WHOLE) walk(T.root, '', 0);
+  if (WHOLE) {                               // the site, and in it the house
+    tree.rows.push({ level: 0, kind: 'cat', cells: [DATA.name, '', ...DATA.offset.map(mm), ...DATA.size.map(mm)] });
+    walk(HOUSE, '', 1);
+  }
   else for (const id of PART) walk(ROOM[id].node, T.path(ROOM[id].node), 0);
   tree.rows.push({ cells: ['A node at its offset from the origin of its parent (its left, back, bottom corner); a group of furniture by its box in its room, and in it the group\'s own x (along its fronts), y (from its wall), h.'] });
   /* the checks: each with its result, what to correct under it */
@@ -382,7 +369,7 @@ const CHECKS = WHOLE ? HOUSE_CHECKS : [ASKED_CHECK, ...(ROOM_CHECKS.length ? ROO
 
 /* ================= THE SCREEN =================
    top-left: the house, its floors and their rooms · top-right: the modes · over the view: the picked room · below: the
-   mode's actions · the panel: the mode's tabs (View: the cut, the floors, the layers, the furniture) */
+   mode's actions · the panel: the mode's tabs (View: the floors, the layers, the furniture) */
 const linkTo = ids => '?room=' + ids.join(',');
 const same = ids => ids.length === PART.length && ids.every(id => PART.includes(id));
 HOME.ui.nav([{ name: 'House', href: 'index.html', on: WHOLE }]
@@ -404,8 +391,8 @@ function bottomMenu() {
   const menus = { '3d': [[walk], cameras().map(go)], '2d': [SHEET_2D.menu], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx')] };
   HOME.ui.bottomMenu(menus[state.mode]);
 }
-const panel = () => { state.tab = HOME.ui.panelTabs(TABS[state.mode] || [], state.tab, t => { state.tab = t; save(); panel(); }, p => (p === 'cut' && !openFloor()) || (p === 'floors' && !WHOLE) || (p === 'furniture' && !Object.keys(ROOM_LAYERS).length)); };
-function refresh() { context(); bottomMenu(); layersPanel(); cutPanel(); panel(); apply(); }
+const panel = () => { state.tab = HOME.ui.panelTabs(TABS[state.mode] || [], state.tab, t => { state.tab = t; save(); panel(); }, p => (p === 'floors' && !WHOLE) || (p === 'furniture' && !Object.keys(ROOM_LAYERS).length)); };
+function refresh() { context(); bottomMenu(); layersPanel(); panel(); apply(); }
 function setMode(m) {
   state.mode = m; save();
   HOME.ui.showMode(MODES, m, setMode);

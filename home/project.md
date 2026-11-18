@@ -42,8 +42,8 @@ house/  ──►  room/  ──►  core/, library/
 ## The tree and the coordinates
 
 - The house's axes are the only coordinates: x along the house, y across, h up. Lengths in mm.
-- One kind of node: `id`, `name`, `type`, `offset`, `size`, `settings`, `refs`, `children`. A node is placed by a translation only: its offset from its parent's origin and its size (above 0). No rotations, no signs for directions.
-- **One zero**: the corner of the house archon starts from. The house lies in positive numbers from it; only what is outside it (the foundations, the insulation before the walls, the site) has negative ones.
+- One kind of node: `id`, `name`, `type`, `offset`, `size`, `settings`, `refs`, `children`. A node is placed by a translation only: its offset from its parent's origin and its size (above 0). No rotations, no signs for directions; the one exception, a group of furniture, is turned a quarter (with a mirror) to face its side of the room.
+- **No absolute zero**: every node has its own zero, its extreme corner (left, back, bottom), and what it holds lies in positive numbers from it. The site's zero is the corner of its lawn; the house's is its own extreme corner (with the wings, the insulation and the footings: deep in the ground), so every part of the house is positive. The one negative number is where the house stands in the site: it starts below the lawn.
 - **The tree says what belongs to what, not what lies inside what**: a room is in the house, a window in its wall, a sink and its tap in their carcass though they stand over it. A child may stand outside its parent.
 - A front is a side of its box: `x0`, `x1`, `y0`, `y1` (the side at the smaller or the bigger x or y).
 - The id is given once and never changed or reused; the path of ids from the root is a node's global identifier. A node refers to others only by their paths, in its `refs`, and Test checks that each exists.
@@ -58,6 +58,41 @@ house/  ──►  room/  ──►  core/, library/
 | the maker's data | the maker | the library, with the product |
 
 The library describes only the outside world: what is bought and the materials, as the shop and the maker give them; nothing of it is our decision. How a product is drawn (the shape of a tap, a handle, a hob's zones) is code: library/draw.js, whatever room the product stands in. The shapes the maker does not give live in that code with it, code and its numbers inseparable; the maker's data (sizes, holes, connections) stay in the product's data file.
+
+## Data, tree, drawing
+
+Three things, kept apart: the **data** says what is decided; the **tree** holds every thing there is, each in its place; the **drawing** makes each thing's solids.
+
+**Where the data is**
+
+| Data | Says | Where |
+|---|---|---|
+| the house | its elements (walls, slabs, ring beams, insulation, roof), openings, rooms, floors, the house's settings | house/house.js, written as a tree |
+| a room's furniture | what the designer decides: the groups, their carcasses (width, height, what is inside), fronts, worktop, which product stands where | room/`<kind>_<number>`.cabinets.js |
+| a room's scene | where each group stands in the room, the side its fronts face; the lights, the cameras | room/`<kind>_<number>`.scene.js |
+| the maker's | a product's sizes, holes, connections, price | library/products |
+| how a product looks | the shapes the maker does not give | library/draw.js, code |
+
+**The tree.** One tree from the site down to the smallest thing drawn: site → house → floor → wall → opening; house → floor → room → group → carcass → board, front → hinge. The house's part is its data as written. A room's part is made by the room engine from the room's data: what follows from a rule (a board's size from its carcass and the settings) is computed once into the tree, never written in the data. Everything after reads the tree: 3D, 2D, Documents, Test.
+
+**A node and the data.** A node says *where* (its offset and size: the box the thing takes) and *what* (its type, and for a thing bought, the product's key). Nothing of its shape: the shape belongs to whoever draws its type. A node names a product; it never repeats the product's data.
+
+**Who draws what**, by the node's type:
+
+| Type | Drawn by | How |
+|---|---|---|
+| an element of the house (block, slab, ring beam, EPS, roof) | the house (house/model.js) | a prism filling the node's box, its openings cut out |
+| an opening (door, window, roof window) | the library, as a product (frame, leaf, glass, handle) | in the node's box; the house only cuts the hole |
+| a room's surface (tiles, a floor's finish) | the room engine | the tiles laid over the node's box |
+| a board (a carcass's side, shelf, back; a front's panel; worktop, plinth, strip, panel) | the cabinets (room/cabinets.js) | a box of the node's size, with its decor, edges, profile and holes |
+| a product (appliance, sink, tap, trap, hob, hood; hinge, runner, handle, leg) | the library (library/draw.js) | from the product's data, in its own coordinates from the node's zero |
+| a container (assembly, floor, room, group, carcass, drawer) | no one | only what it holds |
+
+Each solid is then moved to its node: the offsets summed up the tree, and for a group facing another side, the room's quarter turn.
+
+**Why.** Whoever knows a shape draws it, and only that: the house its walls, the cabinets their boards, the library a product the same in every room. The tree knows only boxes, so it can be checked (every solid inside its node), counted (the cutting list from the boards' nodes, the bill from the products' nodes) and cut (2D) without knowing a shape. A thing moved in the data moves with all it holds.
+
+**The rule.** Nothing is drawn without its node; every node is a type someone draws, or a container. Test checks both.
 
 ## Language
 

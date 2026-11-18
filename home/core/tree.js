@@ -25,7 +25,7 @@ function create(root) {
   /* the nodes from the root down to n */
   const chain = n => { const out = []; for (let m = n; m; m = PARENT.get(m)) out.unshift(m); return out; };
   /* the node's corner in the root's axes: the sum of the offsets */
-  const place = n => chain(n).reduce((p, m) => p.map((v, i) => v + ((m.offset || [])[i] || 0)), [0, 0, 0]);
+  const place = n => chain(n).slice(1).reduce((p, m) => p.map((v, i) => v + ((m.offset || [])[i] || 0)), [0, 0, 0]);   // the root's own offset is its place in its parent: not in its axes
   /* the node's box [x1, x2, y1, y2, h1, h2] in the root's axes */
   const box = n => { const p = place(n), s = n.size; return [p[0], p[0] + s[0], p[1], p[1] + s[1], p[2], p[2] + s[2]]; };
   /* a setting by its key (dots go into nested objects): the value of the nearest node, n or above, that sets it, and that
