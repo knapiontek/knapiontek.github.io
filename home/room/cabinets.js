@@ -1,7 +1,7 @@
 /* room/cabinets.js: the cabinets of a room from its cabinets file: carcasses, boards, fronts, strips, panels, plinths, worktops,
    plasterboard, holes, counts, problems. The same file always gives the same model; it draws nothing and knows no room.
-   Coordinates in mm per group: u along the group, v up from the floor, n out from the carcass backs (groups[g].wall: n of
-   the wall); a box is [u0, u1, v0, v1, n0, n1]. */
+   Coordinates in mm per group: x along the group from its left end (seen from the front), y out from the carcass backs
+   (groups[g].wall: y of the wall), h up from the floor; a box is [x0, x1, y0, y1, h0, h1]. */
 (function () {
   'use strict';
 
@@ -130,11 +130,11 @@
   /* ================= 2. SMALL HELPERS ================= */
 
   // for the pages: a count with its noun (1 problem, 2 problems)
-  const plural = (n, one, many) => (n === 1 ? one : many);
+  const plural = (y, one, many) => (y === 1 ? one : many);
 
   const valueAt = (obj, dotted) => dotted.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
   const hasTag = (item, ...tags) => tags.some(t => item.tags.includes(t));
-  const reachesHingeSide = (item, carcass) => (item.hinge === 'left' ? item.u0 === carcass.u0 : item.u1 === carcass.u1); // the door reaches the carcass side its hinges are on
+  const reachesHingeSide = (item, carcass) => (item.hinge === 'left' ? item.x0 === carcass.x0 : item.x1 === carcass.x1); // the door reaches the carcass side its hinges are on
 
   // how a component's place is printed (warnings, lists, tooltips): "G1[4]" = group 1, column 4; "G1[1-11]" = columns 1 to 11
   const placeLabel = (group, column, span = 1) => `G${group}[${column}${span > 1 ? '-' + (column + span - 1) : ''}]`;
@@ -146,13 +146,13 @@
     return row ? row.count : null;
   };
 
-  // [v0, v1] of the boards lying flat in a carcass
-  const horizontalBands = (boards, carcass) => boards.filter(b => b.carcassId === carcass.id && HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[2], b.box[3]]);
+  // [h0, h1] of the boards lying flat in a carcass
+  const horizontalBands = (boards, carcass) => boards.filter(b => b.carcassId === carcass.id && HORIZONTAL_BOARDS.includes(b.id)).map(b => [b.box[4], b.box[5]]);
 
   // the clear space of a module in its carcass: the nearest horizontal boards below and above its middle (a fixed shelf need not be
   // centred on a joint, e.g. under an oven); NaN where there is none
-  function spaceAround(boards, carcass, v0, v1) {
-    const mid = (v0 + v1) / 2, bands = horizontalBands(boards, carcass);
+  function spaceAround(boards, carcass, h0, h1) {
+    const mid = (h0 + h1) / 2, bands = horizontalBands(boards, carcass);
     const below = bands.filter(([a, b]) => (a + b) / 2 <= mid).map(([, b]) => b), above = bands.filter(([a, b]) => (a + b) / 2 > mid).map(([a]) => a);
     return { bottom: below.length ? Math.max(...below) : NaN, top: above.length ? Math.min(...above) : NaN };
   }
@@ -170,7 +170,7 @@
 
   // a worktop, an end panel or a strip is as thick as its material: which size to compare
   function onEdgeSize(item, island) {
-    const width = item.u1 - item.u0, height = item.v1 - item.v0;
+    const width = item.x1 - item.x0, height = item.h1 - item.h0;
     if (item.type === 'worktop') return { use: island ? ISLAND_USE : 'worktop', size: height, what: 'height' };
     if (item.type === 'endPanel') return { use: island ? ISLAND_END_PANEL_USE : 'endPanel', size: width, what: 'width' };
     if (item.type === 'strip') return { use: 'strip', size: Math.min(width, height), what: height > width ? 'width' : 'height' };
@@ -179,7 +179,7 @@
 
   function frontBox(item) {
     const { left, right, top, bottom } = item.gaps;
-    return { u0: item.u0 + left, u1: item.u1 - right, v0: item.v0 + bottom, v1: item.v1 - top };
+    return { x0: item.x0 + left, x1: item.x1 - right, h0: item.h0 + bottom, h1: item.h1 - top };
   }
 
   /* ================= 3. CHECKS THAT STOP THE BUILD: materials and settings ================= */
@@ -240,7 +240,7 @@
 
   /* ================= 4. LAYOUT: components -> items stacked in their columns ================= */
 
-  const readGap = x => (x === '' || x == null ? NaN : Number(x)); // an empty gap is not 0
+  const readGap = value => (value === '' || value == null ? NaN : Number(value)); // an empty gap is not 0
   const gapsText = gaps => [gaps.left, gaps.right, gaps.top, gaps.bottom].join(':'); // left:right:top:bottom
 
   function readComponent(c, index) {
@@ -264,11 +264,11 @@
 
   // Each piece, in list order, starts on top of the stack of the columns it spans: in each column the stack is the run of
   // pieces that reaches up without a gap from the floor (a piece can fill a gap left under a wider piece); the highest of
-  // those tops wins. Returns the pieces with u0, u1, v0, v1, and the ones that do not fit.
+  // those tops wins. Returns the pieces with x0, x1, h0, h1, and the ones that do not fit.
   function stack(widths, pieces) {
     const columnX = [0];
     widths.forEach(w => columnX.push(columnX[columnX.length - 1] + w));
-    const occupied = widths.map(() => []); // [v0, v1] ranges per column
+    const occupied = widths.map(() => []); // [h0, h1] ranges per column
     const items = [], skipped = [];
     const stackTop = ranges => {
       let top = 0;
@@ -284,15 +284,15 @@
         skipped.push({ piece, why: 'goes beyond the columns' });
         continue;
       }
-      let v0 = 0;
-      for (let k = first; k < end; k++) v0 = Math.max(v0, stackTop(occupied[k]));
-      const v1 = v0 + piece.height;
-      if (occupied.slice(first, end).some(ranges => ranges.some(([a, b]) => Math.max(v0, a) < Math.min(v1, b)))) {
+      let h0 = 0;
+      for (let k = first; k < end; k++) h0 = Math.max(h0, stackTop(occupied[k]));
+      const h1 = h0 + piece.height;
+      if (occupied.slice(first, end).some(ranges => ranges.some(([a, b]) => Math.max(h0, a) < Math.min(h1, b)))) {
         skipped.push({ piece, why: 'overlaps another piece' });
         continue;
       }
-      for (let k = first; k < end; k++) occupied[k].push([v0, v1]);
-      items.push({ ...piece, u0: columnX[first], u1: columnX[end], v0, v1 });
+      for (let k = first; k < end; k++) occupied[k].push([h0, h1]);
+      items.push({ ...piece, x0: columnX[first], x1: columnX[end], h0, h1 });
     }
     return { items, skipped, columnX };
   }
@@ -311,10 +311,10 @@
       return {
         name,
         members,
-        u0: Math.min(...members.map(i => i.u0)),
-        u1: Math.max(...members.map(i => i.u1)),
-        v0: Math.min(...vertical.map(i => i.v0)),
-        v1: Math.max(...vertical.map(i => i.v1)),
+        x0: Math.min(...members.map(i => i.x0)),
+        x1: Math.max(...members.map(i => i.x1)),
+        h0: Math.min(...vertical.map(i => i.h0)),
+        h1: Math.max(...vertical.map(i => i.h1)),
         firstColumn: Math.min(...members.map(i => i.column)),
         lastColumn: Math.max(...members.map(i => i.column + i.span - 1))
       };
@@ -331,7 +331,7 @@
       if (!boards[key]) throw new Error(`settings.materials.${use}: no product ${key} in the library`);
       (uses[key] = uses[key] || []).push(use);
     }
-    const materials = Object.fromEntries(Object.entries(uses).map(([key, u]) => [key, Object.assign({}, boards[key], { uses: u })]));
+    const materials = Object.fromEntries(Object.entries(uses).map(([key, x]) => [key, Object.assign({}, boards[key], { uses: x })]));
     return Object.assign({}, project, { materials });
   }
 
@@ -363,8 +363,8 @@
     const plinthFace = frontFace - settings.plinth.setback;
     // a front panel outside a carcass is screwed to its neighbour, in the front plane
     const panelFace = carcassFront + thickness.frontPanel;
-    // [u0, u1] of a spacer of carcass board inside the carcass side on the hinge side (it carries runners past the hinges)
-    const spacerOnHingeSide = (carcass, hinge) => (hinge === 'right' ? [carcass.u1 - 2 * board, carcass.u1 - board] : [carcass.u0 + board, carcass.u0 + 2 * board]);
+    // [x0, x1] of a spacer of carcass board inside the carcass side on the hinge side (it carries runners past the hinges)
+    const spacerOnHingeSide = (carcass, hinge) => (hinge === 'right' ? [carcass.x1 - 2 * board, carcass.x1 - board] : [carcass.x0 + board, carcass.x0 + 2 * board]);
 
     const issues = []; // { index of the component, text, skipped }
     const warn = (text, index = null, skipped = false) => { issues.push({ index, text, skipped }); };
@@ -449,10 +449,10 @@
           continue;
         }
         groupOfName.set(area.name, groupModel.group);
-        const boxes = area.members.filter(i => BOX_TYPES.includes(i.type)).sort((a, b) => a.v0 - b.v0 || a.u0 - b.u0);
+        const boxes = area.members.filter(i => BOX_TYPES.includes(i.type)).sort((a, b) => a.h0 - b.h0 || a.x0 - b.x0);
         carcasses.push({
           name: area.name, group: groupModel.group, column: area.firstColumn, span: area.lastColumn - area.firstColumn + 1,
-          u0: area.u0, u1: area.u1, v0: area.v0, v1: area.v1, boxes, members: area.members
+          x0: area.x0, x1: area.x1, h0: area.h0, h1: area.h1, boxes, members: area.members
         });
       }
       for (const item of groupModel.items) {
@@ -464,8 +464,8 @@
       // floor = stands on a plinth; base = floor with a worktop on top; tall = floor without a worktop; wall = not on a plinth
       const overlapsColumns = item => item.column <= carcass.column + carcass.span - 1 && item.column + item.span - 1 >= carcass.column;
       const groupItems = groups[carcass.group].items;
-      carcass.floor = groupItems.some(item => item.type === 'plinth' && overlapsColumns(item) && item.v1 === carcass.v0);
-      carcass.base = carcass.floor && groupItems.some(item => item.type === 'worktop' && overlapsColumns(item) && item.v0 === carcass.v1);
+      carcass.floor = groupItems.some(item => item.type === 'plinth' && overlapsColumns(item) && item.h1 === carcass.h0);
+      carcass.base = carcass.floor && groupItems.some(item => item.type === 'worktop' && overlapsColumns(item) && item.h0 === carcass.h1);
       carcass.kind = carcass.base ? 'base' : carcass.floor ? 'tall' : 'wall';
       for (const [flag, tags] of Object.entries(CARCASS_FLAGS)) carcass[flag] = carcass.boxes.some(b => hasTag(b, ...tags));
       carcass.flags = Object.keys(CARCASS_FLAGS).filter(flag => carcass[flag]);
@@ -487,9 +487,9 @@
     // edges: banded edges [{side, length, along}] - the edge seen from the front, along = the size it runs along (a | b); hidden parts get none
     const crossRails = settings.crossRails, shelf = settings.shelf, backPanel = settings.backPanel;
     for (const carcass of carcasses) {
-      const { u0, u1, v0, v1 } = carcass;
-      const width = u1 - u0, height = v1 - v0;
-      const innerU0 = u0 + board, innerU1 = u1 - board, innerWidth = width - 2 * board;
+      const { x0, x1, h0, h1 } = carcass;
+      const width = x1 - x0, height = h1 - h0;
+      const innerX0 = x0 + board, innerX1 = x1 - board, innerWidth = width - 2 * board;
       const carcassMaterial = materialFor.carcass;
       const part = (id, name, a, b, material, layer, box, edges = []) => {
         const piece = { id, name, a, b, material, layer, group: carcass.group, carcassId: carcass.id, box, edges };
@@ -499,35 +499,35 @@
       const frontEdge = (length, along) => [{ side: 'front', length, along }];
       const bottomEdge = [{ side: 'bottom', length: innerWidth, along: 'a' }]; // a rail on edge shows its bottom edge when the drawer below is open
 
-      part('side', 'Side', carcassDepth, height, carcassMaterial, 'carcasses', [u0, innerU0, v0, v1, carcassBack, carcassFront], frontEdge(height, 'b')).hand = 'left';
-      part('side', 'Side', carcassDepth, height, carcassMaterial, 'carcasses', [innerU1, u1, v0, v1, carcassBack, carcassFront], frontEdge(height, 'b')).hand = 'right';
-      part('bottomBoard', 'Bottom board', innerWidth, carcassDepth, carcassMaterial, 'carcasses', [innerU0, innerU1, v0, v0 + board, carcassBack, carcassFront], frontEdge(innerWidth, 'a'));
+      part('side', 'Side', carcassDepth, height, carcassMaterial, 'carcasses', [x0, innerX0, carcassBack, carcassFront, h0, h1], frontEdge(height, 'b')).hand = 'left';
+      part('side', 'Side', carcassDepth, height, carcassMaterial, 'carcasses', [innerX1, x1, carcassBack, carcassFront, h0, h1], frontEdge(height, 'b')).hand = 'right';
+      part('bottomBoard', 'Bottom board', innerWidth, carcassDepth, carcassMaterial, 'carcasses', [innerX0, innerX1, carcassBack, carcassFront, h0, h0 + board], frontEdge(innerWidth, 'a'));
 
       // top: a base carcass has 2 cross rails (flat; on edge under a sink or a hob), any other carcass a top panel
       const crossRailName = 'cross rail ' + crossRails.depth;
       if (carcass.base && carcass.sink) {
         // the cross rails stand on edge to clear the bowl
-        part('crossRail', 'Front ' + crossRailName + ', on edge', innerWidth, crossRails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - crossRails.depth, v1, carcassFront - board, carcassFront], bottomEdge);
-        part('crossRail', 'Back ' + crossRailName + ', on edge', innerWidth, crossRails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - crossRails.depth, v1, carcassBack, carcassBack + board]);
+        part('crossRail', 'Front ' + crossRailName + ', on edge', innerWidth, crossRails.depth, carcassMaterial, 'carcasses', [innerX0, innerX1, carcassFront - board, carcassFront, h1 - crossRails.depth, h1], bottomEdge);
+        part('crossRail', 'Back ' + crossRailName + ', on edge', innerWidth, crossRails.depth, carcassMaterial, 'carcasses', [innerX0, innerX1, carcassBack, carcassBack + board, h1 - crossRails.depth, h1]);
       } else if (carcass.base && carcass.hob) {
         // front rail on edge (hobFront high), rear rail on edge; the separation panel behind the front rail, flush with its bottom edge
         // (hidden from the front), with an air gap at the back
         part('crossRail', 'Front cross rail ' + crossRails.hobFront + ', on edge', innerWidth, crossRails.hobFront, carcassMaterial, 'carcasses',
-          [innerU0, innerU1, v1 - crossRails.hobFront, v1, carcassFront - board, carcassFront], bottomEdge);
-        part('crossRail', 'Back ' + crossRailName + ', on edge', innerWidth, crossRails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - crossRails.depth, v1, carcassBack, carcassBack + board]);
+          [innerX0, innerX1, carcassFront - board, carcassFront, h1 - crossRails.hobFront, h1], bottomEdge);
+        part('crossRail', 'Back ' + crossRailName + ', on edge', innerWidth, crossRails.depth, carcassMaterial, 'carcasses', [innerX0, innerX1, carcassBack, carcassBack + board, h1 - crossRails.depth, h1]);
         part('hobPanel', 'Panel under the hob', innerWidth, carcassDepth - 2 * board - crossRails.hobPanelGap, materialFor.hobPanel, 'carcasses',
-          [innerU0, innerU1, v1 - crossRails.hobFront, v1 - crossRails.hobFront + thickness.hobPanel, carcassBack + board + crossRails.hobPanelGap, carcassFront - board]);
+          [innerX0, innerX1, carcassBack + board + crossRails.hobPanelGap, carcassFront - board, h1 - crossRails.hobFront, h1 - crossRails.hobFront + thickness.hobPanel]);
       } else if (carcass.base) {
-        part('crossRail', 'Front ' + crossRailName, innerWidth, crossRails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassFront - crossRails.depth, carcassFront], frontEdge(innerWidth, 'a'));
-        part('crossRail', 'Back ' + crossRailName, innerWidth, crossRails.depth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassBack, carcassBack + crossRails.depth]);
+        part('crossRail', 'Front ' + crossRailName, innerWidth, crossRails.depth, carcassMaterial, 'carcasses', [innerX0, innerX1, carcassFront - crossRails.depth, carcassFront, h1 - board, h1], frontEdge(innerWidth, 'a'));
+        part('crossRail', 'Back ' + crossRailName, innerWidth, crossRails.depth, carcassMaterial, 'carcasses', [innerX0, innerX1, carcassBack, carcassBack + crossRails.depth, h1 - board, h1]);
       } else {
-        part('topBoard', 'Top board', innerWidth, carcassDepth, carcassMaterial, 'carcasses', [innerU0, innerU1, v1 - board, v1, carcassBack, carcassFront], frontEdge(innerWidth, 'a'));
+        part('topBoard', 'Top board', innerWidth, carcassDepth, carcassMaterial, 'carcasses', [innerX0, innerX1, carcassBack, carcassFront, h1 - board, h1], frontEdge(innerWidth, 'a'));
       }
 
       // back only behind cabinet doors (not behind drawers, dummy fronts, ovens, microwaves, fridges, freezers); one piece per run of doors
       const doorSpans = carcass.boxes
         .filter(b => b.type === 'cabinet' && !hasTag(b, 'fridge', 'freezer'))
-        .map(b => [Math.max(v0, b.v0), Math.min(v1, b.v1)])
+        .map(b => [Math.max(h0, b.h0), Math.min(h1, b.h1)])
         .sort((a, b) => a[0] - b[0])
         .reduce((runs, span) => {
           const last = runs[runs.length - 1];
@@ -537,20 +537,20 @@
         }, []);
       for (const [s0, s1] of doorSpans) {
         part('backPanel', 'Back panel', width - 2 * backPanel.inset, s1 - s0 - 2 * backPanel.inset, materialFor.backPanel, 'backs',
-          [u0 + backPanel.inset, u1 - backPanel.inset, s0 + backPanel.inset, s1 - backPanel.inset, carcassBack - thickness.backPanel, carcassBack]);
+          [x0 + backPanel.inset, x1 - backPanel.inset, carcassBack - thickness.backPanel, carcassBack, s0 + backPanel.inset, s1 - backPanel.inset]);
       }
 
       // a fixed shelf with its top at top; ventGap of air behind it when vented
       const fixedShelf = (top, gap) => {
-        part('fixedShelf', 'Fixed shelf', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerU0, innerU1, top - board, top, carcassBack + gap, carcassFront], frontEdge(innerWidth, 'a'));
+        part('fixedShelf', 'Fixed shelf', innerWidth, carcassDepth - gap, carcassMaterial, 'shelves', [innerX0, innerX1, carcassBack + gap, carcassFront, top - board, top], frontEdge(innerWidth, 'a'));
         counts.shelvesFixed++;
       };
       // fixed shelf at each joint of 2 boxes; a base carcass has its rails, a fridge carcass its own shelf (below)
       if (!carcass.base && !carcass.fridge) {
-        const joints = [...new Set(carcass.boxes.map(b => b.v0))].filter(joint => joint > v0);
+        const joints = [...new Set(carcass.boxes.map(b => b.h0))].filter(joint => joint > h0);
         for (const joint of joints) {
-          const vented = carcass.boxes.some(b => b.v1 === joint && VENTED_SHELF_OVER.includes(b.type));
-          const top = carcass.boxes.some(b => b.v0 === joint && SHELF_UNDER_JOINT.includes(b.type)) ? joint : joint + half;
+          const vented = carcass.boxes.some(b => b.h1 === joint && VENTED_SHELF_OVER.includes(b.type));
+          const top = carcass.boxes.some(b => b.h0 === joint && SHELF_UNDER_JOINT.includes(b.type)) ? joint : joint + half;
           fixedShelf(top, vented ? settings.shelf.ventGap : 0);
         }
       }
@@ -558,8 +558,8 @@
       // shallower to let the air out
       const fridgeHeight = carcass.fridge && appliances && appliances.fridgeFreezer ? appliances.fridgeFreezer.body.height : null;
       if (fridgeHeight) {
-        const top = v0 + board + fridgeHeight + board;
-        if (top > v1 - board) warn(`${carcass.name}: the fridge ${fridgeHeight} does not fit the carcass (inside ${height - 2 * board}).`);
+        const top = h0 + board + fridgeHeight + board;
+        if (top > h1 - board) warn(`${carcass.name}: the fridge ${fridgeHeight} does not fit the carcass (inside ${height - 2 * board}).`);
         else fixedShelf(top, settings.shelf.ventGap);
       }
 
@@ -569,46 +569,46 @@
       const topThickness = carcass.base && carcass.sink ? crossRails.depth : carcass.base && carcass.hob ? crossRails.hobFront : board;
       const spaces = carcass.members.filter(i => i.type === 'space');
       for (const f of carcass.boxes.length ? spaces : spaces.slice(0, 1)) {
-        const atRight = f.u1 === carcass.u1, none = !carcass.boxes.length;
-        const s0 = none || !atRight ? innerU0 : Math.max(...carcass.boxes.map(b => b.u1)), s1 = none || atRight ? innerU1 : Math.min(...carcass.boxes.map(b => b.u0));
+        const atRight = f.x1 === carcass.x1, none = !carcass.boxes.length;
+        const s0 = none || !atRight ? innerX0 : Math.max(...carcass.boxes.map(b => b.x1)), s1 = none || atRight ? innerX1 : Math.min(...carcass.boxes.map(b => b.x0));
         part('insetPanel', 'Inset panel', s1 - s0, height - board - topThickness, carcassMaterial, 'carcasses',
-          [s0, s1, v0 + board, v1 - topThickness, carcassFront - board, carcassFront]);
+          [s0, s1, carcassFront - board, carcassFront, h0 + board, h1 - topThickness]);
       }
 
       // an adjustable shelf: one plain board from side to side over the whole carcass (a hinge post, when there is one, crosses it)
       const adjustableShelf = centre => {
-        const shelfWidth = innerWidth - 2 * shelf.clearance, shelfU0 = innerU0 + shelf.clearance;
+        const shelfWidth = innerWidth - 2 * shelf.clearance, shelfX0 = innerX0 + shelf.clearance;
         part('adjustableShelf', 'Adjustable shelf', shelfWidth, carcassDepth - shelf.setback, carcassMaterial, 'shelves',
-          [shelfU0, shelfU0 + shelfWidth, centre - half, centre + half, carcassBack, carcassFront - shelf.setback], frontEdge(shelfWidth, 'a')).centre = centre;
+          [shelfX0, shelfX0 + shelfWidth, carcassBack, carcassFront - shelf.setback, centre - half, centre + half], frontEdge(shelfWidth, 'a')).centre = centre;
         counts.shelvesAdjustable++;
         counts.shelfPins += PINS_PER_SHELF;
       };
       // a door with coffee: a pull-out shelf on the board under the door, shelves above it up to the board over the door. The open
       // door reaches about as far into the opening as the runner clearance: a spacer on the hinge side carries that runner
       const addPullOutShelf = (door, lo, hi) => {
-        const pullOut = settings.pullOutShelf, y = lo + pullOut.lift;
-        let s0 = innerU0, s1 = innerU1;
+        const pullOut = settings.pullOutShelf, shelfH = lo + pullOut.lift;
+        let s0 = innerX0, s1 = innerX1;
         if (!reachesHingeSide(door, carcass)) warn(`${placeOf(door)}: coffee machine - the door must reach the carcass side on its hinge side.`, door.index);
         else {
-          const spacer = spacerOnHingeSide(carcass, door.hinge), top = y + board + pullOut.spacerAbove;
+          const spacer = spacerOnHingeSide(carcass, door.hinge), top = shelfH + board + pullOut.spacerAbove;
           part('spacer', 'Spacer', carcassDepth, top - lo, carcassMaterial, 'carcasses',
-            [...spacer, lo, top, carcassBack, carcassFront], [{ side: 'front', length: top - lo, along: 'b' }, { side: 'top', length: carcassDepth, along: 'a' }]); // the top is seen above the shelf
+            [...spacer, carcassBack, carcassFront, lo, top], [{ side: 'front', length: top - lo, along: 'b' }, { side: 'top', length: carcassDepth, along: 'a' }]); // the top is seen above the shelf
           if (door.hinge === 'right') s1 = spacer[0]; else s0 = spacer[1];
         }
         const shelfWidth = s1 - s0 - 2 * pullOut.clearance;
         part('pullOutShelf', 'Pull-out shelf', shelfWidth, pullOut.depth, carcassMaterial, 'shelves',
-          [s0 + pullOut.clearance, s1 - pullOut.clearance, y, y + board, carcassFront - pullOut.depth, carcassFront], frontEdge(shelfWidth, 'a')).item = door;
+          [s0 + pullOut.clearance, s1 - pullOut.clearance, carcassFront - pullOut.depth, carcassFront, shelfH, shelfH + board], frontEdge(shelfWidth, 'a')).item = door;
         counts.pullOutShelves++;
-        const above = y + board + pullOut.machineHeight;
+        const above = shelfH + board + pullOut.machineHeight;
         for (let j = 0; j < pullOut.shelvesAbove; j++) adjustableShelf(Math.round(above + ((hi - above) * j) / pullOut.shelvesAbove));
       };
       if (!carcass.sink && !carcass.fridge) {
         // per door, by its front height (settings.shelf.perDoor), evenly between the boards above and below the door
         for (const b of carcass.boxes) {
           if (b.type !== 'cabinet' || hasTag(b, 'doorDrawers')) continue; // behind a door with doorDrawers: the drawers, no shelves
-          const { bottom: lo, top: hi } = spaceAround(boards, carcass, b.v0, b.v1);
+          const { bottom: lo, top: hi } = spaceAround(boards, carcass, b.h0, b.h1);
           if (hasTag(b, 'coffee')) { addPullOutShelf(b, lo, hi); continue; }
-          const front = frontBox(b), frontHeight = front.v1 - front.v0, count = countByHeight(shelf.perDoor, frontHeight);
+          const front = frontBox(b), frontHeight = front.h1 - front.h0, count = countByHeight(shelf.perDoor, frontHeight);
           if (count === null) { warn(`${placeOf(b)}: the front height ${frontHeight} is over the last row of settings.shelf.perDoor.`, b.index); continue; }
           for (let j = 1; j <= count; j++) adjustableShelf(Math.round(lo + ((hi - lo) * j) / (count + 1)));
         }
@@ -619,10 +619,10 @@
     const stripSettings = settings.strip, plasterSettings = settings.plasterboard, stripLacquer = lacquerOf('strip', 'strip');
     for (const groupModel of Object.values(groups)) {
       for (const item of groupModel.items) {
-        const { u0, u1, v0, v1 } = item, width = u1 - u0, height = v1 - v0;
+        const { x0, x1, h0, h1 } = item, width = x1 - x0, height = h1 - h0;
         if (item.type === 'strip') {
           strips.push({
-            group: groupModel.group, item, material: materialFor.strip, box: [u0, u1, v0, v1, frontFace - stripSettings.depth, frontFace],
+            group: groupModel.group, item, material: materialFor.strip, box: [x0, x1, frontFace - stripSettings.depth, frontFace, h0, h1],
             name: (height > width ? 'Front strip ' : 'Horizontal front strip ') + thickness.strip + ' on edge (depth ' + stripSettings.depth + ')',
             a: stripSettings.depth, b: Math.max(width, height),
             lacquer: stripLacquer, lacqueredSides: stripLacquer ? STRIP_LACQUERED_SIDES : []
@@ -631,25 +631,25 @@
             // back strips, cut as the carcasses: an upright strip one per carcass beside it, with a wall bracket at each joint of
             // the stack (cut in on site; none on an island); a horizontal strip one per carcass under it; no carcass: one piece
             const along = height > width, own = carcasses.filter(carcass => carcass.group === groupModel.group);
-            const beside = along ? own.filter(carcass => (carcass.u0 === u1 || carcass.u1 === u0) && carcass.v0 < v1 && carcass.v1 > v0) : [];
-            const under = along ? [] : own.filter(carcass => carcass.v1 === v0 && carcass.u0 < u1 && carcass.u1 > u0).sort((a, b) => a.u0 - b.u0);
-            let spans = along ? [[v0, v1]] : [[u0, u1]]; // [s0, s1] along the strip
-            if (under.length) spans = under.map(carcass => [Math.max(u0, carcass.u0), Math.min(u1, carcass.u1)]);
+            const beside = along ? own.filter(carcass => (carcass.x0 === x1 || carcass.x1 === x0) && carcass.h0 < h1 && carcass.h1 > h0) : [];
+            const under = along ? [] : own.filter(carcass => carcass.h1 === h0 && carcass.x0 < x1 && carcass.x1 > x0).sort((a, b) => a.x0 - b.x0);
+            let spans = along ? [[h0, h1]] : [[x0, x1]]; // [s0, s1] along the strip
+            if (under.length) spans = under.map(carcass => [Math.max(x0, carcass.x0), Math.min(x1, carcass.x1)]);
             if (beside.length) {
-              const joints = [...new Set(beside.filter(carcass => beside.some(upper => upper.v0 === carcass.v1 && upper.u0 === carcass.u0)).map(carcass => carcass.v1))].sort((a, b) => a - b);
-              const ends = [Math.max(v0, Math.min(...beside.map(carcass => carcass.v0))), ...joints, Math.min(v1, Math.max(...beside.map(carcass => carcass.v1)))];
+              const joints = [...new Set(beside.filter(carcass => beside.some(upper => upper.h0 === carcass.h1 && upper.x0 === carcass.x0)).map(carcass => carcass.h1))].sort((a, b) => a - b);
+              const ends = [Math.max(h0, Math.min(...beside.map(carcass => carcass.h0))), ...joints, Math.min(h1, Math.max(...beside.map(carcass => carcass.h1)))];
               spans = ends.slice(0, -1).map((a, i) => [a, ends[i + 1]]);
               if (!groupModel.island) counts.wallBrackets += spans.length - 1; // the top strip of a stack has no bracket
               // the strip and its back strips are screwed to the carcass on one side; the carcass on the other side from inside
-              const length = Ks => Ks.reduce((sum, carcass) => sum + Math.min(carcass.v1, v1) - Math.max(carcass.v0, v0), 0);
-              const left = beside.filter(carcass => carcass.u1 === u0), right = beside.filter(carcass => carcass.u0 === u1);
+              const length = Ks => Ks.reduce((sum, carcass) => sum + Math.min(carcass.h1, h1) - Math.max(carcass.h0, h0), 0);
+              const left = beside.filter(carcass => carcass.x1 === x0), right = beside.filter(carcass => carcass.x0 === x1);
               counts.jointLength.screwed += length(left.length ? left : right);
               if (left.length) counts.jointLength.fromInside += length(right);
             }
             for (const [s0, s1] of spans) {
               boards.push({
                 id: 'backStrip', name: 'Back strip ' + stripSettings.depth, a: stripSettings.depth, b: s1 - s0, material: materialFor.carcass, layer: 'carcasses',
-                group: groupModel.group, column: item.column, box: along ? [u0, u1, s0, s1, carcassBack, carcassBack + stripSettings.depth] : [s0, s1, v0, v1, carcassBack, carcassBack + stripSettings.depth],
+                group: groupModel.group, column: item.column, box: along ? [x0, x1, carcassBack, carcassBack + stripSettings.depth, s0, s1] : [s0, s1, carcassBack, carcassBack + stripSettings.depth, h0, h1],
                 edges: [] // hidden behind its strip
               });
             }
@@ -659,8 +659,8 @@
           // a lacquered material has that edge lacquered, any other gets edge banding there
           const overlaps = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0) > 0;
           const neighbour = {
-            top: o => o.v0 === item.v1 && overlaps(o.u0, o.u1, item.u0, item.u1), bottom: o => o.v1 === item.v0 && overlaps(o.u0, o.u1, item.u0, item.u1),
-            left: o => o.u1 === item.u0 && overlaps(o.v0, o.v1, item.v0, item.v1), right: o => o.u0 === item.u1 && overlaps(o.v0, o.v1, item.v0, item.v1)
+            top: o => o.h0 === item.h1 && overlaps(o.x0, o.x1, item.x0, item.x1), bottom: o => o.h1 === item.h0 && overlaps(o.x0, o.x1, item.x0, item.x1),
+            left: o => o.x1 === item.x0 && overlaps(o.h0, o.h1, item.h0, item.h1), right: o => o.x0 === item.x1 && overlaps(o.h0, o.h1, item.h0, item.h1)
           };
           const seen = SIDES
             .filter(side => groupModel.items.some(other => opens(other) && neighbour[side](other)))
@@ -668,12 +668,12 @@
           const lacquered = Boolean(projectData.materials[materialFor.frontPanel].lacquered);
           const along = size => seen.filter(edge => edge.along === size).length;
           const lacquer = lacquered ? (width >= height ? { long: along('a'), short: along('b') } : { long: along('b'), short: along('a') }) : null;
-          frontPanels.push({ group: groupModel.group, item, material: materialFor.frontPanel, name: 'Front panel ' + thickness.frontPanel, a: width, b: height, box: [u0, u1, v0, v1, ...(item.carcass ? [carcassFront, panelFace] : [frontFace - thickness.frontPanel, frontFace])],
+          frontPanels.push({ group: groupModel.group, item, material: materialFor.frontPanel, name: 'Front panel ' + thickness.frontPanel, a: width, b: height, box: [x0, x1, ...(item.carcass ? [carcassFront, panelFace] : [frontFace - thickness.frontPanel, frontFace]), h0, h1],
             edges: lacquered ? [] : seen, lacquer, lacqueredSides: lacquered ? seen.map(edge => edge.side) : [] });
         } else if (item.type === 'wallPanel') {
-          wallPanels.push({ group: groupModel.group, item, material: materialFor.wallPanel, name: 'Wall panel ' + thickness.wallPanel, a: width, b: height, box: [u0, u1, v0, v1, groupModel.wall, groupModel.wall + thickness.wallPanel], edges: [] });
+          wallPanels.push({ group: groupModel.group, item, material: materialFor.wallPanel, name: 'Wall panel ' + thickness.wallPanel, a: width, b: height, box: [x0, x1, groupModel.wall, groupModel.wall + thickness.wallPanel, h0, h1], edges: [] });
         } else if (item.type === 'plinth') {
-          plinths.push({ group: groupModel.group, item, material: materialFor.plinth, a: height, b: width, box: [u0, u1, v0, v1, plinthFace - thickness.plinth, plinthFace], lacquer: lacquerOf('plinth', 'plinth') });
+          plinths.push({ group: groupModel.group, item, material: materialFor.plinth, a: height, b: width, box: [x0, x1, plinthFace - thickness.plinth, plinthFace, h0, h1], lacquer: lacquerOf('plinth', 'plinth') });
         } else if (item.type === 'plasterboard') {
           // cladding: the face plus the return along the long side; profiles: UD on both fixed edges, CD on the outer edge + cross pieces
           const long = Math.max(width, height), short = Math.min(width, height), depth = plasterSettings.depth;
@@ -698,24 +698,24 @@
       const use = groupModel.island ? ISLAND_USE : 'worktop', material = materialFor[use], materialDepth = projectData.materials[material].depth;
       // every worktop: from worktop.overhang in front of the fronts back to the wall line, the group's backGap behind the carcass backs
       // (an island: no wall, only that line); the rest of the board is cut off at the back
-      const n1 = frontFace + settings.worktop.overhang, n0 = groupModel.wall, depth = n1 - n0;
+      const y1 = frontFace + settings.worktop.overhang, y0 = groupModel.wall, depth = y1 - y0;
       if (depth > materialDepth) warn(`Group ${groupModel.group}: the worktop is ${depth}, the material ${materials[material].label} is ${materialDepth}.`);
-      if (n0 > carcassBack) warn(`Group ${groupModel.group}: the worktop ${depth} does not reach the backs of the carcasses (carcass + front + overhang = ${n1 - carcassBack}).`);
-      worktops[groupModel.group] = { n0, n1, depth, back: carcassBack - n0, v0: top.v0, v1: top.v1, use, material, thickness: thickness[use] };
+      if (y0 > carcassBack) warn(`Group ${groupModel.group}: the worktop ${depth} does not reach the backs of the carcasses (carcass + front + overhang = ${y1 - carcassBack}).`);
+      worktops[groupModel.group] = { y0, y1, depth, back: carcassBack - y0, h0: top.h0, h1: top.h1, use, material, thickness: thickness[use] };
     }
 
     // ---- island back panel: panel material, between the end panels (none: the end columns), floor to the carcass tops, on the carcass backs ----
     for (const groupModel of Object.values(groups).filter(candidate => candidate.island)) {
       const own = carcasses.filter(carcass => carcass.group === groupModel.group);
-      const top = Math.max(0, ...own.map(carcass => carcass.v1));
-      const first = Math.min(...own.map(carcass => carcass.u0)), last = Math.max(...own.map(carcass => carcass.u1));
+      const top = Math.max(0, ...own.map(carcass => carcass.h1));
+      const first = Math.min(...own.map(carcass => carcass.x0)), last = Math.max(...own.map(carcass => carcass.x1));
       const endPanels = groupModel.items.filter(i => i.type === 'endPanel');
-      const left = endPanels.filter(f => f.u1 <= first), right = endPanels.filter(f => f.u0 >= last);
-      const u0 = left.length ? Math.max(...left.map(f => f.u1)) : groupModel.widths[0] || 0;
-      const u1 = right.length ? Math.min(...right.map(f => f.u0)) : groupModel.length - (groupModel.widths[groupModel.widths.length - 1] || 0);
+      const left = endPanels.filter(f => f.x1 <= first), right = endPanels.filter(f => f.x0 >= last);
+      const x0 = left.length ? Math.max(...left.map(f => f.x1)) : groupModel.widths[0] || 0;
+      const x1 = right.length ? Math.min(...right.map(f => f.x0)) : groupModel.length - (groupModel.widths[groupModel.widths.length - 1] || 0);
       frontPanels.push({
-        group: groupModel.group, material: materialFor.frontPanel, name: 'Island back panel ' + thickness.frontPanel, a: u1 - u0, b: top, edges: [],
-        box: [u0, u1, 0, top, carcassBack - thickness.frontPanel, carcassBack]
+        group: groupModel.group, material: materialFor.frontPanel, name: 'Island back panel ' + thickness.frontPanel, a: x1 - x0, b: top, edges: [],
+        box: [x0, x1, carcassBack - thickness.frontPanel, carcassBack, 0, top]
       });
     }
 
@@ -725,24 +725,24 @@
     const shelfPinRow = shelfBoard => shelfBoard.centre - half - settings.drilling.shelfPin.belowShelf;
     // a hinge that meets a shelf (closer than half a board + hinges.aboveShelf to its centre) goes above it: to the lowest height
     // at least hinges.aboveShelf over the shelf where its mounting-plate holes miss every shelf-pin hole (settings.drilling)
-    function hingeClearOfShelves(v, carcass, front, item) {
+    function hingeClearOfShelves(h, carcass, front, item) {
       const plate = settings.drilling.plate, pin = settings.drilling.shelfPin;
-      const centreOf = b => (b.box[2] + b.box[3]) / 2;
-      const inDoor = b => b.carcassId === carcass.id && centreOf(b) > front.v0 && centreOf(b) < front.v1;
+      const centreOf = b => (b.box[4] + b.box[5]) / 2;
+      const inDoor = b => b.carcassId === carcass.id && centreOf(b) > front.h0 && centreOf(b) < front.h1;
       const shelves = boards.filter(b => inDoor(b) && (b.id === 'adjustableShelf' || b.id === 'pullOutShelf')).map(centreOf);
       const reach = half + hingeSettings.aboveShelf;
-      const hit = shelves.find(c => Math.abs(v - c) < reach);
-      if (hit === undefined) return v;
+      const hit = shelves.find(c => Math.abs(h - c) < reach);
+      if (hit === undefined) return h;
       // shelf-pin holes on the same face (only adjustable shelves have pins); centre distance as the overlap check
       const pins = boards.filter(b => inDoor(b) && b.id === 'adjustableShelf').map(shelfPinRow)
-        .flatMap(y => [pin.fromFront, carcassDepth - pin.fromBack].map(x => ({ x, y })));
+        .flatMap(py => [pin.fromFront, carcassDepth - pin.fromBack].map(px => ({ x: px, y: py })));
       const minDistance = (plate.diameter + pin.diameter) / 2 + 1;
-      const clear = h => shelves.every(c => Math.abs(h - c) >= reach) &&
-        [h - plate.spacing / 2, h + plate.spacing / 2].every(y => pins.every(p => Math.hypot(p.x - plate.fromFront, p.y - y) >= minDistance));
-      let h = Math.ceil(hit + reach);
-      while (!clear(h) && h < front.v1) h++;
-      if (h > front.v1 - hingeSettings.fromEnd / 2) warn(`${placeOf(item)}: the hinge above the shelf is beyond the door - move the shelf.`, item.index);
-      return h;
+      const clear = hinge => shelves.every(c => Math.abs(hinge - c) >= reach) &&
+        [hinge - plate.spacing / 2, hinge + plate.spacing / 2].every(py => pins.every(p => Math.hypot(p.x - plate.fromFront, p.y - py) >= minDistance));
+      let hinge = Math.ceil(hit + reach);
+      while (!clear(hinge) && hinge < front.h1) hinge++;
+      if (hinge > front.h1 - hingeSettings.fromEnd / 2) warn(`${placeOf(item)}: the hinge above the shelf is beyond the door - move the shelf.`, item.index);
+      return hinge;
     }
     // drawers behind a door (tag doorDrawers): the hinges take hinges.postDepth at the carcass front, so the spacer and the boxes
     // stop there; the box front covers the ends of the sides and of the bottom
@@ -750,26 +750,26 @@
       const doorDrawerSettings = settings.doorDrawers, t = thickness.drawerBox, at = placeOf(item);
       if (!reachesHingeSide(item, carcass)) return warn(`${at}: drawers behind the door - the door must reach the carcass side on its hinge side.`, item.index);
       const count = doorDrawerSettings.count;
-      const n1 = carcassFront - hingeSettings.postDepth, length = Math.max(...doorDrawerSettings.runnerLengths.filter(l => l <= n1 - carcassBack));
-      if (!Number.isFinite(length)) return warn(`${at}: no runner of settings.doorDrawers.runnerLengths fits in ${n1 - carcassBack}.`, item.index);
-      const { bottom: lo, top: hi } = spaceAround(boards, carcass, item.v0, item.v1);
+      const y1 = carcassFront - hingeSettings.postDepth, length = Math.max(...doorDrawerSettings.runnerLengths.filter(l => l <= y1 - carcassBack));
+      if (!Number.isFinite(length)) return warn(`${at}: no runner of settings.doorDrawers.runnerLengths fits in ${y1 - carcassBack}.`, item.index);
+      const { bottom: lo, top: hi } = spaceAround(boards, carcass, item.h0, item.h1);
       if (!Number.isFinite(lo) || !Number.isFinite(hi)) return warn(`${at}: drawers behind the door - no horizontal board above or below the door.`, item.index);
-      const innerU0 = carcass.u0 + board, innerU1 = carcass.u1 - board, right = item.hinge === 'right';
+      const innerX0 = carcass.x0 + board, innerX1 = carcass.x1 - board, right = item.hinge === 'right';
       const spacer = spacerOnHingeSide(carcass, item.hinge);
-      boards.push({ id: 'spacer', name: 'Spacer', a: n1 - carcassBack, b: hi - lo, material: materialFor.carcass, layer: 'carcasses', group: carcass.group, carcassId: carcass.id,
-        box: [...spacer, lo, hi, carcassBack, n1], edges: [{ side: 'front', length: hi - lo, along: 'b' }] });
-      const u0 = (right ? innerU0 : spacer[1]) + doorDrawerSettings.clearance, u1 = (right ? spacer[0] : innerU1) - doorDrawerSettings.clearance, n0 = n1 - length, pitch = (hi - lo) / count;
-      front.doorDrawers = { count, runnerLength: length, boxWidth: u1 - u0, boxHeight: t + doorDrawerSettings.sideHeight, boxes: [] }; // the runner length is the box depth
+      boards.push({ id: 'spacer', name: 'Spacer', a: y1 - carcassBack, b: hi - lo, material: materialFor.carcass, layer: 'carcasses', group: carcass.group, carcassId: carcass.id,
+        box: [...spacer, carcassBack, y1, lo, hi], edges: [{ side: 'front', length: hi - lo, along: 'b' }] });
+      const x0 = (right ? innerX0 : spacer[1]) + doorDrawerSettings.clearance, x1 = (right ? spacer[0] : innerX1) - doorDrawerSettings.clearance, y0 = y1 - length, pitch = (hi - lo) / count;
+      front.doorDrawers = { count, runnerLength: length, boxWidth: x1 - x0, boxHeight: t + doorDrawerSettings.sideHeight, boxes: [] }; // the runner length is the box depth
       for (let j = 0; j < count; j++) {
-        const v = Math.round(lo + doorDrawerSettings.lift + j * pitch), top = v + t + doorDrawerSettings.sideHeight, next = j + 1 < count ? Math.round(lo + doorDrawerSettings.lift + (j + 1) * pitch) : hi;
+        const h = Math.round(lo + doorDrawerSettings.lift + j * pitch), top = h + t + doorDrawerSettings.sideHeight, next = j + 1 < count ? Math.round(lo + doorDrawerSettings.lift + (j + 1) * pitch) : hi;
         if (top > next) warn(`${at}: drawer behind the door ${j + 1} (${t + doorDrawerSettings.sideHeight}) does not fit under the next board.`, item.index);
         const common = { material: materialFor.drawerBox, layer: 'drawers', group: carcass.group, carcassId: carcass.id, frontId: front.id, doorDrawer: j }, inner = length - t;
-        boards.push({ id: 'doorDrawerFront', name: 'Front of a drawer behind the door', a: u1 - u0, b: t + doorDrawerSettings.sideHeight, ...common, box: [u0, u1, v, top, n1 - t, n1],
-          edges: [{ side: 'top', length: u1 - u0, along: 'a' }, { side: 'left', length: t + doorDrawerSettings.sideHeight, along: 'b' }, { side: 'right', length: t + doorDrawerSettings.sideHeight, along: 'b' }] });
-        boards.push({ id: 'doorDrawerBottom', name: 'Bottom of a drawer behind the door', a: u1 - u0 - 2 * t, b: inner, ...common, box: [u0 + t, u1 - t, v, v + t, n0, n1 - t], edges: [] });
-        for (const s of [u0, u1 - t]) boards.push({ id: 'doorDrawerSide', name: 'Side of a drawer behind the door', a: inner, b: t + doorDrawerSettings.sideHeight, ...common, box: [s, s + t, v, top, n0, n1 - t], edges: [{ side: 'top', length: inner, along: 'a' }] });
-        boards.push({ id: 'doorDrawerBack', name: 'Back of a drawer behind the door', a: u1 - u0 - 2 * t, b: doorDrawerSettings.sideHeight, ...common, box: [u0 + t, u1 - t, v + t, top, n0, n0 + t], edges: [{ side: 'top', length: u1 - u0 - 2 * t, along: 'a' }] });
-        front.doorDrawers.boxes.push({ u0, u1, v0: v, v1: top, n0, n1 });
+        boards.push({ id: 'doorDrawerFront', name: 'Front of a drawer behind the door', a: x1 - x0, b: t + doorDrawerSettings.sideHeight, ...common, box: [x0, x1, y1 - t, y1, h, top],
+          edges: [{ side: 'top', length: x1 - x0, along: 'a' }, { side: 'left', length: t + doorDrawerSettings.sideHeight, along: 'b' }, { side: 'right', length: t + doorDrawerSettings.sideHeight, along: 'b' }] });
+        boards.push({ id: 'doorDrawerBottom', name: 'Bottom of a drawer behind the door', a: x1 - x0 - 2 * t, b: inner, ...common, box: [x0 + t, x1 - t, y0, y1 - t, h, h + t], edges: [] });
+        for (const s of [x0, x1 - t]) boards.push({ id: 'doorDrawerSide', name: 'Side of a drawer behind the door', a: inner, b: t + doorDrawerSettings.sideHeight, ...common, box: [s, s + t, y0, y1 - t, h, top], edges: [{ side: 'top', length: inner, along: 'a' }] });
+        boards.push({ id: 'doorDrawerBack', name: 'Back of a drawer behind the door', a: x1 - x0 - 2 * t, b: doorDrawerSettings.sideHeight, ...common, box: [x0 + t, x1 - t, y0, y0 + t, h + t, top], edges: [{ side: 'top', length: x1 - x0 - 2 * t, along: 'a' }] });
+        front.doorDrawers.boxes.push({ x0, x1, h0: h, h1: top, y0, y1 });
       }
       counts.doorDrawers += count;
     }
@@ -777,18 +777,18 @@
       for (const item of groupModel.items) {
         if (!FRONT_TYPES.includes(item.type)) continue;
         const box = frontBox(item), carcass = carcassOf(item), opening = openingOf(item), hinged = HINGED.includes(opening);
-        if (box.u1 - box.u0 <= 0 || box.v1 - box.v0 <= 0) warn(`${placeOf(item)}: the gaps leave no front.`, item.index);
+        if (box.x1 - box.x0 <= 0 || box.h1 - box.h0 <= 0) warn(`${placeOf(item)}: the gaps leave no front.`, item.index);
         // hinges are screwed to a carcass side: a door that does not reach one gets a hinge post (an appliance front has no hinges)
         if (opening === 'door' && carcass && HINGE_SIDES.includes(item.hinge) && !reachesHingeSide(item, carcass)) {
-          const postU0 = item.hinge === 'left' ? item.u0 : item.u1 - board, postV0 = Math.max(item.v0, carcass.v0 + board), postV1 = Math.min(item.v1, carcass.v1 - board);
+          const postX0 = item.hinge === 'left' ? item.x0 : item.x1 - board, postH0 = Math.max(item.h0, carcass.h0 + board), postH1 = Math.min(item.h1, carcass.h1 - board);
           boards.push({
-            id: 'hingePost', name: 'Hinge post', a: hingeSettings.postDepth, b: postV1 - postV0, material: materialFor.carcass, layer: 'carcasses', group: groupModel.group, carcassId: carcass.id,
-            box: [postU0, postU0 + board, postV0, postV1, carcassFront - hingeSettings.postDepth, carcassFront], edges: [{ side: 'front', length: postV1 - postV0, along: 'b' }], hand: item.hinge
+            id: 'hingePost', name: 'Hinge post', a: hingeSettings.postDepth, b: postH1 - postH0, material: materialFor.carcass, layer: 'carcasses', group: groupModel.group, carcassId: carcass.id,
+            box: [postX0, postX0 + board, carcassFront - hingeSettings.postDepth, carcassFront, postH0, postH1], edges: [{ side: 'front', length: postH1 - postH0, along: 'b' }], hand: item.hinge
           });
         }
         const front = {
           id: fronts.length + 1, group: groupModel.group, item, carcassId: carcass ? carcass.id : null, opening, tags: item.tags, gaps: item.gaps,
-          ...box, width: box.u1 - box.u0, height: box.v1 - box.v0, handle: item.handle, hand: hinged ? item.hinge : '', material: materialFor[item.type],
+          ...box, width: box.x1 - box.x0, height: box.h1 - box.h0, handle: item.handle, hand: hinged ? item.hinge : '', material: materialFor[item.type],
           lacquer: lacquerOf('front', item.type)
         };
         item.front = front;
@@ -800,9 +800,9 @@
           const count = countByHeight(hingeSettings.perDoor, front.height);
           if (count === null) warn(`${placeOf(item)}: the front height ${front.height} is over the last row of settings.hinges.perDoor.`, item.index);
           else {
-            front.hinges = Array.from({ length: count }, (_, j) => Math.round(front.v0 + hingeSettings.fromEnd + ((front.height - 2 * hingeSettings.fromEnd) * j) / (count - 1)))
-              .map(v => hingeClearOfShelves(v, carcass, front, item));
-            front.hingeU = front.hand === 'right' ? item.u1 - board : item.u0 + board; // on the carcass side or the hinge post
+            front.hinges = Array.from({ length: count }, (_, j) => Math.round(front.h0 + hingeSettings.fromEnd + ((front.height - 2 * hingeSettings.fromEnd) * j) / (count - 1)))
+              .map(h => hingeClearOfShelves(h, carcass, front, item));
+            front.hingeX = front.hand === 'right' ? item.x1 - board : item.x0 + board; // on the carcass side or the hinge post
             counts.hinges += count;
           }
         }
@@ -811,36 +811,36 @@
 
         if (opening === 'drawer' && carcass) {
           const size = front.height > drawerSettings.D.frontAbove ? 'D' : 'M', sizeSettings = drawerSettings[size];
-          const innerU0 = carcass.u0 + board, innerU1 = carcass.u1 - board;
+          const innerX0 = carcass.x0 + board, innerX1 = carcass.x1 - board;
           const drawer = {
             size,
             sideHeight: sizeSettings.sideHeight,
             backHeight: sizeSettings.backHeight,
-            innerU0,
-            innerU1,
-            bottomWidth: innerU1 - innerU0 - drawerSettings.bottom.inset,
-            bottomV: item.v0 + (item.v0 === carcass.v0 ? drawerSettings.liftAtBottom : drawerSettings.liftAbove),
+            innerX0,
+            innerX1,
+            bottomWidth: innerX1 - innerX0 - drawerSettings.bottom.inset,
+            bottomH: item.h0 + (item.h0 === carcass.h0 ? drawerSettings.liftAtBottom : drawerSettings.liftAbove),
             bins: hasTag(item, 'bins'),
             inner: hasTag(item, 'innerDrawer')
           };
           front.drawer = drawer;
-          const bottomU0 = innerU0 + drawerSettings.bottom.inset / 2, bottomU1 = innerU1 - drawerSettings.bottom.inset / 2;
-          const backU0 = innerU0 + drawerSettings.back.inset / 2, backU1 = innerU1 - drawerSettings.back.inset / 2;
-          const n0 = carcassBack + drawerSettings.bottom.fromBack, n1 = n0 + drawerSettings.bottom.depth, t = thickness.drawerBox;
-          const drawerBoards = (v, backHeight, backName, inner) => {
+          const bottomX0 = innerX0 + drawerSettings.bottom.inset / 2, bottomX1 = innerX1 - drawerSettings.bottom.inset / 2;
+          const backX0 = innerX0 + drawerSettings.back.inset / 2, backX1 = innerX1 - drawerSettings.back.inset / 2;
+          const y0 = carcassBack + drawerSettings.bottom.fromBack, y1 = y0 + drawerSettings.bottom.depth, t = thickness.drawerBox;
+          const drawerBoards = (h, backHeight, backName, inner) => {
             const common = { material: materialFor.drawerBox, layer: 'drawers', group: groupModel.group, carcassId: carcass.id, frontId: front.id, inner };
-            boards.push({ id: 'drawerBottom', name: 'Drawer bottom', a: drawer.bottomWidth, b: drawerSettings.bottom.depth, ...common, box: [bottomU0, bottomU1, v, v + t, n0, n1] });
-            boards.push({ id: 'drawerBack', name: backName, a: innerU1 - innerU0 - drawerSettings.back.inset, b: backHeight, ...common, box: [backU0, backU1, v + t, v + t + backHeight, n0, n0 + t] });
+            boards.push({ id: 'drawerBottom', name: 'Drawer bottom', a: drawer.bottomWidth, b: drawerSettings.bottom.depth, ...common, box: [bottomX0, bottomX1, y0, y1, h, h + t] });
+            boards.push({ id: 'drawerBack', name: backName, a: innerX1 - innerX0 - drawerSettings.back.inset, b: backHeight, ...common, box: [backX0, backX1, y0, y0 + t, h + t, h + t + backHeight] });
           };
-          drawerBoards(drawer.bottomV, drawer.backHeight, 'Drawer back ' + size, false);
+          drawerBoards(drawer.bottomH, drawer.backHeight, 'Drawer back ' + size, false);
           if (size === 'D') counts.drawersD++;
           else counts.drawersM++;
           if (drawer.inner) {
-            drawer.innerV = drawer.bottomV + drawer.sideHeight + drawerSettings.inner.gap;
-            drawerBoards(drawer.innerV, drawerSettings.inner.backHeight, 'Inner drawer back', true);
+            drawer.innerH = drawer.bottomH + drawer.sideHeight + drawerSettings.inner.gap;
+            drawerBoards(drawer.innerH, drawerSettings.inner.backHeight, 'Inner drawer back', true);
             counts.innerDrawers++;
-            const innerTop = drawer.innerV + Math.max(t + drawerSettings.inner.backHeight, drawerSettings.M.sideHeight);
-            const boardAbove = spaceAround(boards, carcass, item.v0, item.v1).top;
+            const innerTop = drawer.innerH + Math.max(t + drawerSettings.inner.backHeight, drawerSettings.M.sideHeight);
+            const boardAbove = spaceAround(boards, carcass, item.h0, item.h1).top;
             if (innerTop > boardAbove) warn(`${placeOf(item)}: the inner drawer reaches ${innerTop}, the board above it starts at ${boardAbove}.`, item.index);
           }
         }
@@ -848,7 +848,7 @@
     }
 
     // ---- holes: hinge cups in the doors, mounting plates, bumpers and shelf pins in the carcass sides and hinge posts ----
-    // a hole: kind, diameter, depth, x / y on the part (from the edges in part.holeFrom), u / v / n of its centre on the drilled face,
+    // a hole: kind, diameter, depth, x / y on the part (from the edges in part.holeFrom), at: [x, y, h] of its centre on the drilled face,
     // axis it is drilled along and dir (+1 / -1) into the part
     const drill = settings.drilling;
     const holeAt = (part, hole) => {
@@ -859,68 +859,68 @@
       const own = boards.filter(b => b.carcassId === carcass.id);
       // horizontal boards of the carcass: a shelf pin must not land in one
       const bands = horizontalBands(boards, carcass);
-      const faceBoard = u => own.find(b => (b.id === 'side' || b.id === 'hingePost') && (b.box[0] === u || b.box[1] === u));
+      const faceBoard = x => own.find(b => (b.id === 'side' || b.id === 'hingePost') && (b.box[0] === x || b.box[1] === x));
       // mounting plates: on the side or hinge post at the hinge edge of each door, plate.spacing apart around each hinge
       for (const front of fronts.filter(f => f.carcassId === carcass.id && f.hinges)) {
-        const target = faceBoard(front.hingeU);
+        const target = faceBoard(front.hingeX);
         if (!target) { warn(`${carcass.name}: no side or post for the hinges of the front ${placeOf(front.item)}.`); continue; }
         target.holeFrom = { x: 'front', y: 'bottom' };
-        const dir = target.box[1] === front.hingeU ? -1 : 1; // drilled from the face towards the inside of the board
-        for (const v of front.hinges) {
-          for (const dv of [-drill.plate.spacing / 2, drill.plate.spacing / 2]) {
-            holeAt(target, { kind: 'plate', diameter: drill.plate.diameter, depth: drill.plate.depth, x: drill.plate.fromFront, y: v + dv - target.box[2],
-              u: front.hingeU, v: v + dv, n: carcassFront - drill.plate.fromFront, axis: 'u', dir });
+        const dir = target.box[1] === front.hingeX ? -1 : 1; // drilled from the face towards the inside of the board
+        for (const h of front.hinges) {
+          for (const dh of [-drill.plate.spacing / 2, drill.plate.spacing / 2]) {
+            holeAt(target, { kind: 'plate', diameter: drill.plate.diameter, depth: drill.plate.depth, x: drill.plate.fromFront, y: h + dh - target.box[4],
+              at: [front.hingeX, carcassFront - drill.plate.fromFront, h + dh], axis: 'x', dir });
           }
         }
         front.holeFrom = { x: 'hinge', y: 'bottom' };
-        const cupU = front.hand === 'left' ? front.u0 + drill.cup.fromEdge : front.u1 - drill.cup.fromEdge;
-        for (const v of front.hinges) {
-          holeAt(front, { kind: 'cup', diameter: drill.cup.diameter, depth: drill.cup.depth, x: drill.cup.fromEdge, y: v - front.v0,
-            u: cupU, v, n: frontFace - frontThickness, axis: 'n', dir: 1 });
+        const cupX = front.hand === 'left' ? front.x0 + drill.cup.fromEdge : front.x1 - drill.cup.fromEdge;
+        for (const h of front.hinges) {
+          holeAt(front, { kind: 'cup', diameter: drill.cup.diameter, depth: drill.cup.depth, x: drill.cup.fromEdge, y: h - front.h0,
+            at: [cupX, frontFace - frontThickness, h], axis: 'y', dir: 1 });
         }
       }
       // bumpers: one opposite each hinge, at its height, pressed into the front edge of the side (or hinge post) under the other edge of
       // the door, in the middle of its thickness; they keep the front gap (carcass.frontGap) there and stay with the carcass.
       // A hole in an edge: x from the board bottom (hole.from), y 0
       for (const front of fronts.filter(f => f.carcassId === carcass.id && f.hinges)) {
-        const otherEdge = front.hand === 'left' ? front.u1 : front.u0, bumper = drill.bumper, hingeBoard = faceBoard(front.hingeU);
-        const side = own.filter(b => (b.id === 'side' || b.id === 'hingePost') && b !== hingeBoard && b.box[5] === carcassFront && b.box[0] < front.u1 && b.box[1] > front.u0)
+        const otherEdge = front.hand === 'left' ? front.x1 : front.x0, bumper = drill.bumper, hingeBoard = faceBoard(front.hingeX);
+        const side = own.filter(b => (b.id === 'side' || b.id === 'hingePost') && b !== hingeBoard && b.box[3] === carcassFront && b.box[0] < front.x1 && b.box[1] > front.x0)
           .sort((p, q) => Math.abs((p.box[0] + p.box[1]) / 2 - otherEdge) - Math.abs((q.box[0] + q.box[1]) / 2 - otherEdge))[0];
         if (!side) { warn(`${carcass.name}: no side for the bumpers of the front ${placeOf(front.item)} (opposite the hinges).`); continue; }
-        const u = (side.box[0] + side.box[1]) / 2;
+        const x = (side.box[0] + side.box[1]) / 2;
         side.holeFrom = side.holeFrom || { x: 'front', y: 'bottom' };
-        front.bumpers = front.hinges.map(v => ({ u, v }));
-        for (const v of front.hinges) {
-          holeAt(side, { kind: 'bumper', diameter: bumper.diameter, depth: bumper.depth, x: v - side.box[2], y: 0, from: 'bottom', u, v, n: carcassFront, axis: 'n', dir: -1 });
+        front.bumpers = front.hinges.map(h => ({ x, h }));
+        for (const h of front.hinges) {
+          holeAt(side, { kind: 'bumper', diameter: bumper.diameter, depth: bumper.depth, x: h - side.box[4], y: 0, from: 'bottom', at: [x, carcassFront, h], axis: 'y', dir: -1 });
         }
         counts.bumpers += front.bumpers.length;
       }
       const pin = drill.shelfPin, sides = own.filter(b => b.id === 'side');
       for (const shelfBoard of own.filter(b => b.id === 'adjustableShelf')) {
-        const y = shelfPinRow(shelfBoard);
+        const rowH = shelfPinRow(shelfBoard);
         for (const side of sides) {
           side.holeFrom = { x: 'front', y: 'bottom' };
-          const inner = side.box[0] === carcass.u0 ? side.box[1] : side.box[0], dir = side.box[0] === carcass.u0 ? -1 : 1;
-          for (const x of [pin.fromFront, carcassDepth - pin.fromBack]) {
-            holeAt(side, { kind: 'shelfPin', diameter: pin.diameter, depth: pin.depth, x, y: y - side.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
+          const inner = side.box[0] === carcass.x0 ? side.box[1] : side.box[0], dir = side.box[0] === carcass.x0 ? -1 : 1;
+          for (const px of [pin.fromFront, carcassDepth - pin.fromBack]) {
+            holeAt(side, { kind: 'shelfPin', diameter: pin.diameter, depth: pin.depth, x: px, y: rowH - side.box[4], at: [inner, carcassFront - px, rowH], axis: 'x', dir });
           }
         }
       }
       // drawer runners (and the pull-out shelf runners): in both sides, runner.belowDrawer under the drawer bottom, at runner.fromFront
       const runner = drill.runner;
       const runnerRows = [
-        ...fronts.filter(f => f.carcassId === carcass.id && f.drawer).flatMap(f => [f.drawer.bottomV, ...(f.drawer.inner ? [f.drawer.innerV] : [])]),
-        ...own.filter(b => b.id === 'pullOutShelf').map(b => b.box[2])
+        ...fronts.filter(f => f.carcassId === carcass.id && f.drawer).flatMap(f => [f.drawer.bottomH, ...(f.drawer.inner ? [f.drawer.innerH] : [])]),
+        ...own.filter(b => b.id === 'pullOutShelf').map(b => b.box[4])
       ];
       // a spacer on a side (next to the pull-out shelf) carries the runner instead of that side
       const spacers = own.filter(b => b.id === 'spacer');
       for (const bottom of runnerRows) {
         for (const side of sides) {
-          const left = side.box[0] === carcass.u0, y = bottom - runner.belowDrawer;
-          const target = spacers.find(s => (left ? s.box[0] === side.box[1] : s.box[1] === side.box[0]) && y > s.box[2] && y < s.box[3]) || side;
+          const left = side.box[0] === carcass.x0, runnerH = bottom - runner.belowDrawer;
+          const target = spacers.find(s => (left ? s.box[0] === side.box[1] : s.box[1] === side.box[0]) && runnerH > s.box[4] && runnerH < s.box[5]) || side;
           target.holeFrom = { x: 'front', y: 'bottom' };
           const inner = left ? target.box[1] : target.box[0], dir = left ? -1 : 1;
-          for (const x of runner.fromFront) holeAt(target, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x, y: y - target.box[2], u: inner, v: y, n: carcassFront - x, axis: 'u', dir });
+          for (const px of runner.fromFront) holeAt(target, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x: px, y: runnerH - target.box[4], at: [inner, carcassFront - px, runnerH], axis: 'x', dir });
         }
       }
       // ball runners of the drawers behind a door (tag doorDrawers): on the spacer (hinge side) and on the carcass side opposite,
@@ -929,15 +929,15 @@
       for (const front of fronts.filter(f => f.carcassId === carcass.id && f.doorDrawers)) {
         const right = front.hand === 'right';
         for (const box of front.doorDrawers.boxes) {
-          const y = box.v0 + ballRunner.aboveBottom;
-          const spacer = own.find(b => b.id === 'spacer' && b.box[2] <= y && b.box[3] >= y && (right ? b.box[0] >= box.u1 : b.box[1] <= box.u0));
-          const side = sides.find(b => (right ? b.box[0] === carcass.u0 : b.box[1] === carcass.u1));
+          const runnerH = box.h0 + ballRunner.aboveBottom;
+          const spacer = own.find(b => b.id === 'spacer' && b.box[4] <= runnerH && b.box[5] >= runnerH && (right ? b.box[0] >= box.x1 : b.box[1] <= box.x0));
+          const side = sides.find(b => (right ? b.box[0] === carcass.x0 : b.box[1] === carcass.x1));
           for (const target of [spacer, side].filter(Boolean)) {
             target.holeFrom = { x: 'front', y: 'bottom' };
-            const atRight = target.box[0] >= box.u1, inner = atRight ? target.box[0] : target.box[1], dir = atRight ? 1 : -1;
+            const atRight = target.box[0] >= box.x1, inner = atRight ? target.box[0] : target.box[1], dir = atRight ? 1 : -1;
             for (const p of ballRunner.fromFront) {
-              const n = box.n1 - p;
-              holeAt(target, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x: target.box[5] - n, y: y - target.box[2], u: inner, v: y, n, axis: 'u', dir });
+              const y = box.y1 - p;
+              holeAt(target, { kind: 'runner', diameter: runner.diameter, depth: runner.depth, x: target.box[3] - y, y: runnerH - target.box[4], at: [inner, y, runnerH], axis: 'x', dir });
             }
           }
         }
@@ -945,20 +945,20 @@
       // holes too close on one face of one part (once per pair of kinds and part); a hole in a horizontal board (once per kind and carcass)
       const boardHits = new Set();
       for (const b of own.filter(b => b.holes)) {
-        b.holes.sort((h, g) => h.y - g.y || h.x - g.x);
-        const near = (h, g) => Math.hypot(g.x - h.x, g.y - h.y) < (g.diameter + h.diameter) / 2 + 1;
+        b.holes.sort((hole, g) => hole.y - g.y || hole.x - g.x);
+        const near = (hole, g) => Math.hypot(g.x - hole.x, g.y - hole.y) < (g.diameter + hole.diameter) / 2 + 1;
         // a hole in a side or a hinge post must not land where a horizontal board meets it
-        const inBoard = b.holes.find(h => h.axis === 'u' && bands.some(([b0, b1]) => h.v + h.diameter / 2 > b0 && h.v - h.diameter / 2 < b1));
+        const inBoard = b.holes.find(hole => hole.axis === 'x' && bands.some(([b0, b1]) => hole.at[2] + hole.diameter / 2 > b0 && hole.at[2] - hole.diameter / 2 < b1));
         if (inBoard && !boardHits.has(inBoard.kind)) {
           boardHits.add(inBoard.kind);
           warn(`${carcass.name}: ${b.name.toLowerCase()} - a ${LABELS.hole[inBoard.kind]} hits a horizontal board (${inBoard.x} from the front, ${Math.round(inBoard.y)} from the bottom): check the settings drilling.`);
         }
         const pairsMet = new Set();
-        b.holes.forEach((h, i) => {
-          for (const g of b.holes.slice(i + 1).filter(g => near(h, g))) {
-            if (pairsMet.has(h.kind + '|' + g.kind)) continue;
-            pairsMet.add(h.kind + '|' + g.kind);
-            warn(`${carcass.name}: ${b.name.toLowerCase()} - a ${LABELS.hole[h.kind]} and a ${LABELS.hole[g.kind]} in the same place (${h.x} from the front, ${Math.round(h.y)} from the bottom): move the shelf or the hinge.`);
+        b.holes.forEach((hole, i) => {
+          for (const g of b.holes.slice(i + 1).filter(g => near(hole, g))) {
+            if (pairsMet.has(hole.kind + '|' + g.kind)) continue;
+            pairsMet.add(hole.kind + '|' + g.kind);
+            warn(`${carcass.name}: ${b.name.toLowerCase()} - a ${LABELS.hole[hole.kind]} and a ${LABELS.hole[g.kind]} in the same place (${hole.x} from the front, ${Math.round(hole.y)} from the bottom): move the shelf or the hinge.`);
           }
         });
       }
@@ -968,28 +968,28 @@
     // every fit has the body, centred on its module or carcass: {bodyU0, bodyU1, bodyV0, bodyV1}; an oven or a microwave stands on its feet
     // (appliances of the cabinets file) on the board under its module: + {feet, fasciaV0, fasciaV1}; a fridge stands on the carcass bottom, one fit on both
     // its fronts; a dishwasher stands on the floor on its feet, up to the worktop: + {feet, doorV0, doorV1}
-    const bodyAcross = (place, appliance) => { const centre = (place.u0 + place.u1) / 2; return { bodyU0: centre - appliance.body.width / 2, bodyU1: centre + appliance.body.width / 2 }; };
+    const bodyAcross = (place, appliance) => { const centre = (place.x0 + place.x1) / 2; return { bodyX0: centre - appliance.body.width / 2, bodyX1: centre + appliance.body.width / 2 }; };
     function fitAppliances(applianceData) {
       for (const groupModel of Object.values(groups)) {
         for (const item of groupModel.items) {
           if ((item.type === 'oven' || item.type === 'microwave') && applianceData[item.type] && item.carcassId) {
             const a = applianceData[item.type];
-            const floor = spaceAround(boards, carcassOf(item), item.v0, item.v1).bottom;
+            const floor = spaceAround(boards, carcassOf(item), item.h0, item.h1).bottom;
             if (!Number.isFinite(floor)) { warn(`${placeOf(item)}: the ${typeLabel(item.type)} has no board under it.`, item.index); continue; }
-            const bodyV0 = floor + a.feet, fasciaV0 = bodyV0 + a.fascia.bottom;
-            item.fit = { ...bodyAcross(item, a), bodyV0, bodyV1: bodyV0 + a.body.height, feet: a.feet, fasciaV0, fasciaV1: fasciaV0 + a.fascia.height };
+            const bodyH0 = floor + a.feet, fasciaH0 = bodyH0 + a.fascia.bottom;
+            item.fit = { ...bodyAcross(item, a), bodyH0, bodyH1: bodyH0 + a.body.height, feet: a.feet, fasciaH0, fasciaH1: fasciaH0 + a.fascia.height };
           }
           if (hasTag(item, 'dishwasher') && applianceData.dishwasher && worktops[groupModel.group]) {
-            const a = applianceData.dishwasher, bodyV1 = a.feet + a.body.height;
-            if (bodyV1 !== worktops[groupModel.group].v0) warn(`${placeOf(item)}: the dishwasher on its feet is ${bodyV1}, the underside of the worktop is at ${worktops[groupModel.group].v0}.`, item.index);
-            item.fit = { ...bodyAcross(item, a), bodyV0: a.feet, bodyV1, feet: a.feet, doorV0: bodyV1 - a.door.height, doorV1: bodyV1 };
+            const a = applianceData.dishwasher, bodyH1 = a.feet + a.body.height;
+            if (bodyH1 !== worktops[groupModel.group].h0) warn(`${placeOf(item)}: the dishwasher on its feet is ${bodyH1}, the underside of the worktop is at ${worktops[groupModel.group].h0}.`, item.index);
+            item.fit = { ...bodyAcross(item, a), bodyH0: a.feet, bodyH1, feet: a.feet, doorH0: bodyH1 - a.door.height, doorH1: bodyH1 };
           }
         }
       }
       // one fit for the fridge and the freezer front of a fridge carcass
       for (const carcass of carcasses.filter(candidate => candidate.fridge && applianceData.fridgeFreezer)) {
-        const a = applianceData.fridgeFreezer, bodyV0 = carcass.v0 + board;
-        const fit = { ...bodyAcross(carcass, a), bodyV0, bodyV1: bodyV0 + a.body.height };
+        const a = applianceData.fridgeFreezer, bodyH0 = carcass.h0 + board;
+        const fit = { ...bodyAcross(carcass, a), bodyH0, bodyH1: bodyH0 + a.body.height };
         for (const item of carcass.boxes.filter(b => hasTag(b, 'fridge', 'freezer'))) item.fit = fit;
       }
     }
@@ -1002,17 +1002,17 @@
       // finished where an edge is seen: edge banding, unless the material comes with that edge (factoryEdges); cut-outs stay bare
       const items = groupModel.items.filter(i => i.type === 'worktop' || i.type === 'endPanel'), endPanels = items.filter(i => i.type === 'endPanel');
       // a worktop end is seen over an end panel at that end: nothing but spaces between them (the space = the worktop overhanging the panel)
-      const onlySpaces = (a, b) => groupModel.items.every(i => i.type === 'space' || i.u1 <= a || i.u0 >= b || i.v0 >= worktop.v0);
+      const onlySpaces = (a, b) => groupModel.items.every(i => i.type === 'space' || i.x1 <= a || i.x0 >= b || i.h0 >= worktop.h0);
       const endPanelAt = {
-        left: item => endPanels.some(f => f.u0 >= item.u0 && onlySpaces(item.u0, f.u0)),
-        right: item => endPanels.some(f => f.u1 <= item.u1 && onlySpaces(f.u1, item.u1))
+        left: item => endPanels.some(f => f.x0 >= item.x0 && onlySpaces(item.x0, f.x0)),
+        right: item => endPanels.some(f => f.x1 <= item.x1 && onlySpaces(f.x1, item.x1))
       };
       // an end panel stands worktop.endPanelOverhang behind the worktop front (and its back on an island): the joint stays hidden
-      const endPanelN0 = worktop.n0 + (groupModel.island ? settings.worktop.endPanelOverhang : 0), endPanelN1 = worktop.n1 - settings.worktop.endPanelOverhang;
+      const endPanelY0 = worktop.y0 + (groupModel.island ? settings.worktop.endPanelOverhang : 0), endPanelY1 = worktop.y1 - settings.worktop.endPanelOverhang;
       for (const item of items) {
-        const endPanel = item.type === 'endPanel', length = endPanel ? item.v1 - item.v0 : item.u1 - item.u0;
+        const endPanel = item.type === 'endPanel', length = endPanel ? item.h1 - item.h0 : item.x1 - item.x0;
         const material = endPanel ? materialFor[groupModel.island ? ISLAND_END_PANEL_USE : 'endPanel'] : worktop.material;
-        const n0 = endPanel ? endPanelN0 : worktop.n0, n1 = endPanel ? endPanelN1 : worktop.n1, depth = n1 - n0;
+        const y0 = endPanel ? endPanelY0 : worktop.y0, y1 = endPanel ? endPanelY1 : worktop.y1, depth = y1 - y0;
         const materialDepth = projectData.materials[material].depth;
         if (endPanel && materialDepth < depth) warn(`${placeOf(item)}: the end panel is ${depth} deep, the material ${materials[material].label} is ${materialDepth}.`, item.index);
         const seen = [{ side: 'front', length, along: 'a' }];
@@ -1020,7 +1020,7 @@
         if (!endPanel) for (const side of ['left', 'right']) if (endPanelAt[side](item)) seen.push({ side, length: depth, along: 'b' });
         const factory = projectData.materials[material].factoryEdges || [];
         worktopPieces.push({
-          group: groupModel.group, item, name: endPanel ? 'End panel' : 'Worktop', material, a: length, b: depth, n0, n1,
+          group: groupModel.group, item, name: endPanel ? 'End panel' : 'Worktop', material, a: length, b: depth, y0, y1,
           edges: seen.filter(edge => !factory.includes(edge.side)), factoryEdges: seen.map(edge => edge.side).filter(side => factory.includes(side))
         });
       }
@@ -1031,12 +1031,12 @@
         const cut = (settings.cutouts || {})[flag], worktop = worktops[carcass.group];
         if (!cut) { warn(`${carcass.name}: no cut-out sizes in settings.cutouts.${flag}.`); continue; }
         if (!worktop) continue;
-        const centre = (carcass.u0 + carcass.u1) / 2, u0 = centre - cut.width / 2, u1 = centre + cut.width / 2, n0 = worktop.n0 + cut.fromBack, n1 = n0 + cut.depth;
-        const piece = worktopPieces.find(p => p.group === carcass.group && p.item.type === 'worktop' && p.item.u0 <= u0 && p.item.u1 >= u1);
+        const centre = (carcass.x0 + carcass.x1) / 2, x0 = centre - cut.width / 2, x1 = centre + cut.width / 2, y0 = worktop.y0 + cut.fromBack, y1 = y0 + cut.depth;
+        const piece = worktopPieces.find(p => p.group === carcass.group && p.item.type === 'worktop' && p.item.x0 <= x0 && p.item.x1 >= x1);
         if (!piece) { warn(`${carcass.name}: the cut-out (${LABELS.hole[flag]}) does not fit in one worktop.`); continue; }
-        if (u0 < carcass.u0 + board || u1 > carcass.u1 - board) warn(`${carcass.name}: the ${LABELS.hole[flag]} ${cut.width} is wider than the inside of the carcass ${carcass.u1 - carcass.u0 - 2 * board}.`);
-        if (n0 < carcassBack + board || n1 > carcassFront - board) warn(`${carcass.name}: the ${LABELS.hole[flag]} ${cut.depth} goes beyond the inside of the carcass in depth (${n0}–${n1}, inside ${carcassBack + board}–${carcassFront - board}).`);
-        const cutout = { kind: flag, width: cut.width, depth: cut.depth, u0, u1, n0, n1, x: u0 - piece.item.u0, y: cut.fromBack, carcassId: carcass.id };
+        if (x0 < carcass.x0 + board || x1 > carcass.x1 - board) warn(`${carcass.name}: the ${LABELS.hole[flag]} ${cut.width} is wider than the inside of the carcass ${carcass.x1 - carcass.x0 - 2 * board}.`);
+        if (y0 < carcassBack + board || y1 > carcassFront - board) warn(`${carcass.name}: the ${LABELS.hole[flag]} ${cut.depth} goes beyond the inside of the carcass in depth (${y0}–${y1}, inside ${carcassBack + board}–${carcassFront - board}).`);
+        const cutout = { kind: flag, width: cut.width, depth: cut.depth, x0, x1, y0, y1, x: x0 - piece.item.x0, y: cut.fromBack, carcassId: carcass.id };
         worktop.cutouts.push(cutout);
         piece.holeFrom = { x: 'left', y: 'back' };
         (piece.cutouts || (piece.cutouts = [])).push(cutout);
@@ -1047,7 +1047,7 @@
 
     return {
       settings, warnings: issues.map(issue => issue.text), issues, counts, thickness, materials, materialFor, frontThickness, worktopPieces,
-      carcassDepth, carcassBack, carcassFront, frontFace, panelFace, plinthFace, // n: from the carcass backs
+      carcassDepth, carcassBack, carcassFront, frontFace, panelFace, plinthFace, // y: from the carcass backs
       groups, carcasses, fronts, boards, strips, plinths, frontPanels, wallPanels, plaster, worktops
     };
   }
@@ -1073,9 +1073,9 @@
     }
     const handOrder = d => ({ left: 0, right: 1 }[d.drilling.hand] ?? 2);
     return [...rows].map(([key, { part, qty, at, drillings }]) => {
-      const where = [...at].map(([label, n]) => (n > 1 ? label + ' ×' + n : label)).join(', ');
+      const where = [...at].map(([label, y]) => (y > 1 ? label + ' ×' + y : label)).join(', ');
       return { name: part.name, a: part.a, b: part.b, qty, where, edges: part.edges || [], lacquer: part.lacquer || null,
-        drillings: [...drillings.values()].sort((x, y) => handOrder(x) - handOrder(y)), key };
+        drillings: [...drillings.values()].sort((p, q) => handOrder(p) - handOrder(q)), key };
     });
   }
   const cutKey = p => [p.name, p.a, p.b, JSON.stringify(p.edges || []), JSON.stringify(p.lacquer || null)].join('|');
@@ -1084,19 +1084,93 @@
   // or null; hand (left | right) tells a left part from a right one with the same pattern (sides, hinge posts, doors)
   function drillingOf(part) {
     if (!part.holes && !part.cutouts) return null;
-    const r = x => Math.round(x * 10) / 10;
+    const r = value => Math.round(value * 10) / 10;
     return {
       from: part.holeFrom,
       hand: part.hand || '',
-      holes: (part.holes || []).map(h => ({ kind: h.kind, diameter: h.diameter, depth: h.depth, x: r(h.x), y: r(h.y), ...(h.from ? { from: h.from } : {}) }))
+      holes: (part.holes || []).map(hole => ({ kind: hole.kind, diameter: hole.diameter, depth: hole.depth, x: r(hole.x), y: r(hole.y), ...(hole.from ? { from: hole.from } : {}) }))
         .sort((p, q) => p.kind.localeCompare(q.kind) || p.y - q.y || p.x - q.x),
       cutouts: (part.cutouts || []).map(c => ({ kind: c.kind, width: c.width, depth: c.depth, x: r(c.x), y: r(c.y) }))
     };
   }
 
-  /* ================= 6. DRAWING: the model as solids, moving fronts and details =================
+  /* ================= 7. THE TREE: every part in the coordinates of what it belongs to =================
+     group -> its worktop, panels, strips, plinths, plasterboard and carcasses; carcass -> its boards and fronts; front ->
+     the boards of its drawer, its inner drawer, its drawers behind the door. A node: {id, name, type, offset, size, children}
+     in x, y, h: offset from its parent's origin (its smallest corner), size its box (its own parts and its children's);
+     the group's origin: its left end, its wall, the floor. node.part: the part of the model it draws. The model computes
+     with y from the carcass backs; the tree has no such frame. */
+  function tree(model) {
+    const { carcassBack, carcassFront, frontFace, frontThickness, settings } = model;
+    const union = boxes => [0, 1, 2].flatMap(k => [Math.min(...boxes.map(b => b[2 * k])), Math.max(...boxes.map(b => b[2 * k + 1]))]);
+    /* a node with its box in the model's frame (gb) and its children; made local once its parent is known */
+    const make = (id, name, type, own, children = [], part = null) => {
+      const gb = union([own, ...children.map(c => c.gb)].filter(Boolean));
+      const n = { id, name, type, gb, children };
+      Object.defineProperty(n, 'part', { value: part, enumerable: false });
+      return n;
+    };
+    /* ids unique among siblings: the kind, numbered when there are more */
+    const named = list => {
+      const count = {}, seen = {};
+      for (const n of list) count[n.id] = (count[n.id] || 0) + 1;
+      for (const n of list) if (count[n.id] > 1) n.id = n.id + '_' + (seen[n.id] = (seen[n.id] || 0) + 1);
+      for (const n of list) named(n.children);
+      return list;
+    };
+    const boardNode = b => make(b.id, b.name + ' ' + b.a + ' × ' + b.b, 'board', b.box, [], b);
+    const frontBox = f => [f.x0, f.x1, frontFace - frontThickness, frontFace, f.h0, f.h1];
+    function frontNode(f) {
+      const own = model.boards.filter(b => b.frontId === f.id);
+      const children = own.filter(b => !b.inner && b.doorDrawer === undefined).map(boardNode);
+      const inner = own.filter(b => b.inner);
+      if (inner.length) children.push(make('innerDrawer', 'Inner drawer', 'drawer', null, inner.map(boardNode)));
+      const behind = [...new Set(own.filter(b => b.doorDrawer !== undefined).map(b => b.doorDrawer))];
+      for (const j of behind) children.push(make('doorDrawer', 'Drawer behind the door ' + (j + 1), 'drawer', null, own.filter(b => b.doorDrawer === j).map(boardNode)));
+      return make(f.opening, typeLabel(f.item.type) + ' ' + Math.round(f.width) + ' × ' + Math.round(f.height), 'front', frontBox(f), children, f);
+    }
+    const groups = Object.values(model.groups).map(g => {
+      const r = g.group, mine = x => x.group === r;
+      const carcasses = model.carcasses.filter(mine).map(c => make(c.name, 'Carcass ' + c.name, 'carcass', [c.x0, c.x1, carcassBack, carcassFront, c.h0, c.h1],
+        model.boards.filter(b => b.carcassId === c.id && !b.frontId).map(boardNode).concat(model.fronts.filter(f => f.carcassId === c.id).map(frontNode)), c));
+      const loose = model.fronts.filter(f => mine(f) && !f.carcassId).map(frontNode)
+        .concat(model.boards.filter(b => mine(b) && !b.carcassId).map(boardNode));
+      const piece = (list, type) => list.filter(mine).map(x => make(type, (x.name || typeLabel(type)) + ' ' + x.a + ' × ' + x.b, type, x.box, [], x));
+      const worktops = model.worktopPieces.filter(mine).map(w => make(w.item.type, w.name + ' ' + w.a + ' × ' + w.b, w.item.type, [w.item.x0, w.item.x1, w.y0, w.y1, w.item.h0, w.item.h1], [], w));
+      const plaster = model.plaster.filter(mine).map(x => make('plasterboard', x.name + ' ' + x.a + ' × ' + x.b, 'plasterboard',
+        [x.item.x0, x.item.x1, g.wall, g.wall + settings.plasterboard.depth, x.item.h0, x.item.h1], [], x));
+      const children = [...worktops, ...piece(model.wallPanels, 'wallPanel'), ...plaster, ...piece(model.strips, 'strip'), ...piece(model.plinths, 'plinth'),
+        ...piece(model.frontPanels, 'frontPanel'), ...carcasses, ...loose];
+      const n = make('g' + r, 'G' + r + ' · ' + g.name, 'group', [0, g.length, g.wall, g.wall, 0, 0], children);
+      n.gb[0] = 0; n.gb[2] = g.wall; n.gb[4] = 0;                  // the origin: the left end, the wall, the floor
+      return n;
+    });
+    /* local: each node's offset from its parent's origin; the part it draws learns its node */
+    const local = (n, origin) => {
+      n.offset = [n.gb[0] - origin[0], n.gb[2] - origin[1], n.gb[4] - origin[2]];
+      n.size = [n.gb[1] - n.gb[0], n.gb[3] - n.gb[2], n.gb[5] - n.gb[4]];
+      for (const c of n.children) local(c, [n.gb[0], n.gb[2], n.gb[4]]);
+      if (n.part) Object.defineProperty(n.part, 'node', { value: n, configurable: true });
+      delete n.gb;
+      return n;
+    };
+    return named(groups).map(n => {
+      local(n, [n.gb[0], n.gb[2], n.gb[4]]);
+      parentsOf(n, null);
+      return n;
+    });
+  }
+  function parentsOf(n, parent) { Object.defineProperty(n, 'parent', { value: parent }); for (const c of n.children) parentsOf(c, n); }
+  /* a node's box in its group [x0, x1, y0, y1, h0, h1]: the offsets added up from the group's origin */
+  function boxIn(n) {
+    const o = [0, 0, 0];
+    for (let p = n; p.parent; p = p.parent) for (let k = 0; k < 3; k++) o[k] += p.offset[k];
+    return [o[0], o[0] + n.size[0], o[1], o[1] + n.size[1], o[2], o[2] + n.size[2]];
+  }
+
+  /* ================= 8. DRAWING: the model as solids, moving fronts and details =================
      D: the room's drawing context (room/room.js): box(list, r, gb, key, layer, info) in the frame of group r, at, detail,
-     cylinder, mover, linkTo, envelope, openFront, openTop, part, frame(r) {U, N}, has(key), STATIC; a product is drawn by
+     cylinder, mover, linkTo, envelope, openFront, openTop, part, frame(r) {X, Y}, has(key), STATIC; a product is drawn by
      the library (HOME.draw) by its field draw. HW: the hardware as drawn (the products' sizes and the scene's layout);
      install: how the sink, its trap and the hood are fitted. Boards are the materials 'board:' + product key ('~': the decor
      turned a quarter; ':core': the bare edge). */
@@ -1104,22 +1178,24 @@
     const { box, at, detail, cylinder, mover, linkTo, envelope, openTop, STATIC } = D;
     const settings = model.settings, T = model.thickness, { frontFace, panelFace, carcassBack, carcassFront, plinthFace, frontThickness } = model;
     const K = code => 'board:' + code, GROUP_IDS = Object.keys(model.groups);
+    /* a part's box from the tree (from its group's wall), in the frame the drawing computes in (y from the carcass backs) */
+    const placed = part => { const b = boxIn(part.node), wall = model.groups[part.group].wall; return [b[0], b[1], b[2] + wall, b[3] + wall, b[4], b[5]]; };
     const GROUP = r => model.groups[r], groupLength = r => GROUP(r).widths.reduce((s, w) => s + w, 0), itemsOf = r => GROUP(r).items;
     const shakerRail = model.materials[model.materialFor.cabinet].frameWidth;
     const product = (A, place) => HOME.draw[A.draw](D, A, place);
 
-    /* the face of a box by its normal: which side of the group (left/right = −u/+u, bottom/top, back/front = −n/+n) */
-    const SIDE_AXIS = { left: 0, right: 0, bottom: 1, top: 1, back: 2, front: 2 };
-    function sideOf(r, n) {
-      const { U, N } = D.frame(r), du = n[0] * U[0] + n[1] * U[1], dn = n[0] * N[0] + n[1] * N[1];
-      return Math.abs(n[2]) > 0.5 ? (n[2] > 0 ? 'top' : 'bottom') : Math.abs(du) > 0.5 ? (du > 0 ? 'right' : 'left') : (dn > 0 ? 'front' : 'back');
+    /* the face of a box by its normal: which side of the group (left/right = −x/+x, back/front = −y/+y, bottom/top) */
+    const SIDE_AXIS = { left: 0, right: 0, back: 1, front: 1, bottom: 2, top: 2 };
+    function sideOf(r, normal) {
+      const { X, Y } = D.frame(r), dx = normal[0] * X[0] + normal[1] * X[1], dy = normal[0] * Y[0] + normal[1] * Y[1];
+      return Math.abs(normal[2]) > 0.5 ? (normal[2] > 0 ? 'top' : 'bottom') : Math.abs(dx) > 0.5 ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'front' : 'back');
     }
-    /* the grain of a decor: along u, up (v), or (no rule) along the longer side of the face. The texture runs along the
+    /* the grain of a decor: along x, up (h), or (no rule) along the longer side of the face. The texture runs along the
        face's first uv axis (core/surface.js: an x face has (y, h), a y face (x, h), an h face (x, y)); '~' turns it. */
-    const FACE_UV = n => Math.abs(n[0]) > 0.5 ? [1, 2] : Math.abs(n[1]) > 0.5 ? [0, 2] : [0, 1];
-    function turned(c, n, grain) {
-      const [a, b] = FACE_UV(n), extent = k => c.hb[2 * k + 1] - c.hb[2 * k];
-      let g = grain === 'u' ? (Math.abs(D.frame(c.r).U[0]) > 0.5 ? 0 : 1) : grain === 'v' ? 2 : null;
+    const FACE_UV = normal => Math.abs(normal[0]) > 0.5 ? [1, 2] : Math.abs(normal[1]) > 0.5 ? [0, 2] : [0, 1];
+    function turned(c, normal, grain) {
+      const [a, b] = FACE_UV(normal), extent = k => c.hb[2 * k + 1] - c.hb[2 * k];
+      let g = grain === 'x' ? (Math.abs(D.frame(c.r).X[0]) > 0.5 ? 0 : 1) : grain === 'h' ? 2 : null;
       if (g !== a && g !== b) g = extent(a) >= extent(b) ? a : b;
       return g === b;
     }
@@ -1127,11 +1203,11 @@
     function look(c, code, { banded = [], faces = null, grain = null } = {}) {
       if (!c) return null;
       const plain = K(code), turnedKey = D.has(plain + '~') ? plain + '~' : null, bare = D.has(plain + ':core') ? plain + ':core' : null;
-      const size = [c.gb[1] - c.gb[0], c.gb[3] - c.gb[2], c.gb[5] - c.gb[4]], thin = size.indexOf(Math.min(...size)), finished = new Set(banded);
-      c.faceMaterial = n => {
-        const side = sideOf(c.r, n), decor = faces ? faces.includes(side) : SIDE_AXIS[side] === thin;
+      const size = [c.gb[1] - c.gb[0], c.gb[5] - c.gb[4], c.gb[3] - c.gb[2]], thin = size.indexOf(Math.min(...size)), finished = new Set(banded);
+      c.faceMaterial = normal => {
+        const side = sideOf(c.r, normal), decor = faces ? faces.includes(side) : SIDE_AXIS[side] === thin;
         if (!decor && !finished.has(side) && bare) return bare;
-        return turnedKey && turned(c, n, grain) ? turnedKey : plain;
+        return turnedKey && turned(c, normal, grain) ? turnedKey : plain;
       };
       return c;
     }
@@ -1140,58 +1216,58 @@
       doorDrawerBack: 'drawer', backStrip: 'backStrip', adjustableShelf: 'shelf' };
     /* a board of the model, with its banded edges; a carcass board is listed in its carcass */
     function board(list, b, carcass, layer, m) {
-      const c = box(list, String(b.group), b.box, K(b.material), layer || b.layer || 'carcasses', { board: b, carcass, mover: m, check: BOARD_CHECK[b.id] || 'carcass',
+      const c = box(list, String(b.group), placed(b), K(b.material), layer || b.layer || 'carcasses', { board: b, carcass, mover: m, check: BOARD_CHECK[b.id] || 'carcass',
         name: (carcass ? carcass.name + ' ' : '') + b.name + ' ' + b.a + ' × ' + b.b, batch: (carcass ? 'c' + carcass.id : 'b') + ':' + b.id });
       if (c && carcass) carcass.parts.push({ name: b.name, a: b.a, b: b.b });
       return look(c, b.material, { banded: (b.edges || []).map(e => e.side) });
     }
-    const worktopOf = r => model.worktops[r] || { n0: 0, n1: 0, depth: 0, v1: 0 };
-    const worktopTop = r => worktopOf(r).v1;
+    const worktopOf = r => model.worktops[r] || { y0: 0, y1: 0, depth: 0, h1: 0 };
+    const worktopTop = r => worktopOf(r).h1;
 
     /* ---------- worktops, strips, panels, plinths, plasterboard ---------- */
     const CHECKED_TYPES = ['worktop', 'endPanel', 'strip', 'plinth', 'frontPanel', 'wallPanel'];
     /* a worktop or an end panel, one part of boxes around its cut-outs: finished edges (banded or factory) in the decor, the
        walls of the cut-outs bare */
     function worktopPiece(r, piece, info) {
-      const { u0, u1, v0, v1 } = piece.item, endPanel = piece.item.type === 'endPanel', code = piece.material, I = Object.assign({ part: D.part() }, info);
+      const { x0, x1, h0, h1 } = piece.item, endPanel = piece.item.type === 'endPanel', code = piece.material, I = Object.assign({ part: D.part() }, info);
       const finished = new Set([...piece.edges.map(e => e.side), ...piece.factoryEdges]);
-      const outer = u0 + u1 < groupLength(r) ? 'left' : 'right';
+      const outer = x0 + x1 < groupLength(r) ? 'left' : 'right';
       const faces = model.materials[code].twoSided ? (endPanel ? ['left', 'right'] : ['top', 'bottom']) : [endPanel ? outer : 'top'];
-      const holes = (piece.cutouts || []).map(c => [c.u0, c.u1, c.n0, c.n1]);
-      const cuts = [...new Set([u0, u1, ...holes.flatMap(([a, b]) => [a, b])])].sort((x, y) => x - y);
+      const holes = (piece.cutouts || []).map(c => [c.x0, c.x1, c.y0, c.y1]);
+      const cuts = [...new Set([x0, x1, ...holes.flatMap(([a, b]) => [a, b])])].sort((p, q) => p - q);
       for (let i = 0; i + 1 < cuts.length; i++) {
         const a = cuts[i], b = cuts[i + 1], spans = [];
-        let n = piece.n0;
-        for (const [, , h0, h1] of holes.filter(([h0, h1]) => h0 <= a && h1 >= b).sort((x, y) => x[2] - y[2])) { spans.push([n, h0]); n = h1; }
-        spans.push([n, piece.n1]);
-        for (const [n0, n1] of spans) {
-          const outline = { left: a === u0, right: b === u1, back: n0 === piece.n0, front: n1 === piece.n1, top: true, bottom: true };
-          look(box(STATIC, r, [a, b, v0, v1, n0, n1], K(code), endPanel ? 'endPanels' : 'worktops', I), code,
-            { banded: [...finished].filter(s => outline[s]), faces, grain: endPanel ? 'v' : 'u' });
+        let y = piece.y0;
+        for (const [, , c0, c1] of holes.filter(([c0, c1]) => c0 <= a && c1 >= b).sort((p, q) => p[2] - q[2])) { spans.push([y, c0]); y = c1; }
+        spans.push([y, piece.y1]);
+        for (const [y0, y1] of spans) {
+          const outline = { left: a === x0, right: b === x1, back: y0 === piece.y0, front: y1 === piece.y1, top: true, bottom: true };
+          look(box(STATIC, r, [a, b, y0, y1, h0, h1], K(code), endPanel ? 'endPanels' : 'worktops', I), code,
+            { banded: [...finished].filter(s => outline[s]), faces, grain: endPanel ? 'h' : 'x' });
         }
       }
     }
     function drawGroup(r) {
       for (const item of itemsOf(r)) {
-        const { u0, u1, v0, v1, type } = item, wall = GROUP(r).wall;
-        const info = CHECKED_TYPES.includes(type) ? { check: type, name: placeLabel(r, item.column, item.span) + ' ' + typeLabel(type) + ' ' + (u1 - u0) + ' × ' + (v1 - v0) + (item.note ? ' (' + item.note + ')' : '') } : {};
+        const { x0, x1, h0, h1, type } = item, wall = GROUP(r).wall;
+        const info = CHECKED_TYPES.includes(type) ? { check: type, name: placeLabel(r, item.column, item.span) + ' ' + typeLabel(type) + ' ' + (x1 - x0) + ' × ' + (h1 - h0) + (item.note ? ' (' + item.note + ')' : '') } : {};
         if (type === 'worktop' || type === 'endPanel') {
           const piece = model.worktopPieces.find(p => p.item === item);
           if (piece) worktopPiece(r, piece, info);
         } else if (type === 'strip') {                 // on edge in the plane of the fronts; lacquered faces and the edges the model names
           const strip = model.strips.find(s => s.item === item), code = model.materialFor.strip;
-          look(box(STATIC, r, [u0, u1, v0, v1, frontFace - settings.strip.depth, frontFace], K(code), 'strips', info), code, { banded: (strip && strip.lacqueredSides) || [] });
+          look(box(STATIC, r, placed(strip), K(code), 'strips', info), code, { banded: (strip && strip.lacqueredSides) || [] });
         } else if (type === 'frontPanel') {
           const panel = model.frontPanels.find(p => p.item === item), code = model.materialFor.frontPanel;
-          look(box(STATIC, r, [u0, u1, v0, v1, panel.box[4], panel.box[5]], K(code), 'frontPanel', info), code, { banded: [...panel.edges.map(e => e.side), ...panel.lacqueredSides] });
+          look(box(STATIC, r, placed(panel), K(code), 'frontPanel', info), code, { banded: [...panel.edges.map(e => e.side), ...panel.lacqueredSides] });
         } else if (type === 'plinth') {
           const code = model.materialFor.plinth;
-          look(box(STATIC, r, [u0, u1, v0, v1, plinthFace - T.plinth, plinthFace], K(code), 'plinth', info), code);
+          look(box(STATIC, r, placed(model.plinths.find(p => p.item === item)), K(code), 'plinth', info), code);
         } else if (type === 'wallPanel') {
           const code = model.materialFor.wallPanel;
-          look(box(STATIC, r, [u0, u1, v0, v1, wall, wall + T.wallPanel], K(code), 'wallPanel', info), code, { faces: ALL_SIDES, grain: 'u' });
+          look(box(STATIC, r, placed(model.wallPanels.find(p => p.item === item)), K(code), 'wallPanel', info), code, { faces: ALL_SIDES, grain: 'x' });
         } else if (type === 'plasterboard') {          // a space draws nothing
-          box(STATIC, r, [u0, u1, v0, v1, wall, wall + settings.plasterboard.depth], 'wall', 'plasterboard', { name: 'Plasterboard casing ' + (u1 - u0) + ' × ' + (v1 - v0) });
+          box(STATIC, r, [x0, x1, wall, wall + settings.plasterboard.depth, h0, h1], 'wall', 'plasterboard', { name: 'Plasterboard casing ' + (x1 - x0) + ' × ' + (h1 - h0) });
         } else if (type === 'oven' || type === 'microwave') product(appliances[type], { r, item, front: carcassFront });
       }
     }
@@ -1200,48 +1276,48 @@
     const sinkCarcass = model.carcasses.find(c => c.sink), sinkGroup = sinkCarcass ? String(sinkCarcass.group) : null;
     const sinkCut = sinkGroup && (worktopOf(sinkGroup).cutouts || []).find(c => c.kind === 'sink');
     const sinkItem = sinkCut && itemsOf(sinkGroup).find(i => hasTag(i, 'sink'));
-    const sinkU = sinkCut ? (sinkCut.u0 + sinkCut.u1) / 2 : 0;
+    const sinkX = sinkCut ? (sinkCut.x0 + sinkCut.x1) / 2 : 0;
     function drawSink() {
       const r = sinkGroup, top = worktopTop(r), S = appliances.sink;
-      const bowl = product(S, { r, u: sinkU, n: (sinkCut.n0 + sinkCut.n1) / 2, top });
-      HOME.draw.tap(D, { r, u: sinkU, n: worktopOf(r).n0 + install.sink.tapFromBack, top: bowl.rimTop });
-      HOME.draw.trap(D, { r, u: sinkU, from: bowl.bottom, drain: bowl.drain, top: install.sink.trapTop, outlet: install.sink.wallOutlet, back: carcassBack });
+      const bowl = product(S, { r, x: sinkX, y: (sinkCut.y0 + sinkCut.y1) / 2, top });
+      HOME.draw.tap(D, { r, x: sinkX, y: worktopOf(r).y0 + install.sink.tapFromBack, top: bowl.rimTop });
+      HOME.draw.trap(D, { r, x: sinkX, from: bowl.bottom, drain: bowl.drain, top: install.sink.trapTop, outlet: install.sink.wallOutlet, back: carcassBack });
     }
     const hobGroup = GROUP_IDS.find(r => itemsOf(r).some(i => hasTag(i, 'hob')));
     const hobItem = hobGroup && itemsOf(hobGroup).find(i => hasTag(i, 'hob'));
     const hobCut = hobItem && (worktopOf(hobGroup).cutouts || []).find(c => c.kind === 'hob');
-    const hobU = hobCut ? (hobCut.u0 + hobCut.u1) / 2 : hobItem ? (hobItem.u0 + hobItem.u1) / 2 : 0;
+    const hobX = hobCut ? (hobCut.x0 + hobCut.x1) / 2 : hobItem ? (hobItem.x0 + hobItem.x1) / 2 : 0;
 
     /* ---------- carcasses: boards, holes, shelf pins, legs, the fridge, plinth grilles ---------- */
     const carcasses = model.carcasses;
     for (const c of carcasses) { c.parts = []; c.movers = []; }
     const MARKER = { cup: 'markerHinge', plate: 'markerHinge', bumper: 'markerHinge', shelfPin: 'markerShelfPin', runner: 'markerRunner' };
     function holes(a, part) {                      // a disc on the drilled face, 0.6 mm proud; small holes as 12 mm markers
-      for (const h of part.holes || []) {
-        const out = -h.dir * 0.6, p = h.axis === 'u' ? [h.u + out, h.v, h.n] : [h.u, h.v, h.n + out];
-        const radius = h.kind === 'bumper' ? h.diameter / 2 : Math.max(h.diameter / 2, 6);
-        cylinder(a, radius, 1, MARKER[h.kind], ...p, h.axis === 'u' ? 'x' : 'z', 32, false);
+      for (const hole of part.holes || []) {
+        const out = -hole.dir * 0.6, p = hole.axis === 'x' ? [hole.at[0] + out, hole.at[1], hole.at[2]] : [hole.at[0], hole.at[1] + out, hole.at[2]];
+        const radius = hole.kind === 'bumper' ? hole.diameter / 2 : Math.max(hole.diameter / 2, 6);
+        cylinder(a, radius, 1, MARKER[hole.kind], ...p, hole.axis, 32, false);
       }
     }
     function drawCarcass(carcass) {
-      const r = String(carcass.group), { u0, u1, v0 } = carcass, drilled = at(r, 'holes');
+      const r = String(carcass.group), { x0, x1, h0 } = carcass, drilled = at(r, 'holes');
       for (const b of model.boards) {
         if (b.carcassId !== carcass.id || b.frontId || b.id === 'pullOutShelf') continue;   // drawer boards and the pull-out shelf move
         board(STATIC, b, carcass);
         holes(drilled, b);
         if (b.id === 'adjustableShelf') {          // 4 pins under the shelf, in the holes settings.drilling.shelfPin places
-          const pin = settings.drilling.shelfPin, y = b.box[2] - pin.belowShelf, d = pin.diameter / 2;
-          for (const [x0, x1] of [[b.box[0] - 1, b.box[0] + 7], [b.box[1] - 7, b.box[1] + 1]]) for (const n of [carcassBack + pin.fromBack, carcassFront - pin.fromFront]) {
-            box(STATIC, r, [x0, x1, y - d, y + d, n - d, n + d], 'zinc', 'shelves', { name: carcass.name + ' shelf pin' });
+          const pin = settings.drilling.shelfPin, pinH = b.box[4] - pin.belowShelf, d = pin.diameter / 2;
+          for (const [p0, p1] of [[b.box[0] - 1, b.box[0] + 7], [b.box[1] - 7, b.box[1] + 1]]) for (const y of [carcassBack + pin.fromBack, carcassFront - pin.fromFront]) {
+            box(STATIC, r, [p0, p1, y - d, y + d, pinH - d, pinH + d], 'zinc', 'shelves', { name: carcass.name + ' shelf pin' });
           }
         }
       }
       if (carcass.floor) {                         // adjustable legs, as tall as the plinth
         const L = HW.leg, a = at(r, 'legs');
-        for (const u of [u0 + L.fromSide, u1 - L.fromSide]) for (const n of [carcassBack + L.fromBack, carcassFront - L.fromFront]) {
-          cylinder(a, L.radius, v0 - L.footHeight, 'foot', u, (v0 - L.footHeight) / 2, n, null, 16);
-          cylinder(a, L.footRadius, L.footHeight, 'foot', u, v0 - L.footHeight / 2, n, null, 20);
-          envelope(r, [u - L.footRadius, u + L.footRadius, v0 - L.footHeight, v0, n - L.footRadius, n + L.footRadius], carcass.name + ' leg', 'leg');
+        for (const x of [x0 + L.fromSide, x1 - L.fromSide]) for (const y of [carcassBack + L.fromBack, carcassFront - L.fromFront]) {
+          cylinder(a, L.radius, h0 - L.footHeight, 'foot', x, y, (h0 - L.footHeight) / 2, null, 16);
+          cylinder(a, L.footRadius, L.footHeight, 'foot', x, y, h0 - L.footHeight / 2, null, 20);
+          envelope(r, [x - L.footRadius, x + L.footRadius, y - L.footRadius, y + L.footRadius, h0 - L.footHeight, h0], carcass.name + ' leg', 'leg');
         }
       }
       if (carcass.fridge && carcass.boxes.some(b => b.fit)) product(appliances.fridgeFreezer, { r, fit: carcass.boxes.find(b => b.fit).fit, front: carcassFront, back: carcassBack });
@@ -1249,72 +1325,72 @@
     }
     /* an aluminium grille in the plinth under a carcass that needs air (carcass.grille) */
     function plinthGrille(carcass) {
-      const g = HW.plinthGrille, r = String(carcass.group), uc = (carcass.u0 + carcass.u1) / 2, w = Math.min(g.width, carcass.u1 - carcass.u0 - 80);
-      const g0 = uc - w / 2, g1 = uc + w / 2, h0 = g.bottom, h1 = g.top, I = { name: 'Ventilation grille in the plinth', part: D.part() };
+      const g = HW.plinthGrille, r = String(carcass.group), xc = (carcass.x0 + carcass.x1) / 2, w = Math.min(g.width, carcass.x1 - carcass.x0 - 80);
+      const g0 = xc - w / 2, g1 = xc + w / 2, h0 = g.bottom, h1 = g.top, I = { name: 'Ventilation grille in the plinth', part: D.part() };
       const z = gb => box(STATIC, r, gb, 'zinc', 'plinth', I);
-      z([g0, g1, h0, h0 + 5, plinthFace, plinthFace + 3]); z([g0, g1, h1 - 5, h1, plinthFace, plinthFace + 3]);
-      z([g0, g0 + 5, h0 + 5, h1 - 5, plinthFace, plinthFace + 3]); z([g1 - 5, g1, h0 + 5, h1 - 5, plinthFace, plinthFace + 3]);
-      for (let x = g0 + 17; x < g1 - 8; x += 12) z([x - 2, x + 2, h0 + 5, h1 - 5, plinthFace, plinthFace + 2]);   // louvres
+      z([g0, g1, plinthFace, plinthFace + 3, h0, h0 + 5]); z([g0, g1, plinthFace, plinthFace + 3, h1 - 5, h1]);
+      z([g0, g0 + 5, plinthFace, plinthFace + 3, h0 + 5, h1 - 5]); z([g1 - 5, g1, plinthFace, plinthFace + 3, h0 + 5, h1 - 5]);
+      for (let x = g0 + 17; x < g1 - 8; x += 12) z([x - 2, x + 2, plinthFace, plinthFace + 2, h0 + 5, h1 - 5]);   // louvres
     }
 
     /* ---------- fronts and what moves with them ---------- */
-    function shakerFront(m, u0, u1, v0, v1, key, info) {   // a frame of shakerRail wide rails round a recessed panel, one part
-      const w = shakerRail, n0 = frontFace - frontThickness, n1 = frontFace, I = Object.assign({ part: D.part() }, info), f = gb => box(m.cells, m.r, gb, key, 'fronts', I);
-      if (u1 - u0 <= 2 * w + 20 || v1 - v0 <= 2 * w + 20) return f([u0, u1, v0, v1, n0, n1]);
-      f([u0, u1, v1 - w, v1, n0, n1]); f([u0, u1, v0, v0 + w, n0, n1]); f([u0, u0 + w, v0 + w, v1 - w, n0, n1]); f([u1 - w, u1, v0 + w, v1 - w, n0, n1]);
-      f([u0 + w, u1 - w, v0 + w, v1 - w, n0, frontFace - frontThickness / 2]);
+    function shakerFront(m, x0, x1, h0, h1, key, info) {   // a frame of shakerRail wide rails round a recessed panel, one part
+      const w = shakerRail, y0 = frontFace - frontThickness, y1 = frontFace, I = Object.assign({ part: D.part() }, info), f = gb => box(m.cells, m.r, gb, key, 'fronts', I);
+      if (x1 - x0 <= 2 * w + 20 || h1 - h0 <= 2 * w + 20) return f([x0, x1, y0, y1, h0, h1]);
+      f([x0, x1, y0, y1, h1 - w, h1]); f([x0, x1, y0, y1, h0, h0 + w]); f([x0, x0 + w, y0, y1, h0 + w, h1 - w]); f([x1 - w, x1, y0, y1, h0 + w, h1 - w]);
+      f([x0 + w, x1 - w, y0, frontFace - frontThickness / 2, h0 + w, h1 - w]);
     }
     /* every front gets a cup and a bar handle; the handle setting shows one (layers cup / bar) */
     const CUP = (function () {                     // an open quarter shell with its end caps, a lip and two pads, mm
-      const L = HW.handle.cupLength, R = 24, y0 = -12, parts = [];
-      const shell = new THREE.CylinderGeometry(R, R, L - 6, 28, 1, true, 0, Math.PI / 2); shell.rotateZ(Math.PI / 2); shell.translate(0, y0, 0); parts.push(shell);
-      for (const sx of [-1, 1]) { const c = new THREE.CircleGeometry(R, 20, 0, Math.PI / 2); c.rotateY(-Math.PI / 2); c.translate(sx * (L / 2 - 3), y0, 0); parts.push(c); }
-      const lip = new THREE.CylinderGeometry(2.2, 2.2, L - 6, 10); lip.rotateZ(Math.PI / 2); lip.translate(0, y0, R); parts.push(lip);
-      for (const sx of [-1, 1]) { const pad = new THREE.BoxGeometry(12, 26, 4); pad.translate(sx * 32, y0 + 13, 2); parts.push(pad); }
+      const L = HW.handle.cupLength, R = 24, drop = -12, parts = [];
+      const shell = new THREE.CylinderGeometry(R, R, L - 6, 28, 1, true, 0, Math.PI / 2); shell.rotateZ(Math.PI / 2); shell.translate(0, drop, 0); parts.push(shell);
+      for (const sx of [-1, 1]) { const c = new THREE.CircleGeometry(R, 20, 0, Math.PI / 2); c.rotateY(-Math.PI / 2); c.translate(sx * (L / 2 - 3), drop, 0); parts.push(c); }
+      const lip = new THREE.CylinderGeometry(2.2, 2.2, L - 6, 10); lip.rotateZ(Math.PI / 2); lip.translate(0, drop, R); parts.push(lip);
+      for (const sx of [-1, 1]) { const pad = new THREE.BoxGeometry(12, 26, 4); pad.translate(sx * 32, drop + 13, 2); parts.push(pad); }
       return parts;
     })();
-    function handles(m, u0, u1, v0, v1, position, info) {
+    function handles(m, x0, x1, h0, h1, position, info) {
       if (!position) return;
-      const H = HW.handle, L = H.barLength, n = frontFace + 4, cup = at(m.r, 'handles', m, ['cup']);
+      const H = HW.handle, L = H.barLength, y = frontFace + 4, cup = at(m.r, 'handles', m, ['cup']);
       const I = Object.assign({ also: ['bar'], part: D.part() }, info), bar = gb => box(m.cells, m.r, gb, 'handle', 'handles', I);
-      const addCup = (u, v, turn) => { const o = new THREE.Group(); o.position.set(u, v, frontFace); o.rotation.z = turn; cup.frame.add(o);
+      const addCup = (x, h, turn) => { const o = new THREE.Group(); o.position.set(x, h, frontFace); o.rotation.z = turn; cup.frame.add(o);
         for (const g of CUP) detail(Object.assign({}, cup, { frame: o }), g, 'handle', 0, 0, 0); };
       if (position === 'top' || position === 'bottom') {
-        const v = position === 'top' ? v1 - H.axis : v0 + H.axis, uc = (u0 + u1) / 2;
-        addCup(uc, v, 0);
-        bar([uc - L / 2, uc + L / 2, v - 6, v + 6, n + 20, n + 30]); bar([uc - L / 2 + 8, uc - L / 2 + 18, v - 5, v + 5, n, n + 20]); bar([uc + L / 2 - 18, uc + L / 2 - 8, v - 5, v + 5, n, n + 20]);
+        const h = position === 'top' ? h1 - H.axis : h0 + H.axis, xc = (x0 + x1) / 2;
+        addCup(xc, h, 0);
+        bar([xc - L / 2, xc + L / 2, y + 20, y + 30, h - 6, h + 6]); bar([xc - L / 2 + 8, xc - L / 2 + 18, y, y + 20, h - 5, h + 5]); bar([xc + L / 2 - 18, xc + L / 2 - 8, y, y + 20, h - 5, h + 5]);
       } else {
-        const u = position === 'left' ? u0 + H.axis : u1 - H.axis, vc = Math.min(v0 + H.sideHeight, (v0 + v1) / 2);
-        addCup(u, vc, position === 'left' ? Math.PI / 2 : -Math.PI / 2);
-        bar([u - 6, u + 6, vc - L / 2, vc + L / 2, n + 20, n + 30]); bar([u - 5, u + 5, vc - L / 2 + 8, vc - L / 2 + 18, n, n + 20]); bar([u - 5, u + 5, vc + L / 2 - 18, vc + L / 2 - 8, n, n + 20]);
+        const x = position === 'left' ? x0 + H.axis : x1 - H.axis, hc = Math.min(h0 + H.sideHeight, (h0 + h1) / 2);
+        addCup(x, hc, position === 'left' ? Math.PI / 2 : -Math.PI / 2);
+        bar([x - 6, x + 6, y + 20, y + 30, hc - L / 2, hc + L / 2]); bar([x - 5, x + 5, y, y + 20, hc - L / 2 + 8, hc - L / 2 + 18]); bar([x - 5, x + 5, y, y + 20, hc + L / 2 - 18, hc + L / 2 - 8]);
       }
     }
     function drawFront(r, item) {
       const front = item.front, carcass = carcasses.find(c => c.id === item.carcassId), opening = front.opening, hand = front.hand;
-      const { u0: fu0, u1: fu1, v0: fv0, v1: fv1, width: fw, height: fh } = front, size = Math.round(fw) + ' × ' + Math.round(fh);
-      let pu = 0, pv = 0, pn = 0;                  // the pivot: the hinge edge of a door, the bottom edge of a dishwasher door
-      if (opening === 'door' || opening === 'fridge') { pu = hand === 'left' ? fu0 : fu1; pn = frontFace; }
-      else if (opening === 'dishwasher') { pv = item.fit.doorV0; pn = frontFace; }
-      const m = mover(r, opening, pu, pv, pn);
+      const { x0: fx0, x1: fx1, h0: fh0, h1: fh1, width: fw, height: fh } = front, size = Math.round(fw) + ' × ' + Math.round(fh);
+      let px = 0, ph = 0, py = 0;                  // the pivot: the hinge edge of a door, the bottom edge of a dishwasher door
+      if (opening === 'door' || opening === 'fridge') { px = hand === 'left' ? fx0 : fx1; py = frontFace; }
+      else if (opening === 'dishwasher') { ph = item.fit.doorH0; py = frontFace; }
+      const m = mover(r, opening, px, py, ph);
       Object.assign(m, { sign: hand === 'left' ? 1 : -1, item });
       if (opening === 'door' && carcass && (HW.open.doorStop || {})[carcass.name]) m.travel = HW.open.doorStop[carcass.name];
       if (carcass) carcass.movers.push(m);
       const I = { mover: m };
-      shakerFront(m, fu0, fu1, fv0, fv1, K(front.material), I);
-      handles(m, fu0, fu1, fv0, fv1, item.handle, I);
+      shakerFront(m, fx0, fx1, fh0, fh1, K(front.material), I);
+      handles(m, fx0, fx1, fh0, fh1, item.handle, I);
       if (opening === 'door' && carcass) {
-        const cup = settings.drilling.cup, dir = hand === 'left' ? 1 : -1, side = front.hingeU, cupU = hand === 'left' ? fu0 + cup.fromEdge : fu1 - cup.fromEdge;
+        const cup = settings.drilling.cup, dir = hand === 'left' ? 1 : -1, side = front.hingeX, cupX = hand === 'left' ? fx0 + cup.fromEdge : fx1 - cup.fromEdge;
         const hw = at(r, 'hardware'), mhw = at(r, 'hardware', m);
         holes(at(r, 'fronts', m, ['holes']), front);
-        for (const v of front.hinges) {
+        for (const h of front.hinges) {
           const H = { name: 'Hinge', part: D.part() };
-          box(STATIC, r, [Math.min(side, side + dir * 10), Math.max(side, side + dir * 10), v - 22, v + 22, carcassFront - 75, carcassFront - 30], 'zinc', 'hardware', H);   // mounting plate
-          box(STATIC, r, [Math.min(side + dir * 3, side + dir * 20), Math.max(side + dir * 3, side + dir * 20), v - 9, v + 9, carcassFront - 70, carcassFront - 2], 'zinc', 'hardware', H);   // arm
-          cylinder(mhw, cup.diameter / 2 - 0.5, HW.hinge.cupDepth, 'zinc', cupU, v, frontFace - frontThickness + HW.hinge.cupDepth / 2, 'z', 24);   // the cup in the door
-          cylinder(mhw, 24, 1.5, 'zinc', cupU, v, carcassFront - 1, 'z', 24);
+          box(STATIC, r, [Math.min(side, side + dir * 10), Math.max(side, side + dir * 10), carcassFront - 75, carcassFront - 30, h - 22, h + 22], 'zinc', 'hardware', H);   // mounting plate
+          box(STATIC, r, [Math.min(side + dir * 3, side + dir * 20), Math.max(side + dir * 3, side + dir * 20), carcassFront - 70, carcassFront - 2, h - 9, h + 9], 'zinc', 'hardware', H);   // arm
+          cylinder(mhw, cup.diameter / 2 - 0.5, HW.hinge.cupDepth, 'zinc', cupX, frontFace - frontThickness + HW.hinge.cupDepth / 2, h, 'y', 24);   // the cup in the door
+          cylinder(mhw, 24, 1.5, 'zinc', cupX, carcassFront - 1, h, 'y', 24);
         }
         const bumper = settings.drilling.bumper, gap = frontFace - frontThickness - carcassFront;   // the head fills the front gap, 0.2 short of the door
-        for (const b of front.bumpers || []) cylinder(hw, bumper.diameter / 2 + 1.5, gap - 0.2, 'gasket', b.u, b.v, carcassFront + (gap - 0.2) / 2, 'z', 16);
+        for (const b of front.bumpers || []) cylinder(hw, bumper.diameter / 2 + 1.5, gap - 0.2, 'gasket', b.x, carcassFront + (gap - 0.2) / 2, b.h, 'y', 16);
         m.label = 'Door ' + size + ' · hinges: ' + front.hinges.length + ' · bumpers: ' + (front.bumpers || []).length + (front.doorDrawers ? ' · drawers behind it: ' + front.doorDrawers.count : '');
         if (front.doorDrawers) doorDrawers(r, item, m, carcass);
       } else if (opening === 'drawer' && carcass) {
@@ -1324,46 +1400,46 @@
         m.label = 'Dishwasher · front ' + size + ' on the appliance door';
       } else if (opening === 'fridge' && item.fit) {
         const freezer = hasTag(item, 'freezer');
-        HOME.draw.fridgeDoor(D, appliances.fridgeFreezer, { r, m, freezer, fit: item.fit, front: carcassFront, shelves: [carcass.u0 + 55, carcass.u1 - 55] });
+        HOME.draw.fridgeDoor(D, appliances.fridgeFreezer, { r, m, freezer, fit: item.fit, front: carcassFront, shelves: [carcass.x0 + 55, carcass.x1 - 55] });
         m.label = (freezer ? 'Freezer' : 'Fridge') + ' · front ' + size + ' on the appliance door';
       } else if (opening === 'fixed') m.label = 'Dummy front ' + size + ' · fixed';
       if (!m.label) m.label = 'Front ' + size;
     }
     /* a drawer: its boards, metal sides and runners (the carcass part stays, the drawer part moves); bins; an inner drawer */
     function drawer(r, item, m, carcass, size) {
-      const front = item.front, { size: kind, sideHeight, innerU0, innerU1, bottomV: b0, bins, inner } = front.drawer, Dw = HW.drawer, I = { mover: m, carcass };
-      const s0 = Dw.sideFromCarcass, s1 = s0 + Dw.sideThickness, n0 = carcassBack + Dw.fromBack, n1 = carcassFront - Dw.fromFront;
-      const sides = (mv, y0, y1) => { for (const [a, b] of [[innerU0 + s0, innerU0 + s1], [innerU1 - s1, innerU1 - s0]]) box(mv.cells, r, [a, b, y0, y1, n0, n1], 'drawerSide', 'drawers', { mover: mv, carcass }); };
-      const runners = (mv, v) => {
-        for (const [a, b, c, e] of [[innerU0, innerU0 + Dw.runnerWidth, innerU0 + Dw.runnerWidth, innerU0 + s0], [innerU1 - Dw.runnerWidth, innerU1, innerU1 - s0, innerU1 - Dw.runnerWidth]]) {
-          box(STATIC, r, [a, b, v - 24, v - 8, n0, n1 + 2], 'zinc', 'hardware', { name: 'Drawer runner' });
-          box(mv.cells, r, [Math.min(c, e), Math.max(c, e), v - 20, v - 6, n0 + 8, n1 - 2], 'zinc', 'hardware', { mover: mv });
+      const front = item.front, { size: kind, sideHeight, innerX0, innerX1, bottomH: b0, bins, inner } = front.drawer, Dw = HW.drawer, I = { mover: m, carcass };
+      const s0 = Dw.sideFromCarcass, s1 = s0 + Dw.sideThickness, y0 = carcassBack + Dw.fromBack, y1 = carcassFront - Dw.fromFront;
+      const sides = (mv, h0, h1) => { for (const [a, b] of [[innerX0 + s0, innerX0 + s1], [innerX1 - s1, innerX1 - s0]]) box(mv.cells, r, [a, b, y0, y1, h0, h1], 'drawerSide', 'drawers', { mover: mv, carcass }); };
+      const runners = (mv, h) => {
+        for (const [a, b, c, e] of [[innerX0, innerX0 + Dw.runnerWidth, innerX0 + Dw.runnerWidth, innerX0 + s0], [innerX1 - Dw.runnerWidth, innerX1, innerX1 - s0, innerX1 - Dw.runnerWidth]]) {
+          box(STATIC, r, [a, b, y0, y1 + 2, h - 24, h - 8], 'zinc', 'hardware', { name: 'Drawer runner' });
+          box(mv.cells, r, [Math.min(c, e), Math.max(c, e), y0 + 8, y1 - 2, h - 20, h - 6], 'zinc', 'hardware', { mover: mv });
         }
       };
       for (const b of model.boards) if (b.frontId === front.id && !b.inner) board(m.cells, b, carcass, 'drawers', m);
       sides(m, b0 - 4, b0 + sideHeight - 4);
-      if (kind === 'D') for (const [a, b] of [[innerU0 + 28, innerU0 + 32], [innerU1 - 32, innerU1 - 28]]) box(m.cells, r, [a, b, b0 + sideHeight - 4, b0 + sideHeight + 60, carcassBack + 46, carcassFront - 24], 'drawerSide', 'drawers', I);   // gallery rails
+      if (kind === 'D') for (const [a, b] of [[innerX0 + 28, innerX0 + 32], [innerX1 - 32, innerX1 - 28]]) box(m.cells, r, [a, b, carcassBack + 46, carcassFront - 24, b0 + sideHeight - 4, b0 + sideHeight + 60], 'drawerSide', 'drawers', I);   // gallery rails
       runners(m, b0);
       if (bins) {
-        const count = HW.bins.count, x0 = innerU0 + 45, x1 = innerU1 - 45, bw = (x1 - x0 - 10 * (count - 1)) / count, floor = b0 + T.drawerBox, top = floor + HW.bins.height;
+        const count = HW.bins.count, x0 = innerX0 + 45, x1 = innerX1 - 45, bw = (x1 - x0 - 10 * (count - 1)) / count, floor = b0 + T.drawerBox, top = floor + HW.bins.height;
         for (let j = 0; j < count; j++) {
           const a = x0 + j * (bw + 10), b = a + bw;
-          openTop(m.cells, r, [a, b, floor, top, carcassBack + 66, carcassFront - 44], 4, 'binGrey', 'drawers', I);
-          box(m.cells, r, [a + bw * 0.3, b - bw * 0.3, top - 14, top - 4, carcassFront - 54, carcassFront - 40], 'binGrey', 'drawers', I);
+          openTop(m.cells, r, [a, b, carcassBack + 66, carcassFront - 44, floor, top], 4, 'binGrey', 'drawers', I);
+          box(m.cells, r, [a + bw * 0.3, b - bw * 0.3, carcassFront - 54, carcassFront - 40, top - 14, top - 4], 'binGrey', 'drawers', I);
         }
       }
       const name = 'drawer ' + kind + ' (' + sideHeight + ')';
       m.label = (bins ? 'Sink ' + name + ' with waste bins' : kind === 'D' ? 'Drawer ' + kind + ' (' + sideHeight + ')' : 'Top ' + name + (inner ? ' + an inner drawer above it' : '')) + ' · front ' + size;
       if (inner) {                                  // a shallow cutlery drawer above the box, behind the same front, on its own runners
-        const iv = front.drawer.innerV, im = mover(r, 'drawer', 0, 0, 0), M = settings.drawers.M.sideHeight, top = iv - 4 + M, J = { mover: im, carcass };
+        const ih = front.drawer.innerH, im = mover(r, 'drawer', 0, 0, 0), M = settings.drawers.M.sideHeight, top = ih - 4 + M, J = { mover: im, carcass };
         Object.assign(im, { item }); carcass.movers.push(im); linkTo(m, im);
         for (const b of model.boards) if (b.frontId === front.id && b.inner) board(im.cells, b, carcass, 'drawers', im);
-        sides(im, iv - 4, top);
-        box(im.cells, r, [innerU0 + s1, innerU1 - s1, iv - 4, top, n1 - 16, n1 - 2], 'drawerSide', 'drawers', J);   // its metal front
-        for (let j = 1; j < 5; j++) { const x = innerU0 + s1 + (innerU1 - innerU0 - 2 * s1) * j / 5; box(im.cells, r, [x - 3, x + 3, iv + 16, iv + 66, carcassBack + 76, carcassFront - 44], 'insertGrey', 'drawers', J); }
-        box(im.cells, r, [innerU0 + 40, innerU1 - 40, iv + 16, iv + 20, carcassBack + 76, carcassFront - 44], 'insertGrey', 'drawers', J);
-        runners(im, iv);
-        im.label = 'Inner drawer M (' + M + ') for cutlery · inner front ' + (innerU1 - innerU0 - settings.drawers.inner.frontDeduction);
+        sides(im, ih - 4, top);
+        box(im.cells, r, [innerX0 + s1, innerX1 - s1, y1 - 16, y1 - 2, ih - 4, top], 'drawerSide', 'drawers', J);   // its metal front
+        for (let j = 1; j < 5; j++) { const x = innerX0 + s1 + (innerX1 - innerX0 - 2 * s1) * j / 5; box(im.cells, r, [x - 3, x + 3, carcassBack + 76, carcassFront - 44, ih + 16, ih + 66], 'insertGrey', 'drawers', J); }
+        box(im.cells, r, [innerX0 + 40, innerX1 - 40, carcassBack + 76, carcassFront - 44, ih + 16, ih + 20], 'insertGrey', 'drawers', J);
+        runners(im, ih);
+        im.label = 'Inner drawer M (' + M + ') for cutlery · inner front ' + (innerX1 - innerX0 - settings.drawers.inner.frontDeduction);
       }
     }
     /* drawers behind a door: each box slides out on ball runners once the door is open */
@@ -1373,43 +1449,43 @@
         const m = mover(r, 'drawer', 0, 0, 0);
         Object.assign(m, { item, travel: DD.runnerLength, label: 'Drawer behind the door ' + (j + 1) + '/' + DD.count + ' · ' + DD.boxWidth + ' × ' + DD.runnerLength + ' × ' + DD.boxHeight + ', ball runners ' + DD.runnerLength });
         carcass.movers.push(m); linkTo(door, m);
-        for (const x of model.boards) if (x.frontId === front.id && x.doorDrawer === j) board(m.cells, x, carcass, 'drawers', m);
-        const y0 = b.v0 + T.drawerBox + 20, y1 = y0 + 35;
-        for (const [a, c] of [[b.u0 - clearance, b.u0], [b.u1, b.u1 + clearance]]) {
-          const left = a < b.u0;
-          box(STATIC, r, [...(left ? [a, a + clearance / 2] : [c - clearance / 2, c]), y0, y1, b.n0, b.n1], 'zinc', 'hardware', { name: 'Ball runner' });
-          box(m.cells, r, [...(left ? [a + clearance / 2, b.u0] : [b.u1, c - clearance / 2]), y0 + 4, y1 - 4, b.n0 + 4, b.n1 - 2], 'zinc', 'hardware', { mover: m });
+        for (const bd of model.boards) if (bd.frontId === front.id && bd.doorDrawer === j) board(m.cells, bd, carcass, 'drawers', m);
+        const h0 = b.h0 + T.drawerBox + 20, h1 = h0 + 35;
+        for (const [a, c] of [[b.x0 - clearance, b.x0], [b.x1, b.x1 + clearance]]) {
+          const left = a < b.x0;
+          box(STATIC, r, [...(left ? [a, a + clearance / 2] : [c - clearance / 2, c]), b.y0, b.y1, h0, h1], 'zinc', 'hardware', { name: 'Ball runner' });
+          box(m.cells, r, [...(left ? [a + clearance / 2, b.x0] : [b.x1, c - clearance / 2]), b.y0 + 4, b.y1 - 2, h0 + 4, h1 - 4], 'zinc', 'hardware', { mover: m });
         }
       });
     }
     /* the pull-out shelf with the coffee machine: slides out once its door is open */
     function pullOutShelf(shelf) {
       const carcass = carcasses.find(c => c.id === shelf.carcassId), r = String(carcass.group), door = carcass.movers.find(m => m.kind === 'door' && m.item === shelf.item);
-      const m = mover(r, 'drawer', 0, 0, 0), [x0, x1, y0, y1, z0, z1] = shelf.box;
+      const m = mover(r, 'drawer', 0, 0, 0), [x0, x1, y0, y1, h0, h1] = shelf.box;
       Object.assign(m, { item: shelf.item }); carcass.movers.push(m);
       if (door) linkTo(door, m);
       board(m.cells, shelf, carcass, 'drawers', m);
-      const spacer = model.boards.find(b => b.carcassId === carcass.id && b.id === 'spacer' && b.box[2] < y0 && b.box[3] > y0 && (b.box[1] <= x0 || b.box[0] >= x1));
-      const left = spacer && spacer.box[1] <= x0 ? spacer.box[1] : carcass.u0 + T.carcass, right = spacer && spacer.box[0] >= x1 ? spacer.box[0] : carcass.u1 - T.carcass;
+      const spacer = model.boards.find(b => b.carcassId === carcass.id && b.id === 'spacer' && b.box[4] < h0 && b.box[5] > h0 && (b.box[1] <= x0 || b.box[0] >= x1));
+      const left = spacer && spacer.box[1] <= x0 ? spacer.box[1] : carcass.x0 + T.carcass, right = spacer && spacer.box[0] >= x1 ? spacer.box[0] : carcass.x1 - T.carcass;
       for (const [a, b] of [[left, x0], [x1, right]]) {
-        box(STATIC, r, [a, b, y0 - 14, y0, z0, z1], 'zinc', 'hardware', { name: 'Pull-out shelf runner' });
-        box(m.cells, r, [a, b, y0, y0 + 12, z0 + 8, z1 - 4], 'zinc', 'hardware', { mover: m });
+        box(STATIC, r, [a, b, y0, y1, h0 - 14, h0], 'zinc', 'hardware', { name: 'Pull-out shelf runner' });
+        box(m.cells, r, [a, b, y0 + 8, y1 - 4, h0, h0 + 12], 'zinc', 'hardware', { mover: m });
       }
-      product(appliances.coffee, { r, m, u: (x0 + x1) / 2, v: y1, n: z1 - 20 });
+      product(appliances.coffee, { r, m, x: (x0 + x1) / 2, h: h1, y: y1 - 20 });
       m.label = 'Pull-out shelf ' + shelf.a + ' × ' + shelf.b + ' with ' + appliances.coffee.name;
     }
 
     /* ---------- all of it ---------- */
     GROUP_IDS.forEach(drawGroup);
     for (const b of model.boards) if (b.id === 'backStrip') board(STATIC, b, null, 'carcasses');
-    for (const p of model.frontPanels) if (!p.item) look(box(STATIC, String(p.group), p.box, K(p.material), 'frontPanel', { check: 'frontPanel', name: 'G' + p.group + ' ' + p.name + ' ' + p.a + ' × ' + p.b }), p.material, { banded: p.edges.map(e => e.side) });
+    for (const p of model.frontPanels) if (!p.item) look(box(STATIC, String(p.group), placed(p), K(p.material), 'frontPanel', { check: 'frontPanel', name: 'G' + p.group + ' ' + p.name + ' ' + p.a + ' × ' + p.b }), p.material, { banded: p.edges.map(e => e.side) });
     if (sinkItem) drawSink();
-    if (hobItem && hobCut) product(appliances.hob, { r: hobGroup, u: hobU, cut: hobCut, top: worktopTop(hobGroup) });
-    if (hobItem) product(appliances.hood, { r: hobGroup, u: hobU, bottom: install.hood.bottom, ceiling: D.CEILING, worktop: worktopTop(hobGroup) });
+    if (hobItem && hobCut) product(appliances.hob, { r: hobGroup, x: hobX, cut: hobCut, top: worktopTop(hobGroup) });
+    if (hobItem) product(appliances.hood, { r: hobGroup, x: hobX, bottom: install.hood.bottom, ceiling: D.CEILING, worktop: worktopTop(hobGroup) });
     carcasses.forEach(drawCarcass);
     for (const r of GROUP_IDS) for (const item of itemsOf(r)) if (FRONT_TYPES.includes(item.type)) drawFront(r, item);
     model.boards.filter(b => b.id === 'pullOutShelf').forEach(pullOutShelf);
-    return { carcasses, axes: { sink: sinkU, hob: hobU } };
+    return { carcasses, axes: { sink: sinkX, hob: hobX } };
   }
 
   /* the materials of the boards for core, from their products: a decor photo, a lacquer or a colour; the bare edge its core */
@@ -1429,6 +1505,6 @@
   HOME.cabinets = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, hasTag, FRONT_TYPES, SIDES, HINGE_SIDES,
     placeLabel, gapsText, parseTags, spaceAround, valueAt, PINS_PER_SHELF, tagsOf, readType, cutKey, checkSettings, build, cutList, 
-    plural, appliances, withLibrary, draw, boardLooks
+    plural, appliances, withLibrary, tree, boxIn, draw, boardLooks
   };
 })();

@@ -14,7 +14,7 @@ HOME.data({
  "hardware": {
   "handle": {"axis": 28, "barLength": 160, "sideHeight": 260},
   "handles": {"options": ["brass", "nickel", "blackHandle"], "default": "brass"},
-  "open": {"angle": {"door": 110, "fridge": 95, "dishwasher": 84, "oven": 88, "microwave": 100}, "drawer": 440, "doorStop": {"K4": 90}},
+  "open": {"angle": {"door": 110, "fridge": 95, "dishwasher": 84, "oven": 88, "microwave": 100}, "drawer": 440, "doorStop": {"K21": 90}},
   "leg": {"fromSide": 45, "fromBack": 45, "fromFront": 100},
   "bins": {"count": 3, "height": 235},
   "plinthGrille": {"bottom": 20}
@@ -25,10 +25,10 @@ HOME.data({
   "pendantBottom": 1750,
   "pendants": {"group": 3, "count": 2, "spacing": 776},
   "downlights": [
-   {"group": 1, "between": ["sink", "hob"], "n": 402},
-   {"group": 2, "u": 402, "n": 932},
-   {"group": 2, "u": 1370, "n": 932},
-   {"group": 2, "u": 2338, "n": 932}
+   {"group": 1, "between": ["sink", "hob"], "y": 402},
+   {"group": 2, "x": 402, "y": 932},
+   {"group": 2, "x": 1370, "y": 932},
+   {"group": 2, "x": 2338, "y": 932}
   ]
  },
  "cameras": [

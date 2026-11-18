@@ -103,7 +103,8 @@ if (WHOLE) {
       const middle = [0, 1, 2].map(k => (Math.min(...b.map(q => q[2 * k])) + Math.max(...b.map(q => q[2 * k + 1]))) / 2);
       OBJECTS.push({ layer, middle, normal: NORMAL[o.side] });
     }
-    for (const c of o.cells) if (!seen.has(signature(c))) { seen.add(signature(c)); STILL.push(Object.assign({}, c, { room: p.room.id, layers: c.layers.concat(layer) })); }
+    // a room ignores the floors: a solid split at a floor is one solid again (one line round it)
+    for (const c of o.cells) if (!seen.has(signature(c))) { seen.add(signature(c)); STILL.push(Object.assign({}, c, { room: p.room.id, layers: c.layers.filter(k => !VIEW.floors.includes(k)).concat(layer) })); }
     if (o.leaf && !LEAVES.some(l => l.door === o.leaf)) LEAVES.push({ door: o.leaf, layers: [layer] });
   }
 }
@@ -336,7 +337,20 @@ function book() {
   }
   doors.rows.push({ kind: 'sum', cells: ['Total', '', '', '', '', { f: `SUM(F${first}:F${doors.rows.length})` }] });
   const notes = { name: 'Notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [DATA.source] }, { kind: 'head', cells: ['Notes'] }, ...DATA.notes.map(n => ({ cells: [n] }))] };
-  return { sheets: [rooms, doors, notes] };
+  /* a room's furniture as its tree: each part where it is in what it belongs to (mm) */
+  const furniture = WHOLE ? [] : FURNITURE.map(f => {
+    const sheet = { name: 'Furniture', cols: [{ width: 46, share: 3 }, { width: 20, share: 1 }, ...Array(6).fill({ width: 9, fix: 7 })],
+      rows: [{ kind: 'title', cells: [roomName(f.room) + ' · furniture'] },
+        { kind: 'head', cells: ['Part', 'Path', 'x', 'y', 'h', 'Width (x)', 'Depth (y)', 'Height (h)'] }] };
+    const walk = (n, path, depth) => {
+      sheet.rows.push({ kind: depth ? undefined : 'cat', cells: ['\u2003'.repeat(depth) + n.name, path, ...n.offset.map(v => Math.round(v * 10) / 10), ...n.size.map(v => Math.round(v * 10) / 10)] });
+      for (const c of n.children) walk(c, path + '/' + c.id, depth + 1);
+    };
+    for (const g of f.prepared.TREE) walk(g, g.id, 0);
+    sheet.rows.push({ cells: ['Offsets from the origin of what a part belongs to (its left, back, bottom corner); a group\'s origin: its left end, its wall, the floor.'] });
+    return sheet;
+  });
+  return { sheets: [rooms, doors, notes, ...furniture] };
 }
 function documents() {
   if (SHEET) return SHEET.set(book());

@@ -53,7 +53,7 @@ HOME.data({
   {"name": "Strips, panels", "description": "Lacquered, in the plane of the fronts", "details": "L corner: the panel of group 2 covers the end of the panel of group 1"},
   {"name": "Plasterboard casing", "description": "Plasterboard on studs", "details": "Up to the ceiling, also at the end of group 2"},
   {"name": "Handles", "description": "IKEA ENERYDA cup, brass", "details": ""},
-  {"name": "Hardware", "description": "Blum: soft-close hinges, TANDEMBOX drawers", "details": "K8 and K12 bottom: 2 board drawers each on Häfele soft-close ball runners behind the door"},
+  {"name": "Hardware", "description": "Blum: soft-close hinges, TANDEMBOX drawers", "details": "K25 and K29 bottom: 2 board drawers each on Häfele soft-close ball runners behind the door"},
   {"name": "Worktop", "description": "Egger H1180 ST37 Halifax oak", "details": "Group 1 in one piece; end panels of a separate, two-sided material – still looking for a two-sided oak"},
   {"name": "Wall panel", "description": "Egger H1180 ST37 Halifax oak by the window, matching the worktop", "details": ""},
   {"name": "Plinth", "description": "Lacquered, moisture resistant, on legs", "details": "Grilles under the fridge and the oven"},

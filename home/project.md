@@ -11,12 +11,12 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, with everything tha
 | house/ | the house: its data (the rooms, the walls, the settings shared by every room), its model and the main page; it chooses a part of the house and passes it down |
 | room/ | the room engine: it makes a room from what the house gives it and from the room's own data files; cabinets, products, tiles, Documents; the cabinet editor; the rooms' data, flat, `<kind>_<number>.<role>.js` |
 | core/ | shared code: the data loader, the tree, geometry, meshes, the 3D view, the 2D plan, the sheets, the screen; knows no project |
-| library/ | the outside world, as the shop and the maker give it: products, shops, materials, textures; data only |
+| library/ | the outside world, as the shop and the maker give it: products, shops, materials, textures (data); and how each product is drawn (draw.js, code) |
 | archon/ | the archon.pl drawings and their analysis: the source the house is drawn from |
 | test.md | the LLM's own file: how to rebuild its automated tests |
 | report.md | what was done in each step, for the owner |
 
-room/ is written in the next steps (To do); its project.md comes with its code. The root index.html only forwards to house/index.html.
+room/ is being written room by room (To do), the kitchen first. The root index.html only forwards to house/index.html.
 
 ## Dependencies
 
@@ -55,7 +55,7 @@ house/  ──►  room/  ──►  core/, library/
 | settings lower in the tree | the designer, for one room, group, cabinet, product or surface | the node they belong to |
 | the maker's data | the maker | the library, with the product |
 
-The library describes only the outside world: what is bought and the materials, as the shop and the maker give them; nothing of it is our decision. How a product is drawn (the shape of a tap, a handle, a hob's zones) is the business of the code that draws it, not data.
+The library describes only the outside world: what is bought and the materials, as the shop and the maker give them; nothing of it is our decision. How a product is drawn (the shape of a tap, a handle, a hob's zones) is code: library/draw.js, whatever room the product stands in. The shapes the maker does not give live in that code with it, code and its numbers inseparable; the maker's data (sizes, holes, connections) stay in the product's data file.
 
 ## Language
 
