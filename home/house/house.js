@@ -158,9 +158,9 @@ HOME.data({
     },
     "openingKinds": {
      "window": {"glazed": {"sill": true}, "layer": "windows"},
-     "glassDoor": {"glazed": {"sill": false}, "passage": true, "layer": "doors"},
+     "glassDoor": {"glazed": {"sill": true}, "passage": true, "layer": "doors"},
      "gate": {"leaf": "gate", "layer": "doors"},
-     "entrance": {"leaf": "entrance", "glazed": {"sill": false}, "passage": true, "layer": "doors"},
+     "entrance": {"leaf": "entrance", "glazed": {"sill": true}, "passage": true, "layer": "doors"},
      "door": {"passage": true, "door": "inner", "layer": "doors"}
     },
     "frames": {

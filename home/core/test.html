@@ -56,7 +56,7 @@ const MOVING = { door: true, drawer: true }, STILL = CELLS.filter(c => !MOVING[c
 await LIB.loadTextures(CELLS.map(c => LIB.materials[c.material]).flatMap(m => [m.image && m.image.key, m.wood && m.wood.decor]));
 
 const V = HOME.scene.create({ canvas: $('gl'), stage: $('stage'), materials: LIB.materials, textures: LIB.textures, light: VIEW.light, edges: VIEW.edges,
-  body: [[0, 0, 0], SIZE], sunCentre: SIZE.map(v => v / 2) });
+  sunCentre: SIZE.map(v => v / 2) });
 const PIECES = piecesOf(STILL);
 V.buildMeshes(PIECES); V.buildEdges(PIECES);
 

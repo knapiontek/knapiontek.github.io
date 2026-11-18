@@ -1,5 +1,5 @@
 /* core/scene.js: renderer, materials, meshes and edges of pieces, moving parts, section caps, light, camera, navigation,
-   walk, loop. Knows no project: the page hands it a material library, textures, the light, the edges and the body box.
+   walk, loop. Knows no project: the page hands it a material library, textures, the light and the edges.
    The model is built in mm (x along, y across, h up) and turned into the scene's metres with y up.
    Needs core/geometry.js, core/surface.js, THREE and OrbitControls. */
 (function (HOME) {
@@ -8,7 +8,7 @@ const { DEG, INF, hRange, cutBy, sectionAt, edgesOf } = HOME.geometry;
 const { sub3, dot3, cross3, weld } = HOME.surface;
 
 /* opts: {canvas, stage, materials (key -> {color, roughness, ...}), textures (key -> {faces: [image], size: [u, v] mm}),
-   light, edges, body: [[x, y, h], [x, y, h]], sunCentre: [x, y, h]} */
+   light, edges, sunCentre: [x, y, h]} */
 const MM = 0.001;                          // the scene is in metres, the model in mm
 
 /* triangles of the pieces' convex polygons, batched per (layers, material) into one three.js mesh; uv in mm on the face
@@ -329,9 +329,6 @@ function create(opts) {
   controls.enableDamping = true; controls.dampingFactor = 0.12;
   controls.addEventListener('change', redraw);
 
-  /* the body of the model: from outside it the camera turns about its centre */
-  const BODY = new THREE.Box3().setFromPoints(opts.body.map(p => toWorld(...p)));
-  const BODY_CENTRE = BODY.getCenter(new THREE.Vector3());
 
   function setCamera(c, level = 0) {
     camera.position.copy(toWorld(c.eye[0], c.eye[1], c.eye[2] + level));
@@ -357,8 +354,9 @@ function create(opts) {
   const setCut = h => { CUT.constant = h === null ? INF : h * MM; };
 
   /* ================= NAVIGATION =================
-     The wheel zooms toward the surface under the cursor; the pivot stays in front of the camera: the body centre from
-     outside, the surface in the middle of the view inside. */
+     The wheel zooms toward the surface under the cursor. A drag with the left button turns the view about the point under
+     the cursor where the drag starts (a dot marks it while it turns; on no surface, about the point it turned about last);
+     the right button moves the view at the depth of what is under the cursor. */
   const walk = { on: false, keys: new Set(), last: 0, drag: null };
   const ray = new THREE.Raycaster();
   const ndcOf = e => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * 2 - 1, y: -(e.clientY - r.top) / r.height * 2 + 1 }; };
@@ -381,7 +379,6 @@ function create(opts) {
   }
   const ZOOM_IN = 0.2, ZOOM_OUT = 0.25, NEAREST = 0.05;   // fraction of the way per wheel notch; closest approach, m
   const viewAxis = () => new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
-  const outside = () => !BODY.containsPoint(camera.position);
   function seatTarget(point, dir = viewAxis()) {   // the target moves along the view axis to the depth of the point: no jump
     const depth = Math.max(new THREE.Vector3().subVectors(point, camera.position).dot(dir), NEAREST);
     controls.target.copy(camera.position).addScaledVector(dir, depth);
@@ -396,13 +393,44 @@ function create(opts) {
       if (k > 0 && camera.position.distanceTo(p) * (1 - k) < NEAREST) return;
       const dir = viewAxis();              // taken before the move: the camera slides, it does not turn
       camera.position.lerp(p, k);
-      seatTarget(outside() ? BODY_CENTRE : p, dir); controls.update(); redraw();
+      seatTarget(p, dir); controls.update(); redraw();
     }, { capture: true, passive: false });
-    canvas.addEventListener('pointerdown', () => {
+    controls.enableRotate = false;           // the turn is ours: about the point under the cursor
+    const UP = new THREE.Vector3(0, 1, 0), SPEED = 2 * Math.PI, pointers = new Set();
+    const marker = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xd9822b, depthTest: false, transparent: true, opacity: 0.85 }));
+    marker.renderOrder = 999; marker.visible = false; scene.add(marker);
+    const showMarker = p => { marker.position.copy(p); marker.scale.setScalar(Math.max(camera.position.distanceTo(p) * 0.008, 0.004)); marker.visible = true; redraw(); };
+    let orbit = null, pivot = null;
+    canvas.addEventListener('pointerdown', e => {
+      pointers.add(e.pointerId);
       if (walk.on) return;
-      const p = outside() ? BODY_CENTRE : surfaceAt({ x: 0, y: 0 });
-      if (p) { seatTarget(p); controls.update(); }
+      if (pointers.size > 1) { orbit = null; marker.visible = false; redraw(); return; }   // two fingers: the controls zoom and move
+      const p = surfaceAt(ndcOf(e));
+      if (e.button === 2) { if (p) { seatTarget(p); controls.update(); } return; }   // the move follows what is under the cursor
+      if (e.button !== 0) return;
+      pivot = p || pivot || controls.target.clone();
+      orbit = { x: e.clientX, y: e.clientY };
+      showMarker(pivot);
     });
+    canvas.addEventListener('pointermove', e => {
+      if (!orbit || walk.on) return;
+      const h = canvas.clientHeight || 1, yaw = -SPEED * (e.clientX - orbit.x) / h, pitch = -SPEED * (e.clientY - orbit.y) / h;
+      orbit.x = e.clientX; orbit.y = e.clientY;
+      const turn = (axis, angle) => {
+        const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+        camera.position.sub(pivot).applyQuaternion(q).add(pivot);
+        camera.quaternion.premultiply(q);
+      };
+      turn(UP, yaw);
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion), forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      const next = forward.clone().applyAxisAngle(right, pitch);
+      if (Math.abs(next.y) < 0.995) turn(right, pitch);   // never over the top: the view stays upright
+      const ahead = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      controls.target.copy(camera.position).addScaledVector(ahead, Math.max(camera.position.distanceTo(pivot), NEAREST));
+      controls.update(); showMarker(pivot);
+    });
+    const end = e => { pointers.delete(e.pointerId); if (orbit) { orbit = null; marker.visible = false; redraw(); } };
+    for (const k of ['pointerup', 'pointercancel', 'pointerleave']) canvas.addEventListener(k, end);
   }
 
   /* ================= WALK =================

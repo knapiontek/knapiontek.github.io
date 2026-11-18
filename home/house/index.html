@@ -39,7 +39,7 @@ const DEG = 180 / Math.PI;
 HOME.ui.screen($('app'), {
   label: '3D view of the house',
   help: {
-    '3d': `<p>Turn: left button (from outside about the house's middle, inside about what is in the middle of the view) · move: right · zoom: the wheel (toward the cursor).</p>
+    '3d': `<p>Turn: left button, about the point under the cursor (an orange dot marks it while turning) · move: right · zoom: the wheel, toward the cursor.</p>
       <p><b>Walk</b>: the arrows walk and turn, A/D a step aside, Shift faster, PgUp/PgDn or a drag look, Space opens the nearest door, Esc ends.</p>
       <p><b>View</b> (the panel): the floors and the layers; an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: a click on its floor picks a room. A click on a door opens or closes it.</p>
       <p>In a room, the walls and the ceiling between the camera and the room hide; the floors do not apply there, only the elements.</p>`,
@@ -113,7 +113,7 @@ const LIGHT = WHOLE ? VIEW.light : Object.assign({}, VIEW.light, VIEW.light.insi
   sun: Object.assign({}, VIEW.light.sun, VIEW.light.inside.sun), sky: Object.assign({}, VIEW.light.sky, VIEW.light.inside.sky) });
 const BODY = WHOLE ? [[ROOF.x[0], 0, level(FLOORS[0])], [ROOF.x[1], WIDTH, RIDGE_TOP]] : [[UNION[0], UNION[2], UNION[4]], [UNION[1], UNION[3], UNION[5]]];
 const V = HOME.scene.create({ canvas: $('gl'), stage: $('stage'), materials: MATERIALS, textures: LIB.textures, light: LIGHT, edges: VIEW.edges,
-  body: BODY, sunCentre: [0, 1, 2].map(k => (BODY[0][k] + BODY[1][k]) / 2) });
+  sunCentre: [0, 1, 2].map(k => (BODY[0][k] + BODY[1][k]) / 2) });
 if (!WHOLE) V.renderer.physicallyCorrectLights = true;   // a room: the inside light and the lamps in physical units
 for (const f of FURNITURE) {
   const own = PARTS.find(p => p.room === f.room), ceilings = own ? own.objects.filter(o => o.role === 'ceiling').map(o => 'object:' + f.room.id + '/' + o.id) : [];
