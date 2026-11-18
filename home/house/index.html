@@ -336,7 +336,7 @@ function book() {
   }
   doors.rows.push({ kind: 'sum', cells: ['Total', '', '', '', '', { f: `SUM(F${first}:F${doors.rows.length})` }] });
   const notes = { name: 'Notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [DATA.source] }, { kind: 'head', cells: ['Notes'] }, ...DATA.notes.map(n => ({ cells: [n] }))] };
-  /* the tree of what is shown: the house, its floors, its rooms and in them their furniture; a room's view, its rooms.
+  /* the tree of what is shown: the whole house down to its rooms; a room's view, its rooms down to their furniture.
      Each node where it is in its parent (mm); a group of furniture where its scene sets it in its room, the side its fronts
      face, and in it every part in the group's own x, y, h */
   const tree = { name: 'Elements', tree: 'closed', cols: [{ width: 44, share: 3 }, { width: 34, share: 2 }, ...Array(6).fill({ width: 9, fix: 7 })],
@@ -346,7 +346,7 @@ function book() {
   const furnitureOf = id => FURNITURE.find(f => f.room.id === id);
   function walk(n, path, level, offset = n.offset, size = n.size, name = n.name) {
     tree.rows.push({ level, kind: level ? undefined : 'cat', cells: [name, path, ...offset.map(mm), ...size.map(mm)] });
-    const f = n.type !== undefined && furnitureOf(n.id);
+    const f = !WHOLE && n.type !== undefined && furnitureOf(n.id);   // the whole house stops at its rooms; a room's view goes down into it
     if (f) for (const g of f.prepared.TREE) {
       const s = f.prepared.scene.groups[g.id.slice(1)];
       walk(g, (path ? path + '/' : '') + g.id, level + 1, s.offset, s.size, g.name + ' (fronts ' + s.front + ')');

@@ -26,7 +26,7 @@ house.js ─► model.js ─► solids ─► index.html: 3D, 2D (core)
 - **2D**: one sheet per floor (of a part: per floor of its rooms): what the cut meets filled, what lies under it seen from above, the doors' swings, the openings' labels, the rooms with their areas, a dash-dot line where two rooms meet with no wall.
 - **Documents**: the rooms (the model's area and archon's), the inner doors with what is bought for them, the notes.
 - **Test** (the last sheet of Documents): the tree, the house, the library, the rooms' furniture; a room asked for that the house does not have.
-- **Elements** (a sheet of Documents): the tree of what is shown, the house (or the rooms of a part) down to its floors, rooms and their furniture; each node with its offset in its parent and its size; closed at first, a + opens a node. Test is a tree too, open at first.
+- **Elements** (a sheet of Documents): the tree of what is shown: the whole house down to its floors and rooms; a room's view, its rooms down to their furniture; each node with its offset in its parent and its size; closed at first, a + opens a node. Test is a tree too, open at first.
 - The rooms' floor tiles come with room/tiles.js.
 
 ## The format `house`, version 1
