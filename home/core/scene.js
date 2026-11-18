@@ -82,6 +82,19 @@ function create(opts) {
       m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = '#f2f2f2'; g.fillRect(0, 0, w, h); specks(g, w, h, d.strength, d.grain); }, false);
       m.map.repeat.set(1 / d.tile, 1 / d.tile);
     },
+    chipboard(d, m, def) {                 // the bare core of a chipboard: flakes lighter and darker than its colour, every way
+      const base = new THREE.Color(def.color);
+      m.map = canvasTexture(256, 256, (g, w, h) => {
+        g.fillStyle = '#' + base.getHexString(); g.fillRect(0, 0, w, h);
+        for (let i = 0; i < 2600; i++) {
+          const c = base.clone().offsetHSL((rnd() - 0.5) * 0.03, (rnd() - 0.5) * 0.15, (rnd() - 0.5) * 0.32);
+          g.save(); g.translate(rnd() * w, rnd() * h); g.rotate(rnd() * Math.PI);
+          g.fillStyle = '#' + c.getHexString(); g.fillRect(0, 0, 2 + rnd() * 9, 1 + rnd() * 2.5); g.restore();
+        }
+        specks(g, w, h, 1, 1);
+      });
+      m.map.repeat.set(1 / d.tile, 1 / d.tile); m.color.set(0xffffff);
+    },
     grass(d, m, def) {
       m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = def.color; g.fillRect(0, 0, w, h); for (let i = 0; i < 9000; i++) { g.fillStyle = `hsla(${80 + rnd() * 30},${30 + rnd() * 25}%,${25 + rnd() * 25}%,0.5)`; g.fillRect(rnd() * w, rnd() * h, 1, 2 + rnd() * 3); } });
       m.map.repeat.set(1 / d.tile, 1 / d.tile); m.color.set(0xffffff);

@@ -46,7 +46,7 @@ and, by group:
 | Group | Fields |
 |---|---|
 | appliances | body: the overall size (an oven or a microwave without its fascia, a fridge or a dishwasher with its doors, a sink's outline on the worktop); fascia: the front panel of an oven or a microwave, bottom: where it starts from the body's bottom; door: hinge (the edge it turns on), height; doors: a fridge's and a freezer's doors from the appliance's bottom, doorDepth; controlPanelHeight, controlColumnWidth: the part of a fascia that does not open; baseSetback: how far behind the front the base starts; bowl, rim, wall: a sink's; glass: a hob's; chimney: a hood's; source: where the sizes come from ("assumed": still to check) |
-| boards | code and decor (the maker's), thickness, color, core (the colour of a bare edge), lacquered, frameWidth (a shaker front's frame), depth (worktops, end panels), factoryEdges, twoSided, texture (a key of textures/) |
+| boards | code and decor (the maker's), thickness, color, core (the colour of a bare edge), coreSurface (what a bare edge shows: `chipboard`, its chips; `fibre`, an even fibreboard), lacquered, frameWidth (a shaker front's frame), depth (worktops, end panels), factoryEdges, twoSided, texture (a key of textures/) |
 | hardware | as drawn: a handle's length; a leg's radius, footRadius, footHeight; a hinge's cupDepth; a drawer's runnerWidth, sideThickness, sideFromCarcass, fromBack, fromFront; a grille's width, height |
 | tiles | look, finish; texture; len × wid of one tile, joint; minCut: the smallest acceptable cut piece [along, across]; pattern: the maker's default (grid, half, third, quarter, random); formats: the sizes the maker makes |
 

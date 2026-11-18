@@ -252,6 +252,7 @@ function build(V, prepared, opts = {}) {
     { name: 'Furniture: every solid has its node', about: 'Every solid drawn (a board, a front, a piece of hardware, a part of an appliance) lies inside a node of its group\'s tree: nothing is drawn that the tree does not hold.', items: unheld(made, prepared) },
     { name: 'Furniture: inside its group', about: 'Every solid of a group lies inside the box its scene gives it in the room.', items: outside(made, prepared) },
     { name: 'Furniture: parts with no size', about: 'A part whose box has no number (a size the data does not give) is not drawn; it is listed here.', items: UNDRAWN.slice() },
+    { name: 'Cabinets: banded edges are seen', about: 'An edge is banded to be seen: none of the banded edges lies against another part (a board, a front, a worktop, a panel, an appliance, the wall, the floor).', items: C().coveredEdges(model) },
     { name: 'Cabinets: the model', about: 'What the cabinets\' model finds wrong in the cabinets file: a piece that does not fit its column, a hinge on a shelf, a worktop too short, …', items: model.warnings.slice() }
   ];
   return made;

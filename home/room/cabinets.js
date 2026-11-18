@@ -765,10 +765,10 @@
         if (top > next) warn(`${at}: drawer behind the door ${j + 1} (${t + doorDrawerSettings.sideHeight}) does not fit under the next board.`, item.index);
         const common = { material: materialFor.drawerBox, layer: 'drawers', group: carcass.group, carcassId: carcass.id, frontId: front.id, doorDrawer: j }, inner = length - t;
         boards.push({ id: 'doorDrawerFront', name: 'Front of a drawer behind the door', a: x1 - x0, b: t + doorDrawerSettings.sideHeight, ...common, box: [x0, x1, y1 - t, y1, h, top],
-          edges: [{ side: 'top', length: x1 - x0, along: 'a' }, { side: 'left', length: t + doorDrawerSettings.sideHeight, along: 'b' }, { side: 'right', length: t + doorDrawerSettings.sideHeight, along: 'b' }] });
+          edges: [{ side: 'left', length: t + doorDrawerSettings.sideHeight, along: 'b' }, { side: 'right', length: t + doorDrawerSettings.sideHeight, along: 'b' }] });
         boards.push({ id: 'doorDrawerBottom', name: 'Bottom of a drawer behind the door', a: x1 - x0 - 2 * t, b: inner, ...common, box: [x0 + t, x1 - t, y0, y1 - t, h, h + t], edges: [] });
-        for (const s of [x0, x1 - t]) boards.push({ id: 'doorDrawerSide', name: 'Side of a drawer behind the door', a: inner, b: t + doorDrawerSettings.sideHeight, ...common, box: [s, s + t, y0, y1 - t, h, top], edges: [{ side: 'top', length: inner, along: 'a' }] });
-        boards.push({ id: 'doorDrawerBack', name: 'Back of a drawer behind the door', a: x1 - x0 - 2 * t, b: doorDrawerSettings.sideHeight, ...common, box: [x0 + t, x1 - t, y0, y0 + t, h + t, top], edges: [{ side: 'top', length: x1 - x0 - 2 * t, along: 'a' }] });
+        for (const s of [x0, x1 - t]) boards.push({ id: 'doorDrawerSide', name: 'Side of a drawer behind the door', a: inner, b: t + doorDrawerSettings.sideHeight, ...common, box: [s, s + t, y0, y1 - t, h, top], edges: [] });
+        boards.push({ id: 'doorDrawerBack', name: 'Back of a drawer behind the door', a: x1 - x0 - 2 * t, b: doorDrawerSettings.sideHeight, ...common, box: [x0 + t, x1 - t, y0, y0 + t, h + t, top], edges: [] });
         front.doorDrawers.boxes.push({ x0, x1, h0: h, h1: top, y0, y1 });
       }
       counts.doorDrawers += count;
@@ -1045,6 +1045,15 @@
 
     if (appliances) fitAppliances(appliances);
 
+    /* the edges seen as a part slides out: every board of a drawer (a system drawer's, one behind a door) and of a pull-out
+       shelf has its top edge banded, unless its top is one of its faces (a bottom, the shelf) */
+    for (const b of boards) {
+      if (b.frontId === undefined && b.id !== 'pullOutShelf') continue;
+      const size = [0, 1, 2].map(k => b.box[2 * k + 1] - b.box[2 * k]), thin = size.indexOf(Math.min(...size));
+      if (thin === 2 || (b.edges || []).some(e => e.side === 'top')) continue;
+      const length = Math.round(thin === 0 ? size[1] : size[0]);
+      (b.edges = b.edges || []).unshift({ side: 'top', length, along: Math.abs(b.a - length) < 0.5 ? 'a' : 'b' });
+    }
     return {
       settings, warnings: issues.map(issue => issue.text), issues, counts, thickness, materials, materialFor, frontThickness, worktopPieces,
       carcassDepth, carcassBack, carcassFront, frontFace, panelFace, plinthFace, // y: from the carcass backs
@@ -1624,7 +1633,35 @@
         : { color: m.color, roughness: 0.8, reflect: 0.45 };
       out['board:' + code] = def;
       if (m.texture) out['board:' + code + '~'] = Object.assign({}, def, { image: { key: m.texture, turn: true } });
-      if (m.core) out['board:' + code + ':core'] = { color: m.core, roughness: 0.92, texture: { strength: 0.9, grain: 2, tile: 90 } };
+      if (m.core) out['board:' + code + ':core'] = m.coreSurface === 'chipboard' ? { color: m.core, roughness: 0.95, chipboard: { tile: 120 } }   // the chips of a bare edge, plain to see
+        : { color: m.core, roughness: 0.92, texture: { strength: 0.6, grain: 1, tile: 60 } };
+    }
+    return out;
+  }
+
+  /* the banded edges another part covers whole: an edge is banded to be seen, so none may lie, all along, against another board, a front,
+     a worktop, a panel, a piece of hardware, an appliance, the wall or the floor (Test). By samples over the edge, 1 mm out */
+  function coveredEdges(model) {
+    const { frontFace, frontThickness } = model, solids = [];
+    const add = (r, box, what) => box && solids.push({ r: String(r), box, what });
+    for (const b of model.boards) add(b.group, b.box, b.id);
+    for (const f of model.fronts) add(f.group, [f.x0, f.x1, frontFace - frontThickness, frontFace, f.h0, f.h1], 'front');
+    for (const w of model.worktopPieces) add(w.group, [w.item.x0, w.item.x1, w.y0, w.y1, w.item.h0, w.item.h1], 'worktop');
+    for (const k of ['strips', 'plinths', 'frontPanels', 'wallPanels']) for (const x of model[k]) add(x.group, x.box, k);
+    for (const x of model.products || []) add(x.group, x.box, x.role);   // hardware hides no edge: a hinge's arm passes in front of it
+    for (const [r, g] of Object.entries(model.groups)) add(r, [-1e6, 1e6, g.wall - 1e3, g.wall, -1e3, 1e6], 'the wall');
+    for (const r of Object.keys(model.groups)) add(r, [-1e6, 1e6, -1e6, 1e6, -1e3, 0], 'the floor');
+    const SIDES = { left: [0, 0], right: [0, 1], back: [1, 0], front: [1, 1], bottom: [2, 0], top: [2, 1] }, N = 5, out = [];
+    for (const b of model.boards) for (const e of b.edges || []) {
+      const [k, hi] = SIDES[e.side], others = [0, 1, 2].filter(j => j !== k), by = new Set();
+      let covered = 0;
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+        const p = []; p[k] = b.box[2 * k + hi] + (hi ? 1 : -1);
+        for (const [n, q] of [[i, others[0]], [j, others[1]]]) p[q] = b.box[2 * q] + (n + 0.5) / N * (b.box[2 * q + 1] - b.box[2 * q]);
+        const s = solids.find(s => s.r === String(b.group) && s.box !== b.box && [0, 1, 2].every(q => p[q] >= s.box[2 * q] && p[q] <= s.box[2 * q + 1]));
+        if (s) { covered++; by.add(s.what); }
+      }
+      if (covered === N * N) out.push(`G${b.group} ${b.name} ${b.a} × ${b.b}: its ${e.side} edge lies against ${[...by].join(', ')}`);
     }
     return out;
   }
@@ -1632,6 +1669,6 @@
   HOME.cabinets = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, hasTag, FRONT_TYPES, SIDES, HINGE_SIDES,
     placeLabel, gapsText, parseTags, spaceAround, valueAt, PINS_PER_SHELF, tagsOf, readType, cutKey, checkSettings, build, cutList, 
-    plural, appliances, withLibrary, tree, boxIn, draw, boardLooks
+    plural, appliances, withLibrary, tree, boxIn, draw, boardLooks, coveredEdges
   };
 })();

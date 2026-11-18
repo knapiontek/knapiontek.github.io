@@ -57,8 +57,13 @@ In the house's axes and order: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`, all
 | lights | pendantBottom; pendants {group, count, spacing}; downlights: {group, x, y} or {group, between: [axes], y}, y from the wall |
 | cameras | name, eye, target: in the room's axes, from its zero |
 
+## Edge banding
+
+An edge is banded to be seen, by three rules, each for every board alike: an edge facing the fronts (into the room) is banded on the boards that show it (sides, tops, bottoms, shelves, horizontal rails, the hinge post, a spacer; a front on every edge); a part that slides out (a drawer's boards, a pull-out shelf) has its top edge banded, seen from above when it is out; what is hidden behind another part (a back rail behind its strip, backs, inset panels, a system drawer's bottom) has none. Test checks that no banded edge lies against another part.
+
 ## Checks (Test)
 
 - The model's problems (cabinets.js).
 - The tree (core/tree.js): ids, sizes; each group inside the box its scene gives it.
 - Every solid inside its group's box; no part with no size.
+- No banded edge lies against another part (a board, a front, a worktop, a panel, an appliance, the wall, the floor).
