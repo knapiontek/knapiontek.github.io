@@ -125,6 +125,7 @@ Not yet: the floor tiles (room/tiles.js), the Documents of the kitchen (estimate
 - **Windows and Doors**: two layers instead of one (an opening's kind says which).
 - **The 3D cut is gone** (the owner: not needed): the panel's Cut, its settings. The 2D plan keeps its cut height.
 - **The openings' names**: "Window 6000/3460" (was "undefined 6000/3460").
+- **The whole kitchen is drawn from its tree**: the fronts' panels, the worktops and the plasterboard from their nodes; a drawer system's metal (sides, gallery rails, an inner drawer's front, waste bins, the cutlery insert) are nodes now, drawn by the library; the holes' markers where their board's node is. The same solids and moving parts; the details the same (two handles' cups 0.5 mm off in the comparison's rounding only).
 
 ## Noted for later: the 2D view (the owner, 18 Nov)
 

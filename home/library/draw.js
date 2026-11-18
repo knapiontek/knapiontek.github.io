@@ -323,12 +323,28 @@ function runner(D, { r, m, size: [w, d, h], kind, side, width }) {
   }
 }
 const NAMES = { drawer: 'Drawer runner', ball: 'Ball runner', pullOut: 'Pull-out shelf runner' };
+/* a metal part of a drawer system filling its node: a side, a gallery rail, an inner drawer's front */
+function drawerPart(D, { r, m, size, info }) { D.box(m.cells, r, [0, size[0], 0, size[1], 0, size[2]], 'drawerSide', 'drawers', info); }
+/* waste bins side by side, 10 apart, each open at the top with a handle at its front. bins: {count} */
+function bins(D, B, { r, m, size: [w, d, h], info }) {
+  const bw = (w - 10 * (B.count - 1)) / B.count;
+  for (let j = 0; j < B.count; j++) {
+    const a = j * (bw + 10), b = a + bw;
+    D.openTop(m.cells, r, [a, b, 0, d - 4, 0, h], 4, 'binGrey', 'drawers', info);
+    D.box(m.cells, r, [a + bw * 0.3, b - bw * 0.3, d - 14, d, h - 14, h - 4], 'binGrey', 'drawers', info);
+  }
+}
+/* a cutlery insert: four dividers on a base; inset: the dividers' share starts this far in from each end */
+function cutleryInsert(D, { r, m, size: [w, d, h], inset, info }) {
+  for (let j = 1; j < 5; j++) { const x = inset + (w - 2 * inset) * j / 5; D.box(m.cells, r, [x - 3, x + 3, 0, d, 0, h], 'insertGrey', 'drawers', info); }
+  D.box(m.cells, r, [0, w, 0, d, 0, 4], 'insertGrey', 'drawers', info);
+}
 
 /* by a product's field draw */
 HOME.draw = {
   oven: (D, A, place) => builtIn(D, 'oven', A, place),
   microwave: (D, A, place) => builtIn(D, 'microwave', A, place),
   sink, tap, trap, hob, hood, fridgeFreezer, fridgeDoor, dishwasher, coffeeMachine, pendant, downlight,
-  leg, grille, shelfPin, bumper, hinge, handle, runner
+  leg, grille, shelfPin, bumper, hinge, handle, runner, drawerPart, bins, cutleryInsert
 };
 })();

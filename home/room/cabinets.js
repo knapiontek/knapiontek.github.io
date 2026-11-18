@@ -1173,7 +1173,7 @@
       }
     }
     for (const f of model.fronts) {
-      const to = { frontId: f.id, group: String(f.group) }, H = HW.handle, L = Math.max(H.cupLength / 2 - 3, H.barLength / 2), out = frontFace + 34;   // the cup or the bar, whichever is drawn
+      const to = { frontId: f.id, group: String(f.group) }, H = HW.handle, L = Math.max(H.cupLength / 2 - 3, H.barLength / 2), reach = frontFace + 34;   // the cup or the bar, whichever is drawn
       if (f.opening === 'door' && f.carcassId) {
         const cup = settings.drilling.cup, dir = f.hand === 'left' ? 1 : -1, side = f.hingeX, cupX = f.hand === 'left' ? f.x0 + cup.fromEdge : f.x1 - cup.fromEdge, R = cup.diameter / 2 - 0.5;
         const span = (a, b) => [Math.min(a, b), Math.max(a, b)];
@@ -1186,10 +1186,10 @@
       const position = f.item.handle;
       if (position === 'top' || position === 'bottom') {
         const h = position === 'top' ? f.h1 - H.axis : f.h0 + H.axis, xc = (f.x0 + f.x1) / 2;
-        add('handle', 'Handle', to, [xc - L, xc + L, frontFace, out, h - 14.2, h + 14.2], { turn: null });
+        add('handle', 'Handle', to, [xc - L, xc + L, frontFace, reach, h - 14.2, h + 14.2], { turn: null });
       } else if (position) {
         const x = position === 'left' ? f.x0 + H.axis : f.x1 - H.axis, hc = Math.min(f.h0 + H.sideHeight, (f.h0 + f.h1) / 2);
-        add('handle', 'Handle', to, [x - 14.2, x + 14.2, frontFace, out, hc - L, hc + L], { turn: position });
+        add('handle', 'Handle', to, [x - 14.2, x + 14.2, frontFace, reach, hc - L, hc + L], { turn: position });
       }
       if (f.opening === 'drawer' && f.drawer) {
         const { innerX0, innerX1, bottomH } = f.drawer, Dw = HW.drawer, s0 = Dw.sideFromCarcass, y0 = carcassBack + Dw.fromBack, y1 = carcassFront - Dw.fromFront;
@@ -1199,6 +1199,22 @@
         };
         runners(bottomH, 'Drawer runner', false);
         if (f.drawer.inner) runners(f.drawer.innerH, 'Inner drawer runner', true);
+        /* the drawer system's metal: its sides, a D drawer's gallery rails, the bins of a sink drawer; an inner drawer's sides,
+           front and cutlery insert */
+        const { size: kind, sideHeight, bins } = f.drawer, s1 = s0 + Dw.sideThickness;
+        const sides = (h0, h1, inner) => {
+          add('drawerSide', 'Drawer side', to, [innerX0 + s0, innerX0 + s1, y0, y1, h0, h1], { inner });
+          add('drawerSide', 'Drawer side', to, [innerX1 - s1, innerX1 - s0, y0, y1, h0, h1], { inner });
+        };
+        sides(bottomH - 4, bottomH + sideHeight - 4, false);
+        if (kind === 'D') for (const [a, b] of [[innerX0 + 28, innerX0 + 32], [innerX1 - 32, innerX1 - 28]]) add('galleryRail', 'Gallery rail', to, [a, b, carcassBack + 46, carcassFront - 24, bottomH + sideHeight - 4, bottomH + sideHeight + 60], { inner: false });
+        if (bins) { const floor = bottomH + T.drawerBox; add('bins', 'Waste bins', to, [innerX0 + 45, innerX1 - 45, carcassBack + 66, carcassFront - 40, floor, floor + HW.bins.height], { inner: false }); }
+        if (f.drawer.inner) {
+          const ih = f.drawer.innerH, top = ih - 4 + settings.drawers.M.sideHeight;
+          sides(ih - 4, top, true);
+          add('drawerFront', 'Inner drawer front', to, [innerX0 + s1, innerX1 - s1, y1 - 16, y1 - 2, ih - 4, top], { inner: true });
+          add('cutleryInsert', 'Cutlery insert', to, [innerX0 + 40, innerX1 - 40, carcassBack + 76, carcassFront - 44, ih + 16, ih + 66], { inner: true, inset: s1 - 40 });
+        }
       }
       if (f.doorDrawers) {
         const clearance = settings.doorDrawers.clearance;
@@ -1319,7 +1335,10 @@
     const settings = model.settings, T = model.thickness, { frontFace, panelFace, carcassBack, carcassFront, plinthFace, frontThickness } = model;
     const K = code => 'board:' + code, GROUP_IDS = Object.keys(model.groups);
     /* a part's box from the tree (from its group's wall), in the frame the drawing computes in (y from the carcass backs) */
-    const placed = part => { const b = boxIn(part.node), wall = model.groups[part.group].wall; return [b[0], b[1], b[2] + wall, b[3] + wall, b[4], b[5]]; };
+    const placedNode = (n, r) => { const b = boxIn(n), wall = model.groups[r].wall; return [b[0], b[1], b[2] + wall, b[3] + wall, b[4], b[5]]; };
+    const placed = part => placedNode(part.node, part.group);
+    /* a front's panel: the board node under its front (a dishwasher's front stands in its bay) */
+    const panelOf = f => (function find(n) { return n.type === 'board' && n.id === 'panel' ? n : n.children.reduce((q, c) => q || find(c), null); })(f.node);
     const GROUP = r => model.groups[r], groupLength = r => GROUP(r).widths.reduce((s, w) => s + w, 0), itemsOf = r => GROUP(r).items;
     const shakerRail = model.materials[model.materialFor.cabinet].frameWidth;
     const product = (A, place, d = D) => HOME.draw[A.draw](d, A, place);
@@ -1392,7 +1411,7 @@
     /* a worktop or an end panel, one part of boxes around its cut-outs: finished edges (banded or factory) in the decor, the
        walls of the cut-outs bare */
     function worktopPiece(r, piece, info) {
-      const { x0, x1, h0, h1 } = piece.item, endPanel = piece.item.type === 'endPanel', code = piece.material, I = Object.assign({ part: D.part() }, info);
+      const [x0, x1, py0, py1, h0, h1] = placed(piece), endPanel = piece.item.type === 'endPanel', code = piece.material, I = Object.assign({ part: D.part() }, info);
       const finished = new Set([...piece.edges.map(e => e.side), ...piece.factoryEdges]);
       const outer = x0 + x1 < groupLength(r) ? 'left' : 'right';
       const faces = model.materials[code].twoSided ? (endPanel ? ['left', 'right'] : ['top', 'bottom']) : [endPanel ? outer : 'top'];
@@ -1400,11 +1419,11 @@
       const cuts = [...new Set([x0, x1, ...holes.flatMap(([a, b]) => [a, b])])].sort((p, q) => p - q);
       for (let i = 0; i + 1 < cuts.length; i++) {
         const a = cuts[i], b = cuts[i + 1], spans = [];
-        let y = piece.y0;
+        let y = py0;
         for (const [, , c0, c1] of holes.filter(([c0, c1]) => c0 <= a && c1 >= b).sort((p, q) => p[2] - q[2])) { spans.push([y, c0]); y = c1; }
-        spans.push([y, piece.y1]);
+        spans.push([y, py1]);
         for (const [y0, y1] of spans) {
-          const outline = { left: a === x0, right: b === x1, back: y0 === piece.y0, front: y1 === piece.y1, top: true, bottom: true };
+          const outline = { left: a === x0, right: b === x1, back: y0 === py0, front: y1 === py1, top: true, bottom: true };
           look(box(STATIC, r, [a, b, y0, y1, h0, h1], K(code), endPanel ? 'endPanels' : 'worktops', I), code,
             { banded: [...finished].filter(s => outline[s]), faces, grain: endPanel ? 'h' : 'x' });
         }
@@ -1412,7 +1431,7 @@
     }
     function drawGroup(r) {
       for (const item of itemsOf(r)) {
-        const { x0, x1, h0, h1, type } = item, wall = GROUP(r).wall;
+        const { x0, x1, h0, h1, type } = item;
         const info = CHECKED_TYPES.includes(type) ? { check: type, name: placeLabel(r, item.column, item.span) + ' ' + typeLabel(type) + ' ' + (x1 - x0) + ' × ' + (h1 - h0) + (item.note ? ' (' + item.note + ')' : '') } : {};
         if (type === 'worktop' || type === 'endPanel') {
           const piece = model.worktopPieces.find(p => p.item === item);
@@ -1430,7 +1449,7 @@
           const code = model.materialFor.wallPanel;
           look(box(STATIC, r, placed(model.wallPanels.find(p => p.item === item)), K(code), 'wallPanel', info), code, { faces: ALL_SIDES, grain: 'x' });
         } else if (type === 'plasterboard') {          // a space draws nothing
-          box(STATIC, r, [x0, x1, wall, wall + settings.plasterboard.depth, h0, h1], 'wall', 'plasterboard', { name: 'Plasterboard casing ' + (x1 - x0) + ' × ' + (h1 - h0) });
+          box(STATIC, r, placed(model.plaster.find(p => p.item === item)), 'wall', 'plasterboard', { name: 'Plasterboard casing ' + (x1 - x0) + ' × ' + (h1 - h0) });
         } else if (type === 'oven' || type === 'microwave') {
           const x = P(type).find(p => p.item === item), o = originOf(x);
           product(appliances[type], { r, item: Object.assign({}, item, { x0: item.x0 - o[0], x1: item.x1 - o[0], fit: minus(item.fit, o, [['bodyH0', 2], ['fasciaH0', 2], ['fasciaH1', 2]]) }), front: carcassFront - o[1] }, moved(o));
@@ -1460,9 +1479,12 @@
     const carcasses = model.carcasses;
     for (const c of carcasses) { c.parts = []; c.movers = []; }
     const MARKER = { cup: 'markerHinge', plate: 'markerHinge', bumper: 'markerHinge', shelfPin: 'markerShelfPin', runner: 'markerRunner' };
-    function holes(a, part) {                      // a disc on the drilled face, 0.6 mm proud; small holes as 12 mm markers
+    /* a disc on the drilled face, 0.6 mm proud; small holes as 12 mm markers. A hole of a part (its box own) where its node is
+       (base) */
+    function holes(a, part, own, base) {
+      const at = hole => hole.at.map((v, k) => v - own[2 * k] + base[2 * k]);
       for (const hole of part.holes || []) {
-        const out = -hole.dir * 0.6, p = hole.axis === 'x' ? [hole.at[0] + out, hole.at[1], hole.at[2]] : [hole.at[0], hole.at[1] + out, hole.at[2]];
+        const out = -hole.dir * 0.6, c = at(hole), p = hole.axis === 'x' ? [c[0] + out, c[1], c[2]] : [c[0], c[1] + out, c[2]];
         const radius = hole.kind === 'bumper' ? hole.diameter / 2 : Math.max(hole.diameter / 2, 6);
         cylinder(a, radius, 1, MARKER[hole.kind], ...p, hole.axis, 32, false);
       }
@@ -1472,7 +1494,7 @@
       for (const b of model.boards) {
         if (b.carcassId !== carcass.id || b.frontId || b.id === 'pullOutShelf') continue;   // drawer boards and the pull-out shelf move
         board(STATIC, b, carcass);
-        holes(drilled, b);
+        holes(drilled, b, b.box, placed(b));
       }
       const mine = kind => pieces(x => x.carcassId === carcass.id && x.kind === kind);
       for (const x of mine('shelfPin')) fitted(x, 'shelfPin', () => ({ name: carcass.name + ' shelf pin' }));
@@ -1483,11 +1505,11 @@
     }
 
     /* ---------- fronts and what moves with them ---------- */
-    function shakerFront(m, x0, x1, h0, h1, key, info) {   // a frame of shakerRail wide rails round a recessed panel, one part
-      const w = shakerRail, y0 = frontFace - frontThickness, y1 = frontFace, I = Object.assign({ part: D.part() }, info), f = gb => box(m.cells, m.r, gb, key, 'fronts', I);
+    function shakerFront(m, [x0, x1, y0, y1, h0, h1], key, info) {   // a frame of shakerRail wide rails round a recessed panel, one part
+      const w = shakerRail, I = Object.assign({ part: D.part() }, info), f = gb => box(m.cells, m.r, gb, key, 'fronts', I);
       if (x1 - x0 <= 2 * w + 20 || h1 - h0 <= 2 * w + 20) return f([x0, x1, y0, y1, h0, h1]);
       f([x0, x1, y0, y1, h1 - w, h1]); f([x0, x1, y0, y1, h0, h0 + w]); f([x0, x0 + w, y0, y1, h0 + w, h1 - w]); f([x1 - w, x1, y0, y1, h0 + w, h1 - w]);
-      f([x0 + w, x1 - w, y0, frontFace - frontThickness / 2, h0 + w, h1 - w]);
+      f([x0 + w, x1 - w, y0, (y0 + y1) / 2, h0 + w, h1 - w]);
     }
     function drawFront(r, item) {
       const front = item.front, carcass = carcasses.find(c => c.id === item.carcassId), opening = front.opening, hand = front.hand;
@@ -1500,11 +1522,12 @@
       if (opening === 'door' && carcass && (HW.open.doorStop || {})[carcass.name]) m.travel = HW.open.doorStop[carcass.name];
       if (carcass) carcass.movers.push(m);
       const I = { mover: m };
-      shakerFront(m, fx0, fx1, fh0, fh1, K(front.material), I);
+      const panel = placedNode(panelOf(front), r);
+      shakerFront(m, panel, K(front.material), I);
       for (const x of pieces(x => x.frontId === front.id && x.kind === 'handle')) fitted(x, 'handle', () => ({ m, turn: x.turn, info: I }), HW.handle);
       if (opening === 'door' && carcass) {
         const cup = settings.drilling.cup, dir = hand === 'left' ? 1 : -1, side = front.hingeX, cupX = hand === 'left' ? fx0 + cup.fromEdge : fx1 - cup.fromEdge;
-        holes(at(r, 'fronts', m, ['holes']), front);
+        holes(at(r, 'fronts', m, ['holes']), front, [fx0, fx1, frontFace - frontThickness, frontFace, fh0, fh1], panel);
         for (const x of pieces(x => x.frontId === front.id && x.kind === 'hinge')) fitted(x, 'hinge', o => ({ m, dir, side: side - o[0], cupX: cupX - o[0], h: x.h - o[2],
           carcassFront: carcassFront - o[1], doorBack: frontFace - frontThickness - o[1], cupRadius: cup.diameter / 2 - 0.5 }), HW.hinge);
         for (const x of pieces(x => x.door === front.id && x.kind === 'bumper')) fitted(x, 'bumper', () => ({}));   // the head fills the front gap, 0.2 short of the door
@@ -1527,34 +1550,27 @@
     }
     /* a drawer: its boards, metal sides and runners (the carcass part stays, the drawer part moves); bins; an inner drawer */
     function drawer(r, item, m, carcass, size) {
-      const front = item.front, { size: kind, sideHeight, innerX0, innerX1, bottomH: b0, bins, inner } = front.drawer, Dw = HW.drawer, I = { mover: m, carcass };
-      const s0 = Dw.sideFromCarcass, s1 = s0 + Dw.sideThickness, y0 = carcassBack + Dw.fromBack, y1 = carcassFront - Dw.fromFront;
-      const sides = (mv, h0, h1) => { for (const [a, b] of [[innerX0 + s0, innerX0 + s1], [innerX1 - s1, innerX1 - s0]]) box(mv.cells, r, [a, b, y0, y1, h0, h1], 'drawerSide', 'drawers', { mover: mv, carcass }); };
+      const front = item.front, { size: kind, sideHeight, innerX0, innerX1, bins, inner } = front.drawer, Dw = HW.drawer, I = { mover: m, carcass };
+      const metal = (kind, inner, mv, info, draw = 'drawerPart') => {   // the drawer system's metal, from its nodes
+        for (const x of pieces(x => x.frontId === front.id && x.kind === kind && x.inner === inner)) fitted(x, draw, () => ({ m: mv, info: info || { mover: mv, carcass }, inset: x.inset }), ...(draw === 'bins' ? [HW.bins] : []));
+      };
       const runners = (mv, inner) => {
         for (const x of pieces(x => x.frontId === front.id && x.runner === 'drawer' && x.inner === inner)) fitted(x, 'runner', () => ({ m: mv, kind: 'drawer', side: x.side, width: Dw.runnerWidth }));
       };
       for (const b of model.boards) if (b.frontId === front.id && !b.inner) board(m.cells, b, carcass, 'drawers', m);
-      sides(m, b0 - 4, b0 + sideHeight - 4);
-      if (kind === 'D') for (const [a, b] of [[innerX0 + 28, innerX0 + 32], [innerX1 - 32, innerX1 - 28]]) box(m.cells, r, [a, b, carcassBack + 46, carcassFront - 24, b0 + sideHeight - 4, b0 + sideHeight + 60], 'drawerSide', 'drawers', I);   // gallery rails
+      metal('drawerSide', false, m);
+      metal('galleryRail', false, m, I);
       runners(m, false);
-      if (bins) {
-        const count = HW.bins.count, x0 = innerX0 + 45, x1 = innerX1 - 45, bw = (x1 - x0 - 10 * (count - 1)) / count, floor = b0 + T.drawerBox, top = floor + HW.bins.height;
-        for (let j = 0; j < count; j++) {
-          const a = x0 + j * (bw + 10), b = a + bw;
-          openTop(m.cells, r, [a, b, carcassBack + 66, carcassFront - 44, floor, top], 4, 'binGrey', 'drawers', I);
-          box(m.cells, r, [a + bw * 0.3, b - bw * 0.3, carcassFront - 54, carcassFront - 40, top - 14, top - 4], 'binGrey', 'drawers', I);
-        }
-      }
+      metal('bins', false, m, I, 'bins');
       const name = 'drawer ' + kind + ' (' + sideHeight + ')';
       m.label = (bins ? 'Sink ' + name + ' with waste bins' : kind === 'D' ? 'Drawer ' + kind + ' (' + sideHeight + ')' : 'Top ' + name + (inner ? ' + an inner drawer above it' : '')) + ' · front ' + size;
       if (inner) {                                  // a shallow cutlery drawer above the box, behind the same front, on its own runners
-        const ih = front.drawer.innerH, im = mover(r, 'drawer', 0, 0, 0), M = settings.drawers.M.sideHeight, top = ih - 4 + M, J = { mover: im, carcass };
+        const im = mover(r, 'drawer', 0, 0, 0), M = settings.drawers.M.sideHeight, J = { mover: im, carcass };
         Object.assign(im, { item }); carcass.movers.push(im); linkTo(m, im);
         for (const b of model.boards) if (b.frontId === front.id && b.inner) board(im.cells, b, carcass, 'drawers', im);
-        sides(im, ih - 4, top);
-        box(im.cells, r, [innerX0 + s1, innerX1 - s1, y1 - 16, y1 - 2, ih - 4, top], 'drawerSide', 'drawers', J);   // its metal front
-        for (let j = 1; j < 5; j++) { const x = innerX0 + s1 + (innerX1 - innerX0 - 2 * s1) * j / 5; box(im.cells, r, [x - 3, x + 3, carcassBack + 76, carcassFront - 44, ih + 16, ih + 66], 'insertGrey', 'drawers', J); }
-        box(im.cells, r, [innerX0 + 40, innerX1 - 40, carcassBack + 76, carcassFront - 44, ih + 16, ih + 20], 'insertGrey', 'drawers', J);
+        metal('drawerSide', true, im);
+        metal('drawerFront', true, im, J);
+        metal('cutleryInsert', true, im, J, 'cutleryInsert');
         runners(im, true);
         im.label = 'Inner drawer M (' + M + ') for cutlery · inner front ' + (innerX1 - innerX0 - settings.drawers.inner.frontDeduction);
       }
