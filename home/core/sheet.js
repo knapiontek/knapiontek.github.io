@@ -8,6 +8,9 @@
           node: an element of the page shown in the tab (above its rows, if it has any); only hidden on another tab, so
           the page keeps filling it. A tab without rows is not in the XLSX.
           row kind: title | head | cat | sum | grand | (none: an item); a row's place in rows is its Excel row (first = 1)
+          row level: a sheet as a tree: a row's depth (0: a root); its children are the rows after it one level deeper; on
+          screen a row with children opens and closes them (+ / −); sheet tree: 'open' (all open at first) or 'closed' (only
+          the roots); in the XLSX the levels are Excel's outline
    cell   a string, a number, null (empty), or an object:
             {v, input: true}       a number the viewer may change
             {f: 'C5*(1+$C$2)'}     a formula as in Excel: A1 and 'Other sheet'!A1 references, ranges, + - * / ( ),
@@ -22,6 +25,7 @@
 'use strict';
 
 const { el, esc, LOCALE } = HOME.ui;
+const OPEN = new WeakMap();   // a tree sheet: its open rows
 const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';   // pinned
 
 /* ---------- formulas ---------- */
@@ -98,8 +102,21 @@ function create(box, book) {
     wrap.hidden = !sheet.rows; wrap.innerHTML = ''; body.scrollTop = 0;
     if (!sheet.rows) return;
     const table = el('table', { className: 'sheet' });
+    /* a tree: which rows are open (kept while the book stays), which have children, which an ancestor hides */
+    let open = OPEN.get(sheet);
+    if (!open) OPEN.set(sheet, open = new Set(sheet.tree === 'open' ? sheet.rows.map((r, i) => i) : []));
+    const isTree = r => r && r.level !== undefined, parent = [];
     sheet.rows.forEach((row, ri) => {
       const tr = el('tr', { className: row.kind || '' });
+      let fold = null;
+      if (isTree(row)) {
+        parent.length = row.level;
+        tr.hidden = parent.some(p => !open.has(p));
+        parent[row.level] = ri;
+        const next = sheet.rows[ri + 1];
+        if (isTree(next) && next.level > row.level) fold = el('button', { className: 'fold', textContent: open.has(ri) ? '−' : '+', title: open.has(ri) ? 'Close' : 'Open',
+          onclick: () => { if (open.has(ri)) open.delete(ri); else open.add(ri); draw(); } });
+      }
       (row.cells || []).forEach((cell, ci) => {
         const d = cell?.digits ?? sheet.cols[ci]?.digits, td = el('td');
         if (typeof cell === 'number') { td.className = 'n'; td.textContent = show(cell, d); }
@@ -117,6 +134,7 @@ function create(box, book) {
           cell.links.forEach((l, i) => td.append(...(i ? [' · '] : []), anchor(l)));
         }
         else if (cell !== null && cell !== undefined) linked(td, String(cell));
+        if (ci === 0 && isTree(row)) { td.classList.add('node'); td.style.paddingLeft = (0.5 + row.level * 1.1) + 'em'; td.prepend(fold || el('span', { className: 'fold' })); }
         tr.append(td);
       });
       if (row.cells?.length === 1 && tr.firstChild) tr.firstChild.colSpan = sheet.cols.length;   // a title or a category runs across
@@ -203,6 +221,7 @@ async function xlsx(book, file) {
     for (const [ref, url] of links) ws[ref].l = { Target: url };
     ws['!ref'] = 'A1:' + letter(Math.max(maxC, sheet.cols.length - 1)) + Math.max(1, sheet.rows.length);
     ws['!cols'] = sheet.cols.map(c => ({ wch: c.width || 12 }));
+    if (sheet.rows.some(r => r.level !== undefined)) ws['!rows'] = sheet.rows.map(r => (r.level ? { level: Math.min(r.level, 7) } : {}));   // the outline
     XL.utils.book_append_sheet(wb, ws, sheet.name.slice(0, 31));   // Excel's limit on a sheet's name
   }
   XL.writeFile(wb, file);

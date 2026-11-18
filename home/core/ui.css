@@ -187,3 +187,8 @@ td.n{font-family:var(--f-mono);color:var(--muted);text-align:right;padding-right
   .stage{height:58vh}
   aside{border-left:0;border-top:1px solid var(--line);overflow:visible}
 }
+
+/* a sheet as a tree: + / − before a row with children */
+.sheet td.node { text-indent: 0; }
+.sheet .fold { display: inline-block; width: 1.3em; margin-right: 0.35em; padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--accent); cursor: pointer; text-align: center; }
+.sheet span.fold { cursor: default; }

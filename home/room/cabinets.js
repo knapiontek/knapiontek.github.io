@@ -1096,8 +1096,9 @@
 
   /* the products built into the cabinets, each with its box in its group (the model's frame) and what holds it: an oven
      and a microwave in their carcass, the fridge-freezer in its carcass, the dishwasher in its group, the sink and the hob in
-     the worktop over their carcass, the coffee machine on its pull-out shelf */
-  function productsOf(model, appliances) {
+     the worktop over their carcass, the coffee machine on its pull-out shelf; with the room's fitting (install: the scene's
+     installation; ceiling: the room's height) the sink's tap and trap in its carcass and the hood over the hob in its group */
+  function productsOf(model, appliances, { install, ceiling } = {}) {
     const { carcassFront } = model, out = [], union = boxes => [0, 1, 2].flatMap(k => [Math.min(...boxes.map(b => b[2 * k])), Math.max(...boxes.map(b => b[2 * k + 1]))]);
     const add = (role, group, carcassId, box, extra) => out.push(Object.assign({ role, A: appliances[role], group: String(group), carcassId, box }, extra));
     for (const g of Object.values(model.groups)) for (const item of g.items) {
@@ -1121,6 +1122,11 @@
       if (sink) {
         const x = (sink.x0 + sink.x1) / 2, y = (sink.y0 + sink.y1) / 2;
         add('sink', r, c.id, [x - S.body.width / 2, x + S.body.width / 2, y - S.body.depth / 2, y + S.body.depth / 2, top - S.bowl.height - S.wall, top + S.rim], { x, y, top });
+        if (!install) continue;
+        const tapY = model.worktops[r].y0 + install.sink.tapFromBack, rim = top + S.rim, from = top - S.bowl.height - S.wall, back = model.carcassBack;
+        add('tap', r, c.id, [x - 28, x + 268, tapY - 28, tapY + 227, rim, rim + 189], { name: 'Tap', x, y: tapY, top: rim });
+        add('trap', r, c.id, [x - 70, x + 125, Math.max(back - 29, model.groups[r].wall), Math.max(y + 20, back + 56), install.sink.wallOutlet - 25, from],   // its outlet ends in the wall
+          { name: 'Trap', x, from, drain: y, top: install.sink.trapTop, outlet: install.sink.wallOutlet, back });
       }
     }
     for (const g of Object.values(model.groups)) {
@@ -1128,6 +1134,13 @@
       if (!cut) continue;
       const H = appliances.hob, top = model.worktops[g.group].h1, x = (cut.x0 + cut.x1) / 2, gy = (cut.y0 + cut.y1) / 2 - H.glass.depth / 2;
       add('hob', g.group, item.carcassId, union([[cut.x0, cut.x1, cut.y0, cut.y1, top - H.body.height, top], [x - H.glass.width / 2, x + H.glass.width / 2, gy, gy + H.glass.depth, top, top + 5]]), { x, cut, top });
+    }
+    for (const g of Object.values(model.groups)) {
+      const item = g.items.find(i => hasTag(i, 'hob'));
+      if (!item || !install) continue;
+      const cut = (worktopOf(String(g.group)).cutouts || []).find(k => k.kind === 'hob'), x = cut ? (cut.x0 + cut.x1) / 2 : (item.x0 + item.x1) / 2, A = appliances.hood;
+      add('hood', g.group, null, [x - A.body.width / 2, x + A.body.width / 2, 0, Math.max(A.body.depth, A.chimney.depth), install.hood.bottom - 1.5, ceiling],
+        { x, bottom: install.hood.bottom, ceiling, worktop: model.worktops[g.group].h1 });
     }
     for (const b of model.boards) if (b.id === 'pullOutShelf') {
       const C = appliances.coffee.body, [x0, x1, , y1, , h1] = b.box, x = (x0 + x1) / 2, y = y1 - 20;
@@ -1143,8 +1156,8 @@
      in x, y, h: offset from its parent's origin (its smallest corner), size its box (its own parts and its children's);
      the group's origin: its left end, its wall, the floor. node.part: the part of the model it draws. The model computes
      with y from the carcass backs; the tree has no such frame. */
-  function tree(model, appliances) {
-    const { carcassBack, carcassFront, frontFace, frontThickness, settings } = model, PRODUCTS = productsOf(model, appliances);
+  function tree(model, appliances, fitting) {
+    const { carcassBack, carcassFront, frontFace, frontThickness, settings } = model, PRODUCTS = productsOf(model, appliances, fitting);
     const union = boxes => [0, 1, 2].flatMap(k => [Math.min(...boxes.map(b => b[2 * k])), Math.max(...boxes.map(b => b[2 * k + 1]))]);
     /* a node with its box in the model's frame (gb) and its children; made local once its parent is known */
     const make = (id, name, type, own, children = [], part = null) => {
@@ -1175,7 +1188,7 @@
     }
     const groups = Object.values(model.groups).map(g => {
       const r = g.group, mine = x => x.group === r;
-      const products = PRODUCTS.filter(x => x.group === String(r)), productNode = x => make(x.role, x.A.name, 'product', x.box, [], x);
+      const products = PRODUCTS.filter(x => x.group === String(r)), productNode = x => make(x.role, x.name || x.A.name, 'product', x.box, [], x);
       const carcasses = model.carcasses.filter(mine).map(c => make(c.name, 'Carcass ' + c.name, 'carcass', [c.x0, c.x1, carcassBack, carcassFront, c.h0, c.h1],
         model.boards.filter(b => b.carcassId === c.id && !b.frontId).map(boardNode).concat(model.fronts.filter(f => f.carcassId === c.id).map(frontNode),
           products.filter(x => x.carcassId === c.id).map(productNode)), c));
@@ -1243,7 +1256,8 @@
         openTop: (list, r, b, ...rest) => D.openTop(list, r, gb(b), ...rest),
         envelope: (r, b, ...rest) => D.envelope(r, gb(b), ...rest),
         cylinder: (...a) => D.cylinder(...at3(a, 4)), detail: (...a) => D.detail(...at3(a, 3)), display: (...a) => D.display(...at3(a, 4)),
-        mover: (...a) => D.mover(...at3(a, 2)), point: (...a) => D.point(...at3(a, 1))
+        mover: (...a) => D.mover(...at3(a, 2)), point: (...a) => D.point(...at3(a, 1)),
+        profile: (list, r, x0, x1, prof, ...rest) => D.profile(list, r, x0 + o[0], x1 + o[0], prof.map(([y, h]) => [y + o[1], h + o[2]]), ...rest)
       });
     }
     const fitOf = (fit, o) => minus(fit, o, [['bodyX0', 0], ['bodyX1', 0], ['bodyH0', 2], ['bodyH1', 2]]);
@@ -1349,8 +1363,9 @@
       const r = sinkGroup, top = worktopTop(r), S = appliances.sink;
       const x = P('sink')[0], o = originOf(x), local = product(S, { r, x: x.x - o[0], y: x.y - o[1], top: x.top - o[2] }, moved(o));
       const bowl = { bottom: local.bottom + o[2], rimTop: local.rimTop + o[2], drain: local.drain + o[1] };
-      HOME.draw.tap(D, { r, x: sinkX, y: worktopOf(r).y0 + install.sink.tapFromBack, top: bowl.rimTop });
-      HOME.draw.trap(D, { r, x: sinkX, from: bowl.bottom, drain: bowl.drain, top: install.sink.trapTop, outlet: install.sink.wallOutlet, back: carcassBack });
+      const tap = P('tap')[0], t = originOf(tap), trap = P('trap')[0], q = originOf(trap);
+      HOME.draw.tap(moved(t), { r, x: tap.x - t[0], y: tap.y - t[1], top: tap.top - t[2] });
+      HOME.draw.trap(moved(q), { r, x: trap.x - q[0], from: trap.from - q[2], drain: trap.drain - q[1], top: trap.top - q[2], outlet: trap.outlet - q[2], back: trap.back - q[1] });
     }
     const hobGroup = GROUP_IDS.find(r => itemsOf(r).some(i => hasTag(i, 'hob')));
     const hobItem = hobGroup && itemsOf(hobGroup).find(i => hasTag(i, 'hob'));
@@ -1558,7 +1573,7 @@
       const o = originOf(x), cut = { x0: x.cut.x0 - o[0], x1: x.cut.x1 - o[0], y0: x.cut.y0 - o[1], y1: x.cut.y1 - o[1] };
       product(appliances.hob, { r: x.group, x: x.x - o[0], cut, top: x.top - o[2] }, moved(o));
     }
-    if (hobItem) product(appliances.hood, { r: hobGroup, x: hobX, bottom: install.hood.bottom, ceiling: D.CEILING, worktop: worktopTop(hobGroup) });
+    for (const x of P('hood')) { const o = originOf(x); product(appliances.hood, { r: x.group, x: x.x - o[0], bottom: x.bottom - o[2], ceiling: x.ceiling - o[2], worktop: x.worktop - o[2] }, moved(o)); }
     carcasses.forEach(drawCarcass);
     for (const r of GROUP_IDS) for (const item of itemsOf(r)) if (FRONT_TYPES.includes(item.type)) drawFront(r, item);
     model.boards.filter(b => b.id === 'pullOutShelf').forEach(pullOutShelf);

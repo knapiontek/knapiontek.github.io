@@ -145,7 +145,7 @@ function menuRow(box, items, extra = []) {
   return row;
 }
 /* the panel's tabs: the same names on every page, each showing only what it has */
-const TAB_NAMES = { layers: 'Layers', finish: 'Finish' };
+const TAB_NAMES = { view: 'View', layers: 'Layers', finish: 'Finish' };
 /* tabs: the tabs of the current mode; shows the sections [data-tab] of the current tab (fallback: the first); hide(part):
    a section [data-part] that needs something the view lacks now. Returns the tab shown. */
 function panelTabs(tabs, current, pick, hide = () => false) {

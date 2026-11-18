@@ -41,14 +41,14 @@ HOME.ui.screen($('app'), {
   help: {
     '3d': `<p>Turn: left button (from outside about the house's middle, inside about what is in the middle of the view) · move: right · zoom: the wheel (toward the cursor).</p>
       <p><b>Walk</b>: the arrows walk and turn, A/D a step aside, Shift faster, PgUp/PgDn or a drag look, Space opens the nearest door, Esc ends.</p>
-      <p><b>Layers</b>: an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: its cut is under the floors; a click on its floor picks a room. A click on a door opens or closes it.</p>
+      <p><b>View</b> (the panel): first the cut, then the layers; an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: its cut is under the floors; a click on its floor picks a room. A click on a door opens or closes it.</p>
       <p>In a room, the walls and the ceiling between the camera and the room hide; the floors do not apply there, only the elements.</p>`,
     '2d': '<p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. Below: zoom and the SVG to print.</p>',
     documents: '<p>The rooms with their areas, the doors with what is bought for them, the notes, the furniture as a tree, the Test (the checks of the data and of the model: OK, nothing to correct; a number, what to correct; i, to know). Blue fields may be changed until a reload. Below: the XLSX with its formulas.</p>' },
-  panel: `<section data-tab="layers" data-part="floors"><h2>Floors</h2><div class="layers" id="floors"></div></section>
-    <section data-tab="layers" data-part="cut"><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv"></span><input id="cut" type="range"></div></section>
-    <section data-tab="layers"><h2>Elements</h2><div class="layers" id="layers"></div></section>
-    <section data-tab="layers" data-part="furniture"><h2>Furniture</h2><div class="layers" id="furniture"></div></section>`
+  panel: `<section data-tab="view" data-part="cut"><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv"></span><input id="cut" type="range"></div></section>
+    <section data-tab="view" data-part="floors"><h2>Floors</h2><div class="layers" id="floors"></div></section>
+    <section data-tab="view"><h2>Elements</h2><div class="layers" id="layers"></div></section>
+    <section data-tab="view" data-part="furniture"><h2>Furniture</h2><div class="layers" id="furniture"></div></section>`
 });
 
 const [DATA, LIB] = await Promise.all([HOME.load(HOME.load.file.house(), 'house', 1), HOME.library.load()]);
@@ -131,7 +131,7 @@ for (const l of LEAVES) {
 V.addLight(); V.addCaps();
 
 /* ================= STATE, LAYERS, CUT ================= */
-const MODES = ['3d', '2d', 'documents'], TABS = { '3d': ['layers'], '2d': ['layers'] };
+const MODES = ['3d', '2d', 'documents'], TABS = { '3d': ['view'], '2d': ['view'] };
 const STORE = HOME.ui.store('home-house', () => ({ mode: '3d', tab: null, layers: {}, cut: {}, zoom: 1, room: null }), s => MODES.includes(s.mode) && s.layers && s.cut);
 const state = STORE.state, save = STORE.save;
 const { layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers);
@@ -336,27 +336,34 @@ function book() {
   }
   doors.rows.push({ kind: 'sum', cells: ['Total', '', '', '', '', { f: `SUM(F${first}:F${doors.rows.length})` }] });
   const notes = { name: 'Notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [DATA.source] }, { kind: 'head', cells: ['Notes'] }, ...DATA.notes.map(n => ({ cells: [n] }))] };
-  /* a room's furniture as its tree: each part where it is in what it belongs to (mm) */
-  const furniture = FURNITURE.map(f => {
-    const sheet = { name: 'Furniture', cols: [{ width: 44, share: 3 }, { width: 34, share: 2 }, ...Array(6).fill({ width: 9, fix: 7 })],
-      rows: [{ kind: 'title', cells: [roomName(f.room) + ' · furniture'] },
-        { kind: 'head', cells: ['Part', 'Path', 'x', 'y', 'h', 'Width (x)', 'Depth (y)', 'Height (h)'] }] };
-    const walk = (n, path, depth) => {
-      sheet.rows.push({ kind: depth ? undefined : 'cat', cells: ['\u2003'.repeat(depth) + n.name, path, ...n.offset.map(v => Math.round(v * 10) / 10), ...n.size.map(v => Math.round(v * 10) / 10)] });
-      for (const c of n.children) walk(c, path + '/' + c.id, depth + 1);
-    };
-    for (const g of f.prepared.TREE) walk(g, g.id, 0);
-    sheet.rows.push({ cells: ['Offsets from the origin of what a part belongs to (its left, back, bottom corner); a group\'s origin: its left end, its wall, the floor.'] });
-    return sheet;
-  });
+  /* the tree of what is shown: the house, its floors, its rooms and in them their furniture; a room's view, its rooms.
+     Each node where it is in its parent (mm); a group of furniture where its scene sets it in its room, the side its fronts
+     face, and in it every part in the group's own x, y, h */
+  const tree = { name: 'Tree', tree: 'closed', cols: [{ width: 44, share: 3 }, { width: 34, share: 2 }, ...Array(6).fill({ width: 9, fix: 7 })],
+    rows: [{ kind: 'title', cells: [WHOLE ? DATA.name : PART.map(id => roomName(ROOM[id])).join(', ')] },
+      { kind: 'head', cells: ['Node', 'Path', 'x', 'y', 'h', 'Width (x)', 'Depth (y)', 'Height (h)'] }] };
+  const mm = v => Math.round(v * 10) / 10;
+  const furnitureOf = id => FURNITURE.find(f => f.room.id === id);
+  function walk(n, path, level, offset = n.offset, size = n.size, name = n.name) {
+    tree.rows.push({ level, kind: level ? undefined : 'cat', cells: [name, path, ...offset.map(mm), ...size.map(mm)] });
+    const f = n.type !== undefined && furnitureOf(n.id);
+    if (f) for (const g of f.prepared.TREE) {
+      const s = f.prepared.scene.groups[g.id.slice(1)];
+      walk(g, (path ? path + '/' : '') + g.id, level + 1, s.offset, s.size, g.name + ' (fronts ' + s.front + ')');
+    }
+    for (const c of n.children || []) walk(c, (path ? path + '/' : '') + c.id, level + 1);
+  }
+  if (WHOLE) walk(T.root, '', 0);
+  else for (const id of PART) walk(ROOM[id].node, T.path(ROOM[id].node), 0);
+  tree.rows.push({ cells: ['A node at its offset from the origin of its parent (its left, back, bottom corner); a group of furniture by its box in its room, and in it the group\'s own x (along its fronts), y (from its wall), h.'] });
   /* the checks: each with its result, what to correct under it */
-  const test = { name: 'Test', cols: [{ width: 90, share: 4 }, { width: 12, fix: 9 }],
+  const test = { name: 'Test', tree: 'open', cols: [{ width: 90, share: 4 }, { width: 12, fix: 9 }],
     rows: [{ kind: 'title', cells: ['Test'] }, { kind: 'head', cells: ['Check', 'Result'] }] };
   for (const c of CHECKS) {
-    test.rows.push({ kind: 'cat', cells: [c.name, c.info ? 'i' : c.items.length ? String(c.items.length) : 'OK'] });
-    for (const i of c.items) test.rows.push({ cells: ['\u2003' + i, ''] });
+    test.rows.push({ level: 0, kind: 'cat', cells: [c.name, c.info ? 'i' : c.items.length ? String(c.items.length) : 'OK'] });
+    for (const i of c.items) test.rows.push({ level: 1, cells: [i, ''] });
   }
-  return { sheets: [rooms, doors, notes, ...furniture, test] };
+  return { sheets: [rooms, doors, notes, tree, test] };
 }
 function documents() {
   if (SHEET) return SHEET.set(book());
@@ -369,7 +376,7 @@ const CHECKS = [{ name: 'Every room asked for (?room=) is a room of the house', 
 
 /* ================= THE SCREEN =================
    top-left: the house, its floors and their rooms · top-right: the modes · over the view: the picked room · below: the
-   mode's actions · the panel: the mode's tabs (Layers: the floors, the cut, the elements) */
+   mode's actions · the panel: the mode's tabs (View: the cut, the floors, the elements, the furniture) */
 const linkTo = ids => '?room=' + ids.join(',');
 const same = ids => ids.length === PART.length && ids.every(id => PART.includes(id));
 HOME.ui.nav([{ name: 'House', href: 'index.html', on: WHOLE }]
