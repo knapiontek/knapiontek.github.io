@@ -25,8 +25,8 @@ async function load() {
   const loadTextures = keys => Promise.all([...new Set(keys)].filter(k => k && !textures[k])
     .map(k => load(file.texture(k), 'texture', VERSION).then(t => { textures[k] = t; }))).then(() => textures);
   const checks = () => [
-    { name: 'Library: every product key in one group only', items: twice },
-    { name: 'Library: every shop named by a product exists', items: Object.keys(groupOf).filter(k => product(k).shop && !shops.shops[product(k).shop]).map(k => `${k}: shop ${product(k).shop}`) }];
+    { name: 'Library: every product key in one group only', about: 'A product is named by its key everywhere; the same key in two groups would make it two products.', items: twice },
+    { name: 'Library: every shop named by a product exists', about: 'Each product\'s shop is a key of shops.js.', items: Object.keys(groupOf).filter(k => product(k).shop && !shops.shops[product(k).shop]).map(k => `${k}: shop ${product(k).shop}`) }];
   return { groups, shops: shops.shops, materials: materials.materials, product, group: key => groupOf[key], textures, loadTextures, checks };
 }
 

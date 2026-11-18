@@ -423,12 +423,12 @@ function checks() {
   }
   const ids = ELEMENTS.concat(OPENINGS, ROOF.windows, VOIDS).map(o => o.id);
   return [
-    { name: 'Every element, opening, roof window and void has its own id', items: ids.filter((id, i) => !id || ids.indexOf(id) !== i).map(id => id || '(no id)') },
-    { name: 'Thickness by kind', items: thickness },
-    { name: `Solids do not overlap (${all.length} solids)`, items: overlaps(all, MIN_OVERLAP).map(overlapText) },
-    { name: 'Floor without a room', items: FLOORS.flatMap(floorLeft) },
-    { name: 'Rooms do not overlap', items: twice },
-    { name: 'Room areas against archon (m², the model at the block faces, archon after plaster)', info: true,
+    { name: 'Every element, opening, roof window and void has its own id', about: 'The parts of the house are found by their ids (a room\'s walls, an opening\'s host, what an element cuts out); two with one id would be mixed up.', items: ids.filter((id, i) => !id || ids.indexOf(id) !== i).map(id => id || '(no id)') },
+    { name: 'Thickness by kind', about: 'An element of a kind with a thickness (block 240, EPS 200, …) is that thick across its wall.', items: thickness },
+    { name: `Solids do not overlap (${all.length} solids)`, about: 'No two solids of the house share volume (the site, frames and glass included): a wall, a slab and the insulation meet face to face.', items: overlaps(all, MIN_OVERLAP).map(overlapText) },
+    { name: 'Floor without a room', about: 'Every part of a floor inside the outer walls belongs to a room, the stair or a wall: no floor area is left without one.', items: FLOORS.flatMap(floorLeft) },
+    { name: 'Rooms do not overlap', about: 'No two rooms share floor area.', items: twice },
+    { name: 'Room areas against archon (m²)', about: 'To know: each room\'s area in the model (at the block faces) beside archon\'s (after plaster), as a reference.', info: true,
       items: ROOMS.filter(r => r.node.archonArea).map(r => `${r.id}: ${areaOf(r.rects).toFixed(2)} · archon ${r.node.archonArea.toFixed(2)}`) }];
 }
 

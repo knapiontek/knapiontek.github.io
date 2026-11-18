@@ -51,6 +51,16 @@ function prepare(room, files, library) {
   return { room, cabinets, scene, model, TREE, appliances, PLACE, HW, looks, textures, level: O[2], ceiling: room.size[2] };
 }
 
+/* the cells of a room's furniture that no node of its group's tree holds: Test */
+function unheld(made, prepared) {
+  const boxes = {}, C = HOME.cabinets, M = prepared.model;
+  for (const g of prepared.TREE) {
+    const r = g.id.slice(1), wall = M.groups[r].wall, list = boxes[r] = [];
+    (function each(n) { const b = C.boxIn(n); list.push([b[0], b[1], b[2] + wall, b[3] + wall, b[4], b[5]]); n.children.forEach(each); })(g);
+  }
+  return made.cells().filter(c => c.gb && !(boxes[c.r] || []).some(b => c.gb.every((v, k) => (k % 2 ? v <= b[k] + 0.5 : v >= b[k] - 0.5))))
+    .map(c => `group ${c.r}: ${c.element} ${c.gb.map(Math.round).join(', ')}`);
+}
 /* the cells of a room outside their group's box: Test */
 function outside(made, prepared) {
   const out = [];
@@ -225,10 +235,11 @@ function build(V, prepared, opts = {}) {
     return out;
   };
   made.checks = () => [
-    { name: 'Room: the furniture as a tree (ids, offsets ≥ 0, every part inside what it belongs to, every group in its box)', items: treeChecks() },
-    { name: 'Room: furniture inside its group', items: outside(made, prepared) },
-    { name: 'Room: parts with no size', items: UNDRAWN.slice() },
-    { name: 'Cabinets: the model', items: model.warnings.slice() }
+    { name: 'Furniture: the tree', about: 'The tree of the furniture by the rules of every tree (ids, sizes), and each group inside the box its scene gives it in the room.', items: treeChecks() },
+    { name: 'Furniture: every solid has its node', about: 'Every solid drawn (a board, a front, a piece of hardware, a part of an appliance) lies inside a node of its group\'s tree: nothing is drawn that the tree does not hold.', items: unheld(made, prepared) },
+    { name: 'Furniture: inside its group', about: 'Every solid of a group lies inside the box its scene gives it in the room.', items: outside(made, prepared) },
+    { name: 'Furniture: parts with no size', about: 'A part whose box has no number (a size the data does not give) is not drawn; it is listed here.', items: UNDRAWN.slice() },
+    { name: 'Cabinets: the model', about: 'What the cabinets\' model finds wrong in the cabinets file: a piece that does not fit its column, a hinge on a shelf, a worktop too short, …', items: model.warnings.slice() }
   ];
   return made;
 }

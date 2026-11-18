@@ -357,12 +357,14 @@ function book() {
   else for (const id of PART) walk(ROOM[id].node, T.path(ROOM[id].node), 0);
   tree.rows.push({ cells: ['A node at its offset from the origin of its parent (its left, back, bottom corner); a group of furniture by its box in its room, and in it the group\'s own x (along its fronts), y (from its wall), h.'] });
   /* the checks: each with its result, what to correct under it */
-  const test = { name: 'Test', tree: 'open', cols: [{ width: 90, share: 4 }, { width: 12, fix: 9 }],
-    rows: [{ kind: 'title', cells: ['Test'] }, { kind: 'head', cells: ['Check', 'Result'] }] };
+  const test = { name: 'Test', tree: 'open', cols: [{ width: 44, share: 2 }, { width: 70, share: 4 }, { width: 10, fix: 8 }],
+    rows: [{ kind: 'title', cells: [WHOLE ? 'Test of the house' : 'Test of ' + PART.map(id => roomName(ROOM[id])).join(', ')] },
+      { kind: 'head', cells: ['Test', 'Details: what it checks', 'Result'] }] };
   for (const c of CHECKS) {
-    test.rows.push({ level: 0, kind: 'cat', cells: [c.name, c.info ? 'i' : c.items.length ? String(c.items.length) : 'OK'] });
-    for (const i of c.items) test.rows.push({ level: 1, cells: [i, ''] });
+    test.rows.push({ level: 0, cells: [c.name, c.about || '', c.info ? 'i' : c.items.length ? String(c.items.length) : 'OK'] });
+    for (const i of c.items) test.rows.push({ level: 1, cells: [i, '', ''] });
   }
+  test.rows.push({ cells: ['Result: OK, nothing to correct; a number, how many to correct (listed under it); i, to know, not a fault.'] });
   return { sheets: [rooms, doors, notes, tree, test] };
 }
 function documents() {
@@ -371,8 +373,12 @@ function documents() {
 }
 
 /* ================= TEST ================= */
-const CHECKS = [{ name: 'Every room asked for (?room=) is a room of the house', items: ASKED.filter(id => !ROOM[id]) }]
-  .concat(T.checks(), MODEL.checks(), LIB.checks(), ...FURNITURE.map(f => f.made.checks().map(c => Object.assign(c, { name: f.room.id + ' · ' + c.name }))));
+/* the whole house: the checks of the house (its tree, its model, the library); a room: its own (its furniture) */
+const ASKED_CHECK = { name: 'Every room asked for is a room of the house', about: 'The rooms named in the address (?room=…) are rooms of house.js.', items: ASKED.filter(id => !ROOM[id]) };
+const HOUSE_CHECKS = [ASKED_CHECK].concat(T.checks(), MODEL.checks(), LIB.checks());
+const ROOM_CHECKS = FURNITURE.flatMap(f => f.made.checks().map(c => Object.assign(c, { name: (FURNITURE.length > 1 ? roomName(f.room) + ' · ' : '') + c.name })));
+const CHECKS = WHOLE ? HOUSE_CHECKS : [ASKED_CHECK, ...(ROOM_CHECKS.length ? ROOM_CHECKS
+  : [{ name: 'No checks of its own', about: 'This room has nothing of its own to check yet; the house\'s checks are in the whole house\'s Documents.', items: [], info: true }])];
 
 /* ================= THE SCREEN =================
    top-left: the house, its floors and their rooms · top-right: the modes · over the view: the picked room · below: the

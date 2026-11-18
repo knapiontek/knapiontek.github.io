@@ -1173,7 +1173,7 @@
       }
     }
     for (const f of model.fronts) {
-      const to = { frontId: f.id, group: String(f.group) }, H = HW.handle, L = H.cupLength / 2 - 3;
+      const to = { frontId: f.id, group: String(f.group) }, H = HW.handle, L = Math.max(H.cupLength / 2 - 3, H.barLength / 2), out = frontFace + 34;   // the cup or the bar, whichever is drawn
       if (f.opening === 'door' && f.carcassId) {
         const cup = settings.drilling.cup, dir = f.hand === 'left' ? 1 : -1, side = f.hingeX, cupX = f.hand === 'left' ? f.x0 + cup.fromEdge : f.x1 - cup.fromEdge, R = cup.diameter / 2 - 0.5;
         const span = (a, b) => [Math.min(a, b), Math.max(a, b)];
@@ -1186,10 +1186,10 @@
       const position = f.item.handle;
       if (position === 'top' || position === 'bottom') {
         const h = position === 'top' ? f.h1 - H.axis : f.h0 + H.axis, xc = (f.x0 + f.x1) / 2;
-        add('handle', 'Handle', to, [xc - L, xc + L, frontFace, frontFace + 26.2, h - 14.2, h + 14]);
+        add('handle', 'Handle', to, [xc - L, xc + L, frontFace, out, h - 14.2, h + 14.2]);
       } else if (position) {
         const x = position === 'left' ? f.x0 + H.axis : f.x1 - H.axis, hc = Math.min(f.h0 + H.sideHeight, (f.h0 + f.h1) / 2);
-        add('handle', 'Handle', to, [x - 14.2, x + 14.2, frontFace, frontFace + 26.2, hc - L, hc + L]);
+        add('handle', 'Handle', to, [x - 14.2, x + 14.2, frontFace, out, hc - L, hc + L]);
       }
       if (f.opening === 'drawer' && f.drawer) {
         const { innerX0, innerX1, bottomH } = f.drawer, Dw = HW.drawer, s0 = Dw.sideFromCarcass, y0 = carcassBack + Dw.fromBack, y1 = carcassFront - Dw.fromFront;
