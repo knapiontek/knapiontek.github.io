@@ -111,3 +111,14 @@ Not yet: the floor tiles (room/tiles.js), the Documents of the kitchen (estimate
 - **The hood, the tap and the trap are nodes too**: the hood in the group of the hob, the tap and the trap in the sink's carcass; drawn in their own coordinates. The same solids and details as before.
 - **The tree is uniform** (the owner's wish): a group holds first what runs along it, then its units in a row as they stand, every one a carcass, the dishwasher in a bay of its own with its front and the appliance (K11, dishwasher, K12, K13, K1X).
 - **The trap's outlet runs to the wall** (in the prototype it went 1 mm into it: the only drawn difference from the prototype, one pipe 1 mm shorter).
+- **Documents and the panel, renamed** (the owner's wish): the sheet Tree is **Elements** (the nodes of the tree); in the panel the block Elements is **Layers** (the kinds of solid: blocks, slabs, EPS…). Opening or closing a node keeps the sheet where it is.
+
+- **The hardware and the fronts' panels are nodes too**: under a carcass its legs, its plinth's grille, its shelf pins, the bumpers, a pull-out shelf's runners; under a front its panel, its hinges (plate, arm, cup), its handle, its drawer's runners. 216 pieces of hardware; every drawn piece lies inside its node. The hardware is still drawn from the model's numbers, not from its node.
+
+## Noted for later: the 2D view (the owner, 18 Nov)
+
+- **Zoom with the mouse wheel**, about the cursor, instead of the + and − buttons.
+- **More dimensions**, more technical: the style of AutoCAD.
+- **The doors' widths are all different**: to unify, by a standard (e.g. 900 for a room, 700 for a wardrobe?), to check first.
+- **The hob draws half black** in 2D.
+- **The kitchen shows too much**: fridge, oven, microwave lie one over another; to simplify (what is under the cut, less detail).

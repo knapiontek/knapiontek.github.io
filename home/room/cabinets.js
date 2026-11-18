@@ -1150,15 +1150,83 @@
     return out;
   }
 
+  /* the hardware, each piece with its box in its group (the model's frame) and what it belongs to: a leg, a plinth's grille,
+     a shelf pin and a hinge's bumper to its carcass; a hinge (plate, arm, cup), a handle and the runners of a drawer, of the
+     drawers behind a door and of a pull-out shelf to their front or shelf. HW: the hardware as drawn (room/room.js) */
+  function hardwareOf(model, HW) {
+    const { carcassBack, carcassFront, frontFace, frontThickness, plinthFace, settings, thickness: T } = model, out = [];
+    const union = boxes => [0, 1, 2].flatMap(k => [Math.min(...boxes.map(b => b[2 * k])), Math.max(...boxes.map(b => b[2 * k + 1]))]);
+    const add = (kind, name, to, box) => out.push(Object.assign({ kind, name, box }, to));
+    for (const c of model.carcasses) {
+      const to = { carcassId: c.id, group: String(c.group) };
+      if (c.floor) {
+        const L = HW.leg, f = L.footRadius;
+        for (const x of [c.x0 + L.fromSide, c.x1 - L.fromSide]) for (const y of [carcassBack + L.fromBack, carcassFront - L.fromFront]) add('leg', 'Leg', to, [x - f, x + f, y - f, y + f, 0, c.h0]);
+      }
+      if (c.grille) {
+        const g = HW.plinthGrille, xc = (c.x0 + c.x1) / 2, w = Math.min(g.width, c.x1 - c.x0 - 80);
+        add('grille', 'Ventilation grille', to, [xc - w / 2, xc + w / 2, plinthFace, plinthFace + 3, g.bottom, g.top]);
+      }
+      for (const b of model.boards) if (b.carcassId === c.id && b.id === 'adjustableShelf') {
+        const pin = settings.drilling.shelfPin, h = b.box[4] - pin.belowShelf, d = pin.diameter / 2;
+        for (const [p0, p1] of [[b.box[0] - 1, b.box[0] + 7], [b.box[1] - 7, b.box[1] + 1]]) for (const y of [carcassBack + pin.fromBack, carcassFront - pin.fromFront]) add('shelfPin', 'Shelf pin', to, [p0, p1, y - d, y + d, h - d, h + d]);
+      }
+    }
+    for (const f of model.fronts) {
+      const to = { frontId: f.id, group: String(f.group) }, H = HW.handle, L = H.cupLength / 2 - 3;
+      if (f.opening === 'door' && f.carcassId) {
+        const cup = settings.drilling.cup, dir = f.hand === 'left' ? 1 : -1, side = f.hingeX, cupX = f.hand === 'left' ? f.x0 + cup.fromEdge : f.x1 - cup.fromEdge, R = cup.diameter / 2 - 0.5;
+        const span = (a, b) => [Math.min(a, b), Math.max(a, b)];
+        for (const h of f.hinges) add('hinge', 'Hinge', to, union([[...span(side, side + dir * 10), carcassFront - 75, carcassFront - 30, h - 22, h + 22],
+          [...span(side + dir * 3, side + dir * 20), carcassFront - 70, carcassFront - 2, h - 9, h + 9],
+          [cupX - 24, cupX + 24, carcassFront - 1.75, frontFace - frontThickness + HW.hinge.cupDepth, h - 24, h + 24], [cupX - R, cupX + R, frontFace - frontThickness, frontFace - frontThickness + HW.hinge.cupDepth, h - R, h + R]]));
+        const bumper = settings.drilling.bumper, gap = frontFace - frontThickness - carcassFront, br = bumper.diameter / 2 + 1.5;
+        for (const b of f.bumpers || []) add('bumper', 'Bumper', { carcassId: f.carcassId, group: String(f.group) }, [b.x - br, b.x + br, carcassFront, carcassFront + gap - 0.2, b.h - br, b.h + br]);
+      }
+      const position = f.item.handle;
+      if (position === 'top' || position === 'bottom') {
+        const h = position === 'top' ? f.h1 - H.axis : f.h0 + H.axis, xc = (f.x0 + f.x1) / 2;
+        add('handle', 'Handle', to, [xc - L, xc + L, frontFace, frontFace + 26.2, h - 14.2, h + 14]);
+      } else if (position) {
+        const x = position === 'left' ? f.x0 + H.axis : f.x1 - H.axis, hc = Math.min(f.h0 + H.sideHeight, (f.h0 + f.h1) / 2);
+        add('handle', 'Handle', to, [x - 14.2, x + 14.2, frontFace, frontFace + 26.2, hc - L, hc + L]);
+      }
+      if (f.opening === 'drawer' && f.drawer) {
+        const { innerX0, innerX1, bottomH } = f.drawer, Dw = HW.drawer, s0 = Dw.sideFromCarcass, y0 = carcassBack + Dw.fromBack, y1 = carcassFront - Dw.fromFront;
+        const runners = (h, name) => {
+          add('runner', name, to, [innerX0, innerX0 + s0, y0, y1 + 2, h - 24, h - 6]);
+          add('runner', name, to, [innerX1 - s0, innerX1, y0, y1 + 2, h - 24, h - 6]);
+        };
+        runners(bottomH, 'Drawer runner');
+        if (f.drawer.inner) runners(f.drawer.innerH, 'Inner drawer runner');
+      }
+      if (f.doorDrawers) {
+        const clearance = settings.doorDrawers.clearance;
+        for (const b of f.doorDrawers.boxes) {
+          const h0 = b.h0 + T.drawerBox + 20, h1 = h0 + 35;
+          add('runner', 'Ball runner', to, [b.x0 - clearance, b.x0, b.y0, b.y1, h0, h1]);
+          add('runner', 'Ball runner', to, [b.x1, b.x1 + clearance, b.y0, b.y1, h0, h1]);
+        }
+      }
+    }
+    for (const shelf of model.boards) if (shelf.id === 'pullOutShelf') {
+      const c = model.carcasses.find(k => k.id === shelf.carcassId), [x0, x1, y0, y1, h0] = shelf.box;
+      const spacer = model.boards.find(b => b.carcassId === c.id && b.id === 'spacer' && b.box[4] < h0 && b.box[5] > h0 && (b.box[1] <= x0 || b.box[0] >= x1));
+      const left = spacer && spacer.box[1] <= x0 ? spacer.box[1] : c.x0 + T.carcass, right = spacer && spacer.box[0] >= x1 ? spacer.box[0] : c.x1 - T.carcass;
+      for (const [a, b] of [[left, x0], [x1, right]]) add('runner', 'Pull-out shelf runner', { carcassId: c.id, group: String(c.group) }, [a, b, y0, y1, h0 - 14, h0 + 12]);
+    }
+    return out;
+  }
+
   /* ================= 7. THE TREE: every part in the coordinates of what it belongs to =================
      group -> what runs along it (worktop, panels, strips, plinths, plasterboard, the hood), then its units in a row: its
-     carcasses and a dishwasher's bay; carcass -> its boards, fronts and products; front ->
+     carcasses and a dishwasher's bay; carcass -> its boards, fronts, products and hardware; front -> its panel, its hardware,
      the boards of its drawer, its inner drawer, its drawers behind the door. A node: {id, name, type, offset, size, children}
      in x, y, h: offset from its parent's origin (its smallest corner), size its box (its own parts and its children's);
      the group's origin: its left end, its wall, the floor. node.part: the part of the model it draws. The model computes
      with y from the carcass backs; the tree has no such frame. */
   function tree(model, appliances, fitting) {
-    const { carcassBack, carcassFront, frontFace, frontThickness, settings } = model, PRODUCTS = productsOf(model, appliances, fitting);
+    const { carcassBack, carcassFront, frontFace, frontThickness, settings } = model, PRODUCTS = productsOf(model, appliances, fitting), HARDWARE = fitting && fitting.HW ? hardwareOf(model, fitting.HW) : [];
     const union = boxes => [0, 1, 2].flatMap(k => [Math.min(...boxes.map(b => b[2 * k])), Math.max(...boxes.map(b => b[2 * k + 1]))]);
     /* a node with its box in the model's frame (gb) and its children; made local once its parent is known */
     const make = (id, name, type, own, children = [], part = null) => {
@@ -1176,11 +1244,13 @@
       return list;
     };
     const cap = t => t[0].toUpperCase() + t.slice(1);
+    const hardwareNode = x => make(x.kind, x.name, 'hardware', x.box, [], x);
     const boardNode = b => make(b.id, b.name + ' ' + b.a + ' × ' + b.b, 'board', b.box, [], b);
     const frontBox = f => [f.x0, f.x1, frontFace - frontThickness, frontFace, f.h0, f.h1];
     function frontNode(f) {
       const own = model.boards.filter(b => b.frontId === f.id);
-      const children = own.filter(b => !b.inner && b.doorDrawer === undefined).map(boardNode);
+      const children = [make('panel', (f.opening === 'drawer' ? 'Drawer front ' : 'Front panel ') + Math.round(f.width) + ' × ' + Math.round(f.height), 'board', frontBox(f), [], null)]
+        .concat(own.filter(b => !b.inner && b.doorDrawer === undefined).map(boardNode), HARDWARE.filter(x => x.frontId === f.id).map(hardwareNode));
       const inner = own.filter(b => b.inner);
       if (inner.length) children.push(make('innerDrawer', 'Inner drawer', 'drawer', null, inner.map(boardNode)));
       const behind = [...new Set(own.filter(b => b.doorDrawer !== undefined).map(b => b.doorDrawer))];
@@ -1192,7 +1262,7 @@
       const products = PRODUCTS.filter(x => x.group === String(r)), productNode = x => make(x.role, x.name || x.A.name, 'product', x.box, [], x);
       const carcasses = model.carcasses.filter(mine).map(c => make(c.name, 'Carcass ' + c.name, 'carcass', [c.x0, c.x1, carcassBack, carcassFront, c.h0, c.h1],
         model.boards.filter(b => b.carcassId === c.id && !b.frontId).map(boardNode).concat(model.fronts.filter(f => f.carcassId === c.id).map(frontNode),
-          products.filter(x => x.carcassId === c.id).map(productNode)), c));
+          products.filter(x => x.carcassId === c.id).map(productNode), HARDWARE.filter(x => x.carcassId === c.id).map(hardwareNode)), c));
       /* a front with no carcass (a dishwasher's) stands in a bay of its own: a unit in the row of carcasses, with its appliance */
       const bays = model.fronts.filter(f => mine(f) && !f.carcassId).map(f => {
         const inside = products.filter(x => !x.carcassId && x.item === f.item);

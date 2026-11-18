@@ -115,7 +115,7 @@ function create(box, book) {
         parent[row.level] = ri;
         const next = sheet.rows[ri + 1];
         if (isTree(next) && next.level > row.level) fold = el('button', { className: 'fold', textContent: open.has(ri) ? '−' : '+', title: open.has(ri) ? 'Close' : 'Open',
-          onclick: () => { if (open.has(ri)) open.delete(ri); else open.add(ri); draw(); } });
+          onclick: () => { const top = body.scrollTop; if (open.has(ri)) open.delete(ri); else open.add(ri); draw(); body.scrollTop = top; } });   // the view stays where it is
       }
       (row.cells || []).forEach((cell, ci) => {
         const d = cell?.digits ?? sheet.cols[ci]?.digits, td = el('td');

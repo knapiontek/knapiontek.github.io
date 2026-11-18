@@ -22,7 +22,7 @@ const FRONTS = {
 function prepare(room, files, library) {
   const P = library.products, cabinets = files.cabinets, scene = files.scene;
   const project = C().withLibrary(cabinets, P.boards), appliances = C().appliances(project, P.appliances);
-  const model = C().build(project, appliances), TREE = C().tree(model, appliances, { install: scene.installation, ceiling: room.size[2] }), O = room.offset;
+  const model = C().build(project, appliances), O = room.offset;
   /* a group: its box in the room (scene) with its back on the wall line; y = 0 at the carcass backs, the wall at y = wall */
   const PLACE = {};
   for (const [r, g] of Object.entries(scene.groups)) {
@@ -42,6 +42,7 @@ function prepare(room, files, library) {
     plinthGrille: { width: grille.width, bottom: L.plinthGrille.bottom, top: L.plinthGrille.bottom + grille.height }
   };
   /* the looks this room adds to the library's: its boards, its walls' paint, the handles' metal, the lamps' shade */
+  const TREE = C().tree(model, appliances, { install: scene.installation, ceiling: room.size[2], HW });
   const looks = Object.assign(C().boardLooks(model), {
     wall: { color: scene.room.wallColor, roughness: 0.95, reflect: 0.45 },
     shade: { color: model.materials[model.materialFor.cabinet].color, roughness: 0.5, metalness: 0.2 }

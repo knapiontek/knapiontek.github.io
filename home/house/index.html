@@ -47,7 +47,7 @@ HOME.ui.screen($('app'), {
     documents: '<p>The rooms with their areas, the doors with what is bought for them, the notes, the furniture as a tree, the Test (the checks of the data and of the model: OK, nothing to correct; a number, what to correct; i, to know). Blue fields may be changed until a reload. Below: the XLSX with its formulas.</p>' },
   panel: `<section data-tab="view" data-part="cut"><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv"></span><input id="cut" type="range"></div></section>
     <section data-tab="view" data-part="floors"><h2>Floors</h2><div class="layers" id="floors"></div></section>
-    <section data-tab="view"><h2>Elements</h2><div class="layers" id="layers"></div></section>
+    <section data-tab="view"><h2>Layers</h2><div class="layers" id="layers"></div></section>
     <section data-tab="view" data-part="furniture"><h2>Furniture</h2><div class="layers" id="furniture"></div></section>`
 });
 
@@ -339,7 +339,7 @@ function book() {
   /* the tree of what is shown: the house, its floors, its rooms and in them their furniture; a room's view, its rooms.
      Each node where it is in its parent (mm); a group of furniture where its scene sets it in its room, the side its fronts
      face, and in it every part in the group's own x, y, h */
-  const tree = { name: 'Tree', tree: 'closed', cols: [{ width: 44, share: 3 }, { width: 34, share: 2 }, ...Array(6).fill({ width: 9, fix: 7 })],
+  const tree = { name: 'Elements', tree: 'closed', cols: [{ width: 44, share: 3 }, { width: 34, share: 2 }, ...Array(6).fill({ width: 9, fix: 7 })],
     rows: [{ kind: 'title', cells: [WHOLE ? DATA.name : PART.map(id => roomName(ROOM[id])).join(', ')] },
       { kind: 'head', cells: ['Node', 'Path', 'x', 'y', 'h', 'Width (x)', 'Depth (y)', 'Height (h)'] }] };
   const mm = v => Math.round(v * 10) / 10;
@@ -376,7 +376,7 @@ const CHECKS = [{ name: 'Every room asked for (?room=) is a room of the house', 
 
 /* ================= THE SCREEN =================
    top-left: the house, its floors and their rooms · top-right: the modes · over the view: the picked room · below: the
-   mode's actions · the panel: the mode's tabs (View: the cut, the floors, the elements, the furniture) */
+   mode's actions · the panel: the mode's tabs (View: the cut, the floors, the layers, the furniture) */
 const linkTo = ids => '?room=' + ids.join(',');
 const same = ids => ids.length === PART.length && ids.every(id => PART.includes(id));
 HOME.ui.nav([{ name: 'House', href: 'index.html', on: WHOLE }]
