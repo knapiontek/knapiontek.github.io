@@ -1,7 +1,7 @@
 /* core/estimate.js: the sheets every room's Documents share, so they look and work the same everywhere (core/sheet.js
    draws them and makes the XLSX):
      estimate   Estimate: the items by category, quantity × unit price, sums, the total
-     cutList    Cutting list: the boards to order, by board, with their edges, m², banding and cuts
+     cutList    Cut list: the boards to order, by board, with their edges, m², banding and cuts
    Knows no project: a page hands in its items and parts. No browser. */
 (function (HOME) {
 'use strict';
@@ -67,7 +67,7 @@ function estimate(spec) {
   return { sheet, row };
 }
 
-/* ---------- Cutting list ----------
+/* ---------- Cut list ----------
    spec   {title, note, blocks: [block], legend: [{code, text}] (under the note, before the blocks), screen (as cols)}
    block  {id, title, columns: [label, size 1, size 2, qty] (or the default), cut (cuts counted), rows: [part]}
    part   {label, name, a, b, edgesA, edgesB (finished edges along a and b), qty, edge (banding of one piece, mm, or null),
@@ -93,7 +93,7 @@ function cutList(spec) {
     rows.push({ kind: 'sum', cells: ['', 'Total', '', '', '', '', formula(`SUM(G${first}:G${last})`), formula(`SUM(H${first}:H${last})`), formula(`SUM(I${first}:I${last})`), formula(`SUM(J${first}:J${last})`)] });
     rows.push([]);
   }
-  const sheet = { name: 'Cutting list', cols: cols([9, 40, 12, 6, 12, 6, 10, 8, 15, 12, 34, 14], { 6: { digits: 3, z: '0.000' }, 8: { digits: 2, z: '0.00' }, 9: { digits: 2, z: '0.00' } },
+  const sheet = { name: 'Cut list', cols: cols([9, 40, 12, 6, 12, 6, 10, 8, 15, 12, 34, 14], { 6: { digits: 3, z: '0.000' }, 8: { digits: 2, z: '0.00' }, 9: { digits: 2, z: '0.00' } },
     spec.screen || [8, 's2n12m36', 6, 3, 6, 3, 7, 5, 7, 7, 's1n9m24', 's1n10m30']), rows: kinds(rows) };
   return { sheet, total };
 }

@@ -360,6 +360,6 @@ function autoFit(table, box, cols) {
   return fit;
 }
 
-HOME.ui = { LOCALE, MODES, $, fmt, byId, el, esc, option, store, screen, failed, modeToggle, showMode, layerTree, layerSwitch, layersPanel,
+HOME.ui = { LOCALE, MODES, $, fmt, byId, el, esc, option, store, screen, failed, modeToggle, showMode, layerTree, layerSwitch, layersPanel, themeButton, corner, panelToggle,
   checksHtml, nav, menuRow, panelTabs, bottomMenu, sunStore, sunPanel, planSheet, setColumns, autoFit };
 })(window.HOME = window.HOME || {});

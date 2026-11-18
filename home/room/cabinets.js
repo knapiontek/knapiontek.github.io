@@ -58,7 +58,7 @@
     // uses that are not a type (the types have their own label)
     use: { islandWorktop: 'island worktop', islandEndPanel: 'island end panel', carcass: 'carcass', backPanel: 'back panel', drawerBox: 'drawer boxes', hobPanel: 'panel under the hob' },
     hole: { cup: 'hinge cup', plate: 'hinge plate', bumper: 'bumper', shelfPin: 'shelf pin', runner: 'drawer / pull-out shelf runner', sink: 'sink cut-out', hob: 'hob cut-out' },
-    // short codes of the holes and cut-outs in the cutting list (its legend explains them): always two letters, the first one the
+    // short codes of the holes and cut-outs in the cut list (its legend explains them): always two letters, the first one the
     // group (H hinge, S shelf / runner, C cut-out), the second the part
     holeCode: { cup: 'HC', plate: 'HP', bumper: 'HB', shelfPin: 'SP', runner: 'SR', sink: 'CS', hob: 'CH' },
     // hand of a part, as seen from the front of the furniture: a carcass side or hinge post (left / right), a door (its hinge side: front.hand)
@@ -1666,9 +1666,23 @@
     return out;
   }
 
+  /* a cabinets file as its text, as the files are written: every setting, appliance, note, group and component on its
+     own line (a setting of settings on lines of their own), a blank line between the groups' components */
+  function cabinetsText(file) {
+    const json1 = v => (Array.isArray(v) ? '[' + v.map(json1).join(', ') + ']' : v && typeof v === 'object' ? '{' + Object.entries(v).map(([k, x]) => JSON.stringify(k) + ': ' + json1(x)).join(', ') + '}' : JSON.stringify(v));
+    const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+    const value = v => (isObj(v) && Object.values(v).every(isObj) ? '{\n' + Object.entries(v).map(([k, x]) => '   ' + json1(k) + ': ' + json1(x)).join(',\n') + '\n  }' : json1(v));
+    const entries = (o, line) => Object.entries(o || {}).map(([k, v]) => '  ' + json1(k) + ': ' + line(v)).join(',\n');
+    const list = l => (l || []).map(x => '  ' + json1(x)).join(',\n');
+    const comps = (file.components || []).map((c, i, all) => (i && c.group !== all[i - 1].group ? '\n' : '') + '  ' + json1(c)).join(',\n');
+    return 'HOME.data({\n "format": "cabinets",\n "version": 1,\n "settings": {\n' + entries(file.settings, value) +
+      '\n },\n "appliances": {\n' + entries(file.appliances, json1) + '\n },\n "notes": [\n' + list(file.notes) +
+      '\n ],\n "groups": [\n' + list(file.groups) + '\n ],\n "components": [\n' + comps + '\n ]\n});\n';
+  }
+
   HOME.cabinets = {
     TYPES, TAGS, TAG_NAMES, LABELS, typeLabel, tagsLabel, useLabel, hasTag, FRONT_TYPES, SIDES, HINGE_SIDES,
     placeLabel, gapsText, parseTags, spaceAround, valueAt, PINS_PER_SHELF, tagsOf, readType, cutKey, checkSettings, build, cutList, 
-    plural, appliances, withLibrary, tree, boxIn, draw, boardLooks, coveredEdges
+    plural, appliances, withLibrary, tree, boxIn, draw, boardLooks, coveredEdges, cabinetsText
   };
 })();

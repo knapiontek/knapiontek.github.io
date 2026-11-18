@@ -1,4 +1,4 @@
-/* room/docs.js: a furnished room's Documents: the estimate, the cutting list, the notes and the assembly cards, from the
+/* room/docs.js: a furnished room's Documents: the estimate, the cut list, the notes and the assembly cards, from the
    cabinets' model, the room's tree and its docs file (room/<kind>_<number>.docs.js), with the shared sheets of
    core/estimate.js. Knows the format docs (its placeholders: room/project.md), not the room. No browser but the cards' HTML.
    What the tree holds (a hinge, a leg, an appliance) is counted from it: {nodes:kind}. */
@@ -35,13 +35,13 @@ const edgeText = edges => (edges || []).map(edge => KE.LABELS.edge[edge.side] + 
 const edgeLength = edges => (edges || []).reduce((sum, edge) => sum + edge.length, 0);
 const sideText = sides => (sides || []).map(side => KE.LABELS.edge[side]).join(' + ');
 const num1 = x => String(x);
-/* the cut-outs of a cutting-list row (worktops, cut by the supplier's CNC): "CS 680×420 @ 1234x110", one line each */
+/* the cut-outs of a cut-list row (worktops, cut by the supplier's CNC): "CS 680×420 @ 1234x110", one line each */
 function cutoutLines(row) {
   const code = KE.LABELS.holeCode;
   const lines = row.drillings.flatMap(({ drilling }) => drilling.cutouts.map(c => (code[c.kind] + ' ' + c.width + '×' + c.depth + ' @ ' + num1(c.x) + 'x' + num1(c.y)).replace(/ /g, ' ')));
   return [...new Set(lines)];
 }
-/* the legend over the cutting list: labels and cut-out codes, from the cabinets file's settings.cutouts */
+/* the legend over the cut list: labels and cut-out codes, from the cabinets file's settings.cutouts */
 function cutoutLegend() {
   const labels = KE.LABELS, c = model.settings.cutouts || {}, from = 'x ' + labels.holeFrom.left + ', y ' + labels.holeFrom.back;
   return [
@@ -88,7 +88,7 @@ const edgeCounts = row => {
   const along = size => edges.filter(edge => edge.along === size).length;
   return { length: along('a'), width: along('b') };
 };
-/* the cutting list's rows: the longer side first (a; the edges turn with it), by name, then the longest first */
+/* the cut list's rows: the longer side first (a; the edges turn with it), by name, then the longest first */
 const turnEdges = edges => (edges || []).map(edge => ({ ...edge, along: edge.along === 'a' ? 'b' : 'a' }));
 const longFirst = rows => rows.map(row => (row.a >= row.b ? row : { ...row, a: row.b, b: row.a, edges: turnEdges(row.edges) }));
 const sortRows = rows => rows.sort((x, y) => x.name.localeCompare(y.name) || y.a - x.a || y.b - x.b);
@@ -100,7 +100,7 @@ function frontFunction(front) {
 /* the place of a part without a carcass: G1[4], G1[1-3]; one without a column, its group */
 const place = p => (p.item ? KE.placeLabel(p.group, p.item.column, p.item.span) : p.column ? KE.placeLabel(p.group, p.column) : 'G' + p.group);
 const columnOfPart = p => (p.item ? p.item.column : p.column || 0);
-/* a front as a cutting-list part: width × height, as fronts are always given */
+/* a front as a cut-list part: width × height, as fronts are always given */
 const frontPart = f => ({ ...f, name: frontFunction(f), a: round1(f.width), b: round1(f.height) });
 /* the rows of one block: its id = fronts | strips | plinths | frontPanels | wallPanels | plaster | worktops | endPanels,
    or a material use (carcass, drawerBox, backPanel ...): every board of that use's material */
@@ -197,7 +197,7 @@ values = {
   params: Object.fromEntries(Object.entries(COST.params).map(([name, value]) => [name, evalQty(value)])),
   items: Object.fromEntries(ITEMS.map(item => [item.id, { qty: item.qty, price: item.price }]))
 };
-/* the totals of each cutting-list block: m², banding, cutting length, pieces; and the same per row */
+/* the totals of each cut-list block: m², banding, cutting length, pieces; and the same per row */
 function blockTotals() {
   const totals = {};
   for (const block of COST.blocks) {
@@ -314,8 +314,8 @@ function compute() {
 
 function buildBook() {
   const result = compute(), E = HOME.estimate;
-  /* the cutting list: as an order form, each size followed by the number of its finished edges */
-  const cutting = E.cutList({ title: 'Cutting list – the kitchen\'s boards (sizes in mm)', note: fill(COST.labels.cuttingNote),
+  /* the cut list: as an order form, each size followed by the number of its finished edges */
+  const cutting = E.cutList({ title: 'Cut list – the kitchen\'s boards (sizes in mm)', note: fill(COST.labels.cuttingNote),
     screen: [6, 's2n9m36', 6, 3, 6, 3, 6, 5, 7, 6, 21, 's1n8m24'],
     blocks: COST.blocks.map(block => ({ id: block.id, title: fill(block.title), columns: block.columns, cut: block.cut,
       rows: (rowsOf[block.id] || []).map((row, i) => {
@@ -335,11 +335,11 @@ function buildBook() {
       notes.push({ cells: [noteNumber[n.id], fill(n.topic), { text: fill(n.description), links: noteDocuments(n).map(l => ({ text: l.name, href: l.url })) }, fill(n.assumed), fill(n.decide)] });
     }
   });
-  /* the estimate: a quantity -> an Excel formula: other items' quantities, the parameters and the cutting list's m², banding
+  /* the estimate: a quantity -> an Excel formula: other items' quantities, the parameters and the cut list's m², banding
      and cut totals as references to their cells, the rest as values */
   const toExcel = (expr, ref) => expr.replace(/^=/, '')
     .replace(/\{q:(\w+)\}/g, (_, id) => ref.item(id))
-    .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, block, total) => `'Cutting list'!$${{ m2: 'G', edge: 'I', cut: 'J' }[total]}$${cutting.total[block]}`)
+    .replace(/\{(\w+)\.(m2|edge|cut)\}/g, (_, block, total) => `'Cut list'!$${{ m2: 'G', edge: 'I', cut: 'J' }[total]}$${cutting.total[block]}`)
     .replaceAll('{waste}', ref.param('waste'))
     .replaceAll('{sheet}', ref.param('sheet'))
     .replace(/\{([^}|]+)\}/g, (_, key) => String(Number(placeholder(key, result.totals, result.quantities))));

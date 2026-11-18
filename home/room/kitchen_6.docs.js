@@ -91,7 +91,7 @@ HOME.data({
      "material": "cabinet",
      "name": "Shaker fronts",
      "spec": "{m:cabinet}, MDF, lacquered all round",
-     "use": "doors and drawers (cutting list: FRONTS)",
+     "use": "doors and drawers (cut list: FRONTS)",
      "qty": "={fronts.m2}",
      "refs": ["lacquered"]
     },
@@ -100,7 +100,7 @@ HOME.data({
      "material": "strip",
      "name": "Front strips",
      "spec": "{m:strip}, lacquered on both faces and the front edge",
-     "use": "between the fronts, on edge, depth {s:strip.depth} (cutting list: FRONT STRIPS)",
+     "use": "between the fronts, on edge, depth {s:strip.depth} (cut list: FRONT STRIPS)",
      "qty": "={strips.m2}",
      "refs": ["stripsPanels", "lacquered"]
     },
@@ -109,7 +109,7 @@ HOME.data({
      "material": "plinth",
      "name": "Plinth",
      "spec": "{m:plinth}, moisture resistant MDF, lacquered on both faces",
-     "use": "under the carcasses, on the legs' clips (cutting list: PLINTH)",
+     "use": "under the carcasses, on the legs' clips (cut list: PLINTH)",
      "qty": "={plinths.m2}",
      "refs": ["lacquered", "corner"]
     },
@@ -118,7 +118,7 @@ HOME.data({
      "material": "frontPanel",
      "name": "Front panels",
      "spec": "{m:frontPanel}, lacquered on both faces and the edges by an opening front",
-     "use": "flat in the plane of the fronts; the island's back panel (cutting list: FRONT PANELS)",
+     "use": "flat in the plane of the fronts; the island's back panel (cut list: FRONT PANELS)",
      "qty": "={frontPanels.m2}",
      "refs": ["lacquered", "hiddenSides"]
     }
@@ -155,13 +155,13 @@ HOME.data({
     {
      "id": "cutting",
      "product": "m-hm-board-cutting",
-     "use": "the carcass and drawer boards, by the cutting list",
+     "use": "the carcass and drawer boards, by the cut list",
      "qty": "={carcass.cut}+{drawerBox.cut}"
     },
     {
      "id": "carcassEdging",
      "product": "edge-banding-u708-pur",
-     "use": "the edges seen of the carcasses and drawers, by the cutting list + {v:edgeAllowance|%}",
+     "use": "the edges seen of the carcasses and drawers, by the cut list + {v:edgeAllowance|%}",
      "qty": "=({carcass.edge}+{drawerBox.edge})*(1+{v:edgeAllowance})"
     }
    ]
@@ -330,7 +330,7 @@ HOME.data({
      "material": "endPanel",
      "name": "End panels",
      "spec": "{m:endPanel}, two-sided, depth {d:endPanel} and {d:islandEndPanel}",
-     "use": "under the worktops' ends; the worktop stands {s:worktop.endPanelOverhang} out (cutting list: END PANELS)",
+     "use": "under the worktops' ends; the worktop stands {s:worktop.endPanelOverhang} out (cut list: END PANELS)",
      "qty": "={endPanels.m2}",
      "refs": ["worktops"]
     },
@@ -346,7 +346,7 @@ HOME.data({
      "material": "wallPanel",
      "name": "Wall panel",
      "spec": "{m:wallPanel}, sheet {v:sheet.length} × {v:sheet.width} × {t:wallPanel}",
-     "use": "the wall over the worktop (cutting list: WALL PANEL)",
+     "use": "the wall over the worktop (cut list: WALL PANEL)",
      "qty": "=ROUNDUP({wallPanels.m2}*(1+{waste})/{sheet},0)"
     },
     {
@@ -525,7 +525,7 @@ HOME.data({
      "appliance": "hob",
      "topic": "Hob Electrolux CIT61443 – K11",
      "description": "Sizes: glass {a:hob.glass.width} × {a:hob.glass.depth}, body {a:hob.body.width} × {a:hob.body.depth} × {a:hob.body.height}.\nCut-out: {s:cutouts.hob.width} × {s:cutouts.hob.depth}, {s:cutouts.hob.fromBack} from the worktop's back edge.\nThe glass on the worktop: {=(<a:hob.glass.width> - <s:cutouts.hob.width>) / 2} at each side; {=<s:cutouts.hob.fromBack> - (<a:hob.glass.depth> - <s:cutouts.hob.depth>) / 2} from the back, {=<w:1.depth> - <s:cutouts.hob.fromBack> - (<a:hob.glass.depth> + <s:cutouts.hob.depth>) / 2} from the front edge of the worktop.\nUnder the hob: the front rail {s:crossRails.hobFront}, the back one {s:crossRails.depth}; a panel of {m:hobPanel} behind the front rail, {s:crossRails.hobPanelGap} gap behind it.",
-     "assumed": "On the cutting list.",
+     "assumed": "On the cut list.",
      "decide": "The hob's body to the panel: the manual, p. 22."
     },
     {
@@ -533,7 +533,7 @@ HOME.data({
      "appliance": "sink",
      "topic": "Sink IKEA KILSVIKEN – K12",
      "description": "Sizes: the sink {a:sink.body.width} × {a:sink.body.depth}, bowl {a:sink.bowl.width} × {a:sink.bowl.depth} × {a:sink.bowl.height}.\nCut-out: {s:cutouts.sink.width} × {s:cutouts.sink.depth}, {s:cutouts.sink.fromBack} from the worktop's back edge.\nThe sink on the worktop: its rim {=(<a:sink.body.width> - <s:cutouts.sink.width>) / 2} at each side; {=<s:cutouts.sink.fromBack> - (<a:sink.body.depth> - <s:cutouts.sink.depth>) / 2} from the back, {=<w:1.depth> - <s:cutouts.sink.fromBack> - (<a:sink.body.depth> + <s:cutouts.sink.depth>) / 2} from the front edge of the worktop.",
-     "assumed": "The cut-out on the cutting list (WORKTOPS).",
+     "assumed": "The cut-out on the cut list (WORKTOPS).",
      "decide": "Check the cut-out with IKEA's template before the CNC."
     },
     {
@@ -556,7 +556,7 @@ HOME.data({
     {
      "id": "corner",
      "topic": "The L corner – the corner carcass",
-     "description": "Carcass K13: a door, a front panel {i:K13/frontPanel.width} and a hidden filler.\nThe hinge post: {m:carcass}, depth {s:hinges.postDepth}, carries the hinges.\nThe inset panel: behind the panel {i:K13/frontPanel.width}, from the post to the carcass's side.\nThe plinths of groups 1 and 2: the cutting list gives both full lengths, cut one on site.",
+     "description": "Carcass K13: a door, a front panel {i:K13/frontPanel.width} and a hidden filler.\nThe hinge post: {m:carcass}, depth {s:hinges.postDepth}, carries the hinges.\nThe inset panel: behind the panel {i:K13/frontPanel.width}, from the post to the carcass's side.\nThe plinths of groups 1 and 2: the cut list gives both full lengths, cut one on site.",
      "assumed": "Connectors: one pack.",
      "decide": "The shelf in K13: the hinge post cuts through it (the 3D view reports a clash).\nA wall strip under the worktop in the corner?"
     },
@@ -574,7 +574,7 @@ HOME.data({
     {
      "id": "innerDrawers",
      "topic": "The inner drawers for cutlery (island)",
-     "description": "The island, its top drawers: an inner TANDEMBOX antaro M 500, behind the same front.\nThe inner front Z31L: the carcass's inside width − {s:drawers.inner.frontDeduction}.\nBottom and back: {m:drawerBox}, on the cutting list.",
+     "description": "The island, its top drawers: an inner TANDEMBOX antaro M 500, behind the same front.\nThe inner front Z31L: the carcass's inside width − {s:drawers.inner.frontDeduction}.\nBottom and back: {m:drawerBox}, on the cut list.",
      "decide": "The back's height and the insert: Blum's configurator."
     },
     {
@@ -586,7 +586,7 @@ HOME.data({
     {
      "id": "worktops",
      "topic": "Worktops",
-     "description": "Group 1: one board, cut at the back to {w:1.depth}.\nThe island: a board of {d:islandWorktop}, cut at the back to {w:3.depth}.\nThe cut-outs for the sink and the hob: CNC at the wholesaler's (cutting list: WORKTOPS).",
+     "description": "Group 1: one board, cut at the back to {w:1.depth}.\nThe island: a board of {d:islandWorktop}, cut at the back to {w:3.depth}.\nThe cut-outs for the sink and the hob: CNC at the wholesaler's (cut list: WORKTOPS).",
      "decide": "End panels: still looking for a two-sided oak (the worktop's decor, both faces seen)."
     },
     {

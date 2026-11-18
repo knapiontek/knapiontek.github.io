@@ -72,3 +72,7 @@ The golden: the prototype's KitchenEngine.build on kitchen.dat.js in Node (every
 ## The kitchen's Documents
 
 `tests/cmp_docs.js` (Node: room/docs.js through tests/t_docs.js) against the prototype's book, golden/kitchen_book.json (its Info sheets, taken from a copy of the prototype's kitchen page that exposes its COST): every number and formula of the Estimate and the Notes row by row; the Cutting list by block, its rows' order aside (they are sorted by their names, now English). All the same but the agreed change: the 9 system drawers' backs with their top edge banded (+6.7 m of banding: 42.22 PLN with the reserve; the total 36 140.84 against 36 098.62).
+
+## The cabinet editor
+
+room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the data; the file read into the tables and written back (`HOME.cabinets.cabinetsText(EDITOR.built.file)`) is room/kitchen_6.cabinets.js byte for byte; a change in a table rebuilds the drawing and lists the model's problems (a drawer made 500 high: "G1[4]: drawer overlaps another piece - skipped").

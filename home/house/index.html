@@ -334,7 +334,7 @@ function book() {
     doors.rows.push({ cells: [d.label, FLOORS.find(F => F.id === d.floor).name, P ? P.name : 'to choose', { v: 1, input: true }, P && P.price !== null ? { v: P.price, input: true } : '', { f: `D${r}*E${r}` }] });
   }
   doors.rows.push({ kind: 'sum', cells: ['Total', '', '', '', '', { f: `SUM(F${first}:F${doors.rows.length})` }] });
-  const notes = { name: WHOLE ? 'Notes' : 'House notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [HOUSE.source] }, { kind: 'head', cells: ['Notes'] }, ...HOUSE.notes.map(n => ({ cells: [n] }))] };
+  const notes = { name: 'Notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [HOUSE.source] }, { kind: 'head', cells: ['Notes'] }, ...HOUSE.notes.map(n => ({ cells: [n] }))] };
   /* the tree of what is shown: the whole house down to its rooms; a room's view, its rooms down to their furniture.
      Each node where it is in its parent (mm); a group of furniture where its scene sets it in its room, the side its fronts
      face, and in it every part in the group's own x, y, h */
@@ -367,9 +367,9 @@ function book() {
     for (const i of c.items) test.rows.push({ level: 1, cells: [i, '', ''] });
   }
   test.rows.push({ cells: ['Result: OK, nothing to correct; a number, how many to correct (listed under it); i, to know, not a fault.'] });
-  /* a furnished room's own Documents first: its estimate, cutting list, assembly cards and notes */
+  /* a furnished room's own Documents first: its estimate, cut list, assembly cards and notes */
   const own = WHOLE ? [] : FURNITURE.filter(f => f.docs).flatMap(f => { const b = f.docs.book(); return [b.sheets[0], b.sheets[1], { name: 'Assembly', node: assemblyNode(f) }, b.sheets[2]]; });
-  return { sheets: [...own, rooms, doors, notes, tree, test] };
+  return { sheets: WHOLE ? [rooms, doors, notes, tree, test] : [...own, tree, test] };   // a room's view: its own Documents, the house's stay with the house
 }
 /* the assembly cards of a room's furniture: one element, kept (core/sheet.js shows it in its tab) */
 function assemblyNode(f) {
@@ -413,7 +413,8 @@ function bottomMenu() {
   const walk = el('button', { className: 'walk', textContent: 'Walk', onclick: () => (V.walk.on ? V.stopWalk() : V.startWalk()) });
   walk.setAttribute('aria-pressed', V.walk.on);
   const go = c => ({ name: c.name, go: () => { V.stopWalk(); V.flyTo(c); } });
-  const menus = { '3d': [[walk], cameras().map(go)], '2d': [SHEET_2D.menu], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx')] };
+  const menus = { '3d': [[walk], cameras().map(go)], '2d': [SHEET_2D.menu], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx'),
+    WHOLE ? [] : FURNITURE.map(f => ({ name: 'Edit the cabinets', go: () => { location.href = '../room/cabinets.html?room=' + f.room.id; } }))] };
   HOME.ui.bottomMenu(menus[state.mode]);
 }
 const panel = () => { state.tab = HOME.ui.panelTabs(TABS[state.mode] || [], state.tab, t => { state.tab = t; save(); panel(); }, p => (p === 'floors' && !WHOLE) || (p === 'furniture' && !Object.keys(ROOM_LAYERS).length)); };
