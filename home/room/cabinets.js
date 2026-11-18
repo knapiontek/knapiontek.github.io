@@ -1385,7 +1385,7 @@
     function look(c, code, { banded = [], faces = null, grain = null } = {}) {
       if (!c) return null;
       const plain = K(code), turnedKey = D.has(plain + '~') ? plain + '~' : null, bare = D.has(plain + ':core') ? plain + ':core' : null;
-      const size = [c.gb[1] - c.gb[0], c.gb[5] - c.gb[4], c.gb[3] - c.gb[2]], thin = size.indexOf(Math.min(...size)), finished = new Set(banded);
+      const size = [c.gb[1] - c.gb[0], c.gb[3] - c.gb[2], c.gb[5] - c.gb[4]], thin = size.indexOf(Math.min(...size)), finished = new Set(banded);
       c.faceMaterial = normal => {
         const side = sideOf(c.r, normal), decor = faces ? faces.includes(side) : SIDE_AXIS[side] === thin;
         if (!decor && !finished.has(side) && bare) return bare;

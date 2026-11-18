@@ -63,3 +63,7 @@ The golden: the prototype's KitchenEngine.build on kitchen.dat.js in Node (every
 - `SHIFT=1000,0,1320 python3 cmp_kitchen_cells.py` after run_kitchen.sh: 472 static, 346 moving, the same (the hood's profile prints as a pair: moved, the same).
 - The pictures: the garden camera the same as v2.
 - After the doors were unified (18 Nov) the snapshot golden/house_now.json was taken again in v3 (SNAP=1): `node t_house_same.js` with no SHIFT from here on.
+
+## The kitchen's faces
+
+`tests/cmp_kitchen_faces.sh`: every board's material on each of its six faces (the decor, the decor turned, the bare core, a banded edge) against the prototype's, golden/kitchen_faces.json (taken from the prototype's kitchen page, the boxes in the prototype's house axes; the new ones moved back by the house's shift). 205 boards, all the same. The cells' comparison does not see the faces: this test was missing when the axes were reordered.
