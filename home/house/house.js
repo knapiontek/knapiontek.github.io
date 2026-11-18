@@ -669,7 +669,7 @@ HOME.data({
        "size": [6390, 2860, 2720],
        "area": [[0, 6390, 0, 2860]],
        "archonArea": 9.67,
-       "files": ["cabinets", "scene"],
+       "files": ["cabinets", "scene", "docs"],
        "note": "The kitchen with the dining area: the island, the table by it and the fixed window by the hob; open to the living room and the hall."
       },
       {

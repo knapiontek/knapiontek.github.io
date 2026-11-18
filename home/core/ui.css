@@ -104,6 +104,11 @@ button{font:inherit;color:inherit}
 .pad [data-k=ArrowUp]{grid-column:2;grid-row:1}.pad [data-k=ArrowLeft]{grid-column:1;grid-row:2}.pad [data-k=ArrowDown]{grid-column:2;grid-row:2}.pad [data-k=ArrowRight]{grid-column:3;grid-row:2}
 #plan2d{position:absolute;inset:0;z-index:4;background:var(--sheet);display:flex;flex-direction:column;padding-top:56px;padding-bottom:56px}
 .hud:has(#context:not(:empty)) ~ #plan2d{padding-top:96px}   /* a menu row over the sheet: the note under it */
+.asm{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding:10px 0}   /* the assembly cards of a room's Documents */
+.asm .card{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;color:var(--muted)}
+.asm h3{margin:0 0 4px;font:700 14px var(--f-display);color:var(--ink)}
+.asm b{color:var(--ink)}
+.asm .holes{display:inline-block;padding-left:14px;font-size:12px}
 #sheet{flex:1;min-height:0;overflow:auto;padding:12px}
 #test,#documents{position:absolute;inset:0;z-index:4;background:var(--panel);overflow:auto;padding:64px 20px 20px}
 #documents{padding-bottom:64px;display:flex;flex-direction:column;overflow:hidden}   /* the title and the tabs stay, the tab scrolls */

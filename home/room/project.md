@@ -12,6 +12,8 @@ The room engine: it makes a room from what the house gives it (the room's node: 
 | cabinets.js | the cabinets of a room from its cabinets file: the model (carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, problems), the tree of the furniture, and its drawing. The model needs no browser |
 | `<kind>_<number>.cabinets.js` | a room's cabinets (format cabinets) |
 | `<kind>_<number>.scene.js` | where a room's groups stand and how it is fitted and lit (format scene) |
+| docs.js | a furnished room's Documents: the estimate, the cutting list, the notes, the assembly cards, from the cabinets' model, the room's tree and its docs file; their check. No browser but the cards |
+| `<kind>_<number>.docs.js` | what a room's Documents say (format docs) |
 
 The products (an oven, a sink, a lamp) are drawn by library/draw.js; the room only says where.
 
@@ -56,6 +58,12 @@ In the house's axes and order: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`, all
 | floors, floorJoint | the tiles to choose for the floor (not drawn yet) |
 | lights | pendantBottom; pendants {group, count, spacing}; downlights: {group, x, y} or {group, between: [axes], y}, y from the wall |
 | cameras | name, eye, target: in the room's axes, from its zero |
+
+## The format `docs`, version 1
+
+What the Documents of a room say that the model and the library do not: `page` (title, heading, info, the XLSX's name, what is excluded), `params` (waste, the sheet's m², the reserve), `values` (stock sizes, allowances), `labels` (a front's function by type and tags, the sheet's label, the cutting list's note, the drilling legend's remarks), `blocks` (the cutting list's tables: id, a two-letter code for the rows' labels, title, columns, cut: the saw cuts priced), `categories` (the estimate's items: id; a product (its key) or a material (a use of the cabinets file) with its name; spec (only what the room adds to the product's); use; qty; refs to notes), `formulas` (named, used in texts), `notes` (by section: topic, description, assumed, decide, an appliance, links). The name, spec, unit, price, source and links of a product are the library's.
+
+A quantity is a number or a formula `=…` (ROUNDUP); a text may hold placeholders: `{nodes:hinge}` how many nodes of that kind the room's tree holds (hardware, appliances); `{n:…}` the model's counts; `{s:…}` a setting; `{t:…}` a thickness; `{d:…}` a depth and `{m:…}` the label of a use's board; `{w:…}` a worktop, `{g:…}` a group, `{k:K25.innerWidth}` a carcass, `{i:K25/oven.space}` an item (its module, front, the space around it, the drawers behind its door, its appliance's fit); `{a:…}` an appliance; `{v:…}` a value; `{p:…}` an item's price and `{q:…}` its quantity; `{note:…}` a note's number; `{f:…}` a formula; `{carcass.m2}` a block's total (m2, edge, cut); `{=…}` a calculation of `<placeholders>`; `|%` as a percentage.
 
 ## Edge banding
 

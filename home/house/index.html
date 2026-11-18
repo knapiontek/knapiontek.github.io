@@ -26,6 +26,8 @@
 <script src="../library/draw.js"></script>
 <script src="../room/cabinets.js"></script>
 <script src="../room/room.js"></script>
+<script src="../core/estimate.js"></script>
+<script src="../room/docs.js"></script>
 <script>
 /* The main page: the whole house, or a part of it (?room=kitchen_6 or ?room=bathroom_7,bathroom_5) cut out of it, in 3D,
    2D and Documents (its last sheet: Test). Everything it shows comes from house.js and the library; nothing of this house is written here. */
@@ -72,9 +74,10 @@ document.title = WHOLE ? 'Home' : PART.map(id => ROOM[id].node.name).join(', ');
    the rooms shown that have files in room/ (house.js: files): placed by room/room.js; their looks join the library's */
 const FURNISHED = (WHOLE ? ROOMS : PART.map(id => ROOM[id])).filter(r => (r.node.files || []).includes('cabinets'));
 const FURNITURE = await Promise.all(FURNISHED.map(async r => {
-  const [cabinets, scene] = await Promise.all(['cabinets', 'scene'].map(role => HOME.load(HOME.load.file.room(r.id, role), role, 1)));
-  const node = { offset: T.place(r.node), size: r.node.size };
-  return { room: r, prepared: HOME.room.prepare(node, { cabinets, scene }, { products: LIB.groups }) };
+  const roles = ['cabinets', 'scene'].concat(r.node.files.includes('docs') ? ['docs'] : []);
+  const [cabinets, scene, docs] = await Promise.all(roles.map(role => HOME.load(HOME.load.file.room(r.id, role), role, 1)));
+  const node = { offset: T.place(r.node), size: r.node.size }, prepared = HOME.room.prepare(node, { cabinets, scene }, { products: LIB.groups });
+  return { room: r, prepared, docs: docs && HOME.docs.create({ cabinets: HOME.cabinets, model: prepared.model, tree: prepared.TREE, docs, appliances: prepared.appliances, library: LIB }) };
 }));
 for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks, { handle: MATERIALS[f.prepared.scene.hardware.handles.default] });
 await LIB.loadTextures(FURNITURE.flatMap(f => f.prepared.textures));
@@ -331,7 +334,7 @@ function book() {
     doors.rows.push({ cells: [d.label, FLOORS.find(F => F.id === d.floor).name, P ? P.name : 'to choose', { v: 1, input: true }, P && P.price !== null ? { v: P.price, input: true } : '', { f: `D${r}*E${r}` }] });
   }
   doors.rows.push({ kind: 'sum', cells: ['Total', '', '', '', '', { f: `SUM(F${first}:F${doors.rows.length})` }] });
-  const notes = { name: 'Notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [HOUSE.source] }, { kind: 'head', cells: ['Notes'] }, ...HOUSE.notes.map(n => ({ cells: [n] }))] };
+  const notes = { name: WHOLE ? 'Notes' : 'House notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [HOUSE.source] }, { kind: 'head', cells: ['Notes'] }, ...HOUSE.notes.map(n => ({ cells: [n] }))] };
   /* the tree of what is shown: the whole house down to its rooms; a room's view, its rooms down to their furniture.
      Each node where it is in its parent (mm); a group of furniture where its scene sets it in its room, the side its fronts
      face, and in it every part in the group's own x, y, h */
@@ -364,7 +367,17 @@ function book() {
     for (const i of c.items) test.rows.push({ level: 1, cells: [i, '', ''] });
   }
   test.rows.push({ cells: ['Result: OK, nothing to correct; a number, how many to correct (listed under it); i, to know, not a fault.'] });
-  return { sheets: [rooms, doors, notes, tree, test] };
+  /* a furnished room's own Documents first: its estimate, cutting list, assembly cards and notes */
+  const own = WHOLE ? [] : FURNITURE.filter(f => f.docs).flatMap(f => { const b = f.docs.book(); return [b.sheets[0], b.sheets[1], { name: 'Assembly', node: assemblyNode(f) }, b.sheets[2]]; });
+  return { sheets: [...own, rooms, doors, notes, tree, test] };
+}
+/* the assembly cards of a room's furniture: one element, kept (core/sheet.js shows it in its tab) */
+function assemblyNode(f) {
+  if (f.assembly) return f.assembly;
+  const a = f.docs.assembly(), box = document.createElement('section');
+  box.innerHTML = '<p class="note">All for one carcass in one place, to gather the parts on site. The parts without a carcass by group and column (G1[4] = group 1, column 4; G1[1-3] = columns 1 to 3). Sizes in mm.</p>'
+    + '<p class="note">' + a.legend + '</p><div class="asm">' + a.cards + '</div>';
+  return (f.assembly = box);
 }
 function documents() {
   if (SHEET) return SHEET.set(book());
@@ -375,7 +388,7 @@ function documents() {
 /* the whole house: the checks of the house (its tree, its model, the library); a room: its own (its furniture) */
 const ASKED_CHECK = { name: 'Every room asked for is a room of the house', about: 'The rooms named in the address (?room=…) are rooms of house.js.', items: ASKED.filter(id => !ROOM[id]) };
 const HOUSE_CHECKS = [ASKED_CHECK].concat(T.checks(), MODEL.checks(), LIB.checks());
-const ROOM_CHECKS = FURNITURE.flatMap(f => f.made.checks().map(c => Object.assign(c, { name: (FURNITURE.length > 1 ? roomName(f.room) + ' · ' : '') + c.name })));
+const ROOM_CHECKS = FURNITURE.flatMap(f => f.made.checks().concat(f.docs ? f.docs.checks() : []).map(c => Object.assign(c, { name: (FURNITURE.length > 1 ? roomName(f.room) + ' · ' : '') + c.name })));
 const CHECKS = WHOLE ? HOUSE_CHECKS : [ASKED_CHECK, ...(ROOM_CHECKS.length ? ROOM_CHECKS
   : [{ name: 'No checks of its own', about: 'This room has nothing of its own to check yet; the house\'s checks are in the whole house\'s Documents.', items: [], info: true }])];
 

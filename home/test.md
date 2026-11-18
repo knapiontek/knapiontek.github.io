@@ -68,3 +68,7 @@ The golden: the prototype's KitchenEngine.build on kitchen.dat.js in Node (every
 
 `tests/cmp_kitchen_faces.sh`: every board's material on each of its six faces (the decor, the decor turned, the bare core, a banded edge) against the prototype's, golden/kitchen_faces.json (taken from the prototype's kitchen page, the boxes in the prototype's house axes; the new ones moved back by the house's shift). 205 boards, all the same. The cells' comparison does not see the faces: this test was missing when the axes were reordered.
 - 18 Nov: the 9 system drawers' backs have their top edge banded (agreed); golden/kitchen_faces.json taken again from the new kitchen after checking that only these 9 changed.
+
+## The kitchen's Documents
+
+`tests/cmp_docs.js` (Node: room/docs.js through tests/t_docs.js) against the prototype's book, golden/kitchen_book.json (its Info sheets, taken from a copy of the prototype's kitchen page that exposes its COST): every number and formula of the Estimate and the Notes row by row; the Cutting list by block, its rows' order aside (they are sorted by their names, now English). All the same but the agreed change: the 9 system drawers' backs with their top edge banded (+6.7 m of banding: 42.22 PLN with the reserve; the total 36 140.84 against 36 098.62).
