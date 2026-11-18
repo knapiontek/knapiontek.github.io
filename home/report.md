@@ -126,8 +126,11 @@ Not yet: the floor tiles (room/tiles.js), the Documents of the kitchen (estimate
 - **The 3D cut is gone** (the owner: not needed): the panel's Cut, its settings. The 2D plan keeps its cut height.
 - **The openings' names**: "Window 6000/3460" (was "undefined 6000/3460").
 - **The whole kitchen is drawn from its tree**: the fronts' panels, the worktops and the plasterboard from their nodes; a drawer system's metal (sides, gallery rails, an inner drawer's front, waste bins, the cutlery insert) are nodes now, drawn by the library; the holes' markers where their board's node is. The same solids and moving parts; the details the same (two handles' cups 0.5 mm off in the comparison's rounding only).
+- **The doors unified** (the owner; the standard: a door "80" in an opening about 900 wide, a door "60" about 700, by Porta's and others' tables): every inner door 900 × 2050, the wardrobes' 700 × 2050, each on archon's centre (six changed: 920, 920, 870, 890, 940 → 900; the wardrobe 8's 820 → 700). No check changed (no overlap, every floor area in a room). A note in house.js says it is our decision.
+- **The 2D, as noted** (below): the wheel zooms about the cursor (and a drag moves the sheet; the − and + gave way to Fit); the dimensions as in CAD: chains with slashes on every side of the whole house, through the openings of each side and the whole; the hob is no longer half black (the hood's filter and lights hung 1.5 mm under the hood's height, so the 1500 cut went through them: the hood's lowest point is now its height, its body 2 mm over it); the kitchen simpler: an appliance is its node's box, grey where the cut meets it (applianceBody's plan colour), the sink and the hob as seen from above.
+- **Whole millimetres**: the handles' nodes on whole mm. The cups were on whole mm already; the half millimetres the comparison showed are the cup's own length (IKEA: 89 mm).
 
-## Noted for later: the 2D view (the owner, 18 Nov)
+## Noted for later: the 2D view (done 18 Nov, see above) (the owner, 18 Nov)
 
 - **Zoom with the mouse wheel**, about the cursor, instead of the + and − buttons.
 - **More dimensions**, more technical: the style of AutoCAD.

@@ -8,13 +8,13 @@
 const { hRange, sectionAt, cutBy, rectArea } = HOME.geometry;
 
 const SIZE = {
-  gap: 4200, margin: 1200, side: 1600, head: 600, foot: 1400,          // between the sheets, around them
+  gap: 4200, margin: 2000, side: 2400, head: 600, foot: 1400,          // between the sheets, around them
   hatch: 80, title: 340, titleAt: 200,
   line: { cut: 14, over: 12, dash: '70 50', clear: '100 80', window: '60 50', hole: '60 60', border: '160 50 20 50', thin: 10, label: 8, seen: 6 },
   clear: { font: 180, inset: 60, down: 260 },
   label: { push: 450, r: 240, font: 130, bar: 200, up: 40, down: 130 },   // fits mm labels of five digits (6000/3460)
   room: { number: 220, name: 150, area: 140, up: 60, nameDown: 180, areaDown: 360 },
-  dim: { off: 600, text: 840, font: 180, side: 600, sideText: 700 }
+  dim: { off: 900, row: 650, font: 150, text: 60, tick: 70, over: 120, small: 260 }   // chains of dimensions: rows outside the drawing
 };
 const INK = '#1f2523', FLOOR_FILL = '#f4f1ea';
 
@@ -73,12 +73,32 @@ function create(materials) {
   /* where two rooms meet with no wall between them: a thin dash-dot line, neither a wall (solid) nor what is over the
      cut (dashed); lines [[x, y], [x, y]] */
   const borders = (X, lines) => lines.map(([a, b]) => `<line x1="${X + a[1]}" y1="${a[0]}" x2="${X + b[1]}" y2="${b[0]}" stroke="#8a8d88" stroke-width="${S.line.thin}" stroke-dasharray="${S.line.border}"/>`).join('');
-  /* the overall sizes of [x1, x2, y1, y2], in mm: the width under x = at, the length on the left */
-  function dims(X, [x1, x2, y1, y2], at) {
-    const D = S.dim, yb = at + D.off, w = Math.round(y2 - y1), l = Math.round(x2 - x1), xm = (x1 + x2) / 2, xs = X + y1 - D.side, xt = X + y1 - D.sideText;
-    return `<g stroke="${INK}" stroke-width="${S.line.over}" font-size="${D.font}" fill="${INK}"><line x1="${X + y1}" y1="${yb}" x2="${X + y2}" y2="${yb}"/><text x="${X + (y1 + y2) / 2}" y="${at + D.text}" text-anchor="middle" stroke="none">${w}</text>
-      <line x1="${xs}" y1="${x1}" x2="${xs}" y2="${x2}"/><text x="${xt}" y="${xm}" text-anchor="middle" stroke="none" transform="rotate(-90 ${xt} ${xm})">${l}</text></g>`;
+  /* a chain of dimensions, as in CAD: a line through the points, a slash at each, the size of each span over it.
+     side: where the chain stands outside box [x1, x2, y1, y2] (house mm): 'x0' (over the sheet: the garden), 'x1' (under
+     it), 'y0' (left), 'y1' (right); row: 0 the nearest; points along the side (house y for x0/x1, house x for y0/y1) */
+  function chain(X, box, side, row, points) {
+    const D = S.dim, ps = [...new Set(points.map(Math.round))].sort((a, b) => a - b);
+    if (ps.length < 2) return '';
+    const across = side === 'x0' || side === 'x1', out = side === 'x0' || side === 'y0' ? -1 : 1;
+    const edge = { x0: box[0], x1: box[1], y0: box[2], y1: box[3] }[side], d = edge + out * (D.off + row * D.row);
+    /* plan coordinates of a point along the chain (u) at a distance from the drawing (v, house mm across the side) */
+    const at = (u, v) => across ? [X + u, v] : [X + v, u];
+    const seg = (a, b) => { const [p, q] = [at(...a), at(...b)]; return `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}"/>`; };
+    let s = seg([ps[0] - D.over, d], [ps[ps.length - 1] + D.over, d]);
+    for (const u of ps) {
+      s += seg([u, d - out * D.over], [u, d + out * D.over]);                          // the extension past the line
+      const [cx, cy] = at(u, d);
+      s += `<line x1="${cx - D.tick}" y1="${cy + D.tick}" x2="${cx + D.tick}" y2="${cy - D.tick}" stroke-width="${S.line.cut}"/>`;   // the slash
+    }
+    for (let i = 0; i + 1 < ps.length; i++) {
+      const m = (ps[i] + ps[i + 1]) / 2, len = ps[i + 1] - ps[i], [tx, ty] = at(m, d - D.text), size = len < D.small ? D.font * 0.75 : D.font;
+      s += across ? `<text x="${tx}" y="${ty}" text-anchor="middle" font-size="${size}" stroke="none">${len}</text>`
+        : `<text x="${tx}" y="${ty}" text-anchor="middle" font-size="${size}" stroke="none" transform="rotate(-90 ${tx} ${ty})">${len}</text>`;
+    }
+    return `<g stroke="${INK}" stroke-width="${S.line.thin}" fill="${INK}">${s}</g>`;
   }
+  /* the overall sizes of [x1, x2, y1, y2], in mm: under the drawing and on its left */
+  const dims = (X, box) => chain(X, box, 'x1', 0, [box[2], box[3]]) + chain(X, box, 'y0', 0, [box[0], box[1]]);
   /* the sheets side by side: [{extent: [x1, x2, y1, y2] (house mm), title, draw(X)}]; X shifts a sheet along the plan.
      A sheet narrower than its title gets the title's width, the drawing in its middle. */
   function sheets(list) {
@@ -96,7 +116,7 @@ function create(materials) {
     });
     return s + '</svg>';
   }
-  return { SIZE, fill, rect, hatches, floorArea, cut, seen, labels, rooms, borders, dims, sheets };
+  return { SIZE, fill, rect, hatches, floorArea, cut, seen, labels, rooms, borders, chain, dims, sheets };
 }
 
 /* the footprint of a solid: its box seen from above */

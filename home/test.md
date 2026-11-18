@@ -62,3 +62,4 @@ The golden: the prototype's KitchenEngine.build on kitchen.dat.js in Node (every
 - The house moved by S = (1000, 0, 1320) in its own axes. `OPENINGS=1 SHIFT=1000,0,1320 node t_house_same.js`: every solid, door, part, border, footprint and check the same as v2 (OPENINGS reads the layers windows and doors as v2's openings).
 - `SHIFT=1000,0,1320 python3 cmp_kitchen_cells.py` after run_kitchen.sh: 472 static, 346 moving, the same (the hood's profile prints as a pair: moved, the same).
 - The pictures: the garden camera the same as v2.
+- After the doors were unified (18 Nov) the snapshot golden/house_now.json was taken again in v3 (SNAP=1): `node t_house_same.js` with no SHIFT from here on.

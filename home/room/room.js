@@ -221,10 +221,18 @@ function build(V, prepared, opts = {}) {
   const made = { STATIC, MOVERS, DETAILS, ENVELOPES, LAMPS, UNDRAWN, carcasses: drawn.carcasses, night, showDetails,
     cells: () => STATIC.concat(...MOVERS.map(m => m.cells)) };
   /* the 2D plan of the furniture: its cells (what the cut meets) and the outlines seen from above, details too */
-  const NOT_SEEN = ['holes', 'hardware', 'legs', 'backs', 'lamps'], SEEN_DETAILS = ['sink', 'hob', 'hood', 'coffee'];
+  /* an appliance is drawn as its node's box, one outline (what it is made of inside stays in 3D); of the sink and the hob
+     what is seen from above too */
+  const NOT_SEEN = ['holes', 'hardware', 'legs', 'backs', 'lamps'], SEEN_DETAILS = ['sink', 'hob'];
+  const APPLIANCES = ['sink', 'trap', 'hob', 'hood', 'oven', 'microwave', 'coffee', 'fridge', 'dishwasher'];
   made.plan = () => {
     V.root.updateMatrixWorld(true);
-    const toHouse = new THREE.Matrix4().copy(V.root.matrixWorld).invert(), cells = made.cells();
+    const bodies = [];
+    for (const x of model.products || []) {
+      const b = C().boxIn(x.node), wall = model.groups[x.group].wall;
+      box(bodies, x.group, [b[0], b[1], b[2] + wall, b[3] + wall, b[4], b[5]], 'applianceBody', 'appliance', { name: x.name || x.role });
+    }
+    const toHouse = new THREE.Matrix4().copy(V.root.matrixWorld).invert(), cells = made.cells().filter(c => !c.layers.some(l => APPLIANCES.includes(l))).concat(bodies);
     return { cells, shapes: cells.filter(c => !c.layers.some(l => NOT_SEEN.includes(l))).map(c => HOME.plan2d.solidShape(c))
       .concat(DETAILS.filter(d => d.layers.some(l => SEEN_DETAILS.includes(l)) && d.mesh.geometry.attributes.position).map(d => HOME.plan2d.meshShape(d.mesh, toHouse))) };
   };

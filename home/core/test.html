@@ -107,7 +107,7 @@ const PLAN = HOME.plan2d.create(LIB.materials);
 function planSvg() {
   const h = VIEW.plan, below = CELLS.filter(c => hRange(c.S)[1] <= h).map(c => HOME.plan2d.solidShape(c));
   return PLAN.sheets([{ extent: [0, SIZE[0], 0, SIZE[1]], title: `Cut at ${h} mm`,
-    draw: X => PLAN.floorArea(X, [[0, SIZE[0], 0, SIZE[1]]]) + PLAN.seen(X, below, h) + PLAN.cut(X, CELLS, h) + PLAN.dims(X, [0, SIZE[0], 0, SIZE[1]], SIZE[0]) }]);
+    draw: X => PLAN.floorArea(X, [[0, SIZE[0], 0, SIZE[1]]]) + PLAN.seen(X, below, h) + PLAN.cut(X, CELLS, h) + PLAN.dims(X, [0, SIZE[0], 0, SIZE[1]]) }]);
 }
 const SHEET_2D = HOME.ui.planSheet({ state, save, svg: planSvg, file: 'test.svg' });
 

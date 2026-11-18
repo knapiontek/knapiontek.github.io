@@ -32,7 +32,7 @@ HOME.data({"format": "materials", "version": 1, "materials": {
  "gasket": {"color":"#1a1a1a","roughness":0.8},
  "granite": {"color":"#ffffff","roughness":0.55,"clearcoat":0.15,"clearcoatRoughness":0.6,"reflect":0.5},
  "blackMetal": {"color":"#141517","roughness":0.42,"metalness":0.45,"reflect":0.8},
- "applianceBody": {"color":"#3a3d42","roughness":0.6,"metalness":0.35},
+ "applianceBody": {"color":"#3a3d42","roughness":0.6,"metalness":0.35,"plan":"#d6d8d6"},
  "zinc": {"color":"#b9bec4","roughness":0.32,"metalness":0.85,"reflect":1.1},
  "drawerSide": {"color":"#dcdedf","roughness":0.35,"metalness":0.35,"reflect":0.9},
  "wire": {"color":"#c8ccd0","roughness":0.35,"metalness":0.85,"opacity":0.55},

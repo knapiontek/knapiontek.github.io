@@ -1140,7 +1140,7 @@
       const item = g.items.find(i => hasTag(i, 'hob'));
       if (!item || !install) continue;
       const cut = (worktopOf(String(g.group)).cutouts || []).find(k => k.kind === 'hob'), x = cut ? (cut.x0 + cut.x1) / 2 : (item.x0 + item.x1) / 2, A = appliances.hood;
-      add('hood', g.group, null, [x - A.body.width / 2, x + A.body.width / 2, 0, Math.max(A.body.depth, A.chimney.depth), install.hood.bottom - 1.5, ceiling],
+      add('hood', g.group, null, [x - A.body.width / 2, x + A.body.width / 2, 0, Math.max(A.body.depth, A.chimney.depth), install.hood.bottom, ceiling],
         { x, bottom: install.hood.bottom, ceiling, worktop: model.worktops[g.group].h1 });
     }
     for (const b of model.boards) if (b.id === 'pullOutShelf') {
@@ -1173,7 +1173,7 @@
       }
     }
     for (const f of model.fronts) {
-      const to = { frontId: f.id, group: String(f.group) }, H = HW.handle, L = Math.max(H.cupLength / 2 - 3, H.barLength / 2), reach = frontFace + 34;   // the cup or the bar, whichever is drawn
+      const to = { frontId: f.id, group: String(f.group) }, H = HW.handle, L = Math.ceil(Math.max(H.cupLength / 2 - 3, H.barLength / 2)), reach = frontFace + 34;   // whole mm   // the cup or the bar, whichever is drawn
       if (f.opening === 'door' && f.carcassId) {
         const cup = settings.drilling.cup, dir = f.hand === 'left' ? 1 : -1, side = f.hingeX, cupX = f.hand === 'left' ? f.x0 + cup.fromEdge : f.x1 - cup.fromEdge, R = cup.diameter / 2 - 0.5;
         const span = (a, b) => [Math.min(a, b), Math.max(a, b)];
@@ -1185,11 +1185,11 @@
       }
       const position = f.item.handle;
       if (position === 'top' || position === 'bottom') {
-        const h = position === 'top' ? f.h1 - H.axis : f.h0 + H.axis, xc = (f.x0 + f.x1) / 2;
-        add('handle', 'Handle', to, [xc - L, xc + L, frontFace, reach, h - 14.2, h + 14.2], { turn: null });
+        const h = Math.round(position === 'top' ? f.h1 - H.axis : f.h0 + H.axis), xc = Math.round((f.x0 + f.x1) / 2);
+        add('handle', 'Handle', to, [xc - L, xc + L, frontFace, reach, h - 15, h + 15], { turn: null });
       } else if (position) {
-        const x = position === 'left' ? f.x0 + H.axis : f.x1 - H.axis, hc = Math.min(f.h0 + H.sideHeight, (f.h0 + f.h1) / 2);
-        add('handle', 'Handle', to, [x - 14.2, x + 14.2, frontFace, reach, hc - L, hc + L], { turn: position });
+        const x = Math.round(position === 'left' ? f.x0 + H.axis : f.x1 - H.axis), hc = Math.round(Math.min(f.h0 + H.sideHeight, (f.h0 + f.h1) / 2));
+        add('handle', 'Handle', to, [x - 15, x + 15, frontFace, reach, hc - L, hc + L], { turn: position });
       }
       if (f.opening === 'drawer' && f.drawer) {
         const { innerX0, innerX1, bottomH } = f.drawer, Dw = HW.drawer, s0 = Dw.sideFromCarcass, y0 = carcassBack + Dw.fromBack, y1 = carcassFront - Dw.fromFront;

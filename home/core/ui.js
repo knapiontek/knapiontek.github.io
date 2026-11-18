@@ -258,13 +258,28 @@ function sunPanel(box, rects, sun, change, mark = []) {
 }
 
 /* ================= THE 2D SHEET ================= */
-/* svg() drawn at state.zoom; the zoom and the download in the bottom menu; returns {draw, menu} */
+/* svg() drawn at state.zoom: the wheel zooms about the cursor (the point under it stays), a drag moves the sheet; the
+   download in the bottom menu; returns {draw, menu} */
 function planSheet({ state, save, svg, file }) {
   const sheet = $('sheet');
   const draw = () => { sheet.innerHTML = svg(); sheet.style.setProperty('--zoom', state.zoom); };
-  const zoom = k => { state.zoom = Math.min(4, Math.max(0.5, state.zoom * k)); save(); draw(); };
+  sheet.addEventListener('wheel', e => {
+    e.preventDefault();
+    const was = state.zoom, now = Math.min(8, Math.max(1, was * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+    if (now === was) return;
+    const r = sheet.getBoundingClientRect(), cx = e.clientX - r.left, cy = e.clientY - r.top;
+    const px = (sheet.scrollLeft + cx) / sheet.scrollWidth, py = (sheet.scrollTop + cy) / sheet.scrollHeight;   // the point under the cursor
+    state.zoom = now; sheet.style.setProperty('--zoom', now);
+    sheet.scrollLeft = px * sheet.scrollWidth - cx; sheet.scrollTop = py * sheet.scrollHeight - cy;
+    save();
+  }, { passive: false });
+  let drag = null;
+  sheet.addEventListener('pointerdown', e => { if (e.button === 0) { drag = { x: e.clientX, y: e.clientY, l: sheet.scrollLeft, t: sheet.scrollTop }; sheet.setPointerCapture(e.pointerId); } });
+  sheet.addEventListener('pointermove', e => { if (drag) { sheet.scrollLeft = drag.l - (e.clientX - drag.x); sheet.scrollTop = drag.t - (e.clientY - drag.y); } });
+  for (const k of ['pointerup', 'pointercancel']) sheet.addEventListener(k, () => { drag = null; });
   const download = () => { const a = el('a', { href: URL.createObjectURL(new Blob([svg()], { type: 'image/svg+xml' })), download: file }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
-  return { draw, menu: [{ name: '−', label: 'Zoom out', go: () => zoom(1 / 1.25) }, { name: '+', label: 'Zoom in', go: () => zoom(1.25) }, { name: 'Save SVG', go: download }] };
+  const fit = () => { state.zoom = 1; save(); draw(); };
+  return { draw, menu: [{ name: 'Fit', label: 'The whole sheet', go: fit }, { name: 'Save SVG', go: download }] };
 }
 
 /* ================= COLUMN WIDTHS =================

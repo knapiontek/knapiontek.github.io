@@ -82,7 +82,8 @@ HOME.data({
     "A cantilevered stair (no stringers), no wall under the flight.",
     "Wardrobes 3 and 4 in the attic with narrow doors 700/2050 from the bedroom (archon: an opening without a door and without the wall).",
     "Attic room 6: the wall by the ventilation shaft removed (a heat recovery unit instead of the shaft); shelving in the niche.",
-    "The facade (graphite, white, timber) read from the archon renderings: a picture, not a dimension."
+    "The facade (graphite, white, timber) read from the archon renderings: a picture, not a dimension.",
+    "The inner doors have standard openings (our decision, not archon's 820–940): 900 × 2050 for a door \"80\" to a room, 700 × 2050 for a door \"60\" to a wardrobe; each kept on archon's centre."
    ],
    "geometry": {
     "split": 4040,
@@ -526,11 +527,11 @@ HOME.data({
        "children": [
         {
          "id": "door_vestibule_1_boiler_8",
-         "name": "Door 920/2050",
+         "name": "Door 900/2050",
          "type": "door",
-         "offset": [1390, 0, 0],
-         "size": [920, 120, 2050],
-         "label": "920/2050",
+         "offset": [1400, 0, 0],
+         "size": [900, 120, 2050],
+         "label": "900/2050",
          "hinge": "x1",
          "opens": "y0"
         }
@@ -545,11 +546,11 @@ HOME.data({
        "children": [
         {
          "id": "door_vestibule_1_hall_3",
-         "name": "Door 920/2050",
+         "name": "Door 900/2050",
          "type": "door",
-         "offset": [0, 530, 0],
-         "size": [240, 920, 2050],
-         "label": "920/2050",
+         "offset": [0, 540, 0],
+         "size": [240, 900, 2050],
+         "label": "900/2050",
          "hinge": "y0",
          "opens": "x1"
         }
@@ -565,11 +566,11 @@ HOME.data({
        "children": [
         {
          "id": "door_vestibule_1_garage_2",
-         "name": "Door 870/2050",
+         "name": "Door 900/2050",
          "type": "door",
-         "offset": [1390, 0, 0],
-         "size": [870, 120, 2050],
-         "label": "870/2050",
+         "offset": [1375, 0, 0],
+         "size": [900, 120, 2050],
+         "label": "900/2050",
          "hinge": "x1",
          "opens": "y1"
         }
@@ -886,11 +887,11 @@ HOME.data({
        "children": [
         {
          "id": "door_hall_1_bedroom_2",
-         "name": "Door 890/2050",
+         "name": "Door 900/2050",
          "type": "door",
-         "offset": [0, 240, 0],
-         "size": [120, 890, 2050],
-         "label": "890/2050",
+         "offset": [0, 235, 0],
+         "size": [120, 900, 2050],
+         "label": "900/2050",
          "hinge": "y0",
          "opens": "x0"
         }
@@ -933,21 +934,21 @@ HOME.data({
        "children": [
         {
          "id": "door_bedroom_7_wardrobe_8",
-         "name": "Door 820/2050",
+         "name": "Door 700/2050",
          "type": "door",
-         "offset": [0, 1340, 0],
-         "size": [120, 820, 2050],
-         "label": "820/2050",
+         "offset": [0, 1400, 0],
+         "size": [120, 700, 2050],
+         "label": "700/2050",
          "hinge": "y0",
          "opens": "x1"
         },
         {
          "id": "door_hall_1_bedroom_7",
-         "name": "Door 940/2050",
+         "name": "Door 900/2050",
          "type": "door",
-         "offset": [0, 3030, 0],
-         "size": [120, 940, 2050],
-         "label": "940/2050",
+         "offset": [0, 3050, 0],
+         "size": [120, 900, 2050],
+         "label": "900/2050",
          "hinge": "y1",
          "opens": "x1"
         },

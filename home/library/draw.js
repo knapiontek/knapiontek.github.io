@@ -143,7 +143,8 @@ function hob(D, H, { r, x: hobX, cut: hobCut, top: h }) {
 
 /* ---------- a chimney hood on the wall. place: {r, x (the axis), bottom (h of its underside), ceiling (h), worktop (h of
    the worktop's top, where its lights point)} ---------- */
-function hood(D, A, { r, x: xc, bottom, ceiling: CEILING, worktop }) {
+function hood(D, A, { r, x: xc, bottom: lowest, ceiling: CEILING, worktop }) {
+  const bottom = lowest + 2;                // the body: its filter and its lights under it, down to the hood's lowest point
   const { box, detail, at, profile, lamp, point, STATIC } = D, { width: w, height: bh, depth: d } = A.body, { width: cw, depth: cd } = A.chimney;
   const I = { name: A.name, layer: 'hood' }, a = at(r, 'hood'), { X } = D.frame(r);
   const prof = [[0, bottom], [d, bottom], [d, bottom + 40], [110, bottom + bh], [0, bottom + bh]];   // (y, h): an angled glass front

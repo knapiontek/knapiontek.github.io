@@ -43,7 +43,7 @@ HOME.ui.screen($('app'), {
       <p><b>Walk</b>: the arrows walk and turn, A/D a step aside, Shift faster, PgUp/PgDn or a drag look, Space opens the nearest door, Esc ends.</p>
       <p><b>View</b> (the panel): the floors and the layers; an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: a click on its floor picks a room. A click on a door opens or closes it.</p>
       <p>In a room, the walls and the ceiling between the camera and the room hide; the floors do not apply there, only the elements.</p>`,
-    '2d': '<p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. Below: zoom and the SVG to print.</p>',
+    '2d': '<p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. The wheel zooms about the cursor, a drag moves the sheet. Below: the whole sheet again, the SVG to print.</p>',
     documents: '<p>The rooms with their areas, the doors with what is bought for them, the notes, the furniture as a tree, the Test (the checks of the data and of the model: OK, nothing to correct; a number, what to correct; i, to know). Blue fields may be changed until a reload. Below: the XLSX with its formulas.</p>' },
   panel: `<section data-tab="view" data-part="floors"><h2>Floors</h2><div class="layers" id="floors"></div></section>
     <section data-tab="view"><h2>Layers</h2><div class="layers" id="layers"></div></section>
@@ -273,6 +273,15 @@ function planDoors(F, X) {
   return s;
 }
 const roomLabel = r => ({ rects: r.rects, numbers: [r.node.number], name: r.node.name });
+/* the whole house's dimensions on each side: the openings of that side's walls on this floor, then the whole */
+function planChains(F, X) {
+  const box = [ROOF.x[0], ROOF.x[1], 0, WIDTH], mine = o => MODEL.floorOf((o.b[4] + o.b[5]) / 2) === F.id;
+  return ['x0', 'x1', 'y0', 'y1'].map(side => {
+    const along = side[0] === 'x' ? 2 : 0, ends = [box[along], box[along + 1]];
+    const openings = MODEL.OPENINGS.filter(o => o.outer === side && mine(o)).flatMap(o => [o.b[along], o.b[along + 1]]);
+    return PLAN.chain(X, box, side, 0, ends.concat(openings)) + PLAN.chain(X, box, side, 1, ends);
+  }).join('');
+}
 function planSvg() {
   const floors = WHOLE ? FLOORS : FLOORS.filter(F => PARTS.some(p => p.floor === F));
   return PLAN.sheets(floors.map(F => {
@@ -288,7 +297,7 @@ function planSvg() {
           + furniture.map(p => PLAN.seen(X, p.shapes, h) + PLAN.cut(X, p.cells, h, c => !c.layers.includes('holes'))).join('')
           + (WHOLE && F === FLOORS[FLOORS.length - 1] ? planUnderRoof(F, X, holes) : '') + planDoors(F, X)
           + PLAN.labels(X, MODEL.OPENINGS, h, MODEL.SIDE, o => MODEL.floorOf((o.b[4] + o.b[5]) / 2) === F.id && (WHOLE || inside(box, (o.b[0] + o.b[1]) / 2, (o.b[2] + o.b[3]) / 2)))
-          + PLAN.borders(X, borders) + PLAN.rooms(X, rooms.map(roomLabel)) + PLAN.dims(X, box, box[1]);
+          + PLAN.borders(X, borders) + PLAN.rooms(X, rooms.map(roomLabel)) + (WHOLE ? planChains(F, X) : PLAN.dims(X, box));
       } };
   }));
 }
