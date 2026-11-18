@@ -22,7 +22,7 @@ const FRONTS = {
 function prepare(room, files, library) {
   const P = library.products, cabinets = files.cabinets, scene = files.scene;
   const project = C().withLibrary(cabinets, P.boards), appliances = C().appliances(project, P.appliances);
-  const model = C().build(project, appliances), TREE = C().tree(model), O = room.offset;
+  const model = C().build(project, appliances), TREE = C().tree(model, appliances), O = room.offset;
   /* a group: its box in the room (scene) with its back on the wall line; y = 0 at the carcass backs, the wall at y = wall */
   const PLACE = {};
   for (const [r, g] of Object.entries(scene.groups)) {

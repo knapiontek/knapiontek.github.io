@@ -27,8 +27,9 @@ house.js (files of a room) ─► index.html ─► room.js prepare: cabinets.js
 In the house's axes and order: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`, all in mm.
 
 - **A group** has its own x, y, h: x from its left end as seen from its fronts, y from its wall out into the room, h up from the floor. Its origin is its left end, its wall, the floor; for an island the wall is its back edge. The room sets a group by its box in the room and the side its fronts face: a quarter turn (with a mirror, as a group's x, y, h are left-handed); the furniture comes out as built.
-- **The tree**: group → its worktop, panels, strips, plinths, plasterboard and carcasses → a carcass's boards and fronts → a front's drawer boards, its inner drawer, its drawers behind the door. Each node: id (unique among its siblings), name, type, offset from its parent's origin (the parent's left, back, bottom corner), size (its own part and its children together). All numbers positive. A carcass stands at y = its group's backGap; changing the gap moves the carcass and all in it.
-- The model still computes with y from the carcass backs; the tree is what comes out of it. Not yet in the tree: the appliances, the sink, the hob, the hood and the hardware, drawn from the model's numbers.
+- **The tree**: group → its worktop, panels, strips, plinths, plasterboard, carcasses and the products standing in it (the dishwasher) → a carcass's boards, fronts and products (oven, microwave, fridge-freezer, sink, hob, coffee machine) → a front's drawer boards, its inner drawer, its drawers behind the door. Each node: id (unique among its siblings), name, type, offset from its parent's origin (the parent's left, back, bottom corner), size (its own part and its children together). All numbers positive. A carcass stands at y = its group's backGap; changing the gap moves the carcass and all in it.
+- A product is drawn in its own coordinates, from the origin of its node; the room moves the drawing there (a translation).
+- The model still computes with y from the carcass backs; the tree is what comes out of it. Not yet in the tree: the hood, the tap and the trap, the hardware (hinges, handles, runners, legs, shelf pins, grilles), the fronts' own panels; drawn from the model's numbers.
 
 ## Formats
 

@@ -28,7 +28,7 @@
 <script src="../room/room.js"></script>
 <script>
 /* The main page: the whole house, or a part of it (?room=kitchen_6 or ?room=bathroom_7,bathroom_5) cut out of it, in 3D,
-   2D, Documents and Test. Everything it shows comes from house.js and the library; nothing of this house is written here. */
+   2D and Documents (its last sheet: Test). Everything it shows comes from house.js and the library; nothing of this house is written here. */
 (async function () {
 'use strict';
 const { $, el, esc, fmt } = HOME.ui;
@@ -44,8 +44,7 @@ HOME.ui.screen($('app'), {
       <p><b>Layers</b>: an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: its cut is under the floors; a click on its floor picks a room. A click on a door opens or closes it.</p>
       <p>In a room, the walls and the ceiling between the camera and the room hide; the floors do not apply there, only the elements.</p>`,
     '2d': '<p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. Below: zoom and the SVG to print.</p>',
-    documents: '<p>The rooms with their areas, the doors with what is bought for them, the notes. Blue fields may be changed until a reload. Below: the XLSX with its formulas.</p>',
-    test: '<p>The checks of the data and of the model. <b>OK</b>: nothing to correct; <b>i</b>: to know.</p>' },
+    documents: '<p>The rooms with their areas, the doors with what is bought for them, the notes, the furniture as a tree, the Test (the checks of the data and of the model: OK, nothing to correct; a number, what to correct; i, to know). Blue fields may be changed until a reload. Below: the XLSX with its formulas.</p>' },
   panel: `<section data-tab="layers" data-part="floors"><h2>Floors</h2><div class="layers" id="floors"></div></section>
     <section data-tab="layers" data-part="cut"><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv"></span><input id="cut" type="range"></div></section>
     <section data-tab="layers"><h2>Elements</h2><div class="layers" id="layers"></div></section>
@@ -132,7 +131,7 @@ for (const l of LEAVES) {
 V.addLight(); V.addCaps();
 
 /* ================= STATE, LAYERS, CUT ================= */
-const MODES = ['3d', '2d', 'documents', 'test'], TABS = { '3d': ['layers'], '2d': ['layers'] };
+const MODES = ['3d', '2d', 'documents'], TABS = { '3d': ['layers'], '2d': ['layers'] };
 const STORE = HOME.ui.store('home-house', () => ({ mode: '3d', tab: null, layers: {}, cut: {}, zoom: 1, room: null }), s => MODES.includes(s.mode) && s.layers && s.cut);
 const state = STORE.state, save = STORE.save;
 const { layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers);
@@ -338,8 +337,8 @@ function book() {
   doors.rows.push({ kind: 'sum', cells: ['Total', '', '', '', '', { f: `SUM(F${first}:F${doors.rows.length})` }] });
   const notes = { name: 'Notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [DATA.source] }, { kind: 'head', cells: ['Notes'] }, ...DATA.notes.map(n => ({ cells: [n] }))] };
   /* a room's furniture as its tree: each part where it is in what it belongs to (mm) */
-  const furniture = WHOLE ? [] : FURNITURE.map(f => {
-    const sheet = { name: 'Furniture', cols: [{ width: 46, share: 3 }, { width: 20, share: 1 }, ...Array(6).fill({ width: 9, fix: 7 })],
+  const furniture = FURNITURE.map(f => {
+    const sheet = { name: 'Furniture', cols: [{ width: 44, share: 3 }, { width: 34, share: 2 }, ...Array(6).fill({ width: 9, fix: 7 })],
       rows: [{ kind: 'title', cells: [roomName(f.room) + ' · furniture'] },
         { kind: 'head', cells: ['Part', 'Path', 'x', 'y', 'h', 'Width (x)', 'Depth (y)', 'Height (h)'] }] };
     const walk = (n, path, depth) => {
@@ -350,7 +349,14 @@ function book() {
     sheet.rows.push({ cells: ['Offsets from the origin of what a part belongs to (its left, back, bottom corner); a group\'s origin: its left end, its wall, the floor.'] });
     return sheet;
   });
-  return { sheets: [rooms, doors, notes, ...furniture] };
+  /* the checks: each with its result, what to correct under it */
+  const test = { name: 'Test', cols: [{ width: 90, share: 4 }, { width: 12, fix: 9 }],
+    rows: [{ kind: 'title', cells: ['Test'] }, { kind: 'head', cells: ['Check', 'Result'] }] };
+  for (const c of CHECKS) {
+    test.rows.push({ kind: 'cat', cells: [c.name, c.info ? 'i' : c.items.length ? String(c.items.length) : 'OK'] });
+    for (const i of c.items) test.rows.push({ cells: ['\u2003' + i, ''] });
+  }
+  return { sheets: [rooms, doors, notes, ...furniture, test] };
 }
 function documents() {
   if (SHEET) return SHEET.set(book());
@@ -360,7 +366,6 @@ function documents() {
 /* ================= TEST ================= */
 const CHECKS = [{ name: 'Every room asked for (?room=) is a room of the house', items: ASKED.filter(id => !ROOM[id]) }]
   .concat(T.checks(), MODEL.checks(), LIB.checks(), ...FURNITURE.map(f => f.made.checks().map(c => Object.assign(c, { name: f.room.id + ' · ' + c.name }))));
-$('checks').innerHTML = HOME.ui.checksHtml(CHECKS);
 
 /* ================= THE SCREEN =================
    top-left: the house, its floors and their rooms · top-right: the modes · over the view: the picked room · below: the
@@ -383,7 +388,7 @@ function bottomMenu() {
   const walk = el('button', { className: 'walk', textContent: 'Walk', onclick: () => (V.walk.on ? V.stopWalk() : V.startWalk()) });
   walk.setAttribute('aria-pressed', V.walk.on);
   const go = c => ({ name: c.name, go: () => { V.stopWalk(); V.flyTo(c); } });
-  const menus = { '3d': [[walk], cameras().map(go)], '2d': [SHEET_2D.menu], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx')], test: [] };
+  const menus = { '3d': [[walk], cameras().map(go)], '2d': [SHEET_2D.menu], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx')] };
   HOME.ui.bottomMenu(menus[state.mode]);
 }
 const panel = () => { state.tab = HOME.ui.panelTabs(TABS[state.mode] || [], state.tab, t => { state.tab = t; save(); panel(); }, p => (p === 'cut' && !openFloor()) || (p === 'floors' && !WHOLE) || (p === 'furniture' && !Object.keys(ROOM_LAYERS).length)); };

@@ -10,7 +10,7 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, and the main page o
 |---|---|
 | house.js | the house's data: its settings (the root of the cascade), what it is made of, its floors and their rooms |
 | model.js | the house's data turned into solids: walls, slabs, roof, windows, doors, stair, site; the rooms in the house's axes and where two of them meet with no wall; a part of the house cut out for a room; the checks of the house. No browser |
-| index.html | the main page: the whole house, or a part of it (`?room=kitchen_6`, `?room=bathroom_7,bathroom_5`), in 3D, 2D, Documents and Test |
+| index.html | the main page: the whole house, or a part of it (`?room=kitchen_6`, `?room=bathroom_7,bathroom_5`), in 3D, 2D and Documents (its last sheet: Test) |
 
 ## How it fits together
 
@@ -25,7 +25,8 @@ house.js ─► model.js ─► solids ─► index.html: 3D, 2D (core)
 - **The menu** (top left): the house, each floor with its rooms.
 - **2D**: one sheet per floor (of a part: per floor of its rooms): what the cut meets filled, what lies under it seen from above, the doors' swings, the openings' labels, the rooms with their areas, a dash-dot line where two rooms meet with no wall.
 - **Documents**: the rooms (the model's area and archon's), the inner doors with what is bought for them, the notes.
-- **Test**: the tree, the house, the library; a room asked for that the house does not have.
+- **Test** (the last sheet of Documents): the tree, the house, the library, the rooms' furniture; a room asked for that the house does not have.
+- **Furniture** (a sheet of Documents): each furnished room's furniture as its tree, every part with its offset in what it belongs to and its size.
 - The rooms' floor tiles come with room/tiles.js.
 
 ## The format `house`, version 1
