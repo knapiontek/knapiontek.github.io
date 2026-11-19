@@ -5,19 +5,19 @@ HOME.data({
   "1": {"front": "W", "offset": [0, 200, 0], "size": [481, 1600, 1080]}
  },
  "fixtures": {
-  "mirror1": {"product": "mirror-led-600x800", "front": "W", "offset": [10, 300, 1220]},
-  "mirror2": {"product": "mirror-led-600x800", "front": "W", "offset": [10, 1100, 1220]},
-  "radiator": {"product": "mexen-hades-1200x400-gold", "front": "S", "offset": [10, 10, 820], "metal": "nickel"},
-  "corner": {"product": "shower-corner-1000x1000", "front": "W", "offset": [1685, 10, 0], "metal": "nickel"},
-  "drain": {"product": "linear-drain-vogi-duo-880", "front": "E", "offset": [2660, 60, 0]},
-  "shower": {"product": "shower-set-rain-thermostat", "front": "S", "offset": [1980, 10, 0], "metal": "nickel"},
+  "mirror1": {"product": "mirror-led-600x800", "front": "W", "offset": [12, 300, 1220]},
+  "mirror2": {"product": "mirror-led-600x800", "front": "W", "offset": [12, 1100, 1220]},
+  "radiator": {"product": "mexen-hades-1200x400-gold", "front": "S", "offset": [10, 12, 820], "metal": "nickel"},
+  "corner": {"product": "shower-corner-1000x1000", "front": "W", "offset": [1685, 12, 0], "metal": "nickel"},
+  "drain": {"product": "linear-drain-vogi-duo-880", "front": "E", "offset": [2658, 60, 0]},
+  "shower": {"product": "shower-set-rain-thermostat", "front": "S", "offset": [1980, 12, 0], "metal": "nickel"},
   "bath": {"product": "castorama-bath-freestanding-170x75", "front": "N", "offset": [390, 2030, 0], "metal": "nickel"},
   "bathTap": {"product": "hansgrohe-tecturis-e-73445000", "front": "N", "offset": [250, 2580, 0]},
   "riser": {"product": "riser-pvc-160", "front": "E", "offset": [2540, 2820, 0], "height": 1200},
   "outlet": {"product": "pvc-pipe-90", "front": "E", "offset": [2535, 1550, 185], "length": 1350},
-  "hatch": {"product": "inspection-hatch-200", "front": "E", "offset": [2464, 2710, 250], "metal": "nickel"},
-  "wcFrame": {"product": "wc-frame-geberit-duofix", "front": "E", "offset": [2462, 1300, 0], "depth": 198, "metal": "nickel"},
-  "wc": {"product": "wc-bowl-wall-hung-360x530", "front": "E", "offset": [1930, 1370, 0], "metal": "nickel"}
+  "hatch": {"product": "inspection-hatch-200", "front": "E", "offset": [2462, 2710, 250], "metal": "nickel"},
+  "wcFrame": {"product": "wc-frame-geberit-duofix", "front": "E", "offset": [2460, 1300, 0], "depth": 200, "metal": "nickel"},
+  "wc": {"product": "wc-bowl-wall-hung-360x530", "front": "E", "offset": [1928, 1370, 0], "metal": "nickel"}
  },
  "builtIns": [
   {"name": "WC casing over the frame and the riser", "box": [2480, 2730, 1250, 3010, 0, 1200], "material": "wall"},

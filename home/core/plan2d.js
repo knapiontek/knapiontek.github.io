@@ -43,7 +43,10 @@ function create(materials) {
   function seen(X, shapes, h) {
     const pts = sh => sh.poly.map(p => `${Math.round((X + p[1]) * 10) / 10},${Math.round(p[0] * 10) / 10}`).join(' ');
     const under = shapes.filter(sh => sh.bottom < h).sort((a, b) => a.top - b.top), over = shapes.filter(sh => sh.bottom >= h);
-    return under.map(sh => `<polygon points="${pts(sh)}" fill="${sh.glass ? 'none' : '#fbfaf7'}" stroke="${sh.glass ? '#6f97ad' : '#7b827e'}" stroke-width="${S.line.seen}"/>`).join('')
+    /* a figure of pieces (a worktop): the pieces filled, one outline round them, no joints */
+    const figure = sh => sh.pieces.map(q => `<polygon points="${pts(q)}" fill="#fbfaf7" stroke="none"/>`).join('')
+      + outline(sh.pieces).map(([a, b]) => `<line x1="${X + a[1]}" y1="${a[0]}" x2="${X + b[1]}" y2="${b[0]}" stroke="#7b827e" stroke-width="${S.line.seen}"/>`).join('');
+    return under.map(sh => sh.pieces ? figure(sh) : `<polygon points="${pts(sh)}" fill="${sh.glass ? 'none' : '#fbfaf7'}" stroke="${sh.glass ? '#6f97ad' : '#7b827e'}" stroke-width="${S.line.seen}"/>`).join('')
       + over.map(sh => `<polygon points="${pts(sh)}" fill="none" stroke="#8a8d88" stroke-width="${S.line.seen}" stroke-dasharray="${S.line.dash}"/>`).join('');
   }
   /* the archon labels (width / height) of the openings the cut at h meets, outside the wall for outer ones;
@@ -120,6 +123,18 @@ function create(materials) {
   return { SIZE, fill, rect, hatches, floorArea, cut, seen, labels, rooms, borders, chain, dims, sheets };
 }
 
+/* the outline of axis-aligned rectangles (shapes with a box poly): the edges of the grid's cells between covered and not,
+   joined along each line; [[x, y], [x, y]] */
+function outline(pieces) {
+  const boxes = pieces.map(q => { const xs = q.poly.map(p => p[0]), ys = q.poly.map(p => p[1]); return [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)]; });
+  const X = [...new Set(boxes.flatMap(b => [b[0], b[1]]).map(v => Math.round(v * 10) / 10))].sort((a, b) => a - b);
+  const Y = [...new Set(boxes.flatMap(b => [b[2], b[3]]).map(v => Math.round(v * 10) / 10))].sort((a, b) => a - b);
+  const on = (i, j) => i >= 0 && j >= 0 && i < X.length - 1 && j < Y.length - 1 && boxes.some(b => b[0] <= X[i] + 0.05 && b[1] >= X[i + 1] - 0.05 && b[2] <= Y[j] + 0.05 && b[3] >= Y[j + 1] - 0.05);
+  const segs = [];
+  for (let i = 0; i <= X.length - 1; i++) for (let j = 0; j < Y.length - 1; j++) if (on(i - 1, j) !== on(i, j)) segs.push([[X[i], Y[j]], [X[i], Y[j + 1]]]);
+  for (let j = 0; j <= Y.length - 1; j++) for (let i = 0; i < X.length - 1; i++) if (on(i, j - 1) !== on(i, j)) segs.push([[X[i], Y[j]], [X[i + 1], Y[j]]]);
+  return segs;
+}
 /* the footprint of a solid: its box seen from above */
 function solidShape(c, glass = false) {
   const ys = c.S.poly.map(p => p[0]), [bottom, top] = hRange(c.S), y1 = Math.min(...ys), y2 = Math.max(...ys);
@@ -139,5 +154,5 @@ function meshShape(mesh, toHouse, glass = false) {
   return { poly: half(pts).concat(half(pts.slice().reverse())), bottom, top, glass };
 }
 
-HOME.plan2d = { SIZE, create, solidShape, meshShape };
+HOME.plan2d = { SIZE, create, solidShape, meshShape, outline };
 })(window.HOME = window.HOME || {});

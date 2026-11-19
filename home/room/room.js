@@ -86,7 +86,7 @@ const tileLayouts = scene => {
   const T = scene.tiles || {}, S = T.shower || {};
   return Object.fromEntries([['walls', T.walls], ['floor', T.floor], ['showerWalls', S.walls], ['showerFloor', S.floor]].filter(([, v]) => v));
 };
-const TILE_DEPTH = 10, TILE_TOP = 3;       // mm: a wall's tile face off the wall (glue and tile); a floor's over the floor
+const TILE_DEPTH = 12, TILE_TOP = 3;       // mm: a wall's tiles, glue and tile, against the wall: their face that far off it; a floor's over the floor
 /* the walls of a floor area (rects) as segments: {axis (0: the wall runs along x), at (its line), from, to, inward (+1 / -1)} */
 function wallsOf(rects) {
   /** @type {{ axis: number, at: number, inward: number, from: number, to: number }[]} */
@@ -208,8 +208,30 @@ function roomTiles(scene, room, library, cell, finish, draw = true) {
       if (!draw) continue;
       /* a tile goes with what it lies on: a wall's with the blocks, a casing's with the casing (like a facade with its EPS) */
       const on = S.id[0] === 'b' ? 'builtIns' : wall ? 'walls' : null;
-      const made = HOME.tiles.corePieces(lay, P, T, pieces, grout, at, S.n, on ? Object.assign({}, cell, { layers: cell.layers.concat(on) }) : cell, finish);
+      const c0 = on ? Object.assign({}, cell, { layers: cell.layers.concat(on) }) : cell;
+      const made = HOME.tiles.corePieces(lay, P, T, pieces, grout, at, S.n, c0, finish);
       out.pieces.push(...made.pieces); Object.assign(out.materials, made.materials);
+      /* a wall's tiles are a slab against the wall: its edges from the wall to the face, round it and round its holes */
+      if (wall) {
+        const cut = poly => under.reduce((q, l) => q.length < 3 ? q : HOME.tiles.clipHalf(q, l.p, l.q, l.c), poly);
+        const R = S.rect, ring = q => [[q[0], q[2]], [q[1], q[2]], [q[1], q[3]], [q[0], q[3]]];
+        const holes = S.holes.map(h => [Math.max(h[0], R[0]), Math.min(h[1], R[1]), Math.max(h[2], R[2]), Math.min(h[3], R[3])]).filter(h => h[1] - h[0] > 1 && h[3] - h[2] > 1);
+        const P0 = S.point(0, 0), U3 = S.point(1, 0).map((v, k) => v - P0[k]), V3 = S.point(0, 1).map((v, k) => v - P0[k]);
+        const key = `tiles:${P.texture}:0`, group = c0.layers.join('+');
+        for (const [poly, out2] of [[cut(ring(R)), 1]].concat(holes.map(h => [cut(ring(h)), -1]))) {
+          for (let k = 0; k < poly.length; k++) {
+            const p = poly[k], q = poly[(k + 1) % poly.length], du = q[0] - p[0], dv = q[1] - p[1], len = Math.hypot(du, dv);
+            if (len < 0.5) continue;
+            /* the edge's outward side: the ring runs counter-clockwise (u right, v up), out of the slab for its outline, into a hole for a hole */
+            const nu = out2 * dv / len, nv = -out2 * du / len, n = U3.map((v, i) => nu * v + nv * V3[i]);
+            const face = [at(...p), at(...q)], back = face.map(x => x.map((v, i) => v - S.n[i] * TILE_DEPTH));
+            const quad = [face[0], face[1], back[1], back[0]], e1 = quad[1].map((v, i) => v - quad[0][i]), e2 = quad[3].map((v, i) => v - quad[0][i]);
+            const c = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+            if (c[0] * n[0] + c[1] * n[1] + c[2] * n[2] < 0) quad.reverse();
+            out.pieces.push({ poly: quad, n, uv: v => [v[0] + v[1], v[2]], cell: c0, group, material: key });
+          }
+        }
+      }
     }
     out.counts[key] = Object.assign({ product: spec.product, name: P0.name, format: P.len + ' × ' + P.wid }, HOME.tiles.count(P, all));
   }
@@ -393,6 +415,31 @@ function build(V, prepared, opts = {}) {
     m.core = V.mover(Object.assign({ pieces: piecesOf(m.cells), at: m.P, behind: m.parent ? m.parent.core : null, label: m.label }, how));
     m.core.inner.add(m.holder);
   }
+  /* one mesh for the still details alike: in one frame, of one material, with the same layers and shadows (a layer shows
+     and hides them as before; what moves, and what the 2D plan draws apart, stays apart) */
+  const SEEN_DETAILS = ['sink', 'hob'], groupsOf = new Map();   // of the sink and the hob the plan draws what is seen from above
+  for (const d of DETAILS) {
+    const m = d.mesh;
+    if (d.moves || d.layers.some(l => SEEN_DETAILS.includes(l)) || !m.parent) continue;
+    const k = [m.parent.uuid, m.material.uuid, d.layers.join('+'), m.castShadow, m.receiveShadow].join('|');
+    if (!groupsOf.has(k)) groupsOf.set(k, []);
+    groupsOf.get(k).push(d);
+  }
+  for (const list of groupsOf.values()) {
+    if (list.length < 2) continue;
+    const parts = list.map(d => { const m = d.mesh; if (m.matrixAutoUpdate) m.updateMatrix(); const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone(); return g.applyMatrix4(m.matrix); });
+    const uv = parts.every(g => g.attributes.uv), merged = new THREE.BufferGeometry();
+    for (const name of ['position', 'normal'].concat(uv ? ['uv'] : [])) {
+      const size = parts[0].attributes[name].itemSize, arr = new Float32Array(parts.reduce((s, g) => s + g.attributes[name].count * size, 0));
+      let at = 0; for (const g of parts) { arr.set(g.attributes[name].array, at); at += g.attributes[name].array.length; }
+      merged.setAttribute(name, new THREE.BufferAttribute(arr, size));
+    }
+    const first = list[0].mesh, one = new THREE.Mesh(merged, first.material);
+    one.castShadow = first.castShadow; one.receiveShadow = first.receiveShadow;
+    first.parent.add(one);
+    for (const d of list) { d.mesh.parent.remove(d.mesh); d.mesh.geometry.dispose(); }
+    DETAILS.splice(0, DETAILS.length, ...DETAILS.filter(d => !list.includes(d)), { mesh: one, layers: list[0].layers, moves: false });
+  }
   for (const d of DETAILS) d.mesh.userData.owner = null;
 
   const night = on => {
@@ -402,21 +449,32 @@ function build(V, prepared, opts = {}) {
   const showDetails = shown => { for (const d of DETAILS) d.mesh.visible = shown(d.layers); };
   const made = { STATIC, MOVERS, DETAILS, ENVELOPES, LAMPS, UNDRAWN, tiles, carcasses: drawn.carcasses, night, showDetails,
     cells: () => STATIC.concat(...MOVERS.map(m => m.cells)) };
-  /* the 2D plan of the furniture: its cells (what the cut meets) and the outlines seen from above, details too */
-  /* an appliance is drawn as its node's box, one outline (what it is made of inside stays in 3D); of the sink and the hob
-     what is seen from above too */
-  const NOT_SEEN = ['holes', 'hardware', 'legs', 'backs', 'lamps'], SEEN_DETAILS = ['sink', 'hob'];
+  /* the 2D plan of the furniture, as a room's plan shows it (about 1:50): not cut, seen from above. A carcass is one
+     rectangle with its front; the tops (worktops, end panels) one figure, no joints, their openings left; a sink and a hob
+     their outlines, an appliance its body; what is built and the sanitary fittings their own outlines. What is over the
+     plan's cut (wall units, the hood) dashed. Left out: the boards, drawers, hardware, handles, strips, plinths, backs,
+     legs, holes, the installations. */
   const APPLIANCES = ['sink', 'trap', 'hob', 'hood', 'oven', 'microwave', 'coffee', 'fridge', 'dishwasher'];
   made.plan = () => {
     V.root.updateMatrixWorld(true);
-    const bodies = [];
-    for (const x of model.products || []) {
-      const b = C().boxIn(x.node), wall = model.groups[x.group].wall;
-      box(bodies, x.group, [b[0], b[1], b[2] + wall, b[3] + wall, b[4], b[5]], 'applianceBody', 'appliance', { name: x.name || x.role });
+    const toHouse = new THREE.Matrix4().copy(V.root.matrixWorld).invert(), cells = made.cells(), shapes = [];
+    const span = list => { const s = list.map(c => HOME.plan2d.solidShape(c)), xs = s.flatMap(q => q.poly.map(p => p[0])), ys = s.flatMap(q => q.poly.map(p => p[1]));
+      return { poly: [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)], [Math.min(...xs), Math.max(...ys)]], bottom: Math.min(...s.map(q => q.bottom)), top: Math.max(...s.map(q => q.top)) }; };
+    for (const c of drawn.carcasses) {
+      const own = cells.filter(x => x.info && x.info.carcass === c).concat(...c.movers.map(m => m.cells)).filter(x => !x.layers.some(l => ['handles', 'hardware', 'holes', 'legs'].includes(l)));   // a handle past the front: not the carcass
+      if (own.length) shapes.push(span(own));
     }
-    const toHouse = new THREE.Matrix4().copy(V.root.matrixWorld).invert(), cells = made.cells().filter(c => !c.layers.some(l => APPLIANCES.includes(l))).concat(bodies);
-    return { cells, shapes: cells.filter(c => !c.layers.some(l => NOT_SEEN.includes(l))).map(c => HOME.plan2d.solidShape(c))
-      .concat(DETAILS.filter(d => d.layers.some(l => SEEN_DETAILS.includes(l)) && d.mesh.geometry.attributes.position).map(d => HOME.plan2d.meshShape(d.mesh, toHouse))) };
+    for (const x of model.products || []) {
+      if (!APPLIANCES.includes(x.role) || ['sink', 'hob', 'trap'].includes(x.role)) continue;   // the sink and the hob: their own outlines below
+      const b = C().boxIn(x.node), wall = model.groups[x.group].wall, list = [];
+      box(list, x.group, [b[0], b[1], b[2] + wall, b[3] + wall, b[4], b[5]], 'applianceBody', 'appliance', { name: x.name || x.role });
+      shapes.push(...list.map(c => HOME.plan2d.solidShape(c)));
+    }
+    const tops = cells.filter(c => c.layers.includes('worktops') || c.layers.includes('endPanels')).map(c => HOME.plan2d.solidShape(c));
+    shapes.push(...cells.filter(c => c.layers.some(l => ['builtIns', 'plasterboard', 'sanitary', 'basin'].includes(l)) && !c.layers.includes('installations')).map(c => HOME.plan2d.solidShape(c, c.material === 'glass')));
+    shapes.push(...DETAILS.filter(d => !d.layers.includes('installations') && d.layers.some(l => ['sink', 'hob', 'basin', 'sanitary'].includes(l)) && d.mesh.geometry.attributes.position).map(d => HOME.plan2d.meshShape(d.mesh, toHouse)));
+    if (tops.length) shapes.push({ pieces: tops, poly: tops[0].poly, bottom: Math.min(...tops.map(q => q.bottom)), top: Math.max(...tops.map(q => q.top)) });
+    return { cells: [], shapes };
   };
   /* the tree: its rules (core/tree.js) and each group inside the box the scene gives it */
   const treeChecks = () => {

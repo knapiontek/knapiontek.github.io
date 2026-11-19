@@ -283,3 +283,11 @@ The owner's decisions: the design is where every object stands (bought, cut, or 
 - **The doors' widths are all different**: to unify, by a standard (e.g. 900 for a room, 700 for a wardrobe?), to check first.
 - **The hob draws half black** in 2D.
 - **The kitchen shows too much**: fridge, oven, microwave lie one over another; to simplify (what is under the cut, less detail).
+
+## Tiles, speed, the 2D plan, prices (19 Nov, late)
+
+- The tiles: 12 mm thick (was 10) and they lie on the blocks: a wall's tiles are one slab whose edges are closed from the wall to the face, round the outline and round every hole, so no gap can be looked into. The corners follow: an inside corner ends 12 short, an outside one 12 past. The fittings that stand on the tiles moved 2 mm with them (both bathrooms' scenes; the prototype's shapes regenerated: the WC plate shift +12).
+- The speed: the still details (handles, hinge cups, shelf pins, legs, rails) are merged into one mesh per group, material, layer and shadow; the movers (doors, drawers) and the sink's and the hob's details stay separate. The whole house: 2490 meshes / 2775 draw calls before, 1459 / 1744 now (−37 %). The layers still switch each kind (handles, hardware, installations).
+- The 2D plan, the rule (room/project.md): furniture is not cut. A carcass is one rectangle of its outline (no handles, hardware, holes, legs); an appliance its body (except the sink, the hob, the trap: those keep their details); the worktops and end panels are one figure drawn by their outline (no joints); built-ins, plasterboard, the basins and the sanitary keep their outline; what is above the cut is dashed. No strips, no hidden hardware.
+- Prices: the items "to check" and "to choose" in both bathrooms got example prices from Polish shops (Media Expert, Castorama, Leroy Merlin, OBI, Kaufland, Onninen), each with its source in priceNote and a link; where no Polish price was found, a foreign one converted, marked "approx." (Blum TANDEMBOX and TIP-ON, the Camar hangers, the Catalano basin, the bath's floor tap). Left to check: the EPDM gaskets, the PUR edge banding service, the wall cabinet 400 × 800 × 150 (about 200–300 zł for a ready one, e.g. Cersanit Moduo 40). New shops in library/shops.js: Kaufland, OBI, SFS.
+- The Egger decors (H1181, H1399, H1346, H1176) and their textures stay: not to delete.

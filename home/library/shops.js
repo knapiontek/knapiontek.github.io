@@ -10,5 +10,8 @@ HOME.data({"format": "shops", "version": 1, "shops": {
  "bathroom-wholesale": {"name":"salon łazienek / hurtownia instalacyjna"},
  "porta": {"name":"esklep-porta.pl"},
  "leroy-castorama-bb": {"name":"Leroy Merlin / Castorama Bielsko-Biała"},
- "porta-salon-bb": {"name":"esklep-porta.pl / salon w Bielsku"}
+ "porta-salon-bb": {"name":"esklep-porta.pl / salon w Bielsku"},
+ "kaufland.pl": {"name":"Kaufland.pl (marketplace, wysyłka)"},
+ "obi.pl": {"name":"OBI (obi.pl)"},
+ "sfs.ch": {"name":"SFS (CH) – reference price"}
 }});

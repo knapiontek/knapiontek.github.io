@@ -6,24 +6,24 @@ HOME.data({
  },
  "fixtures": {
   "riser": {"product": "riser-pvc-160", "front": "W", "offset": [30, 2200, 0]},
-  "hatch": {"product": "inspection-hatch-200", "front": "W", "offset": [290, 2120, 250]},
-  "wcFrame": {"product": "wc-frame-geberit-duofix", "front": "W", "offset": [100, 1555, 0], "depth": 198},
+  "hatch": {"product": "inspection-hatch-200", "front": "W", "offset": [292, 2120, 250]},
+  "wcFrame": {"product": "wc-frame-geberit-duofix", "front": "W", "offset": [100, 1555, 0], "depth": 200},
   "outlet": {"product": "pvc-pipe-90", "front": "W", "offset": [135, 1805, 185], "length": 475},
-  "wc": {"product": "wc-bowl-wall-hung-360x530", "front": "W", "offset": [290, 1625, 0]},
-  "cabinet": {"product": "wall-cabinet-400x800x150", "front": "W", "offset": [130, 1605, 1200]},
-  "mirror": {"product": "mirror-led-600x800", "front": "W", "offset": [10, 800, 1220]},
-  "radiator": {"product": "mexen-hades-1200x400-gold", "front": "S", "offset": [10, 10, 820]},
-  "screen": {"product": "shower-screen-1000-door-600", "front": "W", "offset": [1644, 1390, 0]},
-  "drain": {"product": "linear-drain-vogi-duo-880", "front": "E", "offset": [2450, 1450, 0]},
-  "shower": {"product": "shower-set-rain-thermostat", "front": "S", "offset": [1810, 1400, 0]}
+  "wc": {"product": "wc-bowl-wall-hung-360x530", "front": "W", "offset": [292, 1625, 0]},
+  "cabinet": {"product": "wall-cabinet-400x800x150", "front": "W", "offset": [142, 1605, 1200]},
+  "mirror": {"product": "mirror-led-600x800", "front": "W", "offset": [12, 800, 1220]},
+  "radiator": {"product": "mexen-hades-1200x400-gold", "front": "S", "offset": [10, 12, 820]},
+  "screen": {"product": "shower-screen-1000-door-600", "front": "W", "offset": [1642, 1390, 0]},
+  "drain": {"product": "linear-drain-vogi-duo-880", "front": "E", "offset": [2438, 1450, 0]},
+  "shower": {"product": "shower-set-rain-thermostat", "front": "S", "offset": [1810, 1402, 0]}
  },
  "builtIns": [
-  {"name": "WC casing over the frame and the riser", "box": [0, 280, 1540, 2390, 0, 2720], "cuts": [[130, 280, 1605, 2005, 1200, 2000]], "material": "wall"}
+  {"name": "WC casing over the frame and the riser", "box": [0, 280, 1540, 2390, 0, 2720], "cuts": [[130, 280, 1593, 2017, 1200, 2000]], "material": "wall"}
  ],
  "tiles": {
   "walls": {"product": "paradyz-authority-graphite", "format": [1198, 598], "dir": "x", "pattern": "grid"},
   "floor": {"product": "paradyz-authority-grey", "dir": "x", "pattern": "grid"},
-  "shower": {"zone": [1656, 2510, 1390, 2390],
+  "shower": {"zone": [1654, 2510, 1390, 2390],
    "walls": {"product": "paradyz-authority-graphite", "format": [1198, 598], "dir": "x", "pattern": "grid"},
    "floor": {"product": "paradyz-authority-grey", "dir": "x", "pattern": "grid"}}
  },

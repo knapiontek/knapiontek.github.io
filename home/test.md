@@ -137,3 +137,10 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 - bathroom_7's tiled faces listed: every inside corner 10 short, the outside corner at the shower's step 10 past, the casing's sides 10 past at their free end and short at the wall, the niche's hole 10 smaller and its reveals 10 past at the front. Both bathrooms: every check passes.
 - The whole house: 2490 meshes, 243 004 triangles, 2775 draw calls (this morning's copy: 2328, 224 564, 2593).
 - Regressions: kitchen_6, wardrobe_3, bedroom_6 the same; the house the same; t_tiles clean; tsc clean.
+
+## Tiles 12, the merge, the 2D plan, prices (19 Nov, late)
+
+- Both bathrooms: no errors, every check passes; their Estimates total; a look from inside the wall's edge shows no gap between the tiles and the blocks.
+- The whole house: 1459 meshes, 1744 draw calls (2490 / 2775 before); Handles, Hardware, Installations still hide their parts.
+- The 2D plans of the kitchen and both bathrooms: carcasses one rectangle each, the worktop one figure with the sink's opening, no strips.
+- Regressions: the kitchen's model the same, its cells (472 / 346) and faces (205) the same; wardrobe_3, _4, _8 and bedroom_6 differ only by the white board's new price; the house the same; t_tiles clean; tsc clean; the cabinet editor draws the kitchen and bathroom_5.
