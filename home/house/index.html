@@ -29,22 +29,19 @@
     <template x-part="corner"></template>
   </div>
   <template x-part="panel"><template x-part="layers"></template>
-    <section x-show="tab === 'finish'" x-cloak><h2>Floor tiles</h2><p class="note">A click on a room picks it (here, or on the open floor in 3D); a room shares its layout with the rooms named under it.</p>
-      <table id="rooms"><template x-for="F in finish" :key="F.id"><tbody><tr><td class="floorname" x-text="F.name"></td></tr>
-        <template x-for="r in F.rooms" :key="r.id"><tr :data-room="r.id" :aria-selected="String(r.picked)"><td>
-          <div class="roomline" @click="state.room = r.picked ? null : r.id"><span x-text="r.name"></span><span class="note" x-text="r.note"></span></div>
-          <template x-if="r.layout"><div class="lay" @click.stop>
-            <label>Tile<select @change="setTiles(r.layout.key, 'product', $event.target.value)"><template x-for="p in r.layout.products" :key="p.k"><option :value="p.k" :selected="p.k === r.layout.L.product" x-text="p.name"></option></template></select></label>
-            <p class="note"><span x-text="r.layout.note"></span><template x-if="r.layout.link"><span> · <a :href="r.layout.link.url" target="_blank" rel="noopener" x-text="r.layout.link.name"></a></span></template><template x-if="r.layout.together"><span><br>With: <span x-text="r.layout.together"></span></span></template></p>
-            <div class="row"><label>Pattern<select @change="setTiles(r.layout.key, 'pattern', $event.target.value)"><template x-for="p in r.layout.patterns" :key="p.k"><option :value="p.k" :selected="p.k === r.layout.L.pattern" x-text="p.name"></option></template></select></label>
-              <label>Direction<select @change="setTiles(r.layout.key, 'dir', $event.target.value)"><template x-for="d in r.layout.dirs" :key="d.k"><option :value="d.k" :selected="d.k === r.layout.L.dir" x-text="d.name"></option></template></select></label></div>
-            <div class="row"><label>Origin along (mm)<input type="number" step="1" :value="r.layout.L.oa" @change="setTiles(r.layout.key, 'oa', $event.target.value)"></label>
-              <label>Origin across (mm)<input type="number" step="1" :value="r.layout.L.ob" @change="setTiles(r.layout.key, 'ob', $event.target.value)"></label></div>
-            <div class="row"><label>Grout<input type="color" :value="r.layout.L.grout" @change="setTiles(r.layout.key, 'grout', $event.target.value)"></label>
-              <label>&nbsp;<button class="btn ghost" @click="fitTiles(r.layout.key)">Fit the origin</button></label></div>
-            <template x-if="r.layout.changed"><div class="btns"><button class="btn ghost" @click="setTiles(r.layout.key, 'reset')">Back to the data</button></div></template>
-            <dl class="stats"><template x-for="s in r.layout.stats" :key="s[0]"><div><dt x-text="s[0]"></dt><dd x-text="s[1]"></dd></div></template></dl></div></template>
-        </td></tr></template></tbody></template></table></section></template>
+    <section x-show="tab === 'finish'" x-cloak><h2>Floor tiles</h2>
+      <template x-if="!finish"><p class="note">Pick a room: a click on its floor in 3D, with the roof off.</p></template>
+      <template x-if="finish && !finish.layout"><p class="note">No tiles here.</p></template>
+      <template x-if="finish && finish.layout"><div class="lay">
+        <label>Tile<select @change="setTiles(finish.layout.key, 'product', $event.target.value)"><template x-for="p in finish.layout.products" :key="p.k"><option :value="p.k" :selected="p.k === finish.layout.L.product" x-text="p.name"></option></template></select></label>
+        <div class="row"><label>Pattern<select @change="setTiles(finish.layout.key, 'pattern', $event.target.value)"><template x-for="p in finish.layout.patterns" :key="p.k"><option :value="p.k" :selected="p.k === finish.layout.L.pattern" x-text="p.name"></option></template></select></label>
+          <label>Direction<select @change="setTiles(finish.layout.key, 'dir', $event.target.value)"><template x-for="d in finish.layout.dirs" :key="d.k"><option :value="d.k" :selected="d.k === finish.layout.L.dir" x-text="d.name"></option></template></select></label></div>
+        <div class="row"><label>Origin along (mm)<input type="number" step="1" :value="finish.layout.L.oa" @change="setTiles(finish.layout.key, 'oa', $event.target.value)"></label>
+          <label>Origin across (mm)<input type="number" step="1" :value="finish.layout.L.ob" @change="setTiles(finish.layout.key, 'ob', $event.target.value)"></label></div>
+        <div class="row"><label>Grout<input type="color" :value="finish.layout.L.grout" @change="setTiles(finish.layout.key, 'grout', $event.target.value)"></label>
+          <label>&nbsp;<button class="btn ghost" @click="fitTiles(finish.layout.key)">Fit the origin</button></label></div>
+        <template x-if="finish.layout.changed"><div class="btns"><button class="btn ghost" @click="setTiles(finish.layout.key, 'reset')">Back to the data</button></div></template>
+      </div></template></section></template>
 </div>
 <script src="../core/load.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -76,7 +73,7 @@ HOME.ui.page('house', {
   onMode: m => P.onMode(m), onLayers: () => P.apply(), menus: () => P.menus(),
   get layerBlocks() { return this.ready ? P.layerBlocks() : []; },
   get roomTag() { return this.ready ? P.roomTag() : null; },
-  get finish() { return this.ready ? P.finish() : []; },
+  get finish() { return this.ready ? P.finish() : null; },
   setTiles(key, field, value) { P.setTiles(key, field, value); },
   fitTiles(key) { P.setTiles(key, 'fit'); }
 });
@@ -479,16 +476,13 @@ function assemblyNode(f) {
     + '<p class="note">' + a.legend + '</p><div class="asm">' + a.cards + '</div>';
   return (f.assembly = box);
 }
-/* a layout in the panel: its fields and its count */
+/* a layout in the panel: its settings only (what is laid and what it costs: Documents) */
 function layoutPanel(A, changed) {
-  const { D, L, P, count } = A, cost = P.price ? count.area * (1 + TILES.reserve) * P.price : null, fmt = (x, d) => x.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d });
-  return { key: D.key, L, P, note: P.note || '', link: (P.links || [])[0] || null,
-    together: D.rooms.length > 1 ? D.rooms.map(roomName).join(', ') : '',
+  const { D, L } = A;
+  return { key: D.key, L,
     products: Object.entries(TILE_PRODUCTS).map(([k, p]) => ({ k, name: p.name })),
     patterns: Object.entries(HOME.tiles.PATTERNS).map(([k, [name]]) => ({ k, name })), dirs: Object.entries(HOME.tiles.DIRS).map(([k, name]) => ({ k, name })),
-    changed: !!changed,                    // the viewer changed it: it may go back to the data
-    stats: [['Area', fmt(count.area, 2) + ' m²'], [`Tiles (+${Math.round(TILES.reserve * 100)}%)`, String(Math.ceil(count.tiles * (1 + TILES.reserve)))],
-      ['Whole / cut', count.full + ' / ' + count.cut], ['Small cuts', String(count.small)], ['Cost', cost === null ? '—' : fmt(cost, 0) + ' zł']] };
+    changed: !!changed };                  // the viewer changed it: it may go back to the data
 }
 function documents() {
   if (SHEET) return SHEET.set(book());
@@ -539,15 +533,13 @@ return {
     const r = ROOM[state.room], F = openFloor();
     return state.mode === '3d' && WHOLE && r && F && r.floor === F ? { name: roomName(r), href: linkTo([r.id]) } : null;
   },
-  /* Finish: the rooms of every floor shown; the one picked opens its layout */
+  /* Finish: the layout of the room picked (a room's own view: that room); null: none picked */
   finish() {
     const v = state.layouts;               // read, so the panel follows a change
-    return FLOORS.map(F => ({ id: F.id, name: F.name, rooms: ROOMS.filter(r => r.floor === F && SHOWN_ROOMS.has(r.id)).map(r => {
-      const D = layoutOf(r), A = D && LAID[D.key], picked = state.room === r.id;
-      const own = T.setting(r.node, 'tiles'), none = own && own.value === null;
-      return { id: r.id, name: roomName(r), picked, note: A ? A.P.name : none ? 'no tiles (the room lays its own floor)' : 'no tiles',
-        layout: picked && A ? layoutPanel(A, v[D.key]) : null };
-    }) })).filter(F => F.rooms.length);
+    const r = ROOM[WHOLE ? state.room : PART.length === 1 ? PART[0] : state.room];
+    if (!r || !SHOWN_ROOMS.has(r.id)) return null;
+    const D = layoutOf(r), A = D && LAID[D.key];
+    return { layout: A ? layoutPanel(A, v[D.key]) : null };
   },
   setTiles(key, field, value) {
     const D = LAYOUTS.find(l => l.key === key), v = state.layouts[key] ||= {};

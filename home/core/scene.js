@@ -133,7 +133,7 @@ function create(opts) {
     if (MATERIALS[key]) return MATERIALS[key];
     const def = MATERIAL_LIB[key];
     const o = { color: lin(def.color || '#ffffff'), roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1, clippingPlanes: CLIP, clipShadows: true,
-      polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 };   // the faces a little back in depth: an edge on them shows, one behind them does not
+      polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 };   // the faces a little back in depth, by the depth buffer's own steps at any distance: an edge on them shows, one behind them does not
     if (def.emissive) Object.assign(o, { emissive: lin(def.emissive), emissiveIntensity: def.glow ?? 1 });
     const m = def.clearcoat === undefined ? new THREE.MeshStandardMaterial(o)   // a lacquer: a clear coat over the colour
       : new THREE.MeshPhysicalMaterial(Object.assign(o, { clearcoat: def.clearcoat, clearcoatRoughness: def.clearcoatRoughness ?? 0.5 }));
@@ -213,7 +213,6 @@ function create(opts) {
      in a joint); two outside pieces at an angle are a corner (always a line); otherwise the line hides exactly while every
      group that closes it is shown. */
   const EDGE_GROUPS = [];
-  const EDGE_PULL = 0.0004;                // 4 mm at 10 m, 1 mm at 2.5 m: with the faces pushed back (polygonOffset), in front of its corner, behind a 3 mm board
   function buildEdges(pieces, parent = root) {
     const E = opts.edges, segs = new Map();
     for (const f of pieces) {
@@ -225,11 +224,6 @@ function create(opts) {
       }
     }
     const mat = new THREE.LineBasicMaterial({ color: lin(E.color), transparent: true, opacity: E.opacity, clippingPlanes: CLIP });
-    mat.onBeforeCompile = sh => {          // pulled toward the eye along its view ray: nothing lies between the eye and a visible edge
-      sh.uniforms.edgePull = { value: EDGE_PULL };
-      sh.vertexShader = 'uniform float edgePull;\n' + sh.vertexShader.replace('#include <project_vertex>',
-        '#include <project_vertex>\n  mvPosition.xyz *= 1.0 - edgePull;\n  gl_Position = projectionMatrix * mvPosition;');
-    };
     const same = (m, n) => dot3(m, n) > 1 - 1e-9;
     const lines = new Map();
     for (const s of segs.values()) {

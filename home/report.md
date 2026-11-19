@@ -208,6 +208,10 @@ The prototype's floor tiles (its house page: Wykończenie, the layouts, the coun
 - **The niche's fronts**: 4 mm between them (2 mm a side, 2 mm to the niche's edge; was 1 a side), light grey Egger U708 ST9 instead of the oak decor, banded in U708. Later (the owner): triangles as blends, so the niche reads as one wall with only its joints; push to open.
 - **Floor tiles moved** (the owner: they are bought and cut on site, the prototype's origins are not binding): the attic's bedroom with wardrobes 3 and 4 in half bond, its origin fitted: 1 small cut (was 11); the attic's hall fitted: 20 cut tiles (was 22). The other layouts stay at the prototype's origin (fitting gives nothing better).
 
+- **The edges without a pull** (the owner: no rule in proportion to the distance): the lines are drawn where they are; only the faces are pushed back, by polygonOffset, which the graphics card counts in its own depth steps, so it fits every distance by itself. Close, at a few metres and from 100 m: the backs clean, the edges as before.
+- **The panel only for settings** (the owner): Finish lost its numbers (area, tiles, whole and cut, small cuts, cost) and the product's note; they are in Documents, Floor tiles. The rule in project.md (Code style).
+- **Finish: only the settings** (the owner, again): no list of floors and rooms, no product names, no "With"; the picked room's layout only (pick it on the floor in 3D; a room's own view: that room).
+
 ## Noted for later: the 2D view (done 18 Nov, see above) (the owner, 18 Nov)
 
 - **Zoom with the mouse wheel**, about the cursor, instead of the + and − buttons.
