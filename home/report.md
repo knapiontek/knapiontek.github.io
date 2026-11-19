@@ -262,6 +262,14 @@ The owner's decisions: the design is where every object stands (bought, cut, or 
 - room/bathroom_5.docs.js: the estimate (61 rows), the cut list, the notes.
 - The kitchen, the wardrobes, bedroom 6 and the house: the same as before.
 
+## The owner's notes of the evening (19 Nov)
+
+- The Egger decors H1181, H1399, H1346, H1176 restored: boards to choose from (their textures stay).
+- The 2D plan: a click or a drag no longer selects its texts (user-select none on the drawing).
+- The tiles at the corners: a tile's face stands 10 mm off its wall; at an inside corner a face now ends 10 short (where the other's face is), at an outside one 10 past (closing the corner); a wall's tiles stop at the face of a casing's tiles; a niche's reveals meet the front's tiles. Before, two faces crossed in each inside corner.
+- The speed: the whole house draws about 2500 meshes (2330 this morning, before the attic bathroom); 1309 of them are small cylinders, each its own draw call (handles, hinge cups, shelf pins, legs, the radiators' rails). Merging them per group and material would cut the draw calls by about half: proposed, not done.
+- The triangle fillers in the wardrobes' niches: kept in the plan only, the owner decides later.
+
 ## Noted for later (the owner, 19 Nov)
 
 - **2D, the whole house**: a click on the plan marks everything: ugly (to check whether it still does).

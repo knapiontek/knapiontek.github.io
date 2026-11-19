@@ -125,14 +125,19 @@ function tiledSurfaces(scene, area, height, openings) {
       const a = cuts[i], b = cuts[i + 1], shower = inZone(axis, at, (a + b) / 2), key = shower ? 'showerWalls' : 'walls';
       if (!tileLayouts(scene)[key]) continue;
       const room = o => axis === 0 ? (inward > 0 ? o[3] > at + 0.5 && o[2] <= at + 0.5 : o[2] < at - 0.5 && o[3] >= at - 0.5) : (inward > 0 ? o[1] > at + 0.5 && o[0] <= at + 0.5 : o[0] < at - 0.5 && o[1] >= at - 0.5);   // reaching into the room from the plane
-      const holes = openings.filter(o => (axis === 0 ? o[2] - 0.5 <= at && o[3] + 0.5 >= at : o[0] - 0.5 <= at && o[1] + 0.5 >= at)).concat(built.filter(x => x !== own).map(x => x.box).filter(room))
-        .map(o => axis === 0 ? [o[0], o[1], o[4], o[5]] : [o[2], o[3], o[4], o[5]]).concat(extra);
+      const holes = openings.filter(o => (axis === 0 ? o[2] - 0.5 <= at && o[3] + 0.5 >= at : o[0] - 0.5 <= at && o[1] + 0.5 >= at)).map(o => axis === 0 ? [o[0], o[1], o[4], o[5]] : [o[2], o[3], o[4], o[5]])
+        /* what is built stands on its own tiles: the wall's stop at their face */
+        .concat(built.filter(x => x !== own).map(x => x.box).filter(room).map(o => axis === 0 ? [o[0] - TILE_DEPTH, o[1] + TILE_DEPTH, o[4], o[5]] : [o[2] - TILE_DEPTH, o[3] + TILE_DEPTH, o[4], o[5]])).concat(extra);
       const off = at + inward * TILE_DEPTH;
       out.push({ key, id: id + '_' + i, rect: [a, b, h0, h1], holes, n: axis === 0 ? [0, inward, 0] : [inward, 0, 0],
         point: (u, v) => axis === 0 ? [u, off, v] : [off, u, v] });
     }
   };
-  wallsOf(area).forEach((w, i) => add(w.axis, w.at, w.inward, w.from, w.to, 0, height, 'w' + (i + 1)));
+  /* the tiles' face stands TILE_DEPTH off its wall: at an inside corner a face ends that much short (the other's face is
+     there), at an outside one that much past (closing the corner) */
+  const WALLS = wallsOf(area), meets = (w, end) => WALLS.find(o => o.axis !== w.axis && Math.abs(o.at - end) < 0.5 && w.at >= o.from - 0.5 && w.at <= o.to + 0.5);
+  const endShift = (o, sign) => !o ? 0 : (o.inward === sign ? -TILE_DEPTH : TILE_DEPTH);   // sign: +1 at the start (the room beyond it), −1 at the end
+  WALLS.forEach((w, i) => add(w.axis, w.at, w.inward, w.from - endShift(meets(w, w.from), 1), w.to + endShift(meets(w, w.to), -1), 0, height, 'w' + (i + 1)));
   /* the faces of what is built that face the room (not against a wall, nor against another piece) */
   const sides = q => [[0, q[2], -1, q[0], q[1]], [0, q[3], 1, q[0], q[1]], [1, q[0], -1, q[2], q[3]], [1, q[1], 1, q[2], q[3]]];
   const across = (axis, q) => axis === 0 ? [q[0], q[1], q[4], q[5]] : [q[2], q[3], q[4], q[5]];
@@ -142,13 +147,19 @@ function tiledSurfaces(scene, area, height, openings) {
       if (onWall) return;
       const touches = q => axis === 0 ? Math.abs((inward > 0 ? q[2] : q[3]) - at) < 0.5 : Math.abs((inward > 0 ? q[0] : q[1]) - at) < 0.5;
       const opens = q => axis === 0 ? Math.abs((inward > 0 ? q[3] : q[2]) - at) < 0.5 : Math.abs((inward > 0 ? q[1] : q[0]) - at) < 0.5;
-      const holes = built.filter(o => o !== b).map(o => o.box).filter(touches).concat((b.cuts || []).filter(opens)).map(q => across(axis, q));
-      add(axis, at, inward, from, to, b.box[4], b.box[5], 'b' + (i + 1) + 's' + s, holes, b);
+      /* an opening's hole a tile's depth smaller (the face covers its reveals' edges); an end at a wall short of the wall's
+         tiles, a free end past (the corner of the solid closed) */
+      const holes = built.filter(o => o !== b).map(o => o.box).filter(touches).map(q => across(axis, q))
+        .concat((b.cuts || []).filter(opens).map(q => across(axis, q)).map(q => [q[0] + TILE_DEPTH, q[1] - TILE_DEPTH, q[2], q[3]]));
+      const atWall = e => WALLS.some(w => w.axis !== axis && Math.abs(w.at - e) < 0.5);
+      add(axis, at, inward, from + (atWall(from) ? TILE_DEPTH : -TILE_DEPTH), to + (atWall(to) ? -TILE_DEPTH : TILE_DEPTH), b.box[4], b.box[5], 'b' + (i + 1) + 's' + s, holes, b);
     });
     /* an opening's reveals inside the solid, facing into it */
     (b.cuts || []).forEach((c, k) => sides(c).forEach(([axis, at, inward, from, to], s) => {
       const inside = axis === 0 ? at > b.box[2] + 0.5 && at < b.box[3] - 0.5 : at > b.box[0] + 0.5 && at < b.box[1] - 0.5;
-      if (inside) add(axis, at, -inward, from, to, c[4], c[5], 'b' + (i + 1) + 'c' + k + 's' + s, [], b);
+      /* an end on the solid's face is open (past, to the face's tiles), one inside meets another reveal (short) */
+      const open = e => axis === 0 ? Math.abs(e - b.box[0]) < 0.5 || Math.abs(e - b.box[1]) < 0.5 : Math.abs(e - b.box[2]) < 0.5 || Math.abs(e - b.box[3]) < 0.5;
+      if (inside) add(axis, at, -inward, from + (open(from) ? -TILE_DEPTH : TILE_DEPTH), to + (open(to) ? TILE_DEPTH : -TILE_DEPTH), c[4], c[5], 'b' + (i + 1) + 'c' + k + 's' + s, [], b);
     }));
   });
   /* the floor: its area less what is built on it, the shower's zone apart */

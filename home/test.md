@@ -131,3 +131,9 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 - The tiles: walls 17.54 m² (43 tiles, cut along the slope), floor 6.74 (14), the shower's walls 5.70 (15), its floor 1.00 (4); the ceiling 2850 (the flat part), the roof lines from the model.
 - The shower's door: closed x 1685–1775, open 1198–1727 (outward, clear of the vanity and the bath).
 - The whole house: every check passes. Regressions: the models of kitchen_6, wardrobe_3, _4, _8, bedroom_6 the same; the house the same; the kitchen's cells, faces, Documents the same; t_tiles clean; tsc clean.
+
+## The corners of the tiles (19 Nov, evening)
+
+- bathroom_7's tiled faces listed: every inside corner 10 short, the outside corner at the shower's step 10 past, the casing's sides 10 past at their free end and short at the wall, the niche's hole 10 smaller and its reveals 10 past at the front. Both bathrooms: every check passes.
+- The whole house: 2490 meshes, 243 004 triangles, 2775 draw calls (this morning's copy: 2328, 224 564, 2593).
+- Regressions: kitchen_6, wardrobe_3, bedroom_6 the same; the house the same; t_tiles clean; tsc clean.

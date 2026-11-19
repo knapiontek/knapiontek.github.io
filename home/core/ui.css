@@ -106,6 +106,7 @@ button{font:inherit;color:inherit}
 .pad button{border:1px solid var(--line);background:var(--panel);border-radius:8px;font-size:16px;cursor:pointer;touch-action:none;user-select:none}
 .pad [data-k=ArrowUp]{grid-column:2;grid-row:1}.pad [data-k=ArrowLeft]{grid-column:1;grid-row:2}.pad [data-k=ArrowDown]{grid-column:2;grid-row:2}.pad [data-k=ArrowRight]{grid-column:3;grid-row:2}
 #plan2d{position:absolute;inset:0;z-index:4;background:var(--sheet);display:flex;flex-direction:column;padding-top:56px;padding-bottom:56px}
+#plan2d svg{user-select:none;-webkit-user-select:none}   /* a drawing: a click or a drag selects no text */
 .hud:has(#context:not(:empty)) ~ #plan2d{padding-top:96px}   /* a menu row over the sheet: the note under it */
 .asm{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding:10px 0}   /* the assembly cards of a room's Documents */
 .asm .card{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;color:var(--muted)}
