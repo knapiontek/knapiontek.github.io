@@ -5,7 +5,7 @@ HOME.data({
   "materials": {"carcass": "white-melamine-18", "drawerBox": "white-melamine-16", "backPanel": "hdf-white-3", "plinth": "plinth-pvc-50-white"},
   "hardware": {"leg": "leveling-feet-50"},
   "carcass": {"depth": 397, "frontGap": 2, "legs": 4},
-  "backPanel": {"inset": 0},
+  "backPanel": {"inset": 1},
   "shelf": {"setback": 20, "clearance": 1, "grid": {"from": 686, "pitch": 340, "fixedEvery": 2}},
   "drawers": {"box": "board", "board": {"sideHeight": 264, "lift": 10, "clearance": 13, "setback": 2, "backClearance": 40, "runnerLengths": [250, 350, 750]}},
   "plinth": {"setback": 30},

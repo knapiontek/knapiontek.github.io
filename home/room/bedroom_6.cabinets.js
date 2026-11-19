@@ -5,7 +5,7 @@ HOME.data({
   "materials": {"carcass": "white-melamine-18", "drawerBox": "white-melamine-16", "backPanel": "hdf-white-3", "plinth": "plinth-pvc-50-white", "cabinet": "egger-u708-st9-18", "drawer": "egger-u708-st9-18"},
   "hardware": {"leg": "leveling-feet-50", "hinge": "blum-clip-top-blumotion-110-71b3550"},
   "carcass": {"depth": 397, "frontGap": 2, "legs": 4},
-  "backPanel": {"inset": 0},
+  "backPanel": {"inset": 1},
   "shelf": {"setback": 20, "clearance": 1, "grid": {"from": 686, "pitch": 340, "fixedEvery": 2}},
   "hinges": {"fromEnd": 100, "postDepth": 80, "aboveShelf": 30, "perDoor": [{"maxHeight": 900, "count": 2}, {"maxHeight": 1600, "count": 3}, {"count": 4}]},
   "drawers": {"box": "board", "board": {"sideHeight": 264, "lift": 10, "clearance": 13, "setback": 2, "backClearance": 40, "runnerLengths": [250, 350, 750]}},

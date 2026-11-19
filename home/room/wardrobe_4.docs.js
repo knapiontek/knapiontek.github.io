@@ -31,7 +31,7 @@ HOME.data({
    "title": "DRAWERS – every part of {m:drawerBox}: the boxes on ball runners, the top edges banded",
    "cut": true
   },
-  {"id": "backPanel", "code": "PL", "title": "BACKS – {m:backPanel}, the whole carcass, nailed on behind", "cut": true},
+  {"id": "backPanel", "code": "PL", "title": "BACKS – {m:backPanel}, {s:backPanel.inset} mm smaller than the carcass on every side, nailed on behind", "cut": true},
   {"id": "plinths", "code": "CO", "title": "PLINTH – {m:plinth}, cut to length on site, {s:plinth.setback} behind the carcass front"}
  ],
  "categories": [
@@ -60,7 +60,7 @@ HOME.data({
      "material": "backPanel",
      "name": "HDF backs",
      "spec": "{m:backPanel}, sheet {v:sheet.length} × {v:sheet.width}",
-     "use": "the backs, the whole carcass",
+     "use": "the backs of the carcasses",
      "qty": "=ROUNDUP({backPanel.m2}*(1+{waste})/{sheet},0)"
     }
    ]

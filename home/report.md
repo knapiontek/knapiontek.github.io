@@ -211,6 +211,7 @@ The prototype's floor tiles (its house page: Wykończenie, the layouts, the coun
 - **The edges without a pull** (the owner: no rule in proportion to the distance): the lines are drawn where they are; only the faces are pushed back, by polygonOffset, which the graphics card counts in its own depth steps, so it fits every distance by itself. Close, at a few metres and from 100 m: the backs clean, the edges as before.
 - **The panel only for settings** (the owner): Finish lost its numbers (area, tiles, whole and cut, small cuts, cost) and the product's note; they are in Documents, Floor tiles. The rule in project.md (Code style).
 - **Finish: only the settings** (the owner, again): no list of floors and rooms, no product names, no "With"; the picked room's layout only (pick it on the floor in 3D; a room's own view: that room).
+- **The HDF backs of the wardrobes 1 mm smaller on every side** (the owner): the prototype's wardrobes had them the carcass's full size (its data: a back 800 × 2336 on a carcass 800 × 2336), only its kitchen 1 mm in; now one rule, `backPanel.inset: 1`, as the kitchen's and as an adjustable shelf's clearance; the cut list's title says it.
 
 ## Noted for later: the 2D view (done 18 Nov, see above) (the owner, 18 Nov)
 
