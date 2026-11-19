@@ -16,9 +16,9 @@
     <template x-part="loading"></template>
     <div id="editor" x-show="ready" x-cloak>
       <div class="cols">
-        <div><div class="sheetwrap"><table class="sheet edit"><tr class="title"><td colspan="5">Materials</td></tr>
-          <tr class="head"><td>Name</td><td title="Thickness; × depth when the product gives it (worktop, end panel)">Size</td><td title="The board's colour; the 3D view shows its decor when the product has one">Colour</td><td title="Lacquered (satin)">Lacquer</td><td title="Where it is used: the types and the carcass parts (settings.materials of the cabinets file)">Used for</td></tr>
-          <template x-for="m in materials" :key="m.code"><tr><td x-text="m.name" :title="m.code"></td><td class="n" x-text="m.thickness + (m.depth ? ' × ' + m.depth : '')"></td>
+        <div><div class="sheetwrap"><table class="sheet edit" x-ref="materials"><tr class="title"><td colspan="5">Materials</td></tr>
+          <tr class="head"><td>Name</td><td title="As bought: length × width × thickness (mm); ? where the library does not give it (a front is made to size)">Size</td><td title="The board's colour; the 3D view shows its decor when the product has one">Colour</td><td title="Lacquered (satin)">Lacquer</td><td title="Where it is used: the types and the carcass parts (settings.materials of the cabinets file)">Used for</td></tr>
+          <template x-for="m in materials" :key="m.code"><tr><td x-text="m.name" :title="m.code"></td><td class="n" x-text="[m.length, m.width ?? m.depth, m.thickness].map(v => v ?? '?').join(' × ')"></td>
             <td class="c"><i class="swatch" :style="'background:' + m.color" :title="m.color + (m.texture ? ', decor ' + m.texture : '')"></i></td><td class="c" x-text="m.lacquered ? '✓' : ''"></td><td x-text="m.uses.map(C.useLabel).join(', ')"></td></tr></template>
         </table></div></div>
         <div>
@@ -108,6 +108,15 @@ const ROOM = new URLSearchParams(location.search).get('room') || 'kitchen_6', FI
 const DRAW = { groupGap: 100, margin: 40, line: '#5f6a66', empty: '#e3e6e4', handle: '#c4c9cf',
   appliance: { glass: '#1c1f24', panel: '#0d0f12', edge: '#000000', window: '#2b313a', knob: '#a1a7b0', bar: '#c4c9cf', display: '#06080a', text: '#7dd3fc' },
   handleSize: { thickness: 16, edgeOffset: 20, minSpan: 30, maxSpan: 80, maxSpanVertical: 120, endClearance: 80 } };
+
+/* the columns of each table: fix, characters (numbers, codes); share, the text's part of the room left (min, max characters) */
+const COLS = {
+  materials: [{ share: 3, min: 18, max: 44 }, { fix: 17 }, { fix: 6 }, { fix: 7 }, { share: 2, min: 11 }],
+  groups: [{ fix: 5 }, { share: 1, min: 12 }, { fix: 8 }, { fix: 2 }],
+  columns: [{ fix: 5 }, { fix: 6 }, { fix: 3 }],
+  components: [{ fix: 5 }, { fix: 4 }, { fix: 4 }, { share: 2, min: 11 }, { share: 2, min: 10 }, { fix: 7 }, { fix: 6 }, { fix: 7 }, { fix: 7 }, { fix: 5 }, { fix: 5 }, { fix: 5 }, { fix: 5 }, { share: 3, min: 12 }, { fix: 3 }],
+  notes: [{ share: 1, min: 10, max: 22 }, { share: 2 }, { share: 3 }, { fix: 3 }]
+};
 
 /* ---------- cells and rows ---------- */
 const blank = (...values) => values.every(v => String(v ?? '').trim() === '');
@@ -272,6 +281,9 @@ HOME.ui.page('editor', {
     /* one empty row at the end of every table; the drawing after every change */
     for (const k of ['groups', 'columns', 'components', 'notes']) this.$watch(k, () => this.keepEmpty(k));
     Alpine.effect(() => { if (this.base) this.built = build(this.base, { groups: this.groups, columns: this.columns, components: this.components, notes: this.notes }, this.boards, this.applianceProducts); });
+    /* the widths of the columns, as the sheets of Documents (core/ui.js setColumns) */
+    await this.$nextTick();
+    for (const [k, cols] of Object.entries(COLS)) HOME.ui.autoFit(this.$refs[k], this.$refs[k].parentElement, cols);
     window.EDITOR = this;                      // for tests and the console
   },
   menus() {

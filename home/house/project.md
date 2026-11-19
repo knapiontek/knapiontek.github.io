@@ -9,7 +9,7 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, and the main page o
 | File | Does |
 |---|---|
 | house.js | the house's data: its settings (the root of the cascade), what it is made of, its floors and their rooms |
-| model.js | the house's data turned into solids: walls, slabs, roof, windows, doors, stair, site; the rooms in the house's axes and where two of them meet with no wall; a part of the house cut out for a room; the checks of the house. No browser |
+| model.js | the house's data turned into solids: walls, slabs, roof, windows, doors, stair, site; the rooms in the house's axes and where two of them meet with no wall; a part of the house cut out for a room; the checks of the house; the menu of the house's pages. No browser |
 | index.html | the main page: the whole house, or a part of it (`?room=kitchen_6`, `?room=bathroom_7,bathroom_5`), in 3D, 2D and Documents (its last sheet: Test) |
 
 ## How it fits together
@@ -22,7 +22,7 @@ house.js ─► model.js ─► solids ─► index.html: 3D, 2D (core)
 
 - **The whole house**: every solid, the doors turning on their hinges. The panel's tab View: Floors (where: the floors and the roof) and Layers (what); a solid shows when its floor and its kind are both on. With the roof off the highest floor shown is open: a click on its floor picks a room (Open shows it alone).
 - **A part**: the solids of its rooms, trimmed to each room's box: the floor area out to the far faces of its walls, from the slab under it to what closes it from above. Each wall, the floor and the ceiling is an object; a window or a door hides with the wall it sits in. An object the camera is beyond hides (it still casts its shadow), so the room is always seen from inside. The floors (and the roof) do not apply to a part: it is always drawn, only the elements switch. The light is the house's light for an interior.
-- **The menu** (top left): the house, each floor with its rooms.
+- **The menu** (top left): the house, each floor with its rooms; the same on every page of the house (the editor too), made by model.js from house.js.
 - **2D**: one sheet per floor (of a part: per floor of its rooms): what the cut meets filled, what lies under it seen from above, the doors' swings, the openings' labels, the rooms with their areas, a dash-dot line where two rooms meet with no wall. The whole house has its dimensions as in CAD on every side: a chain through the openings of that side's walls, then the whole; a part, its overall sizes. A furnished room's appliances show as their nodes' boxes (cut: grey, seen: an outline), the sink and the hob as seen from above. The wheel zooms about the cursor, a drag moves the sheet.
 - **Documents**: the whole house, the rooms (the model's area and archon's), the inner doors with what is bought for them, the notes; a room's view, its own (a furnished room's estimate, cut list, assembly cards and notes: room/docs.js); both then Elements and Test.
 - **Test** (the last sheet of Documents): the tree, the house, the library, the rooms' furniture; a room asked for that the house does not have.

@@ -14,11 +14,11 @@ Shared code for every page. It knows no project: a page hands it the data, and c
 | surface.js | the surfaces of solids, ready to draw: welded points, the faces of the solids, the visible pieces (a face covered by another loses that part), finishes on the faces of a host (a room's tiles on the house's walls) |
 | scene.js | the 3D view: renderer, materials, the pieces as triangles batched per material, edges, ghosts (hidden, still casting their shadow), moving parts (doors and drawers), section caps, light, the sun and the clouds (they weaken the sun, strengthen the sky and soften the shadows), camera and flights, navigation, the walk, the loop that draws only after a change |
 | plan2d.js | the 2D plan from the same solids: what the cut meets is filled, what lies under it is seen from above, what is over it dashed; labels of openings and rooms, borders of rooms with no wall between them (dash-dot), dimensions, sheets side by side |
-| sheet.js | the spreadsheet: sheets in tabs, inputs the viewer may change, live formulas, a sheet as a tree (rows with levels, + / − to open and close), the XLSX with the same formulas and the outline; the Documents screen |
+| sheet.js | the spreadsheet: sheets in tabs, inputs the viewer may change, live formulas, a sheet as a tree (rows with levels, + / − to open and close), the XLSX with the same formulas and the outline; the Documents screen, a piece of the screen (its table built once per sheet and changed in place: a field typed in is never redrawn) |
 | estimate.js | the sheets every room's Documents share: the estimate (items by category, quantity × unit price, sums, the total) and the cut list (the boards to order with their edges, m², banding and cuts) |
 | library.js | the library for a page: the products of every group, the shops, the materials; the textures loaded by key; the checks of the library |
-| ui.js | the screen of every page: its skeleton, the modes (3D, 2D, Documents, Test), the stored state, the layers, the checks (OK, faults, or to know), the menus (top left: links and lists of links), the panel and its tabs, the corner (◐ light or dark, ☀ the sun and the clouds, ? help), the 2D sheet, the widths of a table's columns |
-| ui.css | the look of every page, light and dark |
+| ui.js | the screen of every page, on Alpine.js: a page's Alpine part (its state kept in the browser and saved on every change, the mode, the panel's tabs, the bottom menu, the floating boxes, the 2D sheet's zoom and drag); the pieces of the screen, written once (below); light or dark and the panel shown or hidden, one choice for every page; the layers as lists; the sun; the checks (OK, faults, or to know); the widths of a table's columns |
+| ui.css | the look of every page, light and dark: the menus, the panel, the sheets (Documents and the editor's tables: a frame with round corners, the title as the first row, a field the viewer may change shaded, a line under it), the 2D sheet and the elevations (light or dark alike), the list to pick from. A page has no style of its own |
 | test.html | every module of core on a small tree of boxes: the check of core on its own |
 | test.tree.js | the tree test.html draws |
 
@@ -31,7 +31,8 @@ solids ─► plan2d.js ─► 2D        rows ─► sheet.js ─► Documents, 
 ```
 
 - **Computed without a browser**: geometry.js, tree.js, surface.js, plan2d.js (the SVG as text), the formulas of sheet.js. They are tested in Node first.
-- **The browser only where nothing else can do it**: load.js (script tags), scene.js (WebGL), the screen of ui.js and of sheet.js, the XLSX download. No file touches the browser when it loads, so every file but load.js loads in Node.
+- **The browser only where nothing else can do it**: load.js (script tags), scene.js (WebGL), the screen of ui.js and of sheet.js (Alpine.js), the XLSX download. No file touches the browser when it loads (a page starts its screen), so every file but load.js loads in Node.
+- **The screen**: a page's HTML is its layout; a piece of the screen comes in with `<template x-part="name"></template>`, and a piece that takes the page's own content (help, panel) gets what the template holds. The pieces: nav (top left: the house, its floors and rooms), view (the 3D canvas), loading, modes (top right), plan (the 2D sheet), docs (Documents), checks (Test), dock (the bottom menu), pad (the walk's arrows), sun, help, corner (◐ light or dark, ☀ the sun and the clouds, ? help, » « the panel), panel (the title, the tabs, then the page's sections), layers (the layers in blocks, as switches); sheet.js adds sheet. A page gives its part its own fields and its load; the pieces read the part's fields (title, the modes, the menu, the layers, the state), so what is shown follows them.
 - Every module is `HOME.<file name>`. The one name outside that rule is `HOME.data`, which every data file calls: it is defined by load.js.
 
 ## Rules

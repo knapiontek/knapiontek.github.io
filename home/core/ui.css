@@ -146,8 +146,11 @@ table.sheet tr.title td{font:700 14px var(--f-display);border:0;padding:8px 7px}
 table.sheet tr.head td{font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg)}
 table.sheet tr.cat td,table.sheet tr.sum td{font-weight:600;background:var(--bg)}
 table.sheet tr.grand td{font-weight:700;background:color-mix(in srgb,var(--accent) 18%,transparent)}
-table.sheet input{width:100%;min-width:64px;border:0;background:color-mix(in srgb,#2f6fdb 10%,transparent);color:#2f6fdb;font:inherit;text-align:right;padding:2px 4px;border-radius:3px}
-table.sheet input.changed{background:#fde68a;color:#7a4b00}
+/* a field the viewer may change: a light tint and a line under it, the text as the page's; stronger on hover, the accent when typed in */
+table.sheet input,table.sheet textarea,.pick{width:100%;min-width:64px;border:0;border-bottom:1px solid color-mix(in srgb,var(--accent) 45%,transparent);background:color-mix(in srgb,var(--accent) 6%,transparent);color:inherit;font:inherit;text-align:right;padding:2px 4px;border-radius:3px 3px 0 0}
+table.sheet input:hover,table.sheet textarea:hover,.pick:hover{background:color-mix(in srgb,var(--accent) 13%,transparent)}
+table.sheet input:focus,table.sheet textarea:focus{outline:2px solid var(--accent);outline-offset:0;background:var(--panel)}
+table.sheet input.changed{background:color-mix(in srgb,#f2b33d 35%,transparent);border-bottom-color:#d9961f}   /* changed from the data */
 table.sheet a{color:var(--accent);overflow-wrap:anywhere}
 .sheetnote{margin:0 16px;font-size:12px;color:var(--muted);text-align:center}
 #test .check ul{font-family:var(--f-mono);font-size:11.5px}
@@ -200,7 +203,7 @@ td.n{font-family:var(--f-mono);color:var(--muted);text-align:right;padding-right
 }
 
 /* the sheets to edit (room/cabinets.html): the sheets of Documents, every field blue as their inputs */
-.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,300px);gap:18px;align-items:start}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,340px);gap:18px;align-items:start}
 .cols>*{min-width:0;display:grid;gap:18px;align-content:start}
 .cols>.wide{grid-column:1/-1}
 @media (max-width:1100px){.cols{grid-template-columns:minmax(0,1fr)}}
@@ -209,7 +212,7 @@ td.n{font-family:var(--f-mono);color:var(--muted);text-align:right;padding-right
 table.edit td{vertical-align:middle}
 table.edit input{min-width:3.5em}
 table.sheet input[type=text]{text-align:left}
-table.sheet textarea,.pick{display:block;width:100%;border:0;background:color-mix(in srgb,#2f6fdb 10%,transparent);color:#2f6fdb;font:inherit;padding:2px 4px;border-radius:3px}
+table.sheet textarea,.pick{display:block;text-align:left;min-width:0}
 table.sheet textarea{resize:none;overflow:hidden;field-sizing:content}
 .pick{text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pick.none,table.edit tr.empty td{color:var(--muted)}
