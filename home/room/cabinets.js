@@ -1,7 +1,133 @@
+// @ts-check
 /* room/cabinets.js: the cabinets of a room from its cabinets file: carcasses, boards, fronts, strips, panels, plinths, worktops,
    plasterboard, holes, counts, problems. The same file always gives the same model; it draws nothing and knows no room.
    Coordinates in mm per group: x along the group from its left end (seen from the front), y out from the carcass backs
    (groups[g].wall: y of the wall), h up from the floor; a box is [x0, x1, y0, y1, h0, h1]. */
+
+/**
+ * A room's cabinets file (format cabinets, version 1; room/project.md).
+ * @typedef {object} CabinetsFile
+ * @property {string} format
+ * @property {number} version
+ * @property {Object<string, any>} settings  materials, hardware and how the cabinets are built
+ * @property {Object<string, { product: string, feet?: any }>} [appliances]  by role
+ * @property {{ name: string, description?: string, details?: string[] }[]} [notes]
+ * @property {FileGroup[]} groups
+ * @property {Component[]} components
+ * @property {Object<string, any>} materials  not in the file: code -> the library's board, added by withLibrary() before build()
+ */
+/** @typedef {{ group: number, name: string, backGap: number, depth?: number, columns: number[] }} FileGroup */
+/**
+ * One piece of a group, as written in the file.
+ * @typedef {object} Component
+ * @property {number} group
+ * @property {number} column
+ * @property {number} [span]
+ * @property {string} type
+ * @property {number} [height]
+ * @property {string} [carcass]
+ * @property {string[]} [tags]
+ * @property {string} [handle]
+ * @property {Gaps} [gaps]
+ * @property {string} [hinge]
+ * @property {string} [note]
+ */
+
+/** @typedef {number[]} Box  [x0, x1, y0, y1, h0, h1] in mm */
+/** @typedef {{ left: number, right: number, top: number, bottom: number }} Gaps  mm from the module's edges to its front */
+/** @typedef {{ side: string, length: number, along: string }} Edge  a banded edge: its side, its length, the size it runs along (a | b) */
+/** @typedef {{ kind: string, diameter: number, depth: number, x: number, y: number, [more: string]: any }} Hole */
+/**
+ * A component of the file, placed: its column span gives x, its stack h.
+ * @typedef {object} Item
+ * @property {number} group
+ * @property {number} column
+ * @property {number} span
+ * @property {string} type
+ * @property {number} x0
+ * @property {number} x1
+ * @property {number} h0
+ * @property {number} h1
+ * @property {number} index  its row in components
+ * @property {string} [carcass]  its carcass's name
+ * @property {string[]} [tags]
+ * @property {string} [handle]
+ * @property {Gaps|null} [gaps]
+ * @property {string} [hinge]
+ * @property {string} [note]
+ * @property {number} [height]
+ * @property {number} [carcassId]
+ * @property {Front} [front]
+ * @property {Object<string, number>} [fit]  an appliance's place in its module
+ */
+/**
+ * @typedef {object} Carcass
+ * @property {number} id
+ * @property {string} name
+ * @property {number} group
+ * @property {number} column
+ * @property {number} span
+ * @property {number} x0
+ * @property {number} x1
+ * @property {number} h0
+ * @property {number} h1
+ * @property {Item[]} boxes  its modules, bottom up
+ * @property {Item[]} members  every component with its name
+ * @property {boolean} floor  stands on a plinth
+ * @property {boolean} base  a floor carcass under a worktop
+ * @property {string} kind  base | tall | wall
+ * @property {string[]} flags
+ * @property {boolean} sink
+ * @property {boolean} hob
+ * @property {boolean} fridge
+ * @property {number} legs
+ * @property {boolean} grille
+ */
+/**
+ * A board to cut: a × b of its material.
+ * @typedef {object} Board
+ * @property {string} id  its kind, the same for every size
+ * @property {string} name
+ * @property {number} a
+ * @property {number} b
+ * @property {string} material
+ * @property {string} layer
+ * @property {number} group
+ * @property {number} [column]
+ * @property {number|null} [carcassId]
+ * @property {number} [frontId]
+ * @property {Box} box
+ * @property {Edge[]} [edges]  none: no edge banded
+ * @property {Hole[]} [holes]
+ * @property {{ x: string, y: string }} [holeFrom]  the corner its holes are measured from
+ * @property {object[]} [cutouts]
+ * @property {string} [hand]
+ * @property {string} [item]
+ */
+/**
+ * @typedef {object} Geometry  of a group, y from the carcass backs
+ * @property {number} carcassDepth
+ * @property {number} carcassFront
+ * @property {number} frontFace
+ * @property {number} plinthFace
+ * @property {number} panelFace
+ */
+/**
+ * @typedef {object} GroupModel
+ * @property {number} group
+ * @property {string} name
+ * @property {number[]} widths  of its columns
+ * @property {number[]} columnX  the columns' left ends and the group's end
+ * @property {number} length
+ * @property {Item[]} items
+ * @property {boolean} island
+ * @property {number} backGap
+ * @property {number} wall  y of the wall
+ * @property {object[]} areas
+ * @property {Geometry} geometry  set once the group is stacked
+ */
+/** @typedef {Object<string, any>} Front  a front (or an open drawer): its box, size, opening, hinges, drawer */
+
 (function () {
   'use strict';
 
@@ -101,6 +227,7 @@
   // hold, featuresOf); a missing one stops the build (checkSettings)
   const DRILLING_SHELF_PIN = ['drilling.shelfPin.diameter', 'drilling.shelfPin.depth', 'drilling.shelfPin.fromFront', 'drilling.shelfPin.fromBack', 'drilling.shelfPin.belowShelf'];
   const DRILLING_RUNNER = ['drilling.runner.diameter', 'drilling.runner.depth', 'drilling.runner.fromFront', 'drilling.runner.belowDrawer'];
+  /** @type {[(has: any) => boolean, string[]][]} the settings a file needs: [when, paths] */
   const REQUIRED_SETTINGS = [
     [() => true, ['carcass.depth', 'carcass.frontGap', 'carcass.legs', 'backPanel.inset', 'shelf.setback', 'shelf.clearance', ...DRILLING_SHELF_PIN]],
     [has => !has.grid, ['shelf.perDoor']],
@@ -373,8 +500,9 @@
   }
 
   // appliances (appliances(), optional): the manufacturer's sizes, under the name of the type or tag they fit, fridgeFreezer for the tags fridge and freezer (fitAppliances)
+  /** @param {CabinetsFile|null} project */
   function build(project, appliances) {
-    const projectData = project || {}, settings = projectData.settings || {};
+    const projectData = project || /** @type {CabinetsFile} */ ({}), settings = projectData.settings || {};
     const stops = checkSettings(projectData);
     if (stops.length) throw new Error('Settings of the cabinets file: ' + stops.join(' '));
 
@@ -390,8 +518,9 @@
     const spacerOnHingeSide = (carcass, hinge) => (hinge === 'right' ? [carcass.x1 - 2 * board, carcass.x1 - board] : [carcass.x0 + board, carcass.x0 + 2 * board]);
 
     const issues = []; // { index of the component, text, skipped }
+    /** @type {(text: string, index?: number|null, skipped?: boolean) => void} */
     const warn = (text, index = null, skipped = false) => { issues.push({ index, text, skipped }); };
-    const groups = {}, carcasses = [], fronts = [], boards = [];
+    const groups = /** @type {Object<string, GroupModel>} */ ({}), carcasses = /** @type {Carcass[]} */ ([]), fronts = /** @type {Front[]} */ ([]), boards = /** @type {Board[]} */ ([]);
     const strips = [], plinths = [], frontPanels = [], wallPanels = [], plaster = [], worktops = {};
     // engine counts, used by info.js as {n:name}; wallBrackets: brackets of the back strips at a wall; jointLength: mm of carcass side
     // screwed to a strip and its back strip, from the first carcass (screwed) or from inside the second one (fromInside)
@@ -442,7 +571,7 @@
       for (const { piece, why } of stacked.skipped) warn(`${placeOf(piece)}: ${typeLabel(piece.type)} ${why} - skipped.`, piece.index, true);
       const island = stacked.items.some(item => item.type === 'worktop' && hasTag(item, 'island')); // a free-standing island: its worktop has the tag island
       const backGap = groupData[g].backGap; // behind the carcass backs: to the wall, an island to the back of its worktop
-      groups[g] = {
+      groups[g] = /** @type {GroupModel} */ ({
         group: +g,
         name: groupData[g].name || '',
         widths,
@@ -453,7 +582,7 @@
         backGap,
         wall: carcassBack - backGap,
         areas: carcassAreas(stacked.items)
-      };
+      });
       for (const item of stacked.items) {
         counts.type[item.type] = (counts.type[item.type] || 0) + 1;
         for (const tag of item.tags) counts.tag[tag] = (counts.tag[tag] || 0) + 1;
@@ -485,10 +614,10 @@
         }
         groupOfName.set(area.name, groupModel.group);
         const boxes = area.members.filter(i => BOX_TYPES.includes(i.type)).sort((a, b) => a.h0 - b.h0 || a.x0 - b.x0);
-        carcasses.push({
+        carcasses.push(/** @type {Carcass} */ ({   // the rest is set below, once every carcass is known
           name: area.name, group: groupModel.group, column: area.firstColumn, span: area.lastColumn - area.firstColumn + 1,
           x0: area.x0, x1: area.x1, h0: area.h0, h1: area.h1, boxes, members: area.members
-        });
+        }));
       }
       for (const item of groupModel.items) {
         if (BOX_TYPES.includes(item.type) && !item.carcass && !hasTag(item, 'dishwasher')) warn(`${placeOf(item)}: the ${typeLabel(item.type)} has no carcass name.`, item.index);
@@ -509,10 +638,10 @@
       carcass.grille = carcass.floor && carcass.boxes.some(b => GRILLE_FOR.types.includes(b.type) || hasTag(b, ...GRILLE_FOR.tags));
       for (const item of carcass.members) item.carcassId = carcass.id;
       counts.legs += carcass.legs;
-      counts.sinks += carcass.sink;
-      counts.hobs += carcass.hob;
-      counts.fridges += carcass.fridge;
-      counts.grilles += carcass.grille;
+      counts.sinks += Number(carcass.sink);
+      counts.hobs += Number(carcass.hob);
+      counts.fridges += Number(carcass.fridge);
+      counts.grilles += Number(carcass.grille);
     });
     counts.carcasses = carcasses.length;
     const carcassOf = item => carcasses.find(carcass => carcass.id === item.carcassId); // undefined: not in a carcass
@@ -571,7 +700,7 @@
           if (last && span[0] <= last[1]) last[1] = Math.max(last[1], span[1]);
           else runs.push([...span]);
           return runs;
-        }, []);
+        }, /** @type {number[][]} */ ([]));
       for (const [s0, s1] of doorSpans) {
         part('backPanel', 'Back panel', width - 2 * backPanel.inset, s1 - s0 - 2 * backPanel.inset, materialFor.backPanel, 'backs',
           [x0 + backPanel.inset, x1 - backPanel.inset, carcassBack - thickness.backPanel, carcassBack, s0 + backPanel.inset, s1 - backPanel.inset]);
@@ -859,7 +988,7 @@
         const carcass = carcassOf(item), opening = openingOf(item), hinged = HINGED.includes(opening);
         if (box.x1 - box.x0 <= 0 || box.h1 - box.h0 <= 0) warn(`${placeOf(item)}: the gaps leave no front.`, item.index);
         // hinges are screwed to a carcass side: a door that does not reach one gets a hinge post (an appliance front has no hinges)
-        if (opening === 'door' && carcass && HINGE_SIDES.includes(item.hinge) && !reachesHingeSide(item, carcass)) {
+        if (opening === 'door' && carcass && item.hinge && HINGE_SIDES.includes(item.hinge) && !reachesHingeSide(item, carcass)) {
           const postX0 = item.hinge === 'left' ? item.x0 : item.x1 - board, postH0 = Math.max(item.h0, carcass.h0 + board), postH1 = Math.min(item.h1, carcass.h1 - board);
           boards.push({
             id: 'hingePost', name: 'Hinge post', a: hingeSettings.postDepth, b: postH1 - postH0, material: materialFor.carcass, layer: 'carcasses', group: groupModel.group, carcassId: carcass.id,
@@ -867,6 +996,7 @@
           });
         }
         // an open drawer is a front without a panel: its box is what is seen and what moves
+        /** @type {Front} */
         const front = {
           id: fronts.length + 1, group: groupModel.group, item, carcassId: carcass ? carcass.id : null, opening, tags: item.tags, gaps: item.gaps,
           ...box, width: box.x1 - box.x0, height: box.h1 - box.h0, handle: item.handle, hand: hinged ? item.hinge : '', material: open ? null : materialFor[item.type],
@@ -1031,7 +1161,7 @@
           const runnerH = box.h0 + ballRunner.aboveBottom;
           const spacer = own.find(b => b.id === 'spacer' && b.box[4] <= runnerH && b.box[5] >= runnerH && (right ? b.box[0] >= box.x1 : b.box[1] <= box.x0));
           const side = sides.find(b => (right ? b.box[0] === carcass.x0 : b.box[1] === carcass.x1));
-          for (const target of [spacer, side].filter(Boolean)) {
+          for (const target of /** @type {Board[]} */ ([spacer, side].filter(Boolean))) {
             target.holeFrom = { x: 'front', y: 'bottom' };
             const atRight = target.box[0] >= box.x1, inner = atRight ? target.box[0] : target.box[1], dir = atRight ? 1 : -1;
             for (const p of ballRunner.fromFront) {
@@ -1044,6 +1174,7 @@
       // holes too close on one face of one part (once per pair of kinds and part); a hole in a horizontal board (once per kind and carcass)
       const boardHits = new Set();
       for (const b of own.filter(b => b.holes)) {
+        if (!b.holes) continue;
         b.holes.sort((hole, g) => hole.y - g.y || hole.x - g.x);
         const near = (hole, g) => Math.hypot(g.x - hole.x, g.y - hole.y) < (g.diameter + hole.diameter) / 2 + 1;
         // a hole in a side or a hinge post must not land where a horizontal board meets it
@@ -1053,8 +1184,9 @@
           warn(`${carcass.name}: ${b.name.toLowerCase()} - a ${LABELS.hole[inBoard.kind]} hits a horizontal board (${inBoard.x} from the front, ${Math.round(inBoard.y)} from the bottom): check the settings drilling.`);
         }
         const pairsMet = new Set();
-        b.holes.forEach((hole, i) => {
-          for (const g of b.holes.slice(i + 1).filter(g => near(hole, g))) {
+        const holes = b.holes;
+        holes.forEach((hole, i) => {
+          for (const g of holes.slice(i + 1).filter(g => near(hole, g))) {
             if (pairsMet.has(hole.kind + '|' + g.kind)) continue;
             pairsMet.add(hole.kind + '|' + g.kind);
             warn(`${carcass.name}: ${b.name.toLowerCase()} - a ${LABELS.hole[hole.kind]} and a ${LABELS.hole[g.kind]} in the same place (${hole.x} from the front, ${Math.round(hole.y)} from the bottom): move the shelf or the hinge.`);
@@ -1094,7 +1226,7 @@
     }
 
     // ---- worktop pieces and their cut-outs (sink, hob): settings.cutouts[flag], centred on the carcass, fromBack from the worktop back edge ----
-    const worktopPieces = [];
+    const worktopPieces = /** @type {Object<string, any>[]} */ ([]);
     for (const groupModel of Object.values(groups)) {
       const worktop = worktops[groupModel.group];
       if (!worktop) continue;
@@ -1207,7 +1339,7 @@
      and a microwave in their carcass, the fridge-freezer in its carcass, the dishwasher in its group, the sink and the hob in
      the worktop over their carcass, the coffee machine on its pull-out shelf; with the room's fitting (install: the scene's
      installation; ceiling: the room's height) the sink's tap and trap in its carcass and the hood over the hob in its group */
-  function productsOf(model, appliances, { install, ceiling } = {}) {
+  function productsOf(model, appliances, /** @type {{ install?: any, ceiling?: number }} */ { install, ceiling } = {}) {
     const front = g => model.groups[String(g)].geometry.carcassFront, out = [], union = boxes => [0, 1, 2].flatMap(k => [Math.min(...boxes.map(b => b[2 * k])), Math.max(...boxes.map(b => b[2 * k + 1]))]);
     const add = (role, group, carcassId, box, extra) => out.push(Object.assign({ role, A: appliances[role], group: String(group), carcassId, box }, extra));
     for (const g of Object.values(model.groups)) for (const item of g.items) {
@@ -1498,7 +1630,7 @@
       return g === b;
     }
     /* a board: its two big faces (or the faces named) in the decor, banded edges too, every other edge bare */
-    function look(c, code, { banded = [], faces = null, grain = null } = {}) {
+    function look(c, code, /** @type {{ banded?: string[], faces?: string[]|null, grain?: string|null }} */ { banded = [], faces = null, grain = null } = {}) {
       if (!c) return null;
       const plain = K(code), turnedKey = D.has(plain + '~') ? plain + '~' : null, bare = D.has(plain + ':core') ? plain + ':core' : null;
       const size = [c.gb[1] - c.gb[0], c.gb[3] - c.gb[2], c.gb[5] - c.gb[4]], thin = size.indexOf(Math.min(...size)), finished = new Set(banded);
@@ -1621,7 +1753,7 @@
     }
 
     /* ---------- fronts and what moves with them ---------- */
-    function shakerFront(m, [x0, x1, y0, y1, h0, h1], code, info) {   // a frame of shakerRail wide rails round a recessed panel, one part
+    function shakerFront(m, /** @type {number[]} */ [x0, x1, y0, y1, h0, h1], code, info) {   // a frame of shakerRail wide rails round a recessed panel, one part
       const w = shakerRail, I = Object.assign({ part: D.part() }, info), f = gb => box(m.cells, m.r, gb, K(code), 'fronts', I);
       // a plain board front (no frame): its decor up the front, banded all round
       if (!w) return look(f([x0, x1, y0, y1, h0, h1]), code, { banded: ['left', 'right', 'top', 'bottom'], grain: 'h' });

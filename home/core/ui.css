@@ -182,8 +182,14 @@ select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid 
 .layers label{display:flex;gap:7px;align-items:center;font:500 13px var(--f-body);text-transform:none;letter-spacing:0;color:var(--ink);cursor:pointer}
 .layers input{accent-color:var(--accent);margin:0}
 .stats{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12.5px;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:8px;margin:0}
+.stats>div{display:contents}
 .stats dt{color:var(--muted)}
 .stats dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+#rooms td{padding:0}
+#rooms .roomline{display:flex;justify-content:space-between;gap:10px;padding:6px 4px;cursor:pointer}
+#rooms tr[aria-selected="true"] .roomline{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+#rooms .lay{padding:10px 0 14px}
+#rooms .floorname{font:700 12px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 0 4px}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
 td{padding:5px 0;border-bottom:1px solid var(--line);vertical-align:middle}
 td.n{font-family:var(--f-mono);color:var(--muted);text-align:right;padding-right:6px;white-space:nowrap;font-variant-numeric:tabular-nums}

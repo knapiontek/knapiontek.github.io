@@ -83,6 +83,8 @@ house
   When the file's name is known, it is loaded by name; when only a key is known (a room from the address or from the house's list), the loader turns it into the file. The loader checks the file's format and version and gives the data back. Every data file has one form instead of a global name of its own (the prototype had KITCHEN_DESIGN, KITCHEN_VIEW, BATH_DATA, WARDROBE_DATA …): JSON handed to the same function, e.g. `HOME.data({"format": "cabinets", "version": 1, …})`. The product groups are few and small, so they are loaded whole; the textures are big, so they are loaded by key, through the same loader.
 - **The wall elevations with the cabinets are drawn by the cabinets module,** not by the editor page: the editor shows them beside its tables, docs.js puts the same drawing into the Documents (assembly cards, the builder's drawing). One drawing, one place.
 
+- **Types in comments (19 Nov)**: the code stays plain JavaScript with its types written as JSDoc (`// @ts-check`, typedefs of the formats and the model's records), checked by TypeScript's compiler without building anything (`tsc --noEmit`); the pages load the same files. Details in project.md, Code style.
+
 ### Coordinates: translations only
 
 - **The house's axes are the only real coordinates:** x along the house's long side, y across it, h up (height; written h, not z). Lengths in mm.

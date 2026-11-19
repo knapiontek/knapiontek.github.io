@@ -1,9 +1,10 @@
+// @ts-check
 /* core/estimate.js: the sheets every room's Documents share, so they look and work the same everywhere (core/sheet.js
    draws them and makes the XLSX):
      estimate   Estimate: the items by category, quantity × unit price, sums, the total
      cutList    Cut list: the boards to order, by board, with their edges, m², banding and cuts
    Knows no project: a page hands in its items and parts. No browser. */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 
 const formula = f => ({ f }), input = v => ({ v, input: true });
@@ -28,7 +29,7 @@ const kinds = rows => rows.map((r, i) => (r && !Array.isArray(r) ? r : { kind: i
           source  a text, or {text, links: [{text, href}]}
    Returns {sheet, row: id -> its row}. */
 function estimate(spec) {
-  const rows = [[spec.title], [spec.info || '']], param = {}, row = {};
+  const rows = /** @type {any[]} */ ([[spec.title], [spec.info || '']]), param = {}, row = {};
   for (const p of spec.params || []) { param[p.key] = '$C$' + (rows.length + 1); rows.push([p.label, '', p.z ? { ...input(p.v), z: p.z } : input(p.v)]); }
   rows.push([]);
   rows.push({ kind: 'head', cells: ['No.', 'Item', 'Specification', 'Where it goes', 'Qty', 'Unit', 'Unit price [PLN]', 'Value [PLN]', 'Price source / remarks'] });
@@ -75,7 +76,7 @@ function estimate(spec) {
    Returns {sheet, total: block id -> its row of sums (G m², H pieces, I banding, J cuts)}. */
 const DEFAULT_COLUMNS = ['Part', 'Length', 'Width', 'Qty'];
 function cutList(spec) {
-  const rows = [[spec.title], [spec.note || '']], total = {};
+  const rows = /** @type {any[]} */ ([[spec.title], [spec.note || '']]), total = {};
   if ((spec.legend || []).length) { rows.push({ kind: 'cat', cells: ['Labels and cut-outs'] }); for (const l of spec.legend) rows.push([l.code, l.text]); }
   rows.push([]);
   for (const block of spec.blocks) {

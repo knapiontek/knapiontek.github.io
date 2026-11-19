@@ -1,7 +1,8 @@
+// @ts-check
 /* core/ui.js: the screen of every page, on Alpine.js: helpers, the state kept in the browser, the page's Alpine part
    (HOME.ui.page) and the pieces of the screen its HTML puts together (<template x-part="…">), light or dark, the layers, the
    sun, the 2D sheet, the widths of a table's columns. Knows no project. Touches the browser only when called. */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 
 const LOCALE = 'en-GB';                    // numbers on every page and in every sheet
@@ -15,7 +16,7 @@ const option = (v, t, sel) => `<option value="${v}"${v === sel ? ' selected' : '
 /* the viewer's choices stay in the browser; a stored state that fails valid() is dropped for fresh() */
 function store(key, fresh, valid) {
   let state;
-  try { state = JSON.parse(localStorage.getItem(key)); } catch (e) { state = null; }
+  try { state = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { state = null; }
   if (!state || !valid(state)) state = fresh();
   const save = () => { try { localStorage.setItem(key, JSON.stringify(state)); } catch (e) { /* private mode: nothing kept */ } };
   return { state, save };
@@ -128,7 +129,7 @@ function start() {
 /* the layers tree: {id: {name, layers: {...}}} -> id -> {name, parent} */
 function layerTree(tree) {
   const LAYER = {};
-  (function walk(t, parent) { for (const [k, v] of Object.entries(t)) { LAYER[k] = { name: v.name, parent }; if (v.layers) walk(v.layers, k); } })(tree, null);
+  (function walk(t, /** @type {string|null} */ parent) { for (const [k, v] of Object.entries(t)) { LAYER[k] = { name: v.name, parent }; if (v.layers) walk(v.layers, k); } })(tree, null);
   return LAYER;
 }
 /* a layer is on when it and all its parents are on; an object is shown when all its layers are on */

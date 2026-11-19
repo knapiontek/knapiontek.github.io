@@ -1,3 +1,4 @@
+// @ts-check
 /* library/draw.js: how a product of the library is drawn, whatever room it stands in. A product names its drawing (its field
    draw); the room places it and hands over a drawing context D and the place: the frame of its group (x along the group,
    y out from the carcass backs, h up from the floor, mm) and the anchors the drawing starts from. The sizes are the maker's

@@ -1,3 +1,4 @@
+// @ts-check
 /* room/room.js: one room put together from what the page hands it: the room from the house (its node: origin and height),
    the room's files (cabinets, scene) and the library. It places the groups of furniture where the scene says, builds the
    cabinets (room/cabinets.js), the products (library/draw.js) and the lamps, in the house's axes (x, y, h; mm).
@@ -141,7 +142,7 @@ function build(V, prepared, opts = {}) {
   }
   function textMaterial(text) {
     const c = document.createElement('canvas'); c.width = 256; c.height = 80;
-    const g = c.getContext('2d');
+    const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'));
     g.fillStyle = '#000'; g.fillRect(0, 0, 256, 80);
     g.fillStyle = '#7dd3fc'; g.font = '500 52px "IBM Plex Mono",monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText(text, 128, 42);

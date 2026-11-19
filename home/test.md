@@ -89,3 +89,13 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 - The estimates' boards against the prototype's (tests/proto_w_info.py reads its Info): carcass, drawer boxes, HDF and oak m² together the same, hinges 20, brackets 50.
 - The editor (`cabinets.html?room=<room>`): the five rooms open with no problem, their drawing filled, Export the same byte for byte; tests/editor_ui.py as before.
 - The kitchen after the step: cells (SHIFT=1000,0,1320) 472 / 346, only the hood: its profile as a pair and its filter and chimney 2 mm higher (library/draw.js, older than this step, see report.md); faces 205 / 205; the page snapshots (snap.py, cmp_snap.py): only what changed with Alpine (absent pieces, "shaded fields", the columns).
+
+## The type check (19 Nov)
+
+`npm i typescript@5` in a folder of the LLM's own (not in home/), then `tsc --noEmit -p home/jsconfig.json`: no error. After a change of the types only: `node tests/model_snap.js <room>` for the five rooms, the same JSON as before the change.
+
+## The floor tiles (19 Nov)
+
+- `python3 tests/proto_tiles.py`: the prototype's layouts, counts and pieces (from a copy of its house page that exposes them: proto_copy/house/index_t.html) into tests/golden_proto_tiles.json.
+- `node tests/t_tiles.js`: each of the 8 layouts in Node (house/model.js, room/tiles.js) at the origin of the data: the prototype's origin (moved by the house's shift), the same tiles, whole, cut and small cuts, the rooms' area the same; the doors' halves apart (the doors unified); the fitted origin beside.
+- The page: no errors, the Test without faults; the sheet Floor tiles; Finish: a pattern changed, fitted, an origin typed, back to the data (tests: an evaluate on the page); pictures from Above and Plan of both floors beside the prototype's (tests/shot_tiles.py, shot_tiles_proto.py).

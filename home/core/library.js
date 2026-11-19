@@ -1,6 +1,7 @@
+// @ts-check
 /* core/library.js: the library for a page: the products of every group and the shops (what is bought), the materials,
    the textures, loaded by key when a page needs them. Knows no project. Needs core/load.js. */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 
 const VERSION = 1;                         // of every library format: library, materials, shops, products, texture

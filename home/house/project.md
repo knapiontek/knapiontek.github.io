@@ -27,7 +27,7 @@ house.js ─► model.js ─► solids ─► index.html: 3D, 2D (core)
 - **Documents**: the whole house, the rooms (the model's area and archon's), the inner doors with what is bought for them, the notes; a room's view, its own (a furnished room's estimate, cut list, assembly cards and notes: room/docs.js); both then Elements and Test.
 - **Test** (the last sheet of Documents): the tree, the house, the library, the rooms' furniture; a room asked for that the house does not have.
 - **Elements** (a sheet of Documents): the tree of what is shown: the site, the house down to its floors and rooms; a room's view, its rooms down to their furniture; each node with its offset in its parent and its size; closed at first, a + opens a node. Test is a tree too, open at first.
-- The rooms' floor tiles come with room/tiles.js.
+- **The floor tiles** (room/tiles.js): one layout for each node that sets `settings.tiles` (a floor: its product, direction, pattern and grid's origin; a room that sets its own origin: a layout of its own), over the rooms that take them from it; rooms of one layout that meet with no wall are one zone, a tile runs across the line, and the floor runs on through a door. The panel's tab Finish (3D): the rooms of every floor shown, the one picked opens its layout: the tile, the pattern, the direction, the origin, the grout, Fit the origin (the fewest small cuts), Back to the data; the area, the tiles to buy, whole and cut, the small cuts (red with their layer), the cost. The viewer's changes stay in the browser. Documents: the sheet Floor tiles (the m² to buy with the reserve, the value); Test: every room tiled or set to none, every layout's tile in the library, the small cuts (to know).
 
 ## The format `house`, version 3
 
@@ -36,6 +36,7 @@ The file's root node (core/project.md: the node) is the **site**, with the forma
 | Field | Means |
 |---|---|
 | settings.view | the view of the house: `layers` (the layers' tree, names), `floors` (where: the floors and the roof) and `elements` (what: the kinds of elements), the two blocks of Layers in the panel, `edges`, `light` (with `clouds`: how many by default, and at full clouds the sun's and the sky's factors and the shadows' blur; `inside`: the light of a part), `cameras`, `walk`, `planNote` (under the 2D sheets) |
+| settings.tiles | the floor tiles' common settings: `reserve` (for cuts, the part added to what is bought), `grout`, `top` (mm over the floor: the grout's face and the tiles'), `mark` (the picked room's mark), `layers` (the tiles' layers), `small` (the layer that shows a small cut red) |
 | source, notes | where the geometry comes from; remarks for Documents |
 | geometry | what the house is made of (below) |
 | children | the house's parts, by what belongs to what: `foundation`, the floors (`ground`, `attic`), `facade` (the insulation), `roof`, `stair` |
@@ -53,6 +54,8 @@ An assembly stands at the house's zero with the house's size; a floor at its lev
 **A floor** is a node of type `floor`: its offset's h is its level, its size's h its height (the top of its rooms). Its own fields: `inside` (the floor area inside the outer walls, rectangles `[x1, x2, y1, y2]`, in the floor's axes), `other` (areas that are no room: the stair), `settings.view` (`cameras`; `plan`: the height of its 2D cut over the floor). Its children are its walls and slabs (above) and its rooms.
 
 **A room** is a node whose type is its kind (`kitchen`, `bathroom`, `wardrobe`, `bedroom`, `hall`, `living`, `vestibule`, `garage`, `boiler`) and whose id is the kind and archon's number (`kitchen_6`). Its offset is the smallest corner of its floor area, its size the box around it and the floor's height. Its own fields: `number` (archon's), `area` (its floor area at the block faces, rectangles in the room's axes), `archonArea` (m², archon's, after plaster: a reference only), `note` (where its border runs with no wall, and why).
+
+**Floor tiles** (`settings.tiles` of a floor or a room): `product` (a tile of the library), `dir` (x or y: the tiles' length along it), `pattern` (grid, half, third, quarter, random; none: the product's), `origin` ([x, y] in the node's axes: where a tile's corner lies; the grid runs from it both ways). A room takes the tiles of its floor; a room that sets them has its own layout (an origin of its own: the rest from its floor); `null`: no tiles (the room's own project lays its floor: the bathrooms; the garage).
 
 **geometry**, what the elements are made of and how they are drawn. Every number of a node's own fields is in that node's axes, from its zero (mm: x along the house, y across, h up): the house's geometry and views in the house's; a floor's areas and cameras in the floor's; the roof's planes and the stair's flights in theirs; an element's or an opening's lines (`below`) and transoms in its own:
 

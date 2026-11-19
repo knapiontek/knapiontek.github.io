@@ -1,8 +1,9 @@
+// @ts-check
 /* core/surface.js: the surfaces of solids, ready to draw: welded points, the faces of cells, the visible pieces,
    finishes on a host's faces. Knows no project and no browser.
    A cell is {S, material, layers, edges, ...}; faceMaterial(n, points), if a cell has it, gives the material of a face by
    its normal (and its corners, mm). Needs core/geometry.js. */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 const { EPS, ccw, edgesOf, intersect2, minus2 } = HOME.geometry;
 
@@ -21,7 +22,7 @@ function weld(v) {
     const p = WELD.get((k[0] + a) + ',' + (k[1] + b) + ',' + (k[2] + c));
     if (p && Math.abs(p[0] - v[0]) <= WELD_TOL && Math.abs(p[1] - v[1]) <= WELD_TOL && Math.abs(p[2] - v[2]) <= WELD_TOL) return p;
   }
-  const p = [v[0], v[1], v[2]]; p.id = pointCount++; WELD.set(k.join(','), p); return p;
+  const p = /** @type {number[] & { id?: number }} */ ([v[0], v[1], v[2]]); p.id = pointCount++; WELD.set(k.join(','), p); return p;
 }
 const noRepeats = P => P.filter((p, i) => p !== P[(i + 1) % P.length]);
 
@@ -107,7 +108,7 @@ const piecesOf = cells => conform(visiblePieces(cells.flatMap(cellFaces)));
    A rule covers the faces lying on the side of box that n faces from (n = +x: the plane x = box x1, the face looks into
    the box), inside box; the part of such a piece inside takes material. finish: a layer that switches it (off: the face's
    own material). A later rule wins. pick(piece): the pieces a rule may cover (the host's own). Seen pieces only. */
-function finishPieces(pieces, finishes, pick = () => true) {
+function finishPieces(pieces, finishes, pick = /** @type {(face: any) => boolean} */ (() => true)) {
   let out = pieces;
   for (const F of finishes) {
     const k = F.n.findIndex(v => Math.abs(v) > 0.5), s = Math.sign(F.n[k]), plane = F.box[2 * k + (s > 0 ? 0 : 1)];

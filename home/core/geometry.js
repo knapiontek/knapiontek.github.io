@@ -1,7 +1,8 @@
+// @ts-check
 /* core/geometry.js: exact operations on convex polygons and prisms. Knows no project.
    Every solid is a prism along x over a convex polygon in the y-h plane: a box, cut at most by lines h = a + s·y.
    Units mm; x along, y across, h up. */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 
 const DEG = Math.PI / 180, INF = 1e7, EPS = 1e-6;
@@ -120,7 +121,15 @@ function mergeRects(rects) {               // rects sharing a whole side become 
   return rects;
 }
 
-HOME.geometry = { DEG, INF, EPS, SOLID_TOL, ccw, rect2, clipHalf, leftOf, edgesOf, intersect2, minus2,
+/* a stable random number in [0, 1) of whole numbers: the same arguments give the same number (a layout looks the same every time) */
+function hash01(...k) {
+  let h = 2166136261;
+  for (const v of k) { h ^= (v | 0) + 0x9e3779b9; h = Math.imul(h, 16777619); h ^= h >>> 13; }
+  h = Math.imul(h ^ (h >>> 16), 2246822507); h ^= h >>> 13;
+  return (h >>> 0) / 4294967296;
+}
+
+HOME.geometry = { hash01, DEG, INF, EPS, SOLID_TOL, ccw, rect2, clipHalf, leftOf, edgesOf, intersect2, minus2,
   prism, emptyPrism, hRange, centreH, prismIntersect, prismMinus, splitH, sectionAt, cutBy, volume, subtractAll, overlaps,
   rectArea, rectMinus, mergeRects };
 })(window.HOME = window.HOME || {});

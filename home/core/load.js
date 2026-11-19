@@ -1,15 +1,16 @@
+// @ts-check
 /* core/load.js: the one loader of data. A data file is JSON handed to HOME.data, so the pages work opened from disk;
    it says its format and version. A page loads a file by its path from the home folder (file gives the path of a key);
    the data comes back only when its format and version are the ones the caller knows. Must be the first script of a page:
    it finds the home folder from its own address. Knows no project. */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 
-const BASE = document.currentScript.src.replace(/core\/load\.js(\?.*)?$/, '');   // the home folder
+const BASE = /** @type {HTMLScriptElement} */ (document.currentScript).src.replace(/core\/load\.js(\?.*)?$/, '');   // the home folder
 const DATA = new Map(), PENDING = new Map();                                       // address -> data, address -> its loading
 
 /* called by every data file: its data, kept under the file's address */
-HOME.data = json => { DATA.set(document.currentScript.src, json); };
+HOME.data = json => { DATA.set(/** @type {HTMLScriptElement} */ (document.currentScript).src, json); };
 
 /* the path of every kind of data file, from the home folder */
 const file = {
@@ -23,7 +24,7 @@ const file = {
 };
 
 function script(url, path) {
-  if (!PENDING.has(url)) PENDING.set(url, new Promise((done, failed) => {
+  if (!PENDING.has(url)) PENDING.set(url, new Promise((/** @type {(value?: any) => void} */ done, failed) => {
     const s = document.createElement('script');
     s.src = url;
     s.onload = () => (DATA.has(url) ? done() : failed(new Error(path + ': no data in the file')));

@@ -177,6 +177,30 @@ The prototype's four wardrobes (one file of its own, rooms/wardrobe) are now roo
 - **Not ported (yet)**: the prototype's checks of the gap under the ceiling (≥ 100) and of the passage (≥ 600).
 - **Doubt, found on the way**: the kitchen's hood is drawn 2 mm higher than the prototype's (library/draw.js: its bottom = the lowest point + 2, for the lights under it); older than this step, not in this report before. To decide: as the prototype, or as now.
 
+## Types in comments (19 Nov)
+
+At the owner's word: the code stays plain JavaScript, its types written as JSDoc and checked by TypeScript's compiler (`tsc --noEmit`), a tool of the writer only; the pages load the same files, nothing is built.
+
+- Every code file of core/, house/model.js, library/draw.js and room/ (cabinets.js, room.js, docs.js) begins with `// @ts-check`; home/jsconfig.json lists them (strictNullChecks on); home/globals.d.ts declares what comes from outside (HOME, three.js, Alpine.js, SheetJS).
+- Typedefs: in room/cabinets.js the cabinets file (CabinetsFile, FileGroup, Component) and the model's records (Item, Carcass, Board, Edge, Hole, Gaps, Geometry, GroupModel; Front still loose); elsewhere `@type` where a value is not plain (the sheets' rows, the estimate's rows, the defaults of callbacks).
+- The check passes with no error. What it found and what changed in the code (behaviour the same): the cabinets file reaches build() with `materials` added by withLibrary() (now in its type); a carcass's flags are counted as numbers; a door with no hinge side is not looked up; a stored state that is missing parses as null; a key press outside an element is ignored as before.
+- Checked: the models of the five rooms in Node byte for byte as before; the editor's Export, the kitchen's Documents, cells (the same 3 of the hood), faces, the page snapshots: as before.
+- Not checked: the pages' inline scripts (house/index.html, room/cabinets.html, core/test.html) and the data files (checked by the loader and the tests).
+- The MD files: project.md (Code style: types; Folders; To do: tiles, then the bathrooms, the types growing with the code), plan.md (the note), room/project.md (the formats of the wardrobes: the tag open, drawers of board, a group's depth, the shelves' grid, settings needed only by what a room has, the cut list's title, a block's length), library/project.md (a board sold by the metre).
+
+## The floor tiles (19 Nov)
+
+The prototype's floor tiles (its house page: Wykończenie, the layouts, the count, the cost) are in home, by one mechanism: room/tiles.js computes, house.js says, the house's page draws and shows.
+
+- **room/tiles.js** (new, no browser): a layout's rooms and zones (rooms meeting with no wall: one zone), the doors' halves (the floor runs on through a door), the tiles laid from the grid's origin, the count (whole, cut, small cuts below the product's minCut, the penalty), the fitted origin, the faces to draw. The prototype's code, moved.
+- **house.js**: `settings.tiles` of the house (reserve, grout, top, mark, layers, small), of each floor (the product, the direction, the origin of its grid) and of the rooms with a grid of their own (an origin) or none (null: the garage, the two bathrooms, whose floors their projects lay); the layer Floor tiles with Small cuts (red). The layouts as in the prototype: the ground floor's (the hall, the living room, the kitchen), the vestibule, the boiler room; the attic's (the bedroom with wardrobes 3 and 4), the hall, bedrooms 6 and 7, wardrobe 8; the origins the prototype's, in each node's own axes.
+- **house/model.js**: the layouts from the settings (the node a room's tiles come from is its layout).
+- **house/index.html**: the tiles drawn (the grout under, the tiles over, a stone tile one whole image turned at random, a plank a random crop of the photo, a small cut red while its layer is on); the panel's tab **Finish** (3D) as the prototype's Wykończenie; the picked room marked; Documents: the sheet **Floor tiles**; Test: three checks.
+- **core**: hash01 (the stable random number) moved to core/geometry.js, so a module can use it without the browser; the image surface takes which image of a texture (face); ui.css: the rooms' list of Finish.
+- **Against the prototype** (tests/t_tiles.js): all 8 layouts, the same tiles, whole, cut and small cuts, the same area of the rooms; the doors' halves a few cm² apart (the doors unified on 18 Nov). On the page the same numbers as the prototype's (the salon: 84 tiles, 44 / 32, 6,686 zł).
+- **Deviations**: the origin is data (the prototype fitted it on the first visit and kept it in the browser); Fit the origin does the same search, from the floor's zero (so it may land elsewhere than the prototype's: the same score).
+- **To know**: the bedroom with wardrobes 3 and 4 has 11 small cuts with the third bond (as in the prototype); with the half bond and Fit, 1.
+
 ## Noted for later: the 2D view (done 18 Nov, see above) (the owner, 18 Nov)
 
 - **Zoom with the mouse wheel**, about the cursor, instead of the + and − buttons.

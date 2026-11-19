@@ -24,6 +24,7 @@ HOME.data({
    "offset": [14000, 15000, -800],
    "size": [15200, 9100, 10320],
    "settings": {
+    "tiles": {"reserve": 0.1, "grout": 2, "top": 3, "mark": 5, "layers": ["tiles"], "small": "cuts"},
     "view": {
      "layers": {
       "ground": {"name": "Ground floor"},
@@ -37,11 +38,12 @@ HOME.data({
       "doors": {"name": "Doors"},
       "stair": {"name": "Stair"},
       "site": {"name": "Site"},
+      "tiles": {"name": "Floor tiles", "layers": {"cuts": {"name": "Small cuts (red)"}}},
       "furniture": {"name": "Furniture"},
       "edges": {"name": "Edges"}
      },
      "floors": ["ground", "attic", "roof"],
-     "elements": ["foundation", "walls", "slabs", "insulation", "windows", "doors", "stair", "site", "furniture", "edges"],
+     "elements": ["foundation", "walls", "slabs", "insulation", "windows", "doors", "stair", "site", "tiles", "furniture", "edges"],
      "edges": {"color": "#7d807b", "opacity": 0.45, "layers": ["edges"]},
      "light": {
       "exposure": 0.85,
@@ -351,6 +353,7 @@ HOME.data({
      "offset": [0, 0, 1320],
      "size": [15200, 9100, 2720],
      "settings": {
+      "tiles": {"product": "paradyz-authority-graphite", "dir": "x", "origin": [235, 750]},
       "view": {
        "cameras": [
         {"name": "Plan", "eye": [7660, 4550, 23000], "target": [7600, 4550, 0]},
@@ -626,7 +629,8 @@ HOME.data({
        "offset": [10250, 4230, 0],
        "size": [2610, 1920, 2720],
        "area": [[0, 2610, 0, 1920]],
-       "archonArea": 4.84
+       "archonArea": 4.84,
+       "settings": {"tiles": {"origin": [335, 330]}}
       },
       {
        "id": "garage_2",
@@ -636,7 +640,8 @@ HOME.data({
        "offset": [6470, 440, 0],
        "size": [7290, 3670, 2720],
        "area": [[0, 950, 0, 2530], [950, 1070, 0, 2760], [1070, 7290, 0, 3670]],
-       "archonArea": 25.91
+       "archonArea": 25.91,
+       "settings": {"tiles": null}
       },
       {
        "id": "hall_3",
@@ -680,7 +685,8 @@ HOME.data({
        "offset": [8340, 6270, 0],
        "size": [2510, 2390, 2720],
        "area": [[0, 1670, 0, 2390], [1670, 2510, 1390, 2390]],
-       "archonArea": 4.95
+       "archonArea": 4.95,
+       "settings": {"tiles": null}
       },
       {
        "id": "boiler_8",
@@ -690,7 +696,8 @@ HOME.data({
        "offset": [10250, 6270, 0],
        "size": [2610, 2390, 2720],
        "area": [[0, 2610, 0, 1270], [720, 2610, 1270, 2390]],
-       "archonArea": 4.97
+       "archonArea": 4.97,
+       "settings": {"tiles": {"origin": [335, 600]}}
       }
      ]
     },
@@ -701,6 +708,7 @@ HOME.data({
      "offset": [0, 0, 4380],
      "size": [15200, 9100, 5940],
      "settings": {
+      "tiles": {"product": "atlas-log-icon-oak-forest", "dir": "x", "origin": [638, 96]},
       "view": {
        "cameras": [
         {"name": "Plan", "eye": [7660, 4550, 23000], "target": [7600, 4550, 0]},
@@ -997,7 +1005,8 @@ HOME.data({
        "offset": [6470, 2730, 0],
        "size": [3540, 2800, 5940],
        "area": [[950, 1900, 0, 680], [950, 3540, 680, 2800], [0, 950, 1620, 2800]],
-       "archonArea": 7.32
+       "archonArea": 7.32,
+       "settings": {"tiles": {"origin": [1200, 218]}}
       },
       {
        "id": "bedroom_2",
@@ -1039,7 +1048,8 @@ HOME.data({
        "offset": [6470, 5650, 0],
        "size": [2730, 3010, 5940],
        "area": [[0, 2730, 0, 3010]],
-       "archonArea": 7.99
+       "archonArea": 7.99,
+       "settings": {"tiles": null}
       },
       {
        "id": "bedroom_6",
@@ -1050,6 +1060,7 @@ HOME.data({
        "size": [4440, 4130, 5940],
        "area": [[810, 4440, 0, 4130], [0, 810, 1120, 4130]],
        "archonArea": 16.53,
+       "settings": {"tiles": {"origin": [214, 206]}},
        "files": ["cabinets", "scene", "docs"]
       },
       {
@@ -1060,7 +1071,8 @@ HOME.data({
        "offset": [10130, 440, 0],
        "size": [3630, 3970, 5940],
        "area": [[0, 3630, 0, 3970]],
-       "archonArea": 14.11
+       "archonArea": 14.11,
+       "settings": {"tiles": {"origin": [606, 164]}}
       },
       {
        "id": "wardrobe_8",
@@ -1071,6 +1083,7 @@ HOME.data({
        "size": [1520, 2850, 5940],
        "area": [[0, 1520, 0, 2850]],
        "archonArea": 4.16,
+       "settings": {"tiles": {"origin": [802, 2]}},
        "files": ["cabinets", "scene", "docs"]
       }
      ]

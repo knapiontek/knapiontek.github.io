@@ -1,8 +1,9 @@
+// @ts-check
 /* core/scene.js: renderer, materials, meshes and edges of pieces, moving parts, section caps, light, camera, navigation,
    walk, loop. Knows no project: the page hands it a material library, textures, the light and the edges.
    The model is built in mm (x along, y across, h up) and turned into the scene's metres with y up.
    Needs core/geometry.js, core/surface.js, THREE and OrbitControls. */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 const { DEG, INF, hRange, cutBy, sectionAt, edgesOf } = HOME.geometry;
 const { sub3, dot3, cross3, weld } = HOME.surface;
@@ -58,12 +59,7 @@ function create(opts) {
 
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  function hash01(...k) {                  // a stable random number: a layout looks the same every time
-    let h = 2166136261;
-    for (const v of k) { h ^= (v | 0) + 0x9e3779b9; h = Math.imul(h, 16777619); h ^= h >>> 13; }
-    h = Math.imul(h ^ (h >>> 16), 2246822507); h ^= h >>> 13;
-    return (h >>> 0) / 4294967296;
-  }
+  const hash01 = HOME.geometry.hash01;
   function canvasTexture(w, h, draw, srgb = true) {
     const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
     const t = new THREE.CanvasTexture(c); if (srgb) t.encoding = THREE.sRGBEncoding;
@@ -122,9 +118,9 @@ function create(opts) {
         m.map = t; m.color.set(0xffffff); m.needsUpdate = true; redraw();
       });
     },
-    image(d, m) {                          // a photo of textures (a board decor), its size in mm; turn: its u runs along the face's v
+    image(d, m) {                          // a photo of textures (a board decor), its size in mm; face: which of its images (0); turn: its u runs along the face's v
       const T = TEX[d.key];
-      loadImage(T.faces[0], im => {
+      loadImage(T.faces[d.face || 0], im => {
         const t = new THREE.Texture(im); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping;
         t.anisotropy = renderer.capabilities.getMaxAnisotropy();
         if (d.turn) { t.repeat.set(1 / T.size[1], 1 / T.size[0]); t.rotation = Math.PI / 2; } else t.repeat.set(1 / T.size[0], 1 / T.size[1]);
@@ -263,7 +259,7 @@ function create(opts) {
   /* what a layer state shows: faces, finishes, edges, ghosts */
   /* ghost(layers): shown, but drawn as a ghost: not seen, still casting its shadow (a wall in front of the camera) */
   const GHOST = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
-  function showPieces(shown, layerOn, ghost = () => false) {
+  function showPieces(shown, layerOn, ghost = /** @type {(layers: string[]) => boolean} */ (() => false)) {
     for (const g of GROUPS) {
       g.mesh.visible = shown(g.layers);
       g.mesh.material = g.mesh.visible && ghost(g.layers) ? GHOST : g.finish ? (layerOn(g.finish.layer) ? g.finish.on : g.finish.off) : g.base;
@@ -370,7 +366,7 @@ function create(opts) {
      The wheel zooms toward the surface under the cursor. A drag with the left button turns the view about the point under
      the cursor where the drag starts (a dot marks it while it turns; on no surface, about the point it turned about last);
      the right button moves the view at the depth of what is under the cursor. */
-  const walk = { on: false, keys: new Set(), last: 0, drag: null };
+  const walk = { on: false, keys: new Set(), last: 0, drag: /** @type {number[]|null} */ (null) };
   const ray = new THREE.Raycaster();
   const ndcOf = e => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * 2 - 1, y: -(e.clientY - r.top) / r.height * 2 + 1 }; };
   const visibleChain = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
@@ -556,7 +552,7 @@ function create(opts) {
     GROUND = w.ground;
     const keyName = e => e.key.length === 1 ? e.key.toLowerCase() : e.key;
     window.addEventListener('keydown', e => {
-      if (e.target.closest && e.target.closest('input,select')) return;
+      if (e.target instanceof Element && e.target.closest('input,select')) return;
       if (w.canStart() && !walk.on && e.key === 'ArrowUp') startWalk();
       if (!walk.on) return;
       if (e.key === 'Escape') return stopWalk();

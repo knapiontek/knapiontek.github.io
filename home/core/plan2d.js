@@ -1,9 +1,10 @@
+// @ts-check
 /* core/plan2d.js: the 2D plan of every view, drawn from the model's own solids. What the cut meets is filled with its
    material's plan colour or hatch; what lies under the cut is seen from above (the higher over the lower), what lies over
    it is dashed; rooms, opening labels and dimensions come from the project's data. Sheets stand side by side. The sheet
    is in mm of the house (plan x = house y, plan y = house x: the garden at the top), so every size of the drawing is in
    mm too. Knows no project. Needs core/geometry.js and core/ui.js (THREE only for meshShape). */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 const { hRange, sectionAt, cutBy, rectArea } = HOME.geometry;
 
@@ -29,7 +30,7 @@ function create(materials) {
   /* the floor of rooms: rects [x1, x2, y1, y2] */
   const floorArea = (X, rects) => rects.map(q => rect(X, ...q, `fill="${FLOOR_FILL}"`)).join('');
   /* what the cut at h meets: each solid's section, in its section colour (cell.cap) */
-  function cut(X, solids, h, keep = () => true) {
+  function cut(X, solids, h, keep = /** @type {(solid: any) => boolean} */ (() => true)) {
     let s = '';
     for (const c of solids) {
       if (!keep(c) || !cutBy(c.S, h)) continue;
@@ -47,7 +48,7 @@ function create(materials) {
   }
   /* the archon labels (width / height) of the openings the cut at h meets, outside the wall for outer ones;
      sides: side key -> {axis, sign} */
-  function labels(X, openings, h, sides, keep = () => true) {
+  function labels(X, openings, h, sides, keep = /** @type {(opening: any) => boolean} */ (() => true)) {
     const B = S.label;
     let s = '';
     for (const o of openings) {

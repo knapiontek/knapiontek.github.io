@@ -1,3 +1,4 @@
+// @ts-check
 /* core/sheet.js: the spreadsheet of Documents: sheets in tabs, input cells the viewer may change (until a reload),
    formulas that follow them, the XLSX with the same formulas live; and the Documents screen (a title, warnings, the book,
    the bottom menu), an Alpine part. Knows no project: a page hands in the book. The formulas are computed without a browser.
@@ -21,7 +22,7 @@
                                    the text and the cell opens the first one
           any number cell may add: digits (decimals shown; or the column's), pct (shown as a percentage), z (the XLSX
           number format; or the column's z). A text may hold line breaks (\n). */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 
 const { el, esc, LOCALE } = HOME.ui;
@@ -91,7 +92,7 @@ const foldHtml = (ri, open) => `<button class="fold" data-fold="${ri}" title="${
 function grid(sheet, open, original) {
   const isTree = r => r && r.level !== undefined, parent = [];
   return sheet.rows.map((row, ri) => {
-    const out = { i: ri, kind: row.kind || '', hidden: false, cells: [] };
+    const out = { i: ri, kind: row.kind || '', hidden: false, cells: /** @type {Object<string, any>[]} */ ([]) };
     let fold = null;
     if (isTree(row)) {
       parent.length = row.level;
@@ -103,7 +104,7 @@ function grid(sheet, open, original) {
     }
     const cells = row.cells || [];
     cells.forEach((cell, ci) => {
-      const d = cell?.digits ?? sheet.cols[ci]?.digits, td = { cls: '', span: false, title: false, style: '', html: '' };
+      const d = cell?.digits ?? sheet.cols[ci]?.digits, td = /** @type {Object<string, any>} */ ({ cls: '', span: false, title: false, style: '', html: '' });
       if (typeof cell === 'number') { td.cls = 'n'; td.html = esc(show(cell, d)); }
       else if (cell && typeof cell === 'object' && 'v' in cell && !cell.input) { td.cls = 'n'; td.html = esc(show(cell.v, d, cell.pct)); }
       else if (cell && cell.input) { td.cls = 'n'; td.html = `<input type="number" step="any" value="${esc(cell.v)}" data-cell="${ri}:${ci}"${cell.v !== original.get(cell) ? ' class="changed"' : ''}>`; }
@@ -154,7 +155,7 @@ function view(docs) {
   const d = Alpine.raw(docs), original = new Map();   // input cell -> its value as handed in
   let book = null, fit = () => {};
   return {
-    title: d.title, subtitle: d.subtitle || '', warnings: d.warnings || [], names: [], current: 0, rows: [],
+    title: d.title, subtitle: d.subtitle || '', warnings: d.warnings || [], names: [], current: 0, rows: /** @type {Object<string, any>[]} */ ([]),
     init() { this.$nextTick(() => this.start()); },   // after the piece is in
     start() {
       this.take(d.book);

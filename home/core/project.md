@@ -10,7 +10,7 @@ Shared code for every page. It knows no project: a page hands it the data, and c
 |---|---|
 | load.js | the one loader of data: a data file by its path from the home folder, checked for its format and version; the path of every kind of data file by its key. The first script of every page |
 | tree.js | the tree of nodes: a node by its path and the path of a node; a node's place (the sum of the offsets) and box; a setting from the cascade with the node it comes from; the nodes a node refers to; a walk over all nodes; the checks of the tree |
-| geometry.js | exact solids: convex polygons and prisms; clip, subtract, intersect, split, section, volume, overlaps; rectangles |
+| geometry.js | exact solids: convex polygons and prisms; clip, subtract, intersect, split, section, volume, overlaps; rectangles; a stable random number (hash01) |
 | surface.js | the surfaces of solids, ready to draw: welded points, the faces of the solids, the visible pieces (a face covered by another loses that part), finishes on the faces of a host (a room's tiles on the house's walls) |
 | scene.js | the 3D view: renderer, materials, the pieces as triangles batched per material, edges, ghosts (hidden, still casting their shadow), moving parts (doors and drawers), section caps, light, the sun and the clouds (they weaken the sun, strengthen the sky and soften the shadows), camera and flights, navigation, the walk, the loop that draws only after a change |
 | plan2d.js | the 2D plan from the same solids: what the cut meets is filled, what lies under it is seen from above, what is over it dashed; labels of openings and rooms, borders of rooms with no wall between them (dash-dot), dimensions, sheets side by side |

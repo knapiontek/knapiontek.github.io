@@ -28,7 +28,23 @@
     </template>
     <template x-part="corner"></template>
   </div>
-  <template x-part="panel"><template x-part="layers"></template></template>
+  <template x-part="panel"><template x-part="layers"></template>
+    <section x-show="tab === 'finish'" x-cloak><h2>Floor tiles</h2><p class="note">A click on a room picks it (here, or on the open floor in 3D); a room shares its layout with the rooms named under it.</p>
+      <table id="rooms"><template x-for="F in finish" :key="F.id"><tbody><tr><td class="floorname" x-text="F.name"></td></tr>
+        <template x-for="r in F.rooms" :key="r.id"><tr :data-room="r.id" :aria-selected="String(r.picked)"><td>
+          <div class="roomline" @click="state.room = r.picked ? null : r.id"><span x-text="r.name"></span><span class="note" x-text="r.note"></span></div>
+          <template x-if="r.layout"><div class="lay" @click.stop>
+            <label>Tile<select @change="setTiles(r.layout.key, 'product', $event.target.value)"><template x-for="p in r.layout.products" :key="p.k"><option :value="p.k" :selected="p.k === r.layout.L.product" x-text="p.name"></option></template></select></label>
+            <p class="note"><span x-text="r.layout.note"></span><template x-if="r.layout.link"><span> · <a :href="r.layout.link.url" target="_blank" rel="noopener" x-text="r.layout.link.name"></a></span></template><template x-if="r.layout.together"><span><br>With: <span x-text="r.layout.together"></span></span></template></p>
+            <div class="row"><label>Pattern<select @change="setTiles(r.layout.key, 'pattern', $event.target.value)"><template x-for="p in r.layout.patterns" :key="p.k"><option :value="p.k" :selected="p.k === r.layout.L.pattern" x-text="p.name"></option></template></select></label>
+              <label>Direction<select @change="setTiles(r.layout.key, 'dir', $event.target.value)"><template x-for="d in r.layout.dirs" :key="d.k"><option :value="d.k" :selected="d.k === r.layout.L.dir" x-text="d.name"></option></template></select></label></div>
+            <div class="row"><label>Origin along (mm)<input type="number" step="1" :value="r.layout.L.oa" @change="setTiles(r.layout.key, 'oa', $event.target.value)"></label>
+              <label>Origin across (mm)<input type="number" step="1" :value="r.layout.L.ob" @change="setTiles(r.layout.key, 'ob', $event.target.value)"></label></div>
+            <div class="row"><label>Grout<input type="color" :value="r.layout.L.grout" @change="setTiles(r.layout.key, 'grout', $event.target.value)"></label>
+              <label>&nbsp;<button class="btn ghost" @click="fitTiles(r.layout.key)">Fit the origin</button></label></div>
+            <template x-if="r.layout.changed"><div class="btns"><button class="btn ghost" @click="setTiles(r.layout.key, 'reset')">Back to the data</button></div></template>
+            <dl class="stats"><template x-for="s in r.layout.stats" :key="s[0]"><div><dt x-text="s[0]"></dt><dd x-text="s[1]"></dd></div></template></dl></div></template>
+        </td></tr></template></tbody></template></table></section></template>
 </div>
 <script src="../core/load.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -45,6 +61,7 @@
 <script src="../library/draw.js"></script>
 <script src="../room/cabinets.js"></script>
 <script src="../room/room.js"></script>
+<script src="../room/tiles.js"></script>
 <script src="../core/estimate.js"></script>
 <script src="../room/docs.js"></script>
 <script>
@@ -54,11 +71,14 @@
 'use strict';
 HOME.ui.page('house', {
   key: 'home-house', fresh: () => ({ mode: '3d', tab: null, layers: {}, zoom: 1, room: null }), valid: s => ['3d', '2d', 'documents'].includes(s.mode) && s.layers,
-  modes: ['3d', '2d', 'documents'], tabs: { '3d': ['view'], '2d': ['view'] },
+  modes: ['3d', '2d', 'documents'], tabs: { '3d': ['view', 'finish'], '2d': ['view'] },
   async load() { P = await build(this); },
   onMode: m => P.onMode(m), onLayers: () => P.apply(), menus: () => P.menus(),
   get layerBlocks() { return this.ready ? P.layerBlocks() : []; },
-  get roomTag() { return this.ready ? P.roomTag() : null; }
+  get roomTag() { return this.ready ? P.roomTag() : null; },
+  get finish() { return this.ready ? P.finish() : []; },
+  setTiles(key, field, value) { P.setTiles(key, field, value); },
+  fitTiles(key) { P.setTiles(key, 'fit'); }
 });
 let P = null;                              // the page built: what its screen asks of it
 /* builds the page into ui (the page's Alpine part) */
@@ -98,6 +118,8 @@ const FURNITURE = await Promise.all(FURNISHED.map(async r => {
 }));
 for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks, f.prepared.scene.hardware.handles ? { handle: MATERIALS[f.prepared.scene.hardware.handles.default] } : {});
 await LIB.loadTextures(FURNITURE.flatMap(f => f.prepared.textures));
+const TILE_PRODUCTS = LIB.groups.tiles;
+await LIB.loadTextures(Object.values(TILE_PRODUCTS).map(p => p.texture));
 /* one room with furniture: the furniture's own layers too (its groups and its kinds of parts) */
 const ROOM_LAYERS = !WHOLE && FURNITURE.length === 1 ? HOME.room.layers(FURNITURE[0].prepared) : {};
 
@@ -149,6 +171,66 @@ for (const l of LEAVES) {
 }
 V.addLight(); V.addCaps();
 
+/* ================= THE FLOOR TILES =================
+   house.js sets them (house/project.md): one layout for each node that sets tiles, over the rooms that take them from it.
+   The viewer may change a layout's product, pattern, direction, origin and grout (kept in the browser, state.layouts:
+   what differs from the data); each is laid and counted over all its rooms, drawn in the rooms shown */
+const TILES = T.setting(HOUSE, 'tiles').value;
+const SHOWN_ROOMS = new Set((WHOLE ? ROOMS : PART.map(id => ROOM[id])).map(r => r.id));
+const PASSAGE_BOXES = MODEL.OPENINGS.filter(o => HOUSE.geometry.openingKinds[o.kind].passage).map(o => o.b);
+if (!state.layouts) state.layouts = {};
+const LAID = {};                           // key -> {L: the laying, P: the product, laid: its rooms, pieces, count, made: its meshes}
+/* the laying of a layout: the data, then what the viewer changed; a changed product, pattern or direction fits the origin anew */
+function laying(D) {
+  const v = state.layouts[D.key] || {}, product = TILE_PRODUCTS[v.product] ? v.product : D.product, P = TILE_PRODUCTS[product];
+  const changed = product !== D.product || (v.pattern && v.pattern !== (D.pattern || P.pattern)) || (v.dir && v.dir !== D.dir);
+  return { product, pattern: v.pattern || D.pattern || P.pattern, dir: v.dir || D.dir, grout: v.grout || LIB.textures[P.texture].grout,
+    oa: v.oa ?? (changed ? null : D.oa), ob: v.ob ?? (changed ? null : D.ob) };
+}
+function layTiles(D) {
+  const L = laying(D), P = TILE_PRODUCTS[L.product], laid = HOME.tiles.rooms(D.rooms, PASSAGE_BOXES, level(D.floor));
+  if (L.oa === null || L.ob === null) { Object.assign(L, HOME.tiles.fit(L, P, laid)); Object.assign(state.layouts[D.key] ||= {}, { oa: L.oa, ob: L.ob }); }
+  const pieces = HOME.tiles.lay(L, P, laid, L.oa, L.ob), count = HOME.tiles.count(P, pieces);
+  const old = LAID[D.key];
+  if (old) V.removeMeshes(old.made);
+  LAID[D.key] = { D, L, P, laid, pieces, count, made: V.buildMeshes(tilePieces(D, L, P, laid, pieces)) };
+}
+/* the pieces for core: the grout under the layout's rooms shown, and the tiles over it; a small cut red while its layer is on */
+function tilePieces(D, L, P, laid, pieces) {
+  const T = LIB.textures[P.texture], stone = T.kind === 'stone', h = level(D.floor), up = [0, 0, 1], layers = [D.floor.id].concat(TILES.layers);
+  const cell = (extra = {}) => Object.assign({ layers }, extra), out = [];
+  const grout = 'tiles:grout:' + L.grout;
+  MATERIALS[grout] ||= { color: L.grout, roughness: 0.95 };
+  const groutCell = cell();
+  for (const r of laid) if (SHOWN_ROOMS.has(r.id)) for (const q of r.rects) {
+    out.push({ poly: [[q[0], q[2], h + TILES.grout], [q[1], q[2], h + TILES.grout], [q[1], q[3], h + TILES.grout], [q[0], q[3], h + TILES.grout]], n: up, uv: v => [v[0], v[1]], cell: groutCell, group: layers.join('+'), material: grout });
+  }
+  for (const set of HOME.tiles.faces(L, P, T, pieces.filter(p => SHOWN_ROOMS.has(p.room)), h + TILES.top)) {
+    const key = `tiles:${P.texture}:${set.face}`, red = key + ':small';
+    MATERIALS[key] ||= { image: { key: P.texture, face: set.face }, roughness: stone ? 0.6 : 0.65, reflect: 0.35 };
+    MATERIALS[red] ||= Object.assign({}, MATERIALS[key], { color: '#ff9a92' });
+    const c = set.small ? cell({ finish: TILES.small, raw: key }) : cell();
+    for (const q of set.quads) out.push({ poly: q.poly, n: up, uv: q.uv, cell: c, group: layers.join('+'), material: set.small ? red : key });
+  }
+  return out;
+}
+const LAYOUTS = MODEL.LAYOUTS.filter(D => TILE_PRODUCTS[D.product]);
+for (const D of LAYOUTS) layTiles(D);
+const layoutOf = r => LAYOUTS.find(D => D.rooms.includes(r));
+/* the room picked: a mark over its floor */
+let MARK = [];
+const MARK_MATERIAL = 'tiles:mark';
+MATERIALS[MARK_MATERIAL] = { color: '#c8882f', opacity: 0.3 };
+function markRoom() {
+  V.removeMeshes(MARK); MARK = [];
+  const r = ROOM[state.room];
+  if (!r || !WHOLE) return;
+  const h = level(r.floor) + TILES.mark, c = { layers: [r.floor.id] };
+  MARK = V.buildMeshes(r.rects.map(q => ({ poly: [[q[0], q[2], h], [q[1], q[2], h], [q[1], q[3], h], [q[0], q[3], h]], n: [0, 0, 1], uv: v => [v[0], v[1]], cell: c, group: 'mark', material: MARK_MATERIAL })));
+  for (const g of MARK) { g.mesh.castShadow = g.mesh.receiveShadow = false; g.mesh.visible = state.mode === '3d' && !!openFloor() && r.floor === openFloor(); }
+  V.redraw();
+}
+
 /* ================= STATE, LAYERS ================= */
 const { layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers);
 const ROOM_VIEW = new Set(WHOLE ? [] : VIEW.floors);   // a room shows whatever the floors are switched to
@@ -164,6 +246,7 @@ function openFloor() {
 }
 function apply() {
   V.showPieces(shown, layerOn, ghost);
+  for (const g of MARK) g.mesh.visible = state.mode === '3d' && !!openFloor() && ROOM[state.room] && ROOM[state.room].floor === openFloor();
   for (const f of FURNITURE) f.made.showDetails(layers => shown(layers) && !ghost(layers));
   V.redraw();
 }
@@ -339,6 +422,18 @@ function book() {
     doors.rows.push({ cells: [d.label, FLOORS.find(F => F.id === d.floor).name, P ? P.name : 'to choose', { v: 1, input: true }, P && P.price !== null ? { v: P.price, input: true } : '', { f: `D${r}*E${r}` }] });
   }
   doors.rows.push({ kind: 'sum', cells: ['Total', '', '', '', '', { f: `SUM(F${first}:F${doors.rows.length})` }] });
+  /* the floor tiles: each layout as laid (Finish), its area and the reserve give the m² to buy */
+  const tiles = { name: 'Floor tiles', cols: [{ width: 40, share: 2 }, { width: 40, share: 3 }, { width: 30, share: 2 }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }],
+    rows: [{ kind: 'title', cells: ['Floor tiles'] }, { cells: ['Reserve for cuts', { v: TILES.reserve, input: true, z: '0%' }] },
+      { kind: 'head', cells: ['Tile', 'Rooms', 'Laid', 'Area [m²]', 'To buy [m²]', 'Price [zł/m²]', 'Value [zł]'] }] };
+  const firstTile = tiles.rows.length + 1;
+  for (const A of Object.values(LAID).filter(A => A.D.rooms.some(r => SHOWN_ROOMS.has(r.id)))) {
+    const r = tiles.rows.length + 1, c = A.count;
+    tiles.rows.push({ cells: [A.P.name, A.D.rooms.map(roomName).join(', '), `${c.tiles} tiles: ${c.full} whole, ${c.cut} cut, ${c.small} small cuts`,
+      Math.round(c.area * 100) / 100, { f: `ROUND(D${r}*(1+$B$2),2)` }, A.P.price ? { v: A.P.price, input: true } : '', { f: `E${r}*F${r}` }] });
+  }
+  tiles.rows.push({ kind: 'sum', cells: ['Total', '', '', { f: `SUM(D${firstTile}:D${tiles.rows.length})` }, { f: `SUM(E${firstTile}:E${tiles.rows.length})` }, '', { f: `SUM(G${firstTile}:G${tiles.rows.length})` }] });
+  tiles.rows.push({ cells: ['As laid in Finish (3D); the glue, the grout, the skirting and the work not counted.'] });
   const notes = { name: 'Notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [HOUSE.source] }, { kind: 'head', cells: ['Notes'] }, ...HOUSE.notes.map(n => ({ cells: [n] }))] };
   /* the tree of what is shown: the whole house down to its rooms; a room's view, its rooms down to their furniture.
      Each node where it is in its parent (mm); a group of furniture where its scene sets it in its room, the side its fronts
@@ -374,7 +469,7 @@ function book() {
   test.rows.push({ cells: ['Result: OK, nothing to correct; a number, how many to correct (listed under it); i, to know, not a fault.'] });
   /* a furnished room's own Documents first: its estimate, cut list, assembly cards and notes */
   const own = WHOLE ? [] : FURNITURE.filter(f => f.docs).flatMap(f => { const b = f.docs.book(); return [b.sheets[0], b.sheets[1], { name: 'Assembly', node: assemblyNode(f) }, b.sheets[2]]; });
-  return { sheets: WHOLE ? [rooms, doors, notes, tree, test] : [...own, tree, test] };   // a room's view: its own Documents, the house's stay with the house
+  return { sheets: WHOLE ? [rooms, tiles, doors, notes, tree, test] : [...own, tree, test] };   // a room's view: its own Documents, the house's stay with the house
 }
 /* the assembly cards of a room's furniture: one element, kept (core/sheet.js shows it in its tab) */
 function assemblyNode(f) {
@@ -384,6 +479,17 @@ function assemblyNode(f) {
     + '<p class="note">' + a.legend + '</p><div class="asm">' + a.cards + '</div>';
   return (f.assembly = box);
 }
+/* a layout in the panel: its fields and its count */
+function layoutPanel(A, changed) {
+  const { D, L, P, count } = A, cost = P.price ? count.area * (1 + TILES.reserve) * P.price : null, fmt = (x, d) => x.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d });
+  return { key: D.key, L, P, note: P.note || '', link: (P.links || [])[0] || null,
+    together: D.rooms.length > 1 ? D.rooms.map(roomName).join(', ') : '',
+    products: Object.entries(TILE_PRODUCTS).map(([k, p]) => ({ k, name: p.name })),
+    patterns: Object.entries(HOME.tiles.PATTERNS).map(([k, [name]]) => ({ k, name })), dirs: Object.entries(HOME.tiles.DIRS).map(([k, name]) => ({ k, name })),
+    changed: !!changed,                    // the viewer changed it: it may go back to the data
+    stats: [['Area', fmt(count.area, 2) + ' m²'], [`Tiles (+${Math.round(TILES.reserve * 100)}%)`, String(Math.ceil(count.tiles * (1 + TILES.reserve)))],
+      ['Whole / cut', count.full + ' / ' + count.cut], ['Small cuts', String(count.small)], ['Cost', cost === null ? '—' : fmt(cost, 0) + ' zł']] };
+}
 function documents() {
   if (SHEET) return SHEET.set(book());
   if (!ui.docs) ui.docs = { title: ui.title, subtitle: ui.subtitle, book: book(), ready: s => { SHEET = s; } };
@@ -392,7 +498,11 @@ function documents() {
 /* ================= TEST ================= */
 /* the whole house: the checks of the house (its tree, its model, the library); a room: its own (its furniture) */
 const ASKED_CHECK = { name: 'Every room asked for is a room of the house', about: 'The rooms named in the address (?room=…) are rooms of house.js.', items: ASKED.filter(id => !ROOM[id]) };
-const HOUSE_CHECKS = [ASKED_CHECK].concat(T.checks(), MODEL.checks(), LIB.checks());
+const TILE_CHECKS = [
+  { name: 'Floor tiles: every room tiled or set to none', about: 'A room takes its floor tiles from the node above that sets them (its floor), or sets its own (an origin: a layout of its own), or sets none (null: its own project lays its floor).', items: ROOMS.filter(r => !layoutOf(r) && (T.setting(r.node, 'tiles') || {}).value !== null).map(r => r.id) },
+  { name: 'Floor tiles: every layout\'s tile in the library', about: 'The product a layout sets is one of the library\'s tiles, with its texture.', items: MODEL.LAYOUTS.filter(D => !TILE_PRODUCTS[D.product] || !LIB.textures[TILE_PRODUCTS[D.product].texture]).map(D => D.key + ': ' + D.product) },
+  { name: 'Floor tiles: small cuts', about: 'To know, not a fault: the layouts with a cut tile shorter than the product\'s smallest cut (minCut), red in 3D while its layer is on.', items: Object.values(LAID).filter(A => A.count.small).map(A => `${A.D.key}: ${A.count.small}`), info: true }];
+const HOUSE_CHECKS = [ASKED_CHECK].concat(T.checks(), MODEL.checks(), LIB.checks(), TILE_CHECKS);
 const ROOM_CHECKS = FURNITURE.flatMap(f => f.made.checks().concat(f.docs ? f.docs.checks() : []).map(c => Object.assign(c, { name: (FURNITURE.length > 1 ? roomName(f.room) + ' · ' : '') + c.name })));
 const CHECKS = WHOLE ? HOUSE_CHECKS : [ASKED_CHECK, ...(ROOM_CHECKS.length ? ROOM_CHECKS
   : [{ name: 'No checks of its own', about: 'This room has nothing of its own to check yet; the house\'s checks are in the whole house\'s Documents.', items: [], info: true }])];
@@ -410,9 +520,10 @@ function onMode(m) {
 }
 
 V.start(); placeSun(); V.setCamera(cameras()[0]);
+Alpine.effect(() => { state.room; markRoom(); });
 onMode(state.mode);
 V.run();
-window.HOUSE_VIEW = { MODEL, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, FURNITURE, V, setMode: m => ui.pick(m), setLayer: (k, on) => ui.setLayer(k, on), state, planSvg, book,   // for the automated tests
+window.HOUSE_VIEW = { MODEL, LAID, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, FURNITURE, V, setMode: m => ui.pick(m), setLayer: (k, on) => ui.setLayer(k, on), state, planSvg, book,   // for the automated tests
   get hidden() { return [...HIDDEN]; }, pieces: PIECES.length, edges: V.EDGE_GROUPS.length };
 return {
   onMode, apply,
@@ -427,6 +538,26 @@ return {
   roomTag() {
     const r = ROOM[state.room], F = openFloor();
     return state.mode === '3d' && WHOLE && r && F && r.floor === F ? { name: roomName(r), href: linkTo([r.id]) } : null;
+  },
+  /* Finish: the rooms of every floor shown; the one picked opens its layout */
+  finish() {
+    const v = state.layouts;               // read, so the panel follows a change
+    return FLOORS.map(F => ({ id: F.id, name: F.name, rooms: ROOMS.filter(r => r.floor === F && SHOWN_ROOMS.has(r.id)).map(r => {
+      const D = layoutOf(r), A = D && LAID[D.key], picked = state.room === r.id;
+      const own = T.setting(r.node, 'tiles'), none = own && own.value === null;
+      return { id: r.id, name: roomName(r), picked, note: A ? A.P.name : none ? 'no tiles (the room lays its own floor)' : 'no tiles',
+        layout: picked && A ? layoutPanel(A, v[D.key]) : null };
+    }) })).filter(F => F.rooms.length);
+  },
+  setTiles(key, field, value) {
+    const D = LAYOUTS.find(l => l.key === key), v = state.layouts[key] ||= {};
+    if (field === 'reset') delete state.layouts[key];
+    else if (field === 'fit') { v.oa = v.ob = null; }
+    else if (field === 'product') Object.assign(v, { product: value, pattern: undefined, grout: undefined, oa: null, ob: null });
+    else if (field === 'pattern' || field === 'dir') Object.assign(v, { [field]: value, oa: null, ob: null });
+    else v[field] = field === 'grout' ? value : Math.round(+value);
+    layTiles(D); apply();
+    if (SHEET) SHEET.set(book());
   },
   /* below: the mode's actions */
   menus() {

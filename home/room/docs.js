@@ -1,8 +1,9 @@
+// @ts-check
 /* room/docs.js: a furnished room's Documents: the estimate, the cut list, the notes and the assembly cards, from the
    cabinets' model, the room's tree and its docs file (room/<kind>_<number>.docs.js), with the shared sheets of
    core/estimate.js. Knows the format docs (its placeholders: room/project.md), not the room. No browser but the cards' HTML.
    What the tree holds (a hinge, a leg, an appliance) is counted from it: {nodes:kind}. */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 
 /* {cabinets (HOME.cabinets), model (its build), tree (the groups' nodes), docs (the docs file), appliances, library}.
@@ -205,7 +206,7 @@ values = {
 function blockTotals() {
   const totals = {};
   for (const block of COST.blocks) {
-    const t = { m2: 0, edge: 0, cut: 0, qty: 0, length: 0, rows: [] };   // length: m of the longer side (what is bought by the metre)
+    const t = { m2: 0, edge: 0, cut: 0, qty: 0, length: 0, rows: /** @type {object[]} */ ([]) };   // length: m of the longer side (what is bought by the metre)
     (rowsOf[block.id] || []).forEach(row => {
       const { a, b, qty, edges } = row, m2 = (a * b * qty) / 1e6;
       t.length += (Math.max(a, b) * qty) / 1000;

@@ -1,9 +1,10 @@
+// @ts-check
 /* core/tree.js: the tree of nodes. A node is {id, name, type, offset: [x, y, h], size: [x, y, h], settings, refs, children};
    its type is only a name here; refs are the paths of the nodes it refers to (what for, its type says). A node's place is
    its parent's place plus its offset; its settings are the defaults of its branch. The tree says what belongs to what, not
    what lies inside what: a child may stand outside its parent (a sink over its carcass). Knows no project and nothing of
    what a node is. */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 const AXES = ['x', 'y', 'h'];
 const ID = /^[A-Za-z0-9_-]+$/;             // no spaces, no '/': an id is a step of a path

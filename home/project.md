@@ -12,6 +12,7 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, with everything tha
 | room/ | the room engine: it makes a room from what the house gives it and from the room's own data files; cabinets, products, tiles, Documents; the cabinet editor; the rooms' data, flat, `<kind>_<number>.<role>.js` |
 | core/ | shared code: the data loader, the tree, geometry, meshes, the 3D view, the 2D plan, the sheets, the screen; knows no project |
 | library/ | the outside world, as the shop and the maker give it: products, shops, materials, textures (data); and how each product is drawn (draw.js, code) |
+| jsconfig.json, globals.d.ts | the type check of the code (Code style), for the writer only |
 | archon/ | the archon.pl drawings and their analysis: the source the house is drawn from |
 | test.md | the LLM's own file: how to rebuild its automated tests |
 | report.md | what was done in each step, for the owner |
@@ -106,11 +107,11 @@ Each solid is then moved to its node: the offsets summed up the tree, and for a 
 1. **The borders of the open rooms**: the owner checks where the hall, the living room and the kitchen end (house.js, drawn in 2D).
 2. **The room engine** (room/): the room from the house; tiles (the house's floors too) and products from the library placed by the room's scene file; the bathroom stands in the house without its cabinet.
 3. **Cabinets and the rooms as data**, room by room, each compared with the prototype: the kitchen first, then the bathrooms' vanity, then the wardrobes and the bedroom's niche (their data rebuilt as carcasses).
-4. **The wardrobes** (now): the three walk-in wardrobes of the attic (wardrobe_3, wardrobe_4, wardrobe_8) and the niche of bedroom_6, moved from the prototype's solids (rooms/wardrobe/wardrobe.dat.js, written board by board) to cabinets files built by room/cabinets.js, as the kitchen: each room its cabinets, scene and docs files (the estimate, the cut list, the assembly cards, the notes). The format cabinets gets what they need (room/project.md): a module without a front (tag open: open shelves, a drawer box seen), drawers of board on ball runners, a depth per group, the shelves on one grid of the room (all shelves of a room level, fixed and adjustable), the materials and settings a file needs only for what it has.
-5. **Tiles**: the surfaces belong to the rooms; the product, the joint and the grid's origin are the floor's settings, which its rooms take unless they set their own.
-6. **The worktops' and end panels' lengths** as bought: the owner gives them, the library gets them (the editor shows ? for now).
+4. **The bathrooms** (next: bathroom_7, bathroom_5): as in the prototype: their tiles, products (WC, basin, shower, mirror, lamps) and the vanity as a cabinet from the data; with their Documents.
+5. **The worktops' and end panels' lengths** as bought: the owner gives them, the library gets them (the editor shows ? for now).
+6. **Types**: the typedefs grow with the code: whatever shape a change touches (the tree's nodes, the scene, the docs file, the library's products, the sheets) gets its typedef then.
 
-Done: Documents and the editor (the estimate, our own cut list, the assembly cards, Test of the Documents, the cabinet editor); every page on Alpine.js.
+Done: Documents and the editor (the estimate, our own cut list, the assembly cards, Test of the Documents, the cabinet editor); every page on Alpine.js; the wardrobes and the bedroom's niche as cabinets files, with their Documents (19 Nov); every code file type-checked (19 Nov); the floor tiles of the house, with the Finish tab (19 Nov).
 
 ## How we work
 
@@ -123,6 +124,7 @@ Done: Documents and the editor (the estimate, our own cut list, the assembly car
 
 - **MD files**: for a person, short and general: what each file is for and what it must keep. A project.md describes the files of its own folder and the formats of its data, field by field; no names of functions.
 - **Comments**: short and exact, only where the code does not say it; never repeating the code.
+- **Types in comments, checked** (JSDoc): every code file begins with `// @ts-check`; the shapes of the data (a format, a record of the model: a carcass, a board, an item) are typedefs in the file that makes them, and a value whose type is not plain gets its `@type`. The check is TypeScript's compiler, `tsc --noEmit -p home/jsconfig.json`, a tool of the writer only: the pages load the same plain JavaScript, nothing is built. jsconfig.json lists the files checked (strictNullChecks on); globals.d.ts declares only what comes from outside (HOME, three.js, Alpine.js, SheetJS) and is loaded by no page. The check passes clean before a change is handed over. Not checked: the pages' inline scripts and the data files (their loader and the tests check them).
 - Readable: consistent indentation, short functions, one idea per line, names that match the page.
 - **Computing apart from the browser**: a module computes without the browser (no DOM, no WebGL, nothing touched when its file loads); the browser only where nothing else can do it (drawing, the screen, loading the scripts). Tests run in Node first; the browser only for what only it can show.
 - No hidden rules: what is built follows from the data (types, settings), never from names, labels or sizes. No duplicated values or code: what two pages share lives in core.

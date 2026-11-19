@@ -1,7 +1,8 @@
+// @ts-check
 /* house/model.js: the house's data turned into solids, the rooms, a part of the house cut out for a room, the checks.
    No browser: index.html draws what it gives. Units mm in the house's axes (x along, y across, h up).
    Needs core/geometry.js and core/tree.js. */
-(function (HOME) {
+(/** @param {Home} HOME */ function (HOME) {
 'use strict';
 
 const G = HOME.geometry;
@@ -283,6 +284,21 @@ const ROOMS = FLOORS.flatMap(F => F.children.filter(n => n.area).map(node => {
   return { id: node.id, node, floor: F, rects: node.area.map(q => [q[0] + x, q[1] + x, q[2] + y, q[3] + y]) };
 }));
 const ROOM = byId(ROOMS);
+/* the floor tiles: one layout for each node that sets them (a floor, a room with its own grid), over the rooms that take
+   them from it; a room that sets them to null has none (its own project lays its floor) */
+const LAYOUTS = [];
+for (const R of ROOMS) {
+  const own = T.setting(R.node, 'tiles');
+  if (!own || own.value === null || own.from === HOUSE) continue;
+  const key = T.path(own.from), get = k => (T.setting(R.node, 'tiles.' + k) || {}).value;
+  let L = LAYOUTS.find(l => l.key === key);
+  if (!L) {
+    const [x, y] = T.place(own.from), o = get('origin'), dir = get('dir');   // the origin in the node's axes: here in the house's, along and across the tiles
+    const at = o ? [o[0] + x, o[1] + y] : null;
+    LAYOUTS.push(L = { key, node: own.from, floor: R.floor, rooms: [], product: get('product'), dir, pattern: get('pattern'), oa: at && at[dir === 'x' ? 0 : 1], ob: at && at[dir === 'x' ? 1 : 0] });
+  }
+  L.rooms.push(R);
+}
 const areaOf = rects => rects.reduce((s, q) => s + rectArea(q), 0) / 1e6;   // m²
 const planOf = S => { const ys = S.poly.map(p => p[0]); return [S.x1, S.x2, Math.min(...ys), Math.max(...ys)]; };
 const overlap = (a1, a2, b1, b2) => Math.min(a2, b2) - Math.max(a1, b1);
@@ -340,9 +356,9 @@ function sideOf(c, S, rects, L) {
   if (h2 <= L + TOL) return '-h';
   if (h1 >= L + TOL && c.layers.some(l => OVER.includes(l))) return '+h';
   let best = null;
-  for (const r of rects) for (const [side, d, along] of [
+  for (const r of rects) for (const [side, d, along] of /** @type {[string, number, number][]} */ ([
     ['+x', b[0] - r[1], overlap(b[2], b[3], r[2], r[3])], ['-x', r[0] - b[1], overlap(b[2], b[3], r[2], r[3])],
-    ['+y', b[2] - r[3], overlap(b[0], b[1], r[0], r[1])], ['-y', r[2] - b[3], overlap(b[0], b[1], r[0], r[1])]]) {
+    ['+y', b[2] - r[3], overlap(b[0], b[1], r[0], r[1])], ['-y', r[2] - b[3], overlap(b[0], b[1], r[0], r[1])]])) {
     if (d < -TOL || along <= TOL) continue;
     if (!best || along > best.along + TOL || (Math.abs(along - best.along) <= TOL && d < best.d)) best = { side, d, along };
   }
@@ -444,7 +460,7 @@ function checks() {
       items: ROOMS.filter(r => r.node.archonArea).map(r => `${r.id}: ${areaOf(r.rects).toFixed(2)} · archon ${r.node.archonArea.toFixed(2)}`) }];
 }
 
-return { T, HOUSE, SITE, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOf, SIDE, OPENINGS, ELEMENTS, STAIR, FLOORS, ROOMS, ROOM, BORDERS, areaOf,
+return { T, HOUSE, SITE, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOf, SIDE, OPENINGS, ELEMENTS, STAIR, FLOORS, ROOMS, ROOM, LAYOUTS, BORDERS, areaOf,
   CELLS, FIXTURES, DOORS, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS, voidsAt, FOOTPRINT, part, checks };
 }
 
