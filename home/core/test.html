@@ -24,8 +24,6 @@
     <template x-part="corner"></template>
   </div>
   <template x-part="panel">
-    <section x-show="tab === 'layers'" x-cloak><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv" x-text="cut.text"></span>
-      <input id="cut" type="range" :min="cut.min" :max="cut.max" :step="cut.step" :value="cut.value" @input="state.cut = +$event.target.value; onLayers()"></div></section>
     <template x-part="layers"></template>
   </template>
 </div>
@@ -42,16 +40,15 @@
 <script src="library.js"></script>
 <script>
 /* Every module of core on a small tree of boxes (test.tree.js): offsets summed, settings from the cascade, doors and
-   drawers moving, the cut, the 2D plan, a sheet with formulas and its XLSX, the checks. Knows nothing of the house.
+   drawers moving, the 2D plan, a sheet with formulas and its XLSX, the checks. Knows nothing of the house.
    The screen is the HTML above, of core/ui.js's pieces (Alpine.js); build(ui) makes the scene. */
 'use strict';
 HOME.ui.page('coreTest', {
-  key: 'home-core-test', fresh: () => ({ mode: '3d', tab: null, layers: {}, cut: null, zoom: 1 }), valid: s => ['3d', '2d', 'documents', 'test'].includes(s.mode) && s.layers,
+  key: 'home-core-test', fresh: () => ({ mode: '3d', tab: null, layers: {}, zoom: 1 }), valid: s => ['3d', '2d', 'documents', 'test'].includes(s.mode) && s.layers,
   modes: ['3d', '2d', 'documents', 'test'], tabs: { '3d': ['layers'] },
   async load() { P = await build(this); },
   onMode: m => P.onMode(m), onLayers: () => P.apply(), menus: () => P.menus(),
   get layerBlocks() { return this.ready ? P.layerBlocks() : []; },
-  get cut() { return this.ready ? P.cut() : {}; }
 });
 let P = null;                              // the page built: what its screen asks of it
 /* builds the page into ui (the page's Alpine part) */
@@ -90,16 +87,13 @@ function motion(n) {
   return { at: [corner[0], corner[1], 0], axis: [0, 0, 1], angle: Math.sign(along[0] * out[1] - along[1] * out[0]) * open.door };
 }
 for (const c of CELLS.filter(c => MOVING[c.node.type])) V.mover(Object.assign({ pieces: piecesOf([c]) }, motion(c.node)));
-V.addLight(); V.addCaps();
+V.addLight();
 
-/* ================= STATE, LAYERS, CUT ================= */
+/* ================= STATE, LAYERS ================= */
 const LAYER = HOME.ui.layerTree(VIEW.layers);
 const { layerOn, shown } = HOME.ui.layerSwitch(LAYER, () => state.layers);
-const CUT = VIEW.cut, cutTop = SIZE[2];
-const cutHeight = () => (state.cut === null || state.cut >= cutTop || V.walk.on ? null : state.cut);
 function apply() {
-  const h = cutHeight();
-  V.setCut(h); V.showPieces(shown, layerOn); V.buildCaps(h, STILL, shown); V.redraw();
+  V.showPieces(shown, layerOn); V.redraw();
 }
 
 /* ================= 3D: cameras, sun, clicks, walk ================= */
@@ -158,10 +152,9 @@ window.TEST_VIEW = { T, CELLS, CHECKS, V, setMode: m => ui.pick(m), book, planSv
 return {
   onMode, apply,
   layerBlocks: () => [{ name: 'Layers', id: 'layers', tab: 'layers', items: HOME.ui.layerList(LAYER, Object.keys(LAYER), state.layers, layerOn) }],
-  cut: () => ({ min: CUT.from, max: cutTop, step: CUT.step, value: state.cut ?? cutTop, text: cutHeight() === null ? 'off' : state.cut + ' mm' }),
   menus() {
     const walk = { name: 'Walk', cls: 'walk', pressed: ui.walking, go: () => (V.walk.on ? V.stopWalk() : V.startWalk()) };
-    return { '3d': [VIEW.cameras.map(c => ({ name: c.name, go: () => V.flyTo(c) })), [walk]], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, 'test.xlsx')], test: [] };
+    return { '3d': [VIEW.cameras.map(c => ({ name: c.name, go: () => V.flyTo(c) })), [walk, HOME.ui.openAll(ui, V)]], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, 'test.xlsx')], test: [] };
   }
 };
 }

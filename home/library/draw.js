@@ -110,12 +110,12 @@ function granite(D) {
 function tap(D, { r, x: sinkX, y: tapY, top: t }) {
   const { cylinder, at } = D, a = at(r, 'sink');
   cylinder(a, 18, 3, 'steelPolished', sinkX + 250, tapY, t + 1.5, null, 24);           // dispenser plate
-  cylinder(a, 28, 8, 'handle', sinkX, tapY, t + 4, null, 32);                  // tap
-  cylinder(a, 20, 172, 'handle', sinkX, tapY, t + 94, null, 32);
-  cylinder(a, 21, 6, 'handle', sinkX, tapY, t + 183, null, 32);
-  cylinder(a, 11, 220, 'handle', sinkX, tapY + 110, t + 166, 'y', 20);
-  cylinder(a, 13, 26, 'handle', sinkX, tapY + 214, t + 152, null, 20);
-  cylinder(a, 7, 70, 'handle', sinkX + 55, tapY, t + 140, 'x', 16);
+  cylinder(a, 28, 8, D.metal, sinkX, tapY, t + 4, null, 32);                  // tap
+  cylinder(a, 20, 172, D.metal, sinkX, tapY, t + 94, null, 32);
+  cylinder(a, 21, 6, D.metal, sinkX, tapY, t + 183, null, 32);
+  cylinder(a, 11, 220, D.metal, sinkX, tapY + 110, t + 166, 'y', 20);
+  cylinder(a, 13, 26, D.metal, sinkX, tapY + 214, t + 152, null, 20);
+  cylinder(a, 7, 70, D.metal, sinkX + 55, tapY, t + 140, 'x', 16);
 }
 /* a space-saving trap: a short drop, a flat body against the back, the outlet into the wall. place: {r, x, from (the bottom
    of the bowl), drain (y of the drain), top (of the body), outlet (h of the wall outlet), back (y of the carcass back), wall (y of
@@ -239,7 +239,7 @@ function pendant(D, { a, r, x, y, bottom: h, ceiling: CEILING }) {
   detail(a, new THREE.SphereGeometry(150, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), 'shade', x, y, h + 60);
   const inside = detail(a, new THREE.SphereGeometry(148, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), 'shadeInside', x, y, h + 60, false);
   inside.material = D.material('shadeInside').clone(); inside.material.side = THREE.BackSide;
-  detail(a, new THREE.TorusGeometry(150, 4, 8, 48), 'handle', x, y, h + 60).rotation.x = Math.PI / 2;
+  detail(a, new THREE.TorusGeometry(150, 4, 8, 48), D.metal, x, y, h + 60).rotation.x = Math.PI / 2;
   cylinder(a, 14, 40, 'gasket', x, y, h + 180, null, 16);
   detail(a, new THREE.SphereGeometry(32, 20, 12), 'bulb', x, y, h + 135, false);
   lamp(new THREE.PointLight(0xffd9a8, 1.2, 0.9, 2), point(r, x, y, h + 135), null, false);
@@ -300,8 +300,8 @@ function cupShape(length) {
 function handle(D, H, { r, m, size, turn, info }) {
   const { box, detail, at } = D, L = H.barLength, x = size[0] / 2, h = size[2] / 2, y = 4;
   const cup = D.pivot(at(r, 'handles', m, ['cup']), x, 0, h, turn === 'left' ? Math.PI / 2 : turn === 'right' ? -Math.PI / 2 : 0);
-  for (const g of cupShape(H.cupLength)) detail(cup, g, 'handle', 0, 0, 0);
-  const I = Object.assign({ also: ['bar'], part: D.part() }, info), bar = gb => box(m.cells, r, gb, 'handle', 'handles', I);
+  for (const g of cupShape(H.cupLength)) detail(cup, g, D.metal, 0, 0, 0);
+  const I = Object.assign({ also: ['bar'], part: D.part() }, info), bar = gb => box(m.cells, r, gb, D.metal, 'handles', I);
   if (!turn) {
     bar([x - L / 2, x + L / 2, y + 20, y + 30, h - 6, h + 6]); bar([x - L / 2 + 8, x - L / 2 + 18, y, y + 20, h - 5, h + 5]); bar([x + L / 2 - 18, x + L / 2 - 8, y, y + 20, h - 5, h + 5]);
   } else {
@@ -357,7 +357,7 @@ function basin(D, A, { r, x, y, top }) {
 }
 /* a basin tap on the basin's shelf: its body, the spout over the bowl, the lever. place: {r, x, y (the tap's axis), top (the shelf)} */
 function basinTap(D, A, { r, x, y, top }) {
-  const { cylinder, at } = D, a = at(r, 'basin'), m = A.metal;
+  const { cylinder, at } = D, a = at(r, 'basin'), m = D.metal;
   cylinder(a, 25, 6, m, x, y, top + 3, null, 32);
   cylinder(a, 18, A.height - 30, m, x, y, top + (A.height - 30) / 2, null, 32);
   cylinder(a, 9, A.spout, m, x, y + A.spout / 2, top + A.height - 40, 'y', 20);
@@ -380,7 +380,7 @@ function wallCabinet(D, A, { r, w, d, h, h0 }) {
 /* a walk-in screen across the shower: a fixed pane at the wall's end (x = w − fixed … w) and a door on it, turning about its
    inner edge; the profiles in the fittings' metal */
 function showerScreen(D, A, { r, w, d, h, h0, f }) {
-  const metal = f.metal || 'brass', I = fixtureInfo(D, A), t = 8, y0 = d / 2 - t / 2, y1 = d / 2 + t / 2, fx = w - A.fixed;
+  const metal = D.metal, I = fixtureInfo(D, A), t = 8, y0 = d / 2 - t / 2, y1 = d / 2 + t / 2, fx = w - A.fixed;
   D.box(D.STATIC, r, [fx, w, y0, y1, h0, h0 + h], 'glass', 'sanitary', I);
   D.box(D.STATIC, r, [w - 12, w, 0, d, h0, h0 + h], metal, 'sanitary', fixtureInfo(D, A));      // the wall profile
   D.box(D.STATIC, r, [fx, w, 0, d, h0, h0 + 12], metal, 'sanitary', fixtureInfo(D, A));       // the bottom profile
@@ -422,7 +422,7 @@ function loft(sections) {
   return g;
 }
 function shaped(D, A, { r, w, d, h, h0, f }) {
-  const metal = f.metal || A.metal || 'brass', key = m => m === 'metal' ? metal : m === 'ceramic' ? A.material || 'ceramicWhite' : m;
+  const metal = D.metal, key = m => m === 'metal' ? metal : m === 'ceramic' ? A.material || 'ceramicWhite' : m;
   const up = (u, v, z) => new THREE.Vector3(u, h0 + z, v);                 // the frame's three axes: x along, y up, z out of the wall
   /* a door (its parts mv): turning about its hinge at door.at [u, v], door.angle degrees, toward door.sign */
   const door = A.door && Object.assign(D.mover(r, 'door', A.door.at[0], A.door.at[1], 0), { sign: A.door.sign || 1, label: A.name + ' – door', travel: A.door.angle });

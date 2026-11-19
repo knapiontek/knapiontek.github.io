@@ -7,17 +7,17 @@ HOME.data({
  "fixtures": {
   "mirror1": {"product": "mirror-led-600x800", "front": "W", "offset": [12, 300, 1220]},
   "mirror2": {"product": "mirror-led-600x800", "front": "W", "offset": [12, 1100, 1220]},
-  "radiator": {"product": "mexen-hades-1200x400-gold", "front": "S", "offset": [10, 12, 820], "metal": "nickel"},
-  "corner": {"product": "shower-corner-1000x1000", "front": "W", "offset": [1685, 12, 0], "metal": "nickel"},
+  "radiator": {"product": "mexen-hades-1200x400-chrome", "front": "S", "offset": [10, 12, 820]},
+  "corner": {"product": "shower-corner-1000x1000", "front": "W", "offset": [1685, 12, 0]},
   "drain": {"product": "linear-drain-vogi-duo-880", "front": "E", "offset": [2658, 60, 0]},
-  "shower": {"product": "shower-set-rain-thermostat", "front": "S", "offset": [1980, 12, 0], "metal": "nickel"},
-  "bath": {"product": "castorama-bath-freestanding-170x75", "front": "N", "offset": [390, 2030, 0], "metal": "nickel"},
+  "shower": {"product": "shower-set-rain-thermostat", "front": "S", "offset": [1980, 12, 0]},
+  "bath": {"product": "castorama-bath-freestanding-170x75", "front": "N", "offset": [390, 2030, 0]},
   "bathTap": {"product": "hansgrohe-tecturis-e-73445000", "front": "N", "offset": [250, 2580, 0]},
   "riser": {"product": "riser-pvc-160", "front": "E", "offset": [2540, 2820, 0], "height": 1200},
   "outlet": {"product": "pvc-pipe-90", "front": "E", "offset": [2535, 1550, 185], "length": 1350},
-  "hatch": {"product": "inspection-hatch-200", "front": "E", "offset": [2462, 2710, 250], "metal": "nickel"},
-  "wcFrame": {"product": "wc-frame-geberit-duofix", "front": "E", "offset": [2460, 1300, 0], "depth": 200, "metal": "nickel"},
-  "wc": {"product": "wc-bowl-wall-hung-360x530", "front": "E", "offset": [1928, 1370, 0], "metal": "nickel"}
+  "hatch": {"product": "inspection-hatch-200", "front": "E", "offset": [2462, 2710, 250]},
+  "wcFrame": {"product": "wc-frame-geberit-duofix", "front": "E", "offset": [2460, 1300, 0], "depth": 200},
+  "wc": {"product": "wc-bowl-wall-hung-360x530", "front": "E", "offset": [1928, 1370, 0]}
  },
  "builtIns": [
   {"name": "WC casing over the frame and the riser", "box": [2480, 2730, 1250, 3010, 0, 1200], "material": "wall"},
@@ -31,6 +31,7 @@ HOME.data({
    "floor": {"product": "paradyz-authority-grey", "format": [598, 598], "dir": "x", "pattern": "grid"}}
  },
  "room": {"wallColor": "#eeece7"},
+ "finish": {"metal": "nickel"},
  "hardware": {
   "open": {"angle": {"door": 110}, "drawer": 330}
  },

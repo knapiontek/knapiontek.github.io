@@ -65,7 +65,7 @@ HOME.data({
     },
     {
      "id": "edging",
-     "product": "edge-banding-h1180-pur",
+     "product": "edge-banding-h1180-22-pur",
      "use": "the edges seen of the carcasses, the fronts all round, the top all round + {v:edgeAllowance|%}",
      "qty": "=({carcass.edge}+{fronts.edge}+{worktops.edge}+{drawerBox.edge})*(1+{v:edgeAllowance})"
     }
@@ -142,7 +142,7 @@ HOME.data({
    "items": [
     {
      "id": "radiator",
-     "product": "mexen-hades-1200x400-gold",
+     "product": "mexen-hades-1200x400-chrome",
      "use": "by the door; its colour chrome or inox to choose, as the fittings",
      "qty": "=1"
     },

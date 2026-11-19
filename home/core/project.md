@@ -12,7 +12,7 @@ Shared code for every page. It knows no project: a page hands it the data, and c
 | tree.js | the tree of nodes: a node by its path and the path of a node; a node's place (the sum of the offsets) and box; a setting from the cascade with the node it comes from; the nodes a node refers to; a walk over all nodes; the checks of the tree |
 | geometry.js | exact solids: convex polygons and prisms; clip, subtract, intersect, split, section, volume, overlaps; rectangles; a stable random number (hash01) |
 | surface.js | the surfaces of solids, ready to draw: welded points, the faces of the solids, the visible pieces (a face covered by another loses that part), finishes on the faces of a host (a room's tiles on the house's walls) |
-| scene.js | the 3D view: renderer, materials, the pieces as triangles batched per material, edges, ghosts (hidden, still casting their shadow), moving parts (doors and drawers), section caps, light, the sun and the clouds (they weaken the sun, strengthen the sky and soften the shadows), camera and flights, navigation, the walk, the loop that draws only after a change |
+| scene.js | the 3D view: renderer, materials, the pieces as triangles batched per material, edges, ghosts (hidden, still casting their shadow), moving parts (doors and drawers), light, the sun and the clouds (they weaken the sun, strengthen the sky and soften the shadows), camera and flights, navigation, the walk, the loop that draws only after a change |
 | plan2d.js | the 2D plan from the same solids: what the cut meets is filled, what lies under it is seen from above, what is over it dashed; labels of openings and rooms, borders of rooms with no wall between them (dash-dot), dimensions, sheets side by side |
 | sheet.js | the spreadsheet: sheets in tabs, inputs the viewer may change, live formulas, a sheet as a tree (rows with levels, + / − to open and close), the XLSX with the same formulas and the outline; the Documents screen, a piece of the screen (its table built once per sheet and changed in place: a field typed in is never redrawn) |
 | estimate.js | the sheets every room's Documents share: the estimate (items by category, quantity × unit price, sums, the total) and the cut list (the boards to order with their edges, m², banding and cuts) |
@@ -41,7 +41,7 @@ solids ─► plan2d.js ─► 2D        rows ─► sheet.js ─► Documents, 
 - **Built once, then only looked at.** Meshes are built when the page opens; a layer shows or hides what is built; a moving part is built once, closed, and the animation only moves it.
 - **Edges are a layer**: a seam (one plane, one part) has no line, a corner always has one.
 - The scene is in metres with y up; everything handed in and given back is in mm in the house's axes.
-- A view's choices (the mode, the tab, the layers, the cut, the zoom) are kept in the browser; the sun, light or dark and the panel are one choice for every page.
+- A view's choices (the mode, the tab, the layers, the zoom) are kept in the browser; the sun, light or dark and the panel are one choice for every page.
 
 ## The node (format `tree`)
 

@@ -5,6 +5,7 @@ HOME.data({
   "1": {"front": "W", "offset": [0, 1120, 0], "size": [831, 3010, 2046]}
  },
  "room": {"wallColor": "#f2f1ee"},
+ "finish": {"metal": "nickel"},
  "hardware": {
   "open": {"angle": {"door": 110}, "drawer": 300},
   "leg": {"fromSide": 50, "fromBack": 62, "fromFront": 95}

@@ -52,9 +52,9 @@ HOME.data({"format": "materials", "version": 1, "materials": {
  "tube": {"color":"#f3f3f0","roughness":0.45},
  "bulb": {"color":"#e9e5dc","roughness":0.4,"emissive":"#000000"},
  "led": {"color":"#e9e5dc","roughness":0.4,"emissive":"#000000"},
- "brass": {"color":"#c9a063","roughness":0.32,"metalness":0.7,"reflect":1.4},
- "nickel": {"color":"#c4c4c0","roughness":0.34,"metalness":0.55,"reflect":1.4},
- "blackHandle": {"color":"#222326","roughness":0.5,"metalness":0.3,"reflect":1.4},
+ "brass": {"finish":"metal","name":"Gold (brass)","color":"#c9a063","roughness":0.32,"metalness":0.7,"reflect":1.4},
+ "nickel": {"finish":"metal","name":"Silver (chrome, nickel)","color":"#c4c4c0","roughness":0.34,"metalness":0.55,"reflect":1.4},
+ "black": {"finish":"metal","name":"Black","color":"#222326","roughness":0.5,"metalness":0.3,"reflect":1.4},
  "markerHinge": {"color":"#f26b1d","emissive":"#f26b1d","glow":0.35,"roughness":0.8},
  "markerShelfPin": {"color":"#22b35e","emissive":"#22b35e","glow":0.35,"roughness":0.8},
  "markerRunner": {"color":"#2f8fe0","emissive":"#2f8fe0","glow":0.35,"roughness":0.8}

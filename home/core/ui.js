@@ -37,6 +37,10 @@ const TAB_NAMES = { view: 'View', layers: 'Layers', finish: 'Finish' };
 /* checks: [{name, items, info}]: OK when nothing is listed; info: what it lists is to know, not to correct */
 const chip = c => (c.info ? ['info', 'i'] : c.items.length ? ['warn', String(c.items.length)] : ['ok', 'OK']);
 /* a state kept in the browser and reactive: every change is saved */
+/* the menu's one button for the moving parts: Open opens them all, then it is Close */
+function openAll(ui, V) {
+  return { name: ui.opened ? 'Close' : 'Open', cls: 'open', pressed: ui.opened, go: () => { ui.opened = !ui.opened; V.toggleAll(ui.opened); } };
+}
 function kept(key, fresh, valid) {
   const s = store(key, fresh, valid), state = Alpine.reactive(s.state);
   Alpine.effect(() => { JSON.stringify(state); s.save(); });
@@ -51,7 +55,7 @@ function screen(spec) {
   for (const k of ['key', 'fresh', 'valid', 'modes', 'tabs']) delete own[k];
   const part = {
     ready: false, loading: 'Loading…', title: '', subtitle: '', nav: { links: [], groups: [] }, navOpen: null, modes,
-    float: null, sun: null, docs: null, checks: [], plan: { svg: '', note: '' }, walking: false,
+    float: null, sun: null, docs: null, checks: [], plan: { svg: '', note: '' }, walking: false, opened: false,
     state: key ? kept(key, fresh, valid) : { tab: null, zoom: 1, layers: {} },
     get mode() { return this.state.mode ?? null; },
     get tabs() { return tabs[this.mode] || []; },
@@ -300,6 +304,6 @@ function autoFit(table, box, cols) {
   return fit;
 }
 
-HOME.ui = { LOCALE, MODES, TAB_NAMES, PARTS, $, fmt, byId, el, esc, option, store, page, chip, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
+HOME.ui = { LOCALE, MODES, TAB_NAMES, PARTS, $, fmt, byId, el, esc, option, store, page, openAll, chip, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
   setColumns, autoFit };
 })(window.HOME = window.HOME || {});

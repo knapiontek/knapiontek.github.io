@@ -144,3 +144,12 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 - The whole house: 1459 meshes, 1744 draw calls (2490 / 2775 before); Handles, Hardware, Installations still hide their parts.
 - The 2D plans of the kitchen and both bathrooms: carcasses one rectangle each, the worktop one figure with the sink's opening, no strips.
 - Regressions: the kitchen's model the same, its cells (472 / 346) and faces (205) the same; wardrobe_3, _4, _8 and bedroom_6 differ only by the white board's new price; the house the same; t_tiles clean; tsc clean; the cabinet editor draws the kitchen and bathroom_5.
+
+## Finish, Open, the cut removed (19 Nov, night)
+
+- Every view (the house, kitchen_6, both bathrooms, the three wardrobes, bedroom_6): no errors, every check passes.
+- bathroom_7 with nickel and H1181: the estimate lists H1181, its 2 × 22 banding in H1181, the chrome tap 73010000 and the chrome radiator; the picture shows the chrome tap and the tabak oak. With black and white melamine: Test reports the tap (no black one in its family) and the H1199 banding.
+- bathroom_5 in gold with H1346: the radiator, taps, the bath's floor tap, the shower's profiles gold; the top 18 (was 19): no fault.
+- kitchen_6 in black: black handles and tap. The whole house, bathroom_7 picked, nickel: its panel shows; Open opens all 113 moving parts, then Close.
+- The core's test page without the cut: its one fault on purpose; Open opens its 3.
+- Regressions: the models of kitchen_6, the wardrobes and bedroom_6 the same; the house the same; the kitchen's cells (the handles' material now brass, the old handle) and faces the same; t_tiles clean; tsc clean; the cabinet editor draws the kitchen and both bathrooms.

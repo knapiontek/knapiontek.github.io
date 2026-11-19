@@ -39,6 +39,7 @@ All version 1.
 | shop | a key of shops.js |
 | links | [{name, url}]: the maker's documents first, then the shops |
 | note | a remark on buying it |
+| family, metal, code | the same thing in other metals or decors: products of one family differ by metal (the colour it is sold in: a material with finish `metal`) or code (a decor); a room's Finish takes the family's one in its metal and its boards' decors |
 | draw | which drawing of draw.js draws it (oven, microwave, fridgeFreezer, dishwasher, hob, hood, sink, coffeeMachine, basin, basinTap, mirror, wallCabinet, showerScreen, linearDrain, shaped); without it, nothing is drawn. shaped: by the product's shape |
 | shape | the parts of a product as drawn, in its own axes (u along its width, v out of the wall, h up from its bottom): box {b}, cyl {at, ax, r [top, bottom], h, s}, tube {p, r, s}, loft {M (its rows u, v, h: the axes and the place), sec (superellipse sections)}; m: a material, metal (the fittings' finish) or ceramic (the product's); l: sanitary or installations; fit: u or h, a part as long as the fixture's length or height in the scene (a pipe); mv: a part of its door (the product's door: {at [u, v] its hinge, angle in degrees, sign}). From the prototype's bathrooms (work/proto_shapes.js): the radiator, the shower set, the WC bowl, the WC frame with its plate, the riser, the hatch; the attic's bath, its floor tap, the corner shower |
 
@@ -49,7 +50,7 @@ and, by group:
 | appliances | body: the overall size (an oven or a microwave without its fascia, a fridge or a dishwasher with its doors, a sink's outline on the worktop); fascia: the front panel of an oven or a microwave, bottom: where it starts from the body's bottom; door: hinge (the edge it turns on), height; doors: a fridge's and a freezer's doors from the appliance's bottom, doorDepth; controlPanelHeight, controlColumnWidth: the part of a fascia that does not open; baseSetback: how far behind the front the base starts; bowl, rim, wall: a sink's; glass: a hob's; chimney: a hood's; source: where the sizes come from ("assumed": still to check) |
 | boards | code and decor (the maker's), thickness, length and width (a sheet as it is bought; missing where not known: the editor shows ?), color, core (the colour of a bare edge), coreSurface (what a bare edge shows: `chipboard`, its chips; `fibre`, an even fibreboard), lacquered, frameWidth (a shaker front's frame), depth (worktops, end panels), factoryEdges, twoSided, texture (a key of textures/). What is sold by the metre (a PVC plinth) is a board too, with unit m and no sheet size |
 | hardware | as drawn: a handle's length; a leg's radius, footRadius, footHeight; a hinge's cupDepth; a drawer's runnerWidth, sideThickness, sideFromCarcass, fromBack, fromFront; a grille's width, height |
-| sanitary | as drawn: body (the overall size), and by kind: a basin's wall, shelf; a tap's height, spout, metal; a screen's fixed panel and door |
+| sanitary | as drawn: body (the overall size), and by kind: a basin's wall, shelf; a tap's height, spout; a screen's fixed panel and door |
 | tiles | look, finish; texture; len × wid of one tile, joint; minCut: the smallest acceptable cut piece [along, across]; pattern: the maker's default (grid, half, third, quarter, random); formats: the sizes the maker makes |
 
 Sizes in mm.
@@ -64,6 +65,7 @@ Sizes in mm.
 | reflect | the strength of the sky's reflection |
 | clearcoat, clearcoatRoughness | a lacquer over the colour |
 | emissive, glow | a light |
+| finish, name | `metal`: one of the metals a room's Finish offers, by its name |
 | texture, grass, slabs, wood, image | one generated surface at most: plaster grain {strength, grain, tile}; grass {tile}; paving {size, joint}; boards cut from a decor {decor, board, vertical}; a decor photo {key, turn} |
 | plan | the fill of its section in 2D: a colour, or hatch [ground, line]; without it, color |
 

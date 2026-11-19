@@ -7,13 +7,13 @@ HOME.data({
   "3": {"front": "S", "offset": [3070, 342, 0], "size": [1736, 914, 908]}
  },
  "room": {"wallColor": "#f2f1ee"},
+ "finish": {"metal": "brass"},
  "installation": {
   "sink": {"tapFromBack": 45, "trapTop": 575, "wallOutlet": 470},
   "hood": {"bottom": 1500}
  },
  "hardware": {
   "handle": {"axis": 28, "barLength": 160, "sideHeight": 260},
-  "handles": {"options": ["brass", "nickel", "blackHandle"], "default": "brass"},
   "open": {"angle": {"door": 110, "fridge": 95, "dishwasher": 84, "oven": 88, "microwave": 100}, "drawer": 440, "doorStop": {"K21": 90}},
   "leg": {"fromSide": 45, "fromBack": 45, "fromFront": 100},
   "bins": {"count": 3, "height": 235},

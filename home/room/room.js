@@ -23,6 +23,7 @@ const facesAlongX = front => front === 'E' || front === 'W';   // its fronts fac
 /* room: {offset [x, y, h] of its origin in the house, size}; files: {cabinets, scene}; library: {products: group -> products, materials} */
 function prepare(room, files, library) {
   const P = library.products, cabinets = files.cabinets, scene = files.scene;
+  if (!scene.finish || !scene.finish.metal) throw new Error('scene: no finish.metal');
   const project = C().withLibrary(cabinets, P.boards), appliances = C().appliances(project, Object.assign({}, P.appliances, P.sanitary));   // a basin and its tap are the sanitary group's
   const model = C().build(project, appliances), O = room.offset;
   /* a group: its box in the room (scene) with its back on the wall line; y = 0 at the carcass backs, the wall at y = wall */
@@ -54,7 +55,7 @@ function prepare(room, files, library) {
   const has = key => H[key] && product(H[key]), leg = has('leg'), grille = has('plinthGrille'), drawer = has('drawer');   // what the file has
   const HW = {
     handle: has('handle') ? Object.assign({ cupLength: product(H.handle).length }, L.handle) : null,
-    handles: L.handles, open: L.open, bins: L.bins,
+    open: L.open, bins: L.bins,
     leg: leg ? Object.assign({ radius: leg.radius, footRadius: leg.footRadius, footHeight: leg.footHeight }, L.leg) : null,
     hinge: has('hinge') ? { cupDepth: product(H.hinge).cupDepth } : null,
     drawer: drawer ? { runnerWidth: drawer.runnerWidth, sideThickness: drawer.sideThickness, sideFromCarcass: drawer.sideFromCarcass, fromBack: drawer.fromBack, fromFront: drawer.fromFront } : null,
@@ -370,7 +371,7 @@ function build(V, prepared, opts = {}) {
     return Object.assign({}, a, { frame: g, pivot: true });
   }
   const D = { V, box, at, detail, cylinder, display, mover, linkTo, envelope, openFront, openTop, profile, part, lamp, point, pivot, STATIC, CEILING,
-    frame: r => PLACE[r], material: key => V.material(key), has: key => key in MATERIALS };
+    frame: r => PLACE[r], material: key => V.material(key), has: key => key in MATERIALS, metal: scene.finish.metal };
 
   /* the cabinets, with their products */
   const drawn = C().draw(D, model, appliances, HW, scene.installation);

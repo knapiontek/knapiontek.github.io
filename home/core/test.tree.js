@@ -20,7 +20,6 @@ HOME.data({"format": "tree", "version": 1,
     {"name": "Above", "eye": [2000, 1500, 9000], "target": [2000, 1501, 0]}
    ],
    "walk": {"eye": 1600, "radius": 220, "step": 360, "headroom": 100, "speed": 1400, "turn": 90, "look": 50, "run": 2.2, "start": {"x": 2000, "y": 700, "heading": 90}},
-   "cut": {"from": 100, "step": 50},
    "plan": 800
   }
  },

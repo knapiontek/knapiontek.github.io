@@ -1,11 +1,11 @@
 // @ts-check
-/* core/scene.js: renderer, materials, meshes and edges of pieces, moving parts, section caps, light, camera, navigation,
+/* core/scene.js: renderer, materials, meshes and edges of pieces, moving parts, light, camera, navigation,
    walk, loop. Knows no project: the page hands it a material library, textures, the light and the edges.
    The model is built in mm (x along, y across, h up) and turned into the scene's metres with y up.
    Needs core/geometry.js, core/surface.js, THREE and OrbitControls. */
 (/** @param {Home} HOME */ function (HOME) {
 'use strict';
-const { DEG, INF, hRange, cutBy, sectionAt, edgesOf } = HOME.geometry;
+const { DEG, hRange, edgesOf } = HOME.geometry;
 const { sub3, dot3, cross3, weld } = HOME.surface;
 
 /* opts: {canvas, stage, materials (key -> {color, roughness, ...}), textures (key -> {faces: [image], size: [u, v] mm}),
@@ -45,7 +45,6 @@ function create(opts) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.localClippingEnabled = true;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;   // its shadows take a radius: the clouds soften them
   const scene = new THREE.Scene();
@@ -55,7 +54,6 @@ function create(opts) {
 
   const root = new THREE.Group(); root.rotation.x = -Math.PI / 2; root.scale.setScalar(MM); scene.add(root);
   const toWorld = (x, y, h) => new THREE.Vector3(x * MM, h * MM, -y * MM);
-  const CUT = new THREE.Plane(new THREE.Vector3(0, -1, 0), INF), CLIP = [CUT];
 
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
@@ -132,7 +130,7 @@ function create(opts) {
   function material(key) {
     if (MATERIALS[key]) return MATERIALS[key];
     const def = MATERIAL_LIB[key];
-    const o = { color: lin(def.color || '#ffffff'), roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1, clippingPlanes: CLIP, clipShadows: true,
+    const o = { color: lin(def.color || '#ffffff'), roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1,
       polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 };   // the faces a little back in depth, by the depth buffer's own steps at any distance: an edge on them shows, one behind them does not
     if (def.emissive) Object.assign(o, { emissive: lin(def.emissive), emissiveIntensity: def.glow ?? 1 });
     const m = def.clearcoat === undefined ? new THREE.MeshStandardMaterial(o)   // a lacquer: a clear coat over the colour
@@ -143,8 +141,6 @@ function create(opts) {
   }
   /* a ready three.js material under a key, for a page whose look is its own (cells name it like any other) */
   const useMaterial = (key, m) => (MATERIALS[key] = m);
-  const CAP_MATERIALS = {};
-  const capMaterial = key => CAP_MATERIALS[key] || (CAP_MATERIALS[key] = new THREE.MeshLambertMaterial({ color: lin(MATERIAL_LIB[key].color), side: THREE.DoubleSide }));
 
   /* ================= MESHES AND EDGES OF PIECES ================= */
   /* One mesh per (layers, material, finish, cell.batch): cell.batch keeps apart what a page recolours on its own (a selected
@@ -199,13 +195,15 @@ function create(opts) {
     setGoal(m, goal);
     if (!goal) for (const c of m.children) toggle(c, false);
   }
-  /* the moving part a ray meets first, before anything else drawn and uncut; null when none */
+  /* every moving part opened (on) or closed */
+  function toggleAll(on) { for (const m of MOVERS) toggle(m, on); }
+  /* the moving part a ray meets first, before anything else drawn; null when none */
   function moverAt(ray) {
     const meshes = [];
     const moving = o => { for (let p = o; p; p = p.parent) if (p.userData.mover) return true; return false; };
     /* glass is seen through, so a click passes it; a moving one (a shower's door) is still taken */
     root.traverse(o => { if (o.isMesh && visibleChain(o) && o.material !== GHOST && (!(o.material.transparent && o.material.opacity < 0.5) || moving(o))) meshes.push(o); });
-    const hit = ray.intersectObjects(meshes, false).find(h => CUT.distanceToPoint(h.point) >= 0);
+    const hit = ray.intersectObjects(meshes, false)[0];
     for (let o = hit && hit.object; o; o = o.parent) if (o.userData.mover) return o.userData.mover;
     return null;
   }
@@ -225,7 +223,7 @@ function create(opts) {
         segs.get(k).on.push(f);
       }
     }
-    const mat = new THREE.LineBasicMaterial({ color: lin(E.color), transparent: true, opacity: E.opacity, clippingPlanes: CLIP });
+    const mat = new THREE.LineBasicMaterial({ color: lin(E.color), transparent: true, opacity: E.opacity });
     const same = (m, n) => dot3(m, n) > 1 - 1e-9;
     const lines = new Map();
     for (const s of segs.values()) {
@@ -342,23 +340,6 @@ function create(opts) {
     controls.update(); redraw();
   }
 
-  /* ================= SECTION CAPS ================= */
-  const CAP_BIAS = 0.5;                    // mm under the cut: a cap never lies in the plane of a face it closes
-  let capGroup = null;
-  function addCaps() { capGroup = new THREE.Group(); root.add(capGroup); }
-  function buildCaps(h, solids, shown) {
-    for (const m of capGroup.children.splice(0)) m.geometry.dispose();
-    if (h === null) return;
-    const batches = {}, up = [0, 0, 1], uv = v => [v[0], v[1]];
-    for (const c of solids) {
-      if (!shown(c.layers) || !cutBy(c.S, h)) continue;
-      const y = sectionAt(c.S, h); if (!y) continue;
-      (batches[c.cap] ||= new Batch()).polygon([[c.S.x1, y[0], h], [c.S.x2, y[0], h], [c.S.x2, y[1], h], [c.S.x1, y[1], h]], up, uv);
-    }
-    for (const [k, b] of Object.entries(batches)) { const m = b.mesh(capMaterial(k)); m.castShadow = false; m.position.z = -CAP_BIAS; capGroup.add(m); }
-  }
-  const setCut = h => { CUT.constant = h === null ? INF : h * MM; };
-
   /* ================= NAVIGATION =================
      The wheel zooms toward the surface under the cursor. A drag with the left button turns the view about the point under
      the cursor where the drag starts (a dot marks it while it turns; on no surface, about the point it turned about last);
@@ -367,10 +348,10 @@ function create(opts) {
   const ray = new THREE.Raycaster();
   const ndcOf = e => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * 2 - 1, y: -(e.clientY - r.top) / r.height * 2 + 1 }; };
   const visibleChain = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
-  function surfaceAt(ndc) {                // the first drawn, uncut surface along the ray through a screen point
+  function surfaceAt(ndc) {                // the first drawn surface along the ray through a screen point
     ray.setFromCamera(ndc, camera);
     const meshes = []; root.traverse(o => { if (o.isMesh && visibleChain(o) && o.material !== GHOST) meshes.push(o); });
-    const hit = ray.intersectObjects(meshes, false).find(h => CUT.distanceToPoint(h.point) >= 0);
+    const hit = ray.intersectObjects(meshes, false)[0];
     return hit ? hit.point : null;
   }
   /* a click (no drag) on the canvas: the page picks what is under it */
@@ -616,9 +597,9 @@ function create(opts) {
   function start() { new ResizeObserver(resize).observe(stage); resize(); }
   const run = () => requestAnimationFrame(frame);
 
-  return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, CUT, CLIP, hash01, canvasTexture, loadImage, material, useMaterial, capMaterial,
-    buildMeshes, removeMeshes, buildEdges, showPieces, cameraAt, GROUPS, EDGE_GROUPS, mover, toggle, moverAt, MOVERS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion,
-    addCaps, buildCaps, setCut, onClick, enableNavigation, walk, boxes, enableWalk, startWalk, stopWalk, refreshObstacles, stepWalk, onFrame, start, run,
+  return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, hash01, canvasTexture, loadImage, material, useMaterial,
+    buildMeshes, removeMeshes, buildEdges, showPieces, cameraAt, GROUPS, EDGE_GROUPS, mover, toggle, toggleAll, moverAt, MOVERS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion,
+    onClick, enableNavigation, walk, boxes, enableWalk, startWalk, stopWalk, refreshObstacles, stepWalk, onFrame, start, run,
     get hemi() { return hemi; }, get sun() { return sun; } };
 }
 

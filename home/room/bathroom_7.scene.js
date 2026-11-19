@@ -28,6 +28,7 @@ HOME.data({
    "floor": {"product": "paradyz-authority-grey", "dir": "x", "pattern": "grid"}}
  },
  "room": {"wallColor": "#e9e7e2"},
+ "finish": {"metal": "brass"},
  "hardware": {
   "open": {"angle": {"door": 110}, "drawer": 330}
  },
