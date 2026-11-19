@@ -252,6 +252,16 @@ The owner's decisions: the design is where every object stands (bought, cut, or 
 - Unused in the library: the materials hdfWhite, plinthPvc removed. Products nothing uses yet: the attic bathroom's (white basin, plug, taps, freestanding bath and its siphon, white gasket), the decors and tiles to choose from (Egger H1181, H1399, H1346, H1176; three tiles), LEGRABOX (the prototype's attic vanity), ABS edges, eRozkrój, the H1180 banding: kept for the owner to decide.
 - The bar "6. Kitchen · Open · ×" over the whole house's view: the room picked by a click on the open floor (its floor marked orange); Open goes to its own view, × unpicks it; the room picked is also the one whose tile layout Finish shows. Not changed: the owner decides.
 
+## The attic bathroom, room 5 (19 Nov, night)
+
+- The owner: the room-pick bar stays (it chooses the room whose tiles Finish shows); the unused products removed (LEGRABOX, ABS edges, eRozkrój, the H1180 ABS banding, four decors, three tiles); the attic bathroom's kept and used. Four textures now unused (egger-h1176, -h1181, -h1346, -h1399): for the owner to delete.
+- room/bathroom_5.cabinets.js: a hung vanity 1600 of two carcasses 800 in Egger H1180 ST37 (18.6, a top of 19 in the data: the thickness compared in whole mm), a drawer under each white basin, chrome taps.
+- room/bathroom_5.scene.js: as the prototype's attic: two LED mirrors, the radiator by the door, the corner shower 1000 × 1000 (its door opens outward, 77°), the drain, the shower set, the freestanding bath and its floor tap, the WC in a casing 250 × 1200 with a white shelf on top, the frame, the riser up to the casing's top, the WC's outlet, the hatch; light grey tiles (the shower's walls upright, its floor 598 × 598); three downlights under the flat ceiling; six cameras.
+- The roof: the house gives a room its ceiling lines (the attic's flat ceiling, the roof's underside); the lamps hang from the flat part, a gable wall's tiles are cut along the slope (tiles.js clip: a cut piece is a polygon, counted by its area).
+- Products: the bath, its tap, the corner shower (with a door in its shape), a PVC pipe Ø 90 as long as the scene says; the riser as high. Bathroom 7 got the WC's outlet as that pipe.
+- room/bathroom_5.docs.js: the estimate (61 rows), the cut list, the notes.
+- The kitchen, the wardrobes, bedroom 6 and the house: the same as before.
+
 ## Noted for later (the owner, 19 Nov)
 
 - **2D, the whole house**: a click on the plan marks everything: ugly (to check whether it still does).

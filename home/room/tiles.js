@@ -21,7 +21,7 @@
 /** @typedef {{ id: string, own: Rect[], rects: Rect[], zone: string }} LaidRoom  own: the room's rectangles; rects: with its doors' halves */
 /**
  * A piece of one tile in one rectangle, in the layout's axes: a along the tile's length, b across.
- * @typedef {{ room: string, zone: string, j: number, k: number, ta: number, tb: number, a1: number, a2: number, b1: number, b2: number, door: boolean, small?: boolean }} Piece
+ * @typedef {{ room: string, zone: string, j: number, k: number, ta: number, tb: number, a1: number, a2: number, b1: number, b2: number, door: boolean, small?: boolean, poly?: number[][] }} Piece
  */
 /** @typedef {{ area: number, tiles: number, full: number, cut: number, small: number, penalty: number }} Count  area in m² */
 
@@ -89,6 +89,34 @@ function lay(L, P, laid, oa, ob) {
   }
   return out;
 }
+/* a polygon [[x, y]] cut to the side p·x + q·y <= c of a line */
+function clipHalf(poly, p, q, c) {
+  const out = [], inside = v => p * v[0] + q * v[1] <= c + 1e-9;
+  for (let i = 0; i < poly.length; i++) {
+    const A = poly[i], B = poly[(i + 1) % poly.length], ia = inside(A), ib = inside(B);
+    if (ia) out.push(A);
+    if (ia !== ib) { const fa = p * A[0] + q * A[1] - c, fb = p * B[0] + q * B[1] - c, t = fa / (fa - fb); out.push([A[0] + t * (B[0] - A[0]), A[1] + t * (B[1] - A[1])]); }
+  }
+  return out;
+}
+const polyArea = poly => Math.abs(poly.reduce((s, v, i) => { const w = poly[(i + 1) % poly.length]; return s + v[0] * w[1] - w[0] * v[1]; }, 0)) / 2;
+/* the pieces cut to the sides of lines {p, q, c}: p·x + q·y <= c in the plane's coordinates (a wall under a roof's slope);
+   a piece cut becomes a polygon (poly, in the layout's a, b), its box the polygon's; one wholly past a line goes */
+/** @param {Laying} L @param {Piece[]} pieces @param {{ p: number, q: number, c: number }[]} lines @returns {Piece[]} */
+function clip(L, pieces, lines) {
+  if (!lines.length) return pieces;
+  const out = [];
+  for (const piece of pieces) {
+    let poly = [[piece.a1, piece.b1], [piece.a2, piece.b1], [piece.a2, piece.b2], [piece.a1, piece.b2]];
+    for (const l of lines) { const [p, q] = L.dir === 'x' ? [l.p, l.q] : [l.q, l.p]; poly = clipHalf(poly, p, q, l.c); if (poly.length < 3) break; }
+    const area = poly.length < 3 ? 0 : polyArea(poly), whole = (piece.a2 - piece.a1) * (piece.b2 - piece.b1);
+    if (area < MIN_PIECE * MIN_PIECE) continue;
+    if (area > whole - 1e-6) { out.push(piece); continue; }
+    const as = poly.map(v => v[0]), bs = poly.map(v => v[1]);
+    out.push(Object.assign({}, piece, { poly, a1: Math.min(...as), a2: Math.max(...as), b1: Math.min(...bs), b2: Math.max(...bs) }));
+  }
+  return out;
+}
 /* one tile is all the pieces with its row and column in one zone; the doors' halves do not make it cut. Marks the pieces of
    a small cut (shorter than the product's minCut) */
 /** @param {TileProduct} P @param {Piece[]} pieces @returns {Count} */
@@ -98,7 +126,7 @@ function count(P, pieces) {
   for (const p of pieces) {
     const k = p.zone + '|' + p.j + '|' + p.k;
     if (!tiles.has(k)) tiles.set(k, { a1: INF, a2: -INF, b1: INF, b2: -INF, pieces: [] });
-    const t = tiles.get(k); t.pieces.push(p); area += (p.a2 - p.a1) * (p.b2 - p.b1);
+    const t = tiles.get(k); t.pieces.push(p); area += p.poly ? polyArea(p.poly) : (p.a2 - p.a1) * (p.b2 - p.b1);
     if (!p.door) Object.assign(t, { a1: Math.min(t.a1, p.a1), a2: Math.max(t.a2, p.a2), b1: Math.min(t.b1, p.b1), b2: Math.max(t.b2, p.b2) });
   }
   let full = 0, cut = 0, small = 0, penalty = 0;
@@ -148,12 +176,13 @@ function faces(L, P, T, pieces, at, n) {
       for (let i = 0; i < turns; i++) [u, v] = [1 - v, u];
       return [u * imgA, v * imgB];
     };
-    const corners = [[p.a1, p.b1], [p.a2, p.b1], [p.a2, p.b2], [p.a1, p.b2]].map(([a, b]) => { const [x, y] = toXY(L, a, b); return { a, b, pt: at(x, y) }; });
-    const e1 = corners[1].pt.map((v, k) => v - corners[0].pt[k]), e2 = corners[3].pt.map((v, k) => v - corners[0].pt[k]);
+    const point = ([a, b]) => { const [x, y] = toXY(L, a, b); return { a, b, pt: at(x, y) }; };
+    const box = [[p.a1, p.b1], [p.a2, p.b1], [p.a2, p.b2], [p.a1, p.b2]].map(point), corners = (p.poly || box.map(q => [q.a, q.b])).map(point);
+    const e1 = box[1].pt.map((v, k) => v - box[0].pt[k]), e2 = box[3].pt.map((v, k) => v - box[0].pt[k]);
     const c = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
     if (c[0] * n[0] + c[1] * n[1] + c[2] * n[2] < 0) corners.reverse();   // counter-clockwise seen from where the face looks
-    /* uv at a point: back through the plane's coordinates (affine: the quad's corners give it) */
-    const o = corners[0], du = corners[1], dv = corners[corners.length - 1];
+    /* uv at a point: back through the plane's coordinates (affine: the piece's box gives it; a cut piece is drawn as its polygon) */
+    const o = box[0], du = box[1], dv = box[3];
     const ea = du.pt.map((v, k) => v - o.pt[k]), eb = dv.pt.map((v, k) => v - o.pt[k]);
     const la = ea.reduce((s, v) => s + v * v, 0), lb = eb.reduce((s, v) => s + v * v, 0);
     const uv = v => {
@@ -180,5 +209,5 @@ function corePieces(L, P, T, pieces, grout, at, n, cell, finish) {
   return { pieces: out, materials };
 }
 
-HOME.tiles = { PATTERNS, DIRS, rooms, lay, count, fit, faces, corePieces };
+HOME.tiles = { PATTERNS, DIRS, rooms, lay, clip, clipHalf, count, fit, faces, corePieces };
 })(window.HOME = window.HOME || {});

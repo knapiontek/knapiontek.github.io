@@ -112,7 +112,10 @@ const FURNITURE = await Promise.all(FURNISHED.map(async r => {
   const [cabinets, scene, docs] = await Promise.all(roles.map(role => HOME.load(HOME.load.file.room(r.id, role), role, 1)));
   /* the room as the room engine needs it: its zero and size, its floor area and the openings in its walls, in its own axes */
   const at = T.place(r.node), near = b => b[0] <= at[0] + r.node.size[0] + 300 && b[1] >= at[0] - 300 && b[2] <= at[1] + r.node.size[1] + 300 && b[3] >= at[1] - 300 && b[4] < at[2] + r.node.size[2] && b[5] > at[2];
-  const node = { offset: at, size: r.node.size, area: r.node.area, openings: MODEL.OPENINGS.map(o => o.b).filter(near).map(b => b.map((v, k) => v - at[k >> 1])) };
+  /* what closes it above, as lines h <= a + s·y of its own axes: a ceiling over it (the attic's flat one), the roof's underside */
+  const over = MODEL.ELEMENTS.filter(e => e.kind === 'ceiling' && e.b[0] < at[0] + r.node.size[0] && e.b[1] > at[0] && e.b[2] < at[1] + r.node.size[1] && e.b[3] > at[1] && e.b[4] > at[2]);
+  const ceiling = over.map(e => ({ a: e.b[4] - at[2], s: 0 })).concat(r.floor === MODEL.FLOORS[MODEL.FLOORS.length - 1] ? MODEL.ROOF_UNDER.map(l => ({ a: l.a + l.s * at[1] - at[2], s: l.s })) : []);
+  const node = { offset: at, size: r.node.size, area: r.node.area, ceiling, openings: MODEL.OPENINGS.map(o => o.b).filter(near).map(b => b.map((v, k) => v - at[k >> 1])) };
   const prepared = HOME.room.prepare(node, { cabinets, scene }, { products: LIB.groups });
   return { room: r, prepared, docs: docs && HOME.docs.create({ cabinets: HOME.cabinets, model: prepared.model, tree: prepared.TREE, docs, appliances: prepared.appliances, library: LIB }) };
 }));

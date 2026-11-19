@@ -424,8 +424,12 @@ function loft(sections) {
 function shaped(D, A, { r, w, d, h, h0, f }) {
   const metal = f.metal || A.metal || 'brass', key = m => m === 'metal' ? metal : m === 'ceramic' ? A.material || 'ceramicWhite' : m;
   const up = (u, v, z) => new THREE.Vector3(u, h0 + z, v);                 // the frame's three axes: x along, y up, z out of the wall
-  for (const p of A.shape) {
-    if (p.k === 'box') { D.box(D.STATIC, r, [p.b[0], p.b[1], p.b[2], p.b[3], h0 + p.b[4], h0 + p.b[5]], key(p.m), p.l, fixtureInfo(D, A)); continue; }
+  /* a door (its parts mv): turning about its hinge at door.at [u, v], door.angle degrees, toward door.sign */
+  const door = A.door && Object.assign(D.mover(r, 'door', A.door.at[0], A.door.at[1], 0), { sign: A.door.sign || 1, label: A.name + ' – door', travel: A.door.angle });
+  for (const p0 of A.shape) {
+    /* fit: a part that runs the fixture's length (u) or height (h), as the scene gives it */
+    const p = p0.fit === 'u' ? Object.assign({}, p0, { h: w, at: [w / 2, p0.at[1], p0.at[2]] }) : p0.fit === 'h' ? Object.assign({}, p0, { h, at: [p0.at[0], p0.at[1], h / 2] }) : p0;
+    if (p.k === 'box') { D.box(p.mv && door ? door.cells : D.STATIC, r, [p.b[0], p.b[1], p.b[2], p.b[3], h0 + p.b[4], h0 + p.b[5]], key(p.m), p.l, fixtureInfo(D, A)); continue; }
     const a = D.at(r, p.l);
     if (p.k === 'cyl') {
       const m = D.detail(a, new THREE.CylinderGeometry(p.r[0], p.r[1], p.h, p.s), key(p.m), p.at[0], p.at[1], h0 + p.at[2]);

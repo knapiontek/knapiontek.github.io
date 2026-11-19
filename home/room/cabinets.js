@@ -592,7 +592,8 @@
         const onEdge = onEdgeSize(item, groups[g].island);
         if (!onEdge) continue;
         const { use, size, what } = onEdge;
-        if (size !== thickness[use]) warn(`${placeOf(item)}: ${typeLabel(item.type)} - the ${what} ${size} does not match the material ${materials[materialFor[use]].label}.`, item.index);
+        if (size !== Math.round(thickness[use])) warn(   // the data's sizes are whole mm: a board of 18.6 is 19 there
+          `${placeOf(item)}: ${typeLabel(item.type)} - the ${what} ${size} does not match the material ${materials[materialFor[use]].label}.`, item.index);
       }
     }
 

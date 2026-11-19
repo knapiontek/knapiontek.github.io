@@ -124,3 +124,10 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 - The whole house with Blocks off: the 5 wall tile meshes of the bathroom hidden, the casing's and the floors' shown.
 - Pictures: the WC with its casing and with Built in off (the frame, cistern, riser), the radiator, the shower set, the rain head from below.
 - Regressions: models of kitchen_6, wardrobe_3, _4, _8, bedroom_6 the same; the house the same; the kitchen's cells and faces the same; tsc clean; the cabinet editor draws the bathroom.
+
+## The attic bathroom (19 Nov, night)
+
+- house/index.html?room=bathroom_5: no errors, every check passes; the Estimate 61 rows, the Cut list 33; the editor draws it.
+- The tiles: walls 17.54 m² (43 tiles, cut along the slope), floor 6.74 (14), the shower's walls 5.70 (15), its floor 1.00 (4); the ceiling 2850 (the flat part), the roof lines from the model.
+- The shower's door: closed x 1685–1775, open 1198–1727 (outward, clear of the vanity and the bath).
+- The whole house: every check passes. Regressions: the models of kitchen_6, wardrobe_3, _4, _8, bedroom_6 the same; the house the same; the kitchen's cells, faces, Documents the same; t_tiles clean; tsc clean.

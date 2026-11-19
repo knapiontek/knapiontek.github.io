@@ -1061,7 +1061,8 @@ HOME.data({
        "size": [2730, 3010, 5940],
        "area": [[0, 2730, 0, 3010]],
        "archonArea": 7.99,
-       "settings": {"tiles": null}
+       "settings": {"tiles": null},
+       "files": ["cabinets", "scene", "docs"]
       },
       {
        "id": "bedroom_6",

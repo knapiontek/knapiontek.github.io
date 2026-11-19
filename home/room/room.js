@@ -39,14 +39,15 @@ function prepare(room, files, library) {
   const FIXTURES = Object.entries(scene.fixtures || {}).map(([id, f]) => {
     const A = productOf(f.product), F = FRONTS[f.front];
     if (!A) throw new Error(`scene: fixture ${id}: no product ${f.product} in the library`);
-    const b = Object.assign({}, A.body, f.depth ? { depth: f.depth } : {});   // depth: what it reaches out of its wall, if more than its body (a flush plate on a casing)
+    /* depth: what it reaches out of its wall, if more than its body (a flush plate on a casing); length, height: a pipe's, as it runs here */
+    const b = Object.assign({}, A.body, f.depth ? { depth: f.depth } : {}, f.length ? { width: f.length } : {}, f.height ? { height: f.height } : {});
     const size = facesAlongX(f.front) ? [b.depth, b.width, b.height] : [b.width, b.depth, b.height];
     const x = O[0] + f.offset[0] + F.W[0] * size[0], y = O[1] + f.offset[1] + F.W[1] * size[1];
     PLACE[id] = { O: [x, y], X: F.X, Y: F.Y, box: [0, 1, 2].flatMap(k => [O[k] + f.offset[k], O[k] + f.offset[k] + size[k]]) };
     /* its node at its frame's zero (the floor under it), the product in it from its offset's h */
     const node = { id, name: A.name, type: 'product', part: { role: id }, offset: [0, 0, 0], size: [b.width, b.depth, f.offset[2] + b.height], children: /** @type {any[]} */ ([]) };
     node.children.push({ id: 'body', name: A.name, type: 'productBody', offset: [0, 0, f.offset[2]], size: [b.width, b.depth, b.height], children: [], parent: node });
-    return { id, A, f, node };
+    return { id, A, f, node, b };
   });
   /* the hardware as drawn: the products' sizes (the maker's) and the scene's layout (ours) */
   const product = key => P.hardware[key], H = cabinets.settings.hardware, L = scene.hardware;
@@ -63,7 +64,9 @@ function prepare(room, files, library) {
   /* what the owner builds: one node of the room, each piece a child at its box */
   const BUILT = (scene.builtIns || []).length ? [{ id: 'builtIns', name: 'Built in the room', type: 'builtIns', offset: [0, 0, 0], size: room.size.slice(),
     children: scene.builtIns.map((b, i) => ({ id: 'b' + (i + 1), name: b.name, type: 'builtIn', offset: [b.box[0], b.box[2], b.box[4]], size: [b.box[1] - b.box[0], b.box[3] - b.box[2], b.box[5] - b.box[4]], children: [] })) }] : [];
-  const TREE = C().tree(model, appliances, { install: scene.installation, ceiling: room.size[2], HW }).concat(FIXTURES.map(x => x.node), BUILT);
+  /* the ceiling's height: its lowest flat line (under a roof, the flat part), else the room's height */
+  const ceiling = Math.min(room.size[2], ...(room.ceiling || []).filter(l => l.s === 0).map(l => l.a));
+  const TREE = C().tree(model, appliances, { install: scene.installation, ceiling, HW }).concat(FIXTURES.map(x => x.node), BUILT);
   const looks = Object.assign(C().boardLooks(model), {
     wall: { color: scene.room.wallColor, roughness: 0.95, reflect: 0.45 },
     shade: { color: (model.materials[model.materialFor.cabinet || model.materialFor.carcass]).color, roughness: 0.5, metalness: 0.2 }
@@ -72,7 +75,7 @@ function prepare(room, files, library) {
   /* the tiles counted (no drawing yet): the model's counts.tiles, for Documents ({n:tiles.walls.area}, m²) */
   if (scene.tiles) model.counts.tiles = roomTiles(scene, room, { products: library.products, textures: {} }, { layers: [] }, '', false).counts;
   const tileTextures = Object.values(tileLayouts(scene)).map(t => (library.products.tiles[t.product] || {}).texture).filter(Boolean);
-  return { room, cabinets, scene, model, TREE, appliances, PLACE, HW, looks, textures: textures.concat(tileTextures), level: O[2], ceiling: room.size[2], FIXTURES };
+  return { room, cabinets, scene, model, TREE, appliances, PLACE, HW, looks, textures: textures.concat(tileTextures), level: O[2], ceiling, FIXTURES };
 }
 
 /* ================= THE ROOM'S TILES (a bathroom's) =================
@@ -133,7 +136,7 @@ function tiledSurfaces(scene, area, height, openings) {
   /* the faces of what is built that face the room (not against a wall, nor against another piece) */
   const sides = q => [[0, q[2], -1, q[0], q[1]], [0, q[3], 1, q[0], q[1]], [1, q[0], -1, q[2], q[3]], [1, q[1], 1, q[2], q[3]]];
   const across = (axis, q) => axis === 0 ? [q[0], q[1], q[4], q[5]] : [q[2], q[3], q[4], q[5]];
-  built.forEach((b, i) => {
+  built.filter(b => b.tiled !== false).forEach((b, i) => {
     sides(b.box).forEach(([axis, at, inward, from, to], s) => {
       const onWall = wallsOf(area).some(w => w.axis === axis && Math.abs(w.at - at) < 0.5 && w.inward === -inward);
       if (onWall) return;
@@ -160,7 +163,8 @@ function tiledSurfaces(scene, area, height, openings) {
    and the count of each layout (area m², tiles whole, cut, small cuts) */
 function roomTiles(scene, room, library, cell, finish, draw = true) {
   const area = room.area || [[0, room.size[0], 0, room.size[1]]];   // its floor area, in its own axes
-  const L = tileLayouts(scene), surfaces = tiledSurfaces(scene, area, room.size[2], room.openings || []), O = room.offset;
+  const lines = room.ceiling || [], height = Math.min(room.size[2], ...lines.filter(l => l.s === 0).map(l => l.a));
+  const L = tileLayouts(scene), surfaces = tiledSurfaces(scene, area, height, room.openings || []), O = room.offset;
   const out = { pieces: /** @type {any[]} */ ([]), materials: {}, counts: {} };
   for (const [key, spec] of Object.entries(L)) {
     const P0 = library.products.tiles[spec.product], T = library.textures[P0.texture] || { grout: '#888888' };
@@ -179,12 +183,16 @@ function roomTiles(scene, room, library, cell, finish, draw = true) {
         oa = S.rect[0]; let best = score(oa);
         for (let a = S.rect[0]; a < S.rect[0] + Pa; a += 5) { const v = score(a); if (v < best - 1e-9) { best = v; oa = a; } }
       } else ({ oa, ob } = HOME.tiles.fit(lay, P, laid));
-      const pieces = HOME.tiles.lay(lay, P, laid, oa, ob);
+      /* under a roof: a wall's tiles cut to the lines h <= a + s·y, in the wall's own coordinates (S.point is affine) */
+      const f = (u, v) => { const q = S.point(u, v); return q[2]; }, yOf = (u, v) => S.point(u, v)[1];
+      const under = wall ? lines.filter(l => l.s !== 0).map(l => { const g = (u, v) => f(u, v) - l.s * yOf(u, v), g0 = g(0, 0); return { p: g(1, 0) - g0, q: g(0, 1) - g0, c: l.a - g0 }; }) : [];
+      const pieces = HOME.tiles.clip(lay, HOME.tiles.lay(lay, P, laid, oa, ob), under);
       all.push(...pieces);
       const at = (u, v) => { const p = S.point(u, v); return [O[0] + p[0], O[1] + p[1], O[2] + p[2]]; };
       const behind = (u, v) => { const p = S.point(u, v); return [O[0] + p[0] - S.n[0] * 2, O[1] + p[1] - S.n[1] * 2, O[2] + p[2] - S.n[2] * 2]; };
-      const grout = rects.map(r => [[r[0], r[2]], [r[1], r[2]], [r[1], r[3]], [r[0], r[3]]].map(([u, v]) => behind(u, v)));
-      for (const g of grout) { const e1 = g[1].map((v, k) => v - g[0][k]), e2 = g[3].map((v, k) => v - g[0][k]), c = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]]; if (c[0] * S.n[0] + c[1] * S.n[1] + c[2] * S.n[2] < 0) g.reverse(); }
+      const grout = rects.map(r => under.reduce((poly, l) => poly.length < 3 ? poly : HOME.tiles.clipHalf(poly, l.p, l.q, l.c), [[r[0], r[2]], [r[1], r[2]], [r[1], r[3]], [r[0], r[3]]]))
+        .filter(g => g.length > 2).map(g => g.map(([u, v]) => behind(u, v)));
+      for (const g of grout) { const e1 = g[1].map((v, k) => v - g[0][k]), e2 = g[g.length - 1].map((v, k) => v - g[0][k]), c = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]]; if (c[0] * S.n[0] + c[1] * S.n[1] + c[2] * S.n[2] < 0) g.reverse(); }
       HOME.tiles.count(P, pieces);           // marks the small cuts
       if (!draw) continue;
       /* a tile goes with what it lies on: a wall's with the blocks, a casing's with the casing (like a facade with its EPS) */
@@ -335,7 +343,7 @@ function build(V, prepared, opts = {}) {
   const drawn = C().draw(D, model, appliances, HW, scene.installation);
 
   /* the fixtures: each drawn by the library in its own frame (x along its wall, y out of it, h up from the floor) */
-  for (const x of prepared.FIXTURES) HOME.draw[x.A.draw](D, x.A, { r: x.id, a: at(x.id, x.f.layer || 'sanitary'), w: x.A.body.width, d: x.A.body.depth, h: x.A.body.height, h0: x.f.offset[2], f: x.f });
+  for (const x of prepared.FIXTURES) HOME.draw[x.A.draw](D, x.A, { r: x.id, a: at(x.id, x.f.layer || 'sanitary'), w: x.b.width, d: x.b.depth, h: x.b.height, h0: x.f.offset[2], f: x.f });
   /* the room's tiles (room/tiles.js): pieces of core and their materials, for the page */
   const tiles = prepared.scene.tiles ? roomTiles(prepared.scene, prepared.room, { products: opts.products, textures: opts.textures }, { layers: ['tiles'].concat(EXTRA) }, 'cuts') : { pieces: [], materials: {}, counts: {} };
   /* what the owner builds in the room (a casing of plasterboard), boxes in the room's axes */

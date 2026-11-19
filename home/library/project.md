@@ -40,7 +40,7 @@ All version 1.
 | links | [{name, url}]: the maker's documents first, then the shops |
 | note | a remark on buying it |
 | draw | which drawing of draw.js draws it (oven, microwave, fridgeFreezer, dishwasher, hob, hood, sink, coffeeMachine, basin, basinTap, mirror, wallCabinet, showerScreen, linearDrain, shaped); without it, nothing is drawn. shaped: by the product's shape |
-| shape | the parts of a product as drawn, in its own axes (u along its width, v out of the wall, h up from its bottom): box {b}, cyl {at, ax, r [top, bottom], h, s}, tube {p, r, s}, loft {M (its rows u, v, h: the axes and the place), sec (superellipse sections)}; m: a material, metal (the fittings' finish) or ceramic (the product's); l: sanitary or installations. From the prototype's bathroom (work/proto_shapes.js): the radiator, the shower set, the WC bowl, the WC frame with its plate, the riser, the hatch |
+| shape | the parts of a product as drawn, in its own axes (u along its width, v out of the wall, h up from its bottom): box {b}, cyl {at, ax, r [top, bottom], h, s}, tube {p, r, s}, loft {M (its rows u, v, h: the axes and the place), sec (superellipse sections)}; m: a material, metal (the fittings' finish) or ceramic (the product's); l: sanitary or installations; fit: u or h, a part as long as the fixture's length or height in the scene (a pipe); mv: a part of its door (the product's door: {at [u, v] its hinge, angle in degrees, sign}). From the prototype's bathrooms (work/proto_shapes.js): the radiator, the shower set, the WC bowl, the WC frame with its plate, the riser, the hatch; the attic's bath, its floor tap, the corner shower |
 
 and, by group:
 

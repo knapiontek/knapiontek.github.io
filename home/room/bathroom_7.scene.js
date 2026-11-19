@@ -6,8 +6,9 @@ HOME.data({
  },
  "fixtures": {
   "riser": {"product": "riser-pvc-160", "front": "W", "offset": [30, 2200, 0]},
-   "hatch": {"product": "inspection-hatch-200", "front": "W", "offset": [290, 2120, 250]},
+  "hatch": {"product": "inspection-hatch-200", "front": "W", "offset": [290, 2120, 250]},
   "wcFrame": {"product": "wc-frame-geberit-duofix", "front": "W", "offset": [100, 1555, 0], "depth": 198},
+  "outlet": {"product": "pvc-pipe-90", "front": "W", "offset": [135, 1805, 185], "length": 475},
   "wc": {"product": "wc-bowl-wall-hung-360x530", "front": "W", "offset": [290, 1625, 0]},
   "cabinet": {"product": "wall-cabinet-400x800x150", "front": "W", "offset": [130, 1605, 1200]},
   "mirror": {"product": "mirror-led-600x800", "front": "W", "offset": [10, 800, 1220]},

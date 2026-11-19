@@ -12,6 +12,7 @@ HOME.data({"format": "materials", "version": 1, "materials": {
  "cisternBlue": {"color":"#2f6db5","roughness":0.5},
  "slot": {"color":"#000000","roughness":0.6},
  "showerHead": {"color":"#222222","roughness":0.8},
+ "acrylicWhite": {"color":"#f6f6f3","roughness":0.18,"clearcoat":0.5,"clearcoatRoughness":0.1},
  "glass": {"color":"#9fb5bf","roughness":0.02,"metalness":0.1,"opacity":0.3,"reflect":1.6,"plan":"#9fc3d6"},
  "plinth": {"color":"#6d6e6c","roughness":0.9,"texture":{"strength":0.5,"grain":3,"tile":600}},
  "tread": {"color":"#a57b4f","roughness":0.6},
