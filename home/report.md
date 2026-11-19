@@ -201,6 +201,13 @@ The prototype's floor tiles (its house page: Wykończenie, the layouts, the coun
 - **Deviations**: the origin is data (the prototype fitted it on the first visit and kept it in the browser); Fit the origin does the same search, from the floor's zero (so it may land elsewhere than the prototype's: the same score).
 - **To know**: the bedroom with wardrobes 3 and 4 has 11 small cuts with the third bond (as in the prototype); with the half bond and Fit, 1.
 
+## After the owner's look (19 Nov, noon)
+
+- **Lines through the HDF backs**: the edges of the shelves and the sides showed through a 3 mm back. The cause in core/scene.js: every edge line was pulled toward the eye by 0.2 % of its distance (6 mm at 3 m). Now the faces are pushed back a little in depth (polygonOffset) and the lines pulled 0.04 % (1 mm at 2.5 m): a line on a face shows, one behind a 3 mm board does not. The whole house and the kitchen look the same; the doubled lines of the kitchen's shaker fronts (edges behind them) are gone with it.
+- **No carcass taller than 1316**: a carcass reaching over the fixed shelf at 1366 is now two, the lower to 1366 (its name, two drawers and one compartment, all alike) and the upper from 1366 (its name + U, 340 to 1360 high), screwed through its bottom (a note in the cabinets files and the Documents). wardrobe_3 13 carcasses (was 8), wardrobe_4 10 (7), wardrobe_8 8 (6), bedroom_6 6 (4); the niche's tall doors two each. Done in the data (work/split_carcasses.js), the engine as it was.
+- **The niche's fronts**: 4 mm between them (2 mm a side, 2 mm to the niche's edge; was 1 a side), light grey Egger U708 ST9 instead of the oak decor, banded in U708. Later (the owner): triangles as blends, so the niche reads as one wall with only its joints; push to open.
+- **Floor tiles moved** (the owner: they are bought and cut on site, the prototype's origins are not binding): the attic's bedroom with wardrobes 3 and 4 in half bond, its origin fitted: 1 small cut (was 11); the attic's hall fitted: 20 cut tiles (was 22). The other layouts stay at the prototype's origin (fitting gives nothing better).
+
 ## Noted for later: the 2D view (done 18 Nov, see above) (the owner, 18 Nov)
 
 - **Zoom with the mouse wheel**, about the cursor, instead of the + and − buttons.

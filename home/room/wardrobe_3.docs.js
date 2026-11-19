@@ -163,6 +163,13 @@ HOME.data({
      "decide": ""
     },
     {
+     "id": "stacked",
+     "topic": "Carcasses one on another",
+     "description": "No carcass is taller than 1316: where a run goes higher, a second carcass stands on the lower one at 1366 (the fixed shelf’s line), screwed to it through its bottom from inside, the backs in one plane.",
+     "assumed": "4 screws 4 × 30 per pair",
+     "decide": ""
+    },
+    {
      "id": "ends",
      "topic": "The end of a run",
      "description": "Where a run meets a short wall it ends with a gap.",

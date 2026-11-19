@@ -708,7 +708,7 @@ HOME.data({
      "offset": [0, 0, 4380],
      "size": [15200, 9100, 5940],
      "settings": {
-      "tiles": {"product": "atlas-log-icon-oak-forest", "dir": "x", "origin": [638, 96]},
+      "tiles": {"product": "atlas-log-icon-oak-forest", "dir": "x", "pattern": "half", "origin": [1050, 96]},
       "view": {
        "cameras": [
         {"name": "Plan", "eye": [7660, 4550, 23000], "target": [7600, 4550, 0]},
@@ -1006,7 +1006,7 @@ HOME.data({
        "size": [3540, 2800, 5940],
        "area": [[950, 1900, 0, 680], [950, 3540, 680, 2800], [0, 950, 1620, 2800]],
        "archonArea": 7.32,
-       "settings": {"tiles": {"origin": [1200, 218]}}
+       "settings": {"tiles": {"origin": [802, 178]}}
       },
       {
        "id": "bedroom_2",

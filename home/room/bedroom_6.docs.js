@@ -3,7 +3,7 @@ HOME.data({
  "version": 1,
  "page": {
   "title": "Estimate of the niche of bedroom 6",
-  "heading": "Estimate of materials – the niche of bedroom 6 (between the bathroom and the room, fronts of oak decor)",
+  "heading": "Estimate of materials – the niche of bedroom 6 (between the bathroom and the room, light grey fronts, U708)",
   "info": "PLN gross, online shop prices of October 2026 where known (a product marked \"to check\" has no price yet), materials only (we assemble it ourselves). The shaded fields may be changed to try other prices (until the page is reloaded). The quantities are counted from the design.",
   "xlsxFile": "estimate_bedroom_6.xlsx",
   "excluded": ["Labour, transport."]
@@ -98,7 +98,7 @@ HOME.data({
     },
     {
      "id": "frontEdging",
-     "product": "edge-banding-h1180-22",
+     "product": "edge-banding-u708-pur",
      "use": "the fronts all round + {v:edgeAllowance|%}",
      "qty": "={fronts.edge}*(1+{v:edgeAllowance})",
      "refs": ["fronts"]
@@ -184,6 +184,13 @@ HOME.data({
      "topic": "Drawers",
      "description": "Two at the bottom of every carcass, one over the other: boxes of {t:drawerBox} board on full-extension ball runners, push to open; the runners as long as the carcass allows.",
      "assumed": "two rows of equal height",
+     "decide": ""
+    },
+    {
+     "id": "stacked",
+     "topic": "Carcasses one on another",
+     "description": "No carcass is taller than 1316: where a run goes higher, a second carcass stands on the lower one at 1366 (the fixed shelf’s line), screwed to it through its bottom from inside, the backs in one plane.",
+     "assumed": "4 screws 4 × 30 per pair",
      "decide": ""
     },
     {

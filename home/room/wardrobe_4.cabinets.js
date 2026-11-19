@@ -20,7 +20,7 @@ HOME.data({
  },
  "notes": [
   {"name": "Room", "description": "Walk-in wardrobe 4, attic", "details": "Two runs along the long walls: shallow (300) by the left wall, deep (400) opposite; no carcass in front of the passage from the bedroom."},
-  {"name": "Carcass", "description": "Sides the full height, the bottom and the top between them, the back of HDF nailed on behind", "details": "Under the slope each carcass is lower: its top stays clear of the lowest point of the ceiling over it."},
+  {"name": "Carcass", "description": "Sides the full height of the carcass, the bottom and the top between them, the back of HDF nailed on behind; at most 1316 high", "details": "Where a run is taller, a second carcass (its name + U) stands on the lower one at 1366, the fixed shelf’s line, screwed to it through its bottom. Under the slope each carcass is lower: its top stays clear of the lowest point of the ceiling over it."},
   {"name": "Shelves", "description": "On one grid of the room: 686 above the floor, then every 340", "details": "Fixed on every second line (they stiffen the carcass), adjustable on pins on the others; every shelf level with its neighbours’."},
   {"name": "Drawers", "description": "Two at the bottom of every carcass, boxes of 16 mm board on full-extension ball runners, push to open", "details": "The runners as long as the carcass allows: 250 in a 300 carcass, 350 in a 400 one, 750 in the niche."},
   {"name": "Plinth", "description": "Levelling feet under every carcass, a waterproof PVC plinth in front, set back 30", "details": ""},
@@ -34,7 +34,8 @@ HOME.data({
   {"group": 1, "column": 1, "span": 3, "type": "plinth", "height": 50},
   {"group": 1, "column": 1, "span": 1, "type": "drawer", "tags": ["open"], "carcass": "L1", "height": 318},
   {"group": 1, "column": 1, "span": 1, "type": "drawer", "tags": ["open"], "carcass": "L1", "height": 309},
-  {"group": 1, "column": 1, "span": 1, "type": "cabinet", "tags": ["open"], "carcass": "L1", "height": 1369},
+  {"group": 1, "column": 1, "span": 1, "type": "cabinet", "tags": ["open"], "carcass": "L1", "height": 689},
+  {"group": 1, "column": 1, "span": 1, "type": "cabinet", "tags": ["open"], "carcass": "L1U", "height": 680},
   {"group": 1, "column": 2, "span": 1, "type": "drawer", "tags": ["open"], "carcass": "L2", "height": 318},
   {"group": 1, "column": 2, "span": 1, "type": "drawer", "tags": ["open"], "carcass": "L2", "height": 309},
   {"group": 1, "column": 2, "span": 1, "type": "cabinet", "tags": ["open"], "carcass": "L2", "height": 689},
@@ -51,9 +52,11 @@ HOME.data({
   {"group": 2, "column": 2, "span": 1, "type": "cabinet", "tags": ["open"], "carcass": "P3", "height": 689},
   {"group": 2, "column": 3, "span": 1, "type": "drawer", "tags": ["open"], "carcass": "P2", "height": 318},
   {"group": 2, "column": 3, "span": 1, "type": "drawer", "tags": ["open"], "carcass": "P2", "height": 309},
-  {"group": 2, "column": 3, "span": 1, "type": "cabinet", "tags": ["open"], "carcass": "P2", "height": 1369},
+  {"group": 2, "column": 3, "span": 1, "type": "cabinet", "tags": ["open"], "carcass": "P2", "height": 689},
+  {"group": 2, "column": 3, "span": 1, "type": "cabinet", "tags": ["open"], "carcass": "P2U", "height": 680},
   {"group": 2, "column": 4, "span": 1, "type": "drawer", "tags": ["open"], "carcass": "P1", "height": 318},
   {"group": 2, "column": 4, "span": 1, "type": "drawer", "tags": ["open"], "carcass": "P1", "height": 309},
-  {"group": 2, "column": 4, "span": 1, "type": "cabinet", "tags": ["open"], "carcass": "P1", "height": 2049}
+  {"group": 2, "column": 4, "span": 1, "type": "cabinet", "tags": ["open"], "carcass": "P1", "height": 689},
+  {"group": 2, "column": 4, "span": 1, "type": "cabinet", "tags": ["open"], "carcass": "P1U", "height": 1360}
  ]
 });

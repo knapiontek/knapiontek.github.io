@@ -99,3 +99,10 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 - `python3 tests/proto_tiles.py`: the prototype's layouts, counts and pieces (from a copy of its house page that exposes them: proto_copy/house/index_t.html) into tests/golden_proto_tiles.json.
 - `node tests/t_tiles.js`: each of the 8 layouts in Node (house/model.js, room/tiles.js) at the origin of the data: the prototype's origin (moved by the house's shift), the same tiles, whole, cut and small cuts, the rooms' area the same; the doors' halves apart (the doors unified); the fitted origin beside.
 - The page: no errors, the Test without faults; the sheet Floor tiles; Finish: a pattern changed, fitted, an origin typed, back to the data (tests: an evaluate on the page); pictures from Above and Plan of both floors beside the prototype's (tests/shot_tiles.py, shot_tiles_proto.py).
+- 19 Nov: the attic's two layouts (attic, attic/hall_1) moved by the owner's leave: t_tiles.js compares them at the prototype's origin (MOVED).
+
+## The wardrobes split (19 Nov)
+
+- `node work/split_carcasses.js` rewrote the four cabinets files (as the editor writes them); the editor's Export the same byte for byte after it. tests/cmp_wardrobes.js no longer holds for the carcasses (the prototype's are whole): the widths, depths, drawer boxes and the shelves' heights as before.
+- The pages: no errors, every check passes; wardrobe_3 Cut list 64 rows, wardrobe_4 57, wardrobe_8 58, bedroom_6 52; the kitchen as before (Estimate 80, Cut list 144).
+- The edges (core/scene.js): tests/shot_back.py <room> <eye> <target> <png> [layer to switch off | cam:<camera>]: the backs of wardrobe_3 from behind with and without the shelves and the edges; the kitchen and the whole house before and after, side by side.

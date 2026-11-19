@@ -132,7 +132,8 @@ function create(opts) {
   function material(key) {
     if (MATERIALS[key]) return MATERIALS[key];
     const def = MATERIAL_LIB[key];
-    const o = { color: lin(def.color || '#ffffff'), roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1, clippingPlanes: CLIP, clipShadows: true };
+    const o = { color: lin(def.color || '#ffffff'), roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1, clippingPlanes: CLIP, clipShadows: true,
+      polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 };   // the faces a little back in depth: an edge on them shows, one behind them does not
     if (def.emissive) Object.assign(o, { emissive: lin(def.emissive), emissiveIntensity: def.glow ?? 1 });
     const m = def.clearcoat === undefined ? new THREE.MeshStandardMaterial(o)   // a lacquer: a clear coat over the colour
       : new THREE.MeshPhysicalMaterial(Object.assign(o, { clearcoat: def.clearcoat, clearcoatRoughness: def.clearcoatRoughness ?? 0.5 }));
@@ -212,7 +213,7 @@ function create(opts) {
      in a joint); two outside pieces at an angle are a corner (always a line); otherwise the line hides exactly while every
      group that closes it is shown. */
   const EDGE_GROUPS = [];
-  const EDGE_PULL = 0.002;                 // 20 mm at 10 m: in front of the faces of its corner, behind any wall
+  const EDGE_PULL = 0.0004;                // 4 mm at 10 m, 1 mm at 2.5 m: with the faces pushed back (polygonOffset), in front of its corner, behind a 3 mm board
   function buildEdges(pieces, parent = root) {
     const E = opts.edges, segs = new Map();
     for (const f of pieces) {
