@@ -99,20 +99,30 @@ function wallsOf(rects) {
   }
   return out;
 }
+/* box [x1, x2, y1, y2, h1, h2] minus another, as boxes (a solid with an opening: a casing with its niche) */
+function boxMinus(b, c) {
+  const k = [Math.max(b[0], c[0]), Math.min(b[1], c[1]), Math.max(b[2], c[2]), Math.min(b[3], c[3]), Math.max(b[4], c[4]), Math.min(b[5], c[5])];
+  if (k[1] - k[0] < 0.5 || k[3] - k[2] < 0.5 || k[5] - k[4] < 0.5) return [b];
+  const out = [], keep = q => { if (q[1] - q[0] > 0.5 && q[3] - q[2] > 0.5 && q[5] - q[4] > 0.5) out.push(q); };
+  keep([b[0], k[0], b[2], b[3], b[4], b[5]]); keep([k[1], b[1], b[2], b[3], b[4], b[5]]);
+  keep([k[0], k[1], b[2], k[2], b[4], b[5]]); keep([k[0], k[1], k[3], b[3], b[4], b[5]]);
+  keep([k[0], k[1], k[2], k[3], b[4], k[4]]); keep([k[0], k[1], k[2], k[3], k[5], b[5]]);
+  return out;
+}
 /* rect [a1, a2, b1, b2] minus others, as rects */
 const minusAll = (q, holes) => holes.reduce((rest, h) => rest.flatMap(r => G().rectMinus(r, h)), [q]);
 /* the tiled surfaces: {key (the layout), id, rect [u1, u2, v1, v2] and its holes, point(u, v) -> room [x, y, h], n} */
 function tiledSurfaces(scene, area, height, openings) {
   const T = scene.tiles || {}, zone = T.shower && T.shower.zone, built = scene.builtIns || [], out = [];
   const inZone = (axis, at, u) => zone && (axis === 0 ? (u >= zone[0] - 0.5 && u <= zone[1] + 0.5 && at >= zone[2] - 0.5 && at <= zone[3] + 0.5) : (u >= zone[2] - 0.5 && u <= zone[3] + 0.5 && at >= zone[0] - 0.5 && at <= zone[1] + 0.5));
-  const add = (axis, at, inward, from, to, h0, h1, id, extra = []) => {
+  const add = (axis, at, inward, from, to, h0, h1, id, extra = [], own = null) => {
     /* split at the shower zone's edges: each part takes its own layout */
     const cuts = [from, to].concat(zone ? (axis === 0 ? [zone[0], zone[1]] : [zone[2], zone[3]]).filter(c => c > from + 0.5 && c < to - 0.5) : []).sort((p, q) => p - q);
     for (let i = 0; i + 1 < cuts.length; i++) {
       const a = cuts[i], b = cuts[i + 1], shower = inZone(axis, at, (a + b) / 2), key = shower ? 'showerWalls' : 'walls';
       if (!tileLayouts(scene)[key]) continue;
       const room = o => axis === 0 ? (inward > 0 ? o[3] > at + 0.5 && o[2] <= at + 0.5 : o[2] < at - 0.5 && o[3] >= at - 0.5) : (inward > 0 ? o[1] > at + 0.5 && o[0] <= at + 0.5 : o[0] < at - 0.5 && o[1] >= at - 0.5);   // reaching into the room from the plane
-      const holes = openings.filter(o => (axis === 0 ? o[2] - 0.5 <= at && o[3] + 0.5 >= at : o[0] - 0.5 <= at && o[1] + 0.5 >= at)).concat(built.map(x => x.box).filter(room))
+      const holes = openings.filter(o => (axis === 0 ? o[2] - 0.5 <= at && o[3] + 0.5 >= at : o[0] - 0.5 <= at && o[1] + 0.5 >= at)).concat(built.filter(x => x !== own).map(x => x.box).filter(room))
         .map(o => axis === 0 ? [o[0], o[1], o[4], o[5]] : [o[2], o[3], o[4], o[5]]).concat(extra);
       const off = at + inward * TILE_DEPTH;
       out.push({ key, id: id + '_' + i, rect: [a, b, h0, h1], holes, n: axis === 0 ? [0, inward, 0] : [inward, 0, 0],
@@ -121,14 +131,22 @@ function tiledSurfaces(scene, area, height, openings) {
   };
   wallsOf(area).forEach((w, i) => add(w.axis, w.at, w.inward, w.from, w.to, 0, height, 'w' + (i + 1)));
   /* the faces of what is built that face the room (not against a wall, nor against another piece) */
+  const sides = q => [[0, q[2], -1, q[0], q[1]], [0, q[3], 1, q[0], q[1]], [1, q[0], -1, q[2], q[3]], [1, q[1], 1, q[2], q[3]]];
+  const across = (axis, q) => axis === 0 ? [q[0], q[1], q[4], q[5]] : [q[2], q[3], q[4], q[5]];
   built.forEach((b, i) => {
-    for (const [axis, at, inward, from, to] of [[0, b.box[2], -1, b.box[0], b.box[1]], [0, b.box[3], 1, b.box[0], b.box[1]], [1, b.box[0], -1, b.box[2], b.box[3]], [1, b.box[1], 1, b.box[2], b.box[3]]]) {
+    sides(b.box).forEach(([axis, at, inward, from, to], s) => {
       const onWall = wallsOf(area).some(w => w.axis === axis && Math.abs(w.at - at) < 0.5 && w.inward === -inward);
-      if (onWall) continue;
-      const against = built.filter(o => o !== b).filter(o => axis === 0 ? Math.abs((inward > 0 ? o.box[2] : o.box[3]) - at) < 0.5 : Math.abs((inward > 0 ? o.box[0] : o.box[1]) - at) < 0.5)
-        .map(o => axis === 0 ? [o.box[0], o.box[1], o.box[4], o.box[5]] : [o.box[2], o.box[3], o.box[4], o.box[5]]);
-      add(axis, at, inward, from, to, b.box[4], b.box[5], 'b' + (i + 1), against);
-    }
+      if (onWall) return;
+      const touches = q => axis === 0 ? Math.abs((inward > 0 ? q[2] : q[3]) - at) < 0.5 : Math.abs((inward > 0 ? q[0] : q[1]) - at) < 0.5;
+      const opens = q => axis === 0 ? Math.abs((inward > 0 ? q[3] : q[2]) - at) < 0.5 : Math.abs((inward > 0 ? q[1] : q[0]) - at) < 0.5;
+      const holes = built.filter(o => o !== b).map(o => o.box).filter(touches).concat((b.cuts || []).filter(opens)).map(q => across(axis, q));
+      add(axis, at, inward, from, to, b.box[4], b.box[5], 'b' + (i + 1) + 's' + s, holes, b);
+    });
+    /* an opening's reveals inside the solid, facing into it */
+    (b.cuts || []).forEach((c, k) => sides(c).forEach(([axis, at, inward, from, to], s) => {
+      const inside = axis === 0 ? at > b.box[2] + 0.5 && at < b.box[3] - 0.5 : at > b.box[0] + 0.5 && at < b.box[1] - 0.5;
+      if (inside) add(axis, at, -inward, from, to, c[4], c[5], 'b' + (i + 1) + 'c' + k + 's' + s, [], b);
+    }));
   });
   /* the floor: its area less what is built on it, the shower's zone apart */
   const L = tileLayouts(scene), feet = built.filter(b => b.box[4] <= 0.5).map(b => [b.box[0], b.box[1], b.box[2], b.box[3]]);
@@ -169,7 +187,9 @@ function roomTiles(scene, room, library, cell, finish, draw = true) {
       for (const g of grout) { const e1 = g[1].map((v, k) => v - g[0][k]), e2 = g[3].map((v, k) => v - g[0][k]), c = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]]; if (c[0] * S.n[0] + c[1] * S.n[1] + c[2] * S.n[2] < 0) g.reverse(); }
       HOME.tiles.count(P, pieces);           // marks the small cuts
       if (!draw) continue;
-      const made = HOME.tiles.corePieces(lay, P, T, pieces, grout, at, S.n, cell, finish);
+      /* a tile goes with what it lies on: a wall's with the blocks, a casing's with the casing (like a facade with its EPS) */
+      const on = S.id[0] === 'b' ? 'builtIns' : wall ? 'walls' : null;
+      const made = HOME.tiles.corePieces(lay, P, T, pieces, grout, at, S.n, on ? Object.assign({}, cell, { layers: cell.layers.concat(on) }) : cell, finish);
       out.pieces.push(...made.pieces); Object.assign(out.materials, made.materials);
     }
     out.counts[key] = Object.assign({ product: spec.product, name: P0.name, format: P.len + ' × ' + P.wid }, HOME.tiles.count(P, all));
@@ -319,7 +339,11 @@ function build(V, prepared, opts = {}) {
   /* the room's tiles (room/tiles.js): pieces of core and their materials, for the page */
   const tiles = prepared.scene.tiles ? roomTiles(prepared.scene, prepared.room, { products: opts.products, textures: opts.textures }, { layers: ['tiles'].concat(EXTRA) }, 'cuts') : { pieces: [], materials: {}, counts: {} };
   /* what the owner builds in the room (a casing of plasterboard), boxes in the room's axes */
-  for (const b of scene.builtIns || []) box(STATIC, 'room', b.box, b.material, 'builtIns', { name: b.name });
+  /* a built-in is one solid, its openings cut out: its pieces one part, so no line between them */
+  for (const b of scene.builtIns || []) {
+    const one = part();
+    for (const q of (b.cuts || []).reduce((ps, c) => ps.flatMap(p => boxMinus(p, c)), [b.box])) box(STATIC, 'room', q, b.material, 'builtIns', { name: b.name, part: one });
+  }
 
   /* the lamps of the scene: pendants centred over the worktop of their group, downlights at {group, x, y} (y from the
      wall) or between the axes of the sink and the hob; a downlight hides with the ceiling, not with its group */
@@ -409,7 +433,8 @@ function layers(prepared) {
     worktops: M.worktopPieces.some(p => p.item.type === 'worktop'), endPanels: M.worktopPieces.some(p => p.item.type === 'endPanel'), wallPanel: M.wallPanels.length,
     sink: roles.has('sink'), trap: roles.has('trap'), hob: roles.has('hob'), hood: roles.has('hood'), oven: roles.has('oven'), microwave: roles.has('microwave'),
     coffee: roles.has('coffee'), fridge: roles.has('fridgeFreezer'), dishwasher: roles.has('dishwasher'), basin: roles.has('basin'), plasterboard: M.plaster.length,
-    sanitary: (prepared.FIXTURES || []).length, builtIns: (prepared.scene.builtIns || []).length
+    sanitary: (prepared.FIXTURES || []).length, builtIns: (prepared.scene.builtIns || []).length,
+    installations: (prepared.FIXTURES || []).some(x => (x.A.shape || []).some(p => p.l === 'installations'))
   };
   const L = Object.fromEntries(Object.keys(M.groups).map(r => ['g' + r, { name: 'G' + r + ' · ' + M.groups[r].name }]));
   const all = {
@@ -420,7 +445,7 @@ function layers(prepared) {
     appliances: { name: 'Appliances', layers: { sink: { name: 'Sink, tap' }, trap: { name: 'Trap' }, hob: { name: 'Hob' }, hood: { name: 'Hood' }, oven: { name: 'Oven' },
       microwave: { name: 'Microwave' }, coffee: { name: 'Coffee machine' }, fridge: { name: 'Fridge' }, dishwasher: { name: 'Dishwasher' }, basin: { name: 'Basin, tap' } } },
     plasterboard: { name: 'Plasterboard casing' },
-    sanitary: { name: 'Sanitary and fittings' }, builtIns: { name: 'Built in (casings)' }
+    sanitary: { name: 'Sanitary and fittings' }, builtIns: { name: 'Built in (casings, their tiles)' }, installations: { name: 'Installations (riser, WC frame)' }
   };
   for (const [k, v] of Object.entries(all)) {
     if (v.layers) { for (const c of Object.keys(v.layers)) if (!has[c]) delete v.layers[c]; if (Object.keys(v.layers).length) L[k] = v; }

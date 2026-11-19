@@ -117,3 +117,10 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 
 - The models of kitchen_6, wardrobe_3, _4, _8 and bedroom_6 the same as before; the house the same (t_house_same); the kitchen's cells and faces the same; the 2D plan (SVG) of the house and of the bathroom 7 the same string as before the change, the checks the same; core/test.html without errors; tsc clean.
 - The cabinet editor: kitchen_6 and bathroom_7 draw, no warnings, no table wider than its column at 1400 px.
+
+## The bathroom 7, second look (19 Nov, evening)
+
+- A ray through the middle of the shower door's glass finds its mover; the page's checks all pass (every solid has its node, inside its group).
+- The whole house with Blocks off: the 5 wall tile meshes of the bathroom hidden, the casing's and the floors' shown.
+- Pictures: the WC with its casing and with Built in off (the frame, cistern, riser), the radiator, the shower set, the rain head from below.
+- Regressions: models of kitchen_6, wardrobe_3, _4, _8, bedroom_6 the same; the house the same; the kitchen's cells and faces the same; tsc clean; the cabinet editor draws the bathroom.

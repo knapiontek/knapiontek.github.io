@@ -202,7 +202,9 @@ function create(opts) {
   /* the moving part a ray meets first, before anything else drawn and uncut; null when none */
   function moverAt(ray) {
     const meshes = [];
-    root.traverse(o => { if (o.isMesh && visibleChain(o) && o.material !== GHOST && !(o.material.transparent && o.material.opacity < 0.5)) meshes.push(o); });
+    const moving = o => { for (let p = o; p; p = p.parent) if (p.userData.mover) return true; return false; };
+    /* glass is seen through, so a click passes it; a moving one (a shower's door) is still taken */
+    root.traverse(o => { if (o.isMesh && visibleChain(o) && o.material !== GHOST && (!(o.material.transparent && o.material.opacity < 0.5) || moving(o))) meshes.push(o); });
     const hit = ray.intersectObjects(meshes, false).find(h => CUT.distanceToPoint(h.point) >= 0);
     for (let o = hit && hit.object; o; o = o.parent) if (o.userData.mover) return o.userData.mover;
     return null;

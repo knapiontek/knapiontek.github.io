@@ -10,5 +10,6 @@ HOME.data({"format": "products", "version": 1, "products": {
  "t-seal-silicone-white": {"name":"Uszczelka T","spec":"silicone, white, push-in","unit":"m","price":21.53,"links":[{"name":"centrumuszczelek.pl","url":"https://centrumuszczelek.pl/uszczelka-typu-t/uszczelka-silikonowa-biala-wciskana-typ-t-0995462-6199"}]},
  "equation-duct-150-2-7": {"name":"Rura okapu","spec":"Equation, aluminium Ø150, 2.7 m","unit":"pc","price":68.49,"links":[{"name":"leroymerlin.pl","url":"https://www.leroymerlin.pl/produkty/rura-odprowadzajaca-aluminiowa-wentylacyjna-150-mm-2-7-mb-equation-40418021.html"}]},
  "porta-wc-handle-rosette": {"name":"Klamka z rozetą WC w kolorze armatury","price":null,"shop":"porta-salon-bb"},
- "riser-pvc-160": {"name": "Pion kanalizacyjny PVC Ø 160", "draw": "riser", "body": {"width": 160, "depth": 160, "height": 2700}, "price": null, "priceNote": "the builder's"}
+ "inspection-hatch-200": {"name":"Rewizja (klapka) 200 × 200 na zabudowie, w kolorze armatury","draw":"shaped","body":{"width":200,"depth":6,"height":200},"price":null,"priceNote":"to choose","shape":[{"k":"box","b":[0,200,0,6,0,200],"m":"metal","l":"sanitary"}]},
+ "riser-pvc-160": {"name":"Pion kanalizacyjny PVC Ø 160","draw":"shaped","body":{"width":160,"depth":160,"height":2700},"price":null,"priceNote":"the builder's","shape":[{"k":"cyl","at":[80,80,1350],"ax":[0,0,1],"r":[80,80],"h":2700,"s":32,"m":"pipe","l":"installations"},{"k":"cyl","at":[80,80,350],"ax":[0,0,1],"r":[95,95],"h":120,"s":32,"m":"pipe","l":"installations"}]}
 }});

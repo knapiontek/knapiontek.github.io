@@ -243,6 +243,15 @@ The owner's decisions: the design is where every object stands (bought, cut, or 
 - The cabinet editor: the basin and its tap were unknown to it (only the appliances were given, not the sanitary products): the bathroom's drawing was empty; the groups and the components tables narrower so they fit without a slider; a bin instead of × to delete a row.
 - **The sides by the compass**: `E`, `W`, `N`, `S` (and `down`) instead of x0, x1, y0, y1 (and h0) in every file: house.js (outer, side, hinge, opens, flush), the scenes (front), core's test tree. x grows to the west, y to the south; one table, core/geometry.js SIDES, used by house/model.js and core/plan2d.js; room.js's quarter turns keyed by the compass.
 
+## The bathroom 7, the owner's second look (19 Nov, evening)
+
+- The shower's door did not open on a click: a click passed through glass (it is seen through); now a moving glass is taken (core/scene.js moverAt).
+- The WC casing is one solid with its niche cut out (scene builtIns: box + cuts), no lines between its pieces; tiled on its faces and the niche's reveals.
+- The layers: a tile goes with what it lies on: a wall's with Blocks, a casing's with Built in (as the facade with its EPS). Built in off shows what it hides: the layer Installations (the riser, the Geberit frame and its cistern, the WC's outlet).
+- The radiator, the shower set (thermostat, rain head on its arm, hand shower on its hose), the WC bowl (lofted), the flush plate, the frame and its cistern, the riser: the prototype's own details (rooms/bathroom/bathroom.dat.js), in the products' axes (library shape, draw.js shaped; work/proto_shapes.js); my simplified drawings removed (wcFrame, wcBowl, towelRadiator, showerSet, riser). What stands on the tiles 10 mm out (the prototype drew no tiles). A hatch on the casing (inspection-hatch-200), as in the prototype.
+- Unused in the library: the materials hdfWhite, plinthPvc removed. Products nothing uses yet: the attic bathroom's (white basin, plug, taps, freestanding bath and its siphon, white gasket), the decors and tiles to choose from (Egger H1181, H1399, H1346, H1176; three tiles), LEGRABOX (the prototype's attic vanity), ABS edges, eRozkrój, the H1180 banding: kept for the owner to decide.
+- The bar "6. Kitchen · Open · ×" over the whole house's view: the room picked by a click on the open floor (its floor marked orange); Open goes to its own view, × unpicks it; the room picked is also the one whose tile layout Finish shows. Not changed: the owner decides.
+
 ## Noted for later (the owner, 19 Nov)
 
 - **2D, the whole house**: a click on the plan marks everything: ugly (to check whether it still does).

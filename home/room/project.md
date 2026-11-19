@@ -63,8 +63,9 @@ In the house's axes and order: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`, all
 | hardware | our layout of the hardware as drawn: handle (axis, barLength, sideHeight), handles (the metals to choose and the default), open (the angles and the drawers' travel; doorStop: a carcass's door that opens less), leg (fromSide, fromBack, fromFront), bins (count, height), plinthGrille (bottom) |
 | floors, floorJoint | the tiles to choose for the floor (not drawn yet) |
 | lights | pendantBottom; pendants {group, count, spacing}; downlights: {group, x, y} or {group, between: [axes], y}, y from the wall |
-| fixtures | id → {product, front, offset, plate?, depth?, metal?}: a bought thing placed like a group (a WC frame, a WC, a mirror, a radiator, a screen, a drain, a shower set, a riser); plate: a WC frame's flush plate from the floor; depth: the frame's depth as built |
-| builtIns | [{name, box, material}]: what the owner builds (a plasterboard casing), its box in the room's axes; tiled like a wall |
+| fixtures | id → {product, front, offset, depth?, metal?}: a bought thing placed like a group (a WC frame, a WC, a mirror, a radiator, a screen, a drain, a shower set, a riser, an inspection hatch); depth: what it reaches out of its wall as built (a frame with its flush plate on the casing). What stands on a tiled wall stands on the tiles (10 mm out) |
+| builtIns | [{name, box, cuts?, material}]: what the owner builds (a plasterboard casing): one solid, its box in the room's axes, its openings (a niche) cut out of it as boxes; no line between its pieces. Tiled like a wall: its faces that face the room, the openings' reveals |
+| layers | a tile goes with what it lies on: a wall's with the blocks (walls), a casing's with the casing (builtIns), as a facade with its EPS; installations: what a casing hides (the riser, the WC frame and its cistern) |
 | tiles | walls, floor, shower {zone, walls, floor}: each {product, pattern, origin?}; without an origin the tiles are moved along each wall (rows from the floor) and on the floor for the fewest small cuts; the shower's zone [x0, x1, y0, y1] tiled apart |
 | lights.downlights.at | [x, y] in the room's axes, where no group carries them (a bathroom) |
 | cameras | name, eye, target: in the room's axes, from its zero |
