@@ -126,6 +126,8 @@ button{font:inherit;color:inherit}
 .issues{margin:8px 0 12px;padding:8px 12px;border:1px solid var(--warn);border-radius:6px;font-size:13px;color:var(--warn)}
 .issues ul{margin:4px 0 0;padding-left:18px}
 #documents section{max-width:880px}
+#documents section.assembly{max-width:none}   /* the cards take the whole width, as many columns as fit */
+#documents section.assembly .note{max-width:880px}
 #documents table{max-width:880px}
 #documents th{text-align:left;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:4px 8px 4px 0;border-bottom:1px solid var(--line)}
 #documents td{padding-right:8px}

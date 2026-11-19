@@ -467,6 +467,7 @@ function book() {
 function assemblyNode(f) {
   if (f.assembly) return f.assembly;
   const a = f.docs.assembly(), box = document.createElement('section');
+  box.className = 'assembly';
   box.innerHTML = '<p class="note">All for one carcass in one place, to gather the parts on site. The parts without a carcass by group and column (G1[4] = group 1, column 4; G1[1-3] = columns 1 to 3). Sizes in mm.</p>'
     + '<p class="note">' + a.legend + '</p><div class="asm">' + a.cards + '</div>';
   return (f.assembly = box);
