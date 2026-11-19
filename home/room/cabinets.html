@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="../core/ui.css">
 <style>
 /* only what the editor adds to core/ui.css: the tables to edit, the picker, the elevation */
+[x-cloak]{display:none!important}
 #editor{position:absolute;inset:0;overflow:auto;padding:24px 20px 72px;background:var(--panel)}
 #editor section{margin:0 0 22px}
 #editor h2{margin:0 0 8px}
@@ -56,35 +57,68 @@ td.actions button.del:hover{color:var(--warn)}
 </style>
 </head>
 <body>
-<div class="app" id="app">
+<div class="app" x-data="editor" id="app">
   <div class="stage" id="stage">
     <div id="editor">
       <section>
         <div class="cols">
           <div>
             <h2>Materials</h2>
-            <div class="sheetwrap tall"><table class="edit read" id="materials"><thead><tr><th>Name</th><th title="Thickness; × depth when the product gives it (worktop, end panel)">Size</th><th title="The board's colour; the 3D view shows its decor when the product has one">Colour</th><th title="Lacquered (satin)">Lacquer</th><th title="Where it is used: the types and the carcass parts (settings.materials of the cabinets file)">Used for</th></tr></thead><tbody></tbody></table></div>
+            <div class="sheetwrap tall"><table class="edit read"><thead><tr><th>Name</th><th title="Thickness; × depth when the product gives it (worktop, end panel)">Size</th><th title="The board's colour; the 3D view shows its decor when the product has one">Colour</th><th title="Lacquered (satin)">Lacquer</th><th title="Where it is used: the types and the carcass parts (settings.materials of the cabinets file)">Used for</th></tr></thead>
+              <tbody><template x-for="m in materials" :key="m.code"><tr>
+                <td x-text="m.name" :title="m.code"></td><td class="center" x-text="m.thickness + (m.depth ? ' × ' + m.depth : '')"></td>
+                <td><i class="swatch" :style="`background:${m.color}`" :title="m.color + (m.texture ? ', decor ' + m.texture : '')"></i></td>
+                <td class="center" x-text="m.lacquered ? '✓' : ''"></td><td x-text="m.uses.map(C.useLabel).join(', ')"></td>
+              </tr></template></tbody></table></div>
           </div>
           <div>
             <h2>Groups</h2>
-            <table class="edit" id="groups"><thead><tr><th>Group</th><th>Name</th><th title="the carcasses' backs from the wall; an island: to the worktop's back edge">Back gap</th><th></th></tr></thead><tbody></tbody></table>
+            <table class="edit"><thead><tr><th>Group</th><th>Name</th><th title="the carcasses' backs from the wall; an island: to the worktop's back edge">Back gap</th><th></th></tr></thead>
+              <tbody><template x-for="(r, i) in groups" :key="r.id"><tr :class="built.flags.groups[i]">
+                <td><input type="number" min="1" step="1" x-model="r.group"></td><td><input type="text" spellcheck="false" x-model="r.name"></td><td><input type="number" min="0" step="1" x-model="r.backGap"></td>
+                <td class="actions"><button type="button" class="del" title="Delete the row" @click="groups.splice(i, 1)">×</button></td>
+              </tr></template></tbody></table>
             <h2 style="margin-top:14px">Columns</h2>
-            <div class="sheetwrap tall"><table class="edit" id="columns"><thead><tr><th>Group</th><th>Width</th><th></th></tr></thead><tbody></tbody></table></div>
+            <div class="sheetwrap tall" @scroll="picker.row = null"><table class="edit"><thead><tr><th>Group</th><th>Width</th><th></th></tr></thead>
+              <tbody x-ref="columns"><template x-for="(r, i) in columns" :key="r.id"><tr :class="built.flags.columns[i]">
+                <td><input type="number" min="1" step="1" x-model="r.group"></td><td><input type="number" min="0" step="1" x-model="r.width"></td>
+                <td class="actions"><button type="button" class="add" title="Insert a row below (a copy of this one)" @click="insert('columns', i)">+</button><button type="button" class="del" title="Delete the row" @click="columns.splice(i, 1)">×</button></td>
+              </tr></template></tbody></table></div>
           </div>
           <div class="wide">
             <h2>Components</h2>
-            <div class="sheetwrap tall"><table class="edit" id="components"><thead><tr><th>Group</th><th>Col.</th><th>Span</th><th title="What it is: it decides what is built">Type</th><th title="More about it; the list depends on the type">Tags</th><th title="The carcass's name: the components with the same name make one carcass (empty: none)">Carcass</th><th>Height</th><th title="Where the handle sits on the front">Handle</th><th title="The door's hinge side">Hinges</th><th title="The front's gap on the left (mm)">Gap L</th><th title="The front's gap on the right (mm)">Gap R</th><th title="The front's gap at the top (mm)">Gap T</th><th title="The front's gap at the bottom (mm)">Gap B</th><th>Note</th><th></th></tr></thead><tbody></tbody></table></div>
+            <div class="sheetwrap tall" @scroll="picker.row = null"><table class="edit"><thead><tr><th>Group</th><th>Col.</th><th>Span</th><th title="What it is: it decides what is built">Type</th><th title="More about it; the list depends on the type">Tags</th><th title="The carcass's name: the components with the same name make one carcass (empty: none)">Carcass</th><th>Height</th><th title="Where the handle sits on the front">Handle</th><th title="The door's hinge side">Hinges</th><th title="The front's gap on the left (mm)">Gap L</th><th title="The front's gap on the right (mm)">Gap R</th><th title="The front's gap at the top (mm)">Gap T</th><th title="The front's gap at the bottom (mm)">Gap B</th><th>Note</th><th></th></tr></thead>
+              <tbody x-ref="components"><template x-for="(r, i) in components" :key="r.id"><tr :class="built.flags.components[i]">
+                <td><input type="number" min="1" step="1" x-model="r.group"></td><td><input type="number" min="1" step="1" x-model="r.column"></td><td><input type="number" min="1" step="1" x-model="r.span"></td>
+                <td><button type="button" class="pick" :class="{none: !r.type}" title="Pick the type" @click="openPicker(r, $event, 'type')" x-text="r.type ? C.typeLabel(r.type) : '—'"></button></td>
+                <td><template x-if="C.tagsOf(r.type).length || r.tags"><button type="button" class="pick" :class="{none: !r.tags}" title="Add or remove tags" @click="openPicker(r, $event, 'tags')" x-text="r.tags ? C.tagsLabel(parseTags(r.tags).words) : ''"></button></template></td>
+                <td><input type="text" spellcheck="false" placeholder="—" x-model="r.carcass"></td><td><input type="number" min="0" step="1" x-model="r.height"></td>
+                <td><template x-if="isFront(r)"><button type="button" class="pick" title="Where the handle sits" @click="openPicker(r, $event, 'handle')" x-text="r.handle ? SIDE_NAME[r.handle] || r.handle : ''"></button></template></td>
+                <td><template x-if="isFront(r)"><button type="button" class="pick" title="The door's hinge side" @click="openPicker(r, $event, 'hinge')" x-text="r.hinge ? SIDE_NAME[r.hinge] || r.hinge : ''"></button></template></td>
+                <td><input type="number" min="0" step="1" x-model="r.gapLeft"></td><td><input type="number" min="0" step="1" x-model="r.gapRight"></td><td><input type="number" min="0" step="1" x-model="r.gapTop"></td><td><input type="number" min="0" step="1" x-model="r.gapBottom"></td>
+                <td class="note"><input type="text" x-model="r.note"></td>
+                <td class="actions"><button type="button" class="add" title="Insert a row below (a copy of this one)" @click="insert('components', i)">+</button><button type="button" class="del" title="Delete the row" @click="components.splice(i, 1)">×</button></td>
+              </tr></template></tbody></table></div>
           </div>
         </div>
       </section>
       <h2>Drawing</h2>
-      <div id="drawing"><div id="svg"></div><div id="tip" hidden></div></div>
+      <div id="drawing" x-ref="drawing" @mousemove="hover($event)" @mouseleave="tip.show = false">
+        <div id="svg" x-html="built.svg || '<p class=&quot;note&quot; style=&quot;padding:60px 20px&quot;>Nothing to draw yet: add groups, columns and components in the tables above.</p>'"></div>
+        <div id="tip" x-show="tip.show" x-cloak :style="`left:${tip.x}px; top:${tip.y}px`" x-text="tip.text"></div>
+      </div>
       <section style="margin-top:22px">
         <h2>Notes</h2>
-        <div class="sheetwrap"><table class="edit" id="notes"><thead><tr><th>Name</th><th>Description</th><th>Details</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="sheetwrap"><table class="edit"><thead><tr><th>Name</th><th>Description</th><th>Details</th><th></th></tr></thead>
+          <tbody x-ref="notes"><template x-for="(n, i) in notes" :key="n.id"><tr :class="EMPTY.notes(n) ? 'empty' : ''">
+            <td class="note"><textarea rows="1" x-model="n.name"></textarea></td><td class="note"><textarea rows="1" x-model="n.description"></textarea></td><td class="note"><textarea rows="1" x-model="n.details"></textarea></td>
+            <td class="actions"><button type="button" class="add" title="Insert a row below" @click="insert('notes', i)">+</button><button type="button" class="del" title="Delete the row" @click="notes.splice(i, 1)">×</button></td>
+          </tr></template></tbody></table></div>
       </section>
     </div>
-    <div class="dock" id="dock" aria-label="Bottom menu"></div>
+    <div class="dock" aria-label="Bottom menu">
+      <button @click="$refs.importFile.click()">Import</button><button @click="exportFile()">Export</button><span class="sep"></span><button @click="location.href = '../house/index.html?room=' + ROOM">View the room</button>
+    </div>
     <div class="float" id="help" role="dialog" aria-label="Help" hidden>
       <p>The cabinets file of a room in tables: its groups, their columns, the components and the notes. The materials are read only (they say what each type is made of). The drawing under the tables follows every change; the cursor on a part of it shows its sizes.</p>
       <p><b>Export</b> saves the cabinets file, to put in place of the one in room/; <b>Import</b> reads such a file into the tables. ◐: light or dark.</p>
@@ -95,15 +129,33 @@ td.actions button.del:hover{color:var(--warn)}
     </div>
   </div>
   <aside id="panel">
-    <h1 id="title">Cabinets</h1>
-    <p class="sub" id="subtitle"></p>
-    <p class="status" id="status" hidden></p>
+    <h1>Cabinets</h1>
+    <p class="sub" x-text="ROOM + ' · room/' + FILE"></p>
+    <p class="status" :class="{error: status.error}" x-show="status.text" x-cloak x-text="status.text"></p>
     <h2>Drawing</h2>
-    <p class="note" id="hover">The cursor on a part of the drawing shows its sizes.</p>
+    <p class="note" x-text="hoverText"></p>
     <h2>Problems in the data</h2>
-    <div id="problems"></div>
+    <p class="note" x-show="!built.warnings.length">None.</p>
+    <div class="issues" x-show="built.warnings.length" x-cloak>
+      <b x-text="built.warnings.length + ' ' + plural(built.warnings.length, 'problem', 'problems') + ' in the data'"></b>
+      <ul><template x-for="(w, i) in built.warnings" :key="i"><li x-text="w"></li></template></ul>
+    </div>
   </aside>
-  <input type="file" id="importFile" accept=".js,.json,text/javascript,application/json" hidden>
+  <!-- one picker for a component row: the type, the tags, the handle or the hinges (fixed, so no table's scroll clips it) -->
+  <div class="picker" :class="{one: picker.mode !== 'type'}" x-show="picker.row" x-cloak :style="`left:${picker.x}px; top:${picker.y}px`"
+       @click.outside="if (!$event.target.closest('.pick')) picker.row = null" @keydown.escape.window="picker.row = null">
+    <div class="title" x-text="{ type: 'type', tags: 'tags: ' + C.typeLabel(picker.row?.type), handle: 'handle', hinge: 'hinges' }[picker.mode]"></div>
+    <template x-if="picker.row && picker.mode === 'type'"><div style="display:contents"><template x-for="t in TYPES" :key="t">
+      <label><input type="radio" name="pick" :checked="picker.row?.type === t" @change="setType(picker.row, t); picker.row = null"> <span x-text="C.typeLabel(t)"></span></label>
+    </template></div></template>
+    <template x-if="picker.row && picker.mode === 'tags'"><div style="display:contents"><template x-for="tag in C.tagsOf(picker.row?.type)" :key="tag">
+      <label><input type="checkbox" :checked="parseTags(picker.row?.tags).tags.includes(tag)" @change="toggleTag(picker.row, tag)"> <span x-text="C.LABELS.tag[tag]"></span></label>
+    </template></div></template>
+    <template x-if="picker.row && (picker.mode === 'handle' || picker.mode === 'hinge')"><div style="display:contents"><template x-for="s in (picker.mode === 'handle' ? HANDLES : HINGES)" :key="s || 'none'">
+      <label><input type="radio" name="pick" :checked="(picker.row?.[picker.mode] || '') === s" @change="picker.row[picker.mode] = s; picker.row = null"> <span x-text="SIDE_NAME[s]"></span></label>
+    </template></div></template>
+  </div>
+  <input type="file" x-ref="importFile" accept=".js,.json,text/javascript,application/json" hidden @change="importFile($event)">
 </div>
 <script src="../core/load.js"></script>
 <script src="../core/ui.js"></script>
@@ -111,14 +163,14 @@ td.actions button.del:hover{color:var(--warn)}
 <script src="cabinets.js"></script>
 <script>
 /* room/cabinets.html: the cabinet editor. Opens a room's cabinets file from the address (?room=kitchen_6), edits it in tables
-   and draws its elevations: tables -> the file -> the model (cabinets.js) -> the drawing. The checks of the data are the
-   model's; this page only checks that the cells are numbers. Export writes the file as the files are written. */
-(async function () {
+   (Alpine.js) and draws its elevations: tables -> the file -> the model (cabinets.js) -> the drawing. The checks of the data
+   are the model's; this page only checks that the cells are numbers. Export writes the file as the files are written. */
 'use strict';
-const { $, el, esc } = HOME.ui, C = HOME.cabinets;
+const C = HOME.cabinets, { $, el, esc } = HOME.ui;
 const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags, plural } = C;
 const HANDLES = ['', ...C.SIDES], HINGES = ['', ...C.HINGE_SIDES];
 const SIDE_NAME = { '': 'none', top: 'top', bottom: 'bottom', left: 'left', right: 'right' };
+const ROOM = new URLSearchParams(location.search).get('room') || 'kitchen_6', FILE = ROOM + '.cabinets.js';
 /* the drawing: sizes in mm (1 unit), colours */
 const DRAW = { groupGap: 100, margin: 40,
   colors: { space: '#cbd5e1', spaceStroke: '#1e293b', worktop: '#f3c48b', worktopStroke: '#a86c32', wallPanel: '#ead7b4', wallPanelStroke: '#a86c32', board: '#e7e5e4', boardStroke: '#78716c',
@@ -126,44 +178,23 @@ const DRAW = { groupGap: 100, margin: 40,
     glassBlack: '#1c1f24', panelBlack: '#0d0f12', applianceEdge: '#000000', glassWindow: '#2b313a', knobMetal: '#a1a7b0', handleMetal: '#c4c9cf', display: '#06080a', displayText: '#7dd3fc' },
   handle: { thickness: 16, edgeOffset: 20, minSpan: 30, maxSpan: 80, maxSpanVertical: 120, endClearance: 80 } };
 
-HOME.ui.themeButton($('themebtn'));
-HOME.ui.corner([[$('helpbtn'), $('help')]]);
-HOME.ui.panelToggle($('stage'));
-
-const ROOM = new URLSearchParams(location.search).get('room') || 'kitchen_6';
-const FILE = ROOM + '.cabinets.js';
-$('subtitle').textContent = ROOM + ' · room/' + FILE;
-const [LIB, LOADED] = await Promise.all([HOME.library.load(), HOME.load(HOME.load.file.room(ROOM, 'cabinets'), 'cabinets', 1)]);
-const BOARDS = LIB.groups.boards, APPLIANCES = LIB.groups.appliances;
-let file = LOADED;                           // keeps the settings and the appliances, which this page does not edit
-
 /* ---------- cells and rows ---------- */
 const blank = (...values) => values.every(v => String(v ?? '').trim() === '');
 const number = v => { const s = String(v ?? '').trim(); return s === '' ? NaN : Number(s); };   // an empty cell is not 0
 let nextId = 1;
-const groupRow = (g = {}) => ({ id: nextId++, group: g.group ?? '', name: g.name ?? '', backGap: g.backGap ?? '' });
-const columnRow = (group = '', width = '') => ({ id: nextId++, group, width });
-const componentRow = (c = {}) => {
-  const gaps = c.gaps || {};
-  return { id: nextId++, group: c.group ?? '', column: c.column ?? '', span: c.span ?? '', type: c.type !== undefined ? C.readType(c.type) || String(c.type).trim() : '',
-    tags: parseTags(c.tags).words.join(' '), carcass: c.carcass || '', height: c.height ?? '', handle: c.handle ?? '', hinge: c.hinge ?? '',
-    gapLeft: gaps.left ?? '', gapRight: gaps.right ?? '', gapTop: gaps.top ?? '', gapBottom: gaps.bottom ?? '', note: c.note || '' };
+const ROW = {
+  groups: (g = {}) => ({ id: nextId++, group: g.group ?? '', name: g.name ?? '', backGap: g.backGap ?? '' }),
+  columns: (group = '', width = '') => ({ id: nextId++, group, width }),
+  components: (c = {}) => {
+    const gaps = c.gaps || {};
+    return { id: nextId++, group: c.group ?? '', column: c.column ?? '', span: c.span ?? '', type: c.type !== undefined ? C.readType(c.type) || String(c.type).trim() : '',
+      tags: parseTags(c.tags).words.join(' '), carcass: c.carcass || '', height: c.height ?? '', handle: c.handle ?? '', hinge: c.hinge ?? '',
+      gapLeft: gaps.left ?? '', gapRight: gaps.right ?? '', gapTop: gaps.top ?? '', gapBottom: gaps.bottom ?? '', note: c.note || '' };
+  },
+  notes: (n = {}) => ({ id: nextId++, name: n.name ?? '', description: n.description ?? '', details: n.details ?? '' })
 };
-const noteRow = (n = {}) => ({ id: nextId++, name: n.name ?? '', description: n.description ?? '', details: n.details ?? '' });
 const EMPTY = { groups: r => blank(r.group, r.name, r.backGap), columns: r => blank(r.group, r.width), components: r => blank(r.group, r.column, r.span, r.height),
   notes: r => blank(r.name, r.description, r.details) };
-const FRESH = { groups: () => groupRow(), columns: () => columnRow(), components: () => componentRow(), notes: () => noteRow() };
-const rows = { groups: [], columns: [], components: [], notes: [] };
-function setFile(f) {
-  file = f;
-  rows.groups = (f.groups || []).map(groupRow);
-  rows.columns = (f.groups || []).flatMap(g => (g.columns || []).map(w => columnRow(g.group, w)));
-  rows.components = (f.components || []).map(componentRow);
-  rows.notes = (f.notes || []).map(noteRow);
-  materialsTable();
-  for (const k of Object.keys(rows)) render(k);
-  rebuild();
-}
 /* a component row -> a component of the file (in the order the files have); empty fields left out; gaps on fronts only */
 function component(r) {
   const c = { group: number(r.group), column: number(r.column), span: number(r.span), type: r.type };
@@ -178,8 +209,9 @@ function component(r) {
   if (String(r.note).trim()) c.note = String(r.note).trim();
   return c;
 }
-/* the tables as a cabinets file; rows that cannot be read are left out and flagged empty or invalid */
-function readTables() {
+/* the tables as a cabinets file (base: the file loaded, its settings and appliances kept); rows that cannot be read are
+   left out and flagged empty or invalid */
+function readTables(base, rows) {
   const warnings = [], flags = { groups: [], columns: [], components: [] }, whole = (n, min) => Number.isInteger(n) && n >= min;
   const groups = [];
   rows.groups.forEach((r, i) => {
@@ -205,122 +237,8 @@ function readTables() {
     components.push(component(r)); rowOf.push(i);
   });
   const notes = rows.notes.filter(n => !EMPTY.notes(n)).map(({ name, description, details }) => ({ name, description, details }));
-  return { file: { format: 'cabinets', version: 1, settings: file.settings, appliances: file.appliances, notes, groups, components }, warnings, flags, rowOf };
+  return { file: { format: 'cabinets', version: 1, settings: base.settings, appliances: base.appliances, notes, groups, components }, warnings, flags, rowOf };
 }
-
-/* ---------- the tables ---------- */
-const COLUMNS = {
-  groups: [['group', 'number'], ['name', 'text'], ['backGap', 'number']],
-  columns: [['group', 'number'], ['width', 'number']],
-  components: [['group', 'number'], ['column', 'number'], ['span', 'number'], ['type', 'pick'], ['tags', 'pick'], ['carcass', 'text'], ['height', 'number'], ['handle', 'pick'], ['hinge', 'pick'],
-    ['gapLeft', 'number'], ['gapRight', 'number'], ['gapTop', 'number'], ['gapBottom', 'number'], ['note', 'note']],
-  notes: [['name', 'area'], ['description', 'area'], ['details', 'area']]
-};
-const pickText = (r, key) => key === 'type' ? (r.type ? C.typeLabel(r.type) : '—') : key === 'tags' ? (r.tags ? C.tagsLabel(parseTags(r.tags).words) : '')
-  : FRONT_TYPES.includes(r.type) && r[key] ? SIDE_NAME[r[key]] || r[key] : '';
-const hasPick = (r, key) => key === 'type' || (key === 'tags' ? C.tagsOf(r.type).length || r.tags : FRONT_TYPES.includes(r.type));
-const grow = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
-function rowElement(table, r) {
-  const tr = el('tr');
-  for (const [key, kind] of COLUMNS[table]) {
-    const td = el('td', { className: kind === 'note' || kind === 'area' ? 'note' : '' });
-    if (kind === 'pick') {
-      if (hasPick(r, key)) { const b = el('button', { type: 'button', className: 'pick' + (r[key] ? '' : ' none'), textContent: pickText(r, key) }); b.onclick = e => openPicker(table, r, key, e.currentTarget); td.append(b); }
-    } else if (kind === 'area') {
-      const t = el('textarea', { rows: 1, value: r[key] }); t.oninput = () => { r[key] = t.value; grow(t); changed(table, r); }; td.append(t); requestAnimationFrame(() => grow(t));
-    } else {
-      const i = el('input', { type: kind === 'number' ? 'number' : 'text', value: r[key], spellcheck: false });
-      if (kind === 'number') { i.min = 0; i.step = 1; }
-      i.oninput = () => { r[key] = i.value; changed(table, r); }; td.append(i);
-    }
-    tr.append(td);
-  }
-  const act = el('td', { className: 'actions' });
-  if (table !== 'groups') { const add = el('button', { type: 'button', className: 'add', textContent: '+', title: 'Insert a row below (a copy of this one)' }); add.onclick = () => insert(table, r); act.append(add); }
-  const del = el('button', { type: 'button', className: 'del', textContent: '×', title: 'Delete the row' }); del.onclick = () => remove(table, r); act.append(del);
-  tr.append(act);
-  return tr;
-}
-/* every table keeps one empty row at its end */
-function keepEmpty(table) {
-  const list = rows[table], empty = EMPTY[table];
-  let added = false;
-  if (!list.length || !empty(list[list.length - 1])) { list.push(FRESH[table]()); added = true; }
-  while (list.length > 1 && empty(list[list.length - 1]) && empty(list[list.length - 2])) list.pop();
-  return added;
-}
-function render(table) {
-  keepEmpty(table);
-  const body = $(table).tBodies[0];
-  body.replaceChildren(...rows[table].map(r => rowElement(table, r)));
-}
-function changed(table, r) {
-  const list = rows[table];
-  if (r === list[list.length - 1] && !EMPTY[table](r)) { list.push(FRESH[table]()); $(table).tBodies[0].append(rowElement(table, list[list.length - 1])); }
-  rebuild();
-}
-function insert(table, r) {
-  const list = rows[table], at = list.indexOf(r);
-  const copy = table === 'columns' ? columnRow(r.group, r.width) : table === 'components' ? Object.assign(componentRow(), r, { id: nextId++, note: '' }) : FRESH[table]();
-  list.splice(at + 1, 0, copy); render(table); rebuild();
-  $(table).tBodies[0].rows[at + 1]?.querySelector('input,textarea')?.focus();
-}
-function remove(table, r) { rows[table].splice(rows[table].indexOf(r), 1); render(table); rebuild(); }
-
-/* the materials, read only: each product of settings.materials with what it is used for */
-function materialsTable() {
-  let m = {};
-  try { m = C.withLibrary(file, BOARDS).materials; } catch (e) { status(e.message, true); }
-  const list = Object.entries(m).map(([code, x]) => ({ ...x, code })).sort((a, b) => b.thickness - a.thickness);
-  $('materials').tBodies[0].replaceChildren(...list.map(x => el('tr', {}, `<td title="${esc(x.code)}">${esc(x.name)}</td><td class="center">${x.thickness}${x.depth ? ' × ' + x.depth : ''}</td>`
-    + `<td><i class="swatch" style="background:${esc(x.color)}" title="${esc(x.color + (x.texture ? ', decor ' + x.texture : ''))}"></i></td><td class="center">${x.lacquered ? '✓' : ''}</td><td>${esc(x.uses.map(C.useLabel).join(', '))}</td>`)));
-}
-
-/* ---------- the picker: a type, the tags (those of the row's type), a handle's side, the hinges' side ---------- */
-let picker = null;
-function closePicker() { if (picker) { picker.remove(); picker = null; } }
-function openPicker(table, r, key, button) {
-  const same = picker && picker.dataset.key === key && picker.row === r;
-  closePicker();
-  if (same) return;
-  picker = el('div', { className: 'picker' + (key === 'type' ? '' : ' one') });
-  picker.dataset.key = key; picker.row = r;
-  const done = () => { closePicker(); render(table); rebuild(); };
-  if (key === 'type') {
-    picker.append(el('div', { className: 'title', textContent: 'type' }));
-    for (const t of TYPES) { const l = el('label', {}, `<input type="radio" name="pick"${r.type === t ? ' checked' : ''}> ${esc(C.typeLabel(t))}`); l.querySelector('input').onchange = () => { setType(r, t); done(); }; picker.append(l); }
-  } else if (key === 'tags') {
-    picker.append(el('div', { className: 'title', textContent: 'tags: ' + C.typeLabel(r.type) }));
-    for (const tag of C.tagsOf(r.type)) {
-      const l = el('label', {}, `<input type="checkbox"${parseTags(r.tags).tags.includes(tag) ? ' checked' : ''}> ${esc(C.LABELS.tag[tag])}`);
-      l.querySelector('input').onchange = () => { toggleTag(r, tag); button.textContent = pickText(r, 'tags'); button.classList.toggle('none', !r.tags); rebuild(); };
-      picker.append(l);
-    }
-  } else {
-    picker.append(el('div', { className: 'title', textContent: key === 'handle' ? 'handle' : 'hinges' }));
-    for (const s of key === 'handle' ? HANDLES : HINGES) { const l = el('label', {}, `<input type="radio" name="pick"${(r[key] || '') === s ? ' checked' : ''}> ${SIDE_NAME[s]}`); l.querySelector('input').onchange = () => { r[key] = s; done(); }; picker.append(l); }
-  }
-  document.body.append(picker);
-  const b = button.getBoundingClientRect(), h = picker.offsetHeight;
-  picker.style.left = Math.min(b.left, innerWidth - picker.offsetWidth - 8) + 'px';
-  picker.style.top = (b.bottom + h < innerHeight ? b.bottom + 2 : Math.max(4, b.top - h - 2)) + 'px';
-}
-document.addEventListener('pointerdown', e => { if (picker && !picker.contains(e.target) && !e.target.closest('.pick')) closePicker(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closePicker(); });
-document.querySelectorAll('.sheetwrap').forEach(w => w.addEventListener('scroll', closePicker));
-/* the tags in the order of TAG_NAMES, so the file stays stable; unknown ones at the end */
-const writeTags = (r, tags) => { r.tags = [...TAG_NAMES.filter(t => tags.includes(t)), ...parseTags(r.tags).unknown].join(' '); };
-/* a new type keeps only the tags it allows; a handle, hinges and gaps belong to fronts only */
-function setType(r, type) {
-  r.type = type;
-  writeTags(r, parseTags(r.tags).tags.filter(t => TAGS[t].includes(type)));
-  if (!FRONT_TYPES.includes(type)) { r.handle = r.hinge = ''; r.gapLeft = r.gapRight = r.gapTop = r.gapBottom = ''; }
-}
-function toggleTag(r, tag) { const t = parseTags(r.tags).tags; writeTags(r, t.includes(tag) ? t.filter(x => x !== tag) : [...t, tag]); }
-/* number cells hold whole mm: only digits can be typed or pasted */
-const isNumberCell = t => t.matches && t.matches('table.edit input[type="number"]');
-document.addEventListener('keydown', e => { if (isNumberCell(e.target) && e.key.length === 1 && !/[0-9]/.test(e.key) && !e.ctrlKey && !e.metaKey) e.preventDefault(); });
-document.addEventListener('paste', e => { if (isNumberCell(e.target) && !/^\d+$/.test(e.clipboardData.getData('text').trim())) e.preventDefault(); });
 
 /* ---------- the drawing: the model's modules side by side, a group after another ---------- */
 const RECT = { space: ['space', 'spaceStroke'], plasterboard: ['board', 'boardStroke'], worktop: ['worktop', 'worktopStroke'], endPanel: ['worktop', 'worktopStroke'],
@@ -378,72 +296,122 @@ function describe(g) {
   parts.push(a('note'));
   return parts.filter(Boolean).join(' · ');
 }
-const tip = $('tip');
-$('drawing').addEventListener('mousemove', e => {
-  const g = e.target.closest('.item');
-  if (!g) { tip.hidden = true; return; }
-  const r = $('drawing').getBoundingClientRect();
-  tip.textContent = $('hover').textContent = describe(g); tip.hidden = false;
-  tip.style.left = (e.clientX - r.left + 15) + 'px'; tip.style.top = (e.clientY - r.top - 35) + 'px';
-});
-$('drawing').addEventListener('mouseleave', () => { tip.hidden = true; });
-
-/* ---------- tables -> file -> model -> drawing, flags and problems ---------- */
-let built = null;
-function rebuild() {
-  const t = readTables();
+/* tables -> file -> model -> the drawing and the problems */
+function build(base, rows, boards, appliances) {
+  const t = readTables(base, rows);
   let warnings = t.warnings.slice(), svg = '';
   try {
-    const project = C.withLibrary(t.file, BOARDS), stops = C.checkSettings(project);
+    const project = C.withLibrary(t.file, boards), stops = C.checkSettings(project);
     if (stops.length) warnings = warnings.concat(stops);
     else {
-      const model = C.build(project, C.appliances(project, APPLIANCES));
+      const model = C.build(project, C.appliances(project, appliances));
       for (const issue of model.issues) if (issue.skipped && issue.index != null) t.flags.components[t.rowOf[issue.index]] = 'invalid';
       svg = drawing(model); warnings = warnings.concat(model.warnings);
     }
   } catch (e) { warnings.push(e.message); }
-  for (const table of ['groups', 'columns', 'components']) [...$(table).tBodies[0].rows].forEach((tr, i) => { tr.className = t.flags[table][i] || ''; });
-  [...$('notes').tBodies[0].rows].forEach((tr, i) => { tr.className = EMPTY.notes(rows.notes[i] || {}) ? 'empty' : ''; });
-  $('svg').innerHTML = svg || '<p class="note" style="padding:60px 20px">Nothing to draw yet: add groups, columns and components in the tables above.</p>';
-  $('problems').innerHTML = warnings.length ? `<div class="issues"><b>${warnings.length} ${plural(warnings.length, 'problem', 'problems')} in the data</b><ul>${warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></div>` : '<p class="note">None.</p>';
-  built = { file: t.file, warnings };
+  return { file: t.file, flags: t.flags, warnings, svg };
 }
-let timer = null;
-function status(message, error) {
-  clearTimeout(timer);
-  const s = $('status'); s.textContent = message; s.className = 'status' + (error ? ' error' : ''); s.hidden = false;
-  if (!error) timer = setTimeout(() => { s.hidden = true; }, 3000);
-}
-
-/* ---------- import, export ---------- */
-function download(text, name) {
-  const a = el('a', { href: URL.createObjectURL(new Blob([text], { type: 'text/javascript;charset=utf-8' })), download: name });
-  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-}
-function exportFile() {
-  const n = built.warnings.length;
-  download(C.cabinetsText(built.file), FILE);
-  status('Exported ' + FILE + (n ? ' with ' + n + ' ' + plural(n, 'problem', 'problems') + ' in the data (listed in the panel)' : '') + '. Put it in place of room/' + FILE + ' and reload the pages.', n > 0);
-}
-/* a cabinets file (HOME.data({...}) or its JSON) into the tables */
+/* a cabinets file (HOME.data({...}) or its JSON) as an object */
 function readFile(text) {
-  const body = text.trim().replace(/^HOME\.data\(/, '').replace(/\);?\s*$/, '');
-  const f = JSON.parse(body);
+  const f = JSON.parse(text.trim().replace(/^HOME\.data\(/, '').replace(/\);?\s*$/, ''));
   if (f.format !== 'cabinets' || f.version !== 1) throw new Error(`not a cabinets file of version 1 (format ${f.format}, version ${f.version})`);
   if (!f.settings || !Array.isArray(f.groups) || !Array.isArray(f.components)) throw new Error('no settings, groups or components in it');
   return f;
 }
-$('importFile').onchange = e => {
-  const f = e.target.files[0]; if (!f) return;
-  const reader = new FileReader();
-  reader.onload = () => { try { setFile(readFile(String(reader.result))); status(`Imported "${f.name}".`); } catch (err) { status('Import failed: ' + err.message, true); } e.target.value = ''; };
-  reader.readAsText(f);
+const download = (text, name) => {
+  const a = el('a', { href: URL.createObjectURL(new Blob([text], { type: 'text/javascript;charset=utf-8' })), download: name });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
-HOME.ui.bottomMenu([[{ name: 'Import', go: () => $('importFile').click() }, { name: 'Export', go: exportFile }], [{ name: 'View the room', go: () => { location.href = '../house/index.html?room=' + ROOM; } }]]);
+/* number cells hold whole mm: only digits can be typed or pasted */
+const isNumberCell = t => t.matches && t.matches('table.edit input[type="number"]');
+document.addEventListener('keydown', e => { if (isNumberCell(e.target) && e.key.length === 1 && !/[0-9]/.test(e.key) && !e.ctrlKey && !e.metaKey) e.preventDefault(); });
+document.addEventListener('paste', e => { if (isNumberCell(e.target) && !/^\d+$/.test(e.clipboardData.getData('text').trim())) e.preventDefault(); });
 
-setFile(file);
-window.EDITOR = { rows, readTables, rebuild, get built() { return built; }, setFile, readFile };   // for tests and the console
-})().catch(e => { console.error(e); document.body.insertAdjacentHTML('afterbegin', '<p style="color:#b00;padding:12px">Error: ' + String(e.message || e) + '</p>'); });
+/* ---------- the page ---------- */
+document.addEventListener('alpine:init', () => Alpine.data('editor', () => ({
+  C, TYPES, HANDLES, HINGES, SIDE_NAME, EMPTY, ROOM, FILE, parseTags, plural,
+  base: null, boards: {}, applianceProducts: {}, materials: [],
+  groups: [], columns: [], components: [], notes: [],
+  built: { file: null, flags: { groups: [], columns: [], components: [] }, warnings: [], svg: '' },
+  picker: { row: null, mode: 'type', x: 0, y: 0 },
+  tip: { show: false, x: 0, y: 0, text: '' }, hoverText: 'The cursor on a part of the drawing shows its sizes.',
+  status: { text: '', error: false }, timer: null,
+  async init() {
+    HOME.ui.themeButton($('themebtn')); HOME.ui.corner([[$('helpbtn'), $('help')]]); HOME.ui.panelToggle($('stage'));
+    try {
+      const [lib, file] = await Promise.all([HOME.library.load(), HOME.load(HOME.load.file.room(ROOM, 'cabinets'), 'cabinets', 1)]);
+      this.boards = lib.groups.boards; this.applianceProducts = lib.groups.appliances;
+      this.setFile(file);
+    } catch (e) { this.say(e.message, true); }
+    /* one empty row at the end of every table; the drawing after every change */
+    for (const k of ['groups', 'columns', 'components', 'notes']) this.$watch(k, () => this.keepEmpty(k));
+    Alpine.effect(() => { if (this.base) this.built = build(this.base, { groups: this.groups, columns: this.columns, components: this.components, notes: this.notes }, this.boards, this.applianceProducts); });
+    window.EDITOR = this;                      // for tests and the console
+  },
+  setFile(f) {
+    this.base = f;
+    try { this.materials = Object.entries(C.withLibrary(f, this.boards).materials).map(([code, m]) => ({ ...m, code })).sort((a, b) => b.thickness - a.thickness); }
+    catch (e) { this.materials = []; this.say(e.message, true); }
+    this.groups = (f.groups || []).map(g => ROW.groups(g));
+    this.columns = (f.groups || []).flatMap(g => (g.columns || []).map(w => ROW.columns(g.group, w)));
+    this.components = (f.components || []).map(c => ROW.components(c));
+    this.notes = (f.notes || []).map(n => ROW.notes(n));
+    for (const k of ['groups', 'columns', 'components', 'notes']) this.keepEmpty(k);
+  },
+  keepEmpty(k) {
+    const list = this[k], empty = EMPTY[k];
+    if (!list.length || !empty(list[list.length - 1])) list.push(k === 'columns' ? ROW.columns() : ROW[k]());
+    while (list.length > 1 && empty(list[list.length - 1]) && empty(list[list.length - 2])) list.pop();
+  },
+  /* a new row below: a copy of the current one (a component without its note), an empty note */
+  insert(k, i) {
+    const r = this[k][i];
+    const copy = k === 'columns' ? ROW.columns(r.group, r.width) : k === 'components' ? Object.assign(ROW.components(), r, { id: nextId++, note: '' }) : ROW.notes();
+    this[k].splice(i + 1, 0, copy);
+    this.$nextTick(() => this.$refs[k].querySelectorAll('tr')[i + 1]?.querySelector('input,textarea')?.focus());
+  },
+  isFront: r => FRONT_TYPES.includes(r.type),
+  /* the tags in the order of TAG_NAMES, so the file stays stable; unknown ones at the end */
+  writeTags(r, tags) { r.tags = [...TAG_NAMES.filter(t => tags.includes(t)), ...parseTags(r.tags).unknown].join(' '); },
+  /* a new type keeps only the tags it allows; a handle, hinges and gaps belong to fronts only */
+  setType(r, type) {
+    r.type = type;
+    this.writeTags(r, parseTags(r.tags).tags.filter(t => TAGS[t].includes(type)));
+    if (!FRONT_TYPES.includes(type)) { r.handle = r.hinge = ''; r.gapLeft = r.gapRight = r.gapTop = r.gapBottom = ''; }
+  },
+  toggleTag(r, tag) { const t = parseTags(r.tags).tags; this.writeTags(r, t.includes(tag) ? t.filter(x => x !== tag) : [...t, tag]); },
+  /* the picker opens below its cell, or above it when there is no room */
+  openPicker(row, event, mode) {
+    if (this.picker.row === row && this.picker.mode === mode) { this.picker.row = null; return; }
+    const b = event.currentTarget.getBoundingClientRect(), h = { type: 220, tags: 40 + 30 * C.tagsOf(row.type).length, handle: 190, hinge: 120 }[mode];
+    this.picker = { row, mode, x: Math.min(b.left, innerWidth - 260), y: b.bottom + h < innerHeight ? b.bottom + 2 : Math.max(4, b.top - h - 2) };
+  },
+  hover(e) {
+    const g = e.target.closest('.item');
+    if (!g) { this.tip.show = false; return; }
+    const r = this.$refs.drawing.getBoundingClientRect();
+    this.tip = { show: true, x: e.clientX - r.left + 15, y: e.clientY - r.top - 35, text: describe(g) };
+    this.hoverText = this.tip.text;
+  },
+  say(text, error) {
+    clearTimeout(this.timer);
+    this.status = { text, error: !!error };
+    if (!error) this.timer = setTimeout(() => { this.status = { text: '', error: false }; }, 3000);
+  },
+  exportFile() {
+    const n = this.built.warnings.length;
+    if (!this.built.file) { this.say('Nothing to export: ' + FILE + ' is not loaded.', true); return; }
+    download(C.cabinetsText(this.built.file), FILE);
+    this.say('Exported ' + FILE + (n ? ' with ' + n + ' ' + plural(n, 'problem', 'problems') + ' in the data (listed in the panel)' : '') + '. Put it in place of room/' + FILE + ' and reload the pages.', n > 0);
+  },
+  importFile(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => { try { this.setFile(readFile(String(reader.result))); this.say(`Imported "${f.name}".`); } catch (err) { this.say('Import failed: ' + err.message, true); } e.target.value = ''; };
+    reader.readAsText(f);
+  }
+})));
 </script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

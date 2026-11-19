@@ -124,6 +124,7 @@ Each solid is then moved to its node: the offsets summed up the tree, and for a 
 - No hidden rules: what is built follows from the data (types, settings), never from names, labels or sizes. No duplicated values or code: what two pages share lives in core.
 - One global, `HOME`: each module is `HOME.<file name>` (house/model.js: `HOME.model`), so a module's file name is unique in the project; a data file calls `HOME.data(…)`.
 - Scripts in a page in one order: core/load.js first, then three.js, core, the page's own files.
-- Library versions pinned (three.js r128, SheetJS 0.18.5).
+- Library versions pinned (three.js r128, SheetJS 0.18.5, Alpine.js 3.14.1).
+- **Alpine.js for the pages' HTML**: the goal is Alpine.js in every page of the repo (panels, menus, tables, forms), declared in the page's HTML; the modules compute without it (and without the browser where they can). Pages move to it one by one, each checked against what it showed before.
 - No abbreviations a reader has to decode; counters and coordinates may be one letter.
 - A list or an array holds homogeneous values: the same type and meaning.

@@ -75,4 +75,4 @@ The golden: the prototype's KitchenEngine.build on kitchen.dat.js in Node (every
 
 ## The cabinet editor
 
-room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the data; the file read into the tables and written back (`HOME.cabinets.cabinetsText(EDITOR.built.file)`) is room/kitchen_6.cabinets.js byte for byte; a change in a table rebuilds the drawing and lists the model's problems (a drawer made 500 high: "G1[4]: drawer overlaps another piece - skipped").
+room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the data; the file read into the tables and written back (`HOME.cabinets.cabinetsText(EDITOR.built.file)`) is room/kitchen_6.cabinets.js byte for byte; a change in a table rebuilds the drawing and lists the model's problems (a drawer made 500 high: "G1[4]: drawer overlaps another piece - skipped"). The picker: a Type cell opens the list, a choice sets the type and closes it; a Tags cell toggles tags and stays open; Esc or a click outside closes it. Typing in the last (empty) row adds a new empty row.
