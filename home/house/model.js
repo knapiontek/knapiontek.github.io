@@ -42,7 +42,7 @@ const inHouse = (n, fields) => {
 const ELEMENTS = [], OPENINGS = [], ROOF_WINDOWS = [], VOIDS = [];
 T.walk(n => {
   if (KIND[n.type]) ELEMENTS.push(Object.assign(inHouse(n, fieldsOf(n, ['top', 'outer', 'cuts', 'floor', 'below'])), { id: n.id, kind: n.type, b: T.box(n) }));
-  else if (OPENING_KIND[n.type]) OPENINGS.push(Object.assign(inHouse(n, fieldsOf(n, ['label', 'outer', 'cols', 'leaf', 'hinge', 'opens', 'product', 'extras', 'below', 'transoms'])), { id: n.id, kind: n.type, b: T.box(n) }));
+  else if (OPENING_KIND[n.type]) OPENINGS.push(Object.assign(inHouse(n, fieldsOf(n, ['label', 'outer', 'cols', 'leaf', 'hinge', 'opens', 'flush', 'product', 'extras', 'below', 'transoms'])), { id: n.id, kind: n.type, b: T.box(n) }));
   else if (n.type === 'roofWindow') { const b = T.box(n); ROOF_WINDOWS.push({ id: n.id, name: n.place, label: n.label, x: [b[0], b[1]], y: [b[2], b[3]] }); }
   else if (n.type === 'void') VOIDS.push({ id: n.id, name: n.name, boxes: n.children.map(T.box) });
 });
@@ -205,30 +205,38 @@ OPENINGS.forEach(openingFixtures);
 ROOF.windows.forEach(roofWindowFixtures);
 
 /* ================= 5b. INNER DOORS =================
-   In an opening that spans its wall: a frame lining the reveal (the jambs and the head, the wall's whole depth) and a
-   leaf in it, flush with the face it opens toward, turning on the hinge jamb. The frame is a fixture; the leaf and its
-   handles are a door: cells that turn together about the hinge (axis), by angle when open. */
+   Hidden doors: the leaf flush with the wall on the door's flush side (the hall's), in a frame of two steps over the
+   leaf's depth: thin on the half toward which the door opens, thick (the stop) on the other half; the leaf stepped the
+   other way, wide where the frame is thin, so no light passes the gap and the leaf swings clear. The rest of the reveal
+   is the wall. The frame is a fixture; the leaf and its handles are a door: cells that turn together about the hinge
+   (axis, on the leaf's face toward which it opens), by angle when open. */
 const DOORS = [];
 function doorOf(o, i) {
   const K = OPENING_KIND[o.kind], D = K.door && F.doors[K.door];
   if (!D) return;
   const [x1, x2, y1, y2, h1, h2] = o.b, alongX = x2 - x1 > y2 - y1;       // the wall runs along the opening's longer side
   const [u1, u2] = alongX ? [x1, x2] : [y1, y2], [n1, n2] = alongX ? [y1, y2] : [x1, x2];
-  const sign = o.opens[1] === '1' ? 1 : -1, face = sign > 0 ? n2 : n1;
+  const sign = o.opens[1] === '1' ? 1 : -1, flushSign = o.flush[1] === '1' ? 1 : -1;
+  const flush = flushSign > 0 ? n2 : n1, back = flush - flushSign * D.depth, middle = (flush + back) / 2;
+  const near = sign === flushSign ? [middle, flush] : [back, middle], far = sign === flushSign ? [back, middle] : [middle, flush];   // n ranges: the half toward the opening, the other
+  const face = sign === flushSign ? flush : back;                        // the leaf's face toward which it opens
   /* a box from (u, n) ranges into house axes */
   const box = (ua, ub, na, nb, ha, hb) => prism(alongX ? [ua, ub, Math.min(na, nb), Math.max(na, nb), ha, hb] : [Math.min(na, nb), Math.max(na, nb), ua, ub, ha, hb]);
-  const layers = layersOf(o), J = D.frame, top = h2 - D.head;
-  addFixture(box(u1, u1 + J, n1, n2, h1, top), D.frameMaterial, layers, 'door', true);
-  addFixture(box(u2 - J, u2, n1, n2, h1, top), D.frameMaterial, layers, 'door', true);
-  addFixture(box(u1, u2, n1, n2, top, h2), D.frameMaterial, layers, 'door', true);
-  /* the leaf: the frame's inside less the gap, from the floor gap up */
-  const a = u1 + J + D.gap, b = u2 - J - D.gap, back = face - sign * D.depth, floor = floorOf((h1 + h2) / 2);
+  const layers = layersOf(o), floor = floorOf((h1 + h2) / 2);
+  for (const [[na, nb], J] of [[near, D.frame], [far, D.stop]]) {       // the frame's jambs and head, each half its own width
+    addFixture(box(u1, u1 + J, na, nb, h1, h2 - J), D.frameMaterial, layers, 'door', true);
+    addFixture(box(u2 - J, u2, na, nb, h1, h2 - J), D.frameMaterial, layers, 'door', true);
+    addFixture(box(u1, u2, na, nb, h2 - J, h2), D.frameMaterial, layers, 'door', true);
+  }
+  /* the leaf: wide on the near half (the thin frame less the gap), narrow on the far half (the stop less the gap) */
+  const a = u1 + D.frame + D.gap, b = u2 - D.frame - D.gap;
   const cell = (S, material) => ({ S, element: 'door', floor, material, cap: material, layers: [floor].concat(layers), edges: true, part: 'door' + i });
-  const cells = [cell(box(a, b, back, face, h1 + D.bottom, top - D.gap), D.material)];
+  const cells = [cell(box(a, b, near[0], near[1], h1 + D.bottom, h2 - D.frame - D.gap), D.material),
+    cell(box(u1 + D.stop + D.gap, u2 - D.stop - D.gap, far[0], far[1], h1 + D.bottom, h2 - D.stop - D.gap), D.material)];
   /* a handle on each face, by the free edge */
   const hinge = o.hinge === (alongX ? 'x1' : 'y1') ? b : a, free = hinge === a ? b : a, inward = free > hinge ? -1 : 1;
   const H = D.handle, hu = free + inward * H.inset, hh = h1 + H.height;
-  for (const [f, out] of [[face, sign], [back, -sign]]) {
+  for (const [f, out] of [[face, sign], [face - sign * D.depth, -sign]]) {
     cells.push(cell(box(hu - H.rosette / 2, hu + H.rosette / 2, f, f + out * H.rosetteDepth, hh - H.rosette / 2, hh + H.rosette / 2), H.material));
     cells.push(cell(box(Math.min(hu, hu + inward * H.lever), Math.max(hu, hu + inward * H.lever), f + out * H.offset, f + out * (H.offset + H.width), hh - H.width / 2, hh + H.width / 2), H.material));
   }

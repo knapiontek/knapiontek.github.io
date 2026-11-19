@@ -64,8 +64,9 @@ An assembly stands at the house's zero with the house's size; a floor at its lev
 | split | the height between the ground floor and the attic |
 | body | the main body along x [x1, x2] (without the wings) |
 | kinds | of elements: name, material, cap (the section's colour), thickness (checked), layers; `opened`: openings are cut out of it; `host`: windows and doors sit in it; `walkable`: the walk stands on it; `finish`: the facade layer that switches its finish; `raw`: its bare material; `floor`: the floor layer it belongs to when not the one its height gives (the attic's ceiling: the roof) |
+| A door's own fields | `hinge` (the jamb it turns on), `opens` (the side it opens toward), `flush` (the side where the leaf is flush with the wall: the hall's; toward a hall, then a vestibule, the living room, a bedroom) |
 | openingKinds | what is drawn in an opening: `glazed` (frame, bars, glass; `sill`), `leaf` (a solid leaf), `door` (an inner door of frames.doors), `passage` (the floor runs through), `layer` (windows or doors) |
-| frames | the frames, bars and glass of windows; `doors` (an inner door's frame, leaf and handle); `leaves` (a gate's and the entrance's leaf, grooves, handle) |
+| frames | the frames, bars and glass of windows; `doors`: an inner door, hidden (every one alike): `frame` (the frame's width on the half of the leaf's depth toward which it opens), `stop` (its width on the other half), `gap`, `bottom` (the gap at the floor), `depth` (the leaf's), `angle` (open), the materials, the handle; the leaf is flush with the wall on the door's `flush` side, stepped against the frame so no light passes; `leaves` (a gate's and the entrance's leaf, grooves, handle) |
 | finishes | the facade: which material covers which part of an EPS box, by its outer side (x0, x1, y0, y1), a region (x, y, h; a missing range or a null end: no limit) and lines; a later rule wins |
 | part | what a part of the house takes: the element kinds, the fixtures (frames, glass, doors), the roof |
 | line | `{h, y, pitch}`: the line h + pitch · tan(roof pitch) · (y′ − y) across the house |

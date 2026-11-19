@@ -174,8 +174,8 @@ HOME.data({
      "glass": "glass",
      "doors": {
       "inner": {
-       "frame": 50,
-       "head": 30,
+       "frame": 10,
+       "stop": 25,
        "gap": 3,
        "bottom": 10,
        "depth": 40,
@@ -516,6 +516,7 @@ HOME.data({
          "label": "900/2050",
          "hinge": "x1",
          "opens": "y0",
+         "flush": "y0",
          "product": "porta-hide-wc-80",
          "extras": ["porta-wc-handle-rosette"]
         }
@@ -536,7 +537,8 @@ HOME.data({
          "size": [900, 120, 2050],
          "label": "900/2050",
          "hinge": "x1",
-         "opens": "y0"
+         "opens": "y0",
+         "flush": "y0"
         }
        ]
       },
@@ -555,7 +557,8 @@ HOME.data({
          "size": [240, 900, 2050],
          "label": "900/2050",
          "hinge": "y0",
-         "opens": "x1"
+         "opens": "x1",
+         "flush": "x0"
         }
        ]
       },
@@ -575,7 +578,8 @@ HOME.data({
          "size": [900, 120, 2050],
          "label": "900/2050",
          "hinge": "x1",
-         "opens": "y1"
+         "opens": "y1",
+         "flush": "y1"
         }
        ]
       },
@@ -830,7 +834,8 @@ HOME.data({
          "size": [700, 120, 2050],
          "label": "700/2050",
          "hinge": "x0",
-         "opens": "y1"
+         "opens": "y1",
+         "flush": "y0"
         }
        ]
       },
@@ -851,6 +856,7 @@ HOME.data({
          "label": "900/2050",
          "hinge": "x1",
          "opens": "y0",
+         "flush": "y0",
          "product": "porta-hide-wc-80",
          "extras": ["porta-wc-handle-rosette"]
         }
@@ -872,7 +878,8 @@ HOME.data({
          "size": [700, 120, 2050],
          "label": "700/2050",
          "hinge": "x0",
-         "opens": "y0"
+         "opens": "y0",
+         "flush": "y1"
         }
        ]
       },
@@ -901,7 +908,8 @@ HOME.data({
          "size": [120, 900, 2050],
          "label": "900/2050",
          "hinge": "y0",
-         "opens": "x0"
+         "opens": "x0",
+         "flush": "x1"
         }
        ]
       },
@@ -948,7 +956,8 @@ HOME.data({
          "size": [120, 700, 2050],
          "label": "700/2050",
          "hinge": "y0",
-         "opens": "x1"
+         "opens": "x1",
+         "flush": "x1"
         },
         {
          "id": "door_hall_1_bedroom_7",
@@ -958,7 +967,8 @@ HOME.data({
          "size": [120, 900, 2050],
          "label": "900/2050",
          "hinge": "y1",
-         "opens": "x1"
+         "opens": "x1",
+         "flush": "x0"
         },
         {
          "id": "door_hall_1_bedroom_6",
@@ -968,7 +978,8 @@ HOME.data({
          "size": [120, 900, 2050],
          "label": "900/2050",
          "hinge": "y0",
-         "opens": "x1"
+         "opens": "x1",
+         "flush": "x0"
         }
        ]
       },
@@ -1006,7 +1017,7 @@ HOME.data({
        "size": [3540, 2800, 5940],
        "area": [[950, 1900, 0, 680], [950, 3540, 680, 2800], [0, 950, 1620, 2800]],
        "archonArea": 7.32,
-       "settings": {"tiles": {"origin": [802, 178]}}
+       "settings": {"tiles": {"pattern": "third", "origin": [802, 178]}}
       },
       {
        "id": "bedroom_2",
@@ -1060,7 +1071,7 @@ HOME.data({
        "size": [4440, 4130, 5940],
        "area": [[810, 4440, 0, 4130], [0, 810, 1120, 4130]],
        "archonArea": 16.53,
-       "settings": {"tiles": {"origin": [214, 206]}},
+       "settings": {"tiles": {"pattern": "third", "origin": [214, 206]}},
        "files": ["cabinets", "scene", "docs"]
       },
       {
@@ -1072,7 +1083,7 @@ HOME.data({
        "size": [3630, 3970, 5940],
        "area": [[0, 3630, 0, 3970]],
        "archonArea": 14.11,
-       "settings": {"tiles": {"origin": [606, 164]}}
+       "settings": {"tiles": {"pattern": "third", "origin": [606, 164]}}
       },
       {
        "id": "wardrobe_8",
@@ -1083,7 +1094,7 @@ HOME.data({
        "size": [1520, 2850, 5940],
        "area": [[0, 1520, 0, 2850]],
        "archonArea": 4.16,
-       "settings": {"tiles": {"origin": [802, 2]}},
+       "settings": {"tiles": {"pattern": "third", "origin": [802, 2]}},
        "files": ["cabinets", "scene", "docs"]
       }
      ]

@@ -212,6 +212,13 @@ The prototype's floor tiles (its house page: Wykończenie, the layouts, the coun
 - **The panel only for settings** (the owner): Finish lost its numbers (area, tiles, whole and cut, small cuts, cost) and the product's note; they are in Documents, Floor tiles. The rule in project.md (Code style).
 - **Finish: only the settings** (the owner, again): no list of floors and rooms, no product names, no "With"; the picked room's layout only (pick it on the floor in 3D; a room's own view: that room).
 - **The HDF backs of the wardrobes 1 mm smaller on every side** (the owner): the prototype's wardrobes had them the carcass's full size (its data: a back 800 × 2336 on a carcass 800 × 2336), only its kitchen 1 mm in; now one rule, `backPanel.inset: 1`, as the kitchen's and as an adjustable shelf's clearance; the cut list's title says it.
+- **Fixed, my mistake**: the attic's half bond (set on the floor) went down by the cascade to the rooms with their own grid (hall 1, bedrooms 6 and 7, wardrobe 8): 3 to 14 small cuts each, red at the doors. They now set their own pattern (third bond, as before): 0 small cuts each. tests/t_tiles.js compares the moved layout at the prototype's pattern and origin.
+
+## The inner doors hidden (19 Nov, the owner)
+
+- Every inner door is now a hidden door, all drawn alike (700 or 900 wide): the leaf flush with the wall on the hall's side (`flush` on each door node: toward a hall, then a vestibule, the living room, a bedroom; written by work/doors_flush.js), a frame over the leaf's depth only (the rest of the reveal is the wall), of two steps: 10 mm on the half toward which the door opens, 25 mm (the stop) on the other; the leaf stepped the other way. From the hall: the wall, the joint, the leaf. From the room: the leaf set back in the reveal, the stop round it.
+- The light seen through in bedroom 6: the old frame lined the whole reveal and the leaf stood in it with a straight 3 mm gap through its whole depth (the prototype's model, the same); the steps close it now.
+- Checked: the house's model the same but the doors (454 solids, none overlapping); its snapshot taken again (SNAP=1); the rooms' parts as well. The doors' opening directions as before.
 
 ## Noted for later: the 2D view (done 18 Nov, see above) (the owner, 18 Nov)
 
