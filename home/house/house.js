@@ -1017,7 +1017,8 @@ HOME.data({
        "offset": [4760, 440, 0],
        "size": [1590, 3350, 5940],
        "area": [[0, 950, 0, 3350], [950, 1590, 0, 3150]],
-       "archonArea": 5.13
+       "archonArea": 5.13,
+       "files": ["cabinets", "scene", "docs"]
       },
       {
        "id": "wardrobe_4",
@@ -1027,7 +1028,8 @@ HOME.data({
        "offset": [4760, 5650, 0],
        "size": [1590, 3010, 5940],
        "area": [[0, 1590, 0, 3010]],
-       "archonArea": 4.6
+       "archonArea": 4.6,
+       "files": ["cabinets", "scene", "docs"]
       },
       {
        "id": "bathroom_5",
@@ -1047,7 +1049,8 @@ HOME.data({
        "offset": [9320, 4530, 0],
        "size": [4440, 4130, 5940],
        "area": [[810, 4440, 0, 4130], [0, 810, 1120, 4130]],
-       "archonArea": 16.53
+       "archonArea": 16.53,
+       "files": ["cabinets", "scene", "docs"]
       },
       {
        "id": "bedroom_7",
@@ -1067,7 +1070,8 @@ HOME.data({
        "offset": [8490, 440, 0],
        "size": [1520, 2850, 5940],
        "area": [[0, 1520, 0, 2850]],
-       "archonArea": 4.16
+       "archonArea": 4.16,
+       "files": ["cabinets", "scene", "docs"]
       }
      ]
     },

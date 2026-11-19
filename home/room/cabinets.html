@@ -22,10 +22,10 @@
             <td class="c"><i class="swatch" :style="'background:' + m.color" :title="m.color + (m.texture ? ', decor ' + m.texture : '')"></i></td><td class="c" x-text="m.lacquered ? '✓' : ''"></td><td x-text="m.uses.map(C.useLabel).join(', ')"></td></tr></template>
         </table></div></div>
         <div>
-          <div class="sheetwrap"><table class="sheet edit" x-ref="groups"><tr class="title"><td colspan="4">Groups</td></tr>
-            <tr class="head"><td>Group</td><td>Name</td><td title="the carcasses' backs from the wall; an island: to the worktop's back edge">Back gap</td><td></td></tr>
+          <div class="sheetwrap"><table class="sheet edit" x-ref="groups"><tr class="title"><td colspan="5">Groups</td></tr>
+            <tr class="head"><td>Group</td><td>Name</td><td title="the carcasses' backs from the wall; an island: to the worktop's back edge">Back gap</td><td title="The carcasses' depth in this group (empty: settings.carcass.depth)">Depth</td><td></td></tr>
             <template x-for="(r, i) in groups" :key="r.id"><tr data-row :class="built.flags.groups[i]">
-              <td class="n"><input type="number" min="1" step="1" x-model="r.group"></td><td><input type="text" spellcheck="false" x-model="r.name"></td><td class="n"><input type="number" min="0" step="1" x-model="r.backGap"></td>
+              <td class="n"><input type="number" min="1" step="1" x-model="r.group"></td><td><input type="text" spellcheck="false" x-model="r.name"></td><td class="n"><input type="number" min="0" step="1" x-model="r.backGap"></td><td class="n"><input type="number" min="1" step="1" placeholder="—" x-model="r.depth"></td>
               <td class="actions"><button type="button" class="del" title="Delete the row" @click="groups.splice(i, 1)">×</button></td></tr></template>
           </table></div>
           <div class="sheetwrap tall" @scroll="picker.row = null"><table class="sheet edit" x-ref="columns"><tr class="title"><td colspan="3">Columns</td></tr>
@@ -112,7 +112,7 @@ const DRAW = { groupGap: 100, margin: 40, line: '#5f6a66', empty: '#e3e6e4', han
 /* the columns of each table: fix, characters (numbers, codes); share, the text's part of the room left (min, max characters) */
 const COLS = {
   materials: [{ share: 3, min: 18, max: 44 }, { fix: 17 }, { fix: 6 }, { fix: 7 }, { share: 2, min: 11 }],
-  groups: [{ fix: 5 }, { share: 1, min: 12 }, { fix: 8 }, { fix: 2 }],
+  groups: [{ fix: 5 }, { share: 1, min: 12 }, { fix: 8 }, { fix: 5 }, { fix: 2 }],
   columns: [{ fix: 5 }, { fix: 6 }, { fix: 3 }],
   components: [{ fix: 5 }, { fix: 4 }, { fix: 4 }, { share: 2, min: 11 }, { share: 2, min: 10 }, { fix: 7 }, { fix: 6 }, { fix: 7 }, { fix: 7 }, { fix: 5 }, { fix: 5 }, { fix: 5 }, { fix: 5 }, { share: 3, min: 12 }, { fix: 3 }],
   notes: [{ share: 1, min: 10, max: 22 }, { share: 2 }, { share: 3 }, { fix: 3 }]
@@ -123,7 +123,7 @@ const blank = (...values) => values.every(v => String(v ?? '').trim() === '');
 const number = v => { const s = String(v ?? '').trim(); return s === '' ? NaN : Number(s); };   // an empty cell is not 0
 let nextId = 1;
 const ROW = {
-  groups: (g = {}) => ({ id: nextId++, group: g.group ?? '', name: g.name ?? '', backGap: g.backGap ?? '' }),
+  groups: (g = {}) => ({ id: nextId++, group: g.group ?? '', name: g.name ?? '', backGap: g.backGap ?? '', depth: g.depth ?? '' }),
   columns: (group = '', width = '') => ({ id: nextId++, group, width }),
   components: (c = {}) => {
     const gaps = c.gaps || {};
@@ -133,7 +133,7 @@ const ROW = {
   },
   notes: (n = {}) => ({ id: nextId++, name: n.name ?? '', description: n.description ?? '', details: n.details ?? '' })
 };
-const EMPTY = { groups: r => blank(r.group, r.name, r.backGap), columns: r => blank(r.group, r.width), components: r => blank(r.group, r.column, r.span, r.height),
+const EMPTY = { groups: r => blank(r.group, r.name, r.backGap, r.depth), columns: r => blank(r.group, r.width), components: r => blank(r.group, r.column, r.span, r.height),
   notes: r => blank(r.name, r.description, r.details) };
 /* a component row -> a component of the file (in the order the files have); empty fields left out; gaps on fronts only */
 function component(r) {
@@ -156,9 +156,9 @@ function readTables(base, rows) {
   const groups = [];
   rows.groups.forEach((r, i) => {
     if (EMPTY.groups(r)) return (flags.groups[i] = 'empty');
-    const group = number(r.group), backGap = number(r.backGap);
-    if (!whole(group, 1) || !(backGap >= 0) || groups.some(g => g.group === group)) { flags.groups[i] = 'invalid'; warnings.push(`Groups, row ${i + 1}: the group a whole number ≥ 1 (each once), the back gap ≥ 0.`); return; }
-    groups.push({ group, name: String(r.name).trim(), backGap, columns: [] });
+    const group = number(r.group), backGap = number(r.backGap), depth = blank(r.depth) ? null : number(r.depth);
+    if (!whole(group, 1) || !(backGap >= 0) || (depth !== null && !whole(depth, 1)) || groups.some(g => g.group === group)) { flags.groups[i] = 'invalid'; warnings.push(`Groups, row ${i + 1}: the group a whole number ≥ 1 (each once), the back gap ≥ 0, the depth empty or whole mm.`); return; }
+    groups.push(Object.assign({ group, name: String(r.name).trim(), backGap }, depth !== null ? { depth } : {}, { columns: [] }));
   });
   rows.columns.forEach((r, i) => {
     if (EMPTY.columns(r)) return (flags.columns[i] = 'empty');
@@ -221,9 +221,10 @@ function drawing(model) {
   const rail = material('cabinet') ? material('cabinet').frameWidth : 0;
   const items = groups.flatMap(g => g.items.map(i => {
     const width = i.x1 - i.x0, h = i.h1 - i.h0, f = i.front;
-    const s = { type: i.type, x: i.x0 + at.get(g), width, height: h, handle: i.handle, rail, color: (material(i.type) || {}).color || DRAW.empty };
+    const own = C.hasTag(i, 'open') ? material('carcass') : material(i.type);   // an open module shows its carcass
+    const s = { type: i.type, x: i.x0 + at.get(g), width, height: h, handle: i.handle, rail, color: (own || {}).color || DRAW.empty };
     const fw = f ? Math.max(0, f.width) : width, fh = f ? Math.max(0, f.height) : h;
-    return `<g class="item" data-g="${i.group}" data-c="${i.column}" data-s="${i.span}" data-tags="${esc([i.type, ...i.tags].join(' '))}" data-k="${esc(i.carcass || '')}" data-w="${width}" data-h="${h}" data-fw="${fw}" data-fh="${fh}" data-gaps="${f ? C.gapsText(i.gaps) : ''}" data-type="${i.type}" data-note="${esc(i.note || '')}">${(SHAPE[i.type] || rect)(s, height - i.h1)}</g>`;
+    return `<g class="item" data-g="${i.group}" data-c="${i.column}" data-s="${i.span}" data-tags="${esc([i.type, ...i.tags].join(' '))}" data-k="${esc(i.carcass || '')}" data-w="${width}" data-h="${h}" data-fw="${fw}" data-fh="${fh}" data-gaps="${f && i.gaps ? C.gapsText(i.gaps) : ''}" data-type="${i.type}" data-note="${esc(i.note || '')}">${(SHAPE[i.type] || rect)(s, height - i.h1)}</g>`;
   })).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-m} ${-m} ${x - DRAW.groupGap + 2 * m} ${height + 2 * m}" role="img" aria-label="The fronts">${items}</svg>`;
 }
@@ -231,7 +232,7 @@ function drawing(model) {
 function describe(g) {
   const a = n => g.getAttribute('data-' + n);
   const parts = [C.placeLabel(+a('g'), +a('c'), +a('s')), a('k'), C.tagsLabel(a('tags').split(' ')), `${a('w')} × ${a('h')}`];
-  if (FRONT_TYPES.includes(a('type'))) parts.push(`front ${a('fw')} × ${a('fh')}`, `gaps ${a('gaps')}`);
+  if (FRONT_TYPES.includes(a('type')) && a('gaps')) parts.push(`front ${a('fw')} × ${a('fh')}`, `gaps ${a('gaps')}`);
   parts.push(a('note'));
   return parts.filter(Boolean).join(' · ');
 }

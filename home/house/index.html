@@ -96,7 +96,7 @@ const FURNITURE = await Promise.all(FURNISHED.map(async r => {
   const node = { offset: T.place(r.node), size: r.node.size }, prepared = HOME.room.prepare(node, { cabinets, scene }, { products: LIB.groups });
   return { room: r, prepared, docs: docs && HOME.docs.create({ cabinets: HOME.cabinets, model: prepared.model, tree: prepared.TREE, docs, appliances: prepared.appliances, library: LIB }) };
 }));
-for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks, { handle: MATERIALS[f.prepared.scene.hardware.handles.default] });
+for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks, f.prepared.scene.hardware.handles ? { handle: MATERIALS[f.prepared.scene.hardware.handles.default] } : {});
 await LIB.loadTextures(FURNITURE.flatMap(f => f.prepared.textures));
 /* one room with furniture: the furniture's own layers too (its groups and its kinds of parts) */
 const ROOM_LAYERS = !WHOLE && FURNITURE.length === 1 ? HOME.room.layers(FURNITURE[0].prepared) : {};

@@ -66,18 +66,19 @@ function holeText(drilling) {
 }
 /* the drilling rules over the assembly cards, from the cabinets file's settings.drilling */
 function assemblyLegend() {
-  const d = model.settings.drilling, list = xs => xs.map(num1).join(', ');
+  const d = model.settings.drilling, list = xs => xs.map(num1).join(', '), c = model.counts, board = model.settings.drawers && model.settings.drawers.box === 'board';
   const remark = kind => ((COST.labels.legend || {})[kind] ? ' (' + COST.labels.legend[kind] + ')' : '');
+  /* only what the room has */
   return [
     'Holes: the height of the axis from the bottom of the part (doors: from the bottom of the front), in mm. How far from the front the template or the fitting gives:',
-    '· hinge cup Ø' + num1(d.cup.diameter) + ', depth ' + d.cup.depth + ', ' + d.cup.fromEdge + ' from the hinge edge',
-    '· hinge plate: the hinge\'s axis given, 2 holes Ø' + num1(d.plate.diameter) + ' ' + d.plate.spacing + ' apart, ' + d.plate.fromFront + ' from the front',
-    '· bumper Ø' + num1(d.bumper.diameter) + ', depth ' + num1(d.bumper.depth) + ': facing each hinge, at its height; in the front edge of the side (post), in the middle of its thickness',
-    '· shelf pin Ø' + num1(d.shelfPin.diameter) + ': ' + d.shelfPin.fromFront + ' from the front and ' + d.shelfPin.fromBack + ' from the back, ' + d.shelfPin.belowShelf + ' under the shelf',
-    '· drawer / pull-out shelf runner: by the runner, holes ' + list(d.runner.fromFront) + ' from the front, ' + d.runner.belowDrawer + ' under the bottom' + remark('runner'),
-    '· ball runner (drawers behind doors): ' + list(d.ballRunner.fromFront) + ' from the front, ' + d.ballRunner.aboveBottom + ' over the box\'s bottom',
-    'L / R: the left / right sides and hinge posts seen from the front of the cabinet (holes from the inside); doors hinged on the left / right.'
-  ].join('\n');
+    c.hinges && '· hinge cup Ø' + num1(d.cup.diameter) + ', depth ' + d.cup.depth + ', ' + d.cup.fromEdge + ' from the hinge edge',
+    c.hinges && '· hinge plate: the hinge\'s axis given, 2 holes Ø' + num1(d.plate.diameter) + ' ' + d.plate.spacing + ' apart, ' + d.plate.fromFront + ' from the front',
+    c.bumpers && '· bumper Ø' + num1(d.bumper.diameter) + ', depth ' + num1(d.bumper.depth) + ': facing each hinge, at its height; in the front edge of the side (post), in the middle of its thickness',
+    c.shelfPins && '· shelf pin Ø' + num1(d.shelfPin.diameter) + ': ' + d.shelfPin.fromFront + ' from the front and ' + d.shelfPin.fromBack + ' from the back, ' + d.shelfPin.belowShelf + ' under the shelf',
+    (c.drawersD || c.drawersM || c.pullOutShelves) && '· drawer / pull-out shelf runner: by the runner, holes ' + list(d.runner.fromFront) + ' from the front, ' + d.runner.belowDrawer + ' under the bottom' + remark('runner'),
+    (c.doorDrawers || board) && '· ball runner (' + (board ? 'drawers of board' : 'drawers behind doors') + '): ' + list(d.ballRunner.fromFront) + ' from the box\'s front (those within the runner), ' + d.ballRunner.aboveBottom + ' over the box\'s bottom',
+    'L / R: the left / right sides' + (c.hinges ? ' and hinge posts' : '') + ' seen from the front of the cabinet (holes from the inside)' + (c.hinges ? '; doors hinged on the left / right.' : '.')
+  ].filter(Boolean).join('\n');
 }
 /* the finished edges of one piece per side, as a supplier's order form has them: {length, width} = the edges along each,
    0, 1 or 2. Banded edges (boards, unlacquered front panels) come as [{side, length, along}] (along: a | b); lacquered
@@ -109,7 +110,7 @@ function blockRows(blockId) {
   const where = p => (p.carcassId ? carcassName[p.carcassId] : place(p));
   const list = items => sortRows(longFirst(KE.cutList(items.map(p => ({ ...p, at: where(p) })))));
   const FROM_MODEL = {
-    fronts: () => sortRows(KE.cutList(model.fronts.map(f => ({ ...frontPart(f), at: where(f) })))),
+    fronts: () => sortRows(KE.cutList(model.fronts.filter(f => !f.open).map(f => ({ ...frontPart(f), at: where(f) })))),   // an open drawer has no front
     strips: () => list(model.strips),
     plinths: () => list(model.plinths.map(p => ({ ...p, name: 'Plinth' }))),
     frontPanels: () => list(model.frontPanels),
@@ -145,14 +146,16 @@ function renderAssembly() {
   const size = (a, b) => Math.max(a, b) + ' × ' + Math.min(a, b);
   const section = (title, rows) => (rows.length ? '<br><b>' + esc(title) + '</b>' + listLines(rows) : '');
   const cards = model.carcasses.map(carcass => {
-    const boards = model.boards.filter(b => b.carcassId === carcass.id), fronts = model.fronts.filter(f => f.carcassId === carcass.id);
+    const boards = model.boards.filter(b => b.carcassId === carcass.id), drawers = model.fronts.filter(f => f.carcassId === carcass.id), fronts = drawers.filter(f => !f.open);
     const pins = boards.filter(b => b.id === 'adjustableShelf').length * KE.PINS_PER_SHELF;
     const hinges = fronts.reduce((n, f) => n + (f.hinges ? f.hinges.length : 0), 0);
     const bumpers = fronts.reduce((n, f) => n + (f.bumpers ? f.bumpers.length : 0), 0);
     const frontLines = fronts.flatMap(f => [label(KE.cutKey(frontPart(f))) + frontFunction(f) + ' ' + round1(f.width) + ' × ' + round1(f.height) + (f.hinges ? ', hinges: ' + f.hinges.length + ', ' + SIDE[f.hand] : '') + (f.item.handle ? ', handle ' + SIDE[f.item.handle] : ''),
       ...holeLines(KE.cutList([frontPart(f)])[0].drillings)]);
+    const board = f => f.drawer.board, boxOf = d => d.boxWidth + ' × ' + d.runnerLength + ' × ' + d.boxHeight;
     const drawerLines = [
-      ...fronts.filter(f => f.drawer).map(f => 'drawer ' + f.drawer.size + (f.drawer.bins ? ' with waste bins' : '') + (f.drawer.inner ? ' + an inner drawer M' : '')),
+      ...drawers.filter(f => f.drawer).map(f => board(f) ? (f.open ? 'open drawer ' : 'drawer ') + boxOf(f.drawer) + ', ball runners ' + f.drawer.runnerLength
+        : 'drawer ' + f.drawer.size + (f.drawer.bins ? ' with waste bins' : '') + (f.drawer.inner ? ' + an inner drawer M' : '')),
       ...fronts.filter(f => f.doorDrawers).map(f => f.doorDrawers.count + ' × drawer behind the door ' + f.doorDrawers.boxWidth + ' × ' + f.doorDrawers.runnerLength + ' × ' + f.doorDrawers.boxHeight + ' (a spacer on the hinges\' side)')
     ];
     const doorDrawers = fronts.reduce((n, f) => n + (f.doorDrawers ? f.doorDrawers.count : 0), 0);
@@ -163,9 +166,10 @@ function renderAssembly() {
       bumpers ? 'bumpers: ' + bumpers : '',
       pins ? 'shelf pins: ' + pins : '',
       pullOutShelves ? pullOutShelves + ' ' + KE.plural(pullOutShelves, 'pair', 'pairs') + ' of full-extension runners' : '',
-      doorDrawers ? 'ball runners ' + fronts.find(f => f.doorDrawers).doorDrawers.runnerLength + ': ' + doorDrawers + ' sets' : ''
+      doorDrawers ? 'ball runners ' + fronts.find(f => f.doorDrawers).doorDrawers.runnerLength + ': ' + doorDrawers + ' sets' : '',
+      ...[...new Set(drawers.filter(f => f.drawer && board(f)).map(f => f.drawer.runnerLength))].map(l => 'ball runners ' + l + ': ' + drawers.filter(f => f.drawer && board(f) && f.drawer.runnerLength === l).length + ' sets')
     ].filter(Boolean);
-    return '<div class="card"><h3>' + esc(carcass.name) + '</h3>' + KE.placeLabel(carcass.group, carcass.column, carcass.span) + ' · ' + KE.LABELS.carcassKind[carcass.kind] + ' · ' + round1(carcass.x1 - carcass.x0) + ' × ' + round1(carcass.h1 - carcass.h0) + ' × ' + model.carcassDepth + (carcass.flags.length ? ' · ' + carcass.flags.map(f => KE.LABELS.flag[f]).join(', ') : '') +
+    return '<div class="card"><h3>' + esc(carcass.name) + '</h3>' + KE.placeLabel(carcass.group, carcass.column, carcass.span) + ' · ' + KE.LABELS.carcassKind[carcass.kind] + ' · ' + round1(carcass.x1 - carcass.x0) + ' × ' + round1(carcass.h1 - carcass.h0) + ' × ' + model.groups[carcass.group].geometry.carcassDepth + (carcass.flags.length ? ' · ' + carcass.flags.map(f => KE.LABELS.flag[f]).join(', ') : '') +
       [...new Set(boards.map(b => b.material))].map(m => section(model.materials[m].label, partList(boards.filter(b => b.material === m)))).join('') +
       section('Fronts', frontLines) + section('Drawers', drawerLines) + section('Hardware', hardware) + '</div>';
   });
@@ -197,13 +201,14 @@ values = {
   params: Object.fromEntries(Object.entries(COST.params).map(([name, value]) => [name, evalQty(value)])),
   items: Object.fromEntries(ITEMS.map(item => [item.id, { qty: item.qty, price: item.price }]))
 };
-/* the totals of each cut-list block: m², banding, cutting length, pieces; and the same per row */
+/* the totals of each cut-list block: m², banding, cutting length, pieces, length; and the same per row */
 function blockTotals() {
   const totals = {};
   for (const block of COST.blocks) {
-    const t = { m2: 0, edge: 0, cut: 0, qty: 0, rows: [] };
+    const t = { m2: 0, edge: 0, cut: 0, qty: 0, length: 0, rows: [] };   // length: m of the longer side (what is bought by the metre)
     (rowsOf[block.id] || []).forEach(row => {
       const { a, b, qty, edges } = row, m2 = (a * b * qty) / 1e6;
+      t.length += (Math.max(a, b) * qty) / 1000;
       const edge = edges && edges.length ? (edgeLength(edges) * qty) / 1000 : null;   // banded edges; fronts, strips and plinths have none
       const cut = block.cut ? ((a + b) * qty) / 1000 : null;
       t.m2 += m2; t.qty += qty; t.edge += edge || 0; t.cut += cut || 0;
@@ -315,7 +320,7 @@ function compute() {
 function buildBook() {
   const result = compute(), E = HOME.estimate;
   /* the cut list: as an order form, each size followed by the number of its finished edges */
-  const cutting = E.cutList({ title: 'Cut list – the kitchen\'s boards (sizes in mm)', note: fill(COST.labels.cuttingNote),
+  const cutting = E.cutList({ title: fill(COST.labels.cutTitle), note: fill(COST.labels.cuttingNote),
     screen: [6, 's2n9m36', 6, 3, 6, 3, 6, 5, 7, 6, 21, 's1n8m24'],
     blocks: COST.blocks.map(block => ({ id: block.id, title: fill(block.title), columns: block.columns, cut: block.cut,
       rows: (rowsOf[block.id] || []).map((row, i) => {

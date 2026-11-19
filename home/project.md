@@ -106,11 +106,11 @@ Each solid is then moved to its node: the offsets summed up the tree, and for a 
 1. **The borders of the open rooms**: the owner checks where the hall, the living room and the kitchen end (house.js, drawn in 2D).
 2. **The room engine** (room/): the room from the house; tiles (the house's floors too) and products from the library placed by the room's scene file; the bathroom stands in the house without its cabinet.
 3. **Cabinets and the rooms as data**, room by room, each compared with the prototype: the kitchen first, then the bathrooms' vanity, then the wardrobes and the bedroom's niche (their data rebuilt as carcasses).
-4. **Tiles** (next): the surfaces belong to the rooms; the product, the joint and the grid's origin are the floor's settings, which its rooms take unless they set their own.
-5. **The worktops' and end panels' lengths** as bought: the owner gives them, the library gets them (the editor shows ? for now).
-6. **The other projects of the repo on Alpine.js** (books, physics): their folders are to be connected first.
+4. **The wardrobes** (now): the three walk-in wardrobes of the attic (wardrobe_3, wardrobe_4, wardrobe_8) and the niche of bedroom_6, moved from the prototype's solids (rooms/wardrobe/wardrobe.dat.js, written board by board) to cabinets files built by room/cabinets.js, as the kitchen: each room its cabinets, scene and docs files (the estimate, the cut list, the assembly cards, the notes). The format cabinets gets what they need (room/project.md): a module without a front (tag open: open shelves, a drawer box seen), drawers of board on ball runners, a depth per group, the shelves on one grid of the room (all shelves of a room level, fixed and adjustable), the materials and settings a file needs only for what it has.
+5. **Tiles**: the surfaces belong to the rooms; the product, the joint and the grid's origin are the floor's settings, which its rooms take unless they set their own.
+6. **The worktops' and end panels' lengths** as bought: the owner gives them, the library gets them (the editor shows ? for now).
 
-Done: Documents and the editor (the estimate, our own cut list, the assembly cards, Test of the Documents, the cabinet editor); every page of home/ on Alpine.js.
+Done: Documents and the editor (the estimate, our own cut list, the assembly cards, Test of the Documents, the cabinet editor); every page on Alpine.js.
 
 ## How we work
 
@@ -129,6 +129,6 @@ Done: Documents and the editor (the estimate, our own cut list, the assembly car
 - One global, `HOME`: each module is `HOME.<file name>` (house/model.js: `HOME.model`), so a module's file name is unique in the project; a data file calls `HOME.data(…)`.
 - Scripts in a page in one order: core/load.js first, then three.js, core, the page's own files.
 - Library versions pinned (three.js r128, SheetJS 0.18.5, Alpine.js 3.14.1).
-- **The screen with Alpine.js**, in every page of the repo. In home/ every page is one Alpine part on one screen (core/ui.js): the pieces of the screen (the menus, the modes, the panel, the corner, the sheets, the 2D sheet) are written once in core and a page puts them together in its HTML (`<template x-part="…">`); what is its own (its view, its help, its panel's sections) it writes itself. Its state is reactive and kept in the browser; what it shows follows the state, no code copies it to the screen. Every page looks the same: one ui.css, no style of its own. The modules compute without Alpine (and without the browser where they can). A page that moves to it is checked against what it showed before.
+- **The screen with Alpine.js**: every page is one Alpine part on one screen (core/ui.js): the pieces of the screen (the menus, the modes, the panel, the corner, the sheets, the 2D sheet) are written once in core and a page puts them together in its HTML (`<template x-part="…">`); what is its own (its view, its help, its panel's sections) it writes itself. Its state is reactive and kept in the browser; what it shows follows the state, no code copies it to the screen. Every page looks the same: one ui.css, no style of its own. The modules compute without Alpine (and without the browser where they can). A page that moves to it is checked against what it showed before.
 - No abbreviations a reader has to decode; counters and coordinates may be one letter.
 - A list or an array holds homogeneous values: the same type and meaning.

@@ -32,20 +32,20 @@ function prepare(room, files, library) {
   }
   /* the hardware as drawn: the products' sizes (the maker's) and the scene's layout (ours) */
   const product = key => P.hardware[key], H = cabinets.settings.hardware, L = scene.hardware;
-  const leg = product(H.leg), grille = product(H.plinthGrille), drawer = product(H.drawer);
+  const has = key => H[key] && product(H[key]), leg = has('leg'), grille = has('plinthGrille'), drawer = has('drawer');   // what the file has
   const HW = {
-    handle: Object.assign({ cupLength: product(H.handle).length }, L.handle),
+    handle: has('handle') ? Object.assign({ cupLength: product(H.handle).length }, L.handle) : null,
     handles: L.handles, open: L.open, bins: L.bins,
-    leg: Object.assign({ radius: leg.radius, footRadius: leg.footRadius, footHeight: leg.footHeight }, L.leg),
-    hinge: { cupDepth: product(H.hinge).cupDepth },
-    drawer: { runnerWidth: drawer.runnerWidth, sideThickness: drawer.sideThickness, sideFromCarcass: drawer.sideFromCarcass, fromBack: drawer.fromBack, fromFront: drawer.fromFront },
-    plinthGrille: { width: grille.width, bottom: L.plinthGrille.bottom, top: L.plinthGrille.bottom + grille.height }
+    leg: leg ? Object.assign({ radius: leg.radius, footRadius: leg.footRadius, footHeight: leg.footHeight }, L.leg) : null,
+    hinge: has('hinge') ? { cupDepth: product(H.hinge).cupDepth } : null,
+    drawer: drawer ? { runnerWidth: drawer.runnerWidth, sideThickness: drawer.sideThickness, sideFromCarcass: drawer.sideFromCarcass, fromBack: drawer.fromBack, fromFront: drawer.fromFront } : null,
+    plinthGrille: grille ? { width: grille.width, bottom: L.plinthGrille.bottom, top: L.plinthGrille.bottom + grille.height } : null
   };
   /* the looks this room adds to the library's: its boards, its walls' paint, the handles' metal, the lamps' shade */
   const TREE = C().tree(model, appliances, { install: scene.installation, ceiling: room.size[2], HW });
   const looks = Object.assign(C().boardLooks(model), {
     wall: { color: scene.room.wallColor, roughness: 0.95, reflect: 0.45 },
-    shade: { color: model.materials[model.materialFor.cabinet].color, roughness: 0.5, metalness: 0.2 }
+    shade: { color: (model.materials[model.materialFor.cabinet || model.materialFor.carcass]).color, roughness: 0.5, metalness: 0.2 }
   });
   const textures = Object.values(model.materials).map(m => m.texture).filter(Boolean);
   return { room, cabinets, scene, model, TREE, appliances, PLACE, HW, looks, textures, level: O[2], ceiling: room.size[2] };
@@ -240,7 +240,7 @@ function build(V, prepared, opts = {}) {
   const treeChecks = () => {
     const out = [];
     for (const g of prepared.TREE) {
-      for (const c of HOME.tree.create(g).checks()) for (const i of c.items) out.push(g.id + ': ' + c.name + ': ' + i);
+      for (const c of HOME.tree.create(g).checks()) if (!c.info) for (const i of c.items) out.push(g.id + ': ' + c.name + ': ' + i);   // to know (a child outside its parent) is no fault
       const s = scene.groups[g.id.slice(1)];
       const size = s && (s.front[0] === 'x' ? [g.size[1], g.size[0], g.size[2]] : g.size);   // the group's x along the house's y when it faces x
       if (s && size.some((v, k) => v > s.size[k] + 0.5)) out.push(`${g.id}: ${size.map(Math.round).join(' × ')} does not fit the scene's box ${s.size.join(' × ')}`);
@@ -260,8 +260,19 @@ function build(V, prepared, opts = {}) {
 
 /* the layers of a room's furniture, for its own view: its groups, then its parts by kind */
 function layers(prepared) {
-  const L = Object.fromEntries(Object.keys(prepared.model.groups).map(r => ['g' + r, { name: 'G' + r + ' · ' + prepared.model.groups[r].name }]));
-  return Object.assign(L, {
+  const M = prepared.model, kinds = new Set((M.hardware || []).map(x => x.kind)), roles = new Set((M.products || []).map(x => x.role));
+  const boards = id => M.boards.some(b => b.id === id);
+  /* what the room has: a layer only for that (a wardrobe has no worktop, no handles, no appliances) */
+  const has = {
+    carcasses: true, backs: boards('backPanel'), shelves: ['fixedShelf', 'adjustableShelf', 'pullOutShelf'].some(boards), drawers: M.boards.some(b => b.layer === 'drawers'),
+    hardware: ['hinge', 'bumper', 'runner'].some(k => kinds.has(k)), holes: M.boards.some(b => b.holes) || M.fronts.some(f => f.holes), legs: M.carcasses.some(c => c.legs),
+    fronts: M.fronts.some(f => !f.open), handles: kinds.has('handle'), strips: M.strips.length, frontPanel: M.frontPanels.length, plinth: M.plinths.length,
+    worktops: M.worktopPieces.some(p => p.item.type === 'worktop'), endPanels: M.worktopPieces.some(p => p.item.type === 'endPanel'), wallPanel: M.wallPanels.length,
+    sink: roles.has('sink'), trap: roles.has('trap'), hob: roles.has('hob'), hood: roles.has('hood'), oven: roles.has('oven'), microwave: roles.has('microwave'),
+    coffee: roles.has('coffee'), fridge: roles.has('fridgeFreezer'), dishwasher: roles.has('dishwasher'), plasterboard: M.plaster.length
+  };
+  const L = Object.fromEntries(Object.keys(M.groups).map(r => ['g' + r, { name: 'G' + r + ' · ' + M.groups[r].name }]));
+  const all = {
     carcassParts: { name: 'Carcasses', layers: { carcasses: { name: 'Boards' }, backs: { name: 'HDF backs' }, shelves: { name: 'Shelves' }, drawers: { name: 'Drawers' },
       hardware: { name: 'Hinges, bumpers, runners' }, holes: { name: 'Holes' }, legs: { name: 'Legs' } } },
     frontParts: { name: 'Fronts', layers: { fronts: { name: 'Fronts' }, handles: { name: 'Handles' }, strips: { name: 'Front strips' }, frontPanel: { name: 'Panels' }, plinth: { name: 'Plinth' } } },
@@ -269,7 +280,12 @@ function layers(prepared) {
     appliances: { name: 'Appliances', layers: { sink: { name: 'Sink, tap' }, trap: { name: 'Trap' }, hob: { name: 'Hob' }, hood: { name: 'Hood' }, oven: { name: 'Oven' },
       microwave: { name: 'Microwave' }, coffee: { name: 'Coffee machine' }, fridge: { name: 'Fridge' }, dishwasher: { name: 'Dishwasher' } } },
     plasterboard: { name: 'Plasterboard casing' }
-  });
+  };
+  for (const [k, v] of Object.entries(all)) {
+    if (v.layers) { for (const c of Object.keys(v.layers)) if (!has[c]) delete v.layers[c]; if (Object.keys(v.layers).length) L[k] = v; }
+    else if (has[k]) L[k] = v;
+  }
+  return L;
 }
 
 HOME.room = { prepare, build, layers };

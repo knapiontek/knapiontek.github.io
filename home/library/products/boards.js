@@ -19,5 +19,6 @@ HOME.data({"format": "products", "version": 1, "products": {
  "abs-edge-2x42": {"name":"Obrzeże ABS 2 mm × 42 mm","unit":"m","price":null,"shop":"m-hm"},
  "white-melamine-18": {"length":2800,"width":2070,"name":"Płyta wiórowa laminowana biała 18 mm","spec":"the cheapest plain white, e.g. Egger W1000 ST9 or W980 ST2, 2800 × 2070","thickness":18,"color":"#f3f3f0","core":"#cdbb94","coreSurface":"chipboard","unit":"sheet","price":null,"priceNote":"to check","shop":"m-hm"},
  "white-melamine-16": {"length":2800,"width":2070,"name":"Płyta wiórowa laminowana biała 16 mm","spec":"the cheapest plain white, 2800 × 2070","thickness":16,"color":"#f3f3f0","core":"#cdbb94","coreSurface":"chipboard","unit":"sheet","price":null,"priceNote":"to check","shop":"m-hm"},
- "hdf-white-3": {"length":2800,"width":2070,"name":"HDF biały lakierowany","spec":"2800 × 2070 × 3","thickness":3,"color":"#efefec","unit":"sheet","price":null,"priceNote":"to check","shop":"m-hm"}
+ "hdf-white-3": {"length":2800,"width":2070,"name":"HDF biały lakierowany","spec":"2800 × 2070 × 3","thickness":3,"color":"#efefec","unit":"sheet","price":null,"priceNote":"to check","shop":"m-hm"},
+ "plinth-pvc-50-white": {"name":"Cokół PVC wodoodporny 50 mm","spec":"white, height 50, with a floor seal; a plinth profile bought by the metre","thickness":16,"color":"#dcdcd8","unit":"m","price":null,"priceNote":"to check","shop":"m-hm"}
 }});

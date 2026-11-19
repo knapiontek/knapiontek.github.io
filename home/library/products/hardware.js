@@ -25,8 +25,7 @@ HOME.data({"format": "products", "version": 1, "products": {
  "camar-807-hangers": {"name":"Zawieszki ukryte do szafek wiszących","spec":"e.g. Camar 807","unit":"pair","maker":"Camar","price":null,"shop":"m-hm"},
  "blum-screws-4x15-609-1500": {"name":"Wkręty 4 × 15 do prowadnic","spec":"609.1500","unit":"pack","maker":"Blum","price":null,"shop":"m-hm"},
  "ball-runners-push-open-350": {"name":"Prowadnice kulkowe z otwieraniem przez naciśnięcie","spec":"full extension, push-to-open, length 350, H45, set L + R","unit":"set","price":null,"priceNote":"to check","shop":"m-hm"},
- "leveling-feet-50": {"name":"Nóżki regulowane niskie","spec":"height about 50 (adjustable ±10), screwed under the carcass","unit":"pc","price":null,"priceNote":"to check","shop":"m-hm"},
- "plinth-pvc-50-white": {"name":"Cokół PVC wodoodporny 50 mm","spec":"white, height 50, with a floor seal","unit":"m","price":null,"priceNote":"to check","shop":"m-hm"},
+ "leveling-feet-50": {"name":"Nóżki regulowane niskie","spec":"height about 50 (adjustable ±10), screwed under the carcass","radius":12,"footRadius":15,"footHeight":8,"unit":"pc","price":null,"priceNote":"to check","shop":"m-hm"},
  "ball-runners-push-open-250": {"name":"Prowadnice kulkowe z otwieraniem przez naciśnięcie","spec":"full extension, push-to-open, length 250, H45, set L + R","unit":"set","price":null,"priceNote":"to check","shop":"m-hm"},
  "ball-runners-push-open-750": {"name":"Prowadnice kulkowe z otwieraniem przez naciśnięcie","spec":"full extension, push-to-open, length 750, H45, set L + R","unit":"set","price":null,"priceNote":"to check","shop":"m-hm"}
 }});

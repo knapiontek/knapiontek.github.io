@@ -150,6 +150,33 @@ Not yet: the floor tiles (room/tiles.js), the Documents of the kitchen (estimate
   - After the owner's look (19 Nov): the editor's columns set as the sheets of Documents (`setColumns`: the materials' names wider, the groups' names whole); the materials' Size as bought, length × width × thickness, `?` where the library does not give it (the worktops' length, the fronts: made to size); the library's boards got `length` and `width` (2800 × 2070) where the project already said so (the kitchen's sheet in its Documents, the HDF's link, the specs of the white boards); the fields quieter on every page: a light tint of the accent and a line under them, the text in the page's own colour (it was blue: weak in the dark), the tint stronger on hover, the accent's outline when typed in; a field changed from the data stays amber. "Blue fields" in the help and in the kitchen's Estimate: "shaded fields".
   - The MD files brought up to date with the owner's approval: project.md (the screen with Alpine.js; To do: tiles next, the worktops' lengths, the other projects of the repo), core/project.md (ui.js, sheet.js, ui.css, the pieces of the screen), house/project.md (the menu from model.js), room/project.md (the editor), library/project.md (the boards' length and width).
 
+## Step 4: the wardrobes in the cabinets format (19 Nov)
+
+The prototype's four wardrobes (one file of its own, rooms/wardrobe) are now rooms like the kitchen: each with its cabinets, scene and docs file, built by the same engine, with an estimate, a cut list, notes and assembly cards. wardrobe_3, wardrobe_4, wardrobe_8 (open shelving with drawer boxes) and bedroom_6 (the niche: oak doors and drawers).
+
+- **New files**: room/wardrobe_3, wardrobe_4, wardrobe_8, bedroom_6 `.cabinets.js`, `.scene.js`, `.docs.js` (12); house/house.js gives the four rooms their files.
+- **The engine (room/cabinets.js), new and general, the kitchen unchanged** (its model the same but the moved geometry fields; its cells, faces and Documents the same):
+  - the tag `open` (cabinet, drawer): no front; an open drawer is a box seen from the room;
+  - `settings.drawers.box: "board"` with `drawers.board` (sideHeight, lift, clearance, setback, backClearance, runnerLengths): drawers of board on ball runners, the longest runner that fits; counted by runner length;
+  - a group's own `depth` (the wardrobes stand 300, 400 and 810 deep); its geometry per group (`model.geometryOf(g)`);
+  - `shelf.grid` {from, pitch, fixedEvery}: the shelves' tops on lines `from + k·pitch` for all carcasses of a room; fixed on every `fixedEvery`-th line, the others on pins; a warning if a carcass's top or a fixed shelf is off the grid;
+  - no fixed shelf between two drawers; backs behind open modules and board drawers;
+  - settings and materials needed only by what the room has (a wardrobe needs no worktop, no handle, no hinges if it has no doors);
+  - a board front (not lacquered) banded all round, its decor's grain upright as in the prototype.
+- **room/room.js**: the hardware optional (no handle, no hinge: nothing drawn); the layers only of what the room has; an information check is not a fault.
+- **room/docs.js**: the fronts without open ones; the assembly cards for board drawers ("open drawer W × L × H, ball runners L") and runners by length; the legend only with what the room has; the cut list's title from the docs file (`labels.cutTitle`; the kitchen's added); a block's total `length`.
+- **room/cabinets.html**: Groups has Depth (empty: the settings' depth), kept on Export; an open module drawn in its carcass's colour; an open drawer has no gaps (it stopped the drawing). Export the same byte for byte for the five rooms.
+- **library**: leveling-feet-50 got its sizes for the drawing; the PVC plinth is a board (boards.js: thickness 16, sold by the metre).
+- **Against the prototype**: every carcass the same (width, height, depth, place), the drawer boxes, the backs, the fronts of the niche (51–367, 369–676, 678–2045; W4 doors 303), hinges per door 3 / 2; the boards together the same as the prototype's estimate (carcass 72.4 m², drawer boxes 39.3, HDF 30.6, oak 4.8; 20 hinges, 50 brackets).
+- **Deviations** (to approve):
+  - the shelves on one grid for all wardrobes (from 686, every 340): the heights the prototype's, but fixed on every second line (1366, 2046), the others on pins; the prototype mixed them carcass by carcass;
+  - an open drawer's front ends of its sides and bottom banded (they are seen);
+  - the niche: a front gap of 2 (the prototype 0) and the plinth set back 51;
+  - board fronts banded on all four edges;
+  - the estimate per room (the prototype: one for all four wardrobes).
+- **Not ported (yet)**: the prototype's checks of the gap under the ceiling (≥ 100) and of the passage (≥ 600).
+- **Doubt, found on the way**: the kitchen's hood is drawn 2 mm higher than the prototype's (library/draw.js: its bottom = the lowest point + 2, for the lights under it); older than this step, not in this report before. To decide: as the prototype, or as now.
+
 ## Noted for later: the 2D view (done 18 Nov, see above) (the owner, 18 Nov)
 
 - **Zoom with the mouse wheel**, about the cursor, instead of the + and − buttons.
