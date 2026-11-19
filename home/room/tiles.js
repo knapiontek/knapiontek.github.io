@@ -201,7 +201,7 @@ function corePieces(L, P, T, pieces, grout, at, n, cell, finish) {
   for (const q of grout) out.push({ poly: q, n, uv: v => [v[0] + v[2], v[1] + v[2]], cell, group, material: g });
   for (const set of faces(L, P, T, pieces, at, n)) {
     const key = `tiles:${P.texture}:${set.face}`, red = key + ':small';
-    materials[key] = { image: { key: P.texture, face: set.face }, roughness: stone ? 0.6 : 0.65, reflect: 0.35 };
+    materials[key] = { image: { key: P.texture, face: set.face }, roughness: stone ? 0.6 : 0.65, reflect: 0.35, ahead: true };
     materials[red] = Object.assign({}, materials[key], { color: '#ff9a92' });
     const c = set.small ? Object.assign({}, cell, { finish, raw: key }) : cell;
     for (const qd of set.quads) out.push({ poly: qd.poly, n, uv: qd.uv, cell: c, group, material: set.small ? red : key });
@@ -209,5 +209,22 @@ function corePieces(L, P, T, pieces, grout, at, n, cell, finish) {
   return { pieces: out, materials };
 }
 
-HOME.tiles = { PATTERNS, DIRS, rooms, lay, clip, clipHalf, count, fit, faces, corePieces };
+/* the edges of a slab of tiles: rings [{poly [[u, v]], out: 1 its outline, -1 a hole}] on its face, at (u, v) -> the point on
+   the face, point (u, v): the surface's own (affine), n: the face's normal; each edge a quad from the face back by depth */
+function slabEdges(rings, at, point, n, depth, cell, material) {
+  const P0 = point(0, 0), U3 = point(1, 0).map((v, k) => v - P0[k]), V3 = point(0, 1).map((v, k) => v - P0[k]), out = [], group = cell.layers.join('+');
+  for (const { poly, out: side } of rings) for (let k = 0; k < poly.length; k++) {
+    const p = poly[k], q = poly[(k + 1) % poly.length], du = q[0] - p[0], dv = q[1] - p[1], len = Math.hypot(du, dv);
+    if (len < 0.5) continue;
+    const nu = side * dv / len, nv = -side * du / len, m = U3.map((v, i) => nu * v + nv * V3[i]);
+    const face = [at(...p), at(...q)], back = face.map(x => x.map((v, i) => v - n[i] * depth));
+    const quad = [face[0], face[1], back[1], back[0]], e1 = quad[1].map((v, i) => v - quad[0][i]), e2 = quad[3].map((v, i) => v - quad[0][i]);
+    const c = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+    if (c[0] * m[0] + c[1] * m[1] + c[2] * m[2] < 0) quad.reverse();   // facing out of the slab
+    out.push({ poly: quad, n: m, uv: v => [v[0] + v[1], v[2]], cell, group, material });
+  }
+  return out;
+}
+
+HOME.tiles = { PATTERNS, DIRS, rooms, lay, clip, clipHalf, count, fit, faces, corePieces, slabEdges };
 })(window.HOME = window.HOME || {});

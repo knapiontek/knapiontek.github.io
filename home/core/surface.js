@@ -14,15 +14,18 @@ const unit3 = a => { const L = Math.hypot(...a); return a.map(v => v / L); };
 
 /* One list of points: a computed point within WELD_TOL of a listed one is replaced by it. Every face, piece, triangle
    and edge uses these points only, so two faces that meet share their points exactly. */
-const WELD_TOL = 0.05, WELD = new Map();  // mm
+const WELD_TOL = 0.05, WELD = new Map();  // mm; a cell of the grid -> its points
 let pointCount = 0;
+const NEAR = 0.5 - WELD_TOL;
 function weld(v) {
-  const k = v.map(c => Math.round(c * 10));   // a 0.1 mm grid, wider than the tolerance: the neighbours are searched
-  for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) {
-    const p = WELD.get((k[0] + a) + ',' + (k[1] + b) + ',' + (k[2] + c));
-    if (p && Math.abs(p[0] - v[0]) <= WELD_TOL && Math.abs(p[1] - v[1]) <= WELD_TOL && Math.abs(p[2] - v[2]) <= WELD_TOL) return p;
+  const k = [Math.round(v[0]), Math.round(v[1]), Math.round(v[2])];   // a 1 mm grid: a neighbour cell only when the point is within the tolerance of its line
+  const near = k.map((c, i) => { const d = v[i] - c; return d > NEAR ? [c, c + 1] : d < -NEAR ? [c, c - 1] : [c]; });
+  for (const a of near[0]) for (const b of near[1]) for (const c of near[2]) {
+    const list = WELD.get(a + ',' + b + ',' + c);
+    if (list) for (const p of list) if (Math.abs(p[0] - v[0]) <= WELD_TOL && Math.abs(p[1] - v[1]) <= WELD_TOL && Math.abs(p[2] - v[2]) <= WELD_TOL) return p;
   }
-  const p = /** @type {number[] & { id?: number }} */ ([v[0], v[1], v[2]]); p.id = pointCount++; WELD.set(k.join(','), p); return p;
+  const p = /** @type {number[] & { id?: number }} */ ([v[0], v[1], v[2]]); p.id = pointCount++;
+  const key = k[0] + ',' + k[1] + ',' + k[2], list = WELD.get(key); if (list) list.push(p); else WELD.set(key, [p]); return p;
 }
 const noRepeats = P => P.filter((p, i) => p !== P[(i + 1) % P.length]);
 

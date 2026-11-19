@@ -32,21 +32,21 @@
   <template x-part="panel"><template x-part="layers"></template>
     <section x-show="tab === 'finish'" x-cloak><template x-if="!finish"><p class="note">Pick a room: a click on its floor in 3D, with the roof off.</p></template></section>
     <template x-if="finish && finish.furniture"><section x-show="tab === 'finish'" x-cloak><h2>Furniture</h2><div class="lay">
-      <label>Metal<select @change="setFinish(finish.room, 'metal', null, $event.target.value)"><template x-for="m in finish.furniture.metals" :key="m.k"><option :value="m.k" :selected="m.k === finish.furniture.metal" x-text="m.name"></option></template></select></label>
-      <template x-for="b in finish.furniture.boards" :key="b.from"><label><span x-text="b.roles"></span><select @change="setFinish(finish.room, 'board', b.from, $event.target.value)"><template x-for="o in b.options" :key="o.k"><option :value="o.k" :selected="o.k === b.value" x-text="o.name"></option></template></select></label></template>
-      <template x-if="finish.furniture.changed"><div class="btns"><button class="btn ghost" @click="setFinish(finish.room, 'reset')">Back to the data</button></div></template>
+      <label>Metal<select @change="setFinish(finish?.room, 'metal', null, $event.target.value)"><template x-for="m in finish?.furniture?.metals" :key="m.k"><option :value="m.k" :selected="m.k === finish?.furniture?.metal" x-text="m.name"></option></template></select></label>
+      <template x-for="b in finish?.furniture?.boards" :key="b.from"><label><span x-text="b.roles"></span><select @change="setFinish(finish?.room, 'board', b.from, $event.target.value)"><template x-for="o in b.options" :key="o.k"><option :value="o.k" :selected="o.k === b.value" x-text="o.name"></option></template></select></label></template>
+      <template x-if="finish?.furniture?.changed"><div class="btns"><button class="btn ghost" @click="setFinish(finish?.room, 'reset')">Back to the data</button></div></template>
     </div></section></template>
     <section x-show="tab === 'finish' && finish" x-cloak><h2>Floor tiles</h2>
-      <template x-if="finish && !finish.layout"><p class="note" x-text="finish.ownTiles ? 'The room lays its own tiles (its design: walls and floor).' : 'No tiles here.'"></p></template>
+      <template x-if="finish && !finish.layout"><p class="note" x-text="finish?.ownTiles ? 'The room lays its own tiles (its design: walls and floor).' : 'No tiles here.'"></p></template>
       <template x-if="finish && finish.layout"><div class="lay">
-        <label>Tile<select @change="setTiles(finish.layout.key, 'product', $event.target.value)"><template x-for="p in finish.layout.products" :key="p.k"><option :value="p.k" :selected="p.k === finish.layout.L.product" x-text="p.name"></option></template></select></label>
-        <div class="row"><label>Pattern<select @change="setTiles(finish.layout.key, 'pattern', $event.target.value)"><template x-for="p in finish.layout.patterns" :key="p.k"><option :value="p.k" :selected="p.k === finish.layout.L.pattern" x-text="p.name"></option></template></select></label>
-          <label>Direction<select @change="setTiles(finish.layout.key, 'dir', $event.target.value)"><template x-for="d in finish.layout.dirs" :key="d.k"><option :value="d.k" :selected="d.k === finish.layout.L.dir" x-text="d.name"></option></template></select></label></div>
-        <div class="row"><label>Origin along (mm)<input type="number" step="1" :value="finish.layout.L.oa" @change="setTiles(finish.layout.key, 'oa', $event.target.value)"></label>
-          <label>Origin across (mm)<input type="number" step="1" :value="finish.layout.L.ob" @change="setTiles(finish.layout.key, 'ob', $event.target.value)"></label></div>
-        <div class="row"><label>Grout<input type="color" :value="finish.layout.L.grout" @change="setTiles(finish.layout.key, 'grout', $event.target.value)"></label>
-          <label>&nbsp;<button class="btn ghost" @click="fitTiles(finish.layout.key)">Fit the origin</button></label></div>
-        <template x-if="finish.layout.changed"><div class="btns"><button class="btn ghost" @click="setTiles(finish.layout.key, 'reset')">Back to the data</button></div></template>
+        <label>Tile<select @change="setTiles(finish?.layout?.key, 'product', $event.target.value)"><template x-for="p in finish?.layout?.products" :key="p.k"><option :value="p.k" :selected="p.k === finish?.layout?.L.product" x-text="p.name"></option></template></select></label>
+        <div class="row"><label>Pattern<select @change="setTiles(finish?.layout?.key, 'pattern', $event.target.value)"><template x-for="p in finish?.layout?.patterns" :key="p.k"><option :value="p.k" :selected="p.k === finish?.layout?.L.pattern" x-text="p.name"></option></template></select></label>
+          <label>Direction<select @change="setTiles(finish?.layout?.key, 'dir', $event.target.value)"><template x-for="d in finish?.layout?.dirs" :key="d.k"><option :value="d.k" :selected="d.k === finish?.layout?.L.dir" x-text="d.name"></option></template></select></label></div>
+        <div class="row"><label>Origin along (mm)<input type="number" step="1" :value="finish?.layout?.L.oa" @change="setTiles(finish?.layout?.key, 'oa', $event.target.value)"></label>
+          <label>Origin across (mm)<input type="number" step="1" :value="finish?.layout?.L.ob" @change="setTiles(finish?.layout?.key, 'ob', $event.target.value)"></label></div>
+        <div class="row"><label>Grout<input type="color" :value="finish?.layout?.L.grout" @change="setTiles(finish?.layout?.key, 'grout', $event.target.value)"></label>
+          <label>&nbsp;<button class="btn ghost" @click="fitTiles(finish?.layout?.key)">Fit the origin</button></label></div>
+        <template x-if="finish?.layout?.changed"><div class="btns"><button class="btn ghost" @click="setTiles(finish?.layout?.key, 'reset')">Back to the data</button></div></template>
       </div></template></section></template>
 </div>
 <script src="../core/load.js"></script>
@@ -76,10 +76,11 @@ HOME.ui.page('house', {
   key: 'home-house', fresh: () => ({ mode: '3d', tab: null, layers: {}, zoom: 1, room: null, finish: {} }), valid: s => ['3d', '2d', 'documents'].includes(s.mode) && s.layers,
   modes: ['3d', '2d', 'documents'], tabs: { '3d': ['view', 'finish'], '2d': ['view'] },
   async load() { P = await build(this); },
-  onMode: m => P.onMode(m), onLayers: () => P.apply(), menus: () => P.menus(),
-  get layerBlocks() { return this.ready ? P.layerBlocks() : []; },
-  get roomTag() { return this.ready ? P.roomTag() : null; },
-  get finish() { return this.ready ? P.finish() : null; },
+  built: 0,                                // counts the views built: the panel follows a new one
+  onMode: m => P.onMode(m), onLayers: () => P.apply(), menus() { this.built; return P.menus(); },
+  get layerBlocks() { this.built; return this.ready ? P.layerBlocks() : []; },
+  get roomTag() { this.built; return this.ready ? P.roomTag() : null; },
+  get finish() { this.built; return this.ready ? P.finish() : null; },
   setTiles(key, field, value) { P.setTiles(key, field, value); },
   setFinish(room, field, from, value) { P.setFinish(room, field, from, value); },
   fitTiles(key) { P.setTiles(key, 'fit'); }
@@ -101,19 +102,7 @@ const roomName = r => `${r.node.number}. ${r.node.name}`;
 const MATERIALS = LIB.materials;
 await LIB.loadTextures(Object.values(MATERIALS).flatMap(m => [m.image && m.image.key, m.wood && m.wood.decor]));
 
-/* ================= THE PART SHOWN =================
-   ?room= the ids of the rooms, by commas; none: the whole house */
-const ASKED = (new URLSearchParams(location.search).get('room') || '').split(',').filter(Boolean);
-const PART = ASKED.filter(id => ROOM[id]), WHOLE = !PART.length;
-const PARTS = PART.map(MODEL.part);
-const UNION = WHOLE ? null : [0, 1, 2, 3, 4, 5].map(k => (k % 2 ? Math.max : Math.min)(...PARTS.map(p => p.box[k])));
-ui.title = WHOLE ? HOUSE.name : PART.map(id => roomName(ROOM[id])).join(', ');
-ui.subtitle = WHOLE ? HOUSE.source : `${HOUSE.name} · ${[...new Set(PARTS.map(p => p.floor.name))].join(', ')}`;
-document.title = WHOLE ? 'Home' : PART.map(id => ROOM[id].node.name).join(', ');
-
-/* ================= THE ROOMS' FURNITURE =================
-   the rooms shown that have files in room/ (house.js: files): placed by room/room.js; their looks join the library's */
-const FURNISHED = (WHOLE ? ROOMS : PART.map(id => ROOM[id])).filter(r => (r.node.files || []).includes('cabinets'));
+/* ================= THE ROOMS' FURNITURE (prepared once) ================= */
 /* a room's finish as the viewer changes it over its data, kept in the browser: the metal (of every metal part: handles,
    taps, profiles, rails), a board in place of a board; a change builds the page again */
 const FINISH = state.finish || (state.finish = {});
@@ -147,7 +136,9 @@ function finished(id, files) {
   if (metal) f.scene = Object.assign({}, f.scene, { finish: Object.assign({}, f.scene.finish, { metal }) });
   return f;
 }
-const FURNITURE = await Promise.all(FURNISHED.map(async r => {
+/* a room's furniture, prepared once (and again after a change of its finish): its files as finished, placed by room/room.js */
+const PREPARED = new Map();
+const furnished = r => PREPARED.get(r.id) || PREPARED.set(r.id, (async () => {
   const roles = ['cabinets', 'scene'].concat(r.node.files.includes('docs') ? ['docs'] : []);
   const [dataCabinets, dataScene, dataDocs] = await Promise.all(roles.map(role => HOME.load(HOME.load.file.room(r.id, role), role, 1)));
   const data = { cabinets: dataCabinets, scene: dataScene, docs: dataDocs }, used = finished(r.id, data), { cabinets, scene, docs } = used;
@@ -159,11 +150,61 @@ const FURNITURE = await Promise.all(FURNISHED.map(async r => {
   const node = { offset: at, size: r.node.size, area: r.node.area, ceiling, openings: MODEL.OPENINGS.map(o => o.b).filter(near).map(b => b.map((v, k) => v - at[k >> 1])) };
   const prepared = HOME.room.prepare(node, { cabinets, scene }, { products: LIB.groups });
   return { room: r, prepared, data, used, docs: docs && HOME.docs.create({ cabinets: HOME.cabinets, model: prepared.model, tree: prepared.TREE, docs, appliances: prepared.appliances, library: LIB }) };
-}));
-for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks);
-await LIB.loadTextures(FURNITURE.flatMap(f => f.prepared.textures));
+})()).get(r.id);
 const TILE_PRODUCTS = LIB.groups.tiles;
 await LIB.loadTextures(Object.values(TILE_PRODUCTS).map(p => p.texture));
+
+/* ================= THE SCENE: one for every view; a view (the house, a room) is built in it and taken away =================
+   ?room= the rooms asked for; a link to this page, Back and Forward change the view in place */
+const V = HOME.scene.create({ canvas: $('gl'), stage: $('stage'), materials: MATERIALS, textures: LIB.textures, light: VIEW.light, edges: VIEW.edges, sunCentre: [0, 0, 0] });
+let CUR = null;                            // the view shown: {click, frame, key, markRoom, P}
+V.enableNavigation();
+V.onClick(ray => CUR && CUR.click(ray));
+V.onFrame(() => !!CUR && CUR.frame());
+window.addEventListener('keydown', e => CUR && CUR.key(e));
+Alpine.effect(() => { state.room; if (CUR) CUR.markRoom(); });
+const askedOf = search => (new URLSearchParams(search).get('room') || '').split(',').filter(Boolean);
+/* the view of the rooms asked (none: the house) built in place; keep: the camera stays (the same view built again) */
+async function show(asked, keep = false) {
+  ui.loading = 'Loading…';
+  await new Promise(r => requestAnimationFrame(() => setTimeout(r)));   // the word shows first
+  V.stopWalk(); V.clear(); ui.walking = ui.opened = false;
+  CUR = await view(asked, keep); P = CUR.P;
+  ui.loading = ''; ui.built++; V.redraw();
+}
+document.addEventListener('click', e => {   // a link to this page: no new page
+  const a = e.target instanceof Element && e.target.closest('a[href]');
+  if (!a || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  const u = new URL(a.getAttribute('href'), location.href);
+  if (u.pathname !== location.pathname) return;
+  e.preventDefault(); ui.navOpen = null;
+  if (u.search === location.search) return;
+  history.pushState(null, '', u.search || location.pathname); show(askedOf(u.search));
+});
+window.addEventListener('popstate', () => show(askedOf(location.search)));
+V.start();
+CUR = await view(askedOf(location.search), false); P = CUR.P;
+V.run();
+return P;
+
+/* ================= A VIEW =================
+   everything that depends on the rooms shown, built into the scene; its handlers and its page part */
+async function view(ASKED, keep) {
+/* ================= THE PART SHOWN =================
+   ASKED: the ids of the rooms (?room=, by commas); none: the whole house */
+const PART = ASKED.filter(id => ROOM[id]), WHOLE = !PART.length;
+const PARTS = PART.map(MODEL.part);
+const UNION = WHOLE ? null : [0, 1, 2, 3, 4, 5].map(k => (k % 2 ? Math.max : Math.min)(...PARTS.map(p => p.box[k])));
+ui.title = WHOLE ? HOUSE.name : PART.map(id => roomName(ROOM[id])).join(', ');
+ui.subtitle = WHOLE ? HOUSE.source : `${HOUSE.name} · ${[...new Set(PARTS.map(p => p.floor.name))].join(', ')}`;
+document.title = WHOLE ? 'Home' : PART.map(id => ROOM[id].node.name).join(', ');
+
+/* ================= THE ROOMS' FURNITURE =================
+   the rooms shown that have files in room/ (house.js: files): placed by room/room.js; their looks join the library's */
+const FURNISHED = (WHOLE ? ROOMS : PART.map(id => ROOM[id])).filter(r => (r.node.files || []).includes('cabinets'));
+const FURNITURE = await Promise.all(FURNISHED.map(furnished));
+for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks);
+await LIB.loadTextures(FURNITURE.flatMap(f => f.prepared.textures));
 /* one room with furniture: the furniture's own layers too (its groups and its kinds of parts) */
 const ROOM_LAYERS = !WHOLE && FURNITURE.length === 1 ? HOME.room.layers(FURNITURE[0].prepared) : {};
 
@@ -198,9 +239,7 @@ if (WHOLE) {
 const LIGHT = WHOLE ? VIEW.light : Object.assign({}, VIEW.light, VIEW.light.inside, {
   sun: Object.assign({}, VIEW.light.sun, VIEW.light.inside.sun), sky: Object.assign({}, VIEW.light.sky, VIEW.light.inside.sky) });
 const BODY = WHOLE ? [[ROOF.x[0], 0, level(FLOORS[0])], [ROOF.x[1], WIDTH, RIDGE_TOP]] : [[UNION[0], UNION[2], UNION[4]], [UNION[1], UNION[3], UNION[5]]];
-const V = HOME.scene.create({ canvas: $('gl'), stage: $('stage'), materials: MATERIALS, textures: LIB.textures, light: LIGHT, edges: VIEW.edges,
-  sunCentre: [0, 1, 2].map(k => (BODY[0][k] + BODY[1][k]) / 2) });
-if (!WHOLE) V.renderer.physicallyCorrectLights = true;   // a room: the inside light and the lamps in physical units
+V.relight(LIGHT, [0, 1, 2].map(k => (BODY[0][k] + BODY[1][k]) / 2), !WHOLE);   // a room: the inside light and the lamps in physical units
 for (const f of FURNITURE) {
   const own = PARTS.find(p => p.room === f.room), ceilings = own ? own.objects.filter(o => o.role === 'ceiling').map(o => 'object:' + f.room.id + '/' + o.id) : [];
   f.made = HOME.room.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings, products: LIB.groups, textures: LIB.textures });
@@ -215,7 +254,6 @@ for (const l of LEAVES) {
   const cells = l.door.cells.map(c => Object.assign({}, c, { layers: c.layers.concat(l.layers) }));
   l.mover = V.mover({ pieces: piecesOf(cells), at: [l.door.axis[0], l.door.axis[1], 0], axis: [0, 0, 1], angle: l.door.angle * DEG });
 }
-V.addLight();
 
 /* ================= THE FLOOR TILES =================
    house.js sets them (house/project.md): one layout for each node that sets tiles, over the rooms that take them from it.
@@ -247,7 +285,9 @@ function tilePieces(D, L, P, laid, pieces) {
   const grout = laid.filter(r => SHOWN_ROOMS.has(r.id)).flatMap(r => r.rects).map(q => [[q[0], q[2], h + TILES.grout], [q[1], q[2], h + TILES.grout], [q[1], q[3], h + TILES.grout], [q[0], q[3], h + TILES.grout]]);
   const made = HOME.tiles.corePieces(L, P, T, pieces.filter(p => SHOWN_ROOMS.has(p.room)), grout, (x, y) => [x, y, h + TILES.top], up, cell, TILES.small);
   for (const [k, m] of Object.entries(made.materials)) MATERIALS[k] ||= m;
-  return made.pieces;
+  /* a slab of tiles, its face at top, down into the floor by depth: its edges round each room's floor */
+  const rings = laid.filter(r => SHOWN_ROOMS.has(r.id)).flatMap(r => r.rects).map(q => ({ poly: [[q[0], q[2]], [q[1], q[2]], [q[1], q[3]], [q[0], q[3]]], out: 1 }));
+  return made.pieces.concat(HOME.tiles.slabEdges(rings, (x, y) => [x, y, h + TILES.top], (x, y) => [x, y, 0], up, TILES.depth, Object.assign({}, cell), `tiles:${P.texture}:0`));
 }
 const LAYOUTS = MODEL.LAYOUTS.filter(D => TILE_PRODUCTS[D.product]);
 for (const D of LAYOUTS) layTiles(D);
@@ -287,12 +327,12 @@ function apply() {
 }
 /* a part: the walls, the floor and the ceiling the camera is beyond hide, as it moves */
 const MARGIN = 50;                         // mm beyond an object's middle before it hides
-V.onFrame(() => {
+const frameStep = () => {
   if (WHOLE) return false;
   const c = V.cameraAt(), now = new Set(OBJECTS.filter(o => o.normal.reduce((s, n, k) => s + n * (c[k] - o.middle[k]), 0) >= MARGIN).map(o => o.layer));
   if (now.size === HIDDEN.size && [...now].every(k => HIDDEN.has(k))) return false;
   HIDDEN = now; apply(); return true;
-});
+};
 
 /* ================= 3D: cameras, sun, clicks, walk ================= */
 const SUN = HOME.ui.sunStore(VIEW.light);
@@ -322,7 +362,7 @@ function cameras() {
   });
 }
 /* a click: a door opens or closes; on the open floor, its room is picked */
-V.onClick(ray => {
+const click = ray => {
   if (state.mode !== '3d') return;
   const m = V.moverAt(ray);
   if (m) return V.toggle(m);
@@ -333,8 +373,7 @@ V.onClick(ray => {
   const p = V.root.worldToLocal(ray.ray.at(t, new THREE.Vector3()));
   const r = ROOMS.find(r => r.floor === F && r.rects.some(q => p.x >= q[0] && p.x <= q[1] && p.y >= q[2] && p.y <= q[3]));
   state.room = r ? r.id : null;
-});
-V.enableNavigation();
+};
 /* the walk stands on the walkable solids and, through a passage (a door), on its floor: the floor runs on through it */
 const PASSAGES = MODEL.OPENINGS.filter(o => HOUSE.geometry.openingKinds[o.kind].passage);
 const PASSAGE_FLOORS = PASSAGES.map(o => ({ S: prism([o.b[0], o.b[1], o.b[2], o.b[3], o.b[4] - 1, o.b[4]]) }));
@@ -347,12 +386,12 @@ V.enableWalk({ config: Object.assign({}, VIEW.walk, { start: startOf() }), solid
   startLevel: WHOLE ? level(FLOORS[0]) : level(PARTS[0].floor), pad: $('pad'), canStart: () => state.mode === '3d', onToggle: () => { ui.walking = V.walk.on; apply(); }, home: () => cameras()[0] });
 /* on a walk, Space: the nearest door within reach, on the walker's floor */
 const DOOR_REACH = 1500;                   // mm from the walker to the middle of a leaf
-window.addEventListener('keydown', e => {
+const key = e => {
   if (e.key !== ' ' || !V.walk.on) return;
   const w = V.walk, near = LEAVES.filter(l => MODEL.floorOf(w.h + 1) === l.door.floor).map(l => [l, Math.hypot(l.door.centre[0] - w.x, l.door.centre[1] - w.y)])
     .filter(([, r]) => r <= DOOR_REACH).sort((a, b) => a[1] - b[1])[0];
   if (near) { V.toggle(near[0].mover); e.preventDefault(); }
-});
+};
 
 /* ================= 2D: one sheet per floor (of the part: its floors), the garden at the top ================= */
 const PLAN = HOME.plan2d.create(MATERIALS), PS = PLAN.SIZE;
@@ -449,14 +488,14 @@ function book() {
     rooms.rows.push({ kind: 'sum', cells: ['Total', { f: `SUM(B${first}:B${last})` }, { f: `SUM(C${first}:C${last})` }] });
   }
   rooms.rows.push({ cells: ['The model at the block faces; archon after plaster.'] });
-  const doors = { name: 'Doors', cols: [{ width: 12, fix: 9 }, { width: 14, share: 1 }, { width: 50, share: 4 }, { width: 10, fix: 7 }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }],
-    rows: [{ kind: 'title', cells: ['Inner doors'] }, { kind: 'head', cells: ['Door', 'Floor', 'Bought', 'Quantity', 'Price [zł]', 'Value [zł]'] }] };
+  const doors = { name: 'Doors', cols: [{ width: 12, fix: 9 }, { width: 14, share: 1 }, { width: 50, share: 4 }, { width: 12, digits: 2, fix: 10, z: '#,##0.00' }],
+    rows: [{ kind: 'title', cells: ['Inner doors'] }, { kind: 'head', cells: ['Door', 'Floor', 'Bought', 'Price [zł]'] }] };   // each door is one, by its own name and place
   const first = doors.rows.length + 1;
   for (const d of LEAVES.map(l => l.door)) for (const key of [d.product, ...d.extras]) {
-    const r = doors.rows.length + 1, P = key && LIB.product(key);
-    doors.rows.push({ cells: [d.label, FLOORS.find(F => F.id === d.floor).name, P ? P.name : 'to choose', { v: 1, input: true }, P && P.price !== null ? { v: P.price, input: true } : '', { f: `D${r}*E${r}` }] });
+    const P = key && LIB.product(key);
+    doors.rows.push({ cells: [d.label, FLOORS.find(F => F.id === d.floor).name, P ? P.name : 'to choose', P && P.price !== null ? { v: P.price, input: true } : ''] });
   }
-  doors.rows.push({ kind: 'sum', cells: ['Total', '', '', '', '', { f: `SUM(F${first}:F${doors.rows.length})` }] });
+  doors.rows.push({ kind: 'sum', cells: ['Total', '', '', { f: `SUM(D${first}:D${doors.rows.length})` }] });
   /* the floor tiles: each layout as laid (Finish), its area and the reserve give the m² to buy */
   const tiles = { name: 'Floor tiles', cols: [{ width: 40, share: 2 }, { width: 40, share: 3 }, { width: 30, share: 2 }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }],
     rows: [{ kind: 'title', cells: ['Floor tiles'] }, { cells: ['Reserve for cuts', { v: TILES.reserve, input: true, z: '0%' }] },
@@ -575,13 +614,12 @@ function onMode(m) {
   apply();
 }
 
-V.start(); placeSun(); V.setCamera(cameras()[0]);
-Alpine.effect(() => { state.room; markRoom(); });
+placeSun(); if (!keep) V.setCamera(cameras()[0]);
+markRoom();
 onMode(state.mode);
-V.run();
 window.HOUSE_VIEW = { MODEL, LAID, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, FURNITURE, V, setMode: m => ui.pick(m), setLayer: (k, on) => ui.setLayer(k, on), state, planSvg, book,   // for the automated tests
-  get hidden() { return [...HIDDEN]; }, pieces: PIECES.length, edges: V.EDGE_GROUPS.length };
-return {
+  get hidden() { return [...HIDDEN]; }, pieces: PIECES.length, edges: V.EDGE_GROUPS.length, show };
+return { click, frame: frameStep, key, markRoom, P: {
   onMode, apply,
   /* the layers in blocks: where (the floors and the roof; the whole house only), what (the elements), the furniture of a
      room; a solid shows when all its layers are on */
@@ -603,14 +641,14 @@ return {
     const D = layoutOf(r), A = D && LAID[D.key], f = FURNITURE.find(f => f.room === r);
     return { room: r.id, layout: A ? layoutPanel(A, v[D.key]) : null, furniture: f ? finishPanel(f) : null, ownTiles: !!(f && f.prepared.scene.tiles) };
   },
-  /* a change of a room's finish: field metal, board (from: the data's board) or reset; the page is built again */
+  /* a change of a room's finish: field metal, board (from: the data's board) or reset; the room is prepared and the view built again */
   setFinish(id, field, from, value) {
     const data = FURNITURE.find(f => f.room.id === id).data, own = FINISH[id] || (FINISH[id] = {});
     if (field === 'reset') delete FINISH[id];
     else if (field === 'metal') { if (value === data.scene.finish.metal) delete own.metal; else own.metal = value; }
     else { const b = own.boards || (own.boards = {}); if (value === from) delete b[from]; else b[from] = value; if (!Object.keys(b).length) delete own.boards; }
     if (FINISH[id] && !Object.keys(FINISH[id]).length) delete FINISH[id];
-    setTimeout(() => location.reload(), 100);   // after the state is kept
+    PREPARED.delete(id); show(ASKED, true);
   },
   setTiles(key, field, value) {
     const D = LAYOUTS.find(l => l.key === key), v = state.layouts[key] ||= {};
@@ -629,7 +667,8 @@ return {
     return { '3d': [[walk, HOME.ui.openAll(ui, V)], cameras().map(go)], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx'),
       WHOLE ? [] : FURNITURE.map(f => ({ name: 'Edit the cabinets', go: () => { location.href = '../room/cabinets.html?room=' + f.room.id; } }))] };
   }
-};
+} };
+}
 }
 </script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>

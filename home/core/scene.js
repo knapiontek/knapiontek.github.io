@@ -42,6 +42,7 @@ function create(opts) {
 
   /* ================= RENDERER AND MATERIALS ================= */
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  renderer.physicallyCorrectLights = true;   // lamps in physical units; a light in the old units is scaled (units())
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -58,22 +59,32 @@ function create(opts) {
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   const hash01 = HOME.geometry.hash01;
-  function canvasTexture(w, h, draw, srgb = true) {
-    const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const CANVASES = new Map();               // a generated picture drawn once for its key (a core's colour), shared by its textures
+  /** @param {number} w @param {number} h @param {(g: CanvasRenderingContext2D, w: number, h: number) => void} draw @param {boolean} [srgb] @param {string | null} [key] */
+  function canvasTexture(w, h, draw, srgb = true, key = null) {
+    let c = /** @type {HTMLCanvasElement | undefined} */ (key ? CANVASES.get(key) : undefined);
+    if (!c) { c = document.createElement('canvas'); c.width = w; c.height = h; draw(/** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), w, h); if (key) CANVASES.set(key, c); }
     const t = new THREE.CanvasTexture(c); if (srgb) t.encoding = THREE.sRGBEncoding;
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t;
   }
   const loadImage = (src, fn) => { const im = new Image(); im.onload = () => fn(im); im.src = src; };
+  /* specks darker and lighter over what is drawn: squares of size px, blended into the pixels (wrapping round) */
   function specks(g, w, h, strength, size) {
+    const im = g.getImageData(0, 0, w, h), d = im.data;
     for (let i = 0; i < w * h / (size * size) * 0.9; i++) {
-      g.fillStyle = rnd() < 0.5 ? `rgba(0,0,0,${strength * 0.22 * rnd()})` : `rgba(255,255,255,${strength * 0.3 * rnd()})`;
-      g.fillRect(rnd() * w, rnd() * h, size, size);
+      const dark = rnd() < 0.5, a = dark ? strength * 0.22 * rnd() : strength * 0.3 * rnd(), to = dark ? 0 : 255;
+      const x0 = Math.floor(rnd() * w), y0 = Math.floor(rnd() * h);
+      for (let y = y0; y < y0 + size; y++) for (let x = x0; x < x0 + size; x++) {
+        const k = ((y % h) * w + (x % w)) * 4;
+        for (let c = 0; c < 3; c++) d[k + c] += (to - d[k + c]) * a;
+      }
     }
+    g.putImageData(im, 0, 0);
   }
   /* generated surfaces: each sets the map of a material, uv in mm */
   const SURFACES = {
     texture(d, m) {
-      m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = '#f2f2f2'; g.fillRect(0, 0, w, h); specks(g, w, h, d.strength, d.grain); }, false);
+      m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = '#f2f2f2'; g.fillRect(0, 0, w, h); specks(g, w, h, d.strength, d.grain); }, false, `texture:${d.strength}:${d.grain}`);
       m.map.repeat.set(1 / d.tile, 1 / d.tile);
     },
     chipboard(d, m, def) {                 // the bare core of a chipboard: flakes lighter and darker than its colour, every way
@@ -86,7 +97,7 @@ function create(opts) {
           g.fillStyle = '#' + c.getHexString(); g.fillRect(0, 0, 2 + rnd() * 9, 1 + rnd() * 2.5); g.restore();
         }
         specks(g, w, h, 1, 1);
-      });
+      }, true, 'chipboard:' + def.color);
       m.map.repeat.set(1 / d.tile, 1 / d.tile); m.color.set(0xffffff);
     },
     grass(d, m, def) {
@@ -94,7 +105,7 @@ function create(opts) {
       m.map.repeat.set(1 / d.tile, 1 / d.tile); m.color.set(0xffffff);
     },
     slabs(d, m, def) {
-      m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = def.color; g.fillRect(0, 0, w, h); specks(g, w, h, 0.5, 2); g.fillStyle = d.joint; g.fillRect(0, 0, w, 2); g.fillRect(0, 0, 2, h); });
+      m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = def.color; g.fillRect(0, 0, w, h); specks(g, w, h, 0.5, 2); g.fillStyle = d.joint; g.fillRect(0, 0, w, 2); g.fillRect(0, 0, 2, h); }, true, `slabs:${def.color}:${d.joint}`);
       m.map.repeat.set(1 / d.size, 1 / d.size); m.color.set(0xffffff);
     },
     wood(d, m) {                           // boards cut at random from the decor photo, with a dark joint
@@ -132,6 +143,7 @@ function create(opts) {
     const def = MATERIAL_LIB[key];
     const o = { color: lin(def.color || '#ffffff'), roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1,
       polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 };   // the faces a little back in depth, by the depth buffer's own steps at any distance: an edge on them shows, one behind them does not
+    if (def.ahead) Object.assign(o, { polygonOffsetFactor: -1, polygonOffsetUnits: -4 });   // a face over another close behind it (a tile over its floor and grout): it wins at any distance
     if (def.emissive) Object.assign(o, { emissive: lin(def.emissive), emissiveIntensity: def.glow ?? 1 });
     const m = def.clearcoat === undefined ? new THREE.MeshStandardMaterial(o)   // a lacquer: a clear coat over the colour
       : new THREE.MeshPhysicalMaterial(Object.assign(o, { clearcoat: def.clearcoat, clearcoatRoughness: def.clearcoatRoughness ?? 0.5 }));
@@ -266,7 +278,9 @@ function create(opts) {
   const cameraAt = () => { const p = root.worldToLocal(camera.position.clone()); return [p.x, p.y, p.z]; };
 
   /* ================= LIGHT AND CAMERA ================= */
-  let hemi = null, sun = null;
+  let hemi = null, sun = null, MARKER = null;
+  /* the sun's and the sky's intensities as given: physical, or the old units (three's legacy lights: π less) */
+  const units = () => (opts.physical ? 1 : Math.PI);   // MARKER: the pivot's mark of the navigation
   /* the sky behind the model: the light's gradient by day; by night (gradient null) a dark sky with stars and a glow
      over the horizon (the middle of the picture); the same on every page */
   const NIGHT = { fog: '#141a26', gradient: [[0, '#070b16'], [0.36, '#121a2e'], [0.47, '#24304a'], [0.5, '#3a3f52'], [0.52, '#151a22'], [1, '#0b0e13']], stars: 420 };
@@ -276,7 +290,7 @@ function create(opts) {
     let seed = 7;
     const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // the same stars on every load
     nightTexture = canvasTexture(4096, 2048, (g, w, h) => {
-      const gr = g.createLinearGradient(0, 0, 0, h); for (const [t, c] of NIGHT.gradient) gr.addColorStop(t, c); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      const gr = g.createLinearGradient(0, 0, 0, h); for (const [t, c] of NIGHT.gradient) gr.addColorStop(/** @type {number} */ (t), /** @type {string} */ (c)); g.fillStyle = gr; g.fillRect(0, 0, w, h);
       for (let i = 0; i < NIGHT.stars; i++) {
         const y = (0.12 + 0.34 * random()) * h;   // from well under the zenith (no stretching) down to the glow over the horizon
         g.fillStyle = `rgba(255,255,255,${0.45 + 0.55 * random()})`;
@@ -295,14 +309,32 @@ function create(opts) {
     }
     scene.background = skyTexture; redraw();
   }
+  /* the light of another view (the house's, a room's): light, the centre the sun's shadow covers, its sun and sky in physical
+     units or not (the renderer is always physical: the shaders are made once for every view) */
+  function relight(light, sunCentre, physical) {
+    Object.assign(opts, { light, sunCentre });
+    if (hemi) scene.remove(hemi);
+    if (sun) scene.remove(sun, sun.target);
+    if (scene.environment) scene.environment.dispose();
+    opts.physical = physical;
+    addLight();
+  }
+  /* everything drawn taken away (another view is built in the same scene): meshes, edges, moving parts, lamps */
+  function clear() {
+    const keep = new Set([root, hemi, sun, sun && sun.target, MARKER]);
+    for (const o of [...root.children, ...scene.children.filter(o => !keep.has(o))]) {
+      o.parent.remove(o); o.traverse(x => { if (x.geometry) x.geometry.dispose(); });
+    }
+    GROUPS.length = 0; EDGE_GROUPS.length = 0; MOVERS.length = 0; flight = null; redraw();
+  }
   function addLight() {
     const LIGHT = opts.light, SKY = LIGHT.sky;
     renderer.toneMappingExposure = LIGHT.exposure;
     setSky(SKY.gradient);
     scene.environment = new THREE.PMREMGenerator(renderer).fromEquirectangular(skyTexture).texture;
     scene.fog = new THREE.Fog(lin(LIGHT.fog.color), LIGHT.fog.near * MM, LIGHT.fog.far * MM);
-    hemi = new THREE.HemisphereLight(lin(SKY.color), lin(SKY.groundColor), SKY.intensity); scene.add(hemi);
-    sun = new THREE.DirectionalLight(lin(LIGHT.sun.color), LIGHT.sun.intensity);
+    hemi = new THREE.HemisphereLight(lin(SKY.color), lin(SKY.groundColor), SKY.intensity * units()); scene.add(hemi);
+    sun = new THREE.DirectionalLight(lin(LIGHT.sun.color), LIGHT.sun.intensity * units());
     const reach = LIGHT.sun.reach ?? 16;   // m around the sun's centre that its shadow covers
     sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
     Object.assign(sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 1, far: 80 });
@@ -320,8 +352,8 @@ function create(opts) {
     dayEnvironment ||= scene.environment;
     scene.environment = s.night ? null : dayEnvironment;   // by night nothing reflects the day's sky
     const C = LIGHT.clouds, c = s.clouds, toward = full => 1 + (full - 1) * c;
-    sun.intensity = LIGHT.sun.intensity * s.k * toward(C.sun);
-    hemi.intensity = LIGHT.sky.intensity * (s.night ? 0.14 : (0.6 + 0.4 * s.k) * toward(C.sky));   // by night just enough to see the house's outline
+    sun.intensity = LIGHT.sun.intensity * units() * s.k * toward(C.sun);
+    hemi.intensity = LIGHT.sky.intensity * units() * (s.night ? 0.14 : (0.6 + 0.4 * s.k) * toward(C.sky));   // by night just enough to see the house's outline
     sun.shadow.radius = toward(C.blur);
     setSky(s.night ? null : LIGHT.sky.gradient);
     if (scene.fog) scene.fog.color.copy(lin(s.night ? NIGHT.fog : LIGHT.fog.color));
@@ -384,7 +416,7 @@ function create(opts) {
     }, { capture: true, passive: false });
     controls.enableRotate = false;           // the turn is ours: about the point under the cursor
     const UP = new THREE.Vector3(0, 1, 0), SPEED = 2 * Math.PI, pointers = new Set();
-    const marker = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xd9822b, depthTest: false, transparent: true, opacity: 0.85 }));
+    const marker = MARKER = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xd9822b, depthTest: false, transparent: true, opacity: 0.85 }));
     marker.renderOrder = 999; marker.visible = false; scene.add(marker);
     const showMarker = p => { marker.position.copy(p); marker.scale.setScalar(Math.max(camera.position.distanceTo(p) * 0.008, 0.004)); marker.visible = true; redraw(); };
     let orbit = null, pivot = null;
@@ -523,15 +555,18 @@ function create(opts) {
     }
     placeWalkCamera();
   }
+  /* again for another view: its walk; the keys and the pad are listened to once */
   function enableWalk(w) {
+    const first = !W;
     W = w;
     Object.assign(walk, { x: w.config.start.x, y: w.config.start.y, h: 0, heading: w.config.start.heading, pitch: 0 });
     OBSTACLES = BASE = boxes(w.solids).map(obstacle);
     GROUND = w.ground;
+    if (!first) return;
     const keyName = e => e.key.length === 1 ? e.key.toLowerCase() : e.key;
     window.addEventListener('keydown', e => {
       if (e.target instanceof Element && e.target.closest('input,select')) return;
-      if (w.canStart() && !walk.on && e.key === 'ArrowUp') startWalk();
+      if (W.canStart() && !walk.on && e.key === 'ArrowUp') startWalk();
       if (!walk.on) return;
       if (e.key === 'Escape') return stopWalk();
       if (WALK_KEYS[keyName(e)]) { walk.keys.add(keyName(e)); e.preventDefault(); }
@@ -598,7 +633,7 @@ function create(opts) {
   const run = () => requestAnimationFrame(frame);
 
   return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, hash01, canvasTexture, loadImage, material, useMaterial,
-    buildMeshes, removeMeshes, buildEdges, showPieces, cameraAt, GROUPS, EDGE_GROUPS, mover, toggle, toggleAll, moverAt, MOVERS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion,
+    buildMeshes, removeMeshes, buildEdges, showPieces, clear, relight, cameraAt, GROUPS, EDGE_GROUPS, mover, toggle, toggleAll, moverAt, MOVERS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion,
     onClick, enableNavigation, walk, boxes, enableWalk, startWalk, stopWalk, refreshObstacles, stepWalk, onFrame, start, run,
     get hemi() { return hemi; }, get sun() { return sun; } };
 }

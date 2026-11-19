@@ -153,3 +153,11 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 - kitchen_6 in black: black handles and tap. The whole house, bathroom_7 picked, nickel: its panel shows; Open opens all 113 moving parts, then Close.
 - The core's test page without the cut: its one fault on purpose; Open opens its 3.
 - Regressions: the models of kitchen_6, the wardrobes and bedroom_6 the same; the house the same; the kitchen's cells (the handles' material now brass, the old handle) and faces the same; t_tiles clean; tsc clean; the cabinet editor draws the kitchen and both bathrooms.
+
+## Floor slab, views in place, speed (19 Nov, late night)
+
+- One page: the house, then (by the menus) the kitchen, bathroom 7, the house, Back (bathroom 7), bathroom 5, then its metal changed to gold: the page loaded once; each view's checks pass; the panel and the menu follow (titles, cameras, Finish); no errors in the console.
+- A view's build: a room 0.2 to 0.4 s, the house 1.1 s; a frame without a graphics card here: about 1.5 s, the same before and after a change.
+- The house from the garden: the same picture pixel for pixel as before the lights' change.
+- Floor tiles: the kitchen and the bathrooms drawn with the slab, its edges at the cut floor.
+- Regressions: the models of the kitchen, the wardrobes and bedroom 6 the same; the house the same; the kitchen's cells and faces the same; t_tiles clean; tsc clean; the cabinet editor and the core's test page as before.

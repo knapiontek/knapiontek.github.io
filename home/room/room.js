@@ -87,7 +87,7 @@ const tileLayouts = scene => {
   const T = scene.tiles || {}, S = T.shower || {};
   return Object.fromEntries([['walls', T.walls], ['floor', T.floor], ['showerWalls', S.walls], ['showerFloor', S.floor]].filter(([, v]) => v));
 };
-const TILE_DEPTH = 12, TILE_TOP = 3;       // mm: a wall's tiles, glue and tile, against the wall: their face that far off it; a floor's over the floor
+const TILE_DEPTH = 12, TILE_TOP = 3;       // mm: tiles with their glue: a wall's against the wall, their face that far off it; a floor's face over the floor, the slab down into it
 /* the walls of a floor area (rects) as segments: {axis (0: the wall runs along x), at (its line), from, to, inward (+1 / -1)} */
 function wallsOf(rects) {
   /** @type {{ axis: number, at: number, inward: number, from: number, to: number }[]} */
@@ -213,26 +213,11 @@ function roomTiles(scene, room, library, cell, finish, draw = true) {
       const made = HOME.tiles.corePieces(lay, P, T, pieces, grout, at, S.n, c0, finish);
       out.pieces.push(...made.pieces); Object.assign(out.materials, made.materials);
       /* a wall's tiles are a slab against the wall: its edges from the wall to the face, round it and round its holes */
-      if (wall) {
-        const cut = poly => under.reduce((q, l) => q.length < 3 ? q : HOME.tiles.clipHalf(q, l.p, l.q, l.c), poly);
-        const R = S.rect, ring = q => [[q[0], q[2]], [q[1], q[2]], [q[1], q[3]], [q[0], q[3]]];
-        const holes = S.holes.map(h => [Math.max(h[0], R[0]), Math.min(h[1], R[1]), Math.max(h[2], R[2]), Math.min(h[3], R[3])]).filter(h => h[1] - h[0] > 1 && h[3] - h[2] > 1);
-        const P0 = S.point(0, 0), U3 = S.point(1, 0).map((v, k) => v - P0[k]), V3 = S.point(0, 1).map((v, k) => v - P0[k]);
-        const key = `tiles:${P.texture}:0`, group = c0.layers.join('+');
-        for (const [poly, out2] of [[cut(ring(R)), 1]].concat(holes.map(h => [cut(ring(h)), -1]))) {
-          for (let k = 0; k < poly.length; k++) {
-            const p = poly[k], q = poly[(k + 1) % poly.length], du = q[0] - p[0], dv = q[1] - p[1], len = Math.hypot(du, dv);
-            if (len < 0.5) continue;
-            /* the edge's outward side: the ring runs counter-clockwise (u right, v up), out of the slab for its outline, into a hole for a hole */
-            const nu = out2 * dv / len, nv = -out2 * du / len, n = U3.map((v, i) => nu * v + nv * V3[i]);
-            const face = [at(...p), at(...q)], back = face.map(x => x.map((v, i) => v - S.n[i] * TILE_DEPTH));
-            const quad = [face[0], face[1], back[1], back[0]], e1 = quad[1].map((v, i) => v - quad[0][i]), e2 = quad[3].map((v, i) => v - quad[0][i]);
-            const c = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
-            if (c[0] * n[0] + c[1] * n[1] + c[2] * n[2] < 0) quad.reverse();
-            out.pieces.push({ poly: quad, n, uv: v => [v[0] + v[1], v[2]], cell: c0, group, material: key });
-          }
-        }
-      }
+      /* the tiles are a slab on what they lie on: its edges from the face to the back, round it and round its holes */
+      const cut = poly => under.reduce((q, l) => q.length < 3 ? q : HOME.tiles.clipHalf(q, l.p, l.q, l.c), poly);
+      const R = S.rect, ring = q => [[q[0], q[2]], [q[1], q[2]], [q[1], q[3]], [q[0], q[3]]];
+      const holes = S.holes.map(h => [Math.max(h[0], R[0]), Math.min(h[1], R[1]), Math.max(h[2], R[2]), Math.min(h[3], R[3])]).filter(h => h[1] - h[0] > 1 && h[3] - h[2] > 1);
+      out.pieces.push(...HOME.tiles.slabEdges([{ poly: cut(ring(R)), out: 1 }].concat(holes.map(h => ({ poly: cut(ring(h)), out: -1 }))), (u, v) => at(u, v), S.point, S.n, TILE_DEPTH, c0, `tiles:${P.texture}:0`));
     }
     out.counts[key] = Object.assign({ product: spec.product, name: P0.name, format: P.len + ' × ' + P.wid }, HOME.tiles.count(P, all));
   }
