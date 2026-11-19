@@ -136,10 +136,11 @@ function spanText(cells, tds, n) {
 }
 
 /* ---------- the Documents screen: an Alpine part ----------
-   x-data="HOME.sheet.view(docs)" x-html="HOME.sheet.HTML"; docs {title, subtitle, warnings: [text], book, ready(sheet)}:
+   The piece 'docs' of core/ui.js: x-data="HOME.sheet.view(docs)" over the piece 'sheet' below; docs {title, subtitle,
+   warnings: [text], book, ready(sheet)}:
    ready gets {set(book), restore(), xlsx(file)} once the screen is up. Tabs (one per sheet) over the table of the current
    one; the inputs may change until a reload, the formulas follow them. */
-const HTML = `<h1 x-text="title"></h1><p class="sub" x-show="subtitle" x-text="subtitle"></p>
+HOME.ui.PARTS.sheet = `<h1 x-text="title"></h1><p class="sub" x-show="subtitle" x-text="subtitle"></p>
   <div class="issues" x-show="warnings.length"><b x-text="warnings.length + ' × to correct in the data'"></b><ul><template x-for="w in warnings"><li x-text="w"></li></template></ul></div>
   <div class="docsheets">
     <div class="toggle sheettabs" role="tablist" x-show="names.length > 1"><template x-for="(name, i) in names" :key="i">
@@ -150,11 +151,11 @@ const HTML = `<h1 x-text="title"></h1><p class="sub" x-show="subtitle" x-text="s
           <td :class="c.cls" :colspan="c.span" :title="c.title" :style="c.style" x-html="c.html"></td></template></tr></template></table></div></div>
   </div>`;
 function view(docs) {
-  const d = window.Alpine ? Alpine.raw(docs) : docs, original = new Map();   // input cell -> its value as handed in
+  const d = Alpine.raw(docs), original = new Map();   // input cell -> its value as handed in
   let book = null, fit = () => {};
   return {
     title: d.title, subtitle: d.subtitle || '', warnings: d.warnings || [], names: [], current: 0, rows: [],
-    init() { this.$nextTick(() => this.start()); },   // after x-html has put the markup in
+    init() { this.$nextTick(() => this.start()); },   // after the piece is in
     start() {
       this.take(d.book);
       const { wrap, table } = this.$refs;
@@ -267,5 +268,5 @@ const menu = (sheet, file) => [
   { name: 'Save XLSX', go: e => { const b = e.currentTarget, label = b.textContent; sheet().xlsx(file).catch(() => { b.textContent = 'No network: try again'; setTimeout(() => { b.textContent = label; }, 2500); }); } },
   { name: 'Restore data', go: () => sheet().restore() }];
 
-HOME.sheet = { evaluator, xlsx, HTML, view, menu };
+HOME.sheet = { evaluator, xlsx, view, menu };
 })(window.HOME = window.HOME || {});

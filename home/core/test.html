@@ -12,47 +12,22 @@
 <body>
 <div class="app" id="app" x-data="coreTest" :data-ready="ready && ''">
   <div class="stage" id="stage">
-    <canvas id="gl" aria-label="3D view of the test tree" :hidden="mode !== '3d'"></canvas>
-    <div id="loading" x-show="loading" x-text="loading">Loading…</div>
-    <div class="toggle modes" id="mode" role="group" aria-label="Mode"><template x-for="m in modes">
-      <button :data-mode="m" :aria-pressed="String(mode === m)" :data-on="mode === m && ''" @click="pick(m)" x-text="HOME.ui.MODES[m]"></button></template></div>
-    <div id="plan2d" aria-label="2D plan" x-show="mode === '2d'" x-cloak><p class="sheetnote" id="planNote"></p>
-      <div id="sheet" x-html="planSvg" :style="'--zoom: ' + zoom" @wheel.prevent="zoomer.wheel($event)" @pointerdown="zoomer.down($event)" @pointermove="zoomer.move($event)" @pointerup="zoomer.up()" @pointercancel="zoomer.up()"></div></div>
-    <div id="test" aria-label="Test" x-show="mode === 'test'" x-cloak><div id="checks"><template x-for="c in checks">
-      <div class="check"><span class="chip" :class="HOME.ui.chip(c)[0]" x-text="HOME.ui.chip(c)[1]"></span><span x-text="c.name"></span><template x-if="c.items.length"><ul><template x-for="i in c.items"><li x-text="i"></li></template></ul></template></div></template></div></div>
-    <div id="documents" aria-label="Documents" x-show="mode === 'documents'" x-cloak><template x-if="docs"><div style="display:contents" x-data="HOME.sheet.view(docs)" x-html="HOME.sheet.HTML"></div></template></div>
-    <div class="dock" id="dock" aria-label="Bottom menu" x-show="menu.length" x-cloak><template x-for="(g, gi) in menu"><span style="display:contents"><span class="sep" x-show="gi"></span><template x-for="it in g">
-      <button :class="it.cls || false" :aria-label="it.label || false" :aria-pressed="it.pressed === undefined ? false : String(it.pressed)" @click="it.go($event)" x-text="it.name"></button></template></span></template></div>
-    <div class="pad" id="pad" aria-label="Walk" hidden>
-      <button data-k="ArrowUp" aria-label="Forward">▲</button>
-      <button data-k="ArrowLeft" aria-label="Turn left">◀</button>
-      <button data-k="ArrowDown" aria-label="Back">▼</button>
-      <button data-k="ArrowRight" aria-label="Turn right">▶</button>
-    </div>
-    <div class="float sunfloat" id="sun" role="dialog" aria-label="Sun" x-show="float === 'sun'" x-cloak><template x-if="sun"><div x-data="HOME.ui.sunBox(sun)" x-html="HOME.ui.SUN"></div></template></div>
-    <div class="float" id="help" role="dialog" aria-label="Help" x-show="float === 'help'" x-cloak>
+    <template x-part="view"></template><template x-part="loading"></template>
+    <template x-part="modes"></template><template x-part="plan"></template><template x-part="checks"></template><template x-part="docs"></template>
+    <template x-part="dock"></template><template x-part="pad"></template><template x-part="sun"></template>
+    <template x-part="help">
       <div x-show="mode === '3d'"><p>Turn: left button · move: right · zoom: the wheel. A click on a door or a drawer opens or closes it. <b>Walk</b>: the arrows, Esc ends.</p></div>
       <div x-show="mode === '2d'"><p>The plan cut at the height of the data: what the cut meets is filled, what lies under it is seen from above.</p></div>
       <div x-show="mode === 'documents'"><p>Every node with its place, its size and its material, and where the material is set. Blue fields may be changed until a reload.</p></div>
       <div x-show="mode === 'test'"><p>The checks of the tree and of the library. One node lies below the zero on purpose (to know).</p></div>
-    </div>
-    <div class="corner">
-      <button class="round" id="themebtn" aria-label="Light / dark" title="Light / dark" @click="$store.screen.toggleTheme()"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
-      <button class="round" id="sunbtn" aria-label="Sun" title="Sun" aria-controls="sun" :aria-expanded="String(float === 'sun')" x-show="mode === '3d'" @click="toggle('sun')">☀</button>
-      <button class="round" id="helpbtn" aria-label="Help" title="Help" aria-controls="help" :aria-expanded="String(float === 'help')" @click="toggle('help')">?</button>
-    </div>
-    <button class="panelbtn" @click="$store.screen.togglePanel()" x-text="$store.screen.open ? '»' : '«'" :title="$store.screen.open ? 'Hide the panel' : 'Show the panel'" :aria-label="$store.screen.open ? 'Hide the panel' : 'Show the panel'"></button>
+    </template>
+    <template x-part="corner"></template>
   </div>
-  <aside id="panel">
-    <h1 id="title" x-text="title"></h1>
-    <p class="sub" id="subtitle" x-text="subtitle"></p>
-    <div class="toggle" id="tabs" role="tablist" aria-label="Panel" x-show="tabs.length > 1" x-cloak><template x-for="t in tabs">
-      <button role="tab" :data-tab-id="t" :aria-selected="String(t === tab)" :data-on="t === tab && ''" @click="pickTab(t)" x-text="HOME.ui.TAB_NAMES[t]"></button></template></div>
+  <template x-part="panel">
     <section x-show="tab === 'layers'" x-cloak><h2>Cut</h2><div class="rng"><label for="cut">Height of the cut</label><span id="cutv" x-text="cut.text"></span>
-      <input id="cut" type="range" :min="cut.min" :max="cut.max" :step="cut.step" :value="cut.value" @input="setCut(+$event.target.value)"></div></section>
-    <section x-show="tab === 'layers'" x-cloak><h2>Layers</h2><div class="layers" id="layers"><template x-for="l in layers" :key="l.k">
-      <div :class="l.child ? 'child' : ''" :data-off="l.off && ''"><label><input type="checkbox" :checked="l.on" @change="setLayer(l.k, $event.target.checked)"> <span x-text="l.name"></span></label></div></template></div></section>
-  </aside>
+      <input id="cut" type="range" :min="cut.min" :max="cut.max" :step="cut.step" :value="cut.value" @input="state.cut = +$event.target.value; onLayers()"></div></section>
+    <template x-part="layers"></template>
+  </template>
 </div>
 <script src="load.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -68,17 +43,20 @@
 <script>
 /* Every module of core on a small tree of boxes (test.tree.js): offsets summed, settings from the cascade, doors and
    drawers moving, the cut, the 2D plan, a sheet with formulas and its XLSX, the checks. Knows nothing of the house.
-   The screen is the HTML above (Alpine.js); page(ui) builds the scene and fills ui. */
+   The screen is the HTML above, of core/ui.js's pieces (Alpine.js); build(ui) makes the scene. */
 'use strict';
-HOME.ui.start();                           // the stored light or dark and panel, before anything shows
-document.addEventListener('alpine:init', () => Alpine.data('coreTest', () => ({
-  ready: false, loading: 'Loading…', title: '', subtitle: '', modes: [], mode: null, tabs: [], tab: null, layers: [], menu: [], float: null,
-  cut: { min: 0, max: 0, step: 1, value: 0, text: '' }, checks: [], planSvg: '', zoom: 1, zoomer: { wheel() {}, down() {}, move() {}, up() {} }, docs: null, sun: null,
-  pick() {}, pickTab() {}, setLayer() {}, setCut() {},
-  toggle(f) { this.float = this.float === f ? null : f; },
-  init() { page(this).catch(e => { console.error(e && e.stack || e); this.loading = 'Error: ' + (e.message || e); }); }
-})));
-async function page(ui) {
+HOME.ui.page('coreTest', {
+  key: 'home-core-test', fresh: () => ({ mode: '3d', tab: null, layers: {}, cut: null, zoom: 1 }), valid: s => ['3d', '2d', 'documents', 'test'].includes(s.mode) && s.layers,
+  modes: ['3d', '2d', 'documents', 'test'], tabs: { '3d': ['layers'] },
+  async load() { P = await build(this); },
+  onMode: m => P.onMode(m), onLayers: () => P.apply(), menus: () => P.menus(),
+  get layerBlocks() { return this.ready ? P.layerBlocks() : []; },
+  get cut() { return this.ready ? P.cut() : {}; }
+});
+let P = null;                              // the page built: what its screen asks of it
+/* builds the page into ui (the page's Alpine part) */
+async function build(ui) {
+const state = ui.state;
 const { $ } = HOME.ui;
 const { prism, hRange } = HOME.geometry;
 const { piecesOf } = HOME.surface;
@@ -116,18 +94,9 @@ V.addLight(); V.addCaps();
 
 /* ================= STATE, LAYERS, CUT ================= */
 const LAYER = HOME.ui.layerTree(VIEW.layers);
-const MODES = ['3d', '2d', 'documents', 'test'], TABS = { '3d': ['layers'] };
-const STORE = HOME.ui.store('home-core-test', () => ({ mode: '3d', tab: null, layers: {}, cut: null, zoom: 1 }), s => MODES.includes(s.mode) && s.layers);
-const state = STORE.state, save = STORE.save;
 const { layerOn, shown } = HOME.ui.layerSwitch(LAYER, () => state.layers);
 const CUT = VIEW.cut, cutTop = SIZE[2];
 const cutHeight = () => (state.cut === null || state.cut >= cutTop || V.walk.on ? null : state.cut);
-function cutPanel() {
-  ui.cut = { min: CUT.from, max: cutTop, step: CUT.step, value: state.cut ?? cutTop, text: cutHeight() === null ? 'off' : state.cut + ' mm' };
-}
-ui.setCut = v => { state.cut = v; save(); cutPanel(); apply(); };
-const layersPanel = () => { ui.layers = HOME.ui.layerList(LAYER, Object.keys(LAYER), state.layers, layerOn); };
-ui.setLayer = (k, on) => { state.layers[k] = on; save(); layersPanel(); apply(); };
 function apply() {
   const h = cutHeight();
   V.setCut(h); V.showPieces(shown, layerOn); V.buildCaps(h, STILL, shown); V.redraw();
@@ -140,7 +109,7 @@ ui.sun = { rects: [[0, SIZE[0], 0, SIZE[1]]], sun: SUN.state, change: () => { SU
 V.onClick(ray => { if (state.mode !== '3d') return; const m = V.moverAt(ray); if (m) V.toggle(m); });
 V.enableNavigation();
 V.enableWalk({ config: VIEW.walk, solids: STILL, ground: CELLS.filter(c => c.walkable), startLevel: 0, pad: $('pad'),
-  canStart: () => state.mode === '3d', onToggle: () => { bottomMenu(); apply(); }, home: () => VIEW.cameras[0] });
+  canStart: () => state.mode === '3d', onToggle: () => { ui.walking = V.walk.on; apply(); }, home: () => VIEW.cameras[0] });
 
 /* ================= 2D ================= */
 const PLAN = HOME.plan2d.create(LIB.materials);
@@ -149,9 +118,8 @@ function planSvg() {
   return PLAN.sheets([{ extent: [0, SIZE[0], 0, SIZE[1]], title: `Cut at ${h} mm`,
     draw: X => PLAN.floorArea(X, [[0, SIZE[0], 0, SIZE[1]]]) + PLAN.seen(X, below, h) + PLAN.cut(X, CELLS, h) + PLAN.dims(X, [0, SIZE[0], 0, SIZE[1]]) }]);
 }
-ui.zoomer = HOME.ui.sheetZoom(state, save);
-const drawPlan = () => { ui.zoom = state.zoom; ui.planSvg = planSvg(); };
-const PLAN_MENU = [{ name: 'Fit', label: 'The whole sheet', go: () => { state.zoom = 1; save(); drawPlan(); } },
+const drawPlan = () => { ui.plan = { svg: planSvg(), note: '' }; };
+const PLAN_MENU = [{ name: 'Fit', label: 'The whole sheet', go: () => { state.zoom = 1; } },
   { name: 'Save SVG', go: () => HOME.ui.download(planSvg(), 'image/svg+xml', 'test.svg') }];
 
 /* ================= DOCUMENTS: every node, a formula per row and a sum ================= */
@@ -177,32 +145,25 @@ const CHECKS = T.checks().concat(LIB.checks(), [{ name: 'Every material is in th
 ui.checks = CHECKS;
 
 /* ================= THE SCREEN ================= */
-function bottomMenu() {
-  const walk = { name: 'Walk', cls: 'walk', pressed: V.walk.on, go: () => (V.walk.on ? V.stopWalk() : V.startWalk()) };
-  const menus = { '3d': [VIEW.cameras.map(c => ({ name: c.name, go: () => V.flyTo(c) })), [walk]], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, 'test.xlsx')], test: [] };
-  ui.menu = menus[state.mode].filter(g => g.length);
-}
-function panel() {
-  const tabs = TABS[state.mode] || [];
-  ui.tabs = tabs; ui.tab = state.tab = tabs.includes(state.tab) ? state.tab : tabs[0] || null;
-}
-ui.pickTab = t => { state.tab = t; save(); panel(); };
-function setMode(m) {
-  state.mode = m; save();
-  ui.modes = MODES; ui.mode = m;
-  if (m !== '3d' && ui.float === 'sun') ui.float = null;
+function onMode(m) {
   if (m !== '3d') V.stopWalk();
   if (m === '2d') drawPlan();
   if (m === 'documents') documents();
-  bottomMenu(); panel(); layersPanel(); cutPanel(); apply();
+  apply();
 }
-ui.pick = m => { if (m !== state.mode) setMode(m); };
-
 V.start(); placeSun(); V.setCamera(VIEW.cameras[0]);
-setMode(state.mode);
-ui.loading = ''; ui.ready = true;
+onMode(state.mode);
 V.run();
-window.TEST_VIEW = { T, CELLS, CHECKS, V, setMode, book, planSvg };   // for the automated tests
+window.TEST_VIEW = { T, CELLS, CHECKS, V, setMode: m => ui.pick(m), book, planSvg };   // for the automated tests
+return {
+  onMode, apply,
+  layerBlocks: () => [{ name: 'Layers', id: 'layers', tab: 'layers', items: HOME.ui.layerList(LAYER, Object.keys(LAYER), state.layers, layerOn) }],
+  cut: () => ({ min: CUT.from, max: cutTop, step: CUT.step, value: state.cut ?? cutTop, text: cutHeight() === null ? 'off' : state.cut + ' mm' }),
+  menus() {
+    const walk = { name: 'Walk', cls: 'walk', pressed: ui.walking, go: () => (V.walk.on ? V.stopWalk() : V.startWalk()) };
+    return { '3d': [VIEW.cameras.map(c => ({ name: c.name, go: () => V.flyTo(c) })), [walk]], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, 'test.xlsx')], test: [] };
+  }
+};
 }
 </script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>

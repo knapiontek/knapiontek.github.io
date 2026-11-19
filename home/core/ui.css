@@ -25,10 +25,12 @@
 :root[data-panel-closed] .app{grid-template-columns:minmax(0,1fr)}
 .app:not([data-ready]) aside [data-tab]{display:none}
 /* 2D like a drawing on the page's ground: in the dark, light lines on dark (the saved SVG stays as drawn) */
-:root[data-theme="dark"] #sheet svg{filter:invert(1) hue-rotate(180deg)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #sheet svg{filter:invert(1) hue-rotate(180deg)}}
+:root[data-theme="dark"] :is(#sheet,.drawing) svg{filter:invert(1) hue-rotate(180deg)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) :is(#sheet,.drawing) svg{filter:invert(1) hue-rotate(180deg)}}
 [hidden]{display:none!important}
 [x-cloak]{display:none!important}   /* Alpine: hidden until it has set the element up */
+.nav:not(:has(a,summary)),.modes:not(:has(button)),.dock:not(:has(button)){display:none}   /* a menu with nothing in it */
+.dock .group{display:contents}
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow:hidden}
@@ -111,9 +113,12 @@ button{font:inherit;color:inherit}
 .asm b{color:var(--ink)}
 .asm .holes{display:inline-block;padding-left:14px;font-size:12px}
 #sheet{flex:1;min-height:0;overflow:auto;padding:12px}
-#test,#documents{position:absolute;inset:0;z-index:4;background:var(--panel);overflow:auto;padding:64px 20px 20px}
+#test,#documents,#editor{position:absolute;inset:0;z-index:4;background:var(--panel);overflow:auto;padding:64px 20px 20px}
+#editor{padding-bottom:72px}
+#editor>*+*{margin-top:18px}
 #documents{padding-bottom:64px;display:flex;flex-direction:column;overflow:hidden}   /* the title and the tabs stay, the tab scrolls */
-#documents>h1,#documents>.sub,#documents>.issues{flex:none}
+.docview{flex:1;min-height:0;display:flex;flex-direction:column}
+.docview>h1,.docview>.sub,.docview>.issues{flex:none}
 .docsheets{flex:1;min-height:0;display:flex;flex-direction:column}
 .docsheets>.sheettabs{flex:none;flex-wrap:wrap;align-self:flex-start;max-width:100%}
 .sheetbody{flex:1;min-height:0;overflow:auto}
@@ -193,6 +198,46 @@ td.n{font-family:var(--f-mono);color:var(--muted);text-align:right;padding-right
   .stage{height:58vh}
   aside{border-left:0;border-top:1px solid var(--line);overflow:visible}
 }
+
+/* the sheets to edit (room/cabinets.html): the sheets of Documents, every field blue as their inputs */
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,300px);gap:18px;align-items:start}
+.cols>*{min-width:0;display:grid;gap:18px;align-content:start}
+.cols>.wide{grid-column:1/-1}
+@media (max-width:1100px){.cols{grid-template-columns:minmax(0,1fr)}}
+.sheetwrap.tall{max-height:360px}
+.sheetwrap.tall tr.head td{position:sticky;top:0;z-index:1}
+table.edit td{vertical-align:middle}
+table.edit input{min-width:3.5em}
+table.sheet input[type=text]{text-align:left}
+table.sheet textarea,.pick{display:block;width:100%;border:0;background:color-mix(in srgb,#2f6fdb 10%,transparent);color:#2f6fdb;font:inherit;padding:2px 4px;border-radius:3px}
+table.sheet textarea{resize:none;overflow:hidden;field-sizing:content}
+.pick{text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pick.none,table.edit tr.empty td{color:var(--muted)}
+.pick:empty::before{content:"\00a0"}
+table.edit tr.invalid td{background:color-mix(in srgb,var(--warn) 14%,transparent)}
+table.edit td.c{text-align:center}
+table.edit td.actions{width:52px;text-align:center;white-space:nowrap;padding:0}
+td.actions button{width:24px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:5px 0}
+td.actions button.add:hover{color:var(--accent)}
+td.actions button.del:hover{color:var(--warn)}
+.swatch{display:block;width:32px;height:16px;margin:auto;border-radius:3px;border:1px solid var(--line)}
+/* a list to pick from, over the page */
+.picker{position:fixed;z-index:50;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px var(--lift);padding:6px;font:13px var(--f-body);display:grid;grid-template-columns:repeat(2,auto);gap:2px 14px}
+.picker.one{grid-template-columns:auto}
+.picker label{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:4px;cursor:pointer;font:500 13px var(--f-body);text-transform:none;letter-spacing:0;color:var(--ink)}
+.picker label:hover{background:var(--bg)}
+.picker input{margin:0;accent-color:var(--accent)}
+.picker .title{grid-column:1/-1;font:600 11px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 6px 2px}
+/* an elevation: a sheet as the 2D plan's, its title as a sheet's */
+.drawing{position:relative;background:var(--sheet);text-align:center;padding:0 16px 16px}
+.drawing>.title{font:700 14px var(--f-display);padding:8px 7px;text-align:left;margin:0 -16px 8px}
+.drawing svg{display:inline-block;max-width:100%;max-height:min(70vh,700px);overflow:visible}
+.drawing .item{cursor:pointer}
+.drawing .item:hover rect{stroke:var(--accent);stroke-width:4px}
+.drawing .note{padding:40px 20px}
+#tip{position:absolute;z-index:8;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12.5px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.12);color:var(--ink)}
+.status{margin:0 0 12px;padding:8px 12px;border-radius:6px;font-size:13px;border:1px solid var(--ok);color:var(--ok)}
+.status.error{border-color:var(--warn);color:var(--warn)}
 
 /* a sheet as a tree: + / − before a row with children */
 .sheet td.node { text-indent: 0; }

@@ -11,53 +11,24 @@
 </head>
 <body>
 <div class="app" id="app" x-data="house" :data-ready="ready && ''">
-  <nav class="nav" id="nav" aria-label="House" x-show="links.length + groups.length" x-cloak @click.outside="navOpen = null">
-    <template x-for="it in links"><a :href="it.href" :data-on="it.on && ''" x-text="it.name"></a></template>
-    <template x-for="(g, i) in groups"><details :open="navOpen === i" :data-on="g.on && ''"><summary @click.prevent="navOpen = navOpen === i ? null : i" x-text="g.name"></summary><div class="navlist"><template x-for="it in g.items"><a :href="it.href" :data-on="it.on && ''" x-text="it.name"></a></template></div></details></template>
-  </nav>
+  <template x-part="nav"></template>
   <div class="stage" id="stage">
-    <canvas id="gl" aria-label="3D view of the house" :hidden="mode !== '3d'"></canvas>
-    <div id="loading" x-show="loading" x-text="loading">Loading…</div>
+    <template x-part="view"></template><template x-part="loading"></template>
     <div class="hud"><div id="context" aria-label="View menu"><template x-if="roomTag"><div class="menurow"><span class="roomtag"><span x-text="roomTag.name"></span>
-      <a class="btnlink" :href="roomTag.href">Open</a><button aria-label="Unpick" @click="roomTag.unpick()">×</button></span></div></template></div></div>
-    <div class="toggle modes" id="mode" role="group" aria-label="Mode"><template x-for="m in modes">
-      <button :data-mode="m" :aria-pressed="String(mode === m)" :data-on="mode === m && ''" @click="pick(m)" x-text="HOME.ui.MODES[m]"></button></template></div>
-    <div id="plan2d" aria-label="2D plan" x-show="mode === '2d'" x-cloak><p class="sheetnote" id="planNote" x-text="planNote"></p>
-      <div id="sheet" x-html="planSvg" :style="'--zoom: ' + zoom" @wheel.prevent="zoomer.wheel($event)" @pointerdown="zoomer.down($event)" @pointermove="zoomer.move($event)" @pointerup="zoomer.up()" @pointercancel="zoomer.up()"></div></div>
-    <div id="documents" aria-label="Documents" x-show="mode === 'documents'" x-cloak><template x-if="docs"><div style="display:contents" x-data="HOME.sheet.view(docs)" x-html="HOME.sheet.HTML"></div></template></div>
-    <div class="dock" id="dock" aria-label="Bottom menu" x-show="menu.length" x-cloak><template x-for="(g, gi) in menu"><span style="display:contents"><span class="sep" x-show="gi"></span><template x-for="it in g">
-      <button :class="it.cls || false" :aria-label="it.label || false" :aria-pressed="it.pressed === undefined ? false : String(it.pressed)" @click="it.go($event)" x-text="it.name"></button></template></span></template></div>
-    <div class="pad" id="pad" aria-label="Walk" hidden>
-      <button data-k="ArrowUp" aria-label="Forward">▲</button>
-      <button data-k="ArrowLeft" aria-label="Turn left">◀</button>
-      <button data-k="ArrowDown" aria-label="Back">▼</button>
-      <button data-k="ArrowRight" aria-label="Turn right">▶</button>
-    </div>
-    <div class="float sunfloat" id="sun" role="dialog" aria-label="Sun" x-show="float === 'sun'" x-cloak><template x-if="sun"><div x-data="HOME.ui.sunBox(sun)" x-html="HOME.ui.SUN"></div></template></div>
-    <div class="float" id="help" role="dialog" aria-label="Help" x-show="float === 'help'" x-cloak>
+      <a class="btnlink" :href="roomTag.href">Open</a><button aria-label="Unpick" @click="state.room = null">×</button></span></div></template></div></div>
+    <template x-part="modes"></template><template x-part="plan"></template><template x-part="docs"></template>
+    <template x-part="dock"></template><template x-part="pad"></template><template x-part="sun"></template>
+    <template x-part="help">
       <div x-show="mode === '3d'"><p>Turn: left button, about the point under the cursor (an orange dot marks it while turning) · move: right · zoom: the wheel, toward the cursor.</p>
         <p><b>Walk</b>: the arrows walk and turn, A/D a step aside, Shift faster, PgUp/PgDn or a drag look, Space opens the nearest door, Esc ends.</p>
         <p><b>View</b> (the panel): the floors and the layers; an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: a click on its floor picks a room. A click on a door opens or closes it.</p>
         <p>In a room, the walls and the ceiling between the camera and the room hide; the floors do not apply there, only the elements.</p></div>
       <div x-show="mode === '2d'"><p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. The wheel zooms about the cursor, a drag moves the sheet. Below: the whole sheet again, the SVG to print.</p></div>
       <div x-show="mode === 'documents'"><p>The rooms with their areas, the doors with what is bought for them, the notes, the furniture as a tree, the Test (the checks of the data and of the model: OK, nothing to correct; a number, what to correct; i, to know). Blue fields may be changed until a reload. Below: the XLSX with its formulas.</p></div>
-    </div>
-    <div class="corner">
-      <button class="round" id="themebtn" aria-label="Light / dark" title="Light / dark" @click="$store.screen.toggleTheme()"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
-      <button class="round" id="sunbtn" aria-label="Sun" title="Sun" aria-controls="sun" :aria-expanded="String(float === 'sun')" x-show="mode === '3d'" @click="toggle('sun')">☀</button>
-      <button class="round" id="helpbtn" aria-label="Help" title="Help" aria-controls="help" :aria-expanded="String(float === 'help')" @click="toggle('help')">?</button>
-    </div>
-    <button class="panelbtn" @click="$store.screen.togglePanel()" x-text="$store.screen.open ? '»' : '«'" :title="$store.screen.open ? 'Hide the panel' : 'Show the panel'" :aria-label="$store.screen.open ? 'Hide the panel' : 'Show the panel'"></button>
+    </template>
+    <template x-part="corner"></template>
   </div>
-  <aside id="panel">
-    <h1 id="title" x-text="title"></h1>
-    <p class="sub" id="subtitle" x-text="subtitle"></p>
-    <div class="toggle" id="tabs" role="tablist" aria-label="Panel" x-show="tabs.length > 1" x-cloak><template x-for="t in tabs">
-      <button role="tab" :data-tab-id="t" :aria-selected="String(t === tab)" :data-on="t === tab && ''" @click="pickTab(t)" x-text="HOME.ui.TAB_NAMES[t]"></button></template></div>
-    <template x-for="part in [['floors', 'Floors'], ['layers', 'Layers'], ['furniture', 'Furniture']]">
-      <section x-show="tab === 'view' && layers[part[0]].length" x-cloak><h2 x-text="part[1]"></h2><div class="layers" :id="part[0]"><template x-for="l in layers[part[0]]" :key="l.k">
-        <div :class="l.child ? 'child' : ''" :data-off="l.off && ''"><label><input type="checkbox" :checked="l.on" @change="setLayer(l.k, $event.target.checked)"> <span x-text="l.name"></span></label></div></template></div></section></template>
-  </aside>
+  <template x-part="panel"><template x-part="layers"></template></template>
 </div>
 <script src="../core/load.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -79,18 +50,20 @@
 <script>
 /* The main page: the whole house, or a part of it (?room=kitchen_6 or ?room=bathroom_7,bathroom_5) cut out of it, in 3D,
    2D and Documents (its last sheet: Test). Everything it shows comes from house.js and the library; nothing of this house is
-   written here. The screen is the HTML above (Alpine.js); page(ui) builds the model and the scene and fills ui. */
+   written here. The screen is the HTML above, of core/ui.js's pieces (Alpine.js); build(ui) makes the model and the scene. */
 'use strict';
-HOME.ui.start();                           // the stored light or dark and panel, before anything shows
-document.addEventListener('alpine:init', () => Alpine.data('house', () => ({
-  ready: false, loading: 'Loading…', title: '', subtitle: '', links: [], groups: [], navOpen: null, roomTag: null,
-  modes: [], mode: null, tabs: [], tab: null, layers: { floors: [], layers: [], furniture: [] }, menu: [], float: null,
-  planSvg: '', planNote: '', zoom: 1, zoomer: { wheel() {}, down() {}, move() {}, up() {} }, docs: null, sun: null,
-  pick() {}, pickTab() {}, setLayer() {},
-  toggle(f) { this.float = this.float === f ? null : f; },
-  init() { page(this).catch(e => { console.error(e && e.stack || e); this.loading = 'Error: ' + (e.message || e); }); }
-})));
-async function page(ui) {
+HOME.ui.page('house', {
+  key: 'home-house', fresh: () => ({ mode: '3d', tab: null, layers: {}, zoom: 1, room: null }), valid: s => ['3d', '2d', 'documents'].includes(s.mode) && s.layers,
+  modes: ['3d', '2d', 'documents'], tabs: { '3d': ['view'], '2d': ['view'] },
+  async load() { P = await build(this); },
+  onMode: m => P.onMode(m), onLayers: () => P.apply(), menus: () => P.menus(),
+  get layerBlocks() { return this.ready ? P.layerBlocks() : []; },
+  get roomTag() { return this.ready ? P.roomTag() : null; }
+});
+let P = null;                              // the page built: what its screen asks of it
+/* builds the page into ui (the page's Alpine part) */
+async function build(ui) {
+const state = ui.state;
 const { $ } = HOME.ui;
 const { prism, hRange, EPS } = HOME.geometry;
 const { piecesOf } = HOME.surface;
@@ -177,9 +150,6 @@ for (const l of LEAVES) {
 V.addLight(); V.addCaps();
 
 /* ================= STATE, LAYERS ================= */
-const MODES = ['3d', '2d', 'documents'], TABS = { '3d': ['view'], '2d': ['view'] };
-const STORE = HOME.ui.store('home-house', () => ({ mode: '3d', tab: null, layers: {}, zoom: 1, room: null }), s => MODES.includes(s.mode) && s.layers);
-const state = STORE.state, save = STORE.save;
 const { layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers);
 const ROOM_VIEW = new Set(WHOLE ? [] : VIEW.floors);   // a room shows whatever the floors are switched to
 const HANDLE = 'cup';                      // the handles drawn: cup or bar (each front has both)
@@ -192,14 +162,6 @@ function openFloor() {
   const on = FLOORS.filter(F => layerOn(F.id));
   return on.length ? on[on.length - 1] : null;
 }
-/* the layers in blocks: where (the floors and the roof; the whole house only), what (the elements), the furniture of a
-   room; a solid shows when all its layers are on */
-function layersPanel() {
-  const list = top => HOME.ui.layerList(LAYER, top, state.layers, layerOn);
-  ui.layers = { floors: WHOLE ? list(VIEW.floors) : [], layers: list(VIEW.elements), furniture: list(Object.keys(ROOM_LAYERS)) };
-}
-function setLayer(k, on) { state.layers[k] = on; save(); refresh(); }
-ui.setLayer = setLayer;
 function apply() {
   V.showPieces(shown, layerOn, ghost);
   for (const f of FURNITURE) f.made.showDetails(layers => shown(layers) && !ghost(layers));
@@ -252,7 +214,7 @@ V.onClick(ray => {
   if (!(t > 0)) return;
   const p = V.root.worldToLocal(ray.ray.at(t, new THREE.Vector3()));
   const r = ROOMS.find(r => r.floor === F && r.rects.some(q => p.x >= q[0] && p.x <= q[1] && p.y >= q[2] && p.y <= q[3]));
-  state.room = r ? r.id : null; save(); context();
+  state.room = r ? r.id : null;
 });
 V.enableNavigation();
 /* the walk stands on the walkable solids and, through a passage (a door), on its floor: the floor runs on through it */
@@ -264,7 +226,7 @@ const startOf = () => {
   return { x: (q[0] + q[1]) / 2, y: (q[2] + q[3]) / 2, heading: VIEW.walk.start.heading };
 };
 V.enableWalk({ config: Object.assign({}, VIEW.walk, { start: startOf() }), solids: SOLIDS, ground: STILL.filter(c => c.walkable).concat(PASSAGE_FLOORS),
-  startLevel: WHOLE ? level(FLOORS[0]) : level(PARTS[0].floor), pad: $('pad'), canStart: () => state.mode === '3d', onToggle: () => { bottomMenu(); apply(); }, home: () => cameras()[0] });
+  startLevel: WHOLE ? level(FLOORS[0]) : level(PARTS[0].floor), pad: $('pad'), canStart: () => state.mode === '3d', onToggle: () => { ui.walking = V.walk.on; apply(); }, home: () => cameras()[0] });
 /* on a walk, Space: the nearest door within reach, on the walker's floor */
 const DOOR_REACH = 1500;                   // mm from the walker to the middle of a leaf
 window.addEventListener('keydown', e => {
@@ -349,12 +311,8 @@ function planSvg() {
       } };
   }));
 }
-ui.zoomer = HOME.ui.sheetZoom(state, save);
-function drawPlan() {
-  ui.zoom = state.zoom; ui.planSvg = planSvg();
-  ui.planNote = `The cut over the floor: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW.planNote}`;
-}
-const PLAN_MENU = [{ name: 'Fit', label: 'The whole sheet', go: () => { state.zoom = 1; save(); drawPlan(); } },
+const drawPlan = () => { ui.plan = { svg: planSvg(), note: `The cut over the floor: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW.planNote}` }; };
+const PLAN_MENU = [{ name: 'Fit', label: 'The whole sheet', go: () => { state.zoom = 1; } },
   { name: 'Save SVG', go: () => HOME.ui.download(planSvg(), 'image/svg+xml', WHOLE ? 'house.svg' : PART.join('-') + '.svg') }];
 
 /* ================= DOCUMENTS: the rooms, the doors, the notes ================= */
@@ -443,46 +401,41 @@ const CHECKS = WHOLE ? HOUSE_CHECKS : [ASKED_CHECK, ...(ROOM_CHECKS.length ? ROO
    top-left: the house, its floors and their rooms · top-right: the modes · over the view: the picked room · below: the
    mode's actions · the panel: the mode's tabs (View: the floors, the layers, the furniture) */
 const linkTo = ids => '?room=' + ids.join(',');
-const same = ids => ids.length === PART.length && ids.every(id => PART.includes(id));
-ui.links = [{ name: 'House', href: 'index.html', on: WHOLE }];
-ui.groups = FLOORS.map(F => ({ name: F.name, on: !WHOLE && PARTS.every(p => p.floor === F),
-  items: ROOMS.filter(r => r.floor === F).map(r => ({ name: roomName(r), href: linkTo([r.id]), on: same([r.id]) })) }));
-function context() {
-  const r = ROOM[state.room], F = openFloor();
-  ui.roomTag = state.mode === '3d' && WHOLE && r && F && r.floor === F
-    ? { name: roomName(r), href: linkTo([r.id]), unpick: () => { state.room = null; save(); context(); } } : null;
-}
-function bottomMenu() {
-  const walk = { name: 'Walk', cls: 'walk', pressed: V.walk.on, go: () => (V.walk.on ? V.stopWalk() : V.startWalk()) };
-  const go = c => ({ name: c.name, go: () => { V.stopWalk(); V.flyTo(c); } });
-  const menus = { '3d': [[walk], cameras().map(go)], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx'),
-    WHOLE ? [] : FURNITURE.map(f => ({ name: 'Edit the cabinets', go: () => { location.href = '../room/cabinets.html?room=' + f.room.id; } }))] };
-  ui.menu = menus[state.mode].filter(g => g.length);
-}
-/* the panel's tabs: those of the mode; the one picked, or the first */
-function panel() {
-  const tabs = TABS[state.mode] || [];
-  ui.tabs = tabs; ui.tab = state.tab = tabs.includes(state.tab) ? state.tab : tabs[0] || null;
-}
-ui.pickTab = t => { state.tab = t; save(); panel(); };
-function refresh() { context(); bottomMenu(); layersPanel(); panel(); apply(); }
-function setMode(m) {
-  state.mode = m; save();
-  ui.modes = MODES; ui.mode = m;
-  if (m !== '3d' && ui.float === 'sun') ui.float = null;
+ui.nav = HOME.model.nav(DATA, PART);
+function onMode(m) {
   if (m !== '3d') V.stopWalk();
   if (m === '2d') drawPlan();
   if (m === 'documents') documents();
-  refresh();
+  apply();
 }
-ui.pick = m => { if (m !== state.mode) setMode(m); };
 
 V.start(); placeSun(); V.setCamera(cameras()[0]);
-setMode(state.mode);
-ui.loading = ''; ui.ready = true;
+onMode(state.mode);
 V.run();
-window.HOUSE_VIEW = { MODEL, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, FURNITURE, V, setMode, setLayer, state, planSvg, book,   // for the automated tests
+window.HOUSE_VIEW = { MODEL, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, FURNITURE, V, setMode: m => ui.pick(m), setLayer: (k, on) => ui.setLayer(k, on), state, planSvg, book,   // for the automated tests
   get hidden() { return [...HIDDEN]; }, pieces: PIECES.length, edges: V.EDGE_GROUPS.length };
+return {
+  onMode, apply,
+  /* the layers in blocks: where (the floors and the roof; the whole house only), what (the elements), the furniture of a
+     room; a solid shows when all its layers are on */
+  layerBlocks() {
+    const list = top => HOME.ui.layerList(LAYER, top, state.layers, layerOn);
+    return [{ name: 'Floors', id: 'floors', tab: 'view', items: WHOLE ? list(VIEW.floors) : [] }, { name: 'Layers', id: 'layers', tab: 'view', items: list(VIEW.elements) },
+      { name: 'Furniture', id: 'furniture', tab: 'view', items: list(Object.keys(ROOM_LAYERS)) }];
+  },
+  /* the room picked on the open floor, over the view */
+  roomTag() {
+    const r = ROOM[state.room], F = openFloor();
+    return state.mode === '3d' && WHOLE && r && F && r.floor === F ? { name: roomName(r), href: linkTo([r.id]) } : null;
+  },
+  /* below: the mode's actions */
+  menus() {
+    const walk = { name: 'Walk', cls: 'walk', pressed: ui.walking, go: () => (V.walk.on ? V.stopWalk() : V.startWalk()) };
+    const go = c => ({ name: c.name, go: () => { V.stopWalk(); V.flyTo(c); } });
+    return { '3d': [[walk], cameras().map(go)], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx'),
+      WHOLE ? [] : FURNITURE.map(f => ({ name: 'Edit the cabinets', go: () => { location.href = '../room/cabinets.html?room=' + f.room.id; } }))] };
+  }
+};
 }
 </script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
