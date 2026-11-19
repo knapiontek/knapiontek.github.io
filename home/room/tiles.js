@@ -128,11 +128,12 @@ function fit(L, P, laid) {
   return { oa: wrap(best.oa, Pa), ob: wrap(best.ob, Pb) };
 }
 
-/* the faces to draw at the height h: per image of the texture ({kind: stone | wood, size: [u, v] mm, faces}), the tiles'
-   quads, each with its uv in mm of that image at a point [x, y, h]. Stone: one image is one whole tile, a random image and
-   turn per tile; wood: each plank a random crop of the photo. small: the pieces of a small cut, apart */
-/** @param {Laying} L @param {TileProduct} P @param {{ kind: string, size: number[], faces: any[] }} T @param {Piece[]} pieces @param {number} h */
-function faces(L, P, T, pieces, h) {
+/* the faces to draw on a plane: per image of the texture ({kind: stone | wood, size: [u, v] mm, faces}), the tiles' quads,
+   each with its uv in mm of that image at a point. at(p, q): the point [x, y, h] of the plane's coordinates (p, q) (a floor:
+   x, y; a wall: along it, up), n: the face's normal (the quads turn toward it). Stone: one image is one whole tile, a random
+   image and turn per tile; wood: each plank a random crop of the photo. small: the pieces of a small cut, apart */
+/** @param {Laying} L @param {TileProduct} P @param {{ kind: string, size: number[], faces: any[] }} T @param {Piece[]} pieces @param {(p: number, q: number) => number[]} at @param {number[]} n */
+function faces(L, P, T, pieces, at, n) {
   const { TA, TB } = sizes(P), stone = T.kind === 'stone', [imgA, imgB] = T.size;
   /** @type {Object<string, { face: number, small: boolean, quads: { poly: number[][], uv: (v: number[]) => number[] }[] }>} */
   const sets = {};
@@ -147,13 +148,37 @@ function faces(L, P, T, pieces, h) {
       for (let i = 0; i < turns; i++) [u, v] = [1 - v, u];
       return [u * imgA, v * imgB];
     };
-    const corners = [[p.a1, p.b1], [p.a2, p.b1], [p.a2, p.b2], [p.a1, p.b2]];
-    const poly = corners.map(([a, b]) => [...toXY(L, a, b), h]);
-    if (L.dir === 'y') poly.reverse();     // counter-clockwise seen from above, as along x
-    set.quads.push({ poly, uv: v => (L.dir === 'x' ? uvAB(v[0], v[1]) : uvAB(v[1], v[0])) });
+    const corners = [[p.a1, p.b1], [p.a2, p.b1], [p.a2, p.b2], [p.a1, p.b2]].map(([a, b]) => { const [x, y] = toXY(L, a, b); return { a, b, pt: at(x, y) }; });
+    const e1 = corners[1].pt.map((v, k) => v - corners[0].pt[k]), e2 = corners[3].pt.map((v, k) => v - corners[0].pt[k]);
+    const c = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+    if (c[0] * n[0] + c[1] * n[1] + c[2] * n[2] < 0) corners.reverse();   // counter-clockwise seen from where the face looks
+    /* uv at a point: back through the plane's coordinates (affine: the quad's corners give it) */
+    const o = corners[0], du = corners[1], dv = corners[corners.length - 1];
+    const ea = du.pt.map((v, k) => v - o.pt[k]), eb = dv.pt.map((v, k) => v - o.pt[k]);
+    const la = ea.reduce((s, v) => s + v * v, 0), lb = eb.reduce((s, v) => s + v * v, 0);
+    const uv = v => {
+      const d = v.map((x, k) => x - o.pt[k]), sa = d.reduce((s, x, k) => s + x * ea[k], 0) / la, sb = d.reduce((s, x, k) => s + x * eb[k], 0) / lb;
+      return uvAB(o.a + sa * (du.a - o.a) + sb * (dv.a - o.a), o.b + sa * (du.b - o.b) + sb * (dv.b - o.b));
+    };
+    set.quads.push({ poly: corners.map(q => q.pt), uv });
   }
   return Object.values(sets);
 }
+/* the pieces of core for a layout's faces and its grout: materials by key (added to the page's library: tiles:<texture>:<face>,
+   its red twin for a small cut, tiles:grout:<colour>); cell: the cell's fields (layers), finish: the layer that shows a small cut red */
+function corePieces(L, P, T, pieces, grout, at, n, cell, finish) {
+  const out = [], materials = {}, stone = T.kind === 'stone', group = cell.layers.join('+');
+  const g = 'tiles:grout:' + L.grout; materials[g] = { color: L.grout, roughness: 0.95 };
+  for (const q of grout) out.push({ poly: q, n, uv: v => [v[0] + v[2], v[1] + v[2]], cell, group, material: g });
+  for (const set of faces(L, P, T, pieces, at, n)) {
+    const key = `tiles:${P.texture}:${set.face}`, red = key + ':small';
+    materials[key] = { image: { key: P.texture, face: set.face }, roughness: stone ? 0.6 : 0.65, reflect: 0.35 };
+    materials[red] = Object.assign({}, materials[key], { color: '#ff9a92' });
+    const c = set.small ? Object.assign({}, cell, { finish, raw: key }) : cell;
+    for (const qd of set.quads) out.push({ poly: qd.poly, n, uv: qd.uv, cell: c, group, material: set.small ? red : key });
+  }
+  return { pieces: out, materials };
+}
 
-HOME.tiles = { PATTERNS, DIRS, rooms, lay, count, fit, faces };
+HOME.tiles = { PATTERNS, DIRS, rooms, lay, count, fit, faces, corePieces };
 })(window.HOME = window.HOME || {});

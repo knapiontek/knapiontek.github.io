@@ -74,7 +74,8 @@
  * @property {Item[]} boxes  its modules, bottom up
  * @property {Item[]} members  every component with its name
  * @property {boolean} floor  stands on a plinth
- * @property {boolean} base  a floor carcass under a worktop
+ * @property {boolean} base  under a worktop (on a plinth or hung)
+ * @property {boolean} hung  on the wall: nothing under it
  * @property {string} kind  base | tall | wall
  * @property {string[]} flags
  * @property {boolean} sink
@@ -141,6 +142,8 @@
     dummy: ['drawer'],       // fixed drawer front: no drawer box
     hob: ['cabinet', 'drawer'], // cross rails on edge + separation panel under the hob
     sink: ['cabinet', 'drawer'], // cross rails on edge, no shelves, sink cut-out
+    basin: ['cabinet', 'drawer'], // a basin stands on the top over it: its round holes in the top (settings.cutouts.basin)
+    banded: ['worktop'],     // a top banded all round (a top of board in a wet room)
     bins: ['drawer'],        // waste-sorting bins in the drawer
     innerDrawer: ['drawer'],       // inner cutlery drawer above the drawer box, behind the same front
     island: ['worktop'],     // island worktop: of the islandWorktop material, the island back panel, no wall
@@ -168,7 +171,7 @@
   const USES = [...BOARD_TYPES, ISLAND_USE, ISLAND_END_PANEL_USE, ...PARTS];
 
   // carcass flags: a carcass has the flag when one of its boxes has one of the tags
-  const CARCASS_FLAGS = { sink: ['sink'], hob: ['hob'], fridge: ['fridge', 'freezer'], coffee: ['coffee'], doorDrawers: ['doorDrawers'] };
+  const CARCASS_FLAGS = { sink: ['sink'], basin: ['basin'], hob: ['hob'], fridge: ['fridge', 'freezer'], coffee: ['coffee'], doorDrawers: ['doorDrawers'] };
 
   // a carcass on a plinth gets a ventilation grille in the plinth when it holds one of these (air intake for the appliance)
   const GRILLE_FOR = { types: ['oven'], tags: ['fridge', 'freezer'] };
@@ -185,10 +188,10 @@
     edge: { front: 'front', top: 'top', bottom: 'bottom', left: 'left', right: 'right' },
     // uses that are not a type (the types have their own label)
     use: { islandWorktop: 'island worktop', islandEndPanel: 'island end panel', carcass: 'carcass', backPanel: 'back panel', drawerBox: 'drawer boxes', hobPanel: 'panel under the hob' },
-    hole: { cup: 'hinge cup', plate: 'hinge plate', bumper: 'bumper', shelfPin: 'shelf pin', runner: 'drawer / pull-out shelf runner', sink: 'sink cut-out', hob: 'hob cut-out' },
+    hole: { cup: 'hinge cup', plate: 'hinge plate', bumper: 'bumper', shelfPin: 'shelf pin', runner: 'drawer / pull-out shelf runner', sink: 'sink cut-out', hob: 'hob cut-out', basin: 'basin hole' },
     // short codes of the holes and cut-outs in the cut list (its legend explains them): always two letters, the first one the
     // group (H hinge, S shelf / runner, C cut-out), the second the part
-    holeCode: { cup: 'HC', plate: 'HP', bumper: 'HB', shelfPin: 'SP', runner: 'SR', sink: 'CS', hob: 'CH' },
+    holeCode: { cup: 'HC', plate: 'HP', bumper: 'HB', shelfPin: 'SP', runner: 'SR', sink: 'CS', hob: 'CH', basin: 'CB' },
     // hand of a part, as seen from the front of the furniture: a carcass side or hinge post (left / right), a door (its hinge side: front.hand)
     hand: { left: 'L', right: 'R' },
     holeFrom: { front: 'from the front', back: 'from the back', bottom: 'from the bottom', hinge: 'from the hinge edge', left: 'from the left end', right: 'from the right end' }
@@ -273,7 +276,7 @@
   }
 
   // cut-outs in a worktop: the carcass flag that asks for one -> settings.cutouts[flag] {width, depth, fromBack}, centred on the carcass
-  const CUTOUT_FLAGS = ['sink', 'hob'];
+  const CUTOUT_FLAGS = ['sink', 'hob', 'basin'];
 
   // a shelf rests on a pin in each side at the front and at the back (rules.md, section 5)
   const PINS_PER_SHELF = 4;
@@ -343,7 +346,7 @@
     for (const [code, m] of Object.entries(materials || {})) {
       if (!(m.thickness > 0)) problems.push(`Material ${code}: the thickness must be > 0.`);
       if (!/^#[0-9a-f]{6}$/i.test(m.color || '')) problems.push(`Material ${code}: the colour must be "#rrggbb".`);
-      if ((m.uses || []).some(use => DEPTH_USES.includes(use)) && !(m.depth > 0)) problems.push(`Material ${code}: ${m.uses.filter(use => DEPTH_USES.includes(use)).map(useLabel).join(', ')} needs a depth > 0.`);
+      if ((m.uses || []).some(use => DEPTH_USES.includes(use)) && !(m.depth > 0 || m.width > 0)) problems.push(`Material ${code}: ${m.uses.filter(use => DEPTH_USES.includes(use)).map(useLabel).join(', ')} needs a depth > 0 (or a sheet's width: a top cut from a board).`);
       // factoryEdges: edges the material comes finished with (no edge banding to order)
       for (const side of m.factoryEdges || []) if (!(side in LABELS.edge)) problems.push(`Material ${code}: the factory edge "${side}" must be one of: ${Object.keys(LABELS.edge).join(', ')}.`);
       for (const use of m.uses || []) {
@@ -526,7 +529,7 @@
     // screwed to a strip and its back strip, from the first carcass (screwed) or from inside the second one (fromInside)
     const counts = {
       carcasses: 0, wallBrackets: 0, jointLength: { screwed: 0, fromInside: 0 }, fronts: 0, handles: 0, hinges: 0, bumpers: 0, drawersD: 0, drawersM: 0, innerDrawers: 0,
-      shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, doorDrawers: 0, legs: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
+      shelvesAdjustable: 0, shelvesFixed: 0, shelfPins: 0, pullOutShelves: 0, doorDrawers: 0, legs: 0, hangers: 0, sinks: 0, hobs: 0, fridges: 0, grilles: 0,
       plasterUD: 0, plasterCD: 0, plasterEdge: 0, type: {}, tag: {}
     };
 
@@ -629,7 +632,9 @@
       const overlapsColumns = item => item.column <= carcass.column + carcass.span - 1 && item.column + item.span - 1 >= carcass.column;
       const groupItems = groups[carcass.group].items;
       carcass.floor = groupItems.some(item => item.type === 'plinth' && overlapsColumns(item) && item.h1 === carcass.h0);
-      carcass.base = carcass.floor && groupItems.some(item => item.type === 'worktop' && overlapsColumns(item) && item.h0 === carcass.h1);
+      carcass.base = groupItems.some(item => item.type === 'worktop' && overlapsColumns(item) && item.h0 === carcass.h1);   // on a plinth or hung, a worktop on top
+      // hung on the wall: nothing under it but empty space (no plinth, no carcass)
+      carcass.hung = !carcass.floor && carcass.h0 > 0 && groupItems.filter(item => overlapsColumns(item) && item.h1 <= carcass.h0).every(item => item.type === 'space' && !item.carcass);
       carcass.kind = carcass.base ? 'base' : carcass.floor ? 'tall' : 'wall';
       for (const [flag, tags] of Object.entries(CARCASS_FLAGS)) carcass[flag] = carcass.boxes.some(b => hasTag(b, ...tags));
       carcass.flags = Object.keys(CARCASS_FLAGS).filter(flag => carcass[flag]);
@@ -638,6 +643,7 @@
       carcass.grille = carcass.floor && carcass.boxes.some(b => GRILLE_FOR.types.includes(b.type) || hasTag(b, ...GRILLE_FOR.tags));
       for (const item of carcass.members) item.carcassId = carcass.id;
       counts.legs += carcass.legs;
+      counts.hangers += Number(carcass.hung);   // a pair each
       counts.sinks += Number(carcass.sink);
       counts.hobs += Number(carcass.hob);
       counts.fridges += Number(carcass.fridge);
@@ -881,7 +887,7 @@
         if (groupModel.items.some(i => i.type === 'endPanel')) warn(`Group ${groupModel.group}: end panels with no worktop on top.`);
         continue;
       }
-      const use = groupModel.island ? ISLAND_USE : 'worktop', material = materialFor[use], materialDepth = projectData.materials[material].depth;
+      const use = groupModel.island ? ISLAND_USE : 'worktop', material = materialFor[use], materialDepth = projectData.materials[material].depth ?? projectData.materials[material].width;   // a top cut from a board: as deep as its sheet is wide
       // every worktop: from worktop.overhang in front of the fronts back to the wall line, the group's backGap behind the carcass backs
       // (an island: no wall, only that line); the rest of the board is cut off at the back
       const y1 = frontFace + settings.worktop.overhang, y0 = groupModel.wall, depth = y1 - y0;
@@ -1244,11 +1250,12 @@
         const endPanel = item.type === 'endPanel', length = endPanel ? item.h1 - item.h0 : item.x1 - item.x0;
         const material = endPanel ? materialFor[groupModel.island ? ISLAND_END_PANEL_USE : 'endPanel'] : worktop.material;
         const y0 = endPanel ? endPanelY0 : worktop.y0, y1 = endPanel ? endPanelY1 : worktop.y1, depth = y1 - y0;
-        const materialDepth = projectData.materials[material].depth;
+        const materialDepth = projectData.materials[material].depth ?? projectData.materials[material].width;
         if (endPanel && materialDepth < depth) warn(`${placeOf(item)}: the end panel is ${depth} deep, the material ${materials[material].label} is ${materialDepth}.`, item.index);
         const seen = [{ side: 'front', length, along: 'a' }];
         if (groupModel.island) seen.push({ side: 'back', length, along: 'a' });
-        if (!endPanel) for (const side of ['left', 'right']) if (endPanelAt[side](item)) seen.push({ side, length: depth, along: 'b' });
+        if (!endPanel) for (const side of ['left', 'right']) if (endPanelAt[side](item) || hasTag(item, 'banded')) seen.push({ side, length: depth, along: 'b' });
+        if (!endPanel && hasTag(item, 'banded') && !groupModel.island) seen.push({ side: 'back', length, along: 'a' });   // banded all round (a top of board in a wet room)
         const factory = projectData.materials[material].factoryEdges || [];
         worktopPieces.push({
           group: groupModel.group, item, name: endPanel ? 'End panel' : 'Worktop', material, a: length, b: depth, y0, y1,
@@ -1263,7 +1270,20 @@
         const cut = (settings.cutouts || {})[flag], worktop = worktops[carcass.group];
         if (!cut) { warn(`${carcass.name}: no cut-out sizes in settings.cutouts.${flag}.`); continue; }
         if (!worktop) continue;
-        const centre = (carcass.x0 + carcass.x1) / 2, x0 = centre - cut.width / 2, x1 = centre + cut.width / 2, y0 = worktop.y0 + cut.fromBack, y1 = y0 + cut.depth;
+        const centre = (carcass.x0 + carcass.x1) / 2;
+        if (cut.holes) {                       // round holes (a basin on the top): each from the carcass's centre and the worktop's back edge
+          const piece = worktopPieces.find(p => p.group === carcass.group && p.item.type === 'worktop' && p.item.x0 <= centre && p.item.x1 >= centre);
+          if (!piece) { warn(`${carcass.name}: no worktop over it for the ${LABELS.hole[flag]}.`); continue; }
+          for (const h of cut.holes) {
+            const x = centre + h.along, y = worktop.y0 + h.fromBack, r = h.diameter / 2;
+            const cutout = { kind: flag, round: true, width: h.diameter, depth: h.diameter, x0: x - r, x1: x + r, y0: y - r, y1: y + r, x: x - piece.item.x0, y: h.fromBack, carcassId: carcass.id };
+            worktop.cutouts.push(cutout);
+            piece.holeFrom = { x: 'left', y: 'back' };
+            (piece.cutouts || (piece.cutouts = [])).push(cutout);
+          }
+          continue;
+        }
+        const x0 = centre - cut.width / 2, x1 = centre + cut.width / 2, y0 = worktop.y0 + cut.fromBack, y1 = y0 + cut.depth;
         const piece = worktopPieces.find(p => p.group === carcass.group && p.item.type === 'worktop' && p.item.x0 <= x0 && p.item.x1 >= x1);
         if (!piece) { warn(`${carcass.name}: the cut-out (${LABELS.hole[flag]}) does not fit in one worktop.`); continue; }
         if (x0 < carcass.x0 + board || x1 > carcass.x1 - board) warn(`${carcass.name}: the ${LABELS.hole[flag]} ${cut.width} is wider than the inside of the carcass ${carcass.x1 - carcass.x0 - 2 * board}.`);
@@ -1369,6 +1389,20 @@
         const wall = model.groups[r].wall;
         add('trap', r, c.id, [x - 70, x + 125, wall, Math.max(y + 20, back + 56), install.sink.wallOutlet - 25, from],   // its outlet runs to the wall
           { name: 'Trap', x, from, drain: y, top: install.sink.trapTop, outlet: install.sink.wallOutlet, back, wall });
+      }
+    }
+    /* a basin on the top over a carcass tagged basin, its back settings.cutouts.basin.fromBack from the top's back edge; its tap
+       over the hole for the tap */
+    const basinCut = (model.settings.cutouts || {}).basin, B = appliances.basin, BT = appliances.basinTap;
+    for (const c of model.carcasses.filter(c => c.basin && B && basinCut)) {
+      const r = String(c.group), w = model.worktops[r];
+      if (!w) continue;
+      const x = (c.x0 + c.x1) / 2, y0 = w.y0 + basinCut.fromBack, top = w.h1;
+      add('basin', r, c.id, [x - B.body.width / 2, x + B.body.width / 2, y0, y0 + B.body.depth, top, top + B.body.height], { name: B.name, x, y: y0 + B.body.depth / 2, top });
+      const tapHole = basinCut.holes.find(h => h.for === 'tap');
+      if (BT && tapHole) {
+        const tx = x + tapHole.along, ty = w.y0 + tapHole.fromBack, rim = top + B.body.height;
+        add('basinTap', r, c.id, [tx - 25, tx + 25, ty - 25, ty + BT.spout + 10, rim, rim + BT.height], { name: BT.name, x: tx, y: ty, top: rim });
       }
     }
     for (const g of Object.values(model.groups)) {
@@ -1663,7 +1697,7 @@
       const finished = new Set([...piece.edges.map(e => e.side), ...piece.factoryEdges]);
       const outer = x0 + x1 < groupLength(r) ? 'left' : 'right';
       const faces = model.materials[code].twoSided ? (endPanel ? ['left', 'right'] : ['top', 'bottom']) : [endPanel ? outer : 'top'];
-      const holes = (piece.cutouts || []).map(c => [c.x0, c.x1, c.y0, c.y1]);
+      const holes = (piece.cutouts || []).filter(c => !c.round).map(c => [c.x0, c.x1, c.y0, c.y1]);   // a round hole is under what stands on it
       const cuts = [...new Set([x0, x1, ...holes.flatMap(([a, b]) => [a, b])])].sort((p, q) => p - q);
       for (let i = 0; i + 1 < cuts.length; i++) {
         const a = cuts[i], b = cuts[i + 1], spans = [];
@@ -1863,6 +1897,7 @@
     for (const b of model.boards) if (b.id === 'backStrip') board(STATIC, b, null, 'carcasses');
     for (const p of model.frontPanels) if (!p.item) look(box(STATIC, String(p.group), placed(p), K(p.material), 'frontPanel', { check: 'frontPanel', name: 'G' + p.group + ' ' + p.name + ' ' + p.a + ' × ' + p.b }), p.material, { banded: p.edges.map(e => e.side) });
     if (sinkItem) drawSink();
+    for (const role of ['basin', 'basinTap']) for (const x of P(role)) { const o = originOf(x); product(x.A, { r: x.group, x: x.x - o[0], y: x.y - o[1], top: x.top - o[2] }, moved(o)); }
     for (const x of P('hob')) {
       const o = originOf(x), cut = { x0: x.cut.x0 - o[0], x1: x.cut.x1 - o[0], y0: x.cut.y0 - o[1], y1: x.cut.y1 - o[1] };
       product(appliances.hob, { r: x.group, x: x.x - o[0], cut, top: x.top - o[2] }, moved(o));

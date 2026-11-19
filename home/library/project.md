@@ -39,7 +39,7 @@ All version 1.
 | shop | a key of shops.js |
 | links | [{name, url}]: the maker's documents first, then the shops |
 | note | a remark on buying it |
-| draw | which drawing of draw.js draws it (oven, microwave, fridgeFreezer, dishwasher, hob, hood, sink, coffeeMachine); without it, nothing is drawn |
+| draw | which drawing of draw.js draws it (oven, microwave, fridgeFreezer, dishwasher, hob, hood, sink, coffeeMachine, basin, basinTap, wcFrame, wcBowl, mirror, wallCabinet, showerScreen, linearDrain, showerSet, towelRadiator, riser); without it, nothing is drawn |
 
 and, by group:
 
@@ -48,6 +48,7 @@ and, by group:
 | appliances | body: the overall size (an oven or a microwave without its fascia, a fridge or a dishwasher with its doors, a sink's outline on the worktop); fascia: the front panel of an oven or a microwave, bottom: where it starts from the body's bottom; door: hinge (the edge it turns on), height; doors: a fridge's and a freezer's doors from the appliance's bottom, doorDepth; controlPanelHeight, controlColumnWidth: the part of a fascia that does not open; baseSetback: how far behind the front the base starts; bowl, rim, wall: a sink's; glass: a hob's; chimney: a hood's; source: where the sizes come from ("assumed": still to check) |
 | boards | code and decor (the maker's), thickness, length and width (a sheet as it is bought; missing where not known: the editor shows ?), color, core (the colour of a bare edge), coreSurface (what a bare edge shows: `chipboard`, its chips; `fibre`, an even fibreboard), lacquered, frameWidth (a shaker front's frame), depth (worktops, end panels), factoryEdges, twoSided, texture (a key of textures/). What is sold by the metre (a PVC plinth) is a board too, with unit m and no sheet size |
 | hardware | as drawn: a handle's length; a leg's radius, footRadius, footHeight; a hinge's cupDepth; a drawer's runnerWidth, sideThickness, sideFromCarcass, fromBack, fromFront; a grille's width, height |
+| sanitary | as drawn: body (the overall size), and by kind: a basin's wall, shelf; a tap's height, spout, metal; a screen's fixed panel and door; a frame's plate |
 | tiles | look, finish; texture; len × wid of one tile, joint; minCut: the smallest acceptable cut piece [along, across]; pattern: the maker's default (grid, half, third, quarter, random); formats: the sizes the maker makes |
 
 Sizes in mm.

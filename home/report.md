@@ -225,6 +225,16 @@ The prototype's floor tiles (its house page: Wykończenie, the layouts, the coun
 - bedroom_2 (an L): its view took every wall in the box round it, so the walls along wardrobes 3 and 4 came in whole, an empty frame of walls with no floor and no roof over it. Now a wall of a room's view is trimmed to its floor area grown by the thickest wall (240): the frame is gone, the roof as before. The other rooms the same but for short wall ends (living_5, garage_2, boiler_8, hall_1, wardrobe_3); the house's snapshot taken again.
 - Not a fault: the beige face over the passage to the wardrobes is the attic's flat ceiling, lit from below like every ceiling.
 
+## The ground-floor bathroom, room 7 (19 Nov)
+
+The owner's decisions: the design is where every object stands (bought, cut, or made by the owner), not the installer's points; no suspended ceiling, downlights like the kitchen's; the vanity's top one plain 18 mm board of the same decor; the kitchen's drawers (TANDEMBOX antaro, NL 400); an estimate and a cut list like the kitchen's, no eRozkrój; the riser, the Geberit frame, the WC and the basin drawn; no pipes in the walls.
+
+- room/bathroom_7.cabinets.js: a hung vanity of two carcasses 600 (Egger H1199 ST12), its bottom 324 above the floor, three drawers push to open, the top banded all round with the basin's holes (drain Ø 60, tap Ø 35).
+- room/bathroom_7.scene.js: the fixtures (riser, WC frame with its plate on the casing, WC, wall cabinet in the casing's niche, mirror, radiator, the screen with its door, the linear drain, the shower set), the casing as built-ins, the tiles (walls and casing graphite 1198 × 598, floor grey 898 × 898, the shower apart), five downlights, five cameras.
+- room/bathroom_7.docs.js: the estimate (boards, cutting and banding, hardware, basin, WC, shower, radiator and mirror, tiles counted from the drawing + 10 %, the casing), the cut list, the notes on the design.
+- The engine: cabinets.js the tags basin and banded, hung carcasses, round holes; room.js fixtures, built-ins, the room's tiles (tiles.js corePieces shared with the house); draw.js the sanitary drawings; the products in sanitary.js, building.js, hardware.js, services.js (the banding in H1199, PUR).
+- The kitchen and the wardrobes: their models unchanged; the house's tiles and doors unchanged.
+
 ## Noted for later (the owner, 19 Nov)
 
 - **2D, the whole house**: a click on the plan marks everything: ugly (to check whether it still does).

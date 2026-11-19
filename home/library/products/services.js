@@ -4,5 +4,6 @@ HOME.data({"format": "products", "version": 1, "products": {
  "edge-banding-h1180-pur": {"name":"Obrzeże blatu","spec":"1.5 mm in decor H1180 ST37 Halifax oak natural, glued with PUR or by laser (no visible joint)","unit":"m","price":10.1,"priceNote":"machine banding – ask M-HM; match the edging of the end panels to their material","links":[{"name":"m-hm.pl: edging (approximate price)","url":"https://m-hm.pl/pl/p/OBRZEZE-ABS-H1180-ST37-431.5MM-Dab-Halifax-naturalny/1401"}]},
  "m-hm-cutting-edging-erozkroj": {"name":"Cięcie, obrzeże ABS 2 mm (22 i 42 mm), otwory","price":null,"shop":"m-hm","links":[{"name":"m-hm.pl","url":"https://m-hm.pl/pl/i/Uslugi/16"}]},
  "edge-banding-white-22": {"name":"Oklejanie obrzeżem białym","spec":"ABS 0.8 × 22 white, with the banding service","unit":"m","price":null,"priceNote":"to check","shop":"m-hm"},
- "edge-banding-h1180-22": {"name":"Oklejanie frontów","spec":"ABS 1 × 22 in decor H1180 ST37 Halifax oak natural, with the banding service","unit":"m","price":null,"priceNote":"to check","shop":"m-hm"}
+ "edge-banding-h1180-22": {"name":"Oklejanie frontów","spec":"ABS 1 × 22 in decor H1180 ST37 Halifax oak natural, with the banding service","unit":"m","price":null,"priceNote":"to check","shop":"m-hm"},
+ "edge-banding-h1199-pur": {"name":"Oklejanie obrzeżem w dekorze H1199 ST12","spec":"ABS 2 × 22 in decor H1199 ST12, PUR glue (a wet room), with the banding service","unit":"m","price":null,"priceNote":"to check","shop":"m-hm"}
 }});

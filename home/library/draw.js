@@ -343,10 +343,99 @@ function cutleryInsert(D, { r, m, size: [w, d, h], inset, info }) {
 }
 
 /* by a product's field draw */
+/* ---------- a basin standing on the top: its walls, its bottom, a shelf at the back for the tap (the maker's sizes:
+   body, wall, shelf). place: {r, x, y (its centre), top (of the top it stands on)} ---------- */
+function basin(D, A, { r, x, y, top }) {
+  const { box, envelope, STATIC } = D, I = { name: A.name, part: D.part() }, { width: w, depth: d, height: h } = A.body, t = A.wall, key = A.material;
+  const x0 = x - w / 2, x1 = x + w / 2, y0 = y - d / 2, y1 = y + d / 2, s1 = y0 + A.shelf, g = gb => box(STATIC, r, gb, key, 'basin', I);
+  g([x0, x1, y0, s1, top, top + h]);                          // the shelf at the back, the tap's
+  g([x0, x1, y1 - t, y1, top, top + h]);                      // the front wall
+  g([x0, x0 + t, s1, y1 - t, top, top + h]); g([x1 - t, x1, s1, y1 - t, top, top + h]);   // the side walls
+  g([x0 + t, x1 - t, s1, y1 - t, top, top + t]);              // the bottom
+  envelope(r, [x0, x1, y0, y1, top, top + h], A.name + ' ' + w + ' × ' + d + ' × ' + h);
+  D.cylinder(D.at(r, 'basin'), 21, 3, key, x, (s1 + y1) / 2, top + t + 1.5, null, 32);   // the plug, in the basin's colour
+}
+/* a basin tap on the basin's shelf: its body, the spout over the bowl, the lever. place: {r, x, y (the tap's axis), top (the shelf)} */
+function basinTap(D, A, { r, x, y, top }) {
+  const { cylinder, at } = D, a = at(r, 'basin'), m = A.metal;
+  cylinder(a, 25, 6, m, x, y, top + 3, null, 32);
+  cylinder(a, 18, A.height - 30, m, x, y, top + (A.height - 30) / 2, null, 32);
+  cylinder(a, 9, A.spout, m, x, y + A.spout / 2, top + A.height - 40, 'y', 20);
+  cylinder(a, 6, 70, m, x, y - 30, top + A.height - 10, 'y', 16);   // the lever, toward the back
+}
+
+/* ---------- the fixtures of a room (a bathroom's): each in its own frame, x along its wall (0 … w), y out of it (0 … d), h up
+   from the floor (from h0, its offset); place: {r, a (where its details go), w, d, h, h0, f (the scene's fixture)} ---------- */
+const fixtureInfo = (D, A) => ({ name: A.name, part: D.part() });
+/* a WC frame in its casing: the frame (hidden in the casing) and the flush plate on the casing's face, f.plate out from the wall */
+function wcFrame(D, A, { r, w, d, h, h0, f }) {
+  const I = fixtureInfo(D, A), P = A.plate, face = f.plate ?? d, c = w / 2;
+  D.box(D.STATIC, r, [0, w, 0, d, h0, h0 + h], 'steel', 'sanitary', I);
+  D.box(D.STATIC, r, [c - P.width / 2, c + P.width / 2, face, face + 8, P.h, P.h + P.height], 'brass', 'sanitary', fixtureInfo(D, A));
+}
+/* a wall-hung WC bowl: the part against the wall, the bowl (an ellipse in plan), the seat */
+function wcBowl(D, A, { r, a, w, d, h, h0 }) {
+  const I = fixtureInfo(D, A), key = A.material, back = 120;
+  D.box(D.STATIC, r, [w * 0.15, w * 0.85, 0, back, h0 + 60, h0 + h], key, 'sanitary', I);
+  const bowl = D.cylinder(a, w / 2, h - 80, key, w / 2, back + (d - back) / 2 - 20, h0 + 40 + (h - 80) / 2, null, 40);
+  bowl.scale.set(1, 1, (d - back) / w);
+  const seat = D.cylinder(a, w / 2 + 4, 20, key, w / 2, back + (d - back) / 2 - 20, h0 + h - 10, null, 40);
+  seat.scale.set(1, 1, (d - back + 8) / (w + 8));
+  D.envelope(r, [0, w, 0, d, h0, h0 + h], A.name);
+}
+/* a mirror with its light: the glass on a frame of light */
+function mirror(D, A, { r, w, d, h, h0 }) {
+  D.box(D.STATIC, r, [0, w, 0, d - 8, h0, h0 + h], 'led', 'sanitary', fixtureInfo(D, A));
+  D.box(D.STATIC, r, [15, w - 15, d - 8, d, h0 + 15, h0 + h - 15], 'mirror', 'sanitary', fixtureInfo(D, A));
+}
+/* a wall cabinet: its carcass, open at the front, and its door */
+function wallCabinet(D, A, { r, w, d, h, h0 }) {
+  D.openFront(D.STATIC, r, [0, w, 0, d - 18, h0, h0 + h], 16, A.material, 'sanitary', fixtureInfo(D, A));
+  D.box(D.STATIC, r, [1, w - 1, d - 18, d, h0 + 1, h0 + h - 1], A.material, 'sanitary', fixtureInfo(D, A));
+}
+/* a walk-in screen across the shower: a fixed pane at the wall's end (x = w − fixed … w) and a door on it, turning about its
+   inner edge; the profiles in the fittings' metal */
+function showerScreen(D, A, { r, w, d, h, h0, f }) {
+  const metal = f.metal || 'brass', I = fixtureInfo(D, A), t = 8, y0 = d / 2 - t / 2, y1 = d / 2 + t / 2, fx = w - A.fixed;
+  D.box(D.STATIC, r, [fx, w, y0, y1, h0, h0 + h], 'glass', 'sanitary', I);
+  D.box(D.STATIC, r, [w - 12, w, 0, d, h0, h0 + h], metal, 'sanitary', fixtureInfo(D, A));      // the wall profile
+  D.box(D.STATIC, r, [fx, w, 0, d, h0, h0 + 12], metal, 'sanitary', fixtureInfo(D, A));       // the bottom profile
+  const m = D.mover(r, 'door', fx - 5, d / 2, 0);
+  Object.assign(m, { sign: f.opens === 'in' ? -1 : 1, label: A.name + ' – door ' + (fx - 10), travel: 1.4 });
+  const J = { name: A.name + ' – door', part: D.part() };
+  D.box(m.cells, r, [5, fx - 5, y0, y1, h0 + 5, h0 + h], 'glass', 'sanitary', J);
+  D.box(m.cells, r, [20, 40, y0 - 6, y1 + 6, h0 + 840, h0 + 1260], metal, 'sanitary', { name: A.name + ' – handle', part: D.part() });
+}
+/* a linear drain at the far wall of the shower: its frame and its grate (tiled over) */
+function linearDrain(D, A, { r, w, d, h, h0 }) {
+  D.box(D.STATIC, r, [0, w, 0, d, h0, h0 + h], 'steelPolished', 'sanitary', fixtureInfo(D, A));
+}
+/* a shower set on the wall: the thermostat, the arm and the rain head (Ø w at the arm's end, d out of the wall, at h), the hand shower */
+function showerSet(D, A, { r, a, w, d, h, h0, f }) {
+  const metal = f.metal || 'brass', c = w / 2, top = h0 + h;
+  D.box(D.STATIC, r, [c - 120, c + 120, 0, 8, h0 + 1035, h0 + 1165], metal, 'sanitary', fixtureInfo(D, A));   // the thermostat
+  D.cylinder(a, 11, d, metal, c, d / 2, top - 30, 'y', 12);                                                 // the arm
+  D.cylinder(a, w / 2, 12, metal, c, d, top, null, 48);                                                     // the rain head
+  D.cylinder(a, 30, 12, metal, c, 6, top - 30, 'y', 32);
+  D.cylinder(a, 20, 30, metal, c - 230, 15, h0 + 1000, 'y', 32);                                            // the outlet and the hand shower
+  D.cylinder(a, 16, 200, metal, c - 230, 50, h0 + 1320, null, 24);
+}
+/* a ladder towel radiator: two upright tubes, the rails between them in three bands */
+function towelRadiator(D, A, { r, a, w, d, h, h0 }) {
+  const m = A.metal, y = d / 2;
+  for (const x of [25, w - 25]) D.cylinder(a, 12.5, h, m, x, y, h0 + h / 2, null, 20);
+  for (let k = 0, z = h0 + 50; z < h0 + h - 30; k++, z += 50) if (k % 7 !== 6) D.cylinder(a, 9, w - 50, m, w / 2, y, z, 'x', 14);
+  D.envelope(r, [0, w, 0, d, h0, h0 + h], A.name);
+}
+/* a riser: a pipe from the floor to the ceiling */
+function riser(D, A, { a, w, d, h, h0 }) {
+  D.cylinder(a, w / 2, h, 'pipe', w / 2, d / 2, h0 + h / 2, null, 32);
+}
+
 HOME.draw = {
   oven: (D, A, place) => builtIn(D, 'oven', A, place),
   microwave: (D, A, place) => builtIn(D, 'microwave', A, place),
-  sink, tap, trap, hob, hood, fridgeFreezer, fridgeDoor, dishwasher, coffeeMachine, pendant, downlight,
+  sink, tap, trap, basin, basinTap, wcFrame, wcBowl, mirror, wallCabinet, showerScreen, linearDrain, showerSet, towelRadiator, riser, hob, hood, fridgeFreezer, fridgeDoor, dishwasher, coffeeMachine, pendant, downlight,
   leg, grille, shelfPin, bumper, hinge, handle, runner, drawerPart, bins, cutleryInsert
 };
 })();

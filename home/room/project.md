@@ -49,7 +49,9 @@ In the house's axes and order: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`, all
 | appliances | role (oven, microwave, fridgeFreezer, dishwasher, hob, sink, hood, coffee) → {product, feet}: the product and how it is built in |
 | notes | the designer's notes: name, description, details |
 | groups | group (a number), name, backGap (the gap behind the carcasses), depth (its carcasses' depth; none: settings.carcass.depth), columns (their widths) |
-| components | one piece each: group, column, span, type, height; carcass (its name, unique in the room), tags, handle, gaps, hinge, note. The tag `open` (cabinet, drawer): no front, an open shelf or a drawer box seen from the room |
+| components | one piece each: group, column, span, type, height; carcass (its name, unique in the room), tags, handle, gaps, hinge, note. The tag `open` (cabinet, drawer): no front, an open shelf or a drawer box seen from the room; `basin` (drawer): the basin stands over it, its holes cut in the top above; `banded` (worktop): banded on all four edges (a vanity's top) |
+| carcass.base, carcass.hung | base: the carcasses carry a worktop but need not stand on the floor; hung: nothing under them but space (a vanity on hidden hangers, counted a pair a carcass) |
+| cutouts.basin | fromBack; holes [{for: drain or tap, diameter, along, fromBack}]: the round holes of a basin on the top, from its template |
 
 **scene** (version 1):
 
@@ -61,6 +63,10 @@ In the house's axes and order: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`, all
 | hardware | our layout of the hardware as drawn: handle (axis, barLength, sideHeight), handles (the metals to choose and the default), open (the angles and the drawers' travel; doorStop: a carcass's door that opens less), leg (fromSide, fromBack, fromFront), bins (count, height), plinthGrille (bottom) |
 | floors, floorJoint | the tiles to choose for the floor (not drawn yet) |
 | lights | pendantBottom; pendants {group, count, spacing}; downlights: {group, x, y} or {group, between: [axes], y}, y from the wall |
+| fixtures | id → {product, front, offset, plate?, depth?, metal?}: a bought thing placed like a group (a WC frame, a WC, a mirror, a radiator, a screen, a drain, a shower set, a riser); plate: a WC frame's flush plate from the floor; depth: the frame's depth as built |
+| builtIns | [{name, box, material}]: what the owner builds (a plasterboard casing), its box in the room's axes; tiled like a wall |
+| tiles | walls, floor, shower {zone, walls, floor}: each {product, pattern, origin?}; without an origin the tiles are moved along each wall (rows from the floor) and on the floor for the fewest small cuts; the shower's zone [x0, x1, y0, y1] tiled apart |
+| lights.downlights.at | [x, y] in the room's axes, where no group carries them (a bathroom) |
 | cameras | name, eye, target: in the room's axes, from its zero |
 
 ## The format `docs`, version 1

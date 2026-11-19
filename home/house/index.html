@@ -110,7 +110,10 @@ const FURNISHED = (WHOLE ? ROOMS : PART.map(id => ROOM[id])).filter(r => (r.node
 const FURNITURE = await Promise.all(FURNISHED.map(async r => {
   const roles = ['cabinets', 'scene'].concat(r.node.files.includes('docs') ? ['docs'] : []);
   const [cabinets, scene, docs] = await Promise.all(roles.map(role => HOME.load(HOME.load.file.room(r.id, role), role, 1)));
-  const node = { offset: T.place(r.node), size: r.node.size }, prepared = HOME.room.prepare(node, { cabinets, scene }, { products: LIB.groups });
+  /* the room as the room engine needs it: its zero and size, its floor area and the openings in its walls, in its own axes */
+  const at = T.place(r.node), near = b => b[0] <= at[0] + r.node.size[0] + 300 && b[1] >= at[0] - 300 && b[2] <= at[1] + r.node.size[1] + 300 && b[3] >= at[1] - 300 && b[4] < at[2] + r.node.size[2] && b[5] > at[2];
+  const node = { offset: at, size: r.node.size, area: r.node.area, openings: MODEL.OPENINGS.map(o => o.b).filter(near).map(b => b.map((v, k) => v - at[k >> 1])) };
+  const prepared = HOME.room.prepare(node, { cabinets, scene }, { products: LIB.groups });
   return { room: r, prepared, docs: docs && HOME.docs.create({ cabinets: HOME.cabinets, model: prepared.model, tree: prepared.TREE, docs, appliances: prepared.appliances, library: LIB }) };
 }));
 for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks, f.prepared.scene.hardware.handles ? { handle: MATERIALS[f.prepared.scene.hardware.handles.default] } : {});
@@ -156,8 +159,10 @@ const V = HOME.scene.create({ canvas: $('gl'), stage: $('stage'), materials: MAT
 if (!WHOLE) V.renderer.physicallyCorrectLights = true;   // a room: the inside light and the lamps in physical units
 for (const f of FURNITURE) {
   const own = PARTS.find(p => p.room === f.room), ceilings = own ? own.objects.filter(o => o.role === 'ceiling').map(o => 'object:' + f.room.id + '/' + o.id) : [];
-  f.made = HOME.room.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings });
+  f.made = HOME.room.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings, products: LIB.groups, textures: LIB.textures });
   STILL.push(...f.made.STATIC);
+  for (const [k, m] of Object.entries(f.made.tiles.materials)) MATERIALS[k] ||= m;
+  if (f.made.tiles.pieces.length) V.buildMeshes(f.made.tiles.pieces.map(p => Object.assign(p, { cell: Object.assign({}, p.cell, { layers: [f.room.floor.id].concat(p.cell.layers) }), group: [f.room.floor.id].concat(p.cell.layers).join('+') })));
 }
 const SOLIDS = WHOLE ? MODEL.SOLIDS.concat(...FURNITURE.map(f => f.made.STATIC)) : STILL;   // what the walk bumps into
 const PIECES = piecesOf(STILL);
@@ -192,24 +197,13 @@ function layTiles(D) {
   if (old) V.removeMeshes(old.made);
   LAID[D.key] = { D, L, P, laid, pieces, count, made: V.buildMeshes(tilePieces(D, L, P, laid, pieces)) };
 }
-/* the pieces for core: the grout under the layout's rooms shown, and the tiles over it; a small cut red while its layer is on */
+/* the pieces for core (room/tiles.js): the grout under the layout's rooms shown, the tiles over it; a small cut red while its layer is on */
 function tilePieces(D, L, P, laid, pieces) {
-  const T = LIB.textures[P.texture], stone = T.kind === 'stone', h = level(D.floor), up = [0, 0, 1], layers = [D.floor.id].concat(TILES.layers);
-  const cell = (extra = {}) => Object.assign({ layers }, extra), out = [];
-  const grout = 'tiles:grout:' + L.grout;
-  MATERIALS[grout] ||= { color: L.grout, roughness: 0.95 };
-  const groutCell = cell();
-  for (const r of laid) if (SHOWN_ROOMS.has(r.id)) for (const q of r.rects) {
-    out.push({ poly: [[q[0], q[2], h + TILES.grout], [q[1], q[2], h + TILES.grout], [q[1], q[3], h + TILES.grout], [q[0], q[3], h + TILES.grout]], n: up, uv: v => [v[0], v[1]], cell: groutCell, group: layers.join('+'), material: grout });
-  }
-  for (const set of HOME.tiles.faces(L, P, T, pieces.filter(p => SHOWN_ROOMS.has(p.room)), h + TILES.top)) {
-    const key = `tiles:${P.texture}:${set.face}`, red = key + ':small';
-    MATERIALS[key] ||= { image: { key: P.texture, face: set.face }, roughness: stone ? 0.6 : 0.65, reflect: 0.35 };
-    MATERIALS[red] ||= Object.assign({}, MATERIALS[key], { color: '#ff9a92' });
-    const c = set.small ? cell({ finish: TILES.small, raw: key }) : cell();
-    for (const q of set.quads) out.push({ poly: q.poly, n: up, uv: q.uv, cell: c, group: layers.join('+'), material: set.small ? red : key });
-  }
-  return out;
+  const T = LIB.textures[P.texture], h = level(D.floor), up = [0, 0, 1], cell = { layers: [D.floor.id].concat(TILES.layers) };
+  const grout = laid.filter(r => SHOWN_ROOMS.has(r.id)).flatMap(r => r.rects).map(q => [[q[0], q[2], h + TILES.grout], [q[1], q[2], h + TILES.grout], [q[1], q[3], h + TILES.grout], [q[0], q[3], h + TILES.grout]]);
+  const made = HOME.tiles.corePieces(L, P, T, pieces.filter(p => SHOWN_ROOMS.has(p.room)), grout, (x, y) => [x, y, h + TILES.top], up, cell, TILES.small);
+  for (const [k, m] of Object.entries(made.materials)) MATERIALS[k] ||= m;
+  return made.pieces;
 }
 const LAYOUTS = MODEL.LAYOUTS.filter(D => TILE_PRODUCTS[D.product]);
 for (const D of LAYOUTS) layTiles(D);
@@ -444,8 +438,9 @@ function book() {
     tree.rows.push({ level, kind: level ? undefined : 'cat', cells: [name, path, ...offset.map(mm), ...size.map(mm)] });
     const f = !WHOLE && n.type !== undefined && furnitureOf(n.id);   // the whole house stops at its rooms; a room's view goes down into it
     if (f) for (const g of f.prepared.TREE) {
-      const s = f.prepared.scene.groups[g.id.slice(1)];
-      walk(g, (path ? path + '/' : '') + g.id, level + 1, s.offset, s.size, g.name + ' (fronts ' + s.front + ')');
+      if (g.type === 'builtIns') { walk(g, (path ? path + '/' : '') + g.id, level + 1); continue; }   // in the room's axes
+      const s = g.type === 'product' ? f.prepared.scene.fixtures[g.id] : f.prepared.scene.groups[g.id.slice(1)], box = f.prepared.PLACE[g.type === 'product' ? g.id : g.id.slice(1)].box;
+      walk(g, (path ? path + '/' : '') + g.id, level + 1, s.offset, s.size || [box[1] - box[0], box[3] - box[2], box[5] - box[4]], g.name + ' (fronts ' + s.front + ')');
     }
     for (const c of n.children || []) walk(c, (path ? path + '/' : '') + c.id, level + 1);
   }

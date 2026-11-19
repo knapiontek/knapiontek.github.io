@@ -106,3 +106,9 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 - `node work/split_carcasses.js` rewrote the four cabinets files (as the editor writes them); the editor's Export the same byte for byte after it. tests/cmp_wardrobes.js no longer holds for the carcasses (the prototype's are whole): the widths, depths, drawer boxes and the shelves' heights as before.
 - The pages: no errors, every check passes; wardrobe_3 Cut list 64 rows, wardrobe_4 57, wardrobe_8 58, bedroom_6 52; the kitchen as before (Estimate 80, Cut list 144).
 - The edges (core/scene.js): tests/shot_back.py <room> <eye> <target> <png> [layer to switch off | cam:<camera>]: the backs of wardrobe_3 from behind with and without the shelves and the edges; the kitchen and the whole house before and after, side by side.
+
+## The bathroom 7 (19 Nov)
+
+- house/index.html?room=bathroom_7: no errors, every check passes; the Estimate 55 rows, the Cut list, the Notes.
+- The tiles counted on the page: walls 16.33 m² (63 tiles), floor 3.68 (8), the shower's walls 12.75 (28), its floor 0.90 (4).
+- Regressions: model_snap of kitchen_6 and wardrobe_3 the same as before; the kitchen's Documents against the prototype (the cut list differs only in the order of rows, every block the same), its cells and faces the same; t_tiles, t_house_same clean; tsc clean.

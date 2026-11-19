@@ -690,7 +690,8 @@ HOME.data({
        "size": [2510, 2390, 2720],
        "area": [[0, 1670, 0, 2390], [1670, 2510, 1390, 2390]],
        "archonArea": 4.95,
-       "settings": {"tiles": null}
+       "settings": {"tiles": null},
+       "files": ["cabinets", "scene", "docs"]
       },
       {
        "id": "boiler_8",
