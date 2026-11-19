@@ -1,6 +1,6 @@
 /* core/sheet.js: the spreadsheet of Documents: sheets in tabs, input cells the viewer may change (until a reload),
    formulas that follow them, the XLSX with the same formulas live; and the Documents screen (a title, warnings, the book,
-   the bottom menu). Knows no project: a page hands in the book. The formulas are computed without a browser.
+   the bottom menu), an Alpine part. Knows no project: a page hands in the book. The formulas are computed without a browser.
 
    book   {sheets: [{name, cols: [{title, width, digits, fix | share, min, max}], rows: [{kind, cells}], node}]}
           width: characters in the XLSX; on screen fix (characters: numbers, codes, units) or share (text: its part of
@@ -80,116 +80,151 @@ const withLinks = c => [c.text, c.links.map(linkText).join(' · ')].filter(Boole
 /* '#'Notes'!A12' -> [sheet name, row] */
 const target = href => { const m = href.match(/^#'?([^'!]+)'?!\$?[A-Z]+\$?(\d+)$/); return m && [m[1], +m[2]]; };
 
-/* draws book into box: tabs (one per sheet) over the table of the current one; returns {xlsx(file), restore()} */
-function create(box, book) {
-  const original = new Map();   // input cell -> its value as handed in
-  let current = 0;
-  const tabs = el('div', { className: 'toggle sheettabs', role: 'tablist' }), body = el('div', { className: 'sheetbody' }), wrap = el('div', { className: 'sheetwrap' });
-  box.innerHTML = ''; box.append(tabs, body);   // the tabs stay, the body scrolls
-  function take(b) {
-    book = b; original.clear();
-    for (const s of book.sheets) for (const r of s.rows || []) for (const c of r.cells || []) if (c && c.input) original.set(c, c.v);
-    for (const s of book.sheets) if (s.node) body.append(s.node);
-    body.append(wrap);
-  }
-  take(book);
+/* a cell's text as HTML: an address in it shown as a link with its site's name; a link inside the book carries its target */
+const anchor = l => { const to = target(l.href);
+  return `<a href="${esc(l.href)}" title="${esc(l.href)}"${to ? ` data-sheet="${esc(to[0])}" data-row="${to[1]}"` : ' target="_blank" rel="noopener"'}>${esc(linkText(l))}</a>`; };
+const linked = text => text.split(/(https?:\/\/[^\s)]+)/).map((t, k) => (k % 2 ? anchor({ href: t }) : esc(t))).join('');
+const foldHtml = (ri, open) => `<button class="fold" data-fold="${ri}" title="${open ? 'Close' : 'Open'}">${open ? '−' : '+'}</button>`;
 
-  function draw() {
-    tabs.hidden = book.sheets.length < 2;
-    tabs.innerHTML = book.sheets.map((s, i) => `<button role="tab" data-i="${i}" aria-selected="${i === current}"${i === current ? ' data-on' : ''}>${s.name}</button>`).join('');
-    const sheet = book.sheets[current], value = evaluator(book), formulas = [];
-    book.sheets.forEach((s, i) => { if (s.node) s.node.hidden = i !== current; });
-    wrap.hidden = !sheet.rows; wrap.innerHTML = ''; body.scrollTop = 0;
-    if (!sheet.rows) return;
-    const table = el('table', { className: 'sheet' });
-    /* a tree: which rows are open (kept while the book stays), which have children, which an ancestor hides */
-    let open = OPEN.get(sheet);
-    if (!open) OPEN.set(sheet, open = new Set(sheet.tree === 'open' ? sheet.rows.map((r, i) => i) : []));
-    const isTree = r => r && r.level !== undefined, parent = [];
-    sheet.rows.forEach((row, ri) => {
-      const tr = el('tr', { className: row.kind || '' });
-      let fold = null;
-      if (isTree(row)) {
-        parent.length = row.level;
-        tr.hidden = parent.some(p => !open.has(p));
-        parent[row.level] = ri;
-        const next = sheet.rows[ri + 1];
-        if (isTree(next) && next.level > row.level) fold = el('button', { className: 'fold', textContent: open.has(ri) ? '−' : '+', title: open.has(ri) ? 'Close' : 'Open',
-          onclick: () => { const top = body.scrollTop; if (open.has(ri)) open.delete(ri); else open.add(ri); draw(); body.scrollTop = top; } });   // the view stays where it is
-      }
-      (row.cells || []).forEach((cell, ci) => {
-        const d = cell?.digits ?? sheet.cols[ci]?.digits, td = el('td');
-        if (typeof cell === 'number') { td.className = 'n'; td.textContent = show(cell, d); }
-        else if (cell && typeof cell === 'object' && 'v' in cell && !cell.input) { td.className = 'n'; td.textContent = show(cell.v, d, cell.pct); }
-        else if (cell && cell.input) {
-          td.className = 'n';
-          const input = el('input', { type: 'number', step: 'any', value: cell.v });
-          input.classList.toggle('changed', cell.v !== original.get(cell));
-          input.onchange = () => { cell.v = input.value === '' ? 0 : +input.value; input.classList.toggle('changed', cell.v !== original.get(cell)); refresh(); };
-          td.append(input);
-        } else if (cell && cell.f) { td.className = 'n'; td.title = '=' + cell.f; formulas.push([td, ci, ri + 1, d, cell.pct]); }
-        else if (cell && cell.href) td.append(anchor(cell));
-        else if (cell && cell.links) {
-          if (cell.text) linked(td, cell.text + '\n');
-          cell.links.forEach((l, i) => td.append(...(i ? [' · '] : []), anchor(l)));
-        }
-        else if (cell !== null && cell !== undefined) linked(td, String(cell));
-        if (ci === 0 && isTree(row)) { td.classList.add('node'); td.style.paddingLeft = (0.5 + row.level * 1.1) + 'em'; td.prepend(fold || el('span', { className: 'fold' })); }
-        tr.append(td);
-      });
-      if (row.cells?.length === 1 && tr.firstChild) tr.firstChild.colSpan = sheet.cols.length;   // a title or a category runs across
-      else spanText(row.cells || [], tr, sheet.cols.length);
-      table.append(tr);
-    });
-    wrap.innerHTML = ''; wrap.append(table);
-    /* the formula cells of this sheet, again after every change of an input */
-    function refresh() { const v = evaluator(book); for (const [td, c, r, d, pct] of formulas) td.textContent = show(v(sheet, c, r), d, pct); }
-    refresh();
-    /* on screen: the widths set in cols, over the room there is */
-    HOME.ui.autoFit(table, wrap, sheet.cols.map(c => (c.fix || c.share ? c : { share: c.width || 1 })));
-  }
-  /* as in Excel, a text runs on over the empty cells after it: to the end of the row (a note in a short row), or, from the
-     first column, to an input (a label before its value); otherwise an empty cell keeps its column */
-  function spanText(cells, tr, n) {
-    const tds = [...tr.children];
-    for (let i = cells.length - 1; i >= 0; i--) {
-      if (typeof cells[i] !== 'string' || !cells[i]) continue;
-      let j = i + 1;
-      while (j < cells.length && (cells[j] === null || cells[j] === undefined || cells[j] === '')) j++;
-      const end = j >= cells.length ? n : j;
-      if (end - i < 2 || (j < cells.length && !(i === 0 && cells[j] && cells[j].input))) continue;
-      for (let k = i + 1; k < Math.min(j, cells.length); k++) tds[k].remove();
-      tds[i].colSpan = end - i;
+/* the cells of a sheet as the table shows them, built once per sheet and changed in place (a formula's value, a row opened):
+   rows [{kind, hidden, cells: [{cls, span, title, style, html, f: [col, row, digits, pct]}], fold}] */
+function grid(sheet, open, original) {
+  const isTree = r => r && r.level !== undefined, parent = [];
+  return sheet.rows.map((row, ri) => {
+    const out = { i: ri, kind: row.kind || '', hidden: false, cells: [] };
+    let fold = null;
+    if (isTree(row)) {
+      parent.length = row.level;
+      out.hidden = parent.some(p => !open.has(p));
+      out.parents = parent.slice(0, row.level);
+      parent[row.level] = ri;
+      const next = sheet.rows[ri + 1];
+      if (isTree(next) && next.level > row.level) fold = out.fold = ri;
     }
+    const cells = row.cells || [];
+    cells.forEach((cell, ci) => {
+      const d = cell?.digits ?? sheet.cols[ci]?.digits, td = { cls: '', span: false, title: false, style: '', html: '' };
+      if (typeof cell === 'number') { td.cls = 'n'; td.html = esc(show(cell, d)); }
+      else if (cell && typeof cell === 'object' && 'v' in cell && !cell.input) { td.cls = 'n'; td.html = esc(show(cell.v, d, cell.pct)); }
+      else if (cell && cell.input) { td.cls = 'n'; td.html = `<input type="number" step="any" value="${esc(cell.v)}" data-cell="${ri}:${ci}"${cell.v !== original.get(cell) ? ' class="changed"' : ''}>`; }
+      else if (cell && cell.f) { td.cls = 'n'; td.title = '=' + cell.f; td.f = [ci, ri + 1, d, cell.pct]; }
+      else if (cell && cell.href) td.html = anchor(cell);
+      else if (cell && cell.links) td.html = (cell.text ? linked(cell.text + '\n') : '') + cell.links.map(anchor).join(' · ');
+      else if (cell !== null && cell !== undefined) td.html = linked(String(cell));
+      if (ci === 0 && isTree(row)) { td.cls = (td.cls + ' node').trim(); td.style = `padding-left: ${0.5 + row.level * 1.1}em;`; td.lead = fold !== null ? foldHtml(ri, open.has(ri)) : '<span class="fold"></span>'; }
+      out.cells.push(td);
+    });
+    if (cells.length === 1 && out.cells[0]) out.cells[0].span = sheet.cols.length;   // a title or a category runs across
+    else spanText(cells, out.cells, sheet.cols.length);
+    out.cells = out.cells.filter(td => !td.gone);
+    for (const td of out.cells) if (td.lead) td.html = td.lead + td.html;
+    return out;
+  });
+}
+/* as in Excel, a text runs on over the empty cells after it: to the end of the row (a note in a short row), or, from the
+   first column, to an input (a label before its value); otherwise an empty cell keeps its column */
+function spanText(cells, tds, n) {
+  for (let i = cells.length - 1; i >= 0; i--) {
+    if (typeof cells[i] !== 'string' || !cells[i]) continue;
+    let j = i + 1;
+    while (j < cells.length && (cells[j] === null || cells[j] === undefined || cells[j] === '')) j++;
+    const end = j >= cells.length ? n : j;
+    if (end - i < 2 || (j < cells.length && !(i === 0 && cells[j] && cells[j].input))) continue;
+    for (let k = i + 1; k < Math.min(j, cells.length); k++) tds[k].gone = true;
+    tds[i].span = end - i;
   }
-  /* a link: inside the book it opens that sheet, outside a new tab */
-  function anchor(l) {
-    const a = el('a', { href: l.href, textContent: linkText(l), title: l.href }), to = target(l.href);
-    if (to) a.onclick = e => { e.preventDefault(); go(...to); };
-    else Object.assign(a, { target: '_blank', rel: 'noopener' });
-    return a;
-  }
-  /* a text into a cell, an address in it shown as a link with its site's name */
-  function linked(td, text) { text.split(/(https?:\/\/[^\s)]+)/).forEach((t, k) => td.append(k % 2 ? anchor({ href: t }) : t)); }
-  /* a link inside the book: that sheet, its row in view and flashed */
-  function go(name, row) {
-    const i = book.sheets.findIndex(s => s.name === name);
-    if (i < 0) return;
-    current = i; draw();
-    const tr = wrap.querySelectorAll('table.sheet > tr')[row - 1];
-    if (tr) { tr.scrollIntoView({ block: 'center' }); tr.classList.remove('flash'); void tr.offsetWidth; tr.classList.add('flash'); }
-  }
-  tabs.onclick = e => { const b = e.target.closest('[data-i]'); if (b) { current = +b.dataset.i; draw(); } };
-  draw();
-
-  return {
-    restore() { for (const [c, v] of original) c.v = v; draw(); },
-    /* a new book (the project changed): the same tab stays open */
-    set(b) { const name = book.sheets[current]?.name; take(b); current = Math.max(0, book.sheets.findIndex(s => s.name === name)); draw(); },
-    xlsx: file => xlsx({ sheets: book.sheets.filter(s => s.rows) }, file),
-  };
 }
 
+/* ---------- the Documents screen: an Alpine part ----------
+   x-data="HOME.sheet.view(docs)" x-html="HOME.sheet.HTML"; docs {title, subtitle, warnings: [text], book, ready(sheet)}:
+   ready gets {set(book), restore(), xlsx(file)} once the screen is up. Tabs (one per sheet) over the table of the current
+   one; the inputs may change until a reload, the formulas follow them. */
+const HTML = `<h1 x-text="title"></h1><p class="sub" x-show="subtitle" x-text="subtitle"></p>
+  <div class="issues" x-show="warnings.length"><b x-text="warnings.length + ' × to correct in the data'"></b><ul><template x-for="w in warnings"><li x-text="w"></li></template></ul></div>
+  <div class="docsheets">
+    <div class="toggle sheettabs" role="tablist" x-show="names.length > 1"><template x-for="(name, i) in names" :key="i">
+      <button role="tab" :aria-selected="String(i === current)" :data-on="i === current && ''" @click="pick(i)" x-text="name"></button></template></div>
+    <div class="sheetbody" x-ref="body"><div class="sheetwrap" x-ref="wrap" x-show="rows.length">
+      <table class="sheet" x-ref="table" @click="click($event)" @change="change($event)"><template x-for="row in rows" :key="row.i">
+        <tr :class="row.kind" :hidden="row.hidden"><template x-for="(c, ci) in row.cells" :key="ci">
+          <td :class="c.cls" :colspan="c.span" :title="c.title" :style="c.style" x-html="c.html"></td></template></tr></template></table></div></div>
+  </div>`;
+function view(docs) {
+  const d = window.Alpine ? Alpine.raw(docs) : docs, original = new Map();   // input cell -> its value as handed in
+  let book = null, fit = () => {};
+  return {
+    title: d.title, subtitle: d.subtitle || '', warnings: d.warnings || [], names: [], current: 0, rows: [],
+    init() { this.$nextTick(() => this.start()); },   // after x-html has put the markup in
+    start() {
+      this.take(d.book);
+      const { wrap, table } = this.$refs;
+      fit = () => { const sheet = book.sheets[this.current], room = wrap.clientWidth - 2;
+        if (sheet.rows && room > 0) HOME.ui.setColumns(table, sheet.cols.map(c => (c.fix || c.share ? c : { share: c.width || 1 })), room); };
+      new ResizeObserver(() => requestAnimationFrame(fit)).observe(wrap);
+      if (document.fonts) document.fonts.ready.then(fit);
+      this.draw();
+      if (d.ready) d.ready({ set: b => this.set(b), restore: () => this.restore(), xlsx: file => xlsx({ sheets: book.sheets.filter(s => s.rows) }, file) });
+    },
+    take(b) {
+      book = b; original.clear();
+      for (const s of book.sheets) for (const r of s.rows || []) for (const c of r.cells || []) if (c && c.input) original.set(c, c.v);
+      for (const s of book.sheets) if (s.node) this.$refs.body.insertBefore(s.node, this.$refs.wrap);
+      this.names = book.sheets.map(s => s.name);
+    },
+    /* the current sheet: its nodes shown (only hidden on another tab, so the page keeps filling them), its rows, its widths */
+    draw() {
+      const sheet = book.sheets[this.current];
+      book.sheets.forEach((s, i) => { if (s.node) s.node.hidden = i !== this.current; });
+      let open = OPEN.get(sheet);
+      if (!open && sheet.rows) OPEN.set(sheet, open = new Set(sheet.tree === 'open' ? sheet.rows.map((r, i) => i) : []));
+      this.rows = sheet.rows ? grid(sheet, open, original) : [];
+      this.refresh();
+      this.$refs.body.scrollTop = 0;
+      const t = this.$refs.table;                // a new sheet is measured in its own layout, not in the last one's widths
+      t.querySelector(':scope > colgroup')?.remove(); t.style.tableLayout = t.style.width = '';
+      this.$nextTick(fit);
+    },
+    /* the formula cells, again after every change of an input */
+    refresh() {
+      const sheet = book.sheets[this.current], v = evaluator(book);
+      for (const row of this.rows) for (const c of row.cells) if (c.f) c.html = esc(show(v(sheet, c.f[0], c.f[1]), c.f[2], c.f[3]));
+    },
+    pick(i) { if (i !== this.current) { this.current = i; this.draw(); } },
+    click(e) {
+      const f = e.target.closest('[data-fold]'), a = e.target.closest('a[data-sheet]');
+      if (f) {                                 // a row opens or closes its children; the view stays where it is
+        const ri = +f.dataset.fold, open = OPEN.get(book.sheets[this.current]);
+        if (open.has(ri)) open.delete(ri); else open.add(ri);
+        for (const row of this.rows) {
+          if (row.parents) row.hidden = row.parents.some(p => !open.has(p));
+          if (row.fold === ri) row.cells[0].html = row.cells[0].html.replace(/^<button[^>]*>[^<]*<\/button>/, foldHtml(ri, open.has(ri)));
+        }
+      }
+      if (a) { e.preventDefault(); this.go(a.dataset.sheet, +a.dataset.row); }
+    },
+    change(e) {
+      const at = e.target.dataset.cell;
+      if (!at) return;
+      const [ri, ci] = at.split(':').map(Number), cell = book.sheets[this.current].rows[ri].cells[ci];
+      cell.v = e.target.value === '' ? 0 : +e.target.value;
+      e.target.classList.toggle('changed', cell.v !== original.get(cell));
+      this.refresh();
+    },
+    /* a link inside the book: that sheet, its row in view and flashed */
+    go(name, row) {
+      const i = book.sheets.findIndex(s => s.name === name);
+      if (i < 0) return;
+      this.current = i; this.draw();
+      this.$nextTick(() => {
+        const tr = this.$refs.table.querySelectorAll(':scope > tr')[row - 1];
+        if (tr) { tr.scrollIntoView({ block: 'center' }); tr.classList.remove('flash'); void tr.offsetWidth; tr.classList.add('flash'); }
+      });
+    },
+    restore() { for (const [c, v] of original) c.v = v; this.draw(); },
+    /* a new book (the project changed): the same tab stays open */
+    set(b) { const name = book.sheets[this.current]?.name; this.take(b); this.current = Math.max(0, book.sheets.findIndex(s => s.name === name)); this.draw(); }
+  };
+}
 /* ---------- XLSX: the same cells, the formulas live (SheetJS, loaded on the first export) ---------- */
 let sheetJS = null;
 function loadSheetJS() {
@@ -227,21 +262,10 @@ async function xlsx(book, file) {
   XL.writeFile(wb, file);
 }
 
-/* ---------- the Documents screen ----------
-   box: #documents; docs {title, subtitle, warnings: [text], book}. Returns the sheet of create: set(book), restore(), xlsx(file). */
-function screen(box, docs) {
-  box.innerHTML = '';
-  box.append(el('h1', { textContent: docs.title }));
-  if (docs.subtitle) box.append(el('p', { className: 'sub', textContent: docs.subtitle }));
-  if ((docs.warnings || []).length) box.append(el('div', { className: 'issues' }, `<b>${docs.warnings.length} × to correct in the data</b><ul>${docs.warnings.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`));
-  const sheets = el('div', { className: 'docsheets' });
-  box.append(sheets);
-  return create(sheets, docs.book);
-}
 /* the bottom menu of Documents: the XLSX of the book, the inputs back as handed in; sheet(): the sheet shown */
 const menu = (sheet, file) => [
   { name: 'Save XLSX', go: e => { const b = e.currentTarget, label = b.textContent; sheet().xlsx(file).catch(() => { b.textContent = 'No network: try again'; setTimeout(() => { b.textContent = label; }, 2500); }); } },
   { name: 'Restore data', go: () => sheet().restore() }];
 
-HOME.sheet = { evaluator, create, xlsx, screen, menu };
+HOME.sheet = { evaluator, xlsx, HTML, view, menu };
 })(window.HOME = window.HOME || {});

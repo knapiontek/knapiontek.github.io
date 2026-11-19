@@ -28,6 +28,7 @@
 :root[data-theme="dark"] #sheet svg{filter:invert(1) hue-rotate(180deg)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #sheet svg{filter:invert(1) hue-rotate(180deg)}}
 [hidden]{display:none!important}
+[x-cloak]{display:none!important}   /* Alpine: hidden until it has set the element up */
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow:hidden}

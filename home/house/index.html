@@ -10,7 +10,55 @@
 <link rel="stylesheet" href="../core/ui.css">
 </head>
 <body>
-<div id="app"></div>
+<div class="app" id="app" x-data="house" :data-ready="ready && ''">
+  <nav class="nav" id="nav" aria-label="House" x-show="links.length + groups.length" x-cloak @click.outside="navOpen = null">
+    <template x-for="it in links"><a :href="it.href" :data-on="it.on && ''" x-text="it.name"></a></template>
+    <template x-for="(g, i) in groups"><details :open="navOpen === i" :data-on="g.on && ''"><summary @click.prevent="navOpen = navOpen === i ? null : i" x-text="g.name"></summary><div class="navlist"><template x-for="it in g.items"><a :href="it.href" :data-on="it.on && ''" x-text="it.name"></a></template></div></details></template>
+  </nav>
+  <div class="stage" id="stage">
+    <canvas id="gl" aria-label="3D view of the house" :hidden="mode !== '3d'"></canvas>
+    <div id="loading" x-show="loading" x-text="loading">Loading…</div>
+    <div class="hud"><div id="context" aria-label="View menu"><template x-if="roomTag"><div class="menurow"><span class="roomtag"><span x-text="roomTag.name"></span>
+      <a class="btnlink" :href="roomTag.href">Open</a><button aria-label="Unpick" @click="roomTag.unpick()">×</button></span></div></template></div></div>
+    <div class="toggle modes" id="mode" role="group" aria-label="Mode"><template x-for="m in modes">
+      <button :data-mode="m" :aria-pressed="String(mode === m)" :data-on="mode === m && ''" @click="pick(m)" x-text="HOME.ui.MODES[m]"></button></template></div>
+    <div id="plan2d" aria-label="2D plan" x-show="mode === '2d'" x-cloak><p class="sheetnote" id="planNote" x-text="planNote"></p>
+      <div id="sheet" x-html="planSvg" :style="'--zoom: ' + zoom" @wheel.prevent="zoomer.wheel($event)" @pointerdown="zoomer.down($event)" @pointermove="zoomer.move($event)" @pointerup="zoomer.up()" @pointercancel="zoomer.up()"></div></div>
+    <div id="documents" aria-label="Documents" x-show="mode === 'documents'" x-cloak><template x-if="docs"><div style="display:contents" x-data="HOME.sheet.view(docs)" x-html="HOME.sheet.HTML"></div></template></div>
+    <div class="dock" id="dock" aria-label="Bottom menu" x-show="menu.length" x-cloak><template x-for="(g, gi) in menu"><span style="display:contents"><span class="sep" x-show="gi"></span><template x-for="it in g">
+      <button :class="it.cls || false" :aria-label="it.label || false" :aria-pressed="it.pressed === undefined ? false : String(it.pressed)" @click="it.go($event)" x-text="it.name"></button></template></span></template></div>
+    <div class="pad" id="pad" aria-label="Walk" hidden>
+      <button data-k="ArrowUp" aria-label="Forward">▲</button>
+      <button data-k="ArrowLeft" aria-label="Turn left">◀</button>
+      <button data-k="ArrowDown" aria-label="Back">▼</button>
+      <button data-k="ArrowRight" aria-label="Turn right">▶</button>
+    </div>
+    <div class="float sunfloat" id="sun" role="dialog" aria-label="Sun" x-show="float === 'sun'" x-cloak><template x-if="sun"><div x-data="HOME.ui.sunBox(sun)" x-html="HOME.ui.SUN"></div></template></div>
+    <div class="float" id="help" role="dialog" aria-label="Help" x-show="float === 'help'" x-cloak>
+      <div x-show="mode === '3d'"><p>Turn: left button, about the point under the cursor (an orange dot marks it while turning) · move: right · zoom: the wheel, toward the cursor.</p>
+        <p><b>Walk</b>: the arrows walk and turn, A/D a step aside, Shift faster, PgUp/PgDn or a drag look, Space opens the nearest door, Esc ends.</p>
+        <p><b>View</b> (the panel): the floors and the layers; an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: a click on its floor picks a room. A click on a door opens or closes it.</p>
+        <p>In a room, the walls and the ceiling between the camera and the room hide; the floors do not apply there, only the elements.</p></div>
+      <div x-show="mode === '2d'"><p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. The wheel zooms about the cursor, a drag moves the sheet. Below: the whole sheet again, the SVG to print.</p></div>
+      <div x-show="mode === 'documents'"><p>The rooms with their areas, the doors with what is bought for them, the notes, the furniture as a tree, the Test (the checks of the data and of the model: OK, nothing to correct; a number, what to correct; i, to know). Blue fields may be changed until a reload. Below: the XLSX with its formulas.</p></div>
+    </div>
+    <div class="corner">
+      <button class="round" id="themebtn" aria-label="Light / dark" title="Light / dark" @click="$store.screen.toggleTheme()"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
+      <button class="round" id="sunbtn" aria-label="Sun" title="Sun" aria-controls="sun" :aria-expanded="String(float === 'sun')" x-show="mode === '3d'" @click="toggle('sun')">☀</button>
+      <button class="round" id="helpbtn" aria-label="Help" title="Help" aria-controls="help" :aria-expanded="String(float === 'help')" @click="toggle('help')">?</button>
+    </div>
+    <button class="panelbtn" @click="$store.screen.togglePanel()" x-text="$store.screen.open ? '»' : '«'" :title="$store.screen.open ? 'Hide the panel' : 'Show the panel'" :aria-label="$store.screen.open ? 'Hide the panel' : 'Show the panel'"></button>
+  </div>
+  <aside id="panel">
+    <h1 id="title" x-text="title"></h1>
+    <p class="sub" id="subtitle" x-text="subtitle"></p>
+    <div class="toggle" id="tabs" role="tablist" aria-label="Panel" x-show="tabs.length > 1" x-cloak><template x-for="t in tabs">
+      <button role="tab" :data-tab-id="t" :aria-selected="String(t === tab)" :data-on="t === tab && ''" @click="pickTab(t)" x-text="HOME.ui.TAB_NAMES[t]"></button></template></div>
+    <template x-for="part in [['floors', 'Floors'], ['layers', 'Layers'], ['furniture', 'Furniture']]">
+      <section x-show="tab === 'view' && layers[part[0]].length" x-cloak><h2 x-text="part[1]"></h2><div class="layers" :id="part[0]"><template x-for="l in layers[part[0]]" :key="l.k">
+        <div :class="l.child ? 'child' : ''" :data-off="l.off && ''"><label><input type="checkbox" :checked="l.on" @change="setLayer(l.k, $event.target.checked)"> <span x-text="l.name"></span></label></div></template></div></section></template>
+  </aside>
+</div>
 <script src="../core/load.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -30,27 +78,23 @@
 <script src="../room/docs.js"></script>
 <script>
 /* The main page: the whole house, or a part of it (?room=kitchen_6 or ?room=bathroom_7,bathroom_5) cut out of it, in 3D,
-   2D and Documents (its last sheet: Test). Everything it shows comes from house.js and the library; nothing of this house is written here. */
-(async function () {
+   2D and Documents (its last sheet: Test). Everything it shows comes from house.js and the library; nothing of this house is
+   written here. The screen is the HTML above (Alpine.js); page(ui) builds the model and the scene and fills ui. */
 'use strict';
-const { $, el, esc, fmt } = HOME.ui;
+HOME.ui.start();                           // the stored light or dark and panel, before anything shows
+document.addEventListener('alpine:init', () => Alpine.data('house', () => ({
+  ready: false, loading: 'Loading…', title: '', subtitle: '', links: [], groups: [], navOpen: null, roomTag: null,
+  modes: [], mode: null, tabs: [], tab: null, layers: { floors: [], layers: [], furniture: [] }, menu: [], float: null,
+  planSvg: '', planNote: '', zoom: 1, zoomer: { wheel() {}, down() {}, move() {}, up() {} }, docs: null, sun: null,
+  pick() {}, pickTab() {}, setLayer() {},
+  toggle(f) { this.float = this.float === f ? null : f; },
+  init() { page(this).catch(e => { console.error(e && e.stack || e); this.loading = 'Error: ' + (e.message || e); }); }
+})));
+async function page(ui) {
+const { $ } = HOME.ui;
 const { prism, hRange, EPS } = HOME.geometry;
 const { piecesOf } = HOME.surface;
 const DEG = 180 / Math.PI;
-
-HOME.ui.screen($('app'), {
-  label: '3D view of the house',
-  help: {
-    '3d': `<p>Turn: left button, about the point under the cursor (an orange dot marks it while turning) · move: right · zoom: the wheel, toward the cursor.</p>
-      <p><b>Walk</b>: the arrows walk and turn, A/D a step aside, Shift faster, PgUp/PgDn or a drag look, Space opens the nearest door, Esc ends.</p>
-      <p><b>View</b> (the panel): the floors and the layers; an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: a click on its floor picks a room. A click on a door opens or closes it.</p>
-      <p>In a room, the walls and the ceiling between the camera and the room hide; the floors do not apply there, only the elements.</p>`,
-    '2d': '<p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. The wheel zooms about the cursor, a drag moves the sheet. Below: the whole sheet again, the SVG to print.</p>',
-    documents: '<p>The rooms with their areas, the doors with what is bought for them, the notes, the furniture as a tree, the Test (the checks of the data and of the model: OK, nothing to correct; a number, what to correct; i, to know). Blue fields may be changed until a reload. Below: the XLSX with its formulas.</p>' },
-  panel: `<section data-tab="view" data-part="floors"><h2>Floors</h2><div class="layers" id="floors"></div></section>
-    <section data-tab="view"><h2>Layers</h2><div class="layers" id="layers"></div></section>
-    <section data-tab="view" data-part="furniture"><h2>Furniture</h2><div class="layers" id="furniture"></div></section>`
-});
 
 const [DATA, LIB] = await Promise.all([HOME.load(HOME.load.file.house(), 'house', 3), HOME.library.load()]);
 const MODEL = HOME.model.build(DATA), T = MODEL.T, HOUSE = MODEL.HOUSE, VIEW = T.setting(HOUSE, 'view').value;   // DATA: the site, the house in it
@@ -66,8 +110,8 @@ const ASKED = (new URLSearchParams(location.search).get('room') || '').split(','
 const PART = ASKED.filter(id => ROOM[id]), WHOLE = !PART.length;
 const PARTS = PART.map(MODEL.part);
 const UNION = WHOLE ? null : [0, 1, 2, 3, 4, 5].map(k => (k % 2 ? Math.max : Math.min)(...PARTS.map(p => p.box[k])));
-$('title').textContent = WHOLE ? HOUSE.name : PART.map(id => roomName(ROOM[id])).join(', ');
-$('subtitle').textContent = WHOLE ? HOUSE.source : `${HOUSE.name} · ${[...new Set(PARTS.map(p => p.floor.name))].join(', ')}`;
+ui.title = WHOLE ? HOUSE.name : PART.map(id => roomName(ROOM[id])).join(', ');
+ui.subtitle = WHOLE ? HOUSE.source : `${HOUSE.name} · ${[...new Set(PARTS.map(p => p.floor.name))].join(', ')}`;
 document.title = WHOLE ? 'Home' : PART.map(id => ROOM[id].node.name).join(', ');
 
 /* ================= THE ROOMS' FURNITURE =================
@@ -148,13 +192,14 @@ function openFloor() {
   const on = FLOORS.filter(F => layerOn(F.id));
   return on.length ? on[on.length - 1] : null;
 }
-/* the layers in two blocks: where (the floors and the roof) and what (the elements); a solid shows when both are on */
+/* the layers in blocks: where (the floors and the roof; the whole house only), what (the elements), the furniture of a
+   room; a solid shows when all its layers are on */
 function layersPanel() {
-  HOME.ui.layersPanel($('floors'), LAYER, VIEW.floors, state.layers, layerOn, setLayer);
-  HOME.ui.layersPanel($('layers'), LAYER, VIEW.elements, state.layers, layerOn, setLayer);
-  HOME.ui.layersPanel($('furniture'), LAYER, Object.keys(ROOM_LAYERS), state.layers, layerOn, setLayer);
+  const list = top => HOME.ui.layerList(LAYER, top, state.layers, layerOn);
+  ui.layers = { floors: WHOLE ? list(VIEW.floors) : [], layers: list(VIEW.elements), furniture: list(Object.keys(ROOM_LAYERS)) };
 }
 function setLayer(k, on) { state.layers[k] = on; save(); refresh(); }
+ui.setLayer = setLayer;
 function apply() {
   V.showPieces(shown, layerOn, ghost);
   for (const f of FURNITURE) f.made.showDetails(layers => shown(layers) && !ghost(layers));
@@ -172,7 +217,7 @@ V.onFrame(() => {
 /* ================= 3D: cameras, sun, clicks, walk ================= */
 const SUN = HOME.ui.sunStore(VIEW.light);
 const placeSun = () => { V.placeSun(SUN.state); for (const f of FURNITURE) f.made.night(!!SUN.state.night); };
-HOME.ui.sunPanel($('sun'), MODEL.FOOTPRINT, SUN.state, () => { SUN.save(); placeSun(); }, PART.flatMap(id => ROOM[id].rects));
+ui.sun = { rects: MODEL.FOOTPRINT, mark: PART.flatMap(id => ROOM[id].rects), sun: SUN.state, change: () => { SUN.save(); placeSun(); } };
 /* the cameras: the house's and the open floor's; of a part, over it and from two corners, framed by its box */
 function cameras() {
   if (WHOLE) {
@@ -304,11 +349,13 @@ function planSvg() {
       } };
   }));
 }
-const SHEET_2D = HOME.ui.planSheet({ state, save, svg: planSvg, file: WHOLE ? 'house.svg' : PART.join('-') + '.svg' });
+ui.zoomer = HOME.ui.sheetZoom(state, save);
 function drawPlan() {
-  SHEET_2D.draw();
-  $('planNote').textContent = `The cut over the floor: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW.planNote}`;
+  ui.zoom = state.zoom; ui.planSvg = planSvg();
+  ui.planNote = `The cut over the floor: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW.planNote}`;
 }
+const PLAN_MENU = [{ name: 'Fit', label: 'The whole sheet', go: () => { state.zoom = 1; save(); drawPlan(); } },
+  { name: 'Save SVG', go: () => HOME.ui.download(planSvg(), 'image/svg+xml', WHOLE ? 'house.svg' : PART.join('-') + '.svg') }];
 
 /* ================= DOCUMENTS: the rooms, the doors, the notes ================= */
 let SHEET = null;
@@ -381,7 +428,7 @@ function assemblyNode(f) {
 }
 function documents() {
   if (SHEET) return SHEET.set(book());
-  SHEET = HOME.sheet.screen($('documents'), { title: $('title').textContent, subtitle: $('subtitle').textContent, book: book() });
+  if (!ui.docs) ui.docs = { title: ui.title, subtitle: ui.subtitle, book: book(), ready: s => { SHEET = s; } };
 }
 
 /* ================= TEST ================= */
@@ -397,44 +444,47 @@ const CHECKS = WHOLE ? HOUSE_CHECKS : [ASKED_CHECK, ...(ROOM_CHECKS.length ? ROO
    mode's actions · the panel: the mode's tabs (View: the floors, the layers, the furniture) */
 const linkTo = ids => '?room=' + ids.join(',');
 const same = ids => ids.length === PART.length && ids.every(id => PART.includes(id));
-HOME.ui.nav([{ name: 'House', href: 'index.html', on: WHOLE }]
-  .concat(FLOORS.map(F => ({ name: F.name, on: !WHOLE && PARTS.every(p => p.floor === F),
-    items: ROOMS.filter(r => r.floor === F).map(r => ({ name: roomName(r), href: linkTo([r.id]), on: same([r.id]) })) }))));
+ui.links = [{ name: 'House', href: 'index.html', on: WHOLE }];
+ui.groups = FLOORS.map(F => ({ name: F.name, on: !WHOLE && PARTS.every(p => p.floor === F),
+  items: ROOMS.filter(r => r.floor === F).map(r => ({ name: roomName(r), href: linkTo([r.id]), on: same([r.id]) })) }));
 function context() {
-  const box = $('context'); box.innerHTML = '';
-  if (state.mode !== '3d' || !WHOLE) return;
   const r = ROOM[state.room], F = openFloor();
-  if (!r || !F || r.floor !== F) return;
-  const tag = el('span', { className: 'roomtag' }, `${esc(roomName(r))} <a class="btnlink" href="${linkTo([r.id])}">Open</a><button aria-label="Unpick">×</button>`);
-  tag.querySelector('button').onclick = () => { state.room = null; save(); context(); };
-  HOME.ui.menuRow(box, [], [tag]);
+  ui.roomTag = state.mode === '3d' && WHOLE && r && F && r.floor === F
+    ? { name: roomName(r), href: linkTo([r.id]), unpick: () => { state.room = null; save(); context(); } } : null;
 }
 function bottomMenu() {
-  const walk = el('button', { className: 'walk', textContent: 'Walk', onclick: () => (V.walk.on ? V.stopWalk() : V.startWalk()) });
-  walk.setAttribute('aria-pressed', V.walk.on);
+  const walk = { name: 'Walk', cls: 'walk', pressed: V.walk.on, go: () => (V.walk.on ? V.stopWalk() : V.startWalk()) };
   const go = c => ({ name: c.name, go: () => { V.stopWalk(); V.flyTo(c); } });
-  const menus = { '3d': [[walk], cameras().map(go)], '2d': [SHEET_2D.menu], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx'),
+  const menus = { '3d': [[walk], cameras().map(go)], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx'),
     WHOLE ? [] : FURNITURE.map(f => ({ name: 'Edit the cabinets', go: () => { location.href = '../room/cabinets.html?room=' + f.room.id; } }))] };
-  HOME.ui.bottomMenu(menus[state.mode]);
+  ui.menu = menus[state.mode].filter(g => g.length);
 }
-const panel = () => { state.tab = HOME.ui.panelTabs(TABS[state.mode] || [], state.tab, t => { state.tab = t; save(); panel(); }, p => (p === 'floors' && !WHOLE) || (p === 'furniture' && !Object.keys(ROOM_LAYERS).length)); };
+/* the panel's tabs: those of the mode; the one picked, or the first */
+function panel() {
+  const tabs = TABS[state.mode] || [];
+  ui.tabs = tabs; ui.tab = state.tab = tabs.includes(state.tab) ? state.tab : tabs[0] || null;
+}
+ui.pickTab = t => { state.tab = t; save(); panel(); };
 function refresh() { context(); bottomMenu(); layersPanel(); panel(); apply(); }
 function setMode(m) {
   state.mode = m; save();
-  HOME.ui.showMode(MODES, m, setMode);
+  ui.modes = MODES; ui.mode = m;
+  if (m !== '3d' && ui.float === 'sun') ui.float = null;
   if (m !== '3d') V.stopWalk();
   if (m === '2d') drawPlan();
   if (m === 'documents') documents();
   refresh();
 }
+ui.pick = m => { if (m !== state.mode) setMode(m); };
 
 V.start(); placeSun(); V.setCamera(cameras()[0]);
 setMode(state.mode);
-$('loading').hidden = true;
+ui.loading = ''; ui.ready = true;
 V.run();
 window.HOUSE_VIEW = { MODEL, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, FURNITURE, V, setMode, setLayer, state, planSvg, book,   // for the automated tests
   get hidden() { return [...HIDDEN]; }, pieces: PIECES.length, edges: V.EDGE_GROUPS.length };
-})().catch(HOME.ui.failed);
+}
 </script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

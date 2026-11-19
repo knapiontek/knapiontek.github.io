@@ -10,7 +10,6 @@
 <link rel="stylesheet" href="../core/ui.css">
 <style>
 /* only what the editor adds to core/ui.css: the tables to edit, the picker, the elevation */
-[x-cloak]{display:none!important}
 #editor{position:absolute;inset:0;overflow:auto;padding:24px 20px 72px;background:var(--panel)}
 #editor section{margin:0 0 22px}
 #editor h2{margin:0 0 8px}
@@ -119,14 +118,15 @@ td.actions button.del:hover{color:var(--warn)}
     <div class="dock" aria-label="Bottom menu">
       <button @click="$refs.importFile.click()">Import</button><button @click="exportFile()">Export</button><span class="sep"></span><button @click="location.href = '../house/index.html?room=' + ROOM">View the room</button>
     </div>
-    <div class="float" id="help" role="dialog" aria-label="Help" hidden>
+    <div class="float" id="help" role="dialog" aria-label="Help" x-show="help" x-cloak>
       <p>The cabinets file of a room in tables: its groups, their columns, the components and the notes. The materials are read only (they say what each type is made of). The drawing under the tables follows every change; the cursor on a part of it shows its sizes.</p>
       <p><b>Export</b> saves the cabinets file, to put in place of the one in room/; <b>Import</b> reads such a file into the tables. ◐: light or dark.</p>
     </div>
     <div class="corner">
-      <button class="round" id="themebtn" aria-label="Light / dark" title="Light / dark"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
-      <button class="round" id="helpbtn" aria-label="Help" title="Help" aria-expanded="false" aria-controls="help">?</button>
+      <button class="round" id="themebtn" aria-label="Light / dark" title="Light / dark" @click="$store.screen.toggleTheme()"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
+      <button class="round" id="helpbtn" aria-label="Help" title="Help" aria-controls="help" :aria-expanded="String(help)" @click="help = !help">?</button>
     </div>
+    <button class="panelbtn" @click="$store.screen.togglePanel()" x-text="$store.screen.open ? '»' : '«'" :title="$store.screen.open ? 'Hide the panel' : 'Show the panel'" :aria-label="$store.screen.open ? 'Hide the panel' : 'Show the panel'"></button>
   </div>
   <aside id="panel">
     <h1>Cabinets</h1>
@@ -166,7 +166,8 @@ td.actions button.del:hover{color:var(--warn)}
    (Alpine.js) and draws its elevations: tables -> the file -> the model (cabinets.js) -> the drawing. The checks of the data
    are the model's; this page only checks that the cells are numbers. Export writes the file as the files are written. */
 'use strict';
-const C = HOME.cabinets, { $, el, esc } = HOME.ui;
+HOME.ui.start();                           // the stored light or dark and panel, before anything shows
+const C = HOME.cabinets, { esc } = HOME.ui;
 const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags, plural } = C;
 const HANDLES = ['', ...C.SIDES], HINGES = ['', ...C.HINGE_SIDES];
 const SIDE_NAME = { '': 'none', top: 'top', bottom: 'bottom', left: 'left', right: 'right' };
@@ -318,10 +319,6 @@ function readFile(text) {
   if (!f.settings || !Array.isArray(f.groups) || !Array.isArray(f.components)) throw new Error('no settings, groups or components in it');
   return f;
 }
-const download = (text, name) => {
-  const a = el('a', { href: URL.createObjectURL(new Blob([text], { type: 'text/javascript;charset=utf-8' })), download: name });
-  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-};
 /* number cells hold whole mm: only digits can be typed or pasted */
 const isNumberCell = t => t.matches && t.matches('table.edit input[type="number"]');
 document.addEventListener('keydown', e => { if (isNumberCell(e.target) && e.key.length === 1 && !/[0-9]/.test(e.key) && !e.ctrlKey && !e.metaKey) e.preventDefault(); });
@@ -335,9 +332,8 @@ document.addEventListener('alpine:init', () => Alpine.data('editor', () => ({
   built: { file: null, flags: { groups: [], columns: [], components: [] }, warnings: [], svg: '' },
   picker: { row: null, mode: 'type', x: 0, y: 0 },
   tip: { show: false, x: 0, y: 0, text: '' }, hoverText: 'The cursor on a part of the drawing shows its sizes.',
-  status: { text: '', error: false }, timer: null,
+  status: { text: '', error: false }, timer: null, help: false,
   async init() {
-    HOME.ui.themeButton($('themebtn')); HOME.ui.corner([[$('helpbtn'), $('help')]]); HOME.ui.panelToggle($('stage'));
     try {
       const [lib, file] = await Promise.all([HOME.library.load(), HOME.load(HOME.load.file.room(ROOM, 'cabinets'), 'cabinets', 1)]);
       this.boards = lib.groups.boards; this.applianceProducts = lib.groups.appliances;
@@ -401,7 +397,7 @@ document.addEventListener('alpine:init', () => Alpine.data('editor', () => ({
   exportFile() {
     const n = this.built.warnings.length;
     if (!this.built.file) { this.say('Nothing to export: ' + FILE + ' is not loaded.', true); return; }
-    download(C.cabinetsText(this.built.file), FILE);
+    HOME.ui.download(C.cabinetsText(this.built.file), 'text/javascript;charset=utf-8', FILE);
     this.say('Exported ' + FILE + (n ? ' with ' + n + ' ' + plural(n, 'problem', 'problems') + ' in the data (listed in the panel)' : '') + '. Put it in place of room/' + FILE + ' and reload the pages.', n > 0);
   },
   importFile(e) {
