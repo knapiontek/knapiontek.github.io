@@ -220,6 +220,17 @@ The prototype's floor tiles (its house page: Wykończenie, the layouts, the coun
 - The light seen through in bedroom 6: the old frame lined the whole reveal and the leaf stood in it with a straight 3 mm gap through its whole depth (the prototype's model, the same); the steps close it now.
 - Checked: the house's model the same but the doors (454 solids, none overlapping); its snapshot taken again (SNAP=1); the rooms' parts as well. The doors' opening directions as before.
 
+## A room's view: the walls only as far as they close the room (19 Nov)
+
+- bedroom_2 (an L): its view took every wall in the box round it, so the walls along wardrobes 3 and 4 came in whole, an empty frame of walls with no floor and no roof over it. Now a wall of a room's view is trimmed to its floor area grown by the thickest wall (240): the frame is gone, the roof as before. The other rooms the same but for short wall ends (living_5, garage_2, boiler_8, hall_1, wardrobe_3); the house's snapshot taken again.
+- Not a fault: the beige face over the passage to the wardrobes is the attic's flat ceiling, lit from below like every ceiling.
+
+## Noted for later (the owner, 19 Nov)
+
+- **2D, the whole house**: a click on the plan marks everything: ugly (to check whether it still does).
+- **2D, the kitchen**: the sink only rectangles; the worktop shows joints it does not have (it is pieced round the sink: it should be one worktop with an opening, as before); too much detail (dashed lines, the strips in detail, handles and appliances one over another): a rule of what the plan leaves out, to agree.
+- Not to do: the wardrobes' checks of the clearance under the slope and of the passage (the owner does it with the editor); the hood's 2 mm (good as it is); one rule of construction for every room (each room its own).
+
 ## Noted for later: the 2D view (done 18 Nov, see above) (the owner, 18 Nov)
 
 - **Zoom with the mouse wheel**, about the cursor, instead of the + and − buttons.

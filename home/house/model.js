@@ -395,6 +395,18 @@ function part(id) {
     const b = planOf(c.S), byX = walls0.find(w => meets(b, planOf(w.S), 0)), byY = walls0.find(w => meets(b, planOf(w.S), 1));
     if (byX && byY) kept.push(Object.assign(c, { side: byX.side }));
   }
+  /* a wall only as far as it closes the room: within its floor area grown by the thickest wall (an L-shaped room's box
+     holds other rooms: their walls stay out) */
+  const T0 = Math.max(...Object.values(KIND).filter(k => k.layers.includes('walls')).map(k => k.thickness || 0));
+  const band = R.rects.map(q => [q[0] - T0, q[1] + T0, q[2] - T0, q[3] + T0]).reduce((union, w) => union.concat(union.reduce((rest, u) => rest.flatMap(q => rectMinus(q, u)), [w])), []);
+  for (let i = kept.length - 1; i >= 0; i--) {
+    const c = kept[i];
+    if (c.side[1] === 'h' || isFixture(c)) continue;
+    const b = planOf(c.S), inside = mergeRects(band.map(q => [Math.max(q[0], b[0]), Math.min(q[1], b[1]), Math.max(q[2], b[2]), Math.min(q[3], b[3])]).filter(q => q[1] - q[0] > TOL && q[3] - q[2] > TOL));
+    if (inside.length === 1 && inside[0].every((v, k) => Math.abs(v - b[k]) <= TOL)) continue;   // all of it closes the room
+    const pieces = inside.flatMap(q => { const S = prismIntersect(c.S, prism([q[0], q[1], q[2], q[3], -INF, INF])); return S && !emptyPrism(S) ? [Object.assign({}, c, { S })] : []; });
+    kept.splice(i, 1, ...pieces);
+  }
   /* under the floor and over the room: exactly the room's floor area and the walls kept around it */
   const walls = kept.filter(c => c.side[1] !== 'h').map(c => planOf(c.S));
   /* the room's own rects copied: mergeRects joins them in place */
