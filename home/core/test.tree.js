@@ -2,7 +2,7 @@ HOME.data({"format": "tree", "version": 1,
  "id": "test", "name": "Core test", "type": "room", "offset": [0, 0, 0], "size": [4000, 3000, 2600],
  "settings": {
   "material": "block",
-  "front": "y0",
+  "front": "N",
   "open": {"door": 100, "drawer": 400},
   "view": {
    "layers": {"floor": {"name": "Floor"}, "box": {"name": "Boxes"}, "door": {"name": "Doors"}, "drawer": {"name": "Drawers"}, "edges": {"name": "Edges"}},
@@ -34,7 +34,7 @@ HOME.data({"format": "tree", "version": 1,
     {"id": "side_right", "name": "Right side", "type": "box", "offset": [1182, 18, 0], "size": [18, 600, 900]},
     {"id": "bottom", "name": "Bottom", "type": "box", "offset": [18, 18, 0], "size": [1164, 600, 18]},
     {"id": "top", "name": "Top", "type": "box", "offset": [18, 18, 882], "size": [1164, 600, 18]},
-    {"id": "door", "name": "Door", "type": "door", "offset": [0, 0, 0], "size": [597, 18, 900], "settings": {"material": "oakFront", "hinge": "x0"}},
+    {"id": "door", "name": "Door", "type": "door", "offset": [0, 0, 0], "size": [597, 18, 900], "settings": {"material": "oakFront", "hinge": "E"}},
     {"id": "drawer", "name": "Drawer front", "type": "drawer", "offset": [603, 0, 600], "size": [597, 18, 300], "settings": {"material": "oakFront"}},
     {"id": "a3f9c2", "name": "Drawer front", "type": "drawer", "offset": [603, 0, 0], "size": [597, 18, 597], "settings": {"material": "oakFront"}, "refs": ["cabinet/bottom"]}
    ]},

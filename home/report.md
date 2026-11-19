@@ -235,6 +235,14 @@ The owner's decisions: the design is where every object stands (bought, cut, or 
 - The engine: cabinets.js the tags basin and banded, hung carcasses, round holes; room.js fixtures, built-ins, the room's tiles (tiles.js corePieces shared with the house); draw.js the sanitary drawings; the products in sanitary.js, building.js, hardware.js, services.js (the banding in H1199, PUR).
 - The kitchen and the wardrobes: their models unchanged; the house's tiles and doors unchanged.
 
+## After the owner's look at the bathroom 7 (19 Nov, afternoon)
+
+- The riser ended at the ceiling, in the plane of the casing's top: seen from above it showed through (taken for a lamp). Now 2700, inside the casing.
+- The shower screen stood 50 mm before the tiled face of the wall beside it; it now continues that face (x 1644), the shower's zone from its glass (1656). Its door turned 1.4° (the value was read in degrees): now 90°, outward.
+- Documents, Assembly: the cards were held to 880 px like the other sheets (two columns); now as many columns as the window takes.
+- The cabinet editor: the basin and its tap were unknown to it (only the appliances were given, not the sanitary products): the bathroom's drawing was empty; the groups and the components tables narrower so they fit without a slider; a bin instead of × to delete a row.
+- **The sides by the compass**: `E`, `W`, `N`, `S` (and `down`) instead of x0, x1, y0, y1 (and h0) in every file: house.js (outer, side, hinge, opens, flush), the scenes (front), core's test tree. x grows to the west, y to the south; one table, core/geometry.js SIDES, used by house/model.js and core/plan2d.js; room.js's quarter turns keyed by the compass.
+
 ## Noted for later (the owner, 19 Nov)
 
 - **2D, the whole house**: a click on the plan marks everything: ugly (to check whether it still does).

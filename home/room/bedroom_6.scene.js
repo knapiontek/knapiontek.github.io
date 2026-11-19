@@ -2,7 +2,7 @@ HOME.data({
  "format": "scene",
  "version": 1,
  "groups": {
-  "1": {"front": "x1", "offset": [0, 1120, 0], "size": [831, 3010, 2046]}
+  "1": {"front": "W", "offset": [0, 1120, 0], "size": [831, 3010, 2046]}
  },
  "room": {"wallColor": "#f2f1ee"},
  "hardware": {

@@ -129,7 +129,11 @@ function hash01(...k) {
   return (h >>> 0) / 4294967296;
 }
 
-HOME.geometry = { hash01, DEG, INF, EPS, SOLID_TOL, ccw, rect2, clipHalf, leftOf, edgesOf, intersect2, minus2,
+/* the sides of the house by the compass, in its axes: x grows to the west (the garden on the east, the entrance on the
+   west), y to the south (the garage window on the north, the bathrooms on the south); sign: the end of the axis */
+const SIDES = { E: { axis: 0, sign: -1 }, W: { axis: 0, sign: 1 }, N: { axis: 1, sign: -1 }, S: { axis: 1, sign: 1 } };
+
+HOME.geometry = { SIDES, hash01, DEG, INF, EPS, SOLID_TOL, ccw, rect2, clipHalf, leftOf, edgesOf, intersect2, minus2,
   prism, emptyPrism, hRange, centreH, prismIntersect, prismMinus, splitH, sectionAt, cutBy, volume, subtractAll, overlaps,
   rectArea, rectMinus, mergeRects };
 })(window.HOME = window.HOME || {});

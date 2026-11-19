@@ -80,8 +80,8 @@ const PIECES = piecesOf(STILL);
 V.buildMeshes(PIECES); V.buildEdges(PIECES);
 
 /* a front is a side of its box; a drawer slides out of it, a door turns out of it about its hinge side */
-const OUT = { x0: [-1, 0], x1: [1, 0], y0: [0, -1], y1: [0, 1] };
-const SIDE = { x0: [0, 0], x1: [0, 1], y0: [1, 0], y1: [1, 1] };   // the axis of a side, and its end (0: the smaller)
+const OUT = { E: [-1, 0], W: [1, 0], N: [0, -1], S: [0, 1] };
+const SIDE = { E: [0, 0], W: [0, 1], N: [1, 0], S: [1, 1] };   // the axis of a side, and its end (0: the smaller)
 function motion(n) {
   const b = T.box(n), front = T.setting(n, 'front').value, out = OUT[front], open = T.setting(n, 'open').value;
   if (n.type === 'drawer') return { slide: [out[0] * open.drawer, out[1] * open.drawer, 0] };

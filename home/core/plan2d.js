@@ -75,13 +75,13 @@ function create(materials) {
      cut (dashed); lines [[x, y], [x, y]] */
   const borders = (X, lines) => lines.map(([a, b]) => `<line x1="${X + a[1]}" y1="${a[0]}" x2="${X + b[1]}" y2="${b[0]}" stroke="#8a8d88" stroke-width="${S.line.thin}" stroke-dasharray="${S.line.border}"/>`).join('');
   /* a chain of dimensions, as in CAD: a line through the points, a slash at each, the size of each span over it.
-     side: where the chain stands outside box [x1, x2, y1, y2] (house mm): 'x0' (over the sheet: the garden), 'x1' (under
-     it), 'y0' (left), 'y1' (right); row: 0 the nearest; points along the side (house y for x0/x1, house x for y0/y1) */
+     side: where the chain stands outside box [x1, x2, y1, y2] (house mm): 'E' (over the sheet: the garden), 'W' (under
+     it: the entrance), 'N' (left), 'S' (right); row: 0 the nearest; points along the side (house y for E/W, house x for N/S) */
   function chain(X, box, side, row, points) {
     const D = S.dim, ps = [...new Set(points.map(Math.round))].sort((a, b) => a - b);
     if (ps.length < 2) return '';
-    const across = side === 'x0' || side === 'x1', out = side === 'x0' || side === 'y0' ? -1 : 1;
-    const edge = { x0: box[0], x1: box[1], y0: box[2], y1: box[3] }[side], d = edge + out * (D.off + row * D.row);
+    const across = side === 'E' || side === 'W', out = side === 'E' || side === 'N' ? -1 : 1;
+    const edge = { E: box[0], W: box[1], N: box[2], S: box[3] }[side], d = edge + out * (D.off + row * D.row);
     /* plan coordinates of a point along the chain (u) at a distance from the drawing (v, house mm across the side) */
     const at = (u, v) => across ? [X + u, v] : [X + v, u];
     const seg = (a, b) => { const [p, q] = [at(...a), at(...b)]; return `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}"/>`; };
@@ -99,7 +99,7 @@ function create(materials) {
     return `<g stroke="${INK}" stroke-width="${S.line.thin}" fill="${INK}">${s}</g>`;
   }
   /* the overall sizes of [x1, x2, y1, y2], in mm: under the drawing and on its left */
-  const dims = (X, box) => chain(X, box, 'x1', 0, [box[2], box[3]]) + chain(X, box, 'y0', 0, [box[0], box[1]]);
+  const dims = (X, box) => chain(X, box, 'W', 0, [box[2], box[3]]) + chain(X, box, 'N', 0, [box[0], box[1]]);
   /* the sheets side by side: [{extent: [x1, x2, y1, y2] (house mm), title, draw(X)}]; X shifts a sheet along the plan.
      A sheet narrower than its title gets the title's width, the drawing in its middle. */
   function sheets(list) {

@@ -20,7 +20,7 @@ const stripOf = (P, a, b) => clipHalf(clipHalf(P, p => p[0] - a), p => b - p[0])
 const bandOf = (P, k, c, w) => clipHalf(clipHalf(P, p => p[k] - c + w / 2), p => c + w / 2 - p[k]);
 
 /* the outward side of an opening: which axis its wall faces along, and which way */
-const SIDE = { x0: { axis: 0, sign: -1 }, x1: { axis: 0, sign: 1 }, y0: { axis: 1, sign: -1 }, y1: { axis: 1, sign: 1 }, h0: { axis: 2, sign: -1 } };
+const SIDE = Object.assign({}, G.SIDES, { down: { axis: 2, sign: -1 } });   // the compass sides, and down (under the floor)
 
 /* the model of a house: ROOT the root node of house.js, the site, with the house in it. The model works in the house's
    axes (its zero at its own extreme corner); the site is moved into them */
@@ -216,7 +216,7 @@ function doorOf(o, i) {
   if (!D) return;
   const [x1, x2, y1, y2, h1, h2] = o.b, alongX = x2 - x1 > y2 - y1;       // the wall runs along the opening's longer side
   const [u1, u2] = alongX ? [x1, x2] : [y1, y2], [n1, n2] = alongX ? [y1, y2] : [x1, x2];
-  const sign = o.opens[1] === '1' ? 1 : -1, flushSign = o.flush[1] === '1' ? 1 : -1;
+  const sign = SIDE[o.opens].sign, flushSign = SIDE[o.flush].sign;
   const flush = flushSign > 0 ? n2 : n1, back = flush - flushSign * D.depth, middle = (flush + back) / 2;
   const near = sign === flushSign ? [middle, flush] : [back, middle], far = sign === flushSign ? [back, middle] : [middle, flush];   // n ranges: the half toward the opening, the other
   const face = sign === flushSign ? flush : back;                        // the leaf's face toward which it opens
@@ -234,7 +234,7 @@ function doorOf(o, i) {
   const cells = [cell(box(a, b, near[0], near[1], h1 + D.bottom, h2 - D.frame - D.gap), D.material),
     cell(box(u1 + D.stop + D.gap, u2 - D.stop - D.gap, far[0], far[1], h1 + D.bottom, h2 - D.stop - D.gap), D.material)];
   /* a handle on each face, by the free edge */
-  const hinge = o.hinge === (alongX ? 'x1' : 'y1') ? b : a, free = hinge === a ? b : a, inward = free > hinge ? -1 : 1;
+  const hinge = SIDE[o.hinge].sign > 0 ? b : a, free = hinge === a ? b : a, inward = free > hinge ? -1 : 1;
   const H = D.handle, hu = free + inward * H.inset, hh = h1 + H.height;
   for (const [f, out] of [[face, sign], [face - sign * D.depth, -sign]]) {
     cells.push(cell(box(hu - H.rosette / 2, hu + H.rosette / 2, f, f + out * H.rosetteDepth, hh - H.rosette / 2, hh + H.rosette / 2), H.material));

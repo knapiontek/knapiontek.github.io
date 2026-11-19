@@ -200,25 +200,25 @@ HOME.data({
     },
     "finishes": [
      {"h": [null, 1320], "material": "plinth"},
-     {"side": "x0", "y": [640, 8460], "h": [1320, null], "material": "graphite"},
-     {"side": "x0", "y": [1550, 7550], "h": [3720, 4380], "material": "woodHorizontal"},
-     {"side": "x1", "y": [640, 8460], "h": [1320, null], "material": "graphite"},
-     {"side": "x1", "x": [14000, 14200], "y": [640, 8460], "h": [3570, 4380], "material": "plasterWhite"},
+     {"side": "E", "y": [640, 8460], "h": [1320, null], "material": "graphite"},
+     {"side": "E", "y": [1550, 7550], "h": [3720, 4380], "material": "woodHorizontal"},
+     {"side": "W", "y": [640, 8460], "h": [1320, null], "material": "graphite"},
+     {"side": "W", "x": [14000, 14200], "y": [640, 8460], "h": [3570, 4380], "material": "plasterWhite"},
      {
-      "side": "x1",
+      "side": "W",
       "x": [14000, 14200],
       "y": [3880, 5220],
       "h": [4380, null],
       "material": "woodVertical",
       "below": [{"h": 7230, "y": 3880, "pitch": 1}, {"h": 7230, "y": 5220, "pitch": -1}]
      },
-     {"side": "x1", "x": [13100, 13300], "y": [6150, 6610], "h": [1320, 4040], "material": "woodVertical"},
-     {"side": "x1", "x": [13100, 13300], "y": [7410, 8460], "h": [1320, 4040], "material": "woodVertical"},
-     {"side": "y1", "x": [13300, 14000], "y": [4350, 4550], "h": [1320, 4040], "material": "graphite"},
-     {"side": "y0", "x": [13100, 14200], "y": [8460, 8660], "h": [1320, 4040], "material": "graphite"},
-     {"side": "h0", "x": [13100, 14000], "material": "graphite"},
-     {"side": "y1", "x": [4330, 10030], "h": [1320, 3720], "material": "graphite"},
-     {"side": "y0", "x": [2270, 10640], "h": [1320, 3720], "material": "graphite"},
+     {"side": "W", "x": [13100, 13300], "y": [6150, 6610], "h": [1320, 4040], "material": "woodVertical"},
+     {"side": "W", "x": [13100, 13300], "y": [7410, 8460], "h": [1320, 4040], "material": "woodVertical"},
+     {"side": "S", "x": [13300, 14000], "y": [4350, 4550], "h": [1320, 4040], "material": "graphite"},
+     {"side": "N", "x": [13100, 14200], "y": [8460, 8660], "h": [1320, 4040], "material": "graphite"},
+     {"side": "down", "x": [13100, 14000], "material": "graphite"},
+     {"side": "S", "x": [4330, 10030], "h": [1320, 3720], "material": "graphite"},
+     {"side": "N", "x": [2270, 10640], "h": [1320, 3720], "material": "graphite"},
      {"elements": ["chimney"], "h": [8320, null], "material": "graphite"}
     ],
     "part": {
@@ -381,7 +381,7 @@ HOME.data({
          "offset": [8420, -200, 1100],
          "size": [2000, 440, 1000],
          "label": "2000/1000",
-         "outer": "y0"
+         "outer": "N"
         }
        ]
       },
@@ -399,7 +399,7 @@ HOME.data({
          "offset": [1630, 0, 0],
          "size": [2500, 440, 2400],
          "label": "2500/2400",
-         "outer": "y1"
+         "outer": "S"
         },
         {
          "id": "window_kitchen_6",
@@ -408,7 +408,7 @@ HOME.data({
          "offset": [5520, 0, 1100],
          "size": [1900, 440, 1300],
          "label": "1900/1300",
-         "outer": "y1",
+         "outer": "S",
          "cols": 2
         },
         {
@@ -418,7 +418,7 @@ HOME.data({
          "offset": [8830, 0, 1100],
          "size": [1000, 440, 1300],
          "label": "1000/1300",
-         "outer": "y1"
+         "outer": "S"
         }
        ]
       },
@@ -436,7 +436,7 @@ HOME.data({
          "offset": [-200, 1110, 0],
          "size": [440, 6000, 2400],
          "label": "6000/2400",
-         "outer": "x0",
+         "outer": "E",
          "cols": 4
         }
        ]
@@ -455,7 +455,7 @@ HOME.data({
          "offset": [0, 710, 0],
          "size": [440, 2750, 2250],
          "label": "2750/2250",
-         "outer": "x1"
+         "outer": "W"
         }
        ]
       },
@@ -481,7 +481,7 @@ HOME.data({
          "offset": [0, 200, 0],
          "size": [440, 1600, 2100],
          "label": "1600/2100",
-         "outer": "x1",
+         "outer": "W",
          "leaf": 1000
         },
         {
@@ -491,7 +491,7 @@ HOME.data({
          "offset": [0, 2260, 0],
          "size": [440, 800, 2100],
          "label": "800/2100",
-         "outer": "x1"
+         "outer": "W"
         }
        ]
       },
@@ -514,9 +514,9 @@ HOME.data({
          "offset": [420, 0, 0],
          "size": [900, 120, 2050],
          "label": "900/2050",
-         "hinge": "x1",
-         "opens": "y0",
-         "flush": "y0",
+         "hinge": "W",
+         "opens": "N",
+         "flush": "N",
          "product": "porta-hide-wc-80",
          "extras": ["porta-wc-handle-rosette"]
         }
@@ -536,9 +536,9 @@ HOME.data({
          "offset": [1400, 0, 0],
          "size": [900, 120, 2050],
          "label": "900/2050",
-         "hinge": "x1",
-         "opens": "y0",
-         "flush": "y0"
+         "hinge": "W",
+         "opens": "N",
+         "flush": "N"
         }
        ]
       },
@@ -556,9 +556,9 @@ HOME.data({
          "offset": [0, 540, 0],
          "size": [240, 900, 2050],
          "label": "900/2050",
-         "hinge": "y0",
-         "opens": "x1",
-         "flush": "x0"
+         "hinge": "N",
+         "opens": "W",
+         "flush": "E"
         }
        ]
       },
@@ -577,9 +577,9 @@ HOME.data({
          "offset": [1375, 0, 0],
          "size": [900, 120, 2050],
          "label": "900/2050",
-         "hinge": "x1",
-         "opens": "y1",
-         "flush": "y1"
+         "hinge": "W",
+         "opens": "S",
+         "flush": "S"
         }
        ]
       },
@@ -761,7 +761,7 @@ HOME.data({
          "offset": [-200, 1110, 0],
          "size": [440, 6000, 3460],
          "label": "6000/3460",
-         "outer": "x0",
+         "outer": "E",
          "cols": 4,
          "below": [{"h": 3460, "y": 3000, "pitch": 1}, {"h": 3460, "y": 3000, "pitch": -1}]
         }
@@ -782,7 +782,7 @@ HOME.data({
          "offset": [0, 1240, 0],
          "size": [440, 2200, 2850],
          "label": "2200/2850",
-         "outer": "x1",
+         "outer": "W",
          "cols": 2,
          "transoms": [840],
          "below": [{"h": 2850, "y": 2200, "pitch": 1}]
@@ -794,7 +794,7 @@ HOME.data({
          "offset": [0, 4780, 0],
          "size": [440, 2200, 2850],
          "label": "2200/2850",
-         "outer": "x1",
+         "outer": "W",
          "cols": 2,
          "transoms": [840],
          "below": [{"h": 2850, "y": 0, "pitch": -1}]
@@ -834,9 +834,9 @@ HOME.data({
          "offset": [100, 0, 0],
          "size": [700, 120, 2050],
          "label": "700/2050",
-         "hinge": "x0",
-         "opens": "y1",
-         "flush": "y0"
+         "hinge": "E",
+         "opens": "S",
+         "flush": "N"
         }
        ]
       },
@@ -855,9 +855,9 @@ HOME.data({
          "offset": [830, 0, 0],
          "size": [900, 120, 2050],
          "label": "900/2050",
-         "hinge": "x1",
-         "opens": "y0",
-         "flush": "y0",
+         "hinge": "W",
+         "opens": "N",
+         "flush": "N",
          "product": "porta-hide-wc-80",
          "extras": ["porta-wc-handle-rosette"]
         }
@@ -878,9 +878,9 @@ HOME.data({
          "offset": [125, 0, 0],
          "size": [700, 120, 2050],
          "label": "700/2050",
-         "hinge": "x0",
-         "opens": "y0",
-         "flush": "y1"
+         "hinge": "E",
+         "opens": "N",
+         "flush": "S"
         }
        ]
       },
@@ -908,9 +908,9 @@ HOME.data({
          "offset": [0, 235, 0],
          "size": [120, 900, 2050],
          "label": "900/2050",
-         "hinge": "y0",
-         "opens": "x0",
-         "flush": "x1"
+         "hinge": "N",
+         "opens": "E",
+         "flush": "W"
         }
        ]
       },
@@ -956,9 +956,9 @@ HOME.data({
          "offset": [0, 1400, 0],
          "size": [120, 700, 2050],
          "label": "700/2050",
-         "hinge": "y0",
-         "opens": "x1",
-         "flush": "x1"
+         "hinge": "N",
+         "opens": "W",
+         "flush": "W"
         },
         {
          "id": "door_hall_1_bedroom_7",
@@ -967,9 +967,9 @@ HOME.data({
          "offset": [0, 3050, 0],
          "size": [120, 900, 2050],
          "label": "900/2050",
-         "hinge": "y1",
-         "opens": "x1",
-         "flush": "x0"
+         "hinge": "S",
+         "opens": "W",
+         "flush": "E"
         },
         {
          "id": "door_hall_1_bedroom_6",
@@ -978,9 +978,9 @@ HOME.data({
          "offset": [0, 4130, 0],
          "size": [120, 900, 2050],
          "label": "900/2050",
-         "hinge": "y0",
-         "opens": "x1",
-         "flush": "x0"
+         "hinge": "N",
+         "opens": "W",
+         "flush": "E"
         }
        ]
       },
@@ -1114,7 +1114,7 @@ HOME.data({
        "offset": [0, 0, 400],
        "size": [15200, 200, 9920],
        "top": "roof",
-       "outer": "y0",
+       "outer": "N",
        "children": []
       },
       {
@@ -1124,7 +1124,7 @@ HOME.data({
        "offset": [0, 8900, 400],
        "size": [15200, 200, 9920],
        "top": "roof",
-       "outer": "y1",
+       "outer": "S",
        "children": []
       },
       {
@@ -1134,7 +1134,7 @@ HOME.data({
        "offset": [1000, 440, 400],
        "size": [200, 8220, 9920],
        "top": "roof",
-       "outer": "x0",
+       "outer": "E",
        "children": []
       },
       {
@@ -1143,7 +1143,7 @@ HOME.data({
        "type": "eps",
        "offset": [14000, 440, 400],
        "size": [200, 4110, 3640],
-       "outer": "x1",
+       "outer": "W",
        "children": []
       },
       {
@@ -1152,7 +1152,7 @@ HOME.data({
        "type": "eps",
        "offset": [13300, 4350, 400],
        "size": [700, 200, 3640],
-       "outer": "y1",
+       "outer": "S",
        "children": []
       },
       {
@@ -1161,7 +1161,7 @@ HOME.data({
        "type": "eps",
        "offset": [13100, 4350, 400],
        "size": [200, 4110, 3640],
-       "outer": "x1",
+       "outer": "W",
        "children": []
       },
       {
@@ -1170,7 +1170,7 @@ HOME.data({
        "type": "eps",
        "offset": [13100, 8460, 400],
        "size": [1100, 200, 3640],
-       "outer": "y0",
+       "outer": "N",
        "children": []
       },
       {
@@ -1179,7 +1179,7 @@ HOME.data({
        "type": "epsSoffit",
        "offset": [13300, 4550, 3570],
        "size": [900, 3910, 470],
-       "outer": "h0",
+       "outer": "down",
        "children": []
       },
       {
@@ -1189,7 +1189,7 @@ HOME.data({
        "offset": [14000, 440, 4040],
        "size": [200, 8220, 6280],
        "top": "roof",
-       "outer": "x1",
+       "outer": "W",
        "children": []
       },
       {
@@ -1199,7 +1199,7 @@ HOME.data({
        "offset": [200, 440, 400],
        "size": [800, 200, 9920],
        "top": "roof",
-       "outer": "y1",
+       "outer": "S",
        "children": []
       },
       {
@@ -1209,7 +1209,7 @@ HOME.data({
        "offset": [200, 8460, 400],
        "size": [800, 200, 9920],
        "top": "roof",
-       "outer": "y0",
+       "outer": "N",
        "children": []
       },
       {
@@ -1219,7 +1219,7 @@ HOME.data({
        "offset": [14200, 440, 400],
        "size": [800, 200, 9920],
        "top": "roof",
-       "outer": "y1",
+       "outer": "S",
        "children": []
       },
       {
@@ -1229,7 +1229,7 @@ HOME.data({
        "offset": [14200, 8460, 400],
        "size": [800, 200, 9920],
        "top": "roof",
-       "outer": "y0",
+       "outer": "N",
        "children": []
       },
       {
@@ -1239,7 +1239,7 @@ HOME.data({
        "offset": [0, 200, 400],
        "size": [200, 440, 9920],
        "top": "roof",
-       "outer": "x0",
+       "outer": "E",
        "children": []
       },
       {
@@ -1249,7 +1249,7 @@ HOME.data({
        "offset": [0, 8460, 400],
        "size": [200, 440, 9920],
        "top": "roof",
-       "outer": "x0",
+       "outer": "E",
        "children": []
       },
       {
@@ -1259,7 +1259,7 @@ HOME.data({
        "offset": [15000, 200, 400],
        "size": [200, 440, 9920],
        "top": "roof",
-       "outer": "x1",
+       "outer": "W",
        "children": []
       },
       {
@@ -1269,7 +1269,7 @@ HOME.data({
        "offset": [15000, 8460, 400],
        "size": [200, 440, 9920],
        "top": "roof",
-       "outer": "x1",
+       "outer": "W",
        "children": []
       }
      ]

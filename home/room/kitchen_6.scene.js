@@ -2,9 +2,9 @@ HOME.data({
  "format": "scene",
  "version": 1,
  "groups": {
-  "1": {"front": "y0", "offset": [2813, 2228, 0], "size": [3513, 632, 2720]},
-  "2": {"front": "x0", "offset": [5772, 0, 0], "size": [618, 2860, 2720]},
-  "3": {"front": "y1", "offset": [3070, 342, 0], "size": [1736, 914, 908]}
+  "1": {"front": "N", "offset": [2813, 2228, 0], "size": [3513, 632, 2720]},
+  "2": {"front": "E", "offset": [5772, 0, 0], "size": [618, 2860, 2720]},
+  "3": {"front": "S", "offset": [3070, 342, 0], "size": [1736, 914, 908]}
  },
  "room": {"wallColor": "#f2f1ee"},
  "installation": {

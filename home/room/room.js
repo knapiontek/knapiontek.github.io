@@ -13,11 +13,12 @@ const C = () => HOME.cabinets, G = () => HOME.geometry;
    the fronts); a quarter turn and a mirror (the group's x, y, h are left-handed), so what is drawn comes out as built.
    W: which corner of its box in the room lies on its wall line at x = 0 */
 const FRONTS = {
-  y0: { Y: [0, -1], X: [1, 0], W: [0, 1] },
-  y1: { Y: [0, 1], X: [-1, 0], W: [1, 0] },
-  x0: { Y: [-1, 0], X: [0, -1], W: [1, 1] },
-  x1: { Y: [1, 0], X: [0, 1], W: [0, 0] }
+  N: { Y: [0, -1], X: [1, 0], W: [0, 1] },
+  S: { Y: [0, 1], X: [-1, 0], W: [1, 0] },
+  E: { Y: [-1, 0], X: [0, -1], W: [1, 1] },
+  W: { Y: [1, 0], X: [0, 1], W: [0, 0] }
 };
+const facesAlongX = front => front === 'E' || front === 'W';   // its fronts face along the house's x: its width along y
 
 /* room: {offset [x, y, h] of its origin in the house, size}; files: {cabinets, scene}; library: {products: group -> products, materials} */
 function prepare(room, files, library) {
@@ -39,7 +40,7 @@ function prepare(room, files, library) {
     const A = productOf(f.product), F = FRONTS[f.front];
     if (!A) throw new Error(`scene: fixture ${id}: no product ${f.product} in the library`);
     const b = Object.assign({}, A.body, f.depth ? { depth: f.depth } : {});   // depth: what it reaches out of its wall, if more than its body (a flush plate on a casing)
-    const size = f.front[0] === 'x' ? [b.depth, b.width, b.height] : [b.width, b.depth, b.height];
+    const size = facesAlongX(f.front) ? [b.depth, b.width, b.height] : [b.width, b.depth, b.height];
     const x = O[0] + f.offset[0] + F.W[0] * size[0], y = O[1] + f.offset[1] + F.W[1] * size[1];
     PLACE[id] = { O: [x, y], X: F.X, Y: F.Y, box: [0, 1, 2].flatMap(k => [O[k] + f.offset[k], O[k] + f.offset[k] + size[k]]) };
     /* its node at its frame's zero (the floor under it), the product in it from its offset's h */
@@ -91,7 +92,7 @@ function wallsOf(rects) {
     let parts = [[from, to]];
     for (const o of rects) if (o !== q) {            // what another rect of the area covers is no wall
       const lo = axis === 0 ? o[0] : o[2], hi = axis === 0 ? o[1] : o[3], line = axis === 0 ? [o[2], o[3]] : [o[0], o[1]];
-      if (at <= line[0] - 0.5 || at >= line[1] + 0.5 || (inward > 0 ? at >= line[1] - 0.5 : at <= line[0] + 0.5)) continue;
+      if (inward > 0 ? line[0] >= at - 0.5 || line[1] < at - 0.5 : line[1] <= at + 0.5 || line[0] > at + 0.5) continue;   // the other must lie beyond the wall, touching it
       parts = parts.flatMap(([a, b]) => [[a, Math.min(b, lo)], [Math.max(a, hi), b]].filter(([c, d]) => d - c > 0.5));
     }
     for (const [a, b] of parts) out.push({ axis, at, inward, from: a, to: b });
@@ -380,7 +381,7 @@ function build(V, prepared, opts = {}) {
     for (const g of prepared.TREE) {
       for (const c of HOME.tree.create(g).checks()) if (!c.info) for (const i of c.items) out.push(g.id + ': ' + c.name + ': ' + i);   // to know (a child outside its parent) is no fault
       const s = scene.groups[g.id.slice(1)];
-      const size = s && (s.front[0] === 'x' ? [g.size[1], g.size[0], g.size[2]] : g.size);   // the group's x along the house's y when it faces x
+      const size = s && (facesAlongX(s.front) ? [g.size[1], g.size[0], g.size[2]] : g.size);   // the group's x along the house's y when it faces x
       if (s && size.some((v, k) => v > s.size[k] + 0.5)) out.push(`${g.id}: ${size.map(Math.round).join(' × ')} does not fit the scene's box ${s.size.join(' × ')}`);
     }
     return out;

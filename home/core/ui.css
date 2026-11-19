@@ -225,6 +225,8 @@ table.edit td.actions{width:52px;text-align:center;white-space:nowrap;padding:0}
 td.actions button{width:24px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:5px 0}
 td.actions button.add:hover{color:var(--accent)}
 td.actions button.del:hover{color:var(--warn)}
+td.actions button.del::before{content:"";display:inline-block;width:14px;height:14px;vertical-align:-2px;background:currentColor;-webkit-mask:var(--bin) center/contain no-repeat;mask:var(--bin) center/contain no-repeat}   /* a bin */
+:root{--bin:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6'/%3E%3C/svg%3E")}
 .swatch{display:block;width:32px;height:16px;margin:auto;border-radius:3px;border:1px solid var(--line)}
 /* a list to pick from, over the page */
 .picker{position:fixed;z-index:50;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px var(--lift);padding:6px;font:13px var(--f-body);display:grid;grid-template-columns:repeat(2,auto);gap:2px 14px}

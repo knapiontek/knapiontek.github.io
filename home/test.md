@@ -112,3 +112,8 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 - house/index.html?room=bathroom_7: no errors, every check passes; the Estimate 55 rows, the Cut list, the Notes.
 - The tiles counted on the page: walls 16.33 m² (63 tiles), floor 3.68 (8), the shower's walls 12.75 (28), its floor 0.90 (4).
 - Regressions: model_snap of kitchen_6 and wardrobe_3 the same as before; the kitchen's Documents against the prototype (the cut list differs only in the order of rows, every block the same), its cells and faces the same; t_tiles, t_house_same clean; tsc clean.
+
+## The compass sides (19 Nov)
+
+- The models of kitchen_6, wardrobe_3, _4, _8 and bedroom_6 the same as before; the house the same (t_house_same); the kitchen's cells and faces the same; the 2D plan (SVG) of the house and of the bathroom 7 the same string as before the change, the checks the same; core/test.html without errors; tsc clean.
+- The cabinet editor: kitchen_6 and bathroom_7 draw, no warnings, no table wider than its column at 1400 px.

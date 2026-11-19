@@ -401,7 +401,7 @@ function showerScreen(D, A, { r, w, d, h, h0, f }) {
   D.box(D.STATIC, r, [w - 12, w, 0, d, h0, h0 + h], metal, 'sanitary', fixtureInfo(D, A));      // the wall profile
   D.box(D.STATIC, r, [fx, w, 0, d, h0, h0 + 12], metal, 'sanitary', fixtureInfo(D, A));       // the bottom profile
   const m = D.mover(r, 'door', fx - 5, d / 2, 0);
-  Object.assign(m, { sign: f.opens === 'in' ? -1 : 1, label: A.name + ' – door ' + (fx - 10), travel: 1.4 });
+  Object.assign(m, { sign: f.opens === 'in' ? -1 : 1, label: A.name + ' – door ' + (fx - 10), travel: f.angle || 90 });   // degrees
   const J = { name: A.name + ' – door', part: D.part() };
   D.box(m.cells, r, [5, fx - 5, y0, y1, h0 + 5, h0 + h], 'glass', 'sanitary', J);
   D.box(m.cells, r, [20, 40, y0 - 6, y1 + 6, h0 + 840, h0 + 1260], metal, 'sanitary', { name: A.name + ' – handle', part: D.part() });

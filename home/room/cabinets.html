@@ -26,13 +26,13 @@
             <tr class="head"><td>Group</td><td>Name</td><td title="the carcasses' backs from the wall; an island: to the worktop's back edge">Back gap</td><td title="The carcasses' depth in this group (empty: settings.carcass.depth)">Depth</td><td></td></tr>
             <template x-for="(r, i) in groups" :key="r.id"><tr data-row :class="built.flags.groups[i]">
               <td class="n"><input type="number" min="1" step="1" x-model="r.group"></td><td><input type="text" spellcheck="false" x-model="r.name"></td><td class="n"><input type="number" min="0" step="1" x-model="r.backGap"></td><td class="n"><input type="number" min="1" step="1" placeholder="—" x-model="r.depth"></td>
-              <td class="actions"><button type="button" class="del" title="Delete the row" @click="groups.splice(i, 1)">×</button></td></tr></template>
+              <td class="actions"><button type="button" class="del" title="Delete the row" aria-label="Delete the row" @click="groups.splice(i, 1)"></button></td></tr></template>
           </table></div>
           <div class="sheetwrap tall" @scroll="picker.row = null"><table class="sheet edit" x-ref="columns"><tr class="title"><td colspan="3">Columns</td></tr>
             <tr class="head"><td>Group</td><td>Width</td><td></td></tr>
             <template x-for="(r, i) in columns" :key="r.id"><tr data-row :class="built.flags.columns[i]">
               <td class="n"><input type="number" min="1" step="1" x-model="r.group"></td><td class="n"><input type="number" min="0" step="1" x-model="r.width"></td>
-              <td class="actions"><button type="button" class="add" title="Insert a row below (a copy of this one)" @click="insert('columns', i)">+</button><button type="button" class="del" title="Delete the row" @click="columns.splice(i, 1)">×</button></td></tr></template>
+              <td class="actions"><button type="button" class="add" title="Insert a row below (a copy of this one)" @click="insert('columns', i)">+</button><button type="button" class="del" title="Delete the row" aria-label="Delete the row" @click="columns.splice(i, 1)"></button></td></tr></template>
           </table></div>
         </div>
         <div class="wide"><div class="sheetwrap tall" @scroll="picker.row = null"><table class="sheet edit" x-ref="components"><tr class="title"><td colspan="15">Components</td></tr>
@@ -46,7 +46,7 @@
             <td><template x-if="isFront(r)"><button type="button" class="pick" title="The door's hinge side" @click="openPicker(r, $event, 'hinge')" x-text="r.hinge ? SIDE_NAME[r.hinge] || r.hinge : ''"></button></template></td>
             <td class="n"><input type="number" min="0" step="1" x-model="r.gapLeft"></td><td class="n"><input type="number" min="0" step="1" x-model="r.gapRight"></td><td class="n"><input type="number" min="0" step="1" x-model="r.gapTop"></td><td class="n"><input type="number" min="0" step="1" x-model="r.gapBottom"></td>
             <td><input type="text" x-model="r.note"></td>
-            <td class="actions"><button type="button" class="add" title="Insert a row below (a copy of this one)" @click="insert('components', i)">+</button><button type="button" class="del" title="Delete the row" @click="components.splice(i, 1)">×</button></td></tr></template>
+            <td class="actions"><button type="button" class="add" title="Insert a row below (a copy of this one)" @click="insert('components', i)">+</button><button type="button" class="del" title="Delete the row" aria-label="Delete the row" @click="components.splice(i, 1)"></button></td></tr></template>
         </table></div></div>
       </div>
       <div class="sheetwrap drawing" x-ref="drawing" @mousemove="hover($event)" @mouseleave="tip.show = false"><div class="title">Drawing</div>
@@ -56,7 +56,7 @@
         <tr class="head"><td>Name</td><td>Description</td><td>Details</td><td></td></tr>
         <template x-for="(n, i) in notes" :key="n.id"><tr data-row :class="EMPTY.notes(n) ? 'empty' : ''">
           <td><textarea rows="1" x-model="n.name"></textarea></td><td><textarea rows="1" x-model="n.description"></textarea></td><td><textarea rows="1" x-model="n.details"></textarea></td>
-          <td class="actions"><button type="button" class="add" title="Insert a row below" @click="insert('notes', i)">+</button><button type="button" class="del" title="Delete the row" @click="notes.splice(i, 1)">×</button></td></tr></template>
+          <td class="actions"><button type="button" class="add" title="Insert a row below" @click="insert('notes', i)">+</button><button type="button" class="del" title="Delete the row" aria-label="Delete the row" @click="notes.splice(i, 1)"></button></td></tr></template>
       </table></div>
     </div>
     <template x-part="dock"></template>
@@ -112,9 +112,9 @@ const DRAW = { groupGap: 100, margin: 40, line: '#5f6a66', empty: '#e3e6e4', han
 /* the columns of each table: fix, characters (numbers, codes); share, the text's part of the room left (min, max characters) */
 const COLS = {
   materials: [{ share: 3, min: 18, max: 44 }, { fix: 17 }, { fix: 6 }, { fix: 7 }, { share: 2, min: 11 }],
-  groups: [{ fix: 5 }, { share: 1, min: 12 }, { fix: 8 }, { fix: 5 }, { fix: 2 }],
+  groups: [{ fix: 5 }, { share: 1, min: 9 }, { fix: 6 }, { fix: 5 }, { fix: 2 }],
   columns: [{ fix: 5 }, { fix: 6 }, { fix: 3 }],
-  components: [{ fix: 5 }, { fix: 4 }, { fix: 4 }, { share: 2, min: 11 }, { share: 2, min: 10 }, { fix: 7 }, { fix: 6 }, { fix: 7 }, { fix: 7 }, { fix: 5 }, { fix: 5 }, { fix: 5 }, { fix: 5 }, { share: 3, min: 12 }, { fix: 3 }],
+  components: [{ fix: 5 }, { fix: 4 }, { fix: 4 }, { share: 2, min: 9 }, { share: 2, min: 8 }, { fix: 7 }, { fix: 6 }, { fix: 7 }, { fix: 7 }, { fix: 5 }, { fix: 5 }, { fix: 5 }, { fix: 5 }, { share: 3, min: 7 }, { fix: 3 }],
   notes: [{ share: 1, min: 10, max: 22 }, { share: 2 }, { share: 3 }, { fix: 3 }]
 };
 
@@ -277,7 +277,7 @@ HOME.ui.page('editor', {
     const room = HOME.model.nav(house, [ROOM]).groups.flatMap(g => g.items).find(r => r.on);
     this.nav = HOME.model.nav(house, [ROOM]);
     this.title = room ? room.name : ROOM; this.subtitle = 'Cabinets · room/' + FILE;
-    this.boards = lib.groups.boards; this.applianceProducts = lib.groups.appliances;
+    this.boards = lib.groups.boards; this.applianceProducts = Object.assign({}, lib.groups.appliances, lib.groups.sanitary);   // a basin and its tap are sanitary
     this.setFile(file);
     /* one empty row at the end of every table; the drawing after every change */
     for (const k of ['groups', 'columns', 'components', 'notes']) this.$watch(k, () => this.keepEmpty(k));

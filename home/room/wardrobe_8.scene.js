@@ -2,8 +2,8 @@ HOME.data({
  "format": "scene",
  "version": 1,
  "groups": {
-  "1": {"front": "x1", "offset": [0, 0, 0], "size": [400, 2850, 2726]},
-  "2": {"front": "x0", "offset": [1220, 0, 0], "size": [300, 1290, 1366]}
+  "1": {"front": "W", "offset": [0, 0, 0], "size": [400, 2850, 2726]},
+  "2": {"front": "E", "offset": [1220, 0, 0], "size": [300, 1290, 1366]}
  },
  "room": {"wallColor": "#f2f1ee"},
  "hardware": {

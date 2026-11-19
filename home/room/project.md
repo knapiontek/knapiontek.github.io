@@ -57,7 +57,7 @@ In the house's axes and order: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`, all
 
 | Field | Means |
 |---|---|
-| groups | group number → {front: the side its fronts face (y0, y1, x0, x1), offset, size}: its box in the room, from the room's origin, in the house's axes |
+| groups | group number → {front: the side its fronts face (N, S, E, W), offset, size}: its box in the room, from the room's origin, in the house's axes |
 | room | wallColor: the paint of the plasterboard |
 | installation | sink: tapFromBack, trapTop, wallOutlet; hood: bottom |
 | hardware | our layout of the hardware as drawn: handle (axis, barLength, sideHeight), handles (the metals to choose and the default), open (the angles and the drawers' travel; doorStop: a carcass's door that opens less), leg (fromSide, fromBack, fromFront), bins (count, height), plinthGrille (bottom) |
