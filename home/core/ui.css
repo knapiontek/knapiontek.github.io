@@ -251,3 +251,7 @@ td.actions button.del::before{content:"";display:inline-block;width:14px;height:
 .sheet td.node { text-indent: 0; }
 .sheet .fold { display: inline-block; width: 1.3em; margin-right: 0.35em; padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--accent); cursor: pointer; text-align: center; }
 .sheet span.fold { cursor: default; }
+
+.toggle button:disabled{opacity:.4;cursor:default}
+.nav>template+details{margin-left:8px;position:relative}
+.nav>template+details::before{content:"";position:absolute;left:-6px;top:4px;bottom:4px;width:1.5px;background:var(--edge);opacity:.5}

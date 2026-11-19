@@ -309,3 +309,13 @@ The owner's decisions: the design is where every object stands (bought, cut, or 
 - **No page loading**: one page for every view. The data, the library, the textures, the model, the rooms' prepared furniture and the scene (its shaders) are made once; a view (the house, a room, rooms) is built in the same scene and taken away (core/scene.js clear(), relight()). A link in the menus, Open over a picked room, Back and Forward change the view in place; a change in Finish prepares that room again and builds the view again, the camera where it was. The renderer's lights are always physical (the house's sun and sky, in the old units, scaled by π: the picture is the same pixel for pixel), so no shader is made again.
 - **Faster loading**: the generated textures (a chipboard's core, the plaster's specks) drawn once for each colour, into the pixels; the welding of points looks into one cell of a 1 mm grid instead of 27. The house loads in 2.3 s instead of 5.6 s here (no graphics card: a frame costs 1.5 s), a room in 1.0 s instead of 2.7 s; a view built in place: a room 0.2 to 0.4 s, the house 1.1 s (and its first frame).
 - **Doors** (Documents): no Quantity (each door is one, by its own name and place) and no Value; Price and the total.
+- Fixed: in a room's view the tiles of a wall the camera is beyond showed their slab's edges (the tiles were hidden only by facing away). A wall's tiles now carry their wall's layer (the part's object facing them) and hide with it.
+- New layer Lights (a room's furniture): the pendants and downlights, and their light by night.
+
+## One active room, House or Room (19 Nov, night)
+
+- One room is always active: the panel's (its name the title), picked in the floors' menus, kept in the browser (at first the kitchen). Top left, before the floors: **House** (the whole house) or **Room** (the walls cut to the active room). A room picked in the whole house keeps the view (the panel follows); in a room's view the view goes to that room.
+- The panel always shows View and Finish; Finish greyed where there is nothing to finish (the garage). View in the whole house shows the active room's furniture layers too.
+- Gone: a click on the floor picking a room, its orange mark, the bar over the view (the picked room, Open, ×).
+- The cameras follow the view (the house's, or the room's own); Walk only in the whole house (its button and the arrow key); Open / Close always.
+- House.js: settings.tiles.mark removed (nothing marks a room now).

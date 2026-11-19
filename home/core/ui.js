@@ -55,7 +55,7 @@ function screen(spec) {
   for (const k of ['key', 'fresh', 'valid', 'modes', 'tabs']) delete own[k];
   const part = {
     ready: false, loading: 'Loading…', title: '', subtitle: '', nav: { links: [], groups: [] }, navOpen: null, modes,
-    float: null, sun: null, docs: null, checks: [], plan: { svg: '', note: '' }, walking: false, opened: false,
+    float: null, sun: null, docs: null, checks: [], plan: { svg: '', note: '' }, walking: false, opened: false, tabOff: () => false,
     state: key ? kept(key, fresh, valid) : { tab: null, zoom: 1, layers: {} },
     get mode() { return this.state.mode ?? null; },
     get tabs() { return tabs[this.mode] || []; },
@@ -220,7 +220,7 @@ const PARTS = {
     <button ${ROUND}="help" id="helpbtn" aria-label="Help" title="Help" :aria-expanded="String(float === 'help')" @click="toggle('help')">?</button></div>
   <button class="panelbtn" @click="$store.screen.togglePanel()" x-text="$store.screen.open ? '»' : '«'" :title="$store.screen.open ? 'Hide the panel' : 'Show the panel'" :aria-label="$store.screen.open ? 'Hide the panel' : 'Show the panel'"></button>`,
   panel: `<aside id="panel" data-slot><h1 id="title" x-text="title"></h1><p class="sub" id="subtitle" x-text="subtitle"></p>
-    <div class="toggle" id="tabs" role="tablist" aria-label="Panel" x-show="tabs.length > 1" x-cloak><template x-for="t in tabs"><button role="tab" :data-tab-id="t" :aria-selected="String(t === tab)" :data-on="t === tab && ''" @click="pickTab(t)" x-text="HOME.ui.TAB_NAMES[t]"></button></template></div></aside>`,
+    <div class="toggle" id="tabs" role="tablist" aria-label="Panel" x-show="tabs.length > 1" x-cloak><template x-for="t in tabs"><button role="tab" :data-tab-id="t" :aria-selected="String(t === tab)" :data-on="t === tab && ''" :disabled="tabOff(t)" @click="pickTab(t)" x-text="HOME.ui.TAB_NAMES[t]"></button></template></div></aside>`,
   layers: `<template x-for="b in layerBlocks" :key="b.id"><section x-show="tab === b.tab && b.items.length" x-cloak><h2 x-text="b.name"></h2><div class="layers" :id="b.id"><template x-for="l in b.items" :key="l.k"><div :class="l.child ? 'child' : ''" :data-off="l.off && ''"><label><input type="checkbox" :checked="l.on" @change="setLayer(l.k, $event.target.checked)"> <span x-text="l.name"></span></label></div></template></div></section></template>`
 };
 

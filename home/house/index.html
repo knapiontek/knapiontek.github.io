@@ -14,15 +14,13 @@
   <template x-part="nav"></template>
   <div class="stage" id="stage">
     <template x-part="view"></template><template x-part="loading"></template>
-    <div class="hud"><div id="context" aria-label="View menu"><template x-if="roomTag"><div class="menurow"><span class="roomtag"><span x-text="roomTag.name"></span>
-      <a class="btnlink" :href="roomTag.href">Open</a><button aria-label="Unpick" @click="state.room = null">×</button></span></div></template></div></div>
     <template x-part="modes"></template><template x-part="plan"></template><template x-part="docs"></template>
     <template x-part="dock"></template><template x-part="pad"></template><template x-part="sun"></template>
     <template x-part="help">
       <div x-show="mode === '3d'"><p>Turn: left button, about the point under the cursor (an orange dot marks it while turning) · move: right · zoom: the wheel, toward the cursor.</p>
         <p><b>Walk</b>: the arrows walk and turn, A/D a step aside, Shift faster, PgUp/PgDn or a drag look, Space opens the nearest door, Esc ends.</p>
-        <p><b>Open</b> (the menu): every door and drawer opens; then <b>Close</b>. <b>Finish</b> (the panel): the room picked: the metal of all its fittings, its boards, its floor tiles; a change is kept in this browser over the data (Back to the data).</p>
-        <p><b>View</b> (the panel): the floors and the layers; an element shows when its floor and its kind are both on. Without the roof the highest floor shown is open: a click on its floor picks a room. A click on a door opens or closes it.</p>
+        <p><b>Open</b> (the menu): every door and drawer opens; then <b>Close</b>. <b>House</b> or <b>Room</b> (top left): the whole house, or its walls cut to the active room; a room picked in the floors' menus is the active one (the panel's). <b>Finish</b> (the panel): the active room: the metal of all its fittings, its boards, its floor tiles; a change is kept in this browser over the data (Back to the data).</p>
+        <p><b>View</b> (the panel): the floors and the layers; an element shows when its floor and its kind are both on. A click on a door opens or closes it. Walk: the whole house only.</p>
         <p>In a room, the walls and the ceiling between the camera and the room hide; the floors do not apply there, only the elements.</p></div>
       <div x-show="mode === '2d'"><p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. The wheel zooms about the cursor, a drag moves the sheet. Below: the whole sheet again, the SVG to print.</p></div>
       <div x-show="mode === 'documents'"><p>The rooms with their areas, the doors with what is bought for them, the notes, the furniture as a tree, the Test (the checks of the data and of the model: OK, nothing to correct; a number, what to correct; i, to know). Shaded fields may be changed until a reload. Below: the XLSX with its formulas.</p></div>
@@ -30,7 +28,7 @@
     <template x-part="corner"></template>
   </div>
   <template x-part="panel"><template x-part="layers"></template>
-    <section x-show="tab === 'finish'" x-cloak><template x-if="!finish"><p class="note">Pick a room: a click on its floor in 3D, with the roof off.</p></template></section>
+    <section x-show="tab === 'finish'" x-cloak><template x-if="!finish || !(finish.layout || finish.furniture || finish.ownTiles)"><p class="note">Nothing to finish in this room.</p></template></section>
     <template x-if="finish && finish.furniture"><section x-show="tab === 'finish'" x-cloak><h2>Furniture</h2><div class="lay">
       <label>Metal<select @change="setFinish(finish?.room, 'metal', null, $event.target.value)"><template x-for="m in finish?.furniture?.metals" :key="m.k"><option :value="m.k" :selected="m.k === finish?.furniture?.metal" x-text="m.name"></option></template></select></label>
       <template x-for="b in finish?.furniture?.boards" :key="b.from"><label><span x-text="b.roles"></span><select @change="setFinish(finish?.room, 'board', b.from, $event.target.value)"><template x-for="o in b.options" :key="o.k"><option :value="o.k" :selected="o.k === b.value" x-text="o.name"></option></template></select></label></template>
@@ -79,7 +77,7 @@ HOME.ui.page('house', {
   built: 0,                                // counts the views built: the panel follows a new one
   onMode: m => P.onMode(m), onLayers: () => P.apply(), menus() { this.built; return P.menus(); },
   get layerBlocks() { this.built; return this.ready ? P.layerBlocks() : []; },
-  get roomTag() { this.built; return this.ready ? P.roomTag() : null; },
+  tabOff(t) { this.built; return t === 'finish' && this.ready && !P.finishable(); },
   get finish() { this.built; return this.ready ? P.finish() : null; },
   setTiles(key, field, value) { P.setTiles(key, field, value); },
   setFinish(room, field, from, value) { P.setFinish(room, field, from, value); },
@@ -157,19 +155,31 @@ await LIB.loadTextures(Object.values(TILE_PRODUCTS).map(p => p.texture));
 /* ================= THE SCENE: one for every view; a view (the house, a room) is built in it and taken away =================
    ?room= the rooms asked for; a link to this page, Back and Forward change the view in place */
 const V = HOME.scene.create({ canvas: $('gl'), stage: $('stage'), materials: MATERIALS, textures: LIB.textures, light: VIEW.light, edges: VIEW.edges, sunCentre: [0, 0, 0] });
-let CUR = null;                            // the view shown: {click, frame, key, markRoom, P}
+let CUR = null;                            // the view shown: {click, frame, key, active, P}
+let SCOPE = [];                            // the rooms the view is cut to; none: the whole house
+/* the active room: always one (the panel's): the one picked in the menu, kept; at first the first furnished */
+const FIRST = ROOMS.find(r => (r.node.files || []).includes('cabinets')) || ROOMS[0];
+const activeId = () => (ROOM[state.room] ? state.room : FIRST.id);
+/* the panel's heading and the menu: the active room, House or Room */
+function heading() {
+  const r = ROOM[activeId()];
+  ui.title = roomName(r);
+  ui.subtitle = `${HOUSE.name} · ${r.floor.name}`;
+  document.title = SCOPE.length ? SCOPE.map(id => ROOM[id].node.name).join(', ') : 'Home';
+  ui.nav = HOME.model.nav(DATA, SCOPE, r.id);
+}
 V.enableNavigation();
 V.onClick(ray => CUR && CUR.click(ray));
 V.onFrame(() => !!CUR && CUR.frame());
 window.addEventListener('keydown', e => CUR && CUR.key(e));
-Alpine.effect(() => { state.room; if (CUR) CUR.markRoom(); });
+Alpine.effect(() => { state.room; if (CUR) { heading(); CUR.active(); } });
 const askedOf = search => (new URLSearchParams(search).get('room') || '').split(',').filter(Boolean);
 /* the view of the rooms asked (none: the house) built in place; keep: the camera stays (the same view built again) */
 async function show(asked, keep = false) {
   ui.loading = 'Loading…';
   await new Promise(r => requestAnimationFrame(() => setTimeout(r)));   // the word shows first
   V.stopWalk(); V.clear(); ui.walking = ui.opened = false;
-  CUR = await view(asked, keep); P = CUR.P;
+  CUR = await view(asked, keep); P = CUR.P; heading();
   ui.loading = ''; ui.built++; V.redraw();
 }
 document.addEventListener('click', e => {   // a link to this page: no new page
@@ -178,12 +188,14 @@ document.addEventListener('click', e => {   // a link to this page: no new page
   const u = new URL(a.getAttribute('href'), location.href);
   if (u.pathname !== location.pathname) return;
   e.preventDefault(); ui.navOpen = null;
+  const pick = u.hash.startsWith('#room=') && u.hash.slice(6);   // a room picked in the whole house: active, the view stays
+  if (pick) { state.room = pick; return; }
   if (u.search === location.search) return;
   history.pushState(null, '', u.search || location.pathname); show(askedOf(u.search));
 });
 window.addEventListener('popstate', () => show(askedOf(location.search)));
 V.start();
-CUR = await view(askedOf(location.search), false); P = CUR.P;
+CUR = await view(askedOf(location.search), false); P = CUR.P; heading();
 V.run();
 return P;
 
@@ -195,9 +207,8 @@ async function view(ASKED, keep) {
 const PART = ASKED.filter(id => ROOM[id]), WHOLE = !PART.length;
 const PARTS = PART.map(MODEL.part);
 const UNION = WHOLE ? null : [0, 1, 2, 3, 4, 5].map(k => (k % 2 ? Math.max : Math.min)(...PARTS.map(p => p.box[k])));
-ui.title = WHOLE ? HOUSE.name : PART.map(id => roomName(ROOM[id])).join(', ');
-ui.subtitle = WHOLE ? HOUSE.source : `${HOUSE.name} · ${[...new Set(PARTS.map(p => p.floor.name))].join(', ')}`;
-document.title = WHOLE ? 'Home' : PART.map(id => ROOM[id].node.name).join(', ');
+SCOPE = PART;
+if (PART.length && !PART.includes(state.room)) state.room = PART[0];   // a room's view: its room is the active one
 
 /* ================= THE ROOMS' FURNITURE =================
    the rooms shown that have files in room/ (house.js: files): placed by room/room.js; their looks join the library's */
@@ -206,12 +217,14 @@ const FURNITURE = await Promise.all(FURNISHED.map(furnished));
 for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks);
 await LIB.loadTextures(FURNITURE.flatMap(f => f.prepared.textures));
 /* one room with furniture: the furniture's own layers too (its groups and its kinds of parts) */
-const ROOM_LAYERS = !WHOLE && FURNITURE.length === 1 ? HOME.room.layers(FURNITURE[0].prepared) : {};
+/* the active room's furniture: its own layers too (its groups and its kinds of parts), in the house's view as in its own */
+const roomLayers = () => { const f = FURNITURE.find(f => f.room.id === activeId()); return f ? HOME.room.layers(f.prepared) : {}; };
+let ROOM_LAYERS = roomLayers();
 
 /* ================= SOLIDS =================
    The whole house: every solid, each door turning on its hinge. A part: the solids of its rooms, each wall, floor and
    ceiling an object of its own (a layer), a window or a door with the wall it sits in. */
-const LAYER = HOME.ui.layerTree(Object.assign({}, VIEW.layers, ROOM_LAYERS));
+let LAYER = HOME.ui.layerTree(Object.assign({}, VIEW.layers, ROOM_LAYERS));
 const OBJECTS = [];                        // the part's objects that hide while the camera is beyond them: {layer, middle, normal}
 const NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+h': [0, 0, 1], '-h': [0, 0, -1] };
 let STILL, LEAVES;                         // the cells that stand still; the doors drawn, each with the layers its leaf gets
@@ -245,7 +258,15 @@ for (const f of FURNITURE) {
   f.made = HOME.room.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings, products: LIB.groups, textures: LIB.textures });
   STILL.push(...f.made.STATIC);
   for (const [k, m] of Object.entries(f.made.tiles.materials)) MATERIALS[k] ||= m;
-  if (f.made.tiles.pieces.length) V.buildMeshes(f.made.tiles.pieces.map(p => Object.assign(p, { cell: Object.assign({}, p.cell, { layers: [f.room.floor.id].concat(p.cell.layers) }), group: [f.room.floor.id].concat(p.cell.layers).join('+') })));
+  /* a wall's tiles hide with their wall (the part's object facing them, the nearest) */
+  const walls = OBJECTS.filter(o => o.layer.startsWith('object:' + f.room.id + '/'));
+  const wallOf = p => {
+    const n = p.cell.face, q = p.poly[0], off = o => Math.abs(o.normal.reduce((s, v, k) => s + v * (q[k] - o.middle[k]), 0));
+    const fit = n ? walls.filter(o => o.normal.reduce((s, v, k) => s + v * n[k], 0) < -0.99).sort((a, b) => off(a) - off(b)) : [];
+    return fit.length ? [fit[0].layer] : [];
+  };
+  if (f.made.tiles.pieces.length) V.buildMeshes(f.made.tiles.pieces.map(p => { const layers = [f.room.floor.id].concat(p.cell.layers, wallOf(p));
+    return Object.assign(p, { cell: Object.assign({}, p.cell, { layers }), group: layers.join('+') }); }));
 }
 const SOLIDS = WHOLE ? MODEL.SOLIDS.concat(...FURNITURE.map(f => f.made.STATIC)) : STILL;   // what the walk bumps into
 const PIECES = piecesOf(STILL);
@@ -292,22 +313,14 @@ function tilePieces(D, L, P, laid, pieces) {
 const LAYOUTS = MODEL.LAYOUTS.filter(D => TILE_PRODUCTS[D.product]);
 for (const D of LAYOUTS) layTiles(D);
 const layoutOf = r => LAYOUTS.find(D => D.rooms.includes(r));
-/* the room picked: a mark over its floor */
-let MARK = [];
-const MARK_MATERIAL = 'tiles:mark';
-MATERIALS[MARK_MATERIAL] = { color: '#c8882f', opacity: 0.3 };
-function markRoom() {
-  V.removeMeshes(MARK); MARK = [];
-  const r = ROOM[state.room];
-  if (!r || !WHOLE) return;
-  const h = level(r.floor) + TILES.mark, c = { layers: [r.floor.id] };
-  MARK = V.buildMeshes(r.rects.map(q => ({ poly: [[q[0], q[2], h], [q[1], q[2], h], [q[1], q[3], h], [q[0], q[3], h]], n: [0, 0, 1], uv: v => [v[0], v[1]], cell: c, group: 'mark', material: MARK_MATERIAL })));
-  for (const g of MARK) { g.mesh.castShadow = g.mesh.receiveShadow = false; g.mesh.visible = state.mode === '3d' && !!openFloor() && r.floor === openFloor(); }
-  V.redraw();
-}
 
 /* ================= STATE, LAYERS ================= */
-const { layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers);
+let { layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers);
+/* another active room: its furniture's layers */
+function active() {
+  ROOM_LAYERS = roomLayers(); LAYER = HOME.ui.layerTree(Object.assign({}, VIEW.layers, ROOM_LAYERS));
+  ({ layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers)); apply();
+}
 const ROOM_VIEW = new Set(WHOLE ? [] : VIEW.floors);   // a room shows whatever the floors are switched to
 const HANDLE = 'cup';                      // the handles drawn: cup or bar (each front has both)
 const shown = layers => layers.every(k => k === 'cup' || k === 'bar' ? k === HANDLE : !LAYER[k] || ROOM_VIEW.has(k) || layerOn(k));
@@ -321,7 +334,6 @@ function openFloor() {
 }
 function apply() {
   V.showPieces(shown, layerOn, ghost);
-  for (const g of MARK) g.mesh.visible = state.mode === '3d' && !!openFloor() && ROOM[state.room] && ROOM[state.room].floor === openFloor();
   for (const f of FURNITURE) f.made.showDetails(layers => shown(layers) && !ghost(layers));
   V.redraw();
 }
@@ -361,18 +373,11 @@ function cameras() {
     return floors.length === 1 ? [above, corner, opposite] : [Object.assign(corner, { name: F.name }), Object.assign(above, { name: F.name + ' above' })];
   });
 }
-/* a click: a door opens or closes; on the open floor, its room is picked */
+/* a click: a door opens or closes */
 const click = ray => {
   if (state.mode !== '3d') return;
   const m = V.moverAt(ray);
-  if (m) return V.toggle(m);
-  const F = openFloor();
-  if (!F || V.walk.on) return;
-  const h = level(F), t = (h * V.MM - ray.ray.origin.y) / ray.ray.direction.y;
-  if (!(t > 0)) return;
-  const p = V.root.worldToLocal(ray.ray.at(t, new THREE.Vector3()));
-  const r = ROOMS.find(r => r.floor === F && r.rects.some(q => p.x >= q[0] && p.x <= q[1] && p.y >= q[2] && p.y <= q[3]));
-  state.room = r ? r.id : null;
+  if (m) V.toggle(m);
 };
 /* the walk stands on the walkable solids and, through a passage (a door), on its floor: the floor runs on through it */
 const PASSAGES = MODEL.OPENINGS.filter(o => HOUSE.geometry.openingKinds[o.kind].passage);
@@ -383,7 +388,7 @@ const startOf = () => {
   return { x: (q[0] + q[1]) / 2, y: (q[2] + q[3]) / 2, heading: VIEW.walk.start.heading };
 };
 V.enableWalk({ config: Object.assign({}, VIEW.walk, { start: startOf() }), solids: SOLIDS, ground: STILL.filter(c => c.walkable).concat(PASSAGE_FLOORS),
-  startLevel: WHOLE ? level(FLOORS[0]) : level(PARTS[0].floor), pad: $('pad'), canStart: () => state.mode === '3d', onToggle: () => { ui.walking = V.walk.on; apply(); }, home: () => cameras()[0] });
+  startLevel: WHOLE ? level(FLOORS[0]) : level(PARTS[0].floor), pad: $('pad'), canStart: () => state.mode === '3d' && WHOLE, onToggle: () => { ui.walking = V.walk.on; apply(); }, home: () => cameras()[0] });
 /* on a walk, Space: the nearest door within reach, on the walker's floor */
 const DOOR_REACH = 1500;                   // mm from the walker to the middle of a leaf
 const key = e => {
@@ -603,7 +608,7 @@ const CHECKS = WHOLE ? HOUSE_CHECKS : [ASKED_CHECK, ...(ROOM_CHECKS.length ? ROO
   : [{ name: 'No checks of its own', about: 'This room has nothing of its own to check yet; the house\'s checks are in the whole house\'s Documents.', items: [], info: true }])];
 
 /* ================= THE SCREEN =================
-   top-left: the house, its floors and their rooms · top-right: the modes · over the view: the picked room · below: the
+   top-left: House or Room, the floors and their rooms (the active room) · top-right: the modes · below: the
    mode's actions · the panel: the mode's tabs (View: the floors, the layers, the furniture) */
 const linkTo = ids => '?room=' + ids.join(',');
 ui.nav = HOME.model.nav(DATA, PART);
@@ -615,11 +620,10 @@ function onMode(m) {
 }
 
 placeSun(); if (!keep) V.setCamera(cameras()[0]);
-markRoom();
 onMode(state.mode);
 window.HOUSE_VIEW = { MODEL, LAID, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, FURNITURE, V, setMode: m => ui.pick(m), setLayer: (k, on) => ui.setLayer(k, on), state, planSvg, book,   // for the automated tests
   get hidden() { return [...HIDDEN]; }, pieces: PIECES.length, edges: V.EDGE_GROUPS.length, show };
-return { click, frame: frameStep, key, markRoom, P: {
+return { click, frame: frameStep, key, active, P: {
   onMode, apply,
   /* the layers in blocks: where (the floors and the roof; the whole house only), what (the elements), the furniture of a
      room; a solid shows when all its layers are on */
@@ -628,19 +632,16 @@ return { click, frame: frameStep, key, markRoom, P: {
     return [{ name: 'Floors', id: 'floors', tab: 'view', items: WHOLE ? list(VIEW.floors) : [] }, { name: 'Layers', id: 'layers', tab: 'view', items: list(VIEW.elements) },
       { name: 'Furniture', id: 'furniture', tab: 'view', items: list(Object.keys(ROOM_LAYERS)) }];
   },
-  /* the room picked on the open floor, over the view */
-  roomTag() {
-    const r = ROOM[state.room], F = openFloor();
-    return state.mode === '3d' && WHOLE && r && F && r.floor === F ? { name: roomName(r), href: linkTo([r.id]) } : null;
-  },
-  /* Finish: the room picked (a room's own view: that room), its furniture's finish and its floor's layout; null: none picked */
+  /* Finish: the active room, its furniture's finish and its floor's layout; null: not shown here */
   finish() {
     const v = state.layouts;               // read, so the panel follows a change
-    const r = ROOM[WHOLE ? state.room : PART.length === 1 ? PART[0] : state.room];
+    const r = ROOM[activeId()];
     if (!r || !SHOWN_ROOMS.has(r.id)) return null;
     const D = layoutOf(r), A = D && LAID[D.key], f = FURNITURE.find(f => f.room === r);
     return { room: r.id, layout: A ? layoutPanel(A, v[D.key]) : null, furniture: f ? finishPanel(f) : null, ownTiles: !!(f && f.prepared.scene.tiles) };
   },
+  /* something to finish in the active room: its furniture or its floor's tiles */
+  finishable() { const x = this.finish(); return !!(x && (x.layout || x.furniture || x.ownTiles)); },
   /* a change of a room's finish: field metal, board (from: the data's board) or reset; the room is prepared and the view built again */
   setFinish(id, field, from, value) {
     const data = FURNITURE.find(f => f.room.id === id).data, own = FINISH[id] || (FINISH[id] = {});
@@ -662,9 +663,9 @@ return { click, frame: frameStep, key, markRoom, P: {
   },
   /* below: the mode's actions */
   menus() {
-    const walk = { name: 'Walk', cls: 'walk', pressed: ui.walking, go: () => (V.walk.on ? V.stopWalk() : V.startWalk()) };
+    const walk = WHOLE ? [{ name: 'Walk', cls: 'walk', pressed: ui.walking, go: () => (V.walk.on ? V.stopWalk() : V.startWalk()) }] : [];   // a walk: the whole house only
     const go = c => ({ name: c.name, go: () => { V.stopWalk(); V.flyTo(c); } });
-    return { '3d': [[walk, HOME.ui.openAll(ui, V)], cameras().map(go)], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx'),
+    return { '3d': [walk.concat(HOME.ui.openAll(ui, V)), cameras().map(go)], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx'),
       WHOLE ? [] : FURNITURE.map(f => ({ name: 'Edit the cabinets', go: () => { location.href = '../room/cabinets.html?room=' + f.room.id; } }))] };
   }
 } };

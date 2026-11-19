@@ -24,7 +24,7 @@ HOME.data({
    "offset": [14000, 15000, -800],
    "size": [15200, 9100, 10320],
    "settings": {
-    "tiles": {"reserve": 0.1, "grout": 1, "top": 3, "depth": 12, "mark": 5, "layers": ["tiles"], "small": "cuts"},
+    "tiles": {"reserve": 0.1, "grout": 1, "top": 3, "depth": 12, "layers": ["tiles"], "small": "cuts"},
     "view": {
      "layers": {
       "ground": {"name": "Ground floor"},

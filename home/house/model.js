@@ -486,12 +486,15 @@ return { T, HOUSE, SITE, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOf,
 
 /* the top-left menu of every page of the house: the house, its floors and in each its rooms (the nodes with an area, as
    build() finds them); part: the ids of the rooms the page shows (none: the whole house) */
-function nav(ROOT, part = []) {
+/* the menu: House (the whole house) or Room (cut to the active room), and the floors with their rooms: a room picked is the
+   active one; in the whole house (#room=) the view stays, in a room's view it is that room's */
+function nav(ROOT, part = [], active = part[0]) {
   const HOUSE = ROOT.children.find(n => n.type === 'house'), page = '../house/index.html';
   const floors = HOUSE.children.filter(n => n.type === 'floor'), rooms = F => F.children.filter(n => n.area);
-  return { links: [{ name: 'House', href: page, on: !part.length }],
-    groups: floors.map(F => ({ name: F.name, on: part.length > 0 && part.every(id => rooms(F).some(r => r.id === id)),
-      items: rooms(F).map(r => ({ name: `${r.number}. ${r.name}`, href: page + '?room=' + r.id, on: part.length === 1 && part[0] === r.id })) })) };
+  const first = active || floors.flatMap(rooms)[0].id;
+  return { links: [{ name: 'House', href: page, on: !part.length }, { name: 'Room', href: page + '?room=' + first, on: part.length > 0 }],
+    groups: floors.map(F => ({ name: F.name, on: rooms(F).some(r => r.id === active),
+      items: rooms(F).map(r => ({ name: `${r.number}. ${r.name}`, href: page + (part.length ? '?room=' : '#room=') + r.id, on: r.id === active })) })) };
 }
 
 HOME.model = { build, nav };

@@ -209,7 +209,7 @@ function roomTiles(scene, room, library, cell, finish, draw = true) {
       if (!draw) continue;
       /* a tile goes with what it lies on: a wall's with the blocks, a casing's with the casing (like a facade with its EPS) */
       const on = S.id[0] === 'b' ? 'builtIns' : wall ? 'walls' : null;
-      const c0 = on ? Object.assign({}, cell, { layers: cell.layers.concat(on) }) : cell;
+      const c0 = on ? Object.assign({}, cell, { layers: cell.layers.concat(on) }, wall ? { face: S.n } : {}) : cell;   // face: a wall's tiles, its normal (the page hides them with their wall)
       const made = HOME.tiles.corePieces(lay, P, T, pieces, grout, at, S.n, c0, finish);
       out.pieces.push(...made.pieces); Object.assign(out.materials, made.materials);
       /* a wall's tiles are a slab against the wall: its edges from the wall to the face, round it and round its holes */
@@ -382,12 +382,12 @@ function build(V, prepared, opts = {}) {
   }
   if (Lt) {
     for (const d of Lt.downlights.filter(d => d.at)) {    // in the room's axes
-      const a = at('room', 'ceiling', null, opts.ceilingLayers || []); a.layers = a.layers.filter(k => k !== 'groom');
+      const a = at('room', 'ceiling', null, ['lamps'].concat(opts.ceilingLayers || [])); a.layers = a.layers.filter(k => k !== 'groom');
       HOME.draw.downlight(D, { a, r: 'room', x: d.at[0], y: d.at[1], ceiling: CEILING });
     }
     for (const d of Lt.downlights.filter(d => !d.at)) {
       const g = String(d.group), x = d.between ? d.between.reduce((s, k) => s + drawn.axes[k], 0) / d.between.length : d.x, y = model.groups[g].wall + d.y;
-      const a = at(g, 'ceiling', null, opts.ceilingLayers || []); a.layers = a.layers.filter(k => k !== 'g' + g);
+      const a = at(g, 'ceiling', null, ['lamps'].concat(opts.ceilingLayers || [])); a.layers = a.layers.filter(k => k !== 'g' + g);
       HOME.draw.downlight(D, { a, r: g, x, y, ceiling: CEILING });
     }
   }
@@ -428,11 +428,18 @@ function build(V, prepared, opts = {}) {
   }
   for (const d of DETAILS) d.mesh.userData.owner = null;
 
-  const night = on => {
+  /* the lamps light by night while their layer is on */
+  let dark = false, lit = true;
+  const light = () => {
+    const on = dark && lit;
     for (const { light, shadow } of LAMPS) { light.visible = on; light.castShadow = on && shadow; }
     for (const k of ['bulb', 'led']) { const mt = V.material(k); mt.emissive.set(on ? 0xfff0dc : 0x000000); mt.emissiveIntensity = on ? 2 : 1; }
   };
-  const showDetails = shown => { for (const d of DETAILS) d.mesh.visible = shown(d.layers); };
+  const night = on => { dark = on; light(); };
+  const showDetails = shown => {
+    for (const d of DETAILS) d.mesh.visible = shown(d.layers);
+    if (lit !== shown(['lamps'].concat(EXTRA))) { lit = !lit; light(); }
+  };
   const made = { STATIC, MOVERS, DETAILS, ENVELOPES, LAMPS, UNDRAWN, tiles, carcasses: drawn.carcasses, night, showDetails,
     cells: () => STATIC.concat(...MOVERS.map(m => m.cells)) };
   /* the 2D plan of the furniture, as a room's plan shows it (about 1:50): not cut, seen from above. A carcass is one
@@ -497,7 +504,8 @@ function layers(prepared) {
     sink: roles.has('sink'), trap: roles.has('trap'), hob: roles.has('hob'), hood: roles.has('hood'), oven: roles.has('oven'), microwave: roles.has('microwave'),
     coffee: roles.has('coffee'), fridge: roles.has('fridgeFreezer'), dishwasher: roles.has('dishwasher'), basin: roles.has('basin'), plasterboard: M.plaster.length,
     sanitary: (prepared.FIXTURES || []).length, builtIns: (prepared.scene.builtIns || []).length,
-    installations: (prepared.FIXTURES || []).some(x => (x.A.shape || []).some(p => p.l === 'installations'))
+    installations: (prepared.FIXTURES || []).some(x => (x.A.shape || []).some(p => p.l === 'installations')),
+    lamps: !!(prepared.scene.lights && (prepared.scene.lights.pendants || (prepared.scene.lights.downlights || []).length))
   };
   const L = Object.fromEntries(Object.keys(M.groups).map(r => ['g' + r, { name: 'G' + r + ' · ' + M.groups[r].name }]));
   const all = {
@@ -508,7 +516,8 @@ function layers(prepared) {
     appliances: { name: 'Appliances', layers: { sink: { name: 'Sink, tap' }, trap: { name: 'Trap' }, hob: { name: 'Hob' }, hood: { name: 'Hood' }, oven: { name: 'Oven' },
       microwave: { name: 'Microwave' }, coffee: { name: 'Coffee machine' }, fridge: { name: 'Fridge' }, dishwasher: { name: 'Dishwasher' }, basin: { name: 'Basin, tap' } } },
     plasterboard: { name: 'Plasterboard casing' },
-    sanitary: { name: 'Sanitary and fittings' }, builtIns: { name: 'Built in (casings, their tiles)' }, installations: { name: 'Installations (riser, WC frame)' }
+    sanitary: { name: 'Sanitary and fittings' }, builtIns: { name: 'Built in (casings, their tiles)' }, installations: { name: 'Installations (riser, WC frame)' },
+    lamps: { name: 'Lights (lamps and their light)' }
   };
   for (const [k, v] of Object.entries(all)) {
     if (v.layers) { for (const c of Object.keys(v.layers)) if (!has[c]) delete v.layers[c]; if (Object.keys(v.layers).length) L[k] = v; }

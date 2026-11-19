@@ -161,3 +161,5 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 - The house from the garden: the same picture pixel for pixel as before the lights' change.
 - Floor tiles: the kitchen and the bathrooms drawn with the slab, its edges at the cut floor.
 - Regressions: the models of the kitchen, the wardrobes and bedroom 6 the same; the house the same; the kitchen's cells and faces the same; t_tiles clean; tsc clean; the cabinet editor and the core's test page as before.
+- Bathroom 7 from Overview: the near walls hidden with their tiles, no edges left; Lights off: the kitchen's 12 lamp details hidden, on: shown.
+- One page, no loading: the house (the kitchen active) → 7. Bathroom picked (the house stays, the panel: Bathroom 7, its 16 furniture layers) → Room (bathroom 7 cut, its cameras, no Walk) → 5. Bathroom picked (its view) → House (Walk back, bathroom 5 still active) → the garage (Finish greyed). Every view's checks pass, no errors.
