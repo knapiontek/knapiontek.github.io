@@ -13,6 +13,7 @@ The room engine: it makes a room from what the house gives it (the room's node: 
 | `<kind>_<number>.cabinets.js` | a room's cabinets (format cabinets) |
 | `<kind>_<number>.scene.js` | where a room's groups stand and how it is fitted and lit (format scene) |
 | tiles.js | the floor tiles of a layout (house/project.md): its rooms and zones, the tiles laid from the grid's origin, the count (whole, cut, small cuts), the origin with the fewest small cuts, the faces to draw (a tile's image and turn, a plank's crop of the photo). No browser |
+| cabinets.md, tiles.md, products.md | how cabinets are made, tiles laid, products fitted: for the builder, in words (no code, no numbers); with cabinets.js, tiles.js, library/draw.js |
 | docs.js | a furnished room's Documents: the estimate, the cut list, the notes, the assembly cards, from the cabinets' model, the room's tree and its docs file; their check. No browser but the cards |
 | `<kind>_<number>.docs.js` | what a room's Documents say (format docs) |
 

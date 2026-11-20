@@ -335,3 +335,10 @@ The owner's decisions: the design is where every object stands (bought, cut, or 
 - The panel: View and Finish in 3D only; 2D, Documents and Cabinets have none. The heading is what is shown: the house (its 3D with the active room under it), or the room (a room's view, Cabinets).
 - Fixed (20 Nov): Documents kept the first view's sheets after a change of view (the house's sheets in a room's view: no Estimate, no Cut list); each view now makes its own.
 - Undone (20 Nov): I had put the editor's page logic at the end of room/cabinets.js, a liberty against the plan (the engine knows no page). It is now in index.js (THE CABINET EDITOR); room/cabinets.js is again byte for byte the engine it was.
+
+## Review: plan, builder's notes, prices, layers (20 Nov)
+
+- plan.md: the items done ticked (22); products.js named library/draw.js where it moved.
+- Builder's notes, in words, next to the engine: room/cabinets.md (the rules the cabinets are cut by: carcasses, fronts, drawers, the kitchen's, the wardrobes', the vanities'; the tags open, basin, banded), room/tiles.md (the walls' and floors' tiles: 12 mm, grout 1, the cut edges, per m²), room/products.md (the library: keys, units, prices, families and variants for the Finish).
+- Prices that were "to check", now example prices with their source and "approx." where estimated (Nov 2026): the EPDM gaskets (a 5 m roll), the white HDF 3 and white melamine 16 sheets, the black Mexen Hades 1200 × 400, the levelling feet, the PVC plinth 50, the wall cabinet 400, the white and the decors' 2 × 22 PUR bandings, the push-to-open runners 250, 350, 750. To confirm in the shop (the note says so): the runners (push-to-open models), the 150-deep wall cabinet, the bandings at M-HM. Still to choose: the colour of bathroom 5's radiator (chrome or inox).
+- House: a furniture layer switched in the whole house switches that kind in every room (the owner's decision), noted in house/project.md.

@@ -20,12 +20,11 @@ house/        home: the page, the house's model and its data; chooses a part of 
 room/         the room engine: makes a room from what it is given (the room from the house, the house's settings,
   │           the room's files); builds the cabinets, takes products from the library and places them where the scene says
   ├─ cabinets.js        cabinets: carcasses built from the fronts, drawers, shelves, plinths, worktops, panels
-  ├─ products.js        the library's products in a room: appliances, sink, taps, shower, mirror, lamps
   ├─ tiles.js           wall and floor tiles
   ├─ room.js            puts the cabinets, products and tiles together into one room
   ├─ docs.js            turns a room's .docs.js into the Documents (see below)
   ├─ cabinets.md        how cabinets are built for real, for the builder   (with cabinets.js)
-  ├─ products.md        how products are fitted: mirror, basin, sink, appliances, lamps, taps   (with products.js)
+  ├─ products.md        how products are fitted: mirror, basin, sink, appliances, lamps, taps   (with library/draw.js)
   ├─ tiles.md           how tiles are laid   (with tiles.js)
   │
   ├─ kitchen_6.cabinets.js   the rooms' data: JSON wrapped in .js, one room = three files
@@ -45,7 +44,7 @@ core/, library/   drawing, geometry, the 2D plan, sheets, the look of the pages,
 | File | Answers | Holds | Written by | Read by |
 |---|---|---|---|---|
 | `.cabinets.js` | what the furniture is | groups, columns, cabinets; their settings (carcass depth, plinth setback, worktop overhang); the choices (hinge, runners, board); the designer's notes | the designer (the editor) | cabinets.js |
-| `.scene.js` | where everything stands in the room | where each group of furniture stands (its offset in the room); products and lamps (which from the library, where); tiles (which, where); cameras; the settings of the layout (hood height, pendant height, tap position); the design checks (distances that must hold, by ids) | the LLM, agreed with the owner | room.js, products.js, tiles.js |
+| `.scene.js` | where everything stands in the room | where each group of furniture stands (its offset in the room); products and lamps (which from the library, where); tiles (which, where); cameras; the settings of the layout (hood height, pendant height, tap position); the design checks (distances that must hold, by ids) | the LLM, agreed with the owner | room.js, library/draw.js, tiles.js |
 | `.docs.js` | what to buy and how to build | the estimate's items (what, how many, where, remarks), the layout of the cutting list and the assembly cards | the LLM, every time for the case at hand | docs.js |
 
 The furniture file does not know in which room or at which wall the furniture stands; the scene file does not know what it is built from. Together they make one tree: the scene holds the room's own nodes (the groups' offsets in the room, by the groups' ids; the products; the tiled surfaces), the furniture file each group's branch (cabinets, parts) with offsets inside the group. A scene node may hang under a node of the furniture file by its id (the sink under its cabinet). From the prototype: a group's distance from the wall (in kitchen.dat.js today) becomes the group's offset in the scene; the hardware's sizes "for the drawing" (handles, legs, runners, in scene.dat.js today) are the maker's data and go to the library.
@@ -71,7 +70,7 @@ house
 
 ### Pages and modules
 
-- **Modules** (cabinets.js, products.js, tiles.js, docs.js, the house's model) never load anything themselves: they are given their data as arguments. That keeps the dependencies going down only.
+- **Modules** (cabinets.js, library/draw.js, tiles.js, docs.js, the house's model) never load anything themselves: they are given their data as arguments. That keeps the dependencies going down only.
 - **The page** is the host: index.html with index.js (the application) loads the data files and passes them to the modules.
 - **The cabinet editor:** the mode Cabinets edits the active room's `room/<room>.cabinets.js` with the library, both loaded by the application; it hands them to cabinets.js.
 - **One loader for all data, in core.** Code is loaded by the pages statically (each page lists its modules); nothing loads code by name, so no reflection is needed. Data is loaded dynamically, always by a key, by one rule "key → file", in one place in core used by every page:
@@ -96,7 +95,7 @@ house
 ### The tree: elements, settings, identifiers
 
 - **One tree, one kind of node.** Every node: `id`, `name`, `type`, `offset`, `size`, `settings`, `children`. A room has many branches: furniture groups, products, tiled surfaces, where the sink hangs …; together they are a small database kept as a tree.
-- **Two trees that do not clash: where a thing is, and what it is.** The tree of nodes says where each thing is, from the general to the particular (house → room → group → cabinet → part; a room → its shower, mirror, lamps, tiled surfaces): these are the things themselves, each with its place and its settings. The types say what a thing is, from the particular to the general, like a variable's type: this cabinet → type `cabinet` → the module cabinets.js → the project; this shower → type `shower` → products.js. They meet in one field: every node's `type`. room.js walks the tree of nodes and hands each node to the module its type belongs to, by a fixed list "type → module" (nothing is loaded by name); each module's project.md lists the types it knows. Settings hang in the tree of nodes but may speak of types: `cabinet: shaker` set on a room means every node of type `cabinet` in that room has shaker fronts.
+- **Two trees that do not clash: where a thing is, and what it is.** The tree of nodes says where each thing is, from the general to the particular (house → room → group → cabinet → part; a room → its shower, mirror, lamps, tiled surfaces): these are the things themselves, each with its place and its settings. The types say what a thing is, from the particular to the general, like a variable's type: this cabinet → type `cabinet` → the module cabinets.js → the project; this shower → type `shower` → library/draw.js. They meet in one field: every node's `type`. room.js walks the tree of nodes and hands each node to the module its type belongs to, by a fixed list "type → module" (nothing is loaded by name); each module's project.md lists the types it knows. Settings hang in the tree of nodes but may speak of types: `cabinet: shaker` set on a room means every node of type `cabinet` in that room has shaker fronts.
 - **Folders hold the "what", the data holds the "where", the file name joins them.**
 
   | | Holds | Example |
@@ -134,7 +133,7 @@ house
 
   The library speaks only of the outside world (what exists and what the maker states), never of our decisions. Our settings are one cascade along the tree (above); the maker's data is not part of it. Home passes the house's settings down with the room.
 - **Options where the owner still chooses.** Not every value is decided: where the owner picks among options (the floor tiles, the decor, the handles' metal), the data lists the options and the default in the node they belong to. The choice made on the page is kept in the browser; the drawing and the Documents follow the choice.
-- **Settings are values already decided (or an option with its default); rules are how the engine turns the design into concrete values** (pieces, sizes, holes). The rules are in the code of the modules and, in words for the builder, in an MD file named after its module: cabinets.md with cabinets.js, products.md with products.js, tiles.md with tiles.js. There is no common rules.md: building a cabinet and hanging a mirror are different crafts. A file that grows too big is split further the same way (e.g. mirrors.md). The numbers the rules use are in the settings or in the library.
+- **Settings are values already decided (or an option with its default); rules are how the engine turns the design into concrete values** (pieces, sizes, holes). The rules are in the code of the modules and, in words for the builder, in an MD file named after its module: cabinets.md with cabinets.js, products.md with library/draw.js, tiles.md with tiles.js. There is no common rules.md: building a cabinet and hanging a mirror are different crafts. A file that grows too big is split further the same way (e.g. mirrors.md). The numbers the rules use are in the settings or in the library.
 - **Who changes a room's files:** the furniture file is the owner's (the editor), the scene is written by the LLM with the owner's agreement, the docs by the LLM; a room's settings and choices (which hinge, which runners, which board) are the designer's decisions: the LLM does not change them without asking. Changes to the house's settings and to the library are agreed too, because they act on every room.
 - **The designer's notes** in the furniture file are written by a person only. The LLM does not change them, does not add to them and takes nothing from them that the code computes; the Documents show them as they are. When something in them is unclear or bears on the design, the LLM asks. Constraints the engine must know (e.g. no carcass by the recuperator's ducts in wardrobe 8) are in the data as geometry, not in the notes.
 - **The Documents are written by the LLM, not by the code alone.** A room's `.docs.js` is written every time for the case at hand, because buying needs judgement (packs, substitutes, shops, leftover boards). Against drifting from the design:
@@ -152,9 +151,9 @@ house
 - **New in cabinets: carcasses without fronts.** A carcass is a stack of parts in one column, each with its type and height (as in the prototype's kitchen). The new type `open`: an open part with shelves on the shared grid of heights (its pitch a setting, so neighbouring carcasses share it), no front, no hinges. The prototype's tag `doorDrawers` (board drawers on ball runners behind a door) becomes `boardDrawers`, allowed on `cabinet` and on `open`: the same drawers once in the code; cabinets.js tells the two apart by the type: on a `cabinet` a spacer strip on the hinges' side lets the drawers pass the hinges and the open door; on an `open` there is no door and no spacer. An open part with shelves only is `open`; an open part with drawers is `open` with `boardDrawers`.
 - **The designer sets every size.** The engine never cuts or splits a carcass: what the designer writes is what it builds. The largest carcass one can build is a rule for the designer in cabinets.md, not a job of the engine.
 - **Materials in the settings: each kind of part names its material.** The furniture file's settings say which product of the library each kind of part is made of (fronts, carcasses, back panels, worktop …), usually once for the whole room; by the cascade a group or one cabinet could override it, but normally need not. The kitchen's fronts: the English Navy shaker panel; bedroom_6's fronts: the same grey 18 mm chipboard as the carcasses, edged on all 4 sides: no new product. (The prototype did it the other way round, each material listing the parts made of it; this is the change its To do asked for.) How a front looks follows from its product, the maker's data: a shaker panel is a front with a frame (its frame width, `shakerRail: 50` in the prototype's kitchen settings, moves to that product); a plain board used as a front is a flat front edged all round. cabinets.js draws a front as its product says; there is no setting "kind of front".
-- **Products and lamps:** what it is (sizes, look, light, price) the library says; where it stands the room's scene file says; how to draw and count it products.js does.
+- **Products and lamps:** what it is (sizes, look, light, price) the library says; where it stands the room's scene file says; how to draw it library/draw.js does (it took the place of the planned products.js).
 - **The room from the house** (walls, floor, ceiling, slope, windows, doors) is one described structure that home passes down with the house's settings, in the room's own coordinates (its origin as above). No plug-in interfaces, no registration.
-- **Every module has a contract,** written in the project.md of its folder before its code: what it is given and what it gives back. E.g. cabinets.js gets the furniture branch of the tree (with its settings) and gives the solids to draw, the boards to cut and the counts (hinges, runners); products.js gets the products branch and the library and gives solids and counts; docs.js gets a room's .docs.js and the modules' counts and gives the sheets. A module reaches into no other module's inside, only its contract.
+- **Every module has a contract,** written in the project.md of its folder before its code: what it is given and what it gives back. E.g. cabinets.js gets the furniture branch of the tree (with its settings) and gives the solids to draw, the boards to cut and the counts (hinges, runners); library/draw.js gets the products branch and the library and gives solids and counts; docs.js gets a room's .docs.js and the modules' counts and gives the sheets. A module reaches into no other module's inside, only its contract.
 - **One place for everything:** moving doors and drawers, hiding the walls in front of the camera, the 2D plan, the tiles (of the house and of the rooms), the Documents' sheets. The prototype had them in several copies.
 - **Built once, then only looked at.** The model is built once, when the page opens; then only the view changes: turning, zooming and walking move the camera; switching a layer shows or hides objects already built; nothing is rebuilt. Core joins the still solids of one material into one drawn object; the moving ones (doors, drawers) stay apart, built once too, and an animation only moves or turns them on the screen. A door's swing is drawing, not data: in the data a door has no rotation, only its hinge on one side of its box.
 - **Nothing made up in the code:** every number, colour and name of the project is in the data, in the settings or in the library.
@@ -180,42 +179,42 @@ Every step takes from the prototype what worked and compares the result with the
 
 ### Step 0: the structure and the descriptions
 
-- [ ] The whole folder structure of the new `home/`.
-- [ ] A project.md in every folder: every file's name, what it does, what it depends on, the module's contract (what it gets and gives); the formats of the data files with every field.
-- [ ] The root project.md: folders, dependencies, file names, the coordinates and the tree, how we work.
+- [x] The whole folder structure of the new `home/`.
+- [x] A project.md in every folder: every file's name, what it does, what it depends on, the module's contract (what it gets and gives); the formats of the data files with every field.
+- [x] The root project.md: folders, dependencies, file names, the coordinates and the tree, how we work.
 
 Done when: the owner has read and approved the structure and every project.md. No code before that, so that no code is written that will not be accepted.
 
 ### Step 1: the foundation
 
-- [ ] core/: the data loader (key → file, format and version checked), the 3D view, the solids' geometry, the meshes, the 2D plan, the sheets with XLSX export, the look of the pages (from the prototype, without copies or anything of one project); core/tree.js (new).
-- [ ] library/: products, materials and textures as data (from the prototype, tidied: every material and look once; the maker's data the prototype kept in the projects goes to the products, e.g. the shaker panel's frame width).
-- [ ] test.md: how each step is checked against the prototype.
+- [x] core/: the data loader (key → file, format and version checked), the 3D view, the solids' geometry, the meshes, the 2D plan, the sheets with XLSX export, the look of the pages (from the prototype, without copies or anything of one project); core/tree.js (new).
+- [x] library/: products, materials and textures as data (from the prototype, tidied: every material and look once; the maker's data the prototype kept in the projects goes to the products, e.g. the shaker panel's frame width).
+- [x] test.md: how each step is checked against the prototype.
 
 Done when: an empty page with the modes draws a test tree of solids (offsets summed, settings cascaded), and a sheet exports to XLSX.
 
 ### Step 2: the house
 
-- [ ] house/: the house's data house.js (from the prototype) with the list of rooms (hall_3, living_5 and kitchen_6 as three rooms; the LLM draws the borders on the plan, kitchen_6 with the dining area, and the owner corrects them), the house's model, the home page house/index.html with the whole house: 3D, 2D, Documents (doors), Test; the house's tiles come with tiles.js in step 3.
-- [ ] The house's settings at the top of house.js (from the prototype: the kitchen's settings split into the three kinds; those shared by every room go here).
-- [ ] Choosing a part of the house: `?room=…` draws only the chosen rooms; the wall and the ceiling in front of the camera hide.
-- [ ] The room's data for room/: one described structure (walls, floor, ceiling, slope, windows, doors), passed with the house's settings.
+- [x] house/: the house's data house.js (from the prototype) with the list of rooms (hall_3, living_5 and kitchen_6 as three rooms; the LLM draws the borders on the plan, kitchen_6 with the dining area, and the owner corrects them), the house's model, the home page house/index.html with the whole house: 3D, 2D, Documents (doors), Test; the house's tiles come with tiles.js in step 3.
+- [x] The house's settings at the top of house.js (from the prototype: the kitchen's settings split into the three kinds; those shared by every room go here).
+- [x] Choosing a part of the house: `?room=…` draws only the chosen rooms; the wall and the ceiling in front of the camera hide.
+- [x] The room's data for room/: one described structure (walls, floor, ceiling, slope, windows, doors), passed with the house's settings.
 
 Done when: the house looks and counts as in the prototype (but for its tiles), and `?room=` shows an empty room.
 
 ### Step 3: the room engine
 
-- [ ] room/room.js: takes the room and the settings from home, and the room's files; puts the room together.
-- [ ] tiles.js and tiles.md: the room's tiles (and the house's, by one mechanism).
-- [ ] products.js and products.md: products and lamps from the library, placed by the room's scene file.
+- [x] room/room.js: takes the room and the settings from home, and the room's files; puts the room together.
+- [x] tiles.js and tiles.md: the room's tiles (and the house's, by one mechanism).
+- [x] products.md, and the products' drawing: products and lamps from the library, placed by the room's scene file (drawn by library/draw.js, which took the place of the planned room/products.js).
 
 Done when: the house's tiles are as in the prototype, and the prototype's bathroom (tiles, WC, basin, shower, mirror, lamps) stands in home, only still without its cabinet.
 
 ### Step 4: cabinets
 
-- [ ] cabinets.js: the kitchen and the wardrobes from the start (all of the assumptions above), with the type `open`, the tag `boardDrawers` (with its spacer behind a door) and fronts drawn as their product says (shaker or plain).
-- [ ] room/cabinets.md: how cabinets are made (from the prototype, in words, no numbers).
-- [ ] The bathroom's vanity as an ordinary cabinet from the data.
+- [x] cabinets.js: the kitchen and the wardrobes from the start (all of the assumptions above), with the type `open`, the tag `boardDrawers` (with its spacer behind a door) and fronts drawn as their product says (shaker or plain).
+- [x] room/cabinets.md: how cabinets are made (from the prototype, in words, no numbers).
+- [x] The bathroom's vanity as an ordinary cabinet from the data.
 
 Done when: the kitchen's cabinets have the same boards and sizes as in the prototype, and the wardrobes look as in the prototype.
 
@@ -228,17 +227,17 @@ Moving the prototype's rooms into the new format is done once, by the LLM, from 
 
 After the move the furniture files are the owner's: changed in the editor (step 6) and exported by the owner.
 
-- [ ] kitchen_6: the prototype's kitchen in the new format: furniture (.cabinets.js) and scene (.scene.js), every value by its kind.
-- [ ] bathroom_7, bathroom_5: both bathrooms.
-- [ ] wardrobe_3, wardrobe_4, wardrobe_8, bedroom_6: the wardrobes and the bedroom's niche.
+- [x] kitchen_6: the prototype's kitchen in the new format: furniture (.cabinets.js) and scene (.scene.js), every value by its kind.
+- [x] bathroom_7, bathroom_5: both bathrooms.
+- [x] wardrobe_3, wardrobe_4, wardrobe_8, bedroom_6: the wardrobes and the bedroom's niche.
 
 Done when: the whole house with all its rooms in home, Test without errors.
 
 ### Step 6: the Documents and the editor
 
-- [ ] docs.js: makes the Documents' sheets (estimate, cutting list, the designer's notes, assembly cards) from the .docs.js of the chosen part of the house, with the library's prices and XLSX export.
-- [ ] The rooms' .docs.js: written by the LLM for every room (from the prototype: the kitchen's estimate.dat.js as the starting point), with references to the model where a quantity follows from it.
-- [ ] Test: every .docs.js against the model.
+- [x] docs.js: makes the Documents' sheets (estimate, cutting list, the designer's notes, assembly cards) from the .docs.js of the chosen part of the house, with the library's prices and XLSX export.
+- [x] The rooms' .docs.js: written by the LLM for every room (from the prototype: the kitchen's estimate.dat.js as the starting point), with references to the model where a quantity follows from it.
+- [x] Test: every .docs.js against the model.
 - [x] the cabinet editor: the application's mode Cabinets (index.html, index.js), for the active room.
 
 Done when: the kitchen's Documents agree with the prototype's Info, and the editor saves data that home draws unchanged.

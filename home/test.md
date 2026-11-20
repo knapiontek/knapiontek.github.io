@@ -167,3 +167,10 @@ room/cabinets.html?room=kitchen_6 in the browser: no error, no problem in the da
 - The application from home/index.html: the house and every furnished room load with no error, their checks pass; Cabinets: Export the same byte for byte for the seven rooms. The heading: the house (3D: "The active room: …"; 2D, Documents: the house's source), Cabinets and a room's view: the room; tabs View/Finish in 3D only; the page loaded once. The kitchen's cells and faces the same as the prototype's.
 - Documents after switching on one page: the house (Rooms, Floor tiles, Doors, Notes, Elements, Test) → Room, bathroom 7 (Estimate, Cut list, Assembly, Notes, Elements, Test) → the kitchen (its own) → House (the house's again).
 - The editor in index.js: every view loads, Export the same byte for byte for the seven rooms, Show in 3D (bathroom 7: 600,600 -> 500,600), Documents per view; room/cabinets.js the same as before (sync57) byte for byte; the models the same.
+
+## Prices, notes (20 Nov)
+
+- The product files parse; every shop they name is in library/shops.js; no "to check" left in the library.
+- Every room's checks pass (kitchen 6, bathrooms 5 and 7, wardrobes 3, 4, 8, bedroom 6, the hall); the Estimates: only bathroom 5's radiator colour "to choose" left.
+- Cabinets: Export the same byte for byte for the seven rooms; tsc clean.
+- The notes checked against the data: the tags named are the engine's (open, basin, banded); tiles priced per m².
