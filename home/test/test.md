@@ -1,6 +1,19 @@
 # Tests
 
-The LLM's file (kept up to date without asking): how a new session tests the project. The project is described in the project.md files. No test is kept in the repository; the LLM rebuilds its scripts from this file.
+The LLM's file (kept up to date without asking): how the project is tested. The project is described in the project.md files. Everything of the tests is in test/, nothing in the project's folders. Two kinds of test: the clean slate (test/index.html and its tests, in the repository: the owner runs it) and the LLM's own before/after tests (not in the repository: the LLM rebuilds their scripts from this file).
+
+## The clean slate (test/index.html)
+
+The owner opens home/test/index.html from disk: every row must say OK. The LLM runs the same page (Playwright, Chrome, no flags) after every change.
+
+- **What it proves**: a file runs with JavaScript itself and the files it gets, nothing more. Its slate is a worker with every name taken away that is not JavaScript's own: no page, `window`, `document`, `fetch`, `console`, three.js, Alpine, XLSX; no `HOME` but the files it gets. The page refuses a slate that is not empty. What a file needs and was not given is not there: the file fails.
+- **What a file gets**: `GETS` at the top of test/index.html, the only such list. Only the owner changes it.
+- **Its test**: the same path under test/ (test/core/tree.js tests core/tree.js), one function `<name>Test(HOME, data, check)` that calls the file's public API and checks what each part gives; `data(path)`: a data file's content (the house, the library, every room's files); `check(what, ok)`. Its first check is the public API itself (the names the file gives, in order): the test is the API's definition.
+- **Rules**:
+  - A test calls the public API only. HOME is frozen before it runs: a test cannot give a file what GETS does not.
+  - A file tested is one function `<name>Module()` and the line `HOME.<name> = <name>Module();`: the page reads that function's code, so nothing outside it would be tested.
+  - A row that is NOT OK is never made OK by changing the test or GETS without the owner.
+- **Now (20 Nov 2026)**: OK core/geometry, core/tree, core/surface, house/model, room/tiles; NOT OK core/plan2d (`HOME.ui.fmt`), core/estimate (`HOME.sheet`), room/cabinets (`HOME.draw`, in its drawing).
 
 ## The rule
 
@@ -65,8 +78,9 @@ The project's state at the end of the migration (20 Nov 2026) is the reference: 
 10. **Cabinets (the editor)**: pick each of the seven rooms in mode Cabinets: no problem in the data, the drawing filled; Export gives the room's `<id>.cabinets.js` byte for byte. A table edited (bathroom_7: the first column 100 narrower), Show in 3D: its model's group 1 widths 600,600 → 500,600, the mode 3D, the page not reloaded; back to Cabinets: the edits kept; Back to the file: as loaded. A room without a cabinets file (the garage): empty tables, the first furnished room's materials, the panel says so.
 11. **Pictures** when a change touches the look: screenshots from the views' cameras before and after, compared side by side (the house from the garden, the kitchen, both bathrooms, a wardrobe from behind; 2D of both floors).
 12. **tsc** clean.
+13. **test/index.html**: the rows as under "The clean slate".
 
-After a change of types or comments only: 1, 2 and 12 are enough. After a change of data only (prices, products): 5, 6, 7 for the rooms concerned, 10, 12.
+After a change of types or comments only: 1, 2, 12 and 13 are enough. After a change of data only (prices, products): 5, 6, 7 for the rooms concerned, 10, 12.
 
 ## Reference values (20 Nov 2026, checked again in the session of 20 Nov)
 

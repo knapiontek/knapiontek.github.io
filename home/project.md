@@ -13,7 +13,8 @@ The house "Dom w papawerach 5 (G)" (archon.pl), as built, with everything in it:
 | library/ | the outside world: products, shops, materials, textures (data); how a product is drawn (draw.js) |
 | archon/ | archon.pl drawings and their analysis: the source of the house |
 | jsconfig.json, globals.d.ts | the type check (Code style); loaded by no page |
-| test.md | the LLM's test procedure |
+| test/ | the tests, each file's test at its path under test/ (test/test.md) |
+| project.svg | every file and what it needs, data files marked JSON (generated from the code, not drawn) |
 
 ## The application (index.html, index.js)
 
@@ -104,7 +105,7 @@ Each solid is moved to its node: offsets summed up the tree; a group facing anot
 
 - Every MD file: the LLM asks before changing it. We agree; the LLM writes it in the MD; the owner approves; then the work starts.
 - The LLM works on its own copy, compares it with the owner's folder before starting, and writes changed files back. It cannot delete: it gives the `git rm` command.
-- After every change: test.md's tests; every view and mode without errors; Documents, 2D and the look unchanged unless intended. Every difference explained.
+- After every change: test/test.md's tests; every view and mode without errors; Documents, 2D and the look unchanged unless intended. Every difference explained.
 - End of session: what is left goes to To do; what is done is in git.
 
 ## Code style

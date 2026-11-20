@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>home: test</title>
+<style>
+  body { font: 14px/1.45 system-ui, Arial, sans-serif; margin: 24px; color: #1f2523; }
+  table { border-collapse: collapse; } td, th { text-align: left; vertical-align: top; padding: 6px 12px; border-bottom: 1px solid #e3e6e4; }
+  .ok { color: #1d7a3a; font-weight: 700; } .no { color: #b3261e; font-weight: 700; } .wait { color: #8a8d88; }
+  code { font-size: 12px; background: #f4f5f4; padding: 1px 4px; } li { margin: 2px 0; }
+</style>
+</head>
+<body>
+<h1>Clean slate</h1>
+<p>Each file runs alone, on an empty slate: JavaScript itself and the files it gets, nothing more (no page, no browser,
+  no library). Its test (<code>test/&lt;file&gt;</code>: the same path under test/) calls its public API on that slate. test/test.md says more.</p>
+<table><thead><tr><th>File</th><th>Gets</th><th>Result</th></tr></thead><tbody id="results"></tbody></table>
+
+<script>
+/* what each file gets: the files run before it on its slate */
+const GETS = {
+  'core/geometry.js': [],
+  'core/tree.js': [],
+  'core/surface.js': ['core/geometry.js'],
+  'core/plan2d.js': ['core/geometry.js'],
+  'core/estimate.js': [],
+  'house/model.js': ['core/geometry.js', 'core/tree.js'],
+  'room/tiles.js': ['core/geometry.js'],
+  'room/cabinets.js': []
+};
+
+/* a file's name on the slate: room/cabinets.js -> HOME.cabinets, made by cabinetsModule(), tested by cabinetsTest() */
+const nameOf = file => file.split('/').pop().replace('.js', '');
+
+/* a script, run in this page: a path of the project (core/tree.js) is one folder up, a test (test/core/tree.js) here;
+   HOME.data hands a data file's content in */
+window.HOME = {};
+const script = file => new Promise((done, fail) => {
+  const s = document.createElement('script');
+  s.src = file.startsWith('test/') ? file.slice(5) : '../' + file; s.onload = done; s.onerror = () => fail(new Error('cannot load ' + file));
+  document.head.appendChild(s);
+});
+const DATA = {};
+async function read(file) { HOME.data = d => { DATA[file] = d; }; await script(file); }
+
+/* The slate: a worker (no page) with every name taken away that is not JavaScript's own. It gets the files' code and the
+   data, runs the files one by one into HOME, then the test, and sends back what passed and what failed. */
+function slate() {
+  const JAVASCRIPT = new Set(['globalThis', 'Infinity', 'NaN', 'undefined', 'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt',
+    'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'escape', 'unescape', 'AggregateError', 'Array',
+    'ArrayBuffer', 'Atomics', 'BigInt', 'BigInt64Array', 'BigUint64Array', 'Boolean', 'DataView', 'Date', 'Error', 'EvalError',
+    'FinalizationRegistry', 'Float16Array', 'Float32Array', 'Float64Array', 'Function', 'Int8Array', 'Int16Array', 'Int32Array',
+    'Intl', 'Iterator', 'JSON', 'Map', 'Math', 'Number', 'Object', 'Promise', 'Proxy', 'RangeError', 'ReferenceError', 'Reflect',
+    'RegExp', 'Set', 'SharedArrayBuffer', 'String', 'Symbol', 'SyntaxError', 'TypeError', 'Uint8Array', 'Uint8ClampedArray',
+    'Uint16Array', 'Uint32Array', 'URIError', 'WeakMap', 'WeakRef', 'WeakSet']);
+  const send = postMessage.bind(globalThis);
+  onmessage = ({ data: { files, test, data } }) => {
+    for (let o = globalThis; o && o !== Object.prototype; o = Object.getPrototypeOf(o))
+      for (const name of Object.getOwnPropertyNames(o))
+        if (!JAVASCRIPT.has(name)) try { Object.defineProperty(globalThis, name, { value: undefined }); } catch (e) { /* checked below */ }
+    const left = Object.getOwnPropertyNames(globalThis).filter(name => !JAVASCRIPT.has(name) && globalThis[name] !== undefined);
+    if (left.length) return send({ error: 'the slate is not empty: ' + left.join(', ') });
+
+    const HOME = globalThis.HOME = {}, passed = [], failed = [];
+    try {
+      for (const f of files) HOME[f.name] = (0, eval)(`(${f.code})\n//# sourceURL=${f.file}`)();
+      Object.freeze(HOME); Object.values(HOME).forEach(Object.freeze);
+      (0, eval)(`(${test.code})\n//# sourceURL=${test.file}`)(HOME, file => data[file], (what, ok) => (ok ? passed : failed).push(what));
+      send({ passed, failed });
+    } catch (e) { send({ passed, failed, error: String(e), stack: String(e.stack) }); }
+  };
+}
+
+/* the line of the files' code where an error was thrown: the first one of a file in its stack */
+function where(stack, files) {
+  for (const m of stack.matchAll(/([\w\/.-]+\.js):(\d+):\d+/g)) {
+    const f = files.find(f => f.file === m[1]);
+    if (f) return `${f.file}: ${f.code.split('\n')[m[2] - 1].trim()}`;
+  }
+  return '';
+}
+
+/* one file on its slate */
+function run(file) {
+  const files = [...GETS[file], file].map(f => ({ file: f, name: nameOf(f), code: String(window[nameOf(f) + 'Module']) }));
+  const test = { file: 'test/' + file, code: String(window[nameOf(file) + 'Test']) };
+  const worker = new Worker(URL.createObjectURL(new Blob([`(${slate})()`], { type: 'text/javascript' })));
+  return new Promise(done => {
+    worker.onmessage = ({ data: r }) => { worker.terminate(); done(Object.assign(r, { at: r.stack ? where(r.stack, files.concat(test)) : '' })); };
+    worker.postMessage({ files, test, data: DATA });
+  });
+}
+
+(async () => {
+  /* the files and their tests, run in this page only to be read; what they do here does not count */
+  window.onerror = () => true;
+  for (const file of new Set(Object.entries(GETS).flat(2))) await script(file);
+  for (const file of Object.keys(GETS)) await script('test/' + file);
+  window.onerror = null;
+  /* the data the tests read: the house, the library, every room's files */
+  await read('house/house.js'); await read('library/library.js'); await read('library/materials.js');
+  for (const group of DATA['library/library.js'].groups) await read(`library/products/${group}.js`);
+  for (const n of (function all(n) { return [n, ...(n.children || []).flatMap(all)]; })(DATA['house/house.js']))
+    for (const role of n.files || []) await read(`room/${n.id}.${role}.js`);
+
+  const body = document.getElementById('results'), esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  for (const file of Object.keys(GETS)) {
+    const tr = body.insertRow();
+    tr.innerHTML = `<td><code>${file}</code></td><td>${GETS[file].map(f => `<code>${f}</code>`).join(' ') || 'nothing'}</td><td class="wait">running…</td>`;
+    const r = await run(file), ok = !r.error && !r.failed.length;
+    tr.cells[2].className = '';
+    tr.cells[2].innerHTML = `<span class="${ok ? 'ok' : 'no'}">${ok ? 'OK' : 'NOT OK'}</span> · ${(r.passed || []).length} passed`
+      + (r.error ? `<br><b>${esc(r.error)}</b>${r.at ? `<br>at <code>${esc(r.at)}</code>` : ''}` : '')
+      + ((r.failed || []).length ? `<br>failed: <ul>${r.failed.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : '')
+      + `<details><summary>what passed</summary><ul>${(r.passed || []).map(w => `<li>${esc(w)}</li>`).join('')}</ul></details>`;
+  }
+  document.title = 'home: test done';
+})();
+</script>
+</body>
+</html>
