@@ -380,12 +380,11 @@ let SCOPE = [];                            // the rooms the view is cut to; none
 /* the active room: always one (the panel's): the one picked in the menu, kept; at first the first furnished */
 const FIRST = ROOMS.find(r => (r.node.files || []).includes('cabinets')) || ROOMS[0];
 const activeId = () => (ROOM[state.room] ? state.room : FIRST.id);
-/* the panel's heading: what is shown (the house, or the room: in a room's view, in Cabinets); in the house's 3D, the active
-   room under it (its Finish); the menu: House or Room, the active room */
+/* the panel's heading: the active room, whatever is shown; the menu: House or Room, the active room */
 function heading() {
-  const r = ROOM[activeId()], room = SCOPE.length > 0 || state.mode === 'cabinets';
-  ui.title = room ? roomName(r) : HOUSE.name;
-  ui.subtitle = room ? `${HOUSE.name} · ${r.floor.name}` : state.mode === '3d' ? `The active room: ${roomName(r)}` : HOUSE.source;
+  const r = ROOM[activeId()];
+  ui.title = roomName(r);
+  ui.subtitle = r.floor.name;
   document.title = SCOPE.length ? SCOPE.map(id => ROOM[id].node.name).join(', ') : 'Home';
   ui.nav = HOME.model.nav(DATA, SCOPE, r.id);
 }

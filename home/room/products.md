@@ -2,7 +2,7 @@
 
 > **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done.
 
-> For the fitter, in words. No code, no numbers: each product's sizes and its maker's data are in the library (library/products/), where it stands in a room's scene (`<room>.scene.js`), the cut-outs and holes it needs in its cabinet's settings. How a product is drawn is library/draw.js (the plan's products.js).
+> For the fitter, in words. No code, no numbers: each product's sizes and its maker's data are in the library (library/products/), where it stands in a room's scene (`<room>.scene.js`), the cut-outs and holes it needs in its cabinet's settings. How a product is drawn is library/draw.js.
 
 ## 1. A product and its place
 

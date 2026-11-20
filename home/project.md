@@ -15,8 +15,7 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, with everything tha
 | library/ | the outside world, as the shop and the maker give it: products, shops, materials, textures (data); and how each product is drawn (draw.js, code) |
 | jsconfig.json, globals.d.ts | the type check of the code (Code style), for the writer only |
 | archon/ | the archon.pl drawings and their analysis: the source the house is drawn from |
-| test.md | the LLM's own file: how to rebuild its automated tests |
-| report.md | what was done in each step, for the owner |
+| test.md | the LLM's own file: how to set up, run and check its tests in a new session |
 
 room/ is being written room by room (To do), the kitchen first. The application is the root's index.html (its look) and index.js (its logic).
 
@@ -124,7 +123,8 @@ Done: Documents and the editor (the estimate, our own cut list, the assembly car
 - First we agree what to do; it is written in the MD; the owner approves; only then the work starts.
 - The LLM works on its own copy and writes the changed files into the owner's folder. It cannot delete files: for a removed or renamed file it gives the git rm command. Before it starts, it compares its copy with the owner's folder.
 - After every change: every page in every mode without errors, and what should not change compared with before (Documents, the 2D plan, the look). A difference is explained, never left.
-- What is left at the end of a session is in To do; what was done is in report.md.
+- What is left at the end of a session is in To do; what was done is in git's history.
+- After every change: test.md's tests (and its reference values kept up to date).
 
 ## Code style
 
