@@ -489,7 +489,7 @@ return { T, HOUSE, SITE, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOf,
 /* the menu: House (the whole house) or Room (cut to the active room), and the floors with their rooms: a room picked is the
    active one; in the whole house (#room=) the view stays, in a room's view it is that room's */
 function nav(ROOT, part = [], active = part[0]) {
-  const HOUSE = ROOT.children.find(n => n.type === 'house'), page = '../house/index.html';
+  const HOUSE = ROOT.children.find(n => n.type === 'house'), page = 'index.html';   // the main page, in the home folder
   const floors = HOUSE.children.filter(n => n.type === 'floor'), rooms = F => F.children.filter(n => n.area);
   const first = active || floors.flatMap(rooms)[0].id;
   return { links: [{ name: 'House', href: page, on: !part.length }, { name: 'Room', href: page + '?room=' + first, on: part.length > 0 }],

@@ -24,7 +24,6 @@ room/         the room engine: makes a room from what it is given (the room from
   ├─ tiles.js           wall and floor tiles
   ├─ room.js            puts the cabinets, products and tiles together into one room
   ├─ docs.js            turns a room's .docs.js into the Documents (see below)
-  ├─ cabinets.html      the cabinet editor: tables, wall elevations with the cabinets; saves a .cabinets.js
   ├─ cabinets.md        how cabinets are built for real, for the builder   (with cabinets.js)
   ├─ products.md        how products are fitted: mirror, basin, sink, appliances, lamps, taps   (with products.js)
   ├─ tiles.md           how tiles are laid   (with tiles.js)
@@ -73,8 +72,8 @@ house
 ### Pages and modules
 
 - **Modules** (cabinets.js, products.js, tiles.js, docs.js, the house's model) never load anything themselves: they are given their data as arguments. That keeps the dependencies going down only.
-- **Pages** are the hosts: home and cabinets.html load the data files and pass them to the modules. So cabinets.html, though in room/, may load house/house.js: the page does it, not the engine.
-- **The cabinet editor:** `room/cabinets.html?room=kitchen_6` loads `room/kitchen_6.cabinets.js` (the room's cabinets), `house/house.js` (only for the root of the cascade; it also confirms the room is on the house's list) and the library, and hands them to cabinets.js; it needs neither the scene nor the house's model. The same page opens `?room=wardrobe_3` or `?room=bathroom_5`: only the data file changes. It is reached from home (the "Edit cabinets" button of a room) or straight by its address (the LLM can open any room's cabinets that way to look at them).
+- **The page** is the host: index.html with index.js (the application) loads the data files and passes them to the modules.
+- **The cabinet editor:** the mode Cabinets edits the active room's `room/<room>.cabinets.js` with the library, both loaded by the application; it hands them to cabinets.js.
 - **One loader for all data, in core.** Code is loaded by the pages statically (each page lists its modules); nothing loads code by name, so no reflection is needed. Data is loaded dynamically, always by a key, by one rule "key → file", in one place in core used by every page:
   - a room: `kitchen_6` with the role `cabinets` → `room/kitchen_6.cabinets.js`;
   - a texture: `egger-h1180` → `library/textures/egger-h1180.js`;
@@ -122,7 +121,7 @@ house
 
 ### Assumptions
 
-- **One main page,** house/index.html, with the modes 3D, 2D, Documents and Test (besides it only the cabinet editor, room/cabinets.html, below; room/ has no index.html, because a room is viewed from home with `?room=` and room/ has no page of its own). The project's root index.html only forwards to house/index.html. They work the same for the whole house and for a chosen part.
+- **One main page,** the root's index.html (its look) and index.js (its logic), with the modes 3D, 2D, Documents and Cabinets (the cabinet editor: its screen in index.html, its logic in index.js; Test is Documents' last sheet; room/ has no index.html, because a room is viewed from home with `?room=` and room/ has no page of its own). The project's root index.html only forwards to house/index.html. They work the same for the whole house and for a chosen part.
 - **Two engines: house (the whole house) and room (one room).** room/ knows no particular room: no name, number or path of the kitchen or a wardrobe is in the code; everything comes in the data.
 - **No sub-projects.** A room is three data files in room/, next to the engine. A new room is new data, not new code.
 - **Three kinds of values.**
@@ -159,7 +158,7 @@ house
 - **One place for everything:** moving doors and drawers, hiding the walls in front of the camera, the 2D plan, the tiles (of the house and of the rooms), the Documents' sheets. The prototype had them in several copies.
 - **Built once, then only looked at.** The model is built once, when the page opens; then only the view changes: turning, zooming and walking move the camera; switching a layer shows or hides objects already built; nothing is rebuilt. Core joins the still solids of one material into one drawn object; the moving ones (doors, drawers) stay apart, built once too, and an animation only moves or turns them on the screen. A door's swing is drawing, not data: in the data a door has no rotation, only its hinge on one side of its box.
 - **Nothing made up in the code:** every number, colour and name of the project is in the data, in the settings or in the library.
-- **The editor** is a page of its own, cabinets.html: it works on the furniture file only (cabinets.html → cabinets.js → core), it needs no house. Everything about cabinets shares one stem: cabinets.js (the engine), cabinets.html (the editor), cabinets.md (the builder's rules), <kind>_<number>.cabinets.js (the data); an editor of another part would follow the same way (e.g. scene.html). The only entry page of the project is home. The site is static (GitHub Pages, no server), so the editor saves by download: the owner exports, the browser downloads the `.cabinets.js`, the owner puts it into the folder and commits it.
+- **The editor** is the application's mode Cabinets (its screen in index.html, its logic in index.js; until 19 Nov a page of its own, cabinets.html): it works on the active room's furniture file. Everything about cabinets shares one stem: cabinets.js (the engine), cabinets.html (the editor), cabinets.md (the builder's rules), <kind>_<number>.cabinets.js (the data); an editor of another part would follow the same way (e.g. scene.html). The only entry page of the project is home. The site is static (GitHub Pages, no server), so the editor saves by download: the owner exports, the browser downloads the `.cabinets.js`, the owner puts it into the folder and commits it.
 - **Every module checks itself.** Each module has its own checks of what it does (cabinets.js: boards do not intersect, a drawer fits its carcass; tiles.js: the tiles cover the surface; docs.js: the Documents agree with the model; tree.js: unique ids, offsets ≥ 0, a child inside its parent). The Test mode only collects them; a new module brings its checks with it.
 - **Descriptions from the start**, each where it belongs:
 
@@ -240,6 +239,6 @@ Done when: the whole house with all its rooms in home, Test without errors.
 - [ ] docs.js: makes the Documents' sheets (estimate, cutting list, the designer's notes, assembly cards) from the .docs.js of the chosen part of the house, with the library's prices and XLSX export.
 - [ ] The rooms' .docs.js: written by the LLM for every room (from the prototype: the kitchen's estimate.dat.js as the starting point), with references to the model where a quantity follows from it.
 - [ ] Test: every .docs.js against the model.
-- [ ] room/cabinets.html: the cabinet editor; opens a room's furniture file from the address (`?room=kitchen_6`, `?room=wardrobe_3`).
+- [x] the cabinet editor: the application's mode Cabinets (index.html, index.js), for the active room.
 
 Done when: the kitchen's Documents agree with the prototype's Info, and the editor saves data that home draws unchanged.

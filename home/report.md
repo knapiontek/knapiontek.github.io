@@ -319,3 +319,19 @@ The owner's decisions: the design is where every object stands (bought, cut, or 
 - Gone: a click on the floor picking a room, its orange mark, the bar over the view (the picked room, Open, ×).
 - The cameras follow the view (the house's, or the room's own); Walk only in the whole house (its button and the arrow key); Open / Close always.
 - House.js: settings.tiles.mark removed (nothing marks a room now).
+
+## One page: the cabinet editor is the mode Cabinets (19 Nov, night)
+
+- The modes, top right: 3D, 2D, Documents, Cabinets. Cabinets is the editor that was room/cabinets.html, now room/editor.js (its logic, its screen's pieces, its Alpine part), on the main page, for the active room: picking another room in the menu edits that room's file. A room's tables, left for another, stay as they were while the page is open.
+- A room without a cabinets file (the garage) starts empty, with the first furnished room's settings (its materials), said in the panel; Export names the file `<room>.cabinets.js`.
+- **Show in 3D**: the tables in place of the room's file on this page (until it is loaded again; the Finish applies over them), the view built again, the mode 3D. A room needs its scene (where its groups stand) for it; without one the panel says so. **Back to the file**: the tables as loaded.
+- Finish is never greyed now: every room has one (a room with nothing yet says so).
+- room/cabinets.html is no longer used: to delete (`git rm room/cabinets.html`).
+
+## The application in the home folder; the editor back under cabinets (20 Nov)
+
+- The application is the home folder's index.html (its look) and index.js (its logic, out of the page's script); house/index.html and the forwarding index.html are gone (house/ holds the house's data and model only).
+- The editor's name: my room/editor.js was a liberty, undone. Its screen (the tables, the drawing, the picker, the panel, its help) is in index.html; its logic at the end of room/cabinets.js (THE EDITOR, HOME.cabinets.editor), with the engine of the same stem. room/cabinets.html (after the owner's git mv) is not used: a script in a .html file is refused by a server that sends nosniff (GitHub Pages may).
+- The panel: View and Finish in 3D only; 2D, Documents and Cabinets have none. The heading is what is shown: the house (its 3D with the active room under it), or the room (a room's view, Cabinets).
+- Fixed (20 Nov): Documents kept the first view's sheets after a change of view (the house's sheets in a room's view: no Estimate, no Cut list); each view now makes its own.
+- Undone (20 Nov): I had put the editor's page logic at the end of room/cabinets.js, a liberty against the plan (the engine knows no page). It is now in index.js (THE CABINET EDITOR); room/cabinets.js is again byte for byte the engine it was.

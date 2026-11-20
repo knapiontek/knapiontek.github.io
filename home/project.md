@@ -8,7 +8,8 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, with everything tha
 
 | Folder | Holds |
 |---|---|
-| house/ | the house: its data (the rooms, the walls, the settings shared by every room), its model and the main page; it chooses a part of the house and passes it down |
+| index.html, index.js | the application: one page, loaded once, for the whole house and a room, in 3D, 2D, Documents and Cabinets (its look, its logic) |
+| house/ | the house: its data (the rooms, the walls, the settings shared by every room) and its model; it chooses a part of the house and passes it down |
 | room/ | the room engine: it makes a room from what the house gives it and from the room's own data files; cabinets, products, tiles, Documents; the cabinet editor; the rooms' data, flat, `<kind>_<number>.<role>.js` |
 | core/ | shared code: the data loader, the tree, geometry, meshes, the 3D view, the 2D plan, the sheets, the screen; knows no project |
 | library/ | the outside world, as the shop and the maker give it: products, shops, materials, textures (data); and how each product is drawn (draw.js, code) |
@@ -17,7 +18,12 @@ The house "Dom w papawerach 5 (G)" from archon.pl, as built, with everything tha
 | test.md | the LLM's own file: how to rebuild its automated tests |
 | report.md | what was done in each step, for the owner |
 
-room/ is being written room by room (To do), the kitchen first. The root index.html only forwards to house/index.html.
+room/ is being written room by room (To do), the kitchen first. The application is the root's index.html (its look) and index.js (its logic).
+
+| File | What it is |
+|---|---|
+| index.html, index.js | the application, one page (its look: index.html; its logic: index.js), loaded once: the whole house, or a part of it (`?room=kitchen_6`, `?room=bathroom_7,bathroom_5`), in 3D, 2D, Documents (its last sheet: Test) and Cabinets (the active room's cabinets file; the editor's screen in index.html, its logic in index.js). One page for every view: the data, the library, the model, the rooms' furniture and the scene are made once; a link to another view (House, Room, a room picked in a room's view), Back and Forward, and a change of a room's Finish build the view again in the same scene, without loading the page |
+| (in index.js) | the cabinet editor, the application's mode Cabinets (until 19 Nov room/cabinets.html, a page of its own; its screen in index.html, its logic in index.js, the engine room/cabinets.js untouched): the active room's cabinets file in tables as the sheets of Documents (groups, columns, components, notes; the materials read only, with their size as bought), its elevations as a sheet, each part in its material's colour, drawn as it changes; the panel: the drawing's part under the cursor, the model's problems; Import and Export of the file, written as the files are; Show in 3D (the tables in place of the room's file, on this page until it is loaded again; a room needs its scene for it); Back to the file. A room without a cabinets file starts empty, with the first furnished room's settings (its materials); a room's tables, left, stay as they were while the page is open |
 
 ## Dependencies
 

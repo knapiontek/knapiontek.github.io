@@ -32,7 +32,7 @@ function store(key, fresh, valid) {
    spec: key, fresh(), valid(s) (the state kept), modes, tabs {mode: [tab]}, load() (async: builds the page), and the page's
    own fields, getters and methods: onMode(m), menus() ({mode: groups}), onLayers(); a getter that needs the page built
    asks this.ready first. */
-const MODES = { '3d': '3D', '2d': '2D', documents: 'Documents', test: 'Test' };
+const MODES = { '3d': '3D', '2d': '2D', documents: 'Documents', cabinets: 'Cabinets', test: 'Test' };
 const TAB_NAMES = { view: 'View', layers: 'Layers', finish: 'Finish' };
 /* checks: [{name, items, info}]: OK when nothing is listed; info: what it lists is to know, not to correct */
 const chip = c => (c.info ? ['info', 'i'] : c.items.length ? ['warn', String(c.items.length)] : ['ok', 'OK']);
