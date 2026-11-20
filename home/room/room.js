@@ -375,6 +375,7 @@ function build(V, prepared, opts) {
     const g = new THREE.Group(); g.position.set(x, h, y); g.rotation.z = angle; a.frame.add(g);
     return Object.assign({}, a, { frame: g, pivot: true });
   }
+  /** @type {DrawContext} */
   const D = { V, box, at, detail, cylinder, display, mover, linkTo, envelope, openFront, openTop, profile, part, lamp, point, pivot, STATIC, CEILING,
     frame: r => PLACE[r], material: key => V.material(key), has: key => key in MATERIALS, metal: scene.finish.metal };
 

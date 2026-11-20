@@ -47,7 +47,7 @@ By group:
 | boards | code, decor (maker's); thickness; length, width (sheet as bought; missing: the editor shows ?); color; core (bare edge colour); coreSurface (`chipboard` or `fibre`); lacquered; frameWidth (shaker front); depth (worktops, end panels); factoryEdges; twoSided; texture (textures/ key). Sold by the metre (PVC plinth): unit m, no sheet size |
 | hardware | as drawn: handle length; leg radius, footRadius, footHeight; hinge cupDepth; drawer runnerWidth, sideThickness, sideFromCarcass, fromBack, fromFront; grille width, height |
 | sanitary | as drawn: body; basin wall, shelf; tap height, spout; screen fixed panel, door |
-| tiles | look, finish, texture; len × wid, joint; minCut (smallest acceptable piece [along, across]); pattern (maker's default: grid, half, third, quarter, random); formats (sizes made) |
+| tiles | 8 mm thick, all (room/tiles.md); look, finish, texture; len × wid, joint; minCut (smallest acceptable piece [along, across]); pattern (maker's default: grid, half, third, quarter, random); formats (sizes made) |
 
 **materials**: `materials`: key → look:
 

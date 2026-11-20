@@ -35,7 +35,11 @@ rows ─► sheet.js (Documents, XLSX)         checks ─► Test
 
 - **Exact solids**: a prism along x over a convex polygon: a box, at most cut by sloping lines. Nothing patched afterwards: errors are fixed in the data or the module that makes the solid.
 - **Built once, then only looked at**: meshes built on load; a layer shows or hides; a moving part is built closed and only moved.
+- **One mesh**: one list of points, welded at 0.05 mm: no T-junctions, no cracks, no two faces in one plane. Nothing enlarged, moved or hidden to cover a fault.
+- **No shared volume**: no two solids share volume; core gives the check, a page runs it.
 - **Edges are a layer**: a seam (one plane, one part) has no line; a corner always has one.
+- **Layers**: a child shows only with its parent; a solid only while all its layers are on. A switch changes only what shows: no count, no camera.
+- A change to core changes no page's model or picture unless that is its point.
 - The scene is in metres, y up; everything in and out is mm in the house's axes.
 - Kept in the browser per view: mode, tab, layers, zoom. One for every page: sun, light/dark, panel.
 

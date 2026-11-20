@@ -219,10 +219,10 @@ Roof: graphite tiles on top, white underside, ends and eaves.
 | garage door | 2750/2250 | garage front | 12760 – 13200 | 1150 – 3900 | 0 → 2250 |
 | entrance door | 1600/2100 | entrance wall | 11860 – 12300 | 4550 – 6150 | 0 → 2100 (leaf 1000 on the garage side, glass beside it) |
 | boiler room door | 800/2100 | entrance wall | 11860 – 12300 | 6610 – 7410 | 0 → 2100 (glazed) |
-| door | 870/2050 | #9 | 10640 – 11510 | 4110 – 4230 | 0 → 2050 |
-| door | 920/2050 | #7 | 9010 – 9250 | 4880 – 5800 | 0 → 2050 |
+| door | 870/2050 (900, § 14) | #9 | 10640 – 11510 | 4110 – 4230 | 0 → 2050 |
+| door | 920/2050 (900, § 14) | #7 | 9010 – 9250 | 4880 – 5800 | 0 → 2050 |
 | door | 900/2050 | #6a | 7760 – 8660 | 6150 – 6270 | 0 → 2050 |
-| door | 920/2050 | #6b | 10640 – 11560 | 6150 – 6270 | 0 → 2050 |
+| door | 920/2050 (900, § 14) | #6b | 10640 – 11560 | 6150 – 6270 | 0 → 2050 |
 
 ### Stair
 
@@ -262,7 +262,7 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 | 7 | block 120 | 7370 – 7490 | 440 – 3410 |
 | 8 | block 120 | 7490 – 9010 | 3290 – 3410 |
 | 9 | block 120 | 8200 – 8320 | 5650 – 8660 |
-| 12 | block 120 | 9010 – 9130 | 440 – 6490 |
+| 12 | block 120 | 9010 – 9130 | 440 – 6490 (built to 5650, § 14) |
 | 13 | block 120 | 9130 – 12760 | 4410 – 4530 |
 
 ### Openings
@@ -272,10 +272,10 @@ archon's areas are measured after plaster, so they are 2–4 % smaller than thes
 | window | 6000/3460 | garden gable | 0 – 440 | 1550 – 7550 | 3060 → 6520, top cut parallel to the roof: h = 6520 − tan 42° · \|y − 4550\| |
 | window | 2200/2850 | front gable | 12760 – 13200 | 1680 – 3880 | 3060 → 5910, top sloping: h = 5910 − tan 42° · (3880 − y); transom at 3900 |
 | window | 2200/2850 | front gable | 12760 – 13200 | 5220 – 7420 | 3060 → 5910, top sloping: h = 5910 − tan 42° · (y − 5220); transom at 3900 |
-| door | 890/2050 | #6 | 5350 – 5470 | 4590 – 5480 | 3060 → 5110 |
+| door | 890/2050 (900, § 14) | #6 | 5350 – 5470 | 4590 – 5480 | 3060 → 5110 |
 | door | 900/2050 | #3 | 6300 – 7200 | 5530 – 5650 | 3060 → 5110 (built; design 6500 – 7400, § 14) |
-| door | 820/2050 | #12 | 9010 – 9130 | 1780 – 2600 | 3060 → 5110 |
-| door | 940/2050 | #12 | 9010 – 9130 | 3470 – 4410 | 3060 → 5110 |
+| door | 820/2050 (700, § 14) | #12 | 9010 – 9130 | 1780 – 2600 | 3060 → 5110 |
+| door | 940/2050 (900, § 14) | #12 | 9010 – 9130 | 3470 – 4410 | 3060 → 5110 |
 | door | 900/2050 | #12 | 9010 – 9130 | 4570 – 5470 | 3060 → 5110 |
 
 The front gable windows run floor to ceiling: 2850 is the attic clear height (3060 → 5910, printed in the section), and the front elevation measures them ≈ 3140 → ≈ 5800 (±36). The white band under them ends at the attic floor (3060).
@@ -297,7 +297,7 @@ archon's first figure is the usable area: under 1400 of clear height it counts 0
 | Room (7) | [9130,440,12760,4410] | 14.41 | 11.79 (14.11) |
 | Room (6) | [9130,4530,12760,8660] [8320,6490,9130,8660] [8320,5650,9010,6490] | 17.33 | 13.69 (16.53) |
 
-The wardrobes 3 and 4 open from the bedroom (no door in the plan) and are tiled with it.
+The wardrobes 3 and 4 open from the bedroom (no door in the plan; as built with doors, § 14) and are tiled with it.
 
 ## 11. Kitchen as drawn by archon
 
@@ -354,6 +354,9 @@ From the 1900 window's start (x 4720) to wall #5 (x 7220) is 2500. The pier betw
 | Diagonal wall under the stair (garage) | from (5470, ≈ 2710) to (6420, ≈ 3230) | none: the stair is floating; the garage outline keeps y 2970 as the line to the stair |
 | Roof build-up (§ 6) | 646 vertical (≈ 480 across the slope): top at the outer wall face 4510, ridge 8600 | 640 across the slope (861 vertical), as wide as a portal wing (EPS 200 + block 240 + EPS 200), so the white frame keeps one width; same underside, so the top rises: 4725 at the outer wall face, ridge ≈ 8820, chimney ≈ 180 above it |
 | Garden bedroom ceiling (§ 6) | flat at 5910 over the whole attic | cathedral: open to the roof over x 440 – 3640; the flat ceiling starts at x 3760; a block 120 wall x 3640 – 3760, h 5910 → roof, closes the loft over the rest of the attic |
+| Inner doors (§ 9, § 10) | widths scaled from the plans: 820 – 940 | every inner door 900/2050, a wardrobe's 700/2050 (the plans' scale is not exact; the owner's sizes), each centred where archon draws it: ground #9 x 10625 – 11525, #7 y 4890 – 5790, #6b x 10650 – 11550; attic #6 y 4585 – 5485, #12 (room 7) y 3490 – 4390, #12 (wardrobe 8, 700) y 1840 – 2540 |
+| Wall #12 (attic, § 10) | x 9010 – 9130, y 440 – 6490 | built only to y 5650: no wall between y 5650 and 6490 (room 6 runs on there) |
+| Wardrobes 3 and 4 (attic) | open to the bedroom, no door | each closed by a block 120 wall with a door 700/2050, h 3060 → 5110: wardrobe 3: wall x 3760 – 4710, y 3790 – 3910, door x 3885 – 4585; wardrobe 4: #3 runs on to x 3760 (x 3760 – 5350), door x 3860 – 4560 |
 | Recess soffit EPS (§ 8.3) | thickness not given (EPS 200 elsewhere) | 470 thick, h 2250 – 2720: its underside is at the garage door head, so the white front band is one horizontal bar over the garage and the recess |
 
 The showers are fittings and are not in this geometry; only the walls and the door are.

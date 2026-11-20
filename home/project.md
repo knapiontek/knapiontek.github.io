@@ -98,7 +98,7 @@ Each solid is moved to its node: offsets summed up the tree; a group facing anot
 
 1. **Borders of the open rooms**: the owner checks where hall, living room and kitchen end (house.js, 2D).
 2. **Worktop and end-panel lengths** as bought: the owner gives them; the editor shows ? until then.
-3. **Types**: typedefs still loose (`any`) in library/draw.js (the drawing context), the products' group fields, the cabinets file's settings, the Alpine parts.
+3. **Types**: still loose (`any`): the products' group fields, the cabinets file's settings, a drawing's place, the Alpine parts.
 
 ## How we work
 

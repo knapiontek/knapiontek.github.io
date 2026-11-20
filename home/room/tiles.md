@@ -1,6 +1,6 @@
 # Tiles: how they are laid
 
-Rules for the tiler, in words. No numbers: tile size, joint, smallest cut are the library product's; glue depth, reserve and layouts are in the data (the house's `settings.tiles`, a room's scene); counts in Documents. One mechanism (room/tiles.js) for the house's floors and a room's walls, floor and shower.
+Rules for the tiler, in words. Every tile is 8 mm, laid on 4 mm of glue: 12 mm everywhere (the house's `settings.tiles` depth); a thicker tile is not used. Other numbers are not here: tile size, joint, smallest cut are the library product's; glue depth, reserve and layouts are in the data (the house's `settings.tiles`, a room's scene); counts in Documents. One mechanism (room/tiles.js) for the house's floors and a room's walls, floor and shower.
 
 ## 1. The tile and its layout
 

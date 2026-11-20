@@ -26,6 +26,14 @@ house.js ─► model.js ─► solids ─► index.js: 3D, 2D (core)
 - **Documents**, whole house: Rooms (model and archon areas), Floor tiles, Doors (what is bought per door, each by name and place), Notes; a room's view: its own (room/docs.js). Then Elements (the tree shown, each node's offset and size; closed) and Test (open).
 - **Test**: the tree, the house, the library, the rooms' furniture, the floor tiles; a requested room the house lacks.
 
+## Rules
+
+- **Source**: the model copies the boxes of archon/analysis.md (with its changes as built); it never measures anew.
+- **Outside the model**: furniture and fittings (the rooms'). The fireplace is the house's (not drawn yet).
+- **Inner doors**: a click on a leaf opens or closes it; on a walk, Space by a door. A room cut out gets its doors with its walls.
+- **Walk**: the body is a circle (walk radius); walls and fixed parts push it out the shortest way (it slides along a wall, turns into a doorway at a jamb); the floor runs on through a passage; a step is split so nothing is passed through. Furniture shown stops it too; a door not fully open stops it.
+- **2D stair**: under the cut a full line, over it dashed; from the floor above all of it, through the void.
+
 ## Floor tiles and Finish
 
 - One layout per node that sets `settings.tiles`, over the rooms that take it. A slab from the tiles' face down into the floor, edges closed; grout below the face; the face drawn ahead of what lies close behind (no flicker). Rooms of one layout meeting without a wall are one zone: tiles run across the border and through doors. How tiles are laid: room/tiles.md.
@@ -42,7 +50,7 @@ The root node is the **site** (core/project.md: format tree), with format and ve
 | Field | Means |
 |---|---|
 | settings.view | `layers` (layer tree, names), `floors` and `elements` (the two Layers blocks), `edges`, `light` (`clouds`: default count, the sun's and sky's factors and shadow blur at full cloud; `inside`: a part's light), `cameras`, `walk`, `planNote` (under the 2D sheets) |
-| settings.tiles | floor tiles, common: `reserve` (cut reserve, fraction), `top` (tile face over the floor, mm), `grout` (grout face over the floor, mm), `depth` (slab with glue, from the face down), `layers`, `small` (the layer showing small cuts) |
+| settings.tiles | floor tiles, common: `reserve` (cut reserve, fraction), `top` (tile face over the floor, mm), `grout` (grout face over the floor, mm), `depth` (tile with glue, from the face down: 12 = 8 tile + 4 glue, room/tiles.md), `layers`, `small` (the layer showing small cuts) |
 | source, notes | source of the geometry; remarks for Documents |
 | geometry | materials and drawing rules (below) |
 | children | `foundation`, the floors (`ground`, `attic`), `facade`, `roof`, `stair` |
