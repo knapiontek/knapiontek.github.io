@@ -1,77 +1,85 @@
 # House
 
-> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done.
-
-The house "Dom w papawerach 5 (G)" from archon.pl, as built, and the main page of the project. The house stands in its site (the root of house.js): it knows its floors and rooms, and it cuts a part of itself out for a room. Where the numbers come from: archon/analysis.md.
+The house "Dom w papawerach 5 (G)" (archon.pl), as built, standing in its site (the root of house.js): its floors, rooms, and a part of itself cut out for a room. Source of the numbers: archon/analysis.md.
 
 ## Files
 
 | File | Does |
 |---|---|
-| house.js | the house's data: its settings (the root of the cascade), what it is made of, its floors and their rooms |
-| model.js | the house's data turned into solids: walls, slabs, roof, windows, doors, stair, site; the rooms in the house's axes and where two of them meet with no wall; a part of the house cut out for a room; the checks of the house; the menu of the house's pages. No browser |
-
-## How it fits together
+| house.js | the house's data: settings (root of the cascade), what it is made of, floors and rooms |
+| model.js | house.js turned into solids (walls, slabs, roof, windows, doors, stair, site); rooms in the house's axes and their borders without a wall; a part cut out for a room; checks; the top-left menu. No browser |
 
 ```
-house.js ─► model.js ─► solids ─► index.html: 3D, 2D (core)
-                     ─► rooms, borders, a part of the house ─► index.html (later: the room engine)
+house.js ─► model.js ─► solids ─► index.js: 3D, 2D (core)
+                     ─► rooms, borders, parts ─► index.js, room engine
                      ─► checks ─► Test
 ```
 
-- **The whole house**: every solid, the doors turning on their hinges. The panel's tab View: Floors (where: the floors and the roof) and Layers (what); a solid shows when its floor and its kind are both on. With the roof off the highest floor shown is open (its own cameras join the house's).
-- **The active room**: always one, the panel's (its name the panel's title): picked in the floors' menus (top left), kept in the browser; at first the first furnished room. **House** or **Room** (top left, before the floors): the whole house, or its walls cut to the active room; picking a room in the whole house keeps the view, in a room's view shows that room. The panel's heading is always the active room (under it its floor), whatever is shown. View and Finish are 3D's (none in 2D, Documents, Cabinets): View, the house's layers and the active room's furniture (in the whole house too: a furniture layer switches that kind in every room, as the owner decided on 20 Nov); Finish, the active room's (every room has one: what is not there yet says so). The cameras are the view's (the house's, or the room's own); Walk: the whole house only; Open / Close: always.
-- **A part**: the solids of its rooms, trimmed to each room's box: the floor area out to the far faces of its walls, from the slab under it to what closes it from above. Each wall, the floor and the ceiling is an object; a window or a door hides with the wall it sits in. An object the camera is beyond hides (it still casts its shadow), so the room is always seen from inside. The floors (and the roof) do not apply to a part: it is always drawn, only the elements switch. The light is the house's light for an interior.
-- **The menu** (top left): the house, each floor with its rooms; the same on every page of the house (the editor too), made by model.js from house.js.
-- **2D**: one sheet per floor (of a part: per floor of its rooms): what the cut meets filled, what lies under it seen from above, the doors' swings, the openings' labels, the rooms with their areas, a dash-dot line where two rooms meet with no wall. The whole house has its dimensions as in CAD on every side: a chain through the openings of that side's walls, then the whole; a part, its overall sizes. A furnished room's appliances show as their nodes' boxes (cut: grey, seen: an outline), the sink and the hob as seen from above. The wheel zooms about the cursor, a drag moves the sheet.
-- **Documents**: the whole house, the rooms (the model's area and archon's), the inner doors with what is bought for them (each door one, by its own name and place: no quantity), the notes; a room's view, its own (a furnished room's estimate, cut list, assembly cards and notes: room/docs.js); both then Elements and Test.
-- **Open** (the menu, 3D): one button: every moving part (the doors of the house and of the furniture, the drawers, a shower's door) opens; it is then Close.
-- **Test** (the last sheet of Documents): the tree, the house, the library, the rooms' furniture; a room asked for that the house does not have.
-- **Elements** (a sheet of Documents): the tree of what is shown: the site, the house down to its floors and rooms; a room's view, its rooms down to their furniture; each node with its offset in its parent and its size; closed at first, a + opens a node. Test is a tree too, open at first.
-- **The floor tiles** (room/tiles.js): one layout for each node that sets `settings.tiles` (a floor: its product, direction, pattern and grid's origin; a room that sets its own origin: a layout of its own), over the rooms that take them from it; a slab 12 mm deep from the tiles' face down into the floor, its edges closed, the grout 2 mm under the face (as a wall's tiles), the face drawn ahead of what lies close behind it (no flicker from afar); rooms of one layout that meet with no wall are one zone, a tile runs across the line, and the floor runs on through a door. The panel's tab Finish (3D), the same for every room, in the house's view and in a room's: the picked room (a room's own view: that room); Furniture: the metal of all its fittings (one), each of its boards with its stand-ins (the boards of its kind within 1 mm of its thickness; a top follows its board's thickness), Back to the data: kept in the browser, the page built again; a product of a family (a tap, a radiator, an edge banding) follows the metal and the decor, else Test reports it. Floor tiles: the tile, the pattern, the direction, the origin, the grout, Fit the origin (the fewest small cuts), Back to the data; the small cuts red with their layer. The viewer's changes stay in the browser. Documents: the sheet Floor tiles (each layout as laid: tiles whole, cut, small cuts; the m² to buy with the reserve, the value); Test: every room tiled or set to none, every layout's tile in the library, the small cuts (to know).
+## Views (index.js)
 
-## The format `house`, version 3
+- **Active room**: always one, the panel's title (its floor under it), picked in the floors' menus, kept in the browser; at first the first furnished room.
+- **House / Room** (top left): the whole house, or its walls cut to the active room. A room picked in House keeps the view; in Room it shows that room.
+- **Whole house**: every solid; doors turn on their hinges. Panel View: Floors (floors, roof) and Layers (element kinds); a solid shows when its floor and kind are both on. Roof off: the highest floor shown is open and adds its cameras. Walk: whole house only.
+- **A part**: its rooms' solids trimmed to each room's box (floor area to the far faces of its walls, from the slab under it to what closes it above). Each wall, floor and ceiling is an object; a window or door hides with its wall; an object the camera is beyond hides (still casting shadow). Floors do not apply; the light is the interior light.
+- **3D panel**: View (the house's layers and the active room's furniture; a furniture layer switches that kind in every room) and Finish (the active room's). Cameras: the house's or the room's own. Open / Close: every moving part (doors, drawers, a shower door).
+- **2D**: one sheet per floor (of a part: its rooms' floors): cut filled, below seen, door swings, opening labels, rooms with areas, dash-dot borders. Whole house: CAD dimension chains on every side (openings, then overall); a part: overall sizes. A furnished room: appliances as their boxes (cut grey, seen outlined), sink and hob seen from above. Wheel zooms at the cursor; drag moves.
+- **Documents**, whole house: Rooms (model and archon areas), Floor tiles, Doors (what is bought per door, each by name and place), Notes; a room's view: its own (room/docs.js). Then Elements (the tree shown, each node's offset and size; closed) and Test (open).
+- **Test**: the tree, the house, the library, the rooms' furniture, the floor tiles; a requested room the house lacks.
 
-The file's root node (core/project.md: the node) is the **site**, with the format and the version: its zero the corner of its lawn, its fields `lawn` (`rect` [x1, x2, y1, y2], `h` its top, `depth`, `material`, `aroundBuilding`: it gives way to the house), `surfaces` (`rect`, `h`, `material`), `layers`, `walkable`, all in the site's axes. Its child is the **house**: its offset where the house stands in the site (its h below the lawn: the only negative number), and these fields:
+## Floor tiles and Finish
 
-| Field | Means |
-|---|---|
-| settings.view | the view of the house: `layers` (the layers' tree, names), `floors` (where: the floors and the roof) and `elements` (what: the kinds of elements), the two blocks of Layers in the panel, `edges`, `light` (with `clouds`: how many by default, and at full clouds the sun's and the sky's factors and the shadows' blur; `inside`: the light of a part), `cameras`, `walk`, `planNote` (under the 2D sheets) |
-| settings.tiles | the floor tiles' common settings: `reserve` (for cuts, the part added to what is bought), `top` (mm over the floor: the tiles' face), `grout` (mm over the floor: the grout's face, under the tiles'), `depth` (the slab of tiles with its glue, from its face down into the floor), `layers` (the tiles' layers), `small` (the layer that shows a small cut red) |
-| source, notes | where the geometry comes from; remarks for Documents |
-| geometry | what the house is made of (below) |
-| children | the house's parts, by what belongs to what: `foundation`, the floors (`ground`, `attic`), `facade` (the insulation), `roof`, `stair` |
+- One layout per node that sets `settings.tiles`, over the rooms that take it. A slab from the tiles' face down into the floor, edges closed; grout below the face; the face drawn ahead of what lies close behind (no flicker). Rooms of one layout meeting without a wall are one zone: tiles run across the border and through doors. How tiles are laid: room/tiles.md.
+- **Finish** (3D panel), per active room:
+  - Furniture: one metal for all fittings; each board with its stand-ins (same kind, within 1 mm of thickness; a top follows its board's thickness). A family product (tap, radiator, edge banding) follows the metal and decor; none in that variant: Test reports it.
+  - Floor tiles: tile, pattern, direction, origin, grout; Fit the origin (fewest small cuts). Small cuts red on their layer.
+  - Back to the data. Changes stay in the browser; the room is rebuilt.
+- Documents, Floor tiles: per layout, tiles whole, cut, small cuts; m² to buy with reserve; value. Test: every room tiled or set to none; every layout's tile in the library; small cuts (info).
 
-**The tree of the house.** Every element is a node, placed from its parent's zero; the house's zero is its extreme corner (the left wing's insulation, the garden's insulation, the bottom of the footings), so every part of the house lies in positive numbers. What belongs to what:
+## Format `house`, version 3
 
-- `foundation` (an assembly): footings, foundation walls, the chimney's foundation, the ground slabs;
-- a floor: its walls (blocks, the chimney, balustrades), its ring beams and the slab over it, then its rooms; an opening (window, door, gate) is a node of the wall it is in, placed from the wall's origin;
-- `facade` (an assembly): the EPS of the walls and the soffit;
-- `roof` (an assembly): its planes (its fields: pitch, eave, width, thickness, x, faces, cap, cuts, layers, windowFrame, clearHeights), the attic's ceiling and the loft walls, its roof windows (`roofWindow`: place, label);
-- `stair` (an assembly): its flights (fields: risers, tread, material, layers, walkable, flights) and its void (`void`, of boxes `voidBox`).
-
-An assembly stands at the house's zero with the house's size; a floor at its level. An element's type is its kind; its own fields: `top: "roof"` (under both roof planes), `below` (lines it stays under), `cuts` (ids of elements or voids taken out of it), `floor` (as a kind's), `outer` (the side facing the air: E the garden, W the entrance, N, S, down). An opening's: label (archon's width/height), outer, cols, transoms (heights), below, leaf; an inner door: `hinge` (the jamb it turns on: E, W, N, S), `opens` (the side it opens toward), `product`, `extras`.
-
-**A floor** is a node of type `floor`: its offset's h is its level, its size's h its height (the top of its rooms). Its own fields: `inside` (the floor area inside the outer walls, rectangles `[x1, x2, y1, y2]`, in the floor's axes), `other` (areas that are no room: the stair), `settings.view` (`cameras`; `plan`: the height of its 2D cut over the floor). Its children are its walls and slabs (above) and its rooms.
-
-**A room** is a node whose type is its kind (`kitchen`, `bathroom`, `wardrobe`, `bedroom`, `hall`, `living`, `vestibule`, `garage`, `boiler`) and whose id is the kind and archon's number (`kitchen_6`). Its offset is the smallest corner of its floor area, its size the box around it and the floor's height. Its own fields: `number` (archon's), `area` (its floor area at the block faces, rectangles in the room's axes), `archonArea` (m², archon's, after plaster: a reference only), `note` (where its border runs with no wall, and why).
-
-**Floor tiles** (`settings.tiles` of a floor or a room): `product` (a tile of the library), `dir` (x or y: the tiles' length along it), `pattern` (grid, half, third, quarter, random; none: the product's), `origin` ([x, y] in the node's axes: where a tile's corner lies; the grid runs from it both ways). A room takes the tiles of its floor; a room that sets them has its own layout (an origin of its own: the rest from its floor); `null`: no tiles (the room's own project lays its floor: the bathrooms; the garage).
-
-**geometry**, what the elements are made of and how they are drawn. Every number of a node's own fields is in that node's axes, from its zero (mm: x along the house, y across, h up): the house's geometry and views in the house's; a floor's areas and cameras in the floor's; the roof's planes and the stair's flights in theirs; an element's or an opening's lines (`below`) and transoms in its own:
+The root node is the **site** (core/project.md: format tree), with format and version. Zero: the lawn's corner. Fields, in the site's axes: `lawn` (`rect` [x1, x2, y1, y2], `h` top, `depth`, `material`, `aroundBuilding`), `surfaces` (`rect`, `h`, `material`), `layers`, `walkable`. Its child, the **house**: offset = where it stands in the site (h below the lawn); fields:
 
 | Field | Means |
 |---|---|
-| split | the height between the ground floor and the attic |
-| body | the main body along x [x1, x2] (without the wings) |
-| kinds | of elements: name, material, cap (the section's colour), thickness (checked), layers; `opened`: openings are cut out of it; `host`: windows and doors sit in it; `walkable`: the walk stands on it; `finish`: the facade layer that switches its finish; `raw`: its bare material; `floor`: the floor layer it belongs to when not the one its height gives (the attic's ceiling: the roof) |
-| A door's own fields | `hinge` (the jamb it turns on), `opens` (the side it opens toward), `flush` (the side where the leaf is flush with the wall: the hall's; toward a hall, then a vestibule, the living room, a bedroom) |
-| openingKinds | what is drawn in an opening: `glazed` (frame, bars, glass; `sill`), `leaf` (a solid leaf), `door` (an inner door of frames.doors), `passage` (the floor runs through), `layer` (windows or doors) |
-| frames | the frames, bars and glass of windows; `doors`: an inner door, hidden (every one alike): `frame` (the frame's width on the half of the leaf's depth toward which it opens), `stop` (its width on the other half), `gap`, `bottom` (the gap at the floor), `depth` (the leaf's), `angle` (open), the materials, the handle; the leaf is flush with the wall on the door's `flush` side, stepped against the frame so no light passes; `leaves` (a gate's and the entrance's leaf, grooves, handle) |
-| finishes | the facade: which material covers which part of an EPS box, by its outer side (E, W, N, S), a region (x, y, h; a missing range or a null end: no limit) and lines; a later rule wins |
-| part | what a part of the house takes: the element kinds, the fixtures (frames, glass, doors), the roof |
-| line | `{h, y, pitch}`: the line h + pitch · tan(roof pitch) · (y′ − y) across the house |
+| settings.view | `layers` (layer tree, names), `floors` and `elements` (the two Layers blocks), `edges`, `light` (`clouds`: default count, the sun's and sky's factors and shadow blur at full cloud; `inside`: a part's light), `cameras`, `walk`, `planNote` (under the 2D sheets) |
+| settings.tiles | floor tiles, common: `reserve` (cut reserve, fraction), `top` (tile face over the floor, mm), `grout` (grout face over the floor, mm), `depth` (slab with glue, from the face down), `layers`, `small` (the layer showing small cuts) |
+| source, notes | source of the geometry; remarks for Documents |
+| geometry | materials and drawing rules (below) |
+| children | `foundation`, the floors (`ground`, `attic`), `facade`, `roof`, `stair` |
+
+**The house's tree.** Every element is a node. The house's zero: its extreme corner (left wing's insulation, garden insulation, footings' bottom).
+
+- `foundation` (assembly): footings, foundation walls, chimney foundation, ground slabs.
+- a floor: walls (blocks, chimney, balustrades), ring beams, the slab over it, its rooms; an opening is a node of its wall, from the wall's origin.
+- `facade` (assembly): EPS of the walls and soffit.
+- `roof` (assembly): planes (pitch, eave, width, thickness, x, faces, cap, cuts, layers, windowFrame, clearHeights), the attic ceiling, loft walls, roof windows (`roofWindow`: place, label).
+- `stair` (assembly): flights (risers, tread, material, layers, walkable, flights), its void (`void` of `voidBox`es).
+
+An assembly stands at the house's zero with the house's size; a floor at its level.
+
+**An element**: type = its kind. Fields: `top: "roof"` (under both roof planes), `below` (lines it stays under), `cuts` (ids of elements or voids removed from it), `floor` (as a kind's), `outer` (side facing the air: E, W, N, S, down).
+
+**An opening**: `label` (archon's width/height), `outer`, `cols`, `transoms` (heights), `below`, `leaf`. An inner door also: `hinge` (jamb it turns on), `opens` (side it opens to), `flush` (side where the leaf is flush with the wall: toward a hall, then a vestibule, the living room, a bedroom), `product`, `extras`.
+
+**A floor** (type `floor`): offset h = its level; size h = its height (the top of its rooms). Fields: `inside` (floor area within the outer walls, `[x1, x2, y1, y2]`), `other` (non-room areas: the stair), `settings.view` (`cameras`; `plan`: 2D cut height over the floor). Children: walls, slabs, rooms.
+
+**A room**: type = its kind (`kitchen`, `bathroom`, `wardrobe`, `bedroom`, `hall`, `living`, `vestibule`, `garage`, `boiler`); id = kind and archon's number (`kitchen_6`). Offset: the smallest corner of its floor area; size: its bounding box and the floor's height. Fields: `number` (archon's), `area` (floor area at the block faces, rectangles in its axes), `archonArea` (m², after plaster; reference only), `note` (where a wall-less border runs, why), `files` (its data files in room/: cabinets, scene, docs).
+
+**Floor tiles** (`settings.tiles` of a floor or a room): `product` (a library tile), `dir` (x or y: the tiles' length along it), `pattern` (grid, half, third, quarter, random; none: the product's), `origin` ([x, y] in the node's axes: a tile corner; the grid runs both ways). A room takes its floor's; a room that sets an origin has its own layout (the rest from its floor); `null`: no tiles (the room's own design lays its floor: the bathrooms; the garage).
+
+**geometry**. Every number of a node's fields is in that node's axes: the house's geometry and views in the house's; a floor's areas and cameras in the floor's; roof planes and stair flights in theirs; an element's or opening's `below` and transoms in its own.
+
+| Field | Means |
+|---|---|
+| split | height between ground floor and attic |
+| body | the main body along x [x1, x2], without the wings |
+| kinds | element kinds: name, material, cap (section colour), thickness (checked), layers; `opened` (openings cut out), `host` (windows and doors sit in it), `walkable`, `finish` (the facade layer switching its finish), `raw` (bare material), `floor` (its floor layer when not the one its height gives: the attic ceiling → roof) |
+| openingKinds | `glazed` (frame, bars, glass; `sill`), `leaf` (solid leaf), `door` (inner door of frames.doors), `passage` (the floor runs through), `layer` |
+| frames | window frames, bars, glass; `doors`: the inner door, hidden frame, all alike: `frame` (width on the opening half of the leaf's depth), `stop` (on the other half), `gap`, `bottom` (gap at the floor), `depth` (leaf), `angle` (open), materials, handle; the leaf flush on the door's `flush` side, stepped against the frame (no light passes); `leaves` (gate's and entrance's leaf, grooves, handle) |
+| finishes | facade: which material covers which part of an EPS box, by outer side, region (x, y, h; missing or null end: unbounded) and lines; a later rule wins |
+| part | what a part takes: element kinds, fixtures (frames, glass, doors), roof |
+| line | `{h, y, pitch}`: h + pitch · tan(roof pitch) · (y′ − y) |
 
 ## Checks
 
-The tree (to know: what lies below the house's zero: nothing); every element, opening, roof window and void has its own id; every element's thickness by its kind; no two solids share volume (the site, frames and glass included); no floor area without a room; no two rooms overlap; the rooms' areas against archon's (to know, not a fault).
+Tree (info: what lies below the house's zero: nothing); unique ids of elements, openings, roof windows, voids; every element's thickness by its kind; no two solids share volume (site, frames, glass included); no floor area without a room; no overlapping rooms; room areas against archon's (info).

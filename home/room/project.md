@@ -1,91 +1,96 @@
 # Room
 
-> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done.
-
-The room engine: it makes a room from what the house gives it (the room's node: its origin and height) and from the room's own data files, and draws it into the house's page. So far the kitchen (kitchen_6), the walk-in wardrobes (wardrobe_3, wardrobe_4, wardrobe_8) and the bedroom's niche (bedroom_6).
+The room engine: a room from what the house gives (its node: origin, size, floor area, openings, ceiling) and the room's own data files, drawn into the house's page. Rooms with files: kitchen_6, bathroom_5, bathroom_7, wardrobe_3, wardrobe_4, wardrobe_8, bedroom_6.
 
 ## Files
 
 | File | Does |
 |---|---|
-| room.js | puts a room together: places its groups where the scene says, builds its cabinets and products, its lamps; its layers for the panel; its checks. prepare() needs no browser, build() draws |
-| cabinets.js | the cabinets of a room from its cabinets file: the model (carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, problems), the tree of the furniture, and its drawing. The model needs no browser |
-| `<kind>_<number>.cabinets.js` | a room's cabinets (format cabinets) |
-| `<kind>_<number>.scene.js` | where a room's groups stand and how it is fitted and lit (format scene) |
-| tiles.js | the floor tiles of a layout (house/project.md): its rooms and zones, the tiles laid from the grid's origin, the count (whole, cut, small cuts), the origin with the fewest small cuts, the faces to draw (a tile's image and turn, a plank's crop of the photo). No browser |
-| cabinets.md, tiles.md, products.md | how cabinets are made, tiles laid, products fitted: for the builder, in words (no code, no numbers); with cabinets.js, tiles.js, library/draw.js |
-| docs.js | a furnished room's Documents: the estimate, the cut list, the notes, the assembly cards, from the cabinets' model, the room's tree and its docs file; their check. No browser but the cards |
+| room.js | puts a room together: groups and fixtures placed where the scene says, cabinets, products, built-ins, tiles, lamps; its layers; its checks. Preparing needs no browser; drawing does |
+| cabinets.js | a cabinets file → the model (carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, problems), the furniture's tree, its drawing. The model needs no browser |
+| tiles.js | tiles of a layout: rooms and zones, tiles laid from the grid's origin, the count (whole, cut, small cuts), the origin with fewest small cuts, the faces to draw. No browser |
+| docs.js | a furnished room's Documents: estimate, cut list, notes, assembly cards; their check. No browser but the cards |
+| `<kind>_<number>.cabinets.js` | a room's furniture (format cabinets) |
+| `<kind>_<number>.scene.js` | where a room's groups and fixtures stand; its finish, tiles, lights, cameras (format scene) |
 | `<kind>_<number>.docs.js` | what a room's Documents say (format docs) |
-
-The products (an oven, a sink, a lamp) are drawn by library/draw.js; the room only says where.
-
-## How it fits together
+| cabinets.md, tiles.md, products.md | how cabinets are made, tiles laid, products fitted: rules in words, for the builder |
 
 ```
-house.js (files of a room) ─► index.html ─► room.js prepare: cabinets.js build ─► the model ─► tree
-                                           room.js build: cabinets.js draw, library/draw.js ─► solids, moving parts, details, lamps ─► core
+house.js (a room's files) ─► index.js ─► room.js: cabinets.js model ─► tree
+                                       ─► room.js: cabinets.js, library/draw.js, tiles.js ─► solids, moving parts, lamps ─► core
 ```
 
 ## Coordinates
 
-In the house's axes and order: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`, all in mm.
+House axes: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`; mm.
 
-- **A group** has its own x, y, h: x from its left end as seen from its fronts, y from its wall out into the room, h up from the floor. Its origin is its left end, its wall, the floor; for an island the wall is its back edge. The room sets a group by its box in the room and the side its fronts face: a quarter turn (with a mirror, as a group's x, y, h are left-handed); the furniture comes out as built.
-- **The tree**: group → first what runs along it (worktop, end panels, wall panel, plasterboard, front and back strips, plinth, front panels, the hood), then its units in a row as they stand: its carcasses and a dishwasher's bay (its front and the appliance) → a carcass's boards, fronts, products and hardware (legs, a plinth's grille, shelf pins, bumpers, a pull-out shelf's runners) (oven, microwave, fridge-freezer, sink with its tap and trap, hob, coffee machine) → a front's panel, its hardware (hinges, handle, runners) and its drawer's boards, its inner drawer, its drawers behind the door. Each node: id (unique among its siblings), name, type, offset from its parent's origin (the parent's left, back, bottom corner), size (its own part; a carcass's or a container's: with what it holds). A carcass stands at y = its group's backGap; changing the gap moves the carcass and all in it.
-- A product is drawn in its own coordinates, from the origin of its node; the room moves the drawing there (a translation).
-- The model still computes with y from the carcass backs; the tree is what comes out of it. The hardware is drawn by the library from its node, like the products (legs, grilles, shelf pins, bumpers, hinges, handles, runners). Everything of the furniture is drawn from its node: the boards, the fronts' panels, the worktops and the plasterboard by the cabinets; the products, the hardware and a drawer system's metal (its sides, gallery rails, an inner drawer's front, bins, a cutlery insert) by the library; a hole where its board's node is. The trap's outlet runs to the wall, not into it.
+- **A group** has its own axes: x from its left end seen from the fronts, y from its wall into the room, h up from the floor (an island: y from its back edge). The scene gives the group's box in the room and its fronts' side; the room turns it a quarter, with a mirror (a group's axes are left-handed).
+- The cabinets model computes with y from the carcass backs; the tree comes out of it. A carcass stands at y = its group's backGap; changing the gap moves the carcass and everything in it.
+- **The furniture's tree**: group → what runs along it (worktop, end panels, wall panel, plasterboard, front and back strips, plinth, front panels, hood), then its units in a row (carcasses, a dishwasher's bay) → a carcass's boards, fronts, products (oven, microwave, fridge-freezer, sink with tap and trap, hob, coffee machine) and hardware (legs, plinth grille, shelf pins, bumpers, pull-out runners) → a front's panel, hardware (hinges, handle, runners), its drawer's boards, inner drawer, drawers behind a door. Each node: id (unique among siblings), name, type, offset from its parent's left-back-bottom corner, size (a container's: with its contents).
+- Drawn from its node: boards, front panels, worktops, plasterboard by cabinets.js; products, hardware and a drawer system's metal (sides, gallery rails, inner drawer's front, bins, cutlery insert) by library/draw.js, in the product's own coordinates, moved to the node; a hole where its board's node is. A trap's outlet runs to the wall, not into it.
 
-## Formats
+## Format `cabinets`, version 1
 
-**cabinets** (version 1): `settings`, `appliances`, `notes`, `groups`, `components`.
-
-| Field | Means |
-|---|---|
-| settings.materials | each kind of part (carcass, drawerBox, hobPanel, backPanel, cabinet, drawer, frontPanel, strip, plinth, wallPanel, worktop, islandWorktop, endPanel, islandEndPanel) → a board of the library |
-| settings.hardware | the hardware chosen: handle, leg, hinge, drawer, plinthGrille → products of the library; each only if the room has what it serves (no doors: no hinge) |
-| settings (the rest) | how the cabinets are built: carcass, backPanel, crossRails, shelf, pullOutShelf, doorDrawers, hinges, drawers, strip, plinth, worktop, plasterboard, drilling, cutouts. A setting is needed only by what the room has (a wardrobe needs no worktop, no cross rails) |
-| settings.shelf.grid | from, pitch, fixedEvery: the shelves' tops on the lines from + k·pitch, the same for every carcass of the room; fixed on every fixedEvery-th line, the others on pins; a carcass's top or a fixed shelf off the grid is a warning. Without it: shelf.perDoor |
-| settings.drawers.box | `board`: drawers of board on ball runners (drawers.board: sideHeight, lift, clearance, setback, backClearance, runnerLengths: the longest runner that fits the depth); otherwise the drawer system of settings.hardware.drawer |
-| appliances | role (oven, microwave, fridgeFreezer, dishwasher, hob, sink, hood, coffee) → {product, feet}: the product and how it is built in |
-| notes | the designer's notes: name, description, details |
-| groups | group (a number), name, backGap (the gap behind the carcasses), depth (its carcasses' depth; none: settings.carcass.depth), columns (their widths) |
-| components | one piece each: group, column, span, type, height; carcass (its name, unique in the room), tags, handle, gaps, hinge, note. The tag `open` (cabinet, drawer): no front, an open shelf or a drawer box seen from the room; `basin` (drawer): the basin stands over it, its holes cut in the top above; `banded` (worktop): banded on all four edges (a vanity's top) |
-| carcass.base, carcass.hung | base: the carcasses carry a worktop but need not stand on the floor; hung: nothing under them but space (a vanity on hidden hangers, counted a pair a carcass) |
-| cutouts.basin | fromBack; holes [{for: drain or tap, diameter, along, fromBack}]: the round holes of a basin on the top, from its template |
-
-**scene** (version 1):
+Fields: `settings`, `appliances`, `notes`, `groups`, `components`. Rules for what they build: cabinets.md.
 
 | Field | Means |
 |---|---|
-| groups | group number → {front: the side its fronts face (N, S, E, W), offset, size}: its box in the room, from the room's origin, in the house's axes |
-| room | wallColor: the paint of the plasterboard |
-| finish | metal: the one metal of the room (a material of the library with finish `metal`): every metal part drawn in it (handles, taps, profiles, a radiator's rails, the lamps' rings); a product sold in a metal is in it (Test) |
+| settings.materials | part kind (carcass, drawerBox, hobPanel, backPanel, cabinet, drawer, frontPanel, strip, plinth, wallPanel, worktop, islandWorktop, endPanel, islandEndPanel) → a library board |
+| settings.hardware | handle, leg, hinge, drawer, plinthGrille → library products; only what the room uses (no doors: no hinge) |
+| settings (other) | carcass, backPanel, crossRails, shelf, pullOutShelf, doorDrawers, hinges, drawers, strip, plinth, worktop, plasterboard, drilling, cutouts; only what the room uses |
+| settings.shelf.grid | from, pitch, fixedEvery: shelf tops on lines from + k·pitch, the same in every carcass of the room; every fixedEvery-th fixed, others on pins; a carcass top or fixed shelf off the grid is a warning. None: shelf.perDoor |
+| settings.drawers.box | `board`: board drawers on ball runners (drawers.board: sideHeight, lift, clearance, setback, backClearance, runnerLengths); otherwise the drawer system of hardware.drawer |
+| settings.cutouts.basin | fromBack; holes [{for: drain or tap, diameter, along, fromBack}]: the basin's round holes in the top |
+| appliances | role (oven, microwave, fridgeFreezer, dishwasher, hob, sink, hood, coffee) → {product, feet} |
+| notes | designer's notes: name, description, details |
+| groups | group (number), name, backGap (gap behind the carcasses), depth (none: settings.carcass.depth), columns (widths) |
+| components | group, column, span, type, height; carcass (name, unique in the room), tags, handle, gaps, hinge, note. Types and tags: cabinets.md §2 |
+
+## Format `scene`, version 1
+
+| Field | Means |
+|---|---|
+| groups | group number → {front (N, S, E, W), offset, size}: its box in the room's axes |
+| fixtures | id → {product, front, offset, depth?, length?, height?}: a bought thing placed like a group (WC frame, WC, mirror, radiator, screen, drain, shower set, riser, hatch); depth: reach out of the wall as built; length, height: a pipe's run |
+| builtIns | [{name, box, cuts?, material, tiled?}]: what the owner builds (plasterboard casing): one solid, box in the room's axes, openings (a niche) cut out; `tiled: false`: no tiles |
+| room | wallColor: plasterboard paint |
+| finish | metal: the room's one metal (a library material with finish `metal`) for every metal part; a product sold in metals is in it (Test) |
 | installation | sink: tapFromBack, trapTop, wallOutlet; hood: bottom |
-| hardware | our layout of the hardware as drawn: handle (axis, barLength, sideHeight), open (the angles and the drawers' travel; doorStop: a carcass's door that opens less), leg (fromSide, fromBack, fromFront), bins (count, height), plinthGrille (bottom) |
-| floors, floorJoint | the tiles to choose for the floor (not drawn yet) |
-| lights | (the layer Lights: the lamps and their light) pendantBottom; pendants {group, count, spacing}; downlights: {group, x, y} or {group, between: [axes], y}, y from the wall |
-| fixtures | id → {product, front, offset, depth?, length?, height?}: a bought thing placed like a group (a WC frame, a WC, a mirror, a radiator, a screen, a drain, a shower set, a riser, an inspection hatch); depth: what it reaches out of its wall as built (a frame with its flush plate on the casing); length, height: a pipe's as it runs here (the WC's outlet to the riser, the riser up to its casing's top). What stands on a tiled wall stands on the tiles (10 mm out) |
-| builtIns | [{name, box, cuts?, material, tiled?}]: tiled false: a part with no tiles (a shelf on a casing); what the owner builds (a plasterboard casing): one solid, its box in the room's axes, its openings (a niche) cut out of it as boxes; no line between its pieces. Tiled like a wall: its faces that face the room, the openings' reveals |
-| the room's ceiling | the house gives a room what closes it above as lines h <= a + s·y of its own axes: a ceiling over it (the attic's flat one) and, on the top floor, the roof's underside. The lowest flat line is the ceiling (its lamps); a wall's tiles are cut along the others (a gable wall under the slope) |
-| the 2D plan | a room's furniture as a plan of about 1:50 shows it: not cut, seen from above. A carcass is one rectangle with its front (its handles left out); the tops (worktops, end panels) one figure without joints, their openings left; a sink and a hob their outlines, an appliance its body; built-ins and the sanitary fittings their own outlines (glass in blue). Over the plan's cut (wall units, the hood): dashed. Left out: boards, drawers, hardware, handles, strips, plinths, backs, legs, holes, installations |
-| layers | a tile goes with what it lies on: a wall's with the blocks (walls), a casing's with the casing (builtIns), as a facade with its EPS; installations: what a casing hides (the riser, the WC frame and its cistern) |
-| tiles | walls, floor, shower {zone, walls, floor}: each {product, pattern, origin?}; without an origin the tiles are moved along each wall (rows from the floor) and on the floor for the fewest small cuts; the shower's zone [x0, x1, y0, y1] tiled apart |
-| lights.downlights.at | [x, y] in the room's axes, where no group carries them (a bathroom) |
-| cameras | name, eye, target: in the room's axes, from its zero |
+| hardware | our layout of hardware: handle (axis, barLength, sideHeight), open (angles, drawer travel; doorStop: a door that opens less), leg (fromSide, fromBack, fromFront), bins (count, height), plinthGrille (bottom) |
+| lights | pendantBottom; pendants {group, count, spacing}; downlights {group, x, y} or {group, between: [axes], y} (y from the wall), or `at` [x, y] in the room's axes (no group: a bathroom) |
+| tiles | walls, floor, shower {zone [x0, x1, y0, y1], walls, floor}: each {product, pattern, origin?} (room/tiles.md) |
+| cameras | name, eye, target in the room's axes |
 
-## The format `docs`, version 1
+How a room is drawn from it:
 
-What the Documents of a room say that the model and the library do not: `page` (title, heading, info, the XLSX's name, what is excluded), `params` (waste, the sheet's m², the reserve), `values` (stock sizes, allowances), `labels` (a front's function by type and tags, the sheet's label, the cut list's title and note, the drilling legend's remarks), `blocks` (the cut list's tables: id, a two-letter code for the rows' labels, title, columns, cut: the saw cuts priced), `categories` (the estimate's items: id; a product (its key) or a material (a use of the cabinets file) with its name; spec (only what the room adds to the product's); use; qty; refs to notes), `formulas` (named, used in texts), `notes` (by section: topic, description, assumed, decide, an appliance, links). The name, spec, unit, price, source and links of a product are the library's.
+- **Ceiling**: the house gives what closes the room above as lines h ≤ a + s·y in its axes (a flat ceiling; on the top floor the roof's underside). The lowest flat line is the ceiling (lamps); wall tiles are cut along the others.
+- **On tiles**: what stands on a tiled wall stands on the tiles' face.
+- **2D** (about 1:50, seen from above, not cut): a carcass as one rectangle with its front; tops (worktops, end panels) as one figure with their openings; sink and hob outlines, appliance bodies; built-ins and sanitary outlines (glass blue); over the cut (wall units, hood) dashed. Left out: boards, drawers, hardware, strips, plinths, backs, legs, holes, installations.
+- **Layers**: a tile goes with what it lies on (a wall's with Blocks, a casing's with Built in); Installations: what a casing hides (riser, WC frame, cistern).
 
-A quantity is a number or a formula `=…` (ROUNDUP); a text may hold placeholders: `{nodes:hinge}` how many nodes of that kind the room's tree holds (hardware, appliances); `{n:…}` the model's counts; `{s:…}` a setting; `{t:…}` a thickness; `{d:…}` a depth and `{m:…}` the label of a use's board; `{w:…}` a worktop, `{g:…}` a group, `{k:K25.innerWidth}` a carcass, `{i:K25/oven.space}` an item (its module, front, the space around it, the drawers behind its door, its appliance's fit); `{a:…}` an appliance; `{v:…}` a value; `{p:…}` an item's price and `{q:…}` its quantity; `{note:…}` a note's number; `{f:…}` a formula; `{carcass.m2}` a block's total (m2, edge, cut, length: m of the longer side, for what is sold by the metre); `{=…}` a calculation of `<placeholders>`; `|%` as a percentage.
+## Format `docs`, version 1
 
-## Edge banding
+What a room's Documents say beyond the model and the library:
 
-An edge is banded to be seen, by three rules, each for every board alike: an edge facing the fronts (into the room) is banded on the boards that show it (sides, tops, bottoms, shelves, horizontal rails, the hinge post, a spacer; a front on every edge); a part that slides out (a drawer's boards, a pull-out shelf) has its top edge banded, seen from above when it is out; what is hidden behind another part (a back rail behind its strip, backs, inset panels, a system drawer's bottom) has none. Test checks that no banded edge lies against another part.
+| Field | Means |
+|---|---|
+| page | title, heading, info, xlsxFile, excluded |
+| params | waste, sheet m², reserve |
+| values | stock sizes, allowances |
+| labels | a front's function by type and tags; the sheet's label; the cut list's title and note; drilling legend remarks |
+| blocks | cut list tables: id, two-letter row code, title, columns, cut (saw cuts priced) |
+| categories | estimate items: id; a product (key) or a material (a use of the cabinets file) with its name; spec (only what the room adds); use; qty; refs to notes |
+| formulas | named, used in texts |
+| notes | by section: topic, description, assumed, decide, appliance, links |
+
+A product's name, spec, unit, price, source and links come from the library.
+
+A quantity is a number or a formula `=…` (ROUNDUP). Text placeholders: `{nodes:hinge}` nodes of that kind in the room's tree; `{n:…}` model counts; `{s:…}` setting; `{t:…}` thickness; `{d:…}` depth; `{m:…}` label of a use's board; `{w:…}` worktop; `{g:…}` group; `{k:K25.innerWidth}` carcass; `{i:K25/oven.space}` item (module, front, space, drawers behind its door, appliance fit); `{a:…}` appliance; `{v:…}` value; `{p:…}` item price; `{q:…}` item quantity; `{note:…}` note number; `{f:…}` formula; `{carcass.m2}` block total (m2, edge, cut, length: m of the longer side); `{=…}` calculation of placeholders; `|%` percentage.
 
 ## Checks (Test)
 
-- The model's problems (cabinets.js); a check marked as information (a hinge's cup by a door's edge) is shown, not counted as a fault.
-- The tree (core/tree.js): ids, sizes; each group inside the box its scene gives it.
-- Every solid inside its group's box; no part with no size.
-- No banded edge lies against another part (a board, a front, a worktop, a panel, an appliance, the wall, the floor).
+- The model's problems (cabinets.js); info items (a hinge cup by a door's edge) shown, not counted.
+- The tree: ids, sizes; each group inside its scene box; every solid inside its group's box; no part without size.
+- No banded edge against another part (board, front, worktop, panel, appliance, wall, floor). Which edges are banded: cabinets.md §6.
+- Documents: the tree's counts equal the model's.
+- Finish: products in the room's metal; every edge banding in a board's decor.

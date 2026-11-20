@@ -1,13 +1,11 @@
 # Products: how they are fitted
 
-> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done.
-
-> For the fitter, in words. No code, no numbers: each product's sizes and its maker's data are in the library (library/products/), where it stands in a room's scene (`<room>.scene.js`), the cut-outs and holes it needs in its cabinet's settings. How a product is drawn is library/draw.js.
+Rules for the fitter, in words. No numbers: a product's sizes are in library/products/, its place in the room's `.scene.js`, its cut-outs and holes in the cabinets file's settings. Drawn by library/draw.js.
 
 ## 1. A product and its place
 
-- **A product is bought**: from a shop, with its maker's sizes and its link; nothing of it is made on site. The design places it: which way it faces (its front: north, south, east or west), where it stands from the room's corner, and, where the maker lets it vary, how long, how high or how deep it is.
-- **On a tiled wall** a product stands on the tiles' face; on a tiled floor on the tiles' face (room/tiles.md).
+- **A product is bought** (shop, maker's sizes, link); nothing of it is made on site. The design places it: its front (N, S, E, W), its offset from the room's zero and, where the maker allows, its length, height or depth.
+- **On a tiled wall or floor** a product stands on the tiles' face (room/tiles.md).
 - **What the owner builds round a product** (a casing of plasterboard round a riser or a WC's frame) is one solid with its openings (a niche, a hatch) cut out of it, tiled outside.
 - **Layers:** the fittings and the ceramics (Sanitary), what a casing hides (Installations: the riser, the WC's frame, its cistern), the lamps and their light (Lights). Pipes in walls are the installer's, not the design's.
 
@@ -25,7 +23,7 @@
 
 ## 4. The bathrooms
 
-- **The basin** stands on the vanity's top: its tap and its waste through the top's round holes; the siphon is the space-saving one, so the drawer under it passes.
+- **The basin** stands on the vanity's top (room/cabinets.md): tap and waste through the top's round holes; a space-saving siphon, so the drawer under it passes.
 - **The mirror** (with its light) hangs on the tiles over the basin.
 - **The WC:** a wall-hung bowl on a concealed frame; the frame stands in the casing, its flush plate in the casing's face; an inspection hatch in the casing reaches the cistern and the riser. The outlet runs from the bowl to the riser inside the casing.
 - **The shower:** a linear drain at the shower's floor; a concealed thermostatic set with a rain head on the wall; a glass screen with a door (a walk-in), or a corner cabin; the door opens out of the shower.

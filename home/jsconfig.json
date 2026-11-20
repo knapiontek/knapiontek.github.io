@@ -19,6 +19,7 @@
     "room/room.js",
     "room/docs.js",
     "room/tiles.js",
+    "index.js",
     "globals.d.ts"
   ]
 }

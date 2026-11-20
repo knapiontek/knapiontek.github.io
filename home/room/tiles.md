@@ -1,8 +1,6 @@
 # Tiles: how they are laid
 
-> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done.
-
-> For the tiler, in words. No code, no numbers: the tiles' sizes, the grout, the smallest cut, the glue's depth and the reserve are in the library's product and in the data (the house's `settings.tiles`, a room's scene); the counts are in the Documents. One mechanism for the house's floors (room/tiles.js) and a room's walls, floor and shower.
+Rules for the tiler, in words. No numbers: tile size, joint, smallest cut are the library product's; glue depth, reserve and layouts are in the data (the house's `settings.tiles`, a room's scene); counts in Documents. One mechanism (room/tiles.js) for the house's floors and a room's walls, floor and shower.
 
 ## 1. The tile and its layout
 

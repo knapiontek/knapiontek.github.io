@@ -658,7 +658,7 @@
     // edges: banded edges [{side, length, along}] - the edge seen from the front, along = the size it runs along (a | b); hidden parts get none
     const crossRails = settings.crossRails, shelf = settings.shelf, backPanel = settings.backPanel, boardDrawers = valueAt(settings, 'drawers.box') === 'board';
     for (const carcass of carcasses) {
-      const { carcassDepth, carcassFront, frontFace, plinthFace, panelFace } = geometryOf(carcass.group);
+      const { carcassDepth, carcassFront } = geometryOf(carcass.group);
       const { x0, x1, h0, h1 } = carcass;
       const width = x1 - x0, height = h1 - h0;
       const innerX0 = x0 + board, innerX1 = x1 - board, innerWidth = width - 2 * board;
@@ -1614,8 +1614,8 @@
      install: how the sink, its trap and the hood are fitted. Boards are the materials 'board:' + product key ('~': the decor
      turned a quarter; ':core': the bare edge). */
   function draw(D, model, appliances, HW, install) {
-    const { box, at, detail, cylinder, mover, linkTo, envelope, openTop, STATIC } = D;
-    const settings = model.settings, T = model.thickness, { carcassBack, frontThickness } = model, G = r => model.groups[String(r)].geometry;
+    const { box, at, cylinder, mover, linkTo, STATIC } = D;
+    const settings = model.settings, { carcassBack, frontThickness } = model, G = r => model.groups[String(r)].geometry;
     const K = code => 'board:' + code, GROUP_IDS = Object.keys(model.groups);
     /* a part's box from the tree (from its group's wall), in the frame the drawing computes in (y from the carcass backs) */
     const placedNode = (n, r) => { const b = boxIn(n), wall = model.groups[r].wall; return [b[0], b[1], b[2] + wall, b[3] + wall, b[4], b[5]]; };
@@ -1687,7 +1687,6 @@
       return look(c, b.material, { banded: (b.edges || []).map(e => e.side) });
     }
     const worktopOf = r => model.worktops[r] || { y0: 0, y1: 0, depth: 0, h1: 0 };
-    const worktopTop = r => worktopOf(r).h1;
 
     /* ---------- worktops, strips, panels, plinths, plasterboard ---------- */
     const CHECKED_TYPES = ['worktop', 'endPanel', 'strip', 'plinth', 'frontPanel', 'wallPanel'];
@@ -1746,9 +1745,9 @@
     const sinkItem = sinkCut && itemsOf(sinkGroup).find(i => hasTag(i, 'sink'));
     const sinkX = sinkCut ? (sinkCut.x0 + sinkCut.x1) / 2 : 0;
     function drawSink() {
-      const r = sinkGroup, top = worktopTop(r), S = appliances.sink;
-      const x = P('sink')[0], o = originOf(x), local = product(S, { r, x: x.x - o[0], y: x.y - o[1], top: x.top - o[2] }, moved(o));
-      const bowl = { bottom: local.bottom + o[2], rimTop: local.rimTop + o[2], drain: local.drain + o[1] };
+      const r = sinkGroup, S = appliances.sink;
+      const x = P('sink')[0], o = originOf(x);
+      product(S, { r, x: x.x - o[0], y: x.y - o[1], top: x.top - o[2] }, moved(o));
       const tap = P('tap')[0], t = originOf(tap), trap = P('trap')[0], q = originOf(trap);
       HOME.draw.tap(moved(t), { r, x: tap.x - t[0], y: tap.y - t[1], top: tap.top - t[2] });
       HOME.draw.trap(moved(q), { r, x: trap.x - q[0], from: trap.from - q[2], drain: trap.drain - q[1], top: trap.top - q[2], outlet: trap.outlet - q[2], back: trap.back - q[1], wall: trap.wall - q[1] });
@@ -1883,7 +1882,7 @@
     /* the pull-out shelf with the coffee machine: slides out once its door is open */
     function pullOutShelf(shelf) {
       const carcass = carcasses.find(c => c.id === shelf.carcassId), r = String(carcass.group), door = carcass.movers.find(m => m.kind === 'door' && m.item === shelf.item);
-      const m = mover(r, 'drawer', 0, 0, 0), [x0, x1, y0, y1, h0, h1] = shelf.box;
+      const m = mover(r, 'drawer', 0, 0, 0), [x0, x1, , y1, , h1] = shelf.box;
       Object.assign(m, { item: shelf.item }); carcass.movers.push(m);
       if (door) linkTo(door, m);
       board(m.cells, shelf, carcass, 'drawers', m);

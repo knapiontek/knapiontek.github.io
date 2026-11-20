@@ -11,7 +11,6 @@ const fmt = (v, d) => v.toLocaleString(LOCALE, { minimumFractionDigits: d, maxim
 const byId = list => Object.fromEntries(list.map(e => [e.id, e]));
 const el = (tag, attrs, html) => { const e = document.createElement(tag); Object.assign(e, attrs); if (html !== undefined) e.innerHTML = html; return e; };
 const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);   // text into HTML
-const option = (v, t, sel) => `<option value="${v}"${v === sel ? ' selected' : ''}>${t}</option>`;
 
 /* the viewer's choices stay in the browser; a stored state that fails valid() is dropped for fresh() */
 function store(key, fresh, valid) {
@@ -36,11 +35,11 @@ const MODES = { '3d': '3D', '2d': '2D', documents: 'Documents', cabinets: 'Cabin
 const TAB_NAMES = { view: 'View', layers: 'Layers', finish: 'Finish' };
 /* checks: [{name, items, info}]: OK when nothing is listed; info: what it lists is to know, not to correct */
 const chip = c => (c.info ? ['info', 'i'] : c.items.length ? ['warn', String(c.items.length)] : ['ok', 'OK']);
-/* a state kept in the browser and reactive: every change is saved */
 /* the menu's one button for the moving parts: Open opens them all, then it is Close */
 function openAll(ui, V) {
   return { name: ui.opened ? 'Close' : 'Open', cls: 'open', pressed: ui.opened, go: () => { ui.opened = !ui.opened; V.toggleAll(ui.opened); } };
 }
+/* a state kept in the browser and reactive: every change is saved */
 function kept(key, fresh, valid) {
   const s = store(key, fresh, valid), state = Alpine.reactive(s.state);
   Alpine.effect(() => { JSON.stringify(state); s.save(); });
@@ -304,6 +303,6 @@ function autoFit(table, box, cols) {
   return fit;
 }
 
-HOME.ui = { LOCALE, MODES, TAB_NAMES, PARTS, $, fmt, byId, el, esc, option, store, page, openAll, chip, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
+HOME.ui = { LOCALE, MODES, TAB_NAMES, PARTS, $, fmt, byId, el, esc, store, page, openAll, chip, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
   setColumns, autoFit };
 })(window.HOME = window.HOME || {});

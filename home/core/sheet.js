@@ -22,6 +22,9 @@
                                    the text and the cell opens the first one
           any number cell may add: digits (decimals shown; or the column's), pct (shown as a percentage), z (the XLSX
           number format; or the column's z). A text may hold line breaks (\n). */
+/** @typedef {{ kind?: string, level?: number, cells: any[] }} SheetRow */
+/** @typedef {{ name: string, cols?: object[], rows?: SheetRow[], tree?: string, node?: Element }} Sheet */
+/** @typedef {Sheet & { rows: SheetRow[] }} TableSheet  a sheet with rows */
 (/** @param {Home} HOME */ function (HOME) {
 'use strict';
 

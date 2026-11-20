@@ -1,72 +1,64 @@
 # Library
 
-> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done.
+The outside world, once for the whole house: what is bought (products and shops) and the materials, as the shop and the maker give them. None of it is our decision; how we use a product is a node's settings.
 
-The outside world, once for the whole house: what is bought (products, boards, tiles, appliances, hardware, fasteners, sanitary ware, building materials and services, with the shops) and the materials (plaster, glass, lawn, a decor), none of it our decision. A product is described as the shop and the maker give it: what it is, its sizes, its price and where it comes from. Nothing of how we use it (that is a node's settings).
-
-How a product is drawn is code: draw.js, the same for every room. Two kinds of numbers, kept apart: the maker's (the outer sizes, a frame's width, a cup's depth) are the product's data, in products/; the shapes the maker does not give (a knob, a spout, a burner's ring) are made up from the product's look and live in draw.js with the code that draws them, never as data.
-
-- A set that works only together (a hinge with its mounting plate) is one product, with one price.
-- A room names a product by its key; nothing of the product is repeated in a room.
-- A price changed once changes everywhere.
+- Two kinds of numbers, kept apart: the maker's (outer sizes, a frame's width, a cup's depth) are data in products/; shapes the maker does not give (a knob, a spout, a burner ring) are code in draw.js, never data.
+- A set sold only together (a hinge with its plate) is one product, one price.
+- A room names a product by key and repeats none of its data; a price changed once changes everywhere.
 
 ## Files
 
 | File | Holds |
 |---|---|
 | library.js | the product groups, in order: one file each in products/ |
-| products/*.js | the products of one group, by key |
-| shops.js | the shops and workshops, by key |
-| materials.js | how a material looks: colour, surface, the fill of its section in 2D |
+| products/*.js | one group's products, by key |
+| shops.js | shops and workshops, by key |
+| materials.js | how a material looks: colour, surface, 2D section fill |
 | textures/*.js | one image each (a board's decor, a tile's face), by key |
-| draw.js | code: how each kind of product is drawn (`HOME.draw`), in the frame of what holds it (x, y, h), from the product's data and the place the room gives |
+| draw.js | code (`HOME.draw`): how each kind of product is drawn, in the frame of its node (x, y, h), from its data and its place |
 
-## Formats
+## Formats (all version 1; sizes in mm)
 
-All version 1.
+**library**: `groups`: the product groups' names.
 
-**library**: `groups`: the names of the product groups.
+**shops**: `shops`: key → {name, links}.
 
-**products**: `products`: key → product. Every product:
+**products**: `products`: key → product:
 
 | Field | Means |
 |---|---|
 | name | as the shop gives it (what one orders by) |
 | spec | what it is, as bought |
 | code, maker | the maker's model and name |
-| unit, price | the unit and the price in zł gross per unit; null: unknown |
+| unit, price | unit; price in zł gross per unit (null: unknown) |
 | priceNote | where the price comes from, how sure |
 | shop | a key of shops.js |
-| links | [{name, url}]: the maker's documents first, then the shops |
+| links | [{name, url}]: maker's documents first, then shops |
 | note | a remark on buying it |
-| family, metal, code | the same thing in other metals or decors: products of one family differ by metal (the colour it is sold in: a material with finish `metal`) or code (a decor); a room's Finish takes the family's one in its metal and its boards' decors |
-| draw | which drawing of draw.js draws it (oven, microwave, fridgeFreezer, dishwasher, hob, hood, sink, coffeeMachine, basin, basinTap, mirror, wallCabinet, showerScreen, linearDrain, shaped); without it, nothing is drawn. shaped: by the product's shape |
-| shape | the parts of a product as drawn, in its own axes (u along its width, v out of the wall, h up from its bottom): box {b}, cyl {at, ax, r [top, bottom], h, s}, tube {p, r, s}, loft {M (its rows u, v, h: the axes and the place), sec (superellipse sections)}; m: a material, metal (the fittings' finish) or ceramic (the product's); l: sanitary or installations; fit: u or h, a part as long as the fixture's length or height in the scene (a pipe); mv: a part of its door (the product's door: {at [u, v] its hinge, angle in degrees, sign}). From the prototype's bathrooms (work/proto_shapes.js): the radiator, the shower set, the WC bowl, the WC frame with its plate, the riser, the hatch; the attic's bath, its floor tap, the corner shower |
+| family, metal, code | variants: one family's products differ by `metal` (a material with finish `metal`) or `code` (a decor); a room's Finish takes the family member in its metal and its boards' decors |
+| draw | the draw.js drawing (oven, microwave, fridgeFreezer, dishwasher, hob, hood, sink, coffeeMachine, basin, basinTap, mirror, wallCabinet, showerScreen, linearDrain, shaped); none: not drawn |
+| shape | for `shaped`: the parts in the product's axes (u along its width, v out of the wall, h up from its bottom): box {b}, cyl {at, ax, r [top, bottom], h, s}, tube {p, r, s}, loft {M: rows u, v, h; sec: superellipse sections}; m: material, `metal` (the room's fittings) or `ceramic`; l: layer (sanitary, installations); fit: u or h, a part as long as the fixture's length or height in the scene (a pipe); mv: a part of the product's door {at [u, v] hinge, angle (°), sign} |
 
-and, by group:
+By group:
 
 | Group | Fields |
 |---|---|
-| appliances | body: the overall size (an oven or a microwave without its fascia, a fridge or a dishwasher with its doors, a sink's outline on the worktop); fascia: the front panel of an oven or a microwave, bottom: where it starts from the body's bottom; door: hinge (the edge it turns on), height; doors: a fridge's and a freezer's doors from the appliance's bottom, doorDepth; controlPanelHeight, controlColumnWidth: the part of a fascia that does not open; baseSetback: how far behind the front the base starts; bowl, rim, wall: a sink's; glass: a hob's; chimney: a hood's; source: where the sizes come from ("assumed": still to check) |
-| boards | code and decor (the maker's), thickness, length and width (a sheet as it is bought; missing where not known: the editor shows ?), color, core (the colour of a bare edge), coreSurface (what a bare edge shows: `chipboard`, its chips; `fibre`, an even fibreboard), lacquered, frameWidth (a shaker front's frame), depth (worktops, end panels), factoryEdges, twoSided, texture (a key of textures/). What is sold by the metre (a PVC plinth) is a board too, with unit m and no sheet size |
-| hardware | as drawn: a handle's length; a leg's radius, footRadius, footHeight; a hinge's cupDepth; a drawer's runnerWidth, sideThickness, sideFromCarcass, fromBack, fromFront; a grille's width, height |
-| sanitary | as drawn: body (the overall size), and by kind: a basin's wall, shelf; a tap's height, spout; a screen's fixed panel and door |
-| tiles | look, finish; texture; len × wid of one tile, joint; minCut: the smallest acceptable cut piece [along, across]; pattern: the maker's default (grid, half, third, quarter, random); formats: the sizes the maker makes |
-
-Sizes in mm.
-
-**shops**: `shops`: key → {name, links}.
+| appliances | body (overall: an oven or microwave without fascia, a fridge or dishwasher with doors, a sink's outline on the worktop); fascia (oven, microwave front; bottom: from the body's bottom); door (hinge edge, height); doors (fridge and freezer, from the bottom), doorDepth; controlPanelHeight, controlColumnWidth (fascia parts that do not open); baseSetback; bowl, rim, wall (sink); glass (hob); chimney (hood); source ("assumed": to check) |
+| boards | code, decor (maker's); thickness; length, width (sheet as bought; missing: the editor shows ?); color; core (bare edge colour); coreSurface (`chipboard` or `fibre`); lacquered; frameWidth (shaker front); depth (worktops, end panels); factoryEdges; twoSided; texture (textures/ key). Sold by the metre (PVC plinth): unit m, no sheet size |
+| hardware | as drawn: handle length; leg radius, footRadius, footHeight; hinge cupDepth; drawer runnerWidth, sideThickness, sideFromCarcass, fromBack, fromFront; grille width, height |
+| sanitary | as drawn: body; basin wall, shelf; tap height, spout; screen fixed panel, door |
+| tiles | look, finish, texture; len × wid, joint; minCut (smallest acceptable piece [along, across]); pattern (maker's default: grid, half, third, quarter, random); formats (sizes made) |
 
 **materials**: `materials`: key → look:
 
 | Field | Means |
 |---|---|
 | color, roughness, metalness, opacity | the surface; opacity for glass |
-| reflect | the strength of the sky's reflection |
-| clearcoat, clearcoatRoughness | a lacquer over the colour |
+| reflect | strength of the sky's reflection |
+| clearcoat, clearcoatRoughness | lacquer over the colour |
 | emissive, glow | a light |
-| finish, name | `metal`: one of the metals a room's Finish offers, by its name |
-| texture, grass, slabs, wood, image | one generated surface at most: plaster grain {strength, grain, tile}; grass {tile}; paving {size, joint}; boards cut from a decor {decor, board, vertical}; a decor photo {key, turn} |
-| plan | the fill of its section in 2D: a colour, or hatch [ground, line]; without it, color |
+| finish, name | `metal`: a metal offered by Finish, by its name |
+| texture, grass, slabs, wood, image | at most one generated surface: plaster grain {strength, grain, tile}; grass {tile}; paving {size, joint}; boards cut from a decor {decor, board, vertical}; a decor photo {key, turn} |
+| plan | 2D section fill: a colour, or hatch [ground, line]; none: color |
 
-**texture**: name; kind (wood, stone); source (where the image comes from, the grain's direction); size: the mm one image covers [along the grain or the length, across]; grout: the joint's colour; faces: the images as data addresses.
+**texture**: name; kind (wood, stone); source (image origin, grain direction); size (mm one image covers [along grain or length, across]); grout (joint colour); faces (images as data URLs).

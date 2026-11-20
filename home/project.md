@@ -1,144 +1,129 @@
 # Home
 
-> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done.
-
-The house "Dom w papawerach 5 (G)" from archon.pl, as built, with everything that goes into it: the building, the kitchen, the bathrooms, the wardrobes. One main page shows the whole house or a chosen part of it (one room or a group of rooms) in 3D, 2D, Documents and Test.
+The house "Dom w papawerach 5 (G)" (archon.pl), as built, with everything in it: building, kitchen, bathrooms, wardrobes. One page shows the whole house or a part of it (one or more rooms) in 3D, 2D, Documents and Cabinets.
 
 ## Folders
 
-| Folder | Holds |
+| Folder / file | Holds |
 |---|---|
-| index.html, index.js | the application: one page, loaded once, for the whole house and a room, in 3D, 2D, Documents and Cabinets (its look, its logic) |
-| house/ | the house: its data (the rooms, the walls, the settings shared by every room) and its model; it chooses a part of the house and passes it down |
-| room/ | the room engine: it makes a room from what the house gives it and from the room's own data files; cabinets, products, tiles, Documents; the cabinet editor; the rooms' data, flat, `<kind>_<number>.<role>.js` |
-| core/ | shared code: the data loader, the tree, geometry, meshes, the 3D view, the 2D plan, the sheets, the screen; knows no project |
-| library/ | the outside world, as the shop and the maker give it: products, shops, materials, textures (data); and how each product is drawn (draw.js, code) |
-| jsconfig.json, globals.d.ts | the type check of the code (Code style), for the writer only |
-| archon/ | the archon.pl drawings and their analysis: the source the house is drawn from |
-| test.md | the LLM's own file: how to set up, run and check its tests in a new session |
+| index.html, index.js | the application: one page (index.html: its screen; index.js: its logic) |
+| house/ | the house: its data and its model; passes a room down |
+| room/ | the room engine: a room from the house and its own data files (cabinets, products, tiles, Documents); the rooms' data, `<kind>_<number>.<role>.js` |
+| core/ | shared code, no project: loader, tree, geometry, surfaces, 3D, 2D, sheets, screen |
+| library/ | the outside world: products, shops, materials, textures (data); how a product is drawn (draw.js) |
+| archon/ | archon.pl drawings and their analysis: the source of the house |
+| jsconfig.json, globals.d.ts | the type check (Code style); loaded by no page |
+| test.md | the LLM's test procedure |
 
-room/ is being written room by room (To do), the kitchen first. The application is the root's index.html (its look) and index.js (its logic).
+## The application (index.html, index.js)
 
-| File | What it is |
-|---|---|
-| index.html, index.js | the application, one page (its look: index.html; its logic: index.js), loaded once: the whole house, or a part of it (`?room=kitchen_6`, `?room=bathroom_7,bathroom_5`), in 3D, 2D, Documents (its last sheet: Test) and Cabinets (the active room's cabinets file; the editor's screen in index.html, its logic in index.js). One page for every view: the data, the library, the model, the rooms' furniture and the scene are made once; a link to another view (House, Room, a room picked in a room's view), Back and Forward, and a change of a room's Finish build the view again in the same scene, without loading the page |
-| (in index.js) | the cabinet editor, the application's mode Cabinets (until 19 Nov room/cabinets.html, a page of its own; its screen in index.html, its logic in index.js, the engine room/cabinets.js untouched): the active room's cabinets file in tables as the sheets of Documents (groups, columns, components, notes; the materials read only, with their size as bought), its elevations as a sheet, each part in its material's colour, drawn as it changes; the panel: the drawing's part under the cursor, the model's problems; Import and Export of the file, written as the files are; Show in 3D (the tables in place of the room's file, on this page until it is loaded again; a room needs its scene for it); Back to the file. A room without a cabinets file starts empty, with the first furnished room's settings (its materials); a room's tables, left, stay as they were while the page is open |
+- Loaded once. A view: the whole house (House) or a part (Room, `?room=kitchen_6`, `?room=bathroom_7,bathroom_5`). A link to another view, Back/Forward and a change of Finish rebuild the view in the same scene, without reloading.
+- Modes: 3D, 2D, Documents (last sheet: Test), Cabinets.
+- **Cabinets** (the cabinet editor): the active room's cabinets file as tables (groups, columns, components, notes; materials read-only, with their size as bought), its elevations drawn, each part in its material's colour. Panel: the part under the cursor, the data's problems. Import, Export (written as the files are), Show in 3D (replaces the room's file until the page is reloaded; needs the room's scene), Back to the file. A room without a cabinets file starts empty, with the first furnished room's settings. Edited tables stay while the page is open.
 
 ## Dependencies
-
-One way only, as a tree:
 
 ```
 house/  ──►  room/  ──►  core/, library/
 ```
 
-- Nothing below calls the house back. The house passes a room and its settings down; the room engine passes each node to the module of its type.
-- **Modules** never load anything: they are given their data as arguments. **Pages** load the data and hand it to the modules.
+- One way only. The house passes a room and its settings down; the room engine passes each node to the module of its type.
+- **Modules** load nothing: their data comes as arguments. **Pages** load data.
 - core knows no project and no product; library knows no project.
-- One chain for everything drawn: a node ─► the module of its type (house, cabinets, products, tiles) ─► solids ─► core: surface.js ─► scene.js (3D), plan2d.js (2D); the counts ─► sheet.js (Documents).
+- Drawing chain: node ─► module of its type (house, cabinets, products, tiles) ─► solids ─► core/surface.js ─► scene.js (3D), plan2d.js (2D); counts ─► sheet.js (Documents).
 
 ## Data
 
-- Every data file is JSON handed to `HOME.data(…)`, so the pages work opened from disk.
-- Every data file starts with its `format` and `version`. A page loads a file through the one loader of core and names the format and version it knows; any other is an error that names the file and both versions. The version goes up only when an old file would be read wrongly; then the LLM rewrites the few files once and the owner checks them. No converters in the code.
-- The word `format` is for files only; `type` is for nodes (what a thing is).
-- Data is loaded by a key through one rule in core (a room's role, a texture, a product group); code is loaded by the pages statically.
-- A static site cannot list a folder, so every list is in the data: the house lists its rooms, the library its product groups.
+- A data file is JSON passed to `HOME.data(…)`, so pages work opened from disk.
+- It starts with `format` and `version`. A page loads it through core/load.js, naming the format and version it knows; any other is an error naming the file and both versions. The version rises only when an old file would be read wrongly; the LLM then rewrites those files, the owner checks them. No converters.
+- `format`: files only; `type`: nodes only.
+- Data is loaded by key through core/load.js; code is loaded statically by the page.
+- A static site cannot list a folder: every list is in data (the house lists its rooms, the library its product groups).
 
-## The tree and the coordinates
+## Tree and coordinates
 
-- The house's axes are the only coordinates: x along the house, y across, h up. Lengths in mm.
-- One kind of node: `id`, `name`, `type`, `offset`, `size`, `settings`, `refs`, `children`. A node is placed by a translation only: its offset from its parent's origin and its size (above 0). No rotations, no signs for directions; the one exception, a group of furniture, is turned a quarter (with a mirror) to face its side of the room.
-- **No absolute zero**: every node has its own zero, its extreme corner (left, back, bottom), and what it holds lies in positive numbers from it. The site's zero is the corner of its lawn; the house's is its own extreme corner (with the wings, the insulation and the footings: deep in the ground), so every part of the house is positive. The one negative number is where the house stands in the site: it starts below the lawn.
-- **The tree says what belongs to what, not what lies inside what**: a room is in the house, a window in its wall, a sink and its tap in their carcass though they stand over it. A child may stand outside its parent.
-- A side is named by the compass: `E`, `W`, `N`, `S` (a front, an outer side, a door's hinge, opens, flush). The house's x grows to the west (E the garden, W the entrance), its y to the south (N the garage window, S the bathrooms); `down`: under the floor. The one table: core/geometry.js SIDES.
-- The id is given once and never changed or reused; the path of ids from the root is a node's global identifier. A node refers to others only by their paths, in its `refs`, and Test checks that each exists.
-- Settings are a cascade along the tree: a value set on a node is the default for its branch; a node below overrides it for itself and its branch. The root of the cascade is the house.
+- One coordinate system, the house's: x along the house (grows west), y across (grows south), h up; mm.
+- One kind of node: `id`, `name`, `type`, `offset`, `size`, `settings`, `refs`, `children` (core/project.md). Placed by translation only: offset from the parent's origin, size > 0. No rotations, no direction signs; exception: a furniture group, turned a quarter (with a mirror) to face its side.
+- **No absolute zero**: a node's zero is its own left-back-bottom corner; its contents lie at positive numbers. The site's zero: the lawn's corner. The house's zero: its extreme corner (wings, insulation, footings). The one negative number: the house's h in the site (below the lawn).
+- **The tree says what belongs to what, not what lies inside what**: a window belongs to its wall, a tap to its carcass. A child may stand outside its parent.
+- Sides by the compass: `E` (garden), `W` (entrance), `N` (garage window), `S` (bathrooms); `down`: under the floor. One table: core/geometry.js SIDES.
+- An id is given once, never changed or reused; the path of ids from the root is a node's global identifier. A node refers to others only by path, in `refs`; Test checks each.
+- Settings cascade down the tree: a value on a node is the default for its branch; a lower node overrides it. The house is the cascade's root.
 
-## Three kinds of values
+## Who decides what
 
-| Kind | Decided by | Where |
+| Values | Decided by | Where |
 |---|---|---|
-| the house's settings | us, for every room | the house's root node |
-| settings lower in the tree | the designer, for one room, group, cabinet, product or surface | the node they belong to |
-| the maker's data | the maker | the library, with the product |
-
-The library describes only the outside world: what is bought and the materials, as the shop and the maker give them; nothing of it is our decision. How a product is drawn (the shape of a tap, a handle, a hob's zones) is code: library/draw.js, whatever room the product stands in. The shapes the maker does not give live in that code with it, code and its numbers inseparable; the maker's data (sizes, holes, connections) stay in the product's data file.
+| house settings | the owner, for every room | the house's root node |
+| lower settings | the designer, for a room, group, cabinet, product or surface | that node |
+| maker's data | the maker | library/products |
+| shapes the maker does not give | the code | library/draw.js |
 
 ## Data, tree, drawing
 
-Three things, kept apart: the **data** says what is decided; the **tree** holds every thing there is, each in its place; the **drawing** makes each thing's solids.
-
-**Where the data is**
+Kept apart: **data** says what is decided; the **tree** holds every thing, each in its place; the **drawing** makes each thing's solids.
 
 | Data | Says | Where |
 |---|---|---|
-| the house | its elements (walls, slabs, ring beams, insulation, roof), openings, rooms, floors, the house's settings | house/house.js, written as a tree |
-| a room's furniture | what the designer decides: the groups, their carcasses (width, height, what is inside), fronts, worktop, which product stands where | room/`<kind>_<number>`.cabinets.js |
-| a room's scene | where each group stands in the room, the side its fronts face; the lights, the cameras | room/`<kind>_<number>`.scene.js |
-| the maker's | a product's sizes, holes, connections, price | library/products |
-| how a product looks | the shapes the maker does not give | library/draw.js, code |
+| the house | elements (walls, slabs, ring beams, insulation, roof), openings, rooms, floors, settings | house/house.js (a tree) |
+| a room's furniture | groups, carcasses, fronts, worktop, products | room/`<id>`.cabinets.js |
+| a room's scene | where each group and fixture stands, its front side; finish, lights, tiles, cameras | room/`<id>`.scene.js |
+| a room's Documents | what the model and library do not say | room/`<id>`.docs.js |
+| products | sizes, holes, connections, price | library/products |
 
-**The tree.** One tree from the site down to the smallest thing drawn: site → house → floor → wall → opening; house → floor → room → group → carcass → board, front → hinge. The house's part is its data as written. A room's part is made by the room engine from the room's data: what follows from a rule (a board's size from its carcass and the settings) is computed once into the tree, never written in the data. Everything after reads the tree: 3D, 2D, Documents, Test.
+**The tree**: site → house → floor → wall → opening; floor → room → group → carcass → board, front → hinge. The house's part is its data. A room's part is built by the room engine; what follows from a rule (a board's size) is computed into the tree, never written in data. 3D, 2D, Documents and Test read the tree.
 
-**A node and the data.** A node says *where* (its offset and size: the box the thing takes) and *what* (its type, and for a thing bought, the product's key). Nothing of its shape: the shape belongs to whoever draws its type. A node names a product; it never repeats the product's data.
-
-**Who draws what**, by the node's type:
+**A node** says *where* (offset, size: its box) and *what* (type; for a bought thing, the product key). Never its shape; never the product's data.
 
 | Type | Drawn by | How |
 |---|---|---|
-| an element of the house (block, slab, ring beam, EPS, roof) | the house (house/model.js) | a prism filling the node's box, its openings cut out |
-| an opening (door, window, roof window) | the library, as a product (frame, leaf, glass, handle) | in the node's box; the house only cuts the hole |
-| a room's surface (tiles, a floor's finish) | the room engine | the tiles laid over the node's box |
-| a board (a carcass's side, shelf, back; a front's panel; worktop, plinth, strip, panel) | the cabinets (room/cabinets.js) | a box of the node's size, with its decor, edges, profile and holes |
-| a product (appliance, sink, tap, trap, hob, hood; hinge, runner, handle, leg) | the library (library/draw.js) | from the product's data, in its own coordinates from the node's zero |
-| a container (assembly, floor, room, group, carcass, drawer) | no one | only what it holds |
+| house element (block, slab, ring beam, EPS, roof) | house/model.js | prism filling the box, openings cut out |
+| opening (door, window, roof window) | library, as a product | in the box; the house only cuts the hole |
+| room surface (tiles) | room/tiles.js | tiles over the box |
+| board (carcass part, front panel, worktop, plinth, strip, panel) | room/cabinets.js | box with decor, edges, holes |
+| product (appliance, sanitary, hardware) | library/draw.js | from the product's data, from the node's zero |
+| container (assembly, floor, room, group, carcass, drawer) | — | only its contents |
 
-Each solid is then moved to its node: the offsets summed up the tree, and for a group facing another side, the room's quarter turn.
+Each solid is moved to its node: offsets summed up the tree; a group facing another side gets the quarter turn.
 
-**Why.** Whoever knows a shape draws it, and only that: the house its walls, the cabinets their boards, the library a product the same in every room. The tree knows only boxes, so it can be checked (every solid inside its node), counted (the cutting list from the boards' nodes, the bill from the products' nodes) and cut (2D) without knowing a shape. A thing moved in the data moves with all it holds.
-
-**The rule.** Nothing is drawn without its node; every node is a type someone draws, or a container. Test checks both.
+**Rule**: nothing is drawn without its node; every node is a drawn type or a container (Test checks both). So the tree can be checked (every solid in its node), counted (cut list from board nodes, bill from product nodes) and cut (2D) without knowing shapes.
 
 ## Language
 
-- English wherever it can be: the pages, the Documents, every MD file, the code and the data.
-- Proper names stay as they are: a product's name as the shop gives it.
-- The Documents are our own (the cutting list too), not a shop's format.
-- Translations are made by the LLM when needed and are not kept in the project.
+- English everywhere: pages, Documents, MD files, code, data. Proper names as given (a product's shop name).
+- Documents are our own format (the cut list too).
+- Translations: made by the LLM when needed, not kept.
 
 ## To do
 
-1. **The borders of the open rooms**: the owner checks where the hall, the living room and the kitchen end (house.js, drawn in 2D).
-2. **The room engine** (room/): the room from the house; tiles (the house's floors too) and products from the library placed by the room's scene file; the bathroom stands in the house without its cabinet.
-3. **Cabinets and the rooms as data**, room by room, each compared with the prototype: the kitchen first, then the bathrooms' vanity, then the wardrobes and the bedroom's niche (their data rebuilt as carcasses).
-4. **The bathrooms** (now: bathroom_7, then bathroom_5): the prototype's layout and choices (the fittings, the tiles), built by the kitchen's standard, not the prototype's (an LLM's sketch, nothing for CNC). The vanity a cabinets file built by room/cabinets.js: a wall carcass on hangers, drawers of the kitchen's system (Tandembox Antaro, push to open), board fronts banded all round, the top of the same 18 mm decor board (one layer, no bought worktop), the basin on the top with its holes; the products placed by the room's scene and drawn by library/draw.js (WC, its frame and the riser, basin, tap, shower, screen, bath, radiator, mirror); the wall and floor tiles by room/tiles.js; lights as the kitchen's; no suspended ceiling; Documents as the kitchen's (estimate, cut list, assembly cards, notes; no eRozkrój).
-5. **The worktops' and end panels' lengths** as bought: the owner gives them, the library gets them (the editor shows ? for now).
-6. **Types**: the typedefs grow with the code: whatever shape a change touches (the tree's nodes, the scene, the docs file, the library's products, the sheets) gets its typedef then.
+1. **Borders of the open rooms**: the owner checks where hall, living room and kitchen end (house.js, 2D).
+2. **Room engine** (room/): the room from the house; tiles (the house's floors too) and library products placed by the room's scene; the bathroom stands in the house without its cabinet.
+3. **Rooms as data**, each compared with the prototype: kitchen, bathroom vanities, wardrobes, bedroom niche.
+4. **Bathrooms** (bathroom_7, then bathroom_5), by the kitchen's standard: vanity as a cabinets file (wall carcass on hangers, Tandembox Antaro push-to-open drawers, fronts banded all round, top of the same 18 mm decor board, basin holes in it); products placed by the scene, drawn by library/draw.js (WC, frame, riser, basin, tap, shower, screen, bath, radiator, mirror); wall and floor tiles by room/tiles.js; lights as the kitchen's; no suspended ceiling; Documents as the kitchen's (no eRozkrój).
+5. **Worktop and end-panel lengths** as bought: the owner gives them; the editor shows ? until then.
+6. **Types**: a typedef for every shape a change touches (nodes, scene, docs file, products, sheets).
 
-Done: Documents and the editor (the estimate, our own cut list, the assembly cards, Test of the Documents, the cabinet editor); every page on Alpine.js; the wardrobes and the bedroom's niche as cabinets files, with their Documents (19 Nov); every code file type-checked (19 Nov); the floor tiles of the house, with the Finish tab (19 Nov).
+Done: Documents and the editor; every page on Alpine.js; wardrobes and bedroom niche as cabinets files with Documents (19 Nov); type check of every code file (19 Nov); the house's floor tiles with Finish (19 Nov).
 
 ## How we work
 
-- First we agree what to do; it is written in the MD; the owner approves; only then the work starts.
-- The LLM works on its own copy and writes the changed files into the owner's folder. It cannot delete files: for a removed or renamed file it gives the git rm command. Before it starts, it compares its copy with the owner's folder.
-- After every change: every page in every mode without errors, and what should not change compared with before (Documents, the 2D plan, the look). A difference is explained, never left.
-- What is left at the end of a session is in To do; what was done is in git's history.
-- After every change: test.md's tests (and its reference values kept up to date).
+- Every MD file: the LLM asks before changing it. We agree; the LLM writes it in the MD; the owner approves; then the work starts.
+- The LLM works on its own copy, compares it with the owner's folder before starting, and writes changed files back. It cannot delete: it gives the `git rm` command.
+- After every change: test.md's tests; every view and mode without errors; Documents, 2D and the look unchanged unless intended. Every difference explained.
+- End of session: what is left goes to To do; what is done is in git.
 
 ## Code style
 
-- **MD files**: for a person, short and general: what each file is for and what it must keep. A project.md describes the files of its own folder and the formats of its data, field by field; no names of functions.
-- **Comments**: short and exact, only where the code does not say it; never repeating the code.
-- **The level of the design**: the room laid out in space, every object where it stands: what is bought, what is cut, what the owner makes. Not the installer's level (no pipes in the walls, sockets, cables, points for the installer, assembly steps of a fitter); what serves to place things stays (a riser, a WC frame).
-- **The panel is for settings only**: what is shown (the layers) and how it is designed (a tile, a pattern); what follows from it (areas, counts, costs) goes to Documents, never into the panel.
-- **Types in comments, checked** (JSDoc): every code file begins with `// @ts-check`; the shapes of the data (a format, a record of the model: a carcass, a board, an item) are typedefs in the file that makes them, and a value whose type is not plain gets its `@type`. The check is TypeScript's compiler, `tsc --noEmit -p home/jsconfig.json`, a tool of the writer only: the pages load the same plain JavaScript, nothing is built. jsconfig.json lists the files checked (strictNullChecks on); globals.d.ts declares only what comes from outside (HOME, three.js, Alpine.js, SheetJS) and is loaded by no page. The check passes clean before a change is handed over. Not checked: the pages' inline scripts and the data files (their loader and the tests check them).
-- Readable: consistent indentation, short functions, one idea per line, names that match the page.
-- **Computing apart from the browser**: a module computes without the browser (no DOM, no WebGL, nothing touched when its file loads); the browser only where nothing else can do it (drawing, the screen, loading the scripts). Tests run in Node first; the browser only for what only it can show.
-- No hidden rules: what is built follows from the data (types, settings), never from names, labels or sizes. No duplicated values or code: what two pages share lives in core.
-- One global, `HOME`: each module is `HOME.<file name>` (house/model.js: `HOME.model`), so a module's file name is unique in the project; a data file calls `HOME.data(…)`.
-- Scripts in a page in one order: core/load.js first, then three.js, core, the page's own files.
-- Library versions pinned (three.js r128, SheetJS 0.18.5, Alpine.js 3.14.1).
-- **The screen with Alpine.js**: every page is one Alpine part on one screen (core/ui.js): the pieces of the screen (the menus, the modes, the panel, the corner, the sheets, the 2D sheet) are written once in core and a page puts them together in its HTML (`<template x-part="…">`); what is its own (its view, its help, its panel's sections) it writes itself. Its state is reactive and kept in the browser; what it shows follows the state, no code copies it to the screen. Every page looks the same: one ui.css, no style of its own. The modules compute without Alpine (and without the browser where they can). A page that moves to it is checked against what it showed before.
-- No abbreviations a reader has to decode; counters and coordinates may be one letter.
-- A list or an array holds homogeneous values: the same type and meaning.
+- **MD files**: short, for a person: what each file is for, what it must keep. A folder's project.md describes its files and data formats field by field; no function names.
+- **Comments**: short, exact, only what the code does not say.
+- **Design level**: the room in space, every object where it stands (bought, cut, made by the owner). Not the installer's level (pipes, sockets, cables, fitting steps); what places things stays (riser, WC frame).
+- **Panel**: settings only (layers, a tile, a pattern); results (areas, counts, costs) go to Documents.
+- **Types** (JSDoc, checked): every code file starts with `// @ts-check`; data shapes are typedefs in the file that makes them; a non-plain value gets `@type`. Check: `tsc --noEmit -p home/jsconfig.json`, clean before handing over; nothing is built, pages load plain JavaScript. jsconfig.json lists the checked files (strictNullChecks); globals.d.ts declares only outside globals (HOME, three.js, Alpine.js, SheetJS). Not checked: inline page scripts, data files.
+- **Computing without the browser**: a module computes without DOM or WebGL and touches nothing when loaded; the browser only for drawing, the screen, loading scripts. Tests run in Node first.
+- **No hidden rules**: what is built follows from data (types, settings), never from names, labels or sizes. No duplicated values or code: what pages share lives in core.
+- **One global, `HOME`**: module = `HOME.<file name>` (house/model.js: `HOME.model`), so file names are unique; data files call `HOME.data(…)`.
+- **Script order** in a page: core/load.js, three.js, core, the page's own files.
+- **Pinned libraries**: three.js r128, SheetJS 0.18.5, Alpine.js 3.14.1.
+- **Screen (Alpine.js)**: a page is one Alpine part (core/ui.js). Shared pieces (menus, modes, panel, corner, sheets, 2D sheet) are written once in core and put together in the page's HTML (`<template x-part="…">`); the page writes only its own (view, help, panel sections). State is reactive and kept in the browser; the screen follows it. One ui.css, no page styles. Modules compute without Alpine.
+- Readable: consistent indentation, short functions, one idea per line, names as on the page. No abbreviations to decode (counters and coordinates excepted).
+- A list holds values of one type and meaning.

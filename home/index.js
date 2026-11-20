@@ -1,3 +1,4 @@
+// @ts-check
 /* index.js: the application's logic (its look: index.html), one page loaded once: the whole house, or a part of it
    (?room=kitchen_6 or ?room=bathroom_7,bathroom_5) cut out of it, in 3D, 2D, Documents (its last sheet: Test) and Cabinets.
    Everything it shows comes from house.js and the library; nothing of this house is written here. The screen is index.html, of core/ui.js's pieces (Alpine.js); build(ui) makes the model and the scene. */
@@ -296,7 +297,7 @@ HOME.ui.page('house', Object.defineProperties({
   modes: ['3d', '2d', 'documents', 'cabinets'], tabs: { '3d': ['view', 'finish'] },   // the panel's View and Finish: 3D's only
   async load() { P = await build(this); },
   views: 0,                                // counts the views built: the panel follows a new one
-  onMode(m) { P.onMode(m); if (m === 'cabinets') this.editRoom(); }, onLayers: () => P.apply(), menus() { this.views; return P.menus(); },
+  /** @this {any} */ onMode(m) { P.onMode(m); if (m === 'cabinets') this.editRoom(); }, onLayers: () => P.apply(), menus() { this.views; return P.menus(); },
   get layerBlocks() { this.views; return this.ready ? P.layerBlocks() : []; },
   get finish() { this.views; return this.ready ? P.finish() : null; },
   setTiles(key, field, value) { P.setTiles(key, field, value); },
@@ -422,7 +423,7 @@ async function show(asked, keep = false) {
 document.addEventListener('click', e => {   // a link to this page: no new page
   const a = e.target instanceof Element && e.target.closest('a[href]');
   if (!a || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
-  const u = new URL(a.getAttribute('href'), location.href);
+  const u = new URL(/** @type {string} */ (a.getAttribute('href')), location.href);
   const page = p => p.replace(/index\.html$/, '');   // the home folder or its index.html: the same page
   if (page(u.pathname) !== page(location.pathname)) return;
   e.preventDefault(); ui.navOpen = null;
@@ -455,7 +456,6 @@ const FURNISHED = (WHOLE ? ROOMS : PART.map(id => ROOM[id])).filter(r => (r.node
 const FURNITURE = await Promise.all(FURNISHED.map(furnished));
 for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks);
 await LIB.loadTextures(FURNITURE.flatMap(f => f.prepared.textures));
-/* one room with furniture: the furniture's own layers too (its groups and its kinds of parts) */
 /* the active room's furniture: its own layers too (its groups and its kinds of parts), in the house's view as in its own */
 const roomLayers = () => { const f = FURNITURE.find(f => f.room.id === activeId()); return f ? HOME.room.layers(f.prepared) : {}; };
 let ROOM_LAYERS = roomLayers();
@@ -490,7 +490,7 @@ if (WHOLE) {
 /* ================= SCENE ================= */
 const LIGHT = WHOLE ? VIEW.light : Object.assign({}, VIEW.light, VIEW.light.inside, {
   sun: Object.assign({}, VIEW.light.sun, VIEW.light.inside.sun), sky: Object.assign({}, VIEW.light.sky, VIEW.light.inside.sky) });
-const BODY = WHOLE ? [[ROOF.x[0], 0, level(FLOORS[0])], [ROOF.x[1], WIDTH, RIDGE_TOP]] : [[UNION[0], UNION[2], UNION[4]], [UNION[1], UNION[3], UNION[5]]];
+const BODY = UNION ? [[UNION[0], UNION[2], UNION[4]], [UNION[1], UNION[3], UNION[5]]] : [[ROOF.x[0], 0, level(FLOORS[0])], [ROOF.x[1], WIDTH, RIDGE_TOP]];
 V.relight(LIGHT, [0, 1, 2].map(k => (BODY[0][k] + BODY[1][k]) / 2), !WHOLE);   // a room: the inside light and the lamps in physical units
 for (const f of FURNITURE) {
   const own = PARTS.find(p => p.room === f.room), ceilings = own ? own.objects.filter(o => o.role === 'ceiling').map(o => 'object:' + f.room.id + '/' + o.id) : [];
@@ -521,7 +521,7 @@ for (const l of LEAVES) {
    what differs from the data); each is laid and counted over all its rooms, drawn in the rooms shown */
 const TILES = T.setting(HOUSE, 'tiles').value;
 const SHOWN_ROOMS = new Set((WHOLE ? ROOMS : PART.map(id => ROOM[id])).map(r => r.id));
-const PASSAGE_BOXES = MODEL.OPENINGS.filter(o => HOUSE.geometry.openingKinds[o.kind].passage).map(o => o.b);
+const PASSAGES = MODEL.OPENINGS.filter(o => HOUSE.geometry.openingKinds[o.kind].passage), PASSAGE_BOXES = PASSAGES.map(o => o.b);
 if (!state.layouts) state.layouts = {};
 const LAID = {};                           // key -> {L: the laying, P: the product, laid: its rooms, pieces, count, made: its meshes}
 /* the laying of a layout: the data, then what the viewer changed; a changed product, pattern or direction fits the origin anew */
@@ -619,7 +619,6 @@ const click = ray => {
   if (m) V.toggle(m);
 };
 /* the walk stands on the walkable solids and, through a passage (a door), on its floor: the floor runs on through it */
-const PASSAGES = MODEL.OPENINGS.filter(o => HOUSE.geometry.openingKinds[o.kind].passage);
 const PASSAGE_FLOORS = PASSAGES.map(o => ({ S: prism([o.b[0], o.b[1], o.b[2], o.b[3], o.b[4] - 1, o.b[4]]) }));
 const startOf = () => {
   if (WHOLE) return VIEW.walk.start;
@@ -720,8 +719,8 @@ const PLAN_MENU = [{ name: 'Fit', label: 'The whole sheet', go: () => { state.zo
 let SHEET = null;
 function book() {
   const shownRooms = WHOLE ? ROOMS : PART.map(id => ROOM[id]);
-  const rooms = { name: 'Rooms', cols: [{ width: 34, share: 2, max: 40 }, { width: 14, digits: 2, fix: 9 }, { width: 14, digits: 2, fix: 9 }, { width: 60, share: 4 }],
-    rows: [{ kind: 'title', cells: [HOUSE.name] }, { kind: 'head', cells: ['Room', 'Model [m²]', 'Archon [m²]', 'Note'] }] };
+  const rooms = /** @type {TableSheet} */ ({ name: 'Rooms', cols: [{ width: 34, share: 2, max: 40 }, { width: 14, digits: 2, fix: 9 }, { width: 14, digits: 2, fix: 9 }, { width: 60, share: 4 }],
+    rows: [{ kind: 'title', cells: [HOUSE.name] }, { kind: 'head', cells: ['Room', 'Model [m²]', 'Archon [m²]', 'Note'] }] });
   for (const F of FLOORS) {
     const list = shownRooms.filter(r => r.floor === F);
     if (!list.length) continue;
@@ -732,8 +731,8 @@ function book() {
     rooms.rows.push({ kind: 'sum', cells: ['Total', { f: `SUM(B${first}:B${last})` }, { f: `SUM(C${first}:C${last})` }] });
   }
   rooms.rows.push({ cells: ['The model at the block faces; archon after plaster.'] });
-  const doors = { name: 'Doors', cols: [{ width: 12, fix: 9 }, { width: 14, share: 1 }, { width: 50, share: 4 }, { width: 12, digits: 2, fix: 10, z: '#,##0.00' }],
-    rows: [{ kind: 'title', cells: ['Inner doors'] }, { kind: 'head', cells: ['Door', 'Floor', 'Bought', 'Price [zł]'] }] };   // each door is one, by its own name and place
+  const doors = /** @type {TableSheet} */ ({ name: 'Doors', cols: [{ width: 12, fix: 9 }, { width: 14, share: 1 }, { width: 50, share: 4 }, { width: 12, digits: 2, fix: 10, z: '#,##0.00' }],
+    rows: [{ kind: 'title', cells: ['Inner doors'] }, { kind: 'head', cells: ['Door', 'Floor', 'Bought', 'Price [zł]'] }] });   // each door is one, by its own name and place
   const first = doors.rows.length + 1;
   for (const d of LEAVES.map(l => l.door)) for (const key of [d.product, ...d.extras]) {
     const P = key && LIB.product(key);
@@ -741,9 +740,9 @@ function book() {
   }
   doors.rows.push({ kind: 'sum', cells: ['Total', '', '', { f: `SUM(D${first}:D${doors.rows.length})` }] });
   /* the floor tiles: each layout as laid (Finish), its area and the reserve give the m² to buy */
-  const tiles = { name: 'Floor tiles', cols: [{ width: 40, share: 2 }, { width: 40, share: 3 }, { width: 30, share: 2 }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }],
+  const tiles = /** @type {TableSheet} */ ({ name: 'Floor tiles', cols: [{ width: 40, share: 2 }, { width: 40, share: 3 }, { width: 30, share: 2 }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }],
     rows: [{ kind: 'title', cells: ['Floor tiles'] }, { cells: ['Reserve for cuts', { v: TILES.reserve, input: true, z: '0%' }] },
-      { kind: 'head', cells: ['Tile', 'Rooms', 'Laid', 'Area [m²]', 'To buy [m²]', 'Price [zł/m²]', 'Value [zł]'] }] };
+      { kind: 'head', cells: ['Tile', 'Rooms', 'Laid', 'Area [m²]', 'To buy [m²]', 'Price [zł/m²]', 'Value [zł]'] }] });
   const firstTile = tiles.rows.length + 1;
   for (const A of Object.values(LAID).filter(A => A.D.rooms.some(r => SHOWN_ROOMS.has(r.id)))) {
     const r = tiles.rows.length + 1, c = A.count;
@@ -756,9 +755,9 @@ function book() {
   /* the tree of what is shown: the whole house down to its rooms; a room's view, its rooms down to their furniture.
      Each node where it is in its parent (mm); a group of furniture where its scene sets it in its room, the side its fronts
      face, and in it every part in the group's own x, y, h */
-  const tree = { name: 'Elements', tree: 'closed', cols: [{ width: 44, share: 3 }, { width: 34, share: 2 }, ...Array(6).fill({ width: 9, fix: 7 })],
+  const tree = /** @type {TableSheet} */ ({ name: 'Elements', tree: 'closed', cols: [{ width: 44, share: 3 }, { width: 34, share: 2 }, ...Array(6).fill({ width: 9, fix: 7 })],
     rows: [{ kind: 'title', cells: [WHOLE ? HOUSE.name : PART.map(id => roomName(ROOM[id])).join(', ')] },
-      { kind: 'head', cells: ['Node', 'Path', 'x', 'y', 'h', 'Width (x)', 'Depth (y)', 'Height (h)'] }] };
+      { kind: 'head', cells: ['Node', 'Path', 'x', 'y', 'h', 'Width (x)', 'Depth (y)', 'Height (h)'] }] });
   const mm = v => Math.round(v * 10) / 10;
   const furnitureOf = id => FURNITURE.find(f => f.room.id === id);
   function walk(n, path, level, offset = n.offset, size = n.size, name = n.name) {
@@ -778,9 +777,9 @@ function book() {
   else for (const id of PART) walk(ROOM[id].node, T.path(ROOM[id].node), 0);
   tree.rows.push({ cells: ['A node at its offset from the origin of its parent (its left, back, bottom corner); a group of furniture by its box in its room, and in it the group\'s own x (along its fronts), y (from its wall), h.'] });
   /* the checks: each with its result, what to correct under it */
-  const test = { name: 'Test', tree: 'open', cols: [{ width: 44, share: 2 }, { width: 70, share: 4 }, { width: 10, fix: 8 }],
+  const test = /** @type {TableSheet} */ ({ name: 'Test', tree: 'open', cols: [{ width: 44, share: 2 }, { width: 70, share: 4 }, { width: 10, fix: 8 }],
     rows: [{ kind: 'title', cells: [WHOLE ? 'Test of the house' : 'Test of ' + PART.map(id => roomName(ROOM[id])).join(', ')] },
-      { kind: 'head', cells: ['Test', 'Details: what it checks', 'Result'] }] };
+      { kind: 'head', cells: ['Test', 'Details: what it checks', 'Result'] }] });
   for (const c of CHECKS) {
     test.rows.push({ level: 0, cells: [c.name, c.about || '', c.info ? 'i' : c.items.length ? String(c.items.length) : 'OK'] });
     for (const i of c.items) test.rows.push({ level: 1, cells: [i, '', ''] });
@@ -830,7 +829,7 @@ const TILE_CHECKS = [
 const HOUSE_CHECKS = [ASKED_CHECK].concat(T.checks(), MODEL.checks(), LIB.checks(), TILE_CHECKS);
 /* the products a room uses that come in a metal (a tap, a radiator, a handle): in the room's own */
 function metalCheck(f) {
-  const metal = f.prepared.scene.finish.metal, used = new Set(JSON.stringify(f.used).match(/"[^"]+"/g).map(s => s.slice(1, -1)));
+  const metal = f.prepared.scene.finish.metal, used = new Set((JSON.stringify(f.used).match(/"[^"]+"/g) || []).map(s => s.slice(1, -1)));
   const wrong = [...used].filter(k => ALL_PRODUCTS[k] && ALL_PRODUCTS[k].metal && ALL_PRODUCTS[k].metal !== metal);
   return { name: 'Finish: the products in the room\'s metal', about: 'The room\'s metal (its scene\'s finish, or the one chosen in Finish) is one of the library\'s; a product sold in a colour of metal (a tap, a radiator, a handle) is in that one: a product of a family (product.family) takes the family\'s one, else its variant is to choose.',
     items: (METALS.some(m => m.k === metal) ? [] : [`the metal ${metal} is not a finish of the library`]).concat(wrong.map(k => `${ALL_PRODUCTS[k].name}: ${MATERIALS[ALL_PRODUCTS[k].metal].name}, the room ${MATERIALS[metal] ? MATERIALS[metal].name : metal}`)) };
@@ -838,7 +837,7 @@ function metalCheck(f) {
 /* an edge banding in a decor (product.code) is the decor of one of the room's boards */
 function bandingCheck(f) {
   const codes = new Set(Object.values(f.used.cabinets.settings.materials).map(k => (BOARDS[k] || {}).code).concat((f.prepared.model.products || []).map(x => (ALL_PRODUCTS[x.product] || {}).code)).filter(Boolean));
-  const used = new Set(JSON.stringify(f.used.docs || {}).match(/"[^"]+"/g).map(s => s.slice(1, -1)));
+  const used = new Set((JSON.stringify(f.used.docs || {}).match(/"[^"]+"/g) || []).map(s => s.slice(1, -1)));
   return { name: 'Finish: every edge banding in the decor of a board', about: 'An edge banding sold in a decor (its code) bands a board of that decor in the room: when a board is changed in Finish, the banding of its family follows; none in the new decor: to choose.',
     items: [...used].filter(k => ALL_PRODUCTS[k] && ALL_PRODUCTS[k].unit === 'm' && /edge|banding/.test(k) && ALL_PRODUCTS[k].code && !codes.has(ALL_PRODUCTS[k].code)).map(k => `${ALL_PRODUCTS[k].name}: no board ${ALL_PRODUCTS[k].code} in the room`) };
 }
@@ -849,8 +848,6 @@ const CHECKS = WHOLE ? HOUSE_CHECKS : [ASKED_CHECK, ...(ROOM_CHECKS.length ? ROO
 /* ================= THE SCREEN =================
    top-left: House or Room, the floors and their rooms (the active room) · top-right: the modes · below: the
    mode's actions · the panel: the mode's tabs (View: the floors, the layers, the furniture) */
-const linkTo = ids => '?room=' + ids.join(',');
-ui.nav = HOME.model.nav(DATA, PART);
 function onMode(m) {
   if (m !== '3d') V.stopWalk();
   if (m === '2d') drawPlan();
@@ -860,7 +857,7 @@ function onMode(m) {
 
 placeSun(); if (!keep) V.setCamera(cameras()[0]);
 onMode(state.mode);
-window.HOUSE_VIEW = { MODEL, LAID, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, FURNITURE, V, setMode: m => ui.pick(m), setLayer: (k, on) => ui.setLayer(k, on), state, planSvg, book,   // for the automated tests
+/** @type {any} */ (window).HOUSE_VIEW = { MODEL, LAID, PART, PARTS, CHECKS, STILL, LEAVES, OBJECTS, FURNITURE, V, setMode: m => ui.pick(m), setLayer: (k, on) => ui.setLayer(k, on), state, planSvg, book,   // for the automated tests
   get hidden() { return [...HIDDEN]; }, pieces: PIECES.length, edges: V.EDGE_GROUPS.length, show };
 return { click, frame: frameStep, key, active, P: {
   onMode, apply,

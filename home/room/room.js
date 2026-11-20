@@ -61,13 +61,13 @@ function prepare(room, files, library) {
     drawer: drawer ? { runnerWidth: drawer.runnerWidth, sideThickness: drawer.sideThickness, sideFromCarcass: drawer.sideFromCarcass, fromBack: drawer.fromBack, fromFront: drawer.fromFront } : null,
     plinthGrille: grille ? { width: grille.width, bottom: L.plinthGrille.bottom, top: L.plinthGrille.bottom + grille.height } : null
   };
-  /* the looks this room adds to the library's: its boards, its walls' paint, the handles' metal, the lamps' shade */
   /* what the owner builds: one node of the room, each piece a child at its box */
   const BUILT = (scene.builtIns || []).length ? [{ id: 'builtIns', name: 'Built in the room', type: 'builtIns', offset: [0, 0, 0], size: room.size.slice(),
     children: scene.builtIns.map((b, i) => ({ id: 'b' + (i + 1), name: b.name, type: 'builtIn', offset: [b.box[0], b.box[2], b.box[4]], size: [b.box[1] - b.box[0], b.box[3] - b.box[2], b.box[5] - b.box[4]], children: [] })) }] : [];
   /* the ceiling's height: its lowest flat line (under a roof, the flat part), else the room's height */
   const ceiling = Math.min(room.size[2], ...(room.ceiling || []).filter(l => l.s === 0).map(l => l.a));
   const TREE = C().tree(model, appliances, { install: scene.installation, ceiling, HW }).concat(FIXTURES.map(x => x.node), BUILT);
+  /* the looks this room adds to the library's: its boards, its walls' paint, the lamps' shade */
   const looks = Object.assign(C().boardLooks(model), {
     wall: { color: scene.room.wallColor, roughness: 0.95, reflect: 0.45 },
     shade: { color: (model.materials[model.materialFor.cabinet || model.materialFor.carcass]).color, roughness: 0.5, metalness: 0.2 }

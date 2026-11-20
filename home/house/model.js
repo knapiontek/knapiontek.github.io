@@ -484,10 +484,9 @@ return { T, HOUSE, SITE, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOf,
   CELLS, FIXTURES, DOORS, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS, voidsAt, FOOTPRINT, part, checks };
 }
 
-/* the top-left menu of every page of the house: the house, its floors and in each its rooms (the nodes with an area, as
-   build() finds them); part: the ids of the rooms the page shows (none: the whole house) */
-/* the menu: House (the whole house) or Room (cut to the active room), and the floors with their rooms: a room picked is the
-   active one; in the whole house (#room=) the view stays, in a room's view it is that room's */
+/* the top-left menu: House (the whole house) or Room (cut to the active room), and the floors with their rooms (the nodes
+   with an area); part: the ids of the rooms shown (none: the whole house). A room picked is the active one: in the whole
+   house (#room=) the view stays, in a room's view it is that room's */
 function nav(ROOT, part = [], active = part[0]) {
   const HOUSE = ROOT.children.find(n => n.type === 'house'), page = 'index.html';   // the main page, in the home folder
   const floors = HOUSE.children.filter(n => n.type === 'floor'), rooms = F => F.children.filter(n => n.area);

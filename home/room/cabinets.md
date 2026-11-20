@@ -1,8 +1,6 @@
 # Cabinets: how they are made
 
-> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done.
-
-> For the builder, in words. No code, no numbers: every size, gap, depth, clearance and table (shelves, hinges, holes) is in the room's data (its `.cabinets.js` settings) and in its Documents (the cut list, the assembly cards). A room's own decisions (its products, its fronts' gaps) are in its Notes. From the prototype's rules for the kitchen and the wardrobes; the same rules make the bathrooms' vanities.
+Rules for the builder, in words, for every room (kitchen, vanities, wardrobes). No numbers: sizes, gaps, clearances and tables (shelves, hinges, holes) are in the room's `.cabinets.js` settings and its Documents (cut list, assembly cards); a room's own decisions in its Notes. Code: room/cabinets.js.
 
 ## 1. The layout
 
@@ -20,10 +18,10 @@ Every component has exactly one **type**, which decides what is made. **Tags** a
 | plasterboard | a casing of plasterboard |
 | plinth | a plinth |
 | worktop | a worktop; its thickness is the component's height |
-| end panel | an upright board under the end of the worktop, down to the floor; its thickness is the component's width |
-| wall panel | a board on the wall |
-| front panel | a board laid flat |
-| front strip | on edge, in the plane of the fronts, between carcasses |
+| end panel (`endPanel`) | an upright board under the end of the worktop, down to the floor; its thickness is the component's width |
+| wall panel (`wallPanel`) | a board on the wall |
+| front panel (`frontPanel`) | a board laid flat |
+| front strip (`strip`) | on edge, in the plane of the fronts, between carcasses |
 | cabinet | a place in a carcass with a door |
 | drawer | a place in a carcass with a drawer |
 | oven, microwave | an appliance built into a carcass, without a front |
@@ -34,9 +32,9 @@ Every component has exactly one **type**, which decides what is made. **Tags** a
 | sink | cabinet, drawer | rails on edge, no loose shelves, a cut-out in the worktop |
 | hob | cabinet, drawer | a low front rail on edge, a back rail on edge, a partition under the hob |
 | bins | drawer | waste bins in the drawer |
-| inner drawer | drawer | a low drawer over the drawer, behind the same front |
-| coffee machine | cabinet | a pull-out shelf at the bottom (a spacer board on the hinge side), loose shelves over it |
-| board drawers | cabinet | boxes of board on ball-bearing runners behind the door, no loose shelves; a spacer board on the hinge side, so the drawers pass the hinges and the open door |
+| inner drawer (`innerDrawer`) | drawer | a low drawer over the drawer, behind the same front |
+| coffee machine (`coffee`) | cabinet | a pull-out shelf at the bottom (a spacer board on the hinge side), loose shelves over it |
+| board drawers (`doorDrawers`) | cabinet | boxes of board on ball-bearing runners behind the door, no loose shelves; a spacer board on the hinge side, so the drawers pass the hinges and the open door |
 | fridge, freezer | cabinet | the front on the appliance's door: no hinges, no loose shelves, no back |
 | dishwasher | cabinet | the front on the appliance's door, no carcass |
 | island | worktop | a worktop of the island's material, the island's back panel; the island stands free (no wall) |
@@ -50,11 +48,11 @@ A component has at most one of fridge, freezer, dishwasher. These exclude each o
 
 - **A carcass** is every component of one group with the same carcass name. All carcasses of a group have one depth. The gap between the carcasses' backs and the wall is set for each group (an island: to the back edge of the worktop).
 - **Kinds of carcass:**
-  - base: stands on the plinth and has a worktop over it;
-  - tall: stands on the plinth and has no worktop;
-  - upper: stands on a base carcass.
+  - base: a worktop over it; on the plinth, or hung (a vanity on hidden hangers, a pair each, nothing under it);
+  - tall: on the plinth, no worktop;
+  - wall: off the floor, no worktop (on another carcass, or hung).
 
-  A carcass on the plinth stands on legs (a vanity's data sets none).
+  A carcass on the plinth stands on legs (a vanity sets none).
 - **Fixing:** the back strip is fixed to the wall with an angle bracket, except the highest in a stack. The front strip and the back strips are screwed to the first carcass with an ordinary screw, the second carcass to them with a screw from inside.
 - **A grille in the plinth** (an air inlet) is under a carcass on the plinth with an oven, a fridge or a freezer: the maker asks for the air.
 - **The top of a carcass:** a base has two flat rails; the other kinds have a top board.
@@ -88,7 +86,7 @@ A component has at most one of fridge, freezer, dishwasher. These exclude each o
   - the worktop overhangs it: at the side (a space), at the front, in an island at the back too.
 - **An island** (a worktop with the tag island) has a back panel between its end panels, from the floor to the top of the carcasses.
 - **The plinth** is set back behind the fronts.
-- **A vanity's top** (tag banded) is a board of the carcass's decor, as thick as its board, banded all round; the basin stands on it (tag basin under it), its tap and its waste through it; the siphon is the space-saving one, so the drawer under it passes.
+- **A vanity's top** (tag banded): a board of the carcass's decor and thickness, banded all round; the basin on it (room/products.md).
 
 ## 5. Holes and cut-outs
 
