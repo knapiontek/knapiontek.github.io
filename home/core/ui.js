@@ -37,15 +37,13 @@ function store(key, fresh, valid) {
    <template x-part="dock"></template>, and writes what is its own (its view, its help, its panel's sections) into a piece
    that takes it: <template x-part="panel">…</template>. The pieces read these fields of the page:
      title, subtitle, loading, ready · nav {links, groups} · modes, mode, pick(m) · tabs, tab, pickTab(t) · menu (groups of
-     {name, go, label, cls, pressed}) · float ('sun', 'help' or null) · sun · plan {svg, note} · docs · checks ·
+     {name, go, label, cls, pressed}) · float ('sun', 'help' or null) · sun · plan {svg, note} · docs ·
      layerBlocks [{name, id, tab, items}], setLayer(k, on) · state (kept in the browser: mode, tab, zoom, layers, …)
    spec: key, fresh(), valid(s) (the state kept), modes, tabs {mode: [tab]}, load() (async: builds the page), and the page's
    own fields, getters and methods: onMode(m), menus() ({mode: groups}), onLayers(); a getter that needs the page built
    asks this.ready first. */
-const MODES = { '3d': '3D', '2d': '2D', documents: 'Documents', cabinets: 'Cabinets', test: 'Test' };
+const MODES = { '3d': '3D', '2d': '2D', documents: 'Documents', cabinets: 'Cabinets' };
 const TAB_NAMES = { view: 'View', layers: 'Layers', finish: 'Finish' };
-/* checks: [{name, items, info}]: OK when nothing is listed; info: what it lists is to know, not to correct */
-const chip = (/** @type {Check} */ c) => (c.info ? ['info', 'i'] : c.items.length ? ['warn', String(c.items.length)] : ['ok', 'OK']);
 /* the menu's one button for the moving parts: Open opens them all, then it is Close */
 /** @param {{ opened: boolean }} ui @param {{ toggleAll: (on: boolean) => void }} V @returns {MenuItem} */
 function openAll(ui, V) {
@@ -67,7 +65,7 @@ function screen(spec) {
   for (const k of ['key', 'fresh', 'valid', 'modes', 'tabs']) delete own[k];
   const part = {
     ready: false, loading: 'Loading…', title: '', subtitle: '', nav: { links: [], groups: [] }, navOpen: null, modes,
-    float: null, sun: null, docs: null, checks: [], plan: { svg: '', note: '' }, walking: false, opened: false, tabOff: () => false,
+    float: null, sun: null, docs: null, plan: { svg: '', note: '' }, walking: false, opened: false, tabOff: () => false,
     state: key ? kept(key, fresh, valid) : { tab: null, zoom: 1, layers: {} },
     get mode() { return this.state.mode ?? null; },
     get tabs() { return tabs[this.mode] || []; },
@@ -215,7 +213,6 @@ const PARTS = {
   modes: `<div class="toggle modes" id="mode" role="group" aria-label="Mode"><template x-for="m in modes"><button :data-mode="m" :aria-pressed="String(mode === m)" :data-on="mode === m && ''" @click="pick(m)" x-text="HOME.ui.MODES[m]"></button></template></div>`,
   plan: `<div id="plan2d" aria-label="2D plan" x-show="mode === '2d'" x-cloak><p class="sheetnote" id="planNote" x-text="plan.note"></p><div id="sheet" x-html="plan.svg" :style="'--zoom: ' + state.zoom" @wheel.prevent="wheel($event)" @pointerdown="down($event)" @pointermove="move($event)" @pointerup="up()" @pointercancel="up()"></div></div>`,
   docs: `<div id="documents" aria-label="Documents" x-show="mode === 'documents'" x-cloak><template x-if="docs"><div class="docview" x-data="HOME.sheet.view(docs)"><template x-part="sheet"></template></div></template></div>`,
-  checks: `<div id="test" aria-label="Test" x-show="mode === 'test'" x-cloak><div id="checks"><template x-for="c in checks"><div class="check"><span class="chip" :class="HOME.ui.chip(c)[0]" x-text="HOME.ui.chip(c)[1]"></span><span x-text="c.name"></span><template x-if="c.items.length"><ul><template x-for="i in c.items"><li x-text="i"></li></template></ul></template></div></template></div></div>`,
   dock: `<div class="dock" id="dock" aria-label="Bottom menu"><template x-for="(g, gi) in menu"><span class="group"><span class="sep" x-show="gi"></span><template x-for="it in g"><button :class="it.cls || false" :aria-label="it.label || false" :aria-pressed="it.pressed === undefined ? false : String(it.pressed)" @click="it.go($event)" x-text="it.name"></button></template></span></template></div>`,
   pad: `<div class="pad" id="pad" aria-label="Walk" hidden><button data-k="ArrowUp" aria-label="Forward">▲</button><button data-k="ArrowLeft" aria-label="Turn left">◀</button><button data-k="ArrowDown" aria-label="Back">▼</button><button data-k="ArrowRight" aria-label="Turn right">▶</button></div>`,
   sun: `<div class="float sunfloat" id="sun" role="dialog" aria-label="Sun" x-show="float === 'sun'" x-cloak><template x-if="sun"><div x-data="HOME.ui.sunBox(sun)"><template x-part="sunbox"></template></div></template></div>`,
@@ -321,7 +318,7 @@ function autoFit(table, box, cols) {
   return fit;
 }
 
-return { LOCALE, MODES, TAB_NAMES, PARTS, $, fmt, byId, el, esc, page, openAll, chip, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
+return { LOCALE, MODES, TAB_NAMES, PARTS, $, fmt, byId, el, esc, page, openAll, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
   setColumns, autoFit };
 }
 HOME.ui = uiModule();

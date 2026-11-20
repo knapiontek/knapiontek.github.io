@@ -15,9 +15,8 @@ Shared code for every page. Knows no project: a page hands it data; core returns
 | sheet.js | spreadsheet: sheets in tabs, input cells, live formulas, tree sheets (levels, + / −), XLSX with the same formulas and outline; the Documents screen (each table built once, changed in place); what builds a sheet (formula and input cells, columns) |
 | estimate.js | the sheet Estimate, alike on every page: items by category, quantity × price, sums, reserve, total |
 | library.js | the library for a page: products by group, shops, materials; textures by key; its checks |
-| ui.js | the screen (Alpine.js): a page's part (state kept in the browser), modes, panel tabs, bottom menu, floating boxes, 2D zoom and drag; the shared pieces (below); light/dark and panel shown/hidden, one choice for all pages; layers; sun; checks (OK, faults, info); table column widths |
+| ui.js | the screen (Alpine.js): a page's part (state kept in the browser), modes, panel tabs, bottom menu, floating boxes, 2D zoom and drag; the shared pieces (below); light/dark and panel shown/hidden, one choice for all pages; layers; sun; table column widths |
 | ui.css | the look of every page, light and dark: menus, panel, sheets and editor tables, 2D sheet and elevations, pick lists |
-| test.html, test.tree.js | core alone: every module on a small tree of boxes (test.tree.js) |
 
 ## Flow
 
@@ -29,7 +28,7 @@ rows ─► sheet.js (Documents, XLSX)         checks ─► Test
 
 - **Without a browser** (tested in Node): geometry, tree, surface, plan2d (SVG as text), the formulas of sheet. Every file but load.js loads in Node: none touches the browser on load.
 - **Browser only**: load.js (script tags), scene.js (WebGL), the screen of ui.js and sheet.js, the XLSX download.
-- **Screen pieces** (`<template x-part="name">`; one that takes the page's content gets the template's content): nav (top left: house, floors, rooms), view (3D canvas), loading, modes (top right), plan (2D), docs (Documents), checks (Test mode, core/test.html), dock (bottom menu), pad (walk arrows), sun, help, corner (◐ light/dark, ☀ sun, ? help, » « panel), panel (title, tabs, the page's sections), layers (blocks of switches); sheet.js adds sheet. The pieces read the page part's fields (title, modes, menu, layers, state).
+- **Screen pieces** (`<template x-part="name">`; one that takes the page's content gets the template's content): nav (top left: house, floors, rooms), view (3D canvas), loading, modes (top right), plan (2D), docs (Documents), dock (bottom menu), pad (walk arrows), sun, help, corner (◐ light/dark, ☀ sun, ? help, » « panel), panel (title, tabs, the page's sections), layers (blocks of switches); sheet.js adds sheet. The pieces read the page part's fields (title, modes, menu, layers, state).
 
 ## Rules
 
@@ -59,7 +58,3 @@ rows ─► sheet.js (Documents, XLSX)         checks ─► Test
 A file whose root is a node adds `format` and `version` to it. A node's place is in the root's axes (the root's own offset excluded).
 
 Checks: type, offset, size on every node; ids without spaces or slashes, unique among siblings; sizes > 0; every ref resolves; info: what lies below the root's zero.
-
-## test.tree.js
-
-A room: floor, wall, a cabinet of boxes with a door and two drawers (one refers to the cabinet's bottom), one box below the root's zero (reported as info on purpose). Root settings: material, front side, how far doors and drawers open, `view` (layers, edges, light, cameras, walk, 2D cut height).
