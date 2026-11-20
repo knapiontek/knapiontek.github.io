@@ -1,13 +1,57 @@
 // @ts-check
-/* room/docs.js: a furnished room's Documents: the estimate, the cut list, the notes and the assembly cards, from the
-   cabinets' model, the room's tree and its docs file (room/<kind>_<number>.docs.js), with the shared sheets of
-   core/estimate.js. Knows the format docs (its placeholders: room/project.md), not the room. No browser but the cards' HTML.
+/* room/docs.js: a furnished room's Documents: the estimate (core/estimate.js), the cut list, the notes and the assembly
+   cards, from the cabinets' model, the room's tree and its docs file (room/<kind>_<number>.docs.js). Knows the format docs
+   (its placeholders: room/project.md), not the room. No browser but the cards' HTML.
    What the tree holds (a hinge, a leg, an appliance) is counted from it: {nodes:kind}. */
-(/** @param {Home} HOME */ function (HOME) {
+/**
+ * @typedef {object} DocsFile  what a room's Documents say beyond the model and the library (room/project.md: format docs)
+ * @property {{ title: string, heading: string, info: string, xlsxFile: string, excluded: string[] }} page
+ * @property {{ waste: number, sheet: number, reserve: number }} params
+ * @property {Object<string, any>} values
+ * @property {Object<string, any>} labels
+ * @property {{ id: string, code?: string, title: string, columns?: string[], cut?: boolean }[]} blocks
+ * @property {{ name: string, appliances?: boolean, items: Object<string, any>[] }[]} categories
+ * @property {Object<string, string>} [formulas]
+ * @property {{ name: string, notes: Object<string, any>[] }[]} notes
+ */
+function docsModule() {
 'use strict';
 
-/* {cabinets (HOME.cabinets), model (its build), tree (the groups' nodes), docs (the docs file), appliances, library}.
-   Returns {book(), assembly(), warnings, page, fill} */
+const { formula, cols, kinds } = HOME.sheet;
+
+/* ---------- the sheet Cut list: the boards to order, by board, with their edges, m², banding and cuts ----------
+   spec   {title, note, blocks: [block], legend: [{code, text}] (under the note, before the blocks), screen (as cols)}
+   block  {id, title, columns: [label, size 1, size 2, qty] (or the default), cut (cuts counted), rows: [part]}
+   part   {label, name, a, b, edgesA, edgesB (finished edges along a and b), qty, edge (banding of one piece, mm, or null),
+           cutouts: [text], where}
+   Returns {sheet, total: block id -> its row of sums (G m², H pieces, I banding, J cuts)}. */
+const DEFAULT_COLUMNS = ['Part', 'Length', 'Width', 'Qty'];
+function cutListSheet(spec) {
+  const rows = /** @type {any[]} */ ([[spec.title], [spec.note || '']]), total = {};
+  if ((spec.legend || []).length) { rows.push({ kind: 'cat', cells: ['Labels and cut-outs'] }); for (const l of spec.legend) rows.push([l.code, l.text]); }
+  rows.push([]);
+  for (const block of spec.blocks) {
+    const [labelCell, size1, size2, qtyCell] = block.columns || DEFAULT_COLUMNS;
+    rows.push({ kind: 'cat', cells: [block.title] });
+    rows.push({ kind: 'head', cells: ['Label', labelCell, size1 + ' [mm]', 'Edge', size2 + ' [mm]', 'Edge', 'm²', qtyCell, 'Banding [m]', 'Cuts [m]', 'Cut-outs', 'Where'] });
+    const first = rows.length + 1;
+    for (const p of block.rows) {
+      const r = rows.length + 1;
+      rows.push([p.label || '', p.name, p.a, p.edgesA, p.b, p.edgesB, formula(`C${r}*E${r}*H${r}/1000000`), p.qty,
+        p.edge != null ? formula(`${p.edge}*H${r}/1000`) : '', block.cut ? formula(`(C${r}+E${r})*H${r}/1000`) : '', (p.cutouts || []).join('\n'), p.where || '']);
+    }
+    const last = rows.length;
+    total[block.id] = last + 1;
+    rows.push({ kind: 'sum', cells: ['', 'Total', '', '', '', '', formula(`SUM(G${first}:G${last})`), formula(`SUM(H${first}:H${last})`), formula(`SUM(I${first}:I${last})`), formula(`SUM(J${first}:J${last})`)] });
+    rows.push([]);
+  }
+  const sheet = { name: 'Cut list', cols: cols([9, 40, 12, 6, 12, 6, 10, 8, 15, 12, 34, 14], { 6: { digits: 3, z: '0.000' }, 8: { digits: 2, z: '0.00' }, 9: { digits: 2, z: '0.00' } },
+    spec.screen || [8, 's2n12m36', 6, 3, 6, 3, 7, 5, 7, 7, 's1n9m24', 's1n10m30']), rows: kinds(rows) };
+  return { sheet, total };
+}
+
+/** a room's Documents
+    @param {{ cabinets: Home['cabinets'], model: CabinetsModel, tree: FurnitureNode[], docs: DocsFile, appliances: Object<string, any>, library: Library }} room */
 function create({ cabinets, model, tree, docs, appliances, library }) {
 const KE = cabinets, COST = docs, APPLIANCES = appliances;
 const SIDE = { left: 'left', right: 'right', top: 'top', bottom: 'bottom' };
@@ -167,7 +211,7 @@ function renderAssembly() {
       bumpers ? 'bumpers: ' + bumpers : '',
       pins ? 'shelf pins: ' + pins : '',
       pullOutShelves ? pullOutShelves + ' ' + KE.plural(pullOutShelves, 'pair', 'pairs') + ' of full-extension runners' : '',
-      doorDrawers ? 'ball runners ' + fronts.find(f => f.doorDrawers).doorDrawers.runnerLength + ': ' + doorDrawers + ' sets' : '',
+      doorDrawers ? 'ball runners ' + /** @type {Front} */ (fronts.find(f => f.doorDrawers)).doorDrawers.runnerLength + ': ' + doorDrawers + ' sets' : '',
       ...[...new Set(drawers.filter(f => f.drawer && board(f)).map(f => f.drawer.runnerLength))].map(l => 'ball runners ' + l + ': ' + drawers.filter(f => f.drawer && board(f) && f.drawer.runnerLength === l).length + ' sets')
     ].filter(Boolean);
     return '<div class="card"><h3>' + esc(carcass.name) + '</h3>' + KE.placeLabel(carcass.group, carcass.column, carcass.span) + ' · ' + KE.LABELS.carcassKind[carcass.kind] + ' · ' + round1(carcass.x1 - carcass.x0) + ' × ' + round1(carcass.h1 - carcass.h0) + ' × ' + model.groups[carcass.group].geometry.carcassDepth + (carcass.flags.length ? ' · ' + carcass.flags.map(f => KE.LABELS.flag[f]).join(', ') : '') +
@@ -235,7 +279,7 @@ function carcassValue(rest) {
 function itemValue(rest) {
   const dot = rest.indexOf('.'), field = rest.slice(dot + 1), [where, what = ''] = rest.slice(0, dot).split('/'), [kind, n] = what.split('#');
   const item = Object.values(model.groups).flatMap(groupModel => groupModel.items)
-    .filter(i => (i.carcass === where || KE.placeLabel(i.group, i.column, i.span) === where) && (i.type === kind || i.tags.includes(kind)))
+    .filter(i => (i.carcass === where || KE.placeLabel(i.group, i.column, i.span) === where) && (i.type === kind || (i.tags || []).includes(kind)))
     .sort((a, b) => a.h0 - b.h0)[(Number(n) || 1) - 1];
   if (!item) return NaN;
   const f = item.front, carcass = model.carcasses.find(c => c.id === item.carcassId);
@@ -321,7 +365,7 @@ function compute() {
 function buildBook() {
   const result = compute(), E = HOME.estimate;
   /* the cut list: as an order form, each size followed by the number of its finished edges */
-  const cutting = E.cutList({ title: fill(COST.labels.cutTitle), note: fill(COST.labels.cuttingNote),
+  const cutting = cutListSheet({ title: fill(COST.labels.cutTitle), note: fill(COST.labels.cuttingNote),
     screen: [6, 's2n9m36', 6, 3, 6, 3, 6, 5, 7, 6, 21, 's1n8m24'],
     blocks: COST.blocks.map(block => ({ id: block.id, title: fill(block.title), columns: block.columns, cut: block.cut,
       rows: (rowsOf[block.id] || []).map((row, i) => {
@@ -374,5 +418,6 @@ const checks = () => [{ name: 'Documents: the tree counts as the model', about: 
 return { book: buildBook, assembly: renderAssembly, warnings: model.warnings, page: COST.page, fill, nodes: NODES, checks };
 }
 
-HOME.docs = { create };
-})(window.HOME = window.HOME || {});
+return { create };
+}
+HOME.docs = docsModule();

@@ -3,13 +3,57 @@
    walk, loop. Knows no project: the page hands it a material library, textures, the light and the edges.
    The model is built in mm (x along, y across, h up) and turned into the scene's metres with y up.
    Needs core/geometry.js, core/surface.js, THREE and OrbitControls. */
-(/** @param {Home} HOME */ function (HOME) {
+/** @typedef {{ name: string, eye: Vec3, target: Vec3 }} Camera  a view: the eye and what it looks at, mm */
+/**
+ * @typedef {object} Light  a view's light (the house's settings.view.light, or its inside light)
+ * @property {number} exposure
+ * @property {{ azimuth: number, elevation: number, intensity: number, color?: string, reach?: number }} sun  degrees; reach: m its shadow covers
+ * @property {{ intensity: number, color: string, groundColor: string, gradient?: [number, string][] }} sky
+ * @property {{ color: string, near: number, far: number }} fog  mm
+ * @property {{ value: number, sun: number, sky: number, blur: number }} clouds  the default cloud and its factors at full cloud
+ * @property {{ exposure?: number, sun?: object, sky?: object }} [inside]  a part's light: what it changes in this one
+ */
+/** @typedef {{ color: string, opacity: number, layers: string[] }} EdgeLook */
+/** @typedef {{ az: number, el: number, k: number, clouds: number, night: boolean }} Sun  degrees; brightness; 0 clear to 1 overcast */
+/**
+ * @typedef {object} SceneOptions
+ * @property {HTMLCanvasElement} canvas
+ * @property {HTMLElement} stage  what the canvas fills
+ * @property {Object<string, MaterialLook>} materials
+ * @property {Object<string, Texture>} textures
+ * @property {Light} light
+ * @property {EdgeLook} edges
+ * @property {Vec3} sunCentre  what the sun's shadow covers, mm
+ * @property {boolean} [physical]  the light in physical units
+ */
+/**
+ * @typedef {object} MoverPart  a moving part as a page gives it: a door turns about an axis, a drawer slides
+ * @property {Piece[]} pieces
+ * @property {Vec3} [at]  a point of the axis
+ * @property {Vec3} [axis]  a unit vector
+ * @property {number} [angle]  degrees, by the right hand about the axis
+ * @property {Vec3} [slide]  mm
+ * @property {Mover} [behind]  the part that must be open first
+ */
+/** @typedef {MoverPart & { at: Vec3, pivot: any, inner: any, progress: number, goal: number, children: Mover[], [more: string]: any }} Mover */
+/**
+ * @typedef {object} WalkSetup  a view's walk
+ * @property {{ eye: number, radius: number, step: number, headroom: number, speed: number, turn: number, look: number, run: number, start: { x: number, y: number, heading: number } }} config  mm, mm/s, degrees/s
+ * @property {Cell[]} solids  what it bumps into
+ * @property {() => Box[]} [more]  more it bumps into, when the walk starts
+ * @property {Cell[]} ground  the walkable cells
+ * @property {number} startLevel
+ * @property {HTMLElement} pad  the arrows on the screen
+ * @property {() => boolean} canStart
+ * @property {() => void} onToggle
+ * @property {() => Camera} home  the camera when the walk stops
+ */
+/** @typedef {ReturnType<ReturnType<typeof sceneModule>['create']>} SceneView  a page's 3D view */
+function sceneModule() {
 'use strict';
 const { DEG, hRange, edgesOf } = HOME.geometry;
 const { sub3, dot3, cross3, weld } = HOME.surface;
 
-/* opts: {canvas, stage, materials (key -> {color, roughness, ...}), textures (key -> {faces: [image], size: [u, v] mm}),
-   light, edges, sunCentre: [x, y, h]} */
 const MM = 0.001;                          // the scene is in metres, the model in mm
 
 /* triangles of the pieces' convex polygons, batched per (layers, material) into one three.js mesh; uv in mm on the face
@@ -37,6 +81,7 @@ class Batch {
 
 const ease = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 
+/** the 3D view of a page @param {SceneOptions} opts */
 function create(opts) {
   const { canvas, stage } = opts, MATERIAL_LIB = opts.materials, TEX = opts.textures;
 
@@ -138,6 +183,7 @@ function create(opts) {
     }
   };
   const MATERIALS = {};
+  /** the three.js material of a library look, made once @param {string} key */
   function material(key) {
     if (MATERIALS[key]) return MATERIALS[key];
     const def = MATERIAL_LIB[key];
@@ -158,6 +204,7 @@ function create(opts) {
   /* One mesh per (layers, material, finish, cell.batch): cell.batch keeps apart what a page recolours on its own (a selected
      cabinet). parent: the root (model mm), or a group under it that moves (a door). */
   const GROUPS = [];                       // {mesh, cell, layers, finish: {layer, on, off} | null}
+  /** @param {Piece[]} pieces @param {any} [parent] */
   function buildMeshes(pieces, parent = root) {
     const batches = new Map(), made = [];
     for (const f of pieces) {
@@ -174,6 +221,7 @@ function create(opts) {
     return made;
   }
   /* meshes of buildMeshes taken back (a host drawn again with the finishes of a part) */
+  /** @param {ReturnType<typeof buildMeshes>} made */
   function removeMeshes(made) {
     for (const g of made) { g.mesh.parent.remove(g.mesh); g.mesh.geometry.dispose(); GROUPS.splice(GROUPS.indexOf(g), 1); }
     redraw();
@@ -185,6 +233,7 @@ function create(opts) {
      angle (degrees, by the right hand about the axis), or slide: [x, y, h] mm; behind: the part that must be open first} */
   const MOVERS = [], MOVE_SPEED = 1.8;     // of the whole way per second
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;   // then a part and a flight move at once
+  /** @param {MoverPart} part @returns {Mover} */
   function mover(part) {
     const at = part.at || [0, 0, 0], pivot = new THREE.Group(), inner = new THREE.Group();
     pivot.position.set(...at); inner.position.set(-at[0], -at[1], -at[2]); pivot.add(inner); root.add(pivot);
@@ -201,6 +250,7 @@ function create(opts) {
   }
   function setGoal(m, goal) { m.goal = goal; if (reducedMotion) { m.progress = goal; pose(m); } redraw(); }
   /* on: true, false, or undefined to switch; a part behind a closed one opens that one first; closing closes what is behind */
+  /** @param {Mover} m @param {boolean} [on] */
   function toggle(m, on) {
     const goal = on === undefined ? (m.goal ? 0 : 1) : on ? 1 : 0;
     if (goal && m.behind && !m.behind.goal) return setGoal(m.behind, 1);
@@ -208,6 +258,7 @@ function create(opts) {
     if (!goal) for (const c of m.children) toggle(c, false);
   }
   /* every moving part opened (on) or closed */
+  /** @param {boolean} [on] */
   function toggleAll(on) { for (const m of MOVERS) toggle(m, on); }
   /* the moving part a ray meets first, before anything else drawn; null when none */
   function moverAt(ray) {
@@ -225,12 +276,13 @@ function create(opts) {
      in a joint); two outside pieces at an angle are a corner (always a line); otherwise the line hides exactly while every
      group that closes it is shown. */
   const EDGE_GROUPS = [];
+  /** @param {Piece[]} pieces @param {any} [parent] */
   function buildEdges(pieces, parent = root) {
     const E = opts.edges, segs = new Map();
     for (const f of pieces) {
       if (!f.cell.edges) continue;
       for (const [a, b] of edgesOf(f.poly)) {
-        const k = Math.min(a.id, b.id) + '-' + Math.max(a.id, b.id);
+        const k = Math.min(Number(a.id), Number(b.id)) + '-' + Math.max(Number(a.id), Number(b.id));
         if (!segs.has(k)) segs.set(k, { a, b, on: [] });
         segs.get(k).on.push(f);
       }
@@ -266,6 +318,7 @@ function create(opts) {
   /* what a layer state shows: faces, finishes, edges, ghosts */
   /* ghost(layers): shown, but drawn as a ghost: not seen, still casting its shadow (a wall in front of the camera) */
   const GHOST = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
+  /** @param {(layers: string[]) => boolean} shown @param {(layer: string) => boolean} layerOn @param {(layers: string[]) => boolean} [ghost] */
   function showPieces(shown, layerOn, ghost = /** @type {(layers: string[]) => boolean} */ (() => false)) {
     for (const g of GROUPS) {
       g.mesh.visible = shown(g.layers);
@@ -311,6 +364,7 @@ function create(opts) {
   }
   /* the light of another view (the house's, a room's): light, the centre the sun's shadow covers, its sun and sky in physical
      units or not (the renderer is always physical: the shaders are made once for every view) */
+  /** @param {Light} light @param {Vec3} sunCentre @param {boolean} physical */
   function relight(light, sunCentre, physical) {
     Object.assign(opts, { light, sunCentre });
     if (hemi) scene.remove(hemi);
@@ -343,6 +397,7 @@ function create(opts) {
   /* the sun {az, el, k, clouds, night}: azimuth from +x towards +y, elevation, brightness, clouds from 0 (clear) to 1
      (overcast: the light's clouds give the sun's and the sky's factors and the shadow's blur then; between, in proportion);
      by night no sun, a faint sky light, the night sky and fog */
+  /** @param {Sun} s */
   function placeSun(s) {
     const LIGHT = opts.light, az = s.az * DEG, el = s.el * DEG;
     const centre = toWorld(...opts.sunCentre), dir = toWorld(Math.cos(az) * Math.cos(el), Math.sin(az) * Math.cos(el), Math.sin(el)).divideScalar(MM);   // a unit direction, in metres
@@ -366,6 +421,7 @@ function create(opts) {
   controls.addEventListener('change', redraw);
 
 
+  /** @param {Camera} c @param {number} [level]  mm added to the heights */
   function setCamera(c, level = 0) {
     camera.position.copy(toWorld(c.eye[0], c.eye[1], c.eye[2] + level));
     controls.target.copy(toWorld(c.target[0], c.target[1], c.target[2] + level));
@@ -387,6 +443,7 @@ function create(opts) {
     return hit ? hit.point : null;
   }
   /* a click (no drag) on the canvas: the page picks what is under it */
+  /** @param {(ray: any) => void} fn */
   function onClick(fn) {
     let downAt = null;
     canvas.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
@@ -403,7 +460,7 @@ function create(opts) {
     controls.target.copy(camera.position).addScaledVector(dir, depth);
   }
   function enableNavigation() {
-    canvas.parentElement.addEventListener('wheel', e => {   // captured before OrbitControls
+    /** @type {HTMLElement} */ (canvas.parentElement).addEventListener('wheel', e => {   // captured before OrbitControls
       if (e.target !== canvas || walk.on) return;
       e.preventDefault(); e.stopPropagation();
       const p = surfaceAt(ndcOf(e)) || ray.ray.at(camera.position.distanceTo(controls.target), new THREE.Vector3());
@@ -458,6 +515,7 @@ function create(opts) {
      stop it too */
   let W = null, OBSTACLES = [], GROUND = [];
   /* boxes [x1, x2, y1, y2, h1, h2] in house axes (mm) of cells (their solids) and of the meshes of objects that show */
+  /** @param {Cell[]} cells @param {any[]} [objects] three.js objects @returns {Box[]} */
   function boxes(cells, objects = []) {
     const out = cells.map(c => { const ys = c.S.poly.map(p => p[0]), h = hRange(c.S); return [c.S.x1, c.S.x2, Math.min(...ys), Math.max(...ys), h[0], h[1]]; });
     const shows = o => { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; };
@@ -556,6 +614,7 @@ function create(opts) {
     placeWalkCamera();
   }
   /* again for another view: its walk; the keys and the pad are listened to once */
+  /** @param {WalkSetup} w */
   function enableWalk(w) {
     const first = !W;
     W = w;
@@ -590,7 +649,7 @@ function create(opts) {
      It draws only after a change. A page that animates (doors, a camera flight) adds a step: fn(dt) runs every frame and
      returns true while something moved. */
   const STEPS = [];
-  const onFrame = fn => STEPS.push(fn);
+  const onFrame = (/** @type {(dt: number) => boolean} */ fn) => STEPS.push(fn);
   onFrame(dt => {                          // the moving parts toward their goals
     let moved = false;
     for (const m of MOVERS) {
@@ -604,6 +663,7 @@ function create(opts) {
   /* a camera flight to c (as setCamera), eased; at once when instant or when the viewer asks for reduced motion */
   const FLIGHT_MS = 900;
   let flight = null;
+  /** @param {Camera} c @param {boolean} [instant] @param {number} [level] */
   function flyTo(c, instant = false, level = 0) {
     if (instant || reducedMotion) { flight = null; setCamera(c, level); return; }
     flight = { p0: camera.position.clone(), t0: controls.target.clone(), s: performance.now(),
@@ -638,5 +698,6 @@ function create(opts) {
     get hemi() { return hemi; }, get sun() { return sun; } };
 }
 
-HOME.scene = { create };
-})(window.HOME = window.HOME || {});
+return { create };
+}
+HOME.scene = sceneModule();

@@ -2,17 +2,28 @@
 /* core/ui.js: the screen of every page, on Alpine.js: helpers, the state kept in the browser, the page's Alpine part
    (HOME.ui.page) and the pieces of the screen its HTML puts together (<template x-part="…">), light or dark, the layers, the
    sun, the 2D sheet, the widths of a table's columns. Knows no project. Touches the browser only when called. */
-(/** @param {Home} HOME */ function (HOME) {
+/** @typedef {{ name: string, items: string[], info?: boolean, about?: string }} Check  OK when items is empty; info: to know, not to correct */
+/** @typedef {{ name: string, go: () => void, label?: string, cls?: string, pressed?: boolean }} MenuItem  a button of the bottom menu */
+/** @typedef {Object<string, { name: string, parent: string | null }>} LayerTree  layer -> its name and parent */
+/** @typedef {{ k: string, name: string, on: boolean, child: boolean, off: boolean }} LayerItem  a layer as the panel lists it */
+function uiModule() {
 'use strict';
 
 const LOCALE = 'en-GB';                    // numbers on every page and in every sheet
-const $ = id => document.getElementById(id);
-const fmt = (v, d) => v.toLocaleString(LOCALE, { minimumFractionDigits: d, maximumFractionDigits: d });
-const byId = list => Object.fromEntries(list.map(e => [e.id, e]));
+const $ = (/** @type {string} */ id) => document.getElementById(id);
+const fmt = (/** @type {number} */ v, /** @type {number} */ d) => v.toLocaleString(LOCALE, { minimumFractionDigits: d, maximumFractionDigits: d });
+/**
+ * @template {{ id: string }} T
+ * @param {T[]} list
+ * @returns {Record<string, T>}
+ */
+function byId(list) { return Object.fromEntries(list.map(e => [e.id, e])); }
+/** @param {string} tag @param {object} attrs @param {string} [html] @returns {any} an element with attrs */
 const el = (tag, attrs, html) => { const e = document.createElement(tag); Object.assign(e, attrs); if (html !== undefined) e.innerHTML = html; return e; };
-const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);   // text into HTML
+const esc = (/** @type {any} */ v) => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);   // text into HTML
 
 /* the viewer's choices stay in the browser; a stored state that fails valid() is dropped for fresh() */
+/** @template T @param {string} key @param {() => T} fresh @param {(s: any) => boolean} valid @returns {{ state: T, save: () => void }} */
 function store(key, fresh, valid) {
   let state;
   try { state = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { state = null; }
@@ -34,8 +45,9 @@ function store(key, fresh, valid) {
 const MODES = { '3d': '3D', '2d': '2D', documents: 'Documents', cabinets: 'Cabinets', test: 'Test' };
 const TAB_NAMES = { view: 'View', layers: 'Layers', finish: 'Finish' };
 /* checks: [{name, items, info}]: OK when nothing is listed; info: what it lists is to know, not to correct */
-const chip = c => (c.info ? ['info', 'i'] : c.items.length ? ['warn', String(c.items.length)] : ['ok', 'OK']);
+const chip = (/** @type {Check} */ c) => (c.info ? ['info', 'i'] : c.items.length ? ['warn', String(c.items.length)] : ['ok', 'OK']);
 /* the menu's one button for the moving parts: Open opens them all, then it is Close */
+/** @param {{ opened: boolean }} ui @param {{ toggleAll: (on: boolean) => void }} V @returns {MenuItem} */
 function openAll(ui, V) {
   return { name: ui.opened ? 'Close' : 'Open', cls: 'open', pressed: ui.opened, go: () => { ui.opened = !ui.opened; V.toggleAll(ui.opened); } };
 }
@@ -45,6 +57,7 @@ function kept(key, fresh, valid) {
   Alpine.effect(() => { JSON.stringify(state); s.save(); });
   return state;
 }
+/** the page's Alpine part, on its .app (x-data="name") @param {string} name @param {object} spec */
 function page(name, spec) {
   start();
   document.addEventListener('alpine:init', () => Alpine.data(name, () => screen(spec)));
@@ -130,18 +143,22 @@ function start() {
 
 /* ================= LAYERS ================= */
 /* the layers tree: {id: {name, layers: {...}}} -> id -> {name, parent} */
+/** @param {Object<string, { name: string, layers?: object }>} tree @returns {LayerTree} */
 function layerTree(tree) {
-  const LAYER = {};
+  /** @type {LayerTree} */ const LAYER = {};
   (function walk(t, /** @type {string|null} */ parent) { for (const [k, v] of Object.entries(t)) { LAYER[k] = { name: v.name, parent }; if (v.layers) walk(v.layers, k); } })(tree, null);
   return LAYER;
 }
 /* a layer is on when it and all its parents are on; an object is shown when all its layers are on */
+/** @param {LayerTree} LAYER @param {() => Object<string, boolean>} getLayers */
 function layerSwitch(LAYER, getLayers) {
+  /** @type {(k: string) => boolean} */
   const layerOn = k => getLayers()[k] !== false && (!LAYER[k].parent || layerOn(LAYER[k].parent));
-  const shown = layers => layers.every(layerOn);
+  const shown = (/** @type {string[]} */ layers) => layers.every(layerOn);
   return { layerOn, shown };
 }
 /* the layers as a list for the panel: each top layer with its children under it; off: a child whose parent is off */
+/** @param {LayerTree} LAYER @param {string[]} top @param {Object<string, boolean>} state @param {(k: string) => boolean} layerOn @returns {LayerItem[]} */
 function layerList(LAYER, top, state, layerOn) {
   return top.flatMap(k => [{ k, name: LAYER[k].name, on: state[k] !== false, child: false, off: false },
     ...Object.keys(LAYER).filter(c => LAYER[c].parent === k).map(c => ({ k: c, name: LAYER[c].name, on: state[c] !== false, child: true, off: !layerOn(k) }))]);
@@ -155,7 +172,7 @@ function layerList(LAYER, top, state, layerOn) {
 const SUN_RANGE = { azStep: 5, el: [8, 75], k: [0.3, 1.6, 0.05], clouds: [0, 1, 0.05] };   // degrees, degrees, a factor, a share
 const SC = 80, SR = 64, SA = 120, STOP = 20;   // svg units: compass centre and radius; the arc's radius and top margin
 /* one sun for every page, stored once: every page shows the same time of day. light: the light of the page's data */
-const sunStore = light => store('home-sun', () => ({ az: light.sun.azimuth, el: light.sun.elevation, k: 1, clouds: light.clouds.value, night: false }),
+const sunStore = (/** @type {Light} */ light) => store('home-sun', () => ({ az: light.sun.azimuth, el: light.sun.elevation, k: 1, clouds: light.clouds.value, night: false }),
   s => [s.az, s.el, s.k, s.clouds].every(Number.isFinite));
 function sunBox({ rects, mark = [], sun, change }) {
   const raw = Alpine.raw(sun);
@@ -183,6 +200,7 @@ function sunBox({ rects, mark = [], sun, change }) {
 }
 
 /* a text or an svg as a download */
+/** @param {string} text @param {string} type @param {string} file */
 function download(text, type, file) {
   const a = el('a', { href: URL.createObjectURL(new Blob([text], { type })), download: file });
   document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -303,6 +321,7 @@ function autoFit(table, box, cols) {
   return fit;
 }
 
-HOME.ui = { LOCALE, MODES, TAB_NAMES, PARTS, $, fmt, byId, el, esc, store, page, openAll, chip, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
+return { LOCALE, MODES, TAB_NAMES, PARTS, $, fmt, byId, el, esc, page, openAll, chip, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
   setColumns, autoFit };
-})(window.HOME = window.HOME || {});
+}
+HOME.ui = uiModule();

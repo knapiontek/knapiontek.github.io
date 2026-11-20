@@ -4,28 +4,28 @@
    laid one way over some rooms of one floor; rooms that meet with no wall between them are one zone (a tile runs across
    the line), and the floor runs on through a door: each half of its depth belongs to the room on its side. Rectangles
    [x1, x2, y1, y2] in mm, in the floor's axes. Needs core/geometry.js; draws nothing, knows no house. */
-(/** @param {Home} HOME */ function (HOME) {
-'use strict';
-
 /**
  * How a layout is laid, as the viewer may change it.
  * @typedef {object} Laying
  * @property {string} product  a key of the library's tiles
- * @property {string} dir  x: the tiles' length along x, y: along y
+ * @property {'x' | 'y'} dir  x: the tiles' length along x, y: along y
  * @property {string} pattern  a key of PATTERNS
  * @property {number|null} oa  the grid's origin along the length, mm from the floor's zero (null: to fit)
  * @property {number|null} ob  across
+ * @property {string} [grout]  its colour
  */
-/** @typedef {{ len: number, wid: number, joint: number, minCut: number[], pattern: string, price?: number|null }} TileProduct */
-/** @typedef {number[] & { door?: boolean }} Rect  [x1, x2, y1, y2]; door: the half of a door's depth */
-/** @typedef {{ id: string, own: Rect[], rects: Rect[], zone: string }} LaidRoom  own: the room's rectangles; rects: with its doors' halves */
+/** @typedef {{ name?: string, len: number, wid: number, joint: number, minCut: number[], pattern: string, texture: string, price?: number|null }} TileProduct  a library tile, as laid */
+/** @typedef {Rect & { door?: boolean }} TileRect  door: the half of a door's depth */
+/** @typedef {{ id: string, own: TileRect[], rects: TileRect[], zone: string }} LaidRoom  own: the room's rectangles; rects: with its doors' halves */
 /**
  * A piece of one tile in one rectangle, in the layout's axes: a along the tile's length, b across.
- * @typedef {{ room: string, zone: string, j: number, k: number, ta: number, tb: number, a1: number, a2: number, b1: number, b2: number, door: boolean, small?: boolean, poly?: number[][] }} Piece
+ * @typedef {{ room: string, zone: string, j: number, k: number, ta: number, tb: number, a1: number, a2: number, b1: number, b2: number, door: boolean, small?: boolean, poly?: number[][] }} TilePiece
  */
-/** @typedef {{ area: number, tiles: number, full: number, cut: number, small: number, penalty: number }} Count  area in m² */
+/** @typedef {{ area: number, tiles: number, full: number, cut: number, small: number, penalty: number }} TileCount  area in m² */
+function tilesModule() {
+'use strict';
 
-const { hash01, EPS } = HOME.geometry;
+const G = HOME.geometry, { hash01, EPS } = G;
 const INF = Infinity, M2 = 1e6;            // mm² in a m²
 /* the patterns: [name, the shift of each row along the length as a part of a tile; null: at random] */
 const PATTERNS = { grid: ['Grid', 0], half: ['Half bond', 1 / 2], third: ['Third bond', 1 / 3], quarter: ['Quarter bond', 1 / 4], random: ['Random', null] };
@@ -35,8 +35,9 @@ const MIN_PIECE = 0.5;                     // mm: a thinner strip of a tile is n
 const FULL_TOL = 1;                        // mm: a tile this much short of its size is still whole
 
 /* the doors' halves on the side of a room: a passage's box [x1, x2, y1, y2, h1, h2] at the floor's level */
+/** @param {Box[]} passages @param {number} level @param {Rect[]} rects */
 function thresholds(passages, level, rects) {
-  /** @type {Rect[]} */
+  /** @type {TileRect[]} */
   const out = [];
   for (const o of passages) {
     if (Math.abs(o[4] - level) > EPS) continue;
@@ -46,18 +47,19 @@ function thresholds(passages, level, rects) {
       if (hi - lo < MIN_SPAN) continue;
       const half = Math.abs(q[2 * axis + 1] - a1) < EPS ? [a1, mid] : Math.abs(q[2 * axis] - a2) < EPS ? [mid, a2] : null;
       if (!half) continue;
-      /** @type {Rect} */
+      /** @type {TileRect} */
       const t = []; t[2 * axis] = half[0]; t[2 * axis + 1] = half[1]; t[2 * other] = lo; t[2 * other + 1] = hi;
       t.door = true; out.push(t);
     }
   }
   return out;
 }
-/* the rooms of a layout ({id, rects}), each with its doors' halves and its zone */
+/** the rooms of a layout, each with its doors' halves and its zone
+    @param {{ id: string, rects: Rect[] }[]} list @param {Box[]} passages @param {number} level @returns {LaidRoom[]} */
 function rooms(list, passages, level) {
   /** @type {LaidRoom[]} */
   const out = list.map(r => ({ id: r.id, own: r.rects, rects: r.rects.concat(thresholds(passages, level, r.rects)), zone: r.id }));
-  const meet = (a, b) => [0, 1].some(axis => {
+  const meet = (/** @type {Rect} */ a, /** @type {Rect} */ b) => [0, 1].some(axis => {
     const o = 1 - axis, touch = Math.abs(a[2 * axis + 1] - b[2 * axis]) < EPS || Math.abs(b[2 * axis + 1] - a[2 * axis]) < EPS;
     return touch && Math.min(a[2 * o + 1], b[2 * o + 1]) - Math.max(a[2 * o], b[2 * o]) > MIN_SPAN;
   });
@@ -66,13 +68,13 @@ function rooms(list, passages, level) {
 }
 
 /* a rectangle in the layout's axes [a1, b1, a2, b2], and a point back in the floor's [x, y] */
-const toAB = (L, q) => L.dir === 'x' ? [q[0], q[2], q[1], q[3]] : [q[2], q[0], q[3], q[1]];
-const toXY = (L, a, b) => L.dir === 'x' ? [a, b] : [b, a];
+const toAB = (/** @type {Laying} */ L, /** @type {Rect} */ q) => L.dir === 'x' ? [q[0], q[2], q[1], q[3]] : [q[2], q[0], q[3], q[1]];
+const toXY = (/** @type {Laying} */ L, /** @type {number} */ a, /** @type {number} */ b) => L.dir === 'x' ? [a, b] : [b, a];
 /** @param {TileProduct} P */
 const sizes = P => ({ TA: P.len, TB: P.wid, Pa: P.len + P.joint, Pb: P.wid + P.joint, minA: P.minCut[0], minB: P.minCut[1] });
-const rowShift = (L, j, Pa) => PATTERNS[L.pattern][1] === null ? hash01(j, 911) * Pa : (((j * PATTERNS[L.pattern][1]) % 1 + 1) % 1) * Pa;
+const rowShift = (/** @type {Laying} */ L, /** @type {number} */ j, /** @type {number} */ Pa) => PATTERNS[L.pattern][1] === null ? hash01(j, 911) * Pa : (((j * PATTERNS[L.pattern][1]) % 1 + 1) % 1) * Pa;
 
-/** @param {Laying} L @param {TileProduct} P @param {LaidRoom[]} laid @param {number} oa @param {number} ob @returns {Piece[]} */
+/** @param {Laying} L @param {TileProduct} P @param {LaidRoom[]} laid @param {number} oa @param {number} ob @returns {TilePiece[]} */
 function lay(L, P, laid, oa, ob) {
   const { TA, TB, Pa, Pb } = sizes(P), out = [];
   for (const room of laid) for (const q of room.rects) {
@@ -90,19 +92,11 @@ function lay(L, P, laid, oa, ob) {
   return out;
 }
 /* a polygon [[x, y]] cut to the side p·x + q·y <= c of a line */
-function clipHalf(poly, p, q, c) {
-  const out = [], inside = v => p * v[0] + q * v[1] <= c + 1e-9;
-  for (let i = 0; i < poly.length; i++) {
-    const A = poly[i], B = poly[(i + 1) % poly.length], ia = inside(A), ib = inside(B);
-    if (ia) out.push(A);
-    if (ia !== ib) { const fa = p * A[0] + q * A[1] - c, fb = p * B[0] + q * B[1] - c, t = fa / (fa - fb); out.push([A[0] + t * (B[0] - A[0]), A[1] + t * (B[1] - A[1])]); }
-  }
-  return out;
-}
-const polyArea = poly => Math.abs(poly.reduce((s, v, i) => { const w = poly[(i + 1) % poly.length]; return s + v[0] * w[1] - w[0] * v[1]; }, 0)) / 2;
+const clipHalf = (/** @type {Poly} */ poly, /** @type {number} */ p, /** @type {number} */ q, /** @type {number} */ c) => G.clipHalf(poly, v => c - p * v[0] - q * v[1]);
+const polyArea = (/** @type {Poly} */ poly) => Math.abs(G.area2(poly));
 /* the pieces cut to the sides of lines {p, q, c}: p·x + q·y <= c in the plane's coordinates (a wall under a roof's slope);
    a piece cut becomes a polygon (poly, in the layout's a, b), its box the polygon's; one wholly past a line goes */
-/** @param {Laying} L @param {Piece[]} pieces @param {{ p: number, q: number, c: number }[]} lines @returns {Piece[]} */
+/** @param {Laying} L @param {TilePiece[]} pieces @param {{ p: number, q: number, c: number }[]} lines @returns {TilePiece[]} */
 function clip(L, pieces, lines) {
   if (!lines.length) return pieces;
   const out = [];
@@ -119,7 +113,7 @@ function clip(L, pieces, lines) {
 }
 /* one tile is all the pieces with its row and column in one zone; the doors' halves do not make it cut. Marks the pieces of
    a small cut (shorter than the product's minCut) */
-/** @param {TileProduct} P @param {Piece[]} pieces @returns {Count} */
+/** @param {TileProduct} P @param {TilePiece[]} pieces @returns {TileCount} */
 function count(P, pieces) {
   const { TA, TB, minA, minB } = sizes(P), tiles = new Map();
   let area = 0;
@@ -160,7 +154,7 @@ function fit(L, P, laid) {
    each with its uv in mm of that image at a point. at(p, q): the point [x, y, h] of the plane's coordinates (p, q) (a floor:
    x, y; a wall: along it, up), n: the face's normal (the quads turn toward it). Stone: one image is one whole tile, a random
    image and turn per tile; wood: each plank a random crop of the photo. small: the pieces of a small cut, apart */
-/** @param {Laying} L @param {TileProduct} P @param {{ kind: string, size: number[], faces: any[] }} T @param {Piece[]} pieces @param {(p: number, q: number) => number[]} at @param {number[]} n */
+/** @param {Laying} L @param {TileProduct} P @param {Texture} T @param {TilePiece[]} pieces @param {(p: number, q: number) => Vec3} at @param {Vec3} n */
 function faces(L, P, T, pieces, at, n) {
   const { TA, TB } = sizes(P), stone = T.kind === 'stone', [imgA, imgB] = T.size;
   /** @type {Object<string, { face: number, small: boolean, quads: { poly: number[][], uv: (v: number[]) => number[] }[] }>} */
@@ -195,10 +189,12 @@ function faces(L, P, T, pieces, at, n) {
 }
 /* the pieces of core for a layout's faces and its grout: materials by key (added to the page's library: tiles:<texture>:<face>,
    its red twin for a small cut, tiles:grout:<colour>); cell: the cell's fields (layers), finish: the layer that shows a small cut red */
+/** @param {Laying} L @param {TileProduct} P @param {Texture} T @param {TilePiece[]} pieces @param {Poly[]} grout @param {(p: number, q: number) => Vec3} at
+    @param {Vec3} n @param {CellLook} cell @param {string} finish @returns {{ pieces: Piece[], materials: Object<string, MaterialLook> }} */
 function corePieces(L, P, T, pieces, grout, at, n, cell, finish) {
-  const out = [], materials = {}, stone = T.kind === 'stone', group = cell.layers.join('+');
+  const /** @type {Piece[]} */ out = [], /** @type {Object<string, MaterialLook>} */ materials = {}, stone = T.kind === 'stone', group = cell.layers.join('+');
   const g = 'tiles:grout:' + L.grout; materials[g] = { color: L.grout, roughness: 0.95 };
-  for (const q of grout) out.push({ poly: q, n, uv: v => [v[0] + v[2], v[1] + v[2]], cell, group, material: g });
+  for (const q of grout) out.push({ poly: q, n, uv: (/** @type {Vec3} */ v) => [v[0] + v[2], v[1] + v[2]], cell, group, material: g });
   for (const set of faces(L, P, T, pieces, at, n)) {
     const key = `tiles:${P.texture}:${set.face}`, red = key + ':small';
     materials[key] = { image: { key: P.texture, face: set.face }, roughness: stone ? 0.6 : 0.65, reflect: 0.35, ahead: true };
@@ -211,20 +207,23 @@ function corePieces(L, P, T, pieces, grout, at, n, cell, finish) {
 
 /* the edges of a slab of tiles: rings [{poly [[u, v]], out: 1 its outline, -1 a hole}] on its face, at (u, v) -> the point on
    the face, point (u, v): the surface's own (affine), n: the face's normal; each edge a quad from the face back by depth */
+/** @param {{ poly: number[][], out: number }[]} rings @param {(u: number, v: number) => Vec3} at @param {(u: number, v: number) => Vec3} point
+    @param {Vec3} n @param {number} depth @param {CellLook} cell @param {string} material @returns {Piece[]} */
 function slabEdges(rings, at, point, n, depth, cell, material) {
-  const P0 = point(0, 0), U3 = point(1, 0).map((v, k) => v - P0[k]), V3 = point(0, 1).map((v, k) => v - P0[k]), out = [], group = cell.layers.join('+');
+  const P0 = point(0, 0), U3 = point(1, 0).map((v, k) => v - P0[k]), V3 = point(0, 1).map((v, k) => v - P0[k]), /** @type {Piece[]} */ out = [], group = cell.layers.join('+');
   for (const { poly, out: side } of rings) for (let k = 0; k < poly.length; k++) {
     const p = poly[k], q = poly[(k + 1) % poly.length], du = q[0] - p[0], dv = q[1] - p[1], len = Math.hypot(du, dv);
     if (len < 0.5) continue;
     const nu = side * dv / len, nv = -side * du / len, m = U3.map((v, i) => nu * v + nv * V3[i]);
-    const face = [at(...p), at(...q)], back = face.map(x => x.map((v, i) => v - n[i] * depth));
+    const face = [at(p[0], p[1]), at(q[0], q[1])], back = face.map(x => x.map((v, i) => v - n[i] * depth));
     const quad = [face[0], face[1], back[1], back[0]], e1 = quad[1].map((v, i) => v - quad[0][i]), e2 = quad[3].map((v, i) => v - quad[0][i]);
     const c = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
     if (c[0] * m[0] + c[1] * m[1] + c[2] * m[2] < 0) quad.reverse();   // facing out of the slab
-    out.push({ poly: quad, n: m, uv: v => [v[0] + v[1], v[2]], cell, group, material });
+    out.push({ poly: quad, n: m, uv: (/** @type {Vec3} */ v) => [v[0] + v[1], v[2]], cell, group, material });
   }
   return out;
 }
 
-HOME.tiles = { PATTERNS, DIRS, rooms, lay, clip, clipHalf, count, fit, faces, corePieces, slabEdges };
-})(window.HOME = window.HOME || {});
+return { PATTERNS, DIRS, rooms, lay, clip, clipHalf, count, fit, corePieces, slabEdges };
+}
+HOME.tiles = tilesModule();

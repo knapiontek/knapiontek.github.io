@@ -3,14 +3,15 @@
    it says its format and version. A page loads a file by its path from the home folder (file gives the path of a key);
    the data comes back only when its format and version are the ones the caller knows. Must be the first script of a page:
    it finds the home folder from its own address. Knows no project. */
-(/** @param {Home} HOME */ function (HOME) {
+window.HOME = window.HOME || /** @type {Home} */ ({});
+function loadModule() {
 'use strict';
 
 const BASE = /** @type {HTMLScriptElement} */ (document.currentScript).src.replace(/core\/load\.js(\?.*)?$/, '');   // the home folder
 const DATA = new Map(), PENDING = new Map();                                       // address -> data, address -> its loading
 
 /* called by every data file: its data, kept under the file's address */
-HOME.data = json => { DATA.set(/** @type {HTMLScriptElement} */ (document.currentScript).src, json); };
+const data = json => { DATA.set(/** @type {HTMLScriptElement} */ (document.currentScript).src, json); };
 
 /* the path of every kind of data file, from the home folder */
 const file = {
@@ -44,5 +45,6 @@ async function load(path, format, version) {
 }
 
 load.file = file;
-HOME.load = load;
-})(window.HOME = window.HOME || {});
+return { data, load };
+}
+Object.assign(HOME, loadModule());

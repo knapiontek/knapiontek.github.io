@@ -34,7 +34,7 @@ house/  ──►  room/  ──►  core/, library/
 
 ## Data
 
-- A data file is JSON passed to `HOME.data(…)`, so pages work opened from disk.
+- A data file is pure JSON passed to `HOME.data(…)` (named .js so pages work opened from disk); nothing else in it: no code, no comments.
 - It starts with `format` and `version`. A page loads it through core/load.js, naming the format and version it knows; any other is an error naming the file and both versions. The version rises only when an old file would be read wrongly; the LLM then rewrites those files, the owner checks them. No converters.
 - `format`: files only; `type`: nodes only.
 - Data is loaded by key through core/load.js; code is loaded statically by the page.
@@ -46,7 +46,7 @@ house/  ──►  room/  ──►  core/, library/
 - One kind of node: `id`, `name`, `type`, `offset`, `size`, `settings`, `refs`, `children` (core/project.md). Placed by translation only: offset from the parent's origin, size > 0. No rotations, no direction signs; exception: a furniture group, turned a quarter (with a mirror) to face its side.
 - **No absolute zero**: a node's zero is its own left-back-bottom corner; its contents lie at positive numbers. The site's zero: the lawn's corner. The house's zero: its extreme corner (wings, insulation, footings). The one negative number: the house's h in the site (below the lawn).
 - **The tree says what belongs to what, not what lies inside what**: a window belongs to its wall, a tap to its carcass. A child may stand outside its parent.
-- Sides by the compass: `E` (garden), `W` (entrance), `N` (garage window), `S` (bathrooms); `down`: under the floor. One table: core/geometry.js SIDES.
+- Sides by the compass: `E` (garden), `W` (entrance), `N` (garage window), `S` (bathrooms); `down`: under the floor. Defined once, in core/geometry.js.
 - An id is given once, never changed or reused; the path of ids from the root is a node's global identifier. A node refers to others only by path, in `refs`; Test checks each.
 - Settings cascade down the tree: a value on a node is the default for its branch; a lower node overrides it. The house is the cascade's root.
 
@@ -97,13 +97,8 @@ Each solid is moved to its node: offsets summed up the tree; a group facing anot
 ## To do
 
 1. **Borders of the open rooms**: the owner checks where hall, living room and kitchen end (house.js, 2D).
-2. **Room engine** (room/): the room from the house; tiles (the house's floors too) and library products placed by the room's scene; the bathroom stands in the house without its cabinet.
-3. **Rooms as data**, each compared with the prototype: kitchen, bathroom vanities, wardrobes, bedroom niche.
-4. **Bathrooms** (bathroom_7, then bathroom_5), by the kitchen's standard: vanity as a cabinets file (wall carcass on hangers, Tandembox Antaro push-to-open drawers, fronts banded all round, top of the same 18 mm decor board, basin holes in it); products placed by the scene, drawn by library/draw.js (WC, frame, riser, basin, tap, shower, screen, bath, radiator, mirror); wall and floor tiles by room/tiles.js; lights as the kitchen's; no suspended ceiling; Documents as the kitchen's (no eRozkrój).
-5. **Worktop and end-panel lengths** as bought: the owner gives them; the editor shows ? until then.
-6. **Types**: a typedef for every shape a change touches (nodes, scene, docs file, products, sheets).
-
-Done: Documents and the editor; every page on Alpine.js; wardrobes and bedroom niche as cabinets files with Documents (19 Nov); type check of every code file (19 Nov); the house's floor tiles with Finish (19 Nov).
+2. **Worktop and end-panel lengths** as bought: the owner gives them; the editor shows ? until then.
+3. **Types**: typedefs still loose (`any`) in library/draw.js (the drawing context), the products' group fields, the cabinets file's settings, the Alpine parts.
 
 ## How we work
 
@@ -118,10 +113,9 @@ Done: Documents and the editor; every page on Alpine.js; wardrobes and bedroom n
 - **Comments**: short, exact, only what the code does not say.
 - **Design level**: the room in space, every object where it stands (bought, cut, made by the owner). Not the installer's level (pipes, sockets, cables, fitting steps); what places things stays (riser, WC frame).
 - **Panel**: settings only (layers, a tile, a pattern); results (areas, counts, costs) go to Documents.
-- **Types** (JSDoc, checked): every code file starts with `// @ts-check`; data shapes are typedefs in the file that makes them; a non-plain value gets `@type`. Check: `tsc --noEmit -p home/jsconfig.json`, clean before handing over; nothing is built, pages load plain JavaScript. jsconfig.json lists the checked files (strictNullChecks); globals.d.ts declares only outside globals (HOME, three.js, Alpine.js, SheetJS). Not checked: inline page scripts, data files.
+- **Types** (JSDoc, checked): the contract of every module: a typedef for each data shape (in the file that reads or makes it), `@param` and `@returns` on what a module gives, so a call from another file is checked. Every code file starts with `// @ts-check`; a module is one function that returns what it gives, so its interface is taken from its code (globals.d.ts names them; no type is written twice). Check: `tsc --noEmit -p home/jsconfig.json`, clean before handing over; nothing is built, pages load plain JavaScript. jsconfig.json lists the checked files (strictNullChecks); globals.d.ts also declares the outside globals (three.js, Alpine.js, SheetJS). Not checked: inline page scripts, data files.
 - **Computing without the browser**: a module computes without DOM or WebGL and touches nothing when loaded; the browser only for drawing, the screen, loading scripts. Tests run in Node first.
-- **No hidden rules**: what is built follows from data (types, settings), never from names, labels or sizes. No duplicated values or code: what pages share lives in core.
-- **One global, `HOME`**: module = `HOME.<file name>` (house/model.js: `HOME.model`), so file names are unique; data files call `HOME.data(…)`.
+- **No hidden rules**: what is built follows from data (types, settings), never from names, labels or sizes. No duplicated values or code: what pages share lives in core. No dead code: what nothing uses is removed.
 - **Script order** in a page: core/load.js, three.js, core, the page's own files.
 - **Pinned libraries**: three.js r128, SheetJS 0.18.5, Alpine.js 3.14.1.
 - **Screen (Alpine.js)**: a page is one Alpine part (core/ui.js). Shared pieces (menus, modes, panel, corner, sheets, 2D sheet) are written once in core and put together in the page's HTML (`<template x-part="…">`); the page writes only its own (view, help, panel sections). State is reactive and kept in the browser; the screen follows it. One ui.css, no page styles. Modules compute without Alpine.

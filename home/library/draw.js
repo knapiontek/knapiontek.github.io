@@ -9,7 +9,7 @@
    r, x0, x1, prof [[y, h]], info, faceMaterial), part(), lamp(light, from, to, shadow), point(r, x, y, h), frame(r): {X, Y},
    material(key), pivot(a, x, y, h, angle) (a frame at (x, y, h) turned about h: its details from its own zero), STATIC, CEILING. A mesh of a detail keeps three.js's own axes: x along, y up, z out of the wall.
    Needs THREE when it draws, nothing when it loads. */
-(function () {
+function drawModule() {
 'use strict';
 
 /* ---------- an oven or a microwave built into a carcass: the body on its feet behind the carcass front, the fascia in
@@ -445,10 +445,11 @@ function shaped(D, A, { r, w, d, h, h0, f }) {
   D.envelope(r, [0, w, 0, d, h0, h0 + h], A.name);
 }
 
-HOME.draw = {
+return {
   oven: (D, A, place) => builtIn(D, 'oven', A, place),
   microwave: (D, A, place) => builtIn(D, 'microwave', A, place),
   sink, tap, trap, basin, basinTap, shaped, mirror, wallCabinet, showerScreen, linearDrain, hob, hood, fridgeFreezer, fridgeDoor, dishwasher, coffeeMachine, pendant, downlight,
   leg, grille, shelfPin, bumper, hinge, handle, runner, drawerPart, bins, cutleryInsert
 };
-})();
+}
+HOME.draw = drawModule();

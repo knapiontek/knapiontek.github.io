@@ -2,32 +2,80 @@
 /* house/model.js: the house's data turned into solids, the rooms, a part of the house cut out for a room, the checks.
    No browser: index.html draws what it gives. Units mm in the house's axes (x along, y across, h up).
    Needs core/geometry.js and core/tree.js. */
-(/** @param {Home} HOME */ function (HOME) {
+/**
+ * @typedef {Cell & { element: string, floor?: string | null, cap?: string, walkable?: boolean, fixture?: boolean, side?: string | null, room?: string }} HouseCell
+ *   a solid of the house: the element it is of, its floor; side: where it lies from a room cut out (-h, +h, ±x, ±y); room: the room it is drawn for
+ */
+/** @typedef {{ id: string, name?: string, type: string, offset: number[], size: number[], settings?: Object<string, any>, refs?: string[], children?: HouseNode[], [field: string]: any }} HouseNode  a node of house.js: the tree's fields and its own (house/project.md) */
+/** @typedef {{ h: number, y: number, pitch: number }} HouseLine  h + pitch · tan(roof pitch) · (y′ − y) */
+/**
+ * @typedef {object} Opening  a window or a door, in the house's axes
+ * @property {string} id
+ * @property {string} kind  its opening kind
+ * @property {Box} b
+ * @property {string} label  archon's width/height
+ * @property {Side | 'down'} outer
+ * @property {Line[]} [below]
+ * @property {number[]} [transoms]
+ * @property {number} [cols]
+ * @property {any} [leaf]
+ * @property {Side} [hinge]
+ * @property {Side} [opens]
+ * @property {Side} [flush]
+ * @property {string} [product]
+ * @property {string[]} [extras]
+ */
+/** @typedef {{ id: string, node: HouseNode, floor: HouseNode, rects: Rect[] }} HouseRoom  rects: its floor area in the house's axes */
+/**
+ * @typedef {object} Door  an inner door's leaf: cells that turn together about the hinge
+ * @property {string} id
+ * @property {string} label
+ * @property {string} floor
+ * @property {number[]} axis  [x, y] of the hinge
+ * @property {number} angle  radians, open
+ * @property {HouseCell[]} cells
+ * @property {number[]} free  [x, y] of the free edge
+ * @property {number[]} centre
+ * @property {string | null} product
+ * @property {string[]} extras
+ */
+/** @typedef {{ key: string, node: TreeNode, floor: TreeNode, rooms: HouseRoom[], product: string, dir: 'x' | 'y', pattern?: string, oa: number | null, ob: number | null }} TileLayout  floor tiles laid over rooms */
+/** @typedef {{ id: string, role: string, side: string, host?: string | null, cells: HouseCell[], leaf?: Door }} PartObject  a wall, the floor, the ceiling, a window, a door */
+/** @typedef {{ room: HouseRoom, floor: TreeNode, box: Box, cells: HouseCell[], objects: PartObject[], ceiling: number }} Part  a room cut out of the house */
+/** @typedef {ReturnType<ReturnType<typeof modelModule>['build']>} HouseModel */
+function modelModule() {
 'use strict';
 
 const G = HOME.geometry;
 const { DEG, INF, EPS, SOLID_TOL, ccw, rect2, clipHalf, leftOf, edgesOf, minus2, prism, emptyPrism, centreH, hRange,
   prismIntersect, prismMinus, splitH, subtractAll, overlaps, volume, rectArea, rectMinus, mergeRects } = G;
 
-const byId = list => Object.fromEntries(list.map(e => [e.id, e]));
-const range = r => [r && r[0] !== null ? r[0] : -INF, r && r[1] !== null ? r[1] : INF];   // a missing range or end: no limit
+/**
+ * @template {{ id: string }} T
+ * @param {T[]} list
+ * @returns {Record<string, T>}
+ */
+function byId(list) { return Object.fromEntries(list.map(e => [e.id, e])); }
+const range = (/** @type {(number | null)[] | undefined} */ r) => [r && r[0] !== null ? r[0] : -INF, r && r[1] !== null ? r[1] : INF];   // a missing range or end: no limit
 
 /* convex polygons A minus every polygon of B, in turn: convex pieces */
-const polysMinus = (A, B) => B.reduce((pieces, b) => pieces.flatMap(p => G.intersect2(p, b, SOLID_TOL) ? minus2(p, b, SOLID_TOL) : [p]), A);
+const polysMinus = (/** @type {Poly[]} */ A, /** @type {Poly[]} */ B) => B.reduce((pieces, b) => pieces.flatMap(p => G.intersect2(p, b, SOLID_TOL) ? minus2(p, b, SOLID_TOL) : [p]), A);
 /* the part of polygon P between u = a and u = b (u its first coordinate) */
-const stripOf = (P, a, b) => clipHalf(clipHalf(P, p => p[0] - a), p => b - p[0]);
+const stripOf = (/** @type {Poly} */ P, /** @type {number} */ a, /** @type {number} */ b) => clipHalf(clipHalf(P, p => p[0] - a), p => b - p[0]);
 /* the part of polygon P between v = c - w/2 and v = c + w/2 along coordinate k: a bar through c */
-const bandOf = (P, k, c, w) => clipHalf(clipHalf(P, p => p[k] - c + w / 2), p => c + w / 2 - p[k]);
+const bandOf = (/** @type {Poly} */ P, /** @type {number} */ k, /** @type {number} */ c, /** @type {number} */ w) => clipHalf(clipHalf(P, p => p[k] - c + w / 2), p => c + w / 2 - p[k]);
 
 /* the outward side of an opening: which axis its wall faces along, and which way */
+/** @type {Object<string, { axis: number, sign: number }>} */
 const SIDE = Object.assign({}, G.SIDES, { down: { axis: 2, sign: -1 } });   // the compass sides, and down (under the floor)
 
 /* the model of a house: ROOT the root node of house.js, the site, with the house in it. The model works in the house's
    axes (its zero at its own extreme corner); the site is moved into them */
+/** @param {HouseNode} ROOT the site, from house.js */
 function build(ROOT) {
-const HOUSE = ROOT.children.find(n => n.type === 'house'), SITE = ROOT;
+const HOUSE = /** @type {HouseNode} */ ((ROOT.children || []).find(n => n.type === 'house')), SITE = ROOT;
 const T = HOME.tree.create(HOUSE), GEO = HOUSE.geometry, KIND = GEO.kinds, OPENING_KIND = GEO.openingKinds;
-const FLOORS = HOUSE.children.filter(n => n.type === 'floor'), TOP_FLOOR = FLOORS[FLOORS.length - 1];
+const FLOORS = (HOUSE.children || []).filter(n => n.type === 'floor'), TOP_FLOOR = FLOORS[FLOORS.length - 1];
 const level = F => F.offset[2];
 const fieldsOf = (n, keys) => Object.fromEntries(keys.filter(k => n[k] !== undefined).map(k => [k, n[k]]));
 /* a node's lines and transoms are in its own axes: here in the house's */
@@ -39,14 +87,14 @@ const inHouse = (n, fields) => {
 };
 /* the elements of the tree as the model reads them, each with its box in the house: an element (its type a kind), an
    opening in its wall, a roof window, a void and its boxes; the site, the roof and the stair are nodes of the house */
-const ELEMENTS = [], OPENINGS = [], ROOF_WINDOWS = [], VOIDS = [];
+const /** @type {any[]} */ ELEMENTS = [], /** @type {Opening[]} */ OPENINGS = [], /** @type {any[]} */ ROOF_WINDOWS = [], /** @type {{ id: string, name: string, boxes: Box[] }[]} */ VOIDS = [];
 T.walk(n => {
   if (KIND[n.type]) ELEMENTS.push(Object.assign(inHouse(n, fieldsOf(n, ['top', 'outer', 'cuts', 'floor', 'below'])), { id: n.id, kind: n.type, b: T.box(n) }));
   else if (OPENING_KIND[n.type]) OPENINGS.push(Object.assign(inHouse(n, fieldsOf(n, ['label', 'outer', 'cols', 'leaf', 'hinge', 'opens', 'flush', 'product', 'extras', 'below', 'transoms'])), { id: n.id, kind: n.type, b: T.box(n) }));
   else if (n.type === 'roofWindow') { const b = T.box(n); ROOF_WINDOWS.push({ id: n.id, name: n.place, label: n.label, x: [b[0], b[1]], y: [b[2], b[3]] }); }
-  else if (n.type === 'void') VOIDS.push({ id: n.id, name: n.name, boxes: n.children.map(T.box) });
+  else if (n.type === 'void') VOIDS.push({ id: n.id, name: n.name || n.id, boxes: (n.children || []).map(T.box) });
 });
-const HOUSE_NODE = id => HOUSE.children.find(n => n.id === id);
+const HOUSE_NODE = (/** @type {string} */ id) => /** @type {HouseNode} */ ((HOUSE.children || []).find(n => n.id === id));
 const STAIR = HOUSE_NODE('stair');
 const ELEMENT = byId(ELEMENTS), VOID = byId(VOIDS);
 
@@ -55,9 +103,10 @@ const ELEMENT = byId(ELEMENTS), VOID = byId(VOIDS);
 const ROOF = Object.assign({}, HOUSE_NODE('roof'), { windows: ROOF_WINDOWS }), TAN = Math.tan(ROOF.pitch * DEG), WIDTH = ROOF.width;
 const ROOF_DEPTH = ROOF.thickness / Math.cos(ROOF.pitch * DEG);   // the data gives it across the slope, the prisms vertically
 const RIDGE_TOP = ROOF.eave + TAN * WIDTH / 2 + ROOF_DEPTH;
-const line = l => ({ a: l.h - l.pitch * TAN * l.y, s: l.pitch * TAN });
+/** @returns {Line} */
+const line = (/** @type {HouseLine} */ l) => ({ a: l.h - l.pitch * TAN * l.y, s: l.pitch * TAN });
 const ROOF_UNDER = [{ a: ROOF.eave, s: TAN }, { a: ROOF.eave + TAN * WIDTH, s: -TAN }];
-const floorOf = h => h < GEO.split ? FLOORS[0].id : TOP_FLOOR.id;
+const floorOf = (/** @type {number} */ h) => h < GEO.split ? FLOORS[0].id : TOP_FLOOR.id;
 /* a slab of the roof between y1 and y2 along line l, from d[0] to d[1] over its top */
 const slopeSlab = (x1, x2, y1, y2, l, d) => ({ x1, x2, poly: ccw([
   [y1, l.a + l.s * y1 + d[0]], [y2, l.a + l.s * y2 + d[0]], [y2, l.a + l.s * y2 + d[1]], [y1, l.a + l.s * y1 + d[1]]]) });
@@ -72,6 +121,7 @@ const OPENING_PRISMS = OPENINGS.map(openingPrism);
 /* ================= 3. ELEMENTS =================
    A cell is a prism with what it is: {S, element, floor, material, cap, layers, raw?, finish?, walkable?, edges}. Its floor
    is the one its height gives, unless the element or its kind names another (the attic's ceiling is the roof's). */
+/** @type {HouseCell[]} */
 const CELLS = [];
 /* the facade rules that apply to element e: its own, or by the side of its kind's finish facing the air */
 const finishesOf = e => GEO.finishes.filter(r => r.elements ? r.elements.includes(e.id) : !!KIND[e.kind].finish && (!r.side || r.side === e.outer));
@@ -88,9 +138,8 @@ function elementCells(e) {
   const k = KIND[e.kind];
   let parts = subtractAll([elementPrism(e)], (e.cuts || []).flatMap(cutPrisms));
   if (k.opened) parts = subtractAll(parts, OPENING_PRISMS);
-  parts = parts.flatMap(S => splitH(S, GEO.split)).map(S => ({ S, material: k.material }));
-  parts = finishesOf(e).reduce(applyFinish, parts);
-  return parts.map(t => {
+  const pieces = finishesOf(e).reduce(applyFinish, parts.flatMap(S => splitH(S, GEO.split)).map(S => ({ S, material: k.material })));
+  return pieces.map(t => {
     const floor = e.floor || k.floor || floorOf(centreH(t.S));
     return { S: t.S, element: e.id, floor, material: t.material, cap: k.cap, raw: k.raw, finish: k.finish,
       walkable: !!k.walkable, layers: [floor].concat(k.layers), edges: true };
@@ -114,6 +163,7 @@ const ROOF_CELLS = roofCells();
 /* ================= 5. WINDOWS AND DOORS =================
    They sit in the block that hosts them, flush with its outer face. A part of an opening is a polygon in its own
    plane: (y, h) in an x-facing wall, (x, h) in a y-facing one. */
+/** @type {HouseCell[]} */
 const FIXTURES = [];                       // frames, glass, leaves: drawn, never cut by anything
 const F = GEO.frames;
 function addFixture(S, material, layers, element = 'opening', edges = false) {
@@ -210,13 +260,15 @@ ROOF.windows.forEach(roofWindowFixtures);
    other way, wide where the frame is thin, so no light passes the gap and the leaf swings clear. The rest of the reveal
    is the wall. The frame is a fixture; the leaf and its handles are a door: cells that turn together about the hinge
    (axis, on the leaf's face toward which it opens), by angle when open. */
+/** @type {Door[]} */
 const DOORS = [];
+/** @param {Opening} o @param {number} i */
 function doorOf(o, i) {
   const K = OPENING_KIND[o.kind], D = K.door && F.doors[K.door];
   if (!D) return;
   const [x1, x2, y1, y2, h1, h2] = o.b, alongX = x2 - x1 > y2 - y1;       // the wall runs along the opening's longer side
   const [u1, u2] = alongX ? [x1, x2] : [y1, y2], [n1, n2] = alongX ? [y1, y2] : [x1, x2];
-  const sign = SIDE[o.opens].sign, flushSign = SIDE[o.flush].sign;
+  const sign = SIDE[String(o.opens)].sign, flushSign = SIDE[String(o.flush)].sign;
   const flush = flushSign > 0 ? n2 : n1, back = flush - flushSign * D.depth, middle = (flush + back) / 2;
   const near = sign === flushSign ? [middle, flush] : [back, middle], far = sign === flushSign ? [back, middle] : [middle, flush];   // n ranges: the half toward the opening, the other
   const face = sign === flushSign ? flush : back;                        // the leaf's face toward which it opens
@@ -234,7 +286,7 @@ function doorOf(o, i) {
   const cells = [cell(box(a, b, near[0], near[1], h1 + D.bottom, h2 - D.frame - D.gap), D.material),
     cell(box(u1 + D.stop + D.gap, u2 - D.stop - D.gap, far[0], far[1], h1 + D.bottom, h2 - D.stop - D.gap), D.material)];
   /* a handle on each face, by the free edge */
-  const hinge = SIDE[o.hinge].sign > 0 ? b : a, free = hinge === a ? b : a, inward = free > hinge ? -1 : 1;
+  const hinge = SIDE[String(o.hinge)].sign > 0 ? b : a, free = hinge === a ? b : a, inward = free > hinge ? -1 : 1;
   const H = D.handle, hu = free + inward * H.inset, hh = h1 + H.height;
   for (const [f, out] of [[face, sign], [face - sign * D.depth, -sign]]) {
     cells.push(cell(box(hu - H.rosette / 2, hu + H.rosette / 2, f, f + out * H.rosetteDepth, hh - H.rosette / 2, hh + H.rosette / 2), H.material));
@@ -287,13 +339,14 @@ const voidsAt = h => VOIDS.flatMap(v => v.boxes).filter(b => b[4] <= h && b[5] >
 
 /* ================= 8. ROOMS =================
    Each room of each floor with its floor area in the house's axes. */
-const ROOMS = FLOORS.flatMap(F => F.children.filter(n => n.area).map(node => {
+const ROOMS = FLOORS.flatMap(F => (F.children || []).filter(n => n.area).map(node => {
   const [x, y] = T.place(node);
   return { id: node.id, node, floor: F, rects: node.area.map(q => [q[0] + x, q[1] + x, q[2] + y, q[3] + y]) };
 }));
 const ROOM = byId(ROOMS);
 /* the floor tiles: one layout for each node that sets them (a floor, a room with its own grid), over the rooms that take
    them from it; a room that sets them to null has none (its own project lays its floor) */
+/** @type {TileLayout[]} */
 const LAYOUTS = [];
 for (const R of ROOMS) {
   const own = T.setting(R.node, 'tiles');
@@ -307,10 +360,12 @@ for (const R of ROOMS) {
   }
   L.rooms.push(R);
 }
-const areaOf = rects => rects.reduce((s, q) => s + rectArea(q), 0) / 1e6;   // m²
-const planOf = S => { const ys = S.poly.map(p => p[0]); return [S.x1, S.x2, Math.min(...ys), Math.max(...ys)]; };
-const overlap = (a1, a2, b1, b2) => Math.min(a2, b2) - Math.max(a1, b1);
+const areaOf = (/** @type {Rect[]} */ rects) => rects.reduce((s, q) => s + rectArea(q), 0) / 1e6;   // m²
+/** @returns {Rect} */
+const planOf = (/** @type {Prism} */ S) => { const ys = S.poly.map(p => p[0]); return [S.x1, S.x2, Math.min(...ys), Math.max(...ys)]; };
+const overlap = (/** @type {number} */ a1, /** @type {number} */ a2, /** @type {number} */ b1, /** @type {number} */ b2) => Math.min(a2, b2) - Math.max(a1, b1);
 /* where two rooms of a floor meet with no wall between them: [{floor, rooms: [a, b], line: [[x, y], [x, y]]}] */
+/** @type {{ floor: TreeNode, rooms: string[], line: number[][] }[]} */
 const BORDERS = [];
 for (const [i, a] of ROOMS.entries()) for (const b of ROOMS.slice(i + 1)) {
   if (a.floor !== b.floor) continue;
@@ -373,19 +428,20 @@ function sideOf(c, S, rects, L) {
   return best ? best.side : null;            // a piece touching the room at a point only: a corner, or nothing of the room's
 }
 const HOLES = OPENINGS.map(o => ({ id: o.id, b: o.b })).concat(ROOF.windows.map(w => ({ id: w.id, b: [w.x[0], w.x[1], w.y[0], w.y[1]] })));
-/* one room cut out: {room, floor, box, cells, objects: [{id, role, side, host, cells, leaf?}], ceiling} */
+/** one room cut out @param {string} id @returns {Part} */
 function part(id) {
   const R = ROOM[id], L = level(R.floor), box = partBox(R), B = prism(box);
-  const trimmed = [];
+  /** @typedef {HouseCell & { side: string }} SidedCell */
+  /** @type {(HouseCell & { side: string | null })[]} */ const trimmed = [];
   for (const c of TAKEN) {
     const S = prismIntersect(c.S, B);
     if (S && !emptyPrism(S)) trimmed.push(Object.assign({}, c, { S, side: sideOf(c, S, R.rects, L) }));
   }
   /* a wall is the room's when it stands on the edge of its floor area; a window or a door frame when it sits in such a wall */
   const isFixture = c => !!c.fixture;
-  const kept = trimmed.filter(c => c.side && (c.side[1] === 'h' || (isFixture(c)
+  const kept = /** @type {SidedCell[]} */ (trimmed.filter(c => c.side && (c.side[1] === 'h' || (isFixture(c)
     ? trimmed.some(w => !isFixture(w) && w.side === c.side && touches(planOf(w.S), R.rects) && within(planOf(c.S), planOf(w.S)))
-    : touches(planOf(c.S), R.rects))));
+    : touches(planOf(c.S), R.rects)))));
   /* a corner piece of a wall, cut off by a door beside it, touches the room at a point only: it is the room's when a kept
      wall touches it along x and another along y; it faces as the first */
   const walls0 = kept.filter(c => c.side[1] !== 'h' && !isFixture(c));
@@ -443,6 +499,7 @@ function part(id) {
 
 /* ================= 10. CHECKS =================
    As Test shows them: {name, items}; none is OK. info: a difference to know, not a fault. */
+/** @returns {Check[]} */
 function checks() {
   const THICKNESS_TOL = 0.5, MIN_PATCH = 100, MIN_OVERLAP = 1;   // mm; mm²: a smaller patch is a rounding; mm³: the rounding of exact cuts
   const n = v => Math.round(v);
@@ -480,21 +537,23 @@ function checks() {
       items: ROOMS.filter(r => r.node.archonArea).map(r => `${r.id}: ${areaOf(r.rects).toFixed(2)} · archon ${r.node.archonArea.toFixed(2)}`) }];
 }
 
-return { T, HOUSE, SITE, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, line, floorOf, SIDE, OPENINGS, ELEMENTS, STAIR, FLOORS, ROOMS, ROOM, LAYOUTS, BORDERS, areaOf,
+return { T, HOUSE, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, floorOf, SIDE, OPENINGS, ELEMENTS, FLOORS, ROOMS, ROOM, LAYOUTS, BORDERS, areaOf,
   CELLS, FIXTURES, DOORS, ROOF_CELLS, STAIR_CELLS, SITE_CELLS, SOLIDS, voidsAt, FOOTPRINT, part, checks };
 }
 
 /* the top-left menu: House (the whole house) or Room (cut to the active room), and the floors with their rooms (the nodes
    with an area); part: the ids of the rooms shown (none: the whole house). A room picked is the active one: in the whole
    house (#room=) the view stays, in a room's view it is that room's */
+/** @param {HouseNode} ROOT @param {string[]} [part] @param {string} [active] */
 function nav(ROOT, part = [], active = part[0]) {
-  const HOUSE = ROOT.children.find(n => n.type === 'house'), page = 'index.html';   // the main page, in the home folder
-  const floors = HOUSE.children.filter(n => n.type === 'floor'), rooms = F => F.children.filter(n => n.area);
+  const HOUSE = /** @type {HouseNode} */ ((ROOT.children || []).find(n => n.type === 'house')), page = 'index.html';   // the main page, in the home folder
+  const floors = (HOUSE.children || []).filter(n => n.type === 'floor'), rooms = (/** @type {HouseNode} */ F) => (F.children || []).filter(n => n.area);
   const first = active || floors.flatMap(rooms)[0].id;
   return { links: [{ name: 'House', href: page, on: !part.length }, { name: 'Room', href: page + '?room=' + first, on: part.length > 0 }],
     groups: floors.map(F => ({ name: F.name, on: rooms(F).some(r => r.id === active),
       items: rooms(F).map(r => ({ name: `${r.number}. ${r.name}`, href: page + (part.length ? '?room=' : '#room=') + r.id, on: r.id === active })) })) };
 }
 
-HOME.model = { build, nav };
-})(window.HOME = window.HOME || {});
+return { build, nav };
+}
+HOME.model = modelModule();

@@ -1,35 +1,67 @@
 // @ts-check
 /* core/library.js: the library for a page: the products of every group and the shops (what is bought), the materials,
    the textures, loaded by key when a page needs them. Knows no project. Needs core/load.js. */
-(/** @param {Home} HOME */ function (HOME) {
+/**
+ * @typedef {object} Product  a product of the library (library/project.md: format products); the fields of its group too
+ * @property {string} name
+ * @property {string} [spec]
+ * @property {string} [code]
+ * @property {string} [maker]
+ * @property {string} [unit]
+ * @property {number | null} [price]  zł gross per unit
+ * @property {string} [priceNote]
+ * @property {string} [shop]
+ * @property {{ name: string, url: string }[]} [links]
+ * @property {string} [note]
+ * @property {string} [family]
+ * @property {string} [metal]
+ * @property {string} [draw]  its drawing in library/draw.js
+ * @property {string} [texture]
+ * @property {any} [more]
+ */
+/** @typedef {Product & Object<string, any>} AnyProduct  a product with the fields of its group */
+/** @typedef {{ color?: string, roughness?: number, metalness?: number, opacity?: number, [more: string]: any }} MaterialLook  a material's look (format materials) */
+/** @typedef {{ name: string, kind: string, source?: string, size: number[], grout?: string, faces: string[] }} Texture  size: mm one image covers; faces: data URLs */
+/**
+ * @typedef {object} Library  the library a page has
+ * @property {Object<string, Object<string, AnyProduct>>} groups  group -> key -> product
+ * @property {Object<string, { name: string, links?: object[] }>} shops
+ * @property {Object<string, MaterialLook>} materials
+ * @property {(key: string) => AnyProduct} product  throws for a key not in the library
+ * @property {(key: string) => string | undefined} group
+ * @property {Object<string, Texture>} textures  those loaded
+ * @property {(keys: (string | undefined)[]) => Promise<Object<string, Texture>>} loadTextures
+ * @property {() => Check[]} checks
+ */
+function libraryModule() {
 'use strict';
 
 const VERSION = 1;                         // of every library format: library, materials, shops, products, texture
 
-/* resolves with {groups: name -> {key -> product}, shops, materials, product(key), group(key), textures (key -> texture,
-   those loaded), loadTextures(keys), checks()} */
+/** @returns {Promise<Library>} */
 async function load() {
   const load = HOME.load, file = HOME.load.file;
   const index = await load(file.library(), 'library', VERSION);
   const [materials, shops, ...lists] = await Promise.all([load(file.materials(), 'materials', VERSION), load(file.shops(), 'shops', VERSION),
     ...index.groups.map(g => load(file.products(g), 'products', VERSION))]);
-  const groups = {}, groupOf = {}, twice = [];
-  index.groups.forEach((g, i) => {
+  const /** @type {Library['groups']} */ groups = {}, /** @type {Object<string, string>} */ groupOf = {}, /** @type {string[]} */ twice = [];
+  index.groups.forEach((/** @type {string} */ g, /** @type {number} */ i) => {
     groups[g] = lists[i].products;
     for (const key of Object.keys(groups[g])) { if (groupOf[key]) twice.push(`${key}: in ${groupOf[key]} and in ${g}`); groupOf[key] = g; }
   });
-  const product = key => {
+  const product = (/** @type {string} */ key) => {
     if (!groupOf[key]) throw new Error('no product ' + key + ' in the library');
     return groups[groupOf[key]][key];
   };
-  const textures = {};
-  const loadTextures = keys => Promise.all([...new Set(keys)].filter(k => k && !textures[k])
+  const /** @type {Object<string, Texture>} */ textures = {};
+  const loadTextures = (/** @type {(string | undefined)[]} */ keys) => Promise.all([...new Set(keys)].filter(/** @returns {k is string} */ k => !!k && !textures[k])
     .map(k => load(file.texture(k), 'texture', VERSION).then(t => { textures[k] = t; }))).then(() => textures);
   const checks = () => [
     { name: 'Library: every product key in one group only', about: 'A product is named by its key everywhere; the same key in two groups would make it two products.', items: twice },
-    { name: 'Library: every shop named by a product exists', about: 'Each product\'s shop is a key of shops.js.', items: Object.keys(groupOf).filter(k => product(k).shop && !shops.shops[product(k).shop]).map(k => `${k}: shop ${product(k).shop}`) }];
-  return { groups, shops: shops.shops, materials: materials.materials, product, group: key => groupOf[key], textures, loadTextures, checks };
+    { name: 'Library: every shop named by a product exists', about: 'Each product\'s shop is a key of shops.js.', items: Object.keys(groupOf).filter(k => { const s = product(k).shop; return s && !shops.shops[s]; }).map(k => `${k}: shop ${product(k).shop}`) }];
+  return { groups, shops: shops.shops, materials: materials.materials, product, group: (/** @type {string} */ key) => groupOf[key], textures, loadTextures, checks };
 }
 
-HOME.library = { load };
-})(window.HOME = window.HOME || {});
+return { load };
+}
+HOME.library = libraryModule();

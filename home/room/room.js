@@ -5,7 +5,24 @@
    prepare() needs no browser: the model, the places of the groups, the hardware as drawn, the looks and textures the
    room needs. build() draws into a scene of core: still cells, moving parts, details (round or flat things, three.js
    meshes), lamps. */
-(function () {
+/**
+ * @typedef {object} SceneFile  a room's scene (room/project.md: format scene)
+ * @property {Object<string, { front: Side, offset: number[], size: number[] }>} groups  group number -> its box in the room
+ * @property {Object<string, { product: string, front: Side, offset: number[], depth?: number, length?: number, height?: number, layer?: string }>} [fixtures]
+ * @property {{ name: string, box: Box, cuts?: Box[], material: string, tiled?: boolean }[]} [builtIns]
+ * @property {{ wallColor: string }} room
+ * @property {{ metal: string }} finish
+ * @property {{ sink?: { tapFromBack: number, trapTop: number, wallOutlet: number }, hood?: { bottom: number } }} [installation]
+ * @property {Object<string, any>} hardware  our layout of the hardware: handle, open, leg, bins, plinthGrille
+ * @property {{ pendantBottom?: number, pendants?: { group: number, count: number, spacing: number }, downlights: { at?: number[], group?: number, y?: number, x?: number, between?: string[] }[] }} [lights]  a downlight at [x, y] in the room's axes, or in a group's (y from its wall)
+ * @property {{ walls?: object, floor?: object, shower?: { zone: Rect, walls?: object, floor?: object } }} [tiles]
+ * @property {Camera[]} [cameras]
+ */
+/** @typedef {{ offset: number[], size: number[], area?: Rect[], ceiling?: Line[], openings?: Box[], tiles: { top: number, depth: number } }} RoomInHouse
+    what the house gives a room, in the room's axes: ceiling: lines h ≤ a + s·y; tiles: the house's (a floor's face over the floor, a slab's depth with its glue) */
+/** @typedef {ReturnType<ReturnType<typeof roomModule>['prepare']>} PreparedRoom */
+/** @typedef {ReturnType<ReturnType<typeof roomModule>['build']>} BuiltRoom */
+function roomModule() {
 'use strict';
 const C = () => HOME.cabinets, G = () => HOME.geometry;
 
@@ -20,7 +37,8 @@ const FRONTS = {
 };
 const facesAlongX = front => front === 'E' || front === 'W';   // its fronts face along the house's x: its width along y
 
-/* room: {offset [x, y, h] of its origin in the house, size}; files: {cabinets, scene}; library: {products: group -> products, materials} */
+/** the room without a browser: the model, the places of its groups, the hardware as drawn, its looks and textures
+    @param {RoomInHouse} room @param {{ cabinets: CabinetsFile, scene: SceneFile }} files @param {{ products: Library['groups'] }} library */
 function prepare(room, files, library) {
   const P = library.products, cabinets = files.cabinets, scene = files.scene;
   if (!scene.finish || !scene.finish.metal) throw new Error('scene: no finish.metal');
@@ -63,7 +81,7 @@ function prepare(room, files, library) {
   };
   /* what the owner builds: one node of the room, each piece a child at its box */
   const BUILT = (scene.builtIns || []).length ? [{ id: 'builtIns', name: 'Built in the room', type: 'builtIns', offset: [0, 0, 0], size: room.size.slice(),
-    children: scene.builtIns.map((b, i) => ({ id: 'b' + (i + 1), name: b.name, type: 'builtIn', offset: [b.box[0], b.box[2], b.box[4]], size: [b.box[1] - b.box[0], b.box[3] - b.box[2], b.box[5] - b.box[4]], children: [] })) }] : [];
+    children: (scene.builtIns || []).map((b, i) => ({ id: 'b' + (i + 1), name: b.name, type: 'builtIn', offset: [b.box[0], b.box[2], b.box[4]], size: [b.box[1] - b.box[0], b.box[3] - b.box[2], b.box[5] - b.box[4]], children: [] })) }] : [];
   /* the ceiling's height: its lowest flat line (under a roof, the flat part), else the room's height */
   const ceiling = Math.min(room.size[2], ...(room.ceiling || []).filter(l => l.s === 0).map(l => l.a));
   const TREE = C().tree(model, appliances, { install: scene.installation, ceiling, HW }).concat(FIXTURES.map(x => x.node), BUILT);
@@ -87,7 +105,6 @@ const tileLayouts = scene => {
   const T = scene.tiles || {}, S = T.shower || {};
   return Object.fromEntries([['walls', T.walls], ['floor', T.floor], ['showerWalls', S.walls], ['showerFloor', S.floor]].filter(([, v]) => v));
 };
-const TILE_DEPTH = 12, TILE_TOP = 3;       // mm: tiles with their glue: a wall's against the wall, their face that far off it; a floor's face over the floor, the slab down into it
 /* the walls of a floor area (rects) as segments: {axis (0: the wall runs along x), at (its line), from, to, inward (+1 / -1)} */
 function wallsOf(rects) {
   /** @type {{ axis: number, at: number, inward: number, from: number, to: number }[]} */
@@ -115,8 +132,10 @@ function boxMinus(b, c) {
 }
 /* rect [a1, a2, b1, b2] minus others, as rects */
 const minusAll = (q, holes) => holes.reduce((rest, h) => rest.flatMap(r => G().rectMinus(r, h)), [q]);
-/* the tiled surfaces: {key (the layout), id, rect [u1, u2, v1, v2] and its holes, point(u, v) -> room [x, y, h], n} */
-function tiledSurfaces(scene, area, height, openings) {
+/* the tiled surfaces: {key (the layout), id, rect [u1, u2, v1, v2] and its holes, point(u, v) -> room [x, y, h], n};
+   tiles: a wall's face that far off the wall (depth), a floor's over the floor (top) */
+function tiledSurfaces(scene, area, height, openings, tiles) {
+  const TILE_DEPTH = tiles.depth, TILE_TOP = tiles.top;
   const T = scene.tiles || {}, zone = T.shower && T.shower.zone, built = scene.builtIns || [], out = [];
   const inZone = (axis, at, u) => zone && (axis === 0 ? (u >= zone[0] - 0.5 && u <= zone[1] + 0.5 && at >= zone[2] - 0.5 && at <= zone[3] + 0.5) : (u >= zone[2] - 0.5 && u <= zone[3] + 0.5 && at >= zone[0] - 0.5 && at <= zone[1] + 0.5));
   const add = (axis, at, inward, from, to, h0, h1, id, extra = [], own = null) => {
@@ -176,7 +195,7 @@ function tiledSurfaces(scene, area, height, openings) {
 function roomTiles(scene, room, library, cell, finish, draw = true) {
   const area = room.area || [[0, room.size[0], 0, room.size[1]]];   // its floor area, in its own axes
   const lines = room.ceiling || [], height = Math.min(room.size[2], ...lines.filter(l => l.s === 0).map(l => l.a));
-  const L = tileLayouts(scene), surfaces = tiledSurfaces(scene, area, height, room.openings || []), O = room.offset;
+  const L = tileLayouts(scene), surfaces = tiledSurfaces(scene, area, height, room.openings || [], room.tiles), O = room.offset;
   const out = { pieces: /** @type {any[]} */ ([]), materials: {}, counts: {} };
   for (const [key, spec] of Object.entries(L)) {
     const P0 = library.products.tiles[spec.product], T = library.textures[P0.texture] || { grout: '#888888' };
@@ -212,12 +231,11 @@ function roomTiles(scene, room, library, cell, finish, draw = true) {
       const c0 = on ? Object.assign({}, cell, { layers: cell.layers.concat(on) }, wall ? { face: S.n } : {}) : cell;   // face: a wall's tiles, its normal (the page hides them with their wall)
       const made = HOME.tiles.corePieces(lay, P, T, pieces, grout, at, S.n, c0, finish);
       out.pieces.push(...made.pieces); Object.assign(out.materials, made.materials);
-      /* a wall's tiles are a slab against the wall: its edges from the wall to the face, round it and round its holes */
       /* the tiles are a slab on what they lie on: its edges from the face to the back, round it and round its holes */
       const cut = poly => under.reduce((q, l) => q.length < 3 ? q : HOME.tiles.clipHalf(q, l.p, l.q, l.c), poly);
       const R = S.rect, ring = q => [[q[0], q[2]], [q[1], q[2]], [q[1], q[3]], [q[0], q[3]]];
       const holes = S.holes.map(h => [Math.max(h[0], R[0]), Math.min(h[1], R[1]), Math.max(h[2], R[2]), Math.min(h[3], R[3])]).filter(h => h[1] - h[0] > 1 && h[3] - h[2] > 1);
-      out.pieces.push(...HOME.tiles.slabEdges([{ poly: cut(ring(R)), out: 1 }].concat(holes.map(h => ({ poly: cut(ring(h)), out: -1 }))), (u, v) => at(u, v), S.point, S.n, TILE_DEPTH, c0, `tiles:${P.texture}:0`));
+      out.pieces.push(...HOME.tiles.slabEdges([{ poly: cut(ring(R)), out: 1 }].concat(holes.map(h => ({ poly: cut(ring(h)), out: -1 }))), (u, v) => at(u, v), S.point, S.n, room.tiles.depth, c0, `tiles:${P.texture}:0`));
     }
     out.counts[key] = Object.assign({ product: spec.product, name: P0.name, format: P.len + ' × ' + P.wid }, HOME.tiles.count(P, all));
   }
@@ -248,7 +266,9 @@ function outside(made, prepared) {
 /* V: a scene of core; prepared: prepare(); materials: the page's library for core (the room's looks are in it, plus
    handle: the metal chosen); opts: {layers: the host's, added to every solid and detail; ceilingLayers: what hides the
    ceiling's lamps with the ceiling} */
-function build(V, prepared, opts = {}) {
+/** @param {SceneView} V @param {PreparedRoom} prepared
+    @param {{ materials: Object<string, MaterialLook>, layers?: string[], ceilingLayers?: string[], products?: Library['groups'], textures?: Object<string, Texture> }} opts */
+function build(V, prepared, opts) {
   const { model, appliances, PLACE, HW, scene } = prepared, LEVEL = prepared.level, CEILING = prepared.ceiling;
   const MATERIALS = opts.materials, EXTRA = opts.layers || [];
   const { piecesOf } = HOME.surface;
@@ -381,12 +401,14 @@ function build(V, prepared, opts = {}) {
     for (let i = 0; i < Pd.count; i++) HOME.draw.pendant(D, { a, r, x: mid + (i - (Pd.count - 1) / 2) * Pd.spacing, y: (wt.y0 + wt.y1) / 2, bottom: Lt.pendantBottom, ceiling: CEILING });
   }
   if (Lt) {
-    for (const d of Lt.downlights.filter(d => d.at)) {    // in the room's axes
+    for (const d of Lt.downlights) {
+      if (!d.at) continue;                 // in the room's axes
       const a = at('room', 'ceiling', null, ['lamps'].concat(opts.ceilingLayers || [])); a.layers = a.layers.filter(k => k !== 'groom');
       HOME.draw.downlight(D, { a, r: 'room', x: d.at[0], y: d.at[1], ceiling: CEILING });
     }
-    for (const d of Lt.downlights.filter(d => !d.at)) {
-      const g = String(d.group), x = d.between ? d.between.reduce((s, k) => s + drawn.axes[k], 0) / d.between.length : d.x, y = model.groups[g].wall + d.y;
+    for (const d of Lt.downlights) {
+      if (d.at) continue;
+      const g = String(d.group), x = d.between ? d.between.reduce((s, k) => s + drawn.axes[k], 0) / d.between.length : d.x, y = model.groups[g].wall + Number(d.y);
       const a = at(g, 'ceiling', null, ['lamps'].concat(opts.ceilingLayers || [])); a.layers = a.layers.filter(k => k !== 'g' + g);
       HOME.draw.downlight(D, { a, r: g, x, y, ceiling: CEILING });
     }
@@ -492,6 +514,7 @@ function build(V, prepared, opts = {}) {
 }
 
 /* the layers of a room's furniture, for its own view: its groups, then its parts by kind */
+/** @param {PreparedRoom} prepared @returns {Object<string, { name: string, layers?: object }>} */
 function layers(prepared) {
   const M = prepared.model, kinds = new Set((M.hardware || []).map(x => x.kind)), roles = new Set((M.products || []).map(x => x.role));
   const boards = id => M.boards.some(b => b.id === id);
@@ -526,5 +549,6 @@ function layers(prepared) {
   return L;
 }
 
-HOME.room = { prepare, build, layers };
-})();
+return { prepare, build, layers };
+}
+HOME.room = roomModule();

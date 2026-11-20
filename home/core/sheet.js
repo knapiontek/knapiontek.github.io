@@ -23,9 +23,11 @@
           any number cell may add: digits (decimals shown; or the column's), pct (shown as a percentage), z (the XLSX
           number format; or the column's z). A text may hold line breaks (\n). */
 /** @typedef {{ kind?: string, level?: number, cells: any[] }} SheetRow */
-/** @typedef {{ name: string, cols?: object[], rows?: SheetRow[], tree?: string, node?: Element }} Sheet */
+/** @typedef {{ name: string, cols: Column[], rows?: SheetRow[], tree?: string, node?: HTMLElement }} Sheet */
 /** @typedef {Sheet & { rows: SheetRow[] }} TableSheet  a sheet with rows */
-(/** @param {Home} HOME */ function (HOME) {
+/** @typedef {{ sheets: Sheet[] }} Book */
+/** @typedef {{ width?: number, fix?: number, share?: number, min?: number, max?: number, digits?: number, z?: string }} Column */
+function sheetModule() {
 'use strict';
 
 const { el, esc, LOCALE } = HOME.ui;
@@ -34,9 +36,10 @@ const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.m
 
 /* ---------- formulas ---------- */
 const REF = /(?:'([^']+)'!)?\$?([A-Z]{1,3})\$?(\d+)(?::\$?([A-Z]{1,3})\$?(\d+))?/g;
-const column = letters => [...letters].reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0) - 1;   // A -> 0
+const column = (/** @type {string} */ letters) => [...letters].reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0) - 1;   // A -> 0
+/** @type {(i: number) => string} */
 const letter = i => (i >= 26 ? letter(Math.floor(i / 26) - 1) : '') + String.fromCharCode(65 + (i % 26));
-const scale = d => Math.pow(10, d || 0);
+const scale = (/** @type {number | undefined} */ d) => Math.pow(10, d || 0);
 const FUNCTIONS = {
   SUM: (...a) => a.flat().reduce((s, x) => s + x, 0),
   MIN: (...a) => Math.min(...a.flat()),
@@ -45,13 +48,15 @@ const FUNCTIONS = {
   ROUNDUP: (x, d) => Math.sign(x) * Math.ceil(Math.abs(x) * scale(d) - 1e-9) / scale(d),   // away from zero, as Excel
 };
 /* a formula as a function of C(sheet, col, row) and R(sheet, col1, row1, col2, row2) */
+/** @param {string} f */
 function compile(f) {
-  const q = s => (s === undefined ? 'null' : JSON.stringify(s));
+  const q = (/** @type {string | undefined} */ s) => (s === undefined ? 'null' : JSON.stringify(s));
   const js = f.replace(REF, (m, sh, c1, r1, c2, r2) => (r2 ? `R(${q(sh)},${column(c1)},${r1},${column(c2)},${r2})` : `C(${q(sh)},${column(c1)},${r1})`));
   return new Function('C', 'R', ...Object.keys(FUNCTIONS), `return (${js});`);
 }
 
 /* the value of every cell: inputs as the viewer set them, formulas evaluated (text counts as 0, as in Excel) */
+/** @param {Book} book @returns {(sheet: Sheet, col: number, row: number) => number} col from 0, row from 1 */
 function evaluator(book) {
   const byName = Object.fromEntries(book.sheets.map(s => [s.name, s])), memo = new Map(), busy = new Set();
   const value = (sheet, c, r) => {
@@ -73,6 +78,20 @@ function evaluator(book) {
   };
   return value;
 }
+
+/* ---------- building a sheet ----------
+   A page's sheets are rows of cells (the book above); these make them alike everywhere. */
+const formula = (/** @type {string} */ f) => ({ f }), input = (/** @type {number} */ v) => ({ v, input: true });
+/* widths: characters in the XLSX; screen: one per column, how it is shown (HOME.ui.setColumns): a number n is fixed at n
+   characters (numbers, codes, units); a text 's3' has a share of 3, 's2n16m40' at least 16 and at most 40 characters */
+/** @returns {Column} */
+const screenOf = (/** @type {number | string | undefined} */ t) => (typeof t === 'number' ? { fix: t } : (m => (m ? { share: +m[1], min: m[2] ? +m[2] : undefined, max: m[3] ? +m[3] : undefined } : { share: 1 }))(/^s([\d.]+)(?:n(\d+))?(?:m(\d+))?$/.exec(t || '')));
+/** columns of these widths (XLSX characters), with more (index -> fields) and how each shows on screen @returns {Column[]} */
+const cols = (/** @type {number[]} */ widths, /** @type {Object<number, Column>} */ more = {}, /** @type {(number | string)[]} */ screen = []) => widths.map((width, i) => ({ width, ...(screen[i] !== undefined ? screenOf(screen[i]) : {}), ...(more[i] || {}) }));
+const money = { digits: 2, z: '#,##0.00' };   // a column of zł
+/* an array is a row of cells, an object keeps its kind; the first row is the title */
+/** @returns {SheetRow[]} */
+const kinds = (/** @type {any[]} */ rows) => rows.map((r, i) => (r && !Array.isArray(r) ? r : { kind: i === 0 ? 'title' : undefined, cells: r || [] }));
 
 /* ---------- the page ---------- */
 const show = (v, d, pct) => (!Number.isFinite(v) ? '–' : pct ? Math.round(v * 1000) / 10 + '%'
@@ -239,6 +258,7 @@ function loadSheetJS() {
     document.head.append(s);
   });
 }
+/** @param {{ sheets: TableSheet[] }} book @param {string} file */
 async function xlsx(book, file) {
   const XL = await loadSheetJS(), wb = XL.utils.book_new(), value = evaluator(book);
   for (const sheet of book.sheets) {
@@ -268,9 +288,10 @@ async function xlsx(book, file) {
 }
 
 /* the bottom menu of Documents: the XLSX of the book, the inputs back as handed in; sheet(): the sheet shown */
-const menu = (sheet, file) => [
+const menu = (/** @type {() => any} */ sheet, /** @type {string} */ file) => [
   { name: 'Save XLSX', go: e => { const b = e.currentTarget, label = b.textContent; sheet().xlsx(file).catch(() => { b.textContent = 'No network: try again'; setTimeout(() => { b.textContent = label; }, 2500); }); } },
   { name: 'Restore data', go: () => sheet().restore() }];
 
-HOME.sheet = { evaluator, xlsx, view, menu };
-})(window.HOME = window.HOME || {});
+return { evaluator, xlsx, view, menu, formula, input, cols, money, kinds };
+}
+HOME.sheet = sheetModule();

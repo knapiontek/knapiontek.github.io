@@ -1,8 +1,6 @@
 # Dom w papawerach 5 (G): geometry analysis
 
-> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
-
-The house as the archon drawings give it, written as boxes, plus what changed on site (§ 14). house.dat.js is copied from these tables by hand. All values in mm, whole numbers; levels may be quoted in metres (±0.00).
+The house as the archon drawings in this folder give it, as boxes, plus what changed on site (§ 14). It must agree with the drawings; a dimension changes only with the owner's approval. house/house.js is copied from these tables by hand, in its own axes (house/project.md). mm, whole numbers; levels may be in metres (±0.00).
 
 ## 1. Sources
 
@@ -308,7 +306,7 @@ The kitchen is an L of 600-deep counters:
 - **Along the right wall:** x ≈ 4720 – 6620, y 8060 – 8660, with the sink under the 1900 window.
 - **Along wall #5:** x 6620 – 7220, y 5800 – 8660 (printed 2860). It holds the fridge, an appliance, a ≈ 500 cabinet, the hob (y ≈ 7490 – 8070) and the corner.
 
-From the 1900 window's start (x 4720) to wall #5 (x 7220) is 2500. The pier between the 2500 and 1900 windows is x 3330 – 4720. The `kitchen` project has its own layout.
+From the 1900 window's start (x 4720) to wall #5 (x 7220) is 2500. The pier between the 2500 and 1900 windows is x 3330 – 4720. The kitchen as built: room/kitchen_6.*.
 
 ## 12. archon data
 

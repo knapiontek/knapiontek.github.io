@@ -314,7 +314,10 @@ const { piecesOf } = HOME.surface;
 const DEG = 180 / Math.PI;
 
 const [DATA, LIB] = await Promise.all([HOME.load(HOME.load.file.house(), 'house', 3), HOME.library.load()]);
-const MODEL = HOME.model.build(DATA), T = MODEL.T, HOUSE = MODEL.HOUSE, VIEW = T.setting(HOUSE, 'view').value;   // DATA: the site, the house in it
+const MODEL = HOME.model.build(DATA), T = MODEL.T, HOUSE = MODEL.HOUSE;   // DATA: the site, the house in it
+/** a setting the data must give: its value */
+const must = (/** @type {HouseNode} */ n, /** @type {string} */ key) => { const s = T.setting(n, key); if (!s) throw new Error(`${n.id}: no setting ${key}`); return s.value; };
+const VIEW = must(HOUSE, 'view'), TILES = must(HOUSE, 'tiles');
 const { ROOF, WIDTH, RIDGE_TOP, FLOORS, ROOMS, ROOM, DOORS } = MODEL;
 const level = F => F.offset[2], floorTop = F => level(F) + F.size[2];
 const roomName = r => `${r.node.number}. ${r.node.name}`;
@@ -366,16 +369,16 @@ const furnished = r => PREPARED.get(r.id) || PREPARED.set(r.id, (async () => {
   /* what closes it above, as lines h <= a + s·y of its own axes: a ceiling over it (the attic's flat one), the roof's underside */
   const over = MODEL.ELEMENTS.filter(e => e.kind === 'ceiling' && e.b[0] < at[0] + r.node.size[0] && e.b[1] > at[0] && e.b[2] < at[1] + r.node.size[1] && e.b[3] > at[1] && e.b[4] > at[2]);
   const ceiling = over.map(e => ({ a: e.b[4] - at[2], s: 0 })).concat(r.floor === MODEL.FLOORS[MODEL.FLOORS.length - 1] ? MODEL.ROOF_UNDER.map(l => ({ a: l.a + l.s * at[1] - at[2], s: l.s })) : []);
-  const node = { offset: at, size: r.node.size, area: r.node.area, ceiling, openings: MODEL.OPENINGS.map(o => o.b).filter(near).map(b => b.map((v, k) => v - at[k >> 1])) };
+  const node = { offset: at, size: r.node.size, area: r.node.area, ceiling, tiles: TILES, openings: MODEL.OPENINGS.map(o => o.b).filter(near).map(b => b.map((v, k) => v - at[k >> 1])) };
   const prepared = HOME.room.prepare(node, { cabinets, scene }, { products: LIB.groups });
   return { room: r, prepared, data, used, docs: docs && HOME.docs.create({ cabinets: HOME.cabinets, model: prepared.model, tree: prepared.TREE, docs, appliances: prepared.appliances, library: LIB }) };
 })()).get(r.id);
-const TILE_PRODUCTS = LIB.groups.tiles;
+const TILE_PRODUCTS = /** @type {Object<string, TileProduct>} */ (LIB.groups.tiles);
 await LIB.loadTextures(Object.values(TILE_PRODUCTS).map(p => p.texture));
 
 /* ================= THE SCENE: one for every view; a view (the house, a room) is built in it and taken away =================
    ?room= the rooms asked for; a link to this page, Back and Forward change the view in place */
-const V = HOME.scene.create({ canvas: $('gl'), stage: $('stage'), materials: MATERIALS, textures: LIB.textures, light: VIEW.light, edges: VIEW.edges, sunCentre: [0, 0, 0] });
+const V = HOME.scene.create({ canvas: /** @type {HTMLCanvasElement} */ ($('gl')), stage: /** @type {HTMLElement} */ ($('stage')), materials: MATERIALS, textures: LIB.textures, light: VIEW.light, edges: VIEW.edges, sunCentre: [0, 0, 0] });
 let CUR = null;                            // the view shown: {click, frame, key, active, P}
 let SCOPE = [];                            // the rooms the view is cut to; none: the whole house
 /* the active room: always one (the panel's): the one picked in the menu, kept; at first the first furnished */
@@ -466,7 +469,8 @@ let ROOM_LAYERS = roomLayers();
 let LAYER = HOME.ui.layerTree(Object.assign({}, VIEW.layers, ROOM_LAYERS));
 const OBJECTS = [];                        // the part's objects that hide while the camera is beyond them: {layer, middle, normal}
 const NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+h': [0, 0, 1], '-h': [0, 0, -1] };
-let STILL, LEAVES;                         // the cells that stand still; the doors drawn, each with the layers its leaf gets
+/** @type {HouseCell[]} */ let STILL;     // the cells that stand still
+/** @type {{ door: Door, layers: string[], mover?: Mover }[]} */ let LEAVES;   // the doors drawn, each with the layers its leaf gets
 if (WHOLE) {
   STILL = MODEL.CELLS.concat(MODEL.ROOF_CELLS, MODEL.STAIR_CELLS, MODEL.FIXTURES, MODEL.SITE_CELLS);
   LEAVES = DOORS.map(d => ({ door: d, layers: [] }));
@@ -480,7 +484,7 @@ if (WHOLE) {
       const middle = [0, 1, 2].map(k => (Math.min(...b.map(q => q[2 * k])) + Math.max(...b.map(q => q[2 * k + 1]))) / 2);
       OBJECTS.push({ layer, middle, normal: NORMAL[o.side] });
     }
-    // a room ignores the floors: a solid split at a floor is one solid again (one line round it)
+    /* a room ignores the floors: a solid split at a floor is one solid again (one line round it) */
     for (const c of o.cells) if (!seen.has(signature(c))) { seen.add(signature(c)); STILL.push(Object.assign({}, c, { room: p.room.id, layers: c.layers.filter(k => !VIEW.floors.includes(k)).concat(layer) })); }
     if (o.leaf && !LEAVES.some(l => l.door === o.leaf)) LEAVES.push({ door: o.leaf, layers: [layer] });
   }
@@ -519,7 +523,6 @@ for (const l of LEAVES) {
    house.js sets them (house/project.md): one layout for each node that sets tiles, over the rooms that take them from it.
    The viewer may change a layout's product, pattern, direction, origin and grout (kept in the browser, state.layouts:
    what differs from the data); each is laid and counted over all its rooms, drawn in the rooms shown */
-const TILES = T.setting(HOUSE, 'tiles').value;
 const SHOWN_ROOMS = new Set((WHOLE ? ROOMS : PART.map(id => ROOM[id])).map(r => r.id));
 const PASSAGES = MODEL.OPENINGS.filter(o => HOUSE.geometry.openingKinds[o.kind].passage), PASSAGE_BOXES = PASSAGES.map(o => o.b);
 if (!state.layouts) state.layouts = {};
@@ -619,26 +622,27 @@ const click = ray => {
   if (m) V.toggle(m);
 };
 /* the walk stands on the walkable solids and, through a passage (a door), on its floor: the floor runs on through it */
-const PASSAGE_FLOORS = PASSAGES.map(o => ({ S: prism([o.b[0], o.b[1], o.b[2], o.b[3], o.b[4] - 1, o.b[4]]) }));
+/** @type {Cell[]} */
+const PASSAGE_FLOORS = PASSAGES.map(o => ({ S: prism([o.b[0], o.b[1], o.b[2], o.b[3], o.b[4] - 1, o.b[4]]), layers: [] }));
 const startOf = () => {
   if (WHOLE) return VIEW.walk.start;
   const q = ROOM[PART[0]].rects[0];
   return { x: (q[0] + q[1]) / 2, y: (q[2] + q[3]) / 2, heading: VIEW.walk.start.heading };
 };
-V.enableWalk({ config: Object.assign({}, VIEW.walk, { start: startOf() }), solids: SOLIDS, ground: STILL.filter(c => c.walkable).concat(PASSAGE_FLOORS),
-  startLevel: WHOLE ? level(FLOORS[0]) : level(PARTS[0].floor), pad: $('pad'), canStart: () => state.mode === '3d' && WHOLE, onToggle: () => { ui.walking = V.walk.on; apply(); }, home: () => cameras()[0] });
+V.enableWalk({ config: Object.assign({}, VIEW.walk, { start: startOf() }), solids: SOLIDS, ground: /** @type {Cell[]} */ (STILL.filter(c => c.walkable)).concat(PASSAGE_FLOORS),
+  startLevel: WHOLE ? level(FLOORS[0]) : level(PARTS[0].floor), pad: /** @type {HTMLElement} */ ($('pad')), canStart: () => state.mode === '3d' && WHOLE, onToggle: () => { ui.walking = V.walk.on; apply(); }, home: () => cameras()[0] });
 /* on a walk, Space: the nearest door within reach, on the walker's floor */
 const DOOR_REACH = 1500;                   // mm from the walker to the middle of a leaf
 const key = e => {
   if (e.key !== ' ' || !V.walk.on) return;
-  const w = V.walk, near = LEAVES.filter(l => MODEL.floorOf(w.h + 1) === l.door.floor).map(l => [l, Math.hypot(l.door.centre[0] - w.x, l.door.centre[1] - w.y)])
+  const w = V.walk, near = LEAVES.filter(l => MODEL.floorOf(w.h + 1) === l.door.floor).map(l => /** @type {[typeof l, number]} */ ([l, Math.hypot(l.door.centre[0] - w.x, l.door.centre[1] - w.y)]))
     .filter(([, r]) => r <= DOOR_REACH).sort((a, b) => a[1] - b[1])[0];
-  if (near) { V.toggle(near[0].mover); e.preventDefault(); }
+  if (near && near[0].mover) { V.toggle(near[0].mover); e.preventDefault(); }
 };
 
 /* ================= 2D: one sheet per floor (of the part: its floors), the garden at the top ================= */
 const PLAN = HOME.plan2d.create(MATERIALS), PS = PLAN.SIZE;
-const planCut = F => T.setting(F, 'view.plan').value;
+const planCut = (/** @type {HouseNode} */ F) => must(F, 'view.plan');
 const inside = (b, x, y) => x >= b[0] - EPS && x <= b[1] + EPS && y >= b[2] - EPS && y <= b[3] + EPS;
 /* the stair: a full line under the cut, dashed over it; from the floor above, all of it shows through the hole */
 function planStair(F, X, h, holes) {
@@ -686,7 +690,7 @@ const roomLabel = r => ({ rects: r.rects, numbers: [r.node.number], name: r.node
 /* the whole house's dimensions on each side: the openings of that side's walls on this floor, then the whole */
 function planChains(F, X) {
   const box = [ROOF.x[0], ROOF.x[1], 0, WIDTH], mine = o => MODEL.floorOf((o.b[4] + o.b[5]) / 2) === F.id;
-  return ['E', 'W', 'N', 'S'].map(side => {
+  return /** @type {Side[]} */ (['E', 'W', 'N', 'S']).map(side => {
     const along = side === 'E' || side === 'W' ? 2 : 0, ends = [box[along], box[along + 1]];
     const openings = MODEL.OPENINGS.filter(o => o.outer === side && mine(o)).flatMap(o => [o.b[along], o.b[along + 1]]);
     return PLAN.chain(X, box, side, 0, ends.concat(openings)) + PLAN.chain(X, box, side, 1, ends);
@@ -711,7 +715,7 @@ function planSvg() {
       } };
   }));
 }
-const drawPlan = () => { ui.plan = { svg: planSvg(), note: `The cut over the floor: ${FLOORS.map(F => `${F.name.toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW.planNote}` }; };
+const drawPlan = () => { ui.plan = { svg: planSvg(), note: `The cut over the floor: ${FLOORS.map(F => `${(F.name || F.id).toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW.planNote}` }; };
 const PLAN_MENU = [{ name: 'Fit', label: 'The whole sheet', go: () => { state.zoom = 1; } },
   { name: 'Save SVG', go: () => HOME.ui.download(planSvg(), 'image/svg+xml', WHOLE ? 'house.svg' : PART.join('-') + '.svg') }];
 
@@ -736,7 +740,7 @@ function book() {
   const first = doors.rows.length + 1;
   for (const d of LEAVES.map(l => l.door)) for (const key of [d.product, ...d.extras]) {
     const P = key && LIB.product(key);
-    doors.rows.push({ cells: [d.label, FLOORS.find(F => F.id === d.floor).name, P ? P.name : 'to choose', P && P.price !== null ? { v: P.price, input: true } : ''] });
+    doors.rows.push({ cells: [d.label, /** @type {HouseNode} */ (FLOORS.find(F => F.id === d.floor)).name, P ? P.name : 'to choose', P && P.price !== null ? { v: P.price, input: true } : ''] });
   }
   doors.rows.push({ kind: 'sum', cells: ['Total', '', '', { f: `SUM(D${first}:D${doors.rows.length})` }] });
   /* the floor tiles: each layout as laid (Finish), its area and the reserve give the m² to buy */
@@ -821,6 +825,7 @@ function documents() {
 
 /* ================= TEST ================= */
 /* the whole house: the checks of the house (its tree, its model, the library); a room: its own (its furniture) */
+/** @type {Check} */
 const ASKED_CHECK = { name: 'Every room asked for is a room of the house', about: 'The rooms named in the address (?room=…) are rooms of house.js.', items: ASKED.filter(id => !ROOM[id]) };
 const TILE_CHECKS = [
   { name: 'Floor tiles: every room tiled or set to none', about: 'A room takes its floor tiles from the node above that sets them (its floor), or sets its own (an origin: a layout of its own), or sets none (null: its own project lays its floor).', items: ROOMS.filter(r => !layoutOf(r) && (T.setting(r.node, 'tiles') || {}).value !== null).map(r => r.id) },
@@ -897,6 +902,7 @@ return { click, frame: frameStep, key, active, P: {
   },
   /* below: the mode's actions */
   menus() {
+    /** @type {MenuItem[]} */
     const walk = WHOLE ? [{ name: 'Walk', cls: 'walk', pressed: ui.walking, go: () => (V.walk.on ? V.stopWalk() : V.startWalk()) }] : [];   // a walk: the whole house only
     const go = c => ({ name: c.name, go: () => { V.stopWalk(); V.flyTo(c); } });
     return { '3d': [walk.concat(HOME.ui.openAll(ui, V)), cameras().map(go)], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx')], cabinets: ui.editorMenus() };

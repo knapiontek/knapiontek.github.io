@@ -9,7 +9,7 @@ The room engine: a room from what the house gives (its node: origin, size, floor
 | room.js | puts a room together: groups and fixtures placed where the scene says, cabinets, products, built-ins, tiles, lamps; its layers; its checks. Preparing needs no browser; drawing does |
 | cabinets.js | a cabinets file → the model (carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, problems), the furniture's tree, its drawing. The model needs no browser |
 | tiles.js | tiles of a layout: rooms and zones, tiles laid from the grid's origin, the count (whole, cut, small cuts), the origin with fewest small cuts, the faces to draw. No browser |
-| docs.js | a furnished room's Documents: estimate, cut list, notes, assembly cards; their check. No browser but the cards |
+| docs.js | a furnished room's Documents: estimate (core's), cut list (boards with edges, m², banding, cuts), notes, assembly cards; their check. No browser but the cards |
 | `<kind>_<number>.cabinets.js` | a room's furniture (format cabinets) |
 | `<kind>_<number>.scene.js` | where a room's groups and fixtures stand; its finish, tiles, lights, cameras (format scene) |
 | `<kind>_<number>.docs.js` | what a room's Documents say (format docs) |
@@ -58,7 +58,7 @@ Fields: `settings`, `appliances`, `notes`, `groups`, `components`. Rules for wha
 | installation | sink: tapFromBack, trapTop, wallOutlet; hood: bottom |
 | hardware | our layout of hardware: handle (axis, barLength, sideHeight), open (angles, drawer travel; doorStop: a door that opens less), leg (fromSide, fromBack, fromFront), bins (count, height), plinthGrille (bottom) |
 | lights | pendantBottom; pendants {group, count, spacing}; downlights {group, x, y} or {group, between: [axes], y} (y from the wall), or `at` [x, y] in the room's axes (no group: a bathroom) |
-| tiles | walls, floor, shower {zone [x0, x1, y0, y1], walls, floor}: each {product, pattern, origin?} (room/tiles.md) |
+| tiles | walls, floor, shower {zone [x0, x1, y0, y1], walls, floor}: each {product, format? [length, width] (a size the product is made in), dir (x or y: the tiles' length along it), pattern?, origin?, grout?} (room/tiles.md) |
 | cameras | name, eye, target in the room's axes |
 
 How a room is drawn from it:

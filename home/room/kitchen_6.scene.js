@@ -19,8 +19,6 @@ HOME.data({
   "bins": {"count": 3, "height": 235},
   "plinthGrille": {"bottom": 20}
  },
- "floors": ["paradyz-authority-graphite", "paradyz-authority-grey"],
- "floorJoint": 2,
  "lights": {
   "pendantBottom": 1750,
   "pendants": {"group": 3, "count": 2, "spacing": 776},

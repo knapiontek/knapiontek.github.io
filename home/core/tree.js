@@ -4,36 +4,50 @@
    its parent's place plus its offset; its settings are the defaults of its branch. The tree says what belongs to what, not
    what lies inside what: a child may stand outside its parent (a sink over its carcass). Knows no project and nothing of
    what a node is. */
-(/** @param {Home} HOME */ function (HOME) {
+/**
+ * @typedef {object} TreeNode  a node (core/project.md: format tree)
+ * @property {string} id
+ * @property {string} [name]
+ * @property {string} type
+ * @property {number[]} offset  [x, y, h] mm from the parent's origin
+ * @property {number[]} size  [x, y, h] mm
+ * @property {Object<string, any>} [settings]
+ * @property {string[]} [refs]  paths from the root
+ * @property {TreeNode[]} [children]
+ */
+/** @typedef {ReturnType<ReturnType<typeof treeModule>['create']>} Tree */
+function treeModule() {
 'use strict';
 const AXES = ['x', 'y', 'h'];
 const ID = /^[A-Za-z0-9_-]+$/;             // no spaces, no '/': an id is a step of a path
 
-/* a tree over root, indexed once; the nodes are not changed */
+/** a tree over root, indexed once; the nodes are not changed @template {TreeNode} N @param {N} root */
 function create(root) {
-  const PARENT = new Map(), PATH = new Map(), BY_PATH = new Map();
-  (function index(n, parent, path) {
+  const PARENT = /** @type {Map<N, N | null>} */ (new Map()), PATH = /** @type {Map<N, string>} */ (new Map()), BY_PATH = /** @type {Map<string, N>} */ (new Map());
+  (function index(/** @type {N} */ n, /** @type {N | null} */ parent, /** @type {string} */ path) {
     PARENT.set(n, parent); PATH.set(n, path);
     if (!BY_PATH.has(path)) BY_PATH.set(path, n);
-    for (const c of n.children || []) index(c, n, path ? path + '/' + c.id : c.id);
+    for (const c of /** @type {N[]} */ (n.children || [])) index(c, n, path ? path + '/' + c.id : c.id);
   })(root, null, '');
 
   /* the path of ids from the root (the root itself not in it): the node's global identifier */
-  const path = n => PATH.get(n);
+  const path = (/** @type {N} */ n) => /** @type {string} */ (PATH.get(n));
   /* the node of a path; null when there is none */
-  const node = p => BY_PATH.get(p) || null;
-  const parent = n => PARENT.get(n);
+  const node = (/** @type {string} */ p) => BY_PATH.get(p) || null;
+  const parent = (/** @type {N} */ n) => PARENT.get(n) || null;
   /* the nodes from the root down to n */
-  const chain = n => { const out = []; for (let m = n; m; m = PARENT.get(m)) out.unshift(m); return out; };
+  const chain = (/** @type {N} */ n) => { /** @type {N[]} */ const out = []; for (let /** @type {N | null | undefined} */ m = n; m; m = PARENT.get(m)) out.unshift(m); return out; };
   /* the node's corner in the root's axes: the sum of the offsets */
-  const place = n => chain(n).slice(1).reduce((p, m) => p.map((v, i) => v + ((m.offset || [])[i] || 0)), [0, 0, 0]);   // the root's own offset is its place in its parent: not in its axes
+  const place = (/** @type {N} */ n) => chain(n).slice(1).reduce((p, m) => p.map((v, i) => v + ((m.offset || [])[i] || 0)), [0, 0, 0]);   // the root's own offset is its place in its parent: not in its axes
   /* the node's box [x1, x2, y1, y2, h1, h2] in the root's axes */
-  const box = n => { const p = place(n), s = n.size; return [p[0], p[0] + s[0], p[1], p[1] + s[1], p[2], p[2] + s[2]]; };
+  /** @returns {Box} */
+  const box = (/** @type {N} */ n) => { const p = place(n), s = n.size; return [p[0], p[0] + s[0], p[1], p[1] + s[1], p[2], p[2] + s[2]]; };
   /* a setting by its key (dots go into nested objects): the value of the nearest node, n or above, that sets it, and that
      node; undefined when none does */
+  /** @param {N} n @param {string} key @returns {{ value: any, from: N } | undefined} */
   function setting(n, key) {
     const parts = key.split('.');
-    for (let m = n; m; m = PARENT.get(m)) {
+    for (let /** @type {N | null | undefined} */ m = n; m; m = PARENT.get(m)) {
       let v = m.settings;
       for (const k of parts) v = v && typeof v === 'object' ? v[k] : undefined;
       if (v !== undefined) return { value: v, from: m };
@@ -41,14 +55,16 @@ function create(root) {
     return undefined;
   }
   /* the nodes a node refers to, in the order of its refs; null for a path with no node */
-  const refs = n => (n.refs || []).map(node);
+  const refs = (/** @type {N} */ n) => (n.refs || []).map(node);
   /* every node below the root, parents first: fn(node) */
-  function walk(fn) { (function each(n) { for (const c of n.children || []) { fn(c); each(c); } })(root); }
+  /** @param {(n: N) => void} fn */
+  function walk(fn) { (function each(/** @type {N} */ n) { for (const c of /** @type {N[]} */ (n.children || [])) { fn(c); each(c); } })(root); }
 
   /* the checks of the tree, as Test shows them: [{name, items}] */
+  /** @returns {Check[]} */
   function checks() {
-    const shape = [], ids = [], twice = [], below = [], empty = [], broken = [];
-    const vector = v => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
+    /** @type {string[]} */ const shape = [], ids = [], twice = [], below = [], empty = [], broken = [];
+    const vector = (/** @type {any} */ v) => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
     walk(n => {
       const at = path(n) || '(' + (n.name || n.type || 'a node') + ')';
       if (n.refs !== undefined && !(Array.isArray(n.refs) && n.refs.every(r => typeof r === 'string'))) broken.push(`${at}: refs is not a list of paths`);
@@ -59,9 +75,9 @@ function create(root) {
       const p = place(n), low = AXES.filter((a, i) => p[i] < 0);
       if (low.length) below.push(`${at}: ${low.map(a => a + ' ' + p[AXES.indexOf(a)]).join(', ')}`);
     });
-    (function siblings(n) {
+    (function siblings(/** @type {N} */ n) {
       const seen = new Set();
-      for (const c of n.children || []) { if (seen.has(c.id)) twice.push((path(n) ? path(n) + '/' : '') + c.id); seen.add(c.id); siblings(c); }
+      for (const c of /** @type {N[]} */ (n.children || [])) { if (seen.has(c.id)) twice.push((path(n) ? path(n) + '/' : '') + c.id); seen.add(c.id); siblings(c); }
     })(root);
     return [
       { name: 'Tree: every node has a type, an offset and a size', about: 'Each node of the tree says what it is and where it stands: a type, an offset [x, y, h] and a size [x, y, h].', items: shape },
@@ -75,5 +91,6 @@ function create(root) {
   return { root, path, node, parent, chain, place, box, setting, refs, walk, checks };
 }
 
-HOME.tree = { create };
-})(window.HOME = window.HOME || {});
+return { create };
+}
+HOME.tree = treeModule();

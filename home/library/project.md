@@ -15,7 +15,7 @@ The outside world, once for the whole house: what is bought (products and shops)
 | shops.js | shops and workshops, by key |
 | materials.js | how a material looks: colour, surface, 2D section fill |
 | textures/*.js | one image each (a board's decor, a tile's face), by key |
-| draw.js | code (`HOME.draw`): how each kind of product is drawn, in the frame of its node (x, y, h), from its data and its place |
+| draw.js | code: how each kind of product is drawn, in the frame of its node (x, y, h), from its data and its place |
 
 ## Formats (all version 1; sizes in mm)
 
