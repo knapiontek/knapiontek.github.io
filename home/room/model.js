@@ -2,7 +2,7 @@
 /* room/model.js: a room's model, from what the page hands it: the room from the house (its node: origin, size, floor area,
    openings, ceiling), the room's files (cabinets, scene) and the library. No browser: the cabinets' model (room/cabinets.js),
    the places of the groups and the fixtures, the hardware as drawn, the tree, the looks and textures the room needs, its
-   tiles laid and counted; the checks of its tree. In the house's axes (x, y, h; mm). room/view.js draws it. */
+   tiles laid and counted; the checks of its tree. In the house's axes (x, y, h; mm). room/parts.js draws it. */
 /**
  * @typedef {object} SceneFile  a room's scene (room/project.md: format scene)
  * @property {Object<string, { front: Side, offset: number[], size: number[] }>} groups  group number -> its box in the room

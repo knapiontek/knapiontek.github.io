@@ -7,7 +7,7 @@ The room engine: a room from what the house gives (its node: origin, size, floor
 | File | Does |
 |---|---|
 | model.js | a room's model, no browser: the cabinets' model, groups and fixtures placed where the scene says, the hardware as drawn, the tree, the looks and textures it needs, its tiles laid and counted; the checks of its tree |
-| view.js | a room drawn from its model: cabinets, products, built-ins, tiles, lamps described (core/parts.js), core/scene.js draws; the furniture's 2D plan; the checks of what is drawn; the layers of its view |
+| parts.js | a room's parts from its model (core/parts.js): cabinets, products, built-ins, tiles, lamps, how the moving parts move; the page shows them (core/scene.js); the furniture's 2D plan; the checks of the parts against the tree; the layers of its view |
 | cabinets.js | a cabinets file → the model (carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, problems), the furniture's tree. Needs nothing |
 | furniture.js | the cabinets described (core/parts.js) from their model: carcasses, fronts, worktops, panels, hardware, the products in them; the boards' looks |
 | tiles.js | tiles of a layout: rooms and zones, tiles laid from the grid's origin, the count (whole, cut, small cuts), the origin with fewest small cuts, the faces to draw; a floor's layout laid over its rooms and its pieces (one slab: edges only round its outline). No browser |
@@ -20,7 +20,7 @@ The room engine: a room from what the house gives (its node: origin, size, floor
 
 ```
 house.js (a room's files) ─► index.js ─► model.js: cabinets.js model, tiles.js ─► tree, counts
-                                       ─► view.js: furniture.js, library/shapes.js ─► a description ─► core/scene.js
+                                       ─► parts.js: furniture.js, library/shapes.js ─► a description ─► core/scene.js
 ```
 
 ## Coordinates

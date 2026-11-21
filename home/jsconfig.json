@@ -21,7 +21,7 @@
     "room/cabinets.js",
     "room/furniture.js",
     "room/model.js",
-    "room/view.js",
+    "room/parts.js",
     "room/docs.js",
     "room/design.js",
     "room/tiles.js",

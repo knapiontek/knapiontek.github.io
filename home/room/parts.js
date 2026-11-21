@@ -1,13 +1,13 @@
 // @ts-check
-/* room/view.js: a room drawn from its model (room/model.js): the cabinets (room/furniture.js), the fixtures
-   (library/shapes.js), the built-ins, the tiles laid, the lamps, described (core/parts.js: still cells, moving parts,
-   details, lamps) and shown by a scene of core; the furniture's 2D plan; the checks of what is drawn; the layers of the
-   room's own view. */
-/** @typedef {ReturnType<ReturnType<typeof roomViewModule>['build']>} BuiltRoom */
+/* room/parts.js: a room's parts from its model (room/model.js), as core/parts.js holds them: the cabinets
+   (room/furniture.js), the fixtures (library/shapes.js), the built-ins, the tiles laid, the lamps, how the moving parts
+   move. The page shows them (core/scene.js). Also: the furniture's 2D plan, the checks of the parts against the tree, the
+   layers of the room's own view. */
+/** @typedef {ReturnType<ReturnType<typeof roomPartsModule>['build']>} BuiltRoom */
 /** @param {ReturnType<typeof roomModelModule>} room @param {ReturnType<typeof roomCabinetsModule>} cabinets
     @param {ReturnType<typeof roomFurnitureModule>} furniture @param {ReturnType<typeof libraryShapesModule>} shapes
-    @param {ReturnType<typeof corePartsModule>} parts @param {ReturnType<typeof corePlan2dModule>} plan2d */
-function roomViewModule(room, cabinets, furniture, shapes, parts, plan2d) {
+    @param {ReturnType<typeof corePartsModule>} coreParts @param {ReturnType<typeof corePlan2dModule>} plan2d */
+function roomPartsModule(room, cabinets, furniture, shapes, coreParts, plan2d) {
 'use strict';
 const C = cabinets;
 
@@ -45,13 +45,13 @@ function outside(made, prepared) {
 /* V: a scene of core; prepared: prepare(); materials: the page's library for core (the room's looks are in it, plus
 
    ceiling's lamps with the ceiling} */
-/** @param {SceneView} V @param {PreparedRoom} prepared
+/** @param {PreparedRoom} prepared
     @param {{ materials: Object<string, MaterialLook>, layers?: string[], ceilingLayers?: string[], library: Library }} opts  library: library/catalog.js */
-function build(V, prepared, opts) {
+function build(prepared, opts) {
   const { model, appliances, PLACE, HW, scene } = prepared, CEILING = prepared.ceiling;
   const EXTRA = opts.layers || [];
   /* what is drawn, described (core/parts.js): the cabinets, the fixtures, the tiles' cells, the lamps */
-  const D = parts.create({ place: PLACE, level: prepared.level, layers: EXTRA, looks: opts.materials, metal: scene.finish.metal, ceiling: CEILING });
+  const D = coreParts.create({ place: PLACE, level: prepared.level, layers: EXTRA, looks: opts.materials, metal: scene.finish.metal, ceiling: CEILING });
   const { box, at, part, STATIC, MOVERS, ENVELOPES, UNDRAWN } = D;
 
   /* the cabinets, with their products */
@@ -97,10 +97,9 @@ function build(V, prepared, opts) {
     const open = m.travel ?? (m.kind === 'drawer' ? HW.open.drawer : HW.open.angle[m.kind] || 0), { X, Y } = PLACE[m.r], swing = m.swing || SWING[m.kind];
     m.how = swing === 'slide' ? { slide: [open * Y[0], open * Y[1], 0] } : swing === 'x' ? { axis: [X[0], X[1], 0], angle: open } : { axis: [0, 0, 1], angle: -m.sign * open };
   }
-  /* drawn (core/scene.js); of the sink and the hob the plan draws what is seen from above: their details stay apart */
-  const shown = V.show(D, { layers: EXTRA, apart: ['sink', 'hob'] });
-  const { night, showDetails } = shown;
-  const made = { STATIC, MOVERS, DETAILS: shown.DETAILS, ENVELOPES, LAMPS: shown.LAMPS, UNDRAWN, tiles, carcasses: drawn.carcasses, night, showDetails,
+  /* the parts, for the page to show (core/scene.js); of the sink and the hob the plan draws what is seen from above:
+     their details stay apart */
+  const made = { parts: D, apart: ['sink', 'hob'], STATIC, MOVERS, ENVELOPES, UNDRAWN, tiles, carcasses: drawn.carcasses,
     cells: () => STATIC.concat(...MOVERS.map(m => m.cells)) };
   /* the 2D plan of the furniture, as a room's plan shows it (about 1:50): not cut, seen from above. A carcass is one
      rectangle with its front; the tops (worktops, end panels) one figure, no joints, their openings left; a sink and a hob
@@ -108,7 +107,7 @@ function build(V, prepared, opts) {
      plan's cut (wall units, the hood) dashed. Left out: the boards, drawers, hardware, handles, strips, plinths, backs,
      legs, holes, the installations. */
   const APPLIANCES = ['sink', 'trap', 'hob', 'hood', 'oven', 'microwave', 'coffee', 'fridge', 'dishwasher'];
-  made.plan = () => {
+  made.plan = (/** @type {(pass: (layers: string[]) => boolean) => any[]} */ footprints) => {
     const cells = made.cells(), outlines = [];
     const span = list => { const s = list.map(c => plan2d.solidShape(c)), xs = s.flatMap(q => q.poly.map(p => p[0])), ys = s.flatMap(q => q.poly.map(p => p[1]));
       return { poly: [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)], [Math.min(...xs), Math.max(...ys)]], bottom: Math.min(...s.map(q => q.bottom)), top: Math.max(...s.map(q => q.top)) }; };
@@ -124,7 +123,7 @@ function build(V, prepared, opts) {
     }
     const tops = cells.filter(c => c.layers.includes('worktops') || c.layers.includes('endPanels')).map(c => plan2d.solidShape(c));
     outlines.push(...cells.filter(c => c.layers.some(l => ['builtIns', 'plasterboard', 'sanitary', 'basin'].includes(l)) && !c.layers.includes('installations')).map(c => plan2d.solidShape(c, c.material === 'glass')));
-    outlines.push(...shown.footprints(layers => !layers.includes('installations') && layers.some(l => ['sink', 'hob', 'basin', 'sanitary'].includes(l))));
+    outlines.push(...footprints(layers => !layers.includes('installations') && layers.some(l => ['sink', 'hob', 'basin', 'sanitary'].includes(l))));
     if (tops.length) outlines.push({ pieces: tops, poly: tops[0].poly, bottom: Math.min(...tops.map(q => q.bottom)), top: Math.max(...tops.map(q => q.top)) });
     return { cells: [], shapes: outlines };
   };

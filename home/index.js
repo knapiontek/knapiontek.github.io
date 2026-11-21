@@ -11,7 +11,7 @@ const UI = coreUiModule(Tools), Sheet = coreSheetModule(UI, Tools), Scene = core
 const Catalog = libraryCatalogModule(HOME.load), Model = houseModelModule(Geometry, Tree), Tiles = roomTilesModule(Geometry);
 const Shapes = libraryShapesModule(), Cabinets = roomCabinetsModule(), Furniture = roomFurnitureModule(Cabinets, Shapes);
 const Parts = corePartsModule(Geometry);
-const RoomModel = roomModelModule(Geometry, Tree, Tiles, Cabinets, Furniture), RoomView = roomViewModule(RoomModel, Cabinets, Furniture, Shapes, Parts, Plan2d);
+const RoomModel = roomModelModule(Geometry, Tree, Tiles, Cabinets, Furniture), RoomParts = roomPartsModule(RoomModel, Cabinets, Furniture, Shapes, Parts, Plan2d);
 const Docs = roomDocsModule(Tools, Estimate, Cabinets);
 const Design = roomDesignModule(Cabinets, Tools, UI);
 const HousePlan = housePlanModule(Geometry, Plan2d), HouseDocs = houseDocsModule();
@@ -179,22 +179,33 @@ SCOPE = PART;
 if (PART.length && !PART.includes(state.room)) state.room = PART[0];   // a room's view: its room is the active one
 
 /* ================= THE ROOMS' FURNITURE =================
-   the rooms shown that have files in room/ (house.js: files): placed by room/model.js, drawn by room/view.js; their looks join the library's */
+   the rooms shown that have files in room/ (house.js: files): placed by room/model.js, drawn by room/parts.js; their looks join the library's */
 const FURNISHED = (WHOLE ? ROOMS : PART.map(id => ROOM[id])).filter(r => (r.node.files || []).includes('cabinets'));
 const FURNITURE = await Promise.all(FURNISHED.map(furnished));
 for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks);
 await LIB.loadTextures(FURNITURE.flatMap(f => f.prepared.textures));
 /* the active room's furniture: its own layers too (its groups and its kinds of parts), in the house's view as in its own */
-const roomLayers = () => { const f = FURNITURE.find(f => f.room.id === activeId()); return f ? RoomView.layers(f.prepared) : {}; };
+const roomLayers = () => { const f = FURNITURE.find(f => f.room.id === activeId()); return f ? RoomParts.layers(f.prepared) : {}; };
 let ROOM_LAYERS = roomLayers();
 
 /* ================= SOLIDS =================
    The whole house: every solid, each door turning on its hinge. A part: the solids of its rooms, each wall, floor and
    ceiling an object of its own (a layer), a window or a door with the wall it sits in. */
 let LAYER = UI.layerTree(Object.assign({}, VIEW.layers, ROOM_LAYERS));
-const OBJECTS = [];                        // the part's objects that hide while the camera is beyond them: {layer, middle, normal}
-/* the layers of the floors of the part's rooms (one room's, or all): the tiles on a floor hide with it, while the camera is under it */
-const floorLayersOf = (/** @type {string} */ id = '') => PARTS.filter(p => !id || p.room.id === id).flatMap(p => p.objects.filter(o => o.role === 'floor').map(o => 'object:' + p.room.id + '/' + o.id));
+const OBJECTS = [];                        // the part's objects that hide while the camera is beyond them: {layer, middle, normal, box, k, inner}
+/* what lies on an object (a wall, the floor, the ceiling) hides with it: a piece within its skin, the tiles' depth either
+   side of its face toward the room (k: the axis of its normal, inner: that face), and along it meeting its box (as far as
+   the tiles run past its end). The
+   tiles on a wall or on the floor, and their edges, also an edge under another wall's tiles (in that wall's skin too) */
+const TOL = 1;
+const onObjects = (/** @type {number[][]} */ poly) => {
+  const b = boxOf(poly), d = TILES.depth + TOL;
+  return OBJECTS.filter(o => b[2 * o.k] >= o.inner - d && b[2 * o.k + 1] <= o.inner + d
+    && [0, 1, 2].every(j => j === o.k || (b[2 * j] <= o.box[2 * j + 1] + d && b[2 * j + 1] >= o.box[2 * j] - d))).map(o => o.layer);
+};
+/* pieces of core made elsewhere (the tiles), each with the layers of the objects it lies on */
+const onTheirObjects = (/** @type {any[]} */ pieces, /** @type {string[]} */ base) => pieces.map(p => { const layers = base.concat(p.cell.layers, onObjects(p.poly));
+  return Object.assign(p, { cell: Object.assign({}, p.cell, { layers }), group: layers.join('+') }); });
 const boxOf = poly => [0, 1, 2].flatMap(k => [Math.min(...poly.map(v => v[k])), Math.max(...poly.map(v => v[k]))]);   // [x1, x2, y1, y2, h1, h2]
 const NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+h': [0, 0, 1], '-h': [0, 0, -1] };
 /** @type {HouseCell[]} */ let STILL;     // the cells that stand still
@@ -210,7 +221,8 @@ if (WHOLE) {
     if (!o.host) {
       const b = o.cells.map(c => { const ys = c.S.poly.map(q => q[0]), h = hRange(c.S); return [c.S.x1, c.S.x2, Math.min(...ys), Math.max(...ys), ...h]; });
       const middle = [0, 1, 2].map(k => (Math.min(...b.map(q => q[2 * k])) + Math.max(...b.map(q => q[2 * k + 1]))) / 2);
-      OBJECTS.push({ layer, middle, normal: NORMAL[o.side] });
+      const normal = NORMAL[o.side], k = normal.findIndex(v => v !== 0), box = [0, 1, 2, 3, 4, 5].map(i => (i % 2 ? Math.max : Math.min)(...b.map(q => q[i])));
+      OBJECTS.push({ layer, middle, normal, box, k, inner: normal[k] > 0 ? box[2 * k] : box[2 * k + 1] });
     }
     /* a room ignores the floors: a solid split at a floor is one solid again (one line round it) */
     for (const c of o.cells) if (!seen.has(signature(c))) { seen.add(signature(c)); STILL.push(Object.assign({}, c, { room: p.room.id, layers: c.layers.filter(k => !VIEW.floors.includes(k)).concat(layer) })); }
@@ -232,29 +244,11 @@ const BODY = UNION ? [[UNION[0], UNION[2], UNION[4]], [UNION[1], UNION[3], UNION
 V.relight(LIGHT, [0, 1, 2].map(k => (BODY[0][k] + BODY[1][k]) / 2), !WHOLE);   // a room: the inside light and the lamps in physical units
 for (const f of FURNITURE) {
   const own = PARTS.find(p => p.room === f.room), ceilings = own ? own.objects.filter(o => o.role === 'ceiling').map(o => 'object:' + f.room.id + '/' + o.id) : [];
-  f.made = RoomView.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings, library: LIB });
+  f.made = RoomParts.build(f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings, library: LIB });
+  f.shown = V.show(f.made.parts, { layers: [f.room.floor.id, 'furniture'], apart: f.made.apart });
   STILL.push(...f.made.STATIC);
   for (const [k, m] of Object.entries(f.made.tiles.materials)) MATERIALS[k] ||= m;
-  /* a wall's tiles hide with their wall (the part's object facing them, the nearest) */
-  const walls = OBJECTS.filter(o => o.layer.startsWith('object:' + f.room.id + '/'));
-  const wallOf = p => {
-    const n = p.cell.face, q = p.poly[0], off = o => Math.abs(o.normal.reduce((s, v, k) => s + v * (q[k] - o.middle[k]), 0));
-    const fit = n ? walls.filter(o => o.normal.reduce((s, v, k) => s + v * n[k], 0) < -0.99).sort((a, b) => off(a) - off(b)) : [];
-    return fit.length ? [fit[0].layer] : [];
-  };
-  /* an edge of the tiles (the slab's side: the floor's along a wall, a wall's in a corner) lies under another wall's
-     tiles (between their face and the wall): it hides with that wall too, as their slab covers it */
-  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], TOL = 1, DEPTH = f.prepared.room.tiles.depth;
-  const faces = f.made.tiles.pieces.filter(p => p.cell.face && dot(p.n, p.cell.face) > 0.99).map(p => ({ n: p.n, at: dot(p.poly[0], p.n), box: boxOf(p.poly), walls: wallOf(p) }));
-  const coverOf = p => {
-    if (p.cell.face && dot(p.n, p.cell.face) > 0.99) return [];   // a face: its own wall
-    const at = dot(p.poly[0], p.n), b = boxOf(p.poly);
-    const by = faces.find(q => dot(q.n, p.n) < -0.99 && at >= -q.at - TOL && at <= -q.at + DEPTH + TOL
-      && [0, 1, 2].every(k => Math.abs(p.n[k]) > 0.5 || (b[2 * k] <= q.box[2 * k + 1] + TOL && b[2 * k + 1] >= q.box[2 * k] - TOL)));
-    return by ? by.walls : [];
-  };
-  if (f.made.tiles.pieces.length) V.buildMeshes(f.made.tiles.pieces.map(p => { const layers = [f.room.floor.id].concat(p.cell.layers, wallOf(p), coverOf(p), p.cell.face || p.cell.layers.includes('builtIns') ? [] : floorLayersOf(f.room.id));
-    return Object.assign(p, { cell: Object.assign({}, p.cell, { layers }), group: layers.join('+') }); }));
+  if (f.made.tiles.pieces.length) V.buildMeshes(onTheirObjects(f.made.tiles.pieces, [f.room.floor.id]));
 }
 const SOLIDS = WHOLE ? MODEL.SOLIDS.concat(...FURNITURE.map(f => f.made.STATIC)) : STILL;   // what the walk bumps into
 const PIECES = piecesOf(STILL);
@@ -283,9 +277,9 @@ function layTiles(D) {
   if (L.oa === null || L.ob === null) { Object.assign(L, { oa: F.oa, ob: F.ob }); Object.assign(state.layouts[D.key] ||= {}, { oa: F.oa, ob: F.ob }); }
   const old = LAID[D.key];
   if (old) V.removeMeshes(old.made);
-  const made = Tiles.floorPieces(L, P, LIB.textures[P.texture], F, SHOWN_ROOMS, level(D.floor), TILES, { layers: [D.floor.id].concat(TILES.layers, floorLayersOf()) });
+  const made = Tiles.floorPieces(L, P, LIB.textures[P.texture], F, SHOWN_ROOMS, level(D.floor), TILES, { layers: [D.floor.id].concat(TILES.layers) });
   for (const [k, m] of Object.entries(made.materials)) MATERIALS[k] ||= m;
-  LAID[D.key] = { D, L, P, laid: F.laid, pieces: F.pieces, count: F.count, made: V.buildMeshes(made.pieces) };
+  LAID[D.key] = { D, L, P, laid: F.laid, pieces: F.pieces, count: F.count, made: V.buildMeshes(onTheirObjects(made.pieces, [])) };
 }
 const LAYOUTS = MODEL.LAYOUTS.filter(D => TILE_PRODUCTS[D.product]);
 for (const D of LAYOUTS) layTiles(D);
@@ -311,7 +305,7 @@ function openFloor() {
 }
 function apply() {
   V.showPieces(shown, layerOn, ghost);
-  for (const f of FURNITURE) f.made.showDetails(layers => shown(layers) && !ghost(layers));
+  for (const f of FURNITURE) f.shown.showDetails(layers => shown(layers) && !ghost(layers));
   V.redraw();
 }
 /* a part: the walls, the floor and the ceiling the camera is beyond hide, as it moves */
@@ -325,7 +319,7 @@ const frameStep = () => {
 
 /* ================= 3D: cameras, sun, clicks, walk ================= */
 const SUN = UI.sunStore(VIEW.light);
-const placeSun = () => { V.placeSun(SUN.state); for (const f of FURNITURE) f.made.night(!!SUN.state.night); };
+const placeSun = () => { V.placeSun(SUN.state); for (const f of FURNITURE) f.shown.night(!!SUN.state.night); };
 ui.sun = { rects: MODEL.FOOTPRINT, mark: PART.flatMap(id => ROOM[id].rects), sun: SUN.state, change: () => { SUN.save(); placeSun(); } };
 /* the cameras: the house's and the open floor's; of a part, over it and from two corners, framed by its box */
 function cameras() {
@@ -377,7 +371,7 @@ const key = e => {
 
 /* ================= 2D: one sheet per floor (house/plan.js) ================= */
 const PLAN = HousePlan.create(MODEL, MATERIALS);
-const planSvg = () => PLAN.svg({ parts: PARTS, still: STILL, doors: LEAVES.map(l => l.door), furniture: FURNITURE.map(f => ({ floor: f.room.floor, plan: f.made.plan() })) });
+const planSvg = () => PLAN.svg({ parts: PARTS, still: STILL, doors: LEAVES.map(l => l.door), furniture: FURNITURE.map(f => ({ floor: f.room.floor, plan: f.made.plan(f.shown.footprints) })) });
 const drawPlan = () => { ui.plan = { svg: planSvg(), note: PLAN.note() }; };
 const PLAN_MENU = [{ name: 'Fit', label: 'The whole sheet', go: () => { state.zoom = 1; } },
   { name: 'Save SVG', go: () => UI.download(planSvg(), 'image/svg+xml', WHOLE ? 'house.svg' : PART.join('-') + '.svg') }];
