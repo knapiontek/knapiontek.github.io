@@ -11,7 +11,8 @@ const UI = coreUiModule(Tools), Sheet = coreSheetModule(UI, Tools), Scene = core
 const Catalog = libraryCatalogModule(HOME.load), Model = houseModelModule(Geometry, Tree), Tiles = roomTilesModule(Geometry);
 const Shapes = libraryShapesModule(), Cabinets = roomCabinetsModule(), Furniture = roomFurnitureModule(Cabinets, Shapes);
 const Drawing = coreDrawingModule(Geometry);
-const Room = roomRoomModule(Geometry, Tree, Plan2d, Tiles, Cabinets, Furniture, Shapes, Drawing), Docs = roomDocsModule(Tools, Estimate, Cabinets);
+const RoomModel = roomModelModule(Geometry, Tree, Tiles, Cabinets, Furniture), RoomView = roomViewModule(RoomModel, Cabinets, Furniture, Shapes, Drawing, Plan2d);
+const Docs = roomDocsModule(Tools, Estimate, Cabinets);
 const Design = roomDesignModule(Cabinets, Tools, UI);
 
 const DESIGN_HOST = {};                    // what the cabinet design asks of the page (build() fills it)
@@ -81,7 +82,7 @@ function finished(id, files) {
   if (metal) f.scene = Object.assign({}, f.scene, { finish: Object.assign({}, f.scene.finish, { metal }) });
   return f;
 }
-/* a room's furniture, prepared once (and again after a change of its finish): its files as finished, placed by room/room.js */
+/* a room's furniture, prepared once (and again after a change of its finish): its files as finished, placed by room/model.js */
 const PREPARED = new Map();
 const furnished = r => PREPARED.get(r.id) || PREPARED.set(r.id, (async () => {
   const roles = ['cabinets', 'scene'].concat(r.node.files.includes('docs') ? ['docs'] : []);
@@ -93,7 +94,7 @@ const furnished = r => PREPARED.get(r.id) || PREPARED.set(r.id, (async () => {
   const over = MODEL.ELEMENTS.filter(e => e.kind === 'ceiling' && e.b[0] < at[0] + r.node.size[0] && e.b[1] > at[0] && e.b[2] < at[1] + r.node.size[1] && e.b[3] > at[1] && e.b[4] > at[2]);
   const ceiling = over.map(e => ({ a: e.b[4] - at[2], s: 0 })).concat(r.floor === MODEL.FLOORS[MODEL.FLOORS.length - 1] ? MODEL.ROOF_UNDER.map(l => ({ a: l.a + l.s * at[1] - at[2], s: l.s })) : []);
   const node = { offset: at, size: r.node.size, area: r.node.area, ceiling, tiles: TILES, openings: MODEL.OPENINGS.map(o => o.b).filter(near).map(b => b.map((v, k) => v - at[k >> 1])) };
-  const prepared = Room.prepare(node, { cabinets, scene }, LIB);
+  const prepared = RoomModel.prepare(node, { cabinets, scene }, LIB);
   return { room: r, prepared, data, used, docs: docs && Docs.create({ model: prepared.model, tree: prepared.TREE, docs, appliances: prepared.appliances, library: LIB }) };
 })()).get(r.id);
 const TILE_PRODUCTS = /** @type {Object<string, TileProduct>} */ (LIB.groups.tiles);
@@ -177,13 +178,13 @@ SCOPE = PART;
 if (PART.length && !PART.includes(state.room)) state.room = PART[0];   // a room's view: its room is the active one
 
 /* ================= THE ROOMS' FURNITURE =================
-   the rooms shown that have files in room/ (house.js: files): placed by room/room.js; their looks join the library's */
+   the rooms shown that have files in room/ (house.js: files): placed by room/model.js, drawn by room/view.js; their looks join the library's */
 const FURNISHED = (WHOLE ? ROOMS : PART.map(id => ROOM[id])).filter(r => (r.node.files || []).includes('cabinets'));
 const FURNITURE = await Promise.all(FURNISHED.map(furnished));
 for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks);
 await LIB.loadTextures(FURNITURE.flatMap(f => f.prepared.textures));
 /* the active room's furniture: its own layers too (its groups and its kinds of parts), in the house's view as in its own */
-const roomLayers = () => { const f = FURNITURE.find(f => f.room.id === activeId()); return f ? Room.layers(f.prepared) : {}; };
+const roomLayers = () => { const f = FURNITURE.find(f => f.room.id === activeId()); return f ? RoomView.layers(f.prepared) : {}; };
 let ROOM_LAYERS = roomLayers();
 
 /* ================= SOLIDS =================
@@ -221,7 +222,7 @@ const BODY = UNION ? [[UNION[0], UNION[2], UNION[4]], [UNION[1], UNION[3], UNION
 V.relight(LIGHT, [0, 1, 2].map(k => (BODY[0][k] + BODY[1][k]) / 2), !WHOLE);   // a room: the inside light and the lamps in physical units
 for (const f of FURNITURE) {
   const own = PARTS.find(p => p.room === f.room), ceilings = own ? own.objects.filter(o => o.role === 'ceiling').map(o => 'object:' + f.room.id + '/' + o.id) : [];
-  f.made = Room.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings, library: LIB });
+  f.made = RoomView.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings, library: LIB });
   STILL.push(...f.made.STATIC);
   for (const [k, m] of Object.entries(f.made.tiles.materials)) MATERIALS[k] ||= m;
   /* a wall's tiles hide with their wall (the part's object facing them, the nearest) */

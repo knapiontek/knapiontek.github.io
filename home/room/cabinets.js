@@ -1452,7 +1452,7 @@ function productsOf(model, appliances, /** @type {{ install?: any, ceiling?: num
 
 /* the hardware, each piece with its box in its group (the model's frame) and what it belongs to: a leg, a plinth's grille,
    a shelf pin and a hinge's bumper to its carcass; a hinge (plate, arm, cup), a handle and the runners of a drawer, of the
-   drawers behind a door and of a pull-out shelf to their front or shelf. HW: the hardware as drawn (room/room.js) */
+   drawers behind a door and of a pull-out shelf to their front or shelf. HW: the hardware as drawn (room/model.js) */
 function hardwareOf(model, HW) {
   const { carcassBack, frontThickness, settings, thickness: T } = model, out = [], G = g => model.groups[String(g)].geometry;
   const union = boxes => [0, 1, 2].flatMap(k => [Math.min(...boxes.map(b => b[2 * k])), Math.max(...boxes.map(b => b[2 * k + 1]))]);

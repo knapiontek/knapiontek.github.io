@@ -21,7 +21,7 @@
 /* the files tested; core/tree.js is made by coreTreeModule(), its test is coreTreeTest() in test/core/tree.js */
 const FILES = ['core/geometry.js', 'core/tools.js', 'core/tree.js', 'core/faces.js', 'core/plan2d.js', 'core/estimate.js',
   'core/ui.js', 'core/sheet.js', 'core/scene.js', 'core/drawing.js',
-  'house/model.js', 'room/tiles.js', 'room/cabinets.js', 'room/furniture.js', 'room/room.js', 'room/docs.js', 'room/design.js', 'library/catalog.js', 'library/shapes.js'] ;
+  'house/model.js', 'room/tiles.js', 'room/cabinets.js', 'room/furniture.js', 'room/model.js', 'room/view.js', 'room/docs.js', 'room/design.js', 'library/catalog.js', 'library/shapes.js'] ;
 const nameOf = file => file.replace('.js', '').replace(/\/(\w)/g, (_, c) => c.toUpperCase());   // core/plan2d.js → corePlan2d
 const fileOf = constructor => FILES.find(f => nameOf(f) + 'Module' === constructor);
 
@@ -95,6 +95,7 @@ function run(file) {
   /* the data the tests read: the house, the library, every room's files */
   await read('house/house.js'); await read('library/library.js'); await read('library/materials.js'); await read('library/shops.js');
   for (const group of DATA['library/library.js'].groups) await read(`library/products/${group}.js`);
+  for (const t of Object.values(DATA['library/products/tiles.js'].products)) await read(`library/textures/${t.texture}.js`);   // the tiles' textures: a room's tiles laid
   for (const n of (function all(n) { return [n, ...(n.children || []).flatMap(all)]; })(DATA['house/house.js']))
     for (const role of n.files || []) await read(`room/${n.id}.${role}.js`);
 

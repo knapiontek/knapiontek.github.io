@@ -15,7 +15,7 @@ function roomCabinetsTest({ roomCabinetsModule }, data, check) {
     check(`${id} build: its groups and carcasses, nothing stops it`, Object.keys(model.groups).length > 0 && model.carcasses.length > 0);
     check(`${id} cutList: the boards, the same ones in one row`, C.cutList(model.boards).length > 0 && C.cutList(model.boards).length <= model.boards.length);
 
-    /* the hardware as drawn, as room/room.js hands it in: the products' sizes, the scene's layout */
+    /* the hardware as drawn, as room/model.js hands it in: the products' sizes, the scene's layout */
     const has = key => products.hardware[file.settings.hardware[key]], L = scene.hardware;
     const HW = {
       handle: has('handle') && Object.assign({ cupLength: has('handle').length }, L.handle), open: L.open, bins: L.bins,

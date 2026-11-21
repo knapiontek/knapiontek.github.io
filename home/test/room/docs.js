@@ -1,11 +1,11 @@
 /* room/docs.js: its public API, each part with what it gives, on every room with a docs file (test/test.md) */
-async function roomDocsTest({ roomDocsModule, coreToolsModule, coreEstimateModule, roomCabinetsModule, roomFurnitureModule, roomRoomModule, coreGeometryModule, coreTreeModule, corePlan2dModule, roomTilesModule, libraryShapesModule, coreDrawingModule, libraryCatalogModule }, data, check) {
+async function roomDocsTest({ roomDocsModule, coreToolsModule, coreEstimateModule, roomCabinetsModule, roomFurnitureModule, roomModelModule, coreGeometryModule, coreTreeModule, roomTilesModule, libraryShapesModule, libraryCatalogModule }, data, check) {
   const tools = coreToolsModule(), geometry = coreGeometryModule(), cabinets = roomCabinetsModule();
   const docs = roomDocsModule(tools, coreEstimateModule(tools), cabinets);
   check('the public API', Object.keys(docs).join(' ') === 'create');
 
-  /* each room as the page hands it in: prepared by room/room.js, with the library of library/catalog.js */
-  const room = roomRoomModule(geometry, coreTreeModule(), corePlan2dModule(geometry, tools), roomTilesModule(geometry), cabinets, roomFurnitureModule(cabinets, libraryShapesModule()), libraryShapesModule(), coreDrawingModule(geometry));
+  /* each room as the page hands it in: prepared by room/model.js, with the library of library/catalog.js */
+  const room = roomModelModule(geometry, coreTreeModule(), roomTilesModule(geometry), cabinets, roomFurnitureModule(cabinets, libraryShapesModule()));
   const library = await libraryCatalogModule(async path => data(path)).open();
   const house = data('house/house.js'), tiles = house.children.find(n => n.type === 'house').settings.tiles;
   const rooms = []; (function walk(n) { if ((n.files || []).includes('docs')) rooms.push(n); (n.children || []).forEach(walk); })(house);
