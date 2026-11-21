@@ -2,9 +2,9 @@ HOME.data({
  "format": "scene",
  "version": 1,
  "groups": {
-  "1": {"front": "N", "offset": [2813, 2228, 0], "size": [3513, 632, 2720]},
-  "2": {"front": "E", "offset": [5772, 0, 0], "size": [618, 2860, 2720]},
-  "3": {"front": "S", "offset": [3070, 342, 0], "size": [1736, 914, 908]}
+  "1": {"front": "N", "offset": [3203, 7588, 0], "size": [3513, 632, 2720]},
+  "2": {"front": "E", "offset": [6162, 5360, 0], "size": [618, 2860, 2720]},
+  "3": {"front": "S", "offset": [3460, 5702, 0], "size": [1736, 914, 908]}
  },
  "room": {"wallColor": "#f2f1ee"},
  "finish": {"metal": "brass"},
@@ -30,12 +30,12 @@ HOME.data({
   ]
  },
  "cameras": [
-  {"name": "All", "eye": [1418, -2540, 2900], "target": [4618, 1460, 900]},
-  {"name": "Under the window", "eye": [4618, -340, 1600], "target": [4618, 2760, 1150]},
-  {"name": "Tall units", "eye": [3418, 1160, 1550], "target": [6218, 1360, 1350]},
-  {"name": "Island", "eye": [4718, 2010, 1450], "target": [3938, 782, 600]},
-  {"name": "Sink", "eye": [4918, 1110, 1950], "target": [4918, 2560, 850]},
-  {"name": "Corner", "eye": [5118, 560, 1050], "target": [5968, 2360, 350]},
-  {"name": "From above", "eye": [4348, 950, 8200], "target": [4338, 960, 0]}
+  {"name": "All", "eye": [1808, 2820, 2900], "target": [5008, 6820, 900]},
+  {"name": "Under the window", "eye": [5008, 5020, 1600], "target": [5008, 8120, 1150]},
+  {"name": "Tall units", "eye": [3808, 6520, 1550], "target": [6608, 6720, 1350]},
+  {"name": "Island", "eye": [5108, 7370, 1450], "target": [4328, 6142, 600]},
+  {"name": "Sink", "eye": [5308, 6470, 1950], "target": [5308, 7920, 850]},
+  {"name": "Corner", "eye": [5508, 5920, 1050], "target": [6358, 7720, 350]},
+  {"name": "From above", "eye": [4738, 6310, 8200], "target": [4728, 6320, 0]}
  ]
 });

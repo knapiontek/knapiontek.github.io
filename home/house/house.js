@@ -648,38 +648,16 @@ HOME.data({
        "settings": {"tiles": null}
       },
       {
-       "id": "hall_3",
-       "name": "Hall",
-       "type": "hall",
-       "number": 3,
-       "offset": [6470, 4350, 0],
-       "size": [3540, 1800, 2720],
-       "area": [[0, 1870, 0, 1450], [1870, 3540, 0, 1800]],
-       "archonArea": 5.46,
-       "note": "Open to the living room and the kitchen: the hall is the way from the vestibule to the stair and the bathroom, ending where the kitchen and the living room begin."
-      },
-      {
-       "id": "living_5",
-       "name": "Living room",
-       "type": "living",
-       "number": 5,
+       "id": "room_356",
+       "name": "Room",
+       "type": "room",
+       "number": 356,
        "offset": [1440, 440, 0],
-       "size": [5030, 8220, 2720],
-       "area": [[0, 4790, 0, 3150], [0, 4270, 3150, 3910], [0, 5030, 3910, 5360], [0, 390, 5360, 8220]],
-       "archonArea": 35.42,
-       "note": "The garden side with the exit to the garden; open to the kitchen and the hall."
-      },
-      {
-       "id": "kitchen_6",
-       "name": "Kitchen",
-       "type": "kitchen",
-       "number": 6,
-       "offset": [1830, 5800, 0],
-       "size": [6390, 2860, 2720],
-       "area": [[0, 6390, 0, 2860]],
-       "archonArea": 9.67,
+       "size": [8570, 8220, 2720],
+       "area": [[0, 4790, 0, 3150], [0, 4270, 3150, 3910], [0, 5030, 3910, 5360], [0, 390, 5360, 8220], [390, 6780, 5360, 8220], [5030, 6900, 3910, 5360], [6900, 8570, 3910, 5710]],
+       "archonArea": 50.55,
        "files": ["cabinets", "scene", "docs"],
-       "note": "The kitchen with the dining area: the island, the table by it and the fixed window by the hob; open to the living room and the hall."
+       "note": "Archon's hall 3, living room 5 and kitchen 6: one space, no walls between them. The hall: the way from the vestibule to the stair and the bathroom; the living room: the garden side with the exit to the garden; the kitchen with the dining area: the island, the table by it and the fixed window by the hob."
       },
       {
        "id": "bathroom_7",

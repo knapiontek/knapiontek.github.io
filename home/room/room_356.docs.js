@@ -5,7 +5,7 @@ HOME.data({
   "title": "Estimate of the kitchen, Jaworze",
   "heading": "Estimate of materials – the kitchen, Jaworze (groups 1+2 in an L, the island group 3)",
   "info": "PLN gross, online shop prices of October 2026 (every item links to its shop), materials only (we assemble it ourselves). The shaded fields may be changed to try other prices (until the page is reloaded). The quantities are counted from the kitchen's design.",
-  "xlsxFile": "estimate_kitchen_6.xlsx",
+  "xlsxFile": "estimate_room_356.xlsx",
   "excluded": [
    "Labour, transport, electrics (the 400 V hob, the oven's, dishwasher's and fridge's circuits), plumbing, the plasterboard work (its materials are in the estimate)."
   ]

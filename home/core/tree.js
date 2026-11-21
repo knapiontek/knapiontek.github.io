@@ -81,7 +81,7 @@ function create(root) {
     })(root);
     return [
       { name: 'Tree: every node has a type, an offset and a size', about: 'Each node of the tree says what it is and where it stands: a type, an offset [x, y, h] and a size [x, y, h].', items: shape },
-      { name: 'Tree: ids without spaces or slashes', about: 'An id is one step of a path (ground/kitchen_6/g1/K11), so it may hold letters, digits, - and _ only.', items: ids },
+      { name: 'Tree: ids without spaces or slashes', about: 'An id is one step of a path (ground/room_356/g1/K11), so it may hold letters, digits, - and _ only.', items: ids },
       { name: 'Tree: ids unique among siblings', about: 'Two children of one node with the same id would have the same path: one of them could not be found.', items: twice },
       { name: 'Tree: sizes above 0', about: 'Every node has a size above 0 along x, y and h: nothing is flat or turned inside out.', items: empty },
       { name: 'Tree: what lies below the zero', about: 'To know, not a fault: the nodes that lie at negative numbers from the root\'s zero. In the house only what is outside it may: the foundations, the insulation, the site.', items: below, info: true },

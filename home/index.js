@@ -1,6 +1,6 @@
 // @ts-check
 /* index.js: the application's logic (its look: index.html), one page loaded once: the whole house, or a part of it
-   (?room=kitchen_6 or ?room=bathroom_7,bathroom_5) cut out of it, in 3D, 2D, Documents (its last sheet: Test) and Cabinets.
+   (?room=room_356 or ?room=bathroom_7,bathroom_5) cut out of it, in 3D, 2D, Documents (its last sheet: Test) and Cabinets.
    Everything it shows comes from house.js and the library; nothing of this house is written here. The screen is index.html, of core/ui.js's pieces (Alpine.js); build(ui) makes the model and the scene. */
 'use strict';
 /* ================= THE APPLICATION: each file made from its constructor, given what it needs =================

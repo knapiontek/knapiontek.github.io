@@ -306,7 +306,7 @@ The kitchen is an L of 600-deep counters:
 - **Along the right wall:** x ≈ 4720 – 6620, y 8060 – 8660, with the sink under the 1900 window.
 - **Along wall #5:** x 6620 – 7220, y 5800 – 8660 (printed 2860). It holds the fridge, an appliance, a ≈ 500 cabinet, the hob (y ≈ 7490 – 8070) and the corner.
 
-From the 1900 window's start (x 4720) to wall #5 (x 7220) is 2500. The pier between the 2500 and 1900 windows is x 3330 – 4720. The kitchen as built: room/kitchen_6.*.
+From the 1900 window's start (x 4720) to wall #5 (x 7220) is 2500. The pier between the 2500 and 1900 windows is x 3330 – 4720. The kitchen as built: room/room_356.*.
 
 ## 12. archon data
 
