@@ -24,8 +24,8 @@
 /** @typedef {ReturnType<ReturnType<typeof roomModule>['build']>} BuiltRoom */
 /** @param {ReturnType<typeof geometryModule>} geometry
     @param {ReturnType<typeof treeModule>} tree @param {ReturnType<typeof plan2dModule>} plan2d @param {ReturnType<typeof tilesModule>} tiles
-    @param {ReturnType<typeof cabinetsModule>} cabinets @param {ReturnType<typeof drawModule>} draw @param {ReturnType<typeof describeModule>} describe */
-function roomModule(geometry, tree, plan2d, tiles, cabinets, draw, describe) {
+    @param {ReturnType<typeof cabinetsModule>} cabinets @param {ReturnType<typeof furnitureModule>} furniture @param {ReturnType<typeof drawModule>} draw @param {ReturnType<typeof describeModule>} describe */
+function roomModule(geometry, tree, plan2d, tiles, cabinets, furniture, draw, describe) {
 'use strict';
 const C = cabinets, G = geometry;
 
@@ -89,7 +89,7 @@ function prepare(room, files, library) {
   const ceiling = Math.min(room.size[2], ...(room.ceiling || []).filter(l => l.s === 0).map(l => l.a));
   const TREE = C.tree(model, appliances, { install: scene.installation, ceiling, HW }).concat(FIXTURES.map(x => x.node), BUILT);
   /* the looks this room adds to the library's: its boards, its walls' paint, the lamps' shade */
-  const looks = Object.assign(C.boardLooks(model), {
+  const looks = Object.assign(furniture.boardLooks(model), {
     wall: { color: scene.room.wallColor, roughness: 0.95, reflect: 0.45 },
     shade: { color: (model.materials[model.materialFor.cabinet || model.materialFor.carcass]).color, roughness: 0.5, metalness: 0.2 }
   });
@@ -279,7 +279,7 @@ function build(V, prepared, opts) {
   const { box, at, part, STATIC, MOVERS, ENVELOPES, UNDRAWN } = D;
 
   /* the cabinets, with their products */
-  const drawn = C.draw(D, model, appliances, HW, scene.installation);
+  const drawn = furniture.draw(D, model, appliances, HW, scene.installation);
 
   /* the fixtures: each drawn by the library in its own frame (x along its wall, y out of it, h up from the floor) */
   for (const x of prepared.FIXTURES) draw[x.A.draw](D, x.A, { r: x.id, a: at(x.id, x.f.layer || 'sanitary'), w: x.b.width, d: x.b.depth, h: x.b.height, h0: x.f.offset[2], f: x.f });

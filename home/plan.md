@@ -32,9 +32,9 @@ The page runs from disk (file://): no JavaScript modules (`import`). A script's 
 
 Done (21 Nov 2026): no file reaches another but through its constructor's parameters; index.js makes every module in its first lines (the map of what needs what); `HOME` is only the data channel of core/load.js (`data`, `load`); globals.d.ts declares only that and what comes from outside (three.js, Alpine, XLSX). Every row of test/index.html is OK.
 
-1. **Now**: the drawing engine. Done (21 Nov 2026): core/describe.js (a description as data: solids, details of 12 shapes, frames, moving parts, lamps, looks) and core/scene.js `show()` (the only file with three.js: draws a description in the order described, merges still details); room/room.js, room/cabinets.js and library/draw.js describe and draw nothing: the same pixels. Left: the house (house/model.js and index.js) through the same description; the cabinets' description out of the cabinets' engine (room/cabinets.js keeps the model; its description of carcasses, fronts, hardware in a file of its own), so the engine gets nothing.
+1. **Done** (21 Nov 2026): the drawing engine. core/describe.js (a description as data) and core/scene.js `show()` (the only file with three.js, the same pixels); room/room.js, library/draw.js and the new room/furniture.js (the cabinets described, out of the engine) describe; room/cabinets.js is the engine alone and gets nothing. The house's solids and doors go to core/scene.js as data already (cells, a door's moving part).
 2. index.js, split: the cabinet editor, the house's Documents, the finish (a metal or a decor swapped; a query of the catalog: the same product in another metal), each to its own file.
-3. The files' names and places.
+3. **Next**: the files' names and places (proposed: core/surface.js → faces.js, core/describe.js → drawing.js, library/draw.js → shapes.js; to agree).
 
 ## Kept
 

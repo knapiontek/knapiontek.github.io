@@ -17,6 +17,7 @@
     "library/catalog.js",
     "library/draw.js",
     "room/cabinets.js",
+    "room/furniture.js",
     "room/room.js",
     "room/docs.js",
     "room/tiles.js",

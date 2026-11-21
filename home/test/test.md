@@ -13,7 +13,7 @@ The owner opens home/test/index.html from disk: every row must say OK. The LLM r
   - A constructor on the slate is no global name: only the test holds it, so a file cannot reach another file but through its parameters.
   - A file tested is one constructor `<name>Module(...)` and nothing else; the page reads the constructor's code.
   - A test calls the public API only. A row that is NOT OK is never made OK by changing its test without the owner.
-- **Now (21 Nov 2026)**: OK every file tested. ui, sheet and scene draw only in the browser (scene is the only file with three.js): their tests make them and call what needs no browser; room's build() draws through scene, so its test calls prepare() and layers(); cabinets' test gives it a stand-in for library/draw.js that counts the drawings asked.
+- **Now (21 Nov 2026)**: OK every file tested. ui, sheet and scene draw only in the browser (scene is the only file with three.js): their tests make them and call what needs no browser; room's build() draws through scene, so its test calls prepare() and layers(); furniture's test describes every room's cabinets for real (core/describe.js).
 
 ## The rule
 

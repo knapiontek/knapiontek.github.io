@@ -9,9 +9,9 @@ const Geometry = geometryModule(), Tools = toolsModule(), Tree = treeModule();
 const Surface = surfaceModule(Geometry), Plan2d = plan2dModule(Geometry, Tools), Estimate = estimateModule(Tools);
 const UI = uiModule(Tools), Sheet = sheetModule(UI, Tools), Scene = sceneModule(Geometry, Surface);
 const Catalog = catalogModule(HOME.load), Model = modelModule(Geometry, Tree), Tiles = tilesModule(Geometry);
-const Draw = drawModule(), Cabinets = cabinetsModule(Draw);
+const Draw = drawModule(), Cabinets = cabinetsModule(), Furniture = furnitureModule(Cabinets, Draw);
 const Describe = describeModule(Geometry);
-const Room = roomModule(Geometry, Tree, Plan2d, Tiles, Cabinets, Draw, Describe), Docs = docsModule(Tools, Estimate, Cabinets);
+const Room = roomModule(Geometry, Tree, Plan2d, Tiles, Cabinets, Furniture, Draw, Describe), Docs = docsModule(Tools, Estimate, Cabinets);
 /* ================= THE CABINET EDITOR =================
    the mode Cabinets: the active room's cabinets file in tables, its elevations drawn: tables -> the file -> the model
    (room/cabinets.js) -> the drawing. The checks of the data are the model's; it only checks that the cells are numbers.
