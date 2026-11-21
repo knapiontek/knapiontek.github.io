@@ -1,11 +1,11 @@
 /* room/docs.js: its public API, each part with what it gives, on every room with a docs file (test/test.md) */
-async function docsTest({ docsModule, toolsModule, estimateModule, cabinetsModule, roomModule, geometryModule, surfaceModule, treeModule, plan2dModule, tilesModule, drawModule, catalogModule }, data, check) {
+async function docsTest({ docsModule, toolsModule, estimateModule, cabinetsModule, roomModule, geometryModule, treeModule, plan2dModule, tilesModule, drawModule, describeModule, catalogModule }, data, check) {
   const tools = toolsModule(), geometry = geometryModule(), cabinets = cabinetsModule(drawModule());
   const docs = docsModule(tools, estimateModule(tools), cabinets);
   check('the public API', Object.keys(docs).join(' ') === 'create');
 
   /* each room as the page hands it in: prepared by room/room.js, with the library of library/catalog.js */
-  const room = roomModule(geometry, surfaceModule(geometry), treeModule(), plan2dModule(geometry, tools), tilesModule(geometry), cabinets, drawModule());
+  const room = roomModule(geometry, treeModule(), plan2dModule(geometry, tools), tilesModule(geometry), cabinets, drawModule(), describeModule(geometry));
   const library = await catalogModule(async path => data(path)).open();
   const house = data('house/house.js'), tiles = house.children.find(n => n.type === 'house').settings.tiles;
   const rooms = []; (function walk(n) { if ((n.files || []).includes('docs')) rooms.push(n); (n.children || []).forEach(walk); })(house);

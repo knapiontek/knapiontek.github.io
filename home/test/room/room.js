@@ -1,8 +1,8 @@
 /* room/room.js: its public API, each part with what it gives, on every room's files; build() draws (three.js), so it is
    not called here (test/test.md) */
-async function roomTest({ roomModule, geometryModule, surfaceModule, treeModule, plan2dModule, toolsModule, tilesModule, cabinetsModule, drawModule, catalogModule }, data, check) {
+async function roomTest({ roomModule, geometryModule, treeModule, plan2dModule, toolsModule, tilesModule, cabinetsModule, drawModule, describeModule, catalogModule }, data, check) {
   const geometry = geometryModule();
-  const room = roomModule(geometry, surfaceModule(geometry), treeModule(), plan2dModule(geometry, toolsModule()), tilesModule(geometry), cabinetsModule(drawModule()), drawModule());
+  const room = roomModule(geometry, treeModule(), plan2dModule(geometry, toolsModule()), tilesModule(geometry), cabinetsModule(drawModule()), drawModule(), describeModule(geometry));
   check('the public API', Object.keys(room).join(' ') === 'prepare build layers');
 
   /* the library as the page has it (library/catalog.js), and each furnished room as the house hands it in: its size, its

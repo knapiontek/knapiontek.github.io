@@ -32,7 +32,7 @@ house/  ──►  room/  ──►  core/, library/
 - One way only. The house passes a room and its settings down; the room engine passes each node to the module of its type.
 - **Modules** load nothing: their data comes as arguments. **Pages** load data.
 - core knows no project and no product; library knows no project.
-- Drawing chain: node ─► module of its type (house, cabinets, products, tiles) ─► solids ─► core/surface.js ─► scene.js (3D), plan2d.js (2D); counts ─► sheet.js (Documents).
+- Drawing chain: node ─► module of its type (house, cabinets, products, tiles) ─► solids and a description (core/describe.js) ─► core/surface.js ─► scene.js (3D, the only file with three.js), plan2d.js (2D); counts ─► sheet.js (Documents).
 
 ## Data
 

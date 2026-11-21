@@ -3,8 +3,8 @@
    the room's files (cabinets, scene) and the library. It places the groups of furniture where the scene says, builds the
    cabinets (room/cabinets.js), the products (library/draw.js) and the lamps, in the house's axes (x, y, h; mm).
    prepare() needs no browser: the model, the places of the groups, the hardware as drawn, the looks and textures the
-   room needs. build() draws into a scene of core: still cells, moving parts, details (round or flat things, three.js
-   meshes), lamps. */
+   room needs. build() describes the room (core/describe.js: still cells, moving parts, details, lamps) and a scene of core
+   draws it. */
 /**
  * @typedef {object} SceneFile  a room's scene (room/project.md: format scene)
  * @property {Object<string, { front: Side, offset: number[], size: number[] }>} groups  group number -> its box in the room
@@ -22,10 +22,10 @@
     what the house gives a room, in the room's axes: ceiling: lines h ≤ a + s·y; tiles: the house's (a floor's face over the floor, a slab's depth with its glue) */
 /** @typedef {ReturnType<ReturnType<typeof roomModule>['prepare']>} PreparedRoom */
 /** @typedef {ReturnType<ReturnType<typeof roomModule>['build']>} BuiltRoom */
-/** @param {ReturnType<typeof geometryModule>} geometry @param {ReturnType<typeof surfaceModule>} surface
+/** @param {ReturnType<typeof geometryModule>} geometry
     @param {ReturnType<typeof treeModule>} tree @param {ReturnType<typeof plan2dModule>} plan2d @param {ReturnType<typeof tilesModule>} tiles
-    @param {ReturnType<typeof cabinetsModule>} cabinets @param {ReturnType<typeof drawModule>} draw */
-function roomModule(geometry, surface, tree, plan2d, tiles, cabinets, draw) {
+    @param {ReturnType<typeof cabinetsModule>} cabinets @param {ReturnType<typeof drawModule>} draw @param {ReturnType<typeof describeModule>} describe */
+function roomModule(geometry, tree, plan2d, tiles, cabinets, draw, describe) {
 'use strict';
 const C = cabinets, G = geometry;
 
@@ -48,7 +48,7 @@ function prepare(room, files, library) {
   const project = C.withLibrary(cabinets, P.boards), appliances = C.appliances(project, Object.assign({}, P.appliances, P.sanitary));   // a basin and its tap are the sanitary group's
   const model = C.build(project, appliances), O = room.offset;
   /* a group: its box in the room (scene) with its back on the wall line; y = 0 at the carcass backs, the wall at y = wall */
-  const PLACE = {};
+  const PLACE = /** @type {Object<string, { O: number[], X: number[], Y: number[], box: number[] }>} */ ({});
   for (const [r, g] of Object.entries(scene.groups)) {
     const F = FRONTS[g.front], wall = model.groups[r] ? model.groups[r].wall : 0;
     const x = O[0] + g.offset[0] + F.W[0] * g.size[0], y = O[1] + g.offset[1] + F.W[1] * g.size[1];
@@ -266,136 +266,17 @@ function outside(made, prepared) {
   return out;
 }
 
-/* the footprint of a drawn mesh (three.js) for the 2D plan: the convex hull of its points seen from above; toHouse: world -> house mm (Matrix4) */
-/** @param {any} mesh @param {any} toHouse @param {boolean} [glass] @returns {PlanShape} */
-function meshShape(mesh, toHouse, glass = false) {
-  const P = mesh.geometry.attributes.position, m = new THREE.Matrix4().multiplyMatrices(toHouse, mesh.matrixWorld), v = new THREE.Vector3(), /** @type {number[][]} */ pts = [];
-  let bottom = Infinity, top = -Infinity;
-  for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m); pts.push([v.x, v.y]); bottom = Math.min(bottom, v.z); top = Math.max(top, v.z); }   // v.z: the house's h
-  pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const cross = (/** @type {number[]} */ o, /** @type {number[]} */ a, /** @type {number[]} */ b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]), half = (/** @type {number[][]} */ list) => {
-    /** @type {number[][]} */ const h = [];
-    for (const p of list) { while (h.length >= 2 && cross(h[h.length - 2], h[h.length - 1], p) <= 0) h.pop(); h.push(p); }
-    h.pop(); return h;
-  };
-  return { poly: half(pts).concat(half(pts.slice().reverse())), bottom, top, glass };
-}
-
 /* V: a scene of core; prepared: prepare(); materials: the page's library for core (the room's looks are in it, plus
    handle: the metal chosen); opts: {layers: the host's, added to every solid and detail; ceilingLayers: what hides the
    ceiling's lamps with the ceiling} */
 /** @param {SceneView} V @param {PreparedRoom} prepared
     @param {{ materials: Object<string, MaterialLook>, layers?: string[], ceilingLayers?: string[], library: Library }} opts  library: library/catalog.js */
 function build(V, prepared, opts) {
-  const { model, appliances, PLACE, HW, scene } = prepared, LEVEL = prepared.level, CEILING = prepared.ceiling;
-  const MATERIALS = opts.materials, EXTRA = opts.layers || [];
-  const { piecesOf } = surface;
-  const STATIC = [], MOVERS = [], DETAILS = [], ENVELOPES = [], LAMPS = [], UNDRAWN = [];
-  let PART = 0;
-  const part = () => ++PART;
-  const point = (r, x, y, h) => { const { O, X, Y } = PLACE[r]; return [O[0] + x * X[0] + y * Y[0], O[1] + x * X[1] + y * Y[1], LEVEL + h]; };
-  /* a box of group r [x0, x1, y0, y1, h0, h1] -> a box of the house [x1, x2, y1, y2, h1, h2] */
-  function houseBox(r, b) {
-    const xs = [], ys = [];
-    for (const x of [b[0], b[1]]) for (const y of [b[2], b[3]]) { const p = point(r, x, y, 0); xs.push(p[0]); ys.push(p[1]); }
-    return [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys), LEVEL + b[4], LEVEL + b[5]];
-  }
-  /* a solid is a cell of core: {S, material, layers, part, info}. part: one board or piece (a joint between two parts shows
-     a line, a box of the same part none); info: what it is. Layers: its group, its layer, the host's. Glass and wire draw no edges. */
-  function box(list, r, gb, key, layer, info = {}) {
-    if (!gb.every(Number.isFinite)) { UNDRAWN.push((info.name || layer) + ': ' + gb.join(', ')); return null; }
-    if (!(gb[1] > gb[0] && gb[5] > gb[4] && gb[3] > gb[2])) return null;   // an empty box: nothing drawn
-    const hb = houseBox(r, gb);
-    const c = { S: G.prism(hb), element: info.name || layer, material: key, cap: key, layers: ['g' + r, layer].concat(info.also || [], EXTRA),
-      edges: MATERIALS[key].opacity === undefined, part: info.part || part(), r, gb, hb, info, batch: info.batch };
-    list.push(c);
-    return c;
-  }
-  /* a prism over a convex profile [[y, h]] across x0..x1 of group r: only where the group runs along the house's x */
-  function profile(list, r, x0, x1, prof, info, faceMaterial) {
-    const { O, X, Y } = PLACE[r];
-    if (Math.abs(X[0]) < 0.5) return null;
-    const xs = [O[0] + x0 * X[0], O[0] + x1 * X[0]];
-    const c = { S: { x1: Math.min(...xs), x2: Math.max(...xs), poly: G.ccw(prof.map(([y, h]) => [O[1] + y * Y[1], LEVEL + h])) }, material: faceMaterial([0, 0, 1]),
-      element: info.name, layers: ['g' + r, info.layer].concat(EXTRA), edges: true, part: part(), r, info, faceMaterial };
-    c.cap = c.material;
-    list.push(c);
-    return c;
-  }
-
-  /* details: what is round or flat (handles, knobs, legs, rings, displays, lamps) is not a solid of core but a plain mesh in
-     the frame of its group at (x, y, h), mm; its own axes are three.js's: x along the group, y up, z out of the wall */
-  const FRAMES = new Map();
-  function frameOf(r, parent) {
-    const key = parent.uuid + '|' + r;
-    if (FRAMES.has(key)) return FRAMES.get(key);
-    const { O, X, Y } = PLACE[r], f = new THREE.Group();
-    f.matrixAutoUpdate = false;
-    f.matrix.makeBasis(new THREE.Vector3(X[0], X[1], 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(Y[0], Y[1], 0)).setPosition(O[0], O[1], LEVEL);
-    parent.add(f); FRAMES.set(key, f);
-    return f;
-  }
-  /* where details go: group r, layers, the moving part they move with */
-  const at = (r, layer, mover, also = []) => ({ r, frame: frameOf(r, mover ? mover.holder : V.root), layers: (layer === 'lamps' ? [] : ['g' + r]).concat(layer, also, EXTRA), mover });
-  function detail(a, geometry, key, x, y, h, shadow = true) {
-    const material = typeof key === 'string' ? V.material(key) : key, m = new THREE.Mesh(geometry, material);
-    m.position.set(x, h, y); m.castShadow = shadow && !material.transparent; m.receiveShadow = shadow;
-    a.frame.add(m); DETAILS.push({ mesh: m, layers: a.layers, moves: !!a.mover });
-    return m;
-  }
-  /* a cylinder upright, or along x ('x') or y ('y'), centred on (x, y, h) */
-  function cylinder(a, radius, length, key, x, y, h, axis, segments = 20, shadow) {
-    const m = detail(a, new THREE.CylinderGeometry(radius, radius, length, segments), key, x, y, h, shadow);
-    if (axis === 'x') m.rotation.z = Math.PI / 2;
-    if (axis === 'y') m.rotation.x = Math.PI / 2;
-    return m;
-  }
-  function textMaterial(text) {
-    const c = document.createElement('canvas'); c.width = 256; c.height = 80;
-    const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'));
-    g.fillStyle = '#000'; g.fillRect(0, 0, 256, 80);
-    g.fillStyle = '#7dd3fc'; g.font = '500 52px "IBM Plex Mono",monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(text, 128, 42);
-    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
-    return new THREE.MeshBasicMaterial({ map: t });
-  }
-  const display = (a, text, w, high, x, y, h) => detail(a, new THREE.PlaneGeometry(w, high), textMaterial(text), x, y, h, false);
-
-  /* moving parts: a door, a drawer or an appliance door; its cells (built closed) and details are collected first, the
-     part of core is made when all is drawn. parent / children: what opens only behind it (an inner drawer, drawers
-     behind a door) */
-  function mover(r, kind, px, py, ph) {
-    const m = { r, kind, P: point(r, px, py, ph), holder: new THREE.Group(), cells: [], sign: 1, label: '', parent: null, children: [], item: null, travel: null, swing: null };
-    MOVERS.push(m);
-    return m;
-  }
-  const linkTo = (parent, child) => { child.parent = parent; parent.children.push(child); };
-  const envelope = (r, gb, name, kind = 'appliance') => ENVELOPES.push({ kind, name, r, gb });
-  /* boxes open at the front (+y) or at the top (+h), walls t thick; one part */
-  function openFront(list, r, [x0, x1, y0, y1, h0, h1], t, key, layer, info) {
-    const I = Object.assign({ part: part() }, info);
-    for (const b of [[x0, x0 + t, y0, y1, h0, h1], [x1 - t, x1, y0, y1, h0, h1], [x0 + t, x1 - t, y0, y1, h0, h0 + t], [x0 + t, x1 - t, y0, y1, h1 - t, h1], [x0 + t, x1 - t, y0, y0 + t, h0 + t, h1 - t]]) box(list, r, b, key, layer, I);
-  }
-  function openTop(list, r, [x0, x1, y0, y1, h0, h1], t, key, layer, info) {
-    const I = Object.assign({ part: part() }, info);
-    for (const b of [[x0, x0 + t, y0, y1, h0, h1], [x1 - t, x1, y0, y1, h0, h1], [x0 + t, x1 - t, y0, y0 + t, h0, h1], [x0 + t, x1 - t, y1 - t, y1, h0, h1], [x0 + t, x1 - t, y0 + t, y1 - t, h0, h0 + t]]) box(list, r, b, key, layer, I);
-  }
-  /* a lamp: off by day */
-  function lamp(light, from, to, shadow) {
-    light.position.copy(V.toWorld(...from));
-    if (to) { light.target.position.copy(V.toWorld(...to)); V.scene.add(light.target); }
-    light.visible = false; V.scene.add(light);
-    LAMPS.push({ light, shadow });
-    if (shadow) { light.shadow.mapSize.set(1024, 1024); light.shadow.camera.near = 0.1; light.shadow.camera.far = (from[2] - LEVEL) / 1000 + 0.3; light.shadow.bias = -0.0002; light.shadow.normalBias = 0.015; }
-  }
-  /* a frame at (x, y, h) of a's, turned by angle about h: what is drawn in it starts from its own zero */
-  function pivot(a, x, y, h, angle) {
-    const g = new THREE.Group(); g.position.set(x, h, y); g.rotation.z = angle; a.frame.add(g);
-    return Object.assign({}, a, { frame: g, pivot: true });
-  }
-  /** @type {DrawContext} */
-  const D = { V, box, at, detail, cylinder, display, mover, linkTo, envelope, openFront, openTop, profile, part, lamp, point, pivot, STATIC, CEILING,
-    frame: r => PLACE[r], material: key => V.material(key), has: key => key in MATERIALS, metal: scene.finish.metal };
+  const { model, appliances, PLACE, HW, scene } = prepared, CEILING = prepared.ceiling;
+  const EXTRA = opts.layers || [];
+  /* what is drawn, described (core/describe.js): the cabinets, the fixtures, the tiles' cells, the lamps */
+  const D = describe.create({ place: PLACE, level: prepared.level, layers: EXTRA, looks: opts.materials, metal: scene.finish.metal, ceiling: CEILING });
+  const { box, at, part, STATIC, MOVERS, ENVELOPES, UNDRAWN } = D;
 
   /* the cabinets, with their products */
   const drawn = C.draw(D, model, appliances, HW, scene.installation);
@@ -433,55 +314,17 @@ function build(V, prepared, opts) {
     }
   }
 
-  /* the moving parts of core: a door turns about its hinge (h), a dishwasher's door and a bottom-hinged oven door about
-     X, a drawer slides out along Y; built closed */
+  /* the moving parts: a door turns about its hinge (h), a dishwasher's door and a bottom-hinged oven door about X, a drawer
+     slides out along Y; built closed */
   const SWING = { door: 'h', fridge: 'h', dishwasher: 'x', drawer: 'slide' };
   for (const m of MOVERS) {
     const open = m.travel ?? (m.kind === 'drawer' ? HW.open.drawer : HW.open.angle[m.kind] || 0), { X, Y } = PLACE[m.r], swing = m.swing || SWING[m.kind];
-    const how = swing === 'slide' ? { slide: [open * Y[0], open * Y[1], 0] } : swing === 'x' ? { axis: [X[0], X[1], 0], angle: open } : { axis: [0, 0, 1], angle: -m.sign * open };
-    m.core = V.mover(Object.assign({ pieces: piecesOf(m.cells), at: m.P, behind: m.parent ? m.parent.core : null, label: m.label }, how));
-    m.core.inner.add(m.holder);
+    m.how = swing === 'slide' ? { slide: [open * Y[0], open * Y[1], 0] } : swing === 'x' ? { axis: [X[0], X[1], 0], angle: open } : { axis: [0, 0, 1], angle: -m.sign * open };
   }
-  /* one mesh for the still details alike: in one frame, of one material, with the same layers and shadows (a layer shows
-     and hides them as before; what moves, and what the 2D plan draws apart, stays apart) */
-  const SEEN_DETAILS = ['sink', 'hob'], groupsOf = new Map();   // of the sink and the hob the plan draws what is seen from above
-  for (const d of DETAILS) {
-    const m = d.mesh;
-    if (d.moves || d.layers.some(l => SEEN_DETAILS.includes(l)) || !m.parent) continue;
-    const k = [m.parent.uuid, m.material.uuid, d.layers.join('+'), m.castShadow, m.receiveShadow].join('|');
-    if (!groupsOf.has(k)) groupsOf.set(k, []);
-    groupsOf.get(k).push(d);
-  }
-  for (const list of groupsOf.values()) {
-    if (list.length < 2) continue;
-    const parts = list.map(d => { const m = d.mesh; if (m.matrixAutoUpdate) m.updateMatrix(); const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone(); return g.applyMatrix4(m.matrix); });
-    const uv = parts.every(g => g.attributes.uv), merged = new THREE.BufferGeometry();
-    for (const name of ['position', 'normal'].concat(uv ? ['uv'] : [])) {
-      const size = parts[0].attributes[name].itemSize, arr = new Float32Array(parts.reduce((s, g) => s + g.attributes[name].count * size, 0));
-      let at = 0; for (const g of parts) { arr.set(g.attributes[name].array, at); at += g.attributes[name].array.length; }
-      merged.setAttribute(name, new THREE.BufferAttribute(arr, size));
-    }
-    const first = list[0].mesh, one = new THREE.Mesh(merged, first.material);
-    one.castShadow = first.castShadow; one.receiveShadow = first.receiveShadow;
-    first.parent.add(one);
-    for (const d of list) { d.mesh.parent.remove(d.mesh); d.mesh.geometry.dispose(); }
-    DETAILS.splice(0, DETAILS.length, ...DETAILS.filter(d => !list.includes(d)), { mesh: one, layers: list[0].layers, moves: false });
-  }
-  for (const d of DETAILS) d.mesh.userData.owner = null;
-
-  /* the lamps light by night while their layer is on */
-  let dark = false, lit = true;
-  const light = () => {
-    const on = dark && lit;
-    for (const { light, shadow } of LAMPS) { light.visible = on; light.castShadow = on && shadow; }
-    for (const k of ['bulb', 'led']) { const mt = V.material(k); mt.emissive.set(on ? 0xfff0dc : 0x000000); mt.emissiveIntensity = on ? 2 : 1; }
-  };
-  const night = on => { dark = on; light(); };
-  const showDetails = shown => {
-    for (const d of DETAILS) d.mesh.visible = shown(d.layers);
-    if (lit !== shown(['lamps'].concat(EXTRA))) { lit = !lit; light(); }
-  };
-  const made = { STATIC, MOVERS, DETAILS, ENVELOPES, LAMPS, UNDRAWN, tiles, carcasses: drawn.carcasses, night, showDetails,
+  /* drawn (core/scene.js); of the sink and the hob the plan draws what is seen from above: their details stay apart */
+  const shown = V.show(D, { layers: EXTRA, apart: ['sink', 'hob'] });
+  const { night, showDetails } = shown;
+  const made = { STATIC, MOVERS, DETAILS: shown.DETAILS, ENVELOPES, LAMPS: shown.LAMPS, UNDRAWN, tiles, carcasses: drawn.carcasses, night, showDetails,
     cells: () => STATIC.concat(...MOVERS.map(m => m.cells)) };
   /* the 2D plan of the furniture, as a room's plan shows it (about 1:50): not cut, seen from above. A carcass is one
      rectangle with its front; the tops (worktops, end panels) one figure, no joints, their openings left; a sink and a hob
@@ -490,8 +333,7 @@ function build(V, prepared, opts) {
      legs, holes, the installations. */
   const APPLIANCES = ['sink', 'trap', 'hob', 'hood', 'oven', 'microwave', 'coffee', 'fridge', 'dishwasher'];
   made.plan = () => {
-    V.root.updateMatrixWorld(true);
-    const toHouse = new THREE.Matrix4().copy(V.root.matrixWorld).invert(), cells = made.cells(), shapes = [];
+    const cells = made.cells(), shapes = [];
     const span = list => { const s = list.map(c => plan2d.solidShape(c)), xs = s.flatMap(q => q.poly.map(p => p[0])), ys = s.flatMap(q => q.poly.map(p => p[1]));
       return { poly: [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)], [Math.min(...xs), Math.max(...ys)]], bottom: Math.min(...s.map(q => q.bottom)), top: Math.max(...s.map(q => q.top)) }; };
     for (const c of drawn.carcasses) {
@@ -506,7 +348,7 @@ function build(V, prepared, opts) {
     }
     const tops = cells.filter(c => c.layers.includes('worktops') || c.layers.includes('endPanels')).map(c => plan2d.solidShape(c));
     shapes.push(...cells.filter(c => c.layers.some(l => ['builtIns', 'plasterboard', 'sanitary', 'basin'].includes(l)) && !c.layers.includes('installations')).map(c => plan2d.solidShape(c, c.material === 'glass')));
-    shapes.push(...DETAILS.filter(d => !d.layers.includes('installations') && d.layers.some(l => ['sink', 'hob', 'basin', 'sanitary'].includes(l)) && d.mesh.geometry.attributes.position).map(d => meshShape(d.mesh, toHouse)));
+    shapes.push(...shown.footprints(layers => !layers.includes('installations') && layers.some(l => ['sink', 'hob', 'basin', 'sanitary'].includes(l))));
     if (tops.length) shapes.push({ pieces: tops, poly: tops[0].poly, bottom: Math.min(...tops.map(q => q.bottom)), top: Math.max(...tops.map(q => q.top)) });
     return { cells: [], shapes };
   };

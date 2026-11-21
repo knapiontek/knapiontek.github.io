@@ -695,7 +695,166 @@ function create(opts) {
   function start() { new ResizeObserver(resize).observe(stage); resize(); }
   const run = () => requestAnimationFrame(frame);
 
-  return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, hash01, canvasTexture, loadImage, material, useMaterial,
+  /* ================= A DESCRIPTION DRAWN =================
+     A description (core/describe.js) made 3D: its frames, details, lamps and painted looks in the order they were
+     described, then its moving parts; still details alike are merged into one mesh. layers: the host's (its lamps light
+     while they are on). Gives what the page switches: the details (by layers), the lamps by night, the footprints of
+     details for the 2D plan. */
+  /** @param {Shape} s @returns {any} */
+  function shapeGeometry(s) {
+    const seg = s.segments || [], arc = s.arc;
+    const g = s.kind === 'box' ? new THREE.BoxGeometry(...(s.size || []))
+      : s.kind === 'cylinder' ? new THREE.CylinderGeometry((s.r || [])[0], (s.r || [])[1], s.length, seg[0] ?? 8, seg[1] ?? 1, s.open ?? false, arc ? arc[0] : 0, arc ? arc[1] : Math.PI * 2)
+      : s.kind === 'sphere' ? new THREE.SphereGeometry(s.radius, seg[0], seg[1], ...(arc || [0, Math.PI * 2, 0, Math.PI]))
+      : s.kind === 'disc' ? new THREE.CircleGeometry(s.radius, seg[0], ...(arc || [0, Math.PI * 2]))
+      : s.kind === 'ring' ? new THREE.RingGeometry((s.r || [])[0], (s.r || [])[1], seg[0])
+      : s.kind === 'plane' ? new THREE.PlaneGeometry(...(s.size || []))
+      : s.kind === 'torus' ? new THREE.TorusGeometry(s.radius, s.tube, seg[0], seg[1])
+      : s.kind === 'tube' ? new THREE.TubeGeometry(new THREE.CatmullRomCurve3((s.points || []).map(p => new THREE.Vector3(...p))), seg[0], s.radius, seg[1], false)
+      : s.kind === 'extrude' ? new THREE.ExtrudeGeometry(new THREE.Shape((s.outline || []).map(p => new THREE.Vector2(p[0], p[1]))), { depth: s.depth, bevelEnabled: false })
+      : s.kind === 'mesh' ? meshGeometry(s.positions || [], s.index || [])
+      : null;
+    if (!g) throw new Error('no shape ' + s.kind);
+    for (const [op, ...v] of s.then || []) g[op](...v);
+    return g;
+  }
+  function meshGeometry(/** @type {number[]} */ positions, /** @type {number[]} */ index) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.setIndex(index); g.computeVertexNormals();
+    return g;
+  }
+  /* a display's text, lit on black */
+  function textMaterial(/** @type {string} */ text) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 80;
+    const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'));
+    g.fillStyle = '#000'; g.fillRect(0, 0, 256, 80);
+    g.fillStyle = '#7dd3fc'; g.font = '500 52px "IBM Plex Mono",monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(text, 128, 42);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+    return new THREE.MeshBasicMaterial({ map: t });
+  }
+  /* the footprint of a drawn mesh for the 2D plan: the convex hull of its points seen from above; toHouse: world -> house mm */
+  /** @param {any} mesh @param {any} toHouse @param {boolean} [glass] @returns {PlanShape} */
+  function meshShape(mesh, toHouse, glass = false) {
+    const P = mesh.geometry.attributes.position, m = new THREE.Matrix4().multiplyMatrices(toHouse, mesh.matrixWorld), v = new THREE.Vector3(),
+      /** @type {number[][]} */ pts = [];
+    let bottom = Infinity, top = -Infinity;
+    for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m); pts.push([v.x, v.y]); bottom = Math.min(bottom, v.z); top = Math.max(top, v.z); }
+    pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cross = (/** @type {number[]} */ o, /** @type {number[]} */ a, /** @type {number[]} */ b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const half = (/** @type {number[][]} */ list) => {
+      /** @type {number[][]} */ const h = [];
+      for (const p of list) { while (h.length >= 2 && cross(h[h.length - 2], h[h.length - 1], p) <= 0) h.pop(); h.push(p); }
+      h.pop(); return h;
+    };
+    return { poly: half(pts).concat(half(pts.slice().reverse())), bottom, top, glass };
+  }
+  const geometries = new WeakMap();        // a shape described once (a handle's cup) is one geometry
+  /** @param {ReturnType<ReturnType<typeof describeModule>['create']>} desc @param {{ layers?: string[], apart?: string[] }} [opts] apart: layers whose still details stay single meshes (the 2D plan draws them) */
+  function show(desc, opts = {}) {
+    const EXTRA = opts.layers || [], frames = new Map(), holders = new Map(), cores = new Map();
+    /** @type {{ mesh: any, layers: string[], moves: boolean }[]} */ const DETAILS = [];
+    /** @type {{ light: any, shadow: boolean }[]} */ const LAMPS = [];
+    const geometryOf = (/** @type {Shape} */ s) => { if (!geometries.has(s)) geometries.set(s, shapeGeometry(s)); return geometries.get(s); };
+    const all = /** @type {any[]} */ ([]).concat(desc.FRAMES, desc.MOVERS, desc.DETAILS, desc.LAMPS, desc.LOOKS).sort((a, b) => a.n - b.n);
+    for (const it of all) {
+      if (desc.MOVERS.includes(it)) holders.set(it, new THREE.Group());
+      else if (desc.FRAMES.includes(it)) {
+        const f = new THREE.Group();
+        if (it.parent) { f.position.set(it.at[0], it.at[2], it.at[1]); f.rotation.z = it.angle; frames.get(it.parent).add(f); }
+        else {
+          const { O, X, Y } = desc.frame(it.r);
+          f.matrixAutoUpdate = false;
+          f.matrix.makeBasis(new THREE.Vector3(X[0], X[1], 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(Y[0], Y[1], 0)).setPosition(O[0], O[1], desc.LEVEL);
+          (it.mover ? holders.get(it.mover) : root).add(f);
+        }
+        frames.set(it, f);
+      } else if (desc.DETAILS.includes(it)) {
+        const k = it.material, first = typeof k === 'string' ? material(k) : Array.isArray(k) ? material(k[0]) : 'text' in k ? textMaterial(k.text) : material(k.key);
+        const m = new THREE.Mesh(geometryOf(it.shape), first);
+        m.position.set(it.at[0], it.at[2], it.at[1]); m.castShadow = it.shadow && !first.transparent; m.receiveShadow = it.shadow;
+        if (Array.isArray(k)) m.material = k.map(material);
+        else if (typeof k === 'object' && 'side' in k) { m.material = first.clone(); m.material.side = k.side === 'back' ? THREE.BackSide : THREE.DoubleSide; }
+        if (it.turn) for (const ax of ['x', 'y', 'z']) if (it.turn[ax] !== undefined) m.rotation[ax] = it.turn[ax];
+        if (it.up) m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...it.up).normalize());
+        if (it.matrix) { m.matrixAutoUpdate = false; m.matrix.set(...it.matrix); }
+        frames.get(it.frame).add(m); DETAILS.push({ mesh: m, layers: it.layers, moves: it.moves });
+      } else if (desc.LAMPS.includes(it)) {
+        const light = it.kind === 'spot' ? new THREE.SpotLight(it.color, it.intensity, it.distance, it.angle, it.penumbra, it.decay) : new THREE.PointLight(it.color, it.intensity, it.distance, it.decay);
+        light.position.copy(toWorld(...it.from));
+        if (it.to) { light.target.position.copy(toWorld(...it.to)); scene.add(light.target); }
+        light.visible = false; scene.add(light);
+        LAMPS.push({ light, shadow: it.shadow });
+        if (it.shadow) { light.shadow.mapSize.set(1024, 1024); light.shadow.camera.near = 0.1; light.shadow.camera.far = (it.from[2] - desc.LEVEL) / 1000 + 0.3; light.shadow.bias = -0.0002; light.shadow.normalBias = 0.015; }
+      } else {                               // a look painted with specks, once
+        const m = material(it.key), S = it.speckle;
+        if (m.map) continue;
+        const t = canvasTexture(S.size, S.size, (g, w, ch) => {
+          g.fillStyle = S.background; g.fillRect(0, 0, w, ch);
+          for (let i = 0; i < S.count; i++) {
+            const k = hash01(i, 3), s = S.dot[0] + hash01(i, 4) * S.dot[1], d = S.dots.find(d => k > d.above);
+            g.fillStyle = d.alpha ? `rgba(${d.color},${d.alpha[0] + hash01(i, 5) * d.alpha[1]})` : d.color;
+            g.fillRect(hash01(i, 1) * w, hash01(i, 2) * ch, s, s);
+          }
+        });
+        t.repeat.set(S.repeat, S.repeat);
+        m.map = t;
+      }
+    }
+    /* the moving parts, built closed, each with its details */
+    for (const d of desc.MOVERS) {
+      const core = mover(Object.assign({ pieces: surface.piecesOf(d.cells), at: d.P, behind: d.parent ? cores.get(d.parent) : null, label: d.label }, d.how));
+      cores.set(d, core); core.inner.add(holders.get(d));
+    }
+    /* one mesh for the still details alike: in one frame, of one material, with the same layers and shadows (a layer shows
+       and hides them as before; what moves, and what the 2D plan draws apart, stays apart) */
+    const groupsOf = new Map();
+    for (const d of DETAILS) {
+      const m = d.mesh;
+      if (d.moves || d.layers.some(l => (opts.apart || []).includes(l)) || !m.parent) continue;
+      const k = [m.parent.uuid, m.material.uuid, d.layers.join('+'), m.castShadow, m.receiveShadow].join('|');
+      if (!groupsOf.has(k)) groupsOf.set(k, []);
+      groupsOf.get(k).push(d);
+    }
+    for (const list of groupsOf.values()) {
+      if (list.length < 2) continue;
+      const parts = list.map(d => { const m = d.mesh; if (m.matrixAutoUpdate) m.updateMatrix(); const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone(); return g.applyMatrix4(m.matrix); });
+      const uv = parts.every(g => g.attributes.uv), merged = new THREE.BufferGeometry();
+      for (const name of ['position', 'normal'].concat(uv ? ['uv'] : [])) {
+        const size = parts[0].attributes[name].itemSize, arr = new Float32Array(parts.reduce((s, g) => s + g.attributes[name].count * size, 0));
+        let at = 0; for (const g of parts) { arr.set(g.attributes[name].array, at); at += g.attributes[name].array.length; }
+        merged.setAttribute(name, new THREE.BufferAttribute(arr, size));
+      }
+      const first = list[0].mesh, one = new THREE.Mesh(merged, first.material);
+      one.castShadow = first.castShadow; one.receiveShadow = first.receiveShadow;
+      first.parent.add(one);
+      for (const d of list) { d.mesh.parent.remove(d.mesh); d.mesh.geometry.dispose(); }
+      DETAILS.splice(0, DETAILS.length, ...DETAILS.filter(d => !list.includes(d)), { mesh: one, layers: list[0].layers, moves: false });
+    }
+    for (const d of DETAILS) d.mesh.userData.owner = null;
+
+    /* the lamps light by night while their layer is on */
+    let dark = false, lit = true;
+    const light = () => {
+      const on = dark && lit;
+      for (const { light, shadow } of LAMPS) { light.visible = on; light.castShadow = on && shadow; }
+      for (const k of ['bulb', 'led']) { const mt = material(k); mt.emissive.set(on ? 0xfff0dc : 0x000000); mt.emissiveIntensity = on ? 2 : 1; }
+    };
+    const night = (/** @type {boolean} */ on) => { dark = on; light(); };
+    const showDetails = (/** @type {(layers: string[]) => boolean} */ shown) => {
+      for (const d of DETAILS) d.mesh.visible = shown(d.layers);
+      if (lit !== shown(['lamps'].concat(EXTRA))) { lit = !lit; light(); }
+    };
+    /* the footprints of the details whose layers pass, for the 2D plan */
+    const footprints = (/** @type {(layers: string[]) => boolean} */ pass) => {
+      root.updateMatrixWorld(true);
+      const toHouse = new THREE.Matrix4().copy(root.matrixWorld).invert();
+      return DETAILS.filter(d => pass(d.layers) && d.mesh.geometry.attributes.position).map(d => meshShape(d.mesh, toHouse));
+    };
+    return { DETAILS, LAMPS, night, showDetails, footprints, cores };
+  }
+
+  return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, hash01, canvasTexture, loadImage, material, useMaterial, show,
     buildMeshes, removeMeshes, buildEdges, showPieces, clear, relight, cameraAt, GROUPS, EDGE_GROUPS, mover, toggle, toggleAll, moverAt, MOVERS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion,
     onClick, enableNavigation, walk, boxes, enableWalk, startWalk, stopWalk, refreshObstacles, stepWalk, onFrame, start, run,
     get hemi() { return hemi; }, get sun() { return sun; } };

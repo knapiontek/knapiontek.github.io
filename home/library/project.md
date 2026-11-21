@@ -16,7 +16,7 @@ The outside world, once for the whole house: what is bought (products and shops)
 | materials.js | how a material looks: colour, surface, 2D section fill |
 | textures/*.js | one image each (a board's decor, a tile's face), by key |
 | catalog.js | code: the library for a page: products by group and by key, shops, materials; textures loaded by key; its checks. The only code that knows these files |
-| draw.js | code: how each kind of product is drawn, in the frame of its node (x, y, h), from its data and its place |
+| draw.js | code: how each kind of product is described (solids, details, lamps: core/describe.js), in the frame of its node (x, y, h), from its data and its place; draws nothing itself |
 
 ## Formats (all version 1; sizes in mm)
 

@@ -1,54 +1,15 @@
 // @ts-check
 /* library/draw.js: how a product of the library is drawn, whatever room it stands in. A product names its drawing (its field
-   draw); the room places it and hands over a drawing context D (DrawContext, made by room/room.js) and the place: the frame
+   draw); the room places it and hands over a description D (DrawContext, core/describe.js) and the place: the frame
    of its group (x along the group, y out from the carcass backs, h up from the floor, mm) and the anchors the drawing starts
    from. The sizes are the maker's (the product); the shapes the maker does not give (a knob, a tap's spout, a lamp's shade)
-   are drawn here. A mesh of a detail keeps three.js's own axes: x along, y up, z out of the wall. Needs THREE when it draws,
-   nothing when it loads. */
-/** @typedef {{ r: string, frame: any, layers: string[], mover?: DrawMover | null, pivot?: boolean }} Anchor  where details go: group r, its layers, the moving part they move with */
+   are described here. A detail keeps three.js's axes: x along, y up, z out of the wall. Describes into D (core/describe.js):
+   draws nothing, knows no three.js. */
+/** @typedef {{ r: string, frame: DescFrame, layers: string[], mover?: DrawMover | null, pivot?: boolean }} Anchor  where details go: group r, its layers, the moving part they move with */
 /** @typedef {Cell & { element: string, cap?: string, part: any, r: string, gb?: Box, hb?: Box, info: Object<string, any> }} DrawCell  a solid of a room: in group r, its box gb there, hb in the house */
-/**
- * @typedef {object} DrawMover  a moving part as drawn: its cells and details, made a part of core when all is drawn
- * @property {string} r
- * @property {string} kind  door, drawer, fridge, dishwasher, oven, microwave
- * @property {Vec3} P  a point of its axis, in the house
- * @property {any} holder  its details' three.js group
- * @property {DrawCell[]} cells
- * @property {number} sign
- * @property {string} label
- * @property {DrawMover | null} parent  what must open first
- * @property {DrawMover[]} children
- * @property {any} item
- * @property {number | null} travel
- * @property {string | null} swing
- * @property {any} [core]  the part of core, once made
- */
+/** @typedef {DescMover} DrawMover  a moving part as described (core/describe.js) */
 /** @typedef {Object<string, any>} DrawPlace  a drawing's place: its group r and the anchors it starts from (each drawing names its own) */
-/**
- * @typedef {object} DrawContext  what a room hands a drawing (room/room.js)
- * @property {SceneView} V
- * @property {(list: DrawCell[], r: string, gb: Box, key: string, layer: string, info?: Object<string, any>) => DrawCell | null} box  a solid of group r, gb [x0, x1, y0, y1, h0, h1]
- * @property {(r: string, layer: string, mover?: DrawMover | null, also?: string[]) => Anchor} at
- * @property {(a: Anchor, geometry: any, key: any, x: number, y: number, h: number, shadow?: boolean) => any} detail  a mesh at (x, y, h) of a's frame
- * @property {(a: Anchor, radius: number, length: number, key: any, x: number, y: number, h: number, axis: string | null, segments?: number, shadow?: boolean) => any} cylinder  upright, or along x or y
- * @property {(a: Anchor, text: string, w: number, high: number, x: number, y: number, h: number) => any} display
- * @property {(r: string, kind: string, x: number, y: number, h: number) => DrawMover} mover
- * @property {(parent: DrawMover, child: DrawMover) => void} linkTo
- * @property {(r: string, gb: Box, name: string, kind?: string) => number} envelope  an appliance's outline (for Test)
- * @property {(list: DrawCell[], r: string, gb: Box, t: number, key: string, layer: string, info?: Object<string, any>) => void} openFront  a box open at the front, walls t thick
- * @property {(list: DrawCell[], r: string, gb: Box, t: number, key: string, layer: string, info?: Object<string, any>) => void} openTop  a box open at the top
- * @property {(list: DrawCell[], r: string, x0: number, x1: number, prof: number[][], info: Object<string, any>, faceMaterial: (n: Vec3) => string) => DrawCell | null} profile  a prism over a profile [[y, h]]
- * @property {() => number} part  a new part: its solids meet without a line
- * @property {(light: any, from: Vec3, to: Vec3 | null, shadow: boolean) => void} lamp
- * @property {(r: string, x: number, y: number, h: number) => Vec3} point  of group r, in the house
- * @property {(a: Anchor, x: number, y: number, h: number, angle: number) => Anchor} pivot  a frame at (x, y, h) turned about h: its details from its own zero
- * @property {(r: string) => { O: number[], X: number[], Y: number[], box: Box }} frame  group r's axes in the house
- * @property {(key: string) => any} material
- * @property {(key: string) => boolean} has  a look in the page's library
- * @property {string} metal  the room's metal
- * @property {DrawCell[]} STATIC  the solids that stand still
- * @property {number} CEILING
- */
+/** @typedef {ReturnType<ReturnType<typeof describeModule>['create']>} DrawContext  what a drawing describes into (core/describe.js) */
 function drawModule() {
 'use strict';
 
@@ -136,18 +97,8 @@ function sink(D, S, { r, x: sinkX, y: sy, top }) {
 /* the sink's granite: a speckled map drawn once */
 /** @param {DrawContext} D */
 function granite(D) {
-  const V = D.V, m = D.material('granite');
-  if (m.map) return;
-  const t = V.canvasTexture(256, 256, (g, w, ch) => {
-    g.fillStyle = '#2a2b2d'; g.fillRect(0, 0, w, ch);
-    for (let i = 0; i < 5200; i++) {
-      const k = V.hash01(i, 3), s = 0.6 + V.hash01(i, 4) * 1.4;
-      g.fillStyle = k > 0.78 ? `rgba(190,190,186,${0.2 + V.hash01(i, 5) * 0.3})` : k > 0.35 ? 'rgba(90,90,92,.6)' : 'rgba(10,10,11,.7)';
-      g.fillRect(V.hash01(i, 1) * w, V.hash01(i, 2) * ch, s, s);
-    }
-  });
-  t.repeat.set(1 / 250, 1 / 250);
-  m.map = t;
+  D.look('granite', { size: 256, background: '#2a2b2d', count: 5200, dot: [0.6, 1.4], repeat: 1 / 250,
+    dots: [{ above: 0.78, color: '190,190,186', alpha: [0.2, 0.3] }, { above: 0.35, color: 'rgba(90,90,92,.6)' }, { above: -1, color: 'rgba(10,10,11,.7)' }] });
 }
 /* a kitchen tap on the worktop with its soap dispenser. place: {r, x (the sink's axis), y, top (the rim's top)} */
 /** @param {DrawContext} D */
@@ -183,9 +134,9 @@ function hob(D, H, { r, x: hobX, cut: hobCut, top: h }) {
   envelope(r, [hobCut.x0, hobCut.x1, hobCut.y0, hobCut.y1, h - H.body.height, h], 'Hob – body ' + (hobCut.x1 - hobCut.x0) + ' × ' + (hobCut.y1 - hobCut.y0) + ' × ' + H.body.height);
   const a = at(r, 'hob');
   for (const [dx, y, radius] of [[-150, gy + 140, 100], [150, gy + 140, 85], [-150, gy + 370, 85], [150, gy + 370, 110]]) {
-    detail(a, new THREE.RingGeometry(radius - 3, radius, 64), 'ringGrey', hobX + dx, y, h + 5.5, false).rotation.x = -Math.PI / 2;   // cooking zones
+    detail(a, { kind: 'ring', r: [radius - 3, radius], segments: [64] }, 'ringGrey', hobX + dx, y, h + 5.5, false, { turn: { x: -Math.PI / 2 } });   // cooking zones
   }
-  detail(a, new THREE.PlaneGeometry(220, 30), 'ringGrey', hobX, gy + 490, h + 5.5, false).rotation.x = -Math.PI / 2;   // the slider
+  detail(a, { kind: 'plane', size: [220, 30] }, 'ringGrey', hobX, gy + 490, h + 5.5, false, { turn: { x: -Math.PI / 2 } });   // the slider
 }
 
 /* ---------- a chimney hood on the wall. place: {r, x (the axis), bottom (h of its underside), ceiling (h), worktop (h of
@@ -198,18 +149,15 @@ function hood(D, A, { r, x: xc, bottom: lowest, ceiling: CEILING, worktop }) {
   const prof = [[0, bottom], [d, bottom], [d, bottom + 40], [110, bottom + bh], [0, bottom + bh]];   // (y, h): an angled glass front
   const sides = normal => (Math.abs(normal[0] * X[0] + normal[1] * X[1]) > 0.5 ? 'blackMetal' : 'glassBlack');
   if (!profile(STATIC, r, xc - w / 2, xc + w / 2, prof, I, sides)) {   // a group across x: the same body as a plain mesh
-    const shape = new THREE.Shape(prof.map(([y, h]) => new THREE.Vector2(y, h - bottom)));
-    const body = detail(a, new THREE.ExtrudeGeometry(shape, { depth: w, bevelEnabled: false }), 'blackMetal', xc + w / 2, 0, bottom);
-    body.geometry.rotateY(-Math.PI / 2); body.material = [D.material('blackMetal'), D.material('glassBlack')];
+    detail(a, { kind: 'extrude', outline: prof.map(([y, h]) => [y, h - bottom]), depth: w, then: [['rotateY', -Math.PI / 2]] }, ['blackMetal', 'glassBlack'], xc + w / 2, 0, bottom);
   }
   box(STATIC, r, [xc - w / 2 + 20, xc + w / 2 - 20, 20, d - 20, bottom - 1, bottom], 'ovenInside', 'hood', I);   // the filter
   box(STATIC, r, [xc - cw / 2, xc + cw / 2, 0, cd, bottom + bh, CEILING], 'blackMetal', 'hood', I);              // the chimney
-  const angle = Math.atan2(bh - 40, d - 110), panel = detail(a, new THREE.PlaneGeometry(200, 12), 'led', xc,
-    d - (d - 110) * 0.18 + Math.sin(angle) * 1.2, bottom + 40 + (bh - 40) * 0.18 + Math.cos(angle) * 1.2, false);
-  panel.rotation.x = -(Math.PI / 2 - angle);
+  const angle = Math.atan2(bh - 40, d - 110);
+  detail(a, { kind: 'plane', size: [200, 12] }, 'led', xc, d - (d - 110) * 0.18 + Math.sin(angle) * 1.2, bottom + 40 + (bh - 40) * 0.18 + Math.cos(angle) * 1.2, false, { turn: { x: -(Math.PI / 2 - angle) } });
   for (const x of [xc - 150, xc + 150]) {
-    detail(a, new THREE.PlaneGeometry(160, 12), 'led', x, d - 90, bottom - 1.5, false).rotation.x = Math.PI / 2;
-    lamp(new THREE.SpotLight(0xfff0dc, 4.5, 0, 1.05, 0.8, 2), point(r, x, d - 90, bottom - 5), point(r, x, d - 170, worktop), false);
+    detail(a, { kind: 'plane', size: [160, 12] }, 'led', x, d - 90, bottom - 1.5, false, { turn: { x: Math.PI / 2 } });
+    lamp({ kind: 'spot', color: 0xfff0dc, intensity: 4.5, distance: 0, angle: 1.05, penumbra: 0.8, decay: 2 }, point(r, x, d - 90, bottom - 5), point(r, x, d - 170, worktop), false);
   }
 }
 
@@ -288,23 +236,21 @@ function coffeeMachine(D, A, { r, m, x: xc, h: h, y: y1 }) {
 function pendant(D, { a, r, x, y, bottom: h, ceiling: CEILING }) {
   const { cylinder, detail, lamp, point } = D;
   cylinder(a, 2, CEILING - h - 90, 'gasket', x, y, (CEILING + h + 90) / 2, null, 6);   // cable
-  detail(a, new THREE.SphereGeometry(150, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), 'shade', x, y, h + 60);
-  const inside = detail(a, new THREE.SphereGeometry(148, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), 'shadeInside', x, y, h + 60, false);
-  inside.material = D.material('shadeInside').clone(); inside.material.side = THREE.BackSide;
-  detail(a, new THREE.TorusGeometry(150, 4, 8, 48), D.metal, x, y, h + 60).rotation.x = Math.PI / 2;
+  detail(a, { kind: 'sphere', radius: 150, segments: [32, 16], arc: [0, Math.PI * 2, 0, Math.PI / 2] }, 'shade', x, y, h + 60);
+  detail(a, { kind: 'sphere', radius: 148, segments: [32, 16], arc: [0, Math.PI * 2, 0, Math.PI / 2] }, { key: 'shadeInside', side: 'back' }, x, y, h + 60, false);
+  detail(a, { kind: 'torus', radius: 150, tube: 4, segments: [8, 48] }, D.metal, x, y, h + 60, true, { turn: { x: Math.PI / 2 } });
   cylinder(a, 14, 40, 'gasket', x, y, h + 180, null, 16);
-  detail(a, new THREE.SphereGeometry(32, 20, 12), 'bulb', x, y, h + 135, false);
-  lamp(new THREE.PointLight(0xffd9a8, 1.2, 0.9, 2), point(r, x, y, h + 135), null, false);
-  lamp(new THREE.SpotLight(0xffd9a8, 7, 5, 1.2, 0.8, 2), point(r, x, y, h + 135), point(r, x, y, 0), true);
+  detail(a, { kind: 'sphere', radius: 32, segments: [20, 12] }, 'bulb', x, y, h + 135, false);
+  lamp({ kind: 'point', color: 0xffd9a8, intensity: 1.2, distance: 0.9, decay: 2 }, point(r, x, y, h + 135), null, false);
+  lamp({ kind: 'spot', color: 0xffd9a8, intensity: 7, distance: 5, angle: 1.2, penumbra: 0.8, decay: 2 }, point(r, x, y, h + 135), point(r, x, y, 0), true);
 }
 /* a downlight in the ceiling. place: {a, r, x, y, ceiling} */
 /** @param {DrawContext} D */
 function downlight(D, { a, r, x, y, ceiling: CEILING }) {
   const { detail, lamp, point } = D;
-  const tube = detail(a, new THREE.CylinderGeometry(35, 35, 100, 40, 1, true), 'tube', x, y, CEILING - 50);
-  tube.material = D.material('tube').clone(); tube.material.side = THREE.DoubleSide;
-  detail(a, new THREE.CircleGeometry(27, 32), 'bulb', x, y, CEILING - 85, false).rotation.x = Math.PI / 2;
-  lamp(new THREE.SpotLight(0xfff0dc, 11, 0, 1.0, 1, 2), point(r, x, y, CEILING - 90), point(r, x, y, 0), true);
+  detail(a, { kind: 'cylinder', r: [35, 35], length: 100, segments: [40, 1], open: true }, { key: 'tube', side: 'double' }, x, y, CEILING - 50);
+  detail(a, { kind: 'disc', radius: 27, segments: [32] }, 'bulb', x, y, CEILING - 85, false, { turn: { x: Math.PI / 2 } });
+  lamp({ kind: 'spot', color: 0xfff0dc, intensity: 11, distance: 0, angle: 1.0, penumbra: 1, decay: 2 }, point(r, x, y, CEILING - 90), point(r, x, y, 0), true);
 }
 
 /* ================= hardware: each piece in its own coordinates, from the zero of its node (its left, back, bottom
@@ -349,10 +295,10 @@ const CUPS = {};
 function cupShape(length) {
   if (CUPS[length]) return CUPS[length];
   const L = length, R = 24, drop = -12, parts = [];
-  const shell = new THREE.CylinderGeometry(R, R, L - 6, 28, 1, true, 0, Math.PI / 2); shell.rotateZ(Math.PI / 2); shell.translate(0, drop, 0); parts.push(shell);
-  for (const sx of [-1, 1]) { const c = new THREE.CircleGeometry(R, 20, 0, Math.PI / 2); c.rotateY(-Math.PI / 2); c.translate(sx * (L / 2 - 3), drop, 0); parts.push(c); }
-  const lip = new THREE.CylinderGeometry(2.2, 2.2, L - 6, 10); lip.rotateZ(Math.PI / 2); lip.translate(0, drop, R); parts.push(lip);
-  for (const sx of [-1, 1]) { const pad = new THREE.BoxGeometry(12, 26, 4); pad.translate(sx * 32, drop + 13, 2); parts.push(pad); }
+  parts.push({ kind: 'cylinder', r: [R, R], length: L - 6, segments: [28, 1], open: true, arc: [0, Math.PI / 2], then: [['rotateZ', Math.PI / 2], ['translate', 0, drop, 0]] });
+  for (const sx of [-1, 1]) parts.push({ kind: 'disc', radius: R, segments: [20], arc: [0, Math.PI / 2], then: [['rotateY', -Math.PI / 2], ['translate', sx * (L / 2 - 3), drop, 0]] });
+  parts.push({ kind: 'cylinder', r: [2.2, 2.2], length: L - 6, segments: [10], then: [['rotateZ', Math.PI / 2], ['translate', 0, drop, R]] });
+  for (const sx of [-1, 1]) parts.push({ kind: 'box', size: [12, 26, 4], then: [['translate', sx * 32, drop + 13, 2]] });
   return (CUPS[length] = parts);
 }
 /** @param {DrawContext} D */
@@ -469,6 +415,7 @@ function linearDrain(D, A, { r, w, d, h, h0 }) {
 const SEG = 72;   // the points of a loft's section
 const superellipse = (t, n) => { const c = Math.cos(t), s = Math.sin(t); return [Math.sign(c) * Math.pow(Math.abs(c), 2 / n), Math.sign(s) * Math.pow(Math.abs(s), 2 / n)]; };
 /* a solid lofted through superellipse sections {y, a, b, n, nb, cx, cz}, capped at both ends (a WC bowl) */
+/** @returns {Shape} */
 function loft(sections) {
   const ring = s => Array.from({ length: SEG }, (_, j) => {
     const t = j / SEG * Math.PI * 2, n = Math.sin(t) < 0 ? (s.nb || s.n || 2.5) : (s.n || 2.5), [cx, cz] = superellipse(t, n);
@@ -486,14 +433,12 @@ function loft(sections) {
     for (let j = 0; j < SEG; j++) { const a = base + j, b = base + (j + 1) % SEG; up ? index.push(base + SEG, b, a) : index.push(base + SEG, a, b); }
   };
   cap(rings[0], sections[0], false); cap(rings[rings.length - 1], sections[sections.length - 1], true);
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.setIndex(index); g.computeVertexNormals();
-  return g;
+  return { kind: 'mesh', positions, index };
 }
 /** @param {DrawContext} D */
 function shaped(D, A, { r, w, d, h, h0, f }) {
   const metal = D.metal, key = m => m === 'metal' ? metal : m === 'ceramic' ? A.material || 'ceramicWhite' : m;
-  const up = (u, v, z) => new THREE.Vector3(u, h0 + z, v);                 // the frame's three axes: x along, y up, z out of the wall
+  const up = (u, v, z) => [u, h0 + z, v];                                   // the frame's three axes: x along, y up, z out of the wall
   /* a door (its parts mv): turning about its hinge at door.at [u, v], door.angle degrees, toward door.sign */
   const door = A.door && Object.assign(D.mover(r, 'door', A.door.at[0], A.door.at[1], 0), { sign: A.door.sign || 1, label: A.name + ' – door', travel: A.door.angle });
   for (const p0 of A.shape) {
@@ -502,14 +447,12 @@ function shaped(D, A, { r, w, d, h, h0, f }) {
     if (p.k === 'box') { D.box(p.mv && door ? door.cells : D.STATIC, r, [p.b[0], p.b[1], p.b[2], p.b[3], h0 + p.b[4], h0 + p.b[5]], key(p.m), p.l, fixtureInfo(D, A)); continue; }
     const a = D.at(r, p.l);
     if (p.k === 'cyl') {
-      const m = D.detail(a, new THREE.CylinderGeometry(p.r[0], p.r[1], p.h, p.s), key(p.m), p.at[0], p.at[1], h0 + p.at[2]);
-      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(p.ax[0], p.ax[2], p.ax[1]).normalize());
+      D.detail(a, { kind: 'cylinder', r: [p.r[0], p.r[1]], length: p.h, segments: [p.s] }, key(p.m), p.at[0], p.at[1], h0 + p.at[2], true, { up: [p.ax[0], p.ax[2], p.ax[1]] });
     } else if (p.k === 'tube') {
-      D.detail(a, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p.p.map(q => up(...q))), p.s, p.r, 12, false), key(p.m), 0, 0, 0);
+      D.detail(a, { kind: 'tube', points: p.p.map(q => up(...q)), radius: p.r, segments: [p.s, 12] }, key(p.m), 0, 0, 0);
     } else if (p.k === 'loft') {
-      const m = D.detail(a, loft(p.sec), key(p.m), 0, 0, 0), [U, V, H] = p.M;   // its rows: u, v, h of its own axes and its place
-      m.matrixAutoUpdate = false;
-      m.matrix.set(...U, ...H.slice(0, 3), H[3] + h0, ...V, 0, 0, 0, 1);
+      const [U, V, H] = p.M;                 // its rows: u, v, h of its own axes and its place
+      D.detail(a, loft(p.sec), key(p.m), 0, 0, 0, true, { matrix: [...U, ...H.slice(0, 3), H[3] + h0, ...V, 0, 0, 0, 1] });
     }
   }
   D.envelope(r, [0, w, 0, d, h0, h0 + h], A.name);
