@@ -1,7 +1,7 @@
 // @ts-check
 /* core/load.js: the one loader of data. A data file is JSON handed to HOME.data, so the pages work opened from disk;
-   it says its format and version. A page loads a file by its path from the home folder (file gives the path of a key);
-   the data comes back only when its format and version are the ones the caller knows. Must be the first script of a page:
+   it says its format and version. A page loads a file by its path from the home folder (the folder that has the file knows
+   its path); the data comes back only when its format and version are the ones the caller knows. Must be the first script of a page:
    it finds the home folder from its own address. Knows no project. */
 window.HOME = window.HOME || /** @type {Home} */ ({});
 function loadModule() {
@@ -12,17 +12,6 @@ const DATA = new Map(), PENDING = new Map();                                    
 
 /* called by every data file: its data, kept under the file's address */
 const data = json => { DATA.set(/** @type {HTMLScriptElement} */ (document.currentScript).src, json); };
-
-/* the path of every kind of data file, from the home folder */
-const file = {
-  house: () => 'house/house.js',
-  room: (key, role) => `room/${key}.${role}.js`,
-  library: () => 'library/library.js',
-  materials: () => 'library/materials.js',
-  shops: () => 'library/shops.js',
-  products: group => `library/products/${group}.js`,
-  texture: key => `library/textures/${key}.js`,
-};
 
 function script(url, path) {
   if (!PENDING.has(url)) PENDING.set(url, new Promise((/** @type {(value?: any) => void} */ done, failed) => {
@@ -44,7 +33,6 @@ async function load(path, format, version) {
   return d;
 }
 
-load.file = file;
 return { data, load };
 }
 Object.assign(HOME, loadModule());

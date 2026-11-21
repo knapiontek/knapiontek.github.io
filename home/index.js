@@ -313,7 +313,7 @@ const { prism, hRange, EPS } = HOME.geometry;
 const { piecesOf } = HOME.surface;
 const DEG = 180 / Math.PI;
 
-const [DATA, LIB] = await Promise.all([HOME.load(HOME.load.file.house(), 'house', 3), HOME.library.load()]);
+const [DATA, LIB] = await Promise.all([HOME.load('house/house.js', 'house', 3), HOME.catalog.open()]);
 const MODEL = HOME.model.build(DATA), T = MODEL.T, HOUSE = MODEL.HOUSE;   // DATA: the site, the house in it
 /** a setting the data must give: its value */
 const must = (/** @type {HouseNode} */ n, /** @type {string} */ key) => { const s = T.setting(n, key); if (!s) throw new Error(`${n.id}: no setting ${key}`); return s.value; };
@@ -362,7 +362,7 @@ function finished(id, files) {
 const PREPARED = new Map();
 const furnished = r => PREPARED.get(r.id) || PREPARED.set(r.id, (async () => {
   const roles = ['cabinets', 'scene'].concat(r.node.files.includes('docs') ? ['docs'] : []);
-  const [dataCabinets, dataScene, dataDocs] = await Promise.all(roles.map(role => HOME.load(HOME.load.file.room(r.id, role), role, 1)));
+  const [dataCabinets, dataScene, dataDocs] = await Promise.all(roles.map(role => HOME.load(`room/${r.id}.${role}.js`, role, 1)));
   const data = { cabinets: EDITED.get(r.id) || dataCabinets, scene: dataScene, docs: dataDocs }, used = finished(r.id, data), { cabinets, scene, docs } = used;
   /* the room as the room engine needs it: its zero and size, its floor area and the openings in its walls, in its own axes */
   const at = T.place(r.node), near = b => b[0] <= at[0] + r.node.size[0] + 300 && b[1] >= at[0] - 300 && b[2] <= at[1] + r.node.size[1] + 300 && b[3] >= at[1] - 300 && b[4] < at[2] + r.node.size[2] && b[5] > at[2];

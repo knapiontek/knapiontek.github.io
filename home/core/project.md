@@ -6,7 +6,7 @@ Shared code for every page. Knows no project: a page hands it data; core returns
 
 | File | Does |
 |---|---|
-| load.js | the one data loader: a file by its path from the home folder, checked for format and version; the path of every kind of data file by key. First script of every page |
+| load.js | the one data loader: a file by its path from the home folder, checked for format and version (the folder that has a file knows its path). First script of every page |
 | tree.js | the tree of nodes: node by path, path of a node, place (sum of offsets), box, setting from the cascade (and the node it comes from), refs, walk, checks |
 | tools.js | short pieces of no one file: how numbers are written (en-GB on every page and in every sheet); a sheet's rows and columns (formula and input cells, column widths and how each shows, money columns, row kinds) |
 | geometry.js | exact solids: convex polygons, prisms; clip, subtract, intersect, split, section, volume, overlap; rectangles; the compass sides; a stable random number |
@@ -15,7 +15,6 @@ Shared code for every page. Knows no project: a page hands it data; core returns
 | plan2d.js | the 2D plan from the same solids: cut filled, below seen, above dashed; labels, room borders without a wall (dash-dot), dimensions, sheets side by side |
 | sheet.js | spreadsheet: sheets in tabs, input cells, live formulas, tree sheets (levels, + / −), XLSX with the same formulas and outline; the Documents screen (each table built once, changed in place) |
 | estimate.js | the sheet Estimate, alike on every page: items by category, quantity × price, sums, reserve, total |
-| library.js | the library for a page: products by group, shops, materials; textures by key; its checks |
 | ui.js | the screen (Alpine.js): a page's part (state kept in the browser), modes, panel tabs, bottom menu, floating boxes, 2D zoom and drag; the shared pieces (below); light/dark and panel shown/hidden, one choice for all pages; layers; sun; table column widths |
 | ui.css | the look of every page, light and dark: menus, panel, sheets and editor tables, 2D sheet and elevations, pick lists |
 

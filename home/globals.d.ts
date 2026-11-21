@@ -3,7 +3,7 @@ interface Home {
   data: ReturnType<typeof loadModule>['data']; load: ReturnType<typeof loadModule>['load'];
   geometry: ReturnType<typeof geometryModule>; tools: ReturnType<typeof toolsModule>; surface: ReturnType<typeof surfaceModule>; scene: ReturnType<typeof sceneModule>;
   ui: ReturnType<typeof uiModule>; plan2d: ReturnType<typeof plan2dModule>; sheet: ReturnType<typeof sheetModule>;
-  tree: ReturnType<typeof treeModule>; library: ReturnType<typeof libraryModule>; estimate: ReturnType<typeof estimateModule>;
+  tree: ReturnType<typeof treeModule>; catalog: ReturnType<typeof catalogModule>; estimate: ReturnType<typeof estimateModule>;
   model: ReturnType<typeof modelModule>; draw: ReturnType<typeof drawModule>; cabinets: ReturnType<typeof cabinetsModule>;
   room: ReturnType<typeof roomModule>; tiles: ReturnType<typeof tilesModule>; docs: ReturnType<typeof docsModule>;
 }

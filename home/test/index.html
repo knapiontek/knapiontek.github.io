@@ -20,7 +20,7 @@
 <script>
 /* the files tested; core/tree.js is made by treeModule(), its test is treeTest() in test/core/tree.js */
 const FILES = ['core/geometry.js', 'core/tools.js', 'core/tree.js', 'core/surface.js', 'core/plan2d.js', 'core/estimate.js',
-  'house/model.js', 'room/tiles.js', 'room/cabinets.js'];
+  'house/model.js', 'room/tiles.js', 'room/cabinets.js', 'library/catalog.js'];
 const nameOf = file => file.split('/').pop().replace('.js', '');
 const fileOf = constructor => FILES.find(f => nameOf(f) + 'Module' === constructor);
 
@@ -36,7 +36,7 @@ const DATA = {};
 async function read(file) { HOME.data = d => { DATA[file] = d; }; await script(file); }
 
 /* the constructors a test names: its first parameter, { treeModule, geometryModule } */
-const namesOf = test => (String(test).match(/^function\s*\w*\s*\(\s*\{([^}]*)\}/) || ['', ''])[1].split(',').map(s => s.trim()).filter(Boolean);
+const namesOf = test => (String(test).match(/^(?:async\s+)?function\s*\w*\s*\(\s*\{([^}]*)\}/) || ['', ''])[1].split(',').map(s => s.trim()).filter(Boolean);
 
 /* The slate: a worker (no page) with every name taken away that is not JavaScript's own. It gets the constructors' code
    and the data; each constructor becomes a function that only the test holds (none of them is a global name), the test
@@ -50,7 +50,7 @@ function slate() {
     'RegExp', 'Set', 'SharedArrayBuffer', 'String', 'Symbol', 'SyntaxError', 'TypeError', 'Uint8Array', 'Uint8ClampedArray',
     'Uint16Array', 'Uint32Array', 'URIError', 'WeakMap', 'WeakRef', 'WeakSet']);
   const send = postMessage.bind(globalThis);
-  onmessage = ({ data: { constructors, test, data } }) => {
+  onmessage = async ({ data: { constructors, test, data } }) => {
     for (let o = globalThis; o && o !== Object.prototype; o = Object.getPrototypeOf(o))
       for (const name of Object.getOwnPropertyNames(o))
         if (!JAVASCRIPT.has(name)) try { Object.defineProperty(globalThis, name, { value: undefined }); } catch (e) { /* checked below */ }
@@ -60,7 +60,7 @@ function slate() {
     const passed = [], failed = [], given = {};
     try {
       for (const c of constructors) given[c.name] = (0, eval)(`(${c.code})\n//# sourceURL=${c.file}`);
-      (0, eval)(`(${test.code})\n//# sourceURL=${test.file}`)(Object.freeze(given), file => data[file], (what, ok) => (ok ? passed : failed).push(what));
+      await (0, eval)(`(${test.code})\n//# sourceURL=${test.file}`)(Object.freeze(given), file => data[file], (what, ok) => (ok ? passed : failed).push(what));
       send({ passed, failed });
     } catch (e) { send({ passed, failed, error: String(e), stack: String(e.stack) }); }
   };
@@ -92,7 +92,7 @@ function run(file) {
   for (const file of FILES) { await script(file); await script('test/' + file); }
   window.onerror = null;
   /* the data the tests read: the house, the library, every room's files */
-  await read('house/house.js'); await read('library/library.js'); await read('library/materials.js');
+  await read('house/house.js'); await read('library/library.js'); await read('library/materials.js'); await read('library/shops.js');
   for (const group of DATA['library/library.js'].groups) await read(`library/products/${group}.js`);
   for (const n of (function all(n) { return [n, ...(n.children || []).flatMap(all)]; })(DATA['house/house.js']))
     for (const role of n.files || []) await read(`room/${n.id}.${role}.js`);

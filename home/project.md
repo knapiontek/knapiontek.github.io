@@ -39,7 +39,7 @@ house/  ──►  room/  ──►  core/, library/
 - A data file is pure JSON passed to `HOME.data(…)` (named .js so pages work opened from disk); nothing else in it: no code, no comments.
 - It starts with `format` and `version`. A page loads it through core/load.js, naming the format and version it knows; any other is an error naming the file and both versions. The version rises only when an old file would be read wrongly; the LLM then rewrites those files, the owner checks them. No converters.
 - `format`: files only; `type`: nodes only.
-- Data is loaded by key through core/load.js; code is loaded statically by the page.
+- Data is loaded by its path through core/load.js (the folder that has a file knows its path: the library's, library/catalog.js; the house's and the rooms', the page); code is loaded statically by the page.
 - A static site cannot list a folder: every list is in data (the house lists its rooms, the library its product groups).
 
 ## Tree and coordinates
