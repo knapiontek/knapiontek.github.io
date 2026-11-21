@@ -15,7 +15,7 @@
   <div class="stage" id="stage">
     <template x-part="view"></template><template x-part="loading"></template>
     <template x-part="modes"></template><template x-part="plan"></template><template x-part="docs"></template>
-    <div id="editor" aria-label="Cabinets" x-show="mode === 'cabinets'" x-cloak>
+    <div id="design" aria-label="Cabinets" x-show="mode === 'cabinets'" x-cloak>
       <div class="cols">
         <div><div class="sheetwrap"><table class="sheet edit" x-ref="materials"><tr class="title"><td colspan="5">Materials</td></tr>
           <tr class="head"><td>Name</td><td title="As bought: length × width × thickness (mm); ? where the library does not give it (a front is made to size)">Size</td><td title="The board's colour; the 3D view shows its decor when the product has one">Colour</td><td title="Lacquered (satin)">Lacquer</td><td title="Where it is used: the types and the carcass parts (settings.materials of the cabinets file)">Used for</td></tr>
@@ -135,6 +135,7 @@
 <script src="room/tiles.js"></script>
 <script src="room/room.js"></script>
 <script src="room/docs.js"></script>
+<script src="room/design.js"></script>
 <script src="index.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>

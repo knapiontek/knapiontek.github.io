@@ -335,7 +335,7 @@ function spaceAround(boards, carcass, h0, h1) {
   return { bottom: below.length ? Math.max(...below) : NaN, top: above.length ? Math.min(...above) : NaN };
 }
 
-/* tags come as a list (the cabinets file) or as typed text (the editor) */
+/* tags come as a list (the cabinets file) or as typed text (the design) */
 const TAG_BY_LOWER = Object.fromEntries(TAG_NAMES.map(tag => [tag.toLowerCase(), tag])); // typed tags match in any letter case
 function parseTags(tags) {
   const words = (Array.isArray(tags) ? tags : String(tags ?? '').split(/[\s,]+/)).map(w => String(w).trim()).filter(Boolean)
@@ -382,7 +382,7 @@ function materialUses(materials, needed = USES) {
   return { materialFor, problems };
 }
 
-/* problems in the materials and settings that make a build impossible; the editor lists them, build() throws them */
+/* problems in the materials and settings that make a build impossible; the design lists them, build() throws them */
 function checkSettings(project) {
   return [...materialUses(project && project.materials, usesNeeded(project)).problems, ...settingProblems((project && project.settings) || {}, featuresOf(project)), ...groupProblems(project && project.groups)];
 }

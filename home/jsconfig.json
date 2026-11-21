@@ -20,6 +20,7 @@
     "room/furniture.js",
     "room/room.js",
     "room/docs.js",
+    "room/design.js",
     "room/tiles.js",
     "index.js",
     "globals.d.ts"

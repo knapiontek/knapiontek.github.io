@@ -21,7 +21,7 @@
 /* the files tested; core/tree.js is made by coreTreeModule(), its test is coreTreeTest() in test/core/tree.js */
 const FILES = ['core/geometry.js', 'core/tools.js', 'core/tree.js', 'core/faces.js', 'core/plan2d.js', 'core/estimate.js',
   'core/ui.js', 'core/sheet.js', 'core/scene.js', 'core/drawing.js',
-  'house/model.js', 'room/tiles.js', 'room/cabinets.js', 'room/furniture.js', 'room/room.js', 'room/docs.js', 'library/catalog.js', 'library/shapes.js'] ;
+  'house/model.js', 'room/tiles.js', 'room/cabinets.js', 'room/furniture.js', 'room/room.js', 'room/docs.js', 'room/design.js', 'library/catalog.js', 'library/shapes.js'] ;
 const nameOf = file => file.replace('.js', '').replace(/\/(\w)/g, (_, c) => c.toUpperCase());   // core/plan2d.js → corePlan2d
 const fileOf = constructor => FILES.find(f => nameOf(f) + 'Module' === constructor);
 

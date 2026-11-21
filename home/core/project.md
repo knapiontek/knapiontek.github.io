@@ -17,7 +17,7 @@ Shared code for every page. Knows no project: a page hands it data; core returns
 | sheet.js | spreadsheet: sheets in tabs, input cells, live formulas, tree sheets (levels, + / −), XLSX with the same formulas and outline; the Documents screen (each table built once, changed in place) |
 | estimate.js | the sheet Estimate, alike on every page: items by category, quantity × price, sums, reserve, total |
 | ui.js | the screen (Alpine.js): a page's part (state kept in the browser), modes, panel tabs, bottom menu, floating boxes, 2D zoom and drag; the shared pieces (below); light/dark and panel shown/hidden, one choice for all pages; layers; sun; table column widths |
-| ui.css | the look of every page, light and dark: menus, panel, sheets and editor tables, 2D sheet and elevations, pick lists |
+| ui.css | the look of every page, light and dark: menus, panel, sheets and design tables, 2D sheet and elevations, pick lists |
 
 ## Flow
 

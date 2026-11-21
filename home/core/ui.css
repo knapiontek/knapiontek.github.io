@@ -114,9 +114,9 @@ button{font:inherit;color:inherit}
 .asm b{color:var(--ink)}
 .asm .holes{display:inline-block;padding-left:14px;font-size:12px}
 #sheet{flex:1;min-height:0;overflow:auto;padding:12px}
-#documents,#editor{position:absolute;inset:0;z-index:4;background:var(--panel);overflow:auto;padding:64px 20px 20px}
-#editor{padding-bottom:72px}
-#editor>*+*{margin-top:18px}
+#documents,#design{position:absolute;inset:0;z-index:4;background:var(--panel);overflow:auto;padding:64px 20px 20px}
+#design{padding-bottom:72px}
+#design>*+*{margin-top:18px}
 #documents{padding-bottom:64px;display:flex;flex-direction:column;overflow:hidden}   /* the title and the tabs stay, the tab scrolls */
 .docview{flex:1;min-height:0;display:flex;flex-direction:column}
 .docview>h1,.docview>.sub,.docview>.issues{flex:none}

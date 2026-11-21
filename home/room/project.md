@@ -11,6 +11,7 @@ The room engine: a room from what the house gives (its node: origin, size, floor
 | furniture.js | the cabinets described (core/drawing.js) from their model: carcasses, fronts, worktops, panels, hardware, the products in them; the boards' looks |
 | tiles.js | tiles of a layout: rooms and zones, tiles laid from the grid's origin, the count (whole, cut, small cuts), the origin with fewest small cuts, the faces to draw. No browser |
 | docs.js | a furnished room's Documents: estimate (core's), cut list (boards with edges, m², banding, cuts), notes, assembly cards; their check. No browser but the cards |
+| design.js | the mode Cabinets: a cabinets file as tables (groups, columns, components, notes) → the model → the fronts drawn (SVG); Import, Export, Show in 3D. Its screen is in index.html |
 | `<kind>_<number>.cabinets.js` | a room's furniture (format cabinets) |
 | `<kind>_<number>.scene.js` | where a room's groups and fixtures stand; its finish, tiles, lights, cameras (format scene) |
 | `<kind>_<number>.docs.js` | what a room's Documents say (format docs) |

@@ -20,7 +20,7 @@ The house "Dom w papawerach 5 (G)" (archon.pl), as built, with everything in it:
 
 - Loaded once. A view: the whole house (House) or a part (Room, `?room=room_356`, `?room=bathroom_7,bathroom_5`). A link to another view, Back/Forward and a change of Finish rebuild the view in the same scene, without reloading.
 - Modes: 3D, 2D, Documents (last sheet: Test), Cabinets.
-- **Cabinets** (the cabinet editor): the active room's cabinets file as tables (groups, columns, components, notes; materials read-only, with their size as bought), its elevations drawn, each part in its material's colour. Panel: the part under the cursor, the data's problems. Import, Export (written as the files are), Show in 3D (replaces the room's file until the page is reloaded; needs the room's scene), Back to the file. A room without a cabinets file starts empty, with the first furnished room's settings. Edited tables stay while the page is open.
+- **Cabinets** (the cabinet design, room/design.js): the active room's cabinets file as tables (groups, columns, components, notes; materials read-only, with their size as bought), its elevations drawn, each part in its material's colour. Panel: the part under the cursor, the data's problems. Import, Export (written as the files are), Show in 3D (replaces the room's file until the page is reloaded; needs the room's scene), Back to the file. A room without a cabinets file starts empty, with the first furnished room's settings. Edited tables stay while the page is open.
 
 ## Dependencies
 
@@ -97,9 +97,9 @@ Each solid is moved to its node: offsets summed up the tree; a group facing anot
 
 ## To do
 
-1. **Worktop and end-panel lengths** as bought: the owner gives them; the editor shows ? until then.
+1. **Worktop and end-panel lengths** as bought: the owner gives them; the design shows ? until then.
 2. **Types**: still loose (`any`): the products' group fields, the cabinets file's settings, a drawing's place, the Alpine parts.
-3. **index.js, split**: the cabinet editor, the house's Documents, the finish (a metal or a decor swapped; a query of the catalog: the same product in another metal), each to its own file.
+3. **index.js, split**: the house's Documents, the finish (a metal or a decor swapped; a query of the catalog: the same product in another metal), each to its own file.
 
 ## How we work
 
