@@ -10,8 +10,8 @@ const Faces = coreFacesModule(Geometry), Plan2d = corePlan2dModule(Geometry, Too
 const UI = coreUiModule(Tools), Sheet = coreSheetModule(UI, Tools), Scene = coreSceneModule(Geometry, Faces);
 const Catalog = libraryCatalogModule(HOME.load), Model = houseModelModule(Geometry, Tree), Tiles = roomTilesModule(Geometry);
 const Shapes = libraryShapesModule(), Cabinets = roomCabinetsModule(), Furniture = roomFurnitureModule(Cabinets, Shapes);
-const Drawing = coreDrawingModule(Geometry);
-const RoomModel = roomModelModule(Geometry, Tree, Tiles, Cabinets, Furniture), RoomView = roomViewModule(RoomModel, Cabinets, Furniture, Shapes, Drawing, Plan2d);
+const Parts = corePartsModule(Geometry);
+const RoomModel = roomModelModule(Geometry, Tree, Tiles, Cabinets, Furniture), RoomView = roomViewModule(RoomModel, Cabinets, Furniture, Shapes, Parts, Plan2d);
 const Docs = roomDocsModule(Tools, Estimate, Cabinets);
 const Design = roomDesignModule(Cabinets, Tools, UI);
 const HousePlan = housePlanModule(Geometry, Plan2d), HouseDocs = houseDocsModule();
@@ -198,7 +198,7 @@ const floorLayersOf = (/** @type {string} */ id = '') => PARTS.filter(p => !id |
 const boxOf = poly => [0, 1, 2].flatMap(k => [Math.min(...poly.map(v => v[k])), Math.max(...poly.map(v => v[k]))]);   // [x1, x2, y1, y2, h1, h2]
 const NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+h': [0, 0, 1], '-h': [0, 0, -1] };
 /** @type {HouseCell[]} */ let STILL;     // the cells that stand still
-/** @type {{ door: Door, layers: string[], mover?: Mover }[]} */ let LEAVES;   // the doors drawn, each with the layers its leaf gets
+/** @type {{ door: Door, layers: string[], part?: any, mover?: Mover }[]} */ let LEAVES;   // the doors drawn, each with the layers its leaf gets
 if (WHOLE) {
   STILL = MODEL.CELLS.concat(MODEL.ROOF_CELLS, MODEL.STAIR_CELLS, MODEL.FIXTURES, MODEL.SITE_CELLS);
   LEAVES = DOORS.map(d => ({ door: d, layers: [] }));
@@ -217,6 +217,12 @@ if (WHOLE) {
     if (o.leaf && !LEAVES.some(l => l.door === o.leaf)) LEAVES.push({ door: o.leaf, layers: [layer] });
   }
 }
+/* the house's parts (core/parts.js), as a room's furniture gives its own: its cells standing still, each door's leaf moving
+   about its hinge */
+const HOUSE_PARTS = Parts.create({ place: {}, level: 0, looks: MATERIALS, metal: '', ceiling: 0 });
+HOUSE_PARTS.still(STILL);
+for (const l of LEAVES) l.part = HOUSE_PARTS.moving({ cells: l.door.cells.map(c => Object.assign({}, c, { layers: c.layers.concat(l.layers) })),
+  at: [l.door.axis[0], l.door.axis[1], 0], how: { axis: [0, 0, 1], angle: l.door.angle * DEG } });
 
 
 /* ================= SCENE ================= */
@@ -253,10 +259,8 @@ for (const f of FURNITURE) {
 const SOLIDS = WHOLE ? MODEL.SOLIDS.concat(...FURNITURE.map(f => f.made.STATIC)) : STILL;   // what the walk bumps into
 const PIECES = piecesOf(STILL);
 V.buildMeshes(PIECES); V.buildEdges(PIECES);
-for (const l of LEAVES) {
-  const cells = l.door.cells.map(c => Object.assign({}, c, { layers: c.layers.concat(l.layers) }));
-  l.mover = V.mover({ pieces: piecesOf(cells), at: [l.door.axis[0], l.door.axis[1], 0], axis: [0, 0, 1], angle: l.door.angle * DEG });
-}
+const shownHouse = V.show(HOUSE_PARTS);   // its moving parts: the doors
+for (const l of LEAVES) l.mover = shownHouse.cores.get(l.part);
 
 /* ================= THE FLOOR TILES =================
    house.js sets them (house/project.md): one layout for each node that sets tiles, over the rooms that take them from it.

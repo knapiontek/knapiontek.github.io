@@ -1,8 +1,8 @@
 // @ts-check
-/* core/drawing.js: what is drawn, described as data: exact solids (cells of core), details (shapes only for the look),
-   moving parts, lamps. Whoever draws (a room's cabinets, a product of the library) describes into it in the frame of a
-   group: x along the group, y out of its wall, h up from the floor (mm); core/scene.js turns a description into 3D, with
-   the same calls in the same order. Knows no project and no three.js. Gets core/geometry.js. */
+/* core/parts.js: the parts of a view, as data: exact solids (cells of core), details (shapes only for the look), moving
+   parts, lamps. Whoever makes parts (a room's cabinets, a product of the library) puts them in, in the frame of a group:
+   x along the group, y out of its wall, h up from the floor (mm); core/scene.js shows them in 3D, with the same calls in
+   the same order. Knows no project and no three.js. Gets core/geometry.js. */
 /**
  * @typedef {object} Shape  a detail's shape in its own axes (three.js's: x along, y up, z out of the wall), mm
  * @property {'box' | 'cylinder' | 'sphere' | 'disc' | 'ring' | 'plane' | 'torus' | 'tube' | 'extrude' | 'mesh' | 'parts'} kind
@@ -59,7 +59,7 @@
 /** @typedef {{ n: number, key: string, speckle: { size: number, background: string, count: number, dots: { above: number, color: string, alpha?: number[] }[], dot: number[], repeat: number } }} DescLook  a material painted when first drawn */
 
 /** @param {ReturnType<typeof coreGeometryModule>} geometry */
-function coreDrawingModule(geometry) {
+function corePartsModule(geometry) {
 'use strict';
 const G = geometry;
 
@@ -140,6 +140,16 @@ function create({ place: PLACE, level: LEVEL, layers: EXTRA = [], looks: MATERIA
     return m;
   }
   const linkTo = (/** @type {DescMover} */ parent, /** @type {DescMover} */ child) => { child.parent = parent; parent.children.push(child); };
+  /* parts made elsewhere, as cells of the house (the house's own: walls, slabs, roof, windows): standing still, or one
+     moving part (a door's leaf: at, the point it turns about; how: {axis, angle} or {slide}) */
+  /** @param {any[]} cells */
+  const still = cells => { for (const c of cells) STATIC.push(EXTRA.length ? Object.assign({}, c, { layers: c.layers.concat(EXTRA) }) : c); };
+  /** @param {{ cells: any[], at: number[], how: Object<string, any>, label?: string }} m @returns {DescMover} */
+  function moving({ cells, at, how, label = '' }) {
+    const m = /** @type {any} */ ({ n: next(), r: '', kind: 'moving', P: at, cells, sign: 1, label, parent: null, children: [], item: null, travel: null, swing: null, how });
+    MOVERS.push(m);
+    return m;
+  }
   const envelope = (/** @type {string} */ r, /** @type {number[]} */ gb, /** @type {string} */ name, kind = 'appliance') => ENVELOPES.push({ kind, name, r, gb });
   /* boxes open at the front (+y) or at the top (+h), walls t thick; one part */
   /** @param {any[]} list @param {string} r @param {number[]} b @param {number} t @param {string} key @param {string} layer @param {Object<string, any>} [info] */
@@ -166,7 +176,7 @@ function create({ place: PLACE, level: LEVEL, layers: EXTRA = [], looks: MATERIA
   /** @param {string} key @param {DescLook['speckle']} speckle */
   const look = (key, speckle) => { LOOKS.push({ n: next(), key, speckle }); };
 
-  return { box, profile, at, detail, cylinder, display, mover, linkTo, envelope, openFront, openTop, part, lamp, point, pivot, look,
+  return { box, profile, at, detail, cylinder, display, mover, linkTo, still, moving, envelope, openFront, openTop, part, lamp, point, pivot, look,
     STATIC, CEILING: ceiling, LEVEL, frame: (/** @type {string} */ r) => PLACE[r], has: (/** @type {string} */ key) => key in MATERIALS, metal,
     /* what was described */
     MOVERS, DETAILS, LAMPS, FRAMES, LOOKS, ENVELOPES, UNDRAWN };

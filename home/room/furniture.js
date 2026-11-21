@@ -1,5 +1,5 @@
 // @ts-check
-/* room/furniture.js: the cabinets described (core/drawing.js): carcasses, fronts, worktops, panels, plinths, hardware and
+/* room/furniture.js: the cabinets described (core/parts.js): carcasses, fronts, worktops, panels, plinths, hardware and
    the products in them, from the model of room/cabinets.js; and the looks of the boards. Draws nothing itself. Gets the
    cabinets' engine and the library's shapes (library/shapes.js). */
 /** @param {ReturnType<typeof roomCabinetsModule>} cabinets @param {ReturnType<typeof libraryShapesModule>} shapes */
@@ -8,17 +8,17 @@ function roomFurnitureModule(cabinets, shapes) {
 const { boxIn, hasTag, placeLabel, typeLabel } = cabinets;
 
 /* ================= THE CABINETS DESCRIBED: the model as solids, moving fronts and details =================
-   D: the room's description (core/drawing.js): box(list, r, gb, key, layer, info) in the frame of group r, at, detail,
+   D: the room's description (core/parts.js): box(list, r, gb, key, layer, info) in the frame of group r, at, detail,
    cylinder, mover, linkTo, envelope, openFront, openTop, part, frame(r) {X, Y}, has(key), STATIC; a product is drawn by
    the library (library/shapes.js, shapes) by its field draw. HW: the hardware as drawn (the products' sizes and the scene's layout);
    install: how the sink, its trap and the hood are fitted. Boards are the materials 'board:' + product key ('~': the decor
    turned a quarter; ':core': the bare edge). */
-/** @param {any} D the room's description (core/drawing.js: DrawContext) @param {CabinetsModel} model @param {Object<string, any>} appliances @param {any} HW @param {any} install */
+/** @param {any} D the room's description (core/parts.js: PartsContext) @param {CabinetsModel} model @param {Object<string, any>} appliances @param {any} HW @param {any} install */
 function draw(D, model, appliances, HW, install) {
   const { box, at, cylinder, mover, linkTo, STATIC } = D;
   const settings = model.settings, { carcassBack, frontThickness } = model, G = r => model.groups[String(r)].geometry;
   const K = code => 'board:' + code, GROUP_IDS = Object.keys(model.groups);
-  /* a part's box from the tree (from its group's wall), in the frame the drawing computes in (y from the carcass backs) */
+  /* a part's box from the tree (from its group's wall), in the frame the parts are computed in (y from the carcass backs) */
   const placedNode = (n, r) => { const b = boxIn(n), wall = model.groups[r].wall; return [b[0], b[1], b[2] + wall, b[3] + wall, b[4], b[5]]; };
   const placed = part => placedNode(part.node, part.group);
   /* a front's panel: the board node under its front (a dishwasher's front stands in its bay) */
@@ -27,7 +27,7 @@ function draw(D, model, appliances, HW, install) {
   const shakerRail = (model.materials[model.materialFor.cabinet] || {}).frameWidth;   // none: a front is one plain board
   const product = (A, place, d = D) => shapes[A.draw](d, A, place);
   /* a product draws in its own coordinates: from the origin of its node (its left, back, bottom corner); the room's
-     drawing context moved there */
+     parts' context moved there */
   const P = role => (model.products || []).filter(x => x.role === role);
   const originOf = x => { const b = placed(x); return [b[0], b[2], b[4]]; };
   function moved(o) {

@@ -1,7 +1,7 @@
-/* room/furniture.js: its public API, each part with what it gives: every room's cabinets described, as data (core/drawing.js)
+/* room/furniture.js: its public API, each part with what it gives: every room's cabinets described, as data (core/parts.js)
    (test/test.md) */
-async function roomFurnitureTest({ roomFurnitureModule, roomCabinetsModule, libraryShapesModule, coreDrawingModule, roomModelModule, coreGeometryModule, coreTreeModule, roomTilesModule, libraryCatalogModule }, data, check) {
-  const geometry = coreGeometryModule(), cabinets = roomCabinetsModule(), shapes = libraryShapesModule(), drawing = coreDrawingModule(geometry);
+async function roomFurnitureTest({ roomFurnitureModule, roomCabinetsModule, libraryShapesModule, corePartsModule, roomModelModule, coreGeometryModule, coreTreeModule, roomTilesModule, libraryCatalogModule }, data, check) {
+  const geometry = coreGeometryModule(), cabinets = roomCabinetsModule(), shapes = libraryShapesModule(), parts = corePartsModule(geometry);
   const furniture = roomFurnitureModule(cabinets, shapes);
   check('the public API', Object.keys(furniture).join(' ') === 'draw boardLooks');
 
@@ -16,7 +16,7 @@ async function roomFurnitureTest({ roomFurnitureModule, roomCabinetsModule, libr
     const boards = furniture.boardLooks(P.model);
     check(`${n.id} boardLooks: a look per board material, its bare edge's too`, Object.keys(P.model.materials).every(code => boards['board:' + code]));
     const looks = Object.assign({}, library.materials, P.looks);   // the page's materials: the library's and the room's
-    const D = drawing.create({ place: P.PLACE, level: 0, looks, metal: scene.finish.metal, ceiling: P.ceiling });
+    const D = parts.create({ place: P.PLACE, level: 0, looks, metal: scene.finish.metal, ceiling: P.ceiling });
     const drawn = furniture.draw(D, P.model, P.appliances, P.HW, scene.installation);
     check(`${n.id} draw: every carcass described, solids and moving fronts`, drawn.carcasses.length === P.model.carcasses.length && D.STATIC.length > 0 && D.MOVERS.length > 0);
     check(`${n.id} draw: nothing left undrawn`, D.UNDRAWN.length === 0);

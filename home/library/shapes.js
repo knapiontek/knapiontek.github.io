@@ -1,22 +1,22 @@
 // @ts-check
 /* library/shapes.js: how a product of the library is drawn, whatever room it stands in. A product names its drawing (its field
-   draw); the room places it and hands over a description D (DrawContext, core/drawing.js) and the place: the frame
+   draw); the room places it and hands over a description D (PartsContext, core/parts.js) and the place: the frame
    of its group (x along the group, y out from the carcass backs, h up from the floor, mm) and the anchors the drawing starts
    from. The sizes are the maker's (the product); the shapes the maker does not give (a knob, a tap's spout, a lamp's shade)
-   are described here. A detail keeps three.js's axes: x along, y up, z out of the wall. Describes into D (core/drawing.js):
+   are described here. A detail keeps three.js's axes: x along, y up, z out of the wall. Describes into D (core/parts.js):
    draws nothing, knows no three.js. */
 /** @typedef {{ r: string, frame: DescFrame, layers: string[], mover?: DrawMover | null, pivot?: boolean }} Anchor  where details go: group r, its layers, the moving part they move with */
 /** @typedef {Cell & { element: string, cap?: string, part: any, r: string, gb?: Box, hb?: Box, info: Object<string, any> }} DrawCell  a solid of a room: in group r, its box gb there, hb in the house */
-/** @typedef {DescMover} DrawMover  a moving part as described (core/drawing.js) */
+/** @typedef {DescMover} DrawMover  a moving part as described (core/parts.js) */
 /** @typedef {Object<string, any>} DrawPlace  a drawing's place: its group r and the anchors it starts from (each drawing names its own) */
-/** @typedef {ReturnType<ReturnType<typeof coreDrawingModule>['create']>} DrawContext  what a drawing describes into (core/drawing.js) */
+/** @typedef {ReturnType<ReturnType<typeof corePartsModule>['create']>} PartsContext  what a product's parts go into (core/parts.js) */
 function libraryShapesModule() {
 'use strict';
 
 /* ---------- an oven or a microwave built into a carcass: the body on its feet behind the carcass front, the fascia in
    front of it; the appliance door turns on its hinge edge. place: {r, item (item.fit: model.js), front (y of the carcass
    front)}. d = how far a detail stands out of the appliance face: y = 2·face − d. ---------- */
-/** @param {DrawContext} D @param {string} type @param {AnyProduct} A @param {DrawPlace} place */
+/** @param {PartsContext} D @param {string} type @param {AnyProduct} A @param {DrawPlace} place */
 function builtIn(D, type, A, { r, item, front: carcassFront }) {
   const { box, cylinder, display, at, mover, envelope, openFront, STATIC } = D;
   const { feet, bodyH0: b0, fasciaH0: h0, fasciaH1: h1 } = item.fit, floor = b0 - feet, xc = (item.x0 + item.x1) / 2;
@@ -77,7 +77,7 @@ function builtIn(D, type, A, { r, item, front: carcassFront }) {
 
 /* ---------- a sink in its worktop cut-out: rim, bowl, drain. place: {r, x (the axis), y (the middle of the cut-out),
    top (the worktop's top)}. Returns what the tap and the trap start from. ---------- */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function sink(D, S, { r, x: sinkX, y: sy, top }) {
   const { box, cylinder, at, envelope, STATIC } = D, rim = S.rim, wall = S.wall, I = { name: S.name, part: D.part() };
   granite(D);
@@ -95,13 +95,13 @@ function sink(D, S, { r, x: sinkX, y: sy, top }) {
   return { bottom: bottom - wall, rimTop: top + rim, drain: bc };
 }
 /* the sink's granite: a speckled map drawn once */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function granite(D) {
   D.look('granite', { size: 256, background: '#2a2b2d', count: 5200, dot: [0.6, 1.4], repeat: 1 / 250,
     dots: [{ above: 0.78, color: '190,190,186', alpha: [0.2, 0.3] }, { above: 0.35, color: 'rgba(90,90,92,.6)' }, { above: -1, color: 'rgba(10,10,11,.7)' }] });
 }
 /* a kitchen tap on the worktop with its soap dispenser. place: {r, x (the sink's axis), y, top (the rim's top)} */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function tap(D, { r, x: sinkX, y: tapY, top: t }) {
   const { cylinder, at } = D, a = at(r, 'sink');
   cylinder(a, 18, 3, 'steelPolished', sinkX + 250, tapY, t + 1.5, null, 24);           // dispenser plate
@@ -115,7 +115,7 @@ function tap(D, { r, x: sinkX, y: tapY, top: t }) {
 /* a space-saving trap: a short drop, a flat body against the back, the outlet into the wall. place: {r, x, from (the bottom
    of the bowl), drain (y of the drain), top (of the body), outlet (h of the wall outlet), back (y of the carcass back), wall (y of
    the wall: the outlet ends there)} */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function trap(D, { r, x: sinkX, from: fromH, drain: bc, top: topH, outlet: outletH, back: carcassBack, wall }) {
   const { box, cylinder, at, STATIC } = D, p = at(r, 'trap'), yb = carcassBack + 31, P = { name: 'Trap', part: D.part() };
   cylinder(p, 20, fromH - topH, 'pipe', sinkX, bc, (fromH + topH) / 2, null, 20);
@@ -126,7 +126,7 @@ function trap(D, { r, x: sinkX, from: fromH, drain: bc, top: topH, outlet: outle
 }
 
 /* ---------- an induction hob in its cut-out. place: {r, x (the axis), cut {x0, x1, y0, y1}, top (the worktop's top)} ---------- */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function hob(D, H, { r, x: hobX, cut: hobCut, top: h }) {
   const { box, detail, at, envelope, STATIC } = D, gy = (hobCut.y0 + hobCut.y1) / 2 - H.glass.depth / 2, I = { name: H.name };
   box(STATIC, r, [hobX - H.glass.width / 2, hobX + H.glass.width / 2, gy, gy + H.glass.depth, h, h + 5], 'glassBlack', 'hob', I);
@@ -141,7 +141,7 @@ function hob(D, H, { r, x: hobX, cut: hobCut, top: h }) {
 
 /* ---------- a chimney hood on the wall. place: {r, x (the axis), bottom (h of its underside), ceiling (h), worktop (h of
    the worktop's top, where its lights point)} ---------- */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function hood(D, A, { r, x: xc, bottom: lowest, ceiling: CEILING, worktop }) {
   const bottom = lowest + 2;                // the body: its filter and its lights under it, down to the hood's lowest point
   const { box, detail, at, profile, lamp, point, STATIC } = D, { width: w, height: bh, depth: d } = A.body, { width: cw, depth: cd } = A.chimney;
@@ -164,7 +164,7 @@ function hood(D, A, { r, x: xc, bottom: lowest, ceiling: CEILING, worktop }) {
 /* ---------- a built-in fridge-freezer where model.js fits it: the body, its doors at the carcass front. place: {r, fit,
    front (y of the carcass front), back (y of the carcass back)} ---------- */
 const doorPlane = (A, carcassFront) => carcassFront - A.doorDepth;
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function fridgeFreezer(D, A, { r, fit, front: carcassFront, back: carcassBack }) {
   const { box, envelope, openFront, STATIC } = D, I = { name: A.name }, fridgeDoorPlane = doorPlane(A, carcassFront);
   const { bodyX0: x0, bodyX1: x1, bodyH0: h0, bodyH1: h1 } = fit, f = (gb, key) => box(STATIC, r, gb, key, 'fridge', I);
@@ -180,7 +180,7 @@ function fridgeFreezer(D, A, { r, fit, front: carcassFront, back: carcassBack })
 }
 /* one door of it, moving with the cabinet front it carries. place: {r, m (the front's moving part), freezer, fit, front,
    shelves: [u0, u1] of the door shelves} */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function fridgeDoor(D, A, { r, m, freezer, fit, front: carcassFront, shelves: [s0, s1] }) {
   const { box, envelope } = D, I = { mover: m }, fridgeDoorPlane = doorPlane(A, carcassFront), Dr = freezer ? A.doors.freezer : A.doors.fridge;
   const bx0 = fit.bodyX0, bx1 = fit.bodyX1, d0 = fit.bodyH0 + Dr.bottom, d1 = fit.bodyH0 + Dr.top;
@@ -191,7 +191,7 @@ function fridgeDoor(D, A, { r, m, freezer, fit, front: carcassFront, shelves: [s
 
 /* ---------- a built-in dishwasher: the tub and racks stand, its door moves with the front it carries. place: {r, m, item
    (item.fit: model.js), front, back} ---------- */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function dishwasher(D, A, { r, m, item, front: carcassFront, back: carcassBack }) {
   const { box, envelope, openFront, openTop, STATIC } = D, I = { mover: m }, W = { name: A.name };
   const xc = (item.x0 + item.x1) / 2, { bodyX0: w0, bodyX1: w1, bodyH1: bodyTop, doorH0: db, doorH1: dt } = item.fit;
@@ -206,7 +206,7 @@ function dishwasher(D, A, { r, m, item, front: carcassFront, back: carcassBack }
 }
 
 /* ---------- a coffee machine standing on a shelf, moving with it. place: {r, m, x (its middle), h (the shelf's top), y (its front)} ---------- */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function coffeeMachine(D, A, { r, m, x: xc, h: h, y: y1 }) {
   const { box, cylinder, display, at, envelope } = D;
   const { width: w, height: bh, depth: d } = A.body, x0 = xc - w / 2, x1 = xc + w / 2, y0 = y1 - d, top = h + bh, head = top - 115, fp = y1 - 45;
@@ -232,7 +232,7 @@ function coffeeMachine(D, A, { r, m, x: xc, h: h, y: y1 }) {
 /* ---------- lamps, lit at night ---------- */
 /* a pendant: cable, a dome shade in the fronts' colour, a ring, a bulb. place: {a (where details go), r, x, y, bottom (h of
    the shade's rim), ceiling} */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function pendant(D, { a, r, x, y, bottom: h, ceiling: CEILING }) {
   const { cylinder, detail, lamp, point } = D;
   cylinder(a, 2, CEILING - h - 90, 'gasket', x, y, (CEILING + h + 90) / 2, null, 6);   // cable
@@ -245,7 +245,7 @@ function pendant(D, { a, r, x, y, bottom: h, ceiling: CEILING }) {
   lamp({ kind: 'spot', color: 0xffd9a8, intensity: 7, distance: 5, angle: 1.2, penumbra: 0.8, decay: 2 }, point(r, x, y, h + 135), point(r, x, y, 0), true);
 }
 /* a downlight in the ceiling. place: {a, r, x, y, ceiling} */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function downlight(D, { a, r, x, y, ceiling: CEILING }) {
   const { detail, lamp, point } = D;
   detail(a, { kind: 'cylinder', r: [35, 35], length: 100, segments: [40, 1], open: true }, { key: 'tube', side: 'double' }, x, y, CEILING - 50);
@@ -257,7 +257,7 @@ function downlight(D, { a, r, x, y, ceiling: CEILING }) {
    corner); size: its node's [x, y, h]; r its group, m the mover it goes with ================= */
 
 /* an adjustable leg: the post and its foot, centred in its node, as tall as the node. leg: {radius, footRadius, footHeight} */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function leg(D, L, { r, size, name }) {
   const { cylinder, at, envelope } = D, a = at(r, 'legs'), x = size[0] / 2, y = size[1] / 2, h = size[2], f = L.footRadius;
   cylinder(a, L.radius, h - L.footHeight, 'foot', x, y, (h - L.footHeight) / 2, null, 16);
@@ -265,21 +265,21 @@ function leg(D, L, { r, size, name }) {
   envelope(r, [x - f, x + f, y - f, y + f, h - L.footHeight, h], name, 'leg');
 }
 /* an aluminium grille in the plinth: a frame 5 wide round louvres every 12 */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function grille(D, { r, size: [w, d, h] }) {
   const I = { name: 'Ventilation grille in the plinth', part: D.part() }, z = gb => D.box(D.STATIC, r, gb, 'zinc', 'plinth', I);
   z([0, w, 0, d, 0, 5]); z([0, w, 0, d, h - 5, h]); z([0, 5, 0, d, 5, h - 5]); z([w - 5, w, 0, d, 5, h - 5]);
   for (let x = 17; x < w - 8; x += 12) z([x - 2, x + 2, 0, d - 1, 5, h - 5]);
 }
 /* a shelf pin: its node */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function shelfPin(D, { r, size, name }) { D.box(D.STATIC, r, [0, size[0], 0, size[1], 0, size[2]], 'zinc', 'shelves', { name }); }
 /* a door's bumper: a soft head filling the gap between the carcass and the door */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function bumper(D, { r, size }) { D.cylinder(D.at(r, 'hardware'), size[0] / 2, size[1], 'gasket', size[0] / 2, size[1] / 2, size[2] / 2, 'y', 16); }
 /* a hinge: its mounting plate and arm on the carcass, its cup in the door (moving with it). place: {r, m, dir (1: the
    door hinged on its left), side (x of the hinge edge), cupX, h (the hinge's axis), carcassFront, doorBack (y), cupRadius} */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function hinge(D, HG, { r, m, dir, side, cupX, h, carcassFront, doorBack, cupRadius }) {
   const { box, cylinder, at, STATIC } = D, I = { name: 'Hinge', part: D.part() }, span = (a, b) => [Math.min(a, b), Math.max(a, b)];
   box(STATIC, r, [...span(side, side + dir * 10), carcassFront - 75, carcassFront - 30, h - 22, h + 22], 'zinc', 'hardware', I);   // mounting plate
@@ -301,7 +301,7 @@ function cupShape(length) {
   for (const sx of [-1, 1]) parts.push({ kind: 'box', size: [12, 26, 4], then: [['translate', sx * 32, drop + 13, 2]] });
   return (CUPS[length] = parts);
 }
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function handle(D, H, { r, m, size, turn, info }) {
   const { box, detail, at } = D, L = H.barLength, x = size[0] / 2, h = size[2] / 2, y = 4;
   const cup = D.pivot(at(r, 'handles', m, ['cup']), x, 0, h, turn === 'left' ? Math.PI / 2 : turn === 'right' ? -Math.PI / 2 : 0);
@@ -316,7 +316,7 @@ function handle(D, H, { r, m, size, turn, info }) {
 /* a runner: its fixed part on the carcass, its moving part with m. kind: 'drawer' (a drawer's, the fixed rail width wide on
    the carcass side), 'ball' (a ball runner by a drawer behind a door), 'pullOut' (under a pull-out shelf); side: the
    carcass's side it stands by, 'left' or 'right' */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function runner(D, { r, m, size: [w, d, h], kind, side, width }) {
   const { box, STATIC } = D, left = side === 'left', fixed = gb => box(STATIC, r, gb, 'zinc', 'hardware', { name: NAMES[kind] }), moving = gb => box(m.cells, r, gb, 'zinc', 'hardware', { mover: m });
   if (kind === 'drawer') {
@@ -332,10 +332,10 @@ function runner(D, { r, m, size: [w, d, h], kind, side, width }) {
 }
 const NAMES = { drawer: 'Drawer runner', ball: 'Ball runner', pullOut: 'Pull-out shelf runner' };
 /* a metal part of a drawer system filling its node: a side, a gallery rail, an inner drawer's front */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function drawerPart(D, { r, m, size, info }) { D.box(m.cells, r, [0, size[0], 0, size[1], 0, size[2]], 'drawerSide', 'drawers', info); }
 /* waste bins side by side, 10 apart, each open at the top with a handle at its front. bins: {count} */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function bins(D, B, { r, m, size: [w, d, h], info }) {
   const bw = (w - 10 * (B.count - 1)) / B.count;
   for (let j = 0; j < B.count; j++) {
@@ -345,7 +345,7 @@ function bins(D, B, { r, m, size: [w, d, h], info }) {
   }
 }
 /* a cutlery insert: four dividers on a base; inset: the dividers' share starts this far in from each end */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function cutleryInsert(D, { r, m, size: [w, d, h], inset, info }) {
   for (let j = 1; j < 5; j++) { const x = inset + (w - 2 * inset) * j / 5; D.box(m.cells, r, [x - 3, x + 3, 0, d, 0, h], 'insertGrey', 'drawers', info); }
   D.box(m.cells, r, [0, w, 0, d, 0, 4], 'insertGrey', 'drawers', info);
@@ -354,7 +354,7 @@ function cutleryInsert(D, { r, m, size: [w, d, h], inset, info }) {
 /* by a product's field draw */
 /* ---------- a basin standing on the top: its walls, its bottom, a shelf at the back for the tap (the maker's sizes:
    body, wall, shelf). place: {r, x, y (its centre), top (of the top it stands on)} ---------- */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function basin(D, A, { r, x, y, top }) {
   const { box, envelope, STATIC } = D, I = { name: A.name, part: D.part() }, { width: w, depth: d, height: h } = A.body, t = A.wall, key = A.material;
   const x0 = x - w / 2, x1 = x + w / 2, y0 = y - d / 2, y1 = y + d / 2, s1 = y0 + A.shelf, g = gb => box(STATIC, r, gb, key, 'basin', I);
@@ -366,7 +366,7 @@ function basin(D, A, { r, x, y, top }) {
   D.cylinder(D.at(r, 'basin'), 21, 3, key, x, (s1 + y1) / 2, top + t + 1.5, null, 32);   // the plug, in the basin's colour
 }
 /* a basin tap on the basin's shelf: its body, the spout over the bowl, the lever. place: {r, x, y (the tap's axis), top (the shelf)} */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function basinTap(D, A, { r, x, y, top }) {
   const { cylinder, at } = D, a = at(r, 'basin'), m = D.metal;
   cylinder(a, 25, 6, m, x, y, top + 3, null, 32);
@@ -377,22 +377,22 @@ function basinTap(D, A, { r, x, y, top }) {
 
 /* ---------- the fixtures of a room (a bathroom's): each in its own frame, x along its wall (0 … w), y out of it (0 … d), h up
    from the floor (from h0, its offset); place: {r, a (where its details go), w, d, h, h0, f (the scene's fixture)} ---------- */
-const fixtureInfo = (/** @type {DrawContext} */ D, /** @type {AnyProduct} */ A) => ({ name: A.name, part: D.part() });
+const fixtureInfo = (/** @type {PartsContext} */ D, /** @type {AnyProduct} */ A) => ({ name: A.name, part: D.part() });
 /* a mirror with its light: the glass on a frame of light */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function mirror(D, A, { r, w, d, h, h0 }) {
   D.box(D.STATIC, r, [0, w, 0, d - 8, h0, h0 + h], 'led', 'sanitary', fixtureInfo(D, A));
   D.box(D.STATIC, r, [15, w - 15, d - 8, d, h0 + 15, h0 + h - 15], 'mirror', 'sanitary', fixtureInfo(D, A));
 }
 /* a wall cabinet: its carcass, open at the front, and its door */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function wallCabinet(D, A, { r, w, d, h, h0 }) {
   D.openFront(D.STATIC, r, [0, w, 0, d - 18, h0, h0 + h], 16, A.material, 'sanitary', fixtureInfo(D, A));
   D.box(D.STATIC, r, [1, w - 1, d - 18, d, h0 + 1, h0 + h - 1], A.material, 'sanitary', fixtureInfo(D, A));
 }
 /* a walk-in screen across the shower: a fixed pane at the wall's end (x = w − fixed … w) and a door on it, turning about its
    inner edge; the profiles in the fittings' metal */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function showerScreen(D, A, { r, w, d, h, h0, f }) {
   const metal = D.metal, I = fixtureInfo(D, A), t = 8, y0 = d / 2 - t / 2, y1 = d / 2 + t / 2, fx = w - A.fixed;
   D.box(D.STATIC, r, [fx, w, y0, y1, h0, h0 + h], 'glass', 'sanitary', I);
@@ -405,7 +405,7 @@ function showerScreen(D, A, { r, w, d, h, h0, f }) {
   D.box(m.cells, r, [20, 40, y0 - 6, y1 + 6, h0 + 840, h0 + 1260], metal, 'sanitary', { name: A.name + ' – handle', part: D.part() });
 }
 /* a linear drain at the far wall of the shower: its frame and its grate (tiled over) */
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function linearDrain(D, A, { r, w, d, h, h0 }) {
   D.box(D.STATIC, r, [0, w, 0, d, h0, h0 + h], 'steelPolished', 'sanitary', fixtureInfo(D, A));
 }
@@ -435,7 +435,7 @@ function loft(sections) {
   cap(rings[0], sections[0], false); cap(rings[rings.length - 1], sections[sections.length - 1], true);
   return { kind: 'mesh', positions, index };
 }
-/** @param {DrawContext} D */
+/** @param {PartsContext} D */
 function shaped(D, A, { r, w, d, h, h0, f }) {
   const metal = D.metal, key = m => m === 'metal' ? metal : m === 'ceramic' ? A.material || 'ceramicWhite' : m;
   const up = (u, v, z) => [u, h0 + z, v];                                   // the frame's three axes: x along, y up, z out of the wall
@@ -459,8 +459,8 @@ function shaped(D, A, { r, w, d, h, h0, f }) {
 }
 
 return {
-  oven: (/** @type {DrawContext} */ D, /** @type {AnyProduct} */ A, /** @type {DrawPlace} */ place) => builtIn(D, 'oven', A, place),
-  microwave: (/** @type {DrawContext} */ D, /** @type {AnyProduct} */ A, /** @type {DrawPlace} */ place) => builtIn(D, 'microwave', A, place),
+  oven: (/** @type {PartsContext} */ D, /** @type {AnyProduct} */ A, /** @type {DrawPlace} */ place) => builtIn(D, 'oven', A, place),
+  microwave: (/** @type {PartsContext} */ D, /** @type {AnyProduct} */ A, /** @type {DrawPlace} */ place) => builtIn(D, 'microwave', A, place),
   sink, tap, trap, basin, basinTap, shaped, mirror, wallCabinet, showerScreen, linearDrain, hob, hood, fridgeFreezer, fridgeDoor, dishwasher, coffeeMachine, pendant, downlight,
   leg, grille, shelfPin, bumper, hinge, handle, runner, drawerPart, bins, cutleryInsert
 };

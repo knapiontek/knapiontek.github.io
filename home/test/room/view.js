@@ -1,9 +1,9 @@
 /* room/view.js: its public API; build() draws (three.js), so it is not called here: the page draws every room
    (test/test.md) */
-async function roomViewTest({ roomViewModule, roomModelModule, coreGeometryModule, coreTreeModule, corePlan2dModule, coreToolsModule, roomTilesModule, roomCabinetsModule, roomFurnitureModule, libraryShapesModule, coreDrawingModule, libraryCatalogModule }, data, check) {
+async function roomViewTest({ roomViewModule, roomModelModule, coreGeometryModule, coreTreeModule, corePlan2dModule, coreToolsModule, roomTilesModule, roomCabinetsModule, roomFurnitureModule, libraryShapesModule, corePartsModule, libraryCatalogModule }, data, check) {
   const geometry = coreGeometryModule(), cabinets = roomCabinetsModule(), shapes = libraryShapesModule(), furniture = roomFurnitureModule(cabinets, shapes);
   const model = roomModelModule(geometry, coreTreeModule(), roomTilesModule(geometry), cabinets, furniture);
-  const view = roomViewModule(model, cabinets, furniture, shapes, coreDrawingModule(geometry), corePlan2dModule(geometry, coreToolsModule()));
+  const view = roomViewModule(model, cabinets, furniture, shapes, corePartsModule(geometry), corePlan2dModule(geometry, coreToolsModule()));
   check('the public API', Object.keys(view).join(' ') === 'build layers');
 
   /* each furnished room prepared as the page does (room/model.js) */

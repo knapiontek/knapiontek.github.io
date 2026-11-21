@@ -31,7 +31,7 @@ house/  ──►  room/  ──►  core/, library/
 - One way only. The house passes a room and its settings down; the room engine passes each node to the module of its type.
 - **Modules** load nothing: their data comes as arguments. **Pages** load data.
 - core knows no project and no product; library knows no project.
-- Drawing chain: node ─► module of its type (house, cabinets, products, tiles) ─► solids and a description (core/drawing.js) ─► core/faces.js ─► scene.js (3D, the only file with three.js), plan2d.js (2D); counts ─► sheet.js (Documents).
+- Chain: node ─► module of its type (house, cabinets, products, tiles) ─► solids and parts (core/parts.js) ─► core/faces.js ─► scene.js (3D, the only file with three.js), plan2d.js (2D); counts ─► sheet.js (Documents).
 
 ## Data
 
@@ -117,7 +117,7 @@ Each solid is moved to its node: offsets summed up the tree; a group facing anot
 - **Types** (JSDoc, checked): the contract of every module: a typedef for each data shape (in the file that reads or makes it), `@param` and `@returns` on what a module gives, so a call from another file is checked. Every code file starts with `// @ts-check`; a module is one function that returns what it gives, so its interface is taken from its code (`ReturnType<typeof <name>Module>`; no type is written twice). Check: `tsc --noEmit -p home/jsconfig.json`, clean before handing over; nothing is built, pages load plain JavaScript. jsconfig.json lists the checked files (strictNullChecks); globals.d.ts also declares the outside globals (three.js, Alpine.js, SheetJS). Not checked: inline page scripts, data files.
 - **Modules**: a code file is one constructor, `<name>Module(...)`, its name the file's path (core/plan2d.js → `corePlan2dModule`, room/docs.js → `roomDocsModule`; so two folders may hold files of one name): it gets what it needs as its parameters and gives back its public API; nothing else in the file is global, no `HOME` inside. The page runs from disk (no `import`), so a file's constructor is its one global name. index.js makes every module in its first lines: the map of what needs what (project.svg is drawn from them).
 - **Public API**: each file's test (test/<its path>) builds it from its constructor and checks its public API, on a clean slate (test/test.md); the owner reads it and accepts it.
-- **Drawing**: an engine describes what is drawn, as data (core/drawing.js: solids, details, moving parts, lamps); core/scene.js, the only file with three.js, draws a description; plan2d.js the 2D.
+- **Parts**: an engine gives what is shown as parts, data (core/parts.js: solids, details, moving parts, lamps); core/scene.js, the only file with three.js, shows them; plan2d.js the 2D.
 - **Short pieces** that belong to no one file go to core/tools.js, not to a file of their own.
 - **Data channel**: the data files start with `HOME.data(` and are never touched; `HOME` is only that (core/load.js: `data`, `load`).
 - **Computing without the browser**: a module computes without DOM or WebGL and touches nothing when loaded; the browser only for drawing, the screen, loading scripts. Tests run in Node first.

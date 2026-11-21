@@ -1,13 +1,13 @@
 // @ts-check
 /* room/view.js: a room drawn from its model (room/model.js): the cabinets (room/furniture.js), the fixtures
-   (library/shapes.js), the built-ins, the tiles laid, the lamps, described (core/drawing.js: still cells, moving parts,
+   (library/shapes.js), the built-ins, the tiles laid, the lamps, described (core/parts.js: still cells, moving parts,
    details, lamps) and shown by a scene of core; the furniture's 2D plan; the checks of what is drawn; the layers of the
    room's own view. */
 /** @typedef {ReturnType<ReturnType<typeof roomViewModule>['build']>} BuiltRoom */
 /** @param {ReturnType<typeof roomModelModule>} room @param {ReturnType<typeof roomCabinetsModule>} cabinets
     @param {ReturnType<typeof roomFurnitureModule>} furniture @param {ReturnType<typeof libraryShapesModule>} shapes
-    @param {ReturnType<typeof coreDrawingModule>} drawing @param {ReturnType<typeof corePlan2dModule>} plan2d */
-function roomViewModule(room, cabinets, furniture, shapes, drawing, plan2d) {
+    @param {ReturnType<typeof corePartsModule>} parts @param {ReturnType<typeof corePlan2dModule>} plan2d */
+function roomViewModule(room, cabinets, furniture, shapes, parts, plan2d) {
 'use strict';
 const C = cabinets;
 
@@ -50,8 +50,8 @@ function outside(made, prepared) {
 function build(V, prepared, opts) {
   const { model, appliances, PLACE, HW, scene } = prepared, CEILING = prepared.ceiling;
   const EXTRA = opts.layers || [];
-  /* what is drawn, described (core/drawing.js): the cabinets, the fixtures, the tiles' cells, the lamps */
-  const D = drawing.create({ place: PLACE, level: prepared.level, layers: EXTRA, looks: opts.materials, metal: scene.finish.metal, ceiling: CEILING });
+  /* what is drawn, described (core/parts.js): the cabinets, the fixtures, the tiles' cells, the lamps */
+  const D = parts.create({ place: PLACE, level: prepared.level, layers: EXTRA, looks: opts.materials, metal: scene.finish.metal, ceiling: CEILING });
   const { box, at, part, STATIC, MOVERS, ENVELOPES, UNDRAWN } = D;
 
   /* the cabinets, with their products */

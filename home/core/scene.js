@@ -696,7 +696,7 @@ function create(opts) {
   const run = () => requestAnimationFrame(frame);
 
   /* ================= A DESCRIPTION DRAWN =================
-     A description (core/drawing.js) made 3D: its frames, details, lamps and painted looks in the order they were
+     A description (core/parts.js) made 3D: its frames, details, lamps and painted looks in the order they were
      described, then its moving parts; still details alike are merged into one mesh. layers: the host's (its lamps light
      while they are on). Gives what the page switches: the details (by layers), the lamps by night, the footprints of
      details for the 2D plan. */
@@ -750,7 +750,7 @@ function create(opts) {
     return { poly: half(pts).concat(half(pts.slice().reverse())), bottom, top, glass };
   }
   const geometries = new WeakMap();        // a shape described once (a handle's cup) is one geometry
-  /** @param {ReturnType<ReturnType<typeof coreDrawingModule>['create']>} desc @param {{ layers?: string[], apart?: string[] }} [opts] apart: layers whose still details stay single meshes (the 2D plan draws them) */
+  /** @param {ReturnType<ReturnType<typeof corePartsModule>['create']>} desc @param {{ layers?: string[], apart?: string[] }} [opts] apart: layers whose still details stay single meshes (the 2D plan draws them) */
   function show(desc, opts = {}) {
     const EXTRA = opts.layers || [], frames = new Map(), holders = new Map(), cores = new Map();
     /** @type {{ mesh: any, layers: string[], moves: boolean }[]} */ const DETAILS = [];

@@ -1,12 +1,12 @@
-/* core/drawing.js: its public API, each part with what it gives: a description is data, in the order described
+/* core/parts.js: its public API, each part with what it gives: a description is data, in the order described
    (test/test.md) */
-function coreDrawingTest({ coreDrawingModule, coreGeometryModule }, data, check) {
-  const drawing = coreDrawingModule(coreGeometryModule());
-  check('the public API', Object.keys(drawing).join(' ') === 'create');
+function corePartsTest({ corePartsModule, coreGeometryModule }, data, check) {
+  const parts = corePartsModule(coreGeometryModule());
+  check('the public API', Object.keys(parts).join(' ') === 'create');
 
   /* group 1 along the house's x from (1000, 2000), its y the house's y; the floor at h 0 */
-  const D = drawing.create({ place: { 1: { O: [1000, 2000], X: [1, 0], Y: [0, 1] } }, level: 0, layers: ['room'], looks: { oak: {}, glass: { opacity: 0.3 } }, metal: 'steel', ceiling: 2600 });
-  check('create: the API of a description', Object.keys(D).join(' ') === 'box profile at detail cylinder display mover linkTo envelope openFront openTop part lamp point pivot look STATIC CEILING LEVEL frame has metal MOVERS DETAILS LAMPS FRAMES LOOKS ENVELOPES UNDRAWN');
+  const D = parts.create({ place: { 1: { O: [1000, 2000], X: [1, 0], Y: [0, 1] } }, level: 0, layers: ['room'], looks: { oak: {}, glass: { opacity: 0.3 } }, metal: 'steel', ceiling: 2600 });
+  check('create: the API of the parts', Object.keys(D).join(' ') === 'box profile at detail cylinder display mover linkTo still moving envelope openFront openTop part lamp point pivot look STATIC CEILING LEVEL frame has metal MOVERS DETAILS LAMPS FRAMES LOOKS ENVELOPES UNDRAWN');
 
   const c = D.box(D.STATIC, '1', [0, 600, 0, 500, 0, 700], 'oak', 'carcasses', { name: 'Side' });
   check('box: a solid of the house, its group and layer and the host\'s', c.hb.join() === '1000,1600,2000,2500,0,700' && c.layers.join() === 'g1,carcasses,room' && D.STATIC[0] === c && c.edges);
@@ -23,5 +23,11 @@ function coreDrawingTest({ coreDrawingModule, coreGeometryModule }, data, check)
   check('lamp and point: a light from a point of the house to another', D.LAMPS[0].from.join() === '1000,2000,2500' && D.LAMPS[0].to.join() === '1000,2000,0' && D.LAMPS[0].kind === 'spot');
   const all = [].concat(D.FRAMES, D.MOVERS, D.DETAILS, D.LAMPS).map(x => x.n);
   check('the order described: every frame, part, detail and lamp numbered once', new Set(all).size === all.length);
-  check('has, frame, metal: what a drawing asks', D.has('oak') && !D.has('pine') && D.frame('1').O[0] === 1000 && D.metal === 'steel');
+  check('has, frame, metal: what the parts ask', D.has('oak') && !D.has('pine') && D.frame('1').O[0] === 1000 && D.metal === 'steel');
+  /* parts made elsewhere: the house's cells, standing still or moving (a door's leaf about its hinge) */
+  const wall = { S: { x1: 0, x2: 240, poly: [[0, 0], [3000, 0], [3000, 2700], [0, 2700]] }, layers: ['walls'], material: 'oak' };
+  D.still([wall]);
+  check('still: cells made elsewhere stand among the others, with the host\'s layers', D.STATIC.includes(wall) === false && D.STATIC.some(c => c.S === wall.S && c.layers.join() === 'walls,room'));
+  const leaf = D.moving({ cells: [wall], at: [0, 0, 0], how: { axis: [0, 0, 1], angle: 90 } });
+  check('moving: a moving part of those cells, turning as told', D.MOVERS.includes(leaf) && leaf.cells[0] === wall && leaf.how.angle === 90);
 }
