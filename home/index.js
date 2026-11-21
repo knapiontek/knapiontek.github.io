@@ -370,8 +370,8 @@ const furnished = r => PREPARED.get(r.id) || PREPARED.set(r.id, (async () => {
   const over = MODEL.ELEMENTS.filter(e => e.kind === 'ceiling' && e.b[0] < at[0] + r.node.size[0] && e.b[1] > at[0] && e.b[2] < at[1] + r.node.size[1] && e.b[3] > at[1] && e.b[4] > at[2]);
   const ceiling = over.map(e => ({ a: e.b[4] - at[2], s: 0 })).concat(r.floor === MODEL.FLOORS[MODEL.FLOORS.length - 1] ? MODEL.ROOF_UNDER.map(l => ({ a: l.a + l.s * at[1] - at[2], s: l.s })) : []);
   const node = { offset: at, size: r.node.size, area: r.node.area, ceiling, tiles: TILES, openings: MODEL.OPENINGS.map(o => o.b).filter(near).map(b => b.map((v, k) => v - at[k >> 1])) };
-  const prepared = HOME.room.prepare(node, { cabinets, scene }, { products: LIB.groups });
-  return { room: r, prepared, data, used, docs: docs && HOME.docs.create({ cabinets: HOME.cabinets, model: prepared.model, tree: prepared.TREE, docs, appliances: prepared.appliances, library: LIB }) };
+  const prepared = HOME.room.prepare(node, { cabinets, scene }, LIB);
+  return { room: r, prepared, data, used, docs: docs && HOME.docs.create({ model: prepared.model, tree: prepared.TREE, docs, appliances: prepared.appliances, library: LIB }) };
 })()).get(r.id);
 const TILE_PRODUCTS = /** @type {Object<string, TileProduct>} */ (LIB.groups.tiles);
 await LIB.loadTextures(Object.values(TILE_PRODUCTS).map(p => p.texture));
@@ -498,7 +498,7 @@ const BODY = UNION ? [[UNION[0], UNION[2], UNION[4]], [UNION[1], UNION[3], UNION
 V.relight(LIGHT, [0, 1, 2].map(k => (BODY[0][k] + BODY[1][k]) / 2), !WHOLE);   // a room: the inside light and the lamps in physical units
 for (const f of FURNITURE) {
   const own = PARTS.find(p => p.room === f.room), ceilings = own ? own.objects.filter(o => o.role === 'ceiling').map(o => 'object:' + f.room.id + '/' + o.id) : [];
-  f.made = HOME.room.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings, products: LIB.groups, textures: LIB.textures });
+  f.made = HOME.room.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings, library: LIB });
   STILL.push(...f.made.STATIC);
   for (const [k, m] of Object.entries(f.made.tiles.materials)) MATERIALS[k] ||= m;
   /* a wall's tiles hide with their wall (the part's object facing them, the nearest) */

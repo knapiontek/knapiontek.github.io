@@ -30,12 +30,11 @@ The page runs from disk (file://): no JavaScript modules (`import`). A script's 
 
 ## Steps
 
-Done (21 Nov 2026): core/ (geometry, tools, tree, surface, plan2d, estimate, ui, sheet, scene) gets what it needs as parameters and needs nothing outside core; core/tools.js gathers short pieces (numbers, text into HTML, a sheet's rows and columns); library/catalog.js alone knows the library's files; core/load.js only loads a file by its path. The screen's pieces name their Alpine parts (sunBox, sheetView), no global.
+Done (21 Nov 2026): every file but room/cabinets.js and index.js gets what it needs as parameters: core/ needs nothing outside core; core/tools.js gathers short pieces; library/catalog.js alone knows the library's files and room/room.js asks it for a product (product, group), not the library's raw groups; room/docs.js gets the cabinets engine instead of being handed it.
 
-1. **Next**: the engines: room/room.js, room/docs.js; the page asks the catalog (a product, a material) instead of reading the library's groups.
-2. index.js: the application put together on local variables; `HOME` and globals.d.ts go.
-3. The drawing engine. The engines give a description, as data, and draw nothing: exact solids (prisms of core/geometry.js: walls, boards, carcasses; counted, in the 2D plan, never sharing volume), details (look only: a cylinder, a turned shape, an extruded profile, a sphere; a shape, a material, a place), moving parts, lamps. One engine turns a description into 3D (core/scene.js, the only file with three.js), plan2d into 2D. First the format of a description, then: library/draw.js (a product and its place in, its description out), room/cabinets.js (its drawing out of it), the house (it draws nothing that is a room's).
-4. The files' names and places.
+1. **Next**: index.js: the application put together on local variables; it asks the catalog instead of reading the library's groups; `HOME` (but the data channel) and globals.d.ts go.
+2. The drawing engine. The engines give a description, as data, and draw nothing: exact solids (prisms of core/geometry.js: walls, boards, carcasses; counted, in the 2D plan, never sharing volume), details (look only: a cylinder, a turned shape, an extruded profile, a sphere; a shape, a material, a place), moving parts, lamps. One engine turns a description into 3D (core/scene.js, the only file with three.js), plan2d into 2D. First the format of a description, then: library/draw.js (a product and its place in, its description out), room/cabinets.js (its drawing out of it; then its row in test/index.html is OK), the house (it draws nothing that is a room's).
+3. The files' names and places.
 
 ## Kept
 

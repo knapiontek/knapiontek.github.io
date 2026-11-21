@@ -14,10 +14,11 @@
  * @property {Object<string, string>} [formulas]
  * @property {{ name: string, notes: Object<string, any>[] }[]} notes
  */
-function docsModule() {
+/** @param {ReturnType<typeof toolsModule>} tools @param {ReturnType<typeof estimateModule>} estimate @param {ReturnType<typeof cabinetsModule>} cabinets */
+function docsModule(tools, estimate, cabinets) {
 'use strict';
 
-const { formula, cols, kinds } = HOME.tools;
+const { formula, cols, kinds } = tools, E = estimate;
 
 /* ---------- the sheet Cut list: the boards to order, by board, with their edges, m², banding and cuts ----------
    spec   {title, note, blocks: [block], legend: [{code, text}] (under the note, before the blocks), screen (as cols)}
@@ -51,8 +52,8 @@ function cutListSheet(spec) {
 }
 
 /** a room's Documents
-    @param {{ cabinets: Home['cabinets'], model: CabinetsModel, tree: FurnitureNode[], docs: DocsFile, appliances: Object<string, any>, library: Library }} room */
-function create({ cabinets, model, tree, docs, appliances, library }) {
+    @param {{ model: CabinetsModel, tree: FurnitureNode[], docs: DocsFile, appliances: Object<string, any>, library: Library }} room */
+function create({ model, tree, docs, appliances, library }) {
 const KE = cabinets, COST = docs, APPLIANCES = appliances;
 const SIDE = { left: 'left', right: 'right', top: 'top', bottom: 'bottom' };
 /* an item of the estimate: its product from the library (a material: the board the cabinets file gives that use), the rest
@@ -75,7 +76,7 @@ const NODES = {};
 (function count(list) { for (const n of list) { const p = n.part, k = p && (p.kind || p.role); if (k && (n.type === 'hardware' || n.type === 'product')) NODES[k] = (NODES[k] || 0) + 1; count(n.children); } })(tree);
 
 const round1 = x => Math.round(x * 10) / 10;
-const esc = HOME.tools.esc;
+const esc = tools.esc;
 const edgeText = edges => (edges || []).map(edge => KE.LABELS.edge[edge.side] + ' ' + edge.length).join(' + ');
 const edgeLength = edges => (edges || []).reduce((sum, edge) => sum + edge.length, 0);
 const sideText = sides => (sides || []).map(side => KE.LABELS.edge[side]).join(' + ');
@@ -363,7 +364,7 @@ function compute() {
 }
 
 function buildBook() {
-  const result = compute(), E = HOME.estimate;
+  const result = compute();
   /* the cut list: as an order form, each size followed by the number of its finished edges */
   const cutting = cutListSheet({ title: fill(COST.labels.cutTitle), note: fill(COST.labels.cuttingNote),
     screen: [6, 's2n9m36', 6, 3, 6, 3, 6, 5, 7, 6, 21, 's1n8m24'],
@@ -420,4 +421,4 @@ return { book: buildBook, assembly: renderAssembly, warnings: model.warnings, pa
 
 return { create };
 }
-HOME.docs = docsModule();
+HOME.docs = docsModule(HOME.tools, HOME.estimate, HOME.cabinets);
