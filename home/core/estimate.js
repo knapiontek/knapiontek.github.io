@@ -1,10 +1,11 @@
 // @ts-check
 /* core/estimate.js: the sheet Estimate: items by category, quantity × unit price, sums, the total; the same on every page
-   (core/sheet.js draws it and makes the XLSX). Knows no project: a page hands in its items. No browser. Needs core/sheet.js. */
-function estimateModule() {
+   (core/sheet.js draws it and makes the XLSX). Knows no project: a page hands in its items. No browser. Gets core/tools.js. */
+/** @param {ReturnType<typeof toolsModule>} tools */
+function estimateModule(tools) {
 'use strict';
 
-const { formula, input, cols, money, kinds } = HOME.sheet;
+const { formula, input, cols, money, kinds } = tools;
 
 /* ---------- Estimate ---------- */
 /** @typedef {{ item: (id: string) => string, param: (key: string) => string }} EstimateRef  the cells of an item's quantity, of a parameter */
@@ -30,7 +31,7 @@ const { formula, input, cols, money, kinds } = HOME.sheet;
  * @property {{ label: string, note?: string, v: number, of: number }} [reserve]  a share of the totals' row `of` (its index)
  * @property {string[]} [excluded]  what the estimate does not cover
  * @property {any[][]} [after]  rows at its end
- * @property {(number | string)[]} [screen]  how each column shows (core/sheet.js cols)
+ * @property {(number | string)[]} [screen]  how each column shows (core/tools.js cols)
  */
 /** @param {EstimateSpec} spec @returns {{ sheet: TableSheet, row: Object<string, number> }} row: an item's id -> its row */
 function estimate(spec) {
@@ -76,4 +77,4 @@ function estimate(spec) {
 
 return { estimate };
 }
-HOME.estimate = estimateModule();
+HOME.estimate = estimateModule(HOME.tools);

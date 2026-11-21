@@ -17,7 +17,7 @@
 function docsModule() {
 'use strict';
 
-const { formula, cols, kinds } = HOME.sheet;
+const { formula, cols, kinds } = HOME.tools;
 
 /* ---------- the sheet Cut list: the boards to order, by board, with their edges, m², banding and cuts ----------
    spec   {title, note, blocks: [block], legend: [{code, text}] (under the note, before the blocks), screen (as cols)}

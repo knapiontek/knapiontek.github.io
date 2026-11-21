@@ -8,12 +8,12 @@ Shared code for every page. Knows no project: a page hands it data; core returns
 |---|---|
 | load.js | the one data loader: a file by its path from the home folder, checked for format and version; the path of every kind of data file by key. First script of every page |
 | tree.js | the tree of nodes: node by path, path of a node, place (sum of offsets), box, setting from the cascade (and the node it comes from), refs, walk, checks |
-| format.js | how numbers are written: en-GB on every page and in every sheet |
+| tools.js | short pieces of no one file: how numbers are written (en-GB on every page and in every sheet); a sheet's rows and columns (formula and input cells, column widths and how each shows, money columns, row kinds) |
 | geometry.js | exact solids: convex polygons, prisms; clip, subtract, intersect, split, section, volume, overlap; rectangles; the compass sides; a stable random number |
 | surface.js | surfaces ready to draw: welded points, faces of solids, visible pieces (a face loses what another covers) |
 | scene.js | the 3D view, one per page, cleared and relit for another view: renderer (physical lights), materials, pieces batched per material, edges, ghosts (hidden, still casting shadow), moving parts, sun and clouds, camera and flights, navigation, walk; redraws only after a change |
 | plan2d.js | the 2D plan from the same solids: cut filled, below seen, above dashed; labels, room borders without a wall (dash-dot), dimensions, sheets side by side |
-| sheet.js | spreadsheet: sheets in tabs, input cells, live formulas, tree sheets (levels, + / −), XLSX with the same formulas and outline; the Documents screen (each table built once, changed in place); what builds a sheet (formula and input cells, columns) |
+| sheet.js | spreadsheet: sheets in tabs, input cells, live formulas, tree sheets (levels, + / −), XLSX with the same formulas and outline; the Documents screen (each table built once, changed in place) |
 | estimate.js | the sheet Estimate, alike on every page: items by category, quantity × price, sums, reserve, total |
 | library.js | the library for a page: products by group, shops, materials; textures by key; its checks |
 | ui.js | the screen (Alpine.js): a page's part (state kept in the browser), modes, panel tabs, bottom menu, floating boxes, 2D zoom and drag; the shared pieces (below); light/dark and panel shown/hidden, one choice for all pages; layers; sun; table column widths |
@@ -27,7 +27,7 @@ solids ─► surface.js ─► scene.js (3D)      solids ─► plan2d.js (2D)
 rows ─► sheet.js (Documents, XLSX)         checks ─► Test
 ```
 
-- **Without a browser** (tested in Node): format, geometry, tree, surface, plan2d (SVG as text), the formulas of sheet. Every file but load.js loads in Node: none touches the browser on load.
+- **Without a browser** (tested in Node): tools, geometry, tree, surface, plan2d (SVG as text), the formulas of sheet. Every file but load.js loads in Node: none touches the browser on load.
 - **Browser only**: load.js (script tags), scene.js (WebGL), the screen of ui.js and sheet.js, the XLSX download.
 - **Screen pieces** (`<template x-part="name">`; one that takes the page's content gets the template's content): nav (top left: house, floors, rooms), view (3D canvas), loading, modes (top right), plan (2D), docs (Documents), dock (bottom menu), pad (walk arrows), sun, help, corner (◐ light/dark, ☀ sun, ? help, » « panel), panel (title, tabs, the page's sections), layers (blocks of switches); sheet.js adds sheet. The pieces read the page part's fields (title, modes, menu, layers, state).
 

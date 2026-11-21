@@ -1,6 +1,6 @@
 /* core/plan2d.js: its public API, each part with what it gives (test/test.md) */
-function plan2dTest({ plan2dModule, geometryModule, formatModule }, data, check) {
-  const geometry = geometryModule(), P = plan2dModule(geometry, formatModule()), prism = geometry.prism;
+function plan2dTest({ plan2dModule, geometryModule, toolsModule }, data, check) {
+  const geometry = geometryModule(), P = plan2dModule(geometry, toolsModule()), prism = geometry.prism;
   check('the public API', Object.keys(P).join(' ') === 'create solidShape');
 
   const shape = P.solidShape({ S: prism([0, 3000, 0, 4000, 0, 2500]), layers: [] });

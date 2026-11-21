@@ -1,7 +1,7 @@
 // Only for the check (jsconfig.json): the one global HOME, each module's interface taken from its code, and what the pages get from outside. Not loaded by any page.
 interface Home {
   data: ReturnType<typeof loadModule>['data']; load: ReturnType<typeof loadModule>['load'];
-  geometry: ReturnType<typeof geometryModule>; format: ReturnType<typeof formatModule>; surface: ReturnType<typeof surfaceModule>; scene: ReturnType<typeof sceneModule>;
+  geometry: ReturnType<typeof geometryModule>; tools: ReturnType<typeof toolsModule>; surface: ReturnType<typeof surfaceModule>; scene: ReturnType<typeof sceneModule>;
   ui: ReturnType<typeof uiModule>; plan2d: ReturnType<typeof plan2dModule>; sheet: ReturnType<typeof sheetModule>;
   tree: ReturnType<typeof treeModule>; library: ReturnType<typeof libraryModule>; estimate: ReturnType<typeof estimateModule>;
   model: ReturnType<typeof modelModule>; draw: ReturnType<typeof drawModule>; cabinets: ReturnType<typeof cabinetsModule>;

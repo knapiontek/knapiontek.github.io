@@ -79,20 +79,6 @@ function evaluator(book) {
   return value;
 }
 
-/* ---------- building a sheet ----------
-   A page's sheets are rows of cells (the book above); these make them alike everywhere. */
-const formula = (/** @type {string} */ f) => ({ f }), input = (/** @type {number} */ v) => ({ v, input: true });
-/* widths: characters in the XLSX; screen: one per column, how it is shown (HOME.ui.setColumns): a number n is fixed at n
-   characters (numbers, codes, units); a text 's3' has a share of 3, 's2n16m40' at least 16 and at most 40 characters */
-/** @returns {Column} */
-const screenOf = (/** @type {number | string | undefined} */ t) => (typeof t === 'number' ? { fix: t } : (m => (m ? { share: +m[1], min: m[2] ? +m[2] : undefined, max: m[3] ? +m[3] : undefined } : { share: 1 }))(/^s([\d.]+)(?:n(\d+))?(?:m(\d+))?$/.exec(t || '')));
-/** columns of these widths (XLSX characters), with more (index -> fields) and how each shows on screen @returns {Column[]} */
-const cols = (/** @type {number[]} */ widths, /** @type {Object<number, Column>} */ more = {}, /** @type {(number | string)[]} */ screen = []) => widths.map((width, i) => ({ width, ...(screen[i] !== undefined ? screenOf(screen[i]) : {}), ...(more[i] || {}) }));
-const money = { digits: 2, z: '#,##0.00' };   // a column of zł
-/* an array is a row of cells, an object keeps its kind; the first row is the title */
-/** @returns {SheetRow[]} */
-const kinds = (/** @type {any[]} */ rows) => rows.map((r, i) => (r && !Array.isArray(r) ? r : { kind: i === 0 ? 'title' : undefined, cells: r || [] }));
-
 /* ---------- the page ---------- */
 const show = (v, d, pct) => (!Number.isFinite(v) ? '–' : pct ? Math.round(v * 1000) / 10 + '%'
   : v.toLocaleString(LOCALE, d === undefined ? { maximumFractionDigits: 3 } : { minimumFractionDigits: d, maximumFractionDigits: d }));
@@ -292,6 +278,6 @@ const menu = (/** @type {() => any} */ sheet, /** @type {string} */ file) => [
   { name: 'Save XLSX', go: e => { const b = e.currentTarget, label = b.textContent; sheet().xlsx(file).catch(() => { b.textContent = 'No network: try again'; setTimeout(() => { b.textContent = label; }, 2500); }); } },
   { name: 'Restore data', go: () => sheet().restore() }];
 
-return { evaluator, xlsx, view, menu, formula, input, cols, money, kinds };
+return { evaluator, xlsx, view, menu };
 }
 HOME.sheet = sheetModule();

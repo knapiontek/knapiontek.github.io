@@ -9,8 +9,8 @@ What we are changing, in order. The owner decides; the LLM keeps this file up to
 
   ```js
   const geometry = geometryModule();
-  const format = formatModule();
-  const plan2d = plan2dModule(geometry, format);
+  const tools = toolsModule();
+  const plan2d = plan2dModule(geometry, tools);
   ```
 
   These lines are the whole map of what needs what.
@@ -24,20 +24,21 @@ The page runs from disk (file://): no JavaScript modules (`import`). A script's 
 ## The rules of a step
 
 - One file at a time, from the bottom up: core, then the engines, then the screen, index.js last.
-- Inside a constructor no `HOME`: only its parameters and JavaScript itself. Until every file is done, the last line of a file joins it to the page: `HOME.plan2d = plan2dModule(HOME.geometry, HOME.format);`. When all are done these lines and `HOME` go.
+- Inside a constructor no `HOME`: only its parameters and JavaScript itself. Until every file is done, the last line of a file joins it to the page: `HOME.plan2d = plan2dModule(HOME.geometry, HOME.tools);`. When all are done these lines and `HOME` go.
 - Before and after each step the LLM's tests (test/test.md): everything the same.
 - Each step ends with test/index.html: the file's row OK.
 
 ## Steps
 
-1. **Done** (20 Nov 2026): core/format.js (new: how numbers are written, en-GB everywhere); core/plan2d.js gets geometry and format (meshShape, the footprint of a three.js mesh, goes to room/room.js: its only caller, on the 3D side). The files already pure get their dependencies as parameters too: core/geometry.js, core/tree.js, core/surface.js, room/tiles.js, house/model.js. The tests build each file from its constructor; GETS went.
-2. **Next**: core/estimate.js: gets the sheet's helpers it uses, or they move (to decide).
-3. The screen: core/ui.js, core/sheet.js, core/scene.js, core/load.js, core/library.js.
-4. The engines: room/cabinets.js (its drawing out of it, see 6), room/room.js, room/docs.js, library/draw.js.
-5. index.js: the application put together on local variables; `HOME` and globals.d.ts go.
-6. The drawing engine: the format of a description; cabinets give a description instead of drawing; the house draws nothing that is a room's.
-7. The files' names and places.
+Done: core/geometry, tree, surface, plan2d, house/model, room/tiles get what they need as parameters; core/tools.js (short pieces of no one file: numbers, a sheet's rows and columns; was format.js); core/estimate.js gets tools (21 Nov 2026).
 
-## Open
+1. **Next**: the screen: core/ui.js, core/sheet.js, core/scene.js, core/load.js, core/library.js.
+2. The engines: room/cabinets.js (its drawing out of it, see 4), room/room.js, room/docs.js, library/draw.js.
+3. index.js: the application put together on local variables; `HOME` and globals.d.ts go.
+4. The drawing engine: the format of a description; cabinets give a description instead of drawing; the house draws nothing that is a room's.
+5. The files' names and places.
 
-- The data files start with `HOME.data(` (the only way to load data from disk without a server). Keep that name as the one data channel (core/load.js), or change the first word of all 41 files (their JSON untouched)?
+## Kept
+
+- core/tools.js gathers short pieces that belong to no one file, so the map of files stays simple; a piece goes there rather than into a file of its own.
+- The data files keep their first word, `HOME.data(` (data from disk without a server; the files are never touched). At the end `HOME` is only that: the data channel of core/load.js.

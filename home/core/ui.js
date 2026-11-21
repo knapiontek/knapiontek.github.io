@@ -9,7 +9,7 @@
 function uiModule() {
 'use strict';
 
-const { LOCALE, fmt } = HOME.format;       // core/format.js, until ui gets it as a parameter (plan.md)
+const { LOCALE, fmt } = HOME.tools;        // core/tools.js, until ui gets it as a parameter (plan.md)
 const $ = (/** @type {string} */ id) => document.getElementById(id);
 /**
  * @template {{ id: string }} T

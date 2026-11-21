@@ -3,7 +3,7 @@
    material's plan colour or hatch; what lies under the cut is seen from above (the higher over the lower), what lies over
    it is dashed; rooms, opening labels and dimensions come from the project's data. Sheets stand side by side. The sheet
    is in mm of the house (plan x = house y, plan y = house x: the garden at the top), so every size of the drawing is in
-   mm too. Knows no project and no browser. Gets core/geometry.js and core/format.js. */
+   mm too. Knows no project and no browser. Gets core/geometry.js and core/tools.js. */
 /**
  * @typedef {object} PlanShape  a thing seen from above
  * @property {number[][]} poly  [x, y] house mm
@@ -16,8 +16,8 @@
 /** @typedef {{ rects: Rect[], numbers?: (string | number)[], name: string, area?: number }} PlanRoom  area m² (else of rects) */
 /** @typedef {{ extent: Rect, title: string, draw: (X: number) => string }} PlanSheet  extent in house mm; draw at the shift X */
 /** @typedef {Cell & { cap?: string }} PlanCell  cap: the material of its section */
-/** @param {ReturnType<typeof geometryModule>} geometry @param {ReturnType<typeof formatModule>} format */
-function plan2dModule(geometry, format) {
+/** @param {ReturnType<typeof geometryModule>} geometry @param {ReturnType<typeof toolsModule>} tools */
+function plan2dModule(geometry, tools) {
 'use strict';
 const { hRange, sectionAt, cutBy, rectArea } = geometry;
 
@@ -34,7 +34,7 @@ const INK = '#1f2523', FLOOR_FILL = '#f4f1ea';
 
 /** a plan drawer for a page @param {Object<string, MaterialLook>} materials */
 function create(materials) {
-  const S = SIZE, fmt = format.fmt;
+  const S = SIZE, fmt = tools.fmt;
   const fill = (/** @type {string | undefined} */ key) => { const d = (key && materials[key]) || {}; return d.plan?.hatch ? `url(#hatch-${key})` : d.plan || d.color || '#bbbbbb'; };
   const rect = (/** @type {number} */ X, /** @type {number} */ x1, /** @type {number} */ x2, /** @type {number} */ y1, /** @type {number} */ y2, /** @type {string} */ attr) => `<rect x="${Math.round(X + y1)}" y="${Math.round(x1)}" width="${Math.round(y2 - y1)}" height="${Math.round(x2 - x1)}" ${attr}/>`;
   const hatches = () => Object.entries(materials).filter(([, d]) => d.plan?.hatch).map(([k, d]) =>
@@ -164,4 +164,4 @@ function solidShape(c, glass = false) {
 
 return { create, solidShape };
 }
-HOME.plan2d = plan2dModule(HOME.geometry, HOME.format);
+HOME.plan2d = plan2dModule(HOME.geometry, HOME.tools);
