@@ -2,7 +2,7 @@
 /* core/scene.js: renderer, materials, meshes and edges of pieces, moving parts, light, camera, navigation,
    walk, loop. Knows no project: the page hands it a material library, textures, the light and the edges.
    The model is built in mm (x along, y across, h up) and turned into the scene's metres with y up.
-   Gets core/geometry.js and core/surface.js; needs THREE and OrbitControls (the browser's). */
+   Gets core/geometry.js and core/faces.js; needs THREE and OrbitControls (the browser's). */
 /** @typedef {{ color?: string, roughness?: number, metalness?: number, opacity?: number, [more: string]: any }} MaterialLook  a material's look, as the library's materials give it */
 /** @typedef {{ name: string, kind: string, source?: string, size: number[], grout?: string, faces: string[] }} Texture  size: mm one image covers; faces: data URLs */
 /** @typedef {{ name: string, eye: Vec3, target: Vec3 }} Camera  a view: the eye and what it looks at, mm */
@@ -51,11 +51,11 @@
  * @property {() => Camera} home  the camera when the walk stops
  */
 /** @typedef {ReturnType<ReturnType<typeof sceneModule>['create']>} SceneView  a page's 3D view */
-/** @param {ReturnType<typeof geometryModule>} geometry @param {ReturnType<typeof surfaceModule>} surface */
-function sceneModule(geometry, surface) {
+/** @param {ReturnType<typeof geometryModule>} geometry @param {ReturnType<typeof facesModule>} faces */
+function sceneModule(geometry, faces) {
 'use strict';
 const { DEG, hRange, edgesOf } = geometry;
-const { sub3, dot3, cross3, weld } = surface;
+const { sub3, dot3, cross3, weld } = faces;
 
 const MM = 0.001;                          // the scene is in metres, the model in mm
 
@@ -696,7 +696,7 @@ function create(opts) {
   const run = () => requestAnimationFrame(frame);
 
   /* ================= A DESCRIPTION DRAWN =================
-     A description (core/describe.js) made 3D: its frames, details, lamps and painted looks in the order they were
+     A description (core/drawing.js) made 3D: its frames, details, lamps and painted looks in the order they were
      described, then its moving parts; still details alike are merged into one mesh. layers: the host's (its lamps light
      while they are on). Gives what the page switches: the details (by layers), the lamps by night, the footprints of
      details for the 2D plan. */
@@ -750,7 +750,7 @@ function create(opts) {
     return { poly: half(pts).concat(half(pts.slice().reverse())), bottom, top, glass };
   }
   const geometries = new WeakMap();        // a shape described once (a handle's cup) is one geometry
-  /** @param {ReturnType<ReturnType<typeof describeModule>['create']>} desc @param {{ layers?: string[], apart?: string[] }} [opts] apart: layers whose still details stay single meshes (the 2D plan draws them) */
+  /** @param {ReturnType<ReturnType<typeof drawingModule>['create']>} desc @param {{ layers?: string[], apart?: string[] }} [opts] apart: layers whose still details stay single meshes (the 2D plan draws them) */
   function show(desc, opts = {}) {
     const EXTRA = opts.layers || [], frames = new Map(), holders = new Map(), cores = new Map();
     /** @type {{ mesh: any, layers: string[], moves: boolean }[]} */ const DETAILS = [];
@@ -803,7 +803,7 @@ function create(opts) {
     }
     /* the moving parts, built closed, each with its details */
     for (const d of desc.MOVERS) {
-      const core = mover(Object.assign({ pieces: surface.piecesOf(d.cells), at: d.P, behind: d.parent ? cores.get(d.parent) : null, label: d.label }, d.how));
+      const core = mover(Object.assign({ pieces: faces.piecesOf(d.cells), at: d.P, behind: d.parent ? cores.get(d.parent) : null, label: d.label }, d.how));
       cores.set(d, core); core.inner.add(holders.get(d));
     }
     /* one mesh for the still details alike: in one frame, of one material, with the same layers and shadows (a layer shows

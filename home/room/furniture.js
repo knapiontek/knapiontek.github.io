@@ -1,19 +1,19 @@
 // @ts-check
-/* room/furniture.js: the cabinets described (core/describe.js): carcasses, fronts, worktops, panels, plinths, hardware and
+/* room/furniture.js: the cabinets described (core/drawing.js): carcasses, fronts, worktops, panels, plinths, hardware and
    the products in them, from the model of room/cabinets.js; and the looks of the boards. Draws nothing itself. Gets the
-   cabinets' engine and the library's drawings (library/draw.js). */
-/** @param {ReturnType<typeof cabinetsModule>} cabinets @param {ReturnType<typeof drawModule>} drawings */
-function furnitureModule(cabinets, drawings) {
+   cabinets' engine and the library's shapes (library/shapes.js). */
+/** @param {ReturnType<typeof cabinetsModule>} cabinets @param {ReturnType<typeof shapesModule>} shapes */
+function furnitureModule(cabinets, shapes) {
 'use strict';
 const { boxIn, hasTag, placeLabel, typeLabel } = cabinets;
 
 /* ================= THE CABINETS DESCRIBED: the model as solids, moving fronts and details =================
-   D: the room's description (core/describe.js): box(list, r, gb, key, layer, info) in the frame of group r, at, detail,
+   D: the room's description (core/drawing.js): box(list, r, gb, key, layer, info) in the frame of group r, at, detail,
    cylinder, mover, linkTo, envelope, openFront, openTop, part, frame(r) {X, Y}, has(key), STATIC; a product is drawn by
-   the library (library/draw.js, drawings) by its field draw. HW: the hardware as drawn (the products' sizes and the scene's layout);
+   the library (library/shapes.js, shapes) by its field draw. HW: the hardware as drawn (the products' sizes and the scene's layout);
    install: how the sink, its trap and the hood are fitted. Boards are the materials 'board:' + product key ('~': the decor
    turned a quarter; ':core': the bare edge). */
-/** @param {any} D the room's description (core/describe.js: DrawContext) @param {CabinetsModel} model @param {Object<string, any>} appliances @param {any} HW @param {any} install */
+/** @param {any} D the room's description (core/drawing.js: DrawContext) @param {CabinetsModel} model @param {Object<string, any>} appliances @param {any} HW @param {any} install */
 function draw(D, model, appliances, HW, install) {
   const { box, at, cylinder, mover, linkTo, STATIC } = D;
   const settings = model.settings, { carcassBack, frontThickness } = model, G = r => model.groups[String(r)].geometry;
@@ -25,7 +25,7 @@ function draw(D, model, appliances, HW, install) {
   const panelOf = f => (function find(n) { return n.type === 'board' && n.id === 'panel' ? n : n.children.reduce((q, c) => q || find(c), null); })(f.node);
   const GROUP = r => model.groups[r], groupLength = r => GROUP(r).widths.reduce((s, w) => s + w, 0), itemsOf = r => GROUP(r).items;
   const shakerRail = (model.materials[model.materialFor.cabinet] || {}).frameWidth;   // none: a front is one plain board
-  const product = (A, place, d = D) => drawings[A.draw](d, A, place);
+  const product = (A, place, d = D) => shapes[A.draw](d, A, place);
   /* a product draws in its own coordinates: from the origin of its node (its left, back, bottom corner); the room's
      drawing context moved there */
   const P = role => (model.products || []).filter(x => x.role === role);
@@ -46,7 +46,7 @@ function draw(D, model, appliances, HW, install) {
   }
   /* a piece of hardware drawn by the library from the zero of its node */
   const pieces = test => (model.hardware || []).filter(test);
-  const fitted = (x, kind, place, ...settings) => { const o = originOf(x); drawings[kind](moved(o), ...settings, Object.assign({ r: x.group, size: x.node.size }, place(o))); };
+  const fitted = (x, kind, place, ...settings) => { const o = originOf(x); shapes[kind](moved(o), ...settings, Object.assign({ r: x.group, size: x.node.size }, place(o))); };
   const fitOf = (fit, o) => minus(fit, o, [['bodyX0', 0], ['bodyX1', 0], ['bodyH0', 2], ['bodyH1', 2]]);
   const minus = (fit, o, keys) => Object.assign({}, fit, Object.fromEntries(keys.map(([k, i]) => [k, fit[k] - o[i]])));
 
@@ -57,7 +57,7 @@ function draw(D, model, appliances, HW, install) {
     return Math.abs(normal[2]) > 0.5 ? (normal[2] > 0 ? 'top' : 'bottom') : Math.abs(dx) > 0.5 ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'front' : 'back');
   }
   /* the grain of a decor: along x, up (h), or (no rule) along the longer side of the face. The texture runs along the
-     face's first uv axis (core/surface.js: an x face has (y, h), a y face (x, h), an h face (x, y)); '~' turns it. */
+     face's first uv axis (core/faces.js: an x face has (y, h), a y face (x, h), an h face (x, y)); '~' turns it. */
   const FACE_UV = normal => Math.abs(normal[0]) > 0.5 ? [1, 2] : Math.abs(normal[1]) > 0.5 ? [0, 2] : [0, 1];
   function turned(c, normal, grain) {
     const [a, b] = FACE_UV(normal), extent = k => c.hb[2 * k + 1] - c.hb[2 * k];
@@ -150,8 +150,8 @@ function draw(D, model, appliances, HW, install) {
     const x = P('sink')[0], o = originOf(x);
     product(S, { r, x: x.x - o[0], y: x.y - o[1], top: x.top - o[2] }, moved(o));
     const tap = P('tap')[0], t = originOf(tap), trap = P('trap')[0], q = originOf(trap);
-    drawings.tap(moved(t), { r, x: tap.x - t[0], y: tap.y - t[1], top: tap.top - t[2] });
-    drawings.trap(moved(q), { r, x: trap.x - q[0], from: trap.from - q[2], drain: trap.drain - q[1], top: trap.top - q[2], outlet: trap.outlet - q[2], back: trap.back - q[1], wall: trap.wall - q[1] });
+    shapes.tap(moved(t), { r, x: tap.x - t[0], y: tap.y - t[1], top: tap.top - t[2] });
+    shapes.trap(moved(q), { r, x: trap.x - q[0], from: trap.from - q[2], drain: trap.drain - q[1], top: trap.top - q[2], outlet: trap.outlet - q[2], back: trap.back - q[1], wall: trap.wall - q[1] });
   }
   const hobGroup = GROUP_IDS.find(r => itemsOf(r).some(i => hasTag(i, 'hob')));
   const hobItem = hobGroup && itemsOf(hobGroup).find(i => hasTag(i, 'hob'));
@@ -228,7 +228,7 @@ function draw(D, model, appliances, HW, install) {
     } else if (opening === 'fridge' && item.fit) {
       const freezer = hasTag(item, 'freezer');
       const fridge = P('fridgeFreezer').find(x => x.carcassId === carcass.id), o = originOf(fridge);
-      drawings.fridgeDoor(moved(o), appliances.fridgeFreezer, { r, m, freezer, fit: fitOf(item.fit, o), front: carcassFront - o[1], shelves: [carcass.x0 + 55 - o[0], carcass.x1 - 55 - o[0]] });
+      shapes.fridgeDoor(moved(o), appliances.fridgeFreezer, { r, m, freezer, fit: fitOf(item.fit, o), front: carcassFront - o[1], shelves: [carcass.x0 + 55 - o[0], carcass.x1 - 55 - o[0]] });
       m.label = (freezer ? 'Freezer' : 'Fridge') + ' · front ' + size + ' on the appliance door';
     } else if (opening === 'fixed') m.label = 'Dummy front ' + size + ' · fixed';
     if (!m.label) m.label = 'Front ' + size;

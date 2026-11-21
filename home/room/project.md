@@ -8,7 +8,7 @@ The room engine: a room from what the house gives (its node: origin, size, floor
 |---|---|
 | room.js | puts a room together: groups and fixtures placed where the scene says, cabinets, products, built-ins, tiles, lamps; its layers; its checks. Needs no browser: it describes, core/scene.js draws |
 | cabinets.js | a cabinets file → the model (carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, problems), the furniture's tree. Needs nothing |
-| furniture.js | the cabinets described (core/describe.js) from their model: carcasses, fronts, worktops, panels, hardware, the products in them; the boards' looks |
+| furniture.js | the cabinets described (core/drawing.js) from their model: carcasses, fronts, worktops, panels, hardware, the products in them; the boards' looks |
 | tiles.js | tiles of a layout: rooms and zones, tiles laid from the grid's origin, the count (whole, cut, small cuts), the origin with fewest small cuts, the faces to draw. No browser |
 | docs.js | a furnished room's Documents: estimate (core's), cut list (boards with edges, m², banding, cuts), notes, assembly cards; their check. No browser but the cards |
 | `<kind>_<number>.cabinets.js` | a room's furniture (format cabinets) |
@@ -18,7 +18,7 @@ The room engine: a room from what the house gives (its node: origin, size, floor
 
 ```
 house.js (a room's files) ─► index.js ─► room.js: cabinets.js model ─► tree
-                                       ─► room.js: furniture.js, library/draw.js, tiles.js ─► a description ─► core/scene.js
+                                       ─► room.js: furniture.js, library/shapes.js, tiles.js ─► a description ─► core/scene.js
 ```
 
 ## Coordinates
@@ -28,7 +28,7 @@ House axes: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`; mm.
 - **A group** has its own axes: x from its left end seen from the fronts, y from its wall into the room, h up from the floor (an island: y from its back edge). The scene gives the group's box in the room and its fronts' side; the room turns it a quarter, with a mirror (a group's axes are left-handed).
 - The cabinets model computes with y from the carcass backs; the tree comes out of it. A carcass stands at y = its group's backGap; changing the gap moves the carcass and everything in it.
 - **The furniture's tree**: group → what runs along it (worktop, end panels, wall panel, plasterboard, front and back strips, plinth, front panels, hood), then its units in a row (carcasses, a dishwasher's bay) → a carcass's boards, fronts, products (oven, microwave, fridge-freezer, sink with tap and trap, hob, coffee machine) and hardware (legs, plinth grille, shelf pins, bumpers, pull-out runners) → a front's panel, hardware (hinges, handle, runners), its drawer's boards, inner drawer, drawers behind a door. Each node: id (unique among siblings), name, type, offset from its parent's left-back-bottom corner, size (a container's: with its contents).
-- Drawn from its node: boards, front panels, worktops, plasterboard by furniture.js; products, hardware and a drawer system's metal (sides, gallery rails, inner drawer's front, bins, cutlery insert) by library/draw.js, in the product's own coordinates, moved to the node; a hole where its board's node is. A trap's outlet runs to the wall, not into it.
+- Drawn from its node: boards, front panels, worktops, plasterboard by furniture.js; products, hardware and a drawer system's metal (sides, gallery rails, inner drawer's front, bins, cutlery insert) by library/shapes.js, in the product's own coordinates, moved to the node; a hole where its board's node is. A trap's outlet runs to the wall, not into it.
 
 ## Format `cabinets`, version 1
 

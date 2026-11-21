@@ -2,7 +2,7 @@
 
 The outside world, once for the whole house: what is bought (products and shops) and the materials, as the shop and the maker give them. None of it is our decision; how we use a product is a node's settings.
 
-- Two kinds of numbers, kept apart: the maker's (outer sizes, a frame's width, a cup's depth) are data in products/; shapes the maker does not give (a knob, a spout, a burner ring) are code in draw.js, never data.
+- Two kinds of numbers, kept apart: the maker's (outer sizes, a frame's width, a cup's depth) are data in products/; shapes the maker does not give (a knob, a spout, a burner ring) are code in shapes.js, never data.
 - A set sold only together (a hinge with its plate) is one product, one price.
 - A room names a product by key and repeats none of its data; a price changed once changes everywhere.
 
@@ -16,7 +16,7 @@ The outside world, once for the whole house: what is bought (products and shops)
 | materials.js | how a material looks: colour, surface, 2D section fill |
 | textures/*.js | one image each (a board's decor, a tile's face), by key |
 | catalog.js | code: the library for a page: products by group and by key, shops, materials; textures loaded by key; its checks. The only code that knows these files |
-| draw.js | code: how each kind of product is described (solids, details, lamps: core/describe.js), in the frame of its node (x, y, h), from its data and its place; draws nothing itself |
+| shapes.js | code: how each kind of product is described (solids, details, lamps: core/drawing.js), in the frame of its node (x, y, h), from its data and its place; draws nothing itself |
 
 ## Formats (all version 1; sizes in mm)
 
@@ -37,7 +37,7 @@ The outside world, once for the whole house: what is bought (products and shops)
 | links | [{name, url}]: maker's documents first, then shops |
 | note | a remark on buying it |
 | family, metal, code | variants: one family's products differ by `metal` (a material with finish `metal`) or `code` (a decor); a room's Finish takes the family member in its metal and its boards' decors |
-| draw | the draw.js drawing (oven, microwave, fridgeFreezer, dishwasher, hob, hood, sink, coffeeMachine, basin, basinTap, mirror, wallCabinet, showerScreen, linearDrain, shaped); none: not drawn |
+| draw | the shapes.js drawing (oven, microwave, fridgeFreezer, dishwasher, hob, hood, sink, coffeeMachine, basin, basinTap, mirror, wallCabinet, showerScreen, linearDrain, shaped); none: not drawn |
 | shape | for `shaped`: the parts in the product's axes (u along its width, v out of the wall, h up from its bottom): box {b}, cyl {at, ax, r [top, bottom], h, s}, tube {p, r, s}, loft {M: rows u, v, h; sec: superellipse sections}; m: material, `metal` (the room's fittings) or `ceramic`; l: layer (sanitary, installations); fit: u or h, a part as long as the fixture's length or height in the scene (a pipe); mv: a part of the product's door {at [u, v] hinge, angle (°), sign} |
 
 By group:

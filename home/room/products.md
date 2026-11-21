@@ -1,6 +1,6 @@
 # Products: how they are fitted
 
-Rules for the fitter, in words. No numbers: a product's sizes are in library/products/, its place in the room's `.scene.js`, its cut-outs and holes in the cabinets file's settings. Drawn by library/draw.js.
+Rules for the fitter, in words. No numbers: a product's sizes are in library/products/, its place in the room's `.scene.js`, its cut-outs and holes in the cabinets file's settings. Drawn by library/shapes.js.
 
 ## 1. A product and its place
 

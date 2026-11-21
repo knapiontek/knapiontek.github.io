@@ -10,11 +10,10 @@ The house "Dom w papawerach 5 (G)" (archon.pl), as built, with everything in it:
 | house/ | the house: its data and its model; passes a room down |
 | room/ | the room engine: a room from the house and its own data files (cabinets, products, tiles, Documents); the rooms' data, `<kind>_<number>.<role>.js` |
 | core/ | shared code, no project: loader, tree, geometry, surfaces, 3D, 2D, sheets, screen |
-| library/ | the outside world: products, shops, materials, textures (data); how a product is drawn (draw.js) |
+| library/ | the outside world: products, shops, materials, textures (data); how a product is drawn (shapes.js) |
 | archon/ | archon.pl drawings and their analysis: the source of the house |
 | jsconfig.json, globals.d.ts | the type check (Code style); loaded by no page |
 | test/ | the tests, each file's test at its path under test/ (test/test.md) |
-| plan.md | what we are changing, step by step |
 | project.svg | every file and what it needs, data files marked JSON (generated from the code, not drawn) |
 
 ## The application (index.html, index.js)
@@ -32,7 +31,7 @@ house/  ──►  room/  ──►  core/, library/
 - One way only. The house passes a room and its settings down; the room engine passes each node to the module of its type.
 - **Modules** load nothing: their data comes as arguments. **Pages** load data.
 - core knows no project and no product; library knows no project.
-- Drawing chain: node ─► module of its type (house, cabinets, products, tiles) ─► solids and a description (core/describe.js) ─► core/surface.js ─► scene.js (3D, the only file with three.js), plan2d.js (2D); counts ─► sheet.js (Documents).
+- Drawing chain: node ─► module of its type (house, cabinets, products, tiles) ─► solids and a description (core/drawing.js) ─► core/faces.js ─► scene.js (3D, the only file with three.js), plan2d.js (2D); counts ─► sheet.js (Documents).
 
 ## Data
 
@@ -59,7 +58,7 @@ house/  ──►  room/  ──►  core/, library/
 | house settings | the owner, for every room | the house's root node |
 | lower settings | the designer, for a room, group, cabinet, product or surface | that node |
 | maker's data | the maker | library/products |
-| shapes the maker does not give | the code | library/draw.js |
+| shapes the maker does not give | the code | library/shapes.js |
 
 ## Data, tree, drawing
 
@@ -83,7 +82,7 @@ Kept apart: **data** says what is decided; the **tree** holds every thing, each 
 | opening (door, window, roof window) | library, as a product | in the box; the house only cuts the hole |
 | room surface (tiles) | room/tiles.js | tiles over the box |
 | board (carcass part, front panel, worktop, plinth, strip, panel) | room/cabinets.js | box with decor, edges, holes |
-| product (appliance, sanitary, hardware) | library/draw.js | from the product's data, from the node's zero |
+| product (appliance, sanitary, hardware) | library/shapes.js | from the product's data, from the node's zero |
 | container (assembly, floor, room, group, carcass, drawer) | — | only its contents |
 
 Each solid is moved to its node: offsets summed up the tree; a group facing another side gets the quarter turn.
@@ -101,6 +100,7 @@ Each solid is moved to its node: offsets summed up the tree; a group facing anot
 1. **Borders of the open rooms**: the owner checks where hall, living room and kitchen end (house.js, 2D).
 2. **Worktop and end-panel lengths** as bought: the owner gives them; the editor shows ? until then.
 3. **Types**: still loose (`any`): the products' group fields, the cabinets file's settings, a drawing's place, the Alpine parts.
+4. **index.js, split**: the cabinet editor, the house's Documents, the finish (a metal or a decor swapped; a query of the catalog: the same product in another metal), each to its own file.
 
 ## How we work
 
@@ -115,7 +115,12 @@ Each solid is moved to its node: offsets summed up the tree; a group facing anot
 - **Comments**: short, exact, only what the code does not say.
 - **Design level**: the room in space, every object where it stands (bought, cut, made by the owner). Not the installer's level (pipes, sockets, cables, fitting steps); what places things stays (riser, WC frame).
 - **Panel**: settings only (layers, a tile, a pattern); results (areas, counts, costs) go to Documents.
-- **Types** (JSDoc, checked): the contract of every module: a typedef for each data shape (in the file that reads or makes it), `@param` and `@returns` on what a module gives, so a call from another file is checked. Every code file starts with `// @ts-check`; a module is one function that returns what it gives, so its interface is taken from its code (globals.d.ts names them; no type is written twice). Check: `tsc --noEmit -p home/jsconfig.json`, clean before handing over; nothing is built, pages load plain JavaScript. jsconfig.json lists the checked files (strictNullChecks); globals.d.ts also declares the outside globals (three.js, Alpine.js, SheetJS). Not checked: inline page scripts, data files.
+- **Types** (JSDoc, checked): the contract of every module: a typedef for each data shape (in the file that reads or makes it), `@param` and `@returns` on what a module gives, so a call from another file is checked. Every code file starts with `// @ts-check`; a module is one function that returns what it gives, so its interface is taken from its code (`ReturnType<typeof <name>Module>`; no type is written twice). Check: `tsc --noEmit -p home/jsconfig.json`, clean before handing over; nothing is built, pages load plain JavaScript. jsconfig.json lists the checked files (strictNullChecks); globals.d.ts also declares the outside globals (three.js, Alpine.js, SheetJS). Not checked: inline page scripts, data files.
+- **Modules**: a code file is one constructor, `<name>Module(...)`: it gets what it needs as its parameters and gives back its public API; nothing else in the file is global, no `HOME` inside. The page runs from disk (no `import`), so a file's constructor is its one global name. index.js makes every module in its first lines: the map of what needs what (project.svg is drawn from them).
+- **Public API**: each file's test (test/<its path>) builds it from its constructor and checks its public API, on a clean slate (test/test.md); the owner reads it and accepts it.
+- **Drawing**: an engine describes what is drawn, as data (core/drawing.js: solids, details, moving parts, lamps); core/scene.js, the only file with three.js, draws a description; plan2d.js the 2D.
+- **Short pieces** that belong to no one file go to core/tools.js, not to a file of their own.
+- **Data channel**: the data files start with `HOME.data(` and are never touched; `HOME` is only that (core/load.js: `data`, `load`).
 - **Computing without the browser**: a module computes without DOM or WebGL and touches nothing when loaded; the browser only for drawing, the screen, loading scripts. Tests run in Node first.
 - **No hidden rules**: what is built follows from data (types, settings), never from names, labels or sizes. No duplicated values or code: what pages share lives in core. No dead code: what nothing uses is removed.
 - **Script order** in a page: core/load.js first (the data channel, `HOME`), the page's own code last (it makes every module from its constructor); a code file between only defines its constructor, so their order is free.

@@ -1,9 +1,9 @@
 // @ts-check
 /* room/room.js: one room put together from what the page hands it: the room from the house (its node: origin and height),
    the room's files (cabinets, scene) and the library. It places the groups of furniture where the scene says, builds the
-   cabinets (room/cabinets.js), the products (library/draw.js) and the lamps, in the house's axes (x, y, h; mm).
+   cabinets (room/cabinets.js), the products (library/shapes.js) and the lamps, in the house's axes (x, y, h; mm).
    prepare() needs no browser: the model, the places of the groups, the hardware as drawn, the looks and textures the
-   room needs. build() describes the room (core/describe.js: still cells, moving parts, details, lamps) and a scene of core
+   room needs. build() describes the room (core/drawing.js: still cells, moving parts, details, lamps) and a scene of core
    draws it. */
 /**
  * @typedef {object} SceneFile  a room's scene (room/project.md: format scene)
@@ -24,8 +24,8 @@
 /** @typedef {ReturnType<ReturnType<typeof roomModule>['build']>} BuiltRoom */
 /** @param {ReturnType<typeof geometryModule>} geometry
     @param {ReturnType<typeof treeModule>} tree @param {ReturnType<typeof plan2dModule>} plan2d @param {ReturnType<typeof tilesModule>} tiles
-    @param {ReturnType<typeof cabinetsModule>} cabinets @param {ReturnType<typeof furnitureModule>} furniture @param {ReturnType<typeof drawModule>} draw @param {ReturnType<typeof describeModule>} describe */
-function roomModule(geometry, tree, plan2d, tiles, cabinets, furniture, draw, describe) {
+    @param {ReturnType<typeof cabinetsModule>} cabinets @param {ReturnType<typeof furnitureModule>} furniture @param {ReturnType<typeof shapesModule>} shapes @param {ReturnType<typeof drawingModule>} drawing */
+function roomModule(geometry, tree, plan2d, tiles, cabinets, furniture, shapes, drawing) {
 'use strict';
 const C = cabinets, G = geometry;
 
@@ -274,15 +274,15 @@ function outside(made, prepared) {
 function build(V, prepared, opts) {
   const { model, appliances, PLACE, HW, scene } = prepared, CEILING = prepared.ceiling;
   const EXTRA = opts.layers || [];
-  /* what is drawn, described (core/describe.js): the cabinets, the fixtures, the tiles' cells, the lamps */
-  const D = describe.create({ place: PLACE, level: prepared.level, layers: EXTRA, looks: opts.materials, metal: scene.finish.metal, ceiling: CEILING });
+  /* what is drawn, described (core/drawing.js): the cabinets, the fixtures, the tiles' cells, the lamps */
+  const D = drawing.create({ place: PLACE, level: prepared.level, layers: EXTRA, looks: opts.materials, metal: scene.finish.metal, ceiling: CEILING });
   const { box, at, part, STATIC, MOVERS, ENVELOPES, UNDRAWN } = D;
 
   /* the cabinets, with their products */
   const drawn = furniture.draw(D, model, appliances, HW, scene.installation);
 
   /* the fixtures: each drawn by the library in its own frame (x along its wall, y out of it, h up from the floor) */
-  for (const x of prepared.FIXTURES) draw[x.A.draw](D, x.A, { r: x.id, a: at(x.id, x.f.layer || 'sanitary'), w: x.b.width, d: x.b.depth, h: x.b.height, h0: x.f.offset[2], f: x.f });
+  for (const x of prepared.FIXTURES) shapes[x.A.draw](D, x.A, { r: x.id, a: at(x.id, x.f.layer || 'sanitary'), w: x.b.width, d: x.b.depth, h: x.b.height, h0: x.f.offset[2], f: x.f });
   /* the room's tiles (room/tiles.js): pieces of core and their materials, for the page */
   const tiles = prepared.scene.tiles ? roomTiles(prepared.scene, prepared.room, { product: opts.library.product, textures: opts.library.textures }, { layers: ['tiles'].concat(EXTRA) }, 'cuts') : { pieces: [], materials: {}, counts: {} };
   /* what the owner builds in the room (a casing of plasterboard), boxes in the room's axes */
@@ -298,19 +298,19 @@ function build(V, prepared, opts) {
   if (Lt && Lt.pendants) {
     const Pd = Lt.pendants, r = String(Pd.group), wt = model.worktops[r] || { y0: 0, y1: 0 }, top = model.groups[r].items.find(i => i.type === 'worktop');
     const mid = top ? (top.x0 + top.x1) / 2 : model.groups[r].widths.reduce((s, w) => s + w, 0) / 2, a = at(r, 'lamps');
-    for (let i = 0; i < Pd.count; i++) draw.pendant(D, { a, r, x: mid + (i - (Pd.count - 1) / 2) * Pd.spacing, y: (wt.y0 + wt.y1) / 2, bottom: Lt.pendantBottom, ceiling: CEILING });
+    for (let i = 0; i < Pd.count; i++) shapes.pendant(D, { a, r, x: mid + (i - (Pd.count - 1) / 2) * Pd.spacing, y: (wt.y0 + wt.y1) / 2, bottom: Lt.pendantBottom, ceiling: CEILING });
   }
   if (Lt) {
     for (const d of Lt.downlights) {
       if (!d.at) continue;                 // in the room's axes
       const a = at('room', 'ceiling', null, ['lamps'].concat(opts.ceilingLayers || [])); a.layers = a.layers.filter(k => k !== 'groom');
-      draw.downlight(D, { a, r: 'room', x: d.at[0], y: d.at[1], ceiling: CEILING });
+      shapes.downlight(D, { a, r: 'room', x: d.at[0], y: d.at[1], ceiling: CEILING });
     }
     for (const d of Lt.downlights) {
       if (d.at) continue;
       const g = String(d.group), x = d.between ? d.between.reduce((s, k) => s + drawn.axes[k], 0) / d.between.length : d.x, y = model.groups[g].wall + Number(d.y);
       const a = at(g, 'ceiling', null, ['lamps'].concat(opts.ceilingLayers || [])); a.layers = a.layers.filter(k => k !== 'g' + g);
-      draw.downlight(D, { a, r: g, x, y, ceiling: CEILING });
+      shapes.downlight(D, { a, r: g, x, y, ceiling: CEILING });
     }
   }
 
@@ -333,24 +333,24 @@ function build(V, prepared, opts) {
      legs, holes, the installations. */
   const APPLIANCES = ['sink', 'trap', 'hob', 'hood', 'oven', 'microwave', 'coffee', 'fridge', 'dishwasher'];
   made.plan = () => {
-    const cells = made.cells(), shapes = [];
+    const cells = made.cells(), outlines = [];
     const span = list => { const s = list.map(c => plan2d.solidShape(c)), xs = s.flatMap(q => q.poly.map(p => p[0])), ys = s.flatMap(q => q.poly.map(p => p[1]));
       return { poly: [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)], [Math.min(...xs), Math.max(...ys)]], bottom: Math.min(...s.map(q => q.bottom)), top: Math.max(...s.map(q => q.top)) }; };
     for (const c of drawn.carcasses) {
       const own = cells.filter(x => x.info && x.info.carcass === c).concat(...c.movers.map(m => m.cells)).filter(x => !x.layers.some(l => ['handles', 'hardware', 'holes', 'legs'].includes(l)));   // a handle past the front: not the carcass
-      if (own.length) shapes.push(span(own));
+      if (own.length) outlines.push(span(own));
     }
     for (const x of model.products || []) {
       if (!APPLIANCES.includes(x.role) || ['sink', 'hob', 'trap'].includes(x.role)) continue;   // the sink and the hob: their own outlines below
       const b = C.boxIn(x.node), wall = model.groups[x.group].wall, list = [];
       box(list, x.group, [b[0], b[1], b[2] + wall, b[3] + wall, b[4], b[5]], 'applianceBody', 'appliance', { name: x.name || x.role });
-      shapes.push(...list.map(c => plan2d.solidShape(c)));
+      outlines.push(...list.map(c => plan2d.solidShape(c)));
     }
     const tops = cells.filter(c => c.layers.includes('worktops') || c.layers.includes('endPanels')).map(c => plan2d.solidShape(c));
-    shapes.push(...cells.filter(c => c.layers.some(l => ['builtIns', 'plasterboard', 'sanitary', 'basin'].includes(l)) && !c.layers.includes('installations')).map(c => plan2d.solidShape(c, c.material === 'glass')));
-    shapes.push(...shown.footprints(layers => !layers.includes('installations') && layers.some(l => ['sink', 'hob', 'basin', 'sanitary'].includes(l))));
-    if (tops.length) shapes.push({ pieces: tops, poly: tops[0].poly, bottom: Math.min(...tops.map(q => q.bottom)), top: Math.max(...tops.map(q => q.top)) });
-    return { cells: [], shapes };
+    outlines.push(...cells.filter(c => c.layers.some(l => ['builtIns', 'plasterboard', 'sanitary', 'basin'].includes(l)) && !c.layers.includes('installations')).map(c => plan2d.solidShape(c, c.material === 'glass')));
+    outlines.push(...shown.footprints(layers => !layers.includes('installations') && layers.some(l => ['sink', 'hob', 'basin', 'sanitary'].includes(l))));
+    if (tops.length) outlines.push({ pieces: tops, poly: tops[0].poly, bottom: Math.min(...tops.map(q => q.bottom)), top: Math.max(...tops.map(q => q.top)) });
+    return { cells: [], shapes: outlines };
   };
   /* the tree: its rules (core/tree.js) and each group inside the box the scene gives it */
   const treeChecks = () => {

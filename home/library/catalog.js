@@ -16,7 +16,7 @@
  * @property {string} [note]
  * @property {string} [family]
  * @property {string} [metal]
- * @property {string} [draw]  its drawing in library/draw.js
+ * @property {string} [draw]  its drawing in library/shapes.js
  * @property {string} [texture]
  * @property {any} [more]
  */

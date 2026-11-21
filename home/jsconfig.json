@@ -15,7 +15,7 @@
     "core/*.js",
     "house/model.js",
     "library/catalog.js",
-    "library/draw.js",
+    "library/shapes.js",
     "room/cabinets.js",
     "room/furniture.js",
     "room/room.js",
