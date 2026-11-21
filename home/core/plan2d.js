@@ -164,4 +164,3 @@ function solidShape(c, glass = false) {
 
 return { create, solidShape };
 }
-HOME.plan2d = plan2dModule(HOME.geometry, HOME.tools);

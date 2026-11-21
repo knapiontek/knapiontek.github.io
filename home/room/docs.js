@@ -421,4 +421,3 @@ return { book: buildBook, assembly: renderAssembly, warnings: model.warnings, pa
 
 return { create };
 }
-HOME.docs = docsModule(HOME.tools, HOME.estimate, HOME.cabinets);

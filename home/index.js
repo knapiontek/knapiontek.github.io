@@ -3,13 +3,21 @@
    (?room=kitchen_6 or ?room=bathroom_7,bathroom_5) cut out of it, in 3D, 2D, Documents (its last sheet: Test) and Cabinets.
    Everything it shows comes from house.js and the library; nothing of this house is written here. The screen is index.html, of core/ui.js's pieces (Alpine.js); build(ui) makes the model and the scene. */
 'use strict';
+/* ================= THE APPLICATION: each file made from its constructor, given what it needs =================
+   These lines are the whole map of what needs what (plan.md). */
+const Geometry = geometryModule(), Tools = toolsModule(), Tree = treeModule();
+const Surface = surfaceModule(Geometry), Plan2d = plan2dModule(Geometry, Tools), Estimate = estimateModule(Tools);
+const UI = uiModule(Tools), Sheet = sheetModule(UI, Tools), Scene = sceneModule(Geometry, Surface);
+const Catalog = catalogModule(HOME.load), Model = modelModule(Geometry, Tree), Tiles = tilesModule(Geometry);
+const Draw = drawModule(), Cabinets = cabinetsModule(Draw);
+const Room = roomModule(Geometry, Surface, Tree, Plan2d, Tiles, Cabinets, Draw), Docs = docsModule(Tools, Estimate, Cabinets);
 /* ================= THE CABINET EDITOR =================
    the mode Cabinets: the active room's cabinets file in tables, its elevations drawn: tables -> the file -> the model
    (room/cabinets.js) -> the drawing. The checks of the data are the model's; it only checks that the cells are numbers.
    Export writes the file as the files are written; Show in 3D puts it in place of the room's for this page (until it is
    loaded again). Its screen is in index.html; its Alpine part (EDITOR.part(host)) is merged into the page's. */
 const EDITOR = (() => {
-const C = HOME.cabinets, { esc } = HOME.tools;
+const C = Cabinets, { esc } = Tools;
 const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags, plural } = C;
 const HANDLES = ['', ...C.SIDES], HINGES = ['', ...C.HINGE_SIDES];
 const SIDE_NAME = { '': 'none', top: 'top', bottom: 'bottom', left: 'left', right: 'right' };
@@ -201,7 +209,7 @@ function part(host) {
         for (const k of ['groups', 'columns', 'components', 'notes']) this.$watch(k, () => this.keepEmpty(k));
         Alpine.effect(() => { if (this.base) this.built = build(this.base, { groups: this.groups, columns: this.columns, components: this.components, notes: this.notes }, this.boards, this.applianceProducts); });
       }
-      if (!this.fitted) this.$nextTick(() => { this.fitted = true; for (const [k, cols] of Object.entries(COLS)) HOME.ui.autoFit(this.$refs[k], this.$refs[k].parentElement, cols); });
+      if (!this.fitted) this.$nextTick(() => { this.fitted = true; for (const [k, cols] of Object.entries(COLS)) UI.autoFit(this.$refs[k], this.$refs[k].parentElement, cols); });
     },
     watching: false,
     editorMenus() {
@@ -276,7 +284,7 @@ function part(host) {
     exportFile() {
       const n = this.built.warnings.length, FILE = this.editing.id + '.cabinets.js';
       if (!this.built.file) { this.say('Nothing to export.', true); return; }
-      HOME.ui.download(C.cabinetsText(this.built.file), 'text/javascript;charset=utf-8', FILE);
+      UI.download(C.cabinetsText(this.built.file), 'text/javascript;charset=utf-8', FILE);
       this.say('Exported ' + FILE + (n ? ' with ' + n + ' ' + plural(n, 'problem', 'problems') + ' in the data (listed in the panel)' : '') + '. Put it in room/ (a new room: add cabinets to its files in house.js) and load the page again.', n > 0);
     },
     importFile(e) {
@@ -292,7 +300,7 @@ return { part };
 })();
 
 const EDITOR_HOST = {};                    // what the cabinet editor asks of the page (build() fills it)
-HOME.ui.page('house', Object.defineProperties({
+UI.page('house', Object.defineProperties({
   key: 'home-house', fresh: () => ({ mode: '3d', tab: null, layers: {}, zoom: 1, room: null, finish: {} }), valid: s => ['3d', '2d', 'documents', 'cabinets'].includes(s.mode) && s.layers,
   modes: ['3d', '2d', 'documents', 'cabinets'], tabs: { '3d': ['view', 'finish'] },   // the panel's View and Finish: 3D's only
   async load() { P = await build(this); },
@@ -308,13 +316,13 @@ let P = null;                              // the page built: what its screen as
 /* builds the page into ui (the page's Alpine part) */
 async function build(ui) {
 const state = ui.state;
-const { $ } = HOME.ui;
-const { prism, hRange, EPS } = HOME.geometry;
-const { piecesOf } = HOME.surface;
+const { $ } = UI;
+const { prism, hRange, EPS } = Geometry;
+const { piecesOf } = Surface;
 const DEG = 180 / Math.PI;
 
-const [DATA, LIB] = await Promise.all([HOME.load('house/house.js', 'house', 3), HOME.catalog.open()]);
-const MODEL = HOME.model.build(DATA), T = MODEL.T, HOUSE = MODEL.HOUSE;   // DATA: the site, the house in it
+const [DATA, LIB] = await Promise.all([HOME.load('house/house.js', 'house', 3), Catalog.open()]);
+const MODEL = Model.build(DATA), T = MODEL.T, HOUSE = MODEL.HOUSE;   // DATA: the site, the house in it
 /** a setting the data must give: its value */
 const must = (/** @type {HouseNode} */ n, /** @type {string} */ key) => { const s = T.setting(n, key); if (!s) throw new Error(`${n.id}: no setting ${key}`); return s.value; };
 const VIEW = must(HOUSE, 'view'), TILES = must(HOUSE, 'tiles');
@@ -370,15 +378,15 @@ const furnished = r => PREPARED.get(r.id) || PREPARED.set(r.id, (async () => {
   const over = MODEL.ELEMENTS.filter(e => e.kind === 'ceiling' && e.b[0] < at[0] + r.node.size[0] && e.b[1] > at[0] && e.b[2] < at[1] + r.node.size[1] && e.b[3] > at[1] && e.b[4] > at[2]);
   const ceiling = over.map(e => ({ a: e.b[4] - at[2], s: 0 })).concat(r.floor === MODEL.FLOORS[MODEL.FLOORS.length - 1] ? MODEL.ROOF_UNDER.map(l => ({ a: l.a + l.s * at[1] - at[2], s: l.s })) : []);
   const node = { offset: at, size: r.node.size, area: r.node.area, ceiling, tiles: TILES, openings: MODEL.OPENINGS.map(o => o.b).filter(near).map(b => b.map((v, k) => v - at[k >> 1])) };
-  const prepared = HOME.room.prepare(node, { cabinets, scene }, LIB);
-  return { room: r, prepared, data, used, docs: docs && HOME.docs.create({ model: prepared.model, tree: prepared.TREE, docs, appliances: prepared.appliances, library: LIB }) };
+  const prepared = Room.prepare(node, { cabinets, scene }, LIB);
+  return { room: r, prepared, data, used, docs: docs && Docs.create({ model: prepared.model, tree: prepared.TREE, docs, appliances: prepared.appliances, library: LIB }) };
 })()).get(r.id);
 const TILE_PRODUCTS = /** @type {Object<string, TileProduct>} */ (LIB.groups.tiles);
 await LIB.loadTextures(Object.values(TILE_PRODUCTS).map(p => p.texture));
 
 /* ================= THE SCENE: one for every view; a view (the house, a room) is built in it and taken away =================
    ?room= the rooms asked for; a link to this page, Back and Forward change the view in place */
-const V = HOME.scene.create({ canvas: /** @type {HTMLCanvasElement} */ ($('gl')), stage: /** @type {HTMLElement} */ ($('stage')), materials: MATERIALS, textures: LIB.textures, light: VIEW.light, edges: VIEW.edges, sunCentre: [0, 0, 0] });
+const V = Scene.create({ canvas: /** @type {HTMLCanvasElement} */ ($('gl')), stage: /** @type {HTMLElement} */ ($('stage')), materials: MATERIALS, textures: LIB.textures, light: VIEW.light, edges: VIEW.edges, sunCentre: [0, 0, 0] });
 let CUR = null;                            // the view shown: {click, frame, key, active, P}
 let SCOPE = [];                            // the rooms the view is cut to; none: the whole house
 /* the active room: always one (the panel's): the one picked in the menu, kept; at first the first furnished */
@@ -390,7 +398,7 @@ function heading() {
   ui.title = roomName(r);
   ui.subtitle = r.floor.name;
   document.title = SCOPE.length ? SCOPE.map(id => ROOM[id].node.name).join(', ') : 'Home';
-  ui.nav = HOME.model.nav(DATA, SCOPE, r.id);
+  ui.nav = Model.nav(DATA, SCOPE, r.id);
 }
 V.enableNavigation();
 V.onClick(ray => CUR && CUR.click(ray));
@@ -460,13 +468,13 @@ const FURNITURE = await Promise.all(FURNISHED.map(furnished));
 for (const f of FURNITURE) Object.assign(MATERIALS, f.prepared.looks);
 await LIB.loadTextures(FURNITURE.flatMap(f => f.prepared.textures));
 /* the active room's furniture: its own layers too (its groups and its kinds of parts), in the house's view as in its own */
-const roomLayers = () => { const f = FURNITURE.find(f => f.room.id === activeId()); return f ? HOME.room.layers(f.prepared) : {}; };
+const roomLayers = () => { const f = FURNITURE.find(f => f.room.id === activeId()); return f ? Room.layers(f.prepared) : {}; };
 let ROOM_LAYERS = roomLayers();
 
 /* ================= SOLIDS =================
    The whole house: every solid, each door turning on its hinge. A part: the solids of its rooms, each wall, floor and
    ceiling an object of its own (a layer), a window or a door with the wall it sits in. */
-let LAYER = HOME.ui.layerTree(Object.assign({}, VIEW.layers, ROOM_LAYERS));
+let LAYER = UI.layerTree(Object.assign({}, VIEW.layers, ROOM_LAYERS));
 const OBJECTS = [];                        // the part's objects that hide while the camera is beyond them: {layer, middle, normal}
 const NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+h': [0, 0, 1], '-h': [0, 0, -1] };
 /** @type {HouseCell[]} */ let STILL;     // the cells that stand still
@@ -498,7 +506,7 @@ const BODY = UNION ? [[UNION[0], UNION[2], UNION[4]], [UNION[1], UNION[3], UNION
 V.relight(LIGHT, [0, 1, 2].map(k => (BODY[0][k] + BODY[1][k]) / 2), !WHOLE);   // a room: the inside light and the lamps in physical units
 for (const f of FURNITURE) {
   const own = PARTS.find(p => p.room === f.room), ceilings = own ? own.objects.filter(o => o.role === 'ceiling').map(o => 'object:' + f.room.id + '/' + o.id) : [];
-  f.made = HOME.room.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings, library: LIB });
+  f.made = Room.build(V, f.prepared, { materials: MATERIALS, layers: [f.room.floor.id, 'furniture'], ceilingLayers: ceilings, library: LIB });
   STILL.push(...f.made.STATIC);
   for (const [k, m] of Object.entries(f.made.tiles.materials)) MATERIALS[k] ||= m;
   /* a wall's tiles hide with their wall (the part's object facing them, the nearest) */
@@ -535,9 +543,9 @@ function laying(D) {
     oa: v.oa ?? (changed ? null : D.oa), ob: v.ob ?? (changed ? null : D.ob) };
 }
 function layTiles(D) {
-  const L = laying(D), P = TILE_PRODUCTS[L.product], laid = HOME.tiles.rooms(D.rooms, PASSAGE_BOXES, level(D.floor));
-  if (L.oa === null || L.ob === null) { Object.assign(L, HOME.tiles.fit(L, P, laid)); Object.assign(state.layouts[D.key] ||= {}, { oa: L.oa, ob: L.ob }); }
-  const pieces = HOME.tiles.lay(L, P, laid, L.oa, L.ob), count = HOME.tiles.count(P, pieces);
+  const L = laying(D), P = TILE_PRODUCTS[L.product], laid = Tiles.rooms(D.rooms, PASSAGE_BOXES, level(D.floor));
+  if (L.oa === null || L.ob === null) { Object.assign(L, Tiles.fit(L, P, laid)); Object.assign(state.layouts[D.key] ||= {}, { oa: L.oa, ob: L.ob }); }
+  const pieces = Tiles.lay(L, P, laid, L.oa, L.ob), count = Tiles.count(P, pieces);
   const old = LAID[D.key];
   if (old) V.removeMeshes(old.made);
   LAID[D.key] = { D, L, P, laid, pieces, count, made: V.buildMeshes(tilePieces(D, L, P, laid, pieces)) };
@@ -546,22 +554,22 @@ function layTiles(D) {
 function tilePieces(D, L, P, laid, pieces) {
   const T = LIB.textures[P.texture], h = level(D.floor), up = [0, 0, 1], cell = { layers: [D.floor.id].concat(TILES.layers) };
   const grout = laid.filter(r => SHOWN_ROOMS.has(r.id)).flatMap(r => r.rects).map(q => [[q[0], q[2], h + TILES.grout], [q[1], q[2], h + TILES.grout], [q[1], q[3], h + TILES.grout], [q[0], q[3], h + TILES.grout]]);
-  const made = HOME.tiles.corePieces(L, P, T, pieces.filter(p => SHOWN_ROOMS.has(p.room)), grout, (x, y) => [x, y, h + TILES.top], up, cell, TILES.small);
+  const made = Tiles.corePieces(L, P, T, pieces.filter(p => SHOWN_ROOMS.has(p.room)), grout, (x, y) => [x, y, h + TILES.top], up, cell, TILES.small);
   for (const [k, m] of Object.entries(made.materials)) MATERIALS[k] ||= m;
   /* a slab of tiles, its face at top, down into the floor by depth: its edges round each room's floor */
   const rings = laid.filter(r => SHOWN_ROOMS.has(r.id)).flatMap(r => r.rects).map(q => ({ poly: [[q[0], q[2]], [q[1], q[2]], [q[1], q[3]], [q[0], q[3]]], out: 1 }));
-  return made.pieces.concat(HOME.tiles.slabEdges(rings, (x, y) => [x, y, h + TILES.top], (x, y) => [x, y, 0], up, TILES.depth, Object.assign({}, cell), `tiles:${P.texture}:0`));
+  return made.pieces.concat(Tiles.slabEdges(rings, (x, y) => [x, y, h + TILES.top], (x, y) => [x, y, 0], up, TILES.depth, Object.assign({}, cell), `tiles:${P.texture}:0`));
 }
 const LAYOUTS = MODEL.LAYOUTS.filter(D => TILE_PRODUCTS[D.product]);
 for (const D of LAYOUTS) layTiles(D);
 const layoutOf = r => LAYOUTS.find(D => D.rooms.includes(r));
 
 /* ================= STATE, LAYERS ================= */
-let { layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers);
+let { layerOn } = UI.layerSwitch(LAYER, () => state.layers);
 /* another active room: its furniture's layers */
 function active() {
-  ROOM_LAYERS = roomLayers(); LAYER = HOME.ui.layerTree(Object.assign({}, VIEW.layers, ROOM_LAYERS));
-  ({ layerOn } = HOME.ui.layerSwitch(LAYER, () => state.layers)); apply();
+  ROOM_LAYERS = roomLayers(); LAYER = UI.layerTree(Object.assign({}, VIEW.layers, ROOM_LAYERS));
+  ({ layerOn } = UI.layerSwitch(LAYER, () => state.layers)); apply();
 }
 const ROOM_VIEW = new Set(WHOLE ? [] : VIEW.floors);   // a room shows whatever the floors are switched to
 const HANDLE = 'cup';                      // the handles drawn: cup or bar (each front has both)
@@ -589,7 +597,7 @@ const frameStep = () => {
 };
 
 /* ================= 3D: cameras, sun, clicks, walk ================= */
-const SUN = HOME.ui.sunStore(VIEW.light);
+const SUN = UI.sunStore(VIEW.light);
 const placeSun = () => { V.placeSun(SUN.state); for (const f of FURNITURE) f.made.night(!!SUN.state.night); };
 ui.sun = { rects: MODEL.FOOTPRINT, mark: PART.flatMap(id => ROOM[id].rects), sun: SUN.state, change: () => { SUN.save(); placeSun(); } };
 /* the cameras: the house's and the open floor's; of a part, over it and from two corners, framed by its box */
@@ -641,7 +649,7 @@ const key = e => {
 };
 
 /* ================= 2D: one sheet per floor (of the part: its floors), the garden at the top ================= */
-const PLAN = HOME.plan2d.create(MATERIALS), PS = PLAN.SIZE;
+const PLAN = Plan2d.create(MATERIALS), PS = PLAN.SIZE;
 const planCut = (/** @type {HouseNode} */ F) => must(F, 'view.plan');
 const inside = (b, x, y) => x >= b[0] - EPS && x <= b[1] + EPS && y >= b[2] - EPS && y <= b[3] + EPS;
 /* the stair: a full line under the cut, dashed over it; from the floor above, all of it shows through the hole */
@@ -717,7 +725,7 @@ function planSvg() {
 }
 const drawPlan = () => { ui.plan = { svg: planSvg(), note: `The cut over the floor: ${FLOORS.map(F => `${(F.name || F.id).toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW.planNote}` }; };
 const PLAN_MENU = [{ name: 'Fit', label: 'The whole sheet', go: () => { state.zoom = 1; } },
-  { name: 'Save SVG', go: () => HOME.ui.download(planSvg(), 'image/svg+xml', WHOLE ? 'house.svg' : PART.join('-') + '.svg') }];
+  { name: 'Save SVG', go: () => UI.download(planSvg(), 'image/svg+xml', WHOLE ? 'house.svg' : PART.join('-') + '.svg') }];
 
 /* ================= DOCUMENTS: the rooms, the doors, the notes ================= */
 let SHEET = null;
@@ -815,7 +823,7 @@ function layoutPanel(A, changed) {
   const { D, L } = A;
   return { key: D.key, L,
     products: Object.entries(TILE_PRODUCTS).map(([k, p]) => ({ k, name: p.name })),
-    patterns: Object.entries(HOME.tiles.PATTERNS).map(([k, [name]]) => ({ k, name })), dirs: Object.entries(HOME.tiles.DIRS).map(([k, name]) => ({ k, name })),
+    patterns: Object.entries(Tiles.PATTERNS).map(([k, [name]]) => ({ k, name })), dirs: Object.entries(Tiles.DIRS).map(([k, name]) => ({ k, name })),
     changed: !!changed };                  // the viewer changed it: it may go back to the data
 }
 function documents() {
@@ -869,7 +877,7 @@ return { click, frame: frameStep, key, active, P: {
   /* the layers in blocks: where (the floors and the roof; the whole house only), what (the elements), the furniture of a
      room; a solid shows when all its layers are on */
   layerBlocks() {
-    const list = top => HOME.ui.layerList(LAYER, top, state.layers, layerOn);
+    const list = top => UI.layerList(LAYER, top, state.layers, layerOn);
     return [{ name: 'Floors', id: 'floors', tab: 'view', items: WHOLE ? list(VIEW.floors) : [] }, { name: 'Layers', id: 'layers', tab: 'view', items: list(VIEW.elements) },
       { name: 'Furniture', id: 'furniture', tab: 'view', items: list(Object.keys(ROOM_LAYERS)) }];
   },
@@ -905,7 +913,7 @@ return { click, frame: frameStep, key, active, P: {
     /** @type {MenuItem[]} */
     const walk = WHOLE ? [{ name: 'Walk', cls: 'walk', pressed: ui.walking, go: () => (V.walk.on ? V.stopWalk() : V.startWalk()) }] : [];   // a walk: the whole house only
     const go = c => ({ name: c.name, go: () => { V.stopWalk(); V.flyTo(c); } });
-    return { '3d': [walk.concat(HOME.ui.openAll(ui, V)), cameras().map(go)], '2d': [PLAN_MENU], documents: [HOME.sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx')], cabinets: ui.editorMenus() };
+    return { '3d': [walk.concat(UI.openAll(ui, V)), cameras().map(go)], '2d': [PLAN_MENU], documents: [Sheet.menu(() => SHEET, (WHOLE ? 'house' : PART.join('-')) + '.xlsx')], cabinets: ui.editorMenus() };
   }
 } };
 }

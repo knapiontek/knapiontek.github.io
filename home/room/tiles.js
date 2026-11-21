@@ -227,4 +227,3 @@ function slabEdges(rings, at, point, n, depth, cell, material) {
 
 return { PATTERNS, DIRS, rooms, lay, clip, clipHalf, count, fit, corePieces, slabEdges };
 }
-HOME.tiles = tilesModule(HOME.geometry);

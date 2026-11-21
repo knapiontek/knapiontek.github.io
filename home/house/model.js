@@ -557,4 +557,3 @@ function nav(ROOT, part = [], active = part[0]) {
 
 return { build, nav };
 }
-HOME.model = modelModule(HOME.geometry, HOME.tree);

@@ -77,4 +77,3 @@ function estimate(spec) {
 
 return { estimate };
 }
-HOME.estimate = estimateModule(HOME.tools);

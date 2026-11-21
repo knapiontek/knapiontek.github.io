@@ -3,6 +3,8 @@
    it says its format and version. A page loads a file by its path from the home folder (the folder that has the file knows
    its path); the data comes back only when its format and version are the ones the caller knows. Must be the first script of a page:
    it finds the home folder from its own address. Knows no project. */
+/* HOME: the one global name of the pages but the files' constructors: the data channel, data() for the data files, load()
+   for the page */
 window.HOME = window.HOME || /** @type {Home} */ ({});
 function loadModule() {
 'use strict';

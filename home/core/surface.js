@@ -140,4 +140,3 @@ const piecesOf = (/** @type {Cell[]} */ cells) => conform(visiblePieces(cells.fl
 
 return { sub3, dot3, cross3, weld, piecesOf };
 }
-HOME.surface = surfaceModule(HOME.geometry);

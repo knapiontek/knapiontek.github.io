@@ -1,6 +1,6 @@
 /* room/docs.js: its public API, each part with what it gives, on every room with a docs file (test/test.md) */
 async function docsTest({ docsModule, toolsModule, estimateModule, cabinetsModule, roomModule, geometryModule, surfaceModule, treeModule, plan2dModule, tilesModule, drawModule, catalogModule }, data, check) {
-  const tools = toolsModule(), geometry = geometryModule(), cabinets = cabinetsModule();
+  const tools = toolsModule(), geometry = geometryModule(), cabinets = cabinetsModule(drawModule());
   const docs = docsModule(tools, estimateModule(tools), cabinets);
   check('the public API', Object.keys(docs).join(' ') === 'create');
 

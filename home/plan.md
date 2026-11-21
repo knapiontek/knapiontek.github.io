@@ -24,16 +24,16 @@ The page runs from disk (file://): no JavaScript modules (`import`). A script's 
 ## The rules of a step
 
 - One file at a time, from the bottom up: core, then the engines, then the screen, index.js last.
-- Inside a constructor no `HOME`: only its parameters and JavaScript itself. Until every file is done, the last line of a file joins it to the page: `HOME.plan2d = plan2dModule(HOME.geometry, HOME.tools);`. When all are done these lines and `HOME` go.
+- Inside a constructor no `HOME`: only its parameters and JavaScript itself.
 - Before and after each step the LLM's tests (test/test.md): everything the same.
 - Each step ends with test/index.html: the file's row OK.
 
 ## Steps
 
-Done (21 Nov 2026): every file but room/cabinets.js and index.js gets what it needs as parameters: core/ needs nothing outside core; core/tools.js gathers short pieces; library/catalog.js alone knows the library's files and room/room.js asks it for a product (product, group), not the library's raw groups; room/docs.js gets the cabinets engine instead of being handed it.
+Done (21 Nov 2026): no file reaches another but through its constructor's parameters; index.js makes every module in its first lines (the map of what needs what); `HOME` is only the data channel of core/load.js (`data`, `load`); globals.d.ts declares only that and what comes from outside (three.js, Alpine, XLSX). Every row of test/index.html is OK.
 
-1. **Next**: index.js: the application put together on local variables; it asks the catalog instead of reading the library's groups; `HOME` (but the data channel) and globals.d.ts go.
-2. The drawing engine. The engines give a description, as data, and draw nothing: exact solids (prisms of core/geometry.js: walls, boards, carcasses; counted, in the 2D plan, never sharing volume), details (look only: a cylinder, a turned shape, an extruded profile, a sphere; a shape, a material, a place), moving parts, lamps. One engine turns a description into 3D (core/scene.js, the only file with three.js), plan2d into 2D. First the format of a description, then: library/draw.js (a product and its place in, its description out), room/cabinets.js (its drawing out of it; then its row in test/index.html is OK), the house (it draws nothing that is a room's).
+1. **Next**: the drawing engine. The engines give a description, as data, and draw nothing: exact solids (prisms of core/geometry.js: walls, boards, carcasses; counted, in the 2D plan, never sharing volume), details (look only: a cylinder, a turned shape, an extruded profile, a sphere; a shape, a material, a place), moving parts, lamps. One engine turns a description into 3D (core/scene.js, the only file with three.js), plan2d into 2D. First the format of a description, then: library/draw.js (a product and its place in, its description out), room/cabinets.js (its drawing out of it: then it gets nothing), room/room.js, the house (it draws nothing that is a room's).
+2. index.js, split: the cabinet editor, the house's Documents, the finish (a metal or a decor swapped; a query of the catalog: the same product in another metal), each to its own file.
 3. The files' names and places.
 
 ## Kept

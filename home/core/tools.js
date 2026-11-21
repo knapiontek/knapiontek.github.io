@@ -28,4 +28,3 @@ const kinds = (/** @type {any[]} */ rows) => rows.map((r, i) => (r && !Array.isA
 
 return { LOCALE, fmt, esc, formula, input, cols, money, kinds };
 }
-HOME.tools = toolsModule();

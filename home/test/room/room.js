@@ -2,7 +2,7 @@
    not called here (test/test.md) */
 async function roomTest({ roomModule, geometryModule, surfaceModule, treeModule, plan2dModule, toolsModule, tilesModule, cabinetsModule, drawModule, catalogModule }, data, check) {
   const geometry = geometryModule();
-  const room = roomModule(geometry, surfaceModule(geometry), treeModule(), plan2dModule(geometry, toolsModule()), tilesModule(geometry), cabinetsModule(), drawModule());
+  const room = roomModule(geometry, surfaceModule(geometry), treeModule(), plan2dModule(geometry, toolsModule()), tilesModule(geometry), cabinetsModule(drawModule()), drawModule());
   check('the public API', Object.keys(room).join(' ') === 'prepare build layers');
 
   /* the library as the page has it (library/catalog.js), and each furnished room as the house hands it in: its size, its

@@ -330,4 +330,3 @@ function autoFit(table, box, cols) {
 return { MODES, TAB_NAMES, $, byId, el, part, component, page, openAll, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
   setColumns, autoFit };
 }
-HOME.ui = uiModule(HOME.tools);

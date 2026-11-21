@@ -522,4 +522,3 @@ return {
   leg, grille, shelfPin, bumper, hinge, handle, runner, drawerPart, bins, cutleryInsert
 };
 }
-HOME.draw = drawModule();

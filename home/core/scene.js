@@ -703,4 +703,3 @@ function create(opts) {
 
 return { create };
 }
-HOME.scene = sceneModule(HOME.geometry, HOME.surface);

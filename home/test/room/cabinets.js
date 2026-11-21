@@ -1,6 +1,9 @@
 /* room/cabinets.js: its public API, each part with what it gives, on every room's cabinets (test/test.md) */
-function cabinetsTest({ cabinetsModule }, data, check) {
-  const C = cabinetsModule();
+function cabinetsTest({ cabinetsModule, drawModule }, data, check) {
+  /* in place of library/draw.js (three.js): its drawings, each only counting that it was asked */
+  let drawn = 0;
+  const drawings = Object.fromEntries(Object.keys(drawModule()).map(kind => [kind, () => { drawn++; }]));
+  const C = cabinetsModule(drawings);
   check('the public API', Object.keys(C).join(' ') === 'TYPES TAGS TAG_NAMES LABELS typeLabel tagsLabel useLabel hasTag FRONT_TYPES SIDES HINGE_SIDES placeLabel gapsText parseTags spaceAround valueAt PINS_PER_SHELF tagsOf readType cutKey checkSettings build cutList plural appliances withLibrary tree boxIn draw boardLooks coveredEdges cabinetsText');
 
   const products = {};
@@ -34,7 +37,6 @@ function cabinetsTest({ cabinetsModule }, data, check) {
 
   /* draw, into a drawing context (room/room.js's) that only counts what it is asked to draw; what a call gives back is a
      blank that takes any use */
-  let drawn = 0;
   const blank = () => new Proxy(function () {}, { get: (t, k) => k === Symbol.toPrimitive ? () => 0 : blank(), apply: () => blank() });
   const D = { STATIC: [], frame: () => ({ X: [1, 0], Y: [0, 1] }), has: () => true, material: () => ({}), metal: 'steel', V: blank() };
   for (const name of ['box', 'at', 'detail', 'cylinder', 'display', 'mover', 'linkTo', 'envelope', 'openFront', 'openTop', 'profile', 'part', 'lamp', 'point', 'pivot'])

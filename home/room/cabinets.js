@@ -149,7 +149,8 @@
 /** @typedef {{ group: number, item: Item, name: string, a: number, b: number }} PlasterPiece  a plasterboard to cut, a × b */
 /** @typedef {ReturnType<ReturnType<typeof cabinetsModule>['build']>} CabinetsModel  the cabinets of a room, as built from its file */
 
-function cabinetsModule() {
+/** @param {ReturnType<typeof drawModule>} drawings  library/draw.js: how each product is drawn (its drawing goes when cabinets give a description, plan.md) */
+function cabinetsModule(drawings) {
 'use strict';
 
 /* ================= 1. VOCABULARY: types, tags and what they build ================= */
@@ -1637,7 +1638,7 @@ function boxIn(n) {
 /* ================= 8. DRAWING: the model as solids, moving fronts and details =================
    D: the room's drawing context (room/room.js): box(list, r, gb, key, layer, info) in the frame of group r, at, detail,
    cylinder, mover, linkTo, envelope, openFront, openTop, part, frame(r) {X, Y}, has(key), STATIC; a product is drawn by
-   the library (HOME.draw) by its field draw. HW: the hardware as drawn (the products' sizes and the scene's layout);
+   the library (library/draw.js, drawings) by its field draw. HW: the hardware as drawn (the products' sizes and the scene's layout);
    install: how the sink, its trap and the hood are fitted. Boards are the materials 'board:' + product key ('~': the decor
    turned a quarter; ':core': the bare edge). */
 /** @param {any} D the drawing context (room/room.js) @param {CabinetsModel} model @param {Object<string, any>} appliances @param {any} HW @param {any} install */
@@ -1652,7 +1653,7 @@ function draw(D, model, appliances, HW, install) {
   const panelOf = f => (function find(n) { return n.type === 'board' && n.id === 'panel' ? n : n.children.reduce((q, c) => q || find(c), null); })(f.node);
   const GROUP = r => model.groups[r], groupLength = r => GROUP(r).widths.reduce((s, w) => s + w, 0), itemsOf = r => GROUP(r).items;
   const shakerRail = (model.materials[model.materialFor.cabinet] || {}).frameWidth;   // none: a front is one plain board
-  const product = (A, place, d = D) => HOME.draw[A.draw](d, A, place);
+  const product = (A, place, d = D) => drawings[A.draw](d, A, place);
   /* a product draws in its own coordinates: from the origin of its node (its left, back, bottom corner); the room's
      drawing context moved there */
   const P = role => (model.products || []).filter(x => x.role === role);
@@ -1673,7 +1674,7 @@ function draw(D, model, appliances, HW, install) {
   }
   /* a piece of hardware drawn by the library from the zero of its node */
   const pieces = test => (model.hardware || []).filter(test);
-  const fitted = (x, draw, place, ...settings) => { const o = originOf(x); HOME.draw[draw](moved(o), ...settings, Object.assign({ r: x.group, size: x.node.size }, place(o))); };
+  const fitted = (x, kind, place, ...settings) => { const o = originOf(x); drawings[kind](moved(o), ...settings, Object.assign({ r: x.group, size: x.node.size }, place(o))); };
   const fitOf = (fit, o) => minus(fit, o, [['bodyX0', 0], ['bodyX1', 0], ['bodyH0', 2], ['bodyH1', 2]]);
   const minus = (fit, o, keys) => Object.assign({}, fit, Object.fromEntries(keys.map(([k, i]) => [k, fit[k] - o[i]])));
 
@@ -1777,8 +1778,8 @@ function draw(D, model, appliances, HW, install) {
     const x = P('sink')[0], o = originOf(x);
     product(S, { r, x: x.x - o[0], y: x.y - o[1], top: x.top - o[2] }, moved(o));
     const tap = P('tap')[0], t = originOf(tap), trap = P('trap')[0], q = originOf(trap);
-    HOME.draw.tap(moved(t), { r, x: tap.x - t[0], y: tap.y - t[1], top: tap.top - t[2] });
-    HOME.draw.trap(moved(q), { r, x: trap.x - q[0], from: trap.from - q[2], drain: trap.drain - q[1], top: trap.top - q[2], outlet: trap.outlet - q[2], back: trap.back - q[1], wall: trap.wall - q[1] });
+    drawings.tap(moved(t), { r, x: tap.x - t[0], y: tap.y - t[1], top: tap.top - t[2] });
+    drawings.trap(moved(q), { r, x: trap.x - q[0], from: trap.from - q[2], drain: trap.drain - q[1], top: trap.top - q[2], outlet: trap.outlet - q[2], back: trap.back - q[1], wall: trap.wall - q[1] });
   }
   const hobGroup = GROUP_IDS.find(r => itemsOf(r).some(i => hasTag(i, 'hob')));
   const hobItem = hobGroup && itemsOf(hobGroup).find(i => hasTag(i, 'hob'));
@@ -1855,7 +1856,7 @@ function draw(D, model, appliances, HW, install) {
     } else if (opening === 'fridge' && item.fit) {
       const freezer = hasTag(item, 'freezer');
       const fridge = P('fridgeFreezer').find(x => x.carcassId === carcass.id), o = originOf(fridge);
-      HOME.draw.fridgeDoor(moved(o), appliances.fridgeFreezer, { r, m, freezer, fit: fitOf(item.fit, o), front: carcassFront - o[1], shelves: [carcass.x0 + 55 - o[0], carcass.x1 - 55 - o[0]] });
+      drawings.fridgeDoor(moved(o), appliances.fridgeFreezer, { r, m, freezer, fit: fitOf(item.fit, o), front: carcassFront - o[1], shelves: [carcass.x0 + 55 - o[0], carcass.x1 - 55 - o[0]] });
       m.label = (freezer ? 'Freezer' : 'Fridge') + ' · front ' + size + ' on the appliance door';
     } else if (opening === 'fixed') m.label = 'Dummy front ' + size + ' · fixed';
     if (!m.label) m.label = 'Front ' + size;
@@ -2003,4 +2004,3 @@ return {
   plural, appliances, withLibrary, tree, boxIn, draw, boardLooks, coveredEdges, cabinetsText
 };
 }
-HOME.cabinets = cabinetsModule();

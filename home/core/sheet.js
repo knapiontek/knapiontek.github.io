@@ -282,4 +282,3 @@ const menu = (/** @type {() => any} */ sheet, /** @type {string} */ file) => [
 
 return { evaluator, xlsx, view, menu };
 }
-HOME.sheet = sheetModule(HOME.ui, HOME.tools);

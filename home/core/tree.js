@@ -93,4 +93,3 @@ function create(root) {
 
 return { create };
 }
-HOME.tree = treeModule();

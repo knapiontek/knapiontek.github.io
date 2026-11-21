@@ -570,4 +570,3 @@ function layers(prepared) {
 
 return { prepare, build, layers };
 }
-HOME.room = roomModule(HOME.geometry, HOME.surface, HOME.tree, HOME.plan2d, HOME.tiles, HOME.cabinets, HOME.draw);

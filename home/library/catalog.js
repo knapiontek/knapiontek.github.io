@@ -71,4 +71,3 @@ async function open() {
 
 return { open };
 }
-HOME.catalog = catalogModule(HOME.load);
