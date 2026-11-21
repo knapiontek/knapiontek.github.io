@@ -91,7 +91,7 @@ After a change of types or comments only: 1, 2, 12 and 13 are enough. After a ch
 | the house | Rooms 20, Floor tiles 13, Doors 16, Notes 9, Elements 133, Test 35 | 18, the areas information |
 | room_356 | Estimate 80, Cut list 144, Notes 33, Elements 538, Test 13 | 10, all pass |
 | bathroom_5 | Estimate 61, Cut list 33, Notes 12, Elements 71, Test 13 | 10, all pass |
-| bathroom_7 | Estimate 55, Cut list 33, Notes 11, Elements 70, Test 13 | 10, all pass |
+| bathroom_7 | Estimate 54, Cut list 33, Notes 11, Elements 70, Test 13 | 10, all pass |
 | wardrobe_3 | Estimate 31, Cut list 64, Notes 14, Elements 307, Test 13 | 10, all pass |
 | wardrobe_4 | Estimate 31, Cut list 57, Notes 14, Elements 261, Test 13 | 10, all pass |
 | wardrobe_8 | Estimate 31, Cut list 58, Notes 15, Elements 218, Test 13 | 10, all pass |

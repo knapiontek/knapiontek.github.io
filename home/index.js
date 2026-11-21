@@ -14,6 +14,7 @@ const Drawing = coreDrawingModule(Geometry);
 const RoomModel = roomModelModule(Geometry, Tree, Tiles, Cabinets, Furniture), RoomView = roomViewModule(RoomModel, Cabinets, Furniture, Shapes, Drawing, Plan2d);
 const Docs = roomDocsModule(Tools, Estimate, Cabinets);
 const Design = roomDesignModule(Cabinets, Tools, UI);
+const HousePlan = housePlanModule(Geometry, Plan2d), HouseDocs = houseDocsModule();
 
 const DESIGN_HOST = {};                    // what the cabinet design asks of the page (build() fills it)
 UI.page('house', Object.defineProperties({
@@ -33,7 +34,7 @@ let P = null;                              // the page built: what its screen as
 async function build(ui) {
 const state = ui.state;
 const { $ } = UI;
-const { prism, hRange, EPS } = Geometry;
+const { prism, hRange } = Geometry;
 const { piecesOf } = Faces;
 const DEG = 180 / Math.PI;
 
@@ -43,7 +44,7 @@ const MODEL = Model.build(DATA), T = MODEL.T, HOUSE = MODEL.HOUSE;   // DATA: th
 const must = (/** @type {HouseNode} */ n, /** @type {string} */ key) => { const s = T.setting(n, key); if (!s) throw new Error(`${n.id}: no setting ${key}`); return s.value; };
 const VIEW = must(HOUSE, 'view'), TILES = must(HOUSE, 'tiles');
 const { ROOF, WIDTH, RIDGE_TOP, FLOORS, ROOMS, ROOM, DOORS } = MODEL;
-const level = F => F.offset[2], floorTop = F => level(F) + F.size[2];
+const level = F => F.offset[2];
 const roomName = r => `${r.node.number}. ${r.node.name}`;
 const MATERIALS = LIB.materials;
 await LIB.loadTextures(Object.values(MATERIALS).flatMap(m => [m.image && m.image.key, m.wood && m.wood.decor]));
@@ -192,6 +193,9 @@ let ROOM_LAYERS = roomLayers();
    ceiling an object of its own (a layer), a window or a door with the wall it sits in. */
 let LAYER = UI.layerTree(Object.assign({}, VIEW.layers, ROOM_LAYERS));
 const OBJECTS = [];                        // the part's objects that hide while the camera is beyond them: {layer, middle, normal}
+/* the layers of the floors of the part's rooms (one room's, or all): the tiles on a floor hide with it, while the camera is under it */
+const floorLayersOf = (/** @type {string} */ id = '') => PARTS.filter(p => !id || p.room.id === id).flatMap(p => p.objects.filter(o => o.role === 'floor').map(o => 'object:' + p.room.id + '/' + o.id));
+const boxOf = poly => [0, 1, 2].flatMap(k => [Math.min(...poly.map(v => v[k])), Math.max(...poly.map(v => v[k]))]);   // [x1, x2, y1, y2, h1, h2]
 const NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+h': [0, 0, 1], '-h': [0, 0, -1] };
 /** @type {HouseCell[]} */ let STILL;     // the cells that stand still
 /** @type {{ door: Door, layers: string[], mover?: Mover }[]} */ let LEAVES;   // the doors drawn, each with the layers its leaf gets
@@ -232,7 +236,18 @@ for (const f of FURNITURE) {
     const fit = n ? walls.filter(o => o.normal.reduce((s, v, k) => s + v * n[k], 0) < -0.99).sort((a, b) => off(a) - off(b)) : [];
     return fit.length ? [fit[0].layer] : [];
   };
-  if (f.made.tiles.pieces.length) V.buildMeshes(f.made.tiles.pieces.map(p => { const layers = [f.room.floor.id].concat(p.cell.layers, wallOf(p));
+  /* an edge of the tiles (the slab's side: the floor's along a wall, a wall's in a corner) lies under another wall's
+     tiles (between their face and the wall): it hides with that wall too, as their slab covers it */
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], TOL = 1, DEPTH = f.prepared.room.tiles.depth;
+  const faces = f.made.tiles.pieces.filter(p => p.cell.face && dot(p.n, p.cell.face) > 0.99).map(p => ({ n: p.n, at: dot(p.poly[0], p.n), box: boxOf(p.poly), walls: wallOf(p) }));
+  const coverOf = p => {
+    if (p.cell.face && dot(p.n, p.cell.face) > 0.99) return [];   // a face: its own wall
+    const at = dot(p.poly[0], p.n), b = boxOf(p.poly);
+    const by = faces.find(q => dot(q.n, p.n) < -0.99 && at >= -q.at - TOL && at <= -q.at + DEPTH + TOL
+      && [0, 1, 2].every(k => Math.abs(p.n[k]) > 0.5 || (b[2 * k] <= q.box[2 * k + 1] + TOL && b[2 * k + 1] >= q.box[2 * k] - TOL)));
+    return by ? by.walls : [];
+  };
+  if (f.made.tiles.pieces.length) V.buildMeshes(f.made.tiles.pieces.map(p => { const layers = [f.room.floor.id].concat(p.cell.layers, wallOf(p), coverOf(p), p.cell.face || p.cell.layers.includes('builtIns') ? [] : floorLayersOf(f.room.id));
     return Object.assign(p, { cell: Object.assign({}, p.cell, { layers }), group: layers.join('+') }); }));
 }
 const SOLIDS = WHOLE ? MODEL.SOLIDS.concat(...FURNITURE.map(f => f.made.STATIC)) : STILL;   // what the walk bumps into
@@ -258,23 +273,15 @@ function laying(D) {
   return { product, pattern: v.pattern || D.pattern || P.pattern, dir: v.dir || D.dir, grout: v.grout || LIB.textures[P.texture].grout,
     oa: v.oa ?? (changed ? null : D.oa), ob: v.ob ?? (changed ? null : D.ob) };
 }
+/* a layout laid over its rooms (room/tiles.js), drawn in the rooms shown; a fitted origin kept with the viewer's changes */
 function layTiles(D) {
-  const L = laying(D), P = TILE_PRODUCTS[L.product], laid = Tiles.rooms(D.rooms, PASSAGE_BOXES, level(D.floor));
-  if (L.oa === null || L.ob === null) { Object.assign(L, Tiles.fit(L, P, laid)); Object.assign(state.layouts[D.key] ||= {}, { oa: L.oa, ob: L.ob }); }
-  const pieces = Tiles.lay(L, P, laid, L.oa, L.ob), count = Tiles.count(P, pieces);
+  const L = laying(D), P = TILE_PRODUCTS[L.product], F = Tiles.floor(L, P, D.rooms, PASSAGE_BOXES, level(D.floor));
+  if (L.oa === null || L.ob === null) { Object.assign(L, { oa: F.oa, ob: F.ob }); Object.assign(state.layouts[D.key] ||= {}, { oa: F.oa, ob: F.ob }); }
   const old = LAID[D.key];
   if (old) V.removeMeshes(old.made);
-  LAID[D.key] = { D, L, P, laid, pieces, count, made: V.buildMeshes(tilePieces(D, L, P, laid, pieces)) };
-}
-/* the pieces for core (room/tiles.js): the grout under the layout's rooms shown, the tiles over it; a small cut red while its layer is on */
-function tilePieces(D, L, P, laid, pieces) {
-  const T = LIB.textures[P.texture], h = level(D.floor), up = [0, 0, 1], cell = { layers: [D.floor.id].concat(TILES.layers) };
-  const grout = laid.filter(r => SHOWN_ROOMS.has(r.id)).flatMap(r => r.rects).map(q => [[q[0], q[2], h + TILES.grout], [q[1], q[2], h + TILES.grout], [q[1], q[3], h + TILES.grout], [q[0], q[3], h + TILES.grout]]);
-  const made = Tiles.corePieces(L, P, T, pieces.filter(p => SHOWN_ROOMS.has(p.room)), grout, (x, y) => [x, y, h + TILES.top], up, cell, TILES.small);
+  const made = Tiles.floorPieces(L, P, LIB.textures[P.texture], F, SHOWN_ROOMS, level(D.floor), TILES, { layers: [D.floor.id].concat(TILES.layers, floorLayersOf()) });
   for (const [k, m] of Object.entries(made.materials)) MATERIALS[k] ||= m;
-  /* a slab of tiles, its face at top, down into the floor by depth: its edges round each room's floor */
-  const rings = laid.filter(r => SHOWN_ROOMS.has(r.id)).flatMap(r => r.rects).map(q => ({ poly: [[q[0], q[2]], [q[1], q[2]], [q[1], q[3]], [q[0], q[3]]], out: 1 }));
-  return made.pieces.concat(Tiles.slabEdges(rings, (x, y) => [x, y, h + TILES.top], (x, y) => [x, y, 0], up, TILES.depth, Object.assign({}, cell), `tiles:${P.texture}:0`));
+  LAID[D.key] = { D, L, P, laid: F.laid, pieces: F.pieces, count: F.count, made: V.buildMeshes(made.pieces) };
 }
 const LAYOUTS = MODEL.LAYOUTS.filter(D => TILE_PRODUCTS[D.product]);
 for (const D of LAYOUTS) layTiles(D);
@@ -364,158 +371,27 @@ const key = e => {
   if (near && near[0].mover) { V.toggle(near[0].mover); e.preventDefault(); }
 };
 
-/* ================= 2D: one sheet per floor (of the part: its floors), the garden at the top ================= */
-const PLAN = Plan2d.create(MATERIALS), PS = PLAN.SIZE;
-const planCut = (/** @type {HouseNode} */ F) => must(F, 'view.plan');
-const inside = (b, x, y) => x >= b[0] - EPS && x <= b[1] + EPS && y >= b[2] - EPS && y <= b[3] + EPS;
-/* the stair: a full line under the cut, dashed over it; from the floor above, all of it shows through the hole */
-function planStair(F, X, h, holes) {
-  let s = '';
-  for (const c of MODEL.STAIR_CELLS) {
-    const top = hRange(c.S)[1], ys = c.S.poly.map(p => p[0]), y1 = Math.min(...ys), y2 = Math.max(...ys);
-    const own = top > level(F) && top <= floorTop(F) + EPS, seen = top < h && holes.some(b => inside(b, (c.S.x1 + c.S.x2) / 2, (y1 + y2) / 2));
-    if (!own && !seen) continue;
-    const stroke = top <= h ? `stroke="#5f6a66" stroke-width="${PS.line.cut}"` : `stroke="#8a8d88" stroke-width="${PS.line.over}" stroke-dasharray="${PS.line.dash}"`;
-    s += PLAN.rect(X, c.S.x1, c.S.x2, y1, y2, `fill="none" ${stroke}`);
-  }
-  return s;
-}
-/* under the roof: the clear heights, the roof windows, the stair hole */
-function planUnderRoof(F, X, holes) {
-  const x1 = Math.min(...F.inside.map(q => q[0])), x2 = Math.max(...F.inside.map(q => q[1])), C = PS.clear;
-  let s = '';
-  for (const ch of ROOF.clearHeights) {
-    const d = (level(F) + ch - ROOF.eave) / MODEL.TAN;
-    for (const y of [d, WIDTH - d]) {
-      const left = y < WIDTH / 2;
-      s += `<line x1="${X + y}" y1="${x1}" x2="${X + y}" y2="${x2}" stroke="#8a8d88" stroke-dasharray="${PS.line.clear}" stroke-width="${PS.line.over}"/>`
-        + `<text x="${X + y + (left ? C.inset : -C.inset)}" y="${x1 + C.down}" font-size="${C.font}" fill="#8a8d88" text-anchor="${left ? 'start' : 'end'}">${ch}</text>`;
-    }
-  }
-  for (const w of ROOF.windows) s += PLAN.rect(X, w.x[0], w.x[1], w.y[0], w.y[1], `fill="none" stroke="#3a6f8f" stroke-dasharray="${PS.line.window}" stroke-width="${PS.line.cut}"`);
-  for (const b of holes) s += PLAN.rect(X, b[0], b[1], b[2], b[3], `fill="none" stroke="#a3a7a2" stroke-dasharray="${PS.line.hole}" stroke-width="${PS.line.thin}"`);
-  return s;
-}
-/* the inner doors: the leaf open and its swing, as the drawings show them */
-function planDoors(F, X) {
-  const turn = (p, d) => { const c = Math.cos(d.angle), s = Math.sin(d.angle), dx = p[0] - d.axis[0], dy = p[1] - d.axis[1]; return [d.axis[0] + dx * c - dy * s, d.axis[1] + dx * s + dy * c]; };
-  const at = p => `${X + p[1]},${p[0]}`;
-  let s = '';
-  for (const d of LEAVES.map(l => l.door).filter(d => d.floor === F.id)) {
-    const L = d.cells[0].S, ys = L.poly.map(p => p[0]), y1 = Math.min(...ys), y2 = Math.max(...ys);
-    const leaf = [[L.x1, y1], [L.x2, y1], [L.x2, y2], [L.x1, y2]].map(p => turn(p, d)), open = turn(d.free, d);
-    const r = Math.hypot(d.free[0] - d.axis[0], d.free[1] - d.axis[1]);
-    s += `<polygon points="${leaf.map(at).join(' ')}" fill="#fff" stroke="#5f6a66" stroke-width="${PS.line.thin}"/>`
-      + `<path d="M ${at(d.free)} A ${r} ${r} 0 0 ${d.angle > 0 ? 0 : 1} ${at(open)}" fill="none" stroke="#8a8d88" stroke-width="${PS.line.thin}" stroke-dasharray="${PS.line.dash}"/>`;
-  }
-  return s;
-}
-const roomLabel = r => ({ rects: r.rects, numbers: [r.node.number], name: r.node.name });
-/* the whole house's dimensions on each side: the openings of that side's walls on this floor, then the whole */
-function planChains(F, X) {
-  const box = [ROOF.x[0], ROOF.x[1], 0, WIDTH], mine = o => MODEL.floorOf((o.b[4] + o.b[5]) / 2) === F.id;
-  return /** @type {Side[]} */ (['E', 'W', 'N', 'S']).map(side => {
-    const along = side === 'E' || side === 'W' ? 2 : 0, ends = [box[along], box[along + 1]];
-    const openings = MODEL.OPENINGS.filter(o => o.outer === side && mine(o)).flatMap(o => [o.b[along], o.b[along + 1]]);
-    return PLAN.chain(X, box, side, 0, ends.concat(openings)) + PLAN.chain(X, box, side, 1, ends);
-  }).join('');
-}
-function planSvg() {
-  const floors = WHOLE ? FLOORS : FLOORS.filter(F => PARTS.some(p => p.floor === F));
-  return PLAN.sheets(floors.map(F => {
-    const own = WHOLE ? null : PARTS.filter(p => p.floor === F), rooms = WHOLE ? ROOMS.filter(r => r.floor === F) : own.map(p => p.room);
-    const box = WHOLE ? [...HOUSE.geometry.body, 0, WIDTH] : [0, 1, 2, 3].map(k => (k % 2 ? Math.max : Math.min)(...own.map(p => p.box[k])));
-    const solids = WHOLE ? MODEL.SOLIDS.filter(c => c.floor === F.id) : STILL.filter(c => rooms.some(r => r.id === c.room));
-    const borders = MODEL.BORDERS.filter(b => b.floor === F && (WHOLE || b.rooms.some(id => PART.includes(id)))).map(b => b.line);
-    const furniture = FURNITURE.filter(f => f.room.floor === F).map(f => f.made.plan());
-    return { extent: WHOLE ? [ROOF.x[0], ROOF.x[1], 0, WIDTH] : box, title: `${F.name} · cut ${planCut(F)} mm`,
-      draw: X => {
-        const h = level(F) + planCut(F), holes = MODEL.voidsAt(level(F));
-        return PLAN.floorArea(X, rooms.flatMap(r => r.rects)) + (WHOLE ? planStair(F, X, h, holes) : '') + PLAN.cut(X, solids, h)
-          + furniture.map(p => PLAN.seen(X, p.shapes, h) + PLAN.cut(X, p.cells, h, c => !c.layers.includes('holes'))).join('')
-          + (WHOLE && F === FLOORS[FLOORS.length - 1] ? planUnderRoof(F, X, holes) : '') + planDoors(F, X)
-          + PLAN.labels(X, MODEL.OPENINGS, h, MODEL.SIDE, o => MODEL.floorOf((o.b[4] + o.b[5]) / 2) === F.id && (WHOLE || inside(box, (o.b[0] + o.b[1]) / 2, (o.b[2] + o.b[3]) / 2)))
-          + PLAN.borders(X, borders) + PLAN.rooms(X, rooms.map(roomLabel)) + (WHOLE ? planChains(F, X) : PLAN.dims(X, box));
-      } };
-  }));
-}
-const drawPlan = () => { ui.plan = { svg: planSvg(), note: `The cut over the floor: ${FLOORS.map(F => `${(F.name || F.id).toLowerCase()} ${planCut(F)} mm`).join(', ')}. ${VIEW.planNote}` }; };
+/* ================= 2D: one sheet per floor (house/plan.js) ================= */
+const PLAN = HousePlan.create(MODEL, MATERIALS);
+const planSvg = () => PLAN.svg({ parts: PARTS, still: STILL, doors: LEAVES.map(l => l.door), furniture: FURNITURE.map(f => ({ floor: f.room.floor, plan: f.made.plan() })) });
+const drawPlan = () => { ui.plan = { svg: planSvg(), note: PLAN.note() }; };
 const PLAN_MENU = [{ name: 'Fit', label: 'The whole sheet', go: () => { state.zoom = 1; } },
   { name: 'Save SVG', go: () => UI.download(planSvg(), 'image/svg+xml', WHOLE ? 'house.svg' : PART.join('-') + '.svg') }];
 
 /* ================= DOCUMENTS: the rooms, the doors, the notes ================= */
 let SHEET = null;
 function book() {
-  const shownRooms = WHOLE ? ROOMS : PART.map(id => ROOM[id]);
-  const rooms = /** @type {TableSheet} */ ({ name: 'Rooms', cols: [{ width: 34, share: 2, max: 40 }, { width: 14, digits: 2, fix: 9 }, { width: 14, digits: 2, fix: 9 }, { width: 60, share: 4 }],
-    rows: [{ kind: 'title', cells: [HOUSE.name] }, { kind: 'head', cells: ['Room', 'Model [m²]', 'Archon [m²]', 'Note'] }] });
-  for (const F of FLOORS) {
-    const list = shownRooms.filter(r => r.floor === F);
-    if (!list.length) continue;
-    rooms.rows.push({ kind: 'cat', cells: [F.name] });
-    const first = rooms.rows.length + 1;
-    for (const r of list) rooms.rows.push({ cells: [roomName(r), MODEL.areaOf(r.rects), r.node.archonArea ?? null, r.node.note || ''] });
-    const last = rooms.rows.length;
-    rooms.rows.push({ kind: 'sum', cells: ['Total', { f: `SUM(B${first}:B${last})` }, { f: `SUM(C${first}:C${last})` }] });
+  const title = WHOLE ? HOUSE.name : PART.map(id => roomName(ROOM[id])).join(', ');
+  const furnitureOf = n => !WHOLE && (FURNITURE.find(f => f.room.id === n.id) || {}).prepared;   // the whole house stops at its rooms
+  const tree = WHOLE ? HouseDocs.elements(title, DATA, [{ node: HOUSE, path: '', level: 1 }], furnitureOf)
+    : HouseDocs.elements(title, null, PART.map(id => ({ node: ROOM[id].node, path: T.path(ROOM[id].node), level: 0 })), furnitureOf);
+  const test = HouseDocs.test(WHOLE ? 'Test of the house' : 'Test of ' + title, CHECKS);
+  if (!WHOLE) {                              /* a furnished room's own Documents first: its estimate, cut list, assembly cards and notes */
+    const own = FURNITURE.filter(f => f.docs).flatMap(f => { const b = f.docs.book(); return [b.sheets[0], b.sheets[1], { name: 'Assembly', node: assemblyNode(f) }, b.sheets[2]]; });
+    return { sheets: [...own, tree, test] };   // a room's view: its own Documents, the house's stay with the house
   }
-  rooms.rows.push({ cells: ['The model at the block faces; archon after plaster.'] });
-  const doors = /** @type {TableSheet} */ ({ name: 'Doors', cols: [{ width: 12, fix: 9 }, { width: 14, share: 1 }, { width: 50, share: 4 }, { width: 12, digits: 2, fix: 10, z: '#,##0.00' }],
-    rows: [{ kind: 'title', cells: ['Inner doors'] }, { kind: 'head', cells: ['Door', 'Floor', 'Bought', 'Price [zł]'] }] });   // each door is one, by its own name and place
-  const first = doors.rows.length + 1;
-  for (const d of LEAVES.map(l => l.door)) for (const key of [d.product, ...d.extras]) {
-    const P = key && LIB.product(key);
-    doors.rows.push({ cells: [d.label, /** @type {HouseNode} */ (FLOORS.find(F => F.id === d.floor)).name, P ? P.name : 'to choose', P && P.price !== null ? { v: P.price, input: true } : ''] });
-  }
-  doors.rows.push({ kind: 'sum', cells: ['Total', '', '', { f: `SUM(D${first}:D${doors.rows.length})` }] });
-  /* the floor tiles: each layout as laid (Finish), its area and the reserve give the m² to buy */
-  const tiles = /** @type {TableSheet} */ ({ name: 'Floor tiles', cols: [{ width: 40, share: 2 }, { width: 40, share: 3 }, { width: 30, share: 2 }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 12, digits: 2, fix: 9, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }, { width: 14, digits: 2, fix: 10, z: '#,##0.00' }],
-    rows: [{ kind: 'title', cells: ['Floor tiles'] }, { cells: ['Reserve for cuts', { v: TILES.reserve, input: true, z: '0%' }] },
-      { kind: 'head', cells: ['Tile', 'Rooms', 'Laid', 'Area [m²]', 'To buy [m²]', 'Price [zł/m²]', 'Value [zł]'] }] });
-  const firstTile = tiles.rows.length + 1;
-  for (const A of Object.values(LAID).filter(A => A.D.rooms.some(r => SHOWN_ROOMS.has(r.id)))) {
-    const r = tiles.rows.length + 1, c = A.count;
-    tiles.rows.push({ cells: [A.P.name, A.D.rooms.map(roomName).join(', '), `${c.tiles} tiles: ${c.full} whole, ${c.cut} cut, ${c.small} small cuts`,
-      Math.round(c.area * 100) / 100, { f: `ROUND(D${r}*(1+$B$2),2)` }, A.P.price ? { v: A.P.price, input: true } : '', { f: `E${r}*F${r}` }] });
-  }
-  tiles.rows.push({ kind: 'sum', cells: ['Total', '', '', { f: `SUM(D${firstTile}:D${tiles.rows.length})` }, { f: `SUM(E${firstTile}:E${tiles.rows.length})` }, '', { f: `SUM(G${firstTile}:G${tiles.rows.length})` }] });
-  tiles.rows.push({ cells: ['As laid in Finish (3D); the glue, the grout, the skirting and the work not counted.'] });
-  const notes = { name: 'Notes', cols: [{ width: 120, share: 1, max: 140 }], rows: [{ kind: 'title', cells: [HOUSE.source] }, { kind: 'head', cells: ['Notes'] }, ...HOUSE.notes.map(n => ({ cells: [n] }))] };
-  /* the tree of what is shown: the whole house down to its rooms; a room's view, its rooms down to their furniture.
-     Each node where it is in its parent (mm); a group of furniture where its scene sets it in its room, the side its fronts
-     face, and in it every part in the group's own x, y, h */
-  const tree = /** @type {TableSheet} */ ({ name: 'Elements', tree: 'closed', cols: [{ width: 44, share: 3 }, { width: 34, share: 2 }, ...Array(6).fill({ width: 9, fix: 7 })],
-    rows: [{ kind: 'title', cells: [WHOLE ? HOUSE.name : PART.map(id => roomName(ROOM[id])).join(', ')] },
-      { kind: 'head', cells: ['Node', 'Path', 'x', 'y', 'h', 'Width (x)', 'Depth (y)', 'Height (h)'] }] });
-  const mm = v => Math.round(v * 10) / 10;
-  const furnitureOf = id => FURNITURE.find(f => f.room.id === id);
-  function walk(n, path, level, offset = n.offset, size = n.size, name = n.name) {
-    tree.rows.push({ level, kind: level ? undefined : 'cat', cells: [name, path, ...offset.map(mm), ...size.map(mm)] });
-    const f = !WHOLE && n.type !== undefined && furnitureOf(n.id);   // the whole house stops at its rooms; a room's view goes down into it
-    if (f) for (const g of f.prepared.TREE) {
-      if (g.type === 'builtIns') { walk(g, (path ? path + '/' : '') + g.id, level + 1); continue; }   // in the room's axes
-      const s = g.type === 'product' ? f.prepared.scene.fixtures[g.id] : f.prepared.scene.groups[g.id.slice(1)], box = f.prepared.PLACE[g.type === 'product' ? g.id : g.id.slice(1)].box;
-      walk(g, (path ? path + '/' : '') + g.id, level + 1, s.offset, s.size || [box[1] - box[0], box[3] - box[2], box[5] - box[4]], g.name + ' (fronts ' + s.front + ')');
-    }
-    for (const c of n.children || []) walk(c, (path ? path + '/' : '') + c.id, level + 1);
-  }
-  if (WHOLE) {                               // the site, and in it the house
-    tree.rows.push({ level: 0, kind: 'cat', cells: [DATA.name, '', ...DATA.offset.map(mm), ...DATA.size.map(mm)] });
-    walk(HOUSE, '', 1);
-  }
-  else for (const id of PART) walk(ROOM[id].node, T.path(ROOM[id].node), 0);
-  tree.rows.push({ cells: ['A node at its offset from the origin of its parent (its left, back, bottom corner); a group of furniture by its box in its room, and in it the group\'s own x (along its fronts), y (from its wall), h.'] });
-  /* the checks: each with its result, what to correct under it */
-  const test = /** @type {TableSheet} */ ({ name: 'Test', tree: 'open', cols: [{ width: 44, share: 2 }, { width: 70, share: 4 }, { width: 10, fix: 8 }],
-    rows: [{ kind: 'title', cells: [WHOLE ? 'Test of the house' : 'Test of ' + PART.map(id => roomName(ROOM[id])).join(', ')] },
-      { kind: 'head', cells: ['Test', 'Details: what it checks', 'Result'] }] });
-  for (const c of CHECKS) {
-    test.rows.push({ level: 0, cells: [c.name, c.about || '', c.info ? 'i' : c.items.length ? String(c.items.length) : 'OK'] });
-    for (const i of c.items) test.rows.push({ level: 1, cells: [i, '', ''] });
-  }
-  test.rows.push({ cells: ['Result: OK, nothing to correct; a number, how many to correct (listed under it); i, to know, not a fault.'] });
-  /* a furnished room's own Documents first: its estimate, cut list, assembly cards and notes */
-  const own = WHOLE ? [] : FURNITURE.filter(f => f.docs).flatMap(f => { const b = f.docs.book(); return [b.sheets[0], b.sheets[1], { name: 'Assembly', node: assemblyNode(f) }, b.sheets[2]]; });
-  return { sheets: WHOLE ? [rooms, tiles, doors, notes, tree, test] : [...own, tree, test] };   // a room's view: its own Documents, the house's stay with the house
+  const laid = Object.values(LAID).map(A => ({ P: A.P, rooms: A.D.rooms, count: A.count }));
+  return { sheets: [HouseDocs.rooms(MODEL, ROOMS), HouseDocs.tiles(laid, TILES.reserve), HouseDocs.doors(LEAVES.map(l => l.door), FLOORS, LIB), HouseDocs.notes(HOUSE), tree, test] };
 }
 /* the assembly cards of a room's furniture: one element, kept (core/sheet.js shows it in its tab) */
 function assemblyNode(f) {

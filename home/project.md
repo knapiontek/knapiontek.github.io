@@ -99,7 +99,7 @@ Each solid is moved to its node: offsets summed up the tree; a group facing anot
 
 1. **Worktop and end-panel lengths** as bought: the owner gives them; the design shows ? until then.
 2. **Types**: still loose (`any`): the products' group fields, the cabinets file's settings, a drawing's place, the Alpine parts.
-3. **index.js, split**: the house's Documents, the finish (a metal or a decor swapped; a query of the catalog: the same product in another metal), each to its own file.
+3. **index.js, split**: the house's view (3D: solids, objects hiding, lights, walk), the finish (a metal or a decor swapped; a query of the catalog: the same product in another metal), each to its own file.
 
 ## How we work
 

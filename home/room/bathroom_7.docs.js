@@ -159,13 +159,6 @@ HOME.data({
      "use": "the shower's walls, {=<n:tiles.showerWalls.tiles>} tiles; + {tileReserve|%}",
      "qty": "=ROUNDUP({n:tiles.showerWalls.area}*(1+{tileReserve})*100,0)/100",
      "spec": "format 1198 × 598"
-    },
-    {
-     "id": "showerFloorTiles",
-     "product": "paradyz-authority-grey",
-     "use": "the shower's floor, {=<n:tiles.showerFloor.tiles>} tiles; + {tileReserve|%}",
-     "qty": "=ROUNDUP({n:tiles.showerFloor.area}*(1+{tileReserve})*100,0)/100",
-     "spec": "format 898 × 898"
     }
    ]
   },

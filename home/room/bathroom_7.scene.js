@@ -24,8 +24,7 @@ HOME.data({
   "walls": {"product": "paradyz-authority-graphite", "format": [1198, 598], "dir": "x", "pattern": "grid"},
   "floor": {"product": "paradyz-authority-grey", "dir": "x", "pattern": "grid"},
   "shower": {"zone": [1654, 2510, 1390, 2390],
-   "walls": {"product": "paradyz-authority-graphite", "format": [1198, 598], "dir": "x", "pattern": "grid"},
-   "floor": {"product": "paradyz-authority-grey", "dir": "x", "pattern": "grid"}}
+   "walls": {"product": "paradyz-authority-graphite", "format": [1198, 598], "dir": "x", "pattern": "grid"}}
  },
  "room": {"wallColor": "#e9e7e2"},
  "finish": {"metal": "brass"},

@@ -8,9 +8,11 @@ The house "Dom w papawerach 5 (G)" (archon.pl), as built, standing in its site (
 |---|---|
 | house.js | the house's data: settings (root of the cascade), what it is made of, floors and rooms |
 | model.js | house.js turned into solids (walls, slabs, roof, windows, doors, stair, site); rooms in the house's axes and their borders without a wall; a part cut out for a room; checks; the top-left menu. No browser |
+| plan.js | the 2D plan, a sheet per floor (core/plan2d.js draws): the cut, the stair, the roof's clear heights and windows, the doors open, labels, rooms, dimensions; a room's view: its rooms and furniture |
+| docs.js | the Documents' sheets: rooms and areas, inner doors, floor tiles to buy, notes; the elements (tree) and the test (checks) both views have |
 
 ```
-house.js ─► model.js ─► solids ─► index.js: 3D, 2D (core)
+house.js ─► model.js ─► solids ─► index.js: 3D (core/scene.js); plan.js: 2D (core/plan2d.js); docs.js: Documents (core/sheet.js)
                      ─► rooms, borders, parts ─► index.js, room engine
                      ─► checks ─► Test
 ```

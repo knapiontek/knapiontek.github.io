@@ -174,10 +174,17 @@ function tiledSurfaces(scene, area, height, openings, tiles) {
   });
   /* the floor: its area less what is built on it, the shower's zone apart */
   const L = tileLayouts(scene), feet = built.filter(b => b.box[4] <= 0.5).map(b => [b.box[0], b.box[1], b.box[2], b.box[3]]);
-  area.forEach((q, i) => {
-    const parts = zone ? [[minusAll(q, [zone]), 'floor'], [minusAll(q, minusAll(q, [zone])), 'showerFloor']] : [[[q], 'floor']];
-    for (const [rects, key] of parts) if (L[key]) rects.forEach((r, k) => out.push({ key, id: 'f' + (i + 1) + key[0] + k, rect: [r[0], r[1], r[2], r[3]], holes: feet, n: [0, 0, 1], point: (x, y) => [x, y, TILE_TOP] }));
-  });
+  /* each floor layout one surface, laid at once (one grid over all its rectangles); the shower's floor apart when it has a
+     layout of its own, else the floor runs on into it */
+  const floors = /** @type {Object<string, Rect[]>} */ ({ floor: [], showerFloor: [] });
+  for (const q of area) {
+    if (zone && L.showerFloor) { floors.floor.push(...minusAll(q, [zone])); floors.showerFloor.push(...minusAll(q, minusAll(q, [zone]))); }
+    else floors.floor.push(q);
+  }
+  for (const [key, rects] of Object.entries(floors)) if (L[key] && rects.length) {
+    const box = [Math.min(...rects.map(r => r[0])), Math.max(...rects.map(r => r[1])), Math.min(...rects.map(r => r[2])), Math.max(...rects.map(r => r[3]))];
+    out.push({ key, id: 'f' + key[0], rect: box, rects, holes: feet, n: [0, 0, 1], point: (x, y) => [x, y, TILE_TOP] });
+  }
   return out;
 }
 /* every layout laid over its surfaces (each surface a zone of its own): pieces of core in the house's axes, the materials,
@@ -191,9 +198,10 @@ function roomTiles(scene, room, library, cell, finish, draw = true) {
     const P0 = library.product(spec.product), T = library.textures[P0.texture] || { grout: '#888888' };
     const P = Object.assign({}, P0, spec.format ? { len: spec.format[0], wid: spec.format[1] } : {});
     const lay = { product: spec.product, dir: spec.dir || 'x', pattern: spec.pattern || P.pattern, grout: spec.grout || T.grout, oa: null, ob: null };
-    const all = [];
+    const all = [], floorRects = [];        // the floor's surfaces of this layout: one slab, its edges round them all
+    let floorEdge = null;
     for (const S of surfaces.filter(x => x.key === key)) {
-      const rects = minusAll(S.rect, S.holes).filter(r => r[1] - r[0] > 1 && r[3] - r[2] > 1);
+      const rects = (S.rects || [S.rect]).flatMap(q => minusAll(q, S.holes)).filter(r => r[1] - r[0] > 1 && r[3] - r[2] > 1);
       if (!rects.length) continue;
       /* the origin: the data's, else fitted on the surface (a wall: along it only, the rows from the floor up, one line all round) */
       const laid = [{ id: S.id, own: rects, rects, zone: S.id }], wall = S.n[2] === 0;
@@ -221,12 +229,15 @@ function roomTiles(scene, room, library, cell, finish, draw = true) {
       const c0 = on ? Object.assign({}, cell, { layers: cell.layers.concat(on) }, wall ? { face: S.n } : {}) : cell;   // face: a wall's tiles, its normal (the page hides them with their wall)
       const made = tiles.corePieces(lay, P, T, pieces, grout, at, S.n, c0, finish);
       out.pieces.push(...made.pieces); Object.assign(out.materials, made.materials);
-      /* the tiles are a slab on what they lie on: its edges from the face to the back, round it and round its holes */
+      /* the tiles are a slab on what they lie on: its edges from the face to the back, round it and round its holes; the
+         floor's round all its surfaces at once (below) */
+      if (!wall && S.id[0] === 'f') { floorRects.push(...rects); floorEdge = { at, S, c0, material: `tiles:${P.texture}:0` }; continue; }
       const cut = poly => under.reduce((q, l) => q.length < 3 ? q : tiles.clipHalf(q, l.p, l.q, l.c), poly);
       const R = S.rect, ring = q => [[q[0], q[2]], [q[1], q[2]], [q[1], q[3]], [q[0], q[3]]];
       const holes = S.holes.map(h => [Math.max(h[0], R[0]), Math.min(h[1], R[1]), Math.max(h[2], R[2]), Math.min(h[3], R[3])]).filter(h => h[1] - h[0] > 1 && h[3] - h[2] > 1);
       out.pieces.push(...tiles.slabEdges([{ poly: cut(ring(R)), out: 1 }].concat(holes.map(h => ({ poly: cut(ring(h)), out: -1 }))), (u, v) => at(u, v), S.point, S.n, room.tiles.depth, c0, `tiles:${P.texture}:0`));
     }
+    if (floorEdge) out.pieces.push(...tiles.slabEdges(tiles.outline(floorRects).map(poly => ({ poly, out: 1, open: true })), floorEdge.at, floorEdge.S.point, floorEdge.S.n, room.tiles.depth, floorEdge.c0, floorEdge.material));
     out.counts[key] = Object.assign({ product: spec.product, name: P0.name, format: P.len + ' × ' + P.wid }, tiles.count(P, all));
   }
   return out;

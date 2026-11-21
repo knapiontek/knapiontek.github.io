@@ -208,11 +208,12 @@ function corePieces(L, P, T, pieces, grout, at, n, cell, finish) {
 
 /* the edges of a slab of tiles: rings [{poly [[u, v]], out: 1 its outline, -1 a hole}] on its face, at (u, v) -> the point on
    the face, point (u, v): the surface's own (affine), n: the face's normal; each edge a quad from the face back by depth */
-/** @param {{ poly: number[][], out: number }[]} rings @param {(u: number, v: number) => Vec3} at @param {(u: number, v: number) => Vec3} point
+/** @param {{ poly: number[][], out: number, open?: boolean }[]} rings  open: a line, not closed (a piece of an outline)
+    @param {(u: number, v: number) => Vec3} at @param {(u: number, v: number) => Vec3} point
     @param {Vec3} n @param {number} depth @param {CellLook} cell @param {string} material @returns {Piece[]} */
 function slabEdges(rings, at, point, n, depth, cell, material) {
   const P0 = point(0, 0), U3 = point(1, 0).map((v, k) => v - P0[k]), V3 = point(0, 1).map((v, k) => v - P0[k]), /** @type {Piece[]} */ out = [], group = cell.layers.join('+');
-  for (const { poly, out: side } of rings) for (let k = 0; k < poly.length; k++) {
+  for (const { poly, out: side, open } of rings) for (let k = 0; k < poly.length - (open ? 1 : 0); k++) {
     const p = poly[k], q = poly[(k + 1) % poly.length], du = q[0] - p[0], dv = q[1] - p[1], len = Math.hypot(du, dv);
     if (len < 0.5) continue;
     const nu = side * dv / len, nv = -side * du / len, m = U3.map((v, i) => nu * v + nv * V3[i]);
@@ -225,5 +226,46 @@ function slabEdges(rings, at, point, n, depth, cell, material) {
   return out;
 }
 
-return { PATTERNS, DIRS, rooms, lay, clip, clipHalf, count, fit, corePieces, slabEdges };
+/* the outline of a floor made of rectangles: the pieces of their sides that no other rectangle continues, each [p, q] with
+   the floor on its left (a rectangle's sides go round it counter-clockwise); a side two rectangles share is no edge */
+/** @param {Rect[]} rects @returns {number[][][]} */
+function outline(rects) {
+  const /** @type {number[][][]} */ out = [];
+  for (const r of rects) for (const [axis, at, from, to, beyond] of /** @type {[number, number, number, number, number][]} */ ([
+    [1, r[2], r[0], r[1], -1], [0, r[1], r[2], r[3], 1], [1, r[3], r[1], r[0], 1], [0, r[0], r[3], r[2], -1]])) {
+    /* axis: the side runs across it (0: x = at, 1: y = at); beyond: the side the floor is not on */
+    const o = 1 - axis, lo = Math.min(from, to), hi = Math.max(from, to);
+    const covered = rects.filter(s => s !== r && Math.abs((beyond > 0 ? s[2 * axis] : s[2 * axis + 1]) - at) < EPS)
+      .map(s => [Math.max(lo, s[2 * o]), Math.min(hi, s[2 * o + 1])]).filter(([a, b]) => b - a > EPS).sort((a, b) => a[0] - b[0]);
+    let free = [[lo, hi]];
+    for (const [a, b] of covered) free = free.flatMap(([c, d]) => [[c, Math.min(d, a)], [Math.max(c, b), d]].filter(([x, y]) => y - x > EPS));
+    for (const [a, b] of from < to ? free : free.reverse()) {
+      const [u, v] = from < to ? [a, b] : [b, a], pt = t => axis === 0 ? [at, t] : [t, at];
+      out.push([pt(u), pt(v)]);
+    }
+  }
+  return out;
+}
+
+/* a floor's layout over its rooms: laid from its origin (fitted when the laying has none), counted */
+/** @param {Laying} L @param {TileProduct} P @param {{ id: string, rects: Rect[] }[]} list @param {Box[]} passages @param {number} level */
+function floor(L, P, list, passages, level) {
+  const laid = rooms(list, passages, level), o = L.oa === null || L.ob === null ? fit(L, P, laid) : { oa: L.oa, ob: L.ob };
+  const pieces = lay(L, P, laid, o.oa, o.ob);
+  return { laid, oa: o.oa, ob: o.ob, pieces, count: count(P, pieces) };
+}
+/* its pieces of core over the rooms shown, at the floor's level h: the grout, the tiles over it, the slab's edges round the
+   floor's outline (one slab: no edge where two rooms or two rectangles meet). S: the house's tiles (top, grout, depth,
+   small: the layer that shows a small cut red); cell: the cell's fields (layers) */
+/** @param {Laying} L @param {TileProduct} P @param {Texture} T @param {ReturnType<typeof floor>} F @param {Set<string>} shown @param {number} h
+    @param {{ top: number, grout: number, depth: number, small: string }} S @param {CellLook} cell */
+function floorPieces(L, P, T, F, shown, h, S, cell) {
+  const rects = F.laid.filter(r => shown.has(r.id)).flatMap(r => r.rects), /** @type {Vec3} */ up = [0, 0, 1];
+  const grout = rects.map(q => [[q[0], q[2], h + S.grout], [q[1], q[2], h + S.grout], [q[1], q[3], h + S.grout], [q[0], q[3], h + S.grout]]);
+  const made = corePieces(L, P, T, F.pieces.filter(p => shown.has(p.room)), grout, (x, y) => [x, y, h + S.top], up, cell, S.small);
+  const edges = slabEdges(outline(rects).map(poly => ({ poly, out: 1, open: true })), (x, y) => [x, y, h + S.top], (x, y) => [x, y, 0], up, S.depth, Object.assign({}, cell), `tiles:${P.texture}:0`);
+  return { pieces: made.pieces.concat(edges), materials: made.materials };
+}
+
+return { PATTERNS, DIRS, rooms, lay, clip, clipHalf, count, fit, corePieces, slabEdges, outline, floor, floorPieces };
 }
