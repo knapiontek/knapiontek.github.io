@@ -2,7 +2,7 @@
 /* core/surface.js: the surfaces of solids, ready to draw: welded points, the faces of cells, the visible pieces.
    Knows no project and no browser.
    A cell is {S, material, layers, edges, ...}; faceMaterial(n, points), if a cell has it, gives the material of a face by
-   its normal (and its corners, mm). Needs core/geometry.js. */
+   its normal (and its corners, mm). Gets core/geometry.js. */
 /** @typedef {number[]} Vec3  [x, y, h] */
 /** @typedef {Vec3 & { id?: number }} Point3  a welded point: one object per place */
 /**
@@ -28,9 +28,10 @@
  * @property {string[] | null} [cover]  the layers of the solid it lies against (seen only while that is hidden)
  * @property {number} [d]  its plane's distance from the zero
  */
-function surfaceModule() {
+/** @param {ReturnType<typeof geometryModule>} geometry */
+function surfaceModule(geometry) {
 'use strict';
-const { EPS, ccw, edgesOf, intersect2, minus2 } = HOME.geometry;
+const { EPS, ccw, edgesOf, intersect2, minus2 } = geometry;
 
 const sub3 = (/** @type {Vec3} */ a, /** @type {Vec3} */ b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const dot3 = (/** @type {Vec3} */ a, /** @type {Vec3} */ b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -139,4 +140,4 @@ const piecesOf = (/** @type {Cell[]} */ cells) => conform(visiblePieces(cells.fl
 
 return { sub3, dot3, cross3, weld, piecesOf };
 }
-HOME.surface = surfaceModule();
+HOME.surface = surfaceModule(HOME.geometry);

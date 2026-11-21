@@ -14,6 +14,7 @@ The house "Dom w papawerach 5 (G)" (archon.pl), as built, with everything in it:
 | archon/ | archon.pl drawings and their analysis: the source of the house |
 | jsconfig.json, globals.d.ts | the type check (Code style); loaded by no page |
 | test/ | the tests, each file's test at its path under test/ (test/test.md) |
+| plan.md | what we are changing, step by step |
 | project.svg | every file and what it needs, data files marked JSON (generated from the code, not drawn) |
 
 ## The application (index.html, index.js)

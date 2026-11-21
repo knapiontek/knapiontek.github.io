@@ -1,8 +1,9 @@
 /* house/model.js: its public API, each part with what it gives, on the house's own data (test/test.md) */
-function modelTest(HOME, data, check) {
-  check('the public API', Object.keys(HOME.model).join(' ') === 'build nav');
+function modelTest({ modelModule, geometryModule, treeModule }, data, check) {
+  const model = modelModule(geometryModule(), treeModule());
+  check('the public API', Object.keys(model).join(' ') === 'build nav');
 
-  const house = data('house/house.js'), M = HOME.model.build(house);
+  const house = data('house/house.js'), M = model.build(house);
   check('build: the API of a model', Object.keys(M).join(' ') === 'T HOUSE ROOF TAN WIDTH RIDGE_TOP ROOF_UNDER floorOf SIDE OPENINGS ELEMENTS FLOORS ROOMS ROOM LAYOUTS BORDERS areaOf CELLS FIXTURES DOORS ROOF_CELLS STAIR_CELLS SITE_CELLS SOLIDS voidsAt FOOTPRINT part checks');
 
   const rooms = []; (function walk(n) { for (const c of n.children || []) { if (n.type === 'floor' && c.area) rooms.push(c.id); walk(c); } })(house);
@@ -14,6 +15,6 @@ function modelTest(HOME, data, check) {
   check('part: every room\'s part has its solids, inside the roof\'s length and the house\'s width',
     M.ROOMS.every(r => { const p = M.part(r.id); return p.cells.length > 0 && inside(p.box, [M.ROOF.x[0], M.ROOF.x[1], 0, M.WIDTH]); }));
 
-  const links = HOME.model.nav(house).links;
+  const links = model.nav(house).links;
   check('nav: the whole house, then a room', links[0].name === 'House' && links[0].on === true && links[1].name === 'Room');
 }

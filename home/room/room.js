@@ -263,6 +263,21 @@ function outside(made, prepared) {
   return out;
 }
 
+/* the footprint of a drawn mesh (three.js) for the 2D plan: the convex hull of its points seen from above; toHouse: world -> house mm (Matrix4) */
+/** @param {any} mesh @param {any} toHouse @param {boolean} [glass] @returns {PlanShape} */
+function meshShape(mesh, toHouse, glass = false) {
+  const P = mesh.geometry.attributes.position, m = new THREE.Matrix4().multiplyMatrices(toHouse, mesh.matrixWorld), v = new THREE.Vector3(), /** @type {number[][]} */ pts = [];
+  let bottom = Infinity, top = -Infinity;
+  for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m); pts.push([v.x, v.y]); bottom = Math.min(bottom, v.z); top = Math.max(top, v.z); }   // v.z: the house's h
+  pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (/** @type {number[]} */ o, /** @type {number[]} */ a, /** @type {number[]} */ b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]), half = (/** @type {number[][]} */ list) => {
+    /** @type {number[][]} */ const h = [];
+    for (const p of list) { while (h.length >= 2 && cross(h[h.length - 2], h[h.length - 1], p) <= 0) h.pop(); h.push(p); }
+    h.pop(); return h;
+  };
+  return { poly: half(pts).concat(half(pts.slice().reverse())), bottom, top, glass };
+}
+
 /* V: a scene of core; prepared: prepare(); materials: the page's library for core (the room's looks are in it, plus
    handle: the metal chosen); opts: {layers: the host's, added to every solid and detail; ceilingLayers: what hides the
    ceiling's lamps with the ceiling} */
@@ -488,7 +503,7 @@ function build(V, prepared, opts) {
     }
     const tops = cells.filter(c => c.layers.includes('worktops') || c.layers.includes('endPanels')).map(c => HOME.plan2d.solidShape(c));
     shapes.push(...cells.filter(c => c.layers.some(l => ['builtIns', 'plasterboard', 'sanitary', 'basin'].includes(l)) && !c.layers.includes('installations')).map(c => HOME.plan2d.solidShape(c, c.material === 'glass')));
-    shapes.push(...DETAILS.filter(d => !d.layers.includes('installations') && d.layers.some(l => ['sink', 'hob', 'basin', 'sanitary'].includes(l)) && d.mesh.geometry.attributes.position).map(d => HOME.plan2d.meshShape(d.mesh, toHouse)));
+    shapes.push(...DETAILS.filter(d => !d.layers.includes('installations') && d.layers.some(l => ['sink', 'hob', 'basin', 'sanitary'].includes(l)) && d.mesh.geometry.attributes.position).map(d => meshShape(d.mesh, toHouse)));
     if (tops.length) shapes.push({ pieces: tops, poly: tops[0].poly, bottom: Math.min(...tops.map(q => q.bottom)), top: Math.max(...tops.map(q => q.top)) });
     return { cells: [], shapes };
   };

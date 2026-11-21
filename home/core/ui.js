@@ -9,9 +9,8 @@
 function uiModule() {
 'use strict';
 
-const LOCALE = 'en-GB';                    // numbers on every page and in every sheet
+const { LOCALE, fmt } = HOME.format;       // core/format.js, until ui gets it as a parameter (plan.md)
 const $ = (/** @type {string} */ id) => document.getElementById(id);
-const fmt = (/** @type {number} */ v, /** @type {number} */ d) => v.toLocaleString(LOCALE, { minimumFractionDigits: d, maximumFractionDigits: d });
 /**
  * @template {{ id: string }} T
  * @param {T[]} list

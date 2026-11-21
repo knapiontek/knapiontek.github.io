@@ -1,6 +1,6 @@
 /* core/geometry.js: its public API, each part with what it gives (test/test.md) */
-function geometryTest(HOME, data, check) {
-  const G = HOME.geometry;
+function geometryTest({ geometryModule }, data, check) {
+  const G = geometryModule();
   check('the public API', Object.keys(G).join(' ') === 'SIDES hash01 DEG INF EPS SOLID_TOL area2 ccw rect2 clipHalf leftOf edgesOf intersect2 minus2 prism emptyPrism hRange centreH prismIntersect prismMinus splitH sectionAt cutBy volume subtractAll overlaps rectArea rectMinus mergeRects');
 
   const square = G.rect2(0, 2, 0, 2);

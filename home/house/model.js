@@ -1,7 +1,7 @@
 // @ts-check
 /* house/model.js: the house's data turned into solids, the rooms, a part of the house cut out for a room, the checks.
    No browser: index.html draws what it gives. Units mm in the house's axes (x along, y across, h up).
-   Needs core/geometry.js and core/tree.js. */
+   Gets core/geometry.js and core/tree.js. */
 /**
  * @typedef {Cell & { element: string, floor?: string | null, cap?: string, walkable?: boolean, fixture?: boolean, side?: string | null, room?: string }} HouseCell
  *   a solid of the house: the element it is of, its floor; side: where it lies from a room cut out (-h, +h, ±x, ±y); room: the room it is drawn for
@@ -43,10 +43,11 @@
 /** @typedef {{ id: string, role: string, side: string, host?: string | null, cells: HouseCell[], leaf?: Door }} PartObject  a wall, the floor, the ceiling, a window, a door */
 /** @typedef {{ room: HouseRoom, floor: TreeNode, box: Box, cells: HouseCell[], objects: PartObject[], ceiling: number }} Part  a room cut out of the house */
 /** @typedef {ReturnType<ReturnType<typeof modelModule>['build']>} HouseModel */
-function modelModule() {
+/** @param {ReturnType<typeof geometryModule>} geometry @param {ReturnType<typeof treeModule>} tree */
+function modelModule(geometry, tree) {
 'use strict';
 
-const G = HOME.geometry;
+const G = geometry;
 const { DEG, INF, EPS, SOLID_TOL, ccw, rect2, clipHalf, leftOf, edgesOf, minus2, prism, emptyPrism, centreH, hRange,
   prismIntersect, prismMinus, splitH, subtractAll, overlaps, volume, rectArea, rectMinus, mergeRects } = G;
 
@@ -74,7 +75,7 @@ const SIDE = Object.assign({}, G.SIDES, { down: { axis: 2, sign: -1 } });   // t
 /** @param {HouseNode} ROOT the site, from house.js */
 function build(ROOT) {
 const HOUSE = /** @type {HouseNode} */ ((ROOT.children || []).find(n => n.type === 'house')), SITE = ROOT;
-const T = HOME.tree.create(HOUSE), GEO = HOUSE.geometry, KIND = GEO.kinds, OPENING_KIND = GEO.openingKinds;
+const T = tree.create(HOUSE), GEO = HOUSE.geometry, KIND = GEO.kinds, OPENING_KIND = GEO.openingKinds;
 const FLOORS = (HOUSE.children || []).filter(n => n.type === 'floor'), TOP_FLOOR = FLOORS[FLOORS.length - 1];
 const level = F => F.offset[2];
 const fieldsOf = (n, keys) => Object.fromEntries(keys.filter(k => n[k] !== undefined).map(k => [k, n[k]]));
@@ -556,4 +557,4 @@ function nav(ROOT, part = [], active = part[0]) {
 
 return { build, nav };
 }
-HOME.model = modelModule();
+HOME.model = modelModule(HOME.geometry, HOME.tree);

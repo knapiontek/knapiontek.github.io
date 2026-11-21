@@ -12,25 +12,17 @@
 </head>
 <body>
 <h1>Clean slate</h1>
-<p>Each file runs alone, on an empty slate: JavaScript itself and the files it gets, nothing more (no page, no browser,
-  no library). Its test (<code>test/&lt;file&gt;</code>: the same path under test/) calls its public API on that slate. test/test.md says more.</p>
-<table><thead><tr><th>File</th><th>Gets</th><th>Result</th></tr></thead><tbody id="results"></tbody></table>
+<p>Each file runs alone, on an empty slate: JavaScript itself, nothing more (no page, no browser, no library, no global
+  name of the project). Its test (<code>test/&lt;file&gt;</code>: the same path under test/) gets the constructors it names,
+  builds the file from its constructor and calls its public API. test/test.md says more.</p>
+<table><thead><tr><th>File</th><th>Its test builds it with</th><th>Result</th></tr></thead><tbody id="results"></tbody></table>
 
 <script>
-/* what each file gets: the files run before it on its slate */
-const GETS = {
-  'core/geometry.js': [],
-  'core/tree.js': [],
-  'core/surface.js': ['core/geometry.js'],
-  'core/plan2d.js': ['core/geometry.js'],
-  'core/estimate.js': [],
-  'house/model.js': ['core/geometry.js', 'core/tree.js'],
-  'room/tiles.js': ['core/geometry.js'],
-  'room/cabinets.js': []
-};
-
-/* a file's name on the slate: room/cabinets.js -> HOME.cabinets, made by cabinetsModule(), tested by cabinetsTest() */
+/* the files tested; core/tree.js is made by treeModule(), its test is treeTest() in test/core/tree.js */
+const FILES = ['core/geometry.js', 'core/format.js', 'core/tree.js', 'core/surface.js', 'core/plan2d.js', 'core/estimate.js',
+  'house/model.js', 'room/tiles.js', 'room/cabinets.js'];
 const nameOf = file => file.split('/').pop().replace('.js', '');
+const fileOf = constructor => FILES.find(f => nameOf(f) + 'Module' === constructor);
 
 /* a script, run in this page: a path of the project (core/tree.js) is one folder up, a test (test/core/tree.js) here;
    HOME.data hands a data file's content in */
@@ -43,8 +35,12 @@ const script = file => new Promise((done, fail) => {
 const DATA = {};
 async function read(file) { HOME.data = d => { DATA[file] = d; }; await script(file); }
 
-/* The slate: a worker (no page) with every name taken away that is not JavaScript's own. It gets the files' code and the
-   data, runs the files one by one into HOME, then the test, and sends back what passed and what failed. */
+/* the constructors a test names: its first parameter, { treeModule, geometryModule } */
+const namesOf = test => (String(test).match(/^function\s*\w*\s*\(\s*\{([^}]*)\}/) || ['', ''])[1].split(',').map(s => s.trim()).filter(Boolean);
+
+/* The slate: a worker (no page) with every name taken away that is not JavaScript's own. It gets the constructors' code
+   and the data; each constructor becomes a function that only the test holds (none of them is a global name), the test
+   gets them, and the slate sends back what passed and what failed. */
 function slate() {
   const JAVASCRIPT = new Set(['globalThis', 'Infinity', 'NaN', 'undefined', 'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt',
     'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'escape', 'unescape', 'AggregateError', 'Array',
@@ -54,24 +50,23 @@ function slate() {
     'RegExp', 'Set', 'SharedArrayBuffer', 'String', 'Symbol', 'SyntaxError', 'TypeError', 'Uint8Array', 'Uint8ClampedArray',
     'Uint16Array', 'Uint32Array', 'URIError', 'WeakMap', 'WeakRef', 'WeakSet']);
   const send = postMessage.bind(globalThis);
-  onmessage = ({ data: { files, test, data } }) => {
+  onmessage = ({ data: { constructors, test, data } }) => {
     for (let o = globalThis; o && o !== Object.prototype; o = Object.getPrototypeOf(o))
       for (const name of Object.getOwnPropertyNames(o))
         if (!JAVASCRIPT.has(name)) try { Object.defineProperty(globalThis, name, { value: undefined }); } catch (e) { /* checked below */ }
     const left = Object.getOwnPropertyNames(globalThis).filter(name => !JAVASCRIPT.has(name) && globalThis[name] !== undefined);
     if (left.length) return send({ error: 'the slate is not empty: ' + left.join(', ') });
 
-    const HOME = globalThis.HOME = {}, passed = [], failed = [];
+    const passed = [], failed = [], given = {};
     try {
-      for (const f of files) HOME[f.name] = (0, eval)(`(${f.code})\n//# sourceURL=${f.file}`)();
-      Object.freeze(HOME); Object.values(HOME).forEach(Object.freeze);
-      (0, eval)(`(${test.code})\n//# sourceURL=${test.file}`)(HOME, file => data[file], (what, ok) => (ok ? passed : failed).push(what));
+      for (const c of constructors) given[c.name] = (0, eval)(`(${c.code})\n//# sourceURL=${c.file}`);
+      (0, eval)(`(${test.code})\n//# sourceURL=${test.file}`)(Object.freeze(given), file => data[file], (what, ok) => (ok ? passed : failed).push(what));
       send({ passed, failed });
     } catch (e) { send({ passed, failed, error: String(e), stack: String(e.stack) }); }
   };
 }
 
-/* the line of the files' code where an error was thrown: the first one of a file in its stack */
+/* the line of the code where an error was thrown: the first one of a file in its stack */
 function where(stack, files) {
   for (const m of stack.matchAll(/([\w\/.-]+\.js):(\d+):\d+/g)) {
     const f = files.find(f => f.file === m[1]);
@@ -82,20 +77,19 @@ function where(stack, files) {
 
 /* one file on its slate */
 function run(file) {
-  const files = [...GETS[file], file].map(f => ({ file: f, name: nameOf(f), code: String(window[nameOf(f) + 'Module']) }));
   const test = { file: 'test/' + file, code: String(window[nameOf(file) + 'Test']) };
+  const constructors = namesOf(test.code).map(name => ({ name, file: fileOf(name), code: String(window[name]) }));
   const worker = new Worker(URL.createObjectURL(new Blob([`(${slate})()`], { type: 'text/javascript' })));
   return new Promise(done => {
-    worker.onmessage = ({ data: r }) => { worker.terminate(); done(Object.assign(r, { at: r.stack ? where(r.stack, files.concat(test)) : '' })); };
-    worker.postMessage({ files, test, data: DATA });
+    worker.onmessage = ({ data: r }) => { worker.terminate(); done(Object.assign(r, { at: r.stack ? where(r.stack, constructors.concat(test)) : '' })); };
+    worker.postMessage({ constructors, test, data: DATA });
   });
 }
 
 (async () => {
   /* the files and their tests, run in this page only to be read; what they do here does not count */
   window.onerror = () => true;
-  for (const file of new Set(Object.entries(GETS).flat(2))) await script(file);
-  for (const file of Object.keys(GETS)) await script('test/' + file);
+  for (const file of FILES) { await script(file); await script('test/' + file); }
   window.onerror = null;
   /* the data the tests read: the house, the library, every room's files */
   await read('house/house.js'); await read('library/library.js'); await read('library/materials.js');
@@ -104,9 +98,9 @@ function run(file) {
     for (const role of n.files || []) await read(`room/${n.id}.${role}.js`);
 
   const body = document.getElementById('results'), esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  for (const file of Object.keys(GETS)) {
-    const tr = body.insertRow();
-    tr.innerHTML = `<td><code>${file}</code></td><td>${GETS[file].map(f => `<code>${f}</code>`).join(' ') || 'nothing'}</td><td class="wait">running…</td>`;
+  for (const file of FILES) {
+    const tr = body.insertRow(), uses = namesOf(window[nameOf(file) + 'Test']).map(fileOf).filter(f => f !== file);
+    tr.innerHTML = `<td><code>${file}</code></td><td>${uses.map(f => `<code>${f}</code>`).join(' ') || 'nothing'}</td><td class="wait">running…</td>`;
     const r = await run(file), ok = !r.error && !r.failed.length;
     tr.cells[2].className = '';
     tr.cells[2].innerHTML = `<span class="${ok ? 'ok' : 'no'}">${ok ? 'OK' : 'NOT OK'}</span> · ${(r.passed || []).length} passed`

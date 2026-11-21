@@ -1,6 +1,6 @@
 /* room/tiles.js: its public API, each part with what it gives (test/test.md) */
-function tilesTest(HOME, data, check) {
-  const T = HOME.tiles;
+function tilesTest({ tilesModule, geometryModule }, data, check) {
+  const T = tilesModule(geometryModule());
   check('the public API', Object.keys(T).join(' ') === 'PATTERNS DIRS rooms lay clip clipHalf count fit corePieces slabEdges');
 
   /* a tile 600 × 300, no joint; a floor 1200 × 600 at the level 0, a door 900 wide in its wall at x = 1200 */

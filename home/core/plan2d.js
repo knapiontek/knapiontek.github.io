@@ -3,7 +3,7 @@
    material's plan colour or hatch; what lies under the cut is seen from above (the higher over the lower), what lies over
    it is dashed; rooms, opening labels and dimensions come from the project's data. Sheets stand side by side. The sheet
    is in mm of the house (plan x = house y, plan y = house x: the garden at the top), so every size of the drawing is in
-   mm too. Knows no project. Needs core/geometry.js and core/ui.js (THREE only for meshShape). */
+   mm too. Knows no project and no browser. Gets core/geometry.js and core/format.js. */
 /**
  * @typedef {object} PlanShape  a thing seen from above
  * @property {number[][]} poly  [x, y] house mm
@@ -16,9 +16,10 @@
 /** @typedef {{ rects: Rect[], numbers?: (string | number)[], name: string, area?: number }} PlanRoom  area m² (else of rects) */
 /** @typedef {{ extent: Rect, title: string, draw: (X: number) => string }} PlanSheet  extent in house mm; draw at the shift X */
 /** @typedef {Cell & { cap?: string }} PlanCell  cap: the material of its section */
-function plan2dModule() {
+/** @param {ReturnType<typeof geometryModule>} geometry @param {ReturnType<typeof formatModule>} format */
+function plan2dModule(geometry, format) {
 'use strict';
-const { hRange, sectionAt, cutBy, rectArea } = HOME.geometry;
+const { hRange, sectionAt, cutBy, rectArea } = geometry;
 
 const SIZE = {
   gap: 4200, margin: 2000, side: 2400, head: 600, foot: 1400,          // between the sheets, around them
@@ -33,7 +34,7 @@ const INK = '#1f2523', FLOOR_FILL = '#f4f1ea';
 
 /** a plan drawer for a page @param {Object<string, MaterialLook>} materials */
 function create(materials) {
-  const S = SIZE, fmt = HOME.ui.fmt;
+  const S = SIZE, fmt = format.fmt;
   const fill = (/** @type {string | undefined} */ key) => { const d = (key && materials[key]) || {}; return d.plan?.hatch ? `url(#hatch-${key})` : d.plan || d.color || '#bbbbbb'; };
   const rect = (/** @type {number} */ X, /** @type {number} */ x1, /** @type {number} */ x2, /** @type {number} */ y1, /** @type {number} */ y2, /** @type {string} */ attr) => `<rect x="${Math.round(X + y1)}" y="${Math.round(x1)}" width="${Math.round(y2 - y1)}" height="${Math.round(x2 - x1)}" ${attr}/>`;
   const hatches = () => Object.entries(materials).filter(([, d]) => d.plan?.hatch).map(([k, d]) =>
@@ -160,21 +161,7 @@ function solidShape(c, glass = false) {
   const ys = c.S.poly.map(p => p[0]), [bottom, top] = hRange(c.S), y1 = Math.min(...ys), y2 = Math.max(...ys);
   return { poly: [[c.S.x1, y1], [c.S.x2, y1], [c.S.x2, y2], [c.S.x1, y2]], bottom, top, glass };
 }
-/* the footprint of a mesh: the convex hull of its points seen from above; toHouse: world -> house mm (Matrix4) */
-/** @param {any} mesh @param {any} toHouse @param {boolean} [glass] @returns {PlanShape} */
-function meshShape(mesh, toHouse, glass = false) {
-  const P = mesh.geometry.attributes.position, m = new THREE.Matrix4().multiplyMatrices(toHouse, mesh.matrixWorld), v = new THREE.Vector3(), /** @type {number[][]} */ pts = [];
-  let bottom = Infinity, top = -Infinity;
-  for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m); pts.push([v.x, v.y]); bottom = Math.min(bottom, v.z); top = Math.max(top, v.z); }   // v.z: the house's h
-  pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const cross = (/** @type {number[]} */ o, /** @type {number[]} */ a, /** @type {number[]} */ b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]), half = (/** @type {number[][]} */ list) => {
-    /** @type {number[][]} */ const h = [];
-    for (const p of list) { while (h.length >= 2 && cross(h[h.length - 2], h[h.length - 1], p) <= 0) h.pop(); h.push(p); }
-    h.pop(); return h;
-  };
-  return { poly: half(pts).concat(half(pts.slice().reverse())), bottom, top, glass };
-}
 
-return { create, solidShape, meshShape };
+return { create, solidShape };
 }
-HOME.plan2d = plan2dModule();
+HOME.plan2d = plan2dModule(HOME.geometry, HOME.format);

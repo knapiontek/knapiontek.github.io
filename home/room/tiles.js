@@ -3,7 +3,7 @@
    count (whole, cut, small cuts), the origin with the fewest small cuts, and the faces to draw. A layout is one tile product
    laid one way over some rooms of one floor; rooms that meet with no wall between them are one zone (a tile runs across
    the line), and the floor runs on through a door: each half of its depth belongs to the room on its side. Rectangles
-   [x1, x2, y1, y2] in mm, in the floor's axes. Needs core/geometry.js; draws nothing, knows no house. */
+   [x1, x2, y1, y2] in mm, in the floor's axes. Gets core/geometry.js; draws nothing, knows no house. */
 /**
  * How a layout is laid, as the viewer may change it.
  * @typedef {object} Laying
@@ -22,10 +22,11 @@
  * @typedef {{ room: string, zone: string, j: number, k: number, ta: number, tb: number, a1: number, a2: number, b1: number, b2: number, door: boolean, small?: boolean, poly?: number[][] }} TilePiece
  */
 /** @typedef {{ area: number, tiles: number, full: number, cut: number, small: number, penalty: number }} TileCount  area in m² */
-function tilesModule() {
+/** @param {ReturnType<typeof geometryModule>} geometry */
+function tilesModule(geometry) {
 'use strict';
 
-const G = HOME.geometry, { hash01, EPS } = G;
+const G = geometry, { hash01, EPS } = G;
 const INF = Infinity, M2 = 1e6;            // mm² in a m²
 /* the patterns: [name, the shift of each row along the length as a part of a tile; null: at random] */
 const PATTERNS = { grid: ['Grid', 0], half: ['Half bond', 1 / 2], third: ['Third bond', 1 / 3], quarter: ['Quarter bond', 1 / 4], random: ['Random', null] };
@@ -226,4 +227,4 @@ function slabEdges(rings, at, point, n, depth, cell, material) {
 
 return { PATTERNS, DIRS, rooms, lay, clip, clipHalf, count, fit, corePieces, slabEdges };
 }
-HOME.tiles = tilesModule();
+HOME.tiles = tilesModule(HOME.geometry);
