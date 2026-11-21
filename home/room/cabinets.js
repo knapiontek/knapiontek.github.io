@@ -147,9 +147,9 @@
  */
 /** @typedef {{ id: string, name?: string, type: string, offset: number[], size: number[], part?: any, children: FurnitureNode[] }} FurnitureNode  a node of a room's furniture; part: what of the model it draws */
 /** @typedef {{ group: number, item: Item, name: string, a: number, b: number }} PlasterPiece  a plasterboard to cut, a × b */
-/** @typedef {ReturnType<ReturnType<typeof cabinetsModule>['build']>} CabinetsModel  the cabinets of a room, as built from its file */
+/** @typedef {ReturnType<ReturnType<typeof roomCabinetsModule>['build']>} CabinetsModel  the cabinets of a room, as built from its file */
 
-function cabinetsModule() {
+function roomCabinetsModule() {
 'use strict';
 
 /* ================= 1. VOCABULARY: types, tags and what they build ================= */

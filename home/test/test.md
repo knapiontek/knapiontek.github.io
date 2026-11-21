@@ -7,11 +7,11 @@ The LLM's file (kept up to date without asking): how the project is tested. The 
 The owner opens home/test/index.html from disk: every row must say OK. The LLM runs the same page (Playwright, Chrome, no flags) after every change.
 
 - **What it proves**: a file runs with JavaScript itself and what its constructor is given, nothing more. Its slate is a worker with every name taken away that is not JavaScript's own: no page, `window`, `document`, `fetch`, `console`, three.js, Alpine, XLSX, no `HOME`, no global name of the project. The page refuses a slate that is not empty. What a file needs and was not given is not there: the file fails.
-- **Its test**: the same path under test/ (test/core/plan2d.js tests core/plan2d.js), one function `<name>Test({ <the constructors it uses> }, data, check)`. It builds the file as the page does, `plan2dModule(geometryModule(), toolsModule())`, and checks what each part of its public API gives. Its first check is the public API itself (the names the file gives, in order): the test is the API's definition. `data(path)`: a data file's content (the house, the library, every room's files); `check(what, ok)`.
+- **Its test**: the same path under test/ (test/core/plan2d.js tests core/plan2d.js), one function `<name>Test({ <the constructors it uses> }, data, check)`. It builds the file as the page does, `corePlan2dModule(coreGeometryModule(), coreToolsModule())`, and checks what each part of its public API gives. Its first check is the public API itself (the names the file gives, in order): the test is the API's definition. `data(path)`: a data file's content (the house, the library, every room's files); `check(what, ok)`.
 - **The files tested**: `FILES` at the top of test/index.html.
 - **Rules**:
   - A constructor on the slate is no global name: only the test holds it, so a file cannot reach another file but through its parameters.
-  - A file tested is one constructor `<name>Module(...)` and nothing else; the page reads the constructor's code.
+  - A file tested is one constructor `<name>Module(...)` and nothing else (the name is its path: core/plan2d.js → `corePlan2dModule`); the page reads the constructor's code.
   - A test calls the public API only. A row that is NOT OK is never made OK by changing its test without the owner.
 - **Now (21 Nov 2026)**: OK every file tested. ui, sheet and scene draw only in the browser (scene is the only file with three.js): their tests make them and call what needs no browser; room's build() draws through scene, so its test calls prepare() and layers(); furniture's test describes every room's cabinets for real (core/drawing.js).
 
@@ -33,7 +33,7 @@ The project's state at the end of the migration (20 Nov 2026) is the reference: 
   const read = f => { run(f); return DATA; };
   ```
 
-  A code file only defines its constructor (`w.roomModule`); make each module as index.js does (its first lines), for the snapshots below kept as `w.HOME.<name>`, made as soon as what it needs is made.
+  A code file only defines its constructor (`w.roomRoomModule`); make each module as index.js does (its first lines), for the snapshots below kept as `w.HOME.<name>`, made as soon as what it needs is made.
 
 - **The browser**: Playwright (Python) with Chrome, the page opened from disk (`file://…/home/index.html`), as the owner does. Flags: `--use-gl=swiftshader --enable-unsafe-swiftshader --allow-file-access-from-files`; viewport 1400 × 900.
 - **The CDN libraries** from npm in a folder of the LLM's own (never in home/), served by intercepting the requests (`page.route('**/*')`, `route.fulfill(path=…)` when the URL ends with):
@@ -88,7 +88,7 @@ After a change of types or comments only: 1, 2, 12 and 13 are enough. After a ch
 
 | View | Sheets (rows) | Checks |
 |---|---|---|
-| the house | Rooms 22, Floor tiles 13, Doors 16, Notes 9, Elements 135, Test 37 | 18, the areas information |
+| the house | Rooms 20, Floor tiles 13, Doors 16, Notes 9, Elements 133, Test 35 | 18, the areas information |
 | room_356 | Estimate 80, Cut list 144, Notes 33, Elements 538, Test 13 | 10, all pass |
 | bathroom_5 | Estimate 61, Cut list 33, Notes 12, Elements 71, Test 13 | 10, all pass |
 | bathroom_7 | Estimate 55, Cut list 33, Notes 11, Elements 70, Test 13 | 10, all pass |

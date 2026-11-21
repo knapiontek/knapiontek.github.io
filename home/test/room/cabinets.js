@@ -1,6 +1,6 @@
 /* room/cabinets.js: its public API, each part with what it gives, on every room's cabinets (test/test.md) */
-function cabinetsTest({ cabinetsModule }, data, check) {
-  const C = cabinetsModule();
+function roomCabinetsTest({ roomCabinetsModule }, data, check) {
+  const C = roomCabinetsModule();
   check('the public API', Object.keys(C).join(' ') === 'TYPES TAGS TAG_NAMES LABELS typeLabel tagsLabel useLabel hasTag FRONT_TYPES SIDES HINGE_SIDES placeLabel gapsText parseTags spaceAround valueAt PINS_PER_SHELF tagsOf readType cutKey checkSettings build cutList plural appliances withLibrary tree boxIn coveredEdges cabinetsText');
 
   const products = {};

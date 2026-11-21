@@ -16,8 +16,8 @@
 /** @typedef {{ rects: Rect[], numbers?: (string | number)[], name: string, area?: number }} PlanRoom  area m² (else of rects) */
 /** @typedef {{ extent: Rect, title: string, draw: (X: number) => string }} PlanSheet  extent in house mm; draw at the shift X */
 /** @typedef {Cell & { cap?: string }} PlanCell  cap: the material of its section */
-/** @param {ReturnType<typeof geometryModule>} geometry @param {ReturnType<typeof toolsModule>} tools */
-function plan2dModule(geometry, tools) {
+/** @param {ReturnType<typeof coreGeometryModule>} geometry @param {ReturnType<typeof coreToolsModule>} tools */
+function corePlan2dModule(geometry, tools) {
 'use strict';
 const { hRange, sectionAt, cutBy, rectArea } = geometry;
 

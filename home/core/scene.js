@@ -50,9 +50,9 @@
  * @property {() => void} onToggle
  * @property {() => Camera} home  the camera when the walk stops
  */
-/** @typedef {ReturnType<ReturnType<typeof sceneModule>['create']>} SceneView  a page's 3D view */
-/** @param {ReturnType<typeof geometryModule>} geometry @param {ReturnType<typeof facesModule>} faces */
-function sceneModule(geometry, faces) {
+/** @typedef {ReturnType<ReturnType<typeof coreSceneModule>['create']>} SceneView  a page's 3D view */
+/** @param {ReturnType<typeof coreGeometryModule>} geometry @param {ReturnType<typeof coreFacesModule>} faces */
+function coreSceneModule(geometry, faces) {
 'use strict';
 const { DEG, hRange, edgesOf } = geometry;
 const { sub3, dot3, cross3, weld } = faces;
@@ -750,7 +750,7 @@ function create(opts) {
     return { poly: half(pts).concat(half(pts.slice().reverse())), bottom, top, glass };
   }
   const geometries = new WeakMap();        // a shape described once (a handle's cup) is one geometry
-  /** @param {ReturnType<ReturnType<typeof drawingModule>['create']>} desc @param {{ layers?: string[], apart?: string[] }} [opts] apart: layers whose still details stay single meshes (the 2D plan draws them) */
+  /** @param {ReturnType<ReturnType<typeof coreDrawingModule>['create']>} desc @param {{ layers?: string[], apart?: string[] }} [opts] apart: layers whose still details stay single meshes (the 2D plan draws them) */
   function show(desc, opts = {}) {
     const EXTRA = opts.layers || [], frames = new Map(), holders = new Map(), cores = new Map();
     /** @type {{ mesh: any, layers: string[], moves: boolean }[]} */ const DETAILS = [];

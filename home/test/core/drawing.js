@@ -1,7 +1,7 @@
 /* core/drawing.js: its public API, each part with what it gives: a description is data, in the order described
    (test/test.md) */
-function drawingTest({ drawingModule, geometryModule }, data, check) {
-  const drawing = drawingModule(geometryModule());
+function coreDrawingTest({ coreDrawingModule, coreGeometryModule }, data, check) {
+  const drawing = coreDrawingModule(coreGeometryModule());
   check('the public API', Object.keys(drawing).join(' ') === 'create');
 
   /* group 1 along the house's x from (1000, 2000), its y the house's y; the floor at h 0 */

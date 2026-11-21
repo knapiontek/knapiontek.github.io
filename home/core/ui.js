@@ -6,8 +6,8 @@
 /** @typedef {{ name: string, go: () => void, label?: string, cls?: string, pressed?: boolean }} MenuItem  a button of the bottom menu */
 /** @typedef {Object<string, { name: string, parent: string | null }>} LayerTree  layer -> its name and parent */
 /** @typedef {{ k: string, name: string, on: boolean, child: boolean, off: boolean }} LayerItem  a layer as the panel lists it */
-/** @param {ReturnType<typeof toolsModule>} tools */
-function uiModule(tools) {
+/** @param {ReturnType<typeof coreToolsModule>} tools */
+function coreUiModule(tools) {
 'use strict';
 
 const { fmt } = tools;

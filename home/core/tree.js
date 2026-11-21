@@ -15,8 +15,8 @@
  * @property {string[]} [refs]  paths from the root
  * @property {TreeNode[]} [children]
  */
-/** @typedef {ReturnType<ReturnType<typeof treeModule>['create']>} Tree */
-function treeModule() {
+/** @typedef {ReturnType<ReturnType<typeof coreTreeModule>['create']>} Tree */
+function coreTreeModule() {
 'use strict';
 const AXES = ['x', 'y', 'h'];
 const ID = /^[A-Za-z0-9_-]+$/;             // no spaces, no '/': an id is a step of a path

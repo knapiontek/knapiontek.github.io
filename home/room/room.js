@@ -20,12 +20,12 @@
  */
 /** @typedef {{ offset: number[], size: number[], area?: Rect[], ceiling?: Line[], openings?: Box[], tiles: { top: number, depth: number } }} RoomInHouse
     what the house gives a room, in the room's axes: ceiling: lines h ≤ a + s·y; tiles: the house's (a floor's face over the floor, a slab's depth with its glue) */
-/** @typedef {ReturnType<ReturnType<typeof roomModule>['prepare']>} PreparedRoom */
-/** @typedef {ReturnType<ReturnType<typeof roomModule>['build']>} BuiltRoom */
-/** @param {ReturnType<typeof geometryModule>} geometry
-    @param {ReturnType<typeof treeModule>} tree @param {ReturnType<typeof plan2dModule>} plan2d @param {ReturnType<typeof tilesModule>} tiles
-    @param {ReturnType<typeof cabinetsModule>} cabinets @param {ReturnType<typeof furnitureModule>} furniture @param {ReturnType<typeof shapesModule>} shapes @param {ReturnType<typeof drawingModule>} drawing */
-function roomModule(geometry, tree, plan2d, tiles, cabinets, furniture, shapes, drawing) {
+/** @typedef {ReturnType<ReturnType<typeof roomRoomModule>['prepare']>} PreparedRoom */
+/** @typedef {ReturnType<ReturnType<typeof roomRoomModule>['build']>} BuiltRoom */
+/** @param {ReturnType<typeof coreGeometryModule>} geometry
+    @param {ReturnType<typeof coreTreeModule>} tree @param {ReturnType<typeof corePlan2dModule>} plan2d @param {ReturnType<typeof roomTilesModule>} tiles
+    @param {ReturnType<typeof roomCabinetsModule>} cabinets @param {ReturnType<typeof roomFurnitureModule>} furniture @param {ReturnType<typeof libraryShapesModule>} shapes @param {ReturnType<typeof coreDrawingModule>} drawing */
+function roomRoomModule(geometry, tree, plan2d, tiles, cabinets, furniture, shapes, drawing) {
 'use strict';
 const C = cabinets, G = geometry;
 

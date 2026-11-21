@@ -1,7 +1,7 @@
 /* core/sheet.js: its public API, each part with what it gives; what needs the browser (the Documents screen, XLSX) is not
    called here (test/test.md) */
-function sheetTest({ sheetModule, uiModule, toolsModule }, data, check) {
-  const tools = toolsModule(), sheet = sheetModule(uiModule(tools), tools);
+function coreSheetTest({ coreSheetModule, coreUiModule, coreToolsModule }, data, check) {
+  const tools = coreToolsModule(), sheet = coreSheetModule(coreUiModule(tools), tools);
   check('the public API', Object.keys(sheet).join(' ') === 'evaluator xlsx view menu');
 
   const { formula, input } = tools;

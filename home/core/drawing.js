@@ -58,8 +58,8 @@
 /** @typedef {{ n: number, kind: 'point' | 'spot', color: number, intensity: number, distance: number, decay: number, angle?: number, penumbra?: number, from: number[], to: number[] | null, shadow: boolean }} DescLamp  in the house's axes */
 /** @typedef {{ n: number, key: string, speckle: { size: number, background: string, count: number, dots: { above: number, color: string, alpha?: number[] }[], dot: number[], repeat: number } }} DescLook  a material painted when first drawn */
 
-/** @param {ReturnType<typeof geometryModule>} geometry */
-function drawingModule(geometry) {
+/** @param {ReturnType<typeof coreGeometryModule>} geometry */
+function coreDrawingModule(geometry) {
 'use strict';
 const G = geometry;
 

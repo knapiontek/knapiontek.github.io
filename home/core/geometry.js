@@ -9,7 +9,7 @@
 /** @typedef {number[]} Box  [x1, x2, y1, y2, h1, h2] */
 /** @typedef {number[]} Rect  [x1, x2, y1, y2] */
 /** @typedef {'E' | 'W' | 'N' | 'S'} Side  a side by the compass */
-function geometryModule() {
+function coreGeometryModule() {
 'use strict';
 
 const DEG = Math.PI / 180, INF = 1e7, EPS = 1e-6;

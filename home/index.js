@@ -5,13 +5,13 @@
 'use strict';
 /* ================= THE APPLICATION: each file made from its constructor, given what it needs =================
    These lines are the whole map of what needs what. */
-const Geometry = geometryModule(), Tools = toolsModule(), Tree = treeModule();
-const Faces = facesModule(Geometry), Plan2d = plan2dModule(Geometry, Tools), Estimate = estimateModule(Tools);
-const UI = uiModule(Tools), Sheet = sheetModule(UI, Tools), Scene = sceneModule(Geometry, Faces);
-const Catalog = catalogModule(HOME.load), Model = modelModule(Geometry, Tree), Tiles = tilesModule(Geometry);
-const Shapes = shapesModule(), Cabinets = cabinetsModule(), Furniture = furnitureModule(Cabinets, Shapes);
-const Drawing = drawingModule(Geometry);
-const Room = roomModule(Geometry, Tree, Plan2d, Tiles, Cabinets, Furniture, Shapes, Drawing), Docs = docsModule(Tools, Estimate, Cabinets);
+const Geometry = coreGeometryModule(), Tools = coreToolsModule(), Tree = coreTreeModule();
+const Faces = coreFacesModule(Geometry), Plan2d = corePlan2dModule(Geometry, Tools), Estimate = coreEstimateModule(Tools);
+const UI = coreUiModule(Tools), Sheet = coreSheetModule(UI, Tools), Scene = coreSceneModule(Geometry, Faces);
+const Catalog = libraryCatalogModule(HOME.load), Model = houseModelModule(Geometry, Tree), Tiles = roomTilesModule(Geometry);
+const Shapes = libraryShapesModule(), Cabinets = roomCabinetsModule(), Furniture = roomFurnitureModule(Cabinets, Shapes);
+const Drawing = coreDrawingModule(Geometry);
+const Room = roomRoomModule(Geometry, Tree, Plan2d, Tiles, Cabinets, Furniture, Shapes, Drawing), Docs = roomDocsModule(Tools, Estimate, Cabinets);
 /* ================= THE CABINET EDITOR =================
    the mode Cabinets: the active room's cabinets file in tables, its elevations drawn: tables -> the file -> the model
    (room/cabinets.js) -> the drawing. The checks of the data are the model's; it only checks that the cells are numbers.

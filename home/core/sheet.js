@@ -27,8 +27,8 @@
 /** @typedef {Sheet & { rows: SheetRow[] }} TableSheet  a sheet with rows */
 /** @typedef {{ sheets: Sheet[] }} Book */
 /** @typedef {{ width?: number, fix?: number, share?: number, min?: number, max?: number, digits?: number, z?: string }} Column */
-/** @param {ReturnType<typeof uiModule>} ui @param {ReturnType<typeof toolsModule>} tools */
-function sheetModule(ui, tools) {
+/** @param {ReturnType<typeof coreUiModule>} ui @param {ReturnType<typeof coreToolsModule>} tools */
+function coreSheetModule(ui, tools) {
 'use strict';
 
 const { el, setColumns } = ui, { esc, LOCALE } = tools;

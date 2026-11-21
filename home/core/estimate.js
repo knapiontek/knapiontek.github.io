@@ -1,8 +1,8 @@
 // @ts-check
 /* core/estimate.js: the sheet Estimate: items by category, quantity × unit price, sums, the total; the same on every page
    (core/sheet.js draws it and makes the XLSX). Knows no project: a page hands in its items. No browser. Gets core/tools.js. */
-/** @param {ReturnType<typeof toolsModule>} tools */
-function estimateModule(tools) {
+/** @param {ReturnType<typeof coreToolsModule>} tools */
+function coreEstimateModule(tools) {
 'use strict';
 
 const { formula, input, cols, money, kinds } = tools;

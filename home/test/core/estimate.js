@@ -1,6 +1,6 @@
 /* core/estimate.js: its public API, each part with what it gives (test/test.md) */
-function estimateTest({ estimateModule, toolsModule }, data, check) {
-  const E = estimateModule(toolsModule());
+function coreEstimateTest({ coreEstimateModule, coreToolsModule }, data, check) {
+  const E = coreEstimateModule(coreToolsModule());
   check('the public API', Object.keys(E).join(' ') === 'estimate');
 
   const { sheet, row } = E.estimate({ title: 'Kitchen', categories: [

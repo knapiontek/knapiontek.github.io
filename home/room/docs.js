@@ -14,8 +14,8 @@
  * @property {Object<string, string>} [formulas]
  * @property {{ name: string, notes: Object<string, any>[] }[]} notes
  */
-/** @param {ReturnType<typeof toolsModule>} tools @param {ReturnType<typeof estimateModule>} estimate @param {ReturnType<typeof cabinetsModule>} cabinets */
-function docsModule(tools, estimate, cabinets) {
+/** @param {ReturnType<typeof coreToolsModule>} tools @param {ReturnType<typeof coreEstimateModule>} estimate @param {ReturnType<typeof roomCabinetsModule>} cabinets */
+function roomDocsModule(tools, estimate, cabinets) {
 'use strict';
 
 const { formula, cols, kinds } = tools, E = estimate;

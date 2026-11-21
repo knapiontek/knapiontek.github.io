@@ -22,8 +22,8 @@
  * @typedef {{ room: string, zone: string, j: number, k: number, ta: number, tb: number, a1: number, a2: number, b1: number, b2: number, door: boolean, small?: boolean, poly?: number[][] }} TilePiece
  */
 /** @typedef {{ area: number, tiles: number, full: number, cut: number, small: number, penalty: number }} TileCount  area in m² */
-/** @param {ReturnType<typeof geometryModule>} geometry */
-function tilesModule(geometry) {
+/** @param {ReturnType<typeof coreGeometryModule>} geometry */
+function roomTilesModule(geometry) {
 'use strict';
 
 const G = geometry, { hash01, EPS } = G;

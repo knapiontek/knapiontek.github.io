@@ -28,8 +28,8 @@
  * @property {string[] | null} [cover]  the layers of the solid it lies against (seen only while that is hidden)
  * @property {number} [d]  its plane's distance from the zero
  */
-/** @param {ReturnType<typeof geometryModule>} geometry */
-function facesModule(geometry) {
+/** @param {ReturnType<typeof coreGeometryModule>} geometry */
+function coreFacesModule(geometry) {
 'use strict';
 const { EPS, ccw, edgesOf, intersect2, minus2 } = geometry;
 

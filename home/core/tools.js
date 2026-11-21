@@ -1,7 +1,7 @@
 // @ts-check
 /* core/tools.js: short pieces that belong to no one file: how numbers are written (the same on every page and in every
    sheet); text into HTML; how a sheet's rows and columns are built. Knows no project and no browser. */
-function toolsModule() {
+function coreToolsModule() {
 'use strict';
 
 /* ---------- numbers ---------- */

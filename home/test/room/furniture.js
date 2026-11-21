@@ -1,13 +1,13 @@
 /* room/furniture.js: its public API, each part with what it gives: every room's cabinets described, as data (core/drawing.js)
    (test/test.md) */
-async function furnitureTest({ furnitureModule, cabinetsModule, shapesModule, drawingModule, roomModule, geometryModule, treeModule, plan2dModule, toolsModule, tilesModule, catalogModule }, data, check) {
-  const geometry = geometryModule(), cabinets = cabinetsModule(), shapes = shapesModule(), drawing = drawingModule(geometry);
-  const furniture = furnitureModule(cabinets, shapes);
+async function roomFurnitureTest({ roomFurnitureModule, roomCabinetsModule, libraryShapesModule, coreDrawingModule, roomRoomModule, coreGeometryModule, coreTreeModule, corePlan2dModule, coreToolsModule, roomTilesModule, libraryCatalogModule }, data, check) {
+  const geometry = coreGeometryModule(), cabinets = roomCabinetsModule(), shapes = libraryShapesModule(), drawing = coreDrawingModule(geometry);
+  const furniture = roomFurnitureModule(cabinets, shapes);
   check('the public API', Object.keys(furniture).join(' ') === 'draw boardLooks');
 
   /* each furnished room prepared as the page does (room/room.js), with the library of library/catalog.js */
-  const room = roomModule(geometry, treeModule(), plan2dModule(geometry, toolsModule()), tilesModule(geometry), cabinets, furniture, shapes, drawing);
-  const library = await catalogModule(async path => data(path)).open();
+  const room = roomRoomModule(geometry, coreTreeModule(), corePlan2dModule(geometry, coreToolsModule()), roomTilesModule(geometry), cabinets, furniture, shapes, drawing);
+  const library = await libraryCatalogModule(async path => data(path)).open();
   const house = data('house/house.js'), tiles = house.children.find(n => n.type === 'house').settings.tiles;
   const furnished = []; (function walk(n) { if ((n.files || []).includes('cabinets')) furnished.push(n); (n.children || []).forEach(walk); })(house);
   for (const n of furnished) {

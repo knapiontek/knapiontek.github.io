@@ -1,6 +1,6 @@
 /* house/model.js: its public API, each part with what it gives, on the house's own data (test/test.md) */
-function modelTest({ modelModule, geometryModule, treeModule }, data, check) {
-  const model = modelModule(geometryModule(), treeModule());
+function houseModelTest({ houseModelModule, coreGeometryModule, coreTreeModule }, data, check) {
+  const model = houseModelModule(coreGeometryModule(), coreTreeModule());
   check('the public API', Object.keys(model).join(' ') === 'build nav');
 
   const house = data('house/house.js'), M = model.build(house);

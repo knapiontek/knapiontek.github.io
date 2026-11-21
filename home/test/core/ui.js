@@ -1,7 +1,7 @@
 /* core/ui.js: its public API, each part with what it gives; what needs the browser (the page, its pieces) is not called
    here (test/test.md) */
-function uiTest({ uiModule, toolsModule }, data, check) {
-  const ui = uiModule(toolsModule());
+function coreUiTest({ coreUiModule, coreToolsModule }, data, check) {
+  const ui = coreUiModule(coreToolsModule());
   check('the public API', Object.keys(ui).join(' ') === 'MODES TAB_NAMES $ byId el part component page openAll layerTree layerSwitch layerList sunStore sunBox download setColumns autoFit');
 
   check('MODES and TAB_NAMES: the names on the screen', ui.MODES['3d'] === '3D' && ui.MODES.documents === 'Documents' && ui.TAB_NAMES.layers === 'Layers');

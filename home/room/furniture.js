@@ -2,8 +2,8 @@
 /* room/furniture.js: the cabinets described (core/drawing.js): carcasses, fronts, worktops, panels, plinths, hardware and
    the products in them, from the model of room/cabinets.js; and the looks of the boards. Draws nothing itself. Gets the
    cabinets' engine and the library's shapes (library/shapes.js). */
-/** @param {ReturnType<typeof cabinetsModule>} cabinets @param {ReturnType<typeof shapesModule>} shapes */
-function furnitureModule(cabinets, shapes) {
+/** @param {ReturnType<typeof roomCabinetsModule>} cabinets @param {ReturnType<typeof libraryShapesModule>} shapes */
+function roomFurnitureModule(cabinets, shapes) {
 'use strict';
 const { boxIn, hasTag, placeLabel, typeLabel } = cabinets;
 

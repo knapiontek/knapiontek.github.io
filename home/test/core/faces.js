@@ -1,6 +1,6 @@
 /* core/faces.js: its public API, each part with what it gives (test/test.md) */
-function facesTest({ facesModule, geometryModule }, data, check) {
-  const geometry = geometryModule(), S = facesModule(geometry), prism = geometry.prism;
+function coreFacesTest({ coreFacesModule, coreGeometryModule }, data, check) {
+  const geometry = coreGeometryModule(), S = coreFacesModule(geometry), prism = geometry.prism;
   check('the public API', Object.keys(S).join(' ') === 'sub3 dot3 cross3 weld piecesOf');
 
   check('sub3, dot3, cross3', S.sub3([3, 2, 1], [1, 1, 1]).join() === '2,1,0' && S.dot3([1, 2, 3], [4, 5, 6]) === 32 && S.cross3([1, 0, 0], [0, 1, 0]).join() === '0,0,1');

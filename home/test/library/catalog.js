@@ -1,12 +1,12 @@
 /* library/catalog.js: its public API, each part with what it gives, on the library's own data (test/test.md) */
-async function catalogTest({ catalogModule }, data, check) {
+async function libraryCatalogTest({ libraryCatalogModule }, data, check) {
   /* the loader the catalog gets: a data file by its path; a texture is one made up here */
   const asked = [];
   const load = async (path, format, version) => {
     asked.push(path);
     return path.startsWith('library/textures/') ? { format, version, name: 'a texture', kind: 'wood', size: [1000, 1000], faces: ['data:'] } : data(path);
   };
-  const catalog = catalogModule(load);
+  const catalog = libraryCatalogModule(load);
   check('the public API', Object.keys(catalog).join(' ') === 'open');
 
   const L = await catalog.open();

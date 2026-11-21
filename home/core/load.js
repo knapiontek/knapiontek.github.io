@@ -6,7 +6,7 @@
 /* HOME: the one global name of the pages but the files' constructors: the data channel, data() for the data files, load()
    for the page */
 window.HOME = window.HOME || /** @type {Home} */ ({});
-function loadModule() {
+function coreLoadModule() {
 'use strict';
 
 const BASE = /** @type {HTMLScriptElement} */ (document.currentScript).src.replace(/core\/load\.js(\?.*)?$/, '');   // the home folder
@@ -37,4 +37,4 @@ async function load(path, format, version) {
 
 return { data, load };
 }
-Object.assign(HOME, loadModule());
+Object.assign(HOME, coreLoadModule());

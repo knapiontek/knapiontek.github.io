@@ -9,8 +9,8 @@
 /** @typedef {Cell & { element: string, cap?: string, part: any, r: string, gb?: Box, hb?: Box, info: Object<string, any> }} DrawCell  a solid of a room: in group r, its box gb there, hb in the house */
 /** @typedef {DescMover} DrawMover  a moving part as described (core/drawing.js) */
 /** @typedef {Object<string, any>} DrawPlace  a drawing's place: its group r and the anchors it starts from (each drawing names its own) */
-/** @typedef {ReturnType<ReturnType<typeof drawingModule>['create']>} DrawContext  what a drawing describes into (core/drawing.js) */
-function shapesModule() {
+/** @typedef {ReturnType<ReturnType<typeof coreDrawingModule>['create']>} DrawContext  what a drawing describes into (core/drawing.js) */
+function libraryShapesModule() {
 'use strict';
 
 /* ---------- an oven or a microwave built into a carcass: the body on its feet behind the carcass front, the fascia in

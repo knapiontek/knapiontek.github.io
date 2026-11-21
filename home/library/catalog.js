@@ -33,7 +33,7 @@
  * @property {() => Check[]} checks
  */
 /** @param {(path: string, format: string, version: number) => Promise<any>} load  a data file by its path, checked (core/load.js) */
-function catalogModule(load) {
+function libraryCatalogModule(load) {
 'use strict';
 
 const VERSION = 1;                         // of every library format: library, materials, shops, products, texture

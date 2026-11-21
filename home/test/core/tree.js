@@ -1,6 +1,6 @@
 /* core/tree.js: its public API, each part with what it gives (test/test.md) */
-function treeTest({ treeModule }, data, check) {
-  const tree = treeModule();
+function coreTreeTest({ coreTreeModule }, data, check) {
+  const tree = coreTreeModule();
   check('the public API', Object.keys(tree).join(' ') === 'create');
 
   const root = { id: 'site', type: 'site', offset: [0, 0, 0], size: [10000, 10000, 5000], settings: { wall: { thickness: 240 } }, children: [

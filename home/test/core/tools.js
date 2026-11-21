@@ -1,6 +1,6 @@
 /* core/tools.js: its public API, each part with what it gives (test/test.md) */
-function toolsTest({ toolsModule }, data, check) {
-  const T = toolsModule();
+function coreToolsTest({ coreToolsModule }, data, check) {
+  const T = coreToolsModule();
   check('the public API', Object.keys(T).join(' ') === 'LOCALE fmt esc formula input cols money kinds');
 
   check('LOCALE: British English, on every page and in every sheet', T.LOCALE === 'en-GB');
