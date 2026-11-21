@@ -13,7 +13,7 @@ The owner opens home/test/index.html from disk: every row must say OK. The LLM r
   - A constructor on the slate is no global name: only the test holds it, so a file cannot reach another file but through its parameters.
   - A file tested is one constructor `<name>Module(...)` and the line that joins it to the page (plan.md); the page reads the constructor's code, so nothing outside it would be tested.
   - A test calls the public API only. A row that is NOT OK is never made OK by changing its test without the owner.
-- **Now (21 Nov 2026)**: OK core/geometry, core/tools, core/tree, core/surface, core/plan2d, core/estimate, house/model, room/tiles, library/catalog; NOT OK room/cabinets (`HOME.draw`, in its drawing).
+- **Now (21 Nov 2026)**: OK core/geometry, tools, tree, surface, plan2d, estimate, ui, sheet, scene, house/model, room/tiles, library/catalog; NOT OK room/cabinets (`HOME.draw`, in its drawing). ui, sheet and scene draw only in the browser: their tests make them and call what needs no browser. core/load.js has no test: it is the browser's script loading, nothing else.
 
 ## The rule
 

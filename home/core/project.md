@@ -8,7 +8,7 @@ Shared code for every page. Knows no project: a page hands it data; core returns
 |---|---|
 | load.js | the one data loader: a file by its path from the home folder, checked for format and version (the folder that has a file knows its path). First script of every page |
 | tree.js | the tree of nodes: node by path, path of a node, place (sum of offsets), box, setting from the cascade (and the node it comes from), refs, walk, checks |
-| tools.js | short pieces of no one file: how numbers are written (en-GB on every page and in every sheet); a sheet's rows and columns (formula and input cells, column widths and how each shows, money columns, row kinds) |
+| tools.js | short pieces of no one file: how numbers are written (en-GB on every page and in every sheet); text into HTML; a sheet's rows and columns (formula and input cells, column widths and how each shows, money columns, row kinds) |
 | geometry.js | exact solids: convex polygons, prisms; clip, subtract, intersect, split, section, volume, overlap; rectangles; the compass sides; a stable random number |
 | surface.js | surfaces ready to draw: welded points, faces of solids, visible pieces (a face loses what another covers) |
 | scene.js | the 3D view, one per page, cleared and relit for another view: renderer (physical lights), materials, pieces batched per material, edges, ghosts (hidden, still casting shadow), moving parts, sun and clouds, camera and flights, navigation, walk; redraws only after a change |

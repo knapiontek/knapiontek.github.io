@@ -1,11 +1,13 @@
 /* core/tools.js: its public API, each part with what it gives (test/test.md) */
 function toolsTest({ toolsModule }, data, check) {
   const T = toolsModule();
-  check('the public API', Object.keys(T).join(' ') === 'LOCALE fmt formula input cols money kinds');
+  check('the public API', Object.keys(T).join(' ') === 'LOCALE fmt esc formula input cols money kinds');
 
   check('LOCALE: British English, on every page and in every sheet', T.LOCALE === 'en-GB');
   check('fmt: exactly the decimals asked for', T.fmt(12, 2) === '12.00' && T.fmt(0.125, 2) === '0.13' && T.fmt(7.6, 0) === '8');
   check('fmt: thousands with a comma, decimals with a point', T.fmt(1234.5, 1) === '1,234.5');
+
+  check('esc: text into HTML', T.esc('a < b & "c"') === 'a &lt; b &amp; &quot;c&quot;' && T.esc(null) === '');
 
   check('formula and input: a cell computed, a cell the viewer may change', T.formula('A1+1').f === 'A1+1' && T.input(5).v === 5 && T.input(5).input === true);
   const c = T.cols([10, 20, 30], { 2: T.money }, [8, 's2', 's1n16m40']);

@@ -5,7 +5,7 @@
 
    book   {sheets: [{name, cols: [{title, width, digits, fix | share, min, max}], rows: [{kind, cells}], node}]}
           width: characters in the XLSX; on screen fix (characters: numbers, codes, units) or share (text: its part of
-          the room left, from min to max characters), HOME.ui.setColumns; with neither, a share as its width
+          the room left, from min to max characters), core/ui.js setColumns; with neither, a share as its width
           node: an element of the page shown in the tab (above its rows, if it has any); only hidden on another tab, so
           the page keeps filling it. A tab without rows is not in the XLSX.
           row kind: title | head | cat | sum | grand | (none: an item); a row's place in rows is its Excel row (first = 1)
@@ -27,10 +27,11 @@
 /** @typedef {Sheet & { rows: SheetRow[] }} TableSheet  a sheet with rows */
 /** @typedef {{ sheets: Sheet[] }} Book */
 /** @typedef {{ width?: number, fix?: number, share?: number, min?: number, max?: number, digits?: number, z?: string }} Column */
-function sheetModule() {
+/** @param {ReturnType<typeof uiModule>} ui @param {ReturnType<typeof toolsModule>} tools */
+function sheetModule(ui, tools) {
 'use strict';
 
-const { el, esc, LOCALE } = HOME.ui;
+const { el, setColumns } = ui, { esc, LOCALE } = tools;
 const OPEN = new WeakMap();   // a tree sheet: its open rows
 const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';   // pinned
 
@@ -145,11 +146,11 @@ function spanText(cells, tds, n) {
 }
 
 /* ---------- the Documents screen: an Alpine part ----------
-   The piece 'docs' of core/ui.js: x-data="HOME.sheet.view(docs)" over the piece 'sheet' below; docs {title, subtitle,
+   The piece 'docs' of core/ui.js: x-data="sheetView(docs)" over the piece 'sheet' below; docs {title, subtitle,
    warnings: [text], book, ready(sheet)}:
    ready gets {set(book), restore(), xlsx(file)} once the screen is up. Tabs (one per sheet) over the table of the current
    one; the inputs may change until a reload, the formulas follow them. */
-HOME.ui.PARTS.sheet = `<h1 x-text="title"></h1><p class="sub" x-show="subtitle" x-text="subtitle"></p>
+ui.part('sheet', `<h1 x-text="title"></h1><p class="sub" x-show="subtitle" x-text="subtitle"></p>
   <div class="issues" x-show="warnings.length"><b x-text="warnings.length + ' × to correct in the data'"></b><ul><template x-for="w in warnings"><li x-text="w"></li></template></ul></div>
   <div class="docsheets">
     <div class="toggle sheettabs" role="tablist" x-show="names.length > 1"><template x-for="(name, i) in names" :key="i">
@@ -158,7 +159,8 @@ HOME.ui.PARTS.sheet = `<h1 x-text="title"></h1><p class="sub" x-show="subtitle" 
       <table class="sheet" x-ref="table" @click="click($event)" @change="change($event)"><template x-for="row in rows" :key="row.i">
         <tr :class="row.kind" :hidden="row.hidden"><template x-for="(c, ci) in row.cells" :key="ci">
           <td :class="c.cls" :colspan="c.span" :title="c.title" :style="c.style" x-html="c.html"></td></template></tr></template></table></div></div>
-  </div>`;
+  </div>`);
+ui.component('sheetView', view);
 function view(docs) {
   const d = Alpine.raw(docs), original = new Map();   // input cell -> its value as handed in
   let book = null, fit = () => {};
@@ -169,7 +171,7 @@ function view(docs) {
       this.take(d.book);
       const { wrap, table } = this.$refs;
       fit = () => { const sheet = book.sheets[this.current], room = wrap.clientWidth - 2;
-        if (sheet.rows && room > 0) HOME.ui.setColumns(table, sheet.cols.map(c => (c.fix || c.share ? c : { share: c.width || 1 })), room); };
+        if (sheet.rows && room > 0) setColumns(table, sheet.cols.map(c => (c.fix || c.share ? c : { share: c.width || 1 })), room); };
       new ResizeObserver(() => requestAnimationFrame(fit)).observe(wrap);
       if (document.fonts) document.fonts.ready.then(fit);
       this.draw();
@@ -280,4 +282,4 @@ const menu = (/** @type {() => any} */ sheet, /** @type {string} */ file) => [
 
 return { evaluator, xlsx, view, menu };
 }
-HOME.sheet = sheetModule();
+HOME.sheet = sheetModule(HOME.ui, HOME.tools);

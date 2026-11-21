@@ -75,7 +75,7 @@ const NODES = {};
 (function count(list) { for (const n of list) { const p = n.part, k = p && (p.kind || p.role); if (k && (n.type === 'hardware' || n.type === 'product')) NODES[k] = (NODES[k] || 0) + 1; count(n.children); } })(tree);
 
 const round1 = x => Math.round(x * 10) / 10;
-const esc = HOME.ui ? HOME.ui.esc : (v => String(v));
+const esc = HOME.tools.esc;
 const edgeText = edges => (edges || []).map(edge => KE.LABELS.edge[edge.side] + ' ' + edge.length).join(' + ');
 const edgeLength = edges => (edges || []).reduce((sum, edge) => sum + edge.length, 0);
 const sideText = sides => (sides || []).map(side => KE.LABELS.edge[side]).join(' + ');

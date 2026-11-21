@@ -9,7 +9,7 @@
    Export writes the file as the files are written; Show in 3D puts it in place of the room's for this page (until it is
    loaded again). Its screen is in index.html; its Alpine part (EDITOR.part(host)) is merged into the page's. */
 const EDITOR = (() => {
-const C = HOME.cabinets, { esc } = HOME.ui;
+const C = HOME.cabinets, { esc } = HOME.tools;
 const { TYPES, TAGS, TAG_NAMES, FRONT_TYPES, parseTags, plural } = C;
 const HANDLES = ['', ...C.SIDES], HINGES = ['', ...C.HINGE_SIDES];
 const SIDE_NAME = { '': 'none', top: 'top', bottom: 'bottom', left: 'left', right: 'right' };

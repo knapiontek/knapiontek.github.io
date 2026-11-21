@@ -1,15 +1,16 @@
 // @ts-check
 /* core/ui.js: the screen of every page, on Alpine.js: helpers, the state kept in the browser, the page's Alpine part
-   (HOME.ui.page) and the pieces of the screen its HTML puts together (<template x-part="…">), light or dark, the layers, the
-   sun, the 2D sheet, the widths of a table's columns. Knows no project. Touches the browser only when called. */
+   (page) and the pieces of the screen its HTML puts together (<template x-part="…">), light or dark, the layers, the
+   sun, the 2D sheet, the widths of a table's columns. Knows no project. Touches the browser only when called. Gets core/tools.js. */
 /** @typedef {{ name: string, items: string[], info?: boolean, about?: string }} Check  OK when items is empty; info: to know, not to correct */
 /** @typedef {{ name: string, go: () => void, label?: string, cls?: string, pressed?: boolean }} MenuItem  a button of the bottom menu */
 /** @typedef {Object<string, { name: string, parent: string | null }>} LayerTree  layer -> its name and parent */
 /** @typedef {{ k: string, name: string, on: boolean, child: boolean, off: boolean }} LayerItem  a layer as the panel lists it */
-function uiModule() {
+/** @param {ReturnType<typeof toolsModule>} tools */
+function uiModule(tools) {
 'use strict';
 
-const { LOCALE, fmt } = HOME.tools;        // core/tools.js, until ui gets it as a parameter (plan.md)
+const { fmt } = tools;
 const $ = (/** @type {string} */ id) => document.getElementById(id);
 /**
  * @template {{ id: string }} T
@@ -19,7 +20,6 @@ const $ = (/** @type {string} */ id) => document.getElementById(id);
 function byId(list) { return Object.fromEntries(list.map(e => [e.id, e])); }
 /** @param {string} tag @param {object} attrs @param {string} [html] @returns {any} an element with attrs */
 const el = (tag, attrs, html) => { const e = document.createElement(tag); Object.assign(e, attrs); if (html !== undefined) e.innerHTML = html; return e; };
-const esc = (/** @type {any} */ v) => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);   // text into HTML
 
 /* the viewer's choices stay in the browser; a stored state that fails valid() is dropped for fresh() */
 /** @template T @param {string} key @param {() => T} fresh @param {(s: any) => boolean} valid @returns {{ state: T, save: () => void }} */
@@ -32,7 +32,7 @@ function store(key, fresh, valid) {
 }
 
 /* ================= THE SCREEN =================
-   A page is one Alpine part on its .app: HOME.ui.page(name, spec). Its HTML puts the shared pieces where it wants them,
+   A page is one Alpine part on its .app: page(name, spec). Its HTML puts the shared pieces where it wants them,
    <template x-part="dock"></template>, and writes what is its own (its view, its help, its panel's sections) into a piece
    that takes it: <template x-part="panel">…</template>. The pieces read these fields of the page:
      title, subtitle, loading, ready · nav {links, groups} · modes, mode, pick(m) · tabs, tab, pickTab(t) · menu (groups of
@@ -54,16 +54,23 @@ function kept(key, fresh, valid) {
   Alpine.effect(() => { JSON.stringify(state); s.save(); });
   return state;
 }
+/* the Alpine parts a piece of the screen names (x-data="sunBox(sun)"), by name; a file adds its own with component() */
+const COMPONENTS = /** @type {Object<string, (...args: any[]) => object>} */ ({});
+/** an Alpine part a piece may name @param {string} name @param {(...args: any[]) => object} make */
+const component = (name, make) => { COMPONENTS[name] = make; };
 /** the page's Alpine part, on its .app (x-data="name") @param {string} name @param {object} spec */
 function page(name, spec) {
   start();
-  document.addEventListener('alpine:init', () => Alpine.data(name, () => screen(spec)));
+  document.addEventListener('alpine:init', () => {
+    Alpine.data(name, () => screen(spec));
+    for (const [n, make] of Object.entries(COMPONENTS)) Alpine.data(n, make);
+  });
 }
 function screen(spec) {
   const { key, fresh, valid, modes = [], tabs = {} } = spec, own = Object.getOwnPropertyDescriptors(spec);   // getters stay getters
   for (const k of ['key', 'fresh', 'valid', 'modes', 'tabs']) delete own[k];
   const part = {
-    ready: false, loading: 'Loading…', title: '', subtitle: '', nav: { links: [], groups: [] }, navOpen: null, modes,
+    ready: false, loading: 'Loading…', title: '', subtitle: '', nav: { links: [], groups: [] }, navOpen: null, modes, modeNames: MODES, tabNames: TAB_NAMES,
     float: null, sun: null, docs: null, plan: { svg: '', note: '' }, walking: false, opened: false, tabOff: () => false,
     state: key ? kept(key, fresh, valid) : { tab: null, zoom: 1, layers: {} },
     get mode() { return this.state.mode ?? null; },
@@ -209,12 +216,12 @@ const PARTS = {
   nav: `<nav class="nav" id="nav" aria-label="Rooms"><template x-for="it in nav.links"><a :href="it.href" :data-on="it.on && ''" x-text="it.name"></a></template><template x-for="(g, i) in nav.groups"><details :open="navOpen === i" :data-on="g.on && ''" @click.outside="navOpen === i && (navOpen = null)"><summary @click.prevent="navOpen = navOpen === i ? null : i" x-text="g.name"></summary><div class="navlist"><template x-for="it in g.items"><a :href="it.href" :data-on="it.on && ''" x-text="it.name"></a></template></div></details></template></nav>`,
   view: `<canvas id="gl" aria-label="3D view" :hidden="mode !== '3d'"></canvas>`,
   loading: `<div id="loading" x-show="loading" x-text="loading"></div>`,
-  modes: `<div class="toggle modes" id="mode" role="group" aria-label="Mode"><template x-for="m in modes"><button :data-mode="m" :aria-pressed="String(mode === m)" :data-on="mode === m && ''" @click="pick(m)" x-text="HOME.ui.MODES[m]"></button></template></div>`,
+  modes: `<div class="toggle modes" id="mode" role="group" aria-label="Mode"><template x-for="m in modes"><button :data-mode="m" :aria-pressed="String(mode === m)" :data-on="mode === m && ''" @click="pick(m)" x-text="modeNames[m]"></button></template></div>`,
   plan: `<div id="plan2d" aria-label="2D plan" x-show="mode === '2d'" x-cloak><p class="sheetnote" id="planNote" x-text="plan.note"></p><div id="sheet" x-html="plan.svg" :style="'--zoom: ' + state.zoom" @wheel.prevent="wheel($event)" @pointerdown="down($event)" @pointermove="move($event)" @pointerup="up()" @pointercancel="up()"></div></div>`,
-  docs: `<div id="documents" aria-label="Documents" x-show="mode === 'documents'" x-cloak><template x-if="docs"><div class="docview" x-data="HOME.sheet.view(docs)"><template x-part="sheet"></template></div></template></div>`,
+  docs: `<div id="documents" aria-label="Documents" x-show="mode === 'documents'" x-cloak><template x-if="docs"><div class="docview" x-data="sheetView(docs)"><template x-part="sheet"></template></div></template></div>`,
   dock: `<div class="dock" id="dock" aria-label="Bottom menu"><template x-for="(g, gi) in menu"><span class="group"><span class="sep" x-show="gi"></span><template x-for="it in g"><button :class="it.cls || false" :aria-label="it.label || false" :aria-pressed="it.pressed === undefined ? false : String(it.pressed)" @click="it.go($event)" x-text="it.name"></button></template></span></template></div>`,
   pad: `<div class="pad" id="pad" aria-label="Walk" hidden><button data-k="ArrowUp" aria-label="Forward">▲</button><button data-k="ArrowLeft" aria-label="Turn left">◀</button><button data-k="ArrowDown" aria-label="Back">▼</button><button data-k="ArrowRight" aria-label="Turn right">▶</button></div>`,
-  sun: `<div class="float sunfloat" id="sun" role="dialog" aria-label="Sun" x-show="float === 'sun'" x-cloak><template x-if="sun"><div x-data="HOME.ui.sunBox(sun)"><template x-part="sunbox"></template></div></template></div>`,
+  sun: `<div class="float sunfloat" id="sun" role="dialog" aria-label="Sun" x-show="float === 'sun'" x-cloak><template x-if="sun"><div x-data="sunBox(sun)"><template x-part="sunbox"></template></div></template></div>`,
   sunbox: `<div class="sunrow">
     <svg class="compass" viewBox="0 0 ${2 * SC} ${2 * SC}" aria-label="Direction of the sun" @pointerdown="down($event, 'az')" @pointermove="move($event)" @pointerup="up()" @pointercancel="up()">
       <circle cx="${SC}" cy="${SC}" r="${SR}" class="ring"/><g class="plan" x-html="plan"></g>
@@ -233,9 +240,12 @@ const PARTS = {
     <button ${ROUND}="help" id="helpbtn" aria-label="Help" title="Help" :aria-expanded="String(float === 'help')" @click="toggle('help')">?</button></div>
   <button class="panelbtn" @click="$store.screen.togglePanel()" x-text="$store.screen.open ? '»' : '«'" :title="$store.screen.open ? 'Hide the panel' : 'Show the panel'" :aria-label="$store.screen.open ? 'Hide the panel' : 'Show the panel'"></button>`,
   panel: `<aside id="panel" data-slot><h1 id="title" x-text="title"></h1><p class="sub" id="subtitle" x-text="subtitle"></p>
-    <div class="toggle" id="tabs" role="tablist" aria-label="Panel" x-show="tabs.length > 1" x-cloak><template x-for="t in tabs"><button role="tab" :data-tab-id="t" :aria-selected="String(t === tab)" :data-on="t === tab && ''" :disabled="tabOff(t)" @click="pickTab(t)" x-text="HOME.ui.TAB_NAMES[t]"></button></template></div></aside>`,
+    <div class="toggle" id="tabs" role="tablist" aria-label="Panel" x-show="tabs.length > 1" x-cloak><template x-for="t in tabs"><button role="tab" :data-tab-id="t" :aria-selected="String(t === tab)" :data-on="t === tab && ''" :disabled="tabOff(t)" @click="pickTab(t)" x-text="tabNames[t]"></button></template></div></aside>`,
   layers: `<template x-for="b in layerBlocks" :key="b.id"><section x-show="tab === b.tab && b.items.length" x-cloak><h2 x-text="b.name"></h2><div class="layers" :id="b.id"><template x-for="l in b.items" :key="l.k"><div :class="l.child ? 'child' : ''" :data-off="l.off && ''"><label><input type="checkbox" :checked="l.on" @change="setLayer(l.k, $event.target.checked)"> <span x-text="l.name"></span></label></div></template></div></section></template>`
 };
+/** a piece of the screen a file adds (<template x-part="name">) @param {string} name @param {string} html */
+const part = (name, html) => { PARTS[name] = html; };
+component('sunBox', sunBox);
 
 /* ================= COLUMN WIDTHS =================
    cols: one per column, {fix: n} for numbers, codes and units (n characters, as wide as their longest value), or
@@ -317,7 +327,7 @@ function autoFit(table, box, cols) {
   return fit;
 }
 
-return { LOCALE, MODES, TAB_NAMES, PARTS, $, fmt, byId, el, esc, page, openAll, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
+return { MODES, TAB_NAMES, $, byId, el, part, component, page, openAll, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
   setColumns, autoFit };
 }
-HOME.ui = uiModule();
+HOME.ui = uiModule(HOME.tools);

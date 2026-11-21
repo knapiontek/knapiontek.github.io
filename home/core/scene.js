@@ -2,7 +2,9 @@
 /* core/scene.js: renderer, materials, meshes and edges of pieces, moving parts, light, camera, navigation,
    walk, loop. Knows no project: the page hands it a material library, textures, the light and the edges.
    The model is built in mm (x along, y across, h up) and turned into the scene's metres with y up.
-   Needs core/geometry.js, core/surface.js, THREE and OrbitControls. */
+   Gets core/geometry.js and core/surface.js; needs THREE and OrbitControls (the browser's). */
+/** @typedef {{ color?: string, roughness?: number, metalness?: number, opacity?: number, [more: string]: any }} MaterialLook  a material's look, as the library's materials give it */
+/** @typedef {{ name: string, kind: string, source?: string, size: number[], grout?: string, faces: string[] }} Texture  size: mm one image covers; faces: data URLs */
 /** @typedef {{ name: string, eye: Vec3, target: Vec3 }} Camera  a view: the eye and what it looks at, mm */
 /**
  * @typedef {object} Light  a view's light (the house's settings.view.light, or its inside light)
@@ -49,10 +51,11 @@
  * @property {() => Camera} home  the camera when the walk stops
  */
 /** @typedef {ReturnType<ReturnType<typeof sceneModule>['create']>} SceneView  a page's 3D view */
-function sceneModule() {
+/** @param {ReturnType<typeof geometryModule>} geometry @param {ReturnType<typeof surfaceModule>} surface */
+function sceneModule(geometry, surface) {
 'use strict';
-const { DEG, hRange, edgesOf } = HOME.geometry;
-const { sub3, dot3, cross3, weld } = HOME.surface;
+const { DEG, hRange, edgesOf } = geometry;
+const { sub3, dot3, cross3, weld } = surface;
 
 const MM = 0.001;                          // the scene is in metres, the model in mm
 
@@ -103,7 +106,7 @@ function create(opts) {
 
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  const hash01 = HOME.geometry.hash01;
+  const hash01 = geometry.hash01;
   const CANVASES = new Map();               // a generated picture drawn once for its key (a core's colour), shared by its textures
   /** @param {number} w @param {number} h @param {(g: CanvasRenderingContext2D, w: number, h: number) => void} draw @param {boolean} [srgb] @param {string | null} [key] */
   function canvasTexture(w, h, draw, srgb = true, key = null) {
@@ -700,4 +703,4 @@ function create(opts) {
 
 return { create };
 }
-HOME.scene = sceneModule();
+HOME.scene = sceneModule(HOME.geometry, HOME.surface);

@@ -21,8 +21,6 @@
  * @property {any} [more]
  */
 /** @typedef {Product & Object<string, any>} AnyProduct  a product with the fields of its group */
-/** @typedef {{ color?: string, roughness?: number, metalness?: number, opacity?: number, [more: string]: any }} MaterialLook  a material's look (format materials) */
-/** @typedef {{ name: string, kind: string, source?: string, size: number[], grout?: string, faces: string[] }} Texture  size: mm one image covers; faces: data URLs */
 /**
  * @typedef {object} Library  the library a page has
  * @property {Object<string, Object<string, AnyProduct>>} groups  group -> key -> product
