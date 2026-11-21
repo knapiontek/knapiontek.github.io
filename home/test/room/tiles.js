@@ -1,7 +1,7 @@
 /* room/tiles.js: its public API, each part with what it gives (test/test.md) */
 function roomTilesTest({ roomTilesModule, coreGeometryModule }, data, check) {
   const T = roomTilesModule(coreGeometryModule());
-  check('the public API', Object.keys(T).join(' ') === 'PATTERNS DIRS rooms lay clip clipHalf count fit corePieces slabEdges outline floor floorPieces');
+  check('the public API', Object.keys(T).join(' ') === 'PATTERNS DIRS rooms lay clip clipHalf count fit corePieces slabEdges outline floor floorPieces checks');
 
   /* a tile 600 × 300, no joint; a floor 1200 × 600 at the level 0, a door 900 wide in its wall at x = 1200 */
   const tile = { len: 600, wid: 300, joint: 0, minCut: [100, 100], pattern: 'grid', texture: 'any' };
@@ -33,4 +33,8 @@ function roomTilesTest({ roomTilesModule, coreGeometryModule }, data, check) {
     const m = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2], d = [q[0] - p[0], q[1] - p[1]], n = Math.hypot(...d), left = [-d[1] / n, d[0] / n];
     return inL(m[0] + left[0], m[1] + left[1]) && !inL(m[0] - left[0], m[1] - left[1]);
   }));
+
+  /* checks: a layout whose tile the library has not; a small cut, to know */
+  const C = T.checks([{ key: 'ground', product: 'tile' }, { key: 'attic', product: 'none' }], { tile }, { any: {} }, [{ key: 'ground', count: shifted }]);
+  check('checks: the layout with no tile in the library, the small cuts to know', C[0].items.join() === 'attic: none' && C[1].info && C[1].items[0] === 'ground: ' + shifted.small);
 }

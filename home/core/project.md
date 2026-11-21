@@ -1,6 +1,6 @@
 # Core
 
-Shared code for every page. Knows no project: a page hands it data; core returns what is drawn, counted or checked.
+Shared code for every page. Knows no project: a page hands it data; core gives back what is shown, counted or checked.
 
 ## Files
 
@@ -11,8 +11,8 @@ Shared code for every page. Knows no project: a page hands it data; core returns
 | tools.js | short pieces of no one file: how numbers are written (en-GB on every page and in every sheet); text into HTML; a sheet's rows and columns (formula and input cells, column widths and how each shows, money columns, row kinds) |
 | geometry.js | exact solids: convex polygons, prisms; clip, subtract, intersect, split, section, volume, overlap; rectangles; the compass sides; a stable random number |
 | faces.js | surfaces ready to draw: welded points, faces of solids, visible pieces (a face loses what another covers) |
-| scene.js | the 3D view, one per page, cleared and relit for another view: renderer (physical lights), materials, pieces batched per material, edges, ghosts (hidden, still casting shadow), moving parts, sun and clouds, camera and flights, navigation, walk; a description drawn (below); redraws only after a change. The only file with three.js |
-| parts.js | the parts of a view, as data (below): solids, details, moving parts, lamps; the context a room hands its cabinets and products |
+| scene.js | the 3D view, one per page, cleared and relit for another view: renderer (physical lights), materials, pieces batched per material, edges, ghosts (hidden, still casting shadow), moving parts, sun and clouds, camera and flights, navigation, walk; the parts of a view shown (below); redraws only after a change. The only file with three.js |
+| parts.js | the parts of a view, as data (below): solids, details, moving parts, lamps; what a model (the house's, a room's, its cabinets and products) puts its parts into |
 | plan2d.js | the 2D plan from the same solids: cut filled, below seen, above dashed; labels, room borders without a wall (dash-dot), dimensions, sheets side by side |
 | sheet.js | spreadsheet: sheets in tabs, input cells, live formulas, tree sheets (levels, + / −), XLSX with the same formulas and outline; the Documents screen (each table built once, changed in place) |
 | estimate.js | the sheet Estimate, alike on every page: items by category, quantity × price, sums, reserve, total |
@@ -22,10 +22,8 @@ Shared code for every page. Knows no project: a page hands it data; core returns
 ## Flow
 
 ```
-data file ─► load.js ─► page ─► tree.js ─► module of each type ─► solids, or parts (parts.js)
-solids ─► faces.js ─► scene.js (3D)      solids ─► plan2d.js (2D)
-description ─► scene.js (3D)
-rows ─► sheet.js (Documents, XLSX)         checks ─► Test
+data file ─► load.js ─► page ─► a model (house, room) ─► parts (parts.js)
+parts ─► faces.js ─► scene.js (3D)      solids ─► plan2d.js (2D)      rows, checks ─► sheet.js (Documents, XLSX)
 ```
 
 - **Without a browser** (tested in Node): tools, geometry, tree, faces, parts, plan2d (SVG as text), the formulas of sheet. Every file but load.js loads in Node: none touches the browser on load.
@@ -34,16 +32,16 @@ rows ─► sheet.js (Documents, XLSX)         checks ─► Test
 
 ## Parts (parts.js)
 
-The parts of a view, as data; scene.js shows them, in the order described. Places in a group's frame: x along the group, y out of its wall, h up from the floor (mm).
+The parts of a view, as data; scene.js shows them in the order they were put in. Places in a group's frame: x along the group, y out of its wall, h up from the floor (mm).
 
 | Part | Holds |
 |---|---|
-| solids | exact solids (cells of core): a prism, its material, layers, part (a joint between parts shows a line), name |
+| solids | exact solids (cells of core): a prism, its material, layers, part (a joint between parts shows a line), name; also solids made elsewhere (the house's) |
 | details | a shape only for the look (not counted, not cut in 2D): the shape, its material, its frame, its place [x, y, h] and turn (angles, a direction or a matrix), its layers, shadow |
 | shapes | in the detail's own axes (x along, y up, z out of the wall): box, cylinder (two radii, open, an arc), sphere (arcs), disc, ring, plane, torus, tube (a curve's points), extrude (a profile, a depth), mesh (points, triangles); then turned and moved, in order |
 | material of a detail | a key; a key per face group; a key seen from inside or both sides; a display's text |
 | frames | a group's frame, in a moving part or not; or a frame turned about h at a point of another |
-| moving parts | a door, a drawer, an appliance door: a point of its axis, which way, how far, what must open first; its solids and details |
+| moving parts | a door (a room's or a cabinet's), a drawer, an appliance door: a point of its axis, which way, how far, what must open first; its solids and details |
 | lamps | point or spot: colour, intensity, reach, angle, from and to (points of the house), shadow; lit by night while their layer is on |
 | looks | a material painted once with specks: size, background, count, dots (colour, share, alpha), repeat |
 

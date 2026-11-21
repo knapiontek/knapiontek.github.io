@@ -267,5 +267,14 @@ function floorPieces(L, P, T, F, shown, h, S, cell) {
   return { pieces: made.pieces.concat(edges), materials: made.materials };
 }
 
-return { PATTERNS, DIRS, rooms, lay, clip, clipHalf, count, fit, corePieces, slabEdges, outline, floor, floorPieces };
+/** the checks of the floor layouts: each one's tile in the library with its texture; the small cuts, to know
+    @param {{ key: string, product: string }[]} layouts @param {Object<string, TileProduct>} products  the library's tiles
+    @param {Object<string, any>} textures  those loaded @param {{ key: string, count: TileCount }[]} laid @returns {Check[]} */
+function checks(layouts, products, textures, laid) {
+  return [
+    { name: 'Floor tiles: every layout\'s tile in the library', about: 'The product a layout sets is one of the library\'s tiles, with its texture.', items: layouts.filter(D => !products[D.product] || !textures[products[D.product].texture]).map(D => D.key + ': ' + D.product) },
+    { name: 'Floor tiles: small cuts', about: 'To know, not a fault: the layouts with a cut tile shorter than the product\'s smallest cut (minCut), red in 3D while its layer is on.', items: laid.filter(A => A.count.small).map(A => `${A.key}: ${A.count.small}`), info: true }];
+}
+
+return { PATTERNS, DIRS, rooms, lay, clip, clipHalf, count, fit, corePieces, slabEdges, outline, floor, floorPieces, checks };
 }

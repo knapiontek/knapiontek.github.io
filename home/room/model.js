@@ -260,5 +260,37 @@ function checks(prepared) {
   return out;
 }
 
-return { prepare, layTiles, checks };
+/* ================= THE ROOM'S FINISH =================
+   the room's files as the viewer finished them (choice: {metal, boards: {board: the board in its place}}): the boards
+   swapped, a metal chosen; every product of a family (a tap, an edge banding) in that metal and in the decor of the board
+   that took its board's place; a worktop of a board that board thick */
+/** @param {{ cabinets: any, scene: any, docs?: any }} files @param {{ metal?: string, boards?: Object<string, string> }} choice @param {Library} library */
+function finish(files, choice, library) {
+  const B = library.groups.boards, swap = choice.boards || {}, metal = choice.metal && library.materials[choice.metal] ? choice.metal : null;
+  const codes = Object.fromEntries(Object.entries(swap).filter(([a, b]) => B[a] && B[b] && B[a].code && B[b].code).map(([a, b]) => [B[a].code, B[b].code]));
+  const f = metal || Object.keys(codes).length ? JSON.parse(JSON.stringify(files), (key, x) => typeof x === 'string' ? library.variant(x, metal, codes) : x) : Object.assign({}, files);
+  const materials = Object.fromEntries(Object.entries(f.cabinets.settings.materials).map(([role, k]) => [role, swap[k] && B[swap[k]] ? swap[k] : k]));
+  /* a top of a board is that board thick: in whole mm, as the data has it */
+  const whole = k => Math.round(B[k] ? B[k].thickness : 0), was = f.cabinets.settings.materials;
+  const components = (f.cabinets.components || []).map(i => { const role = i.type === 'worktop' && ['worktop', 'islandWorktop'].find(r => materials[r] && materials[r] !== was[r] && i.height === whole(was[r]));
+    return role ? Object.assign({}, i, { height: whole(materials[role]) }) : i; });
+  f.cabinets = Object.assign({}, f.cabinets, { settings: Object.assign({}, f.cabinets.settings, { materials }), components });
+  if (metal) f.scene = Object.assign({}, f.scene, { finish: Object.assign({}, f.scene.finish, { metal }) });
+  return f;
+}
+/** the checks of a finish: the products in the room's metal, every edge banding in the decor of a board of the room
+    @param {{ cabinets: any, scene: any, docs?: any }} files  as finished @param {PreparedRoom} prepared @param {Library} library @returns {Check[]} */
+function finishChecks(files, prepared, library) {
+  const all = Object.assign({}, ...Object.values(library.groups)), B = library.groups.boards, M = library.materials;
+  const words = x => new Set((JSON.stringify(x || {}).match(/"[^"]+"/g) || []).map(s => s.slice(1, -1)));
+  const metal = prepared.scene.finish.metal, used = words(files);
+  const wrong = [...used].filter(k => all[k] && all[k].metal && all[k].metal !== metal);
+  const codes = new Set(Object.values(files.cabinets.settings.materials).map(k => (B[k] || {}).code).concat((prepared.model.products || []).map(x => (all[x.product] || {}).code)).filter(Boolean));
+  return [{ name: 'Finish: the products in the room\'s metal', about: 'The room\'s metal (its scene\'s finish, or the one chosen in Finish) is one of the library\'s; a product sold in a colour of metal (a tap, a radiator, a handle) is in that one: a product of a family (product.family) takes the family\'s one, else its variant is to choose.',
+    items: (library.metals.some(m => m.k === metal) ? [] : [`the metal ${metal} is not a finish of the library`]).concat(wrong.map(k => `${all[k].name}: ${M[all[k].metal].name}, the room ${M[metal] ? M[metal].name : metal}`)) },
+  { name: 'Finish: every edge banding in the decor of a board', about: 'An edge banding sold in a decor (its code) bands a board of that decor in the room: when a board is changed in Finish, the banding of its family follows; none in the new decor: to choose.',
+    items: [...words(files.docs)].filter(k => all[k] && all[k].unit === 'm' && /edge|banding/.test(k) && all[k].code && !codes.has(all[k].code)).map(k => `${all[k].name}: no board ${all[k].code} in the room`) }];
+}
+
+return { prepare, layTiles, checks, finish, finishChecks };
 }

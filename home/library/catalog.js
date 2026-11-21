@@ -31,6 +31,10 @@
  * @property {Object<string, Texture>} textures  those loaded
  * @property {(keys: (string | undefined)[]) => Promise<Object<string, Texture>>} loadTextures
  * @property {() => Check[]} checks
+ * @property {{ k: string, name: string }[]} metals  the materials that are a metal finish
+ * @property {(key: string) => string} boardName  a board by its code and decor (or its name)
+ * @property {(key: string) => string[]} standIns  the boards that may take a board's place
+ * @property {(key: string, metal: string | null, codes: Object<string, string>) => string} variant  a product of a family in another metal or decor
  */
 /** @param {(path: string, format: string, version: number) => Promise<any>} load  a data file by its path, checked (core/load.js) */
 function libraryCatalogModule(load) {
@@ -66,7 +70,21 @@ async function open() {
   const checks = () => [
     { name: 'Library: every product key in one group only', about: 'A product is named by its key everywhere; the same key in two groups would make it two products.', items: twice },
     { name: 'Library: every shop named by a product exists', about: 'Each product\'s shop is a key of shops.js.', items: Object.keys(groupOf).filter(k => { const s = product(k).shop; return s && !shops.shops[s]; }).map(k => `${k}: shop ${product(k).shop}`) }];
-  return { groups, shops: shops.shops, materials: materials.materials, product, group: (/** @type {string} */ key) => groupOf[key], textures, loadTextures, checks };
+  /* the finishes: the metals (of handles, taps, rails), a board's stand-ins (of its kind: by the sheet or the m², lacquered or
+     not, a frame or not, a worktop's depth, within a millimetre of its thickness), a product of a family (the same thing in
+     other metals or decors) in the metal and the decor asked for, if the family has it */
+  const M = materials.materials, B = groups.boards || {}, all = Object.assign({}, ...Object.values(groups));
+  const metals = Object.entries(M).filter(([, m]) => m.finish === 'metal').map(([k, m]) => ({ k, name: m.name }));
+  const boardName = (/** @type {string} */ k) => B[k] ? (B[k].code ? `${B[k].code} ${B[k].decor}` : B[k].name) : k;
+  const standIns = (/** @type {string} */ k) => { const a = B[k]; return a ? Object.keys(B).filter(j => { const b = B[j];
+    return b.unit === a.unit && !!b.lacquered === !!a.lacquered && !b.frameWidth === !a.frameWidth && b.depth === a.depth && Math.abs(b.thickness - a.thickness) < 1; }) : [k]; };
+  const variant = (/** @type {string} */ k, /** @type {string | null} */ metal, /** @type {Object<string, string>} */ codes) => {
+    const p = all[k]; if (!p || !p.family) return k;
+    const metal1 = p.metal && metal || p.metal, code1 = p.code && codes[p.code] || p.code;
+    if (metal1 === p.metal && code1 === p.code) return k;
+    return Object.keys(all).find(j => all[j].family === p.family && all[j].metal === metal1 && all[j].code === code1) || k;
+  };
+  return { groups, shops: shops.shops, materials: M, product, group: (/** @type {string} */ key) => groupOf[key], textures, loadTextures, checks, metals, boardName, standIns, variant };
 }
 
 return { open };

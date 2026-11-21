@@ -1,90 +1,58 @@
 # Tests
 
-The LLM's file (kept up to date without asking): how the project is tested. The project is described in the project.md files. Everything of the tests is in test/, nothing in the project's folders. Two kinds of test: the clean slate (test/index.html and its tests, in the repository: the owner runs it) and the LLM's own before/after tests (not in the repository: the LLM rebuilds their scripts from this file).
+How the project is tested (the LLM's file, kept up to date without asking). Everything of the tests is in test/. Two kinds: the clean slate (test/index.html: the owner runs it) and the LLM's own before/after tests (not in the repository: the LLM rebuilds their scripts from this file).
 
 ## The clean slate (test/index.html)
 
-The owner opens home/test/index.html from disk: every row must say OK. The LLM runs the same page (Playwright, Chrome, no flags) after every change.
+The owner opens home/test/index.html from disk: every row must say OK. The LLM runs the same page after every change.
 
-- **What it proves**: a file runs with JavaScript itself and what its constructor is given, nothing more. Its slate is a worker with every name taken away that is not JavaScript's own: no page, `window`, `document`, `fetch`, `console`, three.js, Alpine, XLSX, no `HOME`, no global name of the project. The page refuses a slate that is not empty. What a file needs and was not given is not there: the file fails.
-- **Its test**: the same path under test/ (test/core/plan2d.js tests core/plan2d.js), one function `<name>Test({ <the constructors it uses> }, data, check)`. It builds the file as the page does, `corePlan2dModule(coreGeometryModule(), coreToolsModule())`, and checks what each part of its public API gives. Its first check is the public API itself (the names the file gives, in order): the test is the API's definition. `data(path)`: a data file's content (the house, the library, every room's files); `check(what, ok)`.
-- **The files tested**: `FILES` at the top of test/index.html.
-- **Rules**:
-  - A constructor on the slate is no global name: only the test holds it, so a file cannot reach another file but through its parameters.
-  - A file tested is one constructor `<name>Module(...)` and nothing else (the name is its path: core/plan2d.js → `corePlan2dModule`); the page reads the constructor's code.
-  - A test calls the public API only. A row that is NOT OK is never made OK by changing its test without the owner.
-- **Now (21 Nov 2026)**: OK every file tested. ui, sheet and scene draw only in the browser (scene is the only file with three.js): their tests make them and call what needs no browser; room's build() draws through scene, so its test calls prepare() and layers(); furniture's test describes every room's cabinets for real (core/parts.js).
+- **What it proves**: a file runs with JavaScript itself and what its constructor is given, nothing more. Its slate is a worker with every name taken away that is not JavaScript's own (no `window`, `document`, `console`, three.js, Alpine, `HOME`, no global name of the project); the page refuses a slate that is not empty.
+- **A file's test**: the same path under test/ (test/core/plan2d.js tests core/plan2d.js), one function `<name>Test({ <the constructors it uses> }, data, check)`. It builds the file as the page does and checks each part of its public API; its first check is the public API itself (the names, in order): the test is the API's definition. `data(path)`: a data file's content; `check(what, ok)`.
+- **Examples** (test/examples/): a story each (the sink in its cabinet, a cabinet in the Documents, a floor of one piece, a door, another metal), one function `<name>Example(…)` like a test: the files working together as index.js makes them, on the house's own data, what comes out checked. Every module an example hands to another's constructor must be an arrow of project.svg (the LLM's diagram script checks it).
+- **The lists**: `FILES` and `EXAMPLES` at the top of test/index.html.
+- **Rules**: a constructor on the slate is no global name, so a file reaches another only through its parameters. A test calls the public API only. A row NOT OK is never made OK by changing its test without the owner.
+- Browser only: ui, sheet (the screen), scene (three.js): their tests call what needs no browser; room/parts.js's parts are shown by the page.
 
 ## The rule
 
-Before a change, take a baseline of the current state (the snapshots below); after it, run the same and compare. Everything must be the same, or each difference explained to the owner and agreed. A test that fails is never left; a baseline is taken again only after the owner has agreed a difference.
-
-The project's state at the end of the migration (20 Nov 2026) is the reference: its numbers are under "Reference values". The prototype (home.proto/) is no longer compared with: the migration is done and every agreed difference from it is behind us.
+Before a change, a baseline of the current state (below); after it, the same again and compared. Everything the same, or each difference explained to the owner and agreed. A baseline is taken again only after the owner agreed a difference.
 
 ## Setup
 
-- **Node** for everything that needs no browser. Load the project's files into a `vm` context with `window` = the context itself; replace `HOME.data` by a function that keeps its argument, then run a data file and read what it gave:
+- **Node** for what needs no browser: the project's files in a `vm` context with `window` = the context; `HOME.data` replaced by a function that keeps its argument. Each module made as index.js makes it (its first lines).
+- **The browser**: Playwright (Python) with Chrome, the page opened from disk (`file://…/home/index.html`); flags `--use-gl=swiftshader --enable-unsafe-swiftshader --allow-file-access-from-files`; viewport 1400 × 900. The CDN libraries from npm in the LLM's own folder, served by intercepting the requests (three@0.128.0 three.min.js and OrbitControls.js, xlsx@0.18.5, alpinejs@3.14.1; the Google fonts' CSS answered empty).
+- **The type check**: `tsc -p home/jsconfig.json`: no error; the same with `noUnusedLocals`: none.
+- **Data files**: `HOME.data(` JSON `)` and nothing else, never touched.
+- WebGL is software (SwiftShader), slow: wait for a state, never a fixed time. Every page error and every console error or warning is a failure.
 
-  ```js
-  const fs = require('fs'), vm = require('vm'), H = '<path>/home/';
-  const w = { console }; w.window = w; vm.createContext(w);
-  const run = f => vm.runInContext(fs.readFileSync(H + f, 'utf8'), w, { filename: f });
-  w.HOME = {}; let DATA; w.HOME.data = d => { DATA = d; };
-  const read = f => { run(f); return DATA; };
-  ```
+## The page
 
-  A code file only defines its constructor (`w.roomModelModule`); make each module as index.js does (its first lines), for the snapshots below kept as `w.HOME.<name>`, made as soon as what it needs is made.
-
-- **The browser**: Playwright (Python) with Chrome, the page opened from disk (`file://…/home/index.html`), as the owner does. Flags: `--use-gl=swiftshader --enable-unsafe-swiftshader --allow-file-access-from-files`; viewport 1400 × 900.
-- **The CDN libraries** from npm in a folder of the LLM's own (never in home/), served by intercepting the requests (`page.route('**/*')`, `route.fulfill(path=…)` when the URL ends with):
-  - `three.min.js` → three@0.128.0 build/three.min.js
-  - `OrbitControls.js` → three@0.128.0 examples/js/controls/OrbitControls.js
-  - `xlsx.full.min.js` → xlsx@0.18.5 dist/xlsx.full.min.js
-  - `alpinejs@3.14.1/dist/cdn.min.js` → alpinejs@3.14.1 dist/cdn.min.js
-  - the Google fonts' CSS: answered with an empty body (an aborted request is a console error).
-- **The type check**: `npm i typescript@5` in the LLM's own folder, then `tsc -p home/jsconfig.json`: no error. Dead locals: the same with `noUnusedLocals` on: none.
-- **Screenshots**: `rsvg-convert` renders an svg; Chrome headless with `--use-gl=swiftshader` the 3D views; the same build gives the same pixels (a difference is real).
-- **Data files are pure JSON**: `HOME.data(` JSON `)` and nothing else. Never add anything to them (no `// @ts-check`, comments, code). Which .js files are data: every file whose whole text is that (tests check it); now house/house.js, room/`<id>`.{cabinets,scene,docs}.js, library/library.js, materials.js, shops.js, products/*, textures/*.
-- **The files**: stage the whole folder, textures included (library/textures/: without them a view never gets ready).
-- WebGL is software here (SwiftShader), slow: wait for a state, never a fixed time. Ignore "GL Driver Message … GPU stall".
-- Every page error and every console error or warning counts as a failure.
-
-## The page (home/index.html + index.js)
-
-- One page, loaded once; views, rooms, modes and Finish change in place. `?room=<id>` opens a room's view (Room); no query, the whole house (House).
-- Ready: `window.HOUSE_VIEW` exists and the Alpine state is ready: `document.querySelector(".app")._x_dataStack[0].ready` (call it `A`). `A.loading` is falsy when a rebuild is done.
-- What the page keeps in the browser: localStorage `home-house`, JSON `{mode, tab, layers, zoom, room, finish}`. To open a room with a given Finish, set it with `page.add_init_script` before `goto`; to start clean, clear localStorage once (a sessionStorage flag) in an init script.
-- The handles a test uses:
-  - `HOUSE_VIEW.CHECKS`: the view's checks, `{name, items, info}`; a fault is `items.length && !info`.
-  - `HOUSE_VIEW.book().sheets`: the Documents' sheets, `{name, rows: [{kind, cells}]}` (Assembly has another shape: no rows).
-  - `A.pick("3d"|"2d"|"documents"|"cabinets")`: the mode; `A.title`, `A.subtitle`: the panel's heading; `#tabs button` visible: View/Finish (3D only).
-  - The top-left menu: links in `#nav a` by their text (`House`, `Room`, `7. Bathroom`, …). They are hidden until the menu opens: click them with `a.click()` in the page (the page's own click handler takes it).
-- Count the page's `load` events: after any number of switches it must stay 1.
+- Ready: `window.HOUSE_VIEW` exists and `document.querySelector(".app")._x_dataStack[0]` (`A`) is ready and not loading.
+- Kept in the browser: localStorage `home-house`, `{mode, tab, layers, zoom, room, finish}`; a test starts clean (cleared once).
+- Handles: `HOUSE_VIEW.CHECKS` (`{name, items, info}`; a fault: items and not info); `HOUSE_VIEW.book().sheets`; `A.pick("3d"|"2d"|"documents"|"cabinets")`; `A.title`, `A.subtitle`; the top-left menu's links `#nav a`.
+- The page's `load` events stay 1 whatever is switched.
 
 ## What to run
 
 ### In Node
 
-1. **Every room's model** (`model_snap`): for each of room_356, bathroom_5, bathroom_7, wardrobe_3, wardrobe_4, wardrobe_8, bedroom_6: load core/geometry.js, core/tools.js, core/faces.js, core/tree.js, core/plan2d.js, room/cabinets.js, room/tiles.js, room/furniture.js, library/shapes.js, room/model.js; read the 8 product files of library/products/ into a library as library/catalog.js gives it (`groups`, `group(key)`, `product(key)`, `textures: {}`); read `room/<id>.cabinets.js` and `room/<id>.scene.js`; the room node is `{offset: [0,0,0], size: [10000,10000,3000], tiles: <the house's settings.tiles>}`, but a bathroom's own `size` and `area` from house/house.js. Each module made as index.js makes it. Then `HOME.room.prepare(node, {cabinets, scene}, library)` and serialise `{model, tree: P.TREE, looks, textures, covered: HOME.cabinets.coveredEdges(model), text: HOME.cabinets.cabinetsText(cabinets)}` (Maps and Sets as arrays, functions as "fn", repeated objects by id, numbers to 0.001). Baseline JSON per room; after a change: the same string.
-2. **The house** (`house_same`): load core/geometry.js, core/tree.js, house/model.js; `HOME.model.build(<house.js data>)`. Snapshot, each solid as `element|material|cap|layers|x1|x2|polygon|walkable|floor|finish` (to 0.01 mm, sorted): CELLS, FIXTURES, ROOF_CELLS, STAIR_CELLS, SITE_CELLS; the doors (label, floor, axis, angle, cells, product); every room's `part(id)` (box, cells with their side, objects); BORDERS; FOOTPRINT; `checks()`. After a change: the same, part by part.
-3. **The tiles**: for every layout of house.js `settings.tiles`, room/tiles.js on house/model.js: the tiles whole, cut and small cuts, the area, the fitted origin. Baseline, then the same.
-4. **core**: every core file but load.js loads in Node, in the page's order (geometry, tools, faces, scene, ui, plan2d, sheet, tree, library/catalog, estimate); the tree checks of a small tree of the LLM's own (a node 200 below the zero) give only the info `below: x -200`; the sheet evaluator: `ROUNDUP(2*3/4,0)` = 2.
-5. **The product library**: every file parses (the text inside `HOME.data(…)` is JSON); every key unique; every `shop` named is in library/shops.js; no price "to check".
+1. **Every room's model**: for each room with files, `room/model.js` prepare (the library as library/catalog.js gives it; the room node `{offset: [0,0,0], size: [10000,10000,3000], tiles}`, a bathroom's own size and area); serialised `{model, tree, looks, textures, covered edges, the cabinets file written back}`. The same string after a change.
+2. **The house**: `house/model.js` build: every solid (element, material, layers, box, polygon), the doors, every room's part, the borders, the footprint, the checks. The same after a change.
+3. **The tiles**: every floor layout laid: whole, cut, small cuts, area, the fitted origin.
+4. **core**: the tree's checks of a small tree; the sheet evaluator (`ROUNDUP(2*3/4,0)` = 2).
+5. **The library**: every file parses; every key unique; every shop exists; no price "to check".
 
 ### In the browser
 
-6. **Every view loads and passes**: index.html (the house) and `?room=` each of the seven rooms: no errors; every check passes (the house: all but the areas, which are information).
-7. **The Documents** of each view: the sheets' names and rows as the baseline (dump every sheet's rows as JSON strings and compare); Save XLSX downloads a workbook with the formulas.
-8. **One page, no reload**: the house 3D → a room picked in the menu (the view stays the house, the panel follows) → Room → another room → House → 2D, Documents, Cabinets, back to 3D. After each step: no errors, the checks pass, the heading is the active room and its floor, View/Finish tabs only in 3D, Walk only in House, Documents the current view's own sheets (the house: Rooms, Floor tiles, Doors, Notes, Elements, Test; a room: Estimate, Cut list, Assembly, Notes, Elements, Test). `load` events: 1.
-9. **Finish**: per room, a metal (brass, nickel, black) and a board changed: the estimate lists the swapped products (a tap of the family in that metal, the board's banding), the checks name what has no variant; the choice kept after a reload.
-10. **Cabinets (the design)**: pick each of the seven rooms in mode Cabinets: no problem in the data, the drawing filled; Export gives the room's `<id>.cabinets.js` byte for byte. A table edited (bathroom_7: the first column 100 narrower), Show in 3D: its model's group 1 widths 600,600 → 500,600, the mode 3D, the page not reloaded; back to Cabinets: the edits kept; Back to the file: as loaded. A room without a cabinets file (the garage): empty tables, the first furnished room's materials, the panel says so.
-11. **Pictures** when a change touches the look: screenshots from the views' cameras before and after, compared side by side (the house from the garden, the kitchen, both bathrooms, a wardrobe from behind; 2D of both floors).
-12. **tsc** clean.
-13. **test/index.html**: the rows as under "The clean slate".
+6. **Every view**: the house and each room with files (`?room=`): no errors, every check passes (the house: the areas are information).
+7. **The Documents** of each view: every sheet's rows as the baseline; Save XLSX gives a workbook with the formulas.
+8. **One page, no reload**: House → a room in the menu → Room → another room → House → 2D, Documents, Cabinets, 3D; after each: no errors, the checks pass, the heading is the active room, View/Finish only in 3D, Walk only in House, Documents the view's own sheets.
+9. **Finish**: a metal and a board changed per room: the estimate lists the swapped products, the checks name what has no variant; kept after a reload.
+10. **Cabinets**: each room: no problem in the data, the fronts drawn; Export gives the room's cabinets file byte for byte; a table edited and Show in 3D changes its model, no reload; Back to the file.
+11. **Pictures**: the views' screenshots before and after, compared (the same build gives the same pixels: a difference is real).
+12. **tsc** clean. 13. **test/index.html**: every row OK.
 
-After a change of types or comments only: 1, 2, 12 and 13 are enough. After a change of data only (prices, products): 5, 6, 7 for the rooms concerned, 10, 12.
-
-## Reference values (20 Nov 2026, checked again in the session of 20 Nov)
+## Reference values (21 Nov 2026)
 
 | View | Sheets (rows) | Checks |
 |---|---|---|
@@ -97,15 +65,8 @@ After a change of types or comments only: 1, 2, 12 and 13 are enough. After a ch
 | wardrobe_8 | Estimate 31, Cut list 58, Notes 15, Elements 218, Test 13 | 10, all pass |
 | bedroom_6 | Estimate 33, Cut list 52, Notes 15, Elements 207, Test 13 | 10, all pass |
 
-- The kitchen: 472 still cells, 33 moving parts with 346 cells; 205 boards, each face's material fixed (decor, decor turned, bare core, banded edge).
-- The tiles of bathroom_7: walls 16.33 m² (63 tiles), floor 3.68 (8), the shower's walls 12.75 (28), its floor 0.90 (4). Bathroom_5: walls 17.54 m² (43), floor 6.74 (14), the shower's walls 5.70 (15), its floor 1.00 (4).
-- The whole house: 1459 meshes, 1744 draw calls; Open opens 113 moving parts.
-- Speed (software WebGL): the house loads in about 2.3 s, a room in about 1.0 s; a view rebuilt in place 0.2–1.1 s.
-- Estimates: no price "to check"; only bathroom_5's radiator colour "to choose".
-- The heading: always the active room and its floor, e.g. "7. Bathroom · Ground floor"; at first the kitchen.
-
 ## Writing into the owner's folder
 
-- Write each batch from a fresh folder (`/mnt/user-data/outputs/syncN/`): a staged path used before may carry its older content.
-- After every write, list the owner's folder and compare each file's size with this copy; when in doubt, stage the file back and compare its content.
-- The LLM cannot delete the owner's files: it gives the command (`git rm <file>`, or `git rm -f <file>` when the file has changes not committed).
+- Each batch from a fresh folder (`/mnt/user-data/outputs/syncN/`).
+- After writing, the owner's folder listed and each file's size compared with this copy.
+- The LLM cannot delete the owner's files: it gives the command (`git rm <file>`).

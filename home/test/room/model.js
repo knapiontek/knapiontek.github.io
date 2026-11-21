@@ -2,7 +2,7 @@
 async function roomModelTest({ roomModelModule, coreGeometryModule, coreTreeModule, roomTilesModule, roomCabinetsModule, roomFurnitureModule, libraryShapesModule, libraryCatalogModule }, data, check) {
   const geometry = coreGeometryModule(), cabinets = roomCabinetsModule();
   const room = roomModelModule(geometry, coreTreeModule(), roomTilesModule(geometry), cabinets, roomFurnitureModule(cabinets, libraryShapesModule()));
-  check('the public API', Object.keys(room).join(' ') === 'prepare layTiles checks');
+  check('the public API', Object.keys(room).join(' ') === 'prepare layTiles checks finish finishChecks');
 
   /* the library as the page has it (library/catalog.js), and each furnished room as the house hands it in: its size, its
      area, the house's tiles */
@@ -22,5 +22,9 @@ async function roomModelTest({ roomModelModule, coreGeometryModule, coreTreeModu
       check(`${n.id} layTiles: pieces, and the counts prepare gave`, laid.pieces.length > 0 && JSON.stringify(laid.counts) === JSON.stringify(P.model.counts.tiles));
     }
     check(`${n.id} checks: the tree right, every group in its box`, room.checks(P).length === 0);
+    const finished = room.finish(files, {}, library);
+    check(`${n.id} finish: nothing chosen, the files as they are`, JSON.stringify(finished.cabinets) === JSON.stringify(files.cabinets) && finished.scene === files.scene);
+    check(`${n.id} finishChecks: the products in its metal, every banding in a decor of its boards`, room.finishChecks(finished, P, library).every(c => c.items.length === 0));
+
   }
 }

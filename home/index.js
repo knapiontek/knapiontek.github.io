@@ -53,42 +53,12 @@ await LIB.loadTextures(Object.values(MATERIALS).flatMap(m => [m.image && m.image
 /* a room's finish as the viewer changes it over its data, kept in the browser: the metal (of every metal part: handles,
    taps, profiles, rails), a board in place of a board; a change builds the page again */
 const FINISH = state.finish || (state.finish = {});
-const METALS = Object.entries(MATERIALS).filter(([, m]) => m.finish === 'metal').map(([k, m]) => ({ k, name: m.name }));
-const BOARDS = LIB.groups.boards;
-const boardName = k => BOARDS[k] ? (BOARDS[k].code ? `${BOARDS[k].code} ${BOARDS[k].decor}` : BOARDS[k].name) : k;
-/* a board's stand-ins: the boards of its kind (by the sheet or the m², lacquered or not, a frame or not, a worktop's depth)
-   within a millimetre of its thickness */
-const standIns = k => { const a = BOARDS[k]; return a ? Object.keys(BOARDS).filter(j => { const b = BOARDS[j];
-  return b.unit === a.unit && !!b.lacquered === !!a.lacquered && !b.frameWidth === !a.frameWidth && b.depth === a.depth && Math.abs(b.thickness - a.thickness) < 1; }) : [k]; };
-const ALL_PRODUCTS = Object.assign({}, ...Object.values(LIB.groups));
-/* a product of a family (the same thing in other metals or decors) in the metal and the decor asked for, if the family has it */
-const variant = (k, metal, codes) => {
-  const p = ALL_PRODUCTS[k]; if (!p || !p.family) return k;
-  const metal1 = p.metal && metal || p.metal, code1 = p.code && codes[p.code] || p.code;
-  if (metal1 === p.metal && code1 === p.code) return k;
-  return Object.keys(ALL_PRODUCTS).find(j => ALL_PRODUCTS[j].family === p.family && ALL_PRODUCTS[j].metal === metal1 && ALL_PRODUCTS[j].code === code1) || k;
-};
-/* the room's files as the viewer finished them: the boards swapped, a metal chosen; every product of a family (a tap, an
-   edge banding) in that metal and the decor of the board that took its board's place */
-function finished(id, files) {
-  const own = FINISH[id] || {}, swap = own.boards || {}, metal = own.metal && MATERIALS[own.metal] ? own.metal : null;
-  const codes = Object.fromEntries(Object.entries(swap).filter(([a, b]) => BOARDS[a] && BOARDS[b] && BOARDS[a].code && BOARDS[b].code).map(([a, b]) => [BOARDS[a].code, BOARDS[b].code]));
-  const f = metal || Object.keys(codes).length ? JSON.parse(JSON.stringify(files), (key, x) => typeof x === 'string' ? variant(x, metal, codes) : x) : Object.assign({}, files);
-  const materials = Object.fromEntries(Object.entries(f.cabinets.settings.materials).map(([role, k]) => [role, swap[k] && BOARDS[swap[k]] ? swap[k] : k]));
-  /* a top of a board is that board thick: in whole mm, as the data has it */
-  const whole = k => Math.round(BOARDS[k] ? BOARDS[k].thickness : 0), was = f.cabinets.settings.materials;
-  const components = (f.cabinets.components || []).map(i => { const role = i.type === 'worktop' && ['worktop', 'islandWorktop'].find(r => materials[r] && materials[r] !== was[r] && i.height === whole(was[r]));
-    return role ? Object.assign({}, i, { height: whole(materials[role]) }) : i; });
-  f.cabinets = Object.assign({}, f.cabinets, { settings: Object.assign({}, f.cabinets.settings, { materials }), components });
-  if (metal) f.scene = Object.assign({}, f.scene, { finish: Object.assign({}, f.scene.finish, { metal }) });
-  return f;
-}
 /* a room's furniture, prepared once (and again after a change of its finish): its files as finished, placed by room/model.js */
 const PREPARED = new Map();
 const furnished = r => PREPARED.get(r.id) || PREPARED.set(r.id, (async () => {
   const roles = ['cabinets', 'scene'].concat(r.node.files.includes('docs') ? ['docs'] : []);
   const [dataCabinets, dataScene, dataDocs] = await Promise.all(roles.map(role => HOME.load(`room/${r.id}.${role}.js`, role, 1)));
-  const data = { cabinets: EDITED.get(r.id) || dataCabinets, scene: dataScene, docs: dataDocs }, used = finished(r.id, data), { cabinets, scene, docs } = used;
+  const data = { cabinets: EDITED.get(r.id) || dataCabinets, scene: dataScene, docs: dataDocs }, used = RoomModel.finish(data, FINISH[r.id] || {}, LIB), { cabinets, scene, docs } = used;
   /* the room as the room engine needs it: its zero and size, its floor area and the openings in its walls, in its own axes */
   const at = T.place(r.node), near = b => b[0] <= at[0] + r.node.size[0] + 300 && b[1] >= at[0] - 300 && b[2] <= at[1] + r.node.size[1] + 300 && b[3] >= at[1] - 300 && b[4] < at[2] + r.node.size[2] && b[5] > at[2];
   /* what closes it above, as lines h <= a + s·y of its own axes: a ceiling over it (the attic's flat one), the roof's underside */
@@ -405,8 +375,8 @@ function finishPanel(f) {
   const own = FINISH[f.room.id] || {}, roles = {}, words = s => s.replace(/[A-Z]/g, c => ' ' + c.toLowerCase());
   for (const [role, k] of Object.entries(f.data.cabinets.settings.materials)) (roles[k] ||= []).push(words(role));
   const boards = Object.entries(roles).map(([k, rs]) => ({ from: k, value: (own.boards || {})[k] || k, roles: rs.join(', ').replace(/^./, c => c.toUpperCase()),
-    options: standIns(k).map(j => ({ k: j, name: boardName(j) })) })).filter(b => b.options.length > 1);
-  return { metal: own.metal || f.data.scene.finish.metal, metals: METALS, boards, changed: !!FINISH[f.room.id] };
+    options: LIB.standIns(k).map(j => ({ k: j, name: LIB.boardName(j) })) })).filter(b => b.options.length > 1);
+  return { metal: own.metal || f.data.scene.finish.metal, metals: LIB.metals, boards, changed: !!FINISH[f.room.id] };
 }
 /* a layout in the panel: its settings only (what is laid and what it costs: Documents) */
 function layoutPanel(A, changed) {
@@ -425,26 +395,9 @@ function documents() {
 /* the whole house: the checks of the house (its tree, its model, the library); a room: its own (its furniture) */
 /** @type {Check} */
 const ASKED_CHECK = { name: 'Every room asked for is a room of the house', about: 'The rooms named in the address (?room=…) are rooms of house.js.', items: ASKED.filter(id => !ROOM[id]) };
-const TILE_CHECKS = [
-  { name: 'Floor tiles: every room tiled or set to none', about: 'A room takes its floor tiles from the node above that sets them (its floor), or sets its own (an origin: a layout of its own), or sets none (null: its own project lays its floor).', items: ROOMS.filter(r => !layoutOf(r) && (T.setting(r.node, 'tiles') || {}).value !== null).map(r => r.id) },
-  { name: 'Floor tiles: every layout\'s tile in the library', about: 'The product a layout sets is one of the library\'s tiles, with its texture.', items: MODEL.LAYOUTS.filter(D => !TILE_PRODUCTS[D.product] || !LIB.textures[TILE_PRODUCTS[D.product].texture]).map(D => D.key + ': ' + D.product) },
-  { name: 'Floor tiles: small cuts', about: 'To know, not a fault: the layouts with a cut tile shorter than the product\'s smallest cut (minCut), red in 3D while its layer is on.', items: Object.values(LAID).filter(A => A.count.small).map(A => `${A.D.key}: ${A.count.small}`), info: true }];
-const HOUSE_CHECKS = [ASKED_CHECK].concat(T.checks(), MODEL.checks(), LIB.checks(), TILE_CHECKS);
-/* the products a room uses that come in a metal (a tap, a radiator, a handle): in the room's own */
-function metalCheck(f) {
-  const metal = f.prepared.scene.finish.metal, used = new Set((JSON.stringify(f.used).match(/"[^"]+"/g) || []).map(s => s.slice(1, -1)));
-  const wrong = [...used].filter(k => ALL_PRODUCTS[k] && ALL_PRODUCTS[k].metal && ALL_PRODUCTS[k].metal !== metal);
-  return { name: 'Finish: the products in the room\'s metal', about: 'The room\'s metal (its scene\'s finish, or the one chosen in Finish) is one of the library\'s; a product sold in a colour of metal (a tap, a radiator, a handle) is in that one: a product of a family (product.family) takes the family\'s one, else its variant is to choose.',
-    items: (METALS.some(m => m.k === metal) ? [] : [`the metal ${metal} is not a finish of the library`]).concat(wrong.map(k => `${ALL_PRODUCTS[k].name}: ${MATERIALS[ALL_PRODUCTS[k].metal].name}, the room ${MATERIALS[metal] ? MATERIALS[metal].name : metal}`)) };
-}
-/* an edge banding in a decor (product.code) is the decor of one of the room's boards */
-function bandingCheck(f) {
-  const codes = new Set(Object.values(f.used.cabinets.settings.materials).map(k => (BOARDS[k] || {}).code).concat((f.prepared.model.products || []).map(x => (ALL_PRODUCTS[x.product] || {}).code)).filter(Boolean));
-  const used = new Set((JSON.stringify(f.used.docs || {}).match(/"[^"]+"/g) || []).map(s => s.slice(1, -1)));
-  return { name: 'Finish: every edge banding in the decor of a board', about: 'An edge banding sold in a decor (its code) bands a board of that decor in the room: when a board is changed in Finish, the banding of its family follows; none in the new decor: to choose.',
-    items: [...used].filter(k => ALL_PRODUCTS[k] && ALL_PRODUCTS[k].unit === 'm' && /edge|banding/.test(k) && ALL_PRODUCTS[k].code && !codes.has(ALL_PRODUCTS[k].code)).map(k => `${ALL_PRODUCTS[k].name}: no board ${ALL_PRODUCTS[k].code} in the room`) };
-}
-const ROOM_CHECKS = FURNITURE.flatMap(f => f.made.checks().concat(f.docs ? f.docs.checks() : [], metalCheck(f), bandingCheck(f)).map(c => Object.assign(c, { name: (FURNITURE.length > 1 ? roomName(f.room) + ' · ' : '') + c.name })));
+const HOUSE_CHECKS = [ASKED_CHECK].concat(T.checks(), MODEL.checks(), LIB.checks(),
+  Tiles.checks(MODEL.LAYOUTS, TILE_PRODUCTS, LIB.textures, Object.values(LAID).map(A => ({ key: A.D.key, count: A.count }))));
+const ROOM_CHECKS = FURNITURE.flatMap(f => f.made.checks().concat(f.docs ? f.docs.checks() : [], RoomModel.finishChecks(f.used, f.prepared, LIB)).map(c => Object.assign(c, { name: (FURNITURE.length > 1 ? roomName(f.room) + ' · ' : '') + c.name })));
 const CHECKS = WHOLE ? HOUSE_CHECKS : [ASKED_CHECK, ...(ROOM_CHECKS.length ? ROOM_CHECKS
   : [{ name: 'No checks of its own', about: 'This room has nothing of its own to check yet; the house\'s checks are in the whole house\'s Documents.', items: [], info: true }])];
 

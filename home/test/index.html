@@ -16,12 +16,18 @@
   name of the project). Its test (<code>test/&lt;file&gt;</code>: the same path under test/) gets the constructors it names,
   builds the file from its constructor and calls its public API. test/test.md says more.</p>
 <table><thead><tr><th>File</th><th>Its test builds it with</th><th>Result</th></tr></thead><tbody id="results"></tbody></table>
+<h1>Examples</h1>
+<p>A story each, on the same slate: the files work together as the page makes them (index.js), on the house's own data,
+  and what comes out is checked (test/examples/). The files it goes through are listed in the order it makes them.</p>
+<table><thead><tr><th>Example</th><th>Goes through</th><th>Result</th></tr></thead><tbody id="examples"></tbody></table>
 
 <script>
 /* the files tested; core/tree.js is made by coreTreeModule(), its test is coreTreeTest() in test/core/tree.js */
 const FILES = ['core/geometry.js', 'core/tools.js', 'core/tree.js', 'core/faces.js', 'core/plan2d.js', 'core/estimate.js',
   'core/ui.js', 'core/sheet.js', 'core/scene.js', 'core/parts.js',
   'house/model.js', 'house/plan.js', 'house/docs.js', 'room/tiles.js', 'room/cabinets.js', 'room/furniture.js', 'room/model.js', 'room/parts.js', 'room/docs.js', 'room/design.js', 'library/catalog.js', 'library/shapes.js'] ;
+/* the examples: test/examples/sink.js is sinkExample() */
+const EXAMPLES = ['sink', 'cabinet', 'floor', 'door', 'metal'];
 const nameOf = file => file.replace('.js', '').replace(/\/(\w)/g, (_, c) => c.toUpperCase());   // core/plan2d.js → corePlan2d
 const fileOf = constructor => FILES.find(f => nameOf(f) + 'Module' === constructor);
 
@@ -76,9 +82,9 @@ function where(stack, files) {
   return '';
 }
 
-/* one file on its slate */
-function run(file) {
-  const test = { file: 'test/' + file, code: String(window[nameOf(file) + 'Test']) };
+/* one test on its slate: a file's (file: its path), or an example (example: its name) */
+function run(file, example) {
+  const test = example ? { file: `test/examples/${example}.js`, code: String(window[example + 'Example']) } : { file: 'test/' + file, code: String(window[nameOf(file) + 'Test']) };
   const constructors = namesOf(test.code).map(name => ({ name, file: fileOf(name), code: String(window[name]) }));
   const worker = new Worker(URL.createObjectURL(new Blob([`(${slate})()`], { type: 'text/javascript' })));
   return new Promise(done => {
@@ -91,6 +97,7 @@ function run(file) {
   /* the files and their tests, run in this page only to be read; what they do here does not count */
   window.onerror = () => true;
   for (const file of FILES) { await script(file); await script('test/' + file); }
+  for (const e of EXAMPLES) await script(`test/examples/${e}.js`);
   window.onerror = null;
   /* the data the tests read: the house, the library, every room's files */
   await read('house/house.js'); await read('library/library.js'); await read('library/materials.js'); await read('library/shops.js');
@@ -99,11 +106,13 @@ function run(file) {
   for (const n of (function all(n) { return [n, ...(n.children || []).flatMap(all)]; })(DATA['house/house.js']))
     for (const role of n.files || []) await read(`room/${n.id}.${role}.js`);
 
-  const body = document.getElementById('results'), esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  for (const file of FILES) {
-    const tr = body.insertRow(), uses = namesOf(window[nameOf(file) + 'Test']).map(fileOf).filter(f => f !== file);
-    tr.innerHTML = `<td><code>${file}</code></td><td>${uses.map(f => `<code>${f}</code>`).join(' ') || 'nothing'}</td><td class="wait">running…</td>`;
-    const r = await run(file), ok = !r.error && !r.failed.length;
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const rows = FILES.map(file => ({ file, body: 'results', label: file, uses: namesOf(window[nameOf(file) + 'Test']).map(fileOf).filter(f => f !== file) }))
+    .concat(EXAMPLES.map(e => ({ example: e, body: 'examples', label: `test/examples/${e}.js`, uses: namesOf(window[e + 'Example']).map(fileOf) })));
+  for (const { file, example, body, label, uses } of rows) {
+    const tr = document.getElementById(body).insertRow();
+    tr.innerHTML = `<td><code>${label}</code></td><td>${uses.map(f => `<code>${f}</code>`).join(' ') || 'nothing'}</td><td class="wait">running…</td>`;
+    const r = await run(file, example), ok = !r.error && !r.failed.length;
     tr.cells[2].className = '';
     tr.cells[2].innerHTML = `<span class="${ok ? 'ok' : 'no'}">${ok ? 'OK' : 'NOT OK'}</span> · ${(r.passed || []).length} passed`
       + (r.error ? `<br><b>${esc(r.error)}</b>${r.at ? `<br>at <code>${esc(r.at)}</code>` : ''}` : '')

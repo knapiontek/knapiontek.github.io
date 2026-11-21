@@ -535,7 +535,9 @@ function checks() {
     { name: 'Floor without a room', about: 'Every part of a floor inside the outer walls belongs to a room, the stair or a wall: no floor area is left without one.', items: FLOORS.flatMap(floorLeft) },
     { name: 'Rooms do not overlap', about: 'No two rooms share floor area.', items: twice },
     { name: 'Room areas against archon (m²)', about: 'To know: each room\'s area in the model (at the block faces) beside archon\'s (after plaster), as a reference.', info: true,
-      items: ROOMS.filter(r => r.node.archonArea).map(r => `${r.id}: ${areaOf(r.rects).toFixed(2)} · archon ${r.node.archonArea.toFixed(2)}`) }];
+      items: ROOMS.filter(r => r.node.archonArea).map(r => `${r.id}: ${areaOf(r.rects).toFixed(2)} · archon ${r.node.archonArea.toFixed(2)}`) },
+    { name: 'Floor tiles: every room tiled or set to none', about: 'A room takes its floor tiles from the node above that sets them (its floor), or sets its own (an origin: a layout of its own), or sets none (null: its own project lays its floor).',
+      items: ROOMS.filter(r => !LAYOUTS.some(D => D.rooms.includes(r)) && (T.setting(r.node, 'tiles') || {}).value !== null).map(r => r.id) }];
 }
 
 return { T, HOUSE, ROOF, TAN, WIDTH, RIDGE_TOP, ROOF_UNDER, floorOf, SIDE, OPENINGS, ELEMENTS, FLOORS, ROOMS, ROOM, LAYOUTS, BORDERS, areaOf,

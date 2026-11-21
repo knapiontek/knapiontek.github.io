@@ -7,43 +7,24 @@ The house "Dom w papawerach 5 (G)" (archon.pl), as built, standing in its site (
 | File | Does |
 |---|---|
 | house.js | the house's data: settings (root of the cascade), what it is made of, floors and rooms |
-| model.js | house.js turned into solids (walls, slabs, roof, windows, doors, stair, site); rooms in the house's axes and their borders without a wall; a part cut out for a room; checks; the top-left menu. No browser |
-| plan.js | the 2D plan, a sheet per floor (core/plan2d.js draws): the cut, the stair, the roof's clear heights and windows, the doors open, labels, rooms, dimensions; a room's view: its rooms and furniture |
-| docs.js | the Documents' sheets: rooms and areas, inner doors, floor tiles to buy, notes; the elements (tree) and the test (checks) both views have |
+| model.js | house.js made into solids (walls, slabs, roof, windows, doors, stair, site); the rooms in the house's axes; a part cut out for a room's view; the floor layouts; checks; the top-left menu. No browser |
+| plan.js | the 2D plan, a sheet per floor (core/plan2d.js draws): what is cut, the stair, the roof's clear heights and windows, the doors open, labels, rooms, dimensions; a room's view too (To do 3) |
+| docs.js | the house's Documents: rooms and their areas, inner doors, floor tiles to buy, notes |
 
-```
-house.js ─► model.js ─► solids ─► index.js: 3D (core/scene.js); plan.js: 2D (core/plan2d.js); docs.js: Documents (core/sheet.js)
-                     ─► rooms, borders, parts ─► index.js, room engine
-                     ─► checks ─► Test
-```
+## Views
 
-## Views (index.js)
-
-- **Active room**: always one, the panel's title (its floor under it), picked in the floors' menus, kept in the browser; at first the first furnished room.
-- **House / Room** (top left): the whole house, or its walls cut to the active room. A room picked in House keeps the view; in Room it shows that room.
-- **Whole house**: every solid; doors turn on their hinges. Panel View: Floors (floors, roof) and Layers (element kinds); a solid shows when its floor and kind are both on. Roof off: the highest floor shown is open and adds its cameras. Walk: whole house only.
-- **A part**: its rooms' solids trimmed to each room's box (floor area to the far faces of its walls, from the slab under it to what closes it above). Each wall, floor and ceiling is an object; a window or door hides with its wall; an object the camera is beyond hides (still casting shadow). Floors do not apply; the light is the interior light.
-- **3D panel**: View (the house's layers and the active room's furniture; a furniture layer switches that kind in every room) and Finish (the active room's). Cameras: the house's or the room's own. Open / Close: every moving part (doors, drawers, a shower door).
-- **2D**: one sheet per floor (of a part: its rooms' floors): cut filled, below seen, door swings, opening labels, rooms with areas, dash-dot borders. Whole house: CAD dimension chains on every side (openings, then overall); a part: overall sizes. A furnished room: appliances as their boxes (cut grey, seen outlined), sink and hob seen from above. Wheel zooms at the cursor; drag moves.
-- **Documents**, whole house: Rooms (model and archon areas), Floor tiles, Doors (what is bought per door, each by name and place), Notes; a room's view: its own (room/docs.js). Then Elements (the tree shown, each node's offset and size; closed) and Test (open).
-- **Test**: the tree, the house, the library, the rooms' furniture, the floor tiles; a requested room the house lacks.
+- **The whole house**: every solid; the doors turn on their hinges. Panel View: Floors and Layers; a solid shows when its floor and its kind are on. Roof off: the highest floor shown is open. Walk: the whole house only.
+- **A room's view**: its rooms' solids cut to each room's box. Each wall, floor and ceiling is an object; an object the camera is beyond hides (still casting its shadow), and with it whatever lies on it (a window, its tiles). The light is the interior light.
+- **2D**: one sheet per floor (a room's view: its rooms' floors): what is cut filled, what is below seen, the doors' swings, the openings' labels, the rooms with their areas. The whole house: dimension chains on every side; a room: its overall sizes and its furniture seen from above.
+- **Documents**: the whole house: Rooms, Floor tiles, Doors, Notes; a room's view: its own (room/docs.js). Then Elements (the tree shown) and Test.
+- **Finish** (3D panel), per room: one metal for its fittings, each board with its stand-ins (room/model.js); the floor tiles: tile, pattern, direction, origin, grout, Fit (the origin with the fewest small cuts). Changes stay in the browser.
 
 ## Rules
 
 - **Source**: the model copies the boxes of archon/analysis.md (with its changes as built); it never measures anew.
-- **Outside the model**: furniture and fittings (the rooms'). The fireplace is the house's (not drawn yet).
-- **Inner doors**: a click on a leaf opens or closes it; on a walk, Space by a door. A room cut out gets its doors with its walls.
-- **Walk**: the body is a circle (walk radius); walls and fixed parts push it out the shortest way (it slides along a wall, turns into a doorway at a jamb); the floor runs on through a passage; a step is split so nothing is passed through. Furniture shown stops it too; a door not fully open stops it.
-- **2D stair**: under the cut a full line, over it dashed; from the floor above all of it, through the void.
-
-## Floor tiles and Finish
-
-- One layout per node that sets `settings.tiles`, over the rooms that take it. A slab from the tiles' face down into the floor, edges closed; grout below the face; the face drawn ahead of what lies close behind (no flicker). Rooms of one layout meeting without a wall are one zone: tiles run across the border and through doors. How tiles are laid: room/tiles.md.
-- **Finish** (3D panel), per active room:
-  - Furniture: one metal for all fittings; each board with its stand-ins (same kind, within 1 mm of thickness; a top follows its board's thickness). A family product (tap, radiator, edge banding) follows the metal and decor; none in that variant: Test reports it.
-  - Floor tiles: tile, pattern, direction, origin, grout; Fit the origin (fewest small cuts). Small cuts red on their layer.
-  - Back to the data. Changes stay in the browser; the room is rebuilt.
-- Documents, Floor tiles: per layout, tiles whole, cut, small cuts; m² to buy with reserve; value. Test: every room tiled or set to none; every layout's tile in the library; small cuts (info).
+- **Inner doors**: a click on a leaf opens or closes it; on a walk, Space by a door.
+- **Walk**: the body is a circle; walls and fixed parts push it out the shortest way; the floor runs on through a passage. Furniture shown stops it too; a door not fully open stops it.
+- **Floor tiles**: one layout per node that sets `settings.tiles`, over the rooms that take it, laid from one origin; rooms meeting without a wall are one zone and the tiles run through the doors (room/tiles.md). One slab: its edges only round the floor's outline.
 
 ## Format `house`, version 3
 

@@ -1,16 +1,16 @@
 # Room
 
-The room engine: a room from what the house gives (its node: origin, size, floor area, openings, ceiling) and the room's own data files, drawn into the house's page. Rooms with files: room_356, bathroom_5, bathroom_7, wardrobe_3, wardrobe_4, wardrobe_8, bedroom_6.
+What is inside a room: from what the house gives (its node: origin, size, floor area, openings, ceiling) and the room's own data files, its model and its parts, shown in the house's page. Rooms with files: room_356, bathroom_5, bathroom_7, wardrobe_3, wardrobe_4, wardrobe_8, bedroom_6.
 
 ## Files
 
 | File | Does |
 |---|---|
-| model.js | a room's model, no browser: the cabinets' model, groups and fixtures placed where the scene says, the hardware as drawn, the tree, the looks and textures it needs, its tiles laid and counted; the checks of its tree |
+| model.js | a room's model, no browser: its files finished (the metal, the boards chosen), the cabinets' model, groups and fixtures placed where the scene says, the hardware, the tree, the looks and textures it needs, its tiles laid and counted; the checks of its tree and of its finish |
 | parts.js | a room's parts from its model (core/parts.js): cabinets, products, built-ins, tiles, lamps, how the moving parts move; the page shows them (core/scene.js); the furniture's 2D plan; the checks of the parts against the tree; the layers of its view |
 | cabinets.js | a cabinets file → the model (carcasses, boards, fronts, strips, panels, plinths, worktops, plasterboard, holes, counts, problems), the furniture's tree. Needs nothing |
-| furniture.js | the cabinets described (core/parts.js) from their model: carcasses, fronts, worktops, panels, hardware, the products in them; the boards' looks |
-| tiles.js | tiles of a layout: rooms and zones, tiles laid from the grid's origin, the count (whole, cut, small cuts), the origin with fewest small cuts, the faces to draw; a floor's layout laid over its rooms and its pieces (one slab: edges only round its outline). No browser |
+| furniture.js | the cabinets' parts (core/parts.js) from their model: carcasses, fronts, worktops, panels, hardware, the products in them; the boards' looks |
+| tiles.js | the tiles of a layout: rooms and zones, laid from the grid's origin, counted (whole, cut, small cuts), the origin with the fewest small cuts, the faces to draw; a floor's layout over its rooms (one slab: edges only round its outline); the layouts' checks. No browser |
 | docs.js | a furnished room's Documents: estimate (core's), cut list (boards with edges, m², banding, cuts), notes, assembly cards; their check. No browser but the cards |
 | design.js | the mode Cabinets: a cabinets file as tables (groups, columns, components, notes) → the model → the fronts drawn (SVG); Import, Export, Show in 3D. Its screen is in index.html |
 | `<kind>_<number>.cabinets.js` | a room's furniture (format cabinets) |
@@ -19,8 +19,9 @@ The room engine: a room from what the house gives (its node: origin, size, floor
 | cabinets.md, tiles.md, products.md | how cabinets are made, tiles laid, products fitted: rules in words, for the builder |
 
 ```
-house.js (a room's files) ─► index.js ─► model.js: cabinets.js model, tiles.js ─► tree, counts
-                                       ─► parts.js: furniture.js, library/shapes.js ─► a description ─► core/scene.js
+house.js (a room's files) ─► index.js ─► model.js: cabinets.js, tiles.js ─► the model, the tree, the counts
+                                       ─► parts.js: furniture.js, library/shapes.js ─► parts ─► index.js ─► core/scene.js
+                                       ─► docs.js ─► Documents;  design.js ─► Cabinets
 ```
 
 ## Coordinates
@@ -30,7 +31,7 @@ House axes: x, y, h; a box is `[x0, x1, y0, y1, h0, h1]`; mm.
 - **A group** has its own axes: x from its left end seen from the fronts, y from its wall into the room, h up from the floor (an island: y from its back edge). The scene gives the group's box in the room and its fronts' side; the room turns it a quarter, with a mirror (a group's axes are left-handed).
 - The cabinets model computes with y from the carcass backs; the tree comes out of it. A carcass stands at y = its group's backGap; changing the gap moves the carcass and everything in it.
 - **The furniture's tree**: group → what runs along it (worktop, end panels, wall panel, plasterboard, front and back strips, plinth, front panels, hood), then its units in a row (carcasses, a dishwasher's bay) → a carcass's boards, fronts, products (oven, microwave, fridge-freezer, sink with tap and trap, hob, coffee machine) and hardware (legs, plinth grille, shelf pins, bumpers, pull-out runners) → a front's panel, hardware (hinges, handle, runners), its drawer's boards, inner drawer, drawers behind a door. Each node: id (unique among siblings), name, type, offset from its parent's left-back-bottom corner, size (a container's: with its contents).
-- Drawn from its node: boards, front panels, worktops, plasterboard by furniture.js; products, hardware and a drawer system's metal (sides, gallery rails, inner drawer's front, bins, cutlery insert) by library/shapes.js, in the product's own coordinates, moved to the node; a hole where its board's node is. A trap's outlet runs to the wall, not into it.
+- Its parts from its node: boards, front panels, worktops, plasterboard by furniture.js; products, hardware and a drawer system's metal (sides, gallery rails, inner drawer's front, bins, cutlery insert) by library/shapes.js, in the product's own coordinates, moved to the node; a hole where its board's node is. A trap's outlet runs to the wall, not into it.
 
 ## Format `cabinets`, version 1
 
@@ -61,7 +62,7 @@ Fields: `settings`, `appliances`, `notes`, `groups`, `components`. Rules for wha
 | installation | sink: tapFromBack, trapTop, wallOutlet; hood: bottom |
 | hardware | our layout of hardware: handle (axis, barLength, sideHeight), open (angles, drawer travel; doorStop: a door that opens less), leg (fromSide, fromBack, fromFront), bins (count, height), plinthGrille (bottom) |
 | lights | pendantBottom; pendants {group, count, spacing}; downlights {group, x, y} or {group, between: [axes], y} (y from the wall), or `at` [x, y] in the room's axes (no group: a bathroom) |
-| tiles | walls, floor, shower {zone [x0, x1, y0, y1], walls, floor}: each {product, format? [length, width] (a size the product is made in), dir (x or y: the tiles' length along it), pattern?, origin?, grout?} (room/tiles.md) |
+| tiles | walls, floor, shower {zone [x0, x1, y0, y1], walls, floor? (none: the floor runs on into the zone)}: each {product, format? [length, width] (a size the product is made in), dir (x or y: the tiles' length along it), pattern?, origin?, grout?} (room/tiles.md) |
 | cameras | name, eye, target in the room's axes |
 
 How a room is drawn from it:
@@ -69,7 +70,7 @@ How a room is drawn from it:
 - **Ceiling**: the house gives what closes the room above as lines h ≤ a + s·y in its axes (a flat ceiling; on the top floor the roof's underside). The lowest flat line is the ceiling (lamps); wall tiles are cut along the others.
 - **On tiles**: what stands on a tiled wall stands on the tiles' face.
 - **2D** (about 1:50, seen from above, not cut): a carcass as one rectangle with its front; tops (worktops, end panels) as one figure with their openings; sink and hob outlines, appliance bodies; built-ins and sanitary outlines (glass blue); over the cut (wall units, hood) dashed. Left out: boards, drawers, hardware, strips, plinths, backs, legs, holes, installations.
-- **Layers**: a tile goes with what it lies on (a wall's with Blocks, a casing's with Built in); Installations: what a casing hides (riser, WC frame, cistern).
+- **Layers**: a tile goes with what it lies on (a wall's with Blocks, a casing's with Built in) and hides with it; Installations: what a casing hides (riser, WC frame, cistern).
 
 ## Format `docs`, version 1
 
