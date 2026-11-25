@@ -1,61 +1,75 @@
 # Core
 
-> **Changes to this file: an LLM always asks first.** We agree what to do; the LLM writes it here; the owner approves it; only then is the work done. Without that approval an LLM does not change this file.
-
-Shared code for every page: the house and every sub-project. It knows no project.
+Shared code for every page. Knows no project: a page hands it data; core gives back what is shown, counted or checked.
 
 ## Files
 
-| File | Holds |
+| File | Does |
 |---|---|
-| geometry.js | convex polygons and prisms: clip, subtract, intersect, split, section, volume, overlaps |
-| mesh.js | welded points, faces, visible pieces, batches of triangles |
-| scene.js | renderer, materials, meshes, edges, caps, light, camera, navigation, walk, loop |
-| ui.js | the screen of every page: stored state, the layer tree, the menus, the panel's tabs, ☀ and ?, the mode switch, the 2D sheet, the checks list, the column widths of a table (set with its data: fixed for numbers and codes, shares of the room for text) |
-| library.js | loads the library's textures when a page needs them (one file per image) |
-| plan.js | the 2D plan from the solids: cut, seen from above, labels, rooms, dimensions, sheets |
-| sheet.js | the spreadsheet: tabs, editable cells, formulas, pages in tabs, XLSX export |
-| info.js | Info of every application: the screen, the order of the tabs, the shared sheets (Kosztorys, Lista cięć, a plain table), the bottom menu |
-| ui.css | the look of every view, light and dark |
+| load.js | the one data loader: a file by its path from the home folder, checked for format and version (the folder that has a file knows its path). First script of every page |
+| tree.js | the tree of nodes: node by path, path of a node, place (sum of offsets), box, setting from the cascade (and the node it comes from), refs, walk, checks |
+| tools.js | short pieces of no one file: how numbers are written (en-GB on every page and in every sheet); text into HTML; a sheet's rows and columns (formula and input cells, column widths and how each shows, money columns, row kinds) |
+| geometry.js | exact solids: convex polygons, prisms; clip, subtract, intersect, split, section, volume, overlap; rectangles; the compass sides; a stable random number |
+| faces.js | surfaces ready to draw: welded points, faces of solids, visible pieces (a face loses what another covers) |
+| scene.js | the 3D view, one per page, cleared and relit for another view: renderer (physical lights), materials, pieces batched per material, edges, ghosts (hidden, still casting shadow), moving parts, sun and clouds, camera and flights, navigation, walk; the parts of a view shown (below); redraws only after a change. The only file with three.js |
+| parts.js | the parts of a view, as data (below): solids, details, moving parts, lamps; what a model (the house's, a room's, its cabinets and products) puts its parts into |
+| plan2d.js | the 2D plan from the same solids: cut filled, below seen, above dashed; labels, room borders without a wall (dash-dot), dimensions, sheets side by side |
+| sheet.js | spreadsheet: sheets in tabs, input cells, live formulas, tree sheets (levels, + / −), XLSX with the same formulas and outline; the Documents screen (each table built once, changed in place) |
+| estimate.js | the sheet Estimate, alike on every page: items by category, quantity × price, sums, reserve, total |
+| ui.js | the screen (Alpine.js): a page's part (state kept in the browser), modes, panel tabs, bottom menu, floating boxes, 2D zoom and drag; the shared pieces (below); light/dark and panel shown/hidden, one choice for all pages; layers; sun; table column widths |
+| ui.css | the look of every page, light and dark: menus, panel, sheets and design tables, 2D sheet and elevations, pick lists |
 
-## How it fits together
+## Flow
 
 ```
-cells ─► mesh.js ─► pieces ─► scene.js ─► view
-   └───► geometry.js ─► checks
+data file ─► load.js ─► page ─► a model (house, room) ─► parts (parts.js)
+parts ─► faces.js ─► scene.js (3D)      solids ─► plan2d.js (2D)      rows, checks ─► sheet.js (Documents, XLSX)
 ```
 
-- geometry.js runs without a browser or three.js; mesh.js too, except its batches (three.js meshes).
-- A page hands in: cells, a material library, textures, light, edge style, the body box, walk settings.
+- **Without a browser** (tested in Node): tools, geometry, tree, faces, parts, plan2d (SVG as text), the formulas of sheet. Every file but load.js loads in Node: none touches the browser on load.
+- **Browser only**: load.js (script tags), scene.js (WebGL), the screen of ui.js and sheet.js, the XLSX download.
+- **Screen pieces** (`<template x-part="name">`; one that takes the page's content gets the template's content): nav (top left: house, floors, rooms), view (3D canvas), loading, modes (top right), plan (2D), docs (Documents), dock (bottom menu), pad (walk arrows), sun, help, corner (◐ light/dark, ☀ sun, ? help, » « panel), panel (title, tabs, the page's sections), layers (blocks of switches); sheet.js adds sheet. The pieces read the page part's fields (title, modes, menu, layers, state).
 
-## Cells
+## Parts (parts.js)
 
-A cell is a solid with what it is:
+The parts of a view, as data; scene.js shows them in the order they were put in. Places in a group's frame: x along the group, y out of its wall, h up from the floor (mm).
 
-- **Its solid**: a prism along x over a convex polygon (a box, at most cut by sloping lines). The scene is in metres.
-- **Its material**, or a material per face by its direction and corners (a board's banded and bare edges, a board's top along the grain).
-- **Its layers**: shown only while all are on; whether it draws edge lines.
-- Optional: the bare material under a finish and the finish's layer; whether one can walk on it; the part it belongs to (one board or piece: a joint between two parts in one plane gets a line, one part has none); a mesh of its own, so a page can recolour it (a selected cabinet).
+| Part | Holds |
+|---|---|
+| solids | exact solids (cells of core): a prism, its material, layers, part (a joint between parts shows a line), name; also solids made elsewhere (the house's) |
+| details | a shape only for the look (not counted, not cut in 2D): the shape, its material, its frame, its place [x, y, h] and turn (angles, a direction or a matrix), its layers, shadow |
+| shapes | in the detail's own axes (x along, y up, z out of the wall): box, cylinder (two radii, open, an arc), sphere (arcs), disc, ring, plane, torus, tube (a curve's points), extrude (a profile, a depth), mesh (points, triangles); then turned and moved, in order |
+| material of a detail | a key; a key per face group; a key seen from inside or both sides; a display's text |
+| frames | a group's frame, in a moving part or not; or a frame turned about h at a point of another |
+| moving parts | a door (a room's or a cabinet's), a drawer, an appliance door: a point of its axis, which way, how far, what must open first; its solids and details |
+| lamps | point or spot: colour, intensity, reach, angle, from and to (points of the house), shadow; lit by night while their layer is on |
+| looks | a material painted once with specks: size, background, count, dots (colour, share, alpha), repeat |
 
-## Mesh
+## Rules
 
-- Faces that meet share the same welded point.
-- A face loses what an opposite face of its own group (its layers) covers. A part covered by another group is kept but shown only while that group is hidden.
-- A finished face against another solid shows its bare material.
-- **Finishes** of a room on its host's faces, as data: the faces inside a box, seen from one side, take a material, switched by a layer (a room's tiles on the house's walls).
-- Every triangle remembers its cell, so a pick can name what is under the cursor.
+- **Exact solids**: a prism along x over a convex polygon: a box, at most cut by sloping lines. Nothing patched afterwards: errors are fixed in the data or the module that makes the solid.
+- **Built once, then only looked at**: meshes built on load; a layer shows or hides; a moving part is built closed and only moved.
+- **One mesh**: one list of points, welded at 0.05 mm: no T-junctions, no cracks, no two faces in one plane. Nothing enlarged, moved or hidden to cover a fault.
+- **No shared volume**: no two solids share volume; core gives the check, a page runs it.
+- **Edges are a layer**: a seam (one plane, one part) has no line; a corner always has one.
+- **Layers**: a child shows only with its parent; a solid only while all its layers are on. A switch changes only what shows: no count, no camera.
+- A change to core changes no page's model or picture unless that is its point.
+- The scene is in metres, y up; everything in and out is mm in the house's axes.
+- Kept in the browser per view: mode, tab, layers, zoom. One for every page: sun, light/dark, panel.
 
-## Scene
+## Format `tree` (a node)
 
-- **Materials**: a page's library, or a ready three.js material handed in under a key (a page whose look is its own). From the library: colour, roughness, metalness, reflect, opacity; clear coat (a lacquer); emissive and glow; one generated surface at most: plaster specks, grass, paving, wood boards, or an image (a decor photo of the textures, its size in mm, turned a quarter when its grain must run the other way).
-- **Meshes and edges** go under the model root, or under a group of it that moves (a door on its hinge).
-- **Edges** come from the pieces: a seam (one plane, one part) has no line, a corner (an angle) always has one; any other line hides while every group that closes it is shown. Lines are pulled toward the eye by a constant fraction; faces have no depth offset.
-- **Section caps** lie just under the cut.
-- **Light**: a sky, a sun around the body centre (its shadow covers the reach the page gives), fog.
-- **Loop**: draws only after a change. A page that animates adds a step that runs every frame and says whether something moved.
+| Field | Means |
+|---|---|
+| id | letters, digits, `_`, `-`; unique among siblings; never changed or reused |
+| name | for people |
+| type | what the node is; the module of that type reads it |
+| offset | [x, y, h] mm from the parent's origin |
+| size | [x, y, h] mm, each > 0 |
+| settings | defaults for the node and its branch; nested objects read by a key path (`open.door`) |
+| refs | paths (from the root) of the nodes it refers to; their meaning by type (a sink: its cabinet) |
+| children | its nodes |
 
-## Views
+A file whose root is a node adds `format` and `version` to it. A node's place is in the root's axes (the root's own offset excluded).
 
-ui.js builds the screen and its modes (3D, 2D, Info, Test) from a project's views data.
-
-The 2D plan (plan.js) is cut from the same solids as the 3D view at the house's cut height for the floor: what the cut meets is filled in its section colour, what lies under it is seen from above, what is over it is dashed. Room and opening labels come from the house's data (a sub-project gets them with its shell), so a sub-project's plan matches the house's.
+Checks: type, offset, size on every node; ids without spaces or slashes, unique among siblings; sizes > 0; every ref resolves; info: what lies below the root's zero.

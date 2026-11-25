@@ -1,4 +1,4 @@
-/* core/ui.css: the look of every view. One screen: the model fills the stage, the panel on the right (below on phones). */
+/* core/ui.css: the look of every page, light and dark. One screen: the model fills the stage, the panel on the right (below on phones). */
 :root{
   --bg:#eceeec; --stage:#dfe3e1; --panel:#f7f8f6; --ink:#1f2523; --muted:#5f6a66; --line:#cfd5d2;
   --accent:#9a6a2f; --accent-ink:#fff; --warn:#b3402e; --ok:#3f7a52;
@@ -18,16 +18,19 @@
   --bg:#121615; --stage:#1b201f; --panel:#1c2220; --ink:#f1f4f2; --muted:#b3bdb9; --line:#3a4440;
   --accent:#e0a25c; --accent-ink:#1a1208; --warn:#ff8a73; --ok:#86d29b; --edge:#f3f6f5; --lift:rgba(0,0,0,.6); --menu:#38433f; --sheet:#1c2220; color-scheme:dark}
 /* the menus over the view: always visible, whatever the mode and whatever is drawn under them */
-.apps,.hud .toggle,.modes,.chk,.roomtag,.dock,.round,.panelbtn,.float{border:2.5px solid var(--edge)!important;box-shadow:0 2px 10px var(--lift)}
-.apps,.hud .toggle,.modes,.chk,.roomtag,.dock,.round,.panelbtn{background:var(--menu)!important}
+.nav,.hud .toggle,.modes,.chk,.roomtag,.dock,.round,.panelbtn,.float{border:2.5px solid var(--edge)!important;box-shadow:0 2px 10px var(--lift)}
+.nav,.hud .toggle,.modes,.chk,.roomtag,.dock,.round,.panelbtn{background:var(--menu)!important}
 /* the panel as the viewer left it, from the first moment; its sections once the page has picked its tab */
 :root[data-panel-closed] .app>aside{display:none}
 :root[data-panel-closed] .app{grid-template-columns:minmax(0,1fr)}
 .app:not([data-ready]) aside [data-tab]{display:none}
 /* 2D like a drawing on the page's ground: in the dark, light lines on dark (the saved SVG stays as drawn) */
-:root[data-theme="dark"] #sheet svg{filter:invert(1) hue-rotate(180deg)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #sheet svg{filter:invert(1) hue-rotate(180deg)}}
+:root[data-theme="dark"] :is(#sheet,.drawing) svg{filter:invert(1) hue-rotate(180deg)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) :is(#sheet,.drawing) svg{filter:invert(1) hue-rotate(180deg)}}
 [hidden]{display:none!important}
+[x-cloak]{display:none!important}   /* Alpine: hidden until it has set the element up */
+.nav:not(:has(a,summary)),.modes:not(:has(button)),.dock:not(:has(button)){display:none}   /* a menu with nothing in it */
+.dock .group{display:contents}
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow:hidden}
@@ -37,16 +40,26 @@ button{font:inherit;color:inherit}
 .panelbtn{position:absolute;z-index:7;right:0;top:50%;transform:translateY(-50%);width:22px;height:56px;border:1px solid var(--line);border-right:0;border-radius:8px 0 0 8px;background:var(--panel);color:var(--muted);font:700 15px var(--f-display);cursor:pointer;padding:0}
 .panelbtn:hover{color:var(--accent)}
 
-/* the top-left menu: the applications, over the view */
-.apps{position:absolute;z-index:8;left:max(12px,env(safe-area-inset-left,0px));top:12px;display:inline-flex;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:2px;font:700 13px var(--f-display);letter-spacing:.04em}
-.apps>*{padding:6px 12px;border-radius:6px;color:var(--ink);text-decoration:none}
-.apps a:hover{color:var(--accent)}
-.apps [data-on]{background:var(--accent);color:var(--accent-ink)}
-.apps a[data-on]:hover{color:var(--accent-ink)}
-.apps span:not([data-on]){color:var(--muted);opacity:.55;cursor:default}
+/* the top-left menu: the house, its floors and rooms, over the view */
+.nav{position:absolute;z-index:8;left:max(12px,env(safe-area-inset-left,0px));top:12px;display:inline-flex;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:2px;font:700 13px var(--f-display);letter-spacing:.04em}
+.nav>a,.nav>span{padding:6px 12px;border-radius:6px;color:var(--ink);text-decoration:none}
+.nav a:hover{color:var(--accent)}
+.nav>a[data-on],.nav>span[data-on]{background:var(--accent);color:var(--accent-ink)}
+.nav a[data-on]:hover{color:var(--accent-ink)}
+.nav details{position:relative}
+.nav summary{padding:6px 12px;border-radius:6px;cursor:pointer;list-style:none}
+.nav summary::-webkit-details-marker{display:none}
+.nav summary::after{content:" ▾";color:var(--muted)}
+.nav details[data-on]>summary{background:var(--accent);color:var(--accent-ink)}
+.nav details>summary:hover{color:var(--accent)}
+.nav details[data-on]>summary:hover{color:var(--accent-ink)}
+.navlist{position:absolute;left:0;top:calc(100% + 6px);display:grid;min-width:190px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px;box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.navlist a{padding:5px 10px;border-radius:6px;color:var(--ink);text-decoration:none;font-weight:600}
+.navlist a:hover{color:var(--accent)}
+.navlist a[data-on]{background:var(--accent);color:var(--accent-ink)}
 /* the top-right menu: the modes */
 .modes{position:absolute;z-index:6;top:12px;right:max(12px,env(safe-area-inset-right,0px))}
-/* the bottom-right corner: ☀ and ?, their boxes float over it */
+/* the bottom-right corner: ◐, ☀ and ?, their boxes float over it */
 .corner{position:absolute;z-index:7;right:max(12px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));display:flex;gap:6px}
 .round{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font:700 16px var(--f-display);cursor:pointer;padding:0}
 .round[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -89,29 +102,36 @@ button{font:inherit;color:inherit}
 .dock .sep{width:1.5px;background:var(--edge);opacity:.5;margin:2px}
 .dock .walk{font-weight:700;color:var(--accent);border-color:var(--accent)}
 .dock .walk[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
-.helpbtn{position:absolute;top:12px;right:max(12px,env(safe-area-inset-right,0px));z-index:7;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font:700 15px var(--f-display);cursor:pointer}
-.helpbtn[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.help{position:absolute;top:52px;right:max(12px,env(safe-area-inset-right,0px));z-index:7;width:min(340px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 14px;font-size:13px;color:var(--muted);box-shadow:0 6px 24px rgba(0,0,0,.12)}
-.help b{color:var(--ink)}
 .pad{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:64px;z-index:6;display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px}
 .pad button{border:1px solid var(--line);background:var(--panel);border-radius:8px;font-size:16px;cursor:pointer;touch-action:none;user-select:none}
 .pad [data-k=ArrowUp]{grid-column:2;grid-row:1}.pad [data-k=ArrowLeft]{grid-column:1;grid-row:2}.pad [data-k=ArrowDown]{grid-column:2;grid-row:2}.pad [data-k=ArrowRight]{grid-column:3;grid-row:2}
 #plan2d{position:absolute;inset:0;z-index:4;background:var(--sheet);display:flex;flex-direction:column;padding-top:56px;padding-bottom:56px}
-.hud:has(#context:not(:empty)) ~ #plan2d{padding-top:96px}   /* a menu row over the sheet (the rooms of an application): the note under it */
+#plan2d svg{user-select:none;-webkit-user-select:none}   /* a drawing: a click or a drag selects no text */
+.hud:has(#context:not(:empty)) ~ #plan2d{padding-top:96px}   /* a menu row over the sheet: the note under it */
+.asm{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding:10px 0}   /* the assembly cards of a room's Documents */
+.asm .card{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;color:var(--muted)}
+.asm h3{margin:0 0 4px;font:700 14px var(--f-display);color:var(--ink)}
+.asm b{color:var(--ink)}
+.asm .holes{display:inline-block;padding-left:14px;font-size:12px}
 #sheet{flex:1;min-height:0;overflow:auto;padding:12px}
-#analysis,#info{position:absolute;inset:0;z-index:4;background:var(--panel);overflow:auto;padding:64px 20px 20px}
-#info{padding-bottom:64px;display:flex;flex-direction:column;overflow:hidden}   /* Info (core/info.js): the title and the tabs stay, the tab scrolls */
-#info>h1,#info>.sub,#info>.issues{flex:none}
-.infosheets{flex:1;min-height:0;display:flex;flex-direction:column}
-.infosheets>.sheettabs{flex:none;flex-wrap:wrap;align-self:flex-start;max-width:100%}
+#documents,#design{position:absolute;inset:0;z-index:4;background:var(--panel);overflow:auto;padding:64px 20px 20px}
+#design{padding-bottom:72px}
+#design>*+*{margin-top:18px}
+#documents{padding-bottom:64px;display:flex;flex-direction:column;overflow:hidden}   /* the title and the tabs stay, the tab scrolls */
+.docview{flex:1;min-height:0;display:flex;flex-direction:column}
+.docview>h1,.docview>.sub,.docview>.issues{flex:none}
+.docsheets{flex:1;min-height:0;display:flex;flex-direction:column}
+.docsheets>.sheettabs{flex:none;flex-wrap:wrap;align-self:flex-start;max-width:100%}
 .sheetbody{flex:1;min-height:0;overflow:auto}
 .sheetbody>:not(.sheetwrap){margin-bottom:12px}
 .issues{margin:8px 0 12px;padding:8px 12px;border:1px solid var(--warn);border-radius:6px;font-size:13px;color:var(--warn)}
 .issues ul{margin:4px 0 0;padding-left:18px}
-#info section{max-width:880px}
-#info table{max-width:880px}
-#info th{text-align:left;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:4px 8px 4px 0;border-bottom:1px solid var(--line)}
-#info td{padding-right:8px}
+#documents section{max-width:880px}
+#documents section.assembly{max-width:none}   /* the cards take the whole width, as many columns as fit */
+#documents section.assembly .note{max-width:880px}
+#documents table{max-width:880px}
+#documents th{text-align:left;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:4px 8px 4px 0;border-bottom:1px solid var(--line)}
+#documents td{padding-right:8px}
 /* the spreadsheet (core/sheet.js) */
 .sheettabs{margin:0 0 8px}
 .sheetwrap{overflow:auto;max-width:100%;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
@@ -129,11 +149,13 @@ table.sheet tr.title td{font:700 14px var(--f-display);border:0;padding:8px 7px}
 table.sheet tr.head td{font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg)}
 table.sheet tr.cat td,table.sheet tr.sum td{font-weight:600;background:var(--bg)}
 table.sheet tr.grand td{font-weight:700;background:color-mix(in srgb,var(--accent) 18%,transparent)}
-table.sheet input{width:100%;min-width:64px;border:0;background:color-mix(in srgb,#2f6fdb 10%,transparent);color:#2f6fdb;font:inherit;text-align:right;padding:2px 4px;border-radius:3px}
-table.sheet input.changed{background:#fde68a;color:#7a4b00}
+/* a field the viewer may change: a light tint and a line under it, the text as the page's; stronger on hover, the accent when typed in */
+table.sheet input,table.sheet textarea,.pick{width:100%;min-width:64px;border:0;border-bottom:1px solid color-mix(in srgb,var(--accent) 45%,transparent);background:color-mix(in srgb,var(--accent) 6%,transparent);color:inherit;font:inherit;text-align:right;padding:2px 4px;border-radius:3px 3px 0 0}
+table.sheet input:hover,table.sheet textarea:hover,.pick:hover{background:color-mix(in srgb,var(--accent) 13%,transparent)}
+table.sheet input:focus,table.sheet textarea:focus{outline:2px solid var(--accent);outline-offset:0;background:var(--panel)}
+table.sheet input.changed{background:color-mix(in srgb,#f2b33d 35%,transparent);border-bottom-color:#d9961f}   /* changed from the data */
 table.sheet a{color:var(--accent);overflow-wrap:anywhere}
 .sheetnote{margin:0 16px;font-size:12px;color:var(--muted);text-align:center}
-#analysis .check ul{font-family:var(--f-mono);font-size:11.5px}
 #sheet svg{display:block;margin:0 auto;height:calc(100% * var(--zoom,1));width:calc(100% * var(--zoom,1));max-width:none}   /* the viewBox keeps the drawing whole: at zoom 1 it fits the sheet both ways */
 
 /* panel */
@@ -167,20 +189,62 @@ select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid 
 table{width:100%;border-collapse:collapse;font-size:12.5px}
 td{padding:5px 0;border-bottom:1px solid var(--line);vertical-align:middle}
 td.n{font-family:var(--f-mono);color:var(--muted);text-align:right;padding-right:6px;white-space:nowrap;font-variant-numeric:tabular-nums}
-#rooms tr[data-room]{cursor:pointer}
-#rooms tr[aria-selected="true"] td{background:color-mix(in srgb,var(--accent) 16%,transparent)}
-#rooms tr.detail td{padding:10px 0 14px}
-.floorname{font:700 12px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:12px}
 .note{font-size:12px;color:var(--muted);line-height:1.5}
 .note a{color:var(--accent)}
-.check{font-size:12.5px;margin:0 0 6px}
-.chip{display:inline-block;font:600 11px var(--f-display);letter-spacing:.06em;padding:1px 7px;border-radius:99px;margin-right:6px;color:var(--panel)}
-.chip.ok{background:var(--ok)}
-.chip.warn{background:var(--warn)}
-.check ul{margin:4px 0 0;padding-left:18px;color:var(--muted);font-size:12px}
 @media (max-width:820px){
   body{overflow:auto}
   .app{grid-template-columns:1fr;grid-template-rows:58vh auto;height:auto}
   .stage{height:58vh}
   aside{border-left:0;border-top:1px solid var(--line);overflow:visible}
 }
+
+/* the sheets to edit (room/cabinets.html): the sheets of Documents, every field blue as their inputs */
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,340px);gap:18px;align-items:start}
+.cols>*{min-width:0;display:grid;gap:18px;align-content:start}
+.cols>.wide{grid-column:1/-1}
+@media (max-width:1100px){.cols{grid-template-columns:minmax(0,1fr)}}
+.sheetwrap.tall{max-height:360px}
+.sheetwrap.tall tr.head td{position:sticky;top:0;z-index:1}
+table.edit td{vertical-align:middle}
+table.edit input{min-width:3.5em}
+table.sheet input[type=text]{text-align:left}
+table.sheet textarea,.pick{display:block;text-align:left;min-width:0}
+table.sheet textarea{resize:none;overflow:hidden;field-sizing:content}
+.pick{text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pick.none,table.edit tr.empty td{color:var(--muted)}
+.pick:empty::before{content:"\00a0"}
+table.edit tr.invalid td{background:color-mix(in srgb,var(--warn) 14%,transparent)}
+table.edit td.c{text-align:center}
+table.edit td.actions{width:52px;text-align:center;white-space:nowrap;padding:0}
+td.actions button{width:24px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:5px 0}
+td.actions button.add:hover{color:var(--accent)}
+td.actions button.del:hover{color:var(--warn)}
+td.actions button.del::before{content:"";display:inline-block;width:14px;height:14px;vertical-align:-2px;background:currentColor;-webkit-mask:var(--bin) center/contain no-repeat;mask:var(--bin) center/contain no-repeat}   /* a bin */
+:root{--bin:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6'/%3E%3C/svg%3E")}
+.swatch{display:block;width:32px;height:16px;margin:auto;border-radius:3px;border:1px solid var(--line)}
+/* a list to pick from, over the page */
+.picker{position:fixed;z-index:50;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px var(--lift);padding:6px;font:13px var(--f-body);display:grid;grid-template-columns:repeat(2,auto);gap:2px 14px}
+.picker.one{grid-template-columns:auto}
+.picker label{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:4px;cursor:pointer;font:500 13px var(--f-body);text-transform:none;letter-spacing:0;color:var(--ink)}
+.picker label:hover{background:var(--bg)}
+.picker input{margin:0;accent-color:var(--accent)}
+.picker .title{grid-column:1/-1;font:600 11px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 6px 2px}
+/* an elevation: a sheet as the 2D plan's, its title as a sheet's */
+.drawing{position:relative;background:var(--sheet);text-align:center;padding:0 16px 16px}
+.drawing>.title{font:700 14px var(--f-display);padding:8px 7px;text-align:left;margin:0 -16px 8px}
+.drawing svg{display:inline-block;max-width:100%;max-height:min(70vh,700px);overflow:visible}
+.drawing .item{cursor:pointer}
+.drawing .item:hover rect{stroke:var(--accent);stroke-width:4px}
+.drawing .note{padding:40px 20px}
+#tip{position:absolute;z-index:8;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12.5px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.12);color:var(--ink)}
+.status{margin:0 0 12px;padding:8px 12px;border-radius:6px;font-size:13px;border:1px solid var(--ok);color:var(--ok)}
+.status.error{border-color:var(--warn);color:var(--warn)}
+
+/* a sheet as a tree: + / − before a row with children */
+.sheet td.node { text-indent: 0; }
+.sheet .fold { display: inline-block; width: 1.3em; margin-right: 0.35em; padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--accent); cursor: pointer; text-align: center; }
+.sheet span.fold { cursor: default; }
+
+.toggle button:disabled{opacity:.4;cursor:default}
+.nav>template+details{margin-left:8px;position:relative}
+.nav>template+details::before{content:"";position:absolute;left:-6px;top:4px;bottom:4px;width:1.5px;background:var(--edge);opacity:.5}

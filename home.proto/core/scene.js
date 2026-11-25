@@ -1,68 +1,159 @@
-/* core/scene.js: renderer, materials, meshes and edges of pieces, section caps, light, camera, navigation, walk, loop.
-   Knows no project: the page hands it a material library, textures, the light, the edges and the body box.
-   The model is built in mm (x along, y across, z up) and turned into the scene's metres with y up.
-   Needs core/geometry.js, core/mesh.js, THREE and OrbitControls. */
-(function (CORE) {
+// @ts-check
+/* core/scene.js: renderer, materials, meshes and edges of pieces, moving parts, light, camera, navigation,
+   walk, loop. Knows no project: the page hands it a material library, textures, the light and the edges.
+   The model is built in mm (x along, y across, h up) and turned into the scene's metres with y up.
+   Gets core/geometry.js and core/faces.js; needs THREE and OrbitControls (the browser's). */
+/** @typedef {{ color?: string, roughness?: number, metalness?: number, opacity?: number, [more: string]: any }} MaterialLook  a material's look, as the library's materials give it */
+/** @typedef {{ name: string, kind: string, source?: string, size: number[], grout?: string, faces: string[] }} Texture  size: mm one image covers; faces: data URLs */
+/** @typedef {{ name: string, eye: Vec3, target: Vec3 }} Camera  a view: the eye and what it looks at, mm */
+/**
+ * @typedef {object} Light  a view's light (the house's settings.view.light, or its inside light)
+ * @property {number} exposure
+ * @property {{ azimuth: number, elevation: number, intensity: number, color?: string, reach?: number }} sun  degrees; reach: m its shadow covers
+ * @property {{ intensity: number, color: string, groundColor: string, gradient?: [number, string][] }} sky
+ * @property {{ color: string, near: number, far: number }} fog  mm
+ * @property {{ value: number, sun: number, sky: number, blur: number }} clouds  the default cloud and its factors at full cloud
+ * @property {{ exposure?: number, sun?: object, sky?: object }} [inside]  a part's light: what it changes in this one
+ */
+/** @typedef {{ color: string, opacity: number, layers: string[] }} EdgeLook */
+/** @typedef {{ az: number, el: number, k: number, clouds: number, night: boolean }} Sun  degrees; brightness; 0 clear to 1 overcast */
+/**
+ * @typedef {object} SceneOptions
+ * @property {HTMLCanvasElement} canvas
+ * @property {HTMLElement} stage  what the canvas fills
+ * @property {Object<string, MaterialLook>} materials
+ * @property {Object<string, Texture>} textures
+ * @property {Light} light
+ * @property {EdgeLook} edges
+ * @property {Vec3} sunCentre  what the sun's shadow covers, mm
+ * @property {boolean} [physical]  the light in physical units
+ */
+/**
+ * @typedef {object} MoverPart  a moving part as a page gives it: a door turns about an axis, a drawer slides
+ * @property {Piece[]} pieces
+ * @property {Vec3} [at]  a point of the axis
+ * @property {Vec3} [axis]  a unit vector
+ * @property {number} [angle]  degrees, by the right hand about the axis
+ * @property {Vec3} [slide]  mm
+ * @property {Mover} [behind]  the part that must be open first
+ */
+/** @typedef {MoverPart & { at: Vec3, pivot: any, inner: any, progress: number, goal: number, children: Mover[], [more: string]: any }} Mover */
+/**
+ * @typedef {object} WalkSetup  a view's walk
+ * @property {{ eye: number, radius: number, step: number, headroom: number, speed: number, turn: number, look: number, run: number, start: { x: number, y: number, heading: number } }} config  mm, mm/s, degrees/s
+ * @property {Cell[]} solids  what it bumps into
+ * @property {() => Box[]} [more]  more it bumps into, when the walk starts
+ * @property {Cell[]} ground  the walkable cells
+ * @property {number} startLevel
+ * @property {HTMLElement} pad  the arrows on the screen
+ * @property {() => boolean} canStart
+ * @property {() => void} onToggle
+ * @property {() => Camera} home  the camera when the walk stops
+ */
+/** @typedef {ReturnType<ReturnType<typeof coreSceneModule>['create']>} SceneView  a page's 3D view */
+/** @param {ReturnType<typeof coreGeometryModule>} geometry @param {ReturnType<typeof coreFacesModule>} faces */
+function coreSceneModule(geometry, faces) {
 'use strict';
-const { DEG, INF, zRange, cutBy, sectionAt, edgesOf } = CORE.geometry;
-const { dot3, Batch } = CORE.mesh;
+const { DEG, hRange, edgesOf } = geometry;
+const { sub3, dot3, cross3, weld } = faces;
 
-/* opts: {canvas, stage, materials (library: key -> {color, roughness, ...}), textures (key -> {faces: [image], size: [u, v] mm}),
-   light, edges, body: [[x, y, z], [x, y, z]], sunCentre: [x, y, z]} */
 const MM = 0.001;                          // the scene is in metres, the model in mm
 
-CORE.createView = function (opts) {
+/* triangles of the pieces' convex polygons, batched per (layers, material) into one three.js mesh; uv in mm on the face
+   plane. owner: what a triangle belongs to (a cell), so a pick can name it: mesh.userData.owners[faceIndex] */
+class Batch {
+  constructor() { this.p = []; this.n = []; this.uv = []; this.owners = []; }
+  polygon(points, n, uv, owner) {          // a fan around the centre: no thin triangles from collinear points
+    const c = [0, 1, 2].map(i => points.reduce((s, v) => s + v[i], 0) / points.length);
+    for (let i = 0; i < points.length; i++) this.tri(c, points[i], points[(i + 1) % points.length], n, uv, owner);
+  }
+  tri(a, b, c, n, uv, owner) {
+    if (dot3(cross3(sub3(b, a), sub3(c, a)), n) < 0) [b, c] = [c, b];
+    for (const v of [a, b, c]) { const w = weld(v); this.p.push(...w); this.n.push(...n); this.uv.push(...uv(v)); }
+    this.owners.push(owner);
+  }
+  mesh(mat) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
+    const m = new THREE.Mesh(g, mat); m.castShadow = !mat.transparent; m.receiveShadow = true;
+    m.userData.owners = this.owners; return m;
+  }
+}
+
+const ease = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+
+/** the 3D view of a page @param {SceneOptions} opts */
+function create(opts) {
   const { canvas, stage } = opts, MATERIAL_LIB = opts.materials, TEX = opts.textures;
 
   /* ================= RENDERER AND MATERIALS ================= */
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  renderer.physicallyCorrectLights = true;   // lamps in physical units; a light in the old units is scaled (units())
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.localClippingEnabled = true;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;   // its shadows take a radius: the clouds soften them
   const scene = new THREE.Scene();
   const lin = hex => new THREE.Color(hex).convertSRGBToLinear();
   let needsRender = true;
   const redraw = () => { needsRender = true; };
 
   const root = new THREE.Group(); root.rotation.x = -Math.PI / 2; root.scale.setScalar(MM); scene.add(root);
-  const toWorld = (x, y, z) => new THREE.Vector3(x * MM, z * MM, -y * MM);
-  const CUT = new THREE.Plane(new THREE.Vector3(0, -1, 0), INF), CLIP = [CUT];
+  const toWorld = (x, y, h) => new THREE.Vector3(x * MM, h * MM, -y * MM);
 
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  function hash01(...k) {                  // a stable random number: a layout looks the same every time
-    let h = 2166136261;
-    for (const v of k) { h ^= (v | 0) + 0x9e3779b9; h = Math.imul(h, 16777619); h ^= h >>> 13; }
-    h = Math.imul(h ^ (h >>> 16), 2246822507); h ^= h >>> 13;
-    return (h >>> 0) / 4294967296;
-  }
-  function canvasTexture(w, h, draw, srgb = true) {
-    const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const hash01 = geometry.hash01;
+  const CANVASES = new Map();               // a generated picture drawn once for its key (a core's colour), shared by its textures
+  /** @param {number} w @param {number} h @param {(g: CanvasRenderingContext2D, w: number, h: number) => void} draw @param {boolean} [srgb] @param {string | null} [key] */
+  function canvasTexture(w, h, draw, srgb = true, key = null) {
+    let c = /** @type {HTMLCanvasElement | undefined} */ (key ? CANVASES.get(key) : undefined);
+    if (!c) { c = document.createElement('canvas'); c.width = w; c.height = h; draw(/** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), w, h); if (key) CANVASES.set(key, c); }
     const t = new THREE.CanvasTexture(c); if (srgb) t.encoding = THREE.sRGBEncoding;
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t;
   }
   const loadImage = (src, fn) => { const im = new Image(); im.onload = () => fn(im); im.src = src; };
+  /* specks darker and lighter over what is drawn: squares of size px, blended into the pixels (wrapping round) */
   function specks(g, w, h, strength, size) {
+    const im = g.getImageData(0, 0, w, h), d = im.data;
     for (let i = 0; i < w * h / (size * size) * 0.9; i++) {
-      g.fillStyle = rnd() < 0.5 ? `rgba(0,0,0,${strength * 0.22 * rnd()})` : `rgba(255,255,255,${strength * 0.3 * rnd()})`;
-      g.fillRect(rnd() * w, rnd() * h, size, size);
+      const dark = rnd() < 0.5, a = dark ? strength * 0.22 * rnd() : strength * 0.3 * rnd(), to = dark ? 0 : 255;
+      const x0 = Math.floor(rnd() * w), y0 = Math.floor(rnd() * h);
+      for (let y = y0; y < y0 + size; y++) for (let x = x0; x < x0 + size; x++) {
+        const k = ((y % h) * w + (x % w)) * 4;
+        for (let c = 0; c < 3; c++) d[k + c] += (to - d[k + c]) * a;
+      }
     }
+    g.putImageData(im, 0, 0);
   }
   /* generated surfaces: each sets the map of a material, uv in mm */
   const SURFACES = {
     texture(d, m) {
-      m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = '#f2f2f2'; g.fillRect(0, 0, w, h); specks(g, w, h, d.strength, d.grain); }, false);
+      m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = '#f2f2f2'; g.fillRect(0, 0, w, h); specks(g, w, h, d.strength, d.grain); }, false, `texture:${d.strength}:${d.grain}`);
       m.map.repeat.set(1 / d.tile, 1 / d.tile);
+    },
+    chipboard(d, m, def) {                 // the bare core of a chipboard: flakes lighter and darker than its colour, every way
+      const base = new THREE.Color(def.color);
+      m.map = canvasTexture(256, 256, (g, w, h) => {
+        g.fillStyle = '#' + base.getHexString(); g.fillRect(0, 0, w, h);
+        for (let i = 0; i < 2600; i++) {
+          const c = base.clone().offsetHSL((rnd() - 0.5) * 0.03, (rnd() - 0.5) * 0.15, (rnd() - 0.5) * 0.32);
+          g.save(); g.translate(rnd() * w, rnd() * h); g.rotate(rnd() * Math.PI);
+          g.fillStyle = '#' + c.getHexString(); g.fillRect(0, 0, 2 + rnd() * 9, 1 + rnd() * 2.5); g.restore();
+        }
+        specks(g, w, h, 1, 1);
+      }, true, 'chipboard:' + def.color);
+      m.map.repeat.set(1 / d.tile, 1 / d.tile); m.color.set(0xffffff);
     },
     grass(d, m, def) {
       m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = def.color; g.fillRect(0, 0, w, h); for (let i = 0; i < 9000; i++) { g.fillStyle = `hsla(${80 + rnd() * 30},${30 + rnd() * 25}%,${25 + rnd() * 25}%,0.5)`; g.fillRect(rnd() * w, rnd() * h, 1, 2 + rnd() * 3); } });
       m.map.repeat.set(1 / d.tile, 1 / d.tile); m.color.set(0xffffff);
     },
     slabs(d, m, def) {
-      m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = def.color; g.fillRect(0, 0, w, h); specks(g, w, h, 0.5, 2); g.fillStyle = d.joint; g.fillRect(0, 0, w, 2); g.fillRect(0, 0, 2, h); });
+      m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = def.color; g.fillRect(0, 0, w, h); specks(g, w, h, 0.5, 2); g.fillStyle = d.joint; g.fillRect(0, 0, w, 2); g.fillRect(0, 0, 2, h); }, true, `slabs:${def.color}:${d.joint}`);
       m.map.repeat.set(1 / d.size, 1 / d.size); m.color.set(0xffffff);
     },
     wood(d, m) {                           // boards cut at random from the decor photo, with a dark joint
@@ -84,9 +175,9 @@ CORE.createView = function (opts) {
         m.map = t; m.color.set(0xffffff); m.needsUpdate = true; redraw();
       });
     },
-    image(d, m) {                          // a photo of textures (a board decor), its size in mm; turn: its u runs along the face's v
+    image(d, m) {                          // a photo of textures (a board decor), its size in mm; face: which of its images (0); turn: its u runs along the face's v
       const T = TEX[d.key];
-      loadImage(T.faces[0], im => {
+      loadImage(T.faces[d.face || 0], im => {
         const t = new THREE.Texture(im); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping;
         t.anisotropy = renderer.capabilities.getMaxAnisotropy();
         if (d.turn) { t.repeat.set(1 / T.size[1], 1 / T.size[0]); t.rotation = Math.PI / 2; } else t.repeat.set(1 / T.size[0], 1 / T.size[1]);
@@ -95,10 +186,13 @@ CORE.createView = function (opts) {
     }
   };
   const MATERIALS = {};
+  /** the three.js material of a library look, made once @param {string} key */
   function material(key) {
     if (MATERIALS[key]) return MATERIALS[key];
     const def = MATERIAL_LIB[key];
-    const o = { color: lin(def.color || '#ffffff'), roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1, clippingPlanes: CLIP, clipShadows: true };
+    const o = { color: lin(def.color || '#ffffff'), roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1,
+      polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 };   // the faces a little back in depth, by the depth buffer's own steps at any distance: an edge on them shows, one behind them does not
+    if (def.ahead) Object.assign(o, { polygonOffsetFactor: -1, polygonOffsetUnits: -4 });   // a face over another close behind it (a tile over its floor and grout): it wins at any distance
     if (def.emissive) Object.assign(o, { emissive: lin(def.emissive), emissiveIntensity: def.glow ?? 1 });
     const m = def.clearcoat === undefined ? new THREE.MeshStandardMaterial(o)   // a lacquer: a clear coat over the colour
       : new THREE.MeshPhysicalMaterial(Object.assign(o, { clearcoat: def.clearcoat, clearcoatRoughness: def.clearcoatRoughness ?? 0.5 }));
@@ -108,13 +202,12 @@ CORE.createView = function (opts) {
   }
   /* a ready three.js material under a key, for a page whose look is its own (cells name it like any other) */
   const useMaterial = (key, m) => (MATERIALS[key] = m);
-  const CAP_MATERIALS = {};
-  const capMaterial = key => CAP_MATERIALS[key] || (CAP_MATERIALS[key] = new THREE.MeshLambertMaterial({ color: lin(MATERIAL_LIB[key].color), side: THREE.DoubleSide }));
 
   /* ================= MESHES AND EDGES OF PIECES ================= */
   /* One mesh per (layers, material, finish, cell.batch): cell.batch keeps apart what a page recolours on its own (a selected
      cabinet). parent: the root (model mm), or a group under it that moves (a door). */
   const GROUPS = [];                       // {mesh, cell, layers, finish: {layer, on, off} | null}
+  /** @param {Piece[]} pieces @param {any} [parent] */
   function buildMeshes(pieces, parent = root) {
     const batches = new Map(), made = [];
     for (const f of pieces) {
@@ -125,15 +218,60 @@ CORE.createView = function (opts) {
     for (const { cell, material: key, batch } of batches.values()) {
       const mesh = batch.mesh(material(key)); parent.add(mesh);
       const switchable = cell.finish && key !== cell.raw;   // a finished face shows its bare material while its finish layer is off
-      const g = { mesh, cell, layers: cell.layers, finish: switchable ? { layer: cell.finish, on: material(key), off: material(cell.raw) } : null };
+      const g = { mesh, cell, layers: cell.layers, base: mesh.material, finish: switchable ? { layer: cell.finish, on: material(key), off: material(cell.raw) } : null };
       GROUPS.push(g); made.push(g);
     }
     return made;
   }
   /* meshes of buildMeshes taken back (a host drawn again with the finishes of a part) */
+  /** @param {ReturnType<typeof buildMeshes>} made */
   function removeMeshes(made) {
     for (const g of made) { g.mesh.parent.remove(g.mesh); g.mesh.geometry.dispose(); GROUPS.splice(GROUPS.indexOf(g), 1); }
     redraw();
+  }
+
+  /* ================= MOVING PARTS =================
+     A door or a drawer: its pieces, built once and closed, under a pivot that turns about an axis or slides; the
+     animation only moves the pivot. part: {pieces, at: [x, y, h] a point of the axis, axis: [x, y, h] a unit vector and
+     angle (degrees, by the right hand about the axis), or slide: [x, y, h] mm; behind: the part that must be open first} */
+  const MOVERS = [], MOVE_SPEED = 1.8;     // of the whole way per second
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;   // then a part and a flight move at once
+  /** @param {MoverPart} part @returns {Mover} */
+  function mover(part) {
+    const at = part.at || [0, 0, 0], pivot = new THREE.Group(), inner = new THREE.Group();
+    pivot.position.set(...at); inner.position.set(-at[0], -at[1], -at[2]); pivot.add(inner); root.add(pivot);
+    buildMeshes(part.pieces, inner); buildEdges(part.pieces, inner);
+    const m = Object.assign({}, part, { at, pivot, inner, progress: 0, goal: 0, children: [] });
+    if (m.behind) m.behind.children.push(m);
+    pivot.userData.mover = m; MOVERS.push(m);
+    return m;
+  }
+  function pose(m) {
+    const e = ease(m.progress);
+    if (m.slide) m.pivot.position.set(m.at[0] + e * m.slide[0], m.at[1] + e * m.slide[1], m.at[2] + e * m.slide[2]);
+    else m.pivot.quaternion.setFromAxisAngle(new THREE.Vector3(...m.axis), e * m.angle * DEG);
+  }
+  function setGoal(m, goal) { m.goal = goal; if (reducedMotion) { m.progress = goal; pose(m); } redraw(); }
+  /* on: true, false, or undefined to switch; a part behind a closed one opens that one first; closing closes what is behind */
+  /** @param {Mover} m @param {boolean} [on] */
+  function toggle(m, on) {
+    const goal = on === undefined ? (m.goal ? 0 : 1) : on ? 1 : 0;
+    if (goal && m.behind && !m.behind.goal) return setGoal(m.behind, 1);
+    setGoal(m, goal);
+    if (!goal) for (const c of m.children) toggle(c, false);
+  }
+  /* every moving part opened (on) or closed */
+  /** @param {boolean} [on] */
+  function toggleAll(on) { for (const m of MOVERS) toggle(m, on); }
+  /* the moving part a ray meets first, before anything else drawn; null when none */
+  function moverAt(ray) {
+    const meshes = [];
+    const moving = o => { for (let p = o; p; p = p.parent) if (p.userData.mover) return true; return false; };
+    /* glass is seen through, so a click passes it; a moving one (a shower's door) is still taken */
+    root.traverse(o => { if (o.isMesh && visibleChain(o) && o.material !== GHOST && (!(o.material.transparent && o.material.opacity < 0.5) || moving(o))) meshes.push(o); });
+    const hit = ray.intersectObjects(meshes, false)[0];
+    for (let o = hit && hit.object; o; o = o.parent) if (o.userData.mover) return o.userData.mover;
+    return null;
   }
 
   /* Edges from the topology of the pieces. For each segment between two welded points and each group on it: two pieces
@@ -141,23 +279,18 @@ CORE.createView = function (opts) {
      in a joint); two outside pieces at an angle are a corner (always a line); otherwise the line hides exactly while every
      group that closes it is shown. */
   const EDGE_GROUPS = [];
-  const EDGE_PULL = 0.002;                 // 20 mm at 10 m: in front of the faces of its corner, behind any wall
+  /** @param {Piece[]} pieces @param {any} [parent] */
   function buildEdges(pieces, parent = root) {
     const E = opts.edges, segs = new Map();
     for (const f of pieces) {
       if (!f.cell.edges) continue;
       for (const [a, b] of edgesOf(f.poly)) {
-        const k = Math.min(a.id, b.id) + '-' + Math.max(a.id, b.id);
+        const k = Math.min(Number(a.id), Number(b.id)) + '-' + Math.max(Number(a.id), Number(b.id));
         if (!segs.has(k)) segs.set(k, { a, b, on: [] });
         segs.get(k).on.push(f);
       }
     }
-    const mat = new THREE.LineBasicMaterial({ color: lin(E.color), transparent: true, opacity: E.opacity, clippingPlanes: CLIP });
-    mat.onBeforeCompile = sh => {          // pulled toward the eye along its view ray: nothing lies between the eye and a visible edge
-      sh.uniforms.edgePull = { value: EDGE_PULL };
-      sh.vertexShader = 'uniform float edgePull;\n' + sh.vertexShader.replace('#include <project_vertex>',
-        '#include <project_vertex>\n  mvPosition.xyz *= 1.0 - edgePull;\n  gl_Position = projectionMatrix * mvPosition;');
-    };
+    const mat = new THREE.LineBasicMaterial({ color: lin(E.color), transparent: true, opacity: E.opacity });
     const same = (m, n) => dot3(m, n) > 1 - 1e-9;
     const lines = new Map();
     for (const s of segs.values()) {
@@ -185,19 +318,27 @@ CORE.createView = function (opts) {
     }
   }
 
-  /* what a layer state shows: faces, finishes, edges */
-  function showPieces(shown, layerOn) {
+  /* what a layer state shows: faces, finishes, edges, ghosts */
+  /* ghost(layers): shown, but drawn as a ghost: not seen, still casting its shadow (a wall in front of the camera) */
+  const GHOST = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
+  /** @param {(layers: string[]) => boolean} shown @param {(layer: string) => boolean} layerOn @param {(layers: string[]) => boolean} [ghost] */
+  function showPieces(shown, layerOn, ghost = /** @type {(layers: string[]) => boolean} */ (() => false)) {
     for (const g of GROUPS) {
       g.mesh.visible = shown(g.layers);
-      if (g.finish) g.mesh.material = layerOn(g.finish.layer) ? g.finish.on : g.finish.off;
+      g.mesh.material = g.mesh.visible && ghost(g.layers) ? GHOST : g.finish ? (layerOn(g.finish.layer) ? g.finish.on : g.finish.off) : g.base;
     }
-    for (const g of EDGE_GROUPS) g.mesh.visible = shown(g.layers) && !(g.hideWhen.length && g.hideWhen.every(shown));
+    const closes = layers => shown(layers) && !ghost(layers);   // a ghost closes no line: what it would cover shows its edge
+    for (const g of EDGE_GROUPS) g.mesh.visible = closes(g.layers) && !(g.hideWhen.length && g.hideWhen.every(closes));
   }
+  /* the camera's place in the house's axes, mm */
+  const cameraAt = () => { const p = root.worldToLocal(camera.position.clone()); return [p.x, p.y, p.z]; };
 
   /* ================= LIGHT AND CAMERA ================= */
-  let hemi = null, sun = null;
-  /* the sky behind the model: the house's gradient by day; by night (gradient null) a dark sky with stars and a glow
-     over the horizon (the middle of the picture); the same in every application */
+  let hemi = null, sun = null, MARKER = null;
+  /* the sun's and the sky's intensities as given: physical, or the old units (three's legacy lights: π less) */
+  const units = () => (opts.physical ? 1 : Math.PI);   // MARKER: the pivot's mark of the navigation
+  /* the sky behind the model: the light's gradient by day; by night (gradient null) a dark sky with stars and a glow
+     over the horizon (the middle of the picture); the same on every page */
   const NIGHT = { fog: '#141a26', gradient: [[0, '#070b16'], [0.36, '#121a2e'], [0.47, '#24304a'], [0.5, '#3a3f52'], [0.52, '#151a22'], [1, '#0b0e13']], stars: 420 };
   let skyTexture = null, skyOf = null, nightTexture = null, dayEnvironment = null;
   function nightSky() {
@@ -205,7 +346,7 @@ CORE.createView = function (opts) {
     let seed = 7;
     const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // the same stars on every load
     nightTexture = canvasTexture(4096, 2048, (g, w, h) => {
-      const gr = g.createLinearGradient(0, 0, 0, h); for (const [t, c] of NIGHT.gradient) gr.addColorStop(t, c); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      const gr = g.createLinearGradient(0, 0, 0, h); for (const [t, c] of NIGHT.gradient) gr.addColorStop(/** @type {number} */ (t), /** @type {string} */ (c)); g.fillStyle = gr; g.fillRect(0, 0, w, h);
       for (let i = 0; i < NIGHT.stars; i++) {
         const y = (0.12 + 0.34 * random()) * h;   // from well under the zenith (no stretching) down to the glow over the horizon
         g.fillStyle = `rgba(255,255,255,${0.45 + 0.55 * random()})`;
@@ -224,21 +365,42 @@ CORE.createView = function (opts) {
     }
     scene.background = skyTexture; redraw();
   }
+  /* the light of another view (the house's, a room's): light, the centre the sun's shadow covers, its sun and sky in physical
+     units or not (the renderer is always physical: the shaders are made once for every view) */
+  /** @param {Light} light @param {Vec3} sunCentre @param {boolean} physical */
+  function relight(light, sunCentre, physical) {
+    Object.assign(opts, { light, sunCentre });
+    if (hemi) scene.remove(hemi);
+    if (sun) scene.remove(sun, sun.target);
+    if (scene.environment) scene.environment.dispose();
+    opts.physical = physical;
+    addLight();
+  }
+  /* everything drawn taken away (another view is built in the same scene): meshes, edges, moving parts, lamps */
+  function clear() {
+    const keep = new Set([root, hemi, sun, sun && sun.target, MARKER]);
+    for (const o of [...root.children, ...scene.children.filter(o => !keep.has(o))]) {
+      o.parent.remove(o); o.traverse(x => { if (x.geometry) x.geometry.dispose(); });
+    }
+    GROUPS.length = 0; EDGE_GROUPS.length = 0; MOVERS.length = 0; flight = null; redraw();
+  }
   function addLight() {
     const LIGHT = opts.light, SKY = LIGHT.sky;
     renderer.toneMappingExposure = LIGHT.exposure;
     setSky(SKY.gradient);
     scene.environment = new THREE.PMREMGenerator(renderer).fromEquirectangular(skyTexture).texture;
     scene.fog = new THREE.Fog(lin(LIGHT.fog.color), LIGHT.fog.near * MM, LIGHT.fog.far * MM);
-    hemi = new THREE.HemisphereLight(lin(SKY.color), lin(SKY.groundColor), SKY.intensity); scene.add(hemi);
-    sun = new THREE.DirectionalLight(lin(LIGHT.sun.color), LIGHT.sun.intensity);
+    hemi = new THREE.HemisphereLight(lin(SKY.color), lin(SKY.groundColor), SKY.intensity * units()); scene.add(hemi);
+    sun = new THREE.DirectionalLight(lin(LIGHT.sun.color), LIGHT.sun.intensity * units());
     const reach = LIGHT.sun.reach ?? 16;   // m around the sun's centre that its shadow covers
     sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
     Object.assign(sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 1, far: 80 });
     scene.add(sun, sun.target);
   }
-  /* s: {az, el, k}: azimuth from +x towards +y, elevation, brightness */
-  /* the sun {az, el, k, night}: by night no sun, a faint sky light, the night sky and fog */
+  /* the sun {az, el, k, clouds, night}: azimuth from +x towards +y, elevation, brightness, clouds from 0 (clear) to 1
+     (overcast: the light's clouds give the sun's and the sky's factors and the shadow's blur then; between, in proportion);
+     by night no sun, a faint sky light, the night sky and fog */
+  /** @param {Sun} s */
   function placeSun(s) {
     const LIGHT = opts.light, az = s.az * DEG, el = s.el * DEG;
     const centre = toWorld(...opts.sunCentre), dir = toWorld(Math.cos(az) * Math.cos(el), Math.sin(az) * Math.cos(el), Math.sin(el)).divideScalar(MM);   // a unit direction, in metres
@@ -247,7 +409,10 @@ CORE.createView = function (opts) {
     sun.visible = !s.night;
     dayEnvironment ||= scene.environment;
     scene.environment = s.night ? null : dayEnvironment;   // by night nothing reflects the day's sky
-    sun.intensity = LIGHT.sun.intensity * s.k; hemi.intensity = LIGHT.sky.intensity * (s.night ? 0.14 : 0.6 + 0.4 * s.k);   // by night just enough to see the house's outline
+    const C = LIGHT.clouds, c = s.clouds, toward = full => 1 + (full - 1) * c;
+    sun.intensity = LIGHT.sun.intensity * units() * s.k * toward(C.sun);
+    hemi.intensity = LIGHT.sky.intensity * units() * (s.night ? 0.14 : (0.6 + 0.4 * s.k) * toward(C.sky));   // by night just enough to see the house's outline
+    sun.shadow.radius = toward(C.blur);
     setSky(s.night ? null : LIGHT.sky.gradient);
     if (scene.fog) scene.fog.color.copy(lin(s.night ? NIGHT.fog : LIGHT.fog.color));
     redraw();
@@ -258,47 +423,30 @@ CORE.createView = function (opts) {
   controls.enableDamping = true; controls.dampingFactor = 0.12;
   controls.addEventListener('change', redraw);
 
-  /* the body of the model: from outside it the camera turns about its centre */
-  const BODY = new THREE.Box3().setFromPoints(opts.body.map(p => toWorld(...p)));
-  const BODY_CENTRE = BODY.getCenter(new THREE.Vector3());
 
+  /** @param {Camera} c @param {number} [level]  mm added to the heights */
   function setCamera(c, level = 0) {
     camera.position.copy(toWorld(c.eye[0], c.eye[1], c.eye[2] + level));
     controls.target.copy(toWorld(c.target[0], c.target[1], c.target[2] + level));
     controls.update(); redraw();
   }
 
-  /* ================= SECTION CAPS ================= */
-  const CAP_BIAS = 0.5;                    // mm under the cut: a cap never lies in the plane of a face it closes
-  let capGroup = null;
-  function addCaps() { capGroup = new THREE.Group(); root.add(capGroup); }
-  function buildCaps(h, solids, shown) {
-    for (const m of capGroup.children.splice(0)) m.geometry.dispose();
-    if (h === null) return;
-    const batches = {}, up = [0, 0, 1], uv = v => [v[0], v[1]];
-    for (const c of solids) {
-      if (!shown(c.layers) || !cutBy(c.S, h)) continue;
-      const y = sectionAt(c.S, h); if (!y) continue;
-      (batches[c.cap] ||= new Batch()).polygon([[c.S.x1, y[0], h], [c.S.x2, y[0], h], [c.S.x2, y[1], h], [c.S.x1, y[1], h]], up, uv);
-    }
-    for (const [k, b] of Object.entries(batches)) { const m = b.mesh(capMaterial(k)); m.castShadow = false; m.position.z = -CAP_BIAS; capGroup.add(m); }
-  }
-  const setCut = h => { CUT.constant = h === null ? INF : h * MM; };
-
   /* ================= NAVIGATION =================
-     The wheel zooms toward the surface under the cursor; the pivot stays in front of the camera: the body centre from
-     outside, the surface in the middle of the view inside. */
-  const walk = { on: false, keys: new Set(), last: 0, drag: null };
+     The wheel zooms toward the surface under the cursor. A drag with the left button turns the view about the point under
+     the cursor where the drag starts (a dot marks it while it turns; on no surface, about the point it turned about last);
+     the right button moves the view at the depth of what is under the cursor. */
+  const walk = { on: false, keys: new Set(), last: 0, drag: /** @type {number[]|null} */ (null) };
   const ray = new THREE.Raycaster();
   const ndcOf = e => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * 2 - 1, y: -(e.clientY - r.top) / r.height * 2 + 1 }; };
   const visibleChain = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
-  function surfaceAt(ndc) {                // the first drawn, uncut surface along the ray through a screen point
+  function surfaceAt(ndc) {                // the first drawn surface along the ray through a screen point
     ray.setFromCamera(ndc, camera);
-    const meshes = []; root.traverse(o => { if (o.isMesh && visibleChain(o)) meshes.push(o); });
-    const hit = ray.intersectObjects(meshes, false).find(h => CUT.distanceToPoint(h.point) >= 0);
+    const meshes = []; root.traverse(o => { if (o.isMesh && visibleChain(o) && o.material !== GHOST) meshes.push(o); });
+    const hit = ray.intersectObjects(meshes, false)[0];
     return hit ? hit.point : null;
   }
   /* a click (no drag) on the canvas: the page picks what is under it */
+  /** @param {(ray: any) => void} fn */
   function onClick(fn) {
     let downAt = null;
     canvas.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
@@ -310,13 +458,12 @@ CORE.createView = function (opts) {
   }
   const ZOOM_IN = 0.2, ZOOM_OUT = 0.25, NEAREST = 0.05;   // fraction of the way per wheel notch; closest approach, m
   const viewAxis = () => new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
-  const outside = () => !BODY.containsPoint(camera.position);
   function seatTarget(point, dir = viewAxis()) {   // the target moves along the view axis to the depth of the point: no jump
     const depth = Math.max(new THREE.Vector3().subVectors(point, camera.position).dot(dir), NEAREST);
     controls.target.copy(camera.position).addScaledVector(dir, depth);
   }
   function enableNavigation() {
-    canvas.parentElement.addEventListener('wheel', e => {   // captured before OrbitControls
+    /** @type {HTMLElement} */ (canvas.parentElement).addEventListener('wheel', e => {   // captured before OrbitControls
       if (e.target !== canvas || walk.on) return;
       e.preventDefault(); e.stopPropagation();
       const p = surfaceAt(ndcOf(e)) || ray.ray.at(camera.position.distanceTo(controls.target), new THREE.Vector3());
@@ -325,22 +472,55 @@ CORE.createView = function (opts) {
       if (k > 0 && camera.position.distanceTo(p) * (1 - k) < NEAREST) return;
       const dir = viewAxis();              // taken before the move: the camera slides, it does not turn
       camera.position.lerp(p, k);
-      seatTarget(outside() ? BODY_CENTRE : p, dir); controls.update(); redraw();
+      seatTarget(p, dir); controls.update(); redraw();
     }, { capture: true, passive: false });
-    canvas.addEventListener('pointerdown', () => {
+    controls.enableRotate = false;           // the turn is ours: about the point under the cursor
+    const UP = new THREE.Vector3(0, 1, 0), SPEED = 2 * Math.PI, pointers = new Set();
+    const marker = MARKER = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xd9822b, depthTest: false, transparent: true, opacity: 0.85 }));
+    marker.renderOrder = 999; marker.visible = false; scene.add(marker);
+    const showMarker = p => { marker.position.copy(p); marker.scale.setScalar(Math.max(camera.position.distanceTo(p) * 0.008, 0.004)); marker.visible = true; redraw(); };
+    let orbit = null, pivot = null;
+    canvas.addEventListener('pointerdown', e => {
+      pointers.add(e.pointerId);
       if (walk.on) return;
-      const p = outside() ? BODY_CENTRE : surfaceAt({ x: 0, y: 0 });
-      if (p) { seatTarget(p); controls.update(); }
+      if (pointers.size > 1) { orbit = null; marker.visible = false; redraw(); return; }   // two fingers: the controls zoom and move
+      const p = surfaceAt(ndcOf(e));
+      if (e.button === 2) { if (p) { seatTarget(p); controls.update(); } return; }   // the move follows what is under the cursor
+      if (e.button !== 0) return;
+      pivot = p || pivot || controls.target.clone();
+      orbit = { x: e.clientX, y: e.clientY };
+      showMarker(pivot);
     });
+    canvas.addEventListener('pointermove', e => {
+      if (!orbit || walk.on) return;
+      const h = canvas.clientHeight || 1, yaw = -SPEED * (e.clientX - orbit.x) / h, pitch = -SPEED * (e.clientY - orbit.y) / h;
+      orbit.x = e.clientX; orbit.y = e.clientY;
+      const turn = (axis, angle) => {
+        const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+        camera.position.sub(pivot).applyQuaternion(q).add(pivot);
+        camera.quaternion.premultiply(q);
+      };
+      turn(UP, yaw);
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion), forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      const next = forward.clone().applyAxisAngle(right, pitch);
+      if (Math.abs(next.y) < 0.995) turn(right, pitch);   // never over the top: the view stays upright
+      const ahead = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      controls.target.copy(camera.position).addScaledVector(ahead, Math.max(camera.position.distanceTo(pivot), NEAREST));
+      controls.update(); showMarker(pivot);
+    });
+    const end = e => { pointers.delete(e.pointerId); if (orbit) { orbit = null; marker.visible = false; redraw(); } };
+    for (const k of ['pointerup', 'pointercancel', 'pointerleave']) canvas.addEventListener(k, end);
   }
 
   /* ================= WALK =================
      w: {config, solids (what it bumps into), more() (more it bumps into, when the walk starts: boxes, as boxes gives them),
-         ground (walkable cells), startLevel, pad (element), canStart(), onToggle(), home (camera)} */
+         ground (walkable cells), startLevel, pad (element), canStart(), onToggle(), home (camera)}; parts not fully open
+     stop it too */
   let W = null, OBSTACLES = [], GROUND = [];
-  /* boxes [x1, x2, y1, y2, z1, z2] in house axes (mm) of cells (their solids) and of the meshes of objects that show */
+  /* boxes [x1, x2, y1, y2, h1, h2] in house axes (mm) of cells (their solids) and of the meshes of objects that show */
+  /** @param {Cell[]} cells @param {any[]} [objects] three.js objects @returns {Box[]} */
   function boxes(cells, objects = []) {
-    const out = cells.map(c => { const ys = c.S.poly.map(p => p[0]), z = zRange(c.S); return [c.S.x1, c.S.x2, Math.min(...ys), Math.max(...ys), z[0], z[1]]; });
+    const out = cells.map(c => { const ys = c.S.poly.map(p => p[0]), h = hRange(c.S); return [c.S.x1, c.S.x2, Math.min(...ys), Math.max(...ys), h[0], h[1]]; });
     const shows = o => { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; };
     for (const o of objects) o.traverse(m => {
       if (!m.isMesh || !shows(m)) return;
@@ -350,32 +530,32 @@ CORE.createView = function (opts) {
     });
     return out;
   }
-  const obstacle = ([x1, x2, y1, y2, z1, z2]) => ({ x1, x2, y1, y2, z: [z1, z2] });
+  const obstacle = ([x1, x2, y1, y2, h1, h2]) => ({ x1, x2, y1, y2, h: [h1, h2] });
   let BASE = [];
-  function groundAt(x, y, z) {             // the highest walkable top under (x, y) within a step up of z
+  function groundAt(x, y, h) {             // the highest walkable top under (x, y) within a step up of h
     let best = null;
     for (const c of GROUND) {
       const S = c.S; if (x < S.x1 || x > S.x2) continue;
       const y12 = [Math.min(...S.poly.map(p => p[0])), Math.max(...S.poly.map(p => p[0]))]; if (y < y12[0] || y > y12[1]) continue;
-      const top = zRange(S)[1]; if (top <= z + W.config.step && (best === null || top > best)) best = top;
+      const top = hRange(S)[1]; if (top <= h + W.config.step && (best === null || top > best)) best = top;
     }
     return best;
   }
   const STEP_CLEAR = 10;                   // mm over a step: what is lower is walked onto, not bumped into
   const clamp = (v, a, b) => Math.max(a, Math.min(v, b));
-  const inReach = (o, z) => { const C = W.config; return o.z[1] >= z + C.step + STEP_CLEAR && o.z[0] <= z + C.eye + C.headroom; };
-  function blocked(x, y, z) {
+  const inReach = (o, h) => { const C = W.config; return o.h[1] >= h + C.step + STEP_CLEAR && o.h[0] <= h + C.eye + C.headroom; };
+  function blocked(x, y, h) {
     const r = W.config.radius - 1;         // what pushOut leaves touching is free
-    return OBSTACLES.some(o => inReach(o, z) && (clamp(x, o.x1, o.x2) - x) ** 2 + (clamp(y, o.y1, o.y2) - y) ** 2 < r * r);
+    return OBSTACLES.some(o => inReach(o, h) && (clamp(x, o.x1, o.x2) - x) ** 2 + (clamp(y, o.y1, o.y2) - y) ** 2 < r * r);
   }
   /* the body (a circle of the radius) pushed out of every solid it overlaps, by the shortest way: along a wall it slides,
      at the corner of a jamb it turns into the doorway */
-  function pushOut(x, y, z) {
+  function pushOut(x, y, h) {
     const r = W.config.radius;
     for (let round = 0; round < 4; round++) {
       let moved = false;
       for (const o of OBSTACLES) {
-        if (x < o.x1 - r || x > o.x2 + r || y < o.y1 - r || y > o.y2 + r || !inReach(o, z)) continue;
+        if (x < o.x1 - r || x > o.x2 + r || y < o.y1 - r || y > o.y2 + r || !inReach(o, h)) continue;
         const cx = clamp(x, o.x1, o.x2), cy = clamp(y, o.y1, o.y2), dx = x - cx, dy = y - cy, d = Math.hypot(dx, dy);
         if (d >= r) continue;
         if (d > 1e-6) { x = cx + dx / d * r; y = cy + dy / d * r; }
@@ -390,17 +570,20 @@ CORE.createView = function (opts) {
     return [x, y];
   }
   function placeWalkCamera() {
-    const h = walk.heading * DEG, p = walk.pitch * DEG, eye = walk.z + W.config.eye;
+    const a = walk.heading * DEG, p = walk.pitch * DEG, eye = walk.h + W.config.eye;
     camera.position.copy(toWorld(walk.x, walk.y, eye));
     const ahead = 1000;                    // mm: a point in front of the eye to look at
-    camera.lookAt(toWorld(walk.x + Math.cos(h) * Math.cos(p) * ahead, walk.y + Math.sin(h) * Math.cos(p) * ahead, eye + Math.sin(p) * ahead));
+    camera.lookAt(toWorld(walk.x + Math.cos(a) * Math.cos(p) * ahead, walk.y + Math.sin(a) * Math.cos(p) * ahead, eye + Math.sin(p) * ahead));
     redraw();
   }
-  /* what it bumps into: the solids and what more() gives now (a page calls it again when that changes: a door turns) */
-  const refreshObstacles = () => { OBSTACLES = BASE.concat((W.more ? W.more() : []).map(obstacle)); };
+  /* what it bumps into: the solids, the parts not fully open (as closed) and what more() gives now */
+  const refreshObstacles = () => {
+    const closed = boxes(MOVERS.filter(m => m.progress < 1).flatMap(m => m.pieces.map(f => f.cell)).filter((c, i, a) => a.indexOf(c) === i));
+    OBSTACLES = BASE.concat(closed.map(obstacle), (W.more ? W.more() : []).map(obstacle));
+  };
   function startWalk() {
     refreshObstacles();
-    walk.on = true; controls.enabled = false; walk.z = groundAt(walk.x, walk.y, W.startLevel) ?? W.startLevel;
+    walk.on = true; controls.enabled = false; walk.h = groundAt(walk.x, walk.y, W.startLevel) ?? W.startLevel;
     W.pad.hidden = false; W.onToggle(); placeWalkCamera();
   }
   function stopWalk() {
@@ -421,27 +604,31 @@ CORE.createView = function (opts) {
     let fwd = 0, side = 0;
     for (const k of walk.keys) { const m = WALK_KEYS[k](dt, fast); if (m) { fwd += m[0]; side += m[1]; } }
     if (fwd || side) {
-      const h = walk.heading * DEG, dx = fwd * Math.cos(h) - side * Math.sin(h), dy = fwd * Math.sin(h) + side * Math.cos(h);
+      const a = walk.heading * DEG, dx = fwd * Math.cos(a) - side * Math.sin(a), dy = fwd * Math.sin(a) + side * Math.cos(a);
       const v = C.speed * fast * dt / Math.hypot(dx, dy), steps = Math.ceil(Math.hypot(dx, dy) * v / (C.radius / 3));   // never through a wall
       /* each small step: out of what it walks into (the shortest way, so it slides along a wall), onto the floor there
          (at most a step up); no floor, or still inside something: it stands */
       for (let i = 0; i < steps; i++) {
-        const [tx, ty] = pushOut(walk.x + dx * v / steps, walk.y + dy * v / steps, walk.z), g = groundAt(tx, ty, walk.z);
+        const [tx, ty] = pushOut(walk.x + dx * v / steps, walk.y + dy * v / steps, walk.h), g = groundAt(tx, ty, walk.h);
         if (g === null || blocked(tx, ty, g)) break;
-        Object.assign(walk, { x: tx, y: ty, z: g });
+        Object.assign(walk, { x: tx, y: ty, h: g });
       }
     }
     placeWalkCamera();
   }
+  /* again for another view: its walk; the keys and the pad are listened to once */
+  /** @param {WalkSetup} w */
   function enableWalk(w) {
+    const first = !W;
     W = w;
-    Object.assign(walk, { x: w.config.start.x, y: w.config.start.y, z: 0, heading: w.config.start.heading, pitch: 0 });
+    Object.assign(walk, { x: w.config.start.x, y: w.config.start.y, h: 0, heading: w.config.start.heading, pitch: 0 });
     OBSTACLES = BASE = boxes(w.solids).map(obstacle);
     GROUND = w.ground;
+    if (!first) return;
     const keyName = e => e.key.length === 1 ? e.key.toLowerCase() : e.key;
     window.addEventListener('keydown', e => {
-      if (e.target.closest && e.target.closest('input,select')) return;
-      if (w.canStart() && !walk.on && e.key === 'ArrowUp') startWalk();
+      if (e.target instanceof Element && e.target.closest('input,select')) return;
+      if (W.canStart() && !walk.on && e.key === 'ArrowUp') startWalk();
       if (!walk.on) return;
       if (e.key === 'Escape') return stopWalk();
       if (WALK_KEYS[keyName(e)]) { walk.keys.add(keyName(e)); e.preventDefault(); }
@@ -465,11 +652,21 @@ CORE.createView = function (opts) {
      It draws only after a change. A page that animates (doors, a camera flight) adds a step: fn(dt) runs every frame and
      returns true while something moved. */
   const STEPS = [];
-  const onFrame = fn => STEPS.push(fn);
+  const onFrame = (/** @type {(dt: number) => boolean} */ fn) => STEPS.push(fn);
+  onFrame(dt => {                          // the moving parts toward their goals
+    let moved = false;
+    for (const m of MOVERS) {
+      if (m.progress === m.goal) continue;
+      m.progress = m.goal > m.progress ? Math.min(m.goal, m.progress + dt * MOVE_SPEED) : Math.max(m.goal, m.progress - dt * MOVE_SPEED);
+      pose(m); moved = true;
+    }
+    if (moved && walk.on) refreshObstacles();
+    return moved;
+  });
   /* a camera flight to c (as setCamera), eased; at once when instant or when the viewer asks for reduced motion */
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const FLIGHT_MS = 900, ease = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+  const FLIGHT_MS = 900;
   let flight = null;
+  /** @param {Camera} c @param {boolean} [instant] @param {number} [level] */
   function flyTo(c, instant = false, level = 0) {
     if (instant || reducedMotion) { flight = null; setCamera(c, level); return; }
     flight = { p0: camera.position.clone(), t0: controls.target.clone(), s: performance.now(),
@@ -498,8 +695,170 @@ CORE.createView = function (opts) {
   function start() { new ResizeObserver(resize).observe(stage); resize(); }
   const run = () => requestAnimationFrame(frame);
 
-  return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, CUT, CLIP, hash01, canvasTexture, loadImage, material, useMaterial, capMaterial,
-    buildMeshes, removeMeshes, buildEdges, showPieces, GROUPS, EDGE_GROUPS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion, addCaps, buildCaps, setCut,
-    onClick, enableNavigation, walk, boxes, enableWalk, startWalk, stopWalk, refreshObstacles, stepWalk, onFrame, start, run, get hemi() { return hemi; }, get sun() { return sun; } };
-};
-})(window.CORE = window.CORE || {});
+  /* ================= A DESCRIPTION DRAWN =================
+     A description (core/parts.js) made 3D: its frames, details, lamps and painted looks in the order they were
+     described, then its moving parts; still details alike are merged into one mesh. layers: the host's (its lamps light
+     while they are on). Gives what the page switches: the details (by layers), the lamps by night, the footprints of
+     details for the 2D plan. */
+  /** @param {Shape} s @returns {any} */
+  function shapeGeometry(s) {
+    const seg = s.segments || [], arc = s.arc;
+    const g = s.kind === 'box' ? new THREE.BoxGeometry(...(s.size || []))
+      : s.kind === 'cylinder' ? new THREE.CylinderGeometry((s.r || [])[0], (s.r || [])[1], s.length, seg[0] ?? 8, seg[1] ?? 1, s.open ?? false, arc ? arc[0] : 0, arc ? arc[1] : Math.PI * 2)
+      : s.kind === 'sphere' ? new THREE.SphereGeometry(s.radius, seg[0], seg[1], ...(arc || [0, Math.PI * 2, 0, Math.PI]))
+      : s.kind === 'disc' ? new THREE.CircleGeometry(s.radius, seg[0], ...(arc || [0, Math.PI * 2]))
+      : s.kind === 'ring' ? new THREE.RingGeometry((s.r || [])[0], (s.r || [])[1], seg[0])
+      : s.kind === 'plane' ? new THREE.PlaneGeometry(...(s.size || []))
+      : s.kind === 'torus' ? new THREE.TorusGeometry(s.radius, s.tube, seg[0], seg[1])
+      : s.kind === 'tube' ? new THREE.TubeGeometry(new THREE.CatmullRomCurve3((s.points || []).map(p => new THREE.Vector3(...p))), seg[0], s.radius, seg[1], false)
+      : s.kind === 'extrude' ? new THREE.ExtrudeGeometry(new THREE.Shape((s.outline || []).map(p => new THREE.Vector2(p[0], p[1]))), { depth: s.depth, bevelEnabled: false })
+      : s.kind === 'mesh' ? meshGeometry(s.positions || [], s.index || [])
+      : null;
+    if (!g) throw new Error('no shape ' + s.kind);
+    for (const [op, ...v] of s.then || []) g[op](...v);
+    return g;
+  }
+  function meshGeometry(/** @type {number[]} */ positions, /** @type {number[]} */ index) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.setIndex(index); g.computeVertexNormals();
+    return g;
+  }
+  /* a display's text, lit on black */
+  function textMaterial(/** @type {string} */ text) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 80;
+    const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'));
+    g.fillStyle = '#000'; g.fillRect(0, 0, 256, 80);
+    g.fillStyle = '#7dd3fc'; g.font = '500 52px "IBM Plex Mono",monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(text, 128, 42);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+    return new THREE.MeshBasicMaterial({ map: t });
+  }
+  /* the footprint of a drawn mesh for the 2D plan: the convex hull of its points seen from above; toHouse: world -> house mm */
+  /** @param {any} mesh @param {any} toHouse @param {boolean} [glass] @returns {PlanShape} */
+  function meshShape(mesh, toHouse, glass = false) {
+    const P = mesh.geometry.attributes.position, m = new THREE.Matrix4().multiplyMatrices(toHouse, mesh.matrixWorld), v = new THREE.Vector3(),
+      /** @type {number[][]} */ pts = [];
+    let bottom = Infinity, top = -Infinity;
+    for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m); pts.push([v.x, v.y]); bottom = Math.min(bottom, v.z); top = Math.max(top, v.z); }
+    pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cross = (/** @type {number[]} */ o, /** @type {number[]} */ a, /** @type {number[]} */ b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const half = (/** @type {number[][]} */ list) => {
+      /** @type {number[][]} */ const h = [];
+      for (const p of list) { while (h.length >= 2 && cross(h[h.length - 2], h[h.length - 1], p) <= 0) h.pop(); h.push(p); }
+      h.pop(); return h;
+    };
+    return { poly: half(pts).concat(half(pts.slice().reverse())), bottom, top, glass };
+  }
+  const geometries = new WeakMap();        // a shape described once (a handle's cup) is one geometry
+  /** @param {ReturnType<ReturnType<typeof corePartsModule>['create']>} desc @param {{ layers?: string[], apart?: string[] }} [opts] apart: layers whose still details stay single meshes (the 2D plan draws them) */
+  function show(desc, opts = {}) {
+    const EXTRA = opts.layers || [], frames = new Map(), holders = new Map(), cores = new Map();
+    /** @type {{ mesh: any, layers: string[], moves: boolean }[]} */ const DETAILS = [];
+    /** @type {{ light: any, shadow: boolean }[]} */ const LAMPS = [];
+    const geometryOf = (/** @type {Shape} */ s) => { if (!geometries.has(s)) geometries.set(s, shapeGeometry(s)); return geometries.get(s); };
+    const all = /** @type {any[]} */ ([]).concat(desc.FRAMES, desc.MOVERS, desc.DETAILS, desc.LAMPS, desc.LOOKS).sort((a, b) => a.n - b.n);
+    for (const it of all) {
+      if (desc.MOVERS.includes(it)) holders.set(it, new THREE.Group());
+      else if (desc.FRAMES.includes(it)) {
+        const f = new THREE.Group();
+        if (it.parent) { f.position.set(it.at[0], it.at[2], it.at[1]); f.rotation.z = it.angle; frames.get(it.parent).add(f); }
+        else {
+          const { O, X, Y } = desc.frame(it.r);
+          f.matrixAutoUpdate = false;
+          f.matrix.makeBasis(new THREE.Vector3(X[0], X[1], 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(Y[0], Y[1], 0)).setPosition(O[0], O[1], desc.LEVEL);
+          (it.mover ? holders.get(it.mover) : root).add(f);
+        }
+        frames.set(it, f);
+      } else if (desc.DETAILS.includes(it)) {
+        const k = it.material, first = typeof k === 'string' ? material(k) : Array.isArray(k) ? material(k[0]) : 'text' in k ? textMaterial(k.text) : material(k.key);
+        const m = new THREE.Mesh(geometryOf(it.shape), first);
+        m.position.set(it.at[0], it.at[2], it.at[1]); m.castShadow = it.shadow && !first.transparent; m.receiveShadow = it.shadow;
+        if (Array.isArray(k)) m.material = k.map(material);
+        else if (typeof k === 'object' && 'side' in k) { m.material = first.clone(); m.material.side = k.side === 'back' ? THREE.BackSide : THREE.DoubleSide; }
+        if (it.turn) for (const ax of ['x', 'y', 'z']) if (it.turn[ax] !== undefined) m.rotation[ax] = it.turn[ax];
+        if (it.up) m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...it.up).normalize());
+        if (it.matrix) { m.matrixAutoUpdate = false; m.matrix.set(...it.matrix); }
+        frames.get(it.frame).add(m); DETAILS.push({ mesh: m, layers: it.layers, moves: it.moves });
+      } else if (desc.LAMPS.includes(it)) {
+        const light = it.kind === 'spot' ? new THREE.SpotLight(it.color, it.intensity, it.distance, it.angle, it.penumbra, it.decay) : new THREE.PointLight(it.color, it.intensity, it.distance, it.decay);
+        light.position.copy(toWorld(...it.from));
+        if (it.to) { light.target.position.copy(toWorld(...it.to)); scene.add(light.target); }
+        light.visible = false; scene.add(light);
+        LAMPS.push({ light, shadow: it.shadow });
+        if (it.shadow) { light.shadow.mapSize.set(1024, 1024); light.shadow.camera.near = 0.1; light.shadow.camera.far = (it.from[2] - desc.LEVEL) / 1000 + 0.3; light.shadow.bias = -0.0002; light.shadow.normalBias = 0.015; }
+      } else {                               // a look painted with specks, once
+        const m = material(it.key), S = it.speckle;
+        if (m.map) continue;
+        const t = canvasTexture(S.size, S.size, (g, w, ch) => {
+          g.fillStyle = S.background; g.fillRect(0, 0, w, ch);
+          for (let i = 0; i < S.count; i++) {
+            const k = hash01(i, 3), s = S.dot[0] + hash01(i, 4) * S.dot[1], d = S.dots.find(d => k > d.above);
+            g.fillStyle = d.alpha ? `rgba(${d.color},${d.alpha[0] + hash01(i, 5) * d.alpha[1]})` : d.color;
+            g.fillRect(hash01(i, 1) * w, hash01(i, 2) * ch, s, s);
+          }
+        });
+        t.repeat.set(S.repeat, S.repeat);
+        m.map = t;
+      }
+    }
+    /* the moving parts, built closed, each with its details */
+    for (const d of desc.MOVERS) {
+      const core = mover(Object.assign({ pieces: faces.piecesOf(d.cells), at: d.P, behind: d.parent ? cores.get(d.parent) : null, label: d.label }, d.how));
+      cores.set(d, core); core.inner.add(holders.get(d));
+    }
+    /* one mesh for the still details alike: in one frame, of one material, with the same layers and shadows (a layer shows
+       and hides them as before; what moves, and what the 2D plan draws apart, stays apart) */
+    const groupsOf = new Map();
+    for (const d of DETAILS) {
+      const m = d.mesh;
+      if (d.moves || d.layers.some(l => (opts.apart || []).includes(l)) || !m.parent) continue;
+      const k = [m.parent.uuid, m.material.uuid, d.layers.join('+'), m.castShadow, m.receiveShadow].join('|');
+      if (!groupsOf.has(k)) groupsOf.set(k, []);
+      groupsOf.get(k).push(d);
+    }
+    for (const list of groupsOf.values()) {
+      if (list.length < 2) continue;
+      const parts = list.map(d => { const m = d.mesh; if (m.matrixAutoUpdate) m.updateMatrix(); const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone(); return g.applyMatrix4(m.matrix); });
+      const uv = parts.every(g => g.attributes.uv), merged = new THREE.BufferGeometry();
+      for (const name of ['position', 'normal'].concat(uv ? ['uv'] : [])) {
+        const size = parts[0].attributes[name].itemSize, arr = new Float32Array(parts.reduce((s, g) => s + g.attributes[name].count * size, 0));
+        let at = 0; for (const g of parts) { arr.set(g.attributes[name].array, at); at += g.attributes[name].array.length; }
+        merged.setAttribute(name, new THREE.BufferAttribute(arr, size));
+      }
+      const first = list[0].mesh, one = new THREE.Mesh(merged, first.material);
+      one.castShadow = first.castShadow; one.receiveShadow = first.receiveShadow;
+      first.parent.add(one);
+      for (const d of list) { d.mesh.parent.remove(d.mesh); d.mesh.geometry.dispose(); }
+      DETAILS.splice(0, DETAILS.length, ...DETAILS.filter(d => !list.includes(d)), { mesh: one, layers: list[0].layers, moves: false });
+    }
+    for (const d of DETAILS) d.mesh.userData.owner = null;
+
+    /* the lamps light by night while their layer is on */
+    let dark = false, lit = true;
+    const light = () => {
+      const on = dark && lit;
+      for (const { light, shadow } of LAMPS) { light.visible = on; light.castShadow = on && shadow; }
+      for (const k of ['bulb', 'led']) { const mt = material(k); mt.emissive.set(on ? 0xfff0dc : 0x000000); mt.emissiveIntensity = on ? 2 : 1; }
+    };
+    const night = (/** @type {boolean} */ on) => { dark = on; light(); };
+    const showDetails = (/** @type {(layers: string[]) => boolean} */ shown) => {
+      for (const d of DETAILS) d.mesh.visible = shown(d.layers);
+      if (lit !== shown(['lamps'].concat(EXTRA))) { lit = !lit; light(); }
+    };
+    /* the footprints of the details whose layers pass, for the 2D plan */
+    const footprints = (/** @type {(layers: string[]) => boolean} */ pass) => {
+      root.updateMatrixWorld(true);
+      const toHouse = new THREE.Matrix4().copy(root.matrixWorld).invert();
+      return DETAILS.filter(d => pass(d.layers) && d.mesh.geometry.attributes.position).map(d => meshShape(d.mesh, toHouse));
+    };
+    return { DETAILS, LAMPS, night, showDetails, footprints, cores };
+  }
+
+  return { renderer, scene, root, camera, controls, lin, redraw, toWorld, MM, hash01, canvasTexture, loadImage, material, useMaterial, show,
+    buildMeshes, removeMeshes, buildEdges, showPieces, clear, relight, cameraAt, GROUPS, EDGE_GROUPS, mover, toggle, toggleAll, moverAt, MOVERS, addLight, setSky, placeSun, setCamera, flyTo, reducedMotion,
+    onClick, enableNavigation, walk, boxes, enableWalk, startWalk, stopWalk, refreshObstacles, stepWalk, onFrame, start, run,
+    get hemi() { return hemi; }, get sun() { return sun; } };
+}
+
+return { create };
+}

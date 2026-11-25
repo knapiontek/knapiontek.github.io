@@ -1,267 +1,257 @@
-/* core/ui.js: the page shell shared by every view: helpers, the stored state, the layers tree, the help, the checks, the
-   view menu (views, top parts, cameras), panel sections and tabs, the 2D sheet.
-   Knows no project. */
-(function (CORE) {
+// @ts-check
+/* core/ui.js: the screen of every page, on Alpine.js: helpers, the state kept in the browser, the page's Alpine part
+   (page) and the pieces of the screen its HTML puts together (<template x-part="…">), light or dark, the layers, the
+   sun, the 2D sheet, the widths of a table's columns. Knows no project. Touches the browser only when called. Gets core/tools.js. */
+/** @typedef {{ name: string, items: string[], info?: boolean, about?: string }} Check  OK when items is empty; info: to know, not to correct */
+/** @typedef {{ name: string, go: () => void, label?: string, cls?: string, pressed?: boolean }} MenuItem  a button of the bottom menu */
+/** @typedef {Object<string, { name: string, parent: string | null }>} LayerTree  layer -> its name and parent */
+/** @typedef {{ k: string, name: string, on: boolean, child: boolean, off: boolean }} LayerItem  a layer as the panel lists it */
+/** @param {ReturnType<typeof coreToolsModule>} tools */
+function coreUiModule(tools) {
 'use strict';
 
-const $ = id => document.getElementById(id);
-const fmt = (v, d) => v.toLocaleString('pl-PL', { minimumFractionDigits: d, maximumFractionDigits: d });
-const byId = list => Object.fromEntries(list.map(e => [e.id, e]));
+const { fmt } = tools;
+const $ = (/** @type {string} */ id) => document.getElementById(id);
+/**
+ * @template {{ id: string }} T
+ * @param {T[]} list
+ * @returns {Record<string, T>}
+ */
+function byId(list) { return Object.fromEntries(list.map(e => [e.id, e])); }
+/** @param {string} tag @param {object} attrs @param {string} [html] @returns {any} an element with attrs */
 const el = (tag, attrs, html) => { const e = document.createElement(tag); Object.assign(e, attrs); if (html !== undefined) e.innerHTML = html; return e; };
-const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);   // text into HTML
-const option = (v, t, sel) => `<option value="${v}"${v === sel ? ' selected' : ''}>${t}</option>`;
 
 /* the viewer's choices stay in the browser; a stored state that fails valid() is dropped for fresh() */
+/** @template T @param {string} key @param {() => T} fresh @param {(s: any) => boolean} valid @returns {{ state: T, save: () => void }} */
 function store(key, fresh, valid) {
   let state;
-  try { state = JSON.parse(localStorage.getItem(key)); } catch (e) { state = null; }
+  try { state = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { state = null; }
   if (!state || !valid(state)) state = fresh();
   const save = () => { try { localStorage.setItem(key, JSON.stringify(state)); } catch (e) { /* private mode: nothing kept */ } };
   return { state, save };
 }
 
+/* ================= THE SCREEN =================
+   A page is one Alpine part on its .app: page(name, spec). Its HTML puts the shared pieces where it wants them,
+   <template x-part="dock"></template>, and writes what is its own (its view, its help, its panel's sections) into a piece
+   that takes it: <template x-part="panel">…</template>. The pieces read these fields of the page:
+     title, subtitle, loading, ready · nav {links, groups} · modes, mode, pick(m) · tabs, tab, pickTab(t) · menu (groups of
+     {name, go, label, cls, pressed}) · float ('sun', 'help' or null) · sun · plan {svg, note} · docs ·
+     layerBlocks [{name, id, tab, items}], setLayer(k, on) · state (kept in the browser: mode, tab, zoom, layers, …)
+   spec: key, fresh(), valid(s) (the state kept), modes, tabs {mode: [tab]}, load() (async: builds the page), and the page's
+   own fields, getters and methods: onMode(m), menus() ({mode: groups}), onLayers(); a getter that needs the page built
+   asks this.ready first. */
+const MODES = { '3d': '3D', '2d': '2D', documents: 'Documents', cabinets: 'Cabinets' };
+const TAB_NAMES = { view: 'View', layers: 'Layers', finish: 'Finish' };
+/* the menu's one button for the moving parts: Open opens them all, then it is Close */
+/** @param {{ opened: boolean }} ui @param {{ toggleAll: (on: boolean) => void }} V @returns {MenuItem} */
+function openAll(ui, V) {
+  return { name: ui.opened ? 'Close' : 'Open', cls: 'open', pressed: ui.opened, go: () => { ui.opened = !ui.opened; V.toggleAll(ui.opened); } };
+}
+/* a state kept in the browser and reactive: every change is saved */
+function kept(key, fresh, valid) {
+  const s = store(key, fresh, valid), state = Alpine.reactive(s.state);
+  Alpine.effect(() => { JSON.stringify(state); s.save(); });
+  return state;
+}
+/* the Alpine parts a piece of the screen names (x-data="sunBox(sun)"), by name; a file adds its own with component() */
+const COMPONENTS = /** @type {Object<string, (...args: any[]) => object>} */ ({});
+/** an Alpine part a piece may name @param {string} name @param {(...args: any[]) => object} make */
+const component = (name, make) => { COMPONENTS[name] = make; };
+/** the page's Alpine part, on its .app (x-data="name") @param {string} name @param {object} spec */
+function page(name, spec) {
+  start();
+  document.addEventListener('alpine:init', () => {
+    Alpine.data(name, () => screen(spec));
+    for (const [n, make] of Object.entries(COMPONENTS)) Alpine.data(n, make);
+  });
+}
+function screen(spec) {
+  const { key, fresh, valid, modes = [], tabs = {} } = spec, own = Object.getOwnPropertyDescriptors(spec);   // getters stay getters
+  for (const k of ['key', 'fresh', 'valid', 'modes', 'tabs']) delete own[k];
+  const part = {
+    ready: false, loading: 'Loading…', title: '', subtitle: '', nav: { links: [], groups: [] }, navOpen: null, modes, modeNames: MODES, tabNames: TAB_NAMES,
+    float: null, sun: null, docs: null, plan: { svg: '', note: '' }, walking: false, opened: false, tabOff: () => false,
+    state: key ? kept(key, fresh, valid) : { tab: null, zoom: 1, layers: {} },
+    get mode() { return this.state.mode ?? null; },
+    get tabs() { return tabs[this.mode] || []; },
+    get tab() { const t = this.tabs; return t.includes(this.state.tab) ? this.state.tab : t[0] || null; },
+    get menu() {                             // menus(): groups by mode, or the groups of a page without modes
+      const m = this.ready && this.menus ? this.menus() : [];
+      return (Array.isArray(m) ? m : m[this.mode] || []).filter(g => g.length);
+    },
+    layerBlocks: [],
+    pick(m) {
+      if (m === this.mode || !modes.includes(m)) return;
+      this.state.mode = m;
+      if (m !== '3d' && this.float === 'sun') this.float = null;
+      if (this.onMode) this.onMode(m);
+    },
+    pickTab(t) { this.state.tab = t; },
+    toggle(f) { this.float = this.float === f ? null : f; },
+    setLayer(k, on) { this.state.layers[k] = on; if (this.onLayers) this.onLayers(); },
+    async init() {
+      await this.$nextTick();                // the pieces are in
+      try { await this.load(); this.loading = ''; this.ready = true; }
+      catch (e) { console.error(e && e.stack || e); this.loading = 'Error: ' + (e.message || e); }
+    },
+    /* the 2D sheet: the wheel zooms about the cursor (the point under it stays), a drag moves the sheet */
+    wheel(e) {
+      const sheet = e.currentTarget, was = this.state.zoom, now = Math.min(8, Math.max(1, was * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+      if (now === was) return;
+      const r = sheet.getBoundingClientRect(), cx = e.clientX - r.left, cy = e.clientY - r.top;
+      const px = (sheet.scrollLeft + cx) / sheet.scrollWidth, py = (sheet.scrollTop + cy) / sheet.scrollHeight;   // the point under the cursor
+      this.state.zoom = now; sheet.style.setProperty('--zoom', now);   // now, so the scroll below is right
+      sheet.scrollLeft = px * sheet.scrollWidth - cx; sheet.scrollTop = py * sheet.scrollHeight - cy;
+    },
+    down(e) { if (e.button === 0) { const s = e.currentTarget; DRAG = { x: e.clientX, y: e.clientY, l: s.scrollLeft, t: s.scrollTop }; s.setPointerCapture(e.pointerId); } },
+    move(e) { if (DRAG) { const s = e.currentTarget; s.scrollLeft = DRAG.l - (e.clientX - DRAG.x); s.scrollTop = DRAG.t - (e.clientY - DRAG.y); } },
+    up() { DRAG = null; }
+  };
+  return Object.defineProperties(part, own);
+}
+let DRAG = null;
+
+/* light or dark: the system's, until the viewer picks one with ◐; the panel shown or hidden with » and «: one choice for
+   every page, applied before anything shows (nothing flashes); the store 'screen' for ◐ and » «; the pieces */
+let THEME = null, PANEL = null;
+function showScreen() {
+  const root = document.documentElement;
+  if (THEME.state.mode) root.dataset.theme = THEME.state.mode; else delete root.dataset.theme;
+  root.toggleAttribute('data-panel-closed', !PANEL.state.open);
+}
+function start() {
+  THEME = store('home-theme', () => ({ mode: null }), s => [null, 'light', 'dark'].includes(s.mode));
+  PANEL = store('home-panel', () => ({ open: true }), s => typeof s.open === 'boolean');
+  showScreen();
+  document.addEventListener('alpine:init', () => {
+    Alpine.store('screen', {
+      open: PANEL.state.open,
+      togglePanel() { this.open = PANEL.state.open = !this.open; PANEL.save(); showScreen(); },
+      toggleTheme() {
+        const dark = THEME.state.mode ? THEME.state.mode === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+        THEME.state.mode = dark ? 'light' : 'dark'; THEME.save(); showScreen();
+      }
+    });
+    /* <template x-part="name">…</template>: the piece in its place, what the template holds put into its [data-slot] */
+    Alpine.directive('part', (el, { expression }) => {
+      const t = document.createElement('template');
+      t.innerHTML = PARTS[expression];
+      const slot = t.content.querySelector('[data-slot]');
+      if (slot) { slot.removeAttribute('data-slot'); slot.append(el.content.cloneNode(true)); }
+      const nodes = [...t.content.children];
+      Alpine.mutateDom(() => { el.after(t.content); nodes.forEach(n => Alpine.initTree(n)); });
+    });
+  });
+}
+
+/* ================= LAYERS ================= */
 /* the layers tree: {id: {name, layers: {...}}} -> id -> {name, parent} */
+/** @param {Object<string, { name: string, layers?: object }>} tree @returns {LayerTree} */
 function layerTree(tree) {
-  const LAYER = {};
-  (function walk(t, parent) { for (const [k, v] of Object.entries(t)) { LAYER[k] = { name: v.name, parent }; if (v.layers) walk(v.layers, k); } })(tree, null);
+  /** @type {LayerTree} */ const LAYER = {};
+  (function walk(t, /** @type {string|null} */ parent) { for (const [k, v] of Object.entries(t)) { LAYER[k] = { name: v.name, parent }; if (v.layers) walk(v.layers, k); } })(tree, null);
   return LAYER;
 }
 /* a layer is on when it and all its parents are on; an object is shown when all its layers are on */
+/** @param {LayerTree} LAYER @param {() => Object<string, boolean>} getLayers */
 function layerSwitch(LAYER, getLayers) {
+  /** @type {(k: string) => boolean} */
   const layerOn = k => getLayers()[k] !== false && (!LAYER[k].parent || layerOn(LAYER[k].parent));
-  const shown = layers => layers.every(layerOn);
+  const shown = (/** @type {string[]} */ layers) => layers.every(layerOn);
   return { layerOn, shown };
 }
-/* the Warstwy panel: each top layer with its children under it */
-function layersPanel(box, LAYER, top, state, layerOn, setLayer) {
-  box.innerHTML = '';
-  const add = (k, child) => {
-    const d = el('div', { className: child ? 'child' : '' }, `<label><input type="checkbox"${state[k] ? ' checked' : ''}> ${LAYER[k].name}</label>`);
-    if (child && !layerOn(LAYER[k].parent)) d.dataset.off = '';
-    d.querySelector('input').onchange = e => setLayer(k, e.target.checked);
-    box.append(d);
-  };
-  for (const k of top) { add(k, false); for (const c of Object.keys(LAYER).filter(c => LAYER[c].parent === k)) add(c, true); }
+/* the layers as a list for the panel: each top layer with its children under it; off: a child whose parent is off */
+/** @param {LayerTree} LAYER @param {string[]} top @param {Object<string, boolean>} state @param {(k: string) => boolean} layerOn @returns {LayerItem[]} */
+function layerList(LAYER, top, state, layerOn) {
+  return top.flatMap(k => [{ k, name: LAYER[k].name, on: state[k] !== false, child: false, off: false },
+    ...Object.keys(LAYER).filter(c => LAYER[c].parent === k).map(c => ({ k: c, name: LAYER[c].name, on: state[c] !== false, child: true, off: !layerOn(k) }))]);
 }
 
-/* checks: [{name, items}]: OK when nothing is listed */
-const checksHtml = checks => checks.map(c => `<div class="check"><span class="chip ${c.items.length ? 'warn' : 'ok'}">${c.items.length || 'OK'}</span>${c.name}${c.items.length ? `<ul>${c.items.map(i => `<li>${i}</li>`).join('')}</ul>` : ''}</div>`).join('');
-
-/* ================= THE MENUS =================
-   The top-left menu (the applications), the top-right menu (the modes of the project's views data), and under it, in
-   3D, the project's top parts (floors and roof, groups, rooms) as switches. */
-
-/* the top-left menu: the applications [{id, name, page}] (page null: planned), current = this page's id. A link carries
-   the current mode (mode()), so another application opens in the same one when it has it (askedMode). */
-function appMenu(box, apps, current, base, mode) {
-  box.innerHTML = '';
-  for (const a of apps) {
-    const item = a.page ? el('a', { href: base + a.page, textContent: a.name }) : el('span', { textContent: a.name, title: 'W przygotowaniu' });
-    if (a.id === current) { item.setAttribute('aria-current', 'page'); item.dataset.on = ''; }
-    if (a.page) item.onclick = () => { const url = new URL(item.href); url.searchParams.set('mode', mode()); item.href = url.href; };
-    box.append(item);
-  }
-}
-/* the mode a link from another application asked for, if this page has it; taken off the address so a reload keeps the stored one */
-function askedMode(views) {
-  const url = new URL(location.href), m = url.searchParams.get('mode');
-  if (m === null) return null;
-  url.searchParams.delete('mode');
-  try { history.replaceState(null, '', url.href); } catch (e) { /* opened from disk in a browser that refuses: the address keeps it */ }
-  return views[m] ? m : null;
-}
-
-/* views: {id: {name}}; pick(id) on a click of another view */
-function modeToggle(box, views, mode, pick) {
-  box.innerHTML = Object.entries(views).map(([k, v]) => `<button data-mode="${k}" aria-pressed="${mode === k}"${mode === k ? ' data-on' : ''}>${v.name}</button>`).join('');
-  box.onclick = e => { const b = e.target.closest('[data-mode]'); if (b && b.dataset.mode !== mode) pick(b.dataset.mode); };
-}
-/* the screen of mode in views: its main view (#plan2d for a plan, #analysis for test, #info for
-   info, canvas for a view with a menu), ☀ only in 3D, its help and the top-right menu; pick(id) on a click of another mode */
-function showMode(views, mode, canvas, pick) {
-  const v = views[mode], is3d = !!v.menu;
-  $('plan2d').hidden = !v.plan; $('analysis').hidden = !v.test; $('info').hidden = !v.info; canvas.hidden = !is3d;
-  $('sunbtn').hidden = !is3d; if (!is3d) $('sun').hidden = true;
-  helpMode($('help'), mode);
-  modeToggle($('mode'), views, mode, pick);
-  return v;
-}
-/* one row of switches: items [{name, on, set(on), radio}] (radio: one of them), then elements (a room tag, a link) */
-function menuRow(box, items, extra = []) {
-  const row = el('div', { className: 'menurow' });
-  for (const it of items) {
-    const l = el('label', { className: 'chk' }, `<input type="${it.radio ? 'radio' : 'checkbox'}"${it.on ? ' checked' : ''}> ${it.name}`);
-    l.querySelector('input').onchange = e => it.set(e.target.checked);
-    row.append(l);
-  }
-  row.append(...extra);
-  box.append(row);
-  return row;
-}
-/* ================= THE SCREEN =================
-   top-left menu (appMenu), top-right menu (modeToggle), the main view, the bottom menu, the right panel in tabs, the
-   bottom-right corner (☀, ?). A view of the project's data says which tabs it shows: view.tabs. The panel is always there;
-   only the viewer hides it (panelToggle). */
-
-/* the right panel's tabs: the same names in every application, each showing only what it has */
-const TAB_NAMES = { layers: 'Warstwy', finish: 'Wykończenie' };
-/* shows the panel's tabs of view, the sections [data-tab] of the current one (fallback: the first); hide(part): a section
-   [data-part] that also needs something the view lacks now. Returns the tab shown. */
-function panelTabs(box, aside, view, current, pick, hide = () => false) {
-  const list = view.tabs || [], tab = list.includes(current) ? current : list[0] || null;
-  box.hidden = list.length < 2;
-  box.innerHTML = list.map(k => `<button role="tab" data-tab-id="${k}" aria-selected="${k === tab}"${k === tab ? ' data-on' : ''}>${TAB_NAMES[k]}</button>`).join('');
-  box.onclick = e => { const b = e.target.closest('[data-tab-id]'); if (b && b.dataset.tabId !== tab) pick(b.dataset.tabId); };
-  for (const s of aside.querySelectorAll('[data-tab]')) s.hidden = s.dataset.tab !== tab || hide(s.dataset.part);
-  aside.closest('.app').dataset.ready = '';   // the sections show from now on
-  return tab;
-}
-/* » and « on the edge of the main view: the viewer hides or shows the panel; one choice for every application, set on
-   the page the moment this file loads, so the panel does not show and vanish while the model is built */
-const PANEL = store('home-panel', () => ({ open: true }), s => typeof s.open === 'boolean');
-const showPanel = () => document.documentElement.toggleAttribute('data-panel-closed', !PANEL.state.open);
-showPanel();
-function panelToggle(stage) {
-  const kept = PANEL, button = el('button', { className: 'panelbtn' });
-  const show = () => {
-    showPanel();
-    button.textContent = kept.state.open ? '»' : '«';
-    button.setAttribute('aria-label', kept.state.open ? 'Ukryj panel' : 'Pokaż panel'); button.title = button.getAttribute('aria-label');
-  };
-  button.onclick = () => { kept.state.open = !kept.state.open; kept.save(); show(); };
-  stage.append(button); show();
-}
-/* the bottom menu: groups of one-off actions, a line between groups; an item is {name, go, label} or an element */
-function bottomMenu(box, groups) {
-  box.innerHTML = '';
-  groups.filter(g => g.length).forEach((list, i) => {
-    if (i) box.append(el('span', { className: 'sep' }));
-    for (const it of list) box.append(it instanceof Element ? it : el('button', { textContent: it.name, onclick: it.go, ...(it.label ? { ariaLabel: it.label } : {}) }));
-  });
-  box.hidden = !box.children.length;
-}
-/* the bottom-right corner: buttons that each open their floating box [[button, box]], one box at a time */
-function corner(pairs) {
-  const close = () => { for (const [b, x] of pairs) { x.hidden = true; b.setAttribute('aria-expanded', false); } };
-  for (const [b, x] of pairs) b.onclick = () => { const open = x.hidden; close(); x.hidden = !open; b.setAttribute('aria-expanded', open); };
-  return close;
-}
-/* light or dark: the system's, until the viewer picks one with ◐ (in every mode); one choice for every application, set
-   the moment this file loads */
-const THEME = store('home-theme', () => ({ mode: null }), s => [null, 'light', 'dark'].includes(s.mode));
-const showTheme = () => { if (THEME.state.mode) document.documentElement.dataset.theme = THEME.state.mode; else delete document.documentElement.dataset.theme; };
-showTheme();
-function toggleTheme() {
-  const dark = THEME.state.mode ? THEME.state.mode === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-  THEME.state.mode = dark ? 'light' : 'dark'; THEME.save(); showTheme();
-}
-/* ◐ in the corner: light or dark */
-function themeButton(button) { button.onclick = toggleTheme; }
-/* the help of the current mode: the [data-help] sections of box */
-function helpMode(box, mode) { for (const s of box.querySelectorAll('[data-help]')) s.hidden = s.dataset.help !== mode; }
-
-/* ☀: a compass with the plan in the middle (rects [x1, x2, y1, y2] mm, x down and y right as on the 2D plan) and the sun
-   dragged round it (the direction, from +x toward +y as core/scene.js); an arc beside it (the height); brightness.
-   sun {az, el, k} is changed in place; change() after every move. */
-const SUN_RANGE = { azStep: 5, el: [8, 75], k: [0.3, 1.6, 0.05] };   // degrees, degrees, a factor
-/* one sun for every application, stored once: every page shows the same time of day.
-   fresh: {azimuth, elevation}; night: false by day */
-const sunStore = fresh => store('home-sun', () => ({ az: fresh.azimuth, el: fresh.elevation, k: 1, night: false }), s => [s.az, s.el, s.k].every(Number.isFinite));
-/* mark: the rects of this application's room, picked out on the plan */
-function sunPanel(box, rects, sun, change, mark = []) {
-  const C = 80, R = 64, A = 120, top = 20;   // svg units: compass centre and radius; the arc's radius and top margin
+/* ================= THE SUN =================
+   ☀: a compass with the plan in the middle (rects [x1, x2, y1, y2] mm, x down and y right as on the 2D plan) and the sun
+   dragged round it (the direction, from +x toward +y as core/scene.js); an arc beside it (the height); brightness; clouds;
+   day or night. The page sets sun {rects, mark, sun, change}: sun {az, el, k, clouds, night} is changed in place, change()
+   after every move; mark: rects picked out on the plan (the part of the house shown). */
+const SUN_RANGE = { azStep: 5, el: [8, 75], k: [0.3, 1.6, 0.05], clouds: [0, 1, 0.05] };   // degrees, degrees, a factor, a share
+const SC = 80, SR = 64, SA = 120, STOP = 20;   // svg units: compass centre and radius; the arc's radius and top margin
+/* one sun for every page, stored once: every page shows the same time of day. light: the light of the page's data */
+const sunStore = (/** @type {Light} */ light) => store('home-sun', () => ({ az: light.sun.azimuth, el: light.sun.elevation, k: 1, clouds: light.clouds.value, night: false }),
+  s => [s.az, s.el, s.k, s.clouds].every(Number.isFinite));
+function sunBox({ rects, mark = [], sun, change }) {
+  const raw = Alpine.raw(sun);
   const x1 = Math.min(...rects.map(q => q[0])), x2 = Math.max(...rects.map(q => q[1])), y1 = Math.min(...rects.map(q => q[2])), y2 = Math.max(...rects.map(q => q[3]));
-  const s = 0.62 * R * 2 / Math.hypot(x2 - x1, y2 - y1), cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-  const rect = q => `<rect x="${C + (q[2] - cy) * s}" y="${C + (q[0] - cx) * s}" width="${(q[3] - q[2]) * s}" height="${(q[1] - q[0]) * s}"/>`;
-  const plan = rects.map(rect).join('') + `<g class="mark">${mark.map(rect).join('')}</g>`;
-  box.innerHTML = `<div class="sunrow">
-    <svg class="compass" viewBox="0 0 ${2 * C} ${2 * C}" aria-label="Kierunek słońca"><circle cx="${C}" cy="${C}" r="${R}" class="ring"/><g class="plan">${plan}</g>
-      <line class="ray" x1="${C}" y1="${C}"/><circle class="sundot" r="9"/></svg>
-    <svg class="arc" viewBox="0 0 ${A + 20} ${A + top + 10}" aria-label="Wysokość słońca"><path class="ring" d="M10 ${A + top} A${A} ${A} 0 0 0 ${A + 10} ${top}" fill="none"/>
-      <line class="ground" x1="10" y1="${A + top}" x2="${A + 14}" y2="${A + top}"/><line class="ray" x1="10" y1="${A + top}"/><circle class="sundot" r="9"/></svg></div>
-    <p class="sunread"></p>
-    <div class="rng"><label for="sunk">Jasność</label><span></span><input id="sunk" type="range" min="${SUN_RANGE.k[0]}" max="${SUN_RANGE.k[1]}" step="${SUN_RANGE.k[2]}"></div>
-    <div class="toggle daynight" role="group" aria-label="Pora dnia"><button data-night="">Dzień</button><button data-night="1">Noc</button></div>`;
-  const [compass, arc] = box.querySelectorAll('svg'), k = box.querySelector('input');
-  /* the sun of an svg at (x, y): its dot and the ray to it */
-  const place = (svg, x, y) => {
-    for (const [a, v] of [['cx', x], ['cy', y]]) svg.querySelector('.sundot').setAttribute(a, v);
-    for (const [a, v] of [['x2', x], ['y2', y]]) svg.querySelector('.ray').setAttribute(a, v);
+  const s = 0.62 * SR * 2 / Math.hypot(x2 - x1, y2 - y1), cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+  const rect = q => `<rect x="${SC + (q[2] - cy) * s}" y="${SC + (q[0] - cx) * s}" width="${(q[3] - q[2]) * s}" height="${(q[1] - q[0]) * s}"/>`;
+  let dragging = null;
+  return {
+    fmt, plan: rects.map(rect).join('') + `<g class="mark">${mark.map(rect).join('')}</g>`,
+    az: raw.az, el: raw.el, k: raw.k, clouds: raw.clouds, night: !!raw.night,
+    get compass() { const a = this.az * Math.PI / 180; return [SC + SR * Math.sin(a), SC + SR * Math.cos(a)]; },
+    get arc() { const e = this.el * Math.PI / 180; return [10 + SA * Math.cos(e), SA + STOP - SA * Math.sin(e)]; },
+    set(key, v) { this[key] = raw[key] = v; change(); },
+    /* a drag on an svg: the pointer in its own units */
+    down(e, what) { e.currentTarget.setPointerCapture(e.pointerId); dragging = what; this.move(e); },
+    move(e) {
+      if (!dragging) return;
+      const svg = e.currentTarget, p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
+      const q = p.matrixTransform(svg.getScreenCTM().inverse());
+      if (dragging === 'az') { const d = Math.atan2(q.x - SC, q.y - SC) * 180 / Math.PI; this.set('az', (Math.round(d / SUN_RANGE.azStep) * SUN_RANGE.azStep + 360) % 360); }
+      else { const d = Math.atan2(SA + STOP - q.y, q.x - 10) * 180 / Math.PI; this.set('el', Math.min(SUN_RANGE.el[1], Math.max(SUN_RANGE.el[0], Math.round(d)))); }
+    },
+    up() { dragging = null; }
   };
-  const draw = () => {
-    const a = sun.az * Math.PI / 180, e = sun.el * Math.PI / 180;
-    place(compass, C + R * Math.sin(a), C + R * Math.cos(a));
-    place(arc, 10 + A * Math.cos(e), A + top - A * Math.sin(e));
-    box.querySelector('.sunread').textContent = `Kierunek ${sun.az}° · wysokość ${sun.el}°`;
-    k.value = sun.k; box.querySelector('.rng span').textContent = fmt(sun.k, 2);
-    for (const b of box.querySelectorAll('[data-night]')) { const on = !!b.dataset.night === !!sun.night; b.toggleAttribute('data-on', on); b.setAttribute('aria-pressed', on); }
-  };
-  /* a drag on an svg: the pointer in its own units */
-  const drag = (svg, set) => {
-    const at = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
-    const move = e => { set(at(e)); draw(); change(); };
-    svg.onpointerdown = e => { svg.setPointerCapture(e.pointerId); move(e); svg.onpointermove = move; };
-    svg.onpointerup = svg.onpointercancel = () => { svg.onpointermove = null; };
-  };
-  drag(compass, p => { const d = Math.atan2(p.x - C, p.y - C) * 180 / Math.PI; sun.az = (Math.round(d / SUN_RANGE.azStep) * SUN_RANGE.azStep + 360) % 360; });
-  drag(arc, p => { const d = Math.atan2(A + top - p.y, p.x - 10) * 180 / Math.PI; sun.el = Math.min(SUN_RANGE.el[1], Math.max(SUN_RANGE.el[0], Math.round(d))); });
-  k.oninput = () => { sun.k = +k.value; draw(); change(); };
-  const dayNight = box.querySelector('.daynight');
-  dayNight.onclick = e => { const b = e.target.closest('[data-night]'); if (b) { sun.night = !!b.dataset.night; draw(); change(); } };
-  draw();
 }
 
-/* the 2D sheet: svg() drawn at state.zoom, zoom buttons and the download; returns draw() */
-function planSheet({ sheet, zoomIn, zoomOut, download, state, save, svg, file }) {
-  const draw = () => { sheet.innerHTML = svg(); sheet.style.setProperty('--zoom', state.zoom); };
-  zoomIn.onclick = () => { state.zoom = Math.min(4, state.zoom * 1.25); save(); draw(); };
-  zoomOut.onclick = () => { state.zoom = Math.max(0.5, state.zoom / 1.25); save(); draw(); };
-  download.onclick = () => { const a = el('a', { href: URL.createObjectURL(new Blob([svg()], { type: 'image/svg+xml' })), download: file }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
-  return draw;
+/* a text or an svg as a download */
+/** @param {string} text @param {string} type @param {string} file */
+function download(text, type, file) {
+  const a = el('a', { href: URL.createObjectURL(new Blob([text], { type })), download: file });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-/* scripts loaded in order, those already on the page skipped; resolves with the addresses it loaded (files: from the page) */
-const onPage = src => [...document.scripts].some(s => s.src === new URL(src, location.href).href);
-function scripts(files) {
-  const loaded = [];
-  const one = src => new Promise((done, failed) => {
-    const s = document.createElement('script');
-    s.src = src; s.onload = done; s.onerror = () => { s.remove(); failed(new Error('Nie można wczytać ' + src)); };   // not loaded: not on the page
-    document.head.append(s);
-  });
-  return files.filter(src => !onPage(src))
-    .reduce((p, src) => p.then(() => { loaded.push(new URL(src, location.href).href); return one(src); }), Promise.resolve())
-    .then(() => loaded);
-}
+/* ================= THE PIECES ================= */
+const ROUND = 'class="round" aria-controls';
+const PARTS = {
+  nav: `<nav class="nav" id="nav" aria-label="Rooms"><template x-for="it in nav.links"><a :href="it.href" :data-on="it.on && ''" x-text="it.name"></a></template><template x-for="(g, i) in nav.groups"><details :open="navOpen === i" :data-on="g.on && ''" @click.outside="navOpen === i && (navOpen = null)"><summary @click.prevent="navOpen = navOpen === i ? null : i" x-text="g.name"></summary><div class="navlist"><template x-for="it in g.items"><a :href="it.href" :data-on="it.on && ''" x-text="it.name"></a></template></div></details></template></nav>`,
+  view: `<canvas id="gl" aria-label="3D view" :hidden="mode !== '3d'"></canvas>`,
+  loading: `<div id="loading" x-show="loading" x-text="loading"></div>`,
+  modes: `<div class="toggle modes" id="mode" role="group" aria-label="Mode"><template x-for="m in modes"><button :data-mode="m" :aria-pressed="String(mode === m)" :data-on="mode === m && ''" @click="pick(m)" x-text="modeNames[m]"></button></template></div>`,
+  plan: `<div id="plan2d" aria-label="2D plan" x-show="mode === '2d'" x-cloak><p class="sheetnote" id="planNote" x-text="plan.note"></p><div id="sheet" x-html="plan.svg" :style="'--zoom: ' + state.zoom" @wheel.prevent="wheel($event)" @pointerdown="down($event)" @pointermove="move($event)" @pointerup="up()" @pointercancel="up()"></div></div>`,
+  docs: `<div id="documents" aria-label="Documents" x-show="mode === 'documents'" x-cloak><template x-if="docs"><div class="docview" x-data="sheetView(docs)"><template x-part="sheet"></template></div></template></div>`,
+  dock: `<div class="dock" id="dock" aria-label="Bottom menu"><template x-for="(g, gi) in menu"><span class="group"><span class="sep" x-show="gi"></span><template x-for="it in g"><button :class="it.cls || false" :aria-label="it.label || false" :aria-pressed="it.pressed === undefined ? false : String(it.pressed)" @click="it.go($event)" x-text="it.name"></button></template></span></template></div>`,
+  pad: `<div class="pad" id="pad" aria-label="Walk" hidden><button data-k="ArrowUp" aria-label="Forward">▲</button><button data-k="ArrowLeft" aria-label="Turn left">◀</button><button data-k="ArrowDown" aria-label="Back">▼</button><button data-k="ArrowRight" aria-label="Turn right">▶</button></div>`,
+  sun: `<div class="float sunfloat" id="sun" role="dialog" aria-label="Sun" x-show="float === 'sun'" x-cloak><template x-if="sun"><div x-data="sunBox(sun)"><template x-part="sunbox"></template></div></template></div>`,
+  sunbox: `<div class="sunrow">
+    <svg class="compass" viewBox="0 0 ${2 * SC} ${2 * SC}" aria-label="Direction of the sun" @pointerdown="down($event, 'az')" @pointermove="move($event)" @pointerup="up()" @pointercancel="up()">
+      <circle cx="${SC}" cy="${SC}" r="${SR}" class="ring"/><g class="plan" x-html="plan"></g>
+      <line class="ray" x1="${SC}" y1="${SC}" :x2="compass[0]" :y2="compass[1]"/><circle class="sundot" r="9" :cx="compass[0]" :cy="compass[1]"/></svg>
+    <svg class="arc" viewBox="0 0 ${SA + 20} ${SA + STOP + 10}" aria-label="Height of the sun" @pointerdown="down($event, 'el')" @pointermove="move($event)" @pointerup="up()" @pointercancel="up()">
+      <path class="ring" d="M10 ${SA + STOP} A${SA} ${SA} 0 0 0 ${SA + 10} ${STOP}" fill="none"/>
+      <line class="ground" x1="10" y1="${SA + STOP}" x2="${SA + 14}" y2="${SA + STOP}"/><line class="ray" x1="10" y1="${SA + STOP}" :x2="arc[0]" :y2="arc[1]"/><circle class="sundot" r="9" :cx="arc[0]" :cy="arc[1]"/></svg></div>
+  <p class="sunread" x-text="'Direction ' + az + '° · height ' + el + '°'"></p>
+  <div class="rng"><label for="sunk">Brightness</label><span x-text="fmt(k, 2)"></span><input id="sunk" type="range" min="${SUN_RANGE.k[0]}" max="${SUN_RANGE.k[1]}" step="${SUN_RANGE.k[2]}" :value="k" @input="set('k', +$event.target.value)"></div>
+  <div class="rng"><label for="sunc">Clouds</label><span x-text="Math.round(clouds * 100) + '%'"></span><input id="sunc" type="range" min="${SUN_RANGE.clouds[0]}" max="${SUN_RANGE.clouds[1]}" step="${SUN_RANGE.clouds[2]}" :value="clouds" @input="set('clouds', +$event.target.value)"></div>
+  <div class="toggle daynight" role="group" aria-label="Time of day"><button :data-on="!night && ''" :aria-pressed="String(!night)" @click="set('night', false)">Day</button><button :data-on="night && ''" :aria-pressed="String(night)" @click="set('night', true)">Night</button></div>`,
+  help: `<div class="float" id="help" role="dialog" aria-label="Help" x-show="float === 'help'" x-cloak data-slot></div>`,
+  corner: `<div class="corner">
+    <button ${ROUND}="" id="themebtn" aria-label="Light / dark" title="Light / dark" @click="$store.screen.toggleTheme()"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor"/></svg></button>
+    <button ${ROUND}="sun" id="sunbtn" aria-label="Sun" title="Sun" :aria-expanded="String(float === 'sun')" x-show="sun && mode === '3d'" @click="toggle('sun')">☀</button>
+    <button ${ROUND}="help" id="helpbtn" aria-label="Help" title="Help" :aria-expanded="String(float === 'help')" @click="toggle('help')">?</button></div>
+  <button class="panelbtn" @click="$store.screen.togglePanel()" x-text="$store.screen.open ? '»' : '«'" :title="$store.screen.open ? 'Hide the panel' : 'Show the panel'" :aria-label="$store.screen.open ? 'Hide the panel' : 'Show the panel'"></button>`,
+  panel: `<aside id="panel" data-slot><h1 id="title" x-text="title"></h1><p class="sub" id="subtitle" x-text="subtitle"></p>
+    <div class="toggle" id="tabs" role="tablist" aria-label="Panel" x-show="tabs.length > 1" x-cloak><template x-for="t in tabs"><button role="tab" :data-tab-id="t" :aria-selected="String(t === tab)" :data-on="t === tab && ''" :disabled="tabOff(t)" @click="pickTab(t)" x-text="tabNames[t]"></button></template></div></aside>`,
+  layers: `<template x-for="b in layerBlocks" :key="b.id"><section x-show="tab === b.tab && b.items.length" x-cloak><h2 x-text="b.name"></h2><div class="layers" :id="b.id"><template x-for="l in b.items" :key="l.k"><div :class="l.child ? 'child' : ''" :data-off="l.off && ''"><label><input type="checkbox" :checked="l.on" @change="setLayer(l.k, $event.target.checked)"> <span x-text="l.name"></span></label></div></template></div></section></template>`
+};
+/** a piece of the screen a file adds (<template x-part="name">) @param {string} name @param {string} html */
+const part = (name, html) => { PARTS[name] = html; };
+component('sunBox', sunBox);
 
-/* an implementation for a host (generic): its file (path, from the home folder; base: the home folder seen from the page),
-   then take() gives its view (checked by whatever interface it implements) with needs, its own inner files, loaded from
-   its folder and never outside it. Resolves with the view. */
-const THROUGH = new Set();                // the files loaded through implementation (for the check below)
-function implementation(base, path, take) {
-  if (!path) return Promise.reject(new Error('Brak pliku implementacji.'));
-  const folder = base + path.slice(0, path.lastIndexOf('/') + 1), keep = loaded => loaded.forEach(src => THROUGH.add(src));
-  return scripts([base + path]).then(keep).then(() => {
-    const view = take(), out = view.needs.filter(f => f.includes('..') || f.includes(':') || f.startsWith('/'));
-    if (out.length) throw new Error(`${path}: needs poza swoim folderem (${out.join(', ')})`);
-    return scripts(view.needs.map(f => folder + f)).then(keep).then(() => view);
-  });
-}
-/* Test: the scripts on this page that belong to one of folders (from the home folder, base seen from the page), when the
-   page is not in that folder and they were not loaded through implementation: [path from the home folder] */
-function scriptsOutside(base, folders) {
-  const home = new URL(base, location.href).href, dir = path => path.slice(0, path.lastIndexOf('/') + 1);
-  const own = dir(location.href.slice(home.length));
-  return [...document.scripts].filter(s => s.src.startsWith(home)).map(s => s.src)
-    .filter(src => { const rel = src.slice(home.length), f = folders.find(d => rel.startsWith(d)); return f && f !== own && !THROUGH.has(src); })
-    .map(src => src.slice(home.length));
-}
-
-/* ---------- column widths of a table, set with its data ----------
+/* ================= COLUMN WIDTHS =================
    cols: one per column, {fix: n} for numbers, codes and units (n characters, as wide as their longest value), or
    {share: k, min?, max?} for text (the room left, in proportion to k, from min to max characters; min 8). A fixed column
-   is never narrower than the longest word of its header, and no column narrower than the fields and buttons in it. If the text columns reach their max, the table is narrower
-   than its box; if they cannot get their min, it is wider and scrolls. */
+   is never narrower than the longest word of its header, and no column narrower than the fields and buttons in it. If the
+   text columns reach their max, the table is narrower than its box; if they cannot get their min, it is wider and scrolls. */
 let measure = null;
 function textWidth(text, font) {
   measure = measure || document.createElement('canvas').getContext('2d');
@@ -294,10 +284,12 @@ function setColumns(table, cols, room) {
       if (c.colSpan === 1) {
         const parts = [...c.querySelectorAll('input:not([type=hidden]), select, button')];
         if (parts.length) {
-          /* side by side (a cell that does not wrap, e.g. small buttons): the sum of their widths; else what each needs at least */
+          /* side by side (a cell that does not wrap): the sum of their widths; else what each needs at least. A field fills
+             its cell (it is as wide as the column was last time): it counts with its min-width, so a fit does not feed the next */
           const cc = getComputedStyle(c), inLine = cc.whiteSpace === 'nowrap';
           const need = parts.reduce((a, e) => { const es = getComputedStyle(e), m = (parseFloat(es.marginLeft) || 0) + (parseFloat(es.marginRight) || 0);
-            return inLine ? a + e.offsetWidth + m : Math.max(a, (parseFloat(es.minWidth) || 0) + m); }, 0);
+            const own = e.tagName === 'BUTTON' ? e.offsetWidth : parseFloat(es.minWidth) || 0;
+            return inLine ? a + own + m : Math.max(a, (parseFloat(es.minWidth) || 0) + m); }, 0);
           ctrl[at] = Math.max(ctrl[at], need + parseFloat(cc.paddingLeft) + parseFloat(cc.paddingRight) + 1);
         }
       }
@@ -334,13 +326,7 @@ function autoFit(table, box, cols) {
   if (document.fonts) document.fonts.ready.then(fit);
   return fit;
 }
-/* the columns of a table in its own markup: data-cols="s4 f9 s2n16m40" (f: fixed characters; s: a text share, with
-   n<min> and m<max> characters if given) */
-const colsOf = table => (table.dataset.cols || '').split(/\s+/).filter(Boolean).map(t => {
-  const m = /^([sf])([\d.]+)(?:n(\d+))?(?:m(\d+))?$/.exec(t);
-  return !m ? { share: 1 } : m[1] === 'f' ? { fix: +m[2] } : { share: +m[2], min: m[3] ? +m[3] : undefined, max: m[4] ? +m[4] : undefined };
-});
 
-CORE.ui = { $, fmt, byId, el, esc, option, store, layerTree, layerSwitch, layersPanel, checksHtml, appMenu, askedMode, modeToggle, showMode, menuRow,
-  panelTabs, panelToggle, bottomMenu, corner, themeButton, sunStore, sunPanel, planSheet, scripts, implementation, scriptsOutside, setColumns, autoFit, colsOf };
-})(window.CORE = window.CORE || {});
+return { MODES, TAB_NAMES, $, byId, el, part, component, page, openAll, layerTree, layerSwitch, layerList, sunStore, sunBox, download,
+  setColumns, autoFit };
+}

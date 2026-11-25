@@ -1,5 +1,145 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head><meta charset="utf-8"><title>Dom w papawerach 5 (G)</title><meta http-equiv="refresh" content="0; url=house/index.html"></head>
-<body><p><a href="house/index.html">Dom</a></p></body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="core/ui.css">
+</head>
+<body>
+<div class="app" id="app" x-data="house" :data-ready="ready && ''">
+  <template x-part="nav"></template>
+  <div class="stage" id="stage">
+    <template x-part="view"></template><template x-part="loading"></template>
+    <template x-part="modes"></template><template x-part="plan"></template><template x-part="docs"></template>
+    <div id="design" aria-label="Cabinets" x-show="mode === 'cabinets'" x-cloak>
+      <div class="cols">
+        <div><div class="sheetwrap"><table class="sheet edit" x-ref="materials"><tr class="title"><td colspan="5">Materials</td></tr>
+          <tr class="head"><td>Name</td><td title="As bought: length × width × thickness (mm); ? where the library does not give it (a front is made to size)">Size</td><td title="The board's colour; the 3D view shows its decor when the product has one">Colour</td><td title="Lacquered (satin)">Lacquer</td><td title="Where it is used: the types and the carcass parts (settings.materials of the cabinets file)">Used for</td></tr>
+          <template x-for="m in materials" :key="m.code"><tr><td x-text="m.name" :title="m.code"></td><td class="n" x-text="[m.length, m.width ?? m.depth, m.thickness].map(v => v ?? '?').join(' × ')"></td>
+            <td class="c"><i class="swatch" :style="'background:' + m.color" :title="m.color + (m.texture ? ', decor ' + m.texture : '')"></i></td><td class="c" x-text="m.lacquered ? '✓' : ''"></td><td x-text="m.uses.map(C.useLabel).join(', ')"></td></tr></template>
+        </table></div></div>
+        <div>
+          <div class="sheetwrap"><table class="sheet edit" x-ref="groups"><tr class="title"><td colspan="5">Groups</td></tr>
+            <tr class="head"><td>Group</td><td>Name</td><td title="the carcasses' backs from the wall; an island: to the worktop's back edge">Back gap</td><td title="The carcasses' depth in this group (empty: settings.carcass.depth)">Depth</td><td></td></tr>
+            <template x-for="(r, i) in groups" :key="r.id"><tr data-row :class="built.flags.groups[i]">
+              <td class="n"><input type="number" min="1" step="1" x-model="r.group"></td><td><input type="text" spellcheck="false" x-model="r.name"></td><td class="n"><input type="number" min="0" step="1" x-model="r.backGap"></td><td class="n"><input type="number" min="1" step="1" placeholder="—" x-model="r.depth"></td>
+              <td class="actions"><button type="button" class="del" title="Delete the row" aria-label="Delete the row" @click="groups.splice(i, 1)"></button></td></tr></template>
+          </table></div>
+          <div class="sheetwrap tall" @scroll="picker.row = null"><table class="sheet edit" x-ref="columns"><tr class="title"><td colspan="3">Columns</td></tr>
+            <tr class="head"><td>Group</td><td>Width</td><td></td></tr>
+            <template x-for="(r, i) in columns" :key="r.id"><tr data-row :class="built.flags.columns[i]">
+              <td class="n"><input type="number" min="1" step="1" x-model="r.group"></td><td class="n"><input type="number" min="0" step="1" x-model="r.width"></td>
+              <td class="actions"><button type="button" class="add" title="Insert a row below (a copy of this one)" @click="insert('columns', i)">+</button><button type="button" class="del" title="Delete the row" aria-label="Delete the row" @click="columns.splice(i, 1)"></button></td></tr></template>
+          </table></div>
+        </div>
+        <div class="wide"><div class="sheetwrap tall" @scroll="picker.row = null"><table class="sheet edit" x-ref="components"><tr class="title"><td colspan="15">Components</td></tr>
+          <tr class="head"><td>Group</td><td>Col.</td><td>Span</td><td title="What it is: it decides what is built">Type</td><td title="More about it; the list depends on the type">Tags</td><td title="The carcass's name: the components with the same name make one carcass (empty: none)">Carcass</td><td>Height</td><td title="Where the handle sits on the front">Handle</td><td title="The door's hinge side">Hinges</td><td title="The front's gap on the left (mm)">Gap L</td><td title="The front's gap on the right (mm)">Gap R</td><td title="The front's gap at the top (mm)">Gap T</td><td title="The front's gap at the bottom (mm)">Gap B</td><td>Note</td><td></td></tr>
+          <template x-for="(r, i) in components" :key="r.id"><tr data-row :class="built.flags.components[i]">
+            <td class="n"><input type="number" min="1" step="1" x-model="r.group"></td><td class="n"><input type="number" min="1" step="1" x-model="r.column"></td><td class="n"><input type="number" min="1" step="1" x-model="r.span"></td>
+            <td><button type="button" class="pick" :class="{none: !r.type}" title="Pick the type" @click="openPicker(r, $event, 'type')" x-text="r.type ? C.typeLabel(r.type) : '—'"></button></td>
+            <td><template x-if="C.tagsOf(r.type).length || r.tags"><button type="button" class="pick" :class="{none: !r.tags}" title="Add or remove tags" @click="openPicker(r, $event, 'tags')" x-text="r.tags ? C.tagsLabel(parseTags(r.tags).words) : ''"></button></template></td>
+            <td><input type="text" spellcheck="false" placeholder="—" x-model="r.carcass"></td><td class="n"><input type="number" min="0" step="1" x-model="r.height"></td>
+            <td><template x-if="isFront(r)"><button type="button" class="pick" title="Where the handle sits" @click="openPicker(r, $event, 'handle')" x-text="r.handle ? SIDE_NAME[r.handle] || r.handle : ''"></button></template></td>
+            <td><template x-if="isFront(r)"><button type="button" class="pick" title="The door's hinge side" @click="openPicker(r, $event, 'hinge')" x-text="r.hinge ? SIDE_NAME[r.hinge] || r.hinge : ''"></button></template></td>
+            <td class="n"><input type="number" min="0" step="1" x-model="r.gapLeft"></td><td class="n"><input type="number" min="0" step="1" x-model="r.gapRight"></td><td class="n"><input type="number" min="0" step="1" x-model="r.gapTop"></td><td class="n"><input type="number" min="0" step="1" x-model="r.gapBottom"></td>
+            <td><input type="text" x-model="r.note"></td>
+            <td class="actions"><button type="button" class="add" title="Insert a row below (a copy of this one)" @click="insert('components', i)">+</button><button type="button" class="del" title="Delete the row" aria-label="Delete the row" @click="components.splice(i, 1)"></button></td></tr></template>
+        </table></div></div>
+      </div>
+      <div class="sheetwrap drawing" x-ref="drawing" @mousemove="hover($event)" @mouseleave="tip.show = false"><div class="title">Drawing</div>
+        <div id="svg" x-html="built.svg || '<p class=&quot;note&quot;>Nothing to draw yet: add groups, columns and components in the tables above.</p>'"></div>
+        <div id="tip" x-show="tip.show" x-cloak :style="'left:' + tip.x + 'px; top:' + tip.y + 'px'" x-text="tip.text"></div></div>
+      <div class="sheetwrap"><table class="sheet edit" x-ref="notes"><tr class="title"><td colspan="4">Notes</td></tr>
+        <tr class="head"><td>Name</td><td>Description</td><td>Details</td><td></td></tr>
+        <template x-for="(n, i) in notes" :key="n.id"><tr data-row :class="EMPTY.notes(n) ? 'empty' : ''">
+          <td><textarea rows="1" x-model="n.name"></textarea></td><td><textarea rows="1" x-model="n.description"></textarea></td><td><textarea rows="1" x-model="n.details"></textarea></td>
+          <td class="actions"><button type="button" class="add" title="Insert a row below" @click="insert('notes', i)">+</button><button type="button" class="del" title="Delete the row" aria-label="Delete the row" @click="notes.splice(i, 1)"></button></td></tr></template>
+      </table></div>
+    </div>
+
+    <template x-part="dock"></template><template x-part="pad"></template><template x-part="sun"></template>
+    <template x-part="help">
+      <div x-show="mode === '3d'"><p>Turn: left button, about the point under the cursor (an orange dot marks it while turning) · move: right · zoom: the wheel, toward the cursor.</p>
+        <p><b>Walk</b>: the arrows walk and turn, A/D a step aside, Shift faster, PgUp/PgDn or a drag look, Space opens the nearest door, Esc ends.</p>
+        <p><b>Open</b> (the menu): every door and drawer opens; then <b>Close</b>. <b>House</b> or <b>Room</b> (top left): the whole house, or its walls cut to the active room; a room picked in the floors' menus is the active one (the panel's). <b>Finish</b> (the panel): the active room: the metal of all its fittings, its boards, its floor tiles; a change is kept in this browser over the data (Back to the data).</p>
+        <p><b>View</b> (the panel): the floors and the layers; an element shows when its floor and its kind are both on. A click on a door opens or closes it. Walk: the whole house only.</p>
+        <p>In a room, the walls and the ceiling between the camera and the room hide; the floors do not apply there, only the elements.</p></div>
+      <div x-show="mode === '2d'"><p>The plan of each floor as a CAD drawing: solid what lies under the cut, dashed what is over it, dash-dot where two rooms meet with no wall. The wheel zooms about the cursor, a drag moves the sheet. Below: the whole sheet again, the SVG to print.</p></div>
+      <div x-show="mode === 'cabinets'">
+      <p>The cabinets file of a room in tables: its groups, their columns, the components and the notes. The materials are read only (they say what each type is made of). The drawing under the tables follows every change, each part in its material's colour; the cursor on a part shows its sizes.</p>
+      <p><b>Export</b> saves the cabinets file, to put in place of the one in room/; <b>Import</b> reads such a file into the tables.</p>
+      </div>
+      <div x-show="mode === 'documents'"><p>The rooms with their areas, the doors with what is bought for them, the notes, the furniture as a tree, the Test (the checks of the data and of the model: OK, nothing to correct; a number, what to correct; i, to know). Shaded fields may be changed until a reload. Below: the XLSX with its formulas.</p></div>
+    </template>
+    <template x-part="corner"></template>
+  </div>
+  <template x-part="panel"><template x-part="layers"></template>
+    <template x-if="mode === 'cabinets'"><div>    <p class="status" :class="{error: status.error}" x-show="status.text" x-cloak x-text="status.text"></p>
+    <h2>Drawing</h2>
+    <p class="note" x-text="hoverText"></p>
+    <h2>Problems in the data</h2>
+    <p class="note" x-show="!built.warnings.length">None.</p>
+    <div class="issues" x-show="built.warnings.length" x-cloak>
+      <b x-text="built.warnings.length + ' ' + plural(built.warnings.length, 'problem', 'problems') + ' in the data'"></b>
+      <ul><template x-for="(w, i) in built.warnings" :key="i"><li x-text="w"></li></template></ul>
+    </div>
+</div></template>
+    <section x-show="tab === 'finish'" x-cloak><template x-if="!finish || !(finish.layout || finish.furniture || finish.ownTiles)"><p class="note">Nothing to finish in this room.</p></template></section>
+    <template x-if="finish && finish.furniture"><section x-show="tab === 'finish'" x-cloak><h2>Furniture</h2><div class="lay">
+      <label>Metal<select @change="setFinish(finish?.room, 'metal', null, $event.target.value)"><template x-for="m in finish?.furniture?.metals" :key="m.k"><option :value="m.k" :selected="m.k === finish?.furniture?.metal" x-text="m.name"></option></template></select></label>
+      <template x-for="b in finish?.furniture?.boards" :key="b.from"><label><span x-text="b.roles"></span><select @change="setFinish(finish?.room, 'board', b.from, $event.target.value)"><template x-for="o in b.options" :key="o.k"><option :value="o.k" :selected="o.k === b.value" x-text="o.name"></option></template></select></label></template>
+      <template x-if="finish?.furniture?.changed"><div class="btns"><button class="btn ghost" @click="setFinish(finish?.room, 'reset')">Back to the data</button></div></template>
+    </div></section></template>
+    <section x-show="tab === 'finish' && finish" x-cloak><h2>Floor tiles</h2>
+      <template x-if="finish && !finish.layout"><p class="note" x-text="finish?.ownTiles ? 'The room lays its own tiles (its design: walls and floor).' : 'No tiles here.'"></p></template>
+      <template x-if="finish && finish.layout"><div class="lay">
+        <label>Tile<select @change="setTiles(finish?.layout?.key, 'product', $event.target.value)"><template x-for="p in finish?.layout?.products" :key="p.k"><option :value="p.k" :selected="p.k === finish?.layout?.L.product" x-text="p.name"></option></template></select></label>
+        <div class="row"><label>Pattern<select @change="setTiles(finish?.layout?.key, 'pattern', $event.target.value)"><template x-for="p in finish?.layout?.patterns" :key="p.k"><option :value="p.k" :selected="p.k === finish?.layout?.L.pattern" x-text="p.name"></option></template></select></label>
+          <label>Direction<select @change="setTiles(finish?.layout?.key, 'dir', $event.target.value)"><template x-for="d in finish?.layout?.dirs" :key="d.k"><option :value="d.k" :selected="d.k === finish?.layout?.L.dir" x-text="d.name"></option></template></select></label></div>
+        <div class="row"><label>Origin along (mm)<input type="number" step="1" :value="finish?.layout?.L.oa" @change="setTiles(finish?.layout?.key, 'oa', $event.target.value)"></label>
+          <label>Origin across (mm)<input type="number" step="1" :value="finish?.layout?.L.ob" @change="setTiles(finish?.layout?.key, 'ob', $event.target.value)"></label></div>
+        <div class="row"><label>Grout<input type="color" :value="finish?.layout?.L.grout" @change="setTiles(finish?.layout?.key, 'grout', $event.target.value)"></label>
+          <label>&nbsp;<button class="btn ghost" @click="fitTiles(finish?.layout?.key)">Fit the origin</button></label></div>
+        <template x-if="finish?.layout?.changed"><div class="btns"><button class="btn ghost" @click="setTiles(finish?.layout?.key, 'reset')">Back to the data</button></div></template>
+      </div></template></section></template>
+  <!-- one picker for a component row: the type, the tags, the handle or the hinges (fixed, so no table's scroll clips it) -->
+  <div class="picker" :class="{one: picker.mode !== 'type'}" x-show="picker.row" x-cloak :style="'left:' + picker.x + 'px; top:' + picker.y + 'px'"
+       @click.outside="if (!$event.target.closest('.pick')) picker.row = null" @keydown.escape.window="picker.row = null">
+    <div class="title" x-text="{ type: 'type', tags: 'tags: ' + C.typeLabel(picker.row?.type), handle: 'handle', hinge: 'hinges' }[picker.mode]"></div>
+    <template x-for="o in pickerOptions" :key="o.key"><label><input :type="o.many ? 'checkbox' : 'radio'" name="pick" :checked="o.on" @change="o.pick()"> <span x-text="o.name"></span></label></template>
+  </div>
+  <input type="file" x-ref="importFile" accept=".js,.json,text/javascript,application/json" hidden @change="importFile($event)">
+</div>
+<script src="core/load.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="core/geometry.js"></script>
+<script src="core/tools.js"></script>
+<script src="core/faces.js"></script>
+<script src="core/scene.js"></script>
+<script src="core/parts.js"></script>
+<script src="core/ui.js"></script>
+<script src="core/plan2d.js"></script>
+<script src="core/sheet.js"></script>
+<script src="core/tree.js"></script>
+<script src="library/catalog.js"></script>
+<script src="core/estimate.js"></script>
+<script src="house/model.js"></script>
+<script src="house/plan.js"></script>
+<script src="house/docs.js"></script>
+<script src="library/shapes.js"></script>
+<script src="room/cabinets.js"></script>
+<script src="room/furniture.js"></script>
+<script src="room/tiles.js"></script>
+<script src="room/model.js"></script>
+<script src="room/parts.js"></script>
+<script src="room/docs.js"></script>
+<script src="room/design.js"></script>
+<script src="index.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+</body>
 </html>
