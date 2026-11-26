@@ -10,11 +10,11 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] core/hierarchy: built from the root down (`add`); places from offsets, settings, refs, layers from the root down, checks; its test
 - [x] tests: one per module, at its path
 - [x] `layers.json` (root): the panel reads it; `checks(known)`: unknown layers; its test
+- [x] `house/model.json` from the prototype's `house.js`, in x East (checked against `analysis.md`); `house/build.js`: its hierarchy, layers by type; its test
 - [x] library/shapes: a product as parts in its own axes (`shapeOf`), materials by key or `metal` (Finish); its test
 
 ## Next
-- [ ] `house/model.json` from `analysis.md` (foundation, walls with their openings, slabs, roof; Ground Floor / First Floor / Attic, each from its slab; the rooms as places; the layers' keys) and `house/build.js`: the house's branches; walls cut round their openings
-- [ ] `plot3d.js` (root): the hierarchy in three.js: a leaf's parts, or its product's shape (`shapeOf`); placed by the hierarchy, its look by material; the granite's speckle
+- [ ] `plot3d.js` (root): the hierarchy in three.js: walls cut round their openings (and the EPS they cross), boxes under the roof cut by it, an element over both floors split at `split` for its floor layer; a leaf's parts, or its product's shape (`shapeOf`); placed by the hierarchy, its look by material; the granite's speckle
 - [ ] `room/build.js`: a room's fittings from the library (lamps, basin, mirror); calls the cabinets, adds what they need from the library; a WC frame's parts behind the casing (Installations): their own node
 - [ ] `room/cabinets.js` and `room/<room>.cabinets.json` (materials, settings, groups, components): the cabinets' engine, by stages; the hardware, the kitchen tap, the trap; tiles
 - [ ] `plot2d.js` (root): plans and dimensions

@@ -1,0 +1,3479 @@
+{
+ "format": "house",
+ "version": 1,
+ "id": "house",
+ "name": "Dom w papawerach 5 (G)",
+ "type": "house",
+ "offset": [
+  0,
+  0,
+  0
+ ],
+ "size": [
+  13200,
+  9100,
+  9000
+ ],
+ "settings": {
+  "tiles": {
+   "reserve": 0.1,
+   "grout": 1,
+   "top": 3,
+   "depth": 12,
+   "layers": [
+    "floorTiles"
+   ],
+   "small": "smallCuts"
+  },
+  "view": {
+   "edges": {
+    "color": "#7d807b",
+    "opacity": 0.45,
+    "layers": [
+     "edges"
+    ]
+   },
+   "light": {
+    "exposure": 0.85,
+    "sun": {
+     "azimuth": 330,
+     "elevation": 38,
+     "intensity": 1.35,
+     "color": "#fff1dc"
+    },
+    "sky": {
+     "intensity": 0.6,
+     "color": "#cfe0ff",
+     "groundColor": "#a9a596",
+     "gradient": [
+      [
+       0,
+       "#5f8fc4"
+      ],
+      [
+       0.32,
+       "#9dbfe0"
+      ],
+      [
+       0.49,
+       "#e4ecef"
+      ],
+      [
+       0.51,
+       "#b7bfae"
+      ],
+      [
+       1,
+       "#6f7a5e"
+      ]
+     ]
+    },
+    "fog": {
+     "color": "#dfe7ea",
+     "near": 60000,
+     "far": 160000
+    },
+    "clouds": {
+     "value": 0.7,
+     "sun": 0.2,
+     "sky": 2.2,
+     "blur": 8
+    },
+    "inside": {
+     "exposure": 1.05,
+     "sun": {
+      "intensity": 2.6,
+      "reach": 6
+     },
+     "sky": {
+      "color": "#f4f6f9",
+      "groundColor": "#8a8178",
+      "intensity": 1.5
+     }
+    }
+   },
+   "cameras": [
+    {
+     "name": "Front",
+     "eye": [
+      -14300,
+      -6500,
+      4200
+     ],
+     "target": [
+      6600,
+      4550,
+      3300
+     ]
+    },
+    {
+     "name": "Garden",
+     "eye": [
+      26700,
+      13500,
+      3800
+     ],
+     "target": [
+      8200,
+      4550,
+      3300
+     ]
+    },
+    {
+     "name": "Above",
+     "eye": [
+      -9800,
+      -11500,
+      17500
+     ],
+     "target": [
+      6600,
+      4550,
+      2500
+     ]
+    }
+   ],
+   "walk": {
+    "eye": 1600,
+    "radius": 220,
+    "step": 360,
+    "headroom": 100,
+    "speed": 1400,
+    "turn": 90,
+    "look": 50,
+    "run": 2.2,
+    "start": {
+     "x": 12200,
+     "y": 5200,
+     "heading": 180
+    }
+   },
+   "planNote": "Garden at the top, the front at the bottom. Hatched: EPS."
+  }
+ },
+ "source": "Geometry from the archon.pl plans (±23 mm), with the build changes.",
+ "notes": [
+  "A heat pump instead of a gas boiler: one chimney (the living room), no ventilation shaft and no second chimney.",
+  "Build changes: the shower niche in the ground floor bathroom 1000 × 900 mm (walls #7, #8, #10 moved), the attic bathroom door moved 200 mm toward the garden, a cathedral ceiling over the bedroom.",
+  "A cantilevered stair (no stringers), no wall under the flight.",
+  "Wardrobes 3 and 4 in the attic with narrow doors 700/2050 from the bedroom (archon: an opening without a door and without the wall).",
+  "Attic room 6: the wall by the ventilation shaft removed (a heat recovery unit instead of the shaft); shelving in the niche.",
+  "The facade (graphite, white, timber) read from the archon renderings: a picture, not a dimension.",
+  "The inner doors have standard openings (our decision, not archon's 820–940): 900 × 2050 for a door \"80\" to a room, 700 × 2050 for a door \"60\" to a wardrobe; each kept on archon's centre."
+ ],
+ "geometry": {
+  "split": 2720,
+  "types": {
+   "footing": {
+    "name": "footing",
+    "material": "concrete",
+    "cap": "concrete",
+    "thickness": 400,
+    "layers": [
+     "footings"
+    ]
+   },
+   "foundation": {
+    "name": "foundation wall",
+    "material": "concrete",
+    "cap": "concrete",
+    "thickness": 240,
+    "layers": [
+     "foundationWalls"
+    ]
+   },
+   "chimneyFoundation": {
+    "name": "chimney foundation",
+    "material": "concrete",
+    "cap": "concrete",
+    "layers": [
+     "foundationWalls"
+    ]
+   },
+   "groundSlab": {
+    "name": "ground slab",
+    "material": "concrete",
+    "cap": "concrete",
+    "thickness": 360,
+    "layers": [
+     "groundSlab"
+    ],
+    "walkable": true
+   },
+   "block240": {
+    "name": "block 240 mm",
+    "material": "plasterInside",
+    "cap": "block",
+    "thickness": 240,
+    "layers": [
+     "blocks"
+    ],
+    "opened": true,
+    "host": true
+   },
+   "block120": {
+    "name": "block 120 mm",
+    "material": "plasterInside",
+    "cap": "block",
+    "thickness": 120,
+    "layers": [
+     "blocks"
+    ],
+    "opened": true,
+    "host": true
+   },
+   "chimney": {
+    "name": "chimney",
+    "material": "plasterInside",
+    "cap": "block",
+    "layers": [
+     "chimney"
+    ]
+   },
+   "eps": {
+    "name": "EPS 200 mm",
+    "material": "plasterWhite",
+    "raw": "insulation",
+    "finish": "facade",
+    "cap": "insulation",
+    "thickness": 200,
+    "layers": [
+     "eps"
+    ],
+    "opened": true
+   },
+   "epsSoffit": {
+    "name": "EPS of the recess soffit 470 mm",
+    "material": "plasterWhite",
+    "raw": "insulation",
+    "finish": "facade",
+    "cap": "insulation",
+    "thickness": 470,
+    "layers": [
+     "eps"
+    ],
+    "opened": true
+   },
+   "ringBeam": {
+    "name": "ring beam over the portal wing",
+    "material": "plasterInside",
+    "cap": "concrete",
+    "thickness": 240,
+    "layers": [
+     "ringBeams"
+    ]
+   },
+   "balustrade": {
+    "name": "stair balustrade (plain, assumed: not in the drawings)",
+    "material": "tread",
+    "cap": "tread",
+    "thickness": 40,
+    "layers": [
+     "stair"
+    ]
+   },
+   "slab": {
+    "name": "slab with ring beam",
+    "material": "plasterInside",
+    "cap": "concrete",
+    "thickness": 340,
+    "layers": [
+     "slab"
+    ],
+    "walkable": true
+   },
+   "ceiling": {
+    "name": "ceiling with insulation",
+    "material": "plasterInside",
+    "cap": "insulation",
+    "thickness": 390,
+    "layers": [
+     "ceiling"
+    ],
+    "floor": "attic"
+   },
+   "window": {
+    "glazed": {
+     "sill": true
+    },
+    "layers": [
+     "windows"
+    ]
+   },
+   "glassDoor": {
+    "glazed": {
+     "sill": true
+    },
+    "passage": true,
+    "layers": [
+     "outerDoors"
+    ]
+   },
+   "gate": {
+    "leaf": "gate",
+    "layers": [
+     "outerDoors"
+    ]
+   },
+   "entrance": {
+    "leaf": "entrance",
+    "glazed": {
+     "sill": true
+    },
+    "passage": true,
+    "layers": [
+     "outerDoors"
+    ]
+   },
+   "door": {
+    "passage": true,
+    "door": "inner",
+    "layers": [
+     "innerDoors"
+    ]
+   },
+   "roofWindow": {
+    "name": "roof window",
+    "layers": [
+     "roofWindows"
+    ]
+   },
+   "void": {
+    "name": "void: cut out of what it crosses"
+   },
+   "voidBox": {
+    "name": "a box of a void"
+   }
+  },
+  "frames": {
+   "width": 70,
+   "depth": 80,
+   "bar": 60,
+   "glassDepth": 10,
+   "material": "frame",
+   "glass": "glass",
+   "doors": {
+    "inner": {
+     "frame": 10,
+     "stop": 25,
+     "gap": 3,
+     "bottom": 10,
+     "depth": 40,
+     "angle": 90,
+     "material": "doorWhite",
+     "frameMaterial": "doorFrame",
+     "handle": {
+      "height": 1000,
+      "inset": 60,
+      "rosette": 50,
+      "rosetteDepth": 8,
+      "offset": 8,
+      "lever": 130,
+      "width": 18,
+      "material": "steel"
+     }
+    }
+   },
+   "leaves": {
+    "gate": {
+     "material": "graphite",
+     "depth": [
+      20,
+      60
+     ],
+     "grooves": 4,
+     "groove": "groove",
+     "grooveDepth": [
+      16,
+      20
+     ],
+     "grooveHeight": 16
+    },
+    "entrance": {
+     "material": "graphite",
+     "depth": [
+      10,
+      70
+     ],
+     "grooves": 4,
+     "groove": "groove",
+     "grooveDepth": [
+      6,
+      10
+     ],
+     "grooveHeight": 12,
+     "handle": {
+      "length": 1200,
+      "width": 30,
+      "depth": [
+       -40,
+       10
+      ],
+      "inset": 140,
+      "centre": 1150,
+      "material": "steel"
+     }
+    }
+   }
+  },
+  "finishes": [
+   {
+    "h": [
+     null,
+     0
+    ],
+    "material": "plinth"
+   },
+   {
+    "side": "E",
+    "y": [
+     640,
+     8460
+    ],
+    "h": [
+     0,
+     null
+    ],
+    "material": "graphite"
+   },
+   {
+    "side": "E",
+    "y": [
+     1550,
+     7550
+    ],
+    "h": [
+     2400,
+     3060
+    ],
+    "material": "woodHorizontal"
+   },
+   {
+    "side": "W",
+    "y": [
+     640,
+     8460
+    ],
+    "h": [
+     0,
+     null
+    ],
+    "material": "graphite"
+   },
+   {
+    "side": "W",
+    "x": [
+     0,
+     200
+    ],
+    "y": [
+     640,
+     8460
+    ],
+    "h": [
+     2250,
+     3060
+    ],
+    "material": "plasterWhite"
+   },
+   {
+    "side": "W",
+    "x": [
+     0,
+     200
+    ],
+    "y": [
+     3880,
+     5220
+    ],
+    "h": [
+     3060,
+     null
+    ],
+    "material": "woodVertical",
+    "below": [
+     {
+      "h": 5910,
+      "y": 3880,
+      "pitch": 1
+     },
+     {
+      "h": 5910,
+      "y": 5220,
+      "pitch": -1
+     }
+    ]
+   },
+   {
+    "side": "W",
+    "x": [
+     900,
+     1100
+    ],
+    "y": [
+     6150,
+     6610
+    ],
+    "h": [
+     0,
+     2720
+    ],
+    "material": "woodVertical"
+   },
+   {
+    "side": "W",
+    "x": [
+     900,
+     1100
+    ],
+    "y": [
+     7410,
+     8460
+    ],
+    "h": [
+     0,
+     2720
+    ],
+    "material": "woodVertical"
+   },
+   {
+    "side": "S",
+    "x": [
+     200,
+     900
+    ],
+    "y": [
+     4350,
+     4550
+    ],
+    "h": [
+     0,
+     2720
+    ],
+    "material": "graphite"
+   },
+   {
+    "side": "N",
+    "x": [
+     0,
+     1100
+    ],
+    "y": [
+     8460,
+     8660
+    ],
+    "h": [
+     0,
+     2720
+    ],
+    "material": "graphite"
+   },
+   {
+    "side": "down",
+    "x": [
+     200,
+     1100
+    ],
+    "material": "graphite"
+   },
+   {
+    "side": "S",
+    "x": [
+     4170,
+     9870
+    ],
+    "h": [
+     0,
+     2400
+    ],
+    "material": "graphite"
+   },
+   {
+    "side": "N",
+    "x": [
+     3560,
+     11930
+    ],
+    "h": [
+     0,
+     2400
+    ],
+    "material": "graphite"
+   },
+   {
+    "elements": [
+     "chimney"
+    ],
+    "h": [
+     7000,
+     null
+    ],
+    "material": "graphite"
+   }
+  ],
+  "part": {
+   "fixtures": true,
+   "roof": true,
+   "types": [
+    "groundSlab",
+    "foundation",
+    "chimneyFoundation",
+    "block240",
+    "block120",
+    "chimney",
+    "slab",
+    "ringBeam",
+    "ceiling"
+   ]
+  },
+  "body": [
+   0,
+   13200
+  ]
+ },
+ "children": [
+  {
+   "id": "foundation",
+   "name": "Foundation",
+   "type": "assembly",
+   "offset": [
+    0,
+    0,
+    0
+   ],
+   "size": [
+    13200,
+    9100,
+    9000
+   ],
+   "children": [
+    {
+     "id": "footingLeft",
+     "name": "footing",
+     "type": "footing",
+     "offset": [
+      -1000,
+      20,
+      -1320
+     ],
+     "size": [
+      15200,
+      600,
+      400
+     ]
+    },
+    {
+     "id": "footingRight",
+     "name": "footing",
+     "type": "footing",
+     "offset": [
+      -1000,
+      8480,
+      -1320
+     ],
+     "size": [
+      15200,
+      600,
+      400
+     ]
+    },
+    {
+     "id": "footingGarden",
+     "name": "footing",
+     "type": "footing",
+     "offset": [
+      12580,
+      620,
+      -1320
+     ],
+     "size": [
+      600,
+      7860,
+      400
+     ]
+    },
+    {
+     "id": "footingFront",
+     "name": "footing",
+     "type": "footing",
+     "offset": [
+      20,
+      620,
+      -1320
+     ],
+     "size": [
+      600,
+      3910,
+      400
+     ]
+    },
+    {
+     "id": "footingRecess",
+     "name": "footing",
+     "type": "footing",
+     "offset": [
+      620,
+      3930,
+      -1320
+     ],
+     "size": [
+      900,
+      600,
+      400
+     ]
+    },
+    {
+     "id": "footingEntrance",
+     "name": "footing",
+     "type": "footing",
+     "offset": [
+      920,
+      4530,
+      -1320
+     ],
+     "size": [
+      600,
+      3950,
+      400
+     ]
+    },
+    {
+     "id": "footingWall4",
+     "name": "footing",
+     "type": "footing",
+     "offset": [
+      3770,
+      3930,
+      -1320
+     ],
+     "size": [
+      3190,
+      600,
+      400
+     ]
+    },
+    {
+     "id": "footingWall7",
+     "name": "footing",
+     "type": "footing",
+     "offset": [
+      3770,
+      4530,
+      -1320
+     ],
+     "size": [
+      600,
+      3430,
+      400
+     ]
+    },
+    {
+     "id": "footingWall2",
+     "name": "footing",
+     "type": "footing",
+     "offset": [
+      7550,
+      620,
+      -1320
+     ],
+     "size": [
+      600,
+      2790,
+      400
+     ]
+    },
+    {
+     "id": "footingChimney",
+     "name": "footing",
+     "type": "footing",
+     "offset": [
+      7550,
+      3410,
+      -1320
+     ],
+     "size": [
+      1120,
+      1120,
+      400
+     ]
+    },
+    {
+     "id": "foundationLeft",
+     "name": "foundation wall",
+     "type": "foundation",
+     "offset": [
+      -800,
+      200,
+      -920
+     ],
+     "size": [
+      14800,
+      240,
+      920
+     ]
+    },
+    {
+     "id": "foundationRight",
+     "name": "foundation wall",
+     "type": "foundation",
+     "offset": [
+      -800,
+      8660,
+      -920
+     ],
+     "size": [
+      14800,
+      240,
+      920
+     ]
+    },
+    {
+     "id": "foundationGarden",
+     "name": "foundation wall",
+     "type": "foundation",
+     "offset": [
+      12760,
+      440,
+      -920
+     ],
+     "size": [
+      240,
+      8220,
+      920
+     ]
+    },
+    {
+     "id": "foundationFront",
+     "name": "foundation wall",
+     "type": "foundation",
+     "offset": [
+      200,
+      440,
+      -920
+     ],
+     "size": [
+      240,
+      3910,
+      920
+     ]
+    },
+    {
+     "id": "foundationRecess",
+     "name": "foundation wall",
+     "type": "foundation",
+     "offset": [
+      440,
+      4110,
+      -920
+     ],
+     "size": [
+      900,
+      240,
+      920
+     ]
+    },
+    {
+     "id": "foundationEntrance",
+     "name": "foundation wall",
+     "type": "foundation",
+     "offset": [
+      1100,
+      4350,
+      -920
+     ],
+     "size": [
+      240,
+      4310,
+      920
+     ]
+    },
+    {
+     "id": "foundationWall4",
+     "name": "foundation wall",
+     "type": "foundation",
+     "offset": [
+      3950,
+      4110,
+      -920
+     ],
+     "size": [
+      2710,
+      240,
+      920
+     ]
+    },
+    {
+     "id": "foundationWall7",
+     "name": "foundation wall",
+     "type": "foundation",
+     "offset": [
+      3950,
+      4350,
+      -920
+     ],
+     "size": [
+      240,
+      3310,
+      920
+     ]
+    },
+    {
+     "id": "foundationWall2",
+     "name": "foundation wall",
+     "type": "foundation",
+     "offset": [
+      7730,
+      440,
+      -920
+     ],
+     "size": [
+      240,
+      3150,
+      920
+     ]
+    },
+    {
+     "id": "foundationChimney",
+     "name": "chimney foundation",
+     "type": "chimneyFoundation",
+     "offset": [
+      7730,
+      3590,
+      -920
+     ],
+     "size": [
+      760,
+      760,
+      920
+     ]
+    },
+    {
+     "id": "groundSlabGarage",
+     "name": "ground slab",
+     "type": "groundSlab",
+     "offset": [
+      440,
+      440,
+      -360
+     ],
+     "size": [
+      12320,
+      3670,
+      360
+     ],
+     "cuts": [
+      "foundationWall2",
+      "foundationWall4",
+      "foundationChimney"
+     ]
+    },
+    {
+     "id": "groundSlabHouse",
+     "name": "ground slab",
+     "type": "groundSlab",
+     "offset": [
+      1340,
+      4110,
+      -360
+     ],
+     "size": [
+      11420,
+      4550,
+      360
+     ],
+     "cuts": [
+      "foundationWall4",
+      "foundationWall7",
+      "foundationChimney"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "groundFloor",
+   "name": "Ground floor",
+   "type": "floor",
+   "offset": [
+    0,
+    0,
+    0
+   ],
+   "size": [
+    13200,
+    9100,
+    2720
+   ],
+   "settings": {
+    "tiles": {
+     "product": "paradyz-authority-graphite",
+     "dir": "x",
+     "origin": [
+      13965,
+      750
+     ]
+    },
+    "view": {
+     "cameras": [
+      {
+       "name": "Plan",
+       "eye": [
+        6540,
+        4550,
+        23000
+       ],
+       "target": [
+        6600,
+        4550,
+        0
+       ]
+      },
+      {
+       "name": "Perspective",
+       "eye": [
+        -5800,
+        -6500,
+        10500
+       ],
+       "target": [
+        7000,
+        4550,
+        600
+       ]
+      },
+      {
+       "name": "Living room",
+       "eye": [
+        12300,
+        8300,
+        1600
+       ],
+       "target": [
+        8000,
+        3000,
+        900
+       ]
+      },
+      {
+       "name": "Entrance",
+       "eye": [
+        1700,
+        5400,
+        1600
+       ],
+       "target": [
+        6700,
+        5200,
+        1000
+       ]
+      }
+     ],
+     "plan": 1500
+    }
+   },
+   "inside": [
+    [
+     440,
+     12760,
+     440,
+     4110
+    ],
+    [
+     1340,
+     12760,
+     4110,
+     8660
+    ]
+   ],
+   "other": [
+    {
+     "name": "Stairs",
+     "area": [
+      [
+       6780,
+       7730,
+       2970,
+       4350
+      ]
+     ]
+    }
+   ],
+   "layers": [
+    "groundFloor"
+   ],
+   "children": [
+    {
+     "id": "blockLeft",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      -800,
+      200,
+      0
+     ],
+     "size": [
+      14800,
+      240,
+      2720
+     ],
+     "children": [
+      {
+       "id": "window_garage_2",
+       "name": "Window 2000/1000",
+       "type": "window",
+       "offset": [
+        4380,
+        -200,
+        1100
+       ],
+       "size": [
+        2000,
+        440,
+        1000
+       ],
+       "label": "2000/1000",
+       "outer": "N"
+      }
+     ]
+    },
+    {
+     "id": "blockRight",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      -800,
+      8660,
+      0
+     ],
+     "size": [
+      14800,
+      240,
+      2720
+     ],
+     "children": [
+      {
+       "id": "window_kitchen_6_fixed",
+       "name": "Window 2500/2400",
+       "type": "window",
+       "offset": [
+        10670,
+        0,
+        0
+       ],
+       "size": [
+        2500,
+        440,
+        2400
+       ],
+       "label": "2500/2400",
+       "outer": "S"
+      },
+      {
+       "id": "window_kitchen_6",
+       "name": "Window 1900/1300",
+       "type": "window",
+       "offset": [
+        7380,
+        0,
+        1100
+       ],
+       "size": [
+        1900,
+        440,
+        1300
+       ],
+       "label": "1900/1300",
+       "outer": "S",
+       "cols": 2
+      },
+      {
+       "id": "window_bathroom_7",
+       "name": "Window 1000/1300",
+       "type": "window",
+       "offset": [
+        4970,
+        0,
+        1100
+       ],
+       "size": [
+        1000,
+        440,
+        1300
+       ],
+       "label": "1000/1300",
+       "outer": "S"
+      }
+     ]
+    },
+    {
+     "id": "blockGarden",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      12760,
+      440,
+      0
+     ],
+     "size": [
+      240,
+      8220,
+      2720
+     ],
+     "children": [
+      {
+       "id": "window_living_5",
+       "name": "Window 6000/2400",
+       "type": "window",
+       "offset": [
+        0,
+        1110,
+        0
+       ],
+       "size": [
+        440,
+        6000,
+        2400
+       ],
+       "label": "6000/2400",
+       "outer": "E",
+       "cols": 4
+      }
+     ]
+    },
+    {
+     "id": "blockGarageFront",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      200,
+      440,
+      0
+     ],
+     "size": [
+      240,
+      3910,
+      2720
+     ],
+     "children": [
+      {
+       "id": "gate_garage_2",
+       "name": "Gate 2750/2250",
+       "type": "gate",
+       "offset": [
+        -200,
+        710,
+        0
+       ],
+       "size": [
+        440,
+        2750,
+        2250
+       ],
+       "label": "2750/2250",
+       "outer": "W"
+      }
+     ]
+    },
+    {
+     "id": "blockRecess",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      440,
+      4110,
+      0
+     ],
+     "size": [
+      900,
+      240,
+      2720
+     ]
+    },
+    {
+     "id": "blockEntrance",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      1100,
+      4350,
+      0
+     ],
+     "size": [
+      240,
+      4310,
+      2720
+     ],
+     "children": [
+      {
+       "id": "entrance_vestibule_1",
+       "name": "Entrance door 1600/2100",
+       "type": "entrance",
+       "offset": [
+        -200,
+        200,
+        0
+       ],
+       "size": [
+        440,
+        1600,
+        2100
+       ],
+       "label": "1600/2100",
+       "outer": "W",
+       "leaf": 1000
+      },
+      {
+       "id": "glassdoor_boiler_8",
+       "name": "Glass door 800/2100",
+       "type": "glassDoor",
+       "offset": [
+        -200,
+        2260,
+        0
+       ],
+       "size": [
+        440,
+        800,
+        2100
+       ],
+       "label": "800/2100",
+       "outer": "W"
+      }
+     ]
+    },
+    {
+     "id": "chimney",
+     "name": "chimney",
+     "type": "chimney",
+     "offset": [
+      7730,
+      3590,
+      0
+     ],
+     "size": [
+      760,
+      760,
+      9000
+     ]
+    },
+    {
+     "id": "wall2",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      7730,
+      440,
+      0
+     ],
+     "size": [
+      240,
+      3150,
+      2720
+     ]
+    },
+    {
+     "id": "wall3",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      6660,
+      3200,
+      0
+     ],
+     "size": [
+      120,
+      1150,
+      2720
+     ]
+    },
+    {
+     "id": "wall4",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      3950,
+      4110,
+      0
+     ],
+     "size": [
+      2710,
+      240,
+      2720
+     ]
+    },
+    {
+     "id": "wall5",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      5860,
+      5800,
+      0
+     ],
+     "size": [
+      120,
+      2860,
+      2720
+     ]
+    },
+    {
+     "id": "wall6a",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      4190,
+      6150,
+      0
+     ],
+     "size": [
+      1670,
+      120,
+      2720
+     ],
+     "children": [
+      {
+       "id": "door_hall_3_bathroom_7",
+       "name": "Door 900/2050",
+       "type": "door",
+       "offset": [
+        350,
+        0,
+        0
+       ],
+       "size": [
+        900,
+        120,
+        2050
+       ],
+       "label": "900/2050",
+       "hinge": "W",
+       "opens": "N",
+       "flush": "N",
+       "product": "porta-hide-wc-80",
+       "extras": [
+        "porta-wc-handle-rosette"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "wall6b",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      1340,
+      6150,
+      0
+     ],
+     "size": [
+      2610,
+      120,
+      2720
+     ],
+     "children": [
+      {
+       "id": "door_vestibule_1_boiler_8",
+       "name": "Door 900/2050",
+       "type": "door",
+       "offset": [
+        310,
+        0,
+        0
+       ],
+       "size": [
+        900,
+        120,
+        2050
+       ],
+       "label": "900/2050",
+       "hinge": "W",
+       "opens": "N",
+       "flush": "N"
+      }
+     ]
+    },
+    {
+     "id": "wall7",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      3950,
+      4350,
+      0
+     ],
+     "size": [
+      240,
+      3310,
+      2720
+     ],
+     "children": [
+      {
+       "id": "door_vestibule_1_hall_3",
+       "name": "Door 900/2050",
+       "type": "door",
+       "offset": [
+        0,
+        540,
+        0
+       ],
+       "size": [
+        240,
+        900,
+        2050
+       ],
+       "label": "900/2050",
+       "hinge": "N",
+       "opens": "W",
+       "flush": "E"
+      }
+     ]
+    },
+    {
+     "id": "wall8",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      3350,
+      7540,
+      0
+     ],
+     "size": [
+      600,
+      120,
+      2720
+     ]
+    },
+    {
+     "id": "wall9",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      1340,
+      4110,
+      0
+     ],
+     "size": [
+      2610,
+      120,
+      2720
+     ],
+     "children": [
+      {
+       "id": "door_vestibule_1_garage_2",
+       "name": "Door 900/2050",
+       "type": "door",
+       "offset": [
+        335,
+        0,
+        0
+       ],
+       "size": [
+        900,
+        120,
+        2050
+       ],
+       "label": "900/2050",
+       "hinge": "W",
+       "opens": "S",
+       "flush": "S"
+      }
+     ]
+    },
+    {
+     "id": "wall10",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      3230,
+      7540,
+      0
+     ],
+     "size": [
+      120,
+      1120,
+      2720
+     ]
+    },
+    {
+     "id": "slab",
+     "name": "slab with ring beam",
+     "type": "slab",
+     "offset": [
+      200,
+      200,
+      2720
+     ],
+     "size": [
+      12800,
+      8700,
+      340
+     ],
+     "cuts": [
+      "stairVoid",
+      "chimney"
+     ]
+    },
+    {
+     "id": "beamWingGardenLeft",
+     "name": "ring beam over the portal wing",
+     "type": "ringBeam",
+     "offset": [
+      13000,
+      200,
+      2720
+     ],
+     "size": [
+      1000,
+      240,
+      340
+     ]
+    },
+    {
+     "id": "beamWingGardenRight",
+     "name": "ring beam over the portal wing",
+     "type": "ringBeam",
+     "offset": [
+      13000,
+      8660,
+      2720
+     ],
+     "size": [
+      1000,
+      240,
+      340
+     ]
+    },
+    {
+     "id": "beamWingFrontLeft",
+     "name": "ring beam over the portal wing",
+     "type": "ringBeam",
+     "offset": [
+      -800,
+      200,
+      2720
+     ],
+     "size": [
+      1000,
+      240,
+      340
+     ]
+    },
+    {
+     "id": "beamWingFrontRight",
+     "name": "ring beam over the portal wing",
+     "type": "ringBeam",
+     "offset": [
+      -800,
+      8660,
+      2720
+     ],
+     "size": [
+      1000,
+      240,
+      340
+     ]
+    },
+    {
+     "id": "vestibule_1",
+     "name": "Vestibule",
+     "type": "vestibule",
+     "number": 1,
+     "offset": [
+      1340,
+      4230,
+      0
+     ],
+     "size": [
+      2610,
+      1920,
+      2720
+     ],
+     "area": [
+      [
+       0,
+       2610,
+       0,
+       1920
+      ]
+     ],
+     "archonArea": 4.84,
+     "settings": {
+      "tiles": {
+       "origin": [
+        2275,
+        330
+       ]
+      }
+     }
+    },
+    {
+     "id": "garage_2",
+     "name": "Garage",
+     "type": "garage",
+     "number": 2,
+     "offset": [
+      440,
+      440,
+      0
+     ],
+     "size": [
+      7290,
+      3670,
+      2720
+     ],
+     "area": [
+      [
+       6340,
+       7290,
+       0,
+       2530
+      ],
+      [
+       6220,
+       6340,
+       0,
+       2760
+      ],
+      [
+       0,
+       6220,
+       0,
+       3670
+      ]
+     ],
+     "archonArea": 25.91,
+     "settings": {
+      "tiles": null
+     }
+    },
+    {
+     "id": "room_356",
+     "name": "Room",
+     "type": "room",
+     "number": 356,
+     "offset": [
+      4190,
+      440,
+      0
+     ],
+     "size": [
+      8570,
+      8220,
+      2720
+     ],
+     "area": [
+      [
+       3780,
+       8570,
+       0,
+       3150
+      ],
+      [
+       4300,
+       8570,
+       3150,
+       3910
+      ],
+      [
+       3540,
+       8570,
+       3910,
+       5360
+      ],
+      [
+       8180,
+       8570,
+       5360,
+       8220
+      ],
+      [
+       1790,
+       8180,
+       5360,
+       8220
+      ],
+      [
+       1670,
+       3540,
+       3910,
+       5360
+      ],
+      [
+       0,
+       1670,
+       3910,
+       5710
+      ]
+     ],
+     "archonArea": 50.55,
+     "files": [
+      "cabinets",
+      "scene",
+      "docs"
+     ],
+     "note": "Archon's hall 3, living room 5 and kitchen 6: one space, no walls between them. The hall: the way from the vestibule to the stair and the bathroom; the living room: the garden side with the exit to the garden; the kitchen with the dining area: the island, the table by it and the fixed window by the hob."
+    },
+    {
+     "id": "bathroom_7",
+     "name": "Bathroom",
+     "type": "bathroom",
+     "number": 7,
+     "offset": [
+      3350,
+      6270,
+      0
+     ],
+     "size": [
+      2510,
+      2390,
+      2720
+     ],
+     "area": [
+      [
+       840,
+       2510,
+       0,
+       2390
+      ],
+      [
+       0,
+       840,
+       1390,
+       2390
+      ]
+     ],
+     "archonArea": 4.95,
+     "settings": {
+      "tiles": null
+     },
+     "files": [
+      "cabinets",
+      "scene",
+      "docs"
+     ]
+    },
+    {
+     "id": "boiler_8",
+     "name": "Boiler room with laundry",
+     "type": "boiler",
+     "number": 8,
+     "offset": [
+      1340,
+      6270,
+      0
+     ],
+     "size": [
+      2610,
+      2390,
+      2720
+     ],
+     "area": [
+      [
+       0,
+       2610,
+       0,
+       1270
+      ],
+      [
+       0,
+       1890,
+       1270,
+       2390
+      ]
+     ],
+     "archonArea": 4.97,
+     "settings": {
+      "tiles": {
+       "origin": [
+        2275,
+        600
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "firstFloor",
+   "name": "Attic",
+   "type": "floor",
+   "offset": [
+    0,
+    0,
+    3060
+   ],
+   "size": [
+    13200,
+    9100,
+    5940
+   ],
+   "settings": {
+    "tiles": {
+     "product": "atlas-log-icon-oak-forest",
+     "dir": "x",
+     "pattern": "half",
+     "origin": [
+      13150,
+      96
+     ]
+    },
+    "view": {
+     "cameras": [
+      {
+       "name": "Plan",
+       "eye": [
+        6540,
+        4550,
+        23000
+       ],
+       "target": [
+        6600,
+        4550,
+        0
+       ]
+      },
+      {
+       "name": "Perspective",
+       "eye": [
+        -5800,
+        -6500,
+        10500
+       ],
+       "target": [
+        7000,
+        4550,
+        600
+       ]
+      },
+      {
+       "name": "Bedroom",
+       "eye": [
+        9900,
+        8200,
+        1600
+       ],
+       "target": [
+        12400,
+        2000,
+        600
+       ]
+      },
+      {
+       "name": "Hall",
+       "eye": [
+        4400,
+        5200,
+        1600
+       ],
+       "target": [
+        7600,
+        4700,
+        600
+       ]
+      },
+      {
+       "name": "Rooms",
+       "eye": [
+        800,
+        4500,
+        1600
+       ],
+       "target": [
+        3900,
+        7000,
+        600
+       ]
+      }
+     ],
+     "plan": 800
+    }
+   },
+   "inside": [
+    [
+     440,
+     12760,
+     440,
+     8660
+    ]
+   ],
+   "other": [],
+   "layers": [
+    "firstFloor"
+   ],
+   "children": [
+    {
+     "id": "kneeLeft",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      -800,
+      200,
+      0
+     ],
+     "size": [
+      14800,
+      240,
+      5940
+     ],
+     "top": "roof"
+    },
+    {
+     "id": "kneeRight",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      -800,
+      8660,
+      0
+     ],
+     "size": [
+      14800,
+      240,
+      5940
+     ],
+     "top": "roof"
+    },
+    {
+     "id": "gableGarden",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      12760,
+      440,
+      0
+     ],
+     "size": [
+      240,
+      8220,
+      5940
+     ],
+     "top": "roof",
+     "children": [
+      {
+       "id": "window_bedroom_2",
+       "name": "Window 6000/3460",
+       "type": "window",
+       "offset": [
+        0,
+        1110,
+        0
+       ],
+       "size": [
+        440,
+        6000,
+        3460
+       ],
+       "label": "6000/3460",
+       "outer": "E",
+       "cols": 4,
+       "below": [
+        {
+         "h": 3460,
+         "y": 3000,
+         "pitch": 1
+        },
+        {
+         "h": 3460,
+         "y": 3000,
+         "pitch": -1
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "gableFront",
+     "name": "block 240 mm",
+     "type": "block240",
+     "offset": [
+      200,
+      440,
+      0
+     ],
+     "size": [
+      240,
+      8220,
+      5940
+     ],
+     "top": "roof",
+     "children": [
+      {
+       "id": "window_bedroom_7",
+       "name": "Window 2200/2850",
+       "type": "window",
+       "offset": [
+        -200,
+        1240,
+        0
+       ],
+       "size": [
+        440,
+        2200,
+        2850
+       ],
+       "label": "2200/2850",
+       "outer": "W",
+       "cols": 2,
+       "transoms": [
+        840
+       ],
+       "below": [
+        {
+         "h": 2850,
+         "y": 2200,
+         "pitch": 1
+        }
+       ]
+      },
+      {
+       "id": "window_bedroom_6",
+       "name": "Window 2200/2850",
+       "type": "window",
+       "offset": [
+        -200,
+        4780,
+        0
+       ],
+       "size": [
+        440,
+        2200,
+        2850
+       ],
+       "label": "2200/2850",
+       "outer": "W",
+       "cols": 2,
+       "transoms": [
+        840
+       ],
+       "below": [
+        {
+         "h": 2850,
+         "y": 0,
+         "pitch": -1
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "attic1",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      9440,
+      440,
+      0
+     ],
+     "size": [
+      120,
+      3470,
+      2850
+     ],
+     "top": "roof"
+    },
+    {
+     "id": "attic2",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      9440,
+      5530,
+      0
+     ],
+     "size": [
+      120,
+      3130,
+      2850
+     ],
+     "top": "roof"
+    },
+    {
+     "id": "attic3a",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      7850,
+      5530,
+      0
+     ],
+     "size": [
+      1590,
+      120,
+      2850
+     ],
+     "top": "roof",
+     "children": [
+      {
+       "id": "door_bedroom_2_wardrobe_4",
+       "name": "Door 700/2050",
+       "type": "door",
+       "offset": [
+        790,
+        0,
+        0
+       ],
+       "size": [
+        700,
+        120,
+        2050
+       ],
+       "label": "700/2050",
+       "hinge": "E",
+       "opens": "S",
+       "flush": "N"
+      }
+     ]
+    },
+    {
+     "id": "attic3b",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      4190,
+      5530,
+      0
+     ],
+     "size": [
+      3540,
+      120,
+      2850
+     ],
+     "top": "roof",
+     "children": [
+      {
+       "id": "door_hall_1_bathroom_5",
+       "name": "Door 900/2050",
+       "type": "door",
+       "offset": [
+        1810,
+        0,
+        0
+       ],
+       "size": [
+        900,
+        120,
+        2050
+       ],
+       "label": "900/2050",
+       "hinge": "W",
+       "opens": "N",
+       "flush": "N",
+       "product": "porta-hide-wc-80",
+       "extras": [
+        "porta-wc-handle-rosette"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "attic4",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      8490,
+      3790,
+      0
+     ],
+     "size": [
+      950,
+      120,
+      2850
+     ],
+     "top": "roof",
+     "children": [
+      {
+       "id": "door_bedroom_2_wardrobe_3",
+       "name": "Door 700/2050",
+       "type": "door",
+       "offset": [
+        125,
+        0,
+        0
+       ],
+       "size": [
+        700,
+        120,
+        2050
+       ],
+       "label": "700/2050",
+       "hinge": "E",
+       "opens": "N",
+       "flush": "S"
+      }
+     ]
+    },
+    {
+     "id": "attic5",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      7730,
+      440,
+      0
+     ],
+     "size": [
+      120,
+      3150,
+      2850
+     ],
+     "top": "roof"
+    },
+    {
+     "id": "attic6",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      7730,
+      4350,
+      0
+     ],
+     "size": [
+      120,
+      4310,
+      2850
+     ],
+     "top": "roof",
+     "children": [
+      {
+       "id": "door_hall_1_bedroom_2",
+       "name": "Door 900/2050",
+       "type": "door",
+       "offset": [
+        0,
+        235,
+        0
+       ],
+       "size": [
+        120,
+        900,
+        2050
+       ],
+       "label": "900/2050",
+       "hinge": "N",
+       "opens": "E",
+       "flush": "W"
+      }
+     ]
+    },
+    {
+     "id": "attic7",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      5710,
+      440,
+      0
+     ],
+     "size": [
+      120,
+      2970,
+      2850
+     ],
+     "top": "roof"
+    },
+    {
+     "id": "attic8",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      4190,
+      3290,
+      0
+     ],
+     "size": [
+      1520,
+      120,
+      2850
+     ],
+     "top": "roof"
+    },
+    {
+     "id": "attic9",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      4880,
+      5650,
+      0
+     ],
+     "size": [
+      120,
+      3010,
+      2850
+     ],
+     "top": "roof"
+    },
+    {
+     "id": "attic12",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      4070,
+      440,
+      0
+     ],
+     "size": [
+      120,
+      5210,
+      2850
+     ],
+     "top": "roof",
+     "children": [
+      {
+       "id": "door_bedroom_7_wardrobe_8",
+       "name": "Door 700/2050",
+       "type": "door",
+       "offset": [
+        0,
+        1400,
+        0
+       ],
+       "size": [
+        120,
+        700,
+        2050
+       ],
+       "label": "700/2050",
+       "hinge": "N",
+       "opens": "W",
+       "flush": "W"
+      },
+      {
+       "id": "door_hall_1_bedroom_7",
+       "name": "Door 900/2050",
+       "type": "door",
+       "offset": [
+        0,
+        3050,
+        0
+       ],
+       "size": [
+        120,
+        900,
+        2050
+       ],
+       "label": "900/2050",
+       "hinge": "S",
+       "opens": "W",
+       "flush": "E"
+      },
+      {
+       "id": "door_hall_1_bedroom_6",
+       "name": "Door 900/2050",
+       "type": "door",
+       "offset": [
+        0,
+        4130,
+        0
+       ],
+       "size": [
+        120,
+        900,
+        2050
+       ],
+       "label": "900/2050",
+       "hinge": "N",
+       "opens": "W",
+       "flush": "E"
+      }
+     ]
+    },
+    {
+     "id": "attic13",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      440,
+      4410,
+      0
+     ],
+     "size": [
+      3630,
+      120,
+      2850
+     ],
+     "top": "roof"
+    },
+    {
+     "id": "balustradeHall",
+     "name": "stair balustrade (plain, assumed: not in the drawings)",
+     "type": "balustrade",
+     "offset": [
+      6740,
+      4350,
+      0
+     ],
+     "size": [
+      990,
+      40,
+      1000
+     ]
+    },
+    {
+     "id": "balustradeStair",
+     "name": "stair balustrade (plain, assumed: not in the drawings)",
+     "type": "balustrade",
+     "offset": [
+      6740,
+      2730,
+      0
+     ],
+     "size": [
+      40,
+      1620,
+      1000
+     ]
+    },
+    {
+     "id": "hall_1",
+     "name": "Hall",
+     "type": "hall",
+     "number": 1,
+     "offset": [
+      4190,
+      2730,
+      0
+     ],
+     "size": [
+      3540,
+      2800,
+      5940
+     ],
+     "area": [
+      [
+       1640,
+       2590,
+       0,
+       680
+      ],
+      [
+       0,
+       2590,
+       680,
+       2800
+      ],
+      [
+       2590,
+       3540,
+       1620,
+       2800
+      ]
+     ],
+     "archonArea": 7.32,
+     "settings": {
+      "tiles": {
+       "pattern": "third",
+       "origin": [
+        2738,
+        178
+       ]
+      }
+     }
+    },
+    {
+     "id": "bedroom_2",
+     "name": "Bedroom",
+     "type": "bedroom",
+     "number": 2,
+     "offset": [
+      7850,
+      440,
+      0
+     ],
+     "size": [
+      4910,
+      8220,
+      5940
+     ],
+     "area": [
+      [
+       1710,
+       4910,
+       0,
+       8220
+      ],
+      [
+       1590,
+       1710,
+       3470,
+       5090
+      ],
+      [
+       640,
+       1590,
+       3470,
+       5090
+      ],
+      [
+       0,
+       640,
+       3910,
+       5090
+      ]
+     ],
+     "archonArea": 28.16
+    },
+    {
+     "id": "wardrobe_3",
+     "name": "Wardrobe",
+     "type": "wardrobe",
+     "number": 3,
+     "offset": [
+      7850,
+      440,
+      0
+     ],
+     "size": [
+      1590,
+      3350,
+      5940
+     ],
+     "area": [
+      [
+       640,
+       1590,
+       0,
+       3350
+      ],
+      [
+       0,
+       640,
+       0,
+       3150
+      ]
+     ],
+     "archonArea": 5.13,
+     "files": [
+      "cabinets",
+      "scene",
+      "docs"
+     ]
+    },
+    {
+     "id": "wardrobe_4",
+     "name": "Wardrobe",
+     "type": "wardrobe",
+     "number": 4,
+     "offset": [
+      7850,
+      5650,
+      0
+     ],
+     "size": [
+      1590,
+      3010,
+      5940
+     ],
+     "area": [
+      [
+       0,
+       1590,
+       0,
+       3010
+      ]
+     ],
+     "archonArea": 4.6,
+     "files": [
+      "cabinets",
+      "scene",
+      "docs"
+     ]
+    },
+    {
+     "id": "bathroom_5",
+     "name": "Bathroom",
+     "type": "bathroom",
+     "number": 5,
+     "offset": [
+      5000,
+      5650,
+      0
+     ],
+     "size": [
+      2730,
+      3010,
+      5940
+     ],
+     "area": [
+      [
+       0,
+       2730,
+       0,
+       3010
+      ]
+     ],
+     "archonArea": 7.99,
+     "settings": {
+      "tiles": null
+     },
+     "files": [
+      "cabinets",
+      "scene",
+      "docs"
+     ]
+    },
+    {
+     "id": "bedroom_6",
+     "name": "Bedroom",
+     "type": "bedroom",
+     "number": 6,
+     "offset": [
+      440,
+      4530,
+      0
+     ],
+     "size": [
+      4440,
+      4130,
+      5940
+     ],
+     "area": [
+      [
+       0,
+       3630,
+       0,
+       4130
+      ],
+      [
+       3630,
+       4440,
+       1120,
+       4130
+      ]
+     ],
+     "archonArea": 16.53,
+     "settings": {
+      "tiles": {
+       "pattern": "third",
+       "origin": [
+        4226,
+        206
+       ]
+      }
+     },
+     "files": [
+      "cabinets",
+      "scene",
+      "docs"
+     ]
+    },
+    {
+     "id": "bedroom_7",
+     "name": "Bedroom",
+     "type": "bedroom",
+     "number": 7,
+     "offset": [
+      440,
+      440,
+      0
+     ],
+     "size": [
+      3630,
+      3970,
+      5940
+     ],
+     "area": [
+      [
+       0,
+       3630,
+       0,
+       3970
+      ]
+     ],
+     "archonArea": 14.11,
+     "settings": {
+      "tiles": {
+       "pattern": "third",
+       "origin": [
+        3024,
+        164
+       ]
+      }
+     }
+    },
+    {
+     "id": "wardrobe_8",
+     "name": "Wardrobe",
+     "type": "wardrobe",
+     "number": 8,
+     "offset": [
+      4190,
+      440,
+      0
+     ],
+     "size": [
+      1520,
+      2850,
+      5940
+     ],
+     "area": [
+      [
+       0,
+       1520,
+       0,
+       2850
+      ]
+     ],
+     "archonArea": 4.16,
+     "settings": {
+      "tiles": {
+       "pattern": "third",
+       "origin": [
+        718,
+        2
+       ]
+      }
+     },
+     "files": [
+      "cabinets",
+      "scene",
+      "docs"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "facade",
+   "name": "Facade insulation",
+   "type": "assembly",
+   "offset": [
+    0,
+    0,
+    0
+   ],
+   "size": [
+    13200,
+    9100,
+    9000
+   ],
+   "children": [
+    {
+     "id": "epsLeft",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      -1000,
+      0,
+      -920
+     ],
+     "size": [
+      15200,
+      200,
+      9920
+     ],
+     "top": "roof",
+     "outer": "N"
+    },
+    {
+     "id": "epsRight",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      -1000,
+      8900,
+      -920
+     ],
+     "size": [
+      15200,
+      200,
+      9920
+     ],
+     "top": "roof",
+     "outer": "S"
+    },
+    {
+     "id": "epsGarden",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      13000,
+      440,
+      -920
+     ],
+     "size": [
+      200,
+      8220,
+      9920
+     ],
+     "top": "roof",
+     "outer": "E"
+    },
+    {
+     "id": "epsGarageFront",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      0,
+      440,
+      -920
+     ],
+     "size": [
+      200,
+      4110,
+      3640
+     ],
+     "outer": "W"
+    },
+    {
+     "id": "epsRecessLeft",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      200,
+      4350,
+      -920
+     ],
+     "size": [
+      700,
+      200,
+      3640
+     ],
+     "outer": "S"
+    },
+    {
+     "id": "epsEntrance",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      900,
+      4350,
+      -920
+     ],
+     "size": [
+      200,
+      4110,
+      3640
+     ],
+     "outer": "W"
+    },
+    {
+     "id": "epsRecessRight",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      0,
+      8460,
+      -920
+     ],
+     "size": [
+      1100,
+      200,
+      3640
+     ],
+     "outer": "N"
+    },
+    {
+     "id": "epsSoffit",
+     "name": "EPS of the recess soffit 470 mm",
+     "type": "epsSoffit",
+     "offset": [
+      0,
+      4550,
+      2250
+     ],
+     "size": [
+      900,
+      3910,
+      470
+     ],
+     "outer": "down"
+    },
+    {
+     "id": "epsFrontGable",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      0,
+      440,
+      2720
+     ],
+     "size": [
+      200,
+      8220,
+      6280
+     ],
+     "top": "roof",
+     "outer": "W"
+    },
+    {
+     "id": "epsWingGardenLeft",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      13200,
+      440,
+      -920
+     ],
+     "size": [
+      800,
+      200,
+      9920
+     ],
+     "top": "roof",
+     "outer": "S"
+    },
+    {
+     "id": "epsWingGardenRight",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      13200,
+      8460,
+      -920
+     ],
+     "size": [
+      800,
+      200,
+      9920
+     ],
+     "top": "roof",
+     "outer": "N"
+    },
+    {
+     "id": "epsWingFrontLeft",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      -800,
+      440,
+      -920
+     ],
+     "size": [
+      800,
+      200,
+      9920
+     ],
+     "top": "roof",
+     "outer": "S"
+    },
+    {
+     "id": "epsWingFrontRight",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      -800,
+      8460,
+      -920
+     ],
+     "size": [
+      800,
+      200,
+      9920
+     ],
+     "top": "roof",
+     "outer": "N"
+    },
+    {
+     "id": "epsHeadGardenLeft",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      14000,
+      200,
+      -920
+     ],
+     "size": [
+      200,
+      440,
+      9920
+     ],
+     "top": "roof",
+     "outer": "E"
+    },
+    {
+     "id": "epsHeadGardenRight",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      14000,
+      8460,
+      -920
+     ],
+     "size": [
+      200,
+      440,
+      9920
+     ],
+     "top": "roof",
+     "outer": "E"
+    },
+    {
+     "id": "epsHeadFrontLeft",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      -1000,
+      200,
+      -920
+     ],
+     "size": [
+      200,
+      440,
+      9920
+     ],
+     "top": "roof",
+     "outer": "W"
+    },
+    {
+     "id": "epsHeadFrontRight",
+     "name": "EPS 200 mm",
+     "type": "eps",
+     "offset": [
+      -1000,
+      8460,
+      -920
+     ],
+     "size": [
+      200,
+      440,
+      9920
+     ],
+     "top": "roof",
+     "outer": "W"
+    }
+   ]
+  },
+  {
+   "id": "roof",
+   "name": "Roof",
+   "type": "assembly",
+   "offset": [
+    0,
+    0,
+    0
+   ],
+   "size": [
+    13200,
+    9100,
+    9000
+   ],
+   "pitch": 42,
+   "eave": 3864,
+   "width": 9100,
+   "thickness": 640,
+   "x": [
+    -1000,
+    14200
+   ],
+   "faces": {
+    "top": "roofGraphite",
+    "bottom": "plasterWhite",
+    "ends": "plasterWhite",
+    "eaves": "graphite",
+    "reveals": "plasterWhite"
+   },
+   "cap": "timber",
+   "cuts": [
+    "chimney"
+   ],
+   "layers": [
+    "roof"
+   ],
+   "windowFrame": {
+    "width": 70,
+    "frame": [
+     -100,
+     40
+    ],
+    "glass": [
+     5,
+     15
+    ],
+    "material": "frame",
+    "glazing": "glass",
+    "layers": [
+     "roofWindows"
+    ]
+   },
+   "clearHeights": [
+    1400,
+    2200
+   ],
+   "children": [
+    {
+     "id": "ceiling",
+     "name": "ceiling with insulation",
+     "type": "ceiling",
+     "offset": [
+      440,
+      440,
+      5910
+     ],
+     "size": [
+      9000,
+      8220,
+      390
+     ],
+     "top": "roof",
+     "cuts": [
+      "chimney"
+     ]
+    },
+    {
+     "id": "loftWall",
+     "name": "block 120 mm",
+     "type": "block120",
+     "offset": [
+      9440,
+      440,
+      5910
+     ],
+     "size": [
+      120,
+      8220,
+      3090
+     ],
+     "top": "roof",
+     "floor": "attic"
+    },
+    {
+     "id": "roofWindow_bedroom_2",
+     "name": "Roof window Bedroom",
+     "type": "roofWindow",
+     "place": "Bedroom",
+     "label": "940/1400",
+     "offset": [
+      10710,
+      7820,
+      4080.096971
+     ],
+     "size": [
+      940,
+      1040,
+      1797.6251530178342
+     ]
+    },
+    {
+     "id": "roofWindow_hall_1",
+     "name": "Roof window Stairs",
+     "type": "roofWindow",
+     "place": "Stairs",
+     "label": "940/1400",
+     "offset": [
+      5870,
+      240,
+      4080.096971
+     ],
+     "size": [
+      940,
+      1040,
+      1797.6251530178342
+     ]
+    },
+    {
+     "id": "roofWindow_bathroom_5",
+     "name": "Roof window Bathroom",
+     "type": "roofWindow",
+     "place": "Bathroom",
+     "label": "940/1400",
+     "offset": [
+      5870,
+      7820,
+      4080.096971
+     ],
+     "size": [
+      940,
+      1040,
+      1797.6251530178342
+     ]
+    }
+   ]
+  },
+  {
+   "id": "stair",
+   "name": "Stair",
+   "type": "assembly",
+   "offset": [
+    0,
+    0,
+    0
+   ],
+   "size": [
+    13200,
+    9100,
+    9000
+   ],
+   "risers": 17,
+   "tread": 50,
+   "material": "tread",
+   "layers": [
+    "stair"
+   ],
+   "walkable": true,
+   "flights": [
+    {
+     "x": [
+      7730,
+      6780
+     ],
+     "y": [
+      4350,
+      1435
+     ],
+     "first": 1,
+     "count": 11
+    },
+    {
+     "x": [
+      7730,
+      5830
+     ],
+     "y": [
+      440,
+      1435
+     ],
+     "first": 12,
+     "count": 1
+    },
+    {
+     "x": [
+      6780,
+      5830
+     ],
+     "y": [
+      1435,
+      2730
+     ],
+     "first": 13,
+     "count": 4
+    }
+   ],
+   "children": [
+    {
+     "id": "stairVoid",
+     "name": "stair void",
+     "type": "void",
+     "offset": [
+      5830,
+      440,
+      2720
+     ],
+     "size": [
+      1900,
+      3910,
+      340
+     ],
+     "children": [
+      {
+       "id": "stairVoid_1",
+       "name": "stair void 1",
+       "type": "voidBox",
+       "offset": [
+        950,
+        0,
+        0
+       ],
+       "size": [
+        950,
+        3910,
+        340
+       ]
+      },
+      {
+       "id": "stairVoid_2",
+       "name": "stair void 2",
+       "type": "voidBox",
+       "offset": [
+        0,
+        0,
+        0
+       ],
+       "size": [
+        950,
+        2290,
+        340
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "site",
+   "name": "Site",
+   "type": "site",
+   "offset": [
+    -15800,
+    -15000,
+    -520
+   ],
+   "size": [
+    44000,
+    39000,
+    9520
+   ],
+   "lawn": {
+    "rect": [
+     0,
+     44000,
+     0,
+     39000
+    ],
+    "h": 200,
+    "depth": 200,
+    "material": "lawn",
+    "aroundBuilding": true
+   },
+   "surfaces": [
+    {
+     "name": "garden terrace",
+     "rect": [
+      30000,
+      31500,
+      15300,
+      23800
+     ],
+     "h": 500,
+     "material": "woodHorizontal"
+    },
+    {
+     "name": "terrace under the portal",
+     "rect": [
+      29000,
+      30000,
+      15640,
+      23460
+     ],
+     "h": 500,
+     "material": "woodHorizontal"
+    },
+    {
+     "name": "entrance",
+     "rect": [
+      14800,
+      16700,
+      19550,
+      23460
+     ],
+     "h": 500,
+     "material": "paving"
+    },
+    {
+     "name": "driveway",
+     "rect": [
+      11800,
+      15800,
+      15640,
+      19500
+     ],
+     "h": 400,
+     "material": "paving"
+    },
+    {
+     "name": "path",
+     "rect": [
+      11800,
+      14800,
+      19780,
+      20980
+     ],
+     "h": 400,
+     "material": "paving"
+    }
+   ],
+   "layers": [
+    "site"
+   ],
+   "walkable": true
+  }
+ ]
+}
