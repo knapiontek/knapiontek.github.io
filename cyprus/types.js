@@ -24,4 +24,38 @@
  */
 /** @typedef {() => Promise<Catalog>} OpenCatalog  the catalog, its files read */
 
+/* ---------- the library's shapes: a product as parts, in its own axes; the scene places them and gives them their look ---------- */
+
+/** @typedef {number[]} Vec  [x, y, h], mm: x along the product, y from its back to its front, h up; 0: its left, back, bottom corner */
+/**
+ * @typedef {object} Part  one solid of a product
+ * @property {'box' | 'cylinder' | 'ring' | 'disc' | 'plane' | 'sphere' | 'torus' | 'extrude' | 'tube' | 'mesh' | 'text'} form
+ * @property {string} material  a key of materials.json, or 'metal': the fittings' metal, set by Finish
+ * @property {string} [mover]  the id of the moving part it moves with: one of the shape's movers, or one the room gives (a fridge door carried by a cabinet front); none: it stands
+ * @property {number[]} [box]  box: [x0, x1, y0, y1, h0, h1]
+ * @property {Vec} [at]  the others' middle (extrude: the start of its depth)
+ * @property {Vec} [axis]  cylinder, torus, extrude: along it; ring, disc, plane, text: the way it faces
+ * @property {number[]} [radius]  cylinder: [bottom, top]; ring: [inner, outer]; disc, sphere, torus, tube: [r]
+ * @property {number} [length]  cylinder: its length; extrude: its depth
+ * @property {number[]} [size]  plane, text: [width, height]
+ * @property {number} [tube]  torus: the tube's radius
+ * @property {number[]} [arc]  sphere: [from, to] of the angle down from the top, radians; cylinder, disc: [from, to] round it
+ * @property {boolean} [open]  cylinder: no ends
+ * @property {'back' | 'double'} [side]  the faces drawn: inside, or both; none: outside
+ * @property {number[][]} [outline]  extrude: [y, h] points of its section
+ * @property {string} [ends]  extrude: the material of its two ends
+ * @property {Vec[]} [points]  tube: the line it follows
+ * @property {number[]} [positions]  mesh: x, y, h of each point
+ * @property {number[]} [index]  mesh: three points per triangle
+ * @property {number[]} [matrix]  mesh: its rows x, y, h of the product: [a, b, c, d] each, x = a·px + b·py + c·pz + d
+ * @property {string} [text]  text: what it shows
+ * @property {number} [segments]  round forms: the facets round
+ */
+/** @typedef {{ id: string, pivot: Vec, axis: Vec, sign: 1 | -1, travel: number }} Mover  a moving part: turning about the axis through its pivot, toward sign, travel degrees */
+/** @typedef {{ kind: 'spot' | 'point', at: Vec, target?: Vec, color: string, intensity: number, distance: number, angle?: number, penumbra?: number, decay: number, shadow: boolean }} Light  a light a product carries, lit at night */
+/** @typedef {{ box: number[], name: string }} Envelope  a box documents give the sizes of: [x0, x1, y0, y1, h0, h1] */
+/** @typedef {{ size: Vec, parts: Part[], movers: Mover[], lights: Light[], envelopes: Envelope[] }} Shape  a product as drawn: size, its outer box */
+/** @typedef {{ feet?: number, worktop?: number, opens?: 'in' | 'out', angle?: number }} ShapeOptions  what the room decides: an oven's feet (mm), how far below a hood the worktop is, which way a shower door opens and how far (degrees) */
+/** @typedef {(product: Product, size?: Vec, options?: ShapeOptions) => Shape} ShapeOf  a product's shape; size: its node's, for what fits to it (a pipe's length, a hood's chimney up to the ceiling) */
+
 export {};

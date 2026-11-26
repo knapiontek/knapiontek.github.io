@@ -8,5 +8,6 @@ Open `index.html` over HTTP. One test per module, at the module's own path; each
 | `run.js` | runs one test in its worker |
 | `core/tree.js` | `core/tree.js`: every call on a small tree, a faulty tree; then a piece of the house: a sink's place, a window's box, layers, the room's metal, the elements by path |
 | `library/catalog.js` | `library/catalog.js`: every call, unknown keys, frozen data, a texture read once, every file against its type; then a board for an estimate, a tap's metals, a tile and its texture, a 2D fill |
+| `library/shapes.js` | `library/shapes.js`: every product with a drawing, its parts sound; then an oven, a microwave, a basin tap, a shower screen, a WC bowl, a pipe fitted to its node |
 
 A test's default export gets `check(what, ok)`. What the module imports and exports is left to ES modules and `tsc`.

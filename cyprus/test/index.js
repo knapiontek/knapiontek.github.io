@@ -3,7 +3,7 @@
 // the module it tests.
 
 /* the tests, from this folder; each the path of its module */
-const TESTS = ['core/tree.js', 'library/catalog.js'];
+const TESTS = ['core/tree.js', 'library/catalog.js', 'library/shapes.js'];
 
 /** a test in a worker of its own @param {string} address @returns {Promise<{ passed: string[], failed: string[], error?: string }>} */
 function run(address) {
