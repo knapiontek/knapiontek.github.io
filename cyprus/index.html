@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <main class="stage">
+    <!-- the four modes: one shows at a time -->
+    <section class="view" data-mode="3d" aria-label="3D">
+      <div class="placeholder">3D view</div>
+    </section>
+    <section class="view sheet" data-mode="2d" aria-label="2D">
+      <div class="paper"><div class="placeholder">2D plan</div></div>
+    </section>
+    <section class="view page" data-mode="documents" aria-label="Documents">
+      <div class="tabs" id="doc-tabs" role="tablist"></div>
+      <div class="table-frame"><div class="placeholder">Sheet</div></div>
+    </section>
+    <section class="view page" data-mode="cabinet" aria-label="Cabinet">
+      <div class="cabinet-grid">
+        <div class="table-frame"><h3>Materials</h3></div>
+        <div class="table-frame"><h3>Groups</h3></div>
+        <div class="table-frame"><h3>Columns</h3></div>
+        <div class="table-frame wide"><h3>Components</h3></div>
+        <div class="table-frame wide tall"><h3>Drawing</h3></div>
+        <div class="table-frame wide"><h3>Notes</h3></div>
+      </div>
+    </section>
+
+    <!-- over the view: top left the house and its floors, top right the modes, bottom the actions, bottom right the corner -->
+    <div class="bar top-left">
+      <nav class="box segmented" id="floors" aria-label="Floors"></nav>
+    </div>
+    <div class="bar top-right">
+      <div class="box segmented" id="modes" role="group" aria-label="Mode"></div>
+    </div>
+    <div class="box dock" id="dock" aria-label="Actions"></div>
+    <div class="corner" id="corner"></div>
+    <div class="box float" data-float="sun" role="dialog" aria-label="Sun" hidden>
+      <h2>Sun</h2>
+      <div class="sun-row"><div class="placeholder round-face">Compass</div><div class="placeholder arc-face">Height</div></div>
+      <label class="range">Clouds<input type="range" min="0" max="1" step="0.05" value="0.7"></label>
+      <div class="segmented tabs"><button type="button" data-on>Day</button><button type="button">Night</button></div>
+    </div>
+    <div class="box float" data-float="help" role="dialog" aria-label="Help" hidden>
+      <p><b>Turn</b>: left button · <b>move</b>: right · <b>zoom</b>: the wheel.</p>
+      <p><b>House</b> or a floor (top left): what the view shows; a floor's list picks one of its rooms.</p>
+      <p><b>View</b> and <b>Finish</b> (the panel): the layers; the finish of the floor or the room.</p>
+    </div>
+
+    <button type="button" class="panel-toggle box" id="panel-toggle"></button>
+  </main>
+
+  <aside class="panel" id="panel">
+    <h1 id="title"></h1>
+    <p class="subtitle" id="subtitle"></p>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Panel"></div>
+    <div id="sections"></div>
+  </aside>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

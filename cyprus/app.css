@@ -1,0 +1,106 @@
+/* app.css: the look of the page, light and dark. The view fills the stage, the panel on the right. */
+:root{
+  --bg:#eceeec; --stage:#dfe3e1; --panel:#f7f8f6; --ink:#1f2523; --muted:#5f6a66; --line:#cfd5d2;
+  --accent:#9a6a2f; --accent-ink:#fff; --edge:#1a201e; --lift:rgba(0,0,0,.26); --menu:#cfd8d4; --sheet:#fff;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow","Segoe UI",Roboto,Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#121615; --stage:#1b201f; --panel:#1c2220; --ink:#f1f4f2; --muted:#b3bdb9; --line:#3a4440;
+  --accent:#e0a25c; --accent-ink:#1a1208; --edge:#f3f6f5; --lift:rgba(0,0,0,.6); --menu:#38433f; --sheet:#1c2220; color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body);overflow:hidden}
+button{font:inherit;color:inherit}
+
+/* the page: the stage and the panel */
+.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 370px}
+.app[data-panel-closed]{grid-template-columns:minmax(0,1fr)}
+.app[data-panel-closed] .panel{display:none}
+.stage{position:relative;background:var(--stage);min-width:0;overflow:hidden}
+
+/* the modes' views */
+.view{position:absolute;inset:0}
+.view.sheet{background:var(--sheet);padding:64px 24px 64px}
+.view.page{background:var(--panel);overflow:auto;padding:64px 20px 72px}
+.paper{height:100%;border:1.5px solid var(--line);border-radius:4px;display:grid}
+.placeholder{display:grid;place-items:center;height:100%;min-height:80px;font:600 15px var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.view[data-mode="3d"] .placeholder{background:repeating-linear-gradient(0deg,transparent 0 39px,color-mix(in srgb,var(--line) 60%,transparent) 39px 40px),repeating-linear-gradient(90deg,transparent 0 39px,color-mix(in srgb,var(--line) 60%,transparent) 39px 40px)}
+.table-frame{border:1px solid var(--line);border-radius:8px;background:var(--panel);min-height:120px;padding:8px 10px}
+.table-frame h3{margin:0;font:700 14px var(--f-display)}
+.view.page>.tabs{margin-bottom:10px}
+.view.page>.table-frame{min-height:calc(100% - 52px)}
+.cabinet-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.cabinet-grid .wide{grid-column:1/-1}
+.cabinet-grid .tall{min-height:280px}
+
+/* the boxes over the view: always readable, whatever lies under them */
+.box{border:2.5px solid var(--edge);background:var(--menu);border-radius:8px;box-shadow:0 2px 10px var(--lift)}
+.bar{position:absolute;z-index:6;top:12px;display:flex;gap:8px;align-items:flex-start}
+.top-left{left:12px}
+.top-right{right:12px}
+.segmented{display:inline-flex;padding:2px;font:700 13px var(--f-display);letter-spacing:.04em}
+.segmented>button,.segmented summary{border:0;background:transparent;padding:6px 12px;border-radius:6px;cursor:pointer;list-style:none;white-space:nowrap}
+.segmented summary::-webkit-details-marker{display:none}
+.segmented summary::after{content:" ▾";color:var(--muted)}
+.segmented>button:hover:not(:disabled):not([data-on]),.floor:not([data-on])>summary:hover{color:var(--accent)}
+.segmented>button[data-on],.floor[data-on]>summary{background:var(--accent);color:var(--accent-ink)}
+.floor[data-on]>summary::after{color:inherit}
+.floor{position:relative}
+
+/* a floor's rooms */
+.dropdown{position:absolute;left:0;top:calc(100% + 6px);z-index:9;display:grid;min-width:190px;background:var(--panel);border:1.5px solid var(--edge);border-radius:8px;padding:4px;box-shadow:0 6px 24px var(--lift)}
+.floor:not([open]) .dropdown{display:none}
+.dropdown button{display:flex;justify-content:space-between;gap:12px;border:0;background:transparent;text-align:left;padding:6px 10px;border-radius:6px;font:600 13px var(--f-body);cursor:pointer}
+.dropdown button:hover:not(:disabled){color:var(--accent)}
+.dropdown button[data-on]{background:var(--accent);color:var(--accent-ink)}
+.dropdown hr{border:0;border-top:1px solid var(--line);margin:4px 2px;width:auto}
+.mark{color:var(--accent);font-size:10px}
+.dropdown button[data-on] .mark{color:inherit}
+
+/* the actions at the bottom */
+.dock{position:absolute;z-index:6;left:0;right:0;bottom:12px;margin-inline:auto;width:fit-content;display:flex;gap:4px;padding:4px;border-radius:10px}
+.dock:empty{display:none}
+.dock .group{display:flex;gap:2px}
+.dock .group+.group{border-left:1.5px solid color-mix(in srgb,var(--edge) 50%,transparent);padding-left:4px}
+.dock button{border:1px solid transparent;background:transparent;font:600 12px var(--f-body);padding:5px 10px;border-radius:6px;cursor:pointer}
+.dock button:hover:not(:disabled){border-color:var(--accent)}
+
+/* greyed: Cabinet and Finish where they do not apply; a layer whose parent is off */
+button:disabled,.check:has(input:disabled){opacity:.38;cursor:not-allowed}
+
+/* » « on the stage's right edge */
+.panel-toggle{position:absolute;z-index:7;right:-2px;top:50%;transform:translateY(-50%);width:24px;height:56px;border-radius:8px 0 0 8px;font:700 15px var(--f-display);cursor:pointer;padding:0}
+
+/* the panel */
+.panel{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:14px 16px 28px}
+h1{font:700 21px/1.15 var(--f-display);margin:0 0 2px}
+.subtitle{color:var(--muted);font-size:12.5px;margin:0 0 10px}
+h2{font:700 12px var(--f-display);text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:18px 0 8px}
+.note{color:var(--muted);font-size:13px;margin:0}
+.tree{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.tree .tree{padding:4px 0 2px 24px}
+.check{display:flex;gap:8px;align-items:center;font-size:13.5px;cursor:pointer}
+.check input{margin:0;accent-color:var(--accent)}
+.fields{display:grid;gap:9px}
+.fields label{display:grid;gap:3px;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+select{width:100%;font:13px var(--f-body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 7px}
+.tabs{display:inline-flex;flex-wrap:wrap;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font:700 13px var(--f-display)}
+.tabs button{border:0;background:transparent;padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--muted)}
+.tabs button[data-on]{background:var(--accent);color:var(--accent-ink)}
+
+/* the corner: ◐ ☀ ?, their boxes over the view */
+.corner{position:absolute;z-index:7;right:12px;bottom:12px;display:flex;gap:6px}
+.round{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;font:700 16px var(--f-display);cursor:pointer;padding:0}
+.round[data-on]{background:var(--accent);color:var(--accent-ink)}
+.float{position:absolute;z-index:7;right:12px;bottom:58px;width:min(340px,calc(100% - 24px));background:var(--panel);border-radius:10px;padding:4px 14px 12px;font-size:13px;color:var(--muted)}
+.float b{color:var(--ink)}
+.sun-row{display:flex;gap:10px}
+.round-face{width:150px;height:150px;min-height:0;border:2px solid var(--line);border-radius:50%}
+.arc-face{width:100px;height:107px;min-height:0;border:2px solid var(--line);border-radius:100px 100px 0 0}
+.range{display:grid;gap:3px;margin:10px 0;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.07em}
+.range input{accent-color:var(--accent)}
+#tabs{margin:0 0 4px}
