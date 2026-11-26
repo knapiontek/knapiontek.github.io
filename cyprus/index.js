@@ -65,7 +65,9 @@ page('sketch', {
   fresh: () => ({ mode: '3d', tab: 'view', floor: null, room: null, layers: {}, open: {} }),
   valid: (/** @type {any} */ s) => typeof s.mode === 'string' && typeof s.layers === 'object' && typeof s.open === 'object',
   modes: ['3d', '2d', 'documents', 'cabinets'],
+  modeNames: { '3d': '3D', '2d': '2D', documents: 'Documents', cabinets: 'Cabinet' },
   tabs: { '3d': ['view', 'finish'] },
+  tabNames: { view: 'View', finish: 'Finish' },
   layerBlocks: SKETCH.layerBlocks.map(b => ({ ...b, tab: 'view' })),
   sun: { rects: SKETCH.house.rects, sun: SUN.state, change: SUN.save },
 

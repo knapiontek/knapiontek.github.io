@@ -24,11 +24,11 @@ export default async function (check) {
 
   /* groups and products */
   /** @type {{ groups: string[] }} */
-  const index = await file('library.json');
+  const index = await file('catalog.json');
   /** @type {Record<string, { products: Record<string, Record<string, unknown>> }>} */
   const lists = {};
   for (const g of index.groups) lists[g] = await file(`products/${g}.json`);
-  check('groups: those of library.json, in order', L.groups.join() === index.groups.join());
+  check('groups: those of catalog.json, in order', L.groups.join() === index.groups.join());
   check('products: each group\'s keys, in the order of its file', index.groups.every(g => L.products(g).join() === Object.keys(lists[g].products).join()));
   check('products: an unknown group throws', throws(() => L.products('no such group')));
   const all = index.groups.flatMap(g => L.products(g));
@@ -39,10 +39,10 @@ export default async function (check) {
   check('product: an unknown key throws', throws(() => L.product('no such product')));
   check('product: frozen, inside too', all.every(k => Object.isFrozen(L.product(k)) && Object.values(L.product(k)).every(v => typeof v !== 'object' || v === null || Object.isFrozen(v))));
   check('product: each key in one group only', new Set(all).size === all.length);
-  /* a library whose library.json names a group twice: its products are in two groups, which is an error */
+  /* a catalog whose catalog.json names a group twice: its products are in two groups, which is an error */
   const watching = globalThis.fetch;
-  globalThis.fetch = async (input, init) => String(input).endsWith('library/library.json')
-    ? new Response(JSON.stringify({ format: 'library', version: 1, groups: ['boards', 'boards'] })) : watching(input, init);
+  globalThis.fetch = async (input, init) => String(input).endsWith('library/catalog.json')
+    ? new Response(JSON.stringify({ format: 'catalog', version: 1, groups: ['boards', 'boards'] })) : watching(input, init);
   let twice = '';
   try { await catalog.openCatalog(); } catch (e) { twice = String(e); }
   globalThis.fetch = watching;
@@ -99,7 +99,7 @@ export default async function (check) {
       || (GROUP[p.group] && !GROUP[p.group](p));
   });
   check('types: every product has its fields' + (bad.length ? ': not ' + bad.join(', ') : ''), bad.length === 0);
-  check('types: library.json, a list of groups', Array.isArray(index.groups) && index.groups.every(g => is(g, 'string')));
+  check('types: catalog.json, a list of groups', Array.isArray(index.groups) && index.groups.every(g => is(g, 'string')));
   check('types: every material\'s look', Object.values(materials.materials).every(m => is(m.color, 'string?') && is(m.roughness, 'number?')
     && is(m.metalness, 'number?') && is(m.opacity, 'number?') && (m.finish === undefined || m.finish === 'metal')));
   check('types: every shop has a name', Object.values(shops.shops).every(s => is(s.name, 'string')));

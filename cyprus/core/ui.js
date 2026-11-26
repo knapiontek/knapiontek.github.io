@@ -25,19 +25,11 @@ function store(key, fresh, valid) {
    A page is one Alpine part on its .app: page(name, spec). Its HTML puts the shared pieces where it wants them,
    <template x-part="dock"></template>, and writes what is its own (its view, its help, its panel's sections) into a piece
    that takes it: <template x-part="panel">…</template>. The pieces read these fields of the page:
-     title, subtitle, loading, ready · nav {links, groups} · modes, mode, pick(m), modeOff(m) · tabs, tab, pickTab(t), tabOff(t) ·
+     title, subtitle, loading, ready · nav {links, groups} · modes, modeNames, mode, pick(m), modeOff(m) · tabs, tabNames, tab, pickTab(t), tabOff(t) ·
      menu (groups of MenuItem) · float ('sun', 'help' or null) · sun · layerBlocks [{id, name, tab, tree}], rows(b), setLayer(k, on),
      openLayer(k) · state (kept in the browser: mode, tab, layers, open)
-   spec: key, fresh(), valid(s) (the state kept), modes, tabs {mode: [tab]}, load() (async: builds the page), and the page's own
+   spec: key, fresh(), valid(s) (the state kept), modes, modeNames {mode: name}, tabs {mode: [tab]}, tabNames {tab: name}, load() (async: builds the page), and the page's own
    fields, getters and methods: onMode(m), menus() ({mode: groups}), onLayers(); a getter that needs the page built asks this.ready. */
-export const MODES = { '3d': '3D', '2d': '2D', documents: 'Documents', cabinets: 'Cabinet' };
-export const TAB_NAMES = { view: 'View', finish: 'Finish' };
-
-/* the menu's one button for the moving parts: Open opens them all, then it is Close */
-/** @param {{ opened: boolean }} ui @param {{ toggleAll: (on: boolean) => void }} V @returns {MenuItem} */
-export function openAll(ui, V) {
-  return { name: ui.opened ? 'Close' : 'Open', cls: 'open', pressed: ui.opened, go: () => { ui.opened = !ui.opened; V.toggleAll(ui.opened); } };
-}
 
 /* a state kept in the browser and reactive: every change is saved */
 /** @param {string} key @param {() => any} fresh @param {(s: any) => boolean} valid */
@@ -68,7 +60,7 @@ function screen(spec) {
   for (const k of ['key', 'fresh', 'valid', 'modes', 'tabs']) delete own[k];
   /** @type {any} open: the page's own fields, getters and methods join it, and Alpine's ($nextTick) */
   const part = {
-    ready: false, loading: 'Loading…', title: '', subtitle: '', nav: { links: [], groups: [] }, navOpen: null, modes, modeNames: MODES, tabNames: TAB_NAMES,
+    ready: false, loading: 'Loading…', title: '', subtitle: '', nav: { links: [], groups: [] }, navOpen: null, modes, modeNames: {}, tabNames: {},
     float: null, sun: null, opened: false, modeOff: () => false, tabOff: () => false,
     state: key ? kept(key, fresh, valid) : { tab: null, layers: {}, open: {} },
     get mode() { return this.state.mode ?? null; },
@@ -142,19 +134,9 @@ function start() {
 }
 
 /* ================= LAYERS =================
-   A layer is on when it and all its parents are on; an object is shown when all its layers are on. In the panel a branch is
-   closed until opened; a layer under a branch that is off is greyed; a branch on with a layer under it off shows a dash. */
-/** @param {LayerTree} tree @param {Record<string, boolean>} on  false: off @returns {(k: string) => boolean} */
-export function layerSwitch(tree, on) {
-  /** @type {Record<string, string | null>} */
-  const parent = {};
-  (function walk(/** @type {LayerTree} */ t, /** @type {string | null} */ p) { for (const [k, v] of Object.entries(t)) { parent[k] = p; if (v.layers) walk(v.layers, k); } })(tree, null);
-  /** @param {string} k @returns {boolean} */
-  const layerOn = k => on[k] !== false && (parent[k] === null || layerOn(/** @type {string} */ (parent[k])));
-  return layerOn;
-}
+   In the panel a branch is closed until opened; a layer under a branch that is off is greyed; a branch on with a layer under it off shows a dash. */
 /** @param {LayerTree} tree @param {Record<string, boolean>} on  false: off @param {Record<string, boolean>} open  true: open @returns {LayerRow[]} */
-export function layerRows(tree, on, open) {
+function layerRows(tree, on, open) {
   /** @param {Layer} l @returns {boolean} */
   const partly = l => Object.entries(l.layers || {}).some(([k, c]) => on[k] === false || partly(c));
   /** @param {LayerTree} t @param {number} depth @param {boolean} off @returns {LayerRow[]} */
@@ -169,7 +151,7 @@ export function layerRows(tree, on, open) {
 /* ================= THE SUN =================
    ☀: a compass with the plan in the middle (rects [x1, x2, y1, y2] mm) and the sun dragged round it; an arc beside it (the
    height); brightness; clouds; day or night. The page sets sun {rects, mark, sun, change}: sun is changed in place, change()
-   after every move; mark: rects picked out on the plan (the part of the house shown). */
+   after every move; mark: rects picked out on the plan (the part shown). */
 const SUN_RANGE = { azStep: 5, el: [8, 75], k: [0.3, 1.6, 0.05], clouds: [0, 1, 0.05] };   // degrees, degrees, a factor, a share
 const SC = 80, SR = 64, SA = 120, STOP = 20;   // svg units: compass centre and radius; the arc's radius and top margin
 /* one sun for every page, stored once: every page shows the same time of day */
@@ -209,7 +191,7 @@ function sunBox({ rects, mark = [], sun, change }) {
 const ROUND = 'class="round" aria-controls';
 /** @type {Record<string, string>} */
 const PARTS = {
-  nav: `<nav class="nav" id="nav" aria-label="Floors"><template x-for="it in nav.links"><a href="#" :data-on="it.on && ''" @click.prevent="it.go()" x-text="it.name"></a></template><template x-for="(g, i) in nav.groups"><details :open="navOpen === i" :data-on="g.on && ''" @click.outside="navOpen === i && (navOpen = null)"><summary @click.prevent="g.go(); navOpen = navOpen === i ? null : i" x-text="g.label"></summary><div class="navlist"><template x-for="it in g.items"><a href="#" :data-on="it.on && ''" :title="it.title || false" @click.prevent="it.go(); navOpen = null" x-text="it.name"></a></template></div></details></template></nav>`,
+  nav: `<nav class="nav" id="nav" aria-label="Places"><template x-for="it in nav.links"><a href="#" :data-on="it.on && ''" @click.prevent="it.go()" x-text="it.name"></a></template><template x-for="(g, i) in nav.groups"><details :open="navOpen === i" :data-on="g.on && ''" @click.outside="navOpen === i && (navOpen = null)"><summary @click.prevent="g.go(); navOpen = navOpen === i ? null : i" x-text="g.label"></summary><div class="navlist"><template x-for="it in g.items"><a href="#" :data-on="it.on && ''" :title="it.title || false" @click.prevent="it.go(); navOpen = null" x-text="it.name"></a></template></div></details></template></nav>`,
   view: `<canvas id="gl" aria-label="3D view" :hidden="mode !== '3d'"></canvas>`,
   loading: `<div id="loading" x-show="loading" x-text="loading"></div>`,
   modes: `<div class="toggle modes" id="mode" role="group" aria-label="Mode"><template x-for="m in modes"><button :data-mode="m" :aria-pressed="String(mode === m)" :data-on="mode === m && ''" :disabled="modeOff(m)" @click="pick(m)" x-text="modeNames[m]"></button></template></div>`,

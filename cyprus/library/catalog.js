@@ -8,7 +8,7 @@
 /** @typedef {import('../types.js').Material} Material */
 /** @typedef {import('../types.js').Shop} Shop */
 
-const VERSION = 1;   // of every library format: library, products, materials, shops, texture
+const VERSION = 1;   // of every library format: catalog, products, materials, shops, texture
 
 /**
  * A file of the library, its format and version checked.
@@ -38,9 +38,9 @@ function get(what, map, key) {
 
 /** @type {OpenCatalog} */
 export async function openCatalog() {
-  /* the files, each as it is written: library.json lists the groups, a group's file its products by key */
+  /* the files, each as it is written: catalog.json lists the groups, a group's file its products by key */
   /** @type {{ groups: string[] }} */
-  const index = await read('library.json', 'library');
+  const index = await read('catalog.json', 'catalog');
   /** @type {[{ materials: Record<string, Material> }, { shops: Record<string, Shop> }, ...{ products: Record<string, object> }[]]} */
   const [materials, shops, ...lists] = await Promise.all([read('materials.json', 'materials'), read('shops.json', 'shops'),
     ...index.groups.map(g => read(`products/${g}.json`, 'products'))]);
