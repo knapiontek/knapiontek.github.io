@@ -5,10 +5,8 @@
 /** @typedef {import('../types.js').OpenCatalog} OpenCatalog */
 /** @typedef {import('../types.js').Product} Product */
 /** @typedef {import('../types.js').Texture} Texture */
-/** @typedef {import('../types.js').LibraryFile} LibraryFile */
-/** @typedef {import('../types.js').ProductsFile} ProductsFile */
-/** @typedef {import('../types.js').MaterialsFile} MaterialsFile */
-/** @typedef {import('../types.js').ShopsFile} ShopsFile */
+/** @typedef {import('../types.js').Material} Material */
+/** @typedef {import('../types.js').Shop} Shop */
 
 const VERSION = 1;   // of every library format: library, products, materials, shops, texture
 
@@ -40,9 +38,10 @@ function get(what, map, key) {
 
 /** @type {OpenCatalog} */
 export async function openCatalog() {
-  /** @type {LibraryFile} */
+  /* the files, each as it is written: library.json lists the groups, a group's file its products by key */
+  /** @type {{ groups: string[] }} */
   const index = await read('library.json', 'library');
-  /** @type {[MaterialsFile, ShopsFile, ...ProductsFile[]]} */
+  /** @type {[{ materials: Record<string, Material> }, { shops: Record<string, Shop> }, ...{ products: Record<string, object> }[]]} */
   const [materials, shops, ...lists] = await Promise.all([read('materials.json', 'materials'), read('shops.json', 'shops'),
     ...index.groups.map(g => read(`products/${g}.json`, 'products'))]);
 

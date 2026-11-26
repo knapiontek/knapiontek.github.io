@@ -7,53 +7,25 @@
   body { font: 14px/1.45 system-ui, Arial, sans-serif; margin: 24px; color: #1f2523; }
   table { border-collapse: collapse; } td, th { text-align: left; vertical-align: top; padding: 6px 12px; border-bottom: 1px solid #e3e6e4; }
   .ok { color: #1d7a3a; font-weight: 700; } .no { color: #b3261e; font-weight: 700; } .wait { color: #8a8d88; }
-  code { font-size: 12px; background: #f4f5f4; padding: 1px 4px; } li { margin: 2px 0; }
+  code { font-size: 12px; background: #f4f5f4; padding: 1px 4px; } li { margin: 2px 0; } [x-cloak] { display: none; }
 </style>
 </head>
-<body>
-<h1>Dependencies</h1>
-<p>A module alone: its test imports only that module and calls only its public API.</p>
-<table><thead><tr><th>Test</th><th>Imports</th><th>Result</th></tr></thead><tbody id="dependencies"></tbody></table>
-<h1>Samples</h1>
-<p>How the other modules use a module's public API, on the project's own data; what comes out is checked.</p>
-<table><thead><tr><th>Sample</th><th>Imports</th><th>Result</th></tr></thead><tbody id="samples"></tbody></table>
+<body x-data="tests">
+<template x-for="t in tables">
+  <section><h1 x-text="t.name"></h1><p x-text="t.about"></p>
+    <table><thead><tr><th x-text="t.what"></th><th>Imports</th><th>Result</th></tr></thead>
+      <tbody><template x-for="r in rows.filter(r => r.table === t.id)">
+        <tr><td><code x-text="'test/' + r.file"></code></td>
+          <td><template x-for="f in r.imports"><code x-text="f" style="margin-right:4px"></code></template></td>
+          <td><span x-show="!r.done" class="wait">running…</span>
+            <template x-if="r.done"><div><span :class="r.ok ? 'ok' : 'no'" x-text="r.ok ? 'OK' : 'NOT OK'"></span> · <span x-text="r.passed.length + ' passed'"></span>
+              <template x-if="r.error"><div><b x-text="r.error"></b></div></template>
+              <template x-if="r.failed.length"><div>failed: <ul><template x-for="w in r.failed"><li x-text="w"></li></template></ul></div></template>
+              <details><summary>what passed</summary><ul><template x-for="w in r.passed"><li x-text="w"></li></template></ul></details></div></template></td></tr>
+      </template></tbody></table></section>
+</template>
 
-<script type="module">
-/* the tests, from this folder */
-const TESTS = [
-  { table: 'dependencies', file: 'dependencies/library/catalog.js' },
-  { table: 'samples', file: 'samples/library.js' }
-];
-
-/* what a test imports, from the project folder: read from its import lines */
-async function imports(address) {
-  const code = await (await fetch(address)).text();
-  const project = new URL('..', location.href).href;
-  return [...code.matchAll(/^import\s.*?from\s+'([^']+)'/gm)].map(m => new URL(m[1], address).href.slice(project.length));
-}
-
-/* a test in a worker of its own */
-function run(address) {
-  const worker = new Worker(new URL('run.js', location.href), { type: 'module' });
-  return new Promise(done => {
-    worker.onmessage = ({ data }) => { worker.terminate(); done(data); };
-    worker.onerror = e => { worker.terminate(); done({ passed: [], failed: [], error: e.message }); };
-    worker.postMessage(address);
-  });
-}
-
-const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-for (const t of TESTS) {
-  const address = new URL(t.file, location.href).href;
-  const tr = document.getElementById(t.table).insertRow();
-  tr.innerHTML = `<td><code>test/${t.file}</code></td><td>${(await imports(address)).map(f => `<code>${f}</code>`).join(' ')}</td><td class="wait">running…</td>`;
-  const r = await run(address), ok = !r.error && !r.failed.length;
-  tr.cells[2].className = '';
-  tr.cells[2].innerHTML = `<span class="${ok ? 'ok' : 'no'}">${ok ? 'OK' : 'NOT OK'}</span> · ${r.passed.length} passed`
-    + (r.error ? `<br><b>${esc(r.error)}</b>` : '')
-    + (r.failed.length ? `<br>failed: <ul>${r.failed.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : '')
-    + `<details><summary>what passed</summary><ul>${r.passed.map(w => `<li>${esc(w)}</li>`).join('')}</ul></details>`;
-}
-</script>
+<script type="module" src="index.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

@@ -10,63 +10,33 @@
 <link rel="stylesheet" href="core/ui.css">
 </head>
 <body>
-<div class="app" id="app">
-
-  <main class="stage">
-    <!-- the four modes: one shows at a time -->
-    <section class="view scene" data-mode="3d" aria-label="3D">
-      <div class="placeholder">3D view</div>
-    </section>
-    <section class="view sheet" data-mode="2d" aria-label="2D">
-      <div class="paper"><div class="placeholder">2D plan</div></div>
-    </section>
-    <section class="view page" data-mode="documents" aria-label="Documents">
-      <div class="tabs" id="doc-tabs" role="tablist"></div>
-      <div class="table-frame"><div class="placeholder">Sheet</div></div>
-    </section>
-    <section class="view page" data-mode="cabinet" aria-label="Cabinet">
-      <div class="table-grid">
-        <div class="table-frame"><h3>Materials</h3></div>
-        <div class="table-frame"><h3>Groups</h3></div>
-        <div class="table-frame"><h3>Columns</h3></div>
-        <div class="table-frame wide"><h3>Components</h3></div>
-        <div class="table-frame wide tall"><h3>Drawing</h3></div>
-        <div class="table-frame wide"><h3>Notes</h3></div>
-      </div>
-    </section>
-
-    <!-- over the view: top left the house and its floors, top right the modes, bottom the actions, bottom right the corner -->
-    <div class="bar top-left">
-      <nav class="box segmented" id="floors" aria-label="Floors"></nav>
-    </div>
-    <div class="bar top-right">
-      <div class="box segmented" id="modes" role="group" aria-label="Mode"></div>
-    </div>
-    <div class="box dock" id="dock" aria-label="Actions"></div>
-    <div class="corner" id="corner"></div>
-    <div class="box float" data-float="sun" role="dialog" aria-label="Sun" hidden>
-      <h2>Sun</h2>
-      <div class="sun-row"><div class="placeholder round-face">Compass</div><div class="placeholder arc-face">Height</div></div>
-      <label class="range">Clouds<input type="range" min="0" max="1" step="0.05" value="0.7"></label>
-      <div class="tabs"><button type="button" data-on>Day</button><button type="button">Night</button></div>
-    </div>
-    <div class="box float" data-float="help" role="dialog" aria-label="Help" hidden>
-      <p><b>Turn</b>: left button · <b>move</b>: right · <b>zoom</b>: the wheel.</p>
+<div class="app" id="app" x-data="sketch" :data-ready="ready && ''">
+  <template x-part="nav"></template>
+  <div class="stage" id="stage">
+    <template x-part="view"></template><template x-part="loading"></template><template x-part="modes"></template>
+    <div id="plan2d" aria-label="2D plan" x-show="mode === '2d'" x-cloak><p class="note">2D plan</p></div>
+    <div id="documents" aria-label="Documents" x-show="mode === 'documents'" x-cloak><p class="note">Documents</p></div>
+    <div id="design" aria-label="Cabinet" x-show="mode === 'cabinets'" x-cloak><p class="note">Cabinet: Materials, Groups, Columns, Components, Drawing, Notes</p></div>
+    <template x-part="dock"></template><template x-part="sun"></template>
+    <template x-part="help">
+      <p>Turn: left button · move: right · zoom: the wheel.</p>
       <p><b>House</b> or a floor (top left): what the view shows; a floor's list picks one of its rooms.</p>
-      <p><b>View</b> and <b>Finish</b> (the panel): the layers; the finish of the floor or the room.</p>
-    </div>
-
-    <button type="button" class="panel-toggle box" id="panel-toggle"></button>
-  </main>
-
-  <aside class="panel" id="panel">
-    <h1 id="title"></h1>
-    <p class="subtitle" id="subtitle"></p>
-    <div class="tabs" id="tabs" role="tablist" aria-label="Panel"></div>
-    <div id="sections"></div>
-  </aside>
-
+      <p><b>View</b> (the panel): the floors and the layers; a branch's name opens it. <b>Finish</b>: the floor or the room.</p>
+    </template>
+    <template x-part="corner"></template>
+  </div>
+  <template x-part="panel"><template x-part="layers"></template>
+    <section x-show="tab === 'finish' && room?.furniture" x-cloak><h2>Furniture</h2><div class="lay">
+      <label>Metal<select><option>—</option></select></label><label>Carcass board<select><option>—</option></select></label>
+      <label>Front board<select><option>—</option></select></label><label>Worktop<select><option>—</option></select></label></div></section>
+    <section x-show="tab === 'finish'" x-cloak><h2>Floor tiles</h2><div class="lay">
+      <label>Tile<select><option>—</option></select></label>
+      <div class="row"><label>Pattern<select><option>—</option></select></label><label>Direction<select><option>—</option></select></label></div>
+      <div class="row"><label>Origin along (mm)<input type="number" step="1"></label><label>Origin across (mm)<input type="number" step="1"></label></div>
+      <label>Grout<input type="color"></label></div></section>
+  </template>
 </div>
 <script type="module" src="index.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

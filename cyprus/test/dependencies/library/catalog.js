@@ -5,10 +5,6 @@
 import * as catalog from '../../../library/catalog.js';
 
 /** @typedef {import('../../../types.js').Tile} Tile */
-/** @typedef {import('../../../types.js').LibraryFile} LibraryFile */
-/** @typedef {import('../../../types.js').ProductsFile} ProductsFile */
-/** @typedef {import('../../../types.js').MaterialsFile} MaterialsFile */
-/** @typedef {import('../../../types.js').ShopsFile} ShopsFile */
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
@@ -27,9 +23,9 @@ export default async function (check) {
   check('openCatalog: the catalog\'s API', Object.keys(L).join() === 'groups,products,product,variants,materials,material,texture,shop');
 
   /* groups and products */
-  /** @type {LibraryFile} */
+  /** @type {{ groups: string[] }} */
   const index = await file('library.json');
-  /** @type {Record<string, ProductsFile>} */
+  /** @type {Record<string, { products: Record<string, Record<string, unknown>> }>} */
   const lists = {};
   for (const g of index.groups) lists[g] = await file(`products/${g}.json`);
   check('groups: those of library.json, in order', L.groups.join() === index.groups.join());
@@ -59,9 +55,9 @@ export default async function (check) {
   check('variants: no family, only itself', all.filter(k => !L.product(k).family).every(k => L.variants(k).join() === k));
 
   /* materials, shops */
-  /** @type {MaterialsFile} */
+  /** @type {{ materials: Record<string, Record<string, unknown>> }} */
   const materials = await file('materials.json');
-  /** @type {ShopsFile} */
+  /** @type {{ shops: Record<string, { name: unknown }> }} */
   const shops = await file('shops.json');
   check('materials: every key of materials.json', L.materials().join() === Object.keys(materials.materials).join());
   check('material: the look of materials.json', L.materials().every(k => JSON.stringify(L.material(k)) === JSON.stringify(materials.materials[k])));
