@@ -1,0 +1,25 @@
+{
+  "floors": { "name": "Floors", "layers": { "groundFloor": "Ground Floor", "firstFloor": "First Floor", "attic": "Attic" } },
+  "construction": { "name": "Construction", "layers": {
+    "foundation": { "name": "Foundation", "layers": { "footings": "Footings", "foundationWalls": "Foundation walls", "groundSlab": "Ground slab" } },
+    "walls": { "name": "Walls", "layers": { "blocks": "Blocks", "chimney": "Chimney" } },
+    "slabs": { "name": "Slabs", "layers": { "ringBeams": "Ring beams", "slab": "Slab", "ceiling": "Attic ceiling" } },
+    "roof": { "name": "Roof", "layers": { "roofPlanes": "Roof planes", "roofWindows": "Roof windows" } },
+    "openings": { "name": "Openings", "layers": { "windows": "Windows", "outerDoors": "Outer doors", "innerDoors": "Inner doors" } },
+    "stair": "Stair",
+    "insulation": { "name": "Insulation", "layers": { "eps": "EPS", "facade": "Facade" } },
+    "site": { "name": "Site", "layers": { "lawn": "Lawn", "terraces": "Terraces", "paving": "Paving" } }
+  } },
+  "interiors": { "name": "Interiors", "layers": {
+    "tiles": { "name": "Tiles", "layers": { "floorTiles": "Floor tiles", "wallTiles": "Wall tiles", "smallCuts": "Small cuts" } },
+    "carcasses": { "name": "Carcasses", "layers": { "boards": "Boards", "backs": "Backs", "shelves": "Shelves", "drawers": "Drawers", "hardware": "Hinges and runners", "holes": "Holes", "legs": "Legs" } },
+    "fronts": { "name": "Fronts", "layers": { "doorsAndDrawers": "Doors and drawers", "handles": "Handles", "strips": "Front strips", "frontPanels": "Panels", "plinth": "Plinth" } },
+    "worktops": { "name": "Worktops", "layers": { "worktop": "Worktop", "endPanels": "End panels", "wallPanel": "Wall panel" } },
+    "appliances": { "name": "Appliances", "layers": { "sink": "Sink", "trap": "Trap", "hob": "Hob", "hood": "Hood", "oven": "Oven", "microwave": "Microwave", "coffee": "Coffee machine", "fridge": "Fridge", "dishwasher": "Dishwasher" } },
+    "sanitary": { "name": "Sanitary", "layers": { "basin": "Basin", "wc": "WC", "shower": "Shower", "mirror": "Mirror", "radiator": "Radiator" } },
+    "builtIns": { "name": "Built-ins", "layers": { "casings": "Casings", "plasterboard": "Plasterboard" } },
+    "installations": { "name": "Installations", "layers": { "riser": "Riser", "wcFrame": "WC frame" } },
+    "lights": { "name": "Lights", "layers": { "pendants": "Pendants", "downlights": "Downlights" } }
+  } },
+  "drawing": { "name": "Drawing", "layers": { "edges": "Edges" } }
+}

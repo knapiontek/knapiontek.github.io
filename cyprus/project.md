@@ -9,6 +9,7 @@ Served over HTTP (Caddy, `toggle-caddy.sh`): `http://localhost:8080/` the page, 
 |---|---|
 | `index.html` | the page: its pieces (Alpine) |
 | `index.js` | joins the page to the modules: the page's Alpine part; for now a sketch with stand-in data |
+| `layers.json` | the layers of the View: a block of the panel at its top level; a layer its name, or its name and the layers under it; the nodes of the hierarchy name its keys |
 | `types.js` | the contracts between modules (types only, never loaded by the browser) |
 | `globals.d.ts`, `jsconfig.json` | the type check (`tsc -p jsconfig.json`): Alpine's global, strict checks of every `.js` |
 | `toggle-caddy.sh`, `Caddyfile` | Caddy on or off: this folder at port 8080, nothing cached |

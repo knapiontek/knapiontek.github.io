@@ -92,15 +92,16 @@ export function createHierarchy(root) {
   /** every node below the root, parents first @param {(n: N) => void} fn */
   function walk(fn) { (function each(/** @type {N} */ n) { for (const c of /** @type {N[]} */ (n.children || [])) { fn(c); each(c); } })(root); }
 
-  /** what is wrong in the hierarchy, as Test shows it @returns {Check[]} */
-  function checks() {
+  /** what is wrong in the hierarchy, as Test shows it @param {string[]} [known]  the layers there are; none: not checked @returns {Check[]} */
+  function checks(known) {
     /** @type {string[][]} */
-    const [shape, ids, twice, empty, below, broken] = [[], [], [], [], [], []];
+    const [shape, ids, twice, empty, below, broken, unknown] = [[], [], [], [], [], [], []];
     const vector = (/** @type {unknown} */ v) => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
     walk(n => {
       const at = path(n) || '(' + (n.name || n.type || 'a node') + ')';
       if (n.refs !== undefined && !(Array.isArray(n.refs) && n.refs.every(r => typeof r === 'string'))) broken.push(`${at}: refs is not a list of paths`);
       else for (const r of n.refs || []) if (!node(r)) broken.push(`${at}: ${r}`);
+      if (known) for (const l of n.layers || []) if (!known.includes(l)) unknown.push(`${at}: ${l}`);
       if (typeof n.id !== 'string' || !ID.test(n.id)) ids.push(`${at}: id ${JSON.stringify(n.id)}`);
       if (!n.type || !vector(n.offset) || !vector(n.size)) {
         shape.push(`${at}: ${[!n.type && 'type', !vector(n.offset) && 'offset', !vector(n.size) && 'size'].filter(Boolean).join(', ')}`);
@@ -120,7 +121,8 @@ export function createHierarchy(root) {
       { name: 'Hierarchy: ids unique among siblings', about: 'Two children of one node with the same id would have the same path: one of them could not be found.', items: twice },
       { name: 'Hierarchy: sizes above 0', about: 'Every node has a size above 0 along x, y and h.', items: empty },
       { name: 'Hierarchy: what lies below the zero', about: 'To know, not a fault: the nodes at negative numbers from the root\'s zero.', items: below, info: true },
-      { name: 'Hierarchy: every ref is the path of a node', about: 'A node may refer to others by their paths; every such path leads to a node.', items: broken }];
+      { name: 'Hierarchy: every ref is the path of a node', about: 'A node may refer to others by their paths; every such path leads to a node.', items: broken },
+      ...(known ? [{ name: 'Hierarchy: every layer is known', about: 'A node\'s layers are keys of the layers there are.', items: unknown }] : [])];
   }
 
   return { root, add, path, node, parent, chain, place, box, setting, refs, layers, walk, checks };

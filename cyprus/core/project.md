@@ -4,7 +4,7 @@ General code for any project: it knows no house, no room, no product. Everything
 
 | File | What |
 |---|---|
-| `ui.js` | the screen on Alpine: `page()` (a page's Alpine part, its state kept in the browser), the pieces (`x-part`: nav, modes, dock, panel, layers, sun, help, corner), the layers as a collapsible tree, light or dark, the panel's » « |
+| `ui.js` | the screen on Alpine: `page()` (a page's Alpine part, its state kept in the browser), the pieces (`x-part`: nav, modes, dock, panel, layers, sun, help, corner), the layers as a collapsible tree (a layer: its name, or its name and the layers under it), light or dark, the panel's » « |
 | `ui.css` | the look of the screen, light and dark |
-| `hierarchy.js` | `createHierarchy(root)`: the hierarchy of nodes, where a thing stands or hangs, built from the root down (`add`: a branch under a node in it): a node by its path, its place (the sum of the offsets), its box, a setting from the nearest node up, its refs, its layers (its own and those above), a walk, the checks |
+| `hierarchy.js` | `createHierarchy(root)`: the hierarchy of nodes, where a thing stands or hangs, built from the root down (`add`: a branch under a node in it): a node by its path, its place (the sum of the offsets), its box, a setting from the nearest node up, its refs, its layers (its own and those above), a walk, the checks (`checks(known)`: also the layers no one knows) |
 | `tools.js` | how numbers are written (`fmt`) |

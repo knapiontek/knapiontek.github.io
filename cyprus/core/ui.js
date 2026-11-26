@@ -6,8 +6,8 @@
 import { fmt } from './tools.js';
 
 /** @typedef {{ name: string, go: () => void, label?: string, cls?: string, pressed?: boolean }} MenuItem  a button of the bottom menu */
-/** @typedef {{ name: string, layers?: LayerTree }} Layer */
-/** @typedef {Record<string, Layer>} LayerTree  a layer by its key, the layers under it in its layers */
+/** @typedef {string | { name: string, layers: LayerTree }} Layer  a layer: its name, or its name and the layers under it */
+/** @typedef {Record<string, Layer>} LayerTree  a layer by its key */
 /** @typedef {{ k: string, name: string, depth: number, branch: boolean, open: boolean, on: boolean, partly: boolean, off: boolean }} LayerRow  a layer as the panel lists it: partly, on with a layer under it off; off, a parent off */
 /** @typedef {{ az: number, el: number, k: number, clouds: number, night: boolean }} Sun */
 
@@ -138,12 +138,13 @@ function start() {
 /** @param {LayerTree} tree @param {Record<string, boolean>} on  false: off @param {Record<string, boolean>} open  true: open @returns {LayerRow[]} */
 function layerRows(tree, on, open) {
   /** @param {Layer} l @returns {boolean} */
-  const partly = l => Object.entries(l.layers || {}).some(([k, c]) => on[k] === false || partly(c));
+  const partly = l => typeof l !== 'string' && Object.entries(l.layers).some(([k, c]) => on[k] === false || partly(c));
   /** @param {LayerTree} t @param {number} depth @param {boolean} off @returns {LayerRow[]} */
   const rows = (t, depth, off) => Object.entries(t).flatMap(([k, l]) => {
-    const row = { k, name: l.name, depth, branch: !!l.layers, open: !!l.layers && !!open[k], on: on[k] !== false, partly: false, off };
+    const branch = typeof l !== 'string';
+    const row = { k, name: branch ? l.name : l, depth, branch, open: branch && !!open[k], on: on[k] !== false, partly: false, off };
     row.partly = row.on && partly(l);
-    return row.open ? [row, ...rows(/** @type {LayerTree} */ (l.layers), depth + 1, off || !row.on)] : [row];
+    return branch && row.open ? [row, ...rows(l.layers, depth + 1, off || !row.on)] : [row];
   });
   return rows(tree, 0, false);
 }

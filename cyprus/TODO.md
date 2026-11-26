@@ -9,13 +9,13 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] ES modules, Caddy, `types.js`, the test page
 - [x] core/hierarchy: built from the root down (`add`); places from offsets, settings, refs, layers from the root down, checks; its test
 - [x] tests: one per module, at its path
+- [x] `layers.json` (root): the panel reads it; `checks(known)`: unknown layers; its test
 - [x] library/shapes: a product as parts in its own axes (`shapeOf`), materials by key or `metal` (Finish); its test
 
 ## Next
-- [ ] `layers.json` (root): the layers, static; the panel reads it; the builders give the nodes its keys; checks: unknown keys; a WC frame's parts behind the casing (Installations): their own node
-- [ ] `house/model.json` from `analysis.md` (foundation, walls with their openings, slabs, roof; Ground Floor / First Floor / Attic, each from its slab; the rooms as places) and `house/build.js`: the house's branches; walls cut round their openings
+- [ ] `house/model.json` from `analysis.md` (foundation, walls with their openings, slabs, roof; Ground Floor / First Floor / Attic, each from its slab; the rooms as places; the layers' keys) and `house/build.js`: the house's branches; walls cut round their openings
 - [ ] `plot3d.js` (root): the hierarchy in three.js: a leaf's parts, or its product's shape (`shapeOf`); placed by the hierarchy, its look by material; the granite's speckle
-- [ ] `room/build.js`: a room's fittings from the library (lamps, basin, mirror); calls the cabinets, adds what they need from the library
+- [ ] `room/build.js`: a room's fittings from the library (lamps, basin, mirror); calls the cabinets, adds what they need from the library; a WC frame's parts behind the casing (Installations): their own node
 - [ ] `room/cabinets.js` and `room/<room>.cabinets.json` (materials, settings, groups, components): the cabinets' engine, by stages; the hardware, the kitchen tap, the trap; tiles
 - [ ] `plot2d.js` (root): plans and dimensions
 - [ ] `docs.js` (root): Documents

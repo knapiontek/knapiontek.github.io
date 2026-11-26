@@ -28,33 +28,6 @@ const SKETCH = {
       { id: 'bedroom_7', number: 7, name: 'Bedroom' },
       { id: 'wardrobe_8', number: 8, name: 'Wardrobe', furniture: true }] }
   ],
-  /** @type {{ id: string, name: string, tree: LayerTree }[]} the View's layer blocks */
-  layerBlocks: [
-    { id: 'floors', name: 'Floors', tree: {
-      groundFloor: { name: 'Ground Floor' }, firstFloor: { name: 'First Floor' }, attic: { name: 'Attic' } } },
-    { id: 'construction', name: 'Construction', tree: {
-      foundation: { name: 'Foundation', layers: { footings: { name: 'Footings' }, foundationWalls: { name: 'Foundation walls' }, groundSlab: { name: 'Ground slab' } } },
-      walls: { name: 'Walls', layers: { blocks: { name: 'Blocks' }, chimney: { name: 'Chimney' } } },
-      slabs: { name: 'Slabs', layers: { ringBeams: { name: 'Ring beams' }, slab: { name: 'Slab' }, ceiling: { name: 'Attic ceiling' } } },
-      roof: { name: 'Roof', layers: { roofPlanes: { name: 'Roof planes' }, roofWindows: { name: 'Roof windows' } } },
-      openings: { name: 'Openings', layers: { windows: { name: 'Windows' }, outerDoors: { name: 'Outer doors' }, innerDoors: { name: 'Inner doors' } } },
-      stair: { name: 'Stair' },
-      insulation: { name: 'Insulation', layers: { eps: { name: 'EPS' }, facade: { name: 'Facade' } } },
-      site: { name: 'Site', layers: { lawn: { name: 'Lawn' }, terraces: { name: 'Terraces' }, paving: { name: 'Paving' } } } } },
-    { id: 'interiors', name: 'Interiors', tree: {
-      tiles: { name: 'Tiles', layers: { floorTiles: { name: 'Floor tiles' }, wallTiles: { name: 'Wall tiles' }, smallCuts: { name: 'Small cuts' } } },
-      carcasses: { name: 'Carcasses', layers: { boards: { name: 'Boards' }, backs: { name: 'Backs' }, shelves: { name: 'Shelves' }, drawers: { name: 'Drawers' },
-        hardware: { name: 'Hinges and runners' }, holes: { name: 'Holes' }, legs: { name: 'Legs' } } },
-      fronts: { name: 'Fronts', layers: { doorsAndDrawers: { name: 'Doors and drawers' }, handles: { name: 'Handles' }, strips: { name: 'Front strips' }, frontPanels: { name: 'Panels' }, plinth: { name: 'Plinth' } } },
-      worktops: { name: 'Worktops', layers: { worktop: { name: 'Worktop' }, endPanels: { name: 'End panels' }, wallPanel: { name: 'Wall panel' } } },
-      appliances: { name: 'Appliances', layers: { sink: { name: 'Sink' }, trap: { name: 'Trap' }, hob: { name: 'Hob' }, hood: { name: 'Hood' }, oven: { name: 'Oven' },
-        microwave: { name: 'Microwave' }, coffee: { name: 'Coffee machine' }, fridge: { name: 'Fridge' }, dishwasher: { name: 'Dishwasher' } } },
-      sanitary: { name: 'Sanitary', layers: { basin: { name: 'Basin' }, wc: { name: 'WC' }, shower: { name: 'Shower' }, mirror: { name: 'Mirror' }, radiator: { name: 'Radiator' } } },
-      builtIns: { name: 'Built-ins', layers: { casings: { name: 'Casings' }, plasterboard: { name: 'Plasterboard' } } },
-      installations: { name: 'Installations', layers: { riser: { name: 'Riser' }, wcFrame: { name: 'WC frame' } } },
-      lights: { name: 'Lights', layers: { pendants: { name: 'Pendants' }, downlights: { name: 'Downlights' } } } } },
-    { id: 'drawing', name: 'Drawing', tree: { edges: { name: 'Edges' } } }
-  ],
   sun: { az: 225, el: 35, k: 1, clouds: 0.7, night: false }
 };
 
@@ -68,7 +41,6 @@ page('sketch', {
   modeNames: { '3d': '3D', '2d': '2D', documents: 'Documents', cabinets: 'Cabinet' },
   tabs: { '3d': ['view', 'finish'] },
   tabNames: { view: 'View', finish: 'Finish' },
-  layerBlocks: SKETCH.layerBlocks.map(b => ({ ...b, tab: 'view' })),
   sun: { rects: SKETCH.house.rects, sun: SUN.state, change: SUN.save },
 
   /* what the view shows: the house, a floor, a room of it */
@@ -114,5 +86,10 @@ page('sketch', {
       cabinets: [[{ name: 'Import', go: none }, { name: 'Export', go: none }], [{ name: 'Show in 3D', go: none }]]
     };
   },
-  async load() { }
+  /* the View's layers: layers.json, a block of the panel at its top level */
+  async load() {
+    /** @type {Record<string, { name: string, layers: LayerTree }>} */
+    const layers = await (await fetch(new URL('layers.json', import.meta.url))).json();
+    this.layerBlocks = Object.entries(layers).map(([id, b]) => ({ id, name: b.name, tab: 'view', tree: b.layers }));
+  }
 });
