@@ -65,38 +65,51 @@ const SKETCH = {
       { id: 'show3d', name: 'Show in 3D', group: 'show' }
     ]
   },
-  /** @type {LayerBlock[]} the View's layer blocks */
+  /** @type {LayerBlock[]} the View's layer blocks: where (Floors), the shell in the order it is built (Construction), what is in the rooms (Interiors) */
   layerBlocks: [
-    { id: 'floors', name: 'Floors', scopes: ['house'], layers: [
-      { id: 'groundFloor', name: 'Ground Floor' }, { id: 'firstFloor', name: 'First Floor' }, { id: 'attic', name: 'Attic' }] },
+    { id: 'floors', name: 'Floors', layers: [
+      { id: 'groundFloor', name: 'Ground Floor' },
+      { id: 'firstFloor', name: 'First Floor' },
+      { id: 'attic', name: 'Attic' }] },
     { id: 'construction', name: 'Construction', layers: [
-      { id: 'foundation', name: 'Foundation' },
-      { id: 'walls', name: 'Blocks' },
-      { id: 'slabs', name: 'Ring beam and slab' },
-      { id: 'insulation', name: 'EPS', children: [{ id: 'facade', name: 'Facade' }] },
-      { id: 'windows', name: 'Windows' },
-      { id: 'doors', name: 'Doors' },
+      { id: 'foundation', name: 'Foundation', children: [
+        { id: 'footings', name: 'Footings' }, { id: 'foundationWalls', name: 'Foundation walls' }, { id: 'groundSlab', name: 'Ground slab' }] },
+      { id: 'walls', name: 'Walls', children: [
+        { id: 'blocks', name: 'Blocks' }, { id: 'chimney', name: 'Chimney' }] },
+      { id: 'slabs', name: 'Slabs', children: [
+        { id: 'ringBeams', name: 'Ring beams' }, { id: 'slab', name: 'Slab' }, { id: 'ceiling', name: 'Attic ceiling' }] },
+      { id: 'roof', name: 'Roof', children: [
+        { id: 'roofPlanes', name: 'Roof planes' }, { id: 'roofWindows', name: 'Roof windows' }] },
+      { id: 'openings', name: 'Openings', children: [
+        { id: 'windows', name: 'Windows' }, { id: 'outerDoors', name: 'Outer doors' }, { id: 'innerDoors', name: 'Inner doors' }] },
       { id: 'stair', name: 'Stair' },
-      { id: 'site', name: 'Site' },
-      { id: 'tiles', name: 'Floor tiles', children: [{ id: 'cuts', name: 'Small cuts' }] },
-      { id: 'furniture', name: 'Furniture' },
-      { id: 'edges', name: 'Edges' }] },
-    { id: 'interiors', name: 'Interiors', scopes: ['room'], furniture: true, layers: [
-      { id: 'carcassParts', name: 'Carcasses', children: [
-        { id: 'carcasses', name: 'Boards' }, { id: 'backs', name: 'Backs' }, { id: 'shelves', name: 'Shelves' }, { id: 'drawers', name: 'Drawers' },
+      { id: 'insulation', name: 'Insulation', children: [
+        { id: 'eps', name: 'EPS' }, { id: 'facade', name: 'Facade' }] },
+      { id: 'site', name: 'Site', children: [
+        { id: 'lawn', name: 'Lawn' }, { id: 'terraces', name: 'Terraces' }, { id: 'paving', name: 'Paving' }] }] },
+    { id: 'interiors', name: 'Interiors', layers: [
+      { id: 'tiles', name: 'Tiles', children: [
+        { id: 'floorTiles', name: 'Floor tiles' }, { id: 'wallTiles', name: 'Wall tiles' }, { id: 'smallCuts', name: 'Small cuts' }] },
+      { id: 'carcasses', name: 'Carcasses', children: [
+        { id: 'boards', name: 'Boards' }, { id: 'backs', name: 'Backs' }, { id: 'shelves', name: 'Shelves' }, { id: 'drawers', name: 'Drawers' },
         { id: 'hardware', name: 'Hinges and runners' }, { id: 'holes', name: 'Holes' }, { id: 'legs', name: 'Legs' }] },
-      { id: 'frontParts', name: 'Fronts', children: [
-        { id: 'fronts', name: 'Fronts' }, { id: 'handles', name: 'Handles' }, { id: 'strips', name: 'Front strips' }, { id: 'frontPanel', name: 'Panels' }, { id: 'plinth', name: 'Plinth' }] },
-      { id: 'worktopParts', name: 'Worktop', children: [
-        { id: 'worktops', name: 'Worktops' }, { id: 'endPanels', name: 'End panels' }, { id: 'wallPanel', name: 'Wall panel' }] },
+      { id: 'fronts', name: 'Fronts', children: [
+        { id: 'doorsAndDrawers', name: 'Doors and drawers' }, { id: 'handles', name: 'Handles' }, { id: 'strips', name: 'Front strips' }, { id: 'frontPanels', name: 'Panels' }, { id: 'plinth', name: 'Plinth' }] },
+      { id: 'worktops', name: 'Worktops', children: [
+        { id: 'worktop', name: 'Worktop' }, { id: 'endPanels', name: 'End panels' }, { id: 'wallPanel', name: 'Wall panel' }] },
       { id: 'appliances', name: 'Appliances', children: [
         { id: 'sink', name: 'Sink' }, { id: 'trap', name: 'Trap' }, { id: 'hob', name: 'Hob' }, { id: 'hood', name: 'Hood' }, { id: 'oven', name: 'Oven' },
-        { id: 'microwave', name: 'Microwave' }, { id: 'coffee', name: 'Coffee machine' }, { id: 'fridge', name: 'Fridge' }, { id: 'dishwasher', name: 'Dishwasher' }, { id: 'basin', name: 'Basin' }] },
-      { id: 'plasterboard', name: 'Plasterboard casing' },
-      { id: 'sanitary', name: 'Sanitary' },
-      { id: 'builtIns', name: 'Built-ins' },
-      { id: 'installations', name: 'Installations' },
-      { id: 'lamps', name: 'Lights' }] }
+        { id: 'microwave', name: 'Microwave' }, { id: 'coffee', name: 'Coffee machine' }, { id: 'fridge', name: 'Fridge' }, { id: 'dishwasher', name: 'Dishwasher' }] },
+      { id: 'sanitary', name: 'Sanitary', children: [
+        { id: 'basin', name: 'Basin' }, { id: 'wc', name: 'WC' }, { id: 'shower', name: 'Shower' }, { id: 'mirror', name: 'Mirror' }, { id: 'radiator', name: 'Radiator' }] },
+      { id: 'builtIns', name: 'Built-ins', children: [
+        { id: 'casings', name: 'Casings' }, { id: 'plasterboard', name: 'Plasterboard' }] },
+      { id: 'installations', name: 'Installations', children: [
+        { id: 'riser', name: 'Riser' }, { id: 'wcFrame', name: 'WC frame' }] },
+      { id: 'lights', name: 'Lights', children: [
+        { id: 'pendants', name: 'Pendants' }, { id: 'downlights', name: 'Downlights' }] }] },
+    { id: 'drawing', name: 'Drawing', layers: [
+      { id: 'edges', name: 'Edges' }] }
   ],
   /** @type {(Item & { fields: string[] })[]} the Finish's blocks */
   finishBlocks: [
