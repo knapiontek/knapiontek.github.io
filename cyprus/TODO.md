@@ -9,8 +9,8 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] ES modules, Caddy, `types.js`, the test page
 - [x] core/hierarchy: built from the root down (`add`); places from offsets, settings, refs, layers from the root down, checks; its test
 - [x] tests: one per module, at its path
-- [x] `layers.json` (root): the panel reads it; `checks(known)`: unknown layers; its test
-- [x] `house/model.json` from the prototype's `house.js`, in x East (checked against `analysis.md`); `house/build.js`: its hierarchy, layers by type; its test
+- [x] `layers.json` (root): the panel reads it; `checks(known)`: an unknown layer or floor; its test
+- [x] `house/model.json` from the prototype's `house.js`: the site at the root, the house on it in `analysis.md`'s axes (checked against it); `layer` and `floor` on a node, its type's, or its parent's; `house/build.js`; its test
 - [x] library/shapes: a product as parts in its own axes (`shapeOf`), materials by key or `metal` (Finish); its test
 
 ## Next

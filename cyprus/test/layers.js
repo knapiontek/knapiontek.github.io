@@ -1,6 +1,6 @@
 // @ts-check
 // test/layers.js: layers.json: the panel's blocks at its top level; a layer its name, or its name and the layers under it;
-// every key once in the file, as the nodes of the hierarchy name them; a hierarchy with a layer the file has not.
+// every key once in the file; the Floors block the floors, the others the layers, as the nodes name them.
 
 import { createHierarchy } from '../core/hierarchy.js';
 
@@ -29,11 +29,13 @@ export default async function (check) {
   check('every key once in the file' + (twice.length ? ': not ' + twice.join(', ') : ''), twice.length === 0);
   check('keys: as ids, letters and digits', keys.every(k => /^[A-Za-z][A-Za-z0-9]*$/.test(k)));
 
-  /* the hierarchy's nodes name the file's keys */
+  /* the hierarchy's nodes name the file's keys: a floor of the Floors block, a layer of the others */
+  const floors = Object.keys(blocks.floors.layers), known = { floors, layers: keys.filter(k => k !== 'floors' && !floors.includes(k)) };
+  check('floors: Ground Floor, First Floor, Attic', floors.join() === 'groundFloor,firstFloor,attic');
   const h = createHierarchy({ id: 'house', type: 'house', offset: [0, 0, 0], size: [1, 1, 1], children: [
-    { id: 'wall', type: 'wall', offset: [0, 0, 0], size: [1, 1, 1], layers: ['groundFloor', 'blocks'] },
-    { id: 'lamp', type: 'lamp', offset: [0, 0, 0], size: [1, 1, 1], layers: ['lamps'] }] });
-  const found = h.checks(keys).find(c => c.name === 'Hierarchy: every layer is known');
-  check('a layer the file has not: found', found?.items.join() === 'lamp: lamps');
-  check('without the layers, not checked', !h.checks().some(c => c.name === 'Hierarchy: every layer is known'));
+    { id: 'wall', type: 'wall', offset: [0, 0, 0], size: [1, 1, 1], floor: 'groundFloor', layer: 'blocks' },
+    { id: 'lamp', type: 'lamp', offset: [0, 0, 0], size: [1, 1, 1], floor: 'cellar', layer: 'lamps' }] });
+  const found = h.checks(known).find(c => c.name === 'Hierarchy: every layer and floor is known');
+  check('a layer or a floor the file has not: found', found?.items.join() === 'lamp: layer lamps,lamp: floor cellar');
+  check('without them, not checked', !h.checks().some(c => c.name === 'Hierarchy: every layer and floor is known'));
 }

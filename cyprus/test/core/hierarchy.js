@@ -14,8 +14,8 @@ export default async function (check) {
 
     /** @type {HierarchyNode} */
     const root = { id: 'site', type: 'site', offset: [0, 0, 0], size: [10000, 10000, 5000], settings: { wall: { thickness: 240 } }, children: [
-      { id: 'house', type: 'house', offset: [2000, 3000, 0], size: [6000, 4000, 3000], layers: ['a'], children: [
-        { id: 'room', type: 'room', offset: [500, 500, 0], size: [2000, 2000, 2500], settings: { wall: { color: 'white' } }, refs: ['house'], layers: ['b', 'a'] }] }] };
+      { id: 'house', type: 'house', offset: [2000, 3000, 0], size: [6000, 4000, 3000], layer: 'a', floor: 'f1', children: [
+        { id: 'room', type: 'room', offset: [500, 500, 0], size: [2000, 2000, 2500], settings: { wall: { color: 'white' } }, refs: ['house'], layer: 'b' }] }] };
     const T = createHierarchy(root);
     check('root: the node it was made over', T.root === root);
 
@@ -30,22 +30,23 @@ export default async function (check) {
     check('setting: its own, or the nearest above, and where it comes from', color?.value === 'white' && color.from === room && thickness?.value === 240 && thickness.from === root);
     check('setting: none sets it, undefined', T.setting(room, 'wall.height') === undefined);
     check('refs: the nodes of its paths', T.refs(room).length === 1 && T.refs(room)[0] === house);
-    check('layers: its own and those above, from the root down, each once', T.layers(room).join() === 'a,b' && T.layers(root).length === 0);
+    check('layer: its own, before its parent\'s', T.layer(room) === 'b' && T.layer(house) === 'a' && T.layer(root) === undefined);
+    check('floor: its parent\'s when it has none', T.floor(room) === 'f1' && T.floor(root) === undefined);
     /** @type {string[]} */
     const walked = [];
     T.walk(n => walked.push(n.id));
     check('walk: every node below the root, parents first', walked.join() === 'house,room');
-    check('the nodes are not changed', JSON.stringify(Object.keys(room)) === JSON.stringify(['id', 'type', 'offset', 'size', 'settings', 'refs', 'layers']));
+    check('the nodes are not changed', JSON.stringify(Object.keys(room)) === JSON.stringify(['id', 'type', 'offset', 'size', 'settings', 'refs', 'layer']));
     check('checks: a sound hierarchy has nothing to correct', T.checks().every(c => c.items.length === 0));
 
     /* add: a branch under a node already in it */
     /** @type {HierarchyNode} */
     const desk = { id: 'desk', type: 'desk', offset: [100, 200, 0], size: [1200, 600, 750], children: [
-      { id: 'lamp', type: 'lamp', offset: [50, 50, 750], size: [150, 150, 400], layers: ['c'] }] };
+      { id: 'lamp', type: 'lamp', offset: [50, 50, 750], size: [150, 150, 400], layer: 'c' }] };
     check('add: gives the node back', T.add(room, desk) === desk);
     check('add: the last of the parent\'s children', /** @type {HierarchyNode[]} */ (room.children).at(-1) === desk);
     const lamp = /** @type {HierarchyNode} */ (T.node('house/room/desk/lamp'));
-    check('add: what lies under it, found by path, placed, its layers', lamp !== null && T.place(lamp).join() === '2650,3750,750' && T.layers(lamp).join() === 'a,b,c');
+    check('add: what lies under it, found by path, placed, its layer and floor', lamp !== null && T.place(lamp).join() === '2650,3750,750' && T.layer(lamp) === 'c' && T.floor(lamp) === 'f1');
     /** @param {() => unknown} f */
     const throws = f => { try { f(); return false; } catch (e) { return true; } };
     check('add: a parent not in it throws', throws(() => T.add({ id: 'x', type: 't', offset: [0, 0, 0], size: [1, 1, 1] }, { id: 'y', type: 't', offset: [0, 0, 0], size: [1, 1, 1] })));
@@ -73,30 +74,32 @@ export default async function (check) {
     /* house/model.json: the house's branches, the room a place in them */
     /** @type {HierarchyNode} */
     const house = { id: 'house', type: 'house', offset: [0, 0, 0], size: [13200, 9100, 8820], children: [
-      { id: 'groundFloor', type: 'level', offset: [0, 0, 0], size: [13200, 9100, 2720], layers: ['groundFloor'], children: [
-        { id: 'wallLeft', type: 'block240', offset: [-800, 200, 0], size: [14800, 240, 2720], layers: ['blocks'], children: [
-          { id: 'windowGarage', type: 'window', offset: [4380, -200, 1100], size: [2000, 440, 1000], layers: ['windows'] }] },
+      { id: 'groundFloor', type: 'level', offset: [0, 0, 0], size: [13200, 9100, 2720], floor: 'groundFloor', children: [
+        { id: 'wallLeft', type: 'block240', offset: [-800, 200, 0], size: [14800, 240, 2720], layer: 'blocks', children: [
+          { id: 'windowGarage', type: 'window', offset: [4380, -200, 1100], size: [2000, 440, 1000], layer: 'windows' }] },
         { id: 'room_356', type: 'room', offset: [5860, 440, 0], size: [6900, 8220, 2720], settings: { metal: 'brass' } }] }] };
     const hierarchy = createHierarchy(house);
     /* room/build.js: the room's cabinets, as room/cabinets.js builds them, under the room */
     const room = /** @type {HierarchyNode} */ (hierarchy.node('groundFloor/room_356'));
     const g1 = hierarchy.add(room, { id: 'g1', type: 'group', offset: [720, 7620, 0], size: [1900, 600, 900] });
-    const K11 = hierarchy.add(g1, { id: 'K11', type: 'carcass', offset: [0, 0, 100], size: [800, 560, 720], layers: ['carcasses'], children: [
-      { id: 'front', type: 'front', offset: [0, 560, 0], size: [800, 18, 720], layers: ['fronts'] }] });
+    const K11 = hierarchy.add(g1, { id: 'K11', type: 'carcass', offset: [0, 0, 100], size: [800, 560, 720], layer: 'carcasses', children: [
+      { id: 'front', type: 'front', offset: [0, 560, 0], size: [800, 18, 720], layer: 'fronts' }] });
     /* … and what the cabinets need from the library: the sink, on its carcass */
-    hierarchy.add(K11, { id: 'sink', type: 'sink', offset: [100, 60, 758], size: [600, 440, 200], layers: ['sink'], refs: ['groundFloor/room_356/g1/K11'] });
+    hierarchy.add(K11, { id: 'sink', type: 'sink', offset: [100, 60, 758], size: [600, 440, 200], layer: 'sink', refs: ['groundFloor/room_356/g1/K11'] });
 
     /* the scene: where a thing is, in the house's axes */
     const sink = /** @type {HierarchyNode} */ (hierarchy.node('groundFloor/room_356/g1/K11/sink'));
     check('place: the sink in the house, its offsets added up', hierarchy.place(sink).join() === '6680,8120,858');
     check('box: the garage window, x 3580 – 5580 as analysis.md', hierarchy.box(/** @type {HierarchyNode} */ (hierarchy.node('groundFloor/wallLeft/windowGarage'))).slice(0, 2).join() === '3580,5580');
 
-    /* the panel: a thing is shown when all its layers are on; Floors come from the level it stands on */
-    /** @param {HierarchyNode} n @param {string[]} off  the layers switched off */
-    const shown = (n, off) => hierarchy.layers(n).every(k => !off.includes(k));
-    check('layers: the sink has the Ground Floor\'s layer and its own', hierarchy.layers(sink).join() === 'groundFloor,carcasses,sink');
-    check('layers: Ground Floor off hides the sink, the wall, the window', !shown(sink, ['groundFloor']) && !shown(/** @type {HierarchyNode} */ (hierarchy.node('groundFloor/wallLeft')), ['groundFloor']));
-    check('layers: Fronts off hides the front, not the sink', !shown(/** @type {HierarchyNode} */ (hierarchy.node('groundFloor/room_356/g1/K11/front')), ['fronts']) && shown(sink, ['fronts']));
+    /* the panel: a thing is shown when its layer and its floor are on */
+    /** @param {HierarchyNode} n @param {string[]} off  the layers and floors switched off */
+    const shown = (n, off) => !off.includes(/** @type {string} */ (hierarchy.layer(n))) && !off.includes(/** @type {string} */ (hierarchy.floor(n)));
+    const wall = /** @type {HierarchyNode} */ (hierarchy.node('groundFloor/wallLeft')), window = /** @type {HierarchyNode} */ (hierarchy.node('groundFloor/wallLeft/windowGarage'));
+    check('layer and floor: the sink, its own layer, the Ground Floor\'s floor', hierarchy.layer(sink) === 'sink' && hierarchy.floor(sink) === 'groundFloor');
+    check('floor: Ground Floor off hides the sink, the wall, the window', !shown(sink, ['groundFloor']) && !shown(wall, ['groundFloor']) && !shown(window, ['groundFloor']));
+    check('layer: Blocks off hides the wall, not the window in it', !shown(wall, ['blocks']) && shown(window, ['blocks']));
+    check('layer: Fronts off hides the front, not the sink', !shown(/** @type {HierarchyNode} */ (hierarchy.node('groundFloor/room_356/g1/K11/front')), ['fronts']) && shown(sink, ['fronts']));
 
     /* Finish: the room's metal, for every fitting in it */
     check('setting: the front takes the room\'s metal', hierarchy.setting(/** @type {HierarchyNode} */ (hierarchy.node('groundFloor/room_356/g1/K11/front')), 'metal')?.value === 'brass');
@@ -104,7 +107,7 @@ export default async function (check) {
     /* Documents: every element, by its path */
     /** @type {string[]} */
     const paths = [];
-    hierarchy.walk(n => { if (n.layers) paths.push(hierarchy.path(n)); });
+    hierarchy.walk(n => { if (n.layer || n.floor) paths.push(hierarchy.path(n)); });
     check('walk: the elements, parents first', paths.join(' ') === 'groundFloor groundFloor/wallLeft groundFloor/wallLeft/windowGarage groundFloor/room_356/g1/K11 groundFloor/room_356/g1/K11/front groundFloor/room_356/g1/K11/sink');
     check('refs: the sink stands on its carcass', hierarchy.refs(sink)[0] === hierarchy.parent(sink));
 

@@ -1,7 +1,7 @@
 // @ts-check
 // core/hierarchy.js: the hierarchy of nodes, built from its root down: whoever builds a branch adds it under a node already in
-// it (add). A node's place is its parent's place plus its offset; its settings are the defaults of its branch; its layers are
-// its own and those of every node above it. It says what belongs to what (where a thing stands or hangs), not what lies inside
+// it (add). A node's place is its parent's place plus its offset; its settings are the defaults of its branch; its layer (what
+// it is) and its floor (where it is) are its own, or else its parent's. It says what belongs to what (where a thing stands or hangs), not what lies inside
 // what: a child may stand outside its parent (a sink over its carcass). Knows no project and nothing of what a node is: its
 // type is only a name here.
 
@@ -14,7 +14,8 @@
  * @property {number[]} size  [x, y, h] mm
  * @property {Record<string, any>} [settings]  the defaults of its branch
  * @property {string[]} [refs]  the paths of the nodes it refers to (what for, its type says)
- * @property {string[]} [layers]  its own layers
+ * @property {string} [layer]  what it is, as the panel switches it; none: its parent's
+ * @property {string} [floor]  the floor it is on; none: its parent's
  * @property {HierarchyNode[]} [children]
  */
 /** @typedef {{ name: string, about: string, items: string[], info?: boolean }} Check  OK when items is empty; info: to know, not to correct */
@@ -87,12 +88,20 @@ export function createHierarchy(root) {
   }
   /** the nodes a node refers to, in the order of its refs; null for a path with no node @param {N} n */
   const refs = n => (n.refs || []).map(node);
-  /** its layers and those of every node above it, from the root down, each once @param {N} n @returns {string[]} */
-  const layers = n => [...new Set(chain(n).flatMap(m => m.layers || []))];
+  /** the value of a field: its own, or the nearest node's above it that has one @param {N} n @param {'layer' | 'floor'} f */
+  const nearest = (n, f) => { for (let /** @type {N | null | undefined} */ m = n; m; m = PARENT.get(m)) if (m[f] !== undefined) return m[f]; return undefined; };
+  /** its layer: its own, or its parent's @param {N} n @returns {string | undefined} */
+  const layer = n => nearest(n, 'layer');
+  /** its floor: its own, or its parent's @param {N} n @returns {string | undefined} */
+  const floor = n => nearest(n, 'floor');
   /** every node below the root, parents first @param {(n: N) => void} fn */
   function walk(fn) { (function each(/** @type {N} */ n) { for (const c of /** @type {N[]} */ (n.children || [])) { fn(c); each(c); } })(root); }
 
-  /** what is wrong in the hierarchy, as Test shows it @param {string[]} [known]  the layers there are; none: not checked @returns {Check[]} */
+  /**
+   * What is wrong in the hierarchy, as Test shows it.
+   * @param {{ layers: string[], floors: string[] }} [known]  the layers and the floors there are; none: not checked
+   * @returns {Check[]}
+   */
   function checks(known) {
     /** @type {string[][]} */
     const [shape, ids, twice, empty, below, broken, unknown] = [[], [], [], [], [], [], []];
@@ -101,7 +110,8 @@ export function createHierarchy(root) {
       const at = path(n) || '(' + (n.name || n.type || 'a node') + ')';
       if (n.refs !== undefined && !(Array.isArray(n.refs) && n.refs.every(r => typeof r === 'string'))) broken.push(`${at}: refs is not a list of paths`);
       else for (const r of n.refs || []) if (!node(r)) broken.push(`${at}: ${r}`);
-      if (known) for (const l of n.layers || []) if (!known.includes(l)) unknown.push(`${at}: ${l}`);
+      if (known && n.layer !== undefined && !known.layers.includes(n.layer)) unknown.push(`${at}: layer ${n.layer}`);
+      if (known && n.floor !== undefined && !known.floors.includes(n.floor)) unknown.push(`${at}: floor ${n.floor}`);
       if (typeof n.id !== 'string' || !ID.test(n.id)) ids.push(`${at}: id ${JSON.stringify(n.id)}`);
       if (!n.type || !vector(n.offset) || !vector(n.size)) {
         shape.push(`${at}: ${[!n.type && 'type', !vector(n.offset) && 'offset', !vector(n.size) && 'size'].filter(Boolean).join(', ')}`);
@@ -122,8 +132,8 @@ export function createHierarchy(root) {
       { name: 'Hierarchy: sizes above 0', about: 'Every node has a size above 0 along x, y and h.', items: empty },
       { name: 'Hierarchy: what lies below the zero', about: 'To know, not a fault: the nodes at negative numbers from the root\'s zero.', items: below, info: true },
       { name: 'Hierarchy: every ref is the path of a node', about: 'A node may refer to others by their paths; every such path leads to a node.', items: broken },
-      ...(known ? [{ name: 'Hierarchy: every layer is known', about: 'A node\'s layers are keys of the layers there are.', items: unknown }] : [])];
+      ...(known ? [{ name: 'Hierarchy: every layer and floor is known', about: 'A node\'s layer is one of the layers there are, its floor one of the floors.', items: unknown }] : [])];
   }
 
-  return { root, add, path, node, parent, chain, place, box, setting, refs, layers, walk, checks };
+  return { root, add, path, node, parent, chain, place, box, setting, refs, layer, floor, walk, checks };
 }
