@@ -16,7 +16,7 @@ Served over HTTP (Caddy, `start-caddy.sh`): `http://localhost:8080/` the page, `
 | `archon/` | the source: archon's drawings and their reading |
 | `core/` | general code, no project |
 | `library/` | the outside world: products, materials, textures, shops |
-| `test/` | dependency tests and samples |
+| `test/` | one test per module, at its path |
 
 ## Rules
 
@@ -25,7 +25,7 @@ Served over HTTP (Caddy, `start-caddy.sh`): `http://localhost:8080/` the page, `
 3. `types.js` holds only what one module counts on from another; a module takes a type by `import('…/types.js')` in a comment.
 4. A folder is a set of modules; one imports the module it needs (`library/catalog.js` → `openCatalog`).
 5. Data is plain JSON, frozen once read: no code changes it.
-6. Every module has a dependency test (its public API only) and a sample (its use on the project's own data).
+6. Every module with a public API has one test at its own path in `test/`: the API on data of its own and on the project's data.
 7. Pages run on Alpine from its CDN; nothing is loaded locally.
 8. No dead code: code comes in when something uses it.
 9. Before every delivery: `tsc` strict, the tests, a click through the page.

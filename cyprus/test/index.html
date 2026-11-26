@@ -11,19 +11,17 @@
 </style>
 </head>
 <body x-data="tests">
-<template x-for="t in tables">
-  <section><h1 x-text="t.name"></h1><p x-text="t.about"></p>
-    <table><thead><tr><th x-text="t.what"></th><th>Imports</th><th>Result</th></tr></thead>
-      <tbody><template x-for="r in rows.filter(r => r.table === t.id)">
-        <tr><td><code x-text="'test/' + r.file"></code></td>
-          <td><template x-for="f in r.imports"><code x-text="f" style="margin-right:4px"></code></template></td>
-          <td><span x-show="!r.done" class="wait">running…</span>
-            <template x-if="r.done"><div><span :class="r.ok ? 'ok' : 'no'" x-text="r.ok ? 'OK' : 'NOT OK'"></span> · <span x-text="r.passed.length + ' passed'"></span>
-              <template x-if="r.error"><div><b x-text="r.error"></b></div></template>
-              <template x-if="r.failed.length"><div>failed: <ul><template x-for="w in r.failed"><li x-text="w"></li></template></ul></div></template>
-              <details><summary>what passed</summary><ul><template x-for="w in r.passed"><li x-text="w"></li></template></ul></details></div></template></td></tr>
-      </template></tbody></table></section>
-</template>
+<h1>Tests</h1>
+<p>One test per module, at the module's own path: its public API on data of its own and on the project's data.</p>
+<table><thead><tr><th>Test</th><th>Module</th><th>Result</th></tr></thead>
+  <tbody><template x-for="r in rows">
+    <tr><td><code x-text="'test/' + r.file"></code></td><td><code x-text="r.file"></code></td>
+      <td><span x-show="!r.done" class="wait">running…</span>
+        <template x-if="r.done"><div><span :class="r.ok ? 'ok' : 'no'" x-text="r.ok ? 'OK' : 'NOT OK'"></span> · <span x-text="r.passed.length + ' passed'"></span>
+          <template x-if="r.error"><div><b x-text="r.error"></b></div></template>
+          <template x-if="r.failed.length"><div>failed: <ul><template x-for="w in r.failed"><li x-text="w"></li></template></ul></div></template>
+          <details><summary>what passed</summary><ul><template x-for="w in r.passed"><li x-text="w"></li></template></ul></details></div></template></td></tr>
+  </template></tbody></table>
 
 <script type="module" src="index.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>

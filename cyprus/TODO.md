@@ -1,6 +1,6 @@
 # To do
 
-By the plan, one step at a time; each module: its API and samples first, then the code.
+By the plan, one step at a time; each module: its API and examples first, then the code and its test.
 
 ## Done
 - [x] UI sketch on Alpine: nav (House, floors, rooms), modes, View / Finish, layers tree, dock, sun, help, light / dark
