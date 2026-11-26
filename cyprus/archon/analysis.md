@@ -25,7 +25,7 @@ Drawings (this folder, `archon`):
 | **y**, across, South | 0 = left outer face (garage side, North) → 9100 = right outer face (kitchen and bathroom windows, South) |
 | **h**, height, up | 0 = ±0.00 finished Ground Floor; 3060 finished First Floor; 5910 Attic floor; 8600 ridge (8820 as built, § 14); terrain −320 |
 
-Left and right are as seen when facing the front of the house (the street side), which is also how archon names the elevations. The plans put the garden at the top and the garage on the left. The drawings measure x from the garden; every x here is turned to run from the front: x = 13200 − (x measured from the garden), so a pixel read from a drawing is converted the same way.
+Left and right are as seen when facing the front of the house (the street side), which is also how archon names the elevations. The plans put the garden at the top and the garage on the left. Zero: the corner of the front (West) and left (North) outer faces, at ±0.00.
 
 ## 3. Modelling rules
 
@@ -41,7 +41,7 @@ Left and right are as seen when facing the front of the house (the street side),
 - **Printed dimensions come first.** Pixels only place things that have no printed number. Plans: 0.04297 px/mm (9100 = 391 px), 1 px ≈ 23 mm. Section: 0.0280 px/mm, 1 px ≈ 36 mm. Site plan: 0.0335 px/mm, 1 px ≈ 30 mm. archon prints whole cm, so every value is a multiple of 10 mm except where a derivation gives a finer one; measured values are good to ±23 on the plans and ±36 on the section.
 - **The printed chains close:**
   - Ground Floor, y (front): 440 + 3670 + 120 + 1920 + 120 + 2390 = 8660, the inner face of the right wall.
-  - Ground Floor, x (right side), printed from the garden face: 440 + 3380 + 3400 + 120 + 2510 + 120 + 1890 = 11860 to the inner face of the entrance wall, so that face is at x 13200 − 11860 = 1340. Vestibule: 1340 + 2610 = 3950.
+  - Ground Floor, x (right side): 440 + 3380 + 3400 + 120 + 2510 + 120 + 1890 = 11860 from the garden outer face to the inner face of the entrance wall, which is at x 1340. Vestibule: 1340 + 2610 = 3950.
   - First Floor, x: 440 + 3200 + 120 + 1590 + 120 + 2730 + 120 + 4440 + 440 = **13200** ✓ (the printed overall length).
   - First Floor, y: 440 + 3970 + 120 + 4130 = 8660 ✓; 440 + 3350 = 3790; 8660 − 3010 = 5650; 440 + 2850 = 3290; x: 440 + 3630 = 4070; 4070 + 120 + 1520 = 5710.
 - **Roof check.** The First Floor plan's dashed 1400 and 2200 clear-height lines lie at y ≈ 650 and 1560. The roof of § 6 puts them at 660 and 1550.

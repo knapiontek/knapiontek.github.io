@@ -73,7 +73,7 @@ h2{font:700 12px var(--f-display);text-transform:uppercase;letter-spacing:.12em;
 .tree .tree{padding:4px 0 2px 24px}
 .check{display:flex;gap:8px;align-items:center;font-size:13.5px;cursor:pointer}
 .check input{margin:0;accent-color:var(--accent)}
-/* a branch with a layer under it off: an empty box with a dash, unlike a tick */
+/* a branch with a switch under it off: an empty box with a dash, unlike a tick */
 .check input:indeterminate{appearance:none;width:13px;height:13px;border:1.5px solid var(--accent);border-radius:3px;background:linear-gradient(var(--accent),var(--accent)) center/7px 2px no-repeat,var(--panel)}
 .fields{display:grid;gap:9px}
 .field{display:grid;gap:3px;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
