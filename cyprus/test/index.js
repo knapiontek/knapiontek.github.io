@@ -3,7 +3,9 @@
 
 /* the tests, from this folder */
 const TESTS = [
+  { table: 'dependencies', file: 'dependencies/core/tree.js' },
   { table: 'dependencies', file: 'dependencies/library/catalog.js' },
+  { table: 'samples', file: 'samples/tree.js' },
   { table: 'samples', file: 'samples/library.js' }
 ];
 const TABLES = [
