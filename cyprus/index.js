@@ -1,5 +1,5 @@
 // @ts-check
-// app.js: the page. Sketch: the layout of the screen only; every value in SKETCH stands in for what the modules will give.
+// index.js: joins index.html to the modules. Sketch: the layout of the screen only; every value in SKETCH stands in for what the modules will give.
 
 /** @typedef {'house' | 'floor' | 'room'} Scope  what the view shows: the house, one floor, one room */
 /** @typedef {{ scopes?: Scope[], furniture?: boolean, modes?: string[] }} Needs  where a control belongs; missing: everywhere. Cabinet and Finish grey out elsewhere, the rest is not shown */

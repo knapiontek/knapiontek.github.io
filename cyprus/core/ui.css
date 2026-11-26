@@ -1,4 +1,4 @@
-/* core/ui.css: the look of the screen's general pieces, light and dark: the stage and the panel, boxes over the stage, choices, lists, actions, the tree, the panel's blocks, the corner. No project. */
+/* core/ui.css: the look of the screen's general pieces, light and dark: the stage and the panel, the views on the stage (a scene, a sheet, a page of tables), boxes over the stage, choices, lists, actions, the tree, the panel's blocks, the corner. No project. */
 :root{
   --bg:#eceeec; --stage:#dfe3e1; --panel:#f7f8f6; --ink:#1f2523; --muted:#5f6a66; --line:#cfd5d2;
   --accent:#9a6a2f; --accent-ink:#fff; --edge:#1a201e; --lift:rgba(0,0,0,.26); --menu:#cfd8d4; --sheet:#fff;
@@ -91,3 +91,21 @@ select{width:100%;font:13px var(--f-body);color:var(--ink);background:var(--pane
 .range{display:grid;gap:3px;margin:10px 0;font:600 11px var(--f-display);text-transform:uppercase;letter-spacing:.07em}
 .range input{accent-color:var(--accent)}
 #tabs{margin:0 0 4px}
+
+/* the views on the stage: a scene, a sheet of paper, a page of tables in a grid; a placeholder until a view is drawn */
+.view{position:absolute;inset:0}
+.view.sheet{background:var(--sheet);padding:64px 24px 64px}
+.view.page{background:var(--panel);overflow:auto;padding:64px 20px 72px}
+.paper{height:100%;border:1.5px solid var(--line);border-radius:4px;display:grid}
+.placeholder{display:grid;place-items:center;height:100%;min-height:80px;font:600 15px var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.view.scene .placeholder{background:repeating-linear-gradient(0deg,transparent 0 39px,color-mix(in srgb,var(--line) 60%,transparent) 39px 40px),repeating-linear-gradient(90deg,transparent 0 39px,color-mix(in srgb,var(--line) 60%,transparent) 39px 40px)}
+.table-frame{border:1px solid var(--line);border-radius:8px;background:var(--panel);min-height:120px;padding:8px 10px}
+.table-frame h3{margin:0;font:700 14px var(--f-display)}
+.view.page>.tabs{margin-bottom:10px}
+.view.page>.table-frame{min-height:calc(100% - 52px)}
+.table-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.table-grid .wide{grid-column:1/-1}
+.table-grid .tall{min-height:280px}
+.sun-row{display:flex;gap:10px}
+.round-face{width:150px;height:150px;min-height:0;border:2px solid var(--line);border-radius:50%}
+.arc-face{width:100px;height:107px;min-height:0;border:2px solid var(--line);border-radius:100px 100px 0 0}
