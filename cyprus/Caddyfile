@@ -1,0 +1,6 @@
+# Caddyfile: this folder at http://localhost:8080/, nothing cached: every reload reads the files as they are now
+:8080 {
+	root * .
+	file_server
+	header Cache-Control "no-store"
+}
