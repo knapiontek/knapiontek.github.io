@@ -3,7 +3,7 @@
 The house "Dom w papawerach 5 (G)" (archon.pl), as built: its model in 3D and 2D, its documents, its cabinets. The prototype
 (`home.proto`) is the functional base; this project rebuilds it cleanly, by the plan.
 
-Served over HTTP (Caddy, `start-caddy.sh`): `http://localhost:8080/` the page, `/test/` the tests.
+Served over HTTP (Caddy, `toggle-caddy.sh`): `http://localhost:8080/` the page, `/test/` the tests.
 
 | File / folder | What |
 |---|---|
@@ -11,7 +11,7 @@ Served over HTTP (Caddy, `start-caddy.sh`): `http://localhost:8080/` the page, `
 | `index.js` | joins the page to the modules: the page's Alpine part; for now a sketch with stand-in data |
 | `types.js` | the contracts between modules (types only, never loaded by the browser) |
 | `globals.d.ts`, `jsconfig.json` | the type check (`tsc -p jsconfig.json`): Alpine's global, strict checks of every `.js` |
-| `start-caddy.sh` | serves this folder at port 8080 |
+| `toggle-caddy.sh`, `Caddyfile` | Caddy on or off: this folder at port 8080, nothing cached |
 | `TODO.md` | what is left, step by step |
 | `archon/` | the source: archon's drawings and their reading |
 | `core/` | general code, no project |
