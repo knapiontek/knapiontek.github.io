@@ -40,6 +40,15 @@ export default async function (check) {
     scene.visible(k => k !== 'a');
     check('a contact piece\'s line shows while the other group is hidden', segments() === 12);
     scene.visible(() => true);
+    /* a chimney (a), a wall against it in its plane (b), a balustrade's end against the wall by the joint (c): no line on the joint */
+    const three = createHierarchy(/** @type {Node} */ ({ id: 'site', type: 'site', offset: [0, 0, 0], size: [1, 1, 1], children: [
+      { id: 'chimney', type: 't', offset: [0, 0, 0], size: [1, 1, 1], layer: 'a', parts: [{ form: 'box', box: [0, 1000, 0, 1000, 0, 1000], material: 'concrete' }] },
+      { id: 'wall', type: 't', offset: [0, 0, 0], size: [1, 1, 1], layer: 'b', parts: [{ form: 'box', box: [0, 240, -1000, 0, 0, 1000], material: 'concrete' }] },
+      { id: 'balustrade', type: 't', offset: [0, 0, 0], size: [1, 1, 1], layer: 'c', parts: [{ form: 'box', box: [-500, 0, -100, 0, 0, 500], material: 'concrete' }] }] }));
+    scene.show(three, three.root);
+    const joint = scene.lines().filter((/** @type {any} */ l) => l.visible).some((/** @type {any} */ l) => { const p = l.geometry.attributes.position.array;
+      for (let i = 0; i < p.length; i += 6) if (p[i] === 0 && p[i + 3] === 0 && p[i + 1] === 0 && p[i + 4] === 0 && Math.min(p[i + 2], p[i + 5]) < 500) return true; return false; });
+    check('edges: a joint in one plane hides, also where the wall is against a third solid', !joint);
   }
 
   /* ---------- the house ---------- */
@@ -51,7 +60,7 @@ export default async function (check) {
     check('a mesh per group and material: the Ground Floor\'s blocks, plaster', blocks.length === 1 && colour(blocks[0]) === catalog.material('plasterInside').color);
     const p = blocks[0].position.clone().set(12760, 440, 0);
     blocks[0].localToWorld(p);
-    check('three\'s axes: x → x, h → y, y → z, metres', p.toArray().map((/** @type {number} */ v) => Math.round(v * 1000)).join() === '12760,0,440');
+    check('three\'s axes: ours as they are (x East, y North, h up), in metres', p.toArray().map((/** @type {number} */ v) => Math.round(v * 1000)).join() === '12760,440,0');
     check('a prism\'s faces by their side: the roof, graphite tiles, a white underside, graphite eaves', ['roofGraphite', 'plasterWhite', 'graphite'].every(k => of('roofPlanes', 'attic').some((/** @type {any} */ m) => m.userData.material === k)));
     check('drawn: the windows\' frames and glass', ['frame', 'glass'].every(k => of('windows', 'groundFloor').some((/** @type {any} */ m) => m.userData.material === k)));
   }
@@ -82,7 +91,7 @@ export default async function (check) {
     scene.view('garden');
     const garden = scene.camera.position.x;
     scene.view('above');
-    check('view: the front from the West, the garden from the East, above from over it', front < 0 && garden > 13.2 && scene.camera.position.y > 15);
+    check('view: the front from the West, the garden from the East, above from over it; h up', front < 0 && garden > 13.2 && scene.camera.position.z > 15 && scene.camera.up.toArray().join() === '0,0,1');
   }
 
   /* ---------- the site ---------- */

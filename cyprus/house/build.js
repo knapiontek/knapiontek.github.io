@@ -16,7 +16,7 @@ const VERSION = 1;   // of model.json's format, house
 
 /**
  * The hierarchy of the site and its house, from model.json. The house is the node house; its geometry (types, frames, finishes)
- * stays on it; its axes are archon/analysis.md's: x East, y South, h up, zero at its front-left corner at ±0.00.
+ * stays on it; its axes are archon/analysis.md's: x East, y North, h up (right-handed), zero at its front-right (South-West) corner at ±0.00.
  * @returns {Promise<ReturnType<typeof createHierarchy<HouseNode>>>}
  */
 export async function buildHouse() {

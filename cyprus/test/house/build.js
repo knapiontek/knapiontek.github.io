@@ -45,25 +45,26 @@ export default async function (check) {
     check('the garage window in its wall: windows, not blocks', both('groundFloor/blockLeft/window_garage_2') === 'windows groundFloor');
     check('an inner door of the First Floor: innerDoors', both('firstFloor/attic3b/door_hall_1_bathroom_5') === 'innerDoors firstFloor');
     check('the ceiling under the roof: ceiling, in the Attic', both('roof/ceiling') === 'ceiling attic');
+    check('the wall by the cathedral ceiling: blocks, the First Floor\'s (the bedroom\'s wall)', both('roof/loftWall') === 'blocks firstFloor');
     check('a roof window: roofWindows, the roof\'s floor, the Attic', both('roof/roofWindow_hall_1') === 'roofWindows attic' && H.layer(at('roof')) === 'roof');
     check('the site: site', H.layer(H.root) === 'site');
   }
 
   /* ---------- in the house's axes, against archon/analysis.md ---------- */
   {
-    check('the house on the site: its zero 15800, 15000, 520 from the site\'s corner', zero.join() === '15800,15000,520');
+    check('the house on the site: its zero 15800, 14900, 520 from the site\'s corner', zero.join() === '15800,14900,520');
     check('§ 8.1: the garden wall, x 12760 – 13000, y 440 – 8660, h 0 → 2720', box('groundFloor/blockGarden') === '12760,13000,440,8660,0,2720');
-    check('§ 8.1: the left wall through both wings, x −800 – 14000', box('groundFloor/blockLeft') === '-800,14000,200,440,0,2720');
-    check('§ 9: the garage window 2000/1000, x 3580 – 5580, h 1100 → 2100', box('groundFloor/blockLeft/window_garage_2') === '3580,5580,0,440,1100,2100');
+    check('§ 8.1: the left wall through both wings, x −800 – 14000', box('groundFloor/blockLeft') === '-800,14000,8660,8900,0,2720');
+    check('§ 9: the garage window 2000/1000, x 3580 – 5580, h 1100 → 2100', box('groundFloor/blockLeft/window_garage_2') === '3580,5580,8660,9100,1100,2100');
     check('§ 9: the garden window 6000/2400', box('groundFloor/blockGarden/window_living_5') === '12760,13200,1550,7550,0,2400');
-    check('§ 9 #1, § 13: the chimney 760 × 760, h 0 → 9000', box('groundFloor/chimney') === '7730,8490,3590,4350,0,9000');
+    check('§ 9 #1, § 13: the chimney 760 × 760, h 0 → 9000', box('groundFloor/chimney') === '7730,8490,4750,5510,0,9000');
     check('§ 7: the slab with its ring beam, h 2720 – 3060', box('groundFloor/slab') === '200,13000,200,8900,2720,3060');
-    check('§ 7.1: the footing of #2 (as built), h −1320 → −920', box('foundation/footingWall2') === '7550,8150,620,3410,-1320,-920');
-    check('§ 8.3, § 13: the recess soffit EPS 470, h 2250 – 2720', box('facade/epsSoffit') === '0,900,4550,8460,2250,2720');
-    check('§ 13: the door in #9, 900, x 1675 – 2575', box('groundFloor/wall9/door_vestibule_1_garage_2') === '1675,2575,4110,4230,0,2050');
-    check('§ 13: the First Floor bathroom door, x 6000 – 6900', box('firstFloor/attic3b/door_hall_1_bathroom_5') === '6000,6900,5530,5650,3060,5110');
+    check('§ 7.1: the footing of #2 (as built), h −1320 → −920', box('foundation/footingWall2') === '7550,8150,5690,8480,-1320,-920');
+    check('§ 8.3, § 13: the recess soffit EPS 470, h 2250 – 2720', box('facade/epsSoffit') === '0,900,640,4550,2250,2720');
+    check('§ 13: the door in #9, 900, x 1675 – 2575', box('groundFloor/wall9/door_vestibule_1_garage_2') === '1675,2575,4870,4990,0,2050');
+    check('§ 13: the First Floor bathroom door, x 6000 – 6900', box('firstFloor/attic3b/door_hall_1_bathroom_5') === '6000,6900,3450,3570,3060,5110');
     check('§ 10: the garden gable window, x 12760 – 13200, h 3060 → 6520', box('firstFloor/gableGarden/window_bedroom_2') === '12760,13200,1550,7550,3060,6520');
-    check('§ 6: the roof window above the stairs, x 5870 – 6810, y 240 – 1280', box('roof/roofWindow_hall_1').startsWith('5870,6810,240,1280'));
+    check('§ 6: the roof window above the stairs, x 5870 – 6810, y 7820 – 8860', box('roof/roofWindow_hall_1').startsWith('5870,6810,7820,8860'));
     check('§ 5, § 6: the roof underside at the outer face, 3864', at('roof').eave === 3864);
     check('§ 5: the floors split at the slab, 2720; the body x 0 – 13200', geometry.split === 2720 && geometry.body.join() === '0,13200');
     const band = geometry.finishes.find((/** @type {any} */ f) => f.material === 'plasterWhite');

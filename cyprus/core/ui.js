@@ -163,13 +163,14 @@ function sunBox({ rects, mark = [], sun, change }) {
   const raw = Alpine.raw(sun);
   const x1 = Math.min(...rects.map(q => q[0])), x2 = Math.max(...rects.map(q => q[1])), y1 = Math.min(...rects.map(q => q[2])), y2 = Math.max(...rects.map(q => q[3]));
   const s = 0.62 * SR * 2 / Math.hypot(x2 - x1, y2 - y1), cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-  const rect = (/** @type {number[]} */ q) => `<rect x="${SC + (q[2] - cy) * s}" y="${SC + (q[0] - cx) * s}" width="${(q[3] - q[2]) * s}" height="${(q[1] - q[0]) * s}"/>`;
+  /* the plan as a map: x to the right, y up the screen */
+  const rect = (/** @type {number[]} */ q) => `<rect x="${SC + (q[0] - cx) * s}" y="${SC - (q[3] - cy) * s}" width="${(q[1] - q[0]) * s}" height="${(q[3] - q[2]) * s}"/>`;
   /** @type {string | null} */
   let dragging = null;
   return {
     fmt, plan: rects.map(rect).join('') + `<g class="mark">${mark.map(rect).join('')}</g>`,
     az: raw.az, el: raw.el, k: raw.k, clouds: raw.clouds, night: !!raw.night,
-    get compass() { const a = this.az * Math.PI / 180; return [SC + SR * Math.sin(a), SC + SR * Math.cos(a)]; },
+    get compass() { const a = this.az * Math.PI / 180; return [SC + SR * Math.cos(a), SC - SR * Math.sin(a)]; },   // az from +x toward +y
     get arc() { const e = this.el * Math.PI / 180; return [10 + SA * Math.cos(e), SA + STOP - SA * Math.sin(e)]; },
     /** @param {'az' | 'el' | 'k' | 'clouds' | 'night'} key @param {number | boolean} v */
     set(key, v) { /** @type {any} */ (this)[key] = raw[key] = v; change(); },
@@ -181,7 +182,7 @@ function sunBox({ rects, mark = [], sun, change }) {
       if (!dragging) return;
       const svg = /** @type {SVGSVGElement} */ (e.currentTarget), p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
       const q = p.matrixTransform(/** @type {DOMMatrix} */ (svg.getScreenCTM()).inverse());
-      if (dragging === 'az') { const d = Math.atan2(q.x - SC, q.y - SC) * 180 / Math.PI; this.set('az', (Math.round(d / SUN_RANGE.azStep) * SUN_RANGE.azStep + 360) % 360); }
+      if (dragging === 'az') { const d = Math.atan2(SC - q.y, q.x - SC) * 180 / Math.PI; this.set('az', (Math.round(d / SUN_RANGE.azStep) * SUN_RANGE.azStep + 360) % 360); }
       else { const d = Math.atan2(SA + STOP - q.y, q.x - 10) * 180 / Math.PI; this.set('el', Math.min(SUN_RANGE.el[1], Math.max(SUN_RANGE.el[0], Math.round(d)))); }
     },
     up() { dragging = null; }

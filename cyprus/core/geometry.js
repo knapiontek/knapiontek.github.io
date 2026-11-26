@@ -152,6 +152,6 @@ export function hash01(...k) {
   return (h >>> 0) / 4294967296;
 }
 
-/* the sides by the compass, in this project's axes: x grows to the East, y to the South; sign: the end of the axis */
+/* the sides by the compass, in this project's axes (East, North, up: right-handed); sign: the end of the axis */
 /** @type {Record<Side, { axis: 0 | 1, sign: 1 | -1 }>} */
-export const SIDES = { E: { axis: 0, sign: 1 }, W: { axis: 0, sign: -1 }, N: { axis: 1, sign: -1 }, S: { axis: 1, sign: 1 } };
+export const SIDES = { E: { axis: 0, sign: 1 }, W: { axis: 0, sign: -1 }, N: { axis: 1, sign: 1 }, S: { axis: 1, sign: -1 } };

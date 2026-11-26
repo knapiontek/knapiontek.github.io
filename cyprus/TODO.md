@@ -4,12 +4,13 @@ By the plan, one step at a time; each module: its API and examples first, then t
 
 ## Done
 - [x] UI sketch on Alpine: nav (House, floors, rooms), modes, View / Finish, layers tree, dock, sun, help, light / dark
-- [x] archon: drawings in English, `analysis.md` read again: x East, y South, h up; assumptions (§ 12), as built (§ 13)
+- [x] archon: drawings in English, `analysis.md` read again: x East, y North, h up (ENU, right-handed); assumptions (§ 12), as built (§ 13)
 - [x] library: products, materials, shops, textures as JSON; `openCatalog`; its test
 - [x] ES modules, Caddy, `types.js`, the test page
 - [x] core/hierarchy: built from the root down (`add`); places from offsets, settings, refs, layers from the root down, checks; its test
 - [x] tests: one per module, at its path
-- [x] `scene.js` as the prototype's: welded faces (`core/faces.js`), meshes by group and material, edges from the topology, generated surfaces, the sky; the roof on the Attic floor
+- [x] axes ENU (x East, y North, h up), right-handed: `model.json`, `analysis.md`, tests; `scene.js` without swapping axes; `core/surfaces.js` (was faces); tests of `core/geometry.js` and `core/surfaces.js` by examples
+- [x] `scene.js` as the prototype's: welded faces (`core/surfaces.js`), meshes by group and material, edges from the topology, generated surfaces, the sky; the roof on the Attic floor
 - [x] house geometry: `core/geometry.js`, `house/parts.js` (the prototype's `house/model.js`): cuts, roof, floors, facade, roof, windows, doors, stair; `scene.js`: prisms, a part's layer and floor, the facade's raw material
 - [x] `scene.js` (root), stage 1: the house's boxes, the site, materials, layers and floors from the panel, edges, cameras, the sun; its test
 - [x] `layers.json` (root): the panel reads it; `checks(known)`: an unknown layer or floor; its test

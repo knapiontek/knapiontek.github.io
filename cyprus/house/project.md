@@ -1,8 +1,8 @@
 # house
 
 The site and the house as built: their data (`model.json`) and how it becomes the hierarchy (`build.js`). The data comes from the
-prototype (`home.proto/house/house.js`); the house's own axes are `archon/analysis.md`'s: x East, y South, h up, zero at its
-front-left corner at ±0.00; the house stands on the site by its offset. Checked against `analysis.md` (`test/house/build.js`).
+prototype (`home.proto/house/house.js`); the house's own axes are `archon/analysis.md`'s: x East, y North, h up (right-handed), zero at its
+front-right (South-West) corner at ±0.00; the house stands on the site by its offset. Checked against `analysis.md` (`test/house/build.js`).
 
 | File | What |
 |---|---|

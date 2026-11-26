@@ -2,7 +2,7 @@
 // scene.js: the 3D view: a branch of a hierarchy in three.js, as the prototype drew it. Every box and prism of the branch (its
 // nodes' parts, or their products' shapes) is a solid with its group (its layer and its floor): the solids' faces are welded,
 // a face against a face of its own group is gone, what lies against another group is its raw material, seen while that group
-// is hidden (core/faces.js); the pieces are batched into one mesh per group and material; edges come from the topology: no
+// is hidden (core/surfaces.js); the pieces are batched into one mesh per group and material; edges come from the topology: no
 // line on a seam, a corner always. The other forms (a cylinder) are meshes of their own. Placed by the hierarchy; the look by
 // the material's key (the catalog's materials, their generated surfaces; 'metal': the setting metal). Knows no house and no
 // room. Without a canvas it builds the scene only (the test). three.js from its CDN.
@@ -11,16 +11,16 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.187.0/+esm';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/controls/OrbitControls.js/+esm';
 import { shapeOf } from './library/shapes.js';
 import { prism, edgesOf } from './core/geometry.js';
-import { createFaces, sub3, dot3, cross3 } from './core/faces.js';
+import { createSurfaces, sub3, dot3, cross3 } from './core/surfaces.js';
 
 /** @typedef {import('./types.js').Catalog} Catalog */
 /** @typedef {import('./types.js').Part} Part */
-/** @typedef {import('./core/faces.js').Cell} Cell */
-/** @typedef {import('./core/faces.js').Piece} Piece */
-/** @typedef {import('./core/faces.js').Vec3} Vec3 */
+/** @typedef {import('./core/surfaces.js').Cell} Cell */
+/** @typedef {import('./core/surfaces.js').Piece} Piece */
+/** @typedef {import('./core/surfaces.js').Vec3} Vec3 */
 /** @typedef {import('./core/hierarchy.js').HierarchyNode & { parts?: Part[], product?: string, options?: object, children?: Node[], [field: string]: any }} Node  parts: what is drawn of it; else its product's shape, when the product has a drawing */
 /** @typedef {ReturnType<typeof import('./core/hierarchy.js').createHierarchy<Node>>} Hierarchy */
-/** @typedef {{ az: number, el: number, k: number, clouds: number, night: boolean }} Sun  degrees (azimuth from +x toward +y); brightness; 0 clear to 1 overcast */
+/** @typedef {{ az: number, el: number, k: number, clouds: number, night: boolean }} Sun  degrees (azimuth from East toward North); brightness; 0 clear to 1 overcast */
 /**
  * @typedef {object} Light  the view's light (settings.view.light)
  * @property {number} exposure
@@ -32,9 +32,9 @@ import { createFaces, sub3, dot3, cross3 } from './core/faces.js';
 /** @typedef {{ color: string, opacity: number }} Edges  how edges are drawn */
 
 const MM = 0.001, DEG = Math.PI / 180;
-/* our axes (x East, y South, h up, mm) in three's (x, y up, z toward the viewer, m): x → x, h → y, y → z */
-const AXES = new THREE.Matrix4().set(MM, 0, 0, 0, 0, 0, MM, 0, 0, MM, 0, 0, 0, 0, 0, 1);
-const UP = new THREE.Vector3(0, 1, 0);
+/* our axes (x East, y North, h up: right-handed, as three's) are three's x, y, z as they are, in metres; h is up (the camera's) */
+const UP = new THREE.Vector3(0, 0, 1);
+const ALONG = new THREE.Vector3(0, 1, 0);   // a three.js cylinder's own axis
 const NIGHT = { fog: '#141a26', gradient: [[0, '#070b16'], [0.36, '#121a2e'], [0.47, '#24304a'], [0.5, '#3a3f52'], [0.52, '#151a22'], [1, '#0b0e13']], stars: 420 };
 
 /* triangles of the pieces' convex polygons, batched into one mesh; a fan around the centre: no thin triangles */
@@ -73,9 +73,11 @@ class Batch {
  */
 export function createScene({ catalog, canvas, light, edges }) {
   const scene = new THREE.Scene(), world = new THREE.Group();
-  world.matrixAutoUpdate = false; world.matrix.copy(AXES);
+  scene.backgroundRotation.set(-Math.PI / 2, 0, 0); scene.environmentRotation.set(-Math.PI / 2, 0, 0);   // the sky's pictures are made y up: turned to h up
+  world.scale.setScalar(MM);
   scene.add(world);
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 500);
+  camera.up.copy(UP);
   const page = typeof document !== 'undefined';   // a page draws pictures; the test's worker does not
 
   /* ================= MATERIALS: a library look, its generated surface (uv in mm) ================= */
@@ -205,7 +207,7 @@ export function createScene({ catalog, canvas, light, edges }) {
    */
   function show(hierarchy, node) {
     clear(); H = hierarchy;
-    const h = hierarchy, zero = h.place(node), F = createFaces();
+    const h = hierarchy, zero = h.place(node), F = createSurfaces();
     /** @type {Cell[]} */ const still = [];
     /** @type {Map<string, Cell[]>} the solids of each moving part, apart: they turn on their own */
     const moving = new Map();
@@ -269,7 +271,9 @@ export function createScene({ catalog, canvas, light, edges }) {
   }
   /* Edges from the topology of the pieces. For each segment between two welded points and each group on it: two pieces of the
      group in one plane are a seam (no line) unless they are of two parts; two outside pieces at an angle are a corner (always a
-     line); otherwise the line hides exactly while every group that closes it is shown. */
+     line); one outside piece continued in its plane by another group's face (open, or itself against a third solid: a wall
+     behind a balustrade's end) hides while that group shows; otherwise the line hides exactly while every group that closes it
+     is shown. */
   /** @param {Piece[]} pieces */
   function lines(pieces) {
     /** @type {Map<string, { a: any, b: any, on: Piece[] }>} */
@@ -294,7 +298,7 @@ export function createScene({ catalog, canvas, light, edges }) {
         const outside = fs.filter(f => !f.cover), unless = /** @type {string[]} */ (fs.filter(f => f.cover).map(f => f.cover));
         let always = outside.length >= 2;
         if (outside.length === 1) {
-          const next = s.on.find(o => o.group !== g && !o.cover && same(o.n, outside[0].n));
+          const next = s.on.find(o => o.group !== g && same(o.n, outside[0].n));   // continued by another group's face, open or against a third solid
           if (next) unless.push(next.group); else always = true;
         }
         const hideWhen = always ? [] : [...new Set(unless)];
@@ -308,6 +312,7 @@ export function createScene({ catalog, canvas, light, edges }) {
       const mesh = new THREE.LineSegments(geo, edgeLook); world.add(mesh);
       const g = GROUPS.get(v.group) || {};
       LINES.push({ mesh, layer: g.layer, floor: g.floor, hideWhen: v.hideWhen.map(k => GROUPS.get(k) || {}) });
+      Object.assign(mesh.userData, { layer: g.layer, floor: g.floor, hideWhen: v.hideWhen });
     }
   }
   /** another form (a cylinder): a mesh of its own, in its group @param {Part} p @param {string} look @param {number[]} at @param {string} group */
@@ -316,7 +321,7 @@ export function createScene({ catalog, canvas, light, edges }) {
     const [r0, r1] = /** @type {number[]} */ (p.radius), c = /** @type {number[]} */ (p.at);
     const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, p.length, p.segments || 20, 1, !!p.open), material(look));
     mesh.position.set(c[0] + at[0], c[1] + at[1], c[2] + at[2]);
-    mesh.quaternion.setFromUnitVectors(UP, new THREE.Vector3(...(p.axis || [0, 0, 1])).normalize());
+    mesh.quaternion.setFromUnitVectors(ALONG, new THREE.Vector3(...(p.axis || [0, 0, 1])).normalize());
     mesh.castShadow = mesh.receiveShadow = true;
     world.add(mesh);
     const g = GROUPS.get(group) || {};
@@ -344,7 +349,7 @@ export function createScene({ catalog, canvas, light, edges }) {
   /** @param {boolean} on */
   function showEdgesOf(on) { showEdges = on; visible(ON); }
 
-  /* ================= THE CAMERAS: from the front (West), from the garden (East), from above (North up) ================= */
+  /* ================= THE CAMERAS: from the front (West), from the garden (East), from above (North up on the screen) ================= */
   /** @param {'front' | 'garden' | 'above'} name */
   function view(name) {
     const box = new THREE.Box3();
@@ -353,7 +358,7 @@ export function createScene({ catalog, canvas, light, edges }) {
     /* far enough that the box's sphere fits the narrower of the two angles of view */
     const c = box.getCenter(new THREE.Vector3()), r = box.getSize(new THREE.Vector3()).length() / 2;
     const v = camera.fov * DEG, narrow = Math.min(v, 2 * Math.atan(Math.tan(v / 2) * camera.aspect)), d = r / Math.sin(narrow / 2);
-    const dir = new THREE.Vector3(...{ front: [-1, 0.35, 0.25], garden: [1, 0.35, -0.25], above: [0, 1, 0.01] }[name]).normalize();
+    const dir = new THREE.Vector3(...{ front: [-1, -0.25, 0.35], garden: [1, 0.25, 0.35], above: [0, -0.01, 1] }[name]).normalize();
     camera.position.copy(c).addScaledVector(dir, d);
     camera.lookAt(c);
     if (controls) { controls.target.copy(c); controls.update(); }
@@ -405,8 +410,10 @@ export function createScene({ catalog, canvas, light, edges }) {
       } else scene.background = new THREE.Color(light.fog.color);
       scene.fog = new THREE.Fog(light.fog.color, light.fog.near * MM, light.fog.far * MM);
       hemi = new THREE.HemisphereLight(light.sky.color, light.sky.groundColor, light.sky.intensity * Math.PI);
+      hemi.position.copy(UP);
       sun = new THREE.DirectionalLight(light.sun.color ?? '#ffffff', light.sun.intensity * Math.PI);
       const reach = light.sun.reach ?? 16;
+      sun.shadow.camera.up.copy(UP);
       sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
       Object.assign(sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 1, far: 80 });
       scene.add(hemi, sun, sun.target);
@@ -429,7 +436,7 @@ export function createScene({ catalog, canvas, light, edges }) {
     const az = s.az * DEG, el = s.el * DEG, box = new THREE.Box3();
     for (const g of MESHES) box.expandByObject(g.mesh);
     const centre = box.isEmpty() ? new THREE.Vector3() : box.getCenter(new THREE.Vector3());
-    const dir = new THREE.Vector3(Math.cos(az) * Math.cos(el), Math.sin(az) * Math.cos(el), Math.sin(el)).applyMatrix4(AXES).normalize();
+    const dir = new THREE.Vector3(Math.cos(az) * Math.cos(el), Math.sin(az) * Math.cos(el), Math.sin(el));
     sun.position.copy(centre).addScaledVector(dir, 40); sun.target.position.copy(centre);
     const C = light.clouds, toward = (/** @type {number} */ full) => 1 + (full - 1) * s.clouds;
     sun.visible = !s.night;

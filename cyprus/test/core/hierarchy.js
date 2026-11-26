@@ -1,7 +1,7 @@
 // @ts-check
 // test/core/hierarchy.js: core/hierarchy.js: every call on a small hierarchy of its own, a faulty one and what its checks
 // find; then a piece of the house built as the project builds it, from the root down: the house's model, a room, its cabinets
-// and what they need from the library (archon/analysis.md, x East, y South).
+// and what they need from the library (archon/analysis.md, x East, y North).
 
 import { createHierarchy } from '../../core/hierarchy.js';
 
@@ -75,21 +75,21 @@ export default async function (check) {
     /** @type {HierarchyNode} */
     const house = { id: 'house', type: 'house', offset: [0, 0, 0], size: [13200, 9100, 8820], children: [
       { id: 'groundFloor', type: 'level', offset: [0, 0, 0], size: [13200, 9100, 2720], floor: 'groundFloor', children: [
-        { id: 'wallLeft', type: 'block240', offset: [-800, 200, 0], size: [14800, 240, 2720], layer: 'blocks', children: [
-          { id: 'windowGarage', type: 'window', offset: [4380, -200, 1100], size: [2000, 440, 1000], layer: 'windows' }] },
+        { id: 'wallLeft', type: 'block240', offset: [-800, 8660, 0], size: [14800, 240, 2720], layer: 'blocks', children: [
+          { id: 'windowGarage', type: 'window', offset: [4380, 0, 1100], size: [2000, 440, 1000], layer: 'windows' }] },
         { id: 'room_356', type: 'room', offset: [5860, 440, 0], size: [6900, 8220, 2720], settings: { metal: 'brass' } }] }] };
     const hierarchy = createHierarchy(house);
     /* room/build.js: the room's cabinets, as room/cabinets.js builds them, under the room */
     const room = /** @type {HierarchyNode} */ (hierarchy.node('groundFloor/room_356'));
-    const g1 = hierarchy.add(room, { id: 'g1', type: 'group', offset: [720, 7620, 0], size: [1900, 600, 900] });
-    const K11 = hierarchy.add(g1, { id: 'K11', type: 'carcass', offset: [0, 0, 100], size: [800, 560, 720], layer: 'carcasses', children: [
-      { id: 'front', type: 'front', offset: [0, 560, 0], size: [800, 18, 720], layer: 'fronts' }] });
+    const g1 = hierarchy.add(room, { id: 'g1', type: 'group', offset: [720, 0, 0], size: [1900, 600, 900] });
+    const K11 = hierarchy.add(g1, { id: 'K11', type: 'carcass', offset: [0, 40, 100], size: [800, 560, 720], layer: 'carcasses', children: [
+      { id: 'front', type: 'front', offset: [0, -18, 0], size: [800, 18, 720], layer: 'fronts' }] });
     /* … and what the cabinets need from the library: the sink, on its carcass */
     hierarchy.add(K11, { id: 'sink', type: 'sink', offset: [100, 60, 758], size: [600, 440, 200], layer: 'sink', refs: ['groundFloor/room_356/g1/K11'] });
 
     /* the scene: where a thing is, in the house's axes */
     const sink = /** @type {HierarchyNode} */ (hierarchy.node('groundFloor/room_356/g1/K11/sink'));
-    check('place: the sink in the house, its offsets added up', hierarchy.place(sink).join() === '6680,8120,858');
+    check('place: the sink in the house, its offsets added up', hierarchy.place(sink).join() === '6680,540,858');
     check('box: the garage window, x 3580 – 5580 as analysis.md', hierarchy.box(/** @type {HierarchyNode} */ (hierarchy.node('groundFloor/wallLeft/windowGarage'))).slice(0, 2).join() === '3580,5580');
 
     /* the panel: a thing is shown when its layer and its floor are on */
