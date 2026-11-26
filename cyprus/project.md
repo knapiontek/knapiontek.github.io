@@ -9,7 +9,7 @@ Served over HTTP (Caddy, `toggle-caddy.sh`): `http://localhost:8080/` the page, 
 |---|---|
 | `index.html` | the page: its pieces (Alpine) |
 | `index.js` | joins the page to the modules: the page's Alpine part; the house in 3D, its layers and floors from the panel; the rest still a sketch with stand-in data |
-| `scene.js` | `createScene()`: the 3D view (three.js from its CDN): a branch of a hierarchy, each node by its parts (boxes, prisms with a material per side, cylinders) or its product's shape, placed by the hierarchy, its look by material (a wood by its decor); a part shown by its layer and floor, its raw material with its finish off; edges, the cameras Front / Garden / Above, the sun |
+| `scene.js` | `createScene()`: the 3D view (three.js from its CDN), as the prototype drew it: a branch of a hierarchy, its boxes and prisms welded (`core/faces.js`), one mesh per group (layer and floor) and material, edges from the topology; other forms (cylinders) apart; the materials' generated surfaces (plaster, concrete, grass, paving, boards); the sky, by night the stars; layers, floors and finishes switched; the cameras Front / Garden / Above, the sun |
 | `layers.json` | the layers of the View: a block of the panel at its top level; a layer its name, or its name and the layers under it; the Floors block: the floors a node is on (`floor`); the others: what a node is (`layer`) |
 | `types.js` | the contracts between modules (types only, never loaded by the browser) |
 | `globals.d.ts`, `jsconfig.json` | the type check (`tsc -p jsconfig.json`): Alpine's global, three.js's modules, strict checks of every `.js` |

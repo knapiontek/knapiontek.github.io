@@ -45,7 +45,7 @@ export default async function (check) {
     check('the garage window in its wall: windows, not blocks', both('groundFloor/blockLeft/window_garage_2') === 'windows groundFloor');
     check('an inner door of the First Floor: innerDoors', both('firstFloor/attic3b/door_hall_1_bathroom_5') === 'innerDoors firstFloor');
     check('the ceiling under the roof: ceiling, in the Attic', both('roof/ceiling') === 'ceiling attic');
-    check('a roof window: roofWindows, the roof\'s', both('roof/roofWindow_hall_1') === 'roofWindows undefined' && H.layer(at('roof')) === 'roof');
+    check('a roof window: roofWindows, the roof\'s floor, the Attic', both('roof/roofWindow_hall_1') === 'roofWindows attic' && H.layer(at('roof')) === 'roof');
     check('the site: site', H.layer(H.root) === 'site');
   }
 

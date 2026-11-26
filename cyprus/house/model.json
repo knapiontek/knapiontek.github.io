@@ -3206,6 +3206,7 @@
       "chimney"
      ],
      "layer": "roof",
+   "floor": "attic",
      "windowFrame": {
       "width": 70,
       "frame": [
