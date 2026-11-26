@@ -6,8 +6,8 @@
 /** @typedef {{ off: string[], open: string[] }} TreeState  the switches turned off, the branches opened */
 /** @typedef {{ id: string, name: string, on?: boolean, enabled?: boolean, title?: string, mark?: string }} Choice  one button of a choice */
 
-/** @param {Document} doc */
-function uiModule(doc) {
+/** @param {Document} doc  the page the screen is drawn in */
+export function createUi(doc) {
 
   /** @param {string} id */
   const byId = id => /** @type {HTMLElement} */ (doc.getElementById(id));

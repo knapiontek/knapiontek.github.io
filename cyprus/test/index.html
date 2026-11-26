@@ -12,84 +12,48 @@
 </head>
 <body>
 <h1>Dependencies</h1>
-<p>A module alone: its test gets the module's constructor and the project's address, and calls only its public API.</p>
-<table><thead><tr><th>Test</th><th>Gets</th><th>Result</th></tr></thead><tbody id="dependencies"></tbody></table>
+<p>A module alone: its test imports only that module and calls only its public API.</p>
+<table><thead><tr><th>Test</th><th>Imports</th><th>Result</th></tr></thead><tbody id="dependencies"></tbody></table>
 <h1>Samples</h1>
 <p>How the other modules use a module's public API, on the project's own data; what comes out is checked.</p>
-<table><thead><tr><th>Sample</th><th>Gets</th><th>Result</th></tr></thead><tbody id="samples"></tbody></table>
+<table><thead><tr><th>Sample</th><th>Imports</th><th>Result</th></tr></thead><tbody id="samples"></tbody></table>
 
-<script>
-/* the modules: a constructor and its file */
-const MODULES = { libraryCatalogModule: 'library/catalog.js' };
-/* the tests: a file and the function in it; the function's first parameter names the constructors it gets */
+<script type="module">
+/* the tests, from this folder */
 const TESTS = [
-  { table: 'dependencies', file: 'test/dependencies/library/catalog.js', name: 'libraryCatalogTest' },
-  { table: 'samples', file: 'test/samples/library.js', name: 'librarySample' }
+  { table: 'dependencies', file: 'dependencies/library/catalog.js' },
+  { table: 'samples', file: 'samples/library.js' }
 ];
 
-/* a script of the project, from one folder up */
-const script = path => new Promise((done, fail) => {
-  const s = document.createElement('script');
-  s.src = '../' + path; s.onload = done; s.onerror = () => fail(new Error('cannot load ' + path));
-  document.head.append(s);
-});
-const BASE = new URL('..', location.href).href;   // the project folder, as served
-
-/* the constructors a test names: { libraryCatalogModule, … } */
-const namesOf = test => (String(test).match(/^(?:async\s+)?function\s*\w*\s*\(\s*\{([^}]*)\}/) || ['', ''])[1].split(',').map(s => s.trim()).filter(Boolean);
-
-/* the slate: a worker with every name taken away that is not JavaScript's own, but fetch and its Response; it gets the constructors' code and
-   the project's address, runs the test and sends back what passed and what failed */
-function slate() {
-  const JAVASCRIPT = new Set(['globalThis', 'Infinity', 'NaN', 'undefined', 'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt',
-    'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'escape', 'unescape', 'AggregateError', 'Array',
-    'ArrayBuffer', 'Atomics', 'BigInt', 'BigInt64Array', 'BigUint64Array', 'Boolean', 'DataView', 'Date', 'Error', 'EvalError',
-    'FinalizationRegistry', 'Float16Array', 'Float32Array', 'Float64Array', 'Function', 'Int8Array', 'Int16Array', 'Int32Array',
-    'Intl', 'Iterator', 'JSON', 'Map', 'Math', 'Number', 'Object', 'Promise', 'Proxy', 'RangeError', 'ReferenceError', 'Reflect',
-    'RegExp', 'Set', 'SharedArrayBuffer', 'String', 'Symbol', 'SyntaxError', 'TypeError', 'Uint8Array', 'Uint8ClampedArray',
-    'Uint16Array', 'Uint32Array', 'URIError', 'WeakMap', 'WeakRef', 'WeakSet', 'fetch', 'Response']);
-  const send = postMessage.bind(globalThis);
-  onmessage = async ({ data: { constructors, test, base } }) => {
-    for (let o = globalThis; o && o !== Object.prototype; o = Object.getPrototypeOf(o))
-      for (const name of Object.getOwnPropertyNames(o))
-        if (!JAVASCRIPT.has(name)) try { Object.defineProperty(globalThis, name, { value: undefined }); } catch (e) { /* checked below */ }
-    const left = Object.getOwnPropertyNames(globalThis).filter(name => !JAVASCRIPT.has(name) && globalThis[name] !== undefined);
-    if (left.length) return send({ error: 'the slate is not empty: ' + left.join(', ') });
-    const passed = [], failed = [], given = {};
-    try {
-      for (const c of constructors) given[c.name] = (0, eval)(`(${c.code})\n//# sourceURL=${c.file}`);
-      await (0, eval)(`(${test.code})\n//# sourceURL=${test.file}`)(Object.freeze(given), base, (what, ok) => (ok ? passed : failed).push(what));
-      send({ passed, failed });
-    } catch (e) { send({ passed, failed, error: String(e) }); }
-  };
+/* what a test imports, from the project folder: read from its import lines */
+async function imports(address) {
+  const code = await (await fetch(address)).text();
+  const project = new URL('..', location.href).href;
+  return [...code.matchAll(/^import\s.*?from\s+'([^']+)'/gm)].map(m => new URL(m[1], address).href.slice(project.length));
 }
 
-function run(t) {
-  const code = String(window[t.name]);
-  const constructors = namesOf(code).map(name => ({ name, file: MODULES[name], code: String(window[name]) }));
-  const worker = new Worker(URL.createObjectURL(new Blob([`(${slate})()`], { type: 'text/javascript' })));
+/* a test in a worker of its own */
+function run(address) {
+  const worker = new Worker(new URL('run.js', location.href), { type: 'module' });
   return new Promise(done => {
     worker.onmessage = ({ data }) => { worker.terminate(); done(data); };
-    worker.postMessage({ constructors, test: { file: t.file, code }, base: BASE });
+    worker.onerror = e => { worker.terminate(); done({ passed: [], failed: [], error: e.message }); };
+    worker.postMessage(address);
   });
 }
 
-(async () => {
-  for (const file of Object.values(MODULES)) await script(file);
-  for (const t of TESTS) await script(t.file);
-
-  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  for (const t of TESTS) {
-    const tr = document.getElementById(t.table).insertRow();
-    tr.innerHTML = `<td><code>${t.file}</code></td><td>${namesOf(window[t.name]).map(n => `<code>${MODULES[n]}</code>`).join(' ')}</td><td class="wait">running…</td>`;
-    const r = await run(t), ok = !r.error && !r.failed.length;
-    tr.cells[2].className = '';
-    tr.cells[2].innerHTML = `<span class="${ok ? 'ok' : 'no'}">${ok ? 'OK' : 'NOT OK'}</span> · ${(r.passed || []).length} passed`
-      + (r.error ? `<br><b>${esc(r.error)}</b>` : '')
-      + ((r.failed || []).length ? `<br>failed: <ul>${r.failed.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : '')
-      + `<details><summary>what passed</summary><ul>${(r.passed || []).map(w => `<li>${esc(w)}</li>`).join('')}</ul></details>`;
-  }
-})();
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+for (const t of TESTS) {
+  const address = new URL(t.file, location.href).href;
+  const tr = document.getElementById(t.table).insertRow();
+  tr.innerHTML = `<td><code>test/${t.file}</code></td><td>${(await imports(address)).map(f => `<code>${f}</code>`).join(' ')}</td><td class="wait">running…</td>`;
+  const r = await run(address), ok = !r.error && !r.failed.length;
+  tr.cells[2].className = '';
+  tr.cells[2].innerHTML = `<span class="${ok ? 'ok' : 'no'}">${ok ? 'OK' : 'NOT OK'}</span> · ${r.passed.length} passed`
+    + (r.error ? `<br><b>${esc(r.error)}</b>` : '')
+    + (r.failed.length ? `<br>failed: <ul>${r.failed.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : '')
+    + `<details><summary>what passed</summary><ul>${r.passed.map(w => `<li>${esc(w)}</li>`).join('')}</ul></details>`;
+}
 </script>
 </body>
 </html>

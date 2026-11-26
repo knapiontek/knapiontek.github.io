@@ -1,34 +1,37 @@
 // @ts-check
-// test/dependencies/library/catalog.js: library/catalog.js alone: every part of its public API (types.js: Library), and every
+// test/dependencies/library/catalog.js: library/catalog.js alone: every part of its public API (types.js: Catalog), and every
 // library file against its type, on the library's own data.
 
-/**
- * @param {{ libraryCatalogModule: LibraryModule }} modules
- * @param {string} base  the project folder's address, ending in /
- * @param {(what: string, ok: boolean) => void} check
- */
-async function libraryCatalogTest({ libraryCatalogModule }, base, check) {
+import * as catalog from '../../../library/catalog.js';
+
+/** @typedef {import('../../../types.js').Tile} Tile */
+/** @typedef {import('../../../types.js').LibraryFile} LibraryFile */
+/** @typedef {import('../../../types.js').ProductsFile} ProductsFile */
+/** @typedef {import('../../../types.js').MaterialsFile} MaterialsFile */
+/** @typedef {import('../../../types.js').ShopsFile} ShopsFile */
+
+/** @param {(what: string, ok: boolean) => void} check */
+export default async function (check) {
   /* every address fetched is noted: this slate is the test's own, so its fetch may be watched */
   /** @type {string[]} */
   const fetched = [];
   const fetchItself = fetch;
   globalThis.fetch = (input, init) => { fetched.push(String(input)); return fetchItself(input, init); };
-  /** @param {string} path @returns {Promise<any>} a file as it lies, read past the library */
-  const file = async path => (await fetchItself(base + path)).json();
+  /** @param {string} path  from the library's folder @returns {Promise<any>} a file as it lies, read past the library */
+  const file = async path => (await fetchItself(new URL('../../../library/' + path, import.meta.url))).json();
   /** @param {() => unknown} f */
   const throws = f => { try { f(); return false; } catch (e) { return true; } };
 
-  const catalog = libraryCatalogModule(base);
-  check('the module: open', Object.keys(catalog).join() === 'open');
-  const L = await catalog.open();
-  check('open: the library\'s API', Object.keys(L).join() === 'groups,products,product,variants,materials,material,texture,shop');
+  check('the module: openCatalog only', Object.keys(catalog).join() === 'openCatalog');
+  const L = await catalog.openCatalog();
+  check('openCatalog: the catalog\'s API', Object.keys(L).join() === 'groups,products,product,variants,materials,material,texture,shop');
 
   /* groups and products */
   /** @type {LibraryFile} */
-  const index = await file('library/library.json');
+  const index = await file('library.json');
   /** @type {Record<string, ProductsFile>} */
   const lists = {};
-  for (const g of index.groups) lists[g] = await file(`library/products/${g}.json`);
+  for (const g of index.groups) lists[g] = await file(`products/${g}.json`);
   check('groups: those of library.json, in order', L.groups.join() === index.groups.join());
   check('products: each group\'s keys, in the order of its file', index.groups.every(g => L.products(g).join() === Object.keys(lists[g].products).join()));
   check('products: an unknown group throws', throws(() => L.products('no such group')));
@@ -45,9 +48,9 @@ async function libraryCatalogTest({ libraryCatalogModule }, base, check) {
   globalThis.fetch = async (input, init) => String(input).endsWith('library/library.json')
     ? new Response(JSON.stringify({ format: 'library', version: 1, groups: ['boards', 'boards'] })) : watching(input, init);
   let twice = '';
-  try { await libraryCatalogModule(base).open(); } catch (e) { twice = String(e); }
+  try { await catalog.openCatalog(); } catch (e) { twice = String(e); }
   globalThis.fetch = watching;
-  check('open: a product in two groups throws', twice.includes('in boards and in boards'));
+  check('openCatalog: a product in two groups throws', twice.includes('in boards and in boards'));
 
   /* variants: the products of a family */
   const inFamily = all.filter(k => L.product(k).family);
@@ -57,9 +60,9 @@ async function libraryCatalogTest({ libraryCatalogModule }, base, check) {
 
   /* materials, shops */
   /** @type {MaterialsFile} */
-  const materials = await file('library/materials.json');
+  const materials = await file('materials.json');
   /** @type {ShopsFile} */
-  const shops = await file('library/shops.json');
+  const shops = await file('shops.json');
   check('materials: every key of materials.json', L.materials().join() === Object.keys(materials.materials).join());
   check('material: the look of materials.json', L.materials().every(k => JSON.stringify(L.material(k)) === JSON.stringify(materials.materials[k])));
   check('material: an unknown key throws', throws(() => L.material('no such material')));
@@ -68,7 +71,7 @@ async function libraryCatalogTest({ libraryCatalogModule }, base, check) {
 
   /* textures: read when asked, once */
   const key = /** @type {Tile} */ (L.product(/** @type {string} */ (all.find(k => L.product(k).group === 'tiles')))).texture;
-  const address = `${base}library/textures/${key}.json`;
+  const address = new URL(`../../../library/textures/${key}.json`, import.meta.url).href;
   const [t1, t2] = await Promise.all([L.texture(key), L.texture(key)]);
   check('texture: its file, read once', t1 === t2 && t1.faces.length > 0 && fetched.filter(a => a === address).length === 1);
   let missing = false;

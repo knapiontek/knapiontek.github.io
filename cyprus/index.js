@@ -1,6 +1,10 @@
 // @ts-check
 // index.js: joins index.html to the modules. Sketch: the layout of the screen only; every value in SKETCH stands in for what the modules will give.
 
+import { createUi } from './core/ui.js';
+
+/** @typedef {ReturnType<typeof createUi>} Ui */
+
 /** @typedef {'house' | 'floor' | 'room'} Scope  what the view shows: the house, one floor, one room */
 /** @typedef {{ scopes?: Scope[], furniture?: boolean, modes?: string[] }} Needs  where a control belongs; missing: everywhere. Cabinet and Finish grey out elsewhere, the rest is not shown */
 /** @typedef {{ id: string, number: number, name: string, furniture?: boolean }} Room  id and number as archon gives them */
@@ -132,10 +136,10 @@ const SKETCH = {
 
 /**
  * The page: what the view shows (the house, a floor, a room), what belongs to it, and the screen drawn with core/ui.js.
- * @param {ReturnType<typeof uiModule>} ui
+ * @param {Ui} ui
  * @param {typeof SKETCH} data
  */
-function appModule(ui, data) {
+function createScreen(ui, data) {
   /** @type {State} */
   const state = { mode: '3d', floor: null, room: null, tab: 'view', off: [], open: [], panelOpen: true, float: null, list: null };
 
@@ -226,4 +230,4 @@ function appModule(ui, data) {
   return { state: () => ({ ...state, scope: scope() }), works, pick, render };
 }
 
-appModule(uiModule(document), SKETCH).render();
+createScreen(createUi(document), SKETCH).render();

@@ -1,6 +1,7 @@
 // @ts-check
-// types.js: the contracts between the modules of the project. Types only: no code runs here. A module implements a contract,
-// index.js joins the implementations; core knows none of this.
+// types.js: the contracts between the modules of the project. Types only: no code runs here; a module takes a type by
+// import('…/types.js'), which is gone when it runs. A module implements a contract, index.js joins the implementations;
+// core knows none of this.
 
 /* ---------- the library: the outside world, what is bought and how a material looks ---------- */
 
@@ -68,7 +69,7 @@
 /** @typedef {{ format: 'texture', version: 1 } & Texture} TextureFile  library/textures/<key>.json */
 
 /**
- * @typedef {object} Library  what the library gives the other modules
+ * @typedef {object} Catalog  what the library's catalog gives the other modules: the products, the materials, the textures, the shops
  * @property {string[]} groups  the product groups, in order
  * @property {(group: string) => string[]} products  the keys of a group's products, in order
  * @property {(key: string) => Product} product  a product by its key; an unknown key throws
@@ -79,4 +80,6 @@
  * @property {(key: string) => Shop} shop  a shop by its key; an unknown key throws
  */
 
-/** @typedef {(base: string) => { open: () => Promise<Library> }} LibraryModule  how the library is made: base: the project folder's address, ending in /; open reads the library's files from base + library/ */
+/** @typedef {() => Promise<Catalog>} OpenCatalog  the catalog, its files read */
+
+export {};
