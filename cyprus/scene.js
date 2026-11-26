@@ -73,7 +73,7 @@ class Batch {
  */
 export function createScene({ catalog, canvas, light, edges }) {
   const scene = new THREE.Scene(), world = new THREE.Group();
-  scene.backgroundRotation.set(-Math.PI / 2, 0, 0); scene.environmentRotation.set(-Math.PI / 2, 0, 0);   // the sky's pictures are made y up: turned to h up
+  scene.backgroundRotation.set(Math.PI / 2, 0, 0); scene.environmentRotation.set(Math.PI / 2, 0, 0);   // the sky's pictures are made y up: turned to h up
   world.scale.setScalar(MM);
   scene.add(world);
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 500);
