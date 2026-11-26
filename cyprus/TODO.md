@@ -9,15 +9,17 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] ES modules, Caddy, `types.js`, the test page
 - [x] core/hierarchy: built from the root down (`add`); places from offsets, settings, refs, layers from the root down, checks; its test
 - [x] tests: one per module, at its path
+- [x] house geometry: `core/geometry.js`, `house/parts.js` (the prototype's `house/model.js`): cuts, roof, floors, facade, roof, windows, doors, stair; `scene.js`: prisms, a part's layer and floor, the facade's raw material
+- [x] `scene.js` (root), stage 1: the house's boxes, the site, materials, layers and floors from the panel, edges, cameras, the sun; its test
 - [x] `layers.json` (root): the panel reads it; `checks(known)`: an unknown layer or floor; its test
 - [x] `house/model.json` from the prototype's `house.js`: the site at the root, the house on it in `analysis.md`'s axes (checked against it); `layer` and `floor` on a node, its type's, or its parent's; `house/build.js`; its test
 - [x] library/shapes: a product as parts in its own axes (`shapeOf`), materials by key or `metal` (Finish); its test
 
 ## Next
-- [ ] `plot3d.js` (root): the hierarchy in three.js: walls cut round their openings (and the EPS they cross), boxes under the roof cut by it, an element over both floors split at `split` for its floor layer; a leaf's parts, or its product's shape (`shapeOf`); placed by the hierarchy, its look by material; the granite's speckle
+- [ ] `scene.js`: the other forms (ring, plane, sphere, torus, extrude, tube, mesh, text), textures (boards, tiles, concrete, plaster, lawn, paving), the sky, moving parts (doors' hinge sense to check), the granite's speckle
 - [ ] `room/build.js`: a room's fittings from the library (lamps, basin, mirror); calls the cabinets, adds what they need from the library; a WC frame's parts behind the casing (Installations): their own node
 - [ ] `room/cabinets.js` and `room/<room>.cabinets.json` (materials, settings, groups, components): the cabinets' engine, by stages; the hardware, the kitchen tap, the trap; tiles
-- [ ] `plot2d.js` (root): plans and dimensions
+- [ ] `plan.js` (root): plans and dimensions
 - [ ] `docs.js` (root): Documents
 - [ ] Cabinet mode
 - [ ] Finish: metal, boards, floor tiles

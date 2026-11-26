@@ -1,8 +1,12 @@
 // @ts-check
-// index.js: joins index.html to the modules: the page's Alpine part. Sketch: the layout of the screen only; every value in
-// SKETCH stands in for what the modules will give.
+// index.js: joins index.html to the modules: the page's Alpine part. The 3D view: the house (house/build.js) drawn by scene.js,
+// its layers and floors switched from the panel (layers.json). The rest is still a sketch: the values in SKETCH stand in for
+// what the modules will give.
 
 import { page, sunStore } from './core/ui.js';
+import { openCatalog } from './library/catalog.js';
+import { buildHouse } from './house/build.js';
+import { createScene } from './scene.js';
 
 /** @typedef {import('./core/ui.js').LayerTree} LayerTree */
 /** @typedef {import('./core/ui.js').MenuItem} MenuItem */
@@ -33,6 +37,14 @@ const SKETCH = {
 
 const SUN = sunStore(SKETCH.sun);
 
+/* what the page builds once (outside Alpine: three.js's objects stay plain) */
+/** @type {ReturnType<typeof createScene> | null} */
+let PLOT = null;
+/** @type {Awaited<ReturnType<typeof buildHouse>> | null} */
+let SITE = null;
+/** @type {Record<string, string[]>} a layer's key, and the keys of the layers above it in the panel */
+const ABOVE = {};
+
 page('sketch', {
   key: 'cyprus-sketch',
   fresh: () => ({ mode: '3d', tab: 'view', floor: null, room: null, layers: {}, open: {} }),
@@ -41,7 +53,7 @@ page('sketch', {
   modeNames: { '3d': '3D', '2d': '2D', documents: 'Documents', cabinets: 'Cabinet' },
   tabs: { '3d': ['view', 'finish'] },
   tabNames: { view: 'View', finish: 'Finish' },
-  sun: { rects: SKETCH.house.rects, sun: SUN.state, change: SUN.save },
+  sun: { rects: SKETCH.house.rects, sun: SUN.state, change: () => { SUN.save(); PLOT?.sun(SUN.state); } },
 
   /* what the view shows: the house, a floor, a room of it */
   get floor() { return SKETCH.floors.find(f => f.id === this.state.floor) || null; },
@@ -80,16 +92,36 @@ page('sketch', {
     const none = () => {};
     return {
       '3d': [this.scope === 'house' ? [{ name: 'Walk', cls: 'walk', go: none }] : [],
-        [{ name: 'Open', go: none }], [{ name: 'Front', go: none }, { name: 'Garden', go: none }, { name: 'Above', go: none }]],
+        [{ name: 'Open', go: none }], [{ name: 'Front', go: () => PLOT?.view('front') }, { name: 'Garden', go: () => PLOT?.view('garden') }, { name: 'Above', go: () => PLOT?.view('above') }]],
       '2d': [[{ name: 'Save SVG', go: none }]],
       documents: [[{ name: 'Save XLSX', go: none }]],
       cabinets: [[{ name: 'Import', go: none }, { name: 'Export', go: none }], [{ name: 'Show in 3D', go: none }]]
     };
   },
-  /* the View's layers: layers.json, a block of the panel at its top level */
+  /* the View's layers: layers.json, a block of the panel at its top level; the house in 3D */
   async load() {
     /** @type {Record<string, { name: string, layers: LayerTree }>} */
     const layers = await (await fetch(new URL('layers.json', import.meta.url))).json();
     this.layerBlocks = Object.entries(layers).map(([id, b]) => ({ id, name: b.name, tab: 'view', tree: b.layers }));
-  }
+    (function above(/** @type {LayerTree} */ t, /** @type {string[]} */ up) {
+      for (const [k, l] of Object.entries(t)) { ABOVE[k] = up; if (typeof l !== 'string') above(l.layers, [...up, k]); }
+    })(Object.fromEntries(Object.values(layers).flatMap(b => Object.entries(b.layers))), []);
+    const [catalog, site] = await Promise.all([openCatalog(), buildHouse()]);
+    const house = /** @type {any} */ (site.node('house')), view = house.settings.view;
+    SITE = site;
+    PLOT = createScene({ catalog, canvas: /** @type {HTMLCanvasElement} */ (document.getElementById('gl')), light: view.light, edges: view.edges });
+    PLOT.show(site, house);
+    PLOT.sun(SUN.state);
+    this.onLayers();
+  },
+  /** a layer or a floor is on when it and every layer above it in the panel are; none: on @param {string | undefined} k */
+  on(k) { return !k || [...(ABOVE[k] || []), k].every(a => this.state.layers[a] !== false); },
+  /* the panel switched a layer: what the view shows */
+  onLayers() {
+    if (!PLOT || !SITE) return;
+    PLOT.visible(k => this.on(k));
+    PLOT.edges(this.on('edges'));
+  },
+  /** @param {string} m */
+  onMode(m) { if (m === '3d') PLOT?.resize(); }
 });

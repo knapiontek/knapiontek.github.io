@@ -3,7 +3,7 @@
 // the module it tests.
 
 /* the tests, from this folder, at the path of what they test */
-const TESTS = [['core/hierarchy.js'], ['library/catalog.js'], ['library/shapes.js'], ['layers.js', 'layers.json'], ['house/build.js', 'house/build.js, house/model.json']];
+const TESTS = [['core/hierarchy.js'], ['library/catalog.js'], ['library/shapes.js'], ['layers.js', 'layers.json'], ['house/build.js', 'house/build.js, house/model.json'], ['scene.js']];
 
 /** a test in a worker of its own @param {string} address @returns {Promise<{ passed: string[], failed: string[], error?: string }>} */
 function run(address) {

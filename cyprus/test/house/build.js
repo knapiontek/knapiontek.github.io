@@ -73,6 +73,29 @@ export default async function (check) {
     check('§ 14: the lawn at −320; the garden terrace x 14200 – 15700, y 300 – 8800, top −20', site.lawn.h - zero[2] === -320 && tx.join() === '14200,15700,300,8800' && terrace.h - zero[2] === -20);
   }
 
+  /* ---------- what is drawn (house/parts.js): cut by the openings and the roof, split between the floors ---------- */
+  {
+    /** @type {{ materials: Record<string, unknown> }} */
+    const library = await (await fetch(new URL('../../library/materials.json', import.meta.url))).json();
+    /** @type {string[]} */
+    const unknown = [];
+    let parts = 0;
+    H.walk(n => { for (const p of /** @type {HouseNode} */ (n).parts || []) { parts++; for (const m of [p.material, p.raw, ...Object.values(p.faces || {})]) if (m && !(m in library.materials)) unknown.push(H.path(n) + ': ' + m); } });
+    check('parts: every material in the library' + (unknown.length ? ': not ' + [...new Set(unknown)].slice(0, 5).join(', ') : ''), parts > 400 && unknown.length === 0);
+    /** the highest and lowest h of a node's parts, in the house's axes @param {string} path */
+    const hs = path => { const n = at(path), h0 = H.place(n)[2] - zero[2]; const all = (n.parts || []).flatMap(p => (p.poly || []).map(q => q[1] + h0)); return [Math.min(...all), Math.max(...all)]; };
+    const garden = at('groundFloor/blockGarden').parts || [];
+    check('§ 3: the garden wall less its window (y 1550 – 7550, h 0 → 2400)', garden.length > 1 && garden.every(p => /** @type {number[][]} */ (p.poly).every(q => q[0] + 440 <= 1550 || q[0] + 440 >= 7550 || q[1] >= 2400)
+      || /** @type {number[][]} */ (p.poly).every(q => q[0] + 440 <= 1550) || /** @type {number[][]} */ (p.poly).every(q => q[0] + 440 >= 7550) || /** @type {number[][]} */ (p.poly).every(q => q[1] >= 2400)));
+    check('§ 6, § 13: the roof\'s ridge ≈ 8820', Math.abs(hs('roof')[1] - 8822) < 1);
+    check('§ 3: the knee wall cut by the roof: 3060 up to its underside, not 9000', hs('firstFloor/kneeLeft')[0] === 3060 && hs('firstFloor/kneeLeft')[1] < 4300);
+    const eps = (at('facade/epsLeft').parts || []).map(p => p.floor);
+    check('§ 5: the EPS split at 2720, Ground Floor below, First Floor above', eps.includes('groundFloor') && eps.includes('firstFloor'));
+    check('the roof\'s planes: their own layer', (at('roof').parts || []).every(p => p.layer === 'roofPlanes'));
+    const door = at('groundFloor/wall9/door_vestibule_1_garage_2');
+    check('an inner door: its frame and its leaf, the leaf on its hinge', (door.parts || []).some(p => p.mover === 'leaf') && door.movers?.[0].id === 'leaf');
+  }
+
   /* ---------- the rooms, as archon numbers them; their floors in m² (§ 9, § 10) ---------- */
   {
     /** @type {string[]} */

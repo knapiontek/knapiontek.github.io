@@ -8,10 +8,11 @@ Served over HTTP (Caddy, `toggle-caddy.sh`): `http://localhost:8080/` the page, 
 | File / folder | What |
 |---|---|
 | `index.html` | the page: its pieces (Alpine) |
-| `index.js` | joins the page to the modules: the page's Alpine part; for now a sketch with stand-in data |
+| `index.js` | joins the page to the modules: the page's Alpine part; the house in 3D, its layers and floors from the panel; the rest still a sketch with stand-in data |
+| `scene.js` | `createScene()`: the 3D view (three.js from its CDN): a branch of a hierarchy, each node by its parts (boxes, prisms with a material per side, cylinders) or its product's shape, placed by the hierarchy, its look by material (a wood by its decor); a part shown by its layer and floor, its raw material with its finish off; edges, the cameras Front / Garden / Above, the sun |
 | `layers.json` | the layers of the View: a block of the panel at its top level; a layer its name, or its name and the layers under it; the Floors block: the floors a node is on (`floor`); the others: what a node is (`layer`) |
 | `types.js` | the contracts between modules (types only, never loaded by the browser) |
-| `globals.d.ts`, `jsconfig.json` | the type check (`tsc -p jsconfig.json`): Alpine's global, strict checks of every `.js` |
+| `globals.d.ts`, `jsconfig.json` | the type check (`tsc -p jsconfig.json`): Alpine's global, three.js's modules, strict checks of every `.js` |
 | `toggle-caddy.sh`, `Caddyfile` | Caddy on or off: this folder at port 8080, nothing cached |
 | `TODO.md` | what is left, step by step |
 | `archon/` | the source: archon's drawings and their reading |

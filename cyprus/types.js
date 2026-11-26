@@ -24,15 +24,25 @@
  */
 /** @typedef {() => Promise<Catalog>} OpenCatalog  the catalog, its files read */
 
-/* ---------- the library's shapes: a product as parts, in its own axes; the scene places them and gives them their look ---------- */
+/* ---------- parts: what is drawn of a node, in its own axes (a product's: library/shapes.js; an element's: its builder); the
+   scene places them and gives them their look ---------- */
 
-/** @typedef {number[]} Vec  [x, y, h], mm: x along the product, y from its back to its front, h up; 0: its left, back, bottom corner */
+/** @typedef {number[]} Vec  [x, y, h], mm, in the node's own axes, 0 its corner; a product's: x along it, y from its back to its front, h up */
 /**
- * @typedef {object} Part  one solid of a product
- * @property {'box' | 'cylinder' | 'ring' | 'disc' | 'plane' | 'sphere' | 'torus' | 'extrude' | 'tube' | 'mesh' | 'text'} form
+ * @typedef {object} Part  one solid of a node
+ * @property {'box' | 'prism' | 'cylinder' | 'ring' | 'disc' | 'plane' | 'sphere' | 'torus' | 'extrude' | 'tube' | 'mesh' | 'text'} form
  * @property {string} material  a key of materials.json, or 'metal': the fittings' metal, set by Finish
+ * @property {string} [layer]  its own layer, before its node's
+ * @property {string} [floor]  its own floor, before its node's (what lies over both floors, split)
  * @property {string} [mover]  the id of the moving part it moves with: one of the shape's movers, or one the room gives (a fridge door carried by a cabinet front); none: it stands
  * @property {number[]} [box]  box: [x0, x1, y0, y1, h0, h1]
+ * @property {number[]} [x]  prism: [x1, x2], along x
+ * @property {number[][]} [poly]  prism: its section, a convex polygon of [y, h] points, counter-clockwise
+ * @property {Record<string, string>} [faces]  prism: a face's material by its side: top, bottom, ends (along x), eaves (a side at an eaves' y), reveals (the other sides)
+ * @property {number[]} [eaves]  prism: the y of its outer edges, where a side is an eave
+ * @property {string} [raw]  the material when its finish's layer is off (EPS under its facade)
+ * @property {string} [finish]  the layer of its finish
+ * @property {string} [cap]  the material of its cut, in a section (2D)
  * @property {Vec} [at]  the others' middle (extrude: the start of its depth)
  * @property {Vec} [axis]  cylinder, torus, extrude: along it; ring, disc, plane, text: the way it faces
  * @property {number[]} [radius]  cylinder: [bottom, top]; ring: [inner, outer]; disc, sphere, torus, tube: [r]
@@ -50,6 +60,7 @@
  * @property {number[]} [matrix]  mesh: its rows x, y, h of the product: [a, b, c, d] each, x = a·px + b·py + c·pz + d
  * @property {string} [text]  text: what it shows
  * @property {number} [segments]  round forms: the facets round
+ * @property {false} [edges]  false: drawn without its edges (the lawn)
  */
 /** @typedef {{ id: string, pivot: Vec, axis: Vec, sign: 1 | -1, travel: number }} Mover  a moving part: turning about the axis through its pivot, toward sign, travel degrees */
 /** @typedef {{ kind: 'spot' | 'point', at: Vec, target?: Vec, color: string, intensity: number, distance: number, angle?: number, penumbra?: number, decay: number, shadow: boolean }} Light  a light a product carries, lit at night */
