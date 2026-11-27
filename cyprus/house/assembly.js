@@ -2,10 +2,10 @@
 // house/assembly.js: the site and its house from their model (model.json, next to this file) as a hierarchy (core/hierarchy.js):
 // the site at the root, the house on it, its assemblies and floors, their elements, the openings in their walls, the rooms as
 // places. A node without its own layer or floor takes its type's (geometry.types): the model names them once, per type. What is
-// drawn of the house: house/parts.js; of the site: its lawn round the house and its surfaces.
+// drawn of the house: house/shapes.js; of the site: its lawn round the house and its surfaces.
 
 import { createHierarchy } from '../core/hierarchy.js';
-import { houseParts } from './parts.js';
+import { houseShapes } from './shapes.js';
 
 /** @typedef {import('../core/hierarchy.js').HierarchyNode} HierarchyNode */
 /** @typedef {import('../types.js').Part} Part */
@@ -35,7 +35,7 @@ export async function assembleHouse() {
     (n.children || []).forEach(typed);
   })(house);
   const hierarchy = createHierarchy(/** @type {HouseNode} */ (root));
-  houseParts(hierarchy, house);
+  houseShapes(hierarchy, house);
   root.parts = siteParts(hierarchy, root, house);
   return hierarchy;
 }

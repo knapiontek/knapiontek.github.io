@@ -74,7 +74,7 @@ export default async function (check) {
     check('§ 14: the lawn at −320; the garden terrace x 14200 – 15700, y 300 – 8800, top −20', site.lawn.h - zero[2] === -320 && tx.join() === '14200,15700,300,8800' && terrace.h - zero[2] === -20);
   }
 
-  /* ---------- what is drawn (house/parts.js): cut by the openings and the roof, split between the floors ---------- */
+  /* ---------- what is drawn (house/shapes.js): cut by the openings and the roof, split between the floors ---------- */
   {
     /** @type {{ materials: Record<string, unknown> }} */
     const library = await (await fetch(new URL('../../library/materials.json', import.meta.url))).json();

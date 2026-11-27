@@ -12,7 +12,9 @@ import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.187.0/exampl
 import { shapeOf } from './library/shapes.js';
 import { prism, edgesOf } from './core/geometry.js';
 import { createSurfaces, sub3, dot3, cross3 } from './core/surfaces.js';
+import { turned } from './core/hierarchy.js';
 
+/** @typedef {{ at: number[], turn: number }} Frame  a node's axes in the branch's: its zero, its quarter turns about h */
 /** @typedef {import('./types.js').Catalog} Catalog */
 /** @typedef {import('./types.js').Part} Part */
 /** @typedef {import('./core/surfaces.js').Cell} Cell */
@@ -207,7 +209,7 @@ export function createScene({ catalog, canvas, light, edges }) {
    */
   function show(hierarchy, node) {
     clear(); H = hierarchy;
-    const h = hierarchy, zero = h.place(node), F = createSurfaces();
+    const h = hierarchy, F = createSurfaces();
     /** @type {Cell[]} */ const still = [];
     /** @type {Map<string, Cell[]>} the solids of each moving part, apart: they turn on their own */
     const moving = new Map();
@@ -215,13 +217,14 @@ export function createScene({ catalog, canvas, light, edges }) {
     (function collect(n) {
       const product = n.product ? catalog.product(n.product) : null;
       const parts = n.parts || (product?.draw ? shapeOf(product, n.size, n.options).parts : null);
-      const p = h.place(n), at = [p[0] - zero[0], p[1] - zero[1], p[2] - zero[2]];
+      /** @type {Frame} n's axes in node's: its zero, its quarter turns */
+      const at = { at: h.fromRoot(node, h.place(n)), turn: (h.turnOf(n) - h.turnOf(node) + 4) % 4 };
       for (const part of parts || []) {
         const look = part.material === 'metal' ? metalOf(n) : part.material;
         const group = groupOf(part.layer ?? h.layer(n), part.floor ?? h.floor(n));
         const S = solidOf(part, at);
         if (!S) { other(part, look, at, group); continue; }
-        const F2 = part.faces, eaves = part.eaves && part.eaves.map(y => y + at[1]);
+        const F2 = part.faces, eaves = part.eaves && at.turn === 0 ? part.eaves.map(y => y + at.at[1]) : undefined;
         /** @type {Cell} */
         const cell = { S, group, edges: part.edges !== false, owner: n, part: part.mover ? h.path(n) + '#' + part.mover : undefined,
           ...(F2 ? { faceMaterial: (/** @type {Vec3} */ v, /** @type {Vec3[]} */ pts) => faceLook(F2, eaves, v, pts) } : { material: look }),
@@ -237,10 +240,19 @@ export function createScene({ catalog, canvas, light, edges }) {
     resize();
     view('front');
   }
-  /** a box or a prism in the branch's axes; none: another form @param {Part} p @param {number[]} at */
-  function solidOf(p, at) {
-    if (p.form === 'box') { const b = /** @type {number[]} */ (p.box); return prism([b[0] + at[0], b[1] + at[0], b[2] + at[1], b[3] + at[1], b[4] + at[2], b[5] + at[2]]); }
-    if (p.form === 'prism') { const x = /** @type {number[]} */ (p.x); return { x1: x[0] + at[0], x2: x[1] + at[0], poly: /** @type {number[][]} */ (p.poly).map(q => [q[0] + at[1], q[1] + at[2]]) }; }
+  /** a point of a node's axes in the branch's @param {Frame} f @param {number[]} v */
+  const put = (f, v) => turned(v, f.turn).map((c, i) => c + f.at[i]);
+  /** a box or a prism in the branch's axes; none: another form, or a prism turned a quarter (along y: not yet) @param {Part} p @param {Frame} f */
+  function solidOf(p, f) {
+    if (p.form === 'box') {
+      const b = /** @type {number[]} */ (p.box), a = put(f, [b[0], b[2], b[4]]), c = put(f, [b[1], b[3], b[5]]);
+      return prism([0, 1, 2].flatMap(i => [Math.min(a[i], c[i]), Math.max(a[i], c[i])]));
+    }
+    if (p.form === 'prism' && f.turn % 2 === 0) {
+      const x = /** @type {number[]} */ (p.x), poly = /** @type {number[][]} */ (p.poly), [ax, ay, ah] = f.at;
+      if (f.turn === 0) return { x1: x[0] + ax, x2: x[1] + ax, poly: poly.map(q => [q[0] + ay, q[1] + ah]) };
+      return { x1: ax - x[1], x2: ax - x[0], poly: poly.map(q => [ay - q[0], q[1] + ah]).reverse() };   // half a turn: y against itself, the polygon's sense kept
+    }
     return null;
   }
   /** a face's material by its side @param {Record<string, string>} F @param {number[] | undefined} eaves @param {Vec3} n @param {Vec3[]} pts */
@@ -322,13 +334,13 @@ export function createScene({ catalog, canvas, light, edges }) {
       Object.assign(mesh.userData, { layer: g.layer, floor: g.floor, hideWhen: v.hideWhen });
     }
   }
-  /** another form (a cylinder): a mesh of its own, in its group @param {Part} p @param {string} look @param {number[]} at @param {string} group */
+  /** another form (a cylinder): a mesh of its own, in its group @param {Part} p @param {string} look @param {Frame} at @param {string} group */
   function other(p, look, at, group) {
     if (p.form !== 'cylinder') { skipped++; return; }
-    const [r0, r1] = /** @type {number[]} */ (p.radius), c = /** @type {number[]} */ (p.at);
+    const [r0, r1] = /** @type {number[]} */ (p.radius), c = put(at, /** @type {number[]} */ (p.at));
     const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, p.length, p.segments || 20, 1, !!p.open), material(look));
-    mesh.position.set(c[0] + at[0], c[1] + at[1], c[2] + at[2]);
-    mesh.quaternion.setFromUnitVectors(ALONG, new THREE.Vector3(...(p.axis || [0, 0, 1])).normalize());
+    mesh.position.set(c[0], c[1], c[2]);
+    mesh.quaternion.setFromUnitVectors(ALONG, new THREE.Vector3(...turned(p.axis || [0, 0, 1], at.turn)).normalize());
     mesh.castShadow = mesh.receiveShadow = true;
     world.add(mesh);
     const g = GROUPS.get(group) || {};

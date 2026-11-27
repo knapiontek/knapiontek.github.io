@@ -3,12 +3,36 @@
 // find; then a piece of the house built as the project builds it, from the root down: the house's model, a room, its cabinets
 // and what they need from the library (archon/analysis.md, x East, y North).
 
-import { createHierarchy } from '../../core/hierarchy.js';
+import { createHierarchy, turned } from '../../core/hierarchy.js';
 
 /** @typedef {import('../../core/hierarchy.js').HierarchyNode} HierarchyNode */
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
+  /* ---------- quarter turns: a room 4000 × 3000, a group of cabinets 1200 long, 600 deep, its zero at the wall ---------- */
+  {
+    check('turned: a quarter turn counterclockwise, x to y', turned([1, 0, 5], 1).join() === '0,1,5' && turned([0, 1, 5], 1).join() === '-1,0,5');
+    check('turned: four quarter turns, as none', turned([3, 4, 5], 4).join() === '3,4,5' && turned([3, 4, 5], -1).join() === turned([3, 4, 5], 3).join());
+    /** a room with a group by each wall: its zero at the wall, its x along it, its y into the room @param {number} turn @param {number[]} offset */
+    const group = (turn, offset) => ({ id: 'g' + turn, type: 'group', offset, turn, size: [1200, 600, 900] });
+    /** @type {HierarchyNode} */
+    const root = { id: 'room', type: 'room', offset: [0, 0, 0], size: [4000, 3000, 2700], children: [
+      group(0, [0, 0, 0]), group(1, [4000, 0, 0]), group(2, [4000, 3000, 0]), group(3, [0, 3000, 0])] };
+    const T = createHierarchy(root), g = (/** @type {number} */ t) => /** @type {HierarchyNode} */ (T.node('g' + t));
+    check('box: by the South wall (turn 0), x East, y North into the room', T.box(g(0)).join() === '0,1200,0,600,0,900');
+    check('box: by the East wall (turn 1), x North, y West into the room', T.box(g(1)).join() === '3400,4000,0,1200,0,900');
+    check('box: by the North wall (turn 2), x West, y South into the room', T.box(g(2)).join() === '2800,4000,2400,3000,0,900');
+    check('box: by the West wall (turn 3), x South, y East into the room', T.box(g(3)).join() === '0,600,1800,3000,0,900');
+    check('toRoot: a carcass back 28 from the wall, 100 along it (turn 1)', T.toRoot(g(1), [100, 28, 0]).join() === '3972,100,0');
+    check('fromRoot: back again', T.fromRoot(g(1), [3972, 100, 0]).join() === '100,28,0');
+    check('turnOf: the turns added up', T.turnOf(g(3)) === 3 && T.turnOf(root) === 0);
+    T.add(g(1), { id: 'k', type: 'carcass', offset: [100, 28, 0], turn: 2, size: [10, 10, 10] });
+    check('turnOf: a turned node in a turned node', T.turnOf(/** @type {HierarchyNode} */ (T.node('g1/k'))) === 3);
+    check('place: its zero through its parent\'s turn', T.place(/** @type {HierarchyNode} */ (T.node('g1/k'))).join() === '3972,100,0');
+    const bad = createHierarchy({ id: 'r', type: 'r', offset: [0, 0, 0], size: [1, 1, 1], children: [{ id: 'a', type: 'a', offset: [0, 0, 0], size: [1, 1, 1], turn: 5 }] });
+    check('checks: a turn of 0 to 3', bad.checks()[0].items.join() === 'a: turn 5');
+  }
+
   /* ---------- every call, on a small hierarchy ---------- */
   {
 

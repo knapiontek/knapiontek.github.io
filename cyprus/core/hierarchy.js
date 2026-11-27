@@ -1,6 +1,7 @@
 // @ts-check
 // core/hierarchy.js: the hierarchy of nodes, built from its root down: whoever builds a branch adds it under a node already in
-// it (add). A node's place is its parent's place plus its offset; its settings are the defaults of its branch; its layer (what
+// it (add). A node's place is its parent's place plus its offset, in the parent's axes; a node's axes may be its parent's
+// turned about h by quarter turns (turn: no trigonometry, an integer matrix); every axes right-handed. Its settings are the defaults of its branch; its layer (what
 // it is) and its floor (where it is) are its own, or else its parent's. It says what belongs to what (where a thing stands or hangs), not what lies inside
 // what: a child may stand outside its parent (a sink over its carcass). Knows no project and nothing of what a node is: its
 // type is only a name here.
@@ -10,7 +11,8 @@
  * @property {string} id  letters, digits, - and _: one step of a path
  * @property {string} [name]
  * @property {string} type
- * @property {number[]} offset  [x, y, h] mm from the parent's corner
+ * @property {number[]} offset  [x, y, h] mm: its zero in its parent's axes
+ * @property {number} [turn]  its axes: its parent's turned about h by quarter turns, counterclockwise (0 to 3); none: 0
  * @property {number[]} size  [x, y, h] mm
  * @property {Record<string, any>} [settings]  the defaults of its branch
  * @property {string[]} [refs]  the paths of the nodes it refers to (what for, its type says)
@@ -21,6 +23,11 @@
 /** @typedef {{ name: string, about: string, items: string[], info?: boolean }} Check  OK when items is empty; info: to know, not to correct */
 
 const AXES = ['x', 'y', 'h'];
+/** a point turned about h by quarter turns, counterclockwise @param {number[]} v @param {number} t @returns {number[]} */
+export function turned([x, y, h], t) {
+  const k = ((t % 4) + 4) % 4;
+  return k === 0 ? [x, y, h] : k === 1 ? [-y, x, h] : k === 2 ? [-x, -y, h] : [y, -x, h];
+}
 const ID = /^[A-Za-z0-9_-]+$/;   // no spaces, no '/': an id is a step of a path
 
 /**
@@ -67,10 +74,19 @@ export function createHierarchy(root) {
   const parent = n => PARENT.get(n) || null;
   /** the nodes from the root down to n @param {N} n @returns {N[]} */
   const chain = n => { /** @type {N[]} */ const out = []; for (let /** @type {N | null | undefined} */ m = n; m; m = PARENT.get(m)) out.unshift(m); return out; };
-  /** the node's corner in the root's axes: the sum of the offsets below the root @param {N} n @returns {number[]} */
-  const place = n => chain(n).slice(1).reduce((p, m) => p.map((v, i) => v + m.offset[i]), [0, 0, 0]);
-  /** the node's box [x1, x2, y1, y2, h1, h2] in the root's axes @param {N} n @returns {number[]} */
-  const box = n => { const p = place(n), s = n.size; return [p[0], p[0] + s[0], p[1], p[1] + s[1], p[2], p[2] + s[2]]; };
+  /** its axes' turn against the root's: quarter turns counterclockwise about h, 0 to 3 @param {N} n */
+  const turnOf = n => chain(n).slice(1).reduce((t, m) => t + (m.turn || 0), 0) % 4;
+  /** a point of n's axes in the root's axes @param {N} n @param {number[]} v @returns {number[]} */
+  const toRoot = (n, v) => chain(n).slice(1).reduceRight((p, m) => turned(p, m.turn || 0).map((c, i) => c + m.offset[i]), v);
+  /** a point of the root's axes in n's axes @param {N} n @param {number[]} v @returns {number[]} */
+  const fromRoot = (n, v) => chain(n).slice(1).reduce((p, m) => turned(p.map((c, i) => c - m.offset[i]), 4 - (m.turn || 0)), v);
+  /** the node's zero in the root's axes @param {N} n @returns {number[]} */
+  const place = n => toRoot(n, [0, 0, 0]);
+  /** the box [x1, x2, y1, y2, h1, h2] in the root's axes that the node's size fills @param {N} n @returns {number[]} */
+  const box = n => {
+    const a = toRoot(n, [0, 0, 0]), b = toRoot(n, n.size);
+    return [0, 1, 2].flatMap(i => [Math.min(a[i], b[i]), Math.max(a[i], b[i])]);
+  };
   /**
    * A setting by its key (dots go into nested objects): the value of the nearest node, n or above, that sets it, and that node;
    * undefined when none does.
@@ -113,6 +129,7 @@ export function createHierarchy(root) {
       if (known && n.layer !== undefined && !known.layers.includes(n.layer)) unknown.push(`${at}: layer ${n.layer}`);
       if (known && n.floor !== undefined && !known.floors.includes(n.floor)) unknown.push(`${at}: floor ${n.floor}`);
       if (typeof n.id !== 'string' || !ID.test(n.id)) ids.push(`${at}: id ${JSON.stringify(n.id)}`);
+      if (n.turn !== undefined && ![0, 1, 2, 3].includes(n.turn)) shape.push(`${at}: turn ${JSON.stringify(n.turn)}`);
       if (!n.type || !vector(n.offset) || !vector(n.size)) {
         shape.push(`${at}: ${[!n.type && 'type', !vector(n.offset) && 'offset', !vector(n.size) && 'size'].filter(Boolean).join(', ')}`);
         return;
@@ -126,7 +143,7 @@ export function createHierarchy(root) {
       for (const c of /** @type {N[]} */ (n.children || [])) { if (seen.has(c.id)) twice.push((path(n) ? path(n) + '/' : '') + c.id); seen.add(c.id); siblings(c); }
     })(root);
     return [
-      { name: 'Hierarchy: every node has a type, an offset and a size', about: 'Each node says what it is and where it stands: a type, an offset [x, y, h] and a size [x, y, h].', items: shape },
+      { name: 'Hierarchy: every node has a type, an offset and a size', about: 'Each node says what it is and where it stands: a type, an offset [x, y, h] and a size [x, y, h]; a turn, if any, of 0 to 3 quarter turns.', items: shape },
       { name: 'Hierarchy: ids without spaces or slashes', about: 'An id is one step of a path, so it holds letters, digits, - and _ only.', items: ids },
       { name: 'Hierarchy: ids unique among siblings', about: 'Two children of one node with the same id would have the same path: one of them could not be found.', items: twice },
       { name: 'Hierarchy: sizes above 0', about: 'Every node has a size above 0 along x, y and h.', items: empty },
@@ -135,5 +152,5 @@ export function createHierarchy(root) {
       ...(known ? [{ name: 'Hierarchy: every layer and floor is known', about: 'A node\'s layer is one of the layers there are, its floor one of the floors.', items: unknown }] : [])];
   }
 
-  return { root, add, path, node, parent, chain, place, box, setting, refs, layer, floor, walk, checks };
+  return { root, add, path, node, parent, chain, place, turnOf, toRoot, fromRoot, box, setting, refs, layer, floor, walk, checks };
 }

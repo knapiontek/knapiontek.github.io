@@ -11,7 +11,7 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] tests: one per module, at its path
 - [x] axes ENU (x East, y North, h up), right-handed: `model.json`, `analysis.md`, tests; `scene.js` without swapping axes; `core/surfaces.js` (was faces); tests of `core/geometry.js` and `core/surfaces.js` by examples
 - [x] `scene.js` as the prototype's: welded faces (`core/surfaces.js`), meshes by group and material, edges from the topology, generated surfaces, the sky; the roof on the Attic floor
-- [x] house geometry: `core/geometry.js`, `house/parts.js` (the prototype's `house/model.js`): cuts, roof, floors, facade, roof, windows, doors, stair; `scene.js`: prisms, a part's layer and floor, the facade's raw material
+- [x] house geometry: `core/geometry.js`, `house/shapes.js` (the prototype's `house/model.js`): cuts, roof, floors, facade, roof, windows, doors, stair; `scene.js`: prisms, a part's layer and floor, the facade's raw material
 - [x] `scene.js` (root), stage 1: the house's boxes, the site, materials, layers and floors from the panel, edges, cameras, the sun; its test
 - [x] `layers.json` (root): the panel reads it; `checks(known)`: an unknown layer or floor; its test
 - [x] `house/model.json` from the prototype's `house.js`: the site at the root, the house on it in `analysis.md`'s axes (checked against it); `layer` and `floor` on a node, its type's, or its parent's; `house/assembly.js`; its test
