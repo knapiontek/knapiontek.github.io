@@ -45,6 +45,20 @@ export default async function (check) {
     const H = createHierarchy(/** @type {CabinetNode} */ (JSON.parse(JSON.stringify(g1))));
     check('axes: K11 in its group, 28 – 578 from the wall at y −28 – −578', H.box(/** @type {CabinetNode} */ (H.node('worktop/K11'))).join() === '59,859,-578,-28,150,870');
     check('the hierarchy of a group: sound', H.checks().filter(c => !c.info).every(c => c.items.length === 0));
+    /** @type {string[]} */
+    const bad = [];
+    let bodies = 0;
+    for (const n of groups.flatMap(sizes)) for (const p of n.parts || []) { bodies++; if (!p.material.startsWith('board:') && p.material !== 'plasterWhite') bad.push(p.material); else if (p.material.startsWith('board:')) { try { catalog.product(p.material.slice(6)); } catch { bad.push(p.material); } } }
+    check('bodies: boards of the library, every one (' + bodies + ')' + (bad.length ? ': not ' + bad.join(', ') : ''), bodies > 150 && bad.length === 0);
+    const k11b = (k11?.parts || []).map(p => /** @type {number[]} */ (p.box));
+    check('K11: two sides 18 thick, the whole carcass high, from its back (y 0) to its front (y −550)', k11b.filter(b => b[1] - b[0] === 18 && b[5] - b[4] === 720 && b[2] === -550 && b[3] === 0).length === 2);
+    check('K11 under the hob: the front rail on edge, 50; the panel under the hob', k11b.some(b => b[5] === 720 && b[4] === 670 && b[2] === -550) && (k11?.parts || []).some(p => p.material === 'board:egger-u708-st9-16'));
+    const front = at(g1, 'worktop/K11/drawer_1')?.parts || [];
+    check('a shaker front: its frame of four rails and its panel, recessed; less its gaps (3 at the sides and the top)', front.length === 5 && front.every(p => p.layer === 'doorsAndDrawers')
+      && Math.min(...front.map(p => /** @type {number[]} */ (p.box)[0])) === 3 && Math.max(...front.map(p => /** @type {number[]} */ (p.box)[1])) === 797 && Math.max(...front.map(p => /** @type {number[]} */ (p.box)[5])) === 417);
+    check('the fronts in their plane: 2 before the carcass, 18 thick (y −552 – −570)', front.every(p => /** @type {number[]} */ (p.box)[2] >= -570 && /** @type {number[]} */ (p.box)[3] <= -552));
+    check('K23: a back behind its doors, fixed shelf at the joint, shelves behind the doors', (at(g2, 'plasterboard_1/K23')?.parts || []).filter(p => p.layer === 'backs').length === 1
+      && (at(g2, 'plasterboard_1/K23')?.parts || []).filter(p => p.layer === 'shelves').length === 1 + 1 + 3);
     check('the same file, the same nodes', JSON.stringify(cabinetsOf(file, catalog).groups) === JSON.stringify(groups));
   }
 

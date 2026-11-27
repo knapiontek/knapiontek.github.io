@@ -31,7 +31,7 @@
 /**
  * @typedef {object} Part  one solid of a node
  * @property {'box' | 'prism' | 'cylinder' | 'ring' | 'disc' | 'plane' | 'sphere' | 'torus' | 'extrude' | 'tube' | 'mesh' | 'text'} form
- * @property {string} material  a key of materials.json, or 'metal': the fittings' metal, set by Finish
+ * @property {string} material  a key of materials.json; 'board:' and a board's key: the board of the library (its decor, lacquer or colour); or 'metal': the fittings' metal, set by Finish
  * @property {string} [layer]  its own layer, before its node's
  * @property {string} [floor]  its own floor, before its node's (what lies over both floors, split)
  * @property {string} [mover]  the id of the moving part it moves with: one of the shape's movers, or one the room gives (a fridge door carried by a cabinet front); none: it stands

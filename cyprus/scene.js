@@ -166,10 +166,17 @@ export function createScene({ catalog, canvas, light, edges }) {
   };
   /** @type {Map<string, any>} */
   const MATERIALS = new Map();
+  /** a board's look from its product: its decor's photo, a lacquer, or a colour @param {string} key  a board of the library @returns {Record<string, any>} */
+  function boardLook(key) {
+    const b = /** @type {any} */ (catalog.product(key));
+    return b.texture ? { color: '#ffffff', image: { key: b.texture }, roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, reflect: 0.5 }
+      : b.lacquered ? { color: b.color, roughness: 0.42, clearcoat: 0.2, clearcoatRoughness: 0.45, reflect: 0.7 }
+      : { color: b.color, roughness: 0.8, reflect: 0.45 };
+  }
   /** the three.js material of a library look, made once @param {string} key */
   function material(key) {
     if (MATERIALS.has(key)) return MATERIALS.get(key);
-    const def = /** @type {Record<string, any>} */ (catalog.material(key));
+    const def = key.startsWith('board:') ? boardLook(key.slice(6)) : /** @type {Record<string, any>} */ (catalog.material(key));
     /** @type {Record<string, any>} */
     const o = { color: def.color || '#ffffff', roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1,
       polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 };   // the faces a little back: an edge on them shows, one behind them does not

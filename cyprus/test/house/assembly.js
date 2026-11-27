@@ -23,6 +23,8 @@ export default async function (check) {
   /** its box in the house's axes, as analysis.md gives it @param {string} path */
   const box = path => H.box(at(path)).map((v, i) => Math.round((v - zero[i >> 1]) * 10) / 10).join();
   const geometry = house.geometry;
+  /** under a room: what stands in it (room/assembly.js, its own tests) @param {HouseNode} n */
+  const inRoom = n => H.chain(n).slice(0, -1).some(m => /** @type {HouseNode} */ (m).area);
 
   /* ---------- the hierarchy ---------- */
   {
@@ -34,7 +36,6 @@ export default async function (check) {
     /** @type {string[]} */
     const unknown = [];
     /* the house's elements: not what stands in the rooms (room/assembly.js, its own test) */
-    const inRoom = (/** @type {HouseNode} */ n) => H.chain(n).slice(0, -1).some(m => /** @type {HouseNode} */ (m).area);
     H.walk(n => { if (!types[n.type] && !GROUPS.includes(n.type) && !/** @type {HouseNode} */ (n).area && !inRoom(n)) unknown.push(H.path(n) + ': ' + n.type); });
     check('rooms: what stands in them assembled, its problems none' + (problems.length ? ': ' + problems.map(p => p.room + ' ' + p.text).join(' | ') : ''), problems.length === 0 && !!H.node('house/groundFloor/room_356/g1'));
     check('every element of a type in geometry.types' + (unknown.length ? ': not ' + unknown.join(', ') : ''), unknown.length === 0);
@@ -85,7 +86,7 @@ export default async function (check) {
     /** @type {string[]} */
     const unknown = [];
     let parts = 0;
-    H.walk(n => { for (const p of /** @type {HouseNode} */ (n).parts || []) { parts++; for (const m of [p.material, p.raw, ...Object.values(p.faces || {})]) if (m && !(m in library.materials)) unknown.push(H.path(n) + ': ' + m); } });
+    H.walk(n => { if (inRoom(/** @type {HouseNode} */ (n))) return; for (const p of /** @type {HouseNode} */ (n).parts || []) { parts++; for (const m of [p.material, p.raw, ...Object.values(p.faces || {})]) if (m && !(m in library.materials)) unknown.push(H.path(n) + ': ' + m); } });
     check('parts: every material in the library' + (unknown.length ? ': not ' + [...new Set(unknown)].slice(0, 5).join(', ') : ''), parts > 400 && unknown.length === 0);
     /** the highest and lowest h of a node's parts, in the house's axes @param {string} path */
     const hs = path => { const n = at(path), h0 = H.place(n)[2] - zero[2]; const all = (n.parts || []).flatMap(p => (p.poly || []).map(q => q[1] + h0)); return [Math.min(...all), Math.max(...all)]; };

@@ -3,8 +3,8 @@
  "version": 1,
  "metal": "brass",
  "cabinets": {
-  "1": {"front": "N", "offset": [6716, 0, 0]},
-  "2": {"front": "E", "offset": [6162, 0, 0]},
-  "3": {"front": "S", "offset": [3460, 2518, 0]}
+  "1": {"front": "N", "offset": [5303, 0, 0]},
+  "2": {"front": "E", "offset": [1790, 0, 0]},
+  "3": {"front": "S", "offset": [3310, 2518, 0]}
  }
 }
