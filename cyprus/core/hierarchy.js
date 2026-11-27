@@ -1,10 +1,10 @@
 // @ts-check
 // core/hierarchy.js: the hierarchy of nodes, built from its root down: whoever builds a branch adds it under a node already in
-// it (add). A node's place is its parent's place plus its offset, in the parent's axes; a node's axes may be its parent's
-// turned about h by quarter turns (turn: no trigonometry, an integer matrix); every axes right-handed. Its settings are the defaults of its branch; its layer (what
-// it is) and its floor (where it is) are its own, or else its parent's. It says what belongs to what (where a thing stands or hangs), not what lies inside
-// what: a child may stand outside its parent (a sink over its carcass). Knows no project and nothing of what a node is: its
-// type is only a name here.
+// it (add). Spatial and arbitrary; its one rule: a child is placed by its offset from its parent, in its parent's axes (a chain
+// of dimensions), a node's axes its parent's turned about h by quarter turns (turn: no trigonometry, an integer matrix), every
+// axes right-handed. A child may lie outside its parent. Its settings are the defaults of its branch; its layer (what it is) and
+// its floor (where it is) are its own, or else its parent's. Knows no project and nothing of what a node is: its type is only a
+// name here.
 
 /**
  * @typedef {object} HierarchyNode  a node
@@ -13,7 +13,7 @@
  * @property {string} type
  * @property {number[]} offset  [x, y, h] mm: its zero in its parent's axes
  * @property {number} [turn]  its axes: its parent's turned about h by quarter turns, counterclockwise (0 to 3); none: 0
- * @property {number[]} size  [x, y, h] mm
+ * @property {number[]} size  [x, y, h] mm: from its zero to its opposite corner; a part may be negative (a cabinet lies from the wall, its zero, at negative y)
  * @property {Record<string, any>} [settings]  the defaults of its branch
  * @property {string[]} [refs]  the paths of the nodes it refers to (what for, its type says)
  * @property {string} [layer]  what it is, as the panel switches it; none: its parent's
@@ -82,7 +82,7 @@ export function createHierarchy(root) {
   const fromRoot = (n, v) => chain(n).slice(1).reduce((p, m) => turned(p.map((c, i) => c - m.offset[i]), 4 - (m.turn || 0)), v);
   /** the node's zero in the root's axes @param {N} n @returns {number[]} */
   const place = n => toRoot(n, [0, 0, 0]);
-  /** the box [x1, x2, y1, y2, h1, h2] in the root's axes that the node's size fills @param {N} n @returns {number[]} */
+  /** the box [x1, x2, y1, y2, h1, h2] in the root's axes between the node's zero and its opposite corner @param {N} n @returns {number[]} */
   const box = n => {
     const a = toRoot(n, [0, 0, 0]), b = toRoot(n, n.size);
     return [0, 1, 2].flatMap(i => [Math.min(a[i], b[i]), Math.max(a[i], b[i])]);
@@ -134,7 +134,7 @@ export function createHierarchy(root) {
         shape.push(`${at}: ${[!n.type && 'type', !vector(n.offset) && 'offset', !vector(n.size) && 'size'].filter(Boolean).join(', ')}`);
         return;
       }
-      AXES.forEach((a, i) => { if (n.size[i] <= 0) empty.push(`${at}: size ${a} ${n.size[i]}`); });
+      AXES.forEach((a, i) => { if (n.size[i] === 0) empty.push(`${at}: size ${a} ${n.size[i]}`); });
       const p = place(n), low = AXES.map((a, i) => p[i] < 0 ? `${a} ${p[i]}` : '').filter(Boolean);
       if (low.length) below.push(`${at}: ${low.join(', ')}`);
     });
@@ -146,7 +146,7 @@ export function createHierarchy(root) {
       { name: 'Hierarchy: every node has a type, an offset and a size', about: 'Each node says what it is and where it stands: a type, an offset [x, y, h] and a size [x, y, h]; a turn, if any, of 0 to 3 quarter turns.', items: shape },
       { name: 'Hierarchy: ids without spaces or slashes', about: 'An id is one step of a path, so it holds letters, digits, - and _ only.', items: ids },
       { name: 'Hierarchy: ids unique among siblings', about: 'Two children of one node with the same id would have the same path: one of them could not be found.', items: twice },
-      { name: 'Hierarchy: sizes above 0', about: 'Every node has a size above 0 along x, y and h.', items: empty },
+      { name: 'Hierarchy: sizes not 0', about: 'Every node has a size along x, y and h, none of them 0: from its zero to its opposite corner (a cabinet from the wall at negative y).', items: empty },
       { name: 'Hierarchy: what lies below the zero', about: 'To know, not a fault: the nodes at negative numbers from the root\'s zero.', items: below, info: true },
       { name: 'Hierarchy: every ref is the path of a node', about: 'A node may refer to others by their paths; every such path leads to a node.', items: broken },
       ...(known ? [{ name: 'Hierarchy: every layer and floor is known', about: 'A node\'s layer is one of the layers there are, its floor one of the floors.', items: unknown }] : [])];

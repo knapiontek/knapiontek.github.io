@@ -1,11 +1,12 @@
 // @ts-check
 // house/assembly.js: the site and its house from their model (model.json, next to this file) as a hierarchy (core/hierarchy.js):
 // the site at the root, the house on it, its assemblies and floors, their elements, the openings in their walls, the rooms as
-// places. A node without its own layer or floor takes its type's (geometry.types): the model names them once, per type. What is
+// places, what stands in them (room/assembly.js). A node without its own layer or floor takes its type's (geometry.types): the model names them once, per type. What is
 // drawn of the house: house/shapes.js; of the site: its lawn round the house and its surfaces.
 
 import { createHierarchy } from '../core/hierarchy.js';
 import { houseShapes } from './shapes.js';
+import { assembleRooms } from '../room/assembly.js';
 
 /** @typedef {import('../core/hierarchy.js').HierarchyNode} HierarchyNode */
 /** @typedef {import('../types.js').Part} Part */
@@ -15,11 +16,13 @@ import { houseShapes } from './shapes.js';
 const VERSION = 1;   // of model.json's format, house
 
 /**
- * The hierarchy of the site and its house, from model.json. The house is the node house; its geometry (types, frames, finishes)
- * stays on it; its axes are archon/analysis.md's: x East, y North, h up (right-handed), zero at its front-right (South-West) corner at ±0.00.
- * @returns {Promise<ReturnType<typeof createHierarchy<HouseNode>>>}
+ * The hierarchy of the site and its house, from model.json, and what stands in its rooms (room/assembly.js), with the problems
+ * of their cabinets. The house is the node house; its geometry (types, frames, finishes) stays on it; its axes are
+ * archon/analysis.md's: x East, y North, h up (right-handed), zero at its front-right (South-West) corner at ±0.00.
+ * @param {import('../types.js').Catalog} catalog
+ * @returns {Promise<{ hierarchy: ReturnType<typeof createHierarchy<HouseNode>>, problems: import('../room/assembly.js').RoomProblem[] }>}
  */
-export async function assembleHouse() {
+export async function assembleHouse(catalog) {
   const response = await fetch(new URL('model.json', import.meta.url));
   if (!response.ok) throw new Error(`house: model.json: ${response.status}`);
   const { format, version, ...root } = await response.json();
@@ -37,7 +40,8 @@ export async function assembleHouse() {
   const hierarchy = createHierarchy(/** @type {HouseNode} */ (root));
   houseShapes(hierarchy, house);
   root.parts = siteParts(hierarchy, root, house);
-  return hierarchy;
+  const problems = await assembleRooms(/** @type {any} */ (hierarchy), catalog);
+  return { hierarchy, problems };
 }
 
 /**

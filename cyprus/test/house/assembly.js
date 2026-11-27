@@ -4,12 +4,13 @@
 // archon/analysis.md: walls, openings, slab, chimney, foundations, finishes, roof, site, rooms.
 
 import { assembleHouse } from '../../house/assembly.js';
+import { openCatalog } from '../../library/catalog.js';
 
 /** @typedef {import('../../house/assembly.js').HouseNode} HouseNode */
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
-  const H = await assembleHouse();
+  const { hierarchy: H, problems } = await assembleHouse(await openCatalog());
   /** @type {Record<string, any>} */
   const blocks = await (await fetch(new URL('../../layers.json', import.meta.url))).json();
   /** @type {string[]} */
@@ -32,7 +33,10 @@ export default async function (check) {
     const types = geometry.types, GROUPS = ['site', 'house', 'assembly', 'floor'];
     /** @type {string[]} */
     const unknown = [];
-    H.walk(n => { if (!types[n.type] && !GROUPS.includes(n.type) && !/** @type {HouseNode} */ (n).area) unknown.push(H.path(n) + ': ' + n.type); });
+    /* the house's elements: not what stands in the rooms (room/assembly.js, its own test) */
+    const inRoom = (/** @type {HouseNode} */ n) => H.chain(n).slice(0, -1).some(m => /** @type {HouseNode} */ (m).area);
+    H.walk(n => { if (!types[n.type] && !GROUPS.includes(n.type) && !/** @type {HouseNode} */ (n).area && !inRoom(n)) unknown.push(H.path(n) + ': ' + n.type); });
+    check('rooms: what stands in them assembled, its problems none' + (problems.length ? ': ' + problems.map(p => p.room + ' ' + p.text).join(' | ') : ''), problems.length === 0 && !!H.node('house/groundFloor/room_356/g1'));
     check('every element of a type in geometry.types' + (unknown.length ? ': not ' + unknown.join(', ') : ''), unknown.length === 0);
     check('every type that is drawn has its layer', Object.entries(types).every(([k, t]) => k.startsWith('void') || typeof t.layer === 'string'));
   }

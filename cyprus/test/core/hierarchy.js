@@ -9,26 +9,29 @@ import { createHierarchy, turned } from '../../core/hierarchy.js';
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
-  /* ---------- quarter turns: a room 4000 × 3000, a group of cabinets 1200 long, 600 deep, its zero at the wall ---------- */
+  /* ---------- quarter turns: a room 4000 × 3000, a run of cabinets 1200 long, 600 deep by each wall: its zero at the wall, at
+     its left end as one sees its fronts; x along it, y toward the wall (the cabinets at negative y), h up ---------- */
   {
     check('turned: a quarter turn counterclockwise, x to y', turned([1, 0, 5], 1).join() === '0,1,5' && turned([0, 1, 5], 1).join() === '-1,0,5');
     check('turned: four quarter turns, as none', turned([3, 4, 5], 4).join() === '3,4,5' && turned([3, 4, 5], -1).join() === turned([3, 4, 5], 3).join());
-    /** a room with a group by each wall: its zero at the wall, its x along it, its y into the room @param {number} turn @param {number[]} offset */
-    const group = (turn, offset) => ({ id: 'g' + turn, type: 'group', offset, turn, size: [1200, 600, 900] });
+    /** a run of cabinets @param {number} turn @param {number[]} offset */
+    const group = (turn, offset) => ({ id: 'g' + turn, type: 'group', offset, turn, size: [1200, -600, 900] });
     /** @type {HierarchyNode} */
     const root = { id: 'room', type: 'room', offset: [0, 0, 0], size: [4000, 3000, 2700], children: [
-      group(0, [0, 0, 0]), group(1, [4000, 0, 0]), group(2, [4000, 3000, 0]), group(3, [0, 3000, 0])] };
+      group(0, [0, 3000, 0]), group(1, [0, 0, 0]), group(2, [4000, 0, 0]), group(3, [4000, 3000, 0])] };
     const T = createHierarchy(root), g = (/** @type {number} */ t) => /** @type {HierarchyNode} */ (T.node('g' + t));
-    check('box: by the South wall (turn 0), x East, y North into the room', T.box(g(0)).join() === '0,1200,0,600,0,900');
-    check('box: by the East wall (turn 1), x North, y West into the room', T.box(g(1)).join() === '3400,4000,0,1200,0,900');
-    check('box: by the North wall (turn 2), x West, y South into the room', T.box(g(2)).join() === '2800,4000,2400,3000,0,900');
-    check('box: by the West wall (turn 3), x South, y East into the room', T.box(g(3)).join() === '0,600,1800,3000,0,900');
-    check('toRoot: a carcass back 28 from the wall, 100 along it (turn 1)', T.toRoot(g(1), [100, 28, 0]).join() === '3972,100,0');
-    check('fromRoot: back again', T.fromRoot(g(1), [3972, 100, 0]).join() === '100,28,0');
+    check('box: by the North wall, fronts South (turn 0): x East, y North', T.box(g(0)).join() === '0,1200,2400,3000,0,900');
+    check('box: by the West wall, fronts East (turn 1): x North, y West', T.box(g(1)).join() === '0,600,0,1200,0,900');
+    check('box: by the South wall, fronts North (turn 2): x West, y South', T.box(g(2)).join() === '2800,4000,0,600,0,900');
+    check('box: by the East wall, fronts West (turn 3): x South, y East', T.box(g(3)).join() === '3400,4000,1800,3000,0,900');
+    check('toRoot: a carcass back 28 from the wall, 100 along it (turn 1)', T.toRoot(g(1), [100, -28, 0]).join() === '28,100,0');
+    check('fromRoot: back again', T.fromRoot(g(1), [28, 100, 0]).join() === '100,-28,0');
     check('turnOf: the turns added up', T.turnOf(g(3)) === 3 && T.turnOf(root) === 0);
-    T.add(g(1), { id: 'k', type: 'carcass', offset: [100, 28, 0], turn: 2, size: [10, 10, 10] });
+    T.add(g(1), { id: 'k', type: 'carcass', offset: [100, -28, 0], turn: 2, size: [10, 10, 10] });
     check('turnOf: a turned node in a turned node', T.turnOf(/** @type {HierarchyNode} */ (T.node('g1/k'))) === 3);
-    check('place: its zero through its parent\'s turn', T.place(/** @type {HierarchyNode} */ (T.node('g1/k'))).join() === '3972,100,0');
+    check('place: its zero through its parent\'s turn', T.place(/** @type {HierarchyNode} */ (T.node('g1/k'))).join() === '28,100,0');
+    const cab = /** @type {HierarchyNode} */ (T.add(g(0), { id: 'carcass', type: 'carcass', offset: [100, -28, 0], size: [600, -550, 720] }));
+    check('box: a size from the zero to the opposite corner, negative toward the room (a carcass 28 from the wall, 550 deep)', T.box(cab).join() === '100,700,2422,2972,0,720');
     const bad = createHierarchy({ id: 'r', type: 'r', offset: [0, 0, 0], size: [1, 1, 1], children: [{ id: 'a', type: 'a', offset: [0, 0, 0], size: [1, 1, 1], turn: 5 }] });
     check('checks: a turn of 0 to 3', bad.checks()[0].items.join() === 'a: turn 5');
   }
@@ -85,15 +88,15 @@ export default async function (check) {
       { id: 'e', type: 't', offset: [0, 0, 0] }] }));
     const found = Object.fromEntries(bad.checks().map(c => [c.name, c.items]));
     check('checks: a bad id', found['Hierarchy: ids without spaces or slashes'].join() === 'b c: id "b c"');
-    check('checks: a flat size', found['Hierarchy: sizes above 0'].join() === 'b c: size x 0');
+    check('checks: a flat size', found['Hierarchy: sizes not 0'].join() === 'b c: size x 0');
     check('checks: the same id twice', found['Hierarchy: ids unique among siblings'].join() === 'd');
     check('checks: a broken ref', found['Hierarchy: every ref is the path of a node'].join() === 'd: nowhere');
     check('checks: a node without its size', found['Hierarchy: every node has a type, an offset and a size'].join() === 'e: size');
     check('checks: below the zero, to know', found['Hierarchy: what lies below the zero'].join() === 'd: x -5' && bad.checks().find(c => c.name === 'Hierarchy: what lies below the zero')?.info === true);
   }
 
-  /* ---------- on a piece of the house: the Ground Floor, its left wall with the garage window, room 356 with a cabinet
-     whose front hangs on it and whose sink stands on it ---------- */
+  /* ---------- on a piece of the house: the Ground Floor, its left wall with the garage window, room 356 with a cabinet,
+     its front and its sink placed from it ---------- */
   {
     /* house/model.json: the house's branches, the room a place in them */
     /** @type {HierarchyNode} */
@@ -133,7 +136,7 @@ export default async function (check) {
     const paths = [];
     hierarchy.walk(n => { if (n.layer || n.floor) paths.push(hierarchy.path(n)); });
     check('walk: the elements, parents first', paths.join(' ') === 'groundFloor groundFloor/wallLeft groundFloor/wallLeft/windowGarage groundFloor/room_356/g1/K11 groundFloor/room_356/g1/K11/front groundFloor/room_356/g1/K11/sink');
-    check('refs: the sink stands on its carcass', hierarchy.refs(sink)[0] === hierarchy.parent(sink));
+    check('refs: the sink refers to its carcass', hierarchy.refs(sink)[0] === hierarchy.parent(sink));
 
     /* Test: the hierarchy is sound; the wall's wings reach past the house's zero, to know */
     const below = hierarchy.checks().find(c => c.info);

@@ -18,6 +18,7 @@ Served over HTTP (Caddy, `toggle-caddy.sh`): `http://localhost:8080/` the page, 
 | `archon/` | the source: archon's drawings and their reading |
 | `core/` | general code, no project |
 | `house/` | the site and the house: their data (`model.json`) and their hierarchy (`assembly.js`) |
+| `room/` | what stands in the rooms: their scenes (where things stand), their cabinets (the designer's files) and the engine that builds them |
 | `library/` | the outside world: products, materials, textures, shops |
 | `test/` | one test per module, at its path |
 

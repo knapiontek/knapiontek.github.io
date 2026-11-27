@@ -27,7 +27,7 @@
 /* ---------- parts: what is drawn of a node, in its own axes (a product's: library/shapes.js; an element's: its builder); the
    scene places them and gives them their look ---------- */
 
-/** @typedef {number[]} Vec  [x, y, h], mm, in the node's own axes, 0 its zero; every axes right-handed; a product's: zero at its back, its right end as one sees its front, bottom; x along it (leftward as one sees its front), y from its back to its front, h up */
+/** @typedef {number[]} Vec  [x, y, h], mm, in the node's own axes, 0 its zero; the model's axes, right-handed (core/tools.js): a product's or a run of cabinets': zero at its back (the wall), its left end as one sees its front, bottom; x to the right, y toward the wall (the front at negative y), h up */
 /**
  * @typedef {object} Part  one solid of a node
  * @property {'box' | 'prism' | 'cylinder' | 'ring' | 'disc' | 'plane' | 'sphere' | 'torus' | 'extrude' | 'tube' | 'mesh' | 'text'} form

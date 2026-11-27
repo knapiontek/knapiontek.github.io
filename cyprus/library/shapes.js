@@ -1,8 +1,10 @@
 // @ts-check
 // library/shapes.js: a product as parts (types.js: Shape), by its field draw: the sizes are the maker's; the shapes the maker
-// does not give (a knob, a spout, a handle) are described here as a person builds them, from the left as one sees the front, and
-// given in the product's own axes (types.js: Vec), right-handed: zero at its back (the wall), its right end as one sees its
-// front, bottom; x along it, y from its back to its front, h up. Draws nothing, knows no three.js, no room, no layers: the scene places the parts and gives them their look.
+// does not give (a knob, a spout, a handle) are described here. Described in the design's axes (zero at its back, its left end
+// as one sees its front, bottom; x from the left, y from its back toward its front, h up), given in the model's
+// (core/tools.js: y the other way). Draws nothing, knows no three.js, no room, no layers: the scene places the parts and gives them their look.
+
+import { shapeToModel } from '../core/tools.js';
 
 /** @typedef {import('../types.js').Product} Product */
 /** @typedef {import('../types.js').Shape} Shape */
@@ -339,49 +341,7 @@ function shaped(A, [w, d, h]) {
  * @returns {Shape}
  */
 export function shapeOf(product, size, options = {}) {
-  return toWall(described(product, size, options));
-}
-
-/**
- * A shape as described (x from its left as one sees its front: as a person builds it) in its axes: x the other way, from its
- * right as one sees its front, so that x, y (from its back, the wall, to its front) and h (up) are right-handed. The whole shape at
- * once: x → its width − x; a direction's x the other way; a turn's axis (an axial vector) keeps its x and turns the other way.
- * @param {Shape} S @returns {Shape}
- */
-function toWall(S) {
-  const W = S.size[0];
-  /** @param {Vec} v */ const point = v => [W - v[0], v[1], v[2]];
-  /** @param {Vec} v */ const dir = v => [-v[0], v[1], v[2]];
-  /** @param {number[]} b */ const box = b => [W - b[1], W - b[0], b[2], b[3], b[4], b[5]];
-  /** @param {Part} p @returns {Part} */
-  function part(p) {
-    const q = /** @type {any} */ ({ ...p });
-    if (p.box) q.box = box(p.box);
-    if (p.x) q.x = [W - p.x[1], W - p.x[0]];
-    if (p.points) q.points = p.points.map(point);
-    if (p.form === 'extrude') {
-      const a = /** @type {Vec} */ (p.axis), at = /** @type {Vec} */ (p.at);
-      if (a[1] || a[2]) throw new Error('shapes: an extrusion not along x');
-      q.at = [W - at[0] - /** @type {number} */ (p.length) * a[0], at[1], at[2]];   // the same run, from its other end
-      return q;
-    }
-    if (p.at) q.at = point(p.at);
-    if (p.axis) q.axis = dir(p.axis);
-    if (p.matrix) { const m = p.matrix; q.matrix = [-m[0], -m[1], -m[2], W - m[3], ...m.slice(4)]; }
-    if (p.index) { const i = p.index, out = []; for (let k = 0; k < i.length; k += 3) out.push(i[k], i[k + 2], i[k + 1]); q.index = out; }   // a mirror turns a triangle's sense
-    return q;
-  }
-  return {
-    size: S.size,
-    parts: S.parts.map(part),
-    /* a turn about a mirrored axis: the axis's x kept, its y and h the other way; written with the axis's sense kept, the turn's sign the other way */
-    movers: S.movers.map(m => {
-      if (m.axis.filter(Boolean).length !== 1) throw new Error('shapes: a turn about an axis not along x, y or h');
-      return { ...m, pivot: point(m.pivot), sign: /** @type {1 | -1} */ (m.axis[0] ? m.sign : -m.sign) };
-    }),
-    lights: S.lights.map(l => ({ ...l, at: point(l.at), ...(l.target ? { target: point(l.target) } : {}) })),
-    envelopes: S.envelopes.map(e => ({ ...e, box: box(e.box) }))
-  };
+  return shapeToModel(described(product, size, options));
 }
 
 /** @param {Product} product @param {Vec} [size] @param {ShapeOptions} [options] @returns {Shape} */

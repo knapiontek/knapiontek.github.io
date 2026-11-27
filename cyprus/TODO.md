@@ -19,8 +19,12 @@ By the plan, one step at a time; each module: its API and examples first, then t
 
 ## Next
 - [ ] `scene.js`: the other forms (ring, plane, sphere, torus, extrude, tube, mesh, text), moving parts (doors' hinge sense to check), the granite's speckle; the site in the House view
-- [ ] `room/assembly.js`: a room's fittings from the library (lamps, basin, mirror); calls the cabinets, adds what they need from the library; a WC frame's parts behind the casing (Installations): their own node
-- [ ] `room/cabinets.js` and `room/<room>.cabinets.json` (materials, settings, groups, components): the cabinets' engine, by stages; the hardware, the kitchen tap, the trap; tiles
+- [x] cabinets, stage 1: the hierarchy's quarter turns (`turn`), sizes to the opposite corner; the design's axes to the model's (`core/tools.js`, y → −y); products in them
+- [x] cabinets, stage 2: `room/cabinets.js` (the layout: columns, stack, carcasses, kinds; the tree: carcasses under the worktop or the plasterboard, measured from it), `room/assembly.js` (the scene places the groups), the kitchen's `room_356.cabinets.json` and `room_356.scene.json`; their tests
+- [ ] cabinets, stage 3: the bodies: boards, fronts, worktop, plinth; the kitchen in 3D
+- [ ] cabinets, stage 4: hardware, appliances, the sink, the tap, the trap, the hood; holes
+- [ ] cabinets, stage 5: the other rooms (bathrooms, wardrobes, bedroom 6); fixtures and lamps in the scenes
+- [ ] tiles
 - [ ] `plan.js` (root): plans and dimensions
 - [ ] `docs.js` (root): Documents
 - [ ] Cabinet mode

@@ -13,7 +13,7 @@ import { createHierarchy } from '../core/hierarchy.js';
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
-  const catalog = await openCatalog(), H = await assembleHouse();
+  const catalog = await openCatalog(), { hierarchy: H } = await assembleHouse(catalog);
   const house = /** @type {Node} */ (H.node('house'));
   const scene = createScene({ catalog, edges: { color: '#7d807b', opacity: 0.45 } });
   /** the meshes of a layer and floor @param {string} layer @param {string} floor */
@@ -54,15 +54,16 @@ export default async function (check) {
     scene.visible(() => true);
   }
 
-  /* ---------- a turned node: a board by the East wall, its zero at the wall (turn 1: x North, y West) ---------- */
+  /* ---------- a turned node: a side of a carcass in a run by the East wall, fronts West (turn 3: x South, y East toward the wall);
+     its zero at the wall, at its left end as one sees the fronts ---------- */
   {
     const room = createHierarchy(/** @type {Node} */ ({ id: 'room', type: 'room', offset: [0, 0, 0], size: [4000, 3000, 2700], children: [
-      { id: 'group', type: 'g', offset: [4000, 0, 0], turn: 1, size: [1200, 600, 900], children: [
-        { id: 'side', type: 'board', offset: [100, 28, 0], size: [18, 550, 720], layer: 'boards', parts: [{ form: 'box', box: [0, 18, 0, 550, 0, 720], material: 'concrete' }] }] }] }));
+      { id: 'group', type: 'g', offset: [4000, 3000, 0], turn: 3, size: [1200, -600, 900], children: [
+        { id: 'side', type: 'board', offset: [100, -28, 0], size: [18, -550, 720], layer: 'boards', parts: [{ form: 'box', box: [0, 18, -550, 0, 0, 720], material: 'concrete' }] }] }] }));
     scene.show(room, room.root);
     const box = scene.meshes()[0].geometry.boundingBox || (scene.meshes()[0].geometry.computeBoundingBox(), scene.meshes()[0].geometry.boundingBox);
     const mm = [box.min.x, box.max.x, box.min.y, box.max.y, box.min.z, box.max.z].map(v => Math.round(v));   // the geometry in mm, the world scaled to m
-    check('turn: a board of a group by the East wall, in the room\'s axes (x 3422–3972, y 100–118)', mm.join() === '3422,3972,100,118,0,720');
+    check('turn: the side in the room\'s axes (x 3422–3972 from the East wall, y 2882–2900)', mm.join() === '3422,3972,2882,2900,0,720');
   }
 
   /* ---------- the house ---------- */

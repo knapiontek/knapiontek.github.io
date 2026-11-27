@@ -47,14 +47,14 @@ export default async function (check) {
     const oven = of('bosch-hba534bb3');
     check('oven: 594 × 548 × 595, the fascia before the body', oven.size.join() === '594,548,595');
     check('oven: documents give the body and the fascia', oven.envelopes.map(e => e.name).join(' | ') === 'Piekarnik Bosch Serie 4 – body 558 × 570 × 528.5 | Piekarnik Bosch Serie 4 – fascia 594 × 595');
-    check('oven: the door turns down about its bottom edge (its zero at the right end: the pivot\'s x 594)', JSON.stringify(oven.movers) === JSON.stringify([{ id: 'door', pivot: [594, 548, 0], axis: [1, 0, 0], sign: -1, travel: 90 }]));
+    check('oven: the door turns down about its bottom edge (the front at y −548)', JSON.stringify(oven.movers) === JSON.stringify([{ id: 'door', pivot: [0, -548, 0], axis: [1, 0, 0], sign: 1, travel: 90 }]));
     check('oven: the leaf, its glass and its handle move with the door', oven.parts.filter(p => p.mover === 'door').length === 10);
     const feet = shapeOf(catalog.product('bosch-hba534bb3'), undefined, { feet: 20 });
     check('oven: on feet, four of them, the rest 20 up', feet.parts.length === oven.parts.length + 4 && feet.size[2] === 615);
 
     /* a microwave: hinged on its left, the fascia 13 below the body */
     const micro = of('bosch-bfl623mb3');
-    check('microwave: the door turns about its left edge, upright: x from the right end, the turn clockwise seen from above', micro.movers[0].axis.join() === '0,0,1' && micro.movers[0].sign === -1 && micro.movers[0].pivot[0] === micro.size[0] - ((595 - 442) / 2 + 2));
+    check('microwave: the door turns about its left edge, upright, clockwise seen from above', micro.movers[0].axis.join() === '0,0,1' && micro.movers[0].sign === -1 && micro.movers[0].pivot[0] === (595 - 442) / 2 + 2);
     check('microwave: the fascia from 0, the body 13 up', micro.envelopes[1].box[4] === 0 && micro.envelopes[0].box[4] === 13);
 
     /* Finish: a basin tap all in the fittings' metal */
@@ -63,9 +63,9 @@ export default async function (check) {
 
     /* a shower screen opening in */
     const screen = shapeOf(catalog.product('shower-screen-1000-door-600'), undefined, { opens: 'in', angle: 80 });
-    check('shower screen: the door 600 opens in, 80° (x from the right end)', screen.movers[0].sign === 1 && screen.movers[0].travel === 80 && screen.movers[0].pivot[0] === screen.size[0] - 595);
-    /* right-handed: x from the right end as one sees the front; a part at the left of the front has the larger x */
-    check('axes: x, y (back to front), h right-handed: the microwave\'s hinge (its left) at the larger x', micro.movers[0].pivot[0] > micro.size[0] / 2);
+    check('shower screen: the door 600 opens in, 80°', screen.movers[0].sign === 1 && screen.movers[0].travel === 80 && screen.movers[0].pivot[0] === 595);
+    /* the model's axes: zero at the back, x from the left, the front at negative y */
+    check('axes: the oven\'s parts behind its back, none; before it, at negative y', oven.parts.every(p => p.form !== 'box' || /** @type {number[]} */ (p.box)[3] <= 0) && oven.parts.some(p => p.form === 'box' && /** @type {number[]} */ (p.box)[2] < -500));
 
     /* a WC bowl: lofted, in the product's ceramic */
     const bowl = of('wc-bowl-wall-hung-360x530');
