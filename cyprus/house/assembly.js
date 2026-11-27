@@ -1,7 +1,7 @@
 // @ts-check
 // house/assembly.js: the site and its house from their model (model.json, next to this file) as a hierarchy (core/hierarchy.js):
 // the site at the root, the house on it, its assemblies and floors, their elements, the openings in their walls, the rooms as
-// places, what stands in them (room/assembly.js). A node without its own layer or floor takes its type's (geometry.types): the model names them once, per type. What is
+// places, what stands in them (room/assembly.js); what it tells a room of itself (roomFacts: its ceiling, its openings). A node without its own layer or floor takes its type's (geometry.types): the model names them once, per type. What is
 // drawn of the house: house/shapes.js; of the site: its lawn round the house and its surfaces.
 
 import { createHierarchy } from '../core/hierarchy.js';
@@ -40,8 +40,29 @@ export async function assembleHouse(catalog) {
   const hierarchy = createHierarchy(/** @type {HouseNode} */ (root));
   houseShapes(hierarchy, house);
   root.parts = siteParts(hierarchy, root, house);
+  hierarchy.walk(n => { if (/** @type {HouseNode} */ (n).area) Object.assign(n, roomFacts(hierarchy, /** @type {HouseNode} */ (n))); });
   const problems = await assembleRooms(/** @type {any} */ (hierarchy), catalog);
   return { hierarchy, problems };
+}
+
+/** @type {string[]} the openings a room has in its walls: a door, a gate, a window */
+const OPENINGS = ['door', 'glassDoor', 'gate', 'entrance', 'window'];
+
+/**
+ * What the house tells a room of itself, in the room's axes: its ceilingHeight (the lowest slab or ceiling of the house over its
+ * footprint, from its floor; none: the room's height) and its openings (each a box through its wall, within 600 of its footprint).
+ * @param {ReturnType<typeof createHierarchy<HouseNode>>} H @param {HouseNode} room @returns {{ ceilingHeight: number, openings: number[][] }}
+ */
+function roomFacts(H, room) {
+  const r = H.box(room), zero = H.place(room), near = (/** @type {number[]} */ b, /** @type {number} */ m) => b[0] < r[1] + m && b[1] > r[0] - m && b[2] < r[3] + m && b[3] > r[2] - m;
+  let low = r[5];
+  /** @type {number[][]} */
+  const openings = [];
+  H.walk(n => {
+    if ((n.type === 'slab' || n.type === 'ceiling')) { const b = H.box(n); if (near(b, 0) && b[4] > r[4] + 100) low = Math.min(low, b[4]); }
+    if (OPENINGS.includes(n.type)) { const b = H.box(n); if (near(b, 600) && b[4] < r[5] && b[5] > r[4]) openings.push(b.map((v, i) => v - zero[i >> 1])); }
+  });
+  return { ceilingHeight: low - r[4], openings };
 }
 
 /**

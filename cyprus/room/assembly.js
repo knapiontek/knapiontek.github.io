@@ -21,16 +21,6 @@ import { pointToModel } from '../core/tools.js';
 /** @typedef {import('./cabinets.js').Problem & { room: string }} RoomProblem */
 
 const VERSION = 1;   // of the format scene
-/** @type {string[]} the openings a floor runs into: its tiles end at their middle */
-const DOORWAYS = ['door', 'glassDoor', 'gate', 'entrance', 'window'];
-
-/** the openings of the house at a room, as boxes in its axes: a door, a gate, a window @param {Hierarchy} H @param {HierarchyNode} room @returns {number[][]} */
-function openingsAt(H, room) {
-  const zero = H.place(room), out = /** @type {number[][]} */ ([]);
-  H.walk(n => { if (DOORWAYS.includes(n.type)) out.push(H.box(n).map((v, i) => v - zero[i >> 1])); });
-  return out;
-}
-
 /**
  * A room's floor tiles, a node under it (layer floorTiles): the grout over the floor, the tiles on it, up to the tiles'
  * depth; a small cut marked (layer smallCuts). The floor: the room's rectangles and the halves of the doors at its floor.
@@ -38,7 +28,7 @@ function openingsAt(H, room) {
  */
 function floorTiles(H, room, t, catalog) {
   const rects = /** @type {import('./tiles.js').Rect[]} */ (room.area || [[0, room.size[0], 0, room.size[1]]]);
-  const floor = [...rects, ...doorHalves(rects, openingsAt(H, room).filter(b => Math.abs(b[4]) < 50))];
+  const floor = [...rects, ...doorHalves(rects, room.openings.filter((/** @type {number[]} */ b) => Math.abs(b[4]) < 50))];
   const { pieces, count } = layTiles(floor, /** @type {any} */ (tileOf(catalog.product(t.product), t.size)), t);
   const d = t.depth, grout = 'grout:' + t.grout, look = 'tile:' + t.product;
   const parts = [
@@ -57,7 +47,7 @@ function floorTiles(H, room, t, catalog) {
  * @param {Hierarchy} H @param {HierarchyNode & Record<string, any>} room @param {any} t  the scene's tiles.walls @param {number} h0  the floor's tiles' top @param {number} h1  the ceiling @param {Catalog} catalog
  */
 function wallTiles(H, room, t, h0, h1, catalog) {
-  const rects = /** @type {import('./tiles.js').Rect[]} */ (room.area || [[0, room.size[0], 0, room.size[1]]]), openings = openingsAt(H, room), tile = /** @type {any} */ (tileOf(catalog.product(t.product), t.size));
+  const rects = /** @type {import('./tiles.js').Rect[]} */ (room.area || [[0, room.size[0], 0, room.size[1]]]), openings = room.openings, tile = /** @type {any} */ (tileOf(catalog.product(t.product), t.size));
   const d = t.depth, grout = 'grout:' + t.grout, look = 'tile:' + t.product, parts = /** @type {any[]} */ ([]), total = { area: 0, tiles: 0, whole: 0, cut: 0, small: 0 };
   for (const w of wallsOf(rects)) {
     const face = wallFace(w, h0, h1, openings);
@@ -105,21 +95,6 @@ export function tilesFaults(tiles, catalog) {
     if (extra.length) faults.push(`tiles.${k}: ${extra.join(', ')}: not known`);
   }
   return faults;
-}
-
-/**
- * The ceiling over a room, from its floor: the lowest slab or ceiling of the house over its footprint; none: the room's height.
- * @param {Hierarchy} H @param {HierarchyNode} room
- */
-function ceilingOver(H, room) {
-  const r = H.box(room);
-  let low = r[5];
-  H.walk(n => {
-    if (n.type !== 'slab' && n.type !== 'ceiling') return;
-    const b = H.box(n);
-    if (b[0] < r[1] && b[1] > r[0] && b[2] < r[3] && b[3] > r[2] && b[4] > r[4] + 100) low = Math.min(low, b[4]);
-  });
-  return low - r[4];
 }
 
 /**
@@ -192,7 +167,7 @@ export async function assembleRooms(H, catalog) {
       if (faults.length) throw new Error(`room: ${room.id}.scene.json: ${faults.join('; ')}`);
       room.tiles = scene.tiles;
       if (scene.tiles.floor) floorTiles(H, room, scene.tiles.floor, catalog);
-      if (scene.tiles.walls) wallTiles(H, room, scene.tiles.walls, scene.tiles.floor?.depth || 0, ceilingOver(H, room), catalog);
+      if (scene.tiles.walls) wallTiles(H, room, scene.tiles.walls, scene.tiles.floor?.depth || 0, room.ceilingHeight, catalog);
     }
     /* fixtures: a product, its body's size (or the scene's depth, length, height: as it is built here), at its zero, turned */
     for (const [id, f] of Object.entries(scene.fixtures || {})) {
@@ -207,7 +182,7 @@ export async function assembleRooms(H, catalog) {
         parts: minus(local(b.box), (b.cuts || []).map(local)).map(box => ({ form: 'box', box, material: b.material })) });
     });
     /* lamps: under the ceiling over the room, at their place in its axes */
-    const ceiling = ceilingOver(H, room);
+    const ceiling = room.ceilingHeight;
     for (const [id, l] of Object.entries(scene.lamps || {})) {
       if (!['downlight', 'pendant'].includes(l.kind) || !(Array.isArray(l.at) && l.at.length === 2)) throw new Error(`room: ${room.id}.scene.json: lamp ${id}: kind downlight or pendant, at [x, y]`);
       H.add(room, { id, name: l.kind === 'pendant' ? 'Pendant' : 'Downlight', type: 'lamp', layer: l.kind + 's', offset: [l.at[0], l.at[1], 0], size: [1, 1, ceiling], ...lampOf(l.kind, ceiling, l.bottom) });

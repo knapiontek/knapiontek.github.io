@@ -15,7 +15,7 @@
 // how a trap fits) and checks that each product it needs is chosen and has what its drawing needs (faultsOf).
 
 import { pointToModel, partToModel } from '../core/tools.js';
-import { cupFromEdge, cutoutOf, drainOf, faultsOf, hingeHeights, hingePost, holeOf, innerOver, pullOutFit, runnerFor, runnerGap, shapeOf, systemDrawer, systemFor, trapFit } from '../library/shapes.js';
+import { bodyOf, boardOf, cutoutOf, drainOf, faultsOf, hingeHeights, hingePost, holeOf, innerOver, pullOutFit, runnerFit, runnerFor, shapeOf, systemDrawer, systemFor, trapFit } from '../library/shapes.js';
 
 /** @typedef {import('../types.js').Catalog} Catalog */
 /** @typedef {import('../core/hierarchy.js').HierarchyNode} HierarchyNode */
@@ -205,11 +205,11 @@ function stops(file, catalog) {
     if (!USES.includes(use)) { problems.push(`materials: "${use}" is neither a board type nor a carcass part (${USES.join(', ')}).`); continue; }
     let m;
     try { m = /** @type {any} */ (catalog.product(String(key))); } catch { problems.push(`materials.${use}: no product ${key} in the library.`); continue; }
-    if (!(m.thickness > 0)) problems.push(`materials.${use}: ${key} has no thickness.`);
-    if (DEPTH_USES.includes(use) && !(m.depth > 0 || m.width > 0)) problems.push(`materials.${use}: ${key} needs a depth (or a sheet's width).`);
+    if (!(boardOf(m).thickness > 0)) problems.push(`materials.${use}: ${key} has no thickness.`);
+    if (DEPTH_USES.includes(use) && !(boardOf(m).depth > 0)) problems.push(`materials.${use}: ${key} needs a depth (or a sheet's width).`);
   }
   for (const use of usesNeeded(file)) if (!materials[use]) problems.push(`materials: none for ${use}.`);
-  const thick = new Set(FRONT_TYPES.filter(t => materials[t]).map(t => { try { return /** @type {any} */ (catalog.product(materials[t])).thickness; } catch { return null; } }));
+  const thick = new Set(FRONT_TYPES.filter(t => materials[t]).map(t => { try { return boardOf(catalog.product(materials[t])).thickness; } catch { return null; } }));
   if (thick.size > 1) problems.push(`materials: the fronts (${FRONT_TYPES.join(', ')}) need one thickness: the plane of the fronts.`);
   const needed = new Set(REQUIRED_SETTINGS.filter(([need]) => need(has)).flatMap(([, paths]) => paths));
   for (const path of needed) if (valueAt(settings, path) === undefined) problems.push(`settings: ${path} missing.`);
@@ -300,7 +300,7 @@ export function cabinetsOf(file, catalog) {
   if (stop.length) throw new Error('cabinets: ' + stop.join(' '));
   const settings = file.settings, materials = file.materials;
   /** @param {string} use */
-  const thickness = use => /** @type {any} */ (catalog.product(materials[use])).thickness;
+  const thickness = use => boardOf(catalog.product(materials[use])).thickness;
   const frontThickness = materials.cabinet ? thickness('cabinet') : materials.drawer ? thickness('drawer') : 0;
   /** @type {Problem[]} */
   const problems = [];
@@ -385,7 +385,7 @@ export function cabinetsOf(file, catalog) {
   /** @param {string} role */
   const appliance = role => settings.appliances?.[role] ? /** @type {any} */ (catalog.product(settings.appliances[role].product)) : null;
   /** @param {string} use */
-  const frameWidth = use => /** @type {any} */ (catalog.product(materials[use])).frameWidth || 0;
+  const frameWidth = use => boardOf(catalog.product(materials[use])).frameWidth;
   /** a piece of hardware of the file, the library's product; null none @param {string} kind */
   const hardware = kind => settings.hardware?.[kind] ? /** @type {any} */ (catalog.product(settings.hardware[kind])) : null;
   /** the runners of the family of hardware.runner, shortest first */
@@ -459,10 +459,10 @@ function groupNode(G, C, warn) {
       }
       const hinges = hingeHeights(Hg, f.h0, f.h1, boards.shelves.map(b => (b[4] + b[5]) / 2), t);
       if (!hinges) { warn(`${placeOf(m)}: the front's height ${f.h1 - f.h0} is over the last row of the hinge's perDoor (${settings.hardware.hinge}).`, m.index); return; }
-      const right = m.hinge === 'right', side = right ? m.x1 - t : m.x0 + t, cupX = right ? f.x1 - cupFromEdge(Hg) : f.x0 + cupFromEdge(Hg);
+      const right = m.hinge === 'right', side = right ? m.x1 - t : m.x0 + t, edge = right ? side - f.x1 : f.x0 - side;
       const other = right ? c.x0 + t / 2 : c.x1 - t / 2, bumpers = right ? m.x0 === c.x0 : m.x1 === c.x1;
       for (const h of hinges) {
-        fit(d, 'hinge', [side, carcassFront, h], 'hardware', { hand: right ? 'right' : 'left', gap, cup: right ? side - cupX : cupX - side });
+        fit(d, 'hinge', [side, carcassFront, h], 'hardware', { hand: right ? 'right' : 'left', gap, edge });
         if (bumpers) fit(k, 'bumper', [other, carcassFront, h], 'hardware', { gap });
       }
       if (hasTag(m, 'doorDrawers')) doorDrawers(c, m, d, k, boards);
@@ -498,7 +498,7 @@ function groupNode(G, C, warn) {
     if (!Number.isFinite(lo) || !Number.isFinite(hi)) { warn(`${placeOf(m)}: drawers behind the door: no board over or under it.`, m.index); return; }
     const spacer = right ? [c.x1 - 2 * t, c.x1 - t] : [c.x0 + t, c.x0 + 2 * t];
     board(k, 'carcass', [spacer[0], spacer[1], carcassBack, y1, lo, hi], 'boards');
-    const x0 = (right ? c.x0 + t : spacer[1]) + runnerGap(R), x1 = (right ? spacer[0] : c.x1 - t) - runnerGap(R), y0 = y1 - R.length, pitch = (hi - lo) / S.count;
+    const { length, gap } = runnerFit(R), x0 = (right ? c.x0 + t : spacer[1]) + gap, x1 = (right ? spacer[0] : c.x1 - t) - gap, y0 = y1 - length, pitch = (hi - lo) / S.count;
     for (let j = 0; j < S.count; j++) {
       const h = Math.round(lo + S.lift + j * pitch), top = h + tb + S.sideHeight;
       board(d, 'drawerBox', [x0, x1, y1 - tb, y1, h, top], 'drawers');
@@ -517,7 +517,7 @@ function groupNode(G, C, warn) {
     const B = settings.drawers.board, t = thickness('carcass'), tb = thickness('drawerBox'), depth = carcassFront - carcassBack;
     const R = runnerFor(C.runners(), depth - B.setback - B.backClearance);
     if (!R) { warn(`${placeOf(m)}: no runner of ${settings.hardware.runner}'s family fits in ${depth - B.setback - B.backClearance}.`, m.index); return; }
-    const x0 = c.x0 + t + runnerGap(R), x1 = c.x1 - t - runnerGap(R), y1 = carcassFront - B.setback, y0 = y1 - R.length;
+    const { length, gap } = runnerFit(R), x0 = c.x0 + t + gap, x1 = c.x1 - t - gap, y1 = carcassFront - B.setback, y0 = y1 - length;
     const h = m.h0 + (m.h0 === c.h0 ? t : 0) + B.lift, top = h + tb + B.sideHeight;
     if (top > boards.spaceAround(m.h0, m.h1).hi) warn(`${placeOf(m)}: the drawer's box reaches ${top}, over the board above it.`, m.index);
     board(d, 'drawerBox', [x0, x1, y0, y1, h, h + tb], 'drawers');
@@ -766,7 +766,7 @@ function carcassBoards(carcass, G, C, warn) {
       fixedShelf(carcass.boxes.some(b => b.h0 === joint && b.type === 'oven') ? joint : joint + half, vented ? shelf.ventGap : 0);
     }
   }
-  const fridgeBody = fridge ? C.appliance('fridgeFreezer')?.body?.height : null;
+  const fridgeBody = fridge && C.appliance('fridgeFreezer') ? bodyOf(C.appliance('fridgeFreezer'))[2] : null;
   if (fridgeBody) {
     const top = h0 + board + fridgeBody + board;
     if (top > h1 - board) warn(`${carcass.name}: the fridge ${fridgeBody} does not fit the carcass (inside ${height - 2 * board}).`);

@@ -3,7 +3,7 @@
 // documents use them: an oven, a microwave, a basin tap, a shower screen, a WC bowl.
 
 import { openCatalog } from '../../library/catalog.js';
-import { bodyOf, faultsOf, hingeHeights, holeOf, runnerFor, shapeOf, systemDrawer, systemFor, tileOf, trapFit } from '../../library/shapes.js';
+import { bodyOf, faultsOf, lookOf, hingeHeights, holeOf, runnerFor, shapeOf, systemDrawer, systemFor, tileOf, trapFit } from '../../library/shapes.js';
 
 /** @typedef {import('../../types.js').Shape} Shape */
 /** @typedef {import('../../types.js').Part} Part */
@@ -101,6 +101,9 @@ export default async function (check) {
     check('tileOf: as laid, the scene\'s size (one of its formats, its length the longer), else its own; none in a size it is not made in, none of what is no tile',
       tileOf(tile, [598, 1198])?.len === 1198 && tileOf(tile)?.wid === 898 && tileOf(tile, [600, 600]) === null && tileOf(P('shelf-pins-5-zinc')) === null);
     check('bodyOf: its body, the room\'s own sizes over the maker\'s', bodyOf(P('catalano-green-lux-60x40-white')).join() === '600,400,140' && bodyOf(P('catalano-green-lux-60x40-white'), { depth: 450 }).join() === '600,450,140');
+    check('lookOf: a decor\'s photo, a lacquer\'s colour, a tile\'s face', lookOf(P('egger-h1180-st37')).finish === 'decor' && lookOf(P('shaker-english-navy-18')).finish === 'lacquer' && lookOf(tile).finish === 'tile' && !!lookOf(tile).texture);
+    const hingeLeft = shapeOf(hinge, undefined, { hand: 'left', gap: 2, edge: 3 }), cupAt = (/** @type {any} */ S) => S.parts.find((/** @type {any} */ p) => p.form === 'cylinder' && p.radius[0] === 17).at[0] - S.anchor[0];
+    check('a hinge: its cup the maker\'s fromEdge (22) in from the door\'s edge (3 in from the side): 25; mirrored on the right', cupAt(hingeLeft) === 25 && cupAt(shapeOf(hinge, undefined, { hand: 'right', gap: 2, edge: 3 })) === -25);
     const pin = shapeOf(P('shelf-pins-5-zinc'), undefined, { hand: 'left' });
     check('a fitting placed by its anchor: a shelf pin at the side\'s face, under the shelf (its hole\'s marker 12 across)', pin.anchor?.join() === '0.5,6,9' && pin.parts.some(p => p.layer === 'holes'));
   }

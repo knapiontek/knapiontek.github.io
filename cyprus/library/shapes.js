@@ -324,11 +324,12 @@ const marker = (D, at, r, marker, axis) => D.add({ form: 'cylinder', radius: [Ma
 
 /* ---------- a concealed hinge: its mounting plate and arm on the carcass's side, its cup in the door; their holes. Anchor: the
    side's face, the carcass's front, the hinge's height. options.hand: the side it is on (left: the carcass inside toward +x),
-   gap: the door's back before the carcass's front, cup: the cup's axis from the side's face, inward ---------- */
+   gap: the door's back before the carcass's front, edge: the door's hinged edge from the side's face, inward (its cup the maker's
+   fromEdge in from it) ---------- */
 /** @param {any} A @param {ShapeOptions} options */
-function hinge(A, { hand = 'left', gap = 2, cup = 0 }) {
+function hinge(A, { hand = 'left', gap = 2, edge = 0 }) {
   const D = describe([1, 1, 1]), s = hand === 'right' ? -1 : 1, x = (/** @type {number} */ a, /** @type {number} */ b) => s > 0 ? [a, b] : [-b, -a];
-  const P = A.plate, ph = P.height / 2, rc = A.cup.diameter / 2, cx = s * cup;
+  const P = A.plate, ph = P.height / 2, rc = A.cup.diameter / 2, cx = s * (edge + A.cup.fromEdge);
   D.box([...x(0, P.thickness), -P.fromFront[1], -P.fromFront[0], -ph, ph], 'zinc');   // the mounting plate
   D.box([...x(3, 20), -70, -2, -9, 9], 'zinc');                                    // the arm
   D.cylinder(rc - 0.5, A.cup.inDoor, 'zinc', [cx, gap + A.cup.inDoor / 2, 0], Y);  // the cup, in the door
@@ -454,8 +455,6 @@ export function hingeHeights(A, h0, h1, shelves, t) {
 }
 /** the depth of the post a hinge needs on a door short of the carcass's side @param {any} A */
 export const hingePost = A => /** @type {number} */ (A.post);
-/** the cup's axis from the door's edge @param {any} A */
-export const cupFromEdge = A => /** @type {number} */ (A.cup.fromEdge);
 
 /**
  * A drawer of a system: how high its bottom lies over the board under it (on the carcass's bottom, or over another), and its
@@ -476,8 +475,14 @@ export const systemFor = (D, M, front, frontAbove) => front > frontAbove ? D : M
 
 /** the longest of a family of runners that fits in a space; none: undefined @param {any[]} family @param {number} space */
 export const runnerFor = (family, space) => family.filter(r => r.length <= space).sort((a, b) => a.length - b.length).pop();
-/** the gap a runner takes beside a drawer's box @param {any} A */
-export const runnerGap = A => /** @type {number} */ (A.clearance);
+/** a drawer's box on runners: as long as they, their gap each side @param {any} A */
+export const runnerFit = A => ({ length: /** @type {number} */ (A.length), gap: /** @type {number} */ (A.clearance) });
+/**
+ * A board as the cabinets cut it: its thickness, its depth (a worktop's, a strip's; a sheet's width), a shaker front's frame
+ * (0: a plain board).
+ * @param {any} A @returns {{ thickness: number, depth: number, frameWidth: number }}
+ */
+export const boardOf = A => ({ thickness: A.thickness, depth: A.depth || A.width, frameWidth: A.frameWidth || 0 });
 /** a pull-out shelf on its runners: as long as they, their gap each side @param {any} A */
 export const pullOutFit = A => ({ length: /** @type {number} */ (A.length), gap: /** @type {number} */ (A.clearance) });
 
@@ -495,6 +500,16 @@ export function holeOf(A, kind) { const h = A.holes.find((/** @type {any} */ o) 
 export function trapFit(A, y) {
   const reach = Math.min(y - A.outlet.length, A.reach[1]);
   return reach < A.reach[0] ? null : { drop: A.drop[0], reach, toWall: y - reach - A.outlet.length };
+}
+
+/**
+ * How a board or a tile looks, for a view to draw: its photo (a decor's, a tile's face: a texture's key), else its colour; its
+ * finish: decor, lacquer, matt, tile.
+ * @param {any} A @returns {{ finish: 'decor' | 'lacquer' | 'matt' | 'tile', texture?: string, color?: string }}
+ */
+export function lookOf(A) {
+  if (A.group === 'tiles') return { finish: 'tile', texture: A.texture };
+  return A.texture ? { finish: 'decor', texture: A.texture } : { finish: A.lacquered ? 'lacquer' : 'matt', color: A.color };
 }
 
 /**
