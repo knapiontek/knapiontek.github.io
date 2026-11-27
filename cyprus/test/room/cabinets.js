@@ -6,6 +6,7 @@
 import { cabinetsOf } from '../../room/cabinets.js';
 import { openCatalog } from '../../library/catalog.js';
 import { createHierarchy } from '../../core/hierarchy.js';
+import { shapeOf } from '../../library/shapes.js';
 
 /** @typedef {import('../../room/cabinets.js').CabinetNode} CabinetNode */
 
@@ -35,7 +36,7 @@ export default async function (check) {
     check('tree: the worktop from the wall (its zero) to 20 before the fronts: 28 + 550 + 2 + 18 + 20', at(g1, 'worktop')?.offset.join() === '0,0,870' && at(g1, 'worktop')?.size.join() === '3513,-618,38');
     check('tree: the tall units under the plasterboard over them, 14 from it', ['K21', 'K23', 'K25', 'K27', 'K29'].every(k => at(g2, 'plasterboard_1/' + k)?.offset[1] === -14) && at(g2, 'plasterboard_1/K21')?.offset[2] === 908 - 2568);
     check('tree: the island\'s carcasses 310 from the back of its worktop; its back panel', at(g3, 'worktop/K31')?.offset[1] === -310 && !!at(g3, 'islandBackPanel'));
-    check('tree: a carcass\'s modules bottom up: the oven, the microwave in K25', (at(g2, 'plasterboard_1/K25')?.children || []).map(c => c.id).join() === 'cabinet_1,oven,microwave,cabinet_2');
+    check('tree: a carcass\'s modules bottom up: the oven, the microwave in K25', (at(g2, 'plasterboard_1/K25')?.children || []).filter(c => c.type !== 'product').map(c => c.id).join() === 'cabinet_1,oven,microwave,cabinet_2');
     check('tree: what runs along a group, its layer', at(g1, 'plinth')?.layer === 'plinth' && at(g1, 'strip_1')?.layer === 'strips' && at(g1, 'worktop')?.layer === 'worktop' && k11?.layer === 'boards');
 
     /* the model's axes: every size toward the room at negative y; K11 as the maker measures it, 28 – 578 from the wall */
@@ -55,13 +56,18 @@ export default async function (check) {
       else if (p.material !== 'metal' && !looks.has(p.material)) bad.push(p.material);
     }
     check('bodies: boards of the library, its materials, the room\'s metal; every one (' + bodies + ')' + (bad.length ? ': not ' + bad.join(', ') : ''), bodies > 150 && bad.length === 0);
+    /* what is drawn of a node and under it: its parts, or its product's shape (its layer the node's) */
+    /** @param {CabinetNode | undefined} n @returns {any[]} */
+    const drawn = n => !n ? [] : n.parts || (/** @type {any} */ (n).product ? shapeOf(catalog.product(/** @type {any} */ (n).product), n.size.map(Math.abs), /** @type {any} */ (n).options).parts.map(p => ({ ...p, layer: p.layer ?? n.layer })) : []);
+    /** @param {CabinetNode | undefined} n */
+    const under = n => !n ? [] : sizes(n).flatMap(drawn);
     /* the products' data, as their makers give them */
-    const all = groups.flatMap(sizes), boxes = (/** @type {string} */ layer) => all.flatMap(n => (n.parts || []).filter(p => p.layer === layer && p.box).map(p => /** @type {number[]} */ (p.box)));
+    const boxes = (/** @type {string} */ layer) => groups.flatMap(under).filter(p => p.layer === layer && p.box).map(p => /** @type {number[]} */ (p.box));
     const eneryda = /** @type {any} */ (catalog.product(file.settings.hardware.handle)).length;
     check('a handle: as its maker gives it (ENERYDA, ' + eneryda + ' long, 30 deep)', boxes('handles').some(b => b[1] - b[0] === eneryda || b[5] - b[4] === eneryda) && boxes('handles').some(b => Math.abs(b[3] - b[2]) === 30 || Math.abs(b[3] - b[2]) === 27));
     const sink = /** @type {any} */ (catalog.product(file.settings.appliances.sink.product)).cutout;
     check('the sink\'s cut-out: its maker\'s, ' + sink.width + ' × ' + sink.depth + ': the worktop open there', (at(g1, 'worktop')?.parts || []).length > 1);
-    const k25 = (at(g2, 'plasterboard_1/K25')?.parts || []).filter(p => p.material === 'zinc' && p.box).map(p => /** @type {number[]} */ (p.box)), runner = /** @type {any} */ (catalog.product(file.settings.hardware.runner));
+    const k25 = under(at(g2, 'plasterboard_1/K25')).filter(p => p.material === 'zinc' && p.box).map(p => /** @type {number[]} */ (p.box)), runner = /** @type {any} */ (catalog.product(file.settings.hardware.runner));
     check('drawers behind a door: on the runner\'s family, as high as the runner (' + runner.height + ')', k25.some(b => b[5] - b[4] === runner.height));
     const k11b = (k11?.parts || []).filter(p => p.form === 'box' && !p.layer).map(p => /** @type {number[]} */ (p.box));
     check('K11: two sides 18 thick, the whole carcass high, from its back (y 0) to its front (y −550)', k11b.filter(b => b[1] - b[0] === 18 && b[5] - b[4] === 720 && b[2] === -550 && b[3] === 0).length === 2);
@@ -81,25 +87,27 @@ export default async function (check) {
       && (at(g1, 'worktop')?.parts || []).length > 4);
     const hood = at(g1, 'hood');
     check('the hood over the hob, on the wall, its bottom at 1500; to the ceiling (the room\'s)', product(hood) === 'electrolux-lfv416k' && hood?.offset[1] === 0 && hood?.offset[2] === 1498 && /** @type {any} */ (hood).ceiling === true);
-    const parts = (/** @type {CabinetNode} */ g) => sizes(g).flatMap(n => n.parts || []);
+    const parts = under;
     check('handles: a cup handle (flange, shell, face, two ends) in the room\'s metal on every front with a handle, its two holes', parts(g1).filter(p => p.layer === 'handles' && p.material === 'metal').length === 5 * 6 && parts(g2).filter(p => p.layer === 'handles').length === 5 * 14
       && parts(g1).filter(p => p.material === 'markerHandle').length === 2 * 6);
     check('legs: four under a carcass on the plinth', parts(g1).filter(p => p.layer === 'legs').length === 2 * 4 * 4);
-    check('a grille in the plinth before the oven\'s and the fridge\'s carcasses', (at(g2, 'plasterboard_1/K25')?.parts || []).some(p => p.layer === 'plinth') && (at(g2, 'plasterboard_1/K27')?.parts || []).some(p => p.layer === 'plinth'));
+    check('a grille in the plinth before the oven\'s and the fridge\'s carcasses', under(at(g2, 'plasterboard_1/K25')).some(p => p.layer === 'plinth') && under(at(g2, 'plasterboard_1/K27')).some(p => p.layer === 'plinth'));
     const tap = /** @type {any} */ (at(g1, 'worktop/K12/sinkTap')), trap = /** @type {any} */ (at(g1, 'worktop/K12/trap'));
     check('the tap: a product (Deante Silia), on the worktop behind the sink', tap?.type === 'product' && tap.product === 'deante-silia-bqs-z73m' && tap.layer === 'sink');
     check('the trap: a product (Deante ZXY 9917), as short as its maker allows, its outlet at the wall (drain 320 from it: reach 234)',
       trap?.product === 'deante-space-saver-zxy-9917' && trap.options.drop === 250 && trap.options.reach === 234 && trap.options.toWall === 0);
     /* stage 4b: inside the carcasses */
-    const k23 = at(g2, 'plasterboard_1/K23')?.parts || [], door = at(g2, 'plasterboard_1/K23/cabinet_2')?.parts || [];
+    const k23 = under(at(g2, 'plasterboard_1/K23')), door = under(at(g2, 'plasterboard_1/K23/cabinet_2'));
     check('hinges: three on the 1200 door, two on the 720 one (plate and arm on the side, the cup in the door)', k23.filter(p => p.layer === 'hardware' && p.form === 'box').length === 2 * (3 + 2)
       && door.filter(p => p.layer === 'hardware' && p.form === 'cylinder').length === 2 * 3);
     check('bumpers opposite the hinges; shelf pins under the adjustable shelves (4 each)', k23.filter(p => p.material === 'gasket').length === 5 && k23.filter(p => p.layer === 'shelves' && p.material === 'zinc').length === 4 * 4);
-    const sinkDrawer = at(g1, 'worktop/K12/drawer_1')?.parts || [], cutlery = at(g3, 'worktop/K31/drawer_2')?.parts || [];
+    const sinkDrawer = under(at(g1, 'worktop/K12/drawer_1')), cutlery = under(at(g3, 'worktop/K31/drawer_2'));
     check('a drawer of the system: its bottom and back, its metal sides and gallery rails (D); the sink\'s with bins (3)', sinkDrawer.filter(p => p.material === 'drawerSide').length === 2 + 2 && sinkDrawer.filter(p => p.material === 'binGrey').length === 3 * 5);
     check('an inner drawer for cutlery: its box, sides and front, the insert', cutlery.filter(p => p.material === 'insertGrey').length === 5 && cutlery.filter(p => p.material === 'drawerSide').length === 2 + 2 + 1);
     check('drawers behind K25\'s door: two boxes of 5 boards, a spacer', (at(g2, 'plasterboard_1/K25/cabinet_1')?.parts || []).filter(p => p.layer === 'drawers').length === 2 * 5);
-    check('holes: their markers in the layer Holes', groups.flatMap(sizes).flatMap(n => n.parts || []).filter(p => p.layer === 'holes').length > 200);
+    check('holes: their markers in the layer Holes', groups.flatMap(under).filter(p => p.layer === 'holes').length > 200);
+    check('the hardware: nodes of the library\'s products (hinges, bumpers, drawer systems, runners, pins, handles, legs, grilles)', ['blum-clip-top-blumotion-110-71b3550', 'blum-servo-drive-993-0530', 'blum-tandembox-antaro-d-500',
+      'shelf-pins-5-zinc', 'ikea-eneryda-shell-brass', 'hafele-axilo-h150', 'gtv-plinth-grille-480x60', 'blum-movento-760h5000s'].every(k => groups.flatMap(sizes).some(n => product(n) === k)));
     check('the same file, the same nodes', JSON.stringify(cabinetsOf(file, catalog).groups) === JSON.stringify(groups));
   }
 
@@ -114,9 +122,9 @@ export default async function (check) {
     const noM = copy(); delete noM.settings.hardware.drawerM;
     check('hardware: a product the file needs, none chosen, stops it (drawerM)', stopped(noM).includes('settings.hardware.drawerM: none.'));
     const noData = copy(); noData.settings.hardware.drawer = 'shelf-pins-5-zinc';
-    check('hardware: a product without the maker\'s data it needs stops it', stopped(noData).includes('settings.hardware.drawer: shelf-pins-5-zinc has no box.sideHeight.'));
+    check('hardware: a product of another kind stops it (a shelf pin for a drawer system)', stopped(noData).includes('settings.hardware.drawer: shelf-pins-5-zinc is no drawerSystem.'));
     const noCut = copy(); noCut.settings.appliances.sink.product = 'bosch-hba534bb3';
-    check('appliances: a sink without its cut-out stops it', stopped(noCut).includes('settings.appliances.sink: bosch-hba534bb3 has no cutout.width.'));
+    check('appliances: an oven for a sink stops it', stopped(noCut).includes('settings.appliances.sink: bosch-hba534bb3 is no sink.'));
     const noOffset = copy(); delete noOffset.groups[0].carcass;
     check('groups: no carcasses\' offset (the group\'s or the settings\') stops it', throws(() => cabinetsOf(noOffset, catalog)));
     const bad = copy();

@@ -8,13 +8,14 @@
 // A carcass's place is measured from what lies on the zero over its columns: the worktop, else the plasterboard casing, else
 // the group itself (settings.carcass.offset, a group's own carcass.offset). Each node carries its bodies (parts, boxes of the
 // boards of the library: 'board:' and the product's key): the carcasses' boards, the fronts, the worktop, panels, strips,
-// plinths, the worktop's cut-outs; the handles, legs and plinth grilles; the tap and the trap. The appliances are nodes of
-// their own, drawn by the library (library/shapes.js): built in their carcass, in the worktop's cut-outs, the hood over the hob
-// (up to the ceiling: room/assembly.js). Inside: hinges, bumpers, shelf pins, the drawers' boxes and the system's metal, bins,
-// cutlery inserts, drawers behind doors; the holes' markers (layer holes).
+// plinths, the worktop's cut-outs, the drawers' boards. Every product (an appliance, a fitting: a hinge, a bumper, a drawer
+// system, runners, a shelf pin, bins, a handle, a leg, a grille; the tap, the trap) is a node of its own, placed by its anchor
+// and drawn by the library (library/shapes.js), the hood up to the ceiling (room/assembly.js). The engine knows what a product
+// does, not how it is made: it asks the library (where a door's hinges go, a drawer's boards, the longest runner that fits,
+// how a trap fits) and checks that each product it needs is chosen and has what its drawing needs (faultsOf).
 
 import { pointToModel, partToModel } from '../core/tools.js';
-import { shapeOf } from '../library/shapes.js';
+import { cupFromEdge, cutoutOf, drainOf, faultsOf, hingeHeights, hingePost, holeOf, innerOver, pullOutFit, runnerFor, runnerGap, shapeOf, systemDrawer, systemFor, trapFit } from '../library/shapes.js';
 
 /** @typedef {import('../types.js').Catalog} Catalog */
 /** @typedef {import('../core/hierarchy.js').HierarchyNode} HierarchyNode */
@@ -127,32 +128,24 @@ const REQUIRED_SETTINGS = [
   [has => has.type.plasterboard, ['plasterboard.depth', 'plasterboard.studSpacing', 'plasterboard.layers']],
   [has => has.grid, ['shelf.grid.from', 'shelf.grid.pitch', 'shelf.grid.fixedEvery']]
 ];
-/* the products a file needs (settings.hardware: a kind → a product of the library), by what it holds, and the maker's data each
-   must carry: [when, kind, dotted paths in the product] */
-const DRAWER_BOX = ['box.sideHeight', 'box.backHeight', 'box.bottom.inset', 'box.bottom.depth', 'box.bottom.fromBack', 'box.back.inset', 'box.lift.bottom', 'box.lift.above',
-  'holes.diameter', 'holes.depth', 'holes.fromFront', 'holes.belowDrawer', 'sideFromCarcass', 'sideThickness', 'fromBack', 'fromFront'];
-/** @type {[(has: any) => boolean, string, string[]][]} */
-const REQUIRED_HARDWARE = [
-  [() => true, 'shelfPin', ['hole.diameter', 'hole.depth', 'belowShelf']],
-  [has => has.door, 'hinge', ['cup.diameter', 'cup.depth', 'cup.fromEdge', 'cup.inDoor', 'plate.height', 'plate.thickness', 'plate.fromFront', 'plate.holes.diameter', 'plate.holes.depth',
-    'plate.holes.fromFront', 'plate.holes.spacing', 'fromEnd', 'perDoor', 'post']],
-  [has => has.door, 'bumper', ['hole.diameter', 'hole.depth']],
-  [has => has.drawer && !has.boardDrawers, 'drawer', DRAWER_BOX],
-  [has => has.drawer && !has.boardDrawers, 'drawerM', DRAWER_BOX],
-  [has => has.drawer && !has.boardDrawers && has.tag.innerDrawer, 'innerDrawer', [...DRAWER_BOX, 'inner.gap']],
-  [has => has.tag.doorDrawers || has.boardDrawers, 'runner', ['length', 'height', 'clearance', 'holes.diameter', 'holes.depth', 'holes.fromFront', 'holes.aboveBottom']],
-  [has => has.tag.coffee, 'pullOut', ['length', 'clearance', 'holes.diameter', 'holes.depth', 'holes.fromFront', 'holes.belowShelf']],
-  [has => has.tag.bins, 'bins', ['count', 'height']],
-  [has => has.handle, 'handle', ['length', 'width', 'depth', 'holes.spacing', 'holes.diameter']]
-];
-/* the appliances' data, by what the file holds: [when, role, dotted paths in the product] */
-/** @type {[(has: any) => boolean, string, string[]][]} */
-const REQUIRED_APPLIANCE = [
-  [has => has.tag.sink, 'sink', ['cutout.width', 'cutout.depth', 'bowl.height']],
-  [has => has.tag.sink, 'sinkTap', ['height', 'length', 'base.diameter', 'base.height', 'tube', 'bend', 'spout.height', 'spout.reach', 'lever.height', 'lever.length']],
-  [has => has.tag.sink, 'trap', ['drain.diameter', 'drop', 'reach', 'outlet.height', 'outlet.length', 'outlet.diameter', 'outlet.socket']],
-  [has => has.tag.hob, 'hob', ['cutout.width', 'cutout.depth']],
-  [has => has.tag.basin, 'basin', ['holes']]
+/* the products a file needs, by what it holds: [when, where (settings.hardware or settings.appliances), its role, its drawing] */
+/** @type {[(has: any) => boolean, 'hardware' | 'appliances', string, string][]} */
+const REQUIRED_PRODUCTS = [
+  [() => true, 'hardware', 'shelfPin', 'shelfPin'],
+  [has => has.door, 'hardware', 'hinge', 'hinge'],
+  [has => has.door, 'hardware', 'bumper', 'bumper'],
+  [has => has.drawer && !has.boardDrawers, 'hardware', 'drawer', 'drawerSystem'],
+  [has => has.drawer && !has.boardDrawers, 'hardware', 'drawerM', 'drawerSystem'],
+  [has => has.drawer && !has.boardDrawers && has.tag.innerDrawer, 'hardware', 'innerDrawer', 'drawerSystem'],
+  [has => has.tag.doorDrawers || has.boardDrawers, 'hardware', 'runner', 'ballRunners'],
+  [has => has.tag.coffee, 'hardware', 'pullOut', 'pullOutRunners'],
+  [has => has.tag.bins, 'hardware', 'bins', 'bins'],
+  [has => has.handle, 'hardware', 'handle', 'cupHandle'],
+  [has => has.tag.sink, 'appliances', 'sink', 'sink'],
+  [has => has.tag.sink, 'appliances', 'sinkTap', 'kitchenTap'],
+  [has => has.tag.sink, 'appliances', 'trap', 'trap'],
+  [has => has.tag.hob, 'appliances', 'hob', 'hob'],
+  [has => has.tag.basin, 'appliances', 'basin', 'basin']
 ];
 
 /* ================= small helpers ================= */
@@ -220,24 +213,20 @@ function stops(file, catalog) {
   if (thick.size > 1) problems.push(`materials: the fronts (${FRONT_TYPES.join(', ')}) need one thickness: the plane of the fronts.`);
   const needed = new Set(REQUIRED_SETTINGS.filter(([need]) => need(has)).flatMap(([, paths]) => paths));
   for (const path of needed) if (valueAt(settings, path) === undefined) problems.push(`settings: ${path} missing.`);
-  /* the products: each needed one chosen, in the library, with the maker's data */
-  /** @param {string} where @param {string | undefined} key @param {string[]} paths */
-  const product = (where, key, paths) => {
-    if (!key) { problems.push(`${where}: none.`); return null; }
+  /* the products: each needed one chosen, in the library, of the drawing its role needs, with what that needs of it (the library's faultsOf) */
+  for (const [need, where, role, draw] of REQUIRED_PRODUCTS) {
+    if (!need(has)) continue;
+    const at = `settings.${where}.${role}`, key = where === 'hardware' ? settings.hardware?.[role] : settings.appliances?.[role]?.product;
+    if (!key) { problems.push(`${at}: none.`); continue; }
     let p;
-    try { p = /** @type {any} */ (catalog.product(String(key))); } catch { problems.push(`${where}: no product ${key} in the library.`); return null; }
-    for (const path of paths) if (valueAt(p, path) === undefined) problems.push(`${where}: ${key} has no ${path}.`);
-    return p;
-  };
-  /** @type {Record<string, any>} */
-  const chosen = {};
-  for (const [need, kind, paths] of REQUIRED_HARDWARE) if (need(has)) chosen[kind] = product(`settings.hardware.${kind}`, settings.hardware?.[kind], paths);
-  for (const [need, role, paths] of REQUIRED_APPLIANCE) if (need(has)) product(`settings.appliances.${role}`, settings.appliances?.[role]?.product, paths);
-  const row = (/** @type {any} */ r, /** @type {boolean} */ last) => r && Number.isInteger(r.count) && (last ? r.maxHeight === undefined : r.maxHeight > 0);
-  for (const [where, table] of [['settings: shelf.perDoor', valueAt(settings, 'shelf.perDoor')], [`settings.hardware.hinge: ${settings.hardware?.hinge}: perDoor`, chosen.hinge?.perDoor]]) {
-    if (table !== undefined && !(Array.isArray(table) && table.length && table.every((r, i) => row(r, i === table.length - 1)))) problems.push(`${where} must be [{maxHeight, count}, …, {count}].`);
+    try { p = /** @type {any} */ (catalog.product(String(key))); } catch { problems.push(`${at}: no product ${key} in the library.`); continue; }
+    if (p.draw !== draw) { problems.push(`${at}: ${key} is no ${draw}.`); continue; }
+    const family = role === 'runner' ? catalog.variants(key) : [key];
+    for (const k of family) for (const path of faultsOf(catalog.product(k))) problems.push(`${at}: ${k} has no ${path}.`);
   }
-  if (chosen.runner && !catalog.variants(settings.hardware.runner).every(k => /** @type {any} */ (catalog.product(k)).length > 0)) problems.push(`settings.hardware.runner: every product of its family needs a length.`);
+  const row = (/** @type {any} */ r, /** @type {boolean} */ last) => r && Number.isInteger(r.count) && (last ? r.maxHeight === undefined : r.maxHeight > 0);
+  const table = valueAt(settings, 'shelf.perDoor');
+  if (table !== undefined && !(Array.isArray(table) && table.length && table.every((r, i) => row(r, i === table.length - 1)))) problems.push(`settings: shelf.perDoor must be [{maxHeight, count}, …, {count}].`);
   if (!Array.isArray(file.groups)) return [...problems, 'groups: none.'];
   const seen = new Set();
   for (const g of file.groups) {
@@ -400,8 +389,10 @@ export function cabinetsOf(file, catalog) {
   /** a piece of hardware of the file, the library's product; null none @param {string} kind */
   const hardware = kind => settings.hardware?.[kind] ? /** @type {any} */ (catalog.product(settings.hardware[kind])) : null;
   /** the runners of the family of hardware.runner, shortest first */
-  const runners = () => settings.hardware?.runner ? catalog.variants(settings.hardware.runner).map(k => /** @type {any} */ (catalog.product(k))).sort((a, b) => a.length - b.length) : [];
-  return { groups: layout.map(G => groupNode(G, { settings, materials, thickness, frameWidth, appliance, hardware, runners, frontThickness }, warn)), layout, problems };
+  const runners = () => settings.hardware?.runner ? catalog.variants(settings.hardware.runner).map(k => /** @type {any} */ (catalog.product(k))) : [];
+  /** a runner's key, in hardware.runner's family @param {any} R */
+  const runnerKey = R => /** @type {string} */ (catalog.variants(settings.hardware.runner).find(k => catalog.product(k) === R));
+  return { groups: layout.map(G => groupNode(G, { catalog, settings, materials, thickness, frameWidth, appliance, hardware, runners, runnerKey, frontThickness }, warn)), layout, problems };
 }
 
 /**
@@ -412,7 +403,9 @@ export function cabinetsOf(file, catalog) {
  * @property {(use: string) => number} frameWidth  a shaker front's frame; 0 a plain board
  * @property {(role: string) => any} appliance  an appliance of the file, the library's product; null none
  * @property {(kind: string) => any} hardware  a piece of hardware of the file, the library's product; null none
- * @property {() => any[]} runners  the runners of hardware.runner's family, shortest first
+ * @property {() => any[]} runners  the runners of hardware.runner's family
+ * @property {(runner: any) => string} runnerKey  a runner's key
+ * @property {Catalog} catalog
  * @property {number} frontThickness
  */
 /**
@@ -435,18 +428,19 @@ function groupNode(G, C, warn) {
   /** an upright cylinder, or along the axis given @param {Draft} d @param {number} radius @param {number} length @param {number[]} at @param {string} material @param {string} layer @param {number[]} [axis] */
   const cylinder = (d, radius, length, at, material, layer, axis = [0, 0, 1]) => { d.bodies.push({ form: 'cylinder', radius: [radius, radius], length, at, axis, material, layer, segments: 24 }); };
   /**
-   * An appliance, a node of its own drawn by the library: its zero at the back, left, bottom of its shape.
-   * @param {string} role @param {any} A @param {number[]} zero  design's axes @param {string} layer @param {Record<string, any>} [options] @returns {Draft}
+   * A product, a node of its own drawn by the library: placed by its shape's anchor (its zero, where it has none).
+   * @param {string} id @param {string} key  a product of the library @param {number[]} point  design's axes @param {string} layer @param {Record<string, any>} [options] @returns {Draft}
    */
-  const product = (role, A, zero, layer, options) => {
-    const size = shapeOf(A, undefined, options).size, [x, y, h] = zero;
-    return { id: role, name: A.name, type: 'product', box: [x, x + size[0], y, y + size[1], h, h + size[2]], layer, children: [], bodies: [],
-      product: C.settings.appliances[{ fridge: 'fridgeFreezer' }[role] || role].product, ...(options ? { options } : {}) };
+  const product = (id, key, point, layer, options) => {
+    const A = /** @type {any} */ (C.catalog.product(key)), S = shapeOf(A, undefined, options), anchor = S.anchor || [0, 0, 0], [x, y, h] = point.map((v, k) => v - anchor[k]);
+    return { id, name: A.name, type: 'product', box: [x, x + S.size[0], y, y + S.size[1], h, h + S.size[2]], layer, children: [], bodies: [], product: key, ...(options ? { options } : {}) };
   };
+  /** a piece of hardware placed (settings.hardware: its product) @param {Draft} d @param {string} kind @param {number[]} point @param {string} layer @param {Record<string, any>} [options] */
+  const fit = (d, kind, point, layer, options) => { d.children.push(product(kind, settings.hardware[kind], point, layer, options)); };
+  /** an appliance placed (settings.appliances: its product) @param {string} role @param {number[]} point @param {string} layer @param {Record<string, any>} [options] */
+  const appliance = (role, point, layer, options) => product({ fridgeFreezer: 'fridge' }[role] || role, settings.appliances[role].product, point, layer, options);
   /** its own box, as one board of its use @param {Draft} d @param {string} use */
   const whole = (d, use) => board(d, use, d.box);
-  /** a hole's marker (layer Holes): a disc on the drilled face, 0.6 proud; a small one 12 across @param {Draft} d @param {number} x @param {number} y @param {number} h @param {number} r @param {string} marker @param {number[]} axis */
-  const hole = (d, x, y, h, r, marker, axis) => cylinder(d, Math.max(r, 6), 1, [x, y, h], marker, 'holes', axis);
   /**
    * What a front has inside its carcass: a door its hinges (plate and arm on the side or a hinge post, the cup in the door) and
    * the bumpers opposite them; drawers behind a door; a drawer its box (bottom, back, the system's sides, runners, gallery rails,
@@ -455,76 +449,40 @@ function groupNode(G, C, warn) {
    */
   const inside = (c, m, d, k, boards) => {
     if (!FRONT_TYPES.includes(m.type) || !m.gaps) return;
-    const t = thickness('carcass'), opening = openingOf(m), Hg = C.hardware('hinge'), Bp = C.hardware('bumper');
+    const t = thickness('carcass'), opening = openingOf(m), Hg = C.hardware('hinge');
     const f = { x0: m.x0 + m.gaps.left, x1: m.x1 - m.gaps.right, h0: m.h0 + m.gaps.bottom, h1: m.h1 - m.gaps.top };
-    const reaches = m.hinge === 'left' ? m.x0 === c.x0 : m.x1 === c.x1, doorBack = frontFace - C.frontThickness;
+    const reaches = m.hinge === 'left' ? m.x0 === c.x0 : m.x1 === c.x1, gap = frontFace - C.frontThickness - carcassFront;
     if (opening === 'door') {
       if (!reaches && HINGE_SIDES.includes(m.hinge)) {   /* a door short of the carcass's side: a hinge post */
         const px = m.hinge === 'left' ? m.x0 : m.x1 - t;
-        board(k, 'carcass', [px, px + t, carcassFront - Hg.post, carcassFront, Math.max(m.h0, c.h0 + t), Math.min(m.h1, c.h1 - t)], 'boards');
+        board(k, 'carcass', [px, px + t, carcassFront - hingePost(Hg), carcassFront, Math.max(m.h0, c.h0 + t), Math.min(m.h1, c.h1 - t)], 'boards');
       }
-      const height = f.h1 - f.h0, row = Hg.perDoor.find((/** @type {any} */ r) => r.maxHeight === undefined || height <= r.maxHeight);
-      if (!row) { warn(`${placeOf(m)}: the front's height ${height} is over the last row of the hinge's perDoor (${settings.hardware.hinge}).`, m.index); return; }
-      /* a hinge at a shelf: moved over it, its mounting plate clear of the board */
-      const reach = t / 2 + Hg.plate.height / 2, shelves = boards.shelves.map(b => (b[4] + b[5]) / 2).filter(h => h > f.h0 && h < f.h1);
-      const hinges = Array.from({ length: row.count }, (_, j) => Math.round(f.h0 + Hg.fromEnd + ((height - 2 * Hg.fromEnd) * j) / (row.count - 1)))
-        .map(h => { const hit = shelves.find(s => Math.abs(h - s) < reach); return hit === undefined ? h : Math.ceil(hit + reach); });   // a hinge at a shelf: over it
-      const right = m.hinge === 'right', side = right ? m.x1 - t : m.x0 + t, dir = right ? -1 : 1, span = (/** @type {number} */ a, /** @type {number} */ b) => [Math.min(a, b), Math.max(a, b)];
-      const cupX = right ? f.x1 - Hg.cup.fromEdge : f.x0 + Hg.cup.fromEdge, cupR = Hg.cup.diameter / 2 - 0.5, plate = Hg.plate, ph = plate.height / 2;
-      const other = right ? c.x0 + t / 2 : c.x1 - t / 2, bumpers = right ? m.x0 === c.x0 : m.x1 === c.x1, gap = doorBack - carcassFront, br = Bp.hole.diameter / 2 + 1.5;
+      const hinges = hingeHeights(Hg, f.h0, f.h1, boards.shelves.map(b => (b[4] + b[5]) / 2), t);
+      if (!hinges) { warn(`${placeOf(m)}: the front's height ${f.h1 - f.h0} is over the last row of the hinge's perDoor (${settings.hardware.hinge}).`, m.index); return; }
+      const right = m.hinge === 'right', side = right ? m.x1 - t : m.x0 + t, cupX = right ? f.x1 - cupFromEdge(Hg) : f.x0 + cupFromEdge(Hg);
+      const other = right ? c.x0 + t / 2 : c.x1 - t / 2, bumpers = right ? m.x0 === c.x0 : m.x1 === c.x1;
       for (const h of hinges) {
-        solid(k, [...span(side, side + dir * plate.thickness), carcassFront - plate.fromFront[1], carcassFront - plate.fromFront[0], h - ph, h + ph], 'zinc', 'hardware');   // the mounting plate
-        solid(k, [...span(side + dir * 3, side + dir * 20), carcassFront - 70, carcassFront - 2, h - 9, h + 9], 'zinc', 'hardware');   // the arm
-        cylinder(d, cupR, Hg.cup.inDoor, [cupX, doorBack + Hg.cup.inDoor / 2, h], 'zinc', 'hardware', [0, 1, 0]);   // the cup, in the door
-        cylinder(d, 24, 1.5, [cupX, carcassFront - 1, h], 'zinc', 'hardware', [0, 1, 0]);
-        for (const dh of [-plate.holes.spacing / 2, plate.holes.spacing / 2]) hole(k, side, carcassFront - plate.holes.fromFront, h + dh, plate.holes.diameter / 2, 'markerHinge', [1, 0, 0]);
-        hole(d, cupX, doorBack - 0.6, h, Hg.cup.diameter / 2, 'markerHinge', [0, 1, 0]);
-        if (bumpers) { cylinder(k, br, gap - 0.2, [other, carcassFront + (gap - 0.2) / 2, h], 'gasket', 'hardware', [0, 1, 0]); hole(k, other, carcassFront + 0.6, h, Bp.hole.diameter / 2, 'markerHinge', [0, 1, 0]); }
+        fit(d, 'hinge', [side, carcassFront, h], 'hardware', { hand: right ? 'right' : 'left', gap, cup: right ? side - cupX : cupX - side });
+        if (bumpers) fit(k, 'bumper', [other, carcassFront, h], 'hardware', { gap });
       }
       if (hasTag(m, 'doorDrawers')) doorDrawers(c, m, d, k, boards);
       return;
     }
     if (opening !== 'drawer') return;
     if (valueAt(settings, 'drawers.box') === 'board') return boardDrawer(c, m, d, boards);
-    /* a drawer of the system (hardware.drawer, D; a front up to drawers.frontAbove: hardware.drawerM, M): its bottom and back of
-       drawerBox board on the system's sides and runners, as its maker gives them */
-    const S = f.h1 - f.h0 > settings.drawers.frontAbove ? C.hardware('drawer') : C.hardware('drawerM'), tb = thickness('drawerBox');
-    const innerX0 = c.x0 + t, innerX1 = c.x1 - t, inner = hasTag(m, 'innerDrawer') && C.hardware('innerDrawer');
-    const bottomH = m.h0 + (m.h0 === c.h0 ? S.box.lift.bottom : S.box.lift.above), sideHeight = S.box.sideHeight;
-    /** its bottom and back @param {any} W the system @param {number} h */
-    const box = (W, h) => {
-      const by0 = carcassBack + W.box.bottom.fromBack, by1 = by0 + W.box.bottom.depth;
-      board(d, 'drawerBox', [innerX0 + W.box.bottom.inset / 2, innerX1 - W.box.bottom.inset / 2, by0, by1, h, h + tb], 'drawers');
-      board(d, 'drawerBox', [innerX0 + W.box.back.inset / 2, innerX1 - W.box.back.inset / 2, by0, by0 + tb, h + tb, h + tb + W.box.backHeight], 'drawers');
+    /* a drawer of a system (hardware.drawer, D; a front up to drawers.frontAbove: hardware.drawerM, M): its bottom and back of
+       drawerBox board, on the system's metal, as its maker gives them */
+    const S = systemFor(C.hardware('drawer'), C.hardware('drawerM'), f.h1 - f.h0, settings.drawers.frontAbove), kind = S === C.hardware('drawer') ? 'drawer' : 'drawerM';
+    const tb = thickness('drawerBox'), innerX0 = c.x0 + t, width = c.x1 - c.x0 - 2 * t, depth = carcassFront - carcassBack;
+    /** a drawer of a system at its bottom h: its boards and its metal @param {string} kind @param {any} W @param {number} h */
+    const drawer = (kind, W, h) => {
+      for (const b of systemDrawer(W, false, width, tb).boards) board(d, 'drawerBox', [innerX0 + b[0], innerX0 + b[1], carcassBack + b[2], carcassBack + b[3], h + b[4], h + b[5]], 'drawers');
+      fit(d, kind, [innerX0, carcassBack, h], 'drawers', { width, depth });
     };
-    box(S, bottomH);
-    /** the runners and the sides at a drawer's bottom h, their holes @param {any} W the system @param {number} h @param {number} top */
-    const system = (W, h, top) => {
-      const s0 = W.sideFromCarcass, s1 = s0 + W.sideThickness, y0 = carcassBack + W.fromBack, y1 = carcassFront - W.fromFront;
-      for (const [a, b] of [[innerX0, innerX0 + s0], [innerX1 - s0, innerX1]]) solid(k, [a, b, y0, y1 + 2, h - 24, h - 6], 'zinc', 'hardware');
-      for (const [a, b] of [[innerX0 + s0, innerX0 + s1], [innerX1 - s1, innerX1 - s0]]) solid(d, [a, b, y0, y1, h - 4, top], 'drawerSide', 'drawers');
-      for (const x of [c.x0 + t, c.x1 - t]) for (const fr of W.holes.fromFront) hole(k, x, carcassFront - fr, h - W.holes.belowDrawer, W.holes.diameter / 2, 'markerRunner', [1, 0, 0]);
-    };
-    system(S, bottomH, bottomH + sideHeight - 4);
-    const s1 = S.sideFromCarcass + S.sideThickness, y1 = carcassFront - S.fromFront;
-    if (S === C.hardware('drawer')) for (const [a, b] of [[innerX0 + 28, innerX0 + 32], [innerX1 - 32, innerX1 - 28]]) solid(d, [a, b, carcassBack + 46, carcassFront - 24, bottomH + sideHeight - 4, bottomH + sideHeight + 60], 'drawerSide', 'drawers');
-    const bins = hasTag(m, 'bins') && C.hardware('bins');
-    if (bins) {   /* waste bins side by side, 10 apart, open at the top */
-      const x0 = innerX0 + 45, x1 = innerX1 - 45, ya = carcassBack + 66, yb = carcassFront - 40, h0 = bottomH + tb, h1 = h0 + bins.height, bw = (x1 - x0 - 10 * (bins.count - 1)) / bins.count;
-      for (let j = 0; j < bins.count; j++) {
-        const a = x0 + j * (bw + 10), b = a + bw;
-        for (const q of [[a, a + 4, ya, yb, h0, h1], [b - 4, b, ya, yb, h0, h1], [a + 4, b - 4, ya, ya + 4, h0, h1], [a + 4, b - 4, yb - 4, yb, h0, h1], [a + 4, b - 4, ya + 4, yb - 4, h0, h0 + 4]]) solid(d, q, 'binGrey', 'drawers');
-      }
-    }
-    if (inner) {   /* an inner drawer for cutlery over the drawer, behind the same front: its box, sides, front and insert */
-      const ih = bottomH + sideHeight + inner.inner.gap, top = ih - 4 + inner.box.sideHeight;
-      box(inner, ih);
-      system(inner, ih, top);
-      solid(d, [innerX0 + s1, innerX1 - s1, y1 - 16, y1 - 2, ih - 4, top], 'drawerSide', 'drawers');
-      const x0 = innerX0 + 40, x1 = innerX1 - 40, ya = carcassBack + 76, yb = carcassFront - 44, inset = s1 - 40;
-      for (let j = 1; j < 5; j++) { const x = x0 + inset + (x1 - x0 - 2 * inset) * j / 5; solid(d, [x - 3, x + 3, ya, yb, ih + 16, ih + 66], 'insertGrey', 'drawers'); }
-      solid(d, [x0, x1, ya, yb, ih + 16, ih + 20], 'insertGrey', 'drawers');
-    }
+    const bottomH = m.h0 + systemDrawer(S, m.h0 === c.h0, width, tb).lift;
+    drawer(kind, S, bottomH);
+    if (hasTag(m, 'bins') && settings.hardware.bins) fit(d, 'bins', [innerX0, carcassBack, bottomH + tb], 'drawers', { width, depth });   /* waste bins in it */
+    if (hasTag(m, 'innerDrawer')) drawer('innerDrawer', C.hardware('innerDrawer'), bottomH + innerOver(S, C.hardware('innerDrawer')));   /* an inner drawer over it */
   };
   /**
    * Drawers behind a door (doorDrawers): a spacer on the hinges' side, boxes of drawerBox board on ball runners, as deep as the
@@ -534,22 +492,20 @@ function groupNode(G, C, warn) {
   const doorDrawers = (c, m, d, k, boards) => {
     const S = settings.doorDrawers, t = thickness('carcass'), tb = thickness('drawerBox'), right = m.hinge === 'right';
     if (!(right ? m.x1 === c.x1 : m.x0 === c.x0)) { warn(`${placeOf(m)}: drawers behind the door: the door must reach the carcass's side on its hinges' side.`, m.index); return; }
-    const y1 = carcassFront - C.hardware('hinge').post, R = C.runners().filter(r => r.length <= y1 - carcassBack).pop();
+    const y1 = carcassFront - hingePost(C.hardware('hinge')), R = runnerFor(C.runners(), y1 - carcassBack);
     if (!R) { warn(`${placeOf(m)}: no runner of ${settings.hardware.runner}'s family fits in ${y1 - carcassBack}.`, m.index); return; }
-    const length = R.length;
     const { lo, hi } = boards.spaceAround(m.h0, m.h1);
     if (!Number.isFinite(lo) || !Number.isFinite(hi)) { warn(`${placeOf(m)}: drawers behind the door: no board over or under it.`, m.index); return; }
     const spacer = right ? [c.x1 - 2 * t, c.x1 - t] : [c.x0 + t, c.x0 + 2 * t];
     board(k, 'carcass', [spacer[0], spacer[1], carcassBack, y1, lo, hi], 'boards');
-    const x0 = (right ? c.x0 + t : spacer[1]) + R.clearance, x1 = (right ? spacer[0] : c.x1 - t) - R.clearance, y0 = y1 - length, pitch = (hi - lo) / S.count;
+    const x0 = (right ? c.x0 + t : spacer[1]) + runnerGap(R), x1 = (right ? spacer[0] : c.x1 - t) - runnerGap(R), y0 = y1 - R.length, pitch = (hi - lo) / S.count;
     for (let j = 0; j < S.count; j++) {
       const h = Math.round(lo + S.lift + j * pitch), top = h + tb + S.sideHeight;
       board(d, 'drawerBox', [x0, x1, y1 - tb, y1, h, top], 'drawers');
       board(d, 'drawerBox', [x0 + tb, x1 - tb, y0, y1 - tb, h, h + tb], 'drawers');
       for (const sx of [x0, x1 - tb]) board(d, 'drawerBox', [sx, sx + tb, y0, y1 - tb, h, top], 'drawers');
       board(d, 'drawerBox', [x0 + tb, x1 - tb, y0, y0 + tb, h + tb, top], 'drawers');
-      const r0 = h + tb + 20;
-      solid(k, [x0 - R.clearance, x0, y0, y1, r0, r0 + R.height], 'zinc', 'hardware'); solid(k, [x1, x1 + R.clearance, y0, y1, r0, r0 + R.height], 'zinc', 'hardware');
+      d.children.push(product('runner', C.runnerKey(R), [x0, y0, h + tb + 20], 'hardware', { width: x1 - x0 }));
     }
   };
   /**
@@ -559,16 +515,15 @@ function groupNode(G, C, warn) {
    */
   const boardDrawer = (c, m, d, boards) => {
     const B = settings.drawers.board, t = thickness('carcass'), tb = thickness('drawerBox'), depth = carcassFront - carcassBack;
-    const R = C.runners().filter(r => r.length <= depth - B.setback - B.backClearance).pop();
+    const R = runnerFor(C.runners(), depth - B.setback - B.backClearance);
     if (!R) { warn(`${placeOf(m)}: no runner of ${settings.hardware.runner}'s family fits in ${depth - B.setback - B.backClearance}.`, m.index); return; }
-    const length = R.length, x0 = c.x0 + t + R.clearance, x1 = c.x1 - t - R.clearance, y1 = carcassFront - B.setback, y0 = y1 - length;
+    const x0 = c.x0 + t + runnerGap(R), x1 = c.x1 - t - runnerGap(R), y1 = carcassFront - B.setback, y0 = y1 - R.length;
     const h = m.h0 + (m.h0 === c.h0 ? t : 0) + B.lift, top = h + tb + B.sideHeight;
     if (top > boards.spaceAround(m.h0, m.h1).hi) warn(`${placeOf(m)}: the drawer's box reaches ${top}, over the board above it.`, m.index);
     board(d, 'drawerBox', [x0, x1, y0, y1, h, h + tb], 'drawers');
     for (const sx of [x0, x1 - tb]) board(d, 'drawerBox', [sx, sx + tb, y0, y1, h + tb, top], 'drawers');
     for (const [b0, b1] of [[y1 - tb, y1], [y0, y0 + tb]]) board(d, 'drawerBox', [x0 + tb, x1 - tb, b0, b1, h + tb, top], 'drawers');
-    const r0 = h + tb + 20;
-    solid(d, [c.x0 + t, x0, y0, y1, r0, r0 + R.height], 'zinc', 'hardware'); solid(d, [x1, c.x1 - t, y0, y1, r0, r0 + R.height], 'zinc', 'hardware');
+    d.children.push(product('runner', C.runnerKey(R), [x0, y0, h + tb + 20], 'hardware', { width: x1 - x0 }));
   };
   /** a module's front, less its gaps, in the plane of the fronts: a shaker's frame round a recessed panel, else one board @param {Draft} d @param {Item} i */
   const front = (d, i) => {
@@ -582,25 +537,14 @@ function groupNode(G, C, warn) {
     }
     handle(d, i, x0, x1, h0, h1);
   };
-  /** a front's handle (hardware.handle), a cup handle as its maker gives it (length, width, depth; its holes), in the room's
-   * metal: a flange on the front, the shell over it open toward the hand (down; on a side, toward the edge), its holes through
-   * the front; by its edge (hardwareLayout.handle: axis from the edge; on a side, sideHeight up)
-   * @param {Draft} d @param {Item} i @param {number} x0 @param {number} x1 @param {number} h0 @param {number} h1 */
+  /** a front's handle (hardware.handle), by its edge (hardwareLayout.handle: axis from the edge; on a side, sideHeight up), its
+   * holes through the front @param {Draft} d @param {Item} i @param {number} x0 @param {number} x1 @param {number} h0 @param {number} h1 */
   const handle = (d, i, x0, x1, h0, h1) => {
     const H = settings.hardwareLayout?.handle, at = i.handle;
     if (!H || !at) return;
-    const A = C.hardware('handle'), L = A.length / 2, W = A.width / 2, D = A.depth, s = 3, y = frontFace, back = frontFace - C.frontThickness;
     const lying = at === 'top' || at === 'bottom';
     const x = lying ? (x0 + x1) / 2 : at === 'left' ? x0 + H.axis : x1 - H.axis, h = lying ? (at === 'top' ? h1 - H.axis : h0 + H.axis) : Math.min(h0 + H.sideHeight, (h0 + h1) / 2);
-    /** a box in the handle's axes (u along it, w out of the front, v across it, the shell's open side at −v) as the front's @param {number[]} b */
-    const at3 = ([u0, u1, w0, w1, v0, v1]) => lying ? [x + u0, x + u1, y + w0, y + w1, h + v0, h + v1]
-      : at === 'left' ? [x + v0, x + v1, y + w0, y + w1, h + u0, h + u1] : [x - v1, x - v0, y + w0, y + w1, h + u0, h + u1];
-    const shell = (/** @type {number[]} */ b) => solid(d, at3(b), 'metal', 'handles');
-    shell([-L, L, 0, s, -W, W]);              // the flange, on the front
-    shell([-L, L, s, D, W - s, W]);           // the shell's back, over the hand
-    shell([-L, L, D - s, D, -W, W]);          // its face
-    for (const u of [-L, L - s]) shell([u, u + s, s, D - s, -W, W - s]);   // its ends
-    for (const u of [-A.holes.spacing / 2, A.holes.spacing / 2]) { const [hx, , , , hh] = at3([u, u, 0, 0, 0, 0]); hole(d, hx, back - 0.6, hh, A.holes.diameter / 2, 'markerHandle', [0, 1, 0]); }
+    fit(d, 'handle', [x, frontFace, h], 'handles', { hand: lying ? 'lying' : at, front: C.frontThickness });
   };
   /** a strip's back strips at the carcasses' backs, cut as the carcasses beside it (upright) or under it (lying) @param {Draft} d @param {Item} i */
   const backStrips = (d, i) => {
@@ -628,7 +572,7 @@ function groupNode(G, C, warn) {
   if (worktop) for (const c of G.carcasses.filter(k => k.base)) for (const kind of ['sink', 'hob'].filter(f => c.flags.includes(f))) {
     const at = settings.cutouts?.[kind], A = C.appliance(kind), xc = (c.x0 + c.x1) / 2;
     if (!at || !A) { warn(`${c.name}: no ${kind} (settings.appliances.${kind}) or no settings.cutouts.${kind}.fromBack.`); continue; }
-    const cut = A.cutout;
+    const cut = cutoutOf(A);
     cutouts.push({ kind, carcass: c, x0: xc - cut.width / 2, x1: xc + cut.width / 2, y0: worktop.y0 + at.fromBack, y1: worktop.y0 + at.fromBack + cut.depth });
   }
   /** a worktop as boxes round its cut-outs @param {Draft} d @param {string} use */
@@ -672,19 +616,15 @@ function groupNode(G, C, warn) {
     const boards = carcassBoards(c, G, C, warn), xc = (c.x0 + c.x1) / 2;
     node.bodies.push(...boards.bodies);
     /* shelf pins under the adjustable shelves, at the front and the back of both sides; their holes */
-    const pin = C.hardware('shelfPin'), at = settings.shelf.pins;
-    for (const b of boards.adjustable) {
-      const h = b[4] - pin.belowShelf, r = pin.hole.diameter / 2;
-      for (const [p0, p1, side] of [[b[0] - 1, b[0] + 7, c.x0 + thickness('carcass')], [b[1] - 7, b[1] + 1, c.x1 - thickness('carcass')]]) for (const y of [carcassBack + at.fromBack, carcassFront - at.fromFront]) {
-        solid(node, [p0, p1, y - r, y + r, h - r, h + r], 'zinc', 'shelves');
-        hole(node, side, y, h, r, 'markerShelfPin', [1, 0, 0]);
-      }
+    const at = settings.shelf.pins;
+    for (const b of boards.adjustable) for (const [hand, side] of [['left', c.x0 + thickness('carcass')], ['right', c.x1 - thickness('carcass')]]) {
+      for (const y of [carcassBack + at.fromBack, carcassFront - at.fromFront]) fit(node, 'shelfPin', [side, y, b[4]], 'shelves', { hand });
     }
     /* the pull-out shelf's runners, between it and the side or the spacer; their holes */
     if (boards.pullOut) {
       const [x0, x1, y0, y1, h0] = boards.pullOut, t = thickness('carcass'), spacer = boards.bodies.find(b => b.layer === 'boards' && b.box && b.box[4] < h0 && b.box[5] > h0 && b.box[1] - b.box[0] === t && b.box[0] > c.x0 + t / 2 && b.box[1] < c.x1 - t / 2);
       const left = spacer && /** @type {number[]} */ (spacer.box)[1] <= x0 ? /** @type {number[]} */ (spacer.box)[1] : c.x0 + t, right = spacer && /** @type {number[]} */ (spacer.box)[0] >= x1 ? /** @type {number[]} */ (spacer.box)[0] : c.x1 - t;
-      for (const [a, b] of [[left, x0], [x1, right]]) { solid(node, [a, b, y0, y1, h0 - 14, h0], 'zinc', 'hardware'); const R = C.hardware('pullOut'); for (const f of R.holes.fromFront) hole(node, a === left ? left : right, carcassFront - f, h0 - R.holes.belowShelf, R.holes.diameter / 2, 'markerRunner', [1, 0, 0]); }
+      fit(node, 'pullOut', [x0, carcassFront, h0], 'hardware', { width: x1 - x0, left: x0 - left, right: right - x1 });
     }
     for (const m of c.members) {
       if (BOX_TYPES.includes(m.type)) {
@@ -692,77 +632,61 @@ function groupNode(G, C, warn) {
         front(d, m);
         inside(c, m, d, node, boards);
         /* an oven, a microwave: on the board under it (on its feet), its fascia before the carcass */
-        const A = (m.type === 'oven' || m.type === 'microwave') && C.appliance(m.type);
-        if (A) {
+        if ((m.type === 'oven' || m.type === 'microwave') && C.appliance(m.type)) {
           const feet = settings.appliances[m.type].feet || 0, floor = boards.spaceAround(m.h0, m.h1).lo;
           if (!Number.isFinite(floor)) warn(`${placeOf(m)}: the ${m.type} has no board under it.`, m.index);
-          else d.children.push(product(m.type, A, [(m.x0 + m.x1) / 2 - A.fascia.width / 2, carcassFront - A.body.depth, floor - Math.max(0, -(feet + A.fascia.bottom))], m.type, { feet }));
+          else d.children.push(appliance(m.type, [(m.x0 + m.x1) / 2, carcassFront, floor], m.type, { feet }));
         }
         node.children.push(d);
       }
       else if (m.type === 'frontPanel') { const d = draft('frontPanel', 'Front panel', 'frontPanel', [m.x0, m.x1, carcassFront, panelFace, m.h0, m.h1], m); whole(d, 'frontPanel'); node.children.push(d); }
     }
     /* a fridge-freezer on the bottom board, its doors carried by the fronts */
-    const F = c.flags.includes('fridge') && C.appliance('fridgeFreezer');
-    if (F) node.children.push(product('fridge', F, [xc - F.body.width / 2, carcassFront - F.body.depth, c.h0 + thickness('carcass')], 'fridge'));
+    if (c.flags.includes('fridge') && C.appliance('fridgeFreezer')) node.children.push(appliance('fridgeFreezer', [xc, carcassFront, c.h0 + thickness('carcass')], 'fridge'));
     /* a coffee machine on its pull-out shelf, 20 behind its front */
-    const coffee = boards.pullOut && C.appliance('coffee');
-    if (coffee && boards.pullOut) { const b = boards.pullOut; node.children.push(product('coffee', coffee, [(b[0] + b[1]) / 2 - coffee.body.width / 2, b[3] - 20 - coffee.body.depth, b[5]], 'coffee')); }
+    if (boards.pullOut && C.appliance('coffee')) { const b = boards.pullOut; node.children.push(appliance('coffee', [(b[0] + b[1]) / 2, b[3] - 20, b[5]], 'coffee')); }
     /* the sink and the hob in their cut-outs; the tap behind the sink, the trap under it */
     for (const cut of cutouts.filter(k => k.carcass === c)) {
-      const A = C.appliance(cut.kind), x = (cut.x0 + cut.x1) / 2, y = (cut.y0 + cut.y1) / 2, top = /** @type {{ h1: number }} */ (worktop).h1;
-      if (!A) continue;
-      if (cut.kind === 'hob') node.children.push(product('hob', A, [x - A.glass.width / 2, y - A.glass.depth / 2, top - A.body.height], 'hob'));
-      else {
-        node.children.push(product('sink', A, [x - A.body.width / 2, y - A.body.depth / 2, top - A.bowl.height - A.wall], 'sink'));
-        /* the tap behind the sink, installation.sink.tapFromBack from the worktop's back, its spout over the bowl */
-        const T = C.appliance('sinkTap'), ty = /** @type {{ y0: number }} */ (worktop).y0 + settings.installation.sink.tapFromBack;
-        node.children.push(product('sinkTap', T, [x - T.base.diameter / 2, ty - (T.length - T.spout.reach), top], 'sink'));
-        /* the trap under it, as short as its maker allows (the drawer under it keeps its room); its outlet ends at the wall, at its
-           own height (the wall's outlet there); beyond the maker's reach, a pipe from it to the wall */
-        const R = C.appliance('trap'), rim = top - A.bowl.height, drop = R.drop[0], reach = Math.min(y - R.outlet.length, R.reach[1]), toWall = y - reach - R.outlet.length;
-        if (reach < R.reach[0]) warn(`${c.name}: the sink's drain is ${y} from the wall; the trap (${R.reach[0]} + ${R.outlet.length}) needs more.`);
-        else node.children.push(product('trap', R, [x - R.drain.diameter / 2, 0, rim - drop], 'trap', { drop, reach, toWall }));
-      }
+      const x = (cut.x0 + cut.x1) / 2, y = (cut.y0 + cut.y1) / 2, top = /** @type {{ h1: number }} */ (worktop).h1;
+      node.children.push(appliance(cut.kind, [x, y, top], cut.kind));
+      if (cut.kind !== 'sink') continue;
+      /* the tap behind the sink, installation.sink.tapFromBack from the worktop's back, its spout over the bowl */
+      node.children.push(appliance('sinkTap', [x, /** @type {{ y0: number }} */ (worktop).y0 + settings.installation.sink.tapFromBack, top], 'sink'));
+      /* the trap under its drain, as its maker lets it fit; its outlet at the wall, at its own height (the wall's outlet there) */
+      const fits = trapFit(C.appliance('trap'), y), drain = drainOf(C.appliance('sink'));
+      if (!fits) warn(`${c.name}: the sink's drain is ${y} from the wall: too near for the trap.`);
+      else node.children.push(appliance('trap', [x + drain[0], y + drain[1], top + drain[2]], 'trap', fits));
     }
     /* a basin on the top over it (settings.cutouts.basin: its back fromBack from the top's back), its tap over its tap's hole */
-    const basinCut = c.flags.includes('basin') && c.base && worktop && settings.cutouts?.basin, B = basinCut && C.appliance('basin');
-    if (basinCut && B && worktop) {
-      const top = worktop.h1, by = worktop.y0 + basinCut.fromBack;
-      node.children.push(product('basin', B, [xc - B.body.width / 2, by, top], 'basin'));
-      const T = C.appliance('basinTap'), tapHole = B.holes.find((/** @type {any} */ h) => h.for === 'tap');
-      if (T && tapHole) node.children.push(product('basinTap', T, [xc + tapHole.along - 25, by + tapHole.fromBack - 65, top + B.body.height], 'basin'));
+    const basinCut = c.flags.includes('basin') && c.base && worktop && settings.cutouts?.basin;
+    if (basinCut && C.appliance('basin') && worktop) {
+      const at = [xc, worktop.y0 + basinCut.fromBack, worktop.h1], tap = holeOf(C.appliance('basin'), 'tap');
+      node.children.push(appliance('basin', at, 'basin'));
+      if (C.appliance('basinTap') && tap) node.children.push(appliance('basinTap', at.map((v, k) => v + tap[k]), 'basin'));
     }
     /* legs under a carcass on the plinth (hardwareLayout.leg: from its sides, back and front); a grille in the plinth before it */
-    const leg = C.hardware('leg'), L = settings.hardwareLayout?.leg;
-    if (c.floor && c.legs && leg && L) for (const x of [c.x0 + L.fromSide, c.x1 - L.fromSide]) for (const y of [carcassBack + L.fromBack, carcassFront - L.fromFront]) {
-      cylinder(node, leg.radius, c.h0 - leg.footHeight, [x, y, leg.footHeight + (c.h0 - leg.footHeight) / 2], 'foot', 'legs');
-      cylinder(node, leg.footRadius, leg.footHeight, [x, y, leg.footHeight / 2], 'foot', 'legs');
-    }
-    const grille = C.hardware('plinthGrille'), gl = settings.hardwareLayout?.plinthGrille;
-    if (c.grille && grille && gl) {
-      const w = Math.min(grille.width, c.x1 - c.x0 - 80), g0 = xc - w / 2, b = gl.bottom, t = gl.bottom + grille.height, z = (/** @type {number[]} */ q) => solid(node, q, 'zinc', 'plinth');
-      z([g0, g0 + w, plinthFace, plinthFace + 3, b, b + 5]); z([g0, g0 + w, plinthFace, plinthFace + 3, t - 5, t]); z([g0, g0 + 5, plinthFace, plinthFace + 3, b + 5, t - 5]); z([g0 + w - 5, g0 + w, plinthFace, plinthFace + 3, b + 5, t - 5]);
-      for (let x = g0 + 17; x < g0 + w - 8; x += 12) z([x - 2, x + 2, plinthFace, plinthFace + 2, b + 5, t - 5]);
-    }
+    const L = settings.hardwareLayout?.leg;
+    if (c.floor && c.legs && settings.hardware.leg && L) for (const x of [c.x0 + L.fromSide, c.x1 - L.fromSide]) for (const y of [carcassBack + L.fromBack, carcassFront - L.fromFront]) fit(node, 'leg', [x, y, 0], 'legs', { height: c.h0 });
+    const gl = settings.hardwareLayout?.plinthGrille;
+    if (c.grille && settings.hardware.plinthGrille && gl) fit(node, 'plinthGrille', [xc, plinthFace, gl.bottom], 'plinth', { width: c.x1 - c.x0 - 80 });
     /* measured from what lies on the zero over its columns: the worktop, else the plasterboard; else the group */
     const parent = along.find(d => d.type === 'worktop' && d.item && covers(d.item, c)) || along.find(d => d.type === 'plasterboard' && d.item && covers(d.item, c));
     (parent ? parent.children : units).push(node);
   }
   for (const i of G.items) if (hasTag(i, 'dishwasher')) {
-    const d = draft('dishwasher', 'Dishwasher bay', 'bay', [i.x0, i.x1, carcassBack, frontFace, i.h0, i.h1], i), A = C.appliance('dishwasher');
+    const d = draft('dishwasher', 'Dishwasher bay', 'bay', [i.x0, i.x1, carcassBack, frontFace, i.h0, i.h1], i);
     front(d, i);
-    if (A) {
-      const feet = settings.appliances.dishwasher.feet || 0;
-      if (worktop && feet + A.body.height !== top?.h0) warn(`${placeOf(i)}: the dishwasher on its feet is ${feet + A.body.height}, the worktop's underside ${top?.h0}.`, i.index);
-      d.children.push(product('dishwasher', A, [(i.x0 + i.x1) / 2 - A.body.width / 2, carcassFront - A.body.depth, feet], 'dishwasher'));
+    if (C.appliance('dishwasher')) {
+      const feet = settings.appliances.dishwasher.feet || 0, D = appliance('dishwasher', [(i.x0 + i.x1) / 2, carcassFront, feet], 'dishwasher');
+      if (worktop && D.box[5] !== top?.h0) warn(`${placeOf(i)}: the dishwasher on its feet is ${D.box[5]}, the worktop's underside ${top?.h0}.`, i.index);
+      d.children.push(D);
     }
     units.push(d);
   }
   /* the hood over the hob, on the wall, its bottom at installation.hood.bottom; its chimney up to the ceiling (the room's) */
-  const hob = cutouts.find(k => k.kind === 'hob'), hoodA = C.appliance('hood'), hoodAt = settings.installation?.hood;
-  if (hob && hoodA && hoodAt && worktop) {
-    const d = product('hood', hoodA, [(hob.x0 + hob.x1) / 2 - hoodA.body.width / 2, 0, hoodAt.bottom - 2], 'hood', { worktop: hoodAt.bottom - worktop.h1 });
+  const hob = cutouts.find(k => k.kind === 'hob'), hoodAt = settings.installation?.hood;
+  if (hob && C.appliance('hood') && hoodAt && worktop) {
+    const d = appliance('hood', [(hob.x0 + hob.x1) / 2, 0, hoodAt.bottom], 'hood', { worktop: hoodAt.bottom - worktop.h1 });
     d.ceiling = true;
     units.push(d);
   }
@@ -876,8 +800,8 @@ function carcassBoards(carcass, G, C, warn) {
       part('spacer', 'carcass', [spacer[0], spacer[1], carcassBack, carcassFront, lo, top]);
       if (door.hinge === 'right') s1 = spacer[0]; else s0 = spacer[1];
     }
-    const R = C.hardware('pullOut');   /* on its runners: as long as they, their clearance each side */
-    part('pullOutShelf', 'carcass', [s0 + R.clearance, s1 - R.clearance, carcassFront - R.length, carcassFront, shelfH, shelfH + board], 'shelves');
+    const R = pullOutFit(C.hardware('pullOut'));   /* on its runners: as long as they, their gap each side */
+    part('pullOutShelf', 'carcass', [s0 + R.gap, s1 - R.gap, carcassFront - R.length, carcassFront, shelfH, shelfH + board], 'shelves');
     const above = shelfH + board + P.machineHeight;
     for (let j = 0; j < P.shelvesAbove; j++) adjustableShelf(Math.round(above + ((hi - above) * j) / P.shelvesAbove));
   };

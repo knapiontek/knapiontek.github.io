@@ -3,7 +3,7 @@
 // documents use them: an oven, a microwave, a basin tap, a shower screen, a WC bowl.
 
 import { openCatalog } from '../../library/catalog.js';
-import { shapeOf } from '../../library/shapes.js';
+import { faultsOf, hingeHeights, holeOf, runnerFor, shapeOf, systemDrawer, systemFor, trapFit } from '../../library/shapes.js';
 
 /** @typedef {import('../../types.js').Shape} Shape */
 /** @typedef {import('../../types.js').Part} Part */
@@ -75,5 +75,29 @@ export default async function (check) {
     /* a pipe fitted to its node: as long as the node */
     const pipe = shapeOf(catalog.product('pvc-pipe-90'), [2400, 110, 110]);
     check('pipe: as long as its node', pipe.parts[0].length === 2400 && /** @type {number[]} */ (pipe.parts[0].at)[0] === 1200);
+  }
+
+  /* the makers' rules a room asks for, and what a drawing needs of its product */
+  {
+    const P = (/** @type {string} */ k) => /** @type {any} */ (catalog.product(k)), all = catalog.groups.flatMap(g => catalog.products(g));
+    const faulty = all.filter(k => P(k).draw && faultsOf(P(k)).length).map(k => k + ': ' + faultsOf(P(k)).join(', '));
+    check('faultsOf: every product with a drawing has what it needs' + (faulty.length ? ': not ' + faulty.join(' | ') : ''), faulty.length === 0);
+    check('faultsOf: a hinge without its plate: what it lacks', faultsOf(/** @type {any} */ ({ ...P('blum-clip-top-blumotion-110-71b3550'), plate: undefined })).includes('plate.height'));
+    const hinge = P('blum-clip-top-blumotion-110-71b3550');
+    check('hingeHeights: a 1197 door, three, 100 from its ends', JSON.stringify(hingeHeights(hinge, 0, 1197, [], 18)) === '[100,599,1097]');
+    check('hingeHeights: one at a shelf moved over it, its plate clear (9 + 22)', JSON.stringify(hingeHeights(hinge, 0, 1197, [600], 18)) === '[100,631,1097]');
+    check('hingeHeights: a door over the last row: none', hingeHeights({ ...hinge, perDoor: [{ maxHeight: 900, count: 2 }] }, 0, 1197, [], 18) === null);
+    const D = P('blum-tandembox-antaro-d-500'), M = P('blum-tandembox-antaro-m-500');
+    check('systemFor: D for a front over 350, else M', systemFor(D, M, 351, 350) === D && systemFor(D, M, 350, 350) === M);
+    const S = systemDrawer(D, true, 564, 16);
+    check('systemDrawer: on the carcass\'s bottom 35 up; its bottom 564 − 75, 476 deep from 38; its back 564 − 87, 199 high', S.lift === 35 && S.boards[0].join() === '37.5,526.5,38,514,0,16' && S.boards[1].join() === '43.5,520.5,38,54,16,215');
+    const runners = catalog.variants('hafele-ball-runners-494-02-184').map(P);
+    check('runnerFor: the longest of the family that fits (450 in 499), none under 300', runnerFor(runners, 499)?.length === 450 && runnerFor(runners, 299) === undefined);
+    const trap = P('deante-space-saver-zxy-9917');
+    check('trapFit: as short as it may be, its outlet at the wall; a pipe beyond its reach; none too near', JSON.stringify(trapFit(trap, 320)) === '{"drop":250,"reach":234,"toWall":0}'
+      && trapFit(trap, 400)?.toWall === 34 && trapFit(trap, 250) === null);
+    check('holeOf: a basin\'s tap hole, over it, on the basin', holeOf(P('catalano-green-lux-60x40-white'), 'tap')?.join() === '0,55,140');
+    const pin = shapeOf(P('shelf-pins-5-zinc'), undefined, { hand: 'left' });
+    check('a fitting placed by its anchor: a shelf pin at the side\'s face, under the shelf (its hole\'s marker 12 across)', pin.anchor?.join() === '0.5,6,9' && pin.parts.some(p => p.layer === 'holes'));
   }
 }

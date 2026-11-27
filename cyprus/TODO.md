@@ -30,6 +30,7 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] `view3d.js`: the turn's ball a globe fixed in the world (it turns with the drawing), lit from the viewer, with a highlight
 - [x] cabinets: the cup handle ENERYDA as IKEA gives it (89 × 22 × 30, holes 64 apart, Ø5: layer Holes); the hinge's plate 8.5 high (Blum)
 - [ ] cabinets: the makers' data still to check against their drawings: the hinge plate's outline and the arm (Blum gives no sizes); the Häfele runners' holes (37, 229, 421); MOVENTO's holes; the bins' place in the drawer
+- [x] the library's API: the makers' rules asked of `library/shapes.js`, every fitting a product node placed by its anchor; `cabinets.js` reads no product's fields (the model unchanged, part for part)
 - [ ] the view: opening fronts and drawers without clashing with the turn (the left button): a click with no drag opens or closes the front under the cursor (the drag turns), Space in Walk (as in Quake); to settle
 - [ ] cabinets: the holes' checks (a hole in a board lying flat, two holes in one place); moving fronts and drawers
 - [x] cabinets, stage 5: the other rooms (bathrooms 5 and 7, wardrobes 3, 4 and 8, bedroom 6): their cabinets and scenes (the prototype's placements through its turned room axes, checked against analysis.md § 13); fixtures (the library's products: WC, frame, mirror, shower, bath, radiator, riser), the casings less their cuts, the basin and its tap on the vanity's top; layers Bath and Wall cabinet
