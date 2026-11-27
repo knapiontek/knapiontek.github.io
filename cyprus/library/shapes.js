@@ -250,6 +250,40 @@ function basinTap(A) {
   return D.S;
 }
 
+/* ---------- a kitchen tap on the worktop, as its maker draws it: its body on the worktop, the tube leaning forward to its bend,
+   the spout over the sink (toward the front), the lever at its side; in the fittings' metal. Its zero: the back of its body,
+   on the worktop ---------- */
+/** @param {any} A */
+function kitchenTap(A) {
+  const r = A.base.diameter / 2, rt = A.tube / 2, back = A.length - A.spout.reach, x = r, y = back, top = A.height - rt;
+  const D = describe([A.base.diameter + 12, A.length, A.height]), { cylinder } = D;
+  cylinder(r, A.base.height, 'metal', [x, y, A.base.height / 2], H, 32);   // the body
+  const dy = A.bend, dh = top - A.base.height, l = Math.hypot(dy, dh);
+  cylinder(rt, l, 'metal', [x, y + dy / 2, A.base.height + dh / 2], [0, dy / l, dh / l], 24);   // the tube, leaning to its bend
+  cylinder(rt, A.spout.reach - dy, 'metal', [x, y + (dy + A.spout.reach) / 2, top], Y, 24);   // the spout
+  cylinder(rt * 0.8, top - A.spout.height, 'metal', [x, y + A.spout.reach, (top + A.spout.height) / 2], H, 24);   // its head, down to the outlet
+  D.box([2 * r, 2 * r + 12, y - 9, y + A.lever.length - 9, A.lever.height - 18, A.lever.height], 'metal');   // the lever, at the side
+  return D.S;
+}
+
+/* ---------- a sink's trap, as its maker draws it: the drain in the bowl, the arm back to the trap, the trap's body down to its
+   bottom, the outlet toward the wall and the pipe into it. Its zero: the trap's bottom, at the wall (y 0), at its left.
+   options.drop: from the drain's rim to the trap's bottom, options.reach: from the drain's axis to the trap's, both within the
+   maker's ranges; options.toWall: the pipe from the outlet to the wall ---------- */
+/** @param {any} A @param {ShapeOptions} options */
+function trap(A, { drop = A.drop[0], reach = A.reach[0], toWall = 0 }) {
+  const R = A.drain.diameter / 2, ro = A.outlet.diameter / 2, rs = A.outlet.socket / 2, rb = 30, x = R;
+  const yr = toWall + A.outlet.length, yd = yr + reach, arm = drop - 45;
+  const D = describe([2 * R, yd + R, drop]), { cylinder } = D;
+  cylinder(R, 4, 'pipe', [x, yd, drop - 2], H, 32);   // the drain's rim, in the bowl
+  cylinder(35, 60, 'pipe', [x, yd, drop - 34], H, 24);   // its body, under the bowl
+  cylinder(ro, reach, 'pipe', [x, (yd + yr) / 2, arm], Y, 16);   // the arm, back to the trap
+  cylinder(rb, arm + ro, 'pipe', [x, yr, (arm + ro) / 2], H, 24);   // the trap's body, down to its bottom
+  cylinder(ro, A.outlet.length, 'pipe', [x, yr - A.outlet.length / 2, A.outlet.height], Y, 16);   // the outlet
+  if (toWall > 0) cylinder(rs, toWall, 'pipe', [x, toWall / 2, A.outlet.height], Y, 16);   // the pipe into the wall
+  return D.S;
+}
+
 /* ---------- the fixtures of a bathroom: x along the wall, y out of it ---------- */
 /* a mirror with its light: the glass on a frame of light */
 /** @param {any} A @param {Vec} size */
@@ -359,6 +393,8 @@ function described(product, size, options = {}) {
     case 'coffeeMachine': return coffeeMachine(A);
     case 'basin': return basin(A);
     case 'basinTap': return basinTap(A);
+    case 'kitchenTap': return kitchenTap(A);
+    case 'trap': return trap(A, options);
     case 'mirror': return mirror(A, needs('a mirror'));
     case 'wallCabinet': return wallCabinet(A, needs('a wall cabinet'));
     case 'showerScreen': return showerScreen(A, needs('a shower screen'), options);

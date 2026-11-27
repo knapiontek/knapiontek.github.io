@@ -66,7 +66,7 @@
 /** @typedef {{ kind: 'spot' | 'point', at: Vec, target?: Vec, color: string, intensity: number, distance: number, angle?: number, penumbra?: number, decay: number, shadow: boolean }} Light  a light a product carries, lit at night */
 /** @typedef {{ box: number[], name: string }} Envelope  a box documents give the sizes of: [x0, x1, y0, y1, h0, h1] */
 /** @typedef {{ size: Vec, parts: Part[], movers: Mover[], lights: Light[], envelopes: Envelope[] }} Shape  a product as drawn: size, its outer box */
-/** @typedef {{ feet?: number, worktop?: number, opens?: 'in' | 'out', angle?: number }} ShapeOptions  what the room decides: an oven's feet (mm), how far below a hood the worktop is, which way a shower door opens and how far (degrees) */
+/** @typedef {{ feet?: number, worktop?: number, opens?: 'in' | 'out', angle?: number, drop?: number, reach?: number, toWall?: number }} ShapeOptions  what the room decides: an oven's feet (mm), how far below a hood the worktop is, which way a shower door opens and how far (degrees); a trap's drop and reach (within its maker's ranges) and its pipe to the wall */
 /** @typedef {(product: Product, size?: Vec, options?: ShapeOptions) => Shape} ShapeOf  a product's shape; size: its node's, for what fits to it (a pipe's length, a hood's chimney up to the ceiling) */
 
 export {};

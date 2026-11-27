@@ -117,6 +117,7 @@ const REQUIRED_SETTINGS = [
   [has => !has.grid, ['shelf.perDoor']],
   [has => has.type.oven || has.tag.fridge || has.tag.freezer, ['shelf.ventGap']],
   [has => has.type.worktop, ['crossRails.depth', 'crossRails.hobFront', 'crossRails.hobPanelGap', 'worktop.overhang', 'worktop.endPanelOverhang']],
+  [has => has.tag.sink, ['installation.sink.tapFromBack']],
   [has => has.tag.coffee, ['pullOutShelf.lift', 'pullOutShelf.spacerAbove', 'pullOutShelf.machineHeight', 'pullOutShelf.shelvesAbove']],
   [has => has.tag.doorDrawers, ['doorDrawers.count', 'doorDrawers.sideHeight', 'doorDrawers.lift']],
   [has => has.drawer && !has.boardDrawers, ['drawers.frontAbove']],
@@ -147,7 +148,9 @@ const REQUIRED_HARDWARE = [
 /* the appliances' data, by what the file holds: [when, role, dotted paths in the product] */
 /** @type {[(has: any) => boolean, string, string[]][]} */
 const REQUIRED_APPLIANCE = [
-  [has => has.tag.sink, 'sink', ['cutout.width', 'cutout.depth']],
+  [has => has.tag.sink, 'sink', ['cutout.width', 'cutout.depth', 'bowl.height']],
+  [has => has.tag.sink, 'sinkTap', ['height', 'length', 'base.diameter', 'base.height', 'tube', 'bend', 'spout.height', 'spout.reach', 'lever.height', 'lever.length']],
+  [has => has.tag.sink, 'trap', ['drain.diameter', 'drop', 'reach', 'outlet.height', 'outlet.length', 'outlet.diameter', 'outlet.socket']],
   [has => has.tag.hob, 'hob', ['cutout.width', 'cutout.depth']],
   [has => has.tag.basin, 'basin', ['holes']]
 ];
@@ -705,16 +708,14 @@ function groupNode(G, C, warn) {
       if (cut.kind === 'hob') node.children.push(product('hob', A, [x - A.glass.width / 2, y - A.glass.depth / 2, top - A.body.height], 'hob'));
       else {
         node.children.push(product('sink', A, [x - A.body.width / 2, y - A.body.depth / 2, top - A.bowl.height - A.wall], 'sink'));
-        const I = settings.installation?.sink;
-        if (I) {
-          const ty = /** @type {{ y0: number }} */ (worktop).y0 + I.tapFromBack, rim = top + A.rim, metal = 'metal';
-          cylinder(node, 28, 8, [x, ty, rim + 4], metal, 'sink'); cylinder(node, 20, 172, [x, ty, rim + 94], metal, 'sink'); cylinder(node, 21, 6, [x, ty, rim + 183], metal, 'sink');
-          cylinder(node, 11, 220, [x, ty + 110, rim + 166], metal, 'sink', [0, 1, 0]); cylinder(node, 13, 26, [x, ty + 214, rim + 152], metal, 'sink');
-          const from = top - A.bowl.height - A.wall, yb = carcassBack + 31;
-          cylinder(node, 20, from - I.trapTop, [x, y, (from + I.trapTop) / 2], 'pipe', 'trap'); cylinder(node, 20, y - yb, [x, (y + yb) / 2, I.trapTop], 'pipe', 'trap', [0, 1, 0]);
-          solid(node, [x - 70, x + 70, carcassBack + 6, carcassBack + 56, I.wallOutlet - 25, I.trapTop + 25], 'pipe', 'trap');
-          cylinder(node, 20, yb + 10, [x + 105, (yb + 10) / 2, I.wallOutlet], 'pipe', 'trap', [0, 1, 0]);   // the outlet, to the wall
-        }
+        /* the tap behind the sink, installation.sink.tapFromBack from the worktop's back, its spout over the bowl */
+        const T = C.appliance('sinkTap'), ty = /** @type {{ y0: number }} */ (worktop).y0 + settings.installation.sink.tapFromBack;
+        node.children.push(product('sinkTap', T, [x - T.base.diameter / 2, ty - (T.length - T.spout.reach), top], 'sink'));
+        /* the trap under it, as short as its maker allows (the drawer under it keeps its room); its outlet ends at the wall, at its
+           own height (the wall's outlet there); beyond the maker's reach, a pipe from it to the wall */
+        const R = C.appliance('trap'), rim = top - A.bowl.height, drop = R.drop[0], reach = Math.min(y - R.outlet.length, R.reach[1]), toWall = y - reach - R.outlet.length;
+        if (reach < R.reach[0]) warn(`${c.name}: the sink's drain is ${y} from the wall; the trap (${R.reach[0]} + ${R.outlet.length}) needs more.`);
+        else node.children.push(product('trap', R, [x - R.drain.diameter / 2, 0, rim - drop], 'trap', { drop, reach, toWall }));
       }
     }
     /* a basin on the top over it (settings.cutouts.basin: its back fromBack from the top's back), its tap over its tap's hole */

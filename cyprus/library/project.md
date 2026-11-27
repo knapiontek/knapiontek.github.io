@@ -6,7 +6,7 @@ it imports nothing, draws nothing; its types are the contracts of `types.js`.
 | File / folder | What |
 |---|---|
 | `catalog.js` | `openCatalog()`: the catalog (`types.js: Catalog`) from the JSON files: a product by key, a group's products, a family's variants, materials, textures read once, shops |
-| `shapes.js` | `shapeOf(product, size?, options?)`: a product as parts (`types.js: Shape`) in its own axes, by its field `draw`; materials by key, or `metal` for the fittings' (Finish) |
+| `shapes.js` | `shapeOf(product, size?, options?)`: a product as parts (also a kitchen tap, a sink's trap: drop, reach and the pipe to the wall its options) (`types.js: Shape`) in its own axes, by its field `draw`; materials by key, or `metal` for the fittings' (Finish) |
 | `catalog.json` | the catalog's index: the product groups, in order |
 | `materials.json` | how each material looks: colour, surface, the 2D section fill |
 | `shops.json` | the shops and workshops |

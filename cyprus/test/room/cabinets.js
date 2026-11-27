@@ -85,7 +85,10 @@ export default async function (check) {
     check('handles: a bar in the room\'s metal on every front with a handle', parts(g1).filter(p => p.layer === 'handles' && p.material === 'metal').length === 3 * 6 && parts(g2).filter(p => p.layer === 'handles').length === 3 * 14);
     check('legs: four under a carcass on the plinth', parts(g1).filter(p => p.layer === 'legs').length === 2 * 4 * 4);
     check('a grille in the plinth before the oven\'s and the fridge\'s carcasses', (at(g2, 'plasterboard_1/K25')?.parts || []).some(p => p.layer === 'plinth') && (at(g2, 'plasterboard_1/K27')?.parts || []).some(p => p.layer === 'plinth'));
-    check('the tap and the trap at the sink', (at(g1, 'worktop/K12')?.parts || []).some(p => p.layer === 'trap') && (at(g1, 'worktop/K12')?.parts || []).filter(p => p.layer === 'sink').length === 5);
+    const tap = /** @type {any} */ (at(g1, 'worktop/K12/sinkTap')), trap = /** @type {any} */ (at(g1, 'worktop/K12/trap'));
+    check('the tap: a product (Deante Silia), on the worktop behind the sink', tap?.type === 'product' && tap.product === 'deante-silia-bqs-z73m' && tap.layer === 'sink');
+    check('the trap: a product (Deante ZXY 9917), as short as its maker allows, its outlet at the wall (drain 320 from it: reach 234)',
+      trap?.product === 'deante-space-saver-zxy-9917' && trap.options.drop === 250 && trap.options.reach === 234 && trap.options.toWall === 0);
     /* stage 4b: inside the carcasses */
     const k23 = at(g2, 'plasterboard_1/K23')?.parts || [], door = at(g2, 'plasterboard_1/K23/cabinet_2')?.parts || [];
     check('hinges: three on the 1200 door, two on the 720 one (plate and arm on the side, the cup in the door)', k23.filter(p => p.layer === 'hardware' && p.form === 'box').length === 2 * (3 + 2)

@@ -562,9 +562,28 @@ export function createView3d({ catalog, canvas, light, edges }) {
       seatTarget(p, dir); controls.update(); redraw();
     }, { capture: true, passive: false });
     controls.enableRotate = false;   // the turn is ours: about the point under the cursor
-    const ball = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xd9822b, depthTest: false, transparent: true, opacity: 0.85, fog: false }));
+    /* the ball: a globe fixed in the world (its poles on h), so it turns with the drawing; segments of two tones and their
+       meridians and parallels show the turn; lit from the viewer's upper left with a highlight, whatever the scene's light */
+    const globe = new THREE.SphereGeometry(1, 48, 32);
+    globe.rotateX(Math.PI / 2);
+    const ball = new THREE.Mesh(globe, new THREE.ShaderMaterial({
+      depthTest: false, transparent: true,
+      vertexShader: 'varying vec2 vUv; varying vec3 vN; void main() { vUv = uv; vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `varying vec2 vUv; varying vec3 vN;
+        void main() {
+          vec3 n = normalize(vN), L = normalize(vec3(-0.45, 0.6, 0.65));
+          float lon = vUv.x * 12.0, lat = vUv.y * 6.0;
+          float tone = mod(floor(lon) + floor(lat), 2.0);
+          vec3 base = mix(vec3(0.85, 0.51, 0.17), vec3(0.98, 0.80, 0.52), tone);
+          float line = max(1.0 - smoothstep(0.0, 0.06, min(fract(lon), 1.0 - fract(lon))), 1.0 - smoothstep(0.0, 0.08, min(fract(lat), 1.0 - fract(lat))));
+          base = mix(base, vec3(0.45, 0.22, 0.05), line * 0.6);
+          float diffuse = max(dot(n, L), 0.0), spec = pow(max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0), 28.0);
+          float rim = pow(1.0 - max(n.z, 0.0), 3.0);
+          gl_FragColor = vec4(base * (0.32 + 0.78 * diffuse) + vec3(spec * 0.6) + vec3(0.25, 0.18, 0.1) * rim, 0.94);
+        }`
+    }));
     ball.renderOrder = 999; ball.visible = false; scene.add(ball);
-    const showBall = (/** @type {any} */ p) => { ball.position.copy(p); ball.scale.setScalar(Math.max(camera.position.distanceTo(p) * 0.008, 0.004)); ball.visible = true; redraw(); };
+    const showBall = (/** @type {any} */ p) => { ball.position.copy(p); ball.scale.setScalar(Math.max(camera.position.distanceTo(p) * 0.012, 0.006)); ball.visible = true; redraw(); };
     const pointers = new Set();
     /** @type {{ x: number, y: number } | null} */ let orbit = null;
     /** @type {any} */ let pivot = null;
