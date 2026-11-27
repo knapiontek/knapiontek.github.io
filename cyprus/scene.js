@@ -187,7 +187,7 @@ export function createScene({ catalog, canvas, light, edges }) {
   let H = null;
   /** @type {{ mesh: any, layer?: string, floor?: string, finish: { layer: string, on: any, off: any } | null, base: any }[]} the meshes, each of one group */
   let MESHES = [];
-  /** @type {{ mesh: any, layer?: string, floor?: string, hideWhen: { layer?: string, floor?: string }[] }[]} */
+  /** @type {{ mesh: any, layer?: string, floor?: string, hideWhen: { layer?: string, floor?: string }[][] }[]} */
   let LINES = [];
   /** @type {Map<string, { layer?: string, floor?: string }>} a group's layer and floor */
   let GROUPS = new Map();
@@ -271,9 +271,9 @@ export function createScene({ catalog, canvas, light, edges }) {
   }
   /* Edges from the topology of the pieces. For each segment between two welded points and each group on it: two pieces of the
      group in one plane are a seam (no line) unless they are of two parts; two outside pieces at an angle are a corner (always a
-     line); one outside piece continued in its plane by another group's face (open, or itself against a third solid: a wall
-     behind a balustrade's end) hides while that group shows; otherwise the line hides exactly while every group that closes it
-     is shown. */
+     line); the group's pieces in one plane, continued in it by another group's face (open, or itself against a third solid: a
+     wall behind a tread's end), make a joint: it hides while that group shows, whatever lies against them; otherwise the line
+     hides exactly while every group that closes it is shown. */
   /** @param {Piece[]} pieces */
   function lines(pieces) {
     /** @type {Map<string, { a: any, b: any, on: Piece[] }>} */
@@ -287,7 +287,7 @@ export function createScene({ catalog, canvas, light, edges }) {
       }
     }
     const same = (/** @type {Vec3} */ m, /** @type {Vec3} */ n) => dot3(m, n) > 1 - 1e-9;
-    /** @type {Map<string, { group: string, hideWhen: string[], p: number[] }>} */
+    /** @type {Map<string, { group: string, hideWhen: string[][], p: number[] }>} */
     const out = new Map();
     for (const s of segs.values()) {
       /** @type {Map<string, Piece[]>} */
@@ -295,14 +295,21 @@ export function createScene({ catalog, canvas, light, edges }) {
       for (const f of s.on) (groups.get(f.group) || groups.set(f.group, []).get(f.group))?.push(f);
       for (const [g, fs] of groups) {
         if (fs.length === 2 && same(fs[0].n, fs[1].n) && fs[0].cell.part === fs[1].cell.part) continue;   // a seam
-        const outside = fs.filter(f => !f.cover), unless = /** @type {string[]} */ (fs.filter(f => f.cover).map(f => f.cover));
-        let always = outside.length >= 2;
-        if (outside.length === 1) {
-          const next = s.on.find(o => o.group !== g && same(o.n, outside[0].n));   // continued by another group's face, open or against a third solid
-          if (next) unless.push(next.group); else always = true;
+        const outside = fs.filter(f => !f.cover), covers = /** @type {string[]} */ ([...new Set(fs.filter(f => f.cover).map(f => f.cover))]);
+        /** the face of another group that continues a plane of this group on the segment, open or against a third solid @param {Vec3} n */
+        const nextTo = n => s.on.find(o => o.group !== g && same(o.n, n));
+        /** @type {string[][]} each a set of groups that, all shown, hide the line */
+        const hideWhen = [];
+        if (outside.length < 2) {
+          if (!outside.length && covers.length) hideWhen.push(covers);                         // inside what covers it
+          const planes = fs.filter((f, i) => fs.findIndex(o => same(o.n, f.n)) === i);
+          if (planes.length === 1) { const next = nextTo(planes[0].n); if (next) hideWhen.push([next.group]); }   // a joint in one plane
+          else if (planes.length === 2) for (const [a, b] of [[planes[0], planes[1]], [planes[1], planes[0]]]) {   // a corner: one side goes on in another group, the other is covered
+            const next = nextTo(a.n), cover = fs.filter(f => same(f.n, b.n)).every(f => f.cover) ? fs.filter(f => same(f.n, b.n)).map(f => /** @type {string} */ (f.cover)) : null;
+            if (next && cover) hideWhen.push([...new Set([next.group, ...cover])]);
+          }
         }
-        const hideWhen = always ? [] : [...new Set(unless)];
-        const k = g + '!' + hideWhen.sort().join('/');
+        const k = g + '!' + hideWhen.map(h => h.sort().join('+')).sort().join('/');
         if (!out.has(k)) out.set(k, { group: g, hideWhen, p: [] });
         out.get(k)?.p.push(s.a[0], s.a[1], s.a[2], s.b[0], s.b[1], s.b[2]);
       }
@@ -311,7 +318,7 @@ export function createScene({ catalog, canvas, light, edges }) {
       const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(v.p, 3));
       const mesh = new THREE.LineSegments(geo, edgeLook); world.add(mesh);
       const g = GROUPS.get(v.group) || {};
-      LINES.push({ mesh, layer: g.layer, floor: g.floor, hideWhen: v.hideWhen.map(k => GROUPS.get(k) || {}) });
+      LINES.push({ mesh, layer: g.layer, floor: g.floor, hideWhen: v.hideWhen.map(h => h.map(k => GROUPS.get(k) || {})) });
       Object.assign(mesh.userData, { layer: g.layer, floor: g.floor, hideWhen: v.hideWhen });
     }
   }
@@ -336,14 +343,14 @@ export function createScene({ catalog, canvas, light, edges }) {
   }
 
   /* ================= WHAT THE PANEL SWITCHES =================
-     A mesh shows when its layer and its floor are on; with its finish's layer off, its raw material; a line also hides while every
-     group that closes it shows. */
+     A mesh shows when its layer and its floor are on; with its finish's layer off, its raw material; a line also hides while all
+     the groups of one of its hiding sets show. */
   /** @param {(key: string | undefined) => boolean} on  a layer's or a floor's key, or none (on) */
   function visible(on) {
     ON = on;
     const shown = (/** @type {{ layer?: string, floor?: string }} */ g) => !!on(g.layer) && !!on(g.floor);
     for (const g of MESHES) { g.mesh.visible = shown(g); g.mesh.material = g.finish ? (on(g.finish.layer) ? g.finish.on : g.finish.off) : g.base; }
-    for (const l of LINES) l.mesh.visible = showEdges && shown(l) && !(l.hideWhen.length && l.hideWhen.every(shown));
+    for (const l of LINES) l.mesh.visible = showEdges && shown(l) && !l.hideWhen.some(h => h.every(shown));
     redraw();
   }
   /** @param {boolean} on */

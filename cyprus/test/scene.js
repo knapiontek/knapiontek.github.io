@@ -46,9 +46,12 @@ export default async function (check) {
       { id: 'wall', type: 't', offset: [0, 0, 0], size: [1, 1, 1], layer: 'b', parts: [{ form: 'box', box: [0, 240, -1000, 0, 0, 1000], material: 'concrete' }] },
       { id: 'balustrade', type: 't', offset: [0, 0, 0], size: [1, 1, 1], layer: 'c', parts: [{ form: 'box', box: [-500, 0, -100, 0, 0, 500], material: 'concrete' }] }] }));
     scene.show(three, three.root);
-    const joint = scene.lines().filter((/** @type {any} */ l) => l.visible).some((/** @type {any} */ l) => { const p = l.geometry.attributes.position.array;
+    const joint = () => scene.lines().filter((/** @type {any} */ l) => l.visible).some((/** @type {any} */ l) => { const p = l.geometry.attributes.position.array;
       for (let i = 0; i < p.length; i += 6) if (p[i] === 0 && p[i + 3] === 0 && p[i + 1] === 0 && p[i + 4] === 0 && Math.min(p[i + 2], p[i + 5]) < 500) return true; return false; });
-    check('edges: a joint in one plane hides, also where the wall is against a third solid', !joint);
+    check('edges: a joint in one plane hides, also where the wall is against a third solid', !joint());
+    scene.visible(k => k !== 'c');
+    check('edges: the third solid hidden, the joint still without a line (no marks where it lay)', !joint());
+    scene.visible(() => true);
   }
 
   /* ---------- the house ---------- */
