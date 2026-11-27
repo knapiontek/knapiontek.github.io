@@ -16,7 +16,7 @@
     "fronts": { "name": "Fronts", "layers": { "doorsAndDrawers": "Doors and drawers", "handles": "Handles", "strips": "Front strips", "frontPanels": "Panels", "plinth": "Plinth" } },
     "worktops": { "name": "Worktops", "layers": { "worktop": "Worktop", "endPanels": "End panels", "wallPanel": "Wall panel" } },
     "appliances": { "name": "Appliances", "layers": { "sink": "Sink", "trap": "Trap", "hob": "Hob", "hood": "Hood", "oven": "Oven", "microwave": "Microwave", "coffee": "Coffee machine", "fridge": "Fridge", "dishwasher": "Dishwasher" } },
-    "sanitary": { "name": "Sanitary", "layers": { "basin": "Basin", "wc": "WC", "shower": "Shower", "mirror": "Mirror", "radiator": "Radiator" } },
+    "sanitary": { "name": "Sanitary", "layers": { "basin": "Basin", "bath": "Bath", "wc": "WC", "shower": "Shower", "mirror": "Mirror", "wallCabinet": "Wall cabinet", "radiator": "Radiator" } },
     "builtIns": { "name": "Built-ins", "layers": { "casings": "Casings", "plasterboard": "Plasterboard" } },
     "installations": { "name": "Installations", "layers": { "riser": "Riser", "wcFrame": "WC frame" } },
     "lights": { "name": "Lights", "layers": { "pendants": "Pendants", "downlights": "Downlights" } }

@@ -17,4 +17,6 @@ What stands in the rooms. A room's things know nothing of the house; its scene s
 
 ## The tree
 
-A group → what runs along it (worktop, end panels, wall panel, plasterboard, strips, plinth, front panels, an island's back panel) → the carcasses under the worktop, else the plasterboard over their columns, else the group, measured from it (`carcass.offset`) → their modules (cabinet, drawer, oven, microwave) and front panels. A dishwasher's bay in the row. Spaces build nothing (stage 3: an inset panel). A group knows no other: where it meets one, its spaces stand in for it.
+A group → what runs along it (worktop, end panels, wall panel, plasterboard, strips, plinth, front panels, an island's back panel) → the carcasses under the worktop, else the plasterboard over their columns, else the group, measured from it (`carcass.offset`) → their modules (cabinet, drawer, oven, microwave) and front panels. A dishwasher's bay in the row. A space at a carcass's end: an inset panel in it.
+
+Each node carries its bodies (`parts`, boxes in its axes): a carcass its boards (layers `boards`, `backs`, `shelves`), a module its front (`doorsAndDrawers`; a shaker's frame round a recessed panel), the rest its own board. Their material: `board:` and the board's key; the scene gives it the board's look. A group knows no other: where it meets one, its spaces stand in for it.

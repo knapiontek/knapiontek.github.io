@@ -10,7 +10,8 @@
 // boards of the library: 'board:' and the product's key): the carcasses' boards, the fronts, the worktop, panels, strips,
 // plinths, the worktop's cut-outs; the handles, legs and plinth grilles; the tap and the trap. The appliances are nodes of
 // their own, drawn by the library (library/shapes.js): built in their carcass, in the worktop's cut-outs, the hood over the hob
-// (up to the ceiling: room/assembly.js). The drawers' boxes, the hinges, runners and holes come later.
+// (up to the ceiling: room/assembly.js). Inside: hinges, bumpers, shelf pins, the drawers' boxes and the system's metal, bins,
+// cutlery inserts, drawers behind doors; the holes' markers (layer holes).
 
 import { pointToModel, partToModel } from '../core/tools.js';
 import { shapeOf } from '../library/shapes.js';
@@ -403,7 +404,7 @@ function groupNode(G, C, warn) {
   const product = (role, A, zero, layer, options) => {
     const size = shapeOf(A, undefined, options).size, [x, y, h] = zero;
     return { id: role, name: A.name, type: 'product', box: [x, x + size[0], y, y + size[1], h, h + size[2]], layer, children: [], bodies: [],
-      product: C.settings.appliances[role === 'fridge' ? 'fridgeFreezer' : role].product, ...(options ? { options } : {}) };
+      product: C.settings.appliances[{ fridge: 'fridgeFreezer' }[role] || role].product, ...(options ? { options } : {}) };
   };
   /** its own box, as one board of its use @param {Draft} d @param {string} use */
   const whole = (d, use) => board(d, use, d.box);
@@ -675,6 +676,14 @@ function groupNode(G, C, warn) {
           cylinder(node, 20, yb + 10, [x + 105, (yb + 10) / 2, I.wallOutlet], 'pipe', 'trap', [0, 1, 0]);   // the outlet, to the wall
         }
       }
+    }
+    /* a basin on the top over it (settings.cutouts.basin: its back fromBack from the top's back), its tap over the tap's hole */
+    const basinCut = c.flags.includes('basin') && c.base && worktop && settings.cutouts?.basin, B = basinCut && C.appliance('basin');
+    if (basinCut && B && worktop) {
+      const top = worktop.h1, by = worktop.y0 + basinCut.fromBack;
+      node.children.push(product('basin', B, [xc - B.body.width / 2, by, top], 'basin'));
+      const T = C.appliance('basinTap'), tapHole = basinCut.holes?.find((/** @type {any} */ h) => h.for === 'tap');
+      if (T && tapHole) node.children.push(product('basinTap', T, [xc + tapHole.along - 25, worktop.y0 + tapHole.fromBack - 65, top + B.body.height], 'basin'));
     }
     /* legs under a carcass on the plinth (hardwareLayout.leg: from its sides, back and front); a grille in the plinth before it */
     const leg = C.hardware('leg'), L = settings.hardwareLayout?.leg;

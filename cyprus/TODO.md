@@ -24,7 +24,8 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] cabinets, stage 3: the bodies: carcass boards (sides, rails, tops, backs, shelves, inset panels, the pull-out shelf), shaker fronts, worktop, end panels, wall panel, strips and back strips, plinth, plasterboard; the boards' looks in `scene.js` (`board:`); the kitchen's scene corrected (group 2 by the West wall, the island before group 1); the kitchen in 3D
 - [ ] cabinets: a board's bare edges (its core), the decor's grain
 - [x] cabinets, stage 4a: the appliances as the library's products in their places (oven, microwave, fridge-freezer, dishwasher, coffee machine, sink and hob in the worktop's cut-outs, the hood up to the ceiling); handles (a bar), legs, plinth grilles, the tap, the trap; `scene.js` draws every form (ring, disc, plane, text, sphere, torus, extrude, tube, mesh)
-- [ ] cabinets, stage 4b: hinges, bumpers, shelf pins, the drawers' boxes and runners, bins, the cutlery insert, drawers behind doors; holes (layer Holes); the cup handle
+- [x] cabinets, stage 4b: hinges (plate, arm, cup; over a shelf they meet), hinge posts, bumpers, shelf pins, the system drawers (bottom, back, sides, runners, gallery rails), bins, the inner drawer and its cutlery insert, drawers behind doors, drawers of board; the holes' markers (layer Holes)
+- [ ] cabinets: the cup handle (ENERYDA) for the bar; the holes' checks (a hole in a board lying flat, two holes in one place); moving fronts and drawers
 - [ ] cabinets, stage 5: the other rooms (bathrooms, wardrobes, bedroom 6); fixtures and lamps in the scenes
 - [ ] tiles
 - [ ] `plan.js` (root): plans and dimensions
