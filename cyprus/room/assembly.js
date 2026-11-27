@@ -2,7 +2,9 @@
 // room/assembly.js: what stands in the rooms, from their scenes (room/<room>.scene.json, format scene): a room's scene places
 // its things and nothing else: each group of its cabinets (room/<room>.cabinets.json, built by room/cabinets.js, which knows no
 // room) and each fixture (a product of the library: a WC, a mirror, a shower) by its zero, at the wall, at its left end as one
-// sees its front, and the way it faces; what the owner builds (a casing: a box less its cuts); and the room's one metal. A room has a scene when its node lists
+// sees its front, and the way it faces; what the owner builds (a casing: a box less its cuts); its lamps (a downlight in the
+// ceiling, a pendant over a table), lit at night; and the room's one metal. The ceiling: the lowest slab or ceiling of the
+// house over the room. A room has a scene when its node lists
 // it in files. Adds them under the room's node: the hierarchy grows from the house down. What reaches the ceiling (a hood's
 // chimney) is made as tall as the room over it.
 
@@ -17,6 +19,46 @@ import { pointToModel } from '../core/tools.js';
 const VERSION = 1;   // of the format scene
 /** @type {Record<string, number>} the way a group's fronts face: its turn (its y, toward the wall, the other way) */
 const FRONT = { S: 0, E: 1, N: 2, W: 3 };
+
+/**
+ * The ceiling over a room, from its floor: the lowest slab or ceiling of the house over its footprint; none: the room's height.
+ * @param {Hierarchy} H @param {HierarchyNode} room
+ */
+function ceilingOver(H, room) {
+  const r = H.box(room);
+  let low = r[5];
+  H.walk(n => {
+    if (n.type !== 'slab' && n.type !== 'ceiling') return;
+    const b = H.box(n);
+    if (b[0] < r[1] && b[1] > r[0] && b[2] < r[3] && b[3] > r[2] && b[4] > r[4] + 100) low = Math.min(low, b[4]);
+  });
+  return low - r[4];
+}
+
+/**
+ * A lamp's bodies and lights, in its node's axes (its zero on the floor under it): a downlight in the ceiling (a tube, its bulb,
+ * a spot down); a pendant (a cable, a dome shade, a ring in the room's metal, a bulb; a soft point and a spot down), its shade's
+ * rim at bottom.
+ * @param {string} kind @param {number} C  the ceiling @param {number} [bottom]
+ * @returns {{ parts: import('../types.js').Part[], lights: import('../types.js').Light[] }}
+ */
+function lampOf(kind, C, bottom = 1750) {
+  const UP = [0, 0, 1], DOWN = [0, 0, -1];
+  if (kind === 'downlight') return {
+    parts: [{ form: 'cylinder', radius: [35, 35], length: 100, segments: 40, open: true, side: 'double', at: [0, 0, C - 50], axis: UP, material: 'tube' },
+      { form: 'disc', radius: [27], segments: 32, at: [0, 0, C - 85], axis: DOWN, material: 'bulb' }],
+    lights: [{ kind: 'spot', at: [0, 0, C - 90], target: [0, 0, 0], color: '#fff0dc', intensity: 11, distance: 0, angle: 1.0, penumbra: 1, decay: 2, shadow: false }] };
+  const h = bottom;
+  return {
+    parts: [{ form: 'cylinder', radius: [2, 2], length: C - h - 90, segments: 6, at: [0, 0, (C + h + 90) / 2], axis: UP, material: 'gasket' },
+      { form: 'sphere', radius: [150], segments: 32, arc: [0, Math.PI / 2], at: [0, 0, h + 60], material: 'blackMetal' },
+      { form: 'sphere', radius: [148], segments: 32, arc: [0, Math.PI / 2], side: 'back', at: [0, 0, h + 60], material: 'shadeInside' },
+      { form: 'torus', radius: [150], tube: 4, segments: 48, at: [0, 0, h + 60], axis: UP, material: 'metal' },
+      { form: 'cylinder', radius: [14, 14], length: 40, segments: 16, at: [0, 0, h + 180], axis: UP, material: 'gasket' },
+      { form: 'sphere', radius: [32], segments: 20, at: [0, 0, h + 135], material: 'bulb' }],
+    lights: [{ kind: 'point', at: [0, 0, h + 135], color: '#ffd9a8', intensity: 1.2, distance: 0.9, decay: 2, shadow: false },
+      { kind: 'spot', at: [0, 0, h + 135], target: [0, 0, 0], color: '#ffd9a8', intensity: 7, distance: 5, angle: 1.2, penumbra: 0.8, decay: 2, shadow: false }] };
+}
 
 /** a box less boxes cut out of it: boxes, split along x, then y, then h @param {number[]} box @param {number[][]} cuts @returns {number[][]} */
 function minus(box, cuts) {
@@ -70,6 +112,12 @@ export async function assembleRooms(H, catalog) {
       H.add(room, { id: 'builtIn' + (k + 1), name: b.name, type: 'builtIn', layer: 'casings', offset: [x0, y0, h0], size: [x1 - x0, y1 - y0, h1 - h0],
         parts: minus(local(b.box), (b.cuts || []).map(local)).map(box => ({ form: 'box', box, material: b.material })) });
     });
+    /* lamps: under the ceiling over the room, at their place in its axes */
+    const ceiling = ceilingOver(H, room);
+    for (const [id, l] of Object.entries(scene.lamps || {})) {
+      if (!['downlight', 'pendant'].includes(l.kind) || !(Array.isArray(l.at) && l.at.length === 2)) throw new Error(`room: ${room.id}.scene.json: lamp ${id}: kind downlight or pendant, at [x, y]`);
+      H.add(room, { id, name: l.kind === 'pendant' ? 'Pendant' : 'Downlight', type: 'lamp', layer: l.kind + 's', offset: [l.at[0], l.at[1], 0], size: [1, 1, ceiling], ...lampOf(l.kind, ceiling, l.bottom) });
+    }
     if (!scene.cabinets) continue;
     const built = cabinetsOf(await read(`${room.id}.cabinets.json`), catalog);
     problems.push(...built.problems.map(p => ({ ...p, room: room.id })));

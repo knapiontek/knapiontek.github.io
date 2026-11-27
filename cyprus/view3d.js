@@ -1,5 +1,5 @@
 // @ts-check
-// scene.js: the 3D view: a branch of a hierarchy in three.js. Every box and prism of the branch (its
+// view3d.js: the 3D view (the menu's 3D): a branch of a hierarchy in three.js. Every box and prism of the branch (its
 // nodes' parts, or their products' shapes) is a solid with its group (its layer and its floor): the solids' faces are welded,
 // a face against a face of its own group is gone, what lies against another group is its raw material, seen while that group
 // is hidden (core/surfaces.js); the pieces are batched into one mesh per group and material; edges come from the topology: no
@@ -17,6 +17,7 @@ import { turned } from './core/hierarchy.js';
 /** @typedef {{ at: number[], turn: number }} Frame  a node's axes in the branch's: its zero, its quarter turns about h */
 /** @typedef {import('./types.js').Catalog} Catalog */
 /** @typedef {import('./types.js').Part} Part */
+/** @typedef {import('./types.js').Light} LampLight  a lamp's light */
 /** @typedef {import('./core/surfaces.js').Cell} Cell */
 /** @typedef {import('./core/surfaces.js').Piece} Piece */
 /** @typedef {import('./core/surfaces.js').Vec3} Vec3 */
@@ -74,7 +75,7 @@ class Batch {
  * The 3D view.
  * @param {{ catalog: Catalog, canvas?: HTMLCanvasElement, light?: Light, edges?: Edges }} options
  */
-export function createScene({ catalog, canvas, light, edges }) {
+export function createView3d({ catalog, canvas, light, edges }) {
   const scene = new THREE.Scene(), world = new THREE.Group();
   scene.backgroundRotation.set(Math.PI / 2, 0, 0); scene.environmentRotation.set(Math.PI / 2, 0, 0);   // the sky's pictures are made y up: turned to h up
   world.scale.setScalar(MM);
@@ -201,12 +202,15 @@ export function createScene({ catalog, canvas, light, edges }) {
   let LINES = [];
   /** @type {Map<string, { layer?: string, floor?: string }>} a group's layer and floor */
   let GROUPS = new Map();
-  let showEdges = true, skipped = 0, pieceCount = 0;
+  /** @type {{ light: any, layer?: string, floor?: string }[]} the lamps' lights, each of one group: lit at night, while its group shows */
+  let LIGHTS = [];
+  let showEdges = true, skipped = 0, pieceCount = 0, night = false;
   /** @type {(key: string | undefined) => boolean} */
   let ON = () => true;
   function clear() {
     for (const o of [...world.children]) { world.remove(o); o.traverse((/** @type {any} */ x) => x.geometry?.dispose()); }
-    MESHES = []; LINES = []; GROUPS = new Map(); skipped = 0; pieceCount = 0;
+    for (const { light } of LIGHTS) { scene.remove(light); if (light.target) scene.remove(light.target); light.dispose(); }
+    MESHES = []; LINES = []; LIGHTS = []; GROUPS = new Map(); skipped = 0; pieceCount = 0;
   }
   /** a group's key @param {string | undefined} layer @param {string | undefined} floor */
   const groupOf = (layer, floor) => { const k = (layer ?? '') + '|' + (floor ?? ''); if (!GROUPS.has(k)) GROUPS.set(k, { layer, floor }); return k; };
@@ -224,7 +228,8 @@ export function createScene({ catalog, canvas, light, edges }) {
     /** @param {Node} n */
     (function collect(n) {
       const product = n.product ? catalog.product(n.product) : null;
-      const parts = n.parts || (product?.draw ? shapeOf(product, n.size.map(Math.abs), n.options).parts : null);   // a shape's size: its extent
+      const shape = product?.draw && !n.parts ? shapeOf(product, n.size.map(Math.abs), n.options) : null;   // a shape's size: its extent
+      const parts = n.parts || shape?.parts || null;
       /** @type {Frame} n's axes in node's: its zero, its quarter turns */
       const at = { at: h.fromRoot(node, h.place(n)), turn: (h.turnOf(n) - h.turnOf(node) + 4) % 4 };
       for (const part of parts || []) {
@@ -239,6 +244,7 @@ export function createScene({ catalog, canvas, light, edges }) {
           ...(part.raw ? { raw: part.raw, finish: part.finish } : {}) };
         if (part.mover) { const k = h.path(n) + '#' + part.mover; (moving.get(k) || moving.set(k, []).get(k))?.push(cell); } else still.push(cell);
       }
+      for (const l of /** @type {LampLight[]} */ (n.lights || shape?.lights || [])) lamp(l, at, groupOf(h.layer(n), h.floor(n)));
       (n.children || []).forEach(collect);
     })(node);
     draw(F.piecesOf(still));
@@ -414,6 +420,20 @@ export function createScene({ catalog, canvas, light, edges }) {
     MESHES.push({ mesh, layer: g.layer, floor: g.floor, finish: null, base: mesh.material });
     Object.assign(mesh.userData, { layer: g.layer, floor: g.floor, material: look });
   }
+  /**
+   * A lamp's light, in its group: a point or a spot (to its target), in the node's axes; lit at night (setSun).
+   * @param {LampLight} l @param {Frame} at @param {string} group
+   */
+  function lamp(l, at, group) {
+    const color = new THREE.Color(l.color), p = put(at, l.at);
+    const light = l.kind === 'spot' ? new THREE.SpotLight(color, l.intensity, l.distance, l.angle ?? Math.PI / 3, l.penumbra ?? 0, l.decay) : new THREE.PointLight(color, l.intensity, l.distance, l.decay);
+    light.position.set(p[0] * MM, p[1] * MM, p[2] * MM);   // the world is in mm, scaled to m
+    if (l.kind === 'spot') { const t = put(at, l.target || [l.at[0], l.at[1], 0]); light.target.position.set(t[0] * MM, t[1] * MM, t[2] * MM); scene.add(light.target); }
+    light.castShadow = false;
+    scene.add(light);
+    const g = GROUPS.get(group) || {};
+    LIGHTS.push({ light, layer: g.layer, floor: g.floor });
+  }
   /** the fittings' metal where node stands: the setting metal @param {Node} n */
   function metalOf(n) {
     const m = H?.setting(n, 'metal')?.value;
@@ -430,6 +450,7 @@ export function createScene({ catalog, canvas, light, edges }) {
     const shown = (/** @type {{ layer?: string, floor?: string }} */ g) => !!on(g.layer) && !!on(g.floor);
     for (const g of MESHES) { g.mesh.visible = shown(g); g.mesh.material = g.finish ? (on(g.finish.layer) ? g.finish.on : g.finish.off) : g.base; }
     for (const l of LINES) l.mesh.visible = showEdges && shown(l) && !l.hideWhen.some(h => h.every(shown));
+    for (const l of LIGHTS) l.light.visible = night && shown(l);
     redraw();
   }
   /** @param {boolean} on */
@@ -596,6 +617,8 @@ export function createScene({ catalog, canvas, light, edges }) {
     sun.position.copy(centre).addScaledVector(dir, 40); sun.target.position.copy(centre);
     const C = light.clouds, toward = (/** @type {number} */ full) => 1 + (full - 1) * s.clouds;
     sun.visible = !s.night;
+    night = !!s.night;
+    for (const l of LIGHTS) l.light.visible = night && (!ON || (!!ON(l.layer) && !!ON(l.floor)));
     scene.environment = s.night ? null : dayEnvironment;
     sun.intensity = light.sun.intensity * Math.PI * s.k * toward(C.sun);
     hemi.intensity = light.sky.intensity * Math.PI * (s.night ? 0.14 : (0.6 + 0.4 * s.k) * toward(C.sky));

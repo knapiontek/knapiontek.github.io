@@ -14,7 +14,7 @@ export default async function (check) {
   /** a node's box in the house's axes @param {string} path */
   const box = path => H.box(/** @type {HouseNode} */ (H.node(room + path))).map((v, i) => Math.round(v - zero[i >> 1])).join();
   check('no problems' + (problems.length ? ': ' + problems.map(p => p.text).join(' | ') : ''), problems.length === 0);
-  check('the room\'s groups, under it', (/** @type {HouseNode} */ (H.node(room.slice(0, -1))).children || []).map(n => n.id).join() === 'g1,g2,g3');
+  check('the room\'s groups, under it', (/** @type {HouseNode} */ (H.node(room.slice(0, -1))).children || []).filter(n => n.type === 'cabinetGroup').map(n => n.id).join() === 'g1,g2,g3');
   /* the room at x 4190, y 440 of the house; the kitchen's West wall at x 5980 (wall 5) */
   check('group 1: by the South wall, fronts North (turn 2), 64 from the West wall, behind group 2\'s corner: x 6044 – 9557, y 440 – 1058', box('g1').startsWith('6044,9557,440,1058,0,'));
   check('group 1: the sink under the kitchen window (x 6580 – 8480): K12 x 7262 – 8062', box('g1/worktop/K12') === '7262,8062,468,1018,150,870');
@@ -50,6 +50,13 @@ export default async function (check) {
   check('bathroom 5: the shower 1000 × 1000 at its front end, by the door wall (x 5000 – 6000, y 2450 – 3450)', Math.abs(corner[0] - 5000) < 30 && Math.abs(corner[1] - 6000) < 60 && Math.abs(corner[3] - 3450) < 30);
   check('bedroom 6: the shelving in the niche of the former shaft (x 4190 – 4880)', at('firstFloor/bedroom_6/g1')[1] === 4880);
   check('a casing less its niche: its boxes round the cut', (/** @type {HouseNode} */ (H.node('house/groundFloor/bathroom_7/builtIn1')).parts || []).length > 1);
+  /* lamps: under the ceiling over the room, lit at night */
+  const lamp = (/** @type {string} */ p) => /** @type {HouseNode} */ (H.node('house/' + p));
+  check('lamps: the kitchen\'s under its ceiling (the slab, 2720): a downlight\'s tube there, its spot down', lamp('groundFloor/room_356/downlight1').size[2] === 2720
+    && lamp('groundFloor/room_356/downlight1').lights?.[0].kind === 'spot' && lamp('groundFloor/room_356/downlight1').layer === 'downlights');
+  check('lamps: two pendants over the island, 776 apart, their shades\' rims at 1750', Math.abs(at('groundFloor/room_356/pendant2')[0] - at('groundFloor/room_356/pendant1')[0]) === 776 && lamp('groundFloor/room_356/pendant1').layer === 'pendants');
+  check('lamps: the downlight between the sink and the hob, 402 from the wall', H.fromRoot(lamp('groundFloor/room_356'), H.place(lamp('groundFloor/room_356/downlight1'))).slice(0, 2).join() === '4190,402');
+  check('lamps: bathroom 5\'s under the Attic\'s ceiling (5910 − 3060 = 2850)', lamp('firstFloor/bathroom_5/downlight1').size[2] === 2850);
   check('the room\'s metal, from its scene, for what stands in it', H.setting(/** @type {HouseNode} */ (H.node(room + 'g1/worktop/K11')), 'metal')?.value === 'brass');
   check('floor: what stands in the room on the room\'s', H.floor(/** @type {HouseNode} */ (H.node(room + 'g1/worktop/K11'))) === 'groundFloor');
 }

@@ -1,12 +1,12 @@
 // @ts-check
-// index.js: joins index.html to the modules: the page's Alpine part. The 3D view: the house (house/assembly.js) drawn by scene.js,
+// index.js: joins index.html to the modules: the page's Alpine part. The 3D view: the house (house/assembly.js) drawn by view3d.js,
 // its layers and floors switched from the panel (layers.json). The rest is still a sketch: the values in SKETCH stand in for
 // what the modules will give.
 
 import { page, sunStore } from './core/ui.js';
 import { openCatalog } from './library/catalog.js';
 import { assembleHouse } from './house/assembly.js';
-import { createScene } from './scene.js';
+import { createView3d } from './view3d.js';
 
 /** @typedef {import('./core/ui.js').LayerTree} LayerTree */
 /** @typedef {import('./core/ui.js').MenuItem} MenuItem */
@@ -38,7 +38,7 @@ const SKETCH = {
 const SUN = sunStore(SKETCH.sun);
 
 /* what the page builds once (outside Alpine: three.js's objects stay plain) */
-/** @type {ReturnType<typeof createScene> | null} */
+/** @type {ReturnType<typeof createView3d> | null} */
 let PLOT = null;
 /** @type {Awaited<ReturnType<typeof assembleHouse>>['hierarchy'] | null} */
 let SITE = null;
@@ -109,7 +109,7 @@ page('sketch', {
     const catalog = await openCatalog(), { hierarchy: site } = await assembleHouse(catalog);
     const house = /** @type {any} */ (site.node('house')), view = house.settings.view;
     SITE = site;
-    PLOT = createScene({ catalog, canvas: /** @type {HTMLCanvasElement} */ (document.getElementById('gl')), light: view.light, edges: view.edges });
+    PLOT = createView3d({ catalog, canvas: /** @type {HTMLCanvasElement} */ (document.getElementById('gl')), light: view.light, edges: view.edges });
     PLOT.show(site, house);
     PLOT.sun(SUN.state);
     this.onLayers();

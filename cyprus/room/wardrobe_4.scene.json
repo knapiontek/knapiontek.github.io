@@ -1,0 +1,9 @@
+{
+ "format": "scene",
+ "version": 1,
+ "metal": "nickel",
+ "cabinets": {
+  "1": {"front": "W", "offset": [1590, 2210, 0]},
+  "2": {"front": "E", "offset": [0, 0, 0]}
+ }
+}

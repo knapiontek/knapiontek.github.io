@@ -6,5 +6,13 @@
   "1": {"front": "N", "offset": [5367, 0, 0]},
   "2": {"front": "E", "offset": [1790, 0, 0]},
   "3": {"front": "S", "offset": [3374, 2518, 0]}
+ },
+ "lamps": {
+  "pendant1": {"kind": "pendant", "at": [3854, 2068], "bottom": 1750},
+  "pendant2": {"kind": "pendant", "at": [4630, 2068], "bottom": 1750},
+  "downlight1": {"kind": "downlight", "at": [4190, 402]},
+  "downlight2": {"kind": "downlight", "at": [2722, 402]},
+  "downlight3": {"kind": "downlight", "at": [2722, 1370]},
+  "downlight4": {"kind": "downlight", "at": [2722, 2338]}
  }
 }

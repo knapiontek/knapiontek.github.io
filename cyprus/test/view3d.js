@@ -1,21 +1,21 @@
 // @ts-check
-// test/scene.js: scene.js without a canvas (the scene only): two boxes welded (their joint gone, no line on its seam) or of two
+// test/view3d.js: view3d.js without a canvas (the scene only): two boxes welded (their joint gone, no line on its seam) or of two
 // groups (the joint a contact piece, raw); the house drawn, in its axes and three's, a material's look, a prism's faces, what
 // the panel switches (layers, floors, the Attic with the roof, the facade, edges), the cameras, the site; a product drawn by its
 // shape, in the fittings' metal.
 
-import { createScene } from '../scene.js';
+import { createView3d } from '../view3d.js';
 import { openCatalog } from '../library/catalog.js';
 import { assembleHouse } from '../house/assembly.js';
 import { createHierarchy } from '../core/hierarchy.js';
 
-/** @typedef {import('../scene.js').Node} Node */
+/** @typedef {import('../view3d.js').Node} Node */
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
   const catalog = await openCatalog(), { hierarchy: H } = await assembleHouse(catalog);
   const house = /** @type {Node} */ (H.node('house'));
-  const scene = createScene({ catalog, edges: { color: '#7d807b', opacity: 0.45 } });
+  const scene = createView3d({ catalog, edges: { color: '#7d807b', opacity: 0.45 } });
   /** the meshes of a layer and floor @param {string} layer @param {string} floor */
   const of = (layer, floor) => scene.meshes().filter((/** @type {any} */ m) => m.userData.layer === layer && m.userData.floor === floor);
   /** a mesh's colour @param {any} m */
