@@ -1,9 +1,12 @@
 // @ts-check
 // test/library/shapes.js: library/shapes.js: every product with a drawing, its parts sound; then the shapes as the scene and
-// documents use them: an oven, a microwave, a basin tap, a shower screen, a WC bowl.
+// documents use them: an oven, a microwave, a basin tap, a shower screen, a WC bowl; then the API by use cases, as a room asks
+// for it (a product checked, a door hung, a drawer of a system, runners, a pull-out shelf, a sink with its tap and trap, a basin,
+// boards and tiles, a fixture), every exported function in one.
 
 import { openCatalog } from '../../library/catalog.js';
-import { bodyOf, faultsOf, lookOf, hingeHeights, holeOf, runnerFor, shapeOf, systemDrawer, systemFor, tileOf, trapFit } from '../../library/shapes.js';
+import * as API from '../../library/shapes.js';
+import { bodyOf, boardOf, cutoutOf, drainOf, faultsOf, formatsOf, hingeHeights, hingePost, holeOf, innerOver, lookOf, pullOutFit, runnerFit, runnerFor, shapeOf, systemDrawer, systemFor, tileOf, trapFit } from '../../library/shapes.js';
 
 /** @typedef {import('../../types.js').Shape} Shape */
 /** @typedef {import('../../types.js').Part} Part */
@@ -77,34 +80,107 @@ export default async function (check) {
     check('pipe: as long as its node', pipe.parts[0].length === 2400 && /** @type {number[]} */ (pipe.parts[0].at)[0] === 1200);
   }
 
-  /* the makers' rules a room asks for, and what a drawing needs of its product */
+  /* ================= THE API BY USE CASES: what a room asks of the library, in the order it asks ================= */
+  const P = (/** @type {string} */ k) => /** @type {any} */ (catalog.product(k));
+  /** where a product's zero goes when its anchor is put at a point (as room/cabinets.js places it) @param {any} S @param {number[]} at */
+  const zeroAt = (S, at) => at.map((v, k) => v - (S.anchor || [0, 0, 0])[k]);
+  /** @type {Set<string>} the API's functions a use case calls */
+  const used = new Set();
+  /** @template {(...a: any[]) => any} F @param {string} name @param {F} f @returns {F} */
+  const api = (name, f) => /** @type {F} */ ((...a) => { used.add(name); return f(...a); });
+  const $ = {
+    shapeOf: api('shapeOf', shapeOf), faultsOf: api('faultsOf', faultsOf), hingeHeights: api('hingeHeights', hingeHeights), hingePost: api('hingePost', hingePost),
+    systemFor: api('systemFor', systemFor), systemDrawer: api('systemDrawer', systemDrawer), innerOver: api('innerOver', innerOver), runnerFor: api('runnerFor', runnerFor),
+    runnerFit: api('runnerFit', runnerFit), pullOutFit: api('pullOutFit', pullOutFit), boardOf: api('boardOf', boardOf), cutoutOf: api('cutoutOf', cutoutOf),
+    drainOf: api('drainOf', drainOf), holeOf: api('holeOf', holeOf), trapFit: api('trapFit', trapFit), lookOf: api('lookOf', lookOf), tileOf: api('tileOf', tileOf),
+    formatsOf: api('formatsOf', formatsOf), bodyOf: api('bodyOf', bodyOf)
+  };
+
+  /* --- use case: a product is chosen for a role; the room checks it has what its drawing needs --- */
   {
-    const P = (/** @type {string} */ k) => /** @type {any} */ (catalog.product(k)), all = catalog.groups.flatMap(g => catalog.products(g));
-    const faulty = all.filter(k => P(k).draw && faultsOf(P(k)).length).map(k => k + ': ' + faultsOf(P(k)).join(', '));
-    check('faultsOf: every product with a drawing has what it needs' + (faulty.length ? ': not ' + faulty.join(' | ') : ''), faulty.length === 0);
-    check('faultsOf: a hinge without its plate: what it lacks', faultsOf(/** @type {any} */ ({ ...P('blum-clip-top-blumotion-110-71b3550'), plate: undefined })).includes('plate.height'));
-    const hinge = P('blum-clip-top-blumotion-110-71b3550');
-    check('hingeHeights: a 1197 door, three, 100 from its ends', JSON.stringify(hingeHeights(hinge, 0, 1197, [], 18)) === '[100,599,1097]');
-    check('hingeHeights: one at a shelf moved over it, its plate clear (9 + 22)', JSON.stringify(hingeHeights(hinge, 0, 1197, [600], 18)) === '[100,631,1097]');
-    check('hingeHeights: a door over the last row: none', hingeHeights({ ...hinge, perDoor: [{ maxHeight: 900, count: 2 }] }, 0, 1197, [], 18) === null);
-    const D = P('blum-tandembox-antaro-d-500'), M = P('blum-tandembox-antaro-m-500');
-    check('systemFor: D for a front over 350, else M', systemFor(D, M, 351, 350) === D && systemFor(D, M, 350, 350) === M);
-    const S = systemDrawer(D, true, 564, 16);
-    check('systemDrawer: on the carcass\'s bottom 35 up; its bottom 564 − 75, 476 deep from 38; its back 564 − 87, 199 high', S.lift === 35 && S.boards[0].join() === '37.5,526.5,38,514,0,16' && S.boards[1].join() === '43.5,520.5,38,54,16,215');
-    const runners = catalog.variants('hafele-ball-runners-494-02-184').map(P);
-    check('runnerFor: the longest of the family that fits (450 in 499), none under 300', runnerFor(runners, 499)?.length === 450 && runnerFor(runners, 299) === undefined);
-    const trap = P('deante-space-saver-zxy-9917');
-    check('trapFit: as short as it may be, its outlet at the wall; a pipe beyond its reach; none too near', JSON.stringify(trapFit(trap, 320)) === '{"drop":250,"reach":234,"toWall":0}'
-      && trapFit(trap, 400)?.toWall === 34 && trapFit(trap, 250) === null);
-    check('holeOf: a basin\'s tap hole, over it, on the basin', holeOf(P('catalano-green-lux-60x40-white'), 'tap')?.join() === '0,55,140');
-    const tile = P('paradyz-authority-grey');
-    check('tileOf: as laid, the scene\'s size (one of its formats, its length the longer), else its own; none in a size it is not made in, none of what is no tile',
-      tileOf(tile, [598, 1198])?.len === 1198 && tileOf(tile)?.wid === 898 && tileOf(tile, [600, 600]) === null && tileOf(P('shelf-pins-5-zinc')) === null);
-    check('bodyOf: its body, the room\'s own sizes over the maker\'s', bodyOf(P('catalano-green-lux-60x40-white')).join() === '600,400,140' && bodyOf(P('catalano-green-lux-60x40-white'), { depth: 450 }).join() === '600,450,140');
-    check('lookOf: a decor\'s photo, a lacquer\'s colour, a tile\'s face', lookOf(P('egger-h1180-st37')).finish === 'decor' && lookOf(P('shaker-english-navy-18')).finish === 'lacquer' && lookOf(tile).finish === 'tile' && !!lookOf(tile).texture);
-    const hingeLeft = shapeOf(hinge, undefined, { hand: 'left', gap: 2, edge: 3 }), cupAt = (/** @type {any} */ S) => S.parts.find((/** @type {any} */ p) => p.form === 'cylinder' && p.radius[0] === 17).at[0] - S.anchor[0];
-    check('a hinge: its cup the maker\'s fromEdge (22) in from the door\'s edge (3 in from the side): 25; mirrored on the right', cupAt(hingeLeft) === 25 && cupAt(shapeOf(hinge, undefined, { hand: 'right', gap: 2, edge: 3 })) === -25);
-    const pin = shapeOf(P('shelf-pins-5-zinc'), undefined, { hand: 'left' });
-    check('a fitting placed by its anchor: a shelf pin at the side\'s face, under the shelf (its hole\'s marker 12 across)', pin.anchor?.join() === '0.5,6,9' && pin.parts.some(p => p.layer === 'holes'));
+    const all = catalog.groups.flatMap(g => catalog.products(g)), faulty = all.filter(k => P(k).draw && $.faultsOf(P(k)).length).map(k => k + ': ' + $.faultsOf(P(k)).join(', '));
+    check('a chosen product: every one with a drawing has what it needs' + (faulty.length ? ': not ' + faulty.join(' | ') : ''), faulty.length === 0);
+    check('a chosen product: a hinge without its plate says what it lacks', $.faultsOf({ ...P('blum-clip-top-blumotion-110-71b3550'), plate: undefined }).includes('plate.height'));
   }
+
+  /* --- use case: hanging a door 1197 high (hinged left, its edge 3 in from the side, its back 2 before the carcass) by a shelf at 600 --- */
+  {
+    const hinge = P('blum-clip-top-blumotion-110-71b3550');
+    const heights = $.hingeHeights(hinge, 0, 1197, [600], 18);
+    check('a door: where its hinges go: three by its height, 100 from its ends; the middle one over the shelf, its plate clear', JSON.stringify(heights) === '[100,631,1097]');
+    check('a door over the last row of the hinge: none, the room warns', $.hingeHeights({ ...hinge, perDoor: [{ maxHeight: 900, count: 2 }] }, 0, 1197, [], 18) === null);
+    const S = $.shapeOf(hinge, undefined, { hand: 'left', gap: 2, edge: 3 }), cup = S.parts.find(p => p.form === 'cylinder' && /** @type {number[]} */ (p.radius)[0] === 17);
+    check('each hinge placed by its anchor (the side\'s face, the carcass\'s front, its height): its cup 22 in from the door\'s edge, 25 from the side', /** @type {number[]} */ (cup?.at)[0] - /** @type {number[]} */ (S.anchor)[0] === 25);
+    check('on the right hand, mirrored', /** @type {number[]} */ ($.shapeOf(hinge, undefined, { hand: 'right', gap: 2, edge: 3 }).parts.find(p => p.form === 'cylinder' && /** @type {number[]} */ (p.radius)[0] === 17)?.at)[0] - /** @type {number[]} */ ($.shapeOf(hinge, undefined, { hand: 'right', gap: 2, edge: 3 }).anchor)[0] === -25);
+    check('its holes come with it (layer holes): two for the plate, one for the cup', S.parts.filter(p => p.layer === 'holes').length === 3);
+    check('a door short of the carcass\'s side: a post as deep as the hinge needs (80)', $.hingePost(hinge) === 80);
+  }
+
+  /* --- use case: a drawer of a system in a carcass 564 wide inside, 550 deep: its front 400 high; an inner drawer over it --- */
+  {
+    const D = P('blum-tandembox-antaro-d-500'), M = P('blum-tandembox-antaro-m-500'), inner = P('blum-tandembox-antaro-m-500-inner');
+    const W = $.systemFor(D, M, 400, 350);
+    check('a drawer: its system by its front (400 over 350: D; 350: M)', W === D && $.systemFor(D, M, 350, 350) === M);
+    const { lift, boards } = $.systemDrawer(W, true, 564, 16);
+    check('its bottom 35 over the carcass\'s bottom; its boards to cut: the bottom 564 − 75 by 476, the back 564 − 87 by 199', lift === 35 && boards[0].join() === '37.5,526.5,38,514,0,16' && boards[1].join() === '43.5,520.5,38,54,16,215');
+    check('over another drawer, 22', $.systemDrawer(W, false, 564, 16).lift === 22);
+    const metal = $.shapeOf(W, undefined, { width: 564, depth: 550 });
+    check('its metal placed by its anchor (the inner left side, the back, the bottom): runners, sides, gallery rails, the runners\' holes', metal.parts.some(p => p.material === 'zinc' && /** @type {number[]} */ (p.box)[0] === /** @type {number[]} */ (metal.anchor)[0]) && metal.parts.some(p => p.material === 'drawerSide') && metal.parts.filter(p => p.layer === 'holes').length === 6);
+    check('an inner drawer: its bottom over the outer\'s sides and the maker\'s gap (224 + 40)', $.innerOver(W, inner) === 264);
+  }
+
+  /* --- use case: drawers on ball runners: the room has 499 behind the front; the family 300 – 600 --- */
+  {
+    const family = catalog.variants('hafele-ball-runners-494-02-184').map(P);
+    const R = $.runnerFor(family, 499);
+    check('the longest runner of the family that fits: 450; none under 300', R?.length === 450 && $.runnerFor(family, 299) === undefined);
+    const fit = $.runnerFit(R);
+    check('the drawer\'s box on it: as long as the runner, the runner\'s gap each side (13)', fit.length === 450 && fit.gap === 13);
+    check('the runners placed by their anchor (the box\'s left, its back, their bottom), beside a box 500 wide', $.shapeOf(R, undefined, { width: 500 }).size[0] === 526);
+  }
+
+  /* --- use case: a coffee machine's pull-out shelf --- */
+  {
+    const fit = $.pullOutFit(P('blum-movento-760h5000s'));
+    check('a pull-out shelf: as long as its runners (500), their gap each side (5)', fit.length === 500 && fit.gap === 5);
+  }
+
+  /* --- use case: a sink in the worktop (top at 870, its middle 320 from the wall), the tap behind it, the trap under it --- */
+  {
+    const sink = P('ikea-kilsviken'), tap = P('deante-silia-bqs-z73m'), trap = P('deante-space-saver-zxy-9917');
+    check('the worktop\'s cut-out: the sink maker\'s, 680 × 420', JSON.stringify($.cutoutOf(sink)) === '{"width":680,"depth":420}');
+    const S = $.shapeOf(sink);
+    check('the sink placed by its anchor, its middle on the worktop: its rim on the top', zeroAt(S, [0, 320, 870])[2] === 870 - (sink.bowl.height + sink.wall));
+    const T = $.shapeOf(tap);
+    check('the tap by its anchor, its axis on the worktop: its zero 39 behind (272 − 233)', zeroAt(T, [0, 45, 870])[1] === 6);
+    const drain = $.drainOf(sink), fit = $.trapFit(trap, 320);
+    check('the drain: the bowl\'s bottom under the sink\'s anchor (180)', drain[2] === -180);
+    check('the trap: as short as its maker allows (250), its outlet at the wall: reach 234, no pipe', JSON.stringify(fit) === '{"drop":250,"reach":234,"toWall":0}');
+    check('beyond its reach a pipe to the wall (drain 400 from it: 34); too near the wall: none', $.trapFit(trap, 400)?.toWall === 34 && $.trapFit(trap, 250) === null);
+    check('the trap placed by its anchor, the drain\'s axis at its rim', $.shapeOf(trap, undefined, /** @type {any} */ (fit)).anchor?.join() === '57,320,250');
+  }
+
+  /* --- use case: a basin on a vanity's top and its tap over its hole --- */
+  {
+    const basin = P('catalano-green-lux-60x40-white'), hole = $.holeOf(basin, 'tap');
+    check('the tap\'s hole, from the basin\'s anchor (its middle at its back, on the top): 55 in, on its rim (140)', hole?.join() === '0,55,140');
+    check('no such hole: none', $.holeOf(basin, 'overflow') === undefined);
+  }
+
+  /* --- use case: boards and tiles: what the cabinets cut, what the view draws --- */
+  {
+    check('a board as cut: its thickness, its depth (a sheet\'s width), a shaker\'s frame', $.boardOf(P('egger-u708-st9-18')).thickness === 18 && $.boardOf(P('egger-u708-st9-18')).depth > 0 && $.boardOf(P('shaker-english-navy-18')).frameWidth > 0);
+    check('a board\'s look: a decor\'s photo, a lacquer\'s colour', $.lookOf(P('egger-h1180-st37')).finish === 'decor' && $.lookOf(P('shaker-english-navy-18')).finish === 'lacquer');
+    const tile = P('paradyz-authority-grey');
+    check('a tile as laid: the scene\'s size, one of its formats (598 × 1198: 1198 long); else its own', $.tileOf(tile, [598, 1198])?.len === 1198 && $.tileOf(tile)?.wid === 898);
+    check('a size it is not made in, or no tile: none; its formats to say so', $.tileOf(tile, [600, 600]) === null && $.tileOf(P('shelf-pins-5-zinc')) === null && $.formatsOf(tile).length === 5);
+    check('a tile\'s look: its face\'s photo', $.lookOf(tile).finish === 'tile' && !!$.lookOf(tile).texture);
+  }
+
+  /* --- use case: a fixture the room builds to its own size --- */
+  check('a fixture\'s body, the room\'s own sizes over the maker\'s', $.bodyOf(P('catalano-green-lux-60x40-white')).join() === '600,400,140' && $.bodyOf(P('catalano-green-lux-60x40-white'), { depth: 450 }).join() === '600,450,140');
+
+  /* every function of the API in a use case: the module's exports, each */
+  const missing = Object.keys(API).filter(k => !used.has(k));
+  check('the API: every function in a use case' + (missing.length ? ': not ' + missing.join(', ') : ''), missing.length === 0);
 }
