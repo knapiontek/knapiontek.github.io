@@ -2,7 +2,8 @@
 // room/assembly.js: what stands in the rooms, from their scenes (room/<room>.scene.json, format scene): a room's scene places
 // its things and nothing else: each group of its cabinets (room/<room>.cabinets.json, built by room/cabinets.js, which knows no
 // room) by its zero, at the wall, and the way its fronts face; and the room's one metal. A room has a scene when its node lists
-// it in files. Adds them under the room's node: the hierarchy grows from the house down.
+// it in files. Adds them under the room's node: the hierarchy grows from the house down. What reaches the ceiling (a hood's
+// chimney) is made as tall as the room over it.
 
 import { cabinetsOf } from './cabinets.js';
 
@@ -47,6 +48,8 @@ export async function assembleRooms(H, catalog) {
         throw new Error(`room: ${room.id}.scene.json: cabinets ${n}: front N, E, S or W and an offset [x, y, h]`);
       }
       H.add(room, Object.assign(group, { offset: at.offset, turn: FRONT[at.front] }));
+      /* what reaches the ceiling (a hood's chimney): as tall as the room over it */
+      H.walk(n => { if (n.ceiling && H.chain(n).includes(group)) n.size[2] = room.size[2] - H.fromRoot(room, H.place(n))[2]; });
     }
     for (const n of Object.keys(scene.cabinets)) if (!built.groups.some(g => g.id === 'g' + n)) problems.push({ room: room.id, index: null, text: `The scene places group ${n}, the cabinets have none.`, skipped: false });
   }

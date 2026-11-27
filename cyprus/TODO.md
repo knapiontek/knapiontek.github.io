@@ -18,11 +18,13 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] library/shapes: a product as parts in its own axes (`shapeOf`), materials by key or `metal` (Finish); its test
 
 ## Next
-- [ ] `scene.js`: the other forms (ring, plane, sphere, torus, extrude, tube, mesh, text), moving parts (doors' hinge sense to check), the granite's speckle; the site in the House view
+- [ ] `scene.js`: moving parts (doors' hinge sense to check), the granite's speckle; the site in the House view
 - [x] cabinets, stage 1: the hierarchy's quarter turns (`turn`), sizes to the opposite corner; the design's axes to the model's (`core/tools.js`, y → −y); products in them
 - [x] cabinets, stage 2: `room/cabinets.js` (the layout: columns, stack, carcasses, kinds; the tree: carcasses under the worktop or the plasterboard, measured from it), `room/assembly.js` (the scene places the groups), the kitchen's `room_356.cabinets.json` and `room_356.scene.json`; their tests
-- [ ] cabinets, stage 3: the bodies: boards, fronts, worktop, plinth; the kitchen in 3D
-- [ ] cabinets, stage 4: hardware, appliances, the sink, the tap, the trap, the hood; holes
+- [x] cabinets, stage 3: the bodies: carcass boards (sides, rails, tops, backs, shelves, inset panels, the pull-out shelf), shaker fronts, worktop, end panels, wall panel, strips and back strips, plinth, plasterboard; the boards' looks in `scene.js` (`board:`); the kitchen's scene corrected (group 2 by the West wall, the island before group 1); the kitchen in 3D
+- [ ] cabinets: a board's bare edges (its core), the decor's grain
+- [x] cabinets, stage 4a: the appliances as the library's products in their places (oven, microwave, fridge-freezer, dishwasher, coffee machine, sink and hob in the worktop's cut-outs, the hood up to the ceiling); handles (a bar), legs, plinth grilles, the tap, the trap; `scene.js` draws every form (ring, disc, plane, text, sphere, torus, extrude, tube, mesh)
+- [ ] cabinets, stage 4b: hinges, bumpers, shelf pins, the drawers' boxes and runners, bins, the cutlery insert, drawers behind doors; holes (layer Holes); the cup handle
 - [ ] cabinets, stage 5: the other rooms (bathrooms, wardrobes, bedroom 6); fixtures and lamps in the scenes
 - [ ] tiles
 - [ ] `plan.js` (root): plans and dimensions

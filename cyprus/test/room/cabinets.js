@@ -48,17 +48,46 @@ export default async function (check) {
     /** @type {string[]} */
     const bad = [];
     let bodies = 0;
-    for (const n of groups.flatMap(sizes)) for (const p of n.parts || []) { bodies++; if (!p.material.startsWith('board:') && p.material !== 'plasterWhite') bad.push(p.material); else if (p.material.startsWith('board:')) { try { catalog.product(p.material.slice(6)); } catch { bad.push(p.material); } } }
-    check('bodies: boards of the library, every one (' + bodies + ')' + (bad.length ? ': not ' + bad.join(', ') : ''), bodies > 150 && bad.length === 0);
-    const k11b = (k11?.parts || []).map(p => /** @type {number[]} */ (p.box));
+    const looks = new Set(catalog.materials());
+    for (const n of groups.flatMap(sizes)) for (const p of n.parts || []) {
+      bodies++;
+      if (p.material.startsWith('board:')) { try { catalog.product(p.material.slice(6)); } catch { bad.push(p.material); } }
+      else if (p.material !== 'metal' && !looks.has(p.material)) bad.push(p.material);
+    }
+    check('bodies: boards of the library, its materials, the room\'s metal; every one (' + bodies + ')' + (bad.length ? ': not ' + bad.join(', ') : ''), bodies > 150 && bad.length === 0);
+    const k11b = (k11?.parts || []).filter(p => p.form === 'box' && !p.layer).map(p => /** @type {number[]} */ (p.box));
     check('K11: two sides 18 thick, the whole carcass high, from its back (y 0) to its front (y −550)', k11b.filter(b => b[1] - b[0] === 18 && b[5] - b[4] === 720 && b[2] === -550 && b[3] === 0).length === 2);
     check('K11 under the hob: the front rail on edge, 50; the panel under the hob', k11b.some(b => b[5] === 720 && b[4] === 670 && b[2] === -550) && (k11?.parts || []).some(p => p.material === 'board:egger-u708-st9-16'));
-    const front = at(g1, 'worktop/K11/drawer_1')?.parts || [];
+    const front = (at(g1, 'worktop/K11/drawer_1')?.parts || []).filter(p => p.layer === 'doorsAndDrawers');
     check('a shaker front: its frame of four rails and its panel, recessed; less its gaps (3 at the sides and the top)', front.length === 5 && front.every(p => p.layer === 'doorsAndDrawers')
       && Math.min(...front.map(p => /** @type {number[]} */ (p.box)[0])) === 3 && Math.max(...front.map(p => /** @type {number[]} */ (p.box)[1])) === 797 && Math.max(...front.map(p => /** @type {number[]} */ (p.box)[5])) === 417);
     check('the fronts in their plane: 2 before the carcass, 18 thick (y −552 – −570)', front.every(p => /** @type {number[]} */ (p.box)[2] >= -570 && /** @type {number[]} */ (p.box)[3] <= -552));
     check('K23: a back behind its doors, fixed shelf at the joint, shelves behind the doors', (at(g2, 'plasterboard_1/K23')?.parts || []).filter(p => p.layer === 'backs').length === 1
-      && (at(g2, 'plasterboard_1/K23')?.parts || []).filter(p => p.layer === 'shelves').length === 1 + 1 + 3);
+      && (at(g2, 'plasterboard_1/K23')?.parts || []).filter(p => p.layer === 'shelves' && p.material.startsWith('board:')).length === 1 + 1 + 3);
+    /* stage 4: the appliances, nodes of the library's products; the cut-outs; the hardware */
+    const product = (/** @type {CabinetNode | undefined} */ n) => /** @type {any} */ (n)?.product;
+    check('appliances: the oven and the microwave in their modules of K25', product(at(g2, 'plasterboard_1/K25/oven/oven')) === 'bosch-hba534bb3' && product(at(g2, 'plasterboard_1/K25/microwave/microwave')) === 'bosch-bfl623mb3');
+    check('appliances: the fridge-freezer in K27, the coffee machine on K21\'s pull-out shelf', product(at(g2, 'plasterboard_1/K27/fridge')) === 'bosch-kis86afe0' && product(at(g2, 'plasterboard_1/K21/coffee')) === 'delonghi-dinamica');
+    check('appliances: the dishwasher in its bay, on its feet (55)', product(at(g1, 'dishwasher/dishwasher')) === 'bosch-smv4hvx00e' && at(g1, 'dishwasher/dishwasher')?.offset[2] === 55 - 150);
+    check('the sink in K12\'s cut-out, the hob in K11\'s; the worktop round them', product(at(g1, 'worktop/K12/sink')) === 'ikea-kilsviken' && product(at(g1, 'worktop/K11/hob')) === 'electrolux-cit61443'
+      && (at(g1, 'worktop')?.parts || []).length > 4);
+    const hood = at(g1, 'hood');
+    check('the hood over the hob, on the wall, its bottom at 1500; to the ceiling (the room\'s)', product(hood) === 'electrolux-lfv416k' && hood?.offset[1] === 0 && hood?.offset[2] === 1498 && /** @type {any} */ (hood).ceiling === true);
+    const parts = (/** @type {CabinetNode} */ g) => sizes(g).flatMap(n => n.parts || []);
+    check('handles: a bar in the room\'s metal on every front with a handle', parts(g1).filter(p => p.layer === 'handles' && p.material === 'metal').length === 3 * 6 && parts(g2).filter(p => p.layer === 'handles').length === 3 * 14);
+    check('legs: four under a carcass on the plinth', parts(g1).filter(p => p.layer === 'legs').length === 2 * 4 * 4);
+    check('a grille in the plinth before the oven\'s and the fridge\'s carcasses', (at(g2, 'plasterboard_1/K25')?.parts || []).some(p => p.layer === 'plinth') && (at(g2, 'plasterboard_1/K27')?.parts || []).some(p => p.layer === 'plinth'));
+    check('the tap and the trap at the sink', (at(g1, 'worktop/K12')?.parts || []).some(p => p.layer === 'trap') && (at(g1, 'worktop/K12')?.parts || []).filter(p => p.layer === 'sink').length === 5);
+    /* stage 4b: inside the carcasses */
+    const k23 = at(g2, 'plasterboard_1/K23')?.parts || [], door = at(g2, 'plasterboard_1/K23/cabinet_2')?.parts || [];
+    check('hinges: three on the 1200 door, two on the 720 one (plate and arm on the side, the cup in the door)', k23.filter(p => p.layer === 'hardware' && p.form === 'box').length === 2 * (3 + 2)
+      && door.filter(p => p.layer === 'hardware' && p.form === 'cylinder').length === 2 * 3);
+    check('bumpers opposite the hinges; shelf pins under the adjustable shelves (4 each)', k23.filter(p => p.material === 'gasket').length === 5 && k23.filter(p => p.layer === 'shelves' && p.material === 'zinc').length === 4 * 4);
+    const sinkDrawer = at(g1, 'worktop/K12/drawer_1')?.parts || [], cutlery = at(g3, 'worktop/K31/drawer_2')?.parts || [];
+    check('a drawer of the system: its bottom and back, its metal sides and gallery rails (D); the sink\'s with bins (3)', sinkDrawer.filter(p => p.material === 'drawerSide').length === 2 + 2 && sinkDrawer.filter(p => p.material === 'binGrey').length === 3 * 5);
+    check('an inner drawer for cutlery: its box, sides and front, the insert', cutlery.filter(p => p.material === 'insertGrey').length === 5 && cutlery.filter(p => p.material === 'drawerSide').length === 2 + 2 + 1);
+    check('drawers behind K25\'s door: two boxes of 5 boards, a spacer', (at(g2, 'plasterboard_1/K25/cabinet_1')?.parts || []).filter(p => p.layer === 'drawers').length === 2 * 5);
+    check('holes: their markers in the layer Holes', groups.flatMap(sizes).flatMap(n => n.parts || []).filter(p => p.layer === 'holes').length > 200);
     check('the same file, the same nodes', JSON.stringify(cabinetsOf(file, catalog).groups) === JSON.stringify(groups));
   }
 

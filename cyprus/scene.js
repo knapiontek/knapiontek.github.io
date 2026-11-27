@@ -37,6 +37,7 @@ const MM = 0.001, DEG = Math.PI / 180;
 /* our axes (x East, y North, h up: right-handed, as three's) are three's x, y, z as they are, in metres; h is up (the camera's) */
 const UP = new THREE.Vector3(0, 0, 1);
 const ALONG = new THREE.Vector3(0, 1, 0);   // a three.js cylinder's own axis
+const FACING = new THREE.Vector3(0, 0, 1);  // the way a three.js ring, disc, plane faces; a torus's axis
 const NIGHT = { fog: '#141a26', gradient: [[0, '#070b16'], [0.36, '#121a2e'], [0.47, '#24304a'], [0.5, '#3a3f52'], [0.52, '#151a22'], [1, '#0b0e13']], stars: 420 };
 
 /* triangles of the pieces' convex polygons, batched into one mesh; a fan around the centre: no thin triangles */
@@ -223,7 +224,7 @@ export function createScene({ catalog, canvas, light, edges }) {
     /** @param {Node} n */
     (function collect(n) {
       const product = n.product ? catalog.product(n.product) : null;
-      const parts = n.parts || (product?.draw ? shapeOf(product, n.size, n.options).parts : null);
+      const parts = n.parts || (product?.draw ? shapeOf(product, n.size.map(Math.abs), n.options).parts : null);   // a shape's size: its extent
       /** @type {Frame} n's axes in node's: its zero, its quarter turns */
       const at = { at: h.fromRoot(node, h.place(n)), turn: (h.turnOf(n) - h.turnOf(node) + 4) % 4 };
       for (const part of parts || []) {
@@ -341,15 +342,74 @@ export function createScene({ catalog, canvas, light, edges }) {
       Object.assign(mesh.userData, { layer: g.layer, floor: g.floor, hideWhen: v.hideWhen });
     }
   }
-  /** another form (a cylinder): a mesh of its own, in its group @param {Part} p @param {string} look @param {Frame} at @param {string} group */
+  /**
+   * Another form: a mesh of its own, in its group; made in its node's axes, set in the branch's by the node's zero and turn.
+   * cylinder, ring, disc, plane, text (facing its axis), sphere, torus (round its axis), extrude (its outline [y, h] along x),
+   * tube (along its points), mesh (its points through its matrix).
+   * @param {Part} p @param {string} look @param {Frame} at @param {string} group
+   */
   function other(p, look, at, group) {
-    if (p.form !== 'cylinder') { skipped++; return; }
-    const [r0, r1] = /** @type {number[]} */ (p.radius), c = put(at, /** @type {number[]} */ (p.at));
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, p.length, p.segments || 20, 1, !!p.open), material(look));
-    mesh.position.set(c[0], c[1], c[2]);
-    mesh.quaternion.setFromUnitVectors(ALONG, new THREE.Vector3(...turned(p.axis || [0, 0, 1], at.turn)).normalize());
-    mesh.castShadow = mesh.receiveShadow = true;
-    world.add(mesh);
+    const r = /** @type {number[]} */ (p.radius || []), seg = p.segments || 24, arc = p.arc || [0, 2 * Math.PI];
+    const facing = (/** @type {any} */ o, /** @type {any} */ from) => o.quaternion.setFromUnitVectors(from, new THREE.Vector3(...(p.axis || [0, 0, 1])).normalize());
+    let m = material(look);
+    if (p.side === 'double' || p.side === 'back') { m = m.clone(); m.side = p.side === 'double' ? THREE.DoubleSide : THREE.BackSide; }
+    /** @type {any} */
+    let geometry = null;
+    /** @type {any} */
+    let materials = m;
+    const AT = /** @type {number[]} */ (p.at || [0, 0, 0]);
+    switch (p.form) {
+      case 'cylinder': geometry = new THREE.CylinderGeometry(r[1] ?? r[0], r[0], p.length, seg, 1, !!p.open, arc[0], arc[1] - arc[0]); break;
+      case 'ring': geometry = new THREE.RingGeometry(r[0], r[1], seg); break;
+      case 'disc': geometry = new THREE.CircleGeometry(r[0], seg, arc[0], arc[1] - arc[0]); break;
+      case 'plane': geometry = new THREE.PlaneGeometry(...(/** @type {number[]} */ (p.size))); break;
+      case 'sphere': geometry = new THREE.SphereGeometry(r[0], seg, Math.max(6, seg >> 1), 0, 2 * Math.PI, ...(p.arc || [0, Math.PI])); break;
+      case 'torus': geometry = new THREE.TorusGeometry(r[0], /** @type {number} */ (p.tube), 12, seg); break;
+      case 'text': {
+        const [w, h] = /** @type {number[]} */ (p.size);
+        if (!page) { geometry = new THREE.PlaneGeometry(w, h); break; }   // no page: no letters
+        const c = document.createElement('canvas');
+        c.width = 512; c.height = Math.max(16, Math.round(512 * h / w));
+        const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'));
+        g.fillStyle = '#d8dde2'; g.font = `${Math.round(c.height * 0.7)}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(p.text), c.width / 2, c.height / 2);
+        const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+        materials = new THREE.MeshBasicMaterial({ map: t, transparent: true });
+        geometry = new THREE.PlaneGeometry(w, h);
+        break;
+      }
+      case 'extrude': {   /* the outline (y, h) along x from at: x ← the extrusion, y ← the outline's first, h ← its second */
+        const shape = new THREE.Shape(/** @type {number[][]} */ (p.outline).map(([y, h]) => new THREE.Vector2(y, h)));
+        geometry = new THREE.ExtrudeGeometry(shape, { depth: p.length, bevelEnabled: false });
+        geometry.applyMatrix4(new THREE.Matrix4().set(0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1));
+        if (p.ends) materials = [material(p.ends), m];
+        break;
+      }
+      case 'tube': {
+        const pts = /** @type {number[][]} */ (p.points).map(q => new THREE.Vector3(...q)), path = new THREE.CurvePath();
+        for (let k = 0; k + 1 < pts.length; k++) path.add(new THREE.LineCurve3(pts[k], pts[k + 1]));
+        geometry = new THREE.TubeGeometry(path, Math.max(8, 8 * (pts.length - 1)), r[0], 12, false);
+        break;
+      }
+      case 'mesh': {
+        geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(/** @type {number[]} */ (p.positions), 3));
+        geometry.setIndex(/** @type {number[]} */ (p.index));
+        const M = /** @type {number[]} */ (p.matrix);
+        geometry.applyMatrix4(new THREE.Matrix4().set(...M, 0, 0, 0, 1));
+        geometry.computeVertexNormals();
+        break;
+      }
+      default: skipped++; return;
+    }
+    const mesh = new THREE.Mesh(geometry, materials);
+    if (!['extrude', 'tube', 'mesh'].includes(p.form)) {
+      mesh.position.set(AT[0], AT[1], AT[2]);
+      if (p.form === 'cylinder') facing(mesh, ALONG); else if (p.form !== 'sphere') facing(mesh, FACING);
+    } else if (p.form === 'extrude') mesh.position.set(AT[0], AT[1], AT[2]);
+    mesh.castShadow = mesh.receiveShadow = p.form !== 'text';
+    const node = new THREE.Group();   /* the node's axes in the branch's */
+    node.position.set(...at.at); node.rotation.z = at.turn * Math.PI / 2;
+    node.add(mesh); world.add(node);
     const g = GROUPS.get(group) || {};
     MESHES.push({ mesh, layer: g.layer, floor: g.floor, finish: null, base: mesh.material });
     Object.assign(mesh.userData, { layer: g.layer, floor: g.floor, material: look });
