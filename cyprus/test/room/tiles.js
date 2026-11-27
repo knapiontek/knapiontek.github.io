@@ -63,6 +63,8 @@ export default async function (check) {
       && walls.some(w => w.axis === 0 && w.at === 1000 && w.from === 800 && w.to === 2000 && w.inward === -1));
     const face = $.wallFace({ axis: 0, at: 0, inward: 1, from: 0, to: 3000 }, 12, 2600, [[1000, 1900, -240, 0, 0, 2050], [1000, 1900, 2800, 3000, 0, 2050]]);
     check('a wall\'s face: from the floor\'s tiles (12) to the ceiling, less the door through it (not one through another wall)', face.length === 3 && face.every(r => r[2] >= 12) && !face.some(r => r[0] < 1900 && r[1] > 1000 && r[2] < 2050));
+    const cased = $.wallFace({ axis: 0, at: 0, inward: 1, from: 0, to: 3000 }, 12, 2600, [], [[2230, 2510, 0, 850, 0, 2600]]);
+    check('a casing against the wall (deeper than a wall is thick): no tiles behind it', cased.length === 2 && !cased.some(r => r[0] < 2510 && r[1] > 2230));
     check('a face less a hole: the rectangles round it', $.rectsMinus([[0, 3000, 0, 2600]], [[1000, 1900, 0, 2050]]).length === 3);
     const { count } = $.layTiles(face, tile, { dir: 'x', pattern: 'grid', offset: [0, 12] });
     check('the wall laid as a floor is (u along it, h up), from its point: counted', count.tiles > 0 && count.area === Math.round((3000 * 2588 - 900 * 2038) / 1e4) / 100);

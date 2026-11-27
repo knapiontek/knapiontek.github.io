@@ -80,7 +80,7 @@ export default async function (check) {
   const ft = /** @type {any} */ (H.node(room + 'floorTiles'));
   check('floor tiles: the kitchen\'s, a node of its own (layer floorTiles), as deep as the scene says (12)', ft?.layer === 'floorTiles' && ft.size[2] === 12);
   check('floor tiles: the kitchen counted (m², tiles, whole, cut, small): ' + JSON.stringify(ft?.count), ft?.count.area > 50.55 && ft.count.tiles === ft.count.whole + ft.count.cut && ft.count.tiles > 60);
-  check('floor tiles: the grout in the scene\'s colour, each tile its product on its face up (the rest the bed), small cuts marked', ft.parts.some((/** @type {any} */ p) => p.material === 'grout:#686a68') && ft.parts.some((/** @type {any} */ p) => p.face?.material === 'tile:paradyz-authority-graphite' && p.face.n.join() === '0,0,1') && ft.parts.filter((/** @type {any} */ p) => p.layer === 'smallCuts').length === ft.count.small);
+  check('floor tiles: the grout in the scene\'s colour, each tile its product on its face up, its photo from its corner (the rest the bed), small cuts marked', ft.parts.some((/** @type {any} */ p) => p.material === 'grout:#686a68') && ft.parts.some((/** @type {any} */ p) => p.face?.material.startsWith('tile:paradyz-authority-graphite:') && p.face.n.join() === '0,0,1' && p.uvAt) && ft.parts.filter((/** @type {any} */ p) => p.layer === 'smallCuts').length === ft.count.small);
   check('floor tiles: none in a room with no scene', !H.node('house/groundFloor/garage_2/floorTiles'));
   /* --- use case: the walls' tiles round the floor, from a joint over the floor's tiles up to the ceiling or the roof's slope,
      less the openings; the inner corners meeting, not overlapping; the tile on the face toward the room, the rest the bed --- */
@@ -94,7 +94,7 @@ export default async function (check) {
     const roof = y => Math.min(bath5.ceilingHeight, ...bath5.slopes.map((/** @type {any} */ l) => l.a + l.s * y));
     const over = wt.parts.filter((/** @type {any} */ p) => p.form === 'prism' ? p.poly.some((/** @type {number[]} */ q) => q[1] > roof(q[0]) + 0.5) : p.box[5] > Math.min(roof(p.box[2]), roof(p.box[3])) + 0.5);
     check('under the roof: none above its slope (the walls along y cut on the slant)' + (over.length ? ': ' + over.length + ' over' : ''), over.length === 0 && wt.parts.some((/** @type {any} */ p) => p.form === 'prism'));
-    check('the tile on the face toward the room, the bed and the grout behind it', wt.parts.filter((/** @type {any} */ p) => p.face).every((/** @type {any} */ p) => p.face.material === 'tile:paradyz-authority-grey' && p.material === 'grout:#8b8a87'));
+    check('the tile on the face toward the room, the bed and the grout behind it', wt.parts.filter((/** @type {any} */ p) => p.face).every((/** @type {any} */ p) => p.face.material.startsWith('tile:paradyz-authority-grey:') && p.uvAt && p.material === 'grout:#8b8a87'));
     /** the boxes of the tiles at a corner overlapping: none */
     const tiles = wt.parts.filter((/** @type {any} */ p) => p.face && p.box).map((/** @type {any} */ p) => p.box);
     const clash = tiles.some((/** @type {number[]} */ a, /** @type {number} */ i) => tiles.slice(i + 1).some((/** @type {number[]} */ b) => [0, 1, 2].every(k => Math.min(a[2 * k + 1], b[2 * k + 1]) - Math.max(a[2 * k], b[2 * k]) > 0.1)));

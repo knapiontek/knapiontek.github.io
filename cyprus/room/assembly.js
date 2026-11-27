@@ -14,6 +14,15 @@ import { cabinetsOf } from './cabinets.js';
 import { doorHalves, layTiles, under, wallFace, wallsOf } from './tiles.js';
 
 const TOL = 0.5;   // mm: walls meet within it
+/**
+ * A tile's look: its product's photo, one of its images by chance (the same for the same tile), its size on the face ([u, v]:
+ * its length along the first axis for dir x) @param {string} product @param {string} tile  its row and column @param {any} t  the tile as laid @param {string} dir
+ */
+const tileLook = (product, tile, t, dir) => {
+  let h = 0;
+  for (const c of tile) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return `tile:${product}:${h % 8}:${dir === 'x' ? t.len + 'x' + t.wid : t.wid + 'x' + t.len}`;
+};
 import { bodyOf, formatsOf, tileOf } from '../library/shapes.js';
 import { pointToModel } from '../core/tools.js';
 
@@ -31,11 +40,11 @@ const VERSION = 1;   // of the format scene
 function floorTiles(H, room, t, catalog) {
   const rects = /** @type {import('./tiles.js').Rect[]} */ (room.area || [[0, room.size[0], 0, room.size[1]]]);
   const floor = [...rects, ...doorHalves(rects, room.openings.filter((/** @type {number[]} */ b) => Math.abs(b[4]) < 50))];
-  const { pieces, count } = layTiles(floor, /** @type {any} */ (tileOf(catalog.product(t.product), t.size)), t);
-  const d = t.depth, grout = 'grout:' + t.grout, look = 'tile:' + t.product;
+  const tile = /** @type {any} */ (tileOf(catalog.product(t.product), t.size)), { pieces, count } = layTiles(floor, tile, t);
+  const d = t.depth, grout = 'grout:' + t.grout;
   const parts = [
     ...floor.map(([x0, x1, y0, y1]) => ({ form: 'box', box: [x0 + 0.5, x1 - 0.5, y0 + 0.5, y1 - 0.5, 0.5, d - 1], material: grout })),   // none of its faces in a tile's plane
-    ...pieces.map(({ rect: [x0, x1, y0, y1] }) => ({ form: 'box', box: [x0, x1, y0, y1, 0, d], material: grout, face: { n: [0, 0, 1], material: look } })),   // the tile its face up, its body the bed and the grout
+    ...pieces.map(({ rect: [x0, x1, y0, y1], tile: id, at }) => ({ form: 'box', box: [x0, x1, y0, y1, 0, d], material: grout, face: { n: [0, 0, 1], material: tileLook(t.product, id, tile, t.dir) }, uvAt: [at[0], at[1], d] })),   // the tile its face up, its photo from its corner; its body the bed and the grout
     ...pieces.filter(p => p.small).map(({ rect: [x0, x1, y0, y1] }) => ({ form: 'box', box: [x0, x1, y0, y1, d, d + 0.5], material: 'smallCut', layer: 'smallCuts' }))
   ];
   H.add(room, { id: 'floorTiles', name: 'Floor tiles', type: 'tiles', layer: 'floorTiles', offset: [0, 0, 0], size: [room.size[0], room.size[1], d], parts, count });
@@ -47,11 +56,12 @@ function floorTiles(H, room, t, catalog) {
  * openings; at an inner corner the wall along y stops at the face of the tiles on the wall along x, a joint from them. The grout
  * on the wall, the tiles on it, out to their depth; a small cut marked. Laid from the scene's point [x, y, h]: a wall along x
  * from its x and h, along y from its y and h; dir x: the tiles' length along the wall, y: upright. Counted together.
- * @param {Hierarchy} H @param {HierarchyNode & Record<string, any>} room @param {any} t  the scene's tiles.walls @param {number} floor  the floor's tiles' depth (0: none) @param {Catalog} catalog
+ * What the owner builds against a wall (a casing) stands in its place: no tiles behind it.
+ * @param {Hierarchy} H @param {HierarchyNode & Record<string, any>} room @param {any} t  the scene's tiles.walls @param {number} floor  the floor's tiles' depth (0: none) @param {number[][]} casings  the scene's built-ins, their boxes @param {Catalog} catalog
  */
-function wallTiles(H, room, t, floor, catalog) {
+function wallTiles(H, room, t, floor, casings, catalog) {
   const rects = /** @type {import('./tiles.js').Rect[]} */ (room.area || [[0, room.size[0], 0, room.size[1]]]), tile = /** @type {any} */ (tileOf(catalog.product(t.product), t.size));
-  const d = t.depth, j = tile.joint, h0 = floor ? floor + j : 0, grout = 'grout:' + t.grout, look = 'tile:' + t.product, parts = /** @type {any[]} */ ([]);
+  const d = t.depth, j = tile.joint, h0 = floor ? floor + j : 0, grout = 'grout:' + t.grout, parts = /** @type {any[]} */ ([]);
   const total = { area: 0, tiles: 0, whole: 0, cut: 0, small: 0 }, walls = wallsOf(rects);
   for (const w of walls) {
     /* an inner corner: a wall along y stops short of the tiles on the wall along x it meets */
@@ -63,7 +73,7 @@ function wallTiles(H, room, t, floor, catalog) {
     if (to - from < TOL) continue;
     /* what the tiles stay under: the ceiling, the roof's slopes (over y: along a wall along y they slant, along x they stand at its line) */
     const lines = [{ a: room.ceilingHeight, s: 0 }, ...(room.slopes || [])].map((/** @type {{ a: number, s: number }} */ l) => w.axis === 1 ? l : { a: l.a + l.s * w.at, s: 0 });
-    const face = wallFace({ ...w, from, to }, h0, room.ceilingHeight, room.openings);
+    const face = wallFace({ ...w, from, to }, h0, room.ceilingHeight, room.openings, casings);   // no tiles behind a casing against the wall
     if (!face.length) continue;
     const { pieces, count } = layTiles(face, tile, { dir: t.dir, pattern: t.pattern, offset: [t.offset[w.axis], t.offset[2]], under: lines });
     for (const k of /** @type {(keyof typeof total)[]} */ (Object.keys(total))) total[k] += count[k];
@@ -80,7 +90,8 @@ function wallTiles(H, room, t, floor, catalog) {
       const inset = /** @type {import('./tiles.js').Rect} */ ([r[0] + 0.5, r[1] - 0.5, r[2] + 0.5, r[3] - 0.5]), poly = under(inset, lines);
       if (poly) parts.push(part(inset, poly, 0.5, d - 1, grout));
     }
-    for (const p of pieces) parts.push(part(p.rect, p.poly, 0, d, grout, { face: { n, material: look } }));
+    const plane = w.inward > 0 ? w.at + d : w.at - d;
+    for (const p of pieces) parts.push(part(p.rect, p.poly, 0, d, grout, { face: { n, material: tileLook(t.product, p.tile, tile, t.dir) }, uvAt: w.axis === 0 ? [p.at[0], plane, p.at[1]] : [plane, p.at[0], p.at[1]] }));
     for (const p of pieces.filter(q => q.small)) parts.push(part(p.rect, p.poly, d, d + 0.5, 'smallCut', { layer: 'smallCuts' }));
   }
   total.area = Math.round(total.area * 100) / 100;
@@ -190,7 +201,7 @@ export async function assembleRooms(H, catalog) {
       if (faults.length) throw new Error(`room: ${room.id}.scene.json: ${faults.join('; ')}`);
       room.tiles = scene.tiles;
       if (scene.tiles.floor) floorTiles(H, room, scene.tiles.floor, catalog);
-      if (scene.tiles.walls) wallTiles(H, room, scene.tiles.walls, scene.tiles.floor?.depth || 0, catalog);
+      if (scene.tiles.walls) wallTiles(H, room, scene.tiles.walls, scene.tiles.floor?.depth || 0, (scene.builtIns || []).map((/** @type {{ box: number[] }} */ b) => b.box), catalog);
     }
     /* fixtures: a product, its body's size (or the scene's depth, length, height: as it is built here), at its zero, turned */
     for (const [id, f] of Object.entries(scene.fixtures || {})) {

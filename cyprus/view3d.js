@@ -10,7 +10,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.187.0/+esm';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/controls/OrbitControls.js/+esm';
 import { lookOf, shapeOf } from './library/shapes.js';
-import { prism, edgesOf } from './core/geometry.js';
+import { prism, edgesOf, hash01 } from './core/geometry.js';
 import { createSurfaces, sub3, dot3, cross3 } from './core/surfaces.js';
 import { turned } from './core/hierarchy.js';
 
@@ -159,21 +159,23 @@ export function createView3d({ catalog, canvas, light, edges }) {
       }));
     },
     image(d, m) {                          // a photo of textures, its size in mm; face: which of its images; turn: its u along the face's v
-      catalog.texture(d.key).then(T => loadImage(T.faces[d.face || 0], im => {
+      catalog.texture(d.key).then(T => loadImage(T.faces[(d.face || 0) % T.faces.length], im => {
         const t = new THREE.Texture(im); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
-        if (d.turn) { t.repeat.set(1 / T.size[1], 1 / T.size[0]); t.rotation = Math.PI / 2; } else t.repeat.set(1 / T.size[0], 1 / T.size[1]);
+        if (d.tile && T.kind === 'stone') t.repeat.set(1 / d.tile[0], 1 / d.tile[1]);   // a tile of stone: one image, the whole tile
+        else if (d.tile) { t.repeat.set(1 / T.size[0], 1 / T.size[1]); t.offset.set(hash01(d.face, 1), hash01(d.face, 2)); }   // a plank: a piece of the photo, by chance
+        else if (d.turn) { t.repeat.set(1 / T.size[1], 1 / T.size[0]); t.rotation = Math.PI / 2; } else t.repeat.set(1 / T.size[0], 1 / T.size[1]);
         t.needsUpdate = true; m.map = t; m.needsUpdate = true; redraw();
       }));
     }
   };
   /** @type {Map<string, any>} */
   const MATERIALS = new Map();
-  /** a product's look (the library's lookOf: a photo or a colour, its finish) as a material's @param {string} key  a board or a tile of the library @returns {Record<string, any>} */
-  function productLook(key) {
+  /** a product's look (the library's lookOf: a photo or a colour, its finish) as a material's @param {string} key  a board or a tile of the library @param {{ face: number, size: number[] }} [tile]  one tile: which image, its size on the face @returns {Record<string, any>} */
+  function productLook(key, tile) {
     const L = lookOf(catalog.product(key));
     return {
       decor: { color: '#ffffff', image: { key: L.texture }, roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, reflect: 0.5 },
-      tile: { color: '#ffffff', image: { key: L.texture }, roughness: 0.45, reflect: 0.6 },
+      tile: { color: '#ffffff', image: { key: L.texture, ...(tile ? { face: tile.face, tile: tile.size } : {}) }, roughness: 0.45, reflect: 0.6 },
       lacquer: { color: L.color, roughness: 0.42, clearcoat: 0.2, clearcoatRoughness: 0.45, reflect: 0.7 },
       matt: { color: L.color, roughness: 0.8, reflect: 0.45 }
     }[L.finish];
@@ -182,7 +184,8 @@ export function createView3d({ catalog, canvas, light, edges }) {
    * @param {string} key */
   function material(key) {
     if (MATERIALS.has(key)) return MATERIALS.get(key);
-    const def = key.startsWith('board:') ? productLook(key.slice(6)) : key.startsWith('tile:') ? productLook(key.slice(5))
+    const [, tileKey, face, size] = key.startsWith('tile:') ? key.split(':') : [];   // tile:<product>[:<image>:<u>x<v>]: one tile's
+    const def = key.startsWith('board:') ? productLook(key.slice(6)) : tileKey ? productLook(tileKey, face !== undefined ? { face: Number(face), size: size.split('x').map(Number) } : undefined)
       : key.startsWith('grout:') ? /** @type {Record<string, any>} */ ({ color: key.slice(6), roughness: 0.95, reflect: 0.2 }) : /** @type {Record<string, any>} */ (catalog.material(key));
     /** @type {Record<string, any>} */
     const o = { color: def.color || '#ffffff', roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1,
@@ -246,7 +249,7 @@ export function createView3d({ catalog, canvas, light, edges }) {
         /* a finish on one face (a tile's face toward the room): that face its finish, the others the part's material */
         const toward = part.face && turned(part.face.n, at.turn), finish = part.face?.material;
         /** @type {Cell} */
-        const cell = { S, group, edges: part.edges !== false, owner: n, part: part.mover ? h.path(n) + '#' + part.mover : undefined,
+        const cell = { S, group, edges: part.edges !== false, owner: n, part: part.mover ? h.path(n) + '#' + part.mover : undefined, ...(part.uvAt ? { uvAt: put(at, part.uvAt) } : {}),
           ...(F2 ? { faceMaterial: (/** @type {Vec3} */ v, /** @type {Vec3[]} */ pts) => faceLook(F2, eaves, v, pts) }
             : toward ? { faceMaterial: (/** @type {Vec3} */ v) => (dot3(v, toward) > 0.9 ? /** @type {string} */ (finish) : look) } : { material: look }),
           ...(part.raw ? { raw: part.raw, finish: part.finish } : {}) };

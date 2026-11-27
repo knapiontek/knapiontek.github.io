@@ -9,7 +9,7 @@
 /** @typedef {{ len: number, wid: number, joint: number, minCut: number[] }} TileSize  the tile as laid: len along dir, wid across */
 /** @typedef {{ a: number, s: number }} Line  a limit over a surface: its second coordinate v up to a + s · u (a sloped ceiling over a wall) */
 /** @typedef {{ dir: 'x' | 'y', pattern: string, offset: number[], under?: Line[] }} Laying  under: the lines the tiles stay under */
-/** @typedef {{ rect: Rect, tile: string, whole: boolean, small: boolean, poly?: number[][] }} TilePiece  tile: the tile it is cut from (its row and column); poly: its outline [u, v], counter-clockwise, where a line cuts it (rect: its box) */
+/** @typedef {{ rect: Rect, tile: string, at: number[], whole: boolean, small: boolean, poly?: number[][] }} TilePiece  tile: the tile it is cut from (its row and column); at: that tile's corner [u, v] (its photo from there); poly: its outline [u, v], counter-clockwise, where a line cuts it (rect: its box) */
 /** @typedef {{ area: number, tiles: number, whole: number, cut: number, small: number }} TileCount  area in m² */
 
 /** @type {Record<string, number | null>} a row's shift along the length, as a part of the tile; null: at random */
@@ -94,7 +94,7 @@ export function layTiles(rects, tile, lay) {
         const cut = poly && areaOf(poly) < (rect[1] - rect[0]) * (rect[3] - rect[2]) - TOL;
         const along = p[1] - p[0], across = p[3] - p[2], area = cut ? areaOf(/** @type {number[][]} */ (poly)) : along * across;
         laid.set(id, (laid.get(id) || 0) + area);
-        pieces.push({ rect, tile: id, whole: false, small: along < tile.minCut[0] - TOL || across < tile.minCut[1] - TOL, ...(cut ? { poly: /** @type {number[][]} */ (poly) } : {}) });
+        pieces.push({ rect, tile: id, at: A === 0 ? [ta0, tb0] : [tb0, ta0], whole: false, small: along < tile.minCut[0] - TOL || across < tile.minCut[1] - TOL, ...(cut ? { poly: /** @type {number[][]} */ (poly) } : {}) });
       }
     }
   }
@@ -138,13 +138,15 @@ export function rectsMinus(rects, holes) {
 
 /**
  * A wall's face to tile, in its own axes (u along the wall, h up): from the floor's tiles to the ceiling, less the openings
- * through it (a box [x0, x1, y0, y1, h0, h1] in the room's axes, across its line).
- * @param {Wall} w @param {number} h0 @param {number} h1 @param {number[][]} openings @returns {Rect[]}
+ * through it (a box [x0, x1, y0, y1, h0, h1] in the room's axes, across its line), less what stands against it (a casing's box).
+ * @param {Wall} w @param {number} h0 @param {number} h1 @param {number[][]} openings @param {number[][]} [against] @returns {Rect[]}
  */
-export function wallFace(w, h0, h1, openings) {
-  const holes = /** @type {Rect[]} */ (openings.filter(b => {
+export function wallFace(w, h0, h1, openings, against = []) {
+  const on = (/** @type {number[]} */ b, /** @type {number} */ most) => {
     const [a0, a1] = w.axis === 0 ? [b[2], b[3]] : [b[0], b[1]];
-    return a0 - 5 <= w.at && w.at <= a1 + 5 && a1 - a0 < 600;   // across this wall's line (a wall is thinner than 600)
-  }).map(b => w.axis === 0 ? [b[0], b[1], b[4], b[5]] : [b[2], b[3], b[4], b[5]]));
+    return a0 - 5 <= w.at && w.at <= a1 + 5 && a1 - a0 < most;   // across this wall's line, or against it
+  };
+  const holes = /** @type {Rect[]} */ ([...openings.filter(b => on(b, 600)), ...against.filter(b => on(b, Infinity))]   // an opening: thinner than a wall (600)
+    .map(b => w.axis === 0 ? [b[0], b[1], b[4], b[5]] : [b[2], b[3], b[4], b[5]]));
   return rectsMinus([[w.from, w.to, h0, h1]], holes);
 }
