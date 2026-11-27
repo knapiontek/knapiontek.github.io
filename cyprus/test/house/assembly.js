@@ -1,16 +1,20 @@
 // @ts-check
-// test/house/assembly.js: house/assembly.js and its model.json: the hierarchy sound, every layer and floor in index.json, every type
-// known; the layer and the floor of a wall, a window, a door, the ceiling, the EPS; then the house in its own axes against
-// archon/analysis.md: walls, openings, slab, chimney, foundations, finishes, roof, site, rooms.
+// test/house/assembly.js: house/assembly.js by use cases, as index.js uses it on model.json: the site and its house assembled,
+// sound (every layer and floor in index.json, every type known); the panel switching a wall, a window, a door, the ceiling by
+// layer and floor; the house in its own axes against archon/analysis.md (walls, openings, slab, chimney, foundations, finishes,
+// roof, site); what is drawn of it; the rooms as archon numbers them, their m²; what the house tells a room of itself. Every
+// function in one.
 
-import { assembleHouse } from '../../house/assembly.js';
+import * as API from '../../house/assembly.js';
 import { openCatalog } from '../../library/catalog.js';
+import { uses } from '../uses.js';
 
 /** @typedef {import('../../house/assembly.js').HouseNode} HouseNode */
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
-  const { hierarchy: H, problems } = await assembleHouse(await openCatalog());
+  const { $, missing } = uses(API);
+  const { hierarchy: H, problems } = await $.assembleHouse(await openCatalog());
   /** @type {Record<string, any>} */
   const { layers: blocks } = await (await fetch(new URL('../../index.json', import.meta.url))).json();
   /** @type {string[]} */
@@ -26,7 +30,7 @@ export default async function (check) {
   /** under a room: what stands in it (room/assembly.js, its own tests) @param {HouseNode} n */
   const inRoom = n => H.chain(n).slice(0, -1).some(m => /** @type {HouseNode} */ (m).area);
 
-  /* ---------- the hierarchy ---------- */
+  /* --- use case: index.js assembles the site and its house: sound, its layers and floors known, every type known --- */
   {
     check('assembleHouse: the site at the root, the house on it', H.root.id === 'site' && (H.root.children || []).map(n => n.id).join() === 'house' && !('format' in H.root));
     check('the house: its branches foundation, the two floors, facade, roof, stair', (house.children || []).map(n => n.id).join() === 'foundation,groundFloor,firstFloor,facade,roof,stair');
@@ -42,7 +46,7 @@ export default async function (check) {
     check('every type that is drawn has its layer', Object.entries(types).every(([k, t]) => k.startsWith('void') || typeof t.layer === 'string'));
   }
 
-  /* ---------- the layer (what it is) and the floor (where it is), as the panel switches them ---------- */
+  /* --- use case: the panel switches a thing by its layer (what it is) and its floor (where it is) --- */
   {
     /** @param {string} path */
     const both = path => H.layer(at(path)) + ' ' + H.floor(at(path));
@@ -55,7 +59,7 @@ export default async function (check) {
     check('the site: site', H.layer(H.root) === 'site');
   }
 
-  /* ---------- in the house's axes, against archon/analysis.md ---------- */
+  /* --- use case: the house in its own axes, against archon/analysis.md --- */
   {
     check('the house on the site: its zero 15800, 14900, 520 from the site\'s corner', zero.join() === '15800,14900,520');
     check('§ 8.1: the garden wall, x 12760 – 13000, y 440 – 8660, h 0 → 2720', box('groundFloor/blockGarden') === '12760,13000,440,8660,0,2720');
@@ -79,7 +83,7 @@ export default async function (check) {
     check('§ 14: the lawn at −320; the garden terrace x 14200 – 15700, y 300 – 8800, top −20', site.lawn.h - zero[2] === -320 && tx.join() === '14200,15700,300,8800' && terrace.h - zero[2] === -20);
   }
 
-  /* ---------- what is drawn (house/shapes.js): cut by the openings and the roof, split between the floors ---------- */
+  /* --- use case: what is drawn (house/shapes.js): cut by the openings and the roof, split between the floors --- */
   {
     /** @type {{ materials: Record<string, unknown> }} */
     const library = await (await fetch(new URL('../../library/materials.json', import.meta.url))).json();
@@ -102,7 +106,7 @@ export default async function (check) {
     check('an inner door: its frame and its leaf, the leaf on its hinge', (door.parts || []).some(p => p.mover === 'leaf') && door.movers?.[0].id === 'leaf');
   }
 
-  /* ---------- the rooms, as archon numbers them; their floors in m² (§ 9, § 10) ---------- */
+  /* --- use case: Documents: the rooms as archon numbers them, their floors in m² (§ 9, § 10) --- */
   {
     /** @type {string[]} */
     const rooms = [];
@@ -114,4 +118,16 @@ export default async function (check) {
     check('rooms: First Floor m² as § 10', m2.hall_1 === 7.26 && m2.bedroom_2 === 28.79 && m2.wardrobe_3 === 5.2 && m2.wardrobe_4 === 4.79 && m2.bathroom_5 === 8.22
       && m2.bedroom_6 === 17.43 && m2.bedroom_7 === 14.41 && m2.wardrobe_8 === 4.33);
   }
+
+  /* --- use case: what the house tells a room of itself (room/assembly.js asks no house): its ceiling, its openings --- */
+  {
+    const kitchen = at('groundFloor/room_356'), bath5 = at('firstFloor/bathroom_5');
+    check('a room\'s ceiling: the slab over the kitchen, 2720; the Attic\'s over bathroom 5, 5910 − 3060', kitchen.ceilingHeight === 2720 && bath5.ceilingHeight === 2850);
+    const under = (/** @type {number} */ y) => Math.min(...bath5.slopes.map((/** @type {any} */ l) => l.a + l.s * y));
+    check('a room\'s slopes: the roof\'s underside over it, its two slopes (in the room\'s axes: 42° up from the eaves)', bath5.slopes.length === 2 && Math.abs(bath5.slopes[0].s - Math.tan(42 * Math.PI / 180)) < 1e-9 && under(0) < under(1500));
+    const door = bath5.openings.find((/** @type {number[]} */ b) => b[1] - b[0] === 900 && b[4] === 0);
+    check('a room\'s openings, in its axes: bathroom 5\'s door (900, from its floor), the garden window of the kitchen', !!door && kitchen.openings.some((/** @type {number[]} */ b) => b[3] - b[2] === 6000));
+  }
+
+  check('the API: every function in a use case' + (missing().length ? ': not ' + missing().join(', ') : ''), missing().length === 0);
 }

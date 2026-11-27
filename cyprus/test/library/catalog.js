@@ -1,15 +1,26 @@
 // @ts-check
-// test/library/catalog.js: library/catalog.js: every call of the catalog (types.js: Catalog), unknown keys, frozen data, a
-// texture read once, every library file against its type; then the catalog as the other modules use it, on its own data.
+// test/library/catalog.js: library/catalog.js by use cases: the library's files read as they lie (groups, products, families,
+// materials, shops, textures read once; what a product names exists; each file against its type); a broken library (unknown
+// keys, a product in two groups); then as the other modules use it: an estimate (a board, its price, its shop), Finish (a
+// tap's family by metal), a tile layout and its texture, the 2D plan's fills. Every call of the catalog in one.
 
-import { openCatalog } from '../../library/catalog.js';
+import * as API from '../../library/catalog.js';
 
 /** @typedef {import('../../types.js').Board} Board */
 /** @typedef {import('../../types.js').Tile} Tile */
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
-  /* ---------- every call ---------- */
+  /** @type {Set<string>} the calls a use case makes */
+  const used = new Set();
+  /** the catalog, its calls counted @returns {Promise<import('../../types.js').Catalog>} */
+  const openCatalog = async () => {
+    used.add('openCatalog');
+    const C = /** @type {Record<string, any>} */ (await API.openCatalog());
+    return /** @type {any} */ (new Proxy(C, { get: (c, k) => { if (typeof c[/** @type {string} */ (k)] === 'function') used.add(String(k)); return c[/** @type {string} */ (k)]; } }));
+  };
+
+  /* --- use case: the library's files, read as they lie: every call, what it gives, what it refuses --- */
   {
     /* every address fetched is noted: this slate is the test's own, so its fetch may be watched */
     /** @type {string[]} */
@@ -110,19 +121,18 @@ export default async function (check) {
       && t.faces.length > 0 && t.faces.every(f => f.startsWith('data:image/'))));
   }
 
-  /* ---------- as the other modules use it ---------- */
+  /* --- use cases: the catalog as the other modules use it (index.js opens it once) --- */
   {
-    /* index.js opens the catalog once */
     const catalog = await openCatalog();
 
-    /* an estimate: a board by its key, its price per unit, the shop it is bought in */
+    /* --- use case: an estimate: a board by its key, its price per unit, the shop it is bought in --- */
     const board = /** @type {Board} */ (catalog.product('egger-u708-st9-18'));   // a board: its group says so, so it has a thickness
     check('an estimate: a board, 18 mm, a sheet 2800 × 2070 at 268.18 zł',
       board.group === 'boards' && board.thickness === 18 && board.length === 2800 && board.width === 2070 && board.unit === 'sheet' && board.price === 268.18);
     const bought = catalog.products('boards').map(k => catalog.product(k)).filter(p => p.shop);
     check('an estimate: each board bought in a shop, by its name', bought.length > 0 && bought.every(p => catalog.shop(/** @type {string} */ (p.shop)).name.length > 0));
 
-    /* Finish: a tap in another metal, among its family */
+    /* --- use case: Finish: a tap in another metal, among its family --- */
     const tap = 'hansgrohe-tecturis-e-110-73010140';
     const metals = catalog.variants(tap).map(k => /** @type {string} */ (catalog.product(k).metal));
     check('Finish: the tap\'s family in brass and nickel', metals.join() === 'brass,nickel');
@@ -130,14 +140,19 @@ export default async function (check) {
     const nickel = catalog.variants(tap).find(k => catalog.product(k).metal === 'nickel');
     check('Finish: the tap in nickel', nickel === 'hansgrohe-tecturis-e-110-73010000');
 
-    /* a tile layout: a tile's size, joint, smallest piece; its texture, loaded when the tiles are drawn */
+    /* --- use case: a tile layout: a tile's size, joint, smallest piece; its texture, loaded when the tiles are drawn --- */
     const tile = /** @type {Tile} */ (catalog.product('paradyz-authority-graphite'));
     check('tiles: 898 × 898, joint 2, smallest piece 300 × 300, laid in a grid',
       tile.group === 'tiles' && tile.len === 898 && tile.wid === 898 && tile.joint === 2 && tile.minCut.join() === '300,300' && tile.pattern === 'grid');
     const image = await catalog.texture(tile.texture);
     check('tiles: its texture, stone, one image covers 898 × 898', image.kind === 'stone' && image.size.join() === '898,898' && image.faces.length > 0);
 
-    /* the 2D plan: how a cut material is filled */
+    /* --- use case: the 2D plan: how a cut material is filled --- */
     check('2D: a block cut is filled dark, EPS hatched', catalog.material('block').plan === '#2d2f31' && typeof catalog.material('insulation').plan === 'object');
   }
+
+  /* every call in a use case: the module's and the catalog's */
+  const calls = [...Object.keys(API), ...Object.keys(await API.openCatalog()).filter(k => k !== 'groups')];
+  const missing = calls.filter(k => !used.has(k));
+  check('the API: every call in a use case' + (missing.length ? ': not ' + missing.join(', ') : ''), missing.length === 0);
 }

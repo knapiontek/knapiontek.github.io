@@ -40,7 +40,7 @@ export async function assembleHouse(catalog) {
   const hierarchy = createHierarchy(/** @type {HouseNode} */ (root));
   houseShapes(hierarchy, house);
   root.parts = siteParts(hierarchy, root, house);
-  hierarchy.walk(n => { if (/** @type {HouseNode} */ (n).area) Object.assign(n, roomFacts(hierarchy, /** @type {HouseNode} */ (n))); });
+  hierarchy.walk(n => { if (/** @type {HouseNode} */ (n).area) Object.assign(n, roomFacts(hierarchy, house, /** @type {HouseNode} */ (n))); });
   const problems = await assembleRooms(/** @type {any} */ (hierarchy), catalog);
   return { hierarchy, problems };
 }
@@ -50,10 +50,11 @@ const OPENINGS = ['door', 'glassDoor', 'gate', 'entrance', 'window'];
 
 /**
  * What the house tells a room of itself, in the room's axes: its ceilingHeight (the lowest slab or ceiling of the house over its
- * footprint, from its floor; none: the room's height) and its openings (each a box through its wall, within 600 of its footprint).
- * @param {ReturnType<typeof createHierarchy<HouseNode>>} H @param {HouseNode} room @returns {{ ceilingHeight: number, openings: number[][] }}
+ * footprint, from its floor; none: the room's height), its slopes (the roof's underside over it: h = a + s · y, each) and its
+ * openings (each a box through its wall, within 600 of its footprint).
+ * @param {ReturnType<typeof createHierarchy<HouseNode>>} H @param {HouseNode} house @param {HouseNode} room @returns {{ ceilingHeight: number, slopes: { a: number, s: number }[], openings: number[][] }}
  */
-function roomFacts(H, room) {
+function roomFacts(H, house, room) {
   const r = H.box(room), zero = H.place(room), near = (/** @type {number[]} */ b, /** @type {number} */ m) => b[0] < r[1] + m && b[1] > r[0] - m && b[2] < r[3] + m && b[3] > r[2] - m;
   let low = r[5];
   /** @type {number[][]} */
@@ -62,7 +63,13 @@ function roomFacts(H, room) {
     if ((n.type === 'slab' || n.type === 'ceiling')) { const b = H.box(n); if (near(b, 0) && b[4] > r[4] + 100) low = Math.min(low, b[4]); }
     if (OPENINGS.includes(n.type)) { const b = H.box(n); if (near(b, 600) && b[4] < r[5] && b[5] > r[4]) openings.push(b.map((v, i) => v - zero[i >> 1])); }
   });
-  return { ceilingHeight: low - r[4], openings };
+  /* the roof's underside, its two slopes up from the eaves to the ridge: in the house's axes h = eave + tan · y, and from the other eave */
+  const roof = /** @type {HouseNode | null} */ (H.node('house/roof')), slopes = [];
+  if (roof?.pitch) {
+    const tan = Math.tan(roof.pitch * Math.PI / 180), h = H.place(house), dy = r[2] - h[1], dh = r[4] - h[2];
+    slopes.push({ a: roof.eave - dh + tan * dy, s: tan }, { a: roof.eave - dh + tan * (roof.width - dy), s: -tan });
+  }
+  return { ceilingHeight: low - r[4], slopes, openings };
 }
 
 /**

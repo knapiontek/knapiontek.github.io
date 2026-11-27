@@ -4,7 +4,7 @@
 // a wall's face less its door. Every exported function in one.
 
 import * as API from '../../room/tiles.js';
-import { doorHalves, layTiles, rectsMinus, wallFace, wallsOf } from '../../room/tiles.js';
+import { doorHalves, layTiles, rectsMinus, under, wallFace, wallsOf } from '../../room/tiles.js';
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
@@ -12,7 +12,7 @@ export default async function (check) {
   const used = new Set();
   /** @template {(...a: any[]) => any} F @param {string} name @param {F} f @returns {F} */
   const api = (name, f) => /** @type {F} */ ((...a) => { used.add(name); return f(...a); });
-  const $ = { layTiles: api('layTiles', layTiles), doorHalves: api('doorHalves', doorHalves), wallsOf: api('wallsOf', wallsOf), rectsMinus: api('rectsMinus', rectsMinus), wallFace: api('wallFace', wallFace) };
+  const $ = { layTiles: api('layTiles', layTiles), doorHalves: api('doorHalves', doorHalves), wallsOf: api('wallsOf', wallsOf), rectsMinus: api('rectsMinus', rectsMinus), wallFace: api('wallFace', wallFace), under: api('under', under) };
   /* a tile as the library gives it (library/shapes.js tileOf): 600 long, 300 wide, joint 2, the smallest cut 100 × 100 */
   const tile = { len: 600, wid: 300, joint: 2, minCut: [100, 100] };
 
@@ -66,6 +66,15 @@ export default async function (check) {
     check('a face less a hole: the rectangles round it', $.rectsMinus([[0, 3000, 0, 2600]], [[1000, 1900, 0, 2050]]).length === 3);
     const { count } = $.layTiles(face, tile, { dir: 'x', pattern: 'grid', offset: [0, 12] });
     check('the wall laid as a floor is (u along it, h up), from its point: counted', count.tiles > 0 && count.area === Math.round((3000 * 2588 - 900 * 2038) / 1e4) / 100);
+  }
+
+  /* --- use case: a wall under the roof's slope: the tiles cut on the slant, none above it --- */
+  {
+    const slope = [{ a: 1000, s: 1 }];   // the ceiling at 1000 at u 0, rising 1 in 1
+    check('a rectangle under a slope: its outline cut on the slant; one under it whole; one over it nothing', $.under([0, 600, 0, 1300], slope)?.length === 5 && $.under([0, 600, 0, 900], slope)?.length === 4 && $.under([0, 600, 1700, 1800], slope) === null);
+    const { pieces, count } = $.layTiles([[0, 1200, 0, 1500]], tile, { dir: 'x', pattern: 'grid', offset: [0, 0], under: slope });
+    check('laid under it: the pieces the slope cuts their outline, none above it; the area under it', pieces.some(p => p.poly) && pieces.every(p => (p.poly || [[p.rect[0], p.rect[3]], [p.rect[1], p.rect[3]]]).every(q => q[1] <= 1000 + q[0] + 0.5))
+      && count.area === 1.68);   // 500 rising from 1000 to 1500 (0.625 m²), then 700 × 1500
   }
 
   /* every function of the API in a use case */

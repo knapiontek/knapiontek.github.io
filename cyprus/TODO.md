@@ -38,7 +38,8 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] tiles, stage 1: in the rooms' scenes (floor and walls, each its depth and grout), out of `house/model.json`; checked
 - [x] tiles, stage 2: `room/tiles.js`, the floor's tiles laid from the offset, ending at the middle of the doors; the grout in its colour, the tiles' photos, the small cuts marked; counted (m², tiles, whole, cut, small)
 - [x] tiles, stage 3: the walls' tiles: round the floor, from the floor's tiles to the ceiling, less the openings; counted
-- [ ] tiles: the casings' faces (built-ins) tiled; a tile's photo per tile (not one sheet over the floor); the corners where two walls' tiles meet
+- [x] tiles: under the roof's slope (cut on the slant), the inner corners meeting, a joint over the floor's tiles, the tile on its face toward the room (the rest its bed), no face of the grout in a tile's plane
+- [ ] tiles: the casings' faces (built-ins) tiled; a tile's photo per tile (not one sheet over the floor); an outer corner's edge
 - [x] the library's API, the rest: `lookOf` (`view3d.js` reads no product's fields); a hinge places its cup itself; the house gives a room its facts (`ceilingHeight`, `openings`: house/assembly.js `roomFacts`), `room/assembly.js` searches no house
 - [ ] the model as JSON output: the hierarchy (or a group) exported; its format to settle
 - [ ] `view2d.js` (root): the 2D view (the menu's 2D): plans and dimensions

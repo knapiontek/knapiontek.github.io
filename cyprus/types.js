@@ -39,6 +39,7 @@
  * @property {number[]} [x]  prism: [x1, x2], along x
  * @property {number[][]} [poly]  prism: its section, a convex polygon of [y, h] points, counter-clockwise
  * @property {Record<string, string>} [faces]  prism: a face's material by its side: top, bottom, ends (along x), eaves (a side at an eaves' y), reveals (the other sides)
+ * @property {{ n: Vec, material: string }} [face]  a finish on one face: the face toward n (in its node's axes) in this material, the others in the part's (a tile: its face toward the room)
  * @property {number[]} [eaves]  prism: the y of its outer edges, where a side is an eave
  * @property {string} [raw]  the material when its finish's layer is off (EPS under its facade)
  * @property {string} [finish]  the layer of its finish

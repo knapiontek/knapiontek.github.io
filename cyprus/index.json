@@ -9,7 +9,7 @@
      "roof": { "name": "Roof", "layers": { "roofPlanes": "Roof planes", "roofWindows": "Roof windows" } },
      "openings": { "name": "Openings", "layers": { "windows": "Windows", "outerDoors": "Outer doors", "innerDoors": "Inner doors" } },
      "stair": "Stair",
-     "insulation": { "name": "Insulation", "layers": { "eps": "EPS", "facade": "Facade" } },
+     "insulation": { "name": "Insulation", "layers": { "eps": { "name": "EPS", "layers": { "facade": "Facade" } } } },
      "site": { "name": "Site", "layers": { "lawn": "Lawn", "terraces": "Terraces", "paving": "Paving" } }
    } },
    "interiors": { "name": "Interiors", "layers": {

@@ -7,13 +7,36 @@
 
 /** @typedef {[number, number, number, number]} Rect */
 /** @typedef {{ len: number, wid: number, joint: number, minCut: number[] }} TileSize  the tile as laid: len along dir, wid across */
-/** @typedef {{ dir: 'x' | 'y', pattern: string, offset: number[] }} Laying */
-/** @typedef {{ rect: Rect, tile: string, whole: boolean, small: boolean }} TilePiece  tile: the tile it is cut from (its row and column) */
+/** @typedef {{ a: number, s: number }} Line  a limit over a surface: its second coordinate v up to a + s · u (a sloped ceiling over a wall) */
+/** @typedef {{ dir: 'x' | 'y', pattern: string, offset: number[], under?: Line[] }} Laying  under: the lines the tiles stay under */
+/** @typedef {{ rect: Rect, tile: string, whole: boolean, small: boolean, poly?: number[][] }} TilePiece  tile: the tile it is cut from (its row and column); poly: its outline [u, v], counter-clockwise, where a line cuts it (rect: its box) */
 /** @typedef {{ area: number, tiles: number, whole: number, cut: number, small: number }} TileCount  area in m² */
 
 /** @type {Record<string, number | null>} a row's shift along the length, as a part of the tile; null: at random */
 export const SHIFT = { grid: 0, half: 1 / 2, third: 1 / 3, quarter: 1 / 4, random: null };
 const TOL = 0.5;   // mm: a thinner strip is no piece; a tile this short of its size is still whole
+
+/** a polygon's area @param {number[][]} P */
+const areaOf = P => Math.abs(P.reduce((s, p, i) => { const q = P[(i + 1) % P.length]; return s + p[0] * q[1] - q[0] * p[1]; }, 0)) / 2;
+/**
+ * A rectangle [u0, u1, v0, v1] under lines (v ≤ a + s · u each): its outline, counter-clockwise; null: nothing under them;
+ * the rectangle's own corners when no line cuts it.
+ * @param {Rect} r @param {Line[]} lines @returns {number[][] | null}
+ */
+export function under(r, lines) {
+  let P = [[r[0], r[2]], [r[1], r[2]], [r[1], r[3]], [r[0], r[3]]];
+  for (const { a, s } of lines) {
+    const f = (/** @type {number[]} */ p) => a + s * p[0] - p[1], out = /** @type {number[][]} */ ([]);
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i], q = P[(i + 1) % P.length], fp = f(p), fq = f(q);
+      if (fp >= 0) out.push(p);
+      if ((fp >= 0) !== (fq >= 0)) { const t = fp / (fp - fq); out.push([p[0] + t * (q[0] - p[0]), p[1] + t * (q[1] - p[1])]); }
+    }
+    P = out;
+    if (P.length < 3 || areaOf(P) < TOL) return null;
+  }
+  return P;
+}
 
 /** a row's shift at random, the same every time @param {number} k */
 const random = k => { const s = Math.sin(k * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -66,16 +89,19 @@ export function layTiles(rects, tile, lay) {
       for (const r of R) {
         const p = [Math.max(ta0, r[0]), Math.min(ta1, r[1]), Math.max(tb0, r[2]), Math.min(tb1, r[3])];
         if (p[1] - p[0] < TOL || p[3] - p[2] < TOL) continue;
-        const along = p[1] - p[0], across = p[3] - p[2];
-        laid.set(id, (laid.get(id) || 0) + along * across);
-        pieces.push({ rect: /** @type {Rect} */ (A === 0 ? p : [p[2], p[3], p[0], p[1]]), tile: id, whole: false, small: along < tile.minCut[0] - TOL || across < tile.minCut[1] - TOL });
+        const rect = /** @type {Rect} */ (A === 0 ? p : [p[2], p[3], p[0], p[1]]), poly = lay.under?.length ? under(rect, lay.under) : null;
+        if (lay.under?.length && !poly) continue;
+        const cut = poly && areaOf(poly) < (rect[1] - rect[0]) * (rect[3] - rect[2]) - TOL;
+        const along = p[1] - p[0], across = p[3] - p[2], area = cut ? areaOf(/** @type {number[][]} */ (poly)) : along * across;
+        laid.set(id, (laid.get(id) || 0) + area);
+        pieces.push({ rect, tile: id, whole: false, small: along < tile.minCut[0] - TOL || across < tile.minCut[1] - TOL, ...(cut ? { poly: /** @type {number[][]} */ (poly) } : {}) });
       }
     }
   }
   const full = tile.len * tile.wid - TOL * (tile.len + tile.wid);
   for (const p of pieces) { p.whole = (laid.get(p.tile) || 0) >= full; if (p.whole) p.small = false; }
   const whole = [...laid.values()].filter(v => v >= full).length;
-  const area = rects.reduce((s, r) => s + (r[1] - r[0]) * (r[3] - r[2]), 0) / 1e6;
+  const area = rects.reduce((s, r) => s + (lay.under?.length ? areaOf(under(r, lay.under) || [[0, 0]]) : (r[1] - r[0]) * (r[3] - r[2])), 0) / 1e6;
   return { pieces, count: { area: Math.round(area * 100) / 100, tiles: laid.size, whole, cut: laid.size - whole, small: pieces.filter(p => p.small).length } };
 }
 

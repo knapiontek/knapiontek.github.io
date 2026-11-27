@@ -1,10 +1,11 @@
 // @ts-check
-// test/view3d.js: view3d.js without a canvas (the scene only): two boxes welded (their joint gone, no line on its seam) or of two
-// groups (the joint a contact piece, raw); the house drawn, in its axes and three's, a material's look, a prism's faces, what
-// the panel switches (layers, floors, the Attic with the roof, the facade, edges), the cameras, the site; a product drawn by its
-// shape, in the fittings' metal.
+// test/view3d.js: view3d.js by use cases, without a canvas (the scene only), as index.js uses it: two blocks drawn (of one
+// wall: welded, no line on the seam; of two: a contact piece, raw); a carcass by the East wall (a turned node); the house shown
+// (its axes and three's, a material's look, a prism's faces); the panel switching layers, floors, the Attic, the facade,
+// edges; the menu's cameras; the site; a product drawn by its shape in the room's metal; the page without a canvas, closed.
+// Every call in one.
 
-import { createView3d } from '../view3d.js';
+import * as API from '../view3d.js';
 import { openCatalog } from '../library/catalog.js';
 import { assembleHouse } from '../house/assembly.js';
 import { createHierarchy } from '../core/hierarchy.js';
@@ -15,7 +16,10 @@ import { createHierarchy } from '../core/hierarchy.js';
 export default async function (check) {
   const catalog = await openCatalog(), { hierarchy: H } = await assembleHouse(catalog);
   const house = /** @type {Node} */ (H.node('house'));
-  const scene = createView3d({ catalog, edges: { color: '#7d807b', opacity: 0.45 } });
+  /** @type {Set<string>} the calls a use case makes */
+  const used = new Set(['createView3d']);
+  const made = /** @type {Record<string, any>} */ (API.createView3d({ catalog, edges: { color: '#7d807b', opacity: 0.45 } }));
+  const scene = /** @type {ReturnType<typeof API.createView3d>} */ (new Proxy(made, { get: (v, k) => { if (typeof v[/** @type {string} */ (k)] === 'function') used.add(String(k)); return v[/** @type {string} */ (k)]; } }));
   /** the meshes of a layer and floor @param {string} layer @param {string} floor */
   const of = (layer, floor) => scene.meshes().filter((/** @type {any} */ m) => m.userData.layer === layer && m.userData.floor === floor);
   /** a mesh's colour @param {any} m */
@@ -23,7 +27,7 @@ export default async function (check) {
   /** the line segments shown @returns {number} */
   const segments = () => scene.lines().filter((/** @type {any} */ l) => l.visible).reduce((s, /** @type {any} */ l) => s + l.geometry.attributes.position.count / 2, 0);
 
-  /* ---------- welded: two boxes side by side ---------- */
+  /* --- use case: two blocks side by side: of one wall (welded), of two (a contact piece each) --- */
   {
     /** two boxes 1000 × 1000 × 1000 along x, of layers a and b @param {string} a @param {string} b */
     const two = (a, b) => createHierarchy(/** @type {Node} */ ({ id: 'site', type: 'site', offset: [0, 0, 0], size: [2000, 1000, 1000], children: [
@@ -54,7 +58,7 @@ export default async function (check) {
     scene.visible(() => true);
   }
 
-  /* ---------- a turned node: a side of a carcass in a run by the East wall, fronts West (turn 3: x South, y East toward the wall);
+  /* --- use case: a turned node: a side of a carcass in a run by the East wall, fronts West (turn 3: x South, y East toward the wall);
      its zero at the wall, at its left end as one sees the fronts ---------- */
   {
     const room = createHierarchy(/** @type {Node} */ ({ id: 'room', type: 'room', offset: [0, 0, 0], size: [4000, 3000, 2700], children: [
@@ -66,7 +70,7 @@ export default async function (check) {
     check('turn: the side in the room\'s axes (x 3422–3972 from the East wall, y 2882–2900)', mm.join() === '3422,3972,2882,2900,0,720');
   }
 
-  /* ---------- the house ---------- */
+  /* --- use case: index.js shows the house --- */
   {
     scene.show(H, house);
     const count = scene.count();
@@ -80,7 +84,7 @@ export default async function (check) {
     check('drawn: the windows\' frames and glass', ['frame', 'glass'].every(k => of('windows', 'groundFloor').some((/** @type {any} */ m) => m.userData.material === k)));
   }
 
-  /* ---------- what the panel switches ---------- */
+  /* --- use case: the panel switches layers, floors, the Attic, the facade, edges --- */
   {
     const shown = (/** @type {any[]} */ ms) => ms.length > 0 && ms.every(m => m.visible), hidden = (/** @type {any[]} */ ms) => ms.length > 0 && ms.every(m => !m.visible);
     scene.visible(k => k !== 'blocks');
@@ -99,7 +103,7 @@ export default async function (check) {
     check('edges: on', segments() > 0);
   }
 
-  /* ---------- the cameras ---------- */
+  /* --- use case: the menu's cameras: Front, Garden, Above --- */
   {
     scene.view('front');
     const front = scene.camera.position.x;
@@ -109,13 +113,13 @@ export default async function (check) {
     check('view: the front from the West, the garden from the East, above from over it; h up', front < 0 && garden > 13.2 && scene.camera.position.z > 15 && scene.camera.up.toArray().join() === '0,0,1');
   }
 
-  /* ---------- the site ---------- */
+  /* --- use case: the site shown, with its house --- */
   {
     scene.show(H, /** @type {Node} */ (H.root));
     check('the site: the lawn, the decking, the paving, with the house', ['lawn', 'woodHorizontal', 'paving'].every(k => of('site', /** @type {any} */ (undefined)).some((/** @type {any} */ m) => m.userData.material === k)) && of('blocks', 'groundFloor').length === 1);
   }
 
-  /* ---------- a product, by its shape, in the fittings' metal ---------- */
+  /* --- use case: a product drawn by its shape, in the room's metal (Finish) --- */
   {
     /** @param {Record<string, any>} [settings] */
     const room = settings => createHierarchy(/** @type {Node} */ ({ id: 'room', type: 'room', offset: [0, 0, 0], size: [2000, 2000, 2500], settings, children: [
@@ -130,4 +134,14 @@ export default async function (check) {
     try { scene.show(bare, bare.root); } catch (e) { error = String(e); }
     check('no setting metal: it says where', error.includes('tap') && error.includes('metal'));
   }
+
+  /* --- use case: the page without a canvas (a test, a worker): resize and the sun do nothing; closed, nothing left drawn --- */
+  {
+    scene.resize(); scene.sun({ az: 200, el: 40, k: 1, clouds: 0, night: false });
+    scene.dispose();
+    check('without a canvas: resize and the sun do nothing; closed: no meshes, no lines', scene.meshes().length === 0 && scene.lines().length === 0);
+  }
+
+  const missing = [...Object.keys(API), ...Object.keys(made).filter(k => typeof made[k] === 'function')].filter(k => !used.has(k));
+  check('the API: every call in a use case' + (missing.length ? ': not ' + missing.join(', ') : ''), missing.length === 0);
 }

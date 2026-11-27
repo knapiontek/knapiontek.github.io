@@ -243,9 +243,12 @@ export function createView3d({ catalog, canvas, light, edges }) {
         const S = solidOf(part, at);
         if (!S) { other(part, look, at, group); continue; }
         const F2 = part.faces, eaves = part.eaves && at.turn === 0 ? part.eaves.map(y => y + at.at[1]) : undefined;
+        /* a finish on one face (a tile's face toward the room): that face its finish, the others the part's material */
+        const toward = part.face && turned(part.face.n, at.turn), finish = part.face?.material;
         /** @type {Cell} */
         const cell = { S, group, edges: part.edges !== false, owner: n, part: part.mover ? h.path(n) + '#' + part.mover : undefined,
-          ...(F2 ? { faceMaterial: (/** @type {Vec3} */ v, /** @type {Vec3[]} */ pts) => faceLook(F2, eaves, v, pts) } : { material: look }),
+          ...(F2 ? { faceMaterial: (/** @type {Vec3} */ v, /** @type {Vec3[]} */ pts) => faceLook(F2, eaves, v, pts) }
+            : toward ? { faceMaterial: (/** @type {Vec3} */ v) => (dot3(v, toward) > 0.9 ? /** @type {string} */ (finish) : look) } : { material: look }),
           ...(part.raw ? { raw: part.raw, finish: part.finish } : {}) };
         if (part.mover) { const k = h.path(n) + '#' + part.mover; (moving.get(k) || moving.set(k, []).get(k))?.push(cell); } else still.push(cell);
       }
