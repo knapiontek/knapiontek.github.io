@@ -13,7 +13,7 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] `view3d.js` as the prototype's: welded faces (`core/surfaces.js`), meshes by group and material, edges from the topology, generated surfaces, the sky; the roof on the Attic floor
 - [x] house geometry: `core/geometry.js`, `house/shapes.js` (the prototype's `house/model.js`): cuts, roof, floors, facade, roof, windows, doors, stair; `view3d.js`: prisms, a part's layer and floor, the facade's raw material
 - [x] `view3d.js` (root), stage 1: the house's boxes, the site, materials, layers and floors from the panel, edges, cameras, the sun; its test
-- [x] `layers.json` (root): the panel reads it; `checks(known)`: an unknown layer or floor; its test
+- [x] `index.json` (root), the app's settings: the layers (the panel reads them; `checks(known)`: an unknown layer or floor) and the view (out of `house/model.json`); its test
 - [x] `house/model.json` from the prototype's `house.js`: the site at the root, the house on it in `analysis.md`'s axes (checked against it); `layer` and `floor` on a node, its type's, or its parent's; `house/assembly.js`; its test
 - [x] library/shapes: a product as parts in its own axes (`shapeOf`), materials by key or `metal` (Finish); its test
 

@@ -106,7 +106,7 @@ const GRILLE_FOR = { types: ['oven'], tags: ['fridge', 'freezer'] };   // a carc
 const SIDES = ['top', 'bottom', 'left', 'right'];
 const HINGE_SIDES = ['left', 'right'];
 const HINGED = ['door', 'fridge'];
-/** @type {Record<string, string>} what a node is, by its kind: its layer (layers.json) */
+/** @type {Record<string, string>} what a node is, by its kind: its layer (index.json: layers) */
 const LAYER = { worktop: 'worktop', endPanel: 'endPanels', wallPanel: 'wallPanel', strip: 'strips', frontPanel: 'frontPanels', islandBackPanel: 'frontPanels',
   plinth: 'plinth', plasterboard: 'plasterboard', carcass: 'boards' };
 

@@ -25,7 +25,7 @@ import { turned } from './core/hierarchy.js';
 /** @typedef {ReturnType<typeof import('./core/hierarchy.js').createHierarchy<Node>>} Hierarchy */
 /** @typedef {{ az: number, el: number, k: number, clouds: number, night: boolean }} Sun  degrees (azimuth from East toward North); brightness; 0 clear to 1 overcast */
 /**
- * @typedef {object} Light  the view's light (settings.view.light)
+ * @typedef {object} Light  the view's light (index.json: view.light)
  * @property {number} exposure
  * @property {{ intensity: number, color?: string, reach?: number }} sun  reach: m its shadow covers
  * @property {{ intensity: number, color: string, groundColor: string, gradient?: [number, string][] }} sky

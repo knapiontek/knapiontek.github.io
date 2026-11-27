@@ -1,0 +1,61 @@
+{
+ "format": "index", "version": 1,
+ "layers": {
+   "floors": { "name": "Floors", "layers": { "groundFloor": "Ground Floor", "firstFloor": "First Floor", "attic": "Attic" } },
+   "construction": { "name": "Construction", "layers": {
+     "foundation": { "name": "Foundation", "layers": { "footings": "Footings", "foundationWalls": "Foundation walls", "groundSlab": "Ground slab" } },
+     "walls": { "name": "Walls", "layers": { "blocks": "Blocks", "chimney": "Chimney" } },
+     "slabs": { "name": "Slabs", "layers": { "ringBeams": "Ring beams", "slab": "Slab", "ceiling": "Attic ceiling" } },
+     "roof": { "name": "Roof", "layers": { "roofPlanes": "Roof planes", "roofWindows": "Roof windows" } },
+     "openings": { "name": "Openings", "layers": { "windows": "Windows", "outerDoors": "Outer doors", "innerDoors": "Inner doors" } },
+     "stair": "Stair",
+     "insulation": { "name": "Insulation", "layers": { "eps": "EPS", "facade": "Facade" } },
+     "site": { "name": "Site", "layers": { "lawn": "Lawn", "terraces": "Terraces", "paving": "Paving" } }
+   } },
+   "interiors": { "name": "Interiors", "layers": {
+     "tiles": { "name": "Tiles", "layers": { "floorTiles": "Floor tiles", "wallTiles": "Wall tiles", "smallCuts": "Small cuts" } },
+     "carcasses": { "name": "Carcasses", "layers": { "boards": "Boards", "backs": "Backs", "shelves": "Shelves", "drawers": "Drawers", "hardware": "Hinges and runners", "holes": "Holes", "legs": "Legs" } },
+     "fronts": { "name": "Fronts", "layers": { "doorsAndDrawers": "Doors and drawers", "handles": "Handles", "strips": "Front strips", "frontPanels": "Panels", "plinth": "Plinth" } },
+     "worktops": { "name": "Worktops", "layers": { "worktop": "Worktop", "endPanels": "End panels", "wallPanel": "Wall panel" } },
+     "appliances": { "name": "Appliances", "layers": { "sink": "Sink", "trap": "Trap", "hob": "Hob", "hood": "Hood", "oven": "Oven", "microwave": "Microwave", "coffee": "Coffee machine", "fridge": "Fridge", "dishwasher": "Dishwasher" } },
+     "sanitary": { "name": "Sanitary", "layers": { "basin": "Basin", "bath": "Bath", "wc": "WC", "shower": "Shower", "mirror": "Mirror", "wallCabinet": "Wall cabinet", "radiator": "Radiator" } },
+     "builtIns": { "name": "Built-ins", "layers": { "casings": "Casings", "plasterboard": "Plasterboard" } },
+     "installations": { "name": "Installations", "layers": { "riser": "Riser", "wcFrame": "WC frame" } },
+     "lights": { "name": "Lights", "layers": { "pendants": "Pendants", "downlights": "Downlights" } }
+   } },
+   "drawing": { "name": "Drawing", "layers": { "edges": "Edges" } }
+ },
+ "view": {
+  "edges": {"color": "#7d807b", "opacity": 0.45, "layer": "edges"},
+  "light": {
+   "exposure": 0.85,
+   "sun": {"azimuth": 330, "elevation": 38, "intensity": 1.35, "color": "#fff1dc"},
+   "sky": {"intensity": 0.6, "color": "#cfe0ff", "groundColor": "#a9a596", "gradient": [[0, "#5f8fc4"], [0.32, "#9dbfe0"], [0.49, "#e4ecef"], [0.51, "#b7bfae"], [1, "#6f7a5e"]]},
+   "fog": {"color": "#dfe7ea", "near": 60000, "far": 160000},
+   "clouds": {"value": 0.7, "sun": 0.2, "sky": 2.2, "blur": 8},
+   "inside": {"exposure": 1.05, "sun": {"intensity": 2.6, "reach": 6}, "sky": {"color": "#f4f6f9", "groundColor": "#8a8178", "intensity": 1.5}}
+  },
+  "cameras": {
+   "house": [
+    {"name": "Front", "eye": [-14300, 15600, 4200], "target": [6600, 4550, 3300]},
+    {"name": "Garden", "eye": [26700, -4400, 3800], "target": [8200, 4550, 3300]},
+    {"name": "Above", "eye": [-9800, 20600, 17500], "target": [6600, 4550, 2500]}
+   ],
+   "groundFloor": [
+    {"name": "Plan", "eye": [6540, 4550, 23000], "target": [6600, 4550, 0]},
+    {"name": "Perspective", "eye": [-5800, 15600, 10500], "target": [7000, 4550, 600]},
+    {"name": "Living room", "eye": [12300, 800, 1600], "target": [8000, 6100, 900]},
+    {"name": "Entrance", "eye": [1700, 3700, 1600], "target": [6700, 3900, 1000]}
+   ],
+   "firstFloor": [
+    {"name": "Plan", "eye": [6540, 4550, 23000], "target": [6600, 4550, 0]},
+    {"name": "Perspective", "eye": [-5800, 15600, 10500], "target": [7000, 4550, 600]},
+    {"name": "Bedroom", "eye": [9900, 900, 1600], "target": [12400, 7100, 600]},
+    {"name": "Hall", "eye": [4400, 3900, 1600], "target": [7600, 4400, 600]},
+    {"name": "Rooms", "eye": [800, 4600, 1600], "target": [3900, 2100, 600]}
+   ]
+  },
+  "plan": {"groundFloor": 1500, "firstFloor": 800},
+  "walk": {"eye": 1600, "radius": 220, "step": 360, "headroom": 100, "speed": 1400, "turn": 90, "look": 50, "run": 2.2, "start": {"x": 12200, "y": 5200, "heading": 180}}
+ }
+}

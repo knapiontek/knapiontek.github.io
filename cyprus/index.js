@@ -1,6 +1,6 @@
 // @ts-check
 // index.js: joins index.html to the modules: the page's Alpine part. The 3D view: the house (house/assembly.js) drawn by view3d.js,
-// its layers and floors switched from the panel (layers.json). The rest is still a sketch: the values in SKETCH stand in for
+// its layers and floors switched from the panel (index.json: the app's settings). The rest is still a sketch: the values in SKETCH stand in for
 // what the modules will give.
 
 import { page, sunStore } from './core/ui.js';
@@ -98,16 +98,16 @@ page('sketch', {
       cabinets: [[{ name: 'Import', go: none }, { name: 'Export', go: none }], [{ name: 'Show in 3D', go: none }]]
     };
   },
-  /* the View's layers: layers.json, a block of the panel at its top level; the house in 3D */
+  /* the app's settings (index.json): the View's layers, a block of the panel at its top level, and the view; the house in 3D */
   async load() {
-    /** @type {Record<string, { name: string, layers: LayerTree }>} */
-    const layers = await (await fetch(new URL('layers.json', import.meta.url))).json();
+    /** @type {{ layers: Record<string, { name: string, layers: LayerTree }>, view: any }} */
+    const { layers, view } = await (await fetch(new URL('index.json', import.meta.url))).json();
     this.layerBlocks = Object.entries(layers).map(([id, b]) => ({ id, name: b.name, tab: 'view', tree: b.layers }));
     (function above(/** @type {LayerTree} */ t, /** @type {string[]} */ up) {
       for (const [k, l] of Object.entries(t)) { ABOVE[k] = up; if (typeof l !== 'string') above(l.layers, [...up, k]); }
     })(Object.fromEntries(Object.values(layers).flatMap(b => Object.entries(b.layers))), []);
     const catalog = await openCatalog(), { hierarchy: site } = await assembleHouse(catalog);
-    const house = /** @type {any} */ (site.node('house')), view = house.settings.view;
+    const house = /** @type {any} */ (site.node('house'));
     SITE = site;
     PLOT = createView3d({ catalog, canvas: /** @type {HTMLCanvasElement} */ (document.getElementById('gl')), light: view.light, edges: view.edges });
     PLOT.show(site, house);
