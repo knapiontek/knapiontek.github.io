@@ -1,5 +1,5 @@
 // @ts-check
-// room/tiles.js: a room's floor tiles, laid as the room's scene says: the tiles' grid from its point (offset) in every
+// room/tiles.js: a room's tiles (the floor's, the walls'), laid as the room's scene says: the tiles' grid from its point (offset) in every
 // direction, along x or y, its rows shifted by the pattern; cut by the floor: the room's rectangles and, at each door, the half
 // of the opening on the room's side (the tiles end at the middle of the door: an expansion joint there). What it gives: the
 // pieces (whole, cut, small: a piece narrower than the tile's smallest cut) and the count (m², tiles, whole, cut, small).
@@ -45,10 +45,11 @@ export function doorHalves(rects, openings) {
 }
 
 /**
- * The tiles over a floor (its rectangles, not overlapping), laid from the offset in every direction.
+ * The tiles over a surface (its rectangles, not overlapping: a floor in x, y; a wall in u along it, h), laid from the offset
+ * in every direction; dir: the tiles' length along the first axis (x; on a wall, along it) or the second (y; upright).
  * @param {Rect[]} rects @param {TileSize} tile @param {Laying} lay @returns {{ pieces: TilePiece[], count: TileCount }}
  */
-export function layFloor(rects, tile, lay) {
+export function layTiles(rects, tile, lay) {
   const A = lay.dir === 'x' ? 0 : 1, B = 1 - A, pitchA = tile.len + tile.joint, pitchB = tile.wid + tile.joint, shift = SHIFT[lay.pattern];
   /** a rectangle in the tiles' axes [a0, a1, b0, b1] @param {number[]} r */
   const ab = r => A === 0 ? [r[0], r[1], r[2], r[3]] : [r[2], r[3], r[0], r[1]];
@@ -78,12 +79,46 @@ export function layFloor(rects, tile, lay) {
   return { pieces, count: { area: Math.round(area * 100) / 100, tiles: laid.size, whole, cut: laid.size - whole, small: pieces.filter(p => p.small).length } };
 }
 
+/** @typedef {{ axis: 0 | 1, at: number, inward: 1 | -1, from: number, to: number }} Wall  a wall of a floor: along x (0) or y (1), at its line, the room on its inward side, from … to along it */
+
 /**
- * The tile as laid: its size (the scene's, one of its formats, its length the longer side; none: the product's), its joint,
- * its smallest cut.
- * @param {any} product @param {number[]} [size] @returns {TileSize}
+ * The walls round a floor (its rectangles): each rectangle's sides, less what another rectangle covers beyond it.
+ * @param {Rect[]} rects @returns {Wall[]}
  */
-export function tileSize(product, size) {
-  const [len, wid] = size ? [Math.max(...size), Math.min(...size)] : [product.len, product.wid];
-  return { len, wid, joint: product.joint, minCut: product.minCut };
+export function wallsOf(rects) {
+  /** @type {Wall[]} */
+  const out = [];
+  for (const q of rects) for (const [axis, at, inward, from, to] of /** @type {[0 | 1, number, 1 | -1, number, number][]} */ ([[0, q[2], 1, q[0], q[1]], [0, q[3], -1, q[0], q[1]], [1, q[0], 1, q[2], q[3]], [1, q[1], -1, q[2], q[3]]])) {
+    let parts = [[from, to]];
+    for (const o of rects) if (o !== q) {   /* another rectangle beyond the side, touching it: no wall there */
+      const lo = axis === 0 ? o[0] : o[2], hi = axis === 0 ? o[1] : o[3], line = axis === 0 ? [o[2], o[3]] : [o[0], o[1]];
+      if (inward > 0 ? Math.abs(line[1] - at) > TOL : Math.abs(line[0] - at) > TOL) continue;
+      parts = parts.flatMap(([a, b]) => [[a, Math.min(b, lo)], [Math.max(a, hi), b]].filter(([c, d]) => d - c > TOL));
+    }
+    for (const [a, b] of parts) out.push({ axis, at, inward, from: a, to: b });
+  }
+  return out;
+}
+
+/** rectangles less holes, as rectangles @param {Rect[]} rects @param {Rect[]} holes @returns {Rect[]} */
+export function rectsMinus(rects, holes) {
+  return holes.reduce((rest, h) => rest.flatMap(r => {
+    if (h[0] >= r[1] - TOL || h[1] <= r[0] + TOL || h[2] >= r[3] - TOL || h[3] <= r[2] + TOL) return [r];
+    const x0 = Math.max(r[0], h[0]), x1 = Math.min(r[1], h[1]);
+    return /** @type {Rect[]} */ ([[r[0], x0, r[2], r[3]], [x1, r[1], r[2], r[3]], [x0, x1, r[2], Math.max(r[2], h[2])], [x0, x1, Math.min(r[3], h[3]), r[3]]])
+      .filter(q => q[1] - q[0] > TOL && q[3] - q[2] > TOL);
+  }), rects);
+}
+
+/**
+ * A wall's face to tile, in its own axes (u along the wall, h up): from the floor's tiles to the ceiling, less the openings
+ * through it (a box [x0, x1, y0, y1, h0, h1] in the room's axes, across its line).
+ * @param {Wall} w @param {number} h0 @param {number} h1 @param {number[][]} openings @returns {Rect[]}
+ */
+export function wallFace(w, h0, h1, openings) {
+  const holes = /** @type {Rect[]} */ (openings.filter(b => {
+    const [a0, a1] = w.axis === 0 ? [b[2], b[3]] : [b[0], b[1]];
+    return a0 - 5 <= w.at && w.at <= a1 + 5 && a1 - a0 < 600;   // across this wall's line (a wall is thinner than 600)
+  }).map(b => w.axis === 0 ? [b[0], b[1], b[4], b[5]] : [b[2], b[3], b[4], b[5]]));
+  return rectsMinus([[w.from, w.to, h0, h1]], holes);
 }

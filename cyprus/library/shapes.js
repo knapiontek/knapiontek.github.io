@@ -497,6 +497,26 @@ export function trapFit(A, y) {
   return reach < A.reach[0] ? null : { drop: A.drop[0], reach, toWall: y - reach - A.outlet.length };
 }
 
+/**
+ * A tile as laid: the size chosen (one of its formats, its length the longer side; none: its own), its joint, its smallest cut.
+ * null: not a tile, or a size it is not made in.
+ * @param {any} A @param {number[]} [size] @returns {{ len: number, wid: number, joint: number, minCut: number[] } | null}
+ */
+export function tileOf(A, size) {
+  if (A.group !== 'tiles') return null;
+  const key = (/** @type {number[]} */ s) => [...s].sort((a, b) => a - b).join();
+  if (size && !(Array.isArray(size) && size.length === 2 && formatsOf(A).some(f => key(f) === key(size)))) return null;
+  const [len, wid] = size ? [Math.max(...size), Math.min(...size)] : [A.len, A.wid];
+  return { len, wid, joint: A.joint, minCut: A.minCut };
+}
+/** the sizes a tile is made in, [a, b] each @param {any} A @returns {number[][]} */
+export const formatsOf = A => (A.formats || [`${A.len}x${A.wid}`]).map((/** @type {string} */ f) => f.split('x').map(Number));
+/** a product's body [width, depth, height], as a room may build it (its own sizes over the maker's) @param {any} A @param {{ width?: number, depth?: number, height?: number }} [own] @returns {number[]} */
+export function bodyOf(A, own = {}) {
+  const b = { ...A.body, ...Object.fromEntries(Object.entries(own).filter(([, v]) => v !== undefined)) };
+  return [b.width, b.depth, b.height];
+}
+
 /** @type {Record<string, string[]>} what each drawing needs of its product */
 const NEEDS = {
   oven: ['body.width', 'body.height', 'body.depth', 'fascia.width', 'fascia.height', 'fascia.thickness', 'fascia.bottom', 'door.hinge', 'controlPanelHeight'],

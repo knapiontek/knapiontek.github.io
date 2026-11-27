@@ -3,7 +3,7 @@
 // documents use them: an oven, a microwave, a basin tap, a shower screen, a WC bowl.
 
 import { openCatalog } from '../../library/catalog.js';
-import { faultsOf, hingeHeights, holeOf, runnerFor, shapeOf, systemDrawer, systemFor, trapFit } from '../../library/shapes.js';
+import { bodyOf, faultsOf, hingeHeights, holeOf, runnerFor, shapeOf, systemDrawer, systemFor, tileOf, trapFit } from '../../library/shapes.js';
 
 /** @typedef {import('../../types.js').Shape} Shape */
 /** @typedef {import('../../types.js').Part} Part */
@@ -97,6 +97,10 @@ export default async function (check) {
     check('trapFit: as short as it may be, its outlet at the wall; a pipe beyond its reach; none too near', JSON.stringify(trapFit(trap, 320)) === '{"drop":250,"reach":234,"toWall":0}'
       && trapFit(trap, 400)?.toWall === 34 && trapFit(trap, 250) === null);
     check('holeOf: a basin\'s tap hole, over it, on the basin', holeOf(P('catalano-green-lux-60x40-white'), 'tap')?.join() === '0,55,140');
+    const tile = P('paradyz-authority-grey');
+    check('tileOf: as laid, the scene\'s size (one of its formats, its length the longer), else its own; none in a size it is not made in, none of what is no tile',
+      tileOf(tile, [598, 1198])?.len === 1198 && tileOf(tile)?.wid === 898 && tileOf(tile, [600, 600]) === null && tileOf(P('shelf-pins-5-zinc')) === null);
+    check('bodyOf: its body, the room\'s own sizes over the maker\'s', bodyOf(P('catalano-green-lux-60x40-white')).join() === '600,400,140' && bodyOf(P('catalano-green-lux-60x40-white'), { depth: 450 }).join() === '600,450,140');
     const pin = shapeOf(P('shelf-pins-5-zinc'), undefined, { hand: 'left' });
     check('a fitting placed by its anchor: a shelf pin at the side\'s face, under the shelf (its hole\'s marker 12 across)', pin.anchor?.join() === '0.5,6,9' && pin.parts.some(p => p.layer === 'holes'));
   }

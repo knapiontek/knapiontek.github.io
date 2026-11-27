@@ -75,4 +75,8 @@ export default async function (check) {
   check('floor tiles: the kitchen counted (m², tiles, whole, cut, small): ' + JSON.stringify(ft?.count), ft?.count.area > 50.55 && ft.count.tiles === ft.count.whole + ft.count.cut && ft.count.tiles > 60);
   check('floor tiles: the grout in the scene\'s colour, the tiles of their product, small cuts marked', ft.parts.some((/** @type {any} */ p) => p.material === 'grout:#686a68') && ft.parts.some((/** @type {any} */ p) => p.material === 'tile:paradyz-authority-graphite') && ft.parts.filter((/** @type {any} */ p) => p.layer === 'smallCuts').length === ft.count.small);
   check('floor tiles: none in a room with no scene', !H.node('house/groundFloor/garage_2/floorTiles'));
+  /* the wall tiles: round the floor, from the floor's tiles to the ceiling, less the openings */
+  const wt = /** @type {any} */ (H.node('house/firstFloor/bathroom_5/wallTiles'));
+  check('wall tiles: bathroom 5\'s, a node of its own (layer wallTiles), counted: ' + JSON.stringify(wt?.count), wt?.layer === 'wallTiles' && wt.count.area > 28 && wt.count.area < 32.8 && wt.count.tiles === wt.count.whole + wt.count.cut);
+  check('wall tiles: from the floor\'s tiles (12) up; none where the room has no wall tiles (the kitchen)', wt.parts.every((/** @type {any} */ p) => p.box[4] >= 12) && !H.node(room + 'wallTiles'));
 }

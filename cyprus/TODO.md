@@ -37,7 +37,9 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] the lamps in the scenes (`lamps`: downlights, pendants; from the prototype's lights, in the room's axes), under the ceiling over the room; `view3d.js` lights them at night (the lamps' and the products' lights: the hood's)
 - [x] tiles, stage 1: in the rooms' scenes (floor and walls, each its depth and grout), out of `house/model.json`; checked
 - [x] tiles, stage 2: `room/tiles.js`, the floor's tiles laid from the offset, ending at the middle of the doors; the grout in its colour, the tiles' photos, the small cuts marked; counted (m², tiles, whole, cut, small)
-- [ ] tiles, stage 3: the walls' tiles (round the openings, the casings), counted
+- [x] tiles, stage 3: the walls' tiles: round the floor, from the floor's tiles to the ceiling, less the openings; counted
+- [ ] tiles: the casings' faces (built-ins) tiled; a tile's photo per tile (not one sheet over the floor); the corners where two walls' tiles meet
+- [ ] the library's API, the rest: the boards' and the tiles' looks (`view3d.js` reads `texture`, `lacquered`, `color`: a `lookOf(product)`); the house gives a room its facts (its ceiling, its doors) instead of `room/assembly.js` searching the house
 - [ ] `view2d.js` (root): the 2D view (the menu's 2D): plans and dimensions
 - [ ] `docs.js` (root): Documents
 - [ ] Cabinet mode

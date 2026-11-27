@@ -11,7 +11,8 @@
 // chimney) is made as tall as the room over it.
 
 import { cabinetsOf } from './cabinets.js';
-import { doorHalves, layFloor, tileSize } from './tiles.js';
+import { doorHalves, layTiles, wallFace, wallsOf } from './tiles.js';
+import { bodyOf, formatsOf, tileOf } from '../library/shapes.js';
 import { pointToModel } from '../core/tools.js';
 
 /** @typedef {import('../types.js').Catalog} Catalog */
@@ -23,21 +24,22 @@ const VERSION = 1;   // of the format scene
 /** @type {string[]} the openings a floor runs into: its tiles end at their middle */
 const DOORWAYS = ['door', 'glassDoor', 'gate', 'entrance', 'window'];
 
+/** the openings of the house at a room, as boxes in its axes: a door, a gate, a window @param {Hierarchy} H @param {HierarchyNode} room @returns {number[][]} */
+function openingsAt(H, room) {
+  const zero = H.place(room), out = /** @type {number[][]} */ ([]);
+  H.walk(n => { if (DOORWAYS.includes(n.type)) out.push(H.box(n).map((v, i) => v - zero[i >> 1])); });
+  return out;
+}
+
 /**
  * A room's floor tiles, a node under it (layer floorTiles): the grout over the floor, the tiles on it, up to the tiles'
  * depth; a small cut marked (layer smallCuts). The floor: the room's rectangles and the halves of the doors at its floor.
  * @param {Hierarchy} H @param {HierarchyNode & Record<string, any>} room @param {any} t  the scene's tiles.floor @param {Catalog} catalog
  */
 function floorTiles(H, room, t, catalog) {
-  const zero = H.place(room), openings = /** @type {number[][]} */ ([]);
-  H.walk(n => {
-    if (!DOORWAYS.includes(n.type)) return;
-    const b = H.box(n).map((v, i) => v - zero[i >> 1]);
-    if (Math.abs(b[4]) < 50) openings.push(b);
-  });
   const rects = /** @type {import('./tiles.js').Rect[]} */ (room.area || [[0, room.size[0], 0, room.size[1]]]);
-  const floor = [...rects, ...doorHalves(rects, openings)];
-  const { pieces, count } = layFloor(floor, tileSize(catalog.product(t.product), t.size), t);
+  const floor = [...rects, ...doorHalves(rects, openingsAt(H, room).filter(b => Math.abs(b[4]) < 50))];
+  const { pieces, count } = layTiles(floor, /** @type {any} */ (tileOf(catalog.product(t.product), t.size)), t);
   const d = t.depth, grout = 'grout:' + t.grout, look = 'tile:' + t.product;
   const parts = [
     ...floor.map(([x0, x1, y0, y1]) => ({ form: 'box', box: [x0, x1, y0, y1, 0, d - 1], material: grout })),
@@ -45,6 +47,31 @@ function floorTiles(H, room, t, catalog) {
     ...pieces.filter(p => p.small).map(({ rect: [x0, x1, y0, y1] }) => ({ form: 'box', box: [x0, x1, y0, y1, d, d + 0.5], material: 'smallCut', layer: 'smallCuts' }))
   ];
   H.add(room, { id: 'floorTiles', name: 'Floor tiles', type: 'tiles', layer: 'floorTiles', offset: [0, 0, 0], size: [room.size[0], room.size[1], d], parts, count });
+}
+
+/**
+ * A room's wall tiles, a node under it (layer wallTiles): each wall round its floor, from the floor's tiles up to the ceiling,
+ * less its openings; the grout on the wall, the tiles on it, out to their depth; a small cut marked. Laid from the scene's point
+ * [x, y, h]: a wall along x from its x and h, along y from its y and h; dir x: the tiles' length along the wall, y: upright.
+ * Counted together.
+ * @param {Hierarchy} H @param {HierarchyNode & Record<string, any>} room @param {any} t  the scene's tiles.walls @param {number} h0  the floor's tiles' top @param {number} h1  the ceiling @param {Catalog} catalog
+ */
+function wallTiles(H, room, t, h0, h1, catalog) {
+  const rects = /** @type {import('./tiles.js').Rect[]} */ (room.area || [[0, room.size[0], 0, room.size[1]]]), openings = openingsAt(H, room), tile = /** @type {any} */ (tileOf(catalog.product(t.product), t.size));
+  const d = t.depth, grout = 'grout:' + t.grout, look = 'tile:' + t.product, parts = /** @type {any[]} */ ([]), total = { area: 0, tiles: 0, whole: 0, cut: 0, small: 0 };
+  for (const w of wallsOf(rects)) {
+    const face = wallFace(w, h0, h1, openings);
+    if (!face.length) continue;
+    const { pieces, count } = layTiles(face, tile, { dir: t.dir, pattern: t.pattern, offset: [t.offset[w.axis], t.offset[2]] });
+    for (const k of /** @type {(keyof typeof total)[]} */ (Object.keys(total))) total[k] += count[k];
+    /** a rectangle of the face [u0, u1, h0, h1] out to w from the wall, in the room's axes @param {number[]} r @param {number} a @param {number} b */
+    const box = ([u0, u1, v0, v1], a, b) => { const [p, q] = w.inward > 0 ? [w.at + a, w.at + b] : [w.at - b, w.at - a]; return w.axis === 0 ? [u0, u1, p, q, v0, v1] : [p, q, u0, u1, v0, v1]; };
+    parts.push(...face.map(r => ({ form: 'box', box: box(r, 0, d - 1), material: grout })));
+    parts.push(...pieces.map(p => ({ form: 'box', box: box(p.rect, 0, d), material: look })));
+    parts.push(...pieces.filter(p => p.small).map(p => ({ form: 'box', box: box(p.rect, d, d + 0.5), material: 'smallCut', layer: 'smallCuts' })));
+  }
+  total.area = Math.round(total.area * 100) / 100;
+  H.add(room, { id: 'wallTiles', name: 'Wall tiles', type: 'tiles', layer: 'wallTiles', offset: [0, 0, 0], size: [room.size[0], room.size[1], h1], parts, count: total });
 }
 /** @type {Record<string, number>} the way a group's fronts face: its turn (its y, toward the wall, the other way) */
 const FRONT = { S: 0, E: 1, N: 2, W: 3 };
@@ -67,9 +94,8 @@ export function tilesFaults(tiles, catalog) {
     if (t === undefined) continue;
     let p = /** @type {any} */ (null);
     try { p = catalog.product(t.product); } catch { /* below */ }
-    if (!p || p.group !== 'tiles') { faults.push(`tiles.${k}: product: not a tile (${t.product})`); continue; }
-    const formats = (p.formats || [`${p.wid}x${p.len}`]).map((/** @type {string} */ f) => f.split('x').map(Number).sort((a, b) => a - b).join());
-    if (t.size !== undefined && !(Array.isArray(t.size) && t.size.length === 2 && formats.includes([...t.size].sort((a, b) => a - b).join()))) faults.push(`tiles.${k}: size: one of ${p.formats || [p.len + 'x' + p.wid]}`);
+    if (!p || !tileOf(p)) { faults.push(`tiles.${k}: product: not a tile (${t.product})`); continue; }
+    if (t.size !== undefined && !tileOf(p, t.size)) faults.push(`tiles.${k}: size: one of ${formatsOf(p).map(f => f.join('x')).join(', ')}`);
     if (!(Number.isFinite(t.depth) && t.depth > 0)) faults.push(`tiles.${k}: depth: mm > 0`);
     if (!['x', 'y'].includes(t.dir)) faults.push(`tiles.${k}: dir: x or y`);
     if (!PATTERNS.includes(t.pattern)) faults.push(`tiles.${k}: pattern: ${PATTERNS.join(', ')}`);
@@ -166,12 +192,13 @@ export async function assembleRooms(H, catalog) {
       if (faults.length) throw new Error(`room: ${room.id}.scene.json: ${faults.join('; ')}`);
       room.tiles = scene.tiles;
       if (scene.tiles.floor) floorTiles(H, room, scene.tiles.floor, catalog);
+      if (scene.tiles.walls) wallTiles(H, room, scene.tiles.walls, scene.tiles.floor?.depth || 0, ceilingOver(H, room), catalog);
     }
     /* fixtures: a product, its body's size (or the scene's depth, length, height: as it is built here), at its zero, turned */
     for (const [id, f] of Object.entries(scene.fixtures || {})) {
-      const A = /** @type {any} */ (catalog.product(f.product)), b = { ...A.body, ...(f.depth ? { depth: f.depth } : {}), ...(f.length ? { width: f.length } : {}), ...(f.height ? { height: f.height } : {}) };
+      const A = catalog.product(f.product), size = bodyOf(A, { width: f.length, depth: f.depth, height: f.height });
       if (!(f.front in FRONT)) throw new Error(`room: ${room.id}.scene.json: fixture ${id}: front N, E, S or W`);
-      H.add(room, { id, name: A.name, type: 'product', product: f.product, layer: f.layer, offset: f.offset, turn: FRONT[f.front], size: pointToModel([b.width, b.depth, b.height]) });
+      H.add(room, { id, name: A.name, type: 'product', product: f.product, layer: f.layer, offset: f.offset, turn: FRONT[f.front], size: pointToModel(size) });
     }
     /* what the owner builds: a box less its cuts (a niche), in the room's axes */
     (scene.builtIns || []).forEach((/** @type {{ name: string, box: number[], cuts?: number[][], material: string }} */ b, /** @type {number} */ k) => {
