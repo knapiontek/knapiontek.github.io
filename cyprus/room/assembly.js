@@ -11,18 +11,10 @@
 // chimney) is made as tall as the room over it.
 
 import { cabinetsOf } from './cabinets.js';
-import { doorHalves, layTiles, under, wallFace, wallsOf } from './tiles.js';
+import { layTiles, tiledSurfaces, under } from './tiles.js';
 
-const TOL = 0.5;   // mm: walls meet within it
-/**
- * A tile's look: its product's photo, one of its images by chance (the same for the same tile), its size on the face ([u, v]:
- * its length along the first axis for dir x) @param {string} product @param {string} tile  its row and column @param {any} t  the tile as laid @param {string} dir
- */
-const tileLook = (product, tile, t, dir) => {
-  let h = 0;
-  for (const c of tile) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return `tile:${product}:${h % 8}:${dir === 'x' ? t.len + 'x' + t.wid : t.wid + 'x' + t.len}`;
-};
+const TOL = 0.5;   // mm
+
 import { bodyOf, formatsOf, tileOf } from '../library/shapes.js';
 import { pointToModel } from '../core/tools.js';
 
@@ -32,70 +24,67 @@ import { pointToModel } from '../core/tools.js';
 /** @typedef {import('./cabinets.js').Problem & { room: string }} RoomProblem */
 
 const VERSION = 1;   // of the format scene
-/**
- * A room's floor tiles, a node under it (layer floorTiles): the grout over the floor, the tiles on it, up to the tiles'
- * depth; a small cut marked (layer smallCuts). The floor: the room's rectangles and the halves of the doors at its floor.
- * @param {Hierarchy} H @param {HierarchyNode & Record<string, any>} room @param {any} t  the scene's tiles.floor @param {Catalog} catalog
- */
-function floorTiles(H, room, t, catalog) {
-  const rects = /** @type {import('./tiles.js').Rect[]} */ (room.area || [[0, room.size[0], 0, room.size[1]]]);
-  const floor = [...rects, ...doorHalves(rects, room.openings.filter((/** @type {number[]} */ b) => Math.abs(b[4]) < 50))];
-  const tile = /** @type {any} */ (tileOf(catalog.product(t.product), t.size)), { pieces, count } = layTiles(floor, tile, t);
-  const d = t.depth, grout = 'grout:' + t.grout;
-  const parts = [
-    ...floor.map(([x0, x1, y0, y1]) => ({ form: 'box', box: [x0 + 0.5, x1 - 0.5, y0 + 0.5, y1 - 0.5, 0.5, d - 1], material: grout })),   // none of its faces in a tile's plane
-    ...pieces.map(({ rect: [x0, x1, y0, y1], tile: id, at }) => ({ form: 'box', box: [x0, x1, y0, y1, 0, d], material: grout, face: { n: [0, 0, 1], material: tileLook(t.product, id, tile, t.dir) }, uvAt: [at[0], at[1], d] })),   // the tile its face up, its photo from its corner; its body the bed and the grout
-    ...pieces.filter(p => p.small).map(({ rect: [x0, x1, y0, y1] }) => ({ form: 'box', box: [x0, x1, y0, y1, d, d + 0.5], material: 'smallCut', layer: 'smallCuts' }))
-  ];
-  H.add(room, { id: 'floorTiles', name: 'Floor tiles', type: 'tiles', layer: 'floorTiles', offset: [0, 0, 0], size: [room.size[0], room.size[1], d], parts, count });
-}
+/** @typedef {import('./tiles.js').Surface} Surface */
+const GROUT = 2;   // mm: the grout's plane behind the tiles' face
+/** a tile's number by chance, the same for the same tile @param {string} id */
+const hashOf = id => { let h = 2166136261; for (const c of id) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0; return h; };
 
 /**
- * A room's wall tiles, a node under it (layer wallTiles): each wall round its floor, from a joint over the floor's tiles (the
- * silicone there) up to the ceiling or the roof's underside over it (the room's slopes: a tile cut on the slant), less its
- * openings; at an inner corner the wall along y stops at the face of the tiles on the wall along x, a joint from them. The grout
- * on the wall, the tiles on it, out to their depth; a small cut marked. Laid from the scene's point [x, y, h]: a wall along x
- * from its x and h, along y from its y and h; dir x: the tiles' length along the wall, y: upright. Counted together.
- * What the owner builds against a wall (a casing) stands in its place: no tiles behind it.
- * @param {Hierarchy} H @param {HierarchyNode & Record<string, any>} room @param {any} t  the scene's tiles.walls @param {number} floor  the floor's tiles' depth (0: none) @param {number[][]} casings  the scene's built-ins, their boxes @param {Catalog} catalog
+ * A room's tiles, as its scene lays them over its surfaces (room/tiles.js: the floor, the walls, the faces of what is built
+ * before them), drawn as faces (form faces): on each surface the grout's plane a little behind the tiles' face, on it each
+ * tile's face, its photo the whole tile (one of the product's images, by chance, turned by chance), a small cut marked over it
+ * (layer smallCuts); the slab's edge (tile:<product>:edge), from its face back to what it lies on, round the openings through a wall and at the
+ * floor's free edges (a door's middle). Two nodes under the room: floorTiles (layer floorTiles), wallTiles (wallTiles: the
+ * casings' too), each counted.
+ * @param {Hierarchy} H @param {HierarchyNode & Record<string, any>} room @param {any} tiles  the scene's @param {import('./tiles.js').BuiltIn[]} built @param {Catalog} catalog
  */
-function wallTiles(H, room, t, floor, casings, catalog) {
-  const rects = /** @type {import('./tiles.js').Rect[]} */ (room.area || [[0, room.size[0], 0, room.size[1]]]), tile = /** @type {any} */ (tileOf(catalog.product(t.product), t.size));
-  const d = t.depth, j = tile.joint, h0 = floor ? floor + j : 0, grout = 'grout:' + t.grout, parts = /** @type {any[]} */ ([]);
-  const total = { area: 0, tiles: 0, whole: 0, cut: 0, small: 0 }, walls = wallsOf(rects);
-  for (const w of walls) {
-    /* an inner corner: a wall along y stops short of the tiles on the wall along x it meets */
-    let { from, to } = w;
-    if (w.axis === 1) for (const o of walls) if (o.axis === 0 && o.from - TOL <= w.at && w.at <= o.to + TOL) {
-      if (o.inward > 0 && Math.abs(o.at - from) < TOL) from += d + j;
-      if (o.inward < 0 && Math.abs(o.at - to) < TOL) to -= d + j;
-    }
-    if (to - from < TOL) continue;
-    /* what the tiles stay under: the ceiling, the roof's slopes (over y: along a wall along y they slant, along x they stand at its line) */
-    const lines = [{ a: room.ceilingHeight, s: 0 }, ...(room.slopes || [])].map((/** @type {{ a: number, s: number }} */ l) => w.axis === 1 ? l : { a: l.a + l.s * w.at, s: 0 });
-    const face = wallFace({ ...w, from, to }, h0, room.ceilingHeight, room.openings, casings);   // no tiles behind a casing against the wall
-    if (!face.length) continue;
-    const { pieces, count } = layTiles(face, tile, { dir: t.dir, pattern: t.pattern, offset: [t.offset[w.axis], t.offset[2]], under: lines });
-    for (const k of /** @type {(keyof typeof total)[]} */ (Object.keys(total))) total[k] += count[k];
-    /* the face toward the room: its tile; the rest of a piece the bed and the grout */
-    const n = w.axis === 0 ? [0, w.inward, 0] : [w.inward, 0, 0];
-    /** a piece of the face [u0, u1, v0, v1] (or its outline), from a to b off the wall, in the room's axes: a box, or a prism along x (a wall along y) @param {number[]} r @param {number[][] | undefined} poly @param {number} a @param {number} b @param {string} material @param {any} [extra] */
-    const part = (r, poly, a, b, material, extra) => {
-      const [p, q] = w.inward > 0 ? [w.at + a, w.at + b] : [w.at - b, w.at - a], L = extra || {};
-      if (poly && w.axis === 1) return { form: 'prism', x: [p, q], poly, material, ...L };
-      const [u0, u1, v0, v1] = poly ? [Math.min(...poly.map(c => c[0])), Math.max(...poly.map(c => c[0])), Math.min(...poly.map(c => c[1])), Math.max(...poly.map(c => c[1]))] : r;
-      return { form: 'box', box: w.axis === 0 ? [u0, u1, p, q, v0, v1] : [p, q, u0, u1, v0, v1], material, ...L };
+function roomTiles(H, room, tiles, built, catalog) {
+  const rects = room.area || [[0, room.size[0], 0, room.size[1]]], C = room.ceilingHeight;
+  const tile = /** @type {Record<string, any>} */ ({});
+  for (const k of ['floor', 'walls']) if (tiles[k]) tile[k] = tileOf(catalog.product(tiles[k].product), tiles[k].size);
+  const surfaces = tiledSurfaces({ rects, height: C, slopes: room.slopes || [], openings: room.openings, built },
+    tiles.floor ? { depth: tiles.floor.depth } : null, tiles.walls ? { depth: tiles.walls.depth, joint: tile.walls.joint } : null);
+  for (const k of /** @type {('floor' | 'walls')[]} */ (['floor', 'walls'])) {
+    const t = tiles[k], T = tile[k];
+    if (!t) continue;
+    const d = t.depth, [U, V] = t.dir === 'x' ? [T.len, T.wid] : [T.wid, T.len], look = `tile:${t.product}`, size = `${T.len}x${T.wid}`;
+    /** @type {Map<string, any>} the faces by their material, their way and layer: a part each */
+    const parts = new Map();
+    const add = (/** @type {string} */ material, /** @type {number[]} */ n, /** @type {number[][]} */ poly, /** @type {number[][] | null} */ uv, /** @type {string} */ layer = '') => {
+      const key = material + '|' + n.join() + '|' + (layer || '');
+      if (!parts.has(key)) parts.set(key, { form: 'faces', n, polys: [], uvs: [], material, ...(layer ? { layer } : {}) });
+      const p = parts.get(key); p.polys.push(poly); p.uvs.push(uv || poly.map(() => [0, 0]));
     };
-    for (const r of face) {   /* the grout behind the joints: half a millimetre in from the face's edges and the wall, none of its faces in a tile's plane */
-      const inset = /** @type {import('./tiles.js').Rect} */ ([r[0] + 0.5, r[1] - 0.5, r[2] + 0.5, r[3] - 0.5]), poly = under(inset, lines);
-      if (poly) parts.push(part(inset, poly, 0.5, d - 1, grout));
+    const total = { area: 0, tiles: 0, whole: 0, cut: 0, small: 0 };
+    for (const s of surfaces.filter(x => x.layout === k)) {
+      /** a point of its plane (u, v), off it by o along its way, in the room's axes @param {number[]} q @param {number} [o] */
+      const P = (q, o = 0) => { const p = s.axis === 0 ? [q[0], s.at, q[1]] : s.axis === 1 ? [s.at, q[0], q[1]] : [q[0], q[1], s.at]; return p.map((v, i) => v + o * s.n[i]); };
+      const offset = s.axis === 2 ? [t.offset[0], t.offset[1]] : [t.offset[s.axis], t.offset[t.offset.length - 1]];   // a wall's point: along it, h
+      const { pieces, count } = layTiles(s.rects, T, { dir: t.dir, pattern: t.pattern, offset, under: s.lines });
+      for (const c of /** @type {(keyof typeof total)[]} */ (Object.keys(total))) total[c] += count[c];
+      /* the grout behind */
+      for (const r of s.rects) { const poly = under(r, s.lines); if (poly) add('grout:' + t.grout, s.n, poly.map(q => P(q, -GROUT)), null); }
+      /* each tile's face: its photo from its corner over the whole tile, turned */
+      for (const p of pieces) {
+        const poly = p.poly || [[p.rect[0], p.rect[2]], [p.rect[1], p.rect[2]], [p.rect[1], p.rect[3]], [p.rect[0], p.rect[3]]];
+        const h = hashOf(k + s.id + p.tile), turns = T.len === T.wid ? h % 4 : 2 * (h % 2);
+        const uv = poly.map(q => { let a = (q[0] - p.at[0]) / U, b = (q[1] - p.at[1]) / V; if (t.dir !== 'x') [a, b] = [b, a]; for (let i = 0; i < turns; i++) [a, b] = [1 - b, a]; return [a, b]; });
+        add(`${look}:${(h >>> 4) % 8}:${size}`, s.n, poly.map(q => P(q)), uv);
+        if (p.small) add('smallCut', s.n, poly.map(q => P(q, 0.5)), null, 'smallCuts');
+      }
+      /* the slab's edge: round the openings through it, at its free edges; from the face back by the depth */
+      const segs = [...s.holes.flatMap(r => [[[r[0], r[2]], [r[1], r[2]], [0, 1]], [[r[1], r[2]], [r[1], r[3]], [-1, 0]], [[r[1], r[3]], [r[0], r[3]], [0, -1]], [[r[0], r[3]], [r[0], r[2]], [1, 0]]]), ...(s.edges || [])];
+      for (const [a, b, out] of segs) {
+        const ok = (/** @type {number[]} */ q) => s.lines.every(l => l.p * q[0] + l.q * q[1] <= l.c + TOL);
+        if (!ok(a) || !ok(b)) continue;
+        const n = s.axis === 0 ? [out[0], 0, out[1]] : s.axis === 1 ? [0, out[0], out[1]] : [out[0], out[1], 0], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        add(`${look}:edge`, n, [P(a), P(b), P(b, -d), P(a, -d)], [[0, 0], [L, 0], [L, d], [0, d]]);   // the photo in mm
+      }
     }
-    const plane = w.inward > 0 ? w.at + d : w.at - d;
-    for (const p of pieces) parts.push(part(p.rect, p.poly, 0, d, grout, { face: { n, material: tileLook(t.product, p.tile, tile, t.dir) }, uvAt: w.axis === 0 ? [p.at[0], plane, p.at[1]] : [plane, p.at[0], p.at[1]] }));
-    for (const p of pieces.filter(q => q.small)) parts.push(part(p.rect, p.poly, d, d + 0.5, 'smallCut', { layer: 'smallCuts' }));
+    total.area = Math.round(total.area * 100) / 100;
+    const id = k === 'floor' ? 'floorTiles' : 'wallTiles';
+    H.add(room, { id, name: k === 'floor' ? 'Floor tiles' : 'Wall tiles', type: 'tiles', layer: id, offset: [0, 0, 0], size: [room.size[0], room.size[1], k === 'floor' ? d : C], parts: [...parts.values()], count: total });
   }
-  total.area = Math.round(total.area * 100) / 100;
-  H.add(room, { id: 'wallTiles', name: 'Wall tiles', type: 'tiles', layer: 'wallTiles', offset: [0, 0, 0], size: [room.size[0], room.size[1], room.ceilingHeight], parts, count: total });
 }
 /** @type {Record<string, number>} the way a group's fronts face: its turn (its y, toward the wall, the other way) */
 const FRONT = { S: 0, E: 1, N: 2, W: 3 };
@@ -200,8 +189,7 @@ export async function assembleRooms(H, catalog) {
       const faults = tilesFaults(scene.tiles, catalog);
       if (faults.length) throw new Error(`room: ${room.id}.scene.json: ${faults.join('; ')}`);
       room.tiles = scene.tiles;
-      if (scene.tiles.floor) floorTiles(H, room, scene.tiles.floor, catalog);
-      if (scene.tiles.walls) wallTiles(H, room, scene.tiles.walls, scene.tiles.floor?.depth || 0, (scene.builtIns || []).map((/** @type {{ box: number[] }} */ b) => b.box), catalog);
+      roomTiles(H, room, scene.tiles, (scene.builtIns || []).map((/** @type {{ box: number[], cuts?: number[][] }} */ b) => ({ box: b.box, cuts: b.cuts || [] })), catalog);
     }
     /* fixtures: a product, its body's size (or the scene's depth, length, height: as it is built here), at its zero, turned */
     for (const [id, f] of Object.entries(scene.fixtures || {})) {

@@ -135,6 +135,24 @@ export default async function (check) {
     check('no setting metal: it says where', error.includes('tap') && error.includes('metal'));
   }
 
+  /* --- use case: a product lofted through a mirroring matrix (the bath): its faces out, its inner floor seen from above --- */
+  {
+    const R = createHierarchy(/** @type {Node} */ ({ id: 'room', type: 'room', offset: [0, 0, 0], size: [3000, 3000, 2500], settings: { metal: 'nickel' }, children: [
+      { id: 'bath', type: 'product', offset: [2340, 230, 12], turn: 2, size: [1700, -750, 580], layer: 'bath', product: 'castorama-bath-freestanding-170x75' }] }));
+    scene.show(R, R.root);
+    const g = of('bath', /** @type {any} */ (undefined)).find((/** @type {any} */ m) => m.geometry.index)?.geometry;
+    const P = g.attributes.position, I = g.index.array, zs = /** @type {number[]} */ ([]);
+    for (let k = 0; k < P.count; k++) zs.push(P.getZ(k));
+    const floorOf = (/** @type {number} */ z) => { let up = 0, down = 0; for (let k = 0; k < I.length; k += 3) {
+      const [a, b, c] = [I[k], I[k + 1], I[k + 2]];
+      if (![a, b, c].every(i => Math.abs(P.getZ(i) - z) < 0.01)) continue;
+      const ux = P.getX(b) - P.getX(a), uy = P.getY(b) - P.getY(a), vx = P.getX(c) - P.getX(a), vy = P.getY(c) - P.getY(a);
+      if (ux * vy - uy * vx > 0) up++; else down++;
+    } return { up, down }; };
+    const low = Math.min(...zs), inner = floorOf(low + 100), outer = floorOf(low);
+    check('its inner floor faces up (seen from above), its bottom down', inner.up > 0 && inner.down === 0 && outer.down > 0 && outer.up === 0);
+  }
+
   /* --- use case: the page without a canvas (a test, a worker): resize and the sun do nothing; closed, nothing left drawn --- */
   {
     scene.resize(); scene.sun({ az: 200, el: 40, k: 1, clouds: 0, night: false });

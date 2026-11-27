@@ -30,7 +30,7 @@
 /** @typedef {number[]} Vec  [x, y, h], mm, in the node's own axes, 0 its zero; the model's axes, right-handed (core/tools.js): a product's or a run of cabinets': zero at its back (the wall), its left end as one sees its front, bottom; x to the right, y toward the wall (the front at negative y), h up */
 /**
  * @typedef {object} Part  one solid of a node
- * @property {'box' | 'prism' | 'cylinder' | 'ring' | 'disc' | 'plane' | 'sphere' | 'torus' | 'extrude' | 'tube' | 'mesh' | 'text'} form
+ * @property {'box' | 'prism' | 'cylinder' | 'ring' | 'disc' | 'plane' | 'sphere' | 'torus' | 'extrude' | 'tube' | 'mesh' | 'faces' | 'text'} form
  * @property {string} material  a key of materials.json; 'board:' and a board's key: the board of the library (its decor, lacquer or colour); or 'metal': the fittings' metal, set by Finish
  * @property {string} [layer]  its own layer, before its node's
  * @property {string} [floor]  its own floor, before its node's (what lies over both floors, split)
@@ -39,8 +39,6 @@
  * @property {number[]} [x]  prism: [x1, x2], along x
  * @property {number[][]} [poly]  prism: its section, a convex polygon of [y, h] points, counter-clockwise
  * @property {Record<string, string>} [faces]  prism: a face's material by its side: top, bottom, ends (along x), eaves (a side at an eaves' y), reveals (the other sides)
- * @property {Vec} [uvAt]  where its texture starts, in its node's axes (a tile's corner: the tile's photo from there)
- * @property {{ n: Vec, material: string }} [face]  a finish on one face: the face toward n (in its node's axes) in this material, the others in the part's (a tile: its face toward the room)
  * @property {number[]} [eaves]  prism: the y of its outer edges, where a side is an eave
  * @property {string} [raw]  the material when its finish's layer is off (EPS under its facade)
  * @property {string} [finish]  the layer of its finish
@@ -60,6 +58,9 @@
  * @property {number[]} [positions]  mesh: x, y, h of each point
  * @property {number[]} [index]  mesh: three points per triangle
  * @property {number[]} [matrix]  mesh: its rows x, y, h of the product: [a, b, c, d] each, x = a·px + b·py + c·pz + d
+ * @property {Vec[][]} [polys]  faces: flat convex polygons, in its node's axes (tiles' faces on a wall)
+ * @property {number[][][]} [uvs]  faces: each polygon's points' [u, v] on its image (a tile's: 0 … 1 over the tile)
+ * @property {Vec} [n]  faces: the way they look
  * @property {string} [text]  text: what it shows
  * @property {number} [segments]  round forms: the facets round
  * @property {false} [edges]  false: drawn without its edges (the lawn)

@@ -637,7 +637,11 @@ function shaped(A, [w, d, h]) {
     if (p.k === 'box') D.box(p.b, key(p.m), mover);
     else if (p.k === 'cyl') D.add({ form: 'cylinder', radius: [p.r[0], p.r[1]], length: p.h, segments: p.s, material: key(p.m), at: p.at, axis: p.ax }, mover);
     else if (p.k === 'tube') D.add({ form: 'tube', points: p.p, radius: [p.r], segments: p.s, material: key(p.m) }, mover);
-    else if (p.k === 'loft') D.add({ form: 'mesh', ...loft(p.sec), matrix: p.M.flat(), material: key(p.m) }, mover);
+    else if (p.k === 'loft') {   /* a matrix that mirrors (its determinant below zero): the triangles turned back, the faces out */
+      const M = p.M, det = M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) + M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
+      const L = loft(p.sec), index = det < 0 ? L.index.flatMap((_, k, I) => k % 3 ? [] : [I[k], I[k + 2], I[k + 1]]) : L.index;
+      D.add({ form: 'mesh', positions: L.positions, index, matrix: M.flat(), material: key(p.m) }, mover);
+    }
   }
   D.envelope([0, w, 0, d, 0, h], A.name);
   return D.S;

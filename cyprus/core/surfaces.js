@@ -19,7 +19,6 @@ import { EPS, ccw, edgesOf, intersect2, minus2 } from './geometry.js';
  * @property {string} [finish]  the layer of its finish: off, its faces show raw
  * @property {any} [part]  what it belongs to (two parts meeting in a plane keep their joint's line)
  * @property {any} [owner]  what it was drawn for (its node)
- * @property {Vec3} [uvAt]  where its texture starts (a tile's corner): the texture's zero there on each of its faces
  */
 /** @typedef {CellLook & { S: Prism }} Cell  a solid as drawn: a prism and its look */
 /**
@@ -64,10 +63,8 @@ const noRepeats = (/** @type {Point3[]} */ P) => P.filter((p, i) => p !== P[(i +
 /* the faces of a cell: the side of every polygon edge and the two ends */
 /** @param {Cell} c @returns {Piece[]} */
 function cellFaces(c) {
-  const S = c.S, P = S.poly, /** @type {Piece[]} */ out = [], at = c.uvAt;
-  /** the texture's zero at uvAt @param {(v: Vec3) => number[]} uv @returns {(v: Vec3) => number[]} */
-  const from = uv => { if (!at) return uv; const o = uv(at); return v => { const q = uv(v); return [q[0] - o[0], q[1] - o[1]]; }; };
-  const face = (/** @type {Vec3[]} */ pts, /** @type {Vec3} */ n, /** @type {(v: Vec3) => number[]} */ uv) => out.push({ poly: noRepeats(pts.map(weld)), n, uv: from(uv), cell: c, group: c.group,
+  const S = c.S, P = S.poly, /** @type {Piece[]} */ out = [];
+  const face = (/** @type {Vec3[]} */ pts, /** @type {Vec3} */ n, /** @type {(v: Vec3) => number[]} */ uv) => out.push({ poly: noRepeats(pts.map(weld)), n, uv, cell: c, group: c.group,
     material: c.faceMaterial ? c.faceMaterial(n, pts) : /** @type {string} */ (c.material) });
   for (const [a, b] of edgesOf(P)) {
     const dy = b[0] - a[0], dh = b[1] - a[1], L = Math.hypot(dy, dh); if (L < EPS) continue;

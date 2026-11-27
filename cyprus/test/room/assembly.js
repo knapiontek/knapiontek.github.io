@@ -80,26 +80,56 @@ export default async function (check) {
   const ft = /** @type {any} */ (H.node(room + 'floorTiles'));
   check('floor tiles: the kitchen\'s, a node of its own (layer floorTiles), as deep as the scene says (12)', ft?.layer === 'floorTiles' && ft.size[2] === 12);
   check('floor tiles: the kitchen counted (m², tiles, whole, cut, small): ' + JSON.stringify(ft?.count), ft?.count.area > 50.55 && ft.count.tiles === ft.count.whole + ft.count.cut && ft.count.tiles > 60);
-  check('floor tiles: the grout in the scene\'s colour, each tile its product on its face up, its photo from its corner (the rest the bed), small cuts marked', ft.parts.some((/** @type {any} */ p) => p.material === 'grout:#686a68') && ft.parts.some((/** @type {any} */ p) => p.face?.material.startsWith('tile:paradyz-authority-graphite:') && p.face.n.join() === '0,0,1' && p.uvAt) && ft.parts.filter((/** @type {any} */ p) => p.layer === 'smallCuts').length === ft.count.small);
+  /** a node's tiles' faces: each polygon, its way, its material @param {any} node @returns {{ q: number[][], n: number[], m: string, layer?: string }[]} */
+  const facesOf = node => node.parts.flatMap((/** @type {any} */ p) => p.polys.map((/** @type {number[][]} */ q) => ({ q, n: p.n, m: p.material, layer: p.layer })));
+  /** two faces in one plane overlapping (their boxes) @param {{ q: number[][], n: number[] }} a @param {{ q: number[][], n: number[] }} b */
+  const clash = (a, b) => {
+    if (a.n.join() !== b.n.join()) return false;
+    const k = a.n.map(Math.abs).indexOf(1), [i, j] = [0, 1, 2].filter(x => x !== k);
+    if (Math.abs(a.q[0][k] - b.q[0][k]) > 0.1) return false;
+    const box = (/** @type {number[][]} */ q) => [Math.min(...q.map(v => v[i])), Math.max(...q.map(v => v[i])), Math.min(...q.map(v => v[j])), Math.max(...q.map(v => v[j]))], A = box(a.q), B = box(b.q);
+    return Math.min(A[1], B[1]) - Math.max(A[0], B[0]) > 0.1 && Math.min(A[3], B[3]) - Math.max(A[2], B[2]) > 0.1;
+  };
+  /** @param {{ q: number[][], n: number[], m: string, layer?: string }[]} fs */
+  const tilesOf = fs => fs.filter(f => /^tile:[^:]+:\d/.test(f.m));   // a tile's face (not the slab's edge)
+  const floorFaces = facesOf(ft);
+  check('floor tiles: faces (no solids): the grout\'s plane 2 under the tiles\' face (12), each tile its product\'s photo, small cuts marked over them', ft.parts.every((/** @type {any} */ p) => p.form === 'faces')
+    && floorFaces.some(f => f.m === 'grout:#686a68' && f.q.every(v => v[2] === 10)) && tilesOf(floorFaces).some(f => f.m.startsWith('tile:paradyz-authority-graphite:') && f.n.join() === '0,0,1' && f.q.every(v => v[2] === 12))
+    && floorFaces.filter(f => f.layer === 'smallCuts').length === ft.count.small);
+  const uvs = ft.parts.filter((/** @type {any} */ p) => /^tile:[^:]+:\d/.test(p.material)).flatMap((/** @type {any} */ p) => p.uvs.flat());
+  check('a tile\'s photo: over the whole tile (its uv 0 … 1)', uvs.every((/** @type {number[]} */ u) => u[0] > -1e-6 && u[0] < 1 + 1e-6 && u[1] > -1e-6 && u[1] < 1 + 1e-6));
   check('floor tiles: none in a room with no scene', !H.node('house/groundFloor/garage_2/floorTiles'));
   /* --- use case: the walls' tiles round the floor, from a joint over the floor's tiles up to the ceiling or the roof's slope,
-     less the openings; the inner corners meeting, not overlapping; the tile on the face toward the room, the rest the bed --- */
+     less the openings; the corners meeting, no face over another --- */
   {
     const wt = /** @type {any} */ (H.node('house/firstFloor/bathroom_5/wallTiles')), bath5 = /** @type {any} */ (H.node('house/firstFloor/bathroom_5'));
     check('bathroom 5\'s wall tiles: a node of its own (layer wallTiles), counted: ' + JSON.stringify(wt?.count), wt?.layer === 'wallTiles' && wt.count.tiles === wt.count.whole + wt.count.cut && wt.count.area > 15 && wt.count.area < 30.74);
-    /** the lowest and the highest h of a part @param {any} p */
-    const hs = p => p.box ? [p.box[4], p.box[5]] : [Math.min(...p.poly.map((/** @type {number[]} */ q) => q[1])), Math.max(...p.poly.map((/** @type {number[]} */ q) => q[1]))];
-    check('from a joint (2) over the floor\'s tiles (12): none lower than 14', wt.parts.every((/** @type {any} */ p) => hs(p)[0] >= 14));
+    const W = tilesOf(facesOf(wt)).filter(f => f.n[2] === 0);
+    check('from a joint (2) over the floor\'s tiles (12): no wall\'s tile lower than 14', W.every(f => f.q.every(v => v[2] >= 14 - 1e-6)));
     /** the roof's underside over y, in the room's axes @param {number} y */
     const roof = y => Math.min(bath5.ceilingHeight, ...bath5.slopes.map((/** @type {any} */ l) => l.a + l.s * y));
-    const over = wt.parts.filter((/** @type {any} */ p) => p.form === 'prism' ? p.poly.some((/** @type {number[]} */ q) => q[1] > roof(q[0]) + 0.5) : p.box[5] > Math.min(roof(p.box[2]), roof(p.box[3])) + 0.5);
-    check('under the roof: none above its slope (the walls along y cut on the slant)' + (over.length ? ': ' + over.length + ' over' : ''), over.length === 0 && wt.parts.some((/** @type {any} */ p) => p.form === 'prism'));
-    check('the tile on the face toward the room, the bed and the grout behind it', wt.parts.filter((/** @type {any} */ p) => p.face).every((/** @type {any} */ p) => p.face.material.startsWith('tile:paradyz-authority-grey:') && p.uvAt && p.material === 'grout:#8b8a87'));
-    /** the boxes of the tiles at a corner overlapping: none */
-    const tiles = wt.parts.filter((/** @type {any} */ p) => p.face && p.box).map((/** @type {any} */ p) => p.box);
-    const clash = tiles.some((/** @type {number[]} */ a, /** @type {number} */ i) => tiles.slice(i + 1).some((/** @type {number[]} */ b) => [0, 1, 2].every(k => Math.min(a[2 * k + 1], b[2 * k + 1]) - Math.max(a[2 * k], b[2 * k]) > 0.1)));
-    check('the inner corners: the tiles of two walls meet, none in another', !clash);
-    check('none where the room has no wall tiles (the kitchen)', !H.node(room + 'wallTiles'));
+    const over = W.filter(f => f.q.some(v => v[2] > roof(v[1]) + 0.5));
+    check('under the roof: none above its slope (cut on the slant)' + (over.length ? ': ' + over.length + ' over' : ''), over.length === 0 && W.some(f => f.q.length > 4 || f.q.some(v => Math.abs(v[2] - Math.round(v[2])) > 1e-3)));
+    check('the tiles\' face 12 off the wall (the room 2730 × 3010)', W.every(f => f.n[0] ? f.q.every(v => Math.abs(v[0] - (f.n[0] > 0 ? 12 : 2718)) < 1e-6 || Math.abs(v[0] - 262) < 1e-6) : f.q.every(v => Math.abs(v[1] - (f.n[1] > 0 ? 12 : 2998)) < 1e-6 || Math.abs(v[1] - 1772) < 1e-6)));
+    const all = tilesOf([...facesOf(wt), ...facesOf(ft)]);
+    check('no tile\'s face over another', !all.some((a, i) => all.slice(i + 1).some(b => clash(a, b))));
+    check('none where the room has no wall tiles (the floorFaces)', !H.node(room + 'wallTiles'));
+  }
+
+  /* --- use case: a casing built before the tiles (bathroom 7: the WC's, its niche): none under it, none behind it; its faces
+     tiled, the niche's back, sides, floor and top too; at an outer corner each face past, closing it --- */
+  {
+    const b7 = 'house/groundFloor/bathroom_7/', wt = /** @type {any} */ (H.node(b7 + 'wallTiles')), ft = /** @type {any} */ (H.node(b7 + 'floorTiles'));
+    const F = [...tilesOf(facesOf(wt)), ...tilesOf(facesOf(ft))];
+    /** a face inside a box (its middle) @param {{ q: number[][] }} f @param {number[]} b */
+    const inside = (f, b) => { const m = [0, 1, 2].map(k => f.q.reduce((s, v) => s + v[k], 0) / f.q.length); return [0, 1, 2].every(k => m[k] > b[2 * k] + 0.1 && m[k] < b[2 * k + 1] - 0.1); };
+    check('no tile in the casing (under it, behind it)', !F.some(f => inside(f, [2230, 2510, 0, 850, 0, 2720]) && !inside(f, [2230, 2380, 373, 797, 1188, 2012])));
+    const at = (/** @type {number[]} */ n, /** @type {number} */ k, /** @type {number} */ v) => F.filter(f => f.n.join() === n.join() && f.q.every(p => Math.abs(p[k] - v) < 1e-6));
+    check('its front tiled, its face 12 in front of it (2218), to the outer corner past (862)', at([-1, 0, 0], 0, 2218).some(f => f.q.some(p => p[1] === 862)));
+    check('the niche: its back (2368), sides (385, 785), floor (1200, up) and top (2000, down)', [at([-1, 0, 0], 0, 2368), at([0, 1, 0], 1, 385), at([0, -1, 0], 1, 785), at([0, 0, 1], 2, 1200), at([0, 0, -1], 2, 2000)].every(l => l.length > 0));
+    const cab = /** @type {any} */ (H.node(b7 + 'cabinet'));
+    check('the wall cabinet in the niche: between its tiles (400 × 800 × 150, from 1200, its front at the front\'s tiles)', !F.some(f => inside(f, [2218, 2368, 385, 785, 1200, 2000])) && cab.offset[0] - 150 === 2218);
+    check('no tile\'s face over another', !F.some((a, i) => F.slice(i + 1).some(b => clash(a, b))));
   }
 
   /* every function in a use case: assembleRooms through the house (it assembles the rooms on the house's hierarchy) */

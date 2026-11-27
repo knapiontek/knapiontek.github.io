@@ -4,7 +4,7 @@
 // a wall's face less its door. Every exported function in one.
 
 import * as API from '../../room/tiles.js';
-import { doorHalves, layTiles, rectsMinus, under, wallFace, wallsOf } from '../../room/tiles.js';
+import { doorHalves, layTiles, rectsMinus, tiledSurfaces, under, wallsOf } from '../../room/tiles.js';
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
@@ -12,7 +12,7 @@ export default async function (check) {
   const used = new Set();
   /** @template {(...a: any[]) => any} F @param {string} name @param {F} f @returns {F} */
   const api = (name, f) => /** @type {F} */ ((...a) => { used.add(name); return f(...a); });
-  const $ = { layTiles: api('layTiles', layTiles), doorHalves: api('doorHalves', doorHalves), wallsOf: api('wallsOf', wallsOf), rectsMinus: api('rectsMinus', rectsMinus), wallFace: api('wallFace', wallFace), under: api('under', under) };
+  const $ = { layTiles: api('layTiles', layTiles), doorHalves: api('doorHalves', doorHalves), wallsOf: api('wallsOf', wallsOf), rectsMinus: api('rectsMinus', rectsMinus), tiledSurfaces: api('tiledSurfaces', tiledSurfaces), under: api('under', under) };
   /* a tile as the library gives it (library/shapes.js tileOf): 600 long, 300 wide, joint 2, the smallest cut 100 × 100 */
   const tile = { len: 600, wid: 300, joint: 2, minCut: [100, 100] };
 
@@ -61,18 +61,18 @@ export default async function (check) {
     const walls = $.wallsOf([[0, 2000, 0, 1000], [0, 800, 1000, 2000]]);
     check('the walls round an L: its sides (seven: the long side in two, one per rectangle), none on the line between its rectangles', walls.length === 7 && !walls.some(w => w.axis === 0 && w.at === 1000 && w.from < 800)
       && walls.some(w => w.axis === 0 && w.at === 1000 && w.from === 800 && w.to === 2000 && w.inward === -1));
-    const face = $.wallFace({ axis: 0, at: 0, inward: 1, from: 0, to: 3000 }, 12, 2600, [[1000, 1900, -240, 0, 0, 2050], [1000, 1900, 2800, 3000, 0, 2050]]);
-    check('a wall\'s face: from the floor\'s tiles (12) to the ceiling, less the door through it (not one through another wall)', face.length === 3 && face.every(r => r[2] >= 12) && !face.some(r => r[0] < 1900 && r[1] > 1000 && r[2] < 2050));
-    const cased = $.wallFace({ axis: 0, at: 0, inward: 1, from: 0, to: 3000 }, 12, 2600, [], [[2230, 2510, 0, 850, 0, 2600]]);
-    check('a casing against the wall (deeper than a wall is thick): no tiles behind it', cased.length === 2 && !cased.some(r => r[0] < 2510 && r[1] > 2230));
+    const S = $.tiledSurfaces({ rects: [[0, 3000, 0, 2000]], height: 2600, slopes: [], openings: [[1000, 1900, -240, 0, 0, 2050], [3000, 3240, 500, 1400, 0, 2050]], built: [] }, { depth: 12 }, { depth: 12, joint: 2 });
+    const w = S.find(s => s.axis === 0 && s.n[1] === 1), face = /** @type {import('../../room/tiles.js').Rect[]} */ (w?.rects);
+    check('a wall\'s face: 12 off the wall, from the floor\'s tiles and a joint (14) to the ceiling, less its door; its ends short at the inner corners', w?.at === 12 && face.length === 3 && face.every(r => r[2] >= 14 && r[0] >= 12 && r[1] <= 2988) && !face.some(r => r[0] < 1900 && r[1] > 1000 && r[2] < 2050) && w.holes.length === 1);
+    check('the floor: face up at the tiles\' depth, the door\'s half on its side, its free edge there (its middle)', S.some(s => s.layout === 'floor' && s.at === 12 && s.rects.some(r => r[0] === 3000 && r[1] === 3120) && s.edges?.some(e => e[0][0] === 3120)));
     check('a face less a hole: the rectangles round it', $.rectsMinus([[0, 3000, 0, 2600]], [[1000, 1900, 0, 2050]]).length === 3);
-    const { count } = $.layTiles(face, tile, { dir: 'x', pattern: 'grid', offset: [0, 12] });
-    check('the wall laid as a floor is (u along it, h up), from its point: counted', count.tiles > 0 && count.area === Math.round((3000 * 2588 - 900 * 2038) / 1e4) / 100);
+    const { count } = $.layTiles(face, tile, { dir: 'x', pattern: 'grid', offset: [0, 14] });
+    check('the wall laid as a floor is (u along it, h up), from its point: counted', count.tiles > 0 && count.area === Math.round((2976 * 2586 - 900 * 2036) / 1e4) / 100);
   }
 
   /* --- use case: a wall under the roof's slope: the tiles cut on the slant, none above it --- */
   {
-    const slope = [{ a: 1000, s: 1 }];   // the ceiling at 1000 at u 0, rising 1 in 1
+    const slope = [{ p: -1, q: 1, c: 1000 }];   // the ceiling at 1000 at u 0, rising 1 in 1 (v - u ≤ 1000)
     check('a rectangle under a slope: its outline cut on the slant; one under it whole; one over it nothing', $.under([0, 600, 0, 1300], slope)?.length === 5 && $.under([0, 600, 0, 900], slope)?.length === 4 && $.under([0, 600, 1700, 1800], slope) === null);
     const { pieces, count } = $.layTiles([[0, 1200, 0, 1500]], tile, { dir: 'x', pattern: 'grid', offset: [0, 0], under: slope });
     check('laid under it: the pieces the slope cuts their outline, none above it; the area under it', pieces.some(p => p.poly) && pieces.every(p => (p.poly || [[p.rect[0], p.rect[3]], [p.rect[1], p.rect[3]]]).every(q => q[1] <= 1000 + q[0] + 0.5))

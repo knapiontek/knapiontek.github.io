@@ -7,7 +7,7 @@
   "walls": {"product": "paradyz-authority-graphite", "size": [1198, 598], "depth": 12, "dir": "x", "pattern": "grid", "offset": [0, 0, 0], "grout": "#686a68"}
  },
  "cabinets": {
-  "1": {"front": "W", "offset": [2510, 2190, 0]}
+  "1": {"front": "W", "offset": [2510, 2190, 12]}
  },
  "fixtures": {
   "riser": {"product": "riser-pvc-160", "front": "W", "offset": [2480, 190, 0], "layer": "riser"},
@@ -18,12 +18,12 @@
   "cabinet": {"product": "wall-cabinet-400x800x150", "front": "W", "offset": [2368, 785, 1200], "layer": "wallCabinet"},
   "mirror": {"product": "mirror-led-600x800", "front": "W", "offset": [2498, 1590, 1220], "layer": "mirror"},
   "radiator": {"product": "mexen-hades-1200x400-gold", "front": "S", "offset": [2100, 2378, 820], "layer": "radiator"},
-  "screen": {"product": "shower-screen-1000-door-600", "front": "W", "offset": [868, 1000, 0], "layer": "shower"},
-  "drain": {"product": "linear-drain-vogi-duo-880", "front": "E", "offset": [12, 60, 0], "layer": "shower"},
-  "shower": {"product": "shower-set-rain-thermostat", "front": "S", "offset": [300, 988, 0], "layer": "shower"}
+  "screen": {"product": "shower-screen-1000-door-600", "front": "W", "offset": [868, 1000, 12], "layer": "shower"},
+  "drain": {"product": "linear-drain-vogi-duo-880", "front": "E", "offset": [12, 60, 8], "layer": "shower"},
+  "shower": {"product": "shower-set-rain-thermostat", "front": "S", "offset": [300, 988, 12], "layer": "shower"}
  },
  "builtIns": [
-  {"name": "WC casing over the frame and the riser", "box": [2230, 2510, 0, 850, 0, 2720], "cuts": [[2230, 2380, 373, 797, 1200, 2000]], "material": "plasterWhite"}
+  {"name": "WC casing over the frame and the riser", "box": [2230, 2510, 0, 850, 0, 2720], "cuts": [[2230, 2380, 373, 797, 1188, 2012]], "material": "plasterWhite"}
  ],
  "lamps": {
   "downlight1": {"kind": "downlight", "at": [1350, 1890]},

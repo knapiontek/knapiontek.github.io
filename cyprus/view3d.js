@@ -161,8 +161,8 @@ export function createView3d({ catalog, canvas, light, edges }) {
     image(d, m) {                          // a photo of textures, its size in mm; face: which of its images; turn: its u along the face's v
       catalog.texture(d.key).then(T => loadImage(T.faces[(d.face || 0) % T.faces.length], im => {
         const t = new THREE.Texture(im); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
-        if (d.tile && T.kind === 'stone') t.repeat.set(1 / d.tile[0], 1 / d.tile[1]);   // a tile of stone: one image, the whole tile
-        else if (d.tile) { t.repeat.set(1 / T.size[0], 1 / T.size[1]); t.offset.set(hash01(d.face, 1), hash01(d.face, 2)); }   // a plank: a piece of the photo, by chance
+        if (d.tile && T.kind === 'stone') t.repeat.set(1, 1);   // a tile of stone (its uv 0 … 1 over the tile): one image, the whole tile
+        else if (d.tile) { t.repeat.set(d.tile[0] / T.size[0], d.tile[1] / T.size[1]); t.offset.set(hash01(d.face, 1), hash01(d.face, 2)); }   // a plank: a piece of the photo, by chance
         else if (d.turn) { t.repeat.set(1 / T.size[1], 1 / T.size[0]); t.rotation = Math.PI / 2; } else t.repeat.set(1 / T.size[0], 1 / T.size[1]);
         t.needsUpdate = true; m.map = t; m.needsUpdate = true; redraw();
       }));
@@ -175,7 +175,7 @@ export function createView3d({ catalog, canvas, light, edges }) {
     const L = lookOf(catalog.product(key));
     return {
       decor: { color: '#ffffff', image: { key: L.texture }, roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, reflect: 0.5 },
-      tile: { color: '#ffffff', image: { key: L.texture, ...(tile ? { face: tile.face, tile: tile.size } : {}) }, roughness: 0.45, reflect: 0.6 },
+      tile: { color: '#ffffff', image: { key: L.texture, ...(tile ? { face: tile.face, tile: tile.size } : {}) }, roughness: 0.45, reflect: 0.6, ahead: true },   // over the grout behind it
       lacquer: { color: L.color, roughness: 0.42, clearcoat: 0.2, clearcoatRoughness: 0.45, reflect: 0.7 },
       matt: { color: L.color, roughness: 0.8, reflect: 0.45 }
     }[L.finish];
@@ -184,8 +184,8 @@ export function createView3d({ catalog, canvas, light, edges }) {
    * @param {string} key */
   function material(key) {
     if (MATERIALS.has(key)) return MATERIALS.get(key);
-    const [, tileKey, face, size] = key.startsWith('tile:') ? key.split(':') : [];   // tile:<product>[:<image>:<u>x<v>]: one tile's
-    const def = key.startsWith('board:') ? productLook(key.slice(6)) : tileKey ? productLook(tileKey, face !== undefined ? { face: Number(face), size: size.split('x').map(Number) } : undefined)
+    const [, tileKey, face, size] = key.startsWith('tile:') ? key.split(':') : [];   // tile:<product>[:<image>:<u>x<v>]: one tile's; tile:<product>:edge: its slab's edge (the photo in mm)
+    const def = key.startsWith('board:') ? productLook(key.slice(6)) : tileKey ? productLook(tileKey, size ? { face: Number(face), size: size.split('x').map(Number) } : undefined)
       : key.startsWith('grout:') ? /** @type {Record<string, any>} */ ({ color: key.slice(6), roughness: 0.95, reflect: 0.2 }) : /** @type {Record<string, any>} */ (catalog.material(key));
     /** @type {Record<string, any>} */
     const o = { color: def.color || '#ffffff', roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1,
@@ -246,12 +246,10 @@ export function createView3d({ catalog, canvas, light, edges }) {
         const S = solidOf(part, at);
         if (!S) { other(part, look, at, group); continue; }
         const F2 = part.faces, eaves = part.eaves && at.turn === 0 ? part.eaves.map(y => y + at.at[1]) : undefined;
-        /* a finish on one face (a tile's face toward the room): that face its finish, the others the part's material */
-        const toward = part.face && turned(part.face.n, at.turn), finish = part.face?.material;
         /** @type {Cell} */
-        const cell = { S, group, edges: part.edges !== false, owner: n, part: part.mover ? h.path(n) + '#' + part.mover : undefined, ...(part.uvAt ? { uvAt: put(at, part.uvAt) } : {}),
+        const cell = { S, group, edges: part.edges !== false, owner: n, part: part.mover ? h.path(n) + '#' + part.mover : undefined,
           ...(F2 ? { faceMaterial: (/** @type {Vec3} */ v, /** @type {Vec3[]} */ pts) => faceLook(F2, eaves, v, pts) }
-            : toward ? { faceMaterial: (/** @type {Vec3} */ v) => (dot3(v, toward) > 0.9 ? /** @type {string} */ (finish) : look) } : { material: look }),
+            : { material: look }),
           ...(part.raw ? { raw: part.raw, finish: part.finish } : {}) };
         if (part.mover) { const k = h.path(n) + '#' + part.mover; (moving.get(k) || moving.set(k, []).get(k))?.push(cell); } else still.push(cell);
       }
@@ -407,6 +405,23 @@ export function createView3d({ catalog, canvas, light, edges }) {
         geometry = new THREE.TubeGeometry(path, Math.max(8, 8 * (pts.length - 1)), r[0], 12, false);
         break;
       }
+      case 'faces': {   /* flat polygons, one way: counter-clockwise seen from where they look (a fan each) */
+        const N = /** @type {number[]} */ (p.n), pos = /** @type {number[]} */ ([]), nor = /** @type {number[]} */ ([]), uv = /** @type {number[]} */ ([]), ix = /** @type {number[]} */ ([]);
+        (/** @type {number[][][]} */ (p.polys)).forEach((poly, k) => {
+          const q = poly.slice(), t = (p.uvs?.[k] || poly.map(() => [0, 0])).slice(), base = pos.length / 3;
+          let s = 0;
+          for (let i = 0; i < q.length; i++) { const a = q[i], b = q[(i + 1) % q.length]; s += N[0] * (a[1] * b[2] - a[2] * b[1]) + N[1] * (a[2] * b[0] - a[0] * b[2]) + N[2] * (a[0] * b[1] - a[1] * b[0]); }
+          if (s < 0) { q.reverse(); t.reverse(); }
+          q.forEach((v, i) => { pos.push(...v); nor.push(...N); uv.push(...t[i]); });
+          for (let i = 1; i + 1 < q.length; i++) ix.push(base, base + i, base + i + 1);
+        });
+        geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        geometry.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+        geometry.setIndex(ix);
+        break;
+      }
       case 'mesh': {
         geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(/** @type {number[]} */ (p.positions), 3));
@@ -419,11 +434,12 @@ export function createView3d({ catalog, canvas, light, edges }) {
       default: skipped++; return;
     }
     const mesh = new THREE.Mesh(geometry, materials);
-    if (!['extrude', 'tube', 'mesh'].includes(p.form)) {
+    if (!['extrude', 'tube', 'mesh', 'faces'].includes(p.form)) {
       mesh.position.set(AT[0], AT[1], AT[2]);
       if (p.form === 'cylinder' || p.form === 'sphere') facing(mesh, ALONG); else facing(mesh, FACING);   // a sphere's poles on its axis (h): its arc from the top down
     } else if (p.form === 'extrude') mesh.position.set(AT[0], AT[1], AT[2]);
-    mesh.castShadow = mesh.receiveShadow = p.form !== 'text';
+    mesh.castShadow = mesh.receiveShadow = p.form !== 'text' && p.form !== 'faces';   // tiles' faces: on what casts and takes the shadows
+    if (p.form === 'faces') mesh.receiveShadow = true;
     const node = new THREE.Group();   /* the node's axes in the branch's */
     node.position.set(...at.at); node.rotation.z = at.turn * Math.PI / 2;
     node.add(mesh); world.add(node);

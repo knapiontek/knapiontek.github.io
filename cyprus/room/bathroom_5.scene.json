@@ -7,17 +7,17 @@
   "walls": {"product": "paradyz-authority-grey", "size": [1198, 598], "depth": 12, "dir": "x", "pattern": "grid", "offset": [0, 0, 0], "grout": "#8b8a87"}
  },
  "cabinets": {
-  "1": {"front": "W", "offset": [2730, 2810, 0]}
+  "1": {"front": "W", "offset": [2730, 2810, 12]}
  },
  "fixtures": {
   "mirror1": {"product": "mirror-led-600x800", "front": "W", "offset": [2718, 2710, 1220], "layer": "mirror"},
   "mirror2": {"product": "mirror-led-600x800", "front": "W", "offset": [2718, 1910, 1220], "layer": "mirror"},
   "radiator": {"product": "mexen-hades-1200x400-chrome", "front": "S", "offset": [2320, 2998, 820], "layer": "radiator"},
-  "corner": {"product": "shower-corner-1000x1000", "front": "W", "offset": [1045, 2998, 0], "layer": "shower"},
-  "drain": {"product": "linear-drain-vogi-duo-880", "front": "E", "offset": [12, 2070, 0], "layer": "shower"},
-  "shower": {"product": "shower-set-rain-thermostat", "front": "S", "offset": [350, 2998, 0], "layer": "shower"},
-  "bath": {"product": "castorama-bath-freestanding-170x75", "front": "N", "offset": [2340, 230, 0], "layer": "bath"},
-  "bathTap": {"product": "hansgrohe-tecturis-e-73445000", "front": "N", "offset": [2480, 330, 0], "layer": "bath"},
+  "corner": {"product": "shower-corner-1000x1000", "front": "W", "offset": [1045, 2998, 12], "layer": "shower"},
+  "drain": {"product": "linear-drain-vogi-duo-880", "front": "E", "offset": [12, 2070, 8], "layer": "shower"},
+  "shower": {"product": "shower-set-rain-thermostat", "front": "S", "offset": [350, 2998, 12], "layer": "shower"},
+  "bath": {"product": "castorama-bath-freestanding-170x75", "front": "N", "offset": [2340, 230, 12], "layer": "bath"},
+  "bathTap": {"product": "hansgrohe-tecturis-e-73445000", "front": "N", "offset": [2480, 330, 12], "layer": "bath"},
   "riser": {"product": "riser-pvc-160", "front": "E", "offset": [30, 30, 0], "layer": "riser", "height": 1200},
   "outlet": {"product": "pvc-pipe-90", "front": "E", "offset": [105, 110, 185], "layer": "riser", "length": 1350},
   "hatch": {"product": "inspection-hatch-200", "front": "E", "offset": [262, 100, 250], "layer": "casings"},
@@ -25,8 +25,7 @@
   "wc": {"product": "wc-bowl-wall-hung-360x530", "front": "E", "offset": [272, 1280, 0], "layer": "wc"}
  },
  "builtIns": [
-  {"name": "WC casing over the frame and the riser", "box": [0, 250, 0, 1760, 0, 1200], "material": "plasterWhite"},
-  {"name": "Its top, a shelf", "box": [0, 260, 25, 1760, 1200, 1220], "material": "melamineWhite"}
+  {"name": "WC casing over the frame and the riser", "box": [0, 250, 0, 1760, 0, 1200], "material": "plasterWhite"}
  ],
  "lamps": {
   "downlight1": {"kind": "downlight", "at": [2280, 2410]},
