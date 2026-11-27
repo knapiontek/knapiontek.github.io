@@ -350,7 +350,7 @@ export function createView3d({ catalog, canvas, light, edges }) {
   }
   /**
    * Another form: a mesh of its own, in its group; made in its node's axes, set in the branch's by the node's zero and turn.
-   * cylinder, ring, disc, plane, text (facing its axis), sphere, torus (round its axis), extrude (its outline [y, h] along x),
+   * cylinder, ring, disc, plane, text (facing its axis), sphere (its poles on its axis, its arc down from the top), torus (round its axis), extrude (its outline [y, h] along x),
    * tube (along its points), mesh (its points through its matrix).
    * @param {Part} p @param {string} look @param {Frame} at @param {string} group
    */
@@ -410,7 +410,7 @@ export function createView3d({ catalog, canvas, light, edges }) {
     const mesh = new THREE.Mesh(geometry, materials);
     if (!['extrude', 'tube', 'mesh'].includes(p.form)) {
       mesh.position.set(AT[0], AT[1], AT[2]);
-      if (p.form === 'cylinder') facing(mesh, ALONG); else if (p.form !== 'sphere') facing(mesh, FACING);
+      if (p.form === 'cylinder' || p.form === 'sphere') facing(mesh, ALONG); else facing(mesh, FACING);   // a sphere's poles on its axis (h): its arc from the top down
     } else if (p.form === 'extrude') mesh.position.set(AT[0], AT[1], AT[2]);
     mesh.castShadow = mesh.receiveShadow = p.form !== 'text';
     const node = new THREE.Group();   /* the node's axes in the branch's */
