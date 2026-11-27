@@ -34,3 +34,4 @@ Served over HTTP (Caddy, `toggle-caddy.sh`): `http://localhost:8080/` the page, 
 8. No dead code: code comes in when something uses it.
 9. Before every delivery: `tsc` strict, the tests, a click through the page.
 10. English in code and data; Polish only for proper and trade names.
+11. Notes are only a person's: the designer's in a cabinets file (`notes`, a component's `note`). Nothing else keeps notes (no notes in the house, the library or the documents): what an LLM knows or finds (a shop, an alternative, a price) is asked again when needed, as it changes.
