@@ -1,15 +1,15 @@
 // @ts-check
-// test/house/build.js: house/build.js and its model.json: the hierarchy sound, every layer and floor in layers.json, every type
+// test/house/assembly.js: house/assembly.js and its model.json: the hierarchy sound, every layer and floor in layers.json, every type
 // known; the layer and the floor of a wall, a window, a door, the ceiling, the EPS; then the house in its own axes against
 // archon/analysis.md: walls, openings, slab, chimney, foundations, finishes, roof, site, rooms.
 
-import { buildHouse } from '../../house/build.js';
+import { assembleHouse } from '../../house/assembly.js';
 
-/** @typedef {import('../../house/build.js').HouseNode} HouseNode */
+/** @typedef {import('../../house/assembly.js').HouseNode} HouseNode */
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
-  const H = await buildHouse();
+  const H = await assembleHouse();
   /** @type {Record<string, any>} */
   const blocks = await (await fetch(new URL('../../layers.json', import.meta.url))).json();
   /** @type {string[]} */
@@ -25,7 +25,7 @@ export default async function (check) {
 
   /* ---------- the hierarchy ---------- */
   {
-    check('buildHouse: the site at the root, the house on it', H.root.id === 'site' && (H.root.children || []).map(n => n.id).join() === 'house' && !('format' in H.root));
+    check('assembleHouse: the site at the root, the house on it', H.root.id === 'site' && (H.root.children || []).map(n => n.id).join() === 'house' && !('format' in H.root));
     check('the house: its branches foundation, the two floors, facade, roof, stair', (house.children || []).map(n => n.id).join() === 'foundation,groundFloor,firstFloor,facade,roof,stair');
     const faults = H.checks(known).filter(c => !c.info && c.items.length);
     check('checks: nothing to correct, every layer and floor in layers.json' + (faults.length ? ': ' + faults.map(c => c.name + ' ' + c.items.slice(0, 3).join('; ')).join(' | ') : ''), faults.length === 0);

@@ -1,7 +1,7 @@
 // @ts-check
 // core/surfaces.js: the surfaces of solids, ready to draw: welded points, the faces of cells, the visible pieces (a face loses what
 // an opposite face of its own group covers; what another group covers is a contact piece, its raw material, seen while that
-// group is hidden), every welded point on an edge a vertex of it. Knows no project and no browser. Ported from the prototype.
+// group is hidden), every welded point on an edge a vertex of it. Knows no project and no browser.
 
 import { EPS, ccw, edgesOf, intersect2, minus2 } from './geometry.js';
 

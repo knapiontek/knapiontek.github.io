@@ -1,5 +1,5 @@
 // @ts-check
-// house/parts.js: what is drawn of the house (types.js: Part), as the prototype's house/model.js made it: every element a prism
+// house/parts.js: what is drawn of the house (types.js: Part): every element a prism
 // cut by the roof, by what it names in cuts and by the openings it hosts, split between the floors at geometry.split, the
 // facade's finishes over its EPS; the roof's two slopes less the chimney and the roof windows; the windows and the outer doors
 // (frames, glass, leaves), the inner doors (frame, leaf, handles); the stair's treads. Worked in the house's axes, each part
@@ -13,7 +13,7 @@ import { DEG, INF, EPS, SOLID_TOL, SIDES, ccw, rect2, clipHalf, leftOf, edgesOf,
 /** @typedef {import('../core/geometry.js').Line} Line */
 /** @typedef {import('../core/geometry.js').Box} Box */
 /** @typedef {import('../types.js').Part} Part */
-/** @typedef {import('./build.js').HouseNode} HouseNode */
+/** @typedef {import('./assembly.js').HouseNode} HouseNode */
 /** @typedef {{ h: number, y: number, pitch: number }} HouseLine  h + pitch · tan(roof pitch) · (y′ − y) */
 /** @typedef {{ S: Prism, material: string, floor?: string, layer?: string, cap?: string, raw?: string, finish?: string, edges?: false, mover?: string, faces?: Record<string, string>, eaves?: number[] }} Cell  a prism and what it is, in the house's axes */
 

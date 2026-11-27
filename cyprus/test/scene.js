@@ -6,14 +6,14 @@
 
 import { createScene } from '../scene.js';
 import { openCatalog } from '../library/catalog.js';
-import { buildHouse } from '../house/build.js';
+import { assembleHouse } from '../house/assembly.js';
 import { createHierarchy } from '../core/hierarchy.js';
 
 /** @typedef {import('../scene.js').Node} Node */
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
-  const catalog = await openCatalog(), H = await buildHouse();
+  const catalog = await openCatalog(), H = await assembleHouse();
   const house = /** @type {Node} */ (H.node('house'));
   const scene = createScene({ catalog, edges: { color: '#7d807b', opacity: 0.45 } });
   /** the meshes of a layer and floor @param {string} layer @param {string} floor */

@@ -17,7 +17,7 @@ Served over HTTP (Caddy, `toggle-caddy.sh`): `http://localhost:8080/` the page, 
 | `TODO.md` | what is left, step by step |
 | `archon/` | the source: archon's drawings and their reading |
 | `core/` | general code, no project |
-| `house/` | the site and the house: their data (`model.json`) and their hierarchy (`build.js`) |
+| `house/` | the site and the house: their data (`model.json`) and their hierarchy (`assembly.js`) |
 | `library/` | the outside world: products, materials, textures, shops |
 | `test/` | one test per module, at its path |
 

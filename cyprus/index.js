@@ -1,11 +1,11 @@
 // @ts-check
-// index.js: joins index.html to the modules: the page's Alpine part. The 3D view: the house (house/build.js) drawn by scene.js,
+// index.js: joins index.html to the modules: the page's Alpine part. The 3D view: the house (house/assembly.js) drawn by scene.js,
 // its layers and floors switched from the panel (layers.json). The rest is still a sketch: the values in SKETCH stand in for
 // what the modules will give.
 
 import { page, sunStore } from './core/ui.js';
 import { openCatalog } from './library/catalog.js';
-import { buildHouse } from './house/build.js';
+import { assembleHouse } from './house/assembly.js';
 import { createScene } from './scene.js';
 
 /** @typedef {import('./core/ui.js').LayerTree} LayerTree */
@@ -40,7 +40,7 @@ const SUN = sunStore(SKETCH.sun);
 /* what the page builds once (outside Alpine: three.js's objects stay plain) */
 /** @type {ReturnType<typeof createScene> | null} */
 let PLOT = null;
-/** @type {Awaited<ReturnType<typeof buildHouse>> | null} */
+/** @type {Awaited<ReturnType<typeof assembleHouse>> | null} */
 let SITE = null;
 /** @type {Record<string, string[]>} a layer's key, and the keys of the layers above it in the panel */
 const ABOVE = {};
@@ -106,7 +106,7 @@ page('sketch', {
     (function above(/** @type {LayerTree} */ t, /** @type {string[]} */ up) {
       for (const [k, l] of Object.entries(t)) { ABOVE[k] = up; if (typeof l !== 'string') above(l.layers, [...up, k]); }
     })(Object.fromEntries(Object.values(layers).flatMap(b => Object.entries(b.layers))), []);
-    const [catalog, site] = await Promise.all([openCatalog(), buildHouse()]);
+    const [catalog, site] = await Promise.all([openCatalog(), assembleHouse()]);
     const house = /** @type {any} */ (site.node('house')), view = house.settings.view;
     SITE = site;
     PLOT = createScene({ catalog, canvas: /** @type {HTMLCanvasElement} */ (document.getElementById('gl')), light: view.light, edges: view.edges });

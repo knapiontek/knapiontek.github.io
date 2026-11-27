@@ -79,7 +79,7 @@ export default async function (check) {
           { id: 'windowGarage', type: 'window', offset: [4380, 0, 1100], size: [2000, 440, 1000], layer: 'windows' }] },
         { id: 'room_356', type: 'room', offset: [5860, 440, 0], size: [6900, 8220, 2720], settings: { metal: 'brass' } }] }] };
     const hierarchy = createHierarchy(house);
-    /* room/build.js: the room's cabinets, as room/cabinets.js builds them, under the room */
+    /* room/assembly.js: the room's cabinets, as room/cabinets.js builds them, under the room */
     const room = /** @type {HierarchyNode} */ (hierarchy.node('groundFloor/room_356'));
     const g1 = hierarchy.add(room, { id: 'g1', type: 'group', offset: [720, 0, 0], size: [1900, 600, 900] });
     const K11 = hierarchy.add(g1, { id: 'K11', type: 'carcass', offset: [0, 40, 100], size: [800, 560, 720], layer: 'carcasses', children: [

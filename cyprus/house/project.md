@@ -1,13 +1,13 @@
 # house
 
-The site and the house as built: their data (`model.json`) and how it becomes the hierarchy (`build.js`). The data comes from the
+The site and the house as built: their data (`model.json`) and how it becomes the hierarchy (`assembly.js`). The data comes from the
 prototype (`home.proto/house/house.js`); the house's own axes are `archon/analysis.md`'s: x East, y North, h up (right-handed), zero at its
-front-right (South-West) corner at ±0.00; the house stands on the site by its offset. Checked against `analysis.md` (`test/house/build.js`).
+front-right (South-West) corner at ±0.00; the house stands on the site by its offset. Checked against `analysis.md` (`test/house/assembly.js`).
 
 | File | What |
 |---|---|
 | `model.json` | format `house`, version 1; the root is the site (its lawn, its surfaces), the house on it; the house's branches: `foundation`, `groundFloor`, `firstFloor`, `facade`, `roof`, `stair`; a wall's openings are its children; the rooms are places in their floor (`area`: their floor, rectangles in their own axes) |
-| `build.js` | `buildHouse()`: `model.json` as a hierarchy (`core/hierarchy.js`); a node without its own `layer` or `floor` takes its type's; its parts (`parts.js`); the site's lawn round the house and its surfaces |
+| `assembly.js` | `assembleHouse()`: `model.json` as a hierarchy (`core/hierarchy.js`); a node without its own `layer` or `floor` takes its type's; its parts (`parts.js`); the site's lawn round the house and its surfaces |
 | `parts.js` | `houseParts()`: what is drawn of the house, as the prototype's `house/model.js` made it: every element a prism cut by the roof, by its `cuts` and by the openings it hosts, split between the floors at `split`, the facade's finishes over its EPS (its raw material with the facade off); the roof's slopes less the chimney and the roof windows; windows and outer doors (frames, glass, leaves), inner doors (frame, leaf and handles on its mover `leaf`); the stair's treads |
 
 ## model.json

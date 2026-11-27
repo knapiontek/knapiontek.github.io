@@ -1,5 +1,5 @@
 // @ts-check
-// house/build.js: the site and its house from their model (model.json, next to this file) as a hierarchy (core/hierarchy.js):
+// house/assembly.js: the site and its house from their model (model.json, next to this file) as a hierarchy (core/hierarchy.js):
 // the site at the root, the house on it, its assemblies and floors, their elements, the openings in their walls, the rooms as
 // places. A node without its own layer or floor takes its type's (geometry.types): the model names them once, per type. What is
 // drawn of the house: house/parts.js; of the site: its lawn round the house and its surfaces.
@@ -19,7 +19,7 @@ const VERSION = 1;   // of model.json's format, house
  * stays on it; its axes are archon/analysis.md's: x East, y North, h up (right-handed), zero at its front-right (South-West) corner at ±0.00.
  * @returns {Promise<ReturnType<typeof createHierarchy<HouseNode>>>}
  */
-export async function buildHouse() {
+export async function assembleHouse() {
   const response = await fetch(new URL('model.json', import.meta.url));
   if (!response.ok) throw new Error(`house: model.json: ${response.status}`);
   const { format, version, ...root } = await response.json();

@@ -1,5 +1,5 @@
 // @ts-check
-// scene.js: the 3D view: a branch of a hierarchy in three.js, as the prototype drew it. Every box and prism of the branch (its
+// scene.js: the 3D view: a branch of a hierarchy in three.js. Every box and prism of the branch (its
 // nodes' parts, or their products' shapes) is a solid with its group (its layer and its floor): the solids' faces are welded,
 // a face against a face of its own group is gone, what lies against another group is its raw material, seen while that group
 // is hidden (core/surfaces.js); the pieces are batched into one mesh per group and material; edges come from the topology: no
@@ -426,6 +426,76 @@ export function createScene({ catalog, canvas, light, edges }) {
       scene.add(hemi, sun, sun.target);
     }
     new ResizeObserver(resize).observe(canvas);
+    navigation(canvas);
+  }
+
+  /* ================= NAVIGATION =================
+     The wheel zooms toward the surface under the cursor. A drag with the left button turns the view about the point under the
+     cursor where the drag starts (a ball marks it while it turns; on no surface, about the point it turned about last); the
+     right button moves the view at the depth of what is under the cursor. Never over the top: h stays up on the screen. */
+  const ZOOM_IN = 0.2, ZOOM_OUT = 0.25, NEAREST = 0.05, SPEED = 2 * Math.PI;   // a wheel notch's share of the way; closest, m
+  const ray = new THREE.Raycaster();
+  /** @param {HTMLCanvasElement} canvas */
+  function navigation(canvas) {
+    const ndcOf = (/** @type {MouseEvent} */ e) => { const r = canvas.getBoundingClientRect(); return new THREE.Vector2((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); };
+    /** the first surface shown along the ray through a point of the screen @param {any} ndc */
+    const surfaceAt = ndc => {
+      ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObjects(MESHES.filter(g => g.mesh.visible).map(g => g.mesh), false)[0];
+      return hit ? hit.point : null;
+    };
+    const viewAxis = () => new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
+    /** the target slides along the view axis to the point's depth: the view does not jump @param {any} point */
+    const seatTarget = (point, dir = viewAxis()) => {
+      const depth = Math.max(new THREE.Vector3().subVectors(point, camera.position).dot(dir), NEAREST);
+      controls.target.copy(camera.position).addScaledVector(dir, depth);
+    };
+    /** @type {HTMLElement} */ (canvas.parentElement).addEventListener('wheel', e => {   // before the controls
+      if (e.target !== canvas) return;
+      e.preventDefault(); e.stopPropagation();
+      const p = surfaceAt(ndcOf(e)) || ray.ray.at(camera.position.distanceTo(controls.target), new THREE.Vector3());
+      const notches = Math.min(Math.abs(e.deltaY) * (e.deltaMode === 1 ? 33 : 1) / 100, 3);   // a mouse notch is 1, a touchpad many small ones
+      const k = e.deltaY < 0 ? 1 - Math.pow(1 - ZOOM_IN, notches) : 1 - Math.pow(1 + ZOOM_OUT, notches);
+      if (k > 0 && camera.position.distanceTo(p) * (1 - k) < NEAREST) return;
+      const dir = viewAxis();
+      camera.position.lerp(p, k);
+      seatTarget(p, dir); controls.update(); redraw();
+    }, { capture: true, passive: false });
+    controls.enableRotate = false;   // the turn is ours: about the point under the cursor
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xd9822b, depthTest: false, transparent: true, opacity: 0.85, fog: false }));
+    ball.renderOrder = 999; ball.visible = false; scene.add(ball);
+    const showBall = (/** @type {any} */ p) => { ball.position.copy(p); ball.scale.setScalar(Math.max(camera.position.distanceTo(p) * 0.008, 0.004)); ball.visible = true; redraw(); };
+    const pointers = new Set();
+    /** @type {{ x: number, y: number } | null} */ let orbit = null;
+    /** @type {any} */ let pivot = null;
+    canvas.addEventListener('pointerdown', e => {
+      pointers.add(e.pointerId);
+      if (pointers.size > 1) { orbit = null; ball.visible = false; redraw(); return; }   // two fingers: the controls zoom and move
+      const p = surfaceAt(ndcOf(e));
+      if (e.button === 2) { if (p) { seatTarget(p); controls.update(); } return; }       // the move follows what is under the cursor
+      if (e.button !== 0) return;
+      pivot = p || pivot || controls.target.clone();
+      orbit = { x: e.clientX, y: e.clientY };
+      showBall(pivot);
+    });
+    canvas.addEventListener('pointermove', e => {
+      if (!orbit) return;
+      const h = canvas.clientHeight || 1, yaw = -SPEED * (e.clientX - orbit.x) / h, pitch = -SPEED * (e.clientY - orbit.y) / h;
+      orbit.x = e.clientX; orbit.y = e.clientY;
+      const turn = (/** @type {any} */ axis, /** @type {number} */ angle) => {
+        const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+        camera.position.sub(pivot).applyQuaternion(q).add(pivot);
+        camera.quaternion.premultiply(q);
+      };
+      turn(UP, yaw);
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion), forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      if (Math.abs(forward.clone().applyAxisAngle(right, pitch).dot(UP)) < 0.995) turn(right, pitch);
+      const ahead = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      controls.target.copy(camera.position).addScaledVector(ahead, Math.max(camera.position.distanceTo(pivot), NEAREST));
+      controls.update(); showBall(pivot);
+    });
+    const end = (/** @type {PointerEvent} */ e) => { pointers.delete(e.pointerId); if (orbit) { orbit = null; ball.visible = false; redraw(); } };
+    for (const k of ['pointerup', 'pointercancel', 'pointerleave']) canvas.addEventListener(k, /** @type {any} */ (end));
   }
   function resize() {
     if (!renderer || !canvas) return;
