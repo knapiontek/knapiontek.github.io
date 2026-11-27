@@ -58,7 +58,7 @@ export default async function (check) {
     /* the products' data, as their makers give them */
     const all = groups.flatMap(sizes), boxes = (/** @type {string} */ layer) => all.flatMap(n => (n.parts || []).filter(p => p.layer === layer && p.box).map(p => /** @type {number[]} */ (p.box)));
     const eneryda = /** @type {any} */ (catalog.product(file.settings.hardware.handle)).length;
-    check('a handle: as long as the product (ENERYDA, ' + eneryda + ')', boxes('handles').some(b => b[1] - b[0] === eneryda || b[5] - b[4] === eneryda));
+    check('a handle: as its maker gives it (ENERYDA, ' + eneryda + ' long, 30 deep)', boxes('handles').some(b => b[1] - b[0] === eneryda || b[5] - b[4] === eneryda) && boxes('handles').some(b => Math.abs(b[3] - b[2]) === 30 || Math.abs(b[3] - b[2]) === 27));
     const sink = /** @type {any} */ (catalog.product(file.settings.appliances.sink.product)).cutout;
     check('the sink\'s cut-out: its maker\'s, ' + sink.width + ' × ' + sink.depth + ': the worktop open there', (at(g1, 'worktop')?.parts || []).length > 1);
     const k25 = (at(g2, 'plasterboard_1/K25')?.parts || []).filter(p => p.material === 'zinc' && p.box).map(p => /** @type {number[]} */ (p.box)), runner = /** @type {any} */ (catalog.product(file.settings.hardware.runner));
@@ -82,7 +82,8 @@ export default async function (check) {
     const hood = at(g1, 'hood');
     check('the hood over the hob, on the wall, its bottom at 1500; to the ceiling (the room\'s)', product(hood) === 'electrolux-lfv416k' && hood?.offset[1] === 0 && hood?.offset[2] === 1498 && /** @type {any} */ (hood).ceiling === true);
     const parts = (/** @type {CabinetNode} */ g) => sizes(g).flatMap(n => n.parts || []);
-    check('handles: a bar in the room\'s metal on every front with a handle', parts(g1).filter(p => p.layer === 'handles' && p.material === 'metal').length === 3 * 6 && parts(g2).filter(p => p.layer === 'handles').length === 3 * 14);
+    check('handles: a cup handle (flange, shell, face, two ends) in the room\'s metal on every front with a handle, its two holes', parts(g1).filter(p => p.layer === 'handles' && p.material === 'metal').length === 5 * 6 && parts(g2).filter(p => p.layer === 'handles').length === 5 * 14
+      && parts(g1).filter(p => p.material === 'markerHandle').length === 2 * 6);
     check('legs: four under a carcass on the plinth', parts(g1).filter(p => p.layer === 'legs').length === 2 * 4 * 4);
     check('a grille in the plinth before the oven\'s and the fridge\'s carcasses', (at(g2, 'plasterboard_1/K25')?.parts || []).some(p => p.layer === 'plinth') && (at(g2, 'plasterboard_1/K27')?.parts || []).some(p => p.layer === 'plinth'));
     const tap = /** @type {any} */ (at(g1, 'worktop/K12/sinkTap')), trap = /** @type {any} */ (at(g1, 'worktop/K12/trap'));

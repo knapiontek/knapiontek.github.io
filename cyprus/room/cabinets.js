@@ -143,7 +143,7 @@ const REQUIRED_HARDWARE = [
   [has => has.tag.doorDrawers || has.boardDrawers, 'runner', ['length', 'height', 'clearance', 'holes.diameter', 'holes.depth', 'holes.fromFront', 'holes.aboveBottom']],
   [has => has.tag.coffee, 'pullOut', ['length', 'clearance', 'holes.diameter', 'holes.depth', 'holes.fromFront', 'holes.belowShelf']],
   [has => has.tag.bins, 'bins', ['count', 'height']],
-  [has => has.handle, 'handle', ['length']]
+  [has => has.handle, 'handle', ['length', 'width', 'depth', 'holes.spacing', 'holes.diameter']]
 ];
 /* the appliances' data, by what the file holds: [when, role, dotted paths in the product] */
 /** @type {[(has: any) => boolean, string, string[]][]} */
@@ -582,18 +582,25 @@ function groupNode(G, C, warn) {
     }
     handle(d, i, x0, x1, h0, h1);
   };
-  /** a front's handle (hardware.handle), for now a bar on two posts as long as the handle, in the room's metal: by its edge (hardwareLayout.handle: axis from the edge; on a side, sideHeight up) @param {Draft} d @param {Item} i @param {number} x0 @param {number} x1 @param {number} h0 @param {number} h1 */
+  /** a front's handle (hardware.handle), a cup handle as its maker gives it (length, width, depth; its holes), in the room's
+   * metal: a flange on the front, the shell over it open toward the hand (down; on a side, toward the edge), its holes through
+   * the front; by its edge (hardwareLayout.handle: axis from the edge; on a side, sideHeight up)
+   * @param {Draft} d @param {Item} i @param {number} x0 @param {number} x1 @param {number} h0 @param {number} h1 */
   const handle = (d, i, x0, x1, h0, h1) => {
     const H = settings.hardwareLayout?.handle, at = i.handle;
     if (!H || !at) return;
-    const L = C.hardware('handle').length, y = frontFace, bar = (/** @type {number[]} */ b) => solid(d, b, 'metal', 'handles');
-    if (at === 'top' || at === 'bottom') {
-      const h = at === 'top' ? h1 - H.axis : h0 + H.axis, x = (x0 + x1) / 2;
-      bar([x - L / 2, x + L / 2, y + 24, y + 34, h - 6, h + 6]); bar([x - L / 2 + 8, x - L / 2 + 18, y, y + 24, h - 5, h + 5]); bar([x + L / 2 - 18, x + L / 2 - 8, y, y + 24, h - 5, h + 5]);
-    } else {
-      const x = at === 'left' ? x0 + H.axis : x1 - H.axis, h = Math.min(h0 + H.sideHeight, (h0 + h1) / 2);
-      bar([x - 6, x + 6, y + 24, y + 34, h - L / 2, h + L / 2]); bar([x - 5, x + 5, y, y + 24, h - L / 2 + 8, h - L / 2 + 18]); bar([x - 5, x + 5, y, y + 24, h + L / 2 - 18, h + L / 2 - 8]);
-    }
+    const A = C.hardware('handle'), L = A.length / 2, W = A.width / 2, D = A.depth, s = 3, y = frontFace, back = frontFace - C.frontThickness;
+    const lying = at === 'top' || at === 'bottom';
+    const x = lying ? (x0 + x1) / 2 : at === 'left' ? x0 + H.axis : x1 - H.axis, h = lying ? (at === 'top' ? h1 - H.axis : h0 + H.axis) : Math.min(h0 + H.sideHeight, (h0 + h1) / 2);
+    /** a box in the handle's axes (u along it, w out of the front, v across it, the shell's open side at −v) as the front's @param {number[]} b */
+    const at3 = ([u0, u1, w0, w1, v0, v1]) => lying ? [x + u0, x + u1, y + w0, y + w1, h + v0, h + v1]
+      : at === 'left' ? [x + v0, x + v1, y + w0, y + w1, h + u0, h + u1] : [x - v1, x - v0, y + w0, y + w1, h + u0, h + u1];
+    const shell = (/** @type {number[]} */ b) => solid(d, at3(b), 'metal', 'handles');
+    shell([-L, L, 0, s, -W, W]);              // the flange, on the front
+    shell([-L, L, s, D, W - s, W]);           // the shell's back, over the hand
+    shell([-L, L, D - s, D, -W, W]);          // its face
+    for (const u of [-L, L - s]) shell([u, u + s, s, D - s, -W, W - s]);   // its ends
+    for (const u of [-A.holes.spacing / 2, A.holes.spacing / 2]) { const [hx, , , , hh] = at3([u, u, 0, 0, 0, 0]); hole(d, hx, back - 0.6, hh, A.holes.diameter / 2, 'markerHandle', [0, 1, 0]); }
   };
   /** a strip's back strips at the carcasses' backs, cut as the carcasses beside it (upright) or under it (lying) @param {Draft} d @param {Item} i */
   const backStrips = (d, i) => {
