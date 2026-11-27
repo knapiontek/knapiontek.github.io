@@ -55,6 +55,14 @@ export default async function (check) {
       else if (p.material !== 'metal' && !looks.has(p.material)) bad.push(p.material);
     }
     check('bodies: boards of the library, its materials, the room\'s metal; every one (' + bodies + ')' + (bad.length ? ': not ' + bad.join(', ') : ''), bodies > 150 && bad.length === 0);
+    /* the products' data, as their makers give them */
+    const all = groups.flatMap(sizes), boxes = (/** @type {string} */ layer) => all.flatMap(n => (n.parts || []).filter(p => p.layer === layer && p.box).map(p => /** @type {number[]} */ (p.box)));
+    const eneryda = /** @type {any} */ (catalog.product(file.settings.hardware.handle)).length;
+    check('a handle: as long as the product (ENERYDA, ' + eneryda + ')', boxes('handles').some(b => b[1] - b[0] === eneryda || b[5] - b[4] === eneryda));
+    const sink = /** @type {any} */ (catalog.product(file.settings.appliances.sink.product)).cutout;
+    check('the sink\'s cut-out: its maker\'s, ' + sink.width + ' × ' + sink.depth + ': the worktop open there', (at(g1, 'worktop')?.parts || []).length > 1);
+    const k25 = (at(g2, 'plasterboard_1/K25')?.parts || []).filter(p => p.material === 'zinc' && p.box).map(p => /** @type {number[]} */ (p.box)), runner = /** @type {any} */ (catalog.product(file.settings.hardware.runner));
+    check('drawers behind a door: on the runner\'s family, as high as the runner (' + runner.height + ')', k25.some(b => b[5] - b[4] === runner.height));
     const k11b = (k11?.parts || []).filter(p => p.form === 'box' && !p.layer).map(p => /** @type {number[]} */ (p.box));
     check('K11: two sides 18 thick, the whole carcass high, from its back (y 0) to its front (y −550)', k11b.filter(b => b[1] - b[0] === 18 && b[5] - b[4] === 720 && b[2] === -550 && b[3] === 0).length === 2);
     check('K11 under the hob: the front rail on edge, 50; the panel under the hob', k11b.some(b => b[5] === 720 && b[4] === 670 && b[2] === -550) && (k11?.parts || []).some(p => p.material === 'board:egger-u708-st9-16'));
@@ -97,6 +105,14 @@ export default async function (check) {
     check('format: another version throws', throws(() => cabinetsOf({ ...copy(), version: 2 }, catalog)));
     const noDepth = copy(); delete noDepth.settings.carcass.depth;
     check('settings: one missing stops the build', throws(() => cabinetsOf(noDepth, catalog)));
+    /** what stops the build @param {any} f */
+    const stopped = f => { try { cabinetsOf(f, catalog); return ''; } catch (e) { return String(e); } };
+    const noM = copy(); delete noM.settings.hardware.drawerM;
+    check('hardware: a product the file needs, none chosen, stops it (drawerM)', stopped(noM).includes('settings.hardware.drawerM: none.'));
+    const noData = copy(); noData.settings.hardware.drawer = 'shelf-pins-5-zinc';
+    check('hardware: a product without the maker\'s data it needs stops it', stopped(noData).includes('settings.hardware.drawer: shelf-pins-5-zinc has no box.sideHeight.'));
+    const noCut = copy(); noCut.settings.appliances.sink.product = 'bosch-hba534bb3';
+    check('appliances: a sink without its cut-out stops it', stopped(noCut).includes('settings.appliances.sink: bosch-hba534bb3 has no cutout.width.'));
     const noOffset = copy(); delete noOffset.groups[0].carcass;
     check('groups: no carcasses\' offset (the group\'s or the settings\') stops it', throws(() => cabinetsOf(noOffset, catalog)));
     const bad = copy();

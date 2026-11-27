@@ -4,7 +4,7 @@
 
 /* ---------- the library's catalog: what is bought, how a material looks ---------- */
 
-/** @typedef {{ group: string, name: string, unit?: string, price?: number | null, priced?: string, shop?: string, family?: string, metal?: string } & Record<string, unknown>} Product  a product as bought: price in zł gross per unit (null: not known), as last checked: priced, the month (YYYY-MM; none: not known), shop, where; a family's products differ only by metal or decor; the other fields of its group pass through as the shop and the maker give them */
+/** @typedef {{ group: string, name: string, unit?: string, price?: number | null, priced?: string, shop?: string, family?: string, metal?: string } & Record<string, unknown>} Product  a product as bought: price in zł gross per unit (null: not known), as last checked: priced, the month (YYYY-MM; none: not known), shop, where; a family's products differ only by metal, decor or length (runners); the other fields of its group pass through as the shop and the maker give them */
 /** @typedef {Product & { thickness: number, length?: number, width?: number }} Board  a board (group boards), as an estimate and the cabinets read it: a sheet length × width */
 /** @typedef {Product & { texture: string, len: number, wid: number, joint: number, minCut: number[], pattern: string }} Tile  a tile (group tiles), as a layout reads it: len × wid, the joint, the smallest piece [along, across] */
 /** @typedef {Record<string, unknown>} Material  how a material looks; the scene reads it (its type comes with the scene) */

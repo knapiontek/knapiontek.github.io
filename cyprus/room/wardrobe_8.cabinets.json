@@ -3,13 +3,12 @@
  "version": 1,
  "materials": {"carcass": "white-melamine-18", "drawerBox": "white-melamine-16", "backPanel": "hdf-white-3", "plinth": "plinth-pvc-50-white"},
  "settings": {
-  "hardware": {"leg": "leveling-feet-50"},
+  "hardware": {"leg": "leveling-feet-50", "runner": "hafele-ball-runners-494-02-184", "shelfPin": "shelf-pins-5-zinc"},
   "carcass": {"depth": 397, "frontGap": 2, "legs": 4},
   "backPanel": {"inset": 1},
-  "shelf": {"setback": 20, "clearance": 1, "grid": {"from": 686, "pitch": 340, "fixedEvery": 2}},
-  "drawers": {"box": "board", "board": {"sideHeight": 264, "lift": 10, "clearance": 13, "setback": 2, "backClearance": 40, "runnerLengths": [250, 350, 750]}},
+  "shelf": {"setback": 20, "clearance": 1, "grid": {"from": 686, "pitch": 340, "fixedEvery": 2}, "pins": {"fromFront": 69, "fromBack": 65}},
+  "drawers": {"box": "board", "board": {"sideHeight": 264, "lift": 10, "setback": 2, "backClearance": 40}},
   "plinth": {"setback": 30},
-  "drilling": {"shelfPin": {"diameter": 5, "depth": 10, "fromFront": 69, "fromBack": 65, "belowShelf": 3}, "runner": {"diameter": 2.5, "depth": 10, "fromFront": [37, 261, 485], "belowDrawer": 10}, "ballRunner": {"fromFront": [37, 229, 421], "aboveBottom": 23}},
   "hardwareLayout": {"open": {"angle": {"door": 110}, "drawer": 300}, "leg": {"fromSide": 50, "fromBack": 62, "fromFront": 95}}
  },
  "groups": [

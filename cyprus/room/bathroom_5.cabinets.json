@@ -3,16 +3,15 @@
  "version": 1,
  "materials": {"carcass": "egger-h1180-st37", "drawerBox": "board-16-drawer-parts", "backPanel": "hdf-white-3", "drawer": "egger-h1180-st37", "worktop": "egger-h1180-st37"},
  "settings": {
-  "hardware": {"drawer": "blum-tandembox-antaro-d-400"},
+  "hardware": {"drawer": "blum-tandembox-antaro-d-400", "drawerM": "blum-tandembox-antaro-m-400", "shelfPin": "shelf-pins-5-zinc"},
   "appliances": {"basin": {"product": "catalano-green-lux-60x40-white"}, "basinTap": {"product": "hansgrohe-tecturis-e-110-73010000"}},
   "carcass": {"depth": 450, "frontGap": 2, "legs": 0},
   "backPanel": {"inset": 1},
   "crossRails": {"depth": 100, "hobFront": 50, "hobPanelGap": 20},
-  "shelf": {"setback": 18, "clearance": 1, "perDoor": [{"count": 1}]},
-  "drawers": {"D": {"frontAbove": 350, "sideHeight": 224, "backHeight": 199}, "M": {"sideHeight": 83, "backHeight": 84}, "bottom": {"inset": 75, "depth": 376, "fromBack": 38}, "back": {"inset": 87}, "liftAtBottom": 35, "liftAbove": 22, "inner": {"gap": 40, "backHeight": 84, "frontDeduction": 132}},
+  "shelf": {"setback": 18, "clearance": 1, "perDoor": [{"count": 1}], "pins": {"fromFront": 69, "fromBack": 65}},
+  "drawers": {"frontAbove": 350},
   "worktop": {"overhang": 10, "endPanelOverhang": 3},
-  "drilling": {"cup": {"diameter": 35, "depth": 13, "fromEdge": 22}, "plate": {"diameter": 2.5, "depth": 10, "fromFront": 37, "spacing": 32}, "bumper": {"diameter": 5, "depth": 11.5}, "shelfPin": {"diameter": 5, "depth": 10, "fromFront": 69, "fromBack": 65, "belowShelf": 3}, "runner": {"diameter": 2.5, "depth": 10, "fromFront": [37, 261], "belowDrawer": 10}},
-  "cutouts": {"basin": {"fromBack": 40, "holes": [{"for": "drain", "diameter": 60, "along": 0, "fromBack": 300}, {"for": "tap", "diameter": 35, "along": 0, "fromBack": 95}]}},
+  "cutouts": {"basin": {"fromBack": 40}},
   "hardwareLayout": {"open": {"angle": {"door": 110}, "drawer": 330}}
  },
  "groups": [
