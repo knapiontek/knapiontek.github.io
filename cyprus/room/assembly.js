@@ -3,7 +3,9 @@
 // its things and nothing else: each group of its cabinets (room/<room>.cabinets.json, built by room/cabinets.js, which knows no
 // room) and each fixture (a product of the library: a WC, a mirror, a shower) by its zero, at the wall, at its left end as one
 // sees its front, and the way it faces; what the owner builds (a casing: a box less its cuts); its lamps (a downlight in the
-// ceiling, a pendant over a table), lit at night; and the room's one metal. The ceiling: the lowest slab or ceiling of the
+// ceiling, a pendant over a table), lit at night; the room's one metal; and its tiles, the floor's and the walls' (each its
+// product, size, depth, the way it runs, pattern, the point it is laid from in every direction and the grout's colour: kept
+// on the room's node, as tiles). A room with no scene has none of these. The ceiling: the lowest slab or ceiling of the
 // house over the room. A room has a scene when its node lists
 // it in files. Adds them under the room's node: the hierarchy grows from the house down. What reaches the ceiling (a hood's
 // chimney) is made as tall as the room over it.
@@ -19,6 +21,38 @@ import { pointToModel } from '../core/tools.js';
 const VERSION = 1;   // of the format scene
 /** @type {Record<string, number>} the way a group's fronts face: its turn (its y, toward the wall, the other way) */
 const FRONT = { S: 0, E: 1, N: 2, W: 3 };
+/** @type {string[]} the tiles' patterns: a row's shift along the length, none, a half, a third, a quarter of a tile, at random */
+export const PATTERNS = ['grid', 'half', 'third', 'quarter', 'random'];
+
+/**
+ * A room's tiles from its scene: the floor's, the walls'. Each: a product of the tiles, its size (one of its formats; none:
+ * its own), its depth (mm), dir (x or y: the tiles' length along x, or along the wall; on a wall along y, along y), its
+ * pattern, the point it is laid from (the floor: [x, y]; the walls: [x, y, h], a wall along x takes x and h, along y y and h)
+ * and the grout's colour. What is wrong: a list.
+ * @param {any} tiles @param {Catalog} catalog @returns {string[]}
+ */
+export function tilesFaults(tiles, catalog) {
+  const faults = [];
+  if (typeof tiles !== 'object' || !tiles) return ['tiles: floor and walls'];
+  for (const k of Object.keys(tiles)) if (!['floor', 'walls'].includes(k)) faults.push(`tiles: ${k}: only floor and walls`);
+  for (const [k, n] of /** @type {[string, number][]} */ ([['floor', 2], ['walls', 3]])) {
+    const t = tiles[k];
+    if (t === undefined) continue;
+    let p = /** @type {any} */ (null);
+    try { p = catalog.product(t.product); } catch { /* below */ }
+    if (!p || p.group !== 'tiles') { faults.push(`tiles.${k}: product: not a tile (${t.product})`); continue; }
+    const formats = (p.formats || [`${p.wid}x${p.len}`]).map((/** @type {string} */ f) => f.split('x').map(Number).sort((a, b) => a - b).join());
+    if (t.size !== undefined && !(Array.isArray(t.size) && t.size.length === 2 && formats.includes([...t.size].sort((a, b) => a - b).join()))) faults.push(`tiles.${k}: size: one of ${p.formats || [p.len + 'x' + p.wid]}`);
+    if (!(Number.isFinite(t.depth) && t.depth > 0)) faults.push(`tiles.${k}: depth: mm > 0`);
+    if (!['x', 'y'].includes(t.dir)) faults.push(`tiles.${k}: dir: x or y`);
+    if (!PATTERNS.includes(t.pattern)) faults.push(`tiles.${k}: pattern: ${PATTERNS.join(', ')}`);
+    if (!(Array.isArray(t.offset) && t.offset.length === n && t.offset.every(Number.isFinite))) faults.push(`tiles.${k}: offset: ${n === 2 ? '[x, y]' : '[x, y, h]'}`);
+    if (!(typeof t.grout === 'string' && /^#[0-9a-f]{6}$/i.test(t.grout))) faults.push(`tiles.${k}: grout: a colour #rrggbb`);
+    const extra = Object.keys(t).filter(a => !['product', 'size', 'depth', 'dir', 'pattern', 'offset', 'grout'].includes(a));
+    if (extra.length) faults.push(`tiles.${k}: ${extra.join(', ')}: not known`);
+  }
+  return faults;
+}
 
 /**
  * The ceiling over a room, from its floor: the lowest slab or ceiling of the house over its footprint; none: the room's height.
@@ -100,6 +134,11 @@ export async function assembleRooms(H, catalog) {
     const scene = await read(`${room.id}.scene.json`);
     if (scene.format !== 'scene' || scene.version !== VERSION) throw new Error(`room: ${room.id}.scene.json: ${scene.format} ${scene.version}, the code reads scene ${VERSION}`);
     if (scene.metal !== undefined) room.settings = { ...room.settings, metal: scene.metal };
+    if (scene.tiles !== undefined) {
+      const faults = tilesFaults(scene.tiles, catalog);
+      if (faults.length) throw new Error(`room: ${room.id}.scene.json: ${faults.join('; ')}`);
+      room.tiles = scene.tiles;
+    }
     /* fixtures: a product, its body's size (or the scene's depth, length, height: as it is built here), at its zero, turned */
     for (const [id, f] of Object.entries(scene.fixtures || {})) {
       const A = /** @type {any} */ (catalog.product(f.product)), b = { ...A.body, ...(f.depth ? { depth: f.depth } : {}), ...(f.length ? { width: f.length } : {}), ...(f.height ? { height: f.height } : {}) };

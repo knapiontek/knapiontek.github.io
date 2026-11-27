@@ -4,12 +4,13 @@
 
 import { assembleHouse } from '../../house/assembly.js';
 import { openCatalog } from '../../library/catalog.js';
+import { tilesFaults } from '../../room/assembly.js';
 
 /** @typedef {import('../../house/assembly.js').HouseNode} HouseNode */
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
-  const { hierarchy: H, problems } = await assembleHouse(await openCatalog());
+  const catalog = await openCatalog(), { hierarchy: H, problems } = await assembleHouse(catalog);
   const house = /** @type {HouseNode} */ (H.node('house')), zero = H.place(house), room = 'house/groundFloor/room_356/';
   /** a node's box in the house's axes @param {string} path */
   const box = path => H.box(/** @type {HouseNode} */ (H.node(room + path))).map((v, i) => Math.round(v - zero[i >> 1])).join();
@@ -59,4 +60,13 @@ export default async function (check) {
   check('lamps: bathroom 5\'s under the Attic\'s ceiling (5910 − 3060 = 2850)', lamp('firstFloor/bathroom_5/downlight1').size[2] === 2850);
   check('the room\'s metal, from its scene, for what stands in it', H.setting(/** @type {HouseNode} */ (H.node(room + 'g1/worktop/K11')), 'metal')?.value === 'brass');
   check('floor: what stands in the room on the room\'s', H.floor(/** @type {HouseNode} */ (H.node(room + 'g1/worktop/K11'))) === 'groundFloor');
+  /* tiles: the room's, from its scene, the floor's and the walls'; none without a scene */
+  const tiled = (/** @type {string} */ p) => /** @type {any} */ (H.node('house/' + p)).tiles;
+  check('tiles: the kitchen\'s floor, graphite, laid from its point; no walls', tiled('groundFloor/room_356').floor.product === 'paradyz-authority-graphite' && tiled('groundFloor/room_356').floor.offset.join() === '9775,7910' && !tiled('groundFloor/room_356').walls);
+  check('tiles: bathroom 5, floor and walls, each its depth and grout', ['floor', 'walls'].every(k => tiled('firstFloor/bathroom_5')[k].depth === 12 && /^#/.test(tiled('firstFloor/bathroom_5')[k].grout)));
+  check('tiles: none in a room with no scene (the garage, the hall)', !tiled('groundFloor/garage_2') && !tiled('firstFloor/hall_1'));
+  const good = { product: 'paradyz-authority-grey', depth: 12, dir: 'x', pattern: 'grid', offset: [0, 0], grout: '#202020' };
+  check('tiles: a good floor, a size of its formats', tilesFaults({ floor: good }, catalog).length === 0 && tilesFaults({ floor: { ...good, size: [598, 1198] } }, catalog).length === 0);
+  const faults = tilesFaults({ shower: {}, floor: { ...good, size: [600, 600], depth: 0, dir: 'z', pattern: 'herring', grout: 'grey', top: 3 }, walls: { ...good } }, catalog);
+  check('tiles: what is wrong, each' + ' (' + faults.length + ')', faults.length === 8 && faults.some(f => f.includes('only floor and walls')) && faults.some(f => f.includes('walls: offset')) && faults.some(f => f.includes('top: not known')));
 }

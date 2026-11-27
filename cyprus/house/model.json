@@ -100,16 +100,6 @@
     9100,
     9000
    ],
-   "settings": {
-    "tiles": {
-     "reserve": 0.1,
-     "grout": 1,
-     "top": 3,
-     "depth": 12,
-     "small": "smallCuts",
-     "layer": "floorTiles"
-    }
-   },
    "geometry": {
     "split": 2720,
     "types": {
@@ -914,16 +904,6 @@
       9100,
       2720
      ],
-     "settings": {
-      "tiles": {
-       "product": "paradyz-authority-graphite",
-       "dir": "x",
-       "origin": [
-        13965,
-        8350
-       ]
-      }
-     },
      "inside": [
       [
        440,
@@ -1547,15 +1527,7 @@
          1920
         ]
        ],
-       "archonArea": 4.84,
-       "settings": {
-        "tiles": {
-         "origin": [
-          2275,
-          1590
-         ]
-        }
-       }
+       "archonArea": 4.84
       },
       {
        "id": "garage_2",
@@ -1592,10 +1564,7 @@
          3670
         ]
        ],
-       "archonArea": 25.91,
-       "settings": {
-        "tiles": null
-       }
+       "archonArea": 25.91
       },
       {
        "id": "room_356",
@@ -1692,9 +1661,6 @@
         ]
        ],
        "archonArea": 4.95,
-       "settings": {
-        "tiles": null
-       },
        "files": [
         "cabinets",
         "scene"
@@ -1729,15 +1695,7 @@
          1120
         ]
        ],
-       "archonArea": 4.97,
-       "settings": {
-        "tiles": {
-         "origin": [
-          2275,
-          1790
-         ]
-        }
-       }
+       "archonArea": 4.97
       }
      ]
     },
@@ -1755,17 +1713,6 @@
       9100,
       5940
      ],
-     "settings": {
-      "tiles": {
-       "product": "atlas-log-icon-oak-forest",
-       "dir": "x",
-       "pattern": "half",
-       "origin": [
-        13150,
-        9004
-       ]
-      }
-     },
      "inside": [
       [
        440,
@@ -2335,16 +2282,7 @@
          1180
         ]
        ],
-       "archonArea": 7.32,
-       "settings": {
-        "tiles": {
-         "pattern": "third",
-         "origin": [
-          2738,
-          2622
-         ]
-        }
-       }
+       "archonArea": 7.32
       },
       {
        "id": "bedroom_2",
@@ -2477,9 +2415,6 @@
         ]
        ],
        "archonArea": 7.99,
-       "settings": {
-        "tiles": null
-       },
        "files": [
         "cabinets",
         "scene"
@@ -2515,15 +2450,6 @@
         ]
        ],
        "archonArea": 16.53,
-       "settings": {
-        "tiles": {
-         "pattern": "third",
-         "origin": [
-          4226,
-          3924
-         ]
-        }
-       },
        "files": [
         "cabinets",
         "scene"
@@ -2552,16 +2478,7 @@
          3970
         ]
        ],
-       "archonArea": 14.11,
-       "settings": {
-        "tiles": {
-         "pattern": "third",
-         "origin": [
-          3024,
-          3806
-         ]
-        }
-       }
+       "archonArea": 14.11
       },
       {
        "id": "wardrobe_8",
@@ -2587,15 +2504,6 @@
         ]
        ],
        "archonArea": 4.16,
-       "settings": {
-        "tiles": {
-         "pattern": "third",
-         "origin": [
-          718,
-          2848
-         ]
-        }
-       },
        "files": [
         "cabinets",
         "scene"

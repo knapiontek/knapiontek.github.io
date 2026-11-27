@@ -2,6 +2,9 @@
  "format": "scene",
  "version": 1,
  "metal": "nickel",
+ "tiles": {
+  "floor": {"product": "atlas-log-icon-oak-forest", "depth": 12, "dir": "x", "pattern": "third", "offset": [4226, 3924], "grout": "#8a7458"}
+ },
  "cabinets": {
   "1": {"front": "W", "offset": [4440, 3010, 0]}
  }

@@ -2,6 +2,9 @@
  "format": "scene",
  "version": 1,
  "metal": "brass",
+ "tiles": {
+  "floor": {"product": "paradyz-authority-graphite", "depth": 12, "dir": "x", "pattern": "grid", "offset": [9775, 7910], "grout": "#686a68"}
+ },
  "cabinets": {
   "1": {"front": "N", "offset": [5367, 0, 0]},
   "2": {"front": "E", "offset": [1790, 0, 0]},

@@ -96,6 +96,7 @@ export default async function (check) {
     const bad = all.filter(k => {
       const p = /** @type {any} */ (L.product(k));
       return !is(p.name, 'string') || !(p.price === undefined || p.price === null || typeof p.price === 'number') || !is(p.unit, 'string?') || !is(p.shop, 'string?')
+        || !(p.priced === undefined || (typeof p.price === 'number' && typeof p.priced === 'string' && /^20\d\d-(0[1-9]|1[0-2])$/.test(p.priced)))
         || !(p.links === undefined || (Array.isArray(p.links) && p.links.every((/** @type {any} */ l) => is(l.name, 'string') && is(l.url, 'string'))))
         || (GROUP[p.group] && !GROUP[p.group](p));
     });

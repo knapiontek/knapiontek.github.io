@@ -12,3 +12,7 @@ it imports nothing, draws nothing; its types are the contracts of `types.js`.
 | `shops.json` | the shops and workshops |
 | `products/` | one file per product group |
 | `textures/` | one image per file: a board's decor, a tile's face |
+
+A product holds what is technical about it: its name, maker, spec, sizes and the maker's rules (how its parts are cut, where
+it is drilled), the source of what it says, its links; and its price as last checked: `price`, `priced` (the month,
+YYYY-MM; none: not known) and `shop` (a key of `shops.json`). Nothing else: no notes.

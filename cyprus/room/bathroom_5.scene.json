@@ -2,6 +2,10 @@
  "format": "scene",
  "version": 1,
  "metal": "nickel",
+ "tiles": {
+  "floor": {"product": "paradyz-authority-grey", "depth": 12, "dir": "x", "pattern": "grid", "offset": [0, 0], "grout": "#8b8a87"},
+  "walls": {"product": "paradyz-authority-grey", "size": [1198, 598], "depth": 12, "dir": "x", "pattern": "grid", "offset": [0, 0, 0], "grout": "#8b8a87"}
+ },
  "cabinets": {
   "1": {"front": "W", "offset": [2730, 2810, 0]}
  },
