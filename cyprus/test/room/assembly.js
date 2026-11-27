@@ -69,4 +69,10 @@ export default async function (check) {
   check('tiles: a good floor, a size of its formats', tilesFaults({ floor: good }, catalog).length === 0 && tilesFaults({ floor: { ...good, size: [598, 1198] } }, catalog).length === 0);
   const faults = tilesFaults({ shower: {}, floor: { ...good, size: [600, 600], depth: 0, dir: 'z', pattern: 'herring', grout: 'grey', top: 3 }, walls: { ...good } }, catalog);
   check('tiles: what is wrong, each' + ' (' + faults.length + ')', faults.length === 8 && faults.some(f => f.includes('only floor and walls')) && faults.some(f => f.includes('walls: offset')) && faults.some(f => f.includes('top: not known')));
+  /* the floor tiles: laid over the floor and the doors' halves, the grout under them, counted */
+  const ft = /** @type {any} */ (H.node(room + 'floorTiles'));
+  check('floor tiles: the kitchen\'s, a node of its own (layer floorTiles), as deep as the scene says (12)', ft?.layer === 'floorTiles' && ft.size[2] === 12);
+  check('floor tiles: the kitchen counted (m², tiles, whole, cut, small): ' + JSON.stringify(ft?.count), ft?.count.area > 50.55 && ft.count.tiles === ft.count.whole + ft.count.cut && ft.count.tiles > 60);
+  check('floor tiles: the grout in the scene\'s colour, the tiles of their product, small cuts marked', ft.parts.some((/** @type {any} */ p) => p.material === 'grout:#686a68') && ft.parts.some((/** @type {any} */ p) => p.material === 'tile:paradyz-authority-graphite') && ft.parts.filter((/** @type {any} */ p) => p.layer === 'smallCuts').length === ft.count.small);
+  check('floor tiles: none in a room with no scene', !H.node('house/groundFloor/garage_2/floorTiles'));
 }

@@ -11,6 +11,7 @@
 // chimney) is made as tall as the room over it.
 
 import { cabinetsOf } from './cabinets.js';
+import { doorHalves, layFloor, tileSize } from './tiles.js';
 import { pointToModel } from '../core/tools.js';
 
 /** @typedef {import('../types.js').Catalog} Catalog */
@@ -19,6 +20,32 @@ import { pointToModel } from '../core/tools.js';
 /** @typedef {import('./cabinets.js').Problem & { room: string }} RoomProblem */
 
 const VERSION = 1;   // of the format scene
+/** @type {string[]} the openings a floor runs into: its tiles end at their middle */
+const DOORWAYS = ['door', 'glassDoor', 'gate', 'entrance', 'window'];
+
+/**
+ * A room's floor tiles, a node under it (layer floorTiles): the grout over the floor, the tiles on it, up to the tiles'
+ * depth; a small cut marked (layer smallCuts). The floor: the room's rectangles and the halves of the doors at its floor.
+ * @param {Hierarchy} H @param {HierarchyNode & Record<string, any>} room @param {any} t  the scene's tiles.floor @param {Catalog} catalog
+ */
+function floorTiles(H, room, t, catalog) {
+  const zero = H.place(room), openings = /** @type {number[][]} */ ([]);
+  H.walk(n => {
+    if (!DOORWAYS.includes(n.type)) return;
+    const b = H.box(n).map((v, i) => v - zero[i >> 1]);
+    if (Math.abs(b[4]) < 50) openings.push(b);
+  });
+  const rects = /** @type {import('./tiles.js').Rect[]} */ (room.area || [[0, room.size[0], 0, room.size[1]]]);
+  const floor = [...rects, ...doorHalves(rects, openings)];
+  const { pieces, count } = layFloor(floor, tileSize(catalog.product(t.product), t.size), t);
+  const d = t.depth, grout = 'grout:' + t.grout, look = 'tile:' + t.product;
+  const parts = [
+    ...floor.map(([x0, x1, y0, y1]) => ({ form: 'box', box: [x0, x1, y0, y1, 0, d - 1], material: grout })),
+    ...pieces.map(({ rect: [x0, x1, y0, y1] }) => ({ form: 'box', box: [x0, x1, y0, y1, 0, d], material: look })),
+    ...pieces.filter(p => p.small).map(({ rect: [x0, x1, y0, y1] }) => ({ form: 'box', box: [x0, x1, y0, y1, d, d + 0.5], material: 'smallCut', layer: 'smallCuts' }))
+  ];
+  H.add(room, { id: 'floorTiles', name: 'Floor tiles', type: 'tiles', layer: 'floorTiles', offset: [0, 0, 0], size: [room.size[0], room.size[1], d], parts, count });
+}
 /** @type {Record<string, number>} the way a group's fronts face: its turn (its y, toward the wall, the other way) */
 const FRONT = { S: 0, E: 1, N: 2, W: 3 };
 /** @type {string[]} the tiles' patterns: a row's shift along the length, none, a half, a third, a quarter of a tile, at random */
@@ -138,6 +165,7 @@ export async function assembleRooms(H, catalog) {
       const faults = tilesFaults(scene.tiles, catalog);
       if (faults.length) throw new Error(`room: ${room.id}.scene.json: ${faults.join('; ')}`);
       room.tiles = scene.tiles;
+      if (scene.tiles.floor) floorTiles(H, room, scene.tiles.floor, catalog);
     }
     /* fixtures: a product, its body's size (or the scene's depth, length, height: as it is built here), at its zero, turned */
     for (const [id, f] of Object.entries(scene.fixtures || {})) {

@@ -58,5 +58,6 @@
  "markerHinge": {"color":"#f26b1d","emissive":"#f26b1d","glow":0.35,"roughness":0.8},
  "markerShelfPin": {"color":"#22b35e","emissive":"#22b35e","glow":0.35,"roughness":0.8},
  "markerRunner": {"color":"#2f8fe0","emissive":"#2f8fe0","glow":0.35,"roughness":0.8},
- "markerHandle": {"color":"#b04ad8","emissive":"#b04ad8","glow":0.35,"roughness":0.8}
+ "markerHandle": {"color":"#b04ad8","emissive":"#b04ad8","glow":0.35,"roughness":0.8},
+ "smallCut": {"color":"#e02020","emissive":"#e02020","glow":0.4,"roughness":0.8,"opacity":0.55}
 }}

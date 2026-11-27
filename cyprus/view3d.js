@@ -175,10 +175,17 @@ export function createView3d({ catalog, canvas, light, edges }) {
       : b.lacquered ? { color: b.color, roughness: 0.42, clearcoat: 0.2, clearcoatRoughness: 0.45, reflect: 0.7 }
       : { color: b.color, roughness: 0.8, reflect: 0.45 };
   }
-  /** the three.js material of a library look, made once @param {string} key */
+  /** a tile's look from its product: its face's photo (one image, one tile) @param {string} key  a tile of the library @returns {Record<string, any>} */
+  function tileLook(key) {
+    const t = /** @type {any} */ (catalog.product(key));
+    return { color: '#ffffff', image: { key: t.texture }, roughness: 0.45, reflect: 0.6 };
+  }
+  /** the three.js material of a library look, made once: a material's key; board:, tile: a product's; grout: a colour
+   * @param {string} key */
   function material(key) {
     if (MATERIALS.has(key)) return MATERIALS.get(key);
-    const def = key.startsWith('board:') ? boardLook(key.slice(6)) : /** @type {Record<string, any>} */ (catalog.material(key));
+    const def = key.startsWith('board:') ? boardLook(key.slice(6)) : key.startsWith('tile:') ? tileLook(key.slice(5))
+      : key.startsWith('grout:') ? /** @type {Record<string, any>} */ ({ color: key.slice(6), roughness: 0.95, reflect: 0.2 }) : /** @type {Record<string, any>} */ (catalog.material(key));
     /** @type {Record<string, any>} */
     const o = { color: def.color || '#ffffff', roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1,
       polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 };   // the faces a little back: an edge on them shows, one behind them does not

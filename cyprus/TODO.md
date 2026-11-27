@@ -35,7 +35,8 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] cabinets, stage 5: the other rooms (bathrooms 5 and 7, wardrobes 3, 4 and 8, bedroom 6): their cabinets and scenes (the prototype's placements through its turned room axes, checked against analysis.md § 13); fixtures (the library's products: WC, frame, mirror, shower, bath, radiator, riser), the casings less their cuts, the basin and its tap on the vanity's top; layers Bath and Wall cabinet
 - [x] the lamps in the scenes (`lamps`: downlights, pendants; from the prototype's lights, in the room's axes), under the ceiling over the room; `view3d.js` lights them at night (the lamps' and the products' lights: the hood's)
 - [x] tiles, stage 1: in the rooms' scenes (floor and walls, each its depth and grout), out of `house/model.json`; checked
-- [ ] tiles, stage 2: `room/tiles.js`, the tiles laid from the offset, ending at the middle of the doors (the expansion joints); drawn; counted (m², pieces)
+- [x] tiles, stage 2: `room/tiles.js`, the floor's tiles laid from the offset, ending at the middle of the doors; the grout in its colour, the tiles' photos, the small cuts marked; counted (m², tiles, whole, cut, small)
+- [ ] tiles, stage 3: the walls' tiles (round the openings, the casings), counted
 - [ ] `view2d.js` (root): the 2D view (the menu's 2D): plans and dimensions
 - [ ] `docs.js` (root): Documents
 - [ ] Cabinet mode
