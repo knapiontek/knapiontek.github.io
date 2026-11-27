@@ -11,7 +11,7 @@
 // chimney) is made as tall as the room over it.
 
 import { cabinetsOf } from './cabinets.js';
-import { layTiles, tiledSurfaces, under } from './tiles.js';
+import { layTiles, pointOf, tiledSurfaces, under } from './tiles.js';
 
 const TOL = 0.5;   // mm
 
@@ -25,17 +25,15 @@ import { pointToModel } from '../core/tools.js';
 
 const VERSION = 1;   // of the format scene
 /** @typedef {import('./tiles.js').Surface} Surface */
-const GROUT = 2;   // mm: the grout's plane behind the tiles' face
 /** a tile's number by chance, the same for the same tile @param {string} id */
 const hashOf = id => { let h = 2166136261; for (const c of id) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0; return h; };
 
 /**
  * A room's tiles, as its scene lays them over its surfaces (room/tiles.js: the floor, the walls, the faces of what is built
- * before them), drawn as faces (form faces): on each surface the grout's plane a little behind the tiles' face, on it each
- * tile's face, its photo the whole tile (one of the product's images, by chance, turned by chance), a small cut marked over it
- * (layer smallCuts); the slab's edge (tile:<product>:edge), from its face back to what it lies on, round the openings through a wall and at the
- * floor's free edges (a door's middle). Two nodes under the room: floorTiles (layer floorTiles), wallTiles (wallTiles: the
- * casings' too), each counted.
+ * before them): on each a slab from what it lies on out to the tiles' face, a solid as the house's are (its edge the tile's,
+ * tile:<product>:edge); on its face the grout, over it each tile's face (form faces), its photo the whole tile (one of the
+ * product's images, by chance, turned by chance), a small cut marked over it (layer smallCuts). Two nodes under the room:
+ * floorTiles (layer floorTiles), wallTiles (wallTiles: the casings' too), each counted.
  * @param {Hierarchy} H @param {HierarchyNode & Record<string, any>} room @param {any} tiles  the scene's @param {import('./tiles.js').BuiltIn[]} built @param {Catalog} catalog
  */
 function roomTiles(H, room, tiles, built, catalog) {
@@ -57,28 +55,27 @@ function roomTiles(H, room, tiles, built, catalog) {
     };
     const total = { area: 0, tiles: 0, whole: 0, cut: 0, small: 0 };
     for (const s of surfaces.filter(x => x.layout === k)) {
-      /** a point of its plane (u, v), off it by o along its way, in the room's axes @param {number[]} q @param {number} [o] */
-      const P = (q, o = 0) => { const p = s.axis === 0 ? [q[0], s.at, q[1]] : s.axis === 1 ? [s.at, q[0], q[1]] : [q[0], q[1], s.at]; return p.map((v, i) => v + o * s.n[i]); };
+      const P = (/** @type {number[]} */ q, o = 0) => pointOf(s, q, o);
       const offset = s.axis === 2 ? [t.offset[0], t.offset[1]] : [t.offset[s.axis], t.offset[t.offset.length - 1]];   // a wall's point: along it, h
       const { pieces, count } = layTiles(s.rects, T, { dir: t.dir, pattern: t.pattern, offset, under: s.lines });
       for (const c of /** @type {(keyof typeof total)[]} */ (Object.keys(total))) total[c] += count[c];
-      /* the grout behind */
-      for (const r of s.rects) { const poly = under(r, s.lines); if (poly) add('grout:' + t.grout, s.n, poly.map(q => P(q, -GROUT)), null); }
-      /* each tile's face: its photo from its corner over the whole tile, turned */
+      /* the slab: from what it lies on out to the face, a solid of its own (the house's surfaces: what touches welded, what is covered not drawn, its edges) */
+      for (const r of s.rects) {
+        const poly = under(r, s.lines);
+        if (!poly) continue;
+        const [a, b] = s.n.some(v => v < 0) ? [s.at, s.at + d] : [s.at - d, s.at];   // across the plane
+        if (s.axis === 1) { parts.set('slab' + parts.size, { form: 'prism', x: [a, b], poly, material: look + ':edge' }); continue; }   // along x: its section [y, h], cut on the slant
+        const [u0, u1, v0, v1] = [Math.min(...poly.map(q => q[0])), Math.max(...poly.map(q => q[0])), Math.min(...poly.map(q => q[1])), Math.max(...poly.map(q => q[1]))];
+        parts.set('slab' + parts.size, { form: 'box', box: s.axis === 0 ? [u0, u1, a, b, v0, v1] : [u0, u1, v0, v1, a, b], material: look + ':edge' });
+        add('grout:' + t.grout, s.n, poly.map(q => P(q)), null);   // on its face, under the tiles
+      }
+      /* each tile's face on it: its photo from its corner over the whole tile, turned */
       for (const p of pieces) {
         const poly = p.poly || [[p.rect[0], p.rect[2]], [p.rect[1], p.rect[2]], [p.rect[1], p.rect[3]], [p.rect[0], p.rect[3]]];
         const h = hashOf(k + s.id + p.tile), turns = T.len === T.wid ? h % 4 : 2 * (h % 2);
         const uv = poly.map(q => { let a = (q[0] - p.at[0]) / U, b = (q[1] - p.at[1]) / V; if (t.dir !== 'x') [a, b] = [b, a]; for (let i = 0; i < turns; i++) [a, b] = [1 - b, a]; return [a, b]; });
         add(`${look}:${(h >>> 4) % 8}:${size}`, s.n, poly.map(q => P(q)), uv);
         if (p.small) add('smallCut', s.n, poly.map(q => P(q, 0.5)), null, 'smallCuts');
-      }
-      /* the slab's edge: round the openings through it, at its free edges; from the face back by the depth */
-      const segs = [...s.holes.flatMap(r => [[[r[0], r[2]], [r[1], r[2]], [0, 1]], [[r[1], r[2]], [r[1], r[3]], [-1, 0]], [[r[1], r[3]], [r[0], r[3]], [0, -1]], [[r[0], r[3]], [r[0], r[2]], [1, 0]]]), ...(s.edges || [])];
-      for (const [a, b, out] of segs) {
-        const ok = (/** @type {number[]} */ q) => s.lines.every(l => l.p * q[0] + l.q * q[1] <= l.c + TOL);
-        if (!ok(a) || !ok(b)) continue;
-        const n = s.axis === 0 ? [out[0], 0, out[1]] : s.axis === 1 ? [0, out[0], out[1]] : [out[0], out[1], 0], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
-        add(`${look}:edge`, n, [P(a), P(b), P(b, -d), P(a, -d)], [[0, 0], [L, 0], [L, d], [0, d]]);   // the photo in mm
       }
     }
     total.area = Math.round(total.area * 100) / 100;

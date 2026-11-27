@@ -81,7 +81,7 @@ export default async function (check) {
   check('floor tiles: the kitchen\'s, a node of its own (layer floorTiles), as deep as the scene says (12)', ft?.layer === 'floorTiles' && ft.size[2] === 12);
   check('floor tiles: the kitchen counted (m², tiles, whole, cut, small): ' + JSON.stringify(ft?.count), ft?.count.area > 50.55 && ft.count.tiles === ft.count.whole + ft.count.cut && ft.count.tiles > 60);
   /** a node's tiles' faces: each polygon, its way, its material @param {any} node @returns {{ q: number[][], n: number[], m: string, layer?: string }[]} */
-  const facesOf = node => node.parts.flatMap((/** @type {any} */ p) => p.polys.map((/** @type {number[][]} */ q) => ({ q, n: p.n, m: p.material, layer: p.layer })));
+  const facesOf = node => node.parts.filter((/** @type {any} */ p) => p.form === 'faces').flatMap((/** @type {any} */ p) => p.polys.map((/** @type {number[][]} */ q) => ({ q, n: p.n, m: p.material, layer: p.layer })));
   /** two faces in one plane overlapping (their boxes) @param {{ q: number[][], n: number[] }} a @param {{ q: number[][], n: number[] }} b */
   const clash = (a, b) => {
     if (a.n.join() !== b.n.join()) return false;
@@ -93,8 +93,8 @@ export default async function (check) {
   /** @param {{ q: number[][], n: number[], m: string, layer?: string }[]} fs */
   const tilesOf = fs => fs.filter(f => /^tile:[^:]+:\d/.test(f.m));   // a tile's face (not the slab's edge)
   const floorFaces = facesOf(ft);
-  check('floor tiles: faces (no solids): the grout\'s plane 2 under the tiles\' face (12), each tile its product\'s photo, small cuts marked over them', ft.parts.every((/** @type {any} */ p) => p.form === 'faces')
-    && floorFaces.some(f => f.m === 'grout:#686a68' && f.q.every(v => v[2] === 10)) && tilesOf(floorFaces).some(f => f.m.startsWith('tile:paradyz-authority-graphite:') && f.n.join() === '0,0,1' && f.q.every(v => v[2] === 12))
+  check('floor tiles: a slab (0 … 12, the tile\'s edge), on its face the grout, over it each tile its product\'s photo, small cuts marked over them', ft.parts.some((/** @type {any} */ p) => p.form === 'box' && p.box[4] === 0 && p.box[5] === 12 && p.material === 'tile:paradyz-authority-graphite:edge')
+    && floorFaces.some(f => f.m === 'grout:#686a68' && f.q.every(v => v[2] === 12)) && tilesOf(floorFaces).some(f => f.m.startsWith('tile:paradyz-authority-graphite:') && f.n.join() === '0,0,1' && f.q.every(v => v[2] === 12))
     && floorFaces.filter(f => f.layer === 'smallCuts').length === ft.count.small);
   const uvs = ft.parts.filter((/** @type {any} */ p) => /^tile:[^:]+:\d/.test(p.material)).flatMap((/** @type {any} */ p) => p.uvs.flat());
   check('a tile\'s photo: over the whole tile (its uv 0 … 1)', uvs.every((/** @type {number[]} */ u) => u[0] > -1e-6 && u[0] < 1 + 1e-6 && u[1] > -1e-6 && u[1] < 1 + 1e-6));
@@ -113,11 +113,13 @@ export default async function (check) {
     check('the tiles\' face 12 off the wall (the room 2730 × 3010)', W.every(f => f.n[0] ? f.q.every(v => Math.abs(v[0] - (f.n[0] > 0 ? 12 : 2718)) < 1e-6 || Math.abs(v[0] - 262) < 1e-6) : f.q.every(v => Math.abs(v[1] - (f.n[1] > 0 ? 12 : 2998)) < 1e-6 || Math.abs(v[1] - 1772) < 1e-6)));
     const all = tilesOf([...facesOf(wt), ...facesOf(ft)]);
     check('no tile\'s face over another', !all.some((a, i) => all.slice(i + 1).some(b => clash(a, b))));
-    check('none where the room has no wall tiles (the floorFaces)', !H.node(room + 'wallTiles'));
+    const boxes = [...wt.parts, ...ft.parts].filter((/** @type {any} */ p) => p.form === 'box').map((/** @type {any} */ p) => p.box);
+    check('the slabs: solids from what they lie on out to the face (12), none in another', wt.parts.some((/** @type {any} */ p) => p.form === 'prism') && !boxes.some((/** @type {number[]} */ a, /** @type {number} */ i) => boxes.slice(i + 1).some((/** @type {number[]} */ b) => [0, 1, 2].every(k => Math.min(a[2 * k + 1], b[2 * k + 1]) - Math.max(a[2 * k], b[2 * k]) > 0.1))));
+    check('none where the room has no wall tiles (the kitchen)', !H.node(room + 'wallTiles'));
   }
 
   /* --- use case: a casing built before the tiles (bathroom 7: the WC's, its niche): none under it, none behind it; its faces
-     tiled, the niche's back, sides, floor and top too; at an outer corner each face past, closing it --- */
+     tiled, the niche's back, sides, floor and top too; at an outer corner the face along y past, over the other's end --- */
   {
     const b7 = 'house/groundFloor/bathroom_7/', wt = /** @type {any} */ (H.node(b7 + 'wallTiles')), ft = /** @type {any} */ (H.node(b7 + 'floorTiles'));
     const F = [...tilesOf(facesOf(wt)), ...tilesOf(facesOf(ft))];

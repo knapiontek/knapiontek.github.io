@@ -4,7 +4,7 @@
 // a wall's face less its door. Every exported function in one.
 
 import * as API from '../../room/tiles.js';
-import { doorHalves, layTiles, rectsMinus, tiledSurfaces, under, wallsOf } from '../../room/tiles.js';
+import { doorHalves, layTiles, pointOf, rectsMinus, tiledSurfaces, under, wallsOf } from '../../room/tiles.js';
 
 /** @param {(what: string, ok: boolean) => void} check */
 export default async function (check) {
@@ -12,7 +12,7 @@ export default async function (check) {
   const used = new Set();
   /** @template {(...a: any[]) => any} F @param {string} name @param {F} f @returns {F} */
   const api = (name, f) => /** @type {F} */ ((...a) => { used.add(name); return f(...a); });
-  const $ = { layTiles: api('layTiles', layTiles), doorHalves: api('doorHalves', doorHalves), wallsOf: api('wallsOf', wallsOf), rectsMinus: api('rectsMinus', rectsMinus), tiledSurfaces: api('tiledSurfaces', tiledSurfaces), under: api('under', under) };
+  const $ = { layTiles: api('layTiles', layTiles), doorHalves: api('doorHalves', doorHalves), wallsOf: api('wallsOf', wallsOf), rectsMinus: api('rectsMinus', rectsMinus), tiledSurfaces: api('tiledSurfaces', tiledSurfaces), pointOf: api('pointOf', pointOf), under: api('under', under) };
   /* a tile as the library gives it (library/shapes.js tileOf): 600 long, 300 wide, joint 2, the smallest cut 100 × 100 */
   const tile = { len: 600, wid: 300, joint: 2, minCut: [100, 100] };
 
@@ -63,11 +63,13 @@ export default async function (check) {
       && walls.some(w => w.axis === 0 && w.at === 1000 && w.from === 800 && w.to === 2000 && w.inward === -1));
     const S = $.tiledSurfaces({ rects: [[0, 3000, 0, 2000]], height: 2600, slopes: [], openings: [[1000, 1900, -240, 0, 0, 2050], [3000, 3240, 500, 1400, 0, 2050]], built: [] }, { depth: 12 }, { depth: 12, joint: 2 });
     const w = S.find(s => s.axis === 0 && s.n[1] === 1), face = /** @type {import('../../room/tiles.js').Rect[]} */ (w?.rects);
-    check('a wall\'s face: 12 off the wall, from the floor\'s tiles and a joint (14) to the ceiling, less its door; its ends short at the inner corners', w?.at === 12 && face.length === 3 && face.every(r => r[2] >= 14 && r[0] >= 12 && r[1] <= 2988) && !face.some(r => r[0] < 1900 && r[1] > 1000 && r[2] < 2050) && w.holes.length === 1);
-    check('the floor: face up at the tiles\' depth, the door\'s half on its side, its free edge there (its middle)', S.some(s => s.layout === 'floor' && s.at === 12 && s.rects.some(r => r[0] === 3000 && r[1] === 3120) && s.edges?.some(e => e[0][0] === 3120)));
+    check('a wall along x: 12 off the wall, from the floor\'s tiles and a joint (14) to the ceiling, less its door; to the corners (it covers the ends of those along y)', w?.at === 12 && face.length === 3 && face.every(r => r[2] >= 14 && r[0] >= 0 && r[1] <= 3000) && face.some(r => r[0] === 0) && !face.some(r => r[0] < 1900 && r[1] > 1000 && r[2] < 2050));
+    const y = S.find(s => s.axis === 1 && s.n[0] === 1);
+    check('a wall along y: at the inner corners short, at the face of those along x (12 … 1988)', !!y && y.rects.every(r => r[0] >= 12 && r[1] <= 1988) && y.rects.some(r => r[0] === 12));
+    check('the floor: face up at the tiles\' depth, the door\'s half on its side (to its middle)', S.some(s => s.layout === 'floor' && s.at === 12 && s.rects.some(r => r[0] === 3000 && r[1] === 3120)));
     check('a face less a hole: the rectangles round it', $.rectsMinus([[0, 3000, 0, 2600]], [[1000, 1900, 0, 2050]]).length === 3);
     const { count } = $.layTiles(face, tile, { dir: 'x', pattern: 'grid', offset: [0, 14] });
-    check('the wall laid as a floor is (u along it, h up), from its point: counted', count.tiles > 0 && count.area === Math.round((2976 * 2586 - 900 * 2036) / 1e4) / 100);
+    check('the wall laid as a floor is (u along it, h up), from its point: counted', count.tiles > 0 && count.area === Math.round((3000 * 2586 - 900 * 2036) / 1e4) / 100);
   }
 
   /* --- use case: a wall under the roof's slope: the tiles cut on the slant, none above it --- */
@@ -77,6 +79,21 @@ export default async function (check) {
     const { pieces, count } = $.layTiles([[0, 1200, 0, 1500]], tile, { dir: 'x', pattern: 'grid', offset: [0, 0], under: slope });
     check('laid under it: the pieces the slope cuts their outline, none above it; the area under it', pieces.some(p => p.poly) && pieces.every(p => (p.poly || [[p.rect[0], p.rect[3]], [p.rect[1], p.rect[3]]]).every(q => q[1] <= 1000 + q[0] + 0.5))
       && count.area === 1.68);   // 500 rising from 1000 to 1500 (0.625 m²), then 700 × 1500
+  }
+
+  /* --- use case: a casing against two walls (an outer corner): the tiles a slab 12 deep off what they lie on; where two meet
+     one runs on over the other's end, the corners closed, no slab in another --- */
+  {
+    const S = $.tiledSurfaces({ rects: [[0, 2510, 0, 2390]], height: 2720, slopes: [], openings: [], built: [{ box: [2230, 2510, 0, 850, 0, 2720] }] }, null, { depth: 12, joint: 2 });
+    const front = /** @type {import('../../room/tiles.js').Surface} */ (S.find(s => s.axis === 1 && s.at === 2218)), side = /** @type {import('../../room/tiles.js').Surface} */ (S.find(s => s.axis === 0 && s.at === 862));
+    check('the casing\'s front (along y) past the outer corner (to 862), its side (along x) to it (from 2230)', front?.rects.some(r => r[1] === 862) && side?.rects.some(r => r[0] === 2230));
+    /** a surface's slabs, boxes in the room's axes @param {import('../../room/tiles.js').Surface} s */
+    const slabs = s => s.rects.map(r => { const A = $.pointOf(s, [r[0], r[2]]), B = $.pointOf(s, [r[1], r[3]], -12); return [0, 1, 2].flatMap(k => [Math.min(A[k], B[k]), Math.max(A[k], B[k])]); });
+    const all = S.flatMap(slabs), meet = (/** @type {number[]} */ a, /** @type {number[]} */ b) => [0, 1, 2].every(k => Math.min(a[2 * k + 1], b[2 * k + 1]) - Math.max(a[2 * k], b[2 * k]) > 0.1);
+    check('no slab in another', !all.some((a, i) => all.slice(i + 1).some(b => meet(a, b))));
+    const inSlab = (/** @type {number[]} */ p) => all.some(b => [0, 1, 2].every(k => b[2 * k] - 1e-6 <= p[k] && p[k] <= b[2 * k + 1] + 1e-6));
+    check('the corners closed: the inner (0, 0), the outer of the casing (2224, 856), the casing at the walls (2224, 6), (2504, 856)', [[6, 6, 1000], [2224, 856, 1000], [2224, 6, 1000], [2504, 856, 1000]].every(inSlab));
+    check('a point of a surface: in the room\'s axes, off its face along its way', $.pointOf(front, [500, 1000]).join() === '2218,500,1000' && $.pointOf(front, [500, 1000], -12).join() === '2230,500,1000');
   }
 
   /* every function of the API in a use case */

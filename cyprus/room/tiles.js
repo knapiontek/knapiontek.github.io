@@ -141,22 +141,21 @@ export function rectsMinus(rects, holes) {
  * A surface to tile: its layout (floor: the floor's tiles; walls: the walls'), its plane (the tiles' face: along x (axis 0, at
  * y), along y (1, at x), level (2, at h); n its side: the way the face looks) and on it, in its own coordinates (a wall: u
  * along it, v = h; level: u = x, v = y), what is tiled (rectangles, holes taken out) and the lines it stays on the side of (a
- * roof's slopes, its ceiling); holes: its openings, their reveals' edges to draw (the slab's edge round them).
- * @typedef {{ id: string, layout: 'floor' | 'walls', axis: 0 | 1 | 2, at: number, n: number[], rects: Rect[], lines: Line[], holes: Rect[], edges?: number[][][] }} Surface
- * edges: the slab's free edges, each a segment [[u, v], [u, v]] and the way out of the slab [du, dv] (a floor's at a door's middle)
+ * roof's slopes, its ceiling). Its tiles a slab from what it lies on out to the plane.
+ * @typedef {{ id: string, layout: 'floor' | 'walls', axis: 0 | 1 | 2, at: number, n: number[], rects: Rect[], lines: Line[] }} Surface
  */
 /**
  * A built-in, before the tiles: its box [x0, x1, y0, y1, h0, h1] in the room's axes, its cuts (a niche: a box in it).
  * @typedef {{ box: number[], cuts?: number[][] }} BuiltIn
  */
 /**
- * A room's surfaces to tile. The tiles are a slab: its face that deep off what it lies on. A wall's tiles from its floor's
- * (a joint over their face) up to the ceiling or the roof, less its openings; at an inner corner a face ends that deep short
- * (the other's face is there), at an outer corner that deep past (the corner closed). What is built before the tiles (a casing)
- * stands on the floor, against the walls: none under it, none behind it; the wall's tiles stop at the face of its tiles. Its
- * faces toward the room tiled (a free end past, one at a wall short), its top (past its free edges), a cut's reveals (an end at
- * the mouth past, one inside short; on the floor's tiles of the cut, under its top's), the cut's floor and top (to the face's
- * tiles at the mouth); the face's hole at the mouth that deep narrower (it covers the reveals' edges).
+ * A room's surfaces to tile; their slabs meet, none in another. The tiles are a slab that deep off what they lie on. A wall's
+ * from its floor's tiles (a joint over their face) up to the ceiling or the roof, less its openings. Where two meet one runs on
+ * over the other's end: at an inner corner the wall along x to the corner (the one along y stops at its face), at an outer one
+ * the wall along y past the corner (over the end of the one along x). What is built before the tiles (a casing) stands on the
+ * floor, against the walls: none under it, none behind it. Its faces toward the room tiled (the same at its corners), its top
+ * past its free edges (over its faces' tops), a cut's reveals, floor and top (to the mouth); at the mouth the face's hole that
+ * deep smaller each way (it covers their ends).
  * @param {{ rects: Rect[], height: number, slopes: { a: number, s: number }[], openings: number[][], built: BuiltIn[] }} room
  *   rects: its floor; slopes: the roof's underside h = a + s · y; openings: boxes through its walls (a door's at the floor)
  * @param {{ depth: number } | null} floor  the floor's tiles (null: none) @param {{ depth: number, joint: number } | null} walls  the walls' (null: none)
@@ -167,68 +166,68 @@ export function tiledSurfaces(room, floor, walls) {
   const W = wallsOf(rects), F = floor ? floor.depth : 0, D = walls ? walls.depth : 0, v0 = floor && walls ? F + walls.joint : 0;
   /* the lines a face stays under: the ceiling, the roof's slopes over y (a wall along y: slanted; along x: level at its line) */
   const roof = (/** @type {0 | 1} */ axis, /** @type {number} */ at) => [{ p: 0, q: 1, c: C }, ...room.slopes.map(l => axis === 1 ? { p: -l.s, q: 1, c: l.a } : { p: 0, q: 1, c: l.a + l.s * at })];
-  /** a vertical face: its line (axis, at the raw face), the way it looks, from … to along it, h0 … h1, its holes, id */
-  const face = (/** @type {0 | 1} */ axis, /** @type {number} */ at, /** @type {number} */ n, /** @type {number} */ from, /** @type {number} */ to, /** @type {number} */ h0, /** @type {number} */ h1, /** @type {Rect[]} */ holes, /** @type {Rect[]} */ openings, /** @type {string} */ id) => {
-    const plane = at + n * D, r = /** @type {Rect} */ ([from, to, h0, h1]);
+  /** a vertical face: its line (axis, at the raw face), the way it looks, from … to along it, h0 … h1, less holes */
+  const face = (/** @type {0 | 1} */ axis, /** @type {number} */ at, /** @type {number} */ n, /** @type {number} */ from, /** @type {number} */ to, /** @type {number} */ h0, /** @type {number} */ h1, /** @type {Rect[]} */ holes, /** @type {string} */ id) => {
     if (to - from < TOL || h1 - h0 < TOL) return;
-    const rs = rectsMinus([r], [...holes, ...openings]);
-    if (rs.length) out.push({ id, layout: 'walls', axis, at: plane, n: axis === 0 ? [0, n, 0] : [n, 0, 0], rects: rs, lines: roof(axis, plane), holes: openings.map(o => /** @type {Rect} */ ([Math.max(o[0], from), Math.min(o[1], to), Math.max(o[2], h0), Math.min(o[3], h1)])).filter(o => o[1] - o[0] > TOL && o[3] - o[2] > TOL) });
+    const plane = at + n * D, rs = rectsMinus([[from, to, h0, h1]], holes);
+    if (rs.length) out.push({ id, layout: 'walls', axis, at: plane, n: axis === 0 ? [0, n, 0] : [n, 0, 0], rects: rs, lines: roof(axis, plane) });
   };
-  /** a level face: at h, looking up (1) or down (-1), its rectangles in x, y */
-  const level = (/** @type {number} */ h, /** @type {number} */ n, /** @type {Rect[]} */ rs, /** @type {string} */ id, /** @type {'floor' | 'walls'} */ layout, /** @type {Surface['edges']} */ edges = undefined) => {
+  /** a level face: on h, looking up (1) or down (-1), its rectangles in x, y */
+  const level = (/** @type {number} */ h, /** @type {number} */ n, /** @type {Rect[]} */ rs, /** @type {string} */ id, /** @type {'floor' | 'walls'} */ layout) => {
     const plane = h + n * (layout === 'floor' ? F : D);
     const lines = n > 0 ? [{ p: 0, q: 0, c: C - plane }, ...room.slopes.map(l => ({ p: 0, q: -l.s, c: l.a - plane }))] : [];   // its face under the roof
-    if (rs.length) out.push({ id, layout, axis: 2, at: plane, n: [0, 0, n], rects: rs, lines, holes: [], ...(edges ? { edges } : {}) });
+    if (rs.length) out.push({ id, layout, axis: 2, at: plane, n: [0, 0, n], rects: rs, lines });
   };
   const side = (/** @type {number[]} */ q) => /** @type {[0 | 1, number, number, number, number][]} */ ([[0, q[2], -1, q[0], q[1]], [0, q[3], 1, q[0], q[1]], [1, q[0], -1, q[2], q[3]], [1, q[1], 1, q[2], q[3]]]);   // a box's sides: line, at, the way out, along
   const across = (/** @type {0 | 1} */ axis, /** @type {number[]} */ q) => /** @type {Rect} */ (axis === 0 ? [q[0], q[1], q[4], q[5]] : [q[2], q[3], q[4], q[5]]);
   const onLine = (/** @type {0 | 1} */ axis, /** @type {number} */ at, /** @type {number[]} */ q) => axis === 0 ? q[2] - 5 <= at && at <= q[3] + 5 : q[0] - 5 <= at && at <= q[1] + 5;
   const top = (/** @type {number[]} */ b) => b[5] < C - TOL ? b[5] + D : C;   // a built box's top tiled: the face above it stops at its tiles
+  /** an end of a face along axis, where it meets another: along x the face runs to it (inner) or stops (outer: the other runs on); along y it stops at the other's face (inner) or runs on over its end (outer) */
+  const end = (/** @type {0 | 1} */ axis, /** @type {boolean} */ inner, /** @type {number} */ sign) => axis === 0 ? 0 : (inner ? D : -D) * sign;
   if (walls) {
-    /* the walls: ends short at an inner corner, past at an outer one; less the openings through them and what is built against them */
-    const meets = (/** @type {Wall} */ w, /** @type {number} */ end) => W.find(o => o.axis !== w.axis && near(o.at, end) && w.at >= o.from - TOL && w.at <= o.to + TOL);
-    const shift = (/** @type {Wall | undefined} */ o, /** @type {number} */ sign) => !o ? 0 : o.inward === sign ? -D : D;
+    /* the walls: less the openings through them (thinner than a wall) and what is built against them */
     W.forEach((w, i) => {
+      const meets = (/** @type {number} */ e) => W.find(o => o.axis !== w.axis && near(o.at, e) && w.at >= o.from - TOL && w.at <= o.to + TOL);
+      const shift = (/** @type {number} */ e, /** @type {number} */ sign) => { const o = meets(e); return o ? end(w.axis, o.inward === sign, sign) : 0; };   // sign: +1 at the start, −1 at the end
       const against = built.map(b => b.box).filter(q => w.axis === 0 ? near(w.inward > 0 ? q[2] : q[3], w.at) : near(w.inward > 0 ? q[0] : q[1], w.at))
-        .map(q => { const a = across(w.axis, q); return /** @type {Rect} */ ([a[0] - D, a[1] + D, a[2], top(q)]); });
-      const openings = room.openings.filter(o => onLine(w.axis, w.at, o) && (w.axis === 0 ? o[3] - o[2] : o[1] - o[0]) < 600).map(o => across(w.axis, o));   // through it: thinner than a wall
-      face(w.axis, w.at, w.inward, w.from - shift(meets(w, w.from), 1), w.to + shift(meets(w, w.to), -1), v0, C, against, openings, 'w' + (i + 1));
+        .map(q => { const a = across(w.axis, q), g = w.axis === 1 ? D : 0; return /** @type {Rect} */ ([a[0] - g, a[1] + g, a[2], top(q)]); });   // along y: to the face of its sides' tiles
+      const openings = room.openings.filter(o => onLine(w.axis, w.at, o) && (w.axis === 0 ? o[3] - o[2] : o[1] - o[0]) < 600).map(o => across(w.axis, o));
+      face(w.axis, w.at, w.inward, w.from + shift(w.from, 1), w.to + shift(w.to, -1), v0, C, [...against, ...openings], 'w' + (i + 1));
     });
     built.forEach((b, i) => {
       const q = b.box, cuts = b.cuts || [], atWall = (/** @type {0 | 1} */ axis, /** @type {number} */ e) => W.some(w => w.axis !== axis && near(w.at, e));
-      /* its sides toward the room (none against a wall): a free end past, one at a wall short; from the floor's tiles to its top */
+      /* its sides toward the room (none against a wall), from the floor's tiles to its top; at the mouth of a cut its hole that deep smaller */
       side(q).forEach(([axis, at, n, from, to], s) => {
         if (W.some(w => w.axis === axis && near(w.at, at) && w.inward === -n)) return;
         const touches = (/** @type {number[]} */ o) => axis === 0 ? near(n > 0 ? o[2] : o[3], at) : near(n > 0 ? o[0] : o[1], at);
         const opens = (/** @type {number[]} */ c) => axis === 0 ? near(n > 0 ? c[3] : c[2], at) : near(n > 0 ? c[1] : c[0], at);
         const holes = built.filter(o => o !== b).map(o => o.box).filter(touches).map(o => across(axis, o))
-          .concat(cuts.filter(opens).map(c => across(axis, c)).map(c => /** @type {Rect} */ ([c[0] + D, c[1] - D, c[2], c[3]])));
-        face(axis, at, n, from + (atWall(axis, from) ? D : -D), to + (atWall(axis, to) ? -D : D), q[4] < TOL ? v0 : q[4], Math.min(q[5], C), holes, [], `b${i + 1}s${s}`);
+          .concat(cuts.filter(opens).map(c => across(axis, c)).map(c => /** @type {Rect} */ ([c[0] + D, c[1] - D, c[2] + (c[2] > q[4] + TOL ? D : 0), c[3] - (c[3] < q[5] - TOL ? D : 0)])));
+        face(axis, at, n, from + end(axis, atWall(axis, from), 1), to + end(axis, atWall(axis, to), -1), q[4] < TOL ? v0 : q[4], Math.min(q[5], C), holes, `b${i + 1}s${s}`);
       });
-      /* a cut's reveals, facing into it: an end at the mouth past, one inside short; on its floor's tiles, under its top's */
+      /* a cut's reveals, facing into it: to the mouth; inside, the same as a room's corners; on its floor's tiles, under its top's */
       cuts.forEach((c, k) => side(c).forEach(([axis, at, n, from, to], s) => {
         const inside = axis === 0 ? at > q[2] + TOL && at < q[3] - TOL : at > q[0] + TOL && at < q[1] - TOL;
         if (!inside) return;
         const open = (/** @type {number} */ e) => axis === 0 ? near(e, q[0]) || near(e, q[1]) : near(e, q[2]) || near(e, q[3]);
-        face(axis, at, -n, from + (open(from) ? -D : D), to + (open(to) ? D : -D), c[4] > q[4] + TOL ? c[4] + D : c[4], c[5] < q[5] - TOL ? c[5] - D : c[5], [], [], `b${i + 1}c${k + 1}s${s}`);
+        face(axis, at, -n, from + (open(from) ? 0 : end(axis, true, 1)), to + (open(to) ? 0 : end(axis, true, -1)), c[4] > q[4] + TOL ? c[4] + D : c[4], c[5] < q[5] - TOL ? c[5] - D : c[5], [], `b${i + 1}c${k + 1}s${s}`);
       }));
-      /* its top (under the ceiling, nothing built on it): past its free edges; a cut's floor and top: past at the mouth */
-      const grow = (/** @type {number[]} */ r, /** @type {(axis: 0 | 1, e: number) => boolean} */ free) => /** @type {Rect} */ ([r[0] - (free(1, r[0]) ? D : 0), r[1] + (free(1, r[1]) ? D : 0), r[2] - (free(0, r[2]) ? D : 0), r[3] + (free(0, r[3]) ? D : 0)]);
-      if (q[5] < C - TOL) level(q[5], 1, rectsMinus([grow(q, (axis, e) => !atWall(axis === 0 ? 1 : 0, e))], built.filter(o => o !== b && near(o.box[4], q[5])).map(o => /** @type {Rect} */ (o.box.slice(0, 4)))), `b${i + 1}t`, 'walls');
+      /* its top (under the ceiling, nothing built on it): past its free edges, over its sides' tiles; a cut's floor and top */
+      const free = (/** @type {0 | 1} */ axis, /** @type {number} */ e) => !atWall(axis, e) ? D : 0;   // axis: the line of the edge's wall
+      if (q[5] < C - TOL) level(q[5], 1, rectsMinus([[q[0] - free(0, q[0]), q[1] + free(0, q[1]), q[2] - free(1, q[2]), q[3] + free(1, q[3])]], built.filter(o => o !== b && near(o.box[4], q[5])).map(o => /** @type {Rect} */ (o.box.slice(0, 4)))), `b${i + 1}t`, 'walls');
       cuts.forEach((c, k) => {
-        const mouth = (/** @type {0 | 1} */ axis, /** @type {number} */ e) => axis === 0 ? near(e, q[2]) || near(e, q[3]) : near(e, q[0]) || near(e, q[1]);
-        if (c[4] > q[4] + TOL) level(c[4], 1, [grow(c, mouth)], `b${i + 1}c${k + 1}f`, 'walls');
-        if (c[5] < q[5] - TOL) level(c[5], -1, [grow(c, mouth)], `b${i + 1}c${k + 1}t`, 'walls');
+        if (c[4] > q[4] + TOL) level(c[4], 1, [/** @type {Rect} */ (c.slice(0, 4))], `b${i + 1}c${k + 1}f`, 'walls');
+        if (c[5] < q[5] - TOL) level(c[5], -1, [/** @type {Rect} */ (c.slice(0, 4))], `b${i + 1}c${k + 1}t`, 'walls');
       });
     });
   }
-  if (floor) {
-    /* the floor: its rectangles and its doors' halves, less what is built on it; its slab's edge free at the doors' middles */
-    const area = rectsMinus([...rects, ...doorHalves(rects, room.openings.filter(o => Math.abs(o[4]) < 50))], built.map(b => b.box).filter(q => q[4] < TOL).map(q => /** @type {Rect} */ (q.slice(0, 4))));
-    const onWall = (/** @type {Wall} */ s) => W.some(w => w.axis === s.axis && near(w.at, s.at) && w.from < s.to - TOL && s.from < w.to - TOL)
-      || built.some(b => { const q = b.box; return q[4] < TOL && (s.axis === 0 ? (near(q[2], s.at) || near(q[3], s.at)) && q[0] < s.to - TOL && s.from < q[1] - TOL : (near(q[0], s.at) || near(q[1], s.at)) && q[2] < s.to - TOL && s.from < q[3] - TOL); });
-    const edges = wallsOf(area).filter(s => !onWall(s)).map(s => s.axis === 0 ? [[s.from, s.at], [s.to, s.at], [0, -s.inward]] : [[s.at, s.from], [s.at, s.to], [-s.inward, 0]]);
-    level(0, 1, area, 'f', 'floor', edges);
-  }
+  /* the floor: its rectangles and its doors' halves, less what is built on it */
+  if (floor) level(0, 1, rectsMinus([...rects, ...doorHalves(rects, room.openings.filter(o => Math.abs(o[4]) < 50))], built.map(b => b.box).filter(q => q[4] < TOL).map(q => /** @type {Rect} */ (q.slice(0, 4)))), 'f', 'floor');
   return out;
+}
+
+/** a point of a surface's plane (u, v), off it by o along its way, in the room's axes @param {Surface} s @param {number[]} q @param {number} [o] @returns {number[]} */
+export function pointOf(s, q, o = 0) {
+  const p = s.axis === 0 ? [q[0], s.at, q[1]] : s.axis === 1 ? [s.at, q[0], q[1]] : [q[0], q[1], s.at];
+  return p.map((v, i) => v + o * s.n[i]);
 }

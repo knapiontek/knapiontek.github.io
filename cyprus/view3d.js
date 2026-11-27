@@ -175,7 +175,7 @@ export function createView3d({ catalog, canvas, light, edges }) {
     const L = lookOf(catalog.product(key));
     return {
       decor: { color: '#ffffff', image: { key: L.texture }, roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.55, reflect: 0.5 },
-      tile: { color: '#ffffff', image: { key: L.texture, ...(tile ? { face: tile.face, tile: tile.size } : {}) }, roughness: 0.45, reflect: 0.6, ahead: true },   // over the grout behind it
+      tile: { color: '#ffffff', image: { key: L.texture, ...(tile ? { face: tile.face, tile: tile.size } : {}) }, roughness: 0.45, reflect: 0.6, ...(tile ? { ahead: 2 } : {}) },   // a tile's face over the grout; its edge (the slab) the house's
       lacquer: { color: L.color, roughness: 0.42, clearcoat: 0.2, clearcoatRoughness: 0.45, reflect: 0.7 },
       matt: { color: L.color, roughness: 0.8, reflect: 0.45 }
     }[L.finish];
@@ -186,11 +186,11 @@ export function createView3d({ catalog, canvas, light, edges }) {
     if (MATERIALS.has(key)) return MATERIALS.get(key);
     const [, tileKey, face, size] = key.startsWith('tile:') ? key.split(':') : [];   // tile:<product>[:<image>:<u>x<v>]: one tile's; tile:<product>:edge: its slab's edge (the photo in mm)
     const def = key.startsWith('board:') ? productLook(key.slice(6)) : tileKey ? productLook(tileKey, size ? { face: Number(face), size: size.split('x').map(Number) } : undefined)
-      : key.startsWith('grout:') ? /** @type {Record<string, any>} */ ({ color: key.slice(6), roughness: 0.95, reflect: 0.2 }) : /** @type {Record<string, any>} */ (catalog.material(key));
+      : key.startsWith('grout:') ? /** @type {Record<string, any>} */ ({ color: key.slice(6), roughness: 0.95, reflect: 0.2, ahead: 1 }) : /** @type {Record<string, any>} */ (catalog.material(key));
     /** @type {Record<string, any>} */
     const o = { color: def.color || '#ffffff', roughness: def.roughness ?? 0.9, metalness: def.metalness || 0, envMapIntensity: def.reflect ?? 1,
       polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 };   // the faces a little back: an edge on them shows, one behind them does not
-    if (def.ahead) Object.assign(o, { polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
+    if (def.ahead) Object.assign(o, { polygonOffsetFactor: -1, polygonOffsetUnits: -2 * def.ahead });   // over a face in its plane: 1 (the grout on a slab), 2 (a tile over it)
     if (def.emissive) Object.assign(o, { emissive: def.emissive, emissiveIntensity: def.glow ?? 1 });
     const m = def.clearcoat === undefined ? new THREE.MeshStandardMaterial(o)
       : new THREE.MeshPhysicalMaterial(Object.assign(o, { clearcoat: def.clearcoat, clearcoatRoughness: def.clearcoatRoughness ?? 0.5 }));
