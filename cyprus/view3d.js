@@ -218,7 +218,7 @@ export function createView3d({ catalog, canvas, light, edges }) {
   /**
    * The moving parts drawn: each a pivot (on its axis, in the branch's axes) and the group of what moves with it; how far open
    * (progress 0 … 1, eased) and where it goes (goal); behind: the mover that opens first.
-   * @typedef {{ key: string, m: import('./types.js').Mover, pivot: any, axis: Vec3, progress: number, goal: number, behind: ViewMover | null, after: ViewMover[] }} ViewMover
+   * @typedef {{ key: string, m: import('./types.js').Mover, pivot: any, inner: any, axis: Vec3, progress: number, goal: number, behind: ViewMover | null, after: ViewMover[] }} ViewMover  inner: the group of what moves with it
    */
   /** @type {Map<string, ViewMover>} */
   let MOVERS = new Map();

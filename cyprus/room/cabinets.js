@@ -439,8 +439,8 @@ function groupNode(G, C, warn) {
   const fit = (d, kind, point, layer, options) => { d.children.push(product(kind, settings.hardware[kind], point, layer, options)); };
   /** an appliance placed (settings.appliances: its product) @param {string} role @param {number[]} point @param {string} layer @param {Record<string, any>} [options] */
   const appliance = (role, point, layer, options) => product({ fridgeFreezer: 'fridge' }[role] || role, settings.appliances[role].product, point, layer, options);
-  /** a drawer: all of it slides out toward the front by travel (its runners' length); behind: what opens first (its door) @param {Draft} d @param {number} travel @param {string} [behind] */
-  const slides = (d, travel, behind) => { d.movers = [{ id: 'drawer', pivot: [0, 0, 0], axis: [0, 1, 0], sign: 1, travel, slide: true, ...(behind ? { behind } : {}) }]; d.mover = 'drawer'; };
+  /** a drawer: all of it slides out toward the front by travel (its runners' length); behind: what opens first (its door, the drawer before an inner one); id: its mover's @param {Draft} d @param {number} travel @param {string} [behind] @param {string} [id] */
+  const slides = (d, travel, behind, id = 'drawer') => { d.movers = [{ id, pivot: [0, 0, 0], axis: [0, 1, 0], sign: 1, travel, slide: true, ...(behind ? { behind } : {}) }]; d.mover = id; };
   /** its own box, as one board of its use @param {Draft} d @param {string} use */
   const whole = (d, use) => board(d, use, d.box);
   /**
@@ -476,16 +476,21 @@ function groupNode(G, C, warn) {
        drawerBox board, on the system's metal, as its maker gives them */
     const S = systemFor(C.hardware('drawer'), C.hardware('drawerM'), f.h1 - f.h0, settings.drawers.frontAbove), kind = S === C.hardware('drawer') ? 'drawer' : 'drawerM';
     const tb = thickness('drawerBox'), innerX0 = c.x0 + t, width = c.x1 - c.x0 - 2 * t, depth = carcassFront - carcassBack;
-    /** a drawer of a system at its bottom h: its boards and its metal @param {string} kind @param {any} W @param {number} h */
-    const drawer = (kind, W, h) => {
-      for (const b of systemDrawer(W, false, width, tb).boards) board(d, 'drawerBox', [innerX0 + b[0], innerX0 + b[1], carcassBack + b[2], carcassBack + b[3], h + b[4], h + b[5]], 'drawers');
-      fit(d, kind, [innerX0, carcassBack, h], 'drawers', { width, depth });
+    /** a drawer of a system at its bottom h, in the node to: its boards and its metal @param {Draft} to @param {string} kind @param {any} W @param {number} h */
+    const drawer = (to, kind, W, h) => {
+      for (const b of systemDrawer(W, false, width, tb).boards) board(to, 'drawerBox', [innerX0 + b[0], innerX0 + b[1], carcassBack + b[2], carcassBack + b[3], h + b[4], h + b[5]], 'drawers');
+      fit(to, kind, [innerX0, carcassBack, h], 'drawers', { width, depth });
     };
     const bottomH = m.h0 + systemDrawer(S, m.h0 === c.h0, width, tb).lift;
     slides(d, travelOf(S));
-    drawer(kind, S, bottomH);
+    drawer(d, kind, S, bottomH);
     if (hasTag(m, 'bins') && settings.hardware.bins) fit(d, 'bins', [innerX0, carcassBack, bottomH + tb], 'drawers', { width, depth });   /* waste bins in it */
-    if (hasTag(m, 'innerDrawer')) drawer('innerDrawer', C.hardware('innerDrawer'), bottomH + innerOver(S, C.hardware('innerDrawer')));   /* an inner drawer over it */
+    if (hasTag(m, 'innerDrawer')) {   /* an inner drawer over it: on its own runners on the carcass's sides, out after the drawer before it */
+      const I = C.hardware('innerDrawer'), h = bottomH + innerOver(S, I), inner = draft('innerDrawer', 'Inner drawer', 'drawer', [innerX0, innerX0 + width, carcassBack, carcassFront, h, m.h1]);
+      slides(inner, travelOf(I), 'drawer', 'innerDrawer');
+      drawer(inner, 'innerDrawer', I, h);
+      d.children.push(inner);
+    }
   };
   /**
    * Drawers behind a door (doorDrawers): a spacer on the hinges' side, boxes of drawerBox board on ball runners, as deep as the

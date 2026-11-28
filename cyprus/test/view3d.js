@@ -178,6 +178,15 @@ export default async function (check) {
       scene.toggleAll(false);
       check('all closed: back where they were drawn', all.every(v => v.progress === 0) && drawer.pivot.position.distanceTo(at) < 1e-6);
     }
+    const inner = all.find(v => v.key.endsWith('/innerDrawer#innerDrawer')), outer = inner && all.find(v => v.key === inner.key.replace('/innerDrawer#innerDrawer', '#drawer'));
+    if (inner && outer) {
+      scene.toggleAll(false); scene.toggle(inner);
+      check('an inner drawer: on its own runners, out after the drawer before it (that one first)', outer.goal === 1 && inner.goal === 0 && inner.pivot.parent !== outer.inner);
+      scene.toggle(inner);
+      const out = inner.progress;
+      scene.toggle(outer, false);
+      check('then out on its own; the drawer before it closed, it closes too', out === 1 && /** @type {number} */ (inner.progress) === 0);
+    } else check('an inner drawer in the kitchen', false);
     check('no page: no mover under a point', scene.moverAt(10, 10) === null);
   }
 
