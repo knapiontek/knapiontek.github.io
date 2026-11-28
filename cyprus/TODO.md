@@ -18,7 +18,8 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] library/shapes: a product as parts in its own axes (`shapeOf`), materials by key or `metal` (Finish); its test
 
 ## Next
-- [ ] `view3d.js`: the granite's speckle; the site in the House view
+- [x] `view3d.js`: the granite's speckle (the sink's black quartz, as the prototype's: `speckle` in its material)
+- [ ] `view3d.js`: the site in the House view
 - [x] cabinets, stage 1: the hierarchy's quarter turns (`turn`), sizes to the opposite corner; the design's axes to the model's (`core/tools.js`, y → −y); products in them
 - [x] cabinets, stage 2: `room/cabinets.js` (the layout: columns, stack, carcasses, kinds; the tree: carcasses under the worktop or the plasterboard, measured from it), `room/assembly.js` (the scene places the groups), the kitchen's `room_356.cabinets.json` and `room_356.scene.json`; their tests
 - [x] cabinets, stage 3: the bodies: carcass boards (sides, rails, tops, backs, shelves, inset panels, the pull-out shelf), shaker fronts, worktop, end panels, wall panel, strips and back strips, plinth, plasterboard; the boards' looks in `view3d.js` (`board:`); the kitchen's scene corrected (group 2 by the West wall, the island before group 1); the kitchen in 3D
@@ -44,7 +45,9 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] the library's API, the rest: `lookOf` (`view3d.js` reads no product's fields); a hinge places its cup itself; the house gives a room its facts (`ceilingHeight`, `openings`: house/assembly.js `roomFacts`), `room/assembly.js` searches no house
 - [ ] the model as JSON output: the hierarchy (or a group) exported; its format to settle
 - [ ] `view2d.js` (root): the 2D view (the menu's 2D): plans and dimensions
-- [ ] `docs.js` (root): Documents
+- [x] Documents, stage 1: `core/sheet.js` (the book, formulas, the XLSX's worksheets), `docs.js` (the mode: its screen, Save XLSX, Restore data; Elements, Test)
+- [x] Documents, stage 2: `house/docs.js` (Rooms, Tiles, Doors, Notes; the house's `source` and `notes` in `model.json`)
+- [ ] Documents, stage 3: a furnished room's Estimate (`core/estimate.js`), Cut list, Assembly, Notes (`room/docs.js`, `room/<room>.docs.json` from the prototype's, its placeholders from the hierarchy)
 - [ ] Cabinet mode
 - [ ] Finish: metal, boards, floor tiles
 - [x] moving parts: a mover (types.js: a turn, or a slide; behind: what opens first) on a node or a shape, what names it moves with it (the nearest of its id round it: a hinge's cup with its door, a dishwasher's front with its door); the cabinets' doors by the hinge's angle (Blum 110°), the drawers out by their runners' length (TANDEMBOX 500), the drawers behind a door after it; the house's doors, the appliances' doors; `view3d.js` pivots, eased, toggle, toggleAll, moverAt

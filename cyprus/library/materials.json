@@ -36,7 +36,7 @@
  "smokedGlass": {"color":"#0a0b0d","roughness":0.04,"opacity":0.62,"reflect":1.2},
  "ringGrey": {"color":"#5b5f66","roughness":0.6},
  "gasket": {"color":"#1a1a1a","roughness":0.8},
- "granite": {"color":"#ffffff","roughness":0.55,"clearcoat":0.15,"clearcoatRoughness":0.6,"reflect":0.5},
+ "granite": {"color":"#2a2b2d","roughness":0.55,"clearcoat":0.15,"clearcoatRoughness":0.6,"reflect":0.5,"speckle":{"size":256,"background":"#2a2b2d","count":5200,"dot":[0.6,1.4],"tile":250,"dots":[{"above":0.78,"color":"190,190,186","alpha":[0.2,0.3]},{"above":0.35,"color":"rgba(90,90,92,.6)"},{"above":-1,"color":"rgba(10,10,11,.7)"}]}},
  "blackMetal": {"color":"#141517","roughness":0.42,"metalness":0.45,"reflect":0.8},
  "applianceBody": {"color":"#3a3d42","roughness":0.6,"metalness":0.35,"plan":"#d6d8d6"},
  "zinc": {"color":"#b9bec4","roughness":0.32,"metalness":0.85,"reflect":1.1},

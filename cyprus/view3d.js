@@ -119,6 +119,21 @@ export function createView3d({ catalog, canvas, light, edges }) {
       m.map = canvasTexture(256, 256, (g, w, h) => { g.fillStyle = '#f2f2f2'; g.fillRect(0, 0, w, h); specks(g, w, h, d.strength, d.grain); }, false, `texture:${d.strength}:${d.grain}`);
       m.map.repeat.set(1 / d.tile, 1 / d.tile);
     },
+    /* a speckled stone (the sink's quartz composite): its ground, dots over it in layers (by chance: above a share, a colour,
+       its alpha), size the canvas in px, dot the dots' radius, tile the mm one canvas covers */
+    speckle(d, m) {
+      m.map = canvasTexture(d.size, d.size, (g, w, h) => {
+        g.fillStyle = d.background; g.fillRect(0, 0, w, h);
+        for (let i = 0; i < d.count; i++) {
+          const k = rnd(), L = /** @type {{ above: number, color: string, alpha?: number[] }[]} */ (d.dots).find(l => k > l.above);
+          if (!L) continue;
+          const a = L.alpha ? L.alpha[0] + rnd() * (L.alpha[1] - L.alpha[0]) : 1;
+          g.fillStyle = L.color.startsWith('rgba') ? L.color : `rgba(${L.color},${a})`;
+          g.beginPath(); g.arc(rnd() * w, rnd() * h, d.dot[0] + rnd() * (d.dot[1] - d.dot[0]), 0, 2 * Math.PI); g.fill();
+        }
+      }, true, 'speckle:' + d.background + ':' + d.count);
+      m.map.repeat.set(1 / d.tile, 1 / d.tile); m.color.set(0xffffff);
+    },
     chipboard(d, m, def) {
       const base = new THREE.Color(def.color);
       m.map = canvasTexture(256, 256, (g, w, h) => {
