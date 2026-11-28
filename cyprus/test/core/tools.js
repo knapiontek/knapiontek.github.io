@@ -47,5 +47,19 @@ export default async function (check) {
     check('twice: as it was (the mirror its own inverse)', JSON.stringify($.shapeToModel(M)) === JSON.stringify(S));
   }
 
+  /* --- use case: a module reads its file of a format (the house's model.json, a room's scene): checked, else it says where --- */
+  {
+    const data = { format: 'scene', version: 1, tiles: {} };
+    check('data of its format and version: given back', $.checkFormat(data, 'scene', 1, 'room: x.scene.json') === data);
+    let said = '';
+    try { $.checkFormat({ format: 'scene', version: 2 }, 'scene', 1, 'room: x.scene.json'); } catch (e) { said = String(e); }
+    check('another version: it throws, saying where and what it reads', said.includes('room: x.scene.json: scene 2, the code reads scene 1'));
+    const house = await $.readFormat(new URL('../../house/model.json', import.meta.url), 'house', 1, 'house: model.json');
+    check('a file read and checked (the house\'s model)', house.format === 'house' && Array.isArray(house.children));
+    said = '';
+    try { await $.readFormat(new URL('../../house/none.json', import.meta.url), 'house', 1, 'house: none.json'); } catch (e) { said = String(e); }
+    check('no file: it says where', said.includes('house: none.json: 404'));
+  }
+
   check('the API: every function in a use case' + (missing().length ? ': not ' + missing().join(', ') : ''), missing().length === 0);
 }

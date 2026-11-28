@@ -14,7 +14,7 @@
 // does, not how it is made: it asks the library (where a door's hinges go, a drawer's boards, the longest runner that fits,
 // how a trap fits) and checks that each product it needs is chosen and has what its drawing needs (faultsOf).
 
-import { pointToModel, partToModel } from '../core/tools.js';
+import { checkFormat, pointToModel, partToModel } from '../core/tools.js';
 import { bodyOf, boardOf, cutoutOf, drainOf, faultsOf, hingeHeights, hingePost, holeOf, innerOver, pullOutFit, runnerFit, runnerFor, shapeOf, systemDrawer, systemFor, trapFit } from '../library/shapes.js';
 
 /** @typedef {import('../types.js').Catalog} Catalog */
@@ -78,7 +78,7 @@ import { bodyOf, boardOf, cutoutOf, drainOf, faultsOf, hingeHeights, hingePost, 
 /** @typedef {Omit<HierarchyNode, 'children'> & { children?: CabinetNode[], parts?: import('../types.js').Part[] }} CabinetNode  a node of the furniture; parts: its bodies, in its axes */
 /** @typedef {import('../types.js').Part & { layer: string }} Body  a body in the design's axes of its group (y from the wall): a box or a cylinder */
 
-const VERSION = 1;   // of the format cabinets
+export const CABINETS = 1;   // of the format cabinets
 
 /* ================= the vocabulary (room/cabinets.md § 2) ================= */
 
@@ -295,7 +295,7 @@ function stack(widths, pieces) {
  * @returns {{ groups: CabinetNode[], layout: Group[], problems: Problem[] }}
  */
 export function cabinetsOf(file, catalog) {
-  if (file?.format !== 'cabinets' || file.version !== VERSION) throw new Error(`cabinets: ${file?.format} ${file?.version}, the code reads cabinets ${VERSION}`);
+  checkFormat(file, 'cabinets', CABINETS, 'cabinets');
   const stop = stops(file, catalog);
   if (stop.length) throw new Error('cabinets: ' + stop.join(' '));
   const settings = file.settings, materials = file.materials;

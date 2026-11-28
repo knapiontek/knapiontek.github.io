@@ -49,3 +49,19 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [ ] moving parts: doors, fronts, windows
 - [ ] cameras, sun, walk
 - [ ] docs: the physical rules (cabinets, tiles, products); `project.svg`, `flow.svg`, `types.svg`
+
+## Generalisation (a review: mechanisms written twice, to make one)
+
+Not now: after the prototype is carried over (much of it still to come). Order then: 3, 4, 9, 6 (cheap); 2 and 1 (the lining, with the house); 7, 8 and 5 change the data's format.
+
+- [ ] 1. A lining, one mechanism: a layer of a depth over a set of surfaces, holes for the openings, a rule of who runs on over whom at a corner, a pattern on its face (tiles, planks, none). Today twice: the house's EPS and facade written by hand as elements and regions (`model.json` `finishes`, `house/shapes.js` `applyFinish`), the room's tiles computed (`room/tiles.js` `tiledSurfaces`). One `lining(surfaces, depth, cornerRule, pattern)`, its slabs through `core/surfaces`, the pattern on the face: EPS, facade, tiles, a skirting or a splashback only data
+- [ ] 2. The room guesses what the house knows: `roomFacts` gives only the floor's rectangles and the openings' boxes; `room/tiles.js` rebuilds the walls (`wallsOf`) and guesses an opening (thinner than 600; a door: at the floor ±50). The house gives a room its walls as segments, each with the openings it hosts (kind, side)
+- [x] 3a. `room/tiles.js` on `core/geometry.js`: its clipping (`clipHalf`), area (`area2`), rectangles less holes (`rectMinus`)
+- [ ] 3. One 2D geometry, the rest: `core/geometry.js` (`clipHalf`, `rectMinus`, `mergeRects`, `area2`, `Line {a, s}`) and `room/tiles.js`'s own (`under`, `rectsMinus`, `areaOf`, `Line {p, q, c}`); `room/assembly.js` `minus(box, cuts)` beside `prismMinus` / `subtractAll`. One geometry, one form of a line (a half-plane)
+- [x] 4. One chance: `hash01` (`core/geometry.js`) for the tiles' rows and a tile's image and turn (the view's sequence of chances, the clouds, its own)
+- [ ] 5. Two axes (the design's, the model's: y mirrored): `partToModel` negates the matrix's row of y and turns the triangles, the data have mirrors of their own (the bath drawn inside out); every new form of a part must remember it. One right-handed system for the data and the model, a mirror only where the data come in. The biggest and riskiest
+- [ ] 6. Two ways to place a product: the cabinets by its `anchor` (point − anchor), the scenes' fixtures by its zero (at the wall, at its left end) and `front` → `turn`. One `place(product, point, front)` by its anchor
+- [ ] 7. Products drawn by code, not data: `library/shapes.js` `described`, some 25 functions (`mirror`, `wallCabinet`, `linearDrain`, `sink`, `hob`, `oven` …) beside 13 products shaped in their data (`shaped`); the lamps (`room/assembly.js` `lampOf`) not the library's products at all. A parametric shape in the data (sizes as expressions of `size` and `options`); code only for a maker's rules (hinge, runners, trap)
+- [ ] 8. A material as a language in strings: `board:<key>`, `tile:<p>:<img>:<UxV>`, `tile:<p>:edge`, `grout:#hex`, `metal`, made by every module and taken apart by `view3d.js`. A material as an object (`{ product, image, size }` / `{ color }`) or one resolver in the library
+- [x] 9a. One reader of a file of a format: `core/tools.js` `readFormat` / `checkFormat` (the house's model, the library's files, a room's scene and cabinets)
+- [ ] 9. Checking by a format's spec, the rest; was: reading and checking files four times: `format` / `version` + `fetch` in `house/assembly.js`, `room/cabinets.js`, `library/catalog.js`, `room/assembly.js`; the scene checked by throwing inside `assembleRooms` beside `tilesFaults` and `faultsOf`. One `readFormat(url, format, version)`, one check by a format's spec, a list of faults

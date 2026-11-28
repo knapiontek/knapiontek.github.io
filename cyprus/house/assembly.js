@@ -5,6 +5,7 @@
 // drawn of the house: house/shapes.js; of the site: its lawn round the house and its surfaces.
 
 import { createHierarchy } from '../core/hierarchy.js';
+import { readFormat } from '../core/tools.js';
 import { houseShapes } from './shapes.js';
 import { assembleRooms } from '../room/assembly.js';
 
@@ -23,10 +24,7 @@ const VERSION = 1;   // of model.json's format, house
  * @returns {Promise<{ hierarchy: ReturnType<typeof createHierarchy<HouseNode>>, problems: import('../room/assembly.js').RoomProblem[] }>}
  */
 export async function assembleHouse(catalog) {
-  const response = await fetch(new URL('model.json', import.meta.url));
-  if (!response.ok) throw new Error(`house: model.json: ${response.status}`);
-  const { format, version, ...root } = await response.json();
-  if (format !== 'house' || version !== VERSION) throw new Error(`house: model.json: ${format} ${version}, the code reads house ${VERSION}`);
+  const { format, version, ...root } = await readFormat(new URL('model.json', import.meta.url), 'house', VERSION, 'house: model.json');
   const house = /** @type {HouseNode} */ (root.children.find((/** @type {HouseNode} */ n) => n.id === 'house'));
   /** @type {Record<string, HouseType>} */
   const types = house.geometry.types;

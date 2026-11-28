@@ -10,13 +10,14 @@
 // it in files. Adds them under the room's node: the hierarchy grows from the house down. What reaches the ceiling (a hood's
 // chimney) is made as tall as the room over it.
 
-import { cabinetsOf } from './cabinets.js';
+import { CABINETS, cabinetsOf } from './cabinets.js';
 import { layTiles, pointOf, tiledSurfaces, under } from './tiles.js';
 
 const TOL = 0.5;   // mm
 
 import { bodyOf, formatsOf, tileOf } from '../library/shapes.js';
-import { pointToModel } from '../core/tools.js';
+import { hash01 } from '../core/geometry.js';
+import { pointToModel, readFormat } from '../core/tools.js';
 
 /** @typedef {import('../types.js').Catalog} Catalog */
 /** @typedef {import('../core/hierarchy.js').HierarchyNode} HierarchyNode */
@@ -26,7 +27,7 @@ import { pointToModel } from '../core/tools.js';
 const VERSION = 1;   // of the format scene
 /** @typedef {import('./tiles.js').Surface} Surface */
 /** a tile's number by chance, the same for the same tile @param {string} id */
-const hashOf = id => { let h = 2166136261; for (const c of id) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0; return h; };
+const hashOf = id => Math.floor(hash01(...[...id].map(c => c.charCodeAt(0))) * 2 ** 32);
 
 /**
  * A room's tiles, as its scene lays them over its surfaces (room/tiles.js: the floor, the walls, the faces of what is built
@@ -160,12 +161,8 @@ function minus(box, cuts) {
   return pieces;
 }
 
-/** a room's file, next to this module @param {string} name */
-async function read(name) {
-  const response = await fetch(new URL(name, import.meta.url));
-  if (!response.ok) throw new Error(`room: ${name}: ${response.status}`);
-  return response.json();
-}
+/** a room's file of a format, next to this module, checked @param {string} name @param {string} format @param {number} version */
+const read = (name, format, version) => readFormat(new URL(name, import.meta.url), format, version, `room: ${name}`);
 
 /**
  * What stands in every room with a scene, added under the room's node; the cabinets' problems, by room. A fault in a scene
@@ -179,8 +176,7 @@ export async function assembleRooms(H, catalog) {
   /** @type {RoomProblem[]} */
   const problems = [];
   for (const room of rooms) {
-    const scene = await read(`${room.id}.scene.json`);
-    if (scene.format !== 'scene' || scene.version !== VERSION) throw new Error(`room: ${room.id}.scene.json: ${scene.format} ${scene.version}, the code reads scene ${VERSION}`);
+    const scene = await read(`${room.id}.scene.json`, 'scene', VERSION);
     if (scene.metal !== undefined) room.settings = { ...room.settings, metal: scene.metal };
     if (scene.tiles !== undefined) {
       const faults = tilesFaults(scene.tiles, catalog);
@@ -207,7 +203,7 @@ export async function assembleRooms(H, catalog) {
       H.add(room, { id, name: l.kind === 'pendant' ? 'Pendant' : 'Downlight', type: 'lamp', layer: l.kind + 's', offset: [l.at[0], l.at[1], 0], size: [1, 1, ceiling], ...lampOf(l.kind, ceiling, l.bottom) });
     }
     if (!scene.cabinets) continue;
-    const built = cabinetsOf(await read(`${room.id}.cabinets.json`), catalog);
+    const built = cabinetsOf(await read(`${room.id}.cabinets.json`, 'cabinets', CABINETS), catalog);
     problems.push(...built.problems.map(p => ({ ...p, room: room.id })));
     for (const group of built.groups) {
       const n = group.id.slice(1), at = scene.cabinets[n];

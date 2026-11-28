@@ -6,6 +6,10 @@
 // room's surfaces to tile (its floor, its walls, the faces of what is built before the tiles), each the plane of the tiles' face.
 // Rectangles [x0, x1, y0, y1] in mm, in the room's axes. Knows no house, draws nothing.
 
+import { area2, clipHalf, hash01, rectMinus } from '../core/geometry.js';
+
+/** a polygon's area @param {number[][]} P */
+const areaOf = P => Math.abs(area2(/** @type {any} */ (P)));
 /** @typedef {[number, number, number, number]} Rect */
 /** @typedef {{ len: number, wid: number, joint: number, minCut: number[] }} TileSize  the tile as laid: len along dir, wid across */
 /** @typedef {{ p: number, q: number, c: number }} Line  a limit over a surface: p · u + q · v ≤ c (a sloped ceiling over a wall, over a casing's top) */
@@ -17,8 +21,6 @@
 export const SHIFT = { grid: 0, half: 1 / 2, third: 1 / 3, quarter: 1 / 4, random: null };
 const TOL = 0.5;   // mm: a thinner strip is no piece; a tile this short of its size is still whole
 
-/** a polygon's area @param {number[][]} P */
-const areaOf = P => Math.abs(P.reduce((s, p, i) => { const q = P[(i + 1) % P.length]; return s + p[0] * q[1] - q[0] * p[1]; }, 0)) / 2;
 /**
  * A rectangle [u0, u1, v0, v1] on the side of lines (p · u + q · v ≤ c each): its outline, counter-clockwise; null: nothing
  * there; the rectangle's own corners when no line cuts it.
@@ -27,20 +29,12 @@ const areaOf = P => Math.abs(P.reduce((s, p, i) => { const q = P[(i + 1) % P.len
 export function under(r, lines) {
   let P = [[r[0], r[2]], [r[1], r[2]], [r[1], r[3]], [r[0], r[3]]];
   for (const { p: a, q: b, c } of lines) {
-    const f = (/** @type {number[]} */ v) => c - a * v[0] - b * v[1], out = /** @type {number[][]} */ ([]);
-    for (let i = 0; i < P.length; i++) {
-      const p = P[i], q = P[(i + 1) % P.length], fp = f(p), fq = f(q);
-      if (fp >= 0) out.push(p);
-      if ((fp >= 0) !== (fq >= 0)) { const s = fp / (fp - fq); out.push([p[0] + s * (q[0] - p[0]), p[1] + s * (q[1] - p[1])]); }
-    }
-    P = out;
+    P = clipHalf(P, v => c - a * v[0] - b * v[1]);
     if (P.length < 3 || areaOf(P) < TOL) return null;
   }
   return P;
 }
 
-/** a row's shift at random, the same every time @param {number} k */
-const random = k => { const s = Math.sin(k * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
 
 /**
  * The floor's rectangles at the room's doors: of each opening at the floor (a box [x0, x1, y0, y1, h0, h1] in the room's
@@ -84,7 +78,7 @@ export function layTiles(rects, tile, lay) {
   /** @type {Map<string, number>} a tile's area laid */
   const laid = new Map();
   for (let k = Math.floor((b0 - ob) / pitchB) - 1; k <= Math.ceil((b1 - ob) / pitchB); k++) {
-    const tb0 = ob + k * pitchB, tb1 = tb0 + tile.wid, s = (shift === null ? random(k) : (((shift * k) % 1) + 1) % 1) * pitchA;
+    const tb0 = ob + k * pitchB, tb1 = tb0 + tile.wid, s = (shift === null ? hash01(k) : (((shift * k) % 1) + 1) % 1) * pitchA;
     for (let i = Math.floor((a0 - oa - s) / pitchA) - 1; i <= Math.ceil((a1 - oa - s) / pitchA); i++) {
       const ta0 = oa + s + i * pitchA, ta1 = ta0 + tile.len, id = `${k}:${i}`;
       for (const r of R) {
@@ -129,12 +123,7 @@ export function wallsOf(rects) {
 
 /** rectangles less holes, as rectangles @param {Rect[]} rects @param {Rect[]} holes @returns {Rect[]} */
 export function rectsMinus(rects, holes) {
-  return holes.reduce((rest, h) => rest.flatMap(r => {
-    if (h[0] >= r[1] - TOL || h[1] <= r[0] + TOL || h[2] >= r[3] - TOL || h[3] <= r[2] + TOL) return [r];
-    const x0 = Math.max(r[0], h[0]), x1 = Math.min(r[1], h[1]);
-    return /** @type {Rect[]} */ ([[r[0], x0, r[2], r[3]], [x1, r[1], r[2], r[3]], [x0, x1, r[2], Math.max(r[2], h[2])], [x0, x1, Math.min(r[3], h[3]), r[3]]])
-      .filter(q => q[1] - q[0] > TOL && q[3] - q[2] > TOL);
-  }), rects);
+  return holes.reduce((rest, h) => rest.flatMap(r => /** @type {Rect[]} */ (rectMinus(r, h))).filter(q => q[1] - q[0] > TOL && q[3] - q[2] > TOL), rects);   // no strip thinner than TOL
 }
 
 /**

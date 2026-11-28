@@ -1,6 +1,8 @@
 // @ts-check
 // library/catalog.js: the catalog (types.js: Catalog) from the library's JSON files, next to this one: the products by group, the
-// materials, the shops, the textures read by key when asked. The only code that knows the library's files. Calls nothing but fetch.
+// materials, the shops, the textures read by key when asked. The only code that knows the library's files (read by core/tools.js readFormat).
+
+import { readFormat } from '../core/tools.js';
 
 /** @typedef {import('../types.js').OpenCatalog} OpenCatalog */
 /** @typedef {import('../types.js').Product} Product */
@@ -17,11 +19,7 @@ const VERSION = 1;   // of every library format: catalog, products, materials, s
  * @returns {Promise<any>}
  */
 async function read(path, format) {
-  const response = await fetch(new URL(path, import.meta.url));
-  if (!response.ok) throw new Error(`library: ${path}: ${response.status}`);
-  const data = await response.json();
-  if (data.format !== format || data.version !== VERSION) throw new Error(`library: ${path}: ${data.format} ${data.version}, the code reads ${format} ${VERSION}`);
-  return data;
+  return readFormat(new URL(path, import.meta.url), format, VERSION, `library: ${path}`);
 }
 
 /** @param {any} data @returns {any} the data, frozen through: nothing changes it */
