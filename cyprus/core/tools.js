@@ -45,6 +45,16 @@ export const boxToModel = ([x0, x1, y0, y1, h0, h1]) => [x0, x1, -y1, -y0, h0, h
 const sectionToModel = poly => poly.map(([y, h]) => [-y, h]).reverse();
 
 /**
+ * A moving part of the design's axes in the model's: its pivot mirrored; a turn about x or h the other way, about y the same;
+ * a slide along y the other way, along x or h the same. Its axis kept (a unit along x, y or h).
+ * @param {import('../types.js').Mover} m @returns {import('../types.js').Mover}
+ */
+export function moverToModel(m) {
+  if (m.axis.filter(Boolean).length !== 1) throw new Error('tools: a mover along or about an axis not of x, y or h');
+  return { ...m, pivot: pointToModel(m.pivot), sign: /** @type {1 | -1} */ ((m.slide ? !m.axis[1] : !!m.axis[1]) ? m.sign : -m.sign) };
+}
+
+/**
  * A part of the design's axes in the model's.
  * @param {Part} p @returns {Part}
  */
@@ -74,10 +84,7 @@ export function shapeToModel(S) {
   return {
     size: S.size,
     parts: S.parts.map(partToModel),
-    movers: S.movers.map(m => {
-      if (m.axis.filter(Boolean).length !== 1) throw new Error('tools: a turn about an axis not along x, y or h');
-      return { ...m, pivot: pointToModel(m.pivot), sign: /** @type {1 | -1} */ (m.axis[1] ? m.sign : -m.sign) };
-    }),
+    movers: S.movers.map(moverToModel),
     lights: S.lights.map(l => ({ ...l, at: pointToModel(l.at), ...(l.target ? { target: pointToModel(l.target) } : {}) })),
     envelopes: S.envelopes.map(e => ({ ...e, box: boxToModel(e.box) })),
     ...(S.anchor ? { anchor: S.anchor } : {})   // in the design's axes, as the room places it

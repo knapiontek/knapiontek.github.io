@@ -6,7 +6,7 @@
 
 import { openCatalog } from '../../library/catalog.js';
 import * as API from '../../library/shapes.js';
-import { bodyOf, boardOf, cutoutOf, drainOf, faultsOf, formatsOf, hingeHeights, hingePost, holeOf, innerOver, lookOf, pullOutFit, runnerFit, runnerFor, shapeOf, systemDrawer, systemFor, tileOf, trapFit } from '../../library/shapes.js';
+import { bodyOf, boardOf, cutoutOf, drainOf, faultsOf, formatsOf, hingeHeights, hingePost, holeOf, innerOver, lookOf, pullOutFit, runnerFit, runnerFor, shapeOf, systemDrawer, systemFor, tileOf, trapFit, travelOf } from '../../library/shapes.js';
 
 /** @typedef {import('../../types.js').Shape} Shape */
 /** @typedef {import('../../types.js').Part} Part */
@@ -30,7 +30,7 @@ export default async function (check) {
     const unknown = [];
     for (const k of drawn) for (const p of shapes[k].parts) if (p.material !== 'metal' && !materials.has(p.material)) unknown.push(k + ': ' + p.material);
     check('materials: of materials.json, or metal' + (unknown.length ? ': not ' + [...new Set(unknown)].join(', ') : ''), unknown.length === 0);
-    const ROOM = ['freezer', 'fridge'];   // carried by the cabinet fronts
+    const ROOM = ['freezer', 'fridge', 'door'];   // the room's: carried by the cabinet fronts (a fridge's doors), a hinge's cup with the door it hangs
     check('movers: a part moves with a mover of its shape, or the room\'s', drawn.every(k => shapes[k].parts.every(p => !p.mover
       || shapes[k].movers.some(m => m.id === p.mover) || ROOM.includes(p.mover))));
     check('boxes: x0 < x1, y0 < y1, h0 < h1', drawn.every(k => shapes[k].parts.every(p => p.form !== 'box'
@@ -89,7 +89,7 @@ export default async function (check) {
   /** @template {(...a: any[]) => any} F @param {string} name @param {F} f @returns {F} */
   const api = (name, f) => /** @type {F} */ ((...a) => { used.add(name); return f(...a); });
   const $ = {
-    shapeOf: api('shapeOf', shapeOf), faultsOf: api('faultsOf', faultsOf), hingeHeights: api('hingeHeights', hingeHeights), hingePost: api('hingePost', hingePost),
+    shapeOf: api('shapeOf', shapeOf), faultsOf: api('faultsOf', faultsOf), hingeHeights: api('hingeHeights', hingeHeights), hingePost: api('hingePost', hingePost), travelOf: api('travelOf', travelOf),
     systemFor: api('systemFor', systemFor), systemDrawer: api('systemDrawer', systemDrawer), innerOver: api('innerOver', innerOver), runnerFor: api('runnerFor', runnerFor),
     runnerFit: api('runnerFit', runnerFit), pullOutFit: api('pullOutFit', pullOutFit), boardOf: api('boardOf', boardOf), cutoutOf: api('cutoutOf', cutoutOf),
     drainOf: api('drainOf', drainOf), holeOf: api('holeOf', holeOf), trapFit: api('trapFit', trapFit), lookOf: api('lookOf', lookOf), tileOf: api('tileOf', tileOf),
@@ -179,6 +179,12 @@ export default async function (check) {
 
   /* --- use case: a fixture the room builds to its own size --- */
   check('a fixture\'s body, the room\'s own sizes over the maker\'s', $.bodyOf(P('catalano-green-lux-60x40-white')).join() === '600,400,140' && $.bodyOf(P('catalano-green-lux-60x40-white'), { depth: 450 }).join() === '600,450,140');
+
+  /* --- use case: how far a fitting opens, as its maker gives it: the room moves its front or its drawer by it --- */
+  check('travelOf: a hinge its angle (Blum CLIP top 110°), a drawer system its length (TANDEMBOX antaro 500: out all the way), runners theirs', $.travelOf(catalog.product('blum-clip-top-blumotion-110-71b3550')) === 110
+    && $.travelOf(catalog.product('blum-tandembox-antaro-d-500')) === 500 && $.travelOf(catalog.product('hafele-ball-runners-494-02-183')) === 400);
+  check('a hinge: its cup and its hole\'s marker in the door turn with it (the door\'s mover), its plate and arm stand', of('blum-clip-top-blumotion-110-71b3550').parts.filter(p => p.mover === 'door').length === 3
+    && of('blum-clip-top-blumotion-110-71b3550').parts.some(p => !p.mover && p.form === 'box'));
 
   /* every function of the API in a use case: the module's exports, each */
   const missing = Object.keys(API).filter(k => !used.has(k));

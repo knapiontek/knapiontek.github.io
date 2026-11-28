@@ -18,6 +18,8 @@
  * @property {string[]} [refs]  the paths of the nodes it refers to (what for, its type says)
  * @property {string} [layer]  what it is, as the panel switches it; none: its parent's
  * @property {string} [floor]  the floor it is on; none: its parent's
+ * @property {import('../types.js').Mover[]} [movers]  its moving parts (a door's leaf, a cabinet's front): what names one moves with it
+ * @property {string} [mover]  it moves, all of it, with this mover: its own, or the nearest one round it (up its parents, then down)
  * @property {HierarchyNode[]} [children]
  */
 /** @typedef {{ name: string, about: string, items: string[], info?: boolean }} Check  OK when items is empty; info: to know, not to correct */

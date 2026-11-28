@@ -153,6 +153,34 @@ export default async function (check) {
     check('its inner floor faces up (seen from above), its bottom down', inner.up > 0 && inner.down === 0 && outer.down > 0 && outer.up === 0);
   }
 
+  /* --- use case: the kitchen's moving parts: a door turns by its hinge's angle, a drawer slides out by its runners' length,
+     the drawers behind a door wait for it; all opened and closed (no page: at once) --- */
+  {
+    const kitchen = /** @type {Node} */ (H.node('house/groundFloor/room_356'));
+    scene.show(H, kitchen);
+    const all = scene.movers(), key = (/** @type {string} */ end) => all.find(v => v.key.endsWith(end));
+    const door = key('K25/cabinet_1/front#door'), behind = key('K25/cabinet_1/drawer_1#drawer'), drawer = key('K11/drawer_1#drawer');
+    check('its moving parts: the fronts\' doors, the drawers, the appliances\' doors (' + all.length + ')', all.length > 10 && !!door && !!behind && !!drawer
+      && all.some(v => v.key.endsWith('#door') && !v.key.includes('/front#')));
+    check('a door: about h by its hinge\'s angle (110°); a drawer: along y by its system\'s length (500)', door?.m.travel === 110 && !door.m.slide && drawer?.m.slide === true && drawer.m.travel === 500);
+    if (door && behind && drawer) {
+      const at = drawer.pivot.position.clone();
+      scene.toggle(drawer);
+      check('a drawer opened: out by 500, toward the room', drawer.progress === 1 && Math.abs(drawer.pivot.position.distanceTo(at) - 500) < 1e-6);
+      scene.toggle(behind);
+      check('a drawer behind a closed door: the door opens first, the drawer waits', door.goal === 1 && behind.goal === 0);
+      scene.toggle(behind);
+      check('then it slides out', behind.progress === 1);
+      scene.toggle(door, false);
+      check('the door closed: what is behind it closes with it', door.progress === 0 && behind.progress === 0);
+      scene.toggleAll(true);
+      check('all opened', all.every(v => v.progress === 1));
+      scene.toggleAll(false);
+      check('all closed: back where they were drawn', all.every(v => v.progress === 0) && drawer.pivot.position.distanceTo(at) < 1e-6);
+    }
+    check('no page: no mover under a point', scene.moverAt(10, 10) === null);
+  }
+
   /* --- use case: the page without a canvas (a test, a worker): resize and the sun do nothing; closed, nothing left drawn --- */
   {
     scene.resize(); scene.sun({ az: 200, el: 40, k: 1, clouds: 0, night: false });

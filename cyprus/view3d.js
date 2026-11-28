@@ -213,12 +213,21 @@ export function createView3d({ catalog, canvas, light, edges }) {
   /** @type {{ light: any, layer?: string, floor?: string }[]} the lamps' lights, each of one group: lit at night, while its group shows */
   let LIGHTS = [];
   let showEdges = true, skipped = 0, pieceCount = 0, night = false;
+  /** @type {any} where what is drawn goes: the world, or a moving part's group */
+  let into = world;
+  /**
+   * The moving parts drawn: each a pivot (on its axis, in the branch's axes) and the group of what moves with it; how far open
+   * (progress 0 … 1, eased) and where it goes (goal); behind: the mover that opens first.
+   * @typedef {{ key: string, m: import('./types.js').Mover, pivot: any, axis: Vec3, progress: number, goal: number, behind: ViewMover | null, after: ViewMover[] }} ViewMover
+   */
+  /** @type {Map<string, ViewMover>} */
+  let MOVERS = new Map();
   /** @type {(key: string | undefined) => boolean} */
   let ON = () => true;
   function clear() {
     for (const o of [...world.children]) { world.remove(o); o.traverse((/** @type {any} */ x) => x.geometry?.dispose()); }
     for (const { light } of LIGHTS) { scene.remove(light); if (light.target) scene.remove(light.target); light.dispose(); }
-    MESHES = []; LINES = []; LIGHTS = []; GROUPS = new Map(); skipped = 0; pieceCount = 0;
+    MESHES = []; LINES = []; LIGHTS = []; GROUPS = new Map(); MOVERS = new Map(); skipped = 0; pieceCount = 0; into = world;
   }
   /** a group's key @param {string | undefined} layer @param {string | undefined} floor */
   const groupOf = (layer, floor) => { const k = (layer ?? '') + '|' + (floor ?? ''); if (!GROUPS.has(k)) GROUPS.set(k, { layer, floor }); return k; };
@@ -233,31 +242,83 @@ export function createView3d({ catalog, canvas, light, edges }) {
     /** @type {Cell[]} */ const still = [];
     /** @type {Map<string, Cell[]>} the solids of each moving part, apart: they turn on their own */
     const moving = new Map();
+    /** @type {Map<string, { part: Part, look: string, at: Frame, group: string }[]>} the other forms of each moving part */
+    const movingOther = new Map();
+    /** @type {Map<Node, import('./types.js').Shape | null>} each product's shape, once */
+    const SHAPES = new Map();
+    const shapeOfNode = (/** @type {Node} */ n) => {
+      if (!SHAPES.has(n)) { const product = n.product ? catalog.product(n.product) : null; SHAPES.set(n, product?.draw && !n.parts ? shapeOf(product, n.size.map(Math.abs), n.options) : null); }
+      return SHAPES.get(n) || null;
+    };
+    /** a node's movers: its own, its shape's @param {Node} n @returns {import('./types.js').Mover[]} */
+    const moversOf = n => [...(n.movers || []), ...(shapeOfNode(n)?.movers || [])];
+    /** the node that has the mover id, the nearest round n: n, else up its parents, in each the nearest below it; null: none @param {Node} n @param {string} id @returns {Node | null} */
+    const owner = (n, id) => {
+      for (let a = /** @type {Node | null} */ (n); a; a = h.parent(a)) {
+        const queue = [a];
+        while (queue.length) { const x = /** @type {Node} */ (queue.shift()); if (moversOf(x).some(m => m.id === id)) return x; queue.push(...(x.children || [])); }
+        if (a === node) break;
+      }
+      return null;
+    };
+    /** the moving part a node's things move with: the one named (id: the nearest of that id round it), else the one its parent's things move with @param {Node} n @param {string | undefined} id @param {string | undefined} inherited @returns {string | undefined} */
+    const moverKey = (n, id, inherited) => {
+      if (!id) return inherited;
+      const o = owner(n, id);
+      if (!o) return inherited;
+      const key = h.path(o) + '#' + id;
+      if (!MOVERS.has(key)) MOVERS.set(key, /** @type {any} */ ({ key, owner: o, id }));   // its pivot made once all is collected
+      return key;
+    };
+    /** @type {Map<Node, string | undefined>} the moving part each node moves with, all of it */
+    const NODE_MOVER = new Map();
     /** @param {Node} n */
     (function collect(n) {
-      const product = n.product ? catalog.product(n.product) : null;
-      const shape = product?.draw && !n.parts ? shapeOf(product, n.size.map(Math.abs), n.options) : null;   // a shape's size: its extent
+      const shape = shapeOfNode(n);
       const parts = n.parts || shape?.parts || null;
+      const nodeMover = moverKey(n, n.mover, n === node ? undefined : NODE_MOVER.get(/** @type {Node} */ (h.parent(n))));
+      NODE_MOVER.set(n, nodeMover);
       /** @type {Frame} n's axes in node's: its zero, its quarter turns */
       const at = { at: h.fromRoot(node, h.place(n)), turn: (h.turnOf(n) - h.turnOf(node) + 4) % 4 };
       for (const part of parts || []) {
         const look = part.material === 'metal' ? metalOf(n) : part.material;
         const group = groupOf(part.layer ?? h.layer(n), part.floor ?? h.floor(n));
-        const S = solidOf(part, at);
-        if (!S) { other(part, look, at, group); continue; }
+        const S = solidOf(part, at), key = part.mover ? moverKey(n, part.mover, nodeMover) : nodeMover;
+        if (!S) {
+          if (key) (movingOther.get(key) || movingOther.set(key, []).get(key))?.push({ part, look, at, group });
+          else other(part, look, at, group);
+          continue;
+        }
         const F2 = part.faces, eaves = part.eaves && at.turn === 0 ? part.eaves.map(y => y + at.at[1]) : undefined;
         /** @type {Cell} */
-        const cell = { S, group, edges: part.edges !== false, owner: n, part: part.mover ? h.path(n) + '#' + part.mover : undefined,
+        const cell = { S, group, edges: part.edges !== false, owner: n, part: part.mover ? h.path(n) + '#' + part.mover : undefined,   // a part of its own: its joint with the rest a line
           ...(F2 ? { faceMaterial: (/** @type {Vec3} */ v, /** @type {Vec3[]} */ pts) => faceLook(F2, eaves, v, pts) }
             : { material: look }),
           ...(part.raw ? { raw: part.raw, finish: part.finish } : {}) };
-        if (part.mover) { const k = h.path(n) + '#' + part.mover; (moving.get(k) || moving.set(k, []).get(k))?.push(cell); } else still.push(cell);
+        if (key) (moving.get(key) || moving.set(key, []).get(key))?.push(cell); else still.push(cell);
       }
       for (const l of /** @type {LampLight[]} */ (n.lights || shape?.lights || [])) lamp(l, at, groupOf(h.layer(n), h.floor(n)));
       (n.children || []).forEach(collect);
     })(node);
     draw(F.piecesOf(still));
-    for (const cells of moving.values()) draw(F.piecesOf(cells));
+    /* the moving parts: each a pivot on its axis (in the branch's axes), what moves with it in it, closed; one inside another's
+       node in that one's group (it moves with it) */
+    for (const v of /** @type {any[]} */ ([...MOVERS.values()])) {
+      const o = /** @type {Node} */ (v.owner), m = /** @type {import('./types.js').Mover} */ (moversOf(o).find(x => x.id === v.id));
+      const f = { at: h.fromRoot(node, h.place(o)), turn: (h.turnOf(o) - h.turnOf(node) + 4) % 4 };
+      Object.assign(v, { m, pivot: new THREE.Group(), inner: new THREE.Group(), axis: turned(m.axis, f.turn), progress: 0, goal: 0, behind: null, after: [], at: put(f, m.pivot) });
+      v.pivot.position.set(...v.at); v.inner.position.set(-v.at[0], -v.at[1], -v.at[2]); v.pivot.add(v.inner);
+      v.pivot.userData.mover = v;
+    }
+    for (const v of /** @type {any[]} */ ([...MOVERS.values()])) {
+      const up = NODE_MOVER.get(v.owner);   // the owner moves with another: its pivot in that one's group
+      (up && up !== v.key ? /** @type {any} */ (MOVERS.get(up)).inner : world).add(v.pivot);
+      if (v.m.behind) { const b = MOVERS.get(/** @type {string} */ (moverKey(v.owner, v.m.behind, undefined))); if (b) { v.behind = b; b.after.push(v); } }
+      into = v.inner;
+      draw(F.piecesOf(moving.get(v.key) || []));
+      for (const o of movingOther.get(v.key) || []) other(o.part, o.look, o.at, o.group);
+      into = world;
+    }
     world.updateMatrixWorld(true);
     visible(ON);
     resize();
@@ -297,7 +358,7 @@ export function createView3d({ catalog, canvas, light, edges }) {
     }
     for (const { cell, material: key, batch } of batches.values()) {
       const mesh = batch.mesh(material(key)), g = GROUPS.get(cell.group) || {};
-      world.add(mesh);
+      into.add(mesh);
       const finish = cell.finish && key !== cell.raw ? { layer: cell.finish, on: material(key), off: material(cell.raw) } : null;
       MESHES.push({ mesh, layer: g.layer, floor: g.floor, finish, base: mesh.material });
       Object.assign(mesh.userData, { layer: g.layer, floor: g.floor, material: key });
@@ -351,7 +412,7 @@ export function createView3d({ catalog, canvas, light, edges }) {
     }
     for (const v of out.values()) {
       const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(v.p, 3));
-      const mesh = new THREE.LineSegments(geo, edgeLook); world.add(mesh);
+      const mesh = new THREE.LineSegments(geo, edgeLook); into.add(mesh);
       const g = GROUPS.get(v.group) || {};
       LINES.push({ mesh, layer: g.layer, floor: g.floor, hideWhen: v.hideWhen.map(h => h.map(k => GROUPS.get(k) || {})) });
       Object.assign(mesh.userData, { layer: g.layer, floor: g.floor, hideWhen: v.hideWhen });
@@ -442,7 +503,7 @@ export function createView3d({ catalog, canvas, light, edges }) {
     if (p.form === 'faces') mesh.receiveShadow = true;
     const node = new THREE.Group();   /* the node's axes in the branch's */
     node.position.set(...at.at); node.rotation.z = at.turn * Math.PI / 2;
-    node.add(mesh); world.add(node);
+    node.add(mesh); into.add(node);
     const g = GROUPS.get(group) || {};
     MESHES.push({ mesh, layer: g.layer, floor: g.floor, finish: null, base: mesh.material });
     Object.assign(mesh.userData, { layer: g.layer, floor: g.floor, material: look });
@@ -509,6 +570,58 @@ export function createView3d({ catalog, canvas, light, edges }) {
   /** @type {any} */ let dayEnvironment = null;
   let frame = 0;
   function redraw() { if (renderer && !frame) frame = requestAnimationFrame(() => { frame = 0; renderer.render(scene, camera); }); }
+
+  /* ================= THE MOVING PARTS: opened and closed ================= */
+  const OPENING = 1.8;   // of the whole way, a second
+  const reducedMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;   // then at once
+  const ease = (/** @type {number} */ t) => t * t * (3 - 2 * t);
+  /** a mover where its progress puts it: slid along its axis, or turned about it @param {ViewMover} v */
+  function pose(v) {
+    const e = ease(v.progress), m = v.m;
+    if (m.slide) v.pivot.position.set(...v.axis.map((/** @type {number} */ a, /** @type {number} */ i) => /** @type {any} */ (v).at[i] + e * m.sign * m.travel * a));
+    else v.pivot.quaternion.setFromAxisAngle(new THREE.Vector3(...v.axis), e * m.sign * m.travel * Math.PI / 180);
+  }
+  let moving = 0, last = 0;
+  /** every mover a step toward its goal, till all are there @param {number} now */
+  function step(now) {
+    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0; last = now;
+    let busy = false;
+    for (const v of MOVERS.values()) if (v.progress !== v.goal) {
+      v.progress = reducedMotion ? v.goal : v.goal > v.progress ? Math.min(v.goal, v.progress + OPENING * dt) : Math.max(v.goal, v.progress - OPENING * dt);
+      pose(v); busy = busy || v.progress !== v.goal;
+    }
+    if (renderer) renderer.render(scene, camera);
+    moving = busy ? requestAnimationFrame(step) : 0;
+    if (!busy) last = 0;
+  }
+  const go = () => {
+    if (reducedMotion || typeof requestAnimationFrame !== 'function') { for (const v of MOVERS.values()) if (v.progress !== v.goal) { v.progress = v.goal; pose(v); } if (renderer) renderer.render(scene, camera); return; }   // at once: no frames (no page)
+    if (!moving) moving = requestAnimationFrame(step);
+  };
+  /**
+   * A moving part opened (on true), closed (false) or switched (none). One behind a closed one (a drawer behind its door) opens
+   * that one first; closing one closes what is behind it.
+   * @param {ViewMover} v @param {boolean} [on]
+   */
+  function toggle(v, on) {
+    const goal = on === undefined ? (v.goal ? 0 : 1) : on ? 1 : 0;
+    if (goal && v.behind && !v.behind.goal) { toggle(v.behind, true); return; }
+    v.goal = goal;
+    if (!goal) for (const a of v.after) toggle(a, false);
+    go();
+  }
+  /** every moving part opened (on) or closed @param {boolean} on */
+  function toggleAll(on) { for (const v of MOVERS.values()) v.goal = on ? 1 : 0; go(); }
+  /** the moving part under a point of the canvas (pixels from its top left), before anything else drawn; null: none @param {number} x @param {number} y @returns {ViewMover | null} */
+  function moverAt(x, y) {
+    if (!canvas) return null;
+    const r = canvas.getBoundingClientRect(), ray = new THREE.Raycaster();
+    ray.setFromCamera(new THREE.Vector2((x / r.width) * 2 - 1, -(y / r.height) * 2 + 1), camera);
+    const shown = MESHES.map(g => g.mesh).filter(m => { for (let o = m; o; o = o.parent) if (!o.visible) return false; return true; });
+    const hit = ray.intersectObjects(shown, false)[0];
+    for (let o = hit?.object; o; o = o.parent) if (o.userData.mover) return o.userData.mover;
+    return null;
+  }
   /** the sky behind: a gradient by day; by night a dark sky with stars @param {[number, string][] | null} gradient */
   function setSky(gradient) {
     if (!gradient) {
@@ -684,6 +797,9 @@ export function createView3d({ catalog, canvas, light, edges }) {
     /** the edges drawn, each a set of lines of one group */
     lines: () => LINES.map(l => l.mesh),
     /** what is drawn: the pieces of faces, the meshes, the sets of lines, parts of a form not drawn yet */
-    count: () => ({ pieces: pieceCount, meshes: MESHES.length, lines: LINES.length, skipped })
+    count: () => ({ pieces: pieceCount, meshes: MESHES.length, lines: LINES.length, skipped }),
+    /** the moving parts drawn: each by its key (its owner's path # its id), how far open (0 … 1) and where it goes */
+    movers: () => [...MOVERS.values()],
+    toggle, toggleAll, moverAt
   };
 }

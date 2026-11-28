@@ -319,8 +319,8 @@ function settle(S) {
   S.anchor = lo.map(v => -v);
   return S;
 }
-/** a hole's marker: a disc on the drilled face, 0.6 proud; a small one 12 across @param {ReturnType<typeof describe>} D @param {Vec} at @param {number} r @param {string} marker @param {Vec} axis */
-const marker = (D, at, r, marker, axis) => D.add({ form: 'cylinder', radius: [Math.max(r, 6), Math.max(r, 6)], length: 1, material: marker, at, axis, segments: 20, layer: 'holes' });
+/** a hole's marker: a disc on the drilled face, 0.6 proud; a small one 12 across @param {ReturnType<typeof describe>} D @param {Vec} at @param {number} r @param {string} marker @param {Vec} axis @param {string} [mover]  it moves with (a hole in a door) */
+const marker = (D, at, r, marker, axis, mover) => D.add({ form: 'cylinder', radius: [Math.max(r, 6), Math.max(r, 6)], length: 1, material: marker, at, axis, segments: 20, layer: 'holes' }, mover);
 
 /* ---------- a concealed hinge: its mounting plate and arm on the carcass's side, its cup in the door; their holes. Anchor: the
    side's face, the carcass's front, the hinge's height. options.hand: the side it is on (left: the carcass inside toward +x),
@@ -332,10 +332,10 @@ function hinge(A, { hand = 'left', gap = 2, edge = 0 }) {
   const P = A.plate, ph = P.height / 2, rc = A.cup.diameter / 2, cx = s * (edge + A.cup.fromEdge);
   D.box([...x(0, P.thickness), -P.fromFront[1], -P.fromFront[0], -ph, ph], 'zinc');   // the mounting plate
   D.box([...x(3, 20), -70, -2, -9, 9], 'zinc');                                    // the arm
-  D.cylinder(rc - 0.5, A.cup.inDoor, 'zinc', [cx, gap + A.cup.inDoor / 2, 0], Y);  // the cup, in the door
-  D.cylinder(24, 1.5, 'zinc', [cx, -1, 0], Y);
+  D.cylinder(rc - 0.5, A.cup.inDoor, 'zinc', [cx, gap + A.cup.inDoor / 2, 0], Y, 20, 'door');  // the cup, in the door: it turns with it (the door's mover, round the hinge)
+  D.cylinder(24, 1.5, 'zinc', [cx, -1, 0], Y, 20, 'door');
   for (const dh of [-P.holes.spacing / 2, P.holes.spacing / 2]) marker(D, [0, -P.holes.fromFront, dh], P.holes.diameter / 2, 'markerHinge', X);
-  marker(D, [cx, gap - 0.6, 0], rc, 'markerHinge', Y);
+  marker(D, [cx, gap - 0.6, 0], rc, 'markerHinge', Y, 'door');
   return settle(D.S);
 }
 /* ---------- a door's bumper in the carcass's front edge, up to the door; its hole. Anchor: its axis at the carcass's front.
@@ -455,6 +455,8 @@ export function hingeHeights(A, h0, h1, shelves, t) {
 }
 /** the depth of the post a hinge needs on a door short of the carcass's side @param {any} A */
 export const hingePost = A => /** @type {number} */ (A.post);
+/** how far it opens, as its maker gives it: a hinge its angle (degrees), a drawer's system or runners their length (mm: out all the way) @param {any} A @returns {number} */
+export const travelOf = A => /** @type {number} */ (A.draw === 'hinge' ? A.angle : A.length);
 
 /**
  * A drawer of a system: how high its bottom lies over the board under it (on the carcass's bottom, or over another), and its
@@ -542,10 +544,10 @@ const NEEDS = {
   trap: ['drain.diameter', 'drop', 'reach', 'outlet.height', 'outlet.length', 'outlet.diameter', 'outlet.socket'],
   basin: ['body.width', 'body.depth', 'body.height', 'wall', 'shelf', 'material', 'holes'],
   hinge: ['cup.diameter', 'cup.depth', 'cup.fromEdge', 'cup.inDoor', 'plate.height', 'plate.thickness', 'plate.fromFront', 'plate.holes.diameter', 'plate.holes.depth',
-    'plate.holes.fromFront', 'plate.holes.spacing', 'fromEnd', 'perDoor', 'post'],
+    'plate.holes.fromFront', 'plate.holes.spacing', 'fromEnd', 'perDoor', 'post', 'angle'],
   bumper: ['hole.diameter', 'hole.depth'],
   drawerSystem: ['box.sideHeight', 'box.backHeight', 'box.bottom.inset', 'box.bottom.depth', 'box.bottom.fromBack', 'box.back.inset', 'box.lift.bottom', 'box.lift.above',
-    'holes.diameter', 'holes.depth', 'holes.fromFront', 'holes.belowDrawer', 'sideFromCarcass', 'sideThickness', 'fromBack', 'fromFront'],
+    'holes.diameter', 'holes.depth', 'holes.fromFront', 'holes.belowDrawer', 'sideFromCarcass', 'sideThickness', 'fromBack', 'fromFront', 'length'],
   ballRunners: ['length', 'height', 'clearance', 'holes.diameter', 'holes.depth', 'holes.fromFront', 'holes.aboveBottom'],
   pullOutRunners: ['length', 'clearance', 'holes.diameter', 'holes.depth', 'holes.fromFront', 'holes.belowShelf'],
   shelfPin: ['hole.diameter', 'hole.depth', 'belowShelf'],

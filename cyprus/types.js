@@ -34,7 +34,7 @@
  * @property {string} material  a key of materials.json; 'board:' and a board's key: the board of the library (its decor, lacquer or colour); or 'metal': the fittings' metal, set by Finish
  * @property {string} [layer]  its own layer, before its node's
  * @property {string} [floor]  its own floor, before its node's (what lies over both floors, split)
- * @property {string} [mover]  the id of the moving part it moves with: one of the shape's movers, or one the room gives (a fridge door carried by a cabinet front); none: it stands
+ * @property {string} [mover]  the id of the moving part it moves with: one of the shape's movers, or the nearest one round its node (up its parents, then down: a hinge's cup with the door it hangs; a fridge's door with the front on it); none: it stands
  * @property {number[]} [box]  box: [x0, x1, y0, y1, h0, h1]
  * @property {number[]} [x]  prism: [x1, x2], along x
  * @property {number[][]} [poly]  prism: its section, a convex polygon of [y, h] points, counter-clockwise
@@ -65,7 +65,7 @@
  * @property {number} [segments]  round forms: the facets round
  * @property {false} [edges]  false: drawn without its edges (the lawn)
  */
-/** @typedef {{ id: string, pivot: Vec, axis: Vec, sign: 1 | -1, travel: number }} Mover  a moving part: turning about the axis through its pivot, toward sign, travel degrees */
+/** @typedef {{ id: string, pivot: Vec, axis: Vec, sign: 1 | -1, travel: number, slide?: true, behind?: string }} Mover  a moving part: turning about the axis through its pivot, toward sign, travel degrees; slide: along the axis, travel mm (a drawer); behind: a mover that opens first (a door before the drawers behind it) */
 /** @typedef {{ kind: 'spot' | 'point', at: Vec, target?: Vec, color: string, intensity: number, distance: number, angle?: number, penumbra?: number, decay: number, shadow: boolean }} Light  a light a product carries, lit at night */
 /** @typedef {{ box: number[], name: string }} Envelope  a box documents give the sizes of: [x0, x1, y0, y1, h0, h1] */
 /** @typedef {{ size: Vec, parts: Part[], movers: Mover[], lights: Light[], envelopes: Envelope[], anchor?: Vec }} Shape  a product as drawn: size, its outer box; anchor: the point the room places it by (none: its zero) */

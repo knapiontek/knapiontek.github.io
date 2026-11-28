@@ -14,8 +14,8 @@
 // does, not how it is made: it asks the library (where a door's hinges go, a drawer's boards, the longest runner that fits,
 // how a trap fits) and checks that each product it needs is chosen and has what its drawing needs (faultsOf).
 
-import { checkFormat, pointToModel, partToModel } from '../core/tools.js';
-import { bodyOf, boardOf, cutoutOf, drainOf, faultsOf, hingeHeights, hingePost, holeOf, innerOver, pullOutFit, runnerFit, runnerFor, shapeOf, systemDrawer, systemFor, trapFit } from '../library/shapes.js';
+import { checkFormat, moverToModel, pointToModel, partToModel } from '../core/tools.js';
+import { bodyOf, boardOf, cutoutOf, drainOf, faultsOf, hingeHeights, hingePost, holeOf, innerOver, pullOutFit, runnerFit, runnerFor, shapeOf, systemDrawer, systemFor, trapFit, travelOf } from '../library/shapes.js';
 
 /** @typedef {import('../types.js').Catalog} Catalog */
 /** @typedef {import('../core/hierarchy.js').HierarchyNode} HierarchyNode */
@@ -418,7 +418,7 @@ export function cabinetsOf(file, catalog) {
 function groupNode(G, C, warn) {
   const { settings, materials, thickness } = C;
   const { carcassBack, carcassFront, frontFace, plinthFace, panelFace } = G.geometry;
-  /** @typedef {{ id: string, name: string, type: string, box: number[], layer?: string, item?: Item, children: Draft[], bodies: Body[], product?: string, options?: Record<string, any>, ceiling?: boolean }} Draft */
+  /** @typedef {{ id: string, name: string, type: string, box: number[], layer?: string, item?: Item, children: Draft[], bodies: Body[], product?: string, options?: Record<string, any>, ceiling?: boolean, movers?: import('../types.js').Mover[], mover?: string }} Draft  movers: its moving parts (design's axes, from its box's corner); mover: it moves, all of it, with this one */
   /** @param {string} id @param {string} name @param {string} type @param {number[]} box @param {Item} [item] @returns {Draft} */
   const draft = (id, name, type, box, item) => ({ id, name, type, box, ...(LAYER[type] ? { layer: LAYER[type] } : {}), ...(item ? { item } : {}), children: [], bodies: [] });
   /** a board of a use: its body @param {Draft} d @param {string} use @param {number[]} box @param {string} [layer] */
@@ -439,6 +439,8 @@ function groupNode(G, C, warn) {
   const fit = (d, kind, point, layer, options) => { d.children.push(product(kind, settings.hardware[kind], point, layer, options)); };
   /** an appliance placed (settings.appliances: its product) @param {string} role @param {number[]} point @param {string} layer @param {Record<string, any>} [options] */
   const appliance = (role, point, layer, options) => product({ fridgeFreezer: 'fridge' }[role] || role, settings.appliances[role].product, point, layer, options);
+  /** a drawer: all of it slides out toward the front by travel (its runners' length); behind: what opens first (its door) @param {Draft} d @param {number} travel @param {string} [behind] */
+  const slides = (d, travel, behind) => { d.movers = [{ id: 'drawer', pivot: [0, 0, 0], axis: [0, 1, 0], sign: 1, travel, slide: true, ...(behind ? { behind } : {}) }]; d.mover = 'drawer'; };
   /** its own box, as one board of its use @param {Draft} d @param {string} use */
   const whole = (d, use) => board(d, use, d.box);
   /**
@@ -480,6 +482,7 @@ function groupNode(G, C, warn) {
       fit(d, kind, [innerX0, carcassBack, h], 'drawers', { width, depth });
     };
     const bottomH = m.h0 + systemDrawer(S, m.h0 === c.h0, width, tb).lift;
+    slides(d, travelOf(S));
     drawer(kind, S, bottomH);
     if (hasTag(m, 'bins') && settings.hardware.bins) fit(d, 'bins', [innerX0, carcassBack, bottomH + tb], 'drawers', { width, depth });   /* waste bins in it */
     if (hasTag(m, 'innerDrawer')) drawer('innerDrawer', C.hardware('innerDrawer'), bottomH + innerOver(S, C.hardware('innerDrawer')));   /* an inner drawer over it */
@@ -501,11 +504,14 @@ function groupNode(G, C, warn) {
     const { length, gap } = runnerFit(R), x0 = (right ? c.x0 + t : spacer[1]) + gap, x1 = (right ? spacer[0] : c.x1 - t) - gap, y0 = y1 - length, pitch = (hi - lo) / S.count;
     for (let j = 0; j < S.count; j++) {
       const h = Math.round(lo + S.lift + j * pitch), top = h + tb + S.sideHeight;
-      board(d, 'drawerBox', [x0, x1, y1 - tb, y1, h, top], 'drawers');
-      board(d, 'drawerBox', [x0 + tb, x1 - tb, y0, y1 - tb, h, h + tb], 'drawers');
-      for (const sx of [x0, x1 - tb]) board(d, 'drawerBox', [sx, sx + tb, y0, y1 - tb, h, top], 'drawers');
-      board(d, 'drawerBox', [x0 + tb, x1 - tb, y0, y0 + tb, h + tb, top], 'drawers');
-      d.children.push(product('runner', C.runnerKey(R), [x0, y0, h + tb + 20], 'hardware', { width: x1 - x0 }));
+      const b = draft('drawer', 'Drawer behind the door', 'drawer', [x0, x1, y0, y1, h, top]);
+      slides(b, travelOf(R), 'door');
+      board(b, 'drawerBox', [x0, x1, y1 - tb, y1, h, top], 'drawers');
+      board(b, 'drawerBox', [x0 + tb, x1 - tb, y0, y1 - tb, h, h + tb], 'drawers');
+      for (const sx of [x0, x1 - tb]) board(b, 'drawerBox', [sx, sx + tb, y0, y1 - tb, h, top], 'drawers');
+      board(b, 'drawerBox', [x0 + tb, x1 - tb, y0, y0 + tb, h + tb, top], 'drawers');
+      b.children.push(product('runner', C.runnerKey(R), [x0, y0, h + tb + 20], 'hardware', { width: x1 - x0 }));
+      d.children.push(b);
     }
   };
   /**
@@ -520,15 +526,32 @@ function groupNode(G, C, warn) {
     const { length, gap } = runnerFit(R), x0 = c.x0 + t + gap, x1 = c.x1 - t - gap, y1 = carcassFront - B.setback, y0 = y1 - length;
     const h = m.h0 + (m.h0 === c.h0 ? t : 0) + B.lift, top = h + tb + B.sideHeight;
     if (top > boards.spaceAround(m.h0, m.h1).hi) warn(`${placeOf(m)}: the drawer's box reaches ${top}, over the board above it.`, m.index);
+    slides(d, travelOf(R));
     board(d, 'drawerBox', [x0, x1, y0, y1, h, h + tb], 'drawers');
     for (const sx of [x0, x1 - tb]) board(d, 'drawerBox', [sx, sx + tb, y0, y1, h + tb, top], 'drawers');
     for (const [b0, b1] of [[y1 - tb, y1], [y0, y0 + tb]]) board(d, 'drawerBox', [x0 + tb, x1 - tb, b0, b1, h + tb, top], 'drawers');
     d.children.push(product('runner', C.runnerKey(R), [x0, y0, h + tb + 20], 'hardware', { width: x1 - x0 }));
   };
-  /** a module's front, less its gaps, in the plane of the fronts: a shaker's frame round a recessed panel, else one board @param {Draft} d @param {Item} i */
+  /**
+   * A module's front, less its gaps, in the plane of the fronts: a node of its own (front), a shaker's frame round a recessed
+   * panel, else one board; its handle. It moves as it opens: a door turns about its hinges' side by the hinge's angle (its
+   * mover door); a fridge's or a dishwasher's front with the appliance's door under it (fridge, freezer; door); a drawer's
+   * with its drawer.
+   * @param {Draft} d @param {Item} i
+   */
   const front = (d, i) => {
     if (!FRONT_TYPES.includes(i.type) || hasTag(i, 'open') || !i.gaps) return;
     const x0 = i.x0 + i.gaps.left, x1 = i.x1 - i.gaps.right, h0 = i.h0 + i.gaps.bottom, h1 = i.h1 - i.gaps.top, y0 = frontFace - C.frontThickness, y1 = frontFace;
+    const f = draft('front', 'Front', 'front', [x0, x1, y0, y1, h0, h1]), opening = openingOf(i);
+    if (opening === 'door' && HINGE_SIDES.includes(i.hinge)) {
+      const left = i.hinge === 'left';
+      f.movers = [{ id: 'door', pivot: [left ? 0 : x1 - x0, y1 - y0, 0], axis: [0, 0, 1], sign: left ? 1 : -1, travel: travelOf(C.hardware('hinge')) }];
+      f.mover = 'door';
+    }
+    else if (opening === 'fridge') f.mover = hasTag(i, 'freezer') ? 'freezer' : 'fridge';
+    else if (opening === 'dishwasher') f.mover = 'door';
+    d.children.push(f);
+    d = f;
     const w = C.frameWidth(i.type), part = (/** @type {number[]} */ b) => board(d, i.type, b, 'doorsAndDrawers');
     if (!w || x1 - x0 <= 2 * w + 20 || h1 - h0 <= 2 * w + 20) part([x0, x1, y0, y1, h0, h1]);
     else {
@@ -711,6 +734,7 @@ function groupNode(G, C, warn) {
       ...(layer !== d.layer ? { layer } : {}) }));
     return { id: d.id, name: d.name, type: d.type, offset: pointToModel(at.map((v, k) => v - zero[k])), size: pointToModel([x1 - x0, y1 - y0, h1 - h0]),
       ...(d.layer ? { layer: d.layer } : {}), ...(d.product ? { product: d.product } : {}), ...(d.options ? { options: d.options } : {}), ...(d.ceiling ? { ceiling: true } : {}),
+      ...(d.movers ? { movers: d.movers.map(moverToModel) } : {}), ...(d.mover ? { mover: d.mover } : {}),
       ...(parts.length ? { parts } : {}), ...(d.children.length ? { children: d.children.map(c => node(c, at)) } : {}) };
   };
   return node(group, [0, 0, 0]);

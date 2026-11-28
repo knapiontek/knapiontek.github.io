@@ -92,7 +92,7 @@ page('sketch', {
     const none = () => {};
     return {
       '3d': [this.scope === 'house' ? [{ name: 'Walk', cls: 'walk', go: none }] : [],
-        [{ name: 'Open', go: none }], [{ name: 'Front', go: () => PLOT?.view('front') }, { name: 'Garden', go: () => PLOT?.view('garden') }, { name: 'Above', go: () => PLOT?.view('above') }]],
+        [{ name: this.opened ? 'Close' : 'Open', pressed: this.opened, go: () => { this.opened = !this.opened; PLOT?.toggleAll(this.opened); } }], [{ name: 'Front', go: () => PLOT?.view('front') }, { name: 'Garden', go: () => PLOT?.view('garden') }, { name: 'Above', go: () => PLOT?.view('above') }]],
       '2d': [[{ name: 'Save SVG', go: none }]],
       documents: [[{ name: 'Save XLSX', go: none }]],
       cabinets: [[{ name: 'Import', go: none }, { name: 'Export', go: none }], [{ name: 'Show in 3D', go: none }]]
@@ -109,7 +109,17 @@ page('sketch', {
     const catalog = await openCatalog(), { hierarchy: site } = await assembleHouse(catalog);
     const house = /** @type {any} */ (site.node('house'));
     SITE = site;
-    PLOT = createView3d({ catalog, canvas: /** @type {HTMLCanvasElement} */ (document.getElementById('gl')), light: view.light, edges: view.edges });
+    const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('gl'));
+    PLOT = createView3d({ catalog, canvas, light: view.light, edges: view.edges });
+    /* a click (no drag: a drag turns the view) opens or closes the moving part under it: a door, a drawer, a front */
+    let down = /** @type {{ x: number, y: number } | null} */ (null);
+    canvas.addEventListener('pointerdown', e => { down = e.button === 0 ? { x: e.offsetX, y: e.offsetY } : null; });
+    canvas.addEventListener('pointerup', e => {
+      if (!down || e.button !== 0 || Math.hypot(e.offsetX - down.x, e.offsetY - down.y) > 4) return;
+      const v = PLOT?.moverAt(e.offsetX, e.offsetY);
+      if (v) PLOT?.toggle(v);
+      down = null;
+    });
     PLOT.show(site, house);
     PLOT.sun(SUN.state);
     this.onLayers();

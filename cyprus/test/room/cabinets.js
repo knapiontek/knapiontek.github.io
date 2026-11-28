@@ -63,14 +63,15 @@ export default async function (check) {
     const k11b = (k11?.parts || []).filter(p => p.form === 'box' && !p.layer).map(p => /** @type {number[]} */ (p.box));
     check('K11: two sides 18 thick, the whole carcass high, from its back (y 0) to its front (y −550)', k11b.filter(b => b[1] - b[0] === 18 && b[5] - b[4] === 720 && b[2] === -550 && b[3] === 0).length === 2);
     check('K11 under the hob: the front rail on edge, 50; the panel under the hob', k11b.some(b => b[5] === 720 && b[4] === 670 && b[2] === -550) && (k11?.parts || []).some(p => p.material === 'board:egger-u708-st9-16'));
-    const front = (at(g1, 'worktop/K11/drawer_1')?.parts || []).filter(p => p.layer === 'doorsAndDrawers');
+    const fn = at(g1, 'worktop/K11/drawer_1/front'), o = fn?.offset || [0, 0, 0];   // the front: a node of its own in its drawer; its boards in the drawer's axes
+    const front = (fn?.parts || []).filter(p => p.layer === 'doorsAndDrawers').map(p => ({ ...p, box: /** @type {number[]} */ (p.box).map((v, k) => v + o[k >> 1]) }));
     check('a shaker front: its frame of four rails and its panel, recessed; less its gaps (3 at the sides and the top)', front.length === 5
       && Math.min(...front.map(p => /** @type {number[]} */ (p.box)[0])) === 3 && Math.max(...front.map(p => /** @type {number[]} */ (p.box)[1])) === 797 && Math.max(...front.map(p => /** @type {number[]} */ (p.box)[5])) === 417);
     check('the fronts in their plane: 2 before the carcass, 18 thick (y −552 – −570)', front.every(p => /** @type {number[]} */ (p.box)[2] >= -570 && /** @type {number[]} */ (p.box)[3] <= -552));
     check('K23: a back behind its doors, fixed shelf at the joint, shelves behind the doors', (at(g2, 'plasterboard_1/K23')?.parts || []).filter(p => p.layer === 'backs').length === 1
       && (at(g2, 'plasterboard_1/K23')?.parts || []).filter(p => p.layer === 'shelves' && p.material.startsWith('board:')).length === 1 + 1 + 3);
     check('the worktop open at the sink\'s and the hob\'s cut-outs (their makers\')', (at(g1, 'worktop')?.parts || []).length > 4);
-    check('drawers behind K25\'s door: two boxes of 5 boards', (at(g2, 'plasterboard_1/K25/cabinet_1')?.parts || []).filter(p => p.layer === 'drawers').length === 2 * 5);
+    check('drawers behind K25\'s door: two boxes of 5 boards', ['drawer_1', 'drawer_2'].every(id => (at(g2, 'plasterboard_1/K25/cabinet_1/' + id)?.parts || []).filter(p => p.layer === 'drawers').length === 5));
   }
 
   /* --- use case: the appliances in their places: each a node of the library's product, placed by its anchor --- */

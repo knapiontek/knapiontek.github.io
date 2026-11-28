@@ -61,5 +61,14 @@ export default async function (check) {
     check('no file: it says where', said.includes('house: none.json: 404'));
   }
 
+  /* --- use case: a cabinet's front and drawer designed from the wall, taken into the model --- */
+  {
+    const door = $.moverToModel({ id: 'door', pivot: [0, 570, 0], axis: [0, 0, 1], sign: 1, travel: 110 });
+    check('a door hinged on the left: its pivot mirrored, its turn about h the other way', door.pivot.join() === '0,-570,0' && door.sign === -1 && door.travel === 110);
+    const drawer = $.moverToModel({ id: 'drawer', pivot: [0, 0, 0], axis: [0, 1, 0], sign: 1, travel: 500, slide: true });
+    check('a drawer out toward the front: along y the other way (the front at negative y)', drawer.sign === -1 && drawer.slide === true);
+    check('a flap about x: the other way', $.moverToModel({ id: 'flap', pivot: [0, 0, 0], axis: [1, 0, 0], sign: -1, travel: 90 }).sign === 1);
+  }
+
   check('the API: every function in a use case' + (missing().length ? ': not ' + missing().join(', ') : ''), missing().length === 0);
 }
