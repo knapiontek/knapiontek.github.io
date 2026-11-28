@@ -7,6 +7,8 @@ import { page, sunStore } from './core/ui.js';
 import { openCatalog } from './library/catalog.js';
 import { assembleHouse } from './house/assembly.js';
 import { createView3d } from './view3d.js';
+import { bookOf } from './docs.js';
+import { houseSheets } from './house/docs.js';
 
 /** @typedef {import('./core/ui.js').LayerTree} LayerTree */
 /** @typedef {import('./core/ui.js').MenuItem} MenuItem */
@@ -44,6 +46,12 @@ let PLOT = null;
 let SITE = null;
 /** @type {Record<string, string[]>} a layer's key, and the keys of the layers above it in the panel */
 const ABOVE = {};
+/** @type {import('./types.js').Catalog | null} */
+let CATALOG = null;
+/** @type {import('./room/assembly.js').RoomProblem[]} what is wrong in the rooms' cabinets files */
+let PROBLEMS = [];
+/** @type {{ set: (b: import('./docs.js').Book) => void, restore: () => void, xlsx: (file: string) => Promise<void> } | null} the Documents screen, once it is up */
+let SHEETS = null;
 
 page('sketch', {
   key: 'cyprus-sketch',
@@ -80,6 +88,20 @@ page('sketch', {
     this.state.floor = floor; this.state.room = room;
     if (this.modeOff(this.mode)) this.state.mode = '3d';
     if (this.tabOff(this.state.tab)) this.state.tab = 'view';
+    if (this.mode === 'documents') this.documents();
+  },
+  /* Documents: the book of what is shown (docs.js): the house, a floor, a room; its checks: the hierarchy's, the cabinets' files' */
+  docs: /** @type {import('./docs.js').Docs | null} */ (null),
+  documents() {
+    if (!SITE) return;
+    const path = ['house', this.state.floor, this.state.room].filter(Boolean).join('/'), node = SITE.node(path) || SITE.node('house');
+    const problems = PROBLEMS.filter(p => !this.state.room || p.room === this.state.room);
+    const checks = [...SITE.checks({ layers: Object.keys(ABOVE), floors: SKETCH.floors.map(f => f.id) }),
+      { name: 'Cabinets: what is wrong in their files', about: 'A fault in a component of a cabinets file: built without it (skipped) or as it could be.', items: problems.map(p => `${p.room}: ${p.text}${p.skipped ? ' (skipped)' : ''}`) }];
+    const own = this.scope === 'house' && CATALOG ? houseSheets(/** @type {any} */ (node), CATALOG, /** @type {any} */ (SITE)) : [];   // the house: its rooms, tiles, doors, notes
+    const book = bookOf(SITE, /** @type {any} */ (node), this.title, checks, own);
+    if (SHEETS && this.docs) SHEETS.set(book);
+    else this.docs = { title: this.title, subtitle: this.subtitle, book, ready: (/** @type {NonNullable<typeof SHEETS>} */ s) => { SHEETS = s; } };
   },
   /* greyed where they do not apply: Cabinet, a room with furniture only; Finish, a floor or a room */
   /** @param {string} m */
@@ -94,7 +116,7 @@ page('sketch', {
       '3d': [this.scope === 'house' ? [{ name: 'Walk', cls: 'walk', go: none }] : [],
         [{ name: this.opened ? 'Close' : 'Open', pressed: this.opened, go: () => { this.opened = !this.opened; PLOT?.toggleAll(this.opened); } }], [{ name: 'Front', go: () => PLOT?.view('front') }, { name: 'Garden', go: () => PLOT?.view('garden') }, { name: 'Above', go: () => PLOT?.view('above') }]],
       '2d': [[{ name: 'Save SVG', go: none }]],
-      documents: [[{ name: 'Save XLSX', go: none }]],
+      documents: [[{ name: 'Save XLSX', go: () => { SHEETS?.xlsx((this.state.room || this.state.floor || 'house') + '.xlsx'); } }, { name: 'Restore data', go: () => SHEETS?.restore() }]],
       cabinets: [[{ name: 'Import', go: none }, { name: 'Export', go: none }], [{ name: 'Show in 3D', go: none }]]
     };
   },
@@ -106,7 +128,8 @@ page('sketch', {
     (function above(/** @type {LayerTree} */ t, /** @type {string[]} */ up) {
       for (const [k, l] of Object.entries(t)) { ABOVE[k] = up; if (typeof l !== 'string') above(l.layers, [...up, k]); }
     })(Object.fromEntries(Object.values(layers).flatMap(b => Object.entries(b.layers))), []);
-    const catalog = await openCatalog(), { hierarchy: site } = await assembleHouse(catalog);
+    const catalog = await openCatalog(), { hierarchy: site, problems } = await assembleHouse(catalog);
+    PROBLEMS = problems; CATALOG = catalog;
     const house = /** @type {any} */ (site.node('house'));
     SITE = site;
     const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('gl'));
@@ -123,6 +146,7 @@ page('sketch', {
     PLOT.show(site, house);
     PLOT.sun(SUN.state);
     this.onLayers();
+    if (this.mode === 'documents') this.documents();
   },
   /** a layer or a floor is on when it and every layer above it in the panel are; none: on @param {string | undefined} k */
   on(k) { return !k || [...(ABOVE[k] || []), k].every(a => this.state.layers[a] !== false); },
@@ -133,5 +157,5 @@ page('sketch', {
     PLOT.edges(this.on('edges'));
   },
   /** @param {string} m */
-  onMode(m) { if (m === '3d') PLOT?.resize(); }
+  onMode(m) { if (m === '3d') PLOT?.resize(); if (m === 'documents') this.documents(); }
 });

@@ -18,7 +18,7 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] library/shapes: a product as parts in its own axes (`shapeOf`), materials by key or `metal` (Finish); its test
 
 ## Next
-- [ ] `view3d.js`: moving parts (doors' hinge sense to check), the granite's speckle; the site in the House view
+- [ ] `view3d.js`: the granite's speckle; the site in the House view
 - [x] cabinets, stage 1: the hierarchy's quarter turns (`turn`), sizes to the opposite corner; the design's axes to the model's (`core/tools.js`, y → −y); products in them
 - [x] cabinets, stage 2: `room/cabinets.js` (the layout: columns, stack, carcasses, kinds; the tree: carcasses under the worktop or the plasterboard, measured from it), `room/assembly.js` (the scene places the groups), the kitchen's `room_356.cabinets.json` and `room_356.scene.json`; their tests
 - [x] cabinets, stage 3: the bodies: carcass boards (sides, rails, tops, backs, shelves, inset panels, the pull-out shelf), shaker fronts, worktop, end panels, wall panel, strips and back strips, plinth, plasterboard; the boards' looks in `view3d.js` (`board:`); the kitchen's scene corrected (group 2 by the West wall, the island before group 1); the kitchen in 3D
@@ -31,7 +31,8 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [x] cabinets: the cup handle ENERYDA as IKEA gives it (89 × 22 × 30, holes 64 apart, Ø5: layer Holes); the hinge's plate 8.5 high (Blum)
 - [ ] cabinets: the makers' data still to check against their drawings: the hinge plate's outline and the arm (Blum gives no sizes); the Häfele runners' holes (37, 229, 421); MOVENTO's holes; the bins' place in the drawer
 - [x] the library's API: the makers' rules asked of `library/shapes.js`, every fitting a product node placed by its anchor; `cabinets.js` reads no product's fields (the model unchanged, part for part)
-- [ ] the view: opening fronts and drawers without clashing with the turn (the left button): a click with no drag opens or closes the front under the cursor (the drag turns), Space in Walk (as in Quake); to settle
+- [x] the view: a click with no drag opens or closes what is under it (the drag turns); Open / Close all in the menu
+- [ ] Space in Walk: the nearest door within reach (1500) on the walker's floor (with the walk)
 - [ ] cabinets: the holes' checks (a hole in a board lying flat, two holes in one place); moving fronts and drawers
 - [x] cabinets, stage 5: the other rooms (bathrooms 5 and 7, wardrobes 3, 4 and 8, bedroom 6): their cabinets and scenes (the prototype's placements through its turned room axes, checked against analysis.md § 13); fixtures (the library's products: WC, frame, mirror, shower, bath, radiator, riser), the casings less their cuts, the basin and its tap on the vanity's top; layers Bath and Wall cabinet
 - [x] the lamps in the scenes (`lamps`: downlights, pendants; from the prototype's lights, in the room's axes), under the ceiling over the room; `view3d.js` lights them at night (the lamps' and the products' lights: the hood's)
@@ -46,7 +47,8 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [ ] `docs.js` (root): Documents
 - [ ] Cabinet mode
 - [ ] Finish: metal, boards, floor tiles
-- [ ] moving parts: doors, fronts, windows
+- [x] moving parts: a mover (types.js: a turn, or a slide; behind: what opens first) on a node or a shape, what names it moves with it (the nearest of its id round it: a hinge's cup with its door, a dishwasher's front with its door); the cabinets' doors by the hinge's angle (Blum 110°), the drawers out by their runners' length (TANDEMBOX 500), the drawers behind a door after it; the house's doors, the appliances' doors; `view3d.js` pivots, eased, toggle, toggleAll, moverAt
+- [ ] moving parts, the rest: the fridge's doors (the front on them: KIS86AFE0's opening angle, its maker's, to find); the windows; Häfele's ball runners out all the way (full extension?) to check
 - [ ] cameras, sun, walk
 - [ ] docs: the physical rules (cabinets, tiles, products); `project.svg`, `flow.svg`, `types.svg`
 

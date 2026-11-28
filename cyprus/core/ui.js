@@ -189,6 +189,84 @@ function sunBox({ rects, mark = [], sun, change }) {
   };
 }
 
+/* ================= COLUMN WIDTHS =================
+   cols: one per column, {fix: n} for numbers, codes and units (n characters, as wide as their longest value), or
+   {share: k, min?, max?} for text (the room left, in proportion to k, from min to max characters; min 8). A fixed column
+   is never narrower than the longest word of its header, and no column narrower than the fields and buttons in it. If the
+   text columns reach their max, the table is narrower than its box; if they cannot get their min, it is wider and scrolls. */
+/** @type {CanvasRenderingContext2D | null} */
+let measure = null;
+/** @param {string} text @param {string} font */
+function textWidth(text, font) {
+  measure = measure || /** @type {CanvasRenderingContext2D} */ (document.createElement('canvas').getContext('2d'));
+  if (measure.font !== font) measure.font = font;
+  return measure.measureText(text).width;
+}
+/**
+ * A table's columns fitted to the room it has (px).
+ * @param {HTMLTableElement} table @param {{ fix?: number, share?: number, min?: number, max?: number }[]} cols @param {number} room
+ */
+export function setColumns(table, cols, room) {
+  if (!cols || !cols.length || !(room > 0)) return;
+  const cell = table.querySelector('tbody td, tr:not(.title):not(.head):not(.cat):not(.sum):not(.grand) td') || table, cs = getComputedStyle(cell);   // an item's cell
+  const ch = parseFloat(cs.fontSize) * 0.6, pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 1;
+  /* the header's longest word under each column */
+  const headWord = new Array(cols.length).fill(0);
+  const head = [...table.rows].find(r => r.cells.length > 1 && (r.cells[0].tagName === 'TH' || /\bhead\b/.test(r.className)));
+  if (head) {
+    let at = 0;
+    for (const c of head.cells) {
+      if (c.colSpan === 1) {
+        const hs = getComputedStyle(c), up = hs.textTransform === 'uppercase', ls = parseFloat(hs.letterSpacing) || 0;
+        const t = c.textContent.trim(), words = (hs.whiteSpace === 'nowrap' ? [t] : t.split(/\s+/)).map(w => (up ? w.toUpperCase() : w));   // a header that does not wrap: whole
+        headWord[at] = Math.max(0, ...words.map(w => textWidth(w, hs.font) + ls * w.length)) + parseFloat(hs.paddingLeft) + parseFloat(hs.paddingRight) + 2;
+      }
+      at += c.colSpan;
+    }
+  }
+  /* the controls in each column (fields, buttons): a column is never narrower than they need, so nothing sticks out */
+  const ctrl = new Array(cols.length).fill(0);
+  for (const r of table.rows) {
+    let at = 0;
+    for (const c of r.cells) {
+      if (c.colSpan === 1) {
+        const parts = [...c.querySelectorAll('input:not([type=hidden]), select, button')];
+        if (parts.length) {
+          /* side by side (a cell that does not wrap): the sum of their widths; else what each needs at least. A field fills
+             its cell (it is as wide as the column was last time): it counts with its min-width, so a fit does not feed the next */
+          const cc = getComputedStyle(c), inLine = cc.whiteSpace === 'nowrap';
+          const need = parts.reduce((a, e) => { const es = getComputedStyle(e), m = (parseFloat(es.marginLeft) || 0) + (parseFloat(es.marginRight) || 0);
+            const own = e.tagName === 'BUTTON' ? /** @type {HTMLElement} */ (e).offsetWidth : parseFloat(es.minWidth) || 0;
+            return inLine ? a + own + m : Math.max(a, (parseFloat(es.minWidth) || 0) + m); }, 0);
+          ctrl[at] = Math.max(ctrl[at], need + parseFloat(cc.paddingLeft) + parseFloat(cc.paddingRight) + 1);
+        }
+      }
+      at += c.colSpan;
+    }
+  }
+  const spec = cols.map(c => (c && (c.fix || c.share) ? { share: 1, ...c } : { share: 1 }));
+  const w = spec.map((c, i) => (c.fix ? Math.max(c.fix * ch + pad, headWord[i], ctrl[i]) : 0));
+  const text = spec.map((c, i) => !c.fix ? i : -1).filter(i => i >= 0);
+  let left = room - w.reduce((a, b) => a + b, 0), open = text.slice();
+  /* the text columns share what is left; one that reaches its min or max is held there and the rest share again */
+  for (let pass = 0; pass < 4 && open.length; pass++) {
+    const k = open.reduce((a, i) => a + spec[i].share, 0), next = /** @type {number[]} */ ([]);
+    for (const i of open) {
+      const c = spec[i], lo = Math.max((c.min || 8) * ch + pad, ctrl[i]), hi = c.max ? c.max * ch + pad : Infinity;
+      w[i] = Math.min(hi, Math.max(lo, left * c.share / k));
+      if (w[i] > lo && w[i] < hi) next.push(i);
+    }
+    const fixedText = open.filter(i => !next.includes(i)).reduce((a, i) => a + w[i], 0);
+    if (next.length === open.length) break;
+    left -= fixedText; open = next;
+  }
+  let cg = table.querySelector(':scope > colgroup');
+  if (!cg) { cg = document.createElement('colgroup'); table.prepend(cg); }
+  cg.innerHTML = w.map(x => `<col style="width:${Math.floor(x)}px">`).join('');
+  table.style.tableLayout = 'fixed';
+  table.style.width = w.reduce((a, b) => a + Math.floor(b), 0) + 'px';
+}
+
 /* ================= THE PIECES ================= */
 const ROUND = 'class="round" aria-controls';
 /** @type {Record<string, string>} */

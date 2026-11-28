@@ -16,7 +16,7 @@ import { layTiles, pointOf, tiledSurfaces, under } from './tiles.js';
 const TOL = 0.5;   // mm
 
 import { bodyOf, formatsOf, tileOf } from '../library/shapes.js';
-import { hash01 } from '../core/geometry.js';
+import { clipHalf, hash01 } from '../core/geometry.js';
 import { pointToModel, readFormat } from '../core/tools.js';
 
 /** @typedef {import('../types.js').Catalog} Catalog */
@@ -26,19 +26,22 @@ import { pointToModel, readFormat } from '../core/tools.js';
 
 const VERSION = 1;   // of the format scene
 /** @typedef {import('./tiles.js').Surface} Surface */
+const FACE = 1;   // mm: a tile's own thickness over the slab (the joints that deep)
 /** a tile's number by chance, the same for the same tile @param {string} id */
 const hashOf = id => Math.floor(hash01(...[...id].map(c => c.charCodeAt(0))) * 2 ** 32);
 
 /**
  * A room's tiles, as its scene lays them over its surfaces (room/tiles.js: the floor, the walls, the faces of what is built
- * before them): on each a slab from what it lies on out to the tiles' face, a solid as the house's are (its edge the tile's,
- * tile:<product>:edge); on its face the grout, over it each tile's face (form faces), its photo the whole tile (one of the
- * product's images, by chance, turned by chance), a small cut marked over it (layer smallCuts). Two nodes under the room:
+ * before them): on each a slab in the grout's colour from what it lies on to a millimetre (FACE) short of the tiles' face, and
+ * on it each tile, that thick: solids as the house's are (core/surfaces: nothing in one plane twice), the grout seen in the
+ * joints; a tile's photo the whole tile from its corner (one of the product's images, turned, by chance: tile:<product>:<image>:
+ * <u>x<v>:<turn>), no lines of its own; a small cut marked over it (layer smallCuts). Two nodes under the room:
  * floorTiles (layer floorTiles), wallTiles (wallTiles: the casings' too), each counted.
  * @param {Hierarchy} H @param {HierarchyNode & Record<string, any>} room @param {any} tiles  the scene's @param {import('./tiles.js').BuiltIn[]} built @param {Catalog} catalog
  */
 function roomTiles(H, room, tiles, built, catalog) {
   const rects = room.area || [[0, room.size[0], 0, room.size[1]]], C = room.ceilingHeight;
+  const slopes = /** @type {{ a: number, s: number }[]} */ (room.slopes?.length ? [{ a: C, s: 0 }, ...room.slopes] : []);   // the roof's underside over y, and the ceiling (none: a flat ceiling)
   const tile = /** @type {Record<string, any>} */ ({});
   for (const k of ['floor', 'walls']) if (tiles[k]) tile[k] = tileOf(catalog.product(tiles[k].product), tiles[k].size);
   const surfaces = tiledSurfaces({ rects, height: C, slopes: room.slopes || [], openings: room.openings, built },
@@ -46,42 +49,46 @@ function roomTiles(H, room, tiles, built, catalog) {
   for (const k of /** @type {('floor' | 'walls')[]} */ (['floor', 'walls'])) {
     const t = tiles[k], T = tile[k];
     if (!t) continue;
-    const d = t.depth, [U, V] = t.dir === 'x' ? [T.len, T.wid] : [T.wid, T.len], look = `tile:${t.product}`, size = `${T.len}x${T.wid}`;
-    /** @type {Map<string, any>} the faces by their material, their way and layer: a part each */
-    const parts = new Map();
-    const add = (/** @type {string} */ material, /** @type {number[]} */ n, /** @type {number[][]} */ poly, /** @type {number[][] | null} */ uv, /** @type {string} */ layer = '') => {
-      const key = material + '|' + n.join() + '|' + (layer || '');
-      if (!parts.has(key)) parts.set(key, { form: 'faces', n, polys: [], uvs: [], material, ...(layer ? { layer } : {}) });
-      const p = parts.get(key); p.polys.push(poly); p.uvs.push(uv || poly.map(() => [0, 0]));
-    };
+    const d = t.depth, [U, V] = t.dir === 'x' ? [T.len, T.wid] : [T.wid, T.len], grout = 'grout:' + t.grout, parts = /** @type {any[]} */ ([]);
     const total = { area: 0, tiles: 0, whole: 0, cut: 0, small: 0 };
     for (const s of surfaces.filter(x => x.layout === k)) {
-      const P = (/** @type {number[]} */ q, o = 0) => pointOf(s, q, o);
       const offset = s.axis === 2 ? [t.offset[0], t.offset[1]] : [t.offset[s.axis], t.offset[t.offset.length - 1]];   // a wall's point: along it, h
       const { pieces, count } = layTiles(s.rects, T, { dir: t.dir, pattern: t.pattern, offset, under: s.lines });
       for (const c of /** @type {(keyof typeof total)[]} */ (Object.keys(total))) total[c] += count[c];
-      /* the slab: from what it lies on out to the face, a solid of its own (the house's surfaces: what touches welded, what is covered not drawn, its edges) */
-      for (const r of s.rects) {
-        const poly = under(r, s.lines);
-        if (!poly) continue;
-        const [a, b] = s.n.some(v => v < 0) ? [s.at, s.at + d] : [s.at - d, s.at];   // across the plane
-        if (s.axis === 1) { parts.set('slab' + parts.size, { form: 'prism', x: [a, b], poly, material: look + ':edge' }); continue; }   // along x: its section [y, h], cut on the slant
+      /** across the plane: from o0 to o1 off the face (negative: behind it) @param {number} o0 @param {number} o1 */
+      const across = (o0, o1) => { const [a, b] = [s.at + o0 * (s.n[0] + s.n[1] + s.n[2]), s.at + o1 * (s.n[0] + s.n[1] + s.n[2])]; return [Math.min(a, b), Math.max(a, b)]; };
+      /**
+       * A solid of an outline in the plane (u, v) between o0 and o1 off the face: a box; a prism along x where the roof cuts it
+       * (a wall along y: its outline cut on the slant; a wall along x: its section across, y and h, under the roof's slope).
+       * @param {number[]} r  its rectangle, uncut @param {number[][]} poly  its outline under the lines @param {number} o0 @param {number} o1 @param {Record<string, any>} what @returns {any}
+       */
+      const solid = (r, poly, o0, o1, what) => {
+        const [a, b] = across(o0, o1);
+        if (s.axis === 1) return { form: 'prism', x: [a, b], poly, ...what };
         const [u0, u1, v0, v1] = [Math.min(...poly.map(q => q[0])), Math.max(...poly.map(q => q[0])), Math.min(...poly.map(q => q[1])), Math.max(...poly.map(q => q[1]))];
-        parts.set('slab' + parts.size, { form: 'box', box: s.axis === 0 ? [u0, u1, a, b, v0, v1] : [u0, u1, v0, v1, a, b], material: look + ':edge' });
-        add('grout:' + t.grout, s.n, poly.map(q => P(q)), null);   // on its face, under the tiles
-      }
-      /* each tile's face on it: its photo from its corner over the whole tile, turned */
+        if (s.axis === 0 && slopes.length) {
+          let P = [[a, r[2]], [b, r[2]], [b, r[3]], [a, r[3]]];   // its section across, cut by the roof over its thickness
+          for (const l of slopes) P = clipHalf(P, q => l.a + l.s * q[0] - q[1]);
+          return P.length >= 3 ? { form: 'prism', x: [u0, u1], poly: P, ...what } : null;
+        }
+        return { form: 'box', box: s.axis === 0 ? [u0, u1, a, b, v0, v1] : [u0, u1, v0, v1, a, b], ...what };
+      };
+      const put = (/** @type {any} */ p) => { if (p) parts.push(p); };
+      /* the slab: from what it lies on to FACE short of the tiles' face, a solid in the grout's colour (the house's surfaces:
+         what touches welded, what is covered not drawn, its edges); seen in the joints */
+      for (const r of s.rects) { const poly = under(r, s.lines); if (poly) put(solid(r, poly, -d, -FACE, { material: grout })); }
+      /* each tile on it, FACE thick: its photo from its corner over the whole tile (one of the product's images, turned, by
+         chance); no lines of its own; a small cut marked over it */
       for (const p of pieces) {
         const poly = p.poly || [[p.rect[0], p.rect[2]], [p.rect[1], p.rect[2]], [p.rect[1], p.rect[3]], [p.rect[0], p.rect[3]]];
-        const h = hashOf(k + s.id + p.tile), turns = T.len === T.wid ? h % 4 : 2 * (h % 2);
-        const uv = poly.map(q => { let a = (q[0] - p.at[0]) / U, b = (q[1] - p.at[1]) / V; if (t.dir !== 'x') [a, b] = [b, a]; for (let i = 0; i < turns; i++) [a, b] = [1 - b, a]; return [a, b]; });
-        add(`${look}:${(h >>> 4) % 8}:${size}`, s.n, poly.map(q => P(q)), uv);
-        if (p.small) add('smallCut', s.n, poly.map(q => P(q, 0.5)), null, 'smallCuts');
+        const h = hashOf(k + s.id + p.tile), turn = T.len === T.wid ? h % 4 : 2 * (h % 2);
+        put(solid(p.rect, poly, -FACE, 0, { material: `tile:${t.product}:${(h >>> 4) % 8}:${U}x${V}:${turn}`, uvAt: pointOf(s, p.at), edges: false }));
+        if (p.small) put(solid(p.rect, poly, 0, 0.5, { material: 'smallCut', layer: 'smallCuts', edges: false }));
       }
     }
     total.area = Math.round(total.area * 100) / 100;
     const id = k === 'floor' ? 'floorTiles' : 'wallTiles';
-    H.add(room, { id, name: k === 'floor' ? 'Floor tiles' : 'Wall tiles', type: 'tiles', layer: id, offset: [0, 0, 0], size: [room.size[0], room.size[1], k === 'floor' ? d : C], parts: [...parts.values()], count: total });
+    H.add(room, { id, name: k === 'floor' ? 'Floor tiles' : 'Wall tiles', type: 'tiles', layer: id, offset: [0, 0, 0], size: [room.size[0], room.size[1], k === 'floor' ? d : C], parts, count: total });
   }
 }
 /** @type {Record<string, number>} the way a group's fronts face: its turn (its y, toward the wall, the other way) */

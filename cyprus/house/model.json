@@ -90,6 +90,16 @@
    "id": "house",
    "name": "Dom w papawerach 5 (G)",
    "type": "house",
+   "source": "Geometry from the archon.pl plans (±23 mm), with the build changes.",
+   "notes": [
+    "A heat pump instead of a gas boiler: one chimney (the living room), no ventilation shaft and no second chimney.",
+    "Build changes: the shower niche in the ground floor bathroom 1000 × 900 mm (walls #7, #8, #10 moved), the attic bathroom door moved 200 mm toward the garden, a cathedral ceiling over the bedroom.",
+    "A cantilevered stair (no stringers), no wall under the flight.",
+    "Wardrobes 3 and 4 in the attic with narrow doors 700/2050 from the bedroom (archon: an opening without a door and without the wall).",
+    "Attic room 6: the wall by the ventilation shaft removed (a heat recovery unit instead of the shaft); shelving in the niche.",
+    "The facade (graphite, white, timber) read from the archon renderings: a picture, not a dimension.",
+    "The inner doors have standard openings (our decision, not archon's 820–940): 900 × 2050 for a door \"80\" to a room, 700 × 2050 for a door \"60\" to a wardrobe; each kept on archon's centre."
+   ],
    "offset": [
     15800,
     14900,

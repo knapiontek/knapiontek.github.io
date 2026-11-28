@@ -15,7 +15,7 @@
   <div class="stage" id="stage">
     <template x-part="view"></template><template x-part="loading"></template><template x-part="modes"></template>
     <div id="plan2d" aria-label="2D plan" x-show="mode === '2d'" x-cloak><p class="note">2D plan</p></div>
-    <div id="documents" aria-label="Documents" x-show="mode === 'documents'" x-cloak><p class="note">Documents</p></div>
+    <template x-part="docs"></template>
     <div id="design" aria-label="Cabinet" x-show="mode === 'cabinets'" x-cloak><p class="note">Cabinet: Materials, Groups, Columns, Components, Drawing, Notes</p></div>
     <template x-part="dock"></template><template x-part="sun"></template>
     <template x-part="help">

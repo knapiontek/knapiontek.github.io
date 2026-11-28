@@ -141,7 +141,7 @@ button{font:inherit;color:inherit}
 .sheetwrap table.sheet tr:first-child>*{border-top:0}
 .sheetwrap table.sheet>tr:last-child>*,.sheetwrap table.sheet>tbody>tr:last-child>*{border-bottom:0}
 table.sheet{border-collapse:collapse;font-size:12.5px;min-width:100%}
-table.sheet td{border:1px solid var(--line);padding:4px 7px;vertical-align:top;white-space:pre-line}
+table.sheet td{border:1px solid var(--line);padding:4px 7px;vertical-align:top;white-space:pre-line;overflow-wrap:anywhere}
 table.sheet tr.flash td{animation:sheetflash 1.6s ease-out}
 @keyframes sheetflash{from{background:#fde68a}}
 table.sheet td.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}

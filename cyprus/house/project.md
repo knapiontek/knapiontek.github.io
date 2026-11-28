@@ -6,9 +6,10 @@ front-right (South-West) corner at ±0.00; the house stands on the site by its o
 
 | File | What |
 |---|---|
-| `model.json` | format `house`, version 1; the root is the site (its lawn, its surfaces), the house on it; the house's branches: `foundation`, `groundFloor`, `firstFloor`, `facade`, `roof`, `stair`; a wall's openings are its children; the rooms are places in their floor (`area`: their floor, rectangles in their own axes) |
+| `model.json` | format `house`, version 1; the house's `source` and `notes` (Documents: Notes); the root is the site (its lawn, its surfaces), the house on it; the house's branches: `foundation`, `groundFloor`, `firstFloor`, `facade`, `roof`, `stair`; a wall's openings are its children; the rooms are places in their floor (`area`: their floor, rectangles in their own axes) |
 | `assembly.js` | `assembleHouse()`: `model.json` as a hierarchy (`core/hierarchy.js`); a node without its own `layer` or `floor` takes its type's; its parts (`shapes.js`); the site's lawn round the house and its surfaces |
 | `shapes.js` | `houseShapes()`: what is drawn of the house, as the prototype's `house/model.js` made it: every element a prism cut by the roof, by its `cuts` and by the openings it hosts, split between the floors at `split`, the facade's finishes over its EPS (its raw material with the facade off); the roof's slopes less the chimney and the roof windows; windows and outer doors (frames, glass, leaves), inner doors (frame, leaf and handles on its mover `leaf`); the stair's treads |
+| `docs.js` | the house's Documents (core/sheet.js sheets): `roomsSheet` (the rooms by floor, the model's area against archon's), `tilesSheet` (the tiles laid by the rooms' scenes: how many, the area, the price a m², the value; no reserve), `doorsSheet` (the inner doors as bought: product and extras, or to choose), `notesSheet` (the house's `notes` under its `source`); `houseSheets` all four |
 
 ## model.json
 
