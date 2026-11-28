@@ -87,6 +87,7 @@ export function shapeToModel(S) {
     movers: S.movers.map(moverToModel),
     lights: S.lights.map(l => ({ ...l, at: pointToModel(l.at), ...(l.target ? { target: pointToModel(l.target) } : {}) })),
     envelopes: S.envelopes.map(e => ({ ...e, box: boxToModel(e.box) })),
+    ...(S.holes ? { holes: S.holes.map(o => ({ ...o, at: pointToModel(o.at), axis: pointToModel(o.axis) })) } : {}),
     ...(S.anchor ? { anchor: S.anchor } : {})   // in the design's axes, as the room places it
   };
 }

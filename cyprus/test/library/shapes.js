@@ -6,7 +6,7 @@
 
 import { openCatalog } from '../../library/catalog.js';
 import * as API from '../../library/shapes.js';
-import { bodyOf, boardOf, cutoutOf, drainOf, faultsOf, formatsOf, hingeHeights, hingePost, holeOf, innerOver, lookOf, pullOutFit, runnerFit, runnerFor, shapeOf, systemDrawer, systemFor, tileOf, trapFit, travelOf } from '../../library/shapes.js';
+import { bodyOf, boardOf, cutoutOf, drainOf, faultsOf, formatsOf, fitOf, hingeHeights, hingePost, holeOf, holesOf, innerOver, lookOf, pullOutFit, runnerFit, runnerFor, shapeOf, systemDrawer, systemFor, tileOf, trapFit, travelOf } from '../../library/shapes.js';
 
 /** @typedef {import('../../types.js').Shape} Shape */
 /** @typedef {import('../../types.js').Part} Part */
@@ -93,7 +93,7 @@ export default async function (check) {
     systemFor: api('systemFor', systemFor), systemDrawer: api('systemDrawer', systemDrawer), innerOver: api('innerOver', innerOver), runnerFor: api('runnerFor', runnerFor),
     runnerFit: api('runnerFit', runnerFit), pullOutFit: api('pullOutFit', pullOutFit), boardOf: api('boardOf', boardOf), cutoutOf: api('cutoutOf', cutoutOf),
     drainOf: api('drainOf', drainOf), holeOf: api('holeOf', holeOf), trapFit: api('trapFit', trapFit), lookOf: api('lookOf', lookOf), tileOf: api('tileOf', tileOf),
-    formatsOf: api('formatsOf', formatsOf), bodyOf: api('bodyOf', bodyOf)
+    formatsOf: api('formatsOf', formatsOf), bodyOf: api('bodyOf', bodyOf), holesOf: api('holesOf', holesOf), fitOf: api('fitOf', fitOf)
   };
 
   /* --- use case: a product is chosen for a role; the room checks it has what its drawing needs --- */
@@ -183,6 +183,29 @@ export default async function (check) {
   /* --- use case: how far a fitting opens, as its maker gives it: the room moves its front or its drawer by it --- */
   check('travelOf: a hinge its angle (Blum CLIP top 110°), a drawer system its length (TANDEMBOX antaro 500: out all the way), runners theirs', $.travelOf(catalog.product('blum-clip-top-blumotion-110-71b3550')) === 110
     && $.travelOf(catalog.product('blum-tandembox-antaro-d-500')) === 500 && $.travelOf(catalog.product('hafele-ball-runners-494-02-183')) === 400);
+  /* --- use case: how an appliance sits where the room places it (the documents give it), from its anchor's height --- */
+  {
+    const micro = $.fitOf(catalog.product('bosch-bfl623mb3'), { feet: 4 }), dish = $.fitOf(catalog.product('bosch-smv4hvx00e'), { feet: 55 });
+    check('a microwave on feet 4: its body 4 … 342, its fascia 13 below the body (−9 … 373)', !!micro && micro.bodyH0 === 4 && micro.bodyH1 === 342 && micro.fasciaH0 === -9 && micro.fasciaH1 === 373);
+    check('a dishwasher: its body 815 from its feet, its door the top 719 of it; a fridge its body; a sink no fit',
+      !!dish && dish.bodyH1 === 815 && dish.doorH0 === 96 && dish.feet === 55 && $.fitOf(catalog.product('bosch-kis86afe0'))?.bodyH1 === 1772 && $.fitOf(catalog.product('ikea-kilsviken')) === null);
+  }
+  /* --- use case: the holes a fitting needs drilled, placed as the room places it (from its anchor, the design's axes) --- */
+  {
+    const hinge = $.holesOf(catalog.product('blum-clip-top-blumotion-110-71b3550'), { hand: 'left', gap: 2, edge: 1 });
+    const plate = hinge.filter(o => o.kind === 'plate'), cup = hinge.find(o => o.kind === 'cup');
+    check('a hinge on the left: 2 plate holes Ø2.5 × 10 in the side (into it: −x), 37 behind the carcass\'s front, 32 apart; the cup Ø35 × 13 in the door, 2 + 1 + 22 from the side, with the door',
+      plate.length === 2 && plate.every(o => o.diameter === 2.5 && o.depth === 10 && o.at[0] === 0 && o.at[1] === -37 && o.axis[0] === -1) && Math.abs(plate[0].at[2] - plate[1].at[2]) === 32
+      && !!cup && cup.diameter === 35 && cup.depth === 13 && cup.at[0] === 23 && cup.at[1] === 2 && cup.axis[1] === 1 && cup.mover === 'door');
+    const right = $.holesOf(catalog.product('blum-clip-top-blumotion-110-71b3550'), { hand: 'right', gap: 2, edge: 1 });
+    check('… on the right: mirrored (the plate into +x, the cup at −23)', right.filter(o => o.kind === 'plate').every(o => o.axis[0] === 1) && right.some(o => o.kind === 'cup' && o.at[0] === -23));
+    const runners = $.holesOf(catalog.product('hafele-ball-runners-494-02-183'), { width: 500 });
+    check('ball runners 400 under a box 500 wide: the holes within the runner (37, 229 from its front; 421 not), each side 13 out, 23 over the box\'s bottom',
+      runners.length === 4 && runners.every(o => o.at[2] === 23 && (o.at[0] === -13 || o.at[0] === 513)) && runners.filter(o => o.at[0] === -13).map(o => o.at[1]).sort((a, b) => a - b).join() === '171,363');
+    const pin = $.holesOf(catalog.product('shelf-pins-5-zinc'), { hand: 'right' });
+    check('a shelf pin on the right side: its hole Ø5 × 10, 3 under the shelf, into +x', pin.length === 1 && pin[0].diameter === 5 && pin[0].depth === 10 && pin[0].at[2] === -3 && pin[0].axis[0] === 1);
+    check('a fitting with no holes: none', $.holesOf(catalog.product('hafele-axilo-h150'), { height: 150 }).length === 0);
+  }
   check('a hinge: its cup and its hole\'s marker in the door turn with it (the door\'s mover), its plate and arm stand', of('blum-clip-top-blumotion-110-71b3550').parts.filter(p => p.mover === 'door').length === 3
     && of('blum-clip-top-blumotion-110-71b3550').parts.some(p => !p.mover && p.form === 'box'));
 

@@ -9,6 +9,7 @@ import { assembleHouse } from './house/assembly.js';
 import { createView3d } from './view3d.js';
 import { bookOf } from './docs.js';
 import { houseSheets } from './house/docs.js';
+import { roomSheets } from './room/docs.js';
 
 /** @typedef {import('./core/ui.js').LayerTree} LayerTree */
 /** @typedef {import('./core/ui.js').MenuItem} MenuItem */
@@ -50,7 +51,7 @@ const ABOVE = {};
 let CATALOG = null;
 /** @type {import('./room/assembly.js').RoomProblem[]} what is wrong in the rooms' cabinets files */
 let PROBLEMS = [];
-/** @type {{ set: (b: import('./docs.js').Book) => void, restore: () => void, xlsx: (file: string) => Promise<void> } | null} the Documents screen, once it is up */
+/** @type {{ set: (b: import('./docs.js').Book, title?: string, subtitle?: string) => void, restore: () => void, xlsx: (file: string) => Promise<void> } | null} the Documents screen, once it is up */
 let SHEETS = null;
 
 page('sketch', {
@@ -92,15 +93,23 @@ page('sketch', {
   },
   /* Documents: the book of what is shown (docs.js): the house, a floor, a room; its checks: the hierarchy's, the cabinets' files' */
   docs: /** @type {import('./docs.js').Docs | null} */ (null),
-  documents() {
+  async documents() {
     if (!SITE) return;
     const path = ['house', this.state.floor, this.state.room].filter(Boolean).join('/'), node = SITE.node(path) || SITE.node('house');
     const problems = PROBLEMS.filter(p => !this.state.room || p.room === this.state.room);
     const checks = [...SITE.checks({ layers: Object.keys(ABOVE), floors: SKETCH.floors.map(f => f.id) }),
       { name: 'Cabinets: what is wrong in their files', about: 'A fault in a component of a cabinets file: built without it (skipped) or as it could be.', items: problems.map(p => `${p.room}: ${p.text}${p.skipped ? ' (skipped)' : ''}`) }];
-    const own = this.scope === 'house' && CATALOG ? houseSheets(/** @type {any} */ (node), CATALOG, /** @type {any} */ (SITE)) : [];   // the house: its rooms, tiles, doors, notes
+    const files = /** @type {any} */ (node).files || [];
+    /** @type {import('./core/sheet.js').Sheet[]} */
+    let own = [];   // the house: its rooms, tiles, doors, notes; a furnished room: its estimate, cut list, assembly, notes
+    if (this.scope === 'house' && CATALOG) own = houseSheets(/** @type {any} */ (node), CATALOG, /** @type {any} */ (SITE));
+    else if (this.state.room && files.includes('docs') && CATALOG) {
+      try { own = await roomSheets(/** @type {any} */ (node), CATALOG); }
+      catch (e) { checks.push({ name: 'Documents: the room\'s files', about: 'Its cabinets\' and its docs\' files read and their sheets made.', items: [String(e)] }); }
+    }
+    if (path !== ['house', this.state.floor, this.state.room].filter(Boolean).join('/')) return;   // shown elsewhere meanwhile
     const book = bookOf(SITE, /** @type {any} */ (node), this.title, checks, own);
-    if (SHEETS && this.docs) SHEETS.set(book);
+    if (SHEETS && this.docs) SHEETS.set(book, this.title, this.subtitle);
     else this.docs = { title: this.title, subtitle: this.subtitle, book, ready: (/** @type {NonNullable<typeof SHEETS>} */ s) => { SHEETS = s; } };
   },
   /* greyed where they do not apply: Cabinet, a room with furniture only; Finish, a floor or a room */

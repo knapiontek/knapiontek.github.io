@@ -595,7 +595,7 @@ export function createView3d({ catalog, canvas, light, edges }) {
     if (!busy) last = 0;
   }
   const go = () => {
-    if (reducedMotion || typeof requestAnimationFrame !== 'function') { for (const v of MOVERS.values()) if (v.progress !== v.goal) { v.progress = v.goal; pose(v); } if (renderer) renderer.render(scene, camera); return; }   // at once: no frames (no page)
+    if (reducedMotion || typeof document === 'undefined' || typeof requestAnimationFrame !== 'function') { for (const v of MOVERS.values()) if (v.progress !== v.goal) { v.progress = v.goal; pose(v); } if (renderer) renderer.render(scene, camera); return; }   // at once: no frames (no page)
     if (!moving) moving = requestAnimationFrame(step);
   };
   /**

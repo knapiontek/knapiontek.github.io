@@ -3,7 +3,7 @@
 // the module it tests.
 
 /* the tests, from this folder, at the path of what they test */
-const TESTS = [['core/hierarchy.js'], ['core/tools.js'], ['core/geometry.js'], ['core/surfaces.js'], ['library/catalog.js'], ['library/shapes.js'], ['settings.js', 'index.json'], ['house/assembly.js', 'house/assembly.js, house/model.json'], ['room/cabinets.js', 'room/cabinets.js, room/room_356.cabinets.json'], ['room/assembly.js', 'room/assembly.js, room/room_356.scene.json'], ['room/tiles.js'], ['view3d.js'], ['core/sheet.js'], ['docs.js'], ['house/docs.js']];
+const TESTS = [['core/hierarchy.js'], ['core/tools.js'], ['core/geometry.js'], ['core/surfaces.js'], ['library/catalog.js'], ['library/shapes.js'], ['settings.js', 'index.json'], ['house/assembly.js', 'house/assembly.js, house/model.json'], ['room/cabinets.js', 'room/cabinets.js, room/room_356.cabinets.json'], ['room/assembly.js', 'room/assembly.js, room/room_356.scene.json'], ['room/tiles.js'], ['view3d.js'], ['core/sheet.js'], ['docs.js'], ['house/docs.js'], ['core/estimate.js'], ['room/docs.js', 'room/docs.js, room/room_356.docs.json']];
 
 /** a test in a worker of its own @param {string} address @returns {Promise<{ passed: string[], failed: string[], error?: string }>} */
 function run(address) {

@@ -47,7 +47,9 @@ By the plan, one step at a time; each module: its API and examples first, then t
 - [ ] `view2d.js` (root): the 2D view (the menu's 2D): plans and dimensions
 - [x] Documents, stage 1: `core/sheet.js` (the book, formulas, the XLSX's worksheets), `docs.js` (the mode: its screen, Save XLSX, Restore data; Elements, Test)
 - [x] Documents, stage 2: `house/docs.js` (Rooms, Tiles, Doors, Notes; the house's `source` and `notes` in `model.json`)
-- [ ] Documents, stage 3: a furnished room's Estimate (`core/estimate.js`), Cut list, Assembly, Notes (`room/docs.js`, `room/<room>.docs.json` from the prototype's, its placeholders from the hierarchy)
+- [x] Documents, stage 3a: the cabinets' pieces to cut (`room/cabinets.js`: names, sizes, banded and lacquered edges, the fittings' holes in the piece they land in (`library/shapes.js` `holesOf`), cut-outs, fronts, counts; as the prototype's, checked piece by piece); `core/estimate.js`; `room/docs.js` (Estimate, Cut list, Assembly as a tree sheet, Notes); the kitchen's `room_356.docs.json`
+- [ ] Documents, stage 3b: the other rooms' `docs.json` (bathrooms 5, 7; bedroom 6; wardrobes 3, 4, 8)
+- [ ] cabinets: the open drawers of board are built now (they were not): the wardrobes' and the bedroom's runners — the Häfele family 300 – 600 fits neither 255 (the wardrobes' 297 carcasses) nor gives 750 (the bedroom's niche); the prototype had push-open runners 250, 350, 750 (no maker's data)
 - [ ] Cabinet mode
 - [ ] Finish: metal, boards, floor tiles
 - [x] moving parts: a mover (types.js: a turn, or a slide; behind: what opens first) on a node or a shape, what names it moves with it (the nearest of its id round it: a hinge's cup with its door, a dishwasher's front with its door); the cabinets' doors by the hinge's angle (Blum 110°), the drawers out by their runners' length (TANDEMBOX 500), the drawers behind a door after it; the house's doors, the appliances' doors; `view3d.js` pivots, eased, toggle, toggleAll, moverAt

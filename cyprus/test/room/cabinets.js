@@ -113,6 +113,44 @@ export default async function (check) {
     check('the holes: their markers in the layer Holes', groups.flatMap(under).filter(p => p.layer === 'holes').length > 200);
   }
 
+  /* --- use case: the maker's lists: every board a piece to cut, made with its body (its name, sizes, banded edges, holes) --- */
+  {
+    const { pieces, fronts, counts } = cabinetsOf(file, catalog);
+    const of = (/** @type {string} */ carcass, /** @type {string} */ id) => pieces.filter(P => P.carcass === carcass && P.id === id);
+    check('the kitchen: 227 pieces (173 boards of the carcasses and drawers, 24 fronts, 14 strips, 3 plinths, 3 front panels, a wall panel, 2 worktops and 3 end panels, 4 of plasterboard)',
+      pieces.length === 227 && pieces.filter(P => P.id === 'front').length === 24 && pieces.filter(P => P.id === 'strip').length === 14 && pieces.filter(P => P.id === 'plasterboard').length === 4);
+    const [left, right] = of('K23', 'side');
+    check('K23\'s sides: 550 × 1920 of the carcass\'s board, left and right, banded on the front edge (1920, along b)', left?.a === 550 && left.b === 1920 && left.material === 'egger-u708-st9-18'
+      && left.hand === 'left' && right?.hand === 'right' && JSON.stringify(left.edges) === '[{"side":"front","length":1920,"along":"b"}]');
+    const plates = left.holes.filter(o => o.kind === 'plate').map(o => o.y), pins = left.holes.filter(o => o.kind === 'shelfPin');
+    check('… their holes, from the front and the bottom: the hinge plates 37 in, 32 apart (the door hinged on the left); shelf pins 69 and 485 in; the bumpers in the other side\'s front edge',
+      left.holeFrom?.x === 'front' && plates.join() === '804,836,1331,1363,1801,1833' && pins.length === 8 && pins.every(o => o.x === 69 || o.x === 485)
+      && right.holes.filter(o => o.kind === 'bumper').every(o => o.from === 'bottom' && o.y === 0) && right.holes.filter(o => o.kind === 'bumper').map(o => o.x).join() === '820,1347,1817');
+    const door = of('K23', 'front').find(P => P.hand === 'left');
+    check('a door: lacquered all round (its edges none to band), the hinges\' cups 22 from its hinged edge at their heights', !!door && door.edges.length === 0 && door.lacquer?.long === 2 && door.lacquer.short === 2
+      && door.holes.filter(o => o.kind === 'cup').map(o => o.x + '@' + o.y).join() === '22@100,22@627,22@1097' && door.holeFrom?.x === 'hinge');
+    const [wall, island] = pieces.filter(P => P.id === 'worktop');
+    check('the worktop of group 1: 3513 × 618, its front from the factory, its left end banded (over the end panel); the hob\'s and the sink\'s cut-outs from its left and its back',
+      wall.a === 3513 && wall.b === 618 && wall.factoryEdges.join() === 'front' && wall.edges.map(e => e.side + e.length).join() === 'left618'
+      && wall.cutouts.map(c => `${c.kind} ${c.width}×${c.depth} @ ${c.x},${c.y}`).join() === 'hob 560×490 @ 179,54,sink 680×420 @ 1555,110');
+    check('the island\'s: its back and both ends banded', island.edges.map(e => e.side).join() === 'back,left,right');
+    check('a drawer\'s boards: the TANDEMBOX back banded on its top edge (seen as it slides out)', of('K11', 'drawerBack').every(P => P.edges.length === 1 && P.edges[0].side === 'top' && P.edges[0].length === 677));
+    check('the strips lacquered on their front edge; the back strips at the carcasses\' backs, cut as they', pieces.filter(P => P.id === 'strip').every(P => P.lacquer?.long === 1 && P.lacqueredSides.join() === 'front')
+      && pieces.filter(P => P.id === 'backStrip').length === 24);
+    check('the fronts: a door\'s hinges, the drawers behind it (2 boxes, runners 450), a drawer\'s system (D, M, with bins, with an inner drawer)', fronts.length === 24
+      && fronts.find(F => F.carcass === 'K25' && F.doorDrawers)?.doorDrawers?.runnerLength === 450 && fronts.filter(F => F.drawer?.system === 'drawer').length === 4 && fronts.some(F => F.drawer?.bins) && fronts.filter(F => F.drawer?.inner).length === 2);
+    check('the counts: 16 carcasses, 24 fronts, 29 hinges, 29 bumpers, drawers 4 D 3 M, 2 inner, 4 behind doors, 16 + 6 shelves, 64 pins, 40 legs, 6 wall brackets',
+      counts.carcasses === 16 && counts.fronts === 24 && counts.hinges === 29 && counts.bumpers === 29 && counts.drawersD === 4 && counts.drawersM === 3 && counts.innerDrawers === 2 && counts.doorDrawers === 4
+      && counts.shelvesAdjustable === 16 && counts.shelvesFixed === 6 && counts.shelfPins === 64 && counts.legs === 40 && counts.wallBrackets === 6);
+    check('… the joints of the strips (17924 screwed, 11040 from inside); the plasterboard\'s profiles (UD 10956, CD 14202, edge 5478); the types and tags',
+      counts.jointLength.screwed === 17924 && counts.jointLength.fromInside === 11040 && counts.plasterUD === 10956 && counts.plasterCD === 14202 && counts.plasterEdge === 5478 && counts.type.cabinet === 16 && counts.tag.island === 1);
+    const item = (/** @type {string} */ type, /** @type {string} */ c) => layout.flatMap(G => G.items).find(i => i.type === type && i.carcass === c);
+    const { layout: L2 } = cabinetsOf(file, catalog), fit = (/** @type {string} */ t, /** @type {string} */ c) => L2.flatMap(G => G.items).find(i => (i.type === t || i.tags.includes(t)) && i.carcass === c)?.fit;
+    check('the appliances\' fits: the oven on the board under it (670), its fascia to 1265; the microwave on feet 4, its fascia 13 below; the dishwasher\'s door 151 – 870; the fridge on K27\'s bottom',
+      !!item('oven', 'K25') && fit('oven', 'K25')?.fasciaH1 === 1265 && fit('microwave', 'K25')?.fasciaH0 === 1270 && fit('dishwasher', '')?.doorH0 === 151 && fit('fridge', 'K27')?.bodyH0 === 168);
+    check('the worktops: from the wall to their front, deep 618 (group 1), 900 (the island)', L2.map(G => G.worktop?.depth ?? 0).join() === '618,0,900');
+  }
+
   /* --- use case: the same file twice: the same nodes --- */
   check('the same file, the same nodes', JSON.stringify(cabinetsOf(file, catalog).groups) === JSON.stringify(groups));
 

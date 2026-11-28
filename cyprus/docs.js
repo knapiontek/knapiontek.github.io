@@ -14,7 +14,7 @@ import { component, part, setColumns } from './core/ui.js';
 /** @typedef {import('./core/sheet.js').Row} Row */
 /** @typedef {import('./core/hierarchy.js').HierarchyNode} Node */
 /** @typedef {{ name: string, about?: string, items: string[], info?: boolean }} Check  OK when items is empty; info: to know, not to correct */
-/** @typedef {{ title: string, subtitle?: string, warnings?: string[], book: Book, ready?: (s: { set: (b: Book) => void, restore: () => void, xlsx: (file: string) => Promise<void> }) => void }} Docs  what the screen shows; ready: its controls, once it is up */
+/** @typedef {{ title: string, subtitle?: string, warnings?: string[], book: Book, ready?: (s: { set: (b: Book, title?: string, subtitle?: string) => void, restore: () => void, xlsx: (file: string) => Promise<void> }) => void }} Docs  what the screen shows; ready: its controls, once it is up */
 
 const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';   // SheetJS, pinned
 const mm = (/** @type {number} */ v) => Math.round(v * 10) / 10;
@@ -169,7 +169,7 @@ function sheetView(docs) {
       new ResizeObserver(() => requestAnimationFrame(fit)).observe(wrap);
       if (document.fonts) document.fonts.ready.then(fit);
       this.draw();
-      if (d.ready) d.ready({ set: b => this.set(b), restore: () => this.restore(), xlsx: file => saveXlsx(book, file) });
+      if (d.ready) d.ready({ set: (b, title, subtitle) => this.set(b, title, subtitle), restore: () => this.restore(), xlsx: file => saveXlsx(book, file) });
     },
     /** @param {Book} b */
     take(b) {
@@ -229,7 +229,10 @@ function sheetView(docs) {
       });
     },
     restore() { for (const [c, v] of original) c.v = v; this.draw(); },
-    /** a new book (what is shown changed): the same tab stays open @param {Book} b */
-    set(b) { const name = book.sheets[this.current]?.name; this.take(b); this.current = Math.max(0, book.sheets.findIndex(s => s.name === name)); this.draw(); }
+    /** a new book (what is shown changed), its title: the same tab stays open @param {Book} b @param {string} [title] @param {string} [subtitle] */
+    set(b, title, subtitle) {
+      if (title !== undefined) { this.title = title; this.subtitle = subtitle || ''; }
+      const name = book.sheets[this.current]?.name; this.take(b); this.current = Math.max(0, book.sheets.findIndex(s => s.name === name)); this.draw();
+    }
   };
 }

@@ -22,7 +22,7 @@ const X = [1, 0, 0], Y = [0, 1, 0], H = [0, 0, 1], DOWN = [0, 0, -1];
 /** a shape being described: its parts, moving parts, lights, the boxes documents give @param {Vec} size */
 function describe(size) {
   /** @type {Shape} */
-  const S = { size, parts: [], movers: [], lights: [], envelopes: [] };
+  const S = { size, parts: [], movers: [], lights: [], envelopes: [], holes: [] };
   /** @param {Part} p @param {string} [mover] */
   const add = (p, mover) => { S.parts.push(mover ? Object.assign(p, { mover }) : p); };
   return {
@@ -315,12 +315,23 @@ function settle(S) {
     if (p.box) p.box = p.box.map((v, k) => v - lo[k >> 1]);
     if (p.at) p.at = p.at.map((v, k) => v - lo[k]);
   }
+  for (const o of S.holes || []) o.at = o.at.map((v, k) => v - lo[k]);
   S.size = [0, 1, 2].map(i => Math.max(hi[i] - lo[i], 1));
   S.anchor = lo.map(v => -v);
   return S;
 }
-/** a hole's marker: a disc on the drilled face, 0.6 proud; a small one 12 across @param {ReturnType<typeof describe>} D @param {Vec} at @param {number} r @param {string} marker @param {Vec} axis @param {string} [mover]  it moves with (a hole in a door) */
-const marker = (D, at, r, marker, axis, mover) => D.add({ form: 'cylinder', radius: [Math.max(r, 6), Math.max(r, 6)], length: 1, material: marker, at, axis, segments: 20, layer: 'holes' }, mover);
+/** @type {Record<string, string>} a hole's marker, by its kind */
+const MARKER = { cup: 'markerHinge', plate: 'markerHinge', bumper: 'markerHinge', runner: 'markerRunner', shelfPin: 'markerShelfPin', handle: 'markerHandle' };
+/**
+ * A hole a fitting needs drilled (types.js: Hole) and its marker: a disc on the drilled face, 0.6 proud; a small one 12 across.
+ * @param {ReturnType<typeof describe>} D @param {string} kind  of MARKER @param {Vec} at  its centre on the face @param {number} diameter @param {number} depth
+ * @param {Vec} axis  into the part @param {string} [mover]  it moves with (a hole in a door)
+ */
+const marker = (D, kind, at, diameter, depth, axis, mover) => {
+  /** @type {any} */ (D.S.holes).push({ kind, diameter, depth, at, axis, ...(mover ? { mover } : {}) });
+  const r = Math.max(diameter / 2, 6);
+  D.add({ form: 'cylinder', radius: [r, r], length: 1, material: MARKER[kind], at: at.map((v, k) => v - 0.6 * axis[k]), axis: axis.map(Math.abs), segments: 20, layer: 'holes' }, mover);
+};
 
 /* ---------- a concealed hinge: its mounting plate and arm on the carcass's side, its cup in the door; their holes. Anchor: the
    side's face, the carcass's front, the hinge's height. options.hand: the side it is on (left: the carcass inside toward +x),
@@ -334,8 +345,8 @@ function hinge(A, { hand = 'left', gap = 2, edge = 0 }) {
   D.box([...x(3, 20), -70, -2, -9, 9], 'zinc');                                    // the arm
   D.cylinder(rc - 0.5, A.cup.inDoor, 'zinc', [cx, gap + A.cup.inDoor / 2, 0], Y, 20, 'door');  // the cup, in the door: it turns with it (the door's mover, round the hinge)
   D.cylinder(24, 1.5, 'zinc', [cx, -1, 0], Y, 20, 'door');
-  for (const dh of [-P.holes.spacing / 2, P.holes.spacing / 2]) marker(D, [0, -P.holes.fromFront, dh], P.holes.diameter / 2, 'markerHinge', X);
-  marker(D, [cx, gap - 0.6, 0], rc, 'markerHinge', Y, 'door');
+  for (const dh of [-P.holes.spacing / 2, P.holes.spacing / 2]) marker(D, 'plate', [0, -P.holes.fromFront, dh], P.holes.diameter, P.holes.depth, [-s, 0, 0]);
+  marker(D, 'cup', [cx, gap, 0], A.cup.diameter, A.cup.depth, Y, 'door');
   return settle(D.S);
 }
 /* ---------- a door's bumper in the carcass's front edge, up to the door; its hole. Anchor: its axis at the carcass's front.
@@ -344,7 +355,7 @@ function hinge(A, { hand = 'left', gap = 2, edge = 0 }) {
 function bumper(A, { gap = 2 }) {
   const D = describe([1, 1, 1]), r = A.hole.diameter / 2;
   D.cylinder(r + 1.5, gap - 0.2, 'gasket', [0, (gap - 0.2) / 2, 0], Y);
-  marker(D, [0, 0.6, 0], r, 'markerHinge', Y);
+  marker(D, 'bumper', [0, 0, 0], A.hole.diameter, A.hole.depth, [0, -1, 0]);
   return settle(D.S);
 }
 /* ---------- a drawer system's metal: its runners on the carcass's sides, its sides, a D drawer's gallery rails, an inner drawer's
@@ -355,7 +366,7 @@ function drawerSystem(A, { width = 564, depth = 550 }) {
   const D = describe([1, 1, 1]), s0 = A.sideFromCarcass, s1 = s0 + A.sideThickness, y0 = A.fromBack, y1 = depth - A.fromFront, top = A.box.sideHeight - 4;
   for (const [a, b] of [[0, s0], [width - s0, width]]) D.add({ form: 'box', box: [a, b, y0, y1 + 2, -24, -6], material: 'zinc', layer: 'hardware' });   // the runners
   for (const [a, b] of [[s0, s1], [width - s1, width - s0]]) D.box([a, b, y0, y1, -4, top], 'drawerSide');   // the sides
-  for (const x of [0, width]) for (const f of A.holes.fromFront) marker(D, [x, depth - f, -A.holes.belowDrawer], A.holes.diameter / 2, 'markerRunner', X);
+  for (const x of [0, width]) for (const f of A.holes.fromFront) marker(D, 'runner', [x, depth - f, -A.holes.belowDrawer], A.holes.diameter, A.holes.depth, [x ? 1 : -1, 0, 0]);
   if (A.gallery) for (const [a, b] of [[28, 32], [width - 32, width - 28]]) D.box([a, b, 46, depth - 24, top, top + 64], 'drawerSide');   // gallery rails
   if (A.inner) {   /* an inner drawer: its front and the cutlery insert in it */
     D.box([s1, width - s1, y1 - 16, y1 - 2, -4, top], 'drawerSide');
@@ -376,12 +387,14 @@ function bins(A, { width = 564, depth = 550 }) {
   }
   return settle(D.S);
 }
-/* ---------- a pair of ball runners beside a drawer's box. Anchor: the box's left, its back, the runners' bottom.
-   options.width: the box's width ---------- */
+/* ---------- a pair of ball runners beside a drawer's box, on the row of their holes (holes.aboveBottom over the box's bottom);
+   the holes in the carcass's sides (or a spacer), fromFront from the runners' front. Anchor: the box's left, its back, its
+   bottom. options.width: the box's width ---------- */
 /** @param {any} A @param {ShapeOptions} options */
 function ballRunners(A, { width = 500 }) {
-  const D = describe([1, 1, 1]);
-  for (const [a, b] of [[-A.clearance, 0], [width, width + A.clearance]]) D.box([a, b, 0, A.length, 0, A.height], 'zinc');
+  const D = describe([1, 1, 1]), h = A.holes.aboveBottom;
+  for (const [a, b] of [[-A.clearance, 0], [width, width + A.clearance]]) D.box([a, b, 0, A.length, h - A.height / 2, h + A.height / 2], 'zinc');
+  for (const [x, s] of [[-A.clearance, -1], [width + A.clearance, 1]]) for (const f of A.holes.fromFront.filter((/** @type {number} */ f) => f < A.length)) marker(D, 'runner', [x, A.length - f, h], A.holes.diameter, A.holes.depth, [s, 0, 0]);
   return settle(D.S);
 }
 /* ---------- a pull-out shelf's runners, between it and the sides (or a spacer); their holes. Anchor: the shelf's left, the
@@ -391,7 +404,7 @@ function pullOutRunners(A, { width = 500, left = 5, right = 5 }) {
   const D = describe([1, 1, 1]);
   for (const [a, b, side] of [[-left, 0, -left], [width, width + right, width + right]]) {
     D.box([a, b, -A.length, 0, -14, 0], 'zinc');
-    for (const f of A.holes.fromFront) marker(D, [side, -f, -A.holes.belowShelf], A.holes.diameter / 2, 'markerRunner', X);
+    for (const f of A.holes.fromFront) marker(D, 'runner', [side, -f, -A.holes.belowShelf], A.holes.diameter, A.holes.depth, [side > 0 ? 1 : -1, 0, 0]);
   }
   return settle(D.S);
 }
@@ -401,7 +414,7 @@ function pullOutRunners(A, { width = 500, left = 5, right = 5 }) {
 function shelfPin(A, { hand = 'left' }) {
   const D = describe([1, 1, 1]), r = A.hole.diameter / 2, h = -A.belowShelf;
   D.box([...(hand === 'right' ? [-8, 0] : [0, 8]), -r, r, h - r, h + r], 'zinc');
-  marker(D, [0, 0, h], r, 'markerShelfPin', X);
+  marker(D, 'shelfPin', [0, 0, h], A.hole.diameter, A.hole.depth, [hand === 'right' ? 1 : -1, 0, 0]);
   return settle(D.S);
 }
 /* ---------- a cup handle: a flange on the front, the shell over it open toward the hand (lying: down; on a side, toward the
@@ -417,7 +430,7 @@ function cupHandle(A, { hand = 'lying', front = 19 }) {
   shell([-L, L, s, d, W - s, W]);           // the shell's back, over the hand
   shell([-L, L, d - s, d, -W, W]);          // its face
   for (const u of [-L, L - s]) shell([u, u + s, s, d - s, -W, W - s]);   // its ends
-  for (const u of [-A.holes.spacing / 2, A.holes.spacing / 2]) { const [hx, , , , hh] = at3([u, u, 0, 0, 0, 0]); marker(D, [hx, -front - 0.6, hh], A.holes.diameter / 2, 'markerHandle', Y); }
+  for (const u of [-A.holes.spacing / 2, A.holes.spacing / 2]) { const [hx, , , , hh] = at3([u, u, 0, 0, 0, 0]); marker(D, 'handle', [hx, -front, hh], A.holes.diameter, front, Y); }
   return settle(D.S);
 }
 /* ---------- a leg under a carcass: its column and its foot. Anchor: its axis on the floor. options.height: the carcass's bottom ---------- */
@@ -488,6 +501,21 @@ export const boardOf = A => ({ thickness: A.thickness, depth: A.depth || A.width
 /** a pull-out shelf on its runners: as long as they, their gap each side @param {any} A */
 export const pullOutFit = A => ({ length: /** @type {number} */ (A.length), gap: /** @type {number} */ (A.clearance) });
 
+/**
+ * How an appliance sits where the room places it, from its anchor's height: its body's bottom and top, an oven's or a
+ * microwave's fascia, a dishwasher's door, its feet; null: no appliance of a fit. What the documents give.
+ * @param {any} A @param {ShapeOptions} [options]
+ * @returns {{ feet?: number, bodyH0: number, bodyH1: number, fasciaH0?: number, fasciaH1?: number, doorH0?: number, doorH1?: number } | null}
+ */
+export function fitOf(A, { feet = 0 } = {}) {
+  const B = A.body;
+  switch (A.draw) {
+    case 'oven': case 'microwave': return { feet, bodyH0: feet, bodyH1: feet + B.height, fasciaH0: feet + A.fascia.bottom, fasciaH1: feet + A.fascia.bottom + A.fascia.height };
+    case 'fridgeFreezer': return { bodyH0: 0, bodyH1: B.height };
+    case 'dishwasher': return { feet, bodyH0: 0, bodyH1: B.height, doorH0: B.height - A.door.height, doorH1: B.height };
+    default: return null;
+  }
+}
 /** the hole a sink, a hob needs in the worktop @param {any} A @returns {{ width: number, depth: number }} */
 export const cutoutOf = A => A.cutout;
 /** a sink's drain, from its anchor (its middle on the worktop) @param {any} A @returns {Vec} */
@@ -658,6 +686,14 @@ function shaped(A, [w, d, h]) {
  */
 export function shapeOf(product, size, options = {}) {
   return shapeToModel(described(product, size, options));
+}
+/**
+ * The holes a fitting needs drilled, placed as the room places it: in the design's axes, from its anchor.
+ * @param {Product} product @param {ShapeOptions} [options] @returns {import('../types.js').Hole[]}
+ */
+export function holesOf(product, options = {}) {
+  const S = described(product, undefined, options), anchor = S.anchor || [0, 0, 0];
+  return (S.holes || []).map(o => ({ ...o, at: o.at.map((v, k) => v - anchor[k]) }));
 }
 
 /** @param {Product} product @param {Vec} [size] @param {ShapeOptions} [options] @returns {Shape} */
